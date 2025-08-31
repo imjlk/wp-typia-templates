@@ -1,0 +1,37 @@
+import typia from "typia";
+
+/**
+ * Create Typia validators for any type
+ */
+export function createValidators<T>() {
+	return {
+		validate: typia.createValidate<T>(),
+		assert: typia.createAssert<T>(),
+		is: typia.createIs<T>(),
+		random: typia.createRandom<T>(),
+		clone: typia.createClone<T>(),
+		prune: typia.createPrune<T>(),
+	};
+}
+
+/**
+ * Create safe attribute updater with validation
+ */
+export function createAttributeUpdater<T>(
+	attributes: T,
+	setAttributes: (attrs: Partial<T>) => void,
+	validator: ReturnType<typeof typia.createValidate<T>>
+) {
+	return <K extends keyof T>(key: K, value: T[K]) => {
+		const newAttrs = { ...attributes, [key]: value };
+		
+		const validation = validator(newAttrs);
+		if (validation.success) {
+			setAttributes({ [key]: value } as Partial<T>);
+			return true;
+		} else {
+			console.error(`Validation failed for ${String(key)}:`, validation.errors);
+			return false;
+		}
+	};
+}

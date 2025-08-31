@@ -1,0 +1,38 @@
+{
+	"name": "{{slugSnakeCase}}",
+	"version": "0.1.0",
+	"description": "{{description}}",
+	"author": "{{author}}",
+	"license": "GPL-2.0-or-later",
+	"main": "build/index.js",
+	"scripts": {
+		"sync-types": "tsx scripts/sync-types-to-block-json.ts",
+		"prebuild": "npm run sync-types",
+		"build": "wp-scripts build",
+		"start": "npm run sync-types && wp-scripts start",
+		"dev": "npm start",
+		"lint:js": "wp-scripts lint-js",
+		"lint:css": "wp-scripts lint-style",
+		"lint": "npm run lint:js && npm run lint:css",
+		"format": "wp-scripts format"
+	},
+	"devDependencies": {
+		"@types/wordpress__block-editor": "^7.0.0",
+		"@types/wordpress__blocks": "^11.0.7",
+		"@types/wordpress__components": "^19.10.5",
+		"@wordpress/scripts": "^27.9.0",
+		"tsx": "^4.19.1",
+		"ts-patch": "^3.2.1",
+		"ttypescript": "^1.5.15",
+		"typescript": "^5.6.2",
+		"typia": "^9.7.2"
+	},
+	"dependencies": {
+		"@wordpress/block-editor": "^15.2.0",
+		"@wordpress/blocks": "^15.2.0",
+		"@wordpress/components": "^30.2.0",
+		"@wordpress/element": "^6.29.0",
+		"@wordpress/i18n": "^6.2.0",
+		"@wordpress/interactivity": "^6.29.0"
+	}
+}

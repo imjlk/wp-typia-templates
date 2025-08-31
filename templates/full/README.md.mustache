@@ -1,0 +1,69 @@
+# {{title}}
+
+A WordPress block with **Typia validation** and **Interactivity API** support.
+
+## 🚀 Features
+
+- **✅ Typia Validation**: Type-safe attributes with compile-time and runtime validation
+- **⚡ Interactivity API**: Lightweight frontend interactions
+- **🎯 Auto-Sync**: Types automatically sync to `block.json`
+- **🔧 TypeScript**: Full type safety throughout
+
+## 🏗️ Development
+
+```bash
+# Install dependencies
+npm install
+
+# Development with hot reload
+npm start
+
+# Build for production  
+npm run build
+
+# Type checking
+npx tsc --noEmit
+
+# Sync types to block.json manually
+npm run sync-types
+```
+
+## 📝 Type System
+
+Edit `src/types.ts` to define your block attributes:
+
+```typescript
+export interface {{titleCase}}Attributes {
+	content: string & tags.MinLength<1> & tags.Default<"Hello World">;
+	isVisible: boolean & tags.Default<true>;
+	count: number & tags.Minimum<0> & tags.Maximum<100>;
+}
+```
+
+**The `block.json` will be automatically updated** with these attributes when you run `npm start` or `npm run build`!
+
+## 🎨 Styling
+
+- `src/style.scss` - Frontend and editor styles
+- Block CSS class: `.wp-block-{{slugKebabCase}}`
+
+## ⚡ Interactivity
+
+Frontend interactions are defined in `src/view.ts`:
+
+```typescript
+const { state, actions } = store('{{namespace}}/{{slug}}', {
+	state: { isActive: false },
+	actions: { toggle() { state.isActive = !state.isActive; } }
+});
+```
+
+## 📦 Generated Files
+
+- `block.json` - Automatically synced from TypeScript types
+- `build/` - Compiled JavaScript and CSS
+- `src/types.ts` - **Edit this to change block attributes**
+
+---
+
+*Generated with [@wordpress/create-block](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-create-block/) and Typia validation*
