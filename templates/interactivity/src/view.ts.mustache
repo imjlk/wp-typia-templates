@@ -1,0 +1,170 @@
+import { store, getContext } from '@wordpress/interactivity';
+import { {{titleCase}}State } from './types';
+
+/**
+ * {{title}} - Advanced Interactivity API Store
+ * Features: Counter, Input handling, Async operations, Error handling
+ */
+const { state, actions, callbacks } = store('{{namespace}}/{{slug}}', {
+	state: {
+		isActive: false,
+		isVisible: true,
+		isLoading: false,
+		counter: 0,
+		userInput: '',
+		error: null as string | null,
+		history: [] as string[],
+	} as {{titleCase}}State & {
+		counter: number;
+		userInput: string;
+		error: string | null;
+		history: string[];
+	},
+	
+	actions: {
+		toggle() {
+			state.isActive = !state.isActive;
+			actions.addToHistory(`Toggled to ${state.isActive ? 'active' : 'inactive'}`);
+		},
+		
+		hide() {
+			state.isVisible = false;
+			actions.addToHistory('Hidden');
+		},
+		
+		show() {
+			state.isVisible = true;
+			actions.addToHistory('Shown');
+		},
+		
+		async increment() {
+			if (state.isLoading) return;
+			
+			state.isLoading = true;
+			state.error = null;
+			
+			try {
+				// Simulate API call
+				await new Promise(resolve => setTimeout(resolve, 300));
+				state.counter += 1;
+				actions.addToHistory(`Incremented to ${state.counter}`);
+			} catch (error) {
+				state.error = 'Failed to increment';
+				console.error('Increment error:', error);
+			} finally {
+				state.isLoading = false;
+			}
+		},
+		
+		async decrement() {
+			if (state.isLoading) return;
+			
+			state.isLoading = true;
+			state.error = null;
+			
+			try {
+				await new Promise(resolve => setTimeout(resolve, 300));
+				state.counter = Math.max(0, state.counter - 1);
+				actions.addToHistory(`Decremented to ${state.counter}`);
+			} catch (error) {
+				state.error = 'Failed to decrement';
+				console.error('Decrement error:', error);
+			} finally {
+				state.isLoading = false;
+			}
+		},
+		
+		updateInput(event: Event) {
+			const target = event.target as HTMLInputElement;
+			state.userInput = target.value;
+		},
+		
+		submitInput() {
+			if (!state.userInput.trim()) {
+				state.error = 'Input cannot be empty';
+				return;
+			}
+			
+			actions.addToHistory(`Input submitted: "${state.userInput}"`);
+			state.userInput = '';
+			state.error = null;
+		},
+		
+		reset() {
+			state.counter = 0;
+			state.userInput = '';
+			state.isActive = false;
+			state.error = null;
+			state.history = [];
+			actions.addToHistory('Reset all values');
+		},
+		
+		clearError() {
+			state.error = null;
+		},
+		
+		addToHistory(message: string) {
+			state.history.unshift(`${new Date().toLocaleTimeString()}: ${message}`);
+			// Keep only last 10 entries
+			if (state.history.length > 10) {
+				state.history = state.history.slice(0, 10);
+			}
+		},
+		
+		async loadContent() {
+			state.isLoading = true;
+			state.error = null;
+			
+			try {
+				// Get context data
+				const context = getContext<{
+					content: string;
+					alignment: string;
+				}>();
+				
+				// Simulate content processing
+				await new Promise(resolve => setTimeout(resolve, 800));
+				
+				actions.addToHistory(`Content loaded: "${context.content}"`);
+				
+			} catch (error) {
+				state.error = error instanceof Error ? error.message : 'Failed to load content';
+				console.error('Content loading failed:', error);
+			} finally {
+				state.isLoading = false;
+			}
+		}
+	},
+	
+	callbacks: {
+		init() {
+			console.log('{{titleCase}} initialized with advanced Interactivity API features');
+			actions.addToHistory('Block initialized');
+		},
+		
+		mounted() {
+			const context = getContext();
+			console.log('{{titleCase}} mounted with context:', context);
+		},
+		
+		// Watchers
+		onCounterChange() {
+			if (state.counter >= 10) {
+				state.error = '🎉 Counter reached 10! Consider resetting.';
+			}
+		},
+		
+		onErrorChange() {
+			if (state.error) {
+				// Auto-clear errors after 5 seconds
+				setTimeout(() => {
+					if (state.error) {
+						state.error = null;
+					}
+				}, 5000);
+			}
+		}
+	},
+});
+
+export { state, actions };

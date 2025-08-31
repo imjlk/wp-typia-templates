@@ -1,0 +1,14 @@
+{
+	"extends": "@wordpress/scripts/config/tsconfig.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"declarationDir": "build/types",
+		"plugins": [
+			{
+				"transform": "typia/lib/transform"
+			}
+		]
+	},
+	"include": ["src/**/*"],
+	"exclude": ["build/**/*"]
+}
