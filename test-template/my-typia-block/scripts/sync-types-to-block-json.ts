@@ -1,0 +1,137 @@
+import typia from "typia";
+import * as fs from "fs";
+import * as path from "path";
+
+/**
+ * 🚀 Typia → block.json 자동 생성 스크립트
+ * 
+ * TypeScript 타입 정의에서 WordPress block.json의 attributes를 자동 생성합니다.
+ */
+
+async function syncTypesToBlockJson() {
+	try {
+		// 타입 파일에서 인터페이스 파싱
+		const typeContent = fs.readFileSync('src/types.ts', 'utf-8');
+		const attributes = parseTypesFromContent(typeContent);
+		
+		// 기존 block.json 읽기
+		const blockJsonPath = 'src/my-typia-block/block.json';
+		const blockJson = JSON.parse(fs.readFileSync(blockJsonPath, 'utf-8'));
+		
+		// Typia 기반 attributes로 업데이트
+		blockJson.attributes = attributes;
+		
+		// Typia example 데이터 생성 (가능한 경우)
+		try {
+			blockJson.example = {
+				attributes: generateExampleAttributes(attributes)
+			};
+		} catch (error) {
+			console.warn('Example generation failed:', error);
+		}
+		
+		// block.json 업데이트
+		fs.writeFileSync(blockJsonPath, JSON.stringify(blockJson, null, '\t'));
+		
+		console.log('✅ block.json이 Typia 타입에서 자동 생성되었습니다!');
+		console.log('📝 생성된 attributes:', Object.keys(attributes));
+		
+	} catch (error) {
+		console.error('❌ 타입 동기화 실패:', error);
+		process.exit(1);
+	}
+}
+
+function parseTypesFromContent(content: string): Record<string, any> {
+	const attributes: Record<string, any> = {};
+	
+	// MyTypiaBlockAttributes 인터페이스 찾기
+	const interfaceMatch = content.match(/interface\s+MyTypiaBlockAttributes[^{]*{([^}]*)}/s);
+	
+	if (interfaceMatch) {
+		const interfaceBody = interfaceMatch[1];
+		
+		// 각 속성 파싱
+		const propertyRegex = /(\w+)(\?)?:\s*([^;]+);/g;
+		let match;
+		
+		while ((match = propertyRegex.exec(interfaceBody)) !== null) {
+			const [, propName, optional, propType] = match;
+			
+			// WordPress 속성 형식으로 변환
+			const attribute: any = {
+				type: mapTypeScriptTypeToWP(propType.trim())
+			};
+			
+			// tags.Default<value> 추출
+			const defaultMatch = propType.match(/tags\.Default<([^>]+)>/);
+			if (defaultMatch) {
+				const defaultValue = defaultMatch[1].replace(/['"]/g, '');
+				if (defaultValue === '""' || defaultValue === "''") {
+					attribute.default = '';
+				} else if (defaultValue === 'true' || defaultValue === 'false') {
+					attribute.default = defaultValue === 'true';
+				} else if (!isNaN(Number(defaultValue))) {
+					attribute.default = Number(defaultValue);
+				} else {
+					attribute.default = defaultValue;
+				}
+			}
+			
+			attributes[propName] = attribute;
+		}
+	}
+	
+	return attributes;
+}
+
+function mapTypeScriptTypeToWP(tsType: string): string {
+	// Typia tags 제거 후 기본 타입 추출
+	const cleanType = tsType.replace(/\s*&\s*tags\.[^&]+/g, '').trim();
+	
+	if (cleanType.startsWith('string')) return 'string';
+	if (cleanType.startsWith('number') || cleanType.startsWith('uint32')) return 'number';
+	if (cleanType.startsWith('boolean')) return 'boolean';
+	if (cleanType.startsWith('Array') || cleanType.includes('[]')) return 'array';
+	if (cleanType.startsWith('{') || cleanType.includes('object')) return 'object';
+	
+	// Union type 처리 ("left" | "center" | "right")
+	if (cleanType.includes('|')) return 'string';
+	
+	return 'string'; // fallback
+}
+
+function generateExampleAttributes(attributes: Record<string, any>): Record<string, any> {
+	const example: Record<string, any> = {};
+	
+	for (const [key, attr] of Object.entries(attributes)) {
+		if (attr.default !== undefined) {
+			example[key] = attr.default;
+		} else {
+			switch (attr.type) {
+				case 'string':
+					example[key] = `Example ${key}`;
+					break;
+				case 'number':
+					example[key] = 42;
+					break;
+				case 'boolean':
+					example[key] = true;
+					break;
+				case 'array':
+					example[key] = [];
+					break;
+				case 'object':
+					example[key] = {};
+					break;
+				default:
+					example[key] = null;
+			}
+		}
+	}
+	
+	return example;
+}
+
+// 스크립트 실행
+syncTypesToBlockJson().catch(console.error);

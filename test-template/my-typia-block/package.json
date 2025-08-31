@@ -1,0 +1,39 @@
+{
+	"name": "my-typia-block",
+	"version": "0.1.0",
+	"description": "WordPress block with Typia validation and Interactivity API",
+	"author": "The WordPress Contributors",
+	"license": "GPL-2.0-or-later",
+	"main": "build/index.js",
+	"scripts": {
+		"sync-types": "tsx scripts/sync-types-to-block-json.ts",
+		"prebuild": "npm run sync-types",
+		"build": "wp-scripts build",
+		"prestart": "npm run sync-types",
+		"start": "wp-scripts start",
+		"format": "wp-scripts format",
+		"lint:css": "wp-scripts lint-style",
+		"lint:js": "wp-scripts lint-js",
+		"packages-update": "wp-scripts packages-update",
+		"plugin-zip": "wp-scripts plugin-zip"
+	},
+	"devDependencies": {
+		"@types/wordpress__block-editor": "^11.5.17",
+		"@types/wordpress__blocks": "^12.5.18",
+		"@types/wordpress__components": "^23.8.0",
+		"@wordpress/scripts": "^30.22.0",
+		"tsx": "^4.20.5",
+		"ts-patch": "^3.2.1",
+		"ttypescript": "^1.5.15",
+		"typescript": "^5.9.2",
+		"typia": "^9.7.2"
+	},
+	"dependencies": {
+		"@wordpress/block-editor": "^15.2.0",
+		"@wordpress/blocks": "^15.2.0",
+		"@wordpress/components": "^30.2.0",
+		"@wordpress/element": "^6.29.0",
+		"@wordpress/i18n": "^6.2.0",
+		"@wordpress/interactivity": "^6.29.0"
+	}
+}

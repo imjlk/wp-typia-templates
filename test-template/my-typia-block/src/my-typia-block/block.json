@@ -1,0 +1,52 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "create-block/my-typia-block",
+	"version": "0.1.0",
+	"title": "My Typia Block",
+	"category": "widgets",
+	"icon": "smiley",
+	"description": "Example block scaffolded with Create Block tool.",
+	"example": {
+		"attributes": {
+			"id": "Example id",
+			"version": 1,
+			"className": "Example className",
+			"content": 0,
+			"alignment": "left",
+			"isVisible": true
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"textdomain": "my-typia-block",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"viewScript": "file:./view.js",
+	"attributes": {
+		"id": {
+			"type": "string"
+		},
+		"version": {
+			"type": "number",
+			"default": 1
+		},
+		"className": {
+			"type": "string"
+		},
+		"content": {
+			"type": "string",
+			"default": 0
+		},
+		"alignment": {
+			"type": "string",
+			"default": "left"
+		},
+		"isVisible": {
+			"type": "boolean",
+			"default": true
+		}
+	}
+}
