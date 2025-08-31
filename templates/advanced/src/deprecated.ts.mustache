@@ -1,0 +1,184 @@
+import { BlockConfiguration } from '@wordpress/blocks';
+import { {{titleCase}}AttributesV1, {{titleCase}}AttributesV2, {{titleCase}}Attributes } from './types/versions';
+import { autoMigrate, generateMigrationReport } from './migrations';
+
+/**
+ * WordPress block deprecated versions with Typia-powered migrations
+ */
+
+// V1 Deprecated (Original version)
+const v1: BlockConfiguration['deprecated'][0] = {
+	attributes: {
+		content: {
+			type: 'string',
+			default: ''
+		},
+		alignment: {
+			type: 'string',
+			default: 'left'
+		}
+	},
+	
+	save({ attributes }: { attributes: {{titleCase}}AttributesV1 }) {
+		return (
+			<p style={{ textAlign: attributes.alignment }}>
+				{attributes.content}
+			</p>
+		);
+	},
+	
+	migrate(attributes: {{titleCase}}AttributesV1) {
+		console.log('🔄 WordPress migration: V1 detected, using Typia auto-migration');
+		
+		const migrated = autoMigrate(attributes);
+		const report = generateMigrationReport(attributes, migrated);
+		
+		console.log('📊 Migration Report:', report);
+		
+		// Log to WordPress admin if available
+		if (typeof wp !== 'undefined' && wp.data && wp.data.dispatch('core/notices')) {
+			wp.data.dispatch('core/notices').createSuccessNotice(
+				`{{title}} block migrated from v${report.fromVersion} to v${report.toVersion}`,
+				{ type: 'snackbar' }
+			);
+		}
+		
+		return migrated;
+	},
+	
+	isEligible(attributes: any) {
+		// Check if this looks like a V1 block
+		return (
+			typeof attributes.content === 'string' &&
+			!('isVisible' in attributes) &&  // No V2+ fields
+			!('id' in attributes) &&         // No V3+ fields
+			!('version' in attributes)       // No version tracking
+		);
+	}
+};
+
+// V2 Deprecated (Added visibility and className)
+const v2: BlockConfiguration['deprecated'][0] = {
+	attributes: {
+		content: {
+			type: 'string',
+			default: ''
+		},
+		alignment: {
+			type: 'string',
+			default: 'left'
+		},
+		isVisible: {
+			type: 'boolean',
+			default: true
+		},
+		className: {
+			type: 'string'
+		}
+	},
+	
+	save({ attributes }: { attributes: {{titleCase}}AttributesV2 }) {
+		return attributes.isVisible ? (
+			<p 
+				className={attributes.className}
+				style={{ textAlign: attributes.alignment }}
+			>
+				{attributes.content}
+			</p>
+		) : null;
+	},
+	
+	migrate(attributes: {{titleCase}}AttributesV2) {
+		console.log('🔄 WordPress migration: V2 detected, using Typia auto-migration');
+		
+		const migrated = autoMigrate(attributes);
+		const report = generateMigrationReport(attributes, migrated);
+		
+		console.log('📊 Migration Report:', report);
+		
+		// Enhanced migration notice for V2
+		if (typeof wp !== 'undefined' && wp.data && wp.data.dispatch('core/notices')) {
+			const changes = report.changes.length;
+			wp.data.dispatch('core/notices').createInfoNotice(
+				`{{title}} block updated: ${changes} new feature${changes !== 1 ? 's' : ''} added`,
+				{ 
+					type: 'snackbar',
+					actions: [
+						{
+							label: 'View Changes',
+							onClick: () => console.table(report)
+						}
+					]
+				}
+			);
+		}
+		
+		return migrated;
+	},
+	
+	isEligible(attributes: any) {
+		// Check if this looks like a V2 block
+		return (
+			typeof attributes.content === 'string' &&
+			('isVisible' in attributes || 'className' in attributes) && // Has V2 fields
+			!('id' in attributes) &&         // No V3+ fields
+			!('version' in attributes) &&    // No version tracking
+			!('theme' in attributes)         // No V3 theme field
+		);
+	}
+};
+
+/**
+ * All deprecated versions in reverse chronological order
+ * (WordPress processes them from newest to oldest)
+ */
+export const deprecated: BlockConfiguration['deprecated'] = [v2, v1];
+
+/**
+ * Migration utilities for development/debugging
+ */
+export const migrationUtils = {
+	/**
+	 * Test migration with sample data
+	 */
+	testMigration() {
+		console.log('🧪 Testing {{title}} migrations...');
+		
+		// Test V1 → Current
+		const v1Sample: {{titleCase}}AttributesV1 = {
+			content: "Hello World",
+			alignment: "center"
+		};
+		
+		console.log('📄 V1 Sample:', v1Sample);
+		const v1Migrated = autoMigrate(v1Sample);
+		console.log('➡️ V1 Migrated:', v1Migrated);
+		
+		// Test V2 → Current
+		const v2Sample: {{titleCase}}AttributesV2 = {
+			content: "Hello World V2",
+			alignment: "right",
+			isVisible: true,
+			className: "custom-class"
+		};
+		
+		console.log('📄 V2 Sample:', v2Sample);
+		const v2Migrated = autoMigrate(v2Sample);
+		console.log('➡️ V2 Migrated:', v2Migrated);
+		
+		console.log('✅ Migration tests complete');
+	},
+	
+	/**
+	 * Get migration statistics
+	 */
+	getStats() {
+		return {
+			supportedVersions: ['1.0.0', '2.0.0', '3.0.0'],
+			currentVersion: '3.0.0',
+			totalMigrations: deprecated.length,
+			autoMigrationEnabled: true,
+			typiaValidation: true
+		};
+	}
+};

@@ -1,0 +1,188 @@
+import typia from "typia";
+import { 
+	{{titleCase}}AttributesV1, 
+	{{titleCase}}AttributesV2, 
+	{{titleCase}}AttributesV3,
+	{{titleCase}}Attributes,
+	BLOCK_VERSIONS 
+} from '../types/versions';
+import { generateUUID } from '../utils';
+
+/**
+ * Migration functions for {{title}} block versions
+ */
+
+// V1 → V2 Migration
+export function migrateV1ToV2(v1Attrs: {{titleCase}}AttributesV1): {{titleCase}}AttributesV2 {
+	console.log('🔄 Migrating {{title}} from v1 to v2');
+	
+	const migrated: {{titleCase}}AttributesV2 = {
+		content: v1Attrs.content || "",
+		alignment: v1Attrs.alignment || "left",
+		// New fields with defaults
+		isVisible: true,
+		className: undefined
+	};
+	
+	// Validate migrated data
+	const validation = typia.validate<{{titleCase}}AttributesV2>(migrated);
+	if (!validation.success) {
+		console.error('❌ V1→V2 migration validation failed:', validation.errors);
+		throw new Error('Migration validation failed');
+	}
+	
+	console.log('✅ V1→V2 migration successful');
+	return migrated;
+}
+
+// V2 → V3 Migration  
+export function migrateV2ToV3(v2Attrs: {{titleCase}}AttributesV2): {{titleCase}}AttributesV3 {
+	console.log('🔄 Migrating {{title}} from v2 to v3');
+	
+	const migrated: {{titleCase}}AttributesV3 = {
+		// New fields
+		id: generateUUID(),
+		version: 3,
+		theme: "default",
+		
+		// Existing fields with potential updates
+		content: v2Attrs.content || "",
+		alignment: v2Attrs.alignment || "left", 
+		isVisible: v2Attrs.isVisible ?? true,
+		
+		// Handle className validation change
+		className: v2Attrs.className && /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(v2Attrs.className) 
+			? v2Attrs.className.slice(0, 50) // Trim to new max length
+			: undefined
+	};
+	
+	// Validate migrated data
+	const validation = typia.validate<{{titleCase}}AttributesV3>(migrated);
+	if (!validation.success) {
+		console.error('❌ V2→V3 migration validation failed:', validation.errors);
+		throw new Error('Migration validation failed');
+	}
+	
+	console.log('✅ V2→V3 migration successful');
+	return migrated;
+}
+
+/**
+ * Auto-detect version and migrate to current
+ */
+export function autoMigrate(attributes: any): {{titleCase}}Attributes {
+	// Try to detect version
+	const detectedVersion = detectVersion(attributes);
+	console.log(`🔍 Detected {{title}} version: ${detectedVersion}`);
+	
+	switch (detectedVersion) {
+		case "1.0.0":
+			// V1 → V2 → V3
+			const v2 = migrateV1ToV2(attributes as {{titleCase}}AttributesV1);
+			return migrateV2ToV3(v2);
+			
+		case "2.0.0":
+			// V2 → V3
+			return migrateV2ToV3(attributes as {{titleCase}}AttributesV2);
+			
+		case "3.0.0":
+			// Already current version
+			console.log('✅ {{title}} already at current version');
+			return attributes as {{titleCase}}AttributesV3;
+			
+		default:
+			console.warn('⚠️ Unknown {{title}} version, attempting best-effort migration');
+			return attemptBestEffortMigration(attributes);
+	}
+}
+
+/**
+ * Detect block version based on structure
+ */
+function detectVersion(attributes: any): string {
+	// Check for V3 features
+	if ('id' in attributes || 'version' in attributes || 'theme' in attributes) {
+		return "3.0.0";
+	}
+	
+	// Check for V2 features  
+	if ('isVisible' in attributes || 'className' in attributes) {
+		return "2.0.0";
+	}
+	
+	// Must be V1
+	return "1.0.0";
+}
+
+/**
+ * Best-effort migration for unknown versions
+ */
+function attemptBestEffortMigration(attributes: any): {{titleCase}}Attributes {
+	console.log('🔧 Attempting best-effort migration');
+	
+	const migrated: {{titleCase}}Attributes = {
+		id: generateUUID(),
+		version: 3,
+		content: String(attributes.content || ""),
+		alignment: ["left", "center", "right", "justify"].includes(attributes.alignment) 
+			? attributes.alignment 
+			: "left",
+		isVisible: Boolean(attributes.isVisible ?? true),
+		className: typeof attributes.className === 'string' 
+			? attributes.className.slice(0, 50) 
+			: undefined,
+		theme: ["default", "dark", "light", "accent"].includes(attributes.theme)
+			? attributes.theme
+			: "default"
+	};
+	
+	// Final validation
+	const validation = typia.validate<{{titleCase}}Attributes>(migrated);
+	if (!validation.success) {
+		console.error('❌ Best-effort migration failed:', validation.errors);
+		// Return minimal valid structure
+		return {
+			id: generateUUID(),
+			version: 3,
+			content: "",
+			alignment: "left",
+			isVisible: true,
+			theme: "default"
+		};
+	}
+	
+	console.log('✅ Best-effort migration successful');
+	return migrated;
+}
+
+/**
+ * Generate migration report
+ */
+export function generateMigrationReport(oldAttrs: any, newAttrs: {{titleCase}}Attributes) {
+	const report = {
+		timestamp: new Date().toISOString(),
+		fromVersion: detectVersion(oldAttrs),
+		toVersion: "3.0.0",
+		changes: [] as string[],
+		warnings: [] as string[]
+	};
+	
+	// Detect changes
+	if (!oldAttrs.id && newAttrs.id) {
+		report.changes.push('Added unique ID');
+	}
+	
+	if (!oldAttrs.version && newAttrs.version) {
+		report.changes.push('Added version tracking');
+	}
+	
+	if (!oldAttrs.theme && newAttrs.theme) {
+		report.changes.push('Added theme support');
+	}
+	
+	if (oldAttrs.content !== newAttrs.content) {
+		report.warnings.push('Content may have been modified during migration');
+	}
+	
+	return report;
+}
