@@ -1,0 +1,78 @@
+import { BlockEditProps } from '@wordpress/blocks';
+import { useBlockProps, InspectorControls, RichText } from '@wordpress/block-editor';
+import { PanelBody, ToggleControl, SelectControl } from '@wordpress/components';
+import { __ } from '@wordpress/i18n';
+import { {{titleCase}}Attributes } from './types';
+import { createValidators } from './validators';
+import { useTypiaValidation } from './hooks';
+
+type EditProps = BlockEditProps<{{titleCase}}Attributes>;
+
+const validators = createValidators<{{titleCase}}Attributes>();
+
+export default function Edit({ attributes, setAttributes }: EditProps) {
+	const blockProps = useBlockProps();
+	const { isValid, errors } = useTypiaValidation(attributes, validators.validate);
+
+	const updateAttribute = <K extends keyof {{titleCase}}Attributes>(
+		key: K,
+		value: {{titleCase}}Attributes[K]
+	) => {
+		const newAttrs = { ...attributes, [key]: value };
+		const validation = validators.validate(newAttrs);
+		
+		if (validation.success) {
+			setAttributes({ [key]: value } as Partial<{{titleCase}}Attributes>);
+		} else {
+			console.error(`Validation failed for ${String(key)}:`, validation.errors);
+		}
+	};
+
+	return (
+		<>
+			<InspectorControls>
+				<PanelBody title={__('Settings', '{{textdomain}}')}>
+					<ToggleControl
+						label={__('Visible', '{{textdomain}}')}
+						checked={attributes.isVisible ?? true}
+						onChange={(isVisible) => updateAttribute('isVisible', isVisible)}
+					/>
+					<SelectControl
+						label={__('Alignment', '{{textdomain}}')}
+						value={attributes.alignment ?? 'left'}
+						options={[
+							{ label: __('Left', '{{textdomain}}'), value: 'left' },
+							{ label: __('Center', '{{textdomain}}'), value: 'center' },
+							{ label: __('Right', '{{textdomain}}'), value: 'right' },
+							{ label: __('Justify', '{{textdomain}}'), value: 'justify' },
+						]}
+						onChange={(alignment) => updateAttribute('alignment', alignment as any)}
+					/>
+				</PanelBody>
+			</InspectorControls>
+
+			<div {...blockProps}>
+				{!isValid && (
+					<div className="block-error">
+						<p>{__('Block validation failed:', '{{textdomain}}')}</p>
+						<pre>{JSON.stringify(errors, null, 2)}</pre>
+					</div>
+				)}
+				
+				<RichText
+					tagName="p"
+					value={attributes.content}
+					onChange={(content) => updateAttribute('content', content)}
+					placeholder={__('Enter your text...', '{{textdomain}}')}
+					style={{
+						textAlign: attributes.alignment ?? 'left'
+					}}
+				/>
+				
+				<p className="block-info">
+					{__('{{title}} – Powered by Typia validation!', '{{textdomain}}')}
+				</p>
+			</div>
+		</>
+	);
+}
