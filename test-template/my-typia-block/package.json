@@ -7,23 +7,27 @@
 	"main": "build/index.js",
 	"scripts": {
 		"sync-types": "tsx scripts/sync-types-to-block-json.ts",
-		"prebuild": "npm run sync-types",
-		"build": "wp-scripts build",
-		"prestart": "npm run sync-types",
+		"generate-manifest": "tsx scripts/generate-manifest.ts",
+		"prebuild": "echo 'Skipping sync-types for debugging'",
+		"build": "wp-scripts build && npm run generate-manifest",
+		"prestart": "echo 'Skipping sync-types for debugging'",
 		"start": "wp-scripts start",
 		"format": "wp-scripts format",
 		"lint:css": "wp-scripts lint-style",
 		"lint:js": "wp-scripts lint-js",
 		"packages-update": "wp-scripts packages-update",
-		"plugin-zip": "wp-scripts plugin-zip"
+		"plugin-zip": "wp-scripts plugin-zip",
+		"zip": "npm run build && npm run create-zip",
+		"create-zip": "tsx scripts/create-plugin-zip.ts"
 	},
 	"devDependencies": {
 		"@types/wordpress__block-editor": "^11.5.17",
 		"@types/wordpress__blocks": "^12.5.18",
 		"@types/wordpress__components": "^23.8.0",
 		"@wordpress/scripts": "^30.22.0",
-		"tsx": "^4.20.5",
+		"archiver": "^7.0.1",
 		"ts-patch": "^3.2.1",
+		"tsx": "^4.20.5",
 		"ttypescript": "^1.5.15",
 		"typescript": "^5.9.2",
 		"typia": "^9.7.2"

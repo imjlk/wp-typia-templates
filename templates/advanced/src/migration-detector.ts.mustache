@@ -14,6 +14,16 @@ import {
  * detailed analysis of required upgrades
  */
 
+export interface MigrationError extends Error {
+	name: string;
+	message: string;
+	stack?: string;
+	code: string;
+	details?: any;
+	timestamp: string;
+	blockData?: any;
+}
+
 export interface MigrationAnalysis {
 	needsMigration: boolean;
 	currentVersion: string;
@@ -90,8 +100,26 @@ export function detectBlockMigration(attributes: any, blockName?: string): Migra
 		}
 
 	} catch (error) {
-		analysis.warnings.push(`Detection error: ${error.message}`);
+		// Enhanced error handling with detailed logging
+		const migrationError: MigrationError = {
+			name: error.name || 'MigrationDetectionError',
+			message: error.message || 'Unknown error during migration detection',
+			stack: error.stack,
+			code: 'MIGRATION_DETECTION_FAILED',
+			details: {
+				blockName,
+				attributes: typeof attributes === 'object' ? Object.keys(attributes) : 'Invalid attributes',
+				timestamp: new Date().toISOString()
+			},
+			timestamp: new Date().toISOString(),
+			blockData: attributes
+		};
+		
+		analysis.warnings.push(`Detection error: ${migrationError.message} (Code: ${migrationError.code})`);
 		analysis.confidence = 0;
+		
+		// Log detailed error for debugging
+		console.error('Migration Detection Error Details:', JSON.stringify(migrationError, null, 2));
 	}
 
 	return analysis;
@@ -102,45 +130,68 @@ export function detectBlockMigration(attributes: any, blockName?: string): Migra
  */
 function detectVersionByStructure(attributes: any): { version: string; confidence: number } {
 	const checks = [
-		// V3 indicators
+		// V3 indicators (highest priority)
 		{
 			version: "3.0.0",
 			indicators: ['id', 'version', 'theme'],
-			required: 1, // At least 1 indicator needed
-			weight: 0.9
+			required: 2, // Need at least 2 indicators for high confidence
+			weight: 0.95
 		},
-		// V2 indicators  
+		// V2 indicators (medium priority)
 		{
-			version: "2.0.0", 
+			version: "2.0.0",
 			indicators: ['isVisible', 'className'],
 			required: 1,
-			weight: 0.8
+			weight: 0.85
+		},
+		// Mixed V2+V3 indicators
+		{
+			version: "2.5.0", // Intermediate version
+			indicators: ['isVisible', 'className', 'id', 'version'],
+			required: 3,
+			weight: 0.9
 		},
 		// V1 indicators (basic structure)
 		{
 			version: "1.0.0",
 			indicators: ['content', 'alignment'],
 			required: 1,
-			weight: 0.6
+			weight: 0.7
 		}
 	];
 
 	let bestMatch = { version: "1.0.0", confidence: 0.3 }; // Default fallback
 
+	// Enhanced detection with weighted scoring
 	for (const check of checks) {
-		const presentIndicators = check.indicators.filter(indicator => 
+		const presentIndicators = check.indicators.filter(indicator =>
 			indicator in attributes && attributes[indicator] !== undefined
 		);
 
 		if (presentIndicators.length >= check.required) {
-			const confidence = (presentIndicators.length / check.indicators.length) * check.weight;
+			// Calculate confidence based on proportion of indicators present and weight
+			const proportion = presentIndicators.length / check.indicators.length;
+			const confidence = proportion * check.weight;
 			
-			if (confidence > bestMatch.confidence) {
+			// Bonus for exact match
+			const bonus = presentIndicators.length === check.indicators.length ? 0.1 : 0;
+			
+			const finalConfidence = Math.min(confidence + bonus, 1.0);
+			
+			if (finalConfidence > bestMatch.confidence) {
 				bestMatch = {
 					version: check.version,
-					confidence: confidence
+					confidence: finalConfidence
 				};
 			}
+		}
+	}
+
+	// Additional validation for V3 blocks
+	if (attributes.version && typeof attributes.version === 'number') {
+		if (attributes.version === 3 && bestMatch.version !== "3.0.0") {
+			// Override if version attribute explicitly states V3
+			bestMatch = { version: "3.0.0", confidence: Math.min(bestMatch.confidence + 0.2, 1.0) };
 		}
 	}
 
@@ -173,17 +224,38 @@ function compareVersionSchemas(fromVersion: string, toVersion: string, analysis:
 		"1.0.0->2.0.0": {
 			added: ['isVisible', 'className'],
 			modified: ['content'], // Added length validation
-			deprecated: []
+			deprecated: [],
+			changes: [
+				"Added visibility toggle (isVisible) for showing/hiding blocks",
+				"Added custom CSS class support (className) for styling",
+				"Enhanced content validation with length constraints"
+			]
 		},
 		"2.0.0->3.0.0": {
 			added: ['id', 'version', 'theme'],
 			modified: ['content', 'className'], // Changed validation rules
-			deprecated: []
+			deprecated: [],
+			changes: [
+				"Added unique ID generation for block identification",
+				"Added version tracking for future migrations",
+				"Added theme support for different visual styles",
+				"Enhanced content validation with increased max length (2000 chars)",
+				"Enhanced className validation with pattern matching"
+			]
 		},
 		"1.0.0->3.0.0": {
 			added: ['id', 'version', 'theme', 'isVisible', 'className'],
 			modified: ['content', 'alignment'],
-			deprecated: []
+			deprecated: [],
+			changes: [
+				"Added visibility toggle (isVisible) for showing/hiding blocks",
+				"Added custom CSS class support (className) for styling",
+				"Added unique ID generation for block identification",
+				"Added version tracking for future migrations",
+				"Added theme support for different visual styles",
+				"Enhanced content validation with length constraints and increased max length",
+				"Extended alignment options to include 'justify'"
+			]
 		}
 	};
 
@@ -194,6 +266,11 @@ function compareVersionSchemas(fromVersion: string, toVersion: string, analysis:
 		analysis.affectedFields.added.push(...changes.added);
 		analysis.affectedFields.modified.push(...changes.modified);
 		analysis.affectedFields.deprecated.push(...changes.deprecated);
+		
+		// Add change descriptions to reasons
+		if (changes.changes) {
+			analysis.reasons.push(...changes.changes.map(change => `📝 ${change}`));
+		}
 	}
 }
 

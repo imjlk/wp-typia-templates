@@ -138,7 +138,8 @@ program
 			}
 
 			// Perform migration
-			const migrated = autoMigrate(attributes);
+			const migrationResult = autoMigrate(attributes);
+			const migrated = migrationResult.data;
 			
 			// Verify migration
 			const postAnalysis = detectBlockMigration(migrated);

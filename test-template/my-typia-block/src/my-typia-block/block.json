@@ -4,15 +4,20 @@
 	"name": "create-block/my-typia-block",
 	"version": "0.1.0",
 	"title": "My Typia Block",
-	"category": "widgets",
+	"category": "text",
 	"icon": "smiley",
 	"description": "Example block scaffolded with Create Block tool.",
+	"keywords": [
+		"typia",
+		"test",
+		"example"
+	],
 	"example": {
 		"attributes": {
 			"id": "Example id",
 			"version": 1,
 			"className": "Example className",
-			"content": 0,
+			"content": "",
 			"alignment": "left",
 			"isVisible": true
 		}
@@ -38,7 +43,7 @@
 		},
 		"content": {
 			"type": "string",
-			"default": 0
+			"default": ""
 		},
 		"alignment": {
 			"type": "string",

@@ -26,6 +26,7 @@ wp-typia-boilerplate/
 ## 🔄 작동 원리
 
 1. **TypeScript 타입 정의**:
+
 ```typescript
 export interface MyTypiaBlockAttributes {
     content: string & tags.MinLength<0> & tags.MaxLength<1000> & tags.Default<"">;
@@ -35,11 +36,13 @@ export interface MyTypiaBlockAttributes {
 ```
 
 2. **자동 block.json 생성**:
+
 ```bash
 npm run sync-types  # 타입에서 block.json attributes 자동 생성
 ```
 
 3. **생성된 block.json**:
+
 ```json
 {
     "attributes": {
@@ -70,16 +73,19 @@ npm run sync-types  # 타입에서 block.json attributes 자동 생성
 ## 🎯 템플릿 베리에이션
 
 ### 1. **Basic** - 핵심 Typia 기능
+
 - ✅ TypeScript 타입에서 block.json 자동 생성
 - ✅ Typia 런타임 검증
 - ✅ 최소한의 기능으로 빠른 시작
 
 **사용 예정:**
+
 ```bash
 npx @wordpress/create-block my-block --template="@your-org/wp-typia-basic"
 ```
 
 ### 2. **Full** - 완전한 개발 환경
+
 - ✅ Basic의 모든 기능
 - ✅ 유틸리티 함수들 (UUID, classNames, debounce, throttle)
 - ✅ 커스텀 훅들 (useDebounce, useLocalStorage)
@@ -87,11 +93,13 @@ npx @wordpress/create-block my-block --template="@your-org/wp-typia-basic"
 - ✅ 개선된 에디터 경험
 
 **사용 예정:**
+
 ```bash
 npx @wordpress/create-block my-block --template="@your-org/wp-typia-full"
 ```
 
 ### 3. **Interactivity** - WordPress Interactivity API 중심
+
 - ✅ Basic의 모든 기능
 - ✅ 고급 Interactivity API 스토어
 - ✅ 카운터, 입력 처리, 비동기 작업
@@ -99,11 +107,13 @@ npx @wordpress/create-block my-block --template="@your-org/wp-typia-full"
 - ✅ 콜백 및 워처 기능
 
 **사용 예정:**
+
 ```bash
 npx @wordpress/create-block my-block --template="@your-org/wp-typia-interactivity"
 ```
 
 ### 4. **Advanced** 🆕 - 마이그레이션 자동화 + 엔터프라이즈
+
 - ✅ Full 템플릿의 모든 기능
 - 🚀 **자동 마이그레이션 생성** - 타입 변경에서 마이그레이션 스크립트 자동 생성
 - 🔄 **버전 관리 시스템** - `V1`, `V2`, `V3` 타입으로 히스토리 관리
@@ -112,6 +122,7 @@ npx @wordpress/create-block my-block --template="@your-org/wp-typia-interactivit
 - 🧪 **마이그레이션 테스트 도구** - `npm run test-migrations`
 
 **핵심 명령어:**
+
 ```bash
 npm run generate-migrations  # 타입에서 마이그레이션 자동 생성
 npm run test-migrations      # 마이그레이션 테스트
@@ -119,6 +130,7 @@ npm run migration-stats      # 마이그레이션 통계
 ```
 
 **사용 예정:**
+
 ```bash
 npx @wordpress/create-block my-block --template="@your-org/wp-typia-advanced"
 ```
@@ -126,6 +138,7 @@ npx @wordpress/create-block my-block --template="@your-org/wp-typia-advanced"
 ## 🛠 사용법
 
 ### 현재 테스트 방법
+
 ```bash
 cd test-template/my-typia-block
 npm run sync-types  # ✅ 성공적으로 6개 속성 생성

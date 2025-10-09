@@ -66,15 +66,16 @@ function parseTypesFromContent(content: string): Record<string, any> {
 			// tags.Default<value> 추출
 			const defaultMatch = propType.match(/tags\.Default<([^>]+)>/);
 			if (defaultMatch) {
-				const defaultValue = defaultMatch[1].replace(/['"]/g, '');
-				if (defaultValue === '""' || defaultValue === "''") {
+				const defaultValue = defaultMatch[1].trim();
+				if (defaultValue === '""' || defaultValue === "''" || defaultValue === '') {
 					attribute.default = '';
 				} else if (defaultValue === 'true' || defaultValue === 'false') {
 					attribute.default = defaultValue === 'true';
 				} else if (!isNaN(Number(defaultValue))) {
 					attribute.default = Number(defaultValue);
 				} else {
-					attribute.default = defaultValue;
+					// 따옴표 제거
+					attribute.default = defaultValue.replace(/^['"]|['"]$/g, '');
 				}
 			}
 			

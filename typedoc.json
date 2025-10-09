@@ -1,0 +1,53 @@
+{
+  "entryPoints": [
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.tsx",
+    "test-template/**/src/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.d.ts",
+    "**/node_modules/**",
+    "**/build/**",
+    "**/dist/**"
+  ],
+  "out": "docs/api",
+  "theme": "default",
+  "plugin": [
+    "typedoc-plugin-markdown"
+  ],
+  "readme": "README.md",
+  "name": "WordPress Typia Boilerplate",
+  "includeVersion": true,
+  "sort": ["source-order"],
+  "kindSortOrder": [
+    "Class",
+    "Interface",
+    "Type alias",
+    "Variable",
+    "Function",
+    "Enum",
+    "Namespace"
+  ],
+  "categorizeByGroup": true,
+  "defaultCategory": "Other",
+  "categoryOrder": [
+    "Core",
+    "Validators",
+    "Utilities",
+    "Hooks",
+    "Components",
+    "Migration",
+    "Interactivity",
+    "Types",
+    "*"
+  ],
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeExternals": true,
+  "disableSources": false,
+  "sourceLinkTemplate": "https://github.com/yourusername/wp-typia-boilerplate/blob/{gitRevision}/{path}#L{line}",
+  "gitRevision": "main",
+  "watch": false,
+  "preserveWatchOutput": true,
+  "logLevel": "Info"
+}

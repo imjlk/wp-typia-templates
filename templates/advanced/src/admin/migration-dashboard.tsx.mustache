@@ -76,7 +76,8 @@ export function MigrationDashboard() {
 
 	const runMigration = async (blockResult: BlockScanResult) => {
 		try {
-			const migrated = autoMigrate(blockResult.attributes);
+			const migrationResult = autoMigrate(blockResult.attributes);
+			const migrated = migrationResult.data;
 			
 			// Here you would save the migrated attributes back to WordPress
 			// Implementation depends on whether this is in admin or REST API
