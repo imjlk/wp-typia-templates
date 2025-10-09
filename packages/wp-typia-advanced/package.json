@@ -1,6 +1,6 @@
 {
   "name": "@wp-typia/advanced",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "WordPress block template with Typia validation - Advanced edition with migration system",
   "main": "index.js",
   "scripts": {
