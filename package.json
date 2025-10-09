@@ -1,0 +1,70 @@
+{
+  "name": "wp-typia-boilerplate",
+  "version": "1.0.0",
+  "description": "WordPress block boilerplate with Typia validation - Multiple templates for different needs",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "test-template/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "jest",
+    "test:e2e": "playwright test",
+    "lint": "npm run lint --workspaces",
+    "format": "npm run format --workspaces",
+    "clean": "npm run clean --workspaces && rm -rf node_modules",
+    "dev": "npm run dev --workspaces --if-present",
+    "release": "changeset publish",
+    "version": "changeset version",
+    "docs:dev": "typedoc --watch",
+    "docs:build": "typedoc",
+    "wp-env:start": "wp-env start",
+    "wp-env:stop": "wp-env stop",
+    "wp-env:reset": "wp-env destroy all && wp-env start"
+  },
+  "keywords": [
+    "wordpress",
+    "gutenberg",
+    "block",
+    "typia",
+    "typescript",
+    "boilerplate",
+    "template",
+    "monorepo"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "GPL-2.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/wp-typia-boilerplate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/wp-typia-boilerplate/issues"
+  },
+  "homepage": "https://github.com/yourusername/wp-typia-boilerplate#readme",
+  "devDependencies": {
+    "@changesets/cli": "^2.27.0",
+    "@playwright/test": "^1.40.0",
+    "@types/jest": "^29.5.8",
+    "@types/node": "^20.9.0",
+    "@types/wordpress__block-editor": "^11.5.17",
+    "@types/wordpress__blocks": "^12.5.18",
+    "@types/wordpress__components": "^23.8.0",
+    "@types/wordpress__element": "^5.4.0",
+    "@types/wordpress__i18n": "^4.47.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typedoc": "^0.25.4",
+    "typedoc-plugin-markdown": "^3.16.0",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "typia": "^9.7.2"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}

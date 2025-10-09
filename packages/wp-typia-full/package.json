@@ -1,0 +1,67 @@
+{
+  "name": "@wp-typia/full",
+  "version": "1.0.0",
+  "description": "WordPress block template with Typia validation - Full edition with utilities and hooks",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "node scripts/setup.js",
+    "start": "wp-scripts start",
+    "build": "wp-scripts build",
+    "dev": "npm run start",
+    "test": "jest",
+    "lint": "wp-scripts lint-js",
+    "format": "wp-scripts format",
+    "sync-types": "tsx scripts/sync-types-to-block-json.ts",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "wordpress",
+    "gutenberg",
+    "block",
+    "typia",
+    "typescript",
+    "template",
+    "hooks",
+    "utilities",
+    "error-boundary"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "GPL-2.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/wp-typia-boilerplate.git",
+    "directory": "packages/wp-typia-full"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "files": [
+    "src/",
+    "scripts/",
+    "*.json",
+    "*.js",
+    "*.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/wordpress__block-editor": "^11.5.17",
+    "@types/wordpress__blocks": "^12.5.18",
+    "@types/wordpress__components": "^23.8.0",
+    "@wordpress/scripts": "^30.22.0",
+    "ts-patch": "^3.2.1",
+    "tsx": "^4.20.5",
+    "ttypescript": "^1.5.15",
+    "typescript": "^5.9.2",
+    "typia": "^9.7.2"
+  },
+  "dependencies": {
+    "@wordpress/block-editor": "^15.2.0",
+    "@wordpress/blocks": "^15.2.0",
+    "@wordpress/components": "^30.2.0",
+    "@wordpress/element": "^6.29.0",
+    "@wordpress/i18n": "^6.2.0"
+  }
+}
