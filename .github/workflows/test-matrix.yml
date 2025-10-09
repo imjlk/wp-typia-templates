@@ -1,0 +1,92 @@
+name: Test Matrix
+
+on:
+  schedule:
+    # Run tests every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      node_version:
+        description: 'Node.js version'
+        required: false
+        default: '20'
+        type: choice
+        options:
+          - '16'
+          - '18'
+          - '20'
+      wp_version:
+        description: 'WordPress version'
+        required: false
+        default: 'latest'
+        type: choice
+        options:
+          - 'latest'
+          - '6.3'
+          - '6.2'
+          - '6.1'
+
+jobs:
+  test-matrix:
+    name: Node ${{ matrix.node }} / WP ${{ matrix.wp }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [16, 18, 20]
+        wp: ['latest', '6.3', '6.2']
+        exclude:
+          # Exclude some combinations to reduce CI load
+          - node: 16
+            wp: '6.1'
+          - node: 18
+            wp: '6.1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build packages
+        run: npm run build
+
+      - name: Setup WordPress ${{ matrix.wp }}
+        run: |
+          npm run wp-env:stop || true
+          npm run wp-env:start
+          sleep 30
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Stop WordPress
+        if: always()
+        run: npm run wp-env:stop
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run npm audit
+        run: npm audit --audit-level high
+
+      - name: Run CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
