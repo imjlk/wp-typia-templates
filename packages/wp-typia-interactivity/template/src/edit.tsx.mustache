@@ -1,0 +1,206 @@
+import { __ } from '@wordpress/i18n';
+import { useBlockProps, InspectorControls, RichText, BlockControls, AlignmentToolbar } from '@wordpress/block-editor';
+import { PanelBody, ToggleControl, SelectControl, RangeControl, TextControl, Button, Notice } from '@wordpress/components';
+import { useState, useEffect } from '@wordpress/element';
+import type { {{pascalCase}}Attributes } from './types';
+
+export default function Edit({ attributes, setAttributes, isSelected }: {
+  attributes: {{pascalCase}}Attributes;
+  setAttributes: (attrs: Partial<{{pascalCase}}Attributes>) => void;
+  isSelected: boolean;
+}) {
+  const [isPreviewing, setIsPreviewing] = useState(false);
+
+  const blockProps = useBlockProps({
+    className: `wp-block-{{slugKebabCase}} wp-block-{{slugKebabCase}}--${attributes.interactiveMode}`,
+    'data-wp-interactive': '{{slugKebabCase}}',
+    'data-wp-context': JSON.stringify({
+      clicks: attributes.clickCount,
+      isAnimating: attributes.isAnimating,
+      isVisible: attributes.isVisible,
+      lastInteraction: '',
+      animation: attributes.animation,
+      interactiveMode: attributes.interactiveMode,
+      maxClicks: attributes.maxClicks,
+      autoPlayInterval: attributes.autoPlayInterval
+    })
+  });
+
+  const resetCounter = () => {
+    setAttributes({ clickCount: 0, isAnimating: false });
+  };
+
+  const testAnimation = () => {
+    setAttributes({ isAnimating: true });
+    setTimeout(() => {
+      setAttributes({ isAnimating: false });
+    }, 1000);
+  };
+
+  return (
+    <>
+      <BlockControls>
+        <AlignmentToolbar
+          value={attributes.alignment}
+          onChange={(value) => setAttributes({ alignment: value || 'left' })}
+        />
+      </BlockControls>
+
+      <InspectorControls>
+        <PanelBody title={__('Interactive Settings', '{{slugSnakeCase}}')}>
+          <SelectControl
+            label={__('Interactive Mode', '{{slugSnakeCase}}')}
+            value={attributes.interactiveMode}
+            options={[
+              { label: __('Click', '{{slugSnakeCase}}'), value: 'click' },
+              { label: __('Hover', '{{slugSnakeCase}}'), value: 'hover' },
+              { label: __('Auto Play', '{{slugSnakeCase}}'), value: 'auto' }
+            ]}
+            onChange={(value) => setAttributes({ interactiveMode: value })}
+          />
+
+          <SelectControl
+            label={__('Animation', '{{slugSnakeCase}}')}
+            value={attributes.animation}
+            options={[
+              { label: __('None', '{{slugSnakeCase}}'), value: 'none' },
+              { label: __('Bounce', '{{slugSnakeCase}}'), value: 'bounce' },
+              { label: __('Pulse', '{{slugSnakeCase}}'), value: 'pulse' },
+              { label: __('Shake', '{{slugSnakeCase}}'), value: 'shake' },
+              { label: __('Flip', '{{slugSnakeCase}}'), value: 'flip' }
+            ]}
+            onChange={(value) => setAttributes({ animation: value })}
+          />
+
+          <ToggleControl
+            label={__('Show Counter', '{{slugSnakeCase}}')}
+            checked={attributes.showCounter}
+            onChange={(value) => setAttributes({ showCounter: value })}
+          />
+
+          <ToggleControl
+            label={__('Visible', '{{slugSnakeCase}}')}
+            checked={attributes.isVisible}
+            onChange={(value) => setAttributes({ isVisible: value })}
+          />
+        </PanelBody>
+
+        <PanelBody title={__('Counter Settings', '{{slugSnakeCase}}')}>
+          <RangeControl
+            label={__('Max Clicks', '{{slugSnakeCase}}')}
+            value={attributes.maxClicks}
+            onChange={(value) => setAttributes({ maxClicks: value })}
+            min={0}
+            max={100}
+            help={__('Set to 0 for unlimited clicks', '{{slugSnakeCase}}')}
+          />
+
+          {attributes.interactiveMode === 'auto' && (
+            <RangeControl
+              label={__('Auto Play Interval (ms)', '{{slugSnakeCase}}')}
+              value={attributes.autoPlayInterval}
+              onChange={(value) => setAttributes({ autoPlayInterval: value })}
+              min={100}
+              max={5000}
+              step={100}
+              help={__('Interval between automatic animations', '{{slugSnakeCase}}')}
+            />
+          )}
+
+          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <Button
+              variant="secondary"
+              onClick={resetCounter}
+              isSmall
+            >
+              {__('Reset Counter', '{{slugSnakeCase}}')}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={testAnimation}
+              isSmall
+            >
+              {__('Test Animation', '{{slugSnakeCase}}')}
+            </Button>
+          </div>
+
+          <TextControl
+            label={__('Unique ID', '{{slugSnakeCase}}')}
+            value={attributes.uniqueId}
+            onChange={(value) => setAttributes({ uniqueId: value })}
+            help={__('Optional unique identifier for this block instance', '{{slugSnakeCase}}')}
+          />
+        </PanelBody>
+
+        {isSelected && (
+          <PanelBody title={__('Preview', '{{slugSnakeCase}}')}>
+            <ToggleControl
+              label={__('Enable Preview Mode', '{{slugSnakeCase}}')}
+              checked={isPreviewing}
+              onChange={setIsPreviewing}
+              help={__('Test interactions in the editor', '{{slugSnakeCase}}')}
+            />
+
+            {attributes.clickCount > 0 && (
+              <Notice status="info" isDismissible={false}>
+                {__('Current clicks:', '{{slugSnakeCase}}')} {attributes.clickCount}
+                {attributes.maxClicks > 0 && ` / ${attributes.maxClicks}`}
+              </Notice>
+            )}
+          </PanelBody>
+        )}
+      </InspectorControls>
+
+      <div {...blockProps}>
+        <div
+          className={`{{cssClassName}}__content ${attributes.isAnimating ? 'is-animating' : ''}`}
+          style={{ textAlign: attributes.alignment }}
+          data-wp-on--click={isPreviewing ? 'actions.handleClick' : undefined}
+          data-wp-on--mouseenter={isPreviewing && attributes.interactiveMode === 'hover' ? 'actions.handleMouseEnter' : undefined}
+          data-wp-on--mouseleave={isPreviewing && attributes.interactiveMode === 'hover' ? 'actions.handleMouseLeave' : undefined}
+        >
+          <RichText
+            tagName="p"
+            value={attributes.content}
+            onChange={(value) => setAttributes({ content: value })}
+            placeholder={__('{{title}} – click me to interact!', '{{slugSnakeCase}}')}
+            withoutInteractiveFormatting
+          />
+
+          {attributes.showCounter && (
+            <div className="{{cssClassName}}__counter">
+              <span className="{{cssClassName}}__counter-label">
+                {__('Clicks:', '{{slugSnakeCase}}')}
+              </span>
+              <span
+                className="{{cssClassName}}__counter-value"
+                data-wp-text="state.clicks"
+              >
+                {attributes.clickCount}
+              </span>
+            </div>
+          )}
+
+          {attributes.maxClicks > 0 && (
+            <div className="{{cssClassName}}__progress">
+              <div
+                className="{{cssClassName}}__progress-bar"
+                style={{ width: `${(attributes.clickCount / attributes.maxClicks) * 100}%` }}
+                data-wp-style--width="state.progress + '%'"
+              />
+            </div>
+          )}
+
+          {attributes.animation !== 'none' && (
+            <div
+              className={`{{cssClassName}}__animation ${attributes.isAnimating ? 'is-active' : ''}`}
+              data-wp-class="is-active"
+            >
+              {attributes.animation}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}

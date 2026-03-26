@@ -1,0 +1,84 @@
+import typia from "typia";
+import { {{pascalCase}}Attributes, {{pascalCase}}ValidationResult } from "./types";
+
+/**
+ * Validates and transforms block attributes
+ */
+export const validate{{pascalCase}}Attributes = (attributes: any): {{pascalCase}}ValidationResult => {
+  try {
+    const validated = typia.validate<{{pascalCase}}Attributes>(attributes);
+
+    if (validated.success) {
+      return {
+        isValid: true,
+        errors: [],
+        data: validated.data
+      };
+    } else {
+      return {
+        isValid: false,
+        errors: validated.errors.map(e => `${e.path}: ${e.message}`),
+        data: attributes
+      };
+    }
+  } catch (error) {
+    return {
+      isValid: false,
+      errors: [`Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`],
+      data: attributes
+    };
+  }
+};
+
+/**
+ * Creates a safe copy of attributes with defaults
+ */
+export const sanitize{{pascalCase}}Attributes = (attributes: Partial<{{pascalCase}}Attributes>): {{pascalCase}}Attributes => {
+  return {
+    content: attributes.content ?? "",
+    alignment: attributes.alignment ?? "left",
+    isVisible: attributes.isVisible ?? true,
+    fontSize: attributes.fontSize ?? "medium",
+    textColor: attributes.textColor ?? "",
+    backgroundColor: attributes.backgroundColor ?? "",
+    padding: {
+      top: attributes.padding?.top ?? 0,
+      right: attributes.padding?.right ?? 0,
+      bottom: attributes.padding?.bottom ?? 0,
+      left: attributes.padding?.left ?? 0
+    },
+    borderRadius: attributes.borderRadius ?? 0,
+    shadow: attributes.shadow ? {
+      enabled: attributes.shadow.enabled ?? false,
+      x: attributes.shadow.x ?? 0,
+      y: attributes.shadow.y ?? 4,
+      blur: attributes.shadow.blur ?? 8,
+      spread: attributes.shadow.spread ?? 0,
+      color: attributes.shadow.color ?? "rgba(0, 0, 0, 0.1)"
+    } : {
+      enabled: false,
+      x: 0,
+      y: 4,
+      blur: 8,
+      spread: 0,
+      color: "rgba(0, 0, 0, 0.1)"
+    },
+    animation: attributes.animation ?? "none",
+    customCSS: attributes.customCSS ?? "",
+    uniqueId: attributes.uniqueId ?? generateUniqueId()
+  };
+};
+
+/**
+ * Generate unique ID for block instances
+ */
+const generateUniqueId = (): string => {
+  return `{{slugKebabCase}}-${Math.random().toString(36).substr(2, 9)}`;
+};
+
+/**
+ * Runtime type guard for checking if an object is {{pascalCase}}Attributes
+ */
+export const is{{pascalCase}}Attributes = (obj: any): obj is {{pascalCase}}Attributes => {
+  return typia.is<{{pascalCase}}Attributes>(obj);
+};

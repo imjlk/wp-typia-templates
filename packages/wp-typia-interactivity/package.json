@@ -1,8 +1,11 @@
 {
-  "name": "@wp-typia/interactivity",
+  "name": "wp-typia-interactivity",
   "version": "1.1.0",
   "description": "WordPress block template with Typia validation - Interactivity API edition",
-  "main": "index.js",
+  "main": "index.json",
+  "bin": {
+    "wp-typia-interactivity": "scripts/setup.js"
+  },
   "scripts": {
     "postinstall": "node scripts/setup.js",
     "start": "wp-scripts start",
@@ -39,6 +42,7 @@
   },
   "files": [
     "src/",
+    "template/",
     "scripts/",
     "*.json",
     "*.js",
@@ -49,15 +53,15 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
+    "ajv": "^8.18.0",
     "@types/wordpress__block-editor": "^11.5.17",
     "@types/wordpress__blocks": "^12.5.18",
     "@types/wordpress__components": "^23.8.0",
     "@wordpress/scripts": "^30.22.0",
-    "ts-patch": "^3.2.1",
+    "@typia/unplugin": "^12.0.1",
     "tsx": "^4.20.5",
-    "ttypescript": "^1.5.15",
     "typescript": "^5.9.2",
-    "typia": "^9.7.2"
+    "typia": "^12.0.1"
   },
   "dependencies": {
     "@wordpress/block-editor": "^15.2.0",

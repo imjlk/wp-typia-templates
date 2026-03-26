@@ -1,0 +1,27 @@
+/**
+ * Internal dependencies
+ */
+import { {{pascalCase}}Attributes } from './types';
+import Edit from './edit';
+import save from './save';
+import metadata from './block.json';
+
+export default {
+  attributes: metadata.attributes as {{pascalCase}}Attributes,
+  apiVersion: metadata.apiVersion,
+  name: metadata.name,
+  category: metadata.category as any,
+  title: metadata.title,
+  description: metadata.description,
+  example: metadata.example,
+  supports: metadata.supports,
+  icon: metadata.icon as any,
+  keywords: metadata.keywords,
+  textdomain: metadata.textdomain,
+  editorScript: metadata.editorScript,
+  editorStyle: metadata.editorStyle,
+  style: metadata.style,
+  viewScript: metadata.viewScript,
+  edit: Edit,
+  save,
+};

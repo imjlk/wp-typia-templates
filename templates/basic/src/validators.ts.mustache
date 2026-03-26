@@ -1,33 +1,35 @@
 import typia from "typia";
+import { {{titleCase}}Attributes } from "./types";
 
 /**
- * Create Typia validators for any type
+ * Typia validators for the block attributes
  */
-export function createValidators<T>() {
-	return {
-		validate: typia.createValidate<T>(),
-		assert: typia.createAssert<T>(),
-		is: typia.createIs<T>(),
-		random: typia.createRandom<T>(),
-		clone: typia.createClone<T>(),
-		prune: typia.createPrune<T>(),
-	};
-}
+export const validators = {
+	validate: typia.createValidate<{{titleCase}}Attributes>(),
+	assert: typia.createAssert<{{titleCase}}Attributes>(),
+	is: typia.createIs<{{titleCase}}Attributes>(),
+	random: typia.createRandom<{{titleCase}}Attributes>(),
+	clone: typia.misc.createClone<{{titleCase}}Attributes>(),
+	prune: typia.misc.createPrune<{{titleCase}}Attributes>(),
+};
 
 /**
  * Create safe attribute updater with validation
  */
-export function createAttributeUpdater<T>(
-	attributes: T,
-	setAttributes: (attrs: Partial<T>) => void,
-	validator: ReturnType<typeof typia.createValidate<T>>
+export function createAttributeUpdater(
+	attributes: {{titleCase}}Attributes,
+	setAttributes: (attrs: Partial<{{titleCase}}Attributes>) => void,
+	validator = validators.validate
 ) {
-	return <K extends keyof T>(key: K, value: T[K]) => {
+	return <K extends keyof {{titleCase}}Attributes>(
+		key: K,
+		value: {{titleCase}}Attributes[K]
+	) => {
 		const newAttrs = { ...attributes, [key]: value };
 		
 		const validation = validator(newAttrs);
 		if (validation.success) {
-			setAttributes({ [key]: value } as Partial<T>);
+			setAttributes({ [key]: value } as Partial<{{titleCase}}Attributes>);
 			return true;
 		} else {
 			console.error(`Validation failed for ${String(key)}:`, validation.errors);

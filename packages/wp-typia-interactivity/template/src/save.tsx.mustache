@@ -1,0 +1,87 @@
+import { useBlockProps, RichText } from '@wordpress/block-editor';
+import type { {{pascalCase}}Attributes } from './types';
+
+export default function Save({ attributes }: { attributes: {{pascalCase}}Attributes }) {
+  const blockProps = useBlockProps.save({
+    className: `wp-block-{{slugKebabCase}} wp-block-{{slugKebabCase}}--${attributes.interactiveMode}`,
+    'data-wp-interactive': '{{slugKebabCase}}',
+    'data-wp-context': JSON.stringify({
+      clicks: attributes.clickCount,
+      isAnimating: attributes.isAnimating,
+      isVisible: attributes.isVisible,
+      lastInteraction: '',
+      animation: attributes.animation,
+      interactiveMode: attributes.interactiveMode,
+      maxClicks: attributes.maxClicks,
+      autoPlayInterval: attributes.autoPlayInterval
+    }),
+    'data-clicks': attributes.clickCount,
+    'data-is-animating': attributes.isAnimating,
+    'data-is-visible': attributes.isVisible,
+    'data-unique-id': attributes.uniqueId
+  });
+
+  return (
+    <div {...blockProps}>
+      <div
+        className={`{{cssClassName}}__content ${attributes.isAnimating ? 'is-animating' : ''}`}
+        style={{ textAlign: attributes.alignment }}
+        data-wp-on--click="actions.handleClick"
+        data-wp-on--mouseenter={attributes.interactiveMode === 'hover' ? 'actions.handleMouseEnter' : undefined}
+        data-wp-on--mouseleave={attributes.interactiveMode === 'hover' ? 'actions.handleMouseLeave' : undefined}
+        data-wp-bind--hidden="!state.isVisible"
+      >
+        <RichText.Content
+          tagName="p"
+          value={attributes.content}
+          className="{{cssClassName}}__text"
+        />
+
+        {attributes.showCounter && (
+          <div className="{{cssClassName}}__counter">
+            <span className="{{cssClassName}}__counter-label">
+              Clicks:
+            </span>
+            <span
+              className="{{cssClassName}}__counter-value"
+              data-wp-text="state.clicks"
+            >
+              {attributes.clickCount}
+            </span>
+          </div>
+        )}
+
+        {attributes.maxClicks > 0 && (
+          <div className="{{cssClassName}}__progress">
+            <div
+              className="{{cssClassName}}__progress-bar"
+              data-wp-style--width="state.progress + '%'"
+            />
+          </div>
+        )}
+
+        <div
+          className={`{{cssClassName}}__animation ${attributes.animation}`}
+          data-wp-class="is-active"
+        />
+
+        {attributes.maxClicks > 0 && (
+          <div
+            className="{{cssClassName}}__completion"
+            data-wp-bind--hidden="!state.isComplete"
+          >
+            🎉 Complete!
+          </div>
+        )}
+
+        <button
+          className="{{cssClassName}}__reset"
+          data-wp-on--click="actions.reset"
+          aria-label="Reset counter"
+        >
+          ↻
+        </button>
+      </div>
+    </div>
+  );
+}

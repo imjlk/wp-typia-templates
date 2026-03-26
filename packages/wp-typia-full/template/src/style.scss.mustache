@@ -1,0 +1,224 @@
+/**
+ * {{title}} Block Styles
+ */
+
+.wp-block-{{slugKebabCase}} {
+  // Base styles
+  position: relative;
+  transition: all 0.3s ease;
+
+  // Font size variations
+  &--small {
+    font-size: var(--wp--preset--font-size--small, 14px);
+  }
+
+  &--medium {
+    font-size: var(--wp--preset--font-size--medium, 16px);
+  }
+
+  &--large {
+    font-size: var(--wp--preset--font-size--large, 24px);
+  }
+
+  &--xlarge {
+    font-size: var(--wp--preset--font-size--x-large, 36px);
+  }
+
+  // Alignment variations
+  &--align-left {
+    text-align: left;
+    margin-left: 0;
+    margin-right: auto;
+  }
+
+  &--align-center {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  &--align-right {
+    text-align: right;
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  &--align-justify {
+    text-align: justify;
+  }
+
+  // Content wrapper
+  .{{cssClassName}}__content {
+    position: relative;
+    z-index: 1;
+
+    p {
+      margin: 0;
+      padding: 0;
+    }
+
+    // Content font size variations
+    &--small {
+      font-size: 1em;
+      line-height: 1.4;
+    }
+
+    &--medium {
+      font-size: 1.1em;
+      line-height: 1.5;
+    }
+
+    &--large {
+      font-size: 1.2em;
+      line-height: 1.6;
+    }
+
+    &--xlarge {
+      font-size: 1.3em;
+      line-height: 1.7;
+    }
+  }
+
+  // Animation classes
+  &--animate-fadeIn {
+    animation: fadeIn 0.6s ease-in-out;
+  }
+
+  &--animate-slideUp {
+    animation: slideUp 0.6s ease-out;
+  }
+
+  &--animate-slideDown {
+    animation: slideDown 0.6s ease-out;
+  }
+
+  &--animate-zoomIn {
+    animation: zoomIn 0.6s ease-out;
+  }
+
+  // Animation keyframes
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes zoomIn {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  // Hover effects
+  &:hover {
+    transform: translateY(-2px);
+
+    &.wp-block-{{slugKebab-case}}--shadow {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1) !important;
+    }
+  }
+
+  // Focus styles
+  &:focus-within {
+    outline: 2px solid var(--wp--preset--color--primary, #0073aa);
+    outline-offset: 2px;
+  }
+
+  // Responsive design
+  @media (max-width: 768px) {
+    &--align-left,
+    &--align-center,
+    &--align-right {
+      text-align: left;
+      margin-left: 0;
+      margin-right: 0;
+    }
+
+    .{{cssClassName}}__content {
+      font-size: 0.9em;
+    }
+  }
+
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .{{cssClassName}}__content {
+      font-size: 1em;
+    }
+  }
+
+  @media (min-width: 1025px) {
+    .{{cssClassName}}__content {
+      font-size: 1.1em;
+    }
+  }
+
+  // High contrast mode support
+  @media (prefers-contrast: high) {
+    border: 1px solid currentColor;
+
+    .{{cssClassName}}__content {
+      font-weight: 600;
+    }
+  }
+
+  // Reduced motion support
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &--animate-fadeIn,
+    &--animate-slideUp,
+    &--animate-slideDown,
+    &--animate-zoomIn {
+      animation: none;
+    }
+
+    &:hover {
+      transform: none;
+    }
+  }
+
+  // Dark mode support
+  @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
+  }
+
+  // Print styles
+  @media print {
+    box-shadow: none !important;
+    animation: none !important;
+
+    .{{cssClassName}}__content {
+      color: black !important;
+      background: white !important;
+    }
+  }
+}

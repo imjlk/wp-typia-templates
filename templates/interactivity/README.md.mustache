@@ -6,7 +6,7 @@ A WordPress block with **Typia validation** and **Interactivity API** support.
 
 - **✅ Typia Validation**: Type-safe attributes with compile-time and runtime validation
 - **⚡ Interactivity API**: Lightweight frontend interactions
-- **🎯 Auto-Sync**: Types automatically sync to `block.json`
+- **🎯 Auto-Sync**: Types automatically sync to `block.json` and `typia.manifest.json`
 - **🔧 TypeScript**: Full type safety throughout
 
 ## 🏗️ Development
@@ -24,7 +24,7 @@ npm run build
 # Type checking
 npx tsc --noEmit
 
-# Sync types to block.json manually
+# Sync block metadata manually
 npm run sync-types
 ```
 
@@ -40,7 +40,7 @@ export interface {{titleCase}}Attributes {
 }
 ```
 
-**The `block.json` will be automatically updated** with these attributes when you run `npm start` or `npm run build`!
+**`block.json` and `typia.manifest.json` will be automatically updated** with these attributes when you run `npm start` or `npm run build`!
 
 ## 🎨 Styling
 
@@ -60,7 +60,8 @@ const { state, actions } = store('{{namespace}}/{{slug}}', {
 
 ## 📦 Generated Files
 
-- `block.json` - Automatically synced from TypeScript types
+- `block.json` - WordPress-facing attribute metadata generated from TypeScript types
+- `typia.manifest.json` - Full Typia constraint manifest for future PHP validation
 - `build/` - Compiled JavaScript and CSS
 - `src/types.ts` - **Edit this to change block attributes**
 

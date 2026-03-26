@@ -1,0 +1,121 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "create-block/{{slugKebabCase}}",
+	"version": "0.1.0",
+	"title": "{{title}}",
+	"category": "widgets",
+	"icon": "smiley",
+	"description": "{{description}}",
+	"example": {},
+	"supports": {
+		"html": false,
+		"align": true,
+		"alignWide": true,
+		"anchor": true,
+		"className": true,
+		"customClassName": true,
+		"color": {
+			"gradients": true,
+			"link": true,
+			"text": true,
+			"background": true
+		},
+		"spacing": {
+			"margin": true,
+			"padding": true,
+			"blockGap": true
+		},
+		"typography": {
+			"fontSize": true,
+			"lineHeight": true,
+			"fontStyle": true,
+			"fontWeight": true,
+			"letterSpacing": true,
+			"textAlign": true,
+			"textDecoration": true,
+			"textTransform": true,
+			"writingMode": true
+		},
+		"dimensions": {
+			"minHeight": true
+		},
+		"position": {
+			"sticky": true,
+			"fixed": true
+		},
+		"interactivity": true
+	},
+	"attributes": {
+		"content": {
+			"type": "string",
+			"source": "html",
+			"selector": ".{{cssClassName}}__content",
+			"default": ""
+		},
+		"alignment": {
+			"type": "string",
+			"enum": ["left", "center", "right", "justify"],
+			"default": "left"
+		},
+		"isVisible": {
+			"type": "boolean",
+			"default": true
+		},
+		"fontSize": {
+			"type": "string",
+			"enum": ["small", "medium", "large", "xlarge"],
+			"default": "medium"
+		},
+		"textColor": {
+			"type": "string",
+			"default": ""
+		},
+		"backgroundColor": {
+			"type": "string",
+			"default": ""
+		},
+		"padding": {
+			"type": "object",
+			"default": {
+				"top": 0,
+				"right": 0,
+				"bottom": 0,
+				"left": 0
+			}
+		},
+		"borderRadius": {
+			"type": "number",
+			"default": 0
+		},
+		"shadow": {
+			"type": "object",
+			"default": {
+				"enabled": false,
+				"x": 0,
+				"y": 4,
+				"blur": 8,
+				"spread": 0,
+				"color": "rgba(0, 0, 0, 0.1)"
+			}
+		},
+		"animation": {
+			"type": "string",
+			"enum": ["none", "fadeIn", "slideUp", "slideDown", "zoomIn"],
+			"default": "none"
+		},
+		"customCSS": {
+			"type": "string",
+			"default": ""
+		},
+		"uniqueId": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"textdomain": "{{slugSnakeCase}}",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"viewScript": "file:./view.js"
+}

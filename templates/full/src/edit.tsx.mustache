@@ -3,14 +3,12 @@ import { useBlockProps, InspectorControls, RichText } from '@wordpress/block-edi
 import { PanelBody, ToggleControl, SelectControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { {{titleCase}}Attributes } from './types';
-import { createValidators } from './validators';
+import { validators } from './validators';
 import { useTypiaValidation, useAttributeLogger, useDebounce } from './hooks';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { classNames } from './utils';
 
 type EditProps = BlockEditProps<{{titleCase}}Attributes>;
-
-const validators = createValidators<{{titleCase}}Attributes>();
 
 export default function Edit({ attributes, setAttributes }: EditProps) {
 	const blockProps = useBlockProps();

@@ -14,7 +14,7 @@
 	],
 	"example": {
 		"attributes": {
-			"id": "Example id",
+			"id": "00000000-0000-4000-8000-000000000000",
 			"version": 1,
 			"className": "Example className",
 			"content": "",
@@ -47,7 +47,13 @@
 		},
 		"alignment": {
 			"type": "string",
-			"default": "left"
+			"default": "left",
+			"enum": [
+				"left",
+				"center",
+				"right",
+				"justify"
+			]
 		},
 		"isVisible": {
 			"type": "boolean",

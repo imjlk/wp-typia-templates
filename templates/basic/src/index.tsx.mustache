@@ -3,11 +3,8 @@ import { __ } from '@wordpress/i18n';
 import Edit from './edit';
 import Save from './save';
 import { {{titleCase}}Attributes } from './types';
-import { createValidators } from './validators';
+import { validators } from './validators';
 import './style.scss';
-
-// Typia validators for the block
-const validators = createValidators<{{titleCase}}Attributes>();
 
 registerBlockType<{{titleCase}}Attributes>('{{namespace}}/{{slug}}', {
 	// Use Typia to generate example data

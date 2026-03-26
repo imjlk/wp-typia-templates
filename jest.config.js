@@ -1,7 +1,7 @@
 module.exports = {
   preset: 'ts-jest',
-  testEnvironment: 'jsdom',
-  roots: ['<rootDir>/tests', '<rootDir>/templates'],
+  testEnvironment: 'node',
+  roots: ['<rootDir>/tests'],
   testMatch: [
     '**/__tests__/**/*.+(ts|tsx|js)',
     '**/*.(test|spec).+(ts|tsx|js)',
@@ -24,18 +24,12 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@blocks/(.*)$': '<rootDir>/src/blocks/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1',
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
     '^@hooks/(.*)$': '<rootDir>/src/hooks/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',
-  },
-  globals: {
-    'ts-jest': {
-      compiler: 'ttypescript',
-    },
   },
 };

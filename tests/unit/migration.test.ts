@@ -1,149 +1,85 @@
-import { detectBlockMigration, generateMigrationReport } from '../../templates/advanced/src/migration-detector';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { syncBlockMetadata } from '../../scripts/lib/typia-metadata-core';
 
-// Mock version types
-interface V1Attributes {
-  content: string;
-  alignment?: 'left' | 'center' | 'right';
+function createFixture(files: Record<string, string>) {
+  const baseDir = path.resolve(__dirname, '../../test-template/my-typia-block/.tmp-metadata-fixtures-errors');
+  fs.mkdirSync(baseDir, { recursive: true });
+
+  const fixtureDir = fs.mkdtempSync(path.join(baseDir, 'fixture-'));
+  for (const [relativePath, content] of Object.entries(files)) {
+    const targetPath = path.join(fixtureDir, relativePath);
+    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+    fs.writeFileSync(targetPath, content);
+  }
+
+  return fixtureDir;
 }
 
-interface V2Attributes extends V1Attributes {
-  alignment?: 'left' | 'center' | 'right' | 'justify';
-  isVisible?: boolean;
-  className?: string;
-}
-
-interface V3Attributes extends V2Attributes {
-  id?: string;
-  version?: number;
-  theme?: 'light' | 'dark' | 'auto';
-}
-
-describe('Migration Detection Tests', () => {
-  describe('detectBlockMigration', () => {
-    test('should detect V1 blocks requiring migration', () => {
-      const v1Attrs: V1Attributes = {
-        content: 'Hello World',
-        alignment: 'center'
-      };
-
-      const analysis = detectBlockMigration(v1Attrs, 'test/block');
-
-      expect(analysis.needsMigration).toBe(true);
-      expect(analysis.currentVersion).toBe('1.0.0');
-      expect(analysis.targetVersion).toBe('3.0.0');
-      expect(analysis.affectedFields.added).toContain('isVisible');
-      expect(analysis.affectedFields.added).toContain('className');
-    });
-
-    test('should detect V2 blocks requiring partial migration', () => {
-      const v2Attrs: V2Attributes = {
-        content: 'Hello World',
-        alignment: 'justify',
-        isVisible: true,
-        className: 'custom-class'
-      };
-
-      const analysis = detectBlockMigration(v2Attrs, 'test/block');
-
-      expect(analysis.needsMigration).toBe(true);
-      expect(analysis.currentVersion).toBe('2.0.0');
-      expect(analysis.affectedFields.added).toContain('id');
-      expect(analysis.affectedFields.added).toContain('version');
-      expect(analysis.affectedFields.added).toContain('theme');
-    });
-
-    test('should identify V3 blocks as up-to-date', () => {
-      const v3Attrs: V3Attributes = {
-        content: 'Hello World',
-        alignment: 'left',
-        isVisible: true,
-        className: 'custom-class',
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        version: 3,
-        theme: 'auto'
-      };
-
-      const analysis = detectBlockMigration(v3Attrs, 'test/block');
-
-      expect(analysis.needsMigration).toBe(false);
-      expect(analysis.currentVersion).toBe('3.0.0');
-      expect(analysis.confidence).toBeCloseTo(1.0);
-    });
-
-    test('should handle malformed data with warnings', () => {
-      const malformedAttrs = {
-        content: null,
-        alignment: 'invalid',
-        unknownField: 'value'
-      };
-
-      const analysis = detectBlockMigration(malformedAttrs, 'test/block');
-
-      expect(analysis.warnings.length).toBeGreaterThan(0);
-      expect(analysis.confidence).toBeLessThan(1);
-    });
-
-    test('should provide detailed migration reasons', () => {
-      const v1Attrs: V1Attributes = { content: 'Test' };
-
-      const analysis = detectBlockMigration(v1Attrs, 'test/block');
-
-      expect(analysis.reasons.length).toBeGreaterThan(0);
-      expect(analysis.reasons.some(r => r.includes('v1.0.0'))).toBe(true);
-      expect(analysis.reasons.some(r => r.includes('v3.0.0'))).toBe(true);
-    });
+describe('Typia metadata generator failure modes', () => {
+  afterAll(() => {
+    const baseDir = path.resolve(__dirname, '../../test-template/my-typia-block/.tmp-metadata-fixtures-errors');
+    fs.rmSync(baseDir, { force: true, recursive: true });
   });
 
-  describe('generateMigrationReport', () => {
-    test('should generate comprehensive migration report', () => {
-      const scanResults = [
-        {
-          blockName: 'test/my-block',
-          postId: 1,
-          postTitle: 'Test Post 1',
-          analysis: {
-            needsMigration: true,
-            currentVersion: '1.0.0',
-            targetVersion: '3.0.0',
-            confidence: 0.9,
-            reasons: ['Missing required fields'],
-            warnings: [],
-            affectedFields: {
-              added: ['id', 'version', 'theme'],
-              modified: ['content'],
-              deprecated: []
-            }
-          },
-          attributes: {}
+  test('rejects external non-serializable types', async () => {
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify({ attributes: {} }, null, 2),
+      'src/types.ts': `import { tags } from "typia";
+
+export interface BlockAttributes {
+  registry: Map<string, string>;
+  title: string & tags.Default<"hello">;
+}
+`,
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: {
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          strict: true,
+          target: 'ES2022',
         },
-        {
-          blockName: 'test/my-block',
-          postId: 2,
-          postTitle: 'Test Post 2',
-          analysis: {
-            needsMigration: false,
-            currentVersion: '3.0.0',
-            targetVersion: '3.0.0',
-            confidence: 1.0,
-            reasons: [],
-            warnings: ['Data quality warning'],
-            affectedFields: {
-              added: [],
-              modified: [],
-              deprecated: []
-            }
-          },
-          attributes: {}
-        }
-      ];
-
-      const report = generateMigrationReport(scanResults);
-
-      expect(report).toContain('Migration Report');
-      expect(report).toContain('Total blocks scanned: 2');
-      expect(report).toContain('Blocks needing migration: 1');
-      expect(report).toContain('Blocks with warnings: 1');
-      expect(report).toContain('Version 1.0.0');
+        include: ['src/**/*.ts'],
+      }, null, 2),
     });
+
+    await expect(syncBlockMetadata({
+      blockJsonFile: 'block.json',
+      manifestFile: 'typia.manifest.json',
+      projectRoot: fixtureDir,
+      sourceTypeName: 'BlockAttributes',
+      typesFile: 'src/types.ts',
+    })).rejects.toThrow(/not supported/i);
+  });
+
+  test('rejects recursive types', async () => {
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify({ attributes: {} }, null, 2),
+      'src/types.ts': `export interface RecursiveNode {
+  child?: RecursiveNode;
+}
+
+export interface BlockAttributes {
+  tree: RecursiveNode;
+}
+`,
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: {
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          strict: true,
+          target: 'ES2022',
+        },
+        include: ['src/**/*.ts'],
+      }, null, 2),
+    });
+
+    await expect(syncBlockMetadata({
+      blockJsonFile: 'block.json',
+      manifestFile: 'typia.manifest.json',
+      projectRoot: fixtureDir,
+      sourceTypeName: 'BlockAttributes',
+      typesFile: 'src/types.ts',
+    })).rejects.toThrow(/recursive/i);
   });
 });

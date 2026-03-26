@@ -1,165 +1,273 @@
-# WordPress Typia Block Boilerplate
+# 🚀 WordPress Typia Boilerplate
 
-TypeScript 타입 정의에서 WordPress block.json을 자동 생성하는 Typia 기반 블록 보일러플레이트입니다.
+Create robust WordPress blocks with TypeScript runtime validation using Typia. This boilerplate provides enterprise-grade features including type safety, validation, testing, and migration support.
 
-## 🚀 핵심 기능
+## ✨ Key Features
 
-- **Typia 자동 타입 변환**: TypeScript 인터페이스에서 WordPress block.json attributes 자동 생성
-- **런타임 타입 검증**: Typia를 통한 강력한 타입 안전성  
-- **WordPress Interactivity API**: 최신 WordPress 프론트엔드 상호작용 시스템
-- **개발자 친화적**: 타입 안전한 개발 환경
+- **🔒 Runtime Type Safety** - Typia provides compile-time and runtime type validation
+- **⚡ Type-first metadata generation** - TypeScript interfaces generate `block.json` and `typia.manifest.json`
+- **🎯 4 Template Variations** - From basic to advanced patterns
+- **🔄 Migration System** - Automated block versioning and migrations (Advanced template)
+- **🧪 Complete Testing** - Unit tests with Jest, E2E tests with Playwright
+- **📦 Monorepo Ready** - npm workspaces with shared dependencies
+- **🎨 Modern Tooling** - TypeScript, SCSS, ESLint, Prettier, GitHub Actions
 
-## 📁 프로젝트 구조
+## 🚀 Quick Start
+
+### Option 1: Use npm Templates (Recommended)
+
+```bash
+# Basic template - Simple and lightweight
+npx wp-typia-basic
+
+# Full template - Rich features and controls
+npx wp-typia-full
+
+# Interactive template - WordPress Interactivity API
+npx wp-typia-interactivity
+
+# Advanced template - Migration system included
+npx wp-typia-advanced
+```
+
+Follow the prompts to configure your block. The setup script will:
+
+- Ask for block details (name, description, author)
+- Generate all necessary files with your settings
+- Configure the package.json
+
+### Option 2: Use GitHub Template
+
+1. Click "Use this template" at the top
+2. Clone your new repository
+3. Copy the template you need:
+
+   ```bash
+   cp -r test-template/my-typia-block your-plugin-directory
+   ```
+
+4. Install and run:
+
+   ```bash
+   cd your-plugin-directory
+   npm install
+   npm run start
+   ```
+
+## 📦 Templates Overview
+
+| Template                                      | Features                                                                               | Best For                           |
+| --------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------- |
+| **[Basic](templates/basic/)**                 | • Type-safe attributes<br>• Runtime validation<br>• Minimal setup                      | Quick prototypes and simple blocks |
+| **[Full](templates/full/)**                   | • Advanced controls<br>• Custom hooks<br>• Style options<br>• Animation support        | Feature-rich blocks                |
+| **[Interactivity](templates/interactivity/)** | • Interactivity API<br>• Client-side state<br>• Event handling                         | Interactive blocks                 |
+| **[Advanced](templates/advanced/)**           | • Migration system<br>• Version tracking<br>• Admin dashboard<br>• Enterprise features | Production blocks                  |
+
+## 🎯 How It Works
+
+### 1. Define Types with Typia
+
+```typescript
+// src/types.ts
+import { tags } from "typia";
+
+export interface MyBlockAttributes {
+  content: string & tags.MinLength<1> & tags.MaxLength<1000> & tags.Default<"">;
+  alignment?: ('left' | 'center' | 'right') & tags.Default<"left">;
+  isVisible?: boolean & tags.Default<true>;
+}
+```
+
+### 2. Auto-generate block metadata
+
+```bash
+npm run sync-types  # Generates block.json and typia.manifest.json from TypeScript types
+```
+
+### 3. Get Runtime Validation
+
+```typescript
+// src/validators.ts
+import typia from "typia";
+
+const validate = typia.validate<MyBlockAttributes>(attributes);
+if (!validate.success) {
+  console.error(validate.errors); // Type-safe error handling
+}
+```
+
+## 🛠 Development Workflow
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run start
+
+# Type checking
+npm run typecheck
+
+# Run tests
+npm test
+
+# Build for production
+npm run build
+```
+
+## 📚 Documentation
+
+- **[Examples Guide](test-template/EXAMPLES.md)** - Practical examples and patterns
+- **Generated manifest** - `typia.manifest.json` preserves Typia-only constraints for future PHP validation
+- **[Migration Guide](packages/wp-typia-advanced/MIGRATION.md)** - Using the migration system
+- **[API Reference](docs/API.md)** - Complete API documentation
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
+
+## 🧪 Testing
+
+This project includes comprehensive testing:
+
+```bash
+# Unit tests
+npm test
+
+# E2E tests with Playwright
+npm run test:e2e
+
+# Migration tests (Advanced template)
+npm run test:migrations
+
+# Coverage report
+npm run test:coverage
+```
+
+## 🔄 Migration System (Advanced Template)
+
+The Advanced template includes a powerful migration system:
+
+```typescript
+// Define version history
+export interface V1_Attributes {
+  title: string;
+}
+
+export interface V2_Attributes extends V1_Attributes {
+  subtitle?: string;
+}
+
+// Auto-generate migrations
+npm run generate-migrations
+
+// Test migrations
+npm run test-migrations
+```
+
+Features:
+
+- 🔄 Automatic migration generation from type changes
+- 📊 Migration dashboard in WordPress admin
+- 🧪 Built-in migration testing
+- 📝 Detailed migration reports
+
+## 📦 Published npm Packages
+
+All templates are published as npm packages:
+
+- [`wp-typia-basic`](https://www.npmjs.com/package/wp-typia-basic)
+- [`wp-typia-full`](https://www.npmjs.com/package/wp-typia-full)
+- [`wp-typia-interactivity`](https://www.npmjs.com/package/wp-typia-interactivity)
+- [`wp-typia-advanced`](https://www.npmjs.com/package/wp-typia-advanced)
+
+## 🏗 Project Structure
 
 ```
 wp-typia-boilerplate/
-├── templates/               # 다양한 템플릿 베리에이션
-│   ├── basic/              # 기본 Typia 기능만
-│   ├── full/               # 유틸리티 + 훅 + ErrorBoundary
-│   ├── interactivity/      # WordPress Interactivity API 중심
-│   └── advanced/           # 🆕 마이그레이션 자동화 + 모든 기능
-├── test-template/          # 테스트용 실제 블록
-│   └── my-typia-block/
-└── README.md
+├── templates/                    # Template variations
+│   ├── basic/                   # Basic Typia features
+│   ├── full/                    # Full feature set
+│   ├── interactivity/           # Interactivity API
+│   └── advanced/                # Migration system
+├── test-template/               # Working examples
+│   └── my-typia-block/         # Complete example
+├── packages/                    # Published npm packages
+├── tests/                       # Test files
+├── docs/                        # Documentation
+└── .github/                     # GitHub configuration
 ```
 
-## 🔄 작동 원리
+## 🎯 Examples
 
-1. **TypeScript 타입 정의**:
+### Basic Block
 
 ```typescript
-export interface MyTypiaBlockAttributes {
-    content: string & tags.MinLength<0> & tags.MaxLength<1000> & tags.Default<"">;
-    alignment?: ("left" | "center" | "right" | "justify") & tags.Default<"left">;
-    isVisible?: boolean & tags.Default<true>;
+// Define your block with full type safety
+export interface QuoteBlockAttributes {
+  text: string & tags.MinLength<1>;
+  author?: string & tags.MaxLength<100>;
+  citation?: string;
+  fontSize: 'small' | 'medium' | 'large' & tags.Default<'medium'>;
 }
 ```
 
-2. **자동 block.json 생성**:
+### Interactive Block
 
-```bash
-npm run sync-types  # 타입에서 block.json attributes 자동 생성
-```
-
-3. **생성된 block.json**:
-
-```json
-{
-    "attributes": {
-        "content": {
-            "type": "string",
-            "default": ""
-        },
-        "alignment": {
-            "type": "string", 
-            "default": "left"
-        },
-        "isVisible": {
-            "type": "boolean",
-            "default": true
-        }
+```typescript
+// Use WordPress Interactivity API
+store('my-interactive-block', {
+  state: {
+    get clicks() {
+      return getContext().clicks;
     }
-}
+  },
+  actions: {
+    handleClick: () => {
+      context.clicks++;
+    }
+  }
+});
 ```
 
-## ✅ 검증된 기능
+### Migration Example
 
-- ✅ Typia tags → WordPress attributes 변환
-- ✅ `tags.Default<value>` → `"default": value` 매핑  
-- ✅ TypeScript 타입 → WordPress 타입 자동 매핑
-- ✅ 빌드 시스템 통합 (`prebuild` hook)
-- ✅ Webpack 컴파일 호환성
-
-## 🎯 템플릿 베리에이션
-
-### 1. **Basic** - 핵심 Typia 기능
-
-- ✅ TypeScript 타입에서 block.json 자동 생성
-- ✅ Typia 런타임 검증
-- ✅ 최소한의 기능으로 빠른 시작
-
-**사용 예정:**
-
-```bash
-npx @wordpress/create-block my-block --template="@your-org/wp-typia-basic"
+```typescript
+// Automatic migrations
+const migrations = {
+  '1.0.0->1.1.0': (attrs) => ({
+    ...attrs,
+    newFeature: attrs.newFeature ?? true
+  })
+};
 ```
 
-### 2. **Full** - 완전한 개발 환경
+## 🤝 Contributing
 
-- ✅ Basic의 모든 기능
-- ✅ 유틸리티 함수들 (UUID, classNames, debounce, throttle)
-- ✅ 커스텀 훅들 (useDebounce, useLocalStorage)
-- ✅ ErrorBoundary 컴포넌트
-- ✅ 개선된 에디터 경험
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
 
-**사용 예정:**
+### Quick Contribution Guide
 
-```bash
-npx @wordpress/create-block my-block --template="@your-org/wp-typia-full"
-```
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new features
+5. Submit a pull request
 
-### 3. **Interactivity** - WordPress Interactivity API 중심
+## 📄 License
 
-- ✅ Basic의 모든 기능
-- ✅ 고급 Interactivity API 스토어
-- ✅ 카운터, 입력 처리, 비동기 작업
-- ✅ 에러 핸들링 및 히스토리 추적
-- ✅ 콜백 및 워처 기능
+GPL-2.0-or-later. See [LICENSE](LICENSE) for details.
 
-**사용 예정:**
+## 🙏 Acknowledgments
 
-```bash
-npx @wordpress/create-block my-block --template="@your-org/wp-typia-interactivity"
-```
+- [Typia](https://typia.io/) - Amazing runtime validation library
+- [WordPress](https://wordpress.org/) - Block Editor platform
+- [TypeScript](https://www.typescriptlang.org/) - Type safety
+- [Playwright](https://playwright.dev/) - E2E testing
 
-### 4. **Advanced** 🆕 - 마이그레이션 자동화 + 엔터프라이즈
+## 📞 Support
 
-- ✅ Full 템플릿의 모든 기능
-- 🚀 **자동 마이그레이션 생성** - 타입 변경에서 마이그레이션 스크립트 자동 생성
-- 🔄 **버전 관리 시스템** - `V1`, `V2`, `V3` 타입으로 히스토리 관리
-- 🛠 **WordPress deprecated 통합** - 완전 자동 블록 업그레이드
-- 📊 **마이그레이션 리포트** - 변경 사항 추적 및 로깅
-- 🧪 **마이그레이션 테스트 도구** - `npm run test-migrations`
+- 📖 [Documentation](https://github.com/yourusername/wp-typia-boilerplate/wiki)
+- 🐛 [Issue Tracker](https://github.com/yourusername/wp-typia-boilerplate/issues)
+- 💬 [Discussions](https://github.com/yourusername/wp-typia-boilerplate/discussions)
 
-**핵심 명령어:**
+---
 
-```bash
-npm run generate-migrations  # 타입에서 마이그레이션 자동 생성
-npm run test-migrations      # 마이그레이션 테스트
-npm run migration-stats      # 마이그레이션 통계
-```
-
-**사용 예정:**
-
-```bash
-npx @wordpress/create-block my-block --template="@your-org/wp-typia-advanced"
-```
-
-## 🛠 사용법
-
-### 현재 테스트 방법
-
-```bash
-cd test-template/my-typia-block
-npm run sync-types  # ✅ 성공적으로 6개 속성 생성
-npm run build       # ✅ 웹팩 컴파일 성공
-```
-
-## 📦 주요 의존성
-
-- `typia`: TypeScript 런타임 타입 검증
-- `tsx`: TypeScript 실행 엔진
-- `@wordpress/scripts`: WordPress 빌드 도구
-- `@wordpress/interactivity`: WordPress Interactivity API
-
-## 🎯 실제 동작 확인
-
-`test-template/my-typia-block`에서 실제 작동하는 예시를 확인할 수 있습니다:
-
-```bash
-cd test-template/my-typia-block
-npm run sync-types  # ✅ 성공적으로 6개 속성 생성
-npm run build       # ✅ 웹팩 컴파일 성공
-```
-
-생성된 attributes: `id`, `version`, `className`, `content`, `alignment`, `isVisible`
+Made with ❤️ for the WordPress community

@@ -1,0 +1,183 @@
+/**
+ * WordPress Interactivity API implementation for {{title}} block
+ */
+import { store, getContext, getElement } from '@wordpress/interactivity';
+
+// Store configuration
+store('{{slugKebabCase}}', {
+  // State - reactive data that updates the UI
+  state: {
+    get clicks() {
+      return getContext().clicks;
+    },
+    get isAnimating() {
+      return getContext().isAnimating;
+    },
+    get isVisible() {
+      return getContext().isVisible;
+    },
+    get animationClass() {
+      const context = getContext();
+      if (!context.isAnimating) return '';
+
+      switch (context.animation) {
+        case 'bounce':
+          return 'animate-bounce';
+        case 'pulse':
+          return 'animate-pulse';
+        case 'shake':
+          return 'animate-shake';
+        case 'flip':
+          return 'animate-flip';
+        default:
+          return '';
+      }
+    },
+    get progress() {
+      const context = getContext();
+      return context.maxClicks > 0 ? (context.clicks / context.maxClicks) * 100 : 0;
+    },
+    get isComplete() {
+      const context = getContext();
+      return context.clicks >= context.maxClicks && context.maxClicks > 0;
+    }
+  },
+
+  // Actions - user interactions
+  actions: {
+    // Handle block click
+    handleClick: () => {
+      const context = getContext();
+      const { element } = getElement();
+
+      // Increment click counter
+      context.clicks += 1;
+      context.lastInteraction = 'click';
+
+      // Trigger animation
+      if (context.animation !== 'none') {
+        context.isAnimating = true;
+        setTimeout(() => {
+          context.isAnimating = false;
+        }, 1000);
+      }
+
+      // Emit custom event
+      element.dispatchEvent(new CustomEvent('{{slugKebabCase}}:click', {
+        detail: { clicks: context.clicks }
+      }));
+
+      // Check if max clicks reached
+      if (context.maxClicks > 0 && context.clicks >= context.maxClicks) {
+        element.dispatchEvent(new CustomEvent('{{slugKebabCase}}:complete', {
+          detail: { totalClicks: context.clicks }
+        }));
+      }
+    },
+
+    // Handle hover events
+    handleMouseEnter: () => {
+      const context = getContext();
+      if (context.interactiveMode === 'hover') {
+        context.isAnimating = true;
+        context.lastInteraction = 'hover';
+      }
+    },
+
+    handleMouseLeave: () => {
+      const context = getContext();
+      if (context.interactiveMode === 'hover') {
+        context.isAnimating = false;
+      }
+    },
+
+    // Toggle visibility
+    toggleVisibility: () => {
+      const context = getContext();
+      context.isVisible = !context.isVisible;
+    },
+
+    // Reset counter
+    reset: () => {
+      const context = getContext();
+      context.clicks = 0;
+      context.isAnimating = false;
+      context.lastInteraction = 'reset';
+    },
+
+    // Start/stop auto play
+    toggleAutoPlay: () => {
+      const context = getContext();
+      if (context.autoPlayInterval > 0) {
+        if (context.autoPlayTimer) {
+          clearInterval(context.autoPlayTimer);
+          context.autoPlayTimer = null;
+        } else {
+          context.autoPlayTimer = setInterval(() => {
+            context.clicks += 1;
+            context.isAnimating = true;
+            setTimeout(() => {
+              context.isAnimating = false;
+            }, 500);
+          }, context.autoPlayInterval);
+        }
+      }
+    }
+  },
+
+  // Callbacks - lifecycle hooks
+  callbacks: {
+    // Initialize on mount
+    onInit: () => {
+      const context = getContext();
+      const { element } = getElement();
+
+      // Set initial state from attributes
+      context.clicks = parseInt(element.dataset.clicks || '0');
+      context.isAnimating = element.dataset.isAnimating === 'true';
+      context.isVisible = element.dataset.isVisible !== 'false';
+
+      // Set up event listeners
+      element.addEventListener('{{slugKebabCase}}:external-trigger', (event: any) => {
+        context.clicks = event.detail.clicks || context.clicks + 1;
+      });
+    },
+
+    // Log interactions
+    onInteraction: () => {
+      const context = getContext();
+      console.log(`{{slugKebabCase}} interaction:`, {
+        clicks: context.clicks,
+        type: context.lastInteraction,
+        timestamp: new Date().toISOString()
+      });
+    },
+
+    // Cleanup on unmount
+    onDestroy: () => {
+      const context = getContext();
+      if (context.autoPlayTimer) {
+        clearInterval(context.autoPlayTimer);
+      }
+    }
+  }
+});
+
+// Type definitions for TypeScript
+declare global {
+  namespace WordPress {
+    namespace Interactivity {
+      interface {{pascalCase}}Context {
+        clicks: number;
+        isAnimating: boolean;
+        isVisible: boolean;
+        lastInteraction: string;
+        animation: string;
+        interactiveMode: string;
+        maxClicks: number;
+        autoPlayInterval: number;
+        autoPlayTimer?: number;
+      }
+    }
+  }
+}

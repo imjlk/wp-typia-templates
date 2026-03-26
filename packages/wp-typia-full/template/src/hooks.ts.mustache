@@ -1,0 +1,140 @@
+import { useSelect } from '@wordpress/data';
+import { useState, useCallback, useEffect } from '@wordpress/element';
+import { {{pascalCase}}Attributes, validate{{pascalCase}}Attributes, sanitize{{pascalCase}}Attributes } from './types';
+
+/**
+ * Hook for managing block attributes with validation
+ */
+export const use{{pascalCase}}Attributes = (initialAttributes: Partial<{{pascalCase}}Attributes>) => {
+  const [attributes, setAttributes] = useState<{{pascalCase}}Attributes>(() =>
+    sanitize{{pascalCase}}Attributes(initialAttributes)
+  );
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+  const updateAttribute = useCallback((key: keyof {{pascalCase}}Attributes, value: any) => {
+    setAttributes(prev => {
+      const newAttrs = { ...prev, [key]: value };
+      const validation = validate{{pascalCase}}Attributes(newAttrs);
+
+      if (!validation.isValid) {
+        setValidationErrors(validation.errors);
+      } else {
+        setValidationErrors([]);
+      }
+
+      return validation.data || newAttrs;
+    });
+  }, []);
+
+  const updateAttributes = useCallback((updates: Partial<{{pascalCase}}Attributes>) => {
+    setAttributes(prev => {
+      const newAttrs = { ...prev, ...updates };
+      const validation = validate{{pascalCase}}Attributes(newAttrs);
+
+      if (!validation.isValid) {
+        setValidationErrors(validation.errors);
+      } else {
+        setValidationErrors([]);
+      }
+
+      return validation.data || newAttrs;
+    });
+  }, []);
+
+  return {
+    attributes,
+    setAttributes,
+    updateAttribute,
+    updateAttributes,
+    validationErrors,
+    isValid: validationErrors.length === 0
+  };
+};
+
+/**
+ * Hook for managing color schemes
+ */
+export const useColorScheme = () => {
+  const colors = useSelect(select => select('core/block-editor').getColors()?.colors || []);
+  const gradients = useSelect(select => select('core/block-editor').getColors()?.gradients || []);
+
+  const getColorVariable = useCallback((color: string) => {
+    if (!color) return '';
+
+    // Check if it's a system color
+    const systemColor = colors.find((c: any) => c.slug === color);
+    if (systemColor) {
+      return `var(--wp--preset--color--${systemColor.slug})`;
+    }
+
+    // Return custom color as-is
+    return color;
+  }, [colors]);
+
+  const getGradientVariable = useCallback((gradient: string) => {
+    if (!gradient) return '';
+
+    // Check if it's a system gradient
+    const systemGradient = gradients.find((g: any) => g.slug === gradient);
+    if (systemGradient) {
+      return `var(--wp--preset--gradient--${systemGradient.slug})`;
+    }
+
+    // Return custom gradient as-is
+    return gradient;
+  }, [gradients]);
+
+  return { getColorVariable, getGradientVariable, colors, gradients };
+};
+
+/**
+ * Hook for responsive design
+ */
+export const useResponsiveValue = <T>(values: { mobile?: T; tablet?: T; desktop?: T }, fallback: T) => {
+  const [deviceType, setDeviceType] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
+
+  useEffect(() => {
+    const updateDeviceType = () => {
+      const width = window.innerWidth;
+      if (width < 768) {
+        setDeviceType('mobile');
+      } else if (width < 1024) {
+        setDeviceType('tablet');
+      } else {
+        setDeviceType('desktop');
+      }
+    };
+
+    updateDeviceType();
+    window.addEventListener('resize', updateDeviceType);
+    return () => window.removeEventListener('resize', updateDeviceType);
+  }, []);
+
+  return values[deviceType] ?? fallback;
+};
+
+/**
+ * Hook for managing animation states
+ */
+export const useAnimation = (animationType: string) => {
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [animationClass, setAnimationClass] = useState('');
+
+  useEffect(() => {
+    if (animationType && animationType !== 'none') {
+      setAnimationClass(`wp-block-{{slugKebabCase}}--animate-${animationType}`);
+      setIsAnimating(true);
+
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    } else {
+      setAnimationClass('');
+      setIsAnimating(false);
+    }
+  }, [animationType]);
+
+  return { animationClass, isAnimating };
+};

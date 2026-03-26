@@ -8,9 +8,9 @@
 	"scripts": {
 		"sync-types": "tsx scripts/sync-types-to-block-json.ts",
 		"generate-manifest": "tsx scripts/generate-manifest.ts",
-		"prebuild": "echo 'Skipping sync-types for debugging'",
+		"prebuild": "npm run sync-types",
 		"build": "wp-scripts build && npm run generate-manifest",
-		"prestart": "echo 'Skipping sync-types for debugging'",
+		"prestart": "npm run sync-types",
 		"start": "wp-scripts start",
 		"format": "wp-scripts format",
 		"lint:css": "wp-scripts lint-style",
@@ -21,16 +21,16 @@
 		"create-zip": "tsx scripts/create-plugin-zip.ts"
 	},
 	"devDependencies": {
+		"ajv": "^8.18.0",
 		"@types/wordpress__block-editor": "^11.5.17",
 		"@types/wordpress__blocks": "^12.5.18",
 		"@types/wordpress__components": "^23.8.0",
 		"@wordpress/scripts": "^30.22.0",
+		"@typia/unplugin": "^12.0.1",
 		"archiver": "^7.0.1",
-		"ts-patch": "^3.2.1",
 		"tsx": "^4.20.5",
-		"ttypescript": "^1.5.15",
 		"typescript": "^5.9.2",
-		"typia": "^9.7.2"
+		"typia": "^12.0.1"
 	},
 	"dependencies": {
 		"@wordpress/block-editor": "^15.2.0",

@@ -7,13 +7,13 @@
 
 > Type-safe WordPress block development with automatic validation powered by Typia
 
-A modern WordPress block development boilerplate featuring TypeScript, Typia validation, and the WordPress Interactivity API. Generate type-safe blocks with runtime validation, automatic `block.json` generation, and seamless WordPress integration.
+A modern WordPress block development boilerplate featuring TypeScript, Typia validation, and the WordPress Interactivity API. Generate type-safe blocks with runtime validation, automatic `block.json` generation, generated `typia.manifest.json` metadata, and seamless WordPress integration.
 
 ## ✨ Features
 
 - 🎯 **Type-Safe Development**: Full TypeScript support with compile-time and runtime validation
 - ⚡ **Typia Integration**: 20,000x faster validation than alternatives
-- 🔄 **Auto block.json Generation**: Derive WordPress block attributes from TypeScript types
+- 🔄 **Type-First Metadata Generation**: Derive `block.json` and `typia.manifest.json` from TypeScript types
 - 🏗️ **Multiple Templates**: Choose from Basic, Full, Interactivity, or Advanced editions
 - 🚀 **Migration System**: Automatic block migration detection and execution (Advanced)
 - ⚛️ **Modern Stack**: React hooks, error boundaries, and utility functions
@@ -80,7 +80,7 @@ wp-typia-boilerplate/
 
 Perfect for simple blocks with type safety:
 
-- ✅ TypeScript to block.json auto-generation
+- ✅ TypeScript to block.json + typia.manifest auto-generation
 - ✅ Typia runtime validation
 - ✅ Minimal setup for quick start
 
@@ -149,7 +149,7 @@ export interface MyBlockAttributes {
 }
 ```
 
-### Auto-Generated block.json
+### Auto-Generated Block Metadata
 
 ```bash
 npm run sync-types
@@ -185,6 +185,8 @@ Generates:
   }
 }
 ```
+
+The generator also emits `typia.manifest.json`, which keeps Typia-only constraints such as `format`, `pattern`, and numeric/string ranges for future PHP-side validation.
 
 ### Runtime Validation
 
@@ -270,30 +272,36 @@ if (analysis.needsMigration) {
 ## 🛠️ Available Scripts
 
 ### Development
+
 - `npm start` - Start development server with hot reload
 - `npm run build` - Build blocks for production
 - `npm run dev` - Alias for `npm start`
 
 ### Type Management
-- `npm run sync-types` - Generate block.json from TypeScript types
+
+- `npm run sync-types` - Generate block.json and typia.manifest.json from TypeScript types
 - `npm run type-check` - Run TypeScript compiler check
 
 ### Testing
+
 - `npm test` - Run unit tests with Jest
 - `npm run test:e2e` - Run E2E tests with Playwright
 - `npm run test:watch` - Run tests in watch mode
 - `npm run test:coverage` - Run tests with coverage
 
 ### Code Quality
+
 - `npm run lint` - Run ESLint
 - `npm run format` - Format code with Prettier
 
 ### WordPress Environment
+
 - `npm run wp-env:start` - Start WordPress test environment
 - `npm run wp-env:stop` - Stop WordPress test environment
 - `npm run wp-env:reset` - Reset WordPress environment
 
 ### Migration (Advanced Template)
+
 - `npm run generate-migrations` - Generate migration scripts
 - `npm run test-migrations` - Test migration scripts
 - `npm run migration-stats` - View migration statistics
@@ -310,6 +318,7 @@ if (analysis.needsMigration) {
 This project includes comprehensive testing:
 
 ### Unit Tests
+
 ```bash
 # Run all tests
 npm test
@@ -322,6 +331,7 @@ npm run test:watch
 ```
 
 ### E2E Tests
+
 ```bash
 # Install Playwright
 npx playwright install
@@ -334,6 +344,7 @@ npx playwright test --ui
 ```
 
 ### Migration Testing
+
 ```bash
 # Test migration scripts
 cd packages/wp-typia-advanced

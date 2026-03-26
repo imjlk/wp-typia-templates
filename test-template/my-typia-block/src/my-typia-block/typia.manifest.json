@@ -1,0 +1,161 @@
+{
+	"attributes": {
+		"id": {
+			"typia": {
+				"constraints": {
+					"format": "uuid",
+					"maxLength": null,
+					"maximum": null,
+					"minLength": null,
+					"minimum": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"default": null
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": false
+			},
+			"wp": {
+				"default": null,
+				"enum": null,
+				"type": "string"
+			}
+		},
+		"version": {
+			"typia": {
+				"constraints": {
+					"format": null,
+					"maxLength": null,
+					"maximum": null,
+					"minLength": null,
+					"minimum": null,
+					"pattern": null,
+					"typeTag": "uint32"
+				},
+				"default": 1
+			},
+			"ts": {
+				"items": null,
+				"kind": "number",
+				"properties": null,
+				"required": false
+			},
+			"wp": {
+				"default": 1,
+				"enum": null,
+				"type": "number"
+			}
+		},
+		"className": {
+			"typia": {
+				"constraints": {
+					"format": null,
+					"maxLength": 100,
+					"maximum": null,
+					"minLength": null,
+					"minimum": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"default": null
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": false
+			},
+			"wp": {
+				"default": null,
+				"enum": null,
+				"type": "string"
+			}
+		},
+		"content": {
+			"typia": {
+				"constraints": {
+					"format": null,
+					"maxLength": 1000,
+					"maximum": null,
+					"minLength": 0,
+					"minimum": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"default": ""
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": true
+			},
+			"wp": {
+				"default": "",
+				"enum": null,
+				"type": "string"
+			}
+		},
+		"alignment": {
+			"typia": {
+				"constraints": {
+					"format": null,
+					"maxLength": null,
+					"maximum": null,
+					"minLength": null,
+					"minimum": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"default": "left"
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": false
+			},
+			"wp": {
+				"default": "left",
+				"enum": [
+					"left",
+					"center",
+					"right",
+					"justify"
+				],
+				"type": "string"
+			}
+		},
+		"isVisible": {
+			"typia": {
+				"constraints": {
+					"format": null,
+					"maxLength": null,
+					"maximum": null,
+					"minLength": null,
+					"minimum": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"default": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "boolean",
+				"properties": null,
+				"required": false
+			},
+			"wp": {
+				"default": true,
+				"enum": null,
+				"type": "boolean"
+			}
+		}
+	},
+	"manifestVersion": 1,
+	"sourceType": "MyTypiaBlockAttributes"
+}
