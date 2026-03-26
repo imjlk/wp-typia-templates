@@ -1,6 +1,6 @@
 {
   "name": "wp-typia-interactivity",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "WordPress block template with Typia validation - Interactivity API edition",
   "main": "index.json",
   "bin": {

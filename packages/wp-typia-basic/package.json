@@ -1,6 +1,6 @@
 {
   "name": "wp-typia-basic",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "WordPress block template with Typia validation - Basic edition",
   "main": "index.js",
   "bin": {
