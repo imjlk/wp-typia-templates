@@ -9,8 +9,7 @@
 	"scripts": {
 		"sync-types": "tsx scripts/sync-types-to-block-json.ts",
 		"generate-migrations": "tsx scripts/generate-migrations.ts",
-		"prebuild": "bun run sync-types && bun run generate-migrations",
-		"build": "wp-scripts build",
+		"build": "bun run sync-types && bun run generate-migrations && wp-scripts build",
 		"start": "bun run sync-types && bun run generate-migrations && wp-scripts start",
 		"dev": "bun run start",
 		"test-migrations": "tsx -e \"import('./src/deprecated.js').then(m => m.migrationUtils.testMigration())\"",

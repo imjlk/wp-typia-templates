@@ -13,6 +13,7 @@
     "test": "bun run test:unit && bun run test:cli",
     "test:unit": "bun test tests/unit",
     "test:cli": "bun run --filter create-wp-typia test",
+    "test:generated-smoke": "node scripts/run-generated-project-smoke.mjs",
     "test:coverage": "bun run test:unit:coverage && bun run test:cli:coverage",
     "test:unit:coverage": "bun test tests/unit --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage/unit",
     "test:cli:coverage": "bun run --filter create-wp-typia test:coverage",

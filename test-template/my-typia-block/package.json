@@ -10,8 +10,7 @@
 	"scripts": {
 		"sync-types": "tsx scripts/sync-types-to-block-json.ts",
 		"generate-manifest": "tsx scripts/generate-manifest.ts",
-		"prebuild": "bun run sync-types",
-		"build": "wp-scripts build && bun run generate-manifest",
+		"build": "bun run sync-types && wp-scripts build && bun run generate-manifest",
 		"prestart": "bun run sync-types",
 		"start": "wp-scripts start",
 		"format": "wp-scripts format",

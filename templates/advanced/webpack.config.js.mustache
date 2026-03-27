@@ -2,16 +2,18 @@ const fs = require("fs");
 const path = require("path");
 const defaultConfig = require("@wordpress/scripts/config/webpack.config");
 
-class TypiaManifestAssetPlugin {
+const METADATA_FILENAMES = new Set(["block.json", "typia.manifest.json"]);
+
+class MetadataAssetPlugin {
 	apply(compiler) {
-		compiler.hooks.thisCompilation.tap("TypiaManifestAssetPlugin", (compilation) => {
+		compiler.hooks.thisCompilation.tap("MetadataAssetPlugin", (compilation) => {
 			compilation.hooks.processAssets.tap(
 				{
-					name: "TypiaManifestAssetPlugin",
+					name: "MetadataAssetPlugin",
 					stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
 				},
 				() => {
-					for (const entry of getManifestEntries()) {
+					for (const entry of getMetadataEntries()) {
 						if (compilation.getAsset(entry.outputPath)) {
 							continue;
 						}
@@ -27,15 +29,17 @@ class TypiaManifestAssetPlugin {
 	}
 }
 
-function getManifestEntries() {
+function getMetadataEntries() {
 	const entries = [];
-	const rootManifestPath = path.resolve(process.cwd(), "typia.manifest.json");
 
-	if (fs.existsSync(rootManifestPath)) {
-		entries.push({
-			inputPath: rootManifestPath,
-			outputPath: "typia.manifest.json",
-		});
+	for (const filename of METADATA_FILENAMES) {
+		const rootFilePath = path.resolve(process.cwd(), filename);
+		if (fs.existsSync(rootFilePath)) {
+			entries.push({
+				inputPath: rootFilePath,
+				outputPath: filename,
+			});
+		}
 	}
 
 	const srcDir = path.resolve(process.cwd(), "src");
@@ -43,7 +47,7 @@ function getManifestEntries() {
 		return entries;
 	}
 
-	for (const inputPath of findManifestFiles(srcDir)) {
+	for (const inputPath of findMetadataFiles(srcDir)) {
 		entries.push({
 			inputPath,
 			outputPath: path.relative(srcDir, inputPath),
@@ -53,22 +57,22 @@ function getManifestEntries() {
 	return entries;
 }
 
-function findManifestFiles(directory) {
-	const manifestFiles = [];
+function findMetadataFiles(directory) {
+	const metadataFiles = [];
 
 	for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
 		const entryPath = path.join(directory, entry.name);
 
 		if (entry.isDirectory()) {
-			manifestFiles.push(...findManifestFiles(entryPath));
+			metadataFiles.push(...findMetadataFiles(entryPath));
 			continue;
 		}
-		if (entry.isFile() && entry.name === "typia.manifest.json") {
-			manifestFiles.push(entryPath);
+		if (entry.isFile() && METADATA_FILENAMES.has(entry.name)) {
+			metadataFiles.push(entryPath);
 		}
 	}
 
-	return manifestFiles;
+	return metadataFiles;
 }
 
 module.exports = async () => {
@@ -79,7 +83,7 @@ module.exports = async () => {
 		plugins: [
 			UnpluginTypia(),
 			...(defaultConfig.plugins || []),
-			new TypiaManifestAssetPlugin(),
+			new MetadataAssetPlugin(),
 		],
 	};
 };

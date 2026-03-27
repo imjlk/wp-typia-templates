@@ -38,7 +38,7 @@ For non-interactive usage:
 npx create-wp-typia my-block --template basic --package-manager pnpm --yes --no-install
 ```
 
-### Option 2: Use direct template wrappers
+### Option 2: Use legacy direct template wrappers
 
 ```bash
 npx wp-typia-basic
@@ -47,7 +47,7 @@ npx wp-typia-interactivity
 npx wp-typia-advanced
 ```
 
-These legacy entrypoints remain supported for compatibility, but `create-wp-typia` is the primary path.
+These legacy entrypoints remain supported for compatibility, but `create-wp-typia` is the primary path for new projects.
 
 ## 📦 Templates Overview
 
@@ -131,9 +131,6 @@ bun run test
 # E2E tests with Playwright
 bun run test:e2e
 
-# Migration tests (Advanced template)
-bun run test:migrations
-
 # Coverage report
 bun run test:coverage
 ```
@@ -170,6 +167,7 @@ Features:
 
 All templates are published as npm packages:
 
+- [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia)
 - [`wp-typia-basic`](https://www.npmjs.com/package/wp-typia-basic)
 - [`wp-typia-full`](https://www.npmjs.com/package/wp-typia-full)
 - [`wp-typia-interactivity`](https://www.npmjs.com/package/wp-typia-interactivity)

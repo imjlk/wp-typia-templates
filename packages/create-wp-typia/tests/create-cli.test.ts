@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -9,6 +9,17 @@ import { scaffoldProject } from "../lib/scaffold.js";
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "create-wp-typia-"));
 const entryPath = path.resolve(import.meta.dir, "../lib/entry.js");
 const legacyBasicPath = path.resolve(import.meta.dir, "../../wp-typia-basic/scripts/setup.js");
+
+function runCli(
+	command: string,
+	args: string[],
+	options: Parameters<typeof execFileSync>[2] = {},
+) {
+	return execFileSync(command, args, {
+		encoding: "utf8",
+		...options,
+	});
+}
 
 describe("create-wp-typia scaffolding", () => {
 	afterAll(() => {
@@ -42,7 +53,7 @@ describe("create-wp-typia scaffolding", () => {
 		const readme = fs.readFileSync(readmePath, "utf8");
 
 		expect(packageJson.packageManager).toBe("npm@11.6.1");
-		expect(packageJson.scripts.prebuild).toBe("npm run sync-types");
+		expect(packageJson.scripts.build).toBe("npm run sync-types && wp-scripts build");
 		expect(packageJson.scripts.start).toBe("npm run sync-types && wp-scripts start");
 		expect(readme).toContain("npm install");
 		expect(readme).toContain("npm run start");
@@ -68,19 +79,15 @@ describe("create-wp-typia scaffolding", () => {
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 
 		expect(packageJson.packageManager).toBe("pnpm@8.3.1");
-		expect(packageJson.scripts.prebuild).toBe(
-			"pnpm run sync-types && pnpm run generate-migrations",
+		expect(packageJson.scripts.build).toBe(
+			"pnpm run sync-types && pnpm run generate-migrations && wp-scripts build",
 		);
 		expect(packageJson.scripts["migration:detect"]).toBe("pnpm run migration -- detect");
 	});
 
 	test("node entry exposes templates and doctor commands", () => {
-		const templatesOutput = execSync(`node ${JSON.stringify(entryPath)} templates list`, {
-			encoding: "utf8",
-		});
-		const doctorOutput = execSync(`node ${JSON.stringify(entryPath)} doctor`, {
-			encoding: "utf8",
-		});
+		const templatesOutput = runCli("node", [entryPath, "templates", "list"]);
+		const doctorOutput = runCli("node", [entryPath, "doctor"]);
 
 		expect(templatesOutput).toContain("basic");
 		expect(templatesOutput).toContain("advanced");
@@ -88,14 +95,49 @@ describe("create-wp-typia scaffolding", () => {
 		expect(doctorOutput).toContain("PASS Template basic");
 	});
 
+	test("bun entry exposes templates and doctor commands", () => {
+		const templatesOutput = runCli("bun", [entryPath, "templates", "list"]);
+		const doctorOutput = runCli("bun", [entryPath, "doctor"]);
+
+		expect(templatesOutput).toContain("basic");
+		expect(templatesOutput).toContain("advanced");
+		expect(doctorOutput).toContain("PASS Bun");
+		expect(doctorOutput).toContain("PASS Template basic");
+	});
+
+	test("bun entry translates kebab-case flags while scaffolding", () => {
+		const targetDir = path.join(tempRoot, "demo-bun-entry");
+
+		runCli("bun", [
+			entryPath,
+			targetDir,
+			"--template",
+			"basic",
+			"--yes",
+			"--no-install",
+			"--package-manager",
+			"bun",
+		], {
+			stdio: "inherit",
+		});
+
+		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
+		expect(packageJson.packageManager).toBe("bun@1.3.10");
+		expect(fs.existsSync(path.join(targetDir, "README.md"))).toBe(true);
+	});
+
 	test("node entry requires --package-manager with --yes", () => {
 		expect(() => {
-			execSync(
-				`node ${JSON.stringify(entryPath)} demo-missing-pm --template basic --yes --no-install`,
-				{
-					stdio: "pipe",
-				},
-			);
+			runCli("node", [
+				entryPath,
+				"demo-missing-pm",
+				"--template",
+				"basic",
+				"--yes",
+				"--no-install",
+			], {
+				stdio: "pipe",
+			});
 		}).toThrow();
 	});
 
@@ -103,10 +145,10 @@ describe("create-wp-typia scaffolding", () => {
 		const targetDir = path.join(tempRoot, "legacy-basic");
 		fs.mkdirSync(targetDir, { recursive: true });
 
-		execSync(
-			`node ${JSON.stringify(legacyBasicPath)} --yes --no-install --package-manager bun`,
-			{ cwd: targetDir, stdio: "inherit" },
-		);
+		runCli("node", [legacyBasicPath, "--yes", "--no-install", "--package-manager", "bun"], {
+			cwd: targetDir,
+			stdio: "inherit",
+		});
 
 		const packageJsonPath = path.join(targetDir, "package.json");
 		expect(fs.existsSync(packageJsonPath)).toBe(true);

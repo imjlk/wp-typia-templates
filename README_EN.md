@@ -2,7 +2,7 @@
 
 [![CI/CD](https://github.com/imjlk/wp-typia-templates/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/imjlk/wp-typia-templates/actions)
 [![License: GPL-2.0+](https://img.shields.io/badge/License-GPL--2.0+-blue.svg)](https://opensource.org/licenses/GPL-2.0+)
-[![npm version](https://badge.fury.io/js/wp-typia-basic.svg)](https://www.npmjs.com/package/wp-typia-basic)
+[![npm version](https://badge.fury.io/js/create-wp-typia.svg)](https://www.npmjs.com/package/create-wp-typia)
 [![codecov](https://codecov.io/gh/imjlk/wp-typia-templates/branch/main/graph/badge.svg)](https://codecov.io/gh/imjlk/wp-typia-templates)
 
 > Type-safe WordPress block development with automatic validation powered by Typia
@@ -38,7 +38,7 @@ The CLI always asks which package manager the generated project should use. For 
 npx create-wp-typia my-block --template basic --package-manager pnpm --yes --no-install
 ```
 
-### Direct Template Wrappers
+### Legacy Direct Template Wrappers
 
 ```bash
 npx wp-typia-basic
@@ -46,6 +46,16 @@ npx wp-typia-full
 npx wp-typia-interactivity
 npx wp-typia-advanced
 ```
+
+These direct entrypoints remain supported for compatibility, but `create-wp-typia` is the primary path for new projects.
+
+## 📦 Published npm Packages
+
+- [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia)
+- [`wp-typia-basic`](https://www.npmjs.com/package/wp-typia-basic)
+- [`wp-typia-full`](https://www.npmjs.com/package/wp-typia-full)
+- [`wp-typia-interactivity`](https://www.npmjs.com/package/wp-typia-interactivity)
+- [`wp-typia-advanced`](https://www.npmjs.com/package/wp-typia-advanced)
 
 ## 📁 Project Structure
 
@@ -277,7 +287,7 @@ if (analysis.needsMigration) {
 ### Type Management
 
 - `bun run sync-types` - Generate block.json and typia.manifest.json from TypeScript types
-- `bun run type-check` - Run TypeScript compiler check
+- `bun run typecheck` - Run TypeScript compiler check
 
 ### Testing
 
@@ -345,7 +355,7 @@ npx playwright test --ui
 ```bash
 # Test migration scripts
 cd packages/wp-typia-advanced
-bun run test:migrations
+bun run test-migrations
 ```
 
 ## 📊 Performance

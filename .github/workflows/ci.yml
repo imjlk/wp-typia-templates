@@ -93,10 +93,30 @@ jobs:
           path: test-template/my-typia-block/build/
           retention-days: 7
 
-  smoke-cli:
-    name: Smoke Test CLI
+  generated-smoke:
+    name: Generated Project Smoke (${{ matrix.package_manager }})
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [lint, test]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runtime: bun
+            template: basic
+            package_manager: bun
+            project_name: smoke-basic-bun
+          - runtime: node
+            template: full
+            package_manager: npm
+            project_name: smoke-full-npm
+          - runtime: node
+            template: interactivity
+            package_manager: pnpm
+            project_name: smoke-interactivity-pnpm
+          - runtime: node
+            template: advanced
+            package_manager: yarn
+            project_name: smoke-advanced-yarn
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -114,19 +134,16 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build CLI
-        run: bun run --filter create-wp-typia build
+      - name: Enable Corepack
+        run: corepack enable
 
-      - name: Scaffold a basic template
+      - name: Run generated project smoke
         run: |
-          mkdir -p /tmp/wp-typia-cli-smoke
-          node packages/create-wp-typia/lib/entry.js /tmp/wp-typia-cli-smoke/demo-basic --template basic --yes --no-install --package-manager bun
-          test -f /tmp/wp-typia-cli-smoke/demo-basic/package.json
-          test -f /tmp/wp-typia-cli-smoke/demo-basic/README.md
-
-      - name: Assert Bun-first metadata
-        run: |
-          node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync('/tmp/wp-typia-cli-smoke/demo-basic/package.json','utf8')); if (j.packageManager !== 'bun@1.3.10') throw new Error('packageManager missing');"
+          node scripts/run-generated-project-smoke.mjs \
+            --runtime "${{ matrix.runtime }}" \
+            --template "${{ matrix.template }}" \
+            --package-manager "${{ matrix.package_manager }}" \
+            --project-name "${{ matrix.project_name }}"
 
   e2e:
     name: E2E Tests
@@ -170,7 +187,7 @@ jobs:
   publish:
     name: Publish to npm
     runs-on: ubuntu-latest
-    needs: [build, smoke-cli, e2e]
+    needs: [build, generated-smoke, e2e]
     if: github.event_name == 'release'
     steps:
       - name: Checkout

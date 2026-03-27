@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
-import readline from "node:readline";
 import { execSync } from "node:child_process";
 
 import {
@@ -9,7 +8,6 @@ import {
 	formatInstallCommand,
 	formatRunScript,
 	getPackageManager,
-	getPackageManagerSelectOptions,
 	transformPackageManagerText,
 } from "./package-managers.js";
 import { TEMPLATE_IDS, getTemplateById } from "./template-registry.js";
@@ -67,57 +65,6 @@ export function detectAuthor() {
 	} catch {
 		return "Your Name";
 	}
-}
-
-function createReadlinePrompt() {
-	const rl = readline.createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	});
-
-	return {
-		async text(message, defaultValue, validate) {
-			const suffix = defaultValue ? ` (${defaultValue})` : "";
-			const answer = await new Promise((resolve) => {
-				rl.question(`${message}${suffix}: `, resolve);
-			});
-
-			const value = String(answer).trim() || defaultValue;
-			if (validate) {
-				const result = validate(value);
-				if (result !== true) {
-					console.error(`❌ ${result}`);
-					return this.text(message, defaultValue, validate);
-				}
-			}
-
-			return value;
-		},
-		async select(message, options, defaultValue) {
-			console.log(message);
-			options.forEach((option, index) => {
-				const hint = option.hint ? ` - ${option.hint}` : "";
-				console.log(`  ${index + 1}. ${option.label}${hint}`);
-			});
-
-			const answer = await this.text("Choice", String(defaultValue ?? 1));
-			const numericChoice = Number(answer);
-			if (!Number.isNaN(numericChoice) && options[numericChoice - 1]) {
-				return options[numericChoice - 1].value;
-			}
-
-			const directChoice = options.find((option) => option.value === answer);
-			if (directChoice) {
-				return directChoice.value;
-			}
-
-			console.error(`❌ Invalid selection: ${answer}`);
-			return this.select(message, options, defaultValue);
-		},
-		close() {
-			rl.close();
-		},
-	};
 }
 
 export function getDefaultAnswers(projectName, templateId) {
@@ -316,6 +263,8 @@ ${formatRunScript(packageManager, "sync-types")}
 function buildGitignore() {
 	return `# Dependencies
 node_modules/
+.yarn/
+.pnp.*
 
 # Build
 build/
@@ -333,6 +282,19 @@ Thumbs.db
 *.log
 .wp-env/
 `;
+}
+
+async function normalizePackageManagerFiles(targetDir, packageManagerId) {
+	const yarnRcPath = path.join(targetDir, ".yarnrc.yml");
+
+	if (packageManagerId === "yarn") {
+		await fsp.writeFile(yarnRcPath, "nodeLinker: node-modules\n", "utf8");
+		return;
+	}
+
+	if (fs.existsSync(yarnRcPath)) {
+		await fsp.rm(yarnRcPath, { force: true });
+	}
 }
 
 async function normalizePackageJson(targetDir, packageManagerId) {
@@ -452,6 +414,7 @@ export async function scaffoldProject({
 	}
 	await fsp.writeFile(path.join(projectDir, ".gitignore"), buildGitignore(), "utf8");
 	await normalizePackageJson(projectDir, resolvedPackageManager);
+	await normalizePackageManagerFiles(projectDir, resolvedPackageManager);
 	await removeUnexpectedLockfiles(projectDir, resolvedPackageManager);
 	await replaceTextRecursively(projectDir, resolvedPackageManager);
 
@@ -471,95 +434,7 @@ export async function scaffoldProject({
 	};
 }
 
-function parseLegacyArgs(argv) {
-	const parsed = {
-		yes: false,
-		noInstall: false,
-		help: false,
-		packageManager: undefined,
-	};
-
-	for (let index = 0; index < argv.length; index += 1) {
-		const arg = argv[index];
-
-		if (arg === "--yes" || arg === "-y") {
-			parsed.yes = true;
-			continue;
-		}
-		if (arg === "--no-install") {
-			parsed.noInstall = true;
-			continue;
-		}
-		if (arg === "--help" || arg === "-h") {
-			parsed.help = true;
-			continue;
-		}
-		if (arg === "--package-manager" || arg === "-p") {
-			parsed.packageManager = argv[index + 1];
-			index += 1;
-			continue;
-		}
-		if (arg.startsWith("--package-manager=")) {
-			parsed.packageManager = arg.split("=", 2)[1];
-			continue;
-		}
-		throw new Error(`Unknown flag: ${arg}`);
-	}
-
-	return parsed;
-}
-
 export async function runLegacyCli(templateId, argv = process.argv.slice(2)) {
-	const args = parseLegacyArgs(argv);
-	const isInteractive = Boolean(process.stdin.isTTY && process.stdout.isTTY);
-	if (args.help) {
-		console.log(
-			`Usage: wp-typia-${templateId} [--yes] [--no-install] [--package-manager <${PACKAGE_MANAGER_IDS.join("|")}>]`,
-		);
-		return;
-	}
-
-	const prompt = createReadlinePrompt();
-
-	try {
-		const packageManager = await resolvePackageManagerId({
-			packageManager: args.packageManager,
-			yes: args.yes,
-			isInteractive,
-			selectPackageManager: () =>
-				prompt.select("Choose a package manager:", getPackageManagerSelectOptions(), 1),
-		});
-
-		if (!args.yes && !isInteractive) {
-			throw new Error("Interactive answers require a TTY. Use --yes inside an existing directory.");
-		}
-
-		const projectDir = process.cwd();
-		const projectName = path.basename(projectDir);
-		const answers = await collectScaffoldAnswers({
-			projectName,
-			templateId,
-			yes: args.yes,
-			promptText: (message, defaultValue, validate) =>
-				prompt.text(message, defaultValue, validate),
-		});
-
-		const result = await scaffoldProject({
-			allowExistingDir: true,
-			answers,
-			noInstall: args.noInstall,
-			packageManager,
-			projectDir,
-			templateId,
-		});
-
-		console.log(`\n✅ Scaffolded ${result.variables.title} in the current directory`);
-		console.log("Next steps:");
-		if (args.noInstall) {
-			console.log(`  ${formatInstallCommand(packageManager)}`);
-		}
-		console.log(`  ${formatRunScript(packageManager, "start")}`);
-	} finally {
-		prompt.close();
-	}
+	const { runLegacyCli: runLegacyCliImpl } = await import("./cli-core.js");
+	return runLegacyCliImpl(templateId, argv);
 }

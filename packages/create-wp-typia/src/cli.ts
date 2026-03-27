@@ -1,37 +1,29 @@
 #!/usr/bin/env node
 
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
-import { access, constants as fsConstants, rm, writeFile } from "node:fs/promises";
-import { execFileSync, execSync } from "node:child_process";
-
+import { execSync } from "node:child_process";
 import { createCLI, defineCommand, defineGroup, option } from "@bunli/core";
 import { z } from "zod";
 
 import packageJson from "../package.json";
 import {
-	collectScaffoldAnswers,
-	resolvePackageManagerId,
-	resolveTemplateId,
-	scaffoldProject,
-} from "../lib/scaffold.js";
-import {
-	PACKAGE_MANAGER_IDS,
-	formatInstallCommand,
-	formatRunScript,
-	getPackageManager,
-	getPackageManagerSelectOptions,
-} from "../lib/package-managers.js";
-import {
-	TEMPLATE_IDS,
+	formatTemplateDetails,
+	formatTemplateFeatures,
+	formatTemplateSummary,
 	getTemplateById,
 	getTemplateSelectOptions,
 	listTemplates,
-} from "../lib/template-registry.js";
+	runDoctor,
+	runScaffoldFlow,
+} from "../lib/cli-core.js";
+import {
+	PACKAGE_MANAGER_IDS,
+	formatInstallCommand,
+	getPackageManager,
+	getPackageManagerSelectOptions,
+} from "../lib/package-managers.js";
+import { TEMPLATE_IDS } from "../lib/template-registry.js";
 
 const TOP_LEVEL_COMMANDS = new Set(["scaffold", "templates", "doctor"]);
-type TemplateRecord = ReturnType<typeof getTemplateById>;
 
 function normalizeRootArgv(argv: string[]) {
 	if (argv.length === 0) {
@@ -46,79 +38,11 @@ function normalizeRootArgv(argv: string[]) {
 	return ["scaffold", ...argv];
 }
 
-function formatTemplateSummary(template: TemplateRecord) {
-	return `${template.id.padEnd(14)} ${template.description}`;
-}
-
-async function collectInteractiveAnswers(prompt: any, projectName: string, templateId: string, yes: boolean) {
-	return collectScaffoldAnswers({
-		projectName,
-		templateId,
-		yes,
-		promptText: async (
-			message: string,
-			defaultValue: string,
-			validate?: (input: string) => boolean | string,
-		) =>
-			prompt.text(message, {
-				default: defaultValue,
-				validate: validate
-					? (value: string) => {
-						const result = validate(value);
-						return result === true ? true : result;
-					}
-					: undefined,
-			}),
-	});
-}
-
 async function runShellCommand(command: string, cwd: string) {
 	execSync(command, {
 		cwd,
 		stdio: "inherit",
 	});
-}
-
-function compareMajorVersion(actualVersion: string, minimumMajor: number) {
-	const parsed = Number.parseInt(actualVersion.replace(/^v/, "").split(".")[0] ?? "", 10);
-	return Number.isFinite(parsed) && parsed >= minimumMajor;
-}
-
-function readCommandVersion(command: string, args: string[] = ["--version"]) {
-	try {
-		return execFileSync(command, args, {
-			encoding: "utf8",
-			stdio: ["ignore", "pipe", "ignore"],
-		}).trim();
-	} catch {
-		return null;
-	}
-}
-
-async function checkWritableDirectory(directory: string) {
-	try {
-		await access(directory, fsConstants.W_OK);
-		return true;
-	} catch {
-		return false;
-	}
-}
-
-async function checkTempDirectory() {
-	const tempFile = path.join(os.tmpdir(), `create-wp-typia-${Date.now()}.tmp`);
-	try {
-		await writeFile(tempFile, "ok", "utf8");
-		await rm(tempFile, { force: true });
-		return true;
-	} catch {
-		return false;
-	}
-}
-
-function printDoctorResult(colors: any, status: "pass" | "warn" | "fail", label: string, detail: string) {
-	const icon =
-		status === "pass" ? colors.green("PASS") : status === "warn" ? colors.yellow("WARN") : colors.red("FAIL");
-	console.log(`${icon} ${label}: ${detail}`);
 }
 
 const scaffoldCommand = defineCommand({
@@ -142,71 +66,67 @@ const scaffoldCommand = defineCommand({
 		}),
 	},
 	handler: async ({ colors, cwd, flags, positional, prompt, spinner, terminal }) => {
-		const projectInput = positional[0];
-		if (!projectInput) {
-			throw new Error("Project directory is required. Usage: create-wp-typia <project-dir>");
-		}
-
-		const projectDir = path.resolve(cwd, projectInput);
-		const projectName = path.basename(projectDir);
-		const templateId = await resolveTemplateId({
-			templateId: flags.template,
-			yes: flags.yes,
-			isInteractive: terminal.isInteractive,
-			selectTemplate: () =>
-				prompt.select("Select a template", {
-					default: "basic",
-					options: getTemplateSelectOptions(),
-				}),
-		});
-		const packageManager = await resolvePackageManagerId({
-			packageManager: flags.packageManager as "bun" | "npm" | "pnpm" | "yarn" | undefined,
-			yes: flags.yes,
-			isInteractive: terminal.isInteractive,
-			selectPackageManager: () =>
-				prompt.select("Choose a package manager", {
-					default: "bun",
-					options: getPackageManagerSelectOptions(),
-				}),
-		});
-		const answers = await collectInteractiveAnswers(prompt, projectName, templateId, flags.yes);
-
-		const copySpinner = spinner({ text: `Scaffolding ${templateId} template...` });
-		copySpinner.start();
+		const copySpinner = spinner({ text: "Scaffolding template..." });
 
 		try {
-			const result = await scaffoldProject({
-				answers,
+			copySpinner.start();
+
+			const flow = await runScaffoldFlow({
+				cwd,
 				installDependencies: flags.noInstall
 					? undefined
-					: async ({ packageManager: selectedPackageManager, projectDir: targetDir }) => {
+					: async ({ packageManager, projectDir }) => {
 						const installSpinner = spinner({
-							text: `Installing dependencies with ${getPackageManager(selectedPackageManager).label}...`,
+							text: `Installing dependencies with ${getPackageManager(packageManager).label}...`,
 						});
 						installSpinner.start();
 
 						try {
-							await runShellCommand(formatInstallCommand(selectedPackageManager), targetDir);
+							await runShellCommand(formatInstallCommand(packageManager), projectDir);
 							installSpinner.succeed("Dependencies installed");
 						} catch (error) {
 							installSpinner.fail("Dependency installation failed");
 							throw error;
 						}
 					},
+				isInteractive: terminal.isInteractive,
 				noInstall: flags.noInstall,
-				packageManager,
-				projectDir,
-				templateId,
+				packageManager: flags.packageManager as "bun" | "npm" | "pnpm" | "yarn" | undefined,
+				projectInput: positional[0],
+				promptText: async (
+					message: string,
+					defaultValue: string,
+					validate?: (input: string) => boolean | string,
+				) =>
+					prompt.text(message, {
+						default: defaultValue,
+						validate: validate
+							? (value: string) => {
+								const result = validate(value);
+								return result === true ? true : result;
+							}
+							: undefined,
+					}),
+				selectPackageManager: () =>
+					prompt.select("Choose a package manager", {
+						default: "bun",
+						options: getPackageManagerSelectOptions(),
+					}),
+				selectTemplate: () =>
+					prompt.select("Select a template", {
+						default: "basic",
+						options: getTemplateSelectOptions(),
+					}),
+				templateId: flags.template,
+				yes: flags.yes,
 			});
-			copySpinner.succeed(`Created ${result.variables.title}`);
 
-			console.log(`\n${colors.green("✓")} Project ready in ${projectDir}`);
+			copySpinner.succeed(`Created ${flow.result.variables.title}`);
+			console.log(`\n${colors.green("✓")} Project ready in ${flow.projectDir}`);
 			console.log("Next steps:");
-			console.log(`  cd ${path.isAbsolute(projectInput) ? projectDir : projectInput}`);
-			if (flags.noInstall) {
-				console.log(`  ${formatInstallCommand(packageManager)}`);
+			for (const step of flow.nextSteps) {
+				console.log(`  ${step}`);
 			}
-			console.log(`  ${formatRunScript(packageManager, "start")}`);
 		} catch (error) {
 			copySpinner.fail("Scaffolding failed");
 			throw error;
@@ -225,7 +145,7 @@ const templatesGroup = defineGroup({
 				console.log(colors.bold("Available templates:\n"));
 				for (const template of listTemplates()) {
 					console.log(formatTemplateSummary(template));
-					console.log(`  ${colors.dim(template.features.join(" • "))}`);
+					console.log(colors.dim(formatTemplateFeatures(template)));
 				}
 			},
 		}),
@@ -238,12 +158,11 @@ const templatesGroup = defineGroup({
 					throw new Error(`Template ID is required. Use one of: ${TEMPLATE_IDS.join(", ")}`);
 				}
 
-				const template = getTemplateById(templateId);
-				console.log(colors.bold(template.id));
-				console.log(template.description);
-				console.log(`Category: ${template.defaultCategory}`);
-				console.log(`Path: ${template.templateDir}`);
-				console.log(`Features: ${template.features.join(", ")}`);
+				const [heading, ...details] = formatTemplateDetails(getTemplateById(templateId)).split("\n");
+				console.log(colors.bold(heading));
+				for (const line of details) {
+					console.log(line);
+				}
 			},
 		}),
 	],
@@ -253,59 +172,17 @@ const doctorCommand = defineCommand({
 	name: "doctor",
 	description: "Check local CLI prerequisites",
 	handler: async ({ colors, cwd }) => {
-		const bunVersion = readCommandVersion("bun");
-		const nodeVersion = readCommandVersion("node");
-		const gitVersion = readCommandVersion("git");
-		const cwdWritable = await checkWritableDirectory(cwd);
-		const tempWritable = await checkTempDirectory();
-		let hasFailures = false;
-
-		printDoctorResult(
-			colors,
-			bunVersion && compareMajorVersion(bunVersion, 1) ? "pass" : "fail",
-			"Bun",
-			bunVersion ? `Detected ${bunVersion}` : "Not available",
-		);
-		hasFailures ||= !(bunVersion && compareMajorVersion(bunVersion, 1));
-
-		printDoctorResult(
-			colors,
-			nodeVersion && compareMajorVersion(nodeVersion, 16) ? "pass" : "fail",
-			"Node",
-			nodeVersion ? `Detected ${nodeVersion}` : "Not available",
-		);
-		hasFailures ||= !(nodeVersion && compareMajorVersion(nodeVersion, 16));
-
-		printDoctorResult(
-			colors,
-			gitVersion ? "pass" : "fail",
-			"git",
-			gitVersion ?? "Not available",
-		);
-		hasFailures ||= !gitVersion;
-
-		printDoctorResult(colors, cwdWritable ? "pass" : "fail", "Current directory", cwdWritable ? "Writable" : "Not writable");
-		hasFailures ||= !cwdWritable;
-
-		printDoctorResult(colors, tempWritable ? "pass" : "fail", "Temp directory", tempWritable ? "Writable" : "Not writable");
-		hasFailures ||= !tempWritable;
-
-		for (const template of listTemplates()) {
-			const hasAssets =
-				fs.existsSync(template.templateDir) &&
-				fs.existsSync(path.join(template.templateDir, "package.json.mustache"));
-			printDoctorResult(
-				colors,
-				hasAssets ? "pass" : "fail",
-				`Template ${template.id}`,
-				hasAssets ? template.templateDir : "Missing core template assets",
-			);
-			hasFailures ||= !hasAssets;
-		}
-
-		if (hasFailures) {
-			throw new Error("Doctor found one or more failing checks.");
-		}
+		await runDoctor(cwd, {
+			renderLine: ({ status, label, detail }) => {
+				const icon =
+					status === "pass"
+						? colors.green("PASS")
+						: status === "fail"
+							? colors.red("FAIL")
+							: colors.yellow("WARN");
+				console.log(`${icon} ${label}: ${detail}`);
+			},
+		});
 	},
 });
 
