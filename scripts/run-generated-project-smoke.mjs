@@ -196,7 +196,15 @@ function main() {
 		ensureCorepackPackageManager(packageManager);
 
 		const [installCommand, installArgs] = getInstallCommand(packageManager);
-		run(installCommand, installArgs, { cwd: projectDir });
+		run(installCommand, installArgs, {
+			cwd: projectDir,
+			env: {
+				...process.env,
+				...(packageManager === "yarn"
+					? { YARN_ENABLE_IMMUTABLE_INSTALLS: "false" }
+					: {}),
+			},
+		});
 
 		if (template === "advanced") {
 			for (const [scriptName, args] of [

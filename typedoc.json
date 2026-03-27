@@ -22,7 +22,7 @@
   "kindSortOrder": [
     "Class",
     "Interface",
-    "Type alias",
+    "TypeAlias",
     "Variable",
     "Function",
     "Enum",

@@ -28,9 +28,9 @@
     "version": "changeset version",
     "docs:dev": "typedoc --watch",
     "docs:build": "typedoc",
-    "wp-env:start": "wp-env start",
-    "wp-env:stop": "wp-env stop",
-    "wp-env:reset": "wp-env destroy all && wp-env start"
+    "wp-env:start": "bunx --package @wordpress/env wp-env start",
+    "wp-env:stop": "bunx --package @wordpress/env wp-env stop",
+    "wp-env:reset": "bunx --package @wordpress/env wp-env destroy all && bunx --package @wordpress/env wp-env start"
   },
   "keywords": [
     "wordpress",
