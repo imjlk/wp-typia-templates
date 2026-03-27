@@ -44,7 +44,7 @@
   "license": "GPL-2.0-or-later",
   "repository": {
     "type": "git",
-    "url": "https://github.com/imjlk/wp-typia-templates.git"
+    "url": "git+https://github.com/imjlk/wp-typia-templates.git"
   },
   "bugs": {
     "url": "https://github.com/imjlk/wp-typia-templates/issues"
