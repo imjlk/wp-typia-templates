@@ -1,450 +1,186 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Notice, Card, CardBody, Flex, FlexItem, ProgressBar } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
-import { scanSiteForMigrations, generateMigrationReport, BlockScanResult } from '../migration-detector';
-import { autoMigrate } from '../migrations';
+import { useState } from "@wordpress/element";
+import { Button, Card, CardBody, Notice, Spinner } from "@wordpress/components";
+import { __ } from "@wordpress/i18n";
 
-/**
- * WordPress Admin Dashboard for {{title}} Migration Management
- */
+import {
+	type BlockScanResult,
+	batchMigrateScanResults,
+	generateMigrationReport,
+	scanSiteForMigrations,
+} from "../migration-detector";
 
 interface MigrationStats {
-	total: number;
 	needsMigration: number;
-	hasWarnings: number;
-	byVersion: Record<string, number>;
+	total: number;
+	unknown: number;
+	versions: Record<string, number>;
+}
+
+function collectStats(results: BlockScanResult[]): MigrationStats {
+	return results.reduce<MigrationStats>(
+		(accumulator, result) => {
+			accumulator.total += 1;
+			if (result.analysis.needsMigration) {
+				accumulator.needsMigration += 1;
+			}
+			if (result.analysis.currentVersion === "unknown") {
+				accumulator.unknown += 1;
+			}
+			accumulator.versions[result.analysis.currentVersion] =
+				(accumulator.versions[result.analysis.currentVersion] ?? 0) + 1;
+			return accumulator;
+		},
+		{
+			needsMigration: 0,
+			total: 0,
+			unknown: 0,
+			versions: {},
+		},
+	);
 }
 
 export function MigrationDashboard() {
-	const [scanResults, setScanResults] = useState<BlockScanResult[]>([]);
+	const [results, setResults] = useState<BlockScanResult[]>([]);
 	const [isScanning, setIsScanning] = useState(false);
 	const [isMigrating, setIsMigrating] = useState(false);
-	const [stats, setStats] = useState<MigrationStats | null>(null);
-	const [lastScan, setLastScan] = useState<Date | null>(null);
+	const [dryRunSummary, setDryRunSummary] = useState<string | null>(null);
+	const [error, setError] = useState<string | null>(null);
 
-	const runSiteScan = async () => {
+	const stats = collectStats(results);
+
+	const runScan = async () => {
 		setIsScanning(true);
+		setError(null);
+
 		try {
-			const results = await scanSiteForMigrations('{{namespace}}/{{slug}}');
-			setScanResults(results);
-			setLastScan(new Date());
-			
-			// Calculate stats
-			const stats: MigrationStats = {
-				total: results.length,
-				needsMigration: results.filter(r => r.analysis.needsMigration).length,
-				hasWarnings: results.filter(r => r.analysis.warnings.length > 0).length,
-				byVersion: {}
-			};
-
-			results.forEach(r => {
-				const version = r.analysis.currentVersion;
-				stats.byVersion[version] = (stats.byVersion[version] || 0) + 1;
-			});
-
-			setStats(stats);
-
-			// Show admin notice
-			if (stats.needsMigration > 0) {
-				wp.data.dispatch('core/notices').createWarningNotice(
-					`Found ${stats.needsMigration} {{title}} blocks that need migration`,
-					{
-						type: 'snackbar',
-						actions: [
-							{
-								label: 'View Details',
-								onClick: () => {
-									// Focus migration section
-									document.getElementById('migration-results')?.scrollIntoView();
-								}
-							}
-						]
-					}
-				);
-			}
-
-		} catch (error) {
-			console.error('Site scan failed:', error);
-			wp.data.dispatch('core/notices').createErrorNotice(
-				`Scan failed: ${error.message}`,
-				{ type: 'snackbar' }
-			);
+			setResults(await scanSiteForMigrations());
+		} catch (scanError) {
+			setError(scanError instanceof Error ? scanError.message : String(scanError));
 		} finally {
 			setIsScanning(false);
 		}
 	};
 
-	const runMigration = async (blockResult: BlockScanResult) => {
+	const runDryRun = async () => {
+		setError(null);
+
 		try {
-			const migrationResult = autoMigrate(blockResult.attributes);
-			const migrated = migrationResult.data;
-			
-			// Here you would save the migrated attributes back to WordPress
-			// Implementation depends on whether this is in admin or REST API
-			console.log('Migrated block:', migrated);
-			
-			wp.data.dispatch('core/notices').createSuccessNotice(
-				`Block in "${blockResult.postTitle}" migrated successfully`,
-				{ type: 'snackbar' }
+			const batchResult = await batchMigrateScanResults(results, { dryRun: true });
+			setDryRunSummary(
+				`${batchResult.successful} post(s) can be migrated, ${batchResult.failed} post(s) currently fail migration.`,
 			);
-
-			// Refresh scan results
-			await runSiteScan();
-
-		} catch (error) {
-			console.error('Migration failed:', error);
-			wp.data.dispatch('core/notices').createErrorNotice(
-				`Migration failed: ${error.message}`,
-				{ type: 'snackbar' }
-			);
+		} catch (batchError) {
+			setError(batchError instanceof Error ? batchError.message : String(batchError));
 		}
 	};
 
-	const batchMigrate = async () => {
-		setIsMigrating(true);
-		const needsMigration = scanResults.filter(r => r.analysis.needsMigration);
-		let success = 0;
-		let failed = 0;
-
-		for (const blockResult of needsMigration) {
-			try {
-				await runMigration(blockResult);
-				success++;
-			} catch (error) {
-				failed++;
-			}
+	const runBatchMigration = async () => {
+		if (!window.confirm(__("Migrate all detected legacy blocks now?", "{{textdomain}}"))) {
+			return;
 		}
 
-		wp.data.dispatch('core/notices').createInfoNotice(
-			`Batch migration complete: ${success} success, ${failed} failed`,
-			{ type: 'snackbar' }
-		);
+		setIsMigrating(true);
+		setError(null);
 
-		setIsMigrating(false);
+		try {
+			await batchMigrateScanResults(results, { dryRun: false });
+			await runScan();
+		} catch (batchError) {
+			setError(batchError instanceof Error ? batchError.message : String(batchError));
+		} finally {
+			setIsMigrating(false);
+		}
 	};
 
 	const downloadReport = () => {
-		const report = generateMigrationReport(scanResults);
-		const blob = new Blob([report], { type: 'text/markdown' });
+		const report = generateMigrationReport(results);
+		const blob = new Blob([report], { type: "text/markdown" });
 		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = `{{slug}}-migration-report-${new Date().toISOString().split('T')[0]}.md`;
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = "{{slug}}-migration-report.md";
+		link.click();
 		URL.revokeObjectURL(url);
 	};
 
-	// Auto-scan on component mount
-	useEffect(() => {
-		runSiteScan();
-	}, []);
-
 	return (
 		<div className="{{slug}}-migration-dashboard">
-			<div className="wrap">
-				<h1>{__('{{title}} Migration Manager', '{{textdomain}}')}</h1>
-				
-				{/* Scan Controls */}
-				<Card>
-					<CardBody>
-						<Flex justify="space-between" align="center">
-							<FlexItem>
-								<h2>{__('Site Scan', '{{textdomain}}')}</h2>
-								{lastScan && (
-									<p className="description">
-										{__('Last scan:', '{{textdomain}}')} {lastScan.toLocaleString()}
-									</p>
-								)}
-							</FlexItem>
-							<FlexItem>
-								<Flex gap={2}>
-									<Button
-										variant="secondary"
-										onClick={runSiteScan}
-										isBusy={isScanning}
-										disabled={isScanning}
-									>
-										{isScanning ? __('Scanning...', '{{textdomain}}') : __('Scan Site', '{{textdomain}}')}
-									</Button>
-									{scanResults.length > 0 && (
-										<Button
-											variant="secondary"
-											onClick={downloadReport}
-										>
-											{__('Download Report', '{{textdomain}}')}
-										</Button>
-									)}
-								</Flex>
-							</FlexItem>
-						</Flex>
-					</CardBody>
-				</Card>
+			<Card>
+				<CardBody>
+					<div style={{ display: "grid", gap: "12px" }}>
+						<div>
+							<strong>{__("Migration Manager", "{{textdomain}}")}</strong>
+							<p style={{ margin: "4px 0 0" }}>
+								{__("Scan posts for legacy attributes, preview changes, and batch migrate to the current Typia contract.", "{{textdomain}}")}
+							</p>
+						</div>
 
-				{/* Statistics */}
-				{stats && (
-					<Card>
-						<CardBody>
-							<h2>{__('Migration Status', '{{textdomain}}')}</h2>
-							<Flex wrap gap={4}>
-								<FlexItem>
-									<div className="migration-stat">
-										<div className="stat-number">{stats.total}</div>
-										<div className="stat-label">{__('Total Blocks', '{{textdomain}}')}</div>
-									</div>
-								</FlexItem>
-								<FlexItem>
-									<div className="migration-stat migration-needed">
-										<div className="stat-number">{stats.needsMigration}</div>
-										<div className="stat-label">{__('Need Migration', '{{textdomain}}')}</div>
-									</div>
-								</FlexItem>
-								<FlexItem>
-									<div className="migration-stat has-warnings">
-										<div className="stat-number">{stats.hasWarnings}</div>
-										<div className="stat-label">{__('Has Warnings', '{{textdomain}}')}</div>
-									</div>
-								</FlexItem>
-							</Flex>
+						<div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+							<Button variant="secondary" onClick={runScan} disabled={isScanning}>
+								{isScanning ? __("Scanning…", "{{textdomain}}") : __("Scan site", "{{textdomain}}")}
+							</Button>
+							<Button variant="secondary" onClick={runDryRun} disabled={results.length === 0 || isScanning || isMigrating}>
+								{__("Dry run", "{{textdomain}}")}
+							</Button>
+							<Button variant="primary" onClick={runBatchMigration} disabled={stats.needsMigration === 0 || isScanning || isMigrating}>
+								{isMigrating ? __("Migrating…", "{{textdomain}}") : __("Migrate all", "{{textdomain}}")}
+							</Button>
+							<Button variant="tertiary" onClick={downloadReport} disabled={results.length === 0}>
+								{__("Download report", "{{textdomain}}")}
+							</Button>
+						</div>
 
-							{/* Version breakdown */}
-							{Object.keys(stats.byVersion).length > 0 && (
-								<div className="version-breakdown">
-									<h3>{__('Version Distribution', '{{textdomain}}')}</h3>
-									{Object.entries(stats.byVersion).map(([version, count]) => (
-										<div key={version} className="version-bar">
-											<span className="version-label">v{version}</span>
-											<ProgressBar value={count} max={stats.total} />
-											<span className="version-count">{count}</span>
-										</div>
-									))}
-								</div>
-							)}
-						</CardBody>
-					</Card>
-				)}
+						{(isScanning || isMigrating) && <Spinner />}
 
-				{/* Migration Actions */}
-				{stats && stats.needsMigration > 0 && (
-					<Card>
-						<CardBody>
-							<Flex justify="space-between" align="center">
-								<FlexItem>
-									<h2>{__('Migration Actions', '{{textdomain}}')}</h2>
-									<p>
-										{__('Found {{needsMigration}} blocks that need migration to the latest version.', '{{textdomain}}')
-											.replace('{{needsMigration}}', stats.needsMigration.toString())}
-									</p>
-								</FlexItem>
-								<FlexItem>
-									<Button
-										variant="primary"
-										onClick={batchMigrate}
-										isBusy={isMigrating}
-										disabled={isMigrating}
-									>
-										{isMigrating 
-											? __('Migrating...', '{{textdomain}}')
-											: __(`Migrate All (${stats.needsMigration})`, '{{textdomain}}')
-										}
-									</Button>
-								</FlexItem>
-							</Flex>
-						</CardBody>
-					</Card>
-				)}
-
-				{/* Results Table */}
-				{scanResults.length > 0 && (
-					<Card id="migration-results">
-						<CardBody>
-							<h2>{__('Scan Results', '{{textdomain}}')}</h2>
-							<div className="migration-results-table">
-								{scanResults.map((result, index) => (
-									<div key={index} className="migration-result-row">
-										<div className="result-header">
-											<h4>"{result.postTitle}" <span className="post-id">(#{result.postId})</span></h4>
-											<div className="result-meta">
-												<span className={`version-badge version-${result.analysis.currentVersion.replace(/\./g, '-')}`}>
-													v{result.analysis.currentVersion}
-												</span>
-												<span className="confidence">
-													{(result.analysis.confidence * 100).toFixed(0)}% confidence
-												</span>
-											</div>
-										</div>
-
-										{result.analysis.needsMigration && (
-											<Notice status="warning" isDismissible={false}>
-												<strong>{__('Migration Required', '{{textdomain}}')}</strong>
-												<ul>
-													{result.analysis.reasons.map((reason, i) => (
-														<li key={i}>{reason}</li>
-													))}
-												</ul>
-												<Button
-													variant="secondary"
-													size="small"
-													onClick={() => runMigration(result)}
-												>
-													{__('Migrate This Block', '{{textdomain}}')}
-												</Button>
-											</Notice>
-										)}
-
-										{result.analysis.warnings.length > 0 && (
-											<Notice status="info" isDismissible={false}>
-												<strong>{__('Warnings', '{{textdomain}}')}</strong>
-												<ul>
-													{result.analysis.warnings.map((warning, i) => (
-														<li key={i}>{warning}</li>
-													))}
-												</ul>
-											</Notice>
-										)}
-
-										{result.analysis.affectedFields.added.length > 0 && (
-											<div className="affected-fields">
-												<strong>{__('New fields to be added:', '{{textdomain}}')}</strong> {' '}
-												{result.analysis.affectedFields.added.join(', ')}
-											</div>
-										)}
-									</div>
-								))}
-							</div>
-						</CardBody>
-					</Card>
-				)}
-
-				{/* No Results */}
-				{!isScanning && scanResults.length === 0 && lastScan && (
-					<Card>
-						<CardBody>
-							<Notice status="success" isDismissible={false}>
-								<p>{__('🎉 No {{title}} blocks found that need migration. All blocks are up to date!', '{{textdomain}}')}</p>
+						{error && (
+							<Notice status="error" isDismissible={false}>
+								{error}
 							</Notice>
-						</CardBody>
-					</Card>
-				)}
-			</div>
+						)}
 
-			<style jsx>{`
-				.{{slug}}-migration-dashboard {
-					margin: 20px 0;
-				}
+						{dryRunSummary && (
+							<Notice status="info" isDismissible onRemove={() => setDryRunSummary(null)}>
+								{dryRunSummary}
+							</Notice>
+						)}
 
-				.migration-stat {
-					text-align: center;
-					padding: 15px;
-					border: 1px solid #ddd;
-					border-radius: 4px;
-					min-width: 120px;
-				}
+						{results.length > 0 && (
+							<div style={{ display: "grid", gap: "8px" }}>
+								<div>
+									<strong>{__("Summary", "{{textdomain}}")}</strong>
+									<ul style={{ margin: "8px 0 0", paddingLeft: "20px" }}>
+										<li>{__("Detected blocks", "{{textdomain}}")}: {stats.total}</li>
+										<li>{__("Need migration", "{{textdomain}}")}: {stats.needsMigration}</li>
+										<li>{__("Unknown shape", "{{textdomain}}")}: {stats.unknown}</li>
+									</ul>
+								</div>
 
-				.migration-stat.migration-needed {
-					border-color: #f56565;
-					background: #fef5e7;
-				}
+								<div>
+									<strong>{__("Version distribution", "{{textdomain}}")}</strong>
+									<ul style={{ margin: "8px 0 0", paddingLeft: "20px" }}>
+										{Object.entries(stats.versions).map(([version, count]) => (
+											<li key={version}>
+												{version}: {count}
+											</li>
+										))}
+									</ul>
+								</div>
 
-				.migration-stat.has-warnings {
-					border-color: #ed8936;
-					background: #fffaf0;
-				}
-
-				.stat-number {
-					font-size: 24px;
-					font-weight: bold;
-				}
-
-				.stat-label {
-					font-size: 12px;
-					color: #666;
-				}
-
-				.version-breakdown {
-					margin-top: 20px;
-				}
-
-				.version-bar {
-					display: flex;
-					align-items: center;
-					gap: 10px;
-					margin: 5px 0;
-				}
-
-				.version-label {
-					min-width: 60px;
-					font-family: monospace;
-				}
-
-				.version-count {
-					min-width: 30px;
-					text-align: right;
-				}
-
-				.migration-result-row {
-					border: 1px solid #ddd;
-					border-radius: 4px;
-					padding: 15px;
-					margin: 10px 0;
-				}
-
-				.result-header {
-					display: flex;
-					justify-content: space-between;
-					align-items: center;
-					margin-bottom: 10px;
-				}
-
-				.result-header h4 {
-					margin: 0;
-				}
-
-				.post-id {
-					color: #666;
-					font-weight: normal;
-				}
-
-				.result-meta {
-					display: flex;
-					gap: 10px;
-					align-items: center;
-				}
-
-				.version-badge {
-					background: #e2e8f0;
-					color: #2d3748;
-					padding: 2px 8px;
-					border-radius: 12px;
-					font-size: 11px;
-					font-weight: bold;
-				}
-
-				.version-badge.version-1-0-0 {
-					background: #fed7d7;
-					color: #c53030;
-				}
-
-				.version-badge.version-2-0-0 {
-					background: #feebc8;
-					color: #dd6b20;
-				}
-
-				.confidence {
-					font-size: 12px;
-					color: #666;
-				}
-
-				.affected-fields {
-					font-size: 13px;
-					color: #2d3748;
-					margin-top: 10px;
-					padding: 8px;
-					background: #f7fafc;
-					border-left: 3px solid #4299e1;
-				}
-			`}</style>
+								<div>
+									<strong>{__("Latest results", "{{textdomain}}")}</strong>
+									<ul style={{ margin: "8px 0 0", paddingLeft: "20px" }}>
+										{results.slice(0, 5).map((result) => (
+											<li key={`${result.postId}:${result.blockPath.join(".")}`}>
+												{result.postTitle} — {result.analysis.currentVersion} → {result.analysis.targetVersion}
+											</li>
+										))}
+									</ul>
+								</div>
+							</div>
+						)}
+					</div>
+				</CardBody>
+			</Card>
 		</div>
 	);
 }

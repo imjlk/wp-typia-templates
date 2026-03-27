@@ -15,6 +15,7 @@ import {
 	runDoctor,
 	runScaffoldFlow,
 } from "../lib/cli-core.js";
+import { runMigrationCommand } from "../lib/migrations.js";
 import {
 	PACKAGE_MANAGER_IDS,
 	formatInstallCommand,
@@ -23,7 +24,8 @@ import {
 } from "../lib/package-managers.js";
 import { TEMPLATE_IDS } from "../lib/template-registry.js";
 
-const TOP_LEVEL_COMMANDS = new Set(["scaffold", "templates", "doctor"]);
+const SEMVER = z.string().regex(/^\d+\.\d+\.\d+$/, "Expected x.y.z semver");
+const TOP_LEVEL_COMMANDS = new Set(["scaffold", "templates", "doctor", "migrations"]);
 
 function normalizeRootArgv(argv: string[]) {
 	if (argv.length === 0) {
@@ -186,6 +188,147 @@ const doctorCommand = defineCommand({
 	},
 });
 
+const migrationsGroup = defineGroup({
+	name: "migrations",
+	description: "Author and verify advanced template migrations",
+	commands: [
+		defineCommand({
+			name: "init",
+			description: "Initialize snapshot-based migrations in an advanced project",
+			options: {
+				currentVersion: option(SEMVER, {
+					description: "Current schema version to initialize",
+				}),
+			},
+			handler: async ({ cwd, flags }) => {
+				await runMigrationCommand(
+					{
+						command: "init",
+						flags: {
+							all: false,
+							currentVersion: flags.currentVersion,
+							from: undefined,
+							to: "current",
+							version: undefined,
+						},
+					},
+					cwd,
+					{ renderLine: console.log },
+				);
+			},
+		}),
+		defineCommand({
+			name: "snapshot",
+			description: "Snapshot current block contract and save output",
+			options: {
+				version: option(SEMVER, {
+					description: "Version to snapshot",
+				}),
+			},
+			handler: async ({ cwd, flags }) => {
+				await runMigrationCommand(
+					{
+						command: "snapshot",
+						flags: {
+							all: false,
+							currentVersion: undefined,
+							from: undefined,
+							to: "current",
+							version: flags.version,
+						},
+					},
+					cwd,
+					{ renderLine: console.log },
+				);
+			},
+		}),
+		defineCommand({
+			name: "diff",
+			description: "Show manifest diff from a legacy snapshot to current",
+			options: {
+				from: option(SEMVER, {
+					description: "Legacy version to compare from",
+				}),
+				to: option(z.string().default("current"), {
+					description: "Target version or current",
+				}),
+			},
+			handler: async ({ cwd, flags }) => {
+				await runMigrationCommand(
+					{
+						command: "diff",
+						flags: {
+							all: false,
+							currentVersion: undefined,
+							from: flags.from,
+							to: flags.to,
+							version: undefined,
+						},
+					},
+					cwd,
+					{ renderLine: console.log },
+				);
+			},
+		}),
+		defineCommand({
+			name: "scaffold",
+			description: "Scaffold a direct legacy-to-current migration rule",
+			options: {
+				from: option(SEMVER, {
+					description: "Legacy version to scaffold from",
+				}),
+				to: option(z.string().default("current"), {
+					description: "Target version or current",
+				}),
+			},
+			handler: async ({ cwd, flags }) => {
+				await runMigrationCommand(
+					{
+						command: "scaffold",
+						flags: {
+							all: false,
+							currentVersion: undefined,
+							from: flags.from,
+							to: flags.to,
+							version: undefined,
+						},
+					},
+					cwd,
+					{ renderLine: console.log },
+				);
+			},
+		}),
+		defineCommand({
+			name: "verify",
+			description: "Run generated migration verification against fixtures",
+			options: {
+				all: option(z.coerce.boolean().default(false), {
+					description: "Verify all supported legacy versions",
+				}),
+				from: option(SEMVER.optional(), {
+					description: "Verify a specific legacy version",
+				}),
+			},
+			handler: async ({ cwd, flags }) => {
+				await runMigrationCommand(
+					{
+						command: "verify",
+						flags: {
+							all: flags.all,
+							currentVersion: undefined,
+							from: flags.from,
+							to: "current",
+							version: undefined,
+						},
+					},
+					cwd,
+					{ renderLine: console.log },
+				);
+			},
+		}),
+	],
+});
+
 async function main() {
 	const cli = await createCLI({
 		description: packageJson.description,
@@ -196,6 +339,7 @@ async function main() {
 	cli.command(scaffoldCommand);
 	cli.command(templatesGroup);
 	cli.command(doctorCommand);
+	cli.command(migrationsGroup);
 
 	await cli.run(normalizeRootArgv(process.argv.slice(2)));
 }

@@ -6,6 +6,7 @@ import { {{titleCase}}Attributes } from './types';
 import { validators } from './validators';
 import { useTypiaValidation, useAttributeLogger, useDebounce } from './hooks';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { MigrationDashboard } from './admin/migration-dashboard';
 import { classNames } from './utils';
 
 type EditProps = BlockEditProps<{{titleCase}}Attributes>;
@@ -64,6 +65,9 @@ export default function Edit({ attributes, setAttributes }: EditProps) {
 							</ul>
 						</div>
 					)}
+				</PanelBody>
+				<PanelBody title={__('Migration Manager', '{{textdomain}}')} initialOpen={false}>
+					<MigrationDashboard />
 				</PanelBody>
 			</InspectorControls>
 

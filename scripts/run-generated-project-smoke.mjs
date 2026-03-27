@@ -71,6 +71,21 @@ function getRunCommand(packageManager) {
 	}
 }
 
+function getRunScriptCommand(packageManager, scriptName, extraArgs = []) {
+	const scriptArgs = extraArgs.length > 0 ? [scriptName, "--", ...extraArgs] : [scriptName];
+
+	switch (packageManager) {
+		case "bun":
+			return ["bun", ["run", ...scriptArgs]];
+		case "npm":
+			return ["npm", ["run", ...scriptArgs]];
+		case "pnpm":
+			return ["corepack", ["pnpm", "run", ...scriptArgs]];
+		default:
+			return ["corepack", ["yarn", "run", ...scriptArgs]];
+	}
+}
+
 function getInstallCommand(packageManager) {
 	switch (packageManager) {
 		case "bun":
@@ -108,6 +123,40 @@ function assertBuildArtifacts(projectDir, projectName) {
 	}
 }
 
+function assertAdvancedMigrationArtifacts(projectDir) {
+	const requiredFiles = [
+		path.join(projectDir, "src", "migrations", "config.ts"),
+		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"),
+		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"),
+		path.join(projectDir, "src", "migrations", "generated", "registry.ts"),
+		path.join(projectDir, "src", "migrations", "generated", "deprecated.ts"),
+		path.join(projectDir, "src", "migrations", "generated", "verify.ts"),
+		path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-1.0.0.ts"),
+		path.join(projectDir, "src", "migrations", "fixtures", "1.0.0.json"),
+	];
+
+	for (const filePath of requiredFiles) {
+		if (!fs.existsSync(filePath)) {
+			throw new Error(`Expected advanced migration artifact at ${filePath}`);
+		}
+	}
+}
+
+function rewriteAdvancedMigrationDependency(projectDir) {
+	const packageJsonPath = path.join(projectDir, "package.json");
+	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+	const localDependency = `file:${path.resolve(__dirname, "../packages/create-wp-typia")}`;
+
+	if (packageJson.devDependencies?.["create-wp-typia"]) {
+		packageJson.devDependencies["create-wp-typia"] = localDependency;
+	}
+	if (packageJson.dependencies?.["create-wp-typia"]) {
+		packageJson.dependencies["create-wp-typia"] = localDependency;
+	}
+
+	fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
+}
+
 function main() {
 	const { runtime, template, packageManager, projectName } = parseArgs(process.argv.slice(2));
 
@@ -140,10 +189,28 @@ function main() {
 			);
 		}
 
+		if (template === "advanced") {
+			rewriteAdvancedMigrationDependency(projectDir);
+		}
+
 		ensureCorepackPackageManager(packageManager);
 
 		const [installCommand, installArgs] = getInstallCommand(packageManager);
 		run(installCommand, installArgs, { cwd: projectDir });
+
+		if (template === "advanced") {
+			for (const [scriptName, args] of [
+				["migration:init", []],
+				["migration:snapshot", ["--version", "1.0.0"]],
+				["migration:scaffold", ["--from", "1.0.0"]],
+				["migration:verify", ["--all"]],
+			]) {
+				const [command, commandArgs] = getRunScriptCommand(packageManager, scriptName, args);
+				run(command, commandArgs, { cwd: projectDir });
+			}
+
+			assertAdvancedMigrationArtifacts(projectDir);
+		}
 
 		const [buildCommand, buildArgs] = getRunCommand(packageManager);
 		run(buildCommand, buildArgs, { cwd: projectDir });

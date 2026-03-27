@@ -79,10 +79,11 @@ describe("create-wp-typia scaffolding", () => {
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 
 		expect(packageJson.packageManager).toBe("pnpm@8.3.1");
-		expect(packageJson.scripts.build).toBe(
-			"pnpm run sync-types && pnpm run generate-migrations && wp-scripts build",
+		expect(packageJson.scripts.build).toBe("pnpm run sync-types && wp-scripts build");
+		expect(packageJson.scripts["migration:init"]).toBe(
+			"create-wp-typia migrations init --current-version 1.0.0",
 		);
-		expect(packageJson.scripts["migration:detect"]).toBe("pnpm run migration -- detect");
+		expect(packageJson.scripts["migration:scaffold"]).toBe("create-wp-typia migrations scaffold");
 	});
 
 	test("node entry exposes templates and doctor commands", () => {

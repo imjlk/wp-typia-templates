@@ -27,6 +27,10 @@ Additional commands:
 ```bash
 create-wp-typia templates list
 create-wp-typia templates inspect basic
+create-wp-typia migrations init --current-version 1.0.0
+create-wp-typia migrations diff --from 1.0.0
+create-wp-typia migrations scaffold --from 1.0.0
+create-wp-typia migrations verify --all
 create-wp-typia doctor
 ```
 

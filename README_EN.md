@@ -114,7 +114,7 @@ Leverage WordPress's latest Interactivity API:
 For production applications with versioning needs:
 
 - ✅ All Full features
-- 🚀 **Automatic Migration Generation**
+- 🚀 **Snapshot-Based Migration Scaffolding**
 - 🔄 **Version Management System**
 - 🛠️ **WordPress Deprecated Integration**
 - 📊 **Migration Analytics**
@@ -251,29 +251,21 @@ const { state, actions } = store('my-plugin/my-block', {
 
 ### Migration System (Advanced Template)
 
-```typescript
-// src/migrations/index.ts
-import typia from "typia";
-import { MyBlockAttributesV1, MyBlockAttributes } from "../types/versions";
+```bash
+# Bootstrap the first schema snapshot
+bun run migration:init
 
-// Define migration
-export const migrateV1ToV2 = typia.createMisc<MyBlockAttributesV1, MyBlockAttributes>({
-  transform: (old) => ({
-    ...old,
-    // Add new field with default
-    isVisible: old.isVisible ?? true,
-    // Transform existing field
-    title: old.title.toUpperCase(),
-  }),
-});
+# Capture another released schema version later on
+bun run migration:snapshot -- --version 1.0.0
 
-// Auto-detect required migrations
-import { detectBlockMigration } from '../migration-detector';
+# Inspect manifest differences against the current schema
+bun run migration:diff -- --from 1.0.0
 
-const analysis = detectBlockMigration(oldAttributes);
-if (analysis.needsMigration) {
-  console.log(`Migrating from ${analysis.currentVersion} to ${analysis.targetVersion}`);
-}
+# Scaffold deprecated + migrate wiring for the edge
+bun run migration:scaffold -- --from 1.0.0
+
+# Verify fixtures against the current validator
+bun run migration:verify
 ```
 
 ## 🛠️ Available Scripts
@@ -309,9 +301,11 @@ if (analysis.needsMigration) {
 
 ### Migration (Advanced Template)
 
-- `bun run generate-migrations` - Generate migration scripts
-- `bun run test-migrations` - Test migration scripts
-- `bun run migration-stats` - View migration statistics
+- `bun run migration:init` - Bootstrap the first migration snapshot
+- `bun run migration:snapshot -- --version <semver>` - Store a released schema snapshot
+- `bun run migration:diff -- --from <semver>` - Compare a legacy snapshot with the current schema
+- `bun run migration:scaffold -- --from <semver>` - Generate deprecated + migrate wiring
+- `bun run migration:verify` - Validate generated migration edges against fixtures
 
 ## 📚 Documentation
 
@@ -353,9 +347,11 @@ npx playwright test --ui
 ### Migration Testing
 
 ```bash
-# Test migration scripts
-cd packages/wp-typia-advanced
-bun run test-migrations
+# Run the advanced template snapshot workflow
+cd my-advanced-block
+bun run migration:init
+bun run migration:scaffold -- --from 1.0.0
+bun run migration:verify
 ```
 
 ## 📊 Performance

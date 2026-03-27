@@ -116,7 +116,7 @@ bun run build
 
 - **[Examples Guide](test-template/EXAMPLES.md)** - Practical examples and patterns
 - **Generated manifest** - `typia.manifest.json` preserves Typia-only constraints for future PHP validation
-- **[Migration Guide](packages/wp-typia-advanced/MIGRATION.md)** - Using the migration system
+- **Advanced snapshot migrations** - The advanced template ships `migration:init`, `migration:snapshot`, `migration:diff`, `migration:scaffold`, and `migration:verify`
 - **[API Reference](docs/API.md)** - Complete API documentation
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
 
@@ -137,30 +137,30 @@ bun run test:coverage
 
 ## 🔄 Migration System (Advanced Template)
 
-The Advanced template includes a powerful migration system:
+The Advanced template uses snapshot-based migrations driven by `typia.manifest.json` diffs:
 
-```typescript
-// Define version history
-export interface V1_Attributes {
-  title: string;
-}
+```bash
+# Bootstrap the first snapshot for the current schema
+bun run migration:init
 
-export interface V2_Attributes extends V1_Attributes {
-  subtitle?: string;
-}
+# Save another release snapshot later on
+bun run migration:snapshot -- --version 1.0.0
 
-// Auto-generate migrations
-bun run generate-migrations
+# Compare a legacy snapshot with the current schema
+bun run migration:diff -- --from 1.0.0
 
-// Test migrations
-bun run test-migrations
+# Scaffold a deprecated migration edge from 1.0.0 -> current
+bun run migration:scaffold -- --from 1.0.0
+
+# Verify fixtures and generated deprecated wiring
+bun run migration:verify
 ```
 
 Features:
 
-- 🔄 Automatic migration generation from type changes
+- 🔄 Snapshot-based manifest diffing and rule generation
 - 📊 Migration dashboard in WordPress admin
-- 🧪 Built-in migration testing
+- 🧪 Built-in migration verification and fixtures
 - 📝 Detailed migration reports
 
 ## 📦 Published npm Packages

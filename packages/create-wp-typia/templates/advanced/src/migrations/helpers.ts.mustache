@@ -1,0 +1,197 @@
+export interface ManifestAttribute {
+	typia: {
+		constraints: {
+			format: string | null;
+			maxLength: number | null;
+			maximum: number | null;
+			minLength: number | null;
+			minimum: number | null;
+			pattern: string | null;
+			typeTag: string | null;
+		};
+		default: unknown;
+	};
+	ts: {
+		items: ManifestAttribute | null;
+		kind: "string" | "number" | "boolean" | "array" | "object";
+		properties: Record<string, ManifestAttribute> | null;
+		required: boolean;
+	};
+	wp: {
+		default: unknown;
+		enum: Array<string | number | boolean> | null;
+		type: "string" | "number" | "boolean" | "array" | "object";
+	};
+}
+
+export interface ManifestDocument {
+	attributes: Record<string, ManifestAttribute>;
+	manifestVersion: 1;
+	sourceType: string;
+}
+
+export function createDefaultValue(attribute: ManifestAttribute): unknown {
+	if (attribute.typia.default !== null && attribute.typia.default !== undefined) {
+		return attribute.typia.default;
+	}
+
+	switch (attribute.ts.kind) {
+		case "string":
+			return "";
+		case "number":
+			return 0;
+		case "boolean":
+			return false;
+		case "array":
+			return [];
+		case "object": {
+			const result: Record<string, unknown> = {};
+			for (const [key, property] of Object.entries(attribute.ts.properties ?? {})) {
+				result[key] = createDefaultValue(property);
+			}
+			return result;
+		}
+		default:
+			return null;
+	}
+}
+
+export function coerceValueFromManifest(attribute: ManifestAttribute, value: unknown): unknown {
+	if (value === undefined || value === null) {
+		return createDefaultValue(attribute);
+	}
+
+	switch (attribute.ts.kind) {
+		case "string":
+			return isValidString(attribute, value) ? value : createDefaultValue(attribute);
+		case "number":
+			return isValidNumber(attribute, value) ? value : createDefaultValue(attribute);
+		case "boolean":
+			return typeof value === "boolean" ? value : createDefaultValue(attribute);
+		case "array":
+			if (!Array.isArray(value) || !attribute.ts.items) {
+				return createDefaultValue(attribute);
+			}
+			return value.map((item) => coerceValueFromManifest(attribute.ts.items as ManifestAttribute, item));
+		case "object":
+			if (!isPlainObject(value)) {
+				return createDefaultValue(attribute);
+			}
+			return Object.fromEntries(
+				Object.entries(attribute.ts.properties ?? {}).map(([key, property]) => [
+					key,
+					coerceValueFromManifest(property, (value as Record<string, unknown>)[key]),
+				]),
+			);
+		default:
+			return createDefaultValue(attribute);
+	}
+}
+
+export function manifestMatchesDocument(manifest: ManifestDocument, attributes: Record<string, unknown>): boolean {
+	for (const [key, attribute] of Object.entries(manifest.attributes)) {
+		const value = attributes[key];
+		if ((value === undefined || value === null) && !attribute.ts.required) {
+			continue;
+		}
+		if (!manifestMatchesAttribute(attribute, value)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+export function summarizeVersionDelta(
+	legacyManifest: ManifestDocument,
+	currentManifest: ManifestDocument,
+): { added: string[]; removed: string[]; changed: string[] } {
+	const added = Object.keys(currentManifest.attributes).filter((key) => !(key in legacyManifest.attributes));
+	const removed = Object.keys(legacyManifest.attributes).filter((key) => !(key in currentManifest.attributes));
+	const changed = Object.keys(currentManifest.attributes).filter((key) => {
+		if (!(key in legacyManifest.attributes)) {
+			return false;
+		}
+		return JSON.stringify(currentManifest.attributes[key]) !== JSON.stringify(legacyManifest.attributes[key]);
+	});
+
+	return { added, changed, removed };
+}
+
+function manifestMatchesAttribute(attribute: ManifestAttribute, value: unknown): boolean {
+	if ((value === undefined || value === null) && !attribute.ts.required) {
+		return true;
+	}
+
+	switch (attribute.ts.kind) {
+		case "string":
+			return isValidString(attribute, value);
+		case "number":
+			return isValidNumber(attribute, value);
+		case "boolean":
+			return typeof value === "boolean";
+		case "array":
+			return Array.isArray(value)
+				&& Boolean(attribute.ts.items)
+				&& value.every((item) => manifestMatchesAttribute(attribute.ts.items as ManifestAttribute, item));
+		case "object":
+			return isPlainObject(value)
+				&& Object.entries(attribute.ts.properties ?? {}).every(([key, property]) =>
+					manifestMatchesAttribute(property, (value as Record<string, unknown>)[key]),
+				);
+		default:
+			return false;
+	}
+}
+
+function isValidString(attribute: ManifestAttribute, value: unknown): value is string {
+	if (typeof value !== "string") {
+		return false;
+	}
+
+	const { enum: enumValues } = attribute.wp;
+	const { format, maxLength, minLength, pattern } = attribute.typia.constraints;
+
+	if (enumValues && !enumValues.includes(value)) {
+		return false;
+	}
+	if (typeof minLength === "number" && value.length < minLength) {
+		return false;
+	}
+	if (typeof maxLength === "number" && value.length > maxLength) {
+		return false;
+	}
+	if (pattern && !(new RegExp(pattern).test(value))) {
+		return false;
+	}
+	if (format === "uuid" && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
+		return false;
+	}
+
+	return true;
+}
+
+function isValidNumber(attribute: ManifestAttribute, value: unknown): value is number {
+	if (typeof value !== "number" || Number.isNaN(value)) {
+		return false;
+	}
+
+	const { enum: enumValues } = attribute.wp;
+	const { maximum, minimum } = attribute.typia.constraints;
+
+	if (enumValues && !enumValues.includes(value)) {
+		return false;
+	}
+	if (typeof minimum === "number" && value < minimum) {
+		return false;
+	}
+	if (typeof maximum === "number" && value > maximum) {
+		return false;
+	}
+
+	return true;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+}

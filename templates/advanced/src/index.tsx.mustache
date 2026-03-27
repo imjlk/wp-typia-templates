@@ -1,5 +1,6 @@
 import { registerBlockType } from '@wordpress/blocks';
 import { __ } from '@wordpress/i18n';
+import { deprecated } from './deprecated';
 import Edit from './edit';
 import Save from './save';
 import { {{titleCase}}Attributes } from './types';
@@ -11,6 +12,7 @@ registerBlockType<{{titleCase}}Attributes>('{{namespace}}/{{slug}}', {
 	example: {
 		attributes: validators.random()
 	},
+	deprecated,
 	edit: Edit,
 	save: Save,
 });

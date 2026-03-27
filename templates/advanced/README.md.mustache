@@ -1,12 +1,13 @@
 # {{title}}
 
-A WordPress block with **Typia validation** and **Interactivity API** support.
+A WordPress block with **Typia validation**, **Interactivity API** support, and **snapshot-based migration tooling**.
 
 ## 🚀 Features
 
 - **✅ Typia Validation**: Type-safe attributes with compile-time and runtime validation
 - **⚡ Interactivity API**: Lightweight frontend interactions
 - **🎯 Auto-Sync**: Types automatically sync to `block.json` and `typia.manifest.json`
+- **🧬 Snapshot Migrations**: Preserve legacy block contracts and scaffold deprecated migrations from Typia manifests
 - **🔧 TypeScript**: Full type safety throughout
 
 ## 🏗️ Development
@@ -26,6 +27,18 @@ npx tsc --noEmit
 
 # Sync block metadata manually
 bun run sync-types
+
+# Bootstrap migration snapshots for the first release
+bun run migration:init
+
+# Compare the current schema with an older snapshot
+bun run migration:diff -- --from 1.0.0
+
+# Scaffold a legacy-to-current migration edge
+bun run migration:scaffold -- --from 1.0.0
+
+# Verify generated migration rules against stored fixtures
+bun run migration:verify
 ```
 
 ## 📝 Type System
@@ -62,9 +75,12 @@ const { state, actions } = store('{{namespace}}/{{slug}}', {
 
 - `block.json` - WordPress-facing attribute metadata generated from TypeScript types
 - `typia.manifest.json` - Full Typia constraint manifest for future PHP validation
+- `src/migrations/versions/` - Versioned snapshots of legacy block contracts and save implementations
+- `src/migrations/rules/` - Per-edge migration rules generated from Typia manifest diffs
+- `src/migrations/generated/` - Generated deprecated array, registry, and verification helpers
 - `build/` - Compiled JavaScript and CSS
 - `src/types.ts` - **Edit this to change block attributes**
 
 ---
 
-*Generated with [@wordpress/create-block](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-create-block/) and Typia validation*
+*Generated with `create-wp-typia` and Typia validation*

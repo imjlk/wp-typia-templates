@@ -6,8 +6,14 @@ async function main() {
 			if (arg === "--no-install") {
 				return "--noInstall";
 			}
+			if (arg === "--current-version") {
+				return "--currentVersion";
+			}
 			if (arg === "--package-manager") {
 				return "--packageManager";
+			}
+			if (arg.startsWith("--current-version=")) {
+				return `--currentVersion=${arg.slice("--current-version=".length)}`;
 			}
 			if (arg.startsWith("--package-manager=")) {
 				return `--packageManager=${arg.slice("--package-manager=".length)}`;

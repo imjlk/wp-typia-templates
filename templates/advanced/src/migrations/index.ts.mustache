@@ -1,361 +1,345 @@
-import typia from "typia";
-import { 
-	{{titleCase}}AttributesV1, 
-	{{titleCase}}AttributesV2, 
-	{{titleCase}}AttributesV3,
-	{{titleCase}}Attributes,
-	BLOCK_VERSIONS 
-} from '../types/versions';
-import { generateUUID } from '../utils';
+import apiFetch from "@wordpress/api-fetch";
+import { parse, serialize } from "@wordpress/blocks";
 
-export interface MigrationContext {
-	originalAttributes: any;
-	timestamp: string;
-	migrationPath: string[];
-	rollbackPossible: boolean;
+import { validators } from "../validators";
+import migrationConfig from "./config";
+import { deprecated } from "./generated/deprecated";
+import migrationRegistry from "./generated/registry";
+import {
+	type ManifestDocument,
+	manifestMatchesDocument,
+	summarizeVersionDelta,
+} from "./helpers";
+
+export interface MigrationAnalysis {
+	needsMigration: boolean;
+	currentVersion: string;
+	targetVersion: string;
+	confidence: number;
+	reasons: string[];
+	warnings: string[];
+	affectedFields: {
+		added: string[];
+		changed: string[];
+		removed: string[];
+	};
 }
 
-export interface MigrationResult<T> {
-	data: T;
-	context: MigrationContext;
-	rollback: () => any;
-	success: boolean;
-	error?: Error;
+export interface BlockScanResult {
+	analysis: MigrationAnalysis;
+	attributes: Record<string, unknown>;
+	blockName: string;
+	blockPath: number[];
+	postId: number;
+	postTitle: string;
+	postType: string;
+	rawContent: string;
+	restBase: string;
 }
 
-/**
- * Migration functions for {{title}} block versions
- */
+export interface BatchMigrationResult {
+	errors: Array<{ postId: number; reason: string }>;
+	failed: number;
+	successful: number;
+	total: number;
+}
+
+export function detectBlockMigration(attributes: Record<string, unknown>): MigrationAnalysis {
+	const currentValidation = validators.validate(attributes as any);
+	if (currentValidation.success) {
+		return {
+			needsMigration: false,
+			currentVersion: migrationRegistry.currentVersion,
+			targetVersion: migrationRegistry.currentVersion,
+			confidence: 1,
+			reasons: ["Current Typia validator accepted the attributes."],
+			warnings: [],
+			affectedFields: {
+				added: [],
+				changed: [],
+				removed: [],
+			},
+		};
+	}
+
+	for (const entry of migrationRegistry.entries) {
+		if (manifestMatchesDocument(entry.manifest as ManifestDocument, attributes)) {
+			const delta = summarizeVersionDelta(
+				entry.manifest as ManifestDocument,
+				migrationRegistry.currentManifest as ManifestDocument,
+			);
+
+			return {
+				needsMigration: true,
+				currentVersion: entry.fromVersion,
+				targetVersion: migrationRegistry.currentVersion,
+				confidence: 0.95,
+				reasons: [
+					`Snapshot ${entry.fromVersion} matched this block.`,
+					...(entry.rule.unresolved.length > 0
+						? [`Migration rule still has unresolved items: ${entry.rule.unresolved.join(", ")}`]
+						: []),
+				],
+				warnings: entry.rule.unresolved.length > 0 ? [...entry.rule.unresolved] : [],
+				affectedFields: delta,
+			};
 		}
-/**
- * Migration functions for {{title}} block versions
- */
-
-// V1 → V2 Migration
-export function migrateV1ToV2(v1Attrs: {{titleCase}}AttributesV1): MigrationResult<{{titleCase}}AttributesV2> {
-	console.log('🔄 Migrating {{title}} from v1 to v2');
-	console.log('📄 V1 attributes:', JSON.stringify(v1Attrs, null, 2));
-	
-	const migrated: {{titleCase}}AttributesV2 = {
-		content: v1Attrs.content || "",
-		alignment: v1Attrs.alignment || "left",
-		// New fields with defaults
-		isVisible: true,
-		className: undefined
-	};
-	
-	console.log('🔧 Adding new fields: isVisible=true, className=undefined');
-	
-	// Validate migrated data
-	const validation = typia.validate<{{titleCase}}AttributesV2>(migrated);
-	if (!validation.success) {
-		const error = new Error('V1→V2 migration validation failed');
-		console.error('❌ V1→V2 migration validation failed:', validation.errors);
-		return {
-			data: null,
-			context: {
-				originalAttributes: v1Attrs,
-				timestamp: new Date().toISOString(),
-				migrationPath: ['V1', 'V2'],
-				rollbackPossible: false
-			},
-			rollback: () => v1Attrs,
-			success: false,
-			error
-		};
 	}
-	
-	console.log('✅ V1→V2 migration successful');
-	console.log('📄 V2 attributes:', JSON.stringify(migrated, null, 2));
-	
-	// Create rollback function
-	const rollback = (): {{titleCase}}AttributesV1 => {
-		return {
-			content: migrated.content,
-			alignment: migrated.alignment
-		};
-	};
-	
+
 	return {
-		data: migrated,
-		context: {
-			originalAttributes: v1Attrs,
-			timestamp: new Date().toISOString(),
-			migrationPath: ['V1', 'V2'],
-			rollbackPossible: true
+		needsMigration: true,
+		currentVersion: "unknown",
+		targetVersion: migrationRegistry.currentVersion,
+		confidence: 0.2,
+		reasons: ["No legacy snapshot matched and current Typia validator rejected the attributes."],
+		warnings: ["Manual migration review is required because the block does not match any supported snapshot."],
+		affectedFields: {
+			added: [],
+			changed: [],
+			removed: [],
 		},
-		rollback,
-		success: true
 	};
 }
 
-// V2 → V3 Migration
-export function migrateV2ToV3(v2Attrs: {{titleCase}}AttributesV2): MigrationResult<{{titleCase}}AttributesV3> {
-	console.log('🔄 Migrating {{title}} from v2 to v3');
-	console.log('📄 V2 attributes:', JSON.stringify(v2Attrs, null, 2));
-	
-	const migrated: {{titleCase}}AttributesV3 = {
-		// New fields
-		id: generateUUID(),
-		version: 3,
-		theme: "default",
-		
-		// Existing fields with potential updates
-		content: v2Attrs.content || "",
-		alignment: v2Attrs.alignment || "left",
-		isVisible: v2Attrs.isVisible ?? true,
-		
-		// Handle className validation change
-		className: v2Attrs.className && /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(v2Attrs.className)
-			? v2Attrs.className.slice(0, 50) // Trim to new max length
-			: undefined
-	};
-	
-	console.log('🔧 Adding new fields:');
-	console.log('   - id:', migrated.id);
-	console.log('   - version:', migrated.version);
-	console.log('   - theme:', migrated.theme);
-	
-	if (v2Attrs.className && !/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(v2Attrs.className)) {
-		console.log('⚠️  Invalid className format, setting to undefined');
+export function autoMigrate(attributes: Record<string, unknown>) {
+	const currentValidation = validators.validate(attributes as any);
+	if (currentValidation.success) {
+		return attributes;
 	}
-	
-	if (v2Attrs.className && v2Attrs.className.length > 50) {
-		console.log('✂️  Trimming className from', v2Attrs.className.length, 'to 50 characters');
-	}
-	
-	// Validate migrated data
-	const validation = typia.validate<{{titleCase}}AttributesV3>(migrated);
-	if (!validation.success) {
-		const error = new Error('V2→V3 migration validation failed');
-		console.error('❌ V2→V3 migration validation failed:', validation.errors);
-		return {
-			data: null,
-			context: {
-				originalAttributes: v2Attrs,
-				timestamp: new Date().toISOString(),
-				migrationPath: ['V2', 'V3'],
-				rollbackPossible: false
-			},
-			rollback: () => v2Attrs,
-			success: false,
-			error
-		};
-	}
-	
-	console.log('✅ V2→V3 migration successful');
-	console.log('📄 V3 attributes:', JSON.stringify(migrated, null, 2));
-	
-	// Create rollback function
-	const rollback = (): {{titleCase}}AttributesV2 => {
-		return {
-			content: migrated.content,
-			alignment: migrated.alignment,
-			isVisible: migrated.isVisible,
-			className: migrated.className
-		};
-	};
-	
-	return {
-		data: migrated,
-		context: {
-			originalAttributes: v2Attrs,
-			timestamp: new Date().toISOString(),
-			migrationPath: ['V2', 'V3'],
-			rollbackPossible: true
-		},
-		rollback,
-		success: true
-	};
-}
 
-/**
- * Auto-detect version and migrate to current
- */
-export function autoMigrate(attributes: any): MigrationResult<{{titleCase}}Attributes> {
-	// Try to detect version
-	const detectedVersion = detectVersion(attributes);
-	console.log(`🔍 Detected {{title}} version: ${detectedVersion}`);
-	
-	switch (detectedVersion) {
-		case "1.0.0": {
-			// V1 → V2 → V3
-			const v2Result = migrateV1ToV2(attributes as {{titleCase}}AttributesV1);
-			if (!v2Result.success) {
-				return v2Result;
+	for (const entry of migrationRegistry.entries) {
+		if (manifestMatchesDocument(entry.manifest as ManifestDocument, attributes)) {
+			const migrated = entry.rule.migrate(attributes);
+			const postValidation = validators.validate(migrated as any);
+			if (!postValidation.success) {
+				throw new Error(
+					`Migration ${entry.fromVersion} -> ${migrationRegistry.currentVersion} failed current validation: ${JSON.stringify(postValidation.errors)}`,
+				);
 			}
-			
-			const v3Result = migrateV2ToV3(v2Result.data);
-			if (!v3Result.success) {
-				// If V3 migration fails, we still have the V2 data
-				return {
-					...v3Result,
-					data: v2Result.data as unknown as {{titleCase}}Attributes,
-					context: {
-						...v3Result.context,
-						migrationPath: [...v2Result.context.migrationPath, ...v3Result.context.migrationPath]
-					}
+			return migrated;
+		}
+	}
+
+	throw new Error("Unable to migrate block attributes because no supported snapshot matched.");
+}
+
+export async function scanSiteForMigrations(
+	blockName: string = migrationConfig.blockName,
+): Promise<BlockScanResult[]> {
+	const postTypes = await fetchEditablePostTypes();
+	const results: BlockScanResult[] = [];
+
+	for (const postType of postTypes) {
+		const posts = await fetchAllPosts(postType.rest_base);
+		for (const post of posts) {
+			const content = post?.content?.raw;
+			if (typeof content !== "string" || content.length === 0) {
+				continue;
+			}
+
+			const blocks = parse(content);
+			walkBlocks(blocks, [], (block, blockPath) => {
+				if (block.name !== blockName) {
+					return;
+				}
+
+				const analysis = detectBlockMigration((block.attributes ?? {}) as Record<string, unknown>);
+				if (analysis.needsMigration || analysis.warnings.length > 0) {
+					results.push({
+						analysis,
+						attributes: (block.attributes ?? {}) as Record<string, unknown>,
+						blockName,
+						blockPath,
+						postId: post.id,
+						postTitle: post?.title?.rendered ?? `Post ${post.id}`,
+						postType: postType.slug,
+						rawContent: content,
+						restBase: postType.rest_base,
+					});
+				}
+			});
+		}
+	}
+
+	return results;
+}
+
+export async function batchMigrateScanResults(
+	results: BlockScanResult[],
+	{ dryRun = false }: { dryRun?: boolean } = {},
+): Promise<BatchMigrationResult> {
+	const grouped = groupResultsByPost(results);
+	const summary: BatchMigrationResult = {
+		errors: [],
+		failed: 0,
+		successful: 0,
+		total: Object.keys(grouped).length,
+	};
+
+	for (const group of Object.values(grouped)) {
+		try {
+			const migratedContent = migratePostContent(group.results, group.rawContent);
+			if (!dryRun) {
+				await apiFetch({
+					body: {
+						content: migratedContent,
+					},
+					method: "POST",
+					path: `/wp/v2/${group.restBase}/${group.postId}`,
+				});
+			}
+			summary.successful += 1;
+		} catch (error) {
+			summary.failed += 1;
+			summary.errors.push({
+				postId: group.postId,
+				reason: error instanceof Error ? error.message : String(error),
+			});
+		}
+	}
+
+	return summary;
+}
+
+export function generateMigrationReport(scanResults: BlockScanResult[]): string {
+	const needsMigration = scanResults.filter((result) => result.analysis.needsMigration);
+	const byVersion = needsMigration.reduce<Record<string, BlockScanResult[]>>((accumulator, result) => {
+		const key = result.analysis.currentVersion;
+		if (!accumulator[key]) {
+			accumulator[key] = [];
+		}
+		accumulator[key].push(result);
+		return accumulator;
+	}, {});
+
+	let report = `# ${migrationConfig.blockName} Migration Report\n\n`;
+	report += `- Current version: ${migrationRegistry.currentVersion}\n`;
+	report += `- Supported deprecated entries: ${deprecated.length}\n`;
+	report += `- Scan results needing attention: ${scanResults.length}\n\n`;
+
+	for (const [version, entries] of Object.entries(byVersion)) {
+		report += `## ${version}\n`;
+		for (const entry of entries) {
+			report += `- ${entry.postTitle} (#${entry.postId})`;
+			if (entry.analysis.warnings.length > 0) {
+				report += ` — warnings: ${entry.analysis.warnings.join(", ")}`;
+			}
+			report += "\n";
+		}
+		report += "\n";
+	}
+
+	return report;
+}
+
+export const migrationUtils = {
+	getStats() {
+		return {
+			blockName: migrationConfig.blockName,
+			currentVersion: migrationRegistry.currentVersion,
+			deprecatedEntries: deprecated.length,
+			supportedVersions: migrationRegistry.entries.map((entry) => entry.fromVersion),
+		};
+	},
+	testMigration(attributes: Record<string, unknown>) {
+		return autoMigrate(attributes);
+	},
+};
+
+async function fetchEditablePostTypes(): Promise<Array<{ rest_base: string; slug: string }>> {
+	const response = (await apiFetch({
+		parse: false,
+		path: "/wp/v2/types?context=edit",
+	})) as Response;
+	const payload = (await response.json()) as Record<string, any>;
+
+	return Object.values(payload)
+		.filter((postType) => postType?.viewable && postType?.rest_base)
+		.map((postType) => ({
+			rest_base: postType.rest_base,
+			slug: postType.slug,
+		}));
+}
+
+async function fetchAllPosts(restBase: string): Promise<any[]> {
+	let page = 1;
+	let totalPages = 1;
+	const entries: any[] = [];
+
+	do {
+		const response = (await apiFetch({
+			parse: false,
+			path: `/wp/v2/${restBase}?context=edit&per_page=100&page=${page}`,
+		})) as Response;
+		totalPages = Number.parseInt(response.headers.get("X-WP-TotalPages") ?? "1", 10);
+		entries.push(...((await response.json()) as any[]));
+		page += 1;
+	} while (page <= totalPages);
+
+	return entries;
+}
+
+function walkBlocks(
+	blocks: any[],
+	pathPrefix: number[],
+	visitor: (block: any, path: number[]) => void,
+) {
+	blocks.forEach((block, index) => {
+		const blockPath = [...pathPrefix, index];
+		visitor(block, blockPath);
+		if (Array.isArray(block.innerBlocks) && block.innerBlocks.length > 0) {
+			walkBlocks(block.innerBlocks, blockPath, visitor);
+		}
+	});
+}
+
+function groupResultsByPost(results: BlockScanResult[]) {
+	return results.reduce<Record<string, { postId: number; rawContent: string; restBase: string; results: BlockScanResult[] }>>(
+		(accumulator, result) => {
+			const key = `${result.restBase}:${result.postId}`;
+			if (!accumulator[key]) {
+				accumulator[key] = {
+					postId: result.postId,
+					rawContent: result.rawContent,
+					restBase: result.restBase,
+					results: [],
 				};
 			}
-			
-			return {
-				...v3Result,
-				context: {
-					...v3Result.context,
-					migrationPath: [...v2Result.context.migrationPath, ...v3Result.context.migrationPath],
-					originalAttributes: attributes
-				},
-				rollback: () => attributes
-			};
-		}
-			
-			
-		case "2.0.0": {
-			// V2 → V3
-			const v3Result = migrateV2ToV3(attributes as {{titleCase}}AttributesV2);
-			if (!v3Result.success) {
-				return v3Result;
-			}
-			
-			return {
-				...v3Result,
-				context: {
-					...v3Result.context,
-					migrationPath: ['V2', 'V3'],
-					originalAttributes: attributes
-				},
-				rollback: () => attributes
-			};
-		}
-			
-			
-		case "3.0.0": {
-			// Already current version
-			console.log('✅ {{title}} already at current version');
-			return {
-				data: attributes as {{titleCase}}AttributesV3,
-				context: {
-					originalAttributes: attributes,
-					timestamp: new Date().toISOString(),
-					migrationPath: ['V3'],
-					rollbackPossible: true
-				},
-				rollback: () => attributes,
-				success: true
-			};
-		}
-			
-			
-		default: {
-			console.warn('⚠️ Unknown {{title}} version, attempting best-effort migration');
-			return attemptBestEffortMigration(attributes);
-		}
-			
-	}
-}
-
-/**
- * Detect block version based on structure
- */
-function detectVersion(attributes: any): string {
-	// Check for V3 features
-	if ('id' in attributes || 'version' in attributes || 'theme' in attributes) {
-		return "3.0.0";
-	}
-	
-	// Check for V2 features  
-	if ('isVisible' in attributes || 'className' in attributes) {
-		return "2.0.0";
-	}
-	
-	// Must be V1
-	return "1.0.0";
-}
-
-/**
- * Best-effort migration for unknown versions
- */
-function attemptBestEffortMigration(attributes: any): MigrationResult<{{titleCase}}Attributes> {
-	console.log('🔧 Attempting best-effort migration');
-	
-	const migrated: {{titleCase}}Attributes = {
-		id: generateUUID(),
-		version: 3,
-		content: String(attributes.content || ""),
-		alignment: ["left", "center", "right", "justify"].includes(attributes.alignment)
-			? attributes.alignment
-			: "left",
-		isVisible: Boolean(attributes.isVisible ?? true),
-		className: typeof attributes.className === 'string'
-			? attributes.className.slice(0, 50)
-			: undefined,
-		theme: ["default", "dark", "light", "accent"].includes(attributes.theme)
-			? attributes.theme
-			: "default"
-	};
-	
-	// Final validation
-	const validation = typia.validate<{{titleCase}}Attributes>(migrated);
-	if (!validation.success) {
-		const error = new Error('Best-effort migration validation failed');
-		console.error('❌ Best-effort migration failed:', validation.errors);
-		// Return minimal valid structure
-		return {
-			data: null,
-			context: {
-				originalAttributes: attributes,
-				timestamp: new Date().toISOString(),
-				migrationPath: ['BestEffort'],
-				rollbackPossible: false
-			},
-			rollback: () => attributes,
-			success: false,
-			error
-		};
-	}
-	
-	console.log('✅ Best-effort migration successful');
-	return {
-		data: migrated,
-		context: {
-			originalAttributes: attributes,
-			timestamp: new Date().toISOString(),
-			migrationPath: ['BestEffort'],
-			rollbackPossible: true
+			accumulator[key].results.push(result);
+			return accumulator;
 		},
-		rollback: () => attributes,
-		success: true
-	};
+		{},
+	);
 }
 
-/**
- * Generate migration report
- */
-export function generateMigrationReport(oldAttrs: any, newAttrs: {{titleCase}}Attributes) {
-	const report = {
-		timestamp: new Date().toISOString(),
-		fromVersion: detectVersion(oldAttrs),
-		toVersion: "3.0.0",
-		changes: [] as string[],
-		warnings: [] as string[]
-	};
-	
-	// Detect changes
-	if (!oldAttrs.id && newAttrs.id) {
-		report.changes.push('Added unique ID');
-	}
-	
-	if (!oldAttrs.version && newAttrs.version) {
-		report.changes.push('Added version tracking');
-	}
-	
-	if (!oldAttrs.theme && newAttrs.theme) {
-		report.changes.push('Added theme support');
-	}
-	
-	if (oldAttrs.content !== newAttrs.content) {
-		report.warnings.push('Content may have been modified during migration');
-	}
-	
-	return report;
+function migratePostContent(results: BlockScanResult[], rawContent: string): string {
+	const replacements = new Map(
+		results.map((result) => [result.blockPath.join("."), autoMigrate(result.attributes)]),
+	);
+	const blocks = parse(rawContent);
+	const nextBlocks = replaceBlocks(blocks, [], replacements);
+	return serialize(nextBlocks);
+}
+
+function replaceBlocks(blocks: any[], pathPrefix: number[], replacements: Map<string, Record<string, unknown>>) {
+	return blocks.map((block, index) => {
+		const blockPath = [...pathPrefix, index];
+		const replacement = replacements.get(blockPath.join("."));
+		const innerBlocks = Array.isArray(block.innerBlocks)
+			? replaceBlocks(block.innerBlocks, blockPath, replacements)
+			: [];
+
+		if (!replacement) {
+			return {
+				...block,
+				innerBlocks,
+			};
+		}
+
+		return {
+			...block,
+			attributes: replacement,
+			innerBlocks,
+		};
+	});
 }

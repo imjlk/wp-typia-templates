@@ -80,6 +80,7 @@ export function formatHelpText() {
   create-wp-typia <project-dir> [--template <id>] [--yes] [--no-install] [--package-manager <id>]
   create-wp-typia templates list
   create-wp-typia templates inspect <id>
+  create-wp-typia migrations <init|snapshot|diff|scaffold|verify> [...]
   create-wp-typia doctor
 
 Templates: ${TEMPLATE_IDS.join(", ")}

@@ -10,6 +10,7 @@ import {
 	runDoctor,
 	runScaffoldFlow,
 } from "./cli-core.js";
+import { formatMigrationHelpText, parseMigrationArgs, runMigrationCommand } from "./migrations.js";
 import {
 	PACKAGE_MANAGER_IDS,
 	getPackageManagerSelectOptions,
@@ -106,6 +107,16 @@ async function runScaffold(parsed, cwd) {
 }
 
 export async function runNodeCli(argv = process.argv.slice(2), cwd = process.cwd()) {
+	if (argv[0] === "migrations") {
+		const migrationCommand = parseMigrationArgs(argv.slice(1));
+		if (!migrationCommand.command) {
+			console.log(formatMigrationHelpText());
+			return;
+		}
+		await runMigrationCommand(migrationCommand, cwd, { renderLine: console.log });
+		return;
+	}
+
 	const parsed = parseArgs(argv);
 
 	if (parsed.help) {

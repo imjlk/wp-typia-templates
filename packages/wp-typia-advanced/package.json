@@ -13,12 +13,9 @@
     "dev": "bun run start",
     "test": "bun test --pass-with-no-tests",
     "test:e2e": "playwright test",
-    "test:migrations": "tsx scripts/test-migrations.ts",
     "lint": "wp-scripts lint-js",
     "format": "wp-scripts format",
     "sync-types": "tsx scripts/sync-types-to-block-json.ts",
-    "generate-migrations": "tsx scripts/generate-migrations.ts",
-    "migration-stats": "tsx scripts/migration-cli.ts stats",
     "wp-env": "wp-scripts wp-env"
   },
   "keywords": [
