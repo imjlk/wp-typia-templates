@@ -13,19 +13,19 @@ A WordPress block with **Typia validation** and **Interactivity API** support.
 
 ```bash
 # Install dependencies
-npm install
+bun install
 
 # Development with hot reload
-npm start
+bun run start
 
 # Build for production  
-npm run build
+bun run build
 
 # Type checking
 npx tsc --noEmit
 
 # Sync block metadata manually
-npm run sync-types
+bun run sync-types
 ```
 
 ## 📝 Type System
@@ -40,7 +40,7 @@ export interface {{titleCase}}Attributes {
 }
 ```
 
-**`block.json` and `typia.manifest.json` will be automatically updated** with these attributes when you run `npm start` or `npm run build`!
+**`block.json` and `typia.manifest.json` will be automatically updated** with these attributes when you run `bun run start` or `bun run build`!
 
 ## 🎨 Styling
 

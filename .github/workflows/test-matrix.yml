@@ -2,76 +2,65 @@ name: Test Matrix
 
 on:
   schedule:
-    # Run tests every Monday at 9 AM UTC
-    - cron: '0 9 * * 1'
+    - cron: "0 9 * * 1"
   workflow_dispatch:
     inputs:
       node_version:
-        description: 'Node.js version'
+        description: "Node.js version"
         required: false
-        default: '20'
+        default: "20"
         type: choice
         options:
-          - '16'
-          - '18'
-          - '20'
-      wp_version:
-        description: 'WordPress version'
-        required: false
-        default: 'latest'
-        type: choice
-        options:
-          - 'latest'
-          - '6.3'
-          - '6.2'
-          - '6.1'
+          - "20"
+          - "22"
+          - "24"
 
 jobs:
   test-matrix:
-    name: Node ${{ matrix.node }} / WP ${{ matrix.wp }}
+    name: Bun / Node ${{ matrix.node }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        node: [16, 18, 20]
-        wp: ['latest', '6.3', '6.2']
-        exclude:
-          # Exclude some combinations to reduce CI load
-          - node: 16
-            wp: '6.1'
-          - node: 18
-            wp: '6.1'
+        node: ["20", "22", "24"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node }}
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: 'npm'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.10"
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Build packages
-        run: npm run build
-
-      - name: Setup WordPress ${{ matrix.wp }}
-        run: |
-          npm run wp-env:stop || true
-          npm run wp-env:start
-          sleep 30
+        run: bun install --frozen-lockfile
 
       - name: Run unit tests
-        run: npm test
+        run: bun run test
+
+      - name: Build workspace targets
+        run: bun run build
+
+      - name: Setup WordPress
+        run: |
+          bun run wp-env:stop || true
+          bun run wp-env:start
+          sleep 30
+
+      - name: Install Playwright
+        run: bunx playwright install --with-deps
 
       - name: Run E2E tests
-        run: npm run test:e2e
+        run: bun run test:e2e
 
       - name: Stop WordPress
         if: always()
-        run: npm run wp-env:stop
+        run: bun run wp-env:stop
 
   security-scan:
     name: Security Scan
@@ -80,8 +69,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run npm audit
-        run: npm audit --audit-level high
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.10"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run Bun audit
+        run: bun audit --audit-level high
 
       - name: Run CodeQL
         uses: github/codeql-action/init@v2

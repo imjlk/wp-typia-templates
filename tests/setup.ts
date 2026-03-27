@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import { TextEncoder, TextDecoder } from 'util';
 
 // Mock WordPress globals
-global.wp = {
+(global as any).wp = {
   blocks: {},
   element: {},
   components: {},

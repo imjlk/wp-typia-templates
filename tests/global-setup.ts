@@ -15,7 +15,7 @@ async function globalSetup(config: FullConfig) {
     const pageTitle = await page.title();
     if (pageTitle.includes('WordPress') && pageTitle.includes('Installation')) {
       console.log('⚠️ WordPress not installed. Please run wp-env first.');
-      console.log('Run: npm run wp-env start');
+      console.log('Run: bun run wp-env:start');
       process.exit(1);
     }
 
@@ -31,7 +31,7 @@ async function globalSetup(config: FullConfig) {
 
   } catch (error) {
     console.error('❌ Failed to setup WordPress environment:', error);
-    console.log('Please ensure wp-env is running: npm run wp-env start');
+    console.log('Please ensure wp-env is running: bun run wp-env:start');
     process.exit(1);
   }
 

@@ -9,7 +9,7 @@ describe('Type Sync Tests', () => {
   const buildManifestPath = path.join(testTemplateDir, 'build/my-typia-block/typia.manifest.json');
 
   beforeAll(() => {
-    execSync('npm run sync-types', { cwd: testTemplateDir });
+    execSync('bun run sync-types', { cwd: testTemplateDir });
   });
 
   test('should sync types to block.json and generate typia.manifest.json', () => {
@@ -59,7 +59,7 @@ describe('Type Sync Tests', () => {
   });
 
   test('should copy typia.manifest.json into the build output', () => {
-    execSync('npm run build', { cwd: testTemplateDir });
+    execSync('bun run build', { cwd: testTemplateDir });
 
     expect(fs.existsSync(buildManifestPath)).toBe(true);
 

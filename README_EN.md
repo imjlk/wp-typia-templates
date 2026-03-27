@@ -1,13 +1,13 @@
-# WordPress Typia Block Boilerplate
+# wp-typia-templates
 
-[![CI/CD](https://github.com/yourusername/wp-typia-boilerplate/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/yourusername/wp-typia-boilerplate/actions)
+[![CI/CD](https://github.com/imjlk/wp-typia-templates/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/imjlk/wp-typia-templates/actions)
 [![License: GPL-2.0+](https://img.shields.io/badge/License-GPL--2.0+-blue.svg)](https://opensource.org/licenses/GPL-2.0+)
-[![npm version](https://badge.fury.io/js/%40wp-typia%2Fbasic.svg)](https://badge.fury.io/js/%40wp-typia%2Fbasic)
-[![codecov](https://codecov.io/gh/yourusername/wp-typia-boilerplate/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/wp-typia-boilerplate)
+[![npm version](https://badge.fury.io/js/wp-typia-basic.svg)](https://www.npmjs.com/package/wp-typia-basic)
+[![codecov](https://codecov.io/gh/imjlk/wp-typia-templates/branch/main/graph/badge.svg)](https://codecov.io/gh/imjlk/wp-typia-templates)
 
 > Type-safe WordPress block development with automatic validation powered by Typia
 
-A modern WordPress block development boilerplate featuring TypeScript, Typia validation, and the WordPress Interactivity API. Generate type-safe blocks with runtime validation, automatic `block.json` generation, generated `typia.manifest.json` metadata, and seamless WordPress integration.
+A Bun-first WordPress block template monorepo featuring TypeScript, Typia validation, and the WordPress Interactivity API. Generate type-safe blocks with runtime validation, automatic `block.json` generation, generated `typia.manifest.json` metadata, and seamless WordPress integration.
 
 ## ✨ Features
 
@@ -18,45 +18,34 @@ A modern WordPress block development boilerplate featuring TypeScript, Typia val
 - 🚀 **Migration System**: Automatic block migration detection and execution (Advanced)
 - ⚛️ **Modern Stack**: React hooks, error boundaries, and utility functions
 - 🧪 **Testing Ready**: Jest unit tests and Playwright E2E tests included
-- 📦 **npm Templates**: Install via `@wordpress/create-block`
+- 📦 **Shared CLI + Templates**: Scaffold via `create-wp-typia` and keep direct template entrypoints
 
 ## 🚀 Quick Start
 
-### Using npm Templates (Recommended)
+### Using `create-wp-typia` (Recommended)
 
 ```bash
-# Basic template
-npx @wordpress/create-block my-block --template=@wp-typia/basic
-
-# Full template with utilities
-npx @wordpress/create-block my-block --template=@wp-typia/full
-
-# Interactivity API template
-npx @wordpress/create-block my-block --template=@wp-typia/interactivity
-
-# Advanced with migrations
-npx @wordpress/create-block my-block --template=@wp-typia/advanced
+bun create wp-typia my-block
+# or
+bunx create-wp-typia my-block
+# or
+npx create-wp-typia my-block
 ```
 
-### Manual Setup
+### Direct Template Wrappers
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/wp-typia-boilerplate.git my-block
-cd my-block
-
-# Install dependencies
-npm install
-
-# Start development
-npm start
+npx wp-typia-basic
+npx wp-typia-full
+npx wp-typia-interactivity
+npx wp-typia-advanced
 ```
 
 ## 📁 Project Structure
 
 ```
-wp-typia-boilerplate/
-├── packages/                    # npm publishable templates
+wp-typia-templates/
+├── packages/                    # published templates and CLI
 │   ├── wp-typia-basic/         # Core Typia functionality
 │   ├── wp-typia-full/          # + utilities + hooks + ErrorBoundary
 │   ├── wp-typia-interactivity/ # + WordPress Interactivity API
@@ -152,7 +141,7 @@ export interface MyBlockAttributes {
 ### Auto-Generated Block Metadata
 
 ```bash
-npm run sync-types
+bun run sync-types
 ```
 
 Generates:
@@ -273,38 +262,38 @@ if (analysis.needsMigration) {
 
 ### Development
 
-- `npm start` - Start development server with hot reload
-- `npm run build` - Build blocks for production
-- `npm run dev` - Alias for `npm start`
+- `bun run start` - Start development server with hot reload
+- `bun run build` - Build blocks for production
+- `bun run dev` - Alias for `bun run start`
 
 ### Type Management
 
-- `npm run sync-types` - Generate block.json and typia.manifest.json from TypeScript types
-- `npm run type-check` - Run TypeScript compiler check
+- `bun run sync-types` - Generate block.json and typia.manifest.json from TypeScript types
+- `bun run type-check` - Run TypeScript compiler check
 
 ### Testing
 
-- `npm test` - Run unit tests with Jest
-- `npm run test:e2e` - Run E2E tests with Playwright
-- `npm run test:watch` - Run tests in watch mode
-- `npm run test:coverage` - Run tests with coverage
+- `bun run test` - Run unit tests with Jest
+- `bun run test:e2e` - Run E2E tests with Playwright
+- `bun run test:watch` - Run tests in watch mode
+- `bun run test:coverage` - Run tests with coverage
 
 ### Code Quality
 
-- `npm run lint` - Run ESLint
-- `npm run format` - Format code with Prettier
+- `bun run lint` - Run ESLint
+- `bun run format` - Format code with Prettier
 
 ### WordPress Environment
 
-- `npm run wp-env:start` - Start WordPress test environment
-- `npm run wp-env:stop` - Stop WordPress test environment
-- `npm run wp-env:reset` - Reset WordPress environment
+- `bun run wp-env:start` - Start WordPress test environment
+- `bun run wp-env:stop` - Stop WordPress test environment
+- `bun run wp-env:reset` - Reset WordPress environment
 
 ### Migration (Advanced Template)
 
-- `npm run generate-migrations` - Generate migration scripts
-- `npm run test-migrations` - Test migration scripts
-- `npm run migration-stats` - View migration statistics
+- `bun run generate-migrations` - Generate migration scripts
+- `bun run test-migrations` - Test migration scripts
+- `bun run migration-stats` - View migration statistics
 
 ## 📚 Documentation
 
@@ -321,13 +310,13 @@ This project includes comprehensive testing:
 
 ```bash
 # Run all tests
-npm test
+bun run test
 
 # Run with coverage
-npm run test:coverage
+bun run test:coverage
 
 # Watch mode
-npm run test:watch
+bun run test:watch
 ```
 
 ### E2E Tests
@@ -337,7 +326,7 @@ npm run test:watch
 npx playwright install
 
 # Run E2E tests
-npm run test:e2e
+bun run test:e2e
 
 # Run with UI
 npx playwright test --ui
@@ -348,7 +337,7 @@ npx playwright test --ui
 ```bash
 # Test migration scripts
 cd packages/wp-typia-advanced
-npm run test:migrations
+bun run test:migrations
 ```
 
 ## 📊 Performance
@@ -366,22 +355,22 @@ We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md)
 
 ```bash
 # Fork and clone
-git clone https://github.com/yourusername/wp-typia-boilerplate.git
-cd wp-typia-boilerplate
+git clone https://github.com/imjlk/wp-typia-templates.git
+cd wp-typia-templates
 
 # Install dependencies
-npm install
+bun install
 
 # Start development
-npm run dev
+bun run dev
 
 # Run tests
-npm test
+bun run test
 ```
 
 ## 📄 License
 
-GPL-2.0-or-later © [Your Name](https://github.com/yourusername)
+GPL-2.0-or-later © [imjlk](https://github.com/imjlk)
 
 ## 🙏 Acknowledgments
 
@@ -392,9 +381,9 @@ GPL-2.0-or-later © [Your Name](https://github.com/yourusername)
 
 ## 📞 Support
 
-- 📖 [Documentation](https://yourusername.github.io/wp-typia-boilerplate/)
-- 🐛 [Issue Tracker](https://github.com/yourusername/wp-typia-boilerplate/issues)
-- 💬 [Discussions](https://github.com/yourusername/wp-typia-boilerplate/discussions)
+- 📖 [Documentation](https://github.com/imjlk/wp-typia-templates/wiki)
+- 🐛 [Issue Tracker](https://github.com/imjlk/wp-typia-templates/issues)
+- 💬 [Discussions](https://github.com/imjlk/wp-typia-templates/discussions)
 - 📧 [Email](mailto:support@example.com)
 
 ---

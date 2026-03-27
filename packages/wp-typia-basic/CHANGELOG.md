@@ -1,4 +1,4 @@
-# @wp-typia/basic
+# wp-typia-basic
 
 ## 1.4.0
 

@@ -1,0 +1,16 @@
+import { registerBlockType } from '@wordpress/blocks';
+import { __ } from '@wordpress/i18n';
+import Edit from './edit';
+import Save from './save';
+import { {{titleCase}}Attributes } from './types';
+import { validators } from './validators';
+import './style.scss';
+
+registerBlockType<{{titleCase}}Attributes>('{{namespace}}/{{slug}}', {
+	// Use Typia to generate example data
+	example: {
+		attributes: validators.random()
+	},
+	edit: Edit,
+	save: Save,
+});

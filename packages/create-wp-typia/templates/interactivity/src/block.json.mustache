@@ -1,0 +1,75 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "create-block/{{slugKebabCase}}",
+	"version": "0.1.0",
+	"title": "{{title}}",
+	"category": "widgets",
+	"icon": "smiley",
+	"description": "{{description}}",
+	"example": {},
+	"supports": {
+		"html": false,
+		"align": true,
+		"anchor": true,
+		"className": true,
+		"interactivity": true
+	},
+	"attributes": {
+		"content": {
+			"type": "string",
+			"source": "html",
+			"selector": ".{{cssClassName}}__content",
+			"default": ""
+		},
+		"alignment": {
+			"type": "string",
+			"enum": ["left", "center", "right"],
+			"default": "left"
+		},
+		"isVisible": {
+			"type": "boolean",
+			"default": true
+		},
+		"interactiveMode": {
+			"type": "string",
+			"enum": ["click", "hover", "auto"],
+			"default": "click"
+		},
+		"animation": {
+			"type": "string",
+			"enum": ["none", "bounce", "pulse", "shake", "flip"],
+			"default": "none"
+		},
+		"clickCount": {
+			"type": "number",
+			"default": 0
+		},
+		"isAnimating": {
+			"type": "boolean",
+			"default": false
+		},
+		"showCounter": {
+			"type": "boolean",
+			"default": true
+		},
+		"maxClicks": {
+			"type": "number",
+			"default": 10
+		},
+		"autoPlayInterval": {
+			"type": "number",
+			"default": 0
+		},
+		"uniqueId": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"textdomain": "{{slugSnakeCase}}",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"viewScript": "file:./view.js",
+	"viewScriptModule": "file:./interactivity.js"
+}

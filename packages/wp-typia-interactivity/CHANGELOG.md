@@ -1,4 +1,4 @@
-# @wp-typia/interactivity
+# wp-typia-interactivity
 
 ## 1.2.0
 

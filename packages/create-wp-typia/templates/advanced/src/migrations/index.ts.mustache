@@ -1,0 +1,361 @@
+import typia from "typia";
+import { 
+	{{titleCase}}AttributesV1, 
+	{{titleCase}}AttributesV2, 
+	{{titleCase}}AttributesV3,
+	{{titleCase}}Attributes,
+	BLOCK_VERSIONS 
+} from '../types/versions';
+import { generateUUID } from '../utils';
+
+export interface MigrationContext {
+	originalAttributes: any;
+	timestamp: string;
+	migrationPath: string[];
+	rollbackPossible: boolean;
+}
+
+export interface MigrationResult<T> {
+	data: T;
+	context: MigrationContext;
+	rollback: () => any;
+	success: boolean;
+	error?: Error;
+}
+
+/**
+ * Migration functions for {{title}} block versions
+ */
+		}
+/**
+ * Migration functions for {{title}} block versions
+ */
+
+// V1 → V2 Migration
+export function migrateV1ToV2(v1Attrs: {{titleCase}}AttributesV1): MigrationResult<{{titleCase}}AttributesV2> {
+	console.log('🔄 Migrating {{title}} from v1 to v2');
+	console.log('📄 V1 attributes:', JSON.stringify(v1Attrs, null, 2));
+	
+	const migrated: {{titleCase}}AttributesV2 = {
+		content: v1Attrs.content || "",
+		alignment: v1Attrs.alignment || "left",
+		// New fields with defaults
+		isVisible: true,
+		className: undefined
+	};
+	
+	console.log('🔧 Adding new fields: isVisible=true, className=undefined');
+	
+	// Validate migrated data
+	const validation = typia.validate<{{titleCase}}AttributesV2>(migrated);
+	if (!validation.success) {
+		const error = new Error('V1→V2 migration validation failed');
+		console.error('❌ V1→V2 migration validation failed:', validation.errors);
+		return {
+			data: null,
+			context: {
+				originalAttributes: v1Attrs,
+				timestamp: new Date().toISOString(),
+				migrationPath: ['V1', 'V2'],
+				rollbackPossible: false
+			},
+			rollback: () => v1Attrs,
+			success: false,
+			error
+		};
+	}
+	
+	console.log('✅ V1→V2 migration successful');
+	console.log('📄 V2 attributes:', JSON.stringify(migrated, null, 2));
+	
+	// Create rollback function
+	const rollback = (): {{titleCase}}AttributesV1 => {
+		return {
+			content: migrated.content,
+			alignment: migrated.alignment
+		};
+	};
+	
+	return {
+		data: migrated,
+		context: {
+			originalAttributes: v1Attrs,
+			timestamp: new Date().toISOString(),
+			migrationPath: ['V1', 'V2'],
+			rollbackPossible: true
+		},
+		rollback,
+		success: true
+	};
+}
+
+// V2 → V3 Migration
+export function migrateV2ToV3(v2Attrs: {{titleCase}}AttributesV2): MigrationResult<{{titleCase}}AttributesV3> {
+	console.log('🔄 Migrating {{title}} from v2 to v3');
+	console.log('📄 V2 attributes:', JSON.stringify(v2Attrs, null, 2));
+	
+	const migrated: {{titleCase}}AttributesV3 = {
+		// New fields
+		id: generateUUID(),
+		version: 3,
+		theme: "default",
+		
+		// Existing fields with potential updates
+		content: v2Attrs.content || "",
+		alignment: v2Attrs.alignment || "left",
+		isVisible: v2Attrs.isVisible ?? true,
+		
+		// Handle className validation change
+		className: v2Attrs.className && /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(v2Attrs.className)
+			? v2Attrs.className.slice(0, 50) // Trim to new max length
+			: undefined
+	};
+	
+	console.log('🔧 Adding new fields:');
+	console.log('   - id:', migrated.id);
+	console.log('   - version:', migrated.version);
+	console.log('   - theme:', migrated.theme);
+	
+	if (v2Attrs.className && !/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(v2Attrs.className)) {
+		console.log('⚠️  Invalid className format, setting to undefined');
+	}
+	
+	if (v2Attrs.className && v2Attrs.className.length > 50) {
+		console.log('✂️  Trimming className from', v2Attrs.className.length, 'to 50 characters');
+	}
+	
+	// Validate migrated data
+	const validation = typia.validate<{{titleCase}}AttributesV3>(migrated);
+	if (!validation.success) {
+		const error = new Error('V2→V3 migration validation failed');
+		console.error('❌ V2→V3 migration validation failed:', validation.errors);
+		return {
+			data: null,
+			context: {
+				originalAttributes: v2Attrs,
+				timestamp: new Date().toISOString(),
+				migrationPath: ['V2', 'V3'],
+				rollbackPossible: false
+			},
+			rollback: () => v2Attrs,
+			success: false,
+			error
+		};
+	}
+	
+	console.log('✅ V2→V3 migration successful');
+	console.log('📄 V3 attributes:', JSON.stringify(migrated, null, 2));
+	
+	// Create rollback function
+	const rollback = (): {{titleCase}}AttributesV2 => {
+		return {
+			content: migrated.content,
+			alignment: migrated.alignment,
+			isVisible: migrated.isVisible,
+			className: migrated.className
+		};
+	};
+	
+	return {
+		data: migrated,
+		context: {
+			originalAttributes: v2Attrs,
+			timestamp: new Date().toISOString(),
+			migrationPath: ['V2', 'V3'],
+			rollbackPossible: true
+		},
+		rollback,
+		success: true
+	};
+}
+
+/**
+ * Auto-detect version and migrate to current
+ */
+export function autoMigrate(attributes: any): MigrationResult<{{titleCase}}Attributes> {
+	// Try to detect version
+	const detectedVersion = detectVersion(attributes);
+	console.log(`🔍 Detected {{title}} version: ${detectedVersion}`);
+	
+	switch (detectedVersion) {
+		case "1.0.0": {
+			// V1 → V2 → V3
+			const v2Result = migrateV1ToV2(attributes as {{titleCase}}AttributesV1);
+			if (!v2Result.success) {
+				return v2Result;
+			}
+			
+			const v3Result = migrateV2ToV3(v2Result.data);
+			if (!v3Result.success) {
+				// If V3 migration fails, we still have the V2 data
+				return {
+					...v3Result,
+					data: v2Result.data as unknown as {{titleCase}}Attributes,
+					context: {
+						...v3Result.context,
+						migrationPath: [...v2Result.context.migrationPath, ...v3Result.context.migrationPath]
+					}
+				};
+			}
+			
+			return {
+				...v3Result,
+				context: {
+					...v3Result.context,
+					migrationPath: [...v2Result.context.migrationPath, ...v3Result.context.migrationPath],
+					originalAttributes: attributes
+				},
+				rollback: () => attributes
+			};
+		}
+			
+			
+		case "2.0.0": {
+			// V2 → V3
+			const v3Result = migrateV2ToV3(attributes as {{titleCase}}AttributesV2);
+			if (!v3Result.success) {
+				return v3Result;
+			}
+			
+			return {
+				...v3Result,
+				context: {
+					...v3Result.context,
+					migrationPath: ['V2', 'V3'],
+					originalAttributes: attributes
+				},
+				rollback: () => attributes
+			};
+		}
+			
+			
+		case "3.0.0": {
+			// Already current version
+			console.log('✅ {{title}} already at current version');
+			return {
+				data: attributes as {{titleCase}}AttributesV3,
+				context: {
+					originalAttributes: attributes,
+					timestamp: new Date().toISOString(),
+					migrationPath: ['V3'],
+					rollbackPossible: true
+				},
+				rollback: () => attributes,
+				success: true
+			};
+		}
+			
+			
+		default: {
+			console.warn('⚠️ Unknown {{title}} version, attempting best-effort migration');
+			return attemptBestEffortMigration(attributes);
+		}
+			
+	}
+}
+
+/**
+ * Detect block version based on structure
+ */
+function detectVersion(attributes: any): string {
+	// Check for V3 features
+	if ('id' in attributes || 'version' in attributes || 'theme' in attributes) {
+		return "3.0.0";
+	}
+	
+	// Check for V2 features  
+	if ('isVisible' in attributes || 'className' in attributes) {
+		return "2.0.0";
+	}
+	
+	// Must be V1
+	return "1.0.0";
+}
+
+/**
+ * Best-effort migration for unknown versions
+ */
+function attemptBestEffortMigration(attributes: any): MigrationResult<{{titleCase}}Attributes> {
+	console.log('🔧 Attempting best-effort migration');
+	
+	const migrated: {{titleCase}}Attributes = {
+		id: generateUUID(),
+		version: 3,
+		content: String(attributes.content || ""),
+		alignment: ["left", "center", "right", "justify"].includes(attributes.alignment)
+			? attributes.alignment
+			: "left",
+		isVisible: Boolean(attributes.isVisible ?? true),
+		className: typeof attributes.className === 'string'
+			? attributes.className.slice(0, 50)
+			: undefined,
+		theme: ["default", "dark", "light", "accent"].includes(attributes.theme)
+			? attributes.theme
+			: "default"
+	};
+	
+	// Final validation
+	const validation = typia.validate<{{titleCase}}Attributes>(migrated);
+	if (!validation.success) {
+		const error = new Error('Best-effort migration validation failed');
+		console.error('❌ Best-effort migration failed:', validation.errors);
+		// Return minimal valid structure
+		return {
+			data: null,
+			context: {
+				originalAttributes: attributes,
+				timestamp: new Date().toISOString(),
+				migrationPath: ['BestEffort'],
+				rollbackPossible: false
+			},
+			rollback: () => attributes,
+			success: false,
+			error
+		};
+	}
+	
+	console.log('✅ Best-effort migration successful');
+	return {
+		data: migrated,
+		context: {
+			originalAttributes: attributes,
+			timestamp: new Date().toISOString(),
+			migrationPath: ['BestEffort'],
+			rollbackPossible: true
+		},
+		rollback: () => attributes,
+		success: true
+	};
+}
+
+/**
+ * Generate migration report
+ */
+export function generateMigrationReport(oldAttrs: any, newAttrs: {{titleCase}}Attributes) {
+	const report = {
+		timestamp: new Date().toISOString(),
+		fromVersion: detectVersion(oldAttrs),
+		toVersion: "3.0.0",
+		changes: [] as string[],
+		warnings: [] as string[]
+	};
+	
+	// Detect changes
+	if (!oldAttrs.id && newAttrs.id) {
+		report.changes.push('Added unique ID');
+	}
+	
+	if (!oldAttrs.version && newAttrs.version) {
+		report.changes.push('Added version tracking');
+	}
+	
+	if (!oldAttrs.theme && newAttrs.theme) {
+		report.changes.push('Added theme support');
+	}
+	
+	if (oldAttrs.content !== newAttrs.content) {
+		report.warnings.push('Content may have been modified during migration');
+	}
+	
+	return report;
+}

@@ -1,0 +1,34 @@
+import { tags } from "typia";
+
+export interface {{pascalCase}}Attributes {
+  content: string & tags.MinLength<1> & tags.MaxLength<1000> & tags.Default<"">;
+  alignment?: ('left' | 'center' | 'right' | 'justify') & tags.Default<"left">;
+  isVisible?: boolean & tags.Default<true>;
+  fontSize?: ('small' | 'medium' | 'large' | 'xlarge') & tags.Default<"medium">;
+  textColor?: string & tags.Default<"">;
+  backgroundColor?: string & tags.Default<"">;
+  padding?: {
+    top: number & tags.Default<0>;
+    right: number & tags.Default<0>;
+    bottom: number & tags.Default<0>;
+    left: number & tags.Default<0>;
+  };
+  borderRadius?: number & tags.Default<0>;
+  shadow?: {
+    enabled: boolean & tags.Default<false>;
+    x: number & tags.Default<0>;
+    y: number & tags.Default<4>;
+    blur: number & tags.Default<8>;
+    spread: number & tags.Default<0>;
+    color: string & tags.Default<"rgba(0, 0, 0, 0.1)">;
+  };
+  animation?: ('none' | 'fadeIn' | 'slideUp' | 'slideDown' | 'zoomIn') & tags.Default<"none">;
+  customCSS?: string & tags.Default<"">;
+  uniqueId?: string & tags.Default<"">;
+}
+
+export type {{pascalCase}}ValidationResult = {
+  isValid: boolean;
+  errors: string[];
+  data?: {{pascalCase}}Attributes;
+};

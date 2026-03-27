@@ -1,4 +1,4 @@
-# @wp-typia/advanced
+# wp-typia-advanced
 
 ## 1.2.0
 

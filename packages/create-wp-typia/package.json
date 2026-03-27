@@ -1,0 +1,58 @@
+{
+  "name": "create-wp-typia",
+  "version": "0.1.0",
+  "description": "Bun-first scaffolding CLI for WordPress Typia block templates",
+  "packageManager": "bun@1.3.10",
+  "type": "module",
+  "main": "lib/scaffold.js",
+  "bin": {
+    "create-wp-typia": "dist/cli.js"
+  },
+  "files": [
+    "dist/",
+    "lib/",
+    "templates/",
+    "README.md",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "bunli build --runtime node",
+    "dev": "bunli dev --runtime node",
+    "clean": "rm -rf dist",
+    "prepack": "bun run build"
+  },
+  "keywords": [
+    "wordpress",
+    "gutenberg",
+    "typia",
+    "template",
+    "scaffold",
+    "cli",
+    "bun"
+  ],
+  "author": "imjlk",
+  "license": "GPL-2.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/imjlk/wp-typia-templates.git",
+    "directory": "packages/create-wp-typia"
+  },
+  "bugs": {
+    "url": "https://github.com/imjlk/wp-typia-templates/issues"
+  },
+  "homepage": "https://github.com/imjlk/wp-typia-templates/tree/main/packages/create-wp-typia#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "bun": ">=1.3.10"
+  },
+  "devDependencies": {
+    "@bunli/core": "^0.8.2",
+    "bunli": "^0.8.2",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "typescript": "^5.9.2"
+  }
+}

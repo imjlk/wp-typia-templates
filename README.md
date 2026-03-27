@@ -1,6 +1,6 @@
-# 🚀 WordPress Typia Boilerplate
+# 🚀 wp-typia-templates
 
-Create robust WordPress blocks with TypeScript runtime validation using Typia. This boilerplate provides enterprise-grade features including type safety, validation, testing, and migration support.
+Create robust WordPress blocks with TypeScript runtime validation using Typia. This Bun-first template monorepo provides shared scaffolding, generated `block.json` / `typia.manifest.json`, testing, and migration support.
 
 ## ✨ Key Features
 
@@ -9,50 +9,38 @@ Create robust WordPress blocks with TypeScript runtime validation using Typia. T
 - **🎯 4 Template Variations** - From basic to advanced patterns
 - **🔄 Migration System** - Automated block versioning and migrations (Advanced template)
 - **🧪 Complete Testing** - Unit tests with Jest, E2E tests with Playwright
-- **📦 Monorepo Ready** - npm workspaces with shared dependencies
+- **📦 Monorepo Ready** - Bun workspaces with shared dependencies
 - **🎨 Modern Tooling** - TypeScript, SCSS, ESLint, Prettier, GitHub Actions
 
 ## 🚀 Quick Start
 
-### Option 1: Use npm Templates (Recommended)
+### Option 1: Use `create-wp-typia` (Recommended)
 
 ```bash
-# Basic template - Simple and lightweight
-npx wp-typia-basic
-
-# Full template - Rich features and controls
-npx wp-typia-full
-
-# Interactive template - WordPress Interactivity API
-npx wp-typia-interactivity
-
-# Advanced template - Migration system included
-npx wp-typia-advanced
+bun create wp-typia my-block
+# or
+bunx create-wp-typia my-block
+# or
+npx create-wp-typia my-block
 ```
 
-Follow the prompts to configure your block. The setup script will:
+Follow the prompts to choose `basic`, `full`, `interactivity`, or `advanced`. The CLI will:
 
 - Ask for block details (name, description, author)
 - Generate all necessary files with your settings
-- Configure the package.json
+- Configure a Bun-first `package.json`
+- Run `bun install` unless you pass `--no-install`
 
-### Option 2: Use GitHub Template
+### Option 2: Use direct template wrappers
 
-1. Click "Use this template" at the top
-2. Clone your new repository
-3. Copy the template you need:
+```bash
+npx wp-typia-basic
+npx wp-typia-full
+npx wp-typia-interactivity
+npx wp-typia-advanced
+```
 
-   ```bash
-   cp -r test-template/my-typia-block your-plugin-directory
-   ```
-
-4. Install and run:
-
-   ```bash
-   cd your-plugin-directory
-   npm install
-   npm run start
-   ```
+These legacy entrypoints remain supported for compatibility, but `create-wp-typia` is the primary path.
 
 ## 📦 Templates Overview
 
@@ -81,7 +69,7 @@ export interface MyBlockAttributes {
 ### 2. Auto-generate block metadata
 
 ```bash
-npm run sync-types  # Generates block.json and typia.manifest.json from TypeScript types
+bun run sync-types  # Generates block.json and typia.manifest.json from TypeScript types
 ```
 
 ### 3. Get Runtime Validation
@@ -100,19 +88,19 @@ if (!validate.success) {
 
 ```bash
 # Install dependencies
-npm install
+bun install
 
 # Start development server
-npm run start
+bun run start
 
 # Type checking
-npm run typecheck
+bun run typecheck
 
 # Run tests
-npm test
+bun run test
 
 # Build for production
-npm run build
+bun run build
 ```
 
 ## 📚 Documentation
@@ -129,16 +117,16 @@ This project includes comprehensive testing:
 
 ```bash
 # Unit tests
-npm test
+bun run test
 
 # E2E tests with Playwright
-npm run test:e2e
+bun run test:e2e
 
 # Migration tests (Advanced template)
-npm run test:migrations
+bun run test:migrations
 
 # Coverage report
-npm run test:coverage
+bun run test:coverage
 ```
 
 ## 🔄 Migration System (Advanced Template)
@@ -156,10 +144,10 @@ export interface V2_Attributes extends V1_Attributes {
 }
 
 // Auto-generate migrations
-npm run generate-migrations
+bun run generate-migrations
 
 // Test migrations
-npm run test-migrations
+bun run test-migrations
 ```
 
 Features:
@@ -181,7 +169,7 @@ All templates are published as npm packages:
 ## 🏗 Project Structure
 
 ```
-wp-typia-boilerplate/
+wp-typia-templates/
 ├── templates/                    # Template variations
 │   ├── basic/                   # Basic Typia features
 │   ├── full/                    # Full feature set
@@ -189,7 +177,8 @@ wp-typia-boilerplate/
 │   └── advanced/                # Migration system
 ├── test-template/               # Working examples
 │   └── my-typia-block/         # Complete example
-├── packages/                    # Published npm packages
+├── packages/                    # Published npm packages and CLI
+│   ├── create-wp-typia/         # Shared Bunli-based scaffolder
 ├── tests/                       # Test files
 ├── docs/                        # Documentation
 └── .github/                     # GitHub configuration
@@ -264,9 +253,9 @@ GPL-2.0-or-later. See [LICENSE](LICENSE) for details.
 
 ## 📞 Support
 
-- 📖 [Documentation](https://github.com/yourusername/wp-typia-boilerplate/wiki)
-- 🐛 [Issue Tracker](https://github.com/yourusername/wp-typia-boilerplate/issues)
-- 💬 [Discussions](https://github.com/yourusername/wp-typia-boilerplate/discussions)
+- 📖 [Documentation](https://github.com/imjlk/wp-typia-templates/wiki)
+- 🐛 [Issue Tracker](https://github.com/imjlk/wp-typia-templates/issues)
+- 💬 [Discussions](https://github.com/imjlk/wp-typia-templates/discussions)
 
 ---
 

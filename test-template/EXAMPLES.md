@@ -1,6 +1,6 @@
 # 📚 WordPress Typia Block Examples
 
-This directory contains practical examples demonstrating how to use the WordPress Typia boilerplate templates effectively.
+This directory contains practical examples demonstrating how to use the wp-typia-templates scaffolding flow effectively.
 
 ## 🎯 Available Examples
 
@@ -69,19 +69,19 @@ Will demonstrate:
 2. **Install Dependencies**
 
    ```bash
-   npm install
+   bun install
    ```
 
 3. **Start Development**
 
    ```bash
-   npm run start
+   bun run start
    ```
 
 4. **Build for Production**
 
    ```bash
-   npm run build
+   bun run build
    ```
 
 5. **Deploy to WordPress**
@@ -184,7 +184,7 @@ export default {
 4. **Sync block metadata**
 
    ```bash
-   npm run sync-types
+   bun run sync-types
    ```
 
 ### Creating a Complex Attribute
@@ -224,26 +224,26 @@ export interface ComplexBlockAttributes {
 
 ```bash
 # Run all tests
-npm test
+bun run test
 
 # Run specific test file
-npm test -- my-block.test.ts
+bun run test -- my-block.test.ts
 
 # Run tests in watch mode
-npm test -- --watch
+bun run test -- --watch
 ```
 
 ### E2E Testing
 
 ```bash
 # Start WordPress environment
-npm run wp-env:start
+bun run wp-env:start
 
 # Run E2E tests
-npm run test:e2e
+bun run test:e2e
 
 # Stop environment
-npm run wp-env:stop
+bun run wp-env:stop
 ```
 
 ## 📦 Deployment Examples
@@ -253,13 +253,13 @@ npm run wp-env:stop
 1. **Build your block**
 
    ```bash
-   npm run build
+   bun run build
    ```
 
 2. **Create plugin ZIP**
 
    ```bash
-   npm run zip
+   bun run zip
    ```
 
 3. **Upload to WordPress**
@@ -271,7 +271,7 @@ npm run wp-env:stop
 1. **Build your block**
 
    ```bash
-   npm run build
+   bun run build
    ```
 
 2. **Copy to theme**

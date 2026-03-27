@@ -1,0 +1,39 @@
+import { useBlockProps, RichText } from '@wordpress/block-editor';
+import { useColorScheme, useAnimation } from './hooks';
+import type { {{pascalCase}}Attributes } from './types';
+
+export default function Save({ attributes }: { attributes: {{pascalCase}}Attributes }) {
+  const { getColorVariable } = useColorScheme();
+  const { animationClass } = useAnimation(attributes.animation);
+
+  const blockProps = useBlockProps.save({
+    className: `wp-block-{{slugKebabCase}} wp-block-{{slugKebabCase}}--${attributes.fontSize} wp-block-{{slugKebabCase}}--align-${attributes.alignment} ${animationClass}`,
+    style: {
+      color: getColorVariable(attributes.textColor),
+      backgroundColor: getColorVariable(attributes.backgroundColor),
+      padding: `${attributes.padding.top}px ${attributes.padding.right}px ${attributes.padding.bottom}px ${attributes.padding.left}px`,
+      borderRadius: `${attributes.borderRadius}px`,
+      boxShadow: attributes.shadow.enabled
+        ? `${attributes.shadow.x}px ${attributes.shadow.y}px ${attributes.shadow.blur}px ${attributes.shadow.spread}px ${attributes.shadow.color}`
+        : 'none',
+      display: attributes.isVisible ? 'block' : 'none',
+      ...(attributes.customCSS ? { cssText: attributes.customCSS } : {})
+    },
+    'data-unique-id': attributes.uniqueId,
+    'data-animation': attributes.animation !== 'none' ? attributes.animation : undefined
+  });
+
+  return (
+    <div {...blockProps}>
+      <div
+        className={`{{cssClassName}}__content {{cssClassName}}__content--${attributes.fontSize}`}
+        style={{ textAlign: attributes.alignment }}
+      >
+        <RichText.Content
+          tagName="p"
+          value={attributes.content}
+        />
+      </div>
+    </div>
+  );
+}

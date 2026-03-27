@@ -1,17 +1,5 @@
 import { test as base, expect, Page, BrowserContext } from '@playwright/test';
 
-// Define WordPress globals
-declare global {
-  interface Window {
-    wp: {
-      data: {
-        select: (store: string) => any;
-        dispatch: (store: string) => any;
-      };
-    };
-  }
-}
-
 // Define WordPress fixtures
 export interface WordPressFixtures {
   page: Page;

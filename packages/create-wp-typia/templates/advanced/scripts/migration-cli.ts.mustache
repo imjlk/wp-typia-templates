@@ -1,0 +1,260 @@
+#!/usr/bin/env tsx
+
+/**
+ * 🔧 {{title}} Migration CLI Tool
+ * 
+ * Command-line interface for detecting and managing block migrations
+ */
+
+import { program } from 'commander';
+import { scanSiteForMigrations, generateMigrationReport, detectBlockMigration } from '../src/migration-detector';
+import { autoMigrate } from '../src/migrations';
+import * as fs from 'fs';
+import * as path from 'path';
+
+program
+	.name('{{slug}}-migration')
+	.description('{{title}} block migration management tool')
+	.version('1.0.0');
+
+// Detect command - analyze specific block data
+program
+	.command('detect')
+	.description('Detect if block attributes need migration')
+	.option('-f, --file <path>', 'JSON file with block attributes')
+	.option('-d, --data <json>', 'Inline JSON block attributes')
+	.option('--verbose', 'Show detailed analysis')
+	.action(async (options) => {
+		try {
+			let attributes;
+
+			if (options.file) {
+				const filePath = path.resolve(options.file);
+				if (!fs.existsSync(filePath)) {
+					console.error(`❌ File not found: ${filePath}`);
+					process.exit(1);
+				}
+				attributes = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+				console.log(`📂 Analyzing block data from: ${filePath}`);
+			} else if (options.data) {
+				attributes = JSON.parse(options.data);
+				console.log('📝 Analyzing inline block data');
+			} else {
+				console.error('❌ Either --file or --data must be provided');
+				process.exit(1);
+			}
+
+			const analysis = detectBlockMigration(attributes);
+
+			// Display results
+			console.log('\n🔍 Migration Analysis Results:');
+			console.log('═'.repeat(50));
+			console.log(`Current Version: ${analysis.currentVersion}`);
+			console.log(`Target Version:  ${analysis.targetVersion}`);
+			console.log(`Confidence:      ${(analysis.confidence * 100).toFixed(1)}%`);
+			console.log(`Needs Migration: ${analysis.needsMigration ? '✅ YES' : '❌ NO'}`);
+
+			if (analysis.reasons.length > 0) {
+				console.log('\n📋 Reasons:');
+				analysis.reasons.forEach(reason => console.log(`  • ${reason}`));
+			}
+
+			if (analysis.warnings.length > 0) {
+				console.log('\n⚠️  Warnings:');
+				analysis.warnings.forEach(warning => console.log(`  • ${warning}`));
+			}
+
+			if (analysis.affectedFields.added.length > 0 || 
+				analysis.affectedFields.modified.length > 0) {
+				console.log('\n🔧 Affected Fields:');
+				if (analysis.affectedFields.added.length > 0) {
+					console.log(`  Added:    ${analysis.affectedFields.added.join(', ')}`);
+				}
+				if (analysis.affectedFields.modified.length > 0) {
+					console.log(`  Modified: ${analysis.affectedFields.modified.join(', ')}`);
+				}
+			}
+
+			if (options.verbose) {
+				console.log('\n📊 Raw Attributes:');
+				console.log(JSON.stringify(attributes, null, 2));
+			}
+
+			// Exit with appropriate code
+			process.exit(analysis.needsMigration ? 1 : 0);
+
+		} catch (error) {
+			console.error('❌ Detection failed:', error.message);
+			process.exit(1);
+		}
+	});
+
+// Migrate command - perform migration on specific data
+program
+	.command('migrate')
+	.description('Migrate block attributes to current version')
+	.option('-f, --file <path>', 'JSON file with block attributes')
+	.option('-d, --data <json>', 'Inline JSON block attributes')
+	.option('-o, --output <path>', 'Output file for migrated data')
+	.option('--dry-run', 'Show what would be migrated without changing anything')
+	.action(async (options) => {
+		try {
+			let attributes;
+			let inputSource = 'unknown';
+
+			if (options.file) {
+				const filePath = path.resolve(options.file);
+				if (!fs.existsSync(filePath)) {
+					console.error(`❌ File not found: ${filePath}`);
+					process.exit(1);
+				}
+				attributes = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+				inputSource = filePath;
+				console.log(`📂 Loading block data from: ${filePath}`);
+			} else if (options.data) {
+				attributes = JSON.parse(options.data);
+				inputSource = 'inline data';
+				console.log('📝 Processing inline block data');
+			} else {
+				console.error('❌ Either --file or --data must be provided');
+				process.exit(1);
+			}
+
+			console.log('\n🔍 Pre-migration analysis...');
+			const preAnalysis = detectBlockMigration(attributes);
+			
+			if (!preAnalysis.needsMigration) {
+				console.log('✅ Block is already at current version, no migration needed');
+				process.exit(0);
+			}
+
+			console.log(`🔄 Migrating from v${preAnalysis.currentVersion} to v${preAnalysis.targetVersion}...`);
+
+			if (options.dryRun) {
+				console.log('🚫 DRY RUN - No changes will be made');
+				console.log('\nChanges that would be applied:');
+				preAnalysis.reasons.forEach(reason => console.log(`  • ${reason}`));
+				process.exit(0);
+			}
+
+			// Perform migration
+			const migrationResult = autoMigrate(attributes);
+			const migrated = migrationResult.data;
+			
+			// Verify migration
+			const postAnalysis = detectBlockMigration(migrated);
+			
+			console.log('\n✅ Migration completed successfully!');
+			console.log(`📊 Post-migration version: v${postAnalysis.currentVersion}`);
+
+			// Output results
+			if (options.output) {
+				const outputPath = path.resolve(options.output);
+				fs.writeFileSync(outputPath, JSON.stringify(migrated, null, 2));
+				console.log(`💾 Migrated data saved to: ${outputPath}`);
+			} else {
+				console.log('\n📄 Migrated attributes:');
+				console.log(JSON.stringify(migrated, null, 2));
+			}
+
+		} catch (error) {
+			console.error('❌ Migration failed:', error.message);
+			process.exit(1);
+		}
+	});
+
+// Scan command - scan site for blocks needing migration
+program
+	.command('scan')
+	.description('Scan WordPress site for blocks needing migration')
+	.option('--block-name <name>', 'Specific block to scan for', '{{namespace}}/{{slug}}')
+	.option('--report <path>', 'Generate markdown report to file')
+	.option('--json <path>', 'Export results as JSON')
+	.option('--summary', 'Show summary only')
+	.action(async (options) => {
+		try {
+			console.log(`🔍 Scanning site for ${options.blockName} blocks...`);
+			
+			const results = await scanSiteForMigrations(options.blockName);
+			
+			if (results.length === 0) {
+				console.log('✅ No blocks found that need migration');
+				process.exit(0);
+			}
+
+			const needsMigration = results.filter(r => r.analysis.needsMigration);
+			const hasWarnings = results.filter(r => r.analysis.warnings.length > 0);
+
+			console.log('\n📊 Scan Results:');
+			console.log('═'.repeat(40));
+			console.log(`Total blocks:        ${results.length}`);
+			console.log(`Need migration:      ${needsMigration.length}`);
+			console.log(`Have warnings:       ${hasWarnings.length}`);
+
+			if (!options.summary) {
+				console.log('\n🔧 Blocks needing migration:');
+				needsMigration.forEach((result, index) => {
+					console.log(`\n${index + 1}. "${result.postTitle}" (Post #${result.postId})`);
+					console.log(`   Version: v${result.analysis.currentVersion} → v${result.analysis.targetVersion}`);
+					console.log(`   Confidence: ${(result.analysis.confidence * 100).toFixed(1)}%`);
+					if (result.analysis.reasons.length > 0) {
+						console.log(`   Reasons: ${result.analysis.reasons.join(', ')}`);
+					}
+				});
+			}
+
+			// Generate reports
+			if (options.report) {
+				const report = generateMigrationReport(results);
+				fs.writeFileSync(path.resolve(options.report), report);
+				console.log(`\n📋 Report saved to: ${options.report}`);
+			}
+
+			if (options.json) {
+				fs.writeFileSync(path.resolve(options.json), JSON.stringify(results, null, 2));
+				console.log(`\n💾 JSON data saved to: ${options.json}`);
+			}
+
+			// Exit with error code if migrations needed
+			process.exit(needsMigration.length > 0 ? 1 : 0);
+
+		} catch (error) {
+			console.error('❌ Site scan failed:', error.message);
+			process.exit(1);
+		}
+	});
+
+// Stats command - show migration statistics
+program
+	.command('stats')
+	.description('Show migration system statistics')
+	.action(() => {
+		console.log('📊 {{title}} Migration System Stats:');
+		console.log('═'.repeat(50));
+		console.log(`Block name:           {{namespace}}/{{slug}}`);
+		console.log(`Current version:      3.0.0`);
+		console.log(`Supported versions:   1.0.0, 2.0.0, 3.0.0`);
+		console.log(`Auto-migration:       ✅ Enabled`);
+		console.log(`Typia validation:     ✅ Enabled`);
+		console.log(`WordPress integration: ✅ Enabled`);
+		console.log(`CLI tools:            ✅ Available`);
+		
+		console.log('\n🔧 Available Commands:');
+		console.log('  detect   - Analyze block for migration needs');
+		console.log('  migrate  - Perform migration on block data');
+		console.log('  scan     - Scan WordPress site for blocks');
+		console.log('  stats    - Show system statistics');
+
+		console.log('\n📚 Quick Examples:');
+		console.log('  {{slug}}-migration detect --file block.json');
+		console.log('  {{slug}}-migration migrate --file old-block.json --output new-block.json');
+		console.log('  {{slug}}-migration scan --report migration-report.md');
+	});
+
+// Parse command line arguments
+program.parse();
+
+// If no command provided, show help
+if (!process.argv.slice(2).length) {
+	program.outputHelp();
+}

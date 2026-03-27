@@ -154,7 +154,7 @@ try {
 	require('archiver');
 } catch {
 	console.log('📦 archiver 패키지 설치 중...');
-	execSync('npm install archiver --save-dev', { stdio: 'inherit' });
+	execSync('bun add -d archiver', { stdio: 'inherit' });
 }
 
 // 스크립트 실행
