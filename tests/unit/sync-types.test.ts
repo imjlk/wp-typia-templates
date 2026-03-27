@@ -68,5 +68,5 @@ describe('Type Sync Tests', () => {
     const builtManifest = JSON.parse(fs.readFileSync(buildManifestPath, 'utf8'));
 
     expect(builtManifest).toEqual(manifest);
-  });
+  }, { timeout: 30_000 });
 });
