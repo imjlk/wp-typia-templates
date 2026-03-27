@@ -11,7 +11,7 @@
     "start": "wp-scripts start",
     "build": "wp-scripts build",
     "dev": "bun run start",
-    "test": "jest",
+    "test": "bun test --pass-with-no-tests",
     "lint": "wp-scripts lint-js",
     "format": "wp-scripts format",
     "sync-types": "tsx scripts/sync-types-to-block-json.ts"

@@ -11,7 +11,7 @@
     "start": "wp-scripts start",
     "build": "wp-scripts build",
     "dev": "bun run start",
-    "test": "jest",
+    "test": "bun test --pass-with-no-tests",
     "test:e2e": "playwright test",
     "test:migrations": "tsx scripts/test-migrations.ts",
     "lint": "wp-scripts lint-js",

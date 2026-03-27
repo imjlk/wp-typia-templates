@@ -1,9 +1,10 @@
+import { beforeAll, describe, expect, test } from "bun:test";
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
 describe('Type Sync Tests', () => {
-  const testTemplateDir = path.join(__dirname, '../../test-template/my-typia-block');
+  const testTemplateDir = path.join(import.meta.dir, '../../test-template/my-typia-block');
   const blockJsonPath = path.join(testTemplateDir, 'src/my-typia-block/block.json');
   const manifestPath = path.join(testTemplateDir, 'src/my-typia-block/typia.manifest.json');
   const buildManifestPath = path.join(testTemplateDir, 'build/my-typia-block/typia.manifest.json');

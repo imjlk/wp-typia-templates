@@ -3,29 +3,23 @@ import { promises as fsp } from "node:fs";
 import path from "node:path";
 import readline from "node:readline";
 import { execSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const TEMPLATE_ROOT = path.join(__dirname, "..", "templates");
-const PACKAGE_MANAGER = "bun@1.3.10";
-const TEMPLATE_IDS = ["basic", "full", "interactivity", "advanced"];
-const TEMPLATE_DEFAULTS = {
-	basic: {
-		description: "A lightweight WordPress block with Typia validation",
-		category: "text",
-	},
-	full: {
-		description: "A full-featured WordPress block with Typia validation and utilities",
-		category: "widgets",
-	},
-	interactivity: {
-		description: "An interactive WordPress block with Typia validation and Interactivity API",
-		category: "widgets",
-	},
-	advanced: {
-		description: "An advanced WordPress block with Typia validation and migration tooling",
-		category: "widgets",
-	},
+import {
+	PACKAGE_MANAGER_IDS,
+	formatInstallCommand,
+	formatRunScript,
+	getPackageManager,
+	getPackageManagerSelectOptions,
+	transformPackageManagerText,
+} from "./package-managers.js";
+import { TEMPLATE_IDS, getTemplateById } from "./template-registry.js";
+
+const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
+const LOCKFILES = {
+	bun: ["bun.lock", "bun.lockb"],
+	npm: ["package-lock.json"],
+	pnpm: ["pnpm-lock.yaml"],
+	yarn: ["yarn.lock"],
 };
 
 function toKebabCase(input) {
@@ -58,61 +52,173 @@ function toTitle(input) {
 		.join(" ");
 }
 
-function parseArgs(argv) {
-	const parsed = {
-		positionals: [],
-		template: undefined,
-		yes: false,
-		noInstall: false,
-		help: false,
-	};
-
-	for (let index = 0; index < argv.length; index += 1) {
-		const arg = argv[index];
-		if (!arg.startsWith("-")) {
-			parsed.positionals.push(arg);
-			continue;
-		}
-
-		if (arg === "--yes" || arg === "-y") {
-			parsed.yes = true;
-			continue;
-		}
-		if (arg === "--no-install") {
-			parsed.noInstall = true;
-			continue;
-		}
-		if (arg === "--help" || arg === "-h") {
-			parsed.help = true;
-			continue;
-		}
-		if (arg === "--template" || arg === "-t") {
-			parsed.template = argv[index + 1];
-			index += 1;
-			continue;
-		}
-		if (arg.startsWith("--template=")) {
-			parsed.template = arg.split("=", 2)[1];
-			continue;
-		}
-		throw new Error(`Unknown flag: ${arg}`);
-	}
-
-	return parsed;
+function validateBlockSlug(input) {
+	return BLOCK_SLUG_PATTERN.test(input) || "Use lowercase letters, numbers, and hyphens only";
 }
 
-function getTemplateVariables(templateId, answers) {
+export function detectAuthor() {
+	try {
+		return (
+			execSync("git config user.name", {
+				encoding: "utf8",
+				stdio: ["ignore", "pipe", "ignore"],
+			}).trim() || "Your Name"
+		);
+	} catch {
+		return "Your Name";
+	}
+}
+
+function createReadlinePrompt() {
+	const rl = readline.createInterface({
+		input: process.stdin,
+		output: process.stdout,
+	});
+
+	return {
+		async text(message, defaultValue, validate) {
+			const suffix = defaultValue ? ` (${defaultValue})` : "";
+			const answer = await new Promise((resolve) => {
+				rl.question(`${message}${suffix}: `, resolve);
+			});
+
+			const value = String(answer).trim() || defaultValue;
+			if (validate) {
+				const result = validate(value);
+				if (result !== true) {
+					console.error(`❌ ${result}`);
+					return this.text(message, defaultValue, validate);
+				}
+			}
+
+			return value;
+		},
+		async select(message, options, defaultValue) {
+			console.log(message);
+			options.forEach((option, index) => {
+				const hint = option.hint ? ` - ${option.hint}` : "";
+				console.log(`  ${index + 1}. ${option.label}${hint}`);
+			});
+
+			const answer = await this.text("Choice", String(defaultValue ?? 1));
+			const numericChoice = Number(answer);
+			if (!Number.isNaN(numericChoice) && options[numericChoice - 1]) {
+				return options[numericChoice - 1].value;
+			}
+
+			const directChoice = options.find((option) => option.value === answer);
+			if (directChoice) {
+				return directChoice.value;
+			}
+
+			console.error(`❌ Invalid selection: ${answer}`);
+			return this.select(message, options, defaultValue);
+		},
+		close() {
+			rl.close();
+		},
+	};
+}
+
+export function getDefaultAnswers(projectName, templateId) {
+	const template = getTemplateById(templateId);
+	const slugDefault = toKebabCase(projectName || "my-wp-typia-block");
+	return {
+		author: detectAuthor(),
+		description: template.description,
+		namespace: "create-block",
+		slug: slugDefault,
+		title: toTitle(slugDefault),
+	};
+}
+
+export async function resolveTemplateId({
+	templateId,
+	yes = false,
+	isInteractive = false,
+	selectTemplate,
+}) {
+	if (templateId) {
+		return getTemplateById(templateId).id;
+	}
+
+	if (yes) {
+		return "basic";
+	}
+
+	if (!isInteractive || !selectTemplate) {
+		throw new Error(`Template is required in non-interactive mode. Use --template <${TEMPLATE_IDS.join("|")}>.`);
+	}
+
+	return selectTemplate();
+}
+
+export async function resolvePackageManagerId({
+	packageManager,
+	yes = false,
+	isInteractive = false,
+	selectPackageManager,
+}) {
+	if (packageManager) {
+		return getPackageManager(packageManager).id;
+	}
+
+	if (yes) {
+		throw new Error(
+			`Package manager is required when using --yes. Use --package-manager <${PACKAGE_MANAGER_IDS.join("|")}>.`,
+		);
+	}
+
+	if (!isInteractive || !selectPackageManager) {
+		throw new Error(
+			`Package manager is required in non-interactive mode. Use --package-manager <${PACKAGE_MANAGER_IDS.join("|")}>.`,
+		);
+	}
+
+	return selectPackageManager();
+}
+
+export async function collectScaffoldAnswers({
+	projectName,
+	templateId,
+	yes = false,
+	promptText,
+}) {
+	const defaults = getDefaultAnswers(projectName, templateId);
+
+	if (yes) {
+		return defaults;
+	}
+
+	if (!promptText) {
+		throw new Error("Interactive answers require a promptText callback.");
+	}
+
+	const slug = toKebabCase(
+		await promptText("Block slug", defaults.slug, validateBlockSlug),
+	);
+
+	return {
+		author: await promptText("Author", defaults.author),
+		description: await promptText("Description", defaults.description),
+		namespace: await promptText("Namespace", defaults.namespace),
+		slug,
+		title: await promptText("Block title", toTitle(slug)),
+	};
+}
+
+export function getTemplateVariables(templateId, answers) {
+	const template = getTemplateById(templateId);
 	const slug = toKebabCase(answers.slug);
 	const slugSnakeCase = toSnakeCase(slug);
 	const pascalCase = toPascalCase(slug);
 	const title = answers.title.trim();
 	const namespace = answers.namespace.trim();
 	const description = answers.description.trim();
-	const category = TEMPLATE_DEFAULTS[templateId]?.category ?? "widgets";
 
 	return {
 		author: answers.author.trim(),
-		category,
+		category: template.defaultCategory,
 		cssClassName: `wp-block-${slug}`,
 		dashCase: slug,
 		dashicon: "smiley",
@@ -137,88 +243,6 @@ function replaceVariables(content, variables) {
 		const key = rawKey.trim();
 		return Object.prototype.hasOwnProperty.call(variables, key) ? variables[key] : match;
 	});
-}
-
-async function prompt(question, defaultValue) {
-	const rl = readline.createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	});
-
-	const suffix = defaultValue ? ` (${defaultValue})` : "";
-	const answer = await new Promise((resolve) => {
-		rl.question(`${question}${suffix}: `, resolve);
-	});
-	rl.close();
-
-	const result = String(answer).trim();
-	return result || defaultValue;
-}
-
-function detectAuthor() {
-	try {
-		return execSync("git config user.name", {
-			encoding: "utf8",
-			stdio: ["ignore", "pipe", "ignore"],
-		}).trim() || "Your Name";
-	} catch {
-		return "Your Name";
-	}
-}
-
-async function selectTemplate(templateId, yes) {
-	if (templateId) {
-		if (!TEMPLATE_IDS.includes(templateId)) {
-			throw new Error(`Unknown template "${templateId}". Expected one of: ${TEMPLATE_IDS.join(", ")}`);
-		}
-		return templateId;
-	}
-
-	if (yes) {
-		return "basic";
-	}
-
-	console.log("Select a template:");
-	TEMPLATE_IDS.forEach((id, index) => {
-		console.log(`  ${index + 1}. ${id}`);
-	});
-
-	const answer = await prompt("Template", "1");
-	const numericChoice = Number(answer);
-	if (!Number.isNaN(numericChoice) && TEMPLATE_IDS[numericChoice - 1]) {
-		return TEMPLATE_IDS[numericChoice - 1];
-	}
-	if (TEMPLATE_IDS.includes(answer)) {
-		return answer;
-	}
-	throw new Error(`Invalid template selection: ${answer}`);
-}
-
-async function collectAnswers({ projectName, templateId, yes }) {
-	const slugDefault = toKebabCase(projectName || "my-wp-typia-block");
-	const titleDefault = toTitle(slugDefault);
-	const descriptionDefault = TEMPLATE_DEFAULTS[templateId]?.description ?? "WordPress block with Typia validation";
-	const namespaceDefault = "create-block";
-	const authorDefault = detectAuthor();
-
-	if (yes) {
-		return {
-			author: authorDefault,
-			description: descriptionDefault,
-			namespace: namespaceDefault,
-			slug: slugDefault,
-			title: titleDefault,
-		};
-	}
-
-	const slug = toKebabCase(await prompt("Block slug", slugDefault));
-	return {
-		author: await prompt("Author", authorDefault),
-		description: await prompt("Description", descriptionDefault),
-		namespace: await prompt("Namespace", namespaceDefault),
-		slug,
-		title: await prompt("Block title", toTitle(slug)),
-	};
 }
 
 async function ensureDirectory(targetDir, allowExisting = false) {
@@ -257,7 +281,7 @@ async function copyTemplateDir(sourceDir, targetDir, variables) {
 	}
 }
 
-function buildReadme(templateId, variables) {
+function buildReadme(templateId, variables, packageManager) {
 	return `# ${variables.title}
 
 ${variables.description}
@@ -269,20 +293,20 @@ ${templateId}
 ## Development
 
 \`\`\`bash
-bun install
-bun run start
+${formatInstallCommand(packageManager)}
+${formatRunScript(packageManager, "start")}
 \`\`\`
 
 ## Build
 
 \`\`\`bash
-bun run build
+${formatRunScript(packageManager, "build")}
 \`\`\`
 
 ## Type Sync
 
 \`\`\`bash
-bun run sync-types
+${formatRunScript(packageManager, "sync-types")}
 \`\`\`
 
 \`src/types.ts\` remains the source of truth for \`block.json\` and \`typia.manifest.json\`.
@@ -311,22 +335,20 @@ Thumbs.db
 `;
 }
 
-async function normalizePackageJson(targetDir) {
+async function normalizePackageJson(targetDir, packageManagerId) {
 	const packageJsonPath = path.join(targetDir, "package.json");
 	if (!fs.existsSync(packageJsonPath)) {
 		return;
 	}
 
+	const packageManager = getPackageManager(packageManagerId);
 	const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, "utf8"));
-	packageJson.packageManager = PACKAGE_MANAGER;
+	packageJson.packageManager = packageManager.packageManagerField;
 
 	if (packageJson.scripts) {
 		for (const [key, value] of Object.entries(packageJson.scripts)) {
 			if (typeof value === "string") {
-				packageJson.scripts[key] = value
-					.replace(/\bnpm install\b/g, "bun install")
-					.replace(/\bnpm run\b/g, "bun run")
-					.replace(/\bnpm start\b/g, "bun run start");
+				packageJson.scripts[key] = transformPackageManagerText(value, packageManagerId);
 			}
 		}
 	}
@@ -334,7 +356,25 @@ async function normalizePackageJson(targetDir) {
 	await fsp.writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, "\t")}\n`, "utf8");
 }
 
-async function replaceTextRecursively(targetDir) {
+async function removeUnexpectedLockfiles(targetDir, packageManagerId) {
+	const keep = new Set(LOCKFILES[packageManagerId] ?? []);
+	const allLockfiles = Object.values(LOCKFILES).flat();
+
+	await Promise.all(
+		allLockfiles.map(async (filename) => {
+			if (keep.has(filename)) {
+				return;
+			}
+
+			const filePath = path.join(targetDir, filename);
+			if (fs.existsSync(filePath)) {
+				await fsp.rm(filePath, { force: true });
+			}
+		}),
+	);
+}
+
+async function replaceTextRecursively(targetDir, packageManagerId) {
 	const textExtensions = new Set([
 		".css",
 		".js",
@@ -358,17 +398,12 @@ async function replaceTextRecursively(targetDir) {
 			return;
 		}
 
-		if (!textExtensions.has(path.extname(currentPath))) {
+		if (path.basename(currentPath) === "package.json" || !textExtensions.has(path.extname(currentPath))) {
 			return;
 		}
 
 		const content = await fsp.readFile(currentPath, "utf8");
-		const nextContent = content
-			.replace(/\bnpm install\b/g, "bun install")
-			.replace(/\bnpm ci\b/g, "bun install --frozen-lockfile")
-			.replace(/\bnpm run\b/g, "bun run")
-			.replace(/\bnpm start\b/g, "bun run start")
-			.replace(/wp-typia-templates/g, "wp-typia-templates")
+		const nextContent = transformPackageManagerText(content, packageManagerId)
 			.replace(/yourusername\/wp-typia-boilerplate/g, "imjlk/wp-typia-templates")
 			.replace(/@wp-typia\/basic/g, "wp-typia-basic")
 			.replace(/@wp-typia\/full/g, "wp-typia-full")
@@ -383,114 +418,148 @@ async function replaceTextRecursively(targetDir) {
 	await visit(targetDir);
 }
 
-function getTemplateDir(templateId) {
-	return path.join(TEMPLATE_ROOT, templateId);
-}
-
-async function runInstall(targetDir) {
-	execSync("bun install", {
-		cwd: targetDir,
+async function defaultInstallDependencies({ projectDir, packageManager }) {
+	execSync(formatInstallCommand(packageManager), {
+		cwd: projectDir,
 		stdio: "inherit",
 	});
 }
 
 export async function scaffoldProject({
 	projectDir,
-	projectName,
-	template,
-	yes = false,
-	noInstall = false,
+	templateId,
+	answers,
+	packageManager,
 	allowExistingDir = false,
+	noInstall = false,
+	installDependencies,
 }) {
-	const templateId = await selectTemplate(template, yes);
-	const templateDir = getTemplateDir(templateId);
-	if (!fs.existsSync(templateDir)) {
-		throw new Error(`Template assets are missing for "${templateId}"`);
-	}
+	const template = getTemplateById(templateId);
+	const resolvedPackageManager = getPackageManager(packageManager).id;
 
 	await ensureDirectory(projectDir, allowExistingDir);
 
-	const answers = await collectAnswers({
-		projectName,
-		templateId,
-		yes,
-	});
-	const variables = getTemplateVariables(templateId, answers);
+	const variables = getTemplateVariables(template.id, answers);
 
-	await copyTemplateDir(templateDir, projectDir, variables);
+	await copyTemplateDir(template.templateDir, projectDir, variables);
 	const readmePath = path.join(projectDir, "README.md");
 	if (!fs.existsSync(readmePath)) {
-		await fsp.writeFile(readmePath, buildReadme(templateId, variables), "utf8");
+		await fsp.writeFile(
+			readmePath,
+			buildReadme(template.id, variables, resolvedPackageManager),
+			"utf8",
+		);
 	}
 	await fsp.writeFile(path.join(projectDir, ".gitignore"), buildGitignore(), "utf8");
-	await normalizePackageJson(projectDir);
-	await replaceTextRecursively(projectDir);
+	await normalizePackageJson(projectDir, resolvedPackageManager);
+	await removeUnexpectedLockfiles(projectDir, resolvedPackageManager);
+	await replaceTextRecursively(projectDir, resolvedPackageManager);
 
 	if (!noInstall) {
-		runInstall(projectDir);
+		const installer = installDependencies ?? defaultInstallDependencies;
+		await installer({
+			projectDir,
+			packageManager: resolvedPackageManager,
+		});
 	}
 
 	return {
 		projectDir,
-		templateId,
+		templateId: template.id,
+		packageManager: resolvedPackageManager,
 		variables,
 	};
 }
 
-export async function runCreateCli(argv = process.argv.slice(2)) {
-	const args = parseArgs(argv);
-	if (args.help) {
-		console.log(`Usage: create-wp-typia <project-dir> [--template <id>] [--yes] [--no-install]
+function parseLegacyArgs(argv) {
+	const parsed = {
+		yes: false,
+		noInstall: false,
+		help: false,
+		packageManager: undefined,
+	};
 
-Templates: ${TEMPLATE_IDS.join(", ")}`);
-		return;
+	for (let index = 0; index < argv.length; index += 1) {
+		const arg = argv[index];
+
+		if (arg === "--yes" || arg === "-y") {
+			parsed.yes = true;
+			continue;
+		}
+		if (arg === "--no-install") {
+			parsed.noInstall = true;
+			continue;
+		}
+		if (arg === "--help" || arg === "-h") {
+			parsed.help = true;
+			continue;
+		}
+		if (arg === "--package-manager" || arg === "-p") {
+			parsed.packageManager = argv[index + 1];
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--package-manager=")) {
+			parsed.packageManager = arg.split("=", 2)[1];
+			continue;
+		}
+		throw new Error(`Unknown flag: ${arg}`);
 	}
 
-	const projectName = args.positionals[0];
-	if (!projectName) {
-		throw new Error("Project directory is required. Usage: create-wp-typia <project-dir>");
-	}
-
-	const projectDir = path.resolve(process.cwd(), projectName);
-	const result = await scaffoldProject({
-		noInstall: args.noInstall,
-		projectDir,
-		projectName,
-		template: args.template,
-		yes: args.yes,
-	});
-
-	console.log(`\n✅ Created ${result.variables.title} in ${projectDir}`);
-	console.log("Next steps:");
-	console.log(`  cd ${projectName}`);
-	if (args.noInstall) {
-		console.log("  bun install");
-	}
-	console.log("  bun run start");
+	return parsed;
 }
 
 export async function runLegacyCli(templateId, argv = process.argv.slice(2)) {
-	const args = parseArgs(argv);
+	const args = parseLegacyArgs(argv);
+	const isInteractive = Boolean(process.stdin.isTTY && process.stdout.isTTY);
 	if (args.help) {
-		console.log(`Usage: wp-typia-${templateId} [--yes] [--no-install]`);
+		console.log(
+			`Usage: wp-typia-${templateId} [--yes] [--no-install] [--package-manager <${PACKAGE_MANAGER_IDS.join("|")}>]`,
+		);
 		return;
 	}
 
-	const projectDir = process.cwd();
-	const projectName = path.basename(projectDir);
-	const result = await scaffoldProject({
-		allowExistingDir: true,
-		noInstall: args.noInstall,
-		projectDir,
-		projectName,
-		template: templateId,
-		yes: args.yes,
-	});
+	const prompt = createReadlinePrompt();
 
-	console.log(`\n✅ Scaffolded ${result.variables.title} in the current directory`);
-	console.log("Next steps:");
-	if (args.noInstall) {
-		console.log("  bun install");
+	try {
+		const packageManager = await resolvePackageManagerId({
+			packageManager: args.packageManager,
+			yes: args.yes,
+			isInteractive,
+			selectPackageManager: () =>
+				prompt.select("Choose a package manager:", getPackageManagerSelectOptions(), 1),
+		});
+
+		if (!args.yes && !isInteractive) {
+			throw new Error("Interactive answers require a TTY. Use --yes inside an existing directory.");
+		}
+
+		const projectDir = process.cwd();
+		const projectName = path.basename(projectDir);
+		const answers = await collectScaffoldAnswers({
+			projectName,
+			templateId,
+			yes: args.yes,
+			promptText: (message, defaultValue, validate) =>
+				prompt.text(message, defaultValue, validate),
+		});
+
+		const result = await scaffoldProject({
+			allowExistingDir: true,
+			answers,
+			noInstall: args.noInstall,
+			packageManager,
+			projectDir,
+			templateId,
+		});
+
+		console.log(`\n✅ Scaffolded ${result.variables.title} in the current directory`);
+		console.log("Next steps:");
+		if (args.noInstall) {
+			console.log(`  ${formatInstallCommand(packageManager)}`);
+		}
+		console.log(`  ${formatRunScript(packageManager, "start")}`);
+	} finally {
+		prompt.close();
 	}
-	console.log("  bun run start");
 }

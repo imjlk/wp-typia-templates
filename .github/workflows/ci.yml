@@ -56,7 +56,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          file: ./coverage/lcov.info
+          file: ./coverage/unit/lcov.info,./packages/create-wp-typia/coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
 
@@ -120,7 +120,7 @@ jobs:
       - name: Scaffold a basic template
         run: |
           mkdir -p /tmp/wp-typia-cli-smoke
-          node packages/create-wp-typia/dist/cli.js /tmp/wp-typia-cli-smoke/demo-basic --template basic --yes --no-install
+          node packages/create-wp-typia/lib/entry.js /tmp/wp-typia-cli-smoke/demo-basic --template basic --yes --no-install --package-manager bun
           test -f /tmp/wp-typia-cli-smoke/demo-basic/package.json
           test -f /tmp/wp-typia-cli-smoke/demo-basic/README.md
 

@@ -17,7 +17,7 @@ A Bun-first WordPress block template monorepo featuring TypeScript, Typia valida
 - 🏗️ **Multiple Templates**: Choose from Basic, Full, Interactivity, or Advanced editions
 - 🚀 **Migration System**: Automatic block migration detection and execution (Advanced)
 - ⚛️ **Modern Stack**: React hooks, error boundaries, and utility functions
-- 🧪 **Testing Ready**: Jest unit tests and Playwright E2E tests included
+- 🧪 **Testing Ready**: Bun unit tests, Bunli CLI tests, and Playwright E2E tests included
 - 📦 **Shared CLI + Templates**: Scaffold via `create-wp-typia` and keep direct template entrypoints
 
 ## 🚀 Quick Start
@@ -30,6 +30,12 @@ bun create wp-typia my-block
 bunx create-wp-typia my-block
 # or
 npx create-wp-typia my-block
+```
+
+The CLI always asks which package manager the generated project should use. For non-interactive runs, pass it explicitly:
+
+```bash
+npx create-wp-typia my-block --template basic --package-manager pnpm --yes --no-install
 ```
 
 ### Direct Template Wrappers
@@ -139,6 +145,8 @@ export interface MyBlockAttributes {
 ```
 
 ### Auto-Generated Block Metadata
+
+Repository contributor note: this monorepo is Bun-first, but the generated project can use `bun`, `npm`, `pnpm`, or `yarn`.
 
 ```bash
 bun run sync-types
@@ -273,7 +281,7 @@ if (analysis.needsMigration) {
 
 ### Testing
 
-- `bun run test` - Run unit tests with Jest
+- `bun run test` - Run Bun/Bunli unit tests
 - `bun run test:e2e` - Run E2E tests with Playwright
 - `bun run test:watch` - Run tests in watch mode
 - `bun run test:coverage` - Run tests with coverage

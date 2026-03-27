@@ -8,7 +8,7 @@ Create robust WordPress blocks with TypeScript runtime validation using Typia. T
 - **⚡ Type-first metadata generation** - TypeScript interfaces generate `block.json` and `typia.manifest.json`
 - **🎯 4 Template Variations** - From basic to advanced patterns
 - **🔄 Migration System** - Automated block versioning and migrations (Advanced template)
-- **🧪 Complete Testing** - Unit tests with Jest, E2E tests with Playwright
+- **🧪 Complete Testing** - Unit tests with Bun test, CLI tests with Bunli, E2E tests with Playwright
 - **📦 Monorepo Ready** - Bun workspaces with shared dependencies
 - **🎨 Modern Tooling** - TypeScript, SCSS, ESLint, Prettier, GitHub Actions
 
@@ -27,9 +27,16 @@ npx create-wp-typia my-block
 Follow the prompts to choose `basic`, `full`, `interactivity`, or `advanced`. The CLI will:
 
 - Ask for block details (name, description, author)
+- Ask which package manager the generated project should use
 - Generate all necessary files with your settings
-- Configure a Bun-first `package.json`
-- Run `bun install` unless you pass `--no-install`
+- Configure the generated project for `bun`, `npm`, `pnpm`, or `yarn`
+- Run the selected package manager's install step unless you pass `--no-install`
+
+For non-interactive usage:
+
+```bash
+npx create-wp-typia my-block --template basic --package-manager pnpm --yes --no-install
+```
 
 ### Option 2: Use direct template wrappers
 
@@ -85,6 +92,8 @@ if (!validate.success) {
 ```
 
 ## 🛠 Development Workflow
+
+This section is for contributors to this repository. The repository itself stays Bun-first, even though scaffolded projects can use another package manager.
 
 ```bash
 # Install dependencies

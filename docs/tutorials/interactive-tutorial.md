@@ -315,8 +315,8 @@ Update `src/style.scss`:
 Create `src/__tests__/block.test.tsx`:
 
 ```typescript
+import { describe, expect, test } from 'bun:test';
 import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
 import { MyTypiaBlockAttributes } from '../types';
 import { createValidators } from '../validators';
 

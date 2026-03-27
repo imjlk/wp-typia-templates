@@ -1,9 +1,10 @@
+import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { syncBlockMetadata } from '../../scripts/lib/typia-metadata-core';
 
 function createFixture(files: Record<string, string>) {
-  const baseDir = path.resolve(__dirname, '../../test-template/my-typia-block/.tmp-metadata-fixtures');
+  const baseDir = path.resolve(import.meta.dir, '../../test-template/my-typia-block/.tmp-metadata-fixtures');
   fs.mkdirSync(baseDir, { recursive: true });
 
   const fixtureDir = fs.mkdtempSync(path.join(baseDir, 'fixture-'));
@@ -18,7 +19,7 @@ function createFixture(files: Record<string, string>) {
 
 describe('Typia metadata generator', () => {
   afterAll(() => {
-    const baseDir = path.resolve(__dirname, '../../test-template/my-typia-block/.tmp-metadata-fixtures');
+    const baseDir = path.resolve(import.meta.dir, '../../test-template/my-typia-block/.tmp-metadata-fixtures');
     fs.rmSync(baseDir, { force: true, recursive: true });
   });
 
@@ -82,11 +83,7 @@ export interface BlockAttributes {
     expect(manifest.attributes.seo.ts.properties.slug.typia.constraints.pattern).toBe('^[a-z0-9-]+$');
     expect(manifest.attributes.seo.ts.properties.canonicalUrl.typia.constraints.format).toBe('uri');
     expect(manifest.attributes.items.ts.items.ts.properties.label.typia.constraints.minLength).toBe(1);
-    expect(result.lossyProjectionWarnings).toEqual(
-      expect.arrayContaining([
-        'BlockAttributes.items: items',
-        'BlockAttributes.seo: properties',
-      ]),
-    );
+    expect(result.lossyProjectionWarnings).toContain('BlockAttributes.items: items');
+    expect(result.lossyProjectionWarnings).toContain('BlockAttributes.seo: properties');
   });
 });
