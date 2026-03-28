@@ -34,4 +34,6 @@ create-wp-typia migrations verify --all
 create-wp-typia doctor
 ```
 
+The `migrations` commands are for projects generated from the `advanced` template. Basic, full, and interactivity projects do not include the snapshot migration workspace.
+
 Repo development stays Bun-first. The generated project can use `bun`, `npm`, `pnpm`, or `yarn`.

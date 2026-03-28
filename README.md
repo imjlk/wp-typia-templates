@@ -7,7 +7,7 @@ Create robust WordPress blocks with TypeScript runtime validation using Typia. T
 - **🔒 Runtime Type Safety** - Typia provides compile-time and runtime type validation
 - **⚡ Type-first metadata generation** - TypeScript interfaces generate `block.json` and `typia.manifest.json`
 - **🎯 4 Template Variations** - From basic to advanced patterns
-- **🔄 Migration System** - Automated block versioning and migrations (Advanced template)
+- **🔄 Migration System** - Snapshot-based block migrations for legacy attribute compatibility (Advanced template)
 - **🧪 Complete Testing** - Unit tests with Bun test, CLI tests with Bunli, E2E tests with Playwright
 - **📦 Monorepo Ready** - Bun workspaces with shared dependencies
 - **🎨 Modern Tooling** - TypeScript, SCSS, ESLint, Prettier, GitHub Actions
@@ -115,9 +115,11 @@ bun run build
 ## 📚 Documentation
 
 - **[Examples Guide](test-template/EXAMPLES.md)** - Practical examples and patterns
+- **[Interactive Tutorial](docs/tutorials/interactive-tutorial.md)** - Build your first block end-to-end
+- **[Migration Guide](docs/migrations.md)** - Snapshot-based migration workflow for the advanced template
+- **[Interactivity Guide](docs/interactivity.md)** - When to choose the interactivity template and how it fits
+- **[API Guide](docs/API.md)** - Where the public CLI and generated runtime surfaces live
 - **Generated manifest** - `typia.manifest.json` preserves Typia-only constraints for future PHP validation
-- **Advanced snapshot migrations** - The advanced template ships `migration:init`, `migration:snapshot`, `migration:diff`, `migration:scaffold`, and `migration:verify`
-- **[API Reference](docs/API.md)** - Complete API documentation
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
 
 ## 🧪 Testing
@@ -226,13 +228,17 @@ store('my-interactive-block', {
 ### Migration Example
 
 ```typescript
-// Automatic migrations
-const migrations = {
-  '1.0.0->1.1.0': (attrs) => ({
-    ...attrs,
-    newFeature: attrs.newFeature ?? true
-  })
-};
+// src/migrations/rules/1.0.0-to-2.0.0.ts
+import type { MyBlockAttributes } from "../../types";
+import currentManifest from "../../../typia.manifest.json";
+import { coerceValueFromManifest } from "../helpers";
+
+export function migrate(input: Record<string, unknown>): MyBlockAttributes {
+  return {
+    content: coerceValueFromManifest(currentManifest.attributes.content, input.content),
+    isVisible: coerceValueFromManifest(currentManifest.attributes.isVisible, input.isVisible),
+  } as MyBlockAttributes;
+}
 ```
 
 ## 🤝 Contributing

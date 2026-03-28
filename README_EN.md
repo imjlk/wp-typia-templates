@@ -15,7 +15,7 @@ A Bun-first WordPress block template monorepo featuring TypeScript, Typia valida
 - ⚡ **Typia Integration**: 20,000x faster validation than alternatives
 - 🔄 **Type-First Metadata Generation**: Derive `block.json` and `typia.manifest.json` from TypeScript types
 - 🏗️ **Multiple Templates**: Choose from Basic, Full, Interactivity, or Advanced editions
-- 🚀 **Migration System**: Automatic block migration detection and execution (Advanced)
+- 🚀 **Migration System**: Snapshot-based legacy block migration tooling (Advanced)
 - ⚛️ **Modern Stack**: React hooks, error boundaries, and utility functions
 - 🧪 **Testing Ready**: Bun unit tests, Bunli CLI tests, and Playwright E2E tests included
 - 📦 **Shared CLI + Templates**: Scaffold via `create-wp-typia` and keep direct template entrypoints
@@ -173,9 +173,7 @@ Generates:
     },
     "count": {
       "type": "number",
-      "default": 1,
-      "minimum": 0,
-      "maximum": 100
+      "default": 1
     },
     "size": {
       "type": "string",
@@ -199,9 +197,7 @@ The generator also emits `typia.manifest.json`, which keeps Typia-only constrain
 
 ```typescript
 // In your block component
-import { createValidators } from './validators';
-
-const validators = createValidators<MyBlockAttributes>();
+import { validators } from './validators';
 
 // Validate attributes
 const result = validators.validate(attributes);
@@ -309,7 +305,8 @@ bun run migration:verify
 
 ## 📚 Documentation
 
-- [API Documentation](./docs/api/) - Complete API reference
+- [Interactive Tutorial](./docs/tutorials/interactive-tutorial.md) - Build your first block step by step
+- [API Guide](./docs/API.md) - Where the public CLI and runtime surfaces live
 - [Migration Guide](./docs/migrations.md) - Block migration system
 - [Interactivity API](./docs/interactivity.md) - Reactive frontend
 - [Contributing](./CONTRIBUTING.md) - Development guidelines

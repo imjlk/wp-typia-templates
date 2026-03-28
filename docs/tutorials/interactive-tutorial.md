@@ -90,11 +90,9 @@ import {
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { MyTypiaBlockAttributes } from './types';
-import { createValidators, createAttributeUpdater } from './validators';
+import { validators, createAttributeUpdater } from './validators';
 
 type EditProps = BlockEditProps<MyTypiaBlockAttributes>;
-
-const validators = createValidators<MyTypiaBlockAttributes>();
 
 function Edit({ attributes, setAttributes }: EditProps) {
   const blockProps = useBlockProps();
@@ -300,7 +298,7 @@ Update `src/style.scss`:
 
 1. Start development:
    ```bash
-   npm start
+   npm run start
    ```
 
 2. Go to WordPress admin and create a new post
@@ -310,20 +308,17 @@ Update `src/style.scss`:
    - Change settings in the inspector
    - Verify the block saves and loads correctly
 
-## Step 8: Add Unit Tests
+## Step 8: Add a Validator Test
 
-Create `src/__tests__/block.test.tsx`:
+Create `src/validators.test.ts`:
 
 ```typescript
 import { describe, expect, test } from 'bun:test';
-import { render, screen } from '@testing-library/react';
-import { MyTypiaBlockAttributes } from '../types';
-import { createValidators } from '../validators';
+import { validators } from './validators';
+import { MyTypiaBlockAttributes } from './types';
 
-describe('MyTypiaBlock', () => {
-  const validators = createValidators<MyTypiaBlockAttributes>();
-
-  test('should validate correct attributes', () => {
+describe('MyTypiaBlock validators', () => {
+  test('accepts valid attributes', () => {
     const validAttrs: MyTypiaBlockAttributes = {
       title: 'Test Title',
       subtitle: 'Test Subtitle',
@@ -336,71 +331,42 @@ describe('MyTypiaBlock', () => {
     expect(result.success).toBe(true);
   });
 
-  test('should reject invalid title length', () => {
-    const invalidAttrs: MyTypiaBlockAttributes = {
-      title: '', // Too short
+  test('rejects invalid title length', () => {
+    const invalidAttrs = {
+      title: '',
       theme: 'light',
       animate: false,
       itemCount: 1,
     };
 
-    const result = validators.validate(invalidAttrs);
+    const result = validators.validate(invalidAttrs as any);
     expect(result.success).toBe(false);
   });
-
-  test('should generate valid random attributes', () => {
-    const randomAttrs = validators.random();
-    const result = validators.validate(randomAttrs);
-    expect(result.success).toBe(true);
-  });
 });
 ```
 
-## Step 9: Add E2E Tests
+Run it with:
 
-Create `tests/e2e/my-block.spec.ts`:
-
-```typescript
-import { test, expect } from './fixtures/wordpress';
-
-test.describe('My Typia Block', () => {
-  test('should create and configure block', async ({ adminPage }) => {
-    await adminPage.goto('/wp-admin/post-new.php');
-    await adminPage.insertBlock('My Typia Block');
-
-    // Configure block
-    await adminPage.fill('label="Title"', 'E2E Test Title');
-    await adminPage.fill('label="Subtitle"', 'E2E Subtitle');
-    await adminPage.selectOption('label="Theme"', 'Dark');
-    await adminPage.check('label="Enable Animation"');
-
-    // Save post
-    await adminPage.savePost();
-
-    // Verify block content
-    await expect(adminPage.locator('.my-typia-block__title')).toContainText('E2E Test Title');
-    await expect(adminPage.locator('.my-typia-block')).toHaveClass(/theme-dark/);
-  });
-
-  test('should validate input', async ({ adminPage }) => {
-    await adminPage.goto('/wp-admin/post-new.php');
-    await adminPage.insertBlock('My Typia Block');
-
-    // Try to clear required title
-    await adminPage.fill('label="Title"', '');
-
-    // Should show validation error
-    await expect(adminPage.locator('.components-notice__content')).toBeVisible();
-  });
-});
+```bash
+bun test src/validators.test.ts
 ```
+
+## Step 9: Build for Production
+
+Once the editor flow looks good, create a production build:
+
+```bash
+npm run build
+```
+
+This regenerates `src/block.json` from your types and outputs the compiled assets in `build/`.
 
 ## What's Next?
 
 Congratulations! You've built a type-safe WordPress block with runtime validation. Here's what you can explore next:
 
-1. **Add Interactivity API**: Upgrade to the Interactivity template
-2. **Add Migrations**: Use the Advanced template for version management
+1. **Add Interactivity API**: Switch to the Interactivity template for frontend state
+2. **Add Migrations**: Switch to the Advanced template for snapshot-based legacy compatibility
 3. **Custom Validators**: Create custom validation logic
 4. **Block Variations**: Add multiple block variations
 5. **Nested Blocks**: Support inner blocks
@@ -409,6 +375,8 @@ Congratulations! You've built a type-safe WordPress block with runtime validatio
 
 - [Typia Documentation](https://typia.io/)
 - [WordPress Block Editor Handbook](https://developer.wordpress.org/block-editor/)
+- [Snapshot Migration Guide](../migrations.md)
+- [Interactivity Template Guide](../interactivity.md)
 - [Interactivity API Guide](https://developer.wordpress.org/block-editor/reference-guides/interactivity-api/)
 
 ---
