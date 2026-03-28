@@ -1,13 +1,13 @@
 # 🚀 wp-typia-templates
 
-Create robust WordPress blocks with TypeScript runtime validation using Typia. This Bun-first template monorepo provides shared scaffolding, generated `block.json` / `typia.manifest.json`, testing, and migration support.
+Create robust WordPress blocks with TypeScript runtime validation using Typia. This Bun-first template monorepo provides shared scaffolding, generated `block.json` / `typia.manifest.json` / `typia-validator.php`, testing, and migration support.
 
 ## ✨ Key Features
 
 - **🔒 Runtime Type Safety** - Typia provides compile-time and runtime type validation
-- **⚡ Type-first metadata generation** - TypeScript interfaces generate `block.json` and `typia.manifest.json`
+- **⚡ Type-first metadata generation** - TypeScript interfaces generate `block.json`, `typia.manifest.json` v2, and `typia-validator.php`
 - **🎯 4 Template Variations** - From basic to advanced patterns
-- **🔄 Migration System** - Snapshot-based block migrations for legacy attribute compatibility (Advanced template)
+- **🔄 Migration System** - Snapshot-based block migrations with `renameMap` / `transforms` authoring helpers (Advanced template)
 - **🧪 Complete Testing** - Unit tests with Bun test, CLI tests with Bunli, E2E tests with Playwright
 - **📦 Monorepo Ready** - Bun workspaces with shared dependencies
 - **🎨 Modern Tooling** - TypeScript, SCSS, ESLint, Prettier, GitHub Actions
@@ -76,7 +76,7 @@ export interface MyBlockAttributes {
 ### 2. Auto-generate block metadata
 
 ```bash
-bun run sync-types  # Generates block.json and typia.manifest.json from TypeScript types
+bun run sync-types  # Generates block.json, typia.manifest.json v2, and typia-validator.php
 ```
 
 ### 3. Get Runtime Validation
@@ -119,7 +119,8 @@ bun run build
 - **[Migration Guide](docs/migrations.md)** - Snapshot-based migration workflow for the advanced template
 - **[Interactivity Guide](docs/interactivity.md)** - When to choose the interactivity template and how it fits
 - **[API Guide](docs/API.md)** - Where the public CLI and generated runtime surfaces live
-- **Generated PHP validator** - `typia.manifest.json` preserves Typia constraints and `typia-validator.php` enforces the supported PHP subset
+- **Generated PHP validator** - `typia.manifest.json` v2 preserves Typia constraints, explicit defaults, and supported discriminated unions; `typia-validator.php` enforces the supported PHP subset
+- **[Union Support Guide](docs/union-support.md)** - What union shapes are supported today and what remains future work
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
 
 ## 🧪 Testing
@@ -139,7 +140,7 @@ bun run test:coverage
 
 ## 🔄 Migration System (Advanced Template)
 
-The Advanced template uses snapshot-based migrations driven by `typia.manifest.json` diffs:
+The Advanced template uses snapshot-based migrations driven by `typia.manifest.json` diffs and now ships a dynamic `render.php` example that exercises the generated PHP validator:
 
 ```bash
 # Bootstrap the first snapshot for the current schema
@@ -229,16 +230,13 @@ store('my-interactive-block', {
 
 ```typescript
 // src/migrations/rules/1.0.0-to-2.0.0.ts
-import type { MyBlockAttributes } from "../../types";
-import currentManifest from "../../../typia.manifest.json";
-import { coerceValueFromManifest } from "../helpers";
+export const renameMap = {
+  // content: "headline",
+};
 
-export function migrate(input: Record<string, unknown>): MyBlockAttributes {
-  return {
-    content: coerceValueFromManifest(currentManifest.attributes.content, input.content),
-    isVisible: coerceValueFromManifest(currentManifest.attributes.isVisible, input.isVisible),
-  } as MyBlockAttributes;
-}
+export const transforms = {
+  // content: (legacyValue) => String(legacyValue ?? ""),
+};
 ```
 
 ## 🤝 Contributing

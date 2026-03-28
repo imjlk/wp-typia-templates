@@ -121,6 +121,13 @@ export function formatDiffReport(diff) {
 		}
 	}
 
+	if ((diff.summary.renameCandidates?.length ?? 0) > 0) {
+		lines.push("", "Rename candidates:");
+		for (const item of diff.summary.renameCandidates) {
+			lines.push(`  - ${item.currentPath} <- ${item.legacyPath}`);
+		}
+	}
+
 	return lines.join("\n");
 }
 
@@ -517,12 +524,15 @@ function createMigrationDiff(state, fromVersion, toVersion) {
 	const newAttributes = targetManifest.attributes ?? {};
 	const autoItems = [];
 	const manualItems = [];
+	const addedKeys = [];
+	const removedKeys = [];
 
 	for (const [key, newAttribute] of Object.entries(newAttributes)) {
 		const oldAttribute = oldAttributes[key];
 
 		if (!oldAttribute) {
-			if (newAttribute.ts.required && newAttribute.typia.default == null) {
+			addedKeys.push(key);
+			if (newAttribute.ts.required && !hasManifestDefault(newAttribute)) {
 				manualItems.push({
 					detail: "required field has no default in current schema",
 					kind: "required-addition",
@@ -530,8 +540,10 @@ function createMigrationDiff(state, fromVersion, toVersion) {
 				});
 			} else {
 				autoItems.push({
-					detail: newAttribute.typia.default != null ? `default ${JSON.stringify(newAttribute.typia.default)}` : "optional addition",
-					kind: newAttribute.typia.default != null ? "add-default" : "add-optional",
+					detail: hasManifestDefault(newAttribute)
+						? `default ${JSON.stringify(getManifestDefaultValue(newAttribute))}`
+						: "optional addition",
+					kind: hasManifestDefault(newAttribute) ? "add-default" : "add-optional",
 					path: key,
 				});
 			}
@@ -548,6 +560,7 @@ function createMigrationDiff(state, fromVersion, toVersion) {
 
 	for (const key of Object.keys(oldAttributes)) {
 		if (!(key in newAttributes)) {
+			removedKeys.push(key);
 			autoItems.push({
 				detail: "field removed from current schema",
 				kind: "drop",
@@ -555,6 +568,8 @@ function createMigrationDiff(state, fromVersion, toVersion) {
 			});
 		}
 	}
+
+	const renameCandidates = createRenameCandidates(oldAttributes, newAttributes, removedKeys, addedKeys);
 
 	return {
 		currentTypeName: targetManifest.sourceType ?? state.currentManifest.sourceType,
@@ -564,6 +579,7 @@ function createMigrationDiff(state, fromVersion, toVersion) {
 			autoItems,
 			manual: manualItems.length,
 			manualItems,
+			renameCandidates,
 		},
 		toVersion,
 	};
@@ -572,6 +588,10 @@ function createMigrationDiff(state, fromVersion, toVersion) {
 function compareManifestAttribute(oldAttribute, newAttribute, attributePath) {
 	if (oldAttribute.ts.kind !== newAttribute.ts.kind) {
 		return manualOutcome(attributePath, "type-change", `${oldAttribute.ts.kind} -> ${newAttribute.ts.kind}`);
+	}
+
+	if (oldAttribute.ts.kind === "union") {
+		return compareUnionAttribute(oldAttribute, newAttribute, attributePath);
 	}
 
 	if (oldAttribute.ts.kind === "object") {
@@ -606,7 +626,7 @@ function compareObjectAttribute(oldAttribute, newAttribute, attributePath) {
 	for (const [key, nextProperty] of Object.entries(newProperties)) {
 		const previousProperty = oldProperties[key];
 		if (!previousProperty) {
-			if (nextProperty.ts.required && nextProperty.typia.default == null) {
+			if (nextProperty.ts.required && !hasManifestDefault(nextProperty)) {
 				return manualOutcome(
 					attributePath,
 					"object-change",
@@ -623,6 +643,47 @@ function compareObjectAttribute(oldAttribute, newAttribute, attributePath) {
 	}
 
 	return autoOutcome(attributePath, "hydrate", "object can be normalized with current manifest defaults");
+}
+
+function compareUnionAttribute(oldAttribute, newAttribute, attributePath) {
+	const oldUnion = oldAttribute.ts.union;
+	const newUnion = newAttribute.ts.union;
+
+	if (!oldUnion || !newUnion) {
+		return manualOutcome(attributePath, "union-change", "missing union metadata");
+	}
+	if (oldUnion.discriminator !== newUnion.discriminator) {
+		return manualOutcome(
+			attributePath,
+			"union-discriminator-change",
+			`${oldUnion.discriminator} -> ${newUnion.discriminator}`,
+		);
+	}
+
+	const oldBranchKeys = Object.keys(oldUnion.branches);
+	const newBranchKeys = Object.keys(newUnion.branches);
+
+	for (const branchKey of oldBranchKeys) {
+		if (!(branchKey in newUnion.branches)) {
+			return manualOutcome(attributePath, "union-branch-removal", `branch ${branchKey} was removed`);
+		}
+
+		const nested = compareManifestAttribute(
+			oldUnion.branches[branchKey],
+			newUnion.branches[branchKey],
+			`${attributePath}<${branchKey}>`,
+		);
+		if (nested.status === "manual") {
+			return manualOutcome(attributePath, "union-change", nested.detail);
+		}
+	}
+
+	const addedBranches = newBranchKeys.filter((branchKey) => !(branchKey in oldUnion.branches));
+	if (addedBranches.length > 0) {
+		return autoOutcome(attributePath, "union-branch-addition", `branches added: ${addedBranches.join(", ")}`);
+	}
+
+	return autoOutcome(attributePath, "copy", "compatible discriminated union");
 }
 
 function hasStricterConstraints(oldAttribute, newAttribute) {
@@ -657,6 +718,65 @@ function hasStricterConstraints(oldAttribute, newAttribute) {
 	}
 
 	return false;
+}
+
+function hasManifestDefault(attribute) {
+	return attribute?.typia?.hasDefault === true;
+}
+
+function getManifestDefaultValue(attribute) {
+	return attribute?.typia?.defaultValue ?? null;
+}
+
+function createRenameCandidates(oldAttributes, newAttributes, removedKeys, addedKeys) {
+	const candidates = [];
+
+	for (const currentPath of addedKeys) {
+		const nextAttribute = newAttributes[currentPath];
+		if (!isPrimitiveRenameCandidate(nextAttribute)) {
+			continue;
+		}
+
+		const matchingLegacyPaths = removedKeys.filter((legacyPath) =>
+			isCompatibleRenamePair(oldAttributes[legacyPath], nextAttribute),
+		);
+
+		if (matchingLegacyPaths.length === 1) {
+			candidates.push({
+				currentPath,
+				legacyPath: matchingLegacyPaths[0],
+			});
+		}
+	}
+
+	return candidates;
+}
+
+function isPrimitiveRenameCandidate(attribute) {
+	return attribute && ["string", "number", "boolean"].includes(attribute.ts.kind);
+}
+
+function isCompatibleRenamePair(oldAttribute, newAttribute) {
+	if (!oldAttribute || !newAttribute) {
+		return false;
+	}
+	if (oldAttribute.ts.kind !== newAttribute.ts.kind) {
+		return false;
+	}
+	if (!isPrimitiveRenameCandidate(oldAttribute) || !isPrimitiveRenameCandidate(newAttribute)) {
+		return false;
+	}
+	if (JSON.stringify(oldAttribute.wp.enum ?? null) !== JSON.stringify(newAttribute.wp.enum ?? null)) {
+		return false;
+	}
+
+	for (const key of ["minLength", "maxLength", "minimum", "maximum", "pattern", "format", "typeTag"]) {
+		if ((oldAttribute.typia.constraints?.[key] ?? null) !== (newAttribute.typia.constraints?.[key] ?? null)) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 function describeConstraintChange(oldAttribute, newAttribute) {
@@ -698,14 +818,30 @@ function renderMigrationRuleFile({ currentAttributes, currentTypeName, diff, fro
 	const lines = [];
 	lines.push(`import type { ${currentTypeName} } from "../../types";`);
 	lines.push(`import currentManifest from "../../../${ROOT_MANIFEST}";`);
-	lines.push(`import { coerceValueFromManifest } from "../helpers";`);
+	lines.push(`import {`);
+	lines.push(`\ttype RenameMap,`);
+	lines.push(`\ttype TransformMap,`);
+	lines.push(`\tresolveMigrationValue,`);
+	lines.push(`} from "../helpers";`);
 	lines.push("");
 	lines.push(`export const fromVersion = "${fromVersion}" as const;`);
 	lines.push(`export const toVersion = "${targetVersion}" as const;`);
 	lines.push("");
+	lines.push("export const renameMap: RenameMap = {");
+	for (const candidate of diff.summary.renameCandidates ?? []) {
+		lines.push(`\t// ${candidate.currentPath}: "${candidate.legacyPath}",`);
+	}
+	lines.push("};");
+	lines.push("");
+	lines.push("export const transforms: TransformMap = {");
+	lines.push("};");
+	lines.push("");
 	lines.push("export const unresolved = [");
 	for (const item of diff.summary.manualItems) {
 		lines.push(`\t"${item.path}: ${item.kind}${item.detail ? ` (${escapeForCode(item.detail)})` : ""}",`);
+	}
+	for (const candidate of diff.summary.renameCandidates ?? []) {
+		lines.push(`\t"${candidate.currentPath}: rename candidate from ${candidate.legacyPath}",`);
 	}
 	lines.push("] as const;");
 	lines.push("");
@@ -713,23 +849,17 @@ function renderMigrationRuleFile({ currentAttributes, currentTypeName, diff, fro
 	lines.push(`\treturn {`);
 
 	for (const key of Object.keys(currentAttributes)) {
-		const autoItem = diff.summary.autoItems.find((item) => item.path === key);
 		const manualItem = diff.summary.manualItems.find((item) => item.path === key);
-
-		if (autoItem && autoItem.kind !== "drop") {
-			lines.push(
-				`\t\t${key}: coerceValueFromManifest(currentManifest.attributes.${key}, input.${key}),`,
-			);
-			continue;
-		}
-
+		const renameCandidate = (diff.summary.renameCandidates ?? []).find((item) => item.currentPath === key);
 		if (manualItem) {
 			lines.push(`\t\t// ${MIGRATION_TODO_PREFIX} ${manualItem.path}: ${manualItem.kind}${manualItem.detail ? ` (${manualItem.detail})` : ""}`);
-			lines.push(`\t\t${key}: coerceValueFromManifest(currentManifest.attributes.${key}, undefined),`);
-			continue;
 		}
-
-		lines.push(`\t\t${key}: coerceValueFromManifest(currentManifest.attributes.${key}, undefined),`);
+		if (renameCandidate) {
+			lines.push(`\t\t// ${MIGRATION_TODO_PREFIX} consider renameMap.${renameCandidate.currentPath} = "${renameCandidate.legacyPath}"`);
+		}
+		lines.push(
+			`\t\t${key}: resolveMigrationValue(currentManifest.attributes.${key}, "${key}", input, renameMap, transforms),`,
+		);
 	}
 
 	lines.push(`\t} as ${currentTypeName};`);
@@ -923,10 +1053,12 @@ function summarizeManifest(manifest) {
 				name,
 				{
 					constraints: attribute.typia?.constraints ?? {},
-					default: attribute.typia?.default ?? null,
+					defaultValue: attribute.typia?.defaultValue ?? null,
+					hasDefault: attribute.typia?.hasDefault ?? false,
 					enum: attribute.wp?.enum ?? null,
 					kind: attribute.ts?.kind ?? null,
 					required: attribute.ts?.required ?? false,
+					union: attribute.ts?.union ?? null,
 				},
 			]),
 		),
@@ -936,8 +1068,11 @@ function summarizeManifest(manifest) {
 }
 
 function defaultValueForManifestAttribute(attribute) {
-	if (attribute.typia.default != null) {
-		return attribute.typia.default;
+	if (attribute.typia?.hasDefault) {
+		return attribute.typia.defaultValue;
+	}
+	if (attribute.wp?.enum?.length > 0) {
+		return attribute.wp.enum[0];
 	}
 	switch (attribute.ts.kind) {
 		case "string":
@@ -954,6 +1089,10 @@ function defaultValueForManifestAttribute(attribute) {
 				result[key] = defaultValueForManifestAttribute(property);
 			}
 			return result;
+		}
+		case "union": {
+			const firstBranch = Object.values(attribute.ts.union?.branches ?? {})[0];
+			return firstBranch ? defaultValueForManifestAttribute(firstBranch) : null;
 		}
 		default:
 			return null;

@@ -144,6 +144,7 @@ function lintPhpArtifact(filePath) {
 
 function assertAdvancedMigrationArtifacts(projectDir) {
 	const requiredFiles = [
+		path.join(projectDir, "render.php"),
 		path.join(projectDir, "src", "migrations", "config.ts"),
 		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"),
 		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"),
@@ -258,7 +259,11 @@ function main() {
 			);
 		}
 		if (template === "advanced") {
+			if (!fs.existsSync(path.join(projectDir, "build", "render.php"))) {
+				throw new Error(`Expected render.php in ${path.join(projectDir, "build")}`);
+			}
 			lintPhpArtifact(path.join(projectDir, "build", "typia-migration-registry.php"));
+			lintPhpArtifact(path.join(projectDir, "build", "render.php"));
 		}
 	} finally {
 		fs.rmSync(tempRoot, { force: true, recursive: true });

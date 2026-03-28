@@ -4,7 +4,8 @@ import ts from "typescript";
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
-type AttributeKind = "string" | "number" | "boolean" | "array" | "object";
+type AttributeKind = "string" | "number" | "boolean" | "array" | "object" | "union";
+type WordPressAttributeKind = "string" | "number" | "boolean" | "array" | "object";
 
 interface AttributeConstraints {
 	format: string | null;
@@ -25,35 +26,49 @@ interface AttributeNode {
 	path: string;
 	properties?: Record<string, AttributeNode>;
 	required: boolean;
+	union?: AttributeUnion | null;
+}
+
+interface AttributeUnion {
+	branches: Record<string, AttributeNode>;
+	discriminator: string;
 }
 
 interface BlockJsonAttribute {
 	default?: JsonValue;
 	enum?: Array<string | number | boolean>;
-	type: AttributeKind;
+	type: WordPressAttributeKind;
 }
 
 interface ManifestAttribute {
 	typia: {
 		constraints: AttributeConstraints;
-		default: JsonValue | null;
+		defaultValue: JsonValue | null;
+		hasDefault: boolean;
 	};
 	ts: {
 		items: ManifestAttribute | null;
 		kind: AttributeKind;
 		properties: Record<string, ManifestAttribute> | null;
 		required: boolean;
+		union: ManifestUnion | null;
 	};
 	wp: {
-		default: JsonValue | null;
+		defaultValue: JsonValue | null;
 		enum: Array<string | number | boolean> | null;
-		type: AttributeKind;
+		hasDefault: boolean;
+		type: WordPressAttributeKind;
 	};
+}
+
+interface ManifestUnion {
+	branches: Record<string, ManifestAttribute>;
+	discriminator: string;
 }
 
 interface ManifestDocument {
 	attributes: Record<string, ManifestAttribute>;
-	manifestVersion: 1;
+	manifestVersion: 2;
 	sourceType: string;
 }
 
@@ -157,7 +172,7 @@ export async function syncBlockMetadata(
 		attributes: Object.fromEntries(
 			Object.entries(rootNode.properties).map(([key, node]) => [key, createManifestAttribute(node)]),
 		),
-		manifestVersion: 1,
+		manifestVersion: 2,
 		sourceType: options.sourceTypeName,
 	};
 
@@ -314,6 +329,7 @@ function parseInterfaceDeclaration(
 		path: pathLabel,
 		properties,
 		required,
+		union: null,
 	};
 }
 
@@ -338,6 +354,7 @@ function parseTypeNode(node: ts.TypeNode, ctx: AnalysisContext, pathLabel: strin
 			kind: "array",
 			path: pathLabel,
 			required: true,
+			union: null,
 		};
 	}
 	if (ts.isLiteralTypeNode(node)) {
@@ -410,6 +427,7 @@ function parseUnionType(node: ts.UnionTypeNode, ctx: AnalysisContext, pathLabel:
 			kind,
 			path: pathLabel,
 			required: true,
+			union: null,
 		};
 	}
 
@@ -421,7 +439,98 @@ function parseUnionType(node: ts.UnionTypeNode, ctx: AnalysisContext, pathLabel:
 		return parseTypeNode(withoutUndefined[0], ctx, pathLabel);
 	}
 
+	if (withoutUndefined.length > 1) {
+		return parseDiscriminatedUnion(withoutUndefined, ctx, pathLabel);
+	}
+
 	throw new Error(`Unsupported union type at ${pathLabel}: ${node.getText()}`);
+}
+
+function parseDiscriminatedUnion(
+	typeNodes: ts.TypeNode[],
+	ctx: AnalysisContext,
+	pathLabel: string,
+): AttributeNode {
+	const branchNodes = typeNodes.map((typeNode, index) => ({
+		node: parseTypeNode(typeNode, ctx, `${pathLabel}<branch:${index}>`),
+		source: typeNode,
+	}));
+
+	for (const branch of branchNodes) {
+		if (branch.node.kind !== "object" || branch.node.properties === undefined) {
+			throw new Error(
+				`Unsupported union type at ${pathLabel}; only discriminated object unions are supported`,
+			);
+		}
+	}
+
+	const discriminator = findDiscriminatorKey(branchNodes.map((branch) => branch.node), pathLabel);
+	const branches: Record<string, AttributeNode> = {};
+
+	for (const branch of branchNodes) {
+		const discriminatorNode = branch.node.properties?.[discriminator];
+		const discriminatorValue = discriminatorNode?.enumValues?.[0];
+
+		if (typeof discriminatorValue !== "string") {
+			throw new Error(
+				`Discriminated union at ${pathLabel} must use string literal discriminator values`,
+			);
+		}
+		if (branches[discriminatorValue] !== undefined) {
+			throw new Error(
+				`Discriminated union at ${pathLabel} has duplicate discriminator value "${discriminatorValue}"`,
+			);
+		}
+
+		branches[discriminatorValue] = withRequired(branch.node, true);
+	}
+
+	return {
+		constraints: DEFAULT_CONSTRAINTS(),
+		enumValues: null,
+		kind: "union",
+		path: pathLabel,
+		required: true,
+		union: {
+			branches,
+			discriminator,
+		},
+	};
+}
+
+function findDiscriminatorKey(branches: AttributeNode[], pathLabel: string): string {
+	const candidateKeys = new Set(Object.keys(branches[0].properties ?? {}));
+
+	for (const branch of branches.slice(1)) {
+		for (const key of [...candidateKeys]) {
+			if (!(branch.properties && key in branch.properties)) {
+				candidateKeys.delete(key);
+			}
+		}
+	}
+
+	const discriminatorCandidates = [...candidateKeys].filter((key) =>
+		branches.every((branch) => isDiscriminatorProperty(branch.properties?.[key])),
+	);
+
+	if (discriminatorCandidates.length !== 1) {
+		throw new Error(
+			`Unsupported union type at ${pathLabel}; expected exactly one shared discriminator property`,
+		);
+	}
+
+	return discriminatorCandidates[0];
+}
+
+function isDiscriminatorProperty(node: AttributeNode | undefined): boolean {
+	return Boolean(
+		node &&
+		node.required &&
+		node.kind === "string" &&
+		node.enumValues !== null &&
+		node.enumValues.length === 1 &&
+		typeof node.enumValues[0] === "string",
+	);
 }
 
 function parseTypeLiteral(node: ts.TypeLiteralNode, ctx: AnalysisContext, pathLabel: string): AttributeNode {
@@ -446,6 +555,7 @@ function parseTypeLiteral(node: ts.TypeLiteralNode, ctx: AnalysisContext, pathLa
 		path: pathLabel,
 		properties,
 		required: true,
+		union: null,
 	};
 }
 
@@ -461,6 +571,7 @@ function parseLiteralType(node: ts.LiteralTypeNode, pathLabel: string): Attribut
 		kind: typeof literal as "string" | "number" | "boolean",
 		path: pathLabel,
 		required: true,
+		union: null,
 	};
 }
 
@@ -485,6 +596,7 @@ function parseTypeReference(
 			kind: "array",
 			path: pathLabel,
 			required: true,
+			union: null,
 		};
 	}
 	if (typeArguments.length > 0) {
@@ -655,7 +767,7 @@ function createBlockJsonAttribute(
 	warnings: string[],
 ): BlockJsonAttribute {
 	const attribute: BlockJsonAttribute = {
-		type: node.kind,
+		type: getWordPressKind(node),
 	};
 
 	if (node.defaultValue !== undefined) {
@@ -675,6 +787,7 @@ function createBlockJsonAttribute(
 	if (node.constraints.typeTag !== null) reasons.push("typeTag");
 	if (node.kind === "array" && node.items !== undefined) reasons.push("items");
 	if (node.kind === "object" && node.properties !== undefined) reasons.push("properties");
+	if (node.kind === "union" && node.union !== null) reasons.push("union");
 
 	if (reasons.length > 0) {
 		warnings.push(`${node.path}: ${reasons.join(", ")}`);
@@ -687,7 +800,8 @@ function createManifestAttribute(node: AttributeNode): ManifestAttribute {
 	return {
 		typia: {
 			constraints: { ...node.constraints },
-			default: node.defaultValue === undefined ? null : cloneJson(node.defaultValue),
+			defaultValue: node.defaultValue === undefined ? null : cloneJson(node.defaultValue),
+			hasDefault: node.defaultValue !== undefined,
 		},
 		ts: {
 			items: node.items ? createManifestAttribute(node.items) : null,
@@ -698,11 +812,20 @@ function createManifestAttribute(node: AttributeNode): ManifestAttribute {
 					)
 				: null,
 			required: node.required,
+			union: node.union
+				? {
+						branches: Object.fromEntries(
+							Object.entries(node.union.branches).map(([key, branch]) => [key, createManifestAttribute(branch)]),
+						),
+						discriminator: node.union.discriminator,
+					}
+				: null,
 		},
 		wp: {
-			default: node.defaultValue === undefined ? null : cloneJson(node.defaultValue),
+			defaultValue: node.defaultValue === undefined ? null : cloneJson(node.defaultValue),
 			enum: node.enumValues ? [...node.enumValues] : null,
-			type: node.kind,
+			hasDefault: node.defaultValue !== undefined,
+			type: getWordPressKind(node),
 		},
 	};
 }
@@ -764,7 +887,7 @@ return new class {
 \t\tforeach ($schema as $name => $attribute) {
 \t\t\tif (!array_key_exists($name, $result)) {
 \t\t\t\tif ($this->hasDefault($attribute)) {
-\t\t\t\t\t$result[$name] = $attribute['typia']['default'];
+\t\t\t\t\t$result[$name] = $attribute['typia']['defaultValue'];
 \t\t\t\t}
 \t\t\t\tcontinue;
 \t\t\t}
@@ -782,6 +905,9 @@ return new class {
 \t\t}
 
 \t\t$kind = $attribute['ts']['kind'] ?? $attribute['wp']['type'] ?? null;
+\t\tif ($kind === 'union') {
+\t\t\treturn $this->applyDefaultsForUnion($value, $attribute);
+\t\t}
 \t\tif ($kind === 'object' && is_array($value) && !$this->isListArray($value)) {
 \t\t\treturn $this->applyDefaultsForObject($value, $attribute['ts']['properties'] ?? []);
 \t\t}
@@ -802,6 +928,30 @@ return new class {
 \t\treturn $value;
 \t}
 
+\tprivate function applyDefaultsForUnion($value, array $attribute)
+\t{
+\t\tif (!is_array($value) || $this->isListArray($value)) {
+\t\t\treturn $value;
+\t\t}
+
+\t\t$union = $attribute['ts']['union'] ?? null;
+\t\tif (!is_array($union)) {
+\t\t\treturn $value;
+\t\t}
+
+\t\t$discriminator = $union['discriminator'] ?? null;
+\t\tif (!is_string($discriminator) || !array_key_exists($discriminator, $value)) {
+\t\t\treturn $value;
+\t\t}
+
+\t\t$branchKey = $value[$discriminator];
+\t\tif (!is_string($branchKey) || !isset($union['branches'][$branchKey]) || !is_array($union['branches'][$branchKey])) {
+\t\t\treturn $value;
+\t\t}
+
+\t\treturn $this->applyDefaultsForNode($value, $union['branches'][$branchKey]);
+\t}
+
 \tprivate function validateAttribute(bool $exists, $value, array $attribute, string $path, array &$errors): void
 \t{
 \t\tif (!$exists) {
@@ -817,7 +967,7 @@ return new class {
 \t\t\treturn;
 \t\t}
 \t\tif ($value === null) {
-\t\t\t$errors[] = sprintf('%s must be %s', $path, $kind);
+\t\t\t$errors[] = sprintf('%s must be %s', $path, $this->expectedKindLabel($attribute));
 \t\t\treturn;
 \t\t}
 
@@ -871,9 +1021,48 @@ return new class {
 \t\t\t\t\t);
 \t\t\t\t}
 \t\t\t\treturn;
+\t\t\tcase 'union':
+\t\t\t\t$this->validateUnion($value, $attribute, $path, $errors);
+\t\t\t\treturn;
 \t\t\tdefault:
 \t\t\t\t$errors[] = sprintf('%s has unsupported schema kind %s', $path, $kind);
 \t\t}
+\t}
+
+\tprivate function validateUnion($value, array $attribute, string $path, array &$errors): void
+\t{
+\t\tif (!is_array($value) || $this->isListArray($value)) {
+\t\t\t$errors[] = sprintf('%s must be object', $path);
+\t\t\treturn;
+\t\t}
+
+\t\t$union = $attribute['ts']['union'] ?? null;
+\t\tif (!is_array($union)) {
+\t\t\t$errors[] = sprintf('%s has invalid union schema metadata', $path);
+\t\t\treturn;
+\t\t}
+
+\t\t$discriminator = $union['discriminator'] ?? null;
+\t\tif (!is_string($discriminator) || $discriminator === '') {
+\t\t\t$errors[] = sprintf('%s has invalid union discriminator metadata', $path);
+\t\t\treturn;
+\t\t}
+\t\tif (!array_key_exists($discriminator, $value)) {
+\t\t\t$errors[] = sprintf('%s.%s is required', $path, $discriminator);
+\t\t\treturn;
+\t\t}
+
+\t\t$branchKey = $value[$discriminator];
+\t\tif (!is_string($branchKey)) {
+\t\t\t$errors[] = sprintf('%s.%s must be string', $path, $discriminator);
+\t\t\treturn;
+\t\t}
+\t\tif (!isset($union['branches'][$branchKey]) || !is_array($union['branches'][$branchKey])) {
+\t\t\t$errors[] = sprintf('%s.%s must be one of %s', $path, $discriminator, implode(', ', array_keys($union['branches'] ?? [])));
+\t\t\treturn;
+\t\t}
+
+\t\t$this->validateAttribute(true, $value, $union['branches'][$branchKey], $path, $errors);
 \t}
 
 \tprivate function validateString(string $value, array $attribute, string $path, array &$errors): void
@@ -922,7 +1111,7 @@ return new class {
 
 \tprivate function hasDefault(array $attribute): bool
 \t{
-\t\treturn array_key_exists('default', $attribute['typia'] ?? []) && $attribute['typia']['default'] !== null;
+\t\treturn ($attribute['typia']['hasDefault'] ?? false) === true;
 \t}
 
 \tprivate function valueInEnum($value, array $enum): bool
@@ -963,6 +1152,12 @@ return new class {
 \t\t}
 \t\treturn true;
 \t}
+
+\tprivate function expectedKindLabel(array $attribute): string
+\t{
+\t\t$kind = $attribute['ts']['kind'] ?? $attribute['wp']['type'] ?? 'value';
+\t\treturn $kind === 'union' ? 'object' : (string) $kind;
+\t}
 };
 `,
 		warnings,
@@ -987,6 +1182,9 @@ function collectPhpGenerationWarnings(
 	}
 	for (const [key, property] of Object.entries(attribute.ts.properties ?? {})) {
 		collectPhpGenerationWarnings(property, `${pathLabel}.${key}`, warnings);
+	}
+	for (const [branchKey, branch] of Object.entries(attribute.ts.union?.branches ?? {})) {
+		collectPhpGenerationWarnings(branch, `${pathLabel}<${branchKey}>`, warnings);
 	}
 }
 
@@ -1052,7 +1250,23 @@ function createExampleValue(node: AttributeNode, key: string): JsonValue {
 					createExampleValue(propertyNode, propertyKey),
 				]),
 			);
+		case "union": {
+			const firstBranch = node.union ? Object.values(node.union.branches)[0] : undefined;
+			if (!firstBranch || firstBranch.kind !== "object") {
+				return {};
+			}
+			return Object.fromEntries(
+				Object.entries(firstBranch.properties ?? {}).map(([propertyKey, propertyNode]) => [
+					propertyKey,
+					createExampleValue(propertyNode, propertyKey),
+				]),
+			);
+		}
 	}
+}
+
+function getWordPressKind(node: AttributeNode): WordPressAttributeKind {
+	return node.kind === "union" ? "object" : node.kind;
 }
 
 function baseNode(kind: AttributeKind, pathLabel: string): AttributeNode {
@@ -1062,6 +1276,7 @@ function baseNode(kind: AttributeKind, pathLabel: string): AttributeNode {
 		kind,
 		path: pathLabel,
 		required: true,
+		union: null,
 	};
 }
 
@@ -1071,6 +1286,16 @@ function withRequired(node: AttributeNode, required: boolean): AttributeNode {
 		items: node.items ? withRequired(node.items, node.items.required) : undefined,
 		properties: node.properties ? cloneProperties(node.properties) : undefined,
 		required,
+		union: node.union ? cloneUnion(node.union) : null,
+	};
+}
+
+function cloneUnion(union: AttributeUnion): AttributeUnion {
+	return {
+		branches: Object.fromEntries(
+			Object.entries(union.branches).map(([key, branch]) => [key, withRequired(branch, branch.required)]),
+		),
+		discriminator: union.discriminator,
 	};
 }
 

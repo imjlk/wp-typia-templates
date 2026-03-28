@@ -6,7 +6,7 @@ The `advanced` template is designed for blocks that need to preserve compatibili
 
 - `src/types.ts` describes the current block contract.
 - `block.json` is generated from that contract for WordPress.
-- `typia.manifest.json` keeps the richer Typia constraints that are not projected into `block.json`.
+- `typia.manifest.json` v2 keeps richer Typia constraints, explicit default markers, and supported discriminated union metadata.
 
 ## Snapshot model
 
@@ -62,6 +62,7 @@ Automatic cases are filled for you:
 - fill new defaults
 - drop removed fields
 - normalize additive object and array changes
+- preserve compatible discriminated union branches
 
 Manual work is still required for:
 
@@ -69,8 +70,15 @@ Manual work is still required for:
 - primitive type changes
 - stricter enums or format constraints
 - semantic transforms
+- discriminator changes or branch removals in discriminated unions
 
-If unresolved `TODO MIGRATION:` markers remain, `migration:verify` fails on purpose.
+Scaffolded rules expose:
+
+- `renameMap`: `currentField -> legacy.path`
+- `transforms`: field-level semantic overrides
+- `unresolved`: issues that must be resolved before `verify`
+
+If unresolved `TODO MIGRATION:` markers or unresolved entries remain, `migration:verify` fails on purpose.
 
 ## Deprecated Gutenberg entries
 
@@ -92,3 +100,13 @@ The advanced template includes an admin-side migration dashboard that can:
 - batch-migrate matching blocks
 
 This scan is REST-based and stays on the JavaScript side. It does not depend on PHP migration code.
+
+## Server-side foundation
+
+The advanced template now also ships:
+
+- `typia-validator.php`
+- `typia-migration-registry.php`
+- `render.php`
+
+`render.php` demonstrates the intended server boundary: normalize with the generated validator, validate the supported subset, and render only when the payload is safe. Migration execution still stays JS-first.

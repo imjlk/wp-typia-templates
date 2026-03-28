@@ -11,17 +11,20 @@
 					"pattern": null,
 					"typeTag": null
 				},
-				"default": null
+				"defaultValue": null,
+				"hasDefault": false
 			},
 			"ts": {
 				"items": null,
 				"kind": "string",
 				"properties": null,
-				"required": false
+				"required": false,
+				"union": null
 			},
 			"wp": {
-				"default": null,
+				"defaultValue": null,
 				"enum": null,
+				"hasDefault": false,
 				"type": "string"
 			}
 		},
@@ -36,17 +39,20 @@
 					"pattern": null,
 					"typeTag": "uint32"
 				},
-				"default": 1
+				"defaultValue": 1,
+				"hasDefault": true
 			},
 			"ts": {
 				"items": null,
 				"kind": "number",
 				"properties": null,
-				"required": false
+				"required": false,
+				"union": null
 			},
 			"wp": {
-				"default": 1,
+				"defaultValue": 1,
 				"enum": null,
+				"hasDefault": true,
 				"type": "number"
 			}
 		},
@@ -61,17 +67,20 @@
 					"pattern": null,
 					"typeTag": null
 				},
-				"default": null
+				"defaultValue": null,
+				"hasDefault": false
 			},
 			"ts": {
 				"items": null,
 				"kind": "string",
 				"properties": null,
-				"required": false
+				"required": false,
+				"union": null
 			},
 			"wp": {
-				"default": null,
+				"defaultValue": null,
 				"enum": null,
+				"hasDefault": false,
 				"type": "string"
 			}
 		},
@@ -86,17 +95,20 @@
 					"pattern": null,
 					"typeTag": null
 				},
-				"default": ""
+				"defaultValue": "",
+				"hasDefault": true
 			},
 			"ts": {
 				"items": null,
 				"kind": "string",
 				"properties": null,
-				"required": true
+				"required": true,
+				"union": null
 			},
 			"wp": {
-				"default": "",
+				"defaultValue": "",
 				"enum": null,
+				"hasDefault": true,
 				"type": "string"
 			}
 		},
@@ -111,22 +123,25 @@
 					"pattern": null,
 					"typeTag": null
 				},
-				"default": "left"
+				"defaultValue": "left",
+				"hasDefault": true
 			},
 			"ts": {
 				"items": null,
 				"kind": "string",
 				"properties": null,
-				"required": false
+				"required": false,
+				"union": null
 			},
 			"wp": {
-				"default": "left",
+				"defaultValue": "left",
 				"enum": [
 					"left",
 					"center",
 					"right",
 					"justify"
 				],
+				"hasDefault": true,
 				"type": "string"
 			}
 		},
@@ -141,21 +156,24 @@
 					"pattern": null,
 					"typeTag": null
 				},
-				"default": true
+				"defaultValue": true,
+				"hasDefault": true
 			},
 			"ts": {
 				"items": null,
 				"kind": "boolean",
 				"properties": null,
-				"required": false
+				"required": false,
+				"union": null
 			},
 			"wp": {
-				"default": true,
+				"defaultValue": true,
 				"enum": null,
+				"hasDefault": true,
 				"type": "boolean"
 			}
 		}
 	},
-	"manifestVersion": 1,
+	"manifestVersion": 2,
 	"sourceType": "MyTypiaBlockAttributes"
 }

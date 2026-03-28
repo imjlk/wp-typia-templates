@@ -1,3 +1,8 @@
+export interface ManifestUnion {
+	branches: Record<string, ManifestAttribute>;
+	discriminator: string;
+}
+
 export interface ManifestAttribute {
 	typia: {
 		constraints: {
@@ -9,30 +14,42 @@ export interface ManifestAttribute {
 			pattern: string | null;
 			typeTag: string | null;
 		};
-		default: unknown;
+		defaultValue: unknown;
+		hasDefault: boolean;
 	};
 	ts: {
 		items: ManifestAttribute | null;
-		kind: "string" | "number" | "boolean" | "array" | "object";
+		kind: "string" | "number" | "boolean" | "array" | "object" | "union";
 		properties: Record<string, ManifestAttribute> | null;
 		required: boolean;
+		union: ManifestUnion | null;
 	};
 	wp: {
-		default: unknown;
+		defaultValue: unknown;
 		enum: Array<string | number | boolean> | null;
+		hasDefault: boolean;
 		type: "string" | "number" | "boolean" | "array" | "object";
 	};
 }
 
 export interface ManifestDocument {
 	attributes: Record<string, ManifestAttribute>;
-	manifestVersion: 1;
+	manifestVersion: 2;
 	sourceType: string;
 }
 
+export type RenameMap = Record<string, string>;
+export type TransformMap = Record<
+	string,
+	(legacyValue: unknown, legacyInput: Record<string, unknown>) => unknown
+>;
+
 export function createDefaultValue(attribute: ManifestAttribute): unknown {
-	if (attribute.typia.default !== null && attribute.typia.default !== undefined) {
-		return attribute.typia.default;
+	if (attribute.typia.hasDefault) {
+		return attribute.typia.defaultValue;
+	}
+	if (attribute.wp.enum && attribute.wp.enum.length > 0) {
+		return attribute.wp.enum[0];
 	}
 
 	switch (attribute.ts.kind) {
@@ -51,9 +68,42 @@ export function createDefaultValue(attribute: ManifestAttribute): unknown {
 			}
 			return result;
 		}
+		case "union": {
+			const firstBranch = Object.values(attribute.ts.union?.branches ?? {})[0];
+			return firstBranch ? createDefaultValue(firstBranch) : null;
+		}
 		default:
 			return null;
 	}
+}
+
+export function getValueAtPath(input: Record<string, unknown>, path: string): unknown {
+	if (!path) {
+		return undefined;
+	}
+
+	return path.split(".").reduce<unknown>((value, segment) => {
+		if (typeof value !== "object" || value === null || Array.isArray(value)) {
+			return undefined;
+		}
+		return (value as Record<string, unknown>)[segment];
+	}, input);
+}
+
+export function resolveMigrationValue(
+	attribute: ManifestAttribute,
+	currentKey: string,
+	input: Record<string, unknown>,
+	renameMap: RenameMap,
+	transforms: TransformMap,
+): unknown {
+	const sourcePath = renameMap[currentKey] ?? currentKey;
+	const legacyValue = getValueAtPath(input, sourcePath);
+	const transformedValue = transforms[currentKey]
+		? transforms[currentKey](legacyValue, input)
+		: legacyValue;
+
+	return coerceValueFromManifest(attribute, transformedValue);
 }
 
 export function coerceValueFromManifest(attribute: ManifestAttribute, value: unknown): unknown {
@@ -83,6 +133,8 @@ export function coerceValueFromManifest(attribute: ManifestAttribute, value: unk
 					coerceValueFromManifest(property, (value as Record<string, unknown>)[key]),
 				]),
 			);
+		case "union":
+			return coerceUnionValue(attribute, value);
 		default:
 			return createDefaultValue(attribute);
 	}
@@ -91,7 +143,7 @@ export function coerceValueFromManifest(attribute: ManifestAttribute, value: unk
 export function manifestMatchesDocument(manifest: ManifestDocument, attributes: Record<string, unknown>): boolean {
 	for (const [key, attribute] of Object.entries(manifest.attributes)) {
 		const value = attributes[key];
-		if ((value === undefined || value === null) && !attribute.ts.required) {
+		if ((value === undefined || value === null) && (!attribute.ts.required || attribute.typia.hasDefault)) {
 			continue;
 		}
 		if (!manifestMatchesAttribute(attribute, value)) {
@@ -119,7 +171,7 @@ export function summarizeVersionDelta(
 }
 
 function manifestMatchesAttribute(attribute: ManifestAttribute, value: unknown): boolean {
-	if ((value === undefined || value === null) && !attribute.ts.required) {
+	if ((value === undefined || value === null) && (!attribute.ts.required || attribute.typia.hasDefault)) {
 		return true;
 	}
 
@@ -139,9 +191,38 @@ function manifestMatchesAttribute(attribute: ManifestAttribute, value: unknown):
 				&& Object.entries(attribute.ts.properties ?? {}).every(([key, property]) =>
 					manifestMatchesAttribute(property, (value as Record<string, unknown>)[key]),
 				);
+		case "union":
+			return matchesUnionAttribute(attribute, value);
 		default:
 			return false;
 	}
+}
+
+function matchesUnionAttribute(attribute: ManifestAttribute, value: unknown): boolean {
+	if (!isPlainObject(value) || !attribute.ts.union) {
+		return false;
+	}
+
+	const { discriminator, branches } = attribute.ts.union;
+	const branchKey = (value as Record<string, unknown>)[discriminator];
+
+	return typeof branchKey === "string"
+		&& branchKey in branches
+		&& manifestMatchesAttribute(branches[branchKey], value);
+}
+
+function coerceUnionValue(attribute: ManifestAttribute, value: unknown): unknown {
+	if (!isPlainObject(value) || !attribute.ts.union) {
+		return createDefaultValue(attribute);
+	}
+
+	const { discriminator, branches } = attribute.ts.union;
+	const branchKey = (value as Record<string, unknown>)[discriminator];
+	if (typeof branchKey !== "string" || !(branchKey in branches)) {
+		return createDefaultValue(attribute);
+	}
+
+	return coerceValueFromManifest(branches[branchKey], value);
 }
 
 function isValidString(attribute: ManifestAttribute, value: unknown): value is string {
@@ -177,7 +258,7 @@ function isValidNumber(attribute: ManifestAttribute, value: unknown): value is n
 	}
 
 	const { enum: enumValues } = attribute.wp;
-	const { maximum, minimum } = attribute.typia.constraints;
+	const { maximum, minimum, typeTag } = attribute.typia.constraints;
 
 	if (enumValues && !enumValues.includes(value)) {
 		return false;
@@ -186,6 +267,9 @@ function isValidNumber(attribute: ManifestAttribute, value: unknown): value is n
 		return false;
 	}
 	if (typeof maximum === "number" && value > maximum) {
+		return false;
+	}
+	if (typeTag === "uint32" && (!Number.isInteger(value) || value < 0 || value > 4294967295)) {
 		return false;
 	}
 

@@ -14,15 +14,18 @@ type ManifestAttribute = {
       pattern: string | null;
       typeTag: string | null;
     };
-    default: unknown;
+    defaultValue: unknown;
+    hasDefault: boolean;
   };
   ts: {
-    kind: 'string' | 'number' | 'boolean' | 'array' | 'object';
+    kind: 'string' | 'number' | 'boolean' | 'array' | 'object' | 'union';
     required: boolean;
+    union?: unknown;
   };
   wp: {
-    default: unknown;
+    defaultValue: unknown;
     enum: unknown[] | null;
+    hasDefault: boolean;
     type: 'string' | 'number' | 'boolean' | 'array' | 'object';
   };
 };
@@ -78,7 +81,7 @@ function validatePayload(
     const value = payload[attributeName];
 
     if (value === undefined) {
-      if (attribute.ts.required && attribute.typia.default == null && attribute.wp.default == null) {
+      if (attribute.ts.required && !attribute.typia.hasDefault && !attribute.wp.hasDefault) {
         errors.push(`${attributeName} is required`);
       }
       continue;
@@ -179,10 +182,10 @@ describe('Typia block attribute contract', () => {
   test('keeps block.json defaults aligned with typia.manifest defaults', () => {
     const { blockJson, manifest } = loadExampleContract();
 
-    expect(blockJson.attributes.version.default).toBe(manifest.attributes.version.typia.default);
-    expect(blockJson.attributes.content.default).toBe(manifest.attributes.content.typia.default);
-    expect(blockJson.attributes.alignment.default).toBe(manifest.attributes.alignment.typia.default);
-    expect(blockJson.attributes.isVisible.default).toBe(manifest.attributes.isVisible.typia.default);
+    expect(blockJson.attributes.version.default).toBe(manifest.attributes.version.typia.defaultValue);
+    expect(blockJson.attributes.content.default).toBe(manifest.attributes.content.typia.defaultValue);
+    expect(blockJson.attributes.alignment.default).toBe(manifest.attributes.alignment.typia.defaultValue);
+    expect(blockJson.attributes.isVisible.default).toBe(manifest.attributes.isVisible.typia.defaultValue);
   });
 
   test('generates a php validator that applies defaults and passes lint', () => {

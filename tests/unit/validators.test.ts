@@ -159,4 +159,101 @@ export interface BlockAttributes {
     expect(objectResult.valid).toBe(false);
     expect(objectResult.errors).toContain('seo must be object');
   });
+
+  test('manifest v2 schema distinguishes explicit null defaults from missing defaults', () => {
+    const withoutDefault = {
+      typia: {
+        constraints: {},
+        defaultValue: null,
+        hasDefault: false,
+      },
+      ts: {
+        items: null,
+        kind: 'string',
+        properties: null,
+        required: false,
+        union: null,
+      },
+      wp: {
+        defaultValue: null,
+        enum: null,
+        hasDefault: false,
+        type: 'string',
+      },
+    };
+    const withExplicitNullDefault = {
+      ...withoutDefault,
+      typia: {
+        ...withoutDefault.typia,
+        hasDefault: true,
+      },
+      wp: {
+        ...withoutDefault.wp,
+        hasDefault: true,
+      },
+    };
+
+    expect(withoutDefault.typia.hasDefault).toBe(false);
+    expect(withoutDefault.typia.defaultValue).toBeNull();
+    expect(withExplicitNullDefault.typia.hasDefault).toBe(true);
+    expect(withExplicitNullDefault.typia.defaultValue).toBeNull();
+  });
+
+  test('emits discriminated union metadata and validates union branches in php', async () => {
+    if (!hasPhpBinary()) {
+      return;
+    }
+
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify({ attributes: {}, example: { attributes: {} } }, null, 2),
+      'src/types.ts': `export type LinkTarget =
+  | { kind: "post"; postId: number }
+  | { kind: "url"; href: string };
+
+export interface BlockAttributes {
+  link: LinkTarget;
+}
+`,
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: {
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          resolveJsonModule: true,
+          strict: true,
+          target: 'ES2022',
+        },
+        include: ['src/**/*.ts'],
+      }, null, 2),
+    });
+
+    await syncBlockMetadata({
+      blockJsonFile: 'block.json',
+      manifestFile: 'typia.manifest.json',
+      projectRoot: fixtureDir,
+      sourceTypeName: 'BlockAttributes',
+      typesFile: 'src/types.ts',
+    });
+
+    const blockJson = JSON.parse(fs.readFileSync(path.join(fixtureDir, 'block.json'), 'utf8'));
+    const manifest = JSON.parse(fs.readFileSync(path.join(fixtureDir, 'typia.manifest.json'), 'utf8'));
+    const phpValidatorPath = path.join(fixtureDir, 'typia-validator.php');
+
+    expect(blockJson.attributes.link).toEqual({ type: 'object' });
+    expect(manifest.attributes.link.ts.kind).toBe('union');
+    expect(manifest.attributes.link.ts.union.discriminator).toBe('kind');
+    expect(Object.keys(manifest.attributes.link.ts.union.branches)).toEqual(['post', 'url']);
+
+    const validResult = JSON.parse(execFileSync('php', [
+      '-r',
+      `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; echo json_encode($validator->validate(["link" => ["kind" => "post", "postId" => 12]]), JSON_UNESCAPED_SLASHES);`,
+    ], { encoding: 'utf8' }));
+    const invalidResult = JSON.parse(execFileSync('php', [
+      '-r',
+      `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; echo json_encode($validator->validate(["link" => ["kind" => "missing", "href" => "https://example.com"]]), JSON_UNESCAPED_SLASHES);`,
+    ], { encoding: 'utf8' }));
+
+    expect(validResult.valid).toBe(true);
+    expect(invalidResult.valid).toBe(false);
+    expect(invalidResult.errors).toContain('link.kind must be one of post, url');
+  });
 });

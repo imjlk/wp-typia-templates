@@ -29,7 +29,7 @@ describe('Type Sync Tests', () => {
     expect(blockJson.attributes.content).toBeDefined();
     expect(blockJson.attributes.alignment).toBeDefined();
     expect(blockJson.attributes.isVisible).toBeDefined();
-    expect(manifest.manifestVersion).toBe(1);
+    expect(manifest.manifestVersion).toBe(2);
     expect(manifest.sourceType).toBe('MyTypiaBlockAttributes');
   });
 

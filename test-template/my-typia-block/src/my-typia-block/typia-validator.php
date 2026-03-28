@@ -18,17 +18,20 @@ return new class {
 							'pattern' => null,
 							'typeTag' => null
 						],
-						'default' => null
+						'defaultValue' => null,
+						'hasDefault' => false
 					],
 					'ts' => [
 						'items' => null,
 						'kind' => 'string',
 						'properties' => null,
-						'required' => false
+						'required' => false,
+						'union' => null
 					],
 					'wp' => [
-						'default' => null,
+						'defaultValue' => null,
 						'enum' => null,
+						'hasDefault' => false,
 						'type' => 'string'
 					]
 				],
@@ -43,17 +46,20 @@ return new class {
 							'pattern' => null,
 							'typeTag' => 'uint32'
 						],
-						'default' => 1
+						'defaultValue' => 1,
+						'hasDefault' => true
 					],
 					'ts' => [
 						'items' => null,
 						'kind' => 'number',
 						'properties' => null,
-						'required' => false
+						'required' => false,
+						'union' => null
 					],
 					'wp' => [
-						'default' => 1,
+						'defaultValue' => 1,
 						'enum' => null,
+						'hasDefault' => true,
 						'type' => 'number'
 					]
 				],
@@ -68,17 +74,20 @@ return new class {
 							'pattern' => null,
 							'typeTag' => null
 						],
-						'default' => null
+						'defaultValue' => null,
+						'hasDefault' => false
 					],
 					'ts' => [
 						'items' => null,
 						'kind' => 'string',
 						'properties' => null,
-						'required' => false
+						'required' => false,
+						'union' => null
 					],
 					'wp' => [
-						'default' => null,
+						'defaultValue' => null,
 						'enum' => null,
+						'hasDefault' => false,
 						'type' => 'string'
 					]
 				],
@@ -93,17 +102,20 @@ return new class {
 							'pattern' => null,
 							'typeTag' => null
 						],
-						'default' => ''
+						'defaultValue' => '',
+						'hasDefault' => true
 					],
 					'ts' => [
 						'items' => null,
 						'kind' => 'string',
 						'properties' => null,
-						'required' => true
+						'required' => true,
+						'union' => null
 					],
 					'wp' => [
-						'default' => '',
+						'defaultValue' => '',
 						'enum' => null,
+						'hasDefault' => true,
 						'type' => 'string'
 					]
 				],
@@ -118,22 +130,25 @@ return new class {
 							'pattern' => null,
 							'typeTag' => null
 						],
-						'default' => 'left'
+						'defaultValue' => 'left',
+						'hasDefault' => true
 					],
 					'ts' => [
 						'items' => null,
 						'kind' => 'string',
 						'properties' => null,
-						'required' => false
+						'required' => false,
+						'union' => null
 					],
 					'wp' => [
-						'default' => 'left',
+						'defaultValue' => 'left',
 						'enum' => [
 							'left',
 							'center',
 							'right',
 							'justify'
 						],
+						'hasDefault' => true,
 						'type' => 'string'
 					]
 				],
@@ -148,22 +163,25 @@ return new class {
 							'pattern' => null,
 							'typeTag' => null
 						],
-						'default' => true
+						'defaultValue' => true,
+						'hasDefault' => true
 					],
 					'ts' => [
 						'items' => null,
 						'kind' => 'boolean',
 						'properties' => null,
-						'required' => false
+						'required' => false,
+						'union' => null
 					],
 					'wp' => [
-						'default' => true,
+						'defaultValue' => true,
 						'enum' => null,
+						'hasDefault' => true,
 						'type' => 'boolean'
 					]
 				]
 			],
-			'manifestVersion' => 1,
+			'manifestVersion' => 2,
 			'sourceType' => 'MyTypiaBlockAttributes'
 		];
 
@@ -205,7 +223,7 @@ return new class {
 		foreach ($schema as $name => $attribute) {
 			if (!array_key_exists($name, $result)) {
 				if ($this->hasDefault($attribute)) {
-					$result[$name] = $attribute['typia']['default'];
+					$result[$name] = $attribute['typia']['defaultValue'];
 				}
 				continue;
 			}
@@ -223,6 +241,9 @@ return new class {
 		}
 
 		$kind = $attribute['ts']['kind'] ?? $attribute['wp']['type'] ?? null;
+		if ($kind === 'union') {
+			return $this->applyDefaultsForUnion($value, $attribute);
+		}
 		if ($kind === 'object' && is_array($value) && !$this->isListArray($value)) {
 			return $this->applyDefaultsForObject($value, $attribute['ts']['properties'] ?? []);
 		}
@@ -243,6 +264,30 @@ return new class {
 		return $value;
 	}
 
+	private function applyDefaultsForUnion($value, array $attribute)
+	{
+		if (!is_array($value) || $this->isListArray($value)) {
+			return $value;
+		}
+
+		$union = $attribute['ts']['union'] ?? null;
+		if (!is_array($union)) {
+			return $value;
+		}
+
+		$discriminator = $union['discriminator'] ?? null;
+		if (!is_string($discriminator) || !array_key_exists($discriminator, $value)) {
+			return $value;
+		}
+
+		$branchKey = $value[$discriminator];
+		if (!is_string($branchKey) || !isset($union['branches'][$branchKey]) || !is_array($union['branches'][$branchKey])) {
+			return $value;
+		}
+
+		return $this->applyDefaultsForNode($value, $union['branches'][$branchKey]);
+	}
+
 	private function validateAttribute(bool $exists, $value, array $attribute, string $path, array &$errors): void
 	{
 		if (!$exists) {
@@ -258,7 +303,7 @@ return new class {
 			return;
 		}
 		if ($value === null) {
-			$errors[] = sprintf('%s must be %s', $path, $kind);
+			$errors[] = sprintf('%s must be %s', $path, $this->expectedKindLabel($attribute));
 			return;
 		}
 
@@ -312,9 +357,48 @@ return new class {
 					);
 				}
 				return;
+			case 'union':
+				$this->validateUnion($value, $attribute, $path, $errors);
+				return;
 			default:
 				$errors[] = sprintf('%s has unsupported schema kind %s', $path, $kind);
 		}
+	}
+
+	private function validateUnion($value, array $attribute, string $path, array &$errors): void
+	{
+		if (!is_array($value) || $this->isListArray($value)) {
+			$errors[] = sprintf('%s must be object', $path);
+			return;
+		}
+
+		$union = $attribute['ts']['union'] ?? null;
+		if (!is_array($union)) {
+			$errors[] = sprintf('%s has invalid union schema metadata', $path);
+			return;
+		}
+
+		$discriminator = $union['discriminator'] ?? null;
+		if (!is_string($discriminator) || $discriminator === '') {
+			$errors[] = sprintf('%s has invalid union discriminator metadata', $path);
+			return;
+		}
+		if (!array_key_exists($discriminator, $value)) {
+			$errors[] = sprintf('%s.%s is required', $path, $discriminator);
+			return;
+		}
+
+		$branchKey = $value[$discriminator];
+		if (!is_string($branchKey)) {
+			$errors[] = sprintf('%s.%s must be string', $path, $discriminator);
+			return;
+		}
+		if (!isset($union['branches'][$branchKey]) || !is_array($union['branches'][$branchKey])) {
+			$errors[] = sprintf('%s.%s must be one of %s', $path, $discriminator, implode(', ', array_keys($union['branches'] ?? [])));
+			return;
+		}
+
+		$this->validateAttribute(true, $value, $union['branches'][$branchKey], $path, $errors);
 	}
 
 	private function validateString(string $value, array $attribute, string $path, array &$errors): void
@@ -363,7 +447,7 @@ return new class {
 
 	private function hasDefault(array $attribute): bool
 	{
-		return array_key_exists('default', $attribute['typia'] ?? []) && $attribute['typia']['default'] !== null;
+		return ($attribute['typia']['hasDefault'] ?? false) === true;
 	}
 
 	private function valueInEnum($value, array $enum): bool
@@ -403,5 +487,11 @@ return new class {
 			$expectedKey += 1;
 		}
 		return true;
+	}
+
+	private function expectedKindLabel(array $attribute): string
+	{
+		$kind = $attribute['ts']['kind'] ?? $attribute['wp']['type'] ?? 'value';
+		return $kind === 'union' ? 'object' : (string) $kind;
 	}
 };

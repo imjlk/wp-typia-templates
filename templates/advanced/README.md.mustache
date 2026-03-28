@@ -1,10 +1,11 @@
 # {{title}}
 
-A WordPress block with **Typia validation**, **Interactivity API** support, and **snapshot-based migration tooling**.
+A WordPress block with **Typia validation**, a **dynamic `render.php` server boundary**, **Interactivity API** support, and **snapshot-based migration tooling**.
 
 ## 🚀 Features
 
 - **✅ Typia Validation**: Type-safe attributes with compile-time and runtime validation
+- **🧱 Dynamic Rendering**: `render.php` uses the generated `typia-validator.php` at the server boundary
 - **⚡ Interactivity API**: Lightweight frontend interactions
 - **🎯 Auto-Sync**: Types automatically sync to `block.json` and `typia.manifest.json`
 - **🧬 Snapshot Migrations**: Preserve legacy block contracts and scaffold deprecated migrations from Typia manifests
@@ -53,7 +54,7 @@ export interface {{titleCase}}Attributes {
 }
 ```
 
-**`block.json` and `typia.manifest.json` will be automatically updated** with these attributes when you run `bun run start` or `bun run build`!
+**`block.json`, `typia.manifest.json`, and `typia-validator.php` are automatically updated** when you run `bun run start` or `bun run build`.
 
 ## 🎨 Styling
 
@@ -71,10 +72,40 @@ const { state, actions } = store('{{namespace}}/{{slug}}', {
 });
 ```
 
+## 🧱 Server Boundary
+
+The block renders on the server through `render.php`. That file loads the generated `typia-validator.php`, applies defaults, validates the supported subset, and safely returns an empty string when the payload is invalid.
+
+## 🧬 Migration Authoring
+
+Generated rule files now expose both `renameMap` and `transforms`:
+
+```ts
+export const renameMap = {
+	// content: "headline",
+};
+
+export const transforms = {
+	// content: (legacyValue) => String(legacyValue ?? ""),
+};
+```
+
+Recommended workflow:
+
+```bash
+bun run migration:snapshot -- --version 2.0.0
+bun run migration:scaffold -- --from 1.0.0
+# fill renameMap / transforms
+bun run migration:verify
+```
+
 ## 📦 Generated Files
 
 - `block.json` - WordPress-facing attribute metadata generated from TypeScript types
-- `typia.manifest.json` - Full Typia constraint manifest used by the generated `typia-validator.php`
+- `typia.manifest.json` - Manifest v2 with default markers and discriminated union metadata
+- `typia-validator.php` - Generated PHP validator for the supported server-side subset
+- `render.php` - Dynamic block rendering entrypoint
+- `typia-migration-registry.php` - PHP-readable snapshot and edge summary
 - `src/migrations/versions/` - Versioned snapshots of legacy block contracts and save implementations
 - `src/migrations/rules/` - Per-edge migration rules generated from Typia manifest diffs
 - `src/migrations/generated/` - Generated deprecated array, registry, and verification helpers

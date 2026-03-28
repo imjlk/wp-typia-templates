@@ -5,17 +5,17 @@
 [![npm version](https://badge.fury.io/js/create-wp-typia.svg)](https://www.npmjs.com/package/create-wp-typia)
 [![codecov](https://codecov.io/gh/imjlk/wp-typia-templates/branch/main/graph/badge.svg)](https://codecov.io/gh/imjlk/wp-typia-templates)
 
-> Type-safe WordPress block development with automatic validation powered by Typia
+> Type-safe WordPress block development with Typia-powered metadata, validation, and migration tooling
 
-A Bun-first WordPress block template monorepo featuring TypeScript, Typia validation, and the WordPress Interactivity API. Generate type-safe blocks with runtime validation, automatic `block.json` generation, generated `typia.manifest.json` metadata, and seamless WordPress integration.
+A Bun-first WordPress block template monorepo featuring TypeScript, Typia validation, generated `block.json` / `typia.manifest.json` v2 / `typia-validator.php` artifacts, and WordPress Interactivity API support. The advanced template also ships a dynamic `render.php` example plus snapshot-based migration tooling.
 
 ## ✨ Features
 
 - 🎯 **Type-Safe Development**: Full TypeScript support with compile-time and runtime validation
-- ⚡ **Typia Integration**: 20,000x faster validation than alternatives
-- 🔄 **Type-First Metadata Generation**: Derive `block.json` and `typia.manifest.json` from TypeScript types
+- 🔄 **Type-First Metadata Generation**: Derive `block.json`, `typia.manifest.json` v2, and `typia-validator.php` from TypeScript types
 - 🏗️ **Multiple Templates**: Choose from Basic, Full, Interactivity, or Advanced editions
-- 🚀 **Migration System**: Snapshot-based legacy block migration tooling (Advanced)
+- 🚀 **Migration System**: Snapshot-based legacy block migration tooling with `renameMap` / `transforms` helpers (Advanced)
+- 🧱 **Dynamic Server Example**: The advanced template renders through `render.php` and the generated PHP validator
 - ⚛️ **Modern Stack**: React hooks, error boundaries, and utility functions
 - 🧪 **Testing Ready**: Bun unit tests, Bunli CLI tests, and Playwright E2E tests included
 - 📦 **Shared CLI + Templates**: Scaffold via `create-wp-typia` and keep direct template entrypoints
@@ -85,7 +85,7 @@ wp-typia-templates/
 
 Perfect for simple blocks with type safety:
 
-- ✅ TypeScript to block.json + typia.manifest auto-generation
+- ✅ TypeScript to `block.json` + `typia.manifest.json` v2 + `typia-validator.php`
 - ✅ Typia runtime validation
 - ✅ Minimal setup for quick start
 
@@ -117,6 +117,8 @@ For production applications with versioning needs:
 - 🚀 **Snapshot-Based Migration Scaffolding**
 - 🔄 **Version Management System**
 - 🛠️ **WordPress Deprecated Integration**
+- 🧱 **Dynamic `render.php` server boundary**
+- 🐘 **Generated `typia-validator.php` + `typia-migration-registry.php`**
 - 📊 **Migration Analytics**
 - 🧪 **Migration Testing Tools**
 
@@ -191,7 +193,7 @@ Generates:
 }
 ```
 
-The generator also emits `typia.manifest.json` and `typia-validator.php`, preserving Typia constraints and enforcing the supported PHP-side subset for server boundaries.
+The generator also emits `typia.manifest.json` v2 and `typia-validator.php`, preserving Typia constraints, explicit default markers, and the supported discriminated-union metadata used by the generated PHP validator.
 
 ### Runtime Validation
 
@@ -264,6 +266,8 @@ bun run migration:scaffold -- --from 1.0.0
 bun run migration:verify
 ```
 
+Generated migration rules expose both `renameMap` and `transforms` so simple field renames and semantic coercions can be authored without rewriting the whole edge by hand.
+
 ## 🛠️ Available Scripts
 
 ### Development
@@ -274,7 +278,7 @@ bun run migration:verify
 
 ### Type Management
 
-- `bun run sync-types` - Generate block.json and typia.manifest.json from TypeScript types
+- `bun run sync-types` - Generate `block.json`, `typia.manifest.json` v2, and `typia-validator.php`
 - `bun run typecheck` - Run TypeScript compiler check
 
 ### Testing
@@ -307,8 +311,9 @@ bun run migration:verify
 
 - [Interactive Tutorial](./docs/tutorials/interactive-tutorial.md) - Build your first block step by step
 - [API Guide](./docs/API.md) - Where the public CLI and runtime surfaces live
-- [Migration Guide](./docs/migrations.md) - Block migration system
+- [Migration Guide](./docs/migrations.md) - Snapshot workflow, generated rules, and server-boundary notes
 - [Interactivity API](./docs/interactivity.md) - Reactive frontend
+- [Union Support Guide](./docs/union-support.md) - Supported enum and discriminated union shapes
 - [Contributing](./CONTRIBUTING.md) - Development guidelines
 
 ## 🧪 Testing

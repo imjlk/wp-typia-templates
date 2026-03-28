@@ -66,17 +66,20 @@ function createManifestAttribute(
 				pattern: null,
 				typeTag: null,
 			},
-			default: defaultValue,
+			defaultValue,
+			hasDefault: defaultValue !== null,
 		},
 		ts: {
 			items: null,
 			kind,
 			properties: null,
 			required,
+			union: null,
 		},
 		wp: {
-			default: defaultValue,
+			defaultValue,
 			enum: null,
+			hasDefault: defaultValue !== null,
 			type: kind,
 		},
 	};
@@ -125,7 +128,7 @@ function createCurrentProjectFiles(projectDir: string) {
 				required: false,
 			}),
 		},
-		manifestVersion: 1,
+		manifestVersion: 2,
 		sourceType: "MigrationAttributes",
 	});
 }
@@ -143,7 +146,15 @@ function createVersionedMigrationProject(projectDir: string) {
 	);
 	writeFile(
 		path.join(projectDir, "src", "migrations", "helpers.ts"),
-		`export function coerceValueFromManifest(attribute: any, value: unknown) {\n\tif (value !== undefined && value !== null) {\n\t\treturn value;\n\t}\n\treturn attribute?.typia?.default ?? null;\n}\n`,
+		`export type RenameMap = Record<string, string>;
+export type TransformMap = Record<string, (legacyValue: unknown, legacyInput: Record<string, unknown>) => unknown>;
+export function resolveMigrationValue(attribute: any, currentKey: string, input: Record<string, unknown>, renameMap: RenameMap, transforms: TransformMap) {
+\tconst sourcePath = renameMap[currentKey] ?? currentKey;
+\tconst legacyValue = sourcePath.split(".").reduce((value: any, segment: string) => (value && typeof value === "object" ? value[segment] : undefined), input as any);
+\tconst transformedValue = transforms[currentKey] ? transforms[currentKey](legacyValue, input) : legacyValue;
+\treturn transformedValue ?? attribute?.typia?.defaultValue ?? null;
+}
+`,
 	);
 	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
 		apiVersion: 3,
@@ -160,12 +171,101 @@ function createVersionedMigrationProject(projectDir: string) {
 				required: true,
 			}),
 		},
-		manifestVersion: 1,
+		manifestVersion: 2,
 		sourceType: "MigrationAttributes",
 	});
 	writeFile(
 		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"),
 		`export default function Save({ attributes }: { attributes: any }) {\n\treturn attributes.content ?? null;\n}\n`,
+	);
+
+	const localBinDir = path.join(projectDir, "node_modules", ".bin");
+	fs.mkdirSync(localBinDir, { recursive: true });
+	fs.symlinkSync(repoTsxPath, path.join(localBinDir, "tsx"));
+}
+
+function createRenameCandidateProject(projectDir: string) {
+	createProjectShell(projectDir);
+
+	writeFile(
+		path.join(projectDir, "src", "validators.ts"),
+		`export const validators = {
+\tvalidate(input: Record<string, unknown>) {
+\t\tconst success = typeof input.content === "string";
+\t\treturn success
+\t\t\t? { success: true as const, data: input }
+\t\t\t: { success: false as const, errors: [{ path: "$", expected: "RenameAttributes" }] };
+\t},
+\trandom() {
+\t\treturn { content: "Hello" };
+\t},
+};
+`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "config.ts"),
+		`export const migrationConfig = {
+\tblockName: "create-block/rename-smoke",
+\tcurrentVersion: "2.0.0",
+\tsupportedVersions: ["1.0.0", "2.0.0"],
+\tsnapshotDir: "src/migrations/versions",
+} as const;
+
+export default migrationConfig;
+`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "helpers.ts"),
+		`export type RenameMap = Record<string, string>;
+export type TransformMap = Record<string, (legacyValue: unknown, legacyInput: Record<string, unknown>) => unknown>;
+export function resolveMigrationValue(attribute: any, currentKey: string, input: Record<string, unknown>, renameMap: RenameMap, transforms: TransformMap) {
+\tconst path = renameMap[currentKey] ?? currentKey;
+\tconst legacyValue = path.split(".").reduce((value: any, segment: string) => (value && typeof value === "object" ? value[segment] : undefined), input as any);
+\tconst transformedValue = transforms[currentKey] ? transforms[currentKey](legacyValue, input) : legacyValue;
+\treturn transformedValue ?? attribute.typia.defaultValue ?? "";
+}
+`,
+	);
+	writeJson(path.join(projectDir, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { type: "string" },
+		},
+		name: "create-block/rename-smoke",
+		title: "Rename Smoke",
+	});
+	writeJson(path.join(projectDir, "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "RenameAttributes",
+	});
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			headline: { type: "string" },
+		},
+		name: "create-block/rename-smoke",
+		title: "Rename Smoke",
+	});
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), {
+		attributes: {
+			headline: createManifestAttribute("string", {
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "RenameAttributes",
+	});
+	writeFile(
+		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"),
+		`export default function Save({ attributes }: { attributes: any }) {
+\treturn attributes.headline ?? null;
+}
+`,
 	);
 
 	const localBinDir = path.join(projectDir, "node_modules", ".bin");
@@ -244,5 +344,29 @@ describe("create-wp-typia migrations", () => {
 		});
 		expect(verifyOutput).toContain("Verified 1.0.0 -> 2.0.0");
 		expect(verifyOutput).toContain("Migration verification passed for create-block/migration-smoke");
+	});
+
+	test("scaffold exposes renameMap and transforms helpers for rename candidates", () => {
+		const projectDir = path.join(tempRoot, "rename-project");
+		createRenameCandidateProject(projectDir);
+
+		const diffOutput = runCli("node", [entryPath, "migrations", "diff", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+		expect(diffOutput).toContain("Rename candidates:");
+		expect(diffOutput).toContain("content <- headline");
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const rulePath = path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts");
+		const ruleSource = fs.readFileSync(rulePath, "utf8");
+
+		expect(ruleSource).toContain("export const renameMap");
+		expect(ruleSource).toContain('// content: "headline",');
+		expect(ruleSource).toContain("export const transforms");
+		expect(ruleSource).toContain('content: rename candidate from headline');
+		expect(ruleSource).toContain('resolveMigrationValue(currentManifest.attributes.content, "content", input, renameMap, transforms)');
 	});
 });
