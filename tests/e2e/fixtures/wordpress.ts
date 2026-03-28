@@ -1,5 +1,28 @@
 import { test as base, expect, Page, FrameLocator } from '@playwright/test';
 
+export const EXAMPLE_BLOCK = {
+  name: 'create-block/my-typia-block',
+  title: 'My Typia Block',
+  editorText: 'My Typia Block - Editor View',
+  defaultAttributes: {
+    content: '',
+    alignment: 'left',
+    isVisible: true,
+    version: 1,
+  },
+  updatedAttributes: {
+    content: 'Persisted content',
+    alignment: 'center',
+    isVisible: false,
+  },
+  frontend: {
+    selector: '.my-typia-block-frontend',
+    text: 'My Typia Block - Frontend View',
+  },
+} as const;
+
+export const test = base;
+
 async function waitForAdminReady(page: Page) {
   await page.waitForLoadState('domcontentloaded');
   await page.waitForFunction(() => {
@@ -11,58 +34,6 @@ async function waitForAdminReady(page: Page) {
   });
 }
 
-// Define WordPress fixtures
-export interface WordPressFixtures {
-  page: Page;
-  adminPage: Page;
-  editorPage: Page;
-}
-
-// Extend base test with WordPress-specific fixtures
-export const test = base.extend<WordPressFixtures>({
-  page: async ({ page }, use) => {
-    // Common page setup
-    await use(page);
-  },
-
-  adminPage: async ({ browser }, use) => {
-    const adminPage = await browser.newPage();
-
-    // Login to admin
-    await adminPage.goto('/wp-login.php');
-    await adminPage.fill('#user_login', 'admin');
-    await adminPage.fill('#user_pass', 'password');
-    await adminPage.click('#wp-submit');
-    await waitForAdminReady(adminPage);
-
-    await use(adminPage);
-    await adminPage.close();
-  },
-
-  editorPage: async ({ browser }, use) => {
-    const editorPage = await browser.newPage();
-
-    // Login and go to editor
-    await editorPage.goto('/wp-login.php');
-    await editorPage.fill('#user_login', 'admin');
-    await editorPage.fill('#user_pass', 'password');
-    await editorPage.click('#wp-submit');
-    await waitForAdminReady(editorPage);
-
-    // Create new post
-    await editorPage.goto('/wp-admin/post-new.php');
-    const closeButton = editorPage.getByRole('button', { name: 'Close' });
-    if (await closeButton.isVisible().catch(() => false)) {
-      await closeButton.click();
-    }
-    await editorPage.frameLocator('iframe').first().getByRole('textbox', { name: 'Add title' }).waitFor();
-
-    await use(editorPage);
-    await editorPage.close();
-  },
-});
-
-// Custom WordPress helper methods
 export class WordPressPage {
   constructor(public page: Page) {}
 
@@ -70,7 +41,11 @@ export class WordPressPage {
     return this.page.frameLocator('iframe').first();
   }
 
-  getBlockLocator(blockType: string) {
+  getBlockLocator(blockType = EXAMPLE_BLOCK.name) {
+    if (blockType === EXAMPLE_BLOCK.name) {
+      return this.getEditorCanvas().getByText(EXAMPLE_BLOCK.editorText);
+    }
+
     return this.getEditorCanvas().locator(`[data-type="${blockType}"]`);
   }
 
@@ -86,19 +61,21 @@ export class WordPressPage {
     await waitForAdminReady(this.page);
   }
 
-  async createPost(title = 'Test Post') {
+  async createPost(title = 'Typia Block Test') {
     await this.page.goto('/wp-admin/post-new.php');
-    await this.dismissWelcomeGuideIfPresent();
+    await this.waitForEditorReady();
 
     const titleInput = this.getEditorCanvas().getByRole('textbox', { name: 'Add title' });
-    await titleInput.waitFor({ state: 'visible' });
     await titleInput.fill(title);
   }
 
-  async insertBlock(blockName: string) {
-    await this.dismissWelcomeGuideIfPresent();
+  async openPostEditor(postId: number) {
+    await this.page.goto(`/wp-admin/post.php?post=${postId}&action=edit`);
+    await this.waitForEditorReady();
+  }
 
-    const blockType = await this.resolveBlockTypeName(blockName);
+  async insertBlock(block = EXAMPLE_BLOCK) {
+    await this.dismissWelcomeGuideIfPresent();
 
     try {
       const inserterButton = this.page
@@ -125,13 +102,31 @@ export class WordPressPage {
         throw new Error('Block inserter search input is not visible');
       }
 
-      await searchInput.fill(blockName);
-      await this.page.getByRole('option', { name: blockName }).first().click({ timeout: 5_000 });
+      await searchInput.fill(block.title);
+      await this.page.getByRole('option', { name: block.title }).first().click({ timeout: 5_000 });
     } catch {
-      await this.insertBlockViaStore(blockType);
+      await this.insertBlockViaStore(block.name);
     }
 
-    await expect(this.getBlockLocator(blockType).first()).toBeVisible();
+    await this.waitForBlockInEditor(block.name);
+    await this.selectLatestBlock(block.name);
+    await expect(this.getBlockLocator(block.name).first()).toBeVisible();
+  }
+
+  async updateSelectedBlockAttributes(attributes: Record<string, unknown>) {
+    await this.page.evaluate((nextAttributes) => {
+      const wp = (window as any).wp;
+      const selectedBlock = wp?.data?.select('core/block-editor')?.getSelectedBlock?.();
+      const dispatch = wp?.data?.dispatch('core/block-editor');
+
+      if (!selectedBlock?.clientId || !dispatch?.updateBlockAttributes) {
+        throw new Error('Unable to update selected block attributes');
+      }
+
+      dispatch.updateBlockAttributes(selectedBlock.clientId, nextAttributes);
+    }, attributes);
+
+    await this.waitForBlockAttributes(attributes);
   }
 
   async savePost() {
@@ -167,40 +162,51 @@ export class WordPressPage {
   }
 
   async previewPost(): Promise<Page> {
-    const previewUrl = await this.page.evaluate(async () => {
+    const previewUrl = await this.page.evaluate(() => {
       const wp = (window as any).wp;
       const postId = wp?.data?.select('core/editor')?.getCurrentPostId?.();
       if (!postId) {
         throw new Error('Current post id is unavailable');
       }
 
-      const response = await fetch(`/wp-json/wp/v2/posts/${postId}?context=edit`, {
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch post preview URL: ${response.status}`);
-      }
-
-      const post = await response.json();
-      return post.link as string;
+      const previewUrl = new URL('/', window.location.origin);
+      previewUrl.searchParams.set('p', String(postId));
+      return previewUrl.toString();
     });
 
-    const newPage = await this.page.context().newPage();
-    await newPage.goto(previewUrl, { waitUntil: 'domcontentloaded' });
-    return newPage;
+    const previewPage = await this.page.context().newPage();
+    await previewPage.goto(previewUrl, { waitUntil: 'domcontentloaded' });
+    return previewPage;
   }
 
-  async getBlockAttributes(blockType: string): Promise<any> {
-    return await this.page.evaluate((type) => {
-      // Type assertion for WordPress global
+  async getBlockAttributes(blockType = EXAMPLE_BLOCK.name): Promise<Record<string, unknown> | null> {
+    return this.page.evaluate((type) => {
       const wp = (window as any).wp;
-      if (!wp || !wp.data) return null;
+      if (!wp?.data) {
+        return null;
+      }
 
       const blocks = wp.data.select('core/block-editor').getBlocks();
-      const block = blocks.find((b: any) => b.name === type);
+      const block = blocks.find((candidate: any) => candidate.name === type);
       return block ? block.attributes : null;
     }, blockType);
+  }
+
+  async getCurrentPostId(): Promise<number> {
+    return this.page.evaluate(() => {
+      const wp = (window as any).wp;
+      const postId = wp?.data?.select('core/editor')?.getCurrentPostId?.();
+      if (!postId) {
+        throw new Error('Current post id is unavailable');
+      }
+
+      return postId as number;
+    });
+  }
+
+  private async waitForEditorReady() {
+    await this.dismissWelcomeGuideIfPresent();
+    await this.getEditorCanvas().getByRole('textbox', { name: 'Add title' }).waitFor({ state: 'visible' });
   }
 
   private async dismissWelcomeGuideIfPresent() {
@@ -208,21 +214,6 @@ export class WordPressPage {
     if (await closeButton.isVisible().catch(() => false)) {
       await closeButton.click();
     }
-  }
-
-  private async resolveBlockTypeName(blockName: string): Promise<string> {
-    return this.page.evaluate((name) => {
-      const wp = (window as any).wp;
-      const blockType = wp?.blocks
-        ?.getBlockTypes?.()
-        ?.find((candidate: any) => candidate.title === name || candidate.name === name);
-
-      if (!blockType?.name) {
-        throw new Error(`Unable to resolve block type for "${name}"`);
-      }
-
-      return blockType.name as string;
-    }, blockName);
   }
 
   private async insertBlockViaStore(blockType: string) {
@@ -241,6 +232,47 @@ export class WordPressPage {
     }, blockType);
   }
 
+  private async selectLatestBlock(blockType: string) {
+    await this.page.evaluate((type) => {
+      const wp = (window as any).wp;
+      const select = wp?.data?.select('core/block-editor');
+      const dispatch = wp?.data?.dispatch('core/block-editor');
+      const blocks = select?.getBlocks?.() ?? [];
+      const matchingBlocks = blocks.filter((block: any) => block.name === type);
+      const latestBlock = matchingBlocks[matchingBlocks.length - 1];
+
+      if (!latestBlock?.clientId || !dispatch?.selectBlock) {
+        throw new Error(`Unable to select latest "${type}" block`);
+      }
+
+      dispatch.selectBlock(latestBlock.clientId);
+    }, blockType);
+  }
+
+  private async waitForBlockAttributes(
+    expectedAttributes: Record<string, unknown>,
+    blockType = EXAMPLE_BLOCK.name,
+  ) {
+    await this.page.waitForFunction(
+      ([type, expected]) => {
+        const wp = (window as any).wp;
+        const block = wp?.data
+          ?.select('core/block-editor')
+          ?.getBlocks?.()
+          ?.find((candidate: any) => candidate.name === type);
+
+        if (!block?.attributes) {
+          return false;
+        }
+
+        return Object.entries(expected as Record<string, unknown>).every(
+          ([key, value]) => block.attributes[key] === value,
+        );
+      },
+      [blockType, expectedAttributes],
+    );
+  }
+
   private async waitForEditorIdle() {
     await this.page.waitForFunction(() => {
       const wp = (window as any).wp;
@@ -248,7 +280,14 @@ export class WordPressPage {
       return Boolean(editor) && !editor.isSavingPost?.() && !editor.isAutosavingPost?.();
     });
   }
+
+  private async waitForBlockInEditor(blockType: string) {
+    await this.page.waitForFunction((type) => {
+      const wp = (window as any).wp;
+      const blocks = wp?.data?.select('core/block-editor')?.getBlocks?.() ?? [];
+      return blocks.some((block: any) => block.name === type);
+    }, blockType);
+  }
 }
 
-// Expect with custom matchers
 export { expect };

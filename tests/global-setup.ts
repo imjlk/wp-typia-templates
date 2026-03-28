@@ -1,5 +1,16 @@
 import { chromium, FullConfig } from '@playwright/test';
 
+async function waitForAdminReady(page: import('@playwright/test').Page) {
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForFunction(() => {
+    return (
+      window.location.pathname.startsWith('/wp-admin') ||
+      Boolean(document.querySelector('#wpadminbar')) ||
+      document.body.classList.contains('wp-admin')
+    );
+  });
+}
+
 async function globalSetup(config: FullConfig) {
   console.log('🚀 Setting up WordPress test environment...');
 
@@ -26,7 +37,7 @@ async function globalSetup(config: FullConfig) {
     await page.click('#wp-submit');
 
     // Wait for login to complete
-    await page.waitForURL('**/wp-admin/**');
+    await waitForAdminReady(page);
     console.log('✅ WordPress environment ready');
 
   } catch (error) {
