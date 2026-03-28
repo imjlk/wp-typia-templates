@@ -1,4 +1,4 @@
-import { test as base, expect, Page, BrowserContext } from '@playwright/test';
+import { test as base, expect, Page, FrameLocator } from '@playwright/test';
 
 // Define WordPress fixtures
 export interface WordPressFixtures {
@@ -40,7 +40,11 @@ export const test = base.extend<WordPressFixtures>({
 
     // Create new post
     await editorPage.goto('/wp-admin/post-new.php');
-    await editorPage.waitForSelector('.editor-post-title__input');
+    const closeButton = editorPage.getByRole('button', { name: 'Close' });
+    if (await closeButton.isVisible().catch(() => false)) {
+      await closeButton.click();
+    }
+    await editorPage.frameLocator('iframe').first().getByRole('textbox', { name: 'Add title' }).waitFor();
 
     await use(editorPage);
     await editorPage.close();
@@ -50,6 +54,14 @@ export const test = base.extend<WordPressFixtures>({
 // Custom WordPress helper methods
 export class WordPressPage {
   constructor(public page: Page) {}
+
+  getEditorCanvas(): FrameLocator {
+    return this.page.frameLocator('iframe').first();
+  }
+
+  getBlockLocator(blockType: string) {
+    return this.getEditorCanvas().locator(`[data-type="${blockType}"]`);
+  }
 
   async login(username = 'admin', password = 'password') {
     await this.page.goto('/wp-login.php');
@@ -61,11 +73,16 @@ export class WordPressPage {
 
   async createPost(title = 'Test Post') {
     await this.page.goto('/wp-admin/post-new.php');
-    await this.page.waitForSelector('.editor-post-title__input');
-    await this.page.fill('.editor-post-title__input', title);
+    await this.dismissWelcomeGuideIfPresent();
+
+    const titleInput = this.getEditorCanvas().getByRole('textbox', { name: 'Add title' });
+    await titleInput.waitFor({ state: 'visible' });
+    await titleInput.fill(title);
   }
 
   async insertBlock(blockName: string) {
+    await this.dismissWelcomeGuideIfPresent();
+
     // Open block inserter
     await this.page.getByLabel('Toggle block inserter').click();
 
@@ -112,6 +129,13 @@ export class WordPressPage {
       const block = blocks.find((b: any) => b.name === type);
       return block ? block.attributes : null;
     }, blockType);
+  }
+
+  private async dismissWelcomeGuideIfPresent() {
+    const closeButton = this.page.getByRole('button', { name: 'Close' });
+    if (await closeButton.isVisible().catch(() => false)) {
+      await closeButton.click();
+    }
   }
 }
 

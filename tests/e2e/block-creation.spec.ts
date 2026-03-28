@@ -14,7 +14,7 @@ test.describe('WordPress Typia Block Creation', () => {
     await wpPage.insertBlock('My Typia Block');
 
     // Verify block is inserted
-    const block = page.locator('[data-type="create-block/my-typia-block"]');
+    const block = wpPage.getBlockLocator('create-block/my-typia-block');
     await expect(block).toBeVisible();
 
     // Check block content
@@ -71,7 +71,7 @@ test.describe('WordPress Typia Block Creation', () => {
     await wpPage.insertBlock('My Typia Block');
 
     // Verify all blocks are present
-    const blocks = page.locator('[data-type="create-block/my-typia-block"]');
+    const blocks = wpPage.getBlockLocator('create-block/my-typia-block');
     await expect(blocks).toHaveCount(3);
 
     // Verify each block has unique ID if implemented
