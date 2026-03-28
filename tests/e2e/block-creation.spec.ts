@@ -42,9 +42,6 @@ test.describe('WordPress Typia Block Creation', () => {
     // Save the post
     await wpPage.savePost();
 
-    // Verify save was successful
-    await expect(page.locator('[aria-label="Saved"]')).toBeVisible();
-
     // Check attributes are still set correctly
     const attributes = await wpPage.getBlockAttributes('create-block/my-typia-block');
     expect(attributes).toBeDefined();

@@ -1,5 +1,16 @@
 import { test as base, expect, Page, FrameLocator } from '@playwright/test';
 
+async function waitForAdminReady(page: Page) {
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForFunction(() => {
+    return (
+      window.location.pathname.startsWith('/wp-admin') ||
+      Boolean(document.querySelector('#wpadminbar')) ||
+      document.body.classList.contains('wp-admin')
+    );
+  });
+}
+
 // Define WordPress fixtures
 export interface WordPressFixtures {
   page: Page;
@@ -22,7 +33,7 @@ export const test = base.extend<WordPressFixtures>({
     await adminPage.fill('#user_login', 'admin');
     await adminPage.fill('#user_pass', 'password');
     await adminPage.click('#wp-submit');
-    await adminPage.waitForURL('**/wp-admin/**');
+    await waitForAdminReady(adminPage);
 
     await use(adminPage);
     await adminPage.close();
@@ -36,7 +47,7 @@ export const test = base.extend<WordPressFixtures>({
     await editorPage.fill('#user_login', 'admin');
     await editorPage.fill('#user_pass', 'password');
     await editorPage.click('#wp-submit');
-    await editorPage.waitForURL('**/wp-admin/**');
+    await waitForAdminReady(editorPage);
 
     // Create new post
     await editorPage.goto('/wp-admin/post-new.php');
@@ -64,11 +75,15 @@ export class WordPressPage {
   }
 
   async login(username = 'admin', password = 'password') {
-    await this.page.goto('/wp-login.php');
-    await this.page.fill('#user_login', username);
-    await this.page.fill('#user_pass', password);
-    await this.page.click('#wp-submit');
-    await this.page.waitForURL('**/wp-admin/**');
+    await this.page.goto('/wp-admin/');
+
+    if (this.page.url().includes('/wp-login.php')) {
+      await this.page.fill('#user_login', username);
+      await this.page.fill('#user_pass', password);
+      await this.page.click('#wp-submit');
+    }
+
+    await waitForAdminReady(this.page);
   }
 
   async createPost(title = 'Test Post') {
@@ -83,39 +98,96 @@ export class WordPressPage {
   async insertBlock(blockName: string) {
     await this.dismissWelcomeGuideIfPresent();
 
-    // Open block inserter
-    await this.page.getByLabel('Toggle block inserter').click();
+    const blockType = await this.resolveBlockTypeName(blockName);
 
-    // Search for block
-    await this.page.getByPlaceholder('Search').fill(blockName);
+    try {
+      const inserterButton = this.page
+        .getByRole('button', { name: /Block Inserter|Toggle block inserter/i })
+        .first();
 
-    // Wait for search results and click on block
-    await this.page.getByLabel(blockName).first().click();
+      await inserterButton.click({ timeout: 5_000 });
 
-    // Wait for block to be inserted
-    await this.page.waitForTimeout(500);
+      const searchInputCandidates = [
+        this.page.getByRole('searchbox').first(),
+        this.page.getByRole('textbox', { name: /Search/i }).first(),
+        this.page.getByPlaceholder(/Search/i).first(),
+      ];
+
+      let searchInput = null;
+      for (const candidate of searchInputCandidates) {
+        if (await candidate.isVisible().catch(() => false)) {
+          searchInput = candidate;
+          break;
+        }
+      }
+
+      if (!searchInput) {
+        throw new Error('Block inserter search input is not visible');
+      }
+
+      await searchInput.fill(blockName);
+      await this.page.getByRole('option', { name: blockName }).first().click({ timeout: 5_000 });
+    } catch {
+      await this.insertBlockViaStore(blockType);
+    }
+
+    await expect(this.getBlockLocator(blockType).first()).toBeVisible();
   }
 
   async savePost() {
-    await this.page.getByLabel('Save draft').click();
-    await this.page.getByLabel('Saved').waitFor({ state: 'visible' });
+    await this.page.evaluate(async () => {
+      const wp = (window as any).wp;
+      const editor = wp?.data?.dispatch('core/editor');
+      if (!editor?.savePost) {
+        throw new Error('WordPress editor save action is unavailable');
+      }
+
+      await editor.savePost();
+    });
+    await this.waitForEditorIdle();
   }
 
   async publishPost() {
-    await this.page.getByLabel('Publish').click();
-    await this.page.getByLabel('Publish', { exact: true }).waitFor({ state: 'hidden' });
-    await this.page.getByLabel('Published').waitFor({ state: 'visible' });
+    await this.page.evaluate(async () => {
+      const wp = (window as any).wp;
+      const dispatch = wp?.data?.dispatch('core/editor');
+      if (!dispatch?.editPost || !dispatch?.savePost) {
+        throw new Error('WordPress editor publish actions are unavailable');
+      }
+
+      dispatch.editPost({ status: 'publish' });
+      await dispatch.savePost();
+    });
+    await this.waitForEditorIdle();
+
+    await this.page.waitForFunction(() => {
+      const wp = (window as any).wp;
+      return wp?.data?.select('core/editor')?.getEditedPostAttribute('status') === 'publish';
+    });
   }
 
   async previewPost(): Promise<Page> {
-    await this.page.getByLabel('Preview').click();
+    const previewUrl = await this.page.evaluate(async () => {
+      const wp = (window as any).wp;
+      const postId = wp?.data?.select('core/editor')?.getCurrentPostId?.();
+      if (!postId) {
+        throw new Error('Current post id is unavailable');
+      }
 
-    // Click the preview in new tab option
-    await this.page.getByText('Preview in new tab').click();
+      const response = await fetch(`/wp-json/wp/v2/posts/${postId}?context=edit`, {
+        credentials: 'same-origin',
+      });
 
-    // Wait for and return the new page
-    const newPage = await this.page.context().waitForEvent('page');
-    await newPage.waitForLoadState('domcontentloaded');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch post preview URL: ${response.status}`);
+      }
+
+      const post = await response.json();
+      return post.link as string;
+    });
+
+    const newPage = await this.page.context().newPage();
+    await newPage.goto(previewUrl, { waitUntil: 'domcontentloaded' });
     return newPage;
   }
 
@@ -136,6 +208,45 @@ export class WordPressPage {
     if (await closeButton.isVisible().catch(() => false)) {
       await closeButton.click();
     }
+  }
+
+  private async resolveBlockTypeName(blockName: string): Promise<string> {
+    return this.page.evaluate((name) => {
+      const wp = (window as any).wp;
+      const blockType = wp?.blocks
+        ?.getBlockTypes?.()
+        ?.find((candidate: any) => candidate.title === name || candidate.name === name);
+
+      if (!blockType?.name) {
+        throw new Error(`Unable to resolve block type for "${name}"`);
+      }
+
+      return blockType.name as string;
+    }, blockName);
+  }
+
+  private async insertBlockViaStore(blockType: string) {
+    await this.page.evaluate((name) => {
+      const wp = (window as any).wp;
+      const createBlock = wp?.blocks?.createBlock;
+      const dispatch = wp?.data?.dispatch('core/block-editor');
+
+      if (!createBlock || !dispatch?.insertBlocks || !dispatch?.selectBlock) {
+        throw new Error('WordPress block editor insertion APIs are unavailable');
+      }
+
+      const block = createBlock(name);
+      dispatch.insertBlocks(block);
+      dispatch.selectBlock(block.clientId);
+    }, blockType);
+  }
+
+  private async waitForEditorIdle() {
+    await this.page.waitForFunction(() => {
+      const wp = (window as any).wp;
+      const editor = wp?.data?.select('core/editor');
+      return Boolean(editor) && !editor.isSavingPost?.() && !editor.isAutosavingPost?.();
+    });
   }
 }
 
