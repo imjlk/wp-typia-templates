@@ -2,84 +2,88 @@ const fs = require("fs");
 const path = require("path");
 const defaultConfig = require("@wordpress/scripts/config/webpack.config");
 
-class TypiaManifestAssetPlugin {
-  apply(compiler) {
-    compiler.hooks.thisCompilation.tap("TypiaManifestAssetPlugin", (compilation) => {
-      compilation.hooks.processAssets.tap(
-        {
-          name: "TypiaManifestAssetPlugin",
-          stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
-        },
-        () => {
-          for (const entry of getManifestEntries()) {
-            if (compilation.getAsset(entry.outputPath)) {
-              continue;
-            }
+const TYPIA_ARTIFACT_FILENAMES = new Set(["typia.manifest.json", "typia-validator.php"]);
 
-            compilation.emitAsset(
-              entry.outputPath,
-              new compiler.webpack.sources.RawSource(fs.readFileSync(entry.inputPath)),
-            );
-          }
-        },
-      );
-    });
-  }
+class TypiaArtifactAssetPlugin {
+	apply(compiler) {
+		compiler.hooks.thisCompilation.tap("TypiaArtifactAssetPlugin", (compilation) => {
+			compilation.hooks.processAssets.tap(
+				{
+					name: "TypiaArtifactAssetPlugin",
+					stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
+				},
+				() => {
+					for (const entry of getArtifactEntries()) {
+						if (compilation.getAsset(entry.outputPath)) {
+							continue;
+						}
+
+						compilation.emitAsset(
+							entry.outputPath,
+							new compiler.webpack.sources.RawSource(fs.readFileSync(entry.inputPath)),
+						);
+					}
+				},
+			);
+		});
+	}
 }
 
-function getManifestEntries() {
-  const entries = [];
-  const rootManifestPath = path.resolve(process.cwd(), "typia.manifest.json");
+function getArtifactEntries() {
+	const entries = [];
 
-  if (fs.existsSync(rootManifestPath)) {
-    entries.push({
-      inputPath: rootManifestPath,
-      outputPath: "typia.manifest.json",
-    });
-  }
+	for (const filename of TYPIA_ARTIFACT_FILENAMES) {
+		const rootArtifactPath = path.resolve(process.cwd(), filename);
+		if (fs.existsSync(rootArtifactPath)) {
+			entries.push({
+				inputPath: rootArtifactPath,
+				outputPath: filename,
+			});
+		}
+	}
 
-  const srcDir = path.resolve(process.cwd(), "src");
-  if (!fs.existsSync(srcDir)) {
-    return entries;
-  }
+	const srcDir = path.resolve(process.cwd(), "src");
+	if (!fs.existsSync(srcDir)) {
+		return entries;
+	}
 
-  for (const inputPath of findManifestFiles(srcDir)) {
-    entries.push({
-      inputPath,
-      outputPath: path.relative(srcDir, inputPath),
-    });
-  }
+	for (const inputPath of findArtifactFiles(srcDir)) {
+		entries.push({
+			inputPath,
+			outputPath: path.relative(srcDir, inputPath),
+		});
+	}
 
-  return entries;
+	return entries;
 }
 
-function findManifestFiles(directory) {
-  const manifestFiles = [];
+function findArtifactFiles(directory) {
+	const artifactFiles = [];
 
-  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-    const entryPath = path.join(directory, entry.name);
+	for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+		const entryPath = path.join(directory, entry.name);
 
-    if (entry.isDirectory()) {
-      manifestFiles.push(...findManifestFiles(entryPath));
-      continue;
-    }
-    if (entry.isFile() && entry.name === "typia.manifest.json") {
-      manifestFiles.push(entryPath);
-    }
-  }
+		if (entry.isDirectory()) {
+			artifactFiles.push(...findArtifactFiles(entryPath));
+			continue;
+		}
+		if (entry.isFile() && TYPIA_ARTIFACT_FILENAMES.has(entry.name)) {
+			artifactFiles.push(entryPath);
+		}
+	}
 
-  return manifestFiles;
+	return artifactFiles;
 }
 
 module.exports = async () => {
-  const { default: UnpluginTypia } = await import("@typia/unplugin/webpack");
+	const { default: UnpluginTypia } = await import("@typia/unplugin/webpack");
 
-  return {
-    ...defaultConfig,
-    plugins: [
-      UnpluginTypia(),
-      ...(defaultConfig.plugins || []),
-      new TypiaManifestAssetPlugin(),
-    ],
-  };
+	return {
+		...defaultConfig,
+		plugins: [
+			UnpluginTypia(),
+			...(defaultConfig.plugins || []),
+			new TypiaArtifactAssetPlugin(),
+		],
+	};
 };

@@ -191,7 +191,7 @@ Generates:
 }
 ```
 
-The generator also emits `typia.manifest.json`, which keeps Typia-only constraints such as `format`, `pattern`, and numeric/string ranges for future PHP-side validation.
+The generator also emits `typia.manifest.json` and `typia-validator.php`, preserving Typia constraints and enforcing the supported PHP-side subset for server boundaries.
 
 ### Runtime Validation
 

@@ -58,6 +58,15 @@ function run(command, args, options = {}) {
 	});
 }
 
+function hasPhpBinary() {
+	try {
+		execFileSync("php", ["-v"], { stdio: "ignore" });
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 function getRunCommand(packageManager) {
 	switch (packageManager) {
 		case "bun":
@@ -113,7 +122,7 @@ function assertBuildArtifacts(projectDir, projectName) {
 		path.join(projectDir, "build"),
 	];
 
-	for (const artifact of ["block.json", "typia.manifest.json"]) {
+	for (const artifact of ["block.json", "typia.manifest.json", "typia-validator.php"]) {
 		const found = candidateDirs.some((dir) => fs.existsSync(path.join(dir, artifact)));
 		if (!found) {
 			throw new Error(
@@ -121,6 +130,16 @@ function assertBuildArtifacts(projectDir, projectName) {
 			);
 		}
 	}
+}
+
+function lintPhpArtifact(filePath) {
+	if (!hasPhpBinary()) {
+		return;
+	}
+
+	run("php", ["-l", filePath], {
+		stdio: "ignore",
+	});
 }
 
 function assertAdvancedMigrationArtifacts(projectDir) {
@@ -133,6 +152,7 @@ function assertAdvancedMigrationArtifacts(projectDir) {
 		path.join(projectDir, "src", "migrations", "generated", "verify.ts"),
 		path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-1.0.0.ts"),
 		path.join(projectDir, "src", "migrations", "fixtures", "1.0.0.json"),
+		path.join(projectDir, "typia-migration-registry.php"),
 	];
 
 	for (const filePath of requiredFiles) {
@@ -224,6 +244,22 @@ function main() {
 		run(buildCommand, buildArgs, { cwd: projectDir });
 
 		assertBuildArtifacts(projectDir, projectName);
+		for (const artifact of [
+			path.join(projectDir, "build", projectName, "typia-validator.php"),
+			path.join(projectDir, "build", "typia-validator.php"),
+		]) {
+			if (fs.existsSync(artifact)) {
+				lintPhpArtifact(artifact);
+			}
+		}
+		if (template === "advanced" && !fs.existsSync(path.join(projectDir, "build", "typia-migration-registry.php"))) {
+			throw new Error(
+				`Expected typia-migration-registry.php in ${path.join(projectDir, "build")}`,
+			);
+		}
+		if (template === "advanced") {
+			lintPhpArtifact(path.join(projectDir, "build", "typia-migration-registry.php"));
+		}
 	} finally {
 		fs.rmSync(tempRoot, { force: true, recursive: true });
 	}

@@ -16,6 +16,26 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
+
+/**
+ * Returns the generated Typia validator helper when server-side code needs it.
+ *
+ * Static blocks do not automatically validate on save, but this helper is
+ * available for future render callbacks, REST endpoints, or migration tooling.
+ *
+ * @return object|null
+ */
+function create_block_my_typia_block_get_typia_validator() {
+	$validator_path = __DIR__ . '/build/my-typia-block/typia-validator.php';
+
+	if ( ! file_exists( $validator_path ) ) {
+		return null;
+	}
+
+	$validator = require $validator_path;
+
+	return is_object( $validator ) ? $validator : null;
+}
 /**
  * Registers the block using a `blocks-manifest.php` file, which improves the performance of block type registration.
  * Behind the scenes, it also registers all assets so they can be enqueued

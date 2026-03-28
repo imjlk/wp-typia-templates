@@ -119,7 +119,7 @@ bun run build
 - **[Migration Guide](docs/migrations.md)** - Snapshot-based migration workflow for the advanced template
 - **[Interactivity Guide](docs/interactivity.md)** - When to choose the interactivity template and how it fits
 - **[API Guide](docs/API.md)** - Where the public CLI and generated runtime surfaces live
-- **Generated manifest** - `typia.manifest.json` preserves Typia-only constraints for future PHP validation
+- **Generated PHP validator** - `typia.manifest.json` preserves Typia constraints and `typia-validator.php` enforces the supported PHP subset
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
 
 ## 🧪 Testing

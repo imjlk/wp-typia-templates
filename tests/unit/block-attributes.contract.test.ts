@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
-import { execSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -59,6 +59,13 @@ function loadExampleContract() {
   ) as ContractManifest;
 
   return { blockJson, manifest };
+}
+
+function loadPhpValidatorPath() {
+  return path.join(
+    import.meta.dir,
+    '../../test-template/my-typia-block/src/my-typia-block/typia-validator.php',
+  );
 }
 
 function validatePayload(
@@ -143,6 +150,26 @@ function validatePayload(
   };
 }
 
+function hasPhpBinary() {
+  try {
+    execFileSync('php', ['-v'], { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function runPhpValidator<T extends Record<string, unknown> | unknown[]>(
+  method: 'apply_defaults' | 'validate',
+  payload: Record<string, unknown>,
+): T {
+  const validatorPath = loadPhpValidatorPath();
+  const encodedPayload = JSON.stringify(payload).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  const phpSource = `$validator = require '${validatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; $payload = json_decode('${encodedPayload}', true); echo json_encode($validator->${method}($payload), JSON_UNESCAPED_SLASHES);`;
+
+  return JSON.parse(execFileSync('php', ['-r', phpSource], { encoding: 'utf8' })) as T;
+}
+
 describe('Typia block attribute contract', () => {
   beforeAll(() => {
     const testTemplateDir = path.join(import.meta.dir, '../../test-template/my-typia-block');
@@ -156,6 +183,23 @@ describe('Typia block attribute contract', () => {
     expect(blockJson.attributes.content.default).toBe(manifest.attributes.content.typia.default);
     expect(blockJson.attributes.alignment.default).toBe(manifest.attributes.alignment.typia.default);
     expect(blockJson.attributes.isVisible.default).toBe(manifest.attributes.isVisible.typia.default);
+  });
+
+  test('generates a php validator that applies defaults and passes lint', () => {
+    if (!hasPhpBinary()) {
+      return;
+    }
+
+    const validatorPath = loadPhpValidatorPath();
+    execFileSync('php', ['-l', validatorPath], { stdio: 'ignore' });
+
+    const normalized = runPhpValidator<Record<string, unknown>>('apply_defaults', {
+      content: 'Hello Typia',
+    });
+
+    expect(normalized.version).toBe(1);
+    expect(normalized.alignment).toBe('left');
+    expect(normalized.isVisible).toBe(true);
   });
 
   test('accepts a valid payload that matches metadata projection and typia constraints', () => {
@@ -200,5 +244,24 @@ describe('Typia block attribute contract', () => {
     expect(result.errors).toContain('id must be a uuid');
     expect(result.errors).toContain('className must be at most 100 characters');
     expect(result.errors).toContain('content must be at most 1000 characters');
+  });
+
+  test('generated php validator rejects invalid enum, uuid, and uint32 payloads', () => {
+    if (!hasPhpBinary()) {
+      return;
+    }
+
+    const result = runPhpValidator<{ errors: string[]; valid: boolean }>('validate', {
+      id: 'not-a-uuid',
+      version: -1,
+      content: null,
+      alignment: 'invalid',
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('id must be a uuid');
+    expect(result.errors).toContain('version must be a uint32');
+    expect(result.errors).toContain('content must be string');
+    expect(result.errors).toContain('alignment must be one of left, center, right, justify');
   });
 });

@@ -6,6 +6,7 @@ import { formatRunScript } from "./package-managers.js";
 
 const ROOT_BLOCK_JSON = "block.json";
 const ROOT_MANIFEST = "typia.manifest.json";
+const ROOT_PHP_MIGRATION_REGISTRY = "typia-migration-registry.php";
 const ROOT_SAVE_FILE = path.join("src", "save.tsx");
 const ROOT_TYPES_FILE = path.join("src", "types.ts");
 const MIGRATIONS_DIR = path.join("src", "migrations");
@@ -396,6 +397,11 @@ function regenerateGeneratedArtifacts(projectDir) {
 	fs.writeFileSync(
 		path.join(state.paths.generatedDir, "verify.ts"),
 		renderVerifyFile(state, entries),
+		"utf8",
+	);
+	fs.writeFileSync(
+		path.join(projectDir, ROOT_PHP_MIGRATION_REGISTRY),
+		renderPhpMigrationRegistryFile(state, entries),
 		"utf8",
 	);
 }
@@ -796,6 +802,63 @@ export const deprecated: NonNullable<BlockConfiguration["deprecated"]> = [${arra
 `;
 }
 
+function renderPhpMigrationRegistryFile(state, entries) {
+	const snapshots = Object.fromEntries(
+		state.config.supportedVersions.map((version) => {
+			const snapshotRoot = path.join(state.projectDir, SNAPSHOT_DIR, version);
+			const manifestPath = path.join(snapshotRoot, ROOT_MANIFEST);
+			const blockJsonPath = path.join(snapshotRoot, ROOT_BLOCK_JSON);
+			const savePath = path.join(snapshotRoot, "save.tsx");
+
+			return [
+				version,
+				{
+					blockJson: fs.existsSync(blockJsonPath)
+						? {
+								attributeNames: Object.keys(readJson(blockJsonPath).attributes ?? {}),
+								name: readJson(blockJsonPath).name ?? null,
+							}
+						: null,
+					hasSaveSnapshot: fs.existsSync(savePath),
+					manifest: fs.existsSync(manifestPath)
+						? summarizeManifest(readJson(manifestPath))
+						: null,
+				},
+			];
+		}),
+	);
+
+	const edgeSummaries = entries.map((entry) => {
+		const ruleMetadata = readRuleMetadata(entry.rulePath);
+		return {
+			fromVersion: entry.fromVersion,
+			ruleFile: path.relative(state.projectDir, entry.rulePath).replace(/\\/g, "/"),
+			toVersion: entry.toVersion,
+			unresolved: ruleMetadata.unresolved,
+		};
+	});
+
+	return `<?php
+declare(strict_types=1);
+
+/**
+ * Generated from advanced migration snapshots. Do not edit manually.
+ */
+return ${renderPhpValue({
+		blockName: state.config.blockName,
+		currentVersion: state.config.currentVersion,
+		currentManifest: summarizeManifest(state.currentManifest),
+		edges: edgeSummaries,
+		legacyVersions: state.config.supportedVersions.filter(
+			(version) => version !== state.config.currentVersion,
+		),
+		snapshotDir: state.config.snapshotDir,
+		snapshots,
+		supportedVersions: state.config.supportedVersions,
+	}, 0)};
+`;
+}
+
 function renderVerifyFile(state, entries) {
 	const imports = [
 		`import { validators } from "../../validators";`,
@@ -853,6 +916,25 @@ function ensureFixtureFile(projectDir, version) {
 	fs.writeFileSync(fixturePath, `${JSON.stringify(attributes, null, "\t")}\n`, "utf8");
 }
 
+function summarizeManifest(manifest) {
+	return {
+		attributes: Object.fromEntries(
+			Object.entries(manifest.attributes ?? {}).map(([name, attribute]) => [
+				name,
+				{
+					constraints: attribute.typia?.constraints ?? {},
+					default: attribute.typia?.default ?? null,
+					enum: attribute.wp?.enum ?? null,
+					kind: attribute.ts?.kind ?? null,
+					required: attribute.ts?.required ?? false,
+				},
+			]),
+		),
+		manifestVersion: manifest.manifestVersion ?? null,
+		sourceType: manifest.sourceType ?? null,
+	};
+}
+
 function defaultValueForManifestAttribute(attribute) {
 	if (attribute.typia.default != null) {
 		return attribute.typia.default;
@@ -895,6 +977,52 @@ function getRuleFilePath(paths, fromVersion, toVersion) {
 
 function readJson(filePath) {
 	return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
+function readRuleMetadata(rulePath) {
+	const source = fs.readFileSync(rulePath, "utf8");
+	const unresolvedBlock = source.match(/export const unresolved = \[([\s\S]*?)\] as const;/);
+	if (!unresolvedBlock) {
+		return { unresolved: [] };
+	}
+
+	const unresolved = [...unresolvedBlock[1].matchAll(/"([^"]+)"/g)].map((match) => match[1]);
+	return { unresolved };
+}
+
+function renderPhpValue(value, indentLevel) {
+	const indent = "\t".repeat(indentLevel);
+	const nestedIndent = "\t".repeat(indentLevel + 1);
+
+	if (value === null) {
+		return "null";
+	}
+	if (typeof value === "string") {
+		return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`;
+	}
+	if (typeof value === "number" || typeof value === "boolean") {
+		return String(value);
+	}
+	if (Array.isArray(value)) {
+		if (value.length === 0) {
+			return "[]";
+		}
+		const items = value.map((item) => `${nestedIndent}${renderPhpValue(item, indentLevel + 1)}`);
+		return `[\n${items.join(",\n")}\n${indent}]`;
+	}
+	if (typeof value === "object") {
+		const entries = Object.entries(value);
+		if (entries.length === 0) {
+			return "[]";
+		}
+		const items = entries.map(
+			([key, item]) =>
+				`${nestedIndent}'${String(key).replace(/\\/g, "\\\\").replace(/'/g, "\\'")}' => ${renderPhpValue(item, indentLevel + 1)}`,
+		);
+		return `[\n${items.join(",\n")}\n${indent}]`;
+	}
+
+	throw new Error(`Unable to encode PHP migration registry value for ${String(value)}`);
 }
 
 function copyFile(sourcePath, targetPath) {

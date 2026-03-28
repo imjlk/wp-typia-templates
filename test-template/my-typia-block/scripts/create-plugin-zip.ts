@@ -139,7 +139,7 @@ async function createPluginZip() {
 		// 포함된 주요 파일들 나열
 		console.log('\n📋 포함된 주요 파일들:');
 		console.log('  • PHP 플러그인 파일');
-		console.log('  • build/ (빌드된 JavaScript, CSS, block.json)');
+		console.log('  • build/ (빌드된 JavaScript, CSS, block.json, typia.manifest.json, typia-validator.php)');
 		console.log('  • blocks-manifest.php');
 		console.log('  • README.md');
 

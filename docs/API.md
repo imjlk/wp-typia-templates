@@ -37,7 +37,7 @@ Each scaffolded project exposes a few predictable files:
 - `src/types.ts`: source of truth for the current attribute contract
 - `src/validators.ts`: Typia runtime helpers such as `validate`, `assert`, `is`, `random`, `clone`, and `prune`
 - `block.json`: WordPress-facing metadata projection
-- `typia.manifest.json`: richer schema details preserved for future server-side validation and migration tooling
+- `typia.manifest.json`: richer schema details preserved for generated PHP validation and migration tooling
 
 The `advanced` template adds:
 

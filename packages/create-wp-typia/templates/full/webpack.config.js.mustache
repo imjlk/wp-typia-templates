@@ -2,16 +2,18 @@ const fs = require("fs");
 const path = require("path");
 const defaultConfig = require("@wordpress/scripts/config/webpack.config");
 
-class TypiaManifestAssetPlugin {
+const TYPIA_ARTIFACT_FILENAMES = new Set(["typia.manifest.json", "typia-validator.php"]);
+
+class TypiaArtifactAssetPlugin {
 	apply(compiler) {
-		compiler.hooks.thisCompilation.tap("TypiaManifestAssetPlugin", (compilation) => {
+		compiler.hooks.thisCompilation.tap("TypiaArtifactAssetPlugin", (compilation) => {
 			compilation.hooks.processAssets.tap(
 				{
-					name: "TypiaManifestAssetPlugin",
+					name: "TypiaArtifactAssetPlugin",
 					stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
 				},
 				() => {
-					for (const entry of getManifestEntries()) {
+					for (const entry of getArtifactEntries()) {
 						if (compilation.getAsset(entry.outputPath)) {
 							continue;
 						}
@@ -27,15 +29,17 @@ class TypiaManifestAssetPlugin {
 	}
 }
 
-function getManifestEntries() {
+function getArtifactEntries() {
 	const entries = [];
-	const rootManifestPath = path.resolve(process.cwd(), "typia.manifest.json");
 
-	if (fs.existsSync(rootManifestPath)) {
-		entries.push({
-			inputPath: rootManifestPath,
-			outputPath: "typia.manifest.json",
-		});
+	for (const filename of TYPIA_ARTIFACT_FILENAMES) {
+		const rootArtifactPath = path.resolve(process.cwd(), filename);
+		if (fs.existsSync(rootArtifactPath)) {
+			entries.push({
+				inputPath: rootArtifactPath,
+				outputPath: filename,
+			});
+		}
 	}
 
 	const srcDir = path.resolve(process.cwd(), "src");
@@ -43,7 +47,7 @@ function getManifestEntries() {
 		return entries;
 	}
 
-	for (const inputPath of findManifestFiles(srcDir)) {
+	for (const inputPath of findArtifactFiles(srcDir)) {
 		entries.push({
 			inputPath,
 			outputPath: path.relative(srcDir, inputPath),
@@ -53,22 +57,22 @@ function getManifestEntries() {
 	return entries;
 }
 
-function findManifestFiles(directory) {
-	const manifestFiles = [];
+function findArtifactFiles(directory) {
+	const artifactFiles = [];
 
 	for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
 		const entryPath = path.join(directory, entry.name);
 
 		if (entry.isDirectory()) {
-			manifestFiles.push(...findManifestFiles(entryPath));
+			artifactFiles.push(...findArtifactFiles(entryPath));
 			continue;
 		}
-		if (entry.isFile() && entry.name === "typia.manifest.json") {
-			manifestFiles.push(entryPath);
+		if (entry.isFile() && TYPIA_ARTIFACT_FILENAMES.has(entry.name)) {
+			artifactFiles.push(entryPath);
 		}
 	}
 
-	return manifestFiles;
+	return artifactFiles;
 }
 
 module.exports = async () => {
@@ -79,7 +83,7 @@ module.exports = async () => {
 		plugins: [
 			UnpluginTypia(),
 			...(defaultConfig.plugins || []),
-			new TypiaManifestAssetPlugin(),
+			new TypiaArtifactAssetPlugin(),
 		],
 	};
 };

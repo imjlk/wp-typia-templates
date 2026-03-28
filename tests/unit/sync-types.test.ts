@@ -7,7 +7,9 @@ describe('Type Sync Tests', () => {
   const testTemplateDir = path.join(import.meta.dir, '../../test-template/my-typia-block');
   const blockJsonPath = path.join(testTemplateDir, 'src/my-typia-block/block.json');
   const manifestPath = path.join(testTemplateDir, 'src/my-typia-block/typia.manifest.json');
+  const phpValidatorPath = path.join(testTemplateDir, 'src/my-typia-block/typia-validator.php');
   const buildManifestPath = path.join(testTemplateDir, 'build/my-typia-block/typia.manifest.json');
+  const buildPhpValidatorPath = path.join(testTemplateDir, 'build/my-typia-block/typia-validator.php');
 
   beforeAll(() => {
     execSync('bun run sync-types', { cwd: testTemplateDir });
@@ -16,6 +18,7 @@ describe('Type Sync Tests', () => {
   test('should sync types to block.json and generate typia.manifest.json', () => {
     expect(fs.existsSync(blockJsonPath)).toBe(true);
     expect(fs.existsSync(manifestPath)).toBe(true);
+    expect(fs.existsSync(phpValidatorPath)).toBe(true);
 
     const blockJson = JSON.parse(fs.readFileSync(blockJsonPath, 'utf8'));
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
@@ -63,10 +66,14 @@ describe('Type Sync Tests', () => {
     execSync('bun run build', { cwd: testTemplateDir });
 
     expect(fs.existsSync(buildManifestPath)).toBe(true);
+    expect(fs.existsSync(buildPhpValidatorPath)).toBe(true);
 
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     const builtManifest = JSON.parse(fs.readFileSync(buildManifestPath, 'utf8'));
+    const phpValidatorSource = fs.readFileSync(phpValidatorPath, 'utf8');
+    const builtPhpValidatorSource = fs.readFileSync(buildPhpValidatorPath, 'utf8');
 
     expect(builtManifest).toEqual(manifest);
+    expect(builtPhpValidatorSource).toEqual(phpValidatorSource);
   }, { timeout: 30_000 });
 });

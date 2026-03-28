@@ -60,6 +60,7 @@ interface ManifestDocument {
 export interface SyncBlockMetadataOptions {
 	blockJsonFile: string;
 	manifestFile?: string;
+	phpValidatorFile?: string;
 	projectRoot?: string;
 	sourceTypeName: string;
 	typesFile: string;
@@ -70,6 +71,8 @@ export interface SyncBlockMetadataResult {
 	blockJsonPath: string;
 	lossyProjectionWarnings: string[];
 	manifestPath: string;
+	phpGenerationWarnings: string[];
+	phpValidatorPath: string;
 }
 
 interface AnalysisContext {
@@ -106,9 +109,15 @@ export async function syncBlockMetadata(
 	const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
 	const typesFilePath = path.resolve(projectRoot, options.typesFile);
 	const blockJsonPath = path.resolve(projectRoot, options.blockJsonFile);
+	const manifestRelativePath =
+		options.manifestFile ?? path.join(path.dirname(options.blockJsonFile), "typia.manifest.json");
 	const manifestPath = path.resolve(
 		projectRoot,
-		options.manifestFile ?? path.join(path.dirname(options.blockJsonFile), "typia.manifest.json"),
+		manifestRelativePath,
+	);
+	const phpValidatorPath = path.resolve(
+		projectRoot,
+		options.phpValidatorFile ?? path.join(path.dirname(manifestRelativePath), "typia-validator.php"),
 	);
 
 	const ctx = createAnalysisContext(projectRoot, typesFilePath);
@@ -156,11 +165,17 @@ export async function syncBlockMetadata(
 	fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
 	fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, "\t"));
 
+	const phpValidator = renderPhpValidator(manifest);
+	fs.mkdirSync(path.dirname(phpValidatorPath), { recursive: true });
+	fs.writeFileSync(phpValidatorPath, phpValidator.source);
+
 	return {
 		attributeNames: Object.keys(rootNode.properties),
 		blockJsonPath,
 		lossyProjectionWarnings: [...new Set(lossyProjectionWarnings)].sort(),
 		manifestPath,
+		phpGenerationWarnings: [...new Set(phpValidator.warnings)].sort(),
+		phpValidatorPath,
 	};
 }
 
@@ -690,6 +705,324 @@ function createManifestAttribute(node: AttributeNode): ManifestAttribute {
 			type: node.kind,
 		},
 	};
+}
+
+function renderPhpValidator(manifest: ManifestDocument): { source: string; warnings: string[] } {
+	const warnings: string[] = [];
+
+	for (const [key, attribute] of Object.entries(manifest.attributes)) {
+		collectPhpGenerationWarnings(attribute, key, warnings);
+	}
+
+	const phpManifest = renderPhpValue(manifest, 2);
+
+	return {
+		source: `<?php
+declare(strict_types=1);
+
+/**
+ * Generated from typia.manifest.json. Do not edit manually.
+ */
+return new class {
+\tprivate array $manifest = ${phpManifest};
+
+\tpublic function apply_defaults(array $attributes): array
+\t{
+\t\treturn $this->applyDefaultsForObject($attributes, $this->manifest['attributes'] ?? []);
+\t}
+
+\tpublic function validate(array $attributes): array
+\t{
+\t\t$normalized = $this->apply_defaults($attributes);
+\t\t$errors = [];
+
+\t\tforeach (($this->manifest['attributes'] ?? []) as $name => $attribute) {
+\t\t\t$this->validateAttribute(
+\t\t\t\tarray_key_exists($name, $normalized),
+\t\t\t\t$normalized[$name] ?? null,
+\t\t\t\t$attribute,
+\t\t\t\t(string) $name,
+\t\t\t\t$errors,
+\t\t\t);
+\t\t}
+
+\t\treturn [
+\t\t\t'errors' => $errors,
+\t\t\t'valid' => count($errors) === 0,
+\t\t];
+\t}
+
+\tpublic function is_valid(array $attributes): bool
+\t{
+\t\treturn $this->validate($attributes)['valid'];
+\t}
+
+\tprivate function applyDefaultsForObject(array $attributes, array $schema): array
+\t{
+\t\t$result = $attributes;
+
+\t\tforeach ($schema as $name => $attribute) {
+\t\t\tif (!array_key_exists($name, $result)) {
+\t\t\t\tif ($this->hasDefault($attribute)) {
+\t\t\t\t\t$result[$name] = $attribute['typia']['default'];
+\t\t\t\t}
+\t\t\t\tcontinue;
+\t\t\t}
+
+\t\t\t$result[$name] = $this->applyDefaultsForNode($result[$name], $attribute);
+\t\t}
+
+\t\treturn $result;
+\t}
+
+\tprivate function applyDefaultsForNode($value, array $attribute)
+\t{
+\t\tif ($value === null) {
+\t\t\treturn null;
+\t\t}
+
+\t\t$kind = $attribute['ts']['kind'] ?? $attribute['wp']['type'] ?? null;
+\t\tif ($kind === 'object' && is_array($value) && !$this->isListArray($value)) {
+\t\t\treturn $this->applyDefaultsForObject($value, $attribute['ts']['properties'] ?? []);
+\t\t}
+\t\tif (
+\t\t\t$kind === 'array' &&
+\t\t\tis_array($value) &&
+\t\t\t$this->isListArray($value) &&
+\t\t\tisset($attribute['ts']['items']) &&
+\t\t\tis_array($attribute['ts']['items'])
+\t\t) {
+\t\t\t$result = [];
+\t\t\tforeach ($value as $index => $item) {
+\t\t\t\t$result[$index] = $this->applyDefaultsForNode($item, $attribute['ts']['items']);
+\t\t\t}
+\t\t\treturn $result;
+\t\t}
+
+\t\treturn $value;
+\t}
+
+\tprivate function validateAttribute(bool $exists, $value, array $attribute, string $path, array &$errors): void
+\t{
+\t\tif (!$exists) {
+\t\t\tif (($attribute['ts']['required'] ?? false) && !$this->hasDefault($attribute)) {
+\t\t\t\t$errors[] = sprintf('%s is required', $path);
+\t\t\t}
+\t\t\treturn;
+\t\t}
+
+\t\t$kind = $attribute['ts']['kind'] ?? $attribute['wp']['type'] ?? null;
+\t\tif (!is_string($kind) || $kind === '') {
+\t\t\t$errors[] = sprintf('%s has an invalid schema kind', $path);
+\t\t\treturn;
+\t\t}
+\t\tif ($value === null) {
+\t\t\t$errors[] = sprintf('%s must be %s', $path, $kind);
+\t\t\treturn;
+\t\t}
+
+\t\tif (($attribute['wp']['enum'] ?? null) !== null && !$this->valueInEnum($value, $attribute['wp']['enum'])) {
+\t\t\t$errors[] = sprintf('%s must be one of %s', $path, implode(', ', $attribute['wp']['enum']));
+\t\t}
+
+\t\tswitch ($kind) {
+\t\t\tcase 'string':
+\t\t\t\tif (!is_string($value)) {
+\t\t\t\t\t$errors[] = sprintf('%s must be string', $path);
+\t\t\t\t\treturn;
+\t\t\t\t}
+\t\t\t\t$this->validateString($value, $attribute, $path, $errors);
+\t\t\t\treturn;
+\t\t\tcase 'number':
+\t\t\t\tif (!$this->isNumber($value)) {
+\t\t\t\t\t$errors[] = sprintf('%s must be number', $path);
+\t\t\t\t\treturn;
+\t\t\t\t}
+\t\t\t\t$this->validateNumber($value, $attribute, $path, $errors);
+\t\t\t\treturn;
+\t\t\tcase 'boolean':
+\t\t\t\tif (!is_bool($value)) {
+\t\t\t\t\t$errors[] = sprintf('%s must be boolean', $path);
+\t\t\t\t}
+\t\t\t\treturn;
+\t\t\tcase 'array':
+\t\t\t\tif (!is_array($value) || !$this->isListArray($value)) {
+\t\t\t\t\t$errors[] = sprintf('%s must be array', $path);
+\t\t\t\t\treturn;
+\t\t\t\t}
+\t\t\t\tif (isset($attribute['ts']['items']) && is_array($attribute['ts']['items'])) {
+\t\t\t\t\tforeach ($value as $index => $item) {
+\t\t\t\t\t\t$this->validateAttribute(true, $item, $attribute['ts']['items'], sprintf('%s[%s]', $path, (string) $index), $errors);
+\t\t\t\t\t}
+\t\t\t\t}
+\t\t\t\treturn;
+\t\t\tcase 'object':
+\t\t\t\tif (!is_array($value) || $this->isListArray($value)) {
+\t\t\t\t\t$errors[] = sprintf('%s must be object', $path);
+\t\t\t\t\treturn;
+\t\t\t\t}
+\t\t\t\tforeach (($attribute['ts']['properties'] ?? []) as $name => $child) {
+\t\t\t\t\t$this->validateAttribute(
+\t\t\t\t\t\tarray_key_exists($name, $value),
+\t\t\t\t\t\t$value[$name] ?? null,
+\t\t\t\t\t\t$child,
+\t\t\t\t\t\tsprintf('%s.%s', $path, (string) $name),
+\t\t\t\t\t\t$errors,
+\t\t\t\t\t);
+\t\t\t\t}
+\t\t\t\treturn;
+\t\t\tdefault:
+\t\t\t\t$errors[] = sprintf('%s has unsupported schema kind %s', $path, $kind);
+\t\t}
+\t}
+
+\tprivate function validateString(string $value, array $attribute, string $path, array &$errors): void
+\t{
+\t\t$constraints = $attribute['typia']['constraints'] ?? [];
+
+\t\tif (isset($constraints['minLength']) && is_int($constraints['minLength']) && strlen($value) < $constraints['minLength']) {
+\t\t\t$errors[] = sprintf('%s must be at least %d characters', $path, $constraints['minLength']);
+\t\t}
+\t\tif (isset($constraints['maxLength']) && is_int($constraints['maxLength']) && strlen($value) > $constraints['maxLength']) {
+\t\t\t$errors[] = sprintf('%s must be at most %d characters', $path, $constraints['maxLength']);
+\t\t}
+\t\tif (
+\t\t\tisset($constraints['pattern']) &&
+\t\t\tis_string($constraints['pattern']) &&
+\t\t\t$constraints['pattern'] !== '' &&
+\t\t\t!$this->matchesPattern($constraints['pattern'], $value)
+\t\t) {
+\t\t\t$errors[] = sprintf('%s does not match %s', $path, $constraints['pattern']);
+\t\t}
+\t\tif (
+\t\t\tisset($constraints['format']) &&
+\t\t\t$constraints['format'] === 'uuid' &&
+\t\t\t!$this->matchesUuid($value)
+\t\t) {
+\t\t\t$errors[] = sprintf('%s must be a uuid', $path);
+\t\t}
+\t}
+
+\tprivate function validateNumber($value, array $attribute, string $path, array &$errors): void
+\t{
+\t\t$constraints = $attribute['typia']['constraints'] ?? [];
+
+\t\tif (isset($constraints['minimum']) && $this->isNumber($constraints['minimum']) && $value < $constraints['minimum']) {
+\t\t\t$errors[] = sprintf('%s must be >= %s', $path, (string) $constraints['minimum']);
+\t\t}
+\t\tif (isset($constraints['maximum']) && $this->isNumber($constraints['maximum']) && $value > $constraints['maximum']) {
+\t\t\t$errors[] = sprintf('%s must be <= %s', $path, (string) $constraints['maximum']);
+\t\t}
+\t\tif (($constraints['typeTag'] ?? null) === 'uint32') {
+\t\t\tif (!is_int($value) || $value < 0 || $value > 4294967295) {
+\t\t\t\t$errors[] = sprintf('%s must be a uint32', $path);
+\t\t\t}
+\t\t}
+\t}
+
+\tprivate function hasDefault(array $attribute): bool
+\t{
+\t\treturn array_key_exists('default', $attribute['typia'] ?? []) && $attribute['typia']['default'] !== null;
+\t}
+
+\tprivate function valueInEnum($value, array $enum): bool
+\t{
+\t\tforeach ($enum as $candidate) {
+\t\t\tif ($candidate === $value) {
+\t\t\t\treturn true;
+\t\t\t}
+\t\t}
+\t\treturn false;
+\t}
+
+\tprivate function matchesPattern(string $pattern, string $value): bool
+\t{
+\t\t$escapedPattern = str_replace('~', '\\\\~', $pattern);
+\t\t$result = @preg_match('~' . $escapedPattern . '~u', $value);
+\t\treturn $result === 1;
+\t}
+
+\tprivate function matchesUuid(string $value): bool
+\t{
+\t\treturn preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $value) === 1;
+\t}
+
+\tprivate function isNumber($value): bool
+\t{
+\t\treturn is_int($value) || is_float($value);
+\t}
+
+\tprivate function isListArray(array $value): bool
+\t{
+\t\t$expectedKey = 0;
+\t\tforeach ($value as $key => $_item) {
+\t\t\tif ($key !== $expectedKey) {
+\t\t\t\treturn false;
+\t\t\t}
+\t\t\t$expectedKey += 1;
+\t\t}
+\t\treturn true;
+\t}
+};
+`,
+		warnings,
+	};
+}
+
+function collectPhpGenerationWarnings(
+	attribute: ManifestAttribute,
+	pathLabel: string,
+	warnings: string[],
+): void {
+	const { format, typeTag } = attribute.typia.constraints;
+	if (format !== null && format !== "uuid") {
+		warnings.push(`${pathLabel}: unsupported PHP validator format "${format}"`);
+	}
+	if (typeTag !== null && typeTag !== "uint32") {
+		warnings.push(`${pathLabel}: unsupported PHP validator type tag "${typeTag}"`);
+	}
+
+	if (attribute.ts.items) {
+		collectPhpGenerationWarnings(attribute.ts.items, `${pathLabel}[]`, warnings);
+	}
+	for (const [key, property] of Object.entries(attribute.ts.properties ?? {})) {
+		collectPhpGenerationWarnings(property, `${pathLabel}.${key}`, warnings);
+	}
+}
+
+function renderPhpValue(value: unknown, indentLevel: number): string {
+	const indent = "\t".repeat(indentLevel);
+	const nestedIndent = "\t".repeat(indentLevel + 1);
+
+	if (value === null) {
+		return "null";
+	}
+	if (typeof value === "string") {
+		return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`;
+	}
+	if (typeof value === "number" || typeof value === "boolean") {
+		return String(value);
+	}
+	if (Array.isArray(value)) {
+		if (value.length === 0) {
+			return "[]";
+		}
+		const items = value.map((item) => `${nestedIndent}${renderPhpValue(item, indentLevel + 1)}`);
+		return `[\n${items.join(",\n")}\n${indent}]`;
+	}
+	if (typeof value === "object") {
+		const entries = Object.entries(value as Record<string, unknown>);
+		if (entries.length === 0) {
+			return "[]";
+		}
+		const items = entries.map(
+			([key, item]) =>
+				`${nestedIndent}'${key.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}' => ${renderPhpValue(item, indentLevel + 1)}`,
+		);
+		return `[\n${items.join(",\n")}\n${indent}]`;
+	}
+
+	throw new Error(`Unable to encode PHP value for manifest node: ${String(value)}`);
 }
 
 function createExampleValue(node: AttributeNode, key: string): JsonValue {

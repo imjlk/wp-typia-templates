@@ -2,7 +2,12 @@ const fs = require("fs");
 const path = require("path");
 const defaultConfig = require("@wordpress/scripts/config/webpack.config");
 
-const METADATA_FILENAMES = new Set(["block.json", "typia.manifest.json"]);
+const METADATA_FILENAMES = new Set([
+	"block.json",
+	"typia.manifest.json",
+	"typia-validator.php",
+	"typia-migration-registry.php",
+]);
 
 class MetadataAssetPlugin {
 	apply(compiler) {

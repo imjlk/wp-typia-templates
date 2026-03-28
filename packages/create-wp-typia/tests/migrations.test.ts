@@ -188,6 +188,7 @@ describe("create-wp-typia migrations", () => {
 
 		expect(fs.existsSync(path.join(projectDir, "src", "migrations", "config.ts"))).toBe(true);
 		expect(fs.existsSync(path.join(projectDir, "src", "migrations", "generated", "registry.ts"))).toBe(true);
+		expect(fs.existsSync(path.join(projectDir, "typia-migration-registry.php"))).toBe(true);
 
 		const snapshotBlock = JSON.parse(
 			fs.readFileSync(
@@ -221,16 +222,22 @@ describe("create-wp-typia migrations", () => {
 		const rulePath = path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts");
 		const deprecatedPath = path.join(projectDir, "src", "migrations", "generated", "deprecated.ts");
 		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "1.0.0.json");
+		const phpRegistryPath = path.join(projectDir, "typia-migration-registry.php");
 
 		expect(fs.existsSync(rulePath)).toBe(true);
 		expect(fs.existsSync(deprecatedPath)).toBe(true);
 		expect(fs.existsSync(fixturePath)).toBe(true);
+		expect(fs.existsSync(phpRegistryPath)).toBe(true);
 
 		const ruleSource = fs.readFileSync(rulePath, "utf8");
 		const deprecatedSource = fs.readFileSync(deprecatedPath, "utf8");
+		const phpRegistrySource = fs.readFileSync(phpRegistryPath, "utf8");
 		expect(ruleSource).not.toContain("TODO MIGRATION:");
 		expect(ruleSource).toContain("isVisible");
 		expect(deprecatedSource).toContain("deprecated_0");
+		expect(phpRegistrySource).toContain("'currentVersion' => '2.0.0'");
+		expect(phpRegistrySource).toContain("'legacyVersions' =>");
+		expect(phpRegistrySource).toContain("'1.0.0'");
 
 		const verifyOutput = runCli("node", [entryPath, "migrations", "verify", "--all"], {
 			cwd: projectDir,

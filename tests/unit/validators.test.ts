@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
+import { execFileSync } from "node:child_process";
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { syncBlockMetadata } from '../../scripts/lib/typia-metadata-core';
@@ -15,6 +16,15 @@ function createFixture(files: Record<string, string>) {
   }
 
   return fixtureDir;
+}
+
+function hasPhpBinary() {
+  try {
+    execFileSync('php', ['-v'], { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 describe('Typia metadata generator', () => {
@@ -85,5 +95,68 @@ export interface BlockAttributes {
     expect(manifest.attributes.items.ts.items.ts.properties.label.typia.constraints.minLength).toBe(1);
     expect(result.lossyProjectionWarnings).toContain('BlockAttributes.items: items');
     expect(result.lossyProjectionWarnings).toContain('BlockAttributes.seo: properties');
+  });
+
+  test('generated php validator distinguishes arrays from objects for nested safe-subset attributes', async () => {
+    if (!hasPhpBinary()) {
+      return;
+    }
+
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify({ attributes: {}, example: { attributes: {} }, name: 'create-block/php-validator' }, null, 2),
+      'src/types.ts': `export interface BlockAttributes {
+  seo: {
+    slug: string;
+  };
+  items: Array<{
+    label: string;
+  }>;
+}
+`,
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: {
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          resolveJsonModule: true,
+          strict: true,
+          target: 'ES2022',
+        },
+        include: ['src/**/*.ts'],
+      }, null, 2),
+    });
+
+    await syncBlockMetadata({
+      blockJsonFile: 'block.json',
+      manifestFile: 'typia.manifest.json',
+      projectRoot: fixtureDir,
+      sourceTypeName: 'BlockAttributes',
+      typesFile: 'src/types.ts',
+    });
+
+    const phpValidatorPath = path.join(fixtureDir, 'typia-validator.php');
+    execFileSync('php', ['-l', phpValidatorPath], { stdio: 'ignore' });
+
+    const invalidArrayPayload = JSON.stringify({
+      items: { label: 'wrong-shape' },
+      seo: { slug: 'valid' },
+    }).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    const invalidObjectPayload = JSON.stringify({
+      items: [{ label: 'valid' }],
+      seo: [{ slug: 'wrong-shape' }],
+    }).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+    const arrayResult = JSON.parse(execFileSync('php', [
+      '-r',
+      `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; $payload = json_decode('${invalidArrayPayload}', true); echo json_encode($validator->validate($payload), JSON_UNESCAPED_SLASHES);`,
+    ], { encoding: 'utf8' }));
+    const objectResult = JSON.parse(execFileSync('php', [
+      '-r',
+      `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; $payload = json_decode('${invalidObjectPayload}', true); echo json_encode($validator->validate($payload), JSON_UNESCAPED_SLASHES);`,
+    ], { encoding: 'utf8' }));
+
+    expect(arrayResult.valid).toBe(false);
+    expect(arrayResult.errors).toContain('items must be array');
+    expect(objectResult.valid).toBe(false);
+    expect(objectResult.errors).toContain('seo must be object');
   });
 });
