@@ -61,8 +61,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: release/sampo
           base: main
-          title: release: version packages
-          commit-message: release: version packages
+          title: "release: version packages"
+          commit-message: "release: version packages"
           body: |
             Automated release PR generated from the latest `main` changes.
 
