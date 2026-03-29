@@ -91,7 +91,9 @@ export interface SyncBlockMetadataResult {
 }
 
 interface AnalysisContext {
+	allowedExternalPackages: Set<string>;
 	checker: ts.TypeChecker;
+	packageNameCache: Map<string, string | null>;
 	projectRoot: string;
 	program: ts.Program;
 	recursionGuard: Set<string>;
@@ -247,7 +249,9 @@ function createAnalysisContext(projectRoot: string, typesFilePath: string): Anal
 	}
 
 	return {
+		allowedExternalPackages: new Set(["@wp-typia/block-types"]),
 		checker: program.getTypeChecker(),
+		packageNameCache: new Map(),
 		projectRoot,
 		program,
 		recursionGuard: new Set<string>(),
@@ -618,7 +622,7 @@ function parseTypeReference(
 	if (declaration === undefined) {
 		throw new Error(`Unsupported referenced type "${typeName}" at ${pathLabel}`);
 	}
-	if (!isProjectLocalDeclaration(declaration, ctx.projectRoot)) {
+	if (!isSerializableExternalDeclaration(declaration, ctx)) {
 		throw new Error(
 			`External or non-serializable referenced type "${typeName}" is not supported at ${pathLabel}`,
 		);
@@ -1355,6 +1359,51 @@ function getReferenceName(node: ts.TypeReferenceNode | ts.ExpressionWithTypeArgu
 function isProjectLocalDeclaration(declaration: ts.Declaration, projectRoot: string): boolean {
 	const fileName = declaration.getSourceFile().fileName;
 	return !fileName.includes("node_modules") && !path.relative(projectRoot, fileName).startsWith("..");
+}
+
+function isSerializableExternalDeclaration(declaration: ts.Declaration, ctx: AnalysisContext): boolean {
+	if (isProjectLocalDeclaration(declaration, ctx.projectRoot)) {
+		return true;
+	}
+
+	const packageName = getOwningPackageName(declaration.getSourceFile().fileName, ctx.packageNameCache);
+	return packageName !== null && ctx.allowedExternalPackages.has(packageName);
+}
+
+function getOwningPackageName(
+	fileName: string,
+	cache: Map<string, string | null>,
+): string | null {
+	let currentDir = path.dirname(fileName);
+
+	while (true) {
+		if (cache.has(currentDir)) {
+			return cache.get(currentDir) ?? null;
+		}
+
+		const packageJsonPath = path.join(currentDir, "package.json");
+		if (fs.existsSync(packageJsonPath)) {
+			try {
+				const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+					name?: string;
+				};
+				const packageName = typeof packageJson.name === "string" ? packageJson.name : null;
+				cache.set(currentDir, packageName);
+				return packageName;
+			} catch {
+				cache.set(currentDir, null);
+				return null;
+			}
+		}
+
+		const parentDir = path.dirname(currentDir);
+		if (parentDir === currentDir) {
+			cache.set(currentDir, null);
+			return null;
+		}
+
+		currentDir = parentDir;
+	}
 }
 
 function formatDiagnosticError(diagnostic: ts.Diagnostic): Error {

@@ -1,4 +1,4 @@
-# 🚀 wp-typia-templates
+# 🚀 wp-typia
 
 Create robust WordPress blocks with TypeScript runtime validation using Typia. This Bun-first template monorepo provides shared scaffolding, generated `block.json` / `typia.manifest.json` / `typia-validator.php`, testing, and migration support.
 
@@ -14,13 +14,15 @@ Create robust WordPress blocks with TypeScript runtime validation using Typia. T
 
 ## 🚀 Quick Start
 
-### Option 1: Use `create-wp-typia` (Recommended)
+### Option 1: Use `@wp-typia/create` (Recommended)
 
 ```bash
 bun create wp-typia my-block
 # or
-bunx create-wp-typia my-block
+bunx @wp-typia/create my-block
 # or
+npx @wp-typia/create my-block
+# compatibility
 npx create-wp-typia my-block
 ```
 
@@ -35,10 +37,10 @@ Follow the prompts to choose `basic`, `full`, `interactivity`, or `advanced`. Th
 For non-interactive usage:
 
 ```bash
-npx create-wp-typia my-block --template basic --package-manager pnpm --yes --no-install
+npx @wp-typia/create my-block --template basic --package-manager pnpm --yes --no-install
 ```
 
-`create-wp-typia` is now the only supported scaffolding entrypoint in this repository. Previously published `wp-typia-*` packages remain on npm for historical installs, but they are no longer maintained or published from this repo.
+`@wp-typia/create` is the canonical scaffolding package in this repository, and `@wp-typia/block-types` is the shared semantic type package used inside `types.ts`. `create-wp-typia` remains as a compatibility shim for `bun create wp-typia` and historical unscoped installs.
 
 ## 📦 Templates Overview
 
@@ -55,11 +57,12 @@ npx create-wp-typia my-block --template basic --package-manager pnpm --yes --no-
 
 ```typescript
 // src/types.ts
+import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";
 import { tags } from "typia";
 
 export interface MyBlockAttributes {
   content: string & tags.MinLength<1> & tags.MaxLength<1000> & tags.Default<"">;
-  alignment?: ('left' | 'center' | 'right') & tags.Default<"left">;
+  alignment?: TextAlignment & tags.Default<"left">;
   isVisible?: boolean & tags.Default<true>;
 }
 ```
@@ -159,18 +162,20 @@ Features:
 - 🧭 Nested leaf authoring for object and supported union-branch paths
 - 📝 Detailed migration reports
 
-## 📦 Published npm Package
+## 📦 Published npm Packages
 
-- [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia)
-
-Legacy `wp-typia-*` packages are no longer published from this repository.
+- [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create)
+- [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types)
+- [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia) - compatibility shim for `bun create wp-typia`
 
 ## 🏗 Project Structure
 
 ```
-wp-typia-templates/
+wp-typia/
 ├── packages/
-│   └── create-wp-typia/         # Published CLI and canonical templates
+│   ├── create-wp-typia/         # Canonical scoped CLI source (@wp-typia/create)
+│   ├── create-wp-typia/         # Unscoped compatibility shim
+│   └── wp-typia-block-types/    # Shared semantic block types
 ├── test-template/
 │   └── my-typia-block/          # Complete example
 ├── tests/                       # Test files
@@ -248,9 +253,9 @@ GPL-2.0-or-later. See [LICENSE](LICENSE) for details.
 
 ## 📞 Support
 
-- 📖 [Documentation](https://github.com/imjlk/wp-typia-templates/wiki)
-- 🐛 [Issue Tracker](https://github.com/imjlk/wp-typia-templates/issues)
-- 💬 [Discussions](https://github.com/imjlk/wp-typia-templates/discussions)
+- 📖 [Documentation](https://github.com/imjlk/wp-typia/wiki)
+- 🐛 [Issue Tracker](https://github.com/imjlk/wp-typia/issues)
+- 💬 [Discussions](https://github.com/imjlk/wp-typia/discussions)
 
 ---
 

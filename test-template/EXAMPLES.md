@@ -1,6 +1,6 @@
 # 📚 WordPress Typia Block Examples
 
-This directory contains practical examples demonstrating how to use the wp-typia-templates scaffolding flow effectively.
+This directory contains practical examples demonstrating how to use the wp-typia scaffolding flow effectively.
 
 ## 🎯 Available Examples
 

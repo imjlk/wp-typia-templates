@@ -22,6 +22,7 @@
 		"create-zip": "tsx scripts/create-plugin-zip.ts"
 	},
 	"devDependencies": {
+		"@wp-typia/block-types": "workspace:*",
 		"ajv": "^8.18.0",
 		"@types/wordpress__block-editor": "^11.5.17",
 		"@types/wordpress__blocks": "^12.5.18",

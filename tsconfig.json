@@ -23,7 +23,13 @@
       "@components/*": ["src/components/*"],
       "@utils/*": ["src/utils/*"],
       "@hooks/*": ["src/hooks/*"],
-      "@types/*": ["src/types/*"]
+      "@types/*": ["src/types/*"],
+      "@wp-typia/block-types": [
+        "packages/wp-typia-block-types/src/index.ts"
+      ],
+      "@wp-typia/block-types/*": [
+        "packages/wp-typia-block-types/src/*"
+      ]
     },
     "plugins": [
       { "transform": "typia/lib/transform" }

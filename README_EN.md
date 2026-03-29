@@ -1,9 +1,9 @@
-# wp-typia-templates
+# wp-typia
 
-[![CI/CD](https://github.com/imjlk/wp-typia-templates/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/imjlk/wp-typia-templates/actions)
+[![CI/CD](https://github.com/imjlk/wp-typia/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/imjlk/wp-typia/actions)
 [![License: GPL-2.0+](https://img.shields.io/badge/License-GPL--2.0+-blue.svg)](https://opensource.org/licenses/GPL-2.0+)
-[![npm version](https://badge.fury.io/js/create-wp-typia.svg)](https://www.npmjs.com/package/create-wp-typia)
-[![codecov](https://codecov.io/gh/imjlk/wp-typia-templates/branch/main/graph/badge.svg)](https://codecov.io/gh/imjlk/wp-typia-templates)
+[![npm version](https://badge.fury.io/js/%40wp-typia%2Fcreate.svg)](https://www.npmjs.com/package/@wp-typia/create)
+[![codecov](https://codecov.io/gh/imjlk/wp-typia/branch/main/graph/badge.svg)](https://codecov.io/gh/imjlk/wp-typia)
 
 > Type-safe WordPress block development with Typia-powered metadata, validation, and migration tooling
 
@@ -20,40 +20,44 @@ A Bun-first WordPress block template monorepo featuring TypeScript, Typia valida
 - 🧭 **Nested Leaf Authoring**: Migration rules can target object and supported union-branch leaf paths such as `settings.label`
 - ⚛️ **Modern Stack**: React hooks, error boundaries, and utility functions
 - 🧪 **Testing Ready**: Bun unit tests, CLI runtime tests, and Playwright E2E tests included
-- 📦 **Shared CLI + Templates**: Scaffold every template through `create-wp-typia`
+- 📦 **Scoped CLI + Shared Types**: Scaffold through `@wp-typia/create` and reuse `@wp-typia/block-types`
 
 ## 🚀 Quick Start
 
-### Using `create-wp-typia` (Recommended)
+### Using `@wp-typia/create` (Recommended)
 
 ```bash
 bun create wp-typia my-block
 # or
-bunx create-wp-typia my-block
+bunx @wp-typia/create my-block
 # or
+npx @wp-typia/create my-block
+# compatibility
 npx create-wp-typia my-block
 ```
 
 The CLI always asks which package manager the generated project should use. For non-interactive runs, pass it explicitly:
 
 ```bash
-npx create-wp-typia my-block --template basic --package-manager pnpm --yes --no-install
+npx @wp-typia/create my-block --template basic --package-manager pnpm --yes --no-install
 ```
 
-`create-wp-typia` is the only supported scaffolding entrypoint in this repository. The old `wp-typia-*` packages remain on npm for historical installs, but they are no longer maintained or published from this repo.
+`@wp-typia/create` is the canonical scaffolding package in this repository, and `@wp-typia/block-types` provides the shared semantic unions used inside generated `types.ts` files. `create-wp-typia` remains as a compatibility shim for `bun create wp-typia` and historical unscoped installs.
 
-## 📦 Published npm Package
+## 📦 Published npm Packages
 
-- [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia)
-
-Legacy `wp-typia-*` packages are no longer published from this repository.
+- [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create)
+- [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types)
+- [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia) - compatibility shim for `bun create wp-typia`
 
 ## 📁 Project Structure
 
 ```
-wp-typia-templates/
+wp-typia/
 ├── packages/
-│   └── create-wp-typia/        # Published CLI and canonical templates
+│   ├── create-wp-typia/        # Canonical scoped CLI source (@wp-typia/create)
+│   ├── create-wp-typia/        # Unscoped compatibility shim
+│   └── wp-typia-block-types/   # Shared semantic block types
 ├── test-template/              # Working example
 │   └── my-typia-block/
 ├── tests/                      # Test suites
@@ -354,8 +358,8 @@ We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md)
 
 ```bash
 # Fork and clone
-git clone https://github.com/imjlk/wp-typia-templates.git
-cd wp-typia-templates
+git clone https://github.com/imjlk/wp-typia.git
+cd wp-typia
 
 # Install dependencies
 bun install
@@ -380,9 +384,9 @@ GPL-2.0-or-later © [imjlk](https://github.com/imjlk)
 
 ## 📞 Support
 
-- 📖 [Documentation](https://github.com/imjlk/wp-typia-templates/wiki)
-- 🐛 [Issue Tracker](https://github.com/imjlk/wp-typia-templates/issues)
-- 💬 [Discussions](https://github.com/imjlk/wp-typia-templates/discussions)
+- 📖 [Documentation](https://github.com/imjlk/wp-typia/wiki)
+- 🐛 [Issue Tracker](https://github.com/imjlk/wp-typia/issues)
+- 💬 [Discussions](https://github.com/imjlk/wp-typia/discussions)
 - 📧 [Email](mailto:support@example.com)
 
 ---

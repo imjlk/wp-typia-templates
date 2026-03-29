@@ -97,6 +97,55 @@ export interface BlockAttributes {
     expect(result.lossyProjectionWarnings).toContain('BlockAttributes.seo: properties');
   });
 
+  test('supports imported aliases from @wp-typia/block-types inside types.ts', async () => {
+    const blockTypesSourceDir = path.resolve(import.meta.dir, '../../packages/wp-typia-block-types/src');
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify({ attributes: {}, example: { attributes: {} } }, null, 2),
+      'src/types.ts': `import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";
+import { tags } from "typia";
+
+export interface BlockAttributes {
+  alignment?: TextAlignment & tags.Default<"left">;
+}
+`,
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: {
+          baseUrl: '.',
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          paths: {
+            '@wp-typia/block-types': [`${blockTypesSourceDir}/index.ts`],
+            '@wp-typia/block-types/*': [`${blockTypesSourceDir}/*`],
+          },
+          resolveJsonModule: true,
+          strict: true,
+          target: 'ES2022',
+        },
+        include: ['src/**/*.ts'],
+      }, null, 2),
+    });
+
+    await syncBlockMetadata({
+      blockJsonFile: 'block.json',
+      manifestFile: 'typia.manifest.json',
+      projectRoot: fixtureDir,
+      sourceTypeName: 'BlockAttributes',
+      typesFile: 'src/types.ts',
+    });
+
+    const blockJson = JSON.parse(
+      fs.readFileSync(path.join(fixtureDir, 'block.json'), 'utf8'),
+    );
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(fixtureDir, 'typia.manifest.json'), 'utf8'),
+    );
+
+    expect(blockJson.attributes.alignment.enum).toEqual(['left', 'center', 'right', 'justify']);
+    expect(blockJson.attributes.alignment.default).toBe('left');
+    expect(manifest.attributes.alignment.typia.hasDefault).toBe(true);
+    expect(manifest.attributes.alignment.typia.defaultValue).toBe('left');
+  });
+
   test('generated php validator distinguishes arrays from objects for nested safe-subset attributes', async () => {
     if (!hasPhpBinary()) {
       return;

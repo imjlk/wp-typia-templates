@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const packageRoot = path.resolve(__dirname, "../packages/create-wp-typia");
+const packageRoot = path.resolve(__dirname, "../packages/create");
 const entryPath = path.resolve(packageRoot, "dist/cli.js");
 const PACKAGE_MANAGERS = {
 	bun: {
@@ -81,11 +81,18 @@ function getPackageManager(packageManager) {
 }
 
 function ensureCreateWpTypiaBuilt() {
-	if (fs.existsSync(entryPath)) {
+	const blockTypesDistPath = path.resolve(
+		__dirname,
+		"../packages/wp-typia-block-types/dist/index.js",
+	);
+	if (fs.existsSync(entryPath) && fs.existsSync(blockTypesDistPath)) {
 		return;
 	}
 
-	run("bun", ["run", "--filter", "create-wp-typia", "build"], {
+	run("bun", ["run", "--filter", "@wp-typia/block-types", "build"], {
+		cwd: path.resolve(__dirname, ".."),
+	});
+	run("bun", ["run", "--filter", "@wp-typia/create", "build"], {
 		cwd: path.resolve(__dirname, ".."),
 	});
 }
@@ -195,16 +202,23 @@ function assertAdvancedMigrationArtifacts(projectDir) {
 	}
 }
 
-function rewriteAdvancedMigrationDependency(projectDir) {
+function rewriteWorkspaceDependencies(projectDir) {
 	const packageJsonPath = path.join(projectDir, "package.json");
 	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-	const localDependency = `file:${path.resolve(__dirname, "../packages/create-wp-typia")}`;
+	const localCreateDependency = `file:${path.resolve(__dirname, "../packages/create")}`;
+	const localBlockTypesDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-block-types")}`;
 
-	if (packageJson.devDependencies?.["create-wp-typia"]) {
-		packageJson.devDependencies["create-wp-typia"] = localDependency;
+	if (packageJson.devDependencies?.["@wp-typia/create"]) {
+		packageJson.devDependencies["@wp-typia/create"] = localCreateDependency;
 	}
-	if (packageJson.dependencies?.["create-wp-typia"]) {
-		packageJson.dependencies["create-wp-typia"] = localDependency;
+	if (packageJson.dependencies?.["@wp-typia/create"]) {
+		packageJson.dependencies["@wp-typia/create"] = localCreateDependency;
+	}
+	if (packageJson.devDependencies?.["@wp-typia/block-types"]) {
+		packageJson.devDependencies["@wp-typia/block-types"] = localBlockTypesDependency;
+	}
+	if (packageJson.dependencies?.["@wp-typia/block-types"]) {
+		packageJson.dependencies["@wp-typia/block-types"] = localBlockTypesDependency;
 	}
 
 	fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
@@ -244,9 +258,7 @@ function main() {
 			);
 		}
 
-		if (template === "advanced") {
-			rewriteAdvancedMigrationDependency(projectDir);
-		}
+		rewriteWorkspaceDependencies(projectDir);
 
 		ensureCorepackPackageManager(packageManager);
 

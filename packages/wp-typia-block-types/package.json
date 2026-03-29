@@ -1,0 +1,81 @@
+{
+  "name": "@wp-typia/block-types",
+  "version": "0.1.0",
+  "description": "Shared WordPress block semantic types derived from Gutenberg and unofficial declarations",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./block-editor": {
+      "types": "./dist/block-editor/index.d.ts",
+      "import": "./dist/block-editor/index.js",
+      "default": "./dist/block-editor/index.js"
+    },
+    "./block-editor/alignment": {
+      "types": "./dist/block-editor/alignment.d.ts",
+      "import": "./dist/block-editor/alignment.js",
+      "default": "./dist/block-editor/alignment.js"
+    },
+    "./block-editor/layout": {
+      "types": "./dist/block-editor/layout.d.ts",
+      "import": "./dist/block-editor/layout.js",
+      "default": "./dist/block-editor/layout.js"
+    },
+    "./block-editor/spacing": {
+      "types": "./dist/block-editor/spacing.d.ts",
+      "import": "./dist/block-editor/spacing.js",
+      "default": "./dist/block-editor/spacing.js"
+    },
+    "./block-editor/typography": {
+      "types": "./dist/block-editor/typography.d.ts",
+      "import": "./dist/block-editor/typography.js",
+      "default": "./dist/block-editor/typography.js"
+    },
+    "./blocks": {
+      "types": "./dist/blocks/index.d.ts",
+      "import": "./dist/blocks/index.js",
+      "default": "./dist/blocks/index.js"
+    },
+    "./blocks/supports": {
+      "types": "./dist/blocks/supports.d.ts",
+      "import": "./dist/blocks/supports.js",
+      "default": "./dist/blocks/supports.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "author": "imjlk",
+  "license": "GPL-2.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imjlk/wp-typia.git",
+    "directory": "packages/wp-typia-block-types"
+  },
+  "bugs": {
+    "url": "https://github.com/imjlk/wp-typia/issues"
+  },
+  "homepage": "https://github.com/imjlk/wp-typia/tree/main/packages/wp-typia-block-types#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/wordpress__block-editor": "^11.5.17",
+    "typescript": "^5.9.2"
+  }
+}

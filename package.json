@@ -1,22 +1,24 @@
 {
-  "name": "wp-typia-templates",
+  "name": "wp-typia",
   "version": "1.0.0",
   "description": "Bun-first WordPress block templates with Typia-powered metadata generation",
   "private": true,
   "packageManager": "bun@1.3.10",
   "workspaces": [
+    "packages/create",
     "packages/create-wp-typia",
+    "packages/wp-typia-block-types",
     "test-template/*"
   ],
   "scripts": {
-    "build": "bun run --filter create-wp-typia build && bun run --filter my-typia-block build",
+    "build": "bun run --filter @wp-typia/block-types build && bun run --filter @wp-typia/create build && bun run --filter my-typia-block build",
     "test": "bun run test:unit && bun run test:cli",
     "test:unit": "bun test tests/unit",
-    "test:cli": "bun run --filter create-wp-typia test",
+    "test:cli": "bun run --filter @wp-typia/create test",
     "test:generated-smoke": "node scripts/run-generated-project-smoke.mjs",
     "test:coverage": "bun run test:unit:coverage && bun run test:cli:coverage",
     "test:unit:coverage": "bun test tests/unit --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage/unit",
-    "test:cli:coverage": "bun run --filter create-wp-typia test:coverage",
+    "test:cli:coverage": "bun run --filter @wp-typia/create test:coverage",
     "test:watch": "bun test tests/unit --watch",
     "test:e2e": "bun run --filter my-typia-block build && playwright test",
     "test:e2e:matrix": "bun run --filter my-typia-block build && PLAYWRIGHT_MATRIX=1 playwright test",
@@ -25,8 +27,9 @@
     "clean": "bun run --workspaces --if-present clean && rm -rf node_modules",
     "dev": "bun run --filter my-typia-block --if-present dev",
     "typecheck": "tsc --noEmit",
-    "release": "changeset publish",
-    "version": "changeset version",
+    "release": "sampo release",
+    "publish": "sampo publish",
+    "sampo:add": "sampo add",
     "docs:dev": "typedoc --watch",
     "docs:build": "typedoc",
     "wp-env:start": "bunx --package @wordpress/env wp-env start",
@@ -46,14 +49,13 @@
   "license": "GPL-2.0-or-later",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/imjlk/wp-typia-templates.git"
+    "url": "git+https://github.com/imjlk/wp-typia.git"
   },
   "bugs": {
-    "url": "https://github.com/imjlk/wp-typia-templates/issues"
+    "url": "https://github.com/imjlk/wp-typia/issues"
   },
-  "homepage": "https://github.com/imjlk/wp-typia-templates#readme",
+  "homepage": "https://github.com/imjlk/wp-typia#readme",
   "devDependencies": {
-    "@changesets/cli": "^2.27.0",
     "@playwright/test": "^1.40.0",
     "@types/node": "^20.9.0",
     "@types/wordpress__block-editor": "^11.5.17",

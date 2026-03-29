@@ -1,3 +1,4 @@
+import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";
 import { tags } from "typia";
 
 /**
@@ -27,7 +28,7 @@ export interface MyTypiaBlockAttributes {
 	/**
 	 * Text alignment
 	 */
-	alignment?: ("left" | "center" | "right" | "justify") & tags.Default<"left">;
+	alignment?: TextAlignment & tags.Default<"left">;
 	
 	/**
 	 * Is the block visible

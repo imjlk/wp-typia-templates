@@ -1,0 +1,30 @@
+import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";
+import { tags } from "typia";
+
+export interface {{pascalCase}}Attributes {
+  content: string & tags.MinLength<1> & tags.MaxLength<1000> & tags.Default<"">;
+  alignment?: TextAlignment & tags.Default<"left">;
+  isVisible?: boolean & tags.Default<true>;
+  interactiveMode?: ('click' | 'hover' | 'auto') & tags.Default<"click">;
+  animation?: ('none' | 'bounce' | 'pulse' | 'shake' | 'flip') & tags.Default<"none">;
+  clickCount?: number & tags.Default<0>;
+  isAnimating?: boolean & tags.Default<false>;
+  showCounter?: boolean & tags.Default<true>;
+  maxClicks?: number & tags.Default<10>;
+  autoPlayInterval?: number & tags.Default<0>;
+  uniqueId?: string & tags.Default<"">;
+}
+
+export interface {{pascalCase}}Context {
+  clicks: number;
+  isAnimating: boolean;
+  isVisible: boolean;
+  lastInteraction: string;
+  animationClass: string;
+}
+
+export type {{pascalCase}}ValidationResult = {
+  isValid: boolean;
+  errors: string[];
+  data?: {{pascalCase}}Attributes;
+};
