@@ -2,7 +2,8 @@
   "entryPoints": [
     "packages/*/src/**/*.ts",
     "packages/*/src/**/*.tsx",
-    "examples/**/src/**/*.ts"
+    "examples/**/src/**/*.ts",
+    "examples/**/src/**/*.tsx"
   ],
   "exclude": [
     "**/*.d.ts",

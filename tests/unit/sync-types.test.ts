@@ -7,18 +7,21 @@ import {
 	getExampleShowcaseDir,
 } from './helpers/example-showcase';
 
-function findGeneratedArtifact(baseDir: string, artifact: string): string {
-  for (const candidate of [
-    path.join(baseDir, 'build', artifact),
-    path.join(baseDir, 'build', 'my-typia-block', artifact),
-    path.join(baseDir, artifact),
-  ]) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
-    }
-  }
+ensureExampleShowcaseSynced();
 
-  throw new Error(`Unable to locate generated artifact "${artifact}" under ${baseDir}`);
+function findGeneratedArtifact(baseDir: string, artifact: string): string {
+	for (const candidate of [
+		path.join(baseDir, 'build', artifact),
+		path.join(baseDir, 'build', 'my-typia-block', artifact),
+	]) {
+		if (fs.existsSync(candidate)) {
+			return candidate;
+		}
+	}
+
+	throw new Error(
+		`Unable to locate generated artifact "${artifact}" under ${baseDir}`
+	);
 }
 
 describe('Type Sync Tests', () => {
@@ -28,8 +31,6 @@ describe('Type Sync Tests', () => {
 	const phpValidatorPath = path.join(exampleDir, 'typia-validator.php');
 
 	test('should sync types to block.json and generate typia.manifest.json', () => {
-		ensureExampleShowcaseSynced();
-
 		expect(fs.existsSync(blockJsonPath)).toBe(true);
 		expect(fs.existsSync(manifestPath)).toBe(true);
 		expect(fs.existsSync(phpValidatorPath)).toBe(true);
@@ -48,8 +49,6 @@ describe('Type Sync Tests', () => {
 	});
 
 	test('should have correct block.json projection types and enums', () => {
-		ensureExampleShowcaseSynced();
-
 		const blockJson = JSON.parse(fs.readFileSync(blockJsonPath, 'utf8'));
 
 		expect(blockJson.attributes.id.type).toBe('string');
@@ -66,8 +65,6 @@ describe('Type Sync Tests', () => {
 	});
 
 	test('should preserve Typia-only constraints in typia.manifest.json', () => {
-		ensureExampleShowcaseSynced();
-
 		const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
 		expect(manifest.attributes.id.typia.constraints.format).toBe('uuid');
@@ -79,8 +76,6 @@ describe('Type Sync Tests', () => {
 	});
 
 	test('should have correct default values', () => {
-		ensureExampleShowcaseSynced();
-
 		const blockJson = JSON.parse(fs.readFileSync(blockJsonPath, 'utf8'));
 
 		expect(blockJson.attributes.version.default).toBe(1);
@@ -92,7 +87,6 @@ describe('Type Sync Tests', () => {
 	test(
 		'should copy typia.manifest.json into the build output',
 		() => {
-			ensureExampleShowcaseSynced();
 			execSync('bun run build', { cwd: exampleDir, stdio: 'inherit' });
 
 			const buildManifestPath = findGeneratedArtifact(

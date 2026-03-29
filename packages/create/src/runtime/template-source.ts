@@ -209,6 +209,21 @@ function readRemoteBlockJson(sourceDir: string): Record<string, unknown> {
 	throw new Error(`Unable to locate block.json in ${sourceDir}`);
 }
 
+async function assertNoSymlinks(sourceDir: string): Promise<void> {
+	const stats = await fsp.lstat(sourceDir);
+	if (stats.isSymbolicLink()) {
+		throw new Error(`Template sources may not include symbolic links: ${sourceDir}`);
+	}
+
+	if (!stats.isDirectory()) {
+		return;
+	}
+
+	for (const entry of await fsp.readdir(sourceDir)) {
+		await assertNoSymlinks(path.join(sourceDir, entry));
+	}
+}
+
 function renderTypeScriptLiteral(value: unknown): string {
 	if (typeof value === "string") {
 		return JSON.stringify(value);
@@ -427,10 +442,15 @@ export async function resolveTemplateSource(
 		}
 		args.push(`https://github.com/${locator.locator.owner}/${locator.locator.repo}.git`, checkoutDir);
 		execFileSync("git", args, { stdio: "ignore" });
-		sourceDir = path.join(checkoutDir, locator.locator.sourcePath);
+		sourceDir = path.resolve(checkoutDir, locator.locator.sourcePath);
+		const relativeSourceDir = path.relative(checkoutDir, sourceDir);
+		if (relativeSourceDir.startsWith("..") || path.isAbsolute(relativeSourceDir)) {
+			throw new Error("GitHub template path must stay within the cloned repository.");
+		}
 		if (!fs.existsSync(sourceDir)) {
 			throw new Error(`GitHub template path does not exist: ${locator.locator.sourcePath}`);
 		}
+		await assertNoSymlinks(sourceDir);
 		cleanupRemote = async () => {
 			await fsp.rm(remoteRoot, { force: true, recursive: true });
 		};

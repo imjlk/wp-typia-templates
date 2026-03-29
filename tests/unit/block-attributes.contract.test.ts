@@ -7,6 +7,8 @@ import {
 	getExampleShowcaseDir,
 } from './helpers/example-showcase';
 
+ensureExampleShowcaseSynced();
+
 type ManifestAttribute = {
   typia: {
     constraints: {
@@ -113,8 +115,6 @@ function matchesContractMultipleOf(value: number, multipleOf: number): boolean {
 }
 
 function loadExampleContract() {
-	ensureExampleShowcaseSynced();
-
 	const testTemplateDir = getExampleShowcaseDir();
 	const blockJson = JSON.parse(
 		fs.readFileSync(path.join(testTemplateDir, 'block.json'), 'utf8')
@@ -127,8 +127,6 @@ function loadExampleContract() {
 }
 
 function loadPhpValidatorPath() {
-	ensureExampleShowcaseSynced();
-
 	return path.join(getExampleShowcaseDir(), 'typia-validator.php');
 }
 
