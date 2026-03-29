@@ -146,6 +146,70 @@ export interface BlockAttributes {
     expect(manifest.attributes.alignment.typia.defaultValue).toBe('left');
   });
 
+  test('supports pipeline-compatible aliases from @wp-typia/block-types inside types.ts', async () => {
+    const blockTypesSourceDir = path.resolve(import.meta.dir, '../../packages/wp-typia-block-types/src');
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify({ attributes: {}, example: { attributes: {} } }, null, 2),
+      'src/types.ts': `import type { CssNamedColor } from "@wp-typia/block-types/block-editor/color";
+import type { MinHeightKeyword } from "@wp-typia/block-types/block-editor/dimensions";
+import { tags } from "typia";
+
+export interface BlockAttributes {
+  textColor?: CssNamedColor & tags.Default<"transparent">;
+  minHeight?: MinHeightKeyword & tags.Default<"auto">;
+}
+`,
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: {
+          baseUrl: '.',
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          paths: {
+            '@wp-typia/block-types': [`${blockTypesSourceDir}/index.ts`],
+            '@wp-typia/block-types/*': [`${blockTypesSourceDir}/*`],
+          },
+          resolveJsonModule: true,
+          strict: true,
+          target: 'ES2022',
+        },
+        include: ['src/**/*.ts'],
+      }, null, 2),
+    });
+
+    await syncBlockMetadata({
+      blockJsonFile: 'block.json',
+      manifestFile: 'typia.manifest.json',
+      projectRoot: fixtureDir,
+      sourceTypeName: 'BlockAttributes',
+      typesFile: 'src/types.ts',
+    });
+
+    const blockJson = JSON.parse(
+      fs.readFileSync(path.join(fixtureDir, 'block.json'), 'utf8'),
+    );
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(fixtureDir, 'typia.manifest.json'), 'utf8'),
+    );
+
+    expect(blockJson.attributes.textColor.enum).toEqual([
+      'transparent',
+      'currentColor',
+      'inherit',
+      'initial',
+      'unset',
+    ]);
+    expect(blockJson.attributes.textColor.default).toBe('transparent');
+    expect(blockJson.attributes.minHeight.enum).toEqual([
+      'auto',
+      'inherit',
+      'initial',
+      'unset',
+    ]);
+    expect(blockJson.attributes.minHeight.default).toBe('auto');
+    expect(manifest.attributes.textColor.typia.defaultValue).toBe('transparent');
+    expect(manifest.attributes.minHeight.typia.defaultValue).toBe('auto');
+  });
+
   test('generated php validator distinguishes arrays from objects for nested safe-subset attributes', async () => {
     if (!hasPhpBinary()) {
       return;
