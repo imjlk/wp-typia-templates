@@ -1,0 +1,69 @@
+name: Create GitHub Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: create-release-${{ github.sha || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  create-release:
+    name: Create release from merged release PR
+    if: "${{ github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'release: version packages') }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release tag
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          existing_tag="$(gh api "repos/${GITHUB_REPOSITORY}/releases" --paginate --jq ".[] | select(.target_commitish == \"${GITHUB_SHA}\") | .tag_name" | head -n1)"
+          if [[ -n "${existing_tag}" ]]; then
+            echo "tag=${existing_tag}" >> "$GITHUB_OUTPUT"
+            echo "name=$(gh release view "${existing_tag}" --json name --jq '.name')" >> "$GITHUB_OUTPUT"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          date_prefix="$(date -u +%Y-%m-%d)"
+          next_seq=1
+          while IFS= read -r tag; do
+            [[ -z "${tag}" ]] && continue
+            suffix="${tag##*-}"
+            if [[ "${suffix}" =~ ^[0-9]+$ ]] && (( 10#${suffix} >= next_seq )); then
+              next_seq=$((10#${suffix} + 1))
+            fi
+          done < <(gh release list --limit 100 --json tagName --jq '.[].tagName' | grep "^release-${date_prefix}-" || true)
+
+          printf -v seq '%02d' "${next_seq}"
+          tag="release-${date_prefix}-${seq}"
+          name="Release ${date_prefix}-${seq}"
+
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "name=${name}" >> "$GITHUB_OUTPUT"
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        if: steps.release.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.release.outputs.tag }}" \
+            --target "${{ github.sha }}" \
+            --title "${{ steps.release.outputs.name }}" \
+            --generate-notes

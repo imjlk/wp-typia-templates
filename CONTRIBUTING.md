@@ -50,8 +50,10 @@ GitHub release automation is split into two workflows:
 1. Merge feature PRs into `main` with **Squash and merge**
 2. `.github/workflows/release-pr.yml` updates the `release/sampo` PR from `main`
 3. Review and **Squash and merge** the release PR
-4. Create a GitHub Release from that merged release commit
-5. `.github/workflows/publish.yml` publishes packages with npm OIDC
+4. `.github/workflows/create-release.yml` creates a GitHub Release automatically from the merged release commit
+5. `.github/workflows/publish.yml` publishes packages with npm OIDC from that release event
+
+`workflow_dispatch` remains available as a manual fallback if the publish workflow ever needs to be rerun for the current commit.
 
 ## Pull requests
 
