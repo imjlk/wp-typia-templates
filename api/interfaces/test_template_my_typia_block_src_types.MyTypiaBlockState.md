@@ -22,7 +22,7 @@ My Typia Block interactivity state
 
 #### Defined in
 
-[test-template/my-typia-block/src/types.ts:42](https://github.com/yourusername/wp-typia-boilerplate/blob/main/test-template/my-typia-block/src/types.ts#L42)
+[test-template/my-typia-block/src/types.ts:43](https://github.com/yourusername/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L43)
 
 ___
 
@@ -32,7 +32,7 @@ ___
 
 #### Defined in
 
-[test-template/my-typia-block/src/types.ts:43](https://github.com/yourusername/wp-typia-boilerplate/blob/main/test-template/my-typia-block/src/types.ts#L43)
+[test-template/my-typia-block/src/types.ts:44](https://github.com/yourusername/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L44)
 
 ___
 
@@ -42,4 +42,4 @@ ___
 
 #### Defined in
 
-[test-template/my-typia-block/src/types.ts:44](https://github.com/yourusername/wp-typia-boilerplate/blob/main/test-template/my-typia-block/src/types.ts#L44)
+[test-template/my-typia-block/src/types.ts:45](https://github.com/yourusername/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L45)

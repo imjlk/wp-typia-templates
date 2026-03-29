@@ -2,37 +2,45 @@
 
 This repository has two public surfaces:
 
-## 1. `create-wp-typia`
+## 1. `@wp-typia/create`
 
 The CLI is the primary entrypoint for new users.
 
 ```bash
 bun create wp-typia my-block
-bunx create-wp-typia my-block
-npx create-wp-typia my-block
+bunx @wp-typia/create my-block
+npx @wp-typia/create my-block
 ```
 
 Common commands:
 
 ```bash
-create-wp-typia templates list
-create-wp-typia templates inspect advanced
-create-wp-typia doctor
+wp-typia templates list
+wp-typia templates inspect advanced
+wp-typia doctor
 ```
 
 Migration commands are available only inside projects generated from the `advanced` template:
 
 ```bash
-create-wp-typia migrations init --current-version 1.0.0
-create-wp-typia migrations snapshot --version 1.0.0
-create-wp-typia migrations diff --from 1.0.0
-create-wp-typia migrations scaffold --from 1.0.0
-create-wp-typia migrations verify --all
+wp-typia migrations init --current-version 1.0.0
+wp-typia migrations snapshot --version 1.0.0
+wp-typia migrations diff --from 1.0.0
+wp-typia migrations scaffold --from 1.0.0
+wp-typia migrations verify --all
 ```
 
-Legacy `wp-typia-*` wrapper packages are no longer published from this repository. `create-wp-typia` is the only maintained entrypoint.
+Compatibility note: `create-wp-typia` remains available only as an unscoped shim for `bun create wp-typia` and historical installs. New users should start from `@wp-typia/create`.
 
-## 2. Generated project runtime
+## 2. `@wp-typia/block-types`
+
+Generated projects can import shared semantic unions directly in `src/types.ts`.
+
+```ts
+import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";
+```
+
+## 3. Generated project runtime
 
 Each scaffolded project exposes a few predictable files:
 
@@ -52,7 +60,7 @@ The `advanced` template adds:
 - `src/migrations/generated/`
 - `src/migrations/fixtures/`
 
-## 3. Generated reference docs
+## 4. Generated reference docs
 
 Contributor note:
 

@@ -1,6 +1,6 @@
 # Union Support Guide
 
-`wp-typia-templates` supports unions in two different ways:
+`wp-typia` supports unions in two different ways:
 
 ## Already supported
 

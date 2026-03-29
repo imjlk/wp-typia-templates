@@ -27,7 +27,7 @@ Unique identifier
 
 #### Defined in
 
-[test-template/my-typia-block/src/types.ts:10](https://github.com/yourusername/wp-typia-boilerplate/blob/main/test-template/my-typia-block/src/types.ts#L10)
+[test-template/my-typia-block/src/types.ts:11](https://github.com/yourusername/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L11)
 
 ___
 
@@ -39,7 +39,7 @@ Block version for migrations
 
 #### Defined in
 
-[test-template/my-typia-block/src/types.ts:15](https://github.com/yourusername/wp-typia-boilerplate/blob/main/test-template/my-typia-block/src/types.ts#L15)
+[test-template/my-typia-block/src/types.ts:16](https://github.com/yourusername/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L16)
 
 ___
 
@@ -51,7 +51,7 @@ Custom CSS class
 
 #### Defined in
 
-[test-template/my-typia-block/src/types.ts:20](https://github.com/yourusername/wp-typia-boilerplate/blob/main/test-template/my-typia-block/src/types.ts#L20)
+[test-template/my-typia-block/src/types.ts:21](https://github.com/yourusername/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L21)
 
 ___
 
@@ -63,19 +63,19 @@ Main content
 
 #### Defined in
 
-[test-template/my-typia-block/src/types.ts:25](https://github.com/yourusername/wp-typia-boilerplate/blob/main/test-template/my-typia-block/src/types.ts#L25)
+[test-template/my-typia-block/src/types.ts:26](https://github.com/yourusername/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L26)
 
 ___
 
 ### alignment
 
-• `Optional` **alignment**: ("left" \| "center" \| "right" \| "justify") & Default\<"left"\>
+• `Optional` **alignment**: TextAlignment & Default\<"left"\>
 
 Text alignment
 
 #### Defined in
 
-[test-template/my-typia-block/src/types.ts:30](https://github.com/yourusername/wp-typia-boilerplate/blob/main/test-template/my-typia-block/src/types.ts#L30)
+[test-template/my-typia-block/src/types.ts:31](https://github.com/yourusername/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L31)
 
 ___
 
@@ -87,4 +87,4 @@ Is the block visible
 
 #### Defined in
 
-[test-template/my-typia-block/src/types.ts:35](https://github.com/yourusername/wp-typia-boilerplate/blob/main/test-template/my-typia-block/src/types.ts#L35)
+[test-template/my-typia-block/src/types.ts:36](https://github.com/yourusername/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L36)

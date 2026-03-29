@@ -12,7 +12,7 @@ Typical fits:
 ## Start with the right template
 
 ```bash
-npx create-wp-typia my-interactive-block --template interactivity --package-manager npm --yes --no-install
+npx @wp-typia/create my-interactive-block --template interactivity --package-manager npm --yes --no-install
 ```
 
 ## Where the behavior lives
