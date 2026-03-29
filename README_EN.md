@@ -20,7 +20,7 @@ A Bun-first WordPress block template monorepo featuring TypeScript, Typia valida
 - 🧭 **Nested Leaf Authoring**: Migration rules can target object and supported union-branch leaf paths such as `settings.label`
 - ⚛️ **Modern Stack**: React hooks, error boundaries, and utility functions
 - 🧪 **Testing Ready**: Bun unit tests, CLI runtime tests, and Playwright E2E tests included
-- 📦 **Shared CLI + Templates**: Scaffold via `create-wp-typia` and keep direct template entrypoints
+- 📦 **Shared CLI + Templates**: Scaffold every template through `create-wp-typia`
 
 ## 🚀 Quick Start
 
@@ -40,41 +40,22 @@ The CLI always asks which package manager the generated project should use. For 
 npx create-wp-typia my-block --template basic --package-manager pnpm --yes --no-install
 ```
 
-### Legacy Direct Template Wrappers
+`create-wp-typia` is the only supported scaffolding entrypoint in this repository. The old `wp-typia-*` packages remain on npm for historical installs, but they are no longer maintained or published from this repo.
 
-```bash
-npx wp-typia-basic
-npx wp-typia-full
-npx wp-typia-interactivity
-npx wp-typia-advanced
-```
-
-These direct entrypoints remain supported for compatibility, but `create-wp-typia` is the primary path for new projects.
-
-## 📦 Published npm Packages
+## 📦 Published npm Package
 
 - [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia)
-- [`wp-typia-basic`](https://www.npmjs.com/package/wp-typia-basic)
-- [`wp-typia-full`](https://www.npmjs.com/package/wp-typia-full)
-- [`wp-typia-interactivity`](https://www.npmjs.com/package/wp-typia-interactivity)
-- [`wp-typia-advanced`](https://www.npmjs.com/package/wp-typia-advanced)
+
+Legacy `wp-typia-*` packages are no longer published from this repository.
 
 ## 📁 Project Structure
 
 ```
 wp-typia-templates/
-├── packages/                    # published templates and CLI
-│   ├── wp-typia-basic/         # Core Typia functionality
-│   ├── wp-typia-full/          # + utilities + hooks + ErrorBoundary
-│   ├── wp-typia-interactivity/ # + WordPress Interactivity API
-│   └── wp-typia-advanced/      # + migration system + admin dashboard
+├── packages/
+│   └── create-wp-typia/        # Published CLI and canonical templates
 ├── test-template/              # Working example
 │   └── my-typia-block/
-├── templates/                  # Mustache templates for npm packages
-│   ├── basic/
-│   ├── full/
-│   ├── interactivity/
-│   └── advanced/
 ├── tests/                      # Test suites
 │   ├── unit/
 │   └── e2e/

@@ -1,4 +1,3 @@
-export { runLegacyCli } from "./cli-core.js";
 export {
 	scaffoldProject,
 	collectScaffoldAnswers,

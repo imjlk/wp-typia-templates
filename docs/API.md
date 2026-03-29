@@ -30,6 +30,8 @@ create-wp-typia migrations scaffold --from 1.0.0
 create-wp-typia migrations verify --all
 ```
 
+Legacy `wp-typia-*` wrapper packages are no longer published from this repository. `create-wp-typia` is the only maintained entrypoint.
+
 ## 2. Generated project runtime
 
 Each scaffolded project exposes a few predictable files:

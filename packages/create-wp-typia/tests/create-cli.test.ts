@@ -8,7 +8,6 @@ import { scaffoldProject } from "../src/runtime/index.js";
 
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "create-wp-typia-"));
 const entryPath = path.resolve(import.meta.dir, "../dist/cli.js");
-const legacyBasicPath = path.resolve(import.meta.dir, "../../wp-typia-basic/scripts/setup.js");
 
 function runCli(
 	command: string,
@@ -140,22 +139,5 @@ describe("create-wp-typia scaffolding", () => {
 				stdio: "pipe",
 			});
 		}).toThrow();
-	});
-
-	test("legacy wrapper keeps current-directory scaffolding flow with explicit package manager", () => {
-		const targetDir = path.join(tempRoot, "legacy-basic");
-		fs.mkdirSync(targetDir, { recursive: true });
-
-		runCli("node", [legacyBasicPath, "--yes", "--no-install", "--package-manager", "bun"], {
-			cwd: targetDir,
-			stdio: "inherit",
-		});
-
-		const packageJsonPath = path.join(targetDir, "package.json");
-		expect(fs.existsSync(packageJsonPath)).toBe(true);
-
-		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-		expect(packageJson.name).toBe("legacy-basic");
-		expect(packageJson.packageManager).toBe("bun@1.3.10");
 	});
 });

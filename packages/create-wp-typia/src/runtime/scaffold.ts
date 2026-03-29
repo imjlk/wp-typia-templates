@@ -470,11 +470,7 @@ async function replaceTextRecursively(
 
 		const content = await fsp.readFile(currentPath, "utf8");
 		const nextContent = transformPackageManagerText(content, packageManagerId)
-			.replace(/yourusername\/wp-typia-boilerplate/g, "imjlk/wp-typia-templates")
-			.replace(/@wp-typia\/basic/g, "wp-typia-basic")
-			.replace(/@wp-typia\/full/g, "wp-typia-full")
-			.replace(/@wp-typia\/interactivity/g, "wp-typia-interactivity")
-			.replace(/@wp-typia\/advanced/g, "wp-typia-advanced");
+			.replace(/yourusername\/wp-typia-boilerplate/g, "imjlk/wp-typia-templates");
 
 		if (nextContent !== content) {
 			await fsp.writeFile(currentPath, nextContent, "utf8");
@@ -539,12 +535,4 @@ export async function scaffoldProject({
 		packageManager: resolvedPackageManager,
 		variables,
 	};
-}
-
-export async function runLegacyCli(
-	templateId: TemplateDefinition["id"],
-	argv: string[] = process.argv.slice(2),
-) {
-	const { runLegacyCli: runLegacyCliImpl } = await import("./cli-core.js");
-	return runLegacyCliImpl(templateId, argv);
 }

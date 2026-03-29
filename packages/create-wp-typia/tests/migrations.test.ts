@@ -32,8 +32,7 @@ function writeJson(filePath: string, value: unknown) {
 
 function resolveRepoTsxBinary() {
 	const candidates = [
-		path.resolve(import.meta.dir, "../../../packages/wp-typia-advanced/node_modules/.bin/tsx"),
-		path.resolve(import.meta.dir, "../../../packages/wp-typia-basic/node_modules/.bin/tsx"),
+		path.resolve(import.meta.dir, "../../../node_modules/.bin/tsx"),
 		path.resolve(import.meta.dir, "../../../node_modules/.bun/tsx@4.21.0/node_modules/.bin/tsx"),
 	];
 

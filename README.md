@@ -38,25 +38,16 @@ For non-interactive usage:
 npx create-wp-typia my-block --template basic --package-manager pnpm --yes --no-install
 ```
 
-### Option 2: Use legacy direct template wrappers
-
-```bash
-npx wp-typia-basic
-npx wp-typia-full
-npx wp-typia-interactivity
-npx wp-typia-advanced
-```
-
-These legacy entrypoints remain supported for compatibility, but `create-wp-typia` is the primary path for new projects.
+`create-wp-typia` is now the only supported scaffolding entrypoint in this repository. Previously published `wp-typia-*` packages remain on npm for historical installs, but they are no longer maintained or published from this repo.
 
 ## 📦 Templates Overview
 
-| Template                                      | Features                                                                               | Best For                           |
-| --------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------- |
-| **[Basic](templates/basic/)**                 | • Type-safe attributes<br>• Runtime validation<br>• Minimal setup                      | Quick prototypes and simple blocks |
-| **[Full](templates/full/)**                   | • Advanced controls<br>• Custom hooks<br>• Style options<br>• Animation support        | Feature-rich blocks                |
-| **[Interactivity](templates/interactivity/)** | • Interactivity API<br>• Client-side state<br>• Event handling                         | Interactive blocks                 |
-| **[Advanced](templates/advanced/)**           | • Migration system<br>• Version tracking<br>• Admin dashboard<br>• Enterprise features | Production blocks                  |
+| Template | Features | Best For |
+| --- | --- | --- |
+| **Basic** | • Type-safe attributes<br>• Runtime validation<br>• Minimal setup | Quick prototypes and simple blocks |
+| **Full** | • Advanced controls<br>• Custom hooks<br>• Style options<br>• Animation support | Feature-rich blocks |
+| **Interactivity** | • Interactivity API<br>• Client-side state<br>• Event handling | Interactive blocks |
+| **Advanced** | • Migration system<br>• Version tracking<br>• Admin dashboard<br>• Enterprise features | Production blocks |
 
 ## 🎯 How It Works
 
@@ -168,29 +159,20 @@ Features:
 - 🧭 Nested leaf authoring for object and supported union-branch paths
 - 📝 Detailed migration reports
 
-## 📦 Published npm Packages
-
-All templates are published as npm packages:
+## 📦 Published npm Package
 
 - [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia)
-- [`wp-typia-basic`](https://www.npmjs.com/package/wp-typia-basic)
-- [`wp-typia-full`](https://www.npmjs.com/package/wp-typia-full)
-- [`wp-typia-interactivity`](https://www.npmjs.com/package/wp-typia-interactivity)
-- [`wp-typia-advanced`](https://www.npmjs.com/package/wp-typia-advanced)
+
+Legacy `wp-typia-*` packages are no longer published from this repository.
 
 ## 🏗 Project Structure
 
 ```
 wp-typia-templates/
-├── templates/                    # Template variations
-│   ├── basic/                   # Basic Typia features
-│   ├── full/                    # Full feature set
-│   ├── interactivity/           # Interactivity API
-│   └── advanced/                # Migration system
-├── test-template/               # Working examples
-│   └── my-typia-block/         # Complete example
-├── packages/                    # Published npm packages and CLI
-│   ├── create-wp-typia/         # Shared CLI scaffolder
+├── packages/
+│   └── create-wp-typia/         # Published CLI and canonical templates
+├── test-template/
+│   └── my-typia-block/          # Complete example
 ├── tests/                       # Test files
 ├── docs/                        # Documentation
 └── .github/                     # GitHub configuration

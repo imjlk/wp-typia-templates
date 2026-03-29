@@ -1,11 +1,7 @@
 ---
-"create-wp-typia": minor
-"wp-typia-basic": minor
-"wp-typia-full": minor
-"wp-typia-interactivity": minor
-"wp-typia-advanced": minor
+"create-wp-typia": major
 ---
 
-Add the new `create-wp-typia` Bun-first scaffolding CLI and move the published template packages onto the shared scaffold core.
+Consolidate the repository and published scaffolding surface around `create-wp-typia` only.
 
-The generated projects now default to Bun commands and package metadata, while keeping the existing `wp-typia-*` entrypoints available as compatibility wrappers.
+This release removes the legacy `wp-typia-*` wrapper packages from the repository and release flow, keeps `packages/create-wp-typia/templates` as the single template source of truth, and makes `create-wp-typia` the only maintained scaffolding entrypoint.

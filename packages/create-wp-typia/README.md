@@ -37,3 +37,5 @@ create-wp-typia doctor
 The `migrations` commands are for projects generated from the `advanced` template. That template includes a dynamic `render.php` server example, snapshot-based migration workspace, generated `typia-validator.php`, and `renameMap` / `transforms` authoring helpers. Basic, full, and interactivity projects do not include the snapshot migration workspace.
 
 Repo development stays Bun-first. The generated project can use `bun`, `npm`, `pnpm`, or `yarn`.
+
+Previously published `wp-typia-*` wrapper packages are no longer maintained from this repository. Use `create-wp-typia` for all new scaffolding flows.

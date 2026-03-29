@@ -72,13 +72,6 @@ interface RunScaffoldFlowOptions {
 	yes?: boolean;
 }
 
-interface LegacyArgs {
-	help: boolean;
-	noInstall: boolean;
-	packageManager?: string;
-	yes: boolean;
-}
-
 export function createReadlinePrompt(): ReadlinePrompt {
 	const rl = readline.createInterface({
 		input: process.stdin,
@@ -342,90 +335,6 @@ export async function runScaffoldFlow({
 			noInstall,
 		}),
 	};
-}
-
-function parseLegacyArgs(argv: string[]): LegacyArgs {
-	const parsed: LegacyArgs = {
-		help: false,
-		noInstall: false,
-		packageManager: undefined,
-		yes: false,
-	};
-
-	for (let index = 0; index < argv.length; index += 1) {
-		const arg = argv[index];
-
-		if (arg === "--yes" || arg === "-y") {
-			parsed.yes = true;
-			continue;
-		}
-		if (arg === "--no-install") {
-			parsed.noInstall = true;
-			continue;
-		}
-		if (arg === "--help" || arg === "-h") {
-			parsed.help = true;
-			continue;
-		}
-		if (arg === "--package-manager" || arg === "-p") {
-			parsed.packageManager = argv[index + 1];
-			index += 1;
-			continue;
-		}
-		if (arg.startsWith("--package-manager=")) {
-			parsed.packageManager = arg.split("=", 2)[1];
-			continue;
-		}
-
-		throw new Error(`Unknown flag: ${arg}`);
-	}
-
-	return parsed;
-}
-
-export async function runLegacyCli(
-	templateId: TemplateDefinition["id"],
-	argv: string[] = process.argv.slice(2),
-): Promise<void> {
-	const args = parseLegacyArgs(argv);
-	if (args.help) {
-		console.log(
-			`Usage: wp-typia-${templateId} [--yes] [--no-install] [--package-manager <${PACKAGE_MANAGER_IDS.join("|")}>]`,
-		);
-		return;
-	}
-
-	const isInteractive = Boolean(process.stdin.isTTY && process.stdout.isTTY);
-	const prompt = createReadlinePrompt();
-
-	try {
-		if (!args.yes && !isInteractive) {
-			throw new Error("Interactive answers require a TTY. Use --yes inside an existing directory.");
-		}
-
-		const flow = await runScaffoldFlow({
-			allowExistingDir: true,
-			cwd: process.cwd(),
-			isInteractive,
-			noInstall: args.noInstall,
-			packageManager: args.packageManager,
-			projectInput: ".",
-			promptText: (message, defaultValue, validate) =>
-				prompt.text(message, defaultValue, validate),
-			selectPackageManager: () =>
-				prompt.select("Choose a package manager:", getPackageManagerSelectOptions(), 1),
-			templateId,
-			yes: args.yes,
-		});
-
-		console.log(`\n✅ Scaffolded ${flow.result.variables.title} in the current directory`);
-		console.log("Next steps:");
-		for (const step of flow.nextSteps.slice(1)) {
-			console.log(`  ${step}`);
-		}
-	} finally {
-		prompt.close();
-	}
 }
 
 export { getTemplateById, getTemplateSelectOptions, listTemplates };

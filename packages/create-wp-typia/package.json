@@ -56,6 +56,9 @@
   "dependencies": {},
   "devDependencies": {
     "bunli": "^0.8.2",
-    "typescript": "^5.9.2"
+    "react": "^19.2.0",
+    "react-devtools-core": "^7.0.1",
+    "typescript": "^5.9.2",
+    "ws": "^8.18.0"
   }
 }
