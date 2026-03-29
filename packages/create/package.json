@@ -51,10 +51,10 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=16.0.0",
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0",
     "bun": ">=1.3.10"
   },
-  "dependencies": {},
   "devDependencies": {
     "bunli": "^0.8.2",
     "react": "^19.2.0",

@@ -2,6 +2,7 @@
   "name": "create-wp-typia",
   "version": "1.0.1",
   "description": "Compatibility shim for @wp-typia/create and bun create wp-typia",
+  "packageManager": "bun@1.3.10",
   "type": "module",
   "bin": {
     "create-wp-typia": "bin/create-wp-typia.js"
@@ -26,8 +27,8 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=8.0.0",
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0",
     "bun": ">=1.3.10"
   },
   "dependencies": {
