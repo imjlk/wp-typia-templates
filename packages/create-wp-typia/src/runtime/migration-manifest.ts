@@ -3,6 +3,8 @@ import type {
 	JsonValue,
 	ManifestAttribute,
 	ManifestDocument,
+	ManifestSummary,
+	UnionBranchSummary,
 } from "./migration-types.js";
 
 interface FlattenContext {
@@ -10,22 +12,6 @@ interface FlattenContext {
 	unionBranch: string | null;
 	unionDiscriminator: string | null;
 	unionRoot: string | null;
-}
-
-interface ManifestSummaryAttribute {
-	constraints: ManifestAttribute["typia"]["constraints"];
-	defaultValue: ManifestAttribute["typia"]["defaultValue"] | null;
-	enum: ManifestAttribute["wp"]["enum"] | null;
-	hasDefault: boolean;
-	kind: ManifestAttribute["ts"]["kind"] | null;
-	required: boolean;
-	union: ManifestAttribute["ts"]["union"] | null;
-}
-
-interface ManifestSummary {
-	attributes: Record<string, ManifestSummaryAttribute>;
-	manifestVersion: number | null;
-	sourceType: string | null;
 }
 
 type ManifestDefaultValue = ManifestAttribute["typia"]["defaultValue"] | JsonValue[] | Record<string, JsonValue>;
@@ -150,7 +136,7 @@ export function summarizeManifest(manifest: ManifestDocument): ManifestSummary {
 	};
 }
 
-export function summarizeUnionBranches(manifestSummary: ManifestSummary) {
+export function summarizeUnionBranches(manifestSummary: ManifestSummary): UnionBranchSummary[] {
 	if (!manifestSummary?.attributes) {
 		return [];
 	}

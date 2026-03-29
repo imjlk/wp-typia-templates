@@ -51,6 +51,28 @@ export interface ManifestDocument {
 	sourceType?: string | null;
 }
 
+export interface ManifestSummaryAttribute {
+	constraints: ManifestAttribute["typia"]["constraints"];
+	defaultValue: ManifestAttribute["typia"]["defaultValue"] | null;
+	enum: ManifestAttribute["wp"]["enum"] | null;
+	hasDefault: boolean;
+	kind: ManifestAttribute["ts"]["kind"] | null;
+	required: boolean;
+	union: ManifestAttribute["ts"]["union"] | null;
+}
+
+export interface ManifestSummary {
+	attributes: Record<string, ManifestSummaryAttribute>;
+	manifestVersion: number | null;
+	sourceType: string | null;
+}
+
+export interface UnionBranchSummary {
+	branches: string[];
+	discriminator: string | null;
+	field: string;
+}
+
 export interface MigrationConfig {
 	blockName: string;
 	currentVersion: string;
@@ -118,6 +140,7 @@ export interface RenameCandidate {
 
 export interface TransformSuggestion {
 	attribute: ManifestAttribute | null;
+	bodyLines: string[];
 	currentPath: string;
 	legacyPath: string | null;
 	reason: string;
@@ -136,6 +159,25 @@ export interface MigrationDiff {
 	currentTypeName: string | null | undefined;
 	fromVersion: string;
 	summary: MigrationDiffSummary;
+	toVersion: string;
+}
+
+export interface MigrationRuleFileInput {
+	currentAttributes: Record<string, ManifestAttribute>;
+	currentTypeName: string | null | undefined;
+	diff: MigrationDiff;
+	fromVersion: string;
+	targetVersion: string;
+}
+
+export interface MigrationFixtureCase {
+	input: JsonObject;
+	name: string;
+}
+
+export interface MigrationFixtureDocument {
+	cases: MigrationFixtureCase[];
+	fromVersion: string;
 	toVersion: string;
 }
 
