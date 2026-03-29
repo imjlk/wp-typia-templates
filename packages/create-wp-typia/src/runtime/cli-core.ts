@@ -1,4 +1,3 @@
-// @ts-nocheck
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -18,38 +17,97 @@ import {
 	formatRunScript,
 	getPackageManagerSelectOptions,
 } from "./package-managers.js";
+import type { PackageManagerId } from "./package-managers.js";
 import {
 	TEMPLATE_IDS,
 	getTemplateById,
 	getTemplateSelectOptions,
 	listTemplates,
 } from "./template-registry.js";
+import type { TemplateDefinition } from "./template-registry.js";
 
-export function createReadlinePrompt() {
+type ValidateInput = (value: string) => boolean | string;
+
+interface PromptOption<T extends string> {
+	hint?: string;
+	label: string;
+	value: T;
+}
+
+interface ReadlinePrompt {
+	close(): void;
+	select<T extends string>(message: string, options: PromptOption<T>[], defaultValue?: number): Promise<T>;
+	text(message: string, defaultValue: string, validate?: ValidateInput): Promise<string>;
+}
+
+interface DoctorCheck {
+	detail: string;
+	label: string;
+	status: "pass" | "fail";
+}
+
+interface RunDoctorOptions {
+	renderLine?: (check: DoctorCheck) => void;
+}
+
+interface GetNextStepsOptions {
+	noInstall: boolean;
+	packageManager: PackageManagerId;
+	projectDir: string;
+	projectInput: string;
+}
+
+interface RunScaffoldFlowOptions {
+	allowExistingDir?: boolean;
+	cwd?: string;
+	installDependencies?: Parameters<typeof scaffoldProject>[0]["installDependencies"];
+	isInteractive?: boolean;
+	noInstall?: boolean;
+	packageManager?: string;
+	projectInput: string;
+	promptText?: Parameters<typeof collectScaffoldAnswers>[0]["promptText"];
+	selectPackageManager?: () => Promise<PackageManagerId>;
+	selectTemplate?: () => Promise<TemplateDefinition["id"]>;
+	templateId?: string;
+	yes?: boolean;
+}
+
+interface LegacyArgs {
+	help: boolean;
+	noInstall: boolean;
+	packageManager?: string;
+	yes: boolean;
+}
+
+export function createReadlinePrompt(): ReadlinePrompt {
 	const rl = readline.createInterface({
 		input: process.stdin,
 		output: process.stdout,
 	});
 
 	return {
-		async text(message, defaultValue, validate) {
+		async text(message: string, defaultValue: string, validate?: ValidateInput): Promise<string> {
 			const suffix = defaultValue ? ` (${defaultValue})` : "";
-			const answer = await new Promise((resolve) => {
+			const answer = await new Promise<string>((resolve) => {
 				rl.question(`${message}${suffix}: `, resolve);
 			});
 
 			const value = String(answer).trim() || defaultValue;
 			if (validate) {
 				const result = validate(value);
-				if (result !== true) {
-					console.error(`❌ ${result}`);
+					if (result !== true) {
+						console.error(`❌ ${typeof result === "string" ? result : "Invalid input"}`);
 					return this.text(message, defaultValue, validate);
 				}
 			}
 
 			return value;
 		},
-		async select(message, options, defaultValue = 1) {
+		async select<T extends string>(
+			message: string,
+			options: PromptOption<T>[],
+			defaultValue = 1,
+		): Promise<T> {
 			console.log(message);
 			options.forEach((option, index) => {
 				const hint = option.hint ? ` - ${option.hint}` : "";
@@ -70,13 +128,13 @@ export function createReadlinePrompt() {
 			console.error(`❌ Invalid selection: ${answer}`);
 			return this.select(message, options, defaultValue);
 		},
-		close() {
+		close(): void {
 			rl.close();
 		},
 	};
 }
 
-export function formatHelpText() {
+export function formatHelpText(): string {
 	return `Usage:
   create-wp-typia <project-dir> [--template <id>] [--yes] [--no-install] [--package-manager <id>]
   create-wp-typia templates list
@@ -88,15 +146,15 @@ Templates: ${TEMPLATE_IDS.join(", ")}
 Package managers: ${PACKAGE_MANAGER_IDS.join(", ")}`;
 }
 
-export function formatTemplateSummary(template) {
+export function formatTemplateSummary(template: TemplateDefinition): string {
 	return `${template.id.padEnd(14)} ${template.description}`;
 }
 
-export function formatTemplateFeatures(template) {
+export function formatTemplateFeatures(template: TemplateDefinition): string {
 	return `  ${template.features.join(" • ")}`;
 }
 
-export function formatTemplateDetails(template) {
+export function formatTemplateDetails(template: TemplateDefinition): string {
 	return [
 		template.id,
 		template.description,
@@ -106,7 +164,7 @@ export function formatTemplateDetails(template) {
 	].join("\n");
 }
 
-function readCommandVersion(command, args = ["--version"]) {
+function readCommandVersion(command: string, args: string[] = ["--version"]): string | null {
 	try {
 		return execFileSync(command, args, {
 			encoding: "utf8",
@@ -117,12 +175,12 @@ function readCommandVersion(command, args = ["--version"]) {
 	}
 }
 
-function compareMajorVersion(actualVersion, minimumMajor) {
+function compareMajorVersion(actualVersion: string, minimumMajor: number): boolean {
 	const parsed = Number.parseInt(actualVersion.replace(/^v/, "").split(".")[0] ?? "", 10);
 	return Number.isFinite(parsed) && parsed >= minimumMajor;
 }
 
-async function checkWritableDirectory(directory) {
+async function checkWritableDirectory(directory: string): Promise<boolean> {
 	try {
 		await access(directory, fsConstants.W_OK);
 		return true;
@@ -131,7 +189,7 @@ async function checkWritableDirectory(directory) {
 	}
 }
 
-async function checkTempDirectory() {
+async function checkTempDirectory(): Promise<boolean> {
 	const tempFile = path.join(os.tmpdir(), `create-wp-typia-${Date.now()}.tmp`);
 	try {
 		await writeFile(tempFile, "ok", "utf8");
@@ -142,8 +200,8 @@ async function checkTempDirectory() {
 	}
 }
 
-export async function getDoctorChecks(cwd) {
-	const checks = [];
+export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
+	const checks: DoctorCheck[] = [];
 	const bunVersion = readCommandVersion("bun");
 	const nodeVersion = readCommandVersion("node");
 	const gitVersion = readCommandVersion("git");
@@ -190,7 +248,10 @@ export async function getDoctorChecks(cwd) {
 	return checks;
 }
 
-export async function runDoctor(cwd, { renderLine }) {
+export async function runDoctor(
+	cwd: string,
+	{ renderLine = (check: DoctorCheck) => console.log(`${check.status.toUpperCase()} ${check.label}: ${check.detail}`) }: RunDoctorOptions = {},
+): Promise<DoctorCheck[]> {
 	const checks = await getDoctorChecks(cwd);
 
 	for (const check of checks) {
@@ -204,7 +265,12 @@ export async function runDoctor(cwd, { renderLine }) {
 	return checks;
 }
 
-export function getNextSteps({ projectInput, projectDir, packageManager, noInstall }) {
+export function getNextSteps({
+	projectInput,
+	projectDir,
+	packageManager,
+	noInstall,
+}: GetNextStepsOptions): string[] {
 	const steps = [`cd ${path.isAbsolute(projectInput) ? projectDir : projectInput}`];
 
 	if (noInstall) {
@@ -228,7 +294,7 @@ export async function runScaffoldFlow({
 	selectPackageManager,
 	promptText,
 	installDependencies = undefined,
-}) {
+}: RunScaffoldFlowOptions) {
 	if (!projectInput) {
 		throw new Error("Project directory is required. Usage: create-wp-typia <project-dir>");
 	}
@@ -278,8 +344,8 @@ export async function runScaffoldFlow({
 	};
 }
 
-function parseLegacyArgs(argv) {
-	const parsed = {
+function parseLegacyArgs(argv: string[]): LegacyArgs {
+	const parsed: LegacyArgs = {
 		help: false,
 		noInstall: false,
 		packageManager: undefined,
@@ -317,7 +383,10 @@ function parseLegacyArgs(argv) {
 	return parsed;
 }
 
-export async function runLegacyCli(templateId, argv = process.argv.slice(2)) {
+export async function runLegacyCli(
+	templateId: TemplateDefinition["id"],
+	argv: string[] = process.argv.slice(2),
+): Promise<void> {
 	const args = parseLegacyArgs(argv);
 	if (args.help) {
 		console.log(

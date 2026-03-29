@@ -1,4 +1,3 @@
-// @ts-nocheck
 import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
@@ -11,17 +10,95 @@ import {
 	getPackageManager,
 	transformPackageManagerText,
 } from "./package-managers.js";
+import type { PackageManagerId } from "./package-managers.js";
 import { TEMPLATE_IDS, getTemplateById } from "./template-registry.js";
+import type { TemplateDefinition } from "./template-registry.js";
 
 const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
-const LOCKFILES = {
+const LOCKFILES: Record<PackageManagerId, string[]> = {
 	bun: ["bun.lock", "bun.lockb"],
 	npm: ["package-lock.json"],
 	pnpm: ["pnpm-lock.yaml"],
 	yarn: ["yarn.lock"],
 };
 
-function toKebabCase(input) {
+export interface ScaffoldAnswers {
+	author: string;
+	description: string;
+	namespace: string;
+	slug: string;
+	title: string;
+}
+
+export interface ScaffoldTemplateVariables {
+	author: string;
+	category: string;
+	cssClassName: string;
+	dashCase: string;
+	dashicon: string;
+	description: string;
+	keyword: string;
+	namespace: string;
+	needsMigration: string;
+	pascalCase: string;
+	slug: string;
+	slugCamelCase: string;
+	slugKebabCase: string;
+	slugSnakeCase: string;
+	textDomain: string;
+	textdomain: string;
+	title: string;
+	titleCase: string;
+}
+
+interface ResolveTemplateOptions {
+	isInteractive?: boolean;
+	selectTemplate?: () => Promise<TemplateDefinition["id"]>;
+	templateId?: string;
+	yes?: boolean;
+}
+
+interface ResolvePackageManagerOptions {
+	isInteractive?: boolean;
+	packageManager?: string;
+	selectPackageManager?: () => Promise<PackageManagerId>;
+	yes?: boolean;
+}
+
+interface CollectScaffoldAnswersOptions {
+	projectName: string;
+	promptText?: (
+		message: string,
+		defaultValue: string,
+		validate?: (value: string) => true | string,
+	) => Promise<string>;
+	templateId: TemplateDefinition["id"];
+	yes?: boolean;
+}
+
+interface InstallDependenciesOptions {
+	packageManager: PackageManagerId;
+	projectDir: string;
+}
+
+interface ScaffoldProjectOptions {
+	allowExistingDir?: boolean;
+	answers: ScaffoldAnswers;
+	installDependencies?: ((options: InstallDependenciesOptions) => Promise<void>) | undefined;
+	noInstall?: boolean;
+	packageManager: PackageManagerId;
+	projectDir: string;
+	templateId: TemplateDefinition["id"];
+}
+
+export interface ScaffoldProjectResult {
+	packageManager: PackageManagerId;
+	projectDir: string;
+	templateId: TemplateDefinition["id"];
+	variables: ScaffoldTemplateVariables;
+}
+
+function toKebabCase(input: string): string {
 	return input
 		.trim()
 		.replace(/([a-z0-9])([A-Z])/g, "$1-$2")
@@ -31,11 +108,11 @@ function toKebabCase(input) {
 		.toLowerCase();
 }
 
-function toSnakeCase(input) {
+function toSnakeCase(input: string): string {
 	return toKebabCase(input).replace(/-/g, "_");
 }
 
-function toPascalCase(input) {
+function toPascalCase(input: string): string {
 	return toKebabCase(input)
 		.split("-")
 		.filter(Boolean)
@@ -43,7 +120,7 @@ function toPascalCase(input) {
 		.join("");
 }
 
-function toTitle(input) {
+function toTitle(input: string): string {
 	return toKebabCase(input)
 		.split("-")
 		.filter(Boolean)
@@ -51,11 +128,11 @@ function toTitle(input) {
 		.join(" ");
 }
 
-function validateBlockSlug(input) {
+function validateBlockSlug(input: string): true | string {
 	return BLOCK_SLUG_PATTERN.test(input) || "Use lowercase letters, numbers, and hyphens only";
 }
 
-export function detectAuthor() {
+export function detectAuthor(): string {
 	try {
 		return (
 			execSync("git config user.name", {
@@ -68,7 +145,10 @@ export function detectAuthor() {
 	}
 }
 
-export function getDefaultAnswers(projectName, templateId) {
+export function getDefaultAnswers(
+	projectName: string,
+	templateId: TemplateDefinition["id"],
+): ScaffoldAnswers {
 	const template = getTemplateById(templateId);
 	const slugDefault = toKebabCase(projectName || "my-wp-typia-block");
 	return {
@@ -85,7 +165,7 @@ export async function resolveTemplateId({
 	yes = false,
 	isInteractive = false,
 	selectTemplate,
-}) {
+}: ResolveTemplateOptions): Promise<TemplateDefinition["id"]> {
 	if (templateId) {
 		return getTemplateById(templateId).id;
 	}
@@ -106,7 +186,7 @@ export async function resolvePackageManagerId({
 	yes = false,
 	isInteractive = false,
 	selectPackageManager,
-}) {
+}: ResolvePackageManagerOptions): Promise<PackageManagerId> {
 	if (packageManager) {
 		return getPackageManager(packageManager).id;
 	}
@@ -131,7 +211,7 @@ export async function collectScaffoldAnswers({
 	templateId,
 	yes = false,
 	promptText,
-}) {
+}: CollectScaffoldAnswersOptions): Promise<ScaffoldAnswers> {
 	const defaults = getDefaultAnswers(projectName, templateId);
 
 	if (yes) {
@@ -155,7 +235,10 @@ export async function collectScaffoldAnswers({
 	};
 }
 
-export function getTemplateVariables(templateId, answers) {
+export function getTemplateVariables(
+	templateId: TemplateDefinition["id"],
+	answers: ScaffoldAnswers,
+): ScaffoldTemplateVariables {
 	const template = getTemplateById(templateId);
 	const slug = toKebabCase(answers.slug);
 	const slugSnakeCase = toSnakeCase(slug);
@@ -186,14 +269,14 @@ export function getTemplateVariables(templateId, answers) {
 	};
 }
 
-function replaceVariables(content, variables) {
+function replaceVariables(content: string, variables: ScaffoldTemplateVariables): string {
 	return content.replace(/\{\{([^}]+)\}\}/g, (match, rawKey) => {
-		const key = rawKey.trim();
+		const key = rawKey.trim() as keyof ScaffoldTemplateVariables;
 		return Object.prototype.hasOwnProperty.call(variables, key) ? variables[key] : match;
 	});
 }
 
-async function ensureDirectory(targetDir, allowExisting = false) {
+async function ensureDirectory(targetDir: string, allowExisting = false): Promise<void> {
 	if (!fs.existsSync(targetDir)) {
 		await fsp.mkdir(targetDir, { recursive: true });
 		return;
@@ -209,7 +292,11 @@ async function ensureDirectory(targetDir, allowExisting = false) {
 	}
 }
 
-async function copyTemplateDir(sourceDir, targetDir, variables) {
+async function copyTemplateDir(
+	sourceDir: string,
+	targetDir: string,
+	variables: ScaffoldTemplateVariables,
+): Promise<void> {
 	const entries = await fsp.readdir(sourceDir, { withFileTypes: true });
 	for (const entry of entries) {
 		const sourcePath = path.join(sourceDir, entry.name);
@@ -229,7 +316,11 @@ async function copyTemplateDir(sourceDir, targetDir, variables) {
 	}
 }
 
-function buildReadme(templateId, variables, packageManager) {
+function buildReadme(
+	templateId: TemplateDefinition["id"],
+	variables: ScaffoldTemplateVariables,
+	packageManager: PackageManagerId,
+): string {
 	return `# ${variables.title}
 
 ${variables.description}
@@ -261,7 +352,7 @@ ${formatRunScript(packageManager, "sync-types")}
 `;
 }
 
-function buildGitignore() {
+function buildGitignore(): string {
 	return `# Dependencies
 node_modules/
 .yarn/
@@ -285,7 +376,10 @@ Thumbs.db
 `;
 }
 
-async function normalizePackageManagerFiles(targetDir, packageManagerId) {
+async function normalizePackageManagerFiles(
+	targetDir: string,
+	packageManagerId: PackageManagerId,
+): Promise<void> {
 	const yarnRcPath = path.join(targetDir, ".yarnrc.yml");
 
 	if (packageManagerId === "yarn") {
@@ -298,14 +392,17 @@ async function normalizePackageManagerFiles(targetDir, packageManagerId) {
 	}
 }
 
-async function normalizePackageJson(targetDir, packageManagerId) {
+async function normalizePackageJson(targetDir: string, packageManagerId: PackageManagerId): Promise<void> {
 	const packageJsonPath = path.join(targetDir, "package.json");
 	if (!fs.existsSync(packageJsonPath)) {
 		return;
 	}
 
 	const packageManager = getPackageManager(packageManagerId);
-	const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, "utf8"));
+	const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, "utf8")) as {
+		packageManager?: string;
+		scripts?: Record<string, string>;
+	};
 	packageJson.packageManager = packageManager.packageManagerField;
 
 	if (packageJson.scripts) {
@@ -319,7 +416,10 @@ async function normalizePackageJson(targetDir, packageManagerId) {
 	await fsp.writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, "\t")}\n`, "utf8");
 }
 
-async function removeUnexpectedLockfiles(targetDir, packageManagerId) {
+async function removeUnexpectedLockfiles(
+	targetDir: string,
+	packageManagerId: PackageManagerId,
+): Promise<void> {
 	const keep = new Set(LOCKFILES[packageManagerId] ?? []);
 	const allLockfiles = Object.values(LOCKFILES).flat();
 
@@ -337,7 +437,10 @@ async function removeUnexpectedLockfiles(targetDir, packageManagerId) {
 	);
 }
 
-async function replaceTextRecursively(targetDir, packageManagerId) {
+async function replaceTextRecursively(
+	targetDir: string,
+	packageManagerId: PackageManagerId,
+): Promise<void> {
 	const textExtensions = new Set([
 		".css",
 		".js",
@@ -351,7 +454,7 @@ async function replaceTextRecursively(targetDir, packageManagerId) {
 		".txt",
 	]);
 
-	async function visit(currentPath) {
+	async function visit(currentPath: string): Promise<void> {
 		const stats = await fsp.stat(currentPath);
 		if (stats.isDirectory()) {
 			const entries = await fsp.readdir(currentPath);
@@ -381,7 +484,10 @@ async function replaceTextRecursively(targetDir, packageManagerId) {
 	await visit(targetDir);
 }
 
-async function defaultInstallDependencies({ projectDir, packageManager }) {
+async function defaultInstallDependencies({
+	projectDir,
+	packageManager,
+}: InstallDependenciesOptions): Promise<void> {
 	execSync(formatInstallCommand(packageManager), {
 		cwd: projectDir,
 		stdio: "inherit",
@@ -396,7 +502,7 @@ export async function scaffoldProject({
 	allowExistingDir = false,
 	noInstall = false,
 	installDependencies = undefined,
-}) {
+}: ScaffoldProjectOptions): Promise<ScaffoldProjectResult> {
 	const template = getTemplateById(templateId);
 	const resolvedPackageManager = getPackageManager(packageManager).id;
 
@@ -435,7 +541,10 @@ export async function scaffoldProject({
 	};
 }
 
-export async function runLegacyCli(templateId, argv = process.argv.slice(2)) {
+export async function runLegacyCli(
+	templateId: TemplateDefinition["id"],
+	argv: string[] = process.argv.slice(2),
+) {
 	const { runLegacyCli: runLegacyCliImpl } = await import("./cli-core.js");
 	return runLegacyCliImpl(templateId, argv);
 }
