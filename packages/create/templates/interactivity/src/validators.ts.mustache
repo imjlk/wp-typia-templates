@@ -1,6 +1,10 @@
 import typia from "typia";
+import currentManifest from "./typia.manifest.json";
+import {
+  type ManifestDefaultsDocument,
+  applyTemplateDefaultsFromManifest,
+} from "@wp-typia/create/runtime/defaults";
 import { {{pascalCase}}Attributes, {{pascalCase}}ValidationResult } from "./types";
-import { applyTemplateDefaults } from "./manifest-defaults";
 
 const validate = typia.createValidate<{{pascalCase}}Attributes>();
 const assert = typia.createAssert<{{pascalCase}}Attributes>();
@@ -53,7 +57,10 @@ export const validate{{pascalCase}}Attributes = (attributes: unknown): {{pascalC
 export const sanitize{{pascalCase}}Attributes = (
   attributes: Partial<{{pascalCase}}Attributes>,
 ): {{pascalCase}}Attributes => {
-  const normalized = applyTemplateDefaults<{{pascalCase}}Attributes>(attributes);
+  const normalized = applyTemplateDefaultsFromManifest<{{pascalCase}}Attributes>(
+    currentManifest as ManifestDefaultsDocument,
+    attributes,
+  );
 
   return {
     ...normalized,

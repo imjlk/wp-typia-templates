@@ -30,7 +30,7 @@ export function ensureAdvancedMigrationProject(projectDir: string): void {
 	const missing = SUPPORTED_PROJECT_FILES.filter((relativePath) => !fs.existsSync(path.join(projectDir, relativePath)));
 	if (missing.length > 0) {
 		throw new Error(
-			`This directory is not a supported advanced migration project. Missing: ${missing.join(", ")}`,
+			`This directory is not a supported migration-capable project. Missing: ${missing.join(", ")}`,
 		);
 	}
 }

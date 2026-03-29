@@ -1,0 +1,32 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "create-block/remote-seed",
+	"title": "Remote Seed",
+	"category": "widgets",
+	"icon": "layout",
+	"description": "A remote create-block subset fixture.",
+	"keywords": ["remote", "seed"],
+	"supports": {
+		"html": false,
+		"align": ["wide", "full"]
+	},
+	"attributes": {
+		"content": {
+			"type": "string",
+			"default": ""
+		},
+		"alignment": {
+			"type": "string",
+			"enum": ["left", "center", "right"],
+			"default": "left"
+		},
+		"isVisible": {
+			"type": "boolean",
+			"default": true
+		}
+	},
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css"
+}

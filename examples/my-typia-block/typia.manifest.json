@@ -1,0 +1,846 @@
+{
+	"attributes": {
+		"id": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": "uuid",
+					"maxLength": null,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": null,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": null,
+				"hasDefault": false
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": null,
+				"enum": null,
+				"hasDefault": false,
+				"type": "string"
+			}
+		},
+		"version": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": null,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": null,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": "uint32"
+				},
+				"defaultValue": 1,
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "number",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": 1,
+				"enum": null,
+				"hasDefault": true,
+				"type": "number"
+			}
+		},
+		"className": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": 100,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": null,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": null,
+				"hasDefault": false
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": null,
+				"enum": null,
+				"hasDefault": false,
+				"type": "string"
+			}
+		},
+		"content": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": 1000,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": 0,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": "",
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": true,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": "",
+				"enum": null,
+				"hasDefault": true,
+				"type": "string"
+			}
+		},
+		"alignment": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": null,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": null,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": "left",
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": "left",
+				"enum": [
+					"left",
+					"center",
+					"right",
+					"justify"
+				],
+				"hasDefault": true,
+				"type": "string"
+			}
+		},
+		"isVisible": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": null,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": null,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": true,
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "boolean",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": true,
+				"enum": null,
+				"hasDefault": true,
+				"type": "boolean"
+			}
+		},
+		"fontSize": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": null,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": null,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": "medium",
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": "medium",
+				"enum": [
+					"small",
+					"medium",
+					"large",
+					"xlarge"
+				],
+				"hasDefault": true,
+				"type": "string"
+			}
+		},
+		"textColor": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": null,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": null,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": "currentColor",
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": "currentColor",
+				"enum": [
+					"transparent",
+					"currentColor",
+					"inherit",
+					"initial",
+					"unset"
+				],
+				"hasDefault": true,
+				"type": "string"
+			}
+		},
+		"backgroundColor": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": null,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": null,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": "transparent",
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": "transparent",
+				"enum": [
+					"transparent",
+					"currentColor",
+					"inherit",
+					"initial",
+					"unset"
+				],
+				"hasDefault": true,
+				"type": "string"
+			}
+		},
+		"aspectRatio": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": null,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": null,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": "16/9",
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": "16/9",
+				"enum": [
+					"auto",
+					"1",
+					"1/1",
+					"4/3",
+					"3/4",
+					"3/2",
+					"2/3",
+					"16/9",
+					"9/16",
+					"21/9"
+				],
+				"hasDefault": true,
+				"type": "string"
+			}
+		},
+		"padding": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": null,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": null,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": null,
+				"hasDefault": false
+			},
+			"ts": {
+				"items": null,
+				"kind": "object",
+				"properties": {
+					"top": {
+						"typia": {
+							"constraints": {
+								"exclusiveMaximum": null,
+								"exclusiveMinimum": null,
+								"format": null,
+								"maxLength": null,
+								"maxItems": null,
+								"maximum": null,
+								"minLength": null,
+								"minItems": null,
+								"minimum": 0,
+								"multipleOf": null,
+								"pattern": null,
+								"typeTag": null
+							},
+							"defaultValue": 0,
+							"hasDefault": true
+						},
+						"ts": {
+							"items": null,
+							"kind": "number",
+							"properties": null,
+							"required": true,
+							"union": null
+						},
+						"wp": {
+							"defaultValue": 0,
+							"enum": null,
+							"hasDefault": true,
+							"type": "number"
+						}
+					},
+					"right": {
+						"typia": {
+							"constraints": {
+								"exclusiveMaximum": null,
+								"exclusiveMinimum": null,
+								"format": null,
+								"maxLength": null,
+								"maxItems": null,
+								"maximum": null,
+								"minLength": null,
+								"minItems": null,
+								"minimum": 0,
+								"multipleOf": null,
+								"pattern": null,
+								"typeTag": null
+							},
+							"defaultValue": 0,
+							"hasDefault": true
+						},
+						"ts": {
+							"items": null,
+							"kind": "number",
+							"properties": null,
+							"required": true,
+							"union": null
+						},
+						"wp": {
+							"defaultValue": 0,
+							"enum": null,
+							"hasDefault": true,
+							"type": "number"
+						}
+					},
+					"bottom": {
+						"typia": {
+							"constraints": {
+								"exclusiveMaximum": null,
+								"exclusiveMinimum": null,
+								"format": null,
+								"maxLength": null,
+								"maxItems": null,
+								"maximum": null,
+								"minLength": null,
+								"minItems": null,
+								"minimum": 0,
+								"multipleOf": null,
+								"pattern": null,
+								"typeTag": null
+							},
+							"defaultValue": 0,
+							"hasDefault": true
+						},
+						"ts": {
+							"items": null,
+							"kind": "number",
+							"properties": null,
+							"required": true,
+							"union": null
+						},
+						"wp": {
+							"defaultValue": 0,
+							"enum": null,
+							"hasDefault": true,
+							"type": "number"
+						}
+					},
+					"left": {
+						"typia": {
+							"constraints": {
+								"exclusiveMaximum": null,
+								"exclusiveMinimum": null,
+								"format": null,
+								"maxLength": null,
+								"maxItems": null,
+								"maximum": null,
+								"minLength": null,
+								"minItems": null,
+								"minimum": 0,
+								"multipleOf": null,
+								"pattern": null,
+								"typeTag": null
+							},
+							"defaultValue": 0,
+							"hasDefault": true
+						},
+						"ts": {
+							"items": null,
+							"kind": "number",
+							"properties": null,
+							"required": true,
+							"union": null
+						},
+						"wp": {
+							"defaultValue": 0,
+							"enum": null,
+							"hasDefault": true,
+							"type": "number"
+						}
+					}
+				},
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": null,
+				"enum": null,
+				"hasDefault": false,
+				"type": "object"
+			}
+		},
+		"borderRadius": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": null,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": null,
+					"minItems": null,
+					"minimum": 0,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": 0,
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "number",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": 0,
+				"enum": null,
+				"hasDefault": true,
+				"type": "number"
+			}
+		},
+		"animation": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": null,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": null,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": "none",
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": "none",
+				"enum": [
+					"none",
+					"fadeIn",
+					"bounce"
+				],
+				"hasDefault": true,
+				"type": "string"
+			}
+		},
+		"linkTarget": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": null,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": null,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": null,
+				"hasDefault": false
+			},
+			"ts": {
+				"items": null,
+				"kind": "union",
+				"properties": null,
+				"required": false,
+				"union": {
+					"branches": {
+						"url": {
+							"typia": {
+								"constraints": {
+									"exclusiveMaximum": null,
+									"exclusiveMinimum": null,
+									"format": null,
+									"maxLength": null,
+									"maxItems": null,
+									"maximum": null,
+									"minLength": null,
+									"minItems": null,
+									"minimum": null,
+									"multipleOf": null,
+									"pattern": null,
+									"typeTag": null
+								},
+								"defaultValue": null,
+								"hasDefault": false
+							},
+							"ts": {
+								"items": null,
+								"kind": "object",
+								"properties": {
+									"kind": {
+										"typia": {
+											"constraints": {
+												"exclusiveMaximum": null,
+												"exclusiveMinimum": null,
+												"format": null,
+												"maxLength": null,
+												"maxItems": null,
+												"maximum": null,
+												"minLength": null,
+												"minItems": null,
+												"minimum": null,
+												"multipleOf": null,
+												"pattern": null,
+												"typeTag": null
+											},
+											"defaultValue": null,
+											"hasDefault": false
+										},
+										"ts": {
+											"items": null,
+											"kind": "string",
+											"properties": null,
+											"required": true,
+											"union": null
+										},
+										"wp": {
+											"defaultValue": null,
+											"enum": [
+												"url"
+											],
+											"hasDefault": false,
+											"type": "string"
+										}
+									},
+									"href": {
+										"typia": {
+											"constraints": {
+												"exclusiveMaximum": null,
+												"exclusiveMinimum": null,
+												"format": "uri",
+												"maxLength": null,
+												"maxItems": null,
+												"maximum": null,
+												"minLength": null,
+												"minItems": null,
+												"minimum": null,
+												"multipleOf": null,
+												"pattern": null,
+												"typeTag": null
+											},
+											"defaultValue": null,
+											"hasDefault": false
+										},
+										"ts": {
+											"items": null,
+											"kind": "string",
+											"properties": null,
+											"required": true,
+											"union": null
+										},
+										"wp": {
+											"defaultValue": null,
+											"enum": null,
+											"hasDefault": false,
+											"type": "string"
+										}
+									}
+								},
+								"required": true,
+								"union": null
+							},
+							"wp": {
+								"defaultValue": null,
+								"enum": null,
+								"hasDefault": false,
+								"type": "object"
+							}
+						},
+						"post": {
+							"typia": {
+								"constraints": {
+									"exclusiveMaximum": null,
+									"exclusiveMinimum": null,
+									"format": null,
+									"maxLength": null,
+									"maxItems": null,
+									"maximum": null,
+									"minLength": null,
+									"minItems": null,
+									"minimum": null,
+									"multipleOf": null,
+									"pattern": null,
+									"typeTag": null
+								},
+								"defaultValue": null,
+								"hasDefault": false
+							},
+							"ts": {
+								"items": null,
+								"kind": "object",
+								"properties": {
+									"kind": {
+										"typia": {
+											"constraints": {
+												"exclusiveMaximum": null,
+												"exclusiveMinimum": null,
+												"format": null,
+												"maxLength": null,
+												"maxItems": null,
+												"maximum": null,
+												"minLength": null,
+												"minItems": null,
+												"minimum": null,
+												"multipleOf": null,
+												"pattern": null,
+												"typeTag": null
+											},
+											"defaultValue": null,
+											"hasDefault": false
+										},
+										"ts": {
+											"items": null,
+											"kind": "string",
+											"properties": null,
+											"required": true,
+											"union": null
+										},
+										"wp": {
+											"defaultValue": null,
+											"enum": [
+												"post"
+											],
+											"hasDefault": false,
+											"type": "string"
+										}
+									},
+									"postId": {
+										"typia": {
+											"constraints": {
+												"exclusiveMaximum": null,
+												"exclusiveMinimum": null,
+												"format": null,
+												"maxLength": null,
+												"maxItems": null,
+												"maximum": null,
+												"minLength": null,
+												"minItems": null,
+												"minimum": null,
+												"multipleOf": null,
+												"pattern": null,
+												"typeTag": "uint32"
+											},
+											"defaultValue": null,
+											"hasDefault": false
+										},
+										"ts": {
+											"items": null,
+											"kind": "number",
+											"properties": null,
+											"required": true,
+											"union": null
+										},
+										"wp": {
+											"defaultValue": null,
+											"enum": null,
+											"hasDefault": false,
+											"type": "number"
+										}
+									}
+								},
+								"required": true,
+								"union": null
+							},
+							"wp": {
+								"defaultValue": null,
+								"enum": null,
+								"hasDefault": false,
+								"type": "object"
+							}
+						}
+					},
+					"discriminator": "kind"
+				}
+			},
+			"wp": {
+				"defaultValue": null,
+				"enum": null,
+				"hasDefault": false,
+				"type": "object"
+			}
+		}
+	},
+	"manifestVersion": 2,
+	"sourceType": "MyTypiaBlockAttributes"
+}

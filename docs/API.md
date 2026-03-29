@@ -16,11 +16,20 @@ Common commands:
 
 ```bash
 wp-typia templates list
-wp-typia templates inspect advanced
+wp-typia templates inspect basic
 wp-typia doctor
 ```
 
-Migration commands are available only inside projects generated from the `advanced` template:
+Built-in templates are intentionally limited to `basic` and `interactivity`.
+
+Remote template MVP:
+
+```bash
+wp-typia my-block --template ./local-template-dir --package-manager npm --yes --no-install
+wp-typia my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
+```
+
+Migration commands remain available inside migration-capable projects such as [`examples/my-typia-block`](../examples/my-typia-block):
 
 ```bash
 wp-typia migrations init --current-version 1.0.0
@@ -50,7 +59,7 @@ Each scaffolded project exposes a few predictable files:
 - `typia.manifest.json`: manifest v2 with explicit default markers and supported discriminated union metadata
 - `typia-validator.php`: generated PHP validator for the supported server-side subset
 
-The `advanced` template adds:
+Migration-capable showcase or custom projects may also add:
 
 - `render.php`
 - `typia-migration-registry.php`

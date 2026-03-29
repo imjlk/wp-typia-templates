@@ -90,7 +90,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: my-typia-block-build
-          path: test-template/my-typia-block/build/
+          path: examples/my-typia-block/build/
           retention-days: 7
 
   generated-smoke:
@@ -106,17 +106,13 @@ jobs:
             package_manager: bun
             project_name: smoke-basic-bun
           - runtime: node
-            template: full
-            package_manager: npm
-            project_name: smoke-full-npm
-          - runtime: node
             template: interactivity
             package_manager: pnpm
             project_name: smoke-interactivity-pnpm
           - runtime: node
-            template: advanced
-            package_manager: yarn
-            project_name: smoke-advanced-yarn
+            template: ./packages/create/tests/fixtures/create-block-subset
+            package_manager: npm
+            project_name: smoke-remote-create-block
     steps:
       - name: Checkout
         uses: actions/checkout@v5

@@ -29,14 +29,26 @@ Additional commands:
 ```bash
 wp-typia templates list
 wp-typia templates inspect basic
+wp-typia doctor
+```
+
+Remote template MVP:
+
+```bash
+npx @wp-typia/create my-block --template ./local-template-dir --package-manager npm --yes --no-install
+npx @wp-typia/create my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
+```
+
+Built-in templates are intentionally limited to `basic` and `interactivity`.
+
+The `migrations` commands remain available for projects that include the migration workspace, such as the showcase app in [`examples/my-typia-block`](../../examples/my-typia-block) or compatible remote seeds:
+
+```bash
 wp-typia migrations init --current-version 1.0.0
 wp-typia migrations diff --from 1.0.0
 wp-typia migrations scaffold --from 1.0.0
 wp-typia migrations verify --all
-wp-typia doctor
 ```
-
-The `migrations` commands are for projects generated from the `advanced` template. That template includes a dynamic `render.php` server example, snapshot-based migration workspace, generated `typia-validator.php`, and `renameMap` / `transforms` authoring helpers. Basic, full, and interactivity projects do not include the snapshot migration workspace.
 
 Repo development stays Bun-first. The generated project can use `bun`, `npm`, `pnpm`, or `yarn`.
 

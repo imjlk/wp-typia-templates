@@ -129,13 +129,13 @@ export function createReadlinePrompt(): ReadlinePrompt {
 
 export function formatHelpText(): string {
 	return `Usage:
-  wp-typia <project-dir> [--template <id>] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <basic|interactivity|./path|github:owner/repo/path[#ref]>] [--yes] [--no-install] [--package-manager <id>]
   wp-typia templates list
   wp-typia templates inspect <id>
   wp-typia migrations <init|snapshot|diff|scaffold|verify> [...]
   wp-typia doctor
 
-Templates: ${TEMPLATE_IDS.join(", ")}
+Built-in templates: ${TEMPLATE_IDS.join(", ")}
 Package managers: ${PACKAGE_MANAGER_IDS.join(", ")}`;
 }
 
@@ -207,7 +207,7 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 		detail: bunVersion ? `Detected ${bunVersion}` : "Not available",
 	});
 	checks.push({
-		status: nodeVersion && compareMajorVersion(nodeVersion, 16) ? "pass" : "fail",
+		status: nodeVersion && compareMajorVersion(nodeVersion, 20) ? "pass" : "fail",
 		label: "Node",
 		detail: nodeVersion ? `Detected ${nodeVersion}` : "Not available",
 	});
@@ -316,6 +316,7 @@ export async function runScaffoldFlow({
 	const result = await scaffoldProject({
 		answers,
 		allowExistingDir,
+		cwd,
 		installDependencies,
 		noInstall,
 		packageManager: resolvedPackageManager,

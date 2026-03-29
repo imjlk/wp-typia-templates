@@ -15,6 +15,15 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
+      "@wp-typia/create": [
+        "packages/create/src/runtime/index.ts"
+      ],
+      "@wp-typia/create/metadata-core": [
+        "packages/create/src/runtime/metadata-core.ts"
+      ],
+      "@wp-typia/create/runtime/defaults": [
+        "packages/create/src/runtime/defaults.ts"
+      ],
       "@wp-typia/block-types": [
         "packages/wp-typia-block-types/src/index.ts"
       ],
@@ -30,7 +39,7 @@
   "include": [
     "packages/*/src/**/*",
     "packages/*/tests/**/*",
-    "test-template/**/src/**/*",
+    "examples/**/src/**/*",
     "tests/**/*"
   ],
   "exclude": [

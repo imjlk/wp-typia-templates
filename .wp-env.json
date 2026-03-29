@@ -3,7 +3,7 @@
   "core": null,
   "port": 8888,
   "plugins": [
-    "./test-template/my-typia-block"
+    "./examples/my-typia-block"
   ],
   "env": {
     "tests": {

@@ -1,4 +1,9 @@
 import typia from "typia";
+import currentManifest from "./typia.manifest.json";
+import {
+  type ManifestDefaultsDocument,
+  applyTemplateDefaultsFromManifest,
+} from "@wp-typia/create/runtime/defaults";
 import { {{pascalCase}}Attributes } from "./types";
 
 /**
@@ -12,6 +17,20 @@ export const validators = {
   clone: typia.misc.createClone<{{pascalCase}}Attributes>(),
   prune: typia.misc.createPrune<{{pascalCase}}Attributes>(),
 };
+
+export function sanitize{{pascalCase}}Attributes(
+  attributes: Partial<{{pascalCase}}Attributes>,
+): {{pascalCase}}Attributes {
+  const normalized = applyTemplateDefaultsFromManifest<{{pascalCase}}Attributes>(
+    currentManifest as ManifestDefaultsDocument,
+    attributes,
+  );
+
+  return {
+    ...normalized,
+    id: normalized.id && normalized.id.length > 0 ? normalized.id : generateRuntimeId(),
+  } as {{pascalCase}}Attributes;
+}
 
 /**
  * 속성 업데이터 생성
@@ -36,4 +55,12 @@ export function createAttributeUpdater(
       return false;
     }
   };
+}
+
+function generateRuntimeId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }

@@ -1,7 +1,13 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
-import { execFileSync, execSync } from 'node:child_process';
+import { describe, expect, test } from 'bun:test';
+import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import {
+	ensureExampleShowcaseSynced,
+	getExampleShowcaseDir,
+} from './helpers/example-showcase';
+
+ensureExampleShowcaseSynced();
 
 type ManifestAttribute = {
   typia: {
@@ -109,22 +115,19 @@ function matchesContractMultipleOf(value: number, multipleOf: number): boolean {
 }
 
 function loadExampleContract() {
-  const testTemplateDir = path.join(import.meta.dir, '../../test-template/my-typia-block');
-  const blockJson = JSON.parse(
-    fs.readFileSync(path.join(testTemplateDir, 'src/my-typia-block/block.json'), 'utf8'),
-  ) as BlockJsonContract;
-  const manifest = JSON.parse(
-    fs.readFileSync(path.join(testTemplateDir, 'src/my-typia-block/typia.manifest.json'), 'utf8'),
-  ) as ContractManifest;
+	const testTemplateDir = getExampleShowcaseDir();
+	const blockJson = JSON.parse(
+		fs.readFileSync(path.join(testTemplateDir, 'block.json'), 'utf8')
+	) as BlockJsonContract;
+	const manifest = JSON.parse(
+		fs.readFileSync(path.join(testTemplateDir, 'typia.manifest.json'), 'utf8')
+	) as ContractManifest;
 
-  return { blockJson, manifest };
+	return { blockJson, manifest };
 }
 
 function loadPhpValidatorPath() {
-  return path.join(
-    import.meta.dir,
-    '../../test-template/my-typia-block/src/my-typia-block/typia-validator.php',
-  );
+	return path.join(getExampleShowcaseDir(), 'typia-validator.php');
 }
 
 function validatePayload(
@@ -260,11 +263,6 @@ function runPhpValidator<T extends Record<string, unknown> | unknown[]>(
 }
 
 describe('Typia block attribute contract', () => {
-  beforeAll(() => {
-    const testTemplateDir = path.join(import.meta.dir, '../../test-template/my-typia-block');
-    execSync('bun run sync-types', { cwd: testTemplateDir });
-  });
-
   test('keeps block.json defaults aligned with typia.manifest defaults', () => {
     const { blockJson, manifest } = loadExampleContract();
 

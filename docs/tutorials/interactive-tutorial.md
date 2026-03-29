@@ -366,7 +366,7 @@ This regenerates `src/block.json` from your types and outputs the compiled asset
 Congratulations! You've built a type-safe WordPress block with runtime validation. Here's what you can explore next:
 
 1. **Add Interactivity API**: Switch to the Interactivity template for frontend state
-2. **Add Migrations**: Switch to the Advanced template for snapshot-based legacy compatibility
+2. **Add Migrations**: Use the showcase patterns from the `wp-typia` repository's `examples/my-typia-block` example if the block later needs snapshot-based legacy compatibility
 3. **Custom Validators**: Create custom validation logic
 4. **Block Variations**: Add multiple block variations
 5. **Nested Blocks**: Support inner blocks
