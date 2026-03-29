@@ -122,9 +122,30 @@ export function formatDiffReport(diff) {
 	}
 
 	if ((diff.summary.renameCandidates?.length ?? 0) > 0) {
-		lines.push("", "Rename candidates:");
-		for (const item of diff.summary.renameCandidates) {
-			lines.push(`  - ${item.currentPath} <- ${item.legacyPath}`);
+		const autoApplied = diff.summary.renameCandidates.filter((item) => item.autoApply);
+		const suggested = diff.summary.renameCandidates.filter((item) => !item.autoApply);
+
+		if (autoApplied.length > 0) {
+			lines.push("", "Auto-applied renames:");
+			for (const item of autoApplied) {
+				lines.push(
+					`  - ${item.currentPath} <- ${item.legacyPath} (${item.reason}, score ${item.score.toFixed(2)})`,
+				);
+			}
+		}
+		if (suggested.length > 0) {
+			lines.push("", "Suggested renames:");
+			for (const item of suggested) {
+				lines.push(
+					`  - ${item.currentPath} <- ${item.legacyPath} (${item.reason}, score ${item.score.toFixed(2)})`,
+				);
+			}
+		}
+	}
+	if ((diff.summary.transformSuggestions?.length ?? 0) > 0) {
+		lines.push("", "Suggested transforms:");
+		for (const item of diff.summary.transformSuggestions) {
+			lines.push(`  - ${item.currentPath}${item.legacyPath ? ` <- ${item.legacyPath}` : ""} (${item.reason})`);
 		}
 	}
 
@@ -269,7 +290,7 @@ export function scaffoldProjectMigrations(
 		);
 	}
 
-	ensureFixtureFile(projectDir, fromVersion);
+	ensureEdgeFixtureFile(projectDir, fromVersion, targetVersion, diff);
 	regenerateGeneratedArtifacts(projectDir);
 
 	renderLine(formatDiffReport(diff));
@@ -436,7 +457,7 @@ function discoverMigrationEntries(state) {
 		) {
 			entries.push({
 				blockJsonImport: `../versions/${version}/block.json`,
-				fixtureImport: `../fixtures/${version}.json`,
+				fixtureImport: `../fixtures/${version}-to-${currentVersion}.json`,
 				fromVersion: version,
 				manifestImport: `../versions/${version}/typia.manifest.json`,
 				ruleImport: `../rules/${version}-to-${currentVersion}`,
@@ -570,6 +591,27 @@ function createMigrationDiff(state, fromVersion, toVersion) {
 	}
 
 	const renameCandidates = createRenameCandidates(oldAttributes, newAttributes, removedKeys, addedKeys);
+	const activeRenameCandidates = renameCandidates.filter((candidate) => candidate.autoApply);
+
+	for (const candidate of activeRenameCandidates) {
+		removeOutcomeByPath(autoItems, candidate.legacyPath, "drop");
+		removeOutcomeByPath(autoItems, candidate.currentPath, "add-default");
+		removeOutcomeByPath(autoItems, candidate.currentPath, "add-optional");
+		removeOutcomeByPath(manualItems, candidate.currentPath, "required-addition");
+		autoItems.push({
+			detail: `legacy field ${candidate.legacyPath}`,
+			kind: "rename",
+			path: candidate.currentPath,
+		});
+	}
+	const transformSuggestions = createTransformSuggestions(
+		oldAttributes,
+		newAttributes,
+		addedKeys,
+		removedKeys,
+		manualItems,
+		renameCandidates,
+	);
 
 	return {
 		currentTypeName: targetManifest.sourceType ?? state.currentManifest.sourceType,
@@ -580,9 +622,17 @@ function createMigrationDiff(state, fromVersion, toVersion) {
 			manual: manualItems.length,
 			manualItems,
 			renameCandidates,
+			transformSuggestions,
 		},
 		toVersion,
 	};
+}
+
+function removeOutcomeByPath(items, pathLabel, kind) {
+	const index = items.findIndex((item) => item.path === pathLabel && item.kind === kind);
+	if (index >= 0) {
+		items.splice(index, 1);
+	}
 }
 
 function compareManifestAttribute(oldAttribute, newAttribute, attributePath) {
@@ -729,54 +779,299 @@ function getManifestDefaultValue(attribute) {
 }
 
 function createRenameCandidates(oldAttributes, newAttributes, removedKeys, addedKeys) {
-	const candidates = [];
+	const assessments = [];
 
 	for (const currentPath of addedKeys) {
 		const nextAttribute = newAttributes[currentPath];
-		if (!isPrimitiveRenameCandidate(nextAttribute)) {
+		for (const legacyPath of removedKeys) {
+			const candidate = assessRenameCandidate(oldAttributes[legacyPath], nextAttribute, legacyPath, currentPath);
+			if (candidate) {
+				assessments.push(candidate);
+			}
+		}
+	}
+
+	return assessments
+		.map((candidate) => {
+			const currentMatches = assessments
+				.filter((item) => item.currentPath === candidate.currentPath)
+				.sort((left, right) => right.score - left.score);
+			const legacyMatches = assessments
+				.filter((item) => item.legacyPath === candidate.legacyPath)
+				.sort((left, right) => right.score - left.score);
+			const currentLeader = currentMatches[0];
+			const legacyLeader = legacyMatches[0];
+			const currentHasTie =
+				currentMatches.length > 1 && Math.abs(currentMatches[1].score - currentLeader.score) < 0.05;
+			const legacyHasTie =
+				legacyMatches.length > 1 && Math.abs(legacyMatches[1].score - legacyLeader.score) < 0.05;
+
+			return {
+				...candidate,
+				autoApply:
+					currentLeader.legacyPath === candidate.legacyPath
+					&& legacyLeader.currentPath === candidate.currentPath
+					&& !currentHasTie
+					&& !legacyHasTie
+					&& candidate.score >= 0.6,
+			};
+		})
+		.filter((candidate, index, list) => {
+			const firstMatch = list.findIndex(
+				(item) => item.currentPath === candidate.currentPath && item.legacyPath === candidate.legacyPath,
+			);
+			return firstMatch === index;
+		})
+		.sort((left, right) => right.score - left.score);
+}
+
+function createTransformSuggestions(
+	oldAttributes,
+	newAttributes,
+	addedKeys,
+	removedKeys,
+	manualItems,
+	renameCandidates,
+) {
+	const suggestions = [];
+	const activeRenameTargets = new Set(
+		renameCandidates.filter((candidate) => candidate.autoApply).map((candidate) => candidate.currentPath),
+	);
+
+	for (const currentPath of Object.keys(newAttributes)) {
+		if (activeRenameTargets.has(currentPath)) {
 			continue;
 		}
 
-		const matchingLegacyPaths = removedKeys.filter((legacyPath) =>
-			isCompatibleRenamePair(oldAttributes[legacyPath], nextAttribute),
-		);
+		const manualItem = manualItems.find((item) => item.path === currentPath || item.path.startsWith(`${currentPath}<`));
+		const currentAttribute = newAttributes[currentPath];
+		if (!manualItem || !currentAttribute) {
+			continue;
+		}
 
-		if (matchingLegacyPaths.length === 1) {
-			candidates.push({
+		const exactLegacy = oldAttributes[currentPath];
+		if (exactLegacy && exactLegacy.ts.kind !== currentAttribute.ts.kind) {
+			suggestions.push({
+				bodyLines: buildTransformBodyLines(currentAttribute, currentPath),
 				currentPath,
-				legacyPath: matchingLegacyPaths[0],
+				legacyPath: currentPath,
+				reason: `semantic coercion suggested for ${manualItem.kind}`,
+			});
+			continue;
+		}
+
+		const bestRenameCandidate = renameCandidates.find((candidate) => candidate.currentPath === currentPath);
+		if (bestRenameCandidate && !bestRenameCandidate.autoApply) {
+			suggestions.push({
+				bodyLines: buildTransformBodyLines(currentAttribute, bestRenameCandidate.legacyPath),
+				currentPath,
+				legacyPath: bestRenameCandidate.legacyPath,
+				reason: `review coercion from ${bestRenameCandidate.legacyPath}`,
+			});
+			continue;
+		}
+
+		const addedCurrent = addedKeys.includes(currentPath);
+		if (!addedCurrent) {
+			continue;
+		}
+
+		const compatibleLegacyPath = removedKeys.find((legacyPath) =>
+			passesNameSimilarityRule(legacyPath, currentPath),
+		);
+		if (compatibleLegacyPath) {
+			suggestions.push({
+				bodyLines: buildTransformBodyLines(currentAttribute, compatibleLegacyPath),
+				currentPath,
+				legacyPath: compatibleLegacyPath,
+				reason: `review coercion from ${compatibleLegacyPath}`,
 			});
 		}
 	}
 
-	return candidates;
+	return suggestions;
 }
 
-function isPrimitiveRenameCandidate(attribute) {
-	return attribute && ["string", "number", "boolean"].includes(attribute.ts.kind);
+function isRenameCandidateShapeCompatible(oldAttribute, newAttribute) {
+	if (!oldAttribute || !newAttribute || oldAttribute.ts.kind !== newAttribute.ts.kind) {
+		return false;
+	}
+
+	if (["string", "number", "boolean"].includes(oldAttribute.ts.kind)) {
+		return hasRenameCompatibleConstraints(oldAttribute, newAttribute);
+	}
+
+	if (oldAttribute.ts.kind === "union") {
+		return compareUnionAttribute(oldAttribute, newAttribute, "$rename").status === "auto";
+	}
+
+	return false;
 }
 
-function isCompatibleRenamePair(oldAttribute, newAttribute) {
-	if (!oldAttribute || !newAttribute) {
-		return false;
-	}
-	if (oldAttribute.ts.kind !== newAttribute.ts.kind) {
-		return false;
-	}
-	if (!isPrimitiveRenameCandidate(oldAttribute) || !isPrimitiveRenameCandidate(newAttribute)) {
-		return false;
-	}
-	if (JSON.stringify(oldAttribute.wp.enum ?? null) !== JSON.stringify(newAttribute.wp.enum ?? null)) {
-		return false;
+function assessRenameCandidate(oldAttribute, newAttribute, legacyPath, currentPath) {
+	if (!isRenameCandidateShapeCompatible(oldAttribute, newAttribute)) {
+		return null;
 	}
 
-	for (const key of ["minLength", "maxLength", "minimum", "maximum", "pattern", "format", "typeTag"]) {
-		if ((oldAttribute.typia.constraints?.[key] ?? null) !== (newAttribute.typia.constraints?.[key] ?? null)) {
+	const score = scoreRenameSimilarity(legacyPath, currentPath);
+	return {
+		autoApply: false,
+		currentPath,
+		legacyPath,
+		reason: describeRenameReason(oldAttribute, legacyPath, currentPath, score),
+		score,
+	};
+}
+
+function hasRenameCompatibleConstraints(oldAttribute, newAttribute) {
+	const oldEnum = oldAttribute.wp.enum ?? null;
+	const nextEnum = newAttribute.wp.enum ?? null;
+
+	if (oldEnum && nextEnum) {
+		const oldIsSubset = oldEnum.every((value) => nextEnum.includes(value));
+		if (!oldIsSubset) {
 			return false;
 		}
+	} else if (oldEnum && !nextEnum) {
+		return false;
 	}
 
-	return true;
+	const oldConstraints = oldAttribute.typia.constraints ?? {};
+	const nextConstraints = newAttribute.typia.constraints ?? {};
+
+	return [
+		compareMinimumBound(oldConstraints.minLength, nextConstraints.minLength),
+		compareMaximumBound(oldConstraints.maxLength, nextConstraints.maxLength),
+		compareMinimumBound(oldConstraints.minimum, nextConstraints.minimum),
+		compareMaximumBound(oldConstraints.maximum, nextConstraints.maximum),
+		comparePatternBound(oldConstraints.pattern, nextConstraints.pattern),
+		comparePatternBound(oldConstraints.format, nextConstraints.format),
+		comparePatternBound(oldConstraints.typeTag, nextConstraints.typeTag),
+	].every(Boolean);
+}
+
+function compareMinimumBound(oldValue, nextValue) {
+	if (nextValue === null || nextValue === undefined) {
+		return true;
+	}
+	if (oldValue === null || oldValue === undefined) {
+		return true;
+	}
+	return oldValue <= nextValue;
+}
+
+function compareMaximumBound(oldValue, nextValue) {
+	if (nextValue === null || nextValue === undefined) {
+		return true;
+	}
+	if (oldValue === null || oldValue === undefined) {
+		return true;
+	}
+	return oldValue >= nextValue;
+}
+
+function comparePatternBound(oldValue, nextValue) {
+	return oldValue === nextValue || oldValue === null || oldValue === undefined;
+}
+
+function scoreRenameSimilarity(legacyPath, currentPath) {
+	const legacy = normalizeFieldName(legacyPath);
+	const current = normalizeFieldName(currentPath);
+
+	if (legacy === current) {
+		return 1;
+	}
+	if (shareAliasGroup(legacy, current)) {
+		return 0.9;
+	}
+
+	const legacyTokens = tokenizeFieldName(legacy);
+	const currentTokens = tokenizeFieldName(current);
+	const overlap = legacyTokens.filter((token) => currentTokens.includes(token));
+	const jaccard = overlap.length / new Set([...legacyTokens, ...currentTokens]).size;
+
+	if (legacy.includes(current) || current.includes(legacy)) {
+		return Math.max(jaccard, 0.7);
+	}
+	if (legacyTokens.length > 0 && currentTokens.length > 0 && legacyTokens[legacyTokens.length - 1] === currentTokens[currentTokens.length - 1]) {
+		return Math.max(jaccard, 0.6);
+	}
+
+	return jaccard;
+}
+
+function passesNameSimilarityRule(legacyPath, currentPath) {
+	return scoreRenameSimilarity(legacyPath, currentPath) >= 0.6;
+}
+
+function normalizeFieldName(name) {
+	return String(name)
+		.replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+		.replace(/[^a-zA-Z0-9]+/g, " ")
+		.trim()
+		.toLowerCase()
+		.replace(/\s+/g, "");
+}
+
+function tokenizeFieldName(name) {
+	return String(name)
+		.replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+		.toLowerCase()
+		.split(/[^a-z0-9]+/)
+		.filter(Boolean);
+}
+
+function shareAliasGroup(left, right) {
+	const aliasGroups = [
+		["content", "headline", "body", "text", "copy", "message"],
+		["id", "uniqueid", "uuid"],
+		["visible", "isvisible", "show", "shown", "enabled"],
+		["align", "alignment", "textalign"],
+		["count", "clickcount", "counter"],
+		["url", "href", "link"],
+	];
+
+	return aliasGroups.some((group) => group.includes(left) && group.includes(right));
+}
+
+function describeRenameReason(attribute, legacyPath, currentPath, score) {
+	if (attribute.ts.kind === "union") {
+		return `compatible discriminated union (${legacyPath} → ${currentPath})`;
+	}
+	if (score >= 0.9) {
+		return "high-confidence compatible field";
+	}
+	if (score >= 0.6) {
+		return "name-similar compatible field";
+	}
+	return "compatible field requiring review";
+}
+
+function buildTransformBodyLines(attribute, legacyPath) {
+	switch (attribute.ts.kind) {
+		case "string":
+			return [
+				`// return typeof legacyValue === "string" ? legacyValue : String(legacyValue ?? "");`,
+			];
+		case "number":
+			return [
+				`// const numericValue = typeof legacyValue === "number" ? legacyValue : Number(legacyValue ?? 0);`,
+				`// return Number.isNaN(numericValue) ? undefined : numericValue;`,
+			];
+		case "boolean":
+			return [
+				`// return typeof legacyValue === "boolean" ? legacyValue : Boolean(legacyValue);`,
+			];
+		case "union":
+			return [
+				`// const legacyObject = typeof legacyValue === "object" && legacyValue !== null ? legacyValue : {};`,
+				`// return legacyObject; // adjust discriminator / branch fields before verify`,
+			];
+		default:
+			return [
+				`// return legacyValue; // customize migration from ${legacyPath}`,
+			];
+	}
 }
 
 function describeConstraintChange(oldAttribute, newAttribute) {
@@ -815,6 +1110,8 @@ function manualOutcome(pathLabel, kind, detail) {
 }
 
 function renderMigrationRuleFile({ currentAttributes, currentTypeName, diff, fromVersion, targetVersion }) {
+	const activeRenameCandidates = (diff.summary.renameCandidates ?? []).filter((candidate) => candidate.autoApply);
+	const suggestedRenameCandidates = (diff.summary.renameCandidates ?? []).filter((candidate) => !candidate.autoApply);
 	const lines = [];
 	lines.push(`import type { ${currentTypeName} } from "../../types";`);
 	lines.push(`import currentManifest from "../../../${ROOT_MANIFEST}";`);
@@ -828,20 +1125,33 @@ function renderMigrationRuleFile({ currentAttributes, currentTypeName, diff, fro
 	lines.push(`export const toVersion = "${targetVersion}" as const;`);
 	lines.push("");
 	lines.push("export const renameMap: RenameMap = {");
-	for (const candidate of diff.summary.renameCandidates ?? []) {
+	for (const candidate of activeRenameCandidates) {
+		lines.push(`\t${candidate.currentPath}: "${candidate.legacyPath}",`);
+	}
+	for (const candidate of suggestedRenameCandidates) {
 		lines.push(`\t// ${candidate.currentPath}: "${candidate.legacyPath}",`);
 	}
 	lines.push("};");
 	lines.push("");
 	lines.push("export const transforms: TransformMap = {");
+	for (const suggestion of diff.summary.transformSuggestions ?? []) {
+		lines.push(`\t// ${suggestion.currentPath}: (legacyValue, legacyInput) => {`);
+		for (const bodyLine of suggestion.bodyLines) {
+			lines.push(`\t${bodyLine}`);
+		}
+		lines.push(`\t// },`);
+	}
 	lines.push("};");
 	lines.push("");
 	lines.push("export const unresolved = [");
 	for (const item of diff.summary.manualItems) {
 		lines.push(`\t"${item.path}: ${item.kind}${item.detail ? ` (${escapeForCode(item.detail)})` : ""}",`);
 	}
-	for (const candidate of diff.summary.renameCandidates ?? []) {
+	for (const candidate of suggestedRenameCandidates) {
 		lines.push(`\t"${candidate.currentPath}: rename candidate from ${candidate.legacyPath}",`);
+	}
+	for (const suggestion of diff.summary.transformSuggestions ?? []) {
+		lines.push(`\t"${suggestion.currentPath}: transform suggested from ${suggestion.legacyPath ?? suggestion.currentPath}",`);
 	}
 	lines.push("] as const;");
 	lines.push("");
@@ -854,7 +1164,7 @@ function renderMigrationRuleFile({ currentAttributes, currentTypeName, diff, fro
 		if (manualItem) {
 			lines.push(`\t\t// ${MIGRATION_TODO_PREFIX} ${manualItem.path}: ${manualItem.kind}${manualItem.detail ? ` (${manualItem.detail})` : ""}`);
 		}
-		if (renameCandidate) {
+		if (renameCandidate && !renameCandidate.autoApply) {
 			lines.push(`\t\t// ${MIGRATION_TODO_PREFIX} consider renameMap.${renameCandidate.currentPath} = "${renameCandidate.legacyPath}"`);
 		}
 		lines.push(
@@ -960,10 +1270,15 @@ function renderPhpMigrationRegistryFile(state, entries) {
 
 	const edgeSummaries = entries.map((entry) => {
 		const ruleMetadata = readRuleMetadata(entry.rulePath);
+		const snapshotManifest = snapshots[entry.fromVersion]?.manifest ?? null;
 		return {
+			autoAppliedRenameCount: ruleMetadata.renameMap.length,
+			autoAppliedRenames: ruleMetadata.renameMap,
 			fromVersion: entry.fromVersion,
 			ruleFile: path.relative(state.projectDir, entry.rulePath).replace(/\\/g, "/"),
+			transformKeys: ruleMetadata.transforms,
 			toVersion: entry.toVersion,
+			unionBranches: summarizeUnionBranches(snapshotManifest),
 			unresolved: ruleMetadata.unresolved,
 		};
 	});
@@ -1003,12 +1318,15 @@ function renderVerifyFile(state, entries) {
 		checks.push(`\t\tif (rule_${index}.unresolved.length > 0) {`);
 		checks.push(`\t\t\tthrow new Error("Unresolved migration TODOs remain for ${entry.fromVersion} -> ${entry.toVersion}: " + rule_${index}.unresolved.join(", "));`);
 		checks.push(`\t\t}`);
-		checks.push(`\t\tconst migrated_${index} = rule_${index}.migrate(fixture_${index});`);
-		checks.push(`\t\tconst validation_${index} = validators.validate(migrated_${index});`);
-		checks.push(`\t\tif (!validation_${index}.success) {`);
-		checks.push(`\t\t\tthrow new Error("Current validator rejected migrated fixture for ${entry.fromVersion}: " + JSON.stringify(validation_${index}.errors));`);
+		checks.push(`\t\tconst cases_${index} = Array.isArray(fixture_${index}.cases) ? fixture_${index}.cases : [];`);
+		checks.push(`\t\tfor (const fixtureCase of cases_${index}) {`);
+		checks.push(`\t\t\tconst migrated_${index} = rule_${index}.migrate(fixtureCase.input ?? {});`);
+		checks.push(`\t\t\tconst validation_${index} = validators.validate(migrated_${index});`);
+		checks.push(`\t\t\tif (!validation_${index}.success) {`);
+		checks.push(`\t\t\t\tthrow new Error("Current validator rejected migrated fixture for ${entry.fromVersion} case " + String(fixtureCase.name ?? "unknown") + ": " + JSON.stringify(validation_${index}.errors));`);
+		checks.push(`\t\t\t}`);
 		checks.push(`\t\t}`);
-		checks.push(`\t\tconsole.log("Verified ${entry.fromVersion} -> ${entry.toVersion}");`);
+		checks.push(`\t\tconsole.log("Verified ${entry.fromVersion} -> ${entry.toVersion} (" + cases_${index}.length + " case(s))");`);
 		checks.push(`\t}`);
 	});
 
@@ -1032,18 +1350,147 @@ console.log("Migration verification passed for ${state.config.blockName}");
 `;
 }
 
-function ensureFixtureFile(projectDir, version) {
-	const fixturePath = path.join(projectDir, FIXTURES_DIR, `${version}.json`);
+function ensureEdgeFixtureFile(projectDir, fromVersion, toVersion, diff) {
+	const fixturePath = path.join(projectDir, FIXTURES_DIR, `${fromVersion}-to-${toVersion}.json`);
 	if (fs.existsSync(fixturePath)) {
 		return;
 	}
 
-	const manifest = readJson(path.join(projectDir, SNAPSHOT_DIR, version, ROOT_MANIFEST));
+	const manifest = readJson(path.join(projectDir, SNAPSHOT_DIR, fromVersion, ROOT_MANIFEST));
 	const attributes = {};
 	for (const [key, attribute] of Object.entries(manifest.attributes ?? {})) {
 		attributes[key] = defaultValueForManifestAttribute(attribute);
 	}
-	fs.writeFileSync(fixturePath, `${JSON.stringify(attributes, null, "\t")}\n`, "utf8");
+
+	const cases = [
+		{
+			input: attributes,
+			name: "default",
+		},
+		...createRenameFixtureCases(attributes, diff.summary.renameCandidates ?? []),
+		...createUnionFixtureCases(attributes, manifest.attributes ?? {}, diff.summary.renameCandidates ?? []),
+	];
+
+	fs.writeFileSync(
+		fixturePath,
+		`${JSON.stringify(
+			{
+				cases,
+				fromVersion,
+				toVersion,
+			},
+			null,
+			"\t",
+		)}\n`,
+		"utf8",
+	);
+}
+
+function createRenameFixtureCases(baseAttributes, renameCandidates) {
+	return renameCandidates
+		.filter((candidate) => candidate.autoApply)
+		.map((candidate) => {
+			const nextInput = cloneJsonValue(baseAttributes);
+			const legacyValue = getValueAtPath(nextInput, candidate.legacyPath);
+			deleteValueAtPath(nextInput, candidate.currentPath);
+			if (legacyValue === undefined) {
+				setValueAtPath(nextInput, candidate.legacyPath, createFixtureScalarValue(candidate.currentPath));
+			}
+
+			return {
+				input: nextInput,
+				name: `rename:${candidate.legacyPath}->${candidate.currentPath}`,
+			};
+		});
+}
+
+function createUnionFixtureCases(baseAttributes, manifestAttributes, renameCandidates) {
+	const cases = [];
+
+	for (const [key, attribute] of Object.entries(manifestAttributes)) {
+		if (attribute?.ts?.kind !== "union" || !attribute.ts.union) {
+			continue;
+		}
+
+		for (const [branchKey, branch] of Object.entries(attribute.ts.union.branches ?? {})) {
+			const nextInput = cloneJsonValue(baseAttributes);
+			const legacyPath = renameCandidates.find((candidate) => candidate.autoApply && candidate.currentPath === key)?.legacyPath ?? key;
+			setValueAtPath(nextInput, legacyPath, createUnionBranchFixtureValue(attribute.ts.union.discriminator, branchKey, branch));
+			cases.push({
+				input: nextInput,
+				name: `union:${key}:${branchKey}`,
+			});
+		}
+	}
+
+	return cases;
+}
+
+function createUnionBranchFixtureValue(discriminator, branchKey, branchAttribute) {
+	const branchValue = defaultValueForManifestAttribute(branchAttribute);
+	if (typeof branchValue === "object" && branchValue !== null && !Array.isArray(branchValue)) {
+		return {
+			...branchValue,
+			[discriminator]: branchKey,
+		};
+	}
+
+	return {
+		[discriminator]: branchKey,
+	};
+}
+
+function cloneJsonValue(value) {
+	return JSON.parse(JSON.stringify(value));
+}
+
+function getValueAtPath(input, pathLabel) {
+	return String(pathLabel)
+		.split(".")
+		.reduce((value, segment) => (value && typeof value === "object" ? value[segment] : undefined), input);
+}
+
+function setValueAtPath(input, pathLabel, value) {
+	const segments = String(pathLabel).split(".");
+	let target = input;
+	while (segments.length > 1) {
+		const segment = segments.shift();
+		if (!segment) {
+			continue;
+		}
+		if (!target[segment] || typeof target[segment] !== "object" || Array.isArray(target[segment])) {
+			target[segment] = {};
+		}
+		target = target[segment];
+	}
+	target[segments[0]] = value;
+}
+
+function deleteValueAtPath(input, pathLabel) {
+	const segments = String(pathLabel).split(".");
+	let target = input;
+	while (segments.length > 1) {
+		const segment = segments.shift();
+		if (!segment || !target[segment] || typeof target[segment] !== "object") {
+			return;
+		}
+		target = target[segment];
+	}
+	delete target[segments[0]];
+}
+
+function createFixtureScalarValue(pathLabel) {
+	const normalized = String(pathLabel).toLowerCase();
+	if (normalized.includes("id")) {
+		return "00000000-0000-4000-8000-000000000000";
+	}
+	if (normalized.includes("count") || normalized.includes("number")) {
+		return 1;
+	}
+	if (normalized.includes("visible") || normalized.startsWith("is")) {
+		return true;
+	}
+	return `legacy:${pathLabel}`;
 }
 
 function summarizeManifest(manifest) {
@@ -1065,6 +1512,20 @@ function summarizeManifest(manifest) {
 		manifestVersion: manifest.manifestVersion ?? null,
 		sourceType: manifest.sourceType ?? null,
 	};
+}
+
+function summarizeUnionBranches(manifestSummary) {
+	if (!manifestSummary?.attributes) {
+		return [];
+	}
+
+	return Object.entries(manifestSummary.attributes)
+		.filter(([, attribute]) => attribute.kind === "union" && attribute.union)
+		.map(([field, attribute]) => ({
+			branches: Object.keys(attribute.union?.branches ?? {}),
+			discriminator: attribute.union?.discriminator ?? null,
+			field,
+		}));
 }
 
 function defaultValueForManifestAttribute(attribute) {
@@ -1121,12 +1582,23 @@ function readJson(filePath) {
 function readRuleMetadata(rulePath) {
 	const source = fs.readFileSync(rulePath, "utf8");
 	const unresolvedBlock = source.match(/export const unresolved = \[([\s\S]*?)\] as const;/);
-	if (!unresolvedBlock) {
-		return { unresolved: [] };
-	}
+	const renameMapBlock = source.match(/export const renameMap: RenameMap = \{([\s\S]*?)\};/);
+	const transformsBlock = source.match(/export const transforms: TransformMap = \{([\s\S]*?)\};/);
 
-	const unresolved = [...unresolvedBlock[1].matchAll(/"([^"]+)"/g)].map((match) => match[1]);
-	return { unresolved };
+	const unresolved = unresolvedBlock
+		? [...unresolvedBlock[1].matchAll(/"([^"]+)"/g)].map((match) => match[1])
+		: [];
+	const renameMap = renameMapBlock
+		? [...renameMapBlock[1].matchAll(/^\s*([A-Za-z0-9_$]+):\s*"([^"]+)"/gm)].map((match) => ({
+			currentPath: match[1],
+			legacyPath: match[2],
+		}))
+		: [];
+	const transforms = transformsBlock
+		? [...transformsBlock[1].matchAll(/^\s*([A-Za-z0-9_$]+):\s*\(/gm)].map((match) => match[1])
+		: [];
+
+	return { renameMap, transforms, unresolved };
 }
 
 function renderPhpValue(value, indentLevel) {

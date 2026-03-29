@@ -85,6 +85,43 @@ function createManifestAttribute(
 	};
 }
 
+function createUnionManifestAttribute(
+	discriminator: string,
+	branches: Record<string, ReturnType<typeof createManifestAttribute>>,
+) {
+	return {
+		typia: {
+			constraints: {
+				format: null,
+				maxLength: null,
+				maximum: null,
+				minLength: null,
+				minimum: null,
+				pattern: null,
+				typeTag: null,
+			},
+			defaultValue: null,
+			hasDefault: false,
+		},
+		ts: {
+			items: null,
+			kind: "union",
+			properties: null,
+			required: true,
+			union: {
+				branches,
+				discriminator,
+			},
+		},
+		wp: {
+			defaultValue: null,
+			enum: null,
+			hasDefault: false,
+			type: "object",
+		},
+	};
+}
+
 function createProjectShell(projectDir: string) {
 	writeJson(path.join(projectDir, "package.json"), {
 		name: "migration-smoke",
@@ -273,6 +310,304 @@ export function resolveMigrationValue(attribute: any, currentKey: string, input:
 	fs.symlinkSync(repoTsxPath, path.join(localBinDir, "tsx"));
 }
 
+function createAmbiguousRenameProject(projectDir: string) {
+	createProjectShell(projectDir);
+
+	writeFile(
+		path.join(projectDir, "src", "validators.ts"),
+		`export const validators = {
+\tvalidate(input: Record<string, unknown>) {
+\t\tconst success = typeof input.content === "string";
+\t\treturn success
+\t\t\t? { success: true as const, data: input }
+\t\t\t: { success: false as const, errors: [{ path: "$", expected: "AmbiguousRenameAttributes" }] };
+\t},
+\trandom() {
+\t\treturn { content: "Hello" };
+\t},
+};
+`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "config.ts"),
+		`export const migrationConfig = {
+\tblockName: "create-block/ambiguous-rename",
+\tcurrentVersion: "2.0.0",
+\tsupportedVersions: ["1.0.0", "2.0.0"],
+\tsnapshotDir: "src/migrations/versions",
+} as const;
+
+export default migrationConfig;
+`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "helpers.ts"),
+		`export type RenameMap = Record<string, string>;
+export type TransformMap = Record<string, (legacyValue: unknown, legacyInput: Record<string, unknown>) => unknown>;
+export function resolveMigrationValue(attribute: any, currentKey: string, input: Record<string, unknown>, renameMap: RenameMap, transforms: TransformMap) {
+\tconst path = renameMap[currentKey] ?? currentKey;
+\tconst legacyValue = path.split(".").reduce((value: any, segment: string) => (value && typeof value === "object" ? value[segment] : undefined), input as any);
+\tconst transformedValue = transforms[currentKey] ? transforms[currentKey](legacyValue, input) : legacyValue;
+\treturn transformedValue ?? attribute.typia.defaultValue ?? "";
+}
+`,
+	);
+	writeJson(path.join(projectDir, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { type: "string" },
+		},
+		name: "create-block/ambiguous-rename",
+		title: "Ambiguous Rename",
+	});
+	writeJson(path.join(projectDir, "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "AmbiguousRenameAttributes",
+	});
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			body: { type: "string" },
+			headline: { type: "string" },
+		},
+		name: "create-block/ambiguous-rename",
+		title: "Ambiguous Rename",
+	});
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), {
+		attributes: {
+			body: createManifestAttribute("string", {
+				required: true,
+			}),
+			headline: createManifestAttribute("string", {
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "AmbiguousRenameAttributes",
+	});
+	writeFile(
+		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"),
+		`export default function Save({ attributes }: { attributes: any }) {
+\treturn attributes.headline ?? attributes.body ?? null;
+}
+`,
+	);
+
+	const localBinDir = path.join(projectDir, "node_modules", ".bin");
+	fs.mkdirSync(localBinDir, { recursive: true });
+	fs.symlinkSync(repoTsxPath, path.join(localBinDir, "tsx"));
+}
+
+function createTypeCoercionProject(projectDir: string) {
+	createProjectShell(projectDir);
+
+	writeFile(
+		path.join(projectDir, "src", "validators.ts"),
+		`export const validators = {
+\tvalidate(input: Record<string, unknown>) {
+\t\tconst success = typeof input.clickCount === "number";
+\t\treturn success
+\t\t\t? { success: true as const, data: input }
+\t\t\t: { success: false as const, errors: [{ path: "$", expected: "CoercionAttributes" }] };
+\t},
+\trandom() {
+\t\treturn { clickCount: 1 };
+\t},
+};
+`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "config.ts"),
+		`export const migrationConfig = {
+\tblockName: "create-block/coercion-smoke",
+\tcurrentVersion: "2.0.0",
+\tsupportedVersions: ["1.0.0", "2.0.0"],
+\tsnapshotDir: "src/migrations/versions",
+} as const;
+
+export default migrationConfig;
+`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "helpers.ts"),
+		`export type RenameMap = Record<string, string>;
+export type TransformMap = Record<string, (legacyValue: unknown, legacyInput: Record<string, unknown>) => unknown>;
+export function resolveMigrationValue(attribute: any, currentKey: string, input: Record<string, unknown>, renameMap: RenameMap, transforms: TransformMap) {
+\tconst path = renameMap[currentKey] ?? currentKey;
+\tconst legacyValue = path.split(".").reduce((value: any, segment: string) => (value && typeof value === "object" ? value[segment] : undefined), input as any);
+\tconst transformedValue = transforms[currentKey] ? transforms[currentKey](legacyValue, input) : legacyValue;
+\treturn transformedValue ?? attribute.typia.defaultValue ?? 0;
+}
+`,
+	);
+	writeJson(path.join(projectDir, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			clickCount: { type: "number" },
+		},
+		name: "create-block/coercion-smoke",
+		title: "Coercion Smoke",
+	});
+	writeJson(path.join(projectDir, "typia.manifest.json"), {
+		attributes: {
+			clickCount: createManifestAttribute("number", {
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "CoercionAttributes",
+	});
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			clickCount: { type: "string" },
+		},
+		name: "create-block/coercion-smoke",
+		title: "Coercion Smoke",
+	});
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), {
+		attributes: {
+			clickCount: createManifestAttribute("string", {
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "CoercionAttributes",
+	});
+	writeFile(
+		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"),
+		`export default function Save({ attributes }: { attributes: any }) {
+\treturn attributes.clickCount ?? null;
+}
+`,
+	);
+
+	const localBinDir = path.join(projectDir, "node_modules", ".bin");
+	fs.mkdirSync(localBinDir, { recursive: true });
+	fs.symlinkSync(repoTsxPath, path.join(localBinDir, "tsx"));
+}
+
+function createUnionProject(projectDir: string, { removeBranch = false }: { removeBranch?: boolean } = {}) {
+	createProjectShell(projectDir);
+
+	writeFile(
+		path.join(projectDir, "src", "validators.ts"),
+		`export const validators = {
+\tvalidate(input: Record<string, unknown>) {
+\t\tconst target = input.linkTarget as any;
+\t\tconst success = typeof target === "object" && target !== null && typeof target.kind === "string";
+\t\treturn success
+\t\t\t? { success: true as const, data: input }
+\t\t\t: { success: false as const, errors: [{ path: "$", expected: "UnionAttributes" }] };
+\t},
+\trandom() {
+\t\treturn { linkTarget: { kind: "post", postId: 1 } };
+\t},
+};
+`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "config.ts"),
+		`export const migrationConfig = {
+\tblockName: "create-block/union-smoke",
+\tcurrentVersion: "2.0.0",
+\tsupportedVersions: ["1.0.0", "2.0.0"],
+\tsnapshotDir: "src/migrations/versions",
+} as const;
+
+export default migrationConfig;
+`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "helpers.ts"),
+		`export type RenameMap = Record<string, string>;
+export type TransformMap = Record<string, (legacyValue: unknown, legacyInput: Record<string, unknown>) => unknown>;
+export function resolveMigrationValue(attribute: any, currentKey: string, input: Record<string, unknown>, renameMap: RenameMap, transforms: TransformMap) {
+\tconst path = renameMap[currentKey] ?? currentKey;
+\tconst legacyValue = path.split(".").reduce((value: any, segment: string) => (value && typeof value === "object" ? value[segment] : undefined), input as any);
+\tconst transformedValue = transforms[currentKey] ? transforms[currentKey](legacyValue, input) : legacyValue;
+\treturn transformedValue ?? attribute.typia.defaultValue ?? null;
+}
+`,
+	);
+
+	const currentBranches: Record<string, ReturnType<typeof createManifestAttribute>> = removeBranch
+		? {
+			post: createManifestAttribute("object", {
+				required: true,
+			}),
+		}
+		: {
+			post: createManifestAttribute("object", {
+				required: true,
+			}),
+			url: createManifestAttribute("object", {
+				required: true,
+			}),
+		};
+	const legacyBranches: Record<string, ReturnType<typeof createManifestAttribute>> = removeBranch
+		? {
+			post: createManifestAttribute("object", {
+				required: true,
+			}),
+			url: createManifestAttribute("object", {
+				required: true,
+			}),
+		}
+		: {
+			post: createManifestAttribute("object", {
+				required: true,
+			}),
+		};
+
+	writeJson(path.join(projectDir, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			linkTarget: { type: "object" },
+		},
+		name: "create-block/union-smoke",
+		title: "Union Smoke",
+	});
+	writeJson(path.join(projectDir, "typia.manifest.json"), {
+		attributes: {
+			linkTarget: createUnionManifestAttribute("kind", currentBranches),
+		},
+		manifestVersion: 2,
+		sourceType: "UnionAttributes",
+	});
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			linkTarget: { type: "object" },
+		},
+		name: "create-block/union-smoke",
+		title: "Union Smoke",
+	});
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), {
+		attributes: {
+			linkTarget: createUnionManifestAttribute("kind", legacyBranches),
+		},
+		manifestVersion: 2,
+		sourceType: "UnionAttributes",
+	});
+	writeFile(
+		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"),
+		`export default function Save({ attributes }: { attributes: any }) {
+\treturn attributes.linkTarget ?? null;
+}
+`,
+	);
+
+	const localBinDir = path.join(projectDir, "node_modules", ".bin");
+	fs.mkdirSync(localBinDir, { recursive: true });
+	fs.symlinkSync(repoTsxPath, path.join(localBinDir, "tsx"));
+}
+
 describe("create-wp-typia migrations", () => {
 	afterAll(() => {
 		fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -321,7 +656,7 @@ describe("create-wp-typia migrations", () => {
 
 		const rulePath = path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts");
 		const deprecatedPath = path.join(projectDir, "src", "migrations", "generated", "deprecated.ts");
-		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "1.0.0.json");
+		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json");
 		const phpRegistryPath = path.join(projectDir, "typia-migration-registry.php");
 
 		expect(fs.existsSync(rulePath)).toBe(true);
@@ -331,10 +666,13 @@ describe("create-wp-typia migrations", () => {
 
 		const ruleSource = fs.readFileSync(rulePath, "utf8");
 		const deprecatedSource = fs.readFileSync(deprecatedPath, "utf8");
+		const fixtureSource = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 		const phpRegistrySource = fs.readFileSync(phpRegistryPath, "utf8");
 		expect(ruleSource).not.toContain("TODO MIGRATION:");
 		expect(ruleSource).toContain("isVisible");
 		expect(deprecatedSource).toContain("deprecated_0");
+		expect(Array.isArray(fixtureSource.cases)).toBe(true);
+		expect(fixtureSource.cases[0].name).toBe("default");
 		expect(phpRegistrySource).toContain("'currentVersion' => '2.0.0'");
 		expect(phpRegistrySource).toContain("'legacyVersions' =>");
 		expect(phpRegistrySource).toContain("'1.0.0'");
@@ -353,8 +691,34 @@ describe("create-wp-typia migrations", () => {
 		const diffOutput = runCli("node", [entryPath, "migrations", "diff", "--from", "1.0.0"], {
 			cwd: projectDir,
 		});
-		expect(diffOutput).toContain("Rename candidates:");
+		expect(diffOutput).toContain("Auto-applied renames:");
 		expect(diffOutput).toContain("content <- headline");
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const rulePath = path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts");
+		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json");
+		const ruleSource = fs.readFileSync(rulePath, "utf8");
+		const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+
+		expect(ruleSource).toContain("export const renameMap");
+		expect(ruleSource).toContain('content: "headline"');
+		expect(ruleSource).toContain("export const transforms");
+		expect(ruleSource).not.toContain('content: rename candidate from headline');
+		expect(ruleSource).toContain('resolveMigrationValue(currentManifest.attributes.content, "content", input, renameMap, transforms)');
+		expect(fixture.cases.some((entry: { name: string }) => entry.name === "rename:headline->content")).toBe(true);
+
+		const verifyOutput = runCli("node", [entryPath, "migrations", "verify", "--all"], {
+			cwd: projectDir,
+		});
+		expect(verifyOutput).toContain("Verified 1.0.0 -> 2.0.0");
+	});
+
+	test("ambiguous rename candidates stay unresolved", () => {
+		const projectDir = path.join(tempRoot, "ambiguous-rename-project");
+		createAmbiguousRenameProject(projectDir);
 
 		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
 			cwd: projectDir,
@@ -363,10 +727,40 @@ describe("create-wp-typia migrations", () => {
 		const rulePath = path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts");
 		const ruleSource = fs.readFileSync(rulePath, "utf8");
 
-		expect(ruleSource).toContain("export const renameMap");
 		expect(ruleSource).toContain('// content: "headline",');
+		expect(ruleSource).toContain("rename candidate from");
+	});
+
+	test("scaffold suggests transform bodies for semantic coercion", () => {
+		const projectDir = path.join(tempRoot, "coercion-project");
+		createTypeCoercionProject(projectDir);
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const rulePath = path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts");
+		const ruleSource = fs.readFileSync(rulePath, "utf8");
+
 		expect(ruleSource).toContain("export const transforms");
-		expect(ruleSource).toContain('content: rename candidate from headline');
-		expect(ruleSource).toContain('resolveMigrationValue(currentManifest.attributes.content, "content", input, renameMap, transforms)');
+		expect(ruleSource).toContain('// clickCount: (legacyValue, legacyInput) => {');
+		expect(ruleSource).toContain("// const numericValue = typeof legacyValue === \"number\" ? legacyValue : Number(legacyValue ?? 0);");
+		expect(ruleSource).toContain("clickCount: transform suggested from clickCount");
+	});
+
+	test("union diff distinguishes additive and removal changes", () => {
+		const additiveProjectDir = path.join(tempRoot, "union-additive-project");
+		createUnionProject(additiveProjectDir, { removeBranch: false });
+		const additiveOutput = runCli("node", [entryPath, "migrations", "diff", "--from", "1.0.0"], {
+			cwd: additiveProjectDir,
+		});
+		expect(additiveOutput).toContain("union-branch-addition");
+
+		const removalProjectDir = path.join(tempRoot, "union-removal-project");
+		createUnionProject(removalProjectDir, { removeBranch: true });
+		const removalOutput = runCli("node", [entryPath, "migrations", "diff", "--from", "1.0.0"], {
+			cwd: removalProjectDir,
+		});
+		expect(removalOutput).toContain("union-branch-removal");
 	});
 });

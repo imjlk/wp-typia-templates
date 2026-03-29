@@ -152,7 +152,7 @@ function assertAdvancedMigrationArtifacts(projectDir) {
 		path.join(projectDir, "src", "migrations", "generated", "deprecated.ts"),
 		path.join(projectDir, "src", "migrations", "generated", "verify.ts"),
 		path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-1.0.0.ts"),
-		path.join(projectDir, "src", "migrations", "fixtures", "1.0.0.json"),
+		path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-1.0.0.json"),
 		path.join(projectDir, "typia-migration-registry.php"),
 	];
 

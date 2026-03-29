@@ -48,12 +48,30 @@ bun run migration:scaffold -- --from 1.0.0
 bun run migration:verify
 ```
 
+The intended authoring flow is:
+
+1. change `src/types.ts`
+2. regenerate metadata with `bun run sync-types`
+3. snapshot the release you want to preserve
+4. scaffold the edge from the old snapshot to the current schema
+5. review auto-applied renames
+6. fill in any suggested semantic transforms
+7. adjust the generated fixture cases to match real legacy payloads
+8. run `migration:verify`
+9. use the admin dashboard dry-run before batch migration
+
 ## Generated rule files
 
 Scaffolded rules live in:
 
 ```text
 src/migrations/rules/<from>-to-<to>.ts
+```
+
+Edge fixtures now live next to them:
+
+```text
+src/migrations/fixtures/<from>-to-<to>.json
 ```
 
 Automatic cases are filled for you:
@@ -63,6 +81,7 @@ Automatic cases are filled for you:
 - drop removed fields
 - normalize additive object and array changes
 - preserve compatible discriminated union branches
+- auto-apply high-confidence top-level renames
 
 Manual work is still required for:
 
@@ -77,6 +96,9 @@ Scaffolded rules expose:
 - `renameMap`: `currentField -> legacy.path`
 - `transforms`: field-level semantic overrides
 - `unresolved`: issues that must be resolved before `verify`
+- `migrate()`: the generated edge implementation used by deprecated entries and batch migration
+
+High-confidence renames are written into `renameMap` automatically. Ambiguous candidates stay unresolved, and semantic-risk coercions are emitted as suggested transform bodies with unresolved markers left in place.
 
 If unresolved `TODO MIGRATION:` markers or unresolved entries remain, `migration:verify` fails on purpose.
 
@@ -96,10 +118,20 @@ The advanced template includes an admin-side migration dashboard that can:
 
 - scan posts for legacy block attributes
 - summarize version distribution
-- preview migration work
+- preview migration work with before/after payloads
 - batch-migrate matching blocks
+- export markdown and JSON reports
 
 This scan is REST-based and stays on the JavaScript side. It does not depend on PHP migration code.
+
+Dry-run and batch execution share the same `autoMigrate()` path, so the preview you see in the dashboard is the same migration logic that will be applied during writes.
+
+The dashboard preview now highlights:
+
+- changed field paths
+- discriminated union branch matches
+- validation errors
+- unresolved/manual review badges
 
 ## Server-side foundation
 

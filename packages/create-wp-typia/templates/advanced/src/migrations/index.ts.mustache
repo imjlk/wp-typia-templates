@@ -6,6 +6,7 @@ import migrationConfig from "./config";
 import { deprecated } from "./generated/deprecated";
 import migrationRegistry from "./generated/registry";
 import {
+	type ManifestAttribute,
 	type ManifestDocument,
 	manifestMatchesDocument,
 	summarizeVersionDelta,
@@ -25,6 +26,22 @@ export interface MigrationAnalysis {
 	};
 }
 
+export interface UnionBranchPreview {
+	field: string;
+	legacyBranch: string | null;
+	nextBranch: string | null;
+	status: "auto" | "current" | "manual" | "unknown";
+}
+
+export interface MigrationPreview {
+	after: Record<string, unknown> | null;
+	before: Record<string, unknown>;
+	changedFields: string[];
+	unresolved: string[];
+	unionBranches: UnionBranchPreview[];
+	validationErrors: string[];
+}
+
 export interface BlockScanResult {
 	analysis: MigrationAnalysis;
 	attributes: Record<string, unknown>;
@@ -33,94 +50,52 @@ export interface BlockScanResult {
 	postId: number;
 	postTitle: string;
 	postType: string;
+	preview: MigrationPreview;
 	rawContent: string;
 	restBase: string;
+}
+
+export interface BatchMigrationBlockResult {
+	blockPath: number[];
+	currentVersion: string;
+	preview: MigrationPreview;
+	reason?: string;
+	status: "failed" | "success";
+	targetVersion: string;
+}
+
+export interface BatchMigrationPostResult {
+	postId: number;
+	postTitle: string;
+	postType: string;
+	previews: BatchMigrationBlockResult[];
+	reason?: string;
+	status: "failed" | "success";
 }
 
 export interface BatchMigrationResult {
 	errors: Array<{ postId: number; reason: string }>;
 	failed: number;
+	posts: BatchMigrationPostResult[];
 	successful: number;
 	total: number;
 }
 
 export function detectBlockMigration(attributes: Record<string, unknown>): MigrationAnalysis {
-	const currentValidation = validators.validate(attributes as any);
-	if (currentValidation.success) {
-		return {
-			needsMigration: false,
-			currentVersion: migrationRegistry.currentVersion,
-			targetVersion: migrationRegistry.currentVersion,
-			confidence: 1,
-			reasons: ["Current Typia validator accepted the attributes."],
-			warnings: [],
-			affectedFields: {
-				added: [],
-				changed: [],
-				removed: [],
-			},
-		};
-	}
-
-	for (const entry of migrationRegistry.entries) {
-		if (manifestMatchesDocument(entry.manifest as ManifestDocument, attributes)) {
-			const delta = summarizeVersionDelta(
-				entry.manifest as ManifestDocument,
-				migrationRegistry.currentManifest as ManifestDocument,
-			);
-
-			return {
-				needsMigration: true,
-				currentVersion: entry.fromVersion,
-				targetVersion: migrationRegistry.currentVersion,
-				confidence: 0.95,
-				reasons: [
-					`Snapshot ${entry.fromVersion} matched this block.`,
-					...(entry.rule.unresolved.length > 0
-						? [`Migration rule still has unresolved items: ${entry.rule.unresolved.join(", ")}`]
-						: []),
-				],
-				warnings: entry.rule.unresolved.length > 0 ? [...entry.rule.unresolved] : [],
-				affectedFields: delta,
-			};
-		}
-	}
-
-	return {
-		needsMigration: true,
-		currentVersion: "unknown",
-		targetVersion: migrationRegistry.currentVersion,
-		confidence: 0.2,
-		reasons: ["No legacy snapshot matched and current Typia validator rejected the attributes."],
-		warnings: ["Manual migration review is required because the block does not match any supported snapshot."],
-		affectedFields: {
-			added: [],
-			changed: [],
-			removed: [],
-		},
-	};
+	return resolveMigrationState(attributes).analysis;
 }
 
 export function autoMigrate(attributes: Record<string, unknown>) {
-	const currentValidation = validators.validate(attributes as any);
-	if (currentValidation.success) {
-		return attributes;
+	const resolution = resolveMigrationState(attributes);
+	if (!resolution.preview.after) {
+		throw new Error(
+			resolution.preview.validationErrors[0]
+				?? resolution.preview.unresolved[0]
+				?? "Unable to migrate block attributes because no supported snapshot matched.",
+		);
 	}
 
-	for (const entry of migrationRegistry.entries) {
-		if (manifestMatchesDocument(entry.manifest as ManifestDocument, attributes)) {
-			const migrated = entry.rule.migrate(attributes);
-			const postValidation = validators.validate(migrated as any);
-			if (!postValidation.success) {
-				throw new Error(
-					`Migration ${entry.fromVersion} -> ${migrationRegistry.currentVersion} failed current validation: ${JSON.stringify(postValidation.errors)}`,
-				);
-			}
-			return migrated;
-		}
-	}
-
-	throw new Error("Unable to migrate block attributes because no supported snapshot matched.");
+	return resolution.preview.after;
 }
 
 export async function scanSiteForMigrations(
@@ -143,16 +118,24 @@ export async function scanSiteForMigrations(
 					return;
 				}
 
-				const analysis = detectBlockMigration((block.attributes ?? {}) as Record<string, unknown>);
-				if (analysis.needsMigration || analysis.warnings.length > 0) {
+				const attributes = (block.attributes ?? {}) as Record<string, unknown>;
+				const resolution = resolveMigrationState(attributes);
+
+				if (
+					resolution.analysis.needsMigration
+					|| resolution.preview.changedFields.length > 0
+					|| resolution.preview.unresolved.length > 0
+					|| resolution.preview.validationErrors.length > 0
+				) {
 					results.push({
-						analysis,
-						attributes: (block.attributes ?? {}) as Record<string, unknown>,
+						analysis: resolution.analysis,
+						attributes,
 						blockName,
 						blockPath,
 						postId: post.id,
 						postTitle: post?.title?.rendered ?? `Post ${post.id}`,
 						postType: postType.slug,
+						preview: resolution.preview,
 						rawContent: content,
 						restBase: postType.rest_base,
 					});
@@ -172,59 +155,95 @@ export async function batchMigrateScanResults(
 	const summary: BatchMigrationResult = {
 		errors: [],
 		failed: 0,
+		posts: [],
 		successful: 0,
 		total: Object.keys(grouped).length,
 	};
 
 	for (const group of Object.values(grouped)) {
-		try {
-			const migratedContent = migratePostContent(group.results, group.rawContent);
-			if (!dryRun) {
-				await apiFetch({
-					body: {
-						content: migratedContent,
-					},
-					method: "POST",
-					path: `/wp/v2/${group.restBase}/${group.postId}`,
-				});
-			}
-			summary.successful += 1;
-		} catch (error) {
+		const blockPreviews = group.results.map((result) => {
+			const resolution = resolveMigrationState(result.attributes);
+			const reason =
+				resolution.preview.validationErrors[0]
+				?? resolution.preview.unresolved[0]
+				?? undefined;
+
+			return {
+				blockPath: result.blockPath,
+				currentVersion: resolution.analysis.currentVersion,
+				preview: resolution.preview,
+				reason,
+				status: resolution.preview.after ? "success" : "failed",
+				targetVersion: resolution.analysis.targetVersion,
+			} satisfies BatchMigrationBlockResult;
+		});
+
+		const failedPreview = blockPreviews.find((preview) => preview.status === "failed");
+		if (failedPreview) {
 			summary.failed += 1;
 			summary.errors.push({
 				postId: group.postId,
-				reason: error instanceof Error ? error.message : String(error),
+				reason: failedPreview.reason ?? "One or more blocks could not be migrated.",
+			});
+			summary.posts.push({
+				postId: group.postId,
+				postTitle: group.postTitle,
+				postType: group.postType,
+				previews: blockPreviews,
+				reason: failedPreview.reason,
+				status: "failed",
+			});
+			continue;
+		}
+
+		const migratedContent = migratePostContent(blockPreviews, group.rawContent);
+		if (!dryRun) {
+			await apiFetch({
+				body: {
+					content: migratedContent,
+				},
+				method: "POST",
+				path: `/wp/v2/${group.restBase}/${group.postId}`,
 			});
 		}
+
+		summary.successful += 1;
+		summary.posts.push({
+			postId: group.postId,
+			postTitle: group.postTitle,
+			postType: group.postType,
+			previews: blockPreviews,
+			status: "success",
+		});
 	}
 
 	return summary;
 }
 
 export function generateMigrationReport(scanResults: BlockScanResult[]): string {
-	const needsMigration = scanResults.filter((result) => result.analysis.needsMigration);
-	const byVersion = needsMigration.reduce<Record<string, BlockScanResult[]>>((accumulator, result) => {
-		const key = result.analysis.currentVersion;
-		if (!accumulator[key]) {
-			accumulator[key] = [];
-		}
-		accumulator[key].push(result);
-		return accumulator;
-	}, {});
-
 	let report = `# ${migrationConfig.blockName} Migration Report\n\n`;
 	report += `- Current version: ${migrationRegistry.currentVersion}\n`;
 	report += `- Supported deprecated entries: ${deprecated.length}\n`;
 	report += `- Scan results needing attention: ${scanResults.length}\n\n`;
 
-	for (const [version, entries] of Object.entries(byVersion)) {
-		report += `## ${version}\n`;
-		for (const entry of entries) {
-			report += `- ${entry.postTitle} (#${entry.postId})`;
-			if (entry.analysis.warnings.length > 0) {
-				report += ` — warnings: ${entry.analysis.warnings.join(", ")}`;
+	for (const entry of scanResults) {
+		report += `## ${entry.postTitle} (#${entry.postId})\n`;
+		report += `- Version: ${entry.analysis.currentVersion} -> ${entry.analysis.targetVersion}\n`;
+		report += `- Confidence: ${entry.analysis.confidence}\n`;
+		if (entry.preview.changedFields.length > 0) {
+			report += `- Changed fields: ${entry.preview.changedFields.join(", ")}\n`;
+		}
+		if (entry.preview.unionBranches.length > 0) {
+			report += `- Union branches:\n`;
+			for (const branch of entry.preview.unionBranches) {
+				report += `  - ${branch.field}: ${branch.legacyBranch ?? "unknown"} -> ${branch.nextBranch ?? "unknown"} (${branch.status})\n`;
 			}
-			report += "\n";
+		}
+		if (entry.preview.unresolved.length > 0) {
+			report += `- Unresolved: ${entry.preview.unresolved.join(", ")}\n`;
+		}
+		if (entry.preview.validationErrors.length > 0) {
+			report += `- Validation errors: ${entry.preview.validationErrors.join(", ")}\n`;
 		}
 		report += "\n";
 	}
@@ -294,12 +313,16 @@ function walkBlocks(
 }
 
 function groupResultsByPost(results: BlockScanResult[]) {
-	return results.reduce<Record<string, { postId: number; rawContent: string; restBase: string; results: BlockScanResult[] }>>(
+	return results.reduce<
+		Record<string, { postId: number; postTitle: string; postType: string; rawContent: string; restBase: string; results: BlockScanResult[] }>
+	>(
 		(accumulator, result) => {
 			const key = `${result.restBase}:${result.postId}`;
 			if (!accumulator[key]) {
 				accumulator[key] = {
 					postId: result.postId,
+					postTitle: result.postTitle,
+					postType: result.postType,
 					rawContent: result.rawContent,
 					restBase: result.restBase,
 					results: [],
@@ -312,9 +335,11 @@ function groupResultsByPost(results: BlockScanResult[]) {
 	);
 }
 
-function migratePostContent(results: BlockScanResult[], rawContent: string): string {
+function migratePostContent(results: BatchMigrationBlockResult[], rawContent: string): string {
 	const replacements = new Map(
-		results.map((result) => [result.blockPath.join("."), autoMigrate(result.attributes)]),
+		results
+			.filter((result) => result.preview.after)
+			.map((result) => [result.blockPath.join("."), result.preview.after as Record<string, unknown>]),
 	);
 	const blocks = parse(rawContent);
 	const nextBlocks = replaceBlocks(blocks, [], replacements);
@@ -342,4 +367,208 @@ function replaceBlocks(blocks: any[], pathPrefix: number[], replacements: Map<st
 			innerBlocks,
 		};
 	});
+}
+
+function resolveMigrationState(attributes: Record<string, unknown>) {
+	const currentValidation = validators.validate(attributes as any);
+	if (currentValidation.success) {
+		return {
+			analysis: {
+				affectedFields: {
+					added: [],
+					changed: [],
+					removed: [],
+				},
+				confidence: 1,
+				currentVersion: migrationRegistry.currentVersion,
+				needsMigration: false,
+				reasons: ["Current Typia validator accepted the attributes."],
+				targetVersion: migrationRegistry.currentVersion,
+				warnings: [],
+			} satisfies MigrationAnalysis,
+			preview: createPreview({
+				after: attributes,
+				before: attributes,
+				currentManifest: migrationRegistry.currentManifest as ManifestDocument,
+				legacyManifest: null,
+				status: "current",
+				unresolved: [],
+				validationErrors: [],
+			}),
+		};
+	}
+
+	for (const entry of migrationRegistry.entries) {
+		if (manifestMatchesDocument(entry.manifest as ManifestDocument, attributes)) {
+			const migrated = entry.rule.migrate(attributes);
+			const migratedValidation = validators.validate(migrated as any);
+			const unresolved = Array.isArray(entry.rule.unresolved) ? [...entry.rule.unresolved] : [];
+			const validationErrors = migratedValidation.success ? [] : formatValidationErrors(migratedValidation.errors);
+			const preview = createPreview({
+				after: migratedValidation.success ? (migrated as Record<string, unknown>) : null,
+				before: attributes,
+				currentManifest: migrationRegistry.currentManifest as ManifestDocument,
+				legacyManifest: entry.manifest as ManifestDocument,
+				status: migratedValidation.success ? (unresolved.length > 0 ? "manual" : "auto") : "manual",
+				unresolved,
+				validationErrors,
+			});
+			const delta = summarizeVersionDelta(
+				entry.manifest as ManifestDocument,
+				migrationRegistry.currentManifest as ManifestDocument,
+			);
+
+			return {
+				analysis: {
+					affectedFields: delta,
+					confidence: unresolved.length > 0 ? 0.8 : 0.95,
+					currentVersion: entry.fromVersion,
+					needsMigration: true,
+					reasons: [
+						`Snapshot ${entry.fromVersion} matched this block.`,
+						...preview.unionBranches.map(
+							(branch) => `Union ${branch.field}: ${branch.legacyBranch ?? "unknown"} -> ${branch.nextBranch ?? "unknown"} (${branch.status})`,
+						),
+					],
+					targetVersion: migrationRegistry.currentVersion,
+					warnings: [...unresolved, ...validationErrors],
+				} satisfies MigrationAnalysis,
+				preview,
+			};
+		}
+	}
+
+	return {
+		analysis: {
+			affectedFields: {
+				added: [],
+				changed: [],
+				removed: [],
+			},
+			confidence: 0.2,
+			currentVersion: "unknown",
+			needsMigration: true,
+			reasons: ["No legacy snapshot matched and current Typia validator rejected the attributes."],
+			targetVersion: migrationRegistry.currentVersion,
+			warnings: formatValidationErrors(currentValidation.errors),
+		} satisfies MigrationAnalysis,
+		preview: createPreview({
+			after: null,
+			before: attributes,
+			currentManifest: migrationRegistry.currentManifest as ManifestDocument,
+			legacyManifest: null,
+			status: "unknown",
+			unresolved: ["Manual migration review is required because the block does not match any supported snapshot."],
+			validationErrors: formatValidationErrors(currentValidation.errors),
+		}),
+	};
+}
+
+function createPreview({
+	after,
+	before,
+	currentManifest,
+	legacyManifest,
+	status,
+	unresolved,
+	validationErrors,
+}: {
+	after: Record<string, unknown> | null;
+	before: Record<string, unknown>;
+	currentManifest: ManifestDocument;
+	legacyManifest: ManifestDocument | null;
+	status: UnionBranchPreview["status"];
+	unresolved: string[];
+	validationErrors: string[];
+}): MigrationPreview {
+	return {
+		after,
+		before,
+		changedFields: after ? collectChangedFieldPaths(before, after) : [],
+		unresolved,
+		unionBranches: collectUnionBranchPreview(legacyManifest, currentManifest, before, after, status),
+		validationErrors,
+	};
+}
+
+function collectChangedFieldPaths(
+	before: Record<string, unknown>,
+	after: Record<string, unknown>,
+	prefix = "",
+): string[] {
+	const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+	const changes: string[] = [];
+
+	for (const key of keys) {
+		const nextPrefix = prefix ? `${prefix}.${key}` : key;
+		const left = before[key];
+		const right = after[key];
+
+		if (isPlainObject(left) && isPlainObject(right)) {
+			changes.push(...collectChangedFieldPaths(left, right, nextPrefix));
+			continue;
+		}
+		if (JSON.stringify(left) !== JSON.stringify(right)) {
+			changes.push(nextPrefix);
+		}
+	}
+
+	return changes;
+}
+
+function collectUnionBranchPreview(
+	legacyManifest: ManifestDocument | null,
+	currentManifest: ManifestDocument,
+	before: Record<string, unknown>,
+	after: Record<string, unknown> | null,
+	status: UnionBranchPreview["status"],
+): UnionBranchPreview[] {
+	const fieldNames = new Set<string>();
+
+	for (const [field, attribute] of Object.entries(legacyManifest?.attributes ?? {})) {
+		if (attribute.ts.kind === "union") {
+			fieldNames.add(field);
+		}
+	}
+	for (const [field, attribute] of Object.entries(currentManifest.attributes ?? {})) {
+		if (attribute.ts.kind === "union") {
+			fieldNames.add(field);
+		}
+	}
+
+	return [...fieldNames].map((field) => {
+		const legacyAttribute = legacyManifest?.attributes?.[field] ?? null;
+		const currentAttribute = currentManifest.attributes?.[field] ?? null;
+		return {
+			field,
+			legacyBranch: resolveUnionBranchKey(legacyAttribute, before[field]),
+			nextBranch: resolveUnionBranchKey(currentAttribute, (after ?? before)[field]),
+			status,
+		};
+	});
+}
+
+function resolveUnionBranchKey(attribute: ManifestAttribute | null, value: unknown) {
+	if (!attribute || attribute.ts.kind !== "union" || !attribute.ts.union || !isPlainObject(value)) {
+		return null;
+	}
+
+	const discriminatorValue = value[attribute.ts.union.discriminator];
+	if (typeof discriminatorValue !== "string") {
+		return null;
+	}
+
+	return discriminatorValue in attribute.ts.union.branches ? discriminatorValue : null;
+}
+
+function formatValidationErrors(errors: Array<{ expected?: string; path?: string }> = []) {
+	return errors.map((error) => {
+		const pathLabel = error.path ?? "$";
+		const expectedLabel = error.expected ?? "unknown";
+		return `${pathLabel}: ${expectedLabel}`;
+	});
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
 }

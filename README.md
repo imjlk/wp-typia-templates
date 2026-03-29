@@ -163,7 +163,8 @@ Features:
 
 - 🔄 Snapshot-based manifest diffing and rule generation
 - 📊 Migration dashboard in WordPress admin
-- 🧪 Built-in migration verification and fixtures
+- 🧪 Built-in migration verification and edge fixtures
+- ✍️ Auto-applied high-confidence renames plus suggested transform bodies
 - 📝 Detailed migration reports
 
 ## 📦 Published npm Packages

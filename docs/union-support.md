@@ -31,6 +31,8 @@ The generated metadata keeps this as:
 - `typia.manifest.json`: `ts.kind = "union"` plus `ts.union`
 - `typia-validator.php`: branch-aware validation using the discriminator
 - migration diffing: branch-aware compatibility checks
+- migration scaffold: branch-aware fixtures, rename candidates, and transform suggestions
+- dashboard preview: branch match summaries in scan, dry-run, and batch reports
 
 ## Not supported yet
 
@@ -49,6 +51,7 @@ Migration automation is strongest for:
 - additive/defaultable branch changes
 - compatible same-name branch fields
 - same-primitive enum unions
+- compatible discriminated-union edges with stable discriminators
 
 Manual authoring is still expected for:
 
@@ -56,5 +59,6 @@ Manual authoring is still expected for:
 - branch removals
 - branch renames
 - semantic transforms across branches
+- nested semantic transforms that cannot be expressed as a top-level rename or field transform
 
 Use `renameMap` and `transforms` in advanced migration rules when a union edge is not structurally compatible.

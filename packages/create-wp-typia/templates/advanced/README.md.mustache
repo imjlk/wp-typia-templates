@@ -82,22 +82,49 @@ Generated rule files now expose both `renameMap` and `transforms`:
 
 ```ts
 export const renameMap = {
-	// content: "headline",
+	content: "headline",
+	// linkTarget: "cta",
 };
 
 export const transforms = {
-	// content: (legacyValue) => String(legacyValue ?? ""),
+	// count: (legacyValue) => Number(legacyValue ?? 0),
 };
 ```
 
-Recommended workflow:
+Scaffold now does more than leave TODOs behind:
+
+- high-confidence top-level renames are written directly into `renameMap`
+- semantic-risk coercions get suggested transform bodies
+- edge fixtures are generated at `src/migrations/fixtures/<from>-to-<to>.json`
+- `migration:verify` replays every fixture case before it accepts the edge
+
+Recommended flow:
+
+1. update `src/types.ts`
+2. run `bun run sync-types`
+3. snapshot the release you want to preserve
+4. scaffold the legacy edge
+5. review auto-applied renames and suggested transforms
+6. edit the generated fixture cases if the real legacy payload is richer
+7. run `bun run migration:verify`
+8. use the admin dashboard for dry-run previews before batch migration
+
+Example:
 
 ```bash
 bun run migration:snapshot -- --version 2.0.0
 bun run migration:scaffold -- --from 1.0.0
-# fill renameMap / transforms
+# review auto-applied renameMap entries
+# fill suggested transforms if needed
 bun run migration:verify
 ```
+
+The dashboard then shows:
+
+- changed field paths
+- union branch matches
+- unresolved/manual review badges
+- dry-run previews before any write happens
 
 ## 📦 Generated Files
 
@@ -108,6 +135,7 @@ bun run migration:verify
 - `typia-migration-registry.php` - PHP-readable snapshot and edge summary
 - `src/migrations/versions/` - Versioned snapshots of legacy block contracts and save implementations
 - `src/migrations/rules/` - Per-edge migration rules generated from Typia manifest diffs
+- `src/migrations/fixtures/` - Edge fixtures used by `migration:verify` and the dashboard preview
 - `src/migrations/generated/` - Generated deprecated array, registry, and verification helpers
 - `build/` - Compiled JavaScript and CSS
 - `src/types.ts` - **Edit this to change block attributes**

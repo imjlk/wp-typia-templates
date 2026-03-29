@@ -16,6 +16,7 @@ A Bun-first WordPress block template monorepo featuring TypeScript, Typia valida
 - 🏗️ **Multiple Templates**: Choose from Basic, Full, Interactivity, or Advanced editions
 - 🚀 **Migration System**: Snapshot-based legacy block migration tooling with `renameMap` / `transforms` helpers (Advanced)
 - 🧱 **Dynamic Server Example**: The advanced template renders through `render.php` and the generated PHP validator
+- ✍️ **Aggressive Migration Authoring**: High-confidence renames are auto-applied and semantic-risk coercions get suggested transform bodies
 - ⚛️ **Modern Stack**: React hooks, error boundaries, and utility functions
 - 🧪 **Testing Ready**: Bun unit tests, Bunli CLI tests, and Playwright E2E tests included
 - 📦 **Shared CLI + Templates**: Scaffold via `create-wp-typia` and keep direct template entrypoints
