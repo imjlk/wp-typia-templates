@@ -10,21 +10,12 @@ import { parseGitHubTemplateLocator } from "../src/runtime/template-source.js";
 const packageRoot = process.cwd();
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-create-"));
 const entryPath = path.join(packageRoot, "dist", "cli.js");
-const createPackageVersion = `^${JSON.parse(
+const createPackageManifest = JSON.parse(
 	fs.readFileSync(path.join(packageRoot, "package.json"), "utf8"),
-).version}`;
-const blockTypesPackagePath = path.resolve(
-	packageRoot,
-	"../wp-typia-block-types/package.json"
 );
-if ( ! fs.existsSync( blockTypesPackagePath ) ) {
-	throw new Error(
-		`Block types package.json not found at ${ blockTypesPackagePath }`
-	);
-}
-const blockTypesPackageVersion = `^${JSON.parse(
-	fs.readFileSync(blockTypesPackagePath, "utf8"),
-).version}`;
+const createPackageVersion = `^${createPackageManifest.version}`;
+const blockTypesPackageVersion =
+	createPackageManifest.dependencies["@wp-typia/block-types"];
 
 function runCli(
 	command: string,
