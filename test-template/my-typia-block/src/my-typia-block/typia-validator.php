@@ -252,8 +252,9 @@ return new class {
 
 		foreach ($schema as $name => $attribute) {
 			if (!array_key_exists($name, $result)) {
-				if ($this->hasDefault($attribute)) {
-					$result[$name] = $attribute['typia']['defaultValue'];
+				$derivedDefault = $this->deriveDefaultValue($attribute);
+				if ($derivedDefault !== null) {
+					$result[$name] = $derivedDefault;
 				}
 				continue;
 			}
@@ -292,6 +293,36 @@ return new class {
 		}
 
 		return $value;
+	}
+
+	private function deriveDefaultValue(array $attribute)
+	{
+		if ($this->hasDefault($attribute)) {
+			return $attribute['typia']['defaultValue'];
+		}
+
+		$kind = $attribute['ts']['kind'] ?? $attribute['wp']['type'] ?? null;
+		if ($kind !== 'object') {
+			return null;
+		}
+
+		$properties = $attribute['ts']['properties'] ?? null;
+		if (!is_array($properties)) {
+			return null;
+		}
+
+		$derived = [];
+		foreach ($properties as $name => $child) {
+			if (!is_array($child)) {
+				continue;
+			}
+			$childDefault = $this->deriveDefaultValue($child);
+			if ($childDefault !== null) {
+				$derived[$name] = $childDefault;
+			}
+		}
+
+		return count($derived) > 0 ? $derived : null;
 	}
 
 	private function applyDefaultsForUnion($value, array $attribute)

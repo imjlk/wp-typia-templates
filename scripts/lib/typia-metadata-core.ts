@@ -925,8 +925,9 @@ return new class {
 
 \t\tforeach ($schema as $name => $attribute) {
 \t\t\tif (!array_key_exists($name, $result)) {
-\t\t\t\tif ($this->hasDefault($attribute)) {
-\t\t\t\t\t$result[$name] = $attribute['typia']['defaultValue'];
+\t\t\t\t$derivedDefault = $this->deriveDefaultValue($attribute);
+\t\t\t\tif ($derivedDefault !== null) {
+\t\t\t\t\t$result[$name] = $derivedDefault;
 \t\t\t\t}
 \t\t\t\tcontinue;
 \t\t\t}
@@ -965,6 +966,36 @@ return new class {
 \t\t}
 
 \t\treturn $value;
+\t}
+
+\tprivate function deriveDefaultValue(array $attribute)
+\t{
+\t\tif ($this->hasDefault($attribute)) {
+\t\t\treturn $attribute['typia']['defaultValue'];
+\t\t}
+
+\t\t$kind = $attribute['ts']['kind'] ?? $attribute['wp']['type'] ?? null;
+\t\tif ($kind !== 'object') {
+\t\t\treturn null;
+\t\t}
+
+\t\t$properties = $attribute['ts']['properties'] ?? null;
+\t\tif (!is_array($properties)) {
+\t\t\treturn null;
+\t\t}
+
+\t\t$derived = [];
+\t\tforeach ($properties as $name => $child) {
+\t\t\tif (!is_array($child)) {
+\t\t\t\tcontinue;
+\t\t\t}
+\t\t\t$childDefault = $this->deriveDefaultValue($child);
+\t\t\tif ($childDefault !== null) {
+\t\t\t\t$derived[$name] = $childDefault;
+\t\t\t}
+\t\t}
+
+\t\treturn count($derived) > 0 ? $derived : null;
 \t}
 
 \tprivate function applyDefaultsForUnion($value, array $attribute)

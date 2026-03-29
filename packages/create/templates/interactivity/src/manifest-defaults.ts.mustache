@@ -28,6 +28,27 @@ const cloneJson = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
 const isListArray = (value: unknown[]): boolean => value.every((_, index) => index in value);
 
+const deriveDefaultValue = (attribute: ManifestAttribute): JsonValue | undefined => {
+  if (attribute.typia.hasDefault) {
+    return cloneJson(attribute.typia.defaultValue);
+  }
+
+  if (attribute.ts.kind !== "object" || !attribute.ts.properties) {
+    return undefined;
+  }
+
+  const objectValue: Record<string, JsonValue> = {};
+
+  for (const [name, child] of Object.entries(attribute.ts.properties)) {
+    const childDefault = deriveDefaultValue(child);
+    if (childDefault !== undefined) {
+      objectValue[name] = childDefault;
+    }
+  }
+
+  return Object.keys(objectValue).length > 0 ? objectValue : undefined;
+};
+
 const applyDefaultsForObject = (
   value: Record<string, unknown>,
   schema: Record<string, ManifestAttribute>,
@@ -36,8 +57,9 @@ const applyDefaultsForObject = (
 
   for (const [name, attribute] of Object.entries(schema)) {
     if (!(name in result)) {
-      if (attribute.typia.hasDefault) {
-        result[name] = cloneJson(attribute.typia.defaultValue);
+      const derivedDefault = deriveDefaultValue(attribute);
+      if (derivedDefault !== undefined) {
+        result[name] = derivedDefault;
       }
       continue;
     }
