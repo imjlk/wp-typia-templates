@@ -6,8 +6,9 @@ import * as path from "node:path";
 
 import { parseMigrationArgs } from "../src/runtime/index.js";
 
+const packageRoot = process.cwd();
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "create-wp-typia-migrations-"));
-const entryPath = path.resolve(import.meta.dir, "../dist/cli.js");
+const entryPath = path.join(packageRoot, "dist", "cli.js");
 const repoTsxPath = resolveRepoTsxBinary();
 
 function runCli(
@@ -32,8 +33,8 @@ function writeJson(filePath: string, value: unknown) {
 
 function resolveRepoTsxBinary() {
 	const candidates = [
-		path.resolve(import.meta.dir, "../../../node_modules/.bin/tsx"),
-		path.resolve(import.meta.dir, "../../../node_modules/.bun/tsx@4.21.0/node_modules/.bin/tsx"),
+		path.resolve(packageRoot, "../../node_modules/.bin/tsx"),
+		path.resolve(packageRoot, "../../node_modules/.bun/tsx@4.21.0/node_modules/.bin/tsx"),
 	];
 
 	const resolved = candidates.find((candidate) => fs.existsSync(candidate));

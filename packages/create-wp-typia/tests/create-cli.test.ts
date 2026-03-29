@@ -6,8 +6,9 @@ import * as path from "node:path";
 
 import { scaffoldProject } from "../src/runtime/index.js";
 
+const packageRoot = process.cwd();
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "create-wp-typia-"));
-const entryPath = path.resolve(import.meta.dir, "../dist/cli.js");
+const entryPath = path.join(packageRoot, "dist", "cli.js");
 
 function runCli(
 	command: string,
