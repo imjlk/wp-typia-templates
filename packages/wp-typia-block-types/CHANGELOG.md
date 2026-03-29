@@ -1,5 +1,11 @@
 # @wp-typia/block-types
 
+## 0.1.3 — 2026-03-29
+
+### Patch changes
+
+- [c734c7e](https://github.com/imjlk/wp-typia/commit/c734c7eede2da50ebd508cde851e32144bb1ac76) Add pipeline-compatible color and min-height aliases alongside richer DX-only template literal block types, and document which aliases are safe to use inside `types.ts` with `sync-types`. — Thanks @imjlk!
+
 ## 0.1.2 — 2026-03-29
 
 ### Patch changes
