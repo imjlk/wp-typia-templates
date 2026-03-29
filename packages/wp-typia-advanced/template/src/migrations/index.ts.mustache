@@ -81,6 +81,41 @@ export interface BatchMigrationResult {
 	total: number;
 }
 
+interface EditablePostType {
+	rest_base: string;
+	slug: string;
+}
+
+interface EditablePostRecord {
+	content?: {
+		raw?: string;
+	};
+	id: number;
+	title?: {
+		rendered?: string;
+	};
+}
+
+interface GroupedScanResult {
+	postId: number;
+	postTitle: string;
+	postType: string;
+	rawContent: string;
+	restBase: string;
+	results: BlockScanResult[];
+}
+
+interface ParsedBlock {
+	attributes?: Record<string, unknown>;
+	innerBlocks?: ParsedBlock[];
+	name?: string;
+}
+
+interface MigrationResolution {
+	analysis: MigrationAnalysis;
+	preview: MigrationPreview;
+}
+
 export function detectBlockMigration(attributes: Record<string, unknown>): MigrationAnalysis {
 	return resolveMigrationState(attributes).analysis;
 }
@@ -265,30 +300,30 @@ export const migrationUtils = {
 			supportedVersions: migrationRegistry.entries.map((entry) => entry.fromVersion),
 		};
 	},
-	testMigration(attributes: Record<string, unknown>) {
+	testMigration(attributes: Record<string, unknown>): Record<string, unknown> {
 		return autoMigrate(attributes);
 	},
 };
 
-async function fetchEditablePostTypes(): Promise<Array<{ rest_base: string; slug: string }>> {
+async function fetchEditablePostTypes(): Promise<EditablePostType[]> {
 	const response = (await apiFetch({
 		parse: false,
 		path: "/wp/v2/types?context=edit",
 	})) as Response;
-	const payload = (await response.json()) as Record<string, any>;
+	const payload = (await response.json()) as Record<string, { rest_base?: string; slug?: string; viewable?: boolean }>;
 
 	return Object.values(payload)
 		.filter((postType) => postType?.viewable && postType?.rest_base)
 		.map((postType) => ({
-			rest_base: postType.rest_base,
-			slug: postType.slug,
+			rest_base: postType.rest_base!,
+			slug: postType.slug!,
 		}));
 }
 
-async function fetchAllPosts(restBase: string): Promise<any[]> {
+async function fetchAllPosts(restBase: string): Promise<EditablePostRecord[]> {
 	let page = 1;
 	let totalPages = 1;
-	const entries: any[] = [];
+	const entries: EditablePostRecord[] = [];
 
 	do {
 		const response = (await apiFetch({
@@ -296,7 +331,7 @@ async function fetchAllPosts(restBase: string): Promise<any[]> {
 			path: `/wp/v2/${restBase}?context=edit&per_page=100&page=${page}`,
 		})) as Response;
 		totalPages = Number.parseInt(response.headers.get("X-WP-TotalPages") ?? "1", 10);
-		entries.push(...((await response.json()) as any[]));
+		entries.push(...((await response.json()) as EditablePostRecord[]));
 		page += 1;
 	} while (page <= totalPages);
 
@@ -304,10 +339,10 @@ async function fetchAllPosts(restBase: string): Promise<any[]> {
 }
 
 function walkBlocks(
-	blocks: any[],
+	blocks: ParsedBlock[],
 	pathPrefix: number[],
-	visitor: (block: any, path: number[]) => void,
-) {
+	visitor: (block: ParsedBlock, path: number[]) => void,
+): void {
 	blocks.forEach((block, index) => {
 		const blockPath = [...pathPrefix, index];
 		visitor(block, blockPath);
@@ -317,10 +352,8 @@ function walkBlocks(
 	});
 }
 
-function groupResultsByPost(results: BlockScanResult[]) {
-	return results.reduce<
-		Record<string, { postId: number; postTitle: string; postType: string; rawContent: string; restBase: string; results: BlockScanResult[] }>
-	>(
+function groupResultsByPost(results: BlockScanResult[]): Record<string, GroupedScanResult> {
+	return results.reduce<Record<string, GroupedScanResult>>(
 		(accumulator, result) => {
 			const key = `${result.restBase}:${result.postId}`;
 			if (!accumulator[key]) {
@@ -346,12 +379,16 @@ function migratePostContent(results: BatchMigrationBlockResult[], rawContent: st
 			.filter((result) => result.preview.after)
 			.map((result) => [result.blockPath.join("."), result.preview.after as Record<string, unknown>]),
 	);
-	const blocks = parse(rawContent);
+	const blocks = parse(rawContent) as ParsedBlock[];
 	const nextBlocks = replaceBlocks(blocks, [], replacements);
 	return serialize(nextBlocks);
 }
 
-function replaceBlocks(blocks: any[], pathPrefix: number[], replacements: Map<string, Record<string, unknown>>) {
+function replaceBlocks(
+	blocks: ParsedBlock[],
+	pathPrefix: number[],
+	replacements: Map<string, Record<string, unknown>>,
+): ParsedBlock[] {
 	return blocks.map((block, index) => {
 		const blockPath = [...pathPrefix, index];
 		const replacement = replacements.get(blockPath.join("."));
@@ -374,7 +411,7 @@ function replaceBlocks(blocks: any[], pathPrefix: number[], replacements: Map<st
 	});
 }
 
-function resolveMigrationState(attributes: Record<string, unknown>) {
+function resolveMigrationState(attributes: Record<string, unknown>): MigrationResolution {
 	const currentValidation = validators.validate(attributes as any);
 	if (currentValidation.success) {
 		return {
@@ -553,7 +590,7 @@ function collectUnionBranchPreview(
 	});
 }
 
-function resolveUnionBranchKey(attribute: ManifestAttribute | null, value: unknown) {
+function resolveUnionBranchKey(attribute: ManifestAttribute | null, value: unknown): string | null {
 	if (!attribute || attribute.ts.kind !== "union" || !attribute.ts.union || !isPlainObject(value)) {
 		return null;
 	}
@@ -566,7 +603,7 @@ function resolveUnionBranchKey(attribute: ManifestAttribute | null, value: unkno
 	return discriminatorValue in attribute.ts.union.branches ? discriminatorValue : null;
 }
 
-function formatValidationErrors(errors: Array<{ expected?: string; path?: string }> = []) {
+function formatValidationErrors(errors: Array<{ expected?: string; path?: string }> = []): string[] {
 	return errors.map((error) => {
 		const pathLabel = error.path ?? "$";
 		const expectedLabel = error.expected ?? "unknown";
