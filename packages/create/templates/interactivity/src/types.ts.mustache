@@ -7,11 +7,11 @@ export interface {{pascalCase}}Attributes {
   isVisible?: boolean & tags.Default<true>;
   interactiveMode?: ('click' | 'hover' | 'auto') & tags.Default<"click">;
   animation?: ('none' | 'bounce' | 'pulse' | 'shake' | 'flip') & tags.Default<"none">;
-  clickCount?: number & tags.Default<0>;
+  clickCount?: number & tags.Minimum<0> & tags.Type<"uint32"> & tags.Default<0>;
   isAnimating?: boolean & tags.Default<false>;
   showCounter?: boolean & tags.Default<true>;
-  maxClicks?: number & tags.Default<10>;
-  autoPlayInterval?: number & tags.Default<0>;
+  maxClicks?: number & tags.Minimum<0> & tags.Type<"uint32"> & tags.Default<10>;
+  autoPlayInterval?: number & tags.Minimum<0> & tags.Type<"uint32"> & tags.Default<0>;
   uniqueId?: string & tags.Default<"">;
 }
 

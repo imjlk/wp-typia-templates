@@ -305,4 +305,110 @@ export interface BlockAttributes {
     expect(invalidResult.valid).toBe(false);
     expect(invalidResult.errors).toContain('link.kind must be one of post, url');
   });
+
+  test('emits additive numeric and array constraints in manifest v2', async () => {
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify({ attributes: {}, example: { attributes: {} } }, null, 2),
+      'src/types.ts': `import { tags } from "typia";
+
+export interface BlockAttributes {
+  opacity: number & tags.ExclusiveMinimum<0> & tags.ExclusiveMaximum<1> & tags.MultipleOf<0.25>;
+  slides: Array<string> & tags.MinItems<1> & tags.MaxItems<4>;
+}
+`,
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: {
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          resolveJsonModule: true,
+          strict: true,
+          target: 'ES2022',
+        },
+        include: ['src/**/*.ts'],
+      }, null, 2),
+    });
+
+    const result = await syncBlockMetadata({
+      blockJsonFile: 'block.json',
+      manifestFile: 'typia.manifest.json',
+      projectRoot: fixtureDir,
+      sourceTypeName: 'BlockAttributes',
+      typesFile: 'src/types.ts',
+    });
+
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(fixtureDir, 'typia.manifest.json'), 'utf8'),
+    );
+
+    expect(manifest.attributes.opacity.typia.constraints.exclusiveMinimum).toBe(0);
+    expect(manifest.attributes.opacity.typia.constraints.exclusiveMaximum).toBe(1);
+    expect(manifest.attributes.opacity.typia.constraints.multipleOf).toBe(0.25);
+    expect(manifest.attributes.slides.typia.constraints.minItems).toBe(1);
+    expect(manifest.attributes.slides.typia.constraints.maxItems).toBe(4);
+    expect(result.lossyProjectionWarnings).toContain('BlockAttributes.opacity: exclusiveMaximum, exclusiveMinimum, multipleOf');
+    expect(result.lossyProjectionWarnings).toContain('BlockAttributes.slides: maxItems, minItems, items');
+  });
+
+  test('generated php validator supports additional formats, type tags, and array constraints', async () => {
+    if (!hasPhpBinary()) {
+      return;
+    }
+
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify({ attributes: {}, example: { attributes: {} } }, null, 2),
+      'src/types.ts': `import { tags } from "typia";
+
+export interface BlockAttributes {
+  contactEmail: string & tags.Format<"email">;
+  website: string & tags.Format<"url">;
+  publishedAt: string & tags.Format<"date-time">;
+  score: number & tags.Type<"int32"> & tags.ExclusiveMinimum<-1> & tags.ExclusiveMaximum<101> & tags.MultipleOf<5>;
+  slides: Array<string> & tags.MinItems<1> & tags.MaxItems<2>;
+}
+`,
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: {
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext',
+          resolveJsonModule: true,
+          strict: true,
+          target: 'ES2022',
+        },
+        include: ['src/**/*.ts'],
+      }, null, 2),
+    });
+
+    const result = await syncBlockMetadata({
+      blockJsonFile: 'block.json',
+      manifestFile: 'typia.manifest.json',
+      projectRoot: fixtureDir,
+      sourceTypeName: 'BlockAttributes',
+      typesFile: 'src/types.ts',
+    });
+
+    expect(result.phpGenerationWarnings).toEqual([]);
+
+    const phpValidatorPath = path.join(fixtureDir, 'typia-validator.php');
+    execFileSync('php', ['-l', phpValidatorPath], { stdio: 'ignore' });
+
+    const invalidPayload = JSON.stringify({
+      contactEmail: 'not-an-email',
+      website: 'notaurl',
+      publishedAt: '2026/03/29 09:00:00',
+      score: 102,
+      slides: [],
+    }).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+    const invalidResult = JSON.parse(execFileSync('php', [
+      '-r',
+      `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; $payload = json_decode('${invalidPayload}', true); echo json_encode($validator->validate($payload), JSON_UNESCAPED_SLASHES);`,
+    ], { encoding: 'utf8' }));
+
+    expect(invalidResult.valid).toBe(false);
+    expect(invalidResult.errors).toContain('contactEmail must match format email');
+    expect(invalidResult.errors).toContain('website must match format url');
+    expect(invalidResult.errors).toContain('publishedAt must match format date-time');
+    expect(invalidResult.errors).toContain('score must be < 101');
+    expect(invalidResult.errors).toContain('slides must have at least 1 items');
+  });
 });

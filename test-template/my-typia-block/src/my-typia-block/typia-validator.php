@@ -10,11 +10,16 @@ return new class {
 				'id' => [
 					'typia' => [
 						'constraints' => [
+							'exclusiveMaximum' => null,
+							'exclusiveMinimum' => null,
 							'format' => 'uuid',
 							'maxLength' => null,
+							'maxItems' => null,
 							'maximum' => null,
 							'minLength' => null,
+							'minItems' => null,
 							'minimum' => null,
+							'multipleOf' => null,
 							'pattern' => null,
 							'typeTag' => null
 						],
@@ -38,11 +43,16 @@ return new class {
 				'version' => [
 					'typia' => [
 						'constraints' => [
+							'exclusiveMaximum' => null,
+							'exclusiveMinimum' => null,
 							'format' => null,
 							'maxLength' => null,
+							'maxItems' => null,
 							'maximum' => null,
 							'minLength' => null,
+							'minItems' => null,
 							'minimum' => null,
+							'multipleOf' => null,
 							'pattern' => null,
 							'typeTag' => 'uint32'
 						],
@@ -66,11 +76,16 @@ return new class {
 				'className' => [
 					'typia' => [
 						'constraints' => [
+							'exclusiveMaximum' => null,
+							'exclusiveMinimum' => null,
 							'format' => null,
 							'maxLength' => 100,
+							'maxItems' => null,
 							'maximum' => null,
 							'minLength' => null,
+							'minItems' => null,
 							'minimum' => null,
+							'multipleOf' => null,
 							'pattern' => null,
 							'typeTag' => null
 						],
@@ -94,11 +109,16 @@ return new class {
 				'content' => [
 					'typia' => [
 						'constraints' => [
+							'exclusiveMaximum' => null,
+							'exclusiveMinimum' => null,
 							'format' => null,
 							'maxLength' => 1000,
+							'maxItems' => null,
 							'maximum' => null,
 							'minLength' => 0,
+							'minItems' => null,
 							'minimum' => null,
+							'multipleOf' => null,
 							'pattern' => null,
 							'typeTag' => null
 						],
@@ -122,11 +142,16 @@ return new class {
 				'alignment' => [
 					'typia' => [
 						'constraints' => [
+							'exclusiveMaximum' => null,
+							'exclusiveMinimum' => null,
 							'format' => null,
 							'maxLength' => null,
+							'maxItems' => null,
 							'maximum' => null,
 							'minLength' => null,
+							'minItems' => null,
 							'minimum' => null,
+							'multipleOf' => null,
 							'pattern' => null,
 							'typeTag' => null
 						],
@@ -155,11 +180,16 @@ return new class {
 				'isVisible' => [
 					'typia' => [
 						'constraints' => [
+							'exclusiveMaximum' => null,
+							'exclusiveMinimum' => null,
 							'format' => null,
 							'maxLength' => null,
+							'maxItems' => null,
 							'maximum' => null,
 							'minLength' => null,
+							'minItems' => null,
 							'minimum' => null,
+							'multipleOf' => null,
 							'pattern' => null,
 							'typeTag' => null
 						],
@@ -222,8 +252,9 @@ return new class {
 
 		foreach ($schema as $name => $attribute) {
 			if (!array_key_exists($name, $result)) {
-				if ($this->hasDefault($attribute)) {
-					$result[$name] = $attribute['typia']['defaultValue'];
+				$derivedDefault = $this->deriveDefaultValue($attribute);
+				if ($derivedDefault !== null) {
+					$result[$name] = $derivedDefault;
 				}
 				continue;
 			}
@@ -262,6 +293,36 @@ return new class {
 		}
 
 		return $value;
+	}
+
+	private function deriveDefaultValue(array $attribute)
+	{
+		if ($this->hasDefault($attribute)) {
+			return $attribute['typia']['defaultValue'];
+		}
+
+		$kind = $attribute['ts']['kind'] ?? $attribute['wp']['type'] ?? null;
+		if ($kind !== 'object') {
+			return null;
+		}
+
+		$properties = $attribute['ts']['properties'] ?? null;
+		if (!is_array($properties)) {
+			return null;
+		}
+
+		$derived = [];
+		foreach ($properties as $name => $child) {
+			if (!is_array($child)) {
+				continue;
+			}
+			$childDefault = $this->deriveDefaultValue($child);
+			if ($childDefault !== null) {
+				$derived[$name] = $childDefault;
+			}
+		}
+
+		return count($derived) > 0 ? $derived : null;
 	}
 
 	private function applyDefaultsForUnion($value, array $attribute)
@@ -336,6 +397,7 @@ return new class {
 					$errors[] = sprintf('%s must be array', $path);
 					return;
 				}
+				$this->validateArray($value, $attribute, $path, $errors);
 				if (isset($attribute['ts']['items']) && is_array($attribute['ts']['items'])) {
 					foreach ($value as $index => $item) {
 						$this->validateAttribute(true, $item, $attribute['ts']['items'], sprintf('%s[%s]', $path, (string) $index), $errors);
@@ -421,10 +483,22 @@ return new class {
 		}
 		if (
 			isset($constraints['format']) &&
-			$constraints['format'] === 'uuid' &&
-			!$this->matchesUuid($value)
+			is_string($constraints['format']) &&
+			!$this->matchesFormat($constraints['format'], $value)
 		) {
-			$errors[] = sprintf('%s must be a uuid', $path);
+			$errors[] = sprintf('%s must match format %s', $path, $constraints['format']);
+		}
+	}
+
+	private function validateArray(array $value, array $attribute, string $path, array &$errors): void
+	{
+		$constraints = $attribute['typia']['constraints'] ?? [];
+
+		if (isset($constraints['minItems']) && is_int($constraints['minItems']) && count($value) < $constraints['minItems']) {
+			$errors[] = sprintf('%s must have at least %d items', $path, $constraints['minItems']);
+		}
+		if (isset($constraints['maxItems']) && is_int($constraints['maxItems']) && count($value) > $constraints['maxItems']) {
+			$errors[] = sprintf('%s must have at most %d items', $path, $constraints['maxItems']);
 		}
 	}
 
@@ -438,10 +512,33 @@ return new class {
 		if (isset($constraints['maximum']) && $this->isNumber($constraints['maximum']) && $value > $constraints['maximum']) {
 			$errors[] = sprintf('%s must be <= %s', $path, (string) $constraints['maximum']);
 		}
-		if (($constraints['typeTag'] ?? null) === 'uint32') {
-			if (!is_int($value) || $value < 0 || $value > 4294967295) {
-				$errors[] = sprintf('%s must be a uint32', $path);
-			}
+		if (
+			isset($constraints['exclusiveMinimum']) &&
+			$this->isNumber($constraints['exclusiveMinimum']) &&
+			$value <= $constraints['exclusiveMinimum']
+		) {
+			$errors[] = sprintf('%s must be > %s', $path, (string) $constraints['exclusiveMinimum']);
+		}
+		if (
+			isset($constraints['exclusiveMaximum']) &&
+			$this->isNumber($constraints['exclusiveMaximum']) &&
+			$value >= $constraints['exclusiveMaximum']
+		) {
+			$errors[] = sprintf('%s must be < %s', $path, (string) $constraints['exclusiveMaximum']);
+		}
+		if (
+			isset($constraints['multipleOf']) &&
+			$this->isNumber($constraints['multipleOf']) &&
+			!$this->matchesMultipleOf($value, $constraints['multipleOf'])
+		) {
+			$errors[] = sprintf('%s must be a multiple of %s', $path, (string) $constraints['multipleOf']);
+		}
+		if (
+			isset($constraints['typeTag']) &&
+			is_string($constraints['typeTag']) &&
+			!$this->matchesTypeTag($value, $constraints['typeTag'])
+		) {
+			$errors[] = sprintf('%s must be a %s', $path, $constraints['typeTag']);
 		}
 	}
 
@@ -467,9 +564,56 @@ return new class {
 		return $result === 1;
 	}
 
-	private function matchesUuid(string $value): bool
+	private function matchesFormat(string $format, string $value): bool
 	{
-		return preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $value) === 1;
+		switch ($format) {
+			case 'uuid':
+				return preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $value) === 1;
+			case 'email':
+				return filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
+			case 'url':
+			case 'uri':
+				return filter_var($value, FILTER_VALIDATE_URL) !== false;
+			case 'ipv4':
+				return filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false;
+			case 'ipv6':
+				return filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
+			case 'date-time':
+				return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/', $value) === 1;
+			default:
+				return true;
+		}
+	}
+
+	private function matchesTypeTag($value, string $typeTag): bool
+	{
+		switch ($typeTag) {
+			case 'uint32':
+				return is_int($value) && $value >= 0 && $value <= 4294967295;
+			case 'int32':
+				return is_int($value) && $value >= -2147483648 && $value <= 2147483647;
+			case 'uint64':
+				return is_int($value) && $value >= 0;
+			case 'float':
+			case 'double':
+				return is_int($value) || is_float($value);
+			default:
+				return true;
+		}
+	}
+
+	private function matchesMultipleOf($value, $multipleOf): bool
+	{
+		if ($multipleOf == 0) {
+			return true;
+		}
+		if (is_int($value) && is_int($multipleOf)) {
+			return $value % $multipleOf === 0;
+		}
+
+		$remainder = fmod((float) $value, (float) $multipleOf);
+		$epsilon = 0.000000001;
+		return abs($remainder) < $epsilon || abs(abs((float) $multipleOf) - abs($remainder)) < $epsilon;
 	}
 
 	private function isNumber($value): bool

@@ -19,7 +19,7 @@ export const validators = {
 };
 
 /**
- * Validates and transforms block attributes
+ * Validates and transforms block attributes.
  */
 export const validate{{pascalCase}}Attributes = (attributes: unknown): {{pascalCase}}ValidationResult => {
   try {
@@ -29,46 +29,43 @@ export const validate{{pascalCase}}Attributes = (attributes: unknown): {{pascalC
       return {
         isValid: true,
         errors: [],
-        data: validated.data
-      };
-    } else {
-      return {
-        isValid: false,
-        errors: validated.errors.map(e => `${e.path}: ${e.message}`),
-        data: attributes
+        data: validated.data,
       };
     }
+
+    return {
+      isValid: false,
+      errors: validated.errors.map((error) => `${error.path}: ${error.message}`),
+      data: attributes as {{pascalCase}}Attributes,
+    };
   } catch (error) {
     return {
       isValid: false,
-      errors: [`Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`],
-      data: attributes
+      errors: [`Validation error: ${error instanceof Error ? error.message : "Unknown error"}`],
+      data: attributes as {{pascalCase}}Attributes,
     };
   }
 };
 
 /**
- * Creates a safe copy of attributes with defaults
+ * Applies static Typia defaults and generates a stable runtime ID when needed.
  */
-export const sanitize{{pascalCase}}Attributes = (attributes: Partial<{{pascalCase}}Attributes>): {{pascalCase}}Attributes => {
+export const sanitize{{pascalCase}}Attributes = (
+  attributes: Partial<{{pascalCase}}Attributes>,
+): {{pascalCase}}Attributes => {
   const normalized = applyTemplateDefaults<{{pascalCase}}Attributes>(attributes);
 
   return {
     ...normalized,
-    uniqueId: normalized.uniqueId && normalized.uniqueId.length > 0 ? normalized.uniqueId : generateUniqueId()
+    uniqueId: normalized.uniqueId && normalized.uniqueId.length > 0 ? normalized.uniqueId : generateUniqueId(),
   } as {{pascalCase}}Attributes;
 };
 
 /**
- * Generate unique ID for block instances
+ * Runtime type guard for checking if an object is {{pascalCase}}Attributes.
  */
-const generateUniqueId = (): string => {
-  return `{{slugKebabCase}}-${Math.random().toString(36).substr(2, 9)}`;
-};
-
-/**
- * Runtime type guard for checking if an object is {{pascalCase}}Attributes
- */
-export const is{{pascalCase}}Attributes = (obj: any): obj is {{pascalCase}}Attributes => {
+export const is{{pascalCase}}Attributes = (obj: unknown): obj is {{pascalCase}}Attributes => {
   return validators.is(obj);
 };
+
+const generateUniqueId = (): string => `{{slugKebabCase}}-${Math.random().toString(36).slice(2, 11)}`;

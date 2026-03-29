@@ -8,7 +8,7 @@ async function waitForAdminReady(page: import('@playwright/test').Page) {
       Boolean(document.querySelector('#wpadminbar')) ||
       document.body.classList.contains('wp-admin')
     );
-  });
+  }, { timeout: 60_000 });
 }
 
 async function globalSetup(config: FullConfig) {
@@ -31,10 +31,22 @@ async function globalSetup(config: FullConfig) {
     }
 
     // Login to WordPress
-    await page.goto(`${config.projects![0].use.baseURL}/wp-login.php`);
+    await page.goto(`${config.projects![0].use.baseURL}/wp-login.php`, { waitUntil: 'domcontentloaded' });
     await page.fill('#user_login', 'admin');
     await page.fill('#user_pass', 'password');
-    await page.click('#wp-submit');
+    await Promise.allSettled([
+      page.waitForURL((url) => {
+        return url.pathname.startsWith('/wp-admin') || url.pathname.startsWith('/wp-login.php');
+      }, { timeout: 60_000 }),
+      page.click('#wp-submit'),
+    ]);
+
+    const loginErrors = await page.locator('#login_error').allTextContents();
+    if (loginErrors.length > 0) {
+      throw new Error(`WordPress login failed: ${loginErrors.join(' ')}`);
+    }
+
+    await page.goto(`${config.projects![0].use.baseURL}/wp-admin/`, { waitUntil: 'domcontentloaded' });
 
     // Wait for login to complete
     await waitForAdminReady(page);

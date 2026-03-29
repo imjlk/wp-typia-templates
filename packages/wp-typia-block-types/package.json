@@ -21,6 +21,16 @@
       "import": "./dist/block-editor/alignment.js",
       "default": "./dist/block-editor/alignment.js"
     },
+    "./block-editor/color": {
+      "types": "./dist/block-editor/color.d.ts",
+      "import": "./dist/block-editor/color.js",
+      "default": "./dist/block-editor/color.js"
+    },
+    "./block-editor/dimensions": {
+      "types": "./dist/block-editor/dimensions.d.ts",
+      "import": "./dist/block-editor/dimensions.js",
+      "default": "./dist/block-editor/dimensions.js"
+    },
     "./block-editor/layout": {
       "types": "./dist/block-editor/layout.d.ts",
       "import": "./dist/block-editor/layout.js",
