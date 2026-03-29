@@ -70,7 +70,7 @@ jobs:
             - updates package changelogs
             - consumes pending `.sampo/changesets/*`
 
-            Merge this PR with **Squash and merge**, then create a GitHub Release from the merged commit to trigger npm OIDC publish.
+            Merge this PR with **Squash and merge** to automatically create a GitHub Release and trigger npm OIDC publish from `main`.
           labels: |
             release
           add-paths: |
