@@ -59,7 +59,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          file: ./coverage/unit/lcov.info,./packages/create-wp-typia/coverage/lcov.info
+          file: ./coverage/unit/lcov.info,./packages/create/coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
 
@@ -85,8 +85,8 @@ jobs:
       - name: Upload CLI artifact
         uses: actions/upload-artifact@v4
         with:
-          name: create-wp-typia-dist
-          path: packages/create-wp-typia/dist/
+          name: wp-typia-create-dist
+          path: packages/create/dist/
           retention-days: 7
 
       - name: Upload example build artifact
@@ -140,8 +140,8 @@ jobs:
       - name: Download CLI artifact
         uses: actions/download-artifact@v4
         with:
-          name: create-wp-typia-dist
-          path: packages/create-wp-typia/dist
+          name: wp-typia-create-dist
+          path: packages/create/dist
 
       - name: Enable Corepack
         run: corepack enable
