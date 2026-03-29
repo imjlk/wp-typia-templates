@@ -1,5 +1,12 @@
 # create-wp-typia
 
+## 1.0.3 — 2026-03-29
+
+### Patch changes
+
+- [d89441f](https://github.com/imjlk/wp-typia/commit/d89441faf32906763807aa9bde1e960cc2ecf274) Improve Typia-powered metadata and validator generation, expand shared WordPress semantic block types, and strengthen the full/interactivity templates with precompiled validators and manifest-driven default application. — Thanks @imjlk!
+- Updated dependencies: create@0.1.3
+
 ## 1.0.2 — 2026-03-29
 
 ### Patch changes
