@@ -2,19 +2,21 @@ import { useState, useEffect } from 'react';
 
 /**
  * Hook for debounced value
+ * @param value
+ * @param delay
  */
-export function useDebounce<T>(value: T, delay: number): T {
-	const [debouncedValue, setDebouncedValue] = useState<T>(value);
+export function useDebounce< T >( value: T, delay: number ): T {
+	const [ debouncedValue, setDebouncedValue ] = useState< T >( value );
 
-	useEffect(() => {
-		const handler = setTimeout(() => {
-			setDebouncedValue(value);
-		}, delay);
+	useEffect( () => {
+		const handler = setTimeout( () => {
+			setDebouncedValue( value );
+		}, delay );
 
 		return () => {
-			clearTimeout(handler);
+			clearTimeout( handler );
 		};
-	}, [value, delay]);
+	}, [ value, delay ] );
 
 	return debouncedValue;
 }

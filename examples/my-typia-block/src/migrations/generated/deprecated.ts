@@ -1,3 +1,3 @@
-import type { BlockConfiguration } from "@wordpress/blocks";
+import type { BlockConfiguration } from '@wordpress/blocks';
 
-export const deprecated: NonNullable<BlockConfiguration["deprecated"]> = [];
+export const deprecated: NonNullable< BlockConfiguration[ 'deprecated' ] > = [];

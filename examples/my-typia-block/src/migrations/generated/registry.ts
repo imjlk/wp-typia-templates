@@ -1,11 +1,13 @@
-import currentManifest from "../../../typia.manifest.json";
-import type { ManifestDocument } from "../helpers";
+import currentManifest from '../../../typia.manifest.json';
+import type { ManifestDocument } from '../helpers';
 
 interface MigrationRegistryEntry {
 	fromVersion: string;
 	manifest: ManifestDocument;
 	rule: {
-		migrate(input: Record<string, unknown>): Record<string, unknown>;
+		migrate: (
+			input: Record< string, unknown >
+		) => Record< string, unknown >;
 		unresolved?: readonly string[];
 	};
 }
@@ -15,7 +17,7 @@ export const migrationRegistry: {
 	currentManifest: ManifestDocument;
 	entries: MigrationRegistryEntry[];
 } = {
-	currentVersion: "1.0.0",
+	currentVersion: '1.0.0',
 	currentManifest: currentManifest as ManifestDocument,
 	entries: [],
 };

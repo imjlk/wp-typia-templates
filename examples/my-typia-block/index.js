@@ -13,9 +13,10 @@ module.exports = {
 		viewScript: 'file:./view.js',
 	},
 	variants: {
-		'typia': {
+		typia: {
 			title: 'Typia Block',
-			description: 'A WordPress block with Typia validation and Interactivity API',
-		}
-	}
+			description:
+				'A WordPress block with Typia validation and Interactivity API',
+		},
+	},
 };

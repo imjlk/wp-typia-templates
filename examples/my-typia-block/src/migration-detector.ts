@@ -6,4 +6,4 @@ export {
 	detectBlockMigration,
 	generateMigrationReport,
 	scanSiteForMigrations,
-} from "./migrations";
+} from './migrations';

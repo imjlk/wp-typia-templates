@@ -5,7 +5,7 @@ interface SaveProps {
 	attributes: MyTypiaBlockAttributes;
 }
 
-export default function Save({ attributes }: SaveProps) {
+export default function Save( { attributes }: SaveProps ) {
 	useBlockProps.save();
 	void attributes;
 	return null;
