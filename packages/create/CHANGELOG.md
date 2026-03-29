@@ -1,12 +1,14 @@
 # @wp-typia/create
 
-## 1.0.0
+## 0.1.1 — 2026-03-29
+
+### Patch changes
+
+- [bc2d1b9](https://github.com/imjlk/wp-typia/commit/bc2d1b9cde0085c74ec01cc40ac46aeee68dc11d) Refresh workspace configuration and GitHub Actions release wiring for the scoped `@wp-typia` package flow. — Thanks @imjlk!
 
 ### Major Changes
 
 - 4e50d3b: Consolidate the repository and published scaffolding surface around the scoped `@wp-typia/create` package.
-
-  This release removes the legacy `wp-typia-*` wrapper packages from the repository and release flow, keeps `packages/create/templates` as the single template source of truth, and makes `@wp-typia/create` the canonical scaffolding package.
 
 ### Highlights
 
@@ -19,3 +21,4 @@
 ### Patch Changes
 
 - 92d5318: Refactor the published CLI to use a typed TypeScript runtime with `dist/cli.js` as the single runtime entrypoint, and improve advanced migration scaffolding internals.
+
