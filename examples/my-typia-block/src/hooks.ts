@@ -1,6 +1,13 @@
 /* eslint-disable no-console */
 import { useEffect, useState } from '@wordpress/element';
 
+export interface TypiaValidationError {
+	description?: string;
+	expected: string;
+	path: string;
+	value: unknown;
+}
+
 /**
  * Custom hooks for My Typia Block
  */
@@ -9,15 +16,19 @@ export * from './hooks/useLocalStorage';
 
 /**
  * Hook for Typia validation with real-time feedback
- * @param data
- * @param validator
+ * @param data      Value to validate.
+ * @param validator Validation function.
+ * @return Validation state and current errors.
  */
 export function useTypiaValidation< T >(
 	data: T,
-	validator: ( value: T ) => { success: boolean; errors?: any[] }
+	validator: ( value: T ) => {
+		success: boolean;
+		errors?: TypiaValidationError[];
+	}
 ) {
 	const [ isValid, setIsValid ] = useState( true );
-	const [ errors, setErrors ] = useState< any[] >( [] );
+	const [ errors, setErrors ] = useState< TypiaValidationError[] >( [] );
 
 	useEffect( () => {
 		const result = validator( data );
@@ -30,11 +41,12 @@ export function useTypiaValidation< T >(
 
 /**
  * Hook for generating UUID
+ * @return A stable UUID for the lifetime of the component.
  */
 export function useUUID() {
 	const [ uuid ] = useState( () => {
-		if ( typeof crypto !== 'undefined' && crypto.randomUUID ) {
-			return crypto.randomUUID();
+		if ( globalThis.crypto?.randomUUID ) {
+			return globalThis.crypto.randomUUID();
 		}
 
 		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
@@ -52,11 +64,12 @@ export function useUUID() {
 
 /**
  * Hook for logging attribute changes in development
- * @param attributes
+ * @param attributes Current block attributes.
  */
-export function useAttributeLogger( attributes: any ) {
+export function useAttributeLogger( attributes: Record< string, unknown > ) {
 	useEffect( () => {
 		if ( process.env.NODE_ENV === 'development' ) {
+			// eslint-disable-next-line no-console
 			console.log( 'My Typia Block attributes changed:', attributes );
 		}
 	}, [ attributes ] );

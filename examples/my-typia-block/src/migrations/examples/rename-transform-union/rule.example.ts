@@ -8,6 +8,8 @@ import {
 } from '../../helpers';
 
 export const renameMap: RenameMap = {
+	// renameMap is illustrative here: migrate still writes the current `content`
+	// field after pulling from a legacy `headline` path.
 	content: 'headline',
 	'padding.top': 'spacing.top',
 };
@@ -42,12 +44,28 @@ export const unresolved = [
 	'linkTarget: union-branch-removal (branch post was removed)',
 ] as const;
 
+function getRequiredManifestAttribute( key: string ): ManifestAttribute {
+	const manifestAttributes = currentManifest.attributes as Record<
+		string,
+		ManifestAttribute
+	>;
+	const attribute = manifestAttributes[ key ];
+
+	if ( ! attribute ) {
+		throw new Error(
+			`Migration example is missing the required manifest attribute "${ key }".`
+		);
+	}
+
+	return attribute;
+}
+
 export function migrate(
 	input: Record< string, unknown >
 ): MyTypiaBlockAttributes {
 	return {
 		content: resolveMigrationAttribute(
-			currentManifest.attributes.content as ManifestAttribute,
+			getRequiredManifestAttribute( 'content' ),
 			'content',
 			'content',
 			input,
@@ -55,7 +73,7 @@ export function migrate(
 			transforms
 		),
 		padding: resolveMigrationAttribute(
-			currentManifest.attributes.padding as ManifestAttribute,
+			getRequiredManifestAttribute( 'padding' ),
 			'padding',
 			'padding',
 			input,
@@ -63,7 +81,7 @@ export function migrate(
 			transforms
 		),
 		borderRadius: resolveMigrationAttribute(
-			currentManifest.attributes.borderRadius as ManifestAttribute,
+			getRequiredManifestAttribute( 'borderRadius' ),
 			'borderRadius',
 			'borderRadius',
 			input,
@@ -71,7 +89,7 @@ export function migrate(
 			transforms
 		),
 		linkTarget: resolveMigrationAttribute(
-			currentManifest.attributes.linkTarget as ManifestAttribute,
+			getRequiredManifestAttribute( 'linkTarget' ),
 			'linkTarget',
 			'linkTarget',
 			input,

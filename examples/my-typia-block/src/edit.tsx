@@ -9,12 +9,23 @@ import { PanelBody, ToggleControl, SelectControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { MyTypiaBlockAttributes } from './types';
 import { validators } from './validators';
-import { useTypiaValidation, useAttributeLogger, useDebounce } from './hooks';
+import {
+	type TypiaValidationError,
+	useTypiaValidation,
+	useAttributeLogger,
+	useDebounce,
+} from './hooks';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { MigrationDashboard } from './admin/migration-dashboard';
 import { classNames } from './utils';
 
 type EditProps = BlockEditProps< MyTypiaBlockAttributes >;
+type AlignmentValue = NonNullable< MyTypiaBlockAttributes[ 'alignment' ] >;
+type FontSizeValue = NonNullable< MyTypiaBlockAttributes[ 'fontSize' ] >;
+
+function formatValidationError( error: TypiaValidationError ): string {
+	return error.description ?? error.expected;
+}
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const blockProps = useBlockProps();
@@ -79,7 +90,10 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 							},
 						] }
 						onChange={ ( alignment ) =>
-							updateAttribute( 'alignment', alignment as any )
+							updateAttribute(
+								'alignment',
+								alignment as AlignmentValue
+							)
 						}
 					/>
 					<SelectControl
@@ -104,7 +118,10 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 							},
 						] }
 						onChange={ ( fontSize ) =>
-							updateAttribute( 'fontSize', fontSize as any )
+							updateAttribute(
+								'fontSize',
+								fontSize as FontSizeValue
+							)
 						}
 					/>
 					{ ! isValid && (
@@ -121,7 +138,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 								{ errors.map( ( error, index ) => (
 									<li key={ index }>
 										<code>{ error.path }</code>:{ ' ' }
-										{ error.message }
+										{ formatValidationError( error ) }
 									</li>
 								) ) }
 							</ul>

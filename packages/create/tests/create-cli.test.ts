@@ -13,8 +13,17 @@ const entryPath = path.join(packageRoot, "dist", "cli.js");
 const createPackageVersion = `^${JSON.parse(
 	fs.readFileSync(path.join(packageRoot, "package.json"), "utf8"),
 ).version}`;
+const blockTypesPackagePath = path.resolve(
+	packageRoot,
+	"../wp-typia-block-types/package.json"
+);
+if ( ! fs.existsSync( blockTypesPackagePath ) ) {
+	throw new Error(
+		`Block types package.json not found at ${ blockTypesPackagePath }`
+	);
+}
 const blockTypesPackageVersion = `^${JSON.parse(
-	fs.readFileSync(path.resolve(packageRoot, "../wp-typia-block-types/package.json"), "utf8"),
+	fs.readFileSync(blockTypesPackagePath, "utf8"),
 ).version}`;
 
 function runCli(
@@ -98,7 +107,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(packageJson.devDependencies["@wp-typia/create"]).toBe(createPackageVersion);
 		expect(packageJson.scripts.build).toBe("pnpm run sync-types && wp-scripts build");
 		expect(generatedTypes).toContain("export interface DemoRemoteAttributes");
-		expect(generatedTypes).toContain("content?: string & tags.Default<\"\">");
+		expect(generatedTypes).toContain("\"content\"?: string & tags.Default<\"\">");
 		expect(generatedIndex).toContain('import metadata from "./block.json";');
 		expect(generatedBlockJson.name).toBe("create-block/demo-remote");
 		expect(generatedBlockJson.title).toBe("Demo Remote");

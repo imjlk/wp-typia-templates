@@ -286,7 +286,7 @@ function buildRemoteTypesSource(
 		const baseTypeWithGrouping =
 			tagList.length > 0 && baseType.includes(" | ") ? `(${baseType})` : baseType;
 		const renderedType = [baseTypeWithGrouping, ...tagList].join(" & ");
-		lines.push(`  ${name}?: ${renderedType};`);
+		lines.push(`  ${JSON.stringify(name)}?: ${renderedType};`);
 	}
 
 	lines.push("}", "");
@@ -313,6 +313,7 @@ function buildRemoteBlockJsonTemplate(
 
 async function rewriteBlockJsonImports(directory: string): Promise<void> {
 	const textExtensions = new Set([".js", ".jsx", ".ts", ".tsx"]);
+	const targetBlockJsonPath = path.join(directory, "block.json");
 
 	async function visit(currentPath: string): Promise<void> {
 		const stats = await fsp.stat(currentPath);
@@ -329,7 +330,16 @@ async function rewriteBlockJsonImports(directory: string): Promise<void> {
 		}
 
 		const content = await fsp.readFile(currentPath, "utf8");
-		const next = content.replace(/\.\.\/block\.json/g, "./block.json");
+		const relativeSpecifier = path
+			.relative(path.dirname(currentPath), targetBlockJsonPath)
+			.replace(/\\/g, "/");
+		const normalizedSpecifier = relativeSpecifier.startsWith(".")
+			? relativeSpecifier
+			: `./${relativeSpecifier}`;
+		const next = content.replace(
+			/(['"])\.{1,2}\/[^'"]*block\.json\1/g,
+			`$1${normalizedSpecifier}$1`
+		);
 		if (next !== content) {
 			await fsp.writeFile(currentPath, next, "utf8");
 		}
@@ -435,51 +445,63 @@ export async function resolveTemplateSource(
 		}
 	} else {
 		const remoteRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-template-source-"));
-		const checkoutDir = path.join(remoteRoot, "source");
-		const args = ["clone", "--depth", "1"];
-		if (locator.locator.ref) {
-			args.push("--branch", locator.locator.ref);
-		}
-		args.push(`https://github.com/${locator.locator.owner}/${locator.locator.repo}.git`, checkoutDir);
-		execFileSync("git", args, { stdio: "ignore" });
-		sourceDir = path.resolve(checkoutDir, locator.locator.sourcePath);
-		const relativeSourceDir = path.relative(checkoutDir, sourceDir);
-		if (relativeSourceDir.startsWith("..") || path.isAbsolute(relativeSourceDir)) {
-			throw new Error("GitHub template path must stay within the cloned repository.");
-		}
-		if (!fs.existsSync(sourceDir)) {
-			throw new Error(`GitHub template path does not exist: ${locator.locator.sourcePath}`);
-		}
-		await assertNoSymlinks(sourceDir);
 		cleanupRemote = async () => {
 			await fsp.rm(remoteRoot, { force: true, recursive: true });
 		};
+		const checkoutDir = path.join(remoteRoot, "source");
+		try {
+			const args = ["clone", "--depth", "1"];
+			if (locator.locator.ref) {
+				args.push("--branch", locator.locator.ref);
+			}
+			args.push(`https://github.com/${locator.locator.owner}/${locator.locator.repo}.git`, checkoutDir);
+			execFileSync("git", args, { stdio: "ignore" });
+			sourceDir = path.resolve(checkoutDir, locator.locator.sourcePath);
+			const relativeSourceDir = path.relative(checkoutDir, sourceDir);
+			if (relativeSourceDir.startsWith("..") || path.isAbsolute(relativeSourceDir)) {
+				throw new Error("GitHub template path must stay within the cloned repository.");
+			}
+			if (!fs.existsSync(sourceDir)) {
+				throw new Error(`GitHub template path does not exist: ${locator.locator.sourcePath}`);
+			}
+			await assertNoSymlinks(sourceDir);
+		} catch (error) {
+			await cleanupRemote();
+			throw error;
+		}
 	}
 
-	const format = detectTemplateSourceFormat(sourceDir);
-	if (format === "wp-typia") {
+	try {
+		const format = detectTemplateSourceFormat(sourceDir);
+		if (format === "wp-typia") {
+			return {
+				id: templateId,
+				defaultCategory: getDefaultCategory(sourceDir),
+				description: "A remote wp-typia template source",
+				features: ["Remote source", "wp-typia format"],
+				format,
+				templateDir: sourceDir,
+				cleanup: cleanupRemote,
+			};
+		}
+
+		const normalized = await normalizeCreateBlockSubset(sourceDir, context);
+		const originalCleanup = normalized.cleanup;
 		return {
-			id: templateId,
-			defaultCategory: getDefaultCategory(sourceDir),
-			description: "A remote wp-typia template source",
-			features: ["Remote source", "wp-typia format"],
-			format,
-			templateDir: sourceDir,
-			cleanup: cleanupRemote,
+			...normalized,
+			cleanup: async () => {
+				if (originalCleanup) {
+					await originalCleanup();
+				}
+				if (cleanupRemote) {
+					await cleanupRemote();
+				}
+			},
 		};
+	} catch (error) {
+		if (cleanupRemote) {
+			await cleanupRemote();
+		}
+		throw error;
 	}
-
-	const normalized = await normalizeCreateBlockSubset(sourceDir, context);
-	const originalCleanup = normalized.cleanup;
-	return {
-		...normalized,
-		cleanup: async () => {
-			if (originalCleanup) {
-				await originalCleanup();
-			}
-			if (cleanupRemote) {
-				await cleanupRemote();
-			}
-		},
-	};
 }

@@ -203,13 +203,19 @@ export async function batchMigrateScanResults(
 				resolution.preview.validationErrors[ 0 ] ??
 				resolution.preview.unresolved[ 0 ] ??
 				undefined;
+			const status =
+				resolution.preview.after &&
+				resolution.preview.unresolved.length === 0 &&
+				resolution.preview.validationErrors.length === 0
+					? 'success'
+					: 'failed';
 
 			return {
 				blockPath: result.blockPath,
 				currentVersion: resolution.analysis.currentVersion,
 				preview: resolution.preview,
 				reason,
-				status: resolution.preview.after ? 'success' : 'failed',
+				status,
 				targetVersion: resolution.analysis.targetVersion,
 			} satisfies BatchMigrationBlockResult;
 		} );
@@ -241,6 +247,31 @@ export async function batchMigrateScanResults(
 			group.rawContent
 		);
 		if ( ! dryRun ) {
+			const latestPost = await fetchPostById(
+				group.restBase,
+				group.postId
+			);
+			const latestContent = latestPost.content?.raw;
+			if (
+				typeof latestContent !== 'string' ||
+				latestContent !== group.rawContent
+			) {
+				summary.failed += 1;
+				summary.errors.push( {
+					postId: group.postId,
+					reason: 'Post content changed after the scan. Re-run the migration scan before writing.',
+				} );
+				summary.posts.push( {
+					postId: group.postId,
+					postTitle: group.postTitle,
+					postType: group.postType,
+					previews: blockPreviews,
+					reason: 'Post content changed after the scan. Re-run the migration scan before writing.',
+					status: 'failed',
+				} );
+				continue;
+			}
+
 			await apiFetch( {
 				body: JSON.stringify( {
 					content: migratedContent,
@@ -373,6 +404,15 @@ async function fetchAllPosts(
 	} while ( page <= totalPages );
 
 	return entries;
+}
+
+async function fetchPostById(
+	restBase: string,
+	postId: number
+): Promise< EditablePostRecord > {
+	return ( await apiFetch( {
+		path: `/wp/v2/${ restBase }/${ postId }?context=edit`,
+	} ) ) as EditablePostRecord;
 }
 
 function walkBlocks(

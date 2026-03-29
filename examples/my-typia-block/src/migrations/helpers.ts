@@ -44,6 +44,10 @@ export type TransformMap = Record<
 	( legacyValue: unknown, legacyInput: Record< string, unknown > ) => unknown
 >;
 
+function hasOwnKey( record: Record< string, unknown >, key: string ): boolean {
+	return Object.prototype.hasOwnProperty.call( record, key );
+}
+
 function getSourcePath(
 	currentPath: string,
 	fallbackPath: string,
@@ -55,6 +59,9 @@ function getSourcePath(
 export function createDefaultValue( attribute: ManifestAttribute ): unknown {
 	if ( attribute.typia.hasDefault ) {
 		return attribute.typia.defaultValue;
+	}
+	if ( attribute.wp.hasDefault ) {
+		return attribute.wp.defaultValue;
 	}
 	if ( attribute.wp.enum && attribute.wp.enum.length > 0 ) {
 		return attribute.wp.enum[ 0 ];
@@ -166,7 +173,7 @@ export function resolveMigrationAttribute(
 			const branchKey = legacyValue[ discriminator ];
 			if (
 				typeof branchKey !== 'string' ||
-				! ( branchKey in branches )
+				! hasOwnKey( branches, branchKey )
 			) {
 				return createDefaultValue( attribute );
 			}
@@ -267,7 +274,9 @@ export function manifestMatchesDocument(
 		const value = attributes[ key ];
 		if (
 			( value === undefined || value === null ) &&
-			( ! attribute.ts.required || attribute.typia.hasDefault )
+			( ! attribute.ts.required ||
+				attribute.typia.hasDefault ||
+				attribute.wp.hasDefault )
 		) {
 			continue;
 		}
@@ -310,7 +319,9 @@ function manifestMatchesAttribute(
 ): boolean {
 	if (
 		( value === undefined || value === null ) &&
-		( ! attribute.ts.required || attribute.typia.hasDefault )
+		( ! attribute.ts.required ||
+			attribute.typia.hasDefault ||
+			attribute.wp.hasDefault )
 	) {
 		return true;
 	}
@@ -364,7 +375,7 @@ function matchesUnionAttribute(
 
 	return (
 		typeof branchKey === 'string' &&
-		branchKey in branches &&
+		hasOwnKey( branches, branchKey ) &&
 		manifestMatchesAttribute( branches[ branchKey ], value )
 	);
 }
@@ -379,7 +390,7 @@ function coerceUnionValue(
 
 	const { discriminator, branches } = attribute.ts.union;
 	const branchKey = ( value as Record< string, unknown > )[ discriminator ];
-	if ( typeof branchKey !== 'string' || ! ( branchKey in branches ) ) {
+	if ( typeof branchKey !== 'string' || ! hasOwnKey( branches, branchKey ) ) {
 		return createDefaultValue( attribute );
 	}
 
