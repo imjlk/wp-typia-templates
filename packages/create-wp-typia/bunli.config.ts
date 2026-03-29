@@ -1,8 +1,8 @@
-import { defineConfig } from "@bunli/core";
+import type { BunliConfigInput } from "@bunli/core";
 
-export default defineConfig({
+const config = {
 	name: "create-wp-typia",
-	version: "0.1.0",
+	version: "1.0.0",
 	description: "Bun-first scaffolding CLI for WordPress Typia block templates",
 	commands: {
 		entry: "./src/cli.ts",
@@ -13,4 +13,6 @@ export default defineConfig({
 		sourcemap: false,
 		minify: false,
 	},
-});
+} satisfies BunliConfigInput;
+
+export default config;
