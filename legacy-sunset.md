@@ -4,10 +4,13 @@ This note captures the post-release cleanup for the old `wp-typia-*` package nam
 
 ## Release sequence
 
-1. Publish `@wp-typia/create@0.1.0` and `@wp-typia/block-types@0.1.0`
-2. Publish `create-wp-typia@1.0.0` as the compatibility shim
-3. Confirm `npx @wp-typia/create@latest`, `bunx @wp-typia/create@latest`, and `bun create wp-typia` all work
-4. Apply npm deprecations to the legacy package names
+1. Merge feature PRs into `main` with squash merge
+2. Let `release-pr.yml` update the `release/sampo` release PR
+3. Squash merge the release PR so version/changelog changes land on `main` as one release commit
+4. Create a GitHub Release from that merged commit
+5. Let `publish.yml` publish `@wp-typia/create`, `@wp-typia/block-types`, and `create-wp-typia` with npm OIDC
+6. Confirm `npx @wp-typia/create@latest`, `bunx @wp-typia/create@latest`, and `bun create wp-typia` all work
+7. Apply npm deprecations to the legacy package names
 
 ## npm deprecate commands
 
@@ -28,3 +31,4 @@ npm deprecate wp-typia-advanced@"*" "wp-typia-advanced is no longer maintained f
 - `@wp-typia/block-types` provides the shared semantic unions used by generated `types.ts`
 - Manifest v2, `typia-validator.php`, and advanced snapshot migrations remain supported
 - `wp-typia-*` packages remain on npm for historical installs but receive no further releases
+- GitHub Release creation is the explicit trigger for npm OIDC publish
