@@ -5,7 +5,7 @@ This note captures the post-release cleanup for the old `wp-typia-*` package nam
 ## Release sequence
 
 1. Publish `@wp-typia/create@0.1.0` and `@wp-typia/block-types@0.1.0`
-2. Publish `create-wp-typia@1.0.1` as the compatibility shim
+2. Publish `create-wp-typia@1.0.0` as the compatibility shim
 3. Confirm `npx @wp-typia/create@latest`, `bunx @wp-typia/create@latest`, and `bun create wp-typia` all work
 4. Apply npm deprecations to the legacy package names
 
