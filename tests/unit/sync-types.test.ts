@@ -3,16 +3,28 @@ import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
+function findGeneratedArtifact(baseDir: string, artifact: string): string {
+  for (const candidate of [
+    path.join(baseDir, 'build', artifact),
+    path.join(baseDir, 'build', 'my-typia-block', artifact),
+    path.join(baseDir, artifact),
+  ]) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  throw new Error(`Unable to locate generated artifact "${artifact}" under ${baseDir}`);
+}
+
 describe('Type Sync Tests', () => {
-  const testTemplateDir = path.join(import.meta.dir, '../../test-template/my-typia-block');
-  const blockJsonPath = path.join(testTemplateDir, 'src/my-typia-block/block.json');
-  const manifestPath = path.join(testTemplateDir, 'src/my-typia-block/typia.manifest.json');
-  const phpValidatorPath = path.join(testTemplateDir, 'src/my-typia-block/typia-validator.php');
-  const buildManifestPath = path.join(testTemplateDir, 'build/my-typia-block/typia.manifest.json');
-  const buildPhpValidatorPath = path.join(testTemplateDir, 'build/my-typia-block/typia-validator.php');
+  const exampleDir = path.join(import.meta.dir, '../../examples/my-typia-block');
+  const blockJsonPath = path.join(exampleDir, 'block.json');
+  const manifestPath = path.join(exampleDir, 'typia.manifest.json');
+  const phpValidatorPath = path.join(exampleDir, 'typia-validator.php');
 
   beforeAll(() => {
-    execSync('bun run sync-types', { cwd: testTemplateDir });
+    execSync('bun run sync-types', { cwd: exampleDir });
   });
 
   test('should sync types to block.json and generate typia.manifest.json', () => {
@@ -63,10 +75,10 @@ describe('Type Sync Tests', () => {
   });
 
   test('should copy typia.manifest.json into the build output', () => {
-    execSync('bun run build', { cwd: testTemplateDir });
+    execSync('bun run build', { cwd: exampleDir });
 
-    expect(fs.existsSync(buildManifestPath)).toBe(true);
-    expect(fs.existsSync(buildPhpValidatorPath)).toBe(true);
+    const buildManifestPath = findGeneratedArtifact(exampleDir, 'typia.manifest.json');
+    const buildPhpValidatorPath = findGeneratedArtifact(exampleDir, 'typia-validator.php');
 
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     const builtManifest = JSON.parse(fs.readFileSync(buildManifestPath, 'utf8'));

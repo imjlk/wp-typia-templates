@@ -8,6 +8,8 @@
   "exports": {
     ".": "./dist/runtime/index.js",
     "./cli": "./dist/cli.js",
+    "./metadata-core": "./dist/runtime/metadata-core.js",
+    "./runtime/defaults": "./dist/runtime/defaults.js",
     "./package.json": "./package.json"
   },
   "bin": {
@@ -55,11 +57,13 @@
     "npm": ">=10.0.0",
     "bun": ">=1.3.10"
   },
+  "dependencies": {
+    "typescript": "^5.9.2"
+  },
   "devDependencies": {
     "bunli": "^0.8.2",
     "react": "^19.2.0",
     "react-devtools-core": "^7.0.1",
-    "typescript": "^5.9.2",
     "ws": "^8.18.0"
   }
 }

@@ -109,12 +109,12 @@ function matchesContractMultipleOf(value: number, multipleOf: number): boolean {
 }
 
 function loadExampleContract() {
-  const testTemplateDir = path.join(import.meta.dir, '../../test-template/my-typia-block');
+  const testTemplateDir = path.join(import.meta.dir, '../../examples/my-typia-block');
   const blockJson = JSON.parse(
-    fs.readFileSync(path.join(testTemplateDir, 'src/my-typia-block/block.json'), 'utf8'),
+    fs.readFileSync(path.join(testTemplateDir, 'block.json'), 'utf8'),
   ) as BlockJsonContract;
   const manifest = JSON.parse(
-    fs.readFileSync(path.join(testTemplateDir, 'src/my-typia-block/typia.manifest.json'), 'utf8'),
+    fs.readFileSync(path.join(testTemplateDir, 'typia.manifest.json'), 'utf8'),
   ) as ContractManifest;
 
   return { blockJson, manifest };
@@ -123,7 +123,7 @@ function loadExampleContract() {
 function loadPhpValidatorPath() {
   return path.join(
     import.meta.dir,
-    '../../test-template/my-typia-block/src/my-typia-block/typia-validator.php',
+    '../../examples/my-typia-block/typia-validator.php',
   );
 }
 
@@ -261,7 +261,7 @@ function runPhpValidator<T extends Record<string, unknown> | unknown[]>(
 
 describe('Typia block attribute contract', () => {
   beforeAll(() => {
-    const testTemplateDir = path.join(import.meta.dir, '../../test-template/my-typia-block');
+    const testTemplateDir = path.join(import.meta.dir, '../../examples/my-typia-block');
     execSync('bun run sync-types', { cwd: testTemplateDir });
   });
 

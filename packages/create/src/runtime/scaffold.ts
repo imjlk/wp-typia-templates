@@ -11,8 +11,9 @@ import {
 	transformPackageManagerText,
 } from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
-import { TEMPLATE_IDS, getTemplateById } from "./template-registry.js";
-import type { TemplateDefinition } from "./template-registry.js";
+import { CREATE_PACKAGE_ROOT, TEMPLATE_IDS, getTemplateById, isBuiltInTemplateId } from "./template-registry.js";
+import type { BuiltInTemplateId } from "./template-registry.js";
+import { resolveTemplateSource } from "./template-source.js";
 
 const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
 const LOCKFILES: Record<PackageManagerId, string[]> = {
@@ -32,7 +33,9 @@ export interface ScaffoldAnswers {
 
 export interface ScaffoldTemplateVariables {
 	author: string;
+	blockTypesPackageVersion: string;
 	category: string;
+	createPackageVersion: string;
 	cssClassName: string;
 	dashCase: string;
 	dashicon: string;
@@ -53,7 +56,7 @@ export interface ScaffoldTemplateVariables {
 
 interface ResolveTemplateOptions {
 	isInteractive?: boolean;
-	selectTemplate?: () => Promise<TemplateDefinition["id"]>;
+	selectTemplate?: () => Promise<BuiltInTemplateId>;
 	templateId?: string;
 	yes?: boolean;
 }
@@ -72,7 +75,7 @@ interface CollectScaffoldAnswersOptions {
 		defaultValue: string,
 		validate?: (value: string) => true | string,
 	) => Promise<string>;
-	templateId: TemplateDefinition["id"];
+	templateId: string;
 	yes?: boolean;
 }
 
@@ -84,19 +87,29 @@ interface InstallDependenciesOptions {
 interface ScaffoldProjectOptions {
 	allowExistingDir?: boolean;
 	answers: ScaffoldAnswers;
+	cwd?: string;
 	installDependencies?: ((options: InstallDependenciesOptions) => Promise<void>) | undefined;
 	noInstall?: boolean;
 	packageManager: PackageManagerId;
 	projectDir: string;
-	templateId: TemplateDefinition["id"];
+	templateId: string;
 }
 
 export interface ScaffoldProjectResult {
 	packageManager: PackageManagerId;
 	projectDir: string;
-	templateId: TemplateDefinition["id"];
+	templateId: string;
 	variables: ScaffoldTemplateVariables;
 }
+
+function readPackageVersion(relativePackageJsonPath: string): string {
+	const packageJsonPath = path.resolve(CREATE_PACKAGE_ROOT, relativePackageJsonPath);
+	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as { version: string };
+	return `^${packageJson.version}`;
+}
+
+const CREATE_PACKAGE_VERSION = readPackageVersion("package.json");
+const BLOCK_TYPES_PACKAGE_VERSION = readPackageVersion("../wp-typia-block-types/package.json");
 
 function toKebabCase(input: string): string {
 	return input
@@ -147,13 +160,13 @@ export function detectAuthor(): string {
 
 export function getDefaultAnswers(
 	projectName: string,
-	templateId: TemplateDefinition["id"],
+	templateId: string,
 ): ScaffoldAnswers {
-	const template = getTemplateById(templateId);
+	const template = isBuiltInTemplateId(templateId) ? getTemplateById(templateId) : null;
 	const slugDefault = toKebabCase(projectName || "my-wp-typia-block");
 	return {
 		author: detectAuthor(),
-		description: template.description,
+		description: template?.description ?? "A WordPress block scaffolded from a remote template",
 		namespace: "create-block",
 		slug: slugDefault,
 		title: toTitle(slugDefault),
@@ -165,9 +178,12 @@ export async function resolveTemplateId({
 	yes = false,
 	isInteractive = false,
 	selectTemplate,
-}: ResolveTemplateOptions): Promise<TemplateDefinition["id"]> {
+}: ResolveTemplateOptions): Promise<string> {
 	if (templateId) {
-		return getTemplateById(templateId).id;
+		if (isBuiltInTemplateId(templateId)) {
+			return getTemplateById(templateId).id;
+		}
+		return templateId;
 	}
 
 	if (yes) {
@@ -175,7 +191,9 @@ export async function resolveTemplateId({
 	}
 
 	if (!isInteractive || !selectTemplate) {
-		throw new Error(`Template is required in non-interactive mode. Use --template <${TEMPLATE_IDS.join("|")}>.`);
+		throw new Error(
+			`Template is required in non-interactive mode. Use --template <${TEMPLATE_IDS.join("|")}|./path|github:owner/repo/path[#ref]>.`,
+		);
 	}
 
 	return selectTemplate();
@@ -236,10 +254,10 @@ export async function collectScaffoldAnswers({
 }
 
 export function getTemplateVariables(
-	templateId: TemplateDefinition["id"],
+	templateId: string,
 	answers: ScaffoldAnswers,
 ): ScaffoldTemplateVariables {
-	const template = getTemplateById(templateId);
+	const template = isBuiltInTemplateId(templateId) ? getTemplateById(templateId) : null;
 	const slug = toKebabCase(answers.slug);
 	const slugSnakeCase = toSnakeCase(slug);
 	const pascalCase = toPascalCase(slug);
@@ -249,7 +267,9 @@ export function getTemplateVariables(
 
 	return {
 		author: answers.author.trim(),
-		category: template.defaultCategory,
+		blockTypesPackageVersion: BLOCK_TYPES_PACKAGE_VERSION,
+		category: template?.defaultCategory ?? "widgets",
+		createPackageVersion: CREATE_PACKAGE_VERSION,
 		cssClassName: `wp-block-${slug}`,
 		dashCase: slug,
 		dashicon: "smiley",
@@ -317,7 +337,7 @@ async function copyTemplateDir(
 }
 
 function buildReadme(
-	templateId: TemplateDefinition["id"],
+	templateId: string,
 	variables: ScaffoldTemplateVariables,
 	packageManager: PackageManagerId,
 ): string {
@@ -496,23 +516,34 @@ export async function scaffoldProject({
 	templateId,
 	answers,
 	packageManager,
+	cwd = process.cwd(),
 	allowExistingDir = false,
 	noInstall = false,
 	installDependencies = undefined,
 }: ScaffoldProjectOptions): Promise<ScaffoldProjectResult> {
-	const template = getTemplateById(templateId);
 	const resolvedPackageManager = getPackageManager(packageManager).id;
 
 	await ensureDirectory(projectDir, allowExistingDir);
 
-	const variables = getTemplateVariables(template.id, answers);
+	const variables = getTemplateVariables(templateId, answers);
+	const templateSource = await resolveTemplateSource(
+		templateId,
+		cwd,
+		variables as unknown as Record<string, string>,
+	);
 
-	await copyTemplateDir(template.templateDir, projectDir, variables);
+	try {
+		await copyTemplateDir(templateSource.templateDir, projectDir, variables);
+	} finally {
+		if (templateSource.cleanup) {
+			await templateSource.cleanup();
+		}
+	}
 	const readmePath = path.join(projectDir, "README.md");
 	if (!fs.existsSync(readmePath)) {
 		await fsp.writeFile(
 			readmePath,
-			buildReadme(template.id, variables, resolvedPackageManager),
+			buildReadme(templateId, variables, resolvedPackageManager),
 			"utf8",
 		);
 	}
@@ -532,7 +563,7 @@ export async function scaffoldProject({
 
 	return {
 		projectDir,
-		templateId: template.id,
+		templateId,
 		packageManager: resolvedPackageManager,
 		variables,
 	};

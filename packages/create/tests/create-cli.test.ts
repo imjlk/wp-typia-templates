@@ -5,10 +5,17 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 import { scaffoldProject } from "../src/runtime/index.js";
+import { parseGitHubTemplateLocator } from "../src/runtime/template-source.js";
 
 const packageRoot = process.cwd();
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-create-"));
 const entryPath = path.join(packageRoot, "dist", "cli.js");
+const createPackageVersion = `^${JSON.parse(
+	fs.readFileSync(path.join(packageRoot, "package.json"), "utf8"),
+).version}`;
+const blockTypesPackageVersion = `^${JSON.parse(
+	fs.readFileSync(path.resolve(packageRoot, "../wp-typia-block-types/package.json"), "utf8"),
+).version}`;
 
 function runCli(
 	command: string,
@@ -53,40 +60,49 @@ describe("@wp-typia/create scaffolding", () => {
 		const readme = fs.readFileSync(readmePath, "utf8");
 
 		expect(packageJson.packageManager).toBe("npm@11.6.1");
-		expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe("^0.1.0");
+		expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(blockTypesPackageVersion);
+		expect(packageJson.devDependencies["@wp-typia/create"]).toBe(createPackageVersion);
 		expect(packageJson.scripts.build).toBe("npm run sync-types && wp-scripts build");
 		expect(packageJson.scripts.start).toBe("npm run sync-types && wp-scripts start");
 		expect(readme).toContain("npm install");
 		expect(readme).toContain("npm run start");
 	});
 
-	test("advanced template converts nested run-script invocations for pnpm", async () => {
-		const targetDir = path.join(tempRoot, "demo-pnpm");
+	test("local create-block subset paths scaffold into a pnpm-ready wp-typia project", async () => {
+		const targetDir = path.join(tempRoot, "demo-remote");
+		const remoteFixturePath = path.join(packageRoot, "tests", "fixtures", "create-block-subset");
 
 		await scaffoldProject({
 			projectDir: targetDir,
-			templateId: "advanced",
+			templateId: remoteFixturePath,
 			packageManager: "pnpm",
 			noInstall: true,
 			answers: {
 				author: "Test Runner",
-				description: "Demo pnpm block",
+				description: "Demo remote block",
 				namespace: "create-block",
-				slug: "demo-pnpm",
-				title: "Demo Pnpm",
+				slug: "demo-remote",
+				title: "Demo Remote",
 			},
 		});
 
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
+		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
+		const generatedIndex = fs.readFileSync(path.join(targetDir, "src", "index.js"), "utf8");
+		const generatedBlockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
 
 		expect(packageJson.packageManager).toBe("pnpm@8.3.1");
-		expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe("^0.1.0");
-		expect(packageJson.devDependencies["@wp-typia/create"]).toBe("^0.1.0");
+		expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(blockTypesPackageVersion);
+		expect(packageJson.devDependencies["@wp-typia/create"]).toBe(createPackageVersion);
 		expect(packageJson.scripts.build).toBe("pnpm run sync-types && wp-scripts build");
-		expect(packageJson.scripts["migration:init"]).toBe(
-			"wp-typia migrations init --current-version 1.0.0",
-		);
-		expect(packageJson.scripts["migration:scaffold"]).toBe("wp-typia migrations scaffold");
+		expect(generatedTypes).toContain("export interface DemoRemoteAttributes");
+		expect(generatedTypes).toContain("content?: string & tags.Default<\"\">");
+		expect(generatedIndex).toContain('import metadata from "./block.json";');
+		expect(generatedBlockJson.name).toBe("create-block/demo-remote");
+		expect(generatedBlockJson.title).toBe("Demo Remote");
+		expect(generatedBlockJson.supports.align).toEqual(["wide", "full"]);
 	});
 
 	test("node entry exposes templates and doctor commands", () => {
@@ -94,7 +110,9 @@ describe("@wp-typia/create scaffolding", () => {
 		const doctorOutput = runCli("node", [entryPath, "doctor"]);
 
 		expect(templatesOutput).toContain("basic");
-		expect(templatesOutput).toContain("advanced");
+		expect(templatesOutput).toContain("interactivity");
+		expect(templatesOutput).not.toContain("advanced");
+		expect(templatesOutput).not.toContain("full");
 		expect(doctorOutput).toContain("PASS Bun");
 		expect(doctorOutput).toContain("PASS Template basic");
 	});
@@ -104,9 +122,20 @@ describe("@wp-typia/create scaffolding", () => {
 		const doctorOutput = runCli("bun", [entryPath, "doctor"]);
 
 		expect(templatesOutput).toContain("basic");
-		expect(templatesOutput).toContain("advanced");
+		expect(templatesOutput).toContain("interactivity");
+		expect(templatesOutput).not.toContain("advanced");
+		expect(templatesOutput).not.toContain("full");
 		expect(doctorOutput).toContain("PASS Bun");
 		expect(doctorOutput).toContain("PASS Template basic");
+	});
+
+	test("parses github template locators with refs", () => {
+		expect(parseGitHubTemplateLocator("github:owner/repo/templates/card#main")).toEqual({
+			owner: "owner",
+			repo: "repo",
+			ref: "main",
+			sourcePath: "templates/card",
+		});
 	});
 
 	test("bun entry translates kebab-case flags while scaffolding", () => {

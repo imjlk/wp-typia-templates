@@ -11,6 +11,8 @@ export {
 	parseMigrationArgs,
 	runMigrationCommand,
 } from "./migrations.js";
+export { applyTemplateDefaultsFromManifest } from "./defaults.js";
+export * from "./metadata-core.js";
 export {
 	PACKAGE_MANAGER_IDS,
 	PACKAGE_MANAGERS,

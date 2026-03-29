@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-function resolvePackageRoot(startDir: string): string {
+export function resolvePackageRoot(startDir: string): string {
 	let currentDir = startDir;
 
 	while (true) {
@@ -28,10 +28,13 @@ function resolvePackageRoot(startDir: string): string {
 	}
 }
 
-const TEMPLATE_ROOT = path.join(resolvePackageRoot(__dirname), "templates");
+export const CREATE_PACKAGE_ROOT = resolvePackageRoot(__dirname);
+export const TEMPLATE_ROOT = path.join(CREATE_PACKAGE_ROOT, "templates");
+export const BUILTIN_TEMPLATE_IDS = ["basic", "interactivity"] as const;
+export type BuiltInTemplateId = (typeof BUILTIN_TEMPLATE_IDS)[number];
 
 export interface TemplateDefinition {
-	id: "basic" | "full" | "interactivity" | "advanced";
+	id: BuiltInTemplateId;
 	description: string;
 	defaultCategory: string;
 	features: string[];
@@ -47,29 +50,19 @@ export const TEMPLATE_REGISTRY = Object.freeze<TemplateDefinition[]>([
 		templateDir: path.join(TEMPLATE_ROOT, "basic"),
 	},
 	{
-		id: "full",
-		description: "A full-featured WordPress block with Typia validation and utilities",
-		defaultCategory: "widgets",
-		features: ["Advanced controls", "Custom hooks", "Style options"],
-		templateDir: path.join(TEMPLATE_ROOT, "full"),
-	},
-	{
 		id: "interactivity",
 		description: "An interactive WordPress block with Typia validation and Interactivity API",
 		defaultCategory: "widgets",
 		features: ["Interactivity API", "Client-side state", "Event handling"],
 		templateDir: path.join(TEMPLATE_ROOT, "interactivity"),
 	},
-	{
-		id: "advanced",
-		description: "An advanced WordPress block with Typia validation and migration tooling",
-		defaultCategory: "widgets",
-		features: ["Migration system", "Version tracking", "Admin dashboard"],
-		templateDir: path.join(TEMPLATE_ROOT, "advanced"),
-	},
 ]);
 
-export const TEMPLATE_IDS = TEMPLATE_REGISTRY.map((template) => template.id) as TemplateDefinition["id"][];
+export const TEMPLATE_IDS = TEMPLATE_REGISTRY.map((template) => template.id) as BuiltInTemplateId[];
+
+export function isBuiltInTemplateId(templateId: string): templateId is BuiltInTemplateId {
+	return (BUILTIN_TEMPLATE_IDS as readonly string[]).includes(templateId);
+}
 
 export function listTemplates(): readonly TemplateDefinition[] {
 	return TEMPLATE_REGISTRY;

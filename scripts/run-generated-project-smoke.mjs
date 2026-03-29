@@ -181,27 +181,6 @@ function lintPhpArtifact(filePath) {
 	});
 }
 
-function assertAdvancedMigrationArtifacts(projectDir) {
-	const requiredFiles = [
-		path.join(projectDir, "render.php"),
-		path.join(projectDir, "src", "migrations", "config.ts"),
-		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"),
-		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"),
-		path.join(projectDir, "src", "migrations", "generated", "registry.ts"),
-		path.join(projectDir, "src", "migrations", "generated", "deprecated.ts"),
-		path.join(projectDir, "src", "migrations", "generated", "verify.ts"),
-		path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-1.0.0.ts"),
-		path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-1.0.0.json"),
-		path.join(projectDir, "typia-migration-registry.php"),
-	];
-
-	for (const filePath of requiredFiles) {
-		if (!fs.existsSync(filePath)) {
-			throw new Error(`Expected advanced migration artifact at ${filePath}`);
-		}
-	}
-}
-
 function rewriteWorkspaceDependencies(projectDir) {
 	const packageJsonPath = path.join(projectDir, "package.json");
 	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
@@ -273,20 +252,6 @@ function main() {
 			},
 		});
 
-		if (template === "advanced") {
-			for (const [scriptName, args] of [
-				["migration:init", []],
-				["migration:snapshot", ["--version", "1.0.0"]],
-				["migration:scaffold", ["--from", "1.0.0"]],
-				["migration:verify", ["--all"]],
-			]) {
-				const [command, commandArgs] = getRunScriptCommand(packageManager, scriptName, args);
-				run(command, commandArgs, { cwd: projectDir });
-			}
-
-			assertAdvancedMigrationArtifacts(projectDir);
-		}
-
 		const [buildCommand, buildArgs] = getRunCommand(packageManager);
 		run(buildCommand, buildArgs, { cwd: projectDir });
 
@@ -298,18 +263,6 @@ function main() {
 			if (fs.existsSync(artifact)) {
 				lintPhpArtifact(artifact);
 			}
-		}
-		if (template === "advanced" && !fs.existsSync(path.join(projectDir, "build", "typia-migration-registry.php"))) {
-			throw new Error(
-				`Expected typia-migration-registry.php in ${path.join(projectDir, "build")}`,
-			);
-		}
-		if (template === "advanced") {
-			if (!fs.existsSync(path.join(projectDir, "build", "render.php"))) {
-				throw new Error(`Expected render.php in ${path.join(projectDir, "build")}`);
-			}
-			lintPhpArtifact(path.join(projectDir, "build", "typia-migration-registry.php"));
-			lintPhpArtifact(path.join(projectDir, "build", "render.php"));
 		}
 	} finally {
 		fs.rmSync(tempRoot, { force: true, recursive: true });

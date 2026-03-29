@@ -2,7 +2,7 @@
   "entryPoints": [
     "packages/*/src/**/*.ts",
     "packages/*/src/**/*.tsx",
-    "test-template/**/src/**/*.ts"
+    "examples/**/src/**/*.ts"
   ],
   "exclude": [
     "**/*.d.ts",
@@ -16,7 +16,7 @@
     "typedoc-plugin-markdown"
   ],
   "readme": "README.md",
-  "name": "WordPress Typia Boilerplate",
+  "name": "wp-typia",
   "includeVersion": true,
   "sort": ["source-order"],
   "kindSortOrder": [

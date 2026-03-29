@@ -1,6 +1,6 @@
 # Migration Guide
 
-The `advanced` template is designed for blocks that need to preserve compatibility with legacy attributes over time.
+`wp-typia` no longer treats migrations as a built-in scaffold template. Instead, the repository ships a migration-capable showcase app at [`examples/my-typia-block`](../examples/my-typia-block), and the CLI migration commands remain available for projects that choose to keep the same workspace layout.
 
 ## What stays the source of truth
 
@@ -20,7 +20,7 @@ Those snapshots are committed so the project can keep deprecated Gutenberg entri
 
 ## First release
 
-After creating an `advanced` project:
+After creating or adopting a migration-capable project:
 
 ```bash
 bun run migration:init
@@ -120,7 +120,7 @@ The CLI also regenerates:
 
 ## Dashboard and site scan
 
-The advanced template includes an admin-side migration dashboard that can:
+The showcase app includes an admin-side migration dashboard that can:
 
 - scan posts for legacy block attributes
 - summarize version distribution
@@ -142,7 +142,7 @@ The dashboard preview now highlights:
 
 ## Example pack
 
-The advanced template also ships a reference-only example pack at:
+The showcase app also ships a reference-only example pack at:
 
 ```text
 src/migrations/examples/rename-transform-union/
@@ -159,7 +159,7 @@ The example pack does not register itself into `supportedVersions` and does not 
 
 ## Server-side foundation
 
-The advanced template now also ships:
+The showcase app and other migration-capable projects can also ship:
 
 - `typia-validator.php`
 - `typia-migration-registry.php`

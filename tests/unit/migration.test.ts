@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import { syncBlockMetadata } from '../../scripts/lib/typia-metadata-core';
 
 function createFixture(files: Record<string, string>) {
-  const baseDir = path.resolve(import.meta.dir, '../../test-template/my-typia-block/.tmp-metadata-fixtures-errors');
+  const baseDir = path.resolve(import.meta.dir, '../../examples/my-typia-block/.tmp-metadata-fixtures-errors');
   fs.mkdirSync(baseDir, { recursive: true });
 
   const fixtureDir = fs.mkdtempSync(path.join(baseDir, 'fixture-'));
@@ -19,7 +19,7 @@ function createFixture(files: Record<string, string>) {
 
 describe('Typia metadata generator failure modes', () => {
   afterAll(() => {
-    const baseDir = path.resolve(import.meta.dir, '../../test-template/my-typia-block/.tmp-metadata-fixtures-errors');
+    const baseDir = path.resolve(import.meta.dir, '../../examples/my-typia-block/.tmp-metadata-fixtures-errors');
     fs.rmSync(baseDir, { force: true, recursive: true });
   });
 

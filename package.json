@@ -8,7 +8,7 @@
     "packages/create",
     "packages/create-wp-typia",
     "packages/wp-typia-block-types",
-    "test-template/*"
+    "examples/*"
   ],
   "scripts": {
     "build": "bun run --filter @wp-typia/block-types build && bun run --filter @wp-typia/create build && bun run --filter my-typia-block build",
@@ -58,6 +58,8 @@
   "homepage": "https://github.com/imjlk/wp-typia#readme",
   "devDependencies": {
     "@playwright/test": "^1.40.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
     "@types/node": "^20.9.0",
     "@types/wordpress__block-editor": "^11.5.17",
     "@types/wordpress__blocks": "^12.5.18",

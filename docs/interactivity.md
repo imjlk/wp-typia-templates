@@ -38,12 +38,12 @@ const { state, actions } = store("my-plugin/my-block", {
 });
 ```
 
-## When to choose `advanced` instead
+## When to reach for the showcase instead
 
-Choose `advanced` instead of `interactivity` when you need:
+Use [`examples/my-typia-block`](../examples/my-typia-block) as the richer reference when you need:
 
 - schema snapshots for legacy attribute compatibility
 - deprecated Gutenberg entries generated from versioned snapshots
 - site scan and migration dashboard tooling
 
-If you only need reactive frontend behavior, the `interactivity` template stays simpler.
+If you only need reactive frontend behavior, the `interactivity` template stays simpler and is the right built-in starting point.
