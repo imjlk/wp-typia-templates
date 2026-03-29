@@ -33,7 +33,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/package-managers.ts:1](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L1)
+[packages/create/src/runtime/package-managers.ts:1](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L1)
 
 ## Variables
 
@@ -43,7 +43,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/package-managers.ts:42](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L42)
+[packages/create/src/runtime/package-managers.ts:42](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L42)
 
 ___
 
@@ -53,7 +53,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/package-managers.ts:43](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L43)
+[packages/create/src/runtime/package-managers.ts:43](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L43)
 
 ## Functions
 
@@ -73,7 +73,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/package-managers.ts:58](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L58)
+[packages/create/src/runtime/package-managers.ts:58](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L58)
 
 ___
 
@@ -87,7 +87,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/package-managers.ts:68](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L68)
+[packages/create/src/runtime/package-managers.ts:68](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L68)
 
 ___
 
@@ -109,7 +109,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/package-managers.ts:80](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L80)
+[packages/create/src/runtime/package-managers.ts:80](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L80)
 
 ___
 
@@ -129,7 +129,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/package-managers.ts:96](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L96)
+[packages/create/src/runtime/package-managers.ts:96](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L96)
 
 ___
 
@@ -150,4 +150,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/package-managers.ts:175](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L175)
+[packages/create/src/runtime/package-managers.ts:175](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L175)

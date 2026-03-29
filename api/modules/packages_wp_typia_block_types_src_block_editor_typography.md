@@ -28,7 +28,7 @@ Derived from Gutenberg text-transform control values.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/typography.ts:4](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L4)
+[packages/wp-typia-block-types/src/block-editor/typography.ts:4](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L4)
 
 ___
 
@@ -40,7 +40,7 @@ Derived from Gutenberg text-decoration control values.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/typography.ts:16](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L16)
+[packages/wp-typia-block-types/src/block-editor/typography.ts:16](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L16)
 
 ___
 
@@ -52,7 +52,7 @@ Derived from Gutenberg font appearance controls.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/typography.ts:27](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L27)
+[packages/wp-typia-block-types/src/block-editor/typography.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L27)
 
 ___
 
@@ -64,7 +64,7 @@ Derived from Gutenberg writing mode control values.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/typography.ts:37](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L37)
+[packages/wp-typia-block-types/src/block-editor/typography.ts:37](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L37)
 
 ## Variables
 
@@ -74,7 +74,7 @@ Derived from Gutenberg writing mode control values.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/typography.ts:6](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L6)
+[packages/wp-typia-block-types/src/block-editor/typography.ts:6](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L6)
 
 ___
 
@@ -84,7 +84,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/typography.ts:18](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L18)
+[packages/wp-typia-block-types/src/block-editor/typography.ts:18](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L18)
 
 ___
 
@@ -94,7 +94,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/typography.ts:29](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L29)
+[packages/wp-typia-block-types/src/block-editor/typography.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L29)
 
 ___
 
@@ -104,4 +104,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/typography.ts:39](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L39)
+[packages/wp-typia-block-types/src/block-editor/typography.ts:39](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/typography.ts#L39)

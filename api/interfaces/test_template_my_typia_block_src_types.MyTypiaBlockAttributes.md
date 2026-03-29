@@ -27,7 +27,7 @@ Unique identifier
 
 #### Defined in
 
-[test-template/my-typia-block/src/types.ts:11](https://github.com/yourusername/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L11)
+[test-template/my-typia-block/src/types.ts:11](https://github.com/imjlk/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L11)
 
 ___
 
@@ -39,7 +39,7 @@ Block version for migrations
 
 #### Defined in
 
-[test-template/my-typia-block/src/types.ts:16](https://github.com/yourusername/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L16)
+[test-template/my-typia-block/src/types.ts:16](https://github.com/imjlk/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L16)
 
 ___
 
@@ -51,7 +51,7 @@ Custom CSS class
 
 #### Defined in
 
-[test-template/my-typia-block/src/types.ts:21](https://github.com/yourusername/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L21)
+[test-template/my-typia-block/src/types.ts:21](https://github.com/imjlk/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L21)
 
 ___
 
@@ -63,7 +63,7 @@ Main content
 
 #### Defined in
 
-[test-template/my-typia-block/src/types.ts:26](https://github.com/yourusername/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L26)
+[test-template/my-typia-block/src/types.ts:26](https://github.com/imjlk/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L26)
 
 ___
 
@@ -75,7 +75,7 @@ Text alignment
 
 #### Defined in
 
-[test-template/my-typia-block/src/types.ts:31](https://github.com/yourusername/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L31)
+[test-template/my-typia-block/src/types.ts:31](https://github.com/imjlk/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L31)
 
 ___
 
@@ -87,4 +87,4 @@ Is the block visible
 
 #### Defined in
 
-[test-template/my-typia-block/src/types.ts:36](https://github.com/yourusername/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L36)
+[test-template/my-typia-block/src/types.ts:36](https://github.com/imjlk/wp-typia/blob/main/test-template/my-typia-block/src/types.ts#L36)

@@ -26,7 +26,7 @@ Derived from Gutenberg spacing sizes control helpers.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/spacing.ts:4](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/spacing.ts#L4)
+[packages/wp-typia-block-types/src/block-editor/spacing.ts:4](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/spacing.ts#L4)
 
 ___
 
@@ -38,7 +38,7 @@ Derived from Gutenberg spacing axial side helpers.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/spacing.ts:16](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/spacing.ts#L16)
+[packages/wp-typia-block-types/src/block-editor/spacing.ts:16](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/spacing.ts#L16)
 
 ___
 
@@ -48,7 +48,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/spacing.ts:23](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/spacing.ts#L23)
+[packages/wp-typia-block-types/src/block-editor/spacing.ts:23](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/spacing.ts#L23)
 
 ## Variables
 
@@ -58,7 +58,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/spacing.ts:6](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/spacing.ts#L6)
+[packages/wp-typia-block-types/src/block-editor/spacing.ts:6](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/spacing.ts#L6)
 
 ___
 
@@ -68,7 +68,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/spacing.ts:18](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/spacing.ts#L18)
+[packages/wp-typia-block-types/src/block-editor/spacing.ts:18](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/spacing.ts#L18)
 
 ___
 
@@ -78,4 +78,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/spacing.ts:25](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/spacing.ts#L25)
+[packages/wp-typia-block-types/src/block-editor/spacing.ts:25](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/spacing.ts#L25)

@@ -22,7 +22,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/package-managers.ts:4](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L4)
+[packages/create/src/runtime/package-managers.ts:4](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L4)
 
 ___
 
@@ -32,7 +32,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/package-managers.ts:5](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L5)
+[packages/create/src/runtime/package-managers.ts:5](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L5)
 
 ___
 
@@ -42,7 +42,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/package-managers.ts:6](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L6)
+[packages/create/src/runtime/package-managers.ts:6](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L6)
 
 ___
 
@@ -52,7 +52,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/package-managers.ts:7](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L7)
+[packages/create/src/runtime/package-managers.ts:7](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L7)
 
 ___
 
@@ -62,4 +62,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/package-managers.ts:8](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L8)
+[packages/create/src/runtime/package-managers.ts:8](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L8)

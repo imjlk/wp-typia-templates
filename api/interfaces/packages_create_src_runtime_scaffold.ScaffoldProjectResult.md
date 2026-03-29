@@ -21,7 +21,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:95](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L95)
+[packages/create/src/runtime/scaffold.ts:95](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L95)
 
 ___
 
@@ -31,7 +31,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:96](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L96)
+[packages/create/src/runtime/scaffold.ts:96](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L96)
 
 ___
 
@@ -41,7 +41,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:97](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L97)
+[packages/create/src/runtime/scaffold.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L97)
 
 ___
 
@@ -51,4 +51,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:98](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L98)
+[packages/create/src/runtime/scaffold.ts:98](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L98)

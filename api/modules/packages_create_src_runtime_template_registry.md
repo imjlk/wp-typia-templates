@@ -27,7 +27,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:41](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L41)
+[packages/create/src/runtime/template-registry.ts:41](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L41)
 
 ___
 
@@ -37,7 +37,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:72](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L72)
+[packages/create/src/runtime/template-registry.ts:72](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L72)
 
 ## Functions
 
@@ -51,7 +51,7 @@ readonly [`TemplateDefinition`](../interfaces/packages_create_src_runtime_templa
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:74](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L74)
+[packages/create/src/runtime/template-registry.ts:74](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L74)
 
 ___
 
@@ -71,7 +71,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:78](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L78)
+[packages/create/src/runtime/template-registry.ts:78](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L78)
 
 ___
 
@@ -85,4 +85,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:86](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L86)
+[packages/create/src/runtime/template-registry.ts:86](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L86)

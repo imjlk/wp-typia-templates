@@ -26,7 +26,7 @@ Derived from Gutenberg layout registry names.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/layout.ts:4](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/layout.ts#L4)
+[packages/wp-typia-block-types/src/block-editor/layout.ts:4](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/layout.ts#L4)
 
 ___
 
@@ -38,7 +38,7 @@ Derived from Gutenberg flex layout options.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/layout.ts:16](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/layout.ts#L16)
+[packages/wp-typia-block-types/src/block-editor/layout.ts:16](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/layout.ts#L16)
 
 ___
 
@@ -50,7 +50,7 @@ Shared block editor orientation vocabulary.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/layout.ts:26](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/layout.ts#L26)
+[packages/wp-typia-block-types/src/block-editor/layout.ts:26](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/layout.ts#L26)
 
 ## Variables
 
@@ -60,7 +60,7 @@ Shared block editor orientation vocabulary.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/layout.ts:6](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/layout.ts#L6)
+[packages/wp-typia-block-types/src/block-editor/layout.ts:6](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/layout.ts#L6)
 
 ___
 
@@ -70,7 +70,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/layout.ts:18](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/layout.ts#L18)
+[packages/wp-typia-block-types/src/block-editor/layout.ts:18](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/layout.ts#L18)
 
 ___
 
@@ -80,4 +80,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/layout.ts:28](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/layout.ts#L28)
+[packages/wp-typia-block-types/src/block-editor/layout.ts:28](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/layout.ts#L28)

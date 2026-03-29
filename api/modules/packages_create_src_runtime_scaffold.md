@@ -32,7 +32,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:135](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L135)
+[packages/create/src/runtime/scaffold.ts:135](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L135)
 
 ___
 
@@ -53,7 +53,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:148](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L148)
+[packages/create/src/runtime/scaffold.ts:148](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L148)
 
 ___
 
@@ -73,7 +73,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:163](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L163)
+[packages/create/src/runtime/scaffold.ts:163](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L163)
 
 ___
 
@@ -93,7 +93,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:184](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L184)
+[packages/create/src/runtime/scaffold.ts:184](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L184)
 
 ___
 
@@ -113,7 +113,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:209](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L209)
+[packages/create/src/runtime/scaffold.ts:209](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L209)
 
 ___
 
@@ -134,7 +134,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:238](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L238)
+[packages/create/src/runtime/scaffold.ts:238](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L238)
 
 ___
 
@@ -154,4 +154,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:494](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L494)
+[packages/create/src/runtime/scaffold.ts:494](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L494)

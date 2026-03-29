@@ -29,4 +29,4 @@
 
 #### Defined in
 
-[packages/create/src/runtime/migration-fixtures.ts:27](https://github.com/yourusername/wp-typia/blob/main/packages/create/src/runtime/migration-fixtures.ts#L27)
+[packages/create/src/runtime/migration-fixtures.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-fixtures.ts#L27)

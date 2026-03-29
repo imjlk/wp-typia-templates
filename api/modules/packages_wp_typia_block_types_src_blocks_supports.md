@@ -26,7 +26,7 @@ Derived from @wordpress/blocks support constants and block support paths.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:4](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L4)
+[packages/wp-typia-block-types/src/blocks/supports.ts:4](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L4)
 
 ___
 
@@ -36,7 +36,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:45](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L45)
+[packages/wp-typia-block-types/src/blocks/supports.ts:45](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L45)
 
 ___
 
@@ -46,7 +46,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:72](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L72)
+[packages/wp-typia-block-types/src/blocks/supports.ts:72](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L72)
 
 ## Variables
 
@@ -56,7 +56,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:24](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L24)
+[packages/wp-typia-block-types/src/blocks/supports.ts:24](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L24)
 
 ___
 
@@ -66,7 +66,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:58](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L58)
+[packages/wp-typia-block-types/src/blocks/supports.ts:58](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L58)
 
 ___
 
@@ -76,4 +76,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:74](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L74)
+[packages/wp-typia-block-types/src/blocks/supports.ts:74](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L74)

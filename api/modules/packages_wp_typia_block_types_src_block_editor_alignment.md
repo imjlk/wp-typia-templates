@@ -31,7 +31,7 @@ Source of truth: @types/wordpress__block-editor/components/block-alignment-toolb
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/alignment.ts:15](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L15)
+[packages/wp-typia-block-types/src/block-editor/alignment.ts:15](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L15)
 
 ___
 
@@ -44,7 +44,7 @@ There is no stable unofficial narrow export for this union today.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/alignment.ts:29](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L29)
+[packages/wp-typia-block-types/src/block-editor/alignment.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L29)
 
 ___
 
@@ -57,7 +57,7 @@ Source of truth: @types/wordpress__block-editor/components/block-vertical-alignm
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/alignment.ts:42](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L42)
+[packages/wp-typia-block-types/src/block-editor/alignment.ts:42](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L42)
 
 ___
 
@@ -69,7 +69,7 @@ Derived from Gutenberg's justify-content control source.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/alignment.ts:53](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L53)
+[packages/wp-typia-block-types/src/block-editor/alignment.ts:53](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L53)
 
 ___
 
@@ -81,7 +81,7 @@ Derived from Gutenberg's block alignment matrix control source.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/alignment.ts:66](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L66)
+[packages/wp-typia-block-types/src/block-editor/alignment.ts:66](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L66)
 
 ## Variables
 
@@ -91,7 +91,7 @@ Derived from Gutenberg's block alignment matrix control source.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/alignment.ts:17](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L17)
+[packages/wp-typia-block-types/src/block-editor/alignment.ts:17](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L17)
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/alignment.ts:31](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L31)
+[packages/wp-typia-block-types/src/block-editor/alignment.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L31)
 
 ___
 
@@ -111,7 +111,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/alignment.ts:44](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L44)
+[packages/wp-typia-block-types/src/block-editor/alignment.ts:44](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L44)
 
 ___
 
@@ -121,7 +121,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/alignment.ts:55](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L55)
+[packages/wp-typia-block-types/src/block-editor/alignment.ts:55](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L55)
 
 ___
 
@@ -131,4 +131,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/alignment.ts:78](https://github.com/yourusername/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L78)
+[packages/wp-typia-block-types/src/block-editor/alignment.ts:78](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/alignment.ts#L78)
