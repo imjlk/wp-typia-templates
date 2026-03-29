@@ -1,4 +1,14 @@
-const PACKAGE_MANAGER_DATA = [
+export type PackageManagerId = "bun" | "npm" | "pnpm" | "yarn";
+
+export interface PackageManagerDefinition {
+	id: PackageManagerId;
+	label: string;
+	packageManagerField: string;
+	installCommand: string;
+	frozenInstallCommand: string;
+}
+
+const PACKAGE_MANAGER_DATA: PackageManagerDefinition[] = [
 	{
 		id: "bun",
 		label: "Bun",
@@ -29,9 +39,11 @@ const PACKAGE_MANAGER_DATA = [
 	},
 ];
 
-export const PACKAGE_MANAGER_IDS = PACKAGE_MANAGER_DATA.map((manager) => manager.id);
+export const PACKAGE_MANAGER_IDS = PACKAGE_MANAGER_DATA.map((manager) => manager.id) as PackageManagerId[];
 export const PACKAGE_MANAGERS = Object.freeze(
-	Object.fromEntries(PACKAGE_MANAGER_DATA.map((manager) => [manager.id, manager])),
+	Object.fromEntries(
+		PACKAGE_MANAGER_DATA.map((manager) => [manager.id, manager]),
+	) as Record<PackageManagerId, PackageManagerDefinition>,
 );
 
 const DEV_INSTALL_FLAGS = {
@@ -43,8 +55,8 @@ const DEV_INSTALL_FLAGS = {
 
 const STOP_CHARS = new Set(["\n", "\r", "`", "\"", "'", ")", "]", "}", "!", ",", "."]);
 
-export function getPackageManager(id) {
-	const manager = PACKAGE_MANAGERS[id];
+export function getPackageManager(id: string): PackageManagerDefinition {
+	const manager = PACKAGE_MANAGERS[id as PackageManagerId];
 	if (!manager) {
 		throw new Error(
 			`Unknown package manager "${id}". Expected one of: ${PACKAGE_MANAGER_IDS.join(", ")}`,
@@ -53,7 +65,11 @@ export function getPackageManager(id) {
 	return manager;
 }
 
-export function getPackageManagerSelectOptions() {
+export function getPackageManagerSelectOptions(): Array<{
+	label: string;
+	value: PackageManagerId;
+	hint: string;
+}> {
 	return PACKAGE_MANAGER_DATA.map((manager) => ({
 		label: manager.label,
 		value: manager.id,
@@ -61,7 +77,7 @@ export function getPackageManagerSelectOptions() {
 	}));
 }
 
-export function formatRunScript(packageManagerId, scriptName, extraArgs = "") {
+export function formatRunScript(packageManagerId: PackageManagerId, scriptName: string, extraArgs = ""): string {
 	const args = extraArgs.trim();
 
 	if (packageManagerId === "bun") {
@@ -77,11 +93,14 @@ export function formatRunScript(packageManagerId, scriptName, extraArgs = "") {
 	return args ? `yarn run ${scriptName} ${args}` : `yarn run ${scriptName}`;
 }
 
-export function formatInstallCommand(packageManagerId) {
+export function formatInstallCommand(packageManagerId: PackageManagerId): string {
 	return getPackageManager(packageManagerId).installCommand;
 }
 
-function consumeCommandArguments(content, startIndex) {
+function consumeCommandArguments(content: string, startIndex: number): {
+	args: string;
+	cursor: number;
+} {
 	let cursor = startIndex;
 	let args = "";
 
@@ -106,7 +125,7 @@ function consumeCommandArguments(content, startIndex) {
 	};
 }
 
-function replaceBunRunCommands(content, packageManagerId) {
+function replaceBunRunCommands(content: string, packageManagerId: PackageManagerId): string {
 	const marker = "bun run ";
 	let result = "";
 	let cursor = 0;
@@ -143,7 +162,7 @@ function replaceBunRunCommands(content, packageManagerId) {
 	return result;
 }
 
-function replaceDevDependencyInstalls(content, packageManagerId) {
+function replaceDevDependencyInstalls(content: string, packageManagerId: PackageManagerId): string {
 	return content.replace(/\bbun add -d ([^\s&|;`"'()]+)\b/g, (_, packageName) => {
 		if (packageManagerId === "bun") {
 			return `bun add -d ${packageName}`;
@@ -153,7 +172,7 @@ function replaceDevDependencyInstalls(content, packageManagerId) {
 	});
 }
 
-export function transformPackageManagerText(content, packageManagerId) {
+export function transformPackageManagerText(content: string, packageManagerId: PackageManagerId): string {
 	const manager = getPackageManager(packageManagerId);
 
 	return replaceDevDependencyInstalls(

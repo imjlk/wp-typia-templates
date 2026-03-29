@@ -50,6 +50,7 @@ Migration automation is strongest for:
 
 - additive/defaultable branch changes
 - compatible same-name branch fields
+- compatible nested leaf renames inside a stable branch
 - same-primitive enum unions
 - compatible discriminated-union edges with stable discriminators
 
@@ -59,6 +60,6 @@ Manual authoring is still expected for:
 - branch removals
 - branch renames
 - semantic transforms across branches
-- nested semantic transforms that cannot be expressed as a top-level rename or field transform
+- nested semantic transforms that cannot be expressed as a leaf-path rename or field transform
 
 Use `renameMap` and `transforms` in advanced migration rules when a union edge is not structurally compatible.

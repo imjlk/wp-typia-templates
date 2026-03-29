@@ -1,3 +1,4 @@
+// @ts-nocheck
 import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
@@ -394,7 +395,7 @@ export async function scaffoldProject({
 	packageManager,
 	allowExistingDir = false,
 	noInstall = false,
-	installDependencies,
+	installDependencies = undefined,
 }) {
 	const template = getTemplateById(templateId);
 	const resolvedPackageManager = getPackageManager(packageManager).id;

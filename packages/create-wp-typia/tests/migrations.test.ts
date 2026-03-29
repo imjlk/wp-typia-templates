@@ -4,10 +4,10 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import { parseMigrationArgs } from "../lib/migrations.js";
+import { parseMigrationArgs } from "../src/runtime/index.js";
 
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "create-wp-typia-migrations-"));
-const entryPath = path.resolve(import.meta.dir, "../lib/entry.js");
+const entryPath = path.resolve(import.meta.dir, "../dist/cli.js");
 const repoTsxPath = resolveRepoTsxBinary();
 
 function runCli(
@@ -122,6 +122,95 @@ function createUnionManifestAttribute(
 	};
 }
 
+const HELPERS_SOURCE = `export type RenameMap = Record<string, string>;
+export type TransformMap = Record<string, (legacyValue: unknown, legacyInput: Record<string, unknown>) => unknown>;
+
+function getValueAtPath(input: Record<string, unknown>, path: string): unknown {
+\treturn String(path)
+\t\t.split(".")
+\t\t.reduce((value: any, segment: string) => (value && typeof value === "object" ? value[segment] : undefined), input);
+}
+
+function createDefaultValue(attribute: any): unknown {
+\tif (attribute?.typia?.hasDefault) {
+\t\treturn attribute.typia.defaultValue;
+\t}
+\tswitch (attribute?.ts?.kind) {
+\t\tcase "string":
+\t\t\treturn "";
+\t\tcase "number":
+\t\t\treturn 0;
+\t\tcase "boolean":
+\t\t\treturn false;
+\t\tcase "array":
+\t\t\treturn [];
+\t\tcase "object":
+\t\t\treturn Object.fromEntries(
+\t\t\t\tObject.entries(attribute.ts.properties ?? {}).map(([key, property]) => [key, createDefaultValue(property)]),
+\t\t\t);
+\t\tdefault:
+\t\t\treturn null;
+\t}
+}
+
+function coerceValue(attribute: any, value: unknown): unknown {
+\treturn value ?? createDefaultValue(attribute);
+}
+
+export function resolveMigrationValue(
+\tattribute: any,
+\tcurrentKey: string,
+\tfallbackPath: string,
+\tinput: Record<string, unknown>,
+\trenameMap: RenameMap,
+\ttransforms: TransformMap,
+) {
+\tconst sourcePath = renameMap[currentKey] ?? fallbackPath;
+\tconst legacyValue = getValueAtPath(input, sourcePath);
+\tconst transformedValue = transforms[currentKey] ? transforms[currentKey](legacyValue, input) : legacyValue;
+\treturn coerceValue(attribute, transformedValue);
+}
+
+export function resolveMigrationAttribute(
+\tattribute: any,
+\tcurrentPath: string,
+\tfallbackPath: string,
+\tinput: Record<string, unknown>,
+\trenameMap: RenameMap,
+\ttransforms: TransformMap,
+) {
+\tconst sourcePath = renameMap[currentPath] ?? fallbackPath;
+\tif (attribute?.ts?.kind === "object") {
+\t\treturn Object.fromEntries(
+\t\t\tObject.entries(attribute.ts.properties ?? {}).map(([key, property]) => [
+\t\t\t\tkey,
+\t\t\t\tresolveMigrationAttribute(property, \`\${currentPath}.\${key}\`, \`\${sourcePath}.\${key}\`, input, renameMap, transforms),
+\t\t\t]),
+\t\t);
+\t}
+\tif (attribute?.ts?.kind === "union" && attribute?.ts?.union) {
+\t\tconst legacyValue = getValueAtPath(input, sourcePath) as Record<string, unknown> | undefined;
+\t\tconst branchKey = legacyValue?.[attribute.ts.union.discriminator];
+\t\tif (typeof branchKey !== "string" || !(branchKey in attribute.ts.union.branches)) {
+\t\t\treturn createDefaultValue(attribute);
+\t\t}
+\t\tconst branch = attribute.ts.union.branches[branchKey];
+\t\treturn {
+\t\t\t...Object.fromEntries(
+\t\t\t\tObject.entries(branch.ts.properties ?? {})
+\t\t\t\t\t.filter(([key]) => key !== attribute.ts.union.discriminator)
+\t\t\t\t\t.map(([key, property]) => [
+\t\t\t\t\t\tkey,
+\t\t\t\t\t\tresolveMigrationAttribute(property, \`\${currentPath}.\${branchKey}.\${key}\`, \`\${sourcePath}.\${key}\`, input, renameMap, transforms),
+\t\t\t\t\t]),
+\t\t\t),
+\t\t\t[attribute.ts.union.discriminator]: branchKey,
+\t\t};
+\t}
+\treturn resolveMigrationValue(attribute, currentPath, fallbackPath, input, renameMap, transforms);
+}
+`;
+
 function createProjectShell(projectDir: string) {
 	writeJson(path.join(projectDir, "package.json"), {
 		name: "migration-smoke",
@@ -183,15 +272,7 @@ function createVersionedMigrationProject(projectDir: string) {
 	);
 	writeFile(
 		path.join(projectDir, "src", "migrations", "helpers.ts"),
-		`export type RenameMap = Record<string, string>;
-export type TransformMap = Record<string, (legacyValue: unknown, legacyInput: Record<string, unknown>) => unknown>;
-export function resolveMigrationValue(attribute: any, currentKey: string, input: Record<string, unknown>, renameMap: RenameMap, transforms: TransformMap) {
-\tconst sourcePath = renameMap[currentKey] ?? currentKey;
-\tconst legacyValue = sourcePath.split(".").reduce((value: any, segment: string) => (value && typeof value === "object" ? value[segment] : undefined), input as any);
-\tconst transformedValue = transforms[currentKey] ? transforms[currentKey](legacyValue, input) : legacyValue;
-\treturn transformedValue ?? attribute?.typia?.defaultValue ?? null;
-}
-`,
+		HELPERS_SOURCE,
 	);
 	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
 		apiVersion: 3,
@@ -253,15 +334,7 @@ export default migrationConfig;
 	);
 	writeFile(
 		path.join(projectDir, "src", "migrations", "helpers.ts"),
-		`export type RenameMap = Record<string, string>;
-export type TransformMap = Record<string, (legacyValue: unknown, legacyInput: Record<string, unknown>) => unknown>;
-export function resolveMigrationValue(attribute: any, currentKey: string, input: Record<string, unknown>, renameMap: RenameMap, transforms: TransformMap) {
-\tconst path = renameMap[currentKey] ?? currentKey;
-\tconst legacyValue = path.split(".").reduce((value: any, segment: string) => (value && typeof value === "object" ? value[segment] : undefined), input as any);
-\tconst transformedValue = transforms[currentKey] ? transforms[currentKey](legacyValue, input) : legacyValue;
-\treturn transformedValue ?? attribute.typia.defaultValue ?? "";
-}
-`,
+		HELPERS_SOURCE,
 	);
 	writeJson(path.join(projectDir, "block.json"), {
 		apiVersion: 3,
@@ -310,6 +383,142 @@ export function resolveMigrationValue(attribute: any, currentKey: string, input:
 	fs.symlinkSync(repoTsxPath, path.join(localBinDir, "tsx"));
 }
 
+function createNestedRenameProject(projectDir: string) {
+	createProjectShell(projectDir);
+
+	writeFile(
+		path.join(projectDir, "src", "validators.ts"),
+		`export const validators = {
+\tvalidate(input: Record<string, unknown>) {
+\t\tconst settings = input.settings as Record<string, unknown> | undefined;
+\t\tconst success =
+\t\t\ttypeof settings === "object" &&
+\t\t\tsettings !== null &&
+\t\t\ttypeof settings.label === "string";
+\t\treturn success
+\t\t\t? { success: true as const, data: input }
+\t\t\t: { success: false as const, errors: [{ path: "$.settings.label", expected: "string" }] };
+\t},
+\trandom() {
+\t\treturn { settings: { label: "Hello" } };
+\t},
+};
+`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "config.ts"),
+		`export const migrationConfig = {
+\tblockName: "create-block/nested-rename",
+\tcurrentVersion: "2.0.0",
+\tsupportedVersions: ["1.0.0", "2.0.0"],
+\tsnapshotDir: "src/migrations/versions",
+} as const;
+
+export default migrationConfig;
+`,
+	);
+	writeFile(path.join(projectDir, "src", "migrations", "helpers.ts"), HELPERS_SOURCE);
+	writeJson(path.join(projectDir, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			settings: { type: "object" },
+		},
+		name: "create-block/nested-rename",
+		title: "Nested Rename",
+	});
+	writeJson(path.join(projectDir, "typia.manifest.json"), {
+		attributes: {
+			settings: {
+				typia: {
+					constraints: {
+						format: null,
+						maxLength: null,
+						maximum: null,
+						minLength: null,
+						minimum: null,
+						pattern: null,
+						typeTag: null,
+					},
+					defaultValue: null,
+					hasDefault: false,
+				},
+				ts: {
+					items: null,
+					kind: "object",
+					properties: {
+						label: createManifestAttribute("string", { required: true }),
+					},
+					required: true,
+					union: null,
+				},
+				wp: {
+					defaultValue: null,
+					enum: null,
+					hasDefault: false,
+					type: "object",
+				},
+			},
+		},
+		manifestVersion: 2,
+		sourceType: "NestedRenameAttributes",
+	});
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			settings: { type: "object" },
+		},
+		name: "create-block/nested-rename",
+		title: "Nested Rename",
+	});
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), {
+		attributes: {
+			settings: {
+				typia: {
+					constraints: {
+						format: null,
+						maxLength: null,
+						maximum: null,
+						minLength: null,
+						minimum: null,
+						pattern: null,
+						typeTag: null,
+					},
+					defaultValue: null,
+					hasDefault: false,
+				},
+				ts: {
+					items: null,
+					kind: "object",
+					properties: {
+						title: createManifestAttribute("string", { required: true }),
+					},
+					required: true,
+					union: null,
+				},
+				wp: {
+					defaultValue: null,
+					enum: null,
+					hasDefault: false,
+					type: "object",
+				},
+			},
+		},
+		manifestVersion: 2,
+		sourceType: "NestedRenameAttributes",
+	});
+	writeFile(
+		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"),
+		`export default function Save({ attributes }: { attributes: any }) {
+\treturn attributes.settings?.title ?? null;
+}
+`,
+	);
+
+	const localBinDir = path.join(projectDir, "node_modules", ".bin");
+	fs.mkdirSync(localBinDir, { recursive: true });
+	fs.symlinkSync(repoTsxPath, path.join(localBinDir, "tsx"));
+}
+
 function createAmbiguousRenameProject(projectDir: string) {
 	createProjectShell(projectDir);
 
@@ -342,15 +551,7 @@ export default migrationConfig;
 	);
 	writeFile(
 		path.join(projectDir, "src", "migrations", "helpers.ts"),
-		`export type RenameMap = Record<string, string>;
-export type TransformMap = Record<string, (legacyValue: unknown, legacyInput: Record<string, unknown>) => unknown>;
-export function resolveMigrationValue(attribute: any, currentKey: string, input: Record<string, unknown>, renameMap: RenameMap, transforms: TransformMap) {
-\tconst path = renameMap[currentKey] ?? currentKey;
-\tconst legacyValue = path.split(".").reduce((value: any, segment: string) => (value && typeof value === "object" ? value[segment] : undefined), input as any);
-\tconst transformedValue = transforms[currentKey] ? transforms[currentKey](legacyValue, input) : legacyValue;
-\treturn transformedValue ?? attribute.typia.defaultValue ?? "";
-}
-`,
+		HELPERS_SOURCE,
 	);
 	writeJson(path.join(projectDir, "block.json"), {
 		apiVersion: 3,
@@ -435,15 +636,7 @@ export default migrationConfig;
 	);
 	writeFile(
 		path.join(projectDir, "src", "migrations", "helpers.ts"),
-		`export type RenameMap = Record<string, string>;
-export type TransformMap = Record<string, (legacyValue: unknown, legacyInput: Record<string, unknown>) => unknown>;
-export function resolveMigrationValue(attribute: any, currentKey: string, input: Record<string, unknown>, renameMap: RenameMap, transforms: TransformMap) {
-\tconst path = renameMap[currentKey] ?? currentKey;
-\tconst legacyValue = path.split(".").reduce((value: any, segment: string) => (value && typeof value === "object" ? value[segment] : undefined), input as any);
-\tconst transformedValue = transforms[currentKey] ? transforms[currentKey](legacyValue, input) : legacyValue;
-\treturn transformedValue ?? attribute.typia.defaultValue ?? 0;
-}
-`,
+		HELPERS_SOURCE,
 	);
 	writeJson(path.join(projectDir, "block.json"), {
 		apiVersion: 3,
@@ -525,15 +718,7 @@ export default migrationConfig;
 	);
 	writeFile(
 		path.join(projectDir, "src", "migrations", "helpers.ts"),
-		`export type RenameMap = Record<string, string>;
-export type TransformMap = Record<string, (legacyValue: unknown, legacyInput: Record<string, unknown>) => unknown>;
-export function resolveMigrationValue(attribute: any, currentKey: string, input: Record<string, unknown>, renameMap: RenameMap, transforms: TransformMap) {
-\tconst path = renameMap[currentKey] ?? currentKey;
-\tconst legacyValue = path.split(".").reduce((value: any, segment: string) => (value && typeof value === "object" ? value[segment] : undefined), input as any);
-\tconst transformedValue = transforms[currentKey] ? transforms[currentKey](legacyValue, input) : legacyValue;
-\treturn transformedValue ?? attribute.typia.defaultValue ?? null;
-}
-`,
+		HELPERS_SOURCE,
 	);
 
 	const currentBranches: Record<string, ReturnType<typeof createManifestAttribute>> = removeBranch
@@ -704,11 +889,41 @@ describe("create-wp-typia migrations", () => {
 		const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
 		expect(ruleSource).toContain("export const renameMap");
-		expect(ruleSource).toContain('content: "headline"');
+		expect(ruleSource).toContain('"content": "headline"');
 		expect(ruleSource).toContain("export const transforms");
 		expect(ruleSource).not.toContain('content: rename candidate from headline');
-		expect(ruleSource).toContain('resolveMigrationValue(currentManifest.attributes.content, "content", input, renameMap, transforms)');
+		expect(ruleSource).toContain('resolveMigrationAttribute(currentManifest.attributes.content, "content", "content", input, renameMap, transforms)');
 		expect(fixture.cases.some((entry: { name: string }) => entry.name === "rename:headline->content")).toBe(true);
+
+		const verifyOutput = runCli("node", [entryPath, "migrations", "verify", "--all"], {
+			cwd: projectDir,
+		});
+		expect(verifyOutput).toContain("Verified 1.0.0 -> 2.0.0");
+	});
+
+	test("scaffold auto-applies nested leaf rename candidates", () => {
+		const projectDir = path.join(tempRoot, "nested-rename-project");
+		createNestedRenameProject(projectDir);
+
+		const diffOutput = runCli("node", [entryPath, "migrations", "diff", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+		expect(diffOutput).toContain("settings.label <- settings.title");
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const rulePath = path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts");
+		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json");
+		const ruleSource = fs.readFileSync(rulePath, "utf8");
+		const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+
+		expect(ruleSource).toContain('"settings.label": "settings.title"');
+		expect(ruleSource).toContain('resolveMigrationAttribute(currentManifest.attributes.settings, "settings", "settings", input, renameMap, transforms)');
+		expect(
+			fixture.cases.some((entry: { name: string }) => entry.name === "rename:settings.title->settings.label"),
+		).toBe(true);
 
 		const verifyOutput = runCli("node", [entryPath, "migrations", "verify", "--all"], {
 			cwd: projectDir,
@@ -727,7 +942,7 @@ describe("create-wp-typia migrations", () => {
 		const rulePath = path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts");
 		const ruleSource = fs.readFileSync(rulePath, "utf8");
 
-		expect(ruleSource).toContain('// content: "headline",');
+		expect(ruleSource).toContain('// "content": "headline",');
 		expect(ruleSource).toContain("rename candidate from");
 	});
 
@@ -743,7 +958,7 @@ describe("create-wp-typia migrations", () => {
 		const ruleSource = fs.readFileSync(rulePath, "utf8");
 
 		expect(ruleSource).toContain("export const transforms");
-		expect(ruleSource).toContain('// clickCount: (legacyValue, legacyInput) => {');
+		expect(ruleSource).toContain('// "clickCount": (legacyValue, legacyInput) => {');
 		expect(ruleSource).toContain("// const numericValue = typeof legacyValue === \"number\" ? legacyValue : Number(legacyValue ?? 0);");
 		expect(ruleSource).toContain("clickCount: transform suggested from clickCount");
 	});

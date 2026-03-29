@@ -6,11 +6,24 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { getPackageManager } from "../packages/create-wp-typia/lib/package-managers.js";
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const entryPath = path.resolve(__dirname, "../packages/create-wp-typia/lib/entry.js");
+const packageRoot = path.resolve(__dirname, "../packages/create-wp-typia");
+const entryPath = path.resolve(packageRoot, "dist/cli.js");
+const PACKAGE_MANAGERS = {
+	bun: {
+		packageManagerField: "bun@1.3.10",
+	},
+	npm: {
+		packageManagerField: "npm@11.6.1",
+	},
+	pnpm: {
+		packageManagerField: "pnpm@8.3.1",
+	},
+	yarn: {
+		packageManagerField: "yarn@3.2.4",
+	},
+};
 
 function parseArgs(argv) {
 	const parsed = {
@@ -55,6 +68,25 @@ function run(command, args, options = {}) {
 	return execFileSync(command, args, {
 		stdio: "inherit",
 		...options,
+	});
+}
+
+function getPackageManager(packageManager) {
+	const manager = PACKAGE_MANAGERS[packageManager];
+	if (!manager) {
+		throw new Error(`Unknown package manager: ${packageManager}`);
+	}
+
+	return manager;
+}
+
+function ensureCreateWpTypiaBuilt() {
+	if (fs.existsSync(entryPath)) {
+		return;
+	}
+
+	run("bun", ["run", "--filter", "create-wp-typia", "build"], {
+		cwd: path.resolve(__dirname, ".."),
 	});
 }
 
@@ -191,6 +223,8 @@ function main() {
 	const projectDir = path.join(tempRoot, projectName);
 
 	try {
+		ensureCreateWpTypiaBuilt();
+
 		run(runtime, [
 			entryPath,
 			projectDir,

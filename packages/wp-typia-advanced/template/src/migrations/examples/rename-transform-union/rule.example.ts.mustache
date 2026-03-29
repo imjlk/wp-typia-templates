@@ -1,0 +1,47 @@
+import type { {{titleCase}}Attributes } from "../../../types";
+import currentManifest from "../../../../typia.manifest.json";
+import {
+	type RenameMap,
+	type TransformMap,
+	resolveMigrationAttribute,
+} from "../../helpers";
+
+export const renameMap: RenameMap = {
+	"content": "headline",
+	"settings.label": "settings.title",
+};
+
+export const transforms: TransformMap = {
+	"count": (legacyValue) => {
+		const numericValue =
+			typeof legacyValue === "number" ? legacyValue : Number(legacyValue ?? 0);
+		return Number.isNaN(numericValue) ? undefined : numericValue;
+	},
+	// Branch changes still need human review. The generated scaffold will keep this unresolved
+	// until you decide how to map the legacy branch contract.
+	"linkTarget.url.href": (legacyValue, legacyInput) => {
+		if (typeof legacyValue === "string") {
+			return legacyValue;
+		}
+
+		const fallbackHref =
+			typeof legacyInput.cta === "object" && legacyInput.cta && "href" in legacyInput.cta
+				? legacyInput.cta.href
+				: undefined;
+
+		return typeof fallbackHref === "string" ? fallbackHref : undefined;
+	},
+};
+
+export const unresolved = [
+	"linkTarget: union-branch-removal (branch post was removed)",
+] as const;
+
+export function migrate(input: Record<string, unknown>): {{titleCase}}Attributes {
+	return {
+		content: resolveMigrationAttribute(currentManifest.attributes.content, "content", "content", input, renameMap, transforms),
+		settings: resolveMigrationAttribute(currentManifest.attributes.settings, "settings", "settings", input, renameMap, transforms),
+		count: resolveMigrationAttribute(currentManifest.attributes.count, "count", "count", input, renameMap, transforms),
+		linkTarget: resolveMigrationAttribute(currentManifest.attributes.linkTarget, "linkTarget", "linkTarget", input, renameMap, transforms),
+	} as {{titleCase}}Attributes;
+}

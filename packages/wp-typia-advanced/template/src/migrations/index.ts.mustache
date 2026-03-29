@@ -245,7 +245,12 @@ export function generateMigrationReport(scanResults: BlockScanResult[]): string 
 		if (entry.preview.validationErrors.length > 0) {
 			report += `- Validation errors: ${entry.preview.validationErrors.join(", ")}\n`;
 		}
-		report += "\n";
+		report += "\n### Before\n\n```json\n";
+		report += `${JSON.stringify(entry.preview.before, null, 2)}\n`;
+		report += "```\n\n";
+		report += "### After\n\n```json\n";
+		report += `${JSON.stringify(entry.preview.after, null, 2)}\n`;
+		report += "```\n\n";
 	}
 
 	return report;

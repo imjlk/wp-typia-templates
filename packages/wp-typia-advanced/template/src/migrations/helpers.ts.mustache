@@ -44,6 +44,10 @@ export type TransformMap = Record<
 	(legacyValue: unknown, legacyInput: Record<string, unknown>) => unknown
 >;
 
+function getSourcePath(currentPath: string, fallbackPath: string, renameMap: RenameMap): string {
+	return renameMap[currentPath] ?? fallbackPath;
+}
+
 export function createDefaultValue(attribute: ManifestAttribute): unknown {
 	if (attribute.typia.hasDefault) {
 		return attribute.typia.defaultValue;
@@ -93,17 +97,86 @@ export function getValueAtPath(input: Record<string, unknown>, path: string): un
 export function resolveMigrationValue(
 	attribute: ManifestAttribute,
 	currentKey: string,
+	fallbackPath: string,
 	input: Record<string, unknown>,
 	renameMap: RenameMap,
 	transforms: TransformMap,
 ): unknown {
-	const sourcePath = renameMap[currentKey] ?? currentKey;
+	const sourcePath = getSourcePath(currentKey, fallbackPath, renameMap);
 	const legacyValue = getValueAtPath(input, sourcePath);
 	const transformedValue = transforms[currentKey]
 		? transforms[currentKey](legacyValue, input)
 		: legacyValue;
 
 	return coerceValueFromManifest(attribute, transformedValue);
+}
+
+export function resolveMigrationAttribute(
+	attribute: ManifestAttribute,
+	currentPath: string,
+	fallbackPath: string,
+	input: Record<string, unknown>,
+	renameMap: RenameMap,
+	transforms: TransformMap,
+): unknown {
+	const sourcePath = getSourcePath(currentPath, fallbackPath, renameMap);
+
+	switch (attribute.ts.kind) {
+		case "object": {
+			const nextInput = Object.fromEntries(
+				Object.entries(attribute.ts.properties ?? {}).map(([key, property]) => [
+					key,
+					resolveMigrationAttribute(
+						property,
+						`${currentPath}.${key}`,
+						`${sourcePath}.${key}`,
+						input,
+						renameMap,
+						transforms,
+					),
+				]),
+			);
+
+			return coerceValueFromManifest(attribute, nextInput);
+		}
+		case "union": {
+			const legacyValue = getValueAtPath(input, sourcePath);
+			if (!isPlainObject(legacyValue) || !attribute.ts.union) {
+				return createDefaultValue(attribute);
+			}
+
+			const { discriminator, branches } = attribute.ts.union;
+			const branchKey = legacyValue[discriminator];
+			if (typeof branchKey !== "string" || !(branchKey in branches)) {
+				return createDefaultValue(attribute);
+			}
+
+			const branchAttribute = branches[branchKey];
+			const properties = branchAttribute.ts.properties ?? {};
+			const nextInput = Object.fromEntries(
+				Object.entries(properties)
+					.filter(([key]) => key !== discriminator)
+					.map(([key, property]) => [
+						key,
+						resolveMigrationAttribute(
+							property,
+							`${currentPath}.${branchKey}.${key}`,
+							`${sourcePath}.${key}`,
+							input,
+							renameMap,
+							transforms,
+						),
+					]),
+			);
+
+			return coerceValueFromManifest(attribute, {
+				...nextInput,
+				[discriminator]: branchKey,
+			});
+		}
+		default:
+			return resolveMigrationValue(attribute, currentPath, sourcePath, input, renameMap, transforms);
+	}
 }
 
 export function coerceValueFromManifest(attribute: ManifestAttribute, value: unknown): unknown {

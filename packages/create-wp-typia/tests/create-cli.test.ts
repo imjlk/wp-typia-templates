@@ -4,10 +4,10 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import { scaffoldProject } from "../lib/scaffold.js";
+import { scaffoldProject } from "../src/runtime/index.js";
 
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "create-wp-typia-"));
-const entryPath = path.resolve(import.meta.dir, "../lib/entry.js");
+const entryPath = path.resolve(import.meta.dir, "../dist/cli.js");
 const legacyBasicPath = path.resolve(import.meta.dir, "../../wp-typia-basic/scripts/setup.js");
 
 function runCli(

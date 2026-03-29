@@ -17,8 +17,9 @@ A Bun-first WordPress block template monorepo featuring TypeScript, Typia valida
 - 🚀 **Migration System**: Snapshot-based legacy block migration tooling with `renameMap` / `transforms` helpers (Advanced)
 - 🧱 **Dynamic Server Example**: The advanced template renders through `render.php` and the generated PHP validator
 - ✍️ **Aggressive Migration Authoring**: High-confidence renames are auto-applied and semantic-risk coercions get suggested transform bodies
+- 🧭 **Nested Leaf Authoring**: Migration rules can target object and supported union-branch leaf paths such as `settings.label`
 - ⚛️ **Modern Stack**: React hooks, error boundaries, and utility functions
-- 🧪 **Testing Ready**: Bun unit tests, Bunli CLI tests, and Playwright E2E tests included
+- 🧪 **Testing Ready**: Bun unit tests, CLI runtime tests, and Playwright E2E tests included
 - 📦 **Shared CLI + Templates**: Scaffold via `create-wp-typia` and keep direct template entrypoints
 
 ## 🚀 Quick Start
@@ -284,7 +285,7 @@ Generated migration rules expose both `renameMap` and `transforms` so simple fie
 
 ### Testing
 
-- `bun run test` - Run Bun/Bunli unit tests
+- `bun run test` - Run Bun unit tests and CLI runtime tests
 - `bun run test:e2e` - Run E2E tests with Playwright
 - `bun run test:watch` - Run tests in watch mode
 - `bun run test:coverage` - Run tests with coverage

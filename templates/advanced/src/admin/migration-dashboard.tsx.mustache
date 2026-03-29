@@ -50,6 +50,32 @@ function downloadFile(contents: string, fileName: string, type: string) {
 	URL.revokeObjectURL(url);
 }
 
+function formatUnionSummary(result: BlockScanResult["preview"]): string {
+	if (result.unionBranches.length === 0) {
+		return __("No union branch changes", "{{textdomain}}");
+	}
+
+	return result.unionBranches
+		.map((branch) => `${branch.field}: ${branch.legacyBranch ?? "unknown"} → ${branch.nextBranch ?? "unknown"} (${branch.status})`)
+		.join(", ");
+}
+
+function renderJsonPreview(value: unknown) {
+	return (
+		<pre
+			style={{
+				background: "#f6f7f7",
+				borderRadius: "4px",
+				margin: "8px 0 0",
+				overflowX: "auto",
+				padding: "8px",
+			}}
+		>
+			{JSON.stringify(value, null, 2)}
+		</pre>
+	);
+}
+
 export function MigrationDashboard() {
 	const [results, setResults] = useState<BlockScanResult[]>([]);
 	const [dryRunResult, setDryRunResult] = useState<BatchMigrationResult | null>(null);
@@ -189,30 +215,57 @@ export function MigrationDashboard() {
 
 								<div>
 									<strong>{__("Latest results", "{{textdomain}}")}</strong>
-									<ul style={{ margin: "8px 0 0", paddingLeft: "20px" }}>
-										{results.slice(0, 5).map((result) => (
-											<li key={`${result.postId}:${result.blockPath.join(".")}`}>
-												<div>
-													<strong>{result.postTitle}</strong> — {result.analysis.currentVersion} → {result.analysis.targetVersion}
-													{result.preview.unresolved.length > 0 && " · manual review"}
-												</div>
-												{result.preview.changedFields.length > 0 && (
-													<div>{__("Changed fields", "{{textdomain}}")}: {result.preview.changedFields.join(", ")}</div>
-												)}
-												{result.preview.unionBranches.length > 0 && (
+									<div style={{ display: "grid", gap: "8px", marginTop: "8px" }}>
+										{results.map((result) => (
+											<details key={`${result.postId}:${result.blockPath.join(".")}`}>
+												<summary>
+													<strong>{result.postTitle}</strong>
+													{" — "}
+													{result.analysis.currentVersion} → {result.analysis.targetVersion}
+													{" · "}
+													{result.preview.changedFields.length}
+													{" "}
+													{__("changed", "{{textdomain}}")}
+													{result.preview.unresolved.length > 0 ? " · manual review" : ""}
+													{result.preview.validationErrors.length > 0 ? " · validation issues" : ""}
+												</summary>
+												<div style={{ marginTop: "8px", display: "grid", gap: "8px" }}>
 													<div>
-														{__("Union branches", "{{textdomain}}")}:{" "}
-														{result.preview.unionBranches
-															.map((branch) => `${branch.field} ${branch.legacyBranch ?? "unknown"} → ${branch.nextBranch ?? "unknown"} (${branch.status})`)
-															.join(", ")}
+														<strong>{__("Changed fields", "{{textdomain}}")}</strong>
+														<div>
+															{result.preview.changedFields.length > 0
+																? result.preview.changedFields.join(", ")
+																: __("None", "{{textdomain}}")}
+														</div>
 													</div>
-												)}
-												{result.preview.validationErrors.length > 0 && (
-													<div>{__("Validation", "{{textdomain}}")}: {result.preview.validationErrors.join(", ")}</div>
-												)}
-											</li>
+													<div>
+														<strong>{__("Union branches", "{{textdomain}}")}</strong>
+														<div>{formatUnionSummary(result.preview)}</div>
+													</div>
+													{result.preview.unresolved.length > 0 && (
+														<div>
+															<strong>{__("Manual review", "{{textdomain}}")}</strong>
+															<div>{result.preview.unresolved.join(", ")}</div>
+														</div>
+													)}
+													{result.preview.validationErrors.length > 0 && (
+														<div>
+															<strong>{__("Validation", "{{textdomain}}")}</strong>
+															<div>{result.preview.validationErrors.join(", ")}</div>
+														</div>
+													)}
+													<div>
+														<strong>{__("Before", "{{textdomain}}")}</strong>
+														{renderJsonPreview(result.preview.before)}
+													</div>
+													<div>
+														<strong>{__("After", "{{textdomain}}")}</strong>
+														{renderJsonPreview(result.preview.after)}
+													</div>
+												</div>
+											</details>
 										))}
-									</ul>
+									</div>
 								</div>
 							</div>
 						)}
@@ -220,27 +273,38 @@ export function MigrationDashboard() {
 						{dryRunResult && (
 							<div style={{ display: "grid", gap: "8px" }}>
 								<strong>{__("Dry-run preview", "{{textdomain}}")}</strong>
-								<ul style={{ margin: "8px 0 0", paddingLeft: "20px" }}>
+								<div style={{ display: "grid", gap: "8px", marginTop: "8px" }}>
 									{dryRunResult.posts.map((post) => (
-										<li key={post.postId}>
-											<div>
-												<strong>{post.postTitle}</strong> — {post.status}
+										<details key={post.postId}>
+											<summary>
+												<strong>{post.postTitle}</strong>
+												{" — "}
+												{post.status}
 												{post.reason ? ` (${post.reason})` : ""}
-											</div>
-											<ul style={{ margin: "4px 0 0", paddingLeft: "20px" }}>
+											</summary>
+											<div style={{ marginTop: "8px", display: "grid", gap: "8px" }}>
 												{post.previews.map((preview) => (
-													<li key={preview.blockPath.join(".")}>
-														{preview.currentVersion} → {preview.targetVersion}
-														{preview.preview.changedFields.length > 0
-															? ` · ${preview.preview.changedFields.join(", ")}`
-															: ""}
-														{preview.reason ? ` · ${preview.reason}` : ""}
-													</li>
+													<div key={preview.blockPath.join(".")}>
+														<div>
+															<strong>{preview.currentVersion} → {preview.targetVersion}</strong>
+															{preview.preview.changedFields.length > 0
+																? ` · ${preview.preview.changedFields.join(", ")}`
+																: ""}
+															{preview.reason ? ` · ${preview.reason}` : ""}
+														</div>
+														<div>{formatUnionSummary(preview.preview)}</div>
+														{renderJsonPreview({
+															after: preview.preview.after,
+															before: preview.preview.before,
+															unresolved: preview.preview.unresolved,
+															validationErrors: preview.preview.validationErrors,
+														})}
+													</div>
 												))}
-											</ul>
-										</li>
+											</div>
+										</details>
 									))}
-								</ul>
+								</div>
 							</div>
 						)}
 					</div>

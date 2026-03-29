@@ -1,3 +1,4 @@
+// @ts-nocheck
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -226,7 +227,7 @@ export async function runScaffoldFlow({
 	selectTemplate,
 	selectPackageManager,
 	promptText,
-	installDependencies,
+	installDependencies = undefined,
 }) {
 	if (!projectInput) {
 		throw new Error("Project directory is required. Usage: create-wp-typia <project-dir>");

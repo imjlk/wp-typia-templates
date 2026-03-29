@@ -56,7 +56,8 @@ The intended authoring flow is:
 4. scaffold the edge from the old snapshot to the current schema
 5. review auto-applied renames
 6. fill in any suggested semantic transforms
-7. adjust the generated fixture cases to match real legacy payloads
+7. adjust nested leaf paths like `settings.label` or `linkTarget.url.href` if object or union-branch fields moved
+8. adjust the generated fixture cases to match real legacy payloads
 8. run `migration:verify`
 9. use the admin dashboard dry-run before batch migration
 
@@ -82,6 +83,7 @@ Automatic cases are filled for you:
 - normalize additive object and array changes
 - preserve compatible discriminated union branches
 - auto-apply high-confidence top-level renames
+- auto-apply high-confidence nested leaf renames inside objects and supported union branches
 
 Manual work is still required for:
 
@@ -98,7 +100,11 @@ Scaffolded rules expose:
 - `unresolved`: issues that must be resolved before `verify`
 - `migrate()`: the generated edge implementation used by deprecated entries and batch migration
 
-High-confidence renames are written into `renameMap` automatically. Ambiguous candidates stay unresolved, and semantic-risk coercions are emitted as suggested transform bodies with unresolved markers left in place.
+High-confidence renames are written into `renameMap` automatically. Ambiguous candidates stay unresolved, and semantic-risk coercions are emitted as suggested transform bodies with unresolved markers left in place. Nested authoring uses the current-path convention:
+
+- `settings.label`
+- `cta.href`
+- `linkTarget.url.href`
 
 If unresolved `TODO MIGRATION:` markers or unresolved entries remain, `migration:verify` fails on purpose.
 
@@ -132,6 +138,24 @@ The dashboard preview now highlights:
 - discriminated union branch matches
 - validation errors
 - unresolved/manual review badges
+- compact post summaries with expandable before/after payload detail
+
+## Example pack
+
+The advanced template also ships a reference-only example pack at:
+
+```text
+src/migrations/examples/rename-transform-union/
+```
+
+It demonstrates:
+
+- a top-level rename
+- a nested path rename
+- a semantic transform
+- a discriminated union branch change that still needs manual review
+
+The example pack does not register itself into `supportedVersions` and does not affect runtime migration execution.
 
 ## Server-side foundation
 

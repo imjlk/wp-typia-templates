@@ -8,7 +8,7 @@ Create robust WordPress blocks with TypeScript runtime validation using Typia. T
 - **⚡ Type-first metadata generation** - TypeScript interfaces generate `block.json`, `typia.manifest.json` v2, and `typia-validator.php`
 - **🎯 4 Template Variations** - From basic to advanced patterns
 - **🔄 Migration System** - Snapshot-based block migrations with `renameMap` / `transforms` authoring helpers (Advanced template)
-- **🧪 Complete Testing** - Unit tests with Bun test, CLI tests with Bunli, E2E tests with Playwright
+- **🧪 Complete Testing** - Unit tests with Bun test, CLI runtime tests, E2E tests with Playwright
 - **📦 Monorepo Ready** - Bun workspaces with shared dependencies
 - **🎨 Modern Tooling** - TypeScript, SCSS, ESLint, Prettier, GitHub Actions
 
@@ -165,6 +165,7 @@ Features:
 - 📊 Migration dashboard in WordPress admin
 - 🧪 Built-in migration verification and edge fixtures
 - ✍️ Auto-applied high-confidence renames plus suggested transform bodies
+- 🧭 Nested leaf authoring for object and supported union-branch paths
 - 📝 Detailed migration reports
 
 ## 📦 Published npm Packages
@@ -189,7 +190,7 @@ wp-typia-templates/
 ├── test-template/               # Working examples
 │   └── my-typia-block/         # Complete example
 ├── packages/                    # Published npm packages and CLI
-│   ├── create-wp-typia/         # Shared Bunli-based scaffolder
+│   ├── create-wp-typia/         # Shared CLI scaffolder
 ├── tests/                       # Test files
 ├── docs/                        # Documentation
 └── .github/                     # GitHub configuration

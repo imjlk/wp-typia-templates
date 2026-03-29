@@ -1,24 +1,75 @@
+// @ts-nocheck
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
 
-import { formatRunScript } from "./package-managers.js";
+import {
+	FIXTURES_DIR,
+	GENERATED_DIR,
+	MIGRATION_TODO_PREFIX,
+	ROOT_BLOCK_JSON,
+	ROOT_MANIFEST,
+	ROOT_PHP_MIGRATION_REGISTRY,
+	ROOT_SAVE_FILE,
+	SNAPSHOT_DIR,
+} from "./migration-constants.js";
+import {
+	defaultValueForManifestAttribute,
+	flattenManifestLeafAttributes,
+	getAttributeByCurrentPath,
+	getManifestDefaultValue,
+	hasManifestDefault,
+	summarizeManifest,
+	summarizeUnionBranches,
+} from "./migration-manifest.js";
+import {
+	assertRuleHasNoTodos,
+	discoverMigrationEntries,
+	ensureAdvancedMigrationProject,
+	ensureMigrationDirectories,
+	getProjectPaths,
+	getRuleFilePath,
+	loadMigrationProject,
+	readProjectBlockName,
+	readRuleMetadata,
+	writeInitialMigrationScaffold,
+	writeMigrationConfig,
+} from "./migration-project.js";
+import {
+	assertSemver,
+	cloneJsonValue,
+	compareSemver,
+	copyFile,
+	createFixtureScalarValue,
+	createTransformFixtureValue,
+	deleteValueAtPath,
+	escapeForCode,
+	getLocalTsxBinary,
+	getValueAtPath,
+	isNumber,
+	readJson,
+	renderObjectKey,
+	renderPhpValue,
+	resolveTargetVersion,
+	runProjectScriptIfPresent,
+	sanitizeSaveSnapshotSource,
+	sanitizeSnapshotBlockJson,
+	setValueAtPath,
+} from "./migration-utils.js";
+import type {
+	DiffOutcome,
+	FlattenedAttributeDescriptor,
+	ManifestAttribute,
+	MigrationDiff,
+	MigrationEntry,
+	MigrationProjectState,
+	ParsedMigrationArgs,
+	RenderLine,
+	RenameCandidate,
+	TransformSuggestion,
+} from "./migration-types.js";
 
-const ROOT_BLOCK_JSON = "block.json";
-const ROOT_MANIFEST = "typia.manifest.json";
-const ROOT_PHP_MIGRATION_REGISTRY = "typia-migration-registry.php";
-const ROOT_SAVE_FILE = path.join("src", "save.tsx");
-const ROOT_TYPES_FILE = path.join("src", "types.ts");
-const MIGRATIONS_DIR = path.join("src", "migrations");
-const CONFIG_FILE = path.join(MIGRATIONS_DIR, "config.ts");
-const GENERATED_DIR = path.join(MIGRATIONS_DIR, "generated");
-const FIXTURES_DIR = path.join(MIGRATIONS_DIR, "fixtures");
-const RULES_DIR = path.join(MIGRATIONS_DIR, "rules");
-const SNAPSHOT_DIR = path.join(MIGRATIONS_DIR, "versions");
-const SUPPORTED_PROJECT_FILES = ["package.json", ROOT_BLOCK_JSON, ROOT_SAVE_FILE, ROOT_TYPES_FILE];
-const MIGRATION_TODO_PREFIX = "TODO MIGRATION:";
-
-export function formatMigrationHelpText() {
+export function formatMigrationHelpText(): string {
 	return `Usage:
   create-wp-typia migrations init --current-version <semver>
   create-wp-typia migrations snapshot --version <semver>
@@ -27,8 +78,8 @@ export function formatMigrationHelpText() {
   create-wp-typia migrations verify [--from <semver>|--all]`;
 }
 
-export function parseMigrationArgs(argv) {
-	const parsed = {
+export function parseMigrationArgs(argv: string[]): ParsedMigrationArgs {
+	const parsed: ParsedMigrationArgs = {
 		command: undefined,
 		flags: {
 			all: false,
@@ -99,7 +150,7 @@ export function parseMigrationArgs(argv) {
 	return parsed;
 }
 
-export function formatDiffReport(diff) {
+export function formatDiffReport(diff: MigrationDiff): string {
 	const lines = [
 		`Migration diff: ${diff.fromVersion} -> ${diff.toVersion}`,
 		`Current type: ${diff.currentTypeName}`,
@@ -152,7 +203,11 @@ export function formatDiffReport(diff) {
 	return lines.join("\n");
 }
 
-export function runMigrationCommand(command, cwd, { renderLine = console.log } = {}) {
+export function runMigrationCommand(
+	command: ParsedMigrationArgs,
+	cwd: string,
+	{ renderLine = console.log as RenderLine } = {},
+) {
 	switch (command.command) {
 		case "init":
 			if (!command.flags.currentVersion) {
@@ -193,7 +248,11 @@ export function runMigrationCommand(command, cwd, { renderLine = console.log } =
 	}
 }
 
-export function initProjectMigrations(projectDir, currentVersion, { renderLine = console.log } = {}) {
+export function initProjectMigrations(
+	projectDir: string,
+	currentVersion: string,
+	{ renderLine = console.log as RenderLine } = {},
+) {
 	ensureAdvancedMigrationProject(projectDir);
 	assertSemver(currentVersion, "current version");
 
@@ -216,9 +275,9 @@ export function initProjectMigrations(projectDir, currentVersion, { renderLine =
 }
 
 export function snapshotProjectVersion(
-	projectDir,
-	version,
-	{ renderLine = console.log, skipConfigUpdate = false } = {},
+	projectDir: string,
+	version: string,
+	{ renderLine = console.log as RenderLine, skipConfigUpdate = false } = {},
 ) {
 	ensureAdvancedMigrationProject(projectDir);
 	assertSemver(version, "snapshot version");
@@ -255,8 +314,8 @@ export function snapshotProjectVersion(
 }
 
 export function diffProjectMigrations(
-	projectDir,
-	{ fromVersion, toVersion = "current", renderLine = console.log } = {},
+	projectDir: string,
+	{ fromVersion, toVersion = "current", renderLine = console.log as RenderLine } = {},
 ) {
 	const state = loadMigrationProject(projectDir);
 	const targetVersion = resolveTargetVersion(state.config.currentVersion, toVersion);
@@ -266,8 +325,8 @@ export function diffProjectMigrations(
 }
 
 export function scaffoldProjectMigrations(
-	projectDir,
-	{ fromVersion, toVersion = "current", renderLine = console.log } = {},
+	projectDir: string,
+	{ fromVersion, toVersion = "current", renderLine = console.log as RenderLine } = {},
 ) {
 	ensureMigrationDirectories(projectDir);
 	const state = loadMigrationProject(projectDir);
@@ -302,8 +361,8 @@ export function scaffoldProjectMigrations(
 }
 
 export function verifyProjectMigrations(
-	projectDir,
-	{ all = false, fromVersion, renderLine = console.log } = {},
+	projectDir: string,
+	{ all = false, fromVersion, renderLine = console.log as RenderLine } = {},
 ) {
 	const state = loadMigrationProject(projectDir);
 	const verifyScriptPath = path.join(projectDir, GENERATED_DIR, "verify.ts");
@@ -340,73 +399,6 @@ export function verifyProjectMigrations(
 	};
 }
 
-function ensureAdvancedMigrationProject(projectDir) {
-	const missing = SUPPORTED_PROJECT_FILES.filter((relativePath) => !fs.existsSync(path.join(projectDir, relativePath)));
-	if (missing.length > 0) {
-		throw new Error(
-			`This directory is not a supported advanced migration project. Missing: ${missing.join(", ")}`,
-		);
-	}
-}
-
-function getProjectPaths(projectDir) {
-	return {
-		configFile: path.join(projectDir, CONFIG_FILE),
-		fixturesDir: path.join(projectDir, FIXTURES_DIR),
-		generatedDir: path.join(projectDir, GENERATED_DIR),
-		rulesDir: path.join(projectDir, RULES_DIR),
-		snapshotDir: path.join(projectDir, SNAPSHOT_DIR),
-	};
-}
-
-function ensureMigrationDirectories(projectDir) {
-	const paths = getProjectPaths(projectDir);
-	fs.mkdirSync(paths.fixturesDir, { recursive: true });
-	fs.mkdirSync(paths.generatedDir, { recursive: true });
-	fs.mkdirSync(paths.rulesDir, { recursive: true });
-	fs.mkdirSync(paths.snapshotDir, { recursive: true });
-}
-
-function writeInitialMigrationScaffold(projectDir, currentVersion) {
-	const paths = getProjectPaths(projectDir);
-	const readmeFiles = [
-		[path.join(paths.snapshotDir, "README.md"), `# Version Snapshots\n\nSnapshots for ${currentVersion} and future versions live here.\n`],
-		[path.join(paths.rulesDir, "README.md"), `# Migration Rules\n\nScaffold direct legacy-to-current migration rules in this directory.\n`],
-		[path.join(paths.fixturesDir, "README.md"), `# Migration Fixtures\n\nGenerated fixtures are used by verify to assert migrations.\n`],
-	];
-
-	for (const [targetPath, content] of readmeFiles) {
-		if (!fs.existsSync(targetPath)) {
-			fs.writeFileSync(targetPath, content, "utf8");
-		}
-	}
-}
-
-function loadMigrationProject(projectDir, { allowMissingConfig = false } = {}) {
-	ensureAdvancedMigrationProject(projectDir);
-	if (!fs.existsSync(path.join(projectDir, ROOT_MANIFEST))) {
-		runProjectScriptIfPresent(projectDir, "sync-types");
-	}
-
-	const paths = getProjectPaths(projectDir);
-	const config = allowMissingConfig && !fs.existsSync(paths.configFile)
-		? {
-			blockName: readProjectBlockName(projectDir),
-			currentVersion: "0.0.0",
-			snapshotDir: SNAPSHOT_DIR.replace(/\\/g, "/"),
-			supportedVersions: [],
-		}
-		: parseMigrationConfig(fs.readFileSync(paths.configFile, "utf8"));
-
-	return {
-		config,
-		currentBlockJson: readJson(path.join(projectDir, ROOT_BLOCK_JSON)),
-		currentManifest: readJson(path.join(projectDir, ROOT_MANIFEST)),
-		paths,
-		projectDir,
-	};
-}
-
 function regenerateGeneratedArtifacts(projectDir) {
 	const state = loadMigrationProject(projectDir);
 	const entries = discoverMigrationEntries(state);
@@ -434,98 +426,6 @@ function regenerateGeneratedArtifacts(projectDir) {
 	);
 }
 
-function discoverMigrationEntries(state) {
-	const entries = [];
-	const currentVersion = state.config.currentVersion;
-
-	for (const version of state.config.supportedVersions) {
-		if (version === currentVersion) {
-			continue;
-		}
-
-		const snapshotRoot = path.join(state.projectDir, SNAPSHOT_DIR, version);
-		const manifestPath = path.join(snapshotRoot, ROOT_MANIFEST);
-		const blockJsonPath = path.join(snapshotRoot, ROOT_BLOCK_JSON);
-		const savePath = path.join(snapshotRoot, "save.tsx");
-		const rulePath = getRuleFilePath(state.paths, version, currentVersion);
-
-		if (
-			fs.existsSync(manifestPath) &&
-			fs.existsSync(blockJsonPath) &&
-			fs.existsSync(savePath) &&
-			fs.existsSync(rulePath)
-		) {
-			entries.push({
-				blockJsonImport: `../versions/${version}/block.json`,
-				fixtureImport: `../fixtures/${version}-to-${currentVersion}.json`,
-				fromVersion: version,
-				manifestImport: `../versions/${version}/typia.manifest.json`,
-				ruleImport: `../rules/${version}-to-${currentVersion}`,
-				rulePath,
-				saveImport: `../versions/${version}/save`,
-				toVersion: currentVersion,
-			});
-		}
-	}
-
-	return entries.sort((left, right) => compareSemver(right.fromVersion, left.fromVersion));
-}
-
-function parseMigrationConfig(source) {
-	const blockName = matchConfigValue(source, "blockName");
-	const currentVersion = matchConfigValue(source, "currentVersion");
-	const snapshotDir = matchConfigValue(source, "snapshotDir");
-	const supportedVersionsMatch = source.match(/supportedVersions:\s*\[([\s\S]*?)\]/);
-
-	if (!blockName || !currentVersion || !snapshotDir || !supportedVersionsMatch) {
-		throw new Error("Unable to parse migration config. Regenerate with `create-wp-typia migrations init`.");
-	}
-
-	const supportedVersions = supportedVersionsMatch[1]
-		.split(",")
-		.map((item) => item.trim().replace(/^["']|["']$/g, ""))
-		.filter(Boolean)
-		.sort(compareSemver);
-
-	return {
-		blockName,
-		currentVersion,
-		snapshotDir,
-		supportedVersions,
-	};
-}
-
-function matchConfigValue(source, key) {
-	return source.match(new RegExp(`${key}:\\s*"([^"]+)"`))?.[1] ?? null;
-}
-
-function writeMigrationConfig(projectDir, config) {
-	const paths = getProjectPaths(projectDir);
-	fs.mkdirSync(path.dirname(paths.configFile), { recursive: true });
-	fs.writeFileSync(
-		paths.configFile,
-		`export const migrationConfig = {
-	blockName: "${config.blockName}",
-	currentVersion: "${config.currentVersion}",
-	supportedVersions: [${config.supportedVersions.map((version) => `"${version}"`).join(", ")}],
-	snapshotDir: "${config.snapshotDir}",
-} as const;
-
-export default migrationConfig;
-`,
-		"utf8",
-	);
-}
-
-function readProjectBlockName(projectDir) {
-	const blockJson = readJson(path.join(projectDir, ROOT_BLOCK_JSON));
-	const blockName = blockJson?.name;
-	if (typeof blockName !== "string" || blockName.length === 0) {
-		throw new Error("Unable to resolve block name from block.json");
-	}
-	return blockName;
-}
-
 function createMigrationDiff(state, fromVersion, toVersion) {
 	const snapshotManifestPath = path.join(state.projectDir, SNAPSHOT_DIR, fromVersion, ROOT_MANIFEST);
 	if (!fs.existsSync(snapshotManifestPath)) {
@@ -543,6 +443,8 @@ function createMigrationDiff(state, fromVersion, toVersion) {
 	const oldManifest = readJson(snapshotManifestPath);
 	const oldAttributes = oldManifest.attributes ?? {};
 	const newAttributes = targetManifest.attributes ?? {};
+	const oldLeafAttributes = flattenManifestLeafAttributes(oldAttributes);
+	const newLeafAttributes = flattenManifestLeafAttributes(newAttributes);
 	const autoItems = [];
 	const manualItems = [];
 	const addedKeys = [];
@@ -590,7 +492,14 @@ function createMigrationDiff(state, fromVersion, toVersion) {
 		}
 	}
 
-	const renameCandidates = createRenameCandidates(oldAttributes, newAttributes, removedKeys, addedKeys);
+	const renameCandidates = createRenameCandidates(
+		oldAttributes,
+		newAttributes,
+		removedKeys,
+		addedKeys,
+		oldLeafAttributes,
+		newLeafAttributes,
+	);
 	const activeRenameCandidates = renameCandidates.filter((candidate) => candidate.autoApply);
 
 	for (const candidate of activeRenameCandidates) {
@@ -598,6 +507,7 @@ function createMigrationDiff(state, fromVersion, toVersion) {
 		removeOutcomeByPath(autoItems, candidate.currentPath, "add-default");
 		removeOutcomeByPath(autoItems, candidate.currentPath, "add-optional");
 		removeOutcomeByPath(manualItems, candidate.currentPath, "required-addition");
+		removeOutcomesByPath(manualItems, candidate.currentPath);
 		autoItems.push({
 			detail: `legacy field ${candidate.legacyPath}`,
 			kind: "rename",
@@ -605,12 +515,16 @@ function createMigrationDiff(state, fromVersion, toVersion) {
 		});
 	}
 	const transformSuggestions = createTransformSuggestions(
-		oldAttributes,
-		newAttributes,
-		addedKeys,
-		removedKeys,
-		manualItems,
-		renameCandidates,
+		{
+			addedKeys,
+			manualItems,
+			newAttributes,
+			newLeafAttributes,
+			oldAttributes,
+			oldLeafAttributes,
+			renameCandidates,
+			removedKeys,
+		},
 	);
 
 	return {
@@ -632,6 +546,14 @@ function removeOutcomeByPath(items, pathLabel, kind) {
 	const index = items.findIndex((item) => item.path === pathLabel && item.kind === kind);
 	if (index >= 0) {
 		items.splice(index, 1);
+	}
+}
+
+function removeOutcomesByPath(items, pathLabel) {
+	for (let index = items.length - 1; index >= 0; index -= 1) {
+		if (items[index].path === pathLabel) {
+			items.splice(index, 1);
+		}
 	}
 }
 
@@ -658,7 +580,7 @@ function compareManifestAttribute(oldAttribute, newAttribute, attributePath) {
 			`${attributePath}[]`,
 		);
 		return nested.status === "manual"
-			? manualOutcome(attributePath, "array-change", nested.detail)
+			? nested
 			: autoOutcome(attributePath, "hydrate", "array items can be normalized");
 	}
 
@@ -678,9 +600,9 @@ function compareObjectAttribute(oldAttribute, newAttribute, attributePath) {
 		if (!previousProperty) {
 			if (nextProperty.ts.required && !hasManifestDefault(nextProperty)) {
 				return manualOutcome(
-					attributePath,
+					`${attributePath}.${key}`,
 					"object-change",
-					`nested required field ${attributePath}.${key} has no default`,
+					"required field has no default in current schema",
 				);
 			}
 			continue;
@@ -688,7 +610,7 @@ function compareObjectAttribute(oldAttribute, newAttribute, attributePath) {
 
 		const nested = compareManifestAttribute(previousProperty, nextProperty, `${attributePath}.${key}`);
 		if (nested.status === "manual") {
-			return manualOutcome(attributePath, "object-change", nested.detail);
+			return nested;
 		}
 	}
 
@@ -721,10 +643,10 @@ function compareUnionAttribute(oldAttribute, newAttribute, attributePath) {
 		const nested = compareManifestAttribute(
 			oldUnion.branches[branchKey],
 			newUnion.branches[branchKey],
-			`${attributePath}<${branchKey}>`,
+			`${attributePath}.${branchKey}`,
 		);
 		if (nested.status === "manual") {
-			return manualOutcome(attributePath, "union-change", nested.detail);
+			return nested;
 		}
 	}
 
@@ -770,21 +692,45 @@ function hasStricterConstraints(oldAttribute, newAttribute) {
 	return false;
 }
 
-function hasManifestDefault(attribute) {
-	return attribute?.typia?.hasDefault === true;
-}
-
-function getManifestDefaultValue(attribute) {
-	return attribute?.typia?.defaultValue ?? null;
-}
-
-function createRenameCandidates(oldAttributes, newAttributes, removedKeys, addedKeys) {
+function createRenameCandidates(
+	oldAttributes,
+	newAttributes,
+	removedKeys,
+	addedKeys,
+	oldLeafAttributes,
+	newLeafAttributes,
+) {
 	const assessments = [];
 
 	for (const currentPath of addedKeys) {
 		const nextAttribute = newAttributes[currentPath];
 		for (const legacyPath of removedKeys) {
 			const candidate = assessRenameCandidate(oldAttributes[legacyPath], nextAttribute, legacyPath, currentPath);
+			if (candidate) {
+				assessments.push(candidate);
+			}
+		}
+	}
+
+	const oldLeafMap = new Map(oldLeafAttributes.map((descriptor) => [descriptor.currentPath, descriptor]));
+	const newLeafMap = new Map(newLeafAttributes.map((descriptor) => [descriptor.currentPath, descriptor]));
+	const removedLeafDescriptors = oldLeafAttributes.filter((descriptor) => !newLeafMap.has(descriptor.currentPath));
+	const addedLeafDescriptors = newLeafAttributes.filter((descriptor) => !oldLeafMap.has(descriptor.currentPath));
+
+	for (const nextDescriptor of addedLeafDescriptors) {
+		if (!nextDescriptor.currentPath.includes(".")) {
+			continue;
+		}
+		for (const previousDescriptor of removedLeafDescriptors) {
+			if (!previousDescriptor.currentPath.includes(".")) {
+				continue;
+			}
+			const candidate = assessRenameCandidate(
+				previousDescriptor.attribute,
+				nextDescriptor.attribute,
+				previousDescriptor.currentPath,
+				nextDescriptor.currentPath,
+			);
 			if (candidate) {
 				assessments.push(candidate);
 			}
@@ -825,34 +771,53 @@ function createRenameCandidates(oldAttributes, newAttributes, removedKeys, added
 		.sort((left, right) => right.score - left.score);
 }
 
-function createTransformSuggestions(
+function createTransformSuggestions({
 	oldAttributes,
 	newAttributes,
 	addedKeys,
 	removedKeys,
 	manualItems,
 	renameCandidates,
-) {
+	oldLeafAttributes,
+	newLeafAttributes,
+}) {
 	const suggestions = [];
 	const activeRenameTargets = new Set(
 		renameCandidates.filter((candidate) => candidate.autoApply).map((candidate) => candidate.currentPath),
 	);
+	const oldLeafMap = new Map(oldLeafAttributes.map((descriptor) => [descriptor.currentPath, descriptor]));
+	const newLeafMap = new Map(newLeafAttributes.map((descriptor) => [descriptor.currentPath, descriptor]));
 
-	for (const currentPath of Object.keys(newAttributes)) {
+	for (const currentPath of [
+		...new Set([
+			...Object.keys(newAttributes),
+			...manualItems.map((item) => item.path),
+			...newLeafAttributes.map((item) => item.currentPath),
+		]),
+	]) {
 		if (activeRenameTargets.has(currentPath)) {
 			continue;
 		}
 
-		const manualItem = manualItems.find((item) => item.path === currentPath || item.path.startsWith(`${currentPath}<`));
-		const currentAttribute = newAttributes[currentPath];
+		const manualItem = manualItems.find(
+			(item) => item.path === currentPath || item.path.startsWith(`${currentPath}.`),
+		);
+		const currentAttribute =
+			newLeafMap.get(currentPath)?.attribute
+			?? getAttributeByCurrentPath(newAttributes, currentPath)
+			?? null;
 		if (!manualItem || !currentAttribute) {
 			continue;
 		}
 
-		const exactLegacy = oldAttributes[currentPath];
+		const exactLegacy =
+			oldLeafMap.get(currentPath)?.attribute
+			?? getAttributeByCurrentPath(oldAttributes, currentPath)
+			?? null;
 		if (exactLegacy && exactLegacy.ts.kind !== currentAttribute.ts.kind) {
 			suggestions.push({
 				bodyLines: buildTransformBodyLines(currentAttribute, currentPath),
+				attribute: currentAttribute,
 				currentPath,
 				legacyPath: currentPath,
 				reason: `semantic coercion suggested for ${manualItem.kind}`,
@@ -864,6 +829,7 @@ function createTransformSuggestions(
 		if (bestRenameCandidate && !bestRenameCandidate.autoApply) {
 			suggestions.push({
 				bodyLines: buildTransformBodyLines(currentAttribute, bestRenameCandidate.legacyPath),
+				attribute: currentAttribute,
 				currentPath,
 				legacyPath: bestRenameCandidate.legacyPath,
 				reason: `review coercion from ${bestRenameCandidate.legacyPath}`,
@@ -871,17 +837,25 @@ function createTransformSuggestions(
 			continue;
 		}
 
-		const addedCurrent = addedKeys.includes(currentPath);
+		const addedCurrent =
+			addedKeys.includes(currentPath)
+			|| newLeafMap.has(currentPath) && !oldLeafMap.has(currentPath);
 		if (!addedCurrent) {
 			continue;
 		}
 
-		const compatibleLegacyPath = removedKeys.find((legacyPath) =>
+		const compatibleLegacyPath = [
+			...removedKeys,
+			...oldLeafAttributes
+				.filter((descriptor) => !newLeafMap.has(descriptor.currentPath))
+				.map((descriptor) => descriptor.currentPath),
+		].find((legacyPath) =>
 			passesNameSimilarityRule(legacyPath, currentPath),
 		);
 		if (compatibleLegacyPath) {
 			suggestions.push({
 				bodyLines: buildTransformBodyLines(currentAttribute, compatibleLegacyPath),
+				attribute: currentAttribute,
 				currentPath,
 				legacyPath: compatibleLegacyPath,
 				reason: `review coercion from ${compatibleLegacyPath}`,
@@ -913,7 +887,10 @@ function assessRenameCandidate(oldAttribute, newAttribute, legacyPath, currentPa
 		return null;
 	}
 
-	const score = scoreRenameSimilarity(legacyPath, currentPath);
+	const baseScore = scoreRenameSimilarity(legacyPath, currentPath);
+	const score = getParentPath(legacyPath) === getParentPath(currentPath)
+		? Math.max(baseScore, 0.75)
+		: baseScore;
 	return {
 		autoApply: false,
 		currentPath,
@@ -1021,6 +998,14 @@ function tokenizeFieldName(name) {
 		.filter(Boolean);
 }
 
+function getParentPath(pathLabel) {
+	const segments = String(pathLabel).split(".");
+	if (segments.length <= 1) {
+		return "";
+	}
+	return segments.slice(0, -1).join(".");
+}
+
 function shareAliasGroup(left, right) {
 	const aliasGroups = [
 		["content", "headline", "body", "text", "copy", "message"],
@@ -1118,7 +1103,7 @@ function renderMigrationRuleFile({ currentAttributes, currentTypeName, diff, fro
 	lines.push(`import {`);
 	lines.push(`\ttype RenameMap,`);
 	lines.push(`\ttype TransformMap,`);
-	lines.push(`\tresolveMigrationValue,`);
+	lines.push(`\tresolveMigrationAttribute,`);
 	lines.push(`} from "../helpers";`);
 	lines.push("");
 	lines.push(`export const fromVersion = "${fromVersion}" as const;`);
@@ -1126,16 +1111,16 @@ function renderMigrationRuleFile({ currentAttributes, currentTypeName, diff, fro
 	lines.push("");
 	lines.push("export const renameMap: RenameMap = {");
 	for (const candidate of activeRenameCandidates) {
-		lines.push(`\t${candidate.currentPath}: "${candidate.legacyPath}",`);
+		lines.push(`\t${renderObjectKey(candidate.currentPath)}: "${escapeForCode(candidate.legacyPath)}",`);
 	}
 	for (const candidate of suggestedRenameCandidates) {
-		lines.push(`\t// ${candidate.currentPath}: "${candidate.legacyPath}",`);
+		lines.push(`\t// ${renderObjectKey(candidate.currentPath)}: "${escapeForCode(candidate.legacyPath)}",`);
 	}
 	lines.push("};");
 	lines.push("");
 	lines.push("export const transforms: TransformMap = {");
 	for (const suggestion of diff.summary.transformSuggestions ?? []) {
-		lines.push(`\t// ${suggestion.currentPath}: (legacyValue, legacyInput) => {`);
+		lines.push(`\t// ${renderObjectKey(suggestion.currentPath)}: (legacyValue, legacyInput) => {`);
 		for (const bodyLine of suggestion.bodyLines) {
 			lines.push(`\t${bodyLine}`);
 		}
@@ -1159,16 +1144,23 @@ function renderMigrationRuleFile({ currentAttributes, currentTypeName, diff, fro
 	lines.push(`\treturn {`);
 
 	for (const key of Object.keys(currentAttributes)) {
-		const manualItem = diff.summary.manualItems.find((item) => item.path === key);
-		const renameCandidate = (diff.summary.renameCandidates ?? []).find((item) => item.currentPath === key);
-		if (manualItem) {
+		for (const manualItem of diff.summary.manualItems.filter(
+			(item) => item.path === key || item.path.startsWith(`${key}.`),
+		)) {
 			lines.push(`\t\t// ${MIGRATION_TODO_PREFIX} ${manualItem.path}: ${manualItem.kind}${manualItem.detail ? ` (${manualItem.detail})` : ""}`);
 		}
-		if (renameCandidate && !renameCandidate.autoApply) {
-			lines.push(`\t\t// ${MIGRATION_TODO_PREFIX} consider renameMap.${renameCandidate.currentPath} = "${renameCandidate.legacyPath}"`);
+		for (const renameCandidate of (diff.summary.renameCandidates ?? []).filter(
+			(item) => !item.autoApply && (item.currentPath === key || item.currentPath.startsWith(`${key}.`)),
+		)) {
+			lines.push(`\t\t// ${MIGRATION_TODO_PREFIX} consider renameMap[${JSON.stringify(renameCandidate.currentPath)}] = "${renameCandidate.legacyPath}"`);
+		}
+		for (const suggestion of (diff.summary.transformSuggestions ?? []).filter(
+			(item) => item.currentPath === key || item.currentPath.startsWith(`${key}.`),
+		)) {
+			lines.push(`\t\t// ${MIGRATION_TODO_PREFIX} review transforms[${JSON.stringify(suggestion.currentPath)}]`);
 		}
 		lines.push(
-			`\t\t${key}: resolveMigrationValue(currentManifest.attributes.${key}, "${key}", input, renameMap, transforms),`,
+			`\t\t${key}: resolveMigrationAttribute(currentManifest.attributes.${key}, "${key}", "${key}", input, renameMap, transforms),`,
 		);
 	}
 
@@ -1275,6 +1267,7 @@ function renderPhpMigrationRegistryFile(state, entries) {
 			autoAppliedRenameCount: ruleMetadata.renameMap.length,
 			autoAppliedRenames: ruleMetadata.renameMap,
 			fromVersion: entry.fromVersion,
+			nestedPathRenames: ruleMetadata.renameMap.filter((item) => item.currentPath.includes(".")),
 			ruleFile: path.relative(state.projectDir, entry.rulePath).replace(/\\/g, "/"),
 			transformKeys: ruleMetadata.transforms,
 			toVersion: entry.toVersion,
@@ -1368,6 +1361,7 @@ function ensureEdgeFixtureFile(projectDir, fromVersion, toVersion, diff) {
 			name: "default",
 		},
 		...createRenameFixtureCases(attributes, diff.summary.renameCandidates ?? []),
+		...createTransformFixtureCases(attributes, diff.summary.transformSuggestions ?? []),
 		...createUnionFixtureCases(attributes, manifest.attributes ?? {}, diff.summary.renameCandidates ?? []),
 	];
 
@@ -1404,6 +1398,23 @@ function createRenameFixtureCases(baseAttributes, renameCandidates) {
 		});
 }
 
+function createTransformFixtureCases(baseAttributes, transformSuggestions) {
+	return transformSuggestions.map((suggestion) => {
+		const nextInput = cloneJsonValue(baseAttributes);
+		const legacyPath = suggestion.legacyPath ?? suggestion.currentPath;
+		setValueAtPath(
+			nextInput,
+			legacyPath,
+			createTransformFixtureValue(suggestion.attribute, suggestion.currentPath),
+		);
+
+		return {
+			input: nextInput,
+			name: `transform:${legacyPath}->${suggestion.currentPath}`,
+		};
+	});
+}
+
 function createUnionFixtureCases(baseAttributes, manifestAttributes, renameCandidates) {
 	const cases = [];
 
@@ -1438,298 +1449,4 @@ function createUnionBranchFixtureValue(discriminator, branchKey, branchAttribute
 	return {
 		[discriminator]: branchKey,
 	};
-}
-
-function cloneJsonValue(value) {
-	return JSON.parse(JSON.stringify(value));
-}
-
-function getValueAtPath(input, pathLabel) {
-	return String(pathLabel)
-		.split(".")
-		.reduce((value, segment) => (value && typeof value === "object" ? value[segment] : undefined), input);
-}
-
-function setValueAtPath(input, pathLabel, value) {
-	const segments = String(pathLabel).split(".");
-	let target = input;
-	while (segments.length > 1) {
-		const segment = segments.shift();
-		if (!segment) {
-			continue;
-		}
-		if (!target[segment] || typeof target[segment] !== "object" || Array.isArray(target[segment])) {
-			target[segment] = {};
-		}
-		target = target[segment];
-	}
-	target[segments[0]] = value;
-}
-
-function deleteValueAtPath(input, pathLabel) {
-	const segments = String(pathLabel).split(".");
-	let target = input;
-	while (segments.length > 1) {
-		const segment = segments.shift();
-		if (!segment || !target[segment] || typeof target[segment] !== "object") {
-			return;
-		}
-		target = target[segment];
-	}
-	delete target[segments[0]];
-}
-
-function createFixtureScalarValue(pathLabel) {
-	const normalized = String(pathLabel).toLowerCase();
-	if (normalized.includes("id")) {
-		return "00000000-0000-4000-8000-000000000000";
-	}
-	if (normalized.includes("count") || normalized.includes("number")) {
-		return 1;
-	}
-	if (normalized.includes("visible") || normalized.startsWith("is")) {
-		return true;
-	}
-	return `legacy:${pathLabel}`;
-}
-
-function summarizeManifest(manifest) {
-	return {
-		attributes: Object.fromEntries(
-			Object.entries(manifest.attributes ?? {}).map(([name, attribute]) => [
-				name,
-				{
-					constraints: attribute.typia?.constraints ?? {},
-					defaultValue: attribute.typia?.defaultValue ?? null,
-					hasDefault: attribute.typia?.hasDefault ?? false,
-					enum: attribute.wp?.enum ?? null,
-					kind: attribute.ts?.kind ?? null,
-					required: attribute.ts?.required ?? false,
-					union: attribute.ts?.union ?? null,
-				},
-			]),
-		),
-		manifestVersion: manifest.manifestVersion ?? null,
-		sourceType: manifest.sourceType ?? null,
-	};
-}
-
-function summarizeUnionBranches(manifestSummary) {
-	if (!manifestSummary?.attributes) {
-		return [];
-	}
-
-	return Object.entries(manifestSummary.attributes)
-		.filter(([, attribute]) => attribute.kind === "union" && attribute.union)
-		.map(([field, attribute]) => ({
-			branches: Object.keys(attribute.union?.branches ?? {}),
-			discriminator: attribute.union?.discriminator ?? null,
-			field,
-		}));
-}
-
-function defaultValueForManifestAttribute(attribute) {
-	if (attribute.typia?.hasDefault) {
-		return attribute.typia.defaultValue;
-	}
-	if (attribute.wp?.enum?.length > 0) {
-		return attribute.wp.enum[0];
-	}
-	switch (attribute.ts.kind) {
-		case "string":
-			return "";
-		case "number":
-			return 0;
-		case "boolean":
-			return false;
-		case "array":
-			return [];
-		case "object": {
-			const result = {};
-			for (const [key, property] of Object.entries(attribute.ts.properties ?? {})) {
-				result[key] = defaultValueForManifestAttribute(property);
-			}
-			return result;
-		}
-		case "union": {
-			const firstBranch = Object.values(attribute.ts.union?.branches ?? {})[0];
-			return firstBranch ? defaultValueForManifestAttribute(firstBranch) : null;
-		}
-		default:
-			return null;
-	}
-}
-
-function assertRuleHasNoTodos(projectDir, fromVersion, toVersion) {
-	const rulePath = getRuleFilePath(getProjectPaths(projectDir), fromVersion, toVersion);
-	if (!fs.existsSync(rulePath)) {
-		throw new Error(`Missing migration rule: ${path.relative(projectDir, rulePath)}`);
-	}
-	const source = fs.readFileSync(rulePath, "utf8");
-	if (source.includes(MIGRATION_TODO_PREFIX)) {
-		throw new Error(`Migration rule still contains ${MIGRATION_TODO_PREFIX} markers: ${path.relative(projectDir, rulePath)}`);
-	}
-}
-
-function getRuleFilePath(paths, fromVersion, toVersion) {
-	return path.join(paths.rulesDir, `${fromVersion}-to-${toVersion}.ts`);
-}
-
-function readJson(filePath) {
-	return JSON.parse(fs.readFileSync(filePath, "utf8"));
-}
-
-function readRuleMetadata(rulePath) {
-	const source = fs.readFileSync(rulePath, "utf8");
-	const unresolvedBlock = source.match(/export const unresolved = \[([\s\S]*?)\] as const;/);
-	const renameMapBlock = source.match(/export const renameMap: RenameMap = \{([\s\S]*?)\};/);
-	const transformsBlock = source.match(/export const transforms: TransformMap = \{([\s\S]*?)\};/);
-
-	const unresolved = unresolvedBlock
-		? [...unresolvedBlock[1].matchAll(/"([^"]+)"/g)].map((match) => match[1])
-		: [];
-	const renameMap = renameMapBlock
-		? [...renameMapBlock[1].matchAll(/^\s*([A-Za-z0-9_$]+):\s*"([^"]+)"/gm)].map((match) => ({
-			currentPath: match[1],
-			legacyPath: match[2],
-		}))
-		: [];
-	const transforms = transformsBlock
-		? [...transformsBlock[1].matchAll(/^\s*([A-Za-z0-9_$]+):\s*\(/gm)].map((match) => match[1])
-		: [];
-
-	return { renameMap, transforms, unresolved };
-}
-
-function renderPhpValue(value, indentLevel) {
-	const indent = "\t".repeat(indentLevel);
-	const nestedIndent = "\t".repeat(indentLevel + 1);
-
-	if (value === null) {
-		return "null";
-	}
-	if (typeof value === "string") {
-		return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`;
-	}
-	if (typeof value === "number" || typeof value === "boolean") {
-		return String(value);
-	}
-	if (Array.isArray(value)) {
-		if (value.length === 0) {
-			return "[]";
-		}
-		const items = value.map((item) => `${nestedIndent}${renderPhpValue(item, indentLevel + 1)}`);
-		return `[\n${items.join(",\n")}\n${indent}]`;
-	}
-	if (typeof value === "object") {
-		const entries = Object.entries(value);
-		if (entries.length === 0) {
-			return "[]";
-		}
-		const items = entries.map(
-			([key, item]) =>
-				`${nestedIndent}'${String(key).replace(/\\/g, "\\\\").replace(/'/g, "\\'")}' => ${renderPhpValue(item, indentLevel + 1)}`,
-		);
-		return `[\n${items.join(",\n")}\n${indent}]`;
-	}
-
-	throw new Error(`Unable to encode PHP migration registry value for ${String(value)}`);
-}
-
-function copyFile(sourcePath, targetPath) {
-	fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-	fs.copyFileSync(sourcePath, targetPath);
-}
-
-function sanitizeSaveSnapshotSource(source) {
-	return source
-		.replace(/^import\s+\{[^}]+\}\s+from\s+['"]\.\/types['"];?\n?/gm, "")
-		.replace(/^interface\s+SaveProps\s*\{[\s\S]*?\}\n?/m, "")
-		.replace(/: SaveProps/g, ": { attributes: any }")
-		.replace(/attributes:\s*[A-Za-z0-9_<>{}\[\]|&,\s]+;/g, "attributes: any;")
-		.replace(/\(\{\s*attributes\s*\}:\s*\{\s*attributes:\s*any\s*\}\)/g, "({ attributes }: { attributes: any })");
-}
-
-function sanitizeSnapshotBlockJson(blockJson) {
-	const snapshot = { ...blockJson };
-	for (const key of [
-		"editorScript",
-		"script",
-		"scriptModule",
-		"viewScript",
-		"viewScriptModule",
-		"style",
-		"editorStyle",
-		"render",
-	]) {
-		delete snapshot[key];
-	}
-	return snapshot;
-}
-
-function runProjectScriptIfPresent(projectDir, scriptName) {
-	const packageJson = readJson(path.join(projectDir, "package.json"));
-	if (!packageJson.scripts?.[scriptName]) {
-		return;
-	}
-
-	const packageManagerId = detectPackageManagerId(projectDir);
-	execSync(formatRunScript(packageManagerId, scriptName), {
-		cwd: projectDir,
-		stdio: "inherit",
-	});
-}
-
-function detectPackageManagerId(projectDir) {
-	const packageJson = readJson(path.join(projectDir, "package.json"));
-	const field = String(packageJson.packageManager ?? "");
-
-	if (field.startsWith("bun@")) return "bun";
-	if (field.startsWith("npm@")) return "npm";
-	if (field.startsWith("pnpm@")) return "pnpm";
-	if (field.startsWith("yarn@")) return "yarn";
-	return "bun";
-}
-
-function getLocalTsxBinary(projectDir) {
-	const filename = process.platform === "win32" ? "tsx.cmd" : "tsx";
-	const binaryPath = path.join(projectDir, "node_modules", ".bin", filename);
-
-	if (!fs.existsSync(binaryPath)) {
-		throw new Error("Local tsx binary was not found. Install project dependencies before running migration verification.");
-	}
-
-	return binaryPath;
-}
-
-function resolveTargetVersion(currentVersion, value) {
-	return value === "current" ? currentVersion : value;
-}
-
-function assertSemver(value, label) {
-	if (!/^\d+\.\d+\.\d+$/.test(value)) {
-		throw new Error(`Invalid ${label}: ${value}. Expected x.y.z`);
-	}
-}
-
-function compareSemver(left, right) {
-	const leftParts = left.split(".").map((part) => Number.parseInt(part, 10));
-	const rightParts = right.split(".").map((part) => Number.parseInt(part, 10));
-
-	for (let index = 0; index < Math.max(leftParts.length, rightParts.length); index += 1) {
-		const delta = (leftParts[index] ?? 0) - (rightParts[index] ?? 0);
-		if (delta !== 0) {
-			return delta;
-		}
-	}
-
-	return 0;
-}
-
-function escapeForCode(value) {
-	return String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-}
-
-function isNumber(value) {
-	return typeof value === "number" && Number.isFinite(value);
 }

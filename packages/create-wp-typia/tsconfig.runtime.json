@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./dist/runtime",
+    "rootDir": "./src/runtime",
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "plugins": []
+  },
+  "include": [
+    "./src/runtime/**/*.ts"
+  ],
+  "exclude": [
+    "./tests/**/*"
+  ]
+}

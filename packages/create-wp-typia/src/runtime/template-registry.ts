@@ -1,10 +1,44 @@
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const TEMPLATE_ROOT = path.join(__dirname, "..", "templates");
 
-export const TEMPLATE_REGISTRY = Object.freeze([
+function resolvePackageRoot(startDir: string): string {
+	let currentDir = startDir;
+
+	while (true) {
+		const packageJsonPath = path.join(currentDir, "package.json");
+		if (fs.existsSync(packageJsonPath)) {
+			try {
+				const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as { name?: string };
+				if (packageJson.name === "create-wp-typia") {
+					return currentDir;
+				}
+			} catch {
+				// Ignore malformed package.json while walking upward.
+			}
+		}
+
+		const parentDir = path.dirname(currentDir);
+		if (parentDir === currentDir) {
+			throw new Error("Unable to resolve the create-wp-typia package root.");
+		}
+		currentDir = parentDir;
+	}
+}
+
+const TEMPLATE_ROOT = path.join(resolvePackageRoot(__dirname), "templates");
+
+export interface TemplateDefinition {
+	id: "basic" | "full" | "interactivity" | "advanced";
+	description: string;
+	defaultCategory: string;
+	features: string[];
+	templateDir: string;
+}
+
+export const TEMPLATE_REGISTRY = Object.freeze<TemplateDefinition[]>([
 	{
 		id: "basic",
 		description: "A lightweight WordPress block with Typia validation",
@@ -35,13 +69,13 @@ export const TEMPLATE_REGISTRY = Object.freeze([
 	},
 ]);
 
-export const TEMPLATE_IDS = TEMPLATE_REGISTRY.map((template) => template.id);
+export const TEMPLATE_IDS = TEMPLATE_REGISTRY.map((template) => template.id) as TemplateDefinition["id"][];
 
-export function listTemplates() {
+export function listTemplates(): readonly TemplateDefinition[] {
 	return TEMPLATE_REGISTRY;
 }
 
-export function getTemplateById(templateId) {
+export function getTemplateById(templateId: string): TemplateDefinition {
 	const template = TEMPLATE_REGISTRY.find((entry) => entry.id === templateId);
 	if (!template) {
 		throw new Error(`Unknown template "${templateId}". Expected one of: ${TEMPLATE_IDS.join(", ")}`);
@@ -49,7 +83,11 @@ export function getTemplateById(templateId) {
 	return template;
 }
 
-export function getTemplateSelectOptions() {
+export function getTemplateSelectOptions(): Array<{
+	label: string;
+	value: TemplateDefinition["id"];
+	hint: string;
+}> {
 	return TEMPLATE_REGISTRY.map((template) => ({
 		label: template.id,
 		value: template.id,
