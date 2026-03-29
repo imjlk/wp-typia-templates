@@ -13,9 +13,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
     "baseUrl": ".",
     "paths": {
       "@wp-typia/block-types": [

@@ -45,7 +45,7 @@
   "excludeProtected": true,
   "excludeExternals": true,
   "disableSources": false,
-  "sourceLinkTemplate": "https://github.com/yourusername/wp-typia/blob/{gitRevision}/{path}#L{line}",
+  "sourceLinkTemplate": "https://github.com/imjlk/wp-typia/blob/{gitRevision}/{path}#L{line}",
   "gitRevision": "main",
   "watch": false,
   "preserveWatchOutput": true,

@@ -10,9 +10,8 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: "20"
+  NODE_VERSION: "24"
   BUN_VERSION: "1.3.10"
-  NPM_REGISTRY: "https://registry.npmjs.org"
 
 jobs:
   lint:
@@ -194,7 +193,7 @@ jobs:
   deploy-docs:
     name: Deploy Documentation
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [lint, test, build]
     if: github.ref == 'refs/heads/main'
     permissions:
       contents: write
