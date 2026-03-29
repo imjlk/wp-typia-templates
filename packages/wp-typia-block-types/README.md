@@ -29,7 +29,15 @@ Shared WordPress block semantic types derived from Gutenberg source and unoffici
 ## Current v1 areas
 
 - block editor alignment and content-position values
+- color and dimensions helper types
 - layout and flex vocabulary
 - spacing sides and axes
 - typography enums used by core block supports
 - block support keys used by `block.json`
+
+## Typia pipeline notes
+
+- `CssColorValue` and `MinHeightValue` are richer DX aliases that currently rely on template literal types.
+- imported template literal aliases are not yet consumed by the `sync-types` metadata pipeline
+- when a type must round-trip through `types.ts` -> `typia.manifest.json` -> `typia-validator.php`, prefer pipeline-compatible aliases such as `CssNamedColor` and `MinHeightKeyword`
+- for broader CSS-like string shapes in `types.ts`, prefer native Typia constraints on `string`, for example `string & tags.Pattern<"..."> & tags.MaxLength<...>`
