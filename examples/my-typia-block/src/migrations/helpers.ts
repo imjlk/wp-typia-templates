@@ -418,8 +418,14 @@ function isValidString(
 	if ( typeof maxLength === 'number' && value.length > maxLength ) {
 		return false;
 	}
-	if ( pattern && ! new RegExp( pattern ).test( value ) ) {
-		return false;
+	if ( pattern ) {
+		try {
+			if ( ! new RegExp( pattern ).test( value ) ) {
+				return false;
+			}
+		} catch {
+			return false;
+		}
 	}
 	if (
 		format === 'uuid' &&

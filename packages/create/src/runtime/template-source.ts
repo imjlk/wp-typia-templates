@@ -6,12 +6,12 @@ import { execFileSync } from "node:child_process";
 
 import {
 	BUILTIN_TEMPLATE_IDS,
-	CREATE_PACKAGE_ROOT,
 	TEMPLATE_ROOT,
 	getTemplateById,
 	isBuiltInTemplateId,
 	type BuiltInTemplateId,
 } from "./template-registry.js";
+import { getPackageVersions } from "./package-versions.js";
 
 export interface TemplateVariableContext {
 	createPackageVersion: string;
@@ -46,16 +46,6 @@ type RemoteTemplateLocator =
 	| { kind: "builtin"; templateId: BuiltInTemplateId }
 	| { kind: "path"; templatePath: string }
 	| { kind: "github"; locator: GitHubTemplateLocator };
-
-function readPackageVersion(packageJsonPath: string): string {
-	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as { version: string };
-	return `^${packageJson.version}`;
-}
-
-const CREATE_PACKAGE_VERSION = readPackageVersion(path.join(CREATE_PACKAGE_ROOT, "package.json"));
-const BLOCK_TYPES_PACKAGE_VERSION = readPackageVersion(
-	path.join(CREATE_PACKAGE_ROOT, "../wp-typia-block-types/package.json"),
-);
 
 function isTemplatePathLocator(templateId: string): boolean {
 	return path.isAbsolute(templateId) || templateId.startsWith("./") || templateId.startsWith("../");
@@ -116,9 +106,10 @@ function getDefaultCategory(sourceDir: string): string {
 }
 
 function getTemplateVariableContext(variables: { [key: string]: string }): TemplateVariableContext {
+	const { blockTypesPackageVersion, createPackageVersion } = getPackageVersions();
 	return {
-		blockTypesPackageVersion: variables.blockTypesPackageVersion ?? BLOCK_TYPES_PACKAGE_VERSION,
-		createPackageVersion: variables.createPackageVersion ?? CREATE_PACKAGE_VERSION,
+		blockTypesPackageVersion: variables.blockTypesPackageVersion ?? blockTypesPackageVersion,
+		createPackageVersion: variables.createPackageVersion ?? createPackageVersion,
 		description: variables.description,
 		keyword: variables.keyword,
 		namespace: variables.namespace,

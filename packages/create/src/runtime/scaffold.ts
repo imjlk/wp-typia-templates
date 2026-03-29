@@ -11,7 +11,8 @@ import {
 	transformPackageManagerText,
 } from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
-import { CREATE_PACKAGE_ROOT, TEMPLATE_IDS, getTemplateById, isBuiltInTemplateId } from "./template-registry.js";
+import { getPackageVersions } from "./package-versions.js";
+import { TEMPLATE_IDS, getTemplateById, isBuiltInTemplateId } from "./template-registry.js";
 import type { BuiltInTemplateId } from "./template-registry.js";
 import { resolveTemplateSource } from "./template-source.js";
 
@@ -101,15 +102,6 @@ export interface ScaffoldProjectResult {
 	templateId: string;
 	variables: ScaffoldTemplateVariables;
 }
-
-function readPackageVersion(relativePackageJsonPath: string): string {
-	const packageJsonPath = path.resolve(CREATE_PACKAGE_ROOT, relativePackageJsonPath);
-	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as { version: string };
-	return `^${packageJson.version}`;
-}
-
-const CREATE_PACKAGE_VERSION = readPackageVersion("package.json");
-const BLOCK_TYPES_PACKAGE_VERSION = readPackageVersion("../wp-typia-block-types/package.json");
 
 function toKebabCase(input: string): string {
 	return input
@@ -257,6 +249,7 @@ export function getTemplateVariables(
 	templateId: string,
 	answers: ScaffoldAnswers,
 ): ScaffoldTemplateVariables {
+	const { blockTypesPackageVersion, createPackageVersion } = getPackageVersions();
 	const template = isBuiltInTemplateId(templateId) ? getTemplateById(templateId) : null;
 	const slug = toKebabCase(answers.slug);
 	const slugSnakeCase = toSnakeCase(slug);
@@ -267,9 +260,9 @@ export function getTemplateVariables(
 
 	return {
 		author: answers.author.trim(),
-		blockTypesPackageVersion: BLOCK_TYPES_PACKAGE_VERSION,
+		blockTypesPackageVersion,
 		category: template?.defaultCategory ?? "widgets",
-		createPackageVersion: CREATE_PACKAGE_VERSION,
+		createPackageVersion,
 		cssClassName: `wp-block-${slug}`,
 		dashCase: slug,
 		dashicon: "smiley",

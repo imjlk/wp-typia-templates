@@ -29,6 +29,8 @@ function formatValidationError( error: TypiaValidationError ): string {
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const blockProps = useBlockProps();
+	const alignment = attributes.alignment ?? 'left';
+	const isVisible = attributes.isVisible ?? true;
 	const { isValid, errors } = useTypiaValidation(
 		attributes,
 		validators.validate
@@ -63,9 +65,9 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				<PanelBody title={ __( 'Settings', 'my_typia_block' ) }>
 					<ToggleControl
 						label={ __( 'Visible', 'my_typia_block' ) }
-						checked={ attributes.isVisible ?? true }
-						onChange={ ( isVisible ) =>
-							updateAttribute( 'isVisible', isVisible )
+						checked={ isVisible }
+						onChange={ ( nextVisible ) =>
+							updateAttribute( 'isVisible', nextVisible )
 						}
 					/>
 					<SelectControl
@@ -89,10 +91,10 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 								value: 'justify',
 							},
 						] }
-						onChange={ ( alignment ) =>
+						onChange={ ( nextAlignment ) =>
 							updateAttribute(
 								'alignment',
-								alignment as AlignmentValue
+								nextAlignment as AlignmentValue
 							)
 						}
 					/>
@@ -157,7 +159,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				{ ...blockProps }
 				className={ classNames( blockProps.className, {
 					'has-validation-errors': ! isValid,
-					'is-hidden': ! attributes.isVisible,
+					'is-hidden': ! isVisible,
 				} ) }
 			>
 				<div className="my-typia-block-editor">
@@ -172,10 +174,10 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					placeholder={ __( 'Enter your text…', 'my_typia_block' ) }
 					className={ classNames(
 						'my-typia-block-content',
-						`align-${ attributes.alignment }`
+						`align-${ alignment }`
 					) }
 					style={ {
-						textAlign: attributes.alignment ?? 'left',
+						textAlign: alignment,
 					} }
 				/>
 
