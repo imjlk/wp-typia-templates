@@ -16,6 +16,11 @@
 - [JUSTIFY\_CONTENT\_OPTIONS](packages_wp_typia_block_types_src.md#justify_content_options)
 - [BlockContentPosition](packages_wp_typia_block_types_src.md#blockcontentposition)
 - [BLOCK\_CONTENT\_POSITIONS](packages_wp_typia_block_types_src.md#block_content_positions)
+- [CssColorValue](packages_wp_typia_block_types_src.md#csscolorvalue)
+- [DuotonePalette](packages_wp_typia_block_types_src.md#duotonepalette)
+- [AspectRatio](packages_wp_typia_block_types_src.md#aspectratio)
+- [ASPECT\_RATIOS](packages_wp_typia_block_types_src.md#aspect_ratios)
+- [MinHeightValue](packages_wp_typia_block_types_src.md#minheightvalue)
 - [LayoutType](packages_wp_typia_block_types_src.md#layouttype)
 - [LAYOUT\_TYPES](packages_wp_typia_block_types_src.md#layout_types)
 - [FlexWrap](packages_wp_typia_block_types_src.md#flexwrap)
@@ -102,6 +107,36 @@ ___
 ### BLOCK\_CONTENT\_POSITIONS
 
 Re-exports [BLOCK_CONTENT_POSITIONS](packages_wp_typia_block_types_src_block_editor_alignment.md#block_content_positions)
+
+___
+
+### CssColorValue
+
+Re-exports [CssColorValue](packages_wp_typia_block_types_src_block_editor_color.md#csscolorvalue)
+
+___
+
+### DuotonePalette
+
+Re-exports [DuotonePalette](../interfaces/packages_wp_typia_block_types_src_block_editor_color.DuotonePalette.md)
+
+___
+
+### AspectRatio
+
+Re-exports [AspectRatio](packages_wp_typia_block_types_src_block_editor_dimensions.md#aspectratio)
+
+___
+
+### ASPECT\_RATIOS
+
+Re-exports [ASPECT_RATIOS](packages_wp_typia_block_types_src_block_editor_dimensions.md#aspect_ratios)
+
+___
+
+### MinHeightValue
+
+Re-exports [MinHeightValue](packages_wp_typia_block_types_src_block_editor_dimensions.md#minheightvalue)
 
 ___
 
