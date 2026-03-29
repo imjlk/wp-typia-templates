@@ -99,7 +99,7 @@ jobs:
   generated-smoke:
     name: Generated Project Smoke (${{ matrix.package_manager }})
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: [build]
     strategy:
       fail-fast: false
       matrix:
