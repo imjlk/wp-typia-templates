@@ -1,4 +1,4 @@
-[WordPress Typia Boilerplate - v1.0.0](../README.md) / [Modules](../modules.md) / packages/create/src/runtime/migration-utils
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / packages/create/src/runtime/migration-utils
 
 # Module: packages/create/src/runtime/migration-utils
 

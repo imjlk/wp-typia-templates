@@ -1,4 +1,4 @@
-[WordPress Typia Boilerplate - v1.0.0](../README.md) / [Modules](../modules.md) / [packages/wp-typia-block-types/src/block-editor/color](../modules/packages_wp_typia_block_types_src_block_editor_color.md) / DuotonePalette
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / [packages/wp-typia-block-types/src/block-editor/color](../modules/packages_wp_typia_block_types_src_block_editor_color.md) / DuotonePalette
 
 # Interface: DuotonePalette
 

@@ -1,4 +1,4 @@
-[WordPress Typia Boilerplate - v1.0.0](../README.md) / [Modules](../modules.md) / packages/create/src/runtime/migration-diff
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / packages/create/src/runtime/migration-diff
 
 # Module: packages/create/src/runtime/migration-diff
 

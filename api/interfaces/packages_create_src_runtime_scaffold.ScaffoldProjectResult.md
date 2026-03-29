@@ -1,4 +1,4 @@
-[WordPress Typia Boilerplate - v1.0.0](../README.md) / [Modules](../modules.md) / [packages/create/src/runtime/scaffold](../modules/packages_create_src_runtime_scaffold.md) / ScaffoldProjectResult
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / [packages/create/src/runtime/scaffold](../modules/packages_create_src_runtime_scaffold.md) / ScaffoldProjectResult
 
 # Interface: ScaffoldProjectResult
 
@@ -21,7 +21,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:95](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L95)
+[packages/create/src/runtime/scaffold.ts:100](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L100)
 
 ___
 
@@ -31,17 +31,17 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:96](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L96)
+[packages/create/src/runtime/scaffold.ts:101](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L101)
 
 ___
 
 ### templateId
 
-• **templateId**: ``"basic"`` \| ``"full"`` \| ``"interactivity"`` \| ``"advanced"``
+• **templateId**: `string`
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L97)
+[packages/create/src/runtime/scaffold.ts:102](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L102)
 
 ___
 
@@ -51,4 +51,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:98](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L98)
+[packages/create/src/runtime/scaffold.ts:103](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L103)

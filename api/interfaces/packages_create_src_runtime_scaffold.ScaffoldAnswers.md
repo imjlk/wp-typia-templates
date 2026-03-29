@@ -1,4 +1,4 @@
-[WordPress Typia Boilerplate - v1.0.0](../README.md) / [Modules](../modules.md) / [packages/create/src/runtime/scaffold](../modules/packages_create_src_runtime_scaffold.md) / ScaffoldAnswers
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / [packages/create/src/runtime/scaffold](../modules/packages_create_src_runtime_scaffold.md) / ScaffoldAnswers
 
 # Interface: ScaffoldAnswers
 
@@ -22,7 +22,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:26](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L26)
+[packages/create/src/runtime/scaffold.ts:28](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L28)
 
 ___
 
@@ -32,7 +32,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L27)
+[packages/create/src/runtime/scaffold.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L29)
 
 ___
 
@@ -42,7 +42,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:28](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L28)
+[packages/create/src/runtime/scaffold.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L30)
 
 ___
 
@@ -52,7 +52,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L29)
+[packages/create/src/runtime/scaffold.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L31)
 
 ___
 
@@ -62,4 +62,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L30)
+[packages/create/src/runtime/scaffold.ts:32](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L32)

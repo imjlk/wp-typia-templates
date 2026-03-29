@@ -1,4 +1,4 @@
-[WordPress Typia Boilerplate - v1.0.0](../README.md) / [Modules](../modules.md) / packages/wp-typia-block-types/src/block-editor/dimensions
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / packages/wp-typia-block-types/src/block-editor/dimensions
 
 # Module: packages/wp-typia-block-types/src/block-editor/dimensions
 

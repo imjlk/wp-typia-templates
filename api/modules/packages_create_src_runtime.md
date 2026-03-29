@@ -1,4 +1,4 @@
-[WordPress Typia Boilerplate - v1.0.0](../README.md) / [Modules](../modules.md) / packages/create/src/runtime
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / packages/create/src/runtime
 
 # Module: packages/create/src/runtime
 
@@ -15,6 +15,7 @@
 - [formatMigrationHelpText](packages_create_src_runtime.md#formatmigrationhelptext)
 - [parseMigrationArgs](packages_create_src_runtime.md#parsemigrationargs)
 - [runMigrationCommand](packages_create_src_runtime.md#runmigrationcommand)
+- [applyTemplateDefaultsFromManifest](packages_create_src_runtime.md#applytemplatedefaultsfrommanifest)
 - [PACKAGE\_MANAGER\_IDS](packages_create_src_runtime.md#package_manager_ids)
 - [PACKAGE\_MANAGERS](packages_create_src_runtime.md#package_managers)
 - [formatInstallCommand](packages_create_src_runtime.md#formatinstallcommand)
@@ -27,6 +28,9 @@
 - [getTemplateById](packages_create_src_runtime.md#gettemplatebyid)
 - [getTemplateSelectOptions](packages_create_src_runtime.md#gettemplateselectoptions)
 - [listTemplates](packages_create_src_runtime.md#listtemplates)
+- [SyncBlockMetadataOptions](packages_create_src_runtime.md#syncblockmetadataoptions)
+- [SyncBlockMetadataResult](packages_create_src_runtime.md#syncblockmetadataresult)
+- [syncBlockMetadata](packages_create_src_runtime.md#syncblockmetadata)
 
 ## References
 
@@ -81,6 +85,12 @@ ___
 ### runMigrationCommand
 
 Re-exports [runMigrationCommand](packages_create_src_runtime_migrations.md#runmigrationcommand)
+
+___
+
+### applyTemplateDefaultsFromManifest
+
+Re-exports [applyTemplateDefaultsFromManifest](packages_create_src_runtime_defaults.md#applytemplatedefaultsfrommanifest)
 
 ___
 
@@ -153,3 +163,21 @@ ___
 ### listTemplates
 
 Re-exports [listTemplates](packages_create_src_runtime_template_registry.md#listtemplates)
+
+___
+
+### SyncBlockMetadataOptions
+
+Re-exports [SyncBlockMetadataOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncBlockMetadataOptions.md)
+
+___
+
+### SyncBlockMetadataResult
+
+Re-exports [SyncBlockMetadataResult](../interfaces/packages_create_src_runtime_metadata_core.SyncBlockMetadataResult.md)
+
+___
+
+### syncBlockMetadata
+
+Re-exports [syncBlockMetadata](packages_create_src_runtime_metadata_core.md#syncblockmetadata)

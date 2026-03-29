@@ -1,4 +1,4 @@
-[WordPress Typia Boilerplate - v1.0.0](../README.md) / [Modules](../modules.md) / packages/wp-typia-block-types/src/blocks
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / packages/wp-typia-block-types/src/blocks
 
 # Module: packages/wp-typia-block-types/src/blocks
 

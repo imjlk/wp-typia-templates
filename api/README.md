@@ -1,22 +1,17 @@
-WordPress Typia Boilerplate / [Modules](modules.md)
+wp-typia / [Modules](modules.md)
 
-# 🚀 wp-typia
+# wp-typia
 
-Create robust WordPress blocks with TypeScript runtime validation using Typia. This Bun-first template monorepo provides shared scaffolding, generated `block.json` / `typia.manifest.json` / `typia-validator.php`, testing, and migration support.
+Create practical WordPress blocks with Typia-driven metadata, validation, and shared scaffold tooling.
 
-## ✨ Key Features
+`wp-typia` is a Bun-first monorepo centered on two products:
 
-- **🔒 Runtime Type Safety** - Typia provides compile-time and runtime type validation
-- **⚡ Type-first metadata generation** - TypeScript interfaces generate `block.json`, `typia.manifest.json` v2, and `typia-validator.php`
-- **🎯 4 Template Variations** - From basic to advanced patterns
-- **🔄 Migration System** - Snapshot-based block migrations with `renameMap` / `transforms` authoring helpers (Advanced template)
-- **🧪 Complete Testing** - Unit tests with Bun test, CLI runtime tests, E2E tests with Playwright
-- **📦 Monorepo Ready** - Bun workspaces with shared dependencies
-- **🎨 Modern Tooling** - TypeScript, SCSS, ESLint, Prettier, GitHub Actions
+- [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create) for scaffolding
+- [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types) for reusable WordPress semantic types
 
-## 🚀 Quick Start
+It generates `block.json`, `typia.manifest.json`, and `typia-validator.php` from `src/types.ts`, keeps runtime validation close to the block code, and now focuses its built-in scaffold surface on the two templates that are most useful to start from.
 
-### Option 1: Use `@wp-typia/create` (Recommended)
+## Quick Start
 
 ```bash
 bun create wp-typia my-block
@@ -28,37 +23,46 @@ npx @wp-typia/create my-block
 npx create-wp-typia my-block
 ```
 
-Follow the prompts to choose `basic`, `full`, `interactivity`, or `advanced`. The CLI will:
+Built-in templates:
 
-- Ask for block details (name, description, author)
-- Ask which package manager the generated project should use
-- Generate all necessary files with your settings
-- Configure the generated project for `bun`, `npm`, `pnpm`, or `yarn`
-- Run the selected package manager's install step unless you pass `--no-install`
+- `basic`
+- `interactivity`
 
-For non-interactive usage:
+Non-interactive examples:
 
 ```bash
 npx @wp-typia/create my-block --template basic --package-manager pnpm --yes --no-install
+npx @wp-typia/create my-block --template interactivity --package-manager npm --yes --no-install
 ```
 
-`@wp-typia/create` is the canonical scaffolding package in this repository, and `@wp-typia/block-types` is the shared semantic type package used inside `types.ts`. `create-wp-typia` remains as a compatibility shim for `bun create wp-typia` and historical unscoped installs.
+Remote template MVP:
 
-## 📦 Templates Overview
+```bash
+npx @wp-typia/create my-block --template ./local-template-dir --package-manager npm --yes --no-install
+npx @wp-typia/create my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
+```
 
-| Template | Features | Best For |
-| --- | --- | --- |
-| **Basic** | • Type-safe attributes<br>• Runtime validation<br>• Minimal setup | Quick prototypes and simple blocks |
-| **Full** | • Advanced controls<br>• Custom hooks<br>• Style options<br>• Animation support | Feature-rich blocks |
-| **Interactivity** | • Interactivity API<br>• Client-side state<br>• Event handling | Interactive blocks |
-| **Advanced** | • Migration system<br>• Version tracking<br>• Admin dashboard<br>• Enterprise features | Production blocks |
+## Built-in Templates
 
-## 🎯 How It Works
+| Template | What it optimizes for |
+| --- | --- |
+| `basic` | Minimal, clean boilerplate with Typia metadata sync and runtime validation |
+| `interactivity` | The same foundation plus WordPress Interactivity API wiring |
 
-### 1. Define Types with Typia
+`full` and `advanced` are no longer built-in scaffold targets. Their richer patterns live on in the showcase app under [`examples/my-typia-block`](examples/my-typia-block).
 
-```typescript
-// src/types.ts
+## How the Scaffold Works
+
+1. `src/types.ts` is the source of truth.
+2. `bun run sync-types` derives:
+   - `block.json`
+   - `typia.manifest.json`
+   - `typia-validator.php`
+3. `src/validators.ts` uses precompiled Typia validators and manifest-driven default application.
+
+Example:
+
+```ts
 import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";
 import { tags } from "typia";
 
@@ -69,196 +73,77 @@ export interface MyBlockAttributes {
 }
 ```
 
-### 2. Auto-generate block metadata
+## Showcase Example
 
-```bash
-bun run sync-types  # Generates block.json, typia.manifest.json v2, and typia-validator.php
-```
+[`examples/my-typia-block`](examples/my-typia-block) is the kitchen-sink showcase for the repo. It is not a built-in template. It is the place where richer features live together:
 
-### 3. Get Runtime Validation
+- server rendering with `render.php`
+- migration snapshots and dashboard preview tooling
+- richer Typia tags and semantic block types
+- interactivity and validator patterns used by E2E and fixture tests
 
-```typescript
-// src/validators.ts
-import typia from "typia";
+If you want to see the “everything included” shape of `wp-typia`, start there.
 
-const validate = typia.validate<MyBlockAttributes>(attributes);
-if (!validate.success) {
-  console.error(validate.errors); // Type-safe error handling
-}
-```
+## Remote Template MVP
 
-## 🛠 Development Workflow
+`@wp-typia/create` can scaffold from:
 
-This section is for contributors to this repository. The repository itself stays Bun-first, even though scaffolded projects can use another package manager.
+- built-in template ids
+- local paths
+- GitHub locators in the form `github:owner/repo/path[#ref]`
 
-```bash
-# Install dependencies
-bun install
+The current remote adapter supports a `create-block`-style subset:
 
-# Start development server
-bun run start
+- `block.json`
+- `src/index.*`, `src/edit.*`, `src/save.*`
+- optional `render.php`
+- style/editor/view assets
 
-# Type checking
-bun run typecheck
+The remote source is treated as a seed. `wp-typia` still regenerates its own package setup, Typia sync flow, and runtime helpers around it.
 
-# Run tests
-bun run test
-
-# Build for production
-bun run build
-```
-
-## 📚 Documentation
-
-- **[Examples Guide](test-template/EXAMPLES.md)** - Practical examples and patterns
-- **[Interactive Tutorial](docs/tutorials/interactive-tutorial.md)** - Build your first block end-to-end
-- **[Migration Guide](docs/migrations.md)** - Snapshot-based migration workflow for the advanced template
-- **[Interactivity Guide](docs/interactivity.md)** - When to choose the interactivity template and how it fits
-- **[API Guide](docs/API.md)** - Where the public CLI and generated runtime surfaces live
-- **Generated PHP validator** - `typia.manifest.json` v2 preserves Typia constraints, explicit defaults, and supported discriminated unions; `typia-validator.php` enforces the supported PHP subset
-- **[Union Support Guide](docs/union-support.md)** - What union shapes are supported today and what remains future work
-- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
-
-## 🧪 Testing
-
-This project includes comprehensive testing:
-
-```bash
-# Unit tests
-bun run test
-
-# E2E tests with Playwright
-bun run test:e2e
-
-# Coverage report
-bun run test:coverage
-```
-
-## 🔄 Migration System (Advanced Template)
-
-The Advanced template uses snapshot-based migrations driven by `typia.manifest.json` diffs and now ships a dynamic `render.php` example that exercises the generated PHP validator:
-
-```bash
-# Bootstrap the first snapshot for the current schema
-bun run migration:init
-
-# Save another release snapshot later on
-bun run migration:snapshot -- --version 1.0.0
-
-# Compare a legacy snapshot with the current schema
-bun run migration:diff -- --from 1.0.0
-
-# Scaffold a deprecated migration edge from 1.0.0 -> current
-bun run migration:scaffold -- --from 1.0.0
-
-# Verify fixtures and generated deprecated wiring
-bun run migration:verify
-```
-
-Features:
-
-- 🔄 Snapshot-based manifest diffing and rule generation
-- 📊 Migration dashboard in WordPress admin
-- 🧪 Built-in migration verification and edge fixtures
-- ✍️ Auto-applied high-confidence renames plus suggested transform bodies
-- 🧭 Nested leaf authoring for object and supported union-branch paths
-- 📝 Detailed migration reports
-
-## 📦 Published npm Packages
+## Packages
 
 - [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create)
 - [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types)
-- [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia) - compatibility shim for `bun create wp-typia`
+- [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia) for `bun create wp-typia` compatibility
 
-## 🏗 Project Structure
+## Project Structure
 
-```
+```text
 wp-typia/
 ├── packages/
-│   ├── create-wp-typia/         # Canonical scoped CLI source (@wp-typia/create)
-│   ├── create-wp-typia/         # Unscoped compatibility shim
-│   └── wp-typia-block-types/    # Shared semantic block types
-├── test-template/
-│   └── my-typia-block/          # Complete example
-├── tests/                       # Test files
-├── docs/                        # Documentation
-└── .github/                     # GitHub configuration
+│   ├── create/                 # Canonical scoped CLI source (@wp-typia/create)
+│   ├── create-wp-typia/        # Unscoped compatibility shim
+│   └── wp-typia-block-types/   # Shared semantic block types
+├── examples/
+│   └── my-typia-block/         # Kitchen-sink showcase app
+├── tests/
+├── docs/
+└── .github/
 ```
 
-## 🎯 Examples
+## Documentation
 
-### Basic Block
+- [Examples Guide](examples/EXAMPLES.md)
+- [API Guide](docs/API.md)
+- [Interactivity Guide](docs/interactivity.md)
+- [Migration Guide](docs/migrations.md)
+- [Union Support Guide](docs/union-support.md)
+- [Interactive Tutorial](docs/tutorials/interactive-tutorial.md)
+- [Contributing Guide](CONTRIBUTING.md)
 
-```typescript
-// Define your block with full type safety
-export interface QuoteBlockAttributes {
-  text: string & tags.MinLength<1>;
-  author?: string & tags.MaxLength<100>;
-  citation?: string;
-  fontSize: 'small' | 'medium' | 'large' & tags.Default<'medium'>;
-}
+## Repository Development
+
+The repository itself stays Bun-first even though generated projects can use `bun`, `npm`, `pnpm`, or `yarn`.
+
+```bash
+bun install
+bun run typecheck
+bun run test
+bun run build
+bun run test:e2e
 ```
 
-### Interactive Block
-
-```typescript
-// Use WordPress Interactivity API
-store('my-interactive-block', {
-  state: {
-    get clicks() {
-      return getContext().clicks;
-    }
-  },
-  actions: {
-    handleClick: () => {
-      context.clicks++;
-    }
-  }
-});
-```
-
-### Migration Example
-
-```typescript
-// src/migrations/rules/1.0.0-to-2.0.0.ts
-export const renameMap = {
-  // content: "headline",
-};
-
-export const transforms = {
-  // content: (legacyValue) => String(legacyValue ?? ""),
-};
-```
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
-
-### Quick Contribution Guide
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new features
-5. Submit a pull request
-
-## 📄 License
+## License
 
 GPL-2.0-or-later. See [LICENSE](LICENSE) for details.
-
-## 🙏 Acknowledgments
-
-- [Typia](https://typia.io/) - Amazing runtime validation library
-- [WordPress](https://wordpress.org/) - Block Editor platform
-- [TypeScript](https://www.typescriptlang.org/) - Type safety
-- [Playwright](https://playwright.dev/) - E2E testing
-
-## 📞 Support
-
-- 📖 [Documentation](https://github.com/imjlk/wp-typia/wiki)
-- 🐛 [Issue Tracker](https://github.com/imjlk/wp-typia/issues)
-- 💬 [Discussions](https://github.com/imjlk/wp-typia/discussions)
-
----
-
-Made with ❤️ for the WordPress community

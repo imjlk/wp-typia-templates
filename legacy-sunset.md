@@ -18,9 +18,9 @@ Use the same tone for every package and point people to `@wp-typia/create`.
 
 ```bash
 npm deprecate wp-typia-basic@"*" "wp-typia-basic is no longer maintained from this repository. Use @wp-typia/create instead: npx @wp-typia/create --template basic"
-npm deprecate wp-typia-full@"*" "wp-typia-full is no longer maintained from this repository. Use @wp-typia/create instead: npx @wp-typia/create --template full"
+npm deprecate wp-typia-full@"*" "wp-typia-full is no longer maintained from this repository. Use @wp-typia/create instead, then start from the basic template or the examples/my-typia-block showcase."
 npm deprecate wp-typia-interactivity@"*" "wp-typia-interactivity is no longer maintained from this repository. Use @wp-typia/create instead: npx @wp-typia/create --template interactivity"
-npm deprecate wp-typia-advanced@"*" "wp-typia-advanced is no longer maintained from this repository. Use @wp-typia/create instead: npx @wp-typia/create --template advanced"
+npm deprecate wp-typia-advanced@"*" "wp-typia-advanced is no longer maintained from this repository. Use @wp-typia/create instead, then refer to the examples/my-typia-block showcase for migration tooling."
 ```
 
 ## Release note checklist
@@ -29,6 +29,6 @@ npm deprecate wp-typia-advanced@"*" "wp-typia-advanced is no longer maintained f
 - `create-wp-typia` remains only as the compatibility shim for `bun create wp-typia`
 - Canonical templates now live only under `packages/create/templates`
 - `@wp-typia/block-types` provides the shared semantic unions used by generated `types.ts`
-- Manifest v2, `typia-validator.php`, and advanced snapshot migrations remain supported
+- Manifest v2, `typia-validator.php`, and showcase snapshot migrations remain supported
 - `wp-typia-*` packages remain on npm for historical installs but receive no further releases
 - release PR squash merge triggers automatic GitHub Release creation, which then triggers npm OIDC publish

@@ -1,4 +1,4 @@
-[WordPress Typia Boilerplate - v1.0.0](../README.md) / [Modules](../modules.md) / [packages/create/src/runtime/migration-types](../modules/packages_create_src_runtime_migration_types.md) / ManifestTsMetadata
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / [packages/create/src/runtime/migration-types](../modules/packages_create_src_runtime_migration_types.md) / ManifestTsMetadata
 
 # Interface: ManifestTsMetadata
 

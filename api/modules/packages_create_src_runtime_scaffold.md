@@ -1,4 +1,4 @@
-[WordPress Typia Boilerplate - v1.0.0](../README.md) / [Modules](../modules.md) / packages/create/src/runtime/scaffold
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / packages/create/src/runtime/scaffold
 
 # Module: packages/create/src/runtime/scaffold
 
@@ -32,7 +32,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:135](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L135)
+[packages/create/src/runtime/scaffold.ts:140](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L140)
 
 ___
 
@@ -45,7 +45,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `projectName` | `string` |
-| `templateId` | ``"basic"`` \| ``"full"`` \| ``"interactivity"`` \| ``"advanced"`` |
+| `templateId` | `string` |
 
 #### Returns
 
@@ -53,13 +53,13 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:148](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L148)
+[packages/create/src/runtime/scaffold.ts:153](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L153)
 
 ___
 
 ### resolveTemplateId
 
-▸ **resolveTemplateId**(`«destructured»`): `Promise`\<[`TemplateDefinition`](../interfaces/packages_create_src_runtime_template_registry.TemplateDefinition.md)[``"id"``]\>
+▸ **resolveTemplateId**(`«destructured»`): `Promise`\<`string`\>
 
 #### Parameters
 
@@ -69,11 +69,11 @@ ___
 
 #### Returns
 
-`Promise`\<[`TemplateDefinition`](../interfaces/packages_create_src_runtime_template_registry.TemplateDefinition.md)[``"id"``]\>
+`Promise`\<`string`\>
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:163](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L163)
+[packages/create/src/runtime/scaffold.ts:168](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L168)
 
 ___
 
@@ -93,7 +93,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:184](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L184)
+[packages/create/src/runtime/scaffold.ts:194](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L194)
 
 ___
 
@@ -113,7 +113,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:209](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L209)
+[packages/create/src/runtime/scaffold.ts:219](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L219)
 
 ___
 
@@ -125,7 +125,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `templateId` | ``"basic"`` \| ``"full"`` \| ``"interactivity"`` \| ``"advanced"`` |
+| `templateId` | `string` |
 | `answers` | [`ScaffoldAnswers`](../interfaces/packages_create_src_runtime_scaffold.ScaffoldAnswers.md) |
 
 #### Returns
@@ -134,7 +134,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:238](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L238)
+[packages/create/src/runtime/scaffold.ts:248](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L248)
 
 ___
 
@@ -154,4 +154,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:494](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L494)
+[packages/create/src/runtime/scaffold.ts:507](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L507)

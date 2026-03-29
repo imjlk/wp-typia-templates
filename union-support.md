@@ -62,4 +62,4 @@ Manual authoring is still expected for:
 - semantic transforms across branches
 - nested semantic transforms that cannot be expressed as a leaf-path rename or field transform
 
-Use `renameMap` and `transforms` in advanced migration rules when a union edge is not structurally compatible.
+Use `renameMap` and `transforms` in migration-capable projects, such as the showcase app, when a union edge is not structurally compatible.

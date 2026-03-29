@@ -1,14 +1,39 @@
-[WordPress Typia Boilerplate - v1.0.0](README.md) / Modules
+[wp-typia - v1.0.0](README.md) / Modules
 
-# WordPress Typia Boilerplate - v1.0.0
+# wp-typia - v1.0.0
 
 ## Table of contents
 
 ### Modules
 
+- [examples/my-typia-block/src/admin/migration-dashboard](modules/examples_my_typia_block_src_admin_migration_dashboard.md)
+- [examples/my-typia-block/src/components/ErrorBoundary](modules/examples_my_typia_block_src_components_ErrorBoundary.md)
+- [examples/my-typia-block/src/deprecated](modules/examples_my_typia_block_src_deprecated.md)
+- [examples/my-typia-block/src/edit](modules/examples_my_typia_block_src_edit.md)
+- [examples/my-typia-block/src/hooks](modules/examples_my_typia_block_src_hooks.md)
+- [examples/my-typia-block/src/hooks/useDebounce](modules/examples_my_typia_block_src_hooks_useDebounce.md)
+- [examples/my-typia-block/src/hooks/useLocalStorage](modules/examples_my_typia_block_src_hooks_useLocalStorage.md)
+- [examples/my-typia-block/src](modules/examples_my_typia_block_src.md)
+- [examples/my-typia-block/src/migration-detector](modules/examples_my_typia_block_src_migration_detector.md)
+- [examples/my-typia-block/src/migrations/config](modules/examples_my_typia_block_src_migrations_config.md)
+- [examples/my-typia-block/src/migrations/examples/rename-transform-union/rule.example](modules/examples_my_typia_block_src_migrations_examples_rename_transform_union_rule_example.md)
+- [examples/my-typia-block/src/migrations/generated/deprecated](modules/examples_my_typia_block_src_migrations_generated_deprecated.md)
+- [examples/my-typia-block/src/migrations/generated/registry](modules/examples_my_typia_block_src_migrations_generated_registry.md)
+- [examples/my-typia-block/src/migrations/helpers](modules/examples_my_typia_block_src_migrations_helpers.md)
+- [examples/my-typia-block/src/migrations](modules/examples_my_typia_block_src_migrations.md)
+- [examples/my-typia-block/src/save](modules/examples_my_typia_block_src_save.md)
+- [examples/my-typia-block/src/types](modules/examples_my_typia_block_src_types.md)
+- [examples/my-typia-block/src/utils/classnames](modules/examples_my_typia_block_src_utils_classnames.md)
+- [examples/my-typia-block/src/utils/debounce](modules/examples_my_typia_block_src_utils_debounce.md)
+- [examples/my-typia-block/src/utils](modules/examples_my_typia_block_src_utils.md)
+- [examples/my-typia-block/src/utils/uuid](modules/examples_my_typia_block_src_utils_uuid.md)
+- [examples/my-typia-block/src/validators](modules/examples_my_typia_block_src_validators.md)
+- [examples/my-typia-block/src/view](modules/examples_my_typia_block_src_view.md)
 - [packages/create/src/cli](modules/packages_create_src_cli.md)
 - [packages/create/src/runtime/cli-core](modules/packages_create_src_runtime_cli_core.md)
+- [packages/create/src/runtime/defaults](modules/packages_create_src_runtime_defaults.md)
 - [packages/create/src/runtime](modules/packages_create_src_runtime.md)
+- [packages/create/src/runtime/metadata-core](modules/packages_create_src_runtime_metadata_core.md)
 - [packages/create/src/runtime/migration-constants](modules/packages_create_src_runtime_migration_constants.md)
 - [packages/create/src/runtime/migration-diff](modules/packages_create_src_runtime_migration_diff.md)
 - [packages/create/src/runtime/migration-fixtures](modules/packages_create_src_runtime_migration_fixtures.md)
@@ -19,8 +44,10 @@
 - [packages/create/src/runtime/migration-utils](modules/packages_create_src_runtime_migration_utils.md)
 - [packages/create/src/runtime/migrations](modules/packages_create_src_runtime_migrations.md)
 - [packages/create/src/runtime/package-managers](modules/packages_create_src_runtime_package_managers.md)
+- [packages/create/src/runtime/package-versions](modules/packages_create_src_runtime_package_versions.md)
 - [packages/create/src/runtime/scaffold](modules/packages_create_src_runtime_scaffold.md)
 - [packages/create/src/runtime/template-registry](modules/packages_create_src_runtime_template_registry.md)
+- [packages/create/src/runtime/template-source](modules/packages_create_src_runtime_template_source.md)
 - [packages/wp-typia-block-types/src/block-editor/alignment](modules/packages_wp_typia_block_types_src_block_editor_alignment.md)
 - [packages/wp-typia-block-types/src/block-editor/color](modules/packages_wp_typia_block_types_src_block_editor_color.md)
 - [packages/wp-typia-block-types/src/block-editor/dimensions](modules/packages_wp_typia_block_types_src_block_editor_dimensions.md)
@@ -31,4 +58,4 @@
 - [packages/wp-typia-block-types/src/blocks](modules/packages_wp_typia_block_types_src_blocks.md)
 - [packages/wp-typia-block-types/src/blocks/supports](modules/packages_wp_typia_block_types_src_blocks_supports.md)
 - [packages/wp-typia-block-types/src](modules/packages_wp_typia_block_types_src.md)
-- [test-template/my-typia-block/src/types](modules/test_template_my_typia_block_src_types.md)
+- [examples/my-typia-block/src/migrations/generated/verify](modules/examples_my_typia_block_src_migrations_generated_verify.md)

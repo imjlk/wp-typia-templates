@@ -1,4 +1,4 @@
-[WordPress Typia Boilerplate - v1.0.0](../README.md) / [Modules](../modules.md) / packages/create/src/cli
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / packages/create/src/cli
 
 # Module: packages/create/src/cli
 
