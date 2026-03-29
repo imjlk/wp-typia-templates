@@ -33,17 +33,25 @@ bun run docs:build
 
 ## Releases
 
-Release management now uses Sampo:
+Release management now uses Sampo for release metadata and GitHub Actions for publish:
 
 ```bash
 bun run sampo:add
 bun run release
-bun run publish
 ```
 
 - `bun run sampo:add` creates a new pending release note in `.sampo/changesets/`
-- `bun run release` runs `sampo release` to consume pending changesets and update versions/changelogs
-- `bun run publish` runs `sampo publish` for publishable packages
+- `bun run release` runs `sampo release` locally to inspect the version/changelog changes that the release PR workflow will generate
+- `bun run publish` remains a local/manual fallback and is not the primary CI publish path
+- `DRY_RUN=1 bun run publish:oidc` is the safest local way to preview the OIDC publish script behavior without pushing packages
+
+GitHub release automation is split into two workflows:
+
+1. Merge feature PRs into `main` with **Squash and merge**
+2. `.github/workflows/release-pr.yml` updates the `release/sampo` PR from `main`
+3. Review and **Squash and merge** the release PR
+4. Create a GitHub Release from that merged release commit
+5. `.github/workflows/publish.yml` publishes packages with npm OIDC
 
 ## Pull requests
 

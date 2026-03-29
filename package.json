@@ -29,6 +29,7 @@
     "typecheck": "tsc --noEmit",
     "release": "sampo release",
     "publish": "sampo publish",
+    "publish:oidc": "bash scripts/publish-oidc.sh",
     "sampo:add": "sampo add",
     "docs:dev": "typedoc --watch",
     "docs:build": "typedoc",
