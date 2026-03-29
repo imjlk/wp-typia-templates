@@ -1,5 +1,15 @@
 # create-wp-typia
 
+## 1.1.0 — 2026-03-29
+
+### Minor changes
+
+- [01f58fd](https://github.com/imjlk/wp-typia/commit/01f58fdb3a88b7fb06c743181c5afeda57c35537) Reduce the built-in scaffold surface to `basic` and `interactivity`, add remote template MVP support for local paths and GitHub locators, expose shared metadata/default helpers from `@wp-typia/create`, and move the richer showcase app into `examples/my-typia-block`. — Thanks @imjlk!
+
+### Patch changes
+
+- Updated dependencies: create@0.2.0
+
 ## 1.0.3 — 2026-03-29
 
 ### Patch changes
