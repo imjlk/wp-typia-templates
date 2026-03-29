@@ -22,7 +22,7 @@ Derived from Gutenberg duotone preset structures.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/color.ts:19](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/color.ts#L19)
+[packages/wp-typia-block-types/src/block-editor/color.ts:44](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/color.ts#L44)
 
 ___
 
@@ -32,7 +32,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/color.ts:20](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/color.ts#L20)
+[packages/wp-typia-block-types/src/block-editor/color.ts:45](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/color.ts#L45)
 
 ___
 
@@ -42,4 +42,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/color.ts:21](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/color.ts#L21)
+[packages/wp-typia-block-types/src/block-editor/color.ts:46](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/color.ts#L46)

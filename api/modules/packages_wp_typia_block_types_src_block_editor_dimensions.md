@@ -8,10 +8,12 @@
 
 - [AspectRatio](packages_wp_typia_block_types_src_block_editor_dimensions.md#aspectratio)
 - [MinHeightValue](packages_wp_typia_block_types_src_block_editor_dimensions.md#minheightvalue)
+- [MinHeightKeyword](packages_wp_typia_block_types_src_block_editor_dimensions.md#minheightkeyword)
 
 ### Variables
 
 - [ASPECT\_RATIOS](packages_wp_typia_block_types_src_block_editor_dimensions.md#aspect_ratios)
+- [MIN\_HEIGHT\_KEYWORDS](packages_wp_typia_block_types_src_block_editor_dimensions.md#min_height_keywords)
 
 ## Type Aliases
 
@@ -33,9 +35,24 @@ ___
 
 Practical min-height value surface for WordPress dimension controls.
 
+This is primarily a type-level DX helper today. Typia metadata generation does
+not yet consume imported template literal aliases such as `${number}px`.
+
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/dimensions.ts:32](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/dimensions.ts#L32)
+[packages/wp-typia-block-types/src/block-editor/dimensions.ts:35](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/dimensions.ts#L35)
+
+___
+
+### MinHeightKeyword
+
+Ƭ **MinHeightKeyword**: ``"auto"`` \| ``"inherit"`` \| ``"initial"`` \| ``"unset"``
+
+Pipeline-compatible min-height keyword subset for use in `types.ts`.
+
+#### Defined in
+
+[packages/wp-typia-block-types/src/block-editor/dimensions.ts:50](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/dimensions.ts#L50)
 
 ## Variables
 
@@ -46,3 +63,13 @@ Practical min-height value surface for WordPress dimension controls.
 #### Defined in
 
 [packages/wp-typia-block-types/src/block-editor/dimensions.ts:16](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/dimensions.ts#L16)
+
+___
+
+### MIN\_HEIGHT\_KEYWORDS
+
+• `Const` **MIN\_HEIGHT\_KEYWORDS**: readonly [``"auto"``, ``"inherit"``, ``"initial"``, ``"unset"``]
+
+#### Defined in
+
+[packages/wp-typia-block-types/src/block-editor/dimensions.ts:52](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/dimensions.ts#L52)

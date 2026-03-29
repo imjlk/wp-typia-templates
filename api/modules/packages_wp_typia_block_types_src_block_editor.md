@@ -17,10 +17,14 @@
 - [BlockContentPosition](packages_wp_typia_block_types_src_block_editor.md#blockcontentposition)
 - [BLOCK\_CONTENT\_POSITIONS](packages_wp_typia_block_types_src_block_editor.md#block_content_positions)
 - [CssColorValue](packages_wp_typia_block_types_src_block_editor.md#csscolorvalue)
+- [CssNamedColor](packages_wp_typia_block_types_src_block_editor.md#cssnamedcolor)
+- [CSS\_NAMED\_COLORS](packages_wp_typia_block_types_src_block_editor.md#css_named_colors)
 - [DuotonePalette](packages_wp_typia_block_types_src_block_editor.md#duotonepalette)
 - [AspectRatio](packages_wp_typia_block_types_src_block_editor.md#aspectratio)
 - [ASPECT\_RATIOS](packages_wp_typia_block_types_src_block_editor.md#aspect_ratios)
 - [MinHeightValue](packages_wp_typia_block_types_src_block_editor.md#minheightvalue)
+- [MinHeightKeyword](packages_wp_typia_block_types_src_block_editor.md#minheightkeyword)
+- [MIN\_HEIGHT\_KEYWORDS](packages_wp_typia_block_types_src_block_editor.md#min_height_keywords)
 - [LayoutType](packages_wp_typia_block_types_src_block_editor.md#layouttype)
 - [LAYOUT\_TYPES](packages_wp_typia_block_types_src_block_editor.md#layout_types)
 - [FlexWrap](packages_wp_typia_block_types_src_block_editor.md#flexwrap)
@@ -110,6 +114,18 @@ Re-exports [CssColorValue](packages_wp_typia_block_types_src_block_editor_color.
 
 ___
 
+### CssNamedColor
+
+Re-exports [CssNamedColor](packages_wp_typia_block_types_src_block_editor_color.md#cssnamedcolor)
+
+___
+
+### CSS\_NAMED\_COLORS
+
+Re-exports [CSS_NAMED_COLORS](packages_wp_typia_block_types_src_block_editor_color.md#css_named_colors)
+
+___
+
 ### DuotonePalette
 
 Re-exports [DuotonePalette](../interfaces/packages_wp_typia_block_types_src_block_editor_color.DuotonePalette.md)
@@ -131,6 +147,18 @@ ___
 ### MinHeightValue
 
 Re-exports [MinHeightValue](packages_wp_typia_block_types_src_block_editor_dimensions.md#minheightvalue)
+
+___
+
+### MinHeightKeyword
+
+Re-exports [MinHeightKeyword](packages_wp_typia_block_types_src_block_editor_dimensions.md#minheightkeyword)
+
+___
+
+### MIN\_HEIGHT\_KEYWORDS
+
+Re-exports [MIN_HEIGHT_KEYWORDS](packages_wp_typia_block_types_src_block_editor_dimensions.md#min_height_keywords)
 
 ___
 
