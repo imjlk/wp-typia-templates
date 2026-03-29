@@ -31,7 +31,7 @@ async function waitForAdminReady(page: Page) {
       Boolean(document.querySelector('#wpadminbar')) ||
       document.body.classList.contains('wp-admin')
     );
-  });
+  }, { timeout: 60_000 });
 }
 
 export class WordPressPage {
@@ -50,12 +50,24 @@ export class WordPressPage {
   }
 
   async login(username = 'admin', password = 'password') {
-    await this.page.goto('/wp-admin/');
+    await this.page.goto('/wp-admin/', { waitUntil: 'domcontentloaded' });
 
     if (this.page.url().includes('/wp-login.php')) {
       await this.page.fill('#user_login', username);
       await this.page.fill('#user_pass', password);
-      await this.page.click('#wp-submit');
+      await Promise.allSettled([
+        this.page.waitForURL((url) => {
+          return url.pathname.startsWith('/wp-admin') || url.pathname.startsWith('/wp-login.php');
+        }, { timeout: 60_000 }),
+        this.page.click('#wp-submit'),
+      ]);
+
+      const loginErrors = await this.page.locator('#login_error').allTextContents();
+      if (loginErrors.length > 0) {
+        throw new Error(`WordPress login failed: ${loginErrors.join(' ')}`);
+      }
+
+      await this.page.goto('/wp-admin/', { waitUntil: 'domcontentloaded' });
     }
 
     await waitForAdminReady(this.page);

@@ -3,11 +3,16 @@
 		"id": {
 			"typia": {
 				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
 					"format": "uuid",
 					"maxLength": null,
+					"maxItems": null,
 					"maximum": null,
 					"minLength": null,
+					"minItems": null,
 					"minimum": null,
+					"multipleOf": null,
 					"pattern": null,
 					"typeTag": null
 				},
@@ -31,11 +36,16 @@
 		"version": {
 			"typia": {
 				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
 					"format": null,
 					"maxLength": null,
+					"maxItems": null,
 					"maximum": null,
 					"minLength": null,
+					"minItems": null,
 					"minimum": null,
+					"multipleOf": null,
 					"pattern": null,
 					"typeTag": "uint32"
 				},
@@ -59,11 +69,16 @@
 		"className": {
 			"typia": {
 				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
 					"format": null,
 					"maxLength": 100,
+					"maxItems": null,
 					"maximum": null,
 					"minLength": null,
+					"minItems": null,
 					"minimum": null,
+					"multipleOf": null,
 					"pattern": null,
 					"typeTag": null
 				},
@@ -87,11 +102,16 @@
 		"content": {
 			"typia": {
 				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
 					"format": null,
 					"maxLength": 1000,
+					"maxItems": null,
 					"maximum": null,
 					"minLength": 0,
+					"minItems": null,
 					"minimum": null,
+					"multipleOf": null,
 					"pattern": null,
 					"typeTag": null
 				},
@@ -115,11 +135,16 @@
 		"alignment": {
 			"typia": {
 				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
 					"format": null,
 					"maxLength": null,
+					"maxItems": null,
 					"maximum": null,
 					"minLength": null,
+					"minItems": null,
 					"minimum": null,
+					"multipleOf": null,
 					"pattern": null,
 					"typeTag": null
 				},
@@ -148,11 +173,16 @@
 		"isVisible": {
 			"typia": {
 				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
 					"format": null,
 					"maxLength": null,
+					"maxItems": null,
 					"maximum": null,
 					"minLength": null,
+					"minItems": null,
 					"minimum": null,
+					"multipleOf": null,
 					"pattern": null,
 					"typeTag": null
 				},

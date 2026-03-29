@@ -6,11 +6,16 @@ import * as path from 'node:path';
 type ManifestAttribute = {
   typia: {
     constraints: {
+      exclusiveMaximum: number | null;
+      exclusiveMinimum: number | null;
       format: string | null;
       maxLength: number | null;
+      maxItems: number | null;
       maximum: number | null;
       minLength: number | null;
+      minItems: number | null;
       minimum: number | null;
+      multipleOf: number | null;
       pattern: string | null;
       typeTag: string | null;
     };
@@ -51,6 +56,57 @@ type ValidationResult = {
 };
 
 const UUID_V4_LIKE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const DATE_TIME_RFC3339_LIKE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+
+function matchesContractFormat(format: string, value: string): boolean {
+  switch (format) {
+    case 'uuid':
+      return UUID_V4_LIKE.test(value);
+    case 'email':
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    case 'url':
+    case 'uri':
+      return /^https?:\/\/\S+$/.test(value);
+    case 'ipv4':
+      return /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/.test(value);
+    case 'ipv6':
+      return /^[0-9a-f:]+$/i.test(value) && value.includes(':');
+    case 'date-time':
+      return DATE_TIME_RFC3339_LIKE.test(value);
+    default:
+      return true;
+  }
+}
+
+function matchesContractTypeTag(typeTag: string, value: number): boolean {
+  switch (typeTag) {
+    case 'uint32':
+      return Number.isInteger(value) && value >= 0 && value <= 4294967295;
+    case 'int32':
+      return Number.isInteger(value) && value >= -2147483648 && value <= 2147483647;
+    case 'uint64':
+      return Number.isInteger(value) && value >= 0;
+    case 'float':
+    case 'double':
+      return Number.isFinite(value);
+    default:
+      return true;
+  }
+}
+
+function matchesContractMultipleOf(value: number, multipleOf: number): boolean {
+  if (multipleOf === 0) {
+    return true;
+  }
+
+  if (Number.isInteger(value) && Number.isInteger(multipleOf)) {
+    return value % multipleOf === 0;
+  }
+
+  const remainder = value % multipleOf;
+  const epsilon = 1e-9;
+  return Math.abs(remainder) < epsilon || Math.abs(Math.abs(multipleOf) - Math.abs(remainder)) < epsilon;
+}
 
 function loadExampleContract() {
   const testTemplateDir = path.join(import.meta.dir, '../../test-template/my-typia-block');
@@ -107,6 +163,11 @@ function validatePayload(
       continue;
     }
 
+    if (attribute.ts.kind === 'array' && !Array.isArray(value)) {
+      errors.push(`${attributeName} must be array`);
+      continue;
+    }
+
     if (attribute.wp.enum && !attribute.wp.enum.includes(value)) {
       errors.push(`${attributeName} must be one of ${attribute.wp.enum.join(', ')}`);
     }
@@ -120,15 +181,15 @@ function validatePayload(
         errors.push(`${attributeName} must be at most ${attribute.typia.constraints.maxLength} characters`);
       }
 
-      if (attribute.typia.constraints.format === 'uuid' && !UUID_V4_LIKE.test(value)) {
-        errors.push(`${attributeName} must be a uuid`);
-      }
-
       if (attribute.typia.constraints.pattern !== null) {
         const regex = new RegExp(attribute.typia.constraints.pattern);
         if (!regex.test(value)) {
           errors.push(`${attributeName} does not match ${attribute.typia.constraints.pattern}`);
         }
+      }
+
+      if (attribute.typia.constraints.format !== null && !matchesContractFormat(attribute.typia.constraints.format, value)) {
+        errors.push(`${attributeName} must match format ${attribute.typia.constraints.format}`);
       }
     }
 
@@ -141,8 +202,33 @@ function validatePayload(
         errors.push(`${attributeName} must be <= ${attribute.typia.constraints.maximum}`);
       }
 
-      if (attribute.typia.constraints.typeTag === 'uint32' && (!Number.isInteger(value) || value < 0)) {
-        errors.push(`${attributeName} must be an unsigned integer`);
+      if (attribute.typia.constraints.exclusiveMinimum !== null && value <= attribute.typia.constraints.exclusiveMinimum) {
+        errors.push(`${attributeName} must be > ${attribute.typia.constraints.exclusiveMinimum}`);
+      }
+
+      if (attribute.typia.constraints.exclusiveMaximum !== null && value >= attribute.typia.constraints.exclusiveMaximum) {
+        errors.push(`${attributeName} must be < ${attribute.typia.constraints.exclusiveMaximum}`);
+      }
+
+      if (
+        attribute.typia.constraints.multipleOf !== null &&
+        !matchesContractMultipleOf(value, attribute.typia.constraints.multipleOf)
+      ) {
+        errors.push(`${attributeName} must be a multiple of ${attribute.typia.constraints.multipleOf}`);
+      }
+
+      if (attribute.typia.constraints.typeTag !== null && !matchesContractTypeTag(attribute.typia.constraints.typeTag, value)) {
+        errors.push(`${attributeName} must be a ${attribute.typia.constraints.typeTag}`);
+      }
+    }
+
+    if (Array.isArray(value)) {
+      if (attribute.typia.constraints.minItems !== null && value.length < attribute.typia.constraints.minItems) {
+        errors.push(`${attributeName} must have at least ${attribute.typia.constraints.minItems} items`);
+      }
+
+      if (attribute.typia.constraints.maxItems !== null && value.length > attribute.typia.constraints.maxItems) {
+        errors.push(`${attributeName} must have at most ${attribute.typia.constraints.maxItems} items`);
       }
     }
   }
@@ -244,7 +330,7 @@ describe('Typia block attribute contract', () => {
     });
 
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('id must be a uuid');
+    expect(result.errors).toContain('id must match format uuid');
     expect(result.errors).toContain('className must be at most 100 characters');
     expect(result.errors).toContain('content must be at most 1000 characters');
   });
@@ -262,9 +348,93 @@ describe('Typia block attribute contract', () => {
     });
 
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('id must be a uuid');
+    expect(result.errors).toContain('id must match format uuid');
     expect(result.errors).toContain('version must be a uint32');
     expect(result.errors).toContain('content must be string');
     expect(result.errors).toContain('alignment must be one of left, center, right, justify');
+  });
+
+  test('contract helper models additive format, number, and array constraints', () => {
+    const manifest: ContractManifest = {
+      attributes: {
+        contactEmail: {
+          typia: {
+            constraints: {
+              exclusiveMaximum: null,
+              exclusiveMinimum: null,
+              format: 'email',
+              maxLength: null,
+              maxItems: null,
+              maximum: null,
+              minLength: null,
+              minItems: null,
+              minimum: null,
+              multipleOf: null,
+              pattern: null,
+              typeTag: null,
+            },
+            defaultValue: null,
+            hasDefault: false,
+          },
+          ts: { kind: 'string', required: true },
+          wp: { defaultValue: null, enum: null, hasDefault: false, type: 'string' },
+        },
+        opacity: {
+          typia: {
+            constraints: {
+              exclusiveMaximum: 1,
+              exclusiveMinimum: 0,
+              format: null,
+              maxLength: null,
+              maxItems: null,
+              maximum: null,
+              minLength: null,
+              minItems: null,
+              minimum: null,
+              multipleOf: 0.25,
+              pattern: null,
+              typeTag: 'double',
+            },
+            defaultValue: null,
+            hasDefault: false,
+          },
+          ts: { kind: 'number', required: true },
+          wp: { defaultValue: null, enum: null, hasDefault: false, type: 'number' },
+        },
+        slides: {
+          typia: {
+            constraints: {
+              exclusiveMaximum: null,
+              exclusiveMinimum: null,
+              format: null,
+              maxLength: null,
+              maxItems: 3,
+              maximum: null,
+              minLength: null,
+              minItems: 1,
+              minimum: null,
+              multipleOf: null,
+              pattern: null,
+              typeTag: null,
+            },
+            defaultValue: null,
+            hasDefault: false,
+          },
+          ts: { kind: 'array', required: true },
+          wp: { defaultValue: null, enum: null, hasDefault: false, type: 'array' },
+        },
+      },
+    };
+
+    const result = validatePayload(manifest, {
+      contactEmail: 'not-an-email',
+      opacity: 1,
+      slides: [],
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('contactEmail must match format email');
+    expect(result.errors).toContain('opacity must be < 1');
+    expect(result.errors).toContain('slides must have at least 1 items');
   });
 });

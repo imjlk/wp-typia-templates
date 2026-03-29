@@ -8,11 +8,16 @@ type AttributeKind = "string" | "number" | "boolean" | "array" | "object" | "uni
 type WordPressAttributeKind = "string" | "number" | "boolean" | "array" | "object";
 
 interface AttributeConstraints {
+	exclusiveMaximum: number | null;
+	exclusiveMinimum: number | null;
 	format: string | null;
 	maxLength: number | null;
+	maxItems: number | null;
 	maximum: number | null;
 	minLength: number | null;
+	minItems: number | null;
 	minimum: number | null;
+	multipleOf: number | null;
 	pattern: string | null;
 	typeTag: string | null;
 }
@@ -101,21 +106,31 @@ interface AnalysisContext {
 
 const SUPPORTED_TAGS = new Set([
 	"Default",
+	"ExclusiveMaximum",
+	"ExclusiveMinimum",
 	"Format",
 	"MaxLength",
+	"MaxItems",
 	"Maximum",
 	"MinLength",
+	"MinItems",
 	"Minimum",
+	"MultipleOf",
 	"Pattern",
 	"Type",
 ]);
 
 const DEFAULT_CONSTRAINTS = (): AttributeConstraints => ({
+	exclusiveMaximum: null,
+	exclusiveMinimum: null,
 	format: null,
 	maxLength: null,
+	maxItems: null,
 	maximum: null,
 	minLength: null,
+	minItems: null,
 	minimum: null,
+	multipleOf: null,
 	pattern: null,
 	typeTag: null,
 });
@@ -672,11 +687,26 @@ function applyTag(node: AttributeNode, tagNode: ts.TypeReferenceNode, pathLabel:
 		case "MaxLength":
 			node.constraints.maxLength = parseNumericArgument(arg, tagName, pathLabel);
 			return;
+		case "MinItems":
+			node.constraints.minItems = parseNumericArgument(arg, tagName, pathLabel);
+			return;
+		case "MaxItems":
+			node.constraints.maxItems = parseNumericArgument(arg, tagName, pathLabel);
+			return;
 		case "Minimum":
 			node.constraints.minimum = parseNumericArgument(arg, tagName, pathLabel);
 			return;
 		case "Maximum":
 			node.constraints.maximum = parseNumericArgument(arg, tagName, pathLabel);
+			return;
+		case "ExclusiveMinimum":
+			node.constraints.exclusiveMinimum = parseNumericArgument(arg, tagName, pathLabel);
+			return;
+		case "ExclusiveMaximum":
+			node.constraints.exclusiveMaximum = parseNumericArgument(arg, tagName, pathLabel);
+			return;
+		case "MultipleOf":
+			node.constraints.multipleOf = parseNumericArgument(arg, tagName, pathLabel);
 			return;
 		default:
 			return;
@@ -737,9 +767,19 @@ function parseStringLikeArgument(node: ts.TypeNode, tagName: string, pathLabel: 
 	return value;
 }
 
-function extractLiteralValue(node: ts.TypeNode): string | number | boolean | undefined {
+function extractLiteralValue(node: ts.TypeNode | ts.Node): string | number | boolean | undefined {
 	if (ts.isParenthesizedTypeNode(node)) {
 		return extractLiteralValue(node.type);
+	}
+	if (ts.isLiteralTypeNode(node)) {
+		return extractLiteralValue(node.literal);
+	}
+	if (
+		ts.isPrefixUnaryExpression(node) &&
+		node.operator === ts.SyntaxKind.MinusToken &&
+		ts.isNumericLiteral(node.operand)
+	) {
+		return -Number(node.operand.text);
 	}
 	if (node.kind === ts.SyntaxKind.TrueKeyword) {
 		return true;
@@ -747,21 +787,11 @@ function extractLiteralValue(node: ts.TypeNode): string | number | boolean | und
 	if (node.kind === ts.SyntaxKind.FalseKeyword) {
 		return false;
 	}
-	if (!ts.isLiteralTypeNode(node)) {
-		return undefined;
+	if (ts.isStringLiteral(node)) {
+		return node.text;
 	}
-
-	if (ts.isStringLiteral(node.literal)) {
-		return node.literal.text;
-	}
-	if (ts.isNumericLiteral(node.literal)) {
-		return Number(node.literal.text);
-	}
-	if (node.literal.kind === ts.SyntaxKind.TrueKeyword) {
-		return true;
-	}
-	if (node.literal.kind === ts.SyntaxKind.FalseKeyword) {
-		return false;
+	if (ts.isNumericLiteral(node)) {
+		return Number(node.text);
 	}
 	return undefined;
 }
@@ -782,11 +812,16 @@ function createBlockJsonAttribute(
 	}
 
 	const reasons: string[] = [];
+	if (node.constraints.exclusiveMaximum !== null) reasons.push("exclusiveMaximum");
+	if (node.constraints.exclusiveMinimum !== null) reasons.push("exclusiveMinimum");
 	if (node.constraints.format !== null) reasons.push("format");
 	if (node.constraints.maxLength !== null) reasons.push("maxLength");
+	if (node.constraints.maxItems !== null) reasons.push("maxItems");
 	if (node.constraints.maximum !== null) reasons.push("maximum");
 	if (node.constraints.minLength !== null) reasons.push("minLength");
+	if (node.constraints.minItems !== null) reasons.push("minItems");
 	if (node.constraints.minimum !== null) reasons.push("minimum");
+	if (node.constraints.multipleOf !== null) reasons.push("multipleOf");
 	if (node.constraints.pattern !== null) reasons.push("pattern");
 	if (node.constraints.typeTag !== null) reasons.push("typeTag");
 	if (node.kind === "array" && node.items !== undefined) reasons.push("items");
@@ -1004,6 +1039,7 @@ return new class {
 \t\t\t\t\t$errors[] = sprintf('%s must be array', $path);
 \t\t\t\t\treturn;
 \t\t\t\t}
+\t\t\t\t$this->validateArray($value, $attribute, $path, $errors);
 \t\t\t\tif (isset($attribute['ts']['items']) && is_array($attribute['ts']['items'])) {
 \t\t\t\t\tforeach ($value as $index => $item) {
 \t\t\t\t\t\t$this->validateAttribute(true, $item, $attribute['ts']['items'], sprintf('%s[%s]', $path, (string) $index), $errors);
@@ -1089,10 +1125,22 @@ return new class {
 \t\t}
 \t\tif (
 \t\t\tisset($constraints['format']) &&
-\t\t\t$constraints['format'] === 'uuid' &&
-\t\t\t!$this->matchesUuid($value)
+\t\t\tis_string($constraints['format']) &&
+\t\t\t!$this->matchesFormat($constraints['format'], $value)
 \t\t) {
-\t\t\t$errors[] = sprintf('%s must be a uuid', $path);
+\t\t\t$errors[] = sprintf('%s must match format %s', $path, $constraints['format']);
+\t\t}
+\t}
+
+\tprivate function validateArray(array $value, array $attribute, string $path, array &$errors): void
+\t{
+\t\t$constraints = $attribute['typia']['constraints'] ?? [];
+
+\t\tif (isset($constraints['minItems']) && is_int($constraints['minItems']) && count($value) < $constraints['minItems']) {
+\t\t\t$errors[] = sprintf('%s must have at least %d items', $path, $constraints['minItems']);
+\t\t}
+\t\tif (isset($constraints['maxItems']) && is_int($constraints['maxItems']) && count($value) > $constraints['maxItems']) {
+\t\t\t$errors[] = sprintf('%s must have at most %d items', $path, $constraints['maxItems']);
 \t\t}
 \t}
 
@@ -1106,10 +1154,33 @@ return new class {
 \t\tif (isset($constraints['maximum']) && $this->isNumber($constraints['maximum']) && $value > $constraints['maximum']) {
 \t\t\t$errors[] = sprintf('%s must be <= %s', $path, (string) $constraints['maximum']);
 \t\t}
-\t\tif (($constraints['typeTag'] ?? null) === 'uint32') {
-\t\t\tif (!is_int($value) || $value < 0 || $value > 4294967295) {
-\t\t\t\t$errors[] = sprintf('%s must be a uint32', $path);
-\t\t\t}
+\t\tif (
+\t\t\tisset($constraints['exclusiveMinimum']) &&
+\t\t\t$this->isNumber($constraints['exclusiveMinimum']) &&
+\t\t\t$value <= $constraints['exclusiveMinimum']
+\t\t) {
+\t\t\t$errors[] = sprintf('%s must be > %s', $path, (string) $constraints['exclusiveMinimum']);
+\t\t}
+\t\tif (
+\t\t\tisset($constraints['exclusiveMaximum']) &&
+\t\t\t$this->isNumber($constraints['exclusiveMaximum']) &&
+\t\t\t$value >= $constraints['exclusiveMaximum']
+\t\t) {
+\t\t\t$errors[] = sprintf('%s must be < %s', $path, (string) $constraints['exclusiveMaximum']);
+\t\t}
+\t\tif (
+\t\t\tisset($constraints['multipleOf']) &&
+\t\t\t$this->isNumber($constraints['multipleOf']) &&
+\t\t\t!$this->matchesMultipleOf($value, $constraints['multipleOf'])
+\t\t) {
+\t\t\t$errors[] = sprintf('%s must be a multiple of %s', $path, (string) $constraints['multipleOf']);
+\t\t}
+\t\tif (
+\t\t\tisset($constraints['typeTag']) &&
+\t\t\tis_string($constraints['typeTag']) &&
+\t\t\t!$this->matchesTypeTag($value, $constraints['typeTag'])
+\t\t) {
+\t\t\t$errors[] = sprintf('%s must be a %s', $path, $constraints['typeTag']);
 \t\t}
 \t}
 
@@ -1135,9 +1206,56 @@ return new class {
 \t\treturn $result === 1;
 \t}
 
-\tprivate function matchesUuid(string $value): bool
+\tprivate function matchesFormat(string $format, string $value): bool
 \t{
-\t\treturn preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $value) === 1;
+\t\tswitch ($format) {
+\t\t\tcase 'uuid':
+\t\t\t\treturn preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $value) === 1;
+\t\t\tcase 'email':
+\t\t\t\treturn filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
+\t\t\tcase 'url':
+\t\t\tcase 'uri':
+\t\t\t\treturn filter_var($value, FILTER_VALIDATE_URL) !== false;
+\t\t\tcase 'ipv4':
+\t\t\t\treturn filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false;
+\t\t\tcase 'ipv6':
+\t\t\t\treturn filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
+\t\t\tcase 'date-time':
+\t\t\t\treturn preg_match('/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$/', $value) === 1;
+\t\t\tdefault:
+\t\t\t\treturn true;
+\t\t}
+\t}
+
+\tprivate function matchesTypeTag($value, string $typeTag): bool
+\t{
+\t\tswitch ($typeTag) {
+\t\t\tcase 'uint32':
+\t\t\t\treturn is_int($value) && $value >= 0 && $value <= 4294967295;
+\t\t\tcase 'int32':
+\t\t\t\treturn is_int($value) && $value >= -2147483648 && $value <= 2147483647;
+\t\t\tcase 'uint64':
+\t\t\t\treturn is_int($value) && $value >= 0;
+\t\t\tcase 'float':
+\t\t\tcase 'double':
+\t\t\t\treturn is_int($value) || is_float($value);
+\t\t\tdefault:
+\t\t\t\treturn true;
+\t\t}
+\t}
+
+\tprivate function matchesMultipleOf($value, $multipleOf): bool
+\t{
+\t\tif ($multipleOf == 0) {
+\t\t\treturn true;
+\t\t}
+\t\tif (is_int($value) && is_int($multipleOf)) {
+\t\t\treturn $value % $multipleOf === 0;
+\t\t}
+
+\t\t$remainder = fmod((float) $value, (float) $multipleOf);
+\t\t$epsilon = 0.000000001;
+\t\treturn abs($remainder) < $epsilon || abs(abs((float) $multipleOf) - abs($remainder)) < $epsilon;
 \t}
 
 \tprivate function isNumber($value): bool
@@ -1174,10 +1292,10 @@ function collectPhpGenerationWarnings(
 	warnings: string[],
 ): void {
 	const { format, typeTag } = attribute.typia.constraints;
-	if (format !== null && format !== "uuid") {
+	if (format !== null && !new Set(["uuid", "email", "url", "uri", "ipv4", "ipv6", "date-time"]).has(format)) {
 		warnings.push(`${pathLabel}: unsupported PHP validator format "${format}"`);
 	}
-	if (typeTag !== null && typeTag !== "uint32") {
+	if (typeTag !== null && !new Set(["uint32", "int32", "uint64", "float", "double"]).has(typeTag)) {
 		warnings.push(`${pathLabel}: unsupported PHP validator type tag "${typeTag}"`);
 	}
 

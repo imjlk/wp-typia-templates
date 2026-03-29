@@ -1,6 +1,8 @@
 import { test, expect, EXAMPLE_BLOCK, WordPressPage } from './fixtures/wordpress';
 
 test.describe('WordPress Typia block smoke', () => {
+  test.describe.configure({ mode: 'serial' });
+
   let wpPage: WordPressPage;
 
   test.beforeEach(async ({ page }) => {
