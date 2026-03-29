@@ -30,6 +30,8 @@ create-wp-typia migrations scaffold --from 1.0.0
 create-wp-typia migrations verify --all
 ```
 
+Legacy `wp-typia-*` wrapper packages are no longer published from this repository. `create-wp-typia` is the only maintained entrypoint.
+
 ## 2. Generated project runtime
 
 Each scaffolded project exposes a few predictable files:
@@ -37,10 +39,13 @@ Each scaffolded project exposes a few predictable files:
 - `src/types.ts`: source of truth for the current attribute contract
 - `src/validators.ts`: Typia runtime helpers such as `validate`, `assert`, `is`, `random`, `clone`, and `prune`
 - `block.json`: WordPress-facing metadata projection
-- `typia.manifest.json`: richer schema details preserved for future server-side validation and migration tooling
+- `typia.manifest.json`: manifest v2 with explicit default markers and supported discriminated union metadata
+- `typia-validator.php`: generated PHP validator for the supported server-side subset
 
 The `advanced` template adds:
 
+- `render.php`
+- `typia-migration-registry.php`
 - `src/migrations/config.ts`
 - `src/migrations/versions/`
 - `src/migrations/rules/`

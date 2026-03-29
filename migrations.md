@@ -6,7 +6,7 @@ The `advanced` template is designed for blocks that need to preserve compatibili
 
 - `src/types.ts` describes the current block contract.
 - `block.json` is generated from that contract for WordPress.
-- `typia.manifest.json` keeps the richer Typia constraints that are not projected into `block.json`.
+- `typia.manifest.json` v2 keeps richer Typia constraints, explicit default markers, and supported discriminated union metadata.
 
 ## Snapshot model
 
@@ -48,6 +48,19 @@ bun run migration:scaffold -- --from 1.0.0
 bun run migration:verify
 ```
 
+The intended authoring flow is:
+
+1. change `src/types.ts`
+2. regenerate metadata with `bun run sync-types`
+3. snapshot the release you want to preserve
+4. scaffold the edge from the old snapshot to the current schema
+5. review auto-applied renames
+6. fill in any suggested semantic transforms
+7. adjust nested leaf paths like `settings.label` or `linkTarget.url.href` if object or union-branch fields moved
+8. adjust the generated fixture cases to match real legacy payloads
+8. run `migration:verify`
+9. use the admin dashboard dry-run before batch migration
+
 ## Generated rule files
 
 Scaffolded rules live in:
@@ -56,12 +69,21 @@ Scaffolded rules live in:
 src/migrations/rules/<from>-to-<to>.ts
 ```
 
+Edge fixtures now live next to them:
+
+```text
+src/migrations/fixtures/<from>-to-<to>.json
+```
+
 Automatic cases are filled for you:
 
 - copy compatible fields
 - fill new defaults
 - drop removed fields
 - normalize additive object and array changes
+- preserve compatible discriminated union branches
+- auto-apply high-confidence top-level renames
+- auto-apply high-confidence nested leaf renames inside objects and supported union branches
 
 Manual work is still required for:
 
@@ -69,8 +91,22 @@ Manual work is still required for:
 - primitive type changes
 - stricter enums or format constraints
 - semantic transforms
+- discriminator changes or branch removals in discriminated unions
 
-If unresolved `TODO MIGRATION:` markers remain, `migration:verify` fails on purpose.
+Scaffolded rules expose:
+
+- `renameMap`: `currentField -> legacy.path`
+- `transforms`: field-level semantic overrides
+- `unresolved`: issues that must be resolved before `verify`
+- `migrate()`: the generated edge implementation used by deprecated entries and batch migration
+
+High-confidence renames are written into `renameMap` automatically. Ambiguous candidates stay unresolved, and semantic-risk coercions are emitted as suggested transform bodies with unresolved markers left in place. Nested authoring uses the current-path convention:
+
+- `settings.label`
+- `cta.href`
+- `linkTarget.url.href`
+
+If unresolved `TODO MIGRATION:` markers or unresolved entries remain, `migration:verify` fails on purpose.
 
 ## Deprecated Gutenberg entries
 
@@ -88,7 +124,45 @@ The advanced template includes an admin-side migration dashboard that can:
 
 - scan posts for legacy block attributes
 - summarize version distribution
-- preview migration work
+- preview migration work with before/after payloads
 - batch-migrate matching blocks
+- export markdown and JSON reports
 
 This scan is REST-based and stays on the JavaScript side. It does not depend on PHP migration code.
+
+Dry-run and batch execution share the same `autoMigrate()` path, so the preview you see in the dashboard is the same migration logic that will be applied during writes.
+
+The dashboard preview now highlights:
+
+- changed field paths
+- discriminated union branch matches
+- validation errors
+- unresolved/manual review badges
+- compact post summaries with expandable before/after payload detail
+
+## Example pack
+
+The advanced template also ships a reference-only example pack at:
+
+```text
+src/migrations/examples/rename-transform-union/
+```
+
+It demonstrates:
+
+- a top-level rename
+- a nested path rename
+- a semantic transform
+- a discriminated union branch change that still needs manual review
+
+The example pack does not register itself into `supportedVersions` and does not affect runtime migration execution.
+
+## Server-side foundation
+
+The advanced template now also ships:
+
+- `typia-validator.php`
+- `typia-migration-registry.php`
+- `render.php`
+
+`render.php` demonstrates the intended server boundary: normalize with the generated validator, validate the supported subset, and render only when the payload is safe. Migration execution still stays JS-first.

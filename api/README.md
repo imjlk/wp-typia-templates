@@ -2,15 +2,15 @@ WordPress Typia Boilerplate / [Modules](modules.md)
 
 # 🚀 wp-typia-templates
 
-Create robust WordPress blocks with TypeScript runtime validation using Typia. This Bun-first template monorepo provides shared scaffolding, generated `block.json` / `typia.manifest.json`, testing, and migration support.
+Create robust WordPress blocks with TypeScript runtime validation using Typia. This Bun-first template monorepo provides shared scaffolding, generated `block.json` / `typia.manifest.json` / `typia-validator.php`, testing, and migration support.
 
 ## ✨ Key Features
 
 - **🔒 Runtime Type Safety** - Typia provides compile-time and runtime type validation
-- **⚡ Type-first metadata generation** - TypeScript interfaces generate `block.json` and `typia.manifest.json`
+- **⚡ Type-first metadata generation** - TypeScript interfaces generate `block.json`, `typia.manifest.json` v2, and `typia-validator.php`
 - **🎯 4 Template Variations** - From basic to advanced patterns
-- **🔄 Migration System** - Snapshot-based block migrations for legacy attribute compatibility (Advanced template)
-- **🧪 Complete Testing** - Unit tests with Bun test, CLI tests with Bunli, E2E tests with Playwright
+- **🔄 Migration System** - Snapshot-based block migrations with `renameMap` / `transforms` authoring helpers (Advanced template)
+- **🧪 Complete Testing** - Unit tests with Bun test, CLI runtime tests, E2E tests with Playwright
 - **📦 Monorepo Ready** - Bun workspaces with shared dependencies
 - **🎨 Modern Tooling** - TypeScript, SCSS, ESLint, Prettier, GitHub Actions
 
@@ -40,25 +40,16 @@ For non-interactive usage:
 npx create-wp-typia my-block --template basic --package-manager pnpm --yes --no-install
 ```
 
-### Option 2: Use legacy direct template wrappers
-
-```bash
-npx wp-typia-basic
-npx wp-typia-full
-npx wp-typia-interactivity
-npx wp-typia-advanced
-```
-
-These legacy entrypoints remain supported for compatibility, but `create-wp-typia` is the primary path for new projects.
+`create-wp-typia` is now the only supported scaffolding entrypoint in this repository. Previously published `wp-typia-*` packages remain on npm for historical installs, but they are no longer maintained or published from this repo.
 
 ## 📦 Templates Overview
 
-| Template                                      | Features                                                                               | Best For                           |
-| --------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------- |
-| **[Basic](templates/basic/)**                 | • Type-safe attributes<br>• Runtime validation<br>• Minimal setup                      | Quick prototypes and simple blocks |
-| **[Full](templates/full/)**                   | • Advanced controls<br>• Custom hooks<br>• Style options<br>• Animation support        | Feature-rich blocks                |
-| **[Interactivity](templates/interactivity/)** | • Interactivity API<br>• Client-side state<br>• Event handling                         | Interactive blocks                 |
-| **[Advanced](templates/advanced/)**           | • Migration system<br>• Version tracking<br>• Admin dashboard<br>• Enterprise features | Production blocks                  |
+| Template | Features | Best For |
+| --- | --- | --- |
+| **Basic** | • Type-safe attributes<br>• Runtime validation<br>• Minimal setup | Quick prototypes and simple blocks |
+| **Full** | • Advanced controls<br>• Custom hooks<br>• Style options<br>• Animation support | Feature-rich blocks |
+| **Interactivity** | • Interactivity API<br>• Client-side state<br>• Event handling | Interactive blocks |
+| **Advanced** | • Migration system<br>• Version tracking<br>• Admin dashboard<br>• Enterprise features | Production blocks |
 
 ## 🎯 How It Works
 
@@ -78,7 +69,7 @@ export interface MyBlockAttributes {
 ### 2. Auto-generate block metadata
 
 ```bash
-bun run sync-types  # Generates block.json and typia.manifest.json from TypeScript types
+bun run sync-types  # Generates block.json, typia.manifest.json v2, and typia-validator.php
 ```
 
 ### 3. Get Runtime Validation
@@ -121,7 +112,8 @@ bun run build
 - **[Migration Guide](docs/migrations.md)** - Snapshot-based migration workflow for the advanced template
 - **[Interactivity Guide](docs/interactivity.md)** - When to choose the interactivity template and how it fits
 - **[API Guide](docs/API.md)** - Where the public CLI and generated runtime surfaces live
-- **Generated manifest** - `typia.manifest.json` preserves Typia-only constraints for future PHP validation
+- **Generated PHP validator** - `typia.manifest.json` v2 preserves Typia constraints, explicit defaults, and supported discriminated unions; `typia-validator.php` enforces the supported PHP subset
+- **[Union Support Guide](docs/union-support.md)** - What union shapes are supported today and what remains future work
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
 
 ## 🧪 Testing
@@ -141,7 +133,7 @@ bun run test:coverage
 
 ## 🔄 Migration System (Advanced Template)
 
-The Advanced template uses snapshot-based migrations driven by `typia.manifest.json` diffs:
+The Advanced template uses snapshot-based migrations driven by `typia.manifest.json` diffs and now ships a dynamic `render.php` example that exercises the generated PHP validator:
 
 ```bash
 # Bootstrap the first snapshot for the current schema
@@ -164,32 +156,25 @@ Features:
 
 - 🔄 Snapshot-based manifest diffing and rule generation
 - 📊 Migration dashboard in WordPress admin
-- 🧪 Built-in migration verification and fixtures
+- 🧪 Built-in migration verification and edge fixtures
+- ✍️ Auto-applied high-confidence renames plus suggested transform bodies
+- 🧭 Nested leaf authoring for object and supported union-branch paths
 - 📝 Detailed migration reports
 
-## 📦 Published npm Packages
-
-All templates are published as npm packages:
+## 📦 Published npm Package
 
 - [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia)
-- [`wp-typia-basic`](https://www.npmjs.com/package/wp-typia-basic)
-- [`wp-typia-full`](https://www.npmjs.com/package/wp-typia-full)
-- [`wp-typia-interactivity`](https://www.npmjs.com/package/wp-typia-interactivity)
-- [`wp-typia-advanced`](https://www.npmjs.com/package/wp-typia-advanced)
+
+Legacy `wp-typia-*` packages are no longer published from this repository.
 
 ## 🏗 Project Structure
 
 ```
 wp-typia-templates/
-├── templates/                    # Template variations
-│   ├── basic/                   # Basic Typia features
-│   ├── full/                    # Full feature set
-│   ├── interactivity/           # Interactivity API
-│   └── advanced/                # Migration system
-├── test-template/               # Working examples
-│   └── my-typia-block/         # Complete example
-├── packages/                    # Published npm packages and CLI
-│   ├── create-wp-typia/         # Shared Bunli-based scaffolder
+├── packages/
+│   └── create-wp-typia/         # Published CLI and canonical templates
+├── test-template/
+│   └── my-typia-block/          # Complete example
 ├── tests/                       # Test files
 ├── docs/                        # Documentation
 └── .github/                     # GitHub configuration
@@ -231,16 +216,13 @@ store('my-interactive-block', {
 
 ```typescript
 // src/migrations/rules/1.0.0-to-2.0.0.ts
-import type { MyBlockAttributes } from "../../types";
-import currentManifest from "../../../typia.manifest.json";
-import { coerceValueFromManifest } from "../helpers";
+export const renameMap = {
+  // content: "headline",
+};
 
-export function migrate(input: Record<string, unknown>): MyBlockAttributes {
-  return {
-    content: coerceValueFromManifest(currentManifest.attributes.content, input.content),
-    isVisible: coerceValueFromManifest(currentManifest.attributes.isVisible, input.isVisible),
-  } as MyBlockAttributes;
-}
+export const transforms = {
+  // content: (legacyValue) => String(legacyValue ?? ""),
+};
 ```
 
 ## 🤝 Contributing
