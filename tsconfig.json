@@ -18,12 +18,6 @@
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@blocks/*": ["src/blocks/*"],
-      "@components/*": ["src/components/*"],
-      "@utils/*": ["src/utils/*"],
-      "@hooks/*": ["src/hooks/*"],
-      "@types/*": ["src/types/*"],
       "@wp-typia/block-types": [
         "packages/wp-typia-block-types/src/index.ts"
       ],
@@ -40,8 +34,7 @@
     "packages/*/src/**/*",
     "packages/*/tests/**/*",
     "test-template/**/src/**/*",
-    "tests/**/*",
-    "templates/**/*"
+    "tests/**/*"
   ],
   "exclude": [
     "node_modules",
