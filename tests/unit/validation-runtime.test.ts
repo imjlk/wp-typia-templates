@@ -66,6 +66,49 @@ describe('runtime validation helpers', () => {
 		});
 	});
 
+	test('toValidationResult tolerates malformed typia-like payloads', () => {
+		const nullErrors = toValidationResult({
+			errors: null,
+			success: false,
+		});
+		const mixedErrors = toValidationResult({
+			errors: [
+				null,
+				'boom',
+				{
+					value: 99,
+				},
+			],
+			success: false,
+		});
+
+		expect(nullErrors).toEqual({
+			data: undefined,
+			errors: [],
+			isValid: false,
+		});
+		expect(mixedErrors.errors).toEqual([
+			{
+				description: undefined,
+				expected: 'unknown',
+				path: '(root)',
+				value: undefined,
+			},
+			{
+				description: undefined,
+				expected: 'unknown',
+				path: '(root)',
+				value: undefined,
+			},
+			{
+				description: undefined,
+				expected: 'unknown',
+				path: '(root)',
+				value: 99,
+			},
+		]);
+	});
+
 	test('toValidationState derives formatted messages from a validation result', () => {
 		const state = toValidationState({
 			data: undefined,
@@ -127,5 +170,28 @@ describe('runtime validation helpers', () => {
 		expect(patches).toEqual([]);
 		expect(validationErrors).toHaveLength(1);
 		expect(validationErrors[0]?.errors[0]?.path).toBe('content');
+	});
+
+	test('createAttributeUpdater handles invalid patches without an error callback', () => {
+		const patches: Array<Partial<{ content: string; isVisible: boolean }>> = [];
+		const updateAttribute = createAttributeUpdater(
+			{ content: 'Hello', isVisible: true },
+			(patch) => {
+				patches.push(patch);
+			},
+			(): ValidationResult<{ content: string; isVisible: boolean }> => ({
+				errors: [
+					{
+						expected: 'string',
+						path: 'content',
+						value: 123,
+					},
+				],
+				isValid: false,
+			})
+		);
+
+		expect(updateAttribute('content', 'Still invalid')).toBe(false);
+		expect(patches).toEqual([]);
 	});
 });

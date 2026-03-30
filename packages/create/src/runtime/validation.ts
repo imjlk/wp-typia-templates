@@ -24,7 +24,7 @@ interface RawTypiaValidationError {
 
 interface RawTypiaValidationResult<T> {
 	data?: unknown;
-	errors?: RawTypiaValidationError[];
+	errors?: unknown;
 	success: boolean;
 }
 
@@ -38,12 +38,17 @@ function getValueType(value: unknown): string {
 	return typeof value;
 }
 
-export function normalizeValidationError(error: RawTypiaValidationError): TypiaValidationError {
+export function normalizeValidationError(error: unknown): TypiaValidationError {
+	const raw =
+		error !== null && typeof error === "object"
+			? (error as RawTypiaValidationError)
+			: {};
+
 	return {
-		description: typeof error.description === "string" ? error.description : undefined,
-		expected: typeof error.expected === "string" ? error.expected : "unknown",
-		path: typeof error.path === "string" && error.path.length > 0 ? error.path : "(root)",
-		value: "value" in error ? error.value : undefined,
+		description: typeof raw.description === "string" ? raw.description : undefined,
+		expected: typeof raw.expected === "string" ? raw.expected : "unknown",
+		path: typeof raw.path === "string" && raw.path.length > 0 ? raw.path : "(root)",
+		value: Object.prototype.hasOwnProperty.call(raw, "value") ? raw.value : undefined,
 	};
 }
 
@@ -58,9 +63,11 @@ export function toValidationResult<T>(
 		};
 	}
 
+	const rawErrors = Array.isArray(result.errors) ? result.errors : [];
+
 	return {
 		data: undefined,
-		errors: (result.errors ?? []).map(normalizeValidationError),
+		errors: rawErrors.map(normalizeValidationError),
 		isValid: false,
 	};
 }
