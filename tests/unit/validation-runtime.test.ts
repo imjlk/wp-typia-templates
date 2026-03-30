@@ -67,9 +67,14 @@ describe('runtime validation helpers', () => {
 	});
 
 	test('toValidationResult tolerates malformed typia-like payloads', () => {
+		const nullResult = toValidationResult(null);
 		const nullErrors = toValidationResult({
 			errors: null,
 			success: false,
+		});
+		const truthySuccess = toValidationResult({
+			data: 'unexpected',
+			success: 'yes',
 		});
 		const mixedErrors = toValidationResult({
 			errors: [
@@ -82,7 +87,17 @@ describe('runtime validation helpers', () => {
 			success: false,
 		});
 
+		expect(nullResult).toEqual({
+			data: undefined,
+			errors: [],
+			isValid: false,
+		});
 		expect(nullErrors).toEqual({
+			data: undefined,
+			errors: [],
+			isValid: false,
+		});
+		expect(truthySuccess).toEqual({
 			data: undefined,
 			errors: [],
 			isValid: false,
@@ -143,9 +158,10 @@ describe('runtime validation helpers', () => {
 		expect(patches).toEqual([{ content: 'Updated' }]);
 	});
 
-	test('createAttributeUpdater blocks invalid patches and reports the validation result', () => {
+	test('createAttributeUpdater blocks invalid patches and reports the validation result and key', () => {
 		const patches: Array<Partial<{ content: string; isVisible: boolean }>> = [];
 		const validationErrors: Array<ValidationResult<{ content: string; isVisible: boolean }>> = [];
+		const validationKeys: Array<'content' | 'isVisible'> = [];
 		const updateAttribute = createAttributeUpdater(
 			{ content: 'Hello', isVisible: true },
 			(patch) => {
@@ -161,14 +177,16 @@ describe('runtime validation helpers', () => {
 				],
 				isValid: false,
 			}),
-			(validation) => {
+			(validation, key) => {
 				validationErrors.push(validation);
+				validationKeys.push(key);
 			}
 		);
 
 		expect(updateAttribute('content', 'Still invalid')).toBe(false);
 		expect(patches).toEqual([]);
 		expect(validationErrors).toHaveLength(1);
+		expect(validationKeys).toEqual(['content']);
 		expect(validationErrors[0]?.errors[0]?.path).toBe('content');
 	});
 

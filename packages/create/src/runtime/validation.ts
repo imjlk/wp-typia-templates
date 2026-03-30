@@ -25,7 +25,7 @@ interface RawTypiaValidationError {
 interface RawTypiaValidationResult<T> {
 	data?: unknown;
 	errors?: unknown;
-	success: boolean;
+	success?: unknown;
 }
 
 function getValueType(value: unknown): string {
@@ -52,18 +52,21 @@ export function normalizeValidationError(error: unknown): TypiaValidationError {
 	};
 }
 
-export function toValidationResult<T>(
-	result: RawTypiaValidationResult<T>,
-): ValidationResult<T> {
-	if (result.success) {
+export function toValidationResult<T>(result: unknown): ValidationResult<T> {
+	const raw =
+		result !== null && typeof result === "object"
+			? (result as RawTypiaValidationResult<T>)
+			: undefined;
+
+	if (raw?.success === true) {
 		return {
-			data: result.data as T | undefined,
+			data: raw.data as T | undefined,
 			errors: [],
 			isValid: true,
 		};
 	}
 
-	const rawErrors = Array.isArray(result.errors) ? result.errors : [];
+	const rawErrors = Array.isArray(raw?.errors) ? raw.errors : [];
 
 	return {
 		data: undefined,
