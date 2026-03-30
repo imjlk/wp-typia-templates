@@ -44,6 +44,16 @@ function isBinaryTemplateFile(filePath: string): boolean {
 	return BINARY_EXTENSIONS.has(path.extname(filePath).toLowerCase());
 }
 
+function resolveRenderedPath(targetDir: string, destinationName: string): string {
+	const resolvedTargetDir = path.resolve(targetDir);
+	const resolvedDestinationPath = path.resolve(resolvedTargetDir, destinationName);
+	const relativePath = path.relative(resolvedTargetDir, resolvedDestinationPath);
+	if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+		throw new Error(`Rendered template path escapes target directory: ${destinationName}`);
+	}
+	return resolvedDestinationPath;
+}
+
 export async function copyRawDirectory(sourceDir: string, targetDir: string): Promise<void> {
 	await fsp.mkdir(path.dirname(targetDir), { recursive: true });
 	await fsp.cp(sourceDir, targetDir, { recursive: true });
@@ -61,7 +71,7 @@ export async function copyRenderedDirectory(
 			? entry.name.slice(0, -".mustache".length)
 			: entry.name;
 		const destinationName = renderMustacheTemplateString(destinationNameTemplate, view);
-		const destinationPath = path.join(targetDir, destinationName);
+		const destinationPath = resolveRenderedPath(targetDir, destinationName);
 
 		if (entry.isDirectory()) {
 			await fsp.mkdir(destinationPath, { recursive: true });
@@ -93,7 +103,7 @@ export async function copyInterpolatedDirectory(
 			? entry.name.slice(0, -".mustache".length)
 			: entry.name;
 		const destinationName = renderInterpolatedString(destinationNameTemplate, view);
-		const destinationPath = path.join(targetDir, destinationName);
+		const destinationPath = resolveRenderedPath(targetDir, destinationName);
 
 		if (entry.isDirectory()) {
 			await fsp.mkdir(destinationPath, { recursive: true });

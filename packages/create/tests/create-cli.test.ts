@@ -5,6 +5,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 import { scaffoldProject } from "../src/runtime/index.js";
+import { copyRenderedDirectory } from "../src/runtime/template-render.js";
 import {
 	parseGitHubTemplateLocator,
 	parseNpmTemplateLocator,
@@ -147,6 +148,7 @@ describe("@wp-typia/create scaffolding", () => {
 			'Ignoring external template config key "pluginTemplatesPath": wp-typia owns package/tooling/sync setup for generated projects, so this external template setting is ignored.',
 		);
 		expect(fs.existsSync(path.join(targetDir, "assets", "remote-note.txt"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "src", "assets"))).toBe(false);
 		expect(generatedTypes).toContain('"variantLabel"?: string & tags.Default<"standard">');
 		expect(generatedTypes).toContain('"transformedLabel"?: string & tags.Default<"standard-transformed">');
 		expect(generatedEdit).toContain("template-standard");
@@ -179,10 +181,28 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 
 		expect(result.selectedVariant).toBe("hero");
+		expect(fs.existsSync(path.join(targetDir, "src", "assets"))).toBe(false);
 		expect(generatedTypes).toContain('"variantLabel"?: string & tags.Default<"hero">');
 		expect(generatedTypes).toContain('"transformedLabel"?: string & tags.Default<"hero-transformed">');
 		expect(generatedEdit).toContain("template-hero");
 		expect(generatedBlockJson.supports.multiple).toBe(true);
+	});
+
+	test("rendered template paths cannot escape the target directory", async () => {
+		const templateRoot = fs.mkdtempSync(path.join(tempRoot, "render-escape-template-"));
+		const targetDir = fs.mkdtempSync(path.join(tempRoot, "render-escape-target-"));
+
+		fs.writeFileSync(
+			path.join(templateRoot, "{{fileName}}.mustache"),
+			"escaped",
+			"utf8",
+		);
+
+		await expect(
+			copyRenderedDirectory(templateRoot, targetDir, {
+				fileName: "../outside",
+			}),
+		).rejects.toThrow("Rendered template path escapes target directory");
 	});
 
 	test("rejects unsupported variant usage for built-in templates", async () => {
@@ -273,6 +293,7 @@ describe("@wp-typia/create scaffolding", () => {
 		const tarballPath = path.join(npmTemplateRoot, "create-block-template-1.2.3.tgz");
 		const packageDir = path.join(npmTemplateRoot, "package");
 		const originalFetch = globalThis.fetch;
+		const originalRegistry = process.env.NPM_CONFIG_REGISTRY;
 		const targetDir = path.join(tempRoot, "demo-external-npm");
 
 		fs.mkdirSync(packageDir, { recursive: true });
@@ -289,6 +310,7 @@ describe("@wp-typia/create scaffolding", () => {
 			),
 		);
 		execFileSync("tar", ["-czf", tarballPath, "-C", npmTemplateRoot, "package"]);
+		process.env.NPM_CONFIG_REGISTRY = registryBase;
 
 		globalThis.fetch = (async (input) => {
 			const requestUrl = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
@@ -344,6 +366,72 @@ describe("@wp-typia/create scaffolding", () => {
 			expect(fs.existsSync(path.join(targetDir, "assets", "remote-note.txt"))).toBe(true);
 		} finally {
 			globalThis.fetch = originalFetch;
+			if (originalRegistry === undefined) {
+				delete process.env.NPM_CONFIG_REGISTRY;
+			} else {
+				process.env.NPM_CONFIG_REGISTRY = originalRegistry;
+			}
+		}
+	});
+
+	test("npm package template specs reject explicit ranges that do not match published versions", async () => {
+		const registryBase = "https://registry.npmjs.org";
+		const metadataUrl = `${registryBase}/${encodeURIComponent("@demo/create-block-template")}`;
+		const originalFetch = globalThis.fetch;
+		const originalRegistry = process.env.NPM_CONFIG_REGISTRY;
+
+		process.env.NPM_CONFIG_REGISTRY = registryBase;
+		globalThis.fetch = (async (input) => {
+			const requestUrl = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+			if (requestUrl === metadataUrl) {
+				return new Response(
+					JSON.stringify({
+						"dist-tags": {
+							latest: "1.2.3",
+						},
+						versions: {
+							"1.2.3": {
+								dist: {
+									tarball: `${registryBase}/@demo/create-block-template/-/create-block-template-1.2.3.tgz`,
+								},
+							},
+						},
+					}),
+					{
+						status: 200,
+						headers: {
+							"content-type": "application/json",
+						},
+					},
+				);
+			}
+
+			throw new Error(`Unexpected fetch URL in npm template resolver range test: ${requestUrl}`);
+		}) as typeof fetch;
+
+		try {
+			await expect(
+				scaffoldProject({
+					projectDir: path.join(tempRoot, "demo-external-range-miss"),
+					templateId: "@demo/create-block-template@^9.0.0",
+					packageManager: "npm",
+					noInstall: true,
+					answers: {
+						author: "Test Runner",
+						description: "Demo external npm range miss",
+						namespace: "create-block",
+						slug: "demo-external-range-miss",
+						title: "Demo External Range Miss",
+					},
+				}),
+			).rejects.toThrow('Requested "^9.0.0"');
+		} finally {
+			globalThis.fetch = originalFetch;
+			if (originalRegistry === undefined) {
+				delete process.env.NPM_CONFIG_REGISTRY;
+			} else {
+				process.env.NPM_CONFIG_REGISTRY = originalRegistry;
+			}
 		}
 	});
 

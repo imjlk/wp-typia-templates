@@ -158,6 +158,12 @@ function selectRegistryVersion(
 		return matchedVersion;
 	}
 
+	if (locator.fetchSpec.trim().length > 0) {
+		throw new Error(
+			`Unable to resolve npm template version for ${locator.raw}. Requested "${locator.fetchSpec}" but available versions are: ${versionKeys.join(", ") || "(none)"}.`,
+		);
+	}
+
 	const latestVersion = distTags.latest;
 	if (typeof latestVersion === "string" && versions[latestVersion]) {
 		return latestVersion;
@@ -780,9 +786,10 @@ async function renderCreateBlockExternalTemplate(
 	};
 
 	try {
+		const renderedRoot = path.join(tempRoot, "rendered");
 		const folderName =
 			(typeof variantConfig.folderName === "string" ? variantConfig.folderName : config.folderName) || ".";
-		const blockDir = path.join(tempRoot, folderName);
+		const blockDir = resolveSourceSubpath(renderedRoot, folderName);
 		const view = await buildExternalTemplateView(context, config, selectedVariant, variantConfig);
 		const blockTemplateDir = resolveSourceSubpath(sourceDir, blockTemplatesPath);
 		await copyRenderedDirectory(blockTemplateDir, blockDir, view);
