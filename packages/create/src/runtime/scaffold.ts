@@ -12,6 +12,7 @@ import {
 } from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
 import { getPackageVersions } from "./package-versions.js";
+import { copyInterpolatedDirectory } from "./template-render.js";
 import { TEMPLATE_IDS, getTemplateById, isBuiltInTemplateId } from "./template-registry.js";
 import type { BuiltInTemplateId } from "./template-registry.js";
 import { resolveTemplateSource } from "./template-source.js";
@@ -94,13 +95,16 @@ interface ScaffoldProjectOptions {
 	packageManager: PackageManagerId;
 	projectDir: string;
 	templateId: string;
+	variant?: string;
 }
 
 export interface ScaffoldProjectResult {
 	packageManager: PackageManagerId;
 	projectDir: string;
+	selectedVariant: string | null;
 	templateId: string;
 	variables: ScaffoldTemplateVariables;
+	warnings: string[];
 }
 
 function toKebabCase(input: string): string {
@@ -184,7 +188,7 @@ export async function resolveTemplateId({
 
 	if (!isInteractive || !selectTemplate) {
 		throw new Error(
-			`Template is required in non-interactive mode. Use --template <${TEMPLATE_IDS.join("|")}|./path|github:owner/repo/path[#ref]>.`,
+			`Template is required in non-interactive mode. Use --template <${TEMPLATE_IDS.join("|")}|./path|github:owner/repo/path[#ref]|npm-package>.`,
 		);
 	}
 
@@ -282,13 +286,6 @@ export function getTemplateVariables(
 	};
 }
 
-function replaceVariables(content: string, variables: ScaffoldTemplateVariables): string {
-	return content.replace(/\{\{([^}]+)\}\}/g, (match, rawKey) => {
-		const key = rawKey.trim() as keyof ScaffoldTemplateVariables;
-		return Object.prototype.hasOwnProperty.call(variables, key) ? variables[key] : match;
-	});
-}
-
 async function ensureDirectory(targetDir: string, allowExisting = false): Promise<void> {
 	if (!fs.existsSync(targetDir)) {
 		await fsp.mkdir(targetDir, { recursive: true });
@@ -302,30 +299,6 @@ async function ensureDirectory(targetDir: string, allowExisting = false): Promis
 	const entries = await fsp.readdir(targetDir);
 	if (entries.length > 0) {
 		throw new Error(`Target directory is not empty: ${targetDir}`);
-	}
-}
-
-async function copyTemplateDir(
-	sourceDir: string,
-	targetDir: string,
-	variables: ScaffoldTemplateVariables,
-): Promise<void> {
-	const entries = await fsp.readdir(sourceDir, { withFileTypes: true });
-	for (const entry of entries) {
-		const sourcePath = path.join(sourceDir, entry.name);
-		const destinationName = entry.name.endsWith(".mustache")
-			? entry.name.slice(0, -".mustache".length)
-			: entry.name;
-		const destinationPath = path.join(targetDir, destinationName);
-
-		if (entry.isDirectory()) {
-			await fsp.mkdir(destinationPath, { recursive: true });
-			await copyTemplateDir(sourcePath, destinationPath, variables);
-			continue;
-		}
-
-		const content = await fsp.readFile(sourcePath, "utf8");
-		await fsp.writeFile(destinationPath, replaceVariables(content, variables), "utf8");
 	}
 }
 
@@ -513,6 +486,7 @@ export async function scaffoldProject({
 	allowExistingDir = false,
 	noInstall = false,
 	installDependencies = undefined,
+	variant,
 }: ScaffoldProjectOptions): Promise<ScaffoldProjectResult> {
 	const resolvedPackageManager = getPackageManager(packageManager).id;
 
@@ -523,10 +497,15 @@ export async function scaffoldProject({
 		templateId,
 		cwd,
 		variables as unknown as Record<string, string>,
+		variant,
 	);
 
 	try {
-		await copyTemplateDir(templateSource.templateDir, projectDir, variables);
+		await copyInterpolatedDirectory(
+			templateSource.templateDir,
+			projectDir,
+			variables as unknown as Record<string, string>,
+		);
 	} finally {
 		if (templateSource.cleanup) {
 			await templateSource.cleanup();
@@ -556,8 +535,10 @@ export async function scaffoldProject({
 
 	return {
 		projectDir,
+		selectedVariant: templateSource.selectedVariant ?? null,
 		templateId,
 		packageManager: resolvedPackageManager,
 		variables,
+		warnings: templateSource.warnings ?? [],
 	};
 }

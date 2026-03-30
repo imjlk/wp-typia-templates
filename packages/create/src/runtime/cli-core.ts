@@ -69,6 +69,7 @@ interface RunScaffoldFlowOptions {
 	selectPackageManager?: () => Promise<PackageManagerId>;
 	selectTemplate?: () => Promise<TemplateDefinition["id"]>;
 	templateId?: string;
+	variant?: string;
 	yes?: boolean;
 }
 
@@ -130,6 +131,7 @@ export function createReadlinePrompt(): ReadlinePrompt {
 export function formatHelpText(): string {
 	return `Usage:
   wp-typia <project-dir> [--template <basic|interactivity|./path|github:owner/repo/path[#ref]>] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <npm-package>] [--variant <name>] [--yes] [--no-install] [--package-manager <id>]
   wp-typia templates list
   wp-typia templates inspect <id>
   wp-typia migrations <init|snapshot|diff|scaffold|verify> [...]
@@ -287,6 +289,7 @@ export async function runScaffoldFlow({
 	selectPackageManager,
 	promptText,
 	installDependencies = undefined,
+	variant,
 }: RunScaffoldFlowOptions) {
 	if (!projectInput) {
 		throw new Error("Project directory is required. Usage: wp-typia <project-dir>");
@@ -322,6 +325,7 @@ export async function runScaffoldFlow({
 		packageManager: resolvedPackageManager,
 		projectDir,
 		templateId: resolvedTemplateId,
+		variant,
 	});
 
 	return {

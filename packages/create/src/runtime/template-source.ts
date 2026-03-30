@@ -3,6 +3,11 @@ import { promises as fsp } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
+
+import npa from "npm-package-arg";
+import semver from "semver";
+import { x as extractTarball } from "tar";
 
 import {
 	BUILTIN_TEMPLATE_IDS,
@@ -12,8 +17,15 @@ import {
 	type BuiltInTemplateId,
 } from "./template-registry.js";
 import { getPackageVersions } from "./package-versions.js";
+import { copyRawDirectory, copyRenderedDirectory } from "./template-render.js";
 
-export interface TemplateVariableContext {
+const EXTERNAL_TEMPLATE_ENTRY_CANDIDATES = ["index.js", "index.cjs", "index.mjs"] as const;
+const TEMPLATE_WARNING_MESSAGE =
+	"wp-typia owns package/tooling/sync setup for generated projects, so this external template setting is ignored.";
+
+type TemplateSourceFormat = "wp-typia" | "create-block-external" | "create-block-subset";
+
+export interface TemplateVariableContext extends Record<string, unknown> {
 	createPackageVersion: string;
 	blockTypesPackageVersion: string;
 	pascalCase: string;
@@ -30,9 +42,11 @@ export interface ResolvedTemplateSource {
 	defaultCategory: string;
 	description: string;
 	features: string[];
-	format: "wp-typia" | "create-block-subset";
+	format: TemplateSourceFormat;
 	templateDir: string;
 	cleanup?: () => Promise<void>;
+	selectedVariant?: string | null;
+	warnings?: string[];
 }
 
 interface GitHubTemplateLocator {
@@ -42,13 +56,167 @@ interface GitHubTemplateLocator {
 	sourcePath: string;
 }
 
+interface NpmTemplateLocator {
+	fetchSpec: string;
+	name: string;
+	raw: string;
+	type: string;
+}
+
+interface ExternalTemplateConfig {
+	assetsPath?: string;
+	blockTemplatesPath?: string;
+	defaultValues?: Record<string, unknown>;
+	folderName?: string;
+	transformer?: (view: Record<string, unknown>) => Record<string, unknown> | Promise<Record<string, unknown>>;
+	variants?: Record<string, Record<string, unknown>>;
+}
+
+interface SeedSource {
+	assetsDir?: string;
+	blockDir: string;
+	cleanup?: () => Promise<void>;
+	rootDir: string;
+	selectedVariant?: string | null;
+	warnings?: string[];
+}
+
 type RemoteTemplateLocator =
 	| { kind: "builtin"; templateId: BuiltInTemplateId }
-	| { kind: "path"; templatePath: string }
-	| { kind: "github"; locator: GitHubTemplateLocator };
+	| { kind: "github"; locator: GitHubTemplateLocator }
+	| { kind: "npm"; locator: NpmTemplateLocator }
+	| { kind: "path"; templatePath: string };
 
 function isTemplatePathLocator(templateId: string): boolean {
 	return path.isAbsolute(templateId) || templateId.startsWith("./") || templateId.startsWith("../");
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function toPascalCase(input: string): string {
+	return input
+		.replace(/[^A-Za-z0-9]+/g, " ")
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean)
+		.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+		.join("");
+}
+
+function getTemplateWarning(key: string): string {
+	return `Ignoring external template config key "${key}": ${TEMPLATE_WARNING_MESSAGE}`;
+}
+
+function resolveSourceSubpath(sourceDir: string, relativePath: string): string {
+	const targetPath = path.resolve(sourceDir, relativePath);
+	const relativeTarget = path.relative(sourceDir, targetPath);
+	if (relativeTarget.startsWith("..") || path.isAbsolute(relativeTarget)) {
+		throw new Error(`Template path "${relativePath}" must stay within ${sourceDir}.`);
+	}
+	return targetPath;
+}
+
+function getExternalTemplateEntry(sourceDir: string): string | null {
+	for (const filename of EXTERNAL_TEMPLATE_ENTRY_CANDIDATES) {
+		const candidate = path.join(sourceDir, filename);
+		if (fs.existsSync(candidate)) {
+			return candidate;
+		}
+	}
+
+	return null;
+}
+
+function selectRegistryVersion(
+	metadata: Record<string, unknown>,
+	locator: NpmTemplateLocator,
+): string {
+	const distTags = isPlainObject(metadata["dist-tags"]) ? metadata["dist-tags"] : {};
+	const versions = isPlainObject(metadata.versions) ? metadata.versions : {};
+	const versionKeys = Object.keys(versions);
+
+	if (locator.type === "version") {
+		if (!versions[locator.fetchSpec]) {
+			throw new Error(`npm template package version not found: ${locator.raw}`);
+		}
+		return locator.fetchSpec;
+	}
+
+	if (locator.type === "tag") {
+		const taggedVersion = distTags[locator.fetchSpec];
+		if (typeof taggedVersion !== "string") {
+			throw new Error(`npm template package tag not found: ${locator.raw}`);
+		}
+		return taggedVersion;
+	}
+
+	const range = locator.fetchSpec.trim().length > 0 ? locator.fetchSpec : "*";
+	const matchedVersion = semver.maxSatisfying(versionKeys, range);
+	if (matchedVersion) {
+		return matchedVersion;
+	}
+
+	const latestVersion = distTags.latest;
+	if (typeof latestVersion === "string" && versions[latestVersion]) {
+		return latestVersion;
+	}
+
+	throw new Error(`Unable to resolve a published npm template version for ${locator.raw}.`);
+}
+
+async function fetchNpmTemplateSource(locator: NpmTemplateLocator): Promise<SeedSource> {
+	const registryBase = (process.env.NPM_CONFIG_REGISTRY ?? "https://registry.npmjs.org").replace(/\/$/, "");
+	const metadataResponse = await fetch(`${registryBase}/${encodeURIComponent(locator.name)}`);
+	if (!metadataResponse.ok) {
+		throw new Error(`Failed to fetch npm template metadata for ${locator.raw}: ${metadataResponse.status}`);
+	}
+
+	const metadata = (await metadataResponse.json()) as Record<string, unknown>;
+	const resolvedVersion = selectRegistryVersion(metadata, locator);
+	const versions = isPlainObject(metadata.versions) ? metadata.versions : {};
+	const versionMetadata = versions[resolvedVersion];
+	if (!isPlainObject(versionMetadata) || !isPlainObject(versionMetadata.dist)) {
+		throw new Error(`npm template metadata is missing dist information for ${locator.raw}@${resolvedVersion}.`);
+	}
+
+	const tarballUrl = versionMetadata.dist.tarball;
+	if (typeof tarballUrl !== "string" || tarballUrl.length === 0) {
+		throw new Error(`npm template metadata is missing tarball URL for ${locator.raw}@${resolvedVersion}.`);
+	}
+
+	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-template-source-"));
+	const cleanup = async () => {
+		await fsp.rm(tempRoot, { force: true, recursive: true });
+	};
+
+	try {
+		const tarballResponse = await fetch(tarballUrl);
+		if (!tarballResponse.ok) {
+			throw new Error(`Failed to download npm template tarball for ${locator.raw}: ${tarballResponse.status}`);
+		}
+
+		const tarballPath = path.join(tempRoot, "template.tgz");
+		const unpackDir = path.join(tempRoot, "source");
+		await fsp.mkdir(unpackDir, { recursive: true });
+		await fsp.writeFile(tarballPath, Buffer.from(await tarballResponse.arrayBuffer()));
+		await extractTarball({
+			cwd: unpackDir,
+			file: tarballPath,
+			strip: 1,
+		});
+		await assertNoSymlinks(unpackDir);
+
+		return {
+			blockDir: unpackDir,
+			cleanup,
+			rootDir: unpackDir,
+		};
+	} catch (error) {
+		await cleanup();
+		throw error;
+	}
 }
 
 export function parseGitHubTemplateLocator(templateId: string): GitHubTemplateLocator | null {
@@ -73,6 +241,28 @@ export function parseGitHubTemplateLocator(templateId: string): GitHubTemplateLo
 	};
 }
 
+export function parseNpmTemplateLocator(templateId: string): NpmTemplateLocator | null {
+	if (isBuiltInTemplateId(templateId) || isTemplatePathLocator(templateId) || templateId.startsWith("github:")) {
+		return null;
+	}
+
+	try {
+		const parsed = npa(templateId);
+		if (!parsed.registry || !parsed.name) {
+			return null;
+		}
+
+		return {
+			fetchSpec: typeof parsed.fetchSpec === "string" ? parsed.fetchSpec : "",
+			name: parsed.name,
+			raw: templateId,
+			type: parsed.type,
+		};
+	} catch {
+		return null;
+	}
+}
+
 export function parseTemplateLocator(templateId: string): RemoteTemplateLocator {
 	if (isBuiltInTemplateId(templateId)) {
 		return { kind: "builtin", templateId };
@@ -87,27 +277,35 @@ export function parseTemplateLocator(templateId: string): RemoteTemplateLocator 
 		return { kind: "path", templatePath: templateId };
 	}
 
+	const npmLocator = parseNpmTemplateLocator(templateId);
+	if (npmLocator) {
+		return { kind: "npm", locator: npmLocator };
+	}
+
 	throw new Error(
-		`Unknown template "${templateId}". Expected one of: ${BUILTIN_TEMPLATE_IDS.join(", ")}, a local path, or github:owner/repo/path[#ref].`,
+		`Unknown template "${templateId}". Expected one of: ${BUILTIN_TEMPLATE_IDS.join(", ")}, a local path, github:owner/repo/path[#ref], or an npm package spec.`,
 	);
+}
+
+function getDefaultCategoryFromBlockJson(blockJson: Record<string, unknown>): string {
+	return typeof blockJson.category === "string" && blockJson.category.trim().length > 0
+		? blockJson.category.trim()
+		: "widgets";
 }
 
 function getDefaultCategory(sourceDir: string): string {
 	try {
 		const blockJson = readRemoteBlockJson(sourceDir);
-		if (typeof blockJson.category === "string" && blockJson.category.trim().length > 0) {
-			return blockJson.category.trim();
-		}
+		return getDefaultCategoryFromBlockJson(blockJson);
 	} catch {
-		// Ignore missing block.json during generic format detection.
+		return "widgets";
 	}
-
-	return "widgets";
 }
 
 function getTemplateVariableContext(variables: { [key: string]: string }): TemplateVariableContext {
 	const { blockTypesPackageVersion, createPackageVersion } = getPackageVersions();
 	return {
+		...variables,
 		blockTypesPackageVersion: variables.blockTypesPackageVersion ?? blockTypesPackageVersion,
 		createPackageVersion: variables.createPackageVersion ?? createPackageVersion,
 		description: variables.description,
@@ -118,11 +316,6 @@ function getTemplateVariableContext(variables: { [key: string]: string }): Templ
 		textDomain: variables.textDomain,
 		title: variables.title,
 	};
-}
-
-async function copyRawDirectory(sourceDir: string, targetDir: string): Promise<void> {
-	await fsp.mkdir(path.dirname(targetDir), { recursive: true });
-	await fsp.cp(sourceDir, targetDir, { recursive: true });
 }
 
 async function materializeBuiltinTemplate(templateId: BuiltInTemplateId): Promise<ResolvedTemplateSource> {
@@ -159,9 +352,13 @@ async function materializeBuiltinTemplate(templateId: BuiltInTemplateId): Promis
 	};
 }
 
-function detectTemplateSourceFormat(sourceDir: string): "wp-typia" | "create-block-subset" {
+async function detectTemplateSourceFormat(sourceDir: string): Promise<TemplateSourceFormat> {
 	if (fs.existsSync(path.join(sourceDir, "package.json.mustache"))) {
 		return "wp-typia";
+	}
+
+	if (getExternalTemplateEntry(sourceDir)) {
+		return "create-block-external";
 	}
 
 	const sourceRoot = fs.existsSync(path.join(sourceDir, "src")) ? path.join(sourceDir, "src") : sourceDir;
@@ -185,19 +382,19 @@ function detectTemplateSourceFormat(sourceDir: string): "wp-typia" | "create-blo
 	}
 
 	throw new Error(
-		`Unsupported template source at ${sourceDir}. Expected a wp-typia template directory or a create-block subset with block.json and src/index/edit/save files.`,
+		`Unsupported template source at ${sourceDir}. Expected a wp-typia template directory, an official create-block external template config, or a create-block subset with block.json and src/index/edit/save files.`,
 	);
 }
 
-function readRemoteBlockJson(sourceDir: string): Record<string, unknown> {
-	const sourceRoot = fs.existsSync(path.join(sourceDir, "src")) ? path.join(sourceDir, "src") : sourceDir;
-	for (const candidate of [path.join(sourceDir, "block.json"), path.join(sourceRoot, "block.json")]) {
+function readRemoteBlockJson(blockDir: string): Record<string, unknown> {
+	const sourceRoot = fs.existsSync(path.join(blockDir, "src")) ? path.join(blockDir, "src") : blockDir;
+	for (const candidate of [path.join(blockDir, "block.json"), path.join(sourceRoot, "block.json")]) {
 		if (fs.existsSync(candidate)) {
 			return JSON.parse(fs.readFileSync(candidate, "utf8")) as Record<string, unknown>;
 		}
 	}
 
-	throw new Error(`Unable to locate block.json in ${sourceDir}`);
+	throw new Error(`Unable to locate block.json in ${blockDir}`);
 }
 
 async function assertNoSymlinks(sourceDir: string): Promise<void> {
@@ -228,15 +425,9 @@ function renderTypeScriptLiteral(value: unknown): string {
 
 function renderTagsForAttribute(attribute: Record<string, unknown>): string[] {
 	const tags: string[] = [];
-
-	if (Array.isArray(attribute.enum) && attribute.enum.length > 0) {
-		// enums are rendered in the type, defaults are still useful
-	}
-
 	if (typeof attribute.default === "string" || typeof attribute.default === "number" || typeof attribute.default === "boolean") {
 		tags.push(`tags.Default<${renderTypeScriptLiteral(attribute.default)}>`); 
 	}
-
 	return tags;
 }
 
@@ -284,15 +475,13 @@ function buildRemoteTypesSource(
 	return lines.join("\n");
 }
 
-function buildRemoteBlockJsonTemplate(
-	blockJson: Record<string, unknown>,
-): string {
+function buildRemoteBlockJsonTemplate(blockJson: Record<string, unknown>): string {
 	const merged: Record<string, unknown> = {
 		...blockJson,
-		name: "{{namespace}}/{{slug}}",
-		title: "{{title}}",
 		description: "{{description}}",
+		name: "{{namespace}}/{{slug}}",
 		textdomain: "{{textDomain}}",
+		title: "{{title}}",
 	};
 
 	if (!Array.isArray(merged.keywords) || merged.keywords.length === 0) {
@@ -321,16 +510,9 @@ async function rewriteBlockJsonImports(directory: string): Promise<void> {
 		}
 
 		const content = await fsp.readFile(currentPath, "utf8");
-		const relativeSpecifier = path
-			.relative(path.dirname(currentPath), targetBlockJsonPath)
-			.replace(/\\/g, "/");
-		const normalizedSpecifier = relativeSpecifier.startsWith(".")
-			? relativeSpecifier
-			: `./${relativeSpecifier}`;
-		const next = content.replace(
-			/(['"])\.{1,2}\/[^'"]*block\.json\1/g,
-			`$1${normalizedSpecifier}$1`
-		);
+		const relativeSpecifier = path.relative(path.dirname(currentPath), targetBlockJsonPath).replace(/\\/g, "/");
+		const normalizedSpecifier = relativeSpecifier.startsWith(".") ? relativeSpecifier : `./${relativeSpecifier}`;
+		const next = content.replace(/(['"])\.{1,2}\/[^'"]*block\.json\1/g, `$1${normalizedSpecifier}$1`);
 		if (next !== content) {
 			await fsp.writeFile(currentPath, next, "utf8");
 		}
@@ -342,8 +524,8 @@ async function rewriteBlockJsonImports(directory: string): Promise<void> {
 async function patchRemotePackageJson(templateDir: string, needsInteractivity: boolean): Promise<void> {
 	const packageJsonPath = path.join(templateDir, "package.json.mustache");
 	const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, "utf8")) as {
-		devDependencies?: Record<string, string>;
 		dependencies?: Record<string, string>;
+		devDependencies?: Record<string, string>;
 	};
 
 	packageJson.devDependencies = {
@@ -362,33 +544,68 @@ async function patchRemotePackageJson(templateDir: string, needsInteractivity: b
 	await fsp.writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
 }
 
+function getSeedSourceRoot(blockDir: string): string {
+	return fs.existsSync(path.join(blockDir, "src")) ? path.join(blockDir, "src") : blockDir;
+}
+
+function findSeedRenderPhp(seed: SeedSource): string | null {
+	for (const candidate of [path.join(seed.blockDir, "render.php"), path.join(seed.rootDir, "render.php")]) {
+		if (fs.existsSync(candidate)) {
+			return candidate;
+		}
+	}
+	return null;
+}
+
+async function removeSeedEntryConflicts(templateDir: string): Promise<void> {
+	for (const filename of [
+		"edit.js",
+		"edit.jsx",
+		"edit.ts",
+		"edit.tsx",
+		"index.js",
+		"index.jsx",
+		"index.ts",
+		"index.tsx",
+		"save.js",
+		"save.jsx",
+		"save.ts",
+		"save.tsx",
+		"style.css",
+		"style.scss",
+		"view.js",
+		"view.jsx",
+		"view.ts",
+		"view.tsx",
+	]) {
+		await fsp.rm(path.join(templateDir, "src", filename), { force: true });
+	}
+}
+
 async function normalizeCreateBlockSubset(
-	sourceDir: string,
+	seed: SeedSource,
 	context: TemplateVariableContext,
 ): Promise<ResolvedTemplateSource> {
 	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-remote-template-"));
 	const templateDir = path.join(tempRoot, "template");
-	const blockJson = readRemoteBlockJson(sourceDir);
-	const sourceRoot = fs.existsSync(path.join(sourceDir, "src")) ? path.join(sourceDir, "src") : sourceDir;
+	const blockJson = readRemoteBlockJson(seed.blockDir);
+	const sourceRoot = getSeedSourceRoot(seed.blockDir);
 
 	await copyRawDirectory(path.join(TEMPLATE_ROOT, "basic"), templateDir);
+	await removeSeedEntryConflicts(templateDir);
 	await fsp.cp(sourceRoot, path.join(templateDir, "src"), { recursive: true, force: true });
 
-	const remoteRenderPath = path.join(sourceDir, "render.php");
-	if (fs.existsSync(remoteRenderPath)) {
+	const remoteRenderPath = findSeedRenderPhp(seed);
+	if (remoteRenderPath) {
 		await fsp.copyFile(remoteRenderPath, path.join(templateDir, "render.php"));
 	}
 
-	await fsp.writeFile(
-		path.join(templateDir, "src", "types.ts"),
-		buildRemoteTypesSource(blockJson, context),
-		"utf8",
-	);
-	await fsp.writeFile(
-		path.join(templateDir, "src", "block.json"),
-		buildRemoteBlockJsonTemplate(blockJson),
-		"utf8",
-	);
+	if (seed.assetsDir && fs.existsSync(seed.assetsDir)) {
+		await fsp.cp(seed.assetsDir, path.join(templateDir, "assets"), { recursive: true, force: true });
+	}
+
+	await fsp.writeFile(path.join(templateDir, "src", "types.ts"), buildRemoteTypesSource(blockJson, context), "utf8");
+	await fsp.writeFile(path.join(templateDir, "src", "block.json"), buildRemoteBlockJsonTemplate(blockJson), "utf8");
 	await rewriteBlockJsonImports(path.join(templateDir, "src"));
 
 	const needsInteractivity =
@@ -397,101 +614,323 @@ async function normalizeCreateBlockSubset(
 		fs.existsSync(path.join(templateDir, "src", "view.js")) ||
 		fs.existsSync(path.join(templateDir, "src", "view.ts")) ||
 		fs.existsSync(path.join(templateDir, "src", "view.tsx")) ||
+		fs.existsSync(path.join(templateDir, "src", "interactivity.js")) ||
 		fs.existsSync(path.join(templateDir, "src", "interactivity.ts"));
 
 	await patchRemotePackageJson(templateDir, needsInteractivity);
 
 	return {
 		id: "remote:create-block-subset",
-		defaultCategory: typeof blockJson.category === "string" ? blockJson.category : "widgets",
+		defaultCategory: getDefaultCategoryFromBlockJson(blockJson),
 		description: "A wp-typia scaffold normalized from a create-block subset source",
 		features: ["Remote source", "create-block adapter", "Typia metadata pipeline"],
 		format: "create-block-subset",
+		selectedVariant: seed.selectedVariant ?? null,
 		templateDir,
+		warnings: seed.warnings ?? [],
 		cleanup: async () => {
 			await fsp.rm(tempRoot, { force: true, recursive: true });
+			if (seed.cleanup) {
+				await seed.cleanup();
+			}
 		},
 	};
+}
+
+async function loadExternalTemplateConfig(sourceDir: string): Promise<{
+	config: ExternalTemplateConfig;
+	warnings: string[];
+}> {
+	const entryPath = getExternalTemplateEntry(sourceDir);
+	if (!entryPath) {
+		throw new Error(`No external template config entry found in ${sourceDir}.`);
+	}
+
+	const moduleUrl = `${pathToFileURL(entryPath).href}?mtime=${fs.statSync(entryPath).mtimeMs}`;
+	const loadedModule = (await import(moduleUrl)) as Record<string, unknown>;
+	const loadedConfig = loadedModule.default ?? loadedModule;
+	if (!isPlainObject(loadedConfig)) {
+		throw new Error(`External template config must export an object: ${entryPath}`);
+	}
+
+	const warnings: string[] = [];
+	for (const ignoredKey of [
+		"pluginTemplatesPath",
+		"wpScripts",
+		"wpEnv",
+		"customScripts",
+		"npmDependencies",
+		"npmDevDependencies",
+		"customPackageJSON",
+		"pluginReadme",
+		"pluginHeader",
+	]) {
+		if (ignoredKey in loadedConfig) {
+			warnings.push(getTemplateWarning(ignoredKey));
+		}
+	}
+
+	return {
+		config: loadedConfig as unknown as ExternalTemplateConfig,
+		warnings,
+	};
+}
+
+function getVariantFlagName(variantName: string): string {
+	return `is${toPascalCase(variantName)}Variant`;
+}
+
+function getVariantKeys(config: ExternalTemplateConfig): string[] {
+	return isPlainObject(config.variants) ? Object.keys(config.variants) : [];
+}
+
+function getVariantConfig(
+	config: ExternalTemplateConfig,
+	requestedVariant?: string,
+): {
+	selectedVariant: string | null;
+	variantConfig: Record<string, unknown>;
+} {
+	const variantKeys = getVariantKeys(config);
+	if (variantKeys.length === 0) {
+		if (requestedVariant) {
+			throw new Error(
+				`Variant "${requestedVariant}" was requested, but the external template does not define any variants.`,
+			);
+		}
+
+		return {
+			selectedVariant: null,
+			variantConfig: {},
+		};
+	}
+
+	const selectedVariant = requestedVariant ?? variantKeys[0];
+	if (!selectedVariant || !isPlainObject(config.variants?.[selectedVariant])) {
+		throw new Error(
+			`Unknown template variant "${requestedVariant}". Expected one of: ${variantKeys.join(", ")}`,
+		);
+	}
+
+	return {
+		selectedVariant,
+		variantConfig: config.variants?.[selectedVariant] as Record<string, unknown>,
+	};
+}
+
+function extractVariantRenderValues(variantConfig: Record<string, unknown>): Record<string, unknown> {
+	const values = { ...variantConfig };
+	delete values.assetsPath;
+	delete values.blockTemplatesPath;
+	delete values.folderName;
+	delete values.transformer;
+	return values;
+}
+
+async function buildExternalTemplateView(
+	context: TemplateVariableContext,
+	config: ExternalTemplateConfig,
+	selectedVariant: string | null,
+	variantConfig: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+	const mergedView: Record<string, unknown> = {
+		...(config.defaultValues ?? {}),
+		...extractVariantRenderValues(variantConfig),
+		...context,
+	};
+
+	if (selectedVariant) {
+		mergedView.variant = selectedVariant;
+		mergedView[getVariantFlagName(selectedVariant)] = true;
+	}
+
+	if (!config.transformer) {
+		return mergedView;
+	}
+
+	const transformed = await config.transformer(mergedView);
+	if (!isPlainObject(transformed)) {
+		throw new Error("External template transformer(view) must return an object.");
+	}
+
+	return {
+		...mergedView,
+		...transformed,
+	};
+}
+
+async function renderCreateBlockExternalTemplate(
+	sourceDir: string,
+	context: TemplateVariableContext,
+	requestedVariant?: string,
+): Promise<SeedSource> {
+	const { config, warnings } = await loadExternalTemplateConfig(sourceDir);
+	const { selectedVariant, variantConfig } = getVariantConfig(config, requestedVariant);
+
+	const blockTemplatesPath =
+		(typeof variantConfig.blockTemplatesPath === "string" ? variantConfig.blockTemplatesPath : config.blockTemplatesPath) ??
+		null;
+	if (!blockTemplatesPath) {
+		throw new Error("External template config must define blockTemplatesPath.");
+	}
+
+	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-create-block-external-"));
+	const cleanup = async () => {
+		await fsp.rm(tempRoot, { force: true, recursive: true });
+	};
+
+	try {
+		const folderName =
+			(typeof variantConfig.folderName === "string" ? variantConfig.folderName : config.folderName) || ".";
+		const blockDir = path.join(tempRoot, folderName);
+		const view = await buildExternalTemplateView(context, config, selectedVariant, variantConfig);
+		const blockTemplateDir = resolveSourceSubpath(sourceDir, blockTemplatesPath);
+		await copyRenderedDirectory(blockTemplateDir, blockDir, view);
+
+		const assetsPath =
+			typeof variantConfig.assetsPath === "string" ? variantConfig.assetsPath : config.assetsPath;
+		if (typeof assetsPath === "string" && assetsPath.trim().length > 0) {
+			await copyRawDirectory(resolveSourceSubpath(sourceDir, assetsPath), path.join(tempRoot, "assets"));
+		}
+
+		return {
+			assetsDir: fs.existsSync(path.join(tempRoot, "assets")) ? path.join(tempRoot, "assets") : undefined,
+			blockDir,
+			cleanup,
+			rootDir: tempRoot,
+			selectedVariant,
+			warnings,
+		};
+	} catch (error) {
+		await cleanup();
+		throw error;
+	}
+}
+
+async function resolveGitHubTemplateSource(locator: GitHubTemplateLocator): Promise<SeedSource> {
+	const remoteRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-template-source-"));
+	const cleanup = async () => {
+		await fsp.rm(remoteRoot, { force: true, recursive: true });
+	};
+	const checkoutDir = path.join(remoteRoot, "source");
+
+	try {
+		const args = ["clone", "--depth", "1"];
+		if (locator.ref) {
+			args.push("--branch", locator.ref);
+		}
+		args.push(`https://github.com/${locator.owner}/${locator.repo}.git`, checkoutDir);
+		execFileSync("git", args, { stdio: "ignore" });
+
+		const sourceDir = path.resolve(checkoutDir, locator.sourcePath);
+		const relativeSourceDir = path.relative(checkoutDir, sourceDir);
+		if (relativeSourceDir.startsWith("..") || path.isAbsolute(relativeSourceDir)) {
+			throw new Error("GitHub template path must stay within the cloned repository.");
+		}
+		if (!fs.existsSync(sourceDir)) {
+			throw new Error(`GitHub template path does not exist: ${locator.sourcePath}`);
+		}
+		await assertNoSymlinks(sourceDir);
+
+		return {
+			blockDir: sourceDir,
+			cleanup,
+			rootDir: sourceDir,
+		};
+	} catch (error) {
+		await cleanup();
+		throw error;
+	}
+}
+
+async function resolveTemplateSeed(
+	locator: Exclude<RemoteTemplateLocator, { kind: "builtin" }>,
+	cwd: string,
+): Promise<SeedSource> {
+	if (locator.kind === "path") {
+		const sourceDir = path.resolve(cwd, locator.templatePath);
+		if (!fs.existsSync(sourceDir)) {
+			throw new Error(`Template path does not exist: ${sourceDir}`);
+		}
+		await assertNoSymlinks(sourceDir);
+		return {
+			blockDir: sourceDir,
+			rootDir: sourceDir,
+		};
+	}
+
+	if (locator.kind === "github") {
+		return resolveGitHubTemplateSource(locator.locator);
+	}
+
+	return fetchNpmTemplateSource(locator.locator);
 }
 
 export async function resolveTemplateSource(
 	templateId: string,
 	cwd: string,
 	variables: { [key: string]: string },
+	variant?: string,
 ): Promise<ResolvedTemplateSource> {
 	const locator = parseTemplateLocator(templateId);
 	const context = getTemplateVariableContext(variables);
 
 	if (locator.kind === "builtin") {
+		if (variant) {
+			throw new Error(`--variant is only supported for official external template configs. Received variant "${variant}" for built-in template "${templateId}".`);
+		}
 		return materializeBuiltinTemplate(locator.templateId);
 	}
 
-	let sourceDir: string;
-	let cleanupRemote: (() => Promise<void>) | undefined;
-
-	if (locator.kind === "path") {
-		sourceDir = path.resolve(cwd, locator.templatePath);
-		if (!fs.existsSync(sourceDir)) {
-			throw new Error(`Template path does not exist: ${sourceDir}`);
-		}
-	} else {
-		const remoteRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-template-source-"));
-		cleanupRemote = async () => {
-			await fsp.rm(remoteRoot, { force: true, recursive: true });
-		};
-		const checkoutDir = path.join(remoteRoot, "source");
-		try {
-			const args = ["clone", "--depth", "1"];
-			if (locator.locator.ref) {
-				args.push("--branch", locator.locator.ref);
-			}
-			args.push(`https://github.com/${locator.locator.owner}/${locator.locator.repo}.git`, checkoutDir);
-			execFileSync("git", args, { stdio: "ignore" });
-			sourceDir = path.resolve(checkoutDir, locator.locator.sourcePath);
-			const relativeSourceDir = path.relative(checkoutDir, sourceDir);
-			if (relativeSourceDir.startsWith("..") || path.isAbsolute(relativeSourceDir)) {
-				throw new Error("GitHub template path must stay within the cloned repository.");
-			}
-			if (!fs.existsSync(sourceDir)) {
-				throw new Error(`GitHub template path does not exist: ${locator.locator.sourcePath}`);
-			}
-			await assertNoSymlinks(sourceDir);
-		} catch (error) {
-			await cleanupRemote();
-			throw error;
-		}
-	}
+	const seed = await resolveTemplateSeed(locator, cwd);
+	let normalizedSeed: SeedSource | null = null;
 
 	try {
-		const format = detectTemplateSourceFormat(sourceDir);
+		const format = await detectTemplateSourceFormat(seed.blockDir);
 		if (format === "wp-typia") {
+			if (variant) {
+				throw new Error(`--variant is only supported for official external template configs. Received variant "${variant}" for "${templateId}".`);
+			}
 			return {
 				id: templateId,
-				defaultCategory: getDefaultCategory(sourceDir),
+				defaultCategory: getDefaultCategory(seed.blockDir),
 				description: "A remote wp-typia template source",
 				features: ["Remote source", "wp-typia format"],
 				format,
-				templateDir: sourceDir,
-				cleanup: cleanupRemote,
+				templateDir: seed.blockDir,
+				cleanup: seed.cleanup,
 			};
 		}
 
-		const normalized = await normalizeCreateBlockSubset(sourceDir, context);
-		const originalCleanup = normalized.cleanup;
-		return {
-			...normalized,
-			cleanup: async () => {
-				if (originalCleanup) {
-					await originalCleanup();
-				}
-				if (cleanupRemote) {
-					await cleanupRemote();
-				}
-			},
-		};
+		normalizedSeed =
+			format === "create-block-external"
+				? await renderCreateBlockExternalTemplate(seed.blockDir, context, variant)
+				: variant
+					? (() => {
+						throw new Error(`--variant is only supported for official external template configs. Received variant "${variant}" for "${templateId}".`);
+					})()
+					: seed;
+
+		if (format === "create-block-external") {
+			const normalized = await normalizeCreateBlockSubset(normalizedSeed, context);
+			return {
+				...normalized,
+				description: "A wp-typia scaffold normalized from an official create-block external template",
+				features: ["Remote source", "official external template", "Typia metadata pipeline"],
+				format,
+				id: "remote:create-block-external",
+				selectedVariant: normalizedSeed.selectedVariant ?? null,
+				warnings: normalizedSeed.warnings ?? [],
+			};
+		}
+
+		return normalizeCreateBlockSubset(normalizedSeed, context);
 	} catch (error) {
-		if (cleanupRemote) {
-			await cleanupRemote();
+		if (normalizedSeed?.cleanup && normalizedSeed !== seed) {
+			await normalizedSeed.cleanup();
+		}
+		if (seed.cleanup) {
+			await seed.cleanup();
 		}
 		throw error;
 	}
