@@ -20,6 +20,10 @@
       "types": "./dist/runtime/defaults.d.ts",
       "default": "./dist/runtime/defaults.js"
     },
+    "./runtime/editor": {
+      "types": "./dist/runtime/editor.d.ts",
+      "default": "./dist/runtime/editor.js"
+    },
     "./runtime/validation": {
       "types": "./dist/runtime/validation.d.ts",
       "default": "./dist/runtime/validation.js"

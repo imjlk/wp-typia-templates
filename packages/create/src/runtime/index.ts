@@ -14,6 +14,22 @@ export {
 export { applyTemplateDefaultsFromManifest } from "./defaults.js";
 export * from "./metadata-core.js";
 export {
+	createEditorModel,
+	describeEditorField,
+	formatEditorFieldLabel,
+} from "./editor.js";
+export type {
+	EditorControlKind,
+	EditorFieldDescriptor,
+	EditorFieldOption,
+	EditorModelOptions,
+	ManifestAttribute,
+	ManifestConstraints,
+	ManifestDocument,
+	ManifestTsKind,
+	JsonValue,
+} from "./editor.js";
+export {
 	createAttributeUpdater,
 	formatValidationError,
 	formatValidationErrors,

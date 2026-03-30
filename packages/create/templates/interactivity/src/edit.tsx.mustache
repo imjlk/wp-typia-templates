@@ -2,6 +2,8 @@ import { __ } from '@wordpress/i18n';
 import { useBlockProps, InspectorControls, RichText, BlockControls, AlignmentToolbar } from '@wordpress/block-editor';
 import { PanelBody, ToggleControl, SelectControl, RangeControl, TextControl, Button, Notice } from '@wordpress/components';
 import { useState } from '@wordpress/element';
+import currentManifest from './typia.manifest.json';
+import { createEditorModel, type ManifestDocument } from '@wp-typia/create/runtime/editor';
 import type { {{pascalCase}}Attributes } from './types';
 import { createAttributeUpdater, validators } from './validators';
 import { useTypiaValidation } from './hooks';
@@ -12,19 +14,63 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
   isSelected: boolean;
 }) {
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const editorFieldMap = new Map(
+    createEditorModel(currentManifest as ManifestDocument, {
+      manual: ['content', 'clickCount', 'maxClicks', 'autoPlayInterval', 'uniqueId'],
+      labels: {
+        alignment: __('Alignment', '{{slugSnakeCase}}'),
+        animation: __('Animation', '{{slugSnakeCase}}'),
+        interactiveMode: __('Interactive Mode', '{{slugSnakeCase}}'),
+        isVisible: __('Visible', '{{slugSnakeCase}}'),
+        showCounter: __('Show Counter', '{{slugSnakeCase}}'),
+      },
+    }).map((field) => [field.path, field]),
+  );
+  const alignmentField = editorFieldMap.get('alignment');
+  const animationField = editorFieldMap.get('animation');
+  const interactiveModeField = editorFieldMap.get('interactiveMode');
+  const isVisibleField = editorFieldMap.get('isVisible');
+  const showCounterField = editorFieldMap.get('showCounter');
   const { errorMessages, isValid } = useTypiaValidation(attributes, validators.validate);
   const updateAttribute = createAttributeUpdater(attributes, setAttributes, validators.validate);
+  const alignmentOptions = (alignmentField?.options || []).map((option) => ({
+    label: option.label,
+    value: String(option.value),
+  }));
+  const animationOptions = (animationField?.options || []).map((option) => ({
+    label: option.label,
+    value: String(option.value),
+  }));
+  const interactiveModeOptions = (interactiveModeField?.options || []).map((option) => ({
+    label: option.label,
+    value: String(option.value),
+  }));
+  const alignmentValue = attributes.alignment ?? (
+    typeof alignmentField?.defaultValue === 'string' ? alignmentField.defaultValue : 'left'
+  );
+  const isVisible = attributes.isVisible ?? (
+    typeof isVisibleField?.defaultValue === 'boolean' ? isVisibleField.defaultValue : true
+  );
+  const showCounter = attributes.showCounter ?? (
+    typeof showCounterField?.defaultValue === 'boolean' ? showCounterField.defaultValue : true
+  );
+  const interactiveMode = attributes.interactiveMode ?? (
+    typeof interactiveModeField?.defaultValue === 'string' ? interactiveModeField.defaultValue : 'click'
+  );
+  const animation = attributes.animation ?? (
+    typeof animationField?.defaultValue === 'string' ? animationField.defaultValue : 'none'
+  );
 
   const blockProps = useBlockProps({
-    className: `wp-block-{{slugKebabCase}} wp-block-{{slugKebabCase}}--${attributes.interactiveMode}`,
+    className: `wp-block-{{slugKebabCase}} wp-block-{{slugKebabCase}}--${interactiveMode}`,
     'data-wp-interactive': '{{slugKebabCase}}',
     'data-wp-context': JSON.stringify({
       clicks: attributes.clickCount,
       isAnimating: attributes.isAnimating,
-      isVisible: attributes.isVisible,
+      isVisible,
       lastInteraction: '',
-      animation: attributes.animation,
-      interactiveMode: attributes.interactiveMode,
+      animation,
+      interactiveMode,
       maxClicks: attributes.maxClicks,
       autoPlayInterval: attributes.autoPlayInterval
     })
@@ -46,46 +92,43 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
     <>
       <BlockControls>
         <AlignmentToolbar
-          value={attributes.alignment}
-          onChange={(value) => updateAttribute('alignment', (value || 'left') as NonNullable<{{pascalCase}}Attributes['alignment']>)}
+          value={alignmentValue}
+          onChange={(value) => updateAttribute('alignment', (value || alignmentValue) as NonNullable<{{pascalCase}}Attributes['alignment']>)}
         />
       </BlockControls>
 
       <InspectorControls>
         <PanelBody title={__('Interactive Settings', '{{slugSnakeCase}}')}>
           <SelectControl
-            label={__('Interactive Mode', '{{slugSnakeCase}}')}
-            value={attributes.interactiveMode}
-            options={[
-              { label: __('Click', '{{slugSnakeCase}}'), value: 'click' },
-              { label: __('Hover', '{{slugSnakeCase}}'), value: 'hover' },
-              { label: __('Auto Play', '{{slugSnakeCase}}'), value: 'auto' }
-            ]}
+            label={alignmentField?.label || __('Alignment', '{{slugSnakeCase}}')}
+            value={alignmentValue}
+            options={alignmentOptions}
+            onChange={(value) => updateAttribute('alignment', value as NonNullable<{{pascalCase}}Attributes['alignment']>)}
+          />
+
+          <SelectControl
+            label={interactiveModeField?.label || __('Interactive Mode', '{{slugSnakeCase}}')}
+            value={interactiveMode}
+            options={interactiveModeOptions}
             onChange={(value) => updateAttribute('interactiveMode', value as NonNullable<{{pascalCase}}Attributes['interactiveMode']>)}
           />
 
           <SelectControl
-            label={__('Animation', '{{slugSnakeCase}}')}
-            value={attributes.animation}
-            options={[
-              { label: __('None', '{{slugSnakeCase}}'), value: 'none' },
-              { label: __('Bounce', '{{slugSnakeCase}}'), value: 'bounce' },
-              { label: __('Pulse', '{{slugSnakeCase}}'), value: 'pulse' },
-              { label: __('Shake', '{{slugSnakeCase}}'), value: 'shake' },
-              { label: __('Flip', '{{slugSnakeCase}}'), value: 'flip' }
-            ]}
+            label={animationField?.label || __('Animation', '{{slugSnakeCase}}')}
+            value={animation}
+            options={animationOptions}
             onChange={(value) => updateAttribute('animation', value as NonNullable<{{pascalCase}}Attributes['animation']>)}
           />
 
           <ToggleControl
-            label={__('Show Counter', '{{slugSnakeCase}}')}
-            checked={attributes.showCounter}
+            label={showCounterField?.label || __('Show Counter', '{{slugSnakeCase}}')}
+            checked={showCounter}
             onChange={(value) => updateAttribute('showCounter', value)}
           />
 
           <ToggleControl
-            label={__('Visible', '{{slugSnakeCase}}')}
-            checked={attributes.isVisible}
+            label={isVisibleField?.label || __('Visible', '{{slugSnakeCase}}')}
+            checked={isVisible}
             onChange={(value) => updateAttribute('isVisible', value)}
           />
         </PanelBody>
@@ -169,7 +212,7 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
       <div {...blockProps}>
         <div
           className={`{{cssClassName}}__content ${attributes.isAnimating ? 'is-animating' : ''}`}
-          style={{ textAlign: attributes.alignment }}
+          style={{ textAlign: alignmentValue }}
           data-wp-on--click={isPreviewing ? 'actions.handleClick' : undefined}
           data-wp-on--mouseenter={isPreviewing && attributes.interactiveMode === 'hover' ? 'actions.handleMouseEnter' : undefined}
           data-wp-on--mouseleave={isPreviewing && attributes.interactiveMode === 'hover' ? 'actions.handleMouseLeave' : undefined}

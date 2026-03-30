@@ -6,6 +6,8 @@ import { BlockEditProps } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { Notice, PanelBody, TextControl, ToggleControl, SelectControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import currentManifest from './typia.manifest.json';
+import { createEditorModel, type ManifestDocument } from '@wp-typia/create/runtime/editor';
 import { {{pascalCase}}Attributes } from './types';
 import { validators, createAttributeUpdater } from './validators';
 import { useTypiaValidation } from './hooks';
@@ -15,12 +17,38 @@ type AlignmentValue = NonNullable<{{pascalCase}}Attributes['alignment']>;
 
 function Edit({ attributes, setAttributes }: EditProps) {
   const blockProps = useBlockProps();
+  const editorFieldMap = new Map(
+    createEditorModel(currentManifest as ManifestDocument, {
+      hidden: ['id', 'version'],
+      manual: ['content'],
+      labels: {
+        alignment: __('정렬', '{{textDomain}}'),
+        className: __('CSS 클래스', '{{textDomain}}'),
+        content: __('콘텐츠', '{{textDomain}}'),
+        isVisible: __('표시하기', '{{textDomain}}'),
+      },
+    }).map((field) => [field.path, field]),
+  );
+  const alignmentField = editorFieldMap.get('alignment');
+  const classNameField = editorFieldMap.get('className');
+  const isVisibleField = editorFieldMap.get('isVisible');
   const { errorMessages, isValid } = useTypiaValidation(attributes, validators.validate);
   const updateAttribute = createAttributeUpdater(
     attributes,
     setAttributes,
     validators.validate
   );
+  const alignmentValue = attributes.alignment || (typeof alignmentField?.defaultValue === 'string' ? alignmentField.defaultValue : 'left');
+  const isVisible = attributes.isVisible ?? (typeof isVisibleField?.defaultValue === 'boolean' ? isVisibleField.defaultValue : true);
+  const alignmentOptions = (alignmentField?.options || []).map((option) => ({
+    label: ({
+      center: __('가운데', '{{textDomain}}'),
+      justify: __('양쪽 맞춤', '{{textDomain}}'),
+      left: __('왼쪽', '{{textDomain}}'),
+      right: __('오른쪽', '{{textDomain}}'),
+    })[String(option.value)] || option.label,
+    value: String(option.value),
+  }));
 
   return (
     <>
@@ -34,27 +62,22 @@ function Edit({ attributes, setAttributes }: EditProps) {
           />
 
           <SelectControl
-            label={__('정렬', '{{textDomain}}')}
-            value={attributes.alignment || 'left'}
-            options={[
-              { label: __('왼쪽', '{{textDomain}}'), value: 'left' },
-              { label: __('가운데', '{{textDomain}}'), value: 'center' },
-              { label: __('오른쪽', '{{textDomain}}'), value: 'right' },
-              { label: __('양쪽 맞춤', '{{textDomain}}'), value: 'justify' },
-            ]}
+            label={alignmentField?.label || __('정렬', '{{textDomain}}')}
+            value={alignmentValue}
+            options={alignmentOptions}
             onChange={(value) => updateAttribute('alignment', value as AlignmentValue)}
           />
 
           <TextControl
-            label={__('CSS 클래스', '{{textDomain}}')}
+            label={classNameField?.label || __('CSS 클래스', '{{textDomain}}')}
             value={attributes.className || ''}
             onChange={(value) => updateAttribute('className', value)}
             help={__('추가 CSS 클래스를 입력하세요.', '{{textDomain}}')}
           />
 
           <ToggleControl
-            label={__('표시하기', '{{textDomain}}')}
-            checked={attributes.isVisible !== false}
+            label={isVisibleField?.label || __('표시하기', '{{textDomain}}')}
+            checked={isVisible}
             onChange={(value) => updateAttribute('isVisible', value)}
           />
         </PanelBody>
