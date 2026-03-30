@@ -125,7 +125,10 @@ export function sanitizeSaveSnapshotSource(source: string): string {
 		.replace(/^interface\s+SaveProps\s*\{[\s\S]*?\}\n?/m, "")
 		.replace(/: SaveProps/g, ": { attributes: any }")
 		.replace(/attributes:\s*[A-Za-z0-9_<>{}\[\]|&,\s]+;/g, "attributes: any;")
-		.replace(/\(\{\s*attributes\s*\}:\s*\{\s*attributes:\s*any\s*\}\)/g, "({ attributes }: { attributes: any })");
+		.replace(/\(\{\s*attributes\s*\}:\s*\{\s*attributes:\s*any\s*\}\)/g, "({ attributes }: { attributes: any })")
+		.replace(/\n{3,}/g, "\n\n")
+		.trimEnd()
+		.concat("\n");
 }
 
 export function sanitizeSnapshotBlockJson(blockJson: JsonObject): JsonObject {

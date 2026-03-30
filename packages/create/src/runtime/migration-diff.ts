@@ -269,7 +269,11 @@ function compareUnionAttribute(
 			`${attributePath}.${branchKey}`,
 		);
 		if (nested.status === "manual") {
-			return nested;
+			return manualOutcome(
+				nested.path,
+				nested.kind.startsWith("union-") ? nested.kind : "union-manual",
+				nested.detail ?? `branch ${branchKey} requires manual review`,
+			);
 		}
 	}
 

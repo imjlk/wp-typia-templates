@@ -167,6 +167,35 @@ export interface MigrationDiff {
 	toVersion: string;
 }
 
+export interface MigrationRiskBucket {
+	count: number;
+	items: string[];
+}
+
+export interface MigrationRiskSummary {
+	additive: MigrationRiskBucket;
+	rename: MigrationRiskBucket;
+	semanticTransform: MigrationRiskBucket;
+	unionBreaking: MigrationRiskBucket;
+}
+
+export interface MigrationFuzzMapping {
+	currentPath: string;
+	legacyPath: string;
+}
+
+export interface MigrationFuzzPlan {
+	blockedPaths: string[];
+	compatibleMappings: MigrationFuzzMapping[];
+}
+
+export interface GeneratedMigrationEntry {
+	diff: MigrationDiff;
+	entry: MigrationEntry;
+	fuzzPlan: MigrationFuzzPlan;
+	riskSummary: MigrationRiskSummary;
+}
+
 export interface MigrationRuleFileInput {
 	currentAttributes: Record<string, ManifestAttribute>;
 	currentTypeName: string | null | undefined;
@@ -191,7 +220,10 @@ export interface ParsedMigrationArgs {
 	flags: {
 		all: boolean;
 		currentVersion?: string;
+		force: boolean;
 		from?: string;
+		iterations?: string;
+		seed?: string;
 		to?: string;
 		version?: string;
 	};

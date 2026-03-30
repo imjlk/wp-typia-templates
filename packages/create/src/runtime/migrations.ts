@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 import {
 	GENERATED_DIR,
@@ -11,7 +11,8 @@ import {
 	SNAPSHOT_DIR,
 } from "./migration-constants.js";
 import { createMigrationDiff } from "./migration-diff.js";
-import { ensureEdgeFixtureFile } from "./migration-fixtures.js";
+import { createMigrationFuzzPlan } from "./migration-fuzz-plan.js";
+import { createEdgeFixtureDocument, ensureEdgeFixtureFile } from "./migration-fixtures.js";
 import {
 	assertRuleHasNoTodos,
 	discoverMigrationEntries,
@@ -21,17 +22,20 @@ import {
 	getRuleFilePath,
 	loadMigrationProject,
 	readProjectBlockName,
+	readRuleMetadata,
 	writeInitialMigrationScaffold,
 	writeMigrationConfig,
 } from "./migration-project.js";
 import {
 	formatDiffReport,
+	renderFuzzFile,
 	renderGeneratedDeprecatedFile,
 	renderMigrationRegistryFile,
 	renderMigrationRuleFile,
 	renderPhpMigrationRegistryFile,
 	renderVerifyFile,
 } from "./migration-render.js";
+import { createMigrationRiskSummary, formatMigrationRiskSummary } from "./migration-risk.js";
 import {
 	assertSemver,
 	compareSemver,
@@ -47,6 +51,7 @@ import type {
 	ManifestDocument,
 	JsonObject,
 	ParsedMigrationArgs,
+	GeneratedMigrationEntry,
 	RenderLine,
 } from "./migration-types.js";
 
@@ -66,13 +71,32 @@ type VerifyOptions = {
 	renderLine?: RenderLine;
 };
 
+type FixturesOptions = {
+	all?: boolean;
+	force?: boolean;
+	fromVersion?: string;
+	renderLine?: RenderLine;
+	toVersion?: string;
+};
+
+type FuzzOptions = {
+	all?: boolean;
+	fromVersion?: string;
+	iterations?: number;
+	renderLine?: RenderLine;
+	seed?: number;
+};
+
 export function formatMigrationHelpText(): string {
 	return `Usage:
   wp-typia migrations init --current-version <semver>
   wp-typia migrations snapshot --version <semver>
   wp-typia migrations diff --from <semver> [--to current]
   wp-typia migrations scaffold --from <semver> [--to current]
-  wp-typia migrations verify [--from <semver>|--all]`;
+  wp-typia migrations verify [--from <semver>|--all]
+  wp-typia migrations doctor [--from <semver>|--all]
+  wp-typia migrations fixtures [--from <semver>|--all] [--to current] [--force]
+  wp-typia migrations fuzz [--from <semver>|--all] [--iterations <n>] [--seed <n>]`;
 }
 
 export function parseMigrationArgs(argv: string[]): ParsedMigrationArgs {
@@ -81,7 +105,10 @@ export function parseMigrationArgs(argv: string[]): ParsedMigrationArgs {
 		flags: {
 			all: false,
 			currentVersion: undefined,
+			force: false,
 			from: undefined,
+			iterations: undefined,
+			seed: undefined,
 			to: "current",
 			version: undefined,
 		},
@@ -102,6 +129,10 @@ export function parseMigrationArgs(argv: string[]): ParsedMigrationArgs {
 			parsed.flags.all = true;
 			continue;
 		}
+		if (arg === "--force") {
+			parsed.flags.force = true;
+			continue;
+		}
 		if (arg === "--current-version") {
 			parsed.flags.currentVersion = next;
 			index += 1;
@@ -118,6 +149,24 @@ export function parseMigrationArgs(argv: string[]): ParsedMigrationArgs {
 		}
 		if (arg.startsWith("--from=")) {
 			parsed.flags.from = arg.split("=", 2)[1];
+			continue;
+		}
+		if (arg === "--iterations") {
+			parsed.flags.iterations = next;
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--iterations=")) {
+			parsed.flags.iterations = arg.split("=", 2)[1];
+			continue;
+		}
+		if (arg === "--seed") {
+			parsed.flags.seed = next;
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--seed=")) {
+			parsed.flags.seed = arg.split("=", 2)[1];
 			continue;
 		}
 		if (arg === "--to") {
@@ -186,6 +235,28 @@ export function runMigrationCommand(
 				all: command.flags.all,
 				fromVersion: command.flags.from,
 				renderLine,
+			});
+		case "doctor":
+			return doctorProjectMigrations(cwd, {
+				all: command.flags.all,
+				fromVersion: command.flags.from,
+				renderLine,
+			});
+		case "fixtures":
+			return fixturesProjectMigrations(cwd, {
+				all: command.flags.all,
+				force: command.flags.force,
+				fromVersion: command.flags.from,
+				renderLine,
+				toVersion: command.flags.to ?? "current",
+			});
+		case "fuzz":
+			return fuzzProjectMigrations(cwd, {
+				all: command.flags.all,
+				fromVersion: command.flags.from,
+				iterations: parsePositiveInteger(command.flags.iterations, "iterations") ?? 25,
+				renderLine,
+				seed: parsePositiveInteger(command.flags.seed, "seed") ?? undefined,
 			});
 		default:
 			throw new Error(formatMigrationHelpText());
@@ -328,11 +399,7 @@ export function verifyProjectMigrations(
 		);
 	}
 
-	const targetVersions = all
-		? state.config.supportedVersions.filter((version) => version !== state.config.currentVersion)
-		: fromVersion
-			? [fromVersion]
-			: state.config.supportedVersions.filter((version) => version !== state.config.currentVersion);
+	const targetVersions = resolveLegacyVersions(state, { all, fromVersion });
 
 	if (targetVersions.length === 0) {
 		renderLine("No legacy versions configured for verification.");
@@ -345,7 +412,7 @@ export function verifyProjectMigrations(
 
 	const tsxBinary = getLocalTsxBinary(projectDir);
 	const filteredArgs = all ? ["--all"] : fromVersion ? ["--from", fromVersion] : [];
-	execSync(`"${tsxBinary}" "${verifyScriptPath}" ${filteredArgs.join(" ")}`.trim(), {
+	execFileSync(tsxBinary, [verifyScriptPath, ...filteredArgs], {
 		cwd: projectDir,
 		stdio: "inherit",
 	});
@@ -354,14 +421,316 @@ export function verifyProjectMigrations(
 	return { verifiedVersions: targetVersions };
 }
 
+export function doctorProjectMigrations(
+	projectDir: string,
+	{ all = false, fromVersion, renderLine = console.log as RenderLine }: VerifyOptions = {},
+) {
+	const checks: Array<{ detail: string; label: string; status: "fail" | "pass" }> = [];
+	const recordCheck = (status: "fail" | "pass", label: string, detail: string) => {
+		checks.push({ detail, label, status });
+		renderLine(`${status === "pass" ? "PASS" : "FAIL"} ${label}: ${detail}`);
+	};
+
+	let state;
+	try {
+		state = loadMigrationProject(projectDir);
+		recordCheck("pass", "Migration config", `Loaded ${state.config.blockName} @ ${state.config.currentVersion}`);
+	} catch (error) {
+		recordCheck("fail", "Migration config", error instanceof Error ? error.message : String(error));
+		throw new Error("Migration doctor failed.");
+	}
+
+	const targetVersions = resolveLegacyVersions(state, { all, fromVersion });
+	const snapshotVersions = new Set(
+		targetVersions.length > 0
+			? [state.config.currentVersion, ...targetVersions]
+			: state.config.supportedVersions,
+	);
+
+	for (const version of snapshotVersions) {
+		const snapshotRoot = path.join(projectDir, SNAPSHOT_DIR, version);
+		const requiredFiles = [
+			ROOT_BLOCK_JSON,
+			ROOT_MANIFEST,
+			"save.tsx",
+		];
+
+		recordCheck(
+			fs.existsSync(snapshotRoot) ? "pass" : "fail",
+			`Snapshot ${version}`,
+			fs.existsSync(snapshotRoot)
+				? path.relative(projectDir, snapshotRoot)
+				: `Missing ${path.relative(projectDir, snapshotRoot)}`,
+		);
+
+		for (const relativePath of requiredFiles) {
+			const targetPath = path.join(snapshotRoot, relativePath);
+			recordCheck(
+				fs.existsSync(targetPath) ? "pass" : "fail",
+				`Snapshot file ${version}`,
+				fs.existsSync(targetPath)
+					? path.relative(projectDir, targetPath)
+					: `Missing ${path.relative(projectDir, targetPath)}`,
+			);
+		}
+	}
+
+	const generatedEntries = collectGeneratedMigrationEntries(state);
+	const expectedGeneratedFiles = new Map<string, string>([
+		["registry.ts", renderMigrationRegistryFile(state, generatedEntries)],
+		["deprecated.ts", renderGeneratedDeprecatedFile(generatedEntries.map(({ entry }) => entry))],
+		["verify.ts", renderVerifyFile(state, generatedEntries.map(({ entry }) => entry))],
+		["fuzz.ts", renderFuzzFile(state, generatedEntries)],
+	]);
+
+	for (const [fileName, expectedSource] of expectedGeneratedFiles) {
+		const filePath = path.join(state.paths.generatedDir, fileName);
+		const inSync = fs.existsSync(filePath) && fs.readFileSync(filePath, "utf8") === expectedSource;
+		recordCheck(
+			inSync ? "pass" : "fail",
+			`Generated ${fileName}`,
+			inSync ? "In sync" : `Run \`wp-typia migrations scaffold --from <semver>\` or regenerate artifacts`,
+		);
+	}
+
+	for (const version of targetVersions) {
+		const rulePath = getRuleFilePath(state.paths, version, state.config.currentVersion);
+		const fixturePath = path.join(state.paths.fixturesDir, `${version}-to-${state.config.currentVersion}.json`);
+
+		recordCheck(
+			fs.existsSync(rulePath) ? "pass" : "fail",
+			`Rule ${version}`,
+			fs.existsSync(rulePath) ? path.relative(projectDir, rulePath) : `Missing ${path.relative(projectDir, rulePath)}`,
+		);
+		recordCheck(
+			fs.existsSync(fixturePath) ? "pass" : "fail",
+			`Fixture ${version}`,
+			fs.existsSync(fixturePath)
+				? path.relative(projectDir, fixturePath)
+				: `Missing ${path.relative(projectDir, fixturePath)}`,
+		);
+
+		if (!fs.existsSync(rulePath) || !fs.existsSync(fixturePath)) {
+			continue;
+		}
+
+		try {
+			assertRuleHasNoTodos(projectDir, version, state.config.currentVersion);
+			recordCheck("pass", `Rule TODOs ${version}`, "No TODO MIGRATION markers remain");
+		} catch (error) {
+			recordCheck("fail", `Rule TODOs ${version}`, error instanceof Error ? error.message : String(error));
+		}
+
+		const ruleMetadata = readRuleMetadata(rulePath);
+		recordCheck(
+			ruleMetadata.unresolved.length === 0 ? "pass" : "fail",
+			`Rule unresolved ${version}`,
+			ruleMetadata.unresolved.length === 0
+				? "No unresolved entries remain"
+				: ruleMetadata.unresolved.join(", "),
+		);
+
+		try {
+			const fixtureDocument = readJson<{ cases?: Array<{ name?: string }> }>(fixturePath);
+			recordCheck(
+				Array.isArray(fixtureDocument.cases) && fixtureDocument.cases.length > 0 ? "pass" : "fail",
+				`Fixture parse ${version}`,
+				Array.isArray(fixtureDocument.cases) && fixtureDocument.cases.length > 0
+					? `${fixtureDocument.cases.length} case(s)`
+					: "Fixture document has no cases",
+			);
+
+			const diff = createMigrationDiff(state, version, state.config.currentVersion);
+			const expectedFixture = createEdgeFixtureDocument(
+				projectDir,
+				version,
+				state.config.currentVersion,
+				diff,
+			);
+			const actualCaseNames = new Set((fixtureDocument.cases ?? []).map((fixtureCase) => fixtureCase.name));
+			const missingCases = expectedFixture.cases
+				.map((fixtureCase) => fixtureCase.name)
+				.filter((name) => !actualCaseNames.has(name));
+			recordCheck(
+				missingCases.length === 0 ? "pass" : "fail",
+				`Fixture coverage ${version}`,
+				missingCases.length === 0 ? "All expected fixture cases are present" : `Missing ${missingCases.join(", ")}`,
+			);
+
+			recordCheck(
+				"pass",
+				`Risk summary ${version}`,
+				formatMigrationRiskSummary(createMigrationRiskSummary(diff)),
+			);
+		} catch (error) {
+			recordCheck("fail", `Fixture parse ${version}`, error instanceof Error ? error.message : String(error));
+		}
+	}
+
+	const failedChecks = checks.filter((check) => check.status === "fail");
+	renderLine(
+		`${failedChecks.length === 0 ? "PASS" : "FAIL"} Migration doctor summary: ${checks.length - failedChecks.length}/${checks.length} checks passed`,
+	);
+
+	if (failedChecks.length > 0) {
+		throw new Error("Migration doctor failed.");
+	}
+
+	return {
+		checkedVersions: targetVersions,
+		checks,
+	};
+}
+
+export function fixturesProjectMigrations(
+	projectDir: string,
+	{
+		all = false,
+		force = false,
+		fromVersion,
+		renderLine = console.log as RenderLine,
+		toVersion = "current",
+	}: FixturesOptions = {},
+) {
+	ensureMigrationDirectories(projectDir);
+	const state = loadMigrationProject(projectDir);
+	const targetVersion = resolveTargetVersion(state.config.currentVersion, toVersion);
+	const targetVersions = resolveLegacyVersions(state, { all, fromVersion });
+
+	if (targetVersions.length === 0) {
+		renderLine("No legacy versions configured for fixture generation.");
+		return { generatedVersions: [], skippedVersions: [] };
+	}
+
+	const generatedVersions: string[] = [];
+	const skippedVersions: string[] = [];
+
+	for (const version of targetVersions) {
+		const diff = createMigrationDiff(state, version, targetVersion);
+		const result = ensureEdgeFixtureFile(projectDir, version, targetVersion, diff, { force });
+		if (result.written) {
+			generatedVersions.push(version);
+			renderLine(`Generated fixture ${path.relative(projectDir, result.fixturePath)}`);
+		} else {
+			skippedVersions.push(version);
+			renderLine(`Skipped existing fixture ${path.relative(projectDir, result.fixturePath)}`);
+		}
+	}
+
+	return {
+		generatedVersions,
+		skippedVersions,
+	};
+}
+
+export function fuzzProjectMigrations(
+	projectDir: string,
+	{
+		all = false,
+		fromVersion,
+		iterations = 25,
+		renderLine = console.log as RenderLine,
+		seed,
+	}: FuzzOptions = {},
+) {
+	const state = loadMigrationProject(projectDir);
+	const fuzzScriptPath = path.join(projectDir, GENERATED_DIR, "fuzz.ts");
+
+	if (!fs.existsSync(fuzzScriptPath)) {
+		throw new Error(
+			"Generated fuzz script is missing. Run `wp-typia migrations scaffold --from <semver>` first.",
+		);
+	}
+
+	const targetVersions = resolveLegacyVersions(state, { all, fromVersion });
+	if (targetVersions.length === 0) {
+		renderLine("No legacy versions configured for fuzzing.");
+		return { fuzzedVersions: [] };
+	}
+
+	for (const version of targetVersions) {
+		assertRuleHasNoTodos(projectDir, version, state.config.currentVersion);
+	}
+
+	const tsxBinary = getLocalTsxBinary(projectDir);
+	const args = [
+		fuzzScriptPath,
+		...(all ? ["--all"] : fromVersion ? ["--from", fromVersion] : []),
+		"--iterations",
+		String(iterations),
+		...(seed === undefined ? [] : ["--seed", String(seed)]),
+	];
+	execFileSync(tsxBinary, args, {
+		cwd: projectDir,
+		stdio: "inherit",
+	});
+
+	renderLine(`Fuzzed migrations for ${targetVersions.join(", ")}`);
+	return { fuzzedVersions: targetVersions, seed };
+}
+
+function parsePositiveInteger(value: string | undefined, label: string): number | undefined {
+	if (!value) {
+		return undefined;
+	}
+
+	const parsed = Number.parseInt(value, 10);
+	if (!Number.isInteger(parsed) || parsed < 0) {
+		throw new Error(`Invalid ${label}: ${value}. Expected a positive integer.`);
+	}
+
+	return parsed;
+}
+
+function resolveLegacyVersions(
+	state: ReturnType<typeof loadMigrationProject>,
+	{ all = false, fromVersion }: { all?: boolean; fromVersion?: string },
+): string[] {
+	const legacyVersions = state.config.supportedVersions.filter(
+		(version) => version !== state.config.currentVersion,
+	);
+
+	if (fromVersion) {
+		if (!legacyVersions.includes(fromVersion)) {
+			throw new Error(`Unsupported migration version: ${fromVersion}`);
+		}
+		return [fromVersion];
+	}
+
+	if (all || legacyVersions.length > 0) {
+		return legacyVersions;
+	}
+
+	return [];
+}
+
+function collectGeneratedMigrationEntries(
+	state: ReturnType<typeof loadMigrationProject>,
+): GeneratedMigrationEntry[] {
+	return discoverMigrationEntries(state).map((entry) => {
+		const diff = createMigrationDiff(state, entry.fromVersion, entry.toVersion);
+		const legacyManifest = readJson<ManifestDocument>(
+			path.join(state.projectDir, SNAPSHOT_DIR, entry.fromVersion, ROOT_MANIFEST),
+		);
+
+		return {
+			diff,
+			entry,
+			fuzzPlan: createMigrationFuzzPlan(legacyManifest, state.currentManifest, diff),
+			riskSummary: createMigrationRiskSummary(diff),
+		};
+	});
+}
+
 function regenerateGeneratedArtifacts(projectDir: string): void {
 	const state = loadMigrationProject(projectDir);
-	const entries = discoverMigrationEntries(state);
+	const generatedEntries = collectGeneratedMigrationEntries(state);
+	const entries = generatedEntries.map(({ entry }) => entry);
 
 	fs.mkdirSync(state.paths.generatedDir, { recursive: true });
 	fs.writeFileSync(
 		path.join(state.paths.generatedDir, "registry.ts"),
-		renderMigrationRegistryFile(state, entries),
+		renderMigrationRegistryFile(state, generatedEntries),
 		"utf8",
 	);
 	fs.writeFileSync(
@@ -372,6 +741,11 @@ function regenerateGeneratedArtifacts(projectDir: string): void {
 	fs.writeFileSync(
 		path.join(state.paths.generatedDir, "verify.ts"),
 		renderVerifyFile(state, entries),
+		"utf8",
+	);
+	fs.writeFileSync(
+		path.join(state.paths.generatedDir, "fuzz.ts"),
+		renderFuzzFile(state, generatedEntries),
 		"utf8",
 	);
 	fs.writeFileSync(

@@ -4,7 +4,10 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
+import { createMigrationDiff } from "../src/runtime/migration-diff.js";
 import { parseMigrationArgs } from "../src/runtime/index.js";
+import { loadMigrationProject } from "../src/runtime/migration-project.js";
+import { createMigrationRiskSummary } from "../src/runtime/migration-risk.js";
 
 const packageRoot = process.cwd();
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-migrations-"));
@@ -58,11 +61,16 @@ function createManifestAttribute(
 	return {
 		typia: {
 			constraints: {
+				exclusiveMaximum: null,
+				exclusiveMinimum: null,
 				format: null,
 				maxLength: null,
+				maxItems: null,
 				maximum: null,
 				minLength: null,
+				minItems: null,
 				minimum: null,
+				multipleOf: null,
 				pattern: null,
 				typeTag: null,
 			},
@@ -92,11 +100,16 @@ function createUnionManifestAttribute(
 	return {
 		typia: {
 			constraints: {
+				exclusiveMaximum: null,
+				exclusiveMinimum: null,
 				format: null,
 				maxLength: null,
+				maxItems: null,
 				maximum: null,
 				minLength: null,
+				minItems: null,
 				minimum: null,
+				multipleOf: null,
 				pattern: null,
 				typeTag: null,
 			},
@@ -259,6 +272,21 @@ function createCurrentProjectFiles(projectDir: string) {
 	});
 }
 
+function writeCurrentSnapshot(projectDir: string, version = "2.0.0") {
+	writeJson(
+		path.join(projectDir, "src", "migrations", "versions", version, "block.json"),
+		JSON.parse(fs.readFileSync(path.join(projectDir, "block.json"), "utf8")),
+	);
+	writeJson(
+		path.join(projectDir, "src", "migrations", "versions", version, "typia.manifest.json"),
+		JSON.parse(fs.readFileSync(path.join(projectDir, "typia.manifest.json"), "utf8")),
+	);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "versions", version, "save.tsx"),
+		fs.readFileSync(path.join(projectDir, "src", "save.tsx"), "utf8"),
+	);
+}
+
 function createVersionedMigrationProject(projectDir: string) {
 	createCurrentProjectFiles(projectDir);
 
@@ -296,6 +324,7 @@ function createVersionedMigrationProject(projectDir: string) {
 		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"),
 		`export default function Save({ attributes }: { attributes: any }) {\n\treturn attributes.content ?? null;\n}\n`,
 	);
+	writeCurrentSnapshot(projectDir);
 
 	const localBinDir = path.join(projectDir, "node_modules", ".bin");
 	fs.mkdirSync(localBinDir, { recursive: true });
@@ -377,6 +406,7 @@ export default migrationConfig;
 }
 `,
 	);
+	writeCurrentSnapshot(projectDir);
 
 	const localBinDir = path.join(projectDir, "node_modules", ".bin");
 	fs.mkdirSync(localBinDir, { recursive: true });
@@ -431,11 +461,16 @@ export default migrationConfig;
 			settings: {
 				typia: {
 					constraints: {
+						exclusiveMaximum: null,
+						exclusiveMinimum: null,
 						format: null,
 						maxLength: null,
+						maxItems: null,
 						maximum: null,
 						minLength: null,
+						minItems: null,
 						minimum: null,
+						multipleOf: null,
 						pattern: null,
 						typeTag: null,
 					},
@@ -475,11 +510,16 @@ export default migrationConfig;
 			settings: {
 				typia: {
 					constraints: {
+						exclusiveMaximum: null,
+						exclusiveMinimum: null,
 						format: null,
 						maxLength: null,
+						maxItems: null,
 						maximum: null,
 						minLength: null,
+						minItems: null,
 						minimum: null,
+						multipleOf: null,
 						pattern: null,
 						typeTag: null,
 					},
@@ -513,6 +553,7 @@ export default migrationConfig;
 }
 `,
 	);
+	writeCurrentSnapshot(projectDir);
 
 	const localBinDir = path.join(projectDir, "node_modules", ".bin");
 	fs.mkdirSync(localBinDir, { recursive: true });
@@ -598,6 +639,7 @@ export default migrationConfig;
 }
 `,
 	);
+	writeCurrentSnapshot(projectDir);
 
 	const localBinDir = path.join(projectDir, "node_modules", ".bin");
 	fs.mkdirSync(localBinDir, { recursive: true });
@@ -679,6 +721,7 @@ export default migrationConfig;
 }
 `,
 	);
+	writeCurrentSnapshot(projectDir);
 
 	const localBinDir = path.join(projectDir, "node_modules", ".bin");
 	fs.mkdirSync(localBinDir, { recursive: true });
@@ -787,6 +830,91 @@ export default migrationConfig;
 }
 `,
 	);
+	writeCurrentSnapshot(projectDir);
+
+	const localBinDir = path.join(projectDir, "node_modules", ".bin");
+	fs.mkdirSync(localBinDir, { recursive: true });
+	fs.symlinkSync(repoTsxPath, path.join(localBinDir, "tsx"));
+}
+
+function createFuzzFailureProject(projectDir: string) {
+	createProjectShell(projectDir);
+
+	writeFile(
+		path.join(projectDir, "src", "validators.ts"),
+		`export const validators = {
+\tvalidate(input: Record<string, unknown>) {
+\t\tconst success = input.content === "Hello";
+\t\treturn success
+\t\t\t? { isValid: true as const, errors: [], data: input }
+\t\t\t: { isValid: false as const, errors: [{ path: "$.content", expected: '"Hello"' }] };
+\t},
+\trandom() {
+\t\treturn { content: "legacy-random" };
+\t},
+};
+`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "config.ts"),
+		`export const migrationConfig = {
+\tblockName: "create-block/fuzz-failure",
+\tcurrentVersion: "2.0.0",
+\tsupportedVersions: ["1.0.0", "2.0.0"],
+\tsnapshotDir: "src/migrations/versions",
+} as const;
+
+export default migrationConfig;
+`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "helpers.ts"),
+		HELPERS_SOURCE,
+	);
+	writeJson(path.join(projectDir, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Hello", type: "string" },
+		},
+		name: "create-block/fuzz-failure",
+		title: "Fuzz Failure",
+	});
+	writeJson(path.join(projectDir, "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				defaultValue: "Hello",
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "FuzzFailureAttributes",
+	});
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Hello", type: "string" },
+		},
+		name: "create-block/fuzz-failure",
+		title: "Fuzz Failure",
+	});
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				defaultValue: "Hello",
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "FuzzFailureAttributes",
+	});
+	writeFile(
+		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"),
+		`export default function Save({ attributes }: { attributes: any }) {
+\treturn attributes.content ?? null;
+}
+`,
+	);
+	writeCurrentSnapshot(projectDir);
 
 	const localBinDir = path.join(projectDir, "node_modules", ".bin");
 	fs.mkdirSync(localBinDir, { recursive: true });
@@ -977,5 +1105,182 @@ describe("wp-typia migrations", () => {
 			cwd: removalProjectDir,
 		});
 		expect(removalOutput).toContain("union-branch-removal");
+	});
+
+	test("risk summary classifies additive, rename, transform, and union-breaking edges", () => {
+		const additiveProjectDir = path.join(tempRoot, "risk-additive-project");
+		createVersionedMigrationProject(additiveProjectDir);
+		const additiveSummary = createMigrationRiskSummary(
+			createMigrationDiff(loadMigrationProject(additiveProjectDir), "1.0.0", "2.0.0"),
+		);
+		expect(additiveSummary.additive.count).toBeGreaterThan(0);
+
+		const renameProjectDir = path.join(tempRoot, "risk-rename-project");
+		createRenameCandidateProject(renameProjectDir);
+		const renameSummary = createMigrationRiskSummary(
+			createMigrationDiff(loadMigrationProject(renameProjectDir), "1.0.0", "2.0.0"),
+		);
+		expect(renameSummary.rename.count).toBeGreaterThan(0);
+
+		const transformProjectDir = path.join(tempRoot, "risk-transform-project");
+		createTypeCoercionProject(transformProjectDir);
+		const transformSummary = createMigrationRiskSummary(
+			createMigrationDiff(loadMigrationProject(transformProjectDir), "1.0.0", "2.0.0"),
+		);
+		expect(transformSummary.semanticTransform.count).toBeGreaterThan(0);
+
+		const unionProjectDir = path.join(tempRoot, "risk-union-project");
+		createUnionProject(unionProjectDir, { removeBranch: true });
+		const unionSummary = createMigrationRiskSummary(
+			createMigrationDiff(loadMigrationProject(unionProjectDir), "1.0.0", "2.0.0"),
+		);
+		expect(unionSummary.unionBreaking.count).toBeGreaterThan(0);
+	});
+
+	test("doctor passes on a healthy migration workspace", () => {
+		const projectDir = path.join(tempRoot, "doctor-success-project");
+		createVersionedMigrationProject(projectDir);
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const output = runCli("node", [entryPath, "migrations", "doctor", "--all"], {
+			cwd: projectDir,
+		});
+		expect(output).toContain("PASS Migration config:");
+		expect(output).toContain("PASS Fixture coverage 1.0.0:");
+		expect(output).toContain("PASS Risk summary 1.0.0:");
+		expect(output).toContain("PASS Migration doctor summary:");
+	});
+
+	test("doctor fails when a snapshot file is missing", () => {
+		const projectDir = path.join(tempRoot, "doctor-missing-snapshot-project");
+		createVersionedMigrationProject(projectDir);
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+		fs.rmSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"));
+
+		expect(() =>
+			runCli("node", [entryPath, "migrations", "doctor", "--all"], {
+				cwd: projectDir,
+			}),
+		).toThrow(/Migration doctor failed/);
+	});
+
+	test("doctor fails when a fixture file is missing", () => {
+		const projectDir = path.join(tempRoot, "doctor-missing-fixture-project");
+		createVersionedMigrationProject(projectDir);
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+		fs.rmSync(path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json"));
+
+		expect(() =>
+			runCli("node", [entryPath, "migrations", "doctor", "--all"], {
+				cwd: projectDir,
+			}),
+		).toThrow(/Migration doctor failed/);
+	});
+
+	test("doctor fails when unresolved migration markers remain", () => {
+		const projectDir = path.join(tempRoot, "doctor-unresolved-project");
+		createAmbiguousRenameProject(projectDir);
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		expect(() =>
+			runCli("node", [entryPath, "migrations", "doctor", "--all"], {
+				cwd: projectDir,
+			}),
+		).toThrow(/Migration doctor failed/);
+	});
+
+	test("doctor fails when generated deprecated files drift from discovered edges", () => {
+		const projectDir = path.join(tempRoot, "doctor-drift-project");
+		createVersionedMigrationProject(projectDir);
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+		fs.appendFileSync(
+			path.join(projectDir, "src", "migrations", "generated", "deprecated.ts"),
+			"\n// drift\n",
+			"utf8",
+		);
+
+		expect(() =>
+			runCli("node", [entryPath, "migrations", "doctor", "--all"], {
+				cwd: projectDir,
+			}),
+		).toThrow(/Migration doctor failed/);
+	});
+
+	test("fixtures command skips existing files without force and refreshes with force", () => {
+		const projectDir = path.join(tempRoot, "fixtures-project");
+		createVersionedMigrationProject(projectDir);
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json");
+		fs.writeFileSync(
+			fixturePath,
+			`${JSON.stringify({ cases: [{ input: { content: "custom" }, name: "custom" }], fromVersion: "1.0.0", toVersion: "2.0.0" }, null, "\t")}\n`,
+			"utf8",
+		);
+
+		const skipOutput = runCli("node", [entryPath, "migrations", "fixtures", "--all"], {
+			cwd: projectDir,
+		});
+		expect(skipOutput).toContain("Skipped existing fixture");
+		expect(fs.readFileSync(fixturePath, "utf8")).toContain('"custom"');
+
+		const forceOutput = runCli("node", [entryPath, "migrations", "fixtures", "--all", "--force"], {
+			cwd: projectDir,
+		});
+		expect(forceOutput).toContain("Generated fixture");
+		expect(fs.readFileSync(fixturePath, "utf8")).toContain('"default"');
+		expect(fs.readFileSync(fixturePath, "utf8")).not.toContain('"custom"');
+	});
+
+	test("fuzz command succeeds on a healthy migration edge", () => {
+		const projectDir = path.join(tempRoot, "fuzz-success-project");
+		createVersionedMigrationProject(projectDir);
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const output = runCli(
+			"node",
+			[entryPath, "migrations", "fuzz", "--all", "--iterations", "5", "--seed", "1"],
+			{ cwd: projectDir },
+		);
+		expect(output).toContain("Fuzzed 1.0.0 -> 2.0.0");
+		expect(output).toContain("Migration fuzzing passed for create-block/migration-smoke");
+	});
+
+	test("fuzz command reports reproducible failures with the provided seed", () => {
+		const projectDir = path.join(tempRoot, "fuzz-failure-project");
+		createFuzzFailureProject(projectDir);
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		expect(() =>
+			runCli(
+				"node",
+				[entryPath, "migrations", "fuzz", "--all", "--iterations", "5", "--seed", "7"],
+				{ cwd: projectDir },
+			),
+		).toThrow(/seed 7/);
 	});
 });

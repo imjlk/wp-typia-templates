@@ -38,6 +38,18 @@ export interface ManifestDocument {
 	sourceType: string;
 }
 
+export interface MigrationRiskBucket {
+	count: number;
+	items: string[];
+}
+
+export interface MigrationRiskSummary {
+	additive: MigrationRiskBucket;
+	rename: MigrationRiskBucket;
+	semanticTransform: MigrationRiskBucket;
+	unionBreaking: MigrationRiskBucket;
+}
+
 export type RenameMap = Record< string, string >;
 export type TransformMap = Record<
 	string,

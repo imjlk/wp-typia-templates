@@ -29,13 +29,27 @@ export function ensureEdgeFixtureFile(
 	fromVersion: string,
 	toVersion: string,
 	diff: MigrationDiff,
-): void {
+	{ force = false }: { force?: boolean } = {},
+): { fixturePath: string; written: boolean } {
 	const fixturePath = path.join(projectDir, FIXTURES_DIR, `${fromVersion}-to-${toVersion}.json`);
-	if (fs.existsSync(fixturePath)) {
-		return;
+	if (!force && fs.existsSync(fixturePath)) {
+		return { fixturePath, written: false };
 	}
 
+	const fixtureDocument = createEdgeFixtureDocument(projectDir, fromVersion, toVersion, diff);
+
+	fs.writeFileSync(fixturePath, `${JSON.stringify(fixtureDocument, null, "\t")}\n`, "utf8");
+	return { fixturePath, written: true };
+}
+
+export function createEdgeFixtureDocument(
+	projectDir: string,
+	fromVersion: string,
+	toVersion: string,
+	diff: MigrationDiff,
+): MigrationFixtureDocument {
 	const manifest = readJson<ManifestDocument>(path.join(projectDir, SNAPSHOT_DIR, fromVersion, ROOT_MANIFEST));
+
 	const attributes: JsonObject = {};
 	for (const [key, attribute] of Object.entries(manifest.attributes ?? {})) {
 		attributes[key] = defaultValueForManifestAttribute(attribute) ?? null;
@@ -51,13 +65,11 @@ export function ensureEdgeFixtureFile(
 		...createUnionFixtureCases(attributes, manifest.attributes ?? {}, diff.summary.renameCandidates),
 	];
 
-	const fixtureDocument: MigrationFixtureDocument = {
+	return {
 		cases,
 		fromVersion,
 		toVersion,
 	};
-
-	fs.writeFileSync(fixturePath, `${JSON.stringify(fixtureDocument, null, "\t")}\n`, "utf8");
 }
 
 function createRenameFixtureCases(

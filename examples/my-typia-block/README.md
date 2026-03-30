@@ -35,11 +35,20 @@ bun run migration:init
 # Compare the current schema with an older snapshot
 bun run migration:diff -- --from 1.0.0
 
+# Run the read-only migration workspace check
+bun run migration:doctor
+
 # Scaffold a legacy-to-current migration edge
 bun run migration:scaffold -- --from 1.0.0
 
+# Refresh deterministic fixture cases
+bun run migration:fixtures -- --all --force
+
 # Verify generated migration rules against stored fixtures
 bun run migration:verify
+
+# Re-run verification with seeded fuzz inputs
+bun run migration:fuzz -- --all --iterations 25 --seed 1
 ```
 
 ## 📝 Type System
@@ -97,7 +106,9 @@ Scaffold now does more than leave TODOs behind:
 - high-confidence top-level and nested leaf renames are written directly into `renameMap`
 - semantic-risk coercions get suggested transform bodies
 - edge fixtures are generated at `src/migrations/fixtures/<from>-to-<to>.json`
+- `migration:doctor` checks snapshot health, generated artifacts, unresolved markers, and fixture coverage
 - `migration:verify` replays every fixture case before it accepts the edge
+- `migration:fuzz` keeps fixture replay deterministic, then adds seeded `typia.random()` regression coverage
 - `src/migrations/examples/rename-transform-union/` ships a realistic reference pack that does not affect the active migration graph
 
 Recommended flow:
@@ -109,8 +120,10 @@ Recommended flow:
 5. review auto-applied renames and suggested transforms
 6. adjust nested `renameMap` / `transforms` entries if object or union branch leaves changed
 6. edit the generated fixture cases if the real legacy payload is richer
-7. run `bun run migration:verify`
-8. use the admin dashboard for dry-run previews before batch migration
+7. run `bun run migration:doctor`
+8. run `bun run migration:verify`
+9. run `bun run migration:fuzz`
+10. use the admin dashboard for dry-run previews before batch migration
 
 Example:
 
@@ -120,13 +133,16 @@ bun run migration:scaffold -- --from 1.0.0
 # review auto-applied renameMap entries
 # review nested leaf paths like "settings.label" or "linkTarget.url.href"
 # fill suggested transforms if needed
+bun run migration:doctor
 bun run migration:verify
+bun run migration:fuzz -- --all --iterations 25 --seed 1
 ```
 
 The dashboard then shows:
 
 - changed field paths
 - union branch matches
+- risk summary buckets shared with the CLI diff (`additive`, `rename`, `semanticTransform`, `unionBreaking`)
 - unresolved/manual review badges
 - dry-run previews before any write happens
 
@@ -139,9 +155,9 @@ The dashboard then shows:
 - `typia-migration-registry.php` - PHP-readable snapshot and edge summary
 - `src/migrations/versions/` - Versioned snapshots of legacy block contracts and save implementations
 - `src/migrations/rules/` - Per-edge migration rules generated from Typia manifest diffs
-- `src/migrations/fixtures/` - Edge fixtures used by `migration:verify` and the dashboard preview
+- `src/migrations/fixtures/` - Edge fixtures used by `migration:verify`, `migration:fuzz`, and the dashboard preview
 - `src/migrations/examples/` - Reference-only migration examples for rename + transform + union authoring
-- `src/migrations/generated/` - Generated deprecated array, registry, and verification helpers
+- `src/migrations/generated/` - Generated deprecated array, registry, verification, and fuzz helpers
 - `build/` - Compiled JavaScript and CSS
 - `src/types.ts` - **Edit this to change block attributes**
 
