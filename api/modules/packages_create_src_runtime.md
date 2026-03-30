@@ -16,6 +16,16 @@
 - [parseMigrationArgs](packages_create_src_runtime.md#parsemigrationargs)
 - [runMigrationCommand](packages_create_src_runtime.md#runmigrationcommand)
 - [applyTemplateDefaultsFromManifest](packages_create_src_runtime.md#applytemplatedefaultsfrommanifest)
+- [createAttributeUpdater](packages_create_src_runtime.md#createattributeupdater)
+- [formatValidationError](packages_create_src_runtime.md#formatvalidationerror)
+- [formatValidationErrors](packages_create_src_runtime.md#formatvalidationerrors)
+- [normalizeValidationError](packages_create_src_runtime.md#normalizevalidationerror)
+- [toAttributePatch](packages_create_src_runtime.md#toattributepatch)
+- [toValidationResult](packages_create_src_runtime.md#tovalidationresult)
+- [toValidationState](packages_create_src_runtime.md#tovalidationstate)
+- [TypiaValidationError](packages_create_src_runtime.md#typiavalidationerror)
+- [ValidationResult](packages_create_src_runtime.md#validationresult)
+- [ValidationState](packages_create_src_runtime.md#validationstate)
 - [PACKAGE\_MANAGER\_IDS](packages_create_src_runtime.md#package_manager_ids)
 - [PACKAGE\_MANAGERS](packages_create_src_runtime.md#package_managers)
 - [formatInstallCommand](packages_create_src_runtime.md#formatinstallcommand)
@@ -91,6 +101,66 @@ ___
 ### applyTemplateDefaultsFromManifest
 
 Re-exports [applyTemplateDefaultsFromManifest](packages_create_src_runtime_defaults.md#applytemplatedefaultsfrommanifest)
+
+___
+
+### createAttributeUpdater
+
+Re-exports [createAttributeUpdater](packages_create_src_runtime_validation.md#createattributeupdater)
+
+___
+
+### formatValidationError
+
+Re-exports [formatValidationError](packages_create_src_runtime_validation.md#formatvalidationerror)
+
+___
+
+### formatValidationErrors
+
+Re-exports [formatValidationErrors](packages_create_src_runtime_validation.md#formatvalidationerrors)
+
+___
+
+### normalizeValidationError
+
+Re-exports [normalizeValidationError](packages_create_src_runtime_validation.md#normalizevalidationerror)
+
+___
+
+### toAttributePatch
+
+Re-exports [toAttributePatch](packages_create_src_runtime_validation.md#toattributepatch)
+
+___
+
+### toValidationResult
+
+Re-exports [toValidationResult](packages_create_src_runtime_validation.md#tovalidationresult)
+
+___
+
+### toValidationState
+
+Re-exports [toValidationState](packages_create_src_runtime_validation.md#tovalidationstate)
+
+___
+
+### TypiaValidationError
+
+Re-exports [TypiaValidationError](../interfaces/packages_create_src_runtime_validation.TypiaValidationError.md)
+
+___
+
+### ValidationResult
+
+Re-exports [ValidationResult](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)
+
+___
+
+### ValidationState
+
+Re-exports [ValidationState](../interfaces/packages_create_src_runtime_validation.ValidationState.md)
 
 ___
 

@@ -49,6 +49,7 @@
 - [packages/create/src/runtime/template-registry](modules/packages_create_src_runtime_template_registry.md)
 - [packages/create/src/runtime/template-render](modules/packages_create_src_runtime_template_render.md)
 - [packages/create/src/runtime/template-source](modules/packages_create_src_runtime_template_source.md)
+- [packages/create/src/runtime/validation](modules/packages_create_src_runtime_validation.md)
 - [packages/wp-typia-block-types/src/block-editor/alignment](modules/packages_wp_typia_block_types_src_block_editor_alignment.md)
 - [packages/wp-typia-block-types/src/block-editor/color](modules/packages_wp_typia_block_types_src_block_editor_color.md)
 - [packages/wp-typia-block-types/src/block-editor/dimensions](modules/packages_wp_typia_block_types_src_block_editor_dimensions.md)

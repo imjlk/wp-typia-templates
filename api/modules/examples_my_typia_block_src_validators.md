@@ -10,6 +10,7 @@
 
 ### Functions
 
+- [validateMyTypiaBlockAttributes](examples_my_typia_block_src_validators.md#validatemytypiablockattributes)
 - [sanitizeMyTypiaBlockAttributes](examples_my_typia_block_src_validators.md#sanitizemytypiablockattributes)
 - [createAttributeUpdater](examples_my_typia_block_src_validators.md#createattributeupdater)
 
@@ -19,13 +20,11 @@
 
 • `Const` **validators**: `Object`
 
-Typia validators for the block attributes
-
 #### Type declaration
 
 | Name | Type |
 | :------ | :------ |
-| `validate` | (`input`: `unknown`) => `IValidation`\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\> & `StandardSchemaV1`\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md), [`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\> |
+| `validate` | (`attributes`: `unknown`) => [`ValidationResult`](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\> |
 | `assert` | (`input`: `unknown`) => [`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md) |
 | `is` | (`input`: `unknown`) => input is MyTypiaBlockAttributes |
 | `random` | () => [`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md) |
@@ -34,9 +33,29 @@ Typia validators for the block attributes
 
 #### Defined in
 
-[examples/my-typia-block/src/validators.ts:13](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L13)
+[examples/my-typia-block/src/validators.ts:33](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L33)
 
 ## Functions
+
+### validateMyTypiaBlockAttributes
+
+▸ **validateMyTypiaBlockAttributes**(`attributes`): [`ValidationResult`](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `attributes` | `unknown` |
+
+#### Returns
+
+[`ValidationResult`](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\>
+
+#### Defined in
+
+[examples/my-typia-block/src/validators.ts:25](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L25)
+
+___
 
 ### sanitizeMyTypiaBlockAttributes
 
@@ -54,7 +73,7 @@ Typia validators for the block attributes
 
 #### Defined in
 
-[examples/my-typia-block/src/validators.ts:22](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L22)
+[examples/my-typia-block/src/validators.ts:42](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L42)
 
 ___
 
@@ -70,7 +89,7 @@ Create safe attribute updater with validation
 | :------ | :------ | :------ |
 | `attributes` | [`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md) | `undefined` |
 | `setAttributes` | (`attrs`: `Partial`\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\>) => `void` | `undefined` |
-| `validator` | (`input`: `unknown`) => `IValidation`\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\> & `StandardSchemaV1`\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md), [`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\> | `validators.validate` |
+| `validator` | (`attributes`: `unknown`) => [`ValidationResult`](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\> | `validators.validate` |
 
 #### Returns
 
@@ -97,4 +116,4 @@ Create safe attribute updater with validation
 
 #### Defined in
 
-[examples/my-typia-block/src/validators.ts:37](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L37)
+[examples/my-typia-block/src/validators.ts:59](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L59)

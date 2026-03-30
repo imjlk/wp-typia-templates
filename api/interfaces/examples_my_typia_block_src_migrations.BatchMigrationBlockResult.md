@@ -59,7 +59,7 @@ ___
 
 ### status
 
-• **status**: ``"failed"`` \| ``"success"``
+• **status**: ``"success"`` \| ``"failed"``
 
 #### Defined in
 
