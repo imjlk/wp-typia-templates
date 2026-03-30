@@ -131,6 +131,15 @@ export class WordPressPage {
       await closeInserterButton.click();
     }
 
+    const isSidebarOpen = await this.page.evaluate(() => {
+      const wp = (window as any).wp;
+      return wp?.data?.select('core/edit-post')?.isEditorSidebarOpened?.() === true;
+    });
+
+    if (isSidebarOpen) {
+      return;
+    }
+
     const settingsButton = this.page.getByRole('button', { name: /^Settings$/i });
     await settingsButton.click();
 
