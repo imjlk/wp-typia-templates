@@ -30,6 +30,8 @@ export function resolvePackageRoot(startDir: string): string {
 
 export const CREATE_PACKAGE_ROOT = resolvePackageRoot(__dirname);
 export const TEMPLATE_ROOT = path.join(CREATE_PACKAGE_ROOT, "templates");
+export const SHARED_TEMPLATE_ROOT = path.join(TEMPLATE_ROOT, "_shared");
+export const SHARED_BASE_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "base");
 export const BUILTIN_TEMPLATE_IDS = ["basic", "interactivity"] as const;
 export type BuiltInTemplateId = (typeof BUILTIN_TEMPLATE_IDS)[number];
 
@@ -74,6 +76,10 @@ export function getTemplateById(templateId: string): TemplateDefinition {
 		throw new Error(`Unknown template "${templateId}". Expected one of: ${TEMPLATE_IDS.join(", ")}`);
 	}
 	return template;
+}
+
+export function getTemplateLayerDirs(templateId: BuiltInTemplateId): string[] {
+	return [SHARED_BASE_TEMPLATE_ROOT, getTemplateById(templateId).templateDir];
 }
 
 export function getTemplateSelectOptions(): Array<{

@@ -45,7 +45,7 @@ npx @wp-typia/create my-block --template github:owner/repo/path#main --package-m
 - `basic` for clean Typia-first block boilerplate
 - `interactivity` for the same base plus WordPress Interactivity API wiring
 
-Richer patterns that used to live in more specialized templates are now demonstrated in the showcase app under [`examples/my-typia-block`](examples/my-typia-block).
+Richer patterns that used to live in more specialized templates are now demonstrated in the repo-local reference app under [`examples/my-typia-block`](examples/my-typia-block).
 
 ## Core Workflow
 
@@ -77,9 +77,9 @@ The CLI accepts:
 
 The first remote adapter targets a `create-block`-style subset. `wp-typia` treats the remote source as a seed, then regenerates its own package setup, Typia sync flow, and runtime helpers around it.
 
-## Showcase App
+## Reference App
 
-[`examples/my-typia-block`](examples/my-typia-block) is the repo-local kitchen-sink showcase. It keeps the richer migration, validation, and server-rendering flows visible without turning the default scaffold into a kitchen-sink starter.
+[`examples/my-typia-block`](examples/my-typia-block) is the repo-local kitchen-sink reference app. It keeps the richer migration, validation, and server-rendering flows visible without turning the default scaffold into a kitchen-sink starter.
 
 ## Packages
 
@@ -105,6 +105,7 @@ wp-typia/
 ## Docs
 
 - [Examples Guide](examples/EXAMPLES.md)
+- [Architecture Guide](docs/architecture.md)
 - [API Guide](docs/API.md)
 - [Interactivity Guide](docs/interactivity.md)
 - [Migration Guide](docs/migrations.md)
@@ -118,5 +119,23 @@ bun install
 bun run typecheck
 bun run test
 bun run build
-bun run test:e2e
+bun run examples:test:e2e
 ```
+
+Example-specific commands live under the `examples:*` namespace:
+
+```bash
+bun run examples:build
+bun run examples:dev
+bun run examples:lint
+bun run examples:test:e2e
+```
+
+Command map:
+
+| Command | What it targets |
+| --- | --- |
+| `bun run build` | Product packages and the repo-local reference app |
+| `bun run examples:build` | Reference app only |
+| `bun run --filter @wp-typia/create test` | CLI/runtime only |
+| `bun run examples:test:e2e` | Playwright against the reference app |

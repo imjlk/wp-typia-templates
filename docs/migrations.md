@@ -1,6 +1,10 @@
 # Migration Guide
 
-`wp-typia` no longer treats migrations as a built-in scaffold template. Instead, the repository ships a migration-capable showcase app at [`examples/my-typia-block`](../examples/my-typia-block), and the CLI migration commands remain available for projects that choose to keep the same workspace layout.
+`wp-typia` no longer treats migrations as a built-in scaffold template. Instead, the repository ships a migration-capable repo-local reference app at [`examples/my-typia-block`](../examples/my-typia-block), and the CLI migration commands remain available for projects that choose to keep the same workspace layout.
+
+From the repository root, treat the example app as the reference target and use `examples:*` commands for build/dev/test flows.
+
+The `migration:*` and `sync-types` commands shown below are run inside `examples/my-typia-block` (or inside your own generated project root after scaffolding), not from the repository root `package.json`.
 
 ## What stays the source of truth
 
@@ -120,7 +124,7 @@ The CLI also regenerates:
 
 ## Dashboard and site scan
 
-The showcase app includes an admin-side migration dashboard that can:
+The reference app includes an admin-side migration dashboard that can:
 
 - scan posts for legacy block attributes
 - summarize version distribution
@@ -142,7 +146,7 @@ The dashboard preview now highlights:
 
 ## Example pack
 
-The showcase app also ships a reference-only example pack at:
+The reference app also ships a reference-only example pack at:
 
 ```text
 src/migrations/examples/rename-transform-union/
@@ -159,7 +163,7 @@ The example pack does not register itself into `supportedVersions` and does not 
 
 ## Server-side foundation
 
-The showcase app and other migration-capable projects can also ship:
+The reference app and other migration-capable projects can also ship:
 
 - `typia-validator.php`
 - `typia-migration-registry.php`

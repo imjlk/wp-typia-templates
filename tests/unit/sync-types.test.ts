@@ -4,25 +4,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {
 	ensureExampleShowcaseSynced,
+	findExampleShowcaseBuildArtifact,
 	getExampleShowcaseDir,
 } from './helpers/example-showcase';
 
 ensureExampleShowcaseSynced();
-
-function findGeneratedArtifact(baseDir: string, artifact: string): string {
-	for (const candidate of [
-		path.join(baseDir, 'build', artifact),
-		path.join(baseDir, 'build', 'my-typia-block', artifact),
-	]) {
-		if (fs.existsSync(candidate)) {
-			return candidate;
-		}
-	}
-
-	throw new Error(
-		`Unable to locate generated artifact "${artifact}" under ${baseDir}`
-	);
-}
 
 describe('Type Sync Tests', () => {
 	const exampleDir = getExampleShowcaseDir();
@@ -89,12 +75,10 @@ describe('Type Sync Tests', () => {
 		() => {
 			execSync('bun run build', { cwd: exampleDir, stdio: 'inherit' });
 
-			const buildManifestPath = findGeneratedArtifact(
-				exampleDir,
+			const buildManifestPath = findExampleShowcaseBuildArtifact(
 				'typia.manifest.json'
 			);
-			const buildPhpValidatorPath = findGeneratedArtifact(
-				exampleDir,
+			const buildPhpValidatorPath = findExampleShowcaseBuildArtifact(
 				'typia-validator.php'
 			);
 

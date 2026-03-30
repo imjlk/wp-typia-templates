@@ -11,7 +11,9 @@ import { x as extractTarball } from "tar";
 
 import {
 	BUILTIN_TEMPLATE_IDS,
+	SHARED_BASE_TEMPLATE_ROOT,
 	TEMPLATE_ROOT,
+	getTemplateLayerDirs,
 	getTemplateById,
 	isBuiltInTemplateId,
 	type BuiltInTemplateId,
@@ -326,24 +328,21 @@ function getTemplateVariableContext(variables: { [key: string]: string }): Templ
 
 async function materializeBuiltinTemplate(templateId: BuiltInTemplateId): Promise<ResolvedTemplateSource> {
 	const template = getTemplateById(templateId);
-	if (templateId === "basic") {
-		return {
-			id: template.id,
-			defaultCategory: template.defaultCategory,
-			description: template.description,
-			features: template.features,
-			format: "wp-typia",
-			templateDir: template.templateDir,
-		};
-	}
-
 	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-template-"));
-	const templateDir = path.join(tempRoot, "interactivity");
-	await copyRawDirectory(path.join(TEMPLATE_ROOT, "basic"), templateDir);
-	await fsp.cp(path.join(TEMPLATE_ROOT, "interactivity"), templateDir, {
-		recursive: true,
-		force: true,
-	});
+	const templateDir = path.join(tempRoot, templateId);
+	try {
+		await fsp.mkdir(templateDir, { recursive: true });
+
+		for (const layerDir of getTemplateLayerDirs(templateId)) {
+			await fsp.cp(layerDir, templateDir, {
+				recursive: true,
+				force: true,
+			});
+		}
+	} catch (error) {
+		await fsp.rm(tempRoot, { force: true, recursive: true });
+		throw error;
+	}
 
 	return {
 		id: template.id,
@@ -597,7 +596,13 @@ async function normalizeCreateBlockSubset(
 	const blockJson = readRemoteBlockJson(seed.blockDir);
 	const sourceRoot = getSeedSourceRoot(seed.blockDir);
 
-	await copyRawDirectory(path.join(TEMPLATE_ROOT, "basic"), templateDir);
+	await fsp.mkdir(templateDir, { recursive: true });
+	for (const layerDir of [SHARED_BASE_TEMPLATE_ROOT, path.join(TEMPLATE_ROOT, "basic")]) {
+		await fsp.cp(layerDir, templateDir, {
+			recursive: true,
+			force: true,
+		});
+	}
 	await removeSeedEntryConflicts(templateDir);
 	await fsp.cp(sourceRoot, path.join(templateDir, "src"), { recursive: true, force: true });
 

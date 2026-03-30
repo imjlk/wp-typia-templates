@@ -4,7 +4,7 @@
 
 ## `my-typia-block`
 
-[`examples/my-typia-block`](./my-typia-block) is the showcase app for the repository.
+[`examples/my-typia-block`](./my-typia-block) is the repo-local reference app for the repository.
 
 It demonstrates:
 
@@ -17,7 +17,7 @@ It demonstrates:
 
 ## When to use it
 
-Use the showcase when you want to:
+Use the reference app when you want to:
 
 - inspect the fullest supported `wp-typia` feature set
 - copy migration workspace patterns into a real block
@@ -31,10 +31,9 @@ Use the built-in scaffolds from `@wp-typia/create` when you want a smaller start
 ## Quick Start
 
 ```bash
-cd examples/my-typia-block
 bun install
-bun run sync-types
-bun run build
+bun run examples:build
+bun run examples:dev
 ```
 
 ## Structure

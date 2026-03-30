@@ -43,24 +43,26 @@ jobs:
       - name: Run unit tests
         run: bun run test
 
-      - name: Build workspace targets
-        run: bun run build
-
-      - name: Setup WordPress
+      - name: Build packages and example
         run: |
-          bun run wp-env:stop || true
-          bun run wp-env:start
+          bun run packages:build
+          bun run examples:build
+
+      - name: Setup example WordPress environment
+        run: |
+          bun run examples:wp-env:stop || true
+          bun run examples:wp-env:start
           sleep 30
 
       - name: Install Playwright
         run: bunx playwright install --with-deps
 
-      - name: Run E2E tests
-        run: bun run test:e2e
+      - name: Run example E2E tests
+        run: bun run examples:test:e2e
 
       - name: Stop WordPress
         if: always()
-        run: bun run wp-env:stop
+        run: bun run examples:wp-env:stop
 
   security-scan:
     name: Security Scan
