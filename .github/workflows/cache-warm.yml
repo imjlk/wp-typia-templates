@@ -10,7 +10,7 @@ env:
 
 jobs:
   warm:
-    name: Warm Bun and Playwright caches
+    name: Warm Bun, Playwright, and wp-env caches
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,6 +32,16 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Cache wp-env home
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.wp-env
+            ~/wp-env
+          key: wp-env-${{ runner.os }}-${{ hashFiles('.wp-env.json', '.wp-env.test.json', 'examples/my-typia-block/package.json', 'bun.lock') }}
+          restore-keys: |
+            wp-env-${{ runner.os }}-
+
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
@@ -42,3 +52,9 @@ jobs:
 
       - name: Install Playwright Chromium
         run: bunx playwright install --with-deps chromium
+
+      - name: Warm wp-env test home
+        run: |
+          bun run examples:wp-env:stop:test || true
+          bun run examples:wp-env:start:test
+          bun run examples:wp-env:stop:test
