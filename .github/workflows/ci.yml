@@ -110,9 +110,10 @@ jobs:
             package_manager: pnpm
             project_name: smoke-interactivity-pnpm
           - runtime: node
-            template: ./packages/create/tests/fixtures/create-block-subset
+            template: ./packages/create/tests/fixtures/create-block-external
+            variant: hero
             package_manager: npm
-            project_name: smoke-remote-create-block
+            project_name: smoke-remote-create-block-external
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -141,11 +142,16 @@ jobs:
 
       - name: Run generated project smoke
         run: |
-          node scripts/run-generated-project-smoke.mjs \
-            --runtime "${{ matrix.runtime }}" \
-            --template "${{ matrix.template }}" \
-            --package-manager "${{ matrix.package_manager }}" \
+          args=(
+            --runtime "${{ matrix.runtime }}"
+            --template "${{ matrix.template }}"
+            --package-manager "${{ matrix.package_manager }}"
             --project-name "${{ matrix.project_name }}"
+          )
+          if [ -n "${{ matrix.variant || '' }}" ]; then
+            args+=(--variant "${{ matrix.variant }}")
+          fi
+          node scripts/run-generated-project-smoke.mjs "${args[@]}"
 
   e2e:
     name: E2E Tests

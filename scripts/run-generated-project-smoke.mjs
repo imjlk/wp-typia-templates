@@ -31,6 +31,7 @@ function parseArgs(argv) {
 		projectName: undefined,
 		runtime: undefined,
 		template: undefined,
+		variant: undefined,
 	};
 
 	for (let index = 0; index < argv.length; index += 1) {
@@ -49,6 +50,11 @@ function parseArgs(argv) {
 		}
 		if (arg === "--package-manager") {
 			parsed.packageManager = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--variant") {
+			parsed.variant = next;
 			index += 1;
 			continue;
 		}
@@ -204,11 +210,11 @@ function rewriteWorkspaceDependencies(projectDir) {
 }
 
 function main() {
-	const { runtime, template, packageManager, projectName } = parseArgs(process.argv.slice(2));
+	const { runtime, template, packageManager, projectName, variant } = parseArgs(process.argv.slice(2));
 
 	if (!runtime || !template || !packageManager || !projectName) {
 		throw new Error(
-			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> --package-manager <id> --project-name <name>",
+			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] --package-manager <id> --project-name <name>",
 		);
 	}
 
@@ -223,6 +229,7 @@ function main() {
 			projectDir,
 			"--template",
 			template,
+			...(variant ? ["--variant", variant] : []),
 			"--yes",
 			"--no-install",
 			"--package-manager",

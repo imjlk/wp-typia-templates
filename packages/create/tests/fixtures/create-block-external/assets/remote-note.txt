@@ -1,0 +1,1 @@
+remote external template asset

@@ -27,6 +27,7 @@ interface ParsedArgs {
 	packageManager?: string;
 	positionals: string[];
 	template?: string;
+	variant?: string;
 	yes: boolean;
 }
 
@@ -37,6 +38,7 @@ function parseArgs(argv: string[]): ParsedArgs {
 		packageManager: undefined,
 		positionals: [],
 		template: undefined,
+		variant: undefined,
 		yes: false,
 	};
 
@@ -67,6 +69,15 @@ function parseArgs(argv: string[]): ParsedArgs {
 		}
 		if (arg.startsWith("--template=")) {
 			parsed.template = arg.split("=", 2)[1];
+			continue;
+		}
+		if (arg === "--variant") {
+			parsed.variant = argv[index + 1];
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--variant=")) {
+			parsed.variant = arg.split("=", 2)[1];
 			continue;
 		}
 		if (arg === "--package-manager" || arg === "-p") {
@@ -116,8 +127,16 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 			selectTemplate: () =>
 				prompt.select("Select a template", getTemplateSelectOptions(), 1),
 			templateId: parsed.template,
+			variant: parsed.variant,
 			yes: parsed.yes,
 		});
+
+		if (flow.result.selectedVariant) {
+			console.log(`Template variant: ${flow.result.selectedVariant}`);
+		}
+		for (const warning of flow.result.warnings) {
+			console.warn(`⚠️ ${warning}`);
+		}
 
 		console.log(`\n✅ Created ${flow.result.variables.title} in ${flow.projectDir}`);
 		console.log("Next steps:");
