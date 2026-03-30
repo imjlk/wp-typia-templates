@@ -7,6 +7,7 @@ import {
 } from '@wp-typia/create/runtime/defaults';
 import {
 	createAttributeUpdater as createValidatedAttributeUpdater,
+	createNestedAttributeUpdater as createValidatedNestedAttributeUpdater,
 	type ValidationResult,
 	toValidationResult,
 } from '@wp-typia/create/runtime/validation';
@@ -70,6 +71,26 @@ export function createAttributeUpdater(
 		( validation, key ) => {
 			console.error(
 				`Validation failed for ${ String( key ) }:`,
+				validation.errors
+			);
+		}
+	);
+}
+
+export function createNestedAttributeUpdater(
+	attributes: MyTypiaBlockAttributes,
+	setAttributes: ( attrs: Partial< MyTypiaBlockAttributes > ) => void,
+	validator = validators.validate
+) {
+	return createValidatedNestedAttributeUpdater(
+		attributes,
+		setAttributes,
+		validator as (
+			value: MyTypiaBlockAttributes
+		) => ValidationResult< MyTypiaBlockAttributes >,
+		( validation, path ) => {
+			console.error(
+				`Validation failed for ${ path }:`,
 				validation.errors
 			);
 		}

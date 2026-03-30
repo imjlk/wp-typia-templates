@@ -64,6 +64,12 @@ const editorFields = createEditorModel(currentManifest as ManifestDocument, {
 });
 ```
 
+For nested object leaves such as `padding.top`, generated projects can keep validation-aware updates inside the shared runtime layer too:
+
+```ts
+import { createNestedAttributeUpdater } from "@wp-typia/create/runtime/validation";
+```
+
 `runtime/editor` is intentionally lightweight. It infers editor control hints from Typia manifest metadata:
 
 - `boolean` -> toggle

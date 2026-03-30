@@ -21,7 +21,11 @@ import {
 	type ManifestDocument,
 } from '@wp-typia/create/runtime/editor';
 import { MyTypiaBlockAttributes } from './types';
-import { createAttributeUpdater, validators } from './validators';
+import {
+	createAttributeUpdater,
+	createNestedAttributeUpdater,
+	validators,
+} from './validators';
 import { useTypiaValidation, useAttributeLogger, useDebounce } from './hooks';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { MigrationDashboard } from './admin/migration-dashboard';
@@ -183,15 +187,17 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		setAttributes,
 		validators.validate
 	);
+	const updateNestedAttribute = createNestedAttributeUpdater(
+		attributes,
+		setAttributes,
+		validators.validate
+	);
 
 	// Log attribute changes in development
 	useAttributeLogger( debouncedAttributes );
 
 	const updatePadding = ( side: PaddingKey, nextValue: number ) =>
-		updateAttribute( 'padding', {
-			...padding,
-			[ side ]: nextValue,
-		} );
+		updateNestedAttribute( `padding.${ side }`, nextValue );
 
 	const previewStyle = {
 		aspectRatio: aspectRatio === 'auto' ? undefined : aspectRatio,

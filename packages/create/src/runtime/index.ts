@@ -31,10 +31,13 @@ export type {
 } from "./editor.js";
 export {
 	createAttributeUpdater,
+	createNestedAttributeUpdater,
 	formatValidationError,
 	formatValidationErrors,
+	mergeNestedAttributeUpdate,
 	normalizeValidationError,
 	toAttributePatch,
+	toNestedAttributePatch,
 	toValidationResult,
 	toValidationState,
 } from "./validation.js";

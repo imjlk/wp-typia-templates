@@ -2,8 +2,11 @@ import { describe, expect, test } from 'bun:test';
 
 import {
 	createAttributeUpdater,
+	createNestedAttributeUpdater,
 	formatValidationError,
 	formatValidationErrors,
+	mergeNestedAttributeUpdate,
+	toNestedAttributePatch,
 	toValidationResult,
 	toValidationState,
 	type ValidationResult,
@@ -211,5 +214,139 @@ describe('runtime validation helpers', () => {
 
 		expect(updateAttribute('content', 'Still invalid')).toBe(false);
 		expect(patches).toEqual([]);
+	});
+
+	test('toNestedAttributePatch creates a top-level patch for dotted paths without mutating the source object', () => {
+		const attributes = {
+			content: 'Hello',
+			padding: {
+				bottom: 4,
+				left: 4,
+				right: 4,
+				top: 4,
+			},
+		};
+
+		const patch = toNestedAttributePatch(attributes, 'padding.top', 12);
+
+		expect(patch).toEqual({
+			padding: {
+				bottom: 4,
+				left: 4,
+				right: 4,
+				top: 12,
+			},
+		});
+		expect(attributes.padding.top).toBe(4);
+	});
+
+	test('mergeNestedAttributeUpdate applies dotted path updates to the next validation payload', () => {
+		const attributes = {
+			content: 'Hello',
+			padding: {
+				bottom: 4,
+				left: 4,
+				right: 4,
+				top: 4,
+			},
+		};
+
+		expect(mergeNestedAttributeUpdate(attributes, 'padding.left', 16)).toEqual({
+			content: 'Hello',
+			padding: {
+				bottom: 4,
+				left: 16,
+				right: 4,
+				top: 4,
+			},
+		});
+	});
+
+	test('createNestedAttributeUpdater applies valid dotted path patches', () => {
+		const patches: Array<
+			Partial<{
+				content: string;
+				padding: { bottom: number; left: number; right: number; top: number };
+			}>
+		> = [];
+		const updateAttribute = createNestedAttributeUpdater(
+			{
+				content: 'Hello',
+				padding: {
+					bottom: 4,
+					left: 4,
+					right: 4,
+					top: 4,
+				},
+			},
+			(patch) => {
+				patches.push(patch);
+			},
+			(value): ValidationResult<{
+				content: string;
+				padding: { bottom: number; left: number; right: number; top: number };
+			}> => ({
+				data: value,
+				errors: [],
+				isValid: true,
+			})
+		);
+
+		expect(updateAttribute('padding.top', 24)).toBe(true);
+		expect(patches).toEqual([
+			{
+				padding: {
+					bottom: 4,
+					left: 4,
+					right: 4,
+					top: 24,
+				},
+			},
+		]);
+	});
+
+	test('createNestedAttributeUpdater blocks invalid dotted path patches and reports the path', () => {
+		const patches: Array<
+			Partial<{
+				content: string;
+				padding: { bottom: number; left: number; right: number; top: number };
+			}>
+		> = [];
+		const validationPaths: string[] = [];
+		const updateAttribute = createNestedAttributeUpdater(
+			{
+				content: 'Hello',
+				padding: {
+					bottom: 4,
+					left: 4,
+					right: 4,
+					top: 4,
+				},
+			},
+			(patch) => {
+				patches.push(patch);
+			},
+			(): ValidationResult<{
+				content: string;
+				padding: { bottom: number; left: number; right: number; top: number };
+			}> => ({
+				errors: [
+					{
+						expected: 'number',
+						path: 'padding.top',
+						value: -1,
+					},
+				],
+				isValid: false,
+			}),
+			( validation, path ) => {
+				validationPaths.push(path);
+				expect(validation.errors[0]?.path).toBe('padding.top');
+			}
+		);
+
+		expect(updateAttribute('padding.top', -1)).toBe(false);
+		expect(patches).toEqual([]);
+		expect(validationPaths).toEqual(['padding.top']);
 	});
 });

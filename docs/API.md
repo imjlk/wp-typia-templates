@@ -94,6 +94,8 @@ const editorFields = createEditorModel(currentManifest as ManifestDocument, {
 - select options derived from `wp.enum`
 - unsupported/manual reasons for unions, arrays, and complex fields
 
+`runtime/validation` also exposes nested update helpers for dotted editor paths such as `padding.top`. They convert dotted paths into top-level Gutenberg attribute patches and run the same validation contract before calling `setAttributes`.
+
 Migration-capable reference apps or custom projects may also add:
 
 - `render.php`
