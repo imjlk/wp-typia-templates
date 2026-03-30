@@ -50,7 +50,7 @@ npx @wp-typia/create my-block --template @scope/create-block-template --variant 
 | `basic` | Minimal, clean boilerplate with Typia metadata sync and runtime validation |
 | `interactivity` | The same foundation plus WordPress Interactivity API wiring |
 
-`full` and `advanced` are no longer built-in scaffold targets. Their richer patterns live on in the showcase app under [`examples/my-typia-block`](examples/my-typia-block).
+`full` and `advanced` are no longer built-in scaffold targets. Their richer patterns live on in the repo-local reference app under [`examples/my-typia-block`](examples/my-typia-block).
 
 ## How the Scaffold Works
 
@@ -74,9 +74,9 @@ export interface MyBlockAttributes {
 }
 ```
 
-## Showcase Example
+## Reference App
 
-[`examples/my-typia-block`](examples/my-typia-block) is the kitchen-sink showcase for the repo. It is not a built-in template. It is the place where richer features live together:
+[`examples/my-typia-block`](examples/my-typia-block) is the repo-local kitchen-sink reference app. It is not a built-in template. It is the place where richer features live together:
 
 - server rendering with `render.php`
 - migration snapshots and dashboard preview tooling
@@ -122,7 +122,7 @@ wp-typia/
 │   ├── create-wp-typia/        # Unscoped compatibility shim
 │   └── wp-typia-block-types/   # Shared semantic block types
 ├── examples/
-│   └── my-typia-block/         # Kitchen-sink showcase app
+│   └── my-typia-block/         # Kitchen-sink reference app
 ├── tests/
 ├── docs/
 └── .github/
@@ -131,11 +131,12 @@ wp-typia/
 ## Documentation
 
 - [Examples Guide](examples/EXAMPLES.md)
+- [Architecture Guide](docs/architecture.md)
 - [API Guide](docs/API.md)
 - [Interactivity Guide](docs/interactivity.md)
 - [Migration Guide](docs/migrations.md)
 - [Union Support Guide](docs/union-support.md)
-- [Interactive Tutorial](docs/tutorials/interactive-tutorial.md)
+- [Basic Block Tutorial](docs/tutorials/basic-block-tutorial.md)
 - [Contributing Guide](CONTRIBUTING.md)
 
 ## Repository Development
@@ -147,8 +148,26 @@ bun install
 bun run typecheck
 bun run test
 bun run build
-bun run test:e2e
+bun run examples:test:e2e
 ```
+
+Example-specific commands live under the `examples:*` namespace:
+
+```bash
+bun run examples:build
+bun run examples:dev
+bun run examples:lint
+bun run examples:test:e2e
+```
+
+Command map:
+
+| Command | What it targets |
+| --- | --- |
+| `bun run build` | Product packages and the repo-local reference app |
+| `bun run examples:build` | Reference app only |
+| `bun run --filter @wp-typia/create test` | CLI/runtime only |
+| `bun run examples:test:e2e` | Playwright against the reference app |
 
 ## License
 
