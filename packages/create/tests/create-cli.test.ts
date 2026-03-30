@@ -74,6 +74,7 @@ describe("@wp-typia/create scaffolding", () => {
 
 		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 		const readme = fs.readFileSync(readmePath, "utf8");
+		const generatedEdit = fs.readFileSync(path.join(targetDir, "src", "edit.tsx"), "utf8");
 		const generatedHooks = fs.readFileSync(path.join(targetDir, "src", "hooks.ts"), "utf8");
 		const generatedValidators = fs.readFileSync(path.join(targetDir, "src", "validators.ts"), "utf8");
 
@@ -84,6 +85,8 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(packageJson.scripts.start).toBe("npm run sync-types && wp-scripts start");
 		expect(generatedHooks).toContain("type ValidationResult");
 		expect(generatedHooks).toContain("useTypiaValidation");
+		expect(generatedEdit).toContain("@wp-typia/create/runtime/editor");
+		expect(generatedEdit).toContain("createEditorModel");
 		expect(generatedValidators).toContain("toValidationResult");
 		expect(generatedValidators).toContain("createValidatedAttributeUpdater");
 		expect(generatedValidators).toContain("clone");
@@ -120,6 +123,8 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedValidators).toContain("createValidatedAttributeUpdater");
 		expect(generatedValidators).toContain("clone");
 		expect(generatedValidators).toContain("prune");
+		expect(generatedEdit).toContain("@wp-typia/create/runtime/editor");
+		expect(generatedEdit).toContain("createEditorModel");
 		expect(generatedEdit).toContain("useTypiaValidation");
 		expect(generatedEdit).toContain("createAttributeUpdater");
 	});

@@ -48,6 +48,39 @@ Built-in templates are intentionally limited to `basic` and `interactivity`.
 
 Inside `@wp-typia/create`, built-in templates are composed from a shared base layer plus per-template overlays. That keeps package setup, sync scripts, and shared runtime wiring aligned as `wp-typia` evolves without expanding the public template surface.
 
+Generated projects can also reuse small runtime helpers from `@wp-typia/create` instead of copying local utility code:
+
+```ts
+import currentManifest from "./typia.manifest.json";
+import {
+  createEditorModel,
+  type ManifestDocument,
+} from "@wp-typia/create/runtime/editor";
+
+const editorFields = createEditorModel(currentManifest as ManifestDocument, {
+  hidden: ["id", "version"],
+  manual: ["content", "linkTarget"],
+  preferTextarea: ["content"],
+});
+```
+
+For nested object leaves such as `padding.top`, generated projects can keep validation-aware updates inside the shared runtime layer too:
+
+```ts
+import { createNestedAttributeUpdater } from "@wp-typia/create/runtime/validation";
+```
+
+`runtime/editor` is intentionally lightweight. It infers editor control hints from Typia manifest metadata:
+
+- `boolean` -> toggle
+- enum-backed `string` -> select
+- bounded `number` -> range
+- other `number` -> number
+- plain `string` -> text
+- `preferTextarea` strings -> textarea
+
+Unions, arrays, formatted IDs/URLs, and paths marked as `manual` are reported as unsupported so projects can keep custom UI where it matters.
+
 The `migrations` commands remain available for projects that include the migration workspace, such as the repo-local reference app in [`examples/my-typia-block`](../../examples/my-typia-block) or compatible remote seeds:
 
 ```bash

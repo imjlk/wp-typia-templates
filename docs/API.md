@@ -64,6 +64,38 @@ Each scaffolded project exposes a few predictable files:
 - `typia.manifest.json`: manifest v2 with explicit default markers and supported discriminated union metadata
 - `typia-validator.php`: generated PHP validator for the supported server-side subset
 
+Generated projects can also import shared runtime helpers from `@wp-typia/create`:
+
+- `@wp-typia/create/runtime/defaults`
+- `@wp-typia/create/runtime/validation`
+- `@wp-typia/create/runtime/editor`
+
+The `runtime/editor` helper turns manifest metadata into editor control hints without trying to auto-generate the entire inspector UI.
+
+```ts
+import currentManifest from "./typia.manifest.json";
+import {
+  createEditorModel,
+  type ManifestDocument,
+} from "@wp-typia/create/runtime/editor";
+
+const editorFields = createEditorModel(currentManifest as ManifestDocument, {
+  hidden: ["id", "version"],
+  manual: ["content", "linkTarget"],
+  preferTextarea: ["content"],
+});
+```
+
+`createEditorModel()` returns field descriptors with:
+
+- label and dotted `path`
+- inferred control kind (`toggle`, `select`, `range`, `number`, `text`, `textarea`, `unsupported`)
+- default value, required flag, and Typia constraints
+- select options derived from `wp.enum`
+- unsupported/manual reasons for unions, arrays, and complex fields
+
+`runtime/validation` also exposes nested update helpers for dotted editor paths such as `padding.top`. They convert dotted paths into top-level Gutenberg attribute patches and run the same validation contract before calling `setAttributes`.
+
 Migration-capable reference apps or custom projects may also add:
 
 - `render.php`

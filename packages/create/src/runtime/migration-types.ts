@@ -4,11 +4,16 @@ export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue
 export type ManifestTsKind = "string" | "number" | "boolean" | "array" | "object" | "union";
 
 export interface ManifestConstraints {
+	exclusiveMaximum?: number | null;
+	exclusiveMinimum?: number | null;
 	format?: string | null;
 	maxLength?: number | null;
+	maxItems?: number | null;
 	maximum?: number | null;
 	minLength?: number | null;
+	minItems?: number | null;
 	minimum?: number | null;
+	multipleOf?: number | null;
 	pattern?: string | null;
 	typeTag?: string | null;
 }
@@ -21,7 +26,7 @@ export interface ManifestUnionMetadata {
 export interface ManifestTsMetadata {
 	items?: ManifestAttribute | null;
 	kind: ManifestTsKind;
-	properties?: Record<string, ManifestAttribute>;
+	properties?: Record<string, ManifestAttribute> | null;
 	required?: boolean;
 	union?: ManifestUnionMetadata | null;
 }

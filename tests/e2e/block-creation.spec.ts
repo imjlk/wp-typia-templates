@@ -33,6 +33,28 @@ test.describe('WordPress Typia block smoke', () => {
     expect(attributes).toMatchObject(EXAMPLE_BLOCK.updatedAttributes);
   });
 
+  test('helper-driven inspector controls update manifest-backed attributes', async () => {
+    await wpPage.insertBlock();
+    await wpPage.openBlockSettingsSidebar();
+
+    await wpPage.page.getByRole('combobox', { name: 'Font Size' }).selectOption('xlarge');
+    await wpPage.page.getByRole('combobox', { name: 'Text Color' }).selectOption('inherit');
+    await wpPage.page.getByRole('combobox', { name: 'Background Color' }).selectOption('unset');
+    await wpPage.page.getByRole('combobox', { name: 'Aspect Ratio' }).selectOption('1/1');
+    await wpPage.page.getByRole('spinbutton', { name: 'Border Radius' }).fill('12');
+    await wpPage.page.getByRole('checkbox', { name: 'Visible' }).uncheck();
+
+    const attributes = await wpPage.getBlockAttributes();
+    expect(attributes).toMatchObject({
+      aspectRatio: '1/1',
+      backgroundColor: 'unset',
+      borderRadius: 12,
+      fontSize: 'xlarge',
+      isVisible: false,
+      textColor: 'inherit',
+    });
+  });
+
   test('publish + frontend render', async () => {
     await wpPage.insertBlock();
     await wpPage.publishPost();
@@ -50,7 +72,12 @@ test.describe('WordPress Typia block smoke', () => {
     await wpPage.insertBlock();
     await wpPage.updateSelectedBlockAttributes({ alignment: 123 as unknown as string });
 
-    await expect(wpPage.page.getByText(/Validation Errors:/)).toBeVisible();
-    await expect(wpPage.page.getByText(/alignment:/)).toBeVisible();
+    const validationNotice = wpPage.page
+      .locator('.components-notice')
+      .filter({ hasText: 'Validation Errors:' })
+      .first();
+
+    await expect(validationNotice).toBeVisible();
+    await expect(validationNotice.getByText(/alignment:/).first()).toBeVisible();
   });
 });

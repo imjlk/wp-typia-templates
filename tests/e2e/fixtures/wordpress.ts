@@ -125,6 +125,30 @@ export class WordPressPage {
     await expect(this.getBlockLocator(block.name).first()).toBeVisible();
   }
 
+  async openBlockSettingsSidebar() {
+    const closeInserterButton = this.page.getByRole('button', { name: /Close Block Inserter/i });
+    if (await closeInserterButton.isVisible().catch(() => false)) {
+      await closeInserterButton.click();
+    }
+
+    const isSidebarOpen = await this.page.evaluate(() => {
+      const wp = (window as any).wp;
+      return wp?.data?.select('core/edit-post')?.isEditorSidebarOpened?.() === true;
+    });
+
+    if (isSidebarOpen) {
+      return;
+    }
+
+    const settingsButton = this.page.getByRole('button', { name: /^Settings$/i });
+    await settingsButton.click();
+
+    await this.page.waitForFunction(() => {
+      const wp = (window as any).wp;
+      return wp?.data?.select('core/edit-post')?.isEditorSidebarOpened?.() === true;
+    });
+  }
+
   async updateSelectedBlockAttributes(attributes: Record<string, unknown>) {
     await this.page.evaluate((nextAttributes) => {
       const wp = (window as any).wp;
@@ -222,9 +246,16 @@ export class WordPressPage {
   }
 
   private async dismissWelcomeGuideIfPresent() {
-    const closeButton = this.page.getByRole('button', { name: 'Close' });
-    if (await closeButton.isVisible().catch(() => false)) {
-      await closeButton.click();
+    const welcomeGuideDialog = this.page.getByRole('dialog').filter({
+      has: this.page.getByRole('button', { name: 'Close' }),
+    }).first();
+
+    if (await welcomeGuideDialog.isVisible().catch(() => false)) {
+      await welcomeGuideDialog
+        .getByRole('button', { name: 'Close' })
+        .click({ force: true })
+        .catch(() => {});
+      await welcomeGuideDialog.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {});
     }
   }
 
