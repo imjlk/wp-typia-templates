@@ -38,7 +38,7 @@ const { state, actions } = store("my-plugin/my-block", {
 });
 ```
 
-## When to reach for the showcase instead
+## When to reach for the reference app instead
 
 Use [`examples/my-typia-block`](../examples/my-typia-block) as the richer reference when you need:
 

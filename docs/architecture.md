@@ -57,4 +57,4 @@ This keeps public scaffold behavior stable while letting shared runtime/helper c
 2. Author the schema in `src/types.ts`
 3. Run `sync-types`
 4. Build and validate the block
-5. Use the example app as the richer reference when you need migration or showcase patterns
+5. Use the example app as the richer reference when you need migration or kitchen-sink patterns

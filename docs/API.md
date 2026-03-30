@@ -64,7 +64,7 @@ Each scaffolded project exposes a few predictable files:
 - `typia.manifest.json`: manifest v2 with explicit default markers and supported discriminated union metadata
 - `typia-validator.php`: generated PHP validator for the supported server-side subset
 
-Migration-capable showcase or custom projects may also add:
+Migration-capable reference apps or custom projects may also add:
 
 - `render.php`
 - `typia-migration-registry.php`

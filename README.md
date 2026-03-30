@@ -48,7 +48,7 @@ npx @wp-typia/create my-block --template @scope/create-block-template --variant 
 | `basic` | Minimal, clean boilerplate with Typia metadata sync and runtime validation |
 | `interactivity` | The same foundation plus WordPress Interactivity API wiring |
 
-`full` and `advanced` are no longer built-in scaffold targets. Their richer patterns live on in the showcase app under [`examples/my-typia-block`](examples/my-typia-block).
+`full` and `advanced` are no longer built-in scaffold targets. Their richer patterns live on in the repo-local reference app under [`examples/my-typia-block`](examples/my-typia-block).
 
 ## How the Scaffold Works
 
@@ -72,9 +72,9 @@ export interface MyBlockAttributes {
 }
 ```
 
-## Showcase Example
+## Reference App
 
-[`examples/my-typia-block`](examples/my-typia-block) is the kitchen-sink showcase for the repo. It is not a built-in template. It is the place where richer features live together:
+[`examples/my-typia-block`](examples/my-typia-block) is the repo-local kitchen-sink reference app. It is not a built-in template. It is the place where richer features live together:
 
 - server rendering with `render.php`
 - migration snapshots and dashboard preview tooling
@@ -120,7 +120,7 @@ wp-typia/
 │   ├── create-wp-typia/        # Unscoped compatibility shim
 │   └── wp-typia-block-types/   # Shared semantic block types
 ├── examples/
-│   └── my-typia-block/         # Kitchen-sink showcase app
+│   └── my-typia-block/         # Kitchen-sink reference app
 ├── tests/
 ├── docs/
 └── .github/

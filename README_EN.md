@@ -45,7 +45,7 @@ npx @wp-typia/create my-block --template github:owner/repo/path#main --package-m
 - `basic` for clean Typia-first block boilerplate
 - `interactivity` for the same base plus WordPress Interactivity API wiring
 
-Richer patterns that used to live in more specialized templates are now demonstrated in the showcase app under [`examples/my-typia-block`](examples/my-typia-block).
+Richer patterns that used to live in more specialized templates are now demonstrated in the repo-local reference app under [`examples/my-typia-block`](examples/my-typia-block).
 
 ## Core Workflow
 
@@ -77,9 +77,9 @@ The CLI accepts:
 
 The first remote adapter targets a `create-block`-style subset. `wp-typia` treats the remote source as a seed, then regenerates its own package setup, Typia sync flow, and runtime helpers around it.
 
-## Showcase App
+## Reference App
 
-[`examples/my-typia-block`](examples/my-typia-block) is the repo-local kitchen-sink showcase. It keeps the richer migration, validation, and server-rendering flows visible without turning the default scaffold into a kitchen-sink starter.
+[`examples/my-typia-block`](examples/my-typia-block) is the repo-local kitchen-sink reference app. It keeps the richer migration, validation, and server-rendering flows visible without turning the default scaffold into a kitchen-sink starter.
 
 ## Packages
 

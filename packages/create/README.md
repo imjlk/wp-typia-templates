@@ -46,7 +46,7 @@ External template configs execute trusted JavaScript (`index.js` / `index.cjs` /
 
 Built-in templates are intentionally limited to `basic` and `interactivity`.
 
-The `migrations` commands remain available for projects that include the migration workspace, such as the showcase app in [`examples/my-typia-block`](../../examples/my-typia-block) or compatible remote seeds:
+The `migrations` commands remain available for projects that include the migration workspace, such as the repo-local reference app in [`examples/my-typia-block`](../../examples/my-typia-block) or compatible remote seeds:
 
 ```bash
 wp-typia migrations init --current-version 1.0.0
@@ -56,5 +56,13 @@ wp-typia migrations verify --all
 ```
 
 Repo development stays Bun-first. The generated project can use `bun`, `npm`, `pnpm`, or `yarn`.
+
+Inside the monorepo, reference-app commands use the `examples:*` namespace at the root:
+
+```bash
+bun run examples:build
+bun run examples:lint
+bun run examples:test:e2e
+```
 
 `@wp-typia/create` is the canonical package. `create-wp-typia` remains only as a compatibility shim for `bun create wp-typia` and existing unscoped installs.
