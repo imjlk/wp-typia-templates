@@ -1,5 +1,16 @@
 # @wp-typia/create
 
+## 0.3.0 — 2026-03-30
+
+### Minor changes
+
+- [02a4f65](https://github.com/imjlk/wp-typia/commit/02a4f6512abf18fd1ab47e95193a33a1a9b7ce22) Expand `--template` to support official `@wordpress/create-block`-style external template configs from local paths, GitHub locators, and npm package specs. Add `--variant` support for external templates, normalize rendered seeds into the wp-typia scaffold flow, and document the trusted-JavaScript execution model for external template configs. — Thanks @imjlk!
+
+### Patch changes
+
+- [665ce99](https://github.com/imjlk/wp-typia/commit/665ce9917e344654adf5c61f34ff17943b2c6380) Clarify the repository boundary between product packages and the example app by introducing `examples:*` root scripts, tightening built-in template composition around an explicit shared base layer, and documenting `examples/my-typia-block` as the repo-local reference app. This keeps scaffold behavior stable while making repo structure and generated template maintenance easier to follow. — Thanks @imjlk!
+- [4503f18](https://github.com/imjlk/wp-typia/commit/4503f18f6adbe8ccde1b1ce36316a2f8ad9ccbd6) Tighten the generated template validation contract by introducing typed `ValidationResult` helpers, shared runtime validation utilities, and consistent validation error handling across the `basic` and `interactivity` templates. The showcase block now shares the same typed validation flow, includes visible editor-side error summaries, and adds stronger runtime test coverage for clone, prune, attribute updates, and validation UI behavior. — Thanks @imjlk!
+
 ## 0.2.0 — 2026-03-29
 
 ### Minor changes
