@@ -14,6 +14,20 @@ export {
 export { applyTemplateDefaultsFromManifest } from "./defaults.js";
 export * from "./metadata-core.js";
 export {
+	createAttributeUpdater,
+	formatValidationError,
+	formatValidationErrors,
+	normalizeValidationError,
+	toAttributePatch,
+	toValidationResult,
+	toValidationState,
+} from "./validation.js";
+export type {
+	TypiaValidationError,
+	ValidationResult,
+	ValidationState,
+} from "./validation.js";
+export {
 	PACKAGE_MANAGER_IDS,
 	PACKAGE_MANAGERS,
 	formatInstallCommand,

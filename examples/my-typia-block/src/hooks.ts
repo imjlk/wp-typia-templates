@@ -1,12 +1,20 @@
 /* eslint-disable no-console */
 import { useEffect, useState } from '@wordpress/element';
+import {
+	type TypiaValidationError,
+	type ValidationResult,
+	toValidationState,
+} from '@wp-typia/create/runtime/validation';
 
-export interface TypiaValidationError {
-	description?: string;
-	expected: string;
-	path: string;
-	value: unknown;
-}
+export {
+	formatValidationError,
+	formatValidationErrors,
+	toValidationState,
+} from '@wp-typia/create/runtime/validation';
+export type {
+	TypiaValidationError,
+	ValidationResult,
+} from '@wp-typia/create/runtime/validation';
 
 /**
  * Custom hooks for My Typia Block
@@ -22,21 +30,20 @@ export * from './hooks/useLocalStorage';
  */
 export function useTypiaValidation< T >(
 	data: T,
-	validator: ( value: T ) => {
-		success: boolean;
-		errors?: TypiaValidationError[];
-	}
+	validator: ( value: T ) => ValidationResult< T >
 ) {
 	const [ isValid, setIsValid ] = useState( true );
 	const [ errors, setErrors ] = useState< TypiaValidationError[] >( [] );
+	const [ errorMessages, setErrorMessages ] = useState< string[] >( [] );
 
 	useEffect( () => {
-		const result = validator( data );
-		setIsValid( result.success );
-		setErrors( result.errors || [] );
+		const result = toValidationState( validator( data ) );
+		setIsValid( result.isValid );
+		setErrors( result.errors );
+		setErrorMessages( result.errorMessages );
 	}, [ data, validator ] );
 
-	return { isValid, errors };
+	return { isValid, errors, errorMessages };
 }
 
 /**

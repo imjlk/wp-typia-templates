@@ -4,17 +4,18 @@
 
 import { BlockEditProps } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
-import { PanelBody, TextControl, ToggleControl, SelectControl } from '@wordpress/components';
+import { Notice, PanelBody, TextControl, ToggleControl, SelectControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { {{pascalCase}}Attributes } from './types';
 import { validators, createAttributeUpdater } from './validators';
-import { useValidation } from './hooks';
+import { useTypiaValidation } from './hooks';
 
 type EditProps = BlockEditProps<{{pascalCase}}Attributes>;
+type AlignmentValue = NonNullable<{{pascalCase}}Attributes['alignment']>;
 
 function Edit({ attributes, setAttributes }: EditProps) {
   const blockProps = useBlockProps();
-  const { errors, isValid } = useValidation(attributes, validators.validate);
+  const { errorMessages, isValid } = useTypiaValidation(attributes, validators.validate);
   const updateAttribute = createAttributeUpdater(
     attributes,
     setAttributes,
@@ -41,7 +42,7 @@ function Edit({ attributes, setAttributes }: EditProps) {
               { label: __('오른쪽', '{{textDomain}}'), value: 'right' },
               { label: __('양쪽 맞춤', '{{textDomain}}'), value: 'justify' },
             ]}
-            onChange={(value) => updateAttribute('alignment', value as any)}
+            onChange={(value) => updateAttribute('alignment', value as AlignmentValue)}
           />
 
           <TextControl
@@ -60,7 +61,7 @@ function Edit({ attributes, setAttributes }: EditProps) {
 
         {!isValid && (
           <PanelBody title={__('유효성 검증 오류', '{{textDomain}}')} initialOpen>
-            {errors.map((error, index) => (
+            {errorMessages.map((error, index) => (
               <div key={index} style={{ color: '#cc1818', fontSize: '12px' }}>
                 • {error}
               </div>
@@ -77,6 +78,18 @@ function Edit({ attributes, setAttributes }: EditProps) {
             </span>
           )}
         </div>
+        {!isValid && (
+          <Notice status="error" isDismissible={false}>
+            <p>
+              <strong>{__('유효성 검증 오류', '{{textDomain}}')}</strong>
+            </p>
+            <ul style={{ margin: 0, paddingLeft: '1em' }}>
+              {errorMessages.map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          </Notice>
+        )}
       </div>
     </>
   );

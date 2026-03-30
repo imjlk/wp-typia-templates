@@ -1,5 +1,11 @@
 import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";
+import type {
+  TypiaValidationError,
+  ValidationResult,
+} from "@wp-typia/create/runtime/validation";
 import { tags } from "typia";
+
+export type { TypiaValidationError, ValidationResult } from "@wp-typia/create/runtime/validation";
 
 /**
  * 블록 속성 인터페이스
@@ -46,3 +52,5 @@ export interface {{pascalCase}}Attributes {
     tags.Type<"uint32"> & 
     tags.Default<1>;
 }
+
+export type {{pascalCase}}ValidationResult = ValidationResult<{{pascalCase}}Attributes>;

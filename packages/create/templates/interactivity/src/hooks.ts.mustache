@@ -1,0 +1,35 @@
+import { useEffect, useState } from '@wordpress/element';
+import {
+  type TypiaValidationError,
+  type ValidationResult,
+  formatValidationErrors,
+  toValidationState,
+} from '@wp-typia/create/runtime/validation';
+
+export {
+  formatValidationError,
+  formatValidationErrors,
+  toValidationState,
+} from '@wp-typia/create/runtime/validation';
+export type {
+  TypiaValidationError,
+  ValidationResult,
+} from '@wp-typia/create/runtime/validation';
+
+export function useTypiaValidation<T>(
+  attributes: T,
+  validator: (value: T) => ValidationResult<T>
+) {
+  const [errors, setErrors] = useState<TypiaValidationError[]>([]);
+  const [errorMessages, setErrorMessages] = useState<string[]>([]);
+  const [isValid, setIsValid] = useState(true);
+
+  useEffect(() => {
+    const result = toValidationState(validator(attributes));
+    setErrors(result.errors);
+    setErrorMessages(result.errorMessages);
+    setIsValid(result.isValid);
+  }, [attributes, validator]);
+
+  return { errors, errorMessages, isValid };
+}

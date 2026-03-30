@@ -4,18 +4,36 @@ import {
   type ManifestDefaultsDocument,
   applyTemplateDefaultsFromManifest,
 } from "@wp-typia/create/runtime/defaults";
-import { {{pascalCase}}Attributes } from "./types";
+import {
+  createAttributeUpdater as createValidatedAttributeUpdater,
+  type ValidationResult,
+  toValidationResult,
+} from "@wp-typia/create/runtime/validation";
+import { {{pascalCase}}Attributes, {{pascalCase}}ValidationResult } from "./types";
 
 /**
  * Typia 유효성 검증기
  */
+const validate = typia.createValidate<{{pascalCase}}Attributes>();
+const assert = typia.createAssert<{{pascalCase}}Attributes>();
+const is = typia.createIs<{{pascalCase}}Attributes>();
+const random = typia.createRandom<{{pascalCase}}Attributes>();
+const clone = typia.misc.createClone<{{pascalCase}}Attributes>();
+const prune = typia.misc.createPrune<{{pascalCase}}Attributes>();
+
+export const validate{{pascalCase}}Attributes = (
+  attributes: unknown,
+): {{pascalCase}}ValidationResult => {
+  return toValidationResult(validate(attributes));
+};
+
 export const validators = {
-  validate: typia.createValidate<{{pascalCase}}Attributes>(),
-  assert: typia.createAssert<{{pascalCase}}Attributes>(),
-  is: typia.createIs<{{pascalCase}}Attributes>(),
-  random: typia.createRandom<{{pascalCase}}Attributes>(),
-  clone: typia.misc.createClone<{{pascalCase}}Attributes>(),
-  prune: typia.misc.createPrune<{{pascalCase}}Attributes>(),
+  validate: validate{{pascalCase}}Attributes,
+  assert,
+  is,
+  random,
+  clone,
+  prune,
 };
 
 export function sanitize{{pascalCase}}Attributes(
@@ -26,10 +44,10 @@ export function sanitize{{pascalCase}}Attributes(
     attributes,
   );
 
-  return {
+  return validators.assert({
     ...normalized,
     id: normalized.id && normalized.id.length > 0 ? normalized.id : generateRuntimeId(),
-  } as {{pascalCase}}Attributes;
+  });
 }
 
 /**
@@ -40,21 +58,14 @@ export function createAttributeUpdater(
   setAttributes: (attrs: Partial<{{pascalCase}}Attributes>) => void,
   validator = validators.validate
 ) {
-  return <K extends keyof {{pascalCase}}Attributes>(
-    key: K,
-    value: {{pascalCase}}Attributes[K]
-  ) => {
-    const newAttrs = { ...attributes, [key]: value };
-    
-    const validation = validator(newAttrs);
-    if (validation.success) {
-      setAttributes({ [key]: value } as Partial<{{pascalCase}}Attributes>);
-      return true;
-    } else {
+  return createValidatedAttributeUpdater(
+    attributes,
+    setAttributes,
+    validator as (value: {{pascalCase}}Attributes) => ValidationResult<{{pascalCase}}Attributes>,
+    (validation, key) => {
       console.error(`Validation failed for ${String(key)}:`, validation.errors);
-      return false;
-    }
-  };
+    },
+  );
 }
 
 function generateRuntimeId(): string {

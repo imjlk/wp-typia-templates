@@ -4,7 +4,7 @@
     "noEmit": false,
     "outDir": "./dist/runtime",
     "rootDir": "./src/runtime",
-    "declaration": false,
+    "declaration": true,
     "declarationMap": false,
     "sourceMap": false,
     "plugins": []
