@@ -47,3 +47,10 @@ Use [`examples/my-typia-block`](../examples/my-typia-block) as the richer refere
 - site scan and migration dashboard tooling
 
 If you only need reactive frontend behavior, the `interactivity` template stays simpler and is the right built-in starting point.
+
+From the repository root, the reference app is exercised through the `examples:*` namespace:
+
+```bash
+bun run examples:build
+bun run examples:test:e2e
+```

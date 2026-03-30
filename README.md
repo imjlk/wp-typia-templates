@@ -129,6 +129,7 @@ wp-typia/
 ## Documentation
 
 - [Examples Guide](examples/EXAMPLES.md)
+- [Architecture Guide](docs/architecture.md)
 - [API Guide](docs/API.md)
 - [Interactivity Guide](docs/interactivity.md)
 - [Migration Guide](docs/migrations.md)
@@ -145,7 +146,16 @@ bun install
 bun run typecheck
 bun run test
 bun run build
-bun run test:e2e
+bun run examples:test:e2e
+```
+
+Example-specific commands live under the `examples:*` namespace:
+
+```bash
+bun run examples:build
+bun run examples:dev
+bun run examples:lint
+bun run examples:test:e2e
 ```
 
 ## License

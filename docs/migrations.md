@@ -2,6 +2,8 @@
 
 `wp-typia` no longer treats migrations as a built-in scaffold template. Instead, the repository ships a migration-capable showcase app at [`examples/my-typia-block`](../examples/my-typia-block), and the CLI migration commands remain available for projects that choose to keep the same workspace layout.
 
+From the repository root, treat the example app as the reference target and use `examples:*` commands for build/dev/test flows.
+
 ## What stays the source of truth
 
 - `src/types.ts` describes the current block contract.

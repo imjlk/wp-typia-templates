@@ -31,10 +31,9 @@ Use the built-in scaffolds from `@wp-typia/create` when you want a smaller start
 ## Quick Start
 
 ```bash
-cd examples/my-typia-block
 bun install
-bun run sync-types
-bun run build
+bun run examples:build
+bun run examples:dev
 ```
 
 ## Structure

@@ -74,7 +74,20 @@ Migration-capable showcase or custom projects may also add:
 - `src/migrations/generated/`
 - `src/migrations/fixtures/`
 
-## 4. Generated reference docs
+## 4. Repo-local example app
+
+The repository keeps one reference app at [`examples/my-typia-block`](../examples/my-typia-block). From the root workspace, example-oriented commands live under:
+
+```bash
+bun run examples:build
+bun run examples:dev
+bun run examples:lint
+bun run examples:test:e2e
+```
+
+Legacy root shortcuts such as `bun run dev` and `bun run test:e2e` remain available as compatibility aliases.
+
+## 5. Generated reference docs
 
 Contributor note:
 

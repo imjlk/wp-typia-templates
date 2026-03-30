@@ -16,6 +16,8 @@ bun install
 bun run typecheck
 bun run test
 bun run build
+bun run examples:lint
+bun run examples:test:e2e
 bun run test:coverage
 ```
 

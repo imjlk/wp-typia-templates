@@ -3,9 +3,10 @@ import { execFileSync } from "node:child_process";
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { syncBlockMetadata } from '../../scripts/lib/typia-metadata-core';
+import { getExampleShowcaseFixtureRoot } from './helpers/example-showcase';
 
 function createFixture(files: Record<string, string>) {
-  const baseDir = path.resolve(import.meta.dir, '../../examples/my-typia-block/.tmp-metadata-fixtures');
+  const baseDir = getExampleShowcaseFixtureRoot('.tmp-metadata-fixtures');
   fs.mkdirSync(baseDir, { recursive: true });
 
   const fixtureDir = fs.mkdtempSync(path.join(baseDir, 'fixture-'));
@@ -29,7 +30,7 @@ function hasPhpBinary() {
 
 describe('Typia metadata generator', () => {
   afterAll(() => {
-    const baseDir = path.resolve(import.meta.dir, '../../examples/my-typia-block/.tmp-metadata-fixtures');
+    const baseDir = getExampleShowcaseFixtureRoot('.tmp-metadata-fixtures');
     fs.rmSync(baseDir, { force: true, recursive: true });
   });
 

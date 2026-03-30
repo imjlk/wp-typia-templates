@@ -20,6 +20,7 @@ import {
 import type { PackageManagerId } from "./package-managers.js";
 import {
 	TEMPLATE_IDS,
+	getTemplateLayerDirs,
 	getTemplateById,
 	getTemplateSelectOptions,
 	listTemplates,
@@ -150,11 +151,13 @@ export function formatTemplateFeatures(template: TemplateDefinition): string {
 }
 
 export function formatTemplateDetails(template: TemplateDefinition): string {
+	const layers = getTemplateLayerDirs(template.id);
 	return [
 		template.id,
 		template.description,
 		`Category: ${template.defaultCategory}`,
-		`Path: ${template.templateDir}`,
+		`Overlay path: ${template.templateDir}`,
+		`Layers: ${layers.join(" -> ")}`,
 		`Features: ${template.features.join(", ")}`,
 	].join("\n");
 }
@@ -230,13 +233,15 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 	});
 
 	for (const template of listTemplates()) {
+		const layerDirs = getTemplateLayerDirs(template.id);
 		const hasAssets =
-			fs.existsSync(template.templateDir) &&
-			fs.existsSync(path.join(template.templateDir, "package.json.mustache"));
+			layerDirs.every((layerDir) => fs.existsSync(layerDir)) &&
+			layerDirs.some((layerDir) => fs.existsSync(path.join(layerDir, "package.json.mustache"))) &&
+			layerDirs.some((layerDir) => fs.existsSync(path.join(layerDir, "src")));
 		checks.push({
 			status: hasAssets ? "pass" : "fail",
 			label: `Template ${template.id}`,
-			detail: hasAssets ? template.templateDir : "Missing core template assets",
+			detail: hasAssets ? layerDirs.join(" + ") : "Missing core template assets",
 		});
 	}
 
