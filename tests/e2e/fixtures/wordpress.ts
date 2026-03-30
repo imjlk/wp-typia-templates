@@ -246,9 +246,12 @@ export class WordPressPage {
   }
 
   private async dismissWelcomeGuideIfPresent() {
-    const closeButton = this.page.getByRole('button', { name: 'Close' });
-    if (await closeButton.isVisible().catch(() => false)) {
-      await closeButton.click();
+    const welcomeGuideDialog = this.page.getByRole('dialog').filter({
+      has: this.page.getByRole('button', { name: 'Close' }),
+    }).first();
+
+    if (await welcomeGuideDialog.isVisible().catch(() => false)) {
+      await welcomeGuideDialog.getByRole('button', { name: 'Close' }).click();
     }
   }
 

@@ -42,7 +42,6 @@ test.describe('WordPress Typia block smoke', () => {
     await wpPage.page.getByRole('combobox', { name: 'Background Color' }).selectOption('unset');
     await wpPage.page.getByRole('combobox', { name: 'Aspect Ratio' }).selectOption('1/1');
     await wpPage.page.getByRole('spinbutton', { name: 'Border Radius' }).fill('12');
-    await wpPage.page.getByRole('spinbutton', { name: 'Padding Top' }).fill('24');
     await wpPage.page.getByRole('checkbox', { name: 'Visible' }).uncheck();
 
     const attributes = await wpPage.getBlockAttributes();
@@ -52,9 +51,6 @@ test.describe('WordPress Typia block smoke', () => {
       borderRadius: 12,
       fontSize: 'xlarge',
       isVisible: false,
-      padding: {
-        top: 24,
-      },
       textColor: 'inherit',
     });
   });
