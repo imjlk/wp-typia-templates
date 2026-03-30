@@ -4,6 +4,12 @@
 
 [packages/create/src/runtime/template-source](../modules/packages_create_src_runtime_template_source.md).TemplateVariableContext
 
+## Hierarchy
+
+- `Record`\<`string`, `unknown`\>
+
+  ↳ **`TemplateVariableContext`**
+
 ## Table of contents
 
 ### Properties
@@ -26,7 +32,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:17](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L17)
+[packages/create/src/runtime/template-source.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L29)
 
 ___
 
@@ -36,7 +42,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:18](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L18)
+[packages/create/src/runtime/template-source.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L30)
 
 ___
 
@@ -46,7 +52,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:19](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L19)
+[packages/create/src/runtime/template-source.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L31)
 
 ___
 
@@ -56,7 +62,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:20](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L20)
+[packages/create/src/runtime/template-source.ts:32](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L32)
 
 ___
 
@@ -66,7 +72,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:21](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L21)
+[packages/create/src/runtime/template-source.ts:33](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L33)
 
 ___
 
@@ -76,7 +82,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:22](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L22)
+[packages/create/src/runtime/template-source.ts:34](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L34)
 
 ___
 
@@ -86,7 +92,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:23](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L23)
+[packages/create/src/runtime/template-source.ts:35](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L35)
 
 ___
 
@@ -96,7 +102,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:24](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L24)
+[packages/create/src/runtime/template-source.ts:36](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L36)
 
 ___
 
@@ -106,4 +112,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:25](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L25)
+[packages/create/src/runtime/template-source.ts:37](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L37)

@@ -27,7 +27,12 @@ Remote template MVP:
 ```bash
 wp-typia my-block --template ./local-template-dir --package-manager npm --yes --no-install
 wp-typia my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
+wp-typia my-block --template @scope/create-block-template --variant hero --package-manager npm --yes --no-install
 ```
+
+`--variant` only applies to official create-block external template configs. If a config defines variants and `--variant` is omitted, the first variant becomes the default.
+
+Security note: external template configs are trusted JavaScript and are executed during scaffold normalization. Treat local paths, GitHub locators, and npm package templates with the same trust model as `@wordpress/create-block`.
 
 Migration commands remain available inside migration-capable projects such as [`examples/my-typia-block`](../examples/my-typia-block):
 

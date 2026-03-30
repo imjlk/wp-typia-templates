@@ -12,6 +12,7 @@
 ### Functions
 
 - [parseGitHubTemplateLocator](packages_create_src_runtime_template_source.md#parsegithubtemplatelocator)
+- [parseNpmTemplateLocator](packages_create_src_runtime_template_source.md#parsenpmtemplatelocator)
 - [parseTemplateLocator](packages_create_src_runtime_template_source.md#parsetemplatelocator)
 - [resolveTemplateSource](packages_create_src_runtime_template_source.md#resolvetemplatesource)
 
@@ -33,7 +34,27 @@
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:54](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L54)
+[packages/create/src/runtime/template-source.ts:228](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L228)
+
+___
+
+### parseNpmTemplateLocator
+
+▸ **parseNpmTemplateLocator**(`templateId`): `NpmTemplateLocator` \| ``null``
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `templateId` | `string` |
+
+#### Returns
+
+`NpmTemplateLocator` \| ``null``
+
+#### Defined in
+
+[packages/create/src/runtime/template-source.ts:250](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L250)
 
 ___
 
@@ -53,13 +74,13 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:76](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L76)
+[packages/create/src/runtime/template-source.ts:272](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L272)
 
 ___
 
 ### resolveTemplateSource
 
-▸ **resolveTemplateSource**(`templateId`, `cwd`, `variables`): `Promise`\<[`ResolvedTemplateSource`](../interfaces/packages_create_src_runtime_template_source.ResolvedTemplateSource.md)\>
+▸ **resolveTemplateSource**(`templateId`, `cwd`, `variables`, `variant?`): `Promise`\<[`ResolvedTemplateSource`](../interfaces/packages_create_src_runtime_template_source.ResolvedTemplateSource.md)\>
 
 #### Parameters
 
@@ -68,6 +89,7 @@ ___
 | `templateId` | `string` |
 | `cwd` | `string` |
 | `variables` | `Object` |
+| `variant?` | `string` |
 
 #### Returns
 
@@ -75,4 +97,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:417](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L417)
+[packages/create/src/runtime/template-source.ts:876](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L876)

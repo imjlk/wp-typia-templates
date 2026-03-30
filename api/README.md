@@ -40,6 +40,7 @@ Remote template MVP:
 ```bash
 npx @wp-typia/create my-block --template ./local-template-dir --package-manager npm --yes --no-install
 npx @wp-typia/create my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
+npx @wp-typia/create my-block --template @scope/create-block-template --variant hero --package-manager npm --yes --no-install
 ```
 
 ## Built-in Templates
@@ -91,6 +92,9 @@ If you want to see the “everything included” shape of `wp-typia`, start ther
 - built-in template ids
 - local paths
 - GitHub locators in the form `github:owner/repo/path[#ref]`
+- npm package specs such as `@scope/create-block-template@latest`
+
+When the source is an official create-block external template config, `--variant <name>` is supported. If the config defines variants and no variant is passed, the first variant is selected automatically.
 
 The current remote adapter supports a `create-block`-style subset:
 
@@ -100,6 +104,8 @@ The current remote adapter supports a `create-block`-style subset:
 - style/editor/view assets
 
 The remote source is treated as a seed. `wp-typia` still regenerates its own package setup, Typia sync flow, and runtime helpers around it.
+
+External template configs execute trusted JavaScript (`index.js` / `index.cjs` / `index.mjs`) and can run a `transformer(view)` hook before normalization. Only use template sources you trust.
 
 ## Packages
 
