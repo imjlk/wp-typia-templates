@@ -585,72 +585,74 @@ export function MigrationDashboard() {
 												} }
 											>
 												{ post.previews.map(
-													( preview ) => (
-														<div
-															key={ preview.blockPath.join(
-																'.'
-															) }
-														>
-															<div>
-																<strong>
+													( preview ) => {
+														const analysis =
+															findAnalysisForPreview(
+																results,
+																post.postId,
+																preview.blockPath
+															);
+
+														return (
+															<div
+																key={ preview.blockPath.join(
+																	'.'
+																) }
+															>
+																<div>
+																	<strong>
+																		{
+																			preview.currentVersion
+																		}{ ' ' }
+																		→{ ' ' }
+																		{
+																			preview.targetVersion
+																		}
+																	</strong>
+																	{ preview
+																		.preview
+																		.changedFields
+																		.length >
+																	0
+																		? ` · ${ preview.preview.changedFields.join(
+																				', '
+																		  ) }`
+																		: '' }
+																	{ analysis
+																		? ` · ${ formatRiskSummaryLine(
+																				analysis
+																		  ) }`
+																		: '' }
+																	{ preview.reason
+																		? ` · ${ preview.reason }`
+																		: '' }
+																</div>
+																<div>
+																	{ formatUnionSummary(
+																		preview.preview
+																	) }
+																</div>
+																{ renderJsonPreview(
 																	{
-																		preview.currentVersion
-																	}{ ' ' }
-																	→{ ' ' }
-																	{
-																		preview.targetVersion
+																		after: preview
+																			.preview
+																			.after,
+																		before: preview
+																			.preview
+																			.before,
+																		unresolved:
+																			preview
+																				.preview
+																				.unresolved,
+																		validationErrors:
+																			preview
+																				.preview
+																				.validationErrors,
 																	}
-																</strong>
-																{ preview
-																	.preview
-																	.changedFields
-																	.length > 0
-																	? ` · ${ preview.preview.changedFields.join(
-																			', '
-																	  ) }`
-																	: '' }
-																{ findAnalysisForPreview(
-																	results,
-																	post.postId,
-																	preview.blockPath
-																)
-																	? ` · ${ formatRiskSummaryLine(
-																			findAnalysisForPreview(
-																				results,
-																				post.postId,
-																				preview.blockPath
-																			)!
-																	  ) }`
-																	: '' }
-																{ preview.reason
-																	? ` · ${ preview.reason }`
-																	: '' }
-															</div>
-															<div>
-																{ formatUnionSummary(
-																	preview.preview
 																) }
 															</div>
-															{ renderJsonPreview(
-																{
-																	after: preview
-																		.preview
-																		.after,
-																	before: preview
-																		.preview
-																		.before,
-																	unresolved:
-																		preview
-																			.preview
-																			.unresolved,
-																	validationErrors:
-																		preview
-																			.preview
-																			.validationErrors,
-																}
-															) }
-														</div>
-													)
+														);
+													}
 												) }
 											</div>
 										</details>

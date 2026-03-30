@@ -250,6 +250,7 @@ jobs:
 
       - name: Stop WordPress
         if: always()
+        continue-on-error: true
         run: bun run examples:wp-env:stop:test
 
   deploy-docs:

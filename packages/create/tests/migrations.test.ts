@@ -1283,4 +1283,28 @@ describe("wp-typia migrations", () => {
 			),
 		).toThrow(/seed 7/);
 	});
+
+	test("fuzz command accepts seed zero and rejects unsupported requested versions", () => {
+		const projectDir = path.join(tempRoot, "fuzz-seed-zero-project");
+		createVersionedMigrationProject(projectDir);
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const zeroSeedOutput = runCli(
+			"node",
+			[entryPath, "migrations", "fuzz", "--all", "--iterations", "1", "--seed", "0"],
+			{ cwd: projectDir },
+		);
+		expect(zeroSeedOutput).toContain("Fuzzed 1.0.0 -> 2.0.0");
+
+		expect(() =>
+			runCli(
+				"node",
+				[entryPath, "migrations", "fuzz", "--from", "9.9.9", "--iterations", "1", "--seed", "0"],
+				{ cwd: projectDir },
+			),
+		).toThrow(/Unsupported migration version: 9.9.9/);
+	});
 });

@@ -571,12 +571,16 @@ function createDefaultInput(manifest: ManifestDocument): Record<string, unknown>
 }
 
 function isValidationSuccess(result: unknown): boolean {
+\tconst typedResult =
+\t\tresult !== null && typeof result === "object"
+\t\t\t? (result as { isValid?: unknown; success?: unknown })
+\t\t\t: null;
+
 \treturn (
-\t\tresult !== null &&
-\t\ttypeof result === "object" &&
+\t\ttypedResult !== null &&
 \t\t(
-\t\t\tresult.isValid === true ||
-\t\t\tresult.success === true
+\t\t\ttypedResult.isValid === true ||
+\t\t\ttypedResult.success === true
 \t\t)
 \t);
 }
@@ -710,10 +714,14 @@ if (edges.length === 0) {
 \tprocess.exit(0);
 }
 
+let executedEdges = 0;
+
 for (const [edgeIndex, edge] of edges.entries()) {
 \tif (selectedVersions.length > 0 && !selectedVersions.includes(edge.fromVersion)) {
 \t\tcontinue;
 \t}
+
+\texecutedEdges += 1;
 
 \tconst fixtureCases = Array.isArray(edge.fixture?.cases) ? edge.fixture.cases : [];
 \tfor (const fixtureCase of fixtureCases) {
@@ -746,6 +754,13 @@ for (const [edgeIndex, edge] of edges.entries()) {
 \t\t\t" fixture case(s), " +
 \t\t\tString(parsed.iterations) +
 \t\t\t" fuzz iteration(s))",
+\t);
+}
+
+if (selectedVersions.length > 0 && executedEdges === 0) {
+\tthrow new Error(
+\t\t"Requested migration version was not exercised by fuzz: " +
+\t\t\tselectedVersions.join(", "),
 \t);
 }
 

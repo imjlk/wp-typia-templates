@@ -256,7 +256,7 @@ export function runMigrationCommand(
 				fromVersion: command.flags.from,
 				iterations: parsePositiveInteger(command.flags.iterations, "iterations") ?? 25,
 				renderLine,
-				seed: parsePositiveInteger(command.flags.seed, "seed") ?? undefined,
+				seed: parseNonNegativeInteger(command.flags.seed, "seed") ?? undefined,
 			});
 		default:
 			throw new Error(formatMigrationHelpText());
@@ -675,8 +675,21 @@ function parsePositiveInteger(value: string | undefined, label: string): number 
 	}
 
 	const parsed = Number.parseInt(value, 10);
-	if (!Number.isInteger(parsed) || parsed < 0) {
+	if (!Number.isInteger(parsed) || parsed <= 0) {
 		throw new Error(`Invalid ${label}: ${value}. Expected a positive integer.`);
+	}
+
+	return parsed;
+}
+
+function parseNonNegativeInteger(value: string | undefined, label: string): number | undefined {
+	if (!value) {
+		return undefined;
+	}
+
+	const parsed = Number.parseInt(value, 10);
+	if (!Number.isInteger(parsed) || parsed < 0) {
+		throw new Error(`Invalid ${label}: ${value}. Expected a non-negative integer.`);
 	}
 
 	return parsed;
@@ -697,11 +710,7 @@ function resolveLegacyVersions(
 		return [fromVersion];
 	}
 
-	if (all || legacyVersions.length > 0) {
-		return legacyVersions;
-	}
-
-	return [];
+	return legacyVersions;
 }
 
 function collectGeneratedMigrationEntries(

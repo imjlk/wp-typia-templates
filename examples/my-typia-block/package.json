@@ -17,7 +17,7 @@
 		"migration:diff": "wp-typia migrations diff",
 		"migration:scaffold": "wp-typia migrations scaffold",
 		"migration:doctor": "wp-typia migrations doctor --all",
-		"migration:fixtures": "wp-typia migrations fixtures",
+		"migration:fixtures": "wp-typia migrations fixtures --all",
 		"migration:verify": "wp-typia migrations verify --all",
 		"migration:fuzz": "wp-typia migrations fuzz --all",
 		"typecheck": "tsc --noEmit",
