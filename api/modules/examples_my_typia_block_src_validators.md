@@ -13,6 +13,7 @@
 - [validateMyTypiaBlockAttributes](examples_my_typia_block_src_validators.md#validatemytypiablockattributes)
 - [sanitizeMyTypiaBlockAttributes](examples_my_typia_block_src_validators.md#sanitizemytypiablockattributes)
 - [createAttributeUpdater](examples_my_typia_block_src_validators.md#createattributeupdater)
+- [createNestedAttributeUpdater](examples_my_typia_block_src_validators.md#createnestedattributeupdater)
 
 ## Variables
 
@@ -33,7 +34,7 @@
 
 #### Defined in
 
-[examples/my-typia-block/src/validators.ts:33](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L33)
+[examples/my-typia-block/src/validators.ts:34](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L34)
 
 ## Functions
 
@@ -53,7 +54,7 @@
 
 #### Defined in
 
-[examples/my-typia-block/src/validators.ts:25](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L25)
+[examples/my-typia-block/src/validators.ts:26](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L26)
 
 ___
 
@@ -73,7 +74,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/validators.ts:42](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L42)
+[examples/my-typia-block/src/validators.ts:43](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L43)
 
 ___
 
@@ -116,4 +117,39 @@ Create safe attribute updater with validation
 
 #### Defined in
 
-[examples/my-typia-block/src/validators.ts:59](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L59)
+[examples/my-typia-block/src/validators.ts:60](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L60)
+
+___
+
+### createNestedAttributeUpdater
+
+▸ **createNestedAttributeUpdater**(`attributes`, `setAttributes`, `validator?`): (`path`: `string`, `value`: `unknown`) => `boolean`
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `attributes` | [`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md) | `undefined` |
+| `setAttributes` | (`attrs`: `Partial`\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\>) => `void` | `undefined` |
+| `validator` | (`attributes`: `unknown`) => [`ValidationResult`](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\> | `validators.validate` |
+
+#### Returns
+
+`fn`
+
+▸ (`path`, `value`): `boolean`
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `path` | `string` |
+| `value` | `unknown` |
+
+##### Returns
+
+`boolean`
+
+#### Defined in
+
+[examples/my-typia-block/src/validators.ts:80](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L80)

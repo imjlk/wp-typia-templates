@@ -24,7 +24,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:55](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L55)
+[packages/create/src/runtime/migration-types.ts:60](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L60)
 
 ___
 
@@ -34,7 +34,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:56](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L56)
+[packages/create/src/runtime/migration-types.ts:61](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L61)
 
 ___
 
@@ -44,7 +44,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:57](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L57)
+[packages/create/src/runtime/migration-types.ts:62](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L62)
 
 ___
 
@@ -54,7 +54,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:58](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L58)
+[packages/create/src/runtime/migration-types.ts:63](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L63)
 
 ___
 
@@ -64,7 +64,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:59](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L59)
+[packages/create/src/runtime/migration-types.ts:64](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L64)
 
 ___
 
@@ -74,7 +74,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:60](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L60)
+[packages/create/src/runtime/migration-types.ts:65](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L65)
 
 ___
 
@@ -84,4 +84,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:61](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L61)
+[packages/create/src/runtime/migration-types.ts:66](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L66)

@@ -32,6 +32,7 @@
 - [packages/create/src/cli](modules/packages_create_src_cli.md)
 - [packages/create/src/runtime/cli-core](modules/packages_create_src_runtime_cli_core.md)
 - [packages/create/src/runtime/defaults](modules/packages_create_src_runtime_defaults.md)
+- [packages/create/src/runtime/editor](modules/packages_create_src_runtime_editor.md)
 - [packages/create/src/runtime](modules/packages_create_src_runtime.md)
 - [packages/create/src/runtime/metadata-core](modules/packages_create_src_runtime_metadata_core.md)
 - [packages/create/src/runtime/migration-constants](modules/packages_create_src_runtime_migration_constants.md)

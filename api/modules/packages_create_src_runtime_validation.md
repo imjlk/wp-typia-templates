@@ -18,7 +18,10 @@
 - [formatValidationErrors](packages_create_src_runtime_validation.md#formatvalidationerrors)
 - [toValidationState](packages_create_src_runtime_validation.md#tovalidationstate)
 - [toAttributePatch](packages_create_src_runtime_validation.md#toattributepatch)
+- [toNestedAttributePatch](packages_create_src_runtime_validation.md#tonestedattributepatch)
+- [mergeNestedAttributeUpdate](packages_create_src_runtime_validation.md#mergenestedattributeupdate)
 - [createAttributeUpdater](packages_create_src_runtime_validation.md#createattributeupdater)
+- [createNestedAttributeUpdater](packages_create_src_runtime_validation.md#createnestedattributeupdater)
 
 ## Functions
 
@@ -38,7 +41,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:41](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L41)
+[packages/create/src/runtime/validation.ts:43](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L43)
 
 ___
 
@@ -64,7 +67,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:55](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L55)
+[packages/create/src/runtime/validation.ts:57](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L57)
 
 ___
 
@@ -84,7 +87,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:78](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L78)
+[packages/create/src/runtime/validation.ts:80](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L80)
 
 ___
 
@@ -104,7 +107,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:82](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L82)
+[packages/create/src/runtime/validation.ts:84](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L84)
 
 ___
 
@@ -130,7 +133,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:88](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L88)
+[packages/create/src/runtime/validation.ts:90](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L90)
 
 ___
 
@@ -158,7 +161,63 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:108](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L108)
+[packages/create/src/runtime/validation.ts:154](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L154)
+
+___
+
+### toNestedAttributePatch
+
+▸ **toNestedAttributePatch**\<`T`\>(`attributes`, `path`, `value`): `Partial`\<`T`\>
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `T` | extends `object` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `attributes` | `T` |
+| `path` | `string` |
+| `value` | `unknown` |
+
+#### Returns
+
+`Partial`\<`T`\>
+
+#### Defined in
+
+[packages/create/src/runtime/validation.ts:163](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L163)
+
+___
+
+### mergeNestedAttributeUpdate
+
+▸ **mergeNestedAttributeUpdate**\<`T`\>(`attributes`, `path`, `value`): `T`
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `T` | extends `object` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `attributes` | `T` |
+| `path` | `string` |
+| `value` | `unknown` |
+
+#### Returns
+
+`T`
+
+#### Defined in
+
+[packages/create/src/runtime/validation.ts:183](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L183)
 
 ___
 
@@ -206,4 +265,46 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:117](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L117)
+[packages/create/src/runtime/validation.ts:194](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L194)
+
+___
+
+### createNestedAttributeUpdater
+
+▸ **createNestedAttributeUpdater**\<`T`\>(`attributes`, `setAttributes`, `validate`, `onValidationError?`): (`path`: `string`, `value`: `unknown`) => `boolean`
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `T` | extends `object` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `attributes` | `T` |
+| `setAttributes` | (`attrs`: `Partial`\<`T`\>) => `void` |
+| `validate` | (`value`: `T`) => [`ValidationResult`](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)\<`T`\> |
+| `onValidationError?` | (`result`: [`ValidationResult`](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)\<`T`\>, `path`: `string`) => `void` |
+
+#### Returns
+
+`fn`
+
+▸ (`path`, `value`): `boolean`
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `path` | `string` |
+| `value` | `unknown` |
+
+##### Returns
+
+`boolean`
+
+#### Defined in
+
+[packages/create/src/runtime/validation.ts:214](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L214)

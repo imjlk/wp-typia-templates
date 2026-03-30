@@ -16,11 +16,26 @@
 - [parseMigrationArgs](packages_create_src_runtime.md#parsemigrationargs)
 - [runMigrationCommand](packages_create_src_runtime.md#runmigrationcommand)
 - [applyTemplateDefaultsFromManifest](packages_create_src_runtime.md#applytemplatedefaultsfrommanifest)
+- [createEditorModel](packages_create_src_runtime.md#createeditormodel)
+- [describeEditorField](packages_create_src_runtime.md#describeeditorfield)
+- [formatEditorFieldLabel](packages_create_src_runtime.md#formateditorfieldlabel)
+- [EditorControlKind](packages_create_src_runtime.md#editorcontrolkind)
+- [EditorFieldDescriptor](packages_create_src_runtime.md#editorfielddescriptor)
+- [EditorFieldOption](packages_create_src_runtime.md#editorfieldoption)
+- [EditorModelOptions](packages_create_src_runtime.md#editormodeloptions)
+- [ManifestAttribute](packages_create_src_runtime.md#manifestattribute)
+- [ManifestConstraints](packages_create_src_runtime.md#manifestconstraints)
+- [ManifestDocument](packages_create_src_runtime.md#manifestdocument)
+- [ManifestTsKind](packages_create_src_runtime.md#manifesttskind)
+- [JsonValue](packages_create_src_runtime.md#jsonvalue)
 - [createAttributeUpdater](packages_create_src_runtime.md#createattributeupdater)
+- [createNestedAttributeUpdater](packages_create_src_runtime.md#createnestedattributeupdater)
 - [formatValidationError](packages_create_src_runtime.md#formatvalidationerror)
 - [formatValidationErrors](packages_create_src_runtime.md#formatvalidationerrors)
+- [mergeNestedAttributeUpdate](packages_create_src_runtime.md#mergenestedattributeupdate)
 - [normalizeValidationError](packages_create_src_runtime.md#normalizevalidationerror)
 - [toAttributePatch](packages_create_src_runtime.md#toattributepatch)
+- [toNestedAttributePatch](packages_create_src_runtime.md#tonestedattributepatch)
 - [toValidationResult](packages_create_src_runtime.md#tovalidationresult)
 - [toValidationState](packages_create_src_runtime.md#tovalidationstate)
 - [TypiaValidationError](packages_create_src_runtime.md#typiavalidationerror)
@@ -104,9 +119,87 @@ Re-exports [applyTemplateDefaultsFromManifest](packages_create_src_runtime_defau
 
 ___
 
+### createEditorModel
+
+Re-exports [createEditorModel](packages_create_src_runtime_editor.md#createeditormodel)
+
+___
+
+### describeEditorField
+
+Re-exports [describeEditorField](packages_create_src_runtime_editor.md#describeeditorfield)
+
+___
+
+### formatEditorFieldLabel
+
+Re-exports [formatEditorFieldLabel](packages_create_src_runtime_editor.md#formateditorfieldlabel)
+
+___
+
+### EditorControlKind
+
+Re-exports [EditorControlKind](packages_create_src_runtime_editor.md#editorcontrolkind)
+
+___
+
+### EditorFieldDescriptor
+
+Re-exports [EditorFieldDescriptor](../interfaces/packages_create_src_runtime_editor.EditorFieldDescriptor.md)
+
+___
+
+### EditorFieldOption
+
+Re-exports [EditorFieldOption](../interfaces/packages_create_src_runtime_editor.EditorFieldOption.md)
+
+___
+
+### EditorModelOptions
+
+Re-exports [EditorModelOptions](../interfaces/packages_create_src_runtime_editor.EditorModelOptions.md)
+
+___
+
+### ManifestAttribute
+
+Re-exports [ManifestAttribute](../interfaces/packages_create_src_runtime_migration_types.ManifestAttribute.md)
+
+___
+
+### ManifestConstraints
+
+Re-exports [ManifestConstraints](../interfaces/packages_create_src_runtime_migration_types.ManifestConstraints.md)
+
+___
+
+### ManifestDocument
+
+Re-exports [ManifestDocument](../interfaces/packages_create_src_runtime_migration_types.ManifestDocument.md)
+
+___
+
+### ManifestTsKind
+
+Re-exports [ManifestTsKind](packages_create_src_runtime_migration_types.md#manifesttskind)
+
+___
+
+### JsonValue
+
+Re-exports [JsonValue](packages_create_src_runtime_migration_types.md#jsonvalue)
+
+___
+
 ### createAttributeUpdater
 
 Re-exports [createAttributeUpdater](packages_create_src_runtime_validation.md#createattributeupdater)
+
+___
+
+### createNestedAttributeUpdater
+
+Re-exports [createNestedAttributeUpdater](packages_create_src_runtime_validation.md#createnestedattributeupdater)
 
 ___
 
@@ -122,6 +215,12 @@ Re-exports [formatValidationErrors](packages_create_src_runtime_validation.md#fo
 
 ___
 
+### mergeNestedAttributeUpdate
+
+Re-exports [mergeNestedAttributeUpdate](packages_create_src_runtime_validation.md#mergenestedattributeupdate)
+
+___
+
 ### normalizeValidationError
 
 Re-exports [normalizeValidationError](packages_create_src_runtime_validation.md#normalizevalidationerror)
@@ -131,6 +230,12 @@ ___
 ### toAttributePatch
 
 Re-exports [toAttributePatch](packages_create_src_runtime_validation.md#toattributepatch)
+
+___
+
+### toNestedAttributePatch
+
+Re-exports [toNestedAttributePatch](packages_create_src_runtime_validation.md#tonestedattributepatch)
 
 ___
 

@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:71](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L71)
+[packages/create/src/runtime/migration-types.ts:76](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L76)
 
 ___
 
@@ -30,7 +30,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:72](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L72)
+[packages/create/src/runtime/migration-types.ts:77](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L77)
 
 ___
 
@@ -40,4 +40,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:73](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L73)
+[packages/create/src/runtime/migration-types.ts:78](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L78)

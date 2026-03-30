@@ -26,4 +26,4 @@
 
 #### Defined in
 
-[examples/my-typia-block/src/edit.tsx:26](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/edit.tsx#L26)
+[examples/my-typia-block/src/edit.tsx:110](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/edit.tsx#L110)
