@@ -21,6 +21,13 @@ bun run examples:test:e2e
 bun run test:coverage
 ```
 
+Quick command map:
+
+- `bun run build` = product packages + reference app
+- `bun run examples:build` = reference app only
+- `bun run --filter @wp-typia/create test` = CLI/runtime only
+- `bun run examples:test:e2e` = Playwright against the reference app
+
 For generated project smoke checks:
 
 ```bash
@@ -62,4 +69,4 @@ GitHub release automation is split into two workflows:
 - Keep changes scoped and intentional.
 - Add or update tests when behavior changes.
 - If a template workflow changes, update the user-facing README or tutorial in the same PR.
-- For `advanced` migration changes, verify at least one `migration:*` flow locally before opening the PR.
+- If migration behavior or snapshot tooling changes, verify at least one `migration:*` flow in `examples/my-typia-block` before opening the PR.

@@ -34,7 +34,8 @@ This example is not a built-in scaffold target. It exists to demonstrate the ful
   - `typia.manifest.json`
   - `typia-validator.php`
 - `@wp-typia/create/runtime/*` exposes shared runtime helpers used by generated projects.
-- Migration flows live in the showcase/reference app and remain available through the CLI.
+- Migration flows live in the reference app and remain available through the CLI.
+- Built-in templates are composed from a shared base layer plus per-template overlays inside `packages/create/templates/`.
 
 ## Development Workflow
 
@@ -51,6 +52,17 @@ bun run typecheck
 bun run test
 bun run build
 ```
+
+### Command map
+
+- `bun run build`
+  Builds the product packages and the reference app.
+- `bun run examples:build`
+  Builds the reference app only.
+- `bun run --filter @wp-typia/create test`
+  Focused CLI/runtime regression checks.
+- `bun run examples:test:e2e`
+  Playwright coverage against the repo-local reference app.
 
 ### Example-specific commands
 
@@ -69,6 +81,14 @@ Legacy root commands like `bun run dev`, `bun run lint`, and `bun run test:e2e` 
 - `bun run release`
 - GitHub Actions handles release PRs, GitHub Releases, and npm publish.
 
+Release flow:
+
+1. Merge feature PRs into `main`
+2. Let the release PR update from `main`
+3. Merge the release PR
+4. Let GitHub Actions create the GitHub Release
+5. Let OIDC publish package releases from that release event
+
 ## Code Style
 
 - TypeScript strict mode
@@ -81,7 +101,7 @@ Legacy root commands like `bun run dev`, `bun run lint`, and `bun run test:e2e` 
 - `packages/create/src/runtime/`
   CLI/runtime implementation and shared scaffold helpers
 - `packages/create/templates/`
-  Built-in template layers
+  Built-in template layers (`_shared/base` + per-template overlays)
 - `examples/my-typia-block/`
   Reference app used by E2E and fixture tests
 - `tests/unit/helpers/example-showcase.ts`

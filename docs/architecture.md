@@ -51,6 +51,8 @@ Inside `@wp-typia/create`, built-in templates are composed from:
 
 This keeps public scaffold behavior stable while letting shared runtime/helper changes flow into both built-in templates.
 
+Generated projects also import shared runtime helpers from `@wp-typia/create/runtime/*`, so validator/default/runtime behavior can evolve centrally instead of being copied into every generated block.
+
 ## Intended Flow
 
 1. Scaffold a block with `@wp-typia/create`

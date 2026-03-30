@@ -158,6 +158,15 @@ bun run examples:lint
 bun run examples:test:e2e
 ```
 
+Command map:
+
+| Command | What it targets |
+| --- | --- |
+| `bun run build` | Product packages and the repo-local reference app |
+| `bun run examples:build` | Reference app only |
+| `bun run --filter @wp-typia/create test` | CLI/runtime only |
+| `bun run examples:test:e2e` | Playwright against the reference app |
+
 ## License
 
 GPL-2.0-or-later. See [LICENSE](LICENSE) for details.

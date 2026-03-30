@@ -46,6 +46,8 @@ External template configs execute trusted JavaScript (`index.js` / `index.cjs` /
 
 Built-in templates are intentionally limited to `basic` and `interactivity`.
 
+Inside `@wp-typia/create`, built-in templates are composed from a shared base layer plus per-template overlays. That keeps package setup, sync scripts, and shared runtime wiring aligned as `wp-typia` evolves without expanding the public template surface.
+
 The `migrations` commands remain available for projects that include the migration workspace, such as the repo-local reference app in [`examples/my-typia-block`](../../examples/my-typia-block) or compatible remote seeds:
 
 ```bash
