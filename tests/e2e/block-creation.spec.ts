@@ -72,7 +72,12 @@ test.describe('WordPress Typia block smoke', () => {
     await wpPage.insertBlock();
     await wpPage.updateSelectedBlockAttributes({ alignment: 123 as unknown as string });
 
-    await expect(wpPage.page.getByText(/Validation Errors:/)).toBeVisible();
-    await expect(wpPage.page.getByText(/alignment:/)).toBeVisible();
+    const validationNotice = wpPage.page
+      .locator('.components-notice')
+      .filter({ hasText: 'Validation Errors:' })
+      .first();
+
+    await expect(validationNotice).toBeVisible();
+    await expect(validationNotice.getByText(/alignment:/).first()).toBeVisible();
   });
 });

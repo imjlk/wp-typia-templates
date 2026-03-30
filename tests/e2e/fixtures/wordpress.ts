@@ -251,7 +251,11 @@ export class WordPressPage {
     }).first();
 
     if (await welcomeGuideDialog.isVisible().catch(() => false)) {
-      await welcomeGuideDialog.getByRole('button', { name: 'Close' }).click();
+      await welcomeGuideDialog
+        .getByRole('button', { name: 'Close' })
+        .click({ force: true })
+        .catch(() => {});
+      await welcomeGuideDialog.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {});
     }
   }
 
