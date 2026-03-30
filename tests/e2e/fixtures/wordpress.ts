@@ -125,6 +125,21 @@ export class WordPressPage {
     await expect(this.getBlockLocator(block.name).first()).toBeVisible();
   }
 
+  async openBlockSettingsSidebar() {
+    const closeInserterButton = this.page.getByRole('button', { name: /Close Block Inserter/i });
+    if (await closeInserterButton.isVisible().catch(() => false)) {
+      await closeInserterButton.click();
+    }
+
+    const settingsButton = this.page.getByRole('button', { name: /^Settings$/i });
+    await settingsButton.click();
+
+    await this.page.waitForFunction(() => {
+      const wp = (window as any).wp;
+      return wp?.data?.select('core/edit-post')?.isEditorSidebarOpened?.() === true;
+    });
+  }
+
   async updateSelectedBlockAttributes(attributes: Record<string, unknown>) {
     await this.page.evaluate((nextAttributes) => {
       const wp = (window as any).wp;
