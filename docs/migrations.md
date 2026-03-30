@@ -4,6 +4,8 @@
 
 From the repository root, treat the example app as the reference target and use `examples:*` commands for build/dev/test flows.
 
+The `migration:*` and `sync-types` commands shown below are run inside `examples/my-typia-block` (or inside your own generated project root after scaffolding), not from the repository root `package.json`.
+
 ## What stays the source of truth
 
 - `src/types.ts` describes the current block contract.

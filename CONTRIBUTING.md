@@ -17,7 +17,9 @@ bun run typecheck
 bun run test
 bun run build
 bun run examples:lint
+bun run examples:wp-env:start
 bun run examples:test:e2e
+bun run examples:wp-env:stop
 bun run test:coverage
 ```
 
@@ -27,6 +29,7 @@ Quick command map:
 - `bun run examples:build` = reference app only
 - `bun run --filter @wp-typia/create test` = CLI/runtime only
 - `bun run examples:test:e2e` = Playwright against the reference app
+- `bun run examples:test:e2e` expects `bun run examples:wp-env:start` to already be running
 
 For generated project smoke checks:
 

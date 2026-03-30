@@ -330,13 +330,18 @@ async function materializeBuiltinTemplate(templateId: BuiltInTemplateId): Promis
 	const template = getTemplateById(templateId);
 	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-template-"));
 	const templateDir = path.join(tempRoot, templateId);
-	await fsp.mkdir(templateDir, { recursive: true });
+	try {
+		await fsp.mkdir(templateDir, { recursive: true });
 
-	for (const layerDir of getTemplateLayerDirs(templateId)) {
-		await fsp.cp(layerDir, templateDir, {
-			recursive: true,
-			force: true,
-		});
+		for (const layerDir of getTemplateLayerDirs(templateId)) {
+			await fsp.cp(layerDir, templateDir, {
+				recursive: true,
+				force: true,
+			});
+		}
+	} catch (error) {
+		await fsp.rm(tempRoot, { force: true, recursive: true });
+		throw error;
 	}
 
 	return {
