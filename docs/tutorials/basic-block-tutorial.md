@@ -1,10 +1,10 @@
-# Interactive Tutorial: Building Your First Typia Block with `@wp-typia/create`
+# Basic Block Tutorial: Building Your First Typia Block with `@wp-typia/create`
 
-Welcome to the interactive tutorial for `wp-typia`. This hands-on guide walks through creating a fully functional, type-safe WordPress block with runtime validation. For clarity, this tutorial uses `@wp-typia/create` with `npm`; if you choose `bun`, `pnpm`, or `yarn`, swap the generated project commands accordingly.
+Welcome to the basic block tutorial for `wp-typia`. This hands-on guide walks through creating a fully functional, type-safe WordPress block with runtime validation. For clarity, this tutorial uses `@wp-typia/create` with `npm`; if you choose `bun`, `pnpm`, or `yarn`, swap the generated project commands accordingly.
 
 ## Prerequisites
 
-- Node.js 16+ installed
+- Node.js 20+ installed
 - WordPress development environment
 - Basic knowledge of TypeScript and React
 

@@ -134,7 +134,7 @@ wp-typia/
 - [Interactivity Guide](docs/interactivity.md)
 - [Migration Guide](docs/migrations.md)
 - [Union Support Guide](docs/union-support.md)
-- [Interactive Tutorial](docs/tutorials/interactive-tutorial.md)
+- [Basic Block Tutorial](docs/tutorials/basic-block-tutorial.md)
 - [Contributing Guide](CONTRIBUTING.md)
 
 ## Repository Development
