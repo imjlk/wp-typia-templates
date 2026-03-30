@@ -1,8 +1,10 @@
 import { __ } from '@wordpress/i18n';
 import { useBlockProps, InspectorControls, RichText, BlockControls, AlignmentToolbar } from '@wordpress/block-editor';
 import { PanelBody, ToggleControl, SelectControl, RangeControl, TextControl, Button, Notice } from '@wordpress/components';
-import { useState, useEffect } from '@wordpress/element';
+import { useState } from '@wordpress/element';
 import type { {{pascalCase}}Attributes } from './types';
+import { createAttributeUpdater, validators } from './validators';
+import { useTypiaValidation } from './hooks';
 
 export default function Edit({ attributes, setAttributes, isSelected }: {
   attributes: {{pascalCase}}Attributes;
@@ -10,6 +12,8 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
   isSelected: boolean;
 }) {
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const { errorMessages, isValid } = useTypiaValidation(attributes, validators.validate);
+  const updateAttribute = createAttributeUpdater(attributes, setAttributes, validators.validate);
 
   const blockProps = useBlockProps({
     className: `wp-block-{{slugKebabCase}} wp-block-{{slugKebabCase}}--${attributes.interactiveMode}`,
@@ -27,13 +31,14 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
   });
 
   const resetCounter = () => {
-    setAttributes({ clickCount: 0, isAnimating: false });
+    updateAttribute('clickCount', 0);
+    updateAttribute('isAnimating', false);
   };
 
   const testAnimation = () => {
-    setAttributes({ isAnimating: true });
+    updateAttribute('isAnimating', true);
     setTimeout(() => {
-      setAttributes({ isAnimating: false });
+      updateAttribute('isAnimating', false);
     }, 1000);
   };
 
@@ -42,7 +47,7 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
       <BlockControls>
         <AlignmentToolbar
           value={attributes.alignment}
-          onChange={(value) => setAttributes({ alignment: value || 'left' })}
+          onChange={(value) => updateAttribute('alignment', (value || 'left') as NonNullable<{{pascalCase}}Attributes['alignment']>)}
         />
       </BlockControls>
 
@@ -56,7 +61,7 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
               { label: __('Hover', '{{slugSnakeCase}}'), value: 'hover' },
               { label: __('Auto Play', '{{slugSnakeCase}}'), value: 'auto' }
             ]}
-            onChange={(value) => setAttributes({ interactiveMode: value })}
+            onChange={(value) => updateAttribute('interactiveMode', value as NonNullable<{{pascalCase}}Attributes['interactiveMode']>)}
           />
 
           <SelectControl
@@ -69,19 +74,19 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
               { label: __('Shake', '{{slugSnakeCase}}'), value: 'shake' },
               { label: __('Flip', '{{slugSnakeCase}}'), value: 'flip' }
             ]}
-            onChange={(value) => setAttributes({ animation: value })}
+            onChange={(value) => updateAttribute('animation', value as NonNullable<{{pascalCase}}Attributes['animation']>)}
           />
 
           <ToggleControl
             label={__('Show Counter', '{{slugSnakeCase}}')}
             checked={attributes.showCounter}
-            onChange={(value) => setAttributes({ showCounter: value })}
+            onChange={(value) => updateAttribute('showCounter', value)}
           />
 
           <ToggleControl
             label={__('Visible', '{{slugSnakeCase}}')}
             checked={attributes.isVisible}
-            onChange={(value) => setAttributes({ isVisible: value })}
+            onChange={(value) => updateAttribute('isVisible', value)}
           />
         </PanelBody>
 
@@ -89,7 +94,7 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
           <RangeControl
             label={__('Max Clicks', '{{slugSnakeCase}}')}
             value={attributes.maxClicks}
-            onChange={(value) => setAttributes({ maxClicks: value })}
+            onChange={(value) => updateAttribute('maxClicks', value ?? (attributes.maxClicks ?? 0))}
             min={0}
             max={100}
             help={__('Set to 0 for unlimited clicks', '{{slugSnakeCase}}')}
@@ -99,7 +104,7 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
             <RangeControl
               label={__('Auto Play Interval (ms)', '{{slugSnakeCase}}')}
               value={attributes.autoPlayInterval}
-              onChange={(value) => setAttributes({ autoPlayInterval: value })}
+              onChange={(value) => updateAttribute('autoPlayInterval', value ?? (attributes.autoPlayInterval ?? 0))}
               min={100}
               max={5000}
               step={100}
@@ -127,10 +132,20 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
           <TextControl
             label={__('Unique ID', '{{slugSnakeCase}}')}
             value={attributes.uniqueId}
-            onChange={(value) => setAttributes({ uniqueId: value })}
+            onChange={(value) => updateAttribute('uniqueId', value)}
             help={__('Optional unique identifier for this block instance', '{{slugSnakeCase}}')}
           />
         </PanelBody>
+
+        {!isValid && (
+          <PanelBody title={__('Validation Errors', '{{slugSnakeCase}}')} initialOpen>
+            {errorMessages.map((error, index) => (
+              <Notice key={index} status="error" isDismissible={false}>
+                {error}
+              </Notice>
+            ))}
+          </PanelBody>
+        )}
 
         {isSelected && (
           <PanelBody title={__('Preview', '{{slugSnakeCase}}')}>
@@ -162,10 +177,23 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
           <RichText
             tagName="p"
             value={attributes.content}
-            onChange={(value) => setAttributes({ content: value })}
+            onChange={(value) => updateAttribute('content', value)}
             placeholder={__('{{title}} – click me to interact!', '{{slugSnakeCase}}')}
             withoutInteractiveFormatting
           />
+
+          {!isValid && (
+            <Notice status="error" isDismissible={false}>
+              <p>
+                <strong>{__('Validation Errors', '{{slugSnakeCase}}')}</strong>
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1em' }}>
+                {errorMessages.map((error, index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
+            </Notice>
+          )}
 
           {attributes.showCounter && (
             <div className="{{cssClassName}}__counter">

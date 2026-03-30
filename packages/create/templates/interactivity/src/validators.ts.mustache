@@ -4,6 +4,11 @@ import {
   type ManifestDefaultsDocument,
   applyTemplateDefaultsFromManifest,
 } from "@wp-typia/create/runtime/defaults";
+import {
+  createAttributeUpdater as createValidatedAttributeUpdater,
+  type ValidationResult,
+  toValidationResult,
+} from "@wp-typia/create/runtime/validation";
 import { {{pascalCase}}Attributes, {{pascalCase}}ValidationResult } from "./types";
 
 const validate = typia.createValidate<{{pascalCase}}Attributes>();
@@ -26,29 +31,7 @@ export const validators = {
  * Validates and transforms block attributes.
  */
 export const validate{{pascalCase}}Attributes = (attributes: unknown): {{pascalCase}}ValidationResult => {
-  try {
-    const validated = validators.validate(attributes);
-
-    if (validated.success) {
-      return {
-        isValid: true,
-        errors: [],
-        data: validated.data,
-      };
-    }
-
-    return {
-      isValid: false,
-      errors: validated.errors.map((error) => `${error.path}: ${error.message}`),
-      data: attributes as {{pascalCase}}Attributes,
-    };
-  } catch (error) {
-    return {
-      isValid: false,
-      errors: [`Validation error: ${error instanceof Error ? error.message : "Unknown error"}`],
-      data: attributes as {{pascalCase}}Attributes,
-    };
-  }
+  return toValidationResult(validate(attributes));
 };
 
 /**
@@ -62,10 +45,10 @@ export const sanitize{{pascalCase}}Attributes = (
     attributes,
   );
 
-  return {
+  return validators.assert({
     ...normalized,
     uniqueId: normalized.uniqueId && normalized.uniqueId.length > 0 ? normalized.uniqueId : generateUniqueId(),
-  } as {{pascalCase}}Attributes;
+  });
 };
 
 /**
@@ -74,5 +57,20 @@ export const sanitize{{pascalCase}}Attributes = (
 export const is{{pascalCase}}Attributes = (obj: unknown): obj is {{pascalCase}}Attributes => {
   return validators.is(obj);
 };
+
+export function createAttributeUpdater(
+  attributes: {{pascalCase}}Attributes,
+  setAttributes: (attrs: Partial<{{pascalCase}}Attributes>) => void,
+  validator = validate{{pascalCase}}Attributes,
+) {
+  return createValidatedAttributeUpdater(
+    attributes,
+    setAttributes,
+    validator as (value: {{pascalCase}}Attributes) => ValidationResult<{{pascalCase}}Attributes>,
+    (validation, key) => {
+      console.error(`Validation failed for ${String(key)}:`, validation.errors);
+    },
+  );
+}
 
 const generateUniqueId = (): string => `{{slugKebabCase}}-${Math.random().toString(36).slice(2, 11)}`;

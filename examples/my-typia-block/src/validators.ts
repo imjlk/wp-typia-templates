@@ -5,27 +5,49 @@ import {
 	type ManifestDefaultsDocument,
 	applyTemplateDefaultsFromManifest,
 } from '@wp-typia/create/runtime/defaults';
+import {
+	createAttributeUpdater as createValidatedAttributeUpdater,
+	type ValidationResult,
+	toValidationResult,
+} from '@wp-typia/create/runtime/validation';
 import { MyTypiaBlockAttributes } from './types';
 
 /**
  * Typia validators for the block attributes
  */
+const validate = typia.createValidate< MyTypiaBlockAttributes >();
+const assert = typia.createAssert< MyTypiaBlockAttributes >();
+const is = typia.createIs< MyTypiaBlockAttributes >();
+const random = typia.createRandom< MyTypiaBlockAttributes >();
+const clone = typia.misc.createClone< MyTypiaBlockAttributes >();
+const prune = typia.misc.createPrune< MyTypiaBlockAttributes >();
+
+export const validateMyTypiaBlockAttributes = (
+	attributes: unknown
+): ValidationResult< MyTypiaBlockAttributes > => {
+	return toValidationResult< MyTypiaBlockAttributes >(
+		validate( attributes )
+	);
+};
+
 export const validators = {
-	validate: typia.createValidate< MyTypiaBlockAttributes >(),
-	assert: typia.createAssert< MyTypiaBlockAttributes >(),
-	is: typia.createIs< MyTypiaBlockAttributes >(),
-	random: typia.createRandom< MyTypiaBlockAttributes >(),
-	clone: typia.misc.createClone< MyTypiaBlockAttributes >(),
-	prune: typia.misc.createPrune< MyTypiaBlockAttributes >(),
+	validate: validateMyTypiaBlockAttributes,
+	assert,
+	is,
+	random,
+	clone,
+	prune,
 };
 
 export function sanitizeMyTypiaBlockAttributes(
 	attributes: Partial< MyTypiaBlockAttributes >
 ): MyTypiaBlockAttributes {
-	return applyTemplateDefaultsFromManifest< MyTypiaBlockAttributes >(
-		currentManifest as ManifestDefaultsDocument,
-		attributes
-	) as MyTypiaBlockAttributes;
+	return validators.assert(
+		applyTemplateDefaultsFromManifest< MyTypiaBlockAttributes >(
+			currentManifest as ManifestDefaultsDocument,
+			attributes
+		)
+	);
 }
 
 /**
@@ -39,23 +61,17 @@ export function createAttributeUpdater(
 	setAttributes: ( attrs: Partial< MyTypiaBlockAttributes > ) => void,
 	validator = validators.validate
 ) {
-	return < K extends keyof MyTypiaBlockAttributes >(
-		key: K,
-		value: MyTypiaBlockAttributes[ K ]
-	) => {
-		const newAttrs = { ...attributes, [ key ]: value };
-
-		const validation = validator( newAttrs );
-		if ( validation.success ) {
-			setAttributes( {
-				[ key ]: value,
-			} as Partial< MyTypiaBlockAttributes > );
-			return true;
+	return createValidatedAttributeUpdater(
+		attributes,
+		setAttributes,
+		validator as (
+			value: MyTypiaBlockAttributes
+		) => ValidationResult< MyTypiaBlockAttributes >,
+		( validation, key ) => {
+			console.error(
+				`Validation failed for ${ String( key ) }:`,
+				validation.errors
+			);
 		}
-		console.error(
-			`Validation failed for ${ String( key ) }:`,
-			validation.errors
-		);
-		return false;
-	};
+	);
 }

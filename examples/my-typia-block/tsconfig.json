@@ -22,6 +22,9 @@
 			"@wp-typia/create/runtime/defaults": [
 				"../../packages/create/src/runtime/defaults.ts"
 			],
+			"@wp-typia/create/runtime/validation": [
+				"../../packages/create/src/runtime/validation.ts"
+			],
 			"@wp-typia/block-types": [
 				"../../packages/wp-typia-block-types/src/index.ts"
 			],

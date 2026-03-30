@@ -74,14 +74,54 @@ describe("@wp-typia/create scaffolding", () => {
 
 		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 		const readme = fs.readFileSync(readmePath, "utf8");
+		const generatedHooks = fs.readFileSync(path.join(targetDir, "src", "hooks.ts"), "utf8");
+		const generatedValidators = fs.readFileSync(path.join(targetDir, "src", "validators.ts"), "utf8");
 
 		expect(packageJson.packageManager).toBe("npm@11.6.1");
 		expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(blockTypesPackageVersion);
 		expect(packageJson.devDependencies["@wp-typia/create"]).toBe(createPackageVersion);
 		expect(packageJson.scripts.build).toBe("npm run sync-types && wp-scripts build");
 		expect(packageJson.scripts.start).toBe("npm run sync-types && wp-scripts start");
+		expect(generatedHooks).toContain("type ValidationResult");
+		expect(generatedHooks).toContain("useTypiaValidation");
+		expect(generatedValidators).toContain("toValidationResult");
+		expect(generatedValidators).toContain("createValidatedAttributeUpdater");
+		expect(generatedValidators).toContain("clone");
+		expect(generatedValidators).toContain("prune");
 		expect(readme).toContain("npm install");
 		expect(readme).toContain("npm run start");
+	});
+
+	test("scaffoldProject creates an interactivity template with typed validation wiring", async () => {
+		const targetDir = path.join(tempRoot, "demo-interactivity");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "interactivity",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo interactivity block",
+				namespace: "create-block",
+				slug: "demo-interactivity",
+				title: "Demo Interactivity",
+			},
+		});
+
+		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
+		const generatedHooks = fs.readFileSync(path.join(targetDir, "src", "hooks.ts"), "utf8");
+		const generatedValidators = fs.readFileSync(path.join(targetDir, "src", "validators.ts"), "utf8");
+		const generatedEdit = fs.readFileSync(path.join(targetDir, "src", "edit.tsx"), "utf8");
+
+		expect(generatedTypes).toContain("ValidationResult");
+		expect(generatedHooks).toContain("useTypiaValidation");
+		expect(generatedValidators).toContain("toValidationResult");
+		expect(generatedValidators).toContain("createValidatedAttributeUpdater");
+		expect(generatedValidators).toContain("clone");
+		expect(generatedValidators).toContain("prune");
+		expect(generatedEdit).toContain("useTypiaValidation");
+		expect(generatedEdit).toContain("createAttributeUpdater");
 	});
 
 	test("local create-block subset paths scaffold into a pnpm-ready wp-typia project", async () => {

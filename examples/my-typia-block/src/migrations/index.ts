@@ -503,7 +503,7 @@ function resolveMigrationState(
 	attributes: Record< string, unknown >
 ): MigrationResolution {
 	const currentValidation = validators.validate( attributes as any );
-	if ( currentValidation.success ) {
+	if ( currentValidation.isValid ) {
 		return {
 			analysis: {
 				affectedFields: {
@@ -543,15 +543,15 @@ function resolveMigrationState(
 			const unresolved = Array.isArray( entry.rule.unresolved )
 				? [ ...entry.rule.unresolved ]
 				: [];
-			const validationErrors = migratedValidation.success
+			const validationErrors = migratedValidation.isValid
 				? []
 				: formatValidationErrors( migratedValidation.errors );
 			let status: 'auto' | 'manual' = 'manual';
-			if ( migratedValidation.success && unresolved.length === 0 ) {
+			if ( migratedValidation.isValid && unresolved.length === 0 ) {
 				status = 'auto';
 			}
 			const preview = createPreview( {
-				after: migratedValidation.success
+				after: migratedValidation.isValid
 					? ( migrated as Record< string, unknown > )
 					: null,
 				before: attributes,

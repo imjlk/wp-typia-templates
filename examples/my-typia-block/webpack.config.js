@@ -104,6 +104,10 @@ module.exports = async () => {
 					process.cwd(),
 					'../../packages/create/src/runtime/defaults.ts'
 				),
+				'@wp-typia/create/runtime/validation': path.resolve(
+					process.cwd(),
+					'../../packages/create/src/runtime/validation.ts'
+				),
 			},
 		},
 		plugins: [

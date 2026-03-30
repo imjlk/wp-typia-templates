@@ -5,16 +5,16 @@ import {
 	InspectorControls,
 	RichText,
 } from '@wordpress/block-editor';
-import { PanelBody, ToggleControl, SelectControl } from '@wordpress/components';
+import {
+	Notice,
+	PanelBody,
+	SelectControl,
+	ToggleControl,
+} from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { MyTypiaBlockAttributes } from './types';
-import { validators } from './validators';
-import {
-	type TypiaValidationError,
-	useTypiaValidation,
-	useAttributeLogger,
-	useDebounce,
-} from './hooks';
+import { createAttributeUpdater, validators } from './validators';
+import { useTypiaValidation, useAttributeLogger, useDebounce } from './hooks';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { MigrationDashboard } from './admin/migration-dashboard';
 import { classNames } from './utils';
@@ -23,41 +23,23 @@ type EditProps = BlockEditProps< MyTypiaBlockAttributes >;
 type AlignmentValue = NonNullable< MyTypiaBlockAttributes[ 'alignment' ] >;
 type FontSizeValue = NonNullable< MyTypiaBlockAttributes[ 'fontSize' ] >;
 
-function formatValidationError( error: TypiaValidationError ): string {
-	return error.description ?? error.expected;
-}
-
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const blockProps = useBlockProps();
 	const alignment = attributes.alignment ?? 'left';
 	const isVisible = attributes.isVisible ?? true;
-	const { isValid, errors } = useTypiaValidation(
+	const { errorMessages, isValid } = useTypiaValidation(
 		attributes,
 		validators.validate
 	);
 	const debouncedAttributes = useDebounce( attributes, 300 );
+	const updateAttribute = createAttributeUpdater(
+		attributes,
+		setAttributes,
+		validators.validate
+	);
 
 	// Log attribute changes in development
 	useAttributeLogger( debouncedAttributes );
-
-	const updateAttribute = < K extends keyof MyTypiaBlockAttributes >(
-		key: K,
-		value: MyTypiaBlockAttributes[ K ]
-	) => {
-		const newAttrs = { ...attributes, [ key ]: value };
-		const validation = validators.validate( newAttrs );
-
-		if ( validation.success ) {
-			setAttributes( {
-				[ key ]: value,
-			} as Partial< MyTypiaBlockAttributes > );
-		} else {
-			console.error(
-				`Validation failed for ${ String( key ) }:`,
-				validation.errors
-			);
-		}
-	};
 
 	return (
 		<ErrorBoundary>
@@ -137,11 +119,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 								</strong>
 							</p>
 							<ul style={ { margin: 0, paddingLeft: '1em' } }>
-								{ errors.map( ( error, index ) => (
-									<li key={ index }>
-										<code>{ error.path }</code>:{ ' ' }
-										{ formatValidationError( error ) }
-									</li>
+								{ errorMessages.map( ( error, index ) => (
+									<li key={ index }>{ error }</li>
 								) ) }
 							</ul>
 						</div>
@@ -180,6 +159,20 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						textAlign: alignment,
 					} }
 				/>
+				{ ! isValid && (
+					<Notice status="error" isDismissible={ false }>
+						<p>
+							<strong>
+								{ __( 'Validation Errors:', 'my_typia_block' ) }
+							</strong>
+						</p>
+						<ul style={ { margin: 0, paddingLeft: '1em' } }>
+							{ errorMessages.map( ( error, index ) => (
+								<li key={ index }>{ error }</li>
+							) ) }
+						</ul>
+					</Notice>
+				) }
 
 				<div className="block-info">
 					<small>

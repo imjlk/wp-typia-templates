@@ -45,4 +45,12 @@ test.describe('WordPress Typia block smoke', () => {
 
     await previewPage.close();
   });
+
+  test('invalid attributes surface validation errors in the editor', async () => {
+    await wpPage.insertBlock();
+    await wpPage.updateSelectedBlockAttributes({ alignment: 123 as unknown as string });
+
+    await expect(wpPage.page.getByText(/Validation Errors:/)).toBeVisible();
+    await expect(wpPage.page.getByText(/alignment:/)).toBeVisible();
+  });
 });

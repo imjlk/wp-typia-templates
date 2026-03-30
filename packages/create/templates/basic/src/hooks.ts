@@ -1,34 +1,39 @@
-import { useEffect, useState, useCallback } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
-import { {{pascalCase}}Attributes } from './types';
+import { useCallback, useEffect, useState } from '@wordpress/element';
+import {
+  type TypiaValidationError,
+  type ValidationResult,
+  formatValidationErrors,
+  toValidationState,
+} from '@wp-typia/create/runtime/validation';
 
-/**
- * 유효성 검증 훅
- */
-export function useValidation<T>(
+export {
+  formatValidationError,
+  formatValidationErrors,
+  toValidationState,
+} from '@wp-typia/create/runtime/validation';
+export type {
+  TypiaValidationError,
+  ValidationResult,
+} from '@wp-typia/create/runtime/validation';
+
+export function useTypiaValidation<T>(
   attributes: T,
-  validator: (value: T) => { success: boolean; errors?: any[] }
+  validator: (value: T) => ValidationResult<T>
 ) {
-  const [errors, setErrors] = useState<string[]>([]);
+  const [errors, setErrors] = useState<TypiaValidationError[]>([]);
+  const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const [isValid, setIsValid] = useState(true);
 
   useEffect(() => {
-    const result = validator(attributes);
-    if (result.success) {
-      setErrors([]);
-      setIsValid(true);
-    } else {
-      setErrors(result.errors?.map(e => e.path || 'Unknown error') || []);
-      setIsValid(false);
-    }
+    const result = toValidationState(validator(attributes));
+    setErrors(result.errors);
+    setErrorMessages(result.errorMessages);
+    setIsValid(result.isValid);
   }, [attributes, validator]);
 
-  return { errors, isValid };
+  return { errors, errorMessages, isValid };
 }
 
-/**
- * 디바운스 훅
- */
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
@@ -45,9 +50,6 @@ export function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-/**
- * 로컬 스토리지 훅
- */
 export function useLocalStorage<T>(
   key: string,
   initialValue: T
