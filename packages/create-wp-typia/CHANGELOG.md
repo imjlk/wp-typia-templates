@@ -1,5 +1,17 @@
 # create-wp-typia
 
+## 1.3.0 — 2026-03-31
+
+### Minor changes
+
+- [602c85c](https://github.com/imjlk/wp-typia/commit/602c85cf60c09b329836625b4a22b491961f297c) Add the built-in `data` template, introduce the `@wp-typia/rest` package for typed WordPress REST helpers, and extend the Typia sync pipeline with optional JSON Schema and OpenAPI outputs for block and API contracts. — Thanks @imjlk!
+
+### Patch changes
+
+- [fc639de](https://github.com/imjlk/wp-typia/commit/fc639de56c83057659c3ecd362dd7f20b9f156fb) Add manifest-driven editor helper APIs, use them in the reference app, and lightly adopt them in the built-in basic and interactivity templates. — Thanks @imjlk!
+- [c79f56b](https://github.com/imjlk/wp-typia/commit/c79f56b41275a90892284aa62bc8397dd453c2f4) Add migration workspace doctor, explicit fixture refresh, seeded fuzz verification, and shared migration risk summaries for the CLI and reference app. — Thanks @imjlk!
+- Updated dependencies: create@0.4.0
+
 ## 1.2.0 — 2026-03-30
 
 ### Minor changes
