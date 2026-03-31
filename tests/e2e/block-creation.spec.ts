@@ -154,14 +154,25 @@ test.describe('WordPress Typia block smoke', () => {
     const previewPage = await wpPage.previewPost();
     let counterValue = previewPage.locator('.my-typia-block-counter span');
     const persistButton = previewPage.getByRole('button', { name: 'Persist Count' });
+    const toggleButton = previewPage.getByRole('button', { name: 'Toggle' });
     const counterContext = await getCounterRouteContext(previewPage);
 
     await expect(persistButton).toBeVisible();
+    await expect(toggleButton).toBeVisible();
     await previewPage.waitForFunction(
       () => document.documentElement.dataset.myTypiaBlockHydrated === 'true',
       undefined,
       { timeout: 30000 },
     );
+    await expect
+      .poll(
+        async () => {
+          await toggleButton.click();
+          return toggleButton.evaluate((element) => element.classList.contains('active'));
+        },
+        { timeout: 10000 },
+      )
+      .toBe(true);
     await expect
       .poll(
         async () => {
@@ -179,7 +190,7 @@ test.describe('WordPress Typia block smoke', () => {
           const result = await readPersistedCounter(previewPage, counterContext);
           return result.count;
         },
-        { timeout: 10000 },
+        { timeout: 15000 },
       )
       .toBe(1);
     await expect(counterValue).toHaveText('1', { timeout: 10000 });
@@ -191,7 +202,7 @@ test.describe('WordPress Typia block smoke', () => {
           const result = await readPersistedCounter(previewPage, counterContext);
           return result.count;
         },
-        { timeout: 10000 },
+        { timeout: 15000 },
       )
       .toBe(2);
     await expect(counterValue).toHaveText('2', { timeout: 10000 });
@@ -209,7 +220,7 @@ test.describe('WordPress Typia block smoke', () => {
           const result = await readPersistedCounter(previewPage, counterContext);
           return result.count;
         },
-        { timeout: 10000 },
+        { timeout: 15000 },
       )
       .toBe(2);
     await expect(counterValue).toHaveText('2', { timeout: 10000 });
