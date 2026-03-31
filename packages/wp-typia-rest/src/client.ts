@@ -61,6 +61,15 @@ function getDefaultRestRoot(): string {
 			return wpApiSettings.root;
 		}
 
+		if (typeof document !== "undefined") {
+			const apiLink = document.querySelector('link[rel="https://api.w.org/"]');
+			const href = apiLink?.getAttribute("href");
+
+			if (typeof href === "string" && href.length > 0) {
+				return href;
+			}
+		}
+
 		return `${window.location.origin}/wp-json/`;
 	}
 

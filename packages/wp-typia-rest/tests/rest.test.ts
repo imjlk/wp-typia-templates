@@ -261,6 +261,41 @@ describe("@wp-typia/rest", () => {
 		expect(resolved).toBe("http://localhost:8889/index.php?rest_route=%2Fdemo%2Fv1%2Fitems%2F");
 	});
 
+	test("resolveRestRouteUrl falls back to the api.w.org link root when wpApiSettings.root is absent", () => {
+		const originalWindow = globalThis.window;
+		const originalDocument = globalThis.document;
+
+		const fakeWindow = {
+			location: {
+				origin: "http://localhost:8889",
+			},
+			wpApiSettings: undefined,
+		} as unknown as Window & typeof globalThis;
+		const fakeDocument = {
+			querySelector: (selector: string) =>
+				selector === 'link[rel="https://api.w.org/"]'
+					? {
+							getAttribute: (name: string) =>
+								name === "href" ? "http://localhost:8889/index.php?rest_route=/" : null,
+						}
+					: null,
+		} as unknown as Document;
+
+		globalThis.window = fakeWindow;
+		globalThis.document = fakeDocument;
+
+		try {
+			const resolved = resolveRestRouteUrl("/demo/v1/items");
+
+			expect(resolved).toBe(
+				"http://localhost:8889/index.php?rest_route=%2Fdemo%2Fv1%2Fitems%2F",
+			);
+		} finally {
+			globalThis.window = originalWindow;
+			globalThis.document = originalDocument;
+		}
+	});
+
 	test("createQueryDecoder and createHeadersDecoder accept explicit validation decoders", () => {
 		const decodeQuery = createQueryDecoder<{ page: number; search?: string }>((input: string | URLSearchParams) => {
 			const params = typeof input === "string" ? new URLSearchParams(input) : input;

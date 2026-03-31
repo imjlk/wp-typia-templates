@@ -13,23 +13,6 @@ import type {
 
 const COUNTER_PATH = '/my-typia-block/v1/counter';
 
-function getRestRoot(): string {
-	const wpApiSettings = (
-		window as typeof window & {
-			wpApiSettings?: { root?: string };
-		}
-	 ).wpApiSettings;
-
-	if (
-		typeof wpApiSettings?.root === 'string' &&
-		wpApiSettings.root.length > 0
-	) {
-		return wpApiSettings.root;
-	}
-
-	return `${ window.location.origin }/wp-json/`;
-}
-
 function resolveRestNonce( fallback?: string ): string | undefined {
 	if ( typeof fallback === 'string' && fallback.length > 0 ) {
 		return fallback;
@@ -52,7 +35,7 @@ const counterEndpoint = createEndpoint<
 	MyTypiaBlockCounterResponse
 >( {
 	buildRequestOptions: () => ( {
-		url: resolveRestRouteUrl( COUNTER_PATH, getRestRoot() ),
+		url: resolveRestRouteUrl( COUNTER_PATH ),
 	} ),
 	method: 'GET',
 	path: COUNTER_PATH,
@@ -65,7 +48,7 @@ const incrementCounterEndpoint = createEndpoint<
 	MyTypiaBlockCounterResponse
 >( {
 	buildRequestOptions: () => ( {
-		url: resolveRestRouteUrl( COUNTER_PATH, getRestRoot() ),
+		url: resolveRestRouteUrl( COUNTER_PATH ),
 	} ),
 	method: 'POST',
 	path: COUNTER_PATH,

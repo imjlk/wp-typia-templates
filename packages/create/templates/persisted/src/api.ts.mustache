@@ -13,18 +13,6 @@ import { apiValidators } from './api-validators';
 
 const COUNTER_PATH = '/{{namespace}}/v1/{{slugKebabCase}}/counter';
 
-function getRestRoot(): string {
-	const wpApiSettings = ( window as typeof window & {
-		wpApiSettings?: { root?: string };
-	} ).wpApiSettings;
-
-	if ( typeof wpApiSettings?.root === 'string' && wpApiSettings.root.length > 0 ) {
-		return wpApiSettings.root;
-	}
-
-	return `${ window.location.origin }/wp-json/`;
-}
-
 function resolveRestNonce( fallback?: string ): string | undefined {
 	if ( typeof fallback === 'string' && fallback.length > 0 ) {
 		return fallback;
@@ -44,7 +32,7 @@ export const counterEndpoint = createEndpoint<
 	{{pascalCase}}CounterResponse
 >( {
 	buildRequestOptions: () => ( {
-		url: resolveRestRouteUrl( COUNTER_PATH, getRestRoot() ),
+		url: resolveRestRouteUrl( COUNTER_PATH ),
 	} ),
 	method: 'GET',
 	path: COUNTER_PATH,
@@ -57,7 +45,7 @@ export const incrementCounterEndpoint = createEndpoint<
 	{{pascalCase}}CounterResponse
 >( {
 	buildRequestOptions: () => ( {
-		url: resolveRestRouteUrl( COUNTER_PATH, getRestRoot() ),
+		url: resolveRestRouteUrl( COUNTER_PATH ),
 	} ),
 	method: 'POST',
 	path: COUNTER_PATH,
