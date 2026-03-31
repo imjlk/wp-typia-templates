@@ -82,7 +82,7 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 		mounted() {
 			state.isHydrated = true;
 			if ( typeof document !== 'undefined' ) {
-				document.documentElement.dataset.{{camelCase}}Hydrated = 'true';
+				document.documentElement.dataset[ '{{camelCase}}Hydrated' ] = 'true';
 			}
 			void actions.loadCounter();
 		},
