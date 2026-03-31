@@ -1307,4 +1307,49 @@ describe("wp-typia migrations", () => {
 			),
 		).toThrow(/Unsupported migration version: 9.9.9/);
 	});
+
+	test("verify defaults to the first legacy version and rejects malformed numeric flags", () => {
+		const projectDir = path.join(tempRoot, "verify-default-project");
+		createVersionedMigrationProject(projectDir);
+		const configPath = path.join(projectDir, "src", "migrations", "config.ts");
+		const version100Root = path.join(projectDir, "src", "migrations", "versions", "1.0.0");
+		const version150Root = path.join(projectDir, "src", "migrations", "versions", "1.5.0");
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+		fs.cpSync(version100Root, version150Root, { recursive: true });
+		fs.writeFileSync(
+			configPath,
+			fs
+				.readFileSync(configPath, "utf8")
+				.replace('supportedVersions: ["1.0.0", "2.0.0"]', 'supportedVersions: ["1.0.0", "1.5.0", "2.0.0"]'),
+			"utf8",
+		);
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.5.0"], {
+			cwd: projectDir,
+		});
+
+		const verifyOutput = runCli("node", [entryPath, "migrations", "verify"], {
+			cwd: projectDir,
+		});
+		expect(verifyOutput).toContain("Verified migrations for 1.0.0");
+		expect(verifyOutput).not.toContain("1.5.0");
+
+		expect(() =>
+			runCli(
+				"node",
+				[entryPath, "migrations", "fuzz", "--all", "--iterations", "2.5"],
+				{ cwd: projectDir },
+			),
+		).toThrow(/Invalid iterations: 2.5/);
+
+		expect(() =>
+			runCli(
+				"node",
+				[entryPath, "migrations", "fuzz", "--all", "--seed", "10foo"],
+				{ cwd: projectDir },
+			),
+		).toThrow(/Invalid seed: 10foo/);
+	});
 });

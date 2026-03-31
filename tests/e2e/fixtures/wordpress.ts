@@ -89,6 +89,7 @@ export class WordPressPage {
   async insertBlock(block = EXAMPLE_BLOCK) {
     await this.dismissWelcomeGuideIfPresent();
 
+    let inserted = false;
     try {
       const inserterButton = this.page
         .getByRole('button', { name: /Block Inserter|Toggle block inserter/i })
@@ -116,11 +117,16 @@ export class WordPressPage {
 
       await searchInput.fill(block.title);
       await this.page.getByRole('option', { name: block.title }).first().click({ timeout: 5_000 });
+
+      await this.waitForBlockInEditor(block.name, 5_000);
+      inserted = true;
     } catch {
       await this.insertBlockViaStore(block.name);
     }
 
-    await this.waitForBlockInEditor(block.name);
+    if (!inserted) {
+      await this.waitForBlockInEditor(block.name);
+    }
     await this.selectLatestBlock(block.name);
     await expect(this.getBlockLocator(block.name).first()).toBeVisible();
   }
@@ -324,12 +330,12 @@ export class WordPressPage {
     });
   }
 
-  private async waitForBlockInEditor(blockType: string) {
+  private async waitForBlockInEditor(blockType: string, timeout = 30_000) {
     await this.page.waitForFunction((type) => {
       const wp = (window as any).wp;
       const blocks = wp?.data?.select('core/block-editor')?.getBlocks?.() ?? [];
       return blocks.some((block: any) => block.name === type);
-    }, blockType);
+    }, blockType, { timeout });
   }
 }
 

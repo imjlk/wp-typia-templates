@@ -386,6 +386,13 @@ export function scaffoldProjectMigrations(
 	return { diff, rulePath };
 }
 
+/**
+ * Run deterministic migration verification against generated fixtures.
+ *
+ * @param projectDir Absolute or relative project directory containing the migration workspace.
+ * @param options Verification scope and console rendering options.
+ * @returns Verified legacy versions.
+ */
 export function verifyProjectMigrations(
 	projectDir: string,
 	{ all = false, fromVersion, renderLine = console.log as RenderLine }: VerifyOptions = {},
@@ -411,9 +418,12 @@ export function verifyProjectMigrations(
 	}
 
 	const tsxBinary = getLocalTsxBinary(projectDir);
-	const filteredArgs = all ? ["--all"] : fromVersion ? ["--from", fromVersion] : [];
+	const filteredArgs = all
+		? ["--all"]
+		: ["--from", targetVersions[0]];
 	execFileSync(tsxBinary, [verifyScriptPath, ...filteredArgs], {
 		cwd: projectDir,
+		shell: process.platform === "win32",
 		stdio: "inherit",
 	});
 
@@ -421,6 +431,13 @@ export function verifyProjectMigrations(
 	return { verifiedVersions: targetVersions };
 }
 
+/**
+ * Validate the migration workspace without mutating files.
+ *
+ * @param projectDir Absolute or relative project directory containing the migration workspace.
+ * @param options Doctor scope and console rendering options.
+ * @returns Structured doctor check results for the selected legacy versions.
+ */
 export function doctorProjectMigrations(
 	projectDir: string,
 	{ all = false, fromVersion, renderLine = console.log as RenderLine }: VerifyOptions = {},
@@ -475,21 +492,35 @@ export function doctorProjectMigrations(
 		}
 	}
 
-	const generatedEntries = collectGeneratedMigrationEntries(state);
-	const expectedGeneratedFiles = new Map<string, string>([
-		["registry.ts", renderMigrationRegistryFile(state, generatedEntries)],
-		["deprecated.ts", renderGeneratedDeprecatedFile(generatedEntries.map(({ entry }) => entry))],
-		["verify.ts", renderVerifyFile(state, generatedEntries.map(({ entry }) => entry))],
-		["fuzz.ts", renderFuzzFile(state, generatedEntries)],
-	]);
+	try {
+		const generatedEntries = collectGeneratedMigrationEntries(state);
+		const expectedGeneratedFiles = new Map<string, string>([
+			["registry.ts", renderMigrationRegistryFile(state, generatedEntries)],
+			["deprecated.ts", renderGeneratedDeprecatedFile(generatedEntries.map(({ entry }) => entry))],
+			["verify.ts", renderVerifyFile(state, generatedEntries.map(({ entry }) => entry))],
+			["fuzz.ts", renderFuzzFile(state, generatedEntries)],
+			[
+				ROOT_PHP_MIGRATION_REGISTRY,
+				renderPhpMigrationRegistryFile(state, generatedEntries.map(({ entry }) => entry)),
+			],
+		]);
 
-	for (const [fileName, expectedSource] of expectedGeneratedFiles) {
-		const filePath = path.join(state.paths.generatedDir, fileName);
-		const inSync = fs.existsSync(filePath) && fs.readFileSync(filePath, "utf8") === expectedSource;
+		for (const [fileName, expectedSource] of expectedGeneratedFiles) {
+			const filePath = fileName.endsWith(".php")
+				? path.join(projectDir, fileName)
+				: path.join(state.paths.generatedDir, fileName);
+			const inSync = fs.existsSync(filePath) && fs.readFileSync(filePath, "utf8") === expectedSource;
+			recordCheck(
+				inSync ? "pass" : "fail",
+				`Generated ${fileName}`,
+				inSync ? "In sync" : `Run \`wp-typia migrations scaffold --from <semver>\` or regenerate artifacts`,
+			);
+		}
+	} catch (error) {
 		recordCheck(
-			inSync ? "pass" : "fail",
-			`Generated ${fileName}`,
-			inSync ? "In sync" : `Run \`wp-typia migrations scaffold --from <semver>\` or regenerate artifacts`,
+			"fail",
+			"Generated artifacts",
+			error instanceof Error ? error.message : String(error),
 		);
 	}
 
@@ -521,14 +552,22 @@ export function doctorProjectMigrations(
 			recordCheck("fail", `Rule TODOs ${version}`, error instanceof Error ? error.message : String(error));
 		}
 
-		const ruleMetadata = readRuleMetadata(rulePath);
-		recordCheck(
-			ruleMetadata.unresolved.length === 0 ? "pass" : "fail",
-			`Rule unresolved ${version}`,
-			ruleMetadata.unresolved.length === 0
-				? "No unresolved entries remain"
-				: ruleMetadata.unresolved.join(", "),
-		);
+		try {
+			const ruleMetadata = readRuleMetadata(rulePath);
+			recordCheck(
+				ruleMetadata.unresolved.length === 0 ? "pass" : "fail",
+				`Rule unresolved ${version}`,
+				ruleMetadata.unresolved.length === 0
+					? "No unresolved entries remain"
+					: ruleMetadata.unresolved.join(", "),
+			);
+		} catch (error) {
+			recordCheck(
+				"fail",
+				`Rule unresolved ${version}`,
+				error instanceof Error ? error.message : String(error),
+			);
+		}
 
 		try {
 			const fixtureDocument = readJson<{ cases?: Array<{ name?: string }> }>(fixturePath);
@@ -582,6 +621,13 @@ export function doctorProjectMigrations(
 	};
 }
 
+/**
+ * Generate or refresh migration fixtures for one or more legacy edges.
+ *
+ * @param projectDir Absolute or relative project directory containing the migration workspace.
+ * @param options Fixture generation scope and refresh options.
+ * @returns Generated and skipped legacy versions.
+ */
 export function fixturesProjectMigrations(
 	projectDir: string,
 	{
@@ -623,6 +669,13 @@ export function fixturesProjectMigrations(
 	};
 }
 
+/**
+ * Run seeded migration fuzz verification against generated fuzz artifacts.
+ *
+ * @param projectDir Absolute or relative project directory containing the migration workspace.
+ * @param options Fuzz scope, iteration count, seed, and console rendering options.
+ * @returns Fuzzed legacy versions and the effective seed.
+ */
 export function fuzzProjectMigrations(
 	projectDir: string,
 	{
@@ -655,13 +708,14 @@ export function fuzzProjectMigrations(
 	const tsxBinary = getLocalTsxBinary(projectDir);
 	const args = [
 		fuzzScriptPath,
-		...(all ? ["--all"] : fromVersion ? ["--from", fromVersion] : []),
+		...(all ? ["--all"] : ["--from", targetVersions[0]]),
 		"--iterations",
 		String(iterations),
 		...(seed === undefined ? [] : ["--seed", String(seed)]),
 	];
 	execFileSync(tsxBinary, args, {
 		cwd: projectDir,
+		shell: process.platform === "win32",
 		stdio: "inherit",
 	});
 
@@ -672,6 +726,10 @@ export function fuzzProjectMigrations(
 function parsePositiveInteger(value: string | undefined, label: string): number | undefined {
 	if (!value) {
 		return undefined;
+	}
+
+	if (!/^\d+$/.test(value)) {
+		throw new Error(`Invalid ${label}: ${value}. Expected a positive integer.`);
 	}
 
 	const parsed = Number.parseInt(value, 10);
@@ -685,6 +743,10 @@ function parsePositiveInteger(value: string | undefined, label: string): number 
 function parseNonNegativeInteger(value: string | undefined, label: string): number | undefined {
 	if (!value) {
 		return undefined;
+	}
+
+	if (!/^\d+$/.test(value)) {
+		throw new Error(`Invalid ${label}: ${value}. Expected a non-negative integer.`);
 	}
 
 	const parsed = Number.parseInt(value, 10);
@@ -710,7 +772,11 @@ function resolveLegacyVersions(
 		return [fromVersion];
 	}
 
-	return legacyVersions;
+	if (all) {
+		return legacyVersions;
+	}
+
+	return legacyVersions.slice(0, 1);
 }
 
 function collectGeneratedMigrationEntries(

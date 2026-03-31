@@ -78,7 +78,11 @@ async function globalSetup(config: FullConfig) {
   const browser = await chromium.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
-  const baseURL = config.projects![0].use.baseURL!;
+  const project = config.projects?.[0];
+  const baseURL = project?.use?.baseURL;
+  if (!baseURL) {
+    throw new Error('Playwright config missing projects or baseURL');
+  }
 
   try {
     const bootstrapState = await waitForWordPressLogin(page, baseURL);
@@ -98,10 +102,10 @@ async function globalSetup(config: FullConfig) {
       page.click('#wp-submit'),
     ]);
 
-      const loginErrors = await page.locator('#login_error').allTextContents();
-      if (loginErrors.length > 0) {
-        throw new Error(`WordPress login failed: ${loginErrors.join(' ')}`);
-      }
+    const loginErrors = await page.locator('#login_error').allTextContents();
+    if (loginErrors.length > 0) {
+      throw new Error(`WordPress login failed: ${loginErrors.join(' ')}`);
+    }
 
     await page.goto(`${baseURL}/wp-admin/`, { waitUntil: 'domcontentloaded' });
 
