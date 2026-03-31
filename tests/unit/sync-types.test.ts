@@ -81,10 +81,28 @@ describe('Type Sync Tests', () => {
 			const buildPhpValidatorPath = findExampleShowcaseBuildArtifact(
 				'typia-validator.php'
 			);
+			const buildSchemaPath = findExampleShowcaseBuildArtifact(
+				'typia.schema.json'
+			);
+			const buildOpenApiPath = findExampleShowcaseBuildArtifact(
+				'typia.openapi.json'
+			);
 
 			const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 			const builtManifest = JSON.parse(
 				fs.readFileSync(buildManifestPath, 'utf8')
+			);
+			const schema = JSON.parse(
+				fs.readFileSync(path.join(exampleDir, 'typia.schema.json'), 'utf8')
+			);
+			const builtSchema = JSON.parse(
+				fs.readFileSync(buildSchemaPath, 'utf8')
+			);
+			const openApi = JSON.parse(
+				fs.readFileSync(path.join(exampleDir, 'typia.openapi.json'), 'utf8')
+			);
+			const builtOpenApi = JSON.parse(
+				fs.readFileSync(buildOpenApiPath, 'utf8')
 			);
 			const phpValidatorSource = fs.readFileSync(phpValidatorPath, 'utf8');
 			const builtPhpValidatorSource = fs.readFileSync(
@@ -93,8 +111,10 @@ describe('Type Sync Tests', () => {
 			);
 
 			expect(builtManifest).toEqual(manifest);
+			expect(builtSchema).toEqual(schema);
+			expect(builtOpenApi).toEqual(openApi);
 			expect(builtPhpValidatorSource).toEqual(phpValidatorSource);
 		},
-		{ timeout: 30_000 }
+		{ timeout: 90_000 }
 	);
 });

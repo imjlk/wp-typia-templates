@@ -81,8 +81,10 @@ export interface MyTypiaBlockAttributes {
  * My Typia Block interactivity state
  */
 export interface MyTypiaBlockState {
+	count: number;
 	isActive: boolean;
 	isVisible: boolean;
 	isLoading: boolean;
+	isSaving?: boolean;
 	error?: string;
 }

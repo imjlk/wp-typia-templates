@@ -4,13 +4,15 @@ import { syncBlockMetadata } from '@wp-typia/create/metadata-core';
 async function main() {
 	const result = await syncBlockMetadata( {
 		blockJsonFile: 'block.json',
+		jsonSchemaFile: 'typia.schema.json',
 		manifestFile: 'typia.manifest.json',
+		openApiFile: 'typia.openapi.json',
 		sourceTypeName: 'MyTypiaBlockAttributes',
 		typesFile: 'src/types.ts',
 	} );
 
 	console.log(
-		'✅ block.json, typia.manifest.json, and typia-validator.php were generated from TypeScript types!'
+		'✅ block.json, typia.manifest.json, typia-validator.php, typia.schema.json, and typia.openapi.json were generated from TypeScript types!'
 	);
 	console.log( '📝 Generated attributes:', result.attributeNames );
 

@@ -2,13 +2,34 @@ const fs = require( 'fs' );
 const path = require( 'path' );
 const defaultConfig = require( '@wordpress/scripts/config/webpack.config' );
 
-const METADATA_FILENAMES = new Set( [
+const STATIC_METADATA_FILENAMES = new Set( [
 	'block.json',
 	'render.php',
+	'typia.openapi.json',
 	'typia.manifest.json',
+	'typia.schema.json',
 	'typia-validator.php',
 	'typia-migration-registry.php',
 ] );
+const SCRIPT_MODULE_ASSET_FILENAMES = new Set( [
+	'interactivity.asset.php',
+	'view.asset.php',
+] );
+
+function isMetadataAsset( filename ) {
+	return (
+		STATIC_METADATA_FILENAMES.has( filename ) ||
+		filename.endsWith( '.schema.json' ) ||
+		filename.endsWith( '.openapi.json' )
+	);
+}
+
+function normalizeScriptModuleAssetSource( source ) {
+	return String( source ).replace(
+		/'dependencies'\s*=>\s*array\([^)]*\)/,
+		"'dependencies' => array()"
+	);
+}
 
 class MetadataAssetPlugin {
 	apply( compiler ) {
@@ -34,8 +55,48 @@ class MetadataAssetPlugin {
 								)
 							);
 						}
+
+						for ( const assetName of SCRIPT_MODULE_ASSET_FILENAMES ) {
+							const asset = compilation.getAsset( assetName );
+							if ( ! asset ) {
+								continue;
+							}
+
+							compilation.updateAsset(
+								assetName,
+								new compiler.webpack.sources.RawSource(
+									normalizeScriptModuleAssetSource(
+										asset.source.source()
+									)
+								)
+							);
+						}
 					}
 				);
+			}
+		);
+
+		compiler.hooks.afterEmit.tap(
+			'MetadataAssetPlugin',
+			( compilation ) => {
+				const outputPath = compilation.outputOptions.path;
+				if ( ! outputPath ) {
+					return;
+				}
+
+				for ( const assetName of SCRIPT_MODULE_ASSET_FILENAMES ) {
+					const assetPath = path.join( outputPath, assetName );
+					if ( ! fs.existsSync( assetPath ) ) {
+						continue;
+					}
+
+					fs.writeFileSync(
+						assetPath,
+						normalizeScriptModuleAssetSource(
+							fs.readFileSync( assetPath, 'utf8' )
+						)
+					);
+				}
 			}
 		);
 	}
@@ -44,7 +105,7 @@ class MetadataAssetPlugin {
 function getMetadataEntries() {
 	const entries = [];
 
-	for ( const filename of METADATA_FILENAMES ) {
+	for ( const filename of STATIC_METADATA_FILENAMES ) {
 		const rootFilePath = path.resolve( process.cwd(), filename );
 		if ( fs.existsSync( rootFilePath ) ) {
 			entries.push( {
@@ -81,7 +142,7 @@ function findMetadataFiles( directory ) {
 			metadataFiles.push( ...findMetadataFiles( entryPath ) );
 			continue;
 		}
-		if ( entry.isFile() && METADATA_FILENAMES.has( entry.name ) ) {
+		if ( entry.isFile() && isMetadataAsset( entry.name ) ) {
 			metadataFiles.push( entryPath );
 		}
 	}
@@ -89,35 +150,84 @@ function findMetadataFiles( directory ) {
 	return metadataFiles;
 }
 
+function toWebpackConfigs( config ) {
+	return Array.isArray( config ) ? config : [ config ];
+}
+
+function resolveOptionalEntry( name, candidates ) {
+	for ( const candidate of candidates ) {
+		const entryPath = path.resolve( process.cwd(), candidate );
+		if ( fs.existsSync( entryPath ) ) {
+			return [ name, entryPath ];
+		}
+	}
+
+	return null;
+}
+
+function isModuleConfig( config ) {
+	return config?.output?.module === true;
+}
+
 module.exports = async () => {
 	const { default: UnpluginTypia } = await import(
 		'@typia/unplugin/webpack'
 	);
-
-	return {
-		...defaultConfig,
-		resolve: {
-			...( defaultConfig.resolve || {} ),
-			alias: {
-				...( defaultConfig.resolve?.alias || {} ),
-				'@wp-typia/create/runtime/defaults': path.resolve(
-					process.cwd(),
-					'../../packages/create/src/runtime/defaults.ts'
-				),
-				'@wp-typia/create/runtime/editor': path.resolve(
-					process.cwd(),
-					'../../packages/create/src/runtime/editor.ts'
-				),
-				'@wp-typia/create/runtime/validation': path.resolve(
-					process.cwd(),
-					'../../packages/create/src/runtime/validation.ts'
-				),
+	const resolvedDefaultConfig =
+		typeof defaultConfig === 'function'
+			? await defaultConfig()
+			: defaultConfig;
+	const optionalModuleEntries = Object.fromEntries(
+		[
+			resolveOptionalEntry( 'interactivity', [
+				'src/interactivity.ts',
+				'src/interactivity.js',
+			] ),
+			resolveOptionalEntry( 'view', [ 'src/view.ts', 'src/view.js' ] ),
+		].filter( Boolean )
+	);
+	const configs = toWebpackConfigs( resolvedDefaultConfig ).map(
+		( config ) => ( {
+			...config,
+			entry: async () => ( {
+				...( typeof config.entry === 'function'
+					? await config.entry()
+					: config.entry || {} ),
+				...( isModuleConfig( config ) ? optionalModuleEntries : {} ),
+			} ),
+			resolve: {
+				...( config.resolve || {} ),
+				alias: {
+					...( config.resolve?.alias || {} ),
+					'@wp-typia/create/runtime/defaults': path.resolve(
+						process.cwd(),
+						'../../packages/create/src/runtime/defaults.ts'
+					),
+					'@wp-typia/create/runtime/editor': path.resolve(
+						process.cwd(),
+						'../../packages/create/src/runtime/editor.ts'
+					),
+					'@wp-typia/create/runtime/schema-core': path.resolve(
+						process.cwd(),
+						'../../packages/create/src/runtime/schema-core.ts'
+					),
+					'@wp-typia/create/runtime/validation': path.resolve(
+						process.cwd(),
+						'../../packages/create/src/runtime/validation.ts'
+					),
+					'@wp-typia/rest': path.resolve(
+						process.cwd(),
+						'../../packages/wp-typia-rest/src/index.ts'
+					),
+				},
 			},
-		},
-		plugins: [
-			UnpluginTypia(),
-			...( defaultConfig.plugins || [] ),
-			new MetadataAssetPlugin(),
-		],
-	};
+			plugins: [
+				UnpluginTypia(),
+				...( config.plugins || [] ),
+				new MetadataAssetPlugin(),
+			],
+		} )
+	);
+
+	return configs.length === 1 ? configs[ 0 ] : configs;
 };

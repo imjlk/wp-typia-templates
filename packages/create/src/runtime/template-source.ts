@@ -311,7 +311,7 @@ function getDefaultCategory(sourceDir: string): string {
 }
 
 function getTemplateVariableContext(variables: { [key: string]: string }): TemplateVariableContext {
-	const { blockTypesPackageVersion, createPackageVersion } = getPackageVersions();
+	const { blockTypesPackageVersion, createPackageVersion, restPackageVersion } = getPackageVersions();
 	return {
 		...variables,
 		blockTypesPackageVersion: variables.blockTypesPackageVersion ?? blockTypesPackageVersion,
@@ -320,6 +320,7 @@ function getTemplateVariableContext(variables: { [key: string]: string }): Templ
 		keyword: variables.keyword,
 		namespace: variables.namespace,
 		pascalCase: variables.pascalCase,
+		restPackageVersion: variables.restPackageVersion ?? restPackageVersion,
 		slug: variables.slug,
 		textDomain: variables.textDomain,
 		title: variables.title,

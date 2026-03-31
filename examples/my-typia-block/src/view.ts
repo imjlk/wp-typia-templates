@@ -1,12 +1,15 @@
 /* eslint-disable no-console */
 import { store, getContext } from '@wordpress/interactivity';
+import { getCounter, incrementCounter } from './api';
 import { MyTypiaBlockState } from './types';
 
-const { state } = store( 'create-block/my-typia-block', {
+const { actions, state } = store( 'my-typia-block', {
 	state: {
+		count: 0,
 		isActive: false,
 		isVisible: true,
 		isLoading: false,
+		isSaving: false,
 	} as MyTypiaBlockState,
 
 	actions: {
@@ -45,6 +48,73 @@ const { state } = store( 'create-block/my-typia-block', {
 				state.isLoading = false;
 			}
 		},
+		async loadCounter() {
+			const context = getContext< {
+				id?: string;
+				postId?: number;
+			} >();
+			if ( ! context.id || ! context.postId ) {
+				return;
+			}
+
+			state.isLoading = true;
+			state.error = undefined;
+
+			try {
+				const result = await getCounter( {
+					postId: context.postId,
+					resourceKey: context.id,
+				} );
+				if ( ! result.isValid || ! result.data ) {
+					state.error =
+						result.errors[ 0 ]?.expected ??
+						'Unable to load counter';
+					return;
+				}
+				state.count = result.data.count;
+			} catch ( error ) {
+				state.error =
+					error instanceof Error ? error.message : 'Unknown error';
+			} finally {
+				state.isLoading = false;
+			}
+		},
+		async incrementCounter() {
+			const context = getContext< {
+				id?: string;
+				postId?: number;
+				restNonce?: string;
+			} >();
+			if ( ! context.id || ! context.postId ) {
+				return;
+			}
+
+			state.isSaving = true;
+			state.error = undefined;
+
+			try {
+				const result = await incrementCounter(
+					{
+						delta: 1,
+						postId: context.postId,
+						resourceKey: context.id,
+					},
+					context.restNonce
+				);
+				if ( ! result.isValid || ! result.data ) {
+					state.error =
+						result.errors[ 0 ]?.expected ??
+						'Unable to increment counter';
+					return;
+				}
+				state.count = result.data.count;
+			} catch ( error ) {
+				state.error =
+					error instanceof Error ? error.message : 'Unknown error';
+			} finally {
+				state.isSaving = false;
+			}
+		},
 	},
 
 	callbacks: {
@@ -57,6 +127,7 @@ const { state } = store( 'create-block/my-typia-block', {
 		mounted() {
 			const context = getContext();
 			console.log( 'MyTypiaBlock mounted with context:', context );
+			void actions.loadCounter();
 		},
 	},
 } );

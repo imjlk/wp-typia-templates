@@ -8,8 +8,8 @@
 	"main": "build/index.js",
 	"scripts": {
 		"sync-types": "tsx scripts/sync-types-to-block-json.ts",
-		"build": "bun run sync-types && wp-scripts build",
-		"start": "bun run sync-types && wp-scripts start",
+		"build": "bun run sync-types && wp-scripts build --experimental-modules",
+		"start": "bun run sync-types && wp-scripts start --experimental-modules",
 		"dev": "bun run start",
 		"lint:js": "wp-scripts lint-js",
 		"lint:css": "wp-scripts lint-style",

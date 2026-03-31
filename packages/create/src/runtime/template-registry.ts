@@ -32,7 +32,7 @@ export const CREATE_PACKAGE_ROOT = resolvePackageRoot(__dirname);
 export const TEMPLATE_ROOT = path.join(CREATE_PACKAGE_ROOT, "templates");
 export const SHARED_TEMPLATE_ROOT = path.join(TEMPLATE_ROOT, "_shared");
 export const SHARED_BASE_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "base");
-export const BUILTIN_TEMPLATE_IDS = ["basic", "interactivity"] as const;
+export const BUILTIN_TEMPLATE_IDS = ["basic", "interactivity", "data"] as const;
 export type BuiltInTemplateId = (typeof BUILTIN_TEMPLATE_IDS)[number];
 
 export interface TemplateDefinition {
@@ -57,6 +57,13 @@ export const TEMPLATE_REGISTRY = Object.freeze<TemplateDefinition[]>([
 		defaultCategory: "widgets",
 		features: ["Interactivity API", "Client-side state", "Event handling"],
 		templateDir: path.join(TEMPLATE_ROOT, "interactivity"),
+	},
+	{
+		id: "data",
+		description: "A data-backed WordPress block with Typia validation, typed REST contracts, and persistence",
+		defaultCategory: "widgets",
+		features: ["Interactivity API", "Typed REST client", "Schema sync", "Persistence modes"],
+		templateDir: path.join(TEMPLATE_ROOT, "data"),
 	},
 ]);
 

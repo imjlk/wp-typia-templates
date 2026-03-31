@@ -160,12 +160,7 @@
 			},
 			"wp": {
 				"defaultValue": "left",
-				"enum": [
-					"left",
-					"center",
-					"right",
-					"justify"
-				],
+				"enum": ["left", "center", "right", "justify"],
 				"hasDefault": true,
 				"type": "string"
 			}
@@ -231,12 +226,7 @@
 			},
 			"wp": {
 				"defaultValue": "medium",
-				"enum": [
-					"small",
-					"medium",
-					"large",
-					"xlarge"
-				],
+				"enum": ["small", "medium", "large", "xlarge"],
 				"hasDefault": true,
 				"type": "string"
 			}
@@ -590,11 +580,7 @@
 			},
 			"wp": {
 				"defaultValue": "none",
-				"enum": [
-					"none",
-					"fadeIn",
-					"bounce"
-				],
+				"enum": ["none", "fadeIn", "bounce"],
 				"hasDefault": true,
 				"type": "string"
 			}
@@ -676,9 +662,7 @@
 										},
 										"wp": {
 											"defaultValue": null,
-											"enum": [
-												"url"
-											],
+											"enum": ["url"],
 											"hasDefault": false,
 											"type": "string"
 										}
@@ -778,9 +762,7 @@
 										},
 										"wp": {
 											"defaultValue": null,
-											"enum": [
-												"post"
-											],
+											"enum": ["post"],
 											"hasDefault": false,
 											"type": "string"
 										}

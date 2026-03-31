@@ -1,0 +1,32 @@
+import typia from 'typia';
+
+import {
+	toValidationResult,
+	type ValidationResult,
+} from '@wp-typia/rest';
+import type {
+	{{pascalCase}}CounterQuery,
+	{{pascalCase}}CounterResponse,
+	{{pascalCase}}IncrementRequest,
+} from './api-types';
+
+const validateCounterQuery = typia.createValidate< {{pascalCase}}CounterQuery >();
+const validateIncrementRequest =
+	typia.createValidate< {{pascalCase}}IncrementRequest >();
+const validateCounterResponse =
+	typia.createValidate< {{pascalCase}}CounterResponse >();
+
+export const apiValidators = {
+	counterQuery: (
+		input: unknown
+	): ValidationResult< {{pascalCase}}CounterQuery > =>
+		toValidationResult( validateCounterQuery( input ) ),
+	counterResponse: (
+		input: unknown
+	): ValidationResult< {{pascalCase}}CounterResponse > =>
+		toValidationResult( validateCounterResponse( input ) ),
+	incrementRequest: (
+		input: unknown
+	): ValidationResult< {{pascalCase}}IncrementRequest > =>
+		toValidationResult( validateIncrementRequest( input ) ),
+};

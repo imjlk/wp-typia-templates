@@ -2,6 +2,12 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import ts from "typescript";
 
+import {
+	manifestToJsonSchema,
+	manifestToOpenApi,
+	type OpenApiInfo,
+} from "./schema-core.js";
+
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 type AttributeKind = "string" | "number" | "boolean" | "array" | "object" | "union";
@@ -79,7 +85,9 @@ interface ManifestDocument {
 
 export interface SyncBlockMetadataOptions {
 	blockJsonFile: string;
+	jsonSchemaFile?: string;
 	manifestFile?: string;
+	openApiFile?: string;
 	phpValidatorFile?: string;
 	projectRoot?: string;
 	sourceTypeName: string;
@@ -89,10 +97,27 @@ export interface SyncBlockMetadataOptions {
 export interface SyncBlockMetadataResult {
 	attributeNames: string[];
 	blockJsonPath: string;
+	jsonSchemaPath?: string;
 	lossyProjectionWarnings: string[];
 	manifestPath: string;
+	openApiPath?: string;
 	phpGenerationWarnings: string[];
 	phpValidatorPath: string;
+}
+
+export interface SyncTypeSchemaOptions {
+	jsonSchemaFile: string;
+	openApiFile?: string;
+	openApiInfo?: OpenApiInfo;
+	projectRoot?: string;
+	sourceTypeName: string;
+	typesFile: string;
+}
+
+export interface SyncTypeSchemaResult {
+	jsonSchemaPath: string;
+	openApiPath?: string;
+	sourceTypeName: string;
 }
 
 interface AnalysisContext {
@@ -138,8 +163,7 @@ const DEFAULT_CONSTRAINTS = (): AttributeConstraints => ({
 export async function syncBlockMetadata(
 	options: SyncBlockMetadataOptions,
 ): Promise<SyncBlockMetadataResult> {
-	const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
-	const typesFilePath = path.resolve(projectRoot, options.typesFile);
+	const { projectRoot, rootNode } = analyzeSourceType(options);
 	const blockJsonPath = path.resolve(projectRoot, options.blockJsonFile);
 	const manifestRelativePath =
 		options.manifestFile ?? path.join(path.dirname(options.blockJsonFile), "typia.manifest.json");
@@ -152,20 +176,6 @@ export async function syncBlockMetadata(
 		options.phpValidatorFile ?? path.join(path.dirname(manifestRelativePath), "typia-validator.php"),
 	);
 
-	const ctx = createAnalysisContext(projectRoot, typesFilePath);
-	const sourceFile = ctx.program.getSourceFile(typesFilePath);
-	if (sourceFile === undefined) {
-		throw new Error(`Unable to load types file: ${typesFilePath}`);
-	}
-
-	const declaration = findNamedDeclaration(sourceFile, options.sourceTypeName);
-	if (declaration === undefined) {
-		throw new Error(
-			`Unable to find source type "${options.sourceTypeName}" in ${path.relative(projectRoot, typesFilePath)}`,
-		);
-	}
-
-	const rootNode = parseNamedDeclaration(declaration, ctx, options.sourceTypeName, true);
 	if (rootNode.kind !== "object" || rootNode.properties === undefined) {
 		throw new Error(`Source type "${options.sourceTypeName}" must resolve to an object shape`);
 	}
@@ -197,6 +207,33 @@ export async function syncBlockMetadata(
 	fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
 	fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, "\t"));
 
+	const jsonSchemaPath = options.jsonSchemaFile
+		? path.resolve(projectRoot, options.jsonSchemaFile)
+		: undefined;
+	const openApiPath = options.openApiFile
+		? path.resolve(projectRoot, options.openApiFile)
+		: undefined;
+	if (jsonSchemaPath) {
+		fs.mkdirSync(path.dirname(jsonSchemaPath), { recursive: true });
+		fs.writeFileSync(
+			jsonSchemaPath,
+			JSON.stringify(manifestToJsonSchema(manifest as never), null, "\t"),
+		);
+	}
+	if (openApiPath) {
+		fs.mkdirSync(path.dirname(openApiPath), { recursive: true });
+		fs.writeFileSync(
+			openApiPath,
+			JSON.stringify(
+				manifestToOpenApi(manifest as never, {
+					title: options.sourceTypeName,
+				}),
+				null,
+				"\t",
+			),
+		);
+	}
+
 	const phpValidator = renderPhpValidator(manifest);
 	fs.mkdirSync(path.dirname(phpValidatorPath), { recursive: true });
 	fs.writeFileSync(phpValidatorPath, phpValidator.source);
@@ -204,10 +241,83 @@ export async function syncBlockMetadata(
 	return {
 		attributeNames: Object.keys(rootNode.properties),
 		blockJsonPath,
+		jsonSchemaPath,
 		lossyProjectionWarnings: [...new Set(lossyProjectionWarnings)].sort(),
 		manifestPath,
+		openApiPath,
 		phpGenerationWarnings: [...new Set(phpValidator.warnings)].sort(),
 		phpValidatorPath,
+	};
+}
+
+export async function syncTypeSchemas(
+	options: SyncTypeSchemaOptions,
+): Promise<SyncTypeSchemaResult> {
+	const { projectRoot, rootNode } = analyzeSourceType(options);
+	if (rootNode.kind !== "object" || rootNode.properties === undefined) {
+		throw new Error(
+			`Source type "${options.sourceTypeName}" must resolve to an object shape for schema generation`,
+		);
+	}
+
+	const manifest = {
+		attributes: Object.fromEntries(
+			Object.entries(rootNode.properties).map(([key, node]) => [key, createManifestAttribute(node)]),
+		),
+		manifestVersion: 2 as const,
+		sourceType: options.sourceTypeName,
+	};
+
+	const jsonSchemaPath = path.resolve(projectRoot, options.jsonSchemaFile);
+	fs.mkdirSync(path.dirname(jsonSchemaPath), { recursive: true });
+	fs.writeFileSync(
+		jsonSchemaPath,
+		JSON.stringify(manifestToJsonSchema(manifest as never), null, "\t"),
+	);
+
+	const openApiPath = options.openApiFile
+		? path.resolve(projectRoot, options.openApiFile)
+		: undefined;
+	if (openApiPath) {
+		fs.mkdirSync(path.dirname(openApiPath), { recursive: true });
+		fs.writeFileSync(
+			openApiPath,
+			JSON.stringify(
+				manifestToOpenApi(manifest as never, options.openApiInfo ?? { title: options.sourceTypeName }),
+				null,
+				"\t",
+			),
+		);
+	}
+
+	return {
+		jsonSchemaPath,
+		openApiPath,
+		sourceTypeName: options.sourceTypeName,
+	};
+}
+
+function analyzeSourceType(
+	options: Pick<SyncBlockMetadataOptions, "projectRoot" | "sourceTypeName" | "typesFile">,
+): { projectRoot: string; rootNode: AttributeNode } {
+	const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
+	const typesFilePath = path.resolve(projectRoot, options.typesFile);
+	const ctx = createAnalysisContext(projectRoot, typesFilePath);
+	const sourceFile = ctx.program.getSourceFile(typesFilePath);
+	if (sourceFile === undefined) {
+		throw new Error(`Unable to load types file: ${typesFilePath}`);
+	}
+
+	const declaration = findNamedDeclaration(sourceFile, options.sourceTypeName);
+	if (declaration === undefined) {
+		throw new Error(
+			`Unable to find source type "${options.sourceTypeName}" in ${path.relative(projectRoot, typesFilePath)}`,
+		);
+	}
+
+	return {
+		projectRoot,
+		rootNode: parseNamedDeclaration(declaration, ctx, options.sourceTypeName, true),
 	};
 }
 

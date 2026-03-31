@@ -6,8 +6,9 @@ Create practical WordPress blocks with Typia-driven metadata, validation, and sh
 
 - [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create) for scaffolding
 - [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types) for reusable WordPress semantic types
+- [`@wp-typia/rest`](https://www.npmjs.com/package/@wp-typia/rest) for typed WordPress REST helpers
 
-It generates `block.json`, `typia.manifest.json`, and `typia-validator.php` from `src/types.ts`, keeps runtime validation close to the block code, and now focuses its built-in scaffold surface on the two templates that are most useful to start from.
+It generates `block.json`, `typia.manifest.json`, `typia-validator.php`, and optional schema artifacts from `src/types.ts`, keeps runtime validation close to the block code, and now ships three built-in starting points that cover static, interactive, and data-backed blocks.
 
 ## Quick Start
 
@@ -25,12 +26,14 @@ Built-in templates:
 
 - `basic`
 - `interactivity`
+- `data`
 
 Non-interactive examples:
 
 ```bash
 npx @wp-typia/create my-block --template basic --package-manager pnpm --yes --no-install
 npx @wp-typia/create my-block --template interactivity --package-manager npm --yes --no-install
+npx @wp-typia/create my-block --template data --data-storage custom-table --package-manager bun --yes --no-install
 ```
 
 Remote template MVP:
@@ -47,8 +50,9 @@ npx @wp-typia/create my-block --template @scope/create-block-template --variant 
 | --- | --- |
 | `basic` | Minimal, clean boilerplate with Typia metadata sync and runtime validation |
 | `interactivity` | The same foundation plus WordPress Interactivity API wiring |
+| `data` | Typed REST contracts, schema sync, Interactivity API wiring, and `post-meta` or `custom-table` persistence |
 
-`full` and `advanced` are no longer built-in scaffold targets. Their richer patterns live on in the repo-local reference app under [`examples/my-typia-block`](examples/my-typia-block).
+`full` and `advanced` are no longer built-in scaffold targets. Their older kitchen-sink responsibilities are now split between the repo-local reference app and the built-in `data` template.
 
 ## How the Scaffold Works
 
@@ -57,7 +61,10 @@ npx @wp-typia/create my-block --template @scope/create-block-template --variant 
    - `block.json`
    - `typia.manifest.json`
    - `typia-validator.php`
+   - optional `typia.schema.json`
+   - optional `typia.openapi.json`
 3. `src/validators.ts` uses precompiled Typia validators and manifest-driven default application.
+4. Data-backed projects can also run `bun run sync-rest` to emit request/response/query schemas for REST contracts.
 
 Example:
 
@@ -109,6 +116,7 @@ External template configs execute trusted JavaScript (`index.js` / `index.cjs` /
 
 - [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create)
 - [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types)
+- [`@wp-typia/rest`](https://www.npmjs.com/package/@wp-typia/rest)
 - [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia) for `bun create wp-typia` compatibility
 
 ## Project Structure
@@ -118,6 +126,7 @@ wp-typia/
 ├── packages/
 │   ├── create/                 # Canonical scoped CLI source (@wp-typia/create)
 │   ├── create-wp-typia/        # Unscoped compatibility shim
+│   ├── wp-typia-rest/          # Typed REST client helpers
 │   └── wp-typia-block-types/   # Shared semantic block types
 ├── examples/
 │   └── my-typia-block/         # Kitchen-sink reference app

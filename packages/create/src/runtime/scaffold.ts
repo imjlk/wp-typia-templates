@@ -27,11 +27,15 @@ const LOCKFILES: Record<PackageManagerId, string[]> = {
 
 export interface ScaffoldAnswers {
 	author: string;
+	dataStorageMode?: DataStorageMode;
 	description: string;
 	namespace: string;
 	slug: string;
 	title: string;
 }
+
+export const DATA_STORAGE_MODES = ["post-meta", "custom-table"] as const;
+export type DataStorageMode = (typeof DATA_STORAGE_MODES)[number];
 
 export interface ScaffoldTemplateVariables {
 	author: string;
@@ -41,11 +45,13 @@ export interface ScaffoldTemplateVariables {
 	cssClassName: string;
 	dashCase: string;
 	dashicon: string;
+	dataStorageMode: DataStorageMode;
 	description: string;
 	keyword: string;
 	namespace: string;
 	needsMigration: string;
 	pascalCase: string;
+	restPackageVersion: string;
 	slug: string;
 	slugCamelCase: string;
 	slugKebabCase: string;
@@ -71,6 +77,7 @@ interface ResolvePackageManagerOptions {
 }
 
 interface CollectScaffoldAnswersOptions {
+	dataStorageMode?: DataStorageMode;
 	projectName: string;
 	promptText?: (
 		message: string,
@@ -90,6 +97,7 @@ interface ScaffoldProjectOptions {
 	allowExistingDir?: boolean;
 	answers: ScaffoldAnswers;
 	cwd?: string;
+	dataStorageMode?: DataStorageMode;
 	installDependencies?: ((options: InstallDependenciesOptions) => Promise<void>) | undefined;
 	noInstall?: boolean;
 	packageManager: PackageManagerId;
@@ -141,6 +149,10 @@ function validateBlockSlug(input: string): true | string {
 	return BLOCK_SLUG_PATTERN.test(input) || "Use lowercase letters, numbers, and hyphens only";
 }
 
+export function isDataStorageMode(value: string): value is DataStorageMode {
+	return (DATA_STORAGE_MODES as readonly string[]).includes(value);
+}
+
 export function detectAuthor(): string {
 	try {
 		return (
@@ -162,6 +174,7 @@ export function getDefaultAnswers(
 	const slugDefault = toKebabCase(projectName || "my-wp-typia-block");
 	return {
 		author: detectAuthor(),
+		dataStorageMode: templateId === "data" ? "custom-table" : undefined,
 		description: template?.description ?? "A WordPress block scaffolded from a remote template",
 		namespace: "create-block",
 		slug: slugDefault,
@@ -224,12 +237,16 @@ export async function collectScaffoldAnswers({
 	projectName,
 	templateId,
 	yes = false,
+	dataStorageMode,
 	promptText,
 }: CollectScaffoldAnswersOptions): Promise<ScaffoldAnswers> {
 	const defaults = getDefaultAnswers(projectName, templateId);
 
 	if (yes) {
-		return defaults;
+		return {
+			...defaults,
+			dataStorageMode: dataStorageMode ?? defaults.dataStorageMode,
+		};
 	}
 
 	if (!promptText) {
@@ -242,6 +259,7 @@ export async function collectScaffoldAnswers({
 
 	return {
 		author: await promptText("Author", defaults.author),
+		dataStorageMode: dataStorageMode ?? defaults.dataStorageMode,
 		description: await promptText("Description", defaults.description),
 		namespace: await promptText("Namespace", defaults.namespace),
 		slug,
@@ -253,7 +271,7 @@ export function getTemplateVariables(
 	templateId: string,
 	answers: ScaffoldAnswers,
 ): ScaffoldTemplateVariables {
-	const { blockTypesPackageVersion, createPackageVersion } = getPackageVersions();
+	const { blockTypesPackageVersion, createPackageVersion, restPackageVersion } = getPackageVersions();
 	const template = isBuiltInTemplateId(templateId) ? getTemplateById(templateId) : null;
 	const slug = toKebabCase(answers.slug);
 	const slugSnakeCase = toSnakeCase(slug);
@@ -261,6 +279,8 @@ export function getTemplateVariables(
 	const title = answers.title.trim();
 	const namespace = answers.namespace.trim();
 	const description = answers.description.trim();
+	const dataStorageMode =
+		templateId === "data" && answers.dataStorageMode ? answers.dataStorageMode : "custom-table";
 
 	return {
 		author: answers.author.trim(),
@@ -268,6 +288,7 @@ export function getTemplateVariables(
 		category: template?.defaultCategory ?? "widgets",
 		createPackageVersion,
 		cssClassName: `wp-block-${slug}`,
+		dataStorageMode,
 		dashCase: slug,
 		dashicon: "smiley",
 		description,
@@ -275,6 +296,7 @@ export function getTemplateVariables(
 		namespace,
 		needsMigration: "{{needsMigration}}",
 		pascalCase,
+		restPackageVersion,
 		slug,
 		slugCamelCase: pascalCase.charAt(0).toLowerCase() + pascalCase.slice(1),
 		slugKebabCase: slug,
@@ -481,6 +503,7 @@ export async function scaffoldProject({
 	projectDir,
 	templateId,
 	answers,
+	dataStorageMode,
 	packageManager,
 	cwd = process.cwd(),
 	allowExistingDir = false,
@@ -492,7 +515,10 @@ export async function scaffoldProject({
 
 	await ensureDirectory(projectDir, allowExistingDir);
 
-	const variables = getTemplateVariables(templateId, answers);
+	const variables = getTemplateVariables(templateId, {
+		...answers,
+		dataStorageMode: dataStorageMode ?? answers.dataStorageMode,
+	});
 	const templateSource = await resolveTemplateSource(
 		templateId,
 		cwd,

@@ -44,9 +44,20 @@ When `--template` points at an official create-block external template config, `
 
 External template configs execute trusted JavaScript (`index.js` / `index.cjs` / `index.mjs`) in the same way `@wordpress/create-block` does. Only use local, GitHub, or npm template sources that you trust.
 
-Built-in templates are intentionally limited to `basic` and `interactivity`.
+Built-in templates currently cover:
 
-Inside `@wp-typia/create`, built-in templates are composed from a shared base layer plus per-template overlays. That keeps package setup, sync scripts, and shared runtime wiring aligned as `wp-typia` evolves without expanding the public template surface.
+- `basic`
+- `interactivity`
+- `data`
+
+Inside `@wp-typia/create`, built-in templates are composed from a shared base layer plus per-template overlays. That keeps package setup, sync scripts, and shared runtime wiring aligned as `wp-typia` evolves while still letting the public template surface grow when there is a stable use case.
+
+The `data` template adds:
+
+- `--data-storage <post-meta|custom-table>`
+- `sync-rest` contract/schema generation
+- a typed REST client through `@wp-typia/rest`
+- generated PHP route/bootstrap files for persisted block data
 
 Generated projects can also reuse small runtime helpers from `@wp-typia/create` instead of copying local utility code:
 
@@ -80,6 +91,27 @@ import { createNestedAttributeUpdater } from "@wp-typia/create/runtime/validatio
 - `preferTextarea` strings -> textarea
 
 Unions, arrays, formatted IDs/URLs, and paths marked as `manual` are reported as unsupported so projects can keep custom UI where it matters.
+
+Data-backed projects can also opt into schema output from the existing sync pipeline:
+
+```ts
+import { syncBlockMetadata, syncTypeSchemas } from "@wp-typia/create/metadata-core";
+
+await syncBlockMetadata({
+  blockJsonFile: "src/block.json",
+  jsonSchemaFile: "src/typia.schema.json",
+  openApiFile: "src/typia.openapi.json",
+  sourceTypeName: "MyBlockAttributes",
+  typesFile: "src/types.ts",
+});
+
+await syncTypeSchemas({
+  jsonSchemaFile: "src/api-schemas/request.schema.json",
+  openApiFile: "src/api-schemas/request.openapi.json",
+  sourceTypeName: "MyRequestContract",
+  typesFile: "src/api-types.ts",
+});
+```
 
 The `migrations` commands remain available for projects that include the migration workspace, such as the repo-local reference app in [`examples/my-typia-block`](../../examples/my-typia-block) or compatible remote seeds:
 

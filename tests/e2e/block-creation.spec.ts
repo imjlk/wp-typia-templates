@@ -68,6 +68,29 @@ test.describe('WordPress Typia block smoke', () => {
     await previewPage.close();
   });
 
+  test('frontend counter persists through the typed REST client', async () => {
+    await wpPage.insertBlock();
+    await wpPage.publishPost();
+
+    const previewPage = await wpPage.previewPost();
+    let counterValue = previewPage.locator('.my-typia-block-counter span');
+    const persistButton = previewPage.getByRole('button', { name: 'Persist Count' });
+
+    await expect(persistButton).toBeVisible();
+
+    await persistButton.click();
+    await expect(counterValue).toHaveText('1', { timeout: 10000 });
+
+    await persistButton.click();
+    await expect(counterValue).toHaveText('2', { timeout: 10000 });
+
+    await previewPage.reload({ waitUntil: 'domcontentloaded' });
+    counterValue = previewPage.locator('.my-typia-block-counter span');
+    await expect(counterValue).toHaveText('2', { timeout: 10000 });
+
+    await previewPage.close();
+  });
+
   test('invalid attributes surface validation errors in the editor', async () => {
     await wpPage.insertBlock();
     await wpPage.updateSelectedBlockAttributes({ alignment: 123 as unknown as string });

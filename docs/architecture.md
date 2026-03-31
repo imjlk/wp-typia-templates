@@ -12,6 +12,8 @@
   The unscoped compatibility shim.
 - `packages/wp-typia-block-types`
   Shared WordPress semantic types for generated projects.
+- `packages/wp-typia-rest`
+  Shared TypeScript REST helpers for data-backed blocks.
 
 ### 2. Reference app
 
@@ -43,13 +45,21 @@ Built-in templates stay limited to:
 
 - `basic`
 - `interactivity`
+- `data`
 
 Inside `@wp-typia/create`, built-in templates are composed from:
 
 - a shared base layer for common project assets
 - a template-specific overlay
 
-This keeps public scaffold behavior stable while letting shared runtime/helper changes flow into both built-in templates.
+This keeps public scaffold behavior stable while letting shared runtime/helper changes flow into the built-in templates.
+
+The `data` template extends the same base with:
+
+- typed REST contracts and client helpers
+- schema sync outputs
+- generated PHP route/storage files
+- a selectable persistence mode (`post-meta` or `custom-table`)
 
 Generated projects also import shared runtime helpers from `@wp-typia/create/runtime/*`, so validator/default/runtime behavior can evolve centrally instead of being copied into every generated block.
 

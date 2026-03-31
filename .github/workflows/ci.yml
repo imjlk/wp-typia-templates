@@ -135,6 +135,16 @@ jobs:
             template: interactivity
             package_manager: pnpm
             project_name: smoke-interactivity-pnpm
+          - runtime: bun
+            template: data
+            data_storage: custom-table
+            package_manager: bun
+            project_name: smoke-data-custom-table-bun
+          - runtime: node
+            template: data
+            data_storage: post-meta
+            package_manager: npm
+            project_name: smoke-data-post-meta-npm
           - runtime: node
             template: ./packages/create/tests/fixtures/create-block-external
             variant: hero
@@ -184,6 +194,9 @@ jobs:
           )
           if [ -n "${{ matrix.variant || '' }}" ]; then
             args+=(--variant "${{ matrix.variant }}")
+          fi
+          if [ -n "${{ matrix.data_storage || '' }}" ]; then
+            args+=(--data-storage "${{ matrix.data_storage }}")
           fi
           node scripts/run-generated-project-smoke.mjs "${args[@]}"
 

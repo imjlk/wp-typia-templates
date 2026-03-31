@@ -7,6 +7,8 @@ import { execFileSync } from "node:child_process";
 
 import {
 	collectScaffoldAnswers,
+	DATA_STORAGE_MODES,
+	isDataStorageMode,
 	resolvePackageManagerId,
 	resolveTemplateId,
 	scaffoldProject,
@@ -17,6 +19,7 @@ import {
 	formatRunScript,
 	getPackageManagerSelectOptions,
 } from "./package-managers.js";
+import type { DataStorageMode } from "./scaffold.js";
 import type { PackageManagerId } from "./package-managers.js";
 import {
 	TEMPLATE_IDS,
@@ -61,12 +64,14 @@ interface GetNextStepsOptions {
 interface RunScaffoldFlowOptions {
 	allowExistingDir?: boolean;
 	cwd?: string;
+	dataStorageMode?: string;
 	installDependencies?: Parameters<typeof scaffoldProject>[0]["installDependencies"];
 	isInteractive?: boolean;
 	noInstall?: boolean;
 	packageManager?: string;
 	projectInput: string;
 	promptText?: Parameters<typeof collectScaffoldAnswers>[0]["promptText"];
+	selectDataStorage?: () => Promise<DataStorageMode>;
 	selectPackageManager?: () => Promise<PackageManagerId>;
 	selectTemplate?: () => Promise<TemplateDefinition["id"]>;
 	templateId?: string;
@@ -131,8 +136,9 @@ export function createReadlinePrompt(): ReadlinePrompt {
 
 export function formatHelpText(): string {
 	return `Usage:
-  wp-typia <project-dir> [--template <basic|interactivity|./path|github:owner/repo/path[#ref]>] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <basic|interactivity|data|./path|github:owner/repo/path[#ref]>] [--yes] [--no-install] [--package-manager <id>]
   wp-typia <project-dir> [--template <npm-package>] [--variant <name>] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template data] [--data-storage <post-meta|custom-table>] [--yes] [--no-install] [--package-manager <id>]
   wp-typia templates list
   wp-typia templates inspect <id>
   wp-typia migrations <init|snapshot|diff|scaffold|verify|doctor|fixtures|fuzz> [...]
@@ -285,12 +291,14 @@ export async function runScaffoldFlow({
 	projectInput,
 	cwd = process.cwd(),
 	templateId,
+	dataStorageMode,
 	packageManager,
 	yes = false,
 	noInstall = false,
 	isInteractive = false,
 	allowExistingDir = false,
 	selectTemplate,
+	selectDataStorage,
 	selectPackageManager,
 	promptText,
 	installDependencies = undefined,
@@ -306,6 +314,22 @@ export async function runScaffoldFlow({
 		isInteractive,
 		selectTemplate,
 	});
+	const resolvedDataStorage =
+		resolvedTemplateId !== "data"
+			? undefined
+			: dataStorageMode
+				? isDataStorageMode(dataStorageMode)
+					? dataStorageMode
+					: (() => {
+						throw new Error(
+							`Unsupported data storage mode "${dataStorageMode}". Expected one of: ${DATA_STORAGE_MODES.join(", ")}`,
+						);
+					})()
+				: yes
+					? "custom-table"
+					: isInteractive && selectDataStorage
+						? await selectDataStorage()
+						: "custom-table";
 	const resolvedPackageManager = await resolvePackageManagerId({
 		packageManager,
 		yes,
@@ -315,6 +339,7 @@ export async function runScaffoldFlow({
 	const projectDir = path.resolve(cwd, projectInput);
 	const projectName = path.basename(projectDir);
 	const answers = await collectScaffoldAnswers({
+		dataStorageMode: resolvedDataStorage,
 		projectName,
 		templateId: resolvedTemplateId,
 		yes,
@@ -325,6 +350,7 @@ export async function runScaffoldFlow({
 		answers,
 		allowExistingDir,
 		cwd,
+		dataStorageMode: resolvedDataStorage,
 		installDependencies,
 		noInstall,
 		packageManager: resolvedPackageManager,

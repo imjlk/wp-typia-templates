@@ -14,6 +14,7 @@ import {
 	ToggleControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { useEffect } from '@wordpress/element';
 import currentManifest from '../typia.manifest.json';
 import {
 	createEditorModel,
@@ -192,6 +193,21 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		setAttributes,
 		validators.validate
 	);
+
+	useEffect( () => {
+		if ( attributes.id ) {
+			return;
+		}
+
+		if (
+			typeof crypto !== 'undefined' &&
+			typeof crypto.randomUUID === 'function'
+		) {
+			setAttributes( {
+				id: crypto.randomUUID(),
+			} );
+		}
+	}, [ attributes.id, setAttributes ] );
 
 	// Log attribute changes in development
 	useAttributeLogger( debouncedAttributes );

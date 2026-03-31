@@ -43,12 +43,19 @@ export const validators = {
 export function sanitizeMyTypiaBlockAttributes(
 	attributes: Partial< MyTypiaBlockAttributes >
 ): MyTypiaBlockAttributes {
-	return validators.assert(
+	const normalized =
 		applyTemplateDefaultsFromManifest< MyTypiaBlockAttributes >(
 			currentManifest as ManifestDefaultsDocument,
 			attributes
-		)
-	);
+		);
+
+	return validators.assert( {
+		...normalized,
+		id:
+			normalized.id && normalized.id.length > 0
+				? normalized.id
+				: generateBlockId(),
+	} );
 }
 
 /**
@@ -96,3 +103,14 @@ export function createNestedAttributeUpdater(
 		}
 	);
 }
+
+const generateBlockId = (): string => {
+	if (
+		typeof crypto !== 'undefined' &&
+		typeof crypto.randomUUID === 'function'
+	) {
+		return crypto.randomUUID();
+	}
+
+	return 'my-typia-block-' + Math.random().toString( 36 ).slice( 2, 11 );
+};

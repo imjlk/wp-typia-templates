@@ -12,6 +12,7 @@ interface PackageManifest {
 interface PackageVersions {
 	blockTypesPackageVersion: string;
 	createPackageVersion: string;
+	restPackageVersion: string;
 }
 
 const require = createRequire(import.meta.url);
@@ -72,6 +73,10 @@ export function getPackageVersions(): PackageVersions {
 				resolveInstalledPackageManifest("@wp-typia/block-types")?.version,
 		),
 		createPackageVersion: normalizeVersionRange(createManifest.version),
+		restPackageVersion: normalizeVersionRange(
+			createManifest.dependencies?.["@wp-typia/rest"] ??
+				resolveInstalledPackageManifest("@wp-typia/rest")?.version,
+		),
 	};
 
 	return cachedPackageVersions;
