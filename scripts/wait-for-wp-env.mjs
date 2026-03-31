@@ -1,6 +1,14 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const WP_ENV_COMMAND =
+	process.platform === 'win32'
+		? path.join(ROOT_DIR, 'node_modules', '.bin', 'wp-env.cmd')
+		: path.join(ROOT_DIR, 'node_modules', '.bin', 'wp-env');
 
 const baseUrl = process.argv[2] ?? 'http://localhost:8889';
 const timeoutMs = Number.parseInt(process.argv[3] ?? '180000', 10);
@@ -28,11 +36,10 @@ function looksLikeInstall(html) {
 }
 
 function runWpCli(configPath, args) {
-	const command = process.platform === 'win32' ? 'wp-env.cmd' : 'wp-env';
-	return execFileSync(command, ['run', 'cli', `--config=${configPath}`, 'wp', ...args], {
+	return execFileSync(WP_ENV_COMMAND, ['run', 'cli', `--config=${configPath}`, 'wp', ...args], {
+		cwd: ROOT_DIR,
 		encoding: 'utf8',
 		stdio: 'pipe',
-		shell: process.platform === 'win32',
 	});
 }
 
