@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { chromium, FullConfig } from '@playwright/test';
 
-const REFERENCE_PLUGIN_SLUG = 'my-typia-block';
+const EXAMPLE_PLUGIN_SLUGS = ['my-typia-block', 'persistence-examples'] as const;
 
 async function waitForAdminReady(page: import('@playwright/test').Page) {
   await page.waitForLoadState('domcontentloaded');
@@ -49,7 +49,10 @@ async function waitForWordPressLogin(
 }
 
 function runWpCli(args: string[]) {
-	const command = process.platform === 'win32' ? 'wp-env.cmd' : 'wp-env';
+	const command =
+		process.platform === 'win32'
+			? 'node_modules/.bin/wp-env.cmd'
+			: './node_modules/.bin/wp-env';
 	return execFileSync(command, ['run', 'cli', '--config=.wp-env.test.json', 'wp', ...args], {
 		encoding: 'utf8',
 		stdio: 'pipe',
@@ -74,11 +77,13 @@ function ensureWordPressInstalled(baseURL: string) {
 	}
 }
 
-function ensureReferencePluginActive() {
-	try {
-		runWpCli(['plugin', 'is-active', REFERENCE_PLUGIN_SLUG]);
-	} catch {
-		runWpCli(['plugin', 'activate', REFERENCE_PLUGIN_SLUG]);
+function ensureExamplePluginsActive() {
+	for (const pluginSlug of EXAMPLE_PLUGIN_SLUGS) {
+		try {
+			runWpCli(['plugin', 'is-active', pluginSlug]);
+		} catch {
+			runWpCli(['plugin', 'activate', pluginSlug]);
+		}
 	}
 }
 
@@ -100,7 +105,7 @@ async function globalSetup(config: FullConfig) {
       ensureWordPressInstalled(baseURL);
       await waitForWordPressLogin(page, baseURL);
     }
-    ensureReferencePluginActive();
+    ensureExamplePluginsActive();
 
     // Login to WordPress
     await page.goto(`${baseURL}/wp-login.php`, { waitUntil: 'domcontentloaded' });
