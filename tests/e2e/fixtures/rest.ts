@@ -18,6 +18,25 @@ export async function requestWordPressRest(
 	options: BrowserRestRequestOptions,
 ): Promise<BrowserRestResponse> {
 	return page.evaluate(async (requestOptions) => {
+		const mergeHeaders = (
+			headers: Record<string, string> | undefined,
+			body: Record<string, unknown> | undefined,
+		) => {
+			const nextHeaders = { ...(headers ?? {}) };
+			if (typeof body === 'undefined') {
+				return nextHeaders;
+			}
+
+			const hasContentType = Object.keys(nextHeaders).some(
+				(headerName) => headerName.toLowerCase() === 'content-type',
+			);
+			if (!hasContentType) {
+				nextHeaders['Content-Type'] = 'application/json';
+			}
+
+			return nextHeaders;
+		};
+
 		const resolveRestRootInBrowser = () => {
 			const wpApiSettings = (window as typeof window & {
 				wpApiSettings?: { root?: string };
@@ -67,7 +86,7 @@ export async function requestWordPressRest(
 			),
 			{
 				method: requestOptions.method ?? 'GET',
-				headers: requestOptions.headers,
+				headers: mergeHeaders(requestOptions.headers, requestOptions.body),
 				body:
 					typeof requestOptions.body === 'undefined'
 						? undefined

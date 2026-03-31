@@ -9,6 +9,10 @@ import {
 	type BuiltInTemplateId,
 } from "./template-registry.js";
 
+/**
+ * Controls which persistence layer is applied when materializing the built-in
+ * `persistence` template.
+ */
 export type BuiltInPersistencePolicy = "authenticated" | "public";
 
 export interface MaterializedBuiltInTemplateSource {
@@ -18,9 +22,18 @@ export interface MaterializedBuiltInTemplateSource {
 	features: string[];
 	format: "wp-typia";
 	templateDir: string;
-	cleanup: () => Promise<void>;
+	cleanup?: () => Promise<void>;
+	selectedVariant?: string | null;
+	warnings?: string[];
 }
 
+/**
+ * Returns the ordered overlay directories for a built-in template.
+ *
+ * Persistence templates include the shared base, the persistence core layer,
+ * the selected policy layer, and the thin template overlay. All other built-ins
+ * resolve to the shared base plus their own template directory.
+ */
 export function getBuiltInTemplateLayerDirs(
 	templateId: BuiltInTemplateId,
 	persistencePolicy: BuiltInPersistencePolicy = "authenticated",
@@ -37,6 +50,14 @@ export function getBuiltInTemplateLayerDirs(
 	return [SHARED_BASE_TEMPLATE_ROOT, getTemplateById(templateId).templateDir];
 }
 
+/**
+ * Materializes a built-in template into a temporary directory by copying each
+ * resolved layer in order.
+ *
+ * Callers should invoke the returned `cleanup` function when they no longer
+ * need the materialized directory. If copying fails, the temporary directory is
+ * removed before the error is rethrown.
+ */
 export async function resolveBuiltInTemplateSource(
 	templateId: BuiltInTemplateId,
 	persistencePolicy: BuiltInPersistencePolicy = "authenticated",
