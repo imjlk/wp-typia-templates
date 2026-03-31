@@ -1,5 +1,10 @@
 import { test as base, expect, Page, FrameLocator, Browser } from '@playwright/test';
 
+interface InsertableBlock {
+  name: string;
+  title: string;
+}
+
 export const REFERENCE_BLOCK = {
   name: 'create-block/my-typia-block',
   title: 'My Typia Block',
@@ -42,7 +47,7 @@ export class WordPressPage {
     return this.page.frameLocator('iframe').first();
   }
 
-  getBlockLocator(blockType = EXAMPLE_BLOCK.name) {
+  getBlockLocator(blockType: string = EXAMPLE_BLOCK.name) {
     if (blockType === EXAMPLE_BLOCK.name) {
       return this.getEditorCanvas().getByText(EXAMPLE_BLOCK.editorText);
     }
@@ -87,7 +92,7 @@ export class WordPressPage {
     await this.waitForEditorReady();
   }
 
-  async insertBlock(block = EXAMPLE_BLOCK) {
+  async insertBlock(block: InsertableBlock = EXAMPLE_BLOCK) {
     await this.waitForBlockTypeRegistered(block.name);
     await this.dismissWelcomeGuideIfPresent();
 
@@ -248,7 +253,7 @@ export class WordPressPage {
     return previewPage;
   }
 
-  async getBlockAttributes(blockType = EXAMPLE_BLOCK.name): Promise<Record<string, unknown> | null> {
+  async getBlockAttributes(blockType: string = EXAMPLE_BLOCK.name): Promise<Record<string, unknown> | null> {
     return this.page.evaluate((type) => {
       const wp = (window as any).wp;
       if (!wp?.data) {
@@ -327,7 +332,7 @@ export class WordPressPage {
 
   private async waitForBlockAttributes(
     expectedAttributes: Record<string, unknown>,
-    blockType = EXAMPLE_BLOCK.name,
+    blockType: string = EXAMPLE_BLOCK.name,
   ) {
     await this.page.waitForFunction(
       ([type, expected]) => {
