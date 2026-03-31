@@ -175,6 +175,8 @@ export class WordPressPage {
   }
 
   async publishPost() {
+    await this.waitForExampleBlockPersistenceKey();
+
     await this.page.evaluate(async () => {
       const wp = (window as any).wp;
       const dispatch = wp?.data?.dispatch('core/editor');
@@ -318,6 +320,21 @@ export class WordPressPage {
       const editor = wp?.data?.select('core/editor');
       return Boolean(editor) && !editor.isSavingPost?.() && !editor.isAutosavingPost?.();
     });
+  }
+
+  private async waitForExampleBlockPersistenceKey() {
+    await this.page.waitForFunction((blockType) => {
+      const wp = (window as any).wp;
+      const blocks = wp?.data?.select('core/block-editor')?.getBlocks?.() ?? [];
+      const exampleBlock = blocks.find((candidate: any) => candidate.name === blockType);
+
+      if (!exampleBlock) {
+        return true;
+      }
+
+      const id = exampleBlock.attributes?.id;
+      return typeof id === 'undefined' || (typeof id === 'string' && id.length > 0);
+    }, EXAMPLE_BLOCK.name);
   }
 
   private async waitForBlockTypeRegistered(blockType: string) {
