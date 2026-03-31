@@ -7,6 +7,7 @@ DRY_RUN="${DRY_RUN:-0}"
 
 PACKAGES=(
   "packages/wp-typia-block-types"
+  "packages/wp-typia-rest"
   "packages/create"
   "packages/create-wp-typia"
 )

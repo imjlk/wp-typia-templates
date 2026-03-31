@@ -109,6 +109,23 @@ async function defaultFetch<T = unknown, Parse extends boolean = true>(
 	}
 }
 
+async function parseResponsePayload(response: Response): Promise<unknown> {
+	if (response.status === 204) {
+		return undefined;
+	}
+
+	const text = await response.text();
+	if (!text) {
+		return undefined;
+	}
+
+	try {
+		return JSON.parse(text);
+	} catch {
+		return text;
+	}
+}
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
 	return value !== null && typeof value === "object" && !Array.isArray(value);
 }
@@ -282,7 +299,7 @@ export function createValidatedFetch<T>(
 				...options,
 				parse: false,
 			});
-			const payload = await response.json();
+			const payload = await parseResponsePayload(response);
 			return {
 				response,
 				validation: toValidationResult<T>(validator(payload)),
@@ -294,7 +311,7 @@ export function createValidatedFetch<T>(
 				return validation;
 			}
 
-				const payload = await fetchFn<unknown, true>(options as APIFetchOptions<true>);
+			const payload = await fetchFn<unknown, true>(options as APIFetchOptions<true>);
 			return toValidationResult<T>(validator(payload));
 		},
 		async assertFetch(options: APIFetchOptions) {

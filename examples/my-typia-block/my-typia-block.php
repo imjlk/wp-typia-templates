@@ -152,22 +152,28 @@ function my_typia_block_get_counter( $post_id, $resource_key ) {
 function my_typia_block_increment_counter( $post_id, $resource_key, $delta ) {
 	global $wpdb;
 
-	$table_name    = my_typia_block_get_counter_table_name();
-	$current_count = my_typia_block_get_counter( $post_id, $resource_key );
-	$next_count    = max( 0, $current_count + $delta );
-
-	$wpdb->replace(
-		$table_name,
-		array(
-			'post_id'      => $post_id,
-			'resource_key' => $resource_key,
-			'count'        => $next_count,
-			'updated_at'   => current_time( 'mysql', true ),
-		),
-		array( '%d', '%s', '%d', '%s' )
+	$table_name   = my_typia_block_get_counter_table_name();
+	$delta_value  = (int) $delta;
+	$insert_count = max( 0, $delta_value );
+	$result       = $wpdb->query(
+		$wpdb->prepare(
+			"INSERT INTO {$table_name} (post_id, resource_key, count, updated_at)
+			VALUES (%d, %s, %d, %s)
+			ON DUPLICATE KEY UPDATE
+				count = GREATEST(0, count + VALUES(count)),
+				updated_at = VALUES(updated_at)",
+			$post_id,
+			$resource_key,
+			$insert_count,
+			current_time( 'mysql', true )
+		)
 	);
 
-	return $next_count;
+	if ( false === $result ) {
+		return new WP_Error( 'counter_update_failed', 'Failed to update the counter.', array( 'status' => 500 ) );
+	}
+
+	return my_typia_block_get_counter( $post_id, $resource_key );
 }
 
 function my_typia_block_build_counter_response( $post_id, $resource_key, $count ) {
@@ -219,6 +225,10 @@ function my_typia_block_handle_increment_counter( WP_REST_Request $request ) {
 		(string) $payload['resourceKey'],
 		isset( $payload['delta'] ) ? (int) $payload['delta'] : 1
 	);
+
+	if ( is_wp_error( $count ) ) {
+		return $count;
+	}
 
 	return rest_ensure_response(
 		my_typia_block_build_counter_response(

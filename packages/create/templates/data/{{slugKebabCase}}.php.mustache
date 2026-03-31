@@ -37,6 +37,37 @@ function {{slugSnakeCase}}_get_counter_table_name() {
 	return $wpdb->prefix . '{{slugSnakeCase}}_counters';
 }
 
+function {{slugSnakeCase}}_get_counter_lock_name( $post_id, $resource_key ) {
+	return '{{slugSnakeCase}}_counter_' . (int) $post_id . '_' . md5( (string) $resource_key );
+}
+
+function {{slugSnakeCase}}_with_counter_lock( $post_id, $resource_key, $callback ) {
+	global $wpdb;
+
+	$lock_name = {{slugSnakeCase}}_get_counter_lock_name( $post_id, $resource_key );
+	$acquired  = (int) $wpdb->get_var(
+		$wpdb->prepare(
+			'SELECT GET_LOCK(%s, 5)',
+			$lock_name
+		)
+	);
+
+	if ( 1 !== $acquired ) {
+		return new WP_Error( 'counter_lock_timeout', 'Could not acquire the counter lock.', array( 'status' => 503 ) );
+	}
+
+	try {
+		return $callback();
+	} finally {
+		$wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT RELEASE_LOCK(%s)',
+				$lock_name
+			)
+		);
+	}
+}
+
 function {{slugSnakeCase}}_maybe_install_storage() {
 	if ( 'custom-table' !== '{{dataStorageMode}}' ) {
 		return;
@@ -139,27 +170,40 @@ function {{slugSnakeCase}}_increment_counter( $post_id, $resource_key, $delta ) 
 	global $wpdb;
 
 	if ( 'custom-table' === '{{dataStorageMode}}' ) {
-		$table_name     = {{slugSnakeCase}}_get_counter_table_name();
-		$current_count  = {{slugSnakeCase}}_get_counter( $post_id, $resource_key );
-		$next_count     = max( 0, $current_count + $delta );
-		$wpdb->replace(
-			$table_name,
-			array(
-				'post_id'      => $post_id,
-				'resource_key' => $resource_key,
-				'count'        => $next_count,
-				'updated_at'   => current_time( 'mysql', true ),
-			),
-			array( '%d', '%s', '%d', '%s' )
+		$table_name   = {{slugSnakeCase}}_get_counter_table_name();
+		$delta_value  = (int) $delta;
+		$insert_count = max( 0, $delta_value );
+		$result       = $wpdb->query(
+			$wpdb->prepare(
+				"INSERT INTO {$table_name} (post_id, resource_key, count, updated_at)
+				VALUES (%d, %s, %d, %s)
+				ON DUPLICATE KEY UPDATE
+					count = GREATEST(0, count + VALUES(count)),
+					updated_at = VALUES(updated_at)",
+				$post_id,
+				$resource_key,
+				$insert_count,
+				current_time( 'mysql', true )
+			)
 		);
 
-		return $next_count;
+		if ( false === $result ) {
+			return new WP_Error( 'counter_update_failed', 'Failed to update the counter.', array( 'status' => 500 ) );
+		}
+
+		return {{slugSnakeCase}}_get_counter( $post_id, $resource_key );
 	}
 
-	$meta_key   = '_' . '{{slugSnakeCase}}' . '_counter_' . sanitize_key( $resource_key );
-	$next_count = max( 0, {{slugSnakeCase}}_get_counter( $post_id, $resource_key ) + $delta );
-	update_post_meta( $post_id, $meta_key, $next_count );
-	return $next_count;
+	return {{slugSnakeCase}}_with_counter_lock(
+		$post_id,
+		$resource_key,
+		function() use ( $delta, $post_id, $resource_key ) {
+			$meta_key   = '_' . '{{slugSnakeCase}}' . '_counter_' . sanitize_key( $resource_key );
+			$next_count = max( 0, {{slugSnakeCase}}_get_counter( $post_id, $resource_key ) + (int) $delta );
+			update_post_meta( $post_id, $meta_key, $next_count );
+			return $next_count;
+		}
+	);
 }
 
 function {{slugSnakeCase}}_build_counter_response( $post_id, $resource_key, $count ) {
@@ -211,6 +255,10 @@ function {{slugSnakeCase}}_handle_increment_counter( WP_REST_Request $request ) 
 		(string) $payload['resourceKey'],
 		isset( $payload['delta'] ) ? (int) $payload['delta'] : 1
 	);
+
+	if ( is_wp_error( $count ) ) {
+		return $count;
+	}
 
 	return rest_ensure_response(
 		{{slugSnakeCase}}_build_counter_response(

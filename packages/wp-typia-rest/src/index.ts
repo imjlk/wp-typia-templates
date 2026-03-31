@@ -11,9 +11,9 @@ export {
 	type ValidationResult,
 	type ValidationError,
 	type ValidationLike,
-} from "./client.js";
+} from "./client";
 export {
 	createHeadersDecoder,
 	createParameterDecoder,
 	createQueryDecoder,
-} from "./http.js";
+} from "./http";

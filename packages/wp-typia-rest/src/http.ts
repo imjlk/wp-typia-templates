@@ -4,7 +4,7 @@ import {
 	toValidationResult,
 	type ValidationLike,
 	type ValidationResult,
-} from "./client.js";
+} from "./client";
 
 function toHeadersRecord(input: unknown): Record<string, string | string[] | undefined> {
 	if (input instanceof Headers) {
@@ -88,8 +88,44 @@ export function createHeadersDecoder<T extends object>(
 	};
 }
 
+function decodePrimitiveParameter(input: string): string | number | boolean | bigint | null {
+	if (input === "null") {
+		return null;
+	}
+
+	if (input === "true") {
+		return true;
+	}
+
+	if (input === "false") {
+		return false;
+	}
+
+	if (/^-?\d+$/.test(input)) {
+		const numericValue = Number(input);
+		if (Number.isSafeInteger(numericValue)) {
+			return numericValue;
+		}
+
+		try {
+			return BigInt(input);
+		} catch {
+			return input;
+		}
+	}
+
+	if (/^-?(?:\d+\.\d+|\d+\.|\.\d+)$/.test(input)) {
+		const numericValue = Number(input);
+		if (!Number.isNaN(numericValue)) {
+			return numericValue;
+		}
+	}
+
+	return input;
+}
+
 export function createParameterDecoder<T extends string | number | boolean | bigint | null>(): (
 	input: string,
 ) => T {
-	return ((input: string) => input as T);
+	return ((input: string) => decodePrimitiveParameter(input) as T);
 }

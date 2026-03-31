@@ -29,7 +29,7 @@
     "package.json"
   ],
   "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && bun ./scripts/fix-dist-imports.mjs",
     "clean": "rm -rf dist",
     "test": "bun run build && bun test tests",
     "typecheck": "tsc -p tsconfig.json --noEmit"

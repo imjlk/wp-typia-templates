@@ -5,6 +5,7 @@ import {
 	callEndpoint,
 	createEndpoint,
 	createHeadersDecoder,
+	createParameterDecoder,
 	createQueryDecoder,
 	createValidatedFetch,
 	toValidationResult,
@@ -70,6 +71,23 @@ describe("@wp-typia/rest", () => {
 		expect(result.response.headers.get("X-WP-TotalPages")).toBe("3");
 		expect(result.validation.isValid).toBe(true);
 		expect(result.validation.data).toEqual({ ok: true });
+	});
+
+	test("createValidatedFetch tolerates empty parse:false responses", async () => {
+		const fetcher = createValidatedFetch<undefined>(
+			(input: unknown) =>
+				input === undefined ? success(undefined) : failure<undefined>("undefined"),
+			asApiFetch(async () => new Response(null, { status: 204 }) as never),
+		);
+
+		const result = await fetcher.fetchWithResponse({
+			parse: false,
+			path: "/demo",
+		});
+
+		expect(result.response.status).toBe(204);
+		expect(result.validation.isValid).toBe(true);
+		expect(result.validation.data).toBeUndefined();
 	});
 
 	test("callEndpoint validates GET requests and appends query parameters", async () => {
@@ -216,5 +234,15 @@ describe("@wp-typia/rest", () => {
 		expect(headerResult.data).toEqual({
 			authorization: "Bearer demo",
 		});
+	});
+
+	test("createParameterDecoder decodes primitive values", () => {
+		const decode = createParameterDecoder<string | number | boolean | bigint | null>();
+
+		expect(decode("true")).toBe(true);
+		expect(decode("42")).toBe(42);
+		expect(decode("9007199254740993")).toBe(BigInt("9007199254740993"));
+		expect(decode("null")).toBeNull();
+		expect(decode("slug-value")).toBe("slug-value");
 	});
 });
