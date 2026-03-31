@@ -77,6 +77,7 @@ test.describe('WordPress Typia block smoke', () => {
     const persistButton = previewPage.getByRole('button', { name: 'Persist Count' });
 
     await expect(persistButton).toBeVisible();
+    await expect(persistButton).toBeEnabled({ timeout: 10000 });
 
     await persistButton.click();
     await expect(counterValue).toHaveText('1', { timeout: 10000 });
