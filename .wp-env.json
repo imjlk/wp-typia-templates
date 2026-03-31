@@ -4,7 +4,8 @@
   "port": 8888,
   "testsEnvironment": false,
   "plugins": [
-    "./examples/my-typia-block"
+    "./examples/my-typia-block",
+    "./examples/persistence-examples"
   ],
   "config": {
     "WP_DEBUG": true,

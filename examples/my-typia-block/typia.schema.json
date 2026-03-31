@@ -1,0 +1,187 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"additionalProperties": false,
+	"properties": {
+		"id": {
+			"type": "string",
+			"format": "uuid"
+		},
+		"version": {
+			"default": 1,
+			"type": "number",
+			"x-typeTag": "uint32"
+		},
+		"className": {
+			"type": "string",
+			"maxLength": 100
+		},
+		"content": {
+			"default": "",
+			"type": "string",
+			"minLength": 0,
+			"maxLength": 1000
+		},
+		"alignment": {
+			"enum": [
+				"left",
+				"center",
+				"right",
+				"justify"
+			],
+			"default": "left",
+			"type": "string"
+		},
+		"isVisible": {
+			"default": true,
+			"type": "boolean"
+		},
+		"fontSize": {
+			"enum": [
+				"small",
+				"medium",
+				"large",
+				"xlarge"
+			],
+			"default": "medium",
+			"type": "string"
+		},
+		"textColor": {
+			"enum": [
+				"transparent",
+				"currentColor",
+				"inherit",
+				"initial",
+				"unset"
+			],
+			"default": "currentColor",
+			"type": "string"
+		},
+		"backgroundColor": {
+			"enum": [
+				"transparent",
+				"currentColor",
+				"inherit",
+				"initial",
+				"unset"
+			],
+			"default": "transparent",
+			"type": "string"
+		},
+		"aspectRatio": {
+			"enum": [
+				"auto",
+				"1",
+				"1/1",
+				"4/3",
+				"3/4",
+				"3/2",
+				"2/3",
+				"16/9",
+				"9/16",
+				"21/9"
+			],
+			"default": "16/9",
+			"type": "string"
+		},
+		"padding": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"top": {
+					"default": 0,
+					"type": "number",
+					"minimum": 0
+				},
+				"right": {
+					"default": 0,
+					"type": "number",
+					"minimum": 0
+				},
+				"bottom": {
+					"default": 0,
+					"type": "number",
+					"minimum": 0
+				},
+				"left": {
+					"default": 0,
+					"type": "number",
+					"minimum": 0
+				}
+			},
+			"required": [
+				"top",
+				"right",
+				"bottom",
+				"left"
+			]
+		},
+		"borderRadius": {
+			"default": 0,
+			"type": "number",
+			"minimum": 0
+		},
+		"animation": {
+			"enum": [
+				"none",
+				"fadeIn",
+				"bounce"
+			],
+			"default": "none",
+			"type": "string"
+		},
+		"linkTarget": {
+			"discriminator": {
+				"propertyName": "kind"
+			},
+			"oneOf": [
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"kind": {
+							"const": "url",
+							"enum": [
+								"url"
+							],
+							"type": "string"
+						},
+						"href": {
+							"type": "string",
+							"format": "uri"
+						}
+					},
+					"required": [
+						"kind",
+						"href"
+					]
+				},
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"kind": {
+							"const": "post",
+							"enum": [
+								"post"
+							],
+							"type": "string"
+						},
+						"postId": {
+							"type": "number",
+							"x-typeTag": "uint32"
+						}
+					},
+					"required": [
+						"kind",
+						"postId"
+					]
+				}
+			]
+		}
+	},
+	"required": [
+		"content"
+	],
+	"title": "MyTypiaBlockAttributes",
+	"type": "object"
+}

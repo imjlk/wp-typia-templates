@@ -5,6 +5,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 import { scaffoldProject } from "../src/runtime/index.js";
+import { runScaffoldFlow } from "../src/runtime/cli-core.js";
 import { copyRenderedDirectory } from "../src/runtime/template-render.js";
 import {
 	parseGitHubTemplateLocator,
@@ -32,6 +33,7 @@ const createPackageManifest = JSON.parse(
 const createPackageVersion = `^${createPackageManifest.version}`;
 const blockTypesPackageVersion =
 	createPackageManifest.dependencies["@wp-typia/block-types"];
+const restPackageVersion = createPackageManifest.dependencies["@wp-typia/rest"];
 
 function runCli(
 	command: string,
@@ -81,8 +83,8 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(packageJson.packageManager).toBe("npm@11.6.1");
 		expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(blockTypesPackageVersion);
 		expect(packageJson.devDependencies["@wp-typia/create"]).toBe(createPackageVersion);
-		expect(packageJson.scripts.build).toBe("npm run sync-types && wp-scripts build");
-		expect(packageJson.scripts.start).toBe("npm run sync-types && wp-scripts start");
+		expect(packageJson.scripts.build).toBe("npm run sync-types && wp-scripts build --experimental-modules");
+		expect(packageJson.scripts.start).toBe("npm run sync-types && wp-scripts start --experimental-modules");
 		expect(generatedHooks).toContain("type ValidationResult");
 		expect(generatedHooks).toContain("useTypiaValidation");
 		expect(generatedEdit).toContain("@wp-typia/create/runtime/editor");
@@ -129,6 +131,159 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedEdit).toContain("createAttributeUpdater");
 	});
 
+	test("scaffoldProject creates a persistence template with signed public writes and explicit storage mode", async () => {
+		const targetDir = path.join(tempRoot, "demo-persistence-public");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "persistence",
+			dataStorageMode: "post-meta",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				dataStorageMode: "post-meta",
+				description: "Demo persistence block",
+				namespace: "create-block",
+				persistencePolicy: "public",
+				slug: "demo-persistence-public",
+				title: "Demo Persistence Public",
+			},
+			persistencePolicy: "public",
+		});
+
+		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
+		const pluginBootstrap = fs.readFileSync(path.join(targetDir, "demo-persistence-public.php"), "utf8");
+		const generatedApi = fs.readFileSync(path.join(targetDir, "src", "api.ts"), "utf8");
+		const generatedSyncRest = fs.readFileSync(
+			path.join(targetDir, "scripts", "sync-rest-contracts.ts"),
+			"utf8",
+		);
+		const generatedRender = fs.readFileSync(path.join(targetDir, "src", "render.php"), "utf8");
+		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
+
+		expect(packageJson.devDependencies["@wp-typia/rest"]).toBe(restPackageVersion);
+		expect(packageJson.scripts.build).toBe(
+			"npm run sync-types && npm run sync-rest && wp-scripts build --experimental-modules",
+		);
+		expect(pluginBootstrap).toContain("post-meta");
+		expect(pluginBootstrap).toContain("_verify_public_write_token");
+		expect(generatedApi).toContain("@wp-typia/rest");
+		expect(generatedSyncRest).toContain("syncTypeSchemas");
+		expect(generatedRender).toContain("publicWriteToken");
+		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
+	});
+
+	test("scaffoldProject creates a persistence template with authenticated writes by default", async () => {
+		const targetDir = path.join(tempRoot, "demo-persistence-authenticated");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "persistence",
+			dataStorageMode: "custom-table",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				dataStorageMode: "custom-table",
+				description: "Demo authenticated persistence block",
+				namespace: "create-block",
+				persistencePolicy: "authenticated",
+				slug: "demo-persistence-authenticated",
+				title: "Demo Persistence Authenticated",
+			},
+		});
+
+		const pluginBootstrap = fs.readFileSync(
+			path.join(targetDir, "demo-persistence-authenticated.php"),
+			"utf8",
+		);
+		const generatedRender = fs.readFileSync(path.join(targetDir, "src", "render.php"), "utf8");
+		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
+
+		expect(pluginBootstrap).toContain("function demo_persistence_authenticated_can_write_authenticated");
+		expect(generatedRender).toContain("Sign in to persist this counter.");
+		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
+	});
+
+	test("runScaffoldFlow defaults persistence scaffolds to custom-table and authenticated in non-interactive mode", async () => {
+		const projectInput = "demo-persistence-default";
+		const flow = await runScaffoldFlow({
+			cwd: tempRoot,
+			noInstall: true,
+			packageManager: "npm",
+			projectInput,
+			templateId: "persistence",
+			yes: true,
+		});
+
+		const pluginBootstrap = fs.readFileSync(
+			path.join(flow.projectDir, `${projectInput}.php`),
+			"utf8",
+		);
+
+		expect(flow.result.variables.dataStorageMode).toBe("custom-table");
+		expect(flow.result.variables.persistencePolicy).toBe("authenticated");
+		expect(pluginBootstrap).toContain("custom-table");
+	});
+
+	test("runScaffoldFlow accepts prompted persistence policy selections in interactive mode", async () => {
+		const projectInput = "demo-persistence-prompted";
+		const flow = await runScaffoldFlow({
+			cwd: tempRoot,
+			isInteractive: true,
+			noInstall: true,
+			packageManager: "npm",
+			projectInput,
+			promptText: async (_message, defaultValue) => defaultValue,
+			selectDataStorage: async () => "post-meta",
+			selectPersistencePolicy: async () => "public",
+			templateId: "persistence",
+		});
+
+		const pluginBootstrap = fs.readFileSync(
+			path.join(flow.projectDir, `${projectInput}.php`),
+			"utf8",
+		);
+
+		expect(flow.result.variables.dataStorageMode).toBe("post-meta");
+		expect(flow.result.variables.persistencePolicy).toBe("public");
+		expect(pluginBootstrap).toContain("_verify_public_write_token");
+	});
+
+	test("runScaffoldFlow rejects unsupported persistence policies", async () => {
+		const projectInput = "demo-persistence-invalid-policy";
+
+		await expect(
+			runScaffoldFlow({
+				cwd: tempRoot,
+				noInstall: true,
+				packageManager: "npm",
+				projectInput,
+				templateId: "persistence",
+				persistencePolicy: "invalid",
+				yes: true,
+			}),
+		).rejects.toThrow(
+			'Unsupported persistence policy "invalid". Expected one of: authenticated, public',
+		);
+	});
+
+	test("runScaffoldFlow rejects removed built-in template ids", async () => {
+		await expect(
+			runScaffoldFlow({
+				cwd: tempRoot,
+				noInstall: true,
+				packageManager: "npm",
+				projectInput: "demo-removed-template",
+				templateId: "data",
+				yes: true,
+			}),
+		).rejects.toThrow(
+			'Built-in template "data" was removed. Use --template persistence --persistence-policy public instead.',
+		);
+	});
+
 	test("local create-block subset paths scaffold into a pnpm-ready wp-typia project", async () => {
 		const targetDir = path.join(tempRoot, "demo-remote");
 
@@ -156,7 +311,9 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(packageJson.packageManager).toBe("pnpm@8.3.1");
 		expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(blockTypesPackageVersion);
 		expect(packageJson.devDependencies["@wp-typia/create"]).toBe(createPackageVersion);
-		expect(packageJson.scripts.build).toBe("pnpm run sync-types && wp-scripts build");
+		expect(packageJson.scripts.build).toBe(
+			"pnpm run sync-types && wp-scripts build --experimental-modules",
+		);
 		expect(generatedTypes).toContain("export interface DemoRemoteAttributes");
 		expect(generatedTypes).toContain("\"content\"?: string & tags.Default<\"\">");
 		expect(generatedIndex).toContain('import metadata from "./block.json";');
@@ -294,6 +451,7 @@ describe("@wp-typia/create scaffolding", () => {
 
 		expect(templatesOutput).toContain("basic");
 		expect(templatesOutput).toContain("interactivity");
+		expect(templatesOutput).toContain("persistence");
 		expect(templatesOutput).not.toContain("advanced");
 		expect(templatesOutput).not.toContain("full");
 		expect(doctorOutput).toContain("PASS Bun");
@@ -306,6 +464,7 @@ describe("@wp-typia/create scaffolding", () => {
 
 		expect(templatesOutput).toContain("basic");
 		expect(templatesOutput).toContain("interactivity");
+		expect(templatesOutput).toContain("persistence");
 		expect(templatesOutput).not.toContain("advanced");
 		expect(templatesOutput).not.toContain("full");
 		expect(doctorOutput).toContain("PASS Bun");

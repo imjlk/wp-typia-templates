@@ -1,6 +1,11 @@
-import { test as base, expect, Page, FrameLocator } from '@playwright/test';
+import { test as base, expect, Page, FrameLocator, Browser } from '@playwright/test';
 
-export const EXAMPLE_BLOCK = {
+interface InsertableBlock {
+  name: string;
+  title: string;
+}
+
+export const REFERENCE_BLOCK = {
   name: 'create-block/my-typia-block',
   title: 'My Typia Block',
   editorText: 'My Typia Block - Editor View',
@@ -21,6 +26,18 @@ export const EXAMPLE_BLOCK = {
   },
 } as const;
 
+export const PERSISTENCE_COUNTER_BLOCK = {
+  name: 'create-block/persistence-counter',
+  title: 'Persistence Counter',
+} as const;
+
+export const PERSISTENCE_LIKE_BUTTON_BLOCK = {
+  name: 'create-block/persistence-like-button',
+  title: 'Persistence Like Button',
+} as const;
+
+export const EXAMPLE_BLOCK = REFERENCE_BLOCK;
+
 export const test = base;
 
 export class WordPressPage {
@@ -30,7 +47,7 @@ export class WordPressPage {
     return this.page.frameLocator('iframe').first();
   }
 
-  getBlockLocator(blockType = EXAMPLE_BLOCK.name) {
+  getBlockLocator(blockType: string = EXAMPLE_BLOCK.name) {
     if (blockType === EXAMPLE_BLOCK.name) {
       return this.getEditorCanvas().getByText(EXAMPLE_BLOCK.editorText);
     }
@@ -75,8 +92,18 @@ export class WordPressPage {
     await this.waitForEditorReady();
   }
 
-  async insertBlock(block = EXAMPLE_BLOCK) {
-    await this.waitForBlockTypeRegistered(block.name);
+  async insertBlock(block: InsertableBlock = EXAMPLE_BLOCK) {
+    const blockTypeReady = await this.waitForBlockTypeRegistered(block.name);
+    if (!blockTypeReady) {
+      await this.page.reload({ waitUntil: 'domcontentloaded' });
+      await this.waitForEditorReady();
+    }
+
+    const blockTypeReadyAfterReload = blockTypeReady || await this.waitForBlockTypeRegistered(block.name);
+    if (!blockTypeReadyAfterReload) {
+      throw new Error(`Timed out waiting for block type "${block.name}" to register.`);
+    }
+
     await this.dismissWelcomeGuideIfPresent();
 
     let inserted = false;
@@ -175,6 +202,8 @@ export class WordPressPage {
   }
 
   async publishPost() {
+    await this.waitForExampleBlockPersistenceKey();
+
     await this.page.evaluate(async () => {
       const wp = (window as any).wp;
       const dispatch = wp?.data?.dispatch('core/editor');
@@ -193,7 +222,15 @@ export class WordPressPage {
     });
   }
 
-  async previewPost(): Promise<Page> {
+  async previewPost(
+    {
+      loggedIn = true,
+      browser,
+    }: {
+      loggedIn?: boolean;
+      browser?: Browser;
+    } = {},
+  ): Promise<Page> {
     const previewUrl = await this.page.evaluate(() => {
       const wp = (window as any).wp;
       const postId = wp?.data?.select('core/editor')?.getCurrentPostId?.();
@@ -206,12 +243,27 @@ export class WordPressPage {
       return previewUrl.toString();
     });
 
+    if (!loggedIn) {
+      const targetBrowser = browser ?? this.page.context().browser();
+      if (!targetBrowser) {
+        throw new Error('A browser instance is required to open a logged-out preview.');
+      }
+
+      const isolatedContext = await targetBrowser.newContext();
+      const previewPage = await isolatedContext.newPage();
+      previewPage.once('close', () => {
+        void isolatedContext.close().catch(() => {});
+      });
+      await previewPage.goto(previewUrl, { waitUntil: 'domcontentloaded' });
+      return previewPage;
+    }
+
     const previewPage = await this.page.context().newPage();
     await previewPage.goto(previewUrl, { waitUntil: 'domcontentloaded' });
     return previewPage;
   }
 
-  async getBlockAttributes(blockType = EXAMPLE_BLOCK.name): Promise<Record<string, unknown> | null> {
+  async getBlockAttributes(blockType: string = EXAMPLE_BLOCK.name): Promise<Record<string, unknown> | null> {
     return this.page.evaluate((type) => {
       const wp = (window as any).wp;
       if (!wp?.data) {
@@ -236,9 +288,23 @@ export class WordPressPage {
     });
   }
 
-  private async waitForEditorReady() {
+  private async waitForEditorReady(timeout = 10_000) {
+    const waitForTitleInput = async () => {
+      await this.getEditorCanvas().getByRole('textbox', { name: 'Add title' }).waitFor({
+        state: 'visible',
+        timeout,
+      });
+    };
+
     await this.dismissWelcomeGuideIfPresent();
-    await this.getEditorCanvas().getByRole('textbox', { name: 'Add title' }).waitFor({ state: 'visible' });
+
+    try {
+      await waitForTitleInput();
+    } catch {
+      await this.page.reload({ waitUntil: 'domcontentloaded' });
+      await this.dismissWelcomeGuideIfPresent();
+      await waitForTitleInput();
+    }
   }
 
   private async dismissWelcomeGuideIfPresent() {
@@ -290,7 +356,7 @@ export class WordPressPage {
 
   private async waitForBlockAttributes(
     expectedAttributes: Record<string, unknown>,
-    blockType = EXAMPLE_BLOCK.name,
+    blockType: string = EXAMPLE_BLOCK.name,
   ) {
     await this.page.waitForFunction(
       ([type, expected]) => {
@@ -320,14 +386,34 @@ export class WordPressPage {
     });
   }
 
-  private async waitForBlockTypeRegistered(blockType: string) {
-    await this.page.waitForFunction((type) => {
+  private async waitForExampleBlockPersistenceKey(timeout = 30_000) {
+    await this.page.waitForFunction((blockType) => {
       const wp = (window as any).wp;
-      return Boolean(wp?.blocks?.getBlockType?.(type));
-    }, blockType);
+      const blocks = wp?.data?.select('core/block-editor')?.getBlocks?.() ?? [];
+      const exampleBlock = blocks.find((candidate: any) => candidate.name === blockType);
+
+      if (!exampleBlock) {
+        return true;
+      }
+
+      const id = exampleBlock.attributes?.id;
+      return typeof id === 'undefined' || (typeof id === 'string' && id.length > 0);
+    }, EXAMPLE_BLOCK.name, { timeout });
   }
 
-  private async waitForBlockInEditor(blockType: string, timeout = 30_000) {
+  private async waitForBlockTypeRegistered(blockType: string, timeout = 10_000) {
+    try {
+      await this.page.waitForFunction((type) => {
+        const wp = (window as any).wp;
+        return Boolean(wp?.blocks?.getBlockType?.(type));
+      }, blockType, { timeout });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private async waitForBlockInEditor(blockType: string, timeout = 10_000) {
     await this.page.waitForFunction((type) => {
       const wp = (window as any).wp;
       const blocks = wp?.data?.select('core/block-editor')?.getBlocks?.() ?? [];

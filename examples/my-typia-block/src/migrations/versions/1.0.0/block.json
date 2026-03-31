@@ -7,11 +7,7 @@
 	"category": "widgets",
 	"icon": "smiley",
 	"description": "Kitchen-sink showcase block for wp-typia",
-	"keywords": [
-		"typia",
-		"my-typia-block",
-		"custom"
-	],
+	"keywords": ["typia", "my-typia-block", "custom"],
 	"example": {
 		"attributes": {
 			"id": "00000000-0000-4000-8000-000000000000",
@@ -63,12 +59,7 @@
 		"alignment": {
 			"type": "string",
 			"default": "left",
-			"enum": [
-				"left",
-				"center",
-				"right",
-				"justify"
-			]
+			"enum": ["left", "center", "right", "justify"]
 		},
 		"isVisible": {
 			"type": "boolean",
@@ -77,12 +68,7 @@
 		"fontSize": {
 			"type": "string",
 			"default": "medium",
-			"enum": [
-				"small",
-				"medium",
-				"large",
-				"xlarge"
-			]
+			"enum": ["small", "medium", "large", "xlarge"]
 		},
 		"textColor": {
 			"type": "string",
@@ -132,11 +118,7 @@
 		"animation": {
 			"type": "string",
 			"default": "none",
-			"enum": [
-				"none",
-				"fadeIn",
-				"bounce"
-			]
+			"enum": ["none", "fadeIn", "bounce"]
 		},
 		"linkTarget": {
 			"type": "object"

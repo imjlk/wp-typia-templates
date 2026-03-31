@@ -1,0 +1,46 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "create-block/persistence-counter",
+	"version": "0.1.0",
+	"title": "Persistence Counter",
+	"category": "widgets",
+	"icon": "database",
+	"description": "Public aggregate counter example backed by signed public write tokens.",
+	"example": {
+		"attributes": {
+			"content": "Persistence counter example",
+			"showCount": true,
+			"buttonLabel": "Persist Count",
+			"resourceKey": "primary"
+		}
+	},
+	"supports": {
+		"html": false,
+		"interactivity": true
+	},
+	"attributes": {
+		"content": {
+			"type": "string",
+			"default": "Persistence counter example"
+		},
+		"showCount": {
+			"type": "boolean",
+			"default": true
+		},
+		"buttonLabel": {
+			"type": "string",
+			"default": "Persist Count"
+		},
+		"resourceKey": {
+			"type": "string",
+			"default": "primary"
+		}
+	},
+	"textdomain": "persistence-examples",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"viewScriptModule": "file:./interactivity.js",
+	"render": "file:./render.php"
+}

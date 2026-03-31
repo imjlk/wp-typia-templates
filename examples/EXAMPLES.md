@@ -1,6 +1,6 @@
 # Examples
 
-`wp-typia` now keeps a single reference app under `examples/` instead of several built-in kitchen-sink templates.
+`wp-typia` now keeps focused reference apps under `examples/` instead of several built-in kitchen-sink templates.
 
 ## `my-typia-block`
 
@@ -27,6 +27,17 @@ Use the built-in scaffolds from `@wp-typia/create` when you want a smaller start
 
 - `basic`
 - `interactivity`
+- `persistence`
+
+## `persistence-examples`
+
+[`examples/persistence-examples`](./persistence-examples) is the runtime reference plugin for persistence policies.
+
+It demonstrates:
+
+- a public counter protected by signed short-lived write tokens
+- an authenticated per-user like toggle
+- a multi-block example plugin that registers both blocks from one workspace
 
 ## Quick Start
 
@@ -34,6 +45,7 @@ Use the built-in scaffolds from `@wp-typia/create` when you want a smaller start
 bun install
 bun run examples:build
 bun run examples:dev
+bun run examples:dev:persistence
 ```
 
 ## Structure

@@ -25,9 +25,14 @@
 			"@wp-typia/create/runtime/editor": [
 				"../../packages/create/src/runtime/editor.ts"
 			],
+			"@wp-typia/create/runtime/schema-core": [
+				"../../packages/create/src/runtime/schema-core.ts"
+			],
 			"@wp-typia/create/runtime/validation": [
 				"../../packages/create/src/runtime/validation.ts"
 			],
+			"@wp-typia/rest": ["../../packages/wp-typia-rest/src/index.ts"],
+			"@wp-typia/rest/*": ["../../packages/wp-typia-rest/src/*"],
 			"@wp-typia/block-types": [
 				"../../packages/wp-typia-block-types/src/index.ts"
 			],

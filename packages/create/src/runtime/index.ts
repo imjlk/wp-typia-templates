@@ -18,6 +18,11 @@ export {
 	describeEditorField,
 	formatEditorFieldLabel,
 } from "./editor.js";
+export {
+	manifestAttributeToJsonSchema,
+	manifestToJsonSchema,
+	manifestToOpenApi,
+} from "./schema-core.js";
 export type {
 	EditorControlKind,
 	EditorFieldDescriptor,

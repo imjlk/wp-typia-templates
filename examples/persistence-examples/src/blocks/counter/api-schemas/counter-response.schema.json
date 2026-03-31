@@ -1,0 +1,27 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"additionalProperties": false,
+	"properties": {
+		"postId": {
+			"type": "number",
+			"x-typeTag": "uint32"
+		},
+		"resourceKey": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 100
+		},
+		"count": {
+			"type": "number",
+			"x-typeTag": "uint32",
+			"minimum": 0
+		},
+		"storage": {
+			"enum": ["custom-table"],
+			"type": "string"
+		}
+	},
+	"required": ["postId", "resourceKey", "count", "storage"],
+	"title": "PersistenceCounterResponse",
+	"type": "object"
+}

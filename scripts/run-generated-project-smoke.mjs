@@ -27,7 +27,9 @@ const PACKAGE_MANAGERS = {
 
 function parseArgs(argv) {
 	const parsed = {
+		dataStorage: undefined,
 		packageManager: undefined,
+		persistencePolicy: undefined,
 		projectName: undefined,
 		runtime: undefined,
 		template: undefined,
@@ -53,6 +55,11 @@ function parseArgs(argv) {
 			index += 1;
 			continue;
 		}
+		if (arg === "--data-storage") {
+			parsed.dataStorage = next;
+			index += 1;
+			continue;
+		}
 		if (arg === "--variant") {
 			parsed.variant = next;
 			index += 1;
@@ -60,6 +67,11 @@ function parseArgs(argv) {
 		}
 		if (arg === "--project-name") {
 			parsed.projectName = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--persistence-policy") {
+			parsed.persistencePolicy = next;
 			index += 1;
 			continue;
 		}
@@ -91,11 +103,18 @@ function ensureCreateWpTypiaBuilt() {
 		__dirname,
 		"../packages/wp-typia-block-types/dist/index.js",
 	);
-	if (fs.existsSync(entryPath) && fs.existsSync(blockTypesDistPath)) {
+	const restDistPath = path.resolve(
+		__dirname,
+		"../packages/wp-typia-rest/dist/index.js",
+	);
+	if (fs.existsSync(entryPath) && fs.existsSync(blockTypesDistPath) && fs.existsSync(restDistPath)) {
 		return;
 	}
 
 	run("bun", ["run", "--filter", "@wp-typia/block-types", "build"], {
+		cwd: path.resolve(__dirname, ".."),
+	});
+	run("bun", ["run", "--filter", "@wp-typia/rest", "build"], {
 		cwd: path.resolve(__dirname, ".."),
 	});
 	run("bun", ["run", "--filter", "@wp-typia/create", "build"], {
@@ -177,6 +196,26 @@ function assertBuildArtifacts(projectDir, projectName) {
 	}
 }
 
+function assertPersistenceTemplateArtifacts(projectDir, projectName) {
+	const candidateDirs = [
+		path.join(projectDir, "build", projectName),
+		path.join(projectDir, "build"),
+	];
+
+	for (const artifact of [
+		"typia.schema.json",
+		"typia.openapi.json",
+		path.join("api-schemas", "counter-query.schema.json"),
+		path.join("api-schemas", "counter-response.schema.json"),
+		path.join("api-schemas", "increment-request.schema.json"),
+	]) {
+		const found = candidateDirs.some((dir) => fs.existsSync(path.join(dir, artifact)));
+		if (!found) {
+			throw new Error(`Expected ${artifact} in one of: ${candidateDirs.join(", ")}`);
+		}
+	}
+}
+
 function lintPhpArtifact(filePath) {
 	if (!hasPhpBinary()) {
 		return;
@@ -192,6 +231,7 @@ function rewriteWorkspaceDependencies(projectDir) {
 	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 	const localCreateDependency = `file:${path.resolve(__dirname, "../packages/create")}`;
 	const localBlockTypesDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-block-types")}`;
+	const localRestDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-rest")}`;
 
 	if (packageJson.devDependencies?.["@wp-typia/create"]) {
 		packageJson.devDependencies["@wp-typia/create"] = localCreateDependency;
@@ -202,19 +242,47 @@ function rewriteWorkspaceDependencies(projectDir) {
 	if (packageJson.devDependencies?.["@wp-typia/block-types"]) {
 		packageJson.devDependencies["@wp-typia/block-types"] = localBlockTypesDependency;
 	}
+	if (packageJson.devDependencies?.["@wp-typia/rest"]) {
+		packageJson.devDependencies["@wp-typia/rest"] = localRestDependency;
+	}
 	if (packageJson.dependencies?.["@wp-typia/block-types"]) {
 		packageJson.dependencies["@wp-typia/block-types"] = localBlockTypesDependency;
 	}
+	if (packageJson.dependencies?.["@wp-typia/rest"]) {
+		packageJson.dependencies["@wp-typia/rest"] = localRestDependency;
+	}
+
+	packageJson.overrides = {
+		...(packageJson.overrides ?? {}),
+		"@wp-typia/block-types": localBlockTypesDependency,
+		"@wp-typia/create": localCreateDependency,
+		"@wp-typia/rest": localRestDependency,
+	};
+	packageJson.pnpm = {
+		...(packageJson.pnpm ?? {}),
+		overrides: {
+			...(packageJson.pnpm?.overrides ?? {}),
+			"@wp-typia/block-types": localBlockTypesDependency,
+			"@wp-typia/create": localCreateDependency,
+			"@wp-typia/rest": localRestDependency,
+		},
+	};
+	packageJson.resolutions = {
+		...(packageJson.resolutions ?? {}),
+		"@wp-typia/block-types": localBlockTypesDependency,
+		"@wp-typia/create": localCreateDependency,
+		"@wp-typia/rest": localRestDependency,
+	};
 
 	fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
 }
 
 function main() {
-	const { runtime, template, packageManager, projectName, variant } = parseArgs(process.argv.slice(2));
+	const { runtime, template, packageManager, projectName, variant, dataStorage, persistencePolicy } = parseArgs(process.argv.slice(2));
 
 	if (!runtime || !template || !packageManager || !projectName) {
 		throw new Error(
-			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] --package-manager <id> --project-name <name>",
+			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] --package-manager <id> --project-name <name>",
 		);
 	}
 
@@ -230,6 +298,8 @@ function main() {
 			"--template",
 			template,
 			...(variant ? ["--variant", variant] : []),
+			...(dataStorage ? ["--data-storage", dataStorage] : []),
+			...(persistencePolicy ? ["--persistence-policy", persistencePolicy] : []),
 			"--yes",
 			"--no-install",
 			"--package-manager",
@@ -263,6 +333,9 @@ function main() {
 		run(buildCommand, buildArgs, { cwd: projectDir });
 
 		assertBuildArtifacts(projectDir, projectName);
+		if (template === "persistence") {
+			assertPersistenceTemplateArtifacts(projectDir, projectName);
+		}
 		for (const artifact of [
 			path.join(projectDir, "build", projectName, "typia-validator.php"),
 			path.join(projectDir, "build", "typia-validator.php"),

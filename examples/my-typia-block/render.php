@@ -44,6 +44,10 @@ if ( empty( $normalized['isVisible'] ) ) {
 $content = isset( $normalized['content'] ) ? (string) $normalized['content'] : '';
 $alignment = isset( $normalized['alignment'] ) ? (string) $normalized['alignment'] : 'left';
 $font_size = isset( $normalized['fontSize'] ) ? (string) $normalized['fontSize'] : 'medium';
+$resource_key = isset( $normalized['id'] ) ? (string) $normalized['id'] : '';
+$post_id = is_object( $block ) && isset( $block->context['postId'] )
+	? (int) $block->context['postId']
+	: (int) get_queried_object_id();
 
 if ( ! in_array( $alignment, array( 'left', 'center', 'right', 'justify' ), true ) ) {
 	$alignment = 'left';
@@ -55,9 +59,14 @@ $wrapper_attributes = get_block_wrapper_attributes(
 			array(
 				'alignment' => $alignment,
 				'content'   => $content,
+				'id'        => $resource_key,
+				'postId'    => (int) $post_id,
+				'restNonce' => $post_id > 0 ? wp_create_nonce( 'wp_rest' ) : '',
 			)
 		),
-		'data-wp-interactive' => 'create-block/my-typia-block',
+		'data-wp-interactive' => 'my-typia-block',
+		'data-wp-init' => 'callbacks.init',
+		'data-wp-run--mounted' => 'callbacks.mounted',
 	)
 );
 
@@ -77,10 +86,23 @@ $wrapper_attributes = get_block_wrapper_attributes(
 	</p>
 
 	<button
+		data-wp-bind--disabled="state.isSaving"
 		data-wp-class--active="state.isActive"
 		data-wp-on--click="actions.toggle"
 		type="button"
 	>
 		<?php esc_html_e( 'Toggle', 'my_typia_block' ); ?>
 	</button>
+
+	<div class="my-typia-block-counter">
+		<button
+			<?php echo $post_id > 0 ? '' : 'disabled'; ?>
+			data-wp-bind--disabled="state.isSaving || context.postId <= 0"
+			data-wp-on--click="actions.incrementCounter"
+			type="button"
+		>
+			<?php esc_html_e( 'Persist Count', 'my_typia_block' ); ?>
+		</button>
+		<span data-wp-text="state.count">0</span>
+	</div>
 </div>

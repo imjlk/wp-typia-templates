@@ -7,6 +7,10 @@ import { execFileSync } from "node:child_process";
 
 import {
 	collectScaffoldAnswers,
+	DATA_STORAGE_MODES,
+	PERSISTENCE_POLICIES,
+	isDataStorageMode,
+	isPersistencePolicy,
 	resolvePackageManagerId,
 	resolveTemplateId,
 	scaffoldProject,
@@ -17,6 +21,7 @@ import {
 	formatRunScript,
 	getPackageManagerSelectOptions,
 } from "./package-managers.js";
+import type { DataStorageMode, PersistencePolicy } from "./scaffold.js";
 import type { PackageManagerId } from "./package-managers.js";
 import {
 	TEMPLATE_IDS,
@@ -61,16 +66,20 @@ interface GetNextStepsOptions {
 interface RunScaffoldFlowOptions {
 	allowExistingDir?: boolean;
 	cwd?: string;
+	dataStorageMode?: string;
 	installDependencies?: Parameters<typeof scaffoldProject>[0]["installDependencies"];
 	isInteractive?: boolean;
 	noInstall?: boolean;
 	packageManager?: string;
 	projectInput: string;
 	promptText?: Parameters<typeof collectScaffoldAnswers>[0]["promptText"];
+	selectDataStorage?: () => Promise<DataStorageMode>;
 	selectPackageManager?: () => Promise<PackageManagerId>;
+	selectPersistencePolicy?: () => Promise<PersistencePolicy>;
 	selectTemplate?: () => Promise<TemplateDefinition["id"]>;
 	templateId?: string;
 	variant?: string;
+	persistencePolicy?: string;
 	yes?: boolean;
 }
 
@@ -131,8 +140,9 @@ export function createReadlinePrompt(): ReadlinePrompt {
 
 export function formatHelpText(): string {
 	return `Usage:
-  wp-typia <project-dir> [--template <basic|interactivity|./path|github:owner/repo/path[#ref]>] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <basic|interactivity|persistence|./path|github:owner/repo/path[#ref]>] [--yes] [--no-install] [--package-manager <id>]
   wp-typia <project-dir> [--template <npm-package>] [--variant <name>] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template persistence] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--yes] [--no-install] [--package-manager <id>]
   wp-typia templates list
   wp-typia templates inspect <id>
   wp-typia migrations <init|snapshot|diff|scaffold|verify|doctor|fixtures|fuzz> [...]
@@ -151,13 +161,19 @@ export function formatTemplateFeatures(template: TemplateDefinition): string {
 }
 
 export function formatTemplateDetails(template: TemplateDefinition): string {
-	const layers = getTemplateLayerDirs(template.id);
+	const layers =
+		template.id === "persistence"
+			? [
+					`authenticated: ${getTemplateLayerDirs(template.id, "authenticated").join(" -> ")}`,
+					`public: ${getTemplateLayerDirs(template.id, "public").join(" -> ")}`,
+				]
+			: [getTemplateLayerDirs(template.id).join(" -> ")];
 	return [
 		template.id,
 		template.description,
 		`Category: ${template.defaultCategory}`,
 		`Overlay path: ${template.templateDir}`,
-		`Layers: ${layers.join(" -> ")}`,
+		`Layers: ${layers.join("\n")}`,
 		`Features: ${template.features.join(", ")}`,
 	].join("\n");
 }
@@ -233,7 +249,15 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 	});
 
 	for (const template of listTemplates()) {
-		const layerDirs = getTemplateLayerDirs(template.id);
+		const layerDirs =
+			template.id === "persistence"
+				? Array.from(
+						new Set([
+							...getTemplateLayerDirs(template.id, "authenticated"),
+							...getTemplateLayerDirs(template.id, "public"),
+						]),
+					)
+				: getTemplateLayerDirs(template.id);
 		const hasAssets =
 			layerDirs.every((layerDir) => fs.existsSync(layerDir)) &&
 			layerDirs.some((layerDir) => fs.existsSync(path.join(layerDir, "package.json.mustache"))) &&
@@ -285,12 +309,16 @@ export async function runScaffoldFlow({
 	projectInput,
 	cwd = process.cwd(),
 	templateId,
+	dataStorageMode,
+	persistencePolicy,
 	packageManager,
 	yes = false,
 	noInstall = false,
 	isInteractive = false,
 	allowExistingDir = false,
 	selectTemplate,
+	selectDataStorage,
+	selectPersistencePolicy,
 	selectPackageManager,
 	promptText,
 	installDependencies = undefined,
@@ -306,6 +334,38 @@ export async function runScaffoldFlow({
 		isInteractive,
 		selectTemplate,
 	});
+	const resolvedDataStorage =
+		resolvedTemplateId !== "persistence"
+			? undefined
+			: dataStorageMode
+				? isDataStorageMode(dataStorageMode)
+					? dataStorageMode
+					: (() => {
+						throw new Error(
+							`Unsupported data storage mode "${dataStorageMode}". Expected one of: ${DATA_STORAGE_MODES.join(", ")}`,
+						);
+					})()
+				: yes
+					? "custom-table"
+					: isInteractive && selectDataStorage
+						? await selectDataStorage()
+						: "custom-table";
+	const resolvedPersistencePolicy =
+		resolvedTemplateId !== "persistence"
+			? undefined
+			: persistencePolicy
+				? isPersistencePolicy(persistencePolicy)
+					? persistencePolicy
+					: (() => {
+						throw new Error(
+							`Unsupported persistence policy "${persistencePolicy}". Expected one of: ${PERSISTENCE_POLICIES.join(", ")}`,
+						);
+					})()
+				: yes
+					? "authenticated"
+					: isInteractive && selectPersistencePolicy
+						? await selectPersistencePolicy()
+						: "authenticated";
 	const resolvedPackageManager = await resolvePackageManagerId({
 		packageManager,
 		yes,
@@ -315,6 +375,8 @@ export async function runScaffoldFlow({
 	const projectDir = path.resolve(cwd, projectInput);
 	const projectName = path.basename(projectDir);
 	const answers = await collectScaffoldAnswers({
+		dataStorageMode: resolvedDataStorage,
+		persistencePolicy: resolvedPersistencePolicy,
 		projectName,
 		templateId: resolvedTemplateId,
 		yes,
@@ -325,9 +387,11 @@ export async function runScaffoldFlow({
 		answers,
 		allowExistingDir,
 		cwd,
+		dataStorageMode: resolvedDataStorage,
 		installDependencies,
 		noInstall,
 		packageManager: resolvedPackageManager,
+		persistencePolicy: resolvedPersistencePolicy,
 		projectDir,
 		templateId: resolvedTemplateId,
 		variant,

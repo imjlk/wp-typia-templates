@@ -112,11 +112,18 @@ jobs:
           path: packages/create/dist/
           retention-days: 7
 
-      - name: Upload example build artifact
+      - name: Upload reference app build artifact
         uses: actions/upload-artifact@v4
         with:
           name: my-typia-block-build
           path: examples/my-typia-block/build/
+          retention-days: 7
+
+      - name: Upload persistence examples build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: persistence-examples-build
+          path: examples/persistence-examples/build/
           retention-days: 7
 
   generated-smoke:
@@ -135,6 +142,18 @@ jobs:
             template: interactivity
             package_manager: pnpm
             project_name: smoke-interactivity-pnpm
+          - runtime: bun
+            template: persistence
+            data_storage: custom-table
+            persistence_policy: authenticated
+            package_manager: bun
+            project_name: smoke-persistence-authenticated-custom-table-bun
+          - runtime: node
+            template: persistence
+            data_storage: custom-table
+            persistence_policy: public
+            package_manager: npm
+            project_name: smoke-persistence-public-custom-table-npm
           - runtime: node
             template: ./packages/create/tests/fixtures/create-block-external
             variant: hero
@@ -185,6 +204,12 @@ jobs:
           if [ -n "${{ matrix.variant || '' }}" ]; then
             args+=(--variant "${{ matrix.variant }}")
           fi
+          if [ -n "${{ matrix.data_storage || '' }}" ]; then
+            args+=(--data-storage "${{ matrix.data_storage }}")
+          fi
+          if [ -n "${{ matrix.persistence_policy || '' }}" ]; then
+            args+=(--persistence-policy "${{ matrix.persistence_policy }}")
+          fi
           node scripts/run-generated-project-smoke.mjs "${args[@]}"
 
   e2e:
@@ -217,13 +242,19 @@ jobs:
           name: my-typia-block-build
           path: examples/my-typia-block/build
 
+      - name: Download persistence examples build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: persistence-examples-build
+          path: examples/persistence-examples/build
+
       - name: Cache wp-env home
         uses: actions/cache@v4
         with:
           path: |
             ~/.wp-env
             ~/wp-env
-          key: wp-env-${{ runner.os }}-${{ hashFiles('.wp-env.json', '.wp-env.test.json', 'examples/my-typia-block/package.json', 'bun.lock') }}
+          key: wp-env-${{ runner.os }}-${{ hashFiles('.wp-env.json', '.wp-env.test.json', 'examples/my-typia-block/package.json', 'examples/persistence-examples/package.json', 'bun.lock') }}
           restore-keys: |
             wp-env-${{ runner.os }}-
 

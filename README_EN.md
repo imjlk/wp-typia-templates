@@ -23,12 +23,14 @@ Built-in templates:
 
 - `basic`
 - `interactivity`
+- `data`
 
 Non-interactive examples:
 
 ```bash
 npx @wp-typia/create my-block --template basic --package-manager pnpm --yes --no-install
 npx @wp-typia/create my-block --template interactivity --package-manager npm --yes --no-install
+npx @wp-typia/create my-block --template data --data-storage custom-table --package-manager bun --yes --no-install
 ```
 
 Remote template MVP:
@@ -40,12 +42,13 @@ npx @wp-typia/create my-block --template github:owner/repo/path#main --package-m
 
 ## Built-in Template Model
 
-`wp-typia` now keeps the built-in scaffold surface intentionally small:
+`wp-typia` now keeps the built-in scaffold surface intentionally focused:
 
 - `basic` for clean Typia-first block boilerplate
 - `interactivity` for the same base plus WordPress Interactivity API wiring
+- `data` for typed REST contracts, schema sync, and persisted block data
 
-Richer patterns that used to live in more specialized templates are now demonstrated in the repo-local reference app under [`examples/my-typia-block`](examples/my-typia-block).
+Richer patterns that used to live in more specialized templates are now split between the repo-local reference app and the built-in `data` template.
 
 ## Core Workflow
 
@@ -54,6 +57,7 @@ Richer patterns that used to live in more specialized templates are now demonstr
 - `block.json`
 - `typia.manifest.json`
 - `typia-validator.php`
+- optional JSON Schema / OpenAPI artifacts when the sync step requests them
 
 Runtime helpers then use precompiled Typia validators and manifest-driven defaults.
 
@@ -85,6 +89,7 @@ The first remote adapter targets a `create-block`-style subset. `wp-typia` treat
 
 - [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create)
 - [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types)
+- [`@wp-typia/rest`](https://www.npmjs.com/package/@wp-typia/rest)
 - [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia) for compatibility with `bun create wp-typia`
 
 ## Repository Structure
@@ -94,6 +99,7 @@ wp-typia/
 ├── packages/
 │   ├── create/
 │   ├── create-wp-typia/
+│   ├── wp-typia-rest/
 │   └── wp-typia-block-types/
 ├── examples/
 │   └── my-typia-block/

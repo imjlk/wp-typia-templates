@@ -24,6 +24,7 @@ import { copyRawDirectory, copyRenderedDirectory } from "./template-render.js";
 const EXTERNAL_TEMPLATE_ENTRY_CANDIDATES = ["index.js", "index.cjs", "index.mjs"] as const;
 const TEMPLATE_WARNING_MESSAGE =
 	"wp-typia owns package/tooling/sync setup for generated projects, so this external template setting is ignored.";
+const REMOVED_BUILTIN_TEMPLATE_IDS = ["data", "persisted"] as const;
 
 type TemplateSourceFormat = "wp-typia" | "create-block-external" | "create-block-subset";
 
@@ -272,6 +273,14 @@ export function parseNpmTemplateLocator(templateId: string): NpmTemplateLocator 
 }
 
 export function parseTemplateLocator(templateId: string): RemoteTemplateLocator {
+	if ((REMOVED_BUILTIN_TEMPLATE_IDS as readonly string[]).includes(templateId)) {
+		throw new Error(
+			`Built-in template "${templateId}" was removed. Use --template persistence --persistence-policy ${
+				templateId === "data" ? "public" : "authenticated"
+			} instead.`,
+		);
+	}
+
 	if (isBuiltInTemplateId(templateId)) {
 		return { kind: "builtin", templateId };
 	}
@@ -311,7 +320,7 @@ function getDefaultCategory(sourceDir: string): string {
 }
 
 function getTemplateVariableContext(variables: { [key: string]: string }): TemplateVariableContext {
-	const { blockTypesPackageVersion, createPackageVersion } = getPackageVersions();
+	const { blockTypesPackageVersion, createPackageVersion, restPackageVersion } = getPackageVersions();
 	return {
 		...variables,
 		blockTypesPackageVersion: variables.blockTypesPackageVersion ?? blockTypesPackageVersion,
@@ -320,20 +329,24 @@ function getTemplateVariableContext(variables: { [key: string]: string }): Templ
 		keyword: variables.keyword,
 		namespace: variables.namespace,
 		pascalCase: variables.pascalCase,
+		restPackageVersion: variables.restPackageVersion ?? restPackageVersion,
 		slug: variables.slug,
 		textDomain: variables.textDomain,
 		title: variables.title,
 	};
 }
 
-async function materializeBuiltinTemplate(templateId: BuiltInTemplateId): Promise<ResolvedTemplateSource> {
+async function materializeBuiltinTemplate(
+	templateId: BuiltInTemplateId,
+	persistencePolicy: "authenticated" | "public" = "authenticated",
+): Promise<ResolvedTemplateSource> {
 	const template = getTemplateById(templateId);
 	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-template-"));
 	const templateDir = path.join(tempRoot, templateId);
 	try {
 		await fsp.mkdir(templateDir, { recursive: true });
 
-		for (const layerDir of getTemplateLayerDirs(templateId)) {
+		for (const layerDir of getTemplateLayerDirs(templateId, persistencePolicy)) {
 			await fsp.cp(layerDir, templateDir, {
 				recursive: true,
 				force: true,
@@ -891,7 +904,10 @@ export async function resolveTemplateSource(
 		if (variant) {
 			throw new Error(`--variant is only supported for official external template configs. Received variant "${variant}" for built-in template "${templateId}".`);
 		}
-		return materializeBuiltinTemplate(locator.templateId);
+		return materializeBuiltinTemplate(
+			locator.templateId,
+			variables.persistencePolicy === "public" ? "public" : "authenticated",
+		);
 	}
 
 	const seed = await resolveTemplateSeed(locator, cwd);
@@ -923,13 +939,17 @@ export async function resolveTemplateSource(
 					})()
 					: seed;
 
-		if (format === "create-block-external") {
-			const normalized = await normalizeCreateBlockSubset(normalizedSeed, context);
-			return {
-				...normalized,
-				description: "A wp-typia scaffold normalized from an official create-block external template",
-				features: ["Remote source", "official external template", "Typia metadata pipeline"],
-				format,
+			if (format === "create-block-external") {
+				const normalized = await normalizeCreateBlockSubset(normalizedSeed, context);
+				return {
+					...normalized,
+					cleanup: async () => {
+						await normalized.cleanup?.();
+						await seed.cleanup?.();
+					},
+					description: "A wp-typia scaffold normalized from an official create-block external template",
+					features: ["Remote source", "official external template", "Typia metadata pipeline"],
+					format,
 				id: "remote:create-block-external",
 				selectedVariant: normalizedSeed.selectedVariant ?? null,
 				warnings: normalizedSeed.warnings ?? [],

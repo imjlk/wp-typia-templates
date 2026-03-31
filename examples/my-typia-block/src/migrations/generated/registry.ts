@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier, @typescript-eslint/method-signature-style */
-import currentManifest from "../../../typia.manifest.json";
-import type { ManifestDocument, MigrationRiskSummary } from "../helpers";
+import currentManifest from '../../../typia.manifest.json';
+import type { ManifestDocument, MigrationRiskSummary } from '../helpers';
 
 interface MigrationRegistryEntry {
 	fromVersion: string;
@@ -17,11 +17,9 @@ export const migrationRegistry: {
 	currentManifest: ManifestDocument;
 	entries: MigrationRegistryEntry[];
 } = {
-	currentVersion: "1.0.0",
+	currentVersion: '1.0.0',
 	currentManifest: currentManifest as ManifestDocument,
-	entries: [
-
-	],
+	entries: [],
 };
 
 export default migrationRegistry;

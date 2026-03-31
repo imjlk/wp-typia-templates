@@ -6,8 +6,9 @@ Create practical WordPress blocks with Typia-driven metadata, validation, and sh
 
 - [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create) for scaffolding
 - [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types) for reusable WordPress semantic types
+- [`@wp-typia/rest`](https://www.npmjs.com/package/@wp-typia/rest) for typed WordPress REST helpers
 
-It generates `block.json`, `typia.manifest.json`, and `typia-validator.php` from `src/types.ts`, keeps runtime validation close to the block code, and now focuses its built-in scaffold surface on the two templates that are most useful to start from.
+It generates `block.json`, `typia.manifest.json`, `typia-validator.php`, and optional schema artifacts from `src/types.ts`, keeps runtime validation close to the block code, and now ships three built-in starting points that cover static, interactive, and persistence-aware blocks.
 
 ## Quick Start
 
@@ -25,12 +26,15 @@ Built-in templates:
 
 - `basic`
 - `interactivity`
+- `persistence`
 
 Non-interactive examples:
 
 ```bash
 npx @wp-typia/create my-block --template basic --package-manager pnpm --yes --no-install
 npx @wp-typia/create my-block --template interactivity --package-manager npm --yes --no-install
+npx @wp-typia/create my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
+npx @wp-typia/create my-block --template persistence --data-storage custom-table --persistence-policy public --package-manager npm --yes --no-install
 ```
 
 Remote template MVP:
@@ -47,8 +51,9 @@ npx @wp-typia/create my-block --template @scope/create-block-template --variant 
 | --- | --- |
 | `basic` | Minimal, clean boilerplate with Typia metadata sync and runtime validation |
 | `interactivity` | The same foundation plus WordPress Interactivity API wiring |
+| `persistence` | Typed REST contracts, schema sync, Interactivity API wiring, and a selectable `authenticated` or `public` persistence policy |
 
-`full` and `advanced` are no longer built-in scaffold targets. Their richer patterns live on in the repo-local reference app under [`examples/my-typia-block`](examples/my-typia-block).
+`full` and `advanced` are no longer built-in scaffold targets. Their older kitchen-sink responsibilities are now split between the repo-local reference apps and the built-in `persistence` template.
 
 ## How the Scaffold Works
 
@@ -57,7 +62,10 @@ npx @wp-typia/create my-block --template @scope/create-block-template --variant 
    - `block.json`
    - `typia.manifest.json`
    - `typia-validator.php`
+   - optional `typia.schema.json`
+   - optional `typia.openapi.json`
 3. `src/validators.ts` uses precompiled Typia validators and manifest-driven default application.
+4. Data-backed projects can also run `bun run sync-rest` to emit request/response/query schemas for REST contracts.
 
 Example:
 
@@ -72,16 +80,22 @@ export interface MyBlockAttributes {
 }
 ```
 
-## Reference App
+## Reference Apps
 
-[`examples/my-typia-block`](examples/my-typia-block) is the repo-local kitchen-sink reference app. It is not a built-in template. It is the place where richer features live together:
+[`examples/my-typia-block`](examples/my-typia-block) is the repo-local kitchen-sink reference app. It is not a built-in template. It is the place where richer Typia, migration, and editor patterns live together:
 
 - server rendering with `render.php`
 - migration snapshots and dashboard preview tooling
 - richer Typia tags and semantic block types
 - interactivity and validator patterns used by E2E and fixture tests
 
-If you want to see the “everything included” shape of `wp-typia`, start there.
+[`examples/persistence-examples`](examples/persistence-examples) is the runtime reference for persistence policies. It demonstrates:
+
+- a public aggregate counter backed by signed short-lived write tokens
+- an authenticated per-user like button backed by a custom table
+- multi-block plugin registration from one example workspace
+
+If you want to see the “everything included” shape of `wp-typia`, start with `my-typia-block`. If you want to study persistence policy behavior, start with `persistence-examples`.
 
 ## Remote Template MVP
 
@@ -109,6 +123,7 @@ External template configs execute trusted JavaScript (`index.js` / `index.cjs` /
 
 - [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create)
 - [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types)
+- [`@wp-typia/rest`](https://www.npmjs.com/package/@wp-typia/rest)
 - [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia) for `bun create wp-typia` compatibility
 
 ## Project Structure
@@ -118,6 +133,7 @@ wp-typia/
 ├── packages/
 │   ├── create/                 # Canonical scoped CLI source (@wp-typia/create)
 │   ├── create-wp-typia/        # Unscoped compatibility shim
+│   ├── wp-typia-rest/          # Typed REST client helpers
 │   └── wp-typia-block-types/   # Shared semantic block types
 ├── examples/
 │   └── my-typia-block/         # Kitchen-sink reference app

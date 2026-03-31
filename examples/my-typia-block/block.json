@@ -41,6 +41,7 @@
 	"supports": {
 		"html": false,
 		"interactivity": {
+			"interactive": true,
 			"clientNavigation": true
 		}
 	},
@@ -49,7 +50,7 @@
 	"editorStyle": "file:./index.css",
 	"render": "file:./render.php",
 	"style": "file:./style-index.css",
-	"viewScript": "file:./view.js",
+	"viewScriptModule": "file:./view.js",
 	"attributes": {
 		"id": {
 			"type": "string"

@@ -1,6 +1,12 @@
 import apiFetch from '@wordpress/api-fetch';
 import { parse, serialize, type BlockInstance } from '@wordpress/blocks';
 
+import {
+	getEditablePostTypes,
+	getPostByRestBase,
+	getPostsByRestBase,
+} from '../wp-api';
+import type { WpPostRecord, WpPostType } from '../api-types';
 import { validators } from '../validators';
 import migrationConfig from './config';
 import { deprecated } from './generated/deprecated';
@@ -83,21 +89,6 @@ export interface BatchMigrationResult {
 	total: number;
 }
 
-interface EditablePostType {
-	rest_base: string;
-	slug: string;
-}
-
-interface EditablePostRecord {
-	content?: {
-		raw?: string;
-	};
-	id: number;
-	title?: {
-		rendered?: string;
-	};
-}
-
 interface GroupedScanResult {
 	postId: number;
 	postTitle: string;
@@ -108,6 +99,13 @@ interface GroupedScanResult {
 }
 
 type ParsedBlock = BlockInstance< Record< string, unknown > >;
+
+interface EditablePostType {
+	rest_base: WpPostType[ 'rest_base' ];
+	slug: WpPostType[ 'slug' ];
+}
+
+type EditablePostRecord = WpPostRecord;
 
 interface MigrationResolution {
 	analysis: MigrationAnalysis;
@@ -392,16 +390,15 @@ export const migrationUtils = {
 };
 
 async function fetchEditablePostTypes(): Promise< EditablePostType[] > {
-	const response = ( await apiFetch( {
-		parse: false,
-		path: '/wp/v2/types?context=edit',
-	} ) ) as Response;
-	const payload = ( await response.json() ) as Record<
-		string,
-		{ rest_base?: string; slug?: string; viewable?: boolean }
-	>;
+	const result = await getEditablePostTypes();
+	if ( ! result.isValid || ! result.data ) {
+		throw new Error(
+			result.errors[ 0 ]?.expected ??
+				'Unable to validate editable post types.'
+		);
+	}
 
-	return Object.values( payload )
+	return Object.values( result.data )
 		.filter( ( postType ) => postType?.viewable && postType?.rest_base )
 		.map( ( postType ) => ( {
 			rest_base: postType.rest_base!,
@@ -417,17 +414,18 @@ async function fetchAllPosts(
 	const entries: EditablePostRecord[] = [];
 
 	do {
-		const response = ( await apiFetch( {
-			parse: false,
-			path: `/wp/v2/${ restBase }?context=edit&per_page=100&page=${ page }`,
-		} ) ) as Response;
+		const result = await getPostsByRestBase( restBase, page );
+		if ( ! result.validation.isValid || ! result.validation.data ) {
+			throw new Error(
+				result.validation.errors[ 0 ]?.expected ??
+					`Unable to validate post collection for ${ restBase }.`
+			);
+		}
 		totalPages = Number.parseInt(
-			response.headers.get( 'X-WP-TotalPages' ) ?? '1',
+			result.response.headers.get( 'X-WP-TotalPages' ) ?? '1',
 			10
 		);
-		entries.push(
-			...( ( await response.json() ) as EditablePostRecord[] )
-		);
+		entries.push( ...result.validation.data );
 		page += 1;
 	} while ( page <= totalPages );
 
@@ -438,9 +436,15 @@ async function fetchPostById(
 	restBase: string,
 	postId: number
 ): Promise< EditablePostRecord > {
-	return ( await apiFetch( {
-		path: `/wp/v2/${ restBase }/${ postId }?context=edit`,
-	} ) ) as EditablePostRecord;
+	const result = await getPostByRestBase( restBase, postId );
+	if ( ! result.isValid || ! result.data ) {
+		throw new Error(
+			result.errors[ 0 ]?.expected ??
+				`Unable to validate post ${ postId } for ${ restBase }.`
+		);
+	}
+
+	return result.data;
 }
 
 function walkBlocks(

@@ -32,8 +32,10 @@ export const CREATE_PACKAGE_ROOT = resolvePackageRoot(__dirname);
 export const TEMPLATE_ROOT = path.join(CREATE_PACKAGE_ROOT, "templates");
 export const SHARED_TEMPLATE_ROOT = path.join(TEMPLATE_ROOT, "_shared");
 export const SHARED_BASE_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "base");
-export const BUILTIN_TEMPLATE_IDS = ["basic", "interactivity"] as const;
+export const SHARED_PERSISTENCE_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "persistence");
+export const BUILTIN_TEMPLATE_IDS = ["basic", "interactivity", "persistence"] as const;
 export type BuiltInTemplateId = (typeof BUILTIN_TEMPLATE_IDS)[number];
+export type PersistencePolicy = "authenticated" | "public";
 
 export interface TemplateDefinition {
 	id: BuiltInTemplateId;
@@ -58,6 +60,13 @@ export const TEMPLATE_REGISTRY = Object.freeze<TemplateDefinition[]>([
 		features: ["Interactivity API", "Client-side state", "Event handling"],
 		templateDir: path.join(TEMPLATE_ROOT, "interactivity"),
 	},
+	{
+		id: "persistence",
+		description: "A persistence-aware WordPress block with Typia validation, typed REST contracts, and selectable public or authenticated write policies",
+		defaultCategory: "widgets",
+		features: ["Interactivity API", "Typed REST client", "Schema sync", "Persistence policies"],
+		templateDir: path.join(TEMPLATE_ROOT, "persistence"),
+	},
 ]);
 
 export const TEMPLATE_IDS = TEMPLATE_REGISTRY.map((template) => template.id) as BuiltInTemplateId[];
@@ -78,7 +87,19 @@ export function getTemplateById(templateId: string): TemplateDefinition {
 	return template;
 }
 
-export function getTemplateLayerDirs(templateId: BuiltInTemplateId): string[] {
+export function getTemplateLayerDirs(
+	templateId: BuiltInTemplateId,
+	persistencePolicy: PersistencePolicy = "authenticated",
+): string[] {
+	if (templateId === "persistence") {
+		return [
+			SHARED_BASE_TEMPLATE_ROOT,
+			path.join(SHARED_PERSISTENCE_TEMPLATE_ROOT, "core"),
+			path.join(SHARED_PERSISTENCE_TEMPLATE_ROOT, persistencePolicy === "public" ? "public" : "auth"),
+			getTemplateById(templateId).templateDir,
+		];
+	}
+
 	return [SHARED_BASE_TEMPLATE_ROOT, getTemplateById(templateId).templateDir];
 }
 

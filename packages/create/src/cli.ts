@@ -22,9 +22,11 @@ import {
 } from "./runtime/package-managers.js";
 
 interface ParsedArgs {
+	dataStorage?: string;
 	help: boolean;
 	noInstall: boolean;
 	packageManager?: string;
+	persistencePolicy?: string;
 	positionals: string[];
 	template?: string;
 	variant?: string;
@@ -33,9 +35,11 @@ interface ParsedArgs {
 
 function parseArgs(argv: string[]): ParsedArgs {
 	const parsed: ParsedArgs = {
+		dataStorage: undefined,
 		help: false,
 		noInstall: false,
 		packageManager: undefined,
+		persistencePolicy: undefined,
 		positionals: [],
 		template: undefined,
 		variant: undefined,
@@ -85,6 +89,24 @@ function parseArgs(argv: string[]): ParsedArgs {
 			index += 1;
 			continue;
 		}
+		if (arg === "--data-storage") {
+			parsed.dataStorage = argv[index + 1];
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--data-storage=")) {
+			parsed.dataStorage = arg.split("=", 2)[1];
+			continue;
+		}
+		if (arg === "--persistence-policy") {
+			parsed.persistencePolicy = argv[index + 1];
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--persistence-policy=")) {
+			parsed.persistencePolicy = arg.split("=", 2)[1];
+			continue;
+		}
 		if (arg.startsWith("--package-manager=")) {
 			parsed.packageManager = arg.split("=", 2)[1];
 			continue;
@@ -116,6 +138,7 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 	try {
 		const flow = await runScaffoldFlow({
 			cwd,
+			dataStorageMode: parsed.dataStorage,
 			isInteractive,
 			noInstall: parsed.noInstall,
 			packageManager: parsed.packageManager,
@@ -124,10 +147,29 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 				prompt.text(message, defaultValue, validate),
 			selectPackageManager: () =>
 				prompt.select("Choose a package manager", getPackageManagerSelectOptions(), 1),
+			selectDataStorage: () =>
+				prompt.select(
+					"Choose a data storage mode",
+					[
+						{ label: "custom-table", value: "custom-table", hint: "Dedicated table + repository layer" },
+						{ label: "post-meta", value: "post-meta", hint: "Persist through post meta" },
+					],
+					1,
+				),
+			selectPersistencePolicy: () =>
+				prompt.select(
+					"Choose a persistence policy",
+					[
+						{ label: "authenticated", value: "authenticated", hint: "Logged-in writes protected by WP REST nonce" },
+						{ label: "public", value: "public", hint: "Signed public write token flow for anonymous interactions" },
+					],
+					1,
+				),
 			selectTemplate: () =>
 				prompt.select("Select a template", getTemplateSelectOptions(), 1),
 			templateId: parsed.template,
 			variant: parsed.variant,
+			persistencePolicy: parsed.persistencePolicy,
 			yes: parsed.yes,
 		});
 
