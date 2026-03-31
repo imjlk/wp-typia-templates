@@ -1,0 +1,51 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "create-block/persistence-like-button",
+	"version": "0.1.0",
+	"title": "Persistence Like Button",
+	"category": "widgets",
+	"icon": "heart",
+	"description": "Authenticated per-user like toggle example backed by a custom table.",
+	"example": {
+		"attributes": {
+			"content": "Persistence like button example",
+			"showCount": true,
+			"likeLabel": "Like this",
+			"unlikeLabel": "Unlike",
+			"resourceKey": "primary"
+		}
+	},
+	"supports": {
+		"html": false,
+		"interactivity": true
+	},
+	"attributes": {
+		"content": {
+			"type": "string",
+			"default": "Persistence like button example"
+		},
+		"showCount": {
+			"type": "boolean",
+			"default": true
+		},
+		"likeLabel": {
+			"type": "string",
+			"default": "Like this"
+		},
+		"unlikeLabel": {
+			"type": "string",
+			"default": "Unlike"
+		},
+		"resourceKey": {
+			"type": "string",
+			"default": "primary"
+		}
+	},
+	"textdomain": "persistence-examples",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"viewScriptModule": "file:./interactivity.js",
+	"render": "file:./render.php"
+}

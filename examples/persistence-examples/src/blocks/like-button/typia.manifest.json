@@ -1,0 +1,171 @@
+{
+	"attributes": {
+		"content": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": 250,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": 1,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": "Persistence like button example",
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": true,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": "Persistence like button example",
+				"enum": null,
+				"hasDefault": true,
+				"type": "string"
+			}
+		},
+		"showCount": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": null,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": null,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": true,
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "boolean",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": true,
+				"enum": null,
+				"hasDefault": true,
+				"type": "boolean"
+			}
+		},
+		"likeLabel": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": 40,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": 1,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": "Like this",
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": "Like this",
+				"enum": null,
+				"hasDefault": true,
+				"type": "string"
+			}
+		},
+		"unlikeLabel": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": 40,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": 1,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": "Unlike",
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": "Unlike",
+				"enum": null,
+				"hasDefault": true,
+				"type": "string"
+			}
+		},
+		"resourceKey": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": 100,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": 1,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": "primary",
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": "primary",
+				"enum": null,
+				"hasDefault": true,
+				"type": "string"
+			}
+		}
+	},
+	"manifestVersion": 2,
+	"sourceType": "PersistenceLikeButtonAttributes"
+}

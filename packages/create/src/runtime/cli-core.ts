@@ -8,9 +8,9 @@ import { execFileSync } from "node:child_process";
 import {
 	collectScaffoldAnswers,
 	DATA_STORAGE_MODES,
-	WRITE_AUTH_MODES,
+	PERSISTENCE_POLICIES,
 	isDataStorageMode,
-	isWriteAuthMode,
+	isPersistencePolicy,
 	resolvePackageManagerId,
 	resolveTemplateId,
 	scaffoldProject,
@@ -21,7 +21,7 @@ import {
 	formatRunScript,
 	getPackageManagerSelectOptions,
 } from "./package-managers.js";
-import type { DataStorageMode, WriteAuthMode } from "./scaffold.js";
+import type { DataStorageMode, PersistencePolicy } from "./scaffold.js";
 import type { PackageManagerId } from "./package-managers.js";
 import {
 	TEMPLATE_IDS,
@@ -75,11 +75,11 @@ interface RunScaffoldFlowOptions {
 	promptText?: Parameters<typeof collectScaffoldAnswers>[0]["promptText"];
 	selectDataStorage?: () => Promise<DataStorageMode>;
 	selectPackageManager?: () => Promise<PackageManagerId>;
+	selectPersistencePolicy?: () => Promise<PersistencePolicy>;
 	selectTemplate?: () => Promise<TemplateDefinition["id"]>;
-	selectWriteAuth?: () => Promise<WriteAuthMode>;
 	templateId?: string;
 	variant?: string;
-	writeAuthMode?: string;
+	persistencePolicy?: string;
 	yes?: boolean;
 }
 
@@ -140,10 +140,9 @@ export function createReadlinePrompt(): ReadlinePrompt {
 
 export function formatHelpText(): string {
 	return `Usage:
-  wp-typia <project-dir> [--template <basic|interactivity|data|./path|github:owner/repo/path[#ref]>] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <basic|interactivity|persistence|./path|github:owner/repo/path[#ref]>] [--yes] [--no-install] [--package-manager <id>]
   wp-typia <project-dir> [--template <npm-package>] [--variant <name>] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia <project-dir> [--template data] [--data-storage <post-meta|custom-table>] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia <project-dir> [--template persisted] [--data-storage <post-meta|custom-table>] [--write-auth <nonce|public>] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template persistence] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--yes] [--no-install] [--package-manager <id>]
   wp-typia templates list
   wp-typia templates inspect <id>
   wp-typia migrations <init|snapshot|diff|scaffold|verify|doctor|fixtures|fuzz> [...]
@@ -162,13 +161,19 @@ export function formatTemplateFeatures(template: TemplateDefinition): string {
 }
 
 export function formatTemplateDetails(template: TemplateDefinition): string {
-	const layers = getTemplateLayerDirs(template.id);
+	const layers =
+		template.id === "persistence"
+			? [
+					`authenticated: ${getTemplateLayerDirs(template.id, "authenticated").join(" -> ")}`,
+					`public: ${getTemplateLayerDirs(template.id, "public").join(" -> ")}`,
+				]
+			: [getTemplateLayerDirs(template.id).join(" -> ")];
 	return [
 		template.id,
 		template.description,
 		`Category: ${template.defaultCategory}`,
 		`Overlay path: ${template.templateDir}`,
-		`Layers: ${layers.join(" -> ")}`,
+		`Layers: ${layers.join("\n")}`,
 		`Features: ${template.features.join(", ")}`,
 	].join("\n");
 }
@@ -244,7 +249,15 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 	});
 
 	for (const template of listTemplates()) {
-		const layerDirs = getTemplateLayerDirs(template.id);
+		const layerDirs =
+			template.id === "persistence"
+				? Array.from(
+						new Set([
+							...getTemplateLayerDirs(template.id, "authenticated"),
+							...getTemplateLayerDirs(template.id, "public"),
+						]),
+					)
+				: getTemplateLayerDirs(template.id);
 		const hasAssets =
 			layerDirs.every((layerDir) => fs.existsSync(layerDir)) &&
 			layerDirs.some((layerDir) => fs.existsSync(path.join(layerDir, "package.json.mustache"))) &&
@@ -297,7 +310,7 @@ export async function runScaffoldFlow({
 	cwd = process.cwd(),
 	templateId,
 	dataStorageMode,
-	writeAuthMode,
+	persistencePolicy,
 	packageManager,
 	yes = false,
 	noInstall = false,
@@ -305,7 +318,7 @@ export async function runScaffoldFlow({
 	allowExistingDir = false,
 	selectTemplate,
 	selectDataStorage,
-	selectWriteAuth,
+	selectPersistencePolicy,
 	selectPackageManager,
 	promptText,
 	installDependencies = undefined,
@@ -322,7 +335,7 @@ export async function runScaffoldFlow({
 		selectTemplate,
 	});
 	const resolvedDataStorage =
-		resolvedTemplateId !== "data" && resolvedTemplateId !== "persisted"
+		resolvedTemplateId !== "persistence"
 			? undefined
 			: dataStorageMode
 				? isDataStorageMode(dataStorageMode)
@@ -337,22 +350,22 @@ export async function runScaffoldFlow({
 					: isInteractive && selectDataStorage
 						? await selectDataStorage()
 						: "custom-table";
-	const resolvedWriteAuth =
-		resolvedTemplateId !== "persisted"
+	const resolvedPersistencePolicy =
+		resolvedTemplateId !== "persistence"
 			? undefined
-			: writeAuthMode
-				? isWriteAuthMode(writeAuthMode)
-					? writeAuthMode
+			: persistencePolicy
+				? isPersistencePolicy(persistencePolicy)
+					? persistencePolicy
 					: (() => {
 						throw new Error(
-							`Unsupported write auth mode "${writeAuthMode}". Expected one of: ${WRITE_AUTH_MODES.join(", ")}`,
+							`Unsupported persistence policy "${persistencePolicy}". Expected one of: ${PERSISTENCE_POLICIES.join(", ")}`,
 						);
 					})()
 				: yes
-					? "nonce"
-					: isInteractive && selectWriteAuth
-						? await selectWriteAuth()
-						: "nonce";
+					? "authenticated"
+					: isInteractive && selectPersistencePolicy
+						? await selectPersistencePolicy()
+						: "authenticated";
 	const resolvedPackageManager = await resolvePackageManagerId({
 		packageManager,
 		yes,
@@ -363,9 +376,9 @@ export async function runScaffoldFlow({
 	const projectName = path.basename(projectDir);
 	const answers = await collectScaffoldAnswers({
 		dataStorageMode: resolvedDataStorage,
+		persistencePolicy: resolvedPersistencePolicy,
 		projectName,
 		templateId: resolvedTemplateId,
-		writeAuthMode: resolvedWriteAuth,
 		yes,
 		promptText,
 	});
@@ -378,10 +391,10 @@ export async function runScaffoldFlow({
 		installDependencies,
 		noInstall,
 		packageManager: resolvedPackageManager,
+		persistencePolicy: resolvedPersistencePolicy,
 		projectDir,
 		templateId: resolvedTemplateId,
 		variant,
-		writeAuthMode: resolvedWriteAuth,
 	});
 
 	return {

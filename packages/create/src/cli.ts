@@ -26,10 +26,10 @@ interface ParsedArgs {
 	help: boolean;
 	noInstall: boolean;
 	packageManager?: string;
+	persistencePolicy?: string;
 	positionals: string[];
 	template?: string;
 	variant?: string;
-	writeAuth?: string;
 	yes: boolean;
 }
 
@@ -39,10 +39,10 @@ function parseArgs(argv: string[]): ParsedArgs {
 		help: false,
 		noInstall: false,
 		packageManager: undefined,
+		persistencePolicy: undefined,
 		positionals: [],
 		template: undefined,
 		variant: undefined,
-		writeAuth: undefined,
 		yes: false,
 	};
 
@@ -98,13 +98,13 @@ function parseArgs(argv: string[]): ParsedArgs {
 			parsed.dataStorage = arg.split("=", 2)[1];
 			continue;
 		}
-		if (arg === "--write-auth") {
-			parsed.writeAuth = argv[index + 1];
+		if (arg === "--persistence-policy") {
+			parsed.persistencePolicy = argv[index + 1];
 			index += 1;
 			continue;
 		}
-		if (arg.startsWith("--write-auth=")) {
-			parsed.writeAuth = arg.split("=", 2)[1];
+		if (arg.startsWith("--persistence-policy=")) {
+			parsed.persistencePolicy = arg.split("=", 2)[1];
 			continue;
 		}
 		if (arg.startsWith("--package-manager=")) {
@@ -156,12 +156,12 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 					],
 					1,
 				),
-			selectWriteAuth: () =>
+			selectPersistencePolicy: () =>
 				prompt.select(
-					"Choose a write auth mode",
+					"Choose a persistence policy",
 					[
-						{ label: "nonce", value: "nonce", hint: "Authenticated write requests with WP REST nonce" },
-						{ label: "public", value: "public", hint: "Anonymous/public write sample for demo scenarios" },
+						{ label: "authenticated", value: "authenticated", hint: "Logged-in writes protected by WP REST nonce" },
+						{ label: "public", value: "public", hint: "Signed public write token flow for anonymous interactions" },
 					],
 					1,
 				),
@@ -169,7 +169,7 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 				prompt.select("Select a template", getTemplateSelectOptions(), 1),
 			templateId: parsed.template,
 			variant: parsed.variant,
-			writeAuthMode: parsed.writeAuth,
+			persistencePolicy: parsed.persistencePolicy,
 			yes: parsed.yes,
 		});
 

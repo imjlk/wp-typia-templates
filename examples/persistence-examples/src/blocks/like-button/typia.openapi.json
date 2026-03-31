@@ -1,0 +1,49 @@
+{
+	"components": {
+		"schemas": {
+			"PersistenceLikeButtonAttributes": {
+				"$schema": "https://json-schema.org/draft/2020-12/schema",
+				"additionalProperties": false,
+				"properties": {
+					"content": {
+						"default": "Persistence like button example",
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 250
+					},
+					"showCount": {
+						"default": true,
+						"type": "boolean"
+					},
+					"likeLabel": {
+						"default": "Like this",
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 40
+					},
+					"unlikeLabel": {
+						"default": "Unlike",
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 40
+					},
+					"resourceKey": {
+						"default": "primary",
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 100
+					}
+				},
+				"required": ["content"],
+				"title": "PersistenceLikeButtonAttributes",
+				"type": "object"
+			}
+		}
+	},
+	"info": {
+		"title": "PersistenceLikeButtonAttributes",
+		"version": "1.0.0"
+	},
+	"openapi": "3.1.0",
+	"paths": {}
+}

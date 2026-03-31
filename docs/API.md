@@ -20,20 +20,13 @@ wp-typia templates inspect basic
 wp-typia doctor
 ```
 
-Built-in templates currently include `basic`, `interactivity`, `data`, and `persisted`.
+Built-in templates currently include `basic`, `interactivity`, and `persistence`.
 
-`data` also accepts:
-
-```bash
-wp-typia my-block --template data --data-storage post-meta --package-manager npm --yes --no-install
-wp-typia my-block --template data --data-storage custom-table --package-manager bun --yes --no-install
-```
-
-`persisted` also accepts:
+`persistence` also accepts:
 
 ```bash
-wp-typia my-block --template persisted --data-storage custom-table --write-auth nonce --package-manager bun --yes --no-install
-wp-typia my-block --template persisted --data-storage post-meta --write-auth public --package-manager npm --yes --no-install
+wp-typia my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
+wp-typia my-block --template persistence --data-storage custom-table --persistence-policy public --package-manager npm --yes --no-install
 ```
 
 Remote template MVP:
@@ -139,7 +132,7 @@ Migration-capable reference apps or custom projects may also add:
 
 `migrations doctor` is the read-only workspace health check, `migrations fixtures` refreshes deterministic edge fixtures, and `migrations fuzz` replays those fixtures plus seeded random legacy-shaped inputs derived from the current Typia validator.
 
-The built-in `data` and `persisted` templates add another predictable layer:
+The built-in `persistence` template adds another predictable layer:
 
 - `src/api-types.ts`
 - `src/api-validators.ts`
@@ -148,15 +141,24 @@ The built-in `data` and `persisted` templates add another predictable layer:
 - `scripts/sync-rest-contracts.ts`
 - a plugin bootstrap PHP file with generated REST route/storage wiring
 
-`data` is the simple public persistence sample. `persisted` is the auth-first persisted write sample with selectable write auth modes.
+`persistence` keeps one minimal aggregate-counter scaffold and lets you choose between:
+
+- `authenticated`: logged-in writes protected by a WordPress REST nonce
+- `public`: anonymous writes protected by signed short-lived public tokens
 
 ## 5. Repo-local example app
 
-The repository keeps one reference app at [`examples/my-typia-block`](../examples/my-typia-block). From the root workspace, example-oriented commands live under:
+The repository keeps two reference apps:
+
+- [`examples/my-typia-block`](../examples/my-typia-block) for the kitchen-sink editor/migration reference
+- [`examples/persistence-examples`](../examples/persistence-examples) for persistence-policy behavior
+
+From the root workspace, example-oriented commands live under:
 
 ```bash
 bun run examples:build
 bun run examples:dev
+bun run examples:dev:persistence
 bun run examples:lint
 bun run examples:test:e2e
 ```

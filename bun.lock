@@ -14,7 +14,6 @@
         "@types/react-dom": "^19.2.2",
         "@types/wordpress__block-editor": "^11.5.17",
         "@types/wordpress__blocks": "^12.5.18",
-        "@types/wordpress__components": "^23.8.0",
         "@types/wordpress__element": "^2.14.1",
         "@types/wordpress__i18n": "^3.11.0",
         "@wordpress/browserslist-config": "^6.42.0",
@@ -42,7 +41,36 @@
         "@types/react-dom": "^19.2.2",
         "@types/wordpress__block-editor": "^11.5.17",
         "@types/wordpress__blocks": "^12.5.18",
-        "@types/wordpress__components": "^23.8.0",
+        "@typia/unplugin": "^12.0.1",
+        "@wordpress/browserslist-config": "^6.42.0",
+        "@wordpress/scripts": "^30.22.0",
+        "@wp-typia/block-types": "workspace:*",
+        "@wp-typia/create": "workspace:*",
+        "@wp-typia/rest": "workspace:*",
+        "ajv": "^8.18.0",
+        "prettier": "2.8.8",
+        "tsx": "^4.20.5",
+        "typescript": "^5.9.2",
+        "typia": "^12.0.1",
+      },
+    },
+    "examples/persistence-examples": {
+      "name": "persistence-examples",
+      "version": "0.1.0",
+      "dependencies": {
+        "@wordpress/api-fetch": "^7.29.0",
+        "@wordpress/block-editor": "^15.2.0",
+        "@wordpress/blocks": "^15.2.0",
+        "@wordpress/components": "^30.2.0",
+        "@wordpress/element": "^6.29.0",
+        "@wordpress/i18n": "^6.2.0",
+        "@wordpress/interactivity": "^6.29.0",
+      },
+      "devDependencies": {
+        "@types/react": "^19.2.2",
+        "@types/react-dom": "^19.2.2",
+        "@types/wordpress__block-editor": "^11.5.17",
+        "@types/wordpress__blocks": "^12.5.18",
         "@typia/unplugin": "^12.0.1",
         "@wordpress/browserslist-config": "^6.42.0",
         "@wordpress/scripts": "^30.22.0",
@@ -103,10 +131,8 @@
       "dependencies": {
         "@typia/interface": "^12.0.1",
         "@wordpress/api-fetch": "^7.42.0",
-        "typia": "^12.0.1",
       },
       "devDependencies": {
-        "bunli": "^0.8.2",
         "typescript": "^5.9.2",
       },
     },
@@ -1167,8 +1193,6 @@
     "@types/wordpress__block-editor": ["@types/wordpress__block-editor@11.5.17", "", { "dependencies": { "@types/react": "^18", "@types/wordpress__blocks": "*", "@wordpress/components": "^27.2.0", "@wordpress/data": "^9.13.0", "@wordpress/element": "^5.0.0", "@wordpress/keycodes": "^3.54.0", "react-autosize-textarea": "^7.1.0" } }, "sha512-wn9BjAiTO8qJAXzg7JB8UllgmPEt9BNDcA7/nvwh8PObY1CnJCjWxih/usk95HnhQ5FNk4kT0FrymgzQX9wkPA=="],
 
     "@types/wordpress__blocks": ["@types/wordpress__blocks@12.5.18", "", { "dependencies": { "@types/react": "^18", "@wordpress/components": "^27.2.0", "@wordpress/data": "^9.13.0", "@wordpress/element": "^5.0.0", "@wordpress/shortcode": "^4.14.0" } }, "sha512-KDugvZn2fEd1mIyYSE4j0QS4vkXOyz1r4akFrnUyJBoIBVQNqDopqXW2qX7kIrTXk9MydWZpdReNDg2Me02s4g=="],
-
-    "@types/wordpress__components": ["@types/wordpress__components@23.8.0", "", { "dependencies": { "@wordpress/components": "*" } }, "sha512-xCkQMCwy4zLcvqQFC3BZG/X4q1TF+ShPDljT84YgBOjbXhTcOfeVd4BPftfxnZIyjymE3dqLGluEuJObrrALSg=="],
 
     "@types/wordpress__element": ["@types/wordpress__element@2.14.1", "", { "dependencies": { "@wordpress/element": "*" } }, "sha512-qMp7A1r4Fdnm36FgSIQpwZ39CY6DDEfb2P4TfaLHoaSeZcPBdzs4hdhmIRrThX/W9AqOQYmGHyZ8RMzjg88KEg=="],
 
@@ -2937,6 +2961,8 @@
     "peek-readable": ["peek-readable@4.1.0", "", {}, "sha512-ZI3LnwUv5nOGbQzD9c2iDG6toheuXSZP5esSHBjopsXH4dg19soufvpUGA3uohi5anFtGb2lhAVdHzH6R/Evvg=="],
 
     "pend": ["pend@1.2.0", "", {}, "sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg=="],
+
+    "persistence-examples": ["persistence-examples@workspace:examples/persistence-examples"],
 
     "pg-int8": ["pg-int8@1.0.1", "", {}, "sha512-WCtabS6t3c8SkpDBUlb1kjOs7l66xsGdKpIPZsg4wR+B3+u9UAum2odSsF9tnvxg80h4ZxLWMy4pRjOsFIqQpw=="],
 

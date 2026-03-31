@@ -19,6 +19,8 @@
 
 - `examples/my-typia-block`
   The kitchen-sink reference block.
+- `examples/persistence-examples`
+  The persistence-policy reference plugin with two blocks.
 
 This package is the place for:
 
@@ -45,30 +47,24 @@ Built-in templates stay limited to:
 
 - `basic`
 - `interactivity`
-- `data`
-- `persisted`
+- `persistence`
 
 Inside `@wp-typia/create`, built-in templates are composed from:
 
 - a shared base layer for common project assets
+- a persistence `core` layer for shared typed REST/interactivity wiring
+- a persistence policy layer (`public` or `auth`)
 - a template-specific overlay
 
 This keeps public scaffold behavior stable while letting shared runtime/helper changes flow into the built-in templates.
 
-The `data` template extends the same base with:
+The `persistence` template extends the same base with:
 
 - typed REST contracts and client helpers
 - schema sync outputs
 - generated PHP route/storage files
 - a selectable persistence mode (`post-meta` or `custom-table`)
-
-The `persisted` template extends the same base with:
-
-- typed REST contracts and client helpers
-- schema sync outputs
-- generated PHP route/storage files
-- a selectable persistence mode (`post-meta` or `custom-table`)
-- a selectable write auth mode (`nonce` or `public`)
+- a selectable persistence policy (`authenticated` or `public`)
 
 Generated projects also import shared runtime helpers from `@wp-typia/create/runtime/*`, so validator/default/runtime behavior can evolve centrally instead of being copied into every generated block.
 
@@ -78,5 +74,6 @@ Generated projects also import shared runtime helpers from `@wp-typia/create/run
 2. Author the schema in `src/types.ts`
 3. Run `sync-types`
 4. Build and validate the block
-5. Use `data` for simple public persistence samples or `persisted` for auth-first write patterns
-6. Use the example app as the richer reference when you need migration or kitchen-sink patterns
+5. Use `persistence --persistence-policy public` for signed public writes
+6. Use `persistence --persistence-policy authenticated` for logged-in writes
+7. Use the reference apps when you need kitchen-sink or policy-specific runtime patterns

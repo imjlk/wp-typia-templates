@@ -18,6 +18,7 @@ import type { BuiltInTemplateId } from "./template-registry.js";
 import { resolveTemplateSource } from "./template-source.js";
 
 const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
+const REMOVED_BUILTIN_TEMPLATE_IDS = ["data", "persisted"] as const;
 const LOCKFILES: Record<PackageManagerId, string[]> = {
 	bun: ["bun.lock", "bun.lockb"],
 	npm: ["package-lock.json"],
@@ -30,15 +31,15 @@ export interface ScaffoldAnswers {
 	dataStorageMode?: DataStorageMode;
 	description: string;
 	namespace: string;
+	persistencePolicy?: PersistencePolicy;
 	slug: string;
 	title: string;
-	writeAuthMode?: WriteAuthMode;
 }
 
 export const DATA_STORAGE_MODES = ["post-meta", "custom-table"] as const;
 export type DataStorageMode = (typeof DATA_STORAGE_MODES)[number];
-export const WRITE_AUTH_MODES = ["nonce", "public"] as const;
-export type WriteAuthMode = (typeof WRITE_AUTH_MODES)[number];
+export const PERSISTENCE_POLICIES = ["authenticated", "public"] as const;
+export type PersistencePolicy = (typeof PERSISTENCE_POLICIES)[number];
 
 export interface ScaffoldTemplateVariables {
 	author: string;
@@ -63,7 +64,7 @@ export interface ScaffoldTemplateVariables {
 	textdomain: string;
 	title: string;
 	titleCase: string;
-	writeAuthMode: WriteAuthMode;
+	persistencePolicy: PersistencePolicy;
 }
 
 interface ResolveTemplateOptions {
@@ -88,8 +89,8 @@ interface CollectScaffoldAnswersOptions {
 		defaultValue: string,
 		validate?: (value: string) => true | string,
 	) => Promise<string>;
+	persistencePolicy?: PersistencePolicy;
 	templateId: string;
-	writeAuthMode?: WriteAuthMode;
 	yes?: boolean;
 }
 
@@ -106,10 +107,10 @@ interface ScaffoldProjectOptions {
 	installDependencies?: ((options: InstallDependenciesOptions) => Promise<void>) | undefined;
 	noInstall?: boolean;
 	packageManager: PackageManagerId;
+	persistencePolicy?: PersistencePolicy;
 	projectDir: string;
 	templateId: string;
 	variant?: string;
-	writeAuthMode?: WriteAuthMode;
 }
 
 export interface ScaffoldProjectResult {
@@ -159,8 +160,8 @@ export function isDataStorageMode(value: string): value is DataStorageMode {
 	return (DATA_STORAGE_MODES as readonly string[]).includes(value);
 }
 
-export function isWriteAuthMode(value: string): value is WriteAuthMode {
-	return (WRITE_AUTH_MODES as readonly string[]).includes(value);
+export function isPersistencePolicy(value: string): value is PersistencePolicy {
+	return (PERSISTENCE_POLICIES as readonly string[]).includes(value);
 }
 
 export function detectAuthor(): string {
@@ -184,12 +185,12 @@ export function getDefaultAnswers(
 	const slugDefault = toKebabCase(projectName || "my-wp-typia-block");
 	return {
 		author: detectAuthor(),
-		dataStorageMode: templateId === "data" || templateId === "persisted" ? "custom-table" : undefined,
+		dataStorageMode: templateId === "persistence" ? "custom-table" : undefined,
 		description: template?.description ?? "A WordPress block scaffolded from a remote template",
 		namespace: "create-block",
+		persistencePolicy: templateId === "persistence" ? "authenticated" : undefined,
 		slug: slugDefault,
 		title: toTitle(slugDefault),
-		writeAuthMode: templateId === "persisted" ? "nonce" : undefined,
 	};
 }
 
@@ -200,6 +201,13 @@ export async function resolveTemplateId({
 	selectTemplate,
 }: ResolveTemplateOptions): Promise<string> {
 	if (templateId) {
+		if ((REMOVED_BUILTIN_TEMPLATE_IDS as readonly string[]).includes(templateId)) {
+			throw new Error(
+				`Built-in template "${templateId}" was removed. Use --template persistence --persistence-policy ${
+					templateId === "data" ? "public" : "authenticated"
+				} instead.`,
+			);
+		}
 		if (isBuiltInTemplateId(templateId)) {
 			return getTemplateById(templateId).id;
 		}
@@ -249,7 +257,7 @@ export async function collectScaffoldAnswers({
 	templateId,
 	yes = false,
 	dataStorageMode,
-	writeAuthMode,
+	persistencePolicy,
 	promptText,
 }: CollectScaffoldAnswersOptions): Promise<ScaffoldAnswers> {
 	const defaults = getDefaultAnswers(projectName, templateId);
@@ -258,7 +266,7 @@ export async function collectScaffoldAnswers({
 		return {
 			...defaults,
 			dataStorageMode: dataStorageMode ?? defaults.dataStorageMode,
-			writeAuthMode: writeAuthMode ?? defaults.writeAuthMode,
+			persistencePolicy: persistencePolicy ?? defaults.persistencePolicy,
 		};
 	}
 
@@ -275,9 +283,9 @@ export async function collectScaffoldAnswers({
 		dataStorageMode: dataStorageMode ?? defaults.dataStorageMode,
 		description: await promptText("Description", defaults.description),
 		namespace: await promptText("Namespace", defaults.namespace),
+		persistencePolicy: persistencePolicy ?? defaults.persistencePolicy,
 		slug,
 		title: await promptText("Block title", toTitle(slug)),
-		writeAuthMode: writeAuthMode ?? defaults.writeAuthMode,
 	};
 }
 
@@ -294,11 +302,11 @@ export function getTemplateVariables(
 	const namespace = answers.namespace.trim();
 	const description = answers.description.trim();
 	const dataStorageMode =
-		templateId === "data" || templateId === "persisted"
+		templateId === "persistence"
 			? answers.dataStorageMode ?? "custom-table"
 			: "custom-table";
-	const writeAuthMode =
-		templateId === "persisted" ? answers.writeAuthMode ?? "nonce" : "public";
+	const persistencePolicy =
+		templateId === "persistence" ? answers.persistencePolicy ?? "authenticated" : "authenticated";
 
 	return {
 		author: answers.author.trim(),
@@ -323,7 +331,7 @@ export function getTemplateVariables(
 		textdomain: slugSnakeCase,
 		title,
 		titleCase: pascalCase,
-		writeAuthMode,
+		persistencePolicy,
 	};
 }
 
@@ -523,7 +531,7 @@ export async function scaffoldProject({
 	templateId,
 	answers,
 	dataStorageMode,
-	writeAuthMode,
+	persistencePolicy,
 	packageManager,
 	cwd = process.cwd(),
 	allowExistingDir = false,
@@ -538,7 +546,7 @@ export async function scaffoldProject({
 	const variables = getTemplateVariables(templateId, {
 		...answers,
 		dataStorageMode: dataStorageMode ?? answers.dataStorageMode,
-		writeAuthMode: writeAuthMode ?? answers.writeAuthMode,
+		persistencePolicy: persistencePolicy ?? answers.persistencePolicy,
 	});
 	const templateSource = await resolveTemplateSource(
 		templateId,

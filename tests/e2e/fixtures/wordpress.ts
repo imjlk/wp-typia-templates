@@ -1,6 +1,6 @@
-import { test as base, expect, Page, FrameLocator } from '@playwright/test';
+import { test as base, expect, Page, FrameLocator, Browser } from '@playwright/test';
 
-export const EXAMPLE_BLOCK = {
+export const REFERENCE_BLOCK = {
   name: 'create-block/my-typia-block',
   title: 'My Typia Block',
   editorText: 'My Typia Block - Editor View',
@@ -20,6 +20,18 @@ export const EXAMPLE_BLOCK = {
     text: 'My Typia Block - Frontend View',
   },
 } as const;
+
+export const PERSISTENCE_COUNTER_BLOCK = {
+  name: 'create-block/persistence-counter',
+  title: 'Persistence Counter',
+} as const;
+
+export const PERSISTENCE_LIKE_BUTTON_BLOCK = {
+  name: 'create-block/persistence-like-button',
+  title: 'Persistence Like Button',
+} as const;
+
+export const EXAMPLE_BLOCK = REFERENCE_BLOCK;
 
 export const test = base;
 
@@ -195,7 +207,15 @@ export class WordPressPage {
     });
   }
 
-  async previewPost(): Promise<Page> {
+  async previewPost(
+    {
+      loggedIn = true,
+      browser,
+    }: {
+      loggedIn?: boolean;
+      browser?: Browser;
+    } = {},
+  ): Promise<Page> {
     const previewUrl = await this.page.evaluate(() => {
       const wp = (window as any).wp;
       const postId = wp?.data?.select('core/editor')?.getCurrentPostId?.();
@@ -207,6 +227,21 @@ export class WordPressPage {
       previewUrl.searchParams.set('p', String(postId));
       return previewUrl.toString();
     });
+
+    if (!loggedIn) {
+      const targetBrowser = browser ?? this.page.context().browser();
+      if (!targetBrowser) {
+        throw new Error('A browser instance is required to open a logged-out preview.');
+      }
+
+      const isolatedContext = await targetBrowser.newContext();
+      const previewPage = await isolatedContext.newPage();
+      previewPage.once('close', () => {
+        void isolatedContext.close().catch(() => {});
+      });
+      await previewPage.goto(previewUrl, { waitUntil: 'domcontentloaded' });
+      return previewPage;
+    }
 
     const previewPage = await this.page.context().newPage();
     await previewPage.goto(previewUrl, { waitUntil: 'domcontentloaded' });

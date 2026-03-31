@@ -29,11 +29,11 @@ function parseArgs(argv) {
 	const parsed = {
 		dataStorage: undefined,
 		packageManager: undefined,
+		persistencePolicy: undefined,
 		projectName: undefined,
 		runtime: undefined,
 		template: undefined,
 		variant: undefined,
-		writeAuth: undefined,
 	};
 
 	for (let index = 0; index < argv.length; index += 1) {
@@ -70,8 +70,8 @@ function parseArgs(argv) {
 			index += 1;
 			continue;
 		}
-		if (arg === "--write-auth") {
-			parsed.writeAuth = next;
+		if (arg === "--persistence-policy") {
+			parsed.persistencePolicy = next;
 			index += 1;
 			continue;
 		}
@@ -196,7 +196,7 @@ function assertBuildArtifacts(projectDir, projectName) {
 	}
 }
 
-function assertDataTemplateArtifacts(projectDir, projectName) {
+function assertPersistenceTemplateArtifacts(projectDir, projectName) {
 	const candidateDirs = [
 		path.join(projectDir, "build", projectName),
 		path.join(projectDir, "build"),
@@ -278,11 +278,11 @@ function rewriteWorkspaceDependencies(projectDir) {
 }
 
 function main() {
-	const { runtime, template, packageManager, projectName, variant, dataStorage, writeAuth } = parseArgs(process.argv.slice(2));
+	const { runtime, template, packageManager, projectName, variant, dataStorage, persistencePolicy } = parseArgs(process.argv.slice(2));
 
 	if (!runtime || !template || !packageManager || !projectName) {
 		throw new Error(
-			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--data-storage <post-meta|custom-table>] [--write-auth <nonce|public>] --package-manager <id> --project-name <name>",
+			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] --package-manager <id> --project-name <name>",
 		);
 	}
 
@@ -299,7 +299,7 @@ function main() {
 			template,
 			...(variant ? ["--variant", variant] : []),
 			...(dataStorage ? ["--data-storage", dataStorage] : []),
-			...(writeAuth ? ["--write-auth", writeAuth] : []),
+			...(persistencePolicy ? ["--persistence-policy", persistencePolicy] : []),
 			"--yes",
 			"--no-install",
 			"--package-manager",
@@ -333,8 +333,8 @@ function main() {
 		run(buildCommand, buildArgs, { cwd: projectDir });
 
 		assertBuildArtifacts(projectDir, projectName);
-		if (template === "data" || template === "persisted") {
-			assertDataTemplateArtifacts(projectDir, projectName);
+		if (template === "persistence") {
+			assertPersistenceTemplateArtifacts(projectDir, projectName);
 		}
 		for (const artifact of [
 			path.join(projectDir, "build", projectName, "typia-validator.php"),

@@ -22,7 +22,7 @@ For non-interactive usage, pass it explicitly:
 
 ```bash
 npx @wp-typia/create my-block --template basic --package-manager pnpm --yes --no-install
-npx @wp-typia/create my-block --template persisted --data-storage custom-table --write-auth nonce --package-manager bun --yes --no-install
+npx @wp-typia/create my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
 ```
 
 Additional commands:
@@ -49,25 +49,17 @@ Built-in templates currently cover:
 
 - `basic`
 - `interactivity`
-- `data`
-- `persisted`
+- `persistence`
 
 Inside `@wp-typia/create`, built-in templates are composed from a shared base layer plus per-template overlays. That keeps package setup, sync scripts, and shared runtime wiring aligned as `wp-typia` evolves while still letting the public template surface grow when there is a stable use case.
 
-The `data` template adds:
+The `persistence` template adds:
 
 - `--data-storage <post-meta|custom-table>`
+- `--persistence-policy <authenticated|public>`
 - `sync-rest` contract/schema generation
 - a typed REST client through `@wp-typia/rest`
-- generated PHP route/bootstrap files for a simple public persistence sample
-
-The `persisted` template adds:
-
-- `--data-storage <post-meta|custom-table>`
-- `--write-auth <nonce|public>`
-- `sync-rest` contract/schema generation
-- a typed REST client through `@wp-typia/rest`
-- generated PHP route/bootstrap files for auth-first persisted writes
+- generated PHP route/bootstrap files for policy-aware persistence
 
 Generated projects can also reuse small runtime helpers from `@wp-typia/create` instead of copying local utility code:
 
