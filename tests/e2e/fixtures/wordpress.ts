@@ -87,6 +87,7 @@ export class WordPressPage {
   }
 
   async insertBlock(block = EXAMPLE_BLOCK) {
+    await this.waitForBlockTypeRegistered(block.name);
     await this.dismissWelcomeGuideIfPresent();
 
     let inserted = false;
@@ -328,6 +329,13 @@ export class WordPressPage {
       const editor = wp?.data?.select('core/editor');
       return Boolean(editor) && !editor.isSavingPost?.() && !editor.isAutosavingPost?.();
     });
+  }
+
+  private async waitForBlockTypeRegistered(blockType: string) {
+    await this.page.waitForFunction((type) => {
+      const wp = (window as any).wp;
+      return Boolean(wp?.blocks?.getBlockType?.(type));
+    }, blockType);
   }
 
   private async waitForBlockInEditor(blockType: string, timeout = 30_000) {
