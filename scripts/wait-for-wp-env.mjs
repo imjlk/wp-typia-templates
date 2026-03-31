@@ -31,16 +31,14 @@ async function main() {
 			});
 			const body = await response.text();
 
-			if (response.ok && looksReady(body)) {
+			if (response.ok && (looksReady(body) || looksLikeInstall(body))) {
 				console.log(`✅ wp-env ready at ${loginUrl}`);
 				return;
 			}
 
-			if (looksLikeInstall(body)) {
-				lastStatus = 'install-screen';
-			} else {
-				lastStatus = `http-${response.status}`;
-			}
+			lastStatus = looksLikeInstall(body)
+				? 'install-screen'
+				: `http-${response.status}`;
 		} catch (error) {
 			lastStatus =
 				error instanceof Error ? error.message : 'unknown-network-error';

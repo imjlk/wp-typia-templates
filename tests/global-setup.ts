@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { chromium, FullConfig } from '@playwright/test';
 
 async function waitForAdminReady(page: import('@playwright/test').Page) {
@@ -14,7 +15,7 @@ async function waitForAdminReady(page: import('@playwright/test').Page) {
 async function waitForWordPressLogin(
 	page: import('@playwright/test').Page,
 	baseURL: string,
-) {
+): Promise<'ready' | 'install'> {
 	const startedAt = Date.now();
 	const timeoutMs = 60_000;
 
@@ -27,15 +28,14 @@ async function waitForWordPressLogin(
 		const hasAdminBar = await page.locator('#wpadminbar').isVisible().catch(() => false);
 
 		if (hasLoginForm || hasAdminBar) {
-			return;
+			return 'ready';
 		}
 
 		const looksLikeInstall =
 			currentUrl.includes('/wp-admin/install.php') ||
 			(pageTitle.includes('WordPress') && pageTitle.includes('Installation'));
-		if (!looksLikeInstall) {
-			await page.waitForTimeout(2_000);
-			continue;
+		if (looksLikeInstall) {
+			return 'install';
 		}
 
 		await page.waitForTimeout(2_000);
@@ -44,6 +44,32 @@ async function waitForWordPressLogin(
 	throw new Error(
 		'WordPress test environment did not finish booting before timeout.',
 	);
+}
+
+function runWpCli(args: string[]) {
+	const command = process.platform === 'win32' ? 'wp-env.cmd' : 'wp-env';
+	return execFileSync(command, ['run', 'cli', '--config=.wp-env.test.json', 'wp', ...args], {
+		encoding: 'utf8',
+		stdio: 'pipe',
+	});
+}
+
+function ensureWordPressInstalled(baseURL: string) {
+	try {
+		runWpCli(['core', 'is-installed']);
+		return;
+	} catch {
+		runWpCli([
+			'core',
+			'install',
+			`--url=${baseURL}`,
+			'--title=wp-typia-boilerplate',
+			'--admin_user=admin',
+			'--admin_password=password',
+			'--admin_email=admin@example.com',
+			'--skip-email',
+		]);
+	}
 }
 
 async function globalSetup(config: FullConfig) {
@@ -55,7 +81,11 @@ async function globalSetup(config: FullConfig) {
   const baseURL = config.projects![0].use.baseURL!;
 
   try {
-    await waitForWordPressLogin(page, baseURL);
+    const bootstrapState = await waitForWordPressLogin(page, baseURL);
+    if (bootstrapState === 'install') {
+      ensureWordPressInstalled(baseURL);
+      await waitForWordPressLogin(page, baseURL);
+    }
 
     // Login to WordPress
     await page.goto(`${baseURL}/wp-login.php`, { waitUntil: 'domcontentloaded' });
