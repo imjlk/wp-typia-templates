@@ -83,6 +83,7 @@ export interface MyTypiaBlockAttributes {
 export interface MyTypiaBlockState {
 	count: number;
 	isActive: boolean;
+	isHydrated: boolean;
 	isVisible: boolean;
 	isLoading: boolean;
 	isSaving?: boolean;

@@ -7,6 +7,7 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 	state: {
 		count: 0,
 		error: undefined,
+		isHydrated: false,
 		isLoading: false,
 		isSaving: false,
 		isVisible: true,
@@ -79,6 +80,7 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 			state.count = context.count;
 		},
 		mounted() {
+			state.isHydrated = true;
 			void actions.loadCounter();
 		},
 	},

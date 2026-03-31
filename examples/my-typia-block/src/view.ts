@@ -7,6 +7,7 @@ const { actions, state } = store( 'my-typia-block', {
 	state: {
 		count: 0,
 		isActive: false,
+		isHydrated: false,
 		isVisible: true,
 		isLoading: false,
 		isSaving: false,
@@ -127,6 +128,7 @@ const { actions, state } = store( 'my-typia-block', {
 		mounted() {
 			const context = getContext();
 			console.log( 'MyTypiaBlock mounted with context:', context );
+			state.isHydrated = true;
 			void actions.loadCounter();
 		},
 	},

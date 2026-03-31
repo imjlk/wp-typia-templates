@@ -63,7 +63,11 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				0
 			</span>
 		<?php endif; ?>
-		<button type="button" data-wp-on--click="actions.increment">
+		<button
+			type="button"
+			data-wp-bind--disabled="!state.isHydrated || state.isSaving"
+			data-wp-on--click="actions.increment"
+		>
 			<?php echo esc_html( $button_label ); ?>
 		</button>
 	</div>

@@ -84,6 +84,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 	</p>
 
 	<button
+		data-wp-bind--disabled="!state.isHydrated || state.isSaving"
 		data-wp-class--active="state.isActive"
 		data-wp-on--click="actions.toggle"
 		type="button"
@@ -92,7 +93,11 @@ $wrapper_attributes = get_block_wrapper_attributes(
 	</button>
 
 	<div class="my-typia-block-counter">
-		<button data-wp-on--click="actions.incrementCounter" type="button">
+		<button
+			data-wp-bind--disabled="!state.isHydrated || state.isSaving"
+			data-wp-on--click="actions.incrementCounter"
+			type="button"
+		>
 			<?php esc_html_e( 'Persist Count', 'my_typia_block' ); ?>
 		</button>
 		<span data-wp-text="state.count">0</span>
