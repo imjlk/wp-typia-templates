@@ -41,7 +41,7 @@
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:376](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L376)
+[examples/my-typia-block/src/migrations/index.ts:374](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L374)
 
 ## Functions
 
@@ -61,7 +61,7 @@
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:140](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L140)
+[examples/my-typia-block/src/migrations/index.ts:138](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L138)
 
 ___
 
@@ -81,7 +81,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:146](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L146)
+[examples/my-typia-block/src/migrations/index.ts:144](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L144)
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:159](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L159)
+[examples/my-typia-block/src/migrations/index.ts:157](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L157)
 
 ___
 
@@ -123,7 +123,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:211](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L211)
+[examples/my-typia-block/src/migrations/index.ts:209](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L209)
 
 ___
 
@@ -143,4 +143,4 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:325](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L325)
+[examples/my-typia-block/src/migrations/index.ts:323](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L323)

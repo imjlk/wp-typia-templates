@@ -1,0 +1,100 @@
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / [packages/wp-typia-rest/src/client](../modules/packages_wp_typia_rest_src_client.md) / ValidatedFetch
+
+# Interface: ValidatedFetch\<T\>
+
+[packages/wp-typia-rest/src/client](../modules/packages_wp_typia_rest_src_client.md).ValidatedFetch
+
+## Type parameters
+
+| Name |
+| :------ |
+| `T` |
+
+## Table of contents
+
+### Methods
+
+- [assertFetch](packages_wp_typia_rest_src_client.ValidatedFetch.md#assertfetch)
+- [fetch](packages_wp_typia_rest_src_client.ValidatedFetch.md#fetch)
+- [fetchWithResponse](packages_wp_typia_rest_src_client.ValidatedFetch.md#fetchwithresponse)
+- [isFetch](packages_wp_typia_rest_src_client.ValidatedFetch.md#isfetch)
+
+## Methods
+
+### assertFetch
+
+▸ **assertFetch**(`options`): `Promise`\<`T`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `options` | `APIFetchOptions`\<`boolean`\> |
+
+#### Returns
+
+`Promise`\<`T`\>
+
+#### Defined in
+
+[packages/wp-typia-rest/src/client.ts:26](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L26)
+
+___
+
+### fetch
+
+▸ **fetch**(`options`): `Promise`\<[`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`T`\>\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `options` | `APIFetchOptions`\<`boolean`\> |
+
+#### Returns
+
+`Promise`\<[`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`T`\>\>
+
+#### Defined in
+
+[packages/wp-typia-rest/src/client.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L27)
+
+___
+
+### fetchWithResponse
+
+▸ **fetchWithResponse**(`options`): `Promise`\<\{ `response`: `Response` ; `validation`: [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`T`\>  }\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `options` | `APIFetchOptions`\<``false``\> |
+
+#### Returns
+
+`Promise`\<\{ `response`: `Response` ; `validation`: [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`T`\>  }\>
+
+#### Defined in
+
+[packages/wp-typia-rest/src/client.ts:28](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L28)
+
+___
+
+### isFetch
+
+▸ **isFetch**(`options`): `Promise`\<``null`` \| `T`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `options` | `APIFetchOptions`\<`boolean`\> |
+
+#### Returns
+
+`Promise`\<``null`` \| `T`\>
+
+#### Defined in
+
+[packages/wp-typia-rest/src/client.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L31)

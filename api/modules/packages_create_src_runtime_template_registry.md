@@ -11,6 +11,7 @@
 ### Type Aliases
 
 - [BuiltInTemplateId](packages_create_src_runtime_template_registry.md#builtintemplateid)
+- [PersistencePolicy](packages_create_src_runtime_template_registry.md#persistencepolicy)
 
 ### Variables
 
@@ -18,6 +19,7 @@
 - [TEMPLATE\_ROOT](packages_create_src_runtime_template_registry.md#template_root)
 - [SHARED\_TEMPLATE\_ROOT](packages_create_src_runtime_template_registry.md#shared_template_root)
 - [SHARED\_BASE\_TEMPLATE\_ROOT](packages_create_src_runtime_template_registry.md#shared_base_template_root)
+- [SHARED\_PERSISTENCE\_TEMPLATE\_ROOT](packages_create_src_runtime_template_registry.md#shared_persistence_template_root)
 - [BUILTIN\_TEMPLATE\_IDS](packages_create_src_runtime_template_registry.md#builtin_template_ids)
 - [TEMPLATE\_REGISTRY](packages_create_src_runtime_template_registry.md#template_registry)
 - [TEMPLATE\_IDS](packages_create_src_runtime_template_registry.md#template_ids)
@@ -39,7 +41,17 @@
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:36](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L36)
+[packages/create/src/runtime/template-registry.ts:37](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L37)
+
+___
+
+### PersistencePolicy
+
+Ƭ **PersistencePolicy**: ``"authenticated"`` \| ``"public"``
+
+#### Defined in
+
+[packages/create/src/runtime/template-registry.ts:38](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L38)
 
 ## Variables
 
@@ -83,13 +95,23 @@ ___
 
 ___
 
-### BUILTIN\_TEMPLATE\_IDS
+### SHARED\_PERSISTENCE\_TEMPLATE\_ROOT
 
-• `Const` **BUILTIN\_TEMPLATE\_IDS**: readonly [``"basic"``, ``"interactivity"``]
+• `Const` **SHARED\_PERSISTENCE\_TEMPLATE\_ROOT**: `string`
 
 #### Defined in
 
 [packages/create/src/runtime/template-registry.ts:35](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L35)
+
+___
+
+### BUILTIN\_TEMPLATE\_IDS
+
+• `Const` **BUILTIN\_TEMPLATE\_IDS**: readonly [``"basic"``, ``"interactivity"``, ``"persistence"``]
+
+#### Defined in
+
+[packages/create/src/runtime/template-registry.ts:36](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L36)
 
 ___
 
@@ -99,17 +121,17 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:46](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L46)
+[packages/create/src/runtime/template-registry.ts:48](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L48)
 
 ___
 
 ### TEMPLATE\_IDS
 
-• `Const` **TEMPLATE\_IDS**: (``"basic"`` \| ``"interactivity"``)[]
+• `Const` **TEMPLATE\_IDS**: (``"persistence"`` \| ``"basic"`` \| ``"interactivity"``)[]
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:63](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L63)
+[packages/create/src/runtime/template-registry.ts:72](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L72)
 
 ## Functions
 
@@ -135,7 +157,7 @@ ___
 
 ### isBuiltInTemplateId
 
-▸ **isBuiltInTemplateId**(`templateId`): templateId is "basic" \| "interactivity"
+▸ **isBuiltInTemplateId**(`templateId`): templateId is "persistence" \| "basic" \| "interactivity"
 
 #### Parameters
 
@@ -145,11 +167,11 @@ ___
 
 #### Returns
 
-templateId is "basic" \| "interactivity"
+templateId is "persistence" \| "basic" \| "interactivity"
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:65](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L65)
+[packages/create/src/runtime/template-registry.ts:74](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L74)
 
 ___
 
@@ -163,7 +185,7 @@ readonly [`TemplateDefinition`](../interfaces/packages_create_src_runtime_templa
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:69](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L69)
+[packages/create/src/runtime/template-registry.ts:78](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L78)
 
 ___
 
@@ -183,19 +205,20 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:73](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L73)
+[packages/create/src/runtime/template-registry.ts:82](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L82)
 
 ___
 
 ### getTemplateLayerDirs
 
-▸ **getTemplateLayerDirs**(`templateId`): `string`[]
+▸ **getTemplateLayerDirs**(`templateId`, `persistencePolicy?`): `string`[]
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `templateId` | ``"basic"`` \| ``"interactivity"`` |
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `templateId` | ``"persistence"`` \| ``"basic"`` \| ``"interactivity"`` | `undefined` |
+| `persistencePolicy` | [`PersistencePolicy`](packages_create_src_runtime_template_registry.md#persistencepolicy) | `"authenticated"` |
 
 #### Returns
 
@@ -203,7 +226,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:81](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L81)
+[packages/create/src/runtime/template-registry.ts:90](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L90)
 
 ___
 
@@ -217,4 +240,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:85](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L85)
+[packages/create/src/runtime/template-registry.ts:106](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L106)

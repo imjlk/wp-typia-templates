@@ -20,4 +20,4 @@
 
 #### Defined in
 
-[packages/create/src/runtime/package-versions.ts:59](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-versions.ts#L59)
+[packages/create/src/runtime/package-versions.ts:60](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-versions.ts#L60)

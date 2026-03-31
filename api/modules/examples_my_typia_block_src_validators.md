@@ -117,7 +117,7 @@ Create safe attribute updater with validation
 
 #### Defined in
 
-[examples/my-typia-block/src/validators.ts:60](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L60)
+[examples/my-typia-block/src/validators.ts:67](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L67)
 
 ___
 
@@ -152,4 +152,4 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/validators.ts:80](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L80)
+[examples/my-typia-block/src/validators.ts:87](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L87)

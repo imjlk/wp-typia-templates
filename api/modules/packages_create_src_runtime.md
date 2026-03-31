@@ -19,6 +19,9 @@
 - [createEditorModel](packages_create_src_runtime.md#createeditormodel)
 - [describeEditorField](packages_create_src_runtime.md#describeeditorfield)
 - [formatEditorFieldLabel](packages_create_src_runtime.md#formateditorfieldlabel)
+- [manifestAttributeToJsonSchema](packages_create_src_runtime.md#manifestattributetojsonschema)
+- [manifestToJsonSchema](packages_create_src_runtime.md#manifesttojsonschema)
+- [manifestToOpenApi](packages_create_src_runtime.md#manifesttoopenapi)
 - [EditorControlKind](packages_create_src_runtime.md#editorcontrolkind)
 - [EditorFieldDescriptor](packages_create_src_runtime.md#editorfielddescriptor)
 - [EditorFieldOption](packages_create_src_runtime.md#editorfieldoption)
@@ -55,7 +58,10 @@
 - [listTemplates](packages_create_src_runtime.md#listtemplates)
 - [SyncBlockMetadataOptions](packages_create_src_runtime.md#syncblockmetadataoptions)
 - [SyncBlockMetadataResult](packages_create_src_runtime.md#syncblockmetadataresult)
+- [SyncTypeSchemaOptions](packages_create_src_runtime.md#synctypeschemaoptions)
+- [SyncTypeSchemaResult](packages_create_src_runtime.md#synctypeschemaresult)
 - [syncBlockMetadata](packages_create_src_runtime.md#syncblockmetadata)
+- [syncTypeSchemas](packages_create_src_runtime.md#synctypeschemas)
 
 ## References
 
@@ -134,6 +140,24 @@ ___
 ### formatEditorFieldLabel
 
 Re-exports [formatEditorFieldLabel](packages_create_src_runtime_editor.md#formateditorfieldlabel)
+
+___
+
+### manifestAttributeToJsonSchema
+
+Re-exports [manifestAttributeToJsonSchema](packages_create_src_runtime_schema_core.md#manifestattributetojsonschema)
+
+___
+
+### manifestToJsonSchema
+
+Re-exports [manifestToJsonSchema](packages_create_src_runtime_schema_core.md#manifesttojsonschema)
+
+___
+
+### manifestToOpenApi
+
+Re-exports [manifestToOpenApi](packages_create_src_runtime_schema_core.md#manifesttoopenapi)
 
 ___
 
@@ -353,6 +377,24 @@ Re-exports [SyncBlockMetadataResult](../interfaces/packages_create_src_runtime_m
 
 ___
 
+### SyncTypeSchemaOptions
+
+Re-exports [SyncTypeSchemaOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncTypeSchemaOptions.md)
+
+___
+
+### SyncTypeSchemaResult
+
+Re-exports [SyncTypeSchemaResult](../interfaces/packages_create_src_runtime_metadata_core.SyncTypeSchemaResult.md)
+
+___
+
 ### syncBlockMetadata
 
 Re-exports [syncBlockMetadata](packages_create_src_runtime_metadata_core.md#syncblockmetadata)
+
+___
+
+### syncTypeSchemas
+
+Re-exports [syncTypeSchemas](packages_create_src_runtime_metadata_core.md#synctypeschemas)

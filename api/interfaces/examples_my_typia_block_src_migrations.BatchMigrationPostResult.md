@@ -23,7 +23,7 @@
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:70](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L70)
+[examples/my-typia-block/src/migrations/index.ts:76](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L76)
 
 ___
 
@@ -33,7 +33,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:71](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L71)
+[examples/my-typia-block/src/migrations/index.ts:77](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L77)
 
 ___
 
@@ -43,7 +43,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:72](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L72)
+[examples/my-typia-block/src/migrations/index.ts:78](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L78)
 
 ___
 
@@ -53,7 +53,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:73](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L73)
+[examples/my-typia-block/src/migrations/index.ts:79](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L79)
 
 ___
 
@@ -63,7 +63,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:74](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L74)
+[examples/my-typia-block/src/migrations/index.ts:80](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L80)
 
 ___
 
@@ -73,4 +73,4 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:75](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L75)
+[examples/my-typia-block/src/migrations/index.ts:81](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L81)
