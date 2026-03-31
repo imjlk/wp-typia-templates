@@ -23,17 +23,6 @@ export const EXAMPLE_BLOCK = {
 
 export const test = base;
 
-async function waitForAdminReady(page: Page) {
-  await page.waitForLoadState('domcontentloaded');
-  await page.waitForFunction(() => {
-    return (
-      window.location.pathname.startsWith('/wp-admin') ||
-      Boolean(document.querySelector('#wpadminbar')) ||
-      document.body.classList.contains('wp-admin')
-    );
-  }, { timeout: 60_000 });
-}
-
 export class WordPressPage {
   constructor(public page: Page) {}
 
@@ -50,7 +39,9 @@ export class WordPressPage {
   }
 
   async login(username = 'admin', password = 'password') {
-    await this.page.goto('/wp-admin/', { waitUntil: 'domcontentloaded' });
+    await this.page.goto('/wp-login.php?redirect_to=%2Fwp-admin%2Fpost-new.php', {
+      waitUntil: 'domcontentloaded',
+    });
 
     if (this.page.url().includes('/wp-login.php')) {
       await this.page.fill('#user_login', username);
@@ -66,15 +57,13 @@ export class WordPressPage {
       if (loginErrors.length > 0) {
         throw new Error(`WordPress login failed: ${loginErrors.join(' ')}`);
       }
-
-      await this.page.goto('/wp-admin/', { waitUntil: 'domcontentloaded' });
     }
-
-    await waitForAdminReady(this.page);
   }
 
   async createPost(title = 'Typia Block Test') {
-    await this.page.goto('/wp-admin/post-new.php');
+    if (!this.page.url().includes('/wp-admin/post-new.php')) {
+      await this.page.goto('/wp-admin/post-new.php', { waitUntil: 'domcontentloaded' });
+    }
     await this.waitForEditorReady();
 
     const titleInput = this.getEditorCanvas().getByRole('textbox', { name: 'Add title' });

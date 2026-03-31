@@ -417,6 +417,11 @@ function createNestedRenameProject(projectDir: string) {
 	createProjectShell(projectDir);
 
 	writeFile(
+		path.join(projectDir, "src", "save.tsx"),
+		`export default function Save({ attributes }: { attributes: any }) {\n\treturn attributes.settings?.label ?? null;\n}\n`,
+	);
+
+	writeFile(
 		path.join(projectDir, "src", "validators.ts"),
 		`export const validators = {
 \tvalidate(input: Record<string, unknown>) {
@@ -650,6 +655,11 @@ function createTypeCoercionProject(projectDir: string) {
 	createProjectShell(projectDir);
 
 	writeFile(
+		path.join(projectDir, "src", "save.tsx"),
+		`export default function Save({ attributes }: { attributes: any }) {\n\treturn attributes.clickCount ?? null;\n}\n`,
+	);
+
+	writeFile(
 		path.join(projectDir, "src", "validators.ts"),
 		`export const validators = {
 \tvalidate(input: Record<string, unknown>) {
@@ -730,6 +740,11 @@ export default migrationConfig;
 
 function createUnionProject(projectDir: string, { removeBranch = false }: { removeBranch?: boolean } = {}) {
 	createProjectShell(projectDir);
+
+	writeFile(
+		path.join(projectDir, "src", "save.tsx"),
+		`export default function Save({ attributes }: { attributes: any }) {\n\treturn attributes.linkTarget ?? null;\n}\n`,
+	);
 
 	writeFile(
 		path.join(projectDir, "src", "validators.ts"),
@@ -846,8 +861,8 @@ function createFuzzFailureProject(projectDir: string) {
 \tvalidate(input: Record<string, unknown>) {
 \t\tconst success = input.content === "Hello";
 \t\treturn success
-\t\t\t? { isValid: true as const, errors: [], data: input }
-\t\t\t: { isValid: false as const, errors: [{ path: "$.content", expected: '"Hello"' }] };
+\t\t\t? { success: true as const, data: input }
+\t\t\t: { success: false as const, errors: [{ path: "$.content", expected: '"Hello"' }] };
 \t},
 \trandom() {
 \t\treturn { content: "legacy-random" };
