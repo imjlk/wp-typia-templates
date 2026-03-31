@@ -14,6 +14,7 @@ function runWpEnv(args, { cwd = ROOT_DIR } = {}) {
 	return execFileSync(getWpEnvCommand(), args, {
 		cwd,
 		encoding: 'utf8',
+		shell: process.platform === 'win32',
 		stdio: 'pipe',
 	});
 }
