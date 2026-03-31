@@ -1,6 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { chromium, FullConfig } from '@playwright/test';
 
+const REFERENCE_PLUGIN_SLUG = 'my-typia-block';
+
 async function waitForAdminReady(page: import('@playwright/test').Page) {
   await page.waitForLoadState('domcontentloaded');
   await page.waitForFunction(() => {
@@ -72,6 +74,14 @@ function ensureWordPressInstalled(baseURL: string) {
 	}
 }
 
+function ensureReferencePluginActive() {
+	try {
+		runWpCli(['plugin', 'is-active', REFERENCE_PLUGIN_SLUG]);
+	} catch {
+		runWpCli(['plugin', 'activate', REFERENCE_PLUGIN_SLUG]);
+	}
+}
+
 async function globalSetup(config: FullConfig) {
   console.log('🚀 Setting up WordPress test environment...');
 
@@ -90,6 +100,7 @@ async function globalSetup(config: FullConfig) {
       ensureWordPressInstalled(baseURL);
       await waitForWordPressLogin(page, baseURL);
     }
+    ensureReferencePluginActive();
 
     // Login to WordPress
     await page.goto(`${baseURL}/wp-login.php`, { waitUntil: 'domcontentloaded' });
