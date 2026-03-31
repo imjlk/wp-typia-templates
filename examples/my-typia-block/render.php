@@ -45,7 +45,9 @@ $content = isset( $normalized['content'] ) ? (string) $normalized['content'] : '
 $alignment = isset( $normalized['alignment'] ) ? (string) $normalized['alignment'] : 'left';
 $font_size = isset( $normalized['fontSize'] ) ? (string) $normalized['fontSize'] : 'medium';
 $resource_key = isset( $normalized['id'] ) ? (string) $normalized['id'] : '';
-$post_id = get_the_ID();
+$post_id = is_object( $block ) && isset( $block->context['postId'] )
+	? (int) $block->context['postId']
+	: (int) get_queried_object_id();
 
 if ( ! in_array( $alignment, array( 'left', 'center', 'right', 'justify' ), true ) ) {
 	$alignment = 'left';
@@ -59,12 +61,12 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				'content'   => $content,
 				'id'        => $resource_key,
 				'postId'    => (int) $post_id,
-				'restNonce' => wp_create_nonce( 'wp_rest' ),
+				'restNonce' => $post_id > 0 ? wp_create_nonce( 'wp_rest' ) : '',
 			)
 		),
 		'data-wp-interactive' => 'my-typia-block',
 		'data-wp-init' => 'callbacks.init',
-		'data-wp-run---mounted' => 'callbacks.mounted',
+		'data-wp-run--mounted' => 'callbacks.mounted',
 	)
 );
 
@@ -94,7 +96,8 @@ $wrapper_attributes = get_block_wrapper_attributes(
 
 	<div class="my-typia-block-counter">
 		<button
-			data-wp-bind--disabled="state.isSaving"
+			<?php echo $post_id > 0 ? '' : 'disabled'; ?>
+			data-wp-bind--disabled="state.isSaving || context.postId <= 0"
 			data-wp-on--click="actions.incrementCounter"
 			type="button"
 		>

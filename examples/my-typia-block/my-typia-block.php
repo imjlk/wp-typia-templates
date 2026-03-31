@@ -75,7 +75,16 @@ function my_typia_block_install_counter_table() {
 	) {$charset_collate};";
 
 	dbDelta( $sql );
-	update_option( 'my_typia_block_counter_table_version', '1.0.0' );
+	$table_exists = $wpdb->get_var(
+		$wpdb->prepare(
+			'SHOW TABLES LIKE %s',
+			$table_name
+		)
+	);
+
+	if ( $table_name === $table_exists ) {
+		update_option( 'my_typia_block_counter_table_version', '1.0.0' );
+	}
 }
 
 function my_typia_block_ensure_counter_table() {

@@ -66,14 +66,14 @@ function getDefaultRestRoot(): string {
 			const href = apiLink?.getAttribute("href");
 
 			if (typeof href === "string" && href.length > 0) {
-				return href;
+				return new URL(href, window.location.origin).toString();
 			}
 		}
-
-		return `${window.location.origin}/wp-json/`;
 	}
 
-	return "http://localhost/wp-json/";
+	throw new Error(
+		"Unable to resolve the WordPress REST root automatically. Provide wpApiSettings.root, an api.w.org discovery link, or an explicit url.",
+	);
 }
 
 export function resolveRestRouteUrl(routePath: string, root = getDefaultRestRoot()): string {
@@ -351,7 +351,7 @@ export function createValidatedFetch<T>(
 				...options,
 				parse: false,
 			});
-			const payload = await parseResponsePayload(response);
+			const payload = await parseResponsePayload(response.clone());
 			return {
 				response,
 				validation: toValidationResult<T>(validator(payload)),

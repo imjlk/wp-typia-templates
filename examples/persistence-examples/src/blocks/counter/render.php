@@ -29,8 +29,15 @@ if ( empty( $validation['valid'] ) || '' === $resourceKey ) {
 
 $content      = isset( $normalized['content'] ) ? (string) $normalized['content'] : '';
 $button_label = isset( $normalized['buttonLabel'] ) ? (string) $normalized['buttonLabel'] : 'Persist Count';
-$post_id      = get_the_ID();
-$public_write = persistence_examples_create_counter_public_write_token( (int) $post_id, $resourceKey );
+$post_id      = is_object( $block ) && isset( $block->context['postId'] )
+	? (int) $block->context['postId']
+	: (int) get_queried_object_id();
+$public_write = $post_id > 0
+	? persistence_examples_create_counter_public_write_token( (int) $post_id, $resourceKey )
+	: array(
+		'expiresAt' => 0,
+		'token'     => '',
+	);
 $context      = array(
 	'buttonLabel' => $button_label,
 	'canWrite'    => ! empty( $public_write['token'] ),
@@ -53,7 +60,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		'data-wp-context'       => wp_json_encode( $context ),
 		'data-wp-interactive'   => 'persistenceExamplesCounter',
 		'data-wp-init'          => 'callbacks.init',
-		'data-wp-run---mounted' => 'callbacks.mounted',
+		'data-wp-run--mounted' => 'callbacks.mounted',
 	)
 );
 ?>

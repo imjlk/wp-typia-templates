@@ -362,7 +362,7 @@ export class WordPressPage {
     });
   }
 
-  private async waitForExampleBlockPersistenceKey() {
+  private async waitForExampleBlockPersistenceKey(timeout = 30_000) {
     await this.page.waitForFunction((blockType) => {
       const wp = (window as any).wp;
       const blocks = wp?.data?.select('core/block-editor')?.getBlocks?.() ?? [];
@@ -374,7 +374,7 @@ export class WordPressPage {
 
       const id = exampleBlock.attributes?.id;
       return typeof id === 'undefined' || (typeof id === 'string' && id.length > 0);
-    }, EXAMPLE_BLOCK.name);
+    }, EXAMPLE_BLOCK.name, { timeout });
   }
 
   private async waitForBlockTypeRegistered(blockType: string) {

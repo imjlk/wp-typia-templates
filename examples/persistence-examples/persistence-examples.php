@@ -160,7 +160,22 @@ function persistence_examples_install_storage() {
 		) {$charset_collate};"
 	);
 
-	update_option( 'persistence_examples_storage_version', '1.0.0' );
+	$counter_exists = $wpdb->get_var(
+		$wpdb->prepare(
+			'SHOW TABLES LIKE %s',
+			$counter_table
+		)
+	);
+	$like_exists    = $wpdb->get_var(
+		$wpdb->prepare(
+			'SHOW TABLES LIKE %s',
+			$like_table
+		)
+	);
+
+	if ( $counter_table === $counter_exists && $like_table === $like_exists ) {
+		update_option( 'persistence_examples_storage_version', '1.0.0' );
+	}
 }
 
 function persistence_examples_ensure_storage() {

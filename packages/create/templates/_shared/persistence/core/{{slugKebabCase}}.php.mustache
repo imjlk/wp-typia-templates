@@ -87,7 +87,16 @@ function {{slugSnakeCase}}_maybe_install_storage() {
 	) {$charset_collate};";
 
 	dbDelta( $sql );
-	update_option( '{{slugSnakeCase}}_storage_version', '1.0.0' );
+	$table_exists = $wpdb->get_var(
+		$wpdb->prepare(
+			'SHOW TABLES LIKE %s',
+			$table_name
+		)
+	);
+
+	if ( $table_name === $table_exists ) {
+		update_option( '{{slugSnakeCase}}_storage_version', '1.0.0' );
+	}
 }
 
 function {{slugSnakeCase}}_ensure_storage_installed() {

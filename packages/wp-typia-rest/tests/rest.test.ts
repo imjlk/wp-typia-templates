@@ -72,6 +72,7 @@ describe("@wp-typia/rest", () => {
 		expect(result.response.headers.get("X-WP-TotalPages")).toBe("3");
 		expect(result.validation.isValid).toBe(true);
 		expect(result.validation.data).toEqual({ ok: true });
+		await expect(result.response.text()).resolves.toBe('{"ok":true}');
 	});
 
 	test("createValidatedFetch tolerates empty parse:false responses", async () => {
@@ -289,6 +290,30 @@ describe("@wp-typia/rest", () => {
 
 			expect(resolved).toBe(
 				"http://localhost:8889/index.php?rest_route=%2Fdemo%2Fv1%2Fitems%2F",
+			);
+		} finally {
+			globalThis.window = originalWindow;
+			globalThis.document = originalDocument;
+		}
+	});
+
+	test("resolveRestRouteUrl throws when no REST root or discovery link is available", () => {
+		const originalWindow = globalThis.window;
+		const originalDocument = globalThis.document;
+
+		globalThis.window = {
+			location: {
+				origin: "http://localhost:8889",
+			},
+			wpApiSettings: undefined,
+		} as unknown as Window & typeof globalThis;
+		globalThis.document = {
+			querySelector: () => null,
+		} as unknown as Document;
+
+		try {
+			expect(() => resolveRestRouteUrl("/demo/v1/items")).toThrow(
+				"Unable to resolve the WordPress REST root automatically.",
 			);
 		} finally {
 			globalThis.window = originalWindow;

@@ -23,10 +23,17 @@ publish_package() {
   local package_json="$package_dir/package.json"
   local package_name
   local package_version
+  local package_main
   local publish_args=("--access" "public")
 
   package_name="$(read_package_field "$package_json" "name")"
   package_version="$(read_package_field "$package_json" "version")"
+  package_main="$(read_package_field "$package_json" "main")"
+
+  if [[ "$package_main" == dist/* && ! -f "${package_dir}/${package_main}" ]]; then
+    echo "Refusing to publish ${package_name}@${package_version}; missing ${package_main}. Run build first."
+    return 1
+  fi
 
   if npm view "${package_name}@${package_version}" version >/dev/null 2>&1; then
     echo "Skipping ${package_name}@${package_version}; version already exists on npm."

@@ -30,8 +30,10 @@ if ( empty( $validation['valid'] ) || '' === $resourceKey ) {
 $content      = isset( $normalized['content'] ) ? (string) $normalized['content'] : '';
 $like_label   = isset( $normalized['likeLabel'] ) ? (string) $normalized['likeLabel'] : 'Like this';
 $unlike_label = isset( $normalized['unlikeLabel'] ) ? (string) $normalized['unlikeLabel'] : 'Unlike';
-$post_id      = get_the_ID();
-$can_write    = is_user_logged_in();
+$post_id      = is_object( $block ) && isset( $block->context['postId'] )
+	? (int) $block->context['postId']
+	: (int) get_queried_object_id();
+$can_write    = $post_id > 0 && is_user_logged_in();
 $liked        = $can_write ? persistence_examples_has_like( (int) $post_id, $resourceKey, get_current_user_id() ) : false;
 $context      = array(
 	'buttonLabel'         => $liked ? $unlike_label : $like_label,
@@ -54,7 +56,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		'data-wp-context'       => wp_json_encode( $context ),
 		'data-wp-interactive'   => 'persistenceExamplesLikeButton',
 		'data-wp-init'          => 'callbacks.init',
-		'data-wp-run---mounted' => 'callbacks.mounted',
+		'data-wp-run--mounted' => 'callbacks.mounted',
 	)
 );
 ?>
