@@ -129,6 +129,9 @@ const { actions, state } = store( 'my-typia-block', {
 			const context = getContext();
 			console.log( 'MyTypiaBlock mounted with context:', context );
 			state.isHydrated = true;
+			if ( typeof document !== 'undefined' ) {
+				document.documentElement.dataset.myTypiaBlockHydrated = 'true';
+			}
 			void actions.loadCounter();
 		},
 	},

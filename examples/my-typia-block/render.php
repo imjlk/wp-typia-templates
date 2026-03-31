@@ -84,8 +84,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 	</p>
 
 	<button
-		disabled
-		data-wp-bind--disabled="!state.isHydrated || state.isSaving"
+		data-wp-bind--disabled="state.isSaving"
 		data-wp-class--active="state.isActive"
 		data-wp-on--click="actions.toggle"
 		type="button"
@@ -95,8 +94,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 
 	<div class="my-typia-block-counter">
 		<button
-			disabled
-			data-wp-bind--disabled="!state.isHydrated || state.isSaving"
+			data-wp-bind--disabled="state.isSaving"
 			data-wp-on--click="actions.incrementCounter"
 			type="button"
 		>
