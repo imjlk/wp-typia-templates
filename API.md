@@ -39,9 +39,12 @@ Migration commands remain available inside migration-capable projects such as [`
 ```bash
 wp-typia migrations init --current-version 1.0.0
 wp-typia migrations snapshot --version 1.0.0
+wp-typia migrations doctor --all
 wp-typia migrations diff --from 1.0.0
 wp-typia migrations scaffold --from 1.0.0
+wp-typia migrations fixtures --all --force
 wp-typia migrations verify --all
+wp-typia migrations fuzz --all --iterations 25 --seed 1
 ```
 
 Compatibility note: `create-wp-typia` remains available only as an unscoped shim for `bun create wp-typia` and historical installs. New users should start from `@wp-typia/create`.
@@ -105,6 +108,8 @@ Migration-capable reference apps or custom projects may also add:
 - `src/migrations/rules/`
 - `src/migrations/generated/`
 - `src/migrations/fixtures/`
+
+`migrations doctor` is the read-only workspace health check, `migrations fixtures` refreshes deterministic edge fixtures, and `migrations fuzz` replays those fixtures plus seeded random legacy-shaped inputs derived from the current Typia validator.
 
 ## 4. Repo-local example app
 

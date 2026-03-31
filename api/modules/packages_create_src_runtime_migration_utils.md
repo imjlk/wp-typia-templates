@@ -264,7 +264,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:131](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L131)
+[packages/create/src/runtime/migration-utils.ts:134](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L134)
 
 ___
 
@@ -285,7 +285,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:148](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L148)
+[packages/create/src/runtime/migration-utils.ts:151](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L151)
 
 ___
 
@@ -305,7 +305,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:163](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L163)
+[packages/create/src/runtime/migration-utils.ts:166](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L166)
 
 ___
 
@@ -325,7 +325,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:174](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L174)
+[packages/create/src/runtime/migration-utils.ts:177](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L177)
 
 ___
 
@@ -346,7 +346,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:185](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L185)
+[packages/create/src/runtime/migration-utils.ts:188](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L188)
 
 ___
 
@@ -367,7 +367,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:189](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L189)
+[packages/create/src/runtime/migration-utils.ts:192](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L192)
 
 ___
 
@@ -388,7 +388,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:195](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L195)
+[packages/create/src/runtime/migration-utils.ts:198](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L198)
 
 ___
 
@@ -408,7 +408,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:209](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L209)
+[packages/create/src/runtime/migration-utils.ts:212](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L212)
 
 ___
 
@@ -428,7 +428,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:213](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L213)
+[packages/create/src/runtime/migration-utils.ts:216](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L216)
 
 ___
 
@@ -448,4 +448,4 @@ value is number
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:217](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L217)
+[packages/create/src/runtime/migration-utils.ts:220](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L220)

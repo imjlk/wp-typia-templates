@@ -16,4 +16,4 @@
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/generated/deprecated.ts:3](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/generated/deprecated.ts#L3)
+[examples/my-typia-block/src/migrations/generated/deprecated.ts:4](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/generated/deprecated.ts#L4)

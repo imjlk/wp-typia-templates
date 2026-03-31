@@ -13,6 +13,7 @@
 - [targetVersion](examples_my_typia_block_src_migrations.MigrationAnalysis.md#targetversion)
 - [confidence](examples_my_typia_block_src_migrations.MigrationAnalysis.md#confidence)
 - [reasons](examples_my_typia_block_src_migrations.MigrationAnalysis.md#reasons)
+- [riskSummary](examples_my_typia_block_src_migrations.MigrationAnalysis.md#risksummary)
 - [warnings](examples_my_typia_block_src_migrations.MigrationAnalysis.md#warnings)
 - [affectedFields](examples_my_typia_block_src_migrations.MigrationAnalysis.md#affectedfields)
 
@@ -24,7 +25,7 @@
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:16](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L16)
+[examples/my-typia-block/src/migrations/index.ts:17](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L17)
 
 ___
 
@@ -34,7 +35,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:17](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L17)
+[examples/my-typia-block/src/migrations/index.ts:18](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L18)
 
 ___
 
@@ -44,7 +45,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:18](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L18)
+[examples/my-typia-block/src/migrations/index.ts:19](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L19)
 
 ___
 
@@ -54,7 +55,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:19](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L19)
+[examples/my-typia-block/src/migrations/index.ts:20](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L20)
 
 ___
 
@@ -64,7 +65,17 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:20](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L20)
+[examples/my-typia-block/src/migrations/index.ts:21](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L21)
+
+___
+
+### riskSummary
+
+• **riskSummary**: [`MigrationRiskSummary`](examples_my_typia_block_src_migrations_helpers.MigrationRiskSummary.md)
+
+#### Defined in
+
+[examples/my-typia-block/src/migrations/index.ts:22](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L22)
 
 ___
 
@@ -74,7 +85,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:21](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L21)
+[examples/my-typia-block/src/migrations/index.ts:23](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L23)
 
 ___
 
@@ -92,4 +103,4 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:22](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L22)
+[examples/my-typia-block/src/migrations/index.ts:24](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L24)

@@ -27,6 +27,11 @@
 - [TransformSuggestion](../interfaces/packages_create_src_runtime_migration_types.TransformSuggestion.md)
 - [MigrationDiffSummary](../interfaces/packages_create_src_runtime_migration_types.MigrationDiffSummary.md)
 - [MigrationDiff](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md)
+- [MigrationRiskBucket](../interfaces/packages_create_src_runtime_migration_types.MigrationRiskBucket.md)
+- [MigrationRiskSummary](../interfaces/packages_create_src_runtime_migration_types.MigrationRiskSummary.md)
+- [MigrationFuzzMapping](../interfaces/packages_create_src_runtime_migration_types.MigrationFuzzMapping.md)
+- [MigrationFuzzPlan](../interfaces/packages_create_src_runtime_migration_types.MigrationFuzzPlan.md)
+- [GeneratedMigrationEntry](../interfaces/packages_create_src_runtime_migration_types.GeneratedMigrationEntry.md)
 - [MigrationRuleFileInput](../interfaces/packages_create_src_runtime_migration_types.MigrationRuleFileInput.md)
 - [MigrationFixtureCase](../interfaces/packages_create_src_runtime_migration_types.MigrationFixtureCase.md)
 - [MigrationFixtureDocument](../interfaces/packages_create_src_runtime_migration_types.MigrationFixtureDocument.md)
@@ -92,7 +97,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:200](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L200)
+[packages/create/src/runtime/migration-types.ts:232](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L232)
 
 ___
 
@@ -102,4 +107,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:201](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L201)
+[packages/create/src/runtime/migration-types.ts:233](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L233)
