@@ -1,3 +1,4 @@
-import type { BlockConfiguration } from '@wordpress/blocks';
+/* eslint-disable prettier/prettier */
+import type { BlockConfiguration } from "@wordpress/blocks";
 
-export const deprecated: NonNullable< BlockConfiguration[ 'deprecated' ] > = [];
+export const deprecated: NonNullable<BlockConfiguration["deprecated"]> = [];

@@ -48,6 +48,17 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Cache wp-env home
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.wp-env
+            ~/wp-env
+          key: wp-env-${{ runner.os }}-${{ matrix.node }}-${{ hashFiles('.wp-env.json', '.wp-env.test.json', 'examples/my-typia-block/package.json', 'bun.lock') }}
+          restore-keys: |
+            wp-env-${{ runner.os }}-${{ matrix.node }}-
+            wp-env-${{ runner.os }}-
+
       - name: Run unit tests
         run: bun run test
 
@@ -58,9 +69,8 @@ jobs:
 
       - name: Setup example WordPress environment
         run: |
-          bun run examples:wp-env:stop || true
-          bun run examples:wp-env:start
-          sleep 30
+          bun run examples:wp-env:stop:test || true
+          bun run examples:wp-env:start:test
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
@@ -74,11 +84,12 @@ jobs:
         run: bunx playwright install --with-deps chromium
 
       - name: Run example E2E tests
-        run: bun run examples:test:e2e
+        run: bun run examples:test:e2e:ci
 
       - name: Stop WordPress
         if: always()
-        run: bun run examples:wp-env:stop
+        continue-on-error: true
+        run: bun run examples:wp-env:stop:test
 
   security-scan:
     name: Security Scan

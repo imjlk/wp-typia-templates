@@ -1,0 +1,145 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "create-block/my-typia-block",
+	"version": "0.1.0",
+	"title": "My Typia Block",
+	"category": "widgets",
+	"icon": "smiley",
+	"description": "Kitchen-sink showcase block for wp-typia",
+	"keywords": [
+		"typia",
+		"my-typia-block",
+		"custom"
+	],
+	"example": {
+		"attributes": {
+			"id": "00000000-0000-4000-8000-000000000000",
+			"version": 1,
+			"className": "Example className",
+			"content": "",
+			"alignment": "left",
+			"isVisible": true,
+			"fontSize": "medium",
+			"textColor": "currentColor",
+			"backgroundColor": "transparent",
+			"aspectRatio": "16/9",
+			"padding": {
+				"top": 0,
+				"right": 0,
+				"bottom": 0,
+				"left": 0
+			},
+			"borderRadius": 0,
+			"animation": "none",
+			"linkTarget": {
+				"kind": "url",
+				"href": "Example href"
+			}
+		}
+	},
+	"supports": {
+		"html": false,
+		"interactivity": {
+			"clientNavigation": true
+		}
+	},
+	"textdomain": "my_typia_block",
+	"attributes": {
+		"id": {
+			"type": "string"
+		},
+		"version": {
+			"type": "number",
+			"default": 1
+		},
+		"className": {
+			"type": "string"
+		},
+		"content": {
+			"type": "string",
+			"default": ""
+		},
+		"alignment": {
+			"type": "string",
+			"default": "left",
+			"enum": [
+				"left",
+				"center",
+				"right",
+				"justify"
+			]
+		},
+		"isVisible": {
+			"type": "boolean",
+			"default": true
+		},
+		"fontSize": {
+			"type": "string",
+			"default": "medium",
+			"enum": [
+				"small",
+				"medium",
+				"large",
+				"xlarge"
+			]
+		},
+		"textColor": {
+			"type": "string",
+			"default": "currentColor",
+			"enum": [
+				"transparent",
+				"currentColor",
+				"inherit",
+				"initial",
+				"unset"
+			]
+		},
+		"backgroundColor": {
+			"type": "string",
+			"default": "transparent",
+			"enum": [
+				"transparent",
+				"currentColor",
+				"inherit",
+				"initial",
+				"unset"
+			]
+		},
+		"aspectRatio": {
+			"type": "string",
+			"default": "16/9",
+			"enum": [
+				"auto",
+				"1",
+				"1/1",
+				"4/3",
+				"3/4",
+				"3/2",
+				"2/3",
+				"16/9",
+				"9/16",
+				"21/9"
+			]
+		},
+		"padding": {
+			"type": "object"
+		},
+		"borderRadius": {
+			"type": "number",
+			"default": 0
+		},
+		"animation": {
+			"type": "string",
+			"default": "none",
+			"enum": [
+				"none",
+				"fadeIn",
+				"bounce"
+			]
+		},
+		"linkTarget": {
+			"type": "object"
+		}
+	}
+}

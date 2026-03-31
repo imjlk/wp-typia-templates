@@ -47,9 +47,12 @@ Example:
 ```bash
 bun run sync-types
 bun run migration:snapshot -- --version 2.0.0
+bun run migration:doctor
 bun run migration:diff -- --from 1.0.0
 bun run migration:scaffold -- --from 1.0.0
+bun run migration:fixtures -- --all --force
 bun run migration:verify
+bun run migration:fuzz -- --all --iterations 25 --seed 1
 ```
 
 The intended authoring flow is:
@@ -62,8 +65,10 @@ The intended authoring flow is:
 6. fill in any suggested semantic transforms
 7. adjust nested leaf paths like `settings.label` or `linkTarget.url.href` if object or union-branch fields moved
 8. adjust the generated fixture cases to match real legacy payloads
-8. run `migration:verify`
-9. use the admin dashboard dry-run before batch migration
+9. run `migration:doctor`
+10. run `migration:verify`
+11. run `migration:fuzz`
+12. use the admin dashboard dry-run before batch migration
 
 ## Generated rule files
 
@@ -104,6 +109,19 @@ Scaffolded rules expose:
 - `unresolved`: issues that must be resolved before `verify`
 - `migrate()`: the generated edge implementation used by deprecated entries and batch migration
 
+`migration:doctor` now acts as the read-only workspace check. It verifies:
+
+- snapshot directories and required files
+- generated `registry.ts`, `deprecated.ts`, `verify.ts`, and `fuzz.ts`
+- missing or empty edge fixtures
+- unresolved `TODO MIGRATION:` markers
+- deprecated / generated registry drift
+- fixture coverage for default, rename, transform, and supported union-branch cases
+
+`migration:fixtures` is the explicit refresh path for edge fixtures. Without `--force`, existing fixture files are preserved and reported as skipped.
+
+`migration:fuzz` is intentionally separate from `migration:verify`. `verify` stays deterministic and fixture-driven, while `fuzz` replays fixture cases and then generates seeded random current samples with `validators.random()`, converts the safe subset back into legacy-shaped inputs, migrates them, and validates the result against the current Typia validator.
+
 High-confidence renames are written into `renameMap` automatically. Ambiguous candidates stay unresolved, and semantic-risk coercions are emitted as suggested transform bodies with unresolved markers left in place. Nested authoring uses the current-path convention:
 
 - `settings.label`
@@ -140,6 +158,7 @@ The dashboard preview now highlights:
 
 - changed field paths
 - discriminated union branch matches
+- migration risk summary buckets (`additive`, `rename`, `semanticTransform`, `unionBreaking`)
 - validation errors
 - unresolved/manual review badges
 - compact post summaries with expandable before/after payload detail

@@ -158,7 +158,8 @@ export function parseMigrationConfig(source: string): MigrationConfig {
 }
 
 function matchConfigValue(source: string, key: string): string | null {
-	return source.match(new RegExp(`${key}:\\s*"([^"]+)"`))?.[1] ?? null;
+	const pattern = new RegExp(`${key}:\\s*["']([^"']+)["']`);
+	return source.match(pattern)?.[1] ?? null;
 }
 
 export function writeMigrationConfig(projectDir: string, config: MigrationConfig): void {
@@ -167,10 +168,10 @@ export function writeMigrationConfig(projectDir: string, config: MigrationConfig
 	fs.writeFileSync(
 		paths.configFile,
 		`export const migrationConfig = {
-	blockName: "${config.blockName}",
-	currentVersion: "${config.currentVersion}",
-	supportedVersions: [${config.supportedVersions.map((version) => `"${version}"`).join(", ")}],
-	snapshotDir: "${config.snapshotDir}",
+	blockName: '${config.blockName}',
+	currentVersion: '${config.currentVersion}',
+	supportedVersions: [ ${config.supportedVersions.map((version) => `'${version}'`).join(", ")} ],
+	snapshotDir: '${config.snapshotDir}',
 } as const;
 
 export default migrationConfig;

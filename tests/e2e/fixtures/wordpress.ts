@@ -23,17 +23,6 @@ export const EXAMPLE_BLOCK = {
 
 export const test = base;
 
-async function waitForAdminReady(page: Page) {
-  await page.waitForLoadState('domcontentloaded');
-  await page.waitForFunction(() => {
-    return (
-      window.location.pathname.startsWith('/wp-admin') ||
-      Boolean(document.querySelector('#wpadminbar')) ||
-      document.body.classList.contains('wp-admin')
-    );
-  }, { timeout: 60_000 });
-}
-
 export class WordPressPage {
   constructor(public page: Page) {}
 
@@ -50,7 +39,9 @@ export class WordPressPage {
   }
 
   async login(username = 'admin', password = 'password') {
-    await this.page.goto('/wp-admin/', { waitUntil: 'domcontentloaded' });
+    await this.page.goto('/wp-login.php?redirect_to=%2Fwp-admin%2Fpost-new.php', {
+      waitUntil: 'domcontentloaded',
+    });
 
     if (this.page.url().includes('/wp-login.php')) {
       await this.page.fill('#user_login', username);
@@ -66,15 +57,13 @@ export class WordPressPage {
       if (loginErrors.length > 0) {
         throw new Error(`WordPress login failed: ${loginErrors.join(' ')}`);
       }
-
-      await this.page.goto('/wp-admin/', { waitUntil: 'domcontentloaded' });
     }
-
-    await waitForAdminReady(this.page);
   }
 
   async createPost(title = 'Typia Block Test') {
-    await this.page.goto('/wp-admin/post-new.php');
+    if (!this.page.url().includes('/wp-admin/post-new.php')) {
+      await this.page.goto('/wp-admin/post-new.php', { waitUntil: 'domcontentloaded' });
+    }
     await this.waitForEditorReady();
 
     const titleInput = this.getEditorCanvas().getByRole('textbox', { name: 'Add title' });
@@ -87,8 +76,10 @@ export class WordPressPage {
   }
 
   async insertBlock(block = EXAMPLE_BLOCK) {
+    await this.waitForBlockTypeRegistered(block.name);
     await this.dismissWelcomeGuideIfPresent();
 
+    let inserted = false;
     try {
       const inserterButton = this.page
         .getByRole('button', { name: /Block Inserter|Toggle block inserter/i })
@@ -116,11 +107,16 @@ export class WordPressPage {
 
       await searchInput.fill(block.title);
       await this.page.getByRole('option', { name: block.title }).first().click({ timeout: 5_000 });
+
+      await this.waitForBlockInEditor(block.name, 5_000);
+      inserted = true;
     } catch {
       await this.insertBlockViaStore(block.name);
     }
 
-    await this.waitForBlockInEditor(block.name);
+    if (!inserted) {
+      await this.waitForBlockInEditor(block.name);
+    }
     await this.selectLatestBlock(block.name);
     await expect(this.getBlockLocator(block.name).first()).toBeVisible();
   }
@@ -324,12 +320,19 @@ export class WordPressPage {
     });
   }
 
-  private async waitForBlockInEditor(blockType: string) {
+  private async waitForBlockTypeRegistered(blockType: string) {
+    await this.page.waitForFunction((type) => {
+      const wp = (window as any).wp;
+      return Boolean(wp?.blocks?.getBlockType?.(type));
+    }, blockType);
+  }
+
+  private async waitForBlockInEditor(blockType: string, timeout = 30_000) {
     await this.page.waitForFunction((type) => {
       const wp = (window as any).wp;
       const blocks = wp?.data?.select('core/block-editor')?.getBlocks?.() ?? [];
       return blocks.some((block: any) => block.name === type);
-    }, blockType);
+    }, blockType, { timeout });
   }
 }
 

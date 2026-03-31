@@ -135,7 +135,7 @@ export function formatHelpText(): string {
   wp-typia <project-dir> [--template <npm-package>] [--variant <name>] [--yes] [--no-install] [--package-manager <id>]
   wp-typia templates list
   wp-typia templates inspect <id>
-  wp-typia migrations <init|snapshot|diff|scaffold|verify> [...]
+  wp-typia migrations <init|snapshot|diff|scaffold|verify|doctor|fixtures|fuzz> [...]
   wp-typia doctor
 
 Built-in templates: ${TEMPLATE_IDS.join(", ")}

@@ -13,9 +13,35 @@ import {
 
 interface MigrationStats {
 	needsMigration: number;
+	riskTotals: {
+		additive: number;
+		rename: number;
+		semanticTransform: number;
+		unionBreaking: number;
+	};
 	total: number;
 	unknown: number;
 	versions: Record< string, number >;
+}
+
+function formatRiskSummaryLine(
+	result: BlockScanResult[ 'analysis' ]
+): string {
+	return `additive ${ result.riskSummary.additive.count }, rename ${ result.riskSummary.rename.count }, transform ${ result.riskSummary.semanticTransform.count }, union breaking ${ result.riskSummary.unionBreaking.count }`;
+}
+
+function findAnalysisForPreview(
+	results: BlockScanResult[],
+	postId: number,
+	blockPath: number[]
+): BlockScanResult[ 'analysis' ] | null {
+	return (
+		results.find(
+			( result ) =>
+				result.postId === postId &&
+				result.blockPath.join( '.' ) === blockPath.join( '.' )
+		)?.analysis ?? null
+	);
 }
 
 function collectStats( results: BlockScanResult[] ): MigrationStats {
@@ -31,10 +57,24 @@ function collectStats( results: BlockScanResult[] ): MigrationStats {
 			accumulator.versions[ result.analysis.currentVersion ] =
 				( accumulator.versions[ result.analysis.currentVersion ] ??
 					0 ) + 1;
+			accumulator.riskTotals.additive +=
+				result.analysis.riskSummary.additive.count;
+			accumulator.riskTotals.rename +=
+				result.analysis.riskSummary.rename.count;
+			accumulator.riskTotals.semanticTransform +=
+				result.analysis.riskSummary.semanticTransform.count;
+			accumulator.riskTotals.unionBreaking +=
+				result.analysis.riskSummary.unionBreaking.count;
 			return accumulator;
 		},
 		{
 			needsMigration: 0,
+			riskTotals: {
+				additive: 0,
+				rename: 0,
+				semanticTransform: 0,
+				unionBreaking: 0,
+			},
 			total: 0,
 			unknown: 0,
 			versions: {},
@@ -295,6 +335,22 @@ export function MigrationDashboard() {
 											) }
 											: { stats.unknown }
 										</li>
+										<li>
+											{ __(
+												'Risk summary',
+												'my_typia_block'
+											) }
+											: additive{ ' ' }
+											{ stats.riskTotals.additive },
+											rename { stats.riskTotals.rename },
+											transform{ ' ' }
+											{
+												stats.riskTotals
+													.semanticTransform
+											}
+											, union breaking{ ' ' }
+											{ stats.riskTotals.unionBreaking }
+										</li>
 									</ul>
 								</div>
 
@@ -402,6 +458,19 @@ export function MigrationDashboard() {
 																		'None',
 																		'my_typia_block'
 																  ) }
+														</div>
+													</div>
+													<div>
+														<strong>
+															{ __(
+																'Risk summary',
+																'my_typia_block'
+															) }
+														</strong>
+														<div>
+															{ formatRiskSummaryLine(
+																result.analysis
+															) }
 														</div>
 													</div>
 													<div>
@@ -516,59 +585,74 @@ export function MigrationDashboard() {
 												} }
 											>
 												{ post.previews.map(
-													( preview ) => (
-														<div
-															key={ preview.blockPath.join(
-																'.'
-															) }
-														>
-															<div>
-																<strong>
+													( preview ) => {
+														const analysis =
+															findAnalysisForPreview(
+																results,
+																post.postId,
+																preview.blockPath
+															);
+
+														return (
+															<div
+																key={ preview.blockPath.join(
+																	'.'
+																) }
+															>
+																<div>
+																	<strong>
+																		{
+																			preview.currentVersion
+																		}{ ' ' }
+																		→{ ' ' }
+																		{
+																			preview.targetVersion
+																		}
+																	</strong>
+																	{ preview
+																		.preview
+																		.changedFields
+																		.length >
+																	0
+																		? ` · ${ preview.preview.changedFields.join(
+																				', '
+																		  ) }`
+																		: '' }
+																	{ analysis
+																		? ` · ${ formatRiskSummaryLine(
+																				analysis
+																		  ) }`
+																		: '' }
+																	{ preview.reason
+																		? ` · ${ preview.reason }`
+																		: '' }
+																</div>
+																<div>
+																	{ formatUnionSummary(
+																		preview.preview
+																	) }
+																</div>
+																{ renderJsonPreview(
 																	{
-																		preview.currentVersion
-																	}{ ' ' }
-																	→{ ' ' }
-																	{
-																		preview.targetVersion
+																		after: preview
+																			.preview
+																			.after,
+																		before: preview
+																			.preview
+																			.before,
+																		unresolved:
+																			preview
+																				.preview
+																				.unresolved,
+																		validationErrors:
+																			preview
+																				.preview
+																				.validationErrors,
 																	}
-																</strong>
-																{ preview
-																	.preview
-																	.changedFields
-																	.length > 0
-																	? ` · ${ preview.preview.changedFields.join(
-																			', '
-																	  ) }`
-																	: '' }
-																{ preview.reason
-																	? ` · ${ preview.reason }`
-																	: '' }
-															</div>
-															<div>
-																{ formatUnionSummary(
-																	preview.preview
 																) }
 															</div>
-															{ renderJsonPreview(
-																{
-																	after: preview
-																		.preview
-																		.after,
-																	before: preview
-																		.preview
-																		.before,
-																	unresolved:
-																		preview
-																			.preview
-																			.unresolved,
-																	validationErrors:
-																		preview
-																			.preview
-																			.validationErrors,
-																}
-															) }
-														</div>
-													)
+														);
+													}
 												) }
 											</div>
 										</details>

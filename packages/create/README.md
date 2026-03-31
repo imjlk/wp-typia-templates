@@ -85,9 +85,12 @@ The `migrations` commands remain available for projects that include the migrati
 
 ```bash
 wp-typia migrations init --current-version 1.0.0
+wp-typia migrations doctor --all
 wp-typia migrations diff --from 1.0.0
 wp-typia migrations scaffold --from 1.0.0
+wp-typia migrations fixtures --all --force
 wp-typia migrations verify --all
+wp-typia migrations fuzz --all --iterations 25 --seed 1
 ```
 
 Repo development stays Bun-first. The generated project can use `bun`, `npm`, `pnpm`, or `yarn`.

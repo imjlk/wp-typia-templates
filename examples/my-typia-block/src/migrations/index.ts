@@ -8,6 +8,7 @@ import migrationRegistry from './generated/registry';
 import {
 	type ManifestAttribute,
 	type ManifestDocument,
+	type MigrationRiskSummary,
 	manifestMatchesDocument,
 	summarizeVersionDelta,
 } from './helpers';
@@ -18,6 +19,7 @@ export interface MigrationAnalysis {
 	targetVersion: string;
 	confidence: number;
 	reasons: string[];
+	riskSummary: MigrationRiskSummary;
 	warnings: string[];
 	affectedFields: {
 		added: string[];
@@ -110,6 +112,29 @@ type ParsedBlock = BlockInstance< Record< string, unknown > >;
 interface MigrationResolution {
 	analysis: MigrationAnalysis;
 	preview: MigrationPreview;
+}
+
+const EMPTY_RISK_SUMMARY: MigrationRiskSummary = {
+	additive: {
+		count: 0,
+		items: [],
+	},
+	rename: {
+		count: 0,
+		items: [],
+	},
+	semanticTransform: {
+		count: 0,
+		items: [],
+	},
+	unionBreaking: {
+		count: 0,
+		items: [],
+	},
+};
+
+function formatRiskSummary( riskSummary: MigrationRiskSummary ): string {
+	return `additive ${ riskSummary.additive.count }, rename ${ riskSummary.rename.count }, transform ${ riskSummary.semanticTransform.count }, union breaking ${ riskSummary.unionBreaking.count }`;
 }
 
 export function detectBlockMigration(
@@ -309,6 +334,9 @@ export function generateMigrationReport(
 		report += `## ${ entry.postTitle } (#${ entry.postId })\n`;
 		report += `- Version: ${ entry.analysis.currentVersion } -> ${ entry.analysis.targetVersion }\n`;
 		report += `- Confidence: ${ entry.analysis.confidence }\n`;
+		report += `- Risk summary: ${ formatRiskSummary(
+			entry.analysis.riskSummary
+		) }\n`;
 		if ( entry.preview.changedFields.length > 0 ) {
 			report += `- Changed fields: ${ entry.preview.changedFields.join(
 				', '
@@ -515,6 +543,7 @@ function resolveMigrationState(
 				currentVersion: migrationRegistry.currentVersion,
 				needsMigration: false,
 				reasons: [ 'Current Typia validator accepted the attributes.' ],
+				riskSummary: EMPTY_RISK_SUMMARY,
 				targetVersion: migrationRegistry.currentVersion,
 				warnings: [],
 			} satisfies MigrationAnalysis,
@@ -584,6 +613,7 @@ function resolveMigrationState(
 								})`
 						),
 					],
+					riskSummary: entry.riskSummary ?? EMPTY_RISK_SUMMARY,
 					targetVersion: migrationRegistry.currentVersion,
 					warnings: [ ...unresolved, ...validationErrors ],
 				} satisfies MigrationAnalysis,
@@ -605,6 +635,7 @@ function resolveMigrationState(
 			reasons: [
 				'No legacy snapshot matched and current Typia validator rejected the attributes.',
 			],
+			riskSummary: EMPTY_RISK_SUMMARY,
 			targetVersion: migrationRegistry.currentVersion,
 			warnings: formatValidationErrors( currentValidation.errors ),
 		} satisfies MigrationAnalysis,
