@@ -1,0 +1,52 @@
+import type { TextAlignment } from '@wp-typia/block-types/block-editor/alignment';
+import type {
+	TypiaValidationError,
+	ValidationResult,
+} from '@wp-typia/create/runtime/validation';
+import { tags } from 'typia';
+
+export type {
+	TypiaValidationError,
+	ValidationResult,
+} from '@wp-typia/create/runtime/validation';
+
+export interface {{pascalCase}}Attributes {
+	content: string &
+		tags.MinLength< 1 > &
+		tags.MaxLength< 250 > &
+		tags.Default< '{{title}} persisted block' >;
+	alignment?: TextAlignment & tags.Default< 'left' >;
+	isVisible?: boolean & tags.Default< true >;
+	showCount?: boolean & tags.Default< true >;
+	buttonLabel?: string &
+		tags.MinLength< 1 > &
+		tags.MaxLength< 40 > &
+		tags.Default< 'Save Reaction' >;
+	resourceKey?: string &
+		tags.MinLength< 1 > &
+		tags.MaxLength< 100 > &
+		tags.Default< 'primary' >;
+}
+
+export interface {{pascalCase}}Context {
+	buttonLabel: string;
+	canWrite: boolean;
+	count: number;
+	postId: number;
+	restNonce: string;
+	resourceKey: string;
+	storage: 'post-meta' | 'custom-table';
+	writeAuthMode: 'nonce' | 'public';
+}
+
+export interface {{pascalCase}}State {
+	canWrite: boolean;
+	count: number;
+	error?: string;
+	isHydrated: boolean;
+	isLoading: boolean;
+	isSaving: boolean;
+	isVisible: boolean;
+}
+
+export type {{pascalCase}}ValidationResult = ValidationResult< {{pascalCase}}Attributes >;

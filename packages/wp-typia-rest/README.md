@@ -6,6 +6,7 @@ This package focuses on:
 
 - validated `apiFetch` wrappers
 - typed endpoint helpers
+- canonical WordPress REST route URL resolution
 - optional query/header decoder helpers that can wrap Typia-generated HTTP decoders
 
 It does not include any WordPress PHP bridge logic. Generated PHP route code stays in `@wp-typia/create` templates.
@@ -23,6 +24,14 @@ const endpoint = createEndpoint<MyRequest, MyResponse>({
 });
 
 const result = await callEndpoint(endpoint, { title: "Hello" });
+```
+
+If you need a canonical REST URL for a route path, use:
+
+```ts
+import { resolveRestRouteUrl } from "@wp-typia/rest";
+
+const url = resolveRestRouteUrl("/my-namespace/v1/demo");
 ```
 
 If you want Typia-powered HTTP decoding, compile the decoder in the consumer project and pass it in:

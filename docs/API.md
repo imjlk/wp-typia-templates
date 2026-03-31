@@ -20,13 +20,20 @@ wp-typia templates inspect basic
 wp-typia doctor
 ```
 
-Built-in templates currently include `basic`, `interactivity`, and `data`.
+Built-in templates currently include `basic`, `interactivity`, `data`, and `persisted`.
 
 `data` also accepts:
 
 ```bash
 wp-typia my-block --template data --data-storage post-meta --package-manager npm --yes --no-install
 wp-typia my-block --template data --data-storage custom-table --package-manager bun --yes --no-install
+```
+
+`persisted` also accepts:
+
+```bash
+wp-typia my-block --template persisted --data-storage custom-table --write-auth nonce --package-manager bun --yes --no-install
+wp-typia my-block --template persisted --data-storage post-meta --write-auth public --package-manager npm --yes --no-install
 ```
 
 Remote template MVP:
@@ -71,6 +78,7 @@ import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment
 - `createValidatedFetch<T>()`
 - `createEndpoint<Req, Res>()`
 - `callEndpoint<Req, Res>()`
+- `resolveRestRouteUrl(routePath, root?)`
 - `createQueryDecoder<T>()`
 - `createHeadersDecoder<T>()`
 
@@ -131,7 +139,7 @@ Migration-capable reference apps or custom projects may also add:
 
 `migrations doctor` is the read-only workspace health check, `migrations fixtures` refreshes deterministic edge fixtures, and `migrations fuzz` replays those fixtures plus seeded random legacy-shaped inputs derived from the current Typia validator.
 
-The built-in `data` template adds another predictable layer:
+The built-in `data` and `persisted` templates add another predictable layer:
 
 - `src/api-types.ts`
 - `src/api-validators.ts`
@@ -139,6 +147,8 @@ The built-in `data` template adds another predictable layer:
 - `src/api-schemas/`
 - `scripts/sync-rest-contracts.ts`
 - a plugin bootstrap PHP file with generated REST route/storage wiring
+
+`data` is the simple public persistence sample. `persisted` is the auth-first persisted write sample with selectable write auth modes.
 
 ## 5. Repo-local example app
 

@@ -16,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( '{{slugSnakeCase}}_DATA_STORAGE_MODE', '{{dataStorageMode}}' );
+define( '{{slugSnakeCase}}_WRITE_AUTH_MODE', '{{writeAuthMode}}' );
 
 function {{slugSnakeCase}}_get_build_dir() {
 	$candidates = array(
@@ -144,6 +145,45 @@ function {{slugSnakeCase}}_validate_and_sanitize_request( $value, $schema_name, 
 	}
 
 	return rest_sanitize_value_from_schema( $value, $rest_schema, $param_name );
+}
+
+function {{slugSnakeCase}}_get_rest_nonce( WP_REST_Request $request ) {
+	$header_nonce = $request->get_header( 'X-WP-Nonce' );
+	if ( is_string( $header_nonce ) && '' !== $header_nonce ) {
+		return $header_nonce;
+	}
+
+	$query_nonce = $request->get_param( '_wpnonce' );
+	if ( is_string( $query_nonce ) && '' !== $query_nonce ) {
+		return $query_nonce;
+	}
+
+	return null;
+}
+
+function {{slugSnakeCase}}_can_write( WP_REST_Request $request ) {
+	if ( 'public' === '{{writeAuthMode}}' ) {
+		return true;
+	}
+
+	if ( ! is_user_logged_in() ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'Authentication is required to update this counter.',
+			array( 'status' => rest_authorization_required_code() )
+		);
+	}
+
+	$nonce = {{slugSnakeCase}}_get_rest_nonce( $request );
+	if ( ! is_string( $nonce ) || '' === $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The REST nonce is missing or invalid.',
+			array( 'status' => 403 )
+		);
+	}
+
+	return true;
 }
 
 function {{slugSnakeCase}}_get_counter( $post_id, $resource_key ) {
@@ -280,10 +320,9 @@ function {{slugSnakeCase}}_register_routes() {
 				'permission_callback' => '__return_true',
 			),
 			array(
-				// Intentional sample behavior: this template demonstrates anonymous/public writes.
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => '{{slugSnakeCase}}_handle_increment_counter',
-				'permission_callback' => '__return_true',
+				'permission_callback' => '{{slugSnakeCase}}_can_write',
 			),
 		)
 	);

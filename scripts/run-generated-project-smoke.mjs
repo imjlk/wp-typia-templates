@@ -33,6 +33,7 @@ function parseArgs(argv) {
 		runtime: undefined,
 		template: undefined,
 		variant: undefined,
+		writeAuth: undefined,
 	};
 
 	for (let index = 0; index < argv.length; index += 1) {
@@ -66,6 +67,11 @@ function parseArgs(argv) {
 		}
 		if (arg === "--project-name") {
 			parsed.projectName = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--write-auth") {
+			parsed.writeAuth = next;
 			index += 1;
 			continue;
 		}
@@ -272,11 +278,11 @@ function rewriteWorkspaceDependencies(projectDir) {
 }
 
 function main() {
-	const { runtime, template, packageManager, projectName, variant, dataStorage } = parseArgs(process.argv.slice(2));
+	const { runtime, template, packageManager, projectName, variant, dataStorage, writeAuth } = parseArgs(process.argv.slice(2));
 
 	if (!runtime || !template || !packageManager || !projectName) {
 		throw new Error(
-			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--data-storage <post-meta|custom-table>] --package-manager <id> --project-name <name>",
+			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--data-storage <post-meta|custom-table>] [--write-auth <nonce|public>] --package-manager <id> --project-name <name>",
 		);
 	}
 
@@ -293,6 +299,7 @@ function main() {
 			template,
 			...(variant ? ["--variant", variant] : []),
 			...(dataStorage ? ["--data-storage", dataStorage] : []),
+			...(writeAuth ? ["--write-auth", writeAuth] : []),
 			"--yes",
 			"--no-install",
 			"--package-manager",
@@ -326,7 +333,7 @@ function main() {
 		run(buildCommand, buildArgs, { cwd: projectDir });
 
 		assertBuildArtifacts(projectDir, projectName);
-		if (template === "data") {
+		if (template === "data" || template === "persisted") {
 			assertDataTemplateArtifacts(projectDir, projectName);
 		}
 		for (const artifact of [

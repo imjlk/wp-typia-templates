@@ -67,13 +67,42 @@ function getDefaultRestRoot(): string {
 	return "http://localhost/wp-json/";
 }
 
+export function resolveRestRouteUrl(routePath: string, root = getDefaultRestRoot()): string {
+	const [pathWithQuery, hash = ""] = routePath.split("#", 2);
+	const [rawPath, rawQuery = ""] = pathWithQuery.split("?", 2);
+	const normalizedRoute = `/${rawPath.replace(/^\/+/, "").replace(/\/+$/, "")}/`;
+	const queryParams = new URLSearchParams(rawQuery);
+	const resolvedRoot = typeof window !== "undefined" ? new URL(root, window.location.origin) : new URL(root);
+
+	if (resolvedRoot.searchParams.has("rest_route")) {
+		resolvedRoot.searchParams.set("rest_route", normalizedRoute);
+		for (const [key, value] of queryParams) {
+			resolvedRoot.searchParams.append(key, value);
+		}
+		if (hash) {
+			resolvedRoot.hash = hash;
+		}
+		return resolvedRoot.toString();
+	}
+
+	const basePath = resolvedRoot.pathname.endsWith("/") ? resolvedRoot.pathname : `${resolvedRoot.pathname}/`;
+	resolvedRoot.pathname = `${basePath}${normalizedRoute.slice(1)}`;
+	for (const [key, value] of queryParams) {
+		resolvedRoot.searchParams.append(key, value);
+	}
+	if (hash) {
+		resolvedRoot.hash = hash;
+	}
+	return resolvedRoot.toString();
+}
+
 function resolveFetchUrl(options: APIFetchOptions): string {
 	if (typeof options.url === "string" && options.url.length > 0) {
 		return options.url;
 	}
 
 	if (typeof options.path === "string" && options.path.length > 0) {
-		return new URL(options.path.replace(/^\//, ""), getDefaultRestRoot()).toString();
+		return resolveRestRouteUrl(options.path);
 	}
 
 	throw new Error("API fetch options must include either a path or a url.");
@@ -255,7 +284,14 @@ function buildEndpointFetchOptions<Req>(
 			...baseOptions,
 			body: request,
 			method: endpoint.method,
-			path: baseOptions.path ?? endpoint.path,
+			...(baseOptions.url
+				? {
+						url: baseOptions.url,
+						path: undefined,
+					}
+				: {
+						path: baseOptions.path ?? endpoint.path,
+					}),
 		};
 	}
 
@@ -267,7 +303,14 @@ function buildEndpointFetchOptions<Req>(
 			...(baseOptions.headers ?? {}),
 		},
 		method: endpoint.method,
-		path: baseOptions.path ?? endpoint.path,
+		...(baseOptions.url
+			? {
+					url: baseOptions.url,
+					path: undefined,
+				}
+			: {
+					path: baseOptions.path ?? endpoint.path,
+				}),
 	};
 }
 

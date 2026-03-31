@@ -4,6 +4,7 @@ export {
 	callEndpoint,
 	isValidationResult,
 	normalizeValidationError,
+	resolveRestRouteUrl,
 	toValidationResult,
 	type ApiEndpoint,
 	type EndpointCallOptions,

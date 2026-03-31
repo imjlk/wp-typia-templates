@@ -1,4 +1,8 @@
-import { callEndpoint, createEndpoint } from '@wp-typia/rest';
+import {
+	callEndpoint,
+	createEndpoint,
+	resolveRestRouteUrl,
+} from '@wp-typia/rest';
 
 import { apiValidators } from './api-validators';
 import type {
@@ -26,10 +30,6 @@ function getRestRoot(): string {
 	return `${ window.location.origin }/wp-json/`;
 }
 
-function toRestUrl( routePath: string ): string {
-	return new URL( routePath.replace( /^\//, '' ), getRestRoot() ).toString();
-}
-
 function resolveRestNonce( fallback?: string ): string | undefined {
 	if ( typeof fallback === 'string' && fallback.length > 0 ) {
 		return fallback;
@@ -51,7 +51,9 @@ const counterEndpoint = createEndpoint<
 	MyTypiaBlockCounterQuery,
 	MyTypiaBlockCounterResponse
 >( {
-	buildRequestOptions: () => ( { url: toRestUrl( COUNTER_PATH ) } ),
+	buildRequestOptions: () => ( {
+		url: resolveRestRouteUrl( COUNTER_PATH, getRestRoot() ),
+	} ),
 	method: 'GET',
 	path: COUNTER_PATH,
 	validateRequest: apiValidators.counterQuery,
@@ -62,7 +64,9 @@ const incrementCounterEndpoint = createEndpoint<
 	MyTypiaBlockIncrementRequest,
 	MyTypiaBlockCounterResponse
 >( {
-	buildRequestOptions: () => ( { url: toRestUrl( COUNTER_PATH ) } ),
+	buildRequestOptions: () => ( {
+		url: resolveRestRouteUrl( COUNTER_PATH, getRestRoot() ),
+	} ),
 	method: 'POST',
 	path: COUNTER_PATH,
 	validateRequest: apiValidators.incrementRequest,

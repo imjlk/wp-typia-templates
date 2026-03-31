@@ -46,6 +46,7 @@ Built-in templates stay limited to:
 - `basic`
 - `interactivity`
 - `data`
+- `persisted`
 
 Inside `@wp-typia/create`, built-in templates are composed from:
 
@@ -61,6 +62,14 @@ The `data` template extends the same base with:
 - generated PHP route/storage files
 - a selectable persistence mode (`post-meta` or `custom-table`)
 
+The `persisted` template extends the same base with:
+
+- typed REST contracts and client helpers
+- schema sync outputs
+- generated PHP route/storage files
+- a selectable persistence mode (`post-meta` or `custom-table`)
+- a selectable write auth mode (`nonce` or `public`)
+
 Generated projects also import shared runtime helpers from `@wp-typia/create/runtime/*`, so validator/default/runtime behavior can evolve centrally instead of being copied into every generated block.
 
 ## Intended Flow
@@ -69,4 +78,5 @@ Generated projects also import shared runtime helpers from `@wp-typia/create/run
 2. Author the schema in `src/types.ts`
 3. Run `sync-types`
 4. Build and validate the block
-5. Use the example app as the richer reference when you need migration or kitchen-sink patterns
+5. Use `data` for simple public persistence samples or `persisted` for auth-first write patterns
+6. Use the example app as the richer reference when you need migration or kitchen-sink patterns

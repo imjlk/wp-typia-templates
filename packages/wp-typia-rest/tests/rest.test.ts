@@ -8,6 +8,7 @@ import {
 	createParameterDecoder,
 	createQueryDecoder,
 	createValidatedFetch,
+	resolveRestRouteUrl,
 	toValidationResult,
 	type ValidationLike,
 } from "../src/index";
@@ -201,6 +202,63 @@ describe("@wp-typia/rest", () => {
 			"Content-Type": "application/json",
 			"X-WP-Nonce": "demo",
 		});
+	});
+
+	test("callEndpoint preserves buildRequestOptions url for non-GET endpoints", async () => {
+		let seenUrl = "";
+		let seenPath: unknown;
+		const endpoint = createEndpoint<{ title: string }, { ok: boolean }>({
+			buildRequestOptions: () => ({
+				url: "http://localhost:8889/wp-json/demo/v1/items/",
+			}),
+			method: "POST",
+			path: "/items",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { title?: unknown }).title === "string"
+					? toValidationResult(success(input as { title: string }))
+					: toValidationResult(failure<{ title: string }>("{ title: string }", "$.title")),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				(input as { ok?: unknown }).ok === true
+					? toValidationResult(success(input as { ok: boolean }))
+					: toValidationResult(failure<{ ok: boolean }>("{ ok: true }", "$.ok")),
+		});
+
+		await callEndpoint(
+			endpoint,
+			{ title: "Hello" },
+			{
+				fetchFn: asApiFetch(async (options: Record<string, unknown>) => {
+					seenUrl = String(options.url);
+					seenPath = options.path;
+					return { ok: true } as never;
+				}),
+			},
+		);
+
+		expect(seenUrl).toBe("http://localhost:8889/wp-json/demo/v1/items/");
+		expect(seenPath).toBeUndefined();
+	});
+
+	test("resolveRestRouteUrl canonicalizes wp-json roots and route slashes", () => {
+		const resolved = resolveRestRouteUrl("/demo/v1/items", "http://localhost:8889/wp-json/");
+
+		expect(resolved).toBe("http://localhost:8889/wp-json/demo/v1/items/");
+	});
+
+	test("resolveRestRouteUrl preserves query strings while canonicalizing routes", () => {
+		const resolved = resolveRestRouteUrl("/demo/v1/items?page=2", "http://localhost:8889/wp-json/");
+
+		expect(resolved).toBe("http://localhost:8889/wp-json/demo/v1/items/?page=2");
+	});
+
+	test("resolveRestRouteUrl preserves rest_route roots", () => {
+		const resolved = resolveRestRouteUrl("/demo/v1/items", "http://localhost:8889/index.php?rest_route=/");
+
+		expect(resolved).toBe("http://localhost:8889/index.php?rest_route=%2Fdemo%2Fv1%2Fitems%2F");
 	});
 
 	test("createQueryDecoder and createHeadersDecoder accept explicit validation decoders", () => {

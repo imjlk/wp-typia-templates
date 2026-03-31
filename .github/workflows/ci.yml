@@ -145,6 +145,11 @@ jobs:
             data_storage: post-meta
             package_manager: npm
             project_name: smoke-data-post-meta-npm
+          - runtime: bun
+            template: persisted
+            data_storage: custom-table
+            package_manager: bun
+            project_name: smoke-persisted-custom-table-bun
           - runtime: node
             template: ./packages/create/tests/fixtures/create-block-external
             variant: hero

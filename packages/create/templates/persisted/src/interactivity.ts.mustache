@@ -5,6 +5,7 @@ import type { {{pascalCase}}Context, {{pascalCase}}State } from './types';
 
 const { actions, state } = store( '{{slugKebabCase}}', {
 	state: {
+		canWrite: false,
 		count: 0,
 		error: undefined,
 		isHydrated: false,
@@ -47,6 +48,10 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 			if ( context.postId <= 0 || ! context.resourceKey ) {
 				return;
 			}
+			if ( ! context.canWrite ) {
+				state.error = 'Sign in to save this reaction.';
+				return;
+			}
 
 			state.isSaving = true;
 			state.error = undefined;
@@ -76,6 +81,7 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 	callbacks: {
 		init() {
 			const context = getContext< {{pascalCase}}Context >();
+			state.canWrite = context.canWrite;
 			state.isVisible = context.isVisible;
 			state.count = context.count;
 		},

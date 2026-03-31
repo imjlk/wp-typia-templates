@@ -29,7 +29,7 @@ async function getCounterRouteContext(previewPage: Awaited<ReturnType<WordPressP
     return {
       postId: context.postId,
       resourceKey: context.id,
-      restUrl: `${window.location.origin}/?rest_route=/my-typia-block/v1/counter`,
+      restUrl: `${window.location.origin}/wp-json/my-typia-block/v1/counter/`,
     };
   });
 }

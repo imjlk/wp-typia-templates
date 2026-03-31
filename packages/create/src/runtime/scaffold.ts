@@ -32,10 +32,13 @@ export interface ScaffoldAnswers {
 	namespace: string;
 	slug: string;
 	title: string;
+	writeAuthMode?: WriteAuthMode;
 }
 
 export const DATA_STORAGE_MODES = ["post-meta", "custom-table"] as const;
 export type DataStorageMode = (typeof DATA_STORAGE_MODES)[number];
+export const WRITE_AUTH_MODES = ["nonce", "public"] as const;
+export type WriteAuthMode = (typeof WRITE_AUTH_MODES)[number];
 
 export interface ScaffoldTemplateVariables {
 	author: string;
@@ -60,6 +63,7 @@ export interface ScaffoldTemplateVariables {
 	textdomain: string;
 	title: string;
 	titleCase: string;
+	writeAuthMode: WriteAuthMode;
 }
 
 interface ResolveTemplateOptions {
@@ -85,6 +89,7 @@ interface CollectScaffoldAnswersOptions {
 		validate?: (value: string) => true | string,
 	) => Promise<string>;
 	templateId: string;
+	writeAuthMode?: WriteAuthMode;
 	yes?: boolean;
 }
 
@@ -104,6 +109,7 @@ interface ScaffoldProjectOptions {
 	projectDir: string;
 	templateId: string;
 	variant?: string;
+	writeAuthMode?: WriteAuthMode;
 }
 
 export interface ScaffoldProjectResult {
@@ -153,6 +159,10 @@ export function isDataStorageMode(value: string): value is DataStorageMode {
 	return (DATA_STORAGE_MODES as readonly string[]).includes(value);
 }
 
+export function isWriteAuthMode(value: string): value is WriteAuthMode {
+	return (WRITE_AUTH_MODES as readonly string[]).includes(value);
+}
+
 export function detectAuthor(): string {
 	try {
 		return (
@@ -174,11 +184,12 @@ export function getDefaultAnswers(
 	const slugDefault = toKebabCase(projectName || "my-wp-typia-block");
 	return {
 		author: detectAuthor(),
-		dataStorageMode: templateId === "data" ? "custom-table" : undefined,
+		dataStorageMode: templateId === "data" || templateId === "persisted" ? "custom-table" : undefined,
 		description: template?.description ?? "A WordPress block scaffolded from a remote template",
 		namespace: "create-block",
 		slug: slugDefault,
 		title: toTitle(slugDefault),
+		writeAuthMode: templateId === "persisted" ? "nonce" : undefined,
 	};
 }
 
@@ -238,6 +249,7 @@ export async function collectScaffoldAnswers({
 	templateId,
 	yes = false,
 	dataStorageMode,
+	writeAuthMode,
 	promptText,
 }: CollectScaffoldAnswersOptions): Promise<ScaffoldAnswers> {
 	const defaults = getDefaultAnswers(projectName, templateId);
@@ -246,6 +258,7 @@ export async function collectScaffoldAnswers({
 		return {
 			...defaults,
 			dataStorageMode: dataStorageMode ?? defaults.dataStorageMode,
+			writeAuthMode: writeAuthMode ?? defaults.writeAuthMode,
 		};
 	}
 
@@ -264,6 +277,7 @@ export async function collectScaffoldAnswers({
 		namespace: await promptText("Namespace", defaults.namespace),
 		slug,
 		title: await promptText("Block title", toTitle(slug)),
+		writeAuthMode: writeAuthMode ?? defaults.writeAuthMode,
 	};
 }
 
@@ -280,7 +294,11 @@ export function getTemplateVariables(
 	const namespace = answers.namespace.trim();
 	const description = answers.description.trim();
 	const dataStorageMode =
-		templateId === "data" && answers.dataStorageMode ? answers.dataStorageMode : "custom-table";
+		templateId === "data" || templateId === "persisted"
+			? answers.dataStorageMode ?? "custom-table"
+			: "custom-table";
+	const writeAuthMode =
+		templateId === "persisted" ? answers.writeAuthMode ?? "nonce" : "public";
 
 	return {
 		author: answers.author.trim(),
@@ -305,6 +323,7 @@ export function getTemplateVariables(
 		textdomain: slugSnakeCase,
 		title,
 		titleCase: pascalCase,
+		writeAuthMode,
 	};
 }
 
@@ -504,6 +523,7 @@ export async function scaffoldProject({
 	templateId,
 	answers,
 	dataStorageMode,
+	writeAuthMode,
 	packageManager,
 	cwd = process.cwd(),
 	allowExistingDir = false,
@@ -518,6 +538,7 @@ export async function scaffoldProject({
 	const variables = getTemplateVariables(templateId, {
 		...answers,
 		dataStorageMode: dataStorageMode ?? answers.dataStorageMode,
+		writeAuthMode: writeAuthMode ?? answers.writeAuthMode,
 	});
 	const templateSource = await resolveTemplateSource(
 		templateId,

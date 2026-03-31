@@ -169,6 +169,37 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedRender).toContain("resourceKey");
 	});
 
+	test("scaffoldProject creates a persisted template with nonce-authenticated writes by default", async () => {
+		const targetDir = path.join(tempRoot, "demo-persisted");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "persisted",
+			dataStorageMode: "custom-table",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				dataStorageMode: "custom-table",
+				description: "Demo persisted block",
+				namespace: "create-block",
+				slug: "demo-persisted",
+				title: "Demo Persisted",
+				writeAuthMode: "nonce",
+			},
+			writeAuthMode: "nonce",
+		});
+
+		const pluginBootstrap = fs.readFileSync(path.join(targetDir, "demo-persisted.php"), "utf8");
+		const generatedRender = fs.readFileSync(path.join(targetDir, "src", "render.php"), "utf8");
+		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
+
+		expect(pluginBootstrap).toContain("define( 'demo_persisted_WRITE_AUTH_MODE', 'nonce' );");
+		expect(pluginBootstrap).toContain("function demo_persisted_can_write");
+		expect(generatedRender).toContain("Sign in to save this reaction.");
+		expect(generatedTypes).toContain("writeAuthMode: 'nonce' | 'public';");
+	});
+
 	test("runScaffoldFlow defaults data scaffolds to custom-table in non-interactive mode", async () => {
 		const projectInput = "demo-data-default";
 		const flow = await runScaffoldFlow({
@@ -209,6 +240,69 @@ describe("@wp-typia/create scaffolding", () => {
 
 		expect(flow.result.variables.dataStorageMode).toBe("post-meta");
 		expect(pluginBootstrap).toContain("post-meta");
+	});
+
+	test("runScaffoldFlow defaults persisted scaffolds to custom-table and nonce in non-interactive mode", async () => {
+		const projectInput = "demo-persisted-default";
+		const flow = await runScaffoldFlow({
+			cwd: tempRoot,
+			noInstall: true,
+			packageManager: "npm",
+			projectInput,
+			templateId: "persisted",
+			yes: true,
+		});
+
+		const pluginBootstrap = fs.readFileSync(
+			path.join(flow.projectDir, `${projectInput}.php`),
+			"utf8",
+		);
+
+		expect(flow.result.variables.dataStorageMode).toBe("custom-table");
+		expect(flow.result.variables.writeAuthMode).toBe("nonce");
+		expect(pluginBootstrap).toContain("define( 'demo_persisted_default_WRITE_AUTH_MODE', 'nonce' );");
+	});
+
+	test("runScaffoldFlow accepts prompted persisted write auth selections in interactive mode", async () => {
+		const projectInput = "demo-persisted-prompted";
+		const flow = await runScaffoldFlow({
+			cwd: tempRoot,
+			isInteractive: true,
+			noInstall: true,
+			packageManager: "npm",
+			projectInput,
+			promptText: async (_message, defaultValue) => defaultValue,
+			selectDataStorage: async () => "post-meta",
+			selectWriteAuth: async () => "public",
+			templateId: "persisted",
+		});
+
+		const pluginBootstrap = fs.readFileSync(
+			path.join(flow.projectDir, `${projectInput}.php`),
+			"utf8",
+		);
+
+		expect(flow.result.variables.dataStorageMode).toBe("post-meta");
+		expect(flow.result.variables.writeAuthMode).toBe("public");
+		expect(pluginBootstrap).toContain("define( 'demo_persisted_prompted_WRITE_AUTH_MODE', 'public' );");
+	});
+
+	test("runScaffoldFlow rejects unsupported persisted write auth modes", async () => {
+		const projectInput = "demo-persisted-invalid-auth";
+
+		await expect(
+			runScaffoldFlow({
+				cwd: tempRoot,
+				noInstall: true,
+				packageManager: "npm",
+				projectInput,
+				templateId: "persisted",
+				writeAuthMode: "invalid",
+				yes: true,
+			}),
+		).rejects.toThrow(
+			'Unsupported write auth mode "invalid". Expected one of: nonce, public',
+		);
 	});
 
 	test("local create-block subset paths scaffold into a pnpm-ready wp-typia project", async () => {

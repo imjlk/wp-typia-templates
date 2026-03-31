@@ -29,6 +29,7 @@ interface ParsedArgs {
 	positionals: string[];
 	template?: string;
 	variant?: string;
+	writeAuth?: string;
 	yes: boolean;
 }
 
@@ -41,6 +42,7 @@ function parseArgs(argv: string[]): ParsedArgs {
 		positionals: [],
 		template: undefined,
 		variant: undefined,
+		writeAuth: undefined,
 		yes: false,
 	};
 
@@ -96,6 +98,15 @@ function parseArgs(argv: string[]): ParsedArgs {
 			parsed.dataStorage = arg.split("=", 2)[1];
 			continue;
 		}
+		if (arg === "--write-auth") {
+			parsed.writeAuth = argv[index + 1];
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--write-auth=")) {
+			parsed.writeAuth = arg.split("=", 2)[1];
+			continue;
+		}
 		if (arg.startsWith("--package-manager=")) {
 			parsed.packageManager = arg.split("=", 2)[1];
 			continue;
@@ -145,10 +156,20 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 					],
 					1,
 				),
+			selectWriteAuth: () =>
+				prompt.select(
+					"Choose a write auth mode",
+					[
+						{ label: "nonce", value: "nonce", hint: "Authenticated write requests with WP REST nonce" },
+						{ label: "public", value: "public", hint: "Anonymous/public write sample for demo scenarios" },
+					],
+					1,
+				),
 			selectTemplate: () =>
 				prompt.select("Select a template", getTemplateSelectOptions(), 1),
 			templateId: parsed.template,
 			variant: parsed.variant,
+			writeAuthMode: parsed.writeAuth,
 			yes: parsed.yes,
 		});
 

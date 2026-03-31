@@ -8,7 +8,7 @@ Create practical WordPress blocks with Typia-driven metadata, validation, and sh
 - [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types) for reusable WordPress semantic types
 - [`@wp-typia/rest`](https://www.npmjs.com/package/@wp-typia/rest) for typed WordPress REST helpers
 
-It generates `block.json`, `typia.manifest.json`, `typia-validator.php`, and optional schema artifacts from `src/types.ts`, keeps runtime validation close to the block code, and now ships three built-in starting points that cover static, interactive, and data-backed blocks.
+It generates `block.json`, `typia.manifest.json`, `typia-validator.php`, and optional schema artifacts from `src/types.ts`, keeps runtime validation close to the block code, and now ships four built-in starting points that cover static, interactive, public data-backed, and auth-first persisted blocks.
 
 ## Quick Start
 
@@ -27,6 +27,7 @@ Built-in templates:
 - `basic`
 - `interactivity`
 - `data`
+- `persisted`
 
 Non-interactive examples:
 
@@ -34,6 +35,7 @@ Non-interactive examples:
 npx @wp-typia/create my-block --template basic --package-manager pnpm --yes --no-install
 npx @wp-typia/create my-block --template interactivity --package-manager npm --yes --no-install
 npx @wp-typia/create my-block --template data --data-storage custom-table --package-manager bun --yes --no-install
+npx @wp-typia/create my-block --template persisted --data-storage custom-table --write-auth nonce --package-manager bun --yes --no-install
 ```
 
 Remote template MVP:
@@ -50,9 +52,10 @@ npx @wp-typia/create my-block --template @scope/create-block-template --variant 
 | --- | --- |
 | `basic` | Minimal, clean boilerplate with Typia metadata sync and runtime validation |
 | `interactivity` | The same foundation plus WordPress Interactivity API wiring |
-| `data` | Typed REST contracts, schema sync, Interactivity API wiring, and `post-meta` or `custom-table` persistence |
+| `data` | Typed REST contracts, schema sync, Interactivity API wiring, and a simple public persistence sample with `post-meta` or `custom-table` storage |
+| `persisted` | Typed REST contracts, schema sync, Interactivity API wiring, and auth-first persisted writes with selectable write auth modes |
 
-`full` and `advanced` are no longer built-in scaffold targets. Their older kitchen-sink responsibilities are now split between the repo-local reference app and the built-in `data` template.
+`full` and `advanced` are no longer built-in scaffold targets. Their older kitchen-sink responsibilities are now split between the repo-local reference app and the built-in `data` / `persisted` templates.
 
 ## How the Scaffold Works
 
