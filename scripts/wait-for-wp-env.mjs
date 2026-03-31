@@ -1,14 +1,8 @@
 #!/usr/bin/env node
 
-import { execFileSync } from 'node:child_process';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import wpEnvUtils from './wp-env-utils.cjs';
 
-const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const WP_ENV_COMMAND =
-	process.platform === 'win32'
-		? path.join(ROOT_DIR, 'node_modules', '.bin', 'wp-env.cmd')
-		: path.join(ROOT_DIR, 'node_modules', '.bin', 'wp-env');
+const { runWpCli } = wpEnvUtils;
 
 const baseUrl = process.argv[2] ?? 'http://localhost:8889';
 const timeoutMs = Number.parseInt(process.argv[3] ?? '180000', 10);
@@ -35,20 +29,12 @@ function looksLikeInstall(html) {
 	);
 }
 
-function runWpCli(configPath, args) {
-	return execFileSync(WP_ENV_COMMAND, ['run', 'cli', `--config=${configPath}`, 'wp', ...args], {
-		cwd: ROOT_DIR,
-		encoding: 'utf8',
-		stdio: 'pipe',
-	});
-}
-
 function ensureWordPressInstalled(configPath) {
 	try {
-		runWpCli(configPath, ['core', 'is-installed']);
+		runWpCli(['core', 'is-installed'], { configPath });
 		return false;
 	} catch {
-		runWpCli(configPath, [
+		runWpCli([
 			'core',
 			'install',
 			`--url=${baseUrl}`,
@@ -57,7 +43,7 @@ function ensureWordPressInstalled(configPath) {
 			'--admin_password=password',
 			'--admin_email=admin@example.com',
 			'--skip-email',
-		]);
+		], { configPath });
 		return true;
 	}
 }

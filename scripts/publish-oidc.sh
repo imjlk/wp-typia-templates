@@ -18,6 +18,9 @@ read_package_field() {
   node -p "require(process.argv[1])[process.argv[2]]" "$package_json" "$field"
 }
 
+# npm registry propagation can lag briefly after a successful publish, so reruns
+# should also tolerate the publish endpoint reporting "already published".
+
 publish_package() {
   local package_dir="$1"
   local package_json="$package_dir/package.json"
