@@ -248,6 +248,7 @@ jobs:
           name: persistence-examples-build
           path: examples/persistence-examples/build
 
+      # Restored wp-env homes can keep a stale plugin activation state across runs.
       - name: Cache wp-env home
         uses: actions/cache@v4
         with:

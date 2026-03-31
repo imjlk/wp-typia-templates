@@ -78,6 +78,7 @@ function ensureWordPressInstalled(baseURL: string) {
 }
 
 function ensureExamplePluginsActive() {
+	// wp-env cache can restore a DB where example plugins are mounted but inactive.
 	for (const pluginSlug of EXAMPLE_PLUGIN_SLUGS) {
 		try {
 			runWpCli(['plugin', 'is-active', pluginSlug]);
