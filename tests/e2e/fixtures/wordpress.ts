@@ -93,7 +93,17 @@ export class WordPressPage {
   }
 
   async insertBlock(block: InsertableBlock = EXAMPLE_BLOCK) {
-    await this.waitForBlockTypeRegistered(block.name);
+    const blockTypeReady = await this.waitForBlockTypeRegistered(block.name);
+    if (!blockTypeReady) {
+      await this.page.reload({ waitUntil: 'domcontentloaded' });
+      await this.waitForEditorReady();
+    }
+
+    const blockTypeReadyAfterReload = blockTypeReady || await this.waitForBlockTypeRegistered(block.name);
+    if (!blockTypeReadyAfterReload) {
+      throw new Error(`Timed out waiting for block type "${block.name}" to register.`);
+    }
+
     await this.dismissWelcomeGuideIfPresent();
 
     let inserted = false;
@@ -278,9 +288,23 @@ export class WordPressPage {
     });
   }
 
-  private async waitForEditorReady() {
+  private async waitForEditorReady(timeout = 10_000) {
+    const waitForTitleInput = async () => {
+      await this.getEditorCanvas().getByRole('textbox', { name: 'Add title' }).waitFor({
+        state: 'visible',
+        timeout,
+      });
+    };
+
     await this.dismissWelcomeGuideIfPresent();
-    await this.getEditorCanvas().getByRole('textbox', { name: 'Add title' }).waitFor({ state: 'visible' });
+
+    try {
+      await waitForTitleInput();
+    } catch {
+      await this.page.reload({ waitUntil: 'domcontentloaded' });
+      await this.dismissWelcomeGuideIfPresent();
+      await waitForTitleInput();
+    }
   }
 
   private async dismissWelcomeGuideIfPresent() {
@@ -377,14 +401,19 @@ export class WordPressPage {
     }, EXAMPLE_BLOCK.name, { timeout });
   }
 
-  private async waitForBlockTypeRegistered(blockType: string) {
-    await this.page.waitForFunction((type) => {
-      const wp = (window as any).wp;
-      return Boolean(wp?.blocks?.getBlockType?.(type));
-    }, blockType);
+  private async waitForBlockTypeRegistered(blockType: string, timeout = 10_000) {
+    try {
+      await this.page.waitForFunction((type) => {
+        const wp = (window as any).wp;
+        return Boolean(wp?.blocks?.getBlockType?.(type));
+      }, blockType, { timeout });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
-  private async waitForBlockInEditor(blockType: string, timeout = 30_000) {
+  private async waitForBlockInEditor(blockType: string, timeout = 10_000) {
     await this.page.waitForFunction((type) => {
       const wp = (window as any).wp;
       const blocks = wp?.data?.select('core/block-editor')?.getBlocks?.() ?? [];

@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'PERSISTENCE_EXAMPLES_PUBLIC_WRITE_TTL', 20 );
+define( 'PERSISTENCE_EXAMPLES_PUBLIC_WRITE_TTL', 5 );
 
 function persistence_examples_get_build_root() {
 	return __DIR__ . '/build/blocks';

@@ -200,8 +200,55 @@ describe("@wp-typia/rest", () => {
 		);
 
 		expect(seenHeaders).toMatchObject({
-			"Content-Type": "application/json",
-			"X-WP-Nonce": "demo",
+			"content-type": "application/json",
+			"x-wp-nonce": "demo",
+		});
+	});
+
+	test("callEndpoint preserves Headers instances when merging request-level headers", async () => {
+		let seenHeaders: Record<string, string> | undefined;
+			const endpoint = createEndpoint<{ title: string }, { ok: boolean }>({
+				buildRequestOptions: () => ({
+					headers: new Headers({
+						Authorization: "Bearer seed",
+					}) as unknown as Record<string, string>,
+				}),
+			method: "POST",
+			path: "/items",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { title?: unknown }).title === "string"
+					? toValidationResult(success(input as { title: string }))
+					: toValidationResult(failure<{ title: string }>("{ title: string }", "$.title")),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				(input as { ok?: unknown }).ok === true
+					? toValidationResult(success(input as { ok: boolean }))
+					: toValidationResult(failure<{ ok: boolean }>("{ ok: true }", "$.ok")),
+		});
+
+		await callEndpoint(
+			endpoint,
+			{ title: "Hello" },
+			{
+				fetchFn: asApiFetch(async (options: Record<string, unknown>) => {
+					seenHeaders = options.headers as Record<string, string> | undefined;
+					return { ok: true } as never;
+					}),
+					requestOptions: {
+						headers: new Headers({
+							"X-WP-Nonce": "demo",
+						}) as unknown as Record<string, string>,
+					},
+				},
+			);
+
+		expect(seenHeaders).toMatchObject({
+			authorization: "Bearer seed",
+			"content-type": "application/json",
+			"x-wp-nonce": "demo",
 		});
 	});
 

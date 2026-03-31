@@ -287,7 +287,7 @@ test.describe('Persistence examples', () => {
   });
 
   test('public counter uses signed tokens and rejects direct untokened writes', async () => {
-    test.setTimeout(90_000);
+    test.setTimeout(15_000);
 
     await wpPage.createPost('Persistence Counter Example');
     await wpPage.insertBlock(PERSISTENCE_COUNTER_BLOCK);
@@ -301,14 +301,14 @@ test.describe('Persistence examples', () => {
     await previewPage.waitForFunction(
       () => document.documentElement.dataset.persistenceCounterHydrated === 'true',
       undefined,
-      { timeout: 30_000 },
+      { timeout: 10_000 },
     );
     await expect(persistButton).toBeVisible();
-    await expect.poll(async () => persistButton.isEnabled(), { timeout: 15_000 }).toBe(true);
+    await expect.poll(async () => persistButton.isEnabled(), { timeout: 10_000 }).toBe(true);
     await expect(counterValue).toHaveText('0');
 
     await persistButton.click();
-    await expect(counterValue).toHaveText('1', { timeout: 15_000 });
+    await expect(counterValue).toHaveText('1', { timeout: 10_000 });
     await expect
       .poll(async () => {
         const result = await readCounter(previewPage, counterContext);
@@ -331,7 +331,7 @@ test.describe('Persistence examples', () => {
     });
     expect(tamperedToken.status).toBe(403);
 
-    await previewPage.waitForTimeout(21_000);
+    await previewPage.waitForTimeout(6_000);
     const expiredToken = await writeCounter(previewPage, {
       delta: 1,
       postId: counterContext.postId,
@@ -344,10 +344,10 @@ test.describe('Persistence examples', () => {
     await previewPage.waitForFunction(
       () => document.documentElement.dataset.persistenceCounterHydrated === 'true',
       undefined,
-      { timeout: 30_000 },
+      { timeout: 10_000 },
     );
     await expect(previewPage.locator('.persistence-counter-frontend__count')).toHaveText('1', {
-      timeout: 15_000,
+      timeout: 10_000,
     });
 
     await previewPage.close();
@@ -376,14 +376,14 @@ test.describe('Persistence examples', () => {
     await previewPage.waitForFunction(
       () => document.documentElement.dataset.persistenceLikeButtonHydrated === 'true',
       undefined,
-      { timeout: 30_000 },
+      { timeout: 10_000 },
     );
     await expect(likeButton).toBeVisible();
     await expect(likeCount).toHaveText('0');
 
     await likeButton.click();
-    await expect(previewPage.getByRole('button', { name: 'Unlike' })).toBeVisible({ timeout: 15_000 });
-    await expect(likeCount).toHaveText('1', { timeout: 15_000 });
+    await expect(previewPage.getByRole('button', { name: 'Unlike' })).toBeVisible({ timeout: 10_000 });
+    await expect(likeCount).toHaveText('1', { timeout: 10_000 });
     await expect
       .poll(async () => {
         const result = await readLikeStatus(previewPage, likeContext);
@@ -392,8 +392,8 @@ test.describe('Persistence examples', () => {
       .toBe(true);
 
     await previewPage.getByRole('button', { name: 'Unlike' }).click();
-    await expect(previewPage.getByRole('button', { name: 'Like this' })).toBeVisible({ timeout: 15_000 });
-    await expect(likeCount).toHaveText('0', { timeout: 15_000 });
+    await expect(previewPage.getByRole('button', { name: 'Like this' })).toBeVisible({ timeout: 10_000 });
+    await expect(likeCount).toHaveText('0', { timeout: 10_000 });
     await expect
       .poll(async () => {
         const result = await readLikeStatus(previewPage, likeContext);
@@ -406,7 +406,7 @@ test.describe('Persistence examples', () => {
     await previewPage.waitForFunction(
       () => document.documentElement.dataset.persistenceLikeButtonHydrated === 'true',
       undefined,
-      { timeout: 30_000 },
+      { timeout: 10_000 },
     );
     await expect(previewPage.getByRole('button', { name: 'Like this' })).toBeVisible();
     await expect(previewPage.locator('.persistence-like-button-frontend__count')).toHaveText('0');

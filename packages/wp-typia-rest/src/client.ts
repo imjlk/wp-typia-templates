@@ -270,6 +270,24 @@ function joinUrlWithQuery(url: string, query: string): string {
 	return nextUrl.toString();
 }
 
+function mergeHeaderInputs(
+	baseHeaders?: APIFetchOptions["headers"],
+	requestHeaders?: APIFetchOptions["headers"],
+): Record<string, string> | undefined {
+	if (!baseHeaders && !requestHeaders) {
+		return undefined;
+	}
+
+	const mergedHeaders = new Headers(baseHeaders as HeadersInit | undefined);
+	const nextHeaders = new Headers(requestHeaders as HeadersInit | undefined);
+
+	for (const [key, value] of nextHeaders.entries()) {
+		mergedHeaders.set(key, value);
+	}
+
+	return Object.fromEntries(mergedHeaders.entries());
+}
+
 function buildEndpointFetchOptions<Req>(
 	endpoint: ApiEndpoint<Req, unknown>,
 	request: Req,
@@ -307,10 +325,10 @@ function buildEndpointFetchOptions<Req>(
 	return {
 		...baseOptions,
 		body: typeof request === "string" ? request : JSON.stringify(request),
-		headers: {
-			"Content-Type": "application/json",
-			...(baseOptions.headers ?? {}),
-		},
+		headers: mergeHeaderInputs(
+			{ "Content-Type": "application/json" },
+			baseOptions.headers,
+		),
 		method: endpoint.method,
 		...(baseOptions.url
 			? {
@@ -331,13 +349,12 @@ function mergeFetchOptions(
 		return baseOptions;
 	}
 
+	const { headers: requestHeaders, ...transportOptions } = requestOptions;
+
 	return {
 		...baseOptions,
-		...requestOptions,
-		headers: {
-			...(baseOptions.headers ?? {}),
-			...(requestOptions.headers ?? {}),
-		},
+		...transportOptions,
+		headers: mergeHeaderInputs(baseOptions.headers, requestHeaders),
 	};
 }
 

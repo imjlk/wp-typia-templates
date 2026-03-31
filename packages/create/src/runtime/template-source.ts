@@ -939,13 +939,17 @@ export async function resolveTemplateSource(
 					})()
 					: seed;
 
-		if (format === "create-block-external") {
-			const normalized = await normalizeCreateBlockSubset(normalizedSeed, context);
-			return {
-				...normalized,
-				description: "A wp-typia scaffold normalized from an official create-block external template",
-				features: ["Remote source", "official external template", "Typia metadata pipeline"],
-				format,
+			if (format === "create-block-external") {
+				const normalized = await normalizeCreateBlockSubset(normalizedSeed, context);
+				return {
+					...normalized,
+					cleanup: async () => {
+						await normalized.cleanup?.();
+						await seed.cleanup?.();
+					},
+					description: "A wp-typia scaffold normalized from an official create-block external template",
+					features: ["Remote source", "official external template", "Typia metadata pipeline"],
+					format,
 				id: "remote:create-block-external",
 				selectedVariant: normalizedSeed.selectedVariant ?? null,
 				warnings: normalizedSeed.warnings ?? [],
