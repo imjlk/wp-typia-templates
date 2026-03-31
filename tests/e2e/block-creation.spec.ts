@@ -29,7 +29,7 @@ async function getCounterRouteContext(previewPage: Awaited<ReturnType<WordPressP
     return {
       postId: context.postId,
       resourceKey: context.id,
-      restUrl: `${window.location.origin}/wp-json/my-typia-block/v1/counter`,
+      restUrl: `${window.location.origin}/?rest_route=/my-typia-block/v1/counter`,
     };
   });
 }
@@ -37,24 +37,46 @@ async function getCounterRouteContext(previewPage: Awaited<ReturnType<WordPressP
 async function readPersistedCounter(
   previewPage: Awaited<ReturnType<WordPressPage['previewPost']>>,
   context: CounterRouteContext,
-): Promise<{ count: number | null; status: number }> {
-  const url = new URL(context.restUrl);
-  url.searchParams.set('postId', String(context.postId));
-  url.searchParams.set('resourceKey', context.resourceKey);
+): Promise<{ count: number | null; status: number; contentType: string | null; body: string | null }> {
+  return previewPage.evaluate(async (routeContext) => {
+    const url = new URL(routeContext.restUrl);
+    url.searchParams.set('postId', String(routeContext.postId));
+    url.searchParams.set('resourceKey', routeContext.resourceKey);
 
-  const response = await previewPage.request.get(url.toString());
-  if (!response.ok()) {
-    return {
-      count: null,
-      status: response.status(),
-    };
-  }
+    const response = await fetch(url.toString(), {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+    const contentType = response.headers.get('content-type');
+    const rawBody = await response.text();
 
-  const body = (await response.json()) as { count?: unknown };
-  return {
-    count: typeof body.count === 'number' ? body.count : null,
-    status: response.status(),
-  };
+    if (!response.ok) {
+      return {
+        body: rawBody,
+        contentType,
+        count: null,
+        status: response.status,
+      };
+    }
+
+    try {
+      const body = JSON.parse(rawBody) as { count?: unknown };
+      return {
+        body: rawBody,
+        contentType,
+        count: typeof body.count === 'number' ? body.count : null,
+        status: response.status,
+      };
+    } catch {
+      return {
+        body: rawBody,
+        contentType,
+        count: null,
+        status: response.status,
+      };
+    }
+  }, context);
 }
 
 test.describe('WordPress Typia block smoke', () => {
