@@ -8,12 +8,13 @@ on:
       node_version:
         description: "Node.js version"
         required: false
-        default: "20"
+        default: "24"
         type: choice
         options:
-          - "20"
-          - "22"
           - "24"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   test-matrix:
@@ -22,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', github.event.inputs.node_version) || '["20","22","24"]') }}
+        node: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', github.event.inputs.node_version) || '["24"]') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -38,7 +39,7 @@ jobs:
           bun-version: "1.3.10"
 
       - name: Cache Bun install cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
           key: bun-install-${{ runner.os }}-1.3.10-${{ hashFiles('bun.lock') }}
@@ -49,7 +50,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Cache wp-env home
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.wp-env
@@ -73,7 +74,7 @@ jobs:
           bun run examples:wp-env:start:test
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
@@ -104,7 +105,7 @@ jobs:
           bun-version: "1.3.10"
 
       - name: Cache Bun install cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
           key: bun-install-${{ runner.os }}-1.3.10-${{ hashFiles('bun.lock') }}

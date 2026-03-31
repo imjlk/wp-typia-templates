@@ -4,7 +4,7 @@ Welcome to the basic block tutorial for `wp-typia`. This hands-on guide walks th
 
 ## Prerequisites
 
-- Node.js 20+ installed
+- Node.js 24+ installed
 - WordPress development environment
 - Basic knowledge of TypeScript and React
 

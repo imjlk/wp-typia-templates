@@ -206,7 +206,8 @@ export function describeEditorField(
   options: EditorModelOptions = {},
 ): EditorFieldDescriptor {
   const { control, reason } = getControlKind(path, attribute, options);
-  const key = path.split(".").at(-1) ?? path;
+  const pathSegments = path.split(".");
+  const key = pathSegments[pathSegments.length - 1] ?? path;
 
   return {
     constraints: attribute.typia.constraints,
