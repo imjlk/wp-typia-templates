@@ -84,8 +84,10 @@ interface RunScaffoldFlowOptions {
 	dataStorageMode?: string;
 	installDependencies?: Parameters<typeof scaffoldProject>[0]["installDependencies"];
 	isInteractive?: boolean;
+	namespace?: string;
 	noInstall?: boolean;
 	packageManager?: string;
+	phpPrefix?: string;
 	projectInput: string;
 	promptText?: Parameters<typeof collectScaffoldAnswers>[0]["promptText"];
 	selectDataStorage?: () => Promise<DataStorageMode>;
@@ -93,6 +95,7 @@ interface RunScaffoldFlowOptions {
 	selectPersistencePolicy?: () => Promise<PersistencePolicy>;
 	selectTemplate?: () => Promise<TemplateDefinition["id"]>;
 	templateId?: string;
+	textDomain?: string;
 	variant?: string;
 	persistencePolicy?: string;
 	yes?: boolean;
@@ -173,10 +176,10 @@ export function createReadlinePrompt(): ReadlinePrompt {
 
 export function formatHelpText(): string {
 	return `Usage:
-  wp-typia <project-dir> [--template <basic|interactivity|persistence|compound|./path|github:owner/repo/path[#ref]>] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia <project-dir> [--template <npm-package>] [--variant <name>] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia <project-dir> [--template persistence] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia <project-dir> [--template compound] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <basic|interactivity|persistence|compound|./path|github:owner/repo/path[#ref]>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <npm-package>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template persistence] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template compound] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--yes] [--no-install] [--package-manager <id>]
   wp-typia templates list
   wp-typia templates inspect <id>
   wp-typia migrations <init|snapshot|diff|scaffold|verify|doctor|fixtures|fuzz> [...]
@@ -385,6 +388,9 @@ export async function runScaffoldFlow({
 	dataStorageMode,
 	persistencePolicy,
 	packageManager,
+	namespace,
+	textDomain,
+	phpPrefix,
 	yes = false,
 	noInstall = false,
 	isInteractive = false,
@@ -453,9 +459,12 @@ export async function runScaffoldFlow({
 	const projectName = path.basename(projectDir);
 	const answers = await collectScaffoldAnswers({
 		dataStorageMode: resolvedDataStorage,
+		namespace,
 		persistencePolicy: resolvedPersistencePolicy,
+		phpPrefix,
 		projectName,
 		templateId: resolvedTemplateId,
+		textDomain,
 		yes,
 		promptText,
 	});

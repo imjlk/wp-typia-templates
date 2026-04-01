@@ -24,6 +24,7 @@ For non-interactive usage, pass it explicitly:
 npx @wp-typia/create my-block --template basic --package-manager pnpm --yes --no-install
 npx @wp-typia/create my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
 npx @wp-typia/create my-block --template compound --package-manager bun --yes --no-install
+npx @wp-typia/create my-block --template persistence --namespace experiments --text-domain my-block --php-prefix my_block --package-manager bun --yes --no-install
 ```
 
 Additional commands:
@@ -69,6 +70,19 @@ The `compound` template adds:
 - `InnerBlocks` seeding with two default internal items
 - multi-block plugin registration from `build/blocks/*`
 - optional persistence on the parent block when `--data-storage` or `--persistence-policy` is provided
+
+Identifier overrides:
+
+- `--namespace` changes the block namespace used in `block.json` names such as `namespace/slug`
+- `--text-domain` changes the WordPress text domain used for `block.json`, JS i18n, and PHP plugin headers
+- `--php-prefix` changes the snake_case PHP symbol prefix used for functions, constants, option keys, locks, and storage helpers
+
+Defaults keep these concerns separate:
+
+- package names and block slugs stay kebab-case
+- block names remain `namespace/slug`
+- text domains default to the kebab-case slug
+- PHP symbols default to a snake_case prefix derived from the slug
 
 Every generated project exposes `sync-types`, and persistence-enabled scaffolds also expose `sync-rest`. `start` and `build` already run the relevant sync scripts for you. Run them manually only when you want generated metadata/schema artifacts committed before the first `start` or `build` cycle. These syncs do not create migration history.
 

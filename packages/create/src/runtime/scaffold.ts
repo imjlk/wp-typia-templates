@@ -23,6 +23,7 @@ import type { BuiltInTemplateId } from "./template-registry.js";
 import { resolveTemplateSource } from "./template-source.js";
 
 const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
+const PHP_PREFIX_PATTERN = /^[a-z_][a-z0-9_]*$/;
 const REMOVED_BUILTIN_TEMPLATE_IDS = ["data", "persisted"] as const;
 const LOCKFILES: Record<PackageManagerId, string[]> = {
 	bun: ["bun.lock", "bun.lockb"],
@@ -37,7 +38,9 @@ export interface ScaffoldAnswers {
 	description: string;
 	namespace: string;
 	persistencePolicy?: PersistencePolicy;
+	phpPrefix?: string;
 	slug: string;
+	textDomain?: string;
 	title: string;
 }
 
@@ -63,6 +66,7 @@ export interface ScaffoldTemplateVariables {
 	namespace: string;
 	needsMigration: string;
 	pascalCase: string;
+	phpPrefix: string;
 	isAuthenticatedPersistencePolicy: boolean;
 	isPublicPersistencePolicy: boolean;
 	restPackageVersion: string;
@@ -94,6 +98,8 @@ interface ResolvePackageManagerOptions {
 
 interface CollectScaffoldAnswersOptions {
 	dataStorageMode?: DataStorageMode;
+	namespace?: string;
+	phpPrefix?: string;
 	projectName: string;
 	promptText?: (
 		message: string,
@@ -101,6 +107,7 @@ interface CollectScaffoldAnswersOptions {
 		validate?: (value: string) => true | string,
 	) => Promise<string>;
 	persistencePolicy?: PersistencePolicy;
+	textDomain?: string;
 	templateId: string;
 	yes?: boolean;
 }
@@ -167,6 +174,49 @@ function validateBlockSlug(input: string): true | string {
 	return BLOCK_SLUG_PATTERN.test(input) || "Use lowercase letters, numbers, and hyphens only";
 }
 
+function validateNamespace(input: string): true | string {
+	return BLOCK_SLUG_PATTERN.test(toKebabCase(input))
+		? true
+		: "Use lowercase letters, numbers, and hyphens only";
+}
+
+function validateTextDomain(input: string): true | string {
+	return BLOCK_SLUG_PATTERN.test(toKebabCase(input))
+		? true
+		: "Use lowercase letters, numbers, and hyphens only";
+}
+
+function validatePhpPrefix(input: string): true | string {
+	return PHP_PREFIX_PATTERN.test(toSnakeCase(input))
+		? true
+		: "Use letters, numbers, and underscores only, starting with a letter";
+}
+
+function normalizeNamespace(input: string): string {
+	return toKebabCase(input);
+}
+
+function normalizeTextDomain(input: string): string {
+	return toKebabCase(input);
+}
+
+function normalizePhpPrefix(input: string): string {
+	return toSnakeCase(input);
+}
+
+function assertValidIdentifier(
+	label: string,
+	value: string,
+	validate: (value: string) => true | string,
+): string {
+	const result = validate(value);
+	if (result !== true) {
+		throw new Error(typeof result === "string" ? `${label}: ${result}` : `${label} is invalid`);
+	}
+
+	return value;
+}
+
 export function isDataStorageMode(value: string): value is DataStorageMode {
 	return (DATA_STORAGE_MODES as readonly string[]).includes(value);
 }
@@ -200,7 +250,9 @@ export function getDefaultAnswers(
 		description: template?.description ?? "A WordPress block scaffolded from a remote template",
 		namespace: "create-block",
 		persistencePolicy: templateId === "persistence" ? "authenticated" : undefined,
+		phpPrefix: toSnakeCase(slugDefault),
 		slug: slugDefault,
+		textDomain: slugDefault,
 		title: toTitle(slugDefault),
 	};
 }
@@ -268,16 +320,35 @@ export async function collectScaffoldAnswers({
 	templateId,
 	yes = false,
 	dataStorageMode,
+	namespace,
 	persistencePolicy,
+	phpPrefix,
 	promptText,
+	textDomain,
 }: CollectScaffoldAnswersOptions): Promise<ScaffoldAnswers> {
 	const defaults = getDefaultAnswers(projectName, templateId);
 
 	if (yes) {
+		const derivedSlug = defaults.slug;
 		return {
 			...defaults,
 			dataStorageMode: dataStorageMode ?? defaults.dataStorageMode,
+			namespace: assertValidIdentifier(
+				"Namespace",
+				normalizeNamespace(namespace ?? defaults.namespace),
+				validateNamespace,
+			),
 			persistencePolicy: persistencePolicy ?? defaults.persistencePolicy,
+			phpPrefix: assertValidIdentifier(
+				"PHP prefix",
+				normalizePhpPrefix(phpPrefix ?? toSnakeCase(derivedSlug)),
+				validatePhpPrefix,
+			),
+			textDomain: assertValidIdentifier(
+				"Text domain",
+				normalizeTextDomain(textDomain ?? derivedSlug),
+				validateTextDomain,
+			),
 		};
 	}
 
@@ -288,14 +359,33 @@ export async function collectScaffoldAnswers({
 	const slug = toKebabCase(
 		await promptText("Block slug", defaults.slug, validateBlockSlug),
 	);
+	const normalizedNamespace = assertValidIdentifier(
+		"Namespace",
+		normalizeNamespace(
+			namespace ?? ( await promptText("Namespace", defaults.namespace, validateNamespace) )
+		),
+		validateNamespace,
+	);
+	const normalizedTextDomain = assertValidIdentifier(
+		"Text domain",
+		normalizeTextDomain(textDomain ?? slug),
+		validateTextDomain,
+	);
+	const normalizedPhpPrefix = assertValidIdentifier(
+		"PHP prefix",
+		normalizePhpPrefix(phpPrefix ?? slug),
+		validatePhpPrefix,
+	);
 
 	return {
 		author: await promptText("Author", defaults.author),
 		dataStorageMode: dataStorageMode ?? defaults.dataStorageMode,
 		description: await promptText("Description", defaults.description),
-		namespace: await promptText("Namespace", defaults.namespace),
+		namespace: normalizedNamespace,
 		persistencePolicy: persistencePolicy ?? defaults.persistencePolicy,
+		phpPrefix: normalizedPhpPrefix,
 		slug,
+		textDomain: normalizedTextDomain,
 		title: await promptText("Block title", toTitle(slug)),
 	};
 }
@@ -310,8 +400,10 @@ export function getTemplateVariables(
 	const slugSnakeCase = toSnakeCase(slug);
 	const pascalCase = toPascalCase(slug);
 	const title = answers.title.trim();
-	const namespace = answers.namespace.trim();
+	const namespace = normalizeNamespace(answers.namespace);
 	const description = answers.description.trim();
+	const textDomain = normalizeTextDomain(answers.textDomain ?? slug);
+	const phpPrefix = normalizePhpPrefix(answers.phpPrefix ?? slug);
 	const compoundChildTitle = `${title} Item`;
 	const compoundPersistenceEnabled =
 		templateId === "persistence"
@@ -347,13 +439,14 @@ export function getTemplateVariables(
 		namespace,
 		needsMigration: "{{needsMigration}}",
 		pascalCase,
+		phpPrefix,
 		restPackageVersion,
 		slug,
 		slugCamelCase: pascalCase.charAt(0).toLowerCase() + pascalCase.slice(1),
 		slugKebabCase: slug,
 		slugSnakeCase,
-		textDomain: slug,
-		textdomain: slug,
+		textDomain,
+		textdomain: textDomain,
 		title,
 		titleJson: JSON.stringify(title),
 		titleCase: pascalCase,

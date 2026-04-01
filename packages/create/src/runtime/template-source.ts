@@ -31,6 +31,7 @@ export interface TemplateVariableContext extends Record<string, unknown> {
 	createPackageVersion: string;
 	blockTypesPackageVersion: string;
 	pascalCase: string;
+	phpPrefix: string;
 	title: string;
 	description: string;
 	keyword: string;
@@ -323,6 +324,7 @@ function getTemplateVariableContext(variables: { [key: string]: string }): Templ
 		keyword: variables.keyword,
 		namespace: variables.namespace,
 		pascalCase: variables.pascalCase,
+		phpPrefix: variables.phpPrefix,
 		restPackageVersion: variables.restPackageVersion ?? restPackageVersion,
 		slug: variables.slug,
 		textDomain: variables.textDomain,

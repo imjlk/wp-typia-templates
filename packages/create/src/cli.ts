@@ -24,11 +24,14 @@ import {
 interface ParsedArgs {
 	dataStorage?: string;
 	help: boolean;
+	namespace?: string;
 	noInstall: boolean;
 	packageManager?: string;
 	persistencePolicy?: string;
+	phpPrefix?: string;
 	positionals: string[];
 	template?: string;
+	textDomain?: string;
 	variant?: string;
 	yes: boolean;
 }
@@ -37,11 +40,14 @@ function parseArgs(argv: string[]): ParsedArgs {
 	const parsed: ParsedArgs = {
 		dataStorage: undefined,
 		help: false,
+		namespace: undefined,
 		noInstall: false,
 		packageManager: undefined,
 		persistencePolicy: undefined,
+		phpPrefix: undefined,
 		positionals: [],
 		template: undefined,
+		textDomain: undefined,
 		variant: undefined,
 		yes: false,
 	};
@@ -87,6 +93,33 @@ function parseArgs(argv: string[]): ParsedArgs {
 		if (arg === "--package-manager" || arg === "-p") {
 			parsed.packageManager = argv[index + 1];
 			index += 1;
+			continue;
+		}
+		if (arg === "--namespace") {
+			parsed.namespace = argv[index + 1];
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--namespace=")) {
+			parsed.namespace = arg.split("=", 2)[1];
+			continue;
+		}
+		if (arg === "--text-domain") {
+			parsed.textDomain = argv[index + 1];
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--text-domain=")) {
+			parsed.textDomain = arg.split("=", 2)[1];
+			continue;
+		}
+		if (arg === "--php-prefix") {
+			parsed.phpPrefix = argv[index + 1];
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--php-prefix=")) {
+			parsed.phpPrefix = arg.split("=", 2)[1];
 			continue;
 		}
 		if (arg === "--data-storage") {
@@ -140,8 +173,10 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 			cwd,
 			dataStorageMode: parsed.dataStorage,
 			isInteractive,
+			namespace: parsed.namespace,
 			noInstall: parsed.noInstall,
 			packageManager: parsed.packageManager,
+			phpPrefix: parsed.phpPrefix,
 			projectInput: parsed.positionals[0],
 			promptText: (message: string, defaultValue: string, validate?: (input: string) => boolean | string) =>
 				prompt.text(message, defaultValue, validate),
@@ -168,6 +203,7 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 			selectTemplate: () =>
 				prompt.select("Select a template", getTemplateSelectOptions(), 1),
 			templateId: parsed.template,
+			textDomain: parsed.textDomain,
 			variant: parsed.variant,
 			persistencePolicy: parsed.persistencePolicy,
 			yes: parsed.yes,

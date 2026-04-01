@@ -8,19 +8,19 @@
  * Author:            {{author}}
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       {{slugSnakeCase}}
+ * Text Domain:       {{textDomain}}
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-function {{slugSnakeCase}}_get_build_root() {
+function {{phpPrefix}}_get_build_root() {
 	return __DIR__ . '/build/blocks';
 }
 
-function {{slugSnakeCase}}_register_blocks() {
-	$build_root = {{slugSnakeCase}}_get_build_root();
+function {{phpPrefix}}_register_blocks() {
+	$build_root = {{phpPrefix}}_get_build_root();
 	if ( ! is_dir( $build_root ) ) {
 		return;
 	}
@@ -37,4 +37,4 @@ function {{slugSnakeCase}}_register_blocks() {
 	}
 }
 
-add_action( 'init', '{{slugSnakeCase}}_register_blocks' );
+add_action( 'init', '{{phpPrefix}}_register_blocks' );

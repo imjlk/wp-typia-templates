@@ -239,6 +239,116 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
 	});
 
+	test("scaffoldProject supports explicit text-domain overrides on persistence templates", async () => {
+		const targetDir = path.join(tempRoot, "demo-persistence-text-domain");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "persistence",
+			dataStorageMode: "custom-table",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				dataStorageMode: "custom-table",
+				description: "Demo persistence text domain block",
+				namespace: "create-block",
+				persistencePolicy: "authenticated",
+				slug: "demo-persistence-text-domain",
+				textDomain: "demo-custom-text-domain",
+				title: "Demo Persistence Text Domain",
+			},
+		});
+
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
+		const pluginBootstrap = fs.readFileSync(
+			path.join(targetDir, "demo-persistence-text-domain.php"),
+			"utf8",
+		);
+
+		expect(blockJson.name).toBe("create-block/demo-persistence-text-domain");
+		expect(blockJson.textdomain).toBe("demo-custom-text-domain");
+		expect(pluginBootstrap).toContain("Text Domain:       demo-custom-text-domain");
+		expect(pluginBootstrap).toContain(
+			"function demo_persistence_text_domain_get_counter",
+		);
+	});
+
+	test("scaffoldProject supports explicit php-prefix overrides on persistence templates", async () => {
+		const targetDir = path.join(tempRoot, "demo-persistence-php-prefix");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "persistence",
+			dataStorageMode: "custom-table",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				dataStorageMode: "custom-table",
+				description: "Demo persistence php prefix block",
+				namespace: "create-block",
+				persistencePolicy: "authenticated",
+				phpPrefix: "custom_counter_prefix",
+				slug: "demo-persistence-php-prefix",
+				title: "Demo Persistence Php Prefix",
+			},
+		});
+
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
+		const pluginBootstrap = fs.readFileSync(
+			path.join(targetDir, "demo-persistence-php-prefix.php"),
+			"utf8",
+		);
+
+		expect(blockJson.textdomain).toBe("demo-persistence-php-prefix");
+		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-php-prefix");
+		expect(pluginBootstrap).toContain("function custom_counter_prefix_get_counter");
+		expect(pluginBootstrap).toContain("custom_counter_prefix_storage_version");
+	});
+
+	test("scaffoldProject supports combined identifier overrides on persistence templates", async () => {
+		const targetDir = path.join(tempRoot, "demo-persistence-identifiers");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "persistence",
+			dataStorageMode: "post-meta",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				dataStorageMode: "post-meta",
+				description: "Demo persistence identifier overrides",
+				namespace: "experiments",
+				persistencePolicy: "public",
+				phpPrefix: "ab_test_metrics",
+				slug: "demo-persistence-identifiers",
+				textDomain: "demo-persistence-text",
+				title: "Demo Persistence Identifiers",
+			},
+			persistencePolicy: "public",
+		});
+
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
+		const pluginBootstrap = fs.readFileSync(
+			path.join(targetDir, "demo-persistence-identifiers.php"),
+			"utf8",
+		);
+
+		expect(blockJson.name).toBe("experiments/demo-persistence-identifiers");
+		expect(blockJson.textdomain).toBe("demo-persistence-text");
+		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-text");
+		expect(pluginBootstrap).toContain("function ab_test_metrics_get_counter");
+		expect(pluginBootstrap).toContain("ab_test_metrics_create_public_write_token");
+	});
+
 	test("scaffoldProject creates a pure compound template with parent and hidden child blocks", async () => {
 		const targetDir = path.join(tempRoot, "demo-compound");
 
@@ -347,6 +457,50 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("_verify_public_write_token");
 		expect(pluginBootstrap).toContain("HOUR_IN_SECONDS");
 		expect(parentRender).toContain("publicWriteToken");
+	});
+
+	test("compound scaffolds honor namespace, text-domain, and php-prefix overrides", async () => {
+		const targetDir = path.join(tempRoot, "demo-compound-identifiers");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "compound",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo compound identifier overrides",
+				namespace: "experiments",
+				phpPrefix: "compound_panel_group",
+				slug: "demo-compound-identifiers",
+				textDomain: "demo-compound-text",
+				title: "Demo Compound Identifiers",
+			},
+		});
+
+		const pluginBootstrap = fs.readFileSync(
+			path.join(targetDir, "demo-compound-identifiers.php"),
+			"utf8",
+		);
+		const parentBlockJson = JSON.parse(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "demo-compound-identifiers", "block.json"),
+				"utf8",
+			),
+		);
+		const childBlockJson = JSON.parse(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "demo-compound-identifiers-item", "block.json"),
+				"utf8",
+			),
+		);
+
+		expect(parentBlockJson.name).toBe("experiments/demo-compound-identifiers");
+		expect(parentBlockJson.textdomain).toBe("demo-compound-text");
+		expect(childBlockJson.name).toBe("experiments/demo-compound-identifiers-item");
+		expect(childBlockJson.textdomain).toBe("demo-compound-text");
+		expect(pluginBootstrap).toContain("Text Domain:       demo-compound-text");
+		expect(pluginBootstrap).toContain("function compound_panel_group_register_blocks");
 	});
 
 	test("runScaffoldFlow defaults persistence scaffolds to custom-table and authenticated in non-interactive mode", async () => {
@@ -817,14 +971,20 @@ describe("@wp-typia/create scaffolding", () => {
 		}
 	});
 
-	test("bun entry translates kebab-case flags while scaffolding", () => {
+	test("bun entry translates kebab-case identifier flags while scaffolding", () => {
 		const targetDir = path.join(tempRoot, "demo-bun-entry");
 
 		runCli("bun", [
 			entryPath,
 			targetDir,
 			"--template",
-			"basic",
+			"persistence",
+			"--namespace",
+			"experiments",
+			"--text-domain",
+			"demo-bun-entry-text",
+			"--php-prefix",
+			"demo_bun_entry_php",
 			"--yes",
 			"--no-install",
 			"--package-manager",
@@ -834,7 +994,19 @@ describe("@wp-typia/create scaffolding", () => {
 		});
 
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
+		const pluginBootstrap = fs.readFileSync(
+			path.join(targetDir, "demo-bun-entry.php"),
+			"utf8",
+		);
+
 		expect(packageJson.packageManager).toBe("bun@1.3.10");
+		expect(blockJson.name).toBe("experiments/demo-bun-entry");
+		expect(blockJson.textdomain).toBe("demo-bun-entry-text");
+		expect(pluginBootstrap).toContain("Text Domain:       demo-bun-entry-text");
+		expect(pluginBootstrap).toContain("function demo_bun_entry_php_get_counter");
 		expect(fs.existsSync(path.join(targetDir, "README.md"))).toBe(true);
 	});
 
