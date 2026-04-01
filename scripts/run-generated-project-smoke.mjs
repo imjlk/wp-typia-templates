@@ -406,6 +406,9 @@ function main() {
 		}
 		for (const artifact of [
 			path.join(projectDir, `${projectName}.php`),
+			path.join(projectDir, "inc", "rest-shared.php"),
+			path.join(projectDir, "inc", "rest-auth.php"),
+			path.join(projectDir, "inc", "rest-public.php"),
 			path.join(projectDir, "src", "render.php"),
 			path.join(projectDir, "src", "blocks", projectName, "render.php"),
 			path.join(projectDir, "build", projectName, "typia-validator.php"),

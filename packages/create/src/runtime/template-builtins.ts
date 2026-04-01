@@ -7,6 +7,7 @@ import {
 	SHARED_BASE_TEMPLATE_ROOT,
 	SHARED_COMPOUND_TEMPLATE_ROOT,
 	SHARED_PERSISTENCE_TEMPLATE_ROOT,
+	SHARED_REST_HELPER_TEMPLATE_ROOT,
 	type BuiltInTemplateId,
 } from "./template-registry.js";
 
@@ -50,7 +51,12 @@ export function getBuiltInTemplateLayerDirs(
 	if (templateId === "persistence") {
 		return [
 			SHARED_BASE_TEMPLATE_ROOT,
+			path.join(SHARED_REST_HELPER_TEMPLATE_ROOT, "shared"),
 			path.join(SHARED_PERSISTENCE_TEMPLATE_ROOT, "core"),
+			path.join(
+				SHARED_REST_HELPER_TEMPLATE_ROOT,
+				persistencePolicy === "public" ? "public" : "auth",
+			),
 			path.join(SHARED_PERSISTENCE_TEMPLATE_ROOT, persistencePolicy === "public" ? "public" : "auth"),
 			getTemplateById(templateId).templateDir,
 		];
@@ -65,7 +71,12 @@ export function getBuiltInTemplateLayerDirs(
 
 		if (persistenceEnabled) {
 			layers.push(
+				path.join(SHARED_REST_HELPER_TEMPLATE_ROOT, "shared"),
 				path.join(SHARED_COMPOUND_TEMPLATE_ROOT, "persistence"),
+				path.join(
+					SHARED_REST_HELPER_TEMPLATE_ROOT,
+					persistencePolicy === "public" ? "public" : "auth",
+				),
 				path.join(
 					SHARED_COMPOUND_TEMPLATE_ROOT,
 					persistencePolicy === "public" ? "persistence-public" : "persistence-auth",

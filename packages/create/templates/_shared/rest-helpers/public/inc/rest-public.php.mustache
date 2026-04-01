@@ -1,0 +1,161 @@
+<?php
+
+function {{phpPrefix}}_base64url_encode( $value ) {
+	return rtrim( strtr( base64_encode( $value ), '+/', '-_' ), '=' );
+}
+
+function {{phpPrefix}}_base64url_decode( $value ) {
+	if ( ! is_string( $value ) || '' === $value ) {
+		return false;
+	}
+
+	$padding = strlen( $value ) % 4;
+	if ( $padding > 0 ) {
+		$value .= str_repeat( '=', 4 - $padding );
+	}
+
+	return base64_decode( strtr( $value, '-_', '+/' ), true );
+}
+
+function {{phpPrefix}}_get_public_write_action() {
+	return '{{namespace}}/{{slugKebabCase}}/counter/increment';
+}
+
+function {{phpPrefix}}_create_public_write_token( $post_id, $resource_key ) {
+	$expires_at = time() + (int) {{phpPrefix}}_PUBLIC_WRITE_TTL;
+	$payload    = array(
+		'action'      => {{phpPrefix}}_get_public_write_action(),
+		'exp'         => $expires_at,
+		'postId'      => (int) $post_id,
+		'resourceKey' => (string) $resource_key,
+	);
+	$json       = wp_json_encode( $payload );
+
+	if ( ! is_string( $json ) || '' === $json ) {
+		return array(
+			'expiresAt' => $expires_at,
+			'token'     => '',
+		);
+	}
+
+	$payload_segment   = {{phpPrefix}}_base64url_encode( $json );
+	$signature_segment = {{phpPrefix}}_base64url_encode(
+		hash_hmac( 'sha256', $payload_segment, wp_salt( 'nonce' ), true )
+	);
+
+	return array(
+		'expiresAt' => $expires_at,
+		'token'     => $payload_segment . '.' . $signature_segment,
+	);
+}
+
+function {{phpPrefix}}_verify_public_write_token( $token, $post_id, $resource_key ) {
+	if ( ! is_string( $token ) || '' === $token ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The public write token is missing.',
+			array( 'status' => 403 )
+		);
+	}
+
+	$segments = explode( '.', $token );
+	if ( 2 !== count( $segments ) ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The public write token format is invalid.',
+			array( 'status' => 403 )
+		);
+	}
+
+	list( $payload_segment, $signature_segment ) = $segments;
+	$expected_signature = {{phpPrefix}}_base64url_encode(
+		hash_hmac( 'sha256', $payload_segment, wp_salt( 'nonce' ), true )
+	);
+
+	if ( ! hash_equals( $expected_signature, $signature_segment ) ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The public write token signature is invalid.',
+			array( 'status' => 403 )
+		);
+	}
+
+	$payload_json = {{phpPrefix}}_base64url_decode( $payload_segment );
+	if ( false === $payload_json ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The public write token payload is invalid.',
+			array( 'status' => 403 )
+		);
+	}
+
+	$payload = json_decode( $payload_json, true );
+	if ( ! is_array( $payload ) ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The public write token payload is invalid.',
+			array( 'status' => 403 )
+		);
+	}
+
+	$expires_at = isset( $payload['exp'] ) ? (int) $payload['exp'] : 0;
+	if ( $expires_at < time() ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The public write token has expired. Reload the page and try again.',
+			array( 'status' => 403 )
+		);
+	}
+
+	if ( {{phpPrefix}}_get_public_write_action() !== ( isset( $payload['action'] ) ? (string) $payload['action'] : '' ) ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The public write token action is invalid.',
+			array( 'status' => 403 )
+		);
+	}
+
+	if ( (int) $post_id !== (int) ( isset( $payload['postId'] ) ? $payload['postId'] : 0 ) ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The public write token is not valid for this post.',
+			array( 'status' => 403 )
+		);
+	}
+
+	if ( (string) $resource_key !== (string) ( isset( $payload['resourceKey'] ) ? $payload['resourceKey'] : '' ) ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The public write token is not valid for this resource key.',
+			array( 'status' => 403 )
+		);
+	}
+
+	return true;
+}
+
+function {{phpPrefix}}_can_write_publicly( WP_REST_Request $request ) {
+	$payload = $request->get_json_params();
+	if ( ! is_array( $payload ) ) {
+		$payload = array();
+	}
+
+	$post_id      = isset( $payload['postId'] ) ? (int) $payload['postId'] : 0;
+	$resource_key = isset( $payload['resourceKey'] ) ? (string) $payload['resourceKey'] : '';
+	$token        = isset( $payload['publicWriteToken'] ) ? (string) $payload['publicWriteToken'] : '';
+
+	if ( '' === $token ) {
+		$fallback = $request->get_param( 'publicWriteToken' );
+		$token    = is_string( $fallback ) ? $fallback : '';
+	}
+
+	if ( $post_id <= 0 || '' === $resource_key ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The public write request is missing its target identifiers.',
+			array( 'status' => 403 )
+		);
+	}
+
+	return {{phpPrefix}}_verify_public_write_token( $token, $post_id, $resource_key );
+}

@@ -1,0 +1,50 @@
+<?php
+
+function {{phpPrefix}}_load_schema_from_build_dir( $build_dir, $schema_name ) {
+	if ( ! is_string( $build_dir ) || '' === $build_dir ) {
+		return null;
+	}
+
+	$path = $build_dir . '/api-schemas/' . $schema_name . '.schema.json';
+	if ( ! file_exists( $path ) ) {
+		return null;
+	}
+
+	$decoded = json_decode( file_get_contents( $path ), true );
+	return is_array( $decoded ) ? $decoded : null;
+}
+
+function {{phpPrefix}}_sanitize_rest_schema( $schema ) {
+	if ( ! is_array( $schema ) ) {
+		return $schema;
+	}
+
+	unset( $schema['$schema'], $schema['title'] );
+
+	if ( isset( $schema['properties'] ) && is_array( $schema['properties'] ) ) {
+		foreach ( $schema['properties'] as $key => $property_schema ) {
+			$schema['properties'][ $key ] = {{phpPrefix}}_sanitize_rest_schema( $property_schema );
+		}
+	}
+
+	if ( isset( $schema['items'] ) && is_array( $schema['items'] ) ) {
+		$schema['items'] = {{phpPrefix}}_sanitize_rest_schema( $schema['items'] );
+	}
+
+	return $schema;
+}
+
+function {{phpPrefix}}_validate_and_sanitize_request( $value, $build_dir, $schema_name, $param_name ) {
+	$schema = {{phpPrefix}}_load_schema_from_build_dir( $build_dir, $schema_name );
+	if ( ! is_array( $schema ) ) {
+		return new WP_Error( 'missing_schema', 'Missing REST schema.', array( 'status' => 500 ) );
+	}
+
+	$rest_schema = {{phpPrefix}}_sanitize_rest_schema( $schema );
+	$validation  = rest_validate_value_from_schema( $value, $rest_schema, $param_name );
+	if ( is_wp_error( $validation ) ) {
+		return $validation;
+	}
+
+	return rest_sanitize_value_from_schema( $value, $rest_schema, $param_name );
+}
