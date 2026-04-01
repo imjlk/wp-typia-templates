@@ -216,7 +216,7 @@ function {{phpPrefix}}_increment_counter( $post_id, $resource_key, $delta ) {
 	);
 }
 
-function {{phpPrefix}}_build_counter_response( $post_id, $resource_key, $count ) {
+function {{phpPrefix}}_build_state_response( $post_id, $resource_key, $count ) {
 	return array(
 		'postId'      => (int) $post_id,
 		'resourceKey' => (string) $resource_key,
@@ -225,13 +225,13 @@ function {{phpPrefix}}_build_counter_response( $post_id, $resource_key, $count )
 	);
 }
 
-function {{phpPrefix}}_handle_get_counter( WP_REST_Request $request ) {
+function {{phpPrefix}}_handle_get_state( WP_REST_Request $request ) {
 	$payload = {{phpPrefix}}_validate_and_sanitize_request(
 		array(
 			'postId'      => $request->get_param( 'postId' ),
 			'resourceKey' => $request->get_param( 'resourceKey' ),
 		),
-		'counter-query',
+		'state-query',
 		'query'
 	);
 
@@ -241,7 +241,7 @@ function {{phpPrefix}}_handle_get_counter( WP_REST_Request $request ) {
 
 	$count = {{phpPrefix}}_get_counter( (int) $payload['postId'], (string) $payload['resourceKey'] );
 	return rest_ensure_response(
-		{{phpPrefix}}_build_counter_response(
+		{{phpPrefix}}_build_state_response(
 			(int) $payload['postId'],
 			(string) $payload['resourceKey'],
 			$count
@@ -249,10 +249,10 @@ function {{phpPrefix}}_handle_get_counter( WP_REST_Request $request ) {
 	);
 }
 
-function {{phpPrefix}}_handle_increment_counter( WP_REST_Request $request ) {
+function {{phpPrefix}}_handle_write_state( WP_REST_Request $request ) {
 	$payload = {{phpPrefix}}_validate_and_sanitize_request(
 		$request->get_json_params(),
-		'increment-request',
+		'write-state-request',
 		'body'
 	);
 
@@ -271,7 +271,7 @@ function {{phpPrefix}}_handle_increment_counter( WP_REST_Request $request ) {
 	}
 
 	return rest_ensure_response(
-		{{phpPrefix}}_build_counter_response(
+		{{phpPrefix}}_build_state_response(
 			(int) $payload['postId'],
 			(string) $payload['resourceKey'],
 			$count
@@ -282,17 +282,17 @@ function {{phpPrefix}}_handle_increment_counter( WP_REST_Request $request ) {
 function {{phpPrefix}}_register_routes() {
 	register_rest_route(
 		'{{namespace}}/v1',
-		'/{{slugKebabCase}}/counter',
+		'/{{slugKebabCase}}/state',
 		array(
 			array(
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => '{{phpPrefix}}_handle_get_counter',
+				'callback'            => '{{phpPrefix}}_handle_get_state',
 				'permission_callback' => '__return_true',
 			),
 			array(
 				// Intentional sample behavior: this template demonstrates anonymous/public writes.
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => '{{phpPrefix}}_handle_increment_counter',
+				'callback'            => '{{phpPrefix}}_handle_write_state',
 				'permission_callback' => '__return_true',
 			),
 		)

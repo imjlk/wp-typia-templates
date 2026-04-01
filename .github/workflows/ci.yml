@@ -207,7 +207,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Download CLI artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: wp-typia-create-dist
           path: packages/create/dist
@@ -259,19 +259,19 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Download example build artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: my-typia-block-build
           path: examples/my-typia-block/build
 
       - name: Download persistence examples build artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: persistence-examples-build
           path: examples/persistence-examples/build
 
       - name: Download compound patterns build artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: compound-patterns-build
           path: examples/compound-patterns/build

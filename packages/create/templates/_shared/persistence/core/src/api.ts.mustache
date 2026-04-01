@@ -5,13 +5,13 @@ import {
 } from '@wp-typia/rest';
 
 import {
-	type {{pascalCase}}CounterQuery,
-	type {{pascalCase}}CounterResponse,
-	type {{pascalCase}}IncrementRequest,
+	type {{pascalCase}}StateQuery,
+	type {{pascalCase}}StateResponse,
+	type {{pascalCase}}WriteStateRequest,
 } from './api-types';
 import { apiValidators } from './api-validators';
 
-const COUNTER_PATH = '/{{namespace}}/v1/{{slugKebabCase}}/counter';
+const STATE_PATH = '/{{namespace}}/v1/{{slugKebabCase}}/state';
 
 function resolveRestNonce( fallback?: string ): string | undefined {
 	if ( typeof fallback === 'string' && fallback.length > 0 ) {
@@ -27,45 +27,45 @@ function resolveRestNonce( fallback?: string ): string | undefined {
 		: undefined;
 }
 
-export const counterEndpoint = createEndpoint<
-	{{pascalCase}}CounterQuery,
-	{{pascalCase}}CounterResponse
+export const stateEndpoint = createEndpoint<
+	{{pascalCase}}StateQuery,
+	{{pascalCase}}StateResponse
 >( {
 	buildRequestOptions: () => ( {
-		url: resolveRestRouteUrl( COUNTER_PATH ),
+		url: resolveRestRouteUrl( STATE_PATH ),
 	} ),
 	method: 'GET',
-	path: COUNTER_PATH,
-	validateRequest: apiValidators.counterQuery,
-	validateResponse: apiValidators.counterResponse,
+	path: STATE_PATH,
+	validateRequest: apiValidators.stateQuery,
+	validateResponse: apiValidators.stateResponse,
 } );
 
-export const incrementCounterEndpoint = createEndpoint<
-	{{pascalCase}}IncrementRequest,
-	{{pascalCase}}CounterResponse
+export const writeStateEndpoint = createEndpoint<
+	{{pascalCase}}WriteStateRequest,
+	{{pascalCase}}StateResponse
 >( {
 	buildRequestOptions: () => ( {
-		url: resolveRestRouteUrl( COUNTER_PATH ),
+		url: resolveRestRouteUrl( STATE_PATH ),
 	} ),
 	method: 'POST',
-	path: COUNTER_PATH,
-	validateRequest: apiValidators.incrementRequest,
-	validateResponse: apiValidators.counterResponse,
+	path: STATE_PATH,
+	validateRequest: apiValidators.writeStateRequest,
+	validateResponse: apiValidators.stateResponse,
 } );
 
-export function fetchCounter(
-	request: {{pascalCase}}CounterQuery
+export function fetchState(
+	request: {{pascalCase}}StateQuery
 ) {
-	return callEndpoint( counterEndpoint, request );
+	return callEndpoint( stateEndpoint, request );
 }
 
-export function incrementCounter(
-	request: {{pascalCase}}IncrementRequest,
+export function writeState(
+	request: {{pascalCase}}WriteStateRequest,
 	restNonce?: string
 ) {
 	const nonce = resolveRestNonce( restNonce );
 
-	return callEndpoint( incrementCounterEndpoint, request, {
+	return callEndpoint( writeStateEndpoint, request, {
 		requestOptions: nonce
 			? {
 					headers: {
