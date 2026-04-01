@@ -21,6 +21,8 @@
   The kitchen-sink reference block.
 - `examples/persistence-examples`
   The persistence-policy reference plugin with two blocks.
+- `examples/compound-patterns`
+  The compound parent/child reference plugin.
 
 This package is the place for:
 
@@ -50,12 +52,15 @@ Built-in templates stay limited to:
 - `basic`
 - `interactivity`
 - `persistence`
+- `compound`
 
 Inside `@wp-typia/create`, built-in templates are composed from:
 
 - a shared base layer for common project assets
 - a persistence `core` layer for shared typed REST/interactivity wiring
 - a persistence policy layer (`public` or `auth`)
+- a compound `core` layer for multi-block parent/child scaffolds
+- an optional compound persistence layer plus policy layer for parent-only persistence
 - a template-specific overlay
 
 This keeps public scaffold behavior stable while letting shared runtime/helper changes flow into the built-in templates.
@@ -68,6 +73,13 @@ The `persistence` template extends the same base with:
 - a selectable persistence mode (`post-meta` or `custom-table`)
 - a selectable persistence policy (`authenticated` or `public`)
 
+The `compound` template extends the same base with:
+
+- a multi-block project layout under `src/blocks/*`
+- a top-level parent block and a hidden implementation child block
+- `InnerBlocks`-driven composition and default child seeding
+- optional parent-only persistence when either `--data-storage` or `--persistence-policy` is supplied
+
 Generated projects also import shared runtime helpers from `@wp-typia/create/runtime/*`, so validator/default/runtime behavior can evolve centrally instead of being copied into every generated block.
 
 ## Intended Flow
@@ -78,4 +90,5 @@ Generated projects also import shared runtime helpers from `@wp-typia/create/run
 4. Build and validate the block
 5. Use `persistence --persistence-policy public` for signed public writes
 6. Use `persistence --persistence-policy authenticated` for logged-in writes
-7. Use the reference apps when you need kitchen-sink or policy-specific runtime patterns
+7. Use `compound` when you need a scaffolded parent/child `InnerBlocks` structure
+8. Use the reference apps when you need kitchen-sink, policy-specific, or compound runtime patterns

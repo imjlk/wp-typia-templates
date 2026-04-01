@@ -6,6 +6,7 @@
 
 ### Interfaces
 
+- [BuiltInTemplateVariantOptions](../interfaces/packages_create_src_runtime_template_builtins.BuiltInTemplateVariantOptions.md)
 - [MaterializedBuiltInTemplateSource](../interfaces/packages_create_src_runtime_template_builtins.MaterializedBuiltInTemplateSource.md)
 
 ### Type Aliases
@@ -28,13 +29,13 @@ Controls which persistence layer is applied when materializing the built-in
 
 #### Defined in
 
-[packages/create/src/runtime/template-builtins.ts:16](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L16)
+[packages/create/src/runtime/template-builtins.ts:17](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L17)
 
 ## Functions
 
 ### getBuiltInTemplateLayerDirs
 
-▸ **getBuiltInTemplateLayerDirs**(`templateId`, `persistencePolicy?`): `string`[]
+▸ **getBuiltInTemplateLayerDirs**(`templateId`, `«destructured»?`): `string`[]
 
 Returns the ordered overlay directories for a built-in template.
 
@@ -44,10 +45,10 @@ resolve to the shared base plus their own template directory.
 
 #### Parameters
 
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `templateId` | ``"persistence"`` \| ``"basic"`` \| ``"interactivity"`` | `undefined` |
-| `persistencePolicy` | [`BuiltInPersistencePolicy`](packages_create_src_runtime_template_builtins.md#builtinpersistencepolicy) | `"authenticated"` |
+| Name | Type |
+| :------ | :------ |
+| `templateId` | ``"compound"`` \| ``"persistence"`` \| ``"basic"`` \| ``"interactivity"`` |
+| `«destructured»` | [`BuiltInTemplateVariantOptions`](../interfaces/packages_create_src_runtime_template_builtins.BuiltInTemplateVariantOptions.md) |
 
 #### Returns
 
@@ -55,13 +56,13 @@ resolve to the shared base plus their own template directory.
 
 #### Defined in
 
-[packages/create/src/runtime/template-builtins.ts:37](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L37)
+[packages/create/src/runtime/template-builtins.ts:43](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L43)
 
 ___
 
 ### resolveBuiltInTemplateSource
 
-▸ **resolveBuiltInTemplateSource**(`templateId`, `persistencePolicy?`): `Promise`\<[`MaterializedBuiltInTemplateSource`](../interfaces/packages_create_src_runtime_template_builtins.MaterializedBuiltInTemplateSource.md)\>
+▸ **resolveBuiltInTemplateSource**(`templateId`, `options?`): `Promise`\<[`MaterializedBuiltInTemplateSource`](../interfaces/packages_create_src_runtime_template_builtins.MaterializedBuiltInTemplateSource.md)\>
 
 Materializes a built-in template into a temporary directory by copying each
 resolved layer in order.
@@ -72,10 +73,10 @@ removed before the error is rethrown.
 
 #### Parameters
 
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `templateId` | ``"persistence"`` \| ``"basic"`` \| ``"interactivity"`` | `undefined` |
-| `persistencePolicy` | [`BuiltInPersistencePolicy`](packages_create_src_runtime_template_builtins.md#builtinpersistencepolicy) | `"authenticated"` |
+| Name | Type |
+| :------ | :------ |
+| `templateId` | ``"compound"`` \| ``"persistence"`` \| ``"basic"`` \| ``"interactivity"`` |
+| `options` | [`BuiltInTemplateVariantOptions`](../interfaces/packages_create_src_runtime_template_builtins.BuiltInTemplateVariantOptions.md) |
 
 #### Returns
 
@@ -83,4 +84,4 @@ removed before the error is rethrown.
 
 #### Defined in
 
-[packages/create/src/runtime/template-builtins.ts:61](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L61)
+[packages/create/src/runtime/template-builtins.ts:90](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L90)

@@ -534,10 +534,12 @@ The main PHP file (`my-counter.php`) includes:
 2. **Add Rate Limiting**: Protect public endpoints from abuse
 3. **Add Caching**: Cache counter values for better performance
 4. **Extend Validation**: Add custom validation rules in `api-validators.ts`
+5. **Move to Compound Parent/Child Blocks**: Start from the [Compound Block Tutorial](./compound-block-tutorial.md) when the persisted behavior belongs on a top-level container block with internal children
 
 ## Additional Resources
 
 - [Basic Block Tutorial](./basic-block-tutorial.md)
+- [Compound Block Tutorial](./compound-block-tutorial.md)
 - [API Reference](../API.md)
 - [@wp-typia/rest Documentation](../../packages/wp-typia-rest/README.md)
 - [WordPress Interactivity API](https://developer.wordpress.org/block-editor/reference-guides/interactivity-api/)
