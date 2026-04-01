@@ -17,14 +17,14 @@ export default function Edit( {
 				className="wp-block-{{slugKebabCase}}-item__title"
 				value={ attributes.title }
 				onChange={ ( title ) => setAttributes( { title } ) }
-				placeholder={ __( {{compoundChildTitleJson}}, '{{slugSnakeCase}}' ) }
+				placeholder={ __( {{compoundChildTitleJson}}, '{{textDomain}}' ) }
 			/>
 			<RichText
 				tagName="p"
 				className="wp-block-{{slugKebabCase}}-item__body"
 				value={ attributes.body }
 				onChange={ ( body ) => setAttributes( { body } ) }
-				placeholder={ __( 'Add supporting details for this internal item.', '{{slugSnakeCase}}' ) }
+				placeholder={ __( 'Add supporting details for this internal item.', '{{textDomain}}' ) }
 			/>
 		</div>
 	);

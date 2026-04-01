@@ -75,16 +75,21 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(fs.existsSync(readmePath)).toBe(true);
 
 		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
 		const readme = fs.readFileSync(readmePath, "utf8");
 		const generatedEdit = fs.readFileSync(path.join(targetDir, "src", "edit.tsx"), "utf8");
 		const generatedHooks = fs.readFileSync(path.join(targetDir, "src", "hooks.ts"), "utf8");
 		const generatedValidators = fs.readFileSync(path.join(targetDir, "src", "validators.ts"), "utf8");
 
+		expect(packageJson.name).toBe("demo-npm");
 		expect(packageJson.packageManager).toBe("npm@11.6.1");
 		expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(blockTypesPackageVersion);
 		expect(packageJson.devDependencies["@wp-typia/create"]).toBe(createPackageVersion);
 		expect(packageJson.scripts.build).toBe("npm run sync-types && wp-scripts build --experimental-modules");
 		expect(packageJson.scripts.start).toBe("npm run sync-types && wp-scripts start --experimental-modules");
+		expect(blockJson.textdomain).toBe("demo-npm");
 		expect(generatedHooks).toContain("type ValidationResult");
 		expect(generatedHooks).toContain("useTypiaValidation");
 		expect(generatedEdit).toContain("@wp-typia/create/runtime/editor");
@@ -123,7 +128,13 @@ describe("@wp-typia/create scaffolding", () => {
 		const generatedHooks = fs.readFileSync(path.join(targetDir, "src", "hooks.ts"), "utf8");
 		const generatedValidators = fs.readFileSync(path.join(targetDir, "src", "validators.ts"), "utf8");
 		const generatedEdit = fs.readFileSync(path.join(targetDir, "src", "edit.tsx"), "utf8");
+		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
 
+		expect(packageJson.name).toBe("demo-interactivity");
+		expect(blockJson.textdomain).toBe("demo-interactivity");
 		expect(generatedTypes).toContain("ValidationResult");
 		expect(generatedHooks).toContain("useTypiaValidation");
 		expect(generatedValidators).toContain("toValidationResult");
@@ -167,12 +178,18 @@ describe("@wp-typia/create scaffolding", () => {
 		const generatedRender = fs.readFileSync(path.join(targetDir, "src", "render.php"), "utf8");
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
 
+		expect(packageJson.name).toBe("demo-persistence-public");
 		expect(packageJson.devDependencies["@wp-typia/rest"]).toBe(restPackageVersion);
 		expect(packageJson.scripts.build).toBe(
 			"npm run sync-types && npm run sync-rest && wp-scripts build --experimental-modules",
 		);
+		expect(blockJson.textdomain).toBe("demo-persistence-public");
 		expect(pluginBootstrap).toContain("post-meta");
+		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-public");
 		expect(pluginBootstrap).toContain("_verify_public_write_token");
 		expect(generatedApi).toContain("@wp-typia/rest");
 		expect(generatedSyncRest).toContain("syncTypeSchemas");
@@ -209,10 +226,151 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 		const generatedRender = fs.readFileSync(path.join(targetDir, "src", "render.php"), "utf8");
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
+		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
 
+		expect(packageJson.name).toBe("demo-persistence-authenticated");
+		expect(blockJson.textdomain).toBe("demo-persistence-authenticated");
+		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-authenticated");
 		expect(pluginBootstrap).toContain("function demo_persistence_authenticated_can_write_authenticated");
 		expect(generatedRender).toContain("Sign in to persist this counter.");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
+	});
+
+	test("scaffoldProject supports explicit text-domain overrides on persistence templates", async () => {
+		const targetDir = path.join(tempRoot, "demo-persistence-text-domain");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "persistence",
+			dataStorageMode: "custom-table",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				dataStorageMode: "custom-table",
+				description: "Demo persistence text domain block",
+				namespace: "create-block",
+				persistencePolicy: "authenticated",
+				slug: "demo-persistence-text-domain",
+				textDomain: "demo-custom-text-domain",
+				title: "Demo Persistence Text Domain",
+			},
+		});
+
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
+		const pluginBootstrap = fs.readFileSync(
+			path.join(targetDir, "demo-persistence-text-domain.php"),
+			"utf8",
+		);
+
+		expect(blockJson.name).toBe("create-block/demo-persistence-text-domain");
+		expect(blockJson.textdomain).toBe("demo-custom-text-domain");
+		expect(pluginBootstrap).toContain("Text Domain:       demo-custom-text-domain");
+		expect(pluginBootstrap).toContain(
+			"function demo_persistence_text_domain_get_counter",
+		);
+	});
+
+	test("scaffoldProject supports explicit php-prefix overrides on persistence templates", async () => {
+		const targetDir = path.join(tempRoot, "demo-persistence-php-prefix");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "persistence",
+			dataStorageMode: "custom-table",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				dataStorageMode: "custom-table",
+				description: "Demo persistence php prefix block",
+				namespace: "create-block",
+				persistencePolicy: "authenticated",
+				phpPrefix: "custom_counter_prefix",
+				slug: "demo-persistence-php-prefix",
+				title: "Demo Persistence Php Prefix",
+			},
+		});
+
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
+		const pluginBootstrap = fs.readFileSync(
+			path.join(targetDir, "demo-persistence-php-prefix.php"),
+			"utf8",
+		);
+
+		expect(blockJson.textdomain).toBe("demo-persistence-php-prefix");
+		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-php-prefix");
+		expect(pluginBootstrap).toContain("function custom_counter_prefix_get_counter");
+		expect(pluginBootstrap).toContain("custom_counter_prefix_storage_version");
+	});
+
+	test("scaffoldProject rejects overly long php-prefix overrides", async () => {
+		const targetDir = path.join(tempRoot, "demo-persistence-php-prefix-too-long");
+
+		await expect(
+			scaffoldProject({
+				projectDir: targetDir,
+				templateId: "persistence",
+				dataStorageMode: "custom-table",
+				packageManager: "npm",
+				noInstall: true,
+				answers: {
+					author: "Test Runner",
+					dataStorageMode: "custom-table",
+					description: "Demo persistence php prefix length guard",
+					namespace: "create-block",
+					persistencePolicy: "authenticated",
+					phpPrefix: "a".repeat(51),
+					slug: "demo-persistence-php-prefix-too-long",
+					title: "Demo Persistence Php Prefix Too Long",
+				},
+			}),
+		).rejects.toThrow("Use 50 characters or fewer");
+	});
+
+	test("scaffoldProject supports combined identifier overrides on persistence templates", async () => {
+		const targetDir = path.join(tempRoot, "demo-persistence-identifiers");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "persistence",
+			dataStorageMode: "post-meta",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				dataStorageMode: "post-meta",
+				description: "Demo persistence identifier overrides",
+				namespace: "experiments",
+				persistencePolicy: "public",
+				phpPrefix: "ab_test_metrics",
+				slug: "demo-persistence-identifiers",
+				textDomain: "demo-persistence-text",
+				title: "Demo Persistence Identifiers",
+			},
+			persistencePolicy: "public",
+		});
+
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
+		const pluginBootstrap = fs.readFileSync(
+			path.join(targetDir, "demo-persistence-identifiers.php"),
+			"utf8",
+		);
+
+		expect(blockJson.name).toBe("experiments/demo-persistence-identifiers");
+		expect(blockJson.textdomain).toBe("demo-persistence-text");
+		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-text");
+		expect(pluginBootstrap).toContain("function ab_test_metrics_get_counter");
+		expect(pluginBootstrap).toContain("ab_test_metrics_create_public_write_token");
 	});
 
 	test("scaffoldProject creates a pure compound template with parent and hidden child blocks", async () => {
@@ -323,6 +481,50 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("_verify_public_write_token");
 		expect(pluginBootstrap).toContain("HOUR_IN_SECONDS");
 		expect(parentRender).toContain("publicWriteToken");
+	});
+
+	test("compound scaffolds honor namespace, text-domain, and php-prefix overrides", async () => {
+		const targetDir = path.join(tempRoot, "demo-compound-identifiers");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "compound",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo compound identifier overrides",
+				namespace: "experiments",
+				phpPrefix: "compound_panel_group",
+				slug: "demo-compound-identifiers",
+				textDomain: "demo-compound-text",
+				title: "Demo Compound Identifiers",
+			},
+		});
+
+		const pluginBootstrap = fs.readFileSync(
+			path.join(targetDir, "demo-compound-identifiers.php"),
+			"utf8",
+		);
+		const parentBlockJson = JSON.parse(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "demo-compound-identifiers", "block.json"),
+				"utf8",
+			),
+		);
+		const childBlockJson = JSON.parse(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "demo-compound-identifiers-item", "block.json"),
+				"utf8",
+			),
+		);
+
+		expect(parentBlockJson.name).toBe("experiments/demo-compound-identifiers");
+		expect(parentBlockJson.textdomain).toBe("demo-compound-text");
+		expect(childBlockJson.name).toBe("experiments/demo-compound-identifiers-item");
+		expect(childBlockJson.textdomain).toBe("demo-compound-text");
+		expect(pluginBootstrap).toContain("Text Domain:       demo-compound-text");
+		expect(pluginBootstrap).toContain("function compound_panel_group_register_blocks");
 	});
 
 	test("runScaffoldFlow defaults persistence scaffolds to custom-table and authenticated in non-interactive mode", async () => {
@@ -793,14 +995,20 @@ describe("@wp-typia/create scaffolding", () => {
 		}
 	});
 
-	test("bun entry translates kebab-case flags while scaffolding", () => {
+	test("bun entry translates kebab-case identifier flags while scaffolding", () => {
 		const targetDir = path.join(tempRoot, "demo-bun-entry");
 
 		runCli("bun", [
 			entryPath,
 			targetDir,
 			"--template",
-			"basic",
+			"persistence",
+			"--namespace",
+			"experiments",
+			"--text-domain",
+			"demo-bun-entry-text",
+			"--php-prefix",
+			"demo_bun_entry_php",
 			"--yes",
 			"--no-install",
 			"--package-manager",
@@ -810,7 +1018,19 @@ describe("@wp-typia/create scaffolding", () => {
 		});
 
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
+		const pluginBootstrap = fs.readFileSync(
+			path.join(targetDir, "demo-bun-entry.php"),
+			"utf8",
+		);
+
 		expect(packageJson.packageManager).toBe("bun@1.3.10");
+		expect(blockJson.name).toBe("experiments/demo-bun-entry");
+		expect(blockJson.textdomain).toBe("demo-bun-entry-text");
+		expect(pluginBootstrap).toContain("Text Domain:       demo-bun-entry-text");
+		expect(pluginBootstrap).toContain("function demo_bun_entry_php_get_counter");
 		expect(fs.existsSync(path.join(targetDir, "README.md"))).toBe(true);
 	});
 
@@ -823,6 +1043,24 @@ describe("@wp-typia/create scaffolding", () => {
 				"basic",
 				"--yes",
 				"--no-install",
+			], {
+				stdio: "pipe",
+			});
+		}).toThrow();
+	});
+
+	test("node entry rejects missing values for identifier override flags", () => {
+		expect(() => {
+			runCli("node", [
+				entryPath,
+				"demo-missing-namespace",
+				"--template",
+				"basic",
+				"--namespace",
+				"--yes",
+				"--no-install",
+				"--package-manager",
+				"npm",
 			], {
 				stdio: "pipe",
 			});

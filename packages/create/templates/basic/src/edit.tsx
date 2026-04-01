@@ -9,7 +9,11 @@ import { __ } from '@wordpress/i18n';
 import currentManifest from './typia.manifest.json';
 import { createEditorModel, type ManifestDocument } from '@wp-typia/create/runtime/editor';
 import { {{pascalCase}}Attributes } from './types';
-import { validators, createAttributeUpdater } from './validators';
+import {
+  validators,
+  createAttributeUpdater,
+  validate{{pascalCase}}Attributes,
+} from './validators';
 import { useTypiaValidation } from './hooks';
 
 type EditProps = BlockEditProps<{{pascalCase}}Attributes>;
@@ -32,7 +36,10 @@ function Edit({ attributes, setAttributes }: EditProps) {
   const alignmentField = editorFieldMap.get('alignment');
   const classNameField = editorFieldMap.get('className');
   const isVisibleField = editorFieldMap.get('isVisible');
-  const { errorMessages, isValid } = useTypiaValidation(attributes, validators.validate);
+  const { errorMessages, isValid } = useTypiaValidation(
+    attributes,
+    validate{{pascalCase}}Attributes
+  );
   const updateAttribute = createAttributeUpdater(
     attributes,
     setAttributes,

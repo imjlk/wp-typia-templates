@@ -24,24 +24,39 @@ import {
 interface ParsedArgs {
 	dataStorage?: string;
 	help: boolean;
+	namespace?: string;
 	noInstall: boolean;
 	packageManager?: string;
 	persistencePolicy?: string;
+	phpPrefix?: string;
 	positionals: string[];
 	template?: string;
+	textDomain?: string;
 	variant?: string;
 	yes: boolean;
+}
+
+function getRequiredValue(argv: string[], index: number, flagName: string): string {
+	const value = argv[index + 1];
+	if (value === undefined || value.startsWith("-")) {
+		throw new Error(`${flagName} requires a value`);
+	}
+
+	return value;
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
 	const parsed: ParsedArgs = {
 		dataStorage: undefined,
 		help: false,
+		namespace: undefined,
 		noInstall: false,
 		packageManager: undefined,
 		persistencePolicy: undefined,
+		phpPrefix: undefined,
 		positionals: [],
 		template: undefined,
+		textDomain: undefined,
 		variant: undefined,
 		yes: false,
 	};
@@ -85,12 +100,39 @@ function parseArgs(argv: string[]): ParsedArgs {
 			continue;
 		}
 		if (arg === "--package-manager" || arg === "-p") {
-			parsed.packageManager = argv[index + 1];
+			parsed.packageManager = getRequiredValue(argv, index, "--package-manager");
 			index += 1;
 			continue;
 		}
+		if (arg === "--namespace") {
+			parsed.namespace = getRequiredValue(argv, index, "--namespace");
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--namespace=")) {
+			parsed.namespace = arg.split("=", 2)[1];
+			continue;
+		}
+		if (arg === "--text-domain") {
+			parsed.textDomain = getRequiredValue(argv, index, "--text-domain");
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--text-domain=")) {
+			parsed.textDomain = arg.split("=", 2)[1];
+			continue;
+		}
+		if (arg === "--php-prefix") {
+			parsed.phpPrefix = getRequiredValue(argv, index, "--php-prefix");
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--php-prefix=")) {
+			parsed.phpPrefix = arg.split("=", 2)[1];
+			continue;
+		}
 		if (arg === "--data-storage") {
-			parsed.dataStorage = argv[index + 1];
+			parsed.dataStorage = getRequiredValue(argv, index, "--data-storage");
 			index += 1;
 			continue;
 		}
@@ -99,7 +141,7 @@ function parseArgs(argv: string[]): ParsedArgs {
 			continue;
 		}
 		if (arg === "--persistence-policy") {
-			parsed.persistencePolicy = argv[index + 1];
+			parsed.persistencePolicy = getRequiredValue(argv, index, "--persistence-policy");
 			index += 1;
 			continue;
 		}
@@ -140,8 +182,10 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 			cwd,
 			dataStorageMode: parsed.dataStorage,
 			isInteractive,
+			namespace: parsed.namespace,
 			noInstall: parsed.noInstall,
 			packageManager: parsed.packageManager,
+			phpPrefix: parsed.phpPrefix,
 			projectInput: parsed.positionals[0],
 			promptText: (message: string, defaultValue: string, validate?: (input: string) => boolean | string) =>
 				prompt.text(message, defaultValue, validate),
@@ -168,6 +212,7 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 			selectTemplate: () =>
 				prompt.select("Select a template", getTemplateSelectOptions(), 1),
 			templateId: parsed.template,
+			textDomain: parsed.textDomain,
 			variant: parsed.variant,
 			persistencePolicy: parsed.persistencePolicy,
 			yes: parsed.yes,

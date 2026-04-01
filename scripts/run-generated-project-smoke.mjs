@@ -28,11 +28,14 @@ const PACKAGE_MANAGERS = {
 function parseArgs(argv) {
 	const parsed = {
 		dataStorage: undefined,
+		namespace: undefined,
 		packageManager: undefined,
 		persistencePolicy: undefined,
+		phpPrefix: undefined,
 		projectName: undefined,
 		runtime: undefined,
 		template: undefined,
+		textDomain: undefined,
 		variant: undefined,
 	};
 
@@ -52,6 +55,21 @@ function parseArgs(argv) {
 		}
 		if (arg === "--package-manager") {
 			parsed.packageManager = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--namespace") {
+			parsed.namespace = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--text-domain") {
+			parsed.textDomain = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--php-prefix") {
+			parsed.phpPrefix = next;
 			index += 1;
 			continue;
 		}
@@ -307,11 +325,22 @@ function rewriteWorkspaceDependencies(projectDir) {
 }
 
 function main() {
-	const { runtime, template, packageManager, projectName, variant, dataStorage, persistencePolicy } = parseArgs(process.argv.slice(2));
+	const {
+		runtime,
+		template,
+		packageManager,
+		projectName,
+		variant,
+		dataStorage,
+		persistencePolicy,
+		namespace,
+		textDomain,
+		phpPrefix,
+	} = parseArgs(process.argv.slice(2));
 
 	if (!runtime || !template || !packageManager || !projectName) {
 		throw new Error(
-			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] --package-manager <id> --project-name <name>",
+			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] --package-manager <id> --project-name <name>",
 		);
 	}
 
@@ -327,6 +356,9 @@ function main() {
 			"--template",
 			template,
 			...(variant ? ["--variant", variant] : []),
+			...(namespace ? ["--namespace", namespace] : []),
+			...(textDomain ? ["--text-domain", textDomain] : []),
+			...(phpPrefix ? ["--php-prefix", phpPrefix] : []),
 			...(dataStorage ? ["--data-storage", dataStorage] : []),
 			...(persistencePolicy ? ["--persistence-policy", persistencePolicy] : []),
 			"--yes",

@@ -8,38 +8,38 @@
  * Author:            {{author}}
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       {{slugSnakeCase}}
+ * Text Domain:       {{textDomain}}
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( '{{slugSnakeCase}}_DATA_STORAGE_MODE', '{{dataStorageMode}}' );
+define( '{{phpPrefix}}_DATA_STORAGE_MODE', '{{dataStorageMode}}' );
 
-function {{slugSnakeCase}}_get_build_root() {
+function {{phpPrefix}}_get_build_root() {
 	return __DIR__ . '/build/blocks';
 }
 
-function {{slugSnakeCase}}_get_block_build_dir( $block_slug ) {
-	$candidate = trailingslashit( {{slugSnakeCase}}_get_build_root() ) . $block_slug;
+function {{phpPrefix}}_get_block_build_dir( $block_slug ) {
+	$candidate = trailingslashit( {{phpPrefix}}_get_build_root() ) . $block_slug;
 
 	return file_exists( $candidate . '/block.json' ) ? $candidate : null;
 }
 
-function {{slugSnakeCase}}_get_counter_table_name() {
+function {{phpPrefix}}_get_counter_table_name() {
 	global $wpdb;
-	return $wpdb->prefix . '{{slugSnakeCase}}_counters';
+	return $wpdb->prefix . '{{phpPrefix}}_counters';
 }
 
-function {{slugSnakeCase}}_get_counter_lock_name( $post_id, $resource_key ) {
-	return '{{slugSnakeCase}}_counter_' . (int) $post_id . '_' . md5( (string) $resource_key );
+function {{phpPrefix}}_get_counter_lock_name( $post_id, $resource_key ) {
+	return '{{phpPrefix}}_counter_' . (int) $post_id . '_' . md5( (string) $resource_key );
 }
 
-function {{slugSnakeCase}}_with_counter_lock( $post_id, $resource_key, $callback ) {
+function {{phpPrefix}}_with_counter_lock( $post_id, $resource_key, $callback ) {
 	global $wpdb;
 
-	$lock_name = {{slugSnakeCase}}_get_counter_lock_name( $post_id, $resource_key );
+	$lock_name = {{phpPrefix}}_get_counter_lock_name( $post_id, $resource_key );
 	$acquired  = (int) $wpdb->get_var(
 		$wpdb->prepare(
 			'SELECT GET_LOCK(%s, 5)',
@@ -63,7 +63,7 @@ function {{slugSnakeCase}}_with_counter_lock( $post_id, $resource_key, $callback
 	}
 }
 
-function {{slugSnakeCase}}_maybe_install_storage() {
+function {{phpPrefix}}_maybe_install_storage() {
 	if ( 'custom-table' !== '{{dataStorageMode}}' ) {
 		return;
 	}
@@ -71,7 +71,7 @@ function {{slugSnakeCase}}_maybe_install_storage() {
 	global $wpdb;
 	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-	$table_name      = {{slugSnakeCase}}_get_counter_table_name();
+	$table_name      = {{phpPrefix}}_get_counter_table_name();
 	$charset_collate = $wpdb->get_charset_collate();
 	$sql             = "CREATE TABLE {$table_name} (
 		post_id bigint(20) unsigned NOT NULL,
@@ -90,18 +90,18 @@ function {{slugSnakeCase}}_maybe_install_storage() {
 	);
 
 	if ( $table_name === $table_exists ) {
-		update_option( '{{slugSnakeCase}}_storage_version', '1.0.0' );
+		update_option( '{{phpPrefix}}_storage_version', '1.0.0' );
 	}
 }
 
-function {{slugSnakeCase}}_ensure_storage_installed() {
-	if ( 'custom-table' === '{{dataStorageMode}}' && '1.0.0' !== get_option( '{{slugSnakeCase}}_storage_version', '' ) ) {
-		{{slugSnakeCase}}_maybe_install_storage();
+function {{phpPrefix}}_ensure_storage_installed() {
+	if ( 'custom-table' === '{{dataStorageMode}}' && '1.0.0' !== get_option( '{{phpPrefix}}_storage_version', '' ) ) {
+		{{phpPrefix}}_maybe_install_storage();
 	}
 }
 
-function {{slugSnakeCase}}_load_schema( $schema_name ) {
-	$build_dir = {{slugSnakeCase}}_get_block_build_dir( '{{slugKebabCase}}' );
+function {{phpPrefix}}_load_schema( $schema_name ) {
+	$build_dir = {{phpPrefix}}_get_block_build_dir( '{{slugKebabCase}}' );
 	if ( ! $build_dir ) {
 		return null;
 	}
@@ -115,7 +115,7 @@ function {{slugSnakeCase}}_load_schema( $schema_name ) {
 	return is_array( $decoded ) ? $decoded : null;
 }
 
-function {{slugSnakeCase}}_sanitize_rest_schema( $schema ) {
+function {{phpPrefix}}_sanitize_rest_schema( $schema ) {
 	if ( ! is_array( $schema ) ) {
 		return $schema;
 	}
@@ -124,24 +124,24 @@ function {{slugSnakeCase}}_sanitize_rest_schema( $schema ) {
 
 	if ( isset( $schema['properties'] ) && is_array( $schema['properties'] ) ) {
 		foreach ( $schema['properties'] as $key => $property_schema ) {
-			$schema['properties'][ $key ] = {{slugSnakeCase}}_sanitize_rest_schema( $property_schema );
+			$schema['properties'][ $key ] = {{phpPrefix}}_sanitize_rest_schema( $property_schema );
 		}
 	}
 
 	if ( isset( $schema['items'] ) && is_array( $schema['items'] ) ) {
-		$schema['items'] = {{slugSnakeCase}}_sanitize_rest_schema( $schema['items'] );
+		$schema['items'] = {{phpPrefix}}_sanitize_rest_schema( $schema['items'] );
 	}
 
 	return $schema;
 }
 
-function {{slugSnakeCase}}_validate_and_sanitize_request( $value, $schema_name, $param_name ) {
-	$schema = {{slugSnakeCase}}_load_schema( $schema_name );
+function {{phpPrefix}}_validate_and_sanitize_request( $value, $schema_name, $param_name ) {
+	$schema = {{phpPrefix}}_load_schema( $schema_name );
 	if ( ! is_array( $schema ) ) {
 		return new WP_Error( 'missing_schema', 'Missing REST schema.', array( 'status' => 500 ) );
 	}
 
-	$rest_schema = {{slugSnakeCase}}_sanitize_rest_schema( $schema );
+	$rest_schema = {{phpPrefix}}_sanitize_rest_schema( $schema );
 	$validation  = rest_validate_value_from_schema( $value, $rest_schema, $param_name );
 	if ( is_wp_error( $validation ) ) {
 		return $validation;
@@ -150,7 +150,7 @@ function {{slugSnakeCase}}_validate_and_sanitize_request( $value, $schema_name, 
 	return rest_sanitize_value_from_schema( $value, $rest_schema, $param_name );
 }
 
-function {{slugSnakeCase}}_get_rest_nonce( WP_REST_Request $request ) {
+function {{phpPrefix}}_get_rest_nonce( WP_REST_Request $request ) {
 	$header_nonce = $request->get_header( 'X-WP-Nonce' );
 	if ( is_string( $header_nonce ) && '' !== $header_nonce ) {
 		return $header_nonce;
@@ -164,7 +164,7 @@ function {{slugSnakeCase}}_get_rest_nonce( WP_REST_Request $request ) {
 	return null;
 }
 
-function {{slugSnakeCase}}_can_write_authenticated( WP_REST_Request $request ) {
+function {{phpPrefix}}_can_write_authenticated( WP_REST_Request $request ) {
 	if ( ! is_user_logged_in() ) {
 		return new WP_Error(
 			'rest_forbidden',
@@ -173,7 +173,7 @@ function {{slugSnakeCase}}_can_write_authenticated( WP_REST_Request $request ) {
 		);
 	}
 
-	$nonce = {{slugSnakeCase}}_get_rest_nonce( $request );
+	$nonce = {{phpPrefix}}_get_rest_nonce( $request );
 	if ( ! is_string( $nonce ) || '' === $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
 		return new WP_Error(
 			'rest_forbidden',
@@ -185,11 +185,11 @@ function {{slugSnakeCase}}_can_write_authenticated( WP_REST_Request $request ) {
 	return true;
 }
 
-function {{slugSnakeCase}}_get_counter( $post_id, $resource_key ) {
+function {{phpPrefix}}_get_counter( $post_id, $resource_key ) {
 	global $wpdb;
 
 	if ( 'custom-table' === '{{dataStorageMode}}' ) {
-		$table_name = {{slugSnakeCase}}_get_counter_table_name();
+		$table_name = {{phpPrefix}}_get_counter_table_name();
 		$count      = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT count FROM {$table_name} WHERE post_id = %d AND resource_key = %s",
@@ -201,28 +201,29 @@ function {{slugSnakeCase}}_get_counter( $post_id, $resource_key ) {
 		return null === $count ? 0 : (int) $count;
 	}
 
-	$meta_key = '_' . '{{slugSnakeCase}}' . '_counter_' . sanitize_key( $resource_key );
+	$meta_key = '_' . '{{phpPrefix}}' . '_counter_' . sanitize_key( $resource_key );
 	return (int) get_post_meta( $post_id, $meta_key, true );
 }
 
-function {{slugSnakeCase}}_increment_counter( $post_id, $resource_key, $delta ) {
+function {{phpPrefix}}_increment_counter( $post_id, $resource_key, $delta ) {
 	global $wpdb;
 
 	if ( 'custom-table' === '{{dataStorageMode}}' ) {
-		$table_name   = {{slugSnakeCase}}_get_counter_table_name();
-		$delta_value  = (int) $delta;
-		$insert_count = max( 0, $delta_value );
-		$result       = $wpdb->query(
+		$table_name    = {{phpPrefix}}_get_counter_table_name();
+		$delta_value   = (int) $delta;
+		$initial_count = max( 0, $delta_value );
+		$result        = $wpdb->query(
 			$wpdb->prepare(
 				"INSERT INTO {$table_name} (post_id, resource_key, count, updated_at)
 				VALUES (%d, %s, %d, %s)
 				ON DUPLICATE KEY UPDATE
-					count = GREATEST(0, count + VALUES(count)),
+					count = GREATEST(0, count + %d),
 					updated_at = VALUES(updated_at)",
 				$post_id,
 				$resource_key,
-				$insert_count,
-				current_time( 'mysql', true )
+				$initial_count,
+				current_time( 'mysql', true ),
+				$delta_value
 			)
 		);
 
@@ -230,22 +231,22 @@ function {{slugSnakeCase}}_increment_counter( $post_id, $resource_key, $delta ) 
 			return new WP_Error( 'counter_update_failed', 'Failed to update the counter.', array( 'status' => 500 ) );
 		}
 
-		return {{slugSnakeCase}}_get_counter( $post_id, $resource_key );
+		return {{phpPrefix}}_get_counter( $post_id, $resource_key );
 	}
 
-	return {{slugSnakeCase}}_with_counter_lock(
+	return {{phpPrefix}}_with_counter_lock(
 		$post_id,
 		$resource_key,
 		function() use ( $delta, $post_id, $resource_key ) {
-			$meta_key   = '_' . '{{slugSnakeCase}}' . '_counter_' . sanitize_key( $resource_key );
-			$next_count = max( 0, {{slugSnakeCase}}_get_counter( $post_id, $resource_key ) + (int) $delta );
+			$meta_key   = '_' . '{{phpPrefix}}' . '_counter_' . sanitize_key( $resource_key );
+			$next_count = max( 0, {{phpPrefix}}_get_counter( $post_id, $resource_key ) + (int) $delta );
 			update_post_meta( $post_id, $meta_key, $next_count );
 			return $next_count;
 		}
 	);
 }
 
-function {{slugSnakeCase}}_build_counter_response( $post_id, $resource_key, $count ) {
+function {{phpPrefix}}_build_counter_response( $post_id, $resource_key, $count ) {
 	return array(
 		'postId'      => (int) $post_id,
 		'resourceKey' => (string) $resource_key,
@@ -254,8 +255,8 @@ function {{slugSnakeCase}}_build_counter_response( $post_id, $resource_key, $cou
 	);
 }
 
-function {{slugSnakeCase}}_handle_get_counter( WP_REST_Request $request ) {
-	$payload = {{slugSnakeCase}}_validate_and_sanitize_request(
+function {{phpPrefix}}_handle_get_counter( WP_REST_Request $request ) {
+	$payload = {{phpPrefix}}_validate_and_sanitize_request(
 		array(
 			'postId'      => $request->get_param( 'postId' ),
 			'resourceKey' => $request->get_param( 'resourceKey' ),
@@ -268,9 +269,9 @@ function {{slugSnakeCase}}_handle_get_counter( WP_REST_Request $request ) {
 		return $payload;
 	}
 
-	$count = {{slugSnakeCase}}_get_counter( (int) $payload['postId'], (string) $payload['resourceKey'] );
+	$count = {{phpPrefix}}_get_counter( (int) $payload['postId'], (string) $payload['resourceKey'] );
 	return rest_ensure_response(
-		{{slugSnakeCase}}_build_counter_response(
+		{{phpPrefix}}_build_counter_response(
 			(int) $payload['postId'],
 			(string) $payload['resourceKey'],
 			$count
@@ -278,8 +279,8 @@ function {{slugSnakeCase}}_handle_get_counter( WP_REST_Request $request ) {
 	);
 }
 
-function {{slugSnakeCase}}_handle_increment_counter( WP_REST_Request $request ) {
-	$payload = {{slugSnakeCase}}_validate_and_sanitize_request(
+function {{phpPrefix}}_handle_increment_counter( WP_REST_Request $request ) {
+	$payload = {{phpPrefix}}_validate_and_sanitize_request(
 		$request->get_json_params(),
 		'increment-request',
 		'body'
@@ -289,7 +290,7 @@ function {{slugSnakeCase}}_handle_increment_counter( WP_REST_Request $request ) 
 		return $payload;
 	}
 
-	$count = {{slugSnakeCase}}_increment_counter(
+	$count = {{phpPrefix}}_increment_counter(
 		(int) $payload['postId'],
 		(string) $payload['resourceKey'],
 		isset( $payload['delta'] ) ? (int) $payload['delta'] : 1
@@ -300,7 +301,7 @@ function {{slugSnakeCase}}_handle_increment_counter( WP_REST_Request $request ) 
 	}
 
 	return rest_ensure_response(
-		{{slugSnakeCase}}_build_counter_response(
+		{{phpPrefix}}_build_counter_response(
 			(int) $payload['postId'],
 			(string) $payload['resourceKey'],
 			$count
@@ -308,27 +309,27 @@ function {{slugSnakeCase}}_handle_increment_counter( WP_REST_Request $request ) 
 	);
 }
 
-function {{slugSnakeCase}}_register_routes() {
+function {{phpPrefix}}_register_routes() {
 	register_rest_route(
 		'{{namespace}}/v1',
 		'/{{slugKebabCase}}/counter',
 		array(
 			array(
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => '{{slugSnakeCase}}_handle_get_counter',
+				'callback'            => '{{phpPrefix}}_handle_get_counter',
 				'permission_callback' => '__return_true',
 			),
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
-				'callback'            => '{{slugSnakeCase}}_handle_increment_counter',
-				'permission_callback' => '{{slugSnakeCase}}_can_write_authenticated',
+				'callback'            => '{{phpPrefix}}_handle_increment_counter',
+				'permission_callback' => '{{phpPrefix}}_can_write_authenticated',
 			),
 		)
 	);
 }
 
-function {{slugSnakeCase}}_register_blocks() {
-	$build_root = {{slugSnakeCase}}_get_build_root();
+function {{phpPrefix}}_register_blocks() {
+	$build_root = {{phpPrefix}}_get_build_root();
 	if ( ! is_dir( $build_root ) ) {
 		return;
 	}
@@ -345,7 +346,7 @@ function {{slugSnakeCase}}_register_blocks() {
 	}
 }
 
-register_activation_hook( __FILE__, '{{slugSnakeCase}}_maybe_install_storage' );
-add_action( 'init', '{{slugSnakeCase}}_ensure_storage_installed' );
-add_action( 'init', '{{slugSnakeCase}}_register_blocks' );
-add_action( 'rest_api_init', '{{slugSnakeCase}}_register_routes' );
+register_activation_hook( __FILE__, '{{phpPrefix}}_maybe_install_storage' );
+add_action( 'init', '{{phpPrefix}}_ensure_storage_installed' );
+add_action( 'init', '{{phpPrefix}}_register_blocks' );
+add_action( 'rest_api_init', '{{phpPrefix}}_register_routes' );

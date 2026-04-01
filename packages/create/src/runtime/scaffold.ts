@@ -23,6 +23,8 @@ import type { BuiltInTemplateId } from "./template-registry.js";
 import { resolveTemplateSource } from "./template-source.js";
 
 const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
+const PHP_PREFIX_PATTERN = /^[a-z_][a-z0-9_]*$/;
+const PHP_PREFIX_MAX_LENGTH = 50;
 const REMOVED_BUILTIN_TEMPLATE_IDS = ["data", "persisted"] as const;
 const LOCKFILES: Record<PackageManagerId, string[]> = {
 	bun: ["bun.lock", "bun.lockb"],
@@ -31,13 +33,25 @@ const LOCKFILES: Record<PackageManagerId, string[]> = {
 	yarn: ["yarn.lock"],
 };
 
+/**
+ * User-facing scaffold answers before template rendering.
+ *
+ * `namespace`, `textDomain`, and `phpPrefix` are normalized before use so
+ * callers can pass human-entered values while generated output stays
+ * predictable.
+ */
 export interface ScaffoldAnswers {
 	author: string;
 	dataStorageMode?: DataStorageMode;
 	description: string;
+	/** Block namespace used in generated block names such as `namespace/slug`. */
 	namespace: string;
 	persistencePolicy?: PersistencePolicy;
+	/** Snake_case PHP symbol prefix used for generated functions, constants, and keys. */
+	phpPrefix?: string;
 	slug: string;
+	/** Kebab-case WordPress text domain used in block metadata and i18n strings. */
+	textDomain?: string;
 	title: string;
 }
 
@@ -46,7 +60,10 @@ export type DataStorageMode = (typeof DATA_STORAGE_MODES)[number];
 export const PERSISTENCE_POLICIES = ["authenticated", "public"] as const;
 export type PersistencePolicy = (typeof PERSISTENCE_POLICIES)[number];
 
-export interface ScaffoldTemplateVariables {
+/**
+ * Normalized template variables shared by built-in and remote scaffold flows.
+ */
+export interface ScaffoldTemplateVariables extends Record<string, string> {
 	author: string;
 	blockTypesPackageVersion: string;
 	category: string;
@@ -63,6 +80,9 @@ export interface ScaffoldTemplateVariables {
 	namespace: string;
 	needsMigration: string;
 	pascalCase: string;
+	phpPrefix: string;
+	isAuthenticatedPersistencePolicy: "false" | "true";
+	isPublicPersistencePolicy: "false" | "true";
 	restPackageVersion: string;
 	slug: string;
 	slugCamelCase: string;
@@ -92,6 +112,8 @@ interface ResolvePackageManagerOptions {
 
 interface CollectScaffoldAnswersOptions {
 	dataStorageMode?: DataStorageMode;
+	namespace?: string;
+	phpPrefix?: string;
 	projectName: string;
 	promptText?: (
 		message: string,
@@ -99,6 +121,7 @@ interface CollectScaffoldAnswersOptions {
 		validate?: (value: string) => true | string,
 	) => Promise<string>;
 	persistencePolicy?: PersistencePolicy;
+	textDomain?: string;
 	templateId: string;
 	yes?: boolean;
 }
@@ -165,6 +188,54 @@ function validateBlockSlug(input: string): true | string {
 	return BLOCK_SLUG_PATTERN.test(input) || "Use lowercase letters, numbers, and hyphens only";
 }
 
+function validateNamespace(input: string): true | string {
+	return BLOCK_SLUG_PATTERN.test(toKebabCase(input))
+		? true
+		: "Use lowercase letters, numbers, and hyphens only";
+}
+
+function validateTextDomain(input: string): true | string {
+	return BLOCK_SLUG_PATTERN.test(toKebabCase(input))
+		? true
+		: "Use lowercase letters, numbers, and hyphens only";
+}
+
+function validatePhpPrefix(input: string): true | string {
+	const normalizedPrefix = toSnakeCase(input);
+	if (normalizedPrefix.length > PHP_PREFIX_MAX_LENGTH) {
+		return `Use ${PHP_PREFIX_MAX_LENGTH} characters or fewer to keep generated database identifiers within MySQL limits`;
+	}
+
+	return PHP_PREFIX_PATTERN.test(normalizedPrefix)
+		? true
+		: "Use letters, numbers, and underscores only, starting with a letter";
+}
+
+function normalizeNamespace(input: string): string {
+	return toKebabCase(input);
+}
+
+function normalizeTextDomain(input: string): string {
+	return toKebabCase(input);
+}
+
+function normalizePhpPrefix(input: string): string {
+	return toSnakeCase(input);
+}
+
+function assertValidIdentifier(
+	label: string,
+	value: string,
+	validate: (value: string) => true | string,
+): string {
+	const result = validate(value);
+	if (result !== true) {
+		throw new Error(typeof result === "string" ? `${label}: ${result}` : `${label} is invalid`);
+	}
+
+	return value;
+}
+
 export function isDataStorageMode(value: string): value is DataStorageMode {
 	return (DATA_STORAGE_MODES as readonly string[]).includes(value);
 }
@@ -198,7 +269,9 @@ export function getDefaultAnswers(
 		description: template?.description ?? "A WordPress block scaffolded from a remote template",
 		namespace: "create-block",
 		persistencePolicy: templateId === "persistence" ? "authenticated" : undefined,
+		phpPrefix: toSnakeCase(slugDefault),
 		slug: slugDefault,
+		textDomain: slugDefault,
 		title: toTitle(slugDefault),
 	};
 }
@@ -266,16 +339,35 @@ export async function collectScaffoldAnswers({
 	templateId,
 	yes = false,
 	dataStorageMode,
+	namespace,
 	persistencePolicy,
+	phpPrefix,
 	promptText,
+	textDomain,
 }: CollectScaffoldAnswersOptions): Promise<ScaffoldAnswers> {
 	const defaults = getDefaultAnswers(projectName, templateId);
 
 	if (yes) {
+		const derivedSlug = defaults.slug;
 		return {
 			...defaults,
 			dataStorageMode: dataStorageMode ?? defaults.dataStorageMode,
+			namespace: assertValidIdentifier(
+				"Namespace",
+				normalizeNamespace(namespace ?? defaults.namespace),
+				validateNamespace,
+			),
 			persistencePolicy: persistencePolicy ?? defaults.persistencePolicy,
+			phpPrefix: assertValidIdentifier(
+				"PHP prefix",
+				normalizePhpPrefix(phpPrefix ?? toSnakeCase(derivedSlug)),
+				validatePhpPrefix,
+			),
+			textDomain: assertValidIdentifier(
+				"Text domain",
+				normalizeTextDomain(textDomain ?? derivedSlug),
+				validateTextDomain,
+			),
 		};
 	}
 
@@ -286,14 +378,33 @@ export async function collectScaffoldAnswers({
 	const slug = toKebabCase(
 		await promptText("Block slug", defaults.slug, validateBlockSlug),
 	);
+	const normalizedNamespace = assertValidIdentifier(
+		"Namespace",
+		normalizeNamespace(
+			namespace ?? ( await promptText("Namespace", defaults.namespace, validateNamespace) )
+		),
+		validateNamespace,
+	);
+	const normalizedTextDomain = assertValidIdentifier(
+		"Text domain",
+		normalizeTextDomain(textDomain ?? slug),
+		validateTextDomain,
+	);
+	const normalizedPhpPrefix = assertValidIdentifier(
+		"PHP prefix",
+		normalizePhpPrefix(phpPrefix ?? slug),
+		validatePhpPrefix,
+	);
 
 	return {
 		author: await promptText("Author", defaults.author),
 		dataStorageMode: dataStorageMode ?? defaults.dataStorageMode,
 		description: await promptText("Description", defaults.description),
-		namespace: await promptText("Namespace", defaults.namespace),
+		namespace: normalizedNamespace,
 		persistencePolicy: persistencePolicy ?? defaults.persistencePolicy,
+		phpPrefix: normalizedPhpPrefix,
 		slug,
+		textDomain: normalizedTextDomain,
 		title: await promptText("Block title", toTitle(slug)),
 	};
 }
@@ -308,8 +419,22 @@ export function getTemplateVariables(
 	const slugSnakeCase = toSnakeCase(slug);
 	const pascalCase = toPascalCase(slug);
 	const title = answers.title.trim();
-	const namespace = answers.namespace.trim();
+	const namespace = assertValidIdentifier(
+		"Namespace",
+		normalizeNamespace(answers.namespace),
+		validateNamespace,
+	);
 	const description = answers.description.trim();
+	const textDomain = assertValidIdentifier(
+		"Text domain",
+		normalizeTextDomain(answers.textDomain ?? slug),
+		validateTextDomain,
+	);
+	const phpPrefix = assertValidIdentifier(
+		"PHP prefix",
+		normalizePhpPrefix(answers.phpPrefix ?? slug),
+		validatePhpPrefix,
+	);
 	const compoundChildTitle = `${title} Item`;
 	const compoundPersistenceEnabled =
 		templateId === "persistence"
@@ -339,17 +464,21 @@ export function getTemplateVariables(
 		dashCase: slug,
 		dashicon: "smiley",
 		description,
+		isAuthenticatedPersistencePolicy:
+			persistencePolicy === "authenticated" ? "true" : "false",
+		isPublicPersistencePolicy: persistencePolicy === "public" ? "true" : "false",
 		keyword: slug.replace(/-/g, " "),
 		namespace,
 		needsMigration: "{{needsMigration}}",
 		pascalCase,
+		phpPrefix,
 		restPackageVersion,
 		slug,
 		slugCamelCase: pascalCase.charAt(0).toLowerCase() + pascalCase.slice(1),
 		slugKebabCase: slug,
 		slugSnakeCase,
-		textDomain: slugSnakeCase,
-		textdomain: slugSnakeCase,
+		textDomain,
+		textdomain: textDomain,
 		title,
 		titleJson: JSON.stringify(title),
 		titleCase: pascalCase,
@@ -582,7 +711,7 @@ export async function scaffoldProject({
 	const templateSource = await resolveTemplateSource(
 		templateId,
 		cwd,
-		variables as unknown as Record<string, string>,
+		variables,
 		variant,
 	);
 
@@ -590,7 +719,7 @@ export async function scaffoldProject({
 		await copyInterpolatedDirectory(
 			templateSource.templateDir,
 			projectDir,
-			variables as unknown as Record<string, string>,
+			variables,
 		);
 	} finally {
 		if (templateSource.cleanup) {
