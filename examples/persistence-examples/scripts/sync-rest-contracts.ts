@@ -47,7 +47,9 @@ async function main() {
 		} );
 	}
 
-	console.log( '✅ REST contract schemas and endpoint-aware OpenAPI documents generated from TypeScript types!' );
+	console.log(
+		'✅ REST contract schemas and endpoint-aware OpenAPI documents generated from TypeScript types!'
+	);
 }
 
 main().catch( ( error ) => {
