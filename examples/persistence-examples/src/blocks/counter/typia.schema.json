@@ -25,7 +25,9 @@
 			"maxLength": 100
 		}
 	},
-	"required": ["content"],
+	"required": [
+		"content"
+	],
 	"title": "PersistenceCounterAttributes",
 	"type": "object"
 }
