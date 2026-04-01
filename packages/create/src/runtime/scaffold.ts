@@ -84,6 +84,7 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	isAuthenticatedPersistencePolicy: "false" | "true";
 	isPublicPersistencePolicy: "false" | "true";
 	restPackageVersion: string;
+	restWriteAuthMode: "authenticated-rest-nonce" | "public-signed-token";
 	slug: string;
 	slugCamelCase: string;
 	slugKebabCase: string;
@@ -473,6 +474,8 @@ export function getTemplateVariables(
 		pascalCase,
 		phpPrefix,
 		restPackageVersion,
+		restWriteAuthMode:
+			persistencePolicy === "public" ? "public-signed-token" : "authenticated-rest-nonce",
 		slug,
 		slugCamelCase: pascalCase.charAt(0).toLowerCase() + pascalCase.slice(1),
 		slugKebabCase: slug,

@@ -3,6 +3,8 @@ import * as path from "node:path";
 import ts from "typescript";
 
 import {
+	buildEndpointOpenApiDocument,
+	type EndpointOpenApiEndpointDefinition,
 	manifestToJsonSchema,
 	manifestToOpenApi,
 	type OpenApiInfo,
@@ -118,6 +120,51 @@ export interface SyncTypeSchemaResult {
 	jsonSchemaPath: string;
 	openApiPath?: string;
 	sourceTypeName: string;
+}
+
+/**
+ * Source type mapping used when generating aggregate REST OpenAPI documents.
+ */
+export interface RestOpenApiContractDefinition {
+	/** Optional component name override for the generated schema reference. */
+	schemaName?: string;
+	/** Type name exported from the source `typesFile`. */
+	sourceTypeName: string;
+}
+
+/**
+ * Public wrapper for the route metadata consumed by `syncRestOpenApi()`.
+ */
+export interface RestOpenApiEndpointDefinition extends EndpointOpenApiEndpointDefinition {}
+
+/**
+ * Options for writing a canonical endpoint-aware REST OpenAPI document.
+ */
+export interface SyncRestOpenApiOptions {
+	/** Contract registry keyed by logical route contract ids. */
+	contracts: Record<string, RestOpenApiContractDefinition>;
+	/** Endpoint registry describing the REST paths, methods, and auth policies to document. */
+	endpoints: RestOpenApiEndpointDefinition[];
+	/** Output path for the aggregate OpenAPI document. */
+	openApiFile: string;
+	/** Optional OpenAPI document metadata. */
+	openApiInfo?: OpenApiInfo;
+	/** Optional project root used to resolve file paths. */
+	projectRoot?: string;
+	/** Source file that exports the REST contract types. */
+	typesFile: string;
+}
+
+/**
+ * Result returned after writing an aggregate REST OpenAPI document.
+ */
+export interface SyncRestOpenApiResult {
+	/** Number of endpoints included in the generated OpenAPI file. */
+	endpointCount: number;
+	/** Absolute path to the generated OpenAPI file. */
+	openApiPath: string;
+	/** Component schema names included in the generated document. */
+	schemaNames: string[];
 }
 
 interface AnalysisContext {
@@ -297,9 +344,102 @@ export async function syncTypeSchemas(
 	};
 }
 
+/**
+ * Generate and write a canonical OpenAPI document for scaffolded REST contracts.
+ *
+ * @param options Contracts, endpoint metadata, source file, and output file settings.
+ * @returns Information about the generated OpenAPI document and included schema components.
+ */
+export async function syncRestOpenApi(
+	options: SyncRestOpenApiOptions,
+): Promise<SyncRestOpenApiResult> {
+	const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
+	const sourceTypeNames = Object.values(options.contracts).map(
+		(contract) => contract.sourceTypeName,
+	);
+	const analyzedTypes = analyzeSourceTypes(
+		{
+			projectRoot,
+			typesFile: options.typesFile,
+		},
+		sourceTypeNames,
+	);
+	const contracts = Object.fromEntries(
+		Object.entries(options.contracts).map(([contractKey, contract]) => {
+			const rootNode = analyzedTypes[contract.sourceTypeName];
+			if (rootNode.kind !== "object" || rootNode.properties === undefined) {
+				throw new Error(
+					`Source type "${contract.sourceTypeName}" must resolve to an object shape for REST OpenAPI generation`,
+				);
+			}
+
+			return [
+				contractKey,
+				{
+					document: {
+						attributes: Object.fromEntries(
+							Object.entries(rootNode.properties).map(([key, node]) => [
+								key,
+								createManifestAttribute(node),
+							]),
+						),
+						manifestVersion: 2 as const,
+						sourceType: contract.sourceTypeName,
+					},
+					...(typeof contract.schemaName === "string" && contract.schemaName.length > 0
+						? { schemaName: contract.schemaName }
+						: {}),
+				},
+			];
+		}),
+	);
+	const openApiPath = path.resolve(projectRoot, options.openApiFile);
+
+	fs.mkdirSync(path.dirname(openApiPath), { recursive: true });
+	fs.writeFileSync(
+		openApiPath,
+		JSON.stringify(
+			buildEndpointOpenApiDocument({
+				contracts,
+				endpoints: options.endpoints,
+				info: options.openApiInfo,
+			}),
+			null,
+			"\t",
+		),
+	);
+
+	return {
+		endpointCount: options.endpoints.length,
+		openApiPath,
+		schemaNames: Object.values(options.contracts).map(
+			(contract) => contract.schemaName ?? contract.sourceTypeName,
+		),
+	};
+}
+
 function analyzeSourceType(
 	options: Pick<SyncBlockMetadataOptions, "projectRoot" | "sourceTypeName" | "typesFile">,
 ): { projectRoot: string; rootNode: AttributeNode } {
+	const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
+	const rootNodes = analyzeSourceTypes(
+		{
+			projectRoot,
+			typesFile: options.typesFile,
+		},
+		[options.sourceTypeName],
+	);
+
+	return {
+		projectRoot,
+		rootNode: rootNodes[options.sourceTypeName],
+	};
+}
+
+function analyzeSourceTypes(
+	options: Pick<SyncBlockMetadataOptions, "projectRoot" | "typesFile">,
+	sourceTypeNames: string[],
+): Record<string, AttributeNode> {
 	const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
 	const typesFilePath = path.resolve(projectRoot, options.typesFile);
 	const ctx = createAnalysisContext(projectRoot, typesFilePath);
@@ -308,17 +448,21 @@ function analyzeSourceType(
 		throw new Error(`Unable to load types file: ${typesFilePath}`);
 	}
 
-	const declaration = findNamedDeclaration(sourceFile, options.sourceTypeName);
-	if (declaration === undefined) {
-		throw new Error(
-			`Unable to find source type "${options.sourceTypeName}" in ${path.relative(projectRoot, typesFilePath)}`,
-		);
-	}
+	return Object.fromEntries(
+		sourceTypeNames.map((sourceTypeName) => {
+			const declaration = findNamedDeclaration(sourceFile, sourceTypeName);
+			if (declaration === undefined) {
+				throw new Error(
+					`Unable to find source type "${sourceTypeName}" in ${path.relative(projectRoot, typesFilePath)}`,
+				);
+			}
 
-	return {
-		projectRoot,
-		rootNode: parseNamedDeclaration(declaration, ctx, options.sourceTypeName, true),
-	};
+			return [
+				sourceTypeName,
+				parseNamedDeclaration(declaration, ctx, sourceTypeName, true),
+			];
+		}),
+	);
 }
 
 function createAnalysisContext(projectRoot: string, typesFilePath: string): AnalysisContext {

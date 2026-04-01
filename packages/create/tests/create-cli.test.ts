@@ -199,6 +199,8 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(restPublicHelper).toContain("function demo_persistence_public_verify_public_write_token");
 		expect(generatedApi).toContain("@wp-typia/rest");
 		expect(generatedSyncRest).toContain("syncTypeSchemas");
+		expect(generatedSyncRest).toContain("syncRestOpenApi");
+		expect(generatedSyncRest).toContain("src/api.openapi.json");
 		expect(generatedRender).toContain("publicWriteToken");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
 		expect(readme).toContain("npm run sync-types");
@@ -424,6 +426,10 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(parentBlockJson.name).toBe("create-block/demo-compound");
 		expect(childBlockJson.parent).toEqual(["create-block/demo-compound"]);
 		expect(childBlockJson.supports.inserter).toBe(false);
+		expect(fs.existsSync(path.join(targetDir, "scripts", "sync-rest-contracts.ts"))).toBe(false);
+		expect(fs.existsSync(path.join(targetDir, "src", "blocks", "demo-compound", "api.openapi.json"))).toBe(
+			false,
+		);
 		expect(readme).toContain("npm run sync-types");
 		expect(readme).not.toContain("npm run sync-rest");
 		expect(readme).toContain("src/blocks/*/types.ts");
@@ -451,6 +457,14 @@ describe("@wp-typia/create scaffolding", () => {
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 		const pluginBootstrap = fs.readFileSync(path.join(targetDir, "demo-compound-storage.php"), "utf8");
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
+		const generatedSyncRest = fs.readFileSync(
+			path.join(targetDir, "scripts", "sync-rest-contracts.ts"),
+			"utf8",
+		);
+		const generatedBlockConfig = fs.readFileSync(
+			path.join(targetDir, "scripts", "block-config.ts"),
+			"utf8",
+		);
 		const parentBlockJson = JSON.parse(
 			fs.readFileSync(
 				path.join(targetDir, "src", "blocks", "demo-compound-storage", "block.json"),
@@ -469,6 +483,8 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-auth.php';");
 		expect(parentBlockJson.render).toBe("file:./render.php");
 		expect(parentBlockJson.viewScriptModule).toBe("file:./interactivity.js");
+		expect(generatedSyncRest).toContain("syncRestOpenApi");
+		expect(generatedBlockConfig).toContain("src/blocks/demo-compound-storage/api.openapi.json");
 		expect(readme).toContain("npm run sync-rest");
 		expect(readme).toContain("src/blocks/*/api-types.ts");
 	});

@@ -1,26 +1,49 @@
 /* eslint-disable no-console */
-import { syncTypeSchemas } from '@wp-typia/create/metadata-core';
+import {
+	syncRestOpenApi,
+	syncTypeSchemas,
+} from '@wp-typia/create/metadata-core';
 
-const CONTRACTS = [
-	{
-		baseName: 'state-query',
+const CONTRACTS = {
+	'state-query': {
 		sourceTypeName: '{{pascalCase}}StateQuery',
 	},
-	{
-		baseName: 'write-state-request',
+	'write-state-request': {
 		sourceTypeName: '{{pascalCase}}WriteStateRequest',
 	},
-	{
-		baseName: 'state-response',
+	'state-response': {
 		sourceTypeName: '{{pascalCase}}StateResponse',
+	},
+} as const;
+
+const ENDPOINTS = [
+	{
+		authMode: 'public-read',
+		method: 'GET',
+		operationId: 'get{{pascalCase}}State',
+		path: '/{{namespace}}/v1/{{slugKebabCase}}/state',
+		queryContract: 'state-query',
+		responseContract: 'state-response',
+		summary: 'Read the current persisted state.',
+		tags: [ '{{title}}' ],
+	},
+	{
+		authMode: '{{restWriteAuthMode}}',
+		bodyContract: 'write-state-request',
+		method: 'POST',
+		operationId: 'write{{pascalCase}}State',
+		path: '/{{namespace}}/v1/{{slugKebabCase}}/state',
+		responseContract: 'state-response',
+		summary: 'Write the current persisted state.',
+		tags: [ '{{title}}' ],
 	},
 ] as const;
 
 async function main() {
-	for ( const contract of CONTRACTS ) {
+	for ( const [ baseName, contract ] of Object.entries( CONTRACTS ) ) {
 		await syncTypeSchemas( {
-			jsonSchemaFile: `src/api-schemas/${ contract.baseName }.schema.json`,
-			openApiFile: `src/api-schemas/${ contract.baseName }.openapi.json`,
+			jsonSchemaFile: `src/api-schemas/${ baseName }.schema.json`,
+			openApiFile: `src/api-schemas/${ baseName }.openapi.json`,
 			openApiInfo: {
 				title: `${ contract.sourceTypeName }`,
 				version: '1.0.0',
@@ -30,7 +53,18 @@ async function main() {
 		} );
 	}
 
-	console.log( '✅ REST schemas and OpenAPI documents were generated from TypeScript contracts!' );
+	await syncRestOpenApi( {
+		contracts: CONTRACTS,
+		endpoints: ENDPOINTS,
+		openApiFile: 'src/api.openapi.json',
+		openApiInfo: {
+			title: '{{title}} REST API',
+			version: '1.0.0',
+		},
+		typesFile: 'src/api-types.ts',
+	} );
+
+	console.log( '✅ REST schemas and endpoint-aware OpenAPI documents were generated from TypeScript contracts!' );
 }
 
 main().catch( ( error ) => {

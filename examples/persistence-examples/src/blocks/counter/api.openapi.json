@@ -1,0 +1,179 @@
+{
+	"components": {
+		"schemas": {
+			"PersistenceCounterQuery": {
+				"$schema": "https://json-schema.org/draft/2020-12/schema",
+				"additionalProperties": false,
+				"properties": {
+					"postId": {
+						"type": "number",
+						"x-typeTag": "uint32"
+					},
+					"resourceKey": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 100
+					}
+				},
+				"required": [
+					"postId",
+					"resourceKey"
+				],
+				"title": "PersistenceCounterQuery",
+				"type": "object"
+			},
+			"PersistenceCounterIncrementRequest": {
+				"$schema": "https://json-schema.org/draft/2020-12/schema",
+				"additionalProperties": false,
+				"properties": {
+					"postId": {
+						"type": "number",
+						"x-typeTag": "uint32"
+					},
+					"resourceKey": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 100
+					},
+					"publicWriteToken": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 512
+					},
+					"delta": {
+						"default": 1,
+						"type": "number",
+						"x-typeTag": "uint32",
+						"minimum": 1
+					}
+				},
+				"required": [
+					"postId",
+					"resourceKey"
+				],
+				"title": "PersistenceCounterIncrementRequest",
+				"type": "object"
+			},
+			"PersistenceCounterResponse": {
+				"$schema": "https://json-schema.org/draft/2020-12/schema",
+				"additionalProperties": false,
+				"properties": {
+					"postId": {
+						"type": "number",
+						"x-typeTag": "uint32"
+					},
+					"resourceKey": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 100
+					},
+					"count": {
+						"type": "number",
+						"x-typeTag": "uint32",
+						"minimum": 0
+					},
+					"storage": {
+						"enum": [
+							"custom-table"
+						],
+						"type": "string"
+					}
+				},
+				"required": [
+					"postId",
+					"resourceKey",
+					"count",
+					"storage"
+				],
+				"title": "PersistenceCounterResponse",
+				"type": "object"
+			}
+		}
+	},
+	"info": {
+		"title": "Persistence Counter REST API",
+		"version": "1.0.0"
+	},
+	"openapi": "3.1.0",
+	"paths": {
+		"/persistence-examples/v1/counter": {
+			"get": {
+				"operationId": "getPersistenceCounterState",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PersistenceCounterResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					}
+				},
+				"tags": [
+					"Counter"
+				],
+				"x-wp-typia-authPolicy": "public-read",
+				"summary": "Read the current counter state.",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "postId",
+						"required": true,
+						"schema": {
+							"type": "number",
+							"x-typeTag": "uint32"
+						}
+					},
+					{
+						"in": "query",
+						"name": "resourceKey",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 100
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "incrementPersistenceCounterState",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PersistenceCounterResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					}
+				},
+				"tags": [
+					"Counter"
+				],
+				"x-wp-typia-authPolicy": "public-signed-token",
+				"summary": "Increment the current counter state.",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/PersistenceCounterIncrementRequest"
+							}
+						}
+					},
+					"required": true
+				},
+				"x-wp-typia-publicTokenField": "publicWriteToken"
+			}
+		}
+	},
+	"tags": [
+		{
+			"name": "Counter"
+		}
+	]
+}
