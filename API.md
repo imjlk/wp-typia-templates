@@ -145,9 +145,12 @@ The built-in `persistence` template adds another predictable layer:
 - `src/api-types.ts`
 - `src/api-validators.ts`
 - `src/api.ts`
+- `src/api.openapi.json`
 - `src/api-schemas/`
 - `scripts/sync-rest-contracts.ts`
 - a plugin bootstrap PHP file with generated REST route/storage wiring
+
+For persistence-capable scaffolds, `src/api.openapi.json` is the canonical endpoint-aware REST document. The `src/api-schemas/*.schema.json` files remain the runtime contract artifacts, and `src/api-schemas/*.openapi.json` files remain available as per-contract compatibility fragments.
 
 `persistence` keeps one minimal aggregate-counter scaffold and lets you choose between:
 
@@ -166,6 +169,7 @@ When you opt `compound` into persistence with `--data-storage` or `--persistence
 - `src/blocks/<parent>/api-types.ts`
 - `src/blocks/<parent>/api-validators.ts`
 - `src/blocks/<parent>/api.ts`
+- `src/blocks/<parent>/api.openapi.json`
 - `src/blocks/<parent>/api-schemas/`
 - `src/blocks/<parent>/interactivity.ts`
 - generated PHP route/storage wiring in the plugin bootstrap

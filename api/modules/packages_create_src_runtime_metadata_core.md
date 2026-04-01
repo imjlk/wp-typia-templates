@@ -10,11 +10,16 @@
 - [SyncBlockMetadataResult](../interfaces/packages_create_src_runtime_metadata_core.SyncBlockMetadataResult.md)
 - [SyncTypeSchemaOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncTypeSchemaOptions.md)
 - [SyncTypeSchemaResult](../interfaces/packages_create_src_runtime_metadata_core.SyncTypeSchemaResult.md)
+- [RestOpenApiContractDefinition](../interfaces/packages_create_src_runtime_metadata_core.RestOpenApiContractDefinition.md)
+- [RestOpenApiEndpointDefinition](../interfaces/packages_create_src_runtime_metadata_core.RestOpenApiEndpointDefinition.md)
+- [SyncRestOpenApiOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiOptions.md)
+- [SyncRestOpenApiResult](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiResult.md)
 
 ### Functions
 
 - [syncBlockMetadata](packages_create_src_runtime_metadata_core.md#syncblockmetadata)
 - [syncTypeSchemas](packages_create_src_runtime_metadata_core.md#synctypeschemas)
+- [syncRestOpenApi](packages_create_src_runtime_metadata_core.md#syncrestopenapi)
 
 ## Functions
 
@@ -34,7 +39,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:163](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L163)
+[packages/create/src/runtime/metadata-core.ts:210](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L210)
 
 ___
 
@@ -54,4 +59,28 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:253](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L253)
+[packages/create/src/runtime/metadata-core.ts:300](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L300)
+
+___
+
+### syncRestOpenApi
+
+▸ **syncRestOpenApi**(`options`): `Promise`\<[`SyncRestOpenApiResult`](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiResult.md)\>
+
+Generate and write a canonical OpenAPI document for scaffolded REST contracts.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `options` | [`SyncRestOpenApiOptions`](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiOptions.md) | Contracts, endpoint metadata, source file, and output file settings. |
+
+#### Returns
+
+`Promise`\<[`SyncRestOpenApiResult`](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiResult.md)\>
+
+Information about the generated OpenAPI document and included schema components.
+
+#### Defined in
+
+[packages/create/src/runtime/metadata-core.ts:353](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L353)

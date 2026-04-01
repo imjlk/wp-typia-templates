@@ -60,8 +60,13 @@
 - [SyncBlockMetadataResult](packages_create_src_runtime.md#syncblockmetadataresult)
 - [SyncTypeSchemaOptions](packages_create_src_runtime.md#synctypeschemaoptions)
 - [SyncTypeSchemaResult](packages_create_src_runtime.md#synctypeschemaresult)
+- [RestOpenApiContractDefinition](packages_create_src_runtime.md#restopenapicontractdefinition)
+- [RestOpenApiEndpointDefinition](packages_create_src_runtime.md#restopenapiendpointdefinition)
+- [SyncRestOpenApiOptions](packages_create_src_runtime.md#syncrestopenapioptions)
+- [SyncRestOpenApiResult](packages_create_src_runtime.md#syncrestopenapiresult)
 - [syncBlockMetadata](packages_create_src_runtime.md#syncblockmetadata)
 - [syncTypeSchemas](packages_create_src_runtime.md#synctypeschemas)
+- [syncRestOpenApi](packages_create_src_runtime.md#syncrestopenapi)
 
 ## References
 
@@ -389,6 +394,30 @@ Re-exports [SyncTypeSchemaResult](../interfaces/packages_create_src_runtime_meta
 
 ___
 
+### RestOpenApiContractDefinition
+
+Re-exports [RestOpenApiContractDefinition](../interfaces/packages_create_src_runtime_metadata_core.RestOpenApiContractDefinition.md)
+
+___
+
+### RestOpenApiEndpointDefinition
+
+Re-exports [RestOpenApiEndpointDefinition](../interfaces/packages_create_src_runtime_metadata_core.RestOpenApiEndpointDefinition.md)
+
+___
+
+### SyncRestOpenApiOptions
+
+Re-exports [SyncRestOpenApiOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiOptions.md)
+
+___
+
+### SyncRestOpenApiResult
+
+Re-exports [SyncRestOpenApiResult](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiResult.md)
+
+___
+
 ### syncBlockMetadata
 
 Re-exports [syncBlockMetadata](packages_create_src_runtime_metadata_core.md#syncblockmetadata)
@@ -398,3 +427,9 @@ ___
 ### syncTypeSchemas
 
 Re-exports [syncTypeSchemas](packages_create_src_runtime_metadata_core.md#synctypeschemas)
+
+___
+
+### syncRestOpenApi
+
+Re-exports [syncRestOpenApi](packages_create_src_runtime_metadata_core.md#syncrestopenapi)
