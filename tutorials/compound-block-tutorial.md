@@ -173,6 +173,8 @@ If you enabled persistence on the parent block:
 npm run sync-rest
 ```
 
+Run those sync commands manually only when you want generated metadata or REST schemas committed before the first `npm run start` or `npm run build`. The generated `start`/`build` scripts already run the relevant sync steps, and they do not create migration history.
+
 Then load the plugin in your WordPress environment and verify:
 
 - the parent block appears in the inserter

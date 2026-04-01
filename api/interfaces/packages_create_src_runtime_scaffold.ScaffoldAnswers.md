@@ -24,7 +24,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L30)
+[packages/create/src/runtime/scaffold.ts:35](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L35)
 
 ___
 
@@ -34,7 +34,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L31)
+[packages/create/src/runtime/scaffold.ts:36](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L36)
 
 ___
 
@@ -44,7 +44,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:32](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L32)
+[packages/create/src/runtime/scaffold.ts:37](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L37)
 
 ___
 
@@ -54,7 +54,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:33](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L33)
+[packages/create/src/runtime/scaffold.ts:38](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L38)
 
 ___
 
@@ -64,7 +64,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:34](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L34)
+[packages/create/src/runtime/scaffold.ts:39](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L39)
 
 ___
 
@@ -74,7 +74,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:35](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L35)
+[packages/create/src/runtime/scaffold.ts:40](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L40)
 
 ___
 
@@ -84,4 +84,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:36](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L36)
+[packages/create/src/runtime/scaffold.ts:41](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L41)

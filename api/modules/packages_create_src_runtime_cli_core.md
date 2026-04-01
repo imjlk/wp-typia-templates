@@ -20,6 +20,7 @@
 - [getDoctorChecks](packages_create_src_runtime_cli_core.md#getdoctorchecks)
 - [runDoctor](packages_create_src_runtime_cli_core.md#rundoctor)
 - [getNextSteps](packages_create_src_runtime_cli_core.md#getnextsteps)
+- [getOptionalOnboarding](packages_create_src_runtime_cli_core.md#getoptionalonboarding)
 - [runScaffoldFlow](packages_create_src_runtime_cli_core.md#runscaffoldflow)
 
 ## References
@@ -52,7 +53,7 @@ Re-exports [listTemplates](packages_create_src_runtime_template_registry.md#list
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:104](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L104)
+[packages/create/src/runtime/cli-core.ts:119](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L119)
 
 ___
 
@@ -66,7 +67,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:159](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L159)
+[packages/create/src/runtime/cli-core.ts:174](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L174)
 
 ___
 
@@ -86,7 +87,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:174](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L174)
+[packages/create/src/runtime/cli-core.ts:189](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L189)
 
 ___
 
@@ -106,7 +107,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:178](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L178)
+[packages/create/src/runtime/cli-core.ts:193](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L193)
 
 ___
 
@@ -126,7 +127,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:182](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L182)
+[packages/create/src/runtime/cli-core.ts:197](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L197)
 
 ___
 
@@ -146,7 +147,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:248](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L248)
+[packages/create/src/runtime/cli-core.ts:263](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L263)
 
 ___
 
@@ -167,7 +168,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:320](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L320)
+[packages/create/src/runtime/cli-core.ts:335](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L335)
 
 ___
 
@@ -187,13 +188,33 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:337](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L337)
+[packages/create/src/runtime/cli-core.ts:352](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L352)
+
+___
+
+### getOptionalOnboarding
+
+▸ **getOptionalOnboarding**(`«destructured»`): `OptionalOnboardingGuidance`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `«destructured»` | `GetOptionalOnboardingOptions` |
+
+#### Returns
+
+`OptionalOnboardingGuidance`
+
+#### Defined in
+
+[packages/create/src/runtime/cli-core.ts:368](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L368)
 
 ___
 
 ### runScaffoldFlow
 
-▸ **runScaffoldFlow**(`«destructured»`): `Promise`\<\{ `projectDir`: `string` ; `projectInput`: `string` ; `packageManager`: [`PackageManagerId`](packages_create_src_runtime_package_managers.md#packagemanagerid) = resolvedPackageManager; `result`: [`ScaffoldProjectResult`](../interfaces/packages_create_src_runtime_scaffold.ScaffoldProjectResult.md) ; `nextSteps`: `string`[]  }\>
+▸ **runScaffoldFlow**(`«destructured»`): `Promise`\<\{ `optionalOnboarding`: `OptionalOnboardingGuidance` ; `projectDir`: `string` ; `projectInput`: `string` ; `packageManager`: [`PackageManagerId`](packages_create_src_runtime_package_managers.md#packagemanagerid) = resolvedPackageManager; `result`: [`ScaffoldProjectResult`](../interfaces/packages_create_src_runtime_scaffold.ScaffoldProjectResult.md) ; `nextSteps`: `string`[]  }\>
 
 #### Parameters
 
@@ -203,8 +224,8 @@ ___
 
 #### Returns
 
-`Promise`\<\{ `projectDir`: `string` ; `projectInput`: `string` ; `packageManager`: [`PackageManagerId`](packages_create_src_runtime_package_managers.md#packagemanagerid) = resolvedPackageManager; `result`: [`ScaffoldProjectResult`](../interfaces/packages_create_src_runtime_scaffold.ScaffoldProjectResult.md) ; `nextSteps`: `string`[]  }\>
+`Promise`\<\{ `optionalOnboarding`: `OptionalOnboardingGuidance` ; `projectDir`: `string` ; `projectInput`: `string` ; `packageManager`: [`PackageManagerId`](packages_create_src_runtime_package_managers.md#packagemanagerid) = resolvedPackageManager; `result`: [`ScaffoldProjectResult`](../interfaces/packages_create_src_runtime_scaffold.ScaffoldProjectResult.md) ; `nextSteps`: `string`[]  }\>
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:353](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L353)
+[packages/create/src/runtime/cli-core.ts:381](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L381)
