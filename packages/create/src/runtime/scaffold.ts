@@ -24,6 +24,7 @@ import { resolveTemplateSource } from "./template-source.js";
 
 const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
 const PHP_PREFIX_PATTERN = /^[a-z_][a-z0-9_]*$/;
+const PHP_PREFIX_MAX_LENGTH = 50;
 const REMOVED_BUILTIN_TEMPLATE_IDS = ["data", "persisted"] as const;
 const LOCKFILES: Record<PackageManagerId, string[]> = {
 	bun: ["bun.lock", "bun.lockb"],
@@ -62,7 +63,7 @@ export type PersistencePolicy = (typeof PERSISTENCE_POLICIES)[number];
 /**
  * Normalized template variables shared by built-in and remote scaffold flows.
  */
-export interface ScaffoldTemplateVariables {
+export interface ScaffoldTemplateVariables extends Record<string, string> {
 	author: string;
 	blockTypesPackageVersion: string;
 	category: string;
@@ -80,8 +81,8 @@ export interface ScaffoldTemplateVariables {
 	needsMigration: string;
 	pascalCase: string;
 	phpPrefix: string;
-	isAuthenticatedPersistencePolicy: boolean;
-	isPublicPersistencePolicy: boolean;
+	isAuthenticatedPersistencePolicy: "false" | "true";
+	isPublicPersistencePolicy: "false" | "true";
 	restPackageVersion: string;
 	slug: string;
 	slugCamelCase: string;
@@ -200,7 +201,12 @@ function validateTextDomain(input: string): true | string {
 }
 
 function validatePhpPrefix(input: string): true | string {
-	return PHP_PREFIX_PATTERN.test(toSnakeCase(input))
+	const normalizedPrefix = toSnakeCase(input);
+	if (normalizedPrefix.length > PHP_PREFIX_MAX_LENGTH) {
+		return `Use ${PHP_PREFIX_MAX_LENGTH} characters or fewer to keep generated database identifiers within MySQL limits`;
+	}
+
+	return PHP_PREFIX_PATTERN.test(normalizedPrefix)
 		? true
 		: "Use letters, numbers, and underscores only, starting with a letter";
 }
@@ -458,8 +464,9 @@ export function getTemplateVariables(
 		dashCase: slug,
 		dashicon: "smiley",
 		description,
-		isAuthenticatedPersistencePolicy: persistencePolicy === "authenticated",
-		isPublicPersistencePolicy: persistencePolicy === "public",
+		isAuthenticatedPersistencePolicy:
+			persistencePolicy === "authenticated" ? "true" : "false",
+		isPublicPersistencePolicy: persistencePolicy === "public" ? "true" : "false",
 		keyword: slug.replace(/-/g, " "),
 		namespace,
 		needsMigration: "{{needsMigration}}",
@@ -704,7 +711,7 @@ export async function scaffoldProject({
 	const templateSource = await resolveTemplateSource(
 		templateId,
 		cwd,
-		variables as unknown as Record<string, string>,
+		variables,
 		variant,
 	);
 
@@ -712,7 +719,7 @@ export async function scaffoldProject({
 		await copyInterpolatedDirectory(
 			templateSource.templateDir,
 			projectDir,
-			variables as unknown as Record<string, string>,
+			variables,
 		);
 	} finally {
 		if (templateSource.cleanup) {

@@ -311,6 +311,30 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("custom_counter_prefix_storage_version");
 	});
 
+	test("scaffoldProject rejects overly long php-prefix overrides", async () => {
+		const targetDir = path.join(tempRoot, "demo-persistence-php-prefix-too-long");
+
+		await expect(
+			scaffoldProject({
+				projectDir: targetDir,
+				templateId: "persistence",
+				dataStorageMode: "custom-table",
+				packageManager: "npm",
+				noInstall: true,
+				answers: {
+					author: "Test Runner",
+					dataStorageMode: "custom-table",
+					description: "Demo persistence php prefix length guard",
+					namespace: "create-block",
+					persistencePolicy: "authenticated",
+					phpPrefix: "a".repeat(51),
+					slug: "demo-persistence-php-prefix-too-long",
+					title: "Demo Persistence Php Prefix Too Long",
+				},
+			}),
+		).rejects.toThrow("Use 50 characters or fewer");
+	});
+
 	test("scaffoldProject supports combined identifier overrides on persistence templates", async () => {
 		const targetDir = path.join(tempRoot, "demo-persistence-identifiers");
 
