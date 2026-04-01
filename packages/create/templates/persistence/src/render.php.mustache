@@ -37,8 +37,8 @@ $storage_mode       = '{{dataStorageMode}}';
 $persistence_policy = '{{persistencePolicy}}';
 $can_write          = false;
 $notice_message     = 'authenticated' === $persistence_policy
-	? __( 'Sign in to persist this counter.', '{{slugSnakeCase}}' )
-	: __( 'Reload the page to refresh this write token.', '{{slugSnakeCase}}' );
+	? __( 'Sign in to persist this counter.', '{{textdomain}}' )
+	: __( 'Reload the page to refresh this write token.', '{{textdomain}}' );
 $context            = array(
 	'buttonLabel'       => $button_label,
 	'canWrite'          => false,
@@ -55,8 +55,8 @@ if ( 'authenticated' === $persistence_policy ) {
 	if ( $can_write ) {
 		$context['restNonce'] = wp_create_nonce( 'wp_rest' );
 	}
-} elseif ( $post_id > 0 && function_exists( '{{slugSnakeCase}}_create_public_write_token' ) ) {
-	$public_write = {{slugSnakeCase}}_create_public_write_token( (int) $post_id, $resourceKey );
+} elseif ( $post_id > 0 && function_exists( '{{textdomain}}_create_public_write_token' ) ) {
+	$public_write = {{textdomain}}_create_public_write_token( (int) $post_id, $resourceKey );
 	if ( is_array( $public_write ) ) {
 		$token      = isset( $public_write['token'] ) ? (string) $public_write['token'] : '';
 		$expires_at = isset( $public_write['expiresAt'] ) ? (int) $public_write['expiresAt'] : 0;

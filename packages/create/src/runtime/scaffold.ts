@@ -63,6 +63,8 @@ export interface ScaffoldTemplateVariables {
 	namespace: string;
 	needsMigration: string;
 	pascalCase: string;
+	isAuthenticatedPersistencePolicy: boolean;
+	isPublicPersistencePolicy: boolean;
 	restPackageVersion: string;
 	slug: string;
 	slugCamelCase: string;
@@ -339,6 +341,8 @@ export function getTemplateVariables(
 		dashCase: slug,
 		dashicon: "smiley",
 		description,
+		isAuthenticatedPersistencePolicy: persistencePolicy === "authenticated",
+		isPublicPersistencePolicy: persistencePolicy === "public",
 		keyword: slug.replace(/-/g, " "),
 		namespace,
 		needsMigration: "{{needsMigration}}",
@@ -348,8 +352,8 @@ export function getTemplateVariables(
 		slugCamelCase: pascalCase.charAt(0).toLowerCase() + pascalCase.slice(1),
 		slugKebabCase: slug,
 		slugSnakeCase,
-		textDomain: slugSnakeCase,
-		textdomain: slugSnakeCase,
+		textDomain: slug,
+		textdomain: slug,
 		title,
 		titleJson: JSON.stringify(title),
 		titleCase: pascalCase,

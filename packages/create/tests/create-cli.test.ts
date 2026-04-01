@@ -75,16 +75,21 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(fs.existsSync(readmePath)).toBe(true);
 
 		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
 		const readme = fs.readFileSync(readmePath, "utf8");
 		const generatedEdit = fs.readFileSync(path.join(targetDir, "src", "edit.tsx"), "utf8");
 		const generatedHooks = fs.readFileSync(path.join(targetDir, "src", "hooks.ts"), "utf8");
 		const generatedValidators = fs.readFileSync(path.join(targetDir, "src", "validators.ts"), "utf8");
 
+		expect(packageJson.name).toBe("demo-npm");
 		expect(packageJson.packageManager).toBe("npm@11.6.1");
 		expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(blockTypesPackageVersion);
 		expect(packageJson.devDependencies["@wp-typia/create"]).toBe(createPackageVersion);
 		expect(packageJson.scripts.build).toBe("npm run sync-types && wp-scripts build --experimental-modules");
 		expect(packageJson.scripts.start).toBe("npm run sync-types && wp-scripts start --experimental-modules");
+		expect(blockJson.textdomain).toBe("demo-npm");
 		expect(generatedHooks).toContain("type ValidationResult");
 		expect(generatedHooks).toContain("useTypiaValidation");
 		expect(generatedEdit).toContain("@wp-typia/create/runtime/editor");
@@ -123,7 +128,13 @@ describe("@wp-typia/create scaffolding", () => {
 		const generatedHooks = fs.readFileSync(path.join(targetDir, "src", "hooks.ts"), "utf8");
 		const generatedValidators = fs.readFileSync(path.join(targetDir, "src", "validators.ts"), "utf8");
 		const generatedEdit = fs.readFileSync(path.join(targetDir, "src", "edit.tsx"), "utf8");
+		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
 
+		expect(packageJson.name).toBe("demo-interactivity");
+		expect(blockJson.textdomain).toBe("demo-interactivity");
 		expect(generatedTypes).toContain("ValidationResult");
 		expect(generatedHooks).toContain("useTypiaValidation");
 		expect(generatedValidators).toContain("toValidationResult");
@@ -167,12 +178,18 @@ describe("@wp-typia/create scaffolding", () => {
 		const generatedRender = fs.readFileSync(path.join(targetDir, "src", "render.php"), "utf8");
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
 
+		expect(packageJson.name).toBe("demo-persistence-public");
 		expect(packageJson.devDependencies["@wp-typia/rest"]).toBe(restPackageVersion);
 		expect(packageJson.scripts.build).toBe(
 			"npm run sync-types && npm run sync-rest && wp-scripts build --experimental-modules",
 		);
+		expect(blockJson.textdomain).toBe("demo-persistence-public");
 		expect(pluginBootstrap).toContain("post-meta");
+		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-public");
 		expect(pluginBootstrap).toContain("_verify_public_write_token");
 		expect(generatedApi).toContain("@wp-typia/rest");
 		expect(generatedSyncRest).toContain("syncTypeSchemas");
@@ -209,7 +226,14 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 		const generatedRender = fs.readFileSync(path.join(targetDir, "src", "render.php"), "utf8");
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
+		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
+		);
 
+		expect(packageJson.name).toBe("demo-persistence-authenticated");
+		expect(blockJson.textdomain).toBe("demo-persistence-authenticated");
+		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-authenticated");
 		expect(pluginBootstrap).toContain("function demo_persistence_authenticated_can_write_authenticated");
 		expect(generatedRender).toContain("Sign in to persist this counter.");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
