@@ -51,7 +51,7 @@ npx @wp-typia/create my-counter \
 
 The persistence template scaffolds the same editor/runtime foundation as the other built-ins, plus persistence-specific source files:
 
-```
+```text
 my-counter/
 ├── src/
 │   ├── api-types.ts
