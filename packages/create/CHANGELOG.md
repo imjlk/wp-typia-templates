@@ -1,5 +1,21 @@
 # @wp-typia/create
 
+## 0.5.0 — 2026-04-01
+
+### Minor changes
+
+- [6cb1fc5](https://github.com/imjlk/wp-typia/commit/6cb1fc53941e62e56208a58520845aa788eee0f1) Generate endpoint-aware REST OpenAPI documents for persistence-capable scaffolds while keeping per-contract schema artifacts intact. — Thanks @imjlk!
+- [5ab6956](https://github.com/imjlk/wp-typia/commit/5ab69563b9dfde3d99625622121ded62c200f804) Add a compound block scaffold with optional parent-only persistence support. — Thanks @imjlk!
+- [6796256](https://github.com/imjlk/wp-typia/commit/6796256c0d89a7baea647563b3f1fbb1441f5a21) Add scaffold identifier overrides for block namespace, text domain, and PHP prefix while separating the default slug-based naming rules for package metadata and PHP symbols. — Thanks @imjlk!
+
+### Patch changes
+
+- [e52d122](https://github.com/imjlk/wp-typia/commit/e52d122b19735e931a463fe06e60ceeb0b2e2da5) Generalize generated persistence REST route and contract naming beyond the counter sample, and update CI artifact downloads to the Node 24-compatible action release. — Thanks @imjlk!
+- [45c5948](https://github.com/imjlk/wp-typia/commit/45c5948991b06f980c15b189905df95eaa7e9da3) Extract shared PHP REST helper files for generated persistence-capable scaffolds. — Thanks @imjlk!
+- [acb5c7a](https://github.com/imjlk/wp-typia/commit/acb5c7a542271b8acefc9d62fba18b599e53333f) Document PHP REST extension points in persistence-capable scaffolds, generated README files, and repository guides. — Thanks @imjlk!
+- [34b8170](https://github.com/imjlk/wp-typia/commit/34b8170e1ff783d09b133a2f97725e361b6ac8e7) Improve scaffold onboarding messages for manual sync scripts and generated metadata guidance. — Thanks @imjlk!
+- [c950536](https://github.com/imjlk/wp-typia/commit/c950536ddf5c8eeffe8a3d5049306d0c94a4d593) Refactor template resolution and maintenance workflows. — Thanks @imjlk!
+
 ## 0.4.0 — 2026-03-31
 
 ### Minor changes

@@ -1,5 +1,13 @@
 # create-wp-typia
 
+## 1.3.1 — 2026-04-01
+
+### Patch changes
+
+- [5ab6956](https://github.com/imjlk/wp-typia/commit/5ab69563b9dfde3d99625622121ded62c200f804) Add a compound block scaffold with optional parent-only persistence support. — Thanks @imjlk!
+- [6796256](https://github.com/imjlk/wp-typia/commit/6796256c0d89a7baea647563b3f1fbb1441f5a21) Add scaffold identifier overrides for block namespace, text domain, and PHP prefix while separating the default slug-based naming rules for package metadata and PHP symbols. — Thanks @imjlk!
+- Updated dependencies: create@0.5.0
+
 ## 1.3.0 — 2026-03-31
 
 ### Minor changes
