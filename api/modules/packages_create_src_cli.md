@@ -27,4 +27,4 @@
 
 #### Defined in
 
-[packages/create/src/cli.ts:200](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/cli.ts#L200)
+[packages/create/src/cli.ts:245](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/cli.ts#L245)

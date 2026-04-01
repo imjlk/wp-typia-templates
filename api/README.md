@@ -2,6 +2,11 @@ wp-typia / [Modules](modules.md)
 
 # wp-typia
 
+[![CI/CD](https://github.com/imjlk/wp-typia/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/imjlk/wp-typia/actions)
+[![License: GPL-2.0+](https://img.shields.io/badge/License-GPL--2.0+-blue.svg)](https://opensource.org/licenses/GPL-2.0+)
+[![npm version](https://badge.fury.io/js/%40wp-typia%2Fcreate.svg)](https://www.npmjs.com/package/@wp-typia/create)
+[![codecov](https://codecov.io/gh/imjlk/wp-typia/branch/main/graph/badge.svg)](https://codecov.io/gh/imjlk/wp-typia)
+
 Create practical WordPress blocks with Typia-driven metadata, validation, and shared scaffold tooling.
 
 `wp-typia` is a Bun-first monorepo centered on two products:
@@ -42,7 +47,7 @@ npx @wp-typia/create my-block --template compound --package-manager bun --yes --
 npx @wp-typia/create my-block --template compound --persistence-policy public --package-manager npm --yes --no-install
 ```
 
-Remote template MVP:
+Remote template examples:
 
 ```bash
 npx @wp-typia/create my-block --template ./local-template-dir --package-manager npm --yes --no-install
@@ -109,7 +114,7 @@ export interface MyBlockAttributes {
 
 If you want to see the “everything included” shape of `wp-typia`, start with `my-typia-block`. If you want to study persistence policy behavior, start with `persistence-examples`. If you want to scaffold parent/child `InnerBlocks` structures, start with `compound-patterns`.
 
-## Remote Template MVP
+## Remote Template Support
 
 `@wp-typia/create` can scaffold from:
 

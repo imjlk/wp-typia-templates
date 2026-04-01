@@ -4,6 +4,12 @@
 
 [packages/create/src/runtime/scaffold](../modules/packages_create_src_runtime_scaffold.md).ScaffoldAnswers
 
+User-facing scaffold answers before template rendering.
+
+`namespace`, `textDomain`, and `phpPrefix` are normalized before use so
+callers can pass human-entered values while generated output stays
+predictable.
+
 ## Table of contents
 
 ### Properties
@@ -13,7 +19,9 @@
 - [description](packages_create_src_runtime_scaffold.ScaffoldAnswers.md#description)
 - [namespace](packages_create_src_runtime_scaffold.ScaffoldAnswers.md#namespace)
 - [persistencePolicy](packages_create_src_runtime_scaffold.ScaffoldAnswers.md#persistencepolicy)
+- [phpPrefix](packages_create_src_runtime_scaffold.ScaffoldAnswers.md#phpprefix)
 - [slug](packages_create_src_runtime_scaffold.ScaffoldAnswers.md#slug)
+- [textDomain](packages_create_src_runtime_scaffold.ScaffoldAnswers.md#textdomain)
 - [title](packages_create_src_runtime_scaffold.ScaffoldAnswers.md#title)
 
 ## Properties
@@ -24,7 +32,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:35](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L35)
+[packages/create/src/runtime/scaffold.ts:44](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L44)
 
 ___
 
@@ -34,7 +42,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:36](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L36)
+[packages/create/src/runtime/scaffold.ts:45](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L45)
 
 ___
 
@@ -44,7 +52,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:37](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L37)
+[packages/create/src/runtime/scaffold.ts:46](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L46)
 
 ___
 
@@ -52,9 +60,11 @@ ___
 
 • **namespace**: `string`
 
+Block namespace used in generated block names such as `namespace/slug`.
+
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:38](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L38)
+[packages/create/src/runtime/scaffold.ts:48](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L48)
 
 ___
 
@@ -64,7 +74,19 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:39](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L39)
+[packages/create/src/runtime/scaffold.ts:49](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L49)
+
+___
+
+### phpPrefix
+
+• `Optional` **phpPrefix**: `string`
+
+Snake_case PHP symbol prefix used for generated functions, constants, and keys.
+
+#### Defined in
+
+[packages/create/src/runtime/scaffold.ts:51](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L51)
 
 ___
 
@@ -74,7 +96,19 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:40](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L40)
+[packages/create/src/runtime/scaffold.ts:52](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L52)
+
+___
+
+### textDomain
+
+• `Optional` **textDomain**: `string`
+
+Kebab-case WordPress text domain used in block metadata and i18n strings.
+
+#### Defined in
+
+[packages/create/src/runtime/scaffold.ts:54](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L54)
 
 ___
 
@@ -84,4 +118,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:41](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L41)
+[packages/create/src/runtime/scaffold.ts:55](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L55)
