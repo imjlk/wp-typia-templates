@@ -16,33 +16,62 @@ export interface OpenApiInfo {
 	version?: string;
 }
 
+/**
+ * Authentication mode metadata for generated REST OpenAPI endpoints.
+ */
 export type EndpointOpenApiAuthMode =
 	| "authenticated-rest-nonce"
 	| "public-read"
 	| "public-signed-token";
 
+/**
+ * Supported HTTP methods for generated REST OpenAPI endpoints.
+ */
 export type EndpointOpenApiMethod = "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
 
+/**
+ * Contract document used when composing an endpoint-aware OpenAPI file.
+ */
 export interface EndpointOpenApiContractDocument {
+	/** Manifest-derived contract document for this schema component. */
 	document: ManifestDocument;
+	/** Optional component name override for the generated schema reference. */
 	schemaName?: string;
 }
 
+/**
+ * Route metadata for one REST endpoint in the aggregate OpenAPI document.
+ */
 export interface EndpointOpenApiEndpointDefinition {
+	/** Authentication policy surfaced in OpenAPI metadata. */
 	authMode: EndpointOpenApiAuthMode;
+	/** Contract key for a JSON request body, when the endpoint accepts one. */
 	bodyContract?: string;
+	/** HTTP method exposed by the route. */
 	method: EndpointOpenApiMethod;
+	/** Stable OpenAPI operation id for this route. */
 	operationId: string;
+	/** Absolute REST path including namespace and version. */
 	path: string;
+	/** Contract key for query parameters, when the endpoint reads from the query string. */
 	queryContract?: string;
+	/** Contract key for the successful JSON response body. */
 	responseContract: string;
+	/** Optional short endpoint summary shown in generated docs. */
 	summary?: string;
+	/** OpenAPI tag names applied to this endpoint. */
 	tags: string[];
 }
 
+/**
+ * Options for building an aggregate endpoint-aware OpenAPI document.
+ */
 export interface EndpointOpenApiDocumentOptions {
+	/** Named contract documents keyed by the endpoint registry identifiers. */
 	contracts: Record<string, EndpointOpenApiContractDocument>;
+	/** Route definitions that should appear in the generated OpenAPI file. */
 	endpoints: EndpointOpenApiEndpointDefinition[];
+	/** Optional document-level OpenAPI info metadata. */
 	info?: OpenApiInfo;
 }
 
@@ -330,6 +359,12 @@ function buildEndpointOpenApiOperation(
 	return operation;
 }
 
+/**
+ * Build a complete OpenAPI 3.1 document from contract manifests and route metadata.
+ *
+ * @param options Aggregate contract and endpoint definitions for the REST surface.
+ * @returns A JSON-compatible OpenAPI document with paths, components, and auth metadata.
+ */
 export function buildEndpointOpenApiDocument(
 	options: EndpointOpenApiDocumentOptions,
 ): JsonSchemaObject {

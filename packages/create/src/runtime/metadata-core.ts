@@ -4,7 +4,6 @@ import ts from "typescript";
 
 import {
 	buildEndpointOpenApiDocument,
-	type EndpointOpenApiAuthMode,
 	type EndpointOpenApiEndpointDefinition,
 	manifestToJsonSchema,
 	manifestToOpenApi,
@@ -123,28 +122,48 @@ export interface SyncTypeSchemaResult {
 	sourceTypeName: string;
 }
 
+/**
+ * Source type mapping used when generating aggregate REST OpenAPI documents.
+ */
 export interface RestOpenApiContractDefinition {
+	/** Optional component name override for the generated schema reference. */
 	schemaName?: string;
+	/** Type name exported from the source `typesFile`. */
 	sourceTypeName: string;
 }
 
-export interface RestOpenApiEndpointDefinition
-	extends Omit<EndpointOpenApiEndpointDefinition, "authMode"> {
-	authMode: EndpointOpenApiAuthMode;
-}
+/**
+ * Public wrapper for the route metadata consumed by `syncRestOpenApi()`.
+ */
+export interface RestOpenApiEndpointDefinition extends EndpointOpenApiEndpointDefinition {}
 
+/**
+ * Options for writing a canonical endpoint-aware REST OpenAPI document.
+ */
 export interface SyncRestOpenApiOptions {
+	/** Contract registry keyed by logical route contract ids. */
 	contracts: Record<string, RestOpenApiContractDefinition>;
+	/** Endpoint registry describing the REST paths, methods, and auth policies to document. */
 	endpoints: RestOpenApiEndpointDefinition[];
+	/** Output path for the aggregate OpenAPI document. */
 	openApiFile: string;
+	/** Optional OpenAPI document metadata. */
 	openApiInfo?: OpenApiInfo;
+	/** Optional project root used to resolve file paths. */
 	projectRoot?: string;
+	/** Source file that exports the REST contract types. */
 	typesFile: string;
 }
 
+/**
+ * Result returned after writing an aggregate REST OpenAPI document.
+ */
 export interface SyncRestOpenApiResult {
+	/** Number of endpoints included in the generated OpenAPI file. */
 	endpointCount: number;
+	/** Absolute path to the generated OpenAPI file. */
 	openApiPath: string;
+	/** Component schema names included in the generated document. */
 	schemaNames: string[];
 }
 
@@ -325,6 +344,12 @@ export async function syncTypeSchemas(
 	};
 }
 
+/**
+ * Generate and write a canonical OpenAPI document for scaffolded REST contracts.
+ *
+ * @param options Contracts, endpoint metadata, source file, and output file settings.
+ * @returns Information about the generated OpenAPI document and included schema components.
+ */
 export async function syncRestOpenApi(
 	options: SyncRestOpenApiOptions,
 ): Promise<SyncRestOpenApiResult> {

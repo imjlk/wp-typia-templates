@@ -339,7 +339,14 @@ function assertCompoundRestOpenApi(projectDir, projectName, namespace, persisten
 		if (postOperation["x-wp-typia-authPolicy"] !== "public-signed-token") {
 			throw new Error(`Expected public-signed-token auth policy on ${routePath} POST`);
 		}
+		if (postOperation["x-wp-typia-publicTokenField"] !== "publicWriteToken") {
+			throw new Error(`Expected publicWriteToken metadata on ${routePath} POST`);
+		}
 	} else {
+		const securityScheme = openApi.components?.securitySchemes?.wpRestNonce;
+		if (!securityScheme) {
+			throw new Error(`Expected wpRestNonce security scheme in aggregate REST OpenAPI for ${routePath}`);
+		}
 		if (postOperation["x-wp-typia-authPolicy"] !== "authenticated-rest-nonce") {
 			throw new Error(`Expected authenticated-rest-nonce auth policy on ${routePath} POST`);
 		}
