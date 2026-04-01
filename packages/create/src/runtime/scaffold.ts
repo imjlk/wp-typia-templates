@@ -15,6 +15,7 @@ import { getPackageVersions } from "./package-versions.js";
 import {
 	getOptionalOnboardingNote,
 	getOptionalOnboardingSteps,
+	getPhpRestExtensionPointsSection,
 	getTemplateSourceOfTruthNote,
 } from "./scaffold-onboarding.js";
 import { copyInterpolatedDirectory } from "./template-render.js";
@@ -516,6 +517,10 @@ function buildReadme(
 	const sourceOfTruthNote = getTemplateSourceOfTruthNote(templateId, {
 		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
 	});
+	const phpRestExtensionPointsSection = getPhpRestExtensionPointsSection(templateId, {
+		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
+		slug: variables.slug,
+	});
 
 	return `# ${variables.title}
 
@@ -546,7 +551,7 @@ ${optionalOnboardingSteps.join("\n")}
 
 ${getOptionalOnboardingNote(packageManager)}
 
-${sourceOfTruthNote}
+${sourceOfTruthNote}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ""}
 `;
 }
 

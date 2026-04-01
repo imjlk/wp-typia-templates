@@ -14,6 +14,7 @@ function {{phpPrefix}}_get_rest_nonce( WP_REST_Request $request ) {
 	return null;
 }
 
+// Customize authenticated write policy here when your project needs stricter capability checks.
 function {{phpPrefix}}_can_write_authenticated( WP_REST_Request $request ) {
 	if ( ! is_user_logged_in() ) {
 		return new WP_Error(

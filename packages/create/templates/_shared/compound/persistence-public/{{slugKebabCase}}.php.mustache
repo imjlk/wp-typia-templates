@@ -17,6 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( '{{phpPrefix}}_DATA_STORAGE_MODE', '{{dataStorageMode}}' );
 define( '{{phpPrefix}}_PUBLIC_WRITE_TTL', HOUR_IN_SECONDS );
+// These helper files are scaffold-owned plumbing. Customize them only when you are changing auth or request validation behavior.
 require_once __DIR__ . '/inc/rest-shared.php';
 require_once __DIR__ . '/inc/rest-public.php';
 
@@ -127,6 +128,7 @@ function {{phpPrefix}}_get_counter( $post_id, $resource_key ) {
 	return (int) get_post_meta( $post_id, $meta_key, true );
 }
 
+// Customize storage helpers here when you need a different backend or aggregate behavior for the parent block.
 function {{phpPrefix}}_increment_counter( $post_id, $resource_key, $delta ) {
 	global $wpdb;
 
@@ -177,6 +179,7 @@ function {{phpPrefix}}_build_state_response( $post_id, $resource_key, $count ) {
 	);
 }
 
+// Route handlers are the main product-level extension point for parent-block request/response shaping.
 function {{phpPrefix}}_handle_get_state( WP_REST_Request $request ) {
 	$payload = {{phpPrefix}}_validate_and_sanitize_request(
 		array(
@@ -233,6 +236,7 @@ function {{phpPrefix}}_handle_write_state( WP_REST_Request $request ) {
 	);
 }
 
+// Add or reorganize parent-block endpoints here as the REST surface grows.
 function {{phpPrefix}}_register_routes() {
 	register_rest_route(
 		'{{namespace}}/v1',

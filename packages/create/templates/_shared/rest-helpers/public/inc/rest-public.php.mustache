@@ -21,6 +21,7 @@ function {{phpPrefix}}_get_public_write_action() {
 	return '{{namespace}}/{{slugKebabCase}}/state/write';
 }
 
+// Public write tokens are scaffold-owned by default; customize this flow if you need a different anonymous write policy.
 function {{phpPrefix}}_create_public_write_token( $post_id, $resource_key ) {
 	$expires_at = time() + (int) {{phpPrefix}}_PUBLIC_WRITE_TTL;
 	$payload    = array(
@@ -134,6 +135,7 @@ function {{phpPrefix}}_verify_public_write_token( $token, $post_id, $resource_ke
 	return true;
 }
 
+// Customize the public write gate here when you need different anonymous request checks.
 function {{phpPrefix}}_can_write_publicly( WP_REST_Request $request ) {
 	$payload = $request->get_json_params();
 	if ( ! is_array( $payload ) ) {
