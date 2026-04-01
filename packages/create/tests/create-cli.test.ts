@@ -105,6 +105,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(readme).not.toContain("npm run sync-rest");
 		expect(readme).toContain("already run the relevant sync scripts");
 		expect(readme).toContain("do not create migration history");
+		expect(readme).not.toContain("## PHP REST Extension Points");
 	});
 
 	test("scaffoldProject creates an interactivity template with typed validation wiring", async () => {
@@ -206,6 +207,12 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(readme).toContain("npm run sync-types");
 		expect(readme).toContain("npm run sync-rest");
 		expect(readme).toContain("src/api-types.ts");
+		expect(readme).toContain("## PHP REST Extension Points");
+		expect(readme).toContain("Edit `demo-persistence-public.php`");
+		expect(readme).toContain("Edit `inc/rest-auth.php` or `inc/rest-public.php`");
+		expect(pluginBootstrap).toContain("Customize storage helpers");
+		expect(pluginBootstrap).toContain("Route handlers are the main product-level extension point");
+		expect(restPublicHelper).toContain("Customize the public write gate here");
 	});
 
 	test("scaffoldProject creates a persistence template with authenticated writes by default", async () => {
@@ -235,6 +242,7 @@ describe("@wp-typia/create scaffolding", () => {
 		const restAuthHelper = fs.readFileSync(path.join(targetDir, "inc", "rest-auth.php"), "utf8");
 		const generatedRender = fs.readFileSync(path.join(targetDir, "src", "render.php"), "utf8");
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
+		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 		const blockJson = JSON.parse(
 			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
@@ -251,6 +259,9 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(restAuthHelper).toContain("function demo_persistence_authenticated_can_write_authenticated");
 		expect(generatedRender).toContain("Sign in to persist this counter.");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
+		expect(readme).toContain("## PHP REST Extension Points");
+		expect(readme).toContain("Edit `demo-persistence-authenticated.php`");
+		expect(restAuthHelper).toContain("Customize authenticated write policy here");
 	});
 
 	test("scaffoldProject supports explicit text-domain overrides on persistence templates", async () => {
@@ -433,6 +444,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(readme).toContain("npm run sync-types");
 		expect(readme).not.toContain("npm run sync-rest");
 		expect(readme).toContain("src/blocks/*/types.ts");
+		expect(readme).not.toContain("## PHP REST Extension Points");
 	});
 
 	test("compound scaffolds enable authenticated persistence when only data storage is provided", async () => {
@@ -487,6 +499,9 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedBlockConfig).toContain("src/blocks/demo-compound-storage/api.openapi.json");
 		expect(readme).toContain("npm run sync-rest");
 		expect(readme).toContain("src/blocks/*/api-types.ts");
+		expect(readme).toContain("## PHP REST Extension Points");
+		expect(readme).toContain("The hidden child block does not own REST routes or storage.");
+		expect(pluginBootstrap).toContain("Customize storage helpers");
 	});
 
 	test("compound scaffolds enable public persistence when only a public policy is provided", async () => {
@@ -523,6 +538,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("HOUR_IN_SECONDS");
 		expect(restPublicHelper).toContain("function demo_compound_public_verify_public_write_token");
 		expect(parentRender).toContain("publicWriteToken");
+		expect(restPublicHelper).toContain("Customize the public write gate here");
 	});
 
 	test("compound scaffolds honor namespace, text-domain, and php-prefix overrides", async () => {

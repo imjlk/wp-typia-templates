@@ -1,5 +1,6 @@
 <?php
 
+// Scaffold-owned schema plumbing. Extend request/response behavior in the route handlers instead.
 function {{phpPrefix}}_load_schema_from_build_dir( $build_dir, $schema_name ) {
 	if ( ! is_string( $build_dir ) || '' === $build_dir ) {
 		return null;
@@ -19,6 +20,7 @@ function {{phpPrefix}}_load_schema_from_build_dir( $build_dir, $schema_name ) {
 	return is_array( $decoded ) ? $decoded : null;
 }
 
+// Keep schema sanitation aligned with generated JSON Schema unless you are debugging bridge behavior.
 function {{phpPrefix}}_sanitize_rest_schema( $schema ) {
 	if ( ! is_array( $schema ) ) {
 		return $schema;
@@ -39,6 +41,7 @@ function {{phpPrefix}}_sanitize_rest_schema( $schema ) {
 	return $schema;
 }
 
+// Route handlers call this bridge before product-specific logic runs.
 function {{phpPrefix}}_validate_and_sanitize_request( $value, $build_dir, $schema_name, $param_name ) {
 	$schema = {{phpPrefix}}_load_schema_from_build_dir( $build_dir, $schema_name );
 	if ( ! is_array( $schema ) ) {

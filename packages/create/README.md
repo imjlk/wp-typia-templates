@@ -164,7 +164,13 @@ await syncRestOpenApi({
 });
 ```
 
-`src/api-schemas/*.schema.json` remains the runtime-facing artifact for generated PHP validation. `src/api.openapi.json` is the canonical endpoint-aware REST document when a scaffold defines route metadata, while per-contract `src/api-schemas/*.openapi.json` files remain available as compatibility fragments.
+`src/api-types.ts` remains the source of truth for scaffolded REST contracts. `src/api-schemas/*.schema.json` remains the runtime-facing artifact for generated PHP validation, and `src/api.openapi.json` is the canonical endpoint-aware REST document when a scaffold defines route metadata. Per-contract `src/api-schemas/*.openapi.json` files remain available as compatibility fragments.
+
+For persistence-capable scaffolds, generated PHP stays intentionally boring glue:
+
+- edit the plugin bootstrap file when you need to customize storage helpers, route handlers, response shaping, or route registration
+- edit `inc/rest-auth.php` or `inc/rest-public.php` when you need to customize write permission policy
+- regenerate `src/api-schemas/*` and `src/api.openapi.json` from `src/api-types.ts` instead of treating those generated artifacts as hand-maintained sources
 
 The `migrations` commands remain available for projects that include the migration workspace, such as the repo-local reference app in [`examples/my-typia-block`](../../examples/my-typia-block) or compatible remote seeds:
 

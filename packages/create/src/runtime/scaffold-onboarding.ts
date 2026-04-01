@@ -5,6 +5,10 @@ interface SyncOnboardingOptions {
 	compoundPersistenceEnabled?: boolean;
 }
 
+interface PhpRestExtensionOptions extends SyncOnboardingOptions {
+	slug: string;
+}
+
 function templateHasPersistenceSync(
 	templateId: string,
 	{ compoundPersistenceEnabled = false }: SyncOnboardingOptions = {},
@@ -67,4 +71,32 @@ export function getTemplateSourceOfTruthNote(
 	}
 
 	return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`.";
+}
+
+/**
+ * Returns scaffold-local guidance for the main PHP REST customization points.
+ */
+export function getPhpRestExtensionPointsSection(
+	templateId: string,
+	{ compoundPersistenceEnabled = false, slug }: PhpRestExtensionOptions,
+): string | null {
+	if (templateId === "persistence") {
+		return `## PHP REST Extension Points
+
+- Edit \`${slug}.php\` when you need to change storage helpers, route handlers, response shaping, or route registration.
+- Edit \`inc/rest-auth.php\` or \`inc/rest-public.php\` when you need to customize write permissions or token/nonce checks for the selected policy.
+- Keep \`src/api-types.ts\` as the source of truth for request and response contracts, then regenerate \`src/api-schemas/*.schema.json\`, per-contract \`src/api-schemas/*.openapi.json\`, and \`src/api.openapi.json\` with \`sync-rest\`.
+- Avoid hand-editing generated schema and OpenAPI artifacts unless you are debugging generated output; they are meant to be regenerated from TypeScript contracts.`;
+	}
+
+	if (templateId === "compound" && compoundPersistenceEnabled) {
+		return `## PHP REST Extension Points
+
+- Edit \`${slug}.php\` when you need to change parent-block storage helpers, route handlers, response shaping, or route registration.
+- Edit \`inc/rest-auth.php\` or \`inc/rest-public.php\` when you need to customize write permissions or token/nonce checks for the parent block.
+- Keep \`src/blocks/${slug}/api-types.ts\` as the source of truth for parent REST contracts, then regenerate \`src/blocks/${slug}/api-schemas/*.schema.json\`, per-contract \`src/blocks/${slug}/api-schemas/*.openapi.json\`, and \`src/blocks/${slug}/api.openapi.json\` with \`sync-rest\`.
+- The hidden child block does not own REST routes or storage. Avoid hand-editing generated schema and OpenAPI artifacts unless you are debugging generated output.`;
+	}
+
+	return null;
 }

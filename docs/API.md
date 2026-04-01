@@ -152,6 +152,13 @@ The built-in `persistence` template adds another predictable layer:
 
 For persistence-capable scaffolds, `src/api.openapi.json` is the canonical endpoint-aware REST document. The `src/api-schemas/*.schema.json` files remain the runtime contract artifacts, and `src/api-schemas/*.openapi.json` files remain available as per-contract compatibility fragments.
 
+When you customize the generated PHP:
+
+- edit the plugin bootstrap file for storage helpers, route handlers, response shaping, and route registration
+- edit `inc/rest-auth.php` or `inc/rest-public.php` for permission policy changes
+- keep `src/api-types.ts` as the source of truth for REST contracts, then regenerate `src/api-schemas/*` and `src/api.openapi.json`
+- avoid hand-editing generated schema and OpenAPI artifacts unless you are debugging the generation output itself
+
 `persistence` keeps one minimal aggregate-counter scaffold and lets you choose between:
 
 - `authenticated`: logged-in writes protected by a WordPress REST nonce
@@ -173,6 +180,8 @@ When you opt `compound` into persistence with `--data-storage` or `--persistence
 - `src/blocks/<parent>/api-schemas/`
 - `src/blocks/<parent>/interactivity.ts`
 - generated PHP route/storage wiring in the plugin bootstrap
+
+For persistence-enabled `compound`, the parent block follows the same REST extension pattern as `persistence`. The hidden child block does not own REST routes or storage behavior.
 
 ## 5. Repo-local example app
 
