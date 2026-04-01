@@ -20,13 +20,21 @@ wp-typia templates inspect basic
 wp-typia doctor
 ```
 
-Built-in templates currently include `basic`, `interactivity`, and `persistence`.
+Built-in templates currently include `basic`, `interactivity`, `persistence`, and `compound`.
 
 `persistence` also accepts:
 
 ```bash
 wp-typia my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
 wp-typia my-block --template persistence --data-storage custom-table --persistence-policy public --package-manager npm --yes --no-install
+```
+
+`compound` accepts the same persistence flags, but treats them as an optional parent-only layer:
+
+```bash
+wp-typia my-block --template compound --package-manager bun --yes --no-install
+wp-typia my-block --template compound --persistence-policy authenticated --package-manager bun --yes --no-install
+wp-typia my-block --template compound --data-storage post-meta --package-manager npm --yes --no-install
 ```
 
 Remote template MVP:
@@ -146,12 +154,29 @@ The built-in `persistence` template adds another predictable layer:
 - `authenticated`: logged-in writes protected by a WordPress REST nonce
 - `public`: anonymous writes protected by signed short-lived public tokens
 
+The built-in `compound` template adds a multi-block project structure:
+
+- `src/blocks/<parent>/`
+- `src/blocks/<parent>-item/`
+- `scripts/block-config.ts`
+- a root plugin bootstrap that registers `build/blocks/*/block.json`
+
+When you opt `compound` into persistence with `--data-storage` or `--persistence-policy`, the parent block also gains:
+
+- `src/blocks/<parent>/api-types.ts`
+- `src/blocks/<parent>/api-validators.ts`
+- `src/blocks/<parent>/api.ts`
+- `src/blocks/<parent>/api-schemas/`
+- `src/blocks/<parent>/interactivity.ts`
+- generated PHP route/storage wiring in the plugin bootstrap
+
 ## 5. Repo-local example app
 
 The repository keeps two reference apps:
 
 - [`examples/my-typia-block`](../examples/my-typia-block) for the kitchen-sink editor/migration reference
 - [`examples/persistence-examples`](../examples/persistence-examples) for persistence-policy behavior
+- [`examples/compound-patterns`](../examples/compound-patterns) for compound parent/child patterns
 
 From the root workspace, example-oriented commands live under:
 
@@ -159,6 +184,7 @@ From the root workspace, example-oriented commands live under:
 bun run examples:build
 bun run examples:dev
 bun run examples:dev:persistence
+bun run examples:dev:compound
 bun run examples:lint
 bun run examples:test:e2e
 ```

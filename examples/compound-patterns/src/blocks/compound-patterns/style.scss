@@ -1,0 +1,31 @@
+.wp-block-compound-patterns {
+	border: 1px solid #dcdcde;
+	border-radius: 12px;
+	padding: 1.25rem;
+	background: #fff;
+}
+
+.wp-block-compound-patterns__heading {
+	margin: 0 0 0.5rem;
+	font-size: 1.2rem;
+}
+
+.wp-block-compound-patterns__intro {
+	margin: 0 0 1rem;
+	color: #50575e;
+}
+
+.wp-block-compound-patterns__items {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.wp-block-compound-patterns[data-show-dividers="true"] .wp-block-compound-patterns-item {
+	border-top: 1px solid #dcdcde;
+	padding-top: 0.75rem;
+}
+
+.wp-block-compound-patterns[data-show-dividers="true"] .wp-block-compound-patterns-item:first-child {
+	border-top: 0;
+	padding-top: 0;
+}

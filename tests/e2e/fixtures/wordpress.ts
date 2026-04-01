@@ -36,6 +36,16 @@ export const PERSISTENCE_LIKE_BUTTON_BLOCK = {
   title: 'Persistence Like Button',
 } as const;
 
+export const COMPOUND_PATTERNS_BLOCK = {
+  name: 'create-block/compound-patterns',
+  title: 'Compound Patterns',
+} as const;
+
+export const COMPOUND_PATTERNS_ITEM_BLOCK = {
+  name: 'create-block/compound-patterns-item',
+  title: 'Compound Patterns Item',
+} as const;
+
 export const EXAMPLE_BLOCK = REFERENCE_BLOCK;
 
 export const test = base;

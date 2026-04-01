@@ -5,6 +5,7 @@ import { promises as fsp } from "node:fs";
 import {
 	getTemplateById,
 	SHARED_BASE_TEMPLATE_ROOT,
+	SHARED_COMPOUND_TEMPLATE_ROOT,
 	SHARED_PERSISTENCE_TEMPLATE_ROOT,
 	type BuiltInTemplateId,
 } from "./template-registry.js";
@@ -14,6 +15,11 @@ import {
  * `persistence` template.
  */
 export type BuiltInPersistencePolicy = "authenticated" | "public";
+
+export interface BuiltInTemplateVariantOptions {
+	persistenceEnabled?: boolean;
+	persistencePolicy?: BuiltInPersistencePolicy;
+}
 
 export interface MaterializedBuiltInTemplateSource {
 	id: BuiltInTemplateId;
@@ -36,7 +42,10 @@ export interface MaterializedBuiltInTemplateSource {
  */
 export function getBuiltInTemplateLayerDirs(
 	templateId: BuiltInTemplateId,
-	persistencePolicy: BuiltInPersistencePolicy = "authenticated",
+	{
+		persistenceEnabled = false,
+		persistencePolicy = "authenticated",
+	}: BuiltInTemplateVariantOptions = {},
 ): string[] {
 	if (templateId === "persistence") {
 		return [
@@ -45,6 +54,26 @@ export function getBuiltInTemplateLayerDirs(
 			path.join(SHARED_PERSISTENCE_TEMPLATE_ROOT, persistencePolicy === "public" ? "public" : "auth"),
 			getTemplateById(templateId).templateDir,
 		];
+	}
+
+	if (templateId === "compound") {
+		const layers = [
+			SHARED_BASE_TEMPLATE_ROOT,
+			path.join(SHARED_COMPOUND_TEMPLATE_ROOT, "core"),
+			getTemplateById(templateId).templateDir,
+		];
+
+		if (persistenceEnabled) {
+			layers.push(
+				path.join(SHARED_COMPOUND_TEMPLATE_ROOT, "persistence"),
+				path.join(
+					SHARED_COMPOUND_TEMPLATE_ROOT,
+					persistencePolicy === "public" ? "persistence-public" : "persistence-auth",
+				),
+			);
+		}
+
+		return layers;
 	}
 
 	return [SHARED_BASE_TEMPLATE_ROOT, getTemplateById(templateId).templateDir];
@@ -60,7 +89,7 @@ export function getBuiltInTemplateLayerDirs(
  */
 export async function resolveBuiltInTemplateSource(
 	templateId: BuiltInTemplateId,
-	persistencePolicy: BuiltInPersistencePolicy = "authenticated",
+	options: BuiltInTemplateVariantOptions = {},
 ): Promise<MaterializedBuiltInTemplateSource> {
 	const template = getTemplateById(templateId);
 	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-template-"));
@@ -69,7 +98,7 @@ export async function resolveBuiltInTemplateSource(
 	try {
 		await fsp.mkdir(templateDir, { recursive: true });
 
-		for (const layerDir of getBuiltInTemplateLayerDirs(templateId, persistencePolicy)) {
+		for (const layerDir of getBuiltInTemplateLayerDirs(templateId, options)) {
 			await fsp.cp(layerDir, templateDir, {
 				recursive: true,
 				force: true,

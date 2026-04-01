@@ -8,7 +8,7 @@ Create practical WordPress blocks with Typia-driven metadata, validation, and sh
 - [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types) for reusable WordPress semantic types
 - [`@wp-typia/rest`](https://www.npmjs.com/package/@wp-typia/rest) for typed WordPress REST helpers
 
-It generates `block.json`, `typia.manifest.json`, `typia-validator.php`, and optional schema artifacts from `src/types.ts`, keeps runtime validation close to the block code, and now ships three built-in starting points that cover static, interactive, and persistence-aware blocks.
+It generates `block.json`, `typia.manifest.json`, `typia-validator.php`, and optional schema artifacts from `src/types.ts`, keeps runtime validation close to the block code, and now ships four built-in starting points that cover static, interactive, persistence-aware, and compound parent/child blocks.
 
 ## Quick Start
 
@@ -27,6 +27,7 @@ Built-in templates:
 - `basic`
 - `interactivity`
 - `persistence`
+- `compound`
 
 Non-interactive examples:
 
@@ -35,6 +36,8 @@ npx @wp-typia/create my-block --template basic --package-manager pnpm --yes --no
 npx @wp-typia/create my-block --template interactivity --package-manager npm --yes --no-install
 npx @wp-typia/create my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
 npx @wp-typia/create my-block --template persistence --data-storage custom-table --persistence-policy public --package-manager npm --yes --no-install
+npx @wp-typia/create my-block --template compound --package-manager bun --yes --no-install
+npx @wp-typia/create my-block --template compound --persistence-policy public --package-manager npm --yes --no-install
 ```
 
 Remote template MVP:
@@ -52,6 +55,7 @@ npx @wp-typia/create my-block --template @scope/create-block-template --variant 
 | `basic` | Minimal, clean boilerplate with Typia metadata sync and runtime validation |
 | `interactivity` | The same foundation plus WordPress Interactivity API wiring |
 | `persistence` | Typed REST contracts, schema sync, Interactivity API wiring, and a selectable `authenticated` or `public` persistence policy |
+| `compound` | A top-level parent block plus hidden implementation child blocks, with optional persistence when you pass `--data-storage` or `--persistence-policy` |
 
 `full` and `advanced` are no longer built-in scaffold targets. Their older kitchen-sink responsibilities are now split between the repo-local reference apps and the built-in `persistence` template.
 
@@ -95,7 +99,13 @@ export interface MyBlockAttributes {
 - an authenticated per-user like button backed by a custom table
 - multi-block plugin registration from one example workspace
 
-If you want to see the “everything included” shape of `wp-typia`, start with `my-typia-block`. If you want to study persistence policy behavior, start with `persistence-examples`.
+[`examples/compound-patterns`](examples/compound-patterns) is the runtime reference for compound parent/child scaffolds. It demonstrates:
+
+- a single top-level parent block with `InnerBlocks`
+- a hidden implementation child block constrained by `parent`
+- template-seeded internal items that survive save and reopen cycles
+
+If you want to see the “everything included” shape of `wp-typia`, start with `my-typia-block`. If you want to study persistence policy behavior, start with `persistence-examples`. If you want to scaffold parent/child `InnerBlocks` structures, start with `compound-patterns`.
 
 ## Remote Template MVP
 
@@ -136,7 +146,9 @@ wp-typia/
 │   ├── wp-typia-rest/          # Typed REST client helpers
 │   └── wp-typia-block-types/   # Shared semantic block types
 ├── examples/
-│   └── my-typia-block/         # Kitchen-sink reference app
+│   ├── my-typia-block/         # Kitchen-sink reference app
+│   ├── persistence-examples/   # Persistence policy reference plugin
+│   └── compound-patterns/      # Compound parent/child reference plugin
 ├── tests/
 ├── docs/
 └── .github/
@@ -151,6 +163,7 @@ wp-typia/
 - [Migration Guide](docs/migrations.md)
 - [Union Support Guide](docs/union-support.md)
 - [Basic Block Tutorial](docs/tutorials/basic-block-tutorial.md)
+- [Compound Block Tutorial](docs/tutorials/compound-block-tutorial.md)
 - [Contributing Guide](CONTRIBUTING.md)
 
 ## Repository Development

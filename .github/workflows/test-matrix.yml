@@ -55,7 +55,7 @@ jobs:
           path: |
             ~/.wp-env
             ~/wp-env
-          key: wp-env-${{ runner.os }}-${{ matrix.node }}-${{ hashFiles('.wp-env.json', '.wp-env.test.json', 'examples/my-typia-block/package.json', 'examples/persistence-examples/package.json', 'bun.lock') }}
+          key: wp-env-${{ runner.os }}-${{ matrix.node }}-${{ hashFiles('.wp-env.json', '.wp-env.test.json', 'examples/my-typia-block/package.json', 'examples/persistence-examples/package.json', 'examples/compound-patterns/package.json', 'bun.lock') }}
           restore-keys: |
             wp-env-${{ runner.os }}-${{ matrix.node }}-
             wp-env-${{ runner.os }}-

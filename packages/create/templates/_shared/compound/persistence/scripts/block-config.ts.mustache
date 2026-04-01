@@ -1,0 +1,28 @@
+export const BLOCKS = [
+	{
+		apiTypesFile: 'src/blocks/{{slugKebabCase}}/api-types.ts',
+		attributeTypeName: '{{pascalCase}}Attributes',
+		contracts: [
+			{
+				baseName: 'counter-query',
+				sourceTypeName: '{{pascalCase}}CounterQuery',
+			},
+			{
+				baseName: 'increment-request',
+				sourceTypeName: '{{pascalCase}}IncrementRequest',
+			},
+			{
+				baseName: 'counter-response',
+				sourceTypeName: '{{pascalCase}}CounterResponse',
+			},
+		],
+		slug: '{{slugKebabCase}}',
+		typesFile: 'src/blocks/{{slugKebabCase}}/types.ts',
+	},
+	{
+		slug: '{{slugKebabCase}}-item',
+		attributeTypeName: '{{pascalCase}}ItemAttributes',
+		contracts: [],
+		typesFile: 'src/blocks/{{slugKebabCase}}-item/types.ts',
+	},
+] as const;

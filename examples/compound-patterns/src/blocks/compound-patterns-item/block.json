@@ -1,0 +1,38 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "create-block/compound-patterns-item",
+	"version": "0.1.0",
+	"title": "Compound Patterns Item",
+	"category": "widgets",
+	"icon": "excerpt-view",
+	"description": "Internal item block used by Compound Patterns.",
+	"parent": [
+		"create-block/compound-patterns"
+	],
+	"example": {
+		"attributes": {
+			"title": "Compound Patterns Item",
+			"body": "Add supporting details for this internal item."
+		}
+	},
+	"supports": {
+		"html": false,
+		"inserter": false,
+		"reusable": false
+	},
+	"attributes": {
+		"title": {
+			"type": "string",
+			"default": "Compound Patterns Item"
+		},
+		"body": {
+			"type": "string",
+			"default": "Add supporting details for this internal item."
+		}
+	},
+	"textdomain": "compound_patterns",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css"
+}

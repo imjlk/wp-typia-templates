@@ -863,7 +863,10 @@ export async function resolveTemplateSource(
 		}
 		return resolveBuiltInTemplateSource(
 			templateId,
-			variables.persistencePolicy === "public" ? "public" : "authenticated",
+			{
+				persistenceEnabled: variables.compoundPersistenceEnabled === "true",
+				persistencePolicy: variables.persistencePolicy === "public" ? "public" : "authenticated",
+			},
 		);
 	}
 

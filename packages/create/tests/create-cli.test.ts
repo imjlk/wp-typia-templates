@@ -206,6 +206,109 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
 	});
 
+	test("scaffoldProject creates a pure compound template with parent and hidden child blocks", async () => {
+		const targetDir = path.join(tempRoot, "demo-compound");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "compound",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo compound block",
+				namespace: "create-block",
+				slug: "demo-compound",
+				title: "Demo Compound",
+			},
+		});
+
+		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
+		const pluginBootstrap = fs.readFileSync(path.join(targetDir, "demo-compound.php"), "utf8");
+		const parentBlockJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "blocks", "demo-compound", "block.json"), "utf8"),
+		);
+		const childBlockJson = JSON.parse(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "demo-compound-item", "block.json"),
+				"utf8",
+			),
+		);
+
+		expect(packageJson.scripts.build).toBe("npm run sync-types && wp-scripts build --experimental-modules");
+		expect(pluginBootstrap).toContain("build/blocks");
+		expect(parentBlockJson.name).toBe("create-block/demo-compound");
+		expect(childBlockJson.parent).toEqual(["create-block/demo-compound"]);
+		expect(childBlockJson.supports.inserter).toBe(false);
+	});
+
+	test("compound scaffolds enable authenticated persistence when only data storage is provided", async () => {
+		const targetDir = path.join(tempRoot, "demo-compound-storage");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "compound",
+			dataStorageMode: "post-meta",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				dataStorageMode: "post-meta",
+				description: "Demo compound persistence block",
+				namespace: "create-block",
+				slug: "demo-compound-storage",
+				title: "Demo Compound Storage",
+			},
+		});
+
+		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
+		const pluginBootstrap = fs.readFileSync(path.join(targetDir, "demo-compound-storage.php"), "utf8");
+		const parentBlockJson = JSON.parse(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "demo-compound-storage", "block.json"),
+				"utf8",
+			),
+		);
+
+		expect(packageJson.devDependencies["@wp-typia/rest"]).toBe(restPackageVersion);
+		expect(packageJson.scripts.build).toBe(
+			"npm run sync-types && npm run sync-rest && wp-scripts build --experimental-modules",
+		);
+		expect(pluginBootstrap).toContain("can_write_authenticated");
+		expect(parentBlockJson.render).toBe("file:./render.php");
+		expect(parentBlockJson.viewScriptModule).toBe("file:./interactivity.js");
+	});
+
+	test("compound scaffolds enable public persistence when only a public policy is provided", async () => {
+		const targetDir = path.join(tempRoot, "demo-compound-public");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "compound",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo public compound block",
+				namespace: "create-block",
+				persistencePolicy: "public",
+				slug: "demo-compound-public",
+				title: "Demo Compound Public",
+			},
+			persistencePolicy: "public",
+		});
+
+		const pluginBootstrap = fs.readFileSync(path.join(targetDir, "demo-compound-public.php"), "utf8");
+		const parentRender = fs.readFileSync(
+			path.join(targetDir, "src", "blocks", "demo-compound-public", "render.php"),
+			"utf8",
+		);
+
+		expect(pluginBootstrap).toContain("_verify_public_write_token");
+		expect(pluginBootstrap).toContain("HOUR_IN_SECONDS");
+		expect(parentRender).toContain("publicWriteToken");
+	});
+
 	test("runScaffoldFlow defaults persistence scaffolds to custom-table and authenticated in non-interactive mode", async () => {
 		const projectInput = "demo-persistence-default";
 		const flow = await runScaffoldFlow({
@@ -452,6 +555,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(templatesOutput).toContain("basic");
 		expect(templatesOutput).toContain("interactivity");
 		expect(templatesOutput).toContain("persistence");
+		expect(templatesOutput).toContain("compound");
 		expect(templatesOutput).not.toContain("advanced");
 		expect(templatesOutput).not.toContain("full");
 		expect(doctorOutput).toContain("PASS Bun");
@@ -465,6 +569,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(templatesOutput).toContain("basic");
 		expect(templatesOutput).toContain("interactivity");
 		expect(templatesOutput).toContain("persistence");
+		expect(templatesOutput).toContain("compound");
 		expect(templatesOutput).not.toContain("advanced");
 		expect(templatesOutput).not.toContain("full");
 		expect(doctorOutput).toContain("PASS Bun");

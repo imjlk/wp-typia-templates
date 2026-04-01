@@ -1,0 +1,56 @@
+import type {
+	TypiaValidationError,
+	ValidationResult,
+} from '@wp-typia/create/runtime/validation';
+import { tags } from 'typia';
+
+export type {
+	TypiaValidationError,
+	ValidationResult,
+} from '@wp-typia/create/runtime/validation';
+
+export interface {{pascalCase}}Attributes {
+	heading: string &
+		tags.MinLength< 1 > &
+		tags.MaxLength< 80 > &
+		tags.Default< {{titleJson}} >;
+	intro?: string &
+		tags.MinLength< 1 > &
+		tags.MaxLength< 180 > &
+		tags.Default< 'Add and reorder internal items inside this compound block.' >;
+	showDividers?: boolean & tags.Default< true >;
+	showCount?: boolean & tags.Default< true >;
+	buttonLabel?: string &
+		tags.MinLength< 1 > &
+		tags.MaxLength< 40 > &
+		tags.Default< 'Persist Count' >;
+	resourceKey?: string &
+		tags.MinLength< 1 > &
+		tags.MaxLength< 100 > &
+		tags.Default< 'primary' >;
+}
+
+export interface {{pascalCase}}Context {
+	buttonLabel: string;
+	canWrite: boolean;
+	count: number;
+	persistencePolicy: 'authenticated' | 'public';
+	postId: number;
+	publicWriteExpiresAt?: number;
+	publicWriteToken?: string;
+	resourceKey: string;
+	restNonce?: string;
+	showCount: boolean;
+	storage: 'post-meta' | 'custom-table';
+}
+
+export interface {{pascalCase}}State {
+	canWrite: boolean;
+	count: number;
+	error?: string;
+	isHydrated: boolean;
+	isLoading: boolean;
+	isSaving: boolean;
+}
+
+export type {{pascalCase}}ValidationResult = ValidationResult< {{pascalCase}}Attributes >;

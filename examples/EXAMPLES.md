@@ -28,6 +28,7 @@ Use the built-in scaffolds from `@wp-typia/create` when you want a smaller start
 - `basic`
 - `interactivity`
 - `persistence`
+- `compound`
 
 ## `persistence-examples`
 
@@ -39,6 +40,16 @@ It demonstrates:
 - an authenticated per-user like toggle
 - a multi-block example plugin that registers both blocks from one workspace
 
+## `compound-patterns`
+
+[`examples/compound-patterns`](./compound-patterns) is the runtime reference plugin for compound parent/child scaffolds.
+
+It demonstrates:
+
+- a top-level parent block backed by `InnerBlocks`
+- a hidden child block constrained by `parent`
+- template-seeded internal items that remain valid after save and reopen
+
 ## Quick Start
 
 ```bash
@@ -46,6 +57,7 @@ bun install
 bun run examples:build
 bun run examples:dev
 bun run examples:dev:persistence
+bun run examples:dev:compound
 ```
 
 ## Structure
@@ -75,3 +87,4 @@ examples/my-typia-block/
 - [Migration Guide](../docs/migrations.md)
 - [Interactivity Guide](../docs/interactivity.md)
 - [API Guide](../docs/API.md)
+- [Compound Block Tutorial](../docs/tutorials/compound-block-tutorial.md)

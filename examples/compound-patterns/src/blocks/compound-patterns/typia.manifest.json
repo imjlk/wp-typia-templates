@@ -1,0 +1,105 @@
+{
+	"attributes": {
+		"heading": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": 80,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": 1,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": "Compound Patterns",
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": true,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": "Compound Patterns",
+				"enum": null,
+				"hasDefault": true,
+				"type": "string"
+			}
+		},
+		"intro": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": 180,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": 1,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": "Add and reorder internal items inside this compound block.",
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": "Add and reorder internal items inside this compound block.",
+				"enum": null,
+				"hasDefault": true,
+				"type": "string"
+			}
+		},
+		"showDividers": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": null,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": null,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": true,
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "boolean",
+				"properties": null,
+				"required": false,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": true,
+				"enum": null,
+				"hasDefault": true,
+				"type": "boolean"
+			}
+		}
+	},
+	"manifestVersion": 2,
+	"sourceType": "CompoundPatternsAttributes"
+}

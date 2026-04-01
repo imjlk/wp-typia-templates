@@ -32,8 +32,9 @@ export const CREATE_PACKAGE_ROOT = resolvePackageRoot(__dirname);
 export const TEMPLATE_ROOT = path.join(CREATE_PACKAGE_ROOT, "templates");
 export const SHARED_TEMPLATE_ROOT = path.join(TEMPLATE_ROOT, "_shared");
 export const SHARED_BASE_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "base");
+export const SHARED_COMPOUND_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "compound");
 export const SHARED_PERSISTENCE_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "persistence");
-export const BUILTIN_TEMPLATE_IDS = ["basic", "interactivity", "persistence"] as const;
+export const BUILTIN_TEMPLATE_IDS = ["basic", "interactivity", "persistence", "compound"] as const;
 export type BuiltInTemplateId = (typeof BUILTIN_TEMPLATE_IDS)[number];
 export type PersistencePolicy = "authenticated" | "public";
 
@@ -66,6 +67,13 @@ export const TEMPLATE_REGISTRY = Object.freeze<TemplateDefinition[]>([
 		defaultCategory: "widgets",
 		features: ["Interactivity API", "Typed REST client", "Schema sync", "Persistence policies"],
 		templateDir: path.join(TEMPLATE_ROOT, "persistence"),
+	},
+	{
+		id: "compound",
+		description: "A parent-and-child WordPress block scaffold with InnerBlocks, optional persistence wiring, and hidden implementation child blocks",
+		defaultCategory: "widgets",
+		features: ["InnerBlocks", "Hidden child blocks", "Optional persistence layer"],
+		templateDir: path.join(TEMPLATE_ROOT, "compound"),
 	},
 ]);
 

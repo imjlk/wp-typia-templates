@@ -1,0 +1,36 @@
+{
+	"components": {
+		"schemas": {
+			"CompoundPatternsItemAttributes": {
+				"$schema": "https://json-schema.org/draft/2020-12/schema",
+				"additionalProperties": false,
+				"properties": {
+					"title": {
+						"default": "Compound Patterns Item",
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 80
+					},
+					"body": {
+						"default": "Add supporting details for this internal item.",
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 280
+					}
+				},
+				"required": [
+					"title",
+					"body"
+				],
+				"title": "CompoundPatternsItemAttributes",
+				"type": "object"
+			}
+		}
+	},
+	"info": {
+		"title": "CompoundPatternsItemAttributes",
+		"version": "1.0.0"
+	},
+	"openapi": "3.1.0",
+	"paths": {}
+}
