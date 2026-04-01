@@ -122,7 +122,11 @@ Unions, arrays, formatted IDs/URLs, and paths marked as `manual` are reported as
 Data-backed projects can also opt into schema output from the existing sync pipeline:
 
 ```ts
-import { syncBlockMetadata, syncTypeSchemas } from "@wp-typia/create/metadata-core";
+import {
+  syncBlockMetadata,
+  syncRestOpenApi,
+  syncTypeSchemas,
+} from "@wp-typia/create/metadata-core";
 
 await syncBlockMetadata({
   blockJsonFile: "src/block.json",
@@ -138,7 +142,29 @@ await syncTypeSchemas({
   sourceTypeName: "MyRequestContract",
   typesFile: "src/api-types.ts",
 });
+
+await syncRestOpenApi({
+  contracts: {
+    request: { sourceTypeName: "MyRequestContract" },
+    response: { sourceTypeName: "MyResponseContract" },
+  },
+  endpoints: [
+    {
+      authMode: "authenticated-rest-nonce",
+      bodyContract: "request",
+      method: "POST",
+      operationId: "writeMyRequest",
+      path: "/create-block/v1/my-block/state",
+      responseContract: "response",
+      tags: ["My Block"],
+    },
+  ],
+  openApiFile: "src/api.openapi.json",
+  typesFile: "src/api-types.ts",
+});
 ```
+
+`src/api-schemas/*.schema.json` remains the runtime-facing artifact for generated PHP validation. `src/api.openapi.json` is the canonical endpoint-aware REST document when a scaffold defines route metadata, while per-contract `src/api-schemas/*.openapi.json` files remain available as compatibility fragments.
 
 The `migrations` commands remain available for projects that include the migration workspace, such as the repo-local reference app in [`examples/my-typia-block`](../../examples/my-typia-block) or compatible remote seeds:
 

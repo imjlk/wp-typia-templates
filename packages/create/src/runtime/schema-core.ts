@@ -16,6 +16,36 @@ export interface OpenApiInfo {
 	version?: string;
 }
 
+export type EndpointOpenApiAuthMode =
+	| "authenticated-rest-nonce"
+	| "public-read"
+	| "public-signed-token";
+
+export type EndpointOpenApiMethod = "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
+
+export interface EndpointOpenApiContractDocument {
+	document: ManifestDocument;
+	schemaName?: string;
+}
+
+export interface EndpointOpenApiEndpointDefinition {
+	authMode: EndpointOpenApiAuthMode;
+	bodyContract?: string;
+	method: EndpointOpenApiMethod;
+	operationId: string;
+	path: string;
+	queryContract?: string;
+	responseContract: string;
+	summary?: string;
+	tags: string[];
+}
+
+export interface EndpointOpenApiDocumentOptions {
+	contracts: Record<string, EndpointOpenApiContractDocument>;
+	endpoints: EndpointOpenApiEndpointDefinition[];
+	info?: OpenApiInfo;
+}
+
 function applyConstraintIfNumber(
 	schema: JsonSchemaObject,
 	key: string,
@@ -208,5 +238,148 @@ export function manifestToOpenApi(
 		},
 		openapi: "3.1.0",
 		paths: {},
+	};
+}
+
+function createOpenApiSchemaRef(schemaName: string): JsonSchemaObject {
+	return {
+		$ref: `#/components/schemas/${schemaName}`,
+	};
+}
+
+function getContractSchemaName(
+	contractKey: string,
+	contract: EndpointOpenApiContractDocument | undefined,
+): string {
+	if (!contract) {
+		throw new Error(`Missing OpenAPI contract definition for "${contractKey}"`);
+	}
+
+	return contract.schemaName ?? contract.document.sourceType ?? contractKey;
+}
+
+function buildQueryParameters(contract: EndpointOpenApiContractDocument): JsonSchemaObject[] {
+	const attributes = contract.document.attributes ?? {};
+
+	return Object.entries(attributes).map(([name, attribute]) => ({
+		in: "query",
+		name,
+		required: attribute.ts.required !== false,
+		schema: manifestAttributeToJsonSchema(attribute),
+	}));
+}
+
+function buildEndpointOpenApiOperation(
+	endpoint: EndpointOpenApiEndpointDefinition,
+	contracts: Record<string, EndpointOpenApiContractDocument>,
+): JsonSchemaObject {
+	const operation: JsonSchemaObject = {
+		operationId: endpoint.operationId,
+		responses: {
+			"200": {
+				content: {
+					"application/json": {
+						schema: createOpenApiSchemaRef(
+							getContractSchemaName(endpoint.responseContract, contracts[endpoint.responseContract]),
+						),
+					},
+				},
+				description: "Successful response",
+			},
+		},
+		tags: endpoint.tags,
+		"x-wp-typia-authPolicy": endpoint.authMode,
+	};
+
+	if (typeof endpoint.summary === "string" && endpoint.summary.length > 0) {
+		operation.summary = endpoint.summary;
+	}
+
+	if (typeof endpoint.queryContract === "string") {
+		operation.parameters = buildQueryParameters(
+			contracts[endpoint.queryContract] ??
+				(() => {
+					throw new Error(`Missing query contract "${endpoint.queryContract}"`);
+				})(),
+		);
+	}
+
+	if (typeof endpoint.bodyContract === "string") {
+		operation.requestBody = {
+			content: {
+				"application/json": {
+					schema: createOpenApiSchemaRef(
+						getContractSchemaName(endpoint.bodyContract, contracts[endpoint.bodyContract]),
+					),
+				},
+			},
+			required: true,
+		};
+	}
+
+	if (endpoint.authMode === "authenticated-rest-nonce") {
+		operation.security = [
+			{
+				wpRestNonce: [],
+			},
+		];
+	} else if (endpoint.authMode === "public-signed-token") {
+		operation["x-wp-typia-publicTokenField"] = "publicWriteToken";
+	}
+
+	return operation;
+}
+
+export function buildEndpointOpenApiDocument(
+	options: EndpointOpenApiDocumentOptions,
+): JsonSchemaObject {
+	const contractEntries = Object.entries(options.contracts);
+	const schemas = Object.fromEntries(
+		contractEntries.map(([contractKey, contract]) => [
+			getContractSchemaName(contractKey, contract),
+			manifestToJsonSchema(contract.document),
+		]),
+	);
+	const paths: Record<string, JsonSchemaObject> = {};
+	const topLevelTags = [...new Set(options.endpoints.flatMap((endpoint) => endpoint.tags))]
+		.filter((tag) => typeof tag === "string" && tag.length > 0)
+		.map((name) => ({ name }));
+	const usesWpRestNonce = options.endpoints.some(
+		(endpoint) => endpoint.authMode === "authenticated-rest-nonce",
+	);
+
+	for (const endpoint of options.endpoints) {
+		const pathItem = paths[endpoint.path] ?? {};
+		pathItem[endpoint.method.toLowerCase()] = buildEndpointOpenApiOperation(
+			endpoint,
+			options.contracts,
+		);
+		paths[endpoint.path] = pathItem;
+	}
+
+	return {
+		components: {
+			schemas,
+			...(usesWpRestNonce
+				? {
+						securitySchemes: {
+							wpRestNonce: {
+								description: "WordPress REST nonce sent in the X-WP-Nonce header.",
+								in: "header",
+								name: "X-WP-Nonce",
+								type: "apiKey",
+							},
+						},
+				  }
+				: {}),
+		},
+		info: {
+			title: options.info?.title ?? "Typia REST API",
+			version: options.info?.version ?? "1.0.0",
+			...(options.info?.description ? { description: options.info.description } : {}),
+		},
+		openapi: "3.1.0",
+		paths,
+		...(topLevelTags.length > 0 ? { tags: topLevelTags } : {}),
 	};
 }

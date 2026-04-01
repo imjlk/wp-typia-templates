@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+	buildEndpointOpenApiDocument,
 	manifestAttributeToJsonSchema,
 	manifestToJsonSchema,
 	manifestToOpenApi,
@@ -215,5 +216,180 @@ describe("schema-core", () => {
 			version: "2.0.0",
 		});
 		expect(schemas.EmptyDocument).toBeDefined();
+	});
+
+	test("buildEndpointOpenApiDocument composes GET query and POST body operations", () => {
+		const queryDocument: ManifestDocument = {
+			attributes: {
+				postId: createAttribute({
+					ts: { kind: "number", required: true },
+					typia: {
+						constraints: {
+							exclusiveMaximum: null,
+							exclusiveMinimum: null,
+							format: null,
+							maxLength: null,
+							maxItems: null,
+							maximum: null,
+							minLength: null,
+							minItems: null,
+							minimum: 1,
+							multipleOf: 1,
+							pattern: null,
+							typeTag: "uint32",
+						},
+					},
+					wp: { type: "number" },
+				}),
+			},
+			manifestVersion: 2,
+			sourceType: "CounterQuery",
+		};
+		const requestDocument: ManifestDocument = {
+			attributes: {
+				postId: createAttribute({
+					ts: { kind: "number", required: true },
+					wp: { type: "number" },
+				}),
+				publicWriteToken: createAttribute({
+					ts: { kind: "string", required: false },
+					typia: {
+						constraints: {
+							exclusiveMaximum: null,
+							exclusiveMinimum: null,
+							format: null,
+							maxLength: 512,
+							maxItems: null,
+							maximum: null,
+							minLength: 1,
+							minItems: null,
+							minimum: null,
+							multipleOf: null,
+							pattern: null,
+							typeTag: null,
+						},
+					},
+					wp: { type: "string" },
+				}),
+			},
+			manifestVersion: 2,
+			sourceType: "WriteCounterRequest",
+		};
+		const responseDocument: ManifestDocument = {
+			attributes: {
+				count: createAttribute({
+					ts: { kind: "number", required: true },
+					wp: { type: "number" },
+				}),
+			},
+			manifestVersion: 2,
+			sourceType: "CounterResponse",
+		};
+
+		const openApi = buildEndpointOpenApiDocument({
+			contracts: {
+				query: { document: queryDocument },
+				request: { document: requestDocument },
+				response: { document: responseDocument },
+			},
+			endpoints: [
+				{
+					authMode: "public-read",
+					method: "GET",
+					operationId: "getCounterState",
+					path: "/demo/v1/counter/state",
+					queryContract: "query",
+					responseContract: "response",
+					tags: ["Counter"],
+				},
+				{
+					authMode: "public-signed-token",
+					bodyContract: "request",
+					method: "POST",
+					operationId: "writeCounterState",
+					path: "/demo/v1/counter/state",
+					responseContract: "response",
+					tags: ["Counter"],
+				},
+			],
+			info: {
+				title: "Counter REST API",
+			},
+		});
+
+		const components = openApi.components as Record<string, Record<string, unknown>>;
+		const schemas = components.schemas as Record<string, unknown>;
+		const paths = openApi.paths as Record<string, Record<string, Record<string, unknown>>>;
+		const getOperation = paths["/demo/v1/counter/state"].get;
+		const postOperation = paths["/demo/v1/counter/state"].post;
+
+		expect(schemas.CounterQuery).toBeDefined();
+		expect(schemas.WriteCounterRequest).toBeDefined();
+		expect(schemas.CounterResponse).toBeDefined();
+		expect(getOperation["x-wp-typia-authPolicy"]).toBe("public-read");
+		expect((getOperation.parameters as Array<Record<string, unknown>>)[0]).toMatchObject({
+			in: "query",
+			name: "postId",
+			required: true,
+		});
+		expect(postOperation["x-wp-typia-authPolicy"]).toBe("public-signed-token");
+		expect(postOperation["x-wp-typia-publicTokenField"]).toBe("publicWriteToken");
+		expect(
+			(
+				(
+					(postOperation.requestBody as Record<string, Record<string, Record<string, Record<string, string>>>>)
+						.content["application/json"].schema
+				) as Record<string, string>
+			).$ref,
+		).toBe("#/components/schemas/WriteCounterRequest");
+	});
+
+	test("buildEndpointOpenApiDocument adds wpRestNonce security metadata for authenticated writes", () => {
+		const responseDocument: ManifestDocument = {
+			attributes: {},
+			manifestVersion: 2,
+			sourceType: "LikeStatusResponse",
+		};
+		const requestDocument: ManifestDocument = {
+			attributes: {
+				postId: createAttribute({
+					ts: { kind: "number", required: true },
+					wp: { type: "number" },
+				}),
+			},
+			manifestVersion: 2,
+			sourceType: "ToggleLikeRequest",
+		};
+
+		const openApi = buildEndpointOpenApiDocument({
+			contracts: {
+				request: { document: requestDocument },
+				response: { document: responseDocument },
+			},
+			endpoints: [
+				{
+					authMode: "authenticated-rest-nonce",
+					bodyContract: "request",
+					method: "POST",
+					operationId: "toggleLikeStatus",
+					path: "/demo/v1/likes",
+					responseContract: "response",
+					tags: ["Likes"],
+				},
+			],
+		});
+
+		const components = openApi.components as Record<string, Record<string, unknown>>;
+		const securitySchemes = components.securitySchemes as Record<string, Record<string, unknown>>;
+		const paths = openApi.paths as Record<string, Record<string, Record<string, unknown>>>;
+		const operation = paths["/demo/v1/likes"].post;
+
+		expect(securitySchemes.wpRestNonce).toMatchObject({
+			in: "header",
+			name: "X-WP-Nonce",
+			type: "apiKey",
+		});
+		expect(operation["x-wp-typia-authPolicy"]).toBe("authenticated-rest-nonce");
+		expect(operation.security).toEqual([{ wpRestNonce: [] }]);
 	});
 });

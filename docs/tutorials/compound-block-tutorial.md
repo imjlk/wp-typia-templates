@@ -78,6 +78,7 @@ After you run `npm run sync-types`, each block directory also gains:
 
 If persistence is enabled for the parent block, it additionally gains:
 
+- `api.openapi.json`
 - `api-types.ts`
 - `api-validators.ts`
 - `api.ts`
@@ -85,6 +86,8 @@ If persistence is enabled for the parent block, it additionally gains:
 - `render.php`
 - `api-schemas/*.schema.json`
 - `api-schemas/*.openapi.json`
+
+In persistence-enabled compound scaffolds, `src/blocks/<parent>/api.openapi.json` is the canonical REST surface document for the parent block. The `api-schemas/*.schema.json` files remain the runtime contract artifacts, and `api-schemas/*.openapi.json` files remain per-contract compatibility fragments.
 
 ## Step 3: Parent and Child Roles
 

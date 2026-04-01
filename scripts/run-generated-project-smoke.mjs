@@ -234,6 +234,56 @@ function assertPersistenceTemplateArtifacts(projectDir, projectName) {
 	}
 }
 
+function findFirstExistingPath(paths) {
+	return paths.find((candidatePath) => fs.existsSync(candidatePath));
+}
+
+function readJsonFile(filePath) {
+	return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
+function assertPersistenceRestOpenApi(projectDir, projectName, namespace, persistencePolicy) {
+	const candidatePath = findFirstExistingPath([
+		path.join(projectDir, "build", projectName, "api.openapi.json"),
+		path.join(projectDir, "build", "api.openapi.json"),
+	]);
+
+	if (!candidatePath) {
+		throw new Error("Expected aggregate REST OpenAPI document for persistence scaffold");
+	}
+
+	const openApi = readJsonFile(candidatePath);
+	const routePath = `/${namespace}/v1/${projectName}/state`;
+	const pathItem = openApi.paths?.[routePath];
+	const getOperation = pathItem?.get;
+	const postOperation = pathItem?.post;
+
+	if (!getOperation || !postOperation) {
+		throw new Error(`Expected GET and POST operations for ${routePath} in ${candidatePath}`);
+	}
+
+	if (getOperation["x-wp-typia-authPolicy"] !== "public-read") {
+		throw new Error(`Expected public-read auth policy on ${routePath} GET`);
+	}
+
+	if (persistencePolicy === "public") {
+		if (postOperation["x-wp-typia-authPolicy"] !== "public-signed-token") {
+			throw new Error(`Expected public-signed-token auth policy on ${routePath} POST`);
+		}
+		if (postOperation["x-wp-typia-publicTokenField"] !== "publicWriteToken") {
+			throw new Error(`Expected publicWriteToken metadata on ${routePath} POST`);
+		}
+	} else {
+		const securityScheme = openApi.components?.securitySchemes?.wpRestNonce;
+		if (!securityScheme) {
+			throw new Error("Expected wpRestNonce security scheme in aggregate REST OpenAPI");
+		}
+		if (postOperation["x-wp-typia-authPolicy"] !== "authenticated-rest-nonce") {
+			throw new Error(`Expected authenticated-rest-nonce auth policy on ${routePath} POST`);
+		}
+	}
+}
+
 function assertCompoundTemplateArtifacts(projectDir, projectName) {
 	const parentDir = path.join(projectDir, "build", "blocks", projectName);
 	const childDir = path.join(projectDir, "build", "blocks", `${projectName}-item`);
@@ -259,6 +309,39 @@ function assertCompoundPersistenceArtifacts(projectDir, projectName) {
 	]) {
 		if (!fs.existsSync(path.join(parentDir, artifact))) {
 			throw new Error(`Expected ${artifact} in ${parentDir}`);
+		}
+	}
+}
+
+function assertCompoundRestOpenApi(projectDir, projectName, namespace, persistencePolicy) {
+	const parentDir = path.join(projectDir, "build", "blocks", projectName);
+	const openApiPath = path.join(parentDir, "api.openapi.json");
+
+	if (!fs.existsSync(openApiPath)) {
+		throw new Error(`Expected aggregate REST OpenAPI document in ${parentDir}`);
+	}
+
+	const openApi = readJsonFile(openApiPath);
+	const routePath = `/${namespace}/v1/${projectName}/state`;
+	const pathItem = openApi.paths?.[routePath];
+	const getOperation = pathItem?.get;
+	const postOperation = pathItem?.post;
+
+	if (!getOperation || !postOperation) {
+		throw new Error(`Expected GET and POST operations for ${routePath} in ${openApiPath}`);
+	}
+
+	if (getOperation["x-wp-typia-authPolicy"] !== "public-read") {
+		throw new Error(`Expected public-read auth policy on ${routePath} GET`);
+	}
+
+	if (persistencePolicy === "public") {
+		if (postOperation["x-wp-typia-authPolicy"] !== "public-signed-token") {
+			throw new Error(`Expected public-signed-token auth policy on ${routePath} POST`);
+		}
+	} else {
+		if (postOperation["x-wp-typia-authPolicy"] !== "authenticated-rest-nonce") {
+			throw new Error(`Expected authenticated-rest-nonce auth policy on ${routePath} POST`);
 		}
 	}
 }
@@ -400,9 +483,21 @@ function main() {
 		}
 		if (template === "persistence") {
 			assertPersistenceTemplateArtifacts(projectDir, projectName);
+			assertPersistenceRestOpenApi(
+				projectDir,
+				projectName,
+				namespace ?? "create-block",
+				persistencePolicy ?? "authenticated",
+			);
 		}
 		if (template === "compound" && (dataStorage || persistencePolicy)) {
 			assertCompoundPersistenceArtifacts(projectDir, projectName);
+			assertCompoundRestOpenApi(
+				projectDir,
+				projectName,
+				namespace ?? "create-block",
+				persistencePolicy ?? "authenticated",
+			);
 		}
 		for (const artifact of [
 			path.join(projectDir, `${projectName}.php`),

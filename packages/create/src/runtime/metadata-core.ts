@@ -3,6 +3,9 @@ import * as path from "node:path";
 import ts from "typescript";
 
 import {
+	buildEndpointOpenApiDocument,
+	type EndpointOpenApiAuthMode,
+	type EndpointOpenApiEndpointDefinition,
 	manifestToJsonSchema,
 	manifestToOpenApi,
 	type OpenApiInfo,
@@ -118,6 +121,31 @@ export interface SyncTypeSchemaResult {
 	jsonSchemaPath: string;
 	openApiPath?: string;
 	sourceTypeName: string;
+}
+
+export interface RestOpenApiContractDefinition {
+	schemaName?: string;
+	sourceTypeName: string;
+}
+
+export interface RestOpenApiEndpointDefinition
+	extends Omit<EndpointOpenApiEndpointDefinition, "authMode"> {
+	authMode: EndpointOpenApiAuthMode;
+}
+
+export interface SyncRestOpenApiOptions {
+	contracts: Record<string, RestOpenApiContractDefinition>;
+	endpoints: RestOpenApiEndpointDefinition[];
+	openApiFile: string;
+	openApiInfo?: OpenApiInfo;
+	projectRoot?: string;
+	typesFile: string;
+}
+
+export interface SyncRestOpenApiResult {
+	endpointCount: number;
+	openApiPath: string;
+	schemaNames: string[];
 }
 
 interface AnalysisContext {
@@ -297,9 +325,96 @@ export async function syncTypeSchemas(
 	};
 }
 
+export async function syncRestOpenApi(
+	options: SyncRestOpenApiOptions,
+): Promise<SyncRestOpenApiResult> {
+	const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
+	const sourceTypeNames = Object.values(options.contracts).map(
+		(contract) => contract.sourceTypeName,
+	);
+	const analyzedTypes = analyzeSourceTypes(
+		{
+			projectRoot,
+			typesFile: options.typesFile,
+		},
+		sourceTypeNames,
+	);
+	const contracts = Object.fromEntries(
+		Object.entries(options.contracts).map(([contractKey, contract]) => {
+			const rootNode = analyzedTypes[contract.sourceTypeName];
+			if (rootNode.kind !== "object" || rootNode.properties === undefined) {
+				throw new Error(
+					`Source type "${contract.sourceTypeName}" must resolve to an object shape for REST OpenAPI generation`,
+				);
+			}
+
+			return [
+				contractKey,
+				{
+					document: {
+						attributes: Object.fromEntries(
+							Object.entries(rootNode.properties).map(([key, node]) => [
+								key,
+								createManifestAttribute(node),
+							]),
+						),
+						manifestVersion: 2 as const,
+						sourceType: contract.sourceTypeName,
+					},
+					...(typeof contract.schemaName === "string" && contract.schemaName.length > 0
+						? { schemaName: contract.schemaName }
+						: {}),
+				},
+			];
+		}),
+	);
+	const openApiPath = path.resolve(projectRoot, options.openApiFile);
+
+	fs.mkdirSync(path.dirname(openApiPath), { recursive: true });
+	fs.writeFileSync(
+		openApiPath,
+		JSON.stringify(
+			buildEndpointOpenApiDocument({
+				contracts,
+				endpoints: options.endpoints,
+				info: options.openApiInfo,
+			}),
+			null,
+			"\t",
+		),
+	);
+
+	return {
+		endpointCount: options.endpoints.length,
+		openApiPath,
+		schemaNames: Object.values(options.contracts).map(
+			(contract) => contract.schemaName ?? contract.sourceTypeName,
+		),
+	};
+}
+
 function analyzeSourceType(
 	options: Pick<SyncBlockMetadataOptions, "projectRoot" | "sourceTypeName" | "typesFile">,
 ): { projectRoot: string; rootNode: AttributeNode } {
+	const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
+	const rootNodes = analyzeSourceTypes(
+		{
+			projectRoot,
+			typesFile: options.typesFile,
+		},
+		[options.sourceTypeName],
+	);
+
+	return {
+		projectRoot,
+		rootNode: rootNodes[options.sourceTypeName],
+	};
+}
+
+function analyzeSourceTypes(
+	options: Pick<SyncBlockMetadataOptions, "projectRoot" | "typesFile">,
+	sourceTypeNames: string[],
+): Record<string, AttributeNode> {
 	const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
 	const typesFilePath = path.resolve(projectRoot, options.typesFile);
 	const ctx = createAnalysisContext(projectRoot, typesFilePath);
@@ -308,17 +423,21 @@ function analyzeSourceType(
 		throw new Error(`Unable to load types file: ${typesFilePath}`);
 	}
 
-	const declaration = findNamedDeclaration(sourceFile, options.sourceTypeName);
-	if (declaration === undefined) {
-		throw new Error(
-			`Unable to find source type "${options.sourceTypeName}" in ${path.relative(projectRoot, typesFilePath)}`,
-		);
-	}
+	return Object.fromEntries(
+		sourceTypeNames.map((sourceTypeName) => {
+			const declaration = findNamedDeclaration(sourceFile, sourceTypeName);
+			if (declaration === undefined) {
+				throw new Error(
+					`Unable to find source type "${sourceTypeName}" in ${path.relative(projectRoot, typesFilePath)}`,
+				);
+			}
 
-	return {
-		projectRoot,
-		rootNode: parseNamedDeclaration(declaration, ctx, options.sourceTypeName, true),
-	};
+			return [
+				sourceTypeName,
+				parseNamedDeclaration(declaration, ctx, sourceTypeName, true),
+			];
+		}),
+	);
 }
 
 function createAnalysisContext(projectRoot: string, typesFilePath: string): AnalysisContext {

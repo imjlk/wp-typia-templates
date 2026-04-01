@@ -1,7 +1,10 @@
 /* eslint-disable no-console */
 import path from 'node:path';
 
-import { syncTypeSchemas } from '@wp-typia/create/metadata-core';
+import {
+	syncRestOpenApi,
+	syncTypeSchemas,
+} from '@wp-typia/create/metadata-core';
 
 import { BLOCKS } from './block-config';
 
@@ -27,9 +30,24 @@ async function main() {
 				typesFile: block.apiTypesFile,
 			} );
 		}
+
+		await syncRestOpenApi( {
+			contracts: Object.fromEntries(
+				block.contracts.map( ( contract ) => [
+					contract.baseName,
+					{
+						sourceTypeName: contract.sourceTypeName,
+					},
+				] )
+			),
+			endpoints: block.endpoints,
+			openApiFile: block.openApiFile,
+			openApiInfo: block.openApiInfo,
+			typesFile: block.apiTypesFile,
+		} );
 	}
 
-	console.log( '✅ REST contract schemas generated from TypeScript types!' );
+	console.log( '✅ REST contract schemas and endpoint-aware OpenAPI documents generated from TypeScript types!' );
 }
 
 main().catch( ( error ) => {
