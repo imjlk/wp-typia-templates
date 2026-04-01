@@ -223,9 +223,9 @@ function assertPersistenceTemplateArtifacts(projectDir, projectName) {
 	for (const artifact of [
 		"typia.schema.json",
 		"typia.openapi.json",
-		path.join("api-schemas", "counter-query.schema.json"),
-		path.join("api-schemas", "counter-response.schema.json"),
-		path.join("api-schemas", "increment-request.schema.json"),
+		path.join("api-schemas", "state-query.schema.json"),
+		path.join("api-schemas", "state-response.schema.json"),
+		path.join("api-schemas", "write-state-request.schema.json"),
 	]) {
 		const found = candidateDirs.some((dir) => fs.existsSync(path.join(dir, artifact)));
 		if (!found) {
@@ -253,9 +253,9 @@ function assertCompoundPersistenceArtifacts(projectDir, projectName) {
 	for (const artifact of [
 		"typia.schema.json",
 		"typia.openapi.json",
-		path.join("api-schemas", "counter-query.schema.json"),
-		path.join("api-schemas", "counter-response.schema.json"),
-		path.join("api-schemas", "increment-request.schema.json"),
+		path.join("api-schemas", "state-query.schema.json"),
+		path.join("api-schemas", "state-response.schema.json"),
+		path.join("api-schemas", "write-state-request.schema.json"),
 	]) {
 		if (!fs.existsSync(path.join(parentDir, artifact))) {
 			throw new Error(`Expected ${artifact} in ${parentDir}`);

@@ -18,7 +18,7 @@ function {{phpPrefix}}_base64url_decode( $value ) {
 }
 
 function {{phpPrefix}}_get_public_write_action() {
-	return '{{namespace}}/{{slugKebabCase}}/counter/increment';
+	return '{{namespace}}/{{slugKebabCase}}/state/write';
 }
 
 function {{phpPrefix}}_create_public_write_token( $post_id, $resource_key ) {

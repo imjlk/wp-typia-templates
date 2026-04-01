@@ -1,6 +1,6 @@
 import { getContext, store } from '@wordpress/interactivity';
 
-import { fetchCounter, incrementCounter } from './api';
+import { fetchState, writeState } from './api';
 import type { {{pascalCase}}Context, {{pascalCase}}State } from './types';
 
 function hasExpiredPublicWriteToken(
@@ -43,7 +43,7 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 			state.error = undefined;
 
 			try {
-				const result = await fetchCounter( {
+				const result = await fetchState( {
 					postId: context.postId,
 					resourceKey: context.resourceKey,
 				} );
@@ -81,7 +81,7 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 			state.error = undefined;
 
 			try {
-				const result = await incrementCounter( {
+				const result = await writeState( {
 					delta: 1,
 					postId: context.postId,
 					publicWriteToken:
