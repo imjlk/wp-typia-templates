@@ -178,6 +178,7 @@ describe("@wp-typia/create scaffolding", () => {
 		const generatedRender = fs.readFileSync(path.join(targetDir, "src", "render.php"), "utf8");
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
+		const restPublicHelper = fs.readFileSync(path.join(targetDir, "inc", "rest-public.php"), "utf8");
 		const blockJson = JSON.parse(
 			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
 		);
@@ -188,9 +189,14 @@ describe("@wp-typia/create scaffolding", () => {
 			"npm run sync-types && npm run sync-rest && wp-scripts build --experimental-modules",
 		);
 		expect(blockJson.textdomain).toBe("demo-persistence-public");
+		expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "inc", "rest-public.php"))).toBe(true);
 		expect(pluginBootstrap).toContain("post-meta");
 		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-public");
-		expect(pluginBootstrap).toContain("_verify_public_write_token");
+		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
+		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-public.php';");
+		expect(pluginBootstrap).toContain("permission_callback' => 'demo_persistence_public_can_write_publicly'");
+		expect(restPublicHelper).toContain("function demo_persistence_public_verify_public_write_token");
 		expect(generatedApi).toContain("@wp-typia/rest");
 		expect(generatedSyncRest).toContain("syncTypeSchemas");
 		expect(generatedRender).toContain("publicWriteToken");
@@ -224,6 +230,7 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "demo-persistence-authenticated.php"),
 			"utf8",
 		);
+		const restAuthHelper = fs.readFileSync(path.join(targetDir, "inc", "rest-auth.php"), "utf8");
 		const generatedRender = fs.readFileSync(path.join(targetDir, "src", "render.php"), "utf8");
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
@@ -233,8 +240,13 @@ describe("@wp-typia/create scaffolding", () => {
 
 		expect(packageJson.name).toBe("demo-persistence-authenticated");
 		expect(blockJson.textdomain).toBe("demo-persistence-authenticated");
+		expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "inc", "rest-auth.php"))).toBe(true);
 		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-authenticated");
-		expect(pluginBootstrap).toContain("function demo_persistence_authenticated_can_write_authenticated");
+		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
+		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-auth.php';");
+		expect(pluginBootstrap).toContain("permission_callback' => 'demo_persistence_authenticated_can_write_authenticated'");
+		expect(restAuthHelper).toContain("function demo_persistence_authenticated_can_write_authenticated");
 		expect(generatedRender).toContain("Sign in to persist this counter.");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
 	});
@@ -365,12 +377,13 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "demo-persistence-identifiers.php"),
 			"utf8",
 		);
+		const restPublicHelper = fs.readFileSync(path.join(targetDir, "inc", "rest-public.php"), "utf8");
 
 		expect(blockJson.name).toBe("experiments/demo-persistence-identifiers");
 		expect(blockJson.textdomain).toBe("demo-persistence-text");
 		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-text");
 		expect(pluginBootstrap).toContain("function ab_test_metrics_get_counter");
-		expect(pluginBootstrap).toContain("ab_test_metrics_create_public_write_token");
+		expect(restPublicHelper).toContain("function ab_test_metrics_create_public_write_token");
 	});
 
 	test("scaffoldProject creates a pure compound template with parent and hidden child blocks", async () => {
@@ -405,6 +418,9 @@ describe("@wp-typia/create scaffolding", () => {
 
 		expect(packageJson.scripts.build).toBe("npm run sync-types && wp-scripts build --experimental-modules");
 		expect(pluginBootstrap).toContain("build/blocks");
+		expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(false);
+		expect(fs.existsSync(path.join(targetDir, "inc", "rest-auth.php"))).toBe(false);
+		expect(fs.existsSync(path.join(targetDir, "inc", "rest-public.php"))).toBe(false);
 		expect(parentBlockJson.name).toBe("create-block/demo-compound");
 		expect(childBlockJson.parent).toEqual(["create-block/demo-compound"]);
 		expect(childBlockJson.supports.inserter).toBe(false);
@@ -446,7 +462,11 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(packageJson.scripts.build).toBe(
 			"npm run sync-types && npm run sync-rest && wp-scripts build --experimental-modules",
 		);
+		expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "inc", "rest-auth.php"))).toBe(true);
 		expect(pluginBootstrap).toContain("can_write_authenticated");
+		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
+		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-auth.php';");
 		expect(parentBlockJson.render).toBe("file:./render.php");
 		expect(parentBlockJson.viewScriptModule).toBe("file:./interactivity.js");
 		expect(readme).toContain("npm run sync-rest");
@@ -473,13 +493,19 @@ describe("@wp-typia/create scaffolding", () => {
 		});
 
 		const pluginBootstrap = fs.readFileSync(path.join(targetDir, "demo-compound-public.php"), "utf8");
+		const restPublicHelper = fs.readFileSync(path.join(targetDir, "inc", "rest-public.php"), "utf8");
 		const parentRender = fs.readFileSync(
 			path.join(targetDir, "src", "blocks", "demo-compound-public", "render.php"),
 			"utf8",
 		);
 
-		expect(pluginBootstrap).toContain("_verify_public_write_token");
+		expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "inc", "rest-public.php"))).toBe(true);
+		expect(pluginBootstrap).toContain("permission_callback' => 'demo_compound_public_can_write_publicly'");
+		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
+		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-public.php';");
 		expect(pluginBootstrap).toContain("HOUR_IN_SECONDS");
+		expect(restPublicHelper).toContain("function demo_compound_public_verify_public_write_token");
 		expect(parentRender).toContain("publicWriteToken");
 	});
 
@@ -575,10 +601,15 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(flow.projectDir, `${projectInput}.php`),
 			"utf8",
 		);
+		const restPublicHelper = fs.readFileSync(
+			path.join(flow.projectDir, "inc", "rest-public.php"),
+			"utf8",
+		);
 
 		expect(flow.result.variables.dataStorageMode).toBe("post-meta");
 		expect(flow.result.variables.persistencePolicy).toBe("public");
-		expect(pluginBootstrap).toContain("_verify_public_write_token");
+		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-public.php';");
+		expect(restPublicHelper).toContain("function demo_persistence_prompted_verify_public_write_token");
 		expect(flow.optionalOnboarding.steps).toEqual([
 			"npm run sync-types",
 			"npm run sync-rest",

@@ -34,6 +34,7 @@ export const SHARED_TEMPLATE_ROOT = path.join(TEMPLATE_ROOT, "_shared");
 export const SHARED_BASE_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "base");
 export const SHARED_COMPOUND_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "compound");
 export const SHARED_PERSISTENCE_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "persistence");
+export const SHARED_REST_HELPER_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "rest-helpers");
 export const BUILTIN_TEMPLATE_IDS = ["basic", "interactivity", "persistence", "compound"] as const;
 export type BuiltInTemplateId = (typeof BUILTIN_TEMPLATE_IDS)[number];
 export type PersistencePolicy = "authenticated" | "public";

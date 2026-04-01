@@ -16,6 +16,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( '{{phpPrefix}}_DATA_STORAGE_MODE', '{{dataStorageMode}}' );
+require_once __DIR__ . '/inc/rest-shared.php';
+require_once __DIR__ . '/inc/rest-auth.php';
 
 function {{phpPrefix}}_get_build_root() {
 	return __DIR__ . '/build/blocks';
@@ -100,89 +102,8 @@ function {{phpPrefix}}_ensure_storage_installed() {
 	}
 }
 
-function {{phpPrefix}}_load_schema( $schema_name ) {
-	$build_dir = {{phpPrefix}}_get_block_build_dir( '{{slugKebabCase}}' );
-	if ( ! $build_dir ) {
-		return null;
-	}
-
-	$path = $build_dir . '/api-schemas/' . $schema_name . '.schema.json';
-	if ( ! file_exists( $path ) ) {
-		return null;
-	}
-
-	$decoded = json_decode( file_get_contents( $path ), true );
-	return is_array( $decoded ) ? $decoded : null;
-}
-
-function {{phpPrefix}}_sanitize_rest_schema( $schema ) {
-	if ( ! is_array( $schema ) ) {
-		return $schema;
-	}
-
-	unset( $schema['$schema'], $schema['title'] );
-
-	if ( isset( $schema['properties'] ) && is_array( $schema['properties'] ) ) {
-		foreach ( $schema['properties'] as $key => $property_schema ) {
-			$schema['properties'][ $key ] = {{phpPrefix}}_sanitize_rest_schema( $property_schema );
-		}
-	}
-
-	if ( isset( $schema['items'] ) && is_array( $schema['items'] ) ) {
-		$schema['items'] = {{phpPrefix}}_sanitize_rest_schema( $schema['items'] );
-	}
-
-	return $schema;
-}
-
-function {{phpPrefix}}_validate_and_sanitize_request( $value, $schema_name, $param_name ) {
-	$schema = {{phpPrefix}}_load_schema( $schema_name );
-	if ( ! is_array( $schema ) ) {
-		return new WP_Error( 'missing_schema', 'Missing REST schema.', array( 'status' => 500 ) );
-	}
-
-	$rest_schema = {{phpPrefix}}_sanitize_rest_schema( $schema );
-	$validation  = rest_validate_value_from_schema( $value, $rest_schema, $param_name );
-	if ( is_wp_error( $validation ) ) {
-		return $validation;
-	}
-
-	return rest_sanitize_value_from_schema( $value, $rest_schema, $param_name );
-}
-
-function {{phpPrefix}}_get_rest_nonce( WP_REST_Request $request ) {
-	$header_nonce = $request->get_header( 'X-WP-Nonce' );
-	if ( is_string( $header_nonce ) && '' !== $header_nonce ) {
-		return $header_nonce;
-	}
-
-	$query_nonce = $request->get_param( '_wpnonce' );
-	if ( is_string( $query_nonce ) && '' !== $query_nonce ) {
-		return $query_nonce;
-	}
-
-	return null;
-}
-
-function {{phpPrefix}}_can_write_authenticated( WP_REST_Request $request ) {
-	if ( ! is_user_logged_in() ) {
-		return new WP_Error(
-			'rest_forbidden',
-			'Authentication is required to update this counter.',
-			array( 'status' => rest_authorization_required_code() )
-		);
-	}
-
-	$nonce = {{phpPrefix}}_get_rest_nonce( $request );
-	if ( ! is_string( $nonce ) || '' === $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
-		return new WP_Error(
-			'rest_forbidden',
-			'The REST nonce is missing or invalid.',
-			array( 'status' => 403 )
-		);
-	}
-
-	return true;
+function {{phpPrefix}}_get_rest_build_dir() {
+	return {{phpPrefix}}_get_block_build_dir( '{{slugKebabCase}}' );
 }
 
 function {{phpPrefix}}_get_counter( $post_id, $resource_key ) {
@@ -261,6 +182,7 @@ function {{phpPrefix}}_handle_get_counter( WP_REST_Request $request ) {
 			'postId'      => $request->get_param( 'postId' ),
 			'resourceKey' => $request->get_param( 'resourceKey' ),
 		),
+		{{phpPrefix}}_get_rest_build_dir(),
 		'counter-query',
 		'query'
 	);
@@ -282,6 +204,7 @@ function {{phpPrefix}}_handle_get_counter( WP_REST_Request $request ) {
 function {{phpPrefix}}_handle_increment_counter( WP_REST_Request $request ) {
 	$payload = {{phpPrefix}}_validate_and_sanitize_request(
 		$request->get_json_params(),
+		{{phpPrefix}}_get_rest_build_dir(),
 		'increment-request',
 		'body'
 	);
