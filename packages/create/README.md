@@ -70,6 +70,8 @@ The `compound` template adds:
 - multi-block plugin registration from `build/blocks/*`
 - optional persistence on the parent block when `--data-storage` or `--persistence-policy` is provided
 
+Every generated project exposes `sync-types`, and persistence-enabled scaffolds also expose `sync-rest`. `start` and `build` already run the relevant sync scripts for you. Run them manually only when you want generated metadata/schema artifacts committed before the first `start` or `build` cycle. These syncs do not create migration history.
+
 Generated projects can also reuse small runtime helpers from `@wp-typia/create` instead of copying local utility code:
 
 ```ts

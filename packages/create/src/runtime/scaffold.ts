@@ -12,6 +12,11 @@ import {
 } from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
 import { getPackageVersions } from "./package-versions.js";
+import {
+	getOptionalOnboardingNote,
+	getOptionalOnboardingSteps,
+	getTemplateSourceOfTruthNote,
+} from "./scaffold-onboarding.js";
 import { copyInterpolatedDirectory } from "./template-render.js";
 import { TEMPLATE_IDS, getTemplateById, isBuiltInTemplateId } from "./template-registry.js";
 import type { BuiltInTemplateId } from "./template-registry.js";
@@ -373,6 +378,13 @@ function buildReadme(
 	variables: ScaffoldTemplateVariables,
 	packageManager: PackageManagerId,
 ): string {
+	const optionalOnboardingSteps = getOptionalOnboardingSteps(packageManager, templateId, {
+		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
+	});
+	const sourceOfTruthNote = getTemplateSourceOfTruthNote(templateId, {
+		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
+	});
+
 	return `# ${variables.title}
 
 ${variables.description}
@@ -394,13 +406,15 @@ ${formatRunScript(packageManager, "start")}
 ${formatRunScript(packageManager, "build")}
 \`\`\`
 
-## Type Sync
+## Optional First Sync
 
 \`\`\`bash
-${formatRunScript(packageManager, "sync-types")}
+${optionalOnboardingSteps.join("\n")}
 \`\`\`
 
-\`src/types.ts\` remains the source of truth for \`block.json\` and \`typia.manifest.json\`.
+${getOptionalOnboardingNote(packageManager)}
+
+${sourceOfTruthNote}
 `;
 }
 

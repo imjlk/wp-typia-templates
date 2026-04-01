@@ -449,6 +449,8 @@ This creates:
 - `src/api-schemas/*.schema.json` - JSON Schema files
 - `src/api-schemas/*.openapi.json` - OpenAPI specification files
 
+You only need to run `npm run sync-types` / `npm run sync-rest` manually when you want generated metadata and REST schemas committed before the first `npm run start` or `npm run build`. The generated `start` and `build` scripts already run both sync commands for persistence scaffolds, and they do not create migration history.
+
 These schemas can be used for:
 - API documentation
 - Client SDK generation

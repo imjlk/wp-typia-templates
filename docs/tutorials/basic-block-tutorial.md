@@ -74,6 +74,8 @@ npm run sync-types
 
 Check `src/block.json` - it should contain all your attributes with proper types and defaults!
 
+You only need to run this manually when you want the generated metadata committed before your first `npm run start` or `npm run build`. Both scripts already run `npm run sync-types` for you, and this sync only generates metadata artifacts, not migration history.
+
 ## Step 4: Build the Edit Component
 
 Modify `src/edit.tsx` to create your block editor:

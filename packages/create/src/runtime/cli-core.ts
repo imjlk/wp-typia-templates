@@ -23,6 +23,10 @@ import {
 } from "./package-managers.js";
 import type { DataStorageMode, PersistencePolicy } from "./scaffold.js";
 import type { PackageManagerId } from "./package-managers.js";
+import {
+	getOptionalOnboardingNote,
+	getOptionalOnboardingSteps,
+} from "./scaffold-onboarding.js";
 import { getBuiltInTemplateLayerDirs } from "./template-builtins.js";
 import {
 	TEMPLATE_IDS,
@@ -61,6 +65,17 @@ interface GetNextStepsOptions {
 	packageManager: PackageManagerId;
 	projectDir: string;
 	projectInput: string;
+}
+
+interface GetOptionalOnboardingOptions {
+	packageManager: PackageManagerId;
+	templateId: string;
+	compoundPersistenceEnabled?: boolean;
+}
+
+interface OptionalOnboardingGuidance {
+	note: string;
+	steps: string[];
 }
 
 interface RunScaffoldFlowOptions {
@@ -350,6 +365,19 @@ export function getNextSteps({
 	return steps;
 }
 
+export function getOptionalOnboarding({
+	packageManager,
+	templateId,
+	compoundPersistenceEnabled = false,
+}: GetOptionalOnboardingOptions): OptionalOnboardingGuidance {
+	return {
+		note: getOptionalOnboardingNote(packageManager),
+		steps: getOptionalOnboardingSteps(packageManager, templateId, {
+			compoundPersistenceEnabled,
+		}),
+	};
+}
+
 export async function runScaffoldFlow({
 	projectInput,
 	cwd = process.cwd(),
@@ -447,6 +475,11 @@ export async function runScaffoldFlow({
 	});
 
 	return {
+		optionalOnboarding: getOptionalOnboarding({
+			packageManager: resolvedPackageManager,
+			templateId: resolvedTemplateId,
+			compoundPersistenceEnabled: result.variables.compoundPersistenceEnabled === "true",
+		}),
 		projectDir,
 		projectInput,
 		packageManager: resolvedPackageManager,
