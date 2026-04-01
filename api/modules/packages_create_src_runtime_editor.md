@@ -129,4 +129,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/editor.ts:260](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L260)
+[packages/create/src/runtime/editor.ts:261](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L261)

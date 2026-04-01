@@ -77,6 +77,7 @@
 - [packages/create/src/runtime/package-versions](modules/packages_create_src_runtime_package_versions.md)
 - [packages/create/src/runtime/scaffold](modules/packages_create_src_runtime_scaffold.md)
 - [packages/create/src/runtime/schema-core](modules/packages_create_src_runtime_schema_core.md)
+- [packages/create/src/runtime/template-builtins](modules/packages_create_src_runtime_template_builtins.md)
 - [packages/create/src/runtime/template-registry](modules/packages_create_src_runtime_template_registry.md)
 - [packages/create/src/runtime/template-render](modules/packages_create_src_runtime_template_render.md)
 - [packages/create/src/runtime/template-source](modules/packages_create_src_runtime_template_source.md)

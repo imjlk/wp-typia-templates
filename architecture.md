@@ -39,6 +39,8 @@ The root workspace owns:
 - release metadata and publish scripts
 - API/usage docs
 
+Release publishing is intentionally package-only and rerun-safe. Example builds stay in CI/dev flows, while npm publish paths build only publishable workspaces and treat partially published reruns as a normal recovery path.
+
 Example-specific root commands use the `examples:*` namespace so the boundary between product packages and the reference app stays explicit.
 
 ## Template Model

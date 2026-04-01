@@ -30,7 +30,6 @@
 - [isBuiltInTemplateId](packages_create_src_runtime_template_registry.md#isbuiltintemplateid)
 - [listTemplates](packages_create_src_runtime_template_registry.md#listtemplates)
 - [getTemplateById](packages_create_src_runtime_template_registry.md#gettemplatebyid)
-- [getTemplateLayerDirs](packages_create_src_runtime_template_registry.md#gettemplatelayerdirs)
 - [getTemplateSelectOptions](packages_create_src_runtime_template_registry.md#gettemplateselectoptions)
 
 ## Type Aliases
@@ -209,27 +208,6 @@ ___
 
 ___
 
-### getTemplateLayerDirs
-
-▸ **getTemplateLayerDirs**(`templateId`, `persistencePolicy?`): `string`[]
-
-#### Parameters
-
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `templateId` | ``"persistence"`` \| ``"basic"`` \| ``"interactivity"`` | `undefined` |
-| `persistencePolicy` | [`PersistencePolicy`](packages_create_src_runtime_template_registry.md#persistencepolicy) | `"authenticated"` |
-
-#### Returns
-
-`string`[]
-
-#### Defined in
-
-[packages/create/src/runtime/template-registry.ts:90](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L90)
-
-___
-
 ### getTemplateSelectOptions
 
 ▸ **getTemplateSelectOptions**(): \{ `label`: `string` ; `value`: [`TemplateDefinition`](../interfaces/packages_create_src_runtime_template_registry.TemplateDefinition.md)[``"id"``] ; `hint`: `string`  }[]
@@ -240,4 +218,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:106](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L106)
+[packages/create/src/runtime/template-registry.ts:90](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L90)
