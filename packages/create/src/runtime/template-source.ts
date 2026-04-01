@@ -27,16 +27,30 @@ const REMOVED_BUILTIN_TEMPLATE_IDS = ["data", "persisted"] as const;
 
 type TemplateSourceFormat = "wp-typia" | "create-block-external" | "create-block-subset";
 
+/**
+ * Public template variables exposed to external template seeds before wp-typia
+ * normalizes them into a scaffold project.
+ */
 export interface TemplateVariableContext extends Record<string, unknown> {
+	/** Version string for `@wp-typia/create` used in generated dependencies. */
 	createPackageVersion: string;
+	/** Version string for `@wp-typia/block-types` used in generated dependencies. */
 	blockTypesPackageVersion: string;
+	/** PascalCase block type name derived from the scaffold slug. */
 	pascalCase: string;
+	/** Snake_case PHP symbol prefix used for generated functions, constants, and keys. */
 	phpPrefix: string;
+	/** Human-readable block title. */
 	title: string;
+	/** Human-readable project or block description. */
 	description: string;
+	/** Keyword string derived from the slug for generated block metadata. */
 	keyword: string;
+	/** Block namespace used in generated block names such as `namespace/slug`. */
 	namespace: string;
+	/** Kebab-case scaffold slug used for package names, paths, and block slugs. */
 	slug: string;
+	/** Kebab-case text domain used for generated i18n strings and plugin headers. */
 	textDomain: string;
 }
 

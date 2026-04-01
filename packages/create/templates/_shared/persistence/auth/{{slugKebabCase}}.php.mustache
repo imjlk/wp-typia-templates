@@ -214,20 +214,21 @@ function {{phpPrefix}}_increment_counter( $post_id, $resource_key, $delta ) {
 	global $wpdb;
 
 	if ( 'custom-table' === '{{dataStorageMode}}' ) {
-		$table_name   = {{phpPrefix}}_get_counter_table_name();
-		$delta_value  = (int) $delta;
-		$insert_count = max( 0, $delta_value );
-		$result       = $wpdb->query(
+		$table_name    = {{phpPrefix}}_get_counter_table_name();
+		$delta_value   = (int) $delta;
+		$initial_count = max( 0, $delta_value );
+		$result        = $wpdb->query(
 			$wpdb->prepare(
 				"INSERT INTO {$table_name} (post_id, resource_key, count, updated_at)
 				VALUES (%d, %s, %d, %s)
 				ON DUPLICATE KEY UPDATE
-					count = GREATEST(0, count + VALUES(count)),
+					count = GREATEST(0, count + %d),
 					updated_at = VALUES(updated_at)",
 				$post_id,
 				$resource_key,
-				$insert_count,
-				current_time( 'mysql', true )
+				$initial_count,
+				current_time( 'mysql', true ),
+				$delta_value
 			)
 		);
 

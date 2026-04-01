@@ -32,14 +32,24 @@ const LOCKFILES: Record<PackageManagerId, string[]> = {
 	yarn: ["yarn.lock"],
 };
 
+/**
+ * User-facing scaffold answers before template rendering.
+ *
+ * `namespace`, `textDomain`, and `phpPrefix` are normalized before use so
+ * callers can pass human-entered values while generated output stays
+ * predictable.
+ */
 export interface ScaffoldAnswers {
 	author: string;
 	dataStorageMode?: DataStorageMode;
 	description: string;
+	/** Block namespace used in generated block names such as `namespace/slug`. */
 	namespace: string;
 	persistencePolicy?: PersistencePolicy;
+	/** Snake_case PHP symbol prefix used for generated functions, constants, and keys. */
 	phpPrefix?: string;
 	slug: string;
+	/** Kebab-case WordPress text domain used in block metadata and i18n strings. */
 	textDomain?: string;
 	title: string;
 }
@@ -49,6 +59,9 @@ export type DataStorageMode = (typeof DATA_STORAGE_MODES)[number];
 export const PERSISTENCE_POLICIES = ["authenticated", "public"] as const;
 export type PersistencePolicy = (typeof PERSISTENCE_POLICIES)[number];
 
+/**
+ * Normalized template variables shared by built-in and remote scaffold flows.
+ */
 export interface ScaffoldTemplateVariables {
 	author: string;
 	blockTypesPackageVersion: string;
@@ -400,10 +413,22 @@ export function getTemplateVariables(
 	const slugSnakeCase = toSnakeCase(slug);
 	const pascalCase = toPascalCase(slug);
 	const title = answers.title.trim();
-	const namespace = normalizeNamespace(answers.namespace);
+	const namespace = assertValidIdentifier(
+		"Namespace",
+		normalizeNamespace(answers.namespace),
+		validateNamespace,
+	);
 	const description = answers.description.trim();
-	const textDomain = normalizeTextDomain(answers.textDomain ?? slug);
-	const phpPrefix = normalizePhpPrefix(answers.phpPrefix ?? slug);
+	const textDomain = assertValidIdentifier(
+		"Text domain",
+		normalizeTextDomain(answers.textDomain ?? slug),
+		validateTextDomain,
+	);
+	const phpPrefix = assertValidIdentifier(
+		"PHP prefix",
+		normalizePhpPrefix(answers.phpPrefix ?? slug),
+		validatePhpPrefix,
+	);
 	const compoundChildTitle = `${title} Item`;
 	const compoundPersistenceEnabled =
 		templateId === "persistence"

@@ -36,6 +36,15 @@ interface ParsedArgs {
 	yes: boolean;
 }
 
+function getRequiredValue(argv: string[], index: number, flagName: string): string {
+	const value = argv[index + 1];
+	if (value === undefined || value.startsWith("-")) {
+		throw new Error(`${flagName} requires a value`);
+	}
+
+	return value;
+}
+
 function parseArgs(argv: string[]): ParsedArgs {
 	const parsed: ParsedArgs = {
 		dataStorage: undefined,
@@ -91,12 +100,12 @@ function parseArgs(argv: string[]): ParsedArgs {
 			continue;
 		}
 		if (arg === "--package-manager" || arg === "-p") {
-			parsed.packageManager = argv[index + 1];
+			parsed.packageManager = getRequiredValue(argv, index, "--package-manager");
 			index += 1;
 			continue;
 		}
 		if (arg === "--namespace") {
-			parsed.namespace = argv[index + 1];
+			parsed.namespace = getRequiredValue(argv, index, "--namespace");
 			index += 1;
 			continue;
 		}
@@ -105,7 +114,7 @@ function parseArgs(argv: string[]): ParsedArgs {
 			continue;
 		}
 		if (arg === "--text-domain") {
-			parsed.textDomain = argv[index + 1];
+			parsed.textDomain = getRequiredValue(argv, index, "--text-domain");
 			index += 1;
 			continue;
 		}
@@ -114,7 +123,7 @@ function parseArgs(argv: string[]): ParsedArgs {
 			continue;
 		}
 		if (arg === "--php-prefix") {
-			parsed.phpPrefix = argv[index + 1];
+			parsed.phpPrefix = getRequiredValue(argv, index, "--php-prefix");
 			index += 1;
 			continue;
 		}
@@ -123,7 +132,7 @@ function parseArgs(argv: string[]): ParsedArgs {
 			continue;
 		}
 		if (arg === "--data-storage") {
-			parsed.dataStorage = argv[index + 1];
+			parsed.dataStorage = getRequiredValue(argv, index, "--data-storage");
 			index += 1;
 			continue;
 		}
@@ -132,7 +141,7 @@ function parseArgs(argv: string[]): ParsedArgs {
 			continue;
 		}
 		if (arg === "--persistence-policy") {
-			parsed.persistencePolicy = argv[index + 1];
+			parsed.persistencePolicy = getRequiredValue(argv, index, "--persistence-policy");
 			index += 1;
 			continue;
 		}

@@ -1024,4 +1024,22 @@ describe("@wp-typia/create scaffolding", () => {
 			});
 		}).toThrow();
 	});
+
+	test("node entry rejects missing values for identifier override flags", () => {
+		expect(() => {
+			runCli("node", [
+				entryPath,
+				"demo-missing-namespace",
+				"--template",
+				"basic",
+				"--namespace",
+				"--yes",
+				"--no-install",
+				"--package-manager",
+				"npm",
+			], {
+				stdio: "pipe",
+			});
+		}).toThrow();
+	});
 });
