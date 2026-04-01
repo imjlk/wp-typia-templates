@@ -1,0 +1,39 @@
+{
+	"components": {
+		"schemas": {
+			"CompoundPatternsAttributes": {
+				"$schema": "https://json-schema.org/draft/2020-12/schema",
+				"additionalProperties": false,
+				"properties": {
+					"heading": {
+						"default": "Compound Patterns",
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 80
+					},
+					"intro": {
+						"default": "Add and reorder internal items inside this compound block.",
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 180
+					},
+					"showDividers": {
+						"default": true,
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"heading"
+				],
+				"title": "CompoundPatternsAttributes",
+				"type": "object"
+			}
+		}
+	},
+	"info": {
+		"title": "CompoundPatternsAttributes",
+		"version": "1.0.0"
+	},
+	"openapi": "3.1.0",
+	"paths": {}
+}

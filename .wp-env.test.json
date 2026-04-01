@@ -5,7 +5,8 @@
   "testsEnvironment": false,
   "plugins": [
     "./examples/my-typia-block",
-    "./examples/persistence-examples"
+    "./examples/persistence-examples",
+    "./examples/compound-patterns"
   ],
   "config": {
     "WP_DEBUG": true,

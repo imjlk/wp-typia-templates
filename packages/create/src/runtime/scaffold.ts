@@ -45,6 +45,8 @@ export interface ScaffoldTemplateVariables {
 	author: string;
 	blockTypesPackageVersion: string;
 	category: string;
+	compoundChildTitle: string;
+	compoundPersistenceEnabled: "false" | "true";
 	createPackageVersion: string;
 	cssClassName: string;
 	dashCase: string;
@@ -301,17 +303,27 @@ export function getTemplateVariables(
 	const title = answers.title.trim();
 	const namespace = answers.namespace.trim();
 	const description = answers.description.trim();
-	const dataStorageMode =
+	const compoundPersistenceEnabled =
 		templateId === "persistence"
+			? true
+			: templateId === "compound"
+				? Boolean(answers.dataStorageMode || answers.persistencePolicy)
+				: false;
+	const dataStorageMode =
+		templateId === "persistence" || compoundPersistenceEnabled
 			? answers.dataStorageMode ?? "custom-table"
 			: "custom-table";
 	const persistencePolicy =
-		templateId === "persistence" ? answers.persistencePolicy ?? "authenticated" : "authenticated";
+		templateId === "persistence" || compoundPersistenceEnabled
+			? answers.persistencePolicy ?? "authenticated"
+			: "authenticated";
 
 	return {
 		author: answers.author.trim(),
 		blockTypesPackageVersion,
 		category: template?.defaultCategory ?? "widgets",
+		compoundChildTitle: `${title} Item`,
+		compoundPersistenceEnabled: compoundPersistenceEnabled ? "true" : "false",
 		createPackageVersion,
 		cssClassName: `wp-block-${slug}`,
 		dataStorageMode,

@@ -83,6 +83,24 @@ interface RunScaffoldFlowOptions {
 	yes?: boolean;
 }
 
+function templateUsesPersistenceSettings(
+	templateId: string,
+	options: {
+		dataStorageMode?: string;
+		persistencePolicy?: string;
+	},
+): boolean {
+	if (templateId === "persistence") {
+		return true;
+	}
+
+	if (templateId !== "compound") {
+		return false;
+	}
+
+	return Boolean(options.dataStorageMode || options.persistencePolicy);
+}
+
 export function createReadlinePrompt(): ReadlinePrompt {
 	const rl = readline.createInterface({
 		input: process.stdin,
@@ -140,9 +158,10 @@ export function createReadlinePrompt(): ReadlinePrompt {
 
 export function formatHelpText(): string {
 	return `Usage:
-  wp-typia <project-dir> [--template <basic|interactivity|persistence|./path|github:owner/repo/path[#ref]>] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <basic|interactivity|persistence|compound|./path|github:owner/repo/path[#ref]>] [--yes] [--no-install] [--package-manager <id>]
   wp-typia <project-dir> [--template <npm-package>] [--variant <name>] [--yes] [--no-install] [--package-manager <id>]
   wp-typia <project-dir> [--template persistence] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template compound] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--yes] [--no-install] [--package-manager <id>]
   wp-typia templates list
   wp-typia templates inspect <id>
   wp-typia migrations <init|snapshot|diff|scaffold|verify|doctor|fixtures|fuzz> [...]
@@ -164,9 +183,21 @@ export function formatTemplateDetails(template: TemplateDefinition): string {
 	const layers =
 		template.id === "persistence"
 			? [
-					`authenticated: ${getBuiltInTemplateLayerDirs(template.id, "authenticated").join(" -> ")}`,
-					`public: ${getBuiltInTemplateLayerDirs(template.id, "public").join(" -> ")}`,
+					`authenticated: ${getBuiltInTemplateLayerDirs(template.id, { persistencePolicy: "authenticated" }).join(" -> ")}`,
+					`public: ${getBuiltInTemplateLayerDirs(template.id, { persistencePolicy: "public" }).join(" -> ")}`,
 				]
+			: template.id === "compound"
+				? [
+						`pure: ${getBuiltInTemplateLayerDirs(template.id).join(" -> ")}`,
+						`authenticated+persistence: ${getBuiltInTemplateLayerDirs(template.id, {
+							persistenceEnabled: true,
+							persistencePolicy: "authenticated",
+						}).join(" -> ")}`,
+						`public+persistence: ${getBuiltInTemplateLayerDirs(template.id, {
+							persistenceEnabled: true,
+							persistencePolicy: "public",
+						}).join(" -> ")}`,
+					]
 			: [getBuiltInTemplateLayerDirs(template.id).join(" -> ")];
 	return [
 		template.id,
@@ -253,11 +284,25 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 			template.id === "persistence"
 				? Array.from(
 						new Set([
-							...getBuiltInTemplateLayerDirs(template.id, "authenticated"),
-							...getBuiltInTemplateLayerDirs(template.id, "public"),
+							...getBuiltInTemplateLayerDirs(template.id, { persistencePolicy: "authenticated" }),
+							...getBuiltInTemplateLayerDirs(template.id, { persistencePolicy: "public" }),
 						]),
 					)
-				: getBuiltInTemplateLayerDirs(template.id);
+				: template.id === "compound"
+					? Array.from(
+							new Set([
+								...getBuiltInTemplateLayerDirs(template.id),
+								...getBuiltInTemplateLayerDirs(template.id, {
+									persistenceEnabled: true,
+									persistencePolicy: "authenticated",
+								}),
+								...getBuiltInTemplateLayerDirs(template.id, {
+									persistenceEnabled: true,
+									persistencePolicy: "public",
+								}),
+							]),
+						)
+					: getBuiltInTemplateLayerDirs(template.id);
 		const hasAssets =
 			layerDirs.every((layerDir) => fs.existsSync(layerDir)) &&
 			layerDirs.some((layerDir) => fs.existsSync(path.join(layerDir, "package.json.mustache"))) &&
@@ -334,8 +379,12 @@ export async function runScaffoldFlow({
 		isInteractive,
 		selectTemplate,
 	});
+	const shouldResolvePersistence = templateUsesPersistenceSettings(resolvedTemplateId, {
+		dataStorageMode,
+		persistencePolicy,
+	});
 	const resolvedDataStorage =
-		resolvedTemplateId !== "persistence"
+		!shouldResolvePersistence
 			? undefined
 			: dataStorageMode
 				? isDataStorageMode(dataStorageMode)
@@ -351,7 +400,7 @@ export async function runScaffoldFlow({
 						? await selectDataStorage()
 						: "custom-table";
 	const resolvedPersistencePolicy =
-		resolvedTemplateId !== "persistence"
+		!shouldResolvePersistence
 			? undefined
 			: persistencePolicy
 				? isPersistencePolicy(persistencePolicy)

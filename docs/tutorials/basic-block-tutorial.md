@@ -367,16 +367,18 @@ Congratulations! You've built a type-safe WordPress block with runtime validatio
 
 1. **Add Interactivity API**: Switch to the Interactivity template for frontend state
 2. **Add Persistence**: Follow the [Persistence Block Tutorial](./persistence-block-tutorial.md) to add server-side data storage
-3. **Add Migrations**: Use the showcase patterns from the `wp-typia` repository's `examples/my-typia-block` example if the block later needs snapshot-based legacy compatibility
-4. **Custom Validators**: Create custom validation logic
-5. **Block Variations**: Add multiple block variations
-6. **Nested Blocks**: Support inner blocks
+3. **Add Compound Parent/Child Blocks**: Follow the [Compound Block Tutorial](./compound-block-tutorial.md) to scaffold a top-level container block with hidden internal children
+4. **Add Migrations**: Use the showcase patterns from the `wp-typia` repository's `examples/my-typia-block` example if the block later needs snapshot-based legacy compatibility
+5. **Custom Validators**: Create custom validation logic
+6. **Block Variations**: Add multiple block variations
+7. **Nested Blocks**: Support inner blocks
 
 ## Additional Resources
 
 - [Typia Documentation](https://typia.io/)
 - [WordPress Block Editor Handbook](https://developer.wordpress.org/block-editor/)
 - [Persistence Block Tutorial](./persistence-block-tutorial.md) - Add server-side data storage
+- [Compound Block Tutorial](./compound-block-tutorial.md) - Scaffold parent/child InnerBlocks patterns
 - [Snapshot Migration Guide](../migrations.md)
 - [Interactivity Template Guide](../interactivity.md)
 - [Interactivity API Guide](https://developer.wordpress.org/block-editor/reference-guides/interactivity-api/)

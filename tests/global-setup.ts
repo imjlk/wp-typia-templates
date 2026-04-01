@@ -1,7 +1,7 @@
 import { chromium, FullConfig } from '@playwright/test';
 import wpEnvUtils from '../scripts/wp-env-utils.cjs';
 
-const EXAMPLE_PLUGIN_SLUGS = ['my-typia-block', 'persistence-examples'] as const;
+const EXAMPLE_PLUGIN_SLUGS = ['my-typia-block', 'persistence-examples', 'compound-patterns'] as const;
 const { TEST_WP_ENV_CONFIG, runWpCli } = wpEnvUtils;
 
 async function waitForAdminReady(page: import('@playwright/test').Page) {

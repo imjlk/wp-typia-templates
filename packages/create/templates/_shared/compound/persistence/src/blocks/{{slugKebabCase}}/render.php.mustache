@@ -1,0 +1,123 @@
+<?php
+/**
+ * Dynamic render entry for the {{title}} compound parent block.
+ *
+ * @package {{pascalCase}}
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+$validator_path = __DIR__ . '/typia-validator.php';
+if ( ! file_exists( $validator_path ) ) {
+	return '';
+}
+
+$validator = require $validator_path;
+if ( ! is_object( $validator ) || ! method_exists( $validator, 'apply_defaults' ) || ! method_exists( $validator, 'validate' ) ) {
+	return '';
+}
+
+$normalized        = $validator->apply_defaults( is_array( $attributes ) ? $attributes : array() );
+$validation        = $validator->validate( $normalized );
+$resourceKey       = isset( $normalized['resourceKey'] ) ? (string) $normalized['resourceKey'] : '';
+$heading           = isset( $normalized['heading'] ) ? (string) $normalized['heading'] : '{{title}}';
+$intro             = isset( $normalized['intro'] ) ? (string) $normalized['intro'] : '';
+$button_label      = isset( $normalized['buttonLabel'] ) ? (string) $normalized['buttonLabel'] : 'Persist Count';
+$show_count        = ! empty( $normalized['showCount'] );
+$show_dividers     = ! empty( $normalized['showDividers'] );
+$post_id           = is_object( $block ) && isset( $block->context['postId'] )
+	? (int) $block->context['postId']
+	: (int) get_queried_object_id();
+$storage_mode      = '{{dataStorageMode}}';
+$persistence_policy = '{{persistencePolicy}}';
+$can_write         = false;
+$notice_message    = 'authenticated' === $persistence_policy
+	? __( 'Sign in to persist this counter.', '{{slugSnakeCase}}' )
+	: __( 'Reload the page to refresh this write token.', '{{slugSnakeCase}}' );
+
+if ( empty( $validation['valid'] ) || '' === $resourceKey ) {
+	return '';
+}
+
+$context = array(
+	'buttonLabel'       => $button_label,
+	'canWrite'          => false,
+	'count'             => 0,
+	'persistencePolicy' => $persistence_policy,
+	'postId'            => (int) $post_id,
+	'resourceKey'       => $resourceKey,
+	'showCount'         => $show_count,
+	'storage'           => $storage_mode,
+);
+
+if ( 'authenticated' === $persistence_policy ) {
+	$can_write = $post_id > 0 && is_user_logged_in();
+	if ( $can_write ) {
+		$context['restNonce'] = wp_create_nonce( 'wp_rest' );
+	}
+} elseif ( $post_id > 0 && function_exists( '{{slugSnakeCase}}_create_public_write_token' ) ) {
+	$public_write = {{slugSnakeCase}}_create_public_write_token( (int) $post_id, $resourceKey );
+	if ( is_array( $public_write ) ) {
+		$token      = isset( $public_write['token'] ) ? (string) $public_write['token'] : '';
+		$expires_at = isset( $public_write['expiresAt'] ) ? (int) $public_write['expiresAt'] : 0;
+
+		if ( '' !== $token ) {
+			$context['publicWriteToken'] = $token;
+			$can_write                   = true;
+		}
+
+		if ( $expires_at > 0 ) {
+			$context['publicWriteExpiresAt'] = $expires_at;
+		}
+	}
+}
+
+$context['canWrite'] = $can_write;
+
+$wrapper_attributes = get_block_wrapper_attributes(
+	array(
+		'class'                => '{{cssClassName}}',
+		'data-show-dividers'   => $show_dividers ? 'true' : 'false',
+		'data-wp-context'      => wp_json_encode( $context ),
+		'data-wp-init'         => 'callbacks.init',
+		'data-wp-interactive'  => '{{slugKebabCase}}',
+		'data-wp-run--mounted' => 'callbacks.mounted',
+	)
+);
+?>
+
+<div <?php echo $wrapper_attributes; ?>>
+	<h3 class="{{cssClassName}}__heading"><?php echo esc_html( $heading ); ?></h3>
+	<?php if ( '' !== $intro ) : ?>
+		<p class="{{cssClassName}}__intro"><?php echo esc_html( $intro ); ?></p>
+	<?php endif; ?>
+	<?php if ( ! $can_write ) : ?>
+		<p class="{{cssClassName}}__notice">
+			<?php echo esc_html( $notice_message ); ?>
+		</p>
+	<?php endif; ?>
+	<p
+		class="{{cssClassName}}__error"
+		data-wp-bind--hidden="!state.error"
+		data-wp-text="state.error"
+		hidden
+	></p>
+	<?php if ( $show_count ) : ?>
+		<div class="{{cssClassName}}__counter">
+			<span class="{{cssClassName}}__count" data-wp-text="state.count">0</span>
+			<button
+				type="button"
+				<?php echo $can_write ? '' : 'disabled'; ?>
+				data-wp-bind--disabled="!context.canWrite"
+				data-wp-on--click="actions.increment"
+			>
+				<?php echo esc_html( $button_label ); ?>
+			</button>
+		</div>
+	<?php endif; ?>
+	<div class="{{cssClassName}}__items">
+		<?php echo $content; ?>
+	</div>
+</div>

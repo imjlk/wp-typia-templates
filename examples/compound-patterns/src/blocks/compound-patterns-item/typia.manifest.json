@@ -1,0 +1,72 @@
+{
+	"attributes": {
+		"title": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": 80,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": 1,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": "Compound Patterns Item",
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": true,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": "Compound Patterns Item",
+				"enum": null,
+				"hasDefault": true,
+				"type": "string"
+			}
+		},
+		"body": {
+			"typia": {
+				"constraints": {
+					"exclusiveMaximum": null,
+					"exclusiveMinimum": null,
+					"format": null,
+					"maxLength": 280,
+					"maxItems": null,
+					"maximum": null,
+					"minLength": 1,
+					"minItems": null,
+					"minimum": null,
+					"multipleOf": null,
+					"pattern": null,
+					"typeTag": null
+				},
+				"defaultValue": "Add supporting details for this internal item.",
+				"hasDefault": true
+			},
+			"ts": {
+				"items": null,
+				"kind": "string",
+				"properties": null,
+				"required": true,
+				"union": null
+			},
+			"wp": {
+				"defaultValue": "Add supporting details for this internal item.",
+				"enum": null,
+				"hasDefault": true,
+				"type": "string"
+			}
+		}
+	},
+	"manifestVersion": 2,
+	"sourceType": "CompoundPatternsItemAttributes"
+}

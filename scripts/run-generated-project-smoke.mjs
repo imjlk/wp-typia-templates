@@ -216,6 +216,35 @@ function assertPersistenceTemplateArtifacts(projectDir, projectName) {
 	}
 }
 
+function assertCompoundTemplateArtifacts(projectDir, projectName) {
+	const parentDir = path.join(projectDir, "build", "blocks", projectName);
+	const childDir = path.join(projectDir, "build", "blocks", `${projectName}-item`);
+
+	for (const dir of [parentDir, childDir]) {
+		for (const artifact of ["block.json", "typia.manifest.json", "typia-validator.php"]) {
+			if (!fs.existsSync(path.join(dir, artifact))) {
+				throw new Error(`Expected ${artifact} in ${dir}`);
+			}
+		}
+	}
+}
+
+function assertCompoundPersistenceArtifacts(projectDir, projectName) {
+	const parentDir = path.join(projectDir, "build", "blocks", projectName);
+
+	for (const artifact of [
+		"typia.schema.json",
+		"typia.openapi.json",
+		path.join("api-schemas", "counter-query.schema.json"),
+		path.join("api-schemas", "counter-response.schema.json"),
+		path.join("api-schemas", "increment-request.schema.json"),
+	]) {
+		if (!fs.existsSync(path.join(parentDir, artifact))) {
+			throw new Error(`Expected ${artifact} in ${parentDir}`);
+		}
+	}
+}
+
 function lintPhpArtifact(filePath) {
 	if (!hasPhpBinary()) {
 		return;
@@ -332,13 +361,22 @@ function main() {
 		const [buildCommand, buildArgs] = getRunCommand(packageManager);
 		run(buildCommand, buildArgs, { cwd: projectDir });
 
-		assertBuildArtifacts(projectDir, projectName);
+		if (template === "compound") {
+			assertCompoundTemplateArtifacts(projectDir, projectName);
+		} else {
+			assertBuildArtifacts(projectDir, projectName);
+		}
 		if (template === "persistence") {
 			assertPersistenceTemplateArtifacts(projectDir, projectName);
+		}
+		if (template === "compound" && (dataStorage || persistencePolicy)) {
+			assertCompoundPersistenceArtifacts(projectDir, projectName);
 		}
 		for (const artifact of [
 			path.join(projectDir, "build", projectName, "typia-validator.php"),
 			path.join(projectDir, "build", "typia-validator.php"),
+			path.join(projectDir, "build", "blocks", projectName, "typia-validator.php"),
+			path.join(projectDir, "build", "blocks", `${projectName}-item`, "typia-validator.php"),
 		]) {
 			if (fs.existsSync(artifact)) {
 				lintPhpArtifact(artifact);

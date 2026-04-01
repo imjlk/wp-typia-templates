@@ -1,0 +1,31 @@
+import { RichText, useBlockProps } from '@wordpress/block-editor';
+import { __ } from '@wordpress/i18n';
+
+import type { {{pascalCase}}ItemAttributes } from './types';
+
+export default function Edit( {
+	attributes,
+	setAttributes,
+}: {
+	attributes: {{pascalCase}}ItemAttributes;
+	setAttributes: ( attrs: Partial< {{pascalCase}}ItemAttributes > ) => void;
+} ) {
+	return (
+		<div { ...useBlockProps( { className: 'wp-block-{{slugKebabCase}}-item' } ) }>
+			<RichText
+				tagName="h4"
+				className="wp-block-{{slugKebabCase}}-item__title"
+				value={ attributes.title }
+				onChange={ ( title ) => setAttributes( { title } ) }
+				placeholder={ __( '{{compoundChildTitle}}', '{{slugSnakeCase}}' ) }
+			/>
+			<RichText
+				tagName="p"
+				className="wp-block-{{slugKebabCase}}-item__body"
+				value={ attributes.body }
+				onChange={ ( body ) => setAttributes( { body } ) }
+				placeholder={ __( 'Add supporting details for this internal item.', '{{slugSnakeCase}}' ) }
+			/>
+		</div>
+	);
+}

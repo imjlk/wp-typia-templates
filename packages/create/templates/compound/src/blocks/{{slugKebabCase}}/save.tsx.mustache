@@ -1,0 +1,32 @@
+import { InnerBlocks, RichText, useBlockProps } from '@wordpress/block-editor';
+
+import type { {{pascalCase}}Attributes } from './types';
+
+export default function Save( {
+	attributes,
+}: {
+	attributes: {{pascalCase}}Attributes;
+} ) {
+	return (
+		<div
+			{ ...useBlockProps.save( {
+				className: '{{cssClassName}}',
+				'data-show-dividers': attributes.showDividers ?? true ? 'true' : 'false',
+			} ) }
+		>
+			<RichText.Content
+				tagName="h3"
+				className="{{cssClassName}}__heading"
+				value={ attributes.heading }
+			/>
+			<RichText.Content
+				tagName="p"
+				className="{{cssClassName}}__intro"
+				value={ attributes.intro ?? '' }
+			/>
+			<div className="{{cssClassName}}__items">
+				<InnerBlocks.Content />
+			</div>
+		</div>
+	);
+}
