@@ -87,22 +87,6 @@ export function getTemplateById(templateId: string): TemplateDefinition {
 	return template;
 }
 
-export function getTemplateLayerDirs(
-	templateId: BuiltInTemplateId,
-	persistencePolicy: PersistencePolicy = "authenticated",
-): string[] {
-	if (templateId === "persistence") {
-		return [
-			SHARED_BASE_TEMPLATE_ROOT,
-			path.join(SHARED_PERSISTENCE_TEMPLATE_ROOT, "core"),
-			path.join(SHARED_PERSISTENCE_TEMPLATE_ROOT, persistencePolicy === "public" ? "public" : "auth"),
-			getTemplateById(templateId).templateDir,
-		];
-	}
-
-	return [SHARED_BASE_TEMPLATE_ROOT, getTemplateById(templateId).templateDir];
-}
-
 export function getTemplateSelectOptions(): Array<{
 	label: string;
 	value: TemplateDefinition["id"];

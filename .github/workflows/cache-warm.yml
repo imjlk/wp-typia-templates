@@ -7,6 +7,7 @@ on:
 
 env:
   BUN_VERSION: "1.3.10"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   warm:
@@ -22,7 +23,7 @@ jobs:
           bun-version: ${{ env.BUN_VERSION }}
 
       - name: Cache Bun install cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.bun/install/cache
           key: bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-${{ hashFiles('bun.lock') }}
@@ -33,17 +34,17 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Cache wp-env home
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.wp-env
             ~/wp-env
-          key: wp-env-${{ runner.os }}-${{ hashFiles('.wp-env.json', '.wp-env.test.json', 'examples/my-typia-block/package.json', 'bun.lock') }}
+          key: wp-env-${{ runner.os }}-${{ hashFiles('.wp-env.json', '.wp-env.test.json', 'examples/my-typia-block/package.json', 'examples/persistence-examples/package.json', 'bun.lock') }}
           restore-keys: |
             wp-env-${{ runner.os }}-
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}

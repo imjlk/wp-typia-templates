@@ -18,12 +18,16 @@ read_package_field() {
   node -p "require(process.argv[1])[process.argv[2]]" "$package_json" "$field"
 }
 
+# npm registry propagation can lag briefly after a successful publish, so reruns
+# should also tolerate the publish endpoint reporting "already published".
+
 publish_package() {
   local package_dir="$1"
   local package_json="$package_dir/package.json"
   local package_name
   local package_version
   local package_main
+  local publish_log
   local publish_args=("--access" "public")
 
   package_name="$(read_package_field "$package_json" "name")"
@@ -45,10 +49,27 @@ publish_package() {
   fi
 
   echo "Publishing ${package_name}@${package_version}..."
-  (
+  publish_log="$(mktemp)"
+
+  if (
     cd "$package_dir"
     npm publish "${publish_args[@]}"
-  )
+  ) >"$publish_log" 2>&1; then
+    cat "$publish_log"
+    rm -f "$publish_log"
+    return
+  fi
+
+  cat "$publish_log"
+
+  if grep -q "previously published versions" "$publish_log"; then
+    echo "Skipping ${package_name}@${package_version}; version was already published."
+    rm -f "$publish_log"
+    return
+  fi
+
+  rm -f "$publish_log"
+  return 1
 }
 
 for package_path in "${PACKAGES[@]}"; do

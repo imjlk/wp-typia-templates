@@ -1,7 +1,8 @@
-import { execFileSync } from 'node:child_process';
 import { chromium, FullConfig } from '@playwright/test';
+import wpEnvUtils from '../scripts/wp-env-utils.cjs';
 
 const EXAMPLE_PLUGIN_SLUGS = ['my-typia-block', 'persistence-examples'] as const;
+const { TEST_WP_ENV_CONFIG, runWpCli } = wpEnvUtils;
 
 async function waitForAdminReady(page: import('@playwright/test').Page) {
   await page.waitForLoadState('domcontentloaded');
@@ -48,20 +49,9 @@ async function waitForWordPressLogin(
 	);
 }
 
-function runWpCli(args: string[]) {
-	const command =
-		process.platform === 'win32'
-			? 'node_modules/.bin/wp-env.cmd'
-			: './node_modules/.bin/wp-env';
-	return execFileSync(command, ['run', 'cli', '--config=.wp-env.test.json', 'wp', ...args], {
-		encoding: 'utf8',
-		stdio: 'pipe',
-	});
-}
-
 function ensureWordPressInstalled(baseURL: string) {
 	try {
-		runWpCli(['core', 'is-installed']);
+		runWpCli(['core', 'is-installed'], { configPath: TEST_WP_ENV_CONFIG });
 		return;
 	} catch {
 		runWpCli([
@@ -73,16 +63,17 @@ function ensureWordPressInstalled(baseURL: string) {
 			'--admin_password=password',
 			'--admin_email=admin@example.com',
 			'--skip-email',
-		]);
+		], { configPath: TEST_WP_ENV_CONFIG });
 	}
 }
 
 function ensureExamplePluginsActive() {
+	// wp-env cache can restore a DB where example plugins are mounted but inactive.
 	for (const pluginSlug of EXAMPLE_PLUGIN_SLUGS) {
 		try {
-			runWpCli(['plugin', 'is-active', pluginSlug]);
+			runWpCli(['plugin', 'is-active', pluginSlug], { configPath: TEST_WP_ENV_CONFIG });
 		} catch {
-			runWpCli(['plugin', 'activate', pluginSlug]);
+			runWpCli(['plugin', 'activate', pluginSlug], { configPath: TEST_WP_ENV_CONFIG });
 		}
 	}
 }

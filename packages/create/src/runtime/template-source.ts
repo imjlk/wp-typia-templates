@@ -13,11 +13,10 @@ import {
 	BUILTIN_TEMPLATE_IDS,
 	SHARED_BASE_TEMPLATE_ROOT,
 	TEMPLATE_ROOT,
-	getTemplateLayerDirs,
-	getTemplateById,
 	isBuiltInTemplateId,
 	type BuiltInTemplateId,
 } from "./template-registry.js";
+import { resolveBuiltInTemplateSource } from "./template-builtins.js";
 import { getPackageVersions } from "./package-versions.js";
 import { copyRawDirectory, copyRenderedDirectory } from "./template-render.js";
 
@@ -85,7 +84,6 @@ interface SeedSource {
 }
 
 type RemoteTemplateLocator =
-	| { kind: "builtin"; templateId: BuiltInTemplateId }
 	| { kind: "github"; locator: GitHubTemplateLocator }
 	| { kind: "npm"; locator: NpmTemplateLocator }
 	| { kind: "path"; templatePath: string };
@@ -281,10 +279,6 @@ export function parseTemplateLocator(templateId: string): RemoteTemplateLocator 
 		);
 	}
 
-	if (isBuiltInTemplateId(templateId)) {
-		return { kind: "builtin", templateId };
-	}
-
 	const githubLocator = parseGitHubTemplateLocator(templateId);
 	if (githubLocator) {
 		return { kind: "github", locator: githubLocator };
@@ -333,40 +327,6 @@ function getTemplateVariableContext(variables: { [key: string]: string }): Templ
 		slug: variables.slug,
 		textDomain: variables.textDomain,
 		title: variables.title,
-	};
-}
-
-async function materializeBuiltinTemplate(
-	templateId: BuiltInTemplateId,
-	persistencePolicy: "authenticated" | "public" = "authenticated",
-): Promise<ResolvedTemplateSource> {
-	const template = getTemplateById(templateId);
-	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-template-"));
-	const templateDir = path.join(tempRoot, templateId);
-	try {
-		await fsp.mkdir(templateDir, { recursive: true });
-
-		for (const layerDir of getTemplateLayerDirs(templateId, persistencePolicy)) {
-			await fsp.cp(layerDir, templateDir, {
-				recursive: true,
-				force: true,
-			});
-		}
-	} catch (error) {
-		await fsp.rm(tempRoot, { force: true, recursive: true });
-		throw error;
-	}
-
-	return {
-		id: template.id,
-		defaultCategory: template.defaultCategory,
-		description: template.description,
-		features: template.features,
-		format: "wp-typia",
-		templateDir,
-		cleanup: async () => {
-			await fsp.rm(tempRoot, { force: true, recursive: true });
-		},
 	};
 }
 
@@ -869,7 +829,7 @@ async function resolveGitHubTemplateSource(locator: GitHubTemplateLocator): Prom
 }
 
 async function resolveTemplateSeed(
-	locator: Exclude<RemoteTemplateLocator, { kind: "builtin" }>,
+	locator: RemoteTemplateLocator,
 	cwd: string,
 ): Promise<SeedSource> {
 	if (locator.kind === "path") {
@@ -897,19 +857,18 @@ export async function resolveTemplateSource(
 	variables: { [key: string]: string },
 	variant?: string,
 ): Promise<ResolvedTemplateSource> {
-	const locator = parseTemplateLocator(templateId);
-	const context = getTemplateVariableContext(variables);
-
-	if (locator.kind === "builtin") {
+	if (isBuiltInTemplateId(templateId)) {
 		if (variant) {
 			throw new Error(`--variant is only supported for official external template configs. Received variant "${variant}" for built-in template "${templateId}".`);
 		}
-		return materializeBuiltinTemplate(
-			locator.templateId,
+		return resolveBuiltInTemplateSource(
+			templateId,
 			variables.persistencePolicy === "public" ? "public" : "authenticated",
 		);
 	}
 
+	const locator = parseTemplateLocator(templateId);
+	const context = getTemplateVariableContext(variables);
 	const seed = await resolveTemplateSeed(locator, cwd);
 	let normalizedSeed: SeedSource | null = null;
 

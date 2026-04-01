@@ -23,9 +23,9 @@ import {
 } from "./package-managers.js";
 import type { DataStorageMode, PersistencePolicy } from "./scaffold.js";
 import type { PackageManagerId } from "./package-managers.js";
+import { getBuiltInTemplateLayerDirs } from "./template-builtins.js";
 import {
 	TEMPLATE_IDS,
-	getTemplateLayerDirs,
 	getTemplateById,
 	getTemplateSelectOptions,
 	listTemplates,
@@ -164,10 +164,10 @@ export function formatTemplateDetails(template: TemplateDefinition): string {
 	const layers =
 		template.id === "persistence"
 			? [
-					`authenticated: ${getTemplateLayerDirs(template.id, "authenticated").join(" -> ")}`,
-					`public: ${getTemplateLayerDirs(template.id, "public").join(" -> ")}`,
+					`authenticated: ${getBuiltInTemplateLayerDirs(template.id, "authenticated").join(" -> ")}`,
+					`public: ${getBuiltInTemplateLayerDirs(template.id, "public").join(" -> ")}`,
 				]
-			: [getTemplateLayerDirs(template.id).join(" -> ")];
+			: [getBuiltInTemplateLayerDirs(template.id).join(" -> ")];
 	return [
 		template.id,
 		template.description,
@@ -253,11 +253,11 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 			template.id === "persistence"
 				? Array.from(
 						new Set([
-							...getTemplateLayerDirs(template.id, "authenticated"),
-							...getTemplateLayerDirs(template.id, "public"),
+							...getBuiltInTemplateLayerDirs(template.id, "authenticated"),
+							...getBuiltInTemplateLayerDirs(template.id, "public"),
 						]),
 					)
-				: getTemplateLayerDirs(template.id);
+				: getBuiltInTemplateLayerDirs(template.id);
 		const hasAssets =
 			layerDirs.every((layerDir) => fs.existsSync(layerDir)) &&
 			layerDirs.some((layerDir) => fs.existsSync(path.join(layerDir, "package.json.mustache"))) &&

@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
-import { execFileSync } from 'node:child_process';
+import wpEnvUtils from './wp-env-utils.cjs';
+
+const { runWpCli } = wpEnvUtils;
 
 const baseUrl = process.argv[2] ?? 'http://localhost:8889';
 const timeoutMs = Number.parseInt(process.argv[3] ?? '180000', 10);
@@ -27,21 +29,12 @@ function looksLikeInstall(html) {
 	);
 }
 
-function runWpCli(configPath, args) {
-	const command = process.platform === 'win32' ? 'wp-env.cmd' : 'wp-env';
-	return execFileSync(command, ['run', 'cli', `--config=${configPath}`, 'wp', ...args], {
-		encoding: 'utf8',
-		stdio: 'pipe',
-		shell: process.platform === 'win32',
-	});
-}
-
 function ensureWordPressInstalled(configPath) {
 	try {
-		runWpCli(configPath, ['core', 'is-installed']);
+		runWpCli(['core', 'is-installed'], { configPath });
 		return false;
 	} catch {
-		runWpCli(configPath, [
+		runWpCli([
 			'core',
 			'install',
 			`--url=${baseUrl}`,
@@ -50,7 +43,7 @@ function ensureWordPressInstalled(configPath) {
 			'--admin_password=password',
 			'--admin_email=admin@example.com',
 			'--skip-email',
-		]);
+		], { configPath });
 		return true;
 	}
 }
