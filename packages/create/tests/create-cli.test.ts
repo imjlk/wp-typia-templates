@@ -95,6 +95,11 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedValidators).toContain("prune");
 		expect(readme).toContain("npm install");
 		expect(readme).toContain("npm run start");
+		expect(readme).toContain("## Optional First Sync");
+		expect(readme).toContain("npm run sync-types");
+		expect(readme).not.toContain("npm run sync-rest");
+		expect(readme).toContain("already run the relevant sync scripts");
+		expect(readme).toContain("do not create migration history");
 	});
 
 	test("scaffoldProject creates an interactivity template with typed validation wiring", async () => {
@@ -161,6 +166,7 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 		const generatedRender = fs.readFileSync(path.join(targetDir, "src", "render.php"), "utf8");
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
+		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 
 		expect(packageJson.devDependencies["@wp-typia/rest"]).toBe(restPackageVersion);
 		expect(packageJson.scripts.build).toBe(
@@ -172,6 +178,9 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedSyncRest).toContain("syncTypeSchemas");
 		expect(generatedRender).toContain("publicWriteToken");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
+		expect(readme).toContain("npm run sync-types");
+		expect(readme).toContain("npm run sync-rest");
+		expect(readme).toContain("src/api-types.ts");
 	});
 
 	test("scaffoldProject creates a persistence template with authenticated writes by default", async () => {
@@ -225,6 +234,7 @@ describe("@wp-typia/create scaffolding", () => {
 
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 		const pluginBootstrap = fs.readFileSync(path.join(targetDir, "demo-compound.php"), "utf8");
+		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 		const parentBlockJson = JSON.parse(
 			fs.readFileSync(path.join(targetDir, "src", "blocks", "demo-compound", "block.json"), "utf8"),
 		);
@@ -240,6 +250,9 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(parentBlockJson.name).toBe("create-block/demo-compound");
 		expect(childBlockJson.parent).toEqual(["create-block/demo-compound"]);
 		expect(childBlockJson.supports.inserter).toBe(false);
+		expect(readme).toContain("npm run sync-types");
+		expect(readme).not.toContain("npm run sync-rest");
+		expect(readme).toContain("src/blocks/*/types.ts");
 	});
 
 	test("compound scaffolds enable authenticated persistence when only data storage is provided", async () => {
@@ -263,6 +276,7 @@ describe("@wp-typia/create scaffolding", () => {
 
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 		const pluginBootstrap = fs.readFileSync(path.join(targetDir, "demo-compound-storage.php"), "utf8");
+		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 		const parentBlockJson = JSON.parse(
 			fs.readFileSync(
 				path.join(targetDir, "src", "blocks", "demo-compound-storage", "block.json"),
@@ -277,6 +291,8 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("can_write_authenticated");
 		expect(parentBlockJson.render).toBe("file:./render.php");
 		expect(parentBlockJson.viewScriptModule).toBe("file:./interactivity.js");
+		expect(readme).toContain("npm run sync-rest");
+		expect(readme).toContain("src/blocks/*/api-types.ts");
 	});
 
 	test("compound scaffolds enable public persistence when only a public policy is provided", async () => {
@@ -328,6 +344,15 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(flow.result.variables.dataStorageMode).toBe("custom-table");
 		expect(flow.result.variables.persistencePolicy).toBe("authenticated");
 		expect(pluginBootstrap).toContain("custom-table");
+		expect(flow.nextSteps).toEqual([
+			`cd ${projectInput}`,
+			"npm install",
+			"npm run start",
+		]);
+		expect(flow.optionalOnboarding.steps).toEqual([
+			"npm run sync-types",
+			"npm run sync-rest",
+		]);
 	});
 
 	test("runScaffoldFlow accepts prompted persistence policy selections in interactive mode", async () => {
@@ -352,6 +377,30 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(flow.result.variables.dataStorageMode).toBe("post-meta");
 		expect(flow.result.variables.persistencePolicy).toBe("public");
 		expect(pluginBootstrap).toContain("_verify_public_write_token");
+		expect(flow.optionalOnboarding.steps).toEqual([
+			"npm run sync-types",
+			"npm run sync-rest",
+		]);
+	});
+
+	test("runScaffoldFlow keeps compound next steps minimal while surfacing optional sync guidance", async () => {
+		const projectInput = "demo-compound-flow";
+		const flow = await runScaffoldFlow({
+			cwd: tempRoot,
+			noInstall: true,
+			packageManager: "npm",
+			projectInput,
+			templateId: "compound",
+			yes: true,
+		});
+
+		expect(flow.nextSteps).toEqual([
+			`cd ${projectInput}`,
+			"npm install",
+			"npm run start",
+		]);
+		expect(flow.optionalOnboarding.steps).toEqual([ "npm run sync-types" ]);
+		expect(flow.optionalOnboarding.note).toContain("do not create migration history");
 	});
 
 	test("runScaffoldFlow rejects unsupported persistence policies", async () => {

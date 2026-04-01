@@ -185,6 +185,13 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 		for (const step of flow.nextSteps) {
 			console.log(`  ${step}`);
 		}
+		if (flow.optionalOnboarding.steps.length > 0) {
+			console.log("\nOptional before first commit:");
+			for (const step of flow.optionalOnboarding.steps) {
+				console.log(`  ${step}`);
+			}
+			console.log(`Note: ${flow.optionalOnboarding.note}`);
+		}
 	} finally {
 		prompt.close();
 	}
