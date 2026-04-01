@@ -29,7 +29,7 @@ Controls which persistence layer is applied when materializing the built-in
 
 #### Defined in
 
-[packages/create/src/runtime/template-builtins.ts:17](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L17)
+[packages/create/src/runtime/template-builtins.ts:18](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L18)
 
 ## Functions
 
@@ -56,7 +56,7 @@ resolve to the shared base plus their own template directory.
 
 #### Defined in
 
-[packages/create/src/runtime/template-builtins.ts:43](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L43)
+[packages/create/src/runtime/template-builtins.ts:44](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L44)
 
 ___
 
@@ -84,4 +84,4 @@ removed before the error is rethrown.
 
 #### Defined in
 
-[packages/create/src/runtime/template-builtins.ts:90](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L90)
+[packages/create/src/runtime/template-builtins.ts:101](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L101)

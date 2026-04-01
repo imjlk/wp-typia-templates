@@ -19,7 +19,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/template-builtins.ts:20](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L20)
+[packages/create/src/runtime/template-builtins.ts:21](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L21)
 
 ___
 
@@ -29,4 +29,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-builtins.ts:21](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L21)
+[packages/create/src/runtime/template-builtins.ts:22](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-builtins.ts#L22)
