@@ -148,19 +148,19 @@ Open `src/api-types.ts` to define your REST contracts:
 ```typescript
 import { tags } from 'typia';
 
-export interface MyCounterCounterQuery {
+export interface MyCounterStateQuery {
   postId: number & tags.Type<'uint32'>;
   resourceKey: string & tags.MinLength<1> & tags.MaxLength<100>;
 }
 
-export interface MyCounterIncrementRequest {
+export interface MyCounterWriteStateRequest {
   postId: number & tags.Type<'uint32'>;
   publicWriteToken?: string & tags.MinLength<1> & tags.MaxLength<512>;
   resourceKey: string & tags.MinLength<1> & tags.MaxLength<100>;
   delta?: number & tags.Minimum<1> & tags.Type<'uint32'> & tags.Default<1>;
 }
 
-export interface MyCounterCounterResponse {
+export interface MyCounterStateResponse {
   postId: number & tags.Type<'uint32'>;
   resourceKey: string & tags.MinLength<1> & tags.MaxLength<100>;
   count: number & tags.Minimum<0> & tags.Type<'uint32'>;
@@ -180,48 +180,48 @@ import {
 } from '@wp-typia/rest';
 import { apiValidators } from './api-validators';
 import type {
-  MyCounterCounterQuery,
-  MyCounterCounterResponse,
-  MyCounterIncrementRequest,
+  MyCounterStateQuery,
+  MyCounterStateResponse,
+  MyCounterWriteStateRequest,
 } from './api-types';
 
-const COUNTER_PATH = '/create-block/v1/my-counter/counter';
+const STATE_PATH = '/create-block/v1/my-counter/state';
 
-export const counterEndpoint = createEndpoint<
-  MyCounterCounterQuery,
-  MyCounterCounterResponse
+export const stateEndpoint = createEndpoint<
+  MyCounterStateQuery,
+  MyCounterStateResponse
 >({
   buildRequestOptions: () => ({
-    url: resolveRestRouteUrl(COUNTER_PATH),
+    url: resolveRestRouteUrl(STATE_PATH),
   }),
   method: 'GET',
-  path: COUNTER_PATH,
-  validateRequest: apiValidators.counterQuery,
-  validateResponse: apiValidators.counterResponse,
+  path: STATE_PATH,
+  validateRequest: apiValidators.stateQuery,
+  validateResponse: apiValidators.stateResponse,
 });
 
-export const incrementCounterEndpoint = createEndpoint<
-  MyCounterIncrementRequest,
-  MyCounterCounterResponse
+export const writeStateEndpoint = createEndpoint<
+  MyCounterWriteStateRequest,
+  MyCounterStateResponse
 >({
   buildRequestOptions: () => ({
-    url: resolveRestRouteUrl(COUNTER_PATH),
+    url: resolveRestRouteUrl(STATE_PATH),
   }),
   method: 'POST',
-  path: COUNTER_PATH,
-  validateRequest: apiValidators.incrementRequest,
-  validateResponse: apiValidators.counterResponse,
+  path: STATE_PATH,
+  validateRequest: apiValidators.writeStateRequest,
+  validateResponse: apiValidators.stateResponse,
 });
 
-export function fetchCounter(request: MyCounterCounterQuery) {
-  return callEndpoint(counterEndpoint, request);
+export function fetchState(request: MyCounterStateQuery) {
+  return callEndpoint(stateEndpoint, request);
 }
 
-export function incrementCounter(
-  request: MyCounterIncrementRequest,
+export function writeState(
+  request: MyCounterWriteStateRequest,
   restNonce?: string
 ) {
-  return callEndpoint(incrementCounterEndpoint, request, {
+  return callEndpoint(writeStateEndpoint, request, {
     requestOptions: restNonce
       ? {
           headers: {
@@ -233,7 +233,7 @@ export function incrementCounter(
 }
 ```
 
-The default namespace is `create-block`, so the generated route is `/create-block/v1/my-counter/counter` unless you change the namespace during scaffolding.
+The default namespace is `create-block`, so the generated route is `/create-block/v1/my-counter/state` unless you change the namespace during scaffolding.
 
 ## Step 6: Implement Frontend Interactivity
 
@@ -241,7 +241,7 @@ The `src/interactivity.ts` file uses the WordPress Interactivity API:
 
 ```typescript
 import { getContext, store } from '@wordpress/interactivity';
-import { fetchCounter, incrementCounter } from './api';
+import { fetchState, writeState } from './api';
 import type { MyCounterContext, MyCounterState } from './types';
 
 function hasExpiredPublicWriteToken(context: MyCounterContext): boolean {
@@ -281,7 +281,7 @@ const { actions, state } = store('my-counter', {
       state.error = undefined;
 
       try {
-        const result = await fetchCounter({
+        const result = await fetchState({
           postId: context.postId,
           resourceKey: context.resourceKey,
         });
@@ -321,7 +321,7 @@ const { actions, state } = store('my-counter', {
       state.error = undefined;
 
       try {
-        const result = await incrementCounter(
+        const result = await writeState(
           {
             delta: 1,
             postId: context.postId,
@@ -479,14 +479,14 @@ Typical flow:
 
 ```bash
 # Get counter value
-curl "http://localhost:8888/wp-json/create-block/v1/my-counter/counter?postId=1&resourceKey=primary"
+curl "http://localhost:8888/wp-json/create-block/v1/my-counter/state?postId=1&resourceKey=primary"
 
 # Increment counter (default authenticated policy)
 curl -X POST \
   -H "X-WP-Nonce: <wp-rest-nonce>" \
   -H "Content-Type: application/json" \
   -d '{"postId":1,"resourceKey":"primary","delta":1}' \
-  "http://localhost:8888/wp-json/create-block/v1/my-counter/counter"
+  "http://localhost:8888/wp-json/create-block/v1/my-counter/state"
 ```
 
 If you scaffold with `--persistence-policy public`, send the `publicWriteToken` that the block render embeds in its frontend context instead of a REST nonce.
