@@ -455,6 +455,12 @@ You only need to run `npm run sync-types` / `npm run sync-rest` manually when yo
 
 For persistence scaffolds, `src/api.openapi.json` is the canonical REST document because it includes the actual route paths, methods, and auth policy metadata. The files in `src/api-schemas/` remain useful per-contract artifacts for validation and compatibility.
 
+For actual customization work:
+
+- edit `my-counter.php` when you need to change storage helpers, route handlers, response shaping, or route registration
+- edit `inc/rest-auth.php` or `inc/rest-public.php` when you need to change the write permission policy
+- keep `src/api-types.ts` as the source of truth for contracts and regenerate `src/api-schemas/*` plus `src/api.openapi.json` instead of hand-maintaining those generated artifacts
+
 These schemas can be used for:
 - API documentation
 - Client SDK generation
