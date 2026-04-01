@@ -4,7 +4,7 @@ export interface {{pascalCase}}ItemAttributes {
 	title: string &
 		tags.MinLength< 1 > &
 		tags.MaxLength< 80 > &
-		tags.Default< '{{compoundChildTitle}}' >;
+		tags.Default< {{compoundChildTitleJson}} >;
 	body: string &
 		tags.MinLength< 1 > &
 		tags.MaxLength< 280 > &

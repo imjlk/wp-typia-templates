@@ -11,7 +11,7 @@ export default function Save( {
 		<div
 			{ ...useBlockProps.save( {
 				className: '{{cssClassName}}',
-				'data-show-dividers': attributes.showDividers ?? true ? 'true' : 'false',
+				'data-show-dividers': ( attributes.showDividers ?? true ) ? 'true' : 'false',
 			} ) }
 		>
 			<RichText.Content

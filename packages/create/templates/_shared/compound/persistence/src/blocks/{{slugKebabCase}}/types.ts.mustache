@@ -13,7 +13,7 @@ export interface {{pascalCase}}Attributes {
 	heading: string &
 		tags.MinLength< 1 > &
 		tags.MaxLength< 80 > &
-		tags.Default< '{{title}}' >;
+		tags.Default< {{titleJson}} >;
 	intro?: string &
 		tags.MinLength< 1 > &
 		tags.MaxLength< 180 > &

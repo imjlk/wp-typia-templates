@@ -3,7 +3,7 @@
 	"apiVersion": 3,
 	"name": "{{namespace}}/{{slugKebabCase}}",
 	"version": "0.1.0",
-	"title": "{{title}}",
+	"title": {{titleJson}},
 	"category": "widgets",
 	"icon": "screenoptions",
 	"description": "{{description}}",
@@ -18,7 +18,7 @@
 			"type": "string",
 			"source": "html",
 			"selector": ".{{cssClassName}}__heading",
-			"default": "{{title}}"
+			"default": {{titleJson}}
 		},
 		"intro": {
 			"type": "string",

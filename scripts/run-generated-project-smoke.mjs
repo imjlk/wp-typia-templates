@@ -373,10 +373,17 @@ function main() {
 			assertCompoundPersistenceArtifacts(projectDir, projectName);
 		}
 		for (const artifact of [
+			path.join(projectDir, `${projectName}.php`),
+			path.join(projectDir, "src", "render.php"),
+			path.join(projectDir, "src", "blocks", projectName, "render.php"),
 			path.join(projectDir, "build", projectName, "typia-validator.php"),
+			path.join(projectDir, "build", projectName, "render.php"),
 			path.join(projectDir, "build", "typia-validator.php"),
+			path.join(projectDir, "build", "render.php"),
 			path.join(projectDir, "build", "blocks", projectName, "typia-validator.php"),
+			path.join(projectDir, "build", "blocks", projectName, "render.php"),
 			path.join(projectDir, "build", "blocks", `${projectName}-item`, "typia-validator.php"),
+			path.join(projectDir, "build", "blocks", `${projectName}-item`, "render.php"),
 		]) {
 			if (fs.existsSync(artifact)) {
 				lintPhpArtifact(artifact);

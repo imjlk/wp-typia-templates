@@ -17,7 +17,7 @@ export default function Edit( {
 				className="wp-block-{{slugKebabCase}}-item__title"
 				value={ attributes.title }
 				onChange={ ( title ) => setAttributes( { title } ) }
-				placeholder={ __( '{{compoundChildTitle}}', '{{slugSnakeCase}}' ) }
+				placeholder={ __( {{compoundChildTitleJson}}, '{{slugSnakeCase}}' ) }
 			/>
 			<RichText
 				tagName="p"

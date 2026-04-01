@@ -3,7 +3,7 @@
 	"apiVersion": 3,
 	"name": "{{namespace}}/{{slugKebabCase}}-item",
 	"version": "0.1.0",
-	"title": "{{compoundChildTitle}}",
+	"title": {{compoundChildTitleJson}},
 	"category": "widgets",
 	"icon": "excerpt-view",
 	"description": "Internal item block used by {{title}}.",
@@ -21,7 +21,7 @@
 			"type": "string",
 			"source": "html",
 			"selector": ".wp-block-{{slugKebabCase}}-item__title",
-			"default": "{{compoundChildTitle}}"
+			"default": {{compoundChildTitleJson}}
 		},
 		"body": {
 			"type": "string",

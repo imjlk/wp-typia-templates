@@ -82,7 +82,7 @@ export default function Edit( {
 					className="{{cssClassName}}__heading"
 					value={ attributes.heading }
 					onChange={ ( heading ) => setAttributes( { heading } ) }
-					placeholder={ __( '{{title}}', '{{slugSnakeCase}}' ) }
+					placeholder={ __( {{titleJson}}, '{{slugSnakeCase}}' ) }
 				/>
 				<RichText
 					tagName="p"

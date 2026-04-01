@@ -7,7 +7,12 @@ import { BLOCKS } from './block-config';
 
 async function main() {
 	for ( const block of BLOCKS ) {
-		if ( ! ( 'apiTypesFile' in block ) || ! block.apiTypesFile || ! block.contracts.length ) {
+		if (
+			! ( 'apiTypesFile' in block ) ||
+			! block.apiTypesFile ||
+			! Array.isArray( block.contracts ) ||
+			block.contracts.length === 0
+		) {
 			continue;
 		}
 

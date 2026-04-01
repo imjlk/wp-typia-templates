@@ -46,6 +46,7 @@ export interface ScaffoldTemplateVariables {
 	blockTypesPackageVersion: string;
 	category: string;
 	compoundChildTitle: string;
+	compoundChildTitleJson: string;
 	compoundPersistenceEnabled: "false" | "true";
 	createPackageVersion: string;
 	cssClassName: string;
@@ -65,6 +66,7 @@ export interface ScaffoldTemplateVariables {
 	textDomain: string;
 	textdomain: string;
 	title: string;
+	titleJson: string;
 	titleCase: string;
 	persistencePolicy: PersistencePolicy;
 }
@@ -303,6 +305,7 @@ export function getTemplateVariables(
 	const title = answers.title.trim();
 	const namespace = answers.namespace.trim();
 	const description = answers.description.trim();
+	const compoundChildTitle = `${title} Item`;
 	const compoundPersistenceEnabled =
 		templateId === "persistence"
 			? true
@@ -322,7 +325,8 @@ export function getTemplateVariables(
 		author: answers.author.trim(),
 		blockTypesPackageVersion,
 		category: template?.defaultCategory ?? "widgets",
-		compoundChildTitle: `${title} Item`,
+		compoundChildTitle,
+		compoundChildTitleJson: JSON.stringify(compoundChildTitle),
 		compoundPersistenceEnabled: compoundPersistenceEnabled ? "true" : "false",
 		createPackageVersion,
 		cssClassName: `wp-block-${slug}`,
@@ -342,6 +346,7 @@ export function getTemplateVariables(
 		textDomain: slugSnakeCase,
 		textdomain: slugSnakeCase,
 		title,
+		titleJson: JSON.stringify(title),
 		titleCase: pascalCase,
 		persistencePolicy,
 	};
