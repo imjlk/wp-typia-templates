@@ -55,25 +55,27 @@ function {{phpPrefix}}_get_public_write_lock_key( $post_id, $resource_key, $scop
 }
 
 function {{phpPrefix}}_with_public_write_lock( $post_id, $resource_key, $scope, $callback, $lock_subject = '' ) {
-	$lock_key   = {{phpPrefix}}_get_public_write_lock_key( $post_id, $resource_key, $scope, $lock_subject );
-	$expires_at = time() + 5;
+	global $wpdb;
 
-	for ( $attempt = 0; $attempt < 5; $attempt++ ) {
-		if ( add_option( $lock_key, $expires_at, '', false ) ) {
-			try {
-				return $callback();
-			} finally {
-				delete_option( $lock_key );
-			}
+	$lock_key = {{phpPrefix}}_get_public_write_lock_key( $post_id, $resource_key, $scope, $lock_subject );
+	$acquired = (int) $wpdb->get_var(
+		$wpdb->prepare(
+			'SELECT GET_LOCK(%s, 5)',
+			$lock_key
+		)
+	);
+
+	if ( 1 === $acquired ) {
+		try {
+			return $callback();
+		} finally {
+			$wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT RELEASE_LOCK(%s)',
+					$lock_key
+				)
+			);
 		}
-
-		$current_expiration = (int) get_option( $lock_key, 0 );
-		if ( $current_expiration > 0 && $current_expiration < time() ) {
-			delete_option( $lock_key );
-			continue;
-		}
-
-		usleep( 50000 );
 	}
 
 	return new WP_Error(

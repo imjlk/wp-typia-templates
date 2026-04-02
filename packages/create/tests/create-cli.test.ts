@@ -209,6 +209,8 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(restPublicHelper).toContain("function demo_persistence_public_verify_public_write_token");
 		expect(restPublicHelper).toContain("function demo_persistence_public_consume_public_write_request_id");
 		expect(restPublicHelper).toContain("function demo_persistence_public_enforce_public_write_rate_limit");
+		expect(restPublicHelper).toContain("SELECT GET_LOCK(%s, 5)");
+		expect(restPublicHelper).toContain("SELECT RELEASE_LOCK(%s)");
 		expect(generatedApi).toContain("@wp-typia/rest");
 		expect(generatedSyncRest).toContain("syncTypeSchemas");
 		expect(generatedSyncRest).toContain("defineEndpointManifest");
@@ -589,6 +591,7 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 		expect(restPublicHelper).toContain("function demo_compound_public_verify_public_write_token");
 		expect(restPublicHelper).toContain("function demo_compound_public_consume_public_write_request_id");
+		expect(restPublicHelper).toContain("SELECT GET_LOCK(%s, 5)");
 		expect(parentRender).toContain("publicWriteToken");
 		expect(generatedApiTypes).toContain("publicWriteRequestId: string");
 		expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
