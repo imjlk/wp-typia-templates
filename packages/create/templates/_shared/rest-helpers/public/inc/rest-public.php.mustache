@@ -44,14 +44,18 @@ function {{phpPrefix}}_get_public_write_request_replay_key( $post_id, $resource_
 	);
 }
 
-function {{phpPrefix}}_get_public_write_lock_key( $post_id, $resource_key, $scope ) {
+function {{phpPrefix}}_get_public_write_lock_key( $post_id, $resource_key, $scope, $lock_subject = '' ) {
+	$lock_subject = is_string( $lock_subject ) && '' !== $lock_subject
+		? $lock_subject
+		: {{phpPrefix}}_get_public_write_client_subject();
+
 	return '{{phpPrefix}}_public_write_lock_' . md5(
-		(string) $scope . '|' . (int) $post_id . '|' . (string) $resource_key . '|' . {{phpPrefix}}_get_public_write_client_subject()
+		(string) $scope . '|' . (int) $post_id . '|' . (string) $resource_key . '|' . $lock_subject
 	);
 }
 
-function {{phpPrefix}}_with_public_write_lock( $post_id, $resource_key, $scope, $callback ) {
-	$lock_key   = {{phpPrefix}}_get_public_write_lock_key( $post_id, $resource_key, $scope );
+function {{phpPrefix}}_with_public_write_lock( $post_id, $resource_key, $scope, $callback, $lock_subject = '' ) {
+	$lock_key   = {{phpPrefix}}_get_public_write_lock_key( $post_id, $resource_key, $scope, $lock_subject );
 	$expires_at = time() + 5;
 
 	for ( $attempt = 0; $attempt < 5; $attempt++ ) {
@@ -133,7 +137,8 @@ function {{phpPrefix}}_consume_public_write_request_id( $post_id, $resource_key,
 			set_transient( $key, 1, (int) {{phpPrefix}}_PUBLIC_WRITE_TTL );
 
 			return true;
-		}
+		},
+		$request_id
 	);
 }
 

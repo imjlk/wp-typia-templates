@@ -285,6 +285,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(restAuthHelper).toContain("function demo_persistence_authenticated_can_write_authenticated");
 		expect(generatedRender).toContain("Sign in to persist this counter.");
 		expect(generatedApiTypes).toContain("publicWriteRequestId?: string");
+		expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
 		expect(readme).toContain("## PHP REST Extension Points");
 		expect(readme).toContain("Edit `demo-persistence-authenticated.php`");
@@ -506,6 +507,10 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "scripts", "block-config.ts"),
 			"utf8",
 		);
+		const generatedApiTypes = fs.readFileSync(
+			path.join(targetDir, "src", "blocks", "demo-compound-storage", "api-types.ts"),
+			"utf8",
+		);
 		const parentBlockJson = JSON.parse(
 			fs.readFileSync(
 				path.join(targetDir, "src", "blocks", "demo-compound-storage", "block.json"),
@@ -528,6 +533,8 @@ describe("@wp-typia/create scaffolding", () => {
 			expect(generatedSyncRest).toContain("manifest: block.restManifest");
 			expect(generatedBlockConfig).toContain("src/blocks/demo-compound-storage/api.openapi.json");
 			expect(generatedBlockConfig).toContain("restManifest: defineEndpointManifest");
+			expect(generatedApiTypes).toContain("publicWriteRequestId?: string");
+			expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
 			expect(generatedBlockConfig).not.toContain("contracts: [");
 			expect(generatedBlockConfig).not.toContain("openApiInfo:");
 			expect(generatedBlockConfig.match(/restManifest: defineEndpointManifest/g)).toHaveLength(1);
@@ -584,6 +591,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(restPublicHelper).toContain("function demo_compound_public_consume_public_write_request_id");
 		expect(parentRender).toContain("publicWriteToken");
 		expect(generatedApiTypes).toContain("publicWriteRequestId: string");
+		expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
 		expect(restPublicHelper).toContain("Customize the public write gate here");
 		expect(readme).toContain("per-request ids, and coarse rate limiting by default");
 	});

@@ -7,9 +7,7 @@ export interface {{pascalCase}}StateQuery {
 
 export interface {{pascalCase}}WriteStateRequest {
 	postId: number & tags.Type< 'uint32' >;
-{{#isPublicPersistencePolicy}}	publicWriteRequestId: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;
-{{/isPublicPersistencePolicy}}{{^isPublicPersistencePolicy}}	publicWriteRequestId?: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;
-{{/isPublicPersistencePolicy}}
+	{{publicWriteRequestIdDeclaration}}
 	publicWriteToken?: string & tags.MinLength< 1 > & tags.MaxLength< 512 >;
 	resourceKey: string & tags.MinLength< 1 > & tags.MaxLength< 100 >;
 	delta?: number & tags.Minimum< 1 > & tags.Type< 'uint32' > & tags.Default< 1 >;
