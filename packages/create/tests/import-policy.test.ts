@@ -66,5 +66,6 @@ describe("@wp-typia/create import policy", () => {
 		expect(importPolicyDoc).toContain("@wp-typia/create/runtime/validation");
 		expect(importPolicyDoc).toContain("@wp-typia/create/metadata-core");
 		expect(importPolicyDoc).toContain("@wp-typia/create/runtime/schema-core");
+		expect(importPolicyDoc).toContain("@wp-typia/create");
 	});
 });
