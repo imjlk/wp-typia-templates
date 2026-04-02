@@ -20,6 +20,7 @@ export {
 } from "./editor.js";
 export {
 	manifestAttributeToJsonSchema,
+	projectJsonSchemaDocument,
 	manifestToJsonSchema,
 	manifestToOpenApi,
 } from "./schema-core.js";
@@ -30,6 +31,7 @@ export type {
 	EndpointOpenApiEndpointDefinition,
 	EndpointOpenApiMethod,
 	JsonSchemaDocument,
+	JsonSchemaProjectionProfile,
 	JsonSchemaObject,
 	OpenApiDocument,
 	OpenApiInfo,
