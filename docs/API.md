@@ -102,6 +102,8 @@ Generated projects can also import shared runtime helpers from `@wp-typia/create
 - `@wp-typia/create/runtime/validation`
 - `@wp-typia/create/runtime/editor`
 
+For a repo-backed audit of the current `@wp-typia/create` runtime surface and how it is classified today, see [`docs/runtime-surface.md`](./runtime-surface.md).
+
 The `runtime/editor` helper turns manifest metadata into editor control hints without trying to auto-generate the entire inspector UI.
 
 ```ts
