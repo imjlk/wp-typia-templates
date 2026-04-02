@@ -181,7 +181,7 @@ For persistence-capable scaffolds, generated PHP stays intentionally boring glue
 
 - edit the plugin bootstrap file when you need to customize storage helpers, route handlers, response shaping, or route registration
 - edit `inc/rest-auth.php` or `inc/rest-public.php` when you need to customize write permission policy
-- regenerate `src/api-schemas/*` and `src/api.openapi.json` from `src/api-types.ts` instead of treating those generated artifacts as hand-maintained sources
+- update the endpoint manifest alongside `src/api-types.ts`, then regenerate `src/api-schemas/*` and `src/api.openapi.json` instead of treating those generated artifacts as hand-maintained sources
 
 The `migrations` commands remain available for projects that include the migration workspace, such as the repo-local reference app in [`examples/my-typia-block`](../../examples/my-typia-block) or compatible remote seeds:
 
