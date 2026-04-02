@@ -199,7 +199,10 @@ function overlayCounterAbilityInputSchema(
 		typeof properties.publicWriteToken === 'object' &&
 		! Array.isArray( properties.publicWriteToken )
 			? {
-					...( properties.publicWriteToken as Record< string, unknown > ),
+					...( properties.publicWriteToken as Record<
+						string,
+						unknown
+					> ),
 			  }
 			: null;
 
