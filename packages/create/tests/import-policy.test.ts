@@ -7,14 +7,21 @@ const repoRoot = path.resolve(packageRoot, "..", "..");
 
 describe("@wp-typia/create import policy", () => {
 	test("supported generated-project import paths resolve from the built package", async () => {
-		const [rootModule, metadataCoreModule, defaultsModule, editorModule, validationModule] =
-			await Promise.all([
-				import("@wp-typia/create"),
-				import("@wp-typia/create/metadata-core"),
-				import("@wp-typia/create/runtime/defaults"),
-				import("@wp-typia/create/runtime/editor"),
-				import("@wp-typia/create/runtime/validation"),
-			]);
+		const [
+			rootModule,
+			metadataCoreModule,
+			defaultsModule,
+			editorModule,
+			validationModule,
+			schemaCoreModule,
+		] = await Promise.all([
+			import("@wp-typia/create"),
+			import("@wp-typia/create/metadata-core"),
+			import("@wp-typia/create/runtime/defaults"),
+			import("@wp-typia/create/runtime/editor"),
+			import("@wp-typia/create/runtime/validation"),
+			import("@wp-typia/create/runtime/schema-core"),
+		]);
 
 		expect(typeof rootModule.applyTemplateDefaultsFromManifest).toBe("function");
 		expect(typeof rootModule.createEditorModel).toBe("function");
@@ -31,6 +38,8 @@ describe("@wp-typia/create import policy", () => {
 		expect(typeof editorModule.createEditorModel).toBe("function");
 		expect(typeof validationModule.createAttributeUpdater).toBe("function");
 		expect(typeof validationModule.toValidationResult).toBe("function");
+		expect(typeof schemaCoreModule.projectJsonSchemaDocument).toBe("function");
+		expect(typeof schemaCoreModule.manifestToOpenApi).toBe("function");
 	});
 
 	test("public docs point to the normative import policy", () => {
