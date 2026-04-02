@@ -267,24 +267,29 @@ function persistence_examples_get_counter_rate_limit_key( $post_id, $resource_ke
 }
 
 function persistence_examples_enforce_counter_rate_limit( $post_id, $resource_key ) {
-	$key   = persistence_examples_get_counter_rate_limit_key( $post_id, $resource_key );
-	$count = (int) get_transient( $key );
+	return persistence_examples_with_lock(
+		persistence_examples_get_counter_rate_limit_key( $post_id, $resource_key ),
+		function() use ( $post_id, $resource_key ) {
+			$key   = persistence_examples_get_counter_rate_limit_key( $post_id, $resource_key );
+			$count = (int) get_transient( $key );
 
-	if ( $count >= (int) PERSISTENCE_EXAMPLES_PUBLIC_WRITE_RATE_LIMIT_MAX ) {
-		return new WP_Error(
-			'rest_rate_limited',
-			'Too many public write attempts. Wait a minute and try again.',
-			array( 'status' => 429 )
-		);
-	}
+			if ( $count >= (int) PERSISTENCE_EXAMPLES_PUBLIC_WRITE_RATE_LIMIT_MAX ) {
+				return new WP_Error(
+					'rest_rate_limited',
+					'Too many public write attempts. Wait a minute and try again.',
+					array( 'status' => 429 )
+				);
+			}
 
-	set_transient(
-		$key,
-		$count + 1,
-		(int) PERSISTENCE_EXAMPLES_PUBLIC_WRITE_RATE_LIMIT_WINDOW
+			set_transient(
+				$key,
+				$count + 1,
+				(int) PERSISTENCE_EXAMPLES_PUBLIC_WRITE_RATE_LIMIT_WINDOW
+			);
+
+			return true;
+		}
 	);
-
-	return true;
 }
 
 function persistence_examples_get_counter_replay_key( $post_id, $resource_key, $request_id ) {
@@ -302,18 +307,31 @@ function persistence_examples_consume_counter_request_id( $post_id, $resource_ke
 		);
 	}
 
-	$key = persistence_examples_get_counter_replay_key( $post_id, $resource_key, $request_id );
-	if ( false !== get_transient( $key ) ) {
-		return new WP_Error(
-			'rest_conflict',
-			'This public write request was already processed.',
-			array( 'status' => 409 )
-		);
+	return persistence_examples_with_lock(
+		persistence_examples_get_counter_replay_key( $post_id, $resource_key, $request_id ),
+		function() use ( $post_id, $resource_key, $request_id ) {
+			$key = persistence_examples_get_counter_replay_key( $post_id, $resource_key, $request_id );
+			if ( false !== get_transient( $key ) ) {
+				return new WP_Error(
+					'rest_conflict',
+					'This public write request was already processed.',
+					array( 'status' => 409 )
+				);
+			}
+
+			set_transient( $key, 1, (int) PERSISTENCE_EXAMPLES_PUBLIC_WRITE_TTL );
+
+			return true;
+		}
+	);
+}
+
+function persistence_examples_release_counter_request_id( $post_id, $resource_key, $request_id ) {
+	if ( ! is_string( $request_id ) || '' === $request_id ) {
+		return;
 	}
 
-	set_transient( $key, 1, (int) PERSISTENCE_EXAMPLES_PUBLIC_WRITE_TTL );
-
-	return true;
+	delete_transient( persistence_examples_get_counter_replay_key( $post_id, $resource_key, $request_id ) );
 }
 
 function persistence_examples_create_counter_public_write_token( $post_id, $resource_key ) {
@@ -539,6 +557,11 @@ function persistence_examples_handle_increment_counter( WP_REST_Request $request
 	);
 
 	if ( is_wp_error( $count ) ) {
+		persistence_examples_release_counter_request_id(
+			(int) $payload['postId'],
+			(string) $payload['resourceKey'],
+			isset( $payload['publicWriteRequestId'] ) ? (string) $payload['publicWriteRequestId'] : ''
+		);
 		return $count;
 	}
 

@@ -241,6 +241,11 @@ function {{phpPrefix}}_handle_write_state( WP_REST_Request $request ) {
 	);
 
 	if ( is_wp_error( $count ) ) {
+		{{phpPrefix}}_release_public_write_request_id(
+			(int) $payload['postId'],
+			(string) $payload['resourceKey'],
+			isset( $payload['publicWriteRequestId'] ) ? (string) $payload['publicWriteRequestId'] : ''
+		);
 		return $count;
 	}
 

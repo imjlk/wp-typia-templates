@@ -220,7 +220,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedSyncRest).toContain("src/api.openapi.json");
 		expect(generatedSyncRest).not.toContain("openApiInfo: REST_ENDPOINT_MANIFEST.info");
 		expect(generatedRender).toContain("publicWriteToken");
-		expect(generatedApiTypes).toContain("publicWriteRequestId?: string");
+		expect(generatedApiTypes).toContain("publicWriteRequestId: string");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
 		expect(readme).toContain("npm run sync-types");
 		expect(readme).toContain("npm run sync-rest");
@@ -260,6 +260,10 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 		const restAuthHelper = fs.readFileSync(path.join(targetDir, "inc", "rest-auth.php"), "utf8");
 		const generatedRender = fs.readFileSync(path.join(targetDir, "src", "render.php"), "utf8");
+		const generatedApiTypes = fs.readFileSync(
+			path.join(targetDir, "src", "api-types.ts"),
+			"utf8",
+		);
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
@@ -280,6 +284,7 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 		expect(restAuthHelper).toContain("function demo_persistence_authenticated_can_write_authenticated");
 		expect(generatedRender).toContain("Sign in to persist this counter.");
+		expect(generatedApiTypes).toContain("publicWriteRequestId?: string");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
 		expect(readme).toContain("## PHP REST Extension Points");
 		expect(readme).toContain("Edit `demo-persistence-authenticated.php`");
@@ -578,7 +583,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(restPublicHelper).toContain("function demo_compound_public_verify_public_write_token");
 		expect(restPublicHelper).toContain("function demo_compound_public_consume_public_write_request_id");
 		expect(parentRender).toContain("publicWriteToken");
-		expect(generatedApiTypes).toContain("publicWriteRequestId?: string");
+		expect(generatedApiTypes).toContain("publicWriteRequestId: string");
 		expect(restPublicHelper).toContain("Customize the public write gate here");
 		expect(readme).toContain("per-request ids, and coarse rate limiting by default");
 	});

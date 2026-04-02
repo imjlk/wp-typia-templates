@@ -156,7 +156,7 @@ export interface MyCounterStateQuery {
 
 export interface MyCounterWriteStateRequest {
   postId: number & tags.Type<'uint32'>;
-  publicWriteRequestId?: string & tags.MinLength<1> & tags.MaxLength<128>;
+  publicWriteRequestId: string & tags.MinLength<1> & tags.MaxLength<128>;
   publicWriteToken?: string & tags.MinLength<1> & tags.MaxLength<512>;
   resourceKey: string & tags.MinLength<1> & tags.MaxLength<100>;
   delta?: number & tags.Minimum<1> & tags.Type<'uint32'> & tags.Default<1>;

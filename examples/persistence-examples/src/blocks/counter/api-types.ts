@@ -7,7 +7,7 @@ export interface PersistenceCounterQuery {
 
 export interface PersistenceCounterIncrementRequest {
 	postId: number & tags.Type< 'uint32' >;
-	publicWriteRequestId?: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;
+	publicWriteRequestId: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;
 	resourceKey: string & tags.MinLength< 1 > & tags.MaxLength< 100 >;
 	publicWriteToken?: string & tags.MinLength< 1 > & tags.MaxLength< 512 >;
 	delta?: number &

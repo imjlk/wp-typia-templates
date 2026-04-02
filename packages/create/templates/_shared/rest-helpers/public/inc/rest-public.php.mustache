@@ -38,30 +38,72 @@ function {{phpPrefix}}_get_public_write_rate_limit_key( $post_id, $resource_key 
 	);
 }
 
-function {{phpPrefix}}_enforce_public_write_rate_limit( $post_id, $resource_key ) {
-	$key   = {{phpPrefix}}_get_public_write_rate_limit_key( $post_id, $resource_key );
-	$count = (int) get_transient( $key );
-
-	if ( $count >= (int) {{phpPrefix}}_PUBLIC_WRITE_RATE_LIMIT_MAX ) {
-		return new WP_Error(
-			'rest_rate_limited',
-			'Too many public write attempts. Wait a minute and try again.',
-			array( 'status' => 429 )
-		);
-	}
-
-	set_transient(
-		$key,
-		$count + 1,
-		(int) {{phpPrefix}}_PUBLIC_WRITE_RATE_LIMIT_WINDOW
-	);
-
-	return true;
-}
-
 function {{phpPrefix}}_get_public_write_request_replay_key( $post_id, $resource_key, $request_id ) {
 	return '{{phpPrefix}}_public_write_req_' . (int) $post_id . '_' . md5(
 		(string) $resource_key . '|' . (string) $request_id
+	);
+}
+
+function {{phpPrefix}}_get_public_write_lock_key( $post_id, $resource_key, $scope ) {
+	return '{{phpPrefix}}_public_write_lock_' . md5(
+		(string) $scope . '|' . (int) $post_id . '|' . (string) $resource_key . '|' . {{phpPrefix}}_get_public_write_client_subject()
+	);
+}
+
+function {{phpPrefix}}_with_public_write_lock( $post_id, $resource_key, $scope, $callback ) {
+	$lock_key   = {{phpPrefix}}_get_public_write_lock_key( $post_id, $resource_key, $scope );
+	$expires_at = time() + 5;
+
+	for ( $attempt = 0; $attempt < 5; $attempt++ ) {
+		if ( add_option( $lock_key, $expires_at, '', false ) ) {
+			try {
+				return $callback();
+			} finally {
+				delete_option( $lock_key );
+			}
+		}
+
+		$current_expiration = (int) get_option( $lock_key, 0 );
+		if ( $current_expiration > 0 && $current_expiration < time() ) {
+			delete_option( $lock_key );
+			continue;
+		}
+
+		usleep( 50000 );
+	}
+
+	return new WP_Error(
+		'rest_temporarily_unavailable',
+		'Could not acquire the public write lock.',
+		array( 'status' => 503 )
+	);
+}
+
+function {{phpPrefix}}_enforce_public_write_rate_limit( $post_id, $resource_key ) {
+	return {{phpPrefix}}_with_public_write_lock(
+		$post_id,
+		$resource_key,
+		'rate_limit',
+		function() use ( $post_id, $resource_key ) {
+			$key   = {{phpPrefix}}_get_public_write_rate_limit_key( $post_id, $resource_key );
+			$count = (int) get_transient( $key );
+
+			if ( $count >= (int) {{phpPrefix}}_PUBLIC_WRITE_RATE_LIMIT_MAX ) {
+				return new WP_Error(
+					'rest_rate_limited',
+					'Too many public write attempts. Wait a minute and try again.',
+					array( 'status' => 429 )
+				);
+			}
+
+			set_transient(
+				$key,
+				$count + 1,
+				(int) {{phpPrefix}}_PUBLIC_WRITE_RATE_LIMIT_WINDOW
+			);
+
+			return true;
+		}
 	);
 }
 
@@ -74,18 +116,33 @@ function {{phpPrefix}}_consume_public_write_request_id( $post_id, $resource_key,
 		);
 	}
 
-	$key = {{phpPrefix}}_get_public_write_request_replay_key( $post_id, $resource_key, $request_id );
-	if ( false !== get_transient( $key ) ) {
-		return new WP_Error(
-			'rest_conflict',
-			'This public write request was already processed.',
-			array( 'status' => 409 )
-		);
+	return {{phpPrefix}}_with_public_write_lock(
+		$post_id,
+		$resource_key,
+		'replay',
+		function() use ( $post_id, $resource_key, $request_id ) {
+			$key = {{phpPrefix}}_get_public_write_request_replay_key( $post_id, $resource_key, $request_id );
+			if ( false !== get_transient( $key ) ) {
+				return new WP_Error(
+					'rest_conflict',
+					'This public write request was already processed.',
+					array( 'status' => 409 )
+				);
+			}
+
+			set_transient( $key, 1, (int) {{phpPrefix}}_PUBLIC_WRITE_TTL );
+
+			return true;
+		}
+	);
+}
+
+function {{phpPrefix}}_release_public_write_request_id( $post_id, $resource_key, $request_id ) {
+	if ( ! is_string( $request_id ) || '' === $request_id ) {
+		return;
 	}
 
-	set_transient( $key, 1, (int) {{phpPrefix}}_PUBLIC_WRITE_TTL );
-
-	return true;
+	delete_transient( {{phpPrefix}}_get_public_write_request_replay_key( $post_id, $resource_key, $request_id ) );
 }
 
 // Public write tokens are scaffold-owned by default; customize this flow if you need a different anonymous write policy.

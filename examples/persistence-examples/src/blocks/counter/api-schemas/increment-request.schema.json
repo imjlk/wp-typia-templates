@@ -30,6 +30,7 @@
 	},
 	"required": [
 		"postId",
+		"publicWriteRequestId",
 		"resourceKey"
 	],
 	"title": "PersistenceCounterIncrementRequest",

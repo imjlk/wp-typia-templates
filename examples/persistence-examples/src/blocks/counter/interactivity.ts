@@ -29,7 +29,9 @@ function createPublicWriteRequestId(): string {
 		).join( '' );
 	}
 
-	return `req-${ Date.now() }-${ Math.random().toString( 16 ).slice( 2, 10 ) }`;
+	return `req-${ Date.now() }-${ Math.random()
+		.toString( 16 )
+		.slice( 2, 10 ) }`;
 }
 
 const { actions, state } = store( 'persistenceExamplesCounter', {
