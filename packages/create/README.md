@@ -188,6 +188,8 @@ const aiSafeSchema = projectJsonSchemaDocument(requestSchema, {
 
 `ai-structured-output` is an opt-in derived profile. It does not change the default generated REST/runtime artifacts.
 
+For a repo-backed inventory of the current public runtime surface and how it is used today, see [`docs/runtime-surface.md`](../../docs/runtime-surface.md).
+
 For persistence-capable scaffolds, generated PHP stays intentionally boring glue:
 
 - edit the plugin bootstrap file when you need to customize storage helpers, route handlers, response shaping, or route registration
