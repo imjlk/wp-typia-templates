@@ -171,6 +171,58 @@ function projectSchemaDocument(
 	} ) as JsonSchemaDocument & Record< string, unknown >;
 }
 
+function overlayCounterAbilityInputSchema(
+	endpoint: EndpointManifestEndpointDefinition,
+	schema: ( JsonSchemaDocument & Record< string, unknown > ) | null
+) {
+	if ( ! schema || endpoint.method !== 'POST' ) {
+		return schema;
+	}
+
+	const properties =
+		schema.properties &&
+		typeof schema.properties === 'object' &&
+		! Array.isArray( schema.properties )
+			? { ...( schema.properties as Record< string, unknown > ) }
+			: {};
+	const required = Array.isArray( schema.required )
+		? [ ...schema.required ]
+		: [];
+	const postIdSchema =
+		properties.postId &&
+		typeof properties.postId === 'object' &&
+		! Array.isArray( properties.postId )
+			? { ...( properties.postId as Record< string, unknown > ) }
+			: null;
+	const tokenSchema =
+		properties.publicWriteToken &&
+		typeof properties.publicWriteToken === 'object' &&
+		! Array.isArray( properties.publicWriteToken )
+			? {
+					...( properties.publicWriteToken as Record< string, unknown > ),
+			  }
+			: null;
+
+	if ( postIdSchema ) {
+		postIdSchema.minimum = 1;
+		properties.postId = postIdSchema;
+	}
+
+	if ( tokenSchema ) {
+		properties.publicWriteToken = tokenSchema;
+	}
+
+	if ( ! required.includes( 'publicWriteToken' ) ) {
+		required.push( 'publicWriteToken' );
+	}
+
+	return {
+		...schema,
+		properties,
+		required,
+	};
+}
+
 export async function buildCounterWordPressAiArtifacts( options?: {
 	abilityConfig?: Record< string, WordPressAbilityProjectionConfig >;
 	category?: {
@@ -214,12 +266,15 @@ export async function buildCounterWordPressAiArtifacts( options?: {
 
 			const inputContractName = getEndpointInputContract( endpoint );
 			const inputSchema = inputContractName
-				? projectSchemaDocument(
-						await loadJsonDocument(
-							COUNTER_BLOCK.slug,
-							path.join(
-								'api-schemas',
-								`${ inputContractName }.schema.json`
+				? overlayCounterAbilityInputSchema(
+						endpoint,
+						projectSchemaDocument(
+							await loadJsonDocument(
+								COUNTER_BLOCK.slug,
+								path.join(
+									'api-schemas',
+									`${ inputContractName }.schema.json`
+								)
 							)
 						)
 				  )
@@ -227,7 +282,7 @@ export async function buildCounterWordPressAiArtifacts( options?: {
 
 			return {
 				authMode: endpoint.authMode,
-				category: config.categoryId,
+				category: category.id,
 				description: endpoint.summary ?? config.label,
 				executeCallback: config.executeCallback,
 				id: toAbilityId( endpoint.operationId ),

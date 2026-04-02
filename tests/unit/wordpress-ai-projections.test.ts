@@ -43,7 +43,9 @@ describe( 'WordPress AI projections', () => {
 		).toBe( true );
 	} );
 
-	test( 'projects exactly two counter abilities with manifest-aligned route metadata and schema wiring', () => {
+	test( 'projects exactly two counter abilities with manifest-aligned route metadata and schema wiring', async () => {
+		const liveProjected =
+			await buildCounterWordPressAiArtifacts();
 		const counterManifest = BLOCKS.find( ( block ) => block.slug === 'counter' )
 			?.restManifest;
 
@@ -79,6 +81,25 @@ describe( 'WordPress AI projections', () => {
 				> )[ ability.operationId ]?.executeCallback
 			);
 		}
+
+		const postAbility = liveProjected.abilitiesDocument.abilities.find(
+			( ability ) => ability.method === 'POST'
+		);
+		const postAbilityInputSchema = postAbility?.inputSchema as
+			| {
+					required?: string[];
+					properties?: {
+						postId?: {
+							minimum?: number;
+						};
+					};
+			  }
+			| undefined;
+
+		expect( postAbility ).toBeDefined();
+		expect( postAbilityInputSchema ).toBeDefined();
+		expect( postAbilityInputSchema?.required ).toContain( 'publicWriteToken' );
+		expect( postAbilityInputSchema?.properties?.postId?.minimum ).toBe( 1 );
 	} );
 
 	test( 'fails clearly when an endpoint is missing WordPress-only ability metadata', async () => {
@@ -92,6 +113,24 @@ describe( 'WordPress AI projections', () => {
 		).rejects.toThrow(
 			'Missing WordPress ability projection config for operationId "incrementPersistenceCounterState".'
 		);
+	} );
+
+	test( 'uses the provided category id consistently for the document and every ability', async () => {
+		const projected = await buildCounterWordPressAiArtifacts( {
+			category: {
+				id: 'custom-counter-category',
+				label: 'Custom Counter Category',
+			},
+		} );
+
+		expect( projected.abilitiesDocument.category.id ).toBe(
+			'custom-counter-category'
+		);
+		expect(
+			projected.abilitiesDocument.abilities.every(
+				( ability ) => ability.category === 'custom-counter-category'
+			)
+		).toBe( true );
 	} );
 
 	test( 'keeps the example plugin integration explicitly guarded behind WordPress AI and abilities feature detection', () => {

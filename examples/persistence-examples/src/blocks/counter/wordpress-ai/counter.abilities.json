@@ -89,7 +89,7 @@
         "properties": {
           "postId": {
             "type": "integer",
-            "minimum": 0,
+            "minimum": 1,
             "maximum": 4294967295,
             "multipleOf": 1
           },
@@ -119,7 +119,8 @@
         "required": [
           "postId",
           "publicWriteRequestId",
-          "resourceKey"
+          "resourceKey",
+          "publicWriteToken"
         ],
         "title": "PersistenceCounterIncrementRequest",
         "type": "object"
