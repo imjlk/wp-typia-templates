@@ -425,7 +425,14 @@ describe("schema-core", () => {
 		});
 		const validate = ajv.compile(projected);
 
-		expect(validate({ delta: 1, postId: 7, resourceKey: "demo" })).toBe(true);
+		expect(
+			validate({
+				delta: 1,
+				postId: 7,
+				publicWriteRequestId: "req-demo-1",
+				resourceKey: "demo",
+			}),
+		).toBe(true);
 		expect(validate({ postId: 7.5, resourceKey: "demo" })).toBe(false);
 		expect(validate.errors?.some((error) => error.instancePath === "/postId")).toBe(
 			true,
