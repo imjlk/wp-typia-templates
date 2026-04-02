@@ -80,9 +80,6 @@ export function getTemplateSourceOfTruthNote(
 	return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`.";
 }
 
-/**
- * Returns scaffold-local guidance for the main PHP REST customization points.
- */
 function formatPhpRestExtensionPointsSection({
 	apiTypesPath,
 	extraNote,
@@ -103,6 +100,9 @@ function formatPhpRestExtensionPointsSection({
 	return `## PHP REST Extension Points\n\n${lines.join("\n")}`;
 }
 
+/**
+ * Returns scaffold-local guidance for the main PHP REST customization points.
+ */
 export function getPhpRestExtensionPointsSection(
 	templateId: string,
 	{ compoundPersistenceEnabled = false, slug }: PhpRestExtensionOptions,

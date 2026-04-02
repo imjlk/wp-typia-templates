@@ -23,6 +23,9 @@ describe("scaffold-onboarding", () => {
 		expect(compoundSection).toContain(
 			"The hidden child block does not own REST routes or storage.",
 		);
+		expect(persistenceSection).not.toContain(
+			"The hidden child block does not own REST routes or storage.",
+		);
 	});
 
 	test("non-persistence scaffolds do not render PHP REST extension guidance", () => {

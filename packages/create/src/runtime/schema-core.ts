@@ -10,6 +10,9 @@ export interface JsonSchemaObject {
 	[key: string]: JsonValue | JsonSchemaObject | JsonSchemaObject[] | undefined;
 }
 
+/**
+ * Full JSON Schema document for a manifest-derived root object.
+ */
 export interface JsonSchemaDocument extends JsonSchemaObject {
 	$schema: string;
 	additionalProperties: boolean;
@@ -19,16 +22,25 @@ export interface JsonSchemaDocument extends JsonSchemaObject {
 	type: "object";
 }
 
+/**
+ * Document-level metadata applied to generated OpenAPI files.
+ */
 export interface OpenApiInfo {
 	description?: string;
 	title?: string;
 	version?: string;
 }
 
+/**
+ * JSON Schema reference used inside generated OpenAPI documents.
+ */
 export interface OpenApiSchemaReference extends JsonSchemaObject {
 	$ref: string;
 }
 
+/**
+ * OpenAPI query parameter emitted from a manifest attribute.
+ */
 export interface OpenApiParameter extends JsonSchemaObject {
 	in: "query";
 	name: string;
@@ -36,10 +48,16 @@ export interface OpenApiParameter extends JsonSchemaObject {
 	schema: JsonSchemaObject;
 }
 
+/**
+ * OpenAPI media type wrapper for JSON responses and request bodies.
+ */
 export interface OpenApiMediaType extends JsonSchemaObject {
 	schema: OpenApiSchemaReference;
 }
 
+/**
+ * OpenAPI request body definition for generated JSON endpoints.
+ */
 export interface OpenApiRequestBody extends JsonSchemaObject {
 	content: {
 		"application/json": OpenApiMediaType;
@@ -47,6 +65,9 @@ export interface OpenApiRequestBody extends JsonSchemaObject {
 	required: true;
 }
 
+/**
+ * Successful JSON response entry in the generated OpenAPI document.
+ */
 export interface OpenApiResponse extends JsonSchemaObject {
 	content: {
 		"application/json": OpenApiMediaType;
@@ -54,6 +75,9 @@ export interface OpenApiResponse extends JsonSchemaObject {
 	description: string;
 }
 
+/**
+ * Header-based security scheme used by authenticated WordPress REST routes.
+ */
 export interface OpenApiSecurityScheme extends JsonSchemaObject {
 	description?: string;
 	in: "header";
@@ -61,6 +85,9 @@ export interface OpenApiSecurityScheme extends JsonSchemaObject {
 	type: "apiKey";
 }
 
+/**
+ * One generated OpenAPI operation for a scaffolded REST endpoint.
+ */
 export interface OpenApiOperation extends JsonSchemaObject {
 	operationId: string;
 	parameters?: OpenApiParameter[];
@@ -73,18 +100,30 @@ export interface OpenApiOperation extends JsonSchemaObject {
 	"x-wp-typia-publicTokenField"?: string;
 }
 
+/**
+ * Path item containing one or more generated REST operations.
+ */
 export type OpenApiPathItem = JsonSchemaObject &
 	Partial<Record<Lowercase<EndpointOpenApiMethod>, OpenApiOperation>>;
 
+/**
+ * Named tag entry surfaced at the top level of generated OpenAPI docs.
+ */
 export interface OpenApiTag extends JsonSchemaObject {
 	name: string;
 }
 
+/**
+ * OpenAPI component registry for generated schemas and security schemes.
+ */
 export interface OpenApiComponents extends JsonSchemaObject {
 	schemas: Record<string, JsonSchemaDocument>;
 	securitySchemes?: Record<string, OpenApiSecurityScheme>;
 }
 
+/**
+ * Complete OpenAPI 3.1 document emitted for endpoint-aware REST contracts.
+ */
 export interface OpenApiDocument extends JsonSchemaObject {
 	components: OpenApiComponents;
 	info: {
