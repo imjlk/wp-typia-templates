@@ -1,6 +1,6 @@
 # API Guide
 
-This repository has two public surfaces:
+This repository has four public surfaces:
 
 ## 1. `@wp-typia/create`
 
