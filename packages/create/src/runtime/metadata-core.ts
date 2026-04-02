@@ -506,6 +506,9 @@ function normalizeSyncRestOpenApiOptions(
 				"syncRestOpenApi() accepts either { manifest, ... } or { contracts, endpoints, ... }, but not both.",
 			);
 		}
+		if (options.manifest == null) {
+			throw new Error("syncRestOpenApi() requires a manifest object when using { manifest, ... }.");
+		}
 
 		return {
 			manifest: options.manifest,

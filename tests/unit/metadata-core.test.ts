@@ -171,6 +171,25 @@ describe("metadata-core endpoint manifests", () => {
 			);
 		} finally {
 			fs.rmSync(project.root, { force: true, recursive: true });
+			}
+		});
+
+	test("syncRestOpenApi rejects an undefined manifest value", async () => {
+		const project = createTempProject();
+
+		try {
+			await expect(
+				syncRestOpenApi({
+					manifest: undefined,
+					openApiFile: "build/undefined.openapi.json",
+					projectRoot: project.root,
+					typesFile: project.typesFile,
+				} as unknown as SyncRestOpenApiOptions),
+			).rejects.toThrow(
+				"syncRestOpenApi() requires a manifest object when using { manifest, ... }.",
+			);
+		} finally {
+			fs.rmSync(project.root, { force: true, recursive: true });
 		}
 	});
 });
