@@ -21,7 +21,7 @@
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-types.ts:19](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L19)
+[examples/persistence-examples/src/blocks/counter/api-types.ts:20](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L20)
 
 ___
 
@@ -31,7 +31,7 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-types.ts:20](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L20)
+[examples/persistence-examples/src/blocks/counter/api-types.ts:21](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L21)
 
 ___
 
@@ -41,7 +41,7 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-types.ts:21](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L21)
+[examples/persistence-examples/src/blocks/counter/api-types.ts:22](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L22)
 
 ___
 
@@ -51,4 +51,4 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-types.ts:22](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L22)
+[examples/persistence-examples/src/blocks/counter/api-types.ts:23](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L23)

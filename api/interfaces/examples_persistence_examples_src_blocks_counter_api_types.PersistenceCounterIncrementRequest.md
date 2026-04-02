@@ -9,6 +9,7 @@
 ### Properties
 
 - [postId](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md#postid)
+- [publicWriteRequestId](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md#publicwriterequestid)
 - [resourceKey](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md#resourcekey)
 - [publicWriteToken](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md#publicwritetoken)
 - [delta](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md#delta)
@@ -25,13 +26,23 @@
 
 ___
 
+### publicWriteRequestId
+
+• **publicWriteRequestId**: `string` & `MinLength`\<``1``\> & `MaxLength`\<``128``\>
+
+#### Defined in
+
+[examples/persistence-examples/src/blocks/counter/api-types.ts:10](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L10)
+
+___
+
 ### resourceKey
 
 • **resourceKey**: `string` & `MinLength`\<``1``\> & `MaxLength`\<``100``\>
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-types.ts:10](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L10)
+[examples/persistence-examples/src/blocks/counter/api-types.ts:11](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L11)
 
 ___
 
@@ -41,7 +52,7 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-types.ts:11](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L11)
+[examples/persistence-examples/src/blocks/counter/api-types.ts:12](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L12)
 
 ___
 
@@ -51,4 +62,4 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-types.ts:12](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L12)
+[examples/persistence-examples/src/blocks/counter/api-types.ts:13](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L13)

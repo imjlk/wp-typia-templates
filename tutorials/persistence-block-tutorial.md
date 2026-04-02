@@ -156,6 +156,7 @@ export interface MyCounterStateQuery {
 
 export interface MyCounterWriteStateRequest {
   postId: number & tags.Type<'uint32'>;
+  publicWriteRequestId: string & tags.MinLength<1> & tags.MaxLength<128>;
   publicWriteToken?: string & tags.MinLength<1> & tags.MaxLength<512>;
   resourceKey: string & tags.MinLength<1> & tags.MaxLength<100>;
   delta?: number & tags.Minimum<1> & tags.Type<'uint32'> & tags.Default<1>;
@@ -245,6 +246,12 @@ import { getContext, store } from '@wordpress/interactivity';
 import { fetchState, writeState } from './api';
 import type { MyCounterContext, MyCounterState } from './types';
 
+function createPublicWriteRequestId(): string {
+  return typeof globalThis.crypto?.randomUUID === 'function'
+    ? globalThis.crypto.randomUUID()
+    : `req-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+}
+
 function hasExpiredPublicWriteToken(context: MyCounterContext): boolean {
   return (
     context.persistencePolicy === 'public' &&
@@ -326,6 +333,10 @@ const { actions, state } = store('my-counter', {
           {
             delta: 1,
             postId: context.postId,
+            publicWriteRequestId:
+              context.persistencePolicy === 'public'
+                ? createPublicWriteRequestId()
+                : undefined,
             publicWriteToken:
               context.persistencePolicy === 'public'
                 ? context.publicWriteToken
@@ -499,7 +510,7 @@ curl -X POST \
   "http://localhost:8888/wp-json/create-block/v1/my-counter/state"
 ```
 
-If you scaffold with `--persistence-policy public`, send the `publicWriteToken` that the block render embeds in its frontend context instead of a REST nonce.
+If you scaffold with `--persistence-policy public`, send the `publicWriteToken` that the block render embeds in its frontend context plus a fresh `publicWriteRequestId` for each write attempt instead of a REST nonce.
 
 ## Understanding Storage Modes
 
@@ -529,7 +540,11 @@ Data stored in a dedicated table:
 
 - Anonymous writes allowed
 - Uses signed short-lived tokens
+- Requires a fresh request id per write attempt
+- Applies coarse rate limiting before the write handler runs
 - Token embedded in render output, validated on write
+
+For experiments, impressions, or other high-value metrics, treat those defaults as a starting point and add application-specific abuse controls.
 
 ## Generated Plugin Bootstrap
 
@@ -543,7 +558,7 @@ The main PHP file (`my-counter.php`) includes:
 ## What's Next?
 
 1. **Add Custom Endpoints**: Extend the REST API with additional routes
-2. **Add Rate Limiting**: Protect public endpoints from abuse
+2. **Tune Rate Limiting**: Adjust the default public write guardrails for your traffic profile
 3. **Add Caching**: Cache counter values for better performance
 4. **Extend Validation**: Add custom validation rules in `api-validators.ts`
 5. **Move to Compound Parent/Child Blocks**: Start from the [Compound Block Tutorial](./compound-block-tutorial.md) when the persisted behavior belongs on a top-level container block with internal children
