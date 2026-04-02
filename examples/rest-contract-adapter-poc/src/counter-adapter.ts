@@ -100,15 +100,28 @@ function buildStorageKey(postId: number, resourceKey: string): string {
 	return `${postId}:${resourceKey}`;
 }
 
+function parseQueryPostId(rawPostId: string | null): number | undefined {
+	if (rawPostId === null) {
+		return undefined;
+	}
+
+	const normalizedValue = rawPostId.trim();
+
+	if (normalizedValue.length === 0) {
+		return undefined;
+	}
+
+	return Number(normalizedValue);
+}
+
 async function handleGetCounter(
 	request: IncomingMessage,
 	response: ServerResponse,
 	counts: Map<string, number>
 ): Promise<void> {
 	const url = new URL(request.url ?? '/', 'http://127.0.0.1');
-	const rawPostId = url.searchParams.get('postId');
 	const queryInput = {
-		postId: rawPostId === null ? undefined : Number(rawPostId),
+		postId: parseQueryPostId(url.searchParams.get('postId')),
 		resourceKey: url.searchParams.get('resourceKey') ?? '',
 	};
 	const validation = counterContractValidators.counterQuery(queryInput);

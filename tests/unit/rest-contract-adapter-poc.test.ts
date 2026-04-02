@@ -16,20 +16,22 @@ function toRouteSignature(
 }
 
 function getOpenApiRouteSignatures(document: {
-	paths: Record<string, Partial<Record<'get' | 'post', unknown>>>;
+	paths: Record<string, Record<string, unknown>>;
 }): string[] {
+	const httpMethods = new Set([
+		'delete',
+		'get',
+		'head',
+		'options',
+		'patch',
+		'post',
+		'put',
+	]);
+
 	return Object.entries(document.paths).flatMap(([path, item]) => {
-		const routes: string[] = [];
-
-		if (item.get) {
-			routes.push(`GET ${path}`);
-		}
-
-		if (item.post) {
-			routes.push(`POST ${path}`);
-		}
-
-		return routes;
+		return Object.keys(item)
+			.filter((method) => httpMethods.has(method))
+			.map((method) => `${method.toUpperCase()} ${path}`);
 	});
 }
 
@@ -100,6 +102,45 @@ describe('REST contract adapter PoC', () => {
 			expect(followUpResponse.status).toBe(200);
 			expect(followUpValidation.isValid).toBe(true);
 			expect(followUpValidation.data?.count).toBe(3);
+		} finally {
+			await server.close();
+		}
+	});
+
+	test('rejects blank or out-of-contract identifiers instead of coercing them into valid state keys', async () => {
+		const server = await startCounterAdapterServer();
+
+		try {
+			const blankPostIdResponse = await fetch(
+				`${server.url}/persistence-examples/v1/counter?postId=&resourceKey=demo`
+			);
+			const blankPostIdPayload = await blankPostIdResponse.json();
+
+			expect(blankPostIdResponse.status).toBe(400);
+			expect(blankPostIdPayload.message).toBe(
+				'The request did not match the counter query contract.'
+			);
+
+			const fractionalWriteResponse = await fetch(
+				`${server.url}/persistence-examples/v1/counter`,
+				{
+					body: JSON.stringify({
+						delta: 1,
+						postId: 1.5,
+						resourceKey: 'demo',
+					}),
+					headers: {
+						'content-type': 'application/json',
+					},
+					method: 'POST',
+				}
+			);
+			const fractionalWritePayload = await fractionalWriteResponse.json();
+
+			expect(fractionalWriteResponse.status).toBe(400);
+			expect(fractionalWritePayload.message).toBe(
+				'The request did not match the counter write contract.'
+			);
 		} finally {
 			await server.close();
 		}

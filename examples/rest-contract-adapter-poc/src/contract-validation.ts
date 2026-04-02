@@ -10,9 +10,28 @@ import type {
 	PersistenceCounterResponse,
 } from '../../persistence-examples/src/blocks/counter/api-types';
 
+const UINT32_MAX = 4_294_967_295;
+
 const ajv = new Ajv2020({
 	allErrors: true,
 	strict: false,
+});
+
+ajv.addKeyword({
+	keyword: 'x-typeTag',
+	schemaType: 'string',
+	validate(typeTag: string, data: unknown): boolean {
+		if (typeTag !== 'uint32') {
+			return false;
+		}
+
+		return (
+			typeof data === 'number' &&
+			Number.isInteger(data) &&
+			data >= 0 &&
+			data <= UINT32_MAX
+		);
+	},
 });
 
 const validateCounterQuerySchema =
