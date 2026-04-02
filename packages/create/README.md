@@ -175,6 +175,19 @@ await syncRestOpenApi({
 
 `src/api-types.ts` remains the source of truth for scaffolded REST contracts, and the endpoint manifest is the canonical TypeScript description of the scaffolded REST surface. `src/api-schemas/*.schema.json` remains the runtime-facing artifact for generated PHP validation, and `src/api.openapi.json` is the canonical endpoint-aware REST document when a scaffold defines route metadata. Per-contract `src/api-schemas/*.openapi.json` files remain available as compatibility fragments.
 
+When you need an AI- or tool-facing schema surface, derive it from the generated REST schema instead of creating a second hand-maintained contract:
+
+```ts
+import requestSchema from "./src/api-schemas/request.schema.json";
+import { projectJsonSchemaDocument } from "@wp-typia/create";
+
+const aiSafeSchema = projectJsonSchemaDocument(requestSchema, {
+  profile: "ai-structured-output",
+});
+```
+
+`ai-structured-output` is an opt-in derived profile. It does not change the default generated REST/runtime artifacts.
+
 For persistence-capable scaffolds, generated PHP stays intentionally boring glue:
 
 - edit the plugin bootstrap file when you need to customize storage helpers, route handlers, response shaping, or route registration

@@ -1,12 +1,16 @@
 import { describe, expect, test } from "bun:test";
+import Ajv2020 from "ajv/dist/2020.js";
 
 import {
 	buildEndpointOpenApiDocument,
 	manifestAttributeToJsonSchema,
+	projectJsonSchemaDocument,
 	manifestToJsonSchema,
 	manifestToOpenApi,
+	type JsonSchemaDocument,
 } from "../../packages/create/src/runtime/schema-core";
 import type { ManifestAttribute, ManifestDocument } from "../../packages/create/src/runtime/editor";
+import incrementRequestSchema from "../../examples/persistence-examples/src/blocks/counter/api-schemas/increment-request.schema.json";
 
 interface AttributeOverride {
 	typia?: Partial<ManifestAttribute["typia"]>;
@@ -226,6 +230,131 @@ describe("schema-core", () => {
 		expect(properties.count.multipleOf).toBe(1);
 		expect(properties.status.enum).toEqual(["idle", "loading", "done"]);
 		expect(properties.status.default).toBe("idle");
+	});
+
+	test("projectJsonSchemaDocument preserves the current schema shape for the rest profile", () => {
+		const manifest: ManifestDocument = {
+			attributes: {
+				count: createAttribute({
+					ts: { kind: "number", required: true },
+					typia: {
+						constraints: {
+							exclusiveMaximum: null,
+							exclusiveMinimum: null,
+							format: null,
+							maxLength: null,
+							maxItems: null,
+							maximum: 10,
+							minLength: null,
+							minItems: null,
+							minimum: 0,
+							multipleOf: 1,
+							pattern: null,
+							typeTag: "uint32",
+						},
+						defaultValue: 0,
+						hasDefault: true,
+					},
+					wp: {
+						defaultValue: 0,
+						enum: null,
+						hasDefault: true,
+						type: "number",
+					},
+				}),
+			},
+			manifestVersion: 2,
+			sourceType: "CounterDocument",
+		};
+
+		const schema = manifestToJsonSchema(manifest);
+		const projected = projectJsonSchemaDocument(schema, { profile: "rest" });
+
+		expect(projected).toEqual(schema);
+		expect(projected).not.toBe(schema);
+	});
+
+	test("projectJsonSchemaDocument removes wp-typia extension keys and projects uint32 for ai-structured-output", () => {
+		const schema: JsonSchemaDocument = {
+			$schema: "https://json-schema.org/draft/2020-12/schema",
+			additionalProperties: false,
+			properties: {
+				items: {
+					items: {
+						properties: {
+							id: {
+								type: "number",
+								"x-typeTag": "uint32",
+							},
+						},
+						type: "object",
+						"x-wp-typia-note": "nested",
+					},
+					type: "array",
+				},
+			},
+			required: ["items"],
+			title: "ProjectedDocument",
+			type: "object",
+			"x-wp-typia-surface": "rest",
+		};
+
+		const projected = projectJsonSchemaDocument(schema, {
+			profile: "ai-structured-output",
+		});
+		const nestedItem = (
+			(projected.properties as Record<string, Record<string, unknown>>).items
+				.items as Record<string, Record<string, unknown>>
+		).properties.id as Record<string, unknown>;
+
+		expect(projected["x-wp-typia-surface"]).toBeUndefined();
+		expect(
+			((projected.properties as Record<string, Record<string, unknown>>).items
+				.items as Record<string, unknown>)["x-wp-typia-note"],
+		).toBeUndefined();
+		expect(nestedItem["x-typeTag"]).toBeUndefined();
+		expect(nestedItem.type).toBe("integer");
+		expect(nestedItem.minimum).toBe(0);
+		expect(nestedItem.maximum).toBe(4294967295);
+		expect(nestedItem.multipleOf).toBe(1);
+	});
+
+	test("projectJsonSchemaDocument rejects unsupported wp-typia type tags", () => {
+		expect(() =>
+			projectJsonSchemaDocument(
+				{
+					$schema: "https://json-schema.org/draft/2020-12/schema",
+					additionalProperties: false,
+					properties: {
+						id: {
+							type: "number",
+							"x-typeTag": "int64",
+						},
+					},
+					required: ["id"],
+					title: "UnsupportedTypeTag",
+					type: "object",
+				},
+				{ profile: "ai-structured-output" },
+			),
+		).toThrow('Unsupported wp-typia schema type tag "int64" at "#/properties/id".');
+	});
+
+	test("projectJsonSchemaDocument produces AI-safe counter schemas that compile under strict AJV without custom keywords", () => {
+		const projected = projectJsonSchemaDocument(incrementRequestSchema, {
+			profile: "ai-structured-output",
+		});
+		const ajv = new Ajv2020({
+			allErrors: true,
+			strict: true,
+		});
+		const validate = ajv.compile(projected);
+
+		expect(validate({ delta: 1, postId: 7, resourceKey: "demo" })).toBe(true);
+		expect(validate({ postId: 7.5, resourceKey: "demo" })).toBe(false);
+		expect(validate.errors?.some((error) => error.instancePath === "/postId")).toBe(
+			true,
+		);
 	});
 
 	test("manifestToOpenApi wraps the derived schema in an OpenAPI document", () => {

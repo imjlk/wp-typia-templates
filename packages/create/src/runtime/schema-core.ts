@@ -195,6 +195,19 @@ export interface EndpointOpenApiDocumentOptions {
 	info?: OpenApiInfo;
 }
 
+/**
+ * Supported schema projection profiles derived from one canonical wp-typia JSON Schema document.
+ */
+export type JsonSchemaProjectionProfile = "ai-structured-output" | "rest";
+
+/**
+ * Options for projecting one generated JSON Schema document into another consumer-facing profile.
+ */
+export interface JsonSchemaProjectionOptions {
+	/** Projection profile that controls schema transformation rules. */
+	profile: JsonSchemaProjectionProfile;
+}
+
 const WP_TYPIA_OPENAPI_EXTENSION_KEYS = {
 	AUTH_POLICY: "x-wp-typia-authPolicy",
 	PUBLIC_TOKEN_FIELD: "x-wp-typia-publicTokenField",
@@ -209,6 +222,8 @@ const WP_TYPIA_OPENAPI_LITERALS = {
 	WP_REST_NONCE_HEADER: "X-WP-Nonce",
 	WP_REST_NONCE_SCHEME: "wpRestNonce",
 } as const;
+
+const WP_TYPIA_SCHEMA_UINT32_MAX = 4_294_967_295;
 
 function applyConstraintIfNumber(
 	schema: JsonSchemaObject,
@@ -281,6 +296,121 @@ function addDiscriminatorToObjectBranch(
 		: [discriminator];
 	schema.required = required;
 	return schema;
+}
+
+function isJsonSchemaObject(value: unknown): value is JsonSchemaObject {
+	return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function cloneJsonSchemaNode<T extends JsonValue | JsonSchemaObject>(value: T): T {
+	if (Array.isArray(value)) {
+		return value.map((item) =>
+			isJsonSchemaObject(item) || Array.isArray(item)
+				? cloneJsonSchemaNode(item as JsonValue | JsonSchemaObject)
+				: item,
+		) as T;
+	}
+
+	if (!isJsonSchemaObject(value)) {
+		return value;
+	}
+
+	return Object.fromEntries(
+		Object.entries(value).map(([key, child]) => [
+			key,
+			child === undefined
+				? undefined
+				: isJsonSchemaObject(child) || Array.isArray(child)
+					? cloneJsonSchemaNode(child as JsonValue | JsonSchemaObject)
+					: child,
+		]),
+	) as T;
+}
+
+function isWpTypiaSchemaExtensionKey(key: string): boolean {
+	return key.startsWith("x-wp-typia-");
+}
+
+function applyProjectedUint32Constraints(
+	schema: JsonSchemaObject,
+	path: string,
+): void {
+	const currentMultipleOf = schema.multipleOf;
+	if (
+		currentMultipleOf !== undefined &&
+		(typeof currentMultipleOf !== "number" ||
+			!Number.isFinite(currentMultipleOf) ||
+			!Number.isInteger(currentMultipleOf) ||
+			currentMultipleOf <= 0)
+	) {
+		throw new Error(
+			`Unable to project unsupported uint32 multipleOf at "${path}".`,
+		);
+	}
+
+	const currentMinimum = schema.minimum;
+	if (typeof currentMinimum === "number" && Number.isFinite(currentMinimum)) {
+		schema.minimum = Math.max(currentMinimum, 0);
+	} else {
+		schema.minimum = 0;
+	}
+
+	const currentMaximum = schema.maximum;
+	if (typeof currentMaximum === "number" && Number.isFinite(currentMaximum)) {
+		schema.maximum = Math.min(currentMaximum, WP_TYPIA_SCHEMA_UINT32_MAX);
+	} else {
+		schema.maximum = WP_TYPIA_SCHEMA_UINT32_MAX;
+	}
+
+	schema.multipleOf =
+		typeof currentMultipleOf === "number" ? currentMultipleOf : 1;
+	schema.type = "integer";
+}
+
+function projectSchemaNodeForAiStructuredOutput(
+	node: JsonSchemaObject,
+	path: string,
+): JsonSchemaObject {
+	const projectedNode = cloneJsonSchemaNode(node);
+	const rawTypeTag = projectedNode[WP_TYPIA_OPENAPI_EXTENSION_KEYS.TYPE_TAG];
+
+	if (typeof rawTypeTag === "string") {
+		if (rawTypeTag === "uint32") {
+			applyProjectedUint32Constraints(projectedNode, path);
+		} else {
+			throw new Error(
+				`Unsupported wp-typia schema type tag "${rawTypeTag}" at "${path}".`,
+			);
+		}
+	}
+
+	delete projectedNode[WP_TYPIA_OPENAPI_EXTENSION_KEYS.TYPE_TAG];
+
+	for (const key of Object.keys(projectedNode)) {
+		if (isWpTypiaSchemaExtensionKey(key)) {
+			delete projectedNode[key];
+			continue;
+		}
+
+		const child = projectedNode[key];
+		if (Array.isArray(child)) {
+			projectedNode[key] = child.map((item, index) =>
+				isJsonSchemaObject(item)
+					? projectSchemaNodeForAiStructuredOutput(item, `${path}/${key}/${index}`)
+					: item,
+			) as JsonSchemaObject[];
+			continue;
+		}
+
+		if (isJsonSchemaObject(child)) {
+			projectedNode[key] = projectSchemaNodeForAiStructuredOutput(
+				child,
+				`${path}/${key}`,
+			);
+		}
+	}
+
+	return projectedNode;
 }
 
 function manifestUnionToJsonSchema(union: ManifestUnionMetadata): JsonSchemaObject {
@@ -410,6 +540,23 @@ export function manifestToJsonSchema(doc: ManifestDocument): JsonSchemaDocument 
 		title: doc.sourceType ?? "TypiaDocument",
 		type: "object",
 	};
+}
+
+/**
+ * Projects one generated wp-typia JSON Schema document into a consumer-facing profile.
+ *
+ * @param schema Existing generated JSON Schema document.
+ * @param options Projection profile options.
+ * @returns A cloned schema document adjusted for the requested profile.
+ */
+export function projectJsonSchemaDocument<
+	Schema extends JsonSchemaDocument | JsonSchemaObject,
+>(schema: Schema, options: JsonSchemaProjectionOptions): Schema {
+	if (options.profile === "rest") {
+		return cloneJsonSchemaNode(schema);
+	}
+
+	return projectSchemaNodeForAiStructuredOutput(schema, "#") as Schema;
 }
 
 /**
