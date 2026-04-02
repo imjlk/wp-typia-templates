@@ -110,6 +110,7 @@ function persistence_examples_get_like_table_name() {
 function persistence_examples_with_lock( $lock_name, $callback ) {
 	global $wpdb;
 
+	$lock_name = 'pex_lock_' . md5( (string) $lock_name );
 	$acquired = (int) $wpdb->get_var(
 		$wpdb->prepare(
 			'SELECT GET_LOCK(%s, 5)',

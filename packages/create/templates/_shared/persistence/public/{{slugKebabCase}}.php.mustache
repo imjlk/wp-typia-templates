@@ -44,7 +44,9 @@ function {{phpPrefix}}_get_counter_table_name() {
 }
 
 function {{phpPrefix}}_get_counter_lock_name( $post_id, $resource_key ) {
-	return '{{phpPrefix}}_counter_' . (int) $post_id . '_' . md5( (string) $resource_key );
+	return 'wpt_pcl_' . md5(
+		'{{phpPrefix}}|' . (int) $post_id . '|' . (string) $resource_key
+	);
 }
 
 function {{phpPrefix}}_with_counter_lock( $post_id, $resource_key, $callback ) {

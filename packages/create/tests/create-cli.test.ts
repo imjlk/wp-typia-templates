@@ -200,6 +200,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-public");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-public.php';");
+		expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
 		expect(pluginBootstrap).toContain("permission_callback' => 'demo_persistence_public_can_write_publicly'");
 		expect(pluginBootstrap).toContain("PUBLIC_WRITE_RATE_LIMIT_WINDOW");
 		expect(pluginBootstrap).toContain("PUBLIC_WRITE_RATE_LIMIT_MAX");
@@ -211,6 +212,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(restPublicHelper).toContain("function demo_persistence_public_enforce_public_write_rate_limit");
 		expect(restPublicHelper).toContain("SELECT GET_LOCK(%s, 5)");
 		expect(restPublicHelper).toContain("SELECT RELEASE_LOCK(%s)");
+		expect(restPublicHelper).toContain("return 'wpt_pwl_' . md5(");
 		expect(generatedApi).toContain("@wp-typia/rest");
 		expect(generatedSyncRest).toContain("syncTypeSchemas");
 		expect(generatedSyncRest).toContain("defineEndpointManifest");
@@ -280,6 +282,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-authenticated");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-auth.php';");
+		expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
 		expect(pluginBootstrap).toContain("permission_callback' => 'demo_persistence_authenticated_can_write_authenticated'");
 		expect(pluginBootstrap).not.toMatch(
 			/'callback'\s*=>\s*'demo_persistence_authenticated_handle_write_state'[\s\S]*?'permission_callback'\s*=>\s*'__return_true'/,
@@ -529,6 +532,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("can_write_authenticated");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
 			expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-auth.php';");
+			expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
 			expect(parentBlockJson.render).toBe("file:./render.php");
 			expect(parentBlockJson.viewScriptModule).toBe("file:./interactivity.js");
 			expect(generatedSyncRest).toContain("syncRestOpenApi");
@@ -583,6 +587,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("permission_callback' => 'demo_compound_public_can_write_publicly'");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-public.php';");
+		expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
 		expect(pluginBootstrap).toContain("HOUR_IN_SECONDS");
 		expect(pluginBootstrap).toContain("PUBLIC_WRITE_RATE_LIMIT_WINDOW");
 		expect(pluginBootstrap).toContain("PUBLIC_WRITE_RATE_LIMIT_MAX");
@@ -592,6 +597,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(restPublicHelper).toContain("function demo_compound_public_verify_public_write_token");
 		expect(restPublicHelper).toContain("function demo_compound_public_consume_public_write_request_id");
 		expect(restPublicHelper).toContain("SELECT GET_LOCK(%s, 5)");
+		expect(restPublicHelper).toContain("return 'wpt_pwl_' . md5(");
 		expect(parentRender).toContain("publicWriteToken");
 		expect(generatedApiTypes).toContain("publicWriteRequestId: string");
 		expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");

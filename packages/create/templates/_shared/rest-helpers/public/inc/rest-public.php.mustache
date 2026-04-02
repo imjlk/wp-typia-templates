@@ -49,8 +49,8 @@ function {{phpPrefix}}_get_public_write_lock_key( $post_id, $resource_key, $scop
 		? $lock_subject
 		: {{phpPrefix}}_get_public_write_client_subject();
 
-	return '{{phpPrefix}}_public_write_lock_' . md5(
-		(string) $scope . '|' . (int) $post_id . '|' . (string) $resource_key . '|' . $lock_subject
+	return 'wpt_pwl_' . md5(
+		'{{phpPrefix}}|' . (string) $scope . '|' . (int) $post_id . '|' . (string) $resource_key . '|' . $lock_subject
 	);
 }
 
