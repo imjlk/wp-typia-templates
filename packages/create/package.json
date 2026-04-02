@@ -9,27 +9,33 @@
   "exports": {
     ".": {
       "types": "./dist/runtime/index.d.ts",
+      "import": "./dist/runtime/index.js",
       "default": "./dist/runtime/index.js"
     },
     "./cli": "./dist/cli.js",
     "./metadata-core": {
       "types": "./dist/runtime/metadata-core.d.ts",
+      "import": "./dist/runtime/metadata-core.js",
       "default": "./dist/runtime/metadata-core.js"
     },
     "./runtime/defaults": {
       "types": "./dist/runtime/defaults.d.ts",
+      "import": "./dist/runtime/defaults.js",
       "default": "./dist/runtime/defaults.js"
     },
     "./runtime/editor": {
       "types": "./dist/runtime/editor.d.ts",
+      "import": "./dist/runtime/editor.js",
       "default": "./dist/runtime/editor.js"
     },
     "./runtime/schema-core": {
       "types": "./dist/runtime/schema-core.d.ts",
+      "import": "./dist/runtime/schema-core.js",
       "default": "./dist/runtime/schema-core.js"
     },
     "./runtime/validation": {
       "types": "./dist/runtime/validation.d.ts",
+      "import": "./dist/runtime/validation.js",
       "default": "./dist/runtime/validation.js"
     },
     "./package.json": "./package.json"
