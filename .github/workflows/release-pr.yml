@@ -38,6 +38,9 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Validate pending changesets
+        run: bun run changesets:validate
+
       - name: Install Sampo
         run: cargo install sampo --locked --version 0.17.0
 

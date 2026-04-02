@@ -38,6 +38,9 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Validate pending changesets
+        run: bun run changesets:validate
+
       - name: Run example linting
         run: bun run examples:lint
 
