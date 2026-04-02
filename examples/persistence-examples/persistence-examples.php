@@ -19,6 +19,8 @@ define( 'PERSISTENCE_EXAMPLES_PUBLIC_WRITE_TTL', 5 );
 define( 'PERSISTENCE_EXAMPLES_PUBLIC_WRITE_RATE_LIMIT_WINDOW', MINUTE_IN_SECONDS );
 define( 'PERSISTENCE_EXAMPLES_PUBLIC_WRITE_RATE_LIMIT_MAX', 10 );
 
+require_once __DIR__ . '/inc/wordpress-ai.php';
+
 function persistence_examples_get_build_root() {
 	return __DIR__ . '/build/blocks';
 }
@@ -469,28 +471,14 @@ function persistence_examples_can_write_counter( WP_REST_Request $request ) {
 		$request_id = is_string( $fallback ) ? $fallback : '';
 	}
 
-	if ( $post_id <= 0 || '' === $resource_key ) {
-		return new WP_Error(
-			'rest_forbidden',
-			'The counter write request is missing its target identifiers.',
-			array( 'status' => 403 )
-		);
-	}
-
-	if ( '' === $request_id ) {
-		return new WP_Error(
-			'rest_forbidden',
-			'The public write request id is missing.',
-			array( 'status' => 403 )
-		);
-	}
-
-	$verification = persistence_examples_verify_counter_public_write_token( $token, $post_id, $resource_key );
-	if ( is_wp_error( $verification ) ) {
-		return $verification;
-	}
-
-	return persistence_examples_enforce_counter_rate_limit( $post_id, $resource_key );
+	return persistence_examples_authorize_counter_write_payload(
+		array(
+			'postId'               => $post_id,
+			'publicWriteRequestId' => $request_id,
+			'publicWriteToken'     => $token,
+			'resourceKey'          => $resource_key,
+		)
+	);
 }
 
 function persistence_examples_build_counter_response( $post_id, $resource_key, $count ) {

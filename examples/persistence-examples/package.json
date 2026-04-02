@@ -9,8 +9,9 @@
 	"scripts": {
 		"sync-types": "tsx scripts/sync-types-to-block-json.ts",
 		"sync-rest": "tsx scripts/sync-rest-contracts.ts",
-		"build": "bun run sync-types && bun run sync-rest && wp-scripts build --experimental-modules",
-		"start": "bun run sync-types && bun run sync-rest && wp-scripts start --experimental-modules",
+		"sync-wordpress-ai": "tsx scripts/sync-wordpress-ai-projections.ts",
+		"build": "bun run sync-types && bun run sync-rest && bun run sync-wordpress-ai && wp-scripts build --experimental-modules",
+		"start": "bun run sync-types && bun run sync-rest && bun run sync-wordpress-ai && wp-scripts start --experimental-modules",
 		"dev": "bun run start",
 		"typecheck": "tsc --noEmit",
 		"lint:js": "wp-scripts lint-js",
