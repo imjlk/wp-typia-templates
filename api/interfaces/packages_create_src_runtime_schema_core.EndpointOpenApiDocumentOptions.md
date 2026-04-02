@@ -24,7 +24,7 @@ Named contract documents keyed by the endpoint registry identifiers.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:71](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L71)
+[packages/create/src/runtime/schema-core.ts:191](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L191)
 
 ___
 
@@ -36,7 +36,7 @@ Route definitions that should appear in the generated OpenAPI file.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:73](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L73)
+[packages/create/src/runtime/schema-core.ts:193](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L193)
 
 ___
 
@@ -48,4 +48,4 @@ Optional document-level OpenAPI info metadata.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:75](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L75)
+[packages/create/src/runtime/schema-core.ts:195](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L195)

@@ -33,7 +33,7 @@ Returns the optional sync script names to suggest for a template.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold-onboarding.ts:22](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L22)
+[packages/create/src/runtime/scaffold-onboarding.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L29)
 
 ___
 
@@ -57,7 +57,7 @@ Formats optional onboarding sync commands for the selected package manager.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold-onboarding.ts:34](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L34)
+[packages/create/src/runtime/scaffold-onboarding.ts:41](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L41)
 
 ___
 
@@ -79,7 +79,7 @@ Returns the onboarding note explaining when manual sync is optional.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold-onboarding.ts:47](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L47)
+[packages/create/src/runtime/scaffold-onboarding.ts:54](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L54)
 
 ___
 
@@ -102,7 +102,7 @@ Returns source-of-truth guidance for generated artifacts by template mode.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold-onboarding.ts:54](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L54)
+[packages/create/src/runtime/scaffold-onboarding.ts:61](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L61)
 
 ___
 
@@ -125,4 +125,4 @@ Returns scaffold-local guidance for the main PHP REST customization points.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold-onboarding.ts:79](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L79)
+[packages/create/src/runtime/scaffold-onboarding.ts:113](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L113)

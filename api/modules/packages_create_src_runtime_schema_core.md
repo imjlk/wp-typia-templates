@@ -7,13 +7,25 @@
 ### Interfaces
 
 - [JsonSchemaObject](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaObject.md)
+- [JsonSchemaDocument](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaDocument.md)
 - [OpenApiInfo](../interfaces/packages_create_src_runtime_schema_core.OpenApiInfo.md)
+- [OpenApiSchemaReference](../interfaces/packages_create_src_runtime_schema_core.OpenApiSchemaReference.md)
+- [OpenApiParameter](../interfaces/packages_create_src_runtime_schema_core.OpenApiParameter.md)
+- [OpenApiMediaType](../interfaces/packages_create_src_runtime_schema_core.OpenApiMediaType.md)
+- [OpenApiRequestBody](../interfaces/packages_create_src_runtime_schema_core.OpenApiRequestBody.md)
+- [OpenApiResponse](../interfaces/packages_create_src_runtime_schema_core.OpenApiResponse.md)
+- [OpenApiSecurityScheme](../interfaces/packages_create_src_runtime_schema_core.OpenApiSecurityScheme.md)
+- [OpenApiOperation](../interfaces/packages_create_src_runtime_schema_core.OpenApiOperation.md)
+- [OpenApiTag](../interfaces/packages_create_src_runtime_schema_core.OpenApiTag.md)
+- [OpenApiComponents](../interfaces/packages_create_src_runtime_schema_core.OpenApiComponents.md)
+- [OpenApiDocument](../interfaces/packages_create_src_runtime_schema_core.OpenApiDocument.md)
 - [EndpointOpenApiContractDocument](../interfaces/packages_create_src_runtime_schema_core.EndpointOpenApiContractDocument.md)
 - [EndpointOpenApiEndpointDefinition](../interfaces/packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md)
 - [EndpointOpenApiDocumentOptions](../interfaces/packages_create_src_runtime_schema_core.EndpointOpenApiDocumentOptions.md)
 
 ### Type Aliases
 
+- [OpenApiPathItem](packages_create_src_runtime_schema_core.md#openapipathitem)
 - [EndpointOpenApiAuthMode](packages_create_src_runtime_schema_core.md#endpointopenapiauthmode)
 - [EndpointOpenApiMethod](packages_create_src_runtime_schema_core.md#endpointopenapimethod)
 
@@ -26,6 +38,18 @@
 
 ## Type Aliases
 
+### OpenApiPathItem
+
+Ƭ **OpenApiPathItem**: [`JsonSchemaObject`](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaObject.md) & `Partial`\<`Record`\<`Lowercase`\<[`EndpointOpenApiMethod`](packages_create_src_runtime_schema_core.md#endpointopenapimethod)\>, [`OpenApiOperation`](../interfaces/packages_create_src_runtime_schema_core.OpenApiOperation.md)\>\>
+
+Path item containing one or more generated REST operations.
+
+#### Defined in
+
+[packages/create/src/runtime/schema-core.ts:106](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L106)
+
+___
+
 ### EndpointOpenApiAuthMode
 
 Ƭ **EndpointOpenApiAuthMode**: ``"authenticated-rest-nonce"`` \| ``"public-read"`` \| ``"public-signed-token"``
@@ -34,7 +58,7 @@ Authentication mode metadata for generated REST OpenAPI endpoints.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:22](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L22)
+[packages/create/src/runtime/schema-core.ts:142](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L142)
 
 ___
 
@@ -46,7 +70,7 @@ Supported HTTP methods for generated REST OpenAPI endpoints.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L30)
+[packages/create/src/runtime/schema-core.ts:150](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L150)
 
 ## Functions
 
@@ -54,66 +78,78 @@ Supported HTTP methods for generated REST OpenAPI endpoints.
 
 ▸ **manifestAttributeToJsonSchema**(`attribute`): [`JsonSchemaObject`](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaObject.md)
 
+Converts one manifest attribute definition into a JSON Schema fragment.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `attribute` | [`ManifestAttribute`](../interfaces/packages_create_src_runtime_migration_types.ManifestAttribute.md) |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `attribute` | [`ManifestAttribute`](../interfaces/packages_create_src_runtime_migration_types.ManifestAttribute.md) | Manifest-derived attribute metadata. |
 
 #### Returns
 
 [`JsonSchemaObject`](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaObject.md)
 
+A JSON-compatible schema fragment for the attribute.
+
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:166](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L166)
+[packages/create/src/runtime/schema-core.ts:323](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L323)
 
 ___
 
 ### manifestToJsonSchema
 
-▸ **manifestToJsonSchema**(`doc`): [`JsonSchemaObject`](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaObject.md)
+▸ **manifestToJsonSchema**(`doc`): [`JsonSchemaDocument`](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaDocument.md)
+
+Builds a full JSON Schema document from a Typia manifest document.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `doc` | [`ManifestDocument`](../interfaces/packages_create_src_runtime_migration_types.ManifestDocument.md) |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `doc` | [`ManifestDocument`](../interfaces/packages_create_src_runtime_migration_types.ManifestDocument.md) | Manifest-derived attribute document. |
 
 #### Returns
 
-[`JsonSchemaObject`](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaObject.md)
+[`JsonSchemaDocument`](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaDocument.md)
+
+A draft 2020-12 JSON Schema document for the manifest root object.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:233](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L233)
+[packages/create/src/runtime/schema-core.ts:396](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L396)
 
 ___
 
 ### manifestToOpenApi
 
-▸ **manifestToOpenApi**(`doc`, `info?`): [`JsonSchemaObject`](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaObject.md)
+▸ **manifestToOpenApi**(`doc`, `info?`): [`OpenApiDocument`](../interfaces/packages_create_src_runtime_schema_core.OpenApiDocument.md)
+
+Wraps a manifest-derived JSON Schema document in a minimal OpenAPI 3.1 shell.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `doc` | [`ManifestDocument`](../interfaces/packages_create_src_runtime_migration_types.ManifestDocument.md) |
-| `info` | [`OpenApiInfo`](../interfaces/packages_create_src_runtime_schema_core.OpenApiInfo.md) |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `doc` | [`ManifestDocument`](../interfaces/packages_create_src_runtime_migration_types.ManifestDocument.md) | Manifest-derived attribute document. |
+| `info` | [`OpenApiInfo`](../interfaces/packages_create_src_runtime_schema_core.OpenApiInfo.md) | Optional OpenAPI document metadata. |
 
 #### Returns
 
-[`JsonSchemaObject`](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaObject.md)
+[`OpenApiDocument`](../interfaces/packages_create_src_runtime_schema_core.OpenApiDocument.md)
+
+An OpenAPI document containing the schema as a single component.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:252](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L252)
+[packages/create/src/runtime/schema-core.ts:422](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L422)
 
 ___
 
 ### buildEndpointOpenApiDocument
 
-▸ **buildEndpointOpenApiDocument**(`options`): [`JsonSchemaObject`](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaObject.md)
+▸ **buildEndpointOpenApiDocument**(`options`): [`OpenApiDocument`](../interfaces/packages_create_src_runtime_schema_core.OpenApiDocument.md)
 
 Build a complete OpenAPI 3.1 document from contract manifests and route metadata.
 
@@ -125,10 +161,10 @@ Build a complete OpenAPI 3.1 document from contract manifests and route metadata
 
 #### Returns
 
-[`JsonSchemaObject`](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaObject.md)
+[`OpenApiDocument`](../interfaces/packages_create_src_runtime_schema_core.OpenApiDocument.md)
 
 A JSON-compatible OpenAPI document with paths, components, and auth metadata.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:368](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L368)
+[packages/create/src/runtime/schema-core.ts:567](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L567)

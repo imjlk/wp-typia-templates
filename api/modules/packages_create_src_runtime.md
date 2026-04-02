@@ -22,6 +22,19 @@
 - [manifestAttributeToJsonSchema](packages_create_src_runtime.md#manifestattributetojsonschema)
 - [manifestToJsonSchema](packages_create_src_runtime.md#manifesttojsonschema)
 - [manifestToOpenApi](packages_create_src_runtime.md#manifesttoopenapi)
+- [EndpointOpenApiAuthMode](packages_create_src_runtime.md#endpointopenapiauthmode)
+- [EndpointOpenApiContractDocument](packages_create_src_runtime.md#endpointopenapicontractdocument)
+- [EndpointOpenApiDocumentOptions](packages_create_src_runtime.md#endpointopenapidocumentoptions)
+- [EndpointOpenApiEndpointDefinition](packages_create_src_runtime.md#endpointopenapiendpointdefinition)
+- [EndpointOpenApiMethod](packages_create_src_runtime.md#endpointopenapimethod)
+- [JsonSchemaDocument](packages_create_src_runtime.md#jsonschemadocument)
+- [JsonSchemaObject](packages_create_src_runtime.md#jsonschemaobject)
+- [OpenApiDocument](packages_create_src_runtime.md#openapidocument)
+- [OpenApiInfo](packages_create_src_runtime.md#openapiinfo)
+- [OpenApiOperation](packages_create_src_runtime.md#openapioperation)
+- [OpenApiParameter](packages_create_src_runtime.md#openapiparameter)
+- [OpenApiPathItem](packages_create_src_runtime.md#openapipathitem)
+- [OpenApiSecurityScheme](packages_create_src_runtime.md#openapisecurityscheme)
 - [EditorControlKind](packages_create_src_runtime.md#editorcontrolkind)
 - [EditorFieldDescriptor](packages_create_src_runtime.md#editorfielddescriptor)
 - [EditorFieldOption](packages_create_src_runtime.md#editorfieldoption)
@@ -163,6 +176,84 @@ ___
 ### manifestToOpenApi
 
 Re-exports [manifestToOpenApi](packages_create_src_runtime_schema_core.md#manifesttoopenapi)
+
+___
+
+### EndpointOpenApiAuthMode
+
+Re-exports [EndpointOpenApiAuthMode](packages_create_src_runtime_schema_core.md#endpointopenapiauthmode)
+
+___
+
+### EndpointOpenApiContractDocument
+
+Re-exports [EndpointOpenApiContractDocument](../interfaces/packages_create_src_runtime_schema_core.EndpointOpenApiContractDocument.md)
+
+___
+
+### EndpointOpenApiDocumentOptions
+
+Re-exports [EndpointOpenApiDocumentOptions](../interfaces/packages_create_src_runtime_schema_core.EndpointOpenApiDocumentOptions.md)
+
+___
+
+### EndpointOpenApiEndpointDefinition
+
+Re-exports [EndpointOpenApiEndpointDefinition](../interfaces/packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md)
+
+___
+
+### EndpointOpenApiMethod
+
+Re-exports [EndpointOpenApiMethod](packages_create_src_runtime_schema_core.md#endpointopenapimethod)
+
+___
+
+### JsonSchemaDocument
+
+Re-exports [JsonSchemaDocument](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaDocument.md)
+
+___
+
+### JsonSchemaObject
+
+Re-exports [JsonSchemaObject](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaObject.md)
+
+___
+
+### OpenApiDocument
+
+Re-exports [OpenApiDocument](../interfaces/packages_create_src_runtime_schema_core.OpenApiDocument.md)
+
+___
+
+### OpenApiInfo
+
+Re-exports [OpenApiInfo](../interfaces/packages_create_src_runtime_schema_core.OpenApiInfo.md)
+
+___
+
+### OpenApiOperation
+
+Re-exports [OpenApiOperation](../interfaces/packages_create_src_runtime_schema_core.OpenApiOperation.md)
+
+___
+
+### OpenApiParameter
+
+Re-exports [OpenApiParameter](../interfaces/packages_create_src_runtime_schema_core.OpenApiParameter.md)
+
+___
+
+### OpenApiPathItem
+
+Re-exports [OpenApiPathItem](packages_create_src_runtime_schema_core.md#openapipathitem)
+
+___
+
+### OpenApiSecurityScheme
+
+Re-exports [OpenApiSecurityScheme](../interfaces/packages_create_src_runtime_schema_core.OpenApiSecurityScheme.md)
 
 ___
 

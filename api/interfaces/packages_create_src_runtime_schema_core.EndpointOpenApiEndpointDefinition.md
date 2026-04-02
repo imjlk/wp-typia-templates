@@ -36,7 +36,7 @@ Authentication policy surfaced in OpenAPI metadata.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:47](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L47)
+[packages/create/src/runtime/schema-core.ts:167](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L167)
 
 ___
 
@@ -48,7 +48,7 @@ Contract key for a JSON request body, when the endpoint accepts one.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:49](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L49)
+[packages/create/src/runtime/schema-core.ts:169](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L169)
 
 ___
 
@@ -60,7 +60,7 @@ HTTP method exposed by the route.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:51](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L51)
+[packages/create/src/runtime/schema-core.ts:171](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L171)
 
 ___
 
@@ -72,7 +72,7 @@ Stable OpenAPI operation id for this route.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:53](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L53)
+[packages/create/src/runtime/schema-core.ts:173](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L173)
 
 ___
 
@@ -84,7 +84,7 @@ Absolute REST path including namespace and version.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:55](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L55)
+[packages/create/src/runtime/schema-core.ts:175](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L175)
 
 ___
 
@@ -96,7 +96,7 @@ Contract key for query parameters, when the endpoint reads from the query string
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:57](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L57)
+[packages/create/src/runtime/schema-core.ts:177](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L177)
 
 ___
 
@@ -108,7 +108,7 @@ Contract key for the successful JSON response body.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:59](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L59)
+[packages/create/src/runtime/schema-core.ts:179](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L179)
 
 ___
 
@@ -120,7 +120,7 @@ Optional short endpoint summary shown in generated docs.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:61](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L61)
+[packages/create/src/runtime/schema-core.ts:181](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L181)
 
 ___
 
@@ -132,4 +132,4 @@ OpenAPI tag names applied to this endpoint.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:63](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L63)
+[packages/create/src/runtime/schema-core.ts:183](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L183)

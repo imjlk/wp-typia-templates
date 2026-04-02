@@ -4,6 +4,8 @@
 
 [packages/create/src/runtime/schema-core](../modules/packages_create_src_runtime_schema_core.md).OpenApiInfo
 
+Document-level metadata applied to generated OpenAPI files.
+
 ## Table of contents
 
 ### Properties
@@ -20,7 +22,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:14](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L14)
+[packages/create/src/runtime/schema-core.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L29)
 
 ___
 
@@ -30,7 +32,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:15](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L15)
+[packages/create/src/runtime/schema-core.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L30)
 
 ___
 
@@ -40,4 +42,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:16](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L16)
+[packages/create/src/runtime/schema-core.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L31)
