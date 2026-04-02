@@ -167,10 +167,8 @@ const REST_ENDPOINT_MANIFEST = defineEndpointManifest({
 });
 
 await syncRestOpenApi({
-  contracts: REST_ENDPOINT_MANIFEST.contracts,
-  endpoints: REST_ENDPOINT_MANIFEST.endpoints,
+  manifest: REST_ENDPOINT_MANIFEST,
   openApiFile: "src/api.openapi.json",
-  openApiInfo: REST_ENDPOINT_MANIFEST.info,
   typesFile: "src/api-types.ts",
 });
 ```

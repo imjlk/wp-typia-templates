@@ -203,9 +203,11 @@ describe("@wp-typia/create scaffolding", () => {
 			expect(generatedSyncRest).toContain("defineEndpointManifest");
 			expect(generatedSyncRest).toContain("syncRestOpenApi");
 			expect(generatedSyncRest).toContain("const REST_ENDPOINT_MANIFEST = defineEndpointManifest");
+			expect(generatedSyncRest).toContain("manifest: REST_ENDPOINT_MANIFEST");
 			expect(generatedSyncRest).not.toContain("const CONTRACTS =");
 			expect(generatedSyncRest).not.toContain("const ENDPOINTS =");
 			expect(generatedSyncRest).toContain("src/api.openapi.json");
+			expect(generatedSyncRest).not.toContain("openApiInfo: REST_ENDPOINT_MANIFEST.info");
 			expect(generatedRender).toContain("publicWriteToken");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
 		expect(readme).toContain("npm run sync-types");
@@ -502,8 +504,7 @@ describe("@wp-typia/create scaffolding", () => {
 			expect(parentBlockJson.render).toBe("file:./render.php");
 			expect(parentBlockJson.viewScriptModule).toBe("file:./interactivity.js");
 			expect(generatedSyncRest).toContain("syncRestOpenApi");
-			expect(generatedSyncRest).toContain("block.restManifest.contracts");
-			expect(generatedSyncRest).toContain("block.restManifest.endpoints");
+			expect(generatedSyncRest).toContain("manifest: block.restManifest");
 			expect(generatedBlockConfig).toContain("src/blocks/demo-compound-storage/api.openapi.json");
 			expect(generatedBlockConfig).toContain("restManifest: defineEndpointManifest");
 			expect(generatedBlockConfig).not.toContain("contracts: [");
