@@ -74,7 +74,7 @@ export function getTemplateSourceOfTruthNote(
 	}
 
 	if (templateId === "persistence") {
-		return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. `src/api-types.ts` remains the source of truth for `src/api-schemas/*` when you run `sync-rest`.";
+		return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. `src/api-types.ts` remains the source of truth for `src/api-schemas/*` when you run `sync-rest`. This scaffold is intentionally server-rendered: `src/render.php` is the canonical frontend entry, and `src/save.tsx` returns `null` so PHP can inject post context, storage-backed state, and write-policy bootstrap data before hydration.";
 	}
 
 	return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`.";

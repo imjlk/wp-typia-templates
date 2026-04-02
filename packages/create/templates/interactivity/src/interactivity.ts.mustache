@@ -123,43 +123,6 @@ store('{{slugKebabCase}}', {
         }
       }
     }
-  },
-
-  // Callbacks - lifecycle hooks
-  callbacks: {
-    // Initialize on mount
-    onInit: () => {
-      const context = getContext();
-      const { element } = getElement();
-
-      // Set initial state from attributes
-      context.clicks = parseInt(element.dataset.clicks || '0');
-      context.isAnimating = element.dataset.isAnimating === 'true';
-      context.isVisible = element.dataset.isVisible !== 'false';
-
-      // Set up event listeners
-      element.addEventListener('{{slugKebabCase}}:external-trigger', (event: any) => {
-        context.clicks = event.detail.clicks || context.clicks + 1;
-      });
-    },
-
-    // Log interactions
-    onInteraction: () => {
-      const context = getContext();
-      console.log(`{{slugKebabCase}} interaction:`, {
-        clicks: context.clicks,
-        type: context.lastInteraction,
-        timestamp: new Date().toISOString()
-      });
-    },
-
-    // Cleanup on unmount
-    onDestroy: () => {
-      const context = getContext();
-      if (context.autoPlayTimer) {
-        clearInterval(context.autoPlayTimer);
-      }
-    }
   }
 });
 

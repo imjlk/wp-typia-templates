@@ -14,11 +14,7 @@ export default function Save({ attributes }: { attributes: {{pascalCase}}Attribu
       interactiveMode: attributes.interactiveMode,
       maxClicks: attributes.maxClicks,
       autoPlayInterval: attributes.autoPlayInterval
-    }),
-    'data-clicks': attributes.clickCount,
-    'data-is-animating': attributes.isAnimating,
-    'data-is-visible': attributes.isVisible,
-    'data-unique-id': attributes.uniqueId
+    })
   });
 
   return (
