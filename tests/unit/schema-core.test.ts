@@ -340,6 +340,81 @@ describe("schema-core", () => {
 		).toThrow('Unsupported wp-typia schema type tag "int64" at "#/properties/id".');
 	});
 
+	test("projectJsonSchemaDocument supports additional generated numeric type tags", () => {
+		const schema: JsonSchemaDocument = {
+			$schema: "https://json-schema.org/draft/2020-12/schema",
+			additionalProperties: false,
+			properties: {
+				intCount: {
+					type: "number",
+					"x-typeTag": "int32",
+				},
+				score: {
+					type: "number",
+					"x-typeTag": "double",
+				},
+			},
+			required: ["intCount", "score"],
+			title: "AdditionalTypeTags",
+			type: "object",
+		};
+
+		const projected = projectJsonSchemaDocument(schema, {
+			profile: "ai-structured-output",
+		});
+		const properties = projected.properties as Record<string, Record<string, unknown>>;
+
+		expect(properties.intCount.type).toBe("integer");
+		expect(properties.intCount.minimum).toBe(-2147483648);
+		expect(properties.intCount.maximum).toBe(2147483647);
+		expect(properties.intCount.multipleOf).toBe(1);
+		expect(properties.score.type).toBe("number");
+		expect(properties.score["x-typeTag"]).toBeUndefined();
+	});
+
+	test("projectJsonSchemaDocument preserves user properties that happen to match stripped extension keys", () => {
+		const schema: JsonSchemaDocument = {
+			$schema: "https://json-schema.org/draft/2020-12/schema",
+			additionalProperties: false,
+			properties: {
+				"x-typeTag": {
+					type: "string",
+				},
+				"x-wp-typia-custom": {
+					type: "string",
+				},
+			},
+			required: ["x-typeTag", "x-wp-typia-custom"],
+			title: "LiteralExtensionPropertyNames",
+			type: "object",
+		};
+
+		const projected = projectJsonSchemaDocument(schema, {
+			profile: "ai-structured-output",
+		});
+		const properties = projected.properties as Record<string, Record<string, unknown>>;
+
+		expect(properties["x-typeTag"]).toEqual({ type: "string" });
+		expect(properties["x-wp-typia-custom"]).toEqual({ type: "string" });
+		expect(projected.required).toEqual(["x-typeTag", "x-wp-typia-custom"]);
+	});
+
+	test("projectJsonSchemaDocument rejects unknown profiles explicitly", () => {
+		expect(() =>
+			projectJsonSchemaDocument(
+				{
+					$schema: "https://json-schema.org/draft/2020-12/schema",
+					additionalProperties: false,
+					properties: {},
+					required: [],
+					title: "UnknownProfile",
+					type: "object",
+				},
+				{ profile: "agentic" as never },
+			),
+		).toThrow('Unsupported JSON Schema projection profile "agentic".');
+	});
+
 	test("projectJsonSchemaDocument produces AI-safe counter schemas that compile under strict AJV without custom keywords", () => {
 		const projected = projectJsonSchemaDocument(incrementRequestSchema, {
 			profile: "ai-structured-output",
