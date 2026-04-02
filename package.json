@@ -7,12 +7,13 @@
   "workspaces": [
     "packages/create",
     "packages/create-wp-typia",
+    "packages/wp-typia-block-runtime",
     "packages/wp-typia-rest",
     "packages/wp-typia-block-types",
     "examples/*"
   ],
   "scripts": {
-    "packages:build": "bun run --filter @wp-typia/block-types build && bun run --filter @wp-typia/rest build && bun run --filter @wp-typia/create build",
+    "packages:build": "bun run --filter @wp-typia/block-types build && bun run --filter @wp-typia/rest build && bun run --filter @wp-typia/create build && bun run --filter @wp-typia/block-runtime build",
     "examples:build": "bun run --filter my-typia-block build && bun run --filter persistence-examples build && bun run --filter compound-patterns build && bun run --filter rest-contract-adapter-poc build",
     "examples:dev": "bun run --filter my-typia-block --if-present dev",
     "examples:dev:persistence": "bun run --filter persistence-examples --if-present dev",
@@ -34,11 +35,11 @@
     "build": "bun run packages:build && bun run examples:build",
     "test": "bun run test:unit && bun run test:cli",
     "test:unit": "bun test tests/unit",
-    "test:cli": "bun run --filter @wp-typia/rest test && bun run --filter @wp-typia/create test",
+    "test:cli": "bun run --filter @wp-typia/rest test && bun run --filter @wp-typia/create test && bun run --filter @wp-typia/block-runtime test",
     "test:generated-smoke": "node scripts/run-generated-project-smoke.mjs",
     "test:coverage": "bun run test:unit:coverage && bun run test:cli:coverage",
     "test:unit:coverage": "bun test tests/unit --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage/unit",
-    "test:cli:coverage": "bun run --filter @wp-typia/rest test:coverage && bun run --filter @wp-typia/create test:coverage",
+    "test:cli:coverage": "bun run --filter @wp-typia/rest test:coverage && bun run --filter @wp-typia/create test:coverage && bun run --filter @wp-typia/block-runtime test:coverage",
     "test:watch": "bun test tests/unit --watch",
     "test:e2e": "bun run examples:test:e2e",
     "test:e2e:matrix": "bun run examples:test:e2e:matrix",

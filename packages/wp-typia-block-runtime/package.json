@@ -1,0 +1,68 @@
+{
+  "name": "@wp-typia/block-runtime",
+  "version": "0.1.0",
+  "description": "Prototype block runtime facade for wp-typia generated-project helpers",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./defaults": {
+      "types": "./dist/defaults.d.ts",
+      "import": "./dist/defaults.js",
+      "default": "./dist/defaults.js"
+    },
+    "./editor": {
+      "types": "./dist/editor.d.ts",
+      "import": "./dist/editor.js",
+      "default": "./dist/editor.js"
+    },
+    "./validation": {
+      "types": "./dist/validation.d.ts",
+      "import": "./dist/validation.js",
+      "default": "./dist/validation.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "test": "bun run --filter @wp-typia/create build && bun run build && bun test tests",
+    "test:coverage": "bun run --filter @wp-typia/create build && bun run build && bun test tests --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "author": "imjlk",
+  "license": "GPL-2.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imjlk/wp-typia.git",
+    "directory": "packages/wp-typia-block-runtime"
+  },
+  "bugs": {
+    "url": "https://github.com/imjlk/wp-typia/issues"
+  },
+  "homepage": "https://github.com/imjlk/wp-typia/tree/main/packages/wp-typia-block-runtime#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0",
+    "bun": ">=1.3.10"
+  },
+  "dependencies": {
+    "@wp-typia/create": "^0.5.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}
