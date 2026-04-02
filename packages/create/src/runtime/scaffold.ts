@@ -84,6 +84,7 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	phpPrefix: string;
 	isAuthenticatedPersistencePolicy: "false" | "true";
 	isPublicPersistencePolicy: "false" | "true";
+	publicWriteRequestIdDeclaration: string;
 	restPackageVersion: string;
 	restWriteAuthMode: "authenticated-rest-nonce" | "public-signed-token";
 	slug: string;
@@ -475,6 +476,10 @@ export function getTemplateVariables(
 		pascalCase,
 		phpPrefix,
 		restPackageVersion,
+		publicWriteRequestIdDeclaration:
+			persistencePolicy === "public"
+				? "publicWriteRequestId: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;"
+				: "publicWriteRequestId?: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;",
 		restWriteAuthMode:
 			persistencePolicy === "public" ? "public-signed-token" : "authenticated-rest-nonce",
 		slug,
@@ -517,6 +522,10 @@ function buildReadme(
 	const sourceOfTruthNote = getTemplateSourceOfTruthNote(templateId, {
 		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
 	});
+	const publicPersistencePolicyNote =
+		variables.isPublicPersistencePolicy === "true"
+			? "Public persistence writes use signed short-lived tokens, per-request ids, and coarse rate limiting by default. Add application-specific abuse controls before using the same pattern for high-value metrics or experiments."
+			: null;
 	const phpRestExtensionPointsSection = getPhpRestExtensionPointsSection(templateId, {
 		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
 		slug: variables.slug,
@@ -551,7 +560,7 @@ ${optionalOnboardingSteps.join("\n")}
 
 ${getOptionalOnboardingNote(packageManager)}
 
-${sourceOfTruthNote}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ""}
+${sourceOfTruthNote}${publicPersistencePolicyNote ? `\n\n${publicPersistencePolicyNote}` : ""}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ""}
 `;
 }
 

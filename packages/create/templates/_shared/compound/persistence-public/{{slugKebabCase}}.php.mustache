@@ -17,6 +17,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( '{{phpPrefix}}_DATA_STORAGE_MODE', '{{dataStorageMode}}' );
 define( '{{phpPrefix}}_PUBLIC_WRITE_TTL', HOUR_IN_SECONDS );
+define( '{{phpPrefix}}_PUBLIC_WRITE_RATE_LIMIT_WINDOW', MINUTE_IN_SECONDS );
+define( '{{phpPrefix}}_PUBLIC_WRITE_RATE_LIMIT_MAX', 10 );
 // These helper files are scaffold-owned plumbing. Customize them only when you are changing auth or request validation behavior.
 require_once __DIR__ . '/inc/rest-shared.php';
 require_once __DIR__ . '/inc/rest-public.php';
@@ -37,7 +39,9 @@ function {{phpPrefix}}_get_counter_table_name() {
 }
 
 function {{phpPrefix}}_get_counter_lock_name( $post_id, $resource_key ) {
-	return '{{phpPrefix}}_counter_' . (int) $post_id . '_' . md5( (string) $resource_key );
+	return 'wpt_pcl_' . md5(
+		'{{phpPrefix}}|' . (int) $post_id . '|' . (string) $resource_key
+	);
 }
 
 function {{phpPrefix}}_with_counter_lock( $post_id, $resource_key, $callback ) {
@@ -217,6 +221,16 @@ function {{phpPrefix}}_handle_write_state( WP_REST_Request $request ) {
 		return $payload;
 	}
 
+	$request_consumed = {{phpPrefix}}_consume_public_write_request_id(
+		(int) $payload['postId'],
+		(string) $payload['resourceKey'],
+		isset( $payload['publicWriteRequestId'] ) ? (string) $payload['publicWriteRequestId'] : ''
+	);
+
+	if ( is_wp_error( $request_consumed ) ) {
+		return $request_consumed;
+	}
+
 	$count = {{phpPrefix}}_increment_counter(
 		(int) $payload['postId'],
 		(string) $payload['resourceKey'],
@@ -224,6 +238,11 @@ function {{phpPrefix}}_handle_write_state( WP_REST_Request $request ) {
 	);
 
 	if ( is_wp_error( $count ) ) {
+		{{phpPrefix}}_release_public_write_request_id(
+			(int) $payload['postId'],
+			(string) $payload['resourceKey'],
+			isset( $payload['publicWriteRequestId'] ) ? (string) $payload['publicWriteRequestId'] : ''
+		);
 		return $count;
 	}
 

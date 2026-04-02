@@ -172,7 +172,9 @@ When you customize the generated PHP:
 `persistence` keeps one minimal aggregate-counter scaffold and lets you choose between:
 
 - `authenticated`: logged-in writes protected by a WordPress REST nonce
-- `public`: anonymous writes protected by signed short-lived public tokens
+- `public`: anonymous writes protected by signed short-lived public tokens, per-request ids, and coarse rate limiting
+
+The public policy is still a scaffold default, not a complete abuse-prevention system. Add application-specific controls before using the same pattern for experiments, impressions, or other high-value metrics.
 
 The built-in `compound` template adds a multi-block project structure:
 

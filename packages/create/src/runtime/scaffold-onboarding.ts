@@ -95,7 +95,7 @@ function formatPhpRestExtensionPointsSection({
 
 	const lines = [
 		`- Edit \`${mainPhpPath}\` when you need to ${mainPhpScope}.`,
-		"- Edit `inc/rest-auth.php` or `inc/rest-public.php` when you need to customize write permissions or token/nonce checks for the selected policy.",
+		"- Edit `inc/rest-auth.php` or `inc/rest-public.php` when you need to customize write permissions or token/request-id/nonce checks for the selected policy.",
 		`- Keep \`${apiTypesPath}\` as the source of truth for request and response contracts, then regenerate \`${schemaJsonGlob}\`, per-contract \`${perContractOpenApiGlob}\`, and \`${aggregateOpenApiPath}\` with \`sync-rest\`.`,
 		"- Avoid hand-editing generated schema and OpenAPI artifacts unless you are debugging generated output; they are meant to be regenerated from TypeScript contracts.",
 	];

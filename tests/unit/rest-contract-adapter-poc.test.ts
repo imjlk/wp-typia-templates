@@ -75,6 +75,7 @@ describe('REST contract adapter PoC', () => {
 					body: JSON.stringify({
 						delta: 3,
 						postId: 7,
+						publicWriteRequestId: 'adapter-request-1',
 						publicWriteToken: 'adapter-proof-token',
 						resourceKey: 'demo',
 					}),
@@ -127,6 +128,8 @@ describe('REST contract adapter PoC', () => {
 					body: JSON.stringify({
 						delta: 1,
 						postId: 1.5,
+						publicWriteRequestId: 'adapter-request-2',
+						publicWriteToken: 'adapter-proof-token',
 						resourceKey: 'demo',
 					}),
 					headers: {

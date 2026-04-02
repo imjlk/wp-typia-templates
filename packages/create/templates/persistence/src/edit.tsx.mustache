@@ -74,7 +74,7 @@ export default function Edit( {
 	const persistencePolicyDescription =
 		persistencePolicy === 'authenticated'
 			? __( 'Writes require a logged-in user and a valid REST nonce.', '{{textDomain}}' )
-			: __( 'Anonymous writes use signed short-lived public tokens.', '{{textDomain}}' );
+			: __( 'Anonymous writes use signed short-lived public tokens, per-request ids, and coarse rate limiting.', '{{textDomain}}' );
 
 	return (
 		<>

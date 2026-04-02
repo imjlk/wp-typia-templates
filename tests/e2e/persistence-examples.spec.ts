@@ -14,6 +14,12 @@ interface LikeContext {
   restNonce?: string;
 }
 
+function createRequestId(): string {
+  return typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `req-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+}
+
 async function getCounterContext(previewPage: Awaited<ReturnType<WordPressPage['previewPost']>>): Promise<CounterContext> {
   return previewPage.evaluate(() => {
     const interactiveRoot = document.querySelector('[data-wp-interactive="persistenceExamplesCounter"]');
@@ -202,16 +208,45 @@ test.describe('Persistence examples', () => {
       })
       .toBe(1);
 
+    const replayRequestId = createRequestId();
+    const firstReplayAttempt = await writeCounter(previewPage, {
+      delta: 1,
+      postId: counterContext.postId,
+      publicWriteRequestId: replayRequestId,
+      publicWriteToken: counterContext.publicWriteToken,
+      resourceKey: counterContext.resourceKey,
+    });
+    expect(firstReplayAttempt.status).toBe(200);
+
+    const secondReplayAttempt = await writeCounter(previewPage, {
+      delta: 1,
+      postId: counterContext.postId,
+      publicWriteRequestId: replayRequestId,
+      publicWriteToken: counterContext.publicWriteToken,
+      resourceKey: counterContext.resourceKey,
+    });
+    expect(secondReplayAttempt.status).toBe(409);
+
     const missingToken = await writeCounter(previewPage, {
       delta: 1,
       postId: counterContext.postId,
+      publicWriteRequestId: createRequestId(),
       resourceKey: counterContext.resourceKey,
     });
     expect(missingToken.status).toBe(403);
 
+    const missingRequestId = await writeCounter(previewPage, {
+      delta: 1,
+      postId: counterContext.postId,
+      publicWriteToken: counterContext.publicWriteToken,
+      resourceKey: counterContext.resourceKey,
+    });
+    expect(missingRequestId.status).toBe(403);
+
     const tamperedToken = await writeCounter(previewPage, {
       delta: 1,
       postId: counterContext.postId,
+      publicWriteRequestId: createRequestId(),
       publicWriteToken: `${counterContext.publicWriteToken}x`,
       resourceKey: counterContext.resourceKey,
     });
@@ -221,6 +256,7 @@ test.describe('Persistence examples', () => {
     const expiredToken = await writeCounter(previewPage, {
       delta: 1,
       postId: counterContext.postId,
+      publicWriteRequestId: createRequestId(),
       publicWriteToken: counterContext.publicWriteToken,
       resourceKey: counterContext.resourceKey,
     });
@@ -232,7 +268,7 @@ test.describe('Persistence examples', () => {
       undefined,
       { timeout: 10_000 },
     );
-    await expect(previewPage.locator('.persistence-counter-frontend__count')).toHaveText('1', {
+    await expect(previewPage.locator('.persistence-counter-frontend__count')).toHaveText('2', {
       timeout: 10_000,
     });
 

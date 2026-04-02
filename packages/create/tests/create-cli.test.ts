@@ -177,6 +177,10 @@ describe("@wp-typia/create scaffolding", () => {
 			"utf8",
 		);
 		const generatedRender = fs.readFileSync(path.join(targetDir, "src", "render.php"), "utf8");
+		const generatedApiTypes = fs.readFileSync(
+			path.join(targetDir, "src", "api-types.ts"),
+			"utf8",
+		);
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 		const restPublicHelper = fs.readFileSync(path.join(targetDir, "inc", "rest-public.php"), "utf8");
@@ -196,26 +200,39 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-public");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-public.php';");
+		expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
 		expect(pluginBootstrap).toContain("permission_callback' => 'demo_persistence_public_can_write_publicly'");
-			expect(restPublicHelper).toContain("function demo_persistence_public_verify_public_write_token");
-			expect(generatedApi).toContain("@wp-typia/rest");
-			expect(generatedSyncRest).toContain("syncTypeSchemas");
-			expect(generatedSyncRest).toContain("defineEndpointManifest");
-			expect(generatedSyncRest).toContain("syncRestOpenApi");
-			expect(generatedSyncRest).toContain("const REST_ENDPOINT_MANIFEST = defineEndpointManifest");
-			expect(generatedSyncRest).toContain("manifest: REST_ENDPOINT_MANIFEST");
-			expect(generatedSyncRest).not.toContain("const CONTRACTS =");
-			expect(generatedSyncRest).not.toContain("const ENDPOINTS =");
-			expect(generatedSyncRest).toContain("src/api.openapi.json");
-			expect(generatedSyncRest).not.toContain("openApiInfo: REST_ENDPOINT_MANIFEST.info");
-			expect(generatedRender).toContain("publicWriteToken");
+		expect(pluginBootstrap).toContain("PUBLIC_WRITE_RATE_LIMIT_WINDOW");
+		expect(pluginBootstrap).toContain("PUBLIC_WRITE_RATE_LIMIT_MAX");
+		expect(pluginBootstrap).not.toMatch(
+			/'callback'\s*=>\s*'demo_persistence_public_handle_write_state'[\s\S]*?'permission_callback'\s*=>\s*'__return_true'/,
+		);
+		expect(restPublicHelper).toContain("function demo_persistence_public_verify_public_write_token");
+		expect(restPublicHelper).toContain("function demo_persistence_public_consume_public_write_request_id");
+		expect(restPublicHelper).toContain("function demo_persistence_public_enforce_public_write_rate_limit");
+		expect(restPublicHelper).toContain("SELECT GET_LOCK(%s, 5)");
+		expect(restPublicHelper).toContain("SELECT RELEASE_LOCK(%s)");
+		expect(restPublicHelper).toContain("return 'wpt_pwl_' . md5(");
+		expect(generatedApi).toContain("@wp-typia/rest");
+		expect(generatedSyncRest).toContain("syncTypeSchemas");
+		expect(generatedSyncRest).toContain("defineEndpointManifest");
+		expect(generatedSyncRest).toContain("syncRestOpenApi");
+		expect(generatedSyncRest).toContain("const REST_ENDPOINT_MANIFEST = defineEndpointManifest");
+		expect(generatedSyncRest).toContain("manifest: REST_ENDPOINT_MANIFEST");
+		expect(generatedSyncRest).not.toContain("const CONTRACTS =");
+		expect(generatedSyncRest).not.toContain("const ENDPOINTS =");
+		expect(generatedSyncRest).toContain("src/api.openapi.json");
+		expect(generatedSyncRest).not.toContain("openApiInfo: REST_ENDPOINT_MANIFEST.info");
+		expect(generatedRender).toContain("publicWriteToken");
+		expect(generatedApiTypes).toContain("publicWriteRequestId: string");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
 		expect(readme).toContain("npm run sync-types");
 		expect(readme).toContain("npm run sync-rest");
 		expect(readme).toContain("src/api-types.ts");
+		expect(readme).toContain("per-request ids, and coarse rate limiting by default");
 		expect(readme).toContain("## PHP REST Extension Points");
 		expect(readme).toContain("Edit `demo-persistence-public.php`");
-		expect(readme).toContain("Edit `inc/rest-auth.php` or `inc/rest-public.php`");
+		expect(readme).toContain("Edit `inc/rest-auth.php` or `inc/rest-public.php` when you need to customize write permissions or token/request-id/nonce checks");
 		expect(pluginBootstrap).toContain("Customize storage helpers");
 		expect(pluginBootstrap).toContain("Route handlers are the main product-level extension point");
 		expect(restPublicHelper).toContain("Customize the public write gate here");
@@ -247,6 +264,10 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 		const restAuthHelper = fs.readFileSync(path.join(targetDir, "inc", "rest-auth.php"), "utf8");
 		const generatedRender = fs.readFileSync(path.join(targetDir, "src", "render.php"), "utf8");
+		const generatedApiTypes = fs.readFileSync(
+			path.join(targetDir, "src", "api-types.ts"),
+			"utf8",
+		);
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
@@ -261,9 +282,15 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-authenticated");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-auth.php';");
+		expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
 		expect(pluginBootstrap).toContain("permission_callback' => 'demo_persistence_authenticated_can_write_authenticated'");
+		expect(pluginBootstrap).not.toMatch(
+			/'callback'\s*=>\s*'demo_persistence_authenticated_handle_write_state'[\s\S]*?'permission_callback'\s*=>\s*'__return_true'/,
+		);
 		expect(restAuthHelper).toContain("function demo_persistence_authenticated_can_write_authenticated");
 		expect(generatedRender).toContain("Sign in to persist this counter.");
+		expect(generatedApiTypes).toContain("publicWriteRequestId?: string");
+		expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
 		expect(readme).toContain("## PHP REST Extension Points");
 		expect(readme).toContain("Edit `demo-persistence-authenticated.php`");
@@ -485,6 +512,10 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "scripts", "block-config.ts"),
 			"utf8",
 		);
+		const generatedApiTypes = fs.readFileSync(
+			path.join(targetDir, "src", "blocks", "demo-compound-storage", "api-types.ts"),
+			"utf8",
+		);
 		const parentBlockJson = JSON.parse(
 			fs.readFileSync(
 				path.join(targetDir, "src", "blocks", "demo-compound-storage", "block.json"),
@@ -501,12 +532,15 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("can_write_authenticated");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
 			expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-auth.php';");
+			expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
 			expect(parentBlockJson.render).toBe("file:./render.php");
 			expect(parentBlockJson.viewScriptModule).toBe("file:./interactivity.js");
 			expect(generatedSyncRest).toContain("syncRestOpenApi");
 			expect(generatedSyncRest).toContain("manifest: block.restManifest");
 			expect(generatedBlockConfig).toContain("src/blocks/demo-compound-storage/api.openapi.json");
 			expect(generatedBlockConfig).toContain("restManifest: defineEndpointManifest");
+			expect(generatedApiTypes).toContain("publicWriteRequestId?: string");
+			expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
 			expect(generatedBlockConfig).not.toContain("contracts: [");
 			expect(generatedBlockConfig).not.toContain("openApiInfo:");
 			expect(generatedBlockConfig.match(/restManifest: defineEndpointManifest/g)).toHaveLength(1);
@@ -537,21 +571,38 @@ describe("@wp-typia/create scaffolding", () => {
 		});
 
 		const pluginBootstrap = fs.readFileSync(path.join(targetDir, "demo-compound-public.php"), "utf8");
+		const generatedApiTypes = fs.readFileSync(
+			path.join(targetDir, "src", "blocks", "demo-compound-public", "api-types.ts"),
+			"utf8",
+		);
 		const restPublicHelper = fs.readFileSync(path.join(targetDir, "inc", "rest-public.php"), "utf8");
 		const parentRender = fs.readFileSync(
 			path.join(targetDir, "src", "blocks", "demo-compound-public", "render.php"),
 			"utf8",
 		);
+		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(true);
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-public.php"))).toBe(true);
 		expect(pluginBootstrap).toContain("permission_callback' => 'demo_compound_public_can_write_publicly'");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-public.php';");
+		expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
 		expect(pluginBootstrap).toContain("HOUR_IN_SECONDS");
+		expect(pluginBootstrap).toContain("PUBLIC_WRITE_RATE_LIMIT_WINDOW");
+		expect(pluginBootstrap).toContain("PUBLIC_WRITE_RATE_LIMIT_MAX");
+		expect(pluginBootstrap).not.toMatch(
+			/'callback'\s*=>\s*'demo_compound_public_handle_write_state'[\s\S]*?'permission_callback'\s*=>\s*'__return_true'/,
+		);
 		expect(restPublicHelper).toContain("function demo_compound_public_verify_public_write_token");
+		expect(restPublicHelper).toContain("function demo_compound_public_consume_public_write_request_id");
+		expect(restPublicHelper).toContain("SELECT GET_LOCK(%s, 5)");
+		expect(restPublicHelper).toContain("return 'wpt_pwl_' . md5(");
 		expect(parentRender).toContain("publicWriteToken");
+		expect(generatedApiTypes).toContain("publicWriteRequestId: string");
+		expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
 		expect(restPublicHelper).toContain("Customize the public write gate here");
+		expect(readme).toContain("per-request ids, and coarse rate limiting by default");
 	});
 
 	test("compound scaffolds honor namespace, text-domain, and php-prefix overrides", async () => {
