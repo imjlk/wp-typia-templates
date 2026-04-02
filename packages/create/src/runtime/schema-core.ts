@@ -10,10 +10,130 @@ export interface JsonSchemaObject {
 	[key: string]: JsonValue | JsonSchemaObject | JsonSchemaObject[] | undefined;
 }
 
+/**
+ * Full JSON Schema document for a manifest-derived root object.
+ */
+export interface JsonSchemaDocument extends JsonSchemaObject {
+	$schema: string;
+	additionalProperties: boolean;
+	properties: Record<string, JsonSchemaObject>;
+	required: string[];
+	title: string;
+	type: "object";
+}
+
+/**
+ * Document-level metadata applied to generated OpenAPI files.
+ */
 export interface OpenApiInfo {
 	description?: string;
 	title?: string;
 	version?: string;
+}
+
+/**
+ * JSON Schema reference used inside generated OpenAPI documents.
+ */
+export interface OpenApiSchemaReference extends JsonSchemaObject {
+	$ref: string;
+}
+
+/**
+ * OpenAPI query parameter emitted from a manifest attribute.
+ */
+export interface OpenApiParameter extends JsonSchemaObject {
+	in: "query";
+	name: string;
+	required: boolean;
+	schema: JsonSchemaObject;
+}
+
+/**
+ * OpenAPI media type wrapper for JSON responses and request bodies.
+ */
+export interface OpenApiMediaType extends JsonSchemaObject {
+	schema: OpenApiSchemaReference;
+}
+
+/**
+ * OpenAPI request body definition for generated JSON endpoints.
+ */
+export interface OpenApiRequestBody extends JsonSchemaObject {
+	content: {
+		"application/json": OpenApiMediaType;
+	};
+	required: true;
+}
+
+/**
+ * Successful JSON response entry in the generated OpenAPI document.
+ */
+export interface OpenApiResponse extends JsonSchemaObject {
+	content: {
+		"application/json": OpenApiMediaType;
+	};
+	description: string;
+}
+
+/**
+ * Header-based security scheme used by authenticated WordPress REST routes.
+ */
+export interface OpenApiSecurityScheme extends JsonSchemaObject {
+	description?: string;
+	in: "header";
+	name: string;
+	type: "apiKey";
+}
+
+/**
+ * One generated OpenAPI operation for a scaffolded REST endpoint.
+ */
+export interface OpenApiOperation extends JsonSchemaObject {
+	operationId: string;
+	parameters?: OpenApiParameter[];
+	requestBody?: OpenApiRequestBody;
+	responses: Record<string, OpenApiResponse>;
+	security?: Array<Record<string, string[]>>;
+	summary?: string;
+	tags: string[];
+	"x-wp-typia-authPolicy": EndpointOpenApiAuthMode;
+	"x-wp-typia-publicTokenField"?: string;
+}
+
+/**
+ * Path item containing one or more generated REST operations.
+ */
+export type OpenApiPathItem = JsonSchemaObject &
+	Partial<Record<Lowercase<EndpointOpenApiMethod>, OpenApiOperation>>;
+
+/**
+ * Named tag entry surfaced at the top level of generated OpenAPI docs.
+ */
+export interface OpenApiTag extends JsonSchemaObject {
+	name: string;
+}
+
+/**
+ * OpenAPI component registry for generated schemas and security schemes.
+ */
+export interface OpenApiComponents extends JsonSchemaObject {
+	schemas: Record<string, JsonSchemaDocument>;
+	securitySchemes?: Record<string, OpenApiSecurityScheme>;
+}
+
+/**
+ * Complete OpenAPI 3.1 document emitted for endpoint-aware REST contracts.
+ */
+export interface OpenApiDocument extends JsonSchemaObject {
+	components: OpenApiComponents;
+	info: {
+		description?: string;
+		title: string;
+		version: string;
+	};
+	openapi: "3.1.0";
+	paths: Record<string, OpenApiPathItem>;
+	tags?: OpenApiTag[];
 }
 
 /**
@@ -75,6 +195,21 @@ export interface EndpointOpenApiDocumentOptions {
 	info?: OpenApiInfo;
 }
 
+const WP_TYPIA_OPENAPI_EXTENSION_KEYS = {
+	AUTH_POLICY: "x-wp-typia-authPolicy",
+	PUBLIC_TOKEN_FIELD: "x-wp-typia-publicTokenField",
+	TYPE_TAG: "x-typeTag",
+} as const;
+
+const WP_TYPIA_OPENAPI_LITERALS = {
+	JSON_CONTENT_TYPE: "application/json",
+	PUBLIC_WRITE_TOKEN_FIELD: "publicWriteToken",
+	QUERY_LOCATION: "query" as const,
+	SUCCESS_RESPONSE_DESCRIPTION: "Successful response",
+	WP_REST_NONCE_HEADER: "X-WP-Nonce",
+	WP_REST_NONCE_SCHEME: "wpRestNonce",
+} as const;
+
 function applyConstraintIfNumber(
 	schema: JsonSchemaObject,
 	key: string,
@@ -101,7 +236,11 @@ function applyCommonConstraints(
 ): void {
 	applyConstraintIfString(schema, "format", constraints.format);
 	applyConstraintIfString(schema, "pattern", constraints.pattern);
-	applyConstraintIfString(schema, "x-typeTag", constraints.typeTag);
+	applyConstraintIfString(
+		schema,
+		WP_TYPIA_OPENAPI_EXTENSION_KEYS.TYPE_TAG,
+		constraints.typeTag,
+	);
 
 	applyConstraintIfNumber(schema, "minLength", constraints.minLength);
 	applyConstraintIfNumber(schema, "maxLength", constraints.maxLength);
@@ -114,45 +253,57 @@ function applyCommonConstraints(
 	applyConstraintIfNumber(schema, "maxItems", constraints.maxItems);
 }
 
+function createUnionDiscriminatorProperty(branchKey: string): JsonSchemaObject {
+	return {
+		const: branchKey,
+		enum: [branchKey],
+		type: "string",
+	};
+}
+
+function addDiscriminatorToObjectBranch(
+	schema: JsonSchemaObject,
+	discriminator: string,
+	branchKey: string,
+): JsonSchemaObject | null {
+	if (
+		typeof schema.properties !== "object" ||
+		schema.properties === null ||
+		Array.isArray(schema.properties)
+	) {
+		return null;
+	}
+
+	const properties = schema.properties as Record<string, JsonSchemaObject>;
+	properties[discriminator] = createUnionDiscriminatorProperty(branchKey);
+	const required = Array.isArray(schema.required)
+		? [...new Set([...(schema.required as string[]), discriminator])]
+		: [discriminator];
+	schema.required = required;
+	return schema;
+}
+
 function manifestUnionToJsonSchema(union: ManifestUnionMetadata): JsonSchemaObject {
 	const oneOf = Object.entries(union.branches).map(([branchKey, branch]) => {
-		const schema = manifestAttributeToJsonSchema(branch);
-		const branchKind = branch.ts.kind;
-		if (
-			branchKind === "object" &&
-			typeof schema.properties === "object" &&
-			schema.properties !== null &&
-			!Array.isArray(schema.properties)
-		) {
-			const properties = schema.properties as Record<string, JsonSchemaObject>;
-			properties[union.discriminator] = {
-				const: branchKey,
-				enum: [branchKey],
-				type: "string",
-			};
-			const required = Array.isArray(schema.required)
-				? [...new Set([...(schema.required as string[]), union.discriminator])]
-				: [union.discriminator];
-			schema.required = required;
-			return schema;
+		if (branch.ts.kind !== "object") {
+			throw new Error(
+				`Discriminated union branch "${branchKey}" must be an object to carry "${union.discriminator}".`,
+			);
 		}
 
-		return {
-			allOf: [
-				schema,
-				{
-					properties: {
-						[union.discriminator]: {
-							const: branchKey,
-							enum: [branchKey],
-							type: "string",
-						},
-					},
-					required: [union.discriminator],
-					type: "object",
-				},
-			],
-		};
+		const schema = manifestAttributeToJsonSchema(branch);
+		const objectSchema = addDiscriminatorToObjectBranch(
+			schema,
+			union.discriminator,
+			branchKey,
+		);
+		if (!objectSchema) {
+			throw new Error(
+				`Discriminated union branch "${branchKey}" is missing an object schema for "${union.discriminator}".`,
+			);
+		}
+
+		return objectSchema;
 	});
 
 	return {
@@ -163,6 +314,12 @@ function manifestUnionToJsonSchema(union: ManifestUnionMetadata): JsonSchemaObje
 	};
 }
 
+/**
+ * Converts one manifest attribute definition into a JSON Schema fragment.
+ *
+ * @param attribute Manifest-derived attribute metadata.
+ * @returns A JSON-compatible schema fragment for the attribute.
+ */
 export function manifestAttributeToJsonSchema(attribute: ManifestAttribute): JsonSchemaObject {
 	if (attribute.ts.union) {
 		const schema = manifestUnionToJsonSchema(attribute.ts.union);
@@ -230,7 +387,13 @@ export function manifestAttributeToJsonSchema(attribute: ManifestAttribute): Jso
 	return schema;
 }
 
-export function manifestToJsonSchema(doc: ManifestDocument): JsonSchemaObject {
+/**
+ * Builds a full JSON Schema document from a Typia manifest document.
+ *
+ * @param doc Manifest-derived attribute document.
+ * @returns A draft 2020-12 JSON Schema document for the manifest root object.
+ */
+export function manifestToJsonSchema(doc: ManifestDocument): JsonSchemaDocument {
 	const attributes = doc.attributes ?? {};
 	return {
 		$schema: "https://json-schema.org/draft/2020-12/schema",
@@ -249,10 +412,17 @@ export function manifestToJsonSchema(doc: ManifestDocument): JsonSchemaObject {
 	};
 }
 
+/**
+ * Wraps a manifest-derived JSON Schema document in a minimal OpenAPI 3.1 shell.
+ *
+ * @param doc Manifest-derived attribute document.
+ * @param info Optional OpenAPI document metadata.
+ * @returns An OpenAPI document containing the schema as a single component.
+ */
 export function manifestToOpenApi(
 	doc: ManifestDocument,
 	info: OpenApiInfo = {},
-): JsonSchemaObject {
+): OpenApiDocument {
 	const schemaName = doc.sourceType ?? "TypiaDocument";
 	return {
 		components: {
@@ -270,54 +440,75 @@ export function manifestToOpenApi(
 	};
 }
 
-function createOpenApiSchemaRef(schemaName: string): JsonSchemaObject {
+function createOpenApiSchemaRef(schemaName: string): OpenApiSchemaReference {
 	return {
 		$ref: `#/components/schemas/${schemaName}`,
 	};
 }
 
+function formatEndpointDescription(endpoint: EndpointOpenApiEndpointDefinition): string {
+	return `${endpoint.operationId} (${endpoint.method} ${endpoint.path})`;
+}
+
 function getContractSchemaName(
 	contractKey: string,
 	contract: EndpointOpenApiContractDocument | undefined,
+	endpoint?: EndpointOpenApiEndpointDefinition,
+	role = "contract",
 ): string {
 	if (!contract) {
+		if (endpoint) {
+			throw new Error(
+				`Missing ${role} contract "${contractKey}" while building endpoint "${formatEndpointDescription(endpoint)}"`,
+			);
+		}
+
 		throw new Error(`Missing OpenAPI contract definition for "${contractKey}"`);
 	}
 
 	return contract.schemaName ?? contract.document.sourceType ?? contractKey;
 }
 
-function buildQueryParameters(contract: EndpointOpenApiContractDocument): JsonSchemaObject[] {
+function buildQueryParameters(contract: EndpointOpenApiContractDocument): OpenApiParameter[] {
 	const attributes = contract.document.attributes ?? {};
 
 	return Object.entries(attributes).map(([name, attribute]) => ({
-		in: "query",
+		in: WP_TYPIA_OPENAPI_LITERALS.QUERY_LOCATION,
 		name,
 		required: attribute.ts.required !== false,
 		schema: manifestAttributeToJsonSchema(attribute),
 	}));
 }
 
+function createSuccessResponse(schemaName: string): OpenApiResponse {
+	return {
+		content: {
+			[WP_TYPIA_OPENAPI_LITERALS.JSON_CONTENT_TYPE]: {
+				schema: createOpenApiSchemaRef(schemaName),
+			},
+		},
+		description: WP_TYPIA_OPENAPI_LITERALS.SUCCESS_RESPONSE_DESCRIPTION,
+	};
+}
+
 function buildEndpointOpenApiOperation(
 	endpoint: EndpointOpenApiEndpointDefinition,
 	contracts: Record<string, EndpointOpenApiContractDocument>,
-): JsonSchemaObject {
-	const operation: JsonSchemaObject = {
+): OpenApiOperation {
+	const operation: OpenApiOperation = {
 		operationId: endpoint.operationId,
 		responses: {
-			"200": {
-				content: {
-					"application/json": {
-						schema: createOpenApiSchemaRef(
-							getContractSchemaName(endpoint.responseContract, contracts[endpoint.responseContract]),
-						),
-					},
-				},
-				description: "Successful response",
-			},
+			"200": createSuccessResponse(
+				getContractSchemaName(
+					endpoint.responseContract,
+					contracts[endpoint.responseContract],
+					endpoint,
+					"response",
+				),
+			),
 		},
 		tags: endpoint.tags,
-		"x-wp-typia-authPolicy": endpoint.authMode,
+		[WP_TYPIA_OPENAPI_EXTENSION_KEYS.AUTH_POLICY]: endpoint.authMode,
 	};
 
 	if (typeof endpoint.summary === "string" && endpoint.summary.length > 0) {
@@ -328,7 +519,9 @@ function buildEndpointOpenApiOperation(
 		operation.parameters = buildQueryParameters(
 			contracts[endpoint.queryContract] ??
 				(() => {
-					throw new Error(`Missing query contract "${endpoint.queryContract}"`);
+					throw new Error(
+						`Missing query contract "${endpoint.queryContract}" while building endpoint "${formatEndpointDescription(endpoint)}"`,
+					);
 				})(),
 		);
 	}
@@ -336,9 +529,14 @@ function buildEndpointOpenApiOperation(
 	if (typeof endpoint.bodyContract === "string") {
 		operation.requestBody = {
 			content: {
-				"application/json": {
+				[WP_TYPIA_OPENAPI_LITERALS.JSON_CONTENT_TYPE]: {
 					schema: createOpenApiSchemaRef(
-						getContractSchemaName(endpoint.bodyContract, contracts[endpoint.bodyContract]),
+						getContractSchemaName(
+							endpoint.bodyContract,
+							contracts[endpoint.bodyContract],
+							endpoint,
+							"request body",
+						),
 					),
 				},
 			},
@@ -349,11 +547,12 @@ function buildEndpointOpenApiOperation(
 	if (endpoint.authMode === "authenticated-rest-nonce") {
 		operation.security = [
 			{
-				wpRestNonce: [],
+				[WP_TYPIA_OPENAPI_LITERALS.WP_REST_NONCE_SCHEME]: [],
 			},
 		];
 	} else if (endpoint.authMode === "public-signed-token") {
-		operation["x-wp-typia-publicTokenField"] = "publicWriteToken";
+		operation[WP_TYPIA_OPENAPI_EXTENSION_KEYS.PUBLIC_TOKEN_FIELD] =
+			WP_TYPIA_OPENAPI_LITERALS.PUBLIC_WRITE_TOKEN_FIELD;
 	}
 
 	return operation;
@@ -367,7 +566,7 @@ function buildEndpointOpenApiOperation(
  */
 export function buildEndpointOpenApiDocument(
 	options: EndpointOpenApiDocumentOptions,
-): JsonSchemaObject {
+): OpenApiDocument {
 	const contractEntries = Object.entries(options.contracts);
 	const schemas = Object.fromEntries(
 		contractEntries.map(([contractKey, contract]) => [
@@ -375,7 +574,7 @@ export function buildEndpointOpenApiDocument(
 			manifestToJsonSchema(contract.document),
 		]),
 	);
-	const paths: Record<string, JsonSchemaObject> = {};
+	const paths: Record<string, OpenApiPathItem> = {};
 	const topLevelTags = [...new Set(options.endpoints.flatMap((endpoint) => endpoint.tags))]
 		.filter((tag) => typeof tag === "string" && tag.length > 0)
 		.map((name) => ({ name }));
@@ -398,10 +597,10 @@ export function buildEndpointOpenApiDocument(
 			...(usesWpRestNonce
 				? {
 						securitySchemes: {
-							wpRestNonce: {
+							[WP_TYPIA_OPENAPI_LITERALS.WP_REST_NONCE_SCHEME]: {
 								description: "WordPress REST nonce sent in the X-WP-Nonce header.",
 								in: "header",
-								name: "X-WP-Nonce",
+								name: WP_TYPIA_OPENAPI_LITERALS.WP_REST_NONCE_HEADER,
 								type: "apiKey",
 							},
 						},

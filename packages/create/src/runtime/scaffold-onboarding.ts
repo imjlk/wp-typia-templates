@@ -9,6 +9,13 @@ interface PhpRestExtensionOptions extends SyncOnboardingOptions {
 	slug: string;
 }
 
+interface PhpRestSectionOptions {
+	apiTypesPath: string;
+	extraNote?: string;
+	mainPhpPath: string;
+	mainPhpScope: string;
+}
+
 function templateHasPersistenceSync(
 	templateId: string,
 	{ compoundPersistenceEnabled = false }: SyncOnboardingOptions = {},
@@ -73,6 +80,33 @@ export function getTemplateSourceOfTruthNote(
 	return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`.";
 }
 
+function formatPhpRestExtensionPointsSection({
+	apiTypesPath,
+	extraNote,
+	mainPhpPath,
+	mainPhpScope,
+}: PhpRestSectionOptions): string {
+	const schemaJsonGlob = apiTypesPath.replace(/api-types\.ts$/u, "api-schemas/*.schema.json");
+	const perContractOpenApiGlob = apiTypesPath.replace(
+		/api-types\.ts$/u,
+		"api-schemas/*.openapi.json",
+	);
+	const aggregateOpenApiPath = apiTypesPath.replace(/api-types\.ts$/u, "api.openapi.json");
+
+	const lines = [
+		`- Edit \`${mainPhpPath}\` when you need to ${mainPhpScope}.`,
+		"- Edit `inc/rest-auth.php` or `inc/rest-public.php` when you need to customize write permissions or token/nonce checks for the selected policy.",
+		`- Keep \`${apiTypesPath}\` as the source of truth for request and response contracts, then regenerate \`${schemaJsonGlob}\`, per-contract \`${perContractOpenApiGlob}\`, and \`${aggregateOpenApiPath}\` with \`sync-rest\`.`,
+		"- Avoid hand-editing generated schema and OpenAPI artifacts unless you are debugging generated output; they are meant to be regenerated from TypeScript contracts.",
+	];
+
+	if (typeof extraNote === "string" && extraNote.length > 0) {
+		lines.push(`- ${extraNote}`);
+	}
+
+	return `## PHP REST Extension Points\n\n${lines.join("\n")}`;
+}
+
 /**
  * Returns scaffold-local guidance for the main PHP REST customization points.
  */
@@ -81,21 +115,21 @@ export function getPhpRestExtensionPointsSection(
 	{ compoundPersistenceEnabled = false, slug }: PhpRestExtensionOptions,
 ): string | null {
 	if (templateId === "persistence") {
-		return `## PHP REST Extension Points
-
-- Edit \`${slug}.php\` when you need to change storage helpers, route handlers, response shaping, or route registration.
-- Edit \`inc/rest-auth.php\` or \`inc/rest-public.php\` when you need to customize write permissions or token/nonce checks for the selected policy.
-- Keep \`src/api-types.ts\` as the source of truth for request and response contracts, then regenerate \`src/api-schemas/*.schema.json\`, per-contract \`src/api-schemas/*.openapi.json\`, and \`src/api.openapi.json\` with \`sync-rest\`.
-- Avoid hand-editing generated schema and OpenAPI artifacts unless you are debugging generated output; they are meant to be regenerated from TypeScript contracts.`;
+		return formatPhpRestExtensionPointsSection({
+			apiTypesPath: "src/api-types.ts",
+			mainPhpPath: `${slug}.php`,
+			mainPhpScope: "change storage helpers, route handlers, response shaping, or route registration",
+		});
 	}
 
 	if (templateId === "compound" && compoundPersistenceEnabled) {
-		return `## PHP REST Extension Points
-
-- Edit \`${slug}.php\` when you need to change parent-block storage helpers, route handlers, response shaping, or route registration.
-- Edit \`inc/rest-auth.php\` or \`inc/rest-public.php\` when you need to customize write permissions or token/nonce checks for the parent block.
-- Keep \`src/blocks/${slug}/api-types.ts\` as the source of truth for parent REST contracts, then regenerate \`src/blocks/${slug}/api-schemas/*.schema.json\`, per-contract \`src/blocks/${slug}/api-schemas/*.openapi.json\`, and \`src/blocks/${slug}/api.openapi.json\` with \`sync-rest\`.
-- The hidden child block does not own REST routes or storage. Avoid hand-editing generated schema and OpenAPI artifacts unless you are debugging generated output.`;
+		return formatPhpRestExtensionPointsSection({
+			apiTypesPath: `src/blocks/${slug}/api-types.ts`,
+			extraNote: "The hidden child block does not own REST routes or storage.",
+			mainPhpPath: `${slug}.php`,
+			mainPhpScope:
+				"change parent-block storage helpers, route handlers, response shaping, or route registration",
+		});
 	}
 
 	return null;

@@ -132,6 +132,41 @@ describe("schema-core", () => {
 		expect((schema.oneOf as unknown[]).length).toBe(2);
 	});
 
+	test("manifestAttributeToJsonSchema rejects discriminated union branches that are not objects", () => {
+		const attribute = createAttribute({
+			ts: {
+				kind: "union",
+				union: {
+					branches: {
+						post: createAttribute({
+							ts: {
+								kind: "object",
+								properties: {
+									postId: createAttribute({
+										ts: { kind: "number", required: true },
+										wp: { type: "number" },
+									}),
+								},
+								required: true,
+							},
+							wp: { type: "object" },
+						}),
+						text: createAttribute({
+							ts: { kind: "string", required: true },
+							wp: { type: "string" },
+						}),
+					},
+					discriminator: "kind",
+				},
+			},
+			wp: { type: "object" },
+		});
+
+		expect(() => manifestAttributeToJsonSchema(attribute)).toThrow(
+			'Discriminated union branch "text" must be an object to carry "kind".',
+		);
+	});
+
 	test("manifestToJsonSchema derives JSON Schema from manifest attributes", () => {
 		const manifest: ManifestDocument = {
 			attributes: {
@@ -326,6 +361,12 @@ describe("schema-core", () => {
 		expect(schemas.CounterQuery).toBeDefined();
 		expect(schemas.WriteCounterRequest).toBeDefined();
 		expect(schemas.CounterResponse).toBeDefined();
+		expect(openApi.info).toEqual({
+			title: "Counter REST API",
+			version: "1.0.0",
+		});
+		expect(openApi.tags).toEqual([{ name: "Counter" }]);
+		expect(paths["/demo/v1/counter/state"]).toBeDefined();
 		expect(getOperation["x-wp-typia-authPolicy"]).toBe("public-read");
 		expect((getOperation.parameters as Array<Record<string, unknown>>)[0]).toMatchObject({
 			in: "query",
@@ -391,5 +432,84 @@ describe("schema-core", () => {
 		});
 		expect(operation["x-wp-typia-authPolicy"]).toBe("authenticated-rest-nonce");
 		expect(operation.security).toEqual([{ wpRestNonce: [] }]);
+	});
+
+	test("buildEndpointOpenApiDocument includes endpoint context in missing response contract errors", () => {
+		expect(() =>
+			buildEndpointOpenApiDocument({
+				contracts: {},
+				endpoints: [
+					{
+						authMode: "public-read",
+						method: "GET",
+						operationId: "getCounterState",
+						path: "/demo/v1/counter/state",
+						queryContract: "query",
+						responseContract: "response",
+						tags: ["Counter"],
+					},
+				],
+			}),
+		).toThrow(
+			'Missing response contract "response" while building endpoint "getCounterState (GET /demo/v1/counter/state)"',
+		);
+	});
+
+	test("buildEndpointOpenApiDocument includes endpoint context in missing request body contract errors", () => {
+		const responseDocument: ManifestDocument = {
+			attributes: {},
+			manifestVersion: 2,
+			sourceType: "CounterResponse",
+		};
+
+		expect(() =>
+			buildEndpointOpenApiDocument({
+				contracts: {
+					response: { document: responseDocument },
+				},
+				endpoints: [
+					{
+						authMode: "public-signed-token",
+						bodyContract: "request",
+						method: "POST",
+						operationId: "writeCounterState",
+						path: "/demo/v1/counter/state",
+						responseContract: "response",
+						tags: ["Counter"],
+					},
+				],
+			}),
+		).toThrow(
+			'Missing request body contract "request" while building endpoint "writeCounterState (POST /demo/v1/counter/state)"',
+		);
+	});
+
+	test("buildEndpointOpenApiDocument includes endpoint context in missing query-only contract errors", () => {
+		const responseDocument: ManifestDocument = {
+			attributes: {},
+			manifestVersion: 2,
+			sourceType: "CounterResponse",
+		};
+
+		expect(() =>
+			buildEndpointOpenApiDocument({
+				contracts: {
+					response: { document: responseDocument },
+				},
+				endpoints: [
+					{
+						authMode: "public-read",
+						method: "GET",
+						operationId: "getCounterState",
+						path: "/demo/v1/counter/state",
+						queryContract: "query",
+						responseContract: "response",
+						tags: ["Counter"],
+					},
+				],
+			}),
+		).toThrow(
+			'Missing query contract "query" while building endpoint "getCounterState (GET /demo/v1/counter/state)"',
+		);
 	});
 });
