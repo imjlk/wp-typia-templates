@@ -132,6 +132,41 @@ describe("schema-core", () => {
 		expect((schema.oneOf as unknown[]).length).toBe(2);
 	});
 
+	test("manifestAttributeToJsonSchema rejects discriminated union branches that are not objects", () => {
+		const attribute = createAttribute({
+			ts: {
+				kind: "union",
+				union: {
+					branches: {
+						post: createAttribute({
+							ts: {
+								kind: "object",
+								properties: {
+									postId: createAttribute({
+										ts: { kind: "number", required: true },
+										wp: { type: "number" },
+									}),
+								},
+								required: true,
+							},
+							wp: { type: "object" },
+						}),
+						text: createAttribute({
+							ts: { kind: "string", required: true },
+							wp: { type: "string" },
+						}),
+					},
+					discriminator: "kind",
+				},
+			},
+			wp: { type: "object" },
+		});
+
+		expect(() => manifestAttributeToJsonSchema(attribute)).toThrow(
+			'Discriminated union branch "text" must be an object to carry "kind".',
+		);
+	});
+
 	test("manifestToJsonSchema derives JSON Schema from manifest attributes", () => {
 		const manifest: ManifestDocument = {
 			attributes: {

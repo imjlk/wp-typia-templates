@@ -86,10 +86,17 @@ function formatPhpRestExtensionPointsSection({
 	mainPhpPath,
 	mainPhpScope,
 }: PhpRestSectionOptions): string {
+	const schemaJsonGlob = apiTypesPath.replace(/api-types\.ts$/u, "api-schemas/*.schema.json");
+	const perContractOpenApiGlob = apiTypesPath.replace(
+		/api-types\.ts$/u,
+		"api-schemas/*.openapi.json",
+	);
+	const aggregateOpenApiPath = apiTypesPath.replace(/api-types\.ts$/u, "api.openapi.json");
+
 	const lines = [
 		`- Edit \`${mainPhpPath}\` when you need to ${mainPhpScope}.`,
 		"- Edit `inc/rest-auth.php` or `inc/rest-public.php` when you need to customize write permissions or token/nonce checks for the selected policy.",
-		`- Keep \`${apiTypesPath}\` as the source of truth for request and response contracts, then regenerate \`${apiTypesPath.replace(/api-types\.ts$/u, "api-schemas/*.schema.json")}\`, per-contract \`${apiTypesPath.replace(/api-types\.ts$/u, "api-schemas/*.openapi.json")}\`, and \`${apiTypesPath.replace(/api-types\.ts$/u, "api.openapi.json")}\` with \`sync-rest\`.`,
+		`- Keep \`${apiTypesPath}\` as the source of truth for request and response contracts, then regenerate \`${schemaJsonGlob}\`, per-contract \`${perContractOpenApiGlob}\`, and \`${aggregateOpenApiPath}\` with \`sync-rest\`.`,
 		"- Avoid hand-editing generated schema and OpenAPI artifacts unless you are debugging generated output; they are meant to be regenerated from TypeScript contracts.",
 	];
 

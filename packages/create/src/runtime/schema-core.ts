@@ -283,40 +283,27 @@ function addDiscriminatorToObjectBranch(
 	return schema;
 }
 
-function wrapBranchWithDiscriminator(
-	schema: JsonSchemaObject,
-	discriminator: string,
-	branchKey: string,
-): JsonSchemaObject {
-	return {
-		allOf: [
-			schema,
-			{
-				properties: {
-					[discriminator]: createUnionDiscriminatorProperty(branchKey),
-				},
-				required: [discriminator],
-				type: "object",
-			},
-		],
-	};
-}
-
 function manifestUnionToJsonSchema(union: ManifestUnionMetadata): JsonSchemaObject {
 	const oneOf = Object.entries(union.branches).map(([branchKey, branch]) => {
-		const schema = manifestAttributeToJsonSchema(branch);
-		if (branch.ts.kind === "object") {
-			const objectSchema = addDiscriminatorToObjectBranch(
-				schema,
-				union.discriminator,
-				branchKey,
+		if (branch.ts.kind !== "object") {
+			throw new Error(
+				`Discriminated union branch "${branchKey}" must be an object to carry "${union.discriminator}".`,
 			);
-			if (objectSchema) {
-				return objectSchema;
-			}
 		}
 
-		return wrapBranchWithDiscriminator(schema, union.discriminator, branchKey);
+		const schema = manifestAttributeToJsonSchema(branch);
+		const objectSchema = addDiscriminatorToObjectBranch(
+			schema,
+			union.discriminator,
+			branchKey,
+		);
+		if (!objectSchema) {
+			throw new Error(
+				`Discriminated union branch "${branchKey}" is missing an object schema for "${union.discriminator}".`,
+			);
+		}
+
+		return objectSchema;
 	});
 
 	return {
