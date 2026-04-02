@@ -93,7 +93,11 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedHooks).toContain("type ValidationResult");
 		expect(generatedHooks).toContain("useTypiaValidation");
 		expect(generatedEdit).toContain("@wp-typia/create/runtime/editor");
+		expect(generatedEdit).not.toContain("@wp-typia/create/runtime/schema-core");
 		expect(generatedEdit).toContain("createEditorModel");
+		expect(generatedHooks).toContain("@wp-typia/create/runtime/validation");
+		expect(generatedValidators).toContain("@wp-typia/create/runtime/defaults");
+		expect(generatedValidators).toContain("@wp-typia/create/runtime/validation");
 		expect(generatedValidators).toContain("toValidationResult");
 		expect(generatedValidators).toContain("createValidatedAttributeUpdater");
 		expect(generatedValidators).toContain("clone");
@@ -143,9 +147,12 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedValidators).toContain("clone");
 		expect(generatedValidators).toContain("prune");
 		expect(generatedEdit).toContain("@wp-typia/create/runtime/editor");
+		expect(generatedEdit).not.toContain("@wp-typia/create/runtime/schema-core");
 		expect(generatedEdit).toContain("createEditorModel");
 		expect(generatedEdit).toContain("useTypiaValidation");
 		expect(generatedEdit).toContain("createAttributeUpdater");
+		expect(generatedValidators).toContain("@wp-typia/create/runtime/defaults");
+		expect(generatedValidators).toContain("@wp-typia/create/runtime/validation");
 	});
 
 	test("scaffoldProject creates a persistence template with signed public writes and explicit storage mode", async () => {
@@ -217,10 +224,12 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedSyncRest).toContain("syncTypeSchemas");
 		expect(generatedSyncRest).toContain("defineEndpointManifest");
 		expect(generatedSyncRest).toContain("syncRestOpenApi");
+		expect(generatedSyncRest).toContain("@wp-typia/create/metadata-core");
 		expect(generatedSyncRest).toContain("const REST_ENDPOINT_MANIFEST = defineEndpointManifest");
 		expect(generatedSyncRest).toContain("manifest: REST_ENDPOINT_MANIFEST");
 		expect(generatedSyncRest).not.toContain("const CONTRACTS =");
 		expect(generatedSyncRest).not.toContain("const ENDPOINTS =");
+		expect(generatedSyncRest).not.toContain("@wp-typia/create/runtime/schema-core");
 		expect(generatedSyncRest).toContain("src/api.openapi.json");
 		expect(generatedSyncRest).not.toContain("openApiInfo: REST_ENDPOINT_MANIFEST.info");
 		expect(generatedRender).toContain("publicWriteToken");

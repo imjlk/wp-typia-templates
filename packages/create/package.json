@@ -52,8 +52,8 @@
   "scripts": {
     "build": "rm -rf dist && bunli build --runtime node && tsc -p tsconfig.runtime.json",
     "dev": "bun run src/cli.ts",
-    "test": "bun run build && bunli test --pattern ./tests/create-cli.test.ts && bunli test --pattern ./tests/migrations.test.ts",
-    "test:coverage": "bun run build && bunli test --pattern ./tests/create-cli.test.ts --coverage && bunli test --pattern ./tests/migrations.test.ts --coverage && bun test tests/*.test.ts --coverage --coverage-reporter=lcov --coverage-dir=coverage",
+    "test": "bun run build && bunli test --pattern ./tests/create-cli.test.ts && bunli test --pattern ./tests/import-policy.test.ts && bunli test --pattern ./tests/migrations.test.ts",
+    "test:coverage": "bun run build && bunli test --pattern ./tests/create-cli.test.ts --coverage && bunli test --pattern ./tests/import-policy.test.ts --coverage && bunli test --pattern ./tests/migrations.test.ts --coverage && bun test tests/*.test.ts --coverage --coverage-reporter=lcov --coverage-dir=coverage",
     "clean": "rm -rf dist",
     "prepack": "bun run build"
   },
