@@ -1,5 +1,20 @@
 # @wp-typia/create
 
+## 0.6.0 — 2026-04-02
+
+### Minor changes
+
+- [7881cfd](https://github.com/imjlk/wp-typia/commit/7881cfdbdac4ab146bfaab622aa94c81a6a7006d) Add a public endpoint manifest helper for scaffolded REST surfaces and adopt it across persistence-capable scaffold scripts. — Thanks @imjlk!
+- [9597309](https://github.com/imjlk/wp-typia/commit/9597309b45d57f4f0ddd4bc74d00c7cb7fa04ce8) Make endpoint manifests the primary input to aggregate REST OpenAPI generation while keeping the decomposed syncRestOpenApi contract registry API compatible. — Thanks @imjlk!
+- [1177f02](https://github.com/imjlk/wp-typia/commit/1177f02957751ec992a41958d40590fa30dc9091) Add opt-in AI-safe JSON Schema projection helpers for generated wp-typia contracts. — Thanks @imjlk!
+
+### Patch changes
+
+- [9715067](https://github.com/imjlk/wp-typia/commit/97150671f18bb795d5da97284a25382657d8bc08) Clarify and test the supported generated-project runtime import policy for `@wp-typia/create`. — Thanks @imjlk!
+- [5bd7d5e](https://github.com/imjlk/wp-typia/commit/5bd7d5e4915ebc322e24ce75c0b04393b34d5e22) Document the current runtime surface and classification for `@wp-typia/create`. — Thanks @imjlk!
+- [a18f819](https://github.com/imjlk/wp-typia/commit/a18f819b73920ce560ef101f2e218efc8f2d188f) Harden public persistence scaffolds with per-request replay protection, coarse rate limiting, and safer default write routing. — Thanks @imjlk!
+- [1e8f738](https://github.com/imjlk/wp-typia/commit/1e8f738f358f7d631a0d4c370d9ed58256cd5e54) Polish runtime OpenAPI typing, error messages, and scaffold onboarding guidance for persistence-capable templates. — Thanks @imjlk!
+
 ## 0.5.0 — 2026-04-01
 
 ### Minor changes
