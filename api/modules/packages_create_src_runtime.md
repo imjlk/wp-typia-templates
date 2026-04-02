@@ -79,6 +79,8 @@
 - [defineEndpointManifest](packages_create_src_runtime.md#defineendpointmanifest)
 - [RestOpenApiContractDefinition](packages_create_src_runtime.md#restopenapicontractdefinition)
 - [RestOpenApiEndpointDefinition](packages_create_src_runtime.md#restopenapiendpointdefinition)
+- [SyncRestOpenApiManifestOptions](packages_create_src_runtime.md#syncrestopenapimanifestoptions)
+- [SyncRestOpenApiContractsOptions](packages_create_src_runtime.md#syncrestopenapicontractsoptions)
 - [SyncRestOpenApiOptions](packages_create_src_runtime.md#syncrestopenapioptions)
 - [SyncRestOpenApiResult](packages_create_src_runtime.md#syncrestopenapiresult)
 - [syncBlockMetadata](packages_create_src_runtime.md#syncblockmetadata)
@@ -525,9 +527,21 @@ Re-exports [RestOpenApiEndpointDefinition](../interfaces/packages_create_src_run
 
 ___
 
+### SyncRestOpenApiManifestOptions
+
+Re-exports [SyncRestOpenApiManifestOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiManifestOptions.md)
+
+___
+
+### SyncRestOpenApiContractsOptions
+
+Re-exports [SyncRestOpenApiContractsOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiContractsOptions.md)
+
+___
+
 ### SyncRestOpenApiOptions
 
-Re-exports [SyncRestOpenApiOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiOptions.md)
+Re-exports [SyncRestOpenApiOptions](packages_create_src_runtime_metadata_core.md#syncrestopenapioptions)
 
 ___
 
