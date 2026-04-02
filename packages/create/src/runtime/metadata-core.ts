@@ -178,22 +178,51 @@ export interface RestOpenApiContractDefinition extends EndpointManifestContractD
 export interface RestOpenApiEndpointDefinition extends EndpointManifestEndpointDefinition {}
 
 /**
- * Options for writing a canonical endpoint-aware REST OpenAPI document.
+ * Shared file and project inputs for REST OpenAPI generation.
  */
-export interface SyncRestOpenApiOptions {
-	/** Contract registry keyed by logical route contract ids. */
-	contracts: Readonly<Record<string, RestOpenApiContractDefinition>>;
-	/** Endpoint registry describing the REST paths, methods, and auth policies to document. */
-	endpoints: readonly RestOpenApiEndpointDefinition[];
+interface SyncRestOpenApiBaseOptions {
 	/** Output path for the aggregate OpenAPI document. */
 	openApiFile: string;
-	/** Optional OpenAPI document metadata. */
-	openApiInfo?: OpenApiInfo;
 	/** Optional project root used to resolve file paths. */
 	projectRoot?: string;
 	/** Source file that exports the REST contract types. */
 	typesFile: string;
 }
+
+/**
+ * Manifest-first options for writing a canonical endpoint-aware REST OpenAPI document.
+ */
+export interface SyncRestOpenApiManifestOptions extends SyncRestOpenApiBaseOptions {
+	/** Canonical endpoint manifest describing the REST surface. */
+	manifest: EndpointManifestDefinition;
+	/** Not accepted when `manifest` is provided. */
+	contracts?: never;
+	/** Not accepted when `manifest` is provided. */
+	endpoints?: never;
+	/** Not accepted when `manifest` is provided. */
+	openApiInfo?: never;
+}
+
+/**
+ * Backward-compatible options for writing a canonical endpoint-aware REST OpenAPI document.
+ */
+export interface SyncRestOpenApiContractsOptions extends SyncRestOpenApiBaseOptions {
+	/** Contract registry keyed by logical route contract ids. */
+	contracts: Readonly<Record<string, RestOpenApiContractDefinition>>;
+	/** Endpoint registry describing the REST paths, methods, and auth policies to document. */
+	endpoints: readonly RestOpenApiEndpointDefinition[];
+	/** Optional OpenAPI document metadata. */
+	openApiInfo?: OpenApiInfo;
+	/** Not accepted when `contracts` and `endpoints` are provided directly. */
+	manifest?: never;
+}
+
+/**
+ * Options for writing a canonical endpoint-aware REST OpenAPI document.
+ */
+export type SyncRestOpenApiOptions =
+	| SyncRestOpenApiManifestOptions
+	| SyncRestOpenApiContractsOptions;
 
 /**
  * Result returned after writing an aggregate REST OpenAPI document.
@@ -205,6 +234,13 @@ export interface SyncRestOpenApiResult {
 	openApiPath: string;
 	/** Component schema names included in the generated document. */
 	schemaNames: string[];
+}
+
+interface NormalizedSyncRestOpenApiOptions {
+	manifest: EndpointManifestDefinition;
+	openApiPath: string;
+	projectRoot: string;
+	typesFile: string;
 }
 
 interface AnalysisContext {
@@ -393,19 +429,19 @@ export async function syncTypeSchemas(
 export async function syncRestOpenApi(
 	options: SyncRestOpenApiOptions,
 ): Promise<SyncRestOpenApiResult> {
-	const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
-	const sourceTypeNames = Object.values(options.contracts).map(
+	const { manifest, openApiPath, projectRoot, typesFile } = normalizeSyncRestOpenApiOptions(options);
+	const sourceTypeNames = Object.values(manifest.contracts).map(
 		(contract) => contract.sourceTypeName,
 	);
 	const analyzedTypes = analyzeSourceTypes(
 		{
 			projectRoot,
-			typesFile: options.typesFile,
+			typesFile,
 		},
 		sourceTypeNames,
 	);
 	const contracts = Object.fromEntries(
-		Object.entries(options.contracts).map(([contractKey, contract]) => {
+		Object.entries(manifest.contracts).map(([contractKey, contract]) => {
 			const rootNode = analyzedTypes[contract.sourceTypeName];
 			if (rootNode.kind !== "object" || rootNode.properties === undefined) {
 				throw new Error(
@@ -433,16 +469,14 @@ export async function syncRestOpenApi(
 			];
 		}),
 	);
-	const openApiPath = path.resolve(projectRoot, options.openApiFile);
-
 	fs.mkdirSync(path.dirname(openApiPath), { recursive: true });
 	fs.writeFileSync(
 		openApiPath,
 		JSON.stringify(
 			buildEndpointOpenApiDocument({
 				contracts,
-				endpoints: options.endpoints,
-				info: options.openApiInfo,
+				endpoints: manifest.endpoints,
+				info: manifest.info,
 			}),
 			null,
 			"\t",
@@ -450,11 +484,49 @@ export async function syncRestOpenApi(
 	);
 
 	return {
-		endpointCount: options.endpoints.length,
+		endpointCount: manifest.endpoints.length,
 		openApiPath,
-		schemaNames: Object.values(options.contracts).map(
+		schemaNames: Object.values(manifest.contracts).map(
 			(contract) => contract.schemaName ?? contract.sourceTypeName,
 		),
+	};
+}
+
+function normalizeSyncRestOpenApiOptions(
+	options: SyncRestOpenApiOptions,
+): NormalizedSyncRestOpenApiOptions {
+	const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
+	const openApiPath = path.resolve(projectRoot, options.openApiFile);
+
+	if ("manifest" in options) {
+		const hasDecomposedInputs =
+			"contracts" in options || "endpoints" in options || "openApiInfo" in options;
+		if (hasDecomposedInputs) {
+			throw new Error(
+				"syncRestOpenApi() accepts either { manifest, ... } or { contracts, endpoints, ... }, but not both.",
+			);
+		}
+		if (options.manifest == null) {
+			throw new Error("syncRestOpenApi() requires a manifest object when using { manifest, ... }.");
+		}
+
+		return {
+			manifest: options.manifest,
+			openApiPath,
+			projectRoot,
+			typesFile: options.typesFile,
+		};
+	}
+
+	return {
+		manifest: {
+			contracts: options.contracts,
+			endpoints: options.endpoints,
+			...(options.openApiInfo ? { info: options.openApiInfo } : {}),
+		},
+		openApiPath,
+		projectRoot,
+		typesFile: options.typesFile,
 	};
 }
 

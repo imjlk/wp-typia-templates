@@ -42,10 +42,8 @@ async function main() {
 
 		if ( block.restManifest.endpoints.length > 0 && block.openApiFile ) {
 			await syncRestOpenApi( {
-				contracts: block.restManifest.contracts,
-				endpoints: block.restManifest.endpoints,
+				manifest: block.restManifest,
 				openApiFile: block.openApiFile,
-				openApiInfo: block.restManifest.info,
 				typesFile: block.apiTypesFile,
 			} );
 		}

@@ -150,7 +150,15 @@ The built-in `persistence` template adds another predictable layer:
 - `scripts/sync-rest-contracts.ts`
 - a plugin bootstrap PHP file with generated REST route/storage wiring
 
-For persistence-capable scaffolds, the endpoint manifest authored in TypeScript is the canonical description of the REST surface. `src/api.openapi.json` is the canonical endpoint-aware REST document, `src/api-schemas/*.schema.json` files remain the runtime contract artifacts, and `src/api-schemas/*.openapi.json` files remain available as per-contract compatibility fragments.
+For persistence-capable scaffolds, the endpoint manifest authored in TypeScript is the canonical description of the REST surface and the primary input to `syncRestOpenApi()`. `src/api.openapi.json` is the canonical endpoint-aware REST document, `src/api-schemas/*.schema.json` files remain the runtime contract artifacts, and `src/api-schemas/*.openapi.json` files remain available as per-contract compatibility fragments.
+
+```ts
+await syncRestOpenApi({
+  manifest: REST_ENDPOINT_MANIFEST,
+  openApiFile: "src/api.openapi.json",
+  typesFile: "src/api-types.ts",
+});
+```
 
 When you customize the generated PHP:
 
