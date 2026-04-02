@@ -14,6 +14,7 @@ const STATIC_METADATA_FILENAMES = new Set( [
 function isMetadataAsset( filename ) {
 	return (
 		STATIC_METADATA_FILENAMES.has( filename ) ||
+		filename.endsWith( '.abilities.json' ) ||
 		filename.endsWith( '.schema.json' ) ||
 		filename.endsWith( '.openapi.json' )
 	);
