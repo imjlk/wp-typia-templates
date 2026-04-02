@@ -20,6 +20,7 @@
 - [describeEditorField](packages_create_src_runtime.md#describeeditorfield)
 - [formatEditorFieldLabel](packages_create_src_runtime.md#formateditorfieldlabel)
 - [manifestAttributeToJsonSchema](packages_create_src_runtime.md#manifestattributetojsonschema)
+- [projectJsonSchemaDocument](packages_create_src_runtime.md#projectjsonschemadocument)
 - [manifestToJsonSchema](packages_create_src_runtime.md#manifesttojsonschema)
 - [manifestToOpenApi](packages_create_src_runtime.md#manifesttoopenapi)
 - [EndpointOpenApiAuthMode](packages_create_src_runtime.md#endpointopenapiauthmode)
@@ -28,6 +29,7 @@
 - [EndpointOpenApiEndpointDefinition](packages_create_src_runtime.md#endpointopenapiendpointdefinition)
 - [EndpointOpenApiMethod](packages_create_src_runtime.md#endpointopenapimethod)
 - [JsonSchemaDocument](packages_create_src_runtime.md#jsonschemadocument)
+- [JsonSchemaProjectionProfile](packages_create_src_runtime.md#jsonschemaprojectionprofile)
 - [JsonSchemaObject](packages_create_src_runtime.md#jsonschemaobject)
 - [OpenApiDocument](packages_create_src_runtime.md#openapidocument)
 - [OpenApiInfo](packages_create_src_runtime.md#openapiinfo)
@@ -173,6 +175,12 @@ Re-exports [manifestAttributeToJsonSchema](packages_create_src_runtime_schema_co
 
 ___
 
+### projectJsonSchemaDocument
+
+Re-exports [projectJsonSchemaDocument](packages_create_src_runtime_schema_core.md#projectjsonschemadocument)
+
+___
+
 ### manifestToJsonSchema
 
 Re-exports [manifestToJsonSchema](packages_create_src_runtime_schema_core.md#manifesttojsonschema)
@@ -218,6 +226,12 @@ ___
 ### JsonSchemaDocument
 
 Re-exports [JsonSchemaDocument](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaDocument.md)
+
+___
+
+### JsonSchemaProjectionProfile
+
+Re-exports [JsonSchemaProjectionProfile](packages_create_src_runtime_schema_core.md#jsonschemaprojectionprofile)
 
 ___
 

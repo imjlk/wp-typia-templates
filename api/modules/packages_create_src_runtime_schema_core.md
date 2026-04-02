@@ -22,17 +22,20 @@
 - [EndpointOpenApiContractDocument](../interfaces/packages_create_src_runtime_schema_core.EndpointOpenApiContractDocument.md)
 - [EndpointOpenApiEndpointDefinition](../interfaces/packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md)
 - [EndpointOpenApiDocumentOptions](../interfaces/packages_create_src_runtime_schema_core.EndpointOpenApiDocumentOptions.md)
+- [JsonSchemaProjectionOptions](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaProjectionOptions.md)
 
 ### Type Aliases
 
 - [OpenApiPathItem](packages_create_src_runtime_schema_core.md#openapipathitem)
 - [EndpointOpenApiAuthMode](packages_create_src_runtime_schema_core.md#endpointopenapiauthmode)
 - [EndpointOpenApiMethod](packages_create_src_runtime_schema_core.md#endpointopenapimethod)
+- [JsonSchemaProjectionProfile](packages_create_src_runtime_schema_core.md#jsonschemaprojectionprofile)
 
 ### Functions
 
 - [manifestAttributeToJsonSchema](packages_create_src_runtime_schema_core.md#manifestattributetojsonschema)
 - [manifestToJsonSchema](packages_create_src_runtime_schema_core.md#manifesttojsonschema)
+- [projectJsonSchemaDocument](packages_create_src_runtime_schema_core.md#projectjsonschemadocument)
 - [manifestToOpenApi](packages_create_src_runtime_schema_core.md#manifesttoopenapi)
 - [buildEndpointOpenApiDocument](packages_create_src_runtime_schema_core.md#buildendpointopenapidocument)
 
@@ -72,6 +75,18 @@ Supported HTTP methods for generated REST OpenAPI endpoints.
 
 [packages/create/src/runtime/schema-core.ts:150](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L150)
 
+___
+
+### JsonSchemaProjectionProfile
+
+Ƭ **JsonSchemaProjectionProfile**: ``"ai-structured-output"`` \| ``"rest"``
+
+Supported schema projection profiles derived from one canonical wp-typia JSON Schema document.
+
+#### Defined in
+
+[packages/create/src/runtime/schema-core.ts:201](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L201)
+
 ## Functions
 
 ### manifestAttributeToJsonSchema
@@ -94,7 +109,7 @@ A JSON-compatible schema fragment for the attribute.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:323](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L323)
+[packages/create/src/runtime/schema-core.ts:533](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L533)
 
 ___
 
@@ -118,7 +133,38 @@ A draft 2020-12 JSON Schema document for the manifest root object.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:396](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L396)
+[packages/create/src/runtime/schema-core.ts:606](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L606)
+
+___
+
+### projectJsonSchemaDocument
+
+▸ **projectJsonSchemaDocument**\<`Schema`\>(`schema`, `options`): `Schema`
+
+Projects one generated wp-typia JSON Schema document into a consumer-facing profile.
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `Schema` | extends [`JsonSchemaObject`](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaObject.md) \| [`JsonSchemaDocument`](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaDocument.md) |
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `schema` | `Schema` | Existing generated JSON Schema document. |
+| `options` | [`JsonSchemaProjectionOptions`](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaProjectionOptions.md) | Projection profile options. |
+
+#### Returns
+
+`Schema`
+
+A cloned schema document adjusted for the requested profile.
+
+#### Defined in
+
+[packages/create/src/runtime/schema-core.ts:632](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L632)
 
 ___
 
@@ -143,7 +189,7 @@ An OpenAPI document containing the schema as a single component.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:422](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L422)
+[packages/create/src/runtime/schema-core.ts:657](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L657)
 
 ___
 
@@ -167,4 +213,4 @@ A JSON-compatible OpenAPI document with paths, components, and auth metadata.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:567](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L567)
+[packages/create/src/runtime/schema-core.ts:802](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L802)
