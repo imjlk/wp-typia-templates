@@ -30,6 +30,10 @@ The root package remains public overall, but this policy only blesses the
 generated-project runtime subset listed above. It does not imply that every
 root export is part of the generated-project runtime support promise.
 
+The current graduation prototype for this helper set is
+`@wp-typia/block-runtime`, but generated projects should continue to treat
+`@wp-typia/create` as the canonical import surface through v1.
+
 ## Root convenience aliases
 
 The root package also exposes convenience aliases for several runtime helpers,

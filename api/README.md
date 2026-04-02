@@ -9,11 +9,12 @@ wp-typia / [Modules](modules.md)
 
 Create practical WordPress blocks with Typia-driven metadata, validation, and shared scaffold tooling.
 
-`wp-typia` is a Bun-first monorepo centered on two products:
+`wp-typia` is a Bun-first monorepo centered on a small set of packages:
 
 - [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create) for scaffolding
 - [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types) for reusable WordPress semantic types
 - [`@wp-typia/rest`](https://www.npmjs.com/package/@wp-typia/rest) for typed WordPress REST helpers
+- [`@wp-typia/block-runtime`](https://www.npmjs.com/package/@wp-typia/block-runtime) as the prototype graduation path for generated block runtime helpers
 
 It generates `block.json`, `typia.manifest.json`, `typia-validator.php`, and optional schema artifacts from `src/types.ts`, keeps runtime validation close to the block code, and now ships four built-in starting points that cover static, interactive, persistence-aware, and compound parent/child blocks.
 
@@ -141,6 +142,7 @@ External template configs execute trusted JavaScript (`index.js` / `index.cjs` /
 - [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create)
 - [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types)
 - [`@wp-typia/rest`](https://www.npmjs.com/package/@wp-typia/rest)
+- [`@wp-typia/block-runtime`](https://www.npmjs.com/package/@wp-typia/block-runtime) as the current graduation prototype for defaults/editor/validation helpers
 - [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia) for `bun create wp-typia` compatibility
 
 ## Project Structure
@@ -150,6 +152,7 @@ wp-typia/
 ├── packages/
 │   ├── create/                 # Canonical scoped CLI source (@wp-typia/create)
 │   ├── create-wp-typia/        # Unscoped compatibility shim
+│   ├── wp-typia-block-runtime/ # Prototype block runtime facade package
 │   ├── wp-typia-rest/          # Typed REST client helpers
 │   └── wp-typia-block-types/   # Shared semantic block types
 ├── examples/
@@ -166,6 +169,7 @@ wp-typia/
 - [Examples Guide](examples/EXAMPLES.md)
 - [Architecture Guide](docs/architecture.md)
 - [API Guide](docs/API.md)
+- [Package Graduation](docs/package-graduation.md)
 - [Interactivity Guide](docs/interactivity.md)
 - [Migration Guide](docs/migrations.md)
 - [Union Support Guide](docs/union-support.md)
