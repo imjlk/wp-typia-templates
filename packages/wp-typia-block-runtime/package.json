@@ -36,8 +36,9 @@
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "clean": "rm -rf dist",
-    "test": "bun run --filter @wp-typia/create build && bun run build && bun test tests",
-    "test:coverage": "bun run --filter @wp-typia/create build && bun run build && bun test tests --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage",
+    "test:prepare": "bun run --filter @wp-typia/create build && bun run build",
+    "test": "bun run test:prepare && bun test tests",
+    "test:coverage": "bun run test:prepare && bun test tests --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "author": "imjlk",

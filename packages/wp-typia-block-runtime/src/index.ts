@@ -1,3 +1,3 @@
-export * from "./defaults";
-export * from "./editor";
-export * from "./validation";
+export * from "./defaults.js";
+export * from "./editor.js";
+export * from "./validation.js";

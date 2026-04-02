@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 const importModule = (specifier: string) => import(specifier);
 
@@ -55,5 +57,18 @@ describe("@wp-typia/block-runtime", () => {
 	test("unsupported subpaths are not exported", async () => {
 		await expect(importModule("@wp-typia/block-runtime/schema-core")).rejects.toThrow();
 		await expect(importModule("@wp-typia/block-runtime/metadata-core")).rejects.toThrow();
+	});
+
+	test("built root entry preserves ESM-safe .js re-export specifiers", () => {
+		const packageRoot = resolve(import.meta.dir, "..");
+		const builtIndexJs = readFileSync(resolve(packageRoot, "dist/index.js"), "utf8");
+		const builtIndexDts = readFileSync(resolve(packageRoot, "dist/index.d.ts"), "utf8");
+
+		expect(builtIndexJs).toContain('export * from "./defaults.js";');
+		expect(builtIndexJs).toContain('export * from "./editor.js";');
+		expect(builtIndexJs).toContain('export * from "./validation.js";');
+		expect(builtIndexDts).toContain('export * from "./defaults.js";');
+		expect(builtIndexDts).toContain('export * from "./editor.js";');
+		expect(builtIndexDts).toContain('export * from "./validation.js";');
 	});
 });
