@@ -150,13 +150,13 @@ The built-in `persistence` template adds another predictable layer:
 - `scripts/sync-rest-contracts.ts`
 - a plugin bootstrap PHP file with generated REST route/storage wiring
 
-For persistence-capable scaffolds, `src/api.openapi.json` is the canonical endpoint-aware REST document. The `src/api-schemas/*.schema.json` files remain the runtime contract artifacts, and `src/api-schemas/*.openapi.json` files remain available as per-contract compatibility fragments.
+For persistence-capable scaffolds, the endpoint manifest authored in TypeScript is the canonical description of the REST surface. `src/api.openapi.json` is the canonical endpoint-aware REST document, `src/api-schemas/*.schema.json` files remain the runtime contract artifacts, and `src/api-schemas/*.openapi.json` files remain available as per-contract compatibility fragments.
 
 When you customize the generated PHP:
 
 - edit the plugin bootstrap file for storage helpers, route handlers, response shaping, and route registration
 - edit `inc/rest-auth.php` or `inc/rest-public.php` for permission policy changes
-- keep `src/api-types.ts` as the source of truth for REST contracts, then regenerate `src/api-schemas/*` and `src/api.openapi.json`
+- keep `src/api-types.ts` plus the endpoint manifest as the source of truth for REST contracts, then regenerate `src/api-schemas/*` and `src/api.openapi.json`
 - avoid hand-editing generated schema and OpenAPI artifacts unless you are debugging the generation output itself
 
 `persistence` keeps one minimal aggregate-counter scaffold and lets you choose between:

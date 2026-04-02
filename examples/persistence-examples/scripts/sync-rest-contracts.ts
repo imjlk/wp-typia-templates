@@ -10,21 +10,23 @@ import { BLOCKS } from './block-config';
 
 async function main() {
 	for ( const block of BLOCKS ) {
-		for ( const contract of block.contracts ) {
+		const contracts = block.restManifest.contracts;
+
+		for ( const [ baseName, contract ] of Object.entries( contracts ) ) {
 			await syncTypeSchemas( {
 				jsonSchemaFile: path.join(
 					'src',
 					'blocks',
 					block.slug,
 					'api-schemas',
-					`${ contract.baseName }.schema.json`
+					`${ baseName }.schema.json`
 				),
 				openApiFile: path.join(
 					'src',
 					'blocks',
 					block.slug,
 					'api-schemas',
-					`${ contract.baseName }.openapi.json`
+					`${ baseName }.openapi.json`
 				),
 				sourceTypeName: contract.sourceTypeName,
 				typesFile: block.apiTypesFile,
@@ -32,17 +34,10 @@ async function main() {
 		}
 
 		await syncRestOpenApi( {
-			contracts: Object.fromEntries(
-				block.contracts.map( ( contract ) => [
-					contract.baseName,
-					{
-						sourceTypeName: contract.sourceTypeName,
-					},
-				] )
-			),
-			endpoints: block.endpoints,
+			contracts,
+			endpoints: block.restManifest.endpoints,
 			openApiFile: block.openApiFile,
-			openApiInfo: block.openApiInfo,
+			openApiInfo: block.restManifest.info,
 			typesFile: block.apiTypesFile,
 		} );
 	}

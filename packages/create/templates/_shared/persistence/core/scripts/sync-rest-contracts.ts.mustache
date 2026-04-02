@@ -1,46 +1,52 @@
 /* eslint-disable no-console */
 import {
+	defineEndpointManifest,
 	syncRestOpenApi,
 	syncTypeSchemas,
 } from '@wp-typia/create/metadata-core';
 
-const CONTRACTS = {
-	'state-query': {
-		sourceTypeName: '{{pascalCase}}StateQuery',
+const REST_ENDPOINT_MANIFEST = defineEndpointManifest( {
+	contracts: {
+		'state-query': {
+			sourceTypeName: '{{pascalCase}}StateQuery',
+		},
+		'write-state-request': {
+			sourceTypeName: '{{pascalCase}}WriteStateRequest',
+		},
+		'state-response': {
+			sourceTypeName: '{{pascalCase}}StateResponse',
+		},
 	},
-	'write-state-request': {
-		sourceTypeName: '{{pascalCase}}WriteStateRequest',
+	endpoints: [
+		{
+			authMode: 'public-read',
+			method: 'GET',
+			operationId: 'get{{pascalCase}}State',
+			path: '/{{namespace}}/v1/{{slugKebabCase}}/state',
+			queryContract: 'state-query',
+			responseContract: 'state-response',
+			summary: 'Read the current persisted state.',
+			tags: [ '{{title}}' ],
+		},
+		{
+			authMode: '{{restWriteAuthMode}}',
+			bodyContract: 'write-state-request',
+			method: 'POST',
+			operationId: 'write{{pascalCase}}State',
+			path: '/{{namespace}}/v1/{{slugKebabCase}}/state',
+			responseContract: 'state-response',
+			summary: 'Write the current persisted state.',
+			tags: [ '{{title}}' ],
+		},
+	],
+	info: {
+		title: '{{title}} REST API',
+		version: '1.0.0',
 	},
-	'state-response': {
-		sourceTypeName: '{{pascalCase}}StateResponse',
-	},
-} as const;
-
-const ENDPOINTS = [
-	{
-		authMode: 'public-read',
-		method: 'GET',
-		operationId: 'get{{pascalCase}}State',
-		path: '/{{namespace}}/v1/{{slugKebabCase}}/state',
-		queryContract: 'state-query',
-		responseContract: 'state-response',
-		summary: 'Read the current persisted state.',
-		tags: [ '{{title}}' ],
-	},
-	{
-		authMode: '{{restWriteAuthMode}}',
-		bodyContract: 'write-state-request',
-		method: 'POST',
-		operationId: 'write{{pascalCase}}State',
-		path: '/{{namespace}}/v1/{{slugKebabCase}}/state',
-		responseContract: 'state-response',
-		summary: 'Write the current persisted state.',
-		tags: [ '{{title}}' ],
-	},
-] as const;
+} );
 
 async function main() {
-	for ( const [ baseName, contract ] of Object.entries( CONTRACTS ) ) {
+	for ( const [ baseName, contract ] of Object.entries( REST_ENDPOINT_MANIFEST.contracts ) ) {
 		await syncTypeSchemas( {
 			jsonSchemaFile: `src/api-schemas/${ baseName }.schema.json`,
 			openApiFile: `src/api-schemas/${ baseName }.openapi.json`,
@@ -54,13 +60,10 @@ async function main() {
 	}
 
 	await syncRestOpenApi( {
-		contracts: CONTRACTS,
-		endpoints: ENDPOINTS,
+		contracts: REST_ENDPOINT_MANIFEST.contracts,
+		endpoints: REST_ENDPOINT_MANIFEST.endpoints,
 		openApiFile: 'src/api.openapi.json',
-		openApiInfo: {
-			title: '{{title}} REST API',
-			version: '1.0.0',
-		},
+		openApiInfo: REST_ENDPOINT_MANIFEST.info,
 		typesFile: 'src/api-types.ts',
 	} );
 

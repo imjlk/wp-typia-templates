@@ -197,12 +197,16 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-public.php';");
 		expect(pluginBootstrap).toContain("permission_callback' => 'demo_persistence_public_can_write_publicly'");
-		expect(restPublicHelper).toContain("function demo_persistence_public_verify_public_write_token");
-		expect(generatedApi).toContain("@wp-typia/rest");
-		expect(generatedSyncRest).toContain("syncTypeSchemas");
-		expect(generatedSyncRest).toContain("syncRestOpenApi");
-		expect(generatedSyncRest).toContain("src/api.openapi.json");
-		expect(generatedRender).toContain("publicWriteToken");
+			expect(restPublicHelper).toContain("function demo_persistence_public_verify_public_write_token");
+			expect(generatedApi).toContain("@wp-typia/rest");
+			expect(generatedSyncRest).toContain("syncTypeSchemas");
+			expect(generatedSyncRest).toContain("defineEndpointManifest");
+			expect(generatedSyncRest).toContain("syncRestOpenApi");
+			expect(generatedSyncRest).toContain("const REST_ENDPOINT_MANIFEST = defineEndpointManifest");
+			expect(generatedSyncRest).not.toContain("const CONTRACTS =");
+			expect(generatedSyncRest).not.toContain("const ENDPOINTS =");
+			expect(generatedSyncRest).toContain("src/api.openapi.json");
+			expect(generatedRender).toContain("publicWriteToken");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
 		expect(readme).toContain("npm run sync-types");
 		expect(readme).toContain("npm run sync-rest");
@@ -416,12 +420,13 @@ describe("@wp-typia/create scaffolding", () => {
 			},
 		});
 
-		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
-		const pluginBootstrap = fs.readFileSync(path.join(targetDir, "demo-compound.php"), "utf8");
-		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
-		const parentBlockJson = JSON.parse(
-			fs.readFileSync(path.join(targetDir, "src", "blocks", "demo-compound", "block.json"), "utf8"),
-		);
+			const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
+			const pluginBootstrap = fs.readFileSync(path.join(targetDir, "demo-compound.php"), "utf8");
+			const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
+			const blockConfig = fs.readFileSync(path.join(targetDir, "scripts", "block-config.ts"), "utf8");
+			const parentBlockJson = JSON.parse(
+				fs.readFileSync(path.join(targetDir, "src", "blocks", "demo-compound", "block.json"), "utf8"),
+			);
 		const childBlockJson = JSON.parse(
 			fs.readFileSync(
 				path.join(targetDir, "src", "blocks", "demo-compound-item", "block.json"),
@@ -441,11 +446,12 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(fs.existsSync(path.join(targetDir, "src", "blocks", "demo-compound", "api.openapi.json"))).toBe(
 			false,
 		);
-		expect(readme).toContain("npm run sync-types");
-		expect(readme).not.toContain("npm run sync-rest");
-		expect(readme).toContain("src/blocks/*/types.ts");
-		expect(readme).not.toContain("## PHP REST Extension Points");
-	});
+			expect(readme).toContain("npm run sync-types");
+			expect(readme).not.toContain("npm run sync-rest");
+			expect(readme).toContain("src/blocks/*/types.ts");
+			expect(readme).not.toContain("## PHP REST Extension Points");
+			expect(blockConfig).not.toContain("restManifest");
+		});
 
 	test("compound scaffolds enable authenticated persistence when only data storage is provided", async () => {
 		const targetDir = path.join(tempRoot, "demo-compound-storage");
@@ -492,13 +498,19 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-auth.php"))).toBe(true);
 		expect(pluginBootstrap).toContain("can_write_authenticated");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
-		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-auth.php';");
-		expect(parentBlockJson.render).toBe("file:./render.php");
-		expect(parentBlockJson.viewScriptModule).toBe("file:./interactivity.js");
-		expect(generatedSyncRest).toContain("syncRestOpenApi");
-		expect(generatedBlockConfig).toContain("src/blocks/demo-compound-storage/api.openapi.json");
-		expect(readme).toContain("npm run sync-rest");
-		expect(readme).toContain("src/blocks/*/api-types.ts");
+			expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-auth.php';");
+			expect(parentBlockJson.render).toBe("file:./render.php");
+			expect(parentBlockJson.viewScriptModule).toBe("file:./interactivity.js");
+			expect(generatedSyncRest).toContain("syncRestOpenApi");
+			expect(generatedSyncRest).toContain("block.restManifest.contracts");
+			expect(generatedSyncRest).toContain("block.restManifest.endpoints");
+			expect(generatedBlockConfig).toContain("src/blocks/demo-compound-storage/api.openapi.json");
+			expect(generatedBlockConfig).toContain("restManifest: defineEndpointManifest");
+			expect(generatedBlockConfig).not.toContain("contracts: [");
+			expect(generatedBlockConfig).not.toContain("openApiInfo:");
+			expect(generatedBlockConfig.match(/restManifest: defineEndpointManifest/g)).toHaveLength(1);
+			expect(readme).toContain("npm run sync-rest");
+			expect(readme).toContain("src/blocks/*/api-types.ts");
 		expect(readme).toContain("## PHP REST Extension Points");
 		expect(readme).toContain("The hidden child block does not own REST routes or storage.");
 		expect(pluginBootstrap).toContain("Customize storage helpers");
