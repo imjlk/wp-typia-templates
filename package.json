@@ -52,6 +52,7 @@
     "publish:dry-run": "bun run packages:build && DRY_RUN=1 bun run publish:oidc",
     "publish:oidc": "bash scripts/publish-oidc.sh",
     "sampo:add": "sampo add",
+    "changesets:validate": "node scripts/validate-sampo-changesets.mjs",
     "docs:dev": "typedoc --watch",
     "docs:build": "typedoc",
     "wp-env:start": "bun run examples:wp-env:start",
