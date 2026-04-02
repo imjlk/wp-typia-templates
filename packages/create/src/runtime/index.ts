@@ -24,6 +24,21 @@ export {
 	manifestToOpenApi,
 } from "./schema-core.js";
 export type {
+	EndpointOpenApiAuthMode,
+	EndpointOpenApiContractDocument,
+	EndpointOpenApiDocumentOptions,
+	EndpointOpenApiEndpointDefinition,
+	EndpointOpenApiMethod,
+	JsonSchemaDocument,
+	JsonSchemaObject,
+	OpenApiDocument,
+	OpenApiInfo,
+	OpenApiOperation,
+	OpenApiParameter,
+	OpenApiPathItem,
+	OpenApiSecurityScheme,
+} from "./schema-core.js";
+export type {
 	EditorControlKind,
 	EditorFieldDescriptor,
 	EditorFieldOption,
