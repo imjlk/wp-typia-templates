@@ -9,6 +9,7 @@ PACKAGES=(
   "packages/wp-typia-block-types"
   "packages/wp-typia-rest"
   "packages/create"
+  "packages/wp-typia-block-runtime"
   "packages/create-wp-typia"
 )
 

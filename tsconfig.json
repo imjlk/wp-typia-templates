@@ -33,6 +33,18 @@
       ],
       "@wp-typia/block-types/*": [
         "packages/wp-typia-block-types/src/*"
+      ],
+      "@wp-typia/block-runtime": [
+        "packages/wp-typia-block-runtime/src/index.ts"
+      ],
+      "@wp-typia/block-runtime/defaults": [
+        "packages/wp-typia-block-runtime/src/defaults.ts"
+      ],
+      "@wp-typia/block-runtime/editor": [
+        "packages/wp-typia-block-runtime/src/editor.ts"
+      ],
+      "@wp-typia/block-runtime/validation": [
+        "packages/wp-typia-block-runtime/src/validation.ts"
       ]
     },
     "plugins": [
