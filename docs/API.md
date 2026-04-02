@@ -102,7 +102,18 @@ Generated projects can also import shared runtime helpers from `@wp-typia/create
 - `@wp-typia/create/runtime/validation`
 - `@wp-typia/create/runtime/editor`
 
-For a repo-backed audit of the current `@wp-typia/create` runtime surface and how it is classified today, see [`docs/runtime-surface.md`](./runtime-surface.md).
+These `runtime/*` paths, along with `@wp-typia/create` and
+`@wp-typia/create/metadata-core`, remain the supported generated-project import
+paths through v1. Root exports for defaults, editor, validation, and schema
+helpers are additive convenience aliases rather than a migration requirement.
+
+`@wp-typia/create/runtime/schema-core` remains exported, but it is not the
+canonical generated-project import path. When you manually import schema
+helpers, prefer the root exports such as `projectJsonSchemaDocument()`.
+
+For the normative generated-project runtime import policy, see
+[`docs/runtime-import-policy.md`](./runtime-import-policy.md). For the broader
+repo-backed audit, see [`docs/runtime-surface.md`](./runtime-surface.md).
 
 The `runtime/editor` helper turns manifest metadata into editor control hints without trying to auto-generate the entire inspector UI.
 
@@ -129,6 +140,10 @@ const editorFields = createEditorModel(currentManifest as ManifestDocument, {
 - unsupported/manual reasons for unions, arrays, and complex fields
 
 `runtime/validation` also exposes nested update helpers for dotted editor paths such as `padding.top`. They convert dotted paths into top-level Gutenberg attribute patches and run the same validation contract before calling `setAttributes`.
+
+Scaffold flow internals, template rendering/composition internals, and CLI
+implementation internals are not part of the generated-project runtime support
+policy even when they live in the same package.
 
 Migration-capable reference apps or custom projects may also add:
 

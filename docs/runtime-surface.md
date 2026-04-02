@@ -4,6 +4,9 @@ This document audits the current public runtime surface around `@wp-typia/create
 
 It is intentionally descriptive, not normative. The goal is to capture what the repo currently exposes and relies on so follow-up issues can decide support policy and package boundaries without repeating discovery work.
 
+For the normative generated-project runtime support policy, see
+[`docs/runtime-import-policy.md`](./runtime-import-policy.md).
+
 ## Current exported surface
 
 `packages/create/package.json` currently exposes:
@@ -109,3 +112,6 @@ But the long-term stability level is not stated clearly:
 - whether `runtime/defaults` and `runtime/schema-core` should remain create-coupled or be treated as emerging stable surfaces
 - what semver promises apply to generated-project runtime helpers versus CLI/scaffolding internals
 - whether package extraction should remain optional long term or become part of the product direction
+
+That decision is now captured in the normative policy doc at
+[`docs/runtime-import-policy.md`](./runtime-import-policy.md).
