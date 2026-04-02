@@ -4,11 +4,11 @@
 
 [packages/create/src/runtime/metadata-core](../modules/packages_create_src_runtime_metadata_core.md).RestOpenApiEndpointDefinition
 
-Public wrapper for the route metadata consumed by `syncRestOpenApi()`.
+Backward-compatible route metadata consumed by `syncRestOpenApi()`.
 
 ## Hierarchy
 
-- [`EndpointOpenApiEndpointDefinition`](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md)
+- [`EndpointManifestEndpointDefinition`](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md)
 
   ↳ **`RestOpenApiEndpointDefinition`**
 
@@ -36,7 +36,7 @@ Authentication policy surfaced in OpenAPI metadata.
 
 #### Inherited from
 
-[EndpointOpenApiEndpointDefinition](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md).[authMode](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md#authmode)
+[EndpointManifestEndpointDefinition](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md).[authMode](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md#authmode)
 
 #### Defined in
 
@@ -52,7 +52,7 @@ Contract key for a JSON request body, when the endpoint accepts one.
 
 #### Inherited from
 
-[EndpointOpenApiEndpointDefinition](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md).[bodyContract](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md#bodycontract)
+[EndpointManifestEndpointDefinition](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md).[bodyContract](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md#bodycontract)
 
 #### Defined in
 
@@ -68,7 +68,7 @@ HTTP method exposed by the route.
 
 #### Inherited from
 
-[EndpointOpenApiEndpointDefinition](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md).[method](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md#method)
+[EndpointManifestEndpointDefinition](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md).[method](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md#method)
 
 #### Defined in
 
@@ -84,7 +84,7 @@ Stable OpenAPI operation id for this route.
 
 #### Inherited from
 
-[EndpointOpenApiEndpointDefinition](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md).[operationId](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md#operationid)
+[EndpointManifestEndpointDefinition](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md).[operationId](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md#operationid)
 
 #### Defined in
 
@@ -100,7 +100,7 @@ Absolute REST path including namespace and version.
 
 #### Inherited from
 
-[EndpointOpenApiEndpointDefinition](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md).[path](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md#path)
+[EndpointManifestEndpointDefinition](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md).[path](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md#path)
 
 #### Defined in
 
@@ -116,7 +116,7 @@ Contract key for query parameters, when the endpoint reads from the query string
 
 #### Inherited from
 
-[EndpointOpenApiEndpointDefinition](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md).[queryContract](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md#querycontract)
+[EndpointManifestEndpointDefinition](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md).[queryContract](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md#querycontract)
 
 #### Defined in
 
@@ -132,7 +132,7 @@ Contract key for the successful JSON response body.
 
 #### Inherited from
 
-[EndpointOpenApiEndpointDefinition](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md).[responseContract](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md#responsecontract)
+[EndpointManifestEndpointDefinition](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md).[responseContract](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md#responsecontract)
 
 #### Defined in
 
@@ -148,7 +148,7 @@ Optional short endpoint summary shown in generated docs.
 
 #### Inherited from
 
-[EndpointOpenApiEndpointDefinition](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md).[summary](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md#summary)
+[EndpointManifestEndpointDefinition](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md).[summary](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md#summary)
 
 #### Defined in
 
@@ -158,13 +158,13 @@ ___
 
 ### tags
 
-• **tags**: `string`[]
+• **tags**: readonly `string`[]
 
 OpenAPI tag names applied to this endpoint.
 
 #### Inherited from
 
-[EndpointOpenApiEndpointDefinition](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md).[tags](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md#tags)
+[EndpointManifestEndpointDefinition](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md).[tags](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md#tags)
 
 #### Defined in
 

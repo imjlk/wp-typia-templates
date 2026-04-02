@@ -10,6 +10,9 @@
 - [SyncBlockMetadataResult](../interfaces/packages_create_src_runtime_metadata_core.SyncBlockMetadataResult.md)
 - [SyncTypeSchemaOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncTypeSchemaOptions.md)
 - [SyncTypeSchemaResult](../interfaces/packages_create_src_runtime_metadata_core.SyncTypeSchemaResult.md)
+- [EndpointManifestContractDefinition](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestContractDefinition.md)
+- [EndpointManifestEndpointDefinition](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md)
+- [EndpointManifestDefinition](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestDefinition.md)
 - [RestOpenApiContractDefinition](../interfaces/packages_create_src_runtime_metadata_core.RestOpenApiContractDefinition.md)
 - [RestOpenApiEndpointDefinition](../interfaces/packages_create_src_runtime_metadata_core.RestOpenApiEndpointDefinition.md)
 - [SyncRestOpenApiOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiOptions.md)
@@ -17,11 +20,43 @@
 
 ### Functions
 
+- [defineEndpointManifest](packages_create_src_runtime_metadata_core.md#defineendpointmanifest)
 - [syncBlockMetadata](packages_create_src_runtime_metadata_core.md#syncblockmetadata)
 - [syncTypeSchemas](packages_create_src_runtime_metadata_core.md#synctypeschemas)
 - [syncRestOpenApi](packages_create_src_runtime_metadata_core.md#syncrestopenapi)
 
 ## Functions
+
+### defineEndpointManifest
+
+▸ **defineEndpointManifest**\<`Contracts`, `Endpoints`\>(`manifest`): [`EndpointManifestDefinition`](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestDefinition.md)\<`Contracts`, `Endpoints`\>
+
+Preserve literal TypeScript inference for backend-neutral endpoint manifests.
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `Contracts` | extends `Readonly`\<`Record`\<`string`, [`EndpointManifestContractDefinition`](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestContractDefinition.md)\>\> |
+| `Endpoints` | extends readonly [`EndpointManifestEndpointDefinition`](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md)[] |
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `manifest` | [`EndpointManifestDefinition`](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestDefinition.md)\<`Contracts`, `Endpoints`\> | Canonical REST surface metadata authored in TypeScript. |
+
+#### Returns
+
+[`EndpointManifestDefinition`](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestDefinition.md)\<`Contracts`, `Endpoints`\>
+
+The same manifest object with literal contract and endpoint metadata preserved.
+
+#### Defined in
+
+[packages/create/src/runtime/metadata-core.ts:163](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L163)
+
+___
 
 ### syncBlockMetadata
 
@@ -39,7 +74,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:210](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L210)
+[packages/create/src/runtime/metadata-core.ts:250](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L250)
 
 ___
 
@@ -59,7 +94,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:300](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L300)
+[packages/create/src/runtime/metadata-core.ts:340](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L340)
 
 ___
 
@@ -83,4 +118,4 @@ Information about the generated OpenAPI document and included schema components.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:353](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L353)
+[packages/create/src/runtime/metadata-core.ts:393](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L393)

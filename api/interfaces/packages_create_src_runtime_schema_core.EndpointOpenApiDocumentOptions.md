@@ -18,7 +18,7 @@ Options for building an aggregate endpoint-aware OpenAPI document.
 
 ### contracts
 
-• **contracts**: `Record`\<`string`, [`EndpointOpenApiContractDocument`](packages_create_src_runtime_schema_core.EndpointOpenApiContractDocument.md)\>
+• **contracts**: `Readonly`\<`Record`\<`string`, [`EndpointOpenApiContractDocument`](packages_create_src_runtime_schema_core.EndpointOpenApiContractDocument.md)\>\>
 
 Named contract documents keyed by the endpoint registry identifiers.
 
@@ -30,7 +30,7 @@ ___
 
 ### endpoints
 
-• **endpoints**: [`EndpointOpenApiEndpointDefinition`](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md)[]
+• **endpoints**: readonly [`EndpointOpenApiEndpointDefinition`](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md)[]
 
 Route definitions that should appear in the generated OpenAPI file.
 

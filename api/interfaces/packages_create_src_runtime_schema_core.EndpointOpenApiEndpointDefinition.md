@@ -10,7 +10,7 @@ Route metadata for one REST endpoint in the aggregate OpenAPI document.
 
 - **`EndpointOpenApiEndpointDefinition`**
 
-  ↳ [`RestOpenApiEndpointDefinition`](packages_create_src_runtime_metadata_core.RestOpenApiEndpointDefinition.md)
+  ↳ [`EndpointManifestEndpointDefinition`](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md)
 
 ## Table of contents
 
@@ -126,7 +126,7 @@ ___
 
 ### tags
 
-• **tags**: `string`[]
+• **tags**: readonly `string`[]
 
 OpenAPI tag names applied to this endpoint.
 

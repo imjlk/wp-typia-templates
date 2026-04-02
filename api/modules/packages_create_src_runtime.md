@@ -73,6 +73,10 @@
 - [SyncBlockMetadataResult](packages_create_src_runtime.md#syncblockmetadataresult)
 - [SyncTypeSchemaOptions](packages_create_src_runtime.md#synctypeschemaoptions)
 - [SyncTypeSchemaResult](packages_create_src_runtime.md#synctypeschemaresult)
+- [EndpointManifestContractDefinition](packages_create_src_runtime.md#endpointmanifestcontractdefinition)
+- [EndpointManifestEndpointDefinition](packages_create_src_runtime.md#endpointmanifestendpointdefinition)
+- [EndpointManifestDefinition](packages_create_src_runtime.md#endpointmanifestdefinition)
+- [defineEndpointManifest](packages_create_src_runtime.md#defineendpointmanifest)
 - [RestOpenApiContractDefinition](packages_create_src_runtime.md#restopenapicontractdefinition)
 - [RestOpenApiEndpointDefinition](packages_create_src_runtime.md#restopenapiendpointdefinition)
 - [SyncRestOpenApiOptions](packages_create_src_runtime.md#syncrestopenapioptions)
@@ -482,6 +486,30 @@ ___
 ### SyncTypeSchemaResult
 
 Re-exports [SyncTypeSchemaResult](../interfaces/packages_create_src_runtime_metadata_core.SyncTypeSchemaResult.md)
+
+___
+
+### EndpointManifestContractDefinition
+
+Re-exports [EndpointManifestContractDefinition](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestContractDefinition.md)
+
+___
+
+### EndpointManifestEndpointDefinition
+
+Re-exports [EndpointManifestEndpointDefinition](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md)
+
+___
+
+### EndpointManifestDefinition
+
+Re-exports [EndpointManifestDefinition](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestDefinition.md)
+
+___
+
+### defineEndpointManifest
+
+Re-exports [defineEndpointManifest](packages_create_src_runtime_metadata_core.md#defineendpointmanifest)
 
 ___
 

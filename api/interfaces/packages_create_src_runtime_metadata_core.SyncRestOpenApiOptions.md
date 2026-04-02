@@ -21,25 +21,25 @@ Options for writing a canonical endpoint-aware REST OpenAPI document.
 
 ### contracts
 
-• **contracts**: `Record`\<`string`, [`RestOpenApiContractDefinition`](packages_create_src_runtime_metadata_core.RestOpenApiContractDefinition.md)\>
+• **contracts**: `Readonly`\<`Record`\<`string`, [`RestOpenApiContractDefinition`](packages_create_src_runtime_metadata_core.RestOpenApiContractDefinition.md)\>\>
 
 Contract registry keyed by logical route contract ids.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:145](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L145)
+[packages/create/src/runtime/metadata-core.ts:185](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L185)
 
 ___
 
 ### endpoints
 
-• **endpoints**: [`RestOpenApiEndpointDefinition`](packages_create_src_runtime_metadata_core.RestOpenApiEndpointDefinition.md)[]
+• **endpoints**: readonly [`RestOpenApiEndpointDefinition`](packages_create_src_runtime_metadata_core.RestOpenApiEndpointDefinition.md)[]
 
 Endpoint registry describing the REST paths, methods, and auth policies to document.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:147](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L147)
+[packages/create/src/runtime/metadata-core.ts:187](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L187)
 
 ___
 
@@ -51,7 +51,7 @@ Output path for the aggregate OpenAPI document.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:149](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L149)
+[packages/create/src/runtime/metadata-core.ts:189](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L189)
 
 ___
 
@@ -63,7 +63,7 @@ Optional OpenAPI document metadata.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:151](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L151)
+[packages/create/src/runtime/metadata-core.ts:191](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L191)
 
 ___
 
@@ -75,7 +75,7 @@ Optional project root used to resolve file paths.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:153](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L153)
+[packages/create/src/runtime/metadata-core.ts:193](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L193)
 
 ___
 
@@ -87,4 +87,4 @@ Source file that exports the REST contract types.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:155](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L155)
+[packages/create/src/runtime/metadata-core.ts:195](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L195)
