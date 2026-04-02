@@ -21,6 +21,73 @@ function {{phpPrefix}}_get_public_write_action() {
 	return '{{namespace}}/{{slugKebabCase}}/state/write';
 }
 
+function {{phpPrefix}}_get_public_write_client_subject() {
+	$remote_addr = isset( $_SERVER['REMOTE_ADDR'] ) && is_string( $_SERVER['REMOTE_ADDR'] )
+		? wp_unslash( $_SERVER['REMOTE_ADDR'] )
+		: '';
+	$user_agent  = isset( $_SERVER['HTTP_USER_AGENT'] ) && is_string( $_SERVER['HTTP_USER_AGENT'] )
+		? wp_unslash( $_SERVER['HTTP_USER_AGENT'] )
+		: '';
+
+	return md5( $remote_addr . '|' . $user_agent );
+}
+
+function {{phpPrefix}}_get_public_write_rate_limit_key( $post_id, $resource_key ) {
+	return '{{phpPrefix}}_public_write_rl_' . (int) $post_id . '_' . md5(
+		(string) $resource_key . '|' . {{phpPrefix}}_get_public_write_client_subject()
+	);
+}
+
+function {{phpPrefix}}_enforce_public_write_rate_limit( $post_id, $resource_key ) {
+	$key   = {{phpPrefix}}_get_public_write_rate_limit_key( $post_id, $resource_key );
+	$count = (int) get_transient( $key );
+
+	if ( $count >= (int) {{phpPrefix}}_PUBLIC_WRITE_RATE_LIMIT_MAX ) {
+		return new WP_Error(
+			'rest_rate_limited',
+			'Too many public write attempts. Wait a minute and try again.',
+			array( 'status' => 429 )
+		);
+	}
+
+	set_transient(
+		$key,
+		$count + 1,
+		(int) {{phpPrefix}}_PUBLIC_WRITE_RATE_LIMIT_WINDOW
+	);
+
+	return true;
+}
+
+function {{phpPrefix}}_get_public_write_request_replay_key( $post_id, $resource_key, $request_id ) {
+	return '{{phpPrefix}}_public_write_req_' . (int) $post_id . '_' . md5(
+		(string) $resource_key . '|' . (string) $request_id
+	);
+}
+
+function {{phpPrefix}}_consume_public_write_request_id( $post_id, $resource_key, $request_id ) {
+	if ( ! is_string( $request_id ) || '' === $request_id ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The public write request id is missing.',
+			array( 'status' => 403 )
+		);
+	}
+
+	$key = {{phpPrefix}}_get_public_write_request_replay_key( $post_id, $resource_key, $request_id );
+	if ( false !== get_transient( $key ) ) {
+		return new WP_Error(
+			'rest_conflict',
+			'This public write request was already processed.',
+			array( 'status' => 409 )
+		);
+	}
+
+	set_transient( $key, 1, (int) {{phpPrefix}}_PUBLIC_WRITE_TTL );
+
+	return true;
+}
+
 // Public write tokens are scaffold-owned by default; customize this flow if you need a different anonymous write policy.
 function {{phpPrefix}}_create_public_write_token( $post_id, $resource_key ) {
 	$expires_at = time() + (int) {{phpPrefix}}_PUBLIC_WRITE_TTL;
@@ -144,11 +211,17 @@ function {{phpPrefix}}_can_write_publicly( WP_REST_Request $request ) {
 
 	$post_id      = isset( $payload['postId'] ) ? (int) $payload['postId'] : 0;
 	$resource_key = isset( $payload['resourceKey'] ) ? (string) $payload['resourceKey'] : '';
+	$request_id   = isset( $payload['publicWriteRequestId'] ) ? (string) $payload['publicWriteRequestId'] : '';
 	$token        = isset( $payload['publicWriteToken'] ) ? (string) $payload['publicWriteToken'] : '';
 
 	if ( '' === $token ) {
 		$fallback = $request->get_param( 'publicWriteToken' );
 		$token    = is_string( $fallback ) ? $fallback : '';
+	}
+
+	if ( '' === $request_id ) {
+		$fallback   = $request->get_param( 'publicWriteRequestId' );
+		$request_id = is_string( $fallback ) ? $fallback : '';
 	}
 
 	if ( $post_id <= 0 || '' === $resource_key ) {
@@ -159,5 +232,19 @@ function {{phpPrefix}}_can_write_publicly( WP_REST_Request $request ) {
 		);
 	}
 
-	return {{phpPrefix}}_verify_public_write_token( $token, $post_id, $resource_key );
+	if ( '' === $request_id ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The public write request id is missing.',
+			array( 'status' => 403 )
+		);
+	}
+
+	$verification = {{phpPrefix}}_verify_public_write_token( $token, $post_id, $resource_key );
+	if ( is_wp_error( $verification ) ) {
+		return $verification;
+	}
+
+	// Customize this subject or limit strategy if your public write surface needs stronger abuse controls.
+	return {{phpPrefix}}_enforce_public_write_rate_limit( $post_id, $resource_key );
 }

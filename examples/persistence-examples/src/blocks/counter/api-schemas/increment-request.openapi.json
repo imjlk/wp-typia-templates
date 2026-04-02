@@ -9,6 +9,11 @@
 						"type": "number",
 						"x-typeTag": "uint32"
 					},
+					"publicWriteRequestId": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 128
+					},
 					"resourceKey": {
 						"type": "string",
 						"minLength": 1,

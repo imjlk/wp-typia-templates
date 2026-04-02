@@ -517,6 +517,10 @@ function buildReadme(
 	const sourceOfTruthNote = getTemplateSourceOfTruthNote(templateId, {
 		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
 	});
+	const publicPersistencePolicyNote =
+		variables.isPublicPersistencePolicy === "true"
+			? "Public persistence writes use signed short-lived tokens, per-request ids, and coarse rate limiting by default. Add application-specific abuse controls before using the same pattern for high-value metrics or experiments."
+			: null;
 	const phpRestExtensionPointsSection = getPhpRestExtensionPointsSection(templateId, {
 		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
 		slug: variables.slug,
@@ -551,7 +555,7 @@ ${optionalOnboardingSteps.join("\n")}
 
 ${getOptionalOnboardingNote(packageManager)}
 
-${sourceOfTruthNote}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ""}
+${sourceOfTruthNote}${publicPersistencePolicyNote ? `\n\n${publicPersistencePolicyNote}` : ""}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ""}
 `;
 }
 

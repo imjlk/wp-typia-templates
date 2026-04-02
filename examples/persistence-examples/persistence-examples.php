@@ -16,6 +16,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'PERSISTENCE_EXAMPLES_PUBLIC_WRITE_TTL', 5 );
+define( 'PERSISTENCE_EXAMPLES_PUBLIC_WRITE_RATE_LIMIT_WINDOW', MINUTE_IN_SECONDS );
+define( 'PERSISTENCE_EXAMPLES_PUBLIC_WRITE_RATE_LIMIT_MAX', 10 );
 
 function persistence_examples_get_build_root() {
 	return __DIR__ . '/build/blocks';
@@ -247,6 +249,73 @@ function persistence_examples_get_counter_public_write_action() {
 	return 'persistence-examples/counter/increment';
 }
 
+function persistence_examples_get_public_write_client_subject() {
+	$remote_addr = isset( $_SERVER['REMOTE_ADDR'] ) && is_string( $_SERVER['REMOTE_ADDR'] )
+		? wp_unslash( $_SERVER['REMOTE_ADDR'] )
+		: '';
+	$user_agent  = isset( $_SERVER['HTTP_USER_AGENT'] ) && is_string( $_SERVER['HTTP_USER_AGENT'] )
+		? wp_unslash( $_SERVER['HTTP_USER_AGENT'] )
+		: '';
+
+	return md5( $remote_addr . '|' . $user_agent );
+}
+
+function persistence_examples_get_counter_rate_limit_key( $post_id, $resource_key ) {
+	return 'persistence_examples_counter_rl_' . (int) $post_id . '_' . md5(
+		(string) $resource_key . '|' . persistence_examples_get_public_write_client_subject()
+	);
+}
+
+function persistence_examples_enforce_counter_rate_limit( $post_id, $resource_key ) {
+	$key   = persistence_examples_get_counter_rate_limit_key( $post_id, $resource_key );
+	$count = (int) get_transient( $key );
+
+	if ( $count >= (int) PERSISTENCE_EXAMPLES_PUBLIC_WRITE_RATE_LIMIT_MAX ) {
+		return new WP_Error(
+			'rest_rate_limited',
+			'Too many public write attempts. Wait a minute and try again.',
+			array( 'status' => 429 )
+		);
+	}
+
+	set_transient(
+		$key,
+		$count + 1,
+		(int) PERSISTENCE_EXAMPLES_PUBLIC_WRITE_RATE_LIMIT_WINDOW
+	);
+
+	return true;
+}
+
+function persistence_examples_get_counter_replay_key( $post_id, $resource_key, $request_id ) {
+	return 'persistence_examples_counter_req_' . (int) $post_id . '_' . md5(
+		(string) $resource_key . '|' . (string) $request_id
+	);
+}
+
+function persistence_examples_consume_counter_request_id( $post_id, $resource_key, $request_id ) {
+	if ( ! is_string( $request_id ) || '' === $request_id ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The public write request id is missing.',
+			array( 'status' => 403 )
+		);
+	}
+
+	$key = persistence_examples_get_counter_replay_key( $post_id, $resource_key, $request_id );
+	if ( false !== get_transient( $key ) ) {
+		return new WP_Error(
+			'rest_conflict',
+			'This public write request was already processed.',
+			array( 'status' => 409 )
+		);
+	}
+
+	set_transient( $key, 1, (int) PERSISTENCE_EXAMPLES_PUBLIC_WRITE_TTL );
+
+	return true;
+}
+
 function persistence_examples_create_counter_public_write_token( $post_id, $resource_key ) {
 	$expires_at = time() + (int) PERSISTENCE_EXAMPLES_PUBLIC_WRITE_TTL;
 	$payload    = array(
@@ -368,7 +437,18 @@ function persistence_examples_can_write_counter( WP_REST_Request $request ) {
 
 	$post_id      = isset( $payload['postId'] ) ? (int) $payload['postId'] : 0;
 	$resource_key = isset( $payload['resourceKey'] ) ? (string) $payload['resourceKey'] : '';
+	$request_id   = isset( $payload['publicWriteRequestId'] ) ? (string) $payload['publicWriteRequestId'] : '';
 	$token        = isset( $payload['publicWriteToken'] ) ? (string) $payload['publicWriteToken'] : '';
+
+	if ( '' === $token ) {
+		$fallback = $request->get_param( 'publicWriteToken' );
+		$token    = is_string( $fallback ) ? $fallback : '';
+	}
+
+	if ( '' === $request_id ) {
+		$fallback   = $request->get_param( 'publicWriteRequestId' );
+		$request_id = is_string( $fallback ) ? $fallback : '';
+	}
 
 	if ( $post_id <= 0 || '' === $resource_key ) {
 		return new WP_Error(
@@ -378,7 +458,20 @@ function persistence_examples_can_write_counter( WP_REST_Request $request ) {
 		);
 	}
 
-	return persistence_examples_verify_counter_public_write_token( $token, $post_id, $resource_key );
+	if ( '' === $request_id ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The public write request id is missing.',
+			array( 'status' => 403 )
+		);
+	}
+
+	$verification = persistence_examples_verify_counter_public_write_token( $token, $post_id, $resource_key );
+	if ( is_wp_error( $verification ) ) {
+		return $verification;
+	}
+
+	return persistence_examples_enforce_counter_rate_limit( $post_id, $resource_key );
 }
 
 function persistence_examples_build_counter_response( $post_id, $resource_key, $count ) {
@@ -427,6 +520,16 @@ function persistence_examples_handle_increment_counter( WP_REST_Request $request
 
 	if ( is_wp_error( $payload ) ) {
 		return $payload;
+	}
+
+	$request_consumed = persistence_examples_consume_counter_request_id(
+		(int) $payload['postId'],
+		(string) $payload['resourceKey'],
+		isset( $payload['publicWriteRequestId'] ) ? (string) $payload['publicWriteRequestId'] : ''
+	);
+
+	if ( is_wp_error( $request_consumed ) ) {
+		return $request_consumed;
 	}
 
 	$count = persistence_examples_increment_counter(

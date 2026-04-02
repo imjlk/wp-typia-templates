@@ -279,6 +279,14 @@ function {{phpPrefix}}_handle_write_state( WP_REST_Request $request ) {
 	);
 }
 
+function {{phpPrefix}}_deny_write_without_policy() {
+	return new WP_Error(
+		'rest_forbidden',
+		'This scaffold requires an explicit write policy helper before enabling writes.',
+		array( 'status' => 403 )
+	);
+}
+
 function {{phpPrefix}}_register_routes() {
 	register_rest_route(
 		'{{namespace}}/v1',
@@ -290,10 +298,9 @@ function {{phpPrefix}}_register_routes() {
 				'permission_callback' => '__return_true',
 			),
 			array(
-				// Intentional sample behavior: this template demonstrates anonymous/public writes.
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => '{{phpPrefix}}_handle_write_state',
-				'permission_callback' => '__return_true',
+				'permission_callback' => '{{phpPrefix}}_deny_write_without_policy',
 			),
 		)
 	);

@@ -16,6 +16,22 @@ function hasExpiredPublicWriteToken(
 	);
 }
 
+function createPublicWriteRequestId(): string {
+	if ( typeof globalThis.crypto?.randomUUID === 'function' ) {
+		return globalThis.crypto.randomUUID();
+	}
+
+	if ( typeof globalThis.crypto?.getRandomValues === 'function' ) {
+		const bytes = new Uint8Array( 16 );
+		globalThis.crypto.getRandomValues( bytes );
+		return Array.from( bytes, ( byte ) =>
+			byte.toString( 16 ).padStart( 2, '0' )
+		).join( '' );
+	}
+
+	return `req-${ Date.now() }-${ Math.random().toString( 16 ).slice( 2, 10 ) }`;
+}
+
 const { actions, state } = store( 'persistenceExamplesCounter', {
 	state: {
 		canWrite: false,
@@ -82,6 +98,7 @@ const { actions, state } = store( 'persistenceExamplesCounter', {
 				const result = await incrementCounter( {
 					delta: 1,
 					postId: context.postId,
+					publicWriteRequestId: createPublicWriteRequestId(),
 					publicWriteToken: context.publicWriteToken,
 					resourceKey: context.resourceKey,
 				} );
