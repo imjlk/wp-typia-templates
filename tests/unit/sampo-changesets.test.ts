@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -9,8 +9,18 @@ import {
 	validateSampoChangesets,
 } from "../../scripts/validate-sampo-changesets.mjs";
 
+let tempDirs: string[] = [];
+
+afterEach(() => {
+	for (const tempDir of tempDirs) {
+		fs.rmSync(tempDir, { force: true, recursive: true });
+	}
+	tempDirs = [];
+});
+
 function createTempRepo() {
 	const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-sampo-test-"));
+	tempDirs.push(repoRoot);
 	fs.mkdirSync(path.join(repoRoot, ".sampo", "changesets"), { recursive: true });
 	fs.mkdirSync(path.join(repoRoot, "packages", "create"), { recursive: true });
 	fs.mkdirSync(path.join(repoRoot, "packages", "rest"), { recursive: true });
