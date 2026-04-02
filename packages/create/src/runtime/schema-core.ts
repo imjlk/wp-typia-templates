@@ -180,7 +180,7 @@ export interface EndpointOpenApiEndpointDefinition {
 	/** Optional short endpoint summary shown in generated docs. */
 	summary?: string;
 	/** OpenAPI tag names applied to this endpoint. */
-	tags: string[];
+	tags: readonly string[];
 }
 
 /**
@@ -188,9 +188,9 @@ export interface EndpointOpenApiEndpointDefinition {
  */
 export interface EndpointOpenApiDocumentOptions {
 	/** Named contract documents keyed by the endpoint registry identifiers. */
-	contracts: Record<string, EndpointOpenApiContractDocument>;
+	contracts: Readonly<Record<string, EndpointOpenApiContractDocument>>;
 	/** Route definitions that should appear in the generated OpenAPI file. */
-	endpoints: EndpointOpenApiEndpointDefinition[];
+	endpoints: readonly EndpointOpenApiEndpointDefinition[];
 	/** Optional document-level OpenAPI info metadata. */
 	info?: OpenApiInfo;
 }
@@ -493,7 +493,7 @@ function createSuccessResponse(schemaName: string): OpenApiResponse {
 
 function buildEndpointOpenApiOperation(
 	endpoint: EndpointOpenApiEndpointDefinition,
-	contracts: Record<string, EndpointOpenApiContractDocument>,
+	contracts: Readonly<Record<string, EndpointOpenApiContractDocument>>,
 ): OpenApiOperation {
 	const operation: OpenApiOperation = {
 		operationId: endpoint.operationId,
@@ -507,7 +507,7 @@ function buildEndpointOpenApiOperation(
 				),
 			),
 		},
-		tags: endpoint.tags,
+		tags: [ ...endpoint.tags ],
 		[WP_TYPIA_OPENAPI_EXTENSION_KEYS.AUTH_POLICY]: endpoint.authMode,
 	};
 

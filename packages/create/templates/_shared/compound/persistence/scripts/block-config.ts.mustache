@@ -1,56 +1,55 @@
+import { defineEndpointManifest } from '@wp-typia/create/metadata-core';
+
 export const BLOCKS = [
 	{
 		apiTypesFile: 'src/blocks/{{slugKebabCase}}/api-types.ts',
 		attributeTypeName: '{{pascalCase}}Attributes',
-		contracts: [
-			{
-				baseName: 'state-query',
-				sourceTypeName: '{{pascalCase}}StateQuery',
+		restManifest: defineEndpointManifest( {
+			contracts: {
+				'state-query': {
+					sourceTypeName: '{{pascalCase}}StateQuery',
+				},
+				'write-state-request': {
+					sourceTypeName: '{{pascalCase}}WriteStateRequest',
+				},
+				'state-response': {
+					sourceTypeName: '{{pascalCase}}StateResponse',
+				},
 			},
-			{
-				baseName: 'write-state-request',
-				sourceTypeName: '{{pascalCase}}WriteStateRequest',
+			endpoints: [
+				{
+					authMode: 'public-read',
+					method: 'GET',
+					operationId: 'get{{pascalCase}}State',
+					path: '/{{namespace}}/v1/{{slugKebabCase}}/state',
+					queryContract: 'state-query',
+					responseContract: 'state-response',
+					summary: 'Read the current persisted state.',
+					tags: [ '{{title}}' ],
+				},
+				{
+					authMode: '{{restWriteAuthMode}}',
+					bodyContract: 'write-state-request',
+					method: 'POST',
+					operationId: 'write{{pascalCase}}State',
+					path: '/{{namespace}}/v1/{{slugKebabCase}}/state',
+					responseContract: 'state-response',
+					summary: 'Write the current persisted state.',
+					tags: [ '{{title}}' ],
+				},
+			],
+			info: {
+				title: '{{title}} REST API',
+				version: '1.0.0',
 			},
-			{
-				baseName: 'state-response',
-				sourceTypeName: '{{pascalCase}}StateResponse',
-			},
-		],
-		endpoints: [
-			{
-				authMode: 'public-read',
-				method: 'GET',
-				operationId: 'get{{pascalCase}}State',
-				path: '/{{namespace}}/v1/{{slugKebabCase}}/state',
-				queryContract: 'state-query',
-				responseContract: 'state-response',
-				summary: 'Read the current persisted state.',
-				tags: [ '{{title}}' ],
-			},
-			{
-				authMode: '{{restWriteAuthMode}}',
-				bodyContract: 'write-state-request',
-				method: 'POST',
-				operationId: 'write{{pascalCase}}State',
-				path: '/{{namespace}}/v1/{{slugKebabCase}}/state',
-				responseContract: 'state-response',
-				summary: 'Write the current persisted state.',
-				tags: [ '{{title}}' ],
-			},
-		],
+		} ),
 		openApiFile: 'src/blocks/{{slugKebabCase}}/api.openapi.json',
-		openApiInfo: {
-			title: '{{title}} REST API',
-			version: '1.0.0',
-		},
 		slug: '{{slugKebabCase}}',
 		typesFile: 'src/blocks/{{slugKebabCase}}/types.ts',
 	},
 	{
 		slug: '{{slugKebabCase}}-item',
 		attributeTypeName: '{{pascalCase}}ItemAttributes',
-		contracts: [],
-		endpoints: [],
 		typesFile: 'src/blocks/{{slugKebabCase}}-item/types.ts',
 	},
 ] as const;

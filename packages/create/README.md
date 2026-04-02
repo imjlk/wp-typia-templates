@@ -123,6 +123,7 @@ Data-backed projects can also opt into schema output from the existing sync pipe
 
 ```ts
 import {
+  defineEndpointManifest,
   syncBlockMetadata,
   syncRestOpenApi,
   syncTypeSchemas,
@@ -143,7 +144,7 @@ await syncTypeSchemas({
   typesFile: "src/api-types.ts",
 });
 
-await syncRestOpenApi({
+const REST_ENDPOINT_MANIFEST = defineEndpointManifest({
   contracts: {
     request: { sourceTypeName: "MyRequestContract" },
     response: { sourceTypeName: "MyResponseContract" },
@@ -159,12 +160,22 @@ await syncRestOpenApi({
       tags: ["My Block"],
     },
   ],
+  info: {
+    title: "My Block REST API",
+    version: "1.0.0",
+  },
+});
+
+await syncRestOpenApi({
+  contracts: REST_ENDPOINT_MANIFEST.contracts,
+  endpoints: REST_ENDPOINT_MANIFEST.endpoints,
   openApiFile: "src/api.openapi.json",
+  openApiInfo: REST_ENDPOINT_MANIFEST.info,
   typesFile: "src/api-types.ts",
 });
 ```
 
-`src/api-types.ts` remains the source of truth for scaffolded REST contracts. `src/api-schemas/*.schema.json` remains the runtime-facing artifact for generated PHP validation, and `src/api.openapi.json` is the canonical endpoint-aware REST document when a scaffold defines route metadata. Per-contract `src/api-schemas/*.openapi.json` files remain available as compatibility fragments.
+`src/api-types.ts` remains the source of truth for scaffolded REST contracts, and the endpoint manifest is the canonical TypeScript description of the scaffolded REST surface. `src/api-schemas/*.schema.json` remains the runtime-facing artifact for generated PHP validation, and `src/api.openapi.json` is the canonical endpoint-aware REST document when a scaffold defines route metadata. Per-contract `src/api-schemas/*.openapi.json` files remain available as compatibility fragments.
 
 For persistence-capable scaffolds, generated PHP stays intentionally boring glue:
 

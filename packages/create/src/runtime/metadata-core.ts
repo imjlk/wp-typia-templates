@@ -123,9 +123,9 @@ export interface SyncTypeSchemaResult {
 }
 
 /**
- * Source type mapping used when generating aggregate REST OpenAPI documents.
+ * Source type mapping used by endpoint manifests and aggregate REST OpenAPI generation.
  */
-export interface RestOpenApiContractDefinition {
+export interface EndpointManifestContractDefinition {
 	/** Optional component name override for the generated schema reference. */
 	schemaName?: string;
 	/** Type name exported from the source `typesFile`. */
@@ -133,18 +133,58 @@ export interface RestOpenApiContractDefinition {
 }
 
 /**
- * Public wrapper for the route metadata consumed by `syncRestOpenApi()`.
+ * Portable route metadata stored in one endpoint manifest entry.
  */
-export interface RestOpenApiEndpointDefinition extends EndpointOpenApiEndpointDefinition {}
+export interface EndpointManifestEndpointDefinition extends EndpointOpenApiEndpointDefinition {}
+
+/**
+ * Canonical TypeScript description of one scaffolded REST surface.
+ */
+export interface EndpointManifestDefinition<
+	Contracts extends Readonly<Record<string, EndpointManifestContractDefinition>> = Readonly<
+		Record<string, EndpointManifestContractDefinition>
+	>,
+	Endpoints extends readonly EndpointManifestEndpointDefinition[] = readonly EndpointManifestEndpointDefinition[],
+> {
+	/** Contract registry keyed by logical route contract ids. */
+	contracts: Contracts;
+	/** Route registry keyed by concrete REST path and method pairs. */
+	endpoints: Endpoints;
+	/** Optional document-level metadata for aggregate OpenAPI output. */
+	info?: OpenApiInfo;
+}
+
+/**
+ * Preserve literal TypeScript inference for backend-neutral endpoint manifests.
+ *
+ * @param manifest Canonical REST surface metadata authored in TypeScript.
+ * @returns The same manifest object with literal contract and endpoint metadata preserved.
+ */
+export function defineEndpointManifest<
+	const Contracts extends Readonly<Record<string, EndpointManifestContractDefinition>>,
+	const Endpoints extends readonly EndpointManifestEndpointDefinition[],
+>(manifest: EndpointManifestDefinition<Contracts, Endpoints>): EndpointManifestDefinition<Contracts, Endpoints> {
+	return manifest;
+}
+
+/**
+ * Backward-compatible source type mapping used when generating aggregate REST OpenAPI documents.
+ */
+export interface RestOpenApiContractDefinition extends EndpointManifestContractDefinition {}
+
+/**
+ * Backward-compatible route metadata consumed by `syncRestOpenApi()`.
+ */
+export interface RestOpenApiEndpointDefinition extends EndpointManifestEndpointDefinition {}
 
 /**
  * Options for writing a canonical endpoint-aware REST OpenAPI document.
  */
 export interface SyncRestOpenApiOptions {
 	/** Contract registry keyed by logical route contract ids. */
-	contracts: Record<string, RestOpenApiContractDefinition>;
+	contracts: Readonly<Record<string, RestOpenApiContractDefinition>>;
 	/** Endpoint registry describing the REST paths, methods, and auth policies to document. */
-	endpoints: RestOpenApiEndpointDefinition[];
+	endpoints: readonly RestOpenApiEndpointDefinition[];
 	/** Output path for the aggregate OpenAPI document. */
 	openApiFile: string;
 	/** Optional OpenAPI document metadata. */
