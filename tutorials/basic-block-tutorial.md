@@ -82,10 +82,9 @@ Modify `src/edit.tsx` to create your block editor:
 
 ```typescript
 import { BlockEditProps } from '@wordpress/blocks';
-import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
+import { useBlockProps, InspectorControls, RichText } from '@wordpress/block-editor';
 import {
   PanelBody,
-  TextControl,
   ToggleControl,
   RangeControl,
   SelectControl
@@ -108,18 +107,6 @@ function Edit({ attributes, setAttributes }: EditProps) {
     <>
       <InspectorControls>
         <PanelBody title={__('Block Settings', 'my-typia-block')}>
-          <TextControl
-            label={__('Title', 'my-typia-block')}
-            value={attributes.title || ''}
-            onChange={(value) => updateAttribute('title', value)}
-          />
-
-          <TextControl
-            label={__('Subtitle', 'my-typia-block')}
-            value={attributes.subtitle || ''}
-            onChange={(value) => updateAttribute('subtitle', value)}
-          />
-
           <SelectControl
             label={__('Theme', 'my-typia-block')}
             value={attributes.theme}
@@ -149,14 +136,20 @@ function Edit({ attributes, setAttributes }: EditProps) {
 
       <div {...blockProps}>
         <div className={`my-typia-block theme-${attributes.theme}`}>
-          <h2 className="my-typia-block__title">
-            {attributes.title}
-          </h2>
-          {attributes.subtitle && (
-            <p className="my-typia-block__subtitle">
-              {attributes.subtitle}
-            </p>
-          )}
+          <RichText
+            tagName="h2"
+            className="my-typia-block__title"
+            value={attributes.title}
+            onChange={(value) => updateAttribute('title', value)}
+            placeholder={__('Add your title...', 'my-typia-block')}
+          />
+          <RichText
+            tagName="p"
+            className="my-typia-block__subtitle"
+            value={attributes.subtitle || ''}
+            onChange={(value) => updateAttribute('subtitle', value)}
+            placeholder={__('Add an optional subtitle...', 'my-typia-block')}
+          />
           <div className="my-typia-block__content">
             {Array.from({ length: attributes.itemCount }, (_, i) => (
               <div
@@ -183,7 +176,7 @@ export default Edit;
 Modify `src/save.tsx` for frontend rendering:
 
 ```typescript
-import { useBlockProps } from '@wordpress/block-editor';
+import { RichText, useBlockProps } from '@wordpress/block-editor';
 import { MyTypiaBlockAttributes } from './types';
 
 interface SaveProps {
@@ -196,13 +189,17 @@ export default function Save({ attributes }: SaveProps) {
   return (
     <div {...blockProps}>
       <div className={`my-typia-block theme-${attributes.theme}`}>
-        <h2 className="my-typia-block__title">
-          {attributes.title}
-        </h2>
+        <RichText.Content
+          tagName="h2"
+          className="my-typia-block__title"
+          value={attributes.title}
+        />
         {attributes.subtitle && (
-          <p className="my-typia-block__subtitle">
-            {attributes.subtitle}
-          </p>
+          <RichText.Content
+            tagName="p"
+            className="my-typia-block__subtitle"
+            value={attributes.subtitle}
+          />
         )}
         <div className="my-typia-block__content">
           {Array.from({ length: attributes.itemCount }, (_, i) => (
