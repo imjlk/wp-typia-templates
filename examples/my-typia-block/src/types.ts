@@ -3,10 +3,11 @@ import type { CssNamedColor } from '@wp-typia/block-types/block-editor/color';
 import type { AspectRatio } from '@wp-typia/block-types/block-editor/dimensions';
 import type {
 	BlockColorSupportAttributes,
-	BlockStyleAttributes,
 	BlockTypographySupportAttributes,
 } from '@wp-typia/block-types/block-editor/style-attributes';
 import { tags } from 'typia';
+
+type ShowcaseFontSize = 'small' | 'medium' | 'large' | 'xlarge';
 
 /**
  * My Typia Block block attributes with Typia validation
@@ -49,6 +50,7 @@ export interface MyTypiaBlockAttributes {
 	 * Showcase-only richer typography controls.
 	 */
 	fontSize?: BlockTypographySupportAttributes[ 'fontSize' ] &
+		ShowcaseFontSize &
 		tags.Default< 'medium' >;
 
 	/**
@@ -61,11 +63,6 @@ export interface MyTypiaBlockAttributes {
 	backgroundColor?: BlockColorSupportAttributes[ 'backgroundColor' ] &
 		CssNamedColor &
 		tags.Default< 'transparent' >;
-
-	/**
-	 * Shared WordPress-style `style` bag for support-generated values.
-	 */
-	style?: BlockStyleAttributes;
 
 	aspectRatio?: AspectRatio & tags.Default< '16/9' >;
 

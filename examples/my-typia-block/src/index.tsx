@@ -18,9 +18,7 @@ const registration = buildScaffoldBlockRegistration<
 		attributes: validators.random(),
 	},
 	deprecated: deprecated as unknown as NonNullable<
-		Parameters<
-			typeof registerBlockType< MyTypiaBlockAttributes >
-		>[ 1 ]
+		Parameters< typeof registerBlockType< MyTypiaBlockAttributes > >[ 1 ]
 	>[ 'deprecated' ],
 	edit: Edit,
 	save: Save,
