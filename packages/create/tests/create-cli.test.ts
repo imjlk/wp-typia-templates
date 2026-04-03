@@ -751,6 +751,31 @@ describe("@wp-typia/create scaffolding", () => {
 			},
 		});
 
+		const blockConfigPath = path.join(targetDir, "scripts", "block-config.ts");
+		const childrenRegistryPath = path.join(
+			targetDir,
+			"src",
+			"blocks",
+			"demo-compound-add-child",
+			"children.ts",
+		);
+		fs.writeFileSync(
+			blockConfigPath,
+			fs.readFileSync(blockConfigPath, "utf8").replace(
+				/\t\/\/ add-child: insert new block config entries here/u,
+				"  // add-child: insert new block config entries here",
+			),
+			"utf8",
+		);
+		fs.writeFileSync(
+			childrenRegistryPath,
+			fs.readFileSync(childrenRegistryPath, "utf8").replace(
+				/\t\/\/ add-child: insert new allowed child block names here/u,
+				"  // add-child: insert new allowed child block names here",
+			),
+			"utf8",
+		);
+
 		runGeneratedScript(targetDir, "scripts/add-compound-child.ts", [
 			"--slug",
 			"faq-item",
@@ -759,11 +784,8 @@ describe("@wp-typia/create scaffolding", () => {
 		]);
 
 		const newChildDir = path.join(targetDir, "src", "blocks", "demo-compound-add-child-faq-item");
-		const blockConfig = fs.readFileSync(path.join(targetDir, "scripts", "block-config.ts"), "utf8");
-		const childrenRegistry = fs.readFileSync(
-			path.join(targetDir, "src", "blocks", "demo-compound-add-child", "children.ts"),
-			"utf8",
-		);
+		const blockConfig = fs.readFileSync(blockConfigPath, "utf8");
+		const childrenRegistry = fs.readFileSync(childrenRegistryPath, "utf8");
 
 		expect(fs.existsSync(path.join(newChildDir, "block.json"))).toBe(true);
 		expect(fs.existsSync(path.join(newChildDir, "edit.tsx"))).toBe(true);

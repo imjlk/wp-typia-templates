@@ -10,8 +10,8 @@ const PARENT_STYLE_IMPORT = '../{{slugKebabCase}}/style.scss';
 const PROJECT_ROOT = process.cwd();
 const TEXT_DOMAIN = '{{textDomain}}';
 
-const ALLOWED_CHILD_MARKER = '\t// add-child: insert new allowed child block names here';
-const BLOCK_CONFIG_MARKER = '\t// add-child: insert new block config entries here';
+const ALLOWED_CHILD_MARKER = '// add-child: insert new allowed child block names here';
+const BLOCK_CONFIG_MARKER = '// add-child: insert new block config entries here';
 const CHILD_PLACEHOLDER = 'Add supporting details for this internal item.';
 const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
 
@@ -66,16 +66,31 @@ function toTitleCase( input: string ): string {
 		.join( ' ' );
 }
 
-function insertBeforeMarker( filePath: string, marker: string, insertion: string ) {
-	const source = fs.readFileSync( filePath, 'utf8' );
+function escapeForRegExp( value: string ): string {
+	return value.replace( /[.*+?^${}()|[\]\\]/g, '\\$&' );
+}
 
-	if ( ! source.includes( marker ) ) {
+function insertBeforeMarker( filePath: string, marker: string, insertionLines: string[] ) {
+	const source = fs.readFileSync( filePath, 'utf8' );
+	const markerPattern = new RegExp(
+		`^(?<indent>\\s*)${ escapeForRegExp( marker ) }\\s*$`,
+		'm'
+	);
+	const markerMatch = source.match( markerPattern );
+
+	if ( ! markerMatch ) {
 		throw new Error( `Unable to update ${ filePath }: marker not found.` );
 	}
 
+	const indent = markerMatch.groups?.indent ?? '';
+	const markerLine = markerMatch[ 0 ];
+	const insertion = insertionLines
+		.map( ( line ) => ( line.length > 0 ? `${ indent }${ line }` : line ) )
+		.join( '\n' );
+
 	fs.writeFileSync(
 		filePath,
-		source.replace( marker, `${ insertion }\n${ marker }` ),
+		source.replace( markerPattern, `${ insertion }\n${ markerLine }` ),
 		'utf8'
 	);
 }
@@ -428,12 +443,18 @@ function main() {
 	insertBeforeMarker(
 		childrenFile,
 		ALLOWED_CHILD_MARKER,
-		`\t'${ childBlockName }',`
+		[ `'${ childBlockName }',` ]
 	);
 	insertBeforeMarker(
 		blockConfigFile,
 		BLOCK_CONFIG_MARKER,
-		`\t{\n\t\tslug: '${ childFolderSlug }',\n\t\tattributeTypeName: '${ childTypeName }',\n\t\ttypesFile: 'src/blocks/${ childFolderSlug }/types.ts',\n\t},`
+		[
+			'{',
+			`\tslug: '${ childFolderSlug }',`,
+			`\tattributeTypeName: '${ childTypeName }',`,
+			`\ttypesFile: 'src/blocks/${ childFolderSlug }/types.ts',`,
+			'},',
+		]
 	);
 
 	console.log( `✅ Added compound child block ${ childBlockName }` );
