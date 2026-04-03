@@ -48,6 +48,11 @@ function parseCliOptions( argv: string[] ): SyncTypesCliOptions {
 function printHumanReport(
 	report: Awaited< ReturnType< typeof runSyncBlockMetadata > >
 ) {
+	if ( report.failure ) {
+		console.error( '❌ Type sync failed:', report.failure.message );
+		return;
+	}
+
 	console.log(
 		'✅ block.json, typia.manifest.json, typia-validator.php, typia.schema.json, and typia.openapi.json were generated from TypeScript types!'
 	);
@@ -69,11 +74,6 @@ function printHumanReport(
 		for ( const warning of report.phpGenerationWarnings ) {
 			console.warn( `   - ${ warning }` );
 		}
-	}
-
-	if ( report.failure ) {
-		console.error( '❌ Type sync failed:', report.failure.message );
-		return;
 	}
 
 	if ( report.status === 'error' ) {
@@ -104,7 +104,7 @@ async function main() {
 	}
 
 	if ( report.status === 'error' ) {
-		process.exit( 1 );
+		process.exitCode = 1;
 	}
 }
 

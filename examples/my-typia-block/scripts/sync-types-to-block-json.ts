@@ -32,7 +32,9 @@ function parseCliOptions( argv: string[] ): SyncTypesCliOptions {
 		if ( argument === '--report' ) {
 			const reportMode = argv[ index + 1 ];
 			if ( reportMode !== 'json' ) {
-				throw new Error( 'The `--report` flag currently supports only `json`.' );
+				throw new Error(
+					'The `--report` flag currently supports only `json`.'
+				);
 			}
 			options.report = reportMode;
 			index += 1;
@@ -48,6 +50,11 @@ function parseCliOptions( argv: string[] ): SyncTypesCliOptions {
 function printHumanReport(
 	report: Awaited< ReturnType< typeof runSyncBlockMetadata > >
 ) {
+	if ( report.failure ) {
+		console.error( '❌ Type sync failed:', report.failure.message );
+		return;
+	}
+
 	console.log(
 		'✅ block.json, typia.manifest.json, typia-validator.php, typia.schema.json, and typia.openapi.json were generated from TypeScript types!'
 	);
@@ -71,11 +78,6 @@ function printHumanReport(
 		}
 	}
 
-	if ( report.failure ) {
-		console.error( '❌ Type sync failed:', report.failure.message );
-		return;
-	}
-
 	if ( report.status === 'error' ) {
 		console.error(
 			'❌ Type sync completed with warnings treated as errors because of the selected flags.'
@@ -85,17 +87,20 @@ function printHumanReport(
 
 async function main() {
 	const options = parseCliOptions( process.argv.slice( 2 ) );
-	const report = await runSyncBlockMetadata( {
-		blockJsonFile: 'block.json',
-		jsonSchemaFile: 'typia.schema.json',
-		manifestFile: 'typia.manifest.json',
-		openApiFile: 'typia.openapi.json',
-		sourceTypeName: 'MyTypiaBlockAttributes',
-		typesFile: 'src/types.ts',
-	}, {
-		failOnLossy: options.failOnLossy,
-		strict: options.strict,
-	} );
+	const report = await runSyncBlockMetadata(
+		{
+			blockJsonFile: 'block.json',
+			jsonSchemaFile: 'typia.schema.json',
+			manifestFile: 'typia.manifest.json',
+			openApiFile: 'typia.openapi.json',
+			sourceTypeName: 'MyTypiaBlockAttributes',
+			typesFile: 'src/types.ts',
+		},
+		{
+			failOnLossy: options.failOnLossy,
+			strict: options.strict,
+		}
+	);
 
 	if ( options.report === 'json' ) {
 		process.stdout.write( `${ JSON.stringify( report, null, 2 ) }\n` );
@@ -104,7 +109,7 @@ async function main() {
 	}
 
 	if ( report.status === 'error' ) {
-		process.exit( 1 );
+		process.exitCode = 1;
 	}
 }
 
