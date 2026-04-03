@@ -1,6 +1,10 @@
 /* eslint-disable no-console */
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+	buildCompoundChildStarterManifestDocument,
+	stringifyStarterManifest,
+} from '@wp-typia/create';
 
 const PARENT_BLOCK_NAME = '{{namespace}}/{{slugKebabCase}}';
 const PARENT_BLOCK_SLUG = '{{slugKebabCase}}';
@@ -163,6 +167,19 @@ export interface ${ childTypeName } {
 \t\ttags.Default< ${ JSON.stringify( CHILD_PLACEHOLDER ) } >;
 }
 `;
+}
+
+function renderStarterManifestFile(
+	childTypeName: string,
+	childTitle: string
+): string {
+	return stringifyStarterManifest(
+		buildCompoundChildStarterManifestDocument(
+			childTypeName,
+			childTitle,
+			CHILD_PLACEHOLDER
+		)
+	);
 }
 
 function renderHooksFile(): string {
@@ -426,6 +443,11 @@ function main() {
 		'utf8'
 	);
 	fs.writeFileSync( path.join( childDir, 'types.ts' ), renderTypesFile( childTypeName, childTitle ), 'utf8' );
+	fs.writeFileSync(
+		path.join( childDir, 'typia.manifest.json' ),
+		renderStarterManifestFile( childTypeName, childTitle ),
+		'utf8'
+	);
 	fs.writeFileSync( path.join( childDir, 'hooks.ts' ), renderHooksFile(), 'utf8' );
 	fs.writeFileSync(
 		path.join( childDir, 'validators.ts' ),

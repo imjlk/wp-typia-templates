@@ -23,6 +23,7 @@ import {
 } from "./package-managers.js";
 import type { DataStorageMode, PersistencePolicy } from "./scaffold.js";
 import type { PackageManagerId } from "./package-managers.js";
+import { getPrimaryDevelopmentScript } from "./local-dev-presets.js";
 import {
 	getOptionalOnboardingNote,
 	getOptionalOnboardingSteps,
@@ -65,6 +66,7 @@ interface GetNextStepsOptions {
 	packageManager: PackageManagerId;
 	projectDir: string;
 	projectInput: string;
+	templateId: string;
 }
 
 interface GetOptionalOnboardingOptions {
@@ -94,10 +96,14 @@ interface RunScaffoldFlowOptions {
 	selectPackageManager?: () => Promise<PackageManagerId>;
 	selectPersistencePolicy?: () => Promise<PersistencePolicy>;
 	selectTemplate?: () => Promise<TemplateDefinition["id"]>;
+	selectWithTestPreset?: () => Promise<boolean>;
+	selectWithWpEnv?: () => Promise<boolean>;
 	templateId?: string;
 	textDomain?: string;
 	variant?: string;
 	persistencePolicy?: string;
+	withTestPreset?: boolean;
+	withWpEnv?: boolean;
 	yes?: boolean;
 }
 
@@ -176,10 +182,10 @@ export function createReadlinePrompt(): ReadlinePrompt {
 
 export function formatHelpText(): string {
 	return `Usage:
-  wp-typia <project-dir> [--template <basic|interactivity|persistence|compound|./path|github:owner/repo/path[#ref]>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia <project-dir> [--template <npm-package>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia <project-dir> [--template persistence] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia <project-dir> [--template compound] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <basic|interactivity|persistence|compound|./path|github:owner/repo/path[#ref]>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <npm-package>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template persistence] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template compound] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
   wp-typia templates list
   wp-typia templates inspect <id>
   wp-typia migrations <init|snapshot|diff|scaffold|verify|doctor|fixtures|fuzz> [...]
@@ -357,6 +363,7 @@ export function getNextSteps({
 	projectDir,
 	packageManager,
 	noInstall,
+	templateId,
 }: GetNextStepsOptions): string[] {
 	const steps = [`cd ${path.isAbsolute(projectInput) ? projectDir : projectInput}`];
 
@@ -364,7 +371,7 @@ export function getNextSteps({
 		steps.push(formatInstallCommand(packageManager));
 	}
 
-	steps.push(formatRunScript(packageManager, "start"));
+	steps.push(formatRunScript(packageManager, getPrimaryDevelopmentScript(templateId)));
 	return steps;
 }
 
@@ -374,7 +381,7 @@ export function getOptionalOnboarding({
 	compoundPersistenceEnabled = false,
 }: GetOptionalOnboardingOptions): OptionalOnboardingGuidance {
 	return {
-		note: getOptionalOnboardingNote(packageManager),
+		note: getOptionalOnboardingNote(packageManager, templateId),
 		steps: getOptionalOnboardingSteps(packageManager, templateId, {
 			compoundPersistenceEnabled,
 		}),
@@ -402,6 +409,10 @@ export async function runScaffoldFlow({
 	promptText,
 	installDependencies = undefined,
 	variant,
+	selectWithTestPreset,
+	selectWithWpEnv,
+	withTestPreset,
+	withWpEnv,
 }: RunScaffoldFlowOptions) {
 	if (!projectInput) {
 		throw new Error("Project directory is required. Usage: wp-typia <project-dir>");
@@ -455,6 +466,22 @@ export async function runScaffoldFlow({
 		isInteractive,
 		selectPackageManager,
 	});
+	const resolvedWithWpEnv =
+		typeof withWpEnv === "boolean"
+			? withWpEnv
+			: yes
+				? false
+				: isInteractive && selectWithWpEnv
+					? await selectWithWpEnv()
+					: false;
+	const resolvedWithTestPreset =
+		typeof withTestPreset === "boolean"
+			? withTestPreset
+			: yes
+				? false
+				: isInteractive && selectWithTestPreset
+					? await selectWithTestPreset()
+					: false;
 	const projectDir = path.resolve(cwd, projectInput);
 	const projectName = path.basename(projectDir);
 	const answers = await collectScaffoldAnswers({
@@ -481,6 +508,8 @@ export async function runScaffoldFlow({
 		projectDir,
 		templateId: resolvedTemplateId,
 		variant,
+		withTestPreset: resolvedWithTestPreset,
+		withWpEnv: resolvedWithWpEnv,
 	});
 
 	return {
@@ -498,6 +527,7 @@ export async function runScaffoldFlow({
 			projectDir,
 			packageManager: resolvedPackageManager,
 			noInstall,
+			templateId: resolvedTemplateId,
 		}),
 	};
 }

@@ -11,6 +11,11 @@ import {
 	transformPackageManagerText,
 } from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
+import {
+	applyGeneratedProjectDxPackageJson,
+	applyLocalDevPresetFiles,
+	getPrimaryDevelopmentScript,
+} from "./local-dev-presets.js";
 import { getPackageVersions } from "./package-versions.js";
 import {
 	getCompoundExtensionWorkflowSection,
@@ -19,6 +24,7 @@ import {
 	getPhpRestExtensionPointsSection,
 	getTemplateSourceOfTruthNote,
 } from "./scaffold-onboarding.js";
+import { getStarterManifestFiles, stringifyStarterManifest } from "./starter-manifests.js";
 import { copyInterpolatedDirectory } from "./template-render.js";
 import { TEMPLATE_IDS, getTemplateById, isBuiltInTemplateId } from "./template-registry.js";
 import type { BuiltInTemplateId } from "./template-registry.js";
@@ -127,6 +133,8 @@ interface CollectScaffoldAnswersOptions {
 	persistencePolicy?: PersistencePolicy;
 	textDomain?: string;
 	templateId: string;
+	withTestPreset?: boolean;
+	withWpEnv?: boolean;
 	yes?: boolean;
 }
 
@@ -147,6 +155,8 @@ interface ScaffoldProjectOptions {
 	projectDir: string;
 	templateId: string;
 	variant?: string;
+	withTestPreset?: boolean;
+	withWpEnv?: boolean;
 }
 
 export interface ScaffoldProjectResult {
@@ -516,6 +526,13 @@ function buildReadme(
 	templateId: string,
 	variables: ScaffoldTemplateVariables,
 	packageManager: PackageManagerId,
+	{
+		withTestPreset = false,
+		withWpEnv = false,
+	}: {
+		withTestPreset?: boolean;
+		withWpEnv?: boolean;
+	} = {},
 ): string {
 	const optionalOnboardingSteps = getOptionalOnboardingSteps(packageManager, templateId, {
 		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
@@ -535,6 +552,13 @@ function buildReadme(
 		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
 		slug: variables.slug,
 	});
+	const developmentScript = getPrimaryDevelopmentScript(templateId);
+	const wpEnvSection = withWpEnv
+		? `## Local WordPress\n\n\`\`\`bash\n${formatRunScript(packageManager, "wp-env:start")}\n${formatRunScript(packageManager, "wp-env:stop")}\n${formatRunScript(packageManager, "wp-env:reset")}\n\`\`\``
+		: "";
+	const testPresetSection = withTestPreset
+		? `## Local Test Preset\n\n\`\`\`bash\n${formatRunScript(packageManager, "wp-env:start:test")}\n${formatRunScript(packageManager, "wp-env:wait:test")}\n${formatRunScript(packageManager, "test:e2e")}\n\`\`\`\n\nThe generated smoke test uses \`.wp-env.test.json\` and verifies that the scaffolded block registers in the WordPress editor.`
+		: "";
 
 	return `# ${variables.title}
 
@@ -548,7 +572,7 @@ ${templateId}
 
 \`\`\`bash
 ${formatInstallCommand(packageManager)}
-${formatRunScript(packageManager, "start")}
+${formatRunScript(packageManager, developmentScript)}
 \`\`\`
 
 ## Build
@@ -563,9 +587,9 @@ ${formatRunScript(packageManager, "build")}
 ${optionalOnboardingSteps.join("\n")}
 \`\`\`
 
-${getOptionalOnboardingNote(packageManager)}
+${getOptionalOnboardingNote(packageManager, templateId)}
 
-${sourceOfTruthNote}${publicPersistencePolicyNote ? `\n\n${publicPersistencePolicyNote}` : ""}${compoundExtensionWorkflowSection ? `\n\n${compoundExtensionWorkflowSection}` : ""}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ""}
+${sourceOfTruthNote}${publicPersistencePolicyNote ? `\n\n${publicPersistencePolicyNote}` : ""}${compoundExtensionWorkflowSection ? `\n\n${compoundExtensionWorkflowSection}` : ""}${wpEnvSection ? `\n\n${wpEnvSection}` : ""}${testPresetSection ? `\n\n${testPresetSection}` : ""}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ""}
 `;
 }
 
@@ -591,6 +615,42 @@ Thumbs.db
 *.log
 .wp-env/
 `;
+}
+
+function mergeTextLines(primaryContent: string, existingContent: string): string {
+	const normalizedPrimary = primaryContent.replace(/\r\n/g, "\n").trimEnd();
+	const normalizedExisting = existingContent.replace(/\r\n/g, "\n").trimEnd();
+	const mergedLines: string[] = [];
+	const seen = new Set<string>();
+
+	for (const line of [...normalizedPrimary.split("\n"), ...normalizedExisting.split("\n")]) {
+		if (line.length === 0 && mergedLines[mergedLines.length - 1] === "") {
+			continue;
+		}
+		if (line.length > 0 && seen.has(line)) {
+			continue;
+		}
+		if (line.length > 0) {
+			seen.add(line);
+		}
+		mergedLines.push(line);
+	}
+
+	return `${mergedLines.join("\n").replace(/\n{3,}/g, "\n\n")}\n`;
+}
+
+async function writeStarterManifestFiles(
+	targetDir: string,
+	templateId: string,
+	variables: ScaffoldTemplateVariables,
+): Promise<void> {
+	const manifests = getStarterManifestFiles(templateId, variables);
+
+	for (const { document, relativePath } of manifests) {
+		const destinationPath = path.join(targetDir, relativePath);
+		await fsp.mkdir(path.dirname(destinationPath), { recursive: true });
+		await fsp.writeFile(destinationPath, stringifyStarterManifest(document), "utf8");
+	}
 }
 
 async function normalizePackageManagerFiles(
@@ -720,8 +780,11 @@ export async function scaffoldProject({
 	noInstall = false,
 	installDependencies = undefined,
 	variant,
+	withTestPreset = false,
+	withWpEnv = false,
 }: ScaffoldProjectOptions): Promise<ScaffoldProjectResult> {
 	const resolvedPackageManager = getPackageManager(packageManager).id;
+	const isBuiltInTemplate = isBuiltInTemplateId(templateId);
 
 	await ensureDirectory(projectDir, allowExistingDir);
 
@@ -748,16 +811,46 @@ export async function scaffoldProject({
 			await templateSource.cleanup();
 		}
 	}
+	if (isBuiltInTemplate) {
+		await writeStarterManifestFiles(projectDir, templateId, variables);
+		await applyLocalDevPresetFiles({
+			projectDir,
+			variables,
+			withTestPreset,
+			withWpEnv,
+		});
+	}
 	const readmePath = path.join(projectDir, "README.md");
 	if (!fs.existsSync(readmePath)) {
 		await fsp.writeFile(
 			readmePath,
-			buildReadme(templateId, variables, resolvedPackageManager),
+			buildReadme(templateId, variables, resolvedPackageManager, {
+				withTestPreset: isBuiltInTemplate ? withTestPreset : false,
+				withWpEnv: isBuiltInTemplate ? withWpEnv : false,
+			}),
 			"utf8",
 		);
 	}
-	await fsp.writeFile(path.join(projectDir, ".gitignore"), buildGitignore(), "utf8");
+	const gitignorePath = path.join(projectDir, ".gitignore");
+	const existingGitignore = fs.existsSync(gitignorePath)
+		? await fsp.readFile(gitignorePath, "utf8")
+		: "";
+	await fsp.writeFile(
+		gitignorePath,
+		mergeTextLines(buildGitignore(), existingGitignore),
+		"utf8",
+	);
 	await normalizePackageJson(projectDir, resolvedPackageManager);
+	if (isBuiltInTemplate) {
+		await applyGeneratedProjectDxPackageJson({
+			compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
+			packageManager: resolvedPackageManager,
+			projectDir,
+			templateId,
+			withTestPreset,
+			withWpEnv,
+		});
+	}
 	await normalizePackageManagerFiles(projectDir, resolvedPackageManager);
 	await removeUnexpectedLockfiles(projectDir, resolvedPackageManager);
 	await replaceTextRecursively(projectDir, resolvedPackageManager);

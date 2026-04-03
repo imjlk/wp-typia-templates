@@ -33,6 +33,8 @@ interface ParsedArgs {
 	template?: string;
 	textDomain?: string;
 	variant?: string;
+	withTestPreset?: boolean;
+	withWpEnv?: boolean;
 	yes: boolean;
 }
 
@@ -58,6 +60,8 @@ function parseArgs(argv: string[]): ParsedArgs {
 		template: undefined,
 		textDomain: undefined,
 		variant: undefined,
+		withTestPreset: undefined,
+		withWpEnv: undefined,
 		yes: false,
 	};
 
@@ -79,6 +83,14 @@ function parseArgs(argv: string[]): ParsedArgs {
 		}
 		if (arg === "--no-install") {
 			parsed.noInstall = true;
+			continue;
+		}
+		if (arg === "--with-wp-env") {
+			parsed.withWpEnv = true;
+			continue;
+		}
+		if (arg === "--with-test-preset") {
+			parsed.withTestPreset = true;
 			continue;
 		}
 		if (arg === "--template" || arg === "-t") {
@@ -211,10 +223,30 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 				),
 			selectTemplate: () =>
 				prompt.select("Select a template", getTemplateSelectOptions(), 1),
+			selectWithTestPreset: () =>
+				prompt.select(
+					"Add the optional Playwright smoke preset?",
+					[
+						{ label: "No", value: "no", hint: "Keep the scaffold lightweight" },
+						{ label: "Yes", value: "yes", hint: "Add test-only wp-env and Playwright files" },
+					],
+					1,
+				).then((value) => value === "yes"),
+			selectWithWpEnv: () =>
+				prompt.select(
+					"Add a local wp-env preset?",
+					[
+						{ label: "No", value: "no", hint: "Use your existing local WordPress setup" },
+						{ label: "Yes", value: "yes", hint: "Add .wp-env.json and local wp-env scripts" },
+					],
+					1,
+				).then((value) => value === "yes"),
 			templateId: parsed.template,
 			textDomain: parsed.textDomain,
 			variant: parsed.variant,
 			persistencePolicy: parsed.persistencePolicy,
+			withTestPreset: parsed.withTestPreset,
+			withWpEnv: parsed.withWpEnv,
 			yes: parsed.yes,
 		});
 
