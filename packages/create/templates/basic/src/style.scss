@@ -14,7 +14,7 @@
 		line-height: 1.6;
 		color: #333;
 
-		// 정렬 스타일
+		// Alignment styles
 		&[data-align="center"] {
 			text-align: center;
 		}
@@ -28,13 +28,13 @@
 		}
 	}
 
-	// 호버 효과
+	// Hover state
 	&:hover {
 		box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 		transition: box-shadow 0.2s ease;
 	}
 
-	// 에디터에서의 스타일
+	// Editor styles
 	.wp-block-editor & {
 		outline: 1px dashed #ddd;
 		outline-offset: -1px;

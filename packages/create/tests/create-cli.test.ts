@@ -81,6 +81,9 @@ describe("@wp-typia/create scaffolding", () => {
 		const readme = fs.readFileSync(readmePath, "utf8");
 		const generatedEdit = fs.readFileSync(path.join(targetDir, "src", "edit.tsx"), "utf8");
 		const generatedHooks = fs.readFileSync(path.join(targetDir, "src", "hooks.ts"), "utf8");
+		const generatedIndex = fs.readFileSync(path.join(targetDir, "src", "index.tsx"), "utf8");
+		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
+		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const generatedValidators = fs.readFileSync(path.join(targetDir, "src", "validators.ts"), "utf8");
 
 		expect(packageJson.name).toBe("demo-npm");
@@ -92,16 +95,28 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(blockJson.textdomain).toBe("demo-npm");
 		expect(generatedHooks).toContain("type ValidationResult");
 		expect(generatedHooks).toContain("useTypiaValidation");
+		expect(generatedEdit).toContain("RichText");
+		expect(generatedEdit).toContain("TextControl");
+		expect(generatedEdit).toContain("label={__('Content'");
+		expect(generatedEdit).toContain("help={__('Mirrors the main block content.'");
+		expect(generatedEdit).toContain("placeholder={__('Add your content...'");
 		expect(generatedEdit).toContain("@wp-typia/create/runtime/editor");
 		expect(generatedEdit).not.toContain("@wp-typia/create/runtime/schema-core");
 		expect(generatedEdit).toContain("createEditorModel");
+		expect(generatedSave).toContain("RichText.Content");
 		expect(generatedHooks).toContain("@wp-typia/create/runtime/validation");
+		expect(generatedIndex).toContain("Typia-powered type-safe block");
+		expect(generatedTypes).not.toMatch(/[가-힣]/u);
 		expect(generatedValidators).toContain("@wp-typia/create/runtime/defaults");
 		expect(generatedValidators).toContain("@wp-typia/create/runtime/validation");
 		expect(generatedValidators).toContain("toValidationResult");
 		expect(generatedValidators).toContain("createValidatedAttributeUpdater");
 		expect(generatedValidators).toContain("clone");
 		expect(generatedValidators).toContain("prune");
+		expect(generatedEdit).not.toMatch(/[가-힣]/u);
+		expect(generatedSave).not.toMatch(/[가-힣]/u);
+		expect(generatedValidators).not.toMatch(/[가-힣]/u);
+		expect(blockJson.example.attributes.content).toBe("Example content");
 		expect(readme).toContain("npm install");
 		expect(readme).toContain("npm run start");
 		expect(readme).toContain("## Optional First Sync");

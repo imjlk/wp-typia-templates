@@ -1,7 +1,7 @@
 /**
  * WordPress {{title}} Block
- * 
- * Typia 기반 타입 안전 블록
+ *
+ * Typia-powered type-safe block
  */
 
 import { registerBlockType } from '@wordpress/blocks';

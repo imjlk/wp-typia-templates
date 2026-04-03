@@ -12,7 +12,7 @@ import {
 import { {{pascalCase}}Attributes, {{pascalCase}}ValidationResult } from "./types";
 
 /**
- * Typia 유효성 검증기
+ * Typia validator helpers
  */
 const validate = typia.createValidate<{{pascalCase}}Attributes>();
 const assert = typia.createAssert<{{pascalCase}}Attributes>();
@@ -51,7 +51,7 @@ export function sanitize{{pascalCase}}Attributes(
 }
 
 /**
- * 속성 업데이터 생성
+ * Create a validated attribute updater.
  */
 export function createAttributeUpdater(
   attributes: {{pascalCase}}Attributes,
