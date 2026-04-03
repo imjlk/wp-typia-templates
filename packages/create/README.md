@@ -138,6 +138,7 @@ await syncBlockMetadata({
   typesFile: "src/types.ts",
 });
 
+// Or use the reporting wrapper when CI needs explicit status handling.
 const syncReport = await runSyncBlockMetadata(
   {
     blockJsonFile: "src/block.json",
@@ -148,6 +149,15 @@ const syncReport = await runSyncBlockMetadata(
     strict: true,
   },
 );
+
+if (syncReport.status === "error") {
+  throw new Error(syncReport.failure?.message ?? "sync-types failed");
+}
+
+if (syncReport.status === "warning") {
+  console.warn(syncReport.lossyProjectionWarnings);
+  console.warn(syncReport.phpGenerationWarnings);
+}
 
 await syncTypeSchemas({
   jsonSchemaFile: "src/api-schemas/request.schema.json",
