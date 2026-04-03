@@ -1,5 +1,18 @@
 # @wp-typia/create
 
+## 0.7.0 — 2026-04-03
+
+### Minor changes
+
+- [fe19a8b](https://github.com/imjlk/wp-typia/commit/fe19a8bc6036b74cdd4f3eec33b39711e87f2921) Consolidate built-in scaffold runtime helpers behind shared validation, block registration, and webpack helper surfaces, and add the supported `@wp-typia/create/runtime/blocks` generated-project import path. — Thanks @imjlk!
+
+### Patch changes
+
+- [3250087](https://github.com/imjlk/wp-typia/commit/32500876e7ff838751d0320c8a4eabf4c2b3fcd4) Align the basic built-in template with the RichText editing flow and English default scaffold copy used by the other built-in templates. — Thanks @imjlk!
+- [13f2e72](https://github.com/imjlk/wp-typia/commit/13f2e72c663897281ba99e7a98a9ab20e5135bc9) Clarify dynamic-rendered persistence scaffold output and remove dead interactivity callback wiring from generated templates. — Thanks @imjlk!
+- [44c016c](https://github.com/imjlk/wp-typia/commit/44c016c211f2d467c4ce39082bfa73ebe93f4d93) Seed starter `typia.manifest.json` files in generated projects, add a watch-based `dev` workflow, and support opt-in local `wp-env` plus Playwright smoke-test presets. — Thanks @imjlk!
+- [e9eb14b](https://github.com/imjlk/wp-typia/commit/e9eb14bb9ffedb786ecf2a75d9e3d590c064aa2c) Bring compound scaffolds onto the validated editor-update path and add an on-demand child-block workflow for extending generated compound projects. — Thanks @imjlk!
+
 ## 0.6.0 — 2026-04-02
 
 ### Minor changes
