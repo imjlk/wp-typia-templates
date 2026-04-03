@@ -1,5 +1,6 @@
 import apiFetch from '@wordpress/api-fetch';
 import { parse, serialize, type BlockInstance } from '@wordpress/blocks';
+import typia from 'typia';
 
 import {
 	getEditablePostTypes,
@@ -96,6 +97,10 @@ interface GroupedScanResult {
 	rawContent: string;
 	restBase: string;
 	results: BlockScanResult[];
+}
+
+interface EditablePostUpdateRequest {
+	content: string;
 }
 
 type ParsedBlock = BlockInstance< Record< string, unknown > >;
@@ -296,7 +301,7 @@ export async function batchMigrateScanResults(
 			}
 
 			await apiFetch( {
-				body: JSON.stringify( {
+				body: typia.json.assertStringify< EditablePostUpdateRequest >( {
 					content: migratedContent,
 				} ),
 				headers: {
