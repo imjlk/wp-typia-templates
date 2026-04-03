@@ -1,4 +1,7 @@
 import type { BlockSupports as WordPressBlockSupports } from "@wordpress/blocks";
+import type {
+	BlockSupports as TypiaBlockSupports,
+} from "@wp-typia/block-types/blocks/supports";
 
 type EntryMap = Record<string, string>;
 
@@ -33,88 +36,56 @@ export interface TypiaWebpackConfigOptions {
 	};
 }
 
-type ScaffoldSupportDefaultControls = Readonly<Record<string, boolean | undefined>>;
+type OverrideProperties<TBase, TOverride> = Omit<TBase, keyof TOverride> & TOverride;
 
-interface ScaffoldBlockBorderSupport {
-	readonly color?: boolean;
-	readonly radius?: boolean;
-	readonly style?: boolean;
-	readonly width?: boolean;
-	readonly __experimentalDefaultControls?: ScaffoldSupportDefaultControls;
-}
+/**
+ * Extended block support surface used by scaffold registration helpers.
+ *
+ * This keeps compatibility with `@wordpress/blocks` while layering in the
+ * richer support subtrees exported by `@wp-typia/block-types`.
+ */
+export type ScaffoldBlockSupports = OverrideProperties<
+	WordPressBlockSupports,
+	TypiaBlockSupports
+>;
 
-interface ScaffoldBlockDimensionsSupport {
-	readonly aspectRatio?: boolean;
-	readonly height?: boolean;
-	readonly minHeight?: boolean;
-	readonly width?: boolean;
-	readonly __experimentalDefaultControls?: ScaffoldSupportDefaultControls;
-}
-
-interface ScaffoldBlockFilterSupport {
-	readonly duotone?: boolean;
-}
-
-interface ScaffoldBlockInteractivitySupport {
-	readonly clientNavigation?: boolean;
-	readonly interactive?: boolean;
-}
-
-interface ScaffoldBlockLayoutSupport {
-	readonly allowCustomContentAndWideSize?: boolean;
-	readonly allowEditing?: boolean;
-	readonly allowInheriting?: boolean;
-	readonly allowJustification?: boolean;
-	readonly allowOrientation?: boolean;
-	readonly allowSizingOnChildren?: boolean;
-	readonly allowSwitching?: boolean;
-	readonly default?: Readonly<Record<string, unknown>>;
-}
-
-interface ScaffoldBlockLightboxSupport {
-	readonly allowEditing?: boolean;
-	readonly enabled?: boolean;
-}
-
-interface ScaffoldBlockPositionSupport {
-	readonly fixed?: boolean;
-	readonly sticky?: boolean;
-	readonly __experimentalDefaultControls?: ScaffoldSupportDefaultControls;
-}
-
-interface ScaffoldBlockShadowSupport {
-	readonly __experimentalDefaultControls?: ScaffoldSupportDefaultControls;
-}
-
-export type ScaffoldBlockSupports = WordPressBlockSupports & {
-	readonly ariaLabel?: boolean;
-	readonly border?: boolean | ScaffoldBlockBorderSupport;
-	readonly dimensions?: boolean | ScaffoldBlockDimensionsSupport;
-	readonly filter?: boolean | ScaffoldBlockFilterSupport;
-	readonly interactivity?: boolean | ScaffoldBlockInteractivitySupport;
-	readonly layout?: boolean | ScaffoldBlockLayoutSupport;
-	readonly lightbox?: boolean | ScaffoldBlockLightboxSupport;
-	readonly position?: boolean | ScaffoldBlockPositionSupport;
-	readonly renaming?: boolean;
-	readonly shadow?: boolean | ScaffoldBlockShadowSupport;
-};
-
+/**
+ * Registration settings copied from scaffold block metadata and merged into the
+ * final `registerBlockType` call.
+ */
 export interface ScaffoldBlockRegistrationSettings {
+	/** Limits insertion to descendants of the listed ancestor block names. */
 	ancestor?: readonly string[];
+	/** Raw block attribute definitions from `block.json`. */
 	attributes?: Record<string, unknown>;
+	/** WordPress block category passed through to registration. */
 	category?: unknown;
+	/** Human-readable block description from metadata. */
 	description?: unknown;
+	/** Example payload used by inserter previews and fixture generation. */
 	example?: unknown;
+	/** Dashicon slug, SVG, or icon object accepted by WordPress. */
 	icon?: unknown;
+	/** Limits insertion to children of the listed parent block names. */
 	parent?: readonly string[];
+	/** Typed block support configuration for scaffolded registrations. */
 	supports?: ScaffoldBlockSupports;
+	/** Human-readable block title shown in the inserter. */
 	title?: unknown;
 }
 
+/**
+ * Scaffold block metadata consumed by registration helpers.
+ *
+ * This extends the registration settings with the required block name.
+ */
 export interface ScaffoldBlockMetadata extends ScaffoldBlockRegistrationSettings {
 	name: string;
 }
 
+/**
+ * Return shape for `buildScaffoldBlockRegistration`.
+ */
 export interface BuildScaffoldBlockRegistrationResult<TSettings extends object> {
 	name: string;
 	settings: TSettings;
@@ -184,7 +155,7 @@ function mergeEntries(
 
 /**
  * Builds a generated block registration payload while centralizing scaffold
- * metadata casting and override merging.
+ * metadata casting, override merging, and full `block.json` field forwarding.
  *
  * @param metadata Raw block metadata loaded from `block.json`.
  * @param overrides Generated edit/save/example overrides to merge on top.
@@ -199,28 +170,13 @@ export function buildScaffoldBlockRegistration<TSettings extends object>(
 		throw new Error("Scaffold block metadata must include a string name.");
 	}
 
-	const filteredMetadata: ScaffoldBlockRegistrationSettings = {};
-	for (const key of [
-		"title",
-		"description",
-		"category",
-		"icon",
-		"supports",
-		"attributes",
-		"example",
-		"parent",
-		"ancestor",
-	] as const) {
-		const value = metadata[key];
-		if (value !== undefined) {
-			filteredMetadata[key] = value as never;
-		}
-	}
+	const { name: _ignoredName, ...metadataSettings } = metadata as ScaffoldBlockMetadata &
+		Record<string, unknown>;
 
 	return {
 		name,
 		settings: {
-			...filteredMetadata,
+			...metadataSettings,
 			...overrides,
 		} as TSettings,
 	};

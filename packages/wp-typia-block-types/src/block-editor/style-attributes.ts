@@ -23,7 +23,8 @@ export type PresetFontSizeReference = `var:preset|font-size|${string}`;
  * support value maps to a named preset instead of a literal CSS value.
  *
  * These stay intentionally broad and pipeline-compatible so generated metadata
- * can still flow through Typia's current source analysis.
+ * can still flow through Typia's current source analysis. They currently carry
+ * semantic intent without narrowing beyond `string`.
  */
 export type BlockColorSlug = string;
 export type BlockGradientSlug = string;

@@ -115,9 +115,11 @@ export interface BlockBorderSupport {
 
 export interface BlockColorSupport {
 	readonly background?: boolean;
+	/** Dedicated button color support used by recent WordPress releases. */
 	readonly button?: boolean;
 	readonly enableContrastChecker?: boolean;
 	readonly gradients?: boolean;
+	/** Dedicated heading color support used by recent WordPress releases. */
 	readonly heading?: boolean;
 	readonly link?: boolean;
 	readonly text?: boolean;
@@ -163,6 +165,7 @@ export interface BlockLayoutSupport {
 	readonly allowSizingOnChildren?: boolean;
 	readonly allowSwitching?: boolean;
 	readonly default?: BlockLayoutDefault;
+	readonly type?: LayoutType;
 }
 
 export interface BlockLightboxSupport {

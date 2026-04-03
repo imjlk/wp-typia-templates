@@ -361,6 +361,8 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedIndex).toContain("@wp-typia/create/runtime/blocks");
 		expect(generatedIndex).toContain("buildScaffoldBlockRegistration");
 		expect(generatedIndex).toContain("type ScaffoldBlockMetadata");
+		expect(generatedIndex).toContain("@wp-typia/block-types/blocks/supports");
+		expect(generatedIndex).toContain("} satisfies BlockSupports;");
 		expect(generatedWebpackConfig).toContain("createTypiaWebpackConfig");
 		expect(generatedInteractivity).not.toContain("onInit:");
 		expect(generatedInteractivity).not.toContain("onInteraction:");
