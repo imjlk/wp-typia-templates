@@ -121,7 +121,7 @@ export default function Edit( {
 						label={ __( 'Resource Key', '{{textDomain}}' ) }
 						value={ attributes.resourceKey ?? '' }
 						onChange={ ( value ) => updateAttribute( 'resourceKey', value ) }
-						help={ __( 'Stable key used by the persisted counter endpoint.', '{{textDomain}}' ) }
+						help={ __( 'Stable persisted identifier used by the storage-backed counter endpoint.', '{{textDomain}}' ) }
 					/>
 					<Notice status="info" isDismissible={ false }>
 						{ __( 'Storage mode: {{dataStorageMode}}', '{{textDomain}}' ) }
@@ -130,6 +130,9 @@ export default function Edit( {
 						{ __( 'Persistence policy: {{persistencePolicy}}', '{{textDomain}}' ) }
 						<br />
 						{ persistencePolicyDescription }
+					</Notice>
+					<Notice status="info" isDismissible={ false }>
+						{ __( 'Render mode: dynamic. `render.php` bootstraps post context, storage-backed state, and write-policy data before hydration.', '{{textDomain}}' ) }
 					</Notice>
 				</PanelBody>
 				{ ! isValid && (

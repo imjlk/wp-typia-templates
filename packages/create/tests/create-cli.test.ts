@@ -133,6 +133,11 @@ describe("@wp-typia/create scaffolding", () => {
 		const generatedHooks = fs.readFileSync(path.join(targetDir, "src", "hooks.ts"), "utf8");
 		const generatedValidators = fs.readFileSync(path.join(targetDir, "src", "validators.ts"), "utf8");
 		const generatedEdit = fs.readFileSync(path.join(targetDir, "src", "edit.tsx"), "utf8");
+		const generatedInteractivity = fs.readFileSync(
+			path.join(targetDir, "src", "interactivity.ts"),
+			"utf8",
+		);
+		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 		const blockJson = JSON.parse(
 			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
@@ -153,6 +158,13 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedEdit).toContain("createAttributeUpdater");
 		expect(generatedValidators).toContain("@wp-typia/create/runtime/defaults");
 		expect(generatedValidators).toContain("@wp-typia/create/runtime/validation");
+		expect(generatedInteractivity).not.toContain("onInit:");
+		expect(generatedInteractivity).not.toContain("onInteraction:");
+		expect(generatedInteractivity).not.toContain("onDestroy:");
+		expect(generatedSave).not.toContain("data-clicks");
+		expect(generatedSave).not.toContain("data-is-animating");
+		expect(generatedSave).not.toContain("data-is-visible");
+		expect(generatedSave).not.toContain("data-unique-id");
 	});
 
 	test("scaffoldProject creates a persistence template with signed public writes and explicit storage mode", async () => {
@@ -189,6 +201,7 @@ describe("@wp-typia/create scaffolding", () => {
 			"utf8",
 		);
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
+		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 		const restPublicHelper = fs.readFileSync(path.join(targetDir, "inc", "rest-public.php"), "utf8");
 		const blockJson = JSON.parse(
@@ -235,9 +248,13 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedRender).toContain("publicWriteToken");
 		expect(generatedApiTypes).toContain("publicWriteRequestId: string");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
+		expect(generatedSave).toContain("intentionally server-rendered");
+		expect(generatedSave).toContain("return null;");
 		expect(readme).toContain("npm run sync-types");
 		expect(readme).toContain("npm run sync-rest");
 		expect(readme).toContain("src/api-types.ts");
+		expect(readme).toContain("`src/render.php` is the canonical frontend entry");
+		expect(readme).toContain("`src/save.tsx` returns `null`");
 		expect(readme).toContain("per-request ids, and coarse rate limiting by default");
 		expect(readme).toContain("## PHP REST Extension Points");
 		expect(readme).toContain("Edit `demo-persistence-public.php`");
@@ -278,6 +295,8 @@ describe("@wp-typia/create scaffolding", () => {
 			"utf8",
 		);
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
+		const generatedEdit = fs.readFileSync(path.join(targetDir, "src", "edit.tsx"), "utf8");
+		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 		const blockJson = JSON.parse(
@@ -301,8 +320,14 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedApiTypes).toContain("publicWriteRequestId?: string");
 		expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
+		expect(generatedEdit).toContain("Stable persisted identifier used by the storage-backed counter endpoint.");
+		expect(generatedEdit).toContain("Render mode: dynamic. `render.php` bootstraps post context, storage-backed state, and write-policy data before hydration.");
+		expect(generatedSave).toContain("intentionally server-rendered");
+		expect(generatedSave).toContain("return null;");
 		expect(readme).toContain("## PHP REST Extension Points");
 		expect(readme).toContain("Edit `demo-persistence-authenticated.php`");
+		expect(readme).toContain("`src/render.php` is the canonical frontend entry");
+		expect(readme).toContain("`src/save.tsx` returns `null`");
 		expect(restAuthHelper).toContain("Customize authenticated write policy here");
 	});
 
