@@ -10,6 +10,9 @@
       "@wp-typia/create/metadata-core": [
         "packages/create/src/runtime/metadata-core.ts"
       ],
+      "@wp-typia/create/runtime/blocks": [
+        "packages/create/src/runtime/blocks.ts"
+      ],
       "@wp-typia/create/runtime/defaults": [
         "packages/create/src/runtime/defaults.ts"
       ],

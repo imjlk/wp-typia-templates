@@ -2,12 +2,9 @@ import typia from 'typia';
 import currentManifest from './typia.manifest.json';
 import {
 	type ManifestDefaultsDocument,
-	applyTemplateDefaultsFromManifest,
 } from '@wp-typia/create/runtime/defaults';
 import {
-	createAttributeUpdater as createValidatedAttributeUpdater,
-	type ValidationResult,
-	toValidationResult,
+	createScaffoldValidatorToolkit,
 } from '@wp-typia/create/runtime/validation';
 
 import type { {{pascalCase}}ItemAttributes } from './types';
@@ -18,46 +15,22 @@ const is = typia.createIs< {{pascalCase}}ItemAttributes >();
 const random = typia.createRandom< {{pascalCase}}ItemAttributes >();
 const clone = typia.misc.createClone< {{pascalCase}}ItemAttributes >();
 const prune = typia.misc.createPrune< {{pascalCase}}ItemAttributes >();
-
-export const validate{{pascalCase}}ItemAttributes = (
-	attributes: unknown
-): ValidationResult< {{pascalCase}}ItemAttributes > => {
-	return toValidationResult( validate( attributes ) );
-};
-
-export const validators = {
+const scaffoldValidators = createScaffoldValidatorToolkit< {{pascalCase}}ItemAttributes >( {
+	manifest: currentManifest as ManifestDefaultsDocument,
+	validate,
 	assert,
-	clone,
 	is,
-	prune,
 	random,
-	validate: validate{{pascalCase}}ItemAttributes,
-};
+	clone,
+	prune,
+} );
 
-export const sanitize{{pascalCase}}ItemAttributes = (
-	attributes: Partial< {{pascalCase}}ItemAttributes >
-): {{pascalCase}}ItemAttributes => {
-	const normalized = applyTemplateDefaultsFromManifest< {{pascalCase}}ItemAttributes >(
-		currentManifest as ManifestDefaultsDocument,
-		attributes
-	);
+export const validate{{pascalCase}}ItemAttributes =
+	scaffoldValidators.validateAttributes;
 
-	return validators.assert( normalized );
-};
+export const validators = scaffoldValidators.validators;
 
-export function createAttributeUpdater(
-	attributes: {{pascalCase}}ItemAttributes,
-	setAttributes: ( attrs: Partial< {{pascalCase}}ItemAttributes > ) => void,
-	validator = validators.validate
-) {
-	return createValidatedAttributeUpdater(
-		attributes,
-		setAttributes,
-		validator as (
-			value: {{pascalCase}}ItemAttributes
-		) => ValidationResult< {{pascalCase}}ItemAttributes >,
-		( validation, key ) => {
-			console.error( `Validation failed for ${ String( key ) }:`, validation.errors );
-		}
-	);
-}
+export const sanitize{{pascalCase}}ItemAttributes =
+	scaffoldValidators.sanitizeAttributes;
+
+export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;

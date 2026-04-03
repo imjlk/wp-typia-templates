@@ -23,6 +23,11 @@
       "import": "./dist/runtime/defaults.js",
       "default": "./dist/runtime/defaults.js"
     },
+    "./runtime/blocks": {
+      "types": "./dist/runtime/blocks.d.ts",
+      "import": "./dist/runtime/blocks.js",
+      "default": "./dist/runtime/blocks.js"
+    },
     "./runtime/editor": {
       "types": "./dist/runtime/editor.d.ts",
       "import": "./dist/runtime/editor.js",

@@ -1,3 +1,6 @@
+import { applyTemplateDefaultsFromManifest } from "./defaults.js";
+import type { ManifestDefaultsDocument } from "./defaults.js";
+
 export interface TypiaValidationError {
 	description?: string;
 	expected: string;
@@ -13,6 +16,26 @@ export interface ValidationResult<T> {
 
 export interface ValidationState<T> extends ValidationResult<T> {
 	errorMessages: string[];
+}
+
+export interface ValidationHookBindings {
+	useEffect: (
+		effect: () => void | (() => void),
+		deps: readonly unknown[],
+	) => void;
+	useState: <S>(initialState: S | (() => S)) => [S, (value: S) => void];
+}
+
+export interface ScaffoldValidatorToolkitOptions<T extends object> {
+	assert: (value: unknown) => T;
+	clone: (value: T) => T;
+	finalize?: (value: Partial<T>) => unknown;
+	is: (value: unknown) => value is T;
+	manifest: ManifestDefaultsDocument;
+	onValidationError?: (result: ValidationResult<T>, key: keyof T) => void;
+	prune: (value: T) => unknown;
+	random: (...args: unknown[]) => T;
+	validate: (value: unknown) => unknown;
 }
 
 const UNSAFE_PATH_SEGMENTS = new Set(["__proto__", "constructor", "prototype"]);
@@ -93,6 +116,75 @@ export function toValidationState<T>(
 	return {
 		...result,
 		errorMessages: formatValidationErrors(result.errors),
+	};
+}
+
+export function createUseTypiaValidationHook({
+	useEffect,
+	useState,
+}: ValidationHookBindings) {
+	return function useTypiaValidation<T>(
+		value: T,
+		validator: (value: T) => ValidationResult<T>,
+	): ValidationState<T> {
+		const [state, setState] = useState<ValidationState<T>>(() =>
+			toValidationState(validator(value)),
+		);
+
+		useEffect(() => {
+			setState(toValidationState(validator(value)));
+		}, [value, validator]);
+
+		return state;
+	};
+}
+
+export function createScaffoldValidatorToolkit<T extends object>({
+	assert,
+	clone,
+	finalize,
+	is,
+	manifest,
+	onValidationError = (validation, key) => {
+		console.error(`Validation failed for ${String(key)}:`, validation.errors);
+	},
+	prune,
+	random,
+	validate,
+}: ScaffoldValidatorToolkitOptions<T>) {
+	const validateAttributes = (value: unknown): ValidationResult<T> =>
+		toValidationResult<T>(validate(value));
+
+	const sanitizeAttributes = (value: Partial<T>): T => {
+		const normalized = applyTemplateDefaultsFromManifest<T>(manifest, value);
+
+		return assert(finalize ? finalize(normalized) : normalized);
+	};
+
+	const createScaffoldAttributeUpdater = (
+		attributes: T,
+		setAttributes: (attrs: Partial<T>) => void,
+		validator: (value: T) => ValidationResult<T> = validateAttributes,
+	) =>
+		createAttributeUpdater(
+			attributes,
+			setAttributes,
+			validator,
+			onValidationError,
+		);
+
+	return {
+		createAttributeUpdater: createScaffoldAttributeUpdater,
+		sanitizeAttributes,
+		validateAttributes,
+		validators: {
+			assert,
+			clone,
+			is,
+			prune,
+			random,
+			validate: validateAttributes,
+		},
 	};
 }
 

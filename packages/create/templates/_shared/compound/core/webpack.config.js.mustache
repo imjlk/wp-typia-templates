@@ -19,13 +19,6 @@ function isMetadataAsset( filename ) {
 	);
 }
 
-function normalizeScriptModuleAssetSource( source ) {
-	return String( source ).replace(
-		/'dependencies'\s*=>\s*array\([^)]*\)/,
-		"'dependencies' => array()"
-	);
-}
-
 function getBlockDirs() {
 	const blocksRoot = path.resolve( process.cwd(), 'src/blocks' );
 
@@ -82,101 +75,6 @@ function findMetadataFiles( directory ) {
 	return metadataFiles;
 }
 
-function isScriptModuleAsset( assetName ) {
-	return /(^|\/)(interactivity|view)\.asset\.php$/.test( assetName );
-}
-
-function normalizeScriptModuleAssetsInDirectory( directory ) {
-	if ( ! fs.existsSync( directory ) ) {
-		return;
-	}
-
-	for ( const entry of fs.readdirSync( directory, {
-		withFileTypes: true,
-	} ) ) {
-		const entryPath = path.join( directory, entry.name );
-		if ( entry.isDirectory() ) {
-			normalizeScriptModuleAssetsInDirectory( entryPath );
-			continue;
-		}
-		if ( entry.isFile() && isScriptModuleAsset( entryPath ) ) {
-			fs.writeFileSync(
-				entryPath,
-				normalizeScriptModuleAssetSource(
-					fs.readFileSync( entryPath, 'utf8' )
-				)
-			);
-		}
-	}
-}
-
-class MetadataAssetPlugin {
-	apply( compiler ) {
-		compiler.hooks.thisCompilation.tap(
-			'CompoundMetadataAssetPlugin',
-			( compilation ) => {
-				compilation.hooks.processAssets.tap(
-					{
-						name: 'CompoundMetadataAssetPlugin',
-						stage: compiler.webpack.Compilation
-							.PROCESS_ASSETS_STAGE_ADDITIONS,
-					},
-					() => {
-						for ( const entry of getMetadataEntries() ) {
-							if ( compilation.getAsset( entry.outputPath ) ) {
-								continue;
-							}
-
-							compilation.emitAsset(
-								entry.outputPath,
-								new compiler.webpack.sources.RawSource(
-									fs.readFileSync( entry.inputPath )
-								)
-							);
-						}
-
-						for ( const asset of compilation.getAssets() ) {
-							if ( ! isScriptModuleAsset( asset.name ) ) {
-								continue;
-							}
-
-							compilation.updateAsset(
-								asset.name,
-								new compiler.webpack.sources.RawSource(
-									normalizeScriptModuleAssetSource(
-										asset.source.source()
-									)
-								)
-							);
-						}
-					}
-				);
-			}
-		);
-
-		compiler.hooks.afterEmit.tap(
-			'CompoundMetadataAssetPlugin',
-			( compilation ) => {
-				if ( ! compilation.outputOptions.path ) {
-					return;
-				}
-
-				normalizeScriptModuleAssetsInDirectory(
-					compilation.outputOptions.path
-				);
-			}
-		);
-	}
-}
-
-function toWebpackConfigs( config ) {
-	return Array.isArray( config ) ? config : [ config ];
-}
-
-function isModuleConfig( config ) {
-	return config?.output?.module === true;
-}
-
 function getEditorEntries() {
 	return Object.fromEntries(
 		getBlockDirs().map( ( blockDir ) => [
@@ -215,27 +113,17 @@ function getOptionalModuleEntries() {
 }
 
 module.exports = async () => {
-	const { default: UnpluginTypia } = await import(
-		'@typia/unplugin/webpack'
-	);
-	const resolvedDefaultConfig =
-		typeof defaultConfig === 'function'
-			? await defaultConfig()
-			: defaultConfig;
-	const editorEntries = getEditorEntries();
-	const moduleEntries = getOptionalModuleEntries();
-	const configs = toWebpackConfigs( resolvedDefaultConfig ).map(
-		( config ) => ( {
-			...config,
-			entry: async () =>
-				isModuleConfig( config ) ? moduleEntries : editorEntries,
-			plugins: [
-				UnpluginTypia(),
-				...( config.plugins || [] ),
-				new MetadataAssetPlugin(),
-			],
-		} )
-	);
+	const { createTypiaWebpackConfig } = await import( '@wp-typia/create/runtime/blocks' );
 
-	return configs.length === 1 ? configs[ 0 ] : configs;
+	return createTypiaWebpackConfig( {
+		defaultConfig,
+		fs,
+		path,
+		getArtifactEntries: getMetadataEntries,
+		getEditorEntries,
+		getOptionalModuleEntries,
+		importTypiaWebpackPlugin: () => import( '@typia/unplugin/webpack' ),
+		moduleEntriesMode: 'replace',
+		nonModuleEntriesMode: 'replace',
+	} );
 };

@@ -189,10 +189,10 @@ const aiSafeSchema = projectJsonSchemaDocument(requestSchema, {
 `ai-structured-output` is an opt-in derived profile. It does not change the default generated REST/runtime artifacts.
 
 Generated projects may continue using `@wp-typia/create`,
-`@wp-typia/create/metadata-core`, `@wp-typia/create/runtime/defaults`,
-`@wp-typia/create/runtime/editor`, and
+`@wp-typia/create/metadata-core`, `@wp-typia/create/runtime/blocks`,
+`@wp-typia/create/runtime/defaults`, `@wp-typia/create/runtime/editor`, and
 `@wp-typia/create/runtime/validation` as supported public paths through v1.
-Root exports for defaults, editor, validation, and schema helpers remain
+Root exports for blocks, defaults, editor, validation, and schema helpers remain
 additive convenience aliases rather than a migration requirement.
 
 `@wp-typia/create/runtime/schema-core` remains exported, but it is not the

@@ -14,6 +14,7 @@ For the normative generated-project runtime support policy, see
 - root package: `@wp-typia/create`
 - `@wp-typia/create/cli`
 - `@wp-typia/create/metadata-core`
+- `@wp-typia/create/runtime/blocks`
 - `@wp-typia/create/runtime/defaults`
 - `@wp-typia/create/runtime/editor`
 - `@wp-typia/create/runtime/schema-core`
@@ -34,6 +35,9 @@ These exports already behave like product APIs and are documented or used direct
 - `@wp-typia/create/runtime/editor`
   - documented in [`packages/create/README.md`](../packages/create/README.md) and [`docs/API.md`](./API.md)
   - used by examples and generated templates to build editor models from manifests
+- `@wp-typia/create/runtime/blocks`
+  - generated templates now use it for scaffold block registration and shared webpack artifact/config helpers
+  - this behaves like a supported generated-project runtime helper rather than a CLI-only internal
 - `@wp-typia/create/runtime/validation`
   - documented and heavily used by examples and generated templates for nested attribute updates and validation-aware helpers
 
@@ -74,9 +78,9 @@ These are plausible future package candidates because they are already useful ou
 ### Docs and public examples
 
 - `packages/create/README.md`
-  - documents root exports, `metadata-core`, `runtime/editor`, and `runtime/validation`
+  - documents root exports, `metadata-core`, `runtime/blocks`, `runtime/editor`, and `runtime/validation`
 - `docs/API.md`
-  - documents `runtime/defaults`, `runtime/editor`, and `runtime/validation` as generated-project imports
+  - documents `runtime/blocks`, `runtime/defaults`, `runtime/editor`, and `runtime/validation` as generated-project imports
 - repo examples
   - `examples/my-typia-block` imports `runtime/defaults`, `runtime/editor`, and `runtime/validation`
   - `examples/persistence-examples` imports `metadata-core`, `runtime/defaults`, `runtime/editor`, and `runtime/validation`
@@ -85,7 +89,7 @@ These are plausible future package candidates because they are already useful ou
 ### Generated template usage
 
 - base and compound/persistence sync scripts import `@wp-typia/create/metadata-core`
-- `basic`, `interactivity`, and persistence-capable templates import `runtime/editor`, `runtime/defaults`, and `runtime/validation`
+- `basic`, `interactivity`, persistence-capable templates, and compound block registrations import `runtime/blocks`, `runtime/editor`, `runtime/defaults`, and `runtime/validation`
 - generated templates currently do not import `runtime/schema-core` directly, but example webpack configs alias it for repo-local development
 
 ## Current mismatch

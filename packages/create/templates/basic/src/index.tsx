@@ -7,6 +7,7 @@
 import { registerBlockType } from '@wordpress/blocks';
 import type { BlockConfiguration } from '@wordpress/blocks';
 import { __ } from '@wordpress/i18n';
+import { buildScaffoldBlockRegistration } from '@wp-typia/create/runtime/blocks';
 
 // Import components
 import Edit from './edit';
@@ -19,24 +20,19 @@ import { {{pascalCase}}Attributes } from './types';
 import { validators } from './validators';
 
 // Register the block
-const blockMetadata = metadata as BlockConfiguration<{{pascalCase}}Attributes> & {
-  name: string;
-};
-
-registerBlockType<{{pascalCase}}Attributes>(blockMetadata.name, {
-  title: blockMetadata.title,
-  description: blockMetadata.description,
-  category: blockMetadata.category as any,
-  icon: blockMetadata.icon,
+const registration = buildScaffoldBlockRegistration<
+  BlockConfiguration<{{pascalCase}}Attributes>
+>(metadata as Record<string, unknown>, {
   supports: {
     html: false,
     multiple: true,
     align: ['wide', 'full'],
   },
-  attributes: blockMetadata.attributes,
   example: {
     attributes: validators.random(),
   },
   edit: Edit,
   save: Save,
 });
+
+registerBlockType<{{pascalCase}}Attributes>(registration.name, registration.settings);
