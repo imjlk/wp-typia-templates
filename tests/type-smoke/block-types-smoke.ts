@@ -51,6 +51,20 @@ const blockSupports: BlockSupports = {
 		clientNavigation: true,
 		interactive: true,
 	},
+	layout: {
+		allowSwitching: true,
+		allowVerticalAlignment: true,
+		allowWrap: true,
+		default: {
+			type: "flex",
+			flexWrap: "nowrap",
+			contentSize: "720px",
+			wideSize: "1200px",
+			verticalAlignment: "center",
+			minimumColumnWidth: "16rem",
+			columnCount: 3,
+		},
+	},
 	spacing: {
 		blockGap: ["horizontal", "vertical"],
 		padding: ["top", "bottom", "left", "right", "horizontal"],
@@ -58,6 +72,7 @@ const blockSupports: BlockSupports = {
 	typography: {
 		fontFamily: true,
 		fontSize: true,
+		textAlign: ["left", "right"],
 		textTransform: true,
 	},
 };

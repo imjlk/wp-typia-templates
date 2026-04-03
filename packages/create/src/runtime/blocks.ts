@@ -6,6 +6,7 @@ type ScaffoldFlexWrap = "wrap" | "nowrap";
 type ScaffoldOrientation = "horizontal" | "vertical";
 type ScaffoldJustifyContent = "left" | "center" | "right" | "space-between" | "stretch";
 type ScaffoldBlockAlignment = "left" | "center" | "right" | "wide" | "full";
+type ScaffoldBlockVerticalAlignment = "top" | "center" | "bottom";
 type ScaffoldSpacingAxis = "horizontal" | "vertical";
 type ScaffoldSpacingDimension =
 	| "top"
@@ -26,6 +27,7 @@ type ScaffoldTypographySupportKey =
 	| "textTransform"
 	| "writingMode";
 type ScaffoldSpacingSupportKey = "blockGap" | "margin" | "padding";
+type ScaffoldTypographyTextAlignment = "left" | "center" | "right";
 
 /**
  * A generated artifact file that should be copied into the webpack output.
@@ -124,12 +126,17 @@ interface ScaffoldBlockInteractivitySupport {
  * Default layout values accepted by scaffold block registrations.
  */
 interface ScaffoldBlockLayoutDefault {
+	readonly columnCount?: number;
+	readonly contentSize?: string;
 	readonly allowInheriting?: boolean;
 	readonly allowSizingOnChildren?: boolean;
 	readonly flexWrap?: ScaffoldFlexWrap;
 	readonly justifyContent?: ScaffoldJustifyContent;
+	readonly minimumColumnWidth?: string;
 	readonly orientation?: ScaffoldOrientation;
 	readonly type?: ScaffoldLayoutType;
+	readonly verticalAlignment?: ScaffoldBlockVerticalAlignment;
+	readonly wideSize?: string;
 }
 
 /**
@@ -143,8 +150,9 @@ interface ScaffoldBlockLayoutSupport {
 	readonly allowOrientation?: boolean;
 	readonly allowSizingOnChildren?: boolean;
 	readonly allowSwitching?: boolean;
+	readonly allowVerticalAlignment?: boolean;
+	readonly allowWrap?: boolean;
 	readonly default?: ScaffoldBlockLayoutDefault;
-	readonly type?: ScaffoldLayoutType;
 }
 
 /**
@@ -193,7 +201,7 @@ interface ScaffoldBlockTypographySupport {
 	readonly fontWeight?: boolean;
 	readonly letterSpacing?: boolean;
 	readonly lineHeight?: boolean;
-	readonly textAlign?: boolean;
+	readonly textAlign?: boolean | readonly ScaffoldTypographyTextAlignment[];
 	readonly textColumns?: boolean;
 	readonly textDecoration?: boolean;
 	readonly textTransform?: boolean;

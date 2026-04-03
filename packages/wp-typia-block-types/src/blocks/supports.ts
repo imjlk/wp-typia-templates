@@ -1,6 +1,8 @@
 import type {
 	BlockAlignment,
+	BlockVerticalAlignment,
 	JustifyContent,
+	TextAlignment,
 } from "../block-editor/alignment";
 import type { FlexWrap, LayoutType, Orientation } from "../block-editor/layout";
 import type {
@@ -153,12 +155,17 @@ export interface BlockInteractivitySupport {
 }
 
 export interface BlockLayoutDefault {
+	readonly columnCount?: number;
+	readonly contentSize?: string;
 	readonly allowInheriting?: boolean;
 	readonly allowSizingOnChildren?: boolean;
 	readonly flexWrap?: FlexWrap;
 	readonly justifyContent?: JustifyContent;
+	readonly minimumColumnWidth?: string;
 	readonly orientation?: Orientation;
 	readonly type?: LayoutType;
+	readonly verticalAlignment?: BlockVerticalAlignment;
+	readonly wideSize?: string;
 }
 
 export interface BlockLayoutSupport {
@@ -169,8 +176,9 @@ export interface BlockLayoutSupport {
 	readonly allowOrientation?: boolean;
 	readonly allowSizingOnChildren?: boolean;
 	readonly allowSwitching?: boolean;
+	readonly allowVerticalAlignment?: boolean;
+	readonly allowWrap?: boolean;
 	readonly default?: BlockLayoutDefault;
-	readonly type?: LayoutType;
 }
 
 export interface BlockLightboxSupport {
@@ -204,7 +212,7 @@ export interface BlockTypographySupport {
 	readonly fontWeight?: boolean;
 	readonly letterSpacing?: boolean;
 	readonly lineHeight?: boolean;
-	readonly textAlign?: boolean;
+	readonly textAlign?: boolean | readonly Exclude<TextAlignment, "justify">[];
 	readonly textColumns?: boolean;
 	readonly textDecoration?: boolean;
 	readonly textTransform?: boolean;
