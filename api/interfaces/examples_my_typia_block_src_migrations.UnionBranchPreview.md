@@ -47,7 +47,7 @@ ___
 
 ### status
 
-• **status**: ``"unknown"`` \| ``"auto"`` \| ``"manual"`` \| ``"current"``
+• **status**: ``"auto"`` \| ``"manual"`` \| ``"unknown"`` \| ``"current"``
 
 #### Defined in
 

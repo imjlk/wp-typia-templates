@@ -23,6 +23,9 @@
 - [projectJsonSchemaDocument](packages_create_src_runtime.md#projectjsonschemadocument)
 - [manifestToJsonSchema](packages_create_src_runtime.md#manifesttojsonschema)
 - [manifestToOpenApi](packages_create_src_runtime.md#manifesttoopenapi)
+- [buildCompoundChildStarterManifestDocument](packages_create_src_runtime.md#buildcompoundchildstartermanifestdocument)
+- [getStarterManifestFiles](packages_create_src_runtime.md#getstartermanifestfiles)
+- [stringifyStarterManifest](packages_create_src_runtime.md#stringifystartermanifest)
 - [EndpointOpenApiAuthMode](packages_create_src_runtime.md#endpointopenapiauthmode)
 - [EndpointOpenApiContractDocument](packages_create_src_runtime.md#endpointopenapicontractdocument)
 - [EndpointOpenApiDocumentOptions](packages_create_src_runtime.md#endpointopenapidocumentoptions)
@@ -190,6 +193,24 @@ ___
 ### manifestToOpenApi
 
 Re-exports [manifestToOpenApi](packages_create_src_runtime_schema_core.md#manifesttoopenapi)
+
+___
+
+### buildCompoundChildStarterManifestDocument
+
+Re-exports [buildCompoundChildStarterManifestDocument](packages_create_src_runtime_starter_manifests.md#buildcompoundchildstartermanifestdocument)
+
+___
+
+### getStarterManifestFiles
+
+Re-exports [getStarterManifestFiles](packages_create_src_runtime_starter_manifests.md#getstartermanifestfiles)
+
+___
+
+### stringifyStarterManifest
+
+Re-exports [stringifyStarterManifest](packages_create_src_runtime_starter_manifests.md#stringifystartermanifest)
 
 ___
 

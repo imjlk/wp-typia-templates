@@ -174,7 +174,7 @@ ___
 
 ### animation
 
-• `Optional` **animation**: ("none" \| "fadeIn" \| "bounce") & Default\<"none"\>
+• `Optional` **animation**: ("none" \| "bounce" \| "fadeIn") & Default\<"none"\>
 
 #### Defined in
 

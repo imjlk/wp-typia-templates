@@ -34,6 +34,8 @@ The persistence template accepts additional CLI flags:
 |------|--------|-------------|
 | `--data-storage` | `post-meta`, `custom-table` (default) | Where to persist data |
 | `--persistence-policy` | `authenticated` (default), `public` | Who can write data |
+| `--with-wp-env` | flag | Add local `wp-env` scripts and `.wp-env.json` |
+| `--with-test-preset` | flag | Add a test-only `wp-env` config and minimal Playwright smoke test |
 
 Example with custom options:
 
@@ -76,7 +78,7 @@ my-counter/
 └── webpack.config.js
 ```
 
-After you run `npm run sync-types`, `npm run start`, or `npm run build`, the scaffold also generates:
+Fresh scaffolds already include a starter `src/typia.manifest.json` so editor/runtime imports resolve before the first sync. After you run `npm run sync-types`, `npm run dev`, `npm run start`, or `npm run build`, the scaffold also generates:
 
 - `src/typia.manifest.json`
 - `src/typia.schema.json`
@@ -462,7 +464,7 @@ This creates:
 - `src/api-schemas/*.schema.json` - JSON Schema files
 - `src/api-schemas/*.openapi.json` - per-contract OpenAPI compatibility fragments
 
-You only need to run `npm run sync-types` / `npm run sync-rest` manually when you want generated metadata and REST schemas committed before the first `npm run start` or `npm run build`. The generated `start` and `build` scripts already run both sync commands for persistence scaffolds, and they do not create migration history.
+You only need to run `npm run sync-types` / `npm run sync-rest` manually when you want generated metadata and REST schemas committed before the first `npm run dev`, `npm run start`, or `npm run build`. The generated `dev` workflow watches both sync commands for persistence scaffolds, and `start` / `build` still run them as one-shot syncs. They do not create migration history.
 
 For persistence scaffolds, `src/api.openapi.json` is the canonical REST document because it includes the actual route paths, methods, and auth policy metadata. The files in `src/api-schemas/` remain useful per-contract artifacts for validation and compatibility.
 
@@ -482,16 +484,16 @@ These schemas can be used for:
 ### Local Development
 
 ```bash
-npm run start
+npm run dev
 ```
 
 ### Mount the Plugin Into WordPress
 
-The generated scaffold does not add project-local `wp-env` scripts. Instead, load the generated plugin into your existing WordPress development environment and activate it there.
+By default, load the generated plugin into your existing WordPress development environment and activate it there. If you scaffold with `--with-wp-env`, the generated project also includes local `wp-env:start`, `wp-env:stop`, and `wp-env:reset` scripts. If you scaffold with `--with-test-preset`, it additionally includes `.wp-env.test.json`, a minimal Playwright smoke test, and `wp-env:start:test` / `test:e2e` scripts.
 
 Typical flow:
 
-1. Keep the scaffold running with `npm run start`
+1. Keep the scaffold running with `npm run dev`
 2. Mount or symlink the generated plugin into a WordPress install
 3. Activate the plugin in `wp-admin`
 4. Insert the block into a post or page

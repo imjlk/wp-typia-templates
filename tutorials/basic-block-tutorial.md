@@ -74,7 +74,9 @@ npm run sync-types
 
 Check `src/block.json` - it should contain all your attributes with proper types and defaults!
 
-You only need to run this manually when you want the generated metadata committed before your first `npm run start` or `npm run build`. Both scripts already run `npm run sync-types` for you, and this sync only generates metadata artifacts, not migration history.
+Fresh scaffolds already include a starter `src/typia.manifest.json` so editor/runtime imports resolve before the first sync.
+
+You only need to run this manually when you want the generated metadata committed before your first `npm run dev`, `npm run start`, or `npm run build`. The generated `dev` workflow watches `npm run sync-types` for you, and both `start` and `build` still run `npm run sync-types` as one-shot syncs. This sync only generates metadata artifacts, not migration history.
 
 ## Step 4: Build the Edit Component
 
@@ -297,7 +299,7 @@ Update `src/style.scss`:
 
 1. Start development:
    ```bash
-   npm run start
+   npm run dev
    ```
 
 2. Go to WordPress admin and create a new post

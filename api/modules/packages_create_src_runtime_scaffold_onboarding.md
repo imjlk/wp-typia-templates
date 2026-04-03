@@ -34,7 +34,7 @@ Returns the optional sync script names to suggest for a template.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold-onboarding.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L29)
+[packages/create/src/runtime/scaffold-onboarding.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L30)
 
 ___
 
@@ -58,21 +58,22 @@ Formats optional onboarding sync commands for the selected package manager.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold-onboarding.ts:41](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L41)
+[packages/create/src/runtime/scaffold-onboarding.ts:42](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L42)
 
 ___
 
 ### getOptionalOnboardingNote
 
-▸ **getOptionalOnboardingNote**(`packageManager`): `string`
+▸ **getOptionalOnboardingNote**(`packageManager`, `templateId?`): `string`
 
 Returns the onboarding note explaining when manual sync is optional.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `packageManager` | [`PackageManagerId`](packages_create_src_runtime_package_managers.md#packagemanagerid) |
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `packageManager` | [`PackageManagerId`](packages_create_src_runtime_package_managers.md#packagemanagerid) | `undefined` |
+| `templateId` | `string` | `"basic"` |
 
 #### Returns
 
@@ -80,7 +81,7 @@ Returns the onboarding note explaining when manual sync is optional.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold-onboarding.ts:54](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L54)
+[packages/create/src/runtime/scaffold-onboarding.ts:55](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L55)
 
 ___
 
@@ -103,7 +104,7 @@ Returns source-of-truth guidance for generated artifacts by template mode.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold-onboarding.ts:61](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L61)
+[packages/create/src/runtime/scaffold-onboarding.ts:71](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L71)
 
 ___
 
@@ -126,7 +127,7 @@ Returns the generated-project extension workflow for compound child blocks.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold-onboarding.ts:86](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L86)
+[packages/create/src/runtime/scaffold-onboarding.ts:96](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L96)
 
 ___
 
@@ -149,4 +150,4 @@ Returns scaffold-local guidance for the main PHP REST customization points.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold-onboarding.ts:133](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L133)
+[packages/create/src/runtime/scaffold-onboarding.ts:143](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L143)

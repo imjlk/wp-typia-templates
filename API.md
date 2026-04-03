@@ -22,11 +22,17 @@ wp-typia doctor
 
 Built-in templates currently include `basic`, `interactivity`, `persistence`, and `compound`.
 
+Generated built-in projects now scaffold starter `typia.manifest.json` files so
+editor/runtime imports resolve before the first sync, use `dev` as the primary
+watch workflow, and can opt into local presets with `--with-wp-env` and
+`--with-test-preset`.
+
 `persistence` also accepts:
 
 ```bash
 wp-typia my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
 wp-typia my-block --template persistence --data-storage custom-table --persistence-policy public --package-manager npm --yes --no-install
+wp-typia my-block --template persistence --package-manager npm --with-wp-env --with-test-preset --yes --no-install
 ```
 
 `compound` accepts the same persistence flags, but treats them as an optional parent-only layer:
