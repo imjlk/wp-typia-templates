@@ -85,7 +85,6 @@ import { BlockEditProps } from '@wordpress/blocks';
 import { useBlockProps, InspectorControls, RichText } from '@wordpress/block-editor';
 import {
   PanelBody,
-  TextControl,
   ToggleControl,
   RangeControl,
   SelectControl
