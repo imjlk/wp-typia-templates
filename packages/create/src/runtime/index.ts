@@ -22,6 +22,12 @@ export {
 	buildScaffoldBlockRegistration,
 	createTypiaWebpackConfig,
 } from "./blocks.js";
+export type {
+	BuildScaffoldBlockRegistrationResult,
+	ScaffoldBlockMetadata,
+	ScaffoldBlockRegistrationSettings,
+	ScaffoldBlockSupports,
+} from "./blocks.js";
 export {
 	manifestAttributeToJsonSchema,
 	projectJsonSchemaDocument,

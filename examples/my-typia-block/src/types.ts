@@ -1,6 +1,11 @@
 import type { TextAlignment } from '@wp-typia/block-types/block-editor/alignment';
 import type { CssNamedColor } from '@wp-typia/block-types/block-editor/color';
 import type { AspectRatio } from '@wp-typia/block-types/block-editor/dimensions';
+import type {
+	BlockColorSupportAttributes,
+	BlockStyleAttributes,
+	BlockTypographySupportAttributes,
+} from '@wp-typia/block-types/block-editor/style-attributes';
 import { tags } from 'typia';
 
 /**
@@ -43,15 +48,24 @@ export interface MyTypiaBlockAttributes {
 	/**
 	 * Showcase-only richer typography controls.
 	 */
-	fontSize?: ( 'small' | 'medium' | 'large' | 'xlarge' ) &
+	fontSize?: BlockTypographySupportAttributes[ 'fontSize' ] &
 		tags.Default< 'medium' >;
 
 	/**
 	 * Pipeline-compatible semantic color values from @wp-typia/block-types.
 	 */
-	textColor?: CssNamedColor & tags.Default< 'currentColor' >;
+	textColor?: BlockColorSupportAttributes[ 'textColor' ] &
+		CssNamedColor &
+		tags.Default< 'currentColor' >;
 
-	backgroundColor?: CssNamedColor & tags.Default< 'transparent' >;
+	backgroundColor?: BlockColorSupportAttributes[ 'backgroundColor' ] &
+		CssNamedColor &
+		tags.Default< 'transparent' >;
+
+	/**
+	 * Shared WordPress-style `style` bag for support-generated values.
+	 */
+	style?: BlockStyleAttributes;
 
 	aspectRatio?: AspectRatio & tags.Default< '16/9' >;
 

@@ -256,6 +256,9 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedHooks).toContain("createUseTypiaValidationHook");
 		expect(generatedIndex).toContain("@wp-typia/create/runtime/blocks");
 		expect(generatedIndex).toContain("buildScaffoldBlockRegistration");
+		expect(generatedIndex).toContain("type ScaffoldBlockMetadata");
+		expect(generatedIndex).toContain("@wp-typia/block-types/blocks/supports");
+		expect(generatedIndex).toContain("} satisfies BlockSupports;");
 		expect(generatedIndex).toContain("Typia-powered type-safe block");
 		expect(generatedTypes).not.toMatch(/[가-힣]/u);
 		expect(generatedValidators).toContain("@wp-typia/create/runtime/defaults");
@@ -357,6 +360,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedValidators).toContain("@wp-typia/create/runtime/validation");
 		expect(generatedIndex).toContain("@wp-typia/create/runtime/blocks");
 		expect(generatedIndex).toContain("buildScaffoldBlockRegistration");
+		expect(generatedIndex).toContain("type ScaffoldBlockMetadata");
 		expect(generatedWebpackConfig).toContain("createTypiaWebpackConfig");
 		expect(generatedInteractivity).not.toContain("onInit:");
 		expect(generatedInteractivity).not.toContain("onInteraction:");
@@ -904,6 +908,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(addChildScript).toContain("createUseTypiaValidationHook");
 		expect(addChildScript).toContain("createScaffoldValidatorToolkit");
 		expect(addChildScript).toContain("buildScaffoldBlockRegistration");
+		expect(addChildScript).toContain("type ScaffoldBlockMetadata");
 		expect(addChildScript).toContain("ALLOWED_CHILD_MARKER");
 		expect(addChildScript).toContain("BLOCK_CONFIG_MARKER");
 		expect(generatedWebpackConfig).toContain("createTypiaWebpackConfig");
@@ -1041,6 +1046,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(parentEdit).toContain("DEFAULT_CHILD_TEMPLATE");
 		expect(parentEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
 		expect(parentIndex).toContain("buildScaffoldBlockRegistration");
+		expect(parentIndex).toContain("type ScaffoldBlockMetadata");
 		expect(parentChildren).toContain("DEFAULT_CHILD_BLOCK_NAME");
 		expect(childManifest.attributes.title.typia.defaultValue).toBe("Demo Compound Storage Item");
 		expect(childEdit).toContain("createAttributeUpdater");
@@ -1052,6 +1058,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(childValidators).not.toContain("createValidatedAttributeUpdater");
 		expect(generatedAddChild).toContain("ALLOWED_CHILD_MARKER");
 		expect(generatedAddChild).toContain("buildScaffoldBlockRegistration");
+		expect(generatedAddChild).toContain("type ScaffoldBlockMetadata");
 		expect(packageJson.scripts["add-child"]).toBe("tsx scripts/add-compound-child.ts");
 		expect(generatedWebpackConfig).toContain("createTypiaWebpackConfig");
 		expect(readme).toContain("npm run dev");
@@ -1142,6 +1149,7 @@ describe("@wp-typia/create scaffolding", () => {
 			expect(newChildHooks).toContain("createUseTypiaValidationHook");
 			expect(newChildValidators).toContain("createScaffoldValidatorToolkit");
 			expect(newChildIndex).toContain("buildScaffoldBlockRegistration");
+			expect(newChildIndex).toContain("type ScaffoldBlockMetadata");
 			expect(
 				(childrenRegistry.match(/create-block\/demo-compound-add-child-faq-item/g) ?? []).length,
 			).toBe(1);

@@ -1,3 +1,5 @@
+import type { BlockSupports as WordPressBlockSupports } from "@wordpress/blocks";
+
 type EntryMap = Record<string, string>;
 
 /**
@@ -31,18 +33,89 @@ export interface TypiaWebpackConfigOptions {
 	};
 }
 
-interface ScaffoldBlockRegistrationSettings {
-	attributes?: unknown;
+type ScaffoldSupportDefaultControls = Readonly<Record<string, boolean | undefined>>;
+
+interface ScaffoldBlockBorderSupport {
+	readonly color?: boolean;
+	readonly radius?: boolean;
+	readonly style?: boolean;
+	readonly width?: boolean;
+	readonly __experimentalDefaultControls?: ScaffoldSupportDefaultControls;
+}
+
+interface ScaffoldBlockDimensionsSupport {
+	readonly aspectRatio?: boolean;
+	readonly height?: boolean;
+	readonly minHeight?: boolean;
+	readonly width?: boolean;
+	readonly __experimentalDefaultControls?: ScaffoldSupportDefaultControls;
+}
+
+interface ScaffoldBlockFilterSupport {
+	readonly duotone?: boolean;
+}
+
+interface ScaffoldBlockInteractivitySupport {
+	readonly clientNavigation?: boolean;
+	readonly interactive?: boolean;
+}
+
+interface ScaffoldBlockLayoutSupport {
+	readonly allowCustomContentAndWideSize?: boolean;
+	readonly allowEditing?: boolean;
+	readonly allowInheriting?: boolean;
+	readonly allowJustification?: boolean;
+	readonly allowOrientation?: boolean;
+	readonly allowSizingOnChildren?: boolean;
+	readonly allowSwitching?: boolean;
+	readonly default?: Readonly<Record<string, unknown>>;
+}
+
+interface ScaffoldBlockLightboxSupport {
+	readonly allowEditing?: boolean;
+	readonly enabled?: boolean;
+}
+
+interface ScaffoldBlockPositionSupport {
+	readonly fixed?: boolean;
+	readonly sticky?: boolean;
+	readonly __experimentalDefaultControls?: ScaffoldSupportDefaultControls;
+}
+
+interface ScaffoldBlockShadowSupport {
+	readonly __experimentalDefaultControls?: ScaffoldSupportDefaultControls;
+}
+
+export type ScaffoldBlockSupports = WordPressBlockSupports & {
+	readonly ariaLabel?: boolean;
+	readonly border?: boolean | ScaffoldBlockBorderSupport;
+	readonly dimensions?: boolean | ScaffoldBlockDimensionsSupport;
+	readonly filter?: boolean | ScaffoldBlockFilterSupport;
+	readonly interactivity?: boolean | ScaffoldBlockInteractivitySupport;
+	readonly layout?: boolean | ScaffoldBlockLayoutSupport;
+	readonly lightbox?: boolean | ScaffoldBlockLightboxSupport;
+	readonly position?: boolean | ScaffoldBlockPositionSupport;
+	readonly renaming?: boolean;
+	readonly shadow?: boolean | ScaffoldBlockShadowSupport;
+};
+
+export interface ScaffoldBlockRegistrationSettings {
+	ancestor?: readonly string[];
+	attributes?: Record<string, unknown>;
 	category?: unknown;
 	description?: unknown;
 	example?: unknown;
 	icon?: unknown;
-	parent?: unknown;
-	supports?: unknown;
+	parent?: readonly string[];
+	supports?: ScaffoldBlockSupports;
 	title?: unknown;
 }
 
-interface BuildScaffoldBlockRegistrationResult<TSettings extends object> {
+export interface ScaffoldBlockMetadata extends ScaffoldBlockRegistrationSettings {
+	name: string;
+}
+
+export interface BuildScaffoldBlockRegistrationResult<TSettings extends object> {
 	name: string;
 	settings: TSettings;
 }
@@ -118,7 +191,7 @@ function mergeEntries(
  * @returns The block name and merged registration settings.
  */
 export function buildScaffoldBlockRegistration<TSettings extends object>(
-	metadata: Record<string, unknown>,
+	metadata: ScaffoldBlockMetadata,
 	overrides: Partial<TSettings> & Record<string, unknown>,
 ): BuildScaffoldBlockRegistrationResult<TSettings> {
 	const name = metadata.name;
@@ -136,10 +209,11 @@ export function buildScaffoldBlockRegistration<TSettings extends object>(
 		"attributes",
 		"example",
 		"parent",
+		"ancestor",
 	] as const) {
 		const value = metadata[key];
 		if (value !== undefined) {
-			filteredMetadata[key] = value;
+			filteredMetadata[key] = value as never;
 		}
 	}
 

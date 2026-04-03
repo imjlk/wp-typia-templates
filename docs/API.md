@@ -72,10 +72,14 @@ Compatibility note: `create-wp-typia` remains available only as an unscoped shim
 
 ## 2. `@wp-typia/block-types`
 
-Generated projects can import shared semantic unions directly in `src/types.ts`.
+Generated projects can import shared semantic unions, block support metadata
+types, and support-generated style attribute helpers directly in `src/types.ts`
+and registration modules.
 
 ```ts
 import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";
+import type { BlockStyleSupportAttributes } from "@wp-typia/block-types/block-editor/style-attributes";
+import type { BlockSupports } from "@wp-typia/block-types/blocks/supports";
 ```
 
 ## 3. `@wp-typia/rest`
@@ -131,6 +135,16 @@ helpers are additive convenience aliases rather than a migration requirement.
 
 `runtime/blocks` is the shared generated-project surface for scaffold-owned
 block registration helpers and webpack artifact/config adapters.
+
+It now also exports typed registration metadata/settings surfaces so generated
+projects can pass `supports` without dropping to `unknown`:
+
+```ts
+import {
+  buildScaffoldBlockRegistration,
+  type ScaffoldBlockMetadata,
+} from "@wp-typia/create/runtime/blocks";
+```
 
 `@wp-typia/create/runtime/schema-core` remains exported, but it is not the
 canonical generated-project import path. When you manually import schema
