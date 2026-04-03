@@ -1,4 +1,4 @@
-import './typia-tags.js';
+import type {} from './typia-tags.js';
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
