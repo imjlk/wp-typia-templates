@@ -7,6 +7,7 @@
   "license": "GPL-2.0-or-later",
   "main": "build/index.js",
   "scripts": {
+    "add-child": "tsx scripts/add-compound-child.ts",
     "sync-types": "tsx scripts/sync-types-to-block-json.ts",
     "build": "bun run sync-types && wp-scripts build --experimental-modules",
     "start": "bun run sync-types && wp-scripts start --experimental-modules",

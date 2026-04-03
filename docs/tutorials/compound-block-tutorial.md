@@ -50,18 +50,24 @@ compound-demo/
 │   └── blocks/
 │       ├── compound-demo/
 │       │   ├── block.json
+│       │   ├── children.ts
 │       │   ├── edit.tsx
+│       │   ├── hooks.ts
 │       │   ├── index.tsx
 │       │   ├── save.tsx
 │       │   ├── style.scss
-│       │   └── types.ts
+│       │   ├── types.ts
+│       │   └── validators.ts
 │       └── compound-demo-item/
 │           ├── block.json
 │           ├── edit.tsx
+│           ├── hooks.ts
 │           ├── index.tsx
 │           ├── save.tsx
-│           └── types.ts
+│           ├── types.ts
+│           └── validators.ts
 ├── scripts/
+│   ├── add-compound-child.ts
 │   ├── block-config.ts
 │   └── sync-types-to-block-json.ts
 ├── compound-demo.php
@@ -104,26 +110,33 @@ The child block is an internal implementation detail.
 - `parent: ['create-block/compound-demo']`
 - minimal title/body editing UI
 
-## Step 4: How the Parent Seeds Child Blocks
+## Step 4: How the Parent Tracks Child Blocks
 
-The parent edit component includes an `InnerBlocks` template with two default child items:
+The parent block now keeps its scaffold-owned child registry in `src/blocks/<parent>/children.ts`:
 
 ```tsx
-const DEFAULT_TEMPLATE = [
+export const DEFAULT_CHILD_BLOCK_NAME = 'create-block/compound-demo-item';
+
+export const ALLOWED_CHILD_BLOCKS = [
+  DEFAULT_CHILD_BLOCK_NAME,
+];
+
+export const DEFAULT_CHILD_TEMPLATE = [
   [
-    'create-block/compound-demo-item',
+    DEFAULT_CHILD_BLOCK_NAME,
     { title: 'First Item', body: 'Add supporting details for the first internal item.' },
   ],
   [
-    'create-block/compound-demo-item',
+    DEFAULT_CHILD_BLOCK_NAME,
     { title: 'Second Item', body: 'Add supporting details for the second internal item.' },
   ],
 ];
 ```
 
-That template is paired with:
+The parent edit component consumes that registry to drive:
 
 - `allowedBlocks` so only the child block can be inserted inside the parent
+- the default seeded child template
 - `templateLock={ false }` so users can reorder and add more internal items
 - `InnerBlocks.ButtonBlockAppender` so the parent owns the insertion affordance
 
@@ -143,9 +156,30 @@ The child `block.json` keeps the block out of the global inserter:
 }
 ```
 
-This pattern is useful when the child block exists only to structure the parent implementation, not as a reusable standalone block.
+This pattern is useful when the child block exists only to structure the parent implementation, not as a reusable standalone block. Parent and child editors still use validated attribute updaters and surface Typia validation errors inside the editor UI.
 
-## Step 6: Optional Persistence on the Parent
+## Step 6: Add Another Child Block Type
+
+Use the generated extension workflow when the parent needs another hidden child block type:
+
+```bash
+npm run add-child -- --slug faq-item --title "FAQ Item"
+```
+
+That command:
+
+- creates `src/blocks/compound-demo-faq-item/`
+- updates `scripts/block-config.ts`
+- updates `src/blocks/compound-demo/children.ts`
+- keeps the default seeded template unchanged, so existing content does not churn
+
+After adding the child block type, run:
+
+```bash
+npm run sync-types
+```
+
+## Step 7: Optional Persistence on the Parent
 
 When you pass `--data-storage` or `--persistence-policy`, only the parent block gets persistence wiring.
 
@@ -161,7 +195,7 @@ This is a good fit for patterns like:
 - step lists with aggregate interaction tracking
 - experiment containers where the top-level block owns state and children own content
 
-## Step 7: Build and Test
+## Step 8: Build and Test
 
 Run the normal scaffold lifecycle:
 
@@ -189,7 +223,7 @@ Then load the plugin in your WordPress environment and verify:
 ## What's Next?
 
 1. Add custom inspector controls to the parent block
-2. Extend the child block with richer layout or media fields
+2. Use `npm run add-child -- --slug ... --title ...` when you need another hidden child type
 3. Enable persistence on the parent when you need count-like behavior
 4. Adapt the pattern for tabs, steps, carousels, or experiment containers
 
