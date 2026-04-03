@@ -27,8 +27,16 @@ function getEndpointInputTypeName(
 	manifest: EndpointManifestDefinition,
 	endpoint: EndpointManifestEndpointDefinition,
 ): string | null {
+	if (endpoint.method !== "GET" && endpoint.bodyContract && endpoint.queryContract) {
+		throw new Error(
+			`Endpoint "${endpoint.operationId}" defines both bodyContract and queryContract; typia.llm input mapping is ambiguous.`,
+		);
+	}
+
 	const contractName =
-		endpoint.method === "GET" ? endpoint.queryContract ?? null : endpoint.bodyContract ?? null;
+		endpoint.method === "GET"
+			? endpoint.queryContract ?? null
+			: endpoint.bodyContract ?? endpoint.queryContract ?? null;
 
 	if (!contractName) {
 		return null;
@@ -79,8 +87,11 @@ function renderMethodJsDoc(method: TypiaLlmEndpointMethodDescriptor): string {
 function renderMethodSignature(method: TypiaLlmEndpointMethodDescriptor): string {
 	const inputSignature =
 		method.inputTypeName === null ? "" : `input: ${method.inputTypeName}`;
+	const methodName = /^[$A-Z_][$0-9A-Z_]*$/i.test(method.operationId)
+		? method.operationId
+		: JSON.stringify(method.operationId);
 
-	return `${method.operationId}(${inputSignature}): ${method.outputTypeName};`;
+	return `${methodName}(${inputSignature}): ${method.outputTypeName};`;
 }
 
 export function buildTypiaLlmEndpointMethodDescriptors(

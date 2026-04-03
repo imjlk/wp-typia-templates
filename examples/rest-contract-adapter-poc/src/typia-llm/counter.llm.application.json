@@ -41,7 +41,7 @@
         "type": "object",
         "properties": {
           "postId": {
-            "type": "integer",
+            "type": "number",
             "minimum": 0
           },
           "resourceKey": {
@@ -102,7 +102,7 @@
         "type": "object",
         "properties": {
           "postId": {
-            "type": "integer",
+            "type": "number",
             "minimum": 0
           },
           "publicWriteRequestId": {
@@ -121,8 +121,8 @@
             "maxLength": 512
           },
           "delta": {
-            "type": "integer",
-            "minimum": 0,
+            "type": "number",
+            "minimum": 1,
             "default": 1
           }
         },
@@ -140,7 +140,7 @@
     }
   ],
   "generatedFrom": {
-    "baselineOpenApiPath": "src/blocks/counter/api.openapi.json",
+    "baselineOpenApiPath": "../persistence-examples/src/blocks/counter/api.openapi.json",
     "blockSlug": "counter",
     "manifestSource": "endpoint-manifest+typescript"
   }

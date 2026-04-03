@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { BLOCKS } from "../../examples/persistence-examples/scripts/block-config";
+import type { EndpointManifestDefinition } from "../../packages/create/src/runtime/metadata-core";
 import {
 	buildTypiaLlmEndpointMethodDescriptors,
 	renderTypiaLlmModule,
@@ -67,5 +68,89 @@ describe("typia.llm internal helper", () => {
 		expect(source).toContain(
 			"export const counterResponseStructuredOutput =\n\ttypia.llm.structuredOutput<PersistenceCounterResponse>();",
 		);
+	});
+
+	test("uses query contracts for non-GET endpoints when no body contract exists", () => {
+		const manifest = {
+			contracts: {
+				deleteCounterQuery: { sourceTypeName: "DeleteCounterQuery" },
+				persistenceCounterResponse: { sourceTypeName: "PersistenceCounterResponse" },
+			},
+			endpoints: [
+				{
+					authMode: "authenticated-rest-nonce",
+					method: "DELETE",
+					operationId: "deletePersistenceCounterState",
+					path: "/persistence-examples/v1/counter",
+					queryContract: "deleteCounterQuery",
+					responseContract: "persistenceCounterResponse",
+					tags: ["Counter"],
+				},
+			],
+		} satisfies EndpointManifestDefinition;
+
+		expect(buildTypiaLlmEndpointMethodDescriptors(manifest)).toEqual([
+			expect.objectContaining({
+				inputTypeName: "DeleteCounterQuery",
+				operationId: "deletePersistenceCounterState",
+			}),
+		]);
+	});
+
+	test("throws when a non-GET endpoint defines both body and query contracts", () => {
+		const manifest = {
+			contracts: {
+				body: { sourceTypeName: "BodyInput" },
+				query: { sourceTypeName: "QueryInput" },
+				response: { sourceTypeName: "ResponseOutput" },
+			},
+			endpoints: [
+				{
+					authMode: "authenticated-rest-nonce",
+					bodyContract: "body",
+					method: "POST",
+					operationId: "ambiguousInput",
+					path: "/persistence-examples/v1/counter",
+					queryContract: "query",
+					responseContract: "response",
+					tags: ["Counter"],
+				},
+			],
+		} satisfies EndpointManifestDefinition;
+
+		expect(() => buildTypiaLlmEndpointMethodDescriptors(manifest)).toThrow(
+			'Endpoint "ambiguousInput" defines both bodyContract and queryContract; typia.llm input mapping is ambiguous.',
+		);
+	});
+
+	test("quotes invalid operation ids when rendering generated TypeScript", () => {
+		const manifest = {
+			contracts: {
+				query: { sourceTypeName: "CounterQuery" },
+				response: { sourceTypeName: "CounterResponse" },
+			},
+			endpoints: [
+				{
+					authMode: "public-read",
+					method: "GET",
+					operationId: "get-counter state",
+					path: "/persistence-examples/v1/counter",
+					queryContract: "query",
+					responseContract: "response",
+					tags: ["Counter"],
+				},
+			],
+		} satisfies EndpointManifestDefinition;
+
+		const source = renderTypiaLlmModule({
+			applicationExportName: "counterLlmApplication",
+			interfaceName: "CounterRestToolController",
+			manifest,
+			structuredOutputExportName: "counterResponseStructuredOutput",
+			structuredOutputTypeName: "CounterResponse",
+			typesImportPath: "./counter-types",
+		});
+
+		expect(source).toContain('"get-counter state"(input: CounterQuery): CounterResponse;');
 	});
 });

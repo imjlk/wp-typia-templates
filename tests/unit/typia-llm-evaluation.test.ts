@@ -8,6 +8,7 @@ import counterStructuredOutputArtifact from "../../examples/rest-contract-adapte
 import {
 	buildCounterTypiaLlmArtifacts,
 	buildCounterTypiaLlmMethodDescriptors,
+	COUNTER_LLM_GENERATED_SOURCE_RELATIVE_PATH,
 	type ProjectedTypiaLlmApplicationArtifact,
 	type ProjectedTypiaStructuredOutputArtifact,
 	renderCounterTypiaLlmGeneratedSource,
@@ -21,16 +22,7 @@ const checkedInStructuredOutputArtifact =
 describe("typia.llm evaluation artifacts", () => {
 	test("checked-in generated source matches the rendered manifest-driven module", () => {
 		const generatedSource = readFileSync(
-			path.join(
-				import.meta.dir,
-				"..",
-				"..",
-				"examples",
-				"rest-contract-adapter-poc",
-				"src",
-				"typia-llm",
-				"counter.llm.generated.ts",
-			),
+			path.join(import.meta.dir, "..", "..", "examples", "rest-contract-adapter-poc", COUNTER_LLM_GENERATED_SOURCE_RELATIVE_PATH),
 			"utf8",
 		);
 
@@ -53,7 +45,7 @@ describe("typia.llm evaluation artifacts", () => {
 		]);
 		expect(buildCounterTypiaLlmMethodDescriptors()).toHaveLength(2);
 		expect(checkedInApplicationArtifact.generatedFrom.baselineOpenApiPath).toBe(
-			"src/blocks/counter/api.openapi.json",
+			"../persistence-examples/src/blocks/counter/api.openapi.json",
 		);
 
 		const getTool = checkedInApplicationArtifact.functions[0];
@@ -71,6 +63,10 @@ describe("typia.llm evaluation artifacts", () => {
 			"publicWriteRequestId",
 			"resourceKey",
 		]);
+		expect(postTool?.parameters.properties?.delta).toMatchObject({
+			default: 1,
+			minimum: 1,
+		});
 	});
 
 	test("keeps the structured output artifact aligned with the existing AI-safe counter response shape", () => {
