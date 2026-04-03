@@ -93,13 +93,17 @@ import {
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { MyTypiaBlockAttributes } from './types';
-import { createAttributeUpdater } from './validators';
+import { createAttributeUpdater, validators } from './validators';
 
 type EditProps = BlockEditProps<MyTypiaBlockAttributes>;
 
 function Edit({ attributes, setAttributes }: EditProps) {
   const blockProps = useBlockProps();
-  const updateAttribute = createAttributeUpdater(attributes, setAttributes);
+  const updateAttribute = createAttributeUpdater(
+    attributes,
+    setAttributes,
+    validators.validate
+  );
 
   return (
     <>
