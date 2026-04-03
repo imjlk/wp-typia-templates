@@ -80,6 +80,26 @@ export function getTemplateSourceOfTruthNote(
 	return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`.";
 }
 
+/**
+ * Returns the generated-project extension workflow for compound child blocks.
+ */
+export function getCompoundExtensionWorkflowSection(
+	packageManager: PackageManagerId,
+	templateId: string,
+): string | null {
+	if ( templateId !== "compound" ) {
+		return null;
+	}
+
+	return `## Compound Extension Workflow
+
+\`\`\`bash
+${ formatRunScript( packageManager, "add-child" ) } -- --slug faq-item --title "FAQ Item"
+\`\`\`
+
+This scaffolds a new hidden child block type, updates \`scripts/block-config.ts\` and \`src/blocks/*/children.ts\`, and leaves the default seeded child template unchanged.`;
+}
+
 function formatPhpRestExtensionPointsSection({
 	apiTypesPath,
 	extraNote,

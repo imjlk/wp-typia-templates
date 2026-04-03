@@ -1,7 +1,13 @@
 import { RichText, useBlockProps } from '@wordpress/block-editor';
+import { Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
+import { useTypiaValidation } from './hooks';
 import type { {{pascalCase}}ItemAttributes } from './types';
+import {
+	createAttributeUpdater,
+	validate{{pascalCase}}ItemAttributes,
+} from './validators';
 
 export default function Edit( {
 	attributes,
@@ -10,22 +16,35 @@ export default function Edit( {
 	attributes: {{pascalCase}}ItemAttributes;
 	setAttributes: ( attrs: Partial< {{pascalCase}}ItemAttributes > ) => void;
 } ) {
+	const updateAttribute = createAttributeUpdater( attributes, setAttributes );
+	const { errorMessages, isValid } = useTypiaValidation(
+		attributes,
+		validate{{pascalCase}}ItemAttributes
+	);
+
 	return (
 		<div { ...useBlockProps( { className: 'wp-block-{{slugKebabCase}}-item' } ) }>
 			<RichText
 				tagName="h4"
 				className="wp-block-{{slugKebabCase}}-item__title"
-				value={ attributes.title }
-				onChange={ ( title ) => setAttributes( { title } ) }
+				value={ attributes.title ?? '' }
+				onChange={ ( title ) => updateAttribute( 'title', title ) }
 				placeholder={ __( {{compoundChildTitleJson}}, '{{textDomain}}' ) }
 			/>
 			<RichText
 				tagName="p"
 				className="wp-block-{{slugKebabCase}}-item__body"
-				value={ attributes.body }
-				onChange={ ( body ) => setAttributes( { body } ) }
+				value={ attributes.body ?? '' }
+				onChange={ ( body ) => updateAttribute( 'body', body ) }
 				placeholder={ __( 'Add supporting details for this internal item.', '{{textDomain}}' ) }
 			/>
+			{ ! isValid && (
+				<Notice status="error" isDismissible={ false }>
+					<ul>
+						{ errorMessages.map( ( error, index ) => <li key={ index }>{ error }</li> ) }
+					</ul>
+				</Notice>
+			) }
 		</div>
 	);
 }

@@ -1,0 +1,445 @@
+/* eslint-disable no-console */
+import fs from 'node:fs';
+import path from 'node:path';
+
+const PARENT_BLOCK_NAME = '{{namespace}}/{{slugKebabCase}}';
+const PARENT_BLOCK_SLUG = '{{slugKebabCase}}';
+const PARENT_BLOCK_TITLE = {{titleJson}};
+const PARENT_TYPE_NAME = '{{pascalCase}}';
+const PARENT_STYLE_IMPORT = '../{{slugKebabCase}}/style.scss';
+const PROJECT_ROOT = process.cwd();
+const TEXT_DOMAIN = '{{textDomain}}';
+
+const ALLOWED_CHILD_MARKER = '\t// add-child: insert new allowed child block names here';
+const BLOCK_CONFIG_MARKER = '\t// add-child: insert new block config entries here';
+const CHILD_PLACEHOLDER = 'Add supporting details for this internal item.';
+const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
+
+function parseArgs() {
+	const args = process.argv.slice( 2 );
+	const parsed: {
+		slug?: string;
+		title?: string;
+	} = {};
+
+	for ( let index = 0; index < args.length; index += 1 ) {
+		const arg = args[ index ];
+		if ( arg === '--slug' ) {
+			parsed.slug = args[ index + 1 ];
+			index += 1;
+			continue;
+		}
+
+		if ( arg === '--title' ) {
+			parsed.title = args[ index + 1 ];
+			index += 1;
+			continue;
+		}
+	}
+
+	return parsed;
+}
+
+function toKebabCase( input: string ): string {
+	return input
+		.trim()
+		.replace( /([a-z0-9])([A-Z])/g, '$1-$2' )
+		.replace( /[^A-Za-z0-9]+/g, '-' )
+		.replace( /^-+|-+$/g, '' )
+		.replace( /-{2,}/g, '-' )
+		.toLowerCase();
+}
+
+function toPascalCase( input: string ): string {
+	return toKebabCase( input )
+		.split( '-' )
+		.filter( Boolean )
+		.map( ( segment ) => segment.charAt( 0 ).toUpperCase() + segment.slice( 1 ) )
+		.join( '' );
+}
+
+function toTitleCase( input: string ): string {
+	return toKebabCase( input )
+		.split( '-' )
+		.filter( Boolean )
+		.map( ( segment ) => segment.charAt( 0 ).toUpperCase() + segment.slice( 1 ) )
+		.join( ' ' );
+}
+
+function insertBeforeMarker( filePath: string, marker: string, insertion: string ) {
+	const source = fs.readFileSync( filePath, 'utf8' );
+
+	if ( ! source.includes( marker ) ) {
+		throw new Error( `Unable to update ${ filePath }: marker not found.` );
+	}
+
+	fs.writeFileSync(
+		filePath,
+		source.replace( marker, `${ insertion }\n${ marker }` ),
+		'utf8'
+	);
+}
+
+function renderBlockJson(
+	childBlockName: string,
+	childFolderSlug: string,
+	childTitle: string
+): string {
+	return `${ JSON.stringify(
+		{
+			$schema: 'https://schemas.wp.org/trunk/block.json',
+			apiVersion: 3,
+			name: childBlockName,
+			version: '0.1.0',
+			title: childTitle,
+			category: 'widgets',
+			icon: 'excerpt-view',
+			description: `Internal item block used by ${ PARENT_BLOCK_TITLE }.`,
+			parent: [ PARENT_BLOCK_NAME ],
+			example: {},
+			supports: {
+				html: false,
+				inserter: false,
+				reusable: false,
+			},
+			attributes: {
+				title: {
+					type: 'string',
+					source: 'html',
+					selector: `.wp-block-${ childFolderSlug }__title`,
+					default: childTitle,
+				},
+				body: {
+					type: 'string',
+					source: 'html',
+					selector: `.wp-block-${ childFolderSlug }__body`,
+					default: CHILD_PLACEHOLDER,
+				},
+			},
+			textdomain: TEXT_DOMAIN,
+			editorScript: 'file:./index.js',
+			editorStyle: 'file:./index.css',
+			style: 'file:./style-index.css',
+		},
+		null,
+		'\t'
+	) }\n`;
+}
+
+function renderTypesFile( childTypeName: string, childTitle: string ): string {
+	return `import { tags } from 'typia';
+
+export interface ${ childTypeName } {
+\ttitle: string &
+\t\ttags.MinLength< 1 > &
+\t\ttags.MaxLength< 80 > &
+\t\ttags.Default< ${ JSON.stringify( childTitle ) } >;
+\tbody: string &
+\t\ttags.MinLength< 1 > &
+\t\ttags.MaxLength< 280 > &
+\t\ttags.Default< ${ JSON.stringify( CHILD_PLACEHOLDER ) } >;
+}
+`;
+}
+
+function renderHooksFile(): string {
+	return `import { useEffect, useState } from '@wordpress/element';
+
+import {
+\tformatValidationError,
+\tformatValidationErrors,
+\ttoValidationState,
+\ttype TypiaValidationError,
+\ttype ValidationResult,
+\ttype ValidationState,
+} from '@wp-typia/create/runtime/validation';
+
+export {
+\tformatValidationError,
+\tformatValidationErrors,
+\ttype TypiaValidationError,
+\ttype ValidationResult,
+\ttype ValidationState,
+} from '@wp-typia/create/runtime/validation';
+
+export function useTypiaValidation<T>(
+\tvalue: T,
+\tvalidator: ( value: T ) => ValidationResult< T >
+): ValidationState< T > {
+\tconst [ state, setState ] = useState< ValidationState< T > >( () =>
+\t\ttoValidationState( validator( value ) )
+\t);
+
+\tuseEffect( () => {
+\t\tsetState( toValidationState( validator( value ) ) );
+\t}, [ value, validator ] );
+
+\treturn state;
+}
+`;
+}
+
+function renderValidatorsFile(
+	childTypeName: string,
+	childInterfaceName: string
+): string {
+	return `import typia from 'typia';
+import currentManifest from './typia.manifest.json';
+import {
+\ttype ManifestDefaultsDocument,
+\tapplyTemplateDefaultsFromManifest,
+} from '@wp-typia/create/runtime/defaults';
+import {
+\tcreateAttributeUpdater as createValidatedAttributeUpdater,
+\ttype ValidationResult,
+\ttoValidationResult,
+} from '@wp-typia/create/runtime/validation';
+
+import type { ${ childTypeName } } from './types';
+
+const validate = typia.createValidate< ${ childTypeName } >();
+const assert = typia.createAssert< ${ childTypeName } >();
+const is = typia.createIs< ${ childTypeName } >();
+const random = typia.createRandom< ${ childTypeName } >();
+const clone = typia.misc.createClone< ${ childTypeName } >();
+const prune = typia.misc.createPrune< ${ childTypeName } >();
+
+export const validate${ childInterfaceName } = (
+\tattributes: unknown
+): ValidationResult< ${ childTypeName } > => {
+\treturn toValidationResult( validate( attributes ) );
+};
+
+export const validators = {
+\tassert,
+\tclone,
+\tis,
+\tprune,
+\trandom,
+\tvalidate: validate${ childInterfaceName },
+};
+
+export const sanitize${ childInterfaceName } = (
+\tattributes: Partial< ${ childTypeName } >
+): ${ childTypeName } => {
+\tconst normalized = applyTemplateDefaultsFromManifest< ${ childTypeName } >(
+\t\tcurrentManifest as ManifestDefaultsDocument,
+\t\tattributes
+\t);
+
+\treturn validators.assert( normalized );
+};
+
+export function createAttributeUpdater(
+\tattributes: ${ childTypeName },
+\tsetAttributes: ( attrs: Partial< ${ childTypeName } > ) => void,
+\tvalidator = validators.validate
+) {
+\treturn createValidatedAttributeUpdater(
+\t\tattributes,
+\t\tsetAttributes,
+\t\tvalidator as ( value: ${ childTypeName } ) => ValidationResult< ${ childTypeName } >,
+\t\t( validation, key ) => {
+\t\t\tconsole.error( \`Validation failed for \${ String( key ) }:\`, validation.errors );
+\t\t}
+\t);
+}
+`;
+}
+
+function renderEditFile(
+	childBlockName: string,
+	childTypeName: string,
+	childInterfaceName: string,
+	childTitle: string
+): string {
+	return `import { RichText, useBlockProps } from '@wordpress/block-editor';
+import { Notice } from '@wordpress/components';
+import { __ } from '@wordpress/i18n';
+
+import { useTypiaValidation } from './hooks';
+import type { ${ childTypeName } } from './types';
+import {
+\tcreateAttributeUpdater,
+\tvalidate${ childInterfaceName },
+} from './validators';
+
+export default function Edit( {
+\tattributes,
+\tsetAttributes,
+}: {
+\tattributes: ${ childTypeName };
+\tsetAttributes: ( attrs: Partial< ${ childTypeName } > ) => void;
+} ) {
+\tconst updateAttribute = createAttributeUpdater( attributes, setAttributes );
+\tconst { errorMessages, isValid } = useTypiaValidation(
+\t\tattributes,
+\t\tvalidate${ childInterfaceName }
+\t);
+
+\treturn (
+\t\t<div { ...useBlockProps( { className: 'wp-block-${ childBlockName }' } ) }>
+\t\t\t<RichText
+\t\t\t\ttagName="h4"
+\t\t\t\tclassName="wp-block-${ childBlockName }__title"
+\t\t\t\tvalue={ attributes.title ?? '' }
+\t\t\t\tonChange={ ( title ) => updateAttribute( 'title', title ) }
+\t\t\t\tplaceholder={ __( ${ JSON.stringify( childTitle ) }, '${ TEXT_DOMAIN }' ) }
+\t\t\t/>
+\t\t\t<RichText
+\t\t\t\ttagName="p"
+\t\t\t\tclassName="wp-block-${ childBlockName }__body"
+\t\t\t\tvalue={ attributes.body ?? '' }
+\t\t\t\tonChange={ ( body ) => updateAttribute( 'body', body ) }
+\t\t\t\tplaceholder={ __( ${ JSON.stringify( CHILD_PLACEHOLDER ) }, '${ TEXT_DOMAIN }' ) }
+\t\t\t/>
+\t\t\t{ ! isValid && (
+\t\t\t\t<Notice status="error" isDismissible={ false }>
+\t\t\t\t\t<ul>
+\t\t\t\t\t\t{ errorMessages.map( ( error, index ) => (
+\t\t\t\t\t\t\t<li key={ index }>{ error }</li>
+\t\t\t\t\t\t) ) }
+\t\t\t\t\t</ul>
+\t\t\t\t</Notice>
+\t\t\t) }
+\t\t</div>
+\t);
+}
+`;
+}
+
+function renderSaveFile( childBlockName: string, childTypeName: string ): string {
+	return `import { RichText, useBlockProps } from '@wordpress/block-editor';
+
+import type { ${ childTypeName } } from './types';
+
+export default function Save( {
+\tattributes,
+}: {
+\tattributes: ${ childTypeName };
+} ) {
+\treturn (
+\t\t<div { ...useBlockProps.save( { className: 'wp-block-${ childBlockName }' } ) }>
+\t\t\t<RichText.Content
+\t\t\t\ttagName="h4"
+\t\t\t\tclassName="wp-block-${ childBlockName }__title"
+\t\t\t\tvalue={ attributes.title }
+\t\t\t/>
+\t\t\t<RichText.Content
+\t\t\t\ttagName="p"
+\t\t\t\tclassName="wp-block-${ childBlockName }__body"
+\t\t\t\tvalue={ attributes.body }
+\t\t\t/>
+\t\t</div>
+\t);
+}
+`;
+}
+
+function renderIndexFile( childTypeName: string, childFolderSlug: string ): string {
+	return `import { registerBlockType } from '@wordpress/blocks';
+
+import Edit from './edit';
+import Save from './save';
+import metadata from './block.json';
+import '${ PARENT_STYLE_IMPORT }';
+
+import type { ${ childTypeName } } from './types';
+
+registerBlockType< ${ childTypeName } >( metadata.name, {
+\ttitle: metadata.title,
+\tdescription: metadata.description,
+\tcategory: metadata.category as any,
+\ticon: metadata.icon as any,
+\tsupports: metadata.supports,
+\tattributes: metadata.attributes as any,
+\texample: metadata.example,
+\tparent: metadata.parent,
+\tedit: Edit,
+\tsave: Save,
+} );
+`;
+}
+
+function main() {
+	const { slug, title } = parseArgs();
+	const normalizedSlug = slug ? toKebabCase( slug ) : '';
+
+	if ( ! BLOCK_SLUG_PATTERN.test( normalizedSlug ) ) {
+		throw new Error( 'Use a child slug with lowercase letters, numbers, and hyphens only.' );
+	}
+
+	const childTitle = title?.trim().length ? title.trim() : toTitleCase( normalizedSlug );
+	const childFolderSlug = `${ PARENT_BLOCK_SLUG }-${ normalizedSlug }`;
+	const childBlockName = `${ PARENT_BLOCK_NAME }-${ normalizedSlug }`;
+	const childTypeSuffix = toPascalCase( normalizedSlug );
+	const childTypeName = `${ PARENT_TYPE_NAME }${ childTypeSuffix }Attributes`;
+	const childInterfaceName = `${ PARENT_TYPE_NAME }${ childTypeSuffix }`;
+	const childDir = path.join( PROJECT_ROOT, 'src', 'blocks', childFolderSlug );
+	const childrenFile = path.join(
+		PROJECT_ROOT,
+		'src',
+		'blocks',
+		PARENT_BLOCK_SLUG,
+		'children.ts'
+	);
+	const blockConfigFile = path.join( PROJECT_ROOT, 'scripts', 'block-config.ts' );
+
+	if ( fs.existsSync( childDir ) ) {
+		throw new Error( `Child block already exists: ${ childFolderSlug }` );
+	}
+
+	if ( ! fs.existsSync( childrenFile ) || ! fs.existsSync( blockConfigFile ) ) {
+		throw new Error(
+			'This command expects a compound scaffold with src/blocks/<parent>/children.ts and scripts/block-config.ts.'
+		);
+	}
+
+	fs.mkdirSync( childDir, { recursive: true } );
+
+	fs.writeFileSync(
+		path.join( childDir, 'block.json' ),
+		renderBlockJson( childBlockName, childFolderSlug, childTitle ),
+		'utf8'
+	);
+	fs.writeFileSync( path.join( childDir, 'types.ts' ), renderTypesFile( childTypeName, childTitle ), 'utf8' );
+	fs.writeFileSync( path.join( childDir, 'hooks.ts' ), renderHooksFile(), 'utf8' );
+	fs.writeFileSync(
+		path.join( childDir, 'validators.ts' ),
+		renderValidatorsFile( childTypeName, childInterfaceName ),
+		'utf8'
+	);
+	fs.writeFileSync(
+		path.join( childDir, 'edit.tsx' ),
+		renderEditFile( childFolderSlug, childTypeName, childInterfaceName, childTitle ),
+		'utf8'
+	);
+	fs.writeFileSync(
+		path.join( childDir, 'save.tsx' ),
+		renderSaveFile( childFolderSlug, childTypeName ),
+		'utf8'
+	);
+	fs.writeFileSync(
+		path.join( childDir, 'index.tsx' ),
+		renderIndexFile( childTypeName, childFolderSlug ),
+		'utf8'
+	);
+
+	insertBeforeMarker(
+		childrenFile,
+		ALLOWED_CHILD_MARKER,
+		`\t'${ childBlockName }',`
+	);
+	insertBeforeMarker(
+		blockConfigFile,
+		BLOCK_CONFIG_MARKER,
+		`\t{\n\t\tslug: '${ childFolderSlug }',\n\t\tattributeTypeName: '${ childTypeName }',\n\t\ttypesFile: 'src/blocks/${ childFolderSlug }/types.ts',\n\t},`
+	);
+
+	console.log( `✅ Added compound child block ${ childBlockName }` );
+	console.log(
+		'Run `sync-types` next to generate block.json metadata, manifests, schemas, and PHP validators for the new child block.'
+	);
+}
+
+main();

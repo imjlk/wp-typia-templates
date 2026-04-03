@@ -1,0 +1,23 @@
+export const DEFAULT_CHILD_BLOCK_NAME = '{{namespace}}/{{slugKebabCase}}-item';
+
+export const ALLOWED_CHILD_BLOCKS = [
+	DEFAULT_CHILD_BLOCK_NAME,
+	// add-child: insert new allowed child block names here
+];
+
+export const DEFAULT_CHILD_TEMPLATE = [
+	[
+		DEFAULT_CHILD_BLOCK_NAME,
+		{
+			body: 'Add supporting details for the first internal item.',
+			title: 'First Item',
+		},
+	],
+	[
+		DEFAULT_CHILD_BLOCK_NAME,
+		{
+			body: 'Add supporting details for the second internal item.',
+			title: 'Second Item',
+		},
+	],
+];

@@ -12,25 +12,16 @@ import {
 	ToggleControl,
 } from '@wordpress/components';
 
+import {
+	ALLOWED_CHILD_BLOCKS,
+	DEFAULT_CHILD_TEMPLATE,
+} from './children';
+import { useTypiaValidation } from './hooks';
 import type { {{pascalCase}}Attributes } from './types';
-
-const CHILD_BLOCK_NAME = '{{namespace}}/{{slugKebabCase}}-item';
-const DEFAULT_TEMPLATE: Parameters< typeof InnerBlocks >[ 0 ][ 'template' ] = [
-	[
-		CHILD_BLOCK_NAME,
-		{
-			body: 'Add supporting details for the first internal item.',
-			title: 'First Item',
-		},
-	],
-	[
-		CHILD_BLOCK_NAME,
-		{
-			body: 'Add supporting details for the second internal item.',
-			title: 'Second Item',
-		},
-	],
-];
+import {
+	createAttributeUpdater,
+	validate{{pascalCase}}Attributes,
+} from './validators';
 
 export default function Edit( {
 	attributes,
@@ -39,6 +30,11 @@ export default function Edit( {
 	attributes: {{pascalCase}}Attributes;
 	setAttributes: ( attrs: Partial< {{pascalCase}}Attributes > ) => void;
 } ) {
+	const { errorMessages, isValid } = useTypiaValidation(
+		attributes,
+		validate{{pascalCase}}Attributes
+	);
+	const updateAttribute = createAttributeUpdater( attributes, setAttributes );
 	const blockProps = useBlockProps( {
 		className: '{{cssClassName}}',
 	} );
@@ -50,22 +46,22 @@ export default function Edit( {
 					<ToggleControl
 						label={ __( 'Show dividers between items', '{{textDomain}}' ) }
 						checked={ attributes.showDividers ?? true }
-						onChange={ ( value ) => setAttributes( { showDividers: value } ) }
+						onChange={ ( value ) => updateAttribute( 'showDividers', value ) }
 					/>
 					<ToggleControl
 						label={ __( 'Show persisted count', '{{textDomain}}' ) }
 						checked={ attributes.showCount ?? true }
-						onChange={ ( value ) => setAttributes( { showCount: value } ) }
+						onChange={ ( value ) => updateAttribute( 'showCount', value ) }
 					/>
 					<TextControl
 						label={ __( 'Button label', '{{textDomain}}' ) }
 						value={ attributes.buttonLabel ?? 'Persist Count' }
-						onChange={ ( buttonLabel ) => setAttributes( { buttonLabel } ) }
+						onChange={ ( buttonLabel ) => updateAttribute( 'buttonLabel', buttonLabel ) }
 					/>
 					<TextControl
 						label={ __( 'Resource key', '{{textDomain}}' ) }
 						value={ attributes.resourceKey ?? '' }
-						onChange={ ( resourceKey ) => setAttributes( { resourceKey } ) }
+						onChange={ ( resourceKey ) => updateAttribute( 'resourceKey', resourceKey ) }
 						help={ __( 'Stable key used by the persisted counter endpoint.', '{{textDomain}}' ) }
 					/>
 					<Notice status="info" isDismissible={ false }>
@@ -75,33 +71,49 @@ export default function Edit( {
 						{ __( 'Persistence policy: {{persistencePolicy}}', '{{textDomain}}' ) }
 					</Notice>
 				</PanelBody>
+				{ ! isValid && (
+					<PanelBody title={ __( 'Validation Errors', '{{textDomain}}' ) } initialOpen>
+						{ errorMessages.map( ( error, index ) => (
+							<Notice key={ index } status="error" isDismissible={ false }>
+								{ error }
+							</Notice>
+						) ) }
+					</PanelBody>
+				) }
 			</InspectorControls>
 			<div { ...blockProps }>
 				<RichText
 					tagName="h3"
 					className="{{cssClassName}}__heading"
 					value={ attributes.heading }
-					onChange={ ( heading ) => setAttributes( { heading } ) }
+					onChange={ ( heading ) => updateAttribute( 'heading', heading ) }
 					placeholder={ __( {{titleJson}}, '{{textDomain}}' ) }
 				/>
 				<RichText
 					tagName="p"
 					className="{{cssClassName}}__intro"
 					value={ attributes.intro ?? '' }
-					onChange={ ( intro ) => setAttributes( { intro } ) }
+					onChange={ ( intro ) => updateAttribute( 'intro', intro ) }
 					placeholder={ __(
 						'Add and reorder internal items inside this compound block.',
 						'{{textDomain}}'
 					) }
 				/>
+				{ ! isValid && (
+					<Notice status="error" isDismissible={ false }>
+						<ul>
+							{ errorMessages.map( ( error, index ) => <li key={ index }>{ error }</li> ) }
+						</ul>
+					</Notice>
+				) }
 				<p className="{{cssClassName}}__meta">
 					{ __( 'Resource key:', '{{textDomain}}' ) } { attributes.resourceKey || '—' }
 				</p>
 				<div className="{{cssClassName}}__items">
 					<InnerBlocks
-						allowedBlocks={ [ CHILD_BLOCK_NAME ] }
+						allowedBlocks={ ALLOWED_CHILD_BLOCKS }
 						renderAppender={ InnerBlocks.ButtonBlockAppender }
-						template={ DEFAULT_TEMPLATE }
+						template={ DEFAULT_CHILD_TEMPLATE }
 						templateLock={ false }
 					/>
 				</div>
