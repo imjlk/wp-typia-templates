@@ -2,9 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import {
-	type JsonSchemaDocument,
-} from '@wp-typia/create';
+import { type JsonSchemaDocument } from '@wp-typia/create';
 import type {
 	EndpointManifestDefinition,
 	EndpointManifestEndpointDefinition,
