@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from '@wordpress/element';
+import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import {
   createUseTypiaValidationHook,
 } from '@wp-typia/create/runtime/validation';
@@ -15,8 +15,7 @@ export type {
   ValidationState,
 } from '@wp-typia/create/runtime/validation';
 export const useTypiaValidation = createUseTypiaValidationHook({
-  useEffect,
-  useState,
+  useMemo,
 });
 
 export function useDebounce<T>(value: T, delay: number): T {

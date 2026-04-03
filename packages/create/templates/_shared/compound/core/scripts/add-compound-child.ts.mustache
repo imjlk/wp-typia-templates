@@ -183,7 +183,7 @@ function renderStarterManifestFile(
 }
 
 function renderHooksFile(): string {
-	return `import { useEffect, useState } from '@wordpress/element';
+	return `import { useMemo } from '@wordpress/element';
 
 import {
 \tcreateUseTypiaValidationHook,
@@ -203,8 +203,7 @@ export {
 } from '@wp-typia/create/runtime/validation';
 
 export const useTypiaValidation = createUseTypiaValidationHook( {
-\tuseEffect,
-\tuseState,
+\tuseMemo,
 } );
 `;
 }

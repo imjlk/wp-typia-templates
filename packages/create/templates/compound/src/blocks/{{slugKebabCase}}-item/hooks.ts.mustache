@@ -1,4 +1,4 @@
-import { useEffect, useState } from '@wordpress/element';
+import { useMemo } from '@wordpress/element';
 
 import {
 	createUseTypiaValidationHook,
@@ -15,6 +15,5 @@ export {
 } from '@wp-typia/create/runtime/validation';
 
 export const useTypiaValidation = createUseTypiaValidationHook( {
-	useEffect,
-	useState,
+	useMemo,
 } );

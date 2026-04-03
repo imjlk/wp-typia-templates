@@ -23,11 +23,7 @@ export interface ValidationState<T> extends ValidationResult<T> {
  * coupling the runtime package to a specific hook implementation.
  */
 export interface ValidationHookBindings {
-	useEffect: (
-		effect: () => void | (() => void),
-		deps: readonly unknown[],
-	) => void;
-	useState: <S>(initialState: S | (() => S)) => [S, (value: S) => void];
+	useMemo: <S>(factory: () => S, deps: readonly unknown[]) => S;
 }
 
 /**
@@ -69,6 +65,16 @@ function getValueType(value: unknown): string {
 		return "array";
 	}
 	return typeof value;
+}
+
+function redactValidationErrors(
+	errors: readonly TypiaValidationError[],
+): Array<Pick<TypiaValidationError, "description" | "expected" | "path">> {
+	return errors.map(({ description, expected, path }) => ({
+		description,
+		expected,
+		path,
+	}));
 }
 
 export function normalizeValidationError(error: unknown): TypiaValidationError {
@@ -123,33 +129,27 @@ export function toValidationState<T>(
 ): ValidationState<T> {
 	return {
 		...result,
-	errorMessages: formatValidationErrors(result.errors),
+		errorMessages: formatValidationErrors(result.errors),
 	};
 }
 
 /**
  * Creates a validation hook factory bound to the provided hook bindings.
  *
- * @param bindings React-like `useEffect` and `useState` implementations.
+ * @param bindings React-like `useMemo` implementation.
  * @returns A `useTypiaValidation` hook that returns normalized validation state.
  */
 export function createUseTypiaValidationHook({
-	useEffect,
-	useState,
+	useMemo,
 }: ValidationHookBindings) {
 	return function useTypiaValidation<T>(
 		value: T,
 		validator: (value: T) => ValidationResult<T>,
 	): ValidationState<T> {
-		const [state, setState] = useState<ValidationState<T>>(() =>
-			toValidationState(validator(value)),
+		return useMemo(
+			() => toValidationState(validator(value)),
+			[value, validator],
 		);
-
-		useEffect(() => {
-			setState(toValidationState(validator(value)));
-		}, [value, validator]);
-
-		return state;
 	};
 }
 
@@ -158,6 +158,10 @@ export function createUseTypiaValidationHook({
  *
  * @param options Typia validators, manifest defaults, and optional finalize/error hooks.
  * @returns Shared sanitize, validate, and validated attribute update helpers.
+ *
+ * `sanitizeAttributes()` asserts the final value, so required fields must be
+ * supplied by the input, provided by manifest defaults, or filled during
+ * finalization before the assertion runs.
  */
 export function createScaffoldValidatorToolkit<T extends object>({
 	assert,
@@ -166,7 +170,10 @@ export function createScaffoldValidatorToolkit<T extends object>({
 	is,
 	manifest,
 	onValidationError = (validation, key) => {
-		console.error(`Validation failed for ${String(key)}:`, validation.errors);
+		console.error(
+			`Validation failed for ${String(key)}:`,
+			redactValidationErrors(validation.errors),
+		);
 	},
 	prune,
 	random,
