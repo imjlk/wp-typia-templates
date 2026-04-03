@@ -35,12 +35,22 @@ const blockTypesPackageVersion =
 	createPackageManifest.dependencies["@wp-typia/block-types"];
 const restPackageVersion = createPackageManifest.dependencies["@wp-typia/rest"];
 const workspaceNodeModulesPath = path.resolve(packageRoot, "..", "..", "node_modules");
+const workspaceBunNodeModulesPath = path.join(
+	workspaceNodeModulesPath,
+	".bun",
+	"node_modules",
+);
 const workspacePackagePaths = {
 	"@wp-typia/block-types": path.resolve(packageRoot, "..", "wp-typia-block-types"),
 	"@wp-typia/create": packageRoot,
 	"@wp-typia/rest": path.resolve(packageRoot, "..", "wp-typia-rest"),
 } as const;
-const generatedRuntimeDependencies = ["typia", "typescript"] as const;
+const generatedProjectTypecheckSupportPackages = [
+	"react",
+	"react-dom",
+	"@types/react",
+	"@types/react-dom",
+] as const;
 
 function runCli(
 	command: string,
@@ -62,6 +72,20 @@ function ensureDirSymlink(targetPath: string, sourcePath: string) {
 	fs.symlinkSync(sourcePath, targetPath, "dir");
 }
 
+function resolveWorkspaceDependencyPath(packageName: string): string | null {
+	const directPath = path.join(workspaceNodeModulesPath, packageName);
+	if (fs.existsSync(directPath)) {
+		return fs.realpathSync(directPath);
+	}
+
+	const bunPath = path.join(workspaceBunNodeModulesPath, packageName);
+	if (fs.existsSync(bunPath)) {
+		return fs.realpathSync(bunPath);
+	}
+
+	return null;
+}
+
 function linkWorkspaceNodeModules(targetDir: string) {
 	const nodeModulesPath = path.join(targetDir, "node_modules");
 
@@ -69,14 +93,42 @@ function linkWorkspaceNodeModules(targetDir: string) {
 		fs.mkdirSync(nodeModulesPath, { recursive: true });
 	}
 
-	for (const packageName of generatedRuntimeDependencies) {
-		ensureDirSymlink(
-			path.join(nodeModulesPath, packageName),
-			fs.realpathSync(path.join(workspaceNodeModulesPath, packageName)),
-		);
+	ensureDirSymlink(
+		path.join(nodeModulesPath, ".bin"),
+		fs.realpathSync(path.join(workspaceNodeModulesPath, ".bin")),
+	);
+
+	const packageJsonPath = path.join(targetDir, "package.json");
+	if (!fs.existsSync(packageJsonPath)) {
+		return;
 	}
 
-	for (const [packageName, sourcePath] of Object.entries(workspacePackagePaths)) {
+	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+		dependencies?: Record<string, string>;
+		devDependencies?: Record<string, string>;
+	};
+	const dependencyNames = new Set([
+		...Object.keys(packageJson.dependencies ?? {}),
+		...Object.keys(packageJson.devDependencies ?? {}),
+		...generatedProjectTypecheckSupportPackages,
+	]);
+
+	for (const packageName of dependencyNames) {
+		const workspacePackagePath =
+			workspacePackagePaths[packageName as keyof typeof workspacePackagePaths];
+		if (workspacePackagePath) {
+			ensureDirSymlink(
+				path.join(nodeModulesPath, ...packageName.split("/")),
+				workspacePackagePath,
+			);
+			continue;
+		}
+
+		const sourcePath = resolveWorkspaceDependencyPath(packageName);
+		if (!sourcePath) {
+			continue;
+		}
+
 		ensureDirSymlink(path.join(nodeModulesPath, ...packageName.split("/")), sourcePath);
 	}
 }
@@ -84,6 +136,13 @@ function linkWorkspaceNodeModules(targetDir: string) {
 function runGeneratedScript(targetDir: string, scriptRelativePath: string, args: string[] = []) {
 	linkWorkspaceNodeModules(targetDir);
 	return runCli("bun", [path.join(targetDir, scriptRelativePath), ...args], {
+		cwd: targetDir,
+	});
+}
+
+function typecheckGeneratedProject(targetDir: string) {
+	linkWorkspaceNodeModules(targetDir);
+	return runCli(path.join(targetDir, "node_modules", ".bin", "tsc"), ["--noEmit"], {
 		cwd: targetDir,
 	});
 }
@@ -124,6 +183,9 @@ describe("@wp-typia/create scaffolding", () => {
 		const generatedEdit = fs.readFileSync(path.join(targetDir, "src", "edit.tsx"), "utf8");
 		const generatedHooks = fs.readFileSync(path.join(targetDir, "src", "hooks.ts"), "utf8");
 		const generatedIndex = fs.readFileSync(path.join(targetDir, "src", "index.tsx"), "utf8");
+		const generatedManifest = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "typia.manifest.json"), "utf8"),
+		);
 		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const generatedValidators = fs.readFileSync(path.join(targetDir, "src", "validators.ts"), "utf8");
@@ -132,9 +194,27 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(packageJson.packageManager).toBe("npm@11.6.1");
 		expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(blockTypesPackageVersion);
 		expect(packageJson.devDependencies["@wp-typia/create"]).toBe(createPackageVersion);
+		expect(packageJson.devDependencies["chokidar-cli"]).toBe("^3.0.0");
+		expect(packageJson.devDependencies.concurrently).toBe("^9.0.1");
 		expect(packageJson.scripts.build).toBe("npm run sync-types && wp-scripts build --experimental-modules");
+		expect(packageJson.scripts.dev).toBe(
+			'concurrently -k -n sync-types,editor -c yellow,blue "npm run watch:sync-types" "npm run start:editor"',
+		);
+		expect(packageJson.scripts["start:editor"]).toBe("wp-scripts start --experimental-modules");
 		expect(packageJson.scripts.start).toBe("npm run sync-types && wp-scripts start --experimental-modules");
+		expect(packageJson.scripts["watch:sync-types"]).toBe(
+			'chokidar "src/types.ts" --debounce 200 -c "npm run sync-types"',
+		);
 		expect(blockJson.textdomain).toBe("demo-npm");
+		expect(generatedManifest.manifestVersion).toBe(2);
+		expect(generatedManifest.sourceType).toBe("DemoNpmAttributes");
+		expect(generatedManifest.attributes.content.typia.defaultValue).toBe("");
+		expect(generatedManifest.attributes.alignment.wp.enum).toEqual([
+			"left",
+			"center",
+			"right",
+			"justify",
+		]);
 		expect(generatedHooks).toContain("type ValidationResult");
 		expect(generatedHooks).toContain("useTypiaValidation");
 		expect(generatedEdit).toContain("RichText");
@@ -159,14 +239,19 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedSave).not.toMatch(/[가-힣]/u);
 		expect(generatedValidators).not.toMatch(/[가-힣]/u);
 		expect(blockJson.example.attributes.content).toBe("Example content");
+		expect(fs.existsSync(path.join(targetDir, ".wp-env.json"))).toBe(false);
+		expect(fs.existsSync(path.join(targetDir, ".wp-env.test.json"))).toBe(false);
 		expect(readme).toContain("npm install");
+		expect(readme).toContain("npm run dev");
 		expect(readme).toContain("npm run start");
 		expect(readme).toContain("## Optional First Sync");
 		expect(readme).toContain("npm run sync-types");
 		expect(readme).not.toContain("npm run sync-rest");
-		expect(readme).toContain("already run the relevant sync scripts");
+		expect(readme).toContain("watches the relevant sync scripts during local development");
 		expect(readme).toContain("do not create migration history");
 		expect(readme).not.toContain("## PHP REST Extension Points");
+
+		typecheckGeneratedProject(targetDir);
 	});
 
 	test("scaffoldProject creates an interactivity template with typed validation wiring", async () => {
@@ -194,6 +279,9 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "src", "interactivity.ts"),
 			"utf8",
 		);
+		const generatedManifest = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "typia.manifest.json"), "utf8"),
+		);
 		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 		const blockJson = JSON.parse(
@@ -201,7 +289,21 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 
 		expect(packageJson.name).toBe("demo-interactivity");
+		expect(packageJson.scripts.dev).toBe(
+			'concurrently -k -n sync-types,editor -c yellow,blue "npm run watch:sync-types" "npm run start:editor"',
+		);
+		expect(packageJson.scripts["watch:sync-types"]).toBe(
+			'chokidar "src/types.ts" --debounce 200 -c "npm run sync-types"',
+		);
 		expect(blockJson.textdomain).toBe("demo-interactivity");
+		expect(generatedManifest.manifestVersion).toBe(2);
+		expect(generatedManifest.sourceType).toBe("DemoInteractivityAttributes");
+		expect(generatedManifest.attributes.interactiveMode.wp.enum).toEqual([
+			"click",
+			"hover",
+			"auto",
+		]);
+		expect(generatedManifest.attributes.clickCount.typia.constraints.typeTag).toBe("uint32");
 		expect(generatedTypes).toContain("ValidationResult");
 		expect(generatedHooks).toContain("useTypiaValidation");
 		expect(generatedValidators).toContain("toValidationResult");
@@ -222,6 +324,87 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedSave).not.toContain("data-is-animating");
 		expect(generatedSave).not.toContain("data-is-visible");
 		expect(generatedSave).not.toContain("data-unique-id");
+	});
+
+	test("scaffoldProject supports the optional local wp-env preset without adding test files", async () => {
+		const targetDir = path.join(tempRoot, "demo-local-wp-env");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "basic",
+			packageManager: "npm",
+			noInstall: true,
+			withWpEnv: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo local wp-env preset",
+				namespace: "create-block",
+				slug: "demo-local-wp-env",
+				title: "Demo Local Wp Env",
+			},
+		});
+
+		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
+		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
+		const wpEnvConfig = JSON.parse(fs.readFileSync(path.join(targetDir, ".wp-env.json"), "utf8"));
+
+		expect(packageJson.devDependencies["@wordpress/env"]).toBe("^11.2.0");
+		expect(packageJson.scripts["wp-env:start"]).toBe("wp-env start");
+		expect(packageJson.scripts["wp-env:stop"]).toBe("wp-env stop");
+		expect(packageJson.scripts["wp-env:reset"]).toBe("wp-env destroy all && wp-env start");
+		expect(fs.existsSync(path.join(targetDir, ".wp-env.json"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, ".wp-env.test.json"))).toBe(false);
+		expect(fs.existsSync(path.join(targetDir, "playwright.config.ts"))).toBe(false);
+		expect(wpEnvConfig.plugins).toEqual(["."]);
+		expect(readme).toContain("## Local WordPress");
+		expect(readme).not.toContain("## Local Test Preset");
+	});
+
+	test("scaffoldProject supports the optional test preset without adding the normal wp-env preset", async () => {
+		const targetDir = path.join(tempRoot, "demo-test-preset");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "basic",
+			packageManager: "npm",
+			noInstall: true,
+			withTestPreset: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo test preset",
+				namespace: "create-block",
+				slug: "demo-test-preset",
+				title: "Demo Test Preset",
+			},
+		});
+
+		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
+		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
+		const wpEnvTestConfig = JSON.parse(
+			fs.readFileSync(path.join(targetDir, ".wp-env.test.json"), "utf8"),
+		);
+
+		expect(packageJson.devDependencies["@wordpress/env"]).toBe("^11.2.0");
+		expect(packageJson.devDependencies["@playwright/test"]).toBe("^1.54.2");
+		expect(packageJson.scripts["wp-env:start:test"]).toBe("wp-env start --config=.wp-env.test.json");
+		expect(packageJson.scripts["wp-env:wait:test"]).toBe(
+			"node scripts/wait-for-wp-env.mjs http://localhost:8889 180000 .wp-env.test.json",
+		);
+		expect(packageJson.scripts["test:e2e"]).toBe(
+			"npm run wp-env:start:test && npm run wp-env:wait:test && playwright test",
+		);
+		expect(fs.existsSync(path.join(targetDir, ".wp-env.json"))).toBe(false);
+		expect(fs.existsSync(path.join(targetDir, ".wp-env.test.json"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "playwright.config.ts"))).toBe(true);
+		expect(
+			fs.existsSync(path.join(targetDir, "tests", "e2e", "smoke.spec.ts")),
+		).toBe(true);
+		expect(
+			fs.existsSync(path.join(targetDir, "scripts", "wait-for-wp-env.mjs")),
+		).toBe(true);
+		expect(wpEnvTestConfig.plugins).toEqual(["."]);
+		expect(readme).toContain("## Local Test Preset");
+		expect(readme).not.toContain("## Local WordPress");
 	});
 
 	test("scaffoldProject creates a persistence template with signed public writes and explicit storage mode", async () => {
@@ -257,6 +440,9 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "src", "api-types.ts"),
 			"utf8",
 		);
+		const generatedManifest = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "typia.manifest.json"), "utf8"),
+		);
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
@@ -267,10 +453,25 @@ describe("@wp-typia/create scaffolding", () => {
 
 		expect(packageJson.name).toBe("demo-persistence-public");
 		expect(packageJson.devDependencies["@wp-typia/rest"]).toBe(restPackageVersion);
+		expect(packageJson.devDependencies["chokidar-cli"]).toBe("^3.0.0");
+		expect(packageJson.devDependencies.concurrently).toBe("^9.0.1");
 		expect(packageJson.scripts.build).toBe(
 			"npm run sync-types && npm run sync-rest && wp-scripts build --experimental-modules",
 		);
+		expect(packageJson.scripts.dev).toBe(
+			'concurrently -k -n sync-types,sync-rest,editor -c yellow,magenta,blue "npm run watch:sync-types" "npm run watch:sync-rest" "npm run start:editor"',
+		);
+		expect(packageJson.scripts["start:editor"]).toBe("wp-scripts start --experimental-modules");
+		expect(packageJson.scripts["watch:sync-types"]).toBe(
+			'chokidar "src/types.ts" --debounce 200 -c "npm run sync-types"',
+		);
+		expect(packageJson.scripts["watch:sync-rest"]).toBe(
+			'chokidar "src/api-types.ts" --debounce 200 -c "npm run sync-rest"',
+		);
 		expect(blockJson.textdomain).toBe("demo-persistence-public");
+		expect(generatedManifest.manifestVersion).toBe(2);
+		expect(generatedManifest.sourceType).toBe("DemoPersistencePublicAttributes");
+		expect(generatedManifest.attributes.resourceKey.typia.defaultValue).toBe("primary");
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(true);
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-public.php"))).toBe(true);
 		expect(pluginBootstrap).toContain("post-meta");
@@ -307,6 +508,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
 		expect(generatedSave).toContain("intentionally server-rendered");
 		expect(generatedSave).toContain("return null;");
+		expect(readme).toContain("npm run dev");
 		expect(readme).toContain("npm run sync-types");
 		expect(readme).toContain("npm run sync-rest");
 		expect(readme).toContain("src/api-types.ts");
@@ -351,6 +553,9 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "src", "api-types.ts"),
 			"utf8",
 		);
+		const generatedManifest = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "src", "typia.manifest.json"), "utf8"),
+		);
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const generatedEdit = fs.readFileSync(path.join(targetDir, "src", "edit.tsx"), "utf8");
 		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
@@ -361,7 +566,12 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 
 		expect(packageJson.name).toBe("demo-persistence-authenticated");
+		expect(packageJson.scripts.dev).toBe(
+			'concurrently -k -n sync-types,sync-rest,editor -c yellow,magenta,blue "npm run watch:sync-types" "npm run watch:sync-rest" "npm run start:editor"',
+		);
 		expect(blockJson.textdomain).toBe("demo-persistence-authenticated");
+		expect(generatedManifest.manifestVersion).toBe(2);
+		expect(generatedManifest.sourceType).toBe("DemoPersistenceAuthenticatedAttributes");
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(true);
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-auth.php"))).toBe(true);
 		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-authenticated");
@@ -381,6 +591,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedEdit).toContain("Render mode: dynamic. `render.php` bootstraps post context, storage-backed state, and write-policy data before hydration.");
 		expect(generatedSave).toContain("intentionally server-rendered");
 		expect(generatedSave).toContain("return null;");
+		expect(readme).toContain("npm run dev");
 		expect(readme).toContain("## PHP REST Extension Points");
 		expect(readme).toContain("Edit `demo-persistence-authenticated.php`");
 		expect(readme).toContain("`src/render.php` is the canonical frontend entry");
@@ -560,6 +771,12 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "src", "blocks", "demo-compound", "validators.ts"),
 			"utf8",
 		);
+		const parentManifest = JSON.parse(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "demo-compound", "typia.manifest.json"),
+				"utf8",
+			),
+		);
 		const parentChildren = fs.readFileSync(
 			path.join(targetDir, "src", "blocks", "demo-compound", "children.ts"),
 			"utf8",
@@ -576,6 +793,12 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "src", "blocks", "demo-compound-item", "validators.ts"),
 			"utf8",
 		);
+		const childManifest = JSON.parse(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "demo-compound-item", "typia.manifest.json"),
+				"utf8",
+			),
+		);
 		const parentBlockJson = JSON.parse(
 			fs.readFileSync(path.join(targetDir, "src", "blocks", "demo-compound", "block.json"), "utf8"),
 		);
@@ -587,13 +810,23 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 
 		expect(packageJson.scripts.build).toBe("npm run sync-types && wp-scripts build --experimental-modules");
+		expect(packageJson.scripts.dev).toBe(
+			'concurrently -k -n sync-types,editor -c yellow,blue "npm run watch:sync-types" "npm run start:editor"',
+		);
+		expect(packageJson.scripts["watch:sync-types"]).toBe(
+			'chokidar "src/blocks/**/types.ts" "scripts/block-config.ts" --debounce 200 -c "npm run sync-types"',
+		);
 		expect(pluginBootstrap).toContain("build/blocks");
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(false);
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-auth.php"))).toBe(false);
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-public.php"))).toBe(false);
 		expect(parentBlockJson.name).toBe("create-block/demo-compound");
+		expect(parentManifest.sourceType).toBe("DemoCompoundAttributes");
+		expect(parentManifest.attributes.heading.typia.defaultValue).toBe("Demo Compound");
 		expect(childBlockJson.parent).toEqual(["create-block/demo-compound"]);
 		expect(childBlockJson.supports.inserter).toBe(false);
+		expect(childManifest.sourceType).toBe("DemoCompoundItemAttributes");
+		expect(childManifest.attributes.title.typia.defaultValue).toBe("Demo Compound Item");
 		expect(packageJson.scripts["add-child"]).toBe("tsx scripts/add-compound-child.ts");
 		expect(fs.existsSync(path.join(targetDir, "scripts", "sync-rest-contracts.ts"))).toBe(false);
 		expect(fs.existsSync(path.join(targetDir, "src", "blocks", "demo-compound", "api.openapi.json"))).toBe(
@@ -618,10 +851,13 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(addChildScript).toContain("BLOCK_CONFIG_MARKER");
 		expect(readme).toContain("npm run sync-types");
 		expect(readme).not.toContain("npm run sync-rest");
+		expect(readme).toContain("npm run dev");
 		expect(readme).toContain("src/blocks/*/types.ts");
 		expect(readme).toContain('npm run add-child -- --slug faq-item --title "FAQ Item"');
 		expect(readme).not.toContain("## PHP REST Extension Points");
 		expect(blockConfig).not.toContain("restManifest");
+
+		typecheckGeneratedProject(targetDir);
 	});
 
 	test("compound scaffolds enable authenticated persistence when only data storage is provided", async () => {
@@ -670,6 +906,12 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "src", "blocks", "demo-compound-storage", "children.ts"),
 			"utf8",
 		);
+		const parentManifest = JSON.parse(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "demo-compound-storage", "typia.manifest.json"),
+				"utf8",
+			),
+		);
 		const childEdit = fs.readFileSync(
 			path.join(targetDir, "src", "blocks", "demo-compound-storage-item", "edit.tsx"),
 			"utf8",
@@ -682,6 +924,12 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "src", "blocks", "demo-compound-storage-item", "validators.ts"),
 			"utf8",
 		);
+		const childManifest = JSON.parse(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "demo-compound-storage-item", "typia.manifest.json"),
+				"utf8",
+			),
+		);
 		const parentBlockJson = JSON.parse(
 			fs.readFileSync(
 				path.join(targetDir, "src", "blocks", "demo-compound-storage", "block.json"),
@@ -690,6 +938,15 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 
 		expect(packageJson.devDependencies["@wp-typia/rest"]).toBe(restPackageVersion);
+		expect(packageJson.scripts.dev).toBe(
+			'concurrently -k -n sync-types,sync-rest,editor -c yellow,magenta,blue "npm run watch:sync-types" "npm run watch:sync-rest" "npm run start:editor"',
+		);
+		expect(packageJson.scripts["watch:sync-types"]).toBe(
+			'chokidar "src/blocks/**/types.ts" "scripts/block-config.ts" --debounce 200 -c "npm run sync-types"',
+		);
+		expect(packageJson.scripts["watch:sync-rest"]).toBe(
+			'chokidar "src/blocks/**/api-types.ts" "scripts/block-config.ts" --debounce 200 -c "npm run sync-rest"',
+		);
 		expect(packageJson.scripts.build).toBe(
 			"npm run sync-types && npm run sync-rest && wp-scripts build --experimental-modules",
 		);
@@ -701,6 +958,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
 		expect(parentBlockJson.render).toBe("file:./render.php");
 		expect(parentBlockJson.viewScriptModule).toBe("file:./interactivity.js");
+		expect(parentManifest.attributes.resourceKey.typia.defaultValue).toBe("primary");
 		expect(generatedSyncRest).toContain("syncRestOpenApi");
 		expect(generatedSyncRest).toContain("manifest: block.restManifest");
 		expect(generatedBlockConfig).toContain("src/blocks/demo-compound-storage/api.openapi.json");
@@ -717,6 +975,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(parentEdit).toContain("DEFAULT_CHILD_TEMPLATE");
 		expect(parentEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
 		expect(parentChildren).toContain("DEFAULT_CHILD_BLOCK_NAME");
+		expect(childManifest.attributes.title.typia.defaultValue).toBe("Demo Compound Storage Item");
 		expect(childEdit).toContain("createAttributeUpdater");
 		expect(childEdit).toContain("useTypiaValidation");
 		expect(childEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
@@ -724,6 +983,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(childValidators).toContain("createValidatedAttributeUpdater");
 		expect(generatedAddChild).toContain("ALLOWED_CHILD_MARKER");
 		expect(packageJson.scripts["add-child"]).toBe("tsx scripts/add-compound-child.ts");
+		expect(readme).toContain("npm run dev");
 		expect(readme).toContain("npm run sync-rest");
 		expect(readme).toContain("src/blocks/*/api-types.ts");
 		expect(readme).toContain('npm run add-child -- --slug faq-item --title "FAQ Item"');
@@ -799,6 +1059,7 @@ describe("@wp-typia/create scaffolding", () => {
 			expect(fs.existsSync(path.join(newChildDir, "hooks.ts"))).toBe(true);
 			expect(fs.existsSync(path.join(newChildDir, "index.tsx"))).toBe(true);
 			expect(fs.existsSync(path.join(newChildDir, "save.tsx"))).toBe(true);
+			expect(fs.existsSync(path.join(newChildDir, "typia.manifest.json"))).toBe(true);
 			expect(fs.existsSync(path.join(newChildDir, "types.ts"))).toBe(true);
 			expect(fs.existsSync(path.join(newChildDir, "validators.ts"))).toBe(true);
 			expect(blockConfig).toContain("demo-compound-add-child-faq-item");
@@ -938,7 +1199,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(flow.nextSteps).toEqual([
 			`cd ${projectInput}`,
 			"npm install",
-			"npm run start",
+			"npm run dev",
 		]);
 		expect(flow.optionalOnboarding.steps).toEqual([
 			"npm run sync-types",
@@ -957,6 +1218,8 @@ describe("@wp-typia/create scaffolding", () => {
 			promptText: async (_message, defaultValue) => defaultValue,
 			selectDataStorage: async () => "post-meta",
 			selectPersistencePolicy: async () => "public",
+			selectWithTestPreset: async () => true,
+			selectWithWpEnv: async () => false,
 			templateId: "persistence",
 		});
 
@@ -973,6 +1236,8 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(flow.result.variables.persistencePolicy).toBe("public");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-public.php';");
 		expect(restPublicHelper).toContain("function demo_persistence_prompted_verify_public_write_token");
+		expect(fs.existsSync(path.join(flow.projectDir, ".wp-env.json"))).toBe(false);
+		expect(fs.existsSync(path.join(flow.projectDir, ".wp-env.test.json"))).toBe(true);
 		expect(flow.optionalOnboarding.steps).toEqual([
 			"npm run sync-types",
 			"npm run sync-rest",
@@ -993,7 +1258,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(flow.nextSteps).toEqual([
 			`cd ${projectInput}`,
 			"npm install",
-			"npm run start",
+			"npm run dev",
 		]);
 		expect(flow.optionalOnboarding.steps).toEqual([ "npm run sync-types" ]);
 		expect(flow.optionalOnboarding.note).toContain("do not create migration history");

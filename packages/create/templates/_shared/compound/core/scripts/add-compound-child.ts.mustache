@@ -165,6 +165,88 @@ export interface ${ childTypeName } {
 `;
 }
 
+function renderStarterManifestFile(
+	childTypeName: string,
+	childTitle: string
+): string {
+	return `${ JSON.stringify(
+		{
+			attributes: {
+				title: {
+					typia: {
+						constraints: {
+							exclusiveMaximum: null,
+							exclusiveMinimum: null,
+							format: null,
+							maxLength: 80,
+							maxItems: null,
+							maximum: null,
+							minLength: 1,
+							minItems: null,
+							minimum: null,
+							multipleOf: null,
+							pattern: null,
+							typeTag: null,
+						},
+						defaultValue: childTitle,
+						hasDefault: true,
+					},
+					ts: {
+						items: null,
+						kind: 'string',
+						properties: null,
+						required: true,
+						union: null,
+					},
+					wp: {
+						defaultValue: childTitle,
+						enum: null,
+						hasDefault: true,
+						type: 'string',
+					},
+				},
+				body: {
+					typia: {
+						constraints: {
+							exclusiveMaximum: null,
+							exclusiveMinimum: null,
+							format: null,
+							maxLength: 280,
+							maxItems: null,
+							maximum: null,
+							minLength: 1,
+							minItems: null,
+							minimum: null,
+							multipleOf: null,
+							pattern: null,
+							typeTag: null,
+						},
+						defaultValue: CHILD_PLACEHOLDER,
+						hasDefault: true,
+					},
+					ts: {
+						items: null,
+						kind: 'string',
+						properties: null,
+						required: true,
+						union: null,
+					},
+					wp: {
+						defaultValue: CHILD_PLACEHOLDER,
+						enum: null,
+						hasDefault: true,
+						type: 'string',
+					},
+				},
+			},
+			manifestVersion: 2,
+			sourceType: childTypeName,
+		},
+		null,
+		'\t'
+	) }\n`;
+}
+
 function renderHooksFile(): string {
 	return `import { useEffect, useState } from '@wordpress/element';
 
@@ -426,6 +508,11 @@ function main() {
 		'utf8'
 	);
 	fs.writeFileSync( path.join( childDir, 'types.ts' ), renderTypesFile( childTypeName, childTitle ), 'utf8' );
+	fs.writeFileSync(
+		path.join( childDir, 'typia.manifest.json' ),
+		renderStarterManifestFile( childTypeName, childTitle ),
+		'utf8'
+	);
 	fs.writeFileSync( path.join( childDir, 'hooks.ts' ), renderHooksFile(), 'utf8' );
 	fs.writeFileSync(
 		path.join( childDir, 'validators.ts' ),

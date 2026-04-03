@@ -229,7 +229,6 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
             value={attributes.content}
             onChange={(value) => updateAttribute('content', value)}
             placeholder={__('{{title}} – click me to interact!', '{{textDomain}}')}
-            withoutInteractiveFormatting
           />
 
           {!isValid && (

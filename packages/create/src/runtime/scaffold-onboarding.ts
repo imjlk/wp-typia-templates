@@ -1,5 +1,6 @@
 import { formatRunScript } from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
+import { getPrimaryDevelopmentScript } from "./local-dev-presets.js";
 
 interface SyncOnboardingOptions {
 	compoundPersistenceEnabled?: boolean;
@@ -51,8 +52,17 @@ export function getOptionalOnboardingSteps(
 /**
  * Returns the onboarding note explaining when manual sync is optional.
  */
-export function getOptionalOnboardingNote(packageManager: PackageManagerId): string {
-	return `${formatRunScript(packageManager, "start")} and ${formatRunScript(packageManager, "build")} already run the relevant sync scripts. Run them manually only if you want generated metadata/schema artifacts committed before your first start/build cycle. They do not create migration history.`;
+export function getOptionalOnboardingNote(
+	packageManager: PackageManagerId,
+	templateId = "basic",
+): string {
+	const developmentScript = getPrimaryDevelopmentScript(templateId);
+
+	return `${formatRunScript(packageManager, developmentScript)} ${
+		developmentScript === "dev"
+			? "watches the relevant sync scripts during local development."
+			: "remains the primary local entry point."
+	} ${formatRunScript(packageManager, "start")} and ${formatRunScript(packageManager, "build")} still run one-shot syncs before starting or building. Run the sync scripts manually only if you want generated metadata/schema artifacts committed before your first ${developmentScript}/start/build cycle. They do not create migration history.`;
 }
 
 /**
@@ -64,7 +74,7 @@ export function getTemplateSourceOfTruthNote(
 ): string {
 	if (templateId === "compound") {
 		const compoundBase =
-			"`src/blocks/*/types.ts` files remain the source of truth for each block's `block.json`, `typia.manifest.json`, and `typia-validator.php`.";
+			"`src/blocks/*/types.ts` files remain the source of truth for each block's `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include starter `typia.manifest.json` files so editor imports resolve before the first sync.";
 
 		if (compoundPersistenceEnabled) {
 			return `${compoundBase} For persistence-enabled parents, \`src/blocks/*/api-types.ts\` files remain the source of truth for \`src/blocks/*/api-schemas/*\` when you run \`sync-rest\`.`;
@@ -74,10 +84,10 @@ export function getTemplateSourceOfTruthNote(
 	}
 
 	if (templateId === "persistence") {
-		return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. `src/api-types.ts` remains the source of truth for `src/api-schemas/*` when you run `sync-rest`. This scaffold is intentionally server-rendered: `src/render.php` is the canonical frontend entry, and `src/save.tsx` returns `null` so PHP can inject post context, storage-backed state, and write-policy bootstrap data before hydration.";
+		return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include a starter `typia.manifest.json` so editor imports resolve before the first sync. `src/api-types.ts` remains the source of truth for `src/api-schemas/*` when you run `sync-rest`. This scaffold is intentionally server-rendered: `src/render.php` is the canonical frontend entry, and `src/save.tsx` returns `null` so PHP can inject post context, storage-backed state, and write-policy bootstrap data before hydration.";
 	}
 
-	return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`.";
+	return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include a starter `typia.manifest.json` so editor imports resolve before the first sync.";
 }
 
 /**

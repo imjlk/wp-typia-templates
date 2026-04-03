@@ -111,7 +111,6 @@ function Edit({ attributes, setAttributes }: EditProps) {
             value={attributes.content || ''}
             onChange={(value) => updateAttribute('content', value)}
             placeholder={__('Add your content...', '{{textDomain}}')}
-            withoutInteractiveFormatting
           />
         </div>
         {!isValid && (

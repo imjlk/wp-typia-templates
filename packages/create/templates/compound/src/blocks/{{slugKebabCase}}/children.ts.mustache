@@ -1,3 +1,5 @@
+import type { Template } from '@wordpress/blocks';
+
 export const DEFAULT_CHILD_BLOCK_NAME = '{{namespace}}/{{slugKebabCase}}-item';
 
 export const ALLOWED_CHILD_BLOCKS = [
@@ -5,7 +7,7 @@ export const ALLOWED_CHILD_BLOCKS = [
 	// add-child: insert new allowed child block names here
 ];
 
-export const DEFAULT_CHILD_TEMPLATE = [
+export const DEFAULT_CHILD_TEMPLATE: Template[] = [
 	[
 		DEFAULT_CHILD_BLOCK_NAME,
 		{
