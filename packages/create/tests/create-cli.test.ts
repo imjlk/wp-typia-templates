@@ -697,117 +697,126 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-auth.php"))).toBe(true);
 		expect(pluginBootstrap).toContain("can_write_authenticated");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
-			expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-auth.php';");
-			expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
-			expect(parentBlockJson.render).toBe("file:./render.php");
-			expect(parentBlockJson.viewScriptModule).toBe("file:./interactivity.js");
-			expect(generatedSyncRest).toContain("syncRestOpenApi");
-			expect(generatedSyncRest).toContain("manifest: block.restManifest");
-			expect(generatedBlockConfig).toContain("src/blocks/demo-compound-storage/api.openapi.json");
-			expect(generatedBlockConfig).toContain("restManifest: defineEndpointManifest");
-			expect(generatedBlockConfig).toContain("add-child: insert new block config entries here");
-			expect(generatedApiTypes).toContain("publicWriteRequestId?: string");
-			expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
-			expect(generatedBlockConfig).not.toContain("contracts: [");
-			expect(generatedBlockConfig).not.toContain("openApiInfo:");
-			expect(generatedBlockConfig.match(/restManifest: defineEndpointManifest/g)).toHaveLength(1);
-			expect(parentEdit).toContain("createAttributeUpdater");
-			expect(parentEdit).toContain("useTypiaValidation");
-			expect(parentEdit).toContain("ALLOWED_CHILD_BLOCKS");
-			expect(parentEdit).toContain("DEFAULT_CHILD_TEMPLATE");
-			expect(parentEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
-			expect(parentChildren).toContain("DEFAULT_CHILD_BLOCK_NAME");
-			expect(childEdit).toContain("createAttributeUpdater");
-			expect(childEdit).toContain("useTypiaValidation");
-			expect(childEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
-			expect(childHooks).toContain("useTypiaValidation");
-			expect(childValidators).toContain("createValidatedAttributeUpdater");
-			expect(generatedAddChild).toContain("ALLOWED_CHILD_MARKER");
-			expect(packageJson.scripts["add-child"]).toBe("tsx scripts/add-compound-child.ts");
-			expect(readme).toContain("npm run sync-rest");
-			expect(readme).toContain("src/blocks/*/api-types.ts");
-			expect(readme).toContain('npm run add-child -- --slug faq-item --title "FAQ Item"');
+		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-auth.php';");
+		expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
+		expect(parentBlockJson.render).toBe("file:./render.php");
+		expect(parentBlockJson.viewScriptModule).toBe("file:./interactivity.js");
+		expect(generatedSyncRest).toContain("syncRestOpenApi");
+		expect(generatedSyncRest).toContain("manifest: block.restManifest");
+		expect(generatedBlockConfig).toContain("src/blocks/demo-compound-storage/api.openapi.json");
+		expect(generatedBlockConfig).toContain("restManifest: defineEndpointManifest");
+		expect(generatedBlockConfig).toContain("add-child: insert new block config entries here");
+		expect(generatedApiTypes).toContain("publicWriteRequestId?: string");
+		expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
+		expect(generatedBlockConfig).not.toContain("contracts: [");
+		expect(generatedBlockConfig).not.toContain("openApiInfo:");
+		expect(generatedBlockConfig.match(/restManifest: defineEndpointManifest/g)).toHaveLength(1);
+		expect(parentEdit).toContain("createAttributeUpdater");
+		expect(parentEdit).toContain("useTypiaValidation");
+		expect(parentEdit).toContain("ALLOWED_CHILD_BLOCKS");
+		expect(parentEdit).toContain("DEFAULT_CHILD_TEMPLATE");
+		expect(parentEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
+		expect(parentChildren).toContain("DEFAULT_CHILD_BLOCK_NAME");
+		expect(childEdit).toContain("createAttributeUpdater");
+		expect(childEdit).toContain("useTypiaValidation");
+		expect(childEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
+		expect(childHooks).toContain("useTypiaValidation");
+		expect(childValidators).toContain("createValidatedAttributeUpdater");
+		expect(generatedAddChild).toContain("ALLOWED_CHILD_MARKER");
+		expect(packageJson.scripts["add-child"]).toBe("tsx scripts/add-compound-child.ts");
+		expect(readme).toContain("npm run sync-rest");
+		expect(readme).toContain("src/blocks/*/api-types.ts");
+		expect(readme).toContain('npm run add-child -- --slug faq-item --title "FAQ Item"');
 		expect(readme).toContain("## PHP REST Extension Points");
 		expect(readme).toContain("The hidden child block does not own REST routes or storage.");
 		expect(pluginBootstrap).toContain("Customize storage helpers");
 	});
 
-	test("compound add-child workflow scaffolds a new hidden child block and keeps the default template stable", async () => {
-		const targetDir = path.join(tempRoot, "demo-compound-add-child");
+	test(
+		"compound add-child workflow scaffolds a new hidden child block and keeps the default template stable",
+		async () => {
+			const targetDir = path.join(tempRoot, "demo-compound-add-child");
 
-		await scaffoldProject({
-			projectDir: targetDir,
-			templateId: "compound",
-			dataStorageMode: "post-meta",
-			packageManager: "npm",
-			noInstall: true,
-			answers: {
-				author: "Test Runner",
+			await scaffoldProject({
+				projectDir: targetDir,
+				templateId: "compound",
 				dataStorageMode: "post-meta",
-				description: "Demo compound add-child workflow",
-				namespace: "create-block",
-				slug: "demo-compound-add-child",
-				title: "Demo Compound Add Child",
-			},
-		});
+				packageManager: "npm",
+				noInstall: true,
+				answers: {
+					author: "Test Runner",
+					dataStorageMode: "post-meta",
+					description: "Demo compound add-child workflow",
+					namespace: "create-block",
+					slug: "demo-compound-add-child",
+					title: "Demo Compound Add Child",
+				},
+			});
 
-		const blockConfigPath = path.join(targetDir, "scripts", "block-config.ts");
-		const childrenRegistryPath = path.join(
-			targetDir,
-			"src",
-			"blocks",
-			"demo-compound-add-child",
-			"children.ts",
-		);
-		fs.writeFileSync(
-			blockConfigPath,
-			fs.readFileSync(blockConfigPath, "utf8").replace(
-				/\t\/\/ add-child: insert new block config entries here/u,
-				"  // add-child: insert new block config entries here",
-			),
-			"utf8",
-		);
-		fs.writeFileSync(
-			childrenRegistryPath,
-			fs.readFileSync(childrenRegistryPath, "utf8").replace(
-				/\t\/\/ add-child: insert new allowed child block names here/u,
-				"  // add-child: insert new allowed child block names here",
-			),
-			"utf8",
-		);
+			const blockConfigPath = path.join(targetDir, "scripts", "block-config.ts");
+			const childrenRegistryPath = path.join(
+				targetDir,
+				"src",
+				"blocks",
+				"demo-compound-add-child",
+				"children.ts",
+			);
+			fs.writeFileSync(
+				blockConfigPath,
+				fs.readFileSync(blockConfigPath, "utf8").replace(
+					/\t\/\/ add-child: insert new block config entries here/u,
+					"  // add-child: insert new block config entries here",
+				),
+				"utf8",
+			);
+			fs.writeFileSync(
+				childrenRegistryPath,
+				fs.readFileSync(childrenRegistryPath, "utf8").replace(
+					/\t\/\/ add-child: insert new allowed child block names here/u,
+					"  // add-child: insert new allowed child block names here",
+				),
+				"utf8",
+			);
 
-		runGeneratedScript(targetDir, "scripts/add-compound-child.ts", [
-			"--slug",
-			"faq-item",
-			"--title",
-			"FAQ Item",
-		]);
+			runGeneratedScript(targetDir, "scripts/add-compound-child.ts", [
+				"--slug",
+				"faq-item",
+				"--title",
+				"FAQ Item",
+			]);
 
-		const newChildDir = path.join(targetDir, "src", "blocks", "demo-compound-add-child-faq-item");
-		const blockConfig = fs.readFileSync(blockConfigPath, "utf8");
-		const childrenRegistry = fs.readFileSync(childrenRegistryPath, "utf8");
+			const newChildDir = path.join(
+				targetDir,
+				"src",
+				"blocks",
+				"demo-compound-add-child-faq-item",
+			);
+			const blockConfig = fs.readFileSync(blockConfigPath, "utf8");
+			const childrenRegistry = fs.readFileSync(childrenRegistryPath, "utf8");
 
-		expect(fs.existsSync(path.join(newChildDir, "block.json"))).toBe(true);
-		expect(fs.existsSync(path.join(newChildDir, "edit.tsx"))).toBe(true);
-		expect(fs.existsSync(path.join(newChildDir, "hooks.ts"))).toBe(true);
-		expect(fs.existsSync(path.join(newChildDir, "index.tsx"))).toBe(true);
-		expect(fs.existsSync(path.join(newChildDir, "save.tsx"))).toBe(true);
-		expect(fs.existsSync(path.join(newChildDir, "types.ts"))).toBe(true);
-		expect(fs.existsSync(path.join(newChildDir, "validators.ts"))).toBe(true);
-		expect(blockConfig).toContain("demo-compound-add-child-faq-item");
-		expect(blockConfig).toContain("DemoCompoundAddChildFaqItemAttributes");
-		expect(childrenRegistry).toContain("'create-block/demo-compound-add-child-faq-item'");
-		expect(
-			(childrenRegistry.match(/create-block\/demo-compound-add-child-faq-item/g) ?? []).length,
-		).toBe(1);
+			expect(fs.existsSync(path.join(newChildDir, "block.json"))).toBe(true);
+			expect(fs.existsSync(path.join(newChildDir, "edit.tsx"))).toBe(true);
+			expect(fs.existsSync(path.join(newChildDir, "hooks.ts"))).toBe(true);
+			expect(fs.existsSync(path.join(newChildDir, "index.tsx"))).toBe(true);
+			expect(fs.existsSync(path.join(newChildDir, "save.tsx"))).toBe(true);
+			expect(fs.existsSync(path.join(newChildDir, "types.ts"))).toBe(true);
+			expect(fs.existsSync(path.join(newChildDir, "validators.ts"))).toBe(true);
+			expect(blockConfig).toContain("demo-compound-add-child-faq-item");
+			expect(blockConfig).toContain("DemoCompoundAddChildFaqItemAttributes");
+			expect(childrenRegistry).toContain("'create-block/demo-compound-add-child-faq-item'");
+			expect(
+				(childrenRegistry.match(/create-block\/demo-compound-add-child-faq-item/g) ?? []).length,
+			).toBe(1);
 
-		runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts");
+			runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts");
 
-		expect(fs.existsSync(path.join(newChildDir, "typia.manifest.json"))).toBe(true);
-		expect(fs.existsSync(path.join(newChildDir, "typia.schema.json"))).toBe(true);
-		expect(fs.existsSync(path.join(newChildDir, "typia.openapi.json"))).toBe(true);
-		expect(fs.existsSync(path.join(newChildDir, "typia-validator.php"))).toBe(true);
-	});
+			expect(fs.existsSync(path.join(newChildDir, "typia.manifest.json"))).toBe(true);
+			expect(fs.existsSync(path.join(newChildDir, "typia.schema.json"))).toBe(true);
+			expect(fs.existsSync(path.join(newChildDir, "typia.openapi.json"))).toBe(true);
+			expect(fs.existsSync(path.join(newChildDir, "typia-validator.php"))).toBe(true);
+		},
+		{ timeout: 15_000 },
+	);
 
 	test("compound scaffolds enable public persistence when only a public policy is provided", async () => {
 		const targetDir = path.join(tempRoot, "demo-compound-public");

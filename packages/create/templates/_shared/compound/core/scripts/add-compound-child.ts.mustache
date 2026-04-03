@@ -25,13 +25,21 @@ function parseArgs() {
 	for ( let index = 0; index < args.length; index += 1 ) {
 		const arg = args[ index ];
 		if ( arg === '--slug' ) {
-			parsed.slug = args[ index + 1 ];
+			const value = args[ index + 1 ];
+			if ( ! value || value.startsWith( '--' ) ) {
+				throw new Error( '--slug requires a value.' );
+			}
+			parsed.slug = value;
 			index += 1;
 			continue;
 		}
 
 		if ( arg === '--title' ) {
-			parsed.title = args[ index + 1 ];
+			const value = args[ index + 1 ];
+			if ( ! value || value.startsWith( '--' ) ) {
+				throw new Error( '--title requires a value.' );
+			}
+			parsed.title = value;
 			index += 1;
 			continue;
 		}
@@ -263,7 +271,7 @@ export function createAttributeUpdater(
 }
 
 function renderEditFile(
-	childBlockName: string,
+	childFolderSlug: string,
 	childTypeName: string,
 	childInterfaceName: string,
 	childTitle: string
@@ -293,17 +301,17 @@ export default function Edit( {
 \t);
 
 \treturn (
-\t\t<div { ...useBlockProps( { className: 'wp-block-${ childBlockName }' } ) }>
+\t\t<div { ...useBlockProps( { className: 'wp-block-${ childFolderSlug }' } ) }>
 \t\t\t<RichText
 \t\t\t\ttagName="h4"
-\t\t\t\tclassName="wp-block-${ childBlockName }__title"
+\t\t\t\tclassName="wp-block-${ childFolderSlug }__title"
 \t\t\t\tvalue={ attributes.title ?? '' }
 \t\t\t\tonChange={ ( title ) => updateAttribute( 'title', title ) }
 \t\t\t\tplaceholder={ __( ${ JSON.stringify( childTitle ) }, '${ TEXT_DOMAIN }' ) }
 \t\t\t/>
 \t\t\t<RichText
 \t\t\t\ttagName="p"
-\t\t\t\tclassName="wp-block-${ childBlockName }__body"
+\t\t\t\tclassName="wp-block-${ childFolderSlug }__body"
 \t\t\t\tvalue={ attributes.body ?? '' }
 \t\t\t\tonChange={ ( body ) => updateAttribute( 'body', body ) }
 \t\t\t\tplaceholder={ __( ${ JSON.stringify( CHILD_PLACEHOLDER ) }, '${ TEXT_DOMAIN }' ) }
@@ -323,7 +331,7 @@ export default function Edit( {
 `;
 }
 
-function renderSaveFile( childBlockName: string, childTypeName: string ): string {
+function renderSaveFile( childFolderSlug: string, childTypeName: string ): string {
 	return `import { RichText, useBlockProps } from '@wordpress/block-editor';
 
 import type { ${ childTypeName } } from './types';
@@ -334,15 +342,15 @@ export default function Save( {
 \tattributes: ${ childTypeName };
 } ) {
 \treturn (
-\t\t<div { ...useBlockProps.save( { className: 'wp-block-${ childBlockName }' } ) }>
+\t\t<div { ...useBlockProps.save( { className: 'wp-block-${ childFolderSlug }' } ) }>
 \t\t\t<RichText.Content
 \t\t\t\ttagName="h4"
-\t\t\t\tclassName="wp-block-${ childBlockName }__title"
+\t\t\t\tclassName="wp-block-${ childFolderSlug }__title"
 \t\t\t\tvalue={ attributes.title }
 \t\t\t/>
 \t\t\t<RichText.Content
 \t\t\t\ttagName="p"
-\t\t\t\tclassName="wp-block-${ childBlockName }__body"
+\t\t\t\tclassName="wp-block-${ childFolderSlug }__body"
 \t\t\t\tvalue={ attributes.body }
 \t\t\t/>
 \t\t</div>
