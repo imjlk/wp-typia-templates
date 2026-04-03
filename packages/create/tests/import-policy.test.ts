@@ -37,8 +37,10 @@ describe("@wp-typia/create import policy", () => {
 		expect(typeof rootModule.projectJsonSchemaDocument).toBe("function");
 		expect(typeof rootModule.manifestToJsonSchema).toBe("function");
 		expect(typeof rootModule.manifestToOpenApi).toBe("function");
+		expect(typeof rootModule.runSyncBlockMetadata).toBe("function");
 
 		expect(typeof metadataCoreModule.defineEndpointManifest).toBe("function");
+		expect(typeof metadataCoreModule.runSyncBlockMetadata).toBe("function");
 		expect(typeof metadataCoreModule.syncRestOpenApi).toBe("function");
 		expect(typeof blocksModule.buildScaffoldBlockRegistration).toBe("function");
 		expect(typeof blocksModule.createTypiaWebpackConfig).toBe("function");

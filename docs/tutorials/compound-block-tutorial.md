@@ -184,6 +184,8 @@ After adding the child block type, run:
 npm run sync-types
 ```
 
+`npm run sync-types` stays warn-only by default, `npm run sync-types -- --fail-on-lossy` fails only on lossy WordPress projection warnings, and `npm run sync-types -- --strict --report json` emits a CI-friendly JSON report while failing on every warning.
+
 ## Step 7: Optional Persistence on the Parent
 
 When you pass `--data-storage` or `--persistence-policy`, only the parent block gets persistence wiring.

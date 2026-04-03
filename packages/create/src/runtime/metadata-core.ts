@@ -118,6 +118,44 @@ export interface SyncBlockMetadataResult {
   phpValidatorPath: string;
 }
 
+export type SyncBlockMetadataStatus = 'success' | 'warning' | 'error';
+
+export type SyncBlockMetadataFailureCode =
+  | 'unsupported-type-node'
+  | 'unsupported-type-pattern'
+  | 'recursive-type'
+  | 'invalid-source-type'
+  | 'typescript-diagnostic'
+  | 'unknown-internal-error';
+
+export interface SyncBlockMetadataFailure {
+  code: SyncBlockMetadataFailureCode;
+  message: string;
+  name: string;
+}
+
+export interface SyncBlockMetadataExecutionOptions {
+  failOnLossy?: boolean;
+  failOnPhpWarnings?: boolean;
+  strict?: boolean;
+}
+
+export interface SyncBlockMetadataReport {
+  attributeNames: string[];
+  blockJsonPath: string | null;
+  jsonSchemaPath: string | null;
+  lossyProjectionWarnings: string[];
+  manifestPath: string | null;
+  openApiPath: string | null;
+  phpGenerationWarnings: string[];
+  phpValidatorPath: string | null;
+  failure: SyncBlockMetadataFailure | null;
+  failOnLossy: boolean;
+  failOnPhpWarnings: boolean;
+  status: SyncBlockMetadataStatus;
+  strict: boolean;
+}
+
 export interface SyncTypeSchemaOptions {
   jsonSchemaFile: string;
   openApiFile?: string;
@@ -299,10 +337,37 @@ const DEFAULT_CONSTRAINTS = (): AttributeConstraints => ({
   typeTag: null,
 });
 
-export async function syncBlockMetadata(
+const SYNC_BLOCK_METADATA_FAILURE_CODE = Symbol(
+  'sync-block-metadata-failure-code',
+);
+
+type TaggedSyncBlockMetadataError = Error & {
+  [SYNC_BLOCK_METADATA_FAILURE_CODE]?: SyncBlockMetadataFailureCode;
+};
+
+interface ResolvedSyncBlockMetadataPaths {
+  blockJsonPath: string;
+  jsonSchemaPath: string | null;
+  manifestPath: string;
+  openApiPath: string | null;
+  phpValidatorPath: string;
+  projectRoot: string;
+}
+
+function tagSyncBlockMetadataError(
+  error: Error,
+  code: SyncBlockMetadataFailureCode,
+): Error {
+  (
+    error as TaggedSyncBlockMetadataError
+  )[SYNC_BLOCK_METADATA_FAILURE_CODE] = code;
+  return error;
+}
+
+function resolveSyncBlockMetadataPaths(
   options: SyncBlockMetadataOptions,
-): Promise<SyncBlockMetadataResult> {
-  const { projectRoot, rootNode } = analyzeSourceType(options);
+): ResolvedSyncBlockMetadataPaths {
+  const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
   const blockJsonPath = path.resolve(projectRoot, options.blockJsonFile);
   const manifestRelativePath =
     options.manifestFile ??
@@ -313,6 +378,27 @@ export async function syncBlockMetadata(
     options.phpValidatorFile ??
       path.join(path.dirname(manifestRelativePath), 'typia-validator.php'),
   );
+
+  return {
+    blockJsonPath,
+    jsonSchemaPath: options.jsonSchemaFile
+      ? path.resolve(projectRoot, options.jsonSchemaFile)
+      : null,
+    manifestPath,
+    openApiPath: options.openApiFile
+      ? path.resolve(projectRoot, options.openApiFile)
+      : null,
+    phpValidatorPath,
+    projectRoot,
+  };
+}
+
+export async function syncBlockMetadata(
+  options: SyncBlockMetadataOptions,
+): Promise<SyncBlockMetadataResult> {
+  const { blockJsonPath, jsonSchemaPath, manifestPath, openApiPath, phpValidatorPath } =
+    resolveSyncBlockMetadataPaths(options);
+  const { rootNode } = analyzeSourceType(options);
 
   if (rootNode.kind !== 'object' || rootNode.properties === undefined) {
     throw new Error(
@@ -355,12 +441,6 @@ export async function syncBlockMetadata(
   fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, '\t'));
 
-  const jsonSchemaPath = options.jsonSchemaFile
-    ? path.resolve(projectRoot, options.jsonSchemaFile)
-    : undefined;
-  const openApiPath = options.openApiFile
-    ? path.resolve(projectRoot, options.openApiFile)
-    : undefined;
   if (jsonSchemaPath) {
     fs.mkdirSync(path.dirname(jsonSchemaPath), { recursive: true });
     fs.writeFileSync(
@@ -389,13 +469,64 @@ export async function syncBlockMetadata(
   return {
     attributeNames: Object.keys(rootNode.properties),
     blockJsonPath,
-    jsonSchemaPath,
+    ...(jsonSchemaPath ? { jsonSchemaPath } : {}),
     lossyProjectionWarnings: [...new Set(lossyProjectionWarnings)].sort(),
     manifestPath,
-    openApiPath,
+    ...(openApiPath ? { openApiPath } : {}),
     phpGenerationWarnings: [...new Set(phpValidator.warnings)].sort(),
     phpValidatorPath,
   };
+}
+
+export async function runSyncBlockMetadata(
+  options: SyncBlockMetadataOptions,
+  executionOptions: SyncBlockMetadataExecutionOptions = {},
+): Promise<SyncBlockMetadataReport> {
+  const strict = executionOptions.strict === true;
+  const failOnLossy = strict || executionOptions.failOnLossy === true;
+  const failOnPhpWarnings = strict || executionOptions.failOnPhpWarnings === true;
+  const resolvedPaths = resolveSyncBlockMetadataPaths(options);
+
+  try {
+    const result = await syncBlockMetadata(options);
+    const hasLossyWarnings = result.lossyProjectionWarnings.length > 0;
+    const hasPhpWarnings = result.phpGenerationWarnings.length > 0;
+    const hasWarnings = hasLossyWarnings || hasPhpWarnings;
+    const warningsAreErrors =
+      (hasLossyWarnings && failOnLossy) || (hasPhpWarnings && failOnPhpWarnings);
+
+    return {
+      attributeNames: result.attributeNames,
+      blockJsonPath: result.blockJsonPath,
+      jsonSchemaPath: result.jsonSchemaPath ?? null,
+      lossyProjectionWarnings: result.lossyProjectionWarnings,
+      manifestPath: result.manifestPath,
+      openApiPath: result.openApiPath ?? null,
+      phpGenerationWarnings: result.phpGenerationWarnings,
+      phpValidatorPath: result.phpValidatorPath,
+      failure: null,
+      failOnLossy,
+      failOnPhpWarnings,
+      status: warningsAreErrors ? 'error' : hasWarnings ? 'warning' : 'success',
+      strict,
+    };
+  } catch (error) {
+    return {
+      attributeNames: [],
+      blockJsonPath: resolvedPaths.blockJsonPath,
+      jsonSchemaPath: resolvedPaths.jsonSchemaPath,
+      lossyProjectionWarnings: [],
+      manifestPath: resolvedPaths.manifestPath,
+      openApiPath: resolvedPaths.openApiPath,
+      phpGenerationWarnings: [],
+      phpValidatorPath: resolvedPaths.phpValidatorPath,
+      failure: normalizeSyncBlockMetadataFailure(error),
+      failOnLossy,
+      failOnPhpWarnings,
+      status: 'error',
+      strict,
+    };
+  }
 }
 
 export async function syncTypeSchemas(
@@ -2428,8 +2559,67 @@ function getOwningPackageName(
   }
 }
 
+function normalizeSyncBlockMetadataFailure(
+  error: unknown,
+): SyncBlockMetadataFailure {
+  if (error instanceof Error) {
+    return {
+      code: resolveSyncBlockMetadataFailureCode(error),
+      message: error.message,
+      name: error.name,
+    };
+  }
+
+  return {
+    code: 'unknown-internal-error',
+    message: String(error),
+    name: 'NonErrorThrow',
+  };
+}
+
+function resolveSyncBlockMetadataFailureCode(
+  error: Error,
+): SyncBlockMetadataFailureCode {
+  const taggedCode = (
+    error as TaggedSyncBlockMetadataError
+  )[SYNC_BLOCK_METADATA_FAILURE_CODE];
+  if (taggedCode) {
+    return taggedCode;
+  }
+
+  const { message } = error;
+  if (message.startsWith('Unsupported type node at ')) {
+    return 'unsupported-type-node';
+  }
+  if (
+    message.startsWith('Recursive types are not supported:') ||
+    message.startsWith('Recursive type')
+  ) {
+    return 'recursive-type';
+  }
+  if (
+    message.startsWith('Unable to load types file:') ||
+    message.startsWith('Unable to find source type "') ||
+    message.includes('must resolve to an object shape')
+  ) {
+    return 'invalid-source-type';
+  }
+  if (
+    message.startsWith('Unsupported ') ||
+    message.startsWith('Indexed access ') ||
+    message.startsWith('Intersection at ') ||
+    message.startsWith('Only object-like interface extensions are supported:') ||
+    message.startsWith('Array type is missing an item type at ')
+  ) {
+    return 'unsupported-type-pattern';
+  }
+
+  return 'unknown-internal-error';
+}
+
 function formatDiagnosticError(diagnostic: ts.Diagnostic): Error {
-  return new Error(
-    ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'),
+  return tagSyncBlockMetadataError(
+    new Error(ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')),
+    'typescript-diagnostic',
   );
 }

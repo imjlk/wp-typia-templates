@@ -121,6 +121,17 @@ Each scaffolded project exposes a few predictable files:
 - `typia-validator.php`: generated PHP validator for the supported server-side subset
 - optional `typia.schema.json` / `typia.openapi.json` when schema output is enabled
 
+Generated projects also expose `sync-types` as the metadata generator entrypoint.
+It stays warn-only by default, supports `-- --fail-on-lossy` when CI should fail
+only on lossy WordPress projections, and supports
+`-- --strict --report json` when CI should fail on all warnings while reading a
+machine-friendly JSON report from stdout. Hard source-analysis and unsupported
+type failures still exit non-zero regardless of mode.
+
+If you need the same behavior programmatically, `@wp-typia/create/metadata-core`
+also exposes `runSyncBlockMetadata(...)` alongside the lower-level
+`syncBlockMetadata(...)`.
+
 Generated projects can also import shared runtime helpers from `@wp-typia/create`:
 
 - `@wp-typia/create/runtime/blocks`

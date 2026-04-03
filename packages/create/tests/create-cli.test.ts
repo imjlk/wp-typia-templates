@@ -281,12 +281,102 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(readme).toContain("npm run start");
 		expect(readme).toContain("## Optional First Sync");
 		expect(readme).toContain("npm run sync-types");
+		expect(readme).toContain("-- --fail-on-lossy");
+		expect(readme).toContain("-- --strict --report json");
 		expect(readme).not.toContain("npm run sync-rest");
 		expect(readme).toContain("watches the relevant sync scripts during local development");
 		expect(readme).toContain("do not create migration history");
 		expect(readme).not.toContain("## PHP REST Extension Points");
 
 		typecheckGeneratedProject(targetDir);
+	});
+
+	test("generated sync-types scripts support strict and JSON report modes", async () => {
+		const targetDir = path.join(tempRoot, "demo-sync-types-report");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "basic",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo sync-types report block",
+				namespace: "create-block",
+				slug: "demo-sync-types-report",
+				title: "Demo Sync Types Report",
+			},
+		});
+
+		const syncScriptPath = path.join(targetDir, "scripts", "sync-types-to-block-json.ts");
+		const syncScript = fs.readFileSync(syncScriptPath, "utf8");
+		const typesPath = path.join(targetDir, "src", "types.ts");
+
+		expect(syncScript).toContain("runSyncBlockMetadata");
+		expect(syncScript).toContain("--strict");
+		expect(syncScript).toContain("--report");
+		expect(syncScript).toContain("--fail-on-lossy");
+		expect(syncScript).toContain("Unknown sync-types flag");
+		expect(syncScript).toContain("Generated attributes");
+
+		fs.writeFileSync(
+			typesPath,
+			[
+				'import { tags } from "typia";',
+				"",
+				"export interface DemoSyncTypesReportAttributes {",
+				'  title: string & tags.Default<"Hello world">;',
+				"  settings: {",
+				"    slug: string & tags.MinLength<1>;",
+				"  };",
+				'  endpoint?: string & tags.Format<"hostname">;',
+				"}",
+				"",
+			].join("\n"),
+		);
+
+		const warningOutput = runGeneratedScript(
+			targetDir,
+			"scripts/sync-types-to-block-json.ts",
+			["--report", "json"],
+		);
+		const warningReport = JSON.parse(
+			typeof warningOutput === "string" ? warningOutput : warningOutput.toString("utf8"),
+		);
+
+		expect(warningReport.status).toBe("warning");
+		expect(warningReport.strict).toBe(false);
+		expect(warningReport.failOnLossy).toBe(false);
+		expect(warningReport.failOnPhpWarnings).toBe(false);
+		expect(warningReport.lossyProjectionWarnings.length).toBeGreaterThan(0);
+		expect(warningReport.phpGenerationWarnings).toContain(
+			'endpoint: unsupported PHP validator format "hostname"',
+		);
+
+		let strictError: unknown;
+		try {
+			runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
+				"--strict",
+				"--report",
+				"json",
+			]);
+		} catch (error) {
+			strictError = error;
+		}
+
+		expect(strictError).toBeDefined();
+		const strictStdout = (strictError as { stdout?: Buffer | string }).stdout ?? "";
+		const strictReport = JSON.parse(
+			typeof strictStdout === "string" ? strictStdout : strictStdout.toString("utf8"),
+		);
+
+		expect(strictReport.status).toBe("error");
+		expect(strictReport.failure).toBeNull();
+		expect(strictReport.strict).toBe(true);
+		expect(strictReport.failOnLossy).toBe(true);
+		expect(strictReport.failOnPhpWarnings).toBe(true);
+		expect(strictReport.lossyProjectionWarnings.length).toBeGreaterThan(0);
+		expect(strictReport.phpGenerationWarnings.length).toBeGreaterThan(0);
 	});
 
 	test("scaffoldProject creates an interactivity template with typed validation wiring", async () => {
