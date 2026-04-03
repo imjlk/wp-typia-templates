@@ -98,10 +98,9 @@ export const SPACING_SUPPORT_KEYS = [
 	"padding",
 ] as const satisfies readonly SpacingSupportKey[];
 
-type BlockSupportDefaultControls<TFeature extends string> = Partial<
-	Record<TFeature, boolean>
-> &
-	Readonly<Record<string, boolean | undefined>>;
+type BlockSupportDefaultControls<TFeature extends string> = Readonly<
+	Partial<Record<TFeature, boolean>> & Record<string, boolean | undefined>
+>;
 
 export interface BlockBorderSupport {
 	readonly color?: boolean;
@@ -115,11 +114,17 @@ export interface BlockBorderSupport {
 
 export interface BlockColorSupport {
 	readonly background?: boolean;
-	/** Dedicated button color support used by recent WordPress releases. */
+	/**
+	 * Dedicated button color support documented in the Block Supports reference
+	 * as stable since WordPress 6.5.
+	 */
 	readonly button?: boolean;
 	readonly enableContrastChecker?: boolean;
 	readonly gradients?: boolean;
-	/** Dedicated heading color support used by recent WordPress releases. */
+	/**
+	 * Dedicated heading color support documented in the Block Supports reference
+	 * as stable since WordPress 6.5.
+	 */
 	readonly heading?: boolean;
 	readonly link?: boolean;
 	readonly text?: boolean;

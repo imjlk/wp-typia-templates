@@ -234,23 +234,23 @@ module.exports = async () => {
 				alias: {
 					...( config.resolve?.alias || {} ),
 					'@wp-typia/create/runtime/blocks': path.resolve(
-						process.cwd(),
+						__dirname,
 						'../../packages/create/src/runtime/blocks.ts'
 					),
 					'@wp-typia/create/runtime/defaults': path.resolve(
-						process.cwd(),
+						__dirname,
 						'../../packages/create/src/runtime/defaults.ts'
 					),
 					'@wp-typia/create/runtime/editor': path.resolve(
-						process.cwd(),
+						__dirname,
 						'../../packages/create/src/runtime/editor.ts'
 					),
 					'@wp-typia/create/runtime/schema-core': path.resolve(
-						process.cwd(),
+						__dirname,
 						'../../packages/create/src/runtime/schema-core.ts'
 					),
 					'@wp-typia/create/runtime/validation': path.resolve(
-						process.cwd(),
+						__dirname,
 						'../../packages/create/src/runtime/validation.ts'
 					),
 				},
