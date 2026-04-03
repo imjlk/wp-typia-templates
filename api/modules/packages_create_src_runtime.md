@@ -19,6 +19,8 @@
 - [createEditorModel](packages_create_src_runtime.md#createeditormodel)
 - [describeEditorField](packages_create_src_runtime.md#describeeditorfield)
 - [formatEditorFieldLabel](packages_create_src_runtime.md#formateditorfieldlabel)
+- [buildScaffoldBlockRegistration](packages_create_src_runtime.md#buildscaffoldblockregistration)
+- [createTypiaWebpackConfig](packages_create_src_runtime.md#createtypiawebpackconfig)
 - [manifestAttributeToJsonSchema](packages_create_src_runtime.md#manifestattributetojsonschema)
 - [projectJsonSchemaDocument](packages_create_src_runtime.md#projectjsonschemadocument)
 - [manifestToJsonSchema](packages_create_src_runtime.md#manifesttojsonschema)
@@ -50,6 +52,8 @@
 - [ManifestTsKind](packages_create_src_runtime.md#manifesttskind)
 - [JsonValue](packages_create_src_runtime.md#jsonvalue)
 - [createAttributeUpdater](packages_create_src_runtime.md#createattributeupdater)
+- [createScaffoldValidatorToolkit](packages_create_src_runtime.md#createscaffoldvalidatortoolkit)
+- [createUseTypiaValidationHook](packages_create_src_runtime.md#createusetypiavalidationhook)
 - [createNestedAttributeUpdater](packages_create_src_runtime.md#createnestedattributeupdater)
 - [formatValidationError](packages_create_src_runtime.md#formatvalidationerror)
 - [formatValidationErrors](packages_create_src_runtime.md#formatvalidationerrors)
@@ -169,6 +173,18 @@ ___
 ### formatEditorFieldLabel
 
 Re-exports [formatEditorFieldLabel](packages_create_src_runtime_editor.md#formateditorfieldlabel)
+
+___
+
+### buildScaffoldBlockRegistration
+
+Re-exports [buildScaffoldBlockRegistration](packages_create_src_runtime_blocks.md#buildscaffoldblockregistration)
+
+___
+
+### createTypiaWebpackConfig
+
+Re-exports [createTypiaWebpackConfig](packages_create_src_runtime_blocks.md#createtypiawebpackconfig)
 
 ___
 
@@ -355,6 +371,18 @@ ___
 ### createAttributeUpdater
 
 Re-exports [createAttributeUpdater](packages_create_src_runtime_validation.md#createattributeupdater)
+
+___
+
+### createScaffoldValidatorToolkit
+
+Re-exports [createScaffoldValidatorToolkit](packages_create_src_runtime_validation.md#createscaffoldvalidatortoolkit)
+
+___
+
+### createUseTypiaValidationHook
+
+Re-exports [createUseTypiaValidationHook](packages_create_src_runtime_validation.md#createusetypiavalidationhook)
 
 ___
 

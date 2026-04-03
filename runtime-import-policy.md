@@ -13,6 +13,7 @@ Generated projects may rely on these import paths as supported public API:
 
 - `@wp-typia/create`
 - `@wp-typia/create/metadata-core`
+- `@wp-typia/create/runtime/blocks`
 - `@wp-typia/create/runtime/defaults`
 - `@wp-typia/create/runtime/editor`
 - `@wp-typia/create/runtime/validation`
@@ -37,7 +38,8 @@ The current graduation prototype for this helper set is
 ## Root convenience aliases
 
 The root package also exposes convenience aliases for several runtime helpers,
-including defaults, editor, validation, and schema helpers.
+including block registration/webpack helpers, defaults, editor, validation, and
+schema helpers.
 
 Generated projects are not expected to migrate away from the supported
 `runtime/*` paths to use those aliases. They are additive convenience exports,

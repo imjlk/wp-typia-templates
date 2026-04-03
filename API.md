@@ -1,6 +1,6 @@
 # API Guide
 
-This repository has four public surfaces:
+This repository has five public surfaces:
 
 ## 1. `@wp-typia/create`
 
@@ -119,6 +119,7 @@ Each scaffolded project exposes a few predictable files:
 
 Generated projects can also import shared runtime helpers from `@wp-typia/create`:
 
+- `@wp-typia/create/runtime/blocks`
 - `@wp-typia/create/runtime/defaults`
 - `@wp-typia/create/runtime/validation`
 - `@wp-typia/create/runtime/editor`
@@ -127,6 +128,9 @@ These `runtime/*` paths, along with `@wp-typia/create` and
 `@wp-typia/create/metadata-core`, remain the supported generated-project import
 paths through v1. Root exports for defaults, editor, validation, and schema
 helpers are additive convenience aliases rather than a migration requirement.
+
+`runtime/blocks` is the shared generated-project surface for scaffold-owned
+block registration helpers and webpack artifact/config adapters.
 
 `@wp-typia/create/runtime/schema-core` remains exported, but it is not the
 canonical generated-project import path. When you manually import schema

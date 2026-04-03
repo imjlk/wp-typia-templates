@@ -66,6 +66,7 @@
 - [examples/rest-contract-adapter-poc/src/counter-adapter](modules/examples_rest_contract_adapter_poc_src_counter_adapter.md)
 - [examples/rest-contract-adapter-poc/src/server](modules/examples_rest_contract_adapter_poc_src_server.md)
 - [packages/create/src/cli](modules/packages_create_src_cli.md)
+- [packages/create/src/runtime/blocks](modules/packages_create_src_runtime_blocks.md)
 - [packages/create/src/runtime/cli-core](modules/packages_create_src_runtime_cli_core.md)
 - [packages/create/src/runtime/defaults](modules/packages_create_src_runtime_defaults.md)
 - [packages/create/src/runtime/editor](modules/packages_create_src_runtime_editor.md)
