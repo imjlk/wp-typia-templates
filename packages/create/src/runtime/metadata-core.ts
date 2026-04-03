@@ -442,6 +442,18 @@ function resolveSyncBlockMetadataPaths(
   };
 }
 
+/**
+ * Synchronizes block metadata artifacts from a source TypeScript contract.
+ *
+ * This updates `block.json` attributes/examples and emits the related JSON
+ * Schema, manifest, OpenAPI, and optional PHP validator artifacts derived from
+ * the same source type.
+ *
+ * @param options Configuration for locating the project root, source types
+ * file/type name, and output artifact paths.
+ * @returns The generated artifact paths plus any lossy WordPress projection or
+ * PHP validator coverage warnings discovered during synchronization.
+ */
 export async function syncBlockMetadata(
   options: SyncBlockMetadataOptions,
 ): Promise<SyncBlockMetadataResult> {
@@ -2668,11 +2680,15 @@ function resolveSyncBlockMetadataFailureCode(
   }
   if (
     message.startsWith('Unsupported ') ||
+    message.startsWith('Mixed primitive enums are not supported at ') ||
     message.startsWith('Indexed access ') ||
     message.startsWith('Intersection at ') ||
+    message.startsWith('Generic type declarations are not supported at ') ||
     message.startsWith('Generic type references are not supported at ') ||
     message.startsWith('Class and enum references are not supported at ') ||
     message.startsWith('Discriminated union at ') ||
+    message.startsWith('External or non-serializable ') ||
+    message.startsWith('Conflicting ') ||
     message.startsWith('Tag "') ||
     message.startsWith('Only object-like interface extensions are supported:') ||
     message.startsWith('Array type is missing an item type at ')
