@@ -10,6 +10,7 @@
 - [getOptionalOnboardingSteps](packages_create_src_runtime_scaffold_onboarding.md#getoptionalonboardingsteps)
 - [getOptionalOnboardingNote](packages_create_src_runtime_scaffold_onboarding.md#getoptionalonboardingnote)
 - [getTemplateSourceOfTruthNote](packages_create_src_runtime_scaffold_onboarding.md#gettemplatesourceoftruthnote)
+- [getCompoundExtensionWorkflowSection](packages_create_src_runtime_scaffold_onboarding.md#getcompoundextensionworkflowsection)
 - [getPhpRestExtensionPointsSection](packages_create_src_runtime_scaffold_onboarding.md#getphprestextensionpointssection)
 
 ## Functions
@@ -106,6 +107,29 @@ Returns source-of-truth guidance for generated artifacts by template mode.
 
 ___
 
+### getCompoundExtensionWorkflowSection
+
+▸ **getCompoundExtensionWorkflowSection**(`packageManager`, `templateId`): `string` \| ``null``
+
+Returns the generated-project extension workflow for compound child blocks.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `packageManager` | [`PackageManagerId`](packages_create_src_runtime_package_managers.md#packagemanagerid) |
+| `templateId` | `string` |
+
+#### Returns
+
+`string` \| ``null``
+
+#### Defined in
+
+[packages/create/src/runtime/scaffold-onboarding.ts:86](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L86)
+
+___
+
 ### getPhpRestExtensionPointsSection
 
 ▸ **getPhpRestExtensionPointsSection**(`templateId`, `«destructured»`): `string` \| ``null``
@@ -125,4 +149,4 @@ Returns scaffold-local guidance for the main PHP REST customization points.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold-onboarding.ts:113](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L113)
+[packages/create/src/runtime/scaffold-onboarding.ts:133](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L133)

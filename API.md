@@ -212,8 +212,21 @@ The built-in `compound` template adds a multi-block project structure:
 
 - `src/blocks/<parent>/`
 - `src/blocks/<parent>-item/`
+- `src/blocks/<parent>/children.ts`
 - `scripts/block-config.ts`
+- `scripts/add-compound-child.ts`
 - a root plugin bootstrap that registers `build/blocks/*/block.json`
+
+The generated parent and child editors now follow the same validated attribute
+update path used by the other built-in templates, and new child block types can
+be scaffolded on demand:
+
+```bash
+npm run add-child -- --slug faq-item --title "FAQ Item"
+```
+
+That command updates `scripts/block-config.ts` plus `src/blocks/<parent>/children.ts`
+without changing the parent block's default seeded template.
 
 When you opt `compound` into persistence with `--data-storage` or `--persistence-policy`, the parent block also gains:
 
