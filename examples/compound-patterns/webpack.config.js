@@ -229,6 +229,16 @@ module.exports = async () => {
 			...config,
 			entry: async () =>
 				isModuleConfig( config ) ? moduleEntries : editorEntries,
+			resolve: {
+				...( config.resolve || {} ),
+				alias: {
+					...( config.resolve?.alias || {} ),
+					'@wp-typia/create/runtime/blocks': path.resolve(
+						process.cwd(),
+						'../../packages/create/src/runtime/blocks.ts'
+					),
+				},
+			},
 			plugins: [
 				UnpluginTypia(),
 				...( config.plugins || [] ),
