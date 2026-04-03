@@ -1,0 +1,270 @@
+import { afterAll, describe, expect, test } from "bun:test";
+import * as fs from "node:fs";
+import * as path from "node:path";
+
+import { runSyncBlockMetadata } from "../../packages/create/src/runtime/metadata-core";
+import { getExampleShowcaseFixtureRoot } from "./helpers/example-showcase";
+
+function createFixture(files: Record<string, string>) {
+	const baseDir = getExampleShowcaseFixtureRoot(".tmp-sync-types-reporting-fixtures");
+	fs.mkdirSync(baseDir, { recursive: true });
+
+	const fixtureDir = fs.mkdtempSync(path.join(baseDir, "fixture-"));
+	for (const [relativePath, content] of Object.entries(files)) {
+		const targetPath = path.join(fixtureDir, relativePath);
+		fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+		fs.writeFileSync(targetPath, content);
+	}
+
+	return fixtureDir;
+}
+
+function createTypecheckFixture(typesSource: string) {
+	return createFixture({
+		"block.json": JSON.stringify(
+			{ attributes: {}, example: { attributes: {} } },
+			null,
+			2,
+		),
+		"src/types.ts": typesSource,
+		"tsconfig.json": JSON.stringify(
+			{
+				compilerOptions: {
+					module: "NodeNext",
+					moduleResolution: "NodeNext",
+					resolveJsonModule: true,
+					strict: true,
+					target: "ES2022",
+				},
+				include: ["src/**/*.ts"],
+			},
+			null,
+			2,
+		),
+	});
+}
+
+async function runFixture(
+	projectRoot: string,
+	sourceTypeName: string,
+	executionOptions?: Parameters<typeof runSyncBlockMetadata>[1],
+) {
+	return runSyncBlockMetadata(
+		{
+			blockJsonFile: "block.json",
+			manifestFile: "typia.manifest.json",
+			projectRoot,
+			sourceTypeName,
+			typesFile: "src/types.ts",
+		},
+		executionOptions,
+	);
+}
+
+describe("sync-types reporting", () => {
+	afterAll(() => {
+		const baseDir = getExampleShowcaseFixtureRoot(".tmp-sync-types-reporting-fixtures");
+		fs.rmSync(baseDir, { force: true, recursive: true });
+	});
+
+	test("reports success when syncBlockMetadata finishes without warnings", async () => {
+		const fixtureDir = createTypecheckFixture(
+			[
+				'import { tags } from "typia";',
+				"",
+				"export interface BlockAttributes {",
+				'  title: string & tags.Default<"Hello world">;',
+				"  enabled: boolean & tags.Default<true>;",
+				"}",
+				"",
+			].join("\n"),
+		);
+
+		const report = await runFixture(fixtureDir, "BlockAttributes");
+
+		expect(report.status).toBe("success");
+		expect(report.failure).toBeNull();
+		expect(report.attributeNames).toEqual(["title", "enabled"]);
+		expect(report.lossyProjectionWarnings).toEqual([]);
+		expect(report.phpGenerationWarnings).toEqual([]);
+		expect(report.blockJsonPath).toBe(path.join(fixtureDir, "block.json"));
+		expect(report.manifestPath).toBe(path.join(fixtureDir, "typia.manifest.json"));
+		expect(report.phpValidatorPath).toBe(path.join(fixtureDir, "typia-validator.php"));
+		expect(report.strict).toBe(false);
+		expect(report.failOnLossy).toBe(false);
+		expect(report.failOnPhpWarnings).toBe(false);
+	});
+
+	test("reports warning status for lossy WordPress projections by default", async () => {
+		const fixtureDir = createTypecheckFixture(
+			[
+				"export interface BlockAttributes {",
+				"  seo: {",
+				"    slug: string;",
+				"  };",
+				"}",
+				"",
+			].join("\n"),
+		);
+
+		const report = await runFixture(fixtureDir, "BlockAttributes");
+
+		expect(report.status).toBe("warning");
+		expect(report.failure).toBeNull();
+		expect(report.lossyProjectionWarnings).toContain("BlockAttributes.seo: properties");
+		expect(report.phpGenerationWarnings).toEqual([]);
+	});
+
+	test("reports PHP validator coverage warnings without failing by default", async () => {
+		const fixtureDir = createTypecheckFixture(
+			[
+				'import { tags } from "typia";',
+				"",
+				"export interface BlockAttributes {",
+				'  endpoint: string & tags.Format<"hostname">;',
+				"}",
+				"",
+			].join("\n"),
+		);
+
+		const report = await runFixture(fixtureDir, "BlockAttributes");
+
+		expect(report.status).toBe("warning");
+		expect(report.failure).toBeNull();
+		expect(report.phpGenerationWarnings).toContain(
+			'endpoint: unsupported PHP validator format "hostname"',
+		);
+	});
+
+	test("strict mode promotes all warnings to an error status", async () => {
+		const fixtureDir = createTypecheckFixture(
+			[
+				'import { tags } from "typia";',
+				"",
+				"export interface BlockAttributes {",
+				"  seo: {",
+				"    slug: string & tags.MinLength<1>;",
+				"  };",
+				'  endpoint: string & tags.Format<"hostname">;',
+				"}",
+				"",
+			].join("\n"),
+		);
+
+		const report = await runFixture(fixtureDir, "BlockAttributes", {
+			strict: true,
+		});
+
+		expect(report.status).toBe("error");
+		expect(report.failure).toBeNull();
+		expect(report.strict).toBe(true);
+		expect(report.failOnLossy).toBe(true);
+		expect(report.failOnPhpWarnings).toBe(true);
+		expect(report.lossyProjectionWarnings.length).toBeGreaterThan(0);
+		expect(report.phpGenerationWarnings.length).toBeGreaterThan(0);
+	});
+
+	test("failOnLossy only fails lossy projection warnings", async () => {
+		const fixtureDir = createTypecheckFixture(
+			[
+				"export interface BlockAttributes {",
+				"  items: Array<{",
+				"    label: string;",
+				"  }>;",
+				"}",
+				"",
+			].join("\n"),
+		);
+
+		const report = await runFixture(fixtureDir, "BlockAttributes", {
+			failOnLossy: true,
+		});
+
+		expect(report.status).toBe("error");
+		expect(report.failure).toBeNull();
+		expect(report.failOnLossy).toBe(true);
+		expect(report.failOnPhpWarnings).toBe(false);
+		expect(report.lossyProjectionWarnings).toContain("BlockAttributes.items: items");
+	});
+
+	test("normalizes unsupported type nodes into structured failures", async () => {
+		const fixtureDir = createTypecheckFixture(
+			[
+				"export interface BlockAttributes {",
+				"  token: symbol;",
+				"}",
+				"",
+			].join("\n"),
+		);
+
+		const report = await runFixture(fixtureDir, "BlockAttributes");
+
+		expect(report.status).toBe("error");
+		expect(report.failure).toEqual({
+			code: "unsupported-type-node",
+			message: 'Unsupported type node at BlockAttributes.token: symbol',
+			name: "Error",
+		});
+	});
+
+	test("normalizes missing source types into structured failures", async () => {
+		const fixtureDir = createTypecheckFixture(
+			[
+				"export interface DifferentAttributes {",
+				"  title: string;",
+				"}",
+				"",
+			].join("\n"),
+		);
+
+		const report = await runFixture(fixtureDir, "BlockAttributes");
+
+		expect(report.status).toBe("error");
+		expect(report.failure?.code).toBe("invalid-source-type");
+		expect(report.failure?.message).toContain(
+			'Unable to find source type "BlockAttributes"',
+		);
+	});
+
+	test("normalizes recursive types into structured failures", async () => {
+		const fixtureDir = createTypecheckFixture(
+			[
+				"interface TreeNode {",
+				"  next?: TreeNode;",
+				"}",
+				"",
+				"export interface BlockAttributes {",
+				"  tree: TreeNode;",
+				"}",
+				"",
+			].join("\n"),
+		);
+
+		const report = await runFixture(fixtureDir, "BlockAttributes");
+
+		expect(report.status).toBe("error");
+		expect(report.failure?.code).toBe("recursive-type");
+		expect(report.failure?.message).toContain(
+			"Recursive types are not supported",
+		);
+	});
+
+	test("normalizes TypeScript diagnostics into structured failures", async () => {
+		const fixtureDir = createTypecheckFixture(
+			[
+				'import type { MissingType } from "./missing";',
+				"",
+				"export interface BlockAttributes {",
+				"  item: MissingType;",
+				"}",
+				"",
+			].join("\n"),
+		);
+
+		const report = await runFixture(fixtureDir, "BlockAttributes");
+
+		expect(report.status).toBe("error");
+		expect(report.failure?.code).toBe("typescript-diagnostic");
+		expect(report.failure?.message).toContain("Cannot find module './missing'");
+	});
+});

@@ -84,7 +84,7 @@ Defaults keep these concerns separate:
 - text domains default to the kebab-case slug
 - PHP symbols default to a snake_case prefix derived from the slug
 
-Every generated project exposes `sync-types`, and persistence-enabled scaffolds also expose `sync-rest`. `start` and `build` already run the relevant sync scripts for you. Run them manually only when you want generated metadata/schema artifacts committed before the first `start` or `build` cycle. These syncs do not create migration history.
+Every generated project exposes `sync-types`, and persistence-enabled scaffolds also expose `sync-rest`. `start` and `build` already run the relevant sync scripts for you. Run them manually only when you want generated metadata/schema artifacts committed before the first `start` or `build` cycle. `sync-types` stays warn-only by default, supports `-- --fail-on-lossy` when CI should fail only on lossy WordPress projections, and supports `-- --strict --report json` when CI should fail on every warning while reading a machine-friendly JSON report from stdout. These syncs do not create migration history.
 
 Generated projects can also reuse small runtime helpers from `@wp-typia/create` instead of copying local utility code:
 
@@ -124,6 +124,7 @@ Data-backed projects can also opt into schema output from the existing sync pipe
 ```ts
 import {
   defineEndpointManifest,
+  runSyncBlockMetadata,
   syncBlockMetadata,
   syncRestOpenApi,
   syncTypeSchemas,
@@ -136,6 +137,27 @@ await syncBlockMetadata({
   sourceTypeName: "MyBlockAttributes",
   typesFile: "src/types.ts",
 });
+
+// Or use the reporting wrapper when CI needs explicit status handling.
+const syncReport = await runSyncBlockMetadata(
+  {
+    blockJsonFile: "src/block.json",
+    sourceTypeName: "MyBlockAttributes",
+    typesFile: "src/types.ts",
+  },
+  {
+    strict: true,
+  },
+);
+
+if (syncReport.status === "error") {
+  throw new Error(syncReport.failure?.message ?? "sync-types failed");
+}
+
+if (syncReport.status === "warning") {
+  console.warn(syncReport.lossyProjectionWarnings);
+  console.warn(syncReport.phpGenerationWarnings);
+}
 
 await syncTypeSchemas({
   jsonSchemaFile: "src/api-schemas/request.schema.json",
