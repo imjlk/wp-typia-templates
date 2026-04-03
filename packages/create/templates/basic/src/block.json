@@ -10,7 +10,7 @@
 	"keywords": ["{{keyword}}", "typia", "block"],
 	"example": {
 		"attributes": {
-			"content": "예제 콘텐츠",
+			"content": "Example content",
 			"alignment": "center",
 			"isVisible": true
 		}

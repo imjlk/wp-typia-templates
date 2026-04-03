@@ -2,7 +2,7 @@
  * Save/Frontend component for {{title}} Block
  */
 
-import { useBlockProps } from '@wordpress/block-editor';
+import { RichText, useBlockProps } from '@wordpress/block-editor';
 import { {{pascalCase}}Attributes } from './types';
 
 interface SaveProps {
@@ -12,7 +12,7 @@ interface SaveProps {
 export default function Save({ attributes }: SaveProps) {
   const blockProps = useBlockProps.save();
 
-  // 블록이 숨겨져 있으면 아무것도 렌더링하지 않음
+  // Skip rendering when the block is explicitly hidden.
   if (attributes.isVisible === false) {
     return null;
   }
@@ -20,7 +20,7 @@ export default function Save({ attributes }: SaveProps) {
   return (
     <div {...blockProps}>
       <div className="wp-block-{{slug}}__content">
-        {attributes.content}
+        <RichText.Content tagName="p" value={attributes.content} />
       </div>
     </div>
   );
