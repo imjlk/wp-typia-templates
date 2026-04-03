@@ -127,6 +127,11 @@ export async function buildWordPressAbilitiesDocument({
 					`Missing WordPress ability projection config for operationId "${endpoint.operationId}".`,
 				);
 			}
+			if (config.categoryId !== category.id) {
+				throw new Error(
+					`Operation "${endpoint.operationId}" uses categoryId "${config.categoryId}" but document category is "${category.id}".`,
+				);
+			}
 
 			const inputContractName = getEndpointInputContractName(endpoint);
 			let inputSchema: JsonSchemaDocument & Record<string, unknown> | null = null;
@@ -201,6 +206,13 @@ export async function buildWordPressAiArtifacts({
 	const responseContractName = manifest.endpoints[0]?.responseContract;
 	if (!responseContractName) {
 		throw new Error("The manifest is missing its shared response contract.");
+	}
+	for (const endpoint of manifest.endpoints) {
+		if (endpoint.responseContract !== responseContractName) {
+			throw new Error(
+				`Endpoint "${endpoint.operationId}" uses response contract "${endpoint.responseContract}" but expected shared response contract "${responseContractName}".`,
+			);
+		}
 	}
 	if (!manifest.contracts[responseContractName]) {
 		throw new Error(

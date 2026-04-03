@@ -155,14 +155,15 @@ function applyCounterAbilityInputSchemaPolicy( {
 			  }
 			: null;
 
-	if ( postIdSchema ) {
-		postIdSchema.minimum = 1;
-		properties.postId = postIdSchema;
+	if ( ! postIdSchema || ! tokenSchema ) {
+		throw new Error(
+			'The increment request schema must define both "postId" and "publicWriteToken" for the WordPress AI overlay.'
+		);
 	}
 
-	if ( tokenSchema ) {
-		properties.publicWriteToken = tokenSchema;
-	}
+	postIdSchema.minimum = 1;
+	properties.postId = postIdSchema;
+	properties.publicWriteToken = tokenSchema;
 
 	if ( ! required.includes( 'publicWriteToken' ) ) {
 		required.push( 'publicWriteToken' );

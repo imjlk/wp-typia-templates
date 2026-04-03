@@ -12,6 +12,7 @@ import {
 	COUNTER_WORDPRESS_ABILITY_CONFIG,
 } from '../../examples/persistence-examples/scripts/wordpress-ai-projections';
 import {
+	buildWordPressAiArtifacts,
 	buildWordPressAbilitiesDocument,
 	projectWordPressAiSchema,
 } from '../../packages/create/src/internal/wordpress-ai';
@@ -127,6 +128,84 @@ describe( 'WordPress AI internal helper', () => {
 			} )
 		).rejects.toThrow(
 			'Missing WordPress ability projection config for operationId "incrementPersistenceCounterState".'
+		);
+	} );
+
+	test( 'fails clearly when ability config category ids drift from the document category', async () => {
+		expect( counterManifest ).toBeDefined();
+
+		await expect(
+			buildWordPressAbilitiesDocument( {
+				abilityConfig: {
+					...COUNTER_WORDPRESS_ABILITY_CONFIG,
+					getPersistenceCounterState: {
+						...COUNTER_WORDPRESS_ABILITY_CONFIG.getPersistenceCounterState,
+						categoryId: 'mismatched-category',
+					},
+				},
+				category: COUNTER_ABILITY_CATEGORY,
+				generatedFrom: {
+					blockSlug: 'counter',
+					responseSchemaPath: 'wordpress-ai/counter-response.ai.schema.json',
+					schemaProfile: 'ai-structured-output',
+				},
+				loadInputSchema: async ( _endpoint, contractName ) => {
+					const schema = inputSchemas[ contractName as keyof typeof inputSchemas ];
+					if ( ! schema ) {
+						throw new Error( `Unexpected contract "${ contractName }".` );
+					}
+
+					return schema;
+				},
+				manifest: counterManifest!,
+				outputSchema: counterResponseAiSchemaDocument,
+			} )
+		).rejects.toThrow(
+			'Operation "getPersistenceCounterState" uses categoryId "mismatched-category" but document category is "persistence-examples".'
+		);
+	} );
+
+	test( 'fails clearly when endpoints do not share the same response contract', async () => {
+		expect( counterManifest ).toBeDefined();
+
+		await expect(
+			buildWordPressAiArtifacts( {
+				abilityConfig: COUNTER_WORDPRESS_ABILITY_CONFIG,
+				category: COUNTER_ABILITY_CATEGORY,
+				generatedFrom: {
+					blockSlug: 'counter',
+					responseSchemaPath: 'wordpress-ai/counter-response.ai.schema.json',
+					schemaProfile: 'ai-structured-output',
+				},
+				loadInputSchema: async ( _endpoint, contractName ) => {
+					const schema = inputSchemas[ contractName as keyof typeof inputSchemas ];
+					if ( ! schema ) {
+						throw new Error( `Unexpected contract "${ contractName }".` );
+					}
+
+					return schema;
+				},
+				manifest: {
+					...counterManifest!,
+					contracts: {
+						...counterManifest!.contracts,
+						'alt-counter-response': {
+							sourceTypeName: 'PersistenceCounterResponse',
+						},
+					},
+					endpoints: counterManifest!.endpoints.map( ( endpoint, index ) =>
+						index === 0
+							? endpoint
+							: {
+									...endpoint,
+									responseContract: 'alt-counter-response',
+							  }
+					),
+				},
+				responseSchema: counterResponseSchemaDocument,
+			} )
+		).rejects.toThrow(
+			'Endpoint "incrementPersistenceCounterState" uses response contract "alt-counter-response" but expected shared response contract "counter-response".'
 		);
 	} );
 } );
