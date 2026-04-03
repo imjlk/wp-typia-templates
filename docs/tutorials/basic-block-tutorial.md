@@ -177,7 +177,7 @@ export default Edit;
 Modify `src/save.tsx` for frontend rendering:
 
 ```typescript
-import { useBlockProps } from '@wordpress/block-editor';
+import { RichText, useBlockProps } from '@wordpress/block-editor';
 import { MyTypiaBlockAttributes } from './types';
 
 interface SaveProps {
@@ -190,13 +190,17 @@ export default function Save({ attributes }: SaveProps) {
   return (
     <div {...blockProps}>
       <div className={`my-typia-block theme-${attributes.theme}`}>
-        <h2 className="my-typia-block__title">
-          {attributes.title}
-        </h2>
+        <RichText.Content
+          tagName="h2"
+          className="my-typia-block__title"
+          value={attributes.title}
+        />
         {attributes.subtitle && (
-          <p className="my-typia-block__subtitle">
-            {attributes.subtitle}
-          </p>
+          <RichText.Content
+            tagName="p"
+            className="my-typia-block__subtitle"
+            value={attributes.subtitle}
+          />
         )}
         <div className="my-typia-block__content">
           {Array.from({ length: attributes.itemCount }, (_, i) => (
