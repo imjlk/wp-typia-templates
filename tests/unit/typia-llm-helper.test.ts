@@ -1,0 +1,156 @@
+import { describe, expect, test } from "bun:test";
+
+import { BLOCKS } from "../../examples/persistence-examples/scripts/block-config";
+import type { EndpointManifestDefinition } from "../../packages/create/src/runtime/metadata-core";
+import {
+	buildTypiaLlmEndpointMethodDescriptors,
+	renderTypiaLlmModule,
+} from "../../packages/create/src/internal/typia-llm";
+
+const counterManifest = BLOCKS.find((block) => block.slug === "counter")?.restManifest;
+
+describe("typia.llm internal helper", () => {
+	test("maps endpoint manifests to tool/controller method descriptors", () => {
+		expect(counterManifest).toBeDefined();
+
+		const methods = buildTypiaLlmEndpointMethodDescriptors(counterManifest!);
+
+		expect(methods).toEqual([
+			{
+				authMode: "public-read",
+				description: "Read the current counter state.",
+				inputTypeName: "PersistenceCounterQuery",
+				method: "GET",
+				operationId: "getPersistenceCounterState",
+				outputTypeName: "PersistenceCounterResponse",
+				path: "/persistence-examples/v1/counter",
+				tags: ["Counter"],
+			},
+			{
+				authMode: "public-signed-token",
+				description: "Increment the current counter state.",
+				inputTypeName: "PersistenceCounterIncrementRequest",
+				method: "POST",
+				operationId: "incrementPersistenceCounterState",
+				outputTypeName: "PersistenceCounterResponse",
+				path: "/persistence-examples/v1/counter",
+				tags: ["Counter"],
+			},
+		]);
+	});
+
+	test("renders a deterministic typia.llm evaluation module from the manifest", () => {
+		expect(counterManifest).toBeDefined();
+
+		const source = renderTypiaLlmModule({
+			applicationExportName: "counterLlmApplication",
+			interfaceName: "CounterRestToolController",
+			manifest: counterManifest!,
+			structuredOutputExportName: "counterResponseStructuredOutput",
+			structuredOutputTypeName: "PersistenceCounterResponse",
+			typesImportPath: "../../../persistence-examples/src/blocks/counter/api-types",
+		});
+
+		expect(source).toContain('import typia from "typia";');
+		expect(source).toContain("export interface CounterRestToolController");
+		expect(source).toContain(
+			"getPersistenceCounterState(input: PersistenceCounterQuery): PersistenceCounterResponse;",
+		);
+		expect(source).toContain(
+			"incrementPersistenceCounterState(input: PersistenceCounterIncrementRequest): PersistenceCounterResponse;",
+		);
+		expect(source).toContain("REST path: GET /persistence-examples/v1/counter");
+		expect(source).toContain("REST path: POST /persistence-examples/v1/counter");
+		expect(source).toContain("@tag Counter");
+		expect(source).toContain(
+			"export const counterLlmApplication =\n\ttypia.llm.application<CounterRestToolController>();",
+		);
+		expect(source).toContain(
+			"export const counterResponseStructuredOutput =\n\ttypia.llm.structuredOutput<PersistenceCounterResponse>();",
+		);
+	});
+
+	test("uses query contracts for non-GET endpoints when no body contract exists", () => {
+		const manifest = {
+			contracts: {
+				deleteCounterQuery: { sourceTypeName: "DeleteCounterQuery" },
+				persistenceCounterResponse: { sourceTypeName: "PersistenceCounterResponse" },
+			},
+			endpoints: [
+				{
+					authMode: "authenticated-rest-nonce",
+					method: "DELETE",
+					operationId: "deletePersistenceCounterState",
+					path: "/persistence-examples/v1/counter",
+					queryContract: "deleteCounterQuery",
+					responseContract: "persistenceCounterResponse",
+					tags: ["Counter"],
+				},
+			],
+		} satisfies EndpointManifestDefinition;
+
+		expect(buildTypiaLlmEndpointMethodDescriptors(manifest)).toEqual([
+			expect.objectContaining({
+				inputTypeName: "DeleteCounterQuery",
+				operationId: "deletePersistenceCounterState",
+			}),
+		]);
+	});
+
+	test("throws when a non-GET endpoint defines both body and query contracts", () => {
+		const manifest = {
+			contracts: {
+				body: { sourceTypeName: "BodyInput" },
+				query: { sourceTypeName: "QueryInput" },
+				response: { sourceTypeName: "ResponseOutput" },
+			},
+			endpoints: [
+				{
+					authMode: "authenticated-rest-nonce",
+					bodyContract: "body",
+					method: "POST",
+					operationId: "ambiguousInput",
+					path: "/persistence-examples/v1/counter",
+					queryContract: "query",
+					responseContract: "response",
+					tags: ["Counter"],
+				},
+			],
+		} satisfies EndpointManifestDefinition;
+
+		expect(() => buildTypiaLlmEndpointMethodDescriptors(manifest)).toThrow(
+			'Endpoint "ambiguousInput" defines both bodyContract and queryContract; typia.llm input mapping is ambiguous.',
+		);
+	});
+
+	test("quotes invalid operation ids when rendering generated TypeScript", () => {
+		const manifest = {
+			contracts: {
+				query: { sourceTypeName: "CounterQuery" },
+				response: { sourceTypeName: "CounterResponse" },
+			},
+			endpoints: [
+				{
+					authMode: "public-read",
+					method: "GET",
+					operationId: "get-counter state",
+					path: "/persistence-examples/v1/counter",
+					queryContract: "query",
+					responseContract: "response",
+					tags: ["Counter"],
+				},
+			],
+		} satisfies EndpointManifestDefinition;
+
+		const source = renderTypiaLlmModule({
+			applicationExportName: "counterLlmApplication",
+			interfaceName: "CounterRestToolController",
+			manifest,
+			structuredOutputExportName: "counterResponseStructuredOutput",
+			structuredOutputTypeName: "CounterResponse",
+			typesImportPath: "./counter-types",
+		});
+
+		expect(source).toContain('"get-counter state"(input: CounterQuery): CounterResponse;');
+	});
+});

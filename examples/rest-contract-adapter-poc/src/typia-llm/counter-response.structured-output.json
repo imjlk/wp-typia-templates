@@ -1,0 +1,39 @@
+{
+  "generatedFrom": {
+    "aiSchemaPath": "../persistence-examples/src/blocks/counter/wordpress-ai/counter-response.ai.schema.json",
+    "blockSlug": "counter",
+    "outputTypeName": "PersistenceCounterResponse"
+  },
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "postId": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "resourceKey": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "count": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "storage": {
+        "type": "string",
+        "enum": [
+          "custom-table"
+        ]
+      }
+    },
+    "required": [
+      "postId",
+      "resourceKey",
+      "count",
+      "storage"
+    ],
+    "additionalProperties": false,
+    "$defs": {}
+  }
+}

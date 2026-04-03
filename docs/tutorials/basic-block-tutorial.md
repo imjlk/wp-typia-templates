@@ -1,6 +1,6 @@
 # Basic Block Tutorial: Building Your First Typia Block with `@wp-typia/create`
 
-Welcome to the basic block tutorial for `wp-typia`. This hands-on guide walks through creating a fully functional, type-safe WordPress block with runtime validation. For clarity, this tutorial uses `@wp-typia/create` with `npm`; if you choose `bun`, `pnpm`, or `yarn`, swap the generated project commands accordingly.
+Welcome to the basic block tutorial for `wp-typia`. This hands-on guide walks through creating a fully functional, type-safe WordPress block with runtime validation. For clarity, this tutorial uses `@wp-typia/create` with `npm`; if you choose a different package manager, swap the generated project commands accordingly.
 
 ## Prerequisites
 
@@ -93,7 +93,7 @@ import {
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { MyTypiaBlockAttributes } from './types';
-import { validators, createAttributeUpdater } from './validators';
+import { createAttributeUpdater, validators } from './validators';
 
 type EditProps = BlockEditProps<MyTypiaBlockAttributes>;
 
@@ -311,10 +311,13 @@ Update `src/style.scss`:
 
 ## Step 8: Add a Validator Test
 
+The basic template does not scaffold a dedicated unit test runner, so we'll use Node.js 24's built-in test runner together with `tsx`.
+
 Create `src/validators.test.ts`:
 
 ```typescript
-import { describe, expect, test } from 'bun:test';
+import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { validators } from './validators';
 import { MyTypiaBlockAttributes } from './types';
 
@@ -329,7 +332,7 @@ describe('MyTypiaBlock validators', () => {
     };
 
     const result = validators.validate(validAttrs);
-    expect(result.success).toBe(true);
+    assert.equal(result.isValid, true);
   });
 
   test('rejects invalid title length', () => {
@@ -341,7 +344,7 @@ describe('MyTypiaBlock validators', () => {
     };
 
     const result = validators.validate(invalidAttrs as any);
-    expect(result.success).toBe(false);
+    assert.equal(result.isValid, false);
   });
 });
 ```
@@ -349,7 +352,7 @@ describe('MyTypiaBlock validators', () => {
 Run it with:
 
 ```bash
-bun test src/validators.test.ts
+node --import tsx --test src/validators.test.ts
 ```
 
 ## Step 9: Build for Production

@@ -257,7 +257,7 @@ The repository keeps two reference apps:
 - [`examples/my-typia-block`](../examples/my-typia-block) for the kitchen-sink editor/migration reference
 - [`examples/persistence-examples`](../examples/persistence-examples) for persistence-policy behavior and the repo-local WordPress AI projection proof described in [`docs/wordpress-ai-projections.md`](./wordpress-ai-projections.md)
 - [`examples/compound-patterns`](../examples/compound-patterns) for compound parent/child patterns
-- [`examples/rest-contract-adapter-poc`](../examples/rest-contract-adapter-poc) for a minimal non-PHP proof that endpoint manifests can be served outside WordPress/PHP
+- [`examples/rest-contract-adapter-poc`](../examples/rest-contract-adapter-poc) for a minimal non-PHP proof that endpoint manifests can be served outside WordPress/PHP, plus the repo-local `typia.llm` evaluation described in [`docs/typia-llm-evaluation.md`](./typia-llm-evaluation.md)
 
 From the root workspace, example-oriented commands live under:
 

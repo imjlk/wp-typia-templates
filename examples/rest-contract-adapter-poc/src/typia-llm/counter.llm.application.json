@@ -1,0 +1,147 @@
+{
+  "functions": [
+    {
+      "description": "Read the current counter state.\n\nREST path: GET /persistence-examples/v1/counter\nAuth mode: public-read",
+      "name": "getPersistenceCounterState",
+      "output": {
+        "description": "Current Type: {@link PersistenceCounterResponse}",
+        "type": "object",
+        "properties": {
+          "postId": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "resourceKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "storage": {
+            "type": "string",
+            "enum": [
+              "custom-table"
+            ]
+          }
+        },
+        "required": [
+          "postId",
+          "resourceKey",
+          "count",
+          "storage"
+        ],
+        "additionalProperties": false,
+        "$defs": {}
+      },
+      "parameters": {
+        "description": "Current Type: {@link PersistenceCounterQuery}",
+        "type": "object",
+        "properties": {
+          "postId": {
+            "type": "number",
+            "minimum": 0
+          },
+          "resourceKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "postId",
+          "resourceKey"
+        ],
+        "additionalProperties": false,
+        "$defs": {}
+      },
+      "tags": [
+        "Counter"
+      ]
+    },
+    {
+      "description": "Increment the current counter state.\n\nREST path: POST /persistence-examples/v1/counter\nAuth mode: public-signed-token",
+      "name": "incrementPersistenceCounterState",
+      "output": {
+        "description": "Current Type: {@link PersistenceCounterResponse}",
+        "type": "object",
+        "properties": {
+          "postId": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "resourceKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "storage": {
+            "type": "string",
+            "enum": [
+              "custom-table"
+            ]
+          }
+        },
+        "required": [
+          "postId",
+          "resourceKey",
+          "count",
+          "storage"
+        ],
+        "additionalProperties": false,
+        "$defs": {}
+      },
+      "parameters": {
+        "description": "Current Type: {@link PersistenceCounterIncrementRequest}",
+        "type": "object",
+        "properties": {
+          "postId": {
+            "type": "number",
+            "minimum": 0
+          },
+          "publicWriteRequestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "resourceKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "publicWriteToken": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "delta": {
+            "type": "number",
+            "minimum": 1,
+            "default": 1
+          }
+        },
+        "required": [
+          "postId",
+          "publicWriteRequestId",
+          "resourceKey"
+        ],
+        "additionalProperties": false,
+        "$defs": {}
+      },
+      "tags": [
+        "Counter"
+      ]
+    }
+  ],
+  "generatedFrom": {
+    "baselineOpenApiPath": "../persistence-examples/src/blocks/counter/api.openapi.json",
+    "blockSlug": "counter",
+    "manifestSource": "endpoint-manifest+typescript"
+  }
+}

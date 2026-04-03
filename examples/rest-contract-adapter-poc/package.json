@@ -7,7 +7,8 @@
 	"author": "imjlk",
 	"license": "GPL-2.0-or-later",
 	"scripts": {
-		"build": "bun run typecheck",
+		"sync-typia-llm": "tsx scripts/sync-typia-llm.ts",
+		"build": "bun run sync-typia-llm && bun run typecheck",
 		"start": "tsx src/server.ts",
 		"typecheck": "tsc --noEmit"
 	},
@@ -16,7 +17,9 @@
 		"@types/node": "^24.0.0",
 		"@wp-typia/create": "workspace:*",
 		"@wp-typia/rest": "workspace:*",
+		"ts-patch": "^3.3.0",
 		"tsx": "^4.20.5",
-		"typescript": "^5.9.2"
+		"typescript": "^5.9.2",
+		"typia": "^12.0.1"
 	}
 }

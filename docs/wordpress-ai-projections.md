@@ -9,6 +9,8 @@ existing persistence counter example.
   `projectJsonSchemaDocument( ..., { profile: "ai-structured-output" } )`
 - Abilities API: the endpoint manifest is a strong typed source, but it is not
   sufficient on its own
+- typia.llm: see [`docs/typia-llm-evaluation.md`](./typia-llm-evaluation.md)
+  for the separate build-time tool/function consumer evaluation
 
 ## What the PoC emits
 
@@ -51,3 +53,10 @@ projection layer for execution semantics and capability metadata.
 - No new public `@wp-typia/create` APIs are introduced
 - No MCP integration is included here
 - No frontend or default AI behavior is added to generated projects
+
+The main distinction to keep in mind is:
+
+- WordPress AI Client structured outputs still map most naturally to the
+  `ai-structured-output` JSON Schema projection
+- `typia.llm` is being evaluated separately as a tool/function-calling
+  downstream consumer of the same TypeScript contracts
