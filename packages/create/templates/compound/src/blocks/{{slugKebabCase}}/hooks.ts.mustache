@@ -1,12 +1,9 @@
-import { useEffect, useState } from '@wordpress/element';
+import { useMemo } from '@wordpress/element';
 
 import {
+	createUseTypiaValidationHook,
 	formatValidationError,
 	formatValidationErrors,
-	toValidationState,
-	type TypiaValidationError,
-	type ValidationResult,
-	type ValidationState,
 } from '@wp-typia/create/runtime/validation';
 
 export {
@@ -17,17 +14,6 @@ export {
 	type ValidationState,
 } from '@wp-typia/create/runtime/validation';
 
-export function useTypiaValidation<T>(
-	value: T,
-	validator: ( value: T ) => ValidationResult< T >
-): ValidationState< T > {
-	const [ state, setState ] = useState< ValidationState< T > >( () =>
-		toValidationState( validator( value ) )
-	);
-
-	useEffect( () => {
-		setState( toValidationState( validator( value ) ) );
-	}, [ value, validator ] );
-
-	return state;
-}
+export const useTypiaValidation = createUseTypiaValidationHook( {
+	useMemo,
+} );

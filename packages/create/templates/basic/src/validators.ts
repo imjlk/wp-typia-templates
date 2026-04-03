@@ -2,12 +2,9 @@ import typia from "typia";
 import currentManifest from "./typia.manifest.json";
 import {
   type ManifestDefaultsDocument,
-  applyTemplateDefaultsFromManifest,
 } from "@wp-typia/create/runtime/defaults";
 import {
-  createAttributeUpdater as createValidatedAttributeUpdater,
-  type ValidationResult,
-  toValidationResult,
+  createScaffoldValidatorToolkit,
 } from "@wp-typia/create/runtime/validation";
 import { {{pascalCase}}Attributes, {{pascalCase}}ValidationResult } from "./types";
 
@@ -20,53 +17,33 @@ const is = typia.createIs<{{pascalCase}}Attributes>();
 const random = typia.createRandom<{{pascalCase}}Attributes>();
 const clone = typia.misc.createClone<{{pascalCase}}Attributes>();
 const prune = typia.misc.createPrune<{{pascalCase}}Attributes>();
-
-export const validate{{pascalCase}}Attributes = (
-  attributes: unknown,
-): {{pascalCase}}ValidationResult => {
-  return toValidationResult(validate(attributes));
-};
-
-export const validators = {
-  validate: validate{{pascalCase}}Attributes,
+const scaffoldValidators = createScaffoldValidatorToolkit<{{pascalCase}}Attributes>({
+  manifest: currentManifest as ManifestDefaultsDocument,
+  validate,
   assert,
   is,
   random,
   clone,
   prune,
-};
-
-export function sanitize{{pascalCase}}Attributes(
-  attributes: Partial<{{pascalCase}}Attributes>,
-): {{pascalCase}}Attributes {
-  const normalized = applyTemplateDefaultsFromManifest<{{pascalCase}}Attributes>(
-    currentManifest as ManifestDefaultsDocument,
-    attributes,
-  );
-
-  return validators.assert({
+  finalize: (normalized) => ({
     ...normalized,
     id: normalized.id && normalized.id.length > 0 ? normalized.id : generateRuntimeId(),
-  });
-}
+  }),
+});
 
-/**
- * Create a validated attribute updater.
- */
-export function createAttributeUpdater(
-  attributes: {{pascalCase}}Attributes,
-  setAttributes: (attrs: Partial<{{pascalCase}}Attributes>) => void,
-  validator = validators.validate
-) {
-  return createValidatedAttributeUpdater(
-    attributes,
-    setAttributes,
-    validator as (value: {{pascalCase}}Attributes) => ValidationResult<{{pascalCase}}Attributes>,
-    (validation, key) => {
-      console.error(`Validation failed for ${String(key)}:`, validation.errors);
-    },
-  );
-}
+export const validate{{pascalCase}}Attributes =
+  scaffoldValidators.validateAttributes as (
+    attributes: unknown,
+  ) => {{pascalCase}}ValidationResult;
+
+export const validators = scaffoldValidators.validators;
+
+export const sanitize{{pascalCase}}Attributes =
+  scaffoldValidators.sanitizeAttributes as (
+    attributes: Partial<{{pascalCase}}Attributes>,
+  ) => {{pascalCase}}Attributes;
+
+export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;
 
 function generateRuntimeId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {

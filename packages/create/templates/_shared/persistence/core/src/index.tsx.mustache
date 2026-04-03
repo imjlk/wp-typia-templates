@@ -1,5 +1,6 @@
 import { registerBlockType } from '@wordpress/blocks';
 import type { BlockConfiguration } from '@wordpress/blocks';
+import { buildScaffoldBlockRegistration } from '@wp-typia/create/runtime/blocks';
 
 import Edit from './edit';
 import Save from './save';
@@ -8,18 +9,14 @@ import './style.scss';
 
 import type { {{pascalCase}}Attributes } from './types';
 
-const blockMetadata = metadata as BlockConfiguration< {{pascalCase}}Attributes > & {
-	name: string;
-};
-
-registerBlockType< {{pascalCase}}Attributes >( blockMetadata.name, {
-	title: blockMetadata.title,
-	description: blockMetadata.description,
-	category: blockMetadata.category as any,
-	icon: blockMetadata.icon as any,
-	supports: blockMetadata.supports,
-	attributes: blockMetadata.attributes,
-	example: blockMetadata.example,
+const registration = buildScaffoldBlockRegistration<
+	BlockConfiguration< {{pascalCase}}Attributes >
+>( metadata as Record<string, unknown>, {
 	edit: Edit,
 	save: Save,
 } );
+
+registerBlockType< {{pascalCase}}Attributes >(
+	registration.name,
+	registration.settings
+);

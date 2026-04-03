@@ -19,6 +19,10 @@ export {
 	formatEditorFieldLabel,
 } from "./editor.js";
 export {
+	buildScaffoldBlockRegistration,
+	createTypiaWebpackConfig,
+} from "./blocks.js";
+export {
 	manifestAttributeToJsonSchema,
 	projectJsonSchemaDocument,
 	manifestToJsonSchema,
@@ -58,6 +62,8 @@ export type {
 } from "./editor.js";
 export {
 	createAttributeUpdater,
+	createScaffoldValidatorToolkit,
+	createUseTypiaValidationHook,
 	createNestedAttributeUpdater,
 	formatValidationError,
 	formatValidationErrors,

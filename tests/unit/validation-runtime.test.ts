@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
 	createAttributeUpdater,
 	createNestedAttributeUpdater,
+	createScaffoldValidatorToolkit,
 	formatValidationError,
 	formatValidationErrors,
 	mergeNestedAttributeUpdate,
@@ -161,6 +162,32 @@ describe('runtime validation helpers', () => {
 		expect(patches).toEqual([{ content: 'Updated' }]);
 	});
 
+	test('createAttributeUpdater applies normalized validation data when provided', () => {
+		const patches: Array<Partial<{ content: string; id: string }>> = [];
+		const updateAttribute = createAttributeUpdater(
+			{ content: 'Hello', id: '' },
+			(patch) => {
+				patches.push(patch);
+			},
+			(): ValidationResult<{ content: string; id: string }> => ({
+				data: {
+					content: 'Updated',
+					id: 'generated-id',
+				},
+				errors: [],
+				isValid: true,
+			})
+		);
+
+		expect(updateAttribute('content', 'Updated')).toBe(true);
+		expect(patches).toEqual([
+			{
+				content: 'Updated',
+				id: 'generated-id',
+			},
+		]);
+	});
+
 	test('createAttributeUpdater blocks invalid patches and reports the validation result and key', () => {
 		const patches: Array<Partial<{ content: string; isVisible: boolean }>> = [];
 		const validationErrors: Array<ValidationResult<{ content: string; isVisible: boolean }>> = [];
@@ -305,6 +332,58 @@ describe('runtime validation helpers', () => {
 		]);
 	});
 
+	test('createNestedAttributeUpdater applies normalized validation data when provided', () => {
+		const patches: Array<
+			Partial<{
+				resourceKey: string;
+				padding: { bottom: number; left: number; right: number; top: number };
+			}>
+		> = [];
+		const updateAttribute = createNestedAttributeUpdater(
+			{
+				resourceKey: '',
+				padding: {
+					bottom: 4,
+					left: 4,
+					right: 4,
+					top: 4,
+				},
+			},
+			(patch) => {
+				patches.push(patch);
+			},
+			(): ValidationResult<{
+				resourceKey: string;
+				padding: { bottom: number; left: number; right: number; top: number };
+			}> => ({
+				data: {
+					resourceKey: 'generated-resource-key',
+					padding: {
+						bottom: 4,
+						left: 4,
+						right: 4,
+						top: 24,
+					},
+				},
+				errors: [],
+				isValid: true,
+			})
+		);
+
+		expect(updateAttribute('padding.top', 24)).toBe(true);
+		expect(patches).toEqual([
+			{
+				resourceKey: 'generated-resource-key',
+				padding: {
+					bottom: 4,
+					left: 4,
+					right: 4,
+					top: 24,
+				},
+			},
+		]);
+	});
+
 	test('createNestedAttributeUpdater blocks invalid dotted path patches and reports the path', () => {
 		const patches: Array<
 			Partial<{
@@ -348,5 +427,115 @@ describe('runtime validation helpers', () => {
 		expect(updateAttribute('padding.top', -1)).toBe(false);
 		expect(patches).toEqual([]);
 		expect(validationPaths).toEqual(['padding.top']);
+	});
+
+	test('createScaffoldValidatorToolkit default updater sanitizes live edits with finalize hooks', () => {
+		type Attributes = {
+			content: string;
+			id: string;
+		};
+
+		const patches: Array<Partial<Attributes>> = [];
+		const scaffoldValidators = createScaffoldValidatorToolkit<Attributes>({
+			assert: (value): Attributes => {
+				if (
+					typeof value === 'object' &&
+					value !== null &&
+					typeof (value as Partial<Attributes>).content === 'string' &&
+					(value as Partial<Attributes>).content!.length > 0 &&
+					typeof (value as Partial<Attributes>).id === 'string' &&
+					(value as Partial<Attributes>).id!.length > 0
+				) {
+					return value as Attributes;
+				}
+
+				throw new Error('invalid attributes');
+			},
+			clone: (value) => ({ ...value }),
+			finalize: (value) => ({
+				...value,
+				id:
+					typeof value.id === 'string' && value.id.length > 0
+						? value.id
+						: 'generated-id',
+			}),
+			is: (value): value is Attributes =>
+				typeof value === 'object' &&
+				value !== null &&
+				typeof (value as Partial<Attributes>).content === 'string' &&
+				typeof (value as Partial<Attributes>).id === 'string',
+			manifest: {
+				attributes: {
+					content: {
+						ts: {
+							items: null,
+							kind: 'string',
+							properties: null,
+							required: true,
+							union: null,
+						},
+						typia: {
+							defaultValue: null,
+							hasDefault: false,
+						},
+					},
+					id: {
+						ts: {
+							items: null,
+							kind: 'string',
+							properties: null,
+							required: true,
+							union: null,
+						},
+						typia: {
+							defaultValue: null,
+							hasDefault: false,
+						},
+					},
+				},
+			},
+			prune: (value) => value,
+			random: () => ({
+				content: 'random',
+				id: 'random-id',
+			}),
+			validate: (value) => {
+				const attributes = value as Partial<Attributes>;
+				const isValid =
+					typeof attributes.content === 'string' &&
+					attributes.content.length > 0 &&
+					typeof attributes.id === 'string' &&
+					attributes.id.length > 0;
+
+				return {
+					data: isValid ? value : undefined,
+					errors: isValid
+						? []
+						: [
+								{
+									expected: 'string',
+									path: 'id',
+									value: attributes.id,
+								},
+						  ],
+					success: isValid,
+				};
+			},
+		});
+
+		const updateAttribute = scaffoldValidators.createAttributeUpdater(
+			{ content: 'Hello', id: '' },
+			(patch) => {
+				patches.push(patch);
+			}
+		);
+
+		expect(updateAttribute('content', 'Updated')).toBe(true);
+		expect(patches).toEqual([
+			{
+				content: 'Updated',
+				id: 'generated-id',
+			},
+		]);
 	});
 });

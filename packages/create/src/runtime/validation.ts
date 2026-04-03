@@ -1,3 +1,6 @@
+import { applyTemplateDefaultsFromManifest } from "@wp-typia/create/runtime/defaults";
+import type { ManifestDefaultsDocument } from "@wp-typia/create/runtime/defaults";
+
 export interface TypiaValidationError {
 	description?: string;
 	expected: string;
@@ -13,6 +16,30 @@ export interface ValidationResult<T> {
 
 export interface ValidationState<T> extends ValidationResult<T> {
 	errorMessages: string[];
+}
+
+/**
+ * React-like hook bindings used to create a reusable validation hook without
+ * coupling the runtime package to a specific hook implementation.
+ */
+export interface ValidationHookBindings {
+	useMemo: <S>(factory: () => S, deps: readonly unknown[]) => S;
+}
+
+/**
+ * Shared inputs for scaffold validator toolkits that wrap Typia validators,
+ * default application, and validation-aware attribute updates.
+ */
+export interface ScaffoldValidatorToolkitOptions<T extends object> {
+	assert: (value: unknown) => T;
+	clone: (value: T) => T;
+	finalize?: (value: Partial<T>) => unknown;
+	is: (value: unknown) => value is T;
+	manifest: ManifestDefaultsDocument;
+	onValidationError?: (result: ValidationResult<T>, key: keyof T) => void;
+	prune: (value: T) => unknown;
+	random: (...args: unknown[]) => T;
+	validate: (value: unknown) => unknown;
 }
 
 const UNSAFE_PATH_SEGMENTS = new Set(["__proto__", "constructor", "prototype"]);
@@ -38,6 +65,16 @@ function getValueType(value: unknown): string {
 		return "array";
 	}
 	return typeof value;
+}
+
+function redactValidationErrors(
+	errors: readonly TypiaValidationError[],
+): Array<Pick<TypiaValidationError, "description" | "expected" | "path">> {
+	return errors.map(({ description, expected, path }) => ({
+		description,
+		expected,
+		path,
+	}));
 }
 
 export function normalizeValidationError(error: unknown): TypiaValidationError {
@@ -94,6 +131,132 @@ export function toValidationState<T>(
 		...result,
 		errorMessages: formatValidationErrors(result.errors),
 	};
+}
+
+/**
+ * Creates a validation hook factory bound to the provided hook bindings.
+ *
+ * @param bindings React-like `useMemo` implementation.
+ * @returns A `useTypiaValidation` hook that returns normalized validation state.
+ */
+export function createUseTypiaValidationHook({
+	useMemo,
+}: ValidationHookBindings) {
+	return function useTypiaValidation<T>(
+		value: T,
+		validator: (value: T) => ValidationResult<T>,
+	): ValidationState<T> {
+		return useMemo(
+			() => toValidationState(validator(value)),
+			[value, validator],
+		);
+	};
+}
+
+/**
+ * Creates a scaffold-oriented validator toolkit around Typia-generated helpers.
+ *
+ * @param options Typia validators, manifest defaults, and optional finalize/error hooks.
+ * @returns Shared sanitize, validate, and validated attribute update helpers.
+ *
+ * `sanitizeAttributes()` asserts the final value, so required fields must be
+ * supplied by the input, provided by manifest defaults, or filled during
+ * finalization before the assertion runs.
+ */
+export function createScaffoldValidatorToolkit<T extends object>({
+	assert,
+	clone,
+	finalize,
+	is,
+	manifest,
+	onValidationError = (validation, key) => {
+		console.error(
+			`Validation failed for ${String(key)}:`,
+			redactValidationErrors(validation.errors),
+		);
+	},
+	prune,
+	random,
+	validate,
+}: ScaffoldValidatorToolkitOptions<T>) {
+	/**
+	 * Runs Typia validation without applying manifest defaults or scaffold-specific
+	 * finalization. Use this when you need validation-only feedback for already
+	 * normalized values.
+	 */
+	const validateAttributes = (value: unknown): ValidationResult<T> =>
+		toValidationResult<T>(validate(value));
+
+	/**
+	 * Applies manifest defaults and scaffold finalization before asserting the
+	 * resulting value. Use this for edit-time normalization or any path that needs
+	 * synthesized fields such as runtime ids or persistence resource keys.
+	 */
+	const sanitizeAttributes = (value: Partial<T>): T => {
+		const normalized = applyTemplateDefaultsFromManifest<T>(manifest, value);
+
+		return assert(finalize ? finalize(normalized) : normalized);
+	};
+
+	const validateSanitizedAttributes = (value: T): ValidationResult<T> => {
+		try {
+			const data = sanitizeAttributes(value);
+
+			return {
+				data,
+				errors: [],
+				isValid: true,
+			};
+		} catch {
+			return validateAttributes(value);
+		}
+	};
+
+	/**
+	 * Creates an attribute updater that normalizes edit-time updates through
+	 * `sanitizeAttributes()` by default so manifest defaults and finalize hooks are
+	 * reflected during live editing.
+	 */
+	const createScaffoldAttributeUpdater = (
+		attributes: T,
+		setAttributes: (attrs: Partial<T>) => void,
+		validator: (value: T) => ValidationResult<T> = validateSanitizedAttributes,
+	) =>
+		createAttributeUpdater(
+			attributes,
+			setAttributes,
+			validator,
+			onValidationError,
+		);
+
+	return {
+		createAttributeUpdater: createScaffoldAttributeUpdater,
+		sanitizeAttributes,
+		validateAttributes,
+		validators: {
+			assert,
+			clone,
+			is,
+			prune,
+			random,
+			validate: validateAttributes,
+		},
+	};
+}
+
+function toChangedAttributePatch<T extends object>(
+	attributes: T,
+	nextAttributes: T,
+): Partial<T> {
+	const patch: Partial<T> = {};
+
+	for (const key of Object.keys(nextAttributes) as Array<keyof T>) {
+		if (!Object.is(attributes[key], nextAttributes[key])) {
+			patch[key] = nextAttributes[key];
+		}
+	}
+
+	return patch;
 }
 
 function mergeAttributeUpdate<T extends object, K extends keyof T>(
@@ -202,7 +365,12 @@ export function createAttributeUpdater<T extends object>(
 		const validation = validate(nextAttributes);
 
 		if (validation.isValid) {
-			setAttributes(toAttributePatch<T, K>(key, value) as Partial<T>);
+			const patch =
+				validation.data && typeof validation.data === "object"
+					? toChangedAttributePatch(attributes, validation.data)
+					: (toAttributePatch<T, K>(key, value) as Partial<T>);
+
+			setAttributes(patch);
 			return true;
 		}
 
@@ -222,7 +390,12 @@ export function createNestedAttributeUpdater<T extends object>(
 		const validation = validate(nextAttributes);
 
 		if (validation.isValid) {
-			setAttributes(toNestedAttributePatch(attributes, path, value));
+			const patch =
+				validation.data && typeof validation.data === "object"
+					? toChangedAttributePatch(attributes, validation.data)
+					: toNestedAttributePatch(attributes, path, value);
+
+			setAttributes(patch);
 			return true;
 		}
 
