@@ -115,8 +115,40 @@ describe( 'WordPress AI projections', () => {
 		);
 	} );
 
+	test( 'fails clearly when the counter overlay fields disappear from the increment schema', async () => {
+		await expect(
+			buildCounterWordPressAiArtifacts( {
+				manifest: {
+					...BLOCKS.find( ( block ) => block.slug === 'counter' )!.restManifest,
+					endpoints: BLOCKS.find( ( block ) => block.slug === 'counter' )!.restManifest.endpoints.map(
+						( endpoint ) =>
+							endpoint.method === 'POST'
+								? {
+										...endpoint,
+										bodyContract: 'counter-query',
+								  }
+								: endpoint
+					),
+				},
+			} )
+		).rejects.toThrow(
+			'The increment request schema must define both "postId" and "publicWriteToken" for the WordPress AI overlay.'
+		);
+	} );
+
 	test( 'uses the provided category id consistently for the document and every ability', async () => {
 		const projected = await buildCounterWordPressAiArtifacts( {
+			abilityConfig: Object.fromEntries(
+				Object.entries( COUNTER_WORDPRESS_ABILITY_CONFIG ).map(
+					( [ operationId, config ] ) => [
+						operationId,
+						{
+							...config,
+							categoryId: 'custom-counter-category',
+						},
+					]
+				)
+			),
 			category: {
 				id: 'custom-counter-category',
 				label: 'Custom Counter Category',

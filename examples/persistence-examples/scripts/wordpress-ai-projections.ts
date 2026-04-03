@@ -2,58 +2,24 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import {
-	projectJsonSchemaDocument,
-	type JsonSchemaDocument,
-} from '@wp-typia/create';
+import { type JsonSchemaDocument } from '@wp-typia/create';
 import type {
 	EndpointManifestDefinition,
 	EndpointManifestEndpointDefinition,
 } from '@wp-typia/create/metadata-core';
+import {
+	buildWordPressAiArtifacts,
+	type ProjectedWordPressAbilitiesDocument,
+	type WordPressAbilityProjectionConfig,
+	type WordPressAiInputSchemaTransformContext,
+} from '../../../packages/create/src/internal/wordpress-ai';
 
 import { BLOCKS } from './block-config';
-
-export interface WordPressAbilityProjectionConfig {
-	annotations: {
-		destructive?: boolean;
-		idempotent?: boolean;
-		readonly?: boolean;
-	};
-	categoryId: string;
-	executeCallback: string;
-	label: string;
-	permissionCallback: string;
-	showInRest?: boolean;
-}
-
-export interface ProjectedWordPressAbilityDefinition {
-	authMode: EndpointManifestEndpointDefinition[ 'authMode' ];
-	category: string;
-	description: string;
-	executeCallback: string;
-	id: string;
-	inputSchema: Record< string, unknown > | null;
-	label: string;
-	meta: Record< string, unknown >;
-	method: EndpointManifestEndpointDefinition[ 'method' ];
-	operationId: string;
-	outputSchema: Record< string, unknown >;
-	path: string;
-	permissionCallback: string;
-}
-
-export interface ProjectedWordPressAbilitiesDocument {
-	abilities: ProjectedWordPressAbilityDefinition[];
-	category: {
-		id: string;
-		label: string;
-	};
-	generatedFrom: {
-		blockSlug: string;
-		responseSchemaPath: string;
-		schemaProfile: 'ai-structured-output';
-	};
-}
+export type {
+	ProjectedWordPressAbilitiesDocument,
+	ProjectedWordPressAbilityDefinition,
+	WordPressAbilityProjectionConfig,
+} from '../../../packages/create/src/internal/wordpress-ai';
 
 const WORDPRESS_AI_ROOT = 'wordpress-ai';
 
@@ -153,29 +119,12 @@ async function loadJsonDocument(
 	return decoded as JsonSchemaDocument & Record< string, unknown >;
 }
 
-function getEndpointInputContract(
-	endpoint: EndpointManifestEndpointDefinition
-): string | null {
-	if ( endpoint.method === 'GET' ) {
-		return endpoint.queryContract ?? null;
-	}
-
-	return endpoint.bodyContract ?? null;
-}
-
-function projectSchemaDocument(
-	schema: JsonSchemaDocument & Record< string, unknown >
-) {
-	return projectJsonSchemaDocument( schema, {
-		profile: 'ai-structured-output',
-	} ) as JsonSchemaDocument & Record< string, unknown >;
-}
-
-function overlayCounterAbilityInputSchema(
-	endpoint: EndpointManifestEndpointDefinition,
-	schema: ( JsonSchemaDocument & Record< string, unknown > ) | null
-) {
-	if ( ! schema || endpoint.method !== 'POST' ) {
+function applyCounterAbilityInputSchemaPolicy( {
+	endpoint,
+	schema,
+}: WordPressAiInputSchemaTransformContext ): JsonSchemaDocument &
+	Record< string, unknown > {
+	if ( endpoint.method !== 'POST' ) {
 		return schema;
 	}
 
@@ -206,14 +155,15 @@ function overlayCounterAbilityInputSchema(
 			  }
 			: null;
 
-	if ( postIdSchema ) {
-		postIdSchema.minimum = 1;
-		properties.postId = postIdSchema;
+	if ( ! postIdSchema || ! tokenSchema ) {
+		throw new Error(
+			'The increment request schema must define both "postId" and "publicWriteToken" for the WordPress AI overlay.'
+		);
 	}
 
-	if ( tokenSchema ) {
-		properties.publicWriteToken = tokenSchema;
-	}
+	postIdSchema.minimum = 1;
+	properties.postId = postIdSchema;
+	properties.publicWriteToken = tokenSchema;
 
 	if ( ! required.includes( 'publicWriteToken' ) ) {
 		required.push( 'publicWriteToken' );
@@ -223,7 +173,7 @@ function overlayCounterAbilityInputSchema(
 		...schema,
 		properties,
 		required,
-	};
+	} as JsonSchemaDocument & Record< string, unknown >;
 }
 
 export async function buildCounterWordPressAiArtifacts( options?: {
@@ -256,66 +206,28 @@ export async function buildCounterWordPressAiArtifacts( options?: {
 		COUNTER_BLOCK.slug,
 		path.join( 'api-schemas', `${ responseContractName }.schema.json` )
 	);
-	const aiResponseSchema = projectSchemaDocument( responseSchema );
 
-	const abilities = await Promise.all(
-		manifest.endpoints.map( async ( endpoint ) => {
-			const config = abilityConfig[ endpoint.operationId ];
-			if ( ! config ) {
-				throw new Error(
-					`Missing WordPress ability projection config for operationId "${ endpoint.operationId }".`
-				);
-			}
-
-			const inputContractName = getEndpointInputContract( endpoint );
-			const inputSchema = inputContractName
-				? overlayCounterAbilityInputSchema(
-						endpoint,
-						projectSchemaDocument(
-							await loadJsonDocument(
-								COUNTER_BLOCK.slug,
-								path.join(
-									'api-schemas',
-									`${ inputContractName }.schema.json`
-								)
-							)
-						)
-				  )
-				: null;
-
-			return {
-				authMode: endpoint.authMode,
-				category: category.id,
-				description: endpoint.summary ?? config.label,
-				executeCallback: config.executeCallback,
-				id: toAbilityId( endpoint.operationId ),
-				inputSchema,
-				label: config.label,
-				meta: {
-					...config.annotations,
-					show_in_rest: config.showInRest ?? true,
-				},
-				method: endpoint.method,
-				operationId: endpoint.operationId,
-				outputSchema: aiResponseSchema,
-				path: endpoint.path,
-				permissionCallback: config.permissionCallback,
-			} satisfies ProjectedWordPressAbilityDefinition;
-		} )
-	);
-
-	return {
-		abilitiesDocument: {
-			abilities,
-			category,
-			generatedFrom: {
-				blockSlug: COUNTER_BLOCK.slug,
-				responseSchemaPath: COUNTER_AI_RESPONSE_SCHEMA_RELATIVE_PATH,
-				schemaProfile: 'ai-structured-output',
-			},
+	return buildWordPressAiArtifacts( {
+		abilityConfig,
+		buildAbilityId: toAbilityId,
+		category,
+		generatedFrom: {
+			blockSlug: COUNTER_BLOCK.slug,
+			responseSchemaPath: COUNTER_AI_RESPONSE_SCHEMA_RELATIVE_PATH,
+			schemaProfile: 'ai-structured-output',
 		},
-		aiResponseSchema,
-	};
+		loadInputSchema: async (
+			_endpoint: EndpointManifestEndpointDefinition,
+			contractName: string
+		) =>
+			loadJsonDocument(
+				COUNTER_BLOCK.slug,
+				path.join( 'api-schemas', `${ contractName }.schema.json` )
+			),
+		manifest,
+		responseSchema,
+		transformInputSchema: applyCounterAbilityInputSchemaPolicy,
+	} );
 }
 
 export async function syncCounterWordPressAiArtifacts() {
