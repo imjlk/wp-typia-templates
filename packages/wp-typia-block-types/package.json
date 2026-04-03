@@ -41,6 +41,11 @@
       "import": "./dist/block-editor/spacing.js",
       "default": "./dist/block-editor/spacing.js"
     },
+    "./block-editor/style-attributes": {
+      "types": "./dist/block-editor/style-attributes.d.ts",
+      "import": "./dist/block-editor/style-attributes.js",
+      "default": "./dist/block-editor/style-attributes.js"
+    },
     "./block-editor/typography": {
       "types": "./dist/block-editor/typography.d.ts",
       "import": "./dist/block-editor/typography.js",

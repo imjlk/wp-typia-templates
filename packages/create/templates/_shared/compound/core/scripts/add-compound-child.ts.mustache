@@ -341,7 +341,10 @@ export default function Save( {
 function renderIndexFile( childTypeName: string, childFolderSlug: string ): string {
 	return `import { registerBlockType } from '@wordpress/blocks';
 import type { BlockConfiguration } from '@wordpress/blocks';
-import { buildScaffoldBlockRegistration } from '@wp-typia/create/runtime/blocks';
+import {
+\tbuildScaffoldBlockRegistration,
+\ttype ScaffoldBlockMetadata,
+} from '@wp-typia/create/runtime/blocks';
 
 import Edit from './edit';
 import Save from './save';
@@ -352,7 +355,7 @@ import type { ${ childTypeName } } from './types';
 
 const registration = buildScaffoldBlockRegistration<
 \tBlockConfiguration< ${ childTypeName } >
->( metadata as Record<string, unknown>, {
+>( metadata as ScaffoldBlockMetadata, {
 \tedit: Edit,
 \tsave: Save,
 } );

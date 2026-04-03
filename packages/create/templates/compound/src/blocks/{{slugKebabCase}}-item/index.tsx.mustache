@@ -1,6 +1,9 @@
 import { registerBlockType } from '@wordpress/blocks';
 import type { BlockConfiguration } from '@wordpress/blocks';
-import { buildScaffoldBlockRegistration } from '@wp-typia/create/runtime/blocks';
+import {
+	buildScaffoldBlockRegistration,
+	type ScaffoldBlockMetadata,
+} from '@wp-typia/create/runtime/blocks';
 
 import Edit from './edit';
 import Save from './save';
@@ -11,7 +14,7 @@ import type { {{pascalCase}}ItemAttributes } from './types';
 
 const registration = buildScaffoldBlockRegistration<
 	BlockConfiguration< {{pascalCase}}ItemAttributes >
->( metadata as Record<string, unknown>, {
+>( metadata as ScaffoldBlockMetadata, {
 	edit: Edit,
 	save: Save,
 } );

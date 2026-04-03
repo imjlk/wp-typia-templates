@@ -229,6 +229,32 @@ module.exports = async () => {
 			...config,
 			entry: async () =>
 				isModuleConfig( config ) ? moduleEntries : editorEntries,
+			resolve: {
+				...( config.resolve || {} ),
+				alias: {
+					...( config.resolve?.alias || {} ),
+					'@wp-typia/create/runtime/blocks': path.resolve(
+						__dirname,
+						'../../packages/create/src/runtime/blocks.ts'
+					),
+					'@wp-typia/create/runtime/defaults': path.resolve(
+						__dirname,
+						'../../packages/create/src/runtime/defaults.ts'
+					),
+					'@wp-typia/create/runtime/editor': path.resolve(
+						__dirname,
+						'../../packages/create/src/runtime/editor.ts'
+					),
+					'@wp-typia/create/runtime/schema-core': path.resolve(
+						__dirname,
+						'../../packages/create/src/runtime/schema-core.ts'
+					),
+					'@wp-typia/create/runtime/validation': path.resolve(
+						__dirname,
+						'../../packages/create/src/runtime/validation.ts'
+					),
+				},
+			},
 			plugins: [
 				UnpluginTypia(),
 				...( config.plugins || [] ),

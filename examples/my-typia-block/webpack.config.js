@@ -199,6 +199,10 @@ module.exports = async () => {
 				...( config.resolve || {} ),
 				alias: {
 					...( config.resolve?.alias || {} ),
+					'@wp-typia/create/runtime/blocks': path.resolve(
+						process.cwd(),
+						'../../packages/create/src/runtime/blocks.ts'
+					),
 					'@wp-typia/create/runtime/defaults': path.resolve(
 						process.cwd(),
 						'../../packages/create/src/runtime/defaults.ts'

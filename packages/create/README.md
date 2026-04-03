@@ -199,6 +199,11 @@ additive convenience aliases rather than a migration requirement.
 canonical generated-project import path. Prefer the root schema exports such as
 `projectJsonSchemaDocument()` when you are importing schema helpers manually.
 
+`runtime/blocks` includes typed registration helpers such as
+`ScaffoldBlockMetadata`, `ScaffoldBlockRegistrationSettings`, and
+`ScaffoldBlockSupports`, and those types are intended to line up with the
+shared support vocabulary in `@wp-typia/block-types`.
+
 For the normative generated-project import policy, see
 [`docs/runtime-import-policy.md`](../../docs/runtime-import-policy.md). For a
 repo-backed inventory of the current public runtime surface and how it is used

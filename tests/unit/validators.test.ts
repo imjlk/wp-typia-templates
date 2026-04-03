@@ -1,5 +1,5 @@
-import { afterAll, describe, expect, test } from "bun:test";
-import { execFileSync } from "node:child_process";
+import { afterAll, describe, expect, test } from 'bun:test';
+import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { syncBlockMetadata } from '../../scripts/lib/typia-metadata-core';
@@ -36,7 +36,11 @@ describe('Typia metadata generator', () => {
 
   test('preserves imported nested constraints in typia.manifest while keeping block.json minimal', async () => {
     const fixtureDir = createFixture({
-      'block.json': JSON.stringify({ attributes: {}, example: { attributes: {} } }, null, 2),
+      'block.json': JSON.stringify(
+        { attributes: {}, example: { attributes: {} } },
+        null,
+        2,
+      ),
       'src/shared.ts': `import { tags } from "typia";
 
 export interface SeoSettings {
@@ -55,16 +59,20 @@ export interface BlockAttributes {
   }>;
 }
 `,
-      'tsconfig.json': JSON.stringify({
-        compilerOptions: {
-          module: 'NodeNext',
-          moduleResolution: 'NodeNext',
-          resolveJsonModule: true,
-          strict: true,
-          target: 'ES2022',
+      'tsconfig.json': JSON.stringify(
+        {
+          compilerOptions: {
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            resolveJsonModule: true,
+            strict: true,
+            target: 'ES2022',
+          },
+          include: ['src/**/*.ts'],
         },
-        include: ['src/**/*.ts'],
-      }, null, 2),
+        null,
+        2,
+      ),
     });
 
     const result = await syncBlockMetadata({
@@ -91,17 +99,36 @@ export interface BlockAttributes {
     });
 
     expect(manifest.attributes.seo.ts.kind).toBe('object');
-    expect(manifest.attributes.seo.ts.properties.slug.typia.constraints.pattern).toBe('^[a-z0-9-]+$');
-    expect(manifest.attributes.seo.ts.properties.canonicalUrl.typia.constraints.format).toBe('uri');
-    expect(manifest.attributes.items.ts.items.ts.properties.label.typia.constraints.minLength).toBe(1);
-    expect(result.lossyProjectionWarnings).toContain('BlockAttributes.items: items');
-    expect(result.lossyProjectionWarnings).toContain('BlockAttributes.seo: properties');
+    expect(
+      manifest.attributes.seo.ts.properties.slug.typia.constraints.pattern,
+    ).toBe('^[a-z0-9-]+$');
+    expect(
+      manifest.attributes.seo.ts.properties.canonicalUrl.typia.constraints
+        .format,
+    ).toBe('uri');
+    expect(
+      manifest.attributes.items.ts.items.ts.properties.label.typia.constraints
+        .minLength,
+    ).toBe(1);
+    expect(result.lossyProjectionWarnings).toContain(
+      'BlockAttributes.items: items',
+    );
+    expect(result.lossyProjectionWarnings).toContain(
+      'BlockAttributes.seo: properties',
+    );
   });
 
   test('supports imported aliases from @wp-typia/block-types inside types.ts', async () => {
-    const blockTypesSourceDir = path.resolve(import.meta.dir, '../../packages/wp-typia-block-types/src');
+    const blockTypesSourceDir = path.resolve(
+      import.meta.dir,
+      '../../packages/wp-typia-block-types/src',
+    );
     const fixtureDir = createFixture({
-      'block.json': JSON.stringify({ attributes: {}, example: { attributes: {} } }, null, 2),
+      'block.json': JSON.stringify(
+        { attributes: {}, example: { attributes: {} } },
+        null,
+        2,
+      ),
       'src/types.ts': `import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";
 import { tags } from "typia";
 
@@ -109,21 +136,25 @@ export interface BlockAttributes {
   alignment?: TextAlignment & tags.Default<"left">;
 }
 `,
-      'tsconfig.json': JSON.stringify({
-        compilerOptions: {
-          baseUrl: '.',
-          module: 'NodeNext',
-          moduleResolution: 'NodeNext',
-          paths: {
-            '@wp-typia/block-types': [`${blockTypesSourceDir}/index.ts`],
-            '@wp-typia/block-types/*': [`${blockTypesSourceDir}/*`],
+      'tsconfig.json': JSON.stringify(
+        {
+          compilerOptions: {
+            baseUrl: '.',
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            paths: {
+              '@wp-typia/block-types': [`${blockTypesSourceDir}/index.ts`],
+              '@wp-typia/block-types/*': [`${blockTypesSourceDir}/*`],
+            },
+            resolveJsonModule: true,
+            strict: true,
+            target: 'ES2022',
           },
-          resolveJsonModule: true,
-          strict: true,
-          target: 'ES2022',
+          include: ['src/**/*.ts'],
         },
-        include: ['src/**/*.ts'],
-      }, null, 2),
+        null,
+        2,
+      ),
     });
 
     await syncBlockMetadata({
@@ -141,16 +172,28 @@ export interface BlockAttributes {
       fs.readFileSync(path.join(fixtureDir, 'typia.manifest.json'), 'utf8'),
     );
 
-    expect(blockJson.attributes.alignment.enum).toEqual(['left', 'center', 'right', 'justify']);
+    expect(blockJson.attributes.alignment.enum).toEqual([
+      'left',
+      'center',
+      'right',
+      'justify',
+    ]);
     expect(blockJson.attributes.alignment.default).toBe('left');
     expect(manifest.attributes.alignment.typia.hasDefault).toBe(true);
     expect(manifest.attributes.alignment.typia.defaultValue).toBe('left');
   });
 
   test('supports pipeline-compatible aliases from @wp-typia/block-types inside types.ts', async () => {
-    const blockTypesSourceDir = path.resolve(import.meta.dir, '../../packages/wp-typia-block-types/src');
+    const blockTypesSourceDir = path.resolve(
+      import.meta.dir,
+      '../../packages/wp-typia-block-types/src',
+    );
     const fixtureDir = createFixture({
-      'block.json': JSON.stringify({ attributes: {}, example: { attributes: {} } }, null, 2),
+      'block.json': JSON.stringify(
+        { attributes: {}, example: { attributes: {} } },
+        null,
+        2,
+      ),
       'src/types.ts': `import type { CssNamedColor } from "@wp-typia/block-types/block-editor/color";
 import type { MinHeightKeyword } from "@wp-typia/block-types/block-editor/dimensions";
 import { tags } from "typia";
@@ -160,21 +203,25 @@ export interface BlockAttributes {
   minHeight?: MinHeightKeyword & tags.Default<"auto">;
 }
 `,
-      'tsconfig.json': JSON.stringify({
-        compilerOptions: {
-          baseUrl: '.',
-          module: 'NodeNext',
-          moduleResolution: 'NodeNext',
-          paths: {
-            '@wp-typia/block-types': [`${blockTypesSourceDir}/index.ts`],
-            '@wp-typia/block-types/*': [`${blockTypesSourceDir}/*`],
+      'tsconfig.json': JSON.stringify(
+        {
+          compilerOptions: {
+            baseUrl: '.',
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            paths: {
+              '@wp-typia/block-types': [`${blockTypesSourceDir}/index.ts`],
+              '@wp-typia/block-types/*': [`${blockTypesSourceDir}/*`],
+            },
+            resolveJsonModule: true,
+            strict: true,
+            target: 'ES2022',
           },
-          resolveJsonModule: true,
-          strict: true,
-          target: 'ES2022',
+          include: ['src/**/*.ts'],
         },
-        include: ['src/**/*.ts'],
-      }, null, 2),
+        null,
+        2,
+      ),
     });
 
     await syncBlockMetadata({
@@ -207,8 +254,145 @@ export interface BlockAttributes {
       'unset',
     ]);
     expect(blockJson.attributes.minHeight.default).toBe('auto');
-    expect(manifest.attributes.textColor.typia.defaultValue).toBe('transparent');
+    expect(manifest.attributes.textColor.typia.defaultValue).toBe(
+      'transparent',
+    );
     expect(manifest.attributes.minHeight.typia.defaultValue).toBe('auto');
+  });
+
+  test('supports indexed access into imported block support attributes without parsing unrelated nested style types', async () => {
+    const blockTypesSourceDir = path.resolve(
+      import.meta.dir,
+      '../../packages/wp-typia-block-types/src',
+    );
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify(
+        { attributes: {}, example: { attributes: {} } },
+        null,
+        2,
+      ),
+      'src/types.ts': `import type { BlockTypographySupportAttributes } from "@wp-typia/block-types/block-editor/style-attributes";
+import { tags } from "typia";
+
+export interface BlockAttributes {
+  fontSize?: BlockTypographySupportAttributes["fontSize"] & tags.Default<"medium">;
+}
+`,
+      'tsconfig.json': JSON.stringify(
+        {
+          compilerOptions: {
+            baseUrl: '.',
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            paths: {
+              '@wp-typia/block-types': [`${blockTypesSourceDir}/index.ts`],
+              '@wp-typia/block-types/*': [`${blockTypesSourceDir}/*`],
+            },
+            resolveJsonModule: true,
+            strict: true,
+            target: 'ES2022',
+          },
+          include: ['src/**/*.ts'],
+        },
+        null,
+        2,
+      ),
+    });
+
+    await syncBlockMetadata({
+      blockJsonFile: 'block.json',
+      manifestFile: 'typia.manifest.json',
+      projectRoot: fixtureDir,
+      sourceTypeName: 'BlockAttributes',
+      typesFile: 'src/types.ts',
+    });
+
+    const blockJson = JSON.parse(
+      fs.readFileSync(path.join(fixtureDir, 'block.json'), 'utf8'),
+    );
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(fixtureDir, 'typia.manifest.json'), 'utf8'),
+    );
+
+    expect(blockJson.attributes.fontSize.type).toBe('string');
+    expect(blockJson.attributes.fontSize.default).toBe('medium');
+    expect(manifest.attributes.fontSize.wp.defaultValue).toBe('medium');
+    expect(manifest.attributes.fontSize.wp.hasDefault).toBe(true);
+  });
+
+  test('supports primitive-compatible intersections for imported block support attribute aliases', async () => {
+    const blockTypesSourceDir = path.resolve(
+      import.meta.dir,
+      '../../packages/wp-typia-block-types/src',
+    );
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify(
+        { attributes: {}, example: { attributes: {} } },
+        null,
+        2,
+      ),
+      'src/types.ts': `import type { CssNamedColor } from "@wp-typia/block-types/block-editor/color";
+import type { BlockColorSupportAttributes } from "@wp-typia/block-types/block-editor/style-attributes";
+import { tags } from "typia";
+
+export interface BlockAttributes {
+  textColor?: BlockColorSupportAttributes["textColor"] & CssNamedColor & tags.Default<"transparent">;
+}
+`,
+      'tsconfig.json': JSON.stringify(
+        {
+          compilerOptions: {
+            baseUrl: '.',
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            paths: {
+              '@wp-typia/block-types': [`${blockTypesSourceDir}/index.ts`],
+              '@wp-typia/block-types/*': [`${blockTypesSourceDir}/*`],
+            },
+            resolveJsonModule: true,
+            strict: true,
+            target: 'ES2022',
+          },
+          include: ['src/**/*.ts'],
+        },
+        null,
+        2,
+      ),
+    });
+
+    await syncBlockMetadata({
+      blockJsonFile: 'block.json',
+      manifestFile: 'typia.manifest.json',
+      projectRoot: fixtureDir,
+      sourceTypeName: 'BlockAttributes',
+      typesFile: 'src/types.ts',
+    });
+
+    const blockJson = JSON.parse(
+      fs.readFileSync(path.join(fixtureDir, 'block.json'), 'utf8'),
+    );
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(fixtureDir, 'typia.manifest.json'), 'utf8'),
+    );
+
+    expect(blockJson.attributes.textColor.enum).toEqual([
+      'transparent',
+      'currentColor',
+      'inherit',
+      'initial',
+      'unset',
+    ]);
+    expect(blockJson.attributes.textColor.default).toBe('transparent');
+    expect(manifest.attributes.textColor.wp.enum).toEqual([
+      'transparent',
+      'currentColor',
+      'inherit',
+      'initial',
+      'unset',
+    ]);
+    expect(manifest.attributes.textColor.typia.defaultValue).toBe(
+      'transparent',
+    );
   });
 
   test('generated php validator distinguishes arrays from objects for nested safe-subset attributes', async () => {
@@ -217,7 +401,15 @@ export interface BlockAttributes {
     }
 
     const fixtureDir = createFixture({
-      'block.json': JSON.stringify({ attributes: {}, example: { attributes: {} }, name: 'create-block/php-validator' }, null, 2),
+      'block.json': JSON.stringify(
+        {
+          attributes: {},
+          example: { attributes: {} },
+          name: 'create-block/php-validator',
+        },
+        null,
+        2,
+      ),
       'src/types.ts': `export interface BlockAttributes {
   seo: {
     slug: string;
@@ -227,16 +419,20 @@ export interface BlockAttributes {
   }>;
 }
 `,
-      'tsconfig.json': JSON.stringify({
-        compilerOptions: {
-          module: 'NodeNext',
-          moduleResolution: 'NodeNext',
-          resolveJsonModule: true,
-          strict: true,
-          target: 'ES2022',
+      'tsconfig.json': JSON.stringify(
+        {
+          compilerOptions: {
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            resolveJsonModule: true,
+            strict: true,
+            target: 'ES2022',
+          },
+          include: ['src/**/*.ts'],
         },
-        include: ['src/**/*.ts'],
-      }, null, 2),
+        null,
+        2,
+      ),
     });
 
     await syncBlockMetadata({
@@ -253,20 +449,36 @@ export interface BlockAttributes {
     const invalidArrayPayload = JSON.stringify({
       items: { label: 'wrong-shape' },
       seo: { slug: 'valid' },
-    }).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    })
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'");
     const invalidObjectPayload = JSON.stringify({
       items: [{ label: 'valid' }],
       seo: [{ slug: 'wrong-shape' }],
-    }).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    })
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'");
 
-    const arrayResult = JSON.parse(execFileSync('php', [
-      '-r',
-      `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; $payload = json_decode('${invalidArrayPayload}', true); echo json_encode($validator->validate($payload), JSON_UNESCAPED_SLASHES);`,
-    ], { encoding: 'utf8' }));
-    const objectResult = JSON.parse(execFileSync('php', [
-      '-r',
-      `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; $payload = json_decode('${invalidObjectPayload}', true); echo json_encode($validator->validate($payload), JSON_UNESCAPED_SLASHES);`,
-    ], { encoding: 'utf8' }));
+    const arrayResult = JSON.parse(
+      execFileSync(
+        'php',
+        [
+          '-r',
+          `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; $payload = json_decode('${invalidArrayPayload}', true); echo json_encode($validator->validate($payload), JSON_UNESCAPED_SLASHES);`,
+        ],
+        { encoding: 'utf8' },
+      ),
+    );
+    const objectResult = JSON.parse(
+      execFileSync(
+        'php',
+        [
+          '-r',
+          `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; $payload = json_decode('${invalidObjectPayload}', true); echo json_encode($validator->validate($payload), JSON_UNESCAPED_SLASHES);`,
+        ],
+        { encoding: 'utf8' },
+      ),
+    );
 
     expect(arrayResult.valid).toBe(false);
     expect(arrayResult.errors).toContain('items must be array');
@@ -319,7 +531,11 @@ export interface BlockAttributes {
     }
 
     const fixtureDir = createFixture({
-      'block.json': JSON.stringify({ attributes: {}, example: { attributes: {} } }, null, 2),
+      'block.json': JSON.stringify(
+        { attributes: {}, example: { attributes: {} } },
+        null,
+        2,
+      ),
       'src/types.ts': `export type LinkTarget =
   | { kind: "post"; postId: number }
   | { kind: "url"; href: string };
@@ -328,16 +544,20 @@ export interface BlockAttributes {
   link: LinkTarget;
 }
 `,
-      'tsconfig.json': JSON.stringify({
-        compilerOptions: {
-          module: 'NodeNext',
-          moduleResolution: 'NodeNext',
-          resolveJsonModule: true,
-          strict: true,
-          target: 'ES2022',
+      'tsconfig.json': JSON.stringify(
+        {
+          compilerOptions: {
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            resolveJsonModule: true,
+            strict: true,
+            target: 'ES2022',
+          },
+          include: ['src/**/*.ts'],
         },
-        include: ['src/**/*.ts'],
-      }, null, 2),
+        null,
+        2,
+      ),
     });
 
     await syncBlockMetadata({
@@ -348,32 +568,57 @@ export interface BlockAttributes {
       typesFile: 'src/types.ts',
     });
 
-    const blockJson = JSON.parse(fs.readFileSync(path.join(fixtureDir, 'block.json'), 'utf8'));
-    const manifest = JSON.parse(fs.readFileSync(path.join(fixtureDir, 'typia.manifest.json'), 'utf8'));
+    const blockJson = JSON.parse(
+      fs.readFileSync(path.join(fixtureDir, 'block.json'), 'utf8'),
+    );
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(fixtureDir, 'typia.manifest.json'), 'utf8'),
+    );
     const phpValidatorPath = path.join(fixtureDir, 'typia-validator.php');
 
     expect(blockJson.attributes.link).toEqual({ type: 'object' });
     expect(manifest.attributes.link.ts.kind).toBe('union');
     expect(manifest.attributes.link.ts.union.discriminator).toBe('kind');
-    expect(Object.keys(manifest.attributes.link.ts.union.branches)).toEqual(['post', 'url']);
+    expect(Object.keys(manifest.attributes.link.ts.union.branches)).toEqual([
+      'post',
+      'url',
+    ]);
 
-    const validResult = JSON.parse(execFileSync('php', [
-      '-r',
-      `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; echo json_encode($validator->validate(["link" => ["kind" => "post", "postId" => 12]]), JSON_UNESCAPED_SLASHES);`,
-    ], { encoding: 'utf8' }));
-    const invalidResult = JSON.parse(execFileSync('php', [
-      '-r',
-      `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; echo json_encode($validator->validate(["link" => ["kind" => "missing", "href" => "https://example.com"]]), JSON_UNESCAPED_SLASHES);`,
-    ], { encoding: 'utf8' }));
+    const validResult = JSON.parse(
+      execFileSync(
+        'php',
+        [
+          '-r',
+          `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; echo json_encode($validator->validate(["link" => ["kind" => "post", "postId" => 12]]), JSON_UNESCAPED_SLASHES);`,
+        ],
+        { encoding: 'utf8' },
+      ),
+    );
+    const invalidResult = JSON.parse(
+      execFileSync(
+        'php',
+        [
+          '-r',
+          `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; echo json_encode($validator->validate(["link" => ["kind" => "missing", "href" => "https://example.com"]]), JSON_UNESCAPED_SLASHES);`,
+        ],
+        { encoding: 'utf8' },
+      ),
+    );
 
     expect(validResult.valid).toBe(true);
     expect(invalidResult.valid).toBe(false);
-    expect(invalidResult.errors).toContain('link.kind must be one of post, url');
+    expect(invalidResult.errors).toContain(
+      'link.kind must be one of post, url',
+    );
   });
 
   test('emits additive numeric and array constraints in manifest v2', async () => {
     const fixtureDir = createFixture({
-      'block.json': JSON.stringify({ attributes: {}, example: { attributes: {} } }, null, 2),
+      'block.json': JSON.stringify(
+        { attributes: {}, example: { attributes: {} } },
+        null,
+        2,
+      ),
       'src/types.ts': `import { tags } from "typia";
 
 export interface BlockAttributes {
@@ -381,16 +626,20 @@ export interface BlockAttributes {
   slides: Array<string> & tags.MinItems<1> & tags.MaxItems<4>;
 }
 `,
-      'tsconfig.json': JSON.stringify({
-        compilerOptions: {
-          module: 'NodeNext',
-          moduleResolution: 'NodeNext',
-          resolveJsonModule: true,
-          strict: true,
-          target: 'ES2022',
+      'tsconfig.json': JSON.stringify(
+        {
+          compilerOptions: {
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            resolveJsonModule: true,
+            strict: true,
+            target: 'ES2022',
+          },
+          include: ['src/**/*.ts'],
         },
-        include: ['src/**/*.ts'],
-      }, null, 2),
+        null,
+        2,
+      ),
     });
 
     const result = await syncBlockMetadata({
@@ -405,13 +654,21 @@ export interface BlockAttributes {
       fs.readFileSync(path.join(fixtureDir, 'typia.manifest.json'), 'utf8'),
     );
 
-    expect(manifest.attributes.opacity.typia.constraints.exclusiveMinimum).toBe(0);
-    expect(manifest.attributes.opacity.typia.constraints.exclusiveMaximum).toBe(1);
+    expect(manifest.attributes.opacity.typia.constraints.exclusiveMinimum).toBe(
+      0,
+    );
+    expect(manifest.attributes.opacity.typia.constraints.exclusiveMaximum).toBe(
+      1,
+    );
     expect(manifest.attributes.opacity.typia.constraints.multipleOf).toBe(0.25);
     expect(manifest.attributes.slides.typia.constraints.minItems).toBe(1);
     expect(manifest.attributes.slides.typia.constraints.maxItems).toBe(4);
-    expect(result.lossyProjectionWarnings).toContain('BlockAttributes.opacity: exclusiveMaximum, exclusiveMinimum, multipleOf');
-    expect(result.lossyProjectionWarnings).toContain('BlockAttributes.slides: maxItems, minItems, items');
+    expect(result.lossyProjectionWarnings).toContain(
+      'BlockAttributes.opacity: exclusiveMaximum, exclusiveMinimum, multipleOf',
+    );
+    expect(result.lossyProjectionWarnings).toContain(
+      'BlockAttributes.slides: maxItems, minItems, items',
+    );
   });
 
   test('generated php validator supports additional formats, type tags, and array constraints', async () => {
@@ -420,7 +677,11 @@ export interface BlockAttributes {
     }
 
     const fixtureDir = createFixture({
-      'block.json': JSON.stringify({ attributes: {}, example: { attributes: {} } }, null, 2),
+      'block.json': JSON.stringify(
+        { attributes: {}, example: { attributes: {} } },
+        null,
+        2,
+      ),
       'src/types.ts': `import { tags } from "typia";
 
 export interface BlockAttributes {
@@ -431,16 +692,20 @@ export interface BlockAttributes {
   slides: Array<string> & tags.MinItems<1> & tags.MaxItems<2>;
 }
 `,
-      'tsconfig.json': JSON.stringify({
-        compilerOptions: {
-          module: 'NodeNext',
-          moduleResolution: 'NodeNext',
-          resolveJsonModule: true,
-          strict: true,
-          target: 'ES2022',
+      'tsconfig.json': JSON.stringify(
+        {
+          compilerOptions: {
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            resolveJsonModule: true,
+            strict: true,
+            target: 'ES2022',
+          },
+          include: ['src/**/*.ts'],
         },
-        include: ['src/**/*.ts'],
-      }, null, 2),
+        null,
+        2,
+      ),
     });
 
     const result = await syncBlockMetadata({
@@ -462,17 +727,29 @@ export interface BlockAttributes {
       publishedAt: '2026/03/29 09:00:00',
       score: 102,
       slides: [],
-    }).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    })
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'");
 
-    const invalidResult = JSON.parse(execFileSync('php', [
-      '-r',
-      `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; $payload = json_decode('${invalidPayload}', true); echo json_encode($validator->validate($payload), JSON_UNESCAPED_SLASHES);`,
-    ], { encoding: 'utf8' }));
+    const invalidResult = JSON.parse(
+      execFileSync(
+        'php',
+        [
+          '-r',
+          `$validator = require '${phpValidatorPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'; $payload = json_decode('${invalidPayload}', true); echo json_encode($validator->validate($payload), JSON_UNESCAPED_SLASHES);`,
+        ],
+        { encoding: 'utf8' },
+      ),
+    );
 
     expect(invalidResult.valid).toBe(false);
-    expect(invalidResult.errors).toContain('contactEmail must match format email');
+    expect(invalidResult.errors).toContain(
+      'contactEmail must match format email',
+    );
     expect(invalidResult.errors).toContain('website must match format url');
-    expect(invalidResult.errors).toContain('publishedAt must match format date-time');
+    expect(invalidResult.errors).toContain(
+      'publishedAt must match format date-time',
+    );
     expect(invalidResult.errors).toContain('score must be < 101');
     expect(invalidResult.errors).toContain('slides must have at least 1 items');
   });

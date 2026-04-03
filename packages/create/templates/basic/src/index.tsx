@@ -6,8 +6,12 @@
 
 import { registerBlockType } from '@wordpress/blocks';
 import type { BlockConfiguration } from '@wordpress/blocks';
+import type { BlockSupports } from '@wp-typia/block-types/blocks/supports';
 import { __ } from '@wordpress/i18n';
-import { buildScaffoldBlockRegistration } from '@wp-typia/create/runtime/blocks';
+import {
+  buildScaffoldBlockRegistration,
+  type ScaffoldBlockMetadata,
+} from '@wp-typia/create/runtime/blocks';
 
 // Import components
 import Edit from './edit';
@@ -19,15 +23,17 @@ import './style.scss';
 import { {{pascalCase}}Attributes } from './types';
 import { validators } from './validators';
 
+const scaffoldSupports = {
+  html: false,
+  multiple: true,
+  align: ['wide', 'full'],
+} satisfies BlockSupports;
+
 // Register the block
 const registration = buildScaffoldBlockRegistration<
   BlockConfiguration<{{pascalCase}}Attributes>
->(metadata as Record<string, unknown>, {
-  supports: {
-    html: false,
-    multiple: true,
-    align: ['wide', 'full'],
-  },
+>(metadata as ScaffoldBlockMetadata, {
+  supports: scaffoldSupports,
   example: {
     attributes: validators.random(),
   },
