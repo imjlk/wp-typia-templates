@@ -1,3 +1,9 @@
+/**
+ * Scaffold-time starter manifest builders for generated projects.
+ *
+ * These helpers create placeholder `typia.manifest.json` artifacts so fresh
+ * scaffolds can resolve runtime imports before the first canonical sync run.
+ */
 import type {
 	JsonValue,
 	ManifestAttribute,
@@ -18,6 +24,8 @@ interface StarterAttributeDefinition {
 const ALIGNMENT_VALUES = ["left", "center", "right", "justify"] as const;
 const INTERACTIVE_MODE_VALUES = ["click", "hover", "auto"] as const;
 const ANIMATION_VALUES = ["none", "bounce", "pulse", "shake", "flip"] as const;
+const DEFAULT_COMPOUND_CHILD_BODY_PLACEHOLDER =
+	"Add supporting details for this internal item.";
 
 function createConstraints(
 	overrides: Partial<ManifestConstraints> = {},
@@ -105,7 +113,6 @@ function buildBasicStarterManifest(
 		content: createAttribute({
 			constraints: {
 				maxLength: 1000,
-				minLength: 1,
 			},
 			defaultValue: "",
 			kind: "string",
@@ -179,7 +186,6 @@ function buildInteractivityStarterManifest(
 		content: createAttribute({
 			constraints: {
 				maxLength: 1000,
-				minLength: 1,
 			},
 			defaultValue: "",
 			kind: "string",
@@ -353,13 +359,27 @@ function buildCompoundParentStarterManifest(
 function buildCompoundChildStarterManifest(
 	variables: ScaffoldTemplateVariables,
 ): ManifestDocument {
-	return createManifest(`${variables.pascalCase}ItemAttributes`, {
+	return buildCompoundChildStarterManifestDocument(
+		`${variables.pascalCase}ItemAttributes`,
+		variables.compoundChildTitle,
+	);
+}
+
+/**
+ * Builds the starter manifest used by generated compound child blocks.
+ */
+export function buildCompoundChildStarterManifestDocument(
+	childTypeName: string,
+	childTitle: string,
+	bodyPlaceholder = DEFAULT_COMPOUND_CHILD_BODY_PLACEHOLDER,
+): ManifestDocument {
+	return createManifest(childTypeName, {
 		body: createAttribute({
 			constraints: {
 				maxLength: 280,
 				minLength: 1,
 			},
-			defaultValue: "Add supporting details for this internal item.",
+			defaultValue: bodyPlaceholder,
 			kind: "string",
 			required: true,
 			sourceType: "string",
@@ -369,7 +389,7 @@ function buildCompoundChildStarterManifest(
 				maxLength: 80,
 				minLength: 1,
 			},
-			defaultValue: variables.compoundChildTitle,
+			defaultValue: childTitle,
 			kind: "string",
 			required: true,
 			sourceType: "string",
@@ -377,6 +397,10 @@ function buildCompoundChildStarterManifest(
 	});
 }
 
+/**
+ * Returns the starter manifest files that should be seeded for a built-in
+ * template before the first sync.
+ */
 export function getStarterManifestFiles(
 	templateId: string,
 	variables: ScaffoldTemplateVariables,
@@ -427,6 +451,10 @@ export function getStarterManifestFiles(
 	return [];
 }
 
+/**
+ * Serializes a starter manifest using the generated-project JSON formatting
+ * convention.
+ */
 export function stringifyStarterManifest(document: ManifestDocument): string {
 	return `${JSON.stringify(document, null, "\t")}\n`;
 }

@@ -1,3 +1,9 @@
+/**
+ * Helpers for the generated-project local development experience.
+ *
+ * These utilities apply optional preset files and watch-oriented package
+ * scripts after a scaffold has been rendered.
+ */
 import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
@@ -114,6 +120,9 @@ async function appendGitignoreLines(projectDir: string, lines: string[]): Promis
 	await fsp.writeFile(gitignorePath, `${current}${suffix}${missingLines.join("\n")}\n`, "utf8");
 }
 
+/**
+ * Copies opt-in local development preset files into a generated project.
+ */
 export async function applyLocalDevPresetFiles({
 	projectDir,
 	variables,
@@ -138,6 +147,10 @@ export async function applyLocalDevPresetFiles({
 	}
 }
 
+/**
+ * Adds generated-project watch scripts and preset-specific dependencies to
+ * `package.json`.
+ */
 export async function applyGeneratedProjectDxPackageJson({
 	compoundPersistenceEnabled = false,
 	packageManager,
@@ -199,6 +212,10 @@ export async function applyGeneratedProjectDxPackageJson({
 	});
 }
 
+/**
+ * Returns the recommended first-run development command for the given
+ * scaffolded template.
+ */
 export function getPrimaryDevelopmentScript(
 	templateId: string,
 ): "dev" | "start" {

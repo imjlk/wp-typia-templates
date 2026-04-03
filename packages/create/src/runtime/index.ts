@@ -24,6 +24,11 @@ export {
 	manifestToJsonSchema,
 	manifestToOpenApi,
 } from "./schema-core.js";
+export {
+	buildCompoundChildStarterManifestDocument,
+	getStarterManifestFiles,
+	stringifyStarterManifest,
+} from "./starter-manifests.js";
 export type {
 	EndpointOpenApiAuthMode,
 	EndpointOpenApiContractDocument,

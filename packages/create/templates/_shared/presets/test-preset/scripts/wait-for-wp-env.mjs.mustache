@@ -73,9 +73,15 @@ async function main() {
 			if (looksLikeInstall(body)) {
 				lastStatus = "install-screen";
 				if (!installAttempted) {
-					installAttempted = true;
-					const installed = ensureWordPressInstalled(wpEnvConfig);
-					lastStatus = installed ? "auto-installed" : "install-screen";
+					try {
+						const installed = ensureWordPressInstalled(wpEnvConfig);
+						installAttempted = installed;
+						lastStatus = installed ? "auto-installed" : "install-screen";
+					} catch (error) {
+						installAttempted = false;
+						lastStatus =
+							error instanceof Error ? error.message : "install-failed";
+					}
 				}
 			} else {
 				lastStatus = `http-${response.status}`;

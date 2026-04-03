@@ -617,6 +617,28 @@ Thumbs.db
 `;
 }
 
+function mergeTextLines(primaryContent: string, existingContent: string): string {
+	const normalizedPrimary = primaryContent.replace(/\r\n/g, "\n").trimEnd();
+	const normalizedExisting = existingContent.replace(/\r\n/g, "\n").trimEnd();
+	const mergedLines: string[] = [];
+	const seen = new Set<string>();
+
+	for (const line of [...normalizedPrimary.split("\n"), ...normalizedExisting.split("\n")]) {
+		if (line.length === 0 && mergedLines[mergedLines.length - 1] === "") {
+			continue;
+		}
+		if (line.length > 0 && seen.has(line)) {
+			continue;
+		}
+		if (line.length > 0) {
+			seen.add(line);
+		}
+		mergedLines.push(line);
+	}
+
+	return `${mergedLines.join("\n").replace(/\n{3,}/g, "\n\n")}\n`;
+}
+
 async function writeStarterManifestFiles(
 	targetDir: string,
 	templateId: string,
@@ -762,6 +784,7 @@ export async function scaffoldProject({
 	withWpEnv = false,
 }: ScaffoldProjectOptions): Promise<ScaffoldProjectResult> {
 	const resolvedPackageManager = getPackageManager(packageManager).id;
+	const isBuiltInTemplate = isBuiltInTemplateId(templateId);
 
 	await ensureDirectory(projectDir, allowExistingDir);
 
@@ -788,7 +811,7 @@ export async function scaffoldProject({
 			await templateSource.cleanup();
 		}
 	}
-	if (isBuiltInTemplateId(templateId)) {
+	if (isBuiltInTemplate) {
 		await writeStarterManifestFiles(projectDir, templateId, variables);
 		await applyLocalDevPresetFiles({
 			projectDir,
@@ -802,15 +825,23 @@ export async function scaffoldProject({
 		await fsp.writeFile(
 			readmePath,
 			buildReadme(templateId, variables, resolvedPackageManager, {
-				withTestPreset,
-				withWpEnv,
+				withTestPreset: isBuiltInTemplate ? withTestPreset : false,
+				withWpEnv: isBuiltInTemplate ? withWpEnv : false,
 			}),
 			"utf8",
 		);
 	}
-	await fsp.writeFile(path.join(projectDir, ".gitignore"), buildGitignore(), "utf8");
+	const gitignorePath = path.join(projectDir, ".gitignore");
+	const existingGitignore = fs.existsSync(gitignorePath)
+		? await fsp.readFile(gitignorePath, "utf8")
+		: "";
+	await fsp.writeFile(
+		gitignorePath,
+		mergeTextLines(buildGitignore(), existingGitignore),
+		"utf8",
+	);
 	await normalizePackageJson(projectDir, resolvedPackageManager);
-	if (isBuiltInTemplateId(templateId)) {
+	if (isBuiltInTemplate) {
 		await applyGeneratedProjectDxPackageJson({
 			compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
 			packageManager: resolvedPackageManager,

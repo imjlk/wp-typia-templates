@@ -347,6 +347,7 @@ describe("@wp-typia/create scaffolding", () => {
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 		const wpEnvConfig = JSON.parse(fs.readFileSync(path.join(targetDir, ".wp-env.json"), "utf8"));
+		const gitignore = fs.readFileSync(path.join(targetDir, ".gitignore"), "utf8");
 
 		expect(packageJson.devDependencies["@wordpress/env"]).toBe("^11.2.0");
 		expect(packageJson.scripts["wp-env:start"]).toBe("wp-env start");
@@ -356,6 +357,8 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(fs.existsSync(path.join(targetDir, ".wp-env.test.json"))).toBe(false);
 		expect(fs.existsSync(path.join(targetDir, "playwright.config.ts"))).toBe(false);
 		expect(wpEnvConfig.plugins).toEqual(["."]);
+		expect(gitignore).not.toContain("playwright-report/");
+		expect(gitignore).not.toContain("test-results/");
 		expect(readme).toContain("## Local WordPress");
 		expect(readme).not.toContain("## Local Test Preset");
 	});
@@ -380,6 +383,7 @@ describe("@wp-typia/create scaffolding", () => {
 
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
+		const gitignore = fs.readFileSync(path.join(targetDir, ".gitignore"), "utf8");
 		const wpEnvTestConfig = JSON.parse(
 			fs.readFileSync(path.join(targetDir, ".wp-env.test.json"), "utf8"),
 		);
@@ -403,6 +407,8 @@ describe("@wp-typia/create scaffolding", () => {
 			fs.existsSync(path.join(targetDir, "scripts", "wait-for-wp-env.mjs")),
 		).toBe(true);
 		expect(wpEnvTestConfig.plugins).toEqual(["."]);
+		expect(gitignore).toContain("playwright-report/");
+		expect(gitignore).toContain("test-results/");
 		expect(readme).toContain("## Local Test Preset");
 		expect(readme).not.toContain("## Local WordPress");
 	});
@@ -1305,6 +1311,8 @@ describe("@wp-typia/create scaffolding", () => {
 			templateId: createBlockSubsetFixturePath,
 			packageManager: "pnpm",
 			noInstall: true,
+			withTestPreset: true,
+			withWpEnv: true,
 			answers: {
 				author: "Test Runner",
 				description: "Demo remote block",
@@ -1317,6 +1325,7 @@ describe("@wp-typia/create scaffolding", () => {
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const generatedIndex = fs.readFileSync(path.join(targetDir, "src", "index.js"), "utf8");
+		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 		const generatedBlockJson = JSON.parse(
 			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
 		);
@@ -1333,6 +1342,10 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedBlockJson.name).toBe("create-block/demo-remote");
 		expect(generatedBlockJson.title).toBe("Demo Remote");
 		expect(generatedBlockJson.supports.align).toEqual(["wide", "full"]);
+		expect(fs.existsSync(path.join(targetDir, ".wp-env.json"))).toBe(false);
+		expect(fs.existsSync(path.join(targetDir, ".wp-env.test.json"))).toBe(false);
+		expect(readme).not.toContain("## Local WordPress");
+		expect(readme).not.toContain("## Local Test Preset");
 	});
 
 	test("local official external template configs scaffold with the default variant", async () => {

@@ -1,6 +1,10 @@
 /* eslint-disable no-console */
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+	buildCompoundChildStarterManifestDocument,
+	stringifyStarterManifest,
+} from '@wp-typia/create';
 
 const PARENT_BLOCK_NAME = '{{namespace}}/{{slugKebabCase}}';
 const PARENT_BLOCK_SLUG = '{{slugKebabCase}}';
@@ -169,82 +173,13 @@ function renderStarterManifestFile(
 	childTypeName: string,
 	childTitle: string
 ): string {
-	return `${ JSON.stringify(
-		{
-			attributes: {
-				title: {
-					typia: {
-						constraints: {
-							exclusiveMaximum: null,
-							exclusiveMinimum: null,
-							format: null,
-							maxLength: 80,
-							maxItems: null,
-							maximum: null,
-							minLength: 1,
-							minItems: null,
-							minimum: null,
-							multipleOf: null,
-							pattern: null,
-							typeTag: null,
-						},
-						defaultValue: childTitle,
-						hasDefault: true,
-					},
-					ts: {
-						items: null,
-						kind: 'string',
-						properties: null,
-						required: true,
-						union: null,
-					},
-					wp: {
-						defaultValue: childTitle,
-						enum: null,
-						hasDefault: true,
-						type: 'string',
-					},
-				},
-				body: {
-					typia: {
-						constraints: {
-							exclusiveMaximum: null,
-							exclusiveMinimum: null,
-							format: null,
-							maxLength: 280,
-							maxItems: null,
-							maximum: null,
-							minLength: 1,
-							minItems: null,
-							minimum: null,
-							multipleOf: null,
-							pattern: null,
-							typeTag: null,
-						},
-						defaultValue: CHILD_PLACEHOLDER,
-						hasDefault: true,
-					},
-					ts: {
-						items: null,
-						kind: 'string',
-						properties: null,
-						required: true,
-						union: null,
-					},
-					wp: {
-						defaultValue: CHILD_PLACEHOLDER,
-						enum: null,
-						hasDefault: true,
-						type: 'string',
-					},
-				},
-			},
-			manifestVersion: 2,
-			sourceType: childTypeName,
-		},
-		null,
-		'\t'
-	) }\n`;
+	return stringifyStarterManifest(
+		buildCompoundChildStarterManifestDocument(
+			childTypeName,
+			childTitle,
+			CHILD_PLACEHOLDER
+		)
+	);
 }
 
 function renderHooksFile(): string {
