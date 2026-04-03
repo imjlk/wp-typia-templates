@@ -84,6 +84,11 @@
 - [listTemplates](packages_create_src_runtime.md#listtemplates)
 - [SyncBlockMetadataOptions](packages_create_src_runtime.md#syncblockmetadataoptions)
 - [SyncBlockMetadataResult](packages_create_src_runtime.md#syncblockmetadataresult)
+- [SyncBlockMetadataStatus](packages_create_src_runtime.md#syncblockmetadatastatus)
+- [SyncBlockMetadataFailureCode](packages_create_src_runtime.md#syncblockmetadatafailurecode)
+- [SyncBlockMetadataFailure](packages_create_src_runtime.md#syncblockmetadatafailure)
+- [SyncBlockMetadataExecutionOptions](packages_create_src_runtime.md#syncblockmetadataexecutionoptions)
+- [SyncBlockMetadataReport](packages_create_src_runtime.md#syncblockmetadatareport)
 - [SyncTypeSchemaOptions](packages_create_src_runtime.md#synctypeschemaoptions)
 - [SyncTypeSchemaResult](packages_create_src_runtime.md#synctypeschemaresult)
 - [EndpointManifestContractDefinition](packages_create_src_runtime.md#endpointmanifestcontractdefinition)
@@ -97,6 +102,7 @@
 - [SyncRestOpenApiOptions](packages_create_src_runtime.md#syncrestopenapioptions)
 - [SyncRestOpenApiResult](packages_create_src_runtime.md#syncrestopenapiresult)
 - [syncBlockMetadata](packages_create_src_runtime.md#syncblockmetadata)
+- [runSyncBlockMetadata](packages_create_src_runtime.md#runsyncblockmetadata)
 - [syncTypeSchemas](packages_create_src_runtime.md#synctypeschemas)
 - [syncRestOpenApi](packages_create_src_runtime.md#syncrestopenapi)
 
@@ -570,6 +576,36 @@ Re-exports [SyncBlockMetadataResult](../interfaces/packages_create_src_runtime_m
 
 ___
 
+### SyncBlockMetadataStatus
+
+Re-exports [SyncBlockMetadataStatus](packages_create_src_runtime_metadata_core.md#syncblockmetadatastatus)
+
+___
+
+### SyncBlockMetadataFailureCode
+
+Re-exports [SyncBlockMetadataFailureCode](packages_create_src_runtime_metadata_core.md#syncblockmetadatafailurecode)
+
+___
+
+### SyncBlockMetadataFailure
+
+Re-exports [SyncBlockMetadataFailure](../interfaces/packages_create_src_runtime_metadata_core.SyncBlockMetadataFailure.md)
+
+___
+
+### SyncBlockMetadataExecutionOptions
+
+Re-exports [SyncBlockMetadataExecutionOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncBlockMetadataExecutionOptions.md)
+
+___
+
+### SyncBlockMetadataReport
+
+Re-exports [SyncBlockMetadataReport](../interfaces/packages_create_src_runtime_metadata_core.SyncBlockMetadataReport.md)
+
+___
+
 ### SyncTypeSchemaOptions
 
 Re-exports [SyncTypeSchemaOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncTypeSchemaOptions.md)
@@ -645,6 +681,12 @@ ___
 ### syncBlockMetadata
 
 Re-exports [syncBlockMetadata](packages_create_src_runtime_metadata_core.md#syncblockmetadata)
+
+___
+
+### runSyncBlockMetadata
+
+Re-exports [runSyncBlockMetadata](packages_create_src_runtime_metadata_core.md#runsyncblockmetadata)
 
 ___
 

@@ -38,7 +38,7 @@ SyncRestOpenApiBaseOptions.openApiFile
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:201](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L201)
+[packages/create/src/runtime/metadata-core.ts:288](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L288)
 
 ___
 
@@ -54,7 +54,7 @@ SyncRestOpenApiBaseOptions.projectRoot
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:203](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L203)
+[packages/create/src/runtime/metadata-core.ts:290](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L290)
 
 ___
 
@@ -70,7 +70,7 @@ SyncRestOpenApiBaseOptions.typesFile
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:205](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L205)
+[packages/create/src/runtime/metadata-core.ts:292](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L292)
 
 ___
 
@@ -82,7 +82,7 @@ Contract registry keyed by logical route contract ids.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:227](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L227)
+[packages/create/src/runtime/metadata-core.ts:314](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L314)
 
 ___
 
@@ -94,7 +94,7 @@ Endpoint registry describing the REST paths, methods, and auth policies to docum
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:229](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L229)
+[packages/create/src/runtime/metadata-core.ts:316](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L316)
 
 ___
 
@@ -106,7 +106,7 @@ Optional OpenAPI document metadata.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:231](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L231)
+[packages/create/src/runtime/metadata-core.ts:318](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L318)
 
 ___
 
@@ -118,4 +118,4 @@ Not accepted when `contracts` and `endpoints` are provided directly.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:233](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L233)
+[packages/create/src/runtime/metadata-core.ts:320](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L320)

@@ -104,7 +104,7 @@ Returns source-of-truth guidance for generated artifacts by template mode.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold-onboarding.ts:71](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L71)
+[packages/create/src/runtime/scaffold-onboarding.ts:73](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L73)
 
 ___
 
@@ -127,7 +127,7 @@ Returns the generated-project extension workflow for compound child blocks.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold-onboarding.ts:96](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L96)
+[packages/create/src/runtime/scaffold-onboarding.ts:98](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L98)
 
 ___
 
@@ -150,4 +150,4 @@ Returns scaffold-local guidance for the main PHP REST customization points.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold-onboarding.ts:143](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L143)
+[packages/create/src/runtime/scaffold-onboarding.ts:145](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold-onboarding.ts#L145)
