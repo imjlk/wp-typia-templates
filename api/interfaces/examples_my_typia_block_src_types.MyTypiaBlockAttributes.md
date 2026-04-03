@@ -35,7 +35,7 @@ Unique identifier
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:13](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L13)
+[examples/my-typia-block/src/types.ts:19](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L19)
 
 ___
 
@@ -47,7 +47,7 @@ Block version for migrations
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:18](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L18)
+[examples/my-typia-block/src/types.ts:24](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L24)
 
 ___
 
@@ -59,7 +59,7 @@ Custom CSS class
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:23](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L23)
+[examples/my-typia-block/src/types.ts:29](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L29)
 
 ___
 
@@ -71,7 +71,7 @@ Main content
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:28](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L28)
+[examples/my-typia-block/src/types.ts:34](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L34)
 
 ___
 
@@ -83,7 +83,7 @@ Text alignment
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:36](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L36)
+[examples/my-typia-block/src/types.ts:42](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L42)
 
 ___
 
@@ -95,7 +95,7 @@ Is the block visible
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:41](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L41)
+[examples/my-typia-block/src/types.ts:47](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L47)
 
 ___
 
@@ -107,29 +107,29 @@ Showcase-only richer typography controls.
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:46](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L46)
+[examples/my-typia-block/src/types.ts:52](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L52)
 
 ___
 
 ### textColor
 
-• `Optional` **textColor**: CssNamedColor & Default\<"currentColor"\>
+• `Optional` **textColor**: ("inherit" \| "transparent" \| "currentColor" \| "initial" \| "unset") & Default\<"currentColor"\>
 
 Pipeline-compatible semantic color values from @wp-typia/block-types.
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:52](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L52)
+[examples/my-typia-block/src/types.ts:59](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L59)
 
 ___
 
 ### backgroundColor
 
-• `Optional` **backgroundColor**: CssNamedColor & Default\<"transparent"\>
+• `Optional` **backgroundColor**: ("inherit" \| "transparent" \| "currentColor" \| "initial" \| "unset") & Default\<"transparent"\>
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:54](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L54)
+[examples/my-typia-block/src/types.ts:63](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L63)
 
 ___
 
@@ -139,7 +139,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:56](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L56)
+[examples/my-typia-block/src/types.ts:67](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L67)
 
 ___
 
@@ -158,7 +158,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:58](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L58)
+[examples/my-typia-block/src/types.ts:69](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L69)
 
 ___
 
@@ -168,7 +168,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:65](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L65)
+[examples/my-typia-block/src/types.ts:76](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L76)
 
 ___
 
@@ -178,7 +178,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:67](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L67)
+[examples/my-typia-block/src/types.ts:78](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L78)
 
 ___
 
@@ -188,4 +188,4 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:69](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L69)
+[examples/my-typia-block/src/types.ts:80](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L80)

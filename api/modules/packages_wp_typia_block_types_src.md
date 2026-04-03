@@ -37,6 +37,36 @@
 - [SPACING\_AXES](packages_wp_typia_block_types_src.md#spacing_axes)
 - [SpacingDimension](packages_wp_typia_block_types_src.md#spacingdimension)
 - [SPACING\_DIMENSIONS](packages_wp_typia_block_types_src.md#spacing_dimensions)
+- [PresetColorReference](packages_wp_typia_block_types_src.md#presetcolorreference)
+- [PresetGradientReference](packages_wp_typia_block_types_src.md#presetgradientreference)
+- [PresetFontFamilyReference](packages_wp_typia_block_types_src.md#presetfontfamilyreference)
+- [PresetFontSizeReference](packages_wp_typia_block_types_src.md#presetfontsizereference)
+- [BlockColorSlug](packages_wp_typia_block_types_src.md#blockcolorslug)
+- [BlockGradientSlug](packages_wp_typia_block_types_src.md#blockgradientslug)
+- [BlockFontFamilySlug](packages_wp_typia_block_types_src.md#blockfontfamilyslug)
+- [BlockFontSizeSlug](packages_wp_typia_block_types_src.md#blockfontsizeslug)
+- [BlockStyleColorValue](packages_wp_typia_block_types_src.md#blockstylecolorvalue)
+- [BlockStyleGradientValue](packages_wp_typia_block_types_src.md#blockstylegradientvalue)
+- [BlockStyleFontSizeValue](packages_wp_typia_block_types_src.md#blockstylefontsizevalue)
+- [BlockStyleFontFamilyValue](packages_wp_typia_block_types_src.md#blockstylefontfamilyvalue)
+- [BlockStyleSpacingValue](packages_wp_typia_block_types_src.md#blockstylespacingvalue)
+- [BlockStyleBorderWidthValue](packages_wp_typia_block_types_src.md#blockstyleborderwidthvalue)
+- [BlockStyleBorderRadiusValue](packages_wp_typia_block_types_src.md#blockstyleborderradiusvalue)
+- [BlockLinkColorAttributes](packages_wp_typia_block_types_src.md#blocklinkcolorattributes)
+- [BlockElementsStyleAttributes](packages_wp_typia_block_types_src.md#blockelementsstyleattributes)
+- [BlockColorStyleAttributes](packages_wp_typia_block_types_src.md#blockcolorstyleattributes)
+- [BlockBorderStyleAttributes](packages_wp_typia_block_types_src.md#blockborderstyleattributes)
+- [BlockDimensionsStyleAttributes](packages_wp_typia_block_types_src.md#blockdimensionsstyleattributes)
+- [BlockSpacingStyleAttributes](packages_wp_typia_block_types_src.md#blockspacingstyleattributes)
+- [BlockTypographyStyleAttributes](packages_wp_typia_block_types_src.md#blocktypographystyleattributes)
+- [BlockPositionStyleAttributes](packages_wp_typia_block_types_src.md#blockpositionstyleattributes)
+- [BlockStyleAttributes](packages_wp_typia_block_types_src.md#blockstyleattributes)
+- [BlockColorSupportAttributes](packages_wp_typia_block_types_src.md#blockcolorsupportattributes)
+- [BlockTypographySupportAttributes](packages_wp_typia_block_types_src.md#blocktypographysupportattributes)
+- [BlockSpacingSupportAttributes](packages_wp_typia_block_types_src.md#blockspacingsupportattributes)
+- [BlockDimensionsSupportAttributes](packages_wp_typia_block_types_src.md#blockdimensionssupportattributes)
+- [BlockBorderSupportAttributes](packages_wp_typia_block_types_src.md#blockbordersupportattributes)
+- [BlockStyleSupportAttributes](packages_wp_typia_block_types_src.md#blockstylesupportattributes)
 - [TextTransform](packages_wp_typia_block_types_src.md#texttransform)
 - [TEXT\_TRANSFORMS](packages_wp_typia_block_types_src.md#text_transforms)
 - [TextDecoration](packages_wp_typia_block_types_src.md#textdecoration)
@@ -51,6 +81,19 @@
 - [TYPOGRAPHY\_SUPPORT\_KEYS](packages_wp_typia_block_types_src.md#typography_support_keys)
 - [SpacingSupportKey](packages_wp_typia_block_types_src.md#spacingsupportkey)
 - [SPACING\_SUPPORT\_KEYS](packages_wp_typia_block_types_src.md#spacing_support_keys)
+- [BlockBorderSupport](packages_wp_typia_block_types_src.md#blockbordersupport)
+- [BlockColorSupport](packages_wp_typia_block_types_src.md#blockcolorsupport)
+- [BlockDimensionsSupport](packages_wp_typia_block_types_src.md#blockdimensionssupport)
+- [BlockFilterSupport](packages_wp_typia_block_types_src.md#blockfiltersupport)
+- [BlockInteractivitySupport](packages_wp_typia_block_types_src.md#blockinteractivitysupport)
+- [BlockLayoutDefault](packages_wp_typia_block_types_src.md#blocklayoutdefault)
+- [BlockLayoutSupport](packages_wp_typia_block_types_src.md#blocklayoutsupport)
+- [BlockLightboxSupport](packages_wp_typia_block_types_src.md#blocklightboxsupport)
+- [BlockPositionSupport](packages_wp_typia_block_types_src.md#blockpositionsupport)
+- [BlockShadowSupport](packages_wp_typia_block_types_src.md#blockshadowsupport)
+- [BlockSpacingSupport](packages_wp_typia_block_types_src.md#blockspacingsupport)
+- [BlockTypographySupport](packages_wp_typia_block_types_src.md#blocktypographysupport)
+- [BlockSupports](packages_wp_typia_block_types_src.md#blocksupports)
 
 ## References
 
@@ -240,6 +283,186 @@ Re-exports [SPACING_DIMENSIONS](packages_wp_typia_block_types_src_block_editor_s
 
 ___
 
+### PresetColorReference
+
+Re-exports [PresetColorReference](packages_wp_typia_block_types_src_block_editor_style_attributes.md#presetcolorreference)
+
+___
+
+### PresetGradientReference
+
+Re-exports [PresetGradientReference](packages_wp_typia_block_types_src_block_editor_style_attributes.md#presetgradientreference)
+
+___
+
+### PresetFontFamilyReference
+
+Re-exports [PresetFontFamilyReference](packages_wp_typia_block_types_src_block_editor_style_attributes.md#presetfontfamilyreference)
+
+___
+
+### PresetFontSizeReference
+
+Re-exports [PresetFontSizeReference](packages_wp_typia_block_types_src_block_editor_style_attributes.md#presetfontsizereference)
+
+___
+
+### BlockColorSlug
+
+Re-exports [BlockColorSlug](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockcolorslug)
+
+___
+
+### BlockGradientSlug
+
+Re-exports [BlockGradientSlug](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockgradientslug)
+
+___
+
+### BlockFontFamilySlug
+
+Re-exports [BlockFontFamilySlug](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockfontfamilyslug)
+
+___
+
+### BlockFontSizeSlug
+
+Re-exports [BlockFontSizeSlug](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockfontsizeslug)
+
+___
+
+### BlockStyleColorValue
+
+Re-exports [BlockStyleColorValue](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockstylecolorvalue)
+
+___
+
+### BlockStyleGradientValue
+
+Re-exports [BlockStyleGradientValue](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockstylegradientvalue)
+
+___
+
+### BlockStyleFontSizeValue
+
+Re-exports [BlockStyleFontSizeValue](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockstylefontsizevalue)
+
+___
+
+### BlockStyleFontFamilyValue
+
+Re-exports [BlockStyleFontFamilyValue](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockstylefontfamilyvalue)
+
+___
+
+### BlockStyleSpacingValue
+
+Re-exports [BlockStyleSpacingValue](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockstylespacingvalue)
+
+___
+
+### BlockStyleBorderWidthValue
+
+Re-exports [BlockStyleBorderWidthValue](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockstyleborderwidthvalue)
+
+___
+
+### BlockStyleBorderRadiusValue
+
+Re-exports [BlockStyleBorderRadiusValue](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockstyleborderradiusvalue)
+
+___
+
+### BlockLinkColorAttributes
+
+Re-exports [BlockLinkColorAttributes](../interfaces/packages_wp_typia_block_types_src_block_editor_style_attributes.BlockLinkColorAttributes.md)
+
+___
+
+### BlockElementsStyleAttributes
+
+Re-exports [BlockElementsStyleAttributes](../interfaces/packages_wp_typia_block_types_src_block_editor_style_attributes.BlockElementsStyleAttributes.md)
+
+___
+
+### BlockColorStyleAttributes
+
+Re-exports [BlockColorStyleAttributes](../interfaces/packages_wp_typia_block_types_src_block_editor_style_attributes.BlockColorStyleAttributes.md)
+
+___
+
+### BlockBorderStyleAttributes
+
+Re-exports [BlockBorderStyleAttributes](../interfaces/packages_wp_typia_block_types_src_block_editor_style_attributes.BlockBorderStyleAttributes.md)
+
+___
+
+### BlockDimensionsStyleAttributes
+
+Re-exports [BlockDimensionsStyleAttributes](../interfaces/packages_wp_typia_block_types_src_block_editor_style_attributes.BlockDimensionsStyleAttributes.md)
+
+___
+
+### BlockSpacingStyleAttributes
+
+Re-exports [BlockSpacingStyleAttributes](../interfaces/packages_wp_typia_block_types_src_block_editor_style_attributes.BlockSpacingStyleAttributes.md)
+
+___
+
+### BlockTypographyStyleAttributes
+
+Re-exports [BlockTypographyStyleAttributes](../interfaces/packages_wp_typia_block_types_src_block_editor_style_attributes.BlockTypographyStyleAttributes.md)
+
+___
+
+### BlockPositionStyleAttributes
+
+Re-exports [BlockPositionStyleAttributes](../interfaces/packages_wp_typia_block_types_src_block_editor_style_attributes.BlockPositionStyleAttributes.md)
+
+___
+
+### BlockStyleAttributes
+
+Re-exports [BlockStyleAttributes](../interfaces/packages_wp_typia_block_types_src_block_editor_style_attributes.BlockStyleAttributes.md)
+
+___
+
+### BlockColorSupportAttributes
+
+Re-exports [BlockColorSupportAttributes](../interfaces/packages_wp_typia_block_types_src_block_editor_style_attributes.BlockColorSupportAttributes.md)
+
+___
+
+### BlockTypographySupportAttributes
+
+Re-exports [BlockTypographySupportAttributes](../interfaces/packages_wp_typia_block_types_src_block_editor_style_attributes.BlockTypographySupportAttributes.md)
+
+___
+
+### BlockSpacingSupportAttributes
+
+Re-exports [BlockSpacingSupportAttributes](../interfaces/packages_wp_typia_block_types_src_block_editor_style_attributes.BlockSpacingSupportAttributes.md)
+
+___
+
+### BlockDimensionsSupportAttributes
+
+Re-exports [BlockDimensionsSupportAttributes](../interfaces/packages_wp_typia_block_types_src_block_editor_style_attributes.BlockDimensionsSupportAttributes.md)
+
+___
+
+### BlockBorderSupportAttributes
+
+Re-exports [BlockBorderSupportAttributes](../interfaces/packages_wp_typia_block_types_src_block_editor_style_attributes.BlockBorderSupportAttributes.md)
+
+___
+
+### BlockStyleSupportAttributes
+
+Re-exports [BlockStyleSupportAttributes](../interfaces/packages_wp_typia_block_types_src_block_editor_style_attributes.BlockStyleSupportAttributes.md)
+
+___
+
 ### TextTransform
 
 Re-exports [TextTransform](packages_wp_typia_block_types_src_block_editor_typography.md#texttransform)
@@ -321,3 +544,81 @@ ___
 ### SPACING\_SUPPORT\_KEYS
 
 Re-exports [SPACING_SUPPORT_KEYS](packages_wp_typia_block_types_src_blocks_supports.md#spacing_support_keys)
+
+___
+
+### BlockBorderSupport
+
+Re-exports [BlockBorderSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockBorderSupport.md)
+
+___
+
+### BlockColorSupport
+
+Re-exports [BlockColorSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockColorSupport.md)
+
+___
+
+### BlockDimensionsSupport
+
+Re-exports [BlockDimensionsSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockDimensionsSupport.md)
+
+___
+
+### BlockFilterSupport
+
+Re-exports [BlockFilterSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockFilterSupport.md)
+
+___
+
+### BlockInteractivitySupport
+
+Re-exports [BlockInteractivitySupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockInteractivitySupport.md)
+
+___
+
+### BlockLayoutDefault
+
+Re-exports [BlockLayoutDefault](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockLayoutDefault.md)
+
+___
+
+### BlockLayoutSupport
+
+Re-exports [BlockLayoutSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockLayoutSupport.md)
+
+___
+
+### BlockLightboxSupport
+
+Re-exports [BlockLightboxSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockLightboxSupport.md)
+
+___
+
+### BlockPositionSupport
+
+Re-exports [BlockPositionSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockPositionSupport.md)
+
+___
+
+### BlockShadowSupport
+
+Re-exports [BlockShadowSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockShadowSupport.md)
+
+___
+
+### BlockSpacingSupport
+
+Re-exports [BlockSpacingSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockSpacingSupport.md)
+
+___
+
+### BlockTypographySupport
+
+Re-exports [BlockTypographySupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockTypographySupport.md)
+
+___
+
+### BlockSupports
+
+Re-exports [BlockSupports](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockSupports.md)

@@ -4,6 +4,22 @@
 
 ## Table of contents
 
+### Interfaces
+
+- [BlockBorderSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockBorderSupport.md)
+- [BlockColorSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockColorSupport.md)
+- [BlockDimensionsSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockDimensionsSupport.md)
+- [BlockFilterSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockFilterSupport.md)
+- [BlockInteractivitySupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockInteractivitySupport.md)
+- [BlockLayoutDefault](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockLayoutDefault.md)
+- [BlockLayoutSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockLayoutSupport.md)
+- [BlockLightboxSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockLightboxSupport.md)
+- [BlockPositionSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockPositionSupport.md)
+- [BlockShadowSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockShadowSupport.md)
+- [BlockSpacingSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockSpacingSupport.md)
+- [BlockTypographySupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockTypographySupport.md)
+- [BlockSupports](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockSupports.md)
+
 ### Type Aliases
 
 - [BlockSupportFeature](packages_wp_typia_block_types_src_blocks_supports.md#blocksupportfeature)
@@ -20,13 +36,14 @@
 
 ### BlockSupportFeature
 
-Ƭ **BlockSupportFeature**: ``"align"`` \| ``"anchor"`` \| ``"ariaLabel"`` \| ``"border"`` \| ``"className"`` \| ``"color"`` \| ``"dimensions"`` \| ``"filter"`` \| ``"html"`` \| ``"interactivity"`` \| ``"layout"`` \| ``"lightbox"`` \| ``"lock"`` \| ``"position"`` \| ``"renaming"`` \| ``"shadow"`` \| ``"spacing"`` \| ``"typography"``
+Ƭ **BlockSupportFeature**: ``"align"`` \| ``"alignWide"`` \| ``"anchor"`` \| ``"ariaLabel"`` \| ``"border"`` \| ``"className"`` \| ``"color"`` \| ``"customClassName"`` \| ``"dimensions"`` \| ``"filter"`` \| ``"html"`` \| ``"inserter"`` \| ``"interactivity"`` \| ``"layout"`` \| ``"lightbox"`` \| ``"lock"`` \| ``"multiple"`` \| ``"position"`` \| ``"renaming"`` \| ``"reusable"`` \| ``"shadow"`` \| ``"spacing"`` \| ``"typography"``
 
-Derived from @wordpress/blocks support constants and block support paths.
+Derived from Gutenberg block support keys and commonly used block.json
+support sections.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:4](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L4)
+[packages/wp-typia-block-types/src/blocks/supports.ts:17](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L17)
 
 ___
 
@@ -36,7 +53,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:45](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L45)
+[packages/wp-typia-block-types/src/blocks/supports.ts:68](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L68)
 
 ___
 
@@ -46,17 +63,17 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:72](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L72)
+[packages/wp-typia-block-types/src/blocks/supports.ts:95](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L95)
 
 ## Variables
 
 ### BLOCK\_SUPPORT\_FEATURES
 
-• `Const` **BLOCK\_SUPPORT\_FEATURES**: readonly [``"align"``, ``"anchor"``, ``"ariaLabel"``, ``"border"``, ``"className"``, ``"color"``, ``"dimensions"``, ``"filter"``, ``"html"``, ``"interactivity"``, ``"layout"``, ``"lightbox"``, ``"lock"``, ``"position"``, ``"renaming"``, ``"shadow"``, ``"spacing"``, ``"typography"``]
+• `Const` **BLOCK\_SUPPORT\_FEATURES**: readonly [``"align"``, ``"alignWide"``, ``"anchor"``, ``"ariaLabel"``, ``"border"``, ``"className"``, ``"color"``, ``"customClassName"``, ``"dimensions"``, ``"filter"``, ``"html"``, ``"inserter"``, ``"interactivity"``, ``"layout"``, ``"lightbox"``, ``"lock"``, ``"multiple"``, ``"position"``, ``"renaming"``, ``"reusable"``, ``"shadow"``, ``"spacing"``, ``"typography"``]
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:24](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L24)
+[packages/wp-typia-block-types/src/blocks/supports.ts:42](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L42)
 
 ___
 
@@ -66,7 +83,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:58](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L58)
+[packages/wp-typia-block-types/src/blocks/supports.ts:81](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L81)
 
 ___
 
@@ -76,4 +93,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:74](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L74)
+[packages/wp-typia-block-types/src/blocks/supports.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L97)

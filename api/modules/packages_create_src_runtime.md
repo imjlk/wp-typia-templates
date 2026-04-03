@@ -21,6 +21,10 @@
 - [formatEditorFieldLabel](packages_create_src_runtime.md#formateditorfieldlabel)
 - [buildScaffoldBlockRegistration](packages_create_src_runtime.md#buildscaffoldblockregistration)
 - [createTypiaWebpackConfig](packages_create_src_runtime.md#createtypiawebpackconfig)
+- [BuildScaffoldBlockRegistrationResult](packages_create_src_runtime.md#buildscaffoldblockregistrationresult)
+- [ScaffoldBlockMetadata](packages_create_src_runtime.md#scaffoldblockmetadata)
+- [ScaffoldBlockRegistrationSettings](packages_create_src_runtime.md#scaffoldblockregistrationsettings)
+- [ScaffoldBlockSupports](packages_create_src_runtime.md#scaffoldblocksupports)
 - [manifestAttributeToJsonSchema](packages_create_src_runtime.md#manifestattributetojsonschema)
 - [projectJsonSchemaDocument](packages_create_src_runtime.md#projectjsonschemadocument)
 - [manifestToJsonSchema](packages_create_src_runtime.md#manifesttojsonschema)
@@ -185,6 +189,30 @@ ___
 ### createTypiaWebpackConfig
 
 Re-exports [createTypiaWebpackConfig](packages_create_src_runtime_blocks.md#createtypiawebpackconfig)
+
+___
+
+### BuildScaffoldBlockRegistrationResult
+
+Re-exports [BuildScaffoldBlockRegistrationResult](../interfaces/packages_create_src_runtime_blocks.BuildScaffoldBlockRegistrationResult.md)
+
+___
+
+### ScaffoldBlockMetadata
+
+Re-exports [ScaffoldBlockMetadata](../interfaces/packages_create_src_runtime_blocks.ScaffoldBlockMetadata.md)
+
+___
+
+### ScaffoldBlockRegistrationSettings
+
+Re-exports [ScaffoldBlockRegistrationSettings](../interfaces/packages_create_src_runtime_blocks.ScaffoldBlockRegistrationSettings.md)
+
+___
+
+### ScaffoldBlockSupports
+
+Re-exports [ScaffoldBlockSupports](packages_create_src_runtime_blocks.md#scaffoldblocksupports)
 
 ___
 

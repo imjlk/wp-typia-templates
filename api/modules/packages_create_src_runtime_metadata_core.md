@@ -40,7 +40,7 @@ Options for writing a canonical endpoint-aware REST OpenAPI document.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:223](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L223)
+[packages/create/src/runtime/metadata-core.ts:239](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L239)
 
 ## Functions
 
@@ -71,7 +71,7 @@ The same manifest object with literal contract and endpoint metadata preserved.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:163](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L163)
+[packages/create/src/runtime/metadata-core.ts:175](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L175)
 
 ___
 
@@ -91,7 +91,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:286](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L286)
+[packages/create/src/runtime/metadata-core.ts:302](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L302)
 
 ___
 
@@ -111,7 +111,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:376](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L376)
+[packages/create/src/runtime/metadata-core.ts:401](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L401)
 
 ___
 
@@ -135,4 +135,4 @@ Information about the generated OpenAPI document and included schema components.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:429](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L429)
+[packages/create/src/runtime/metadata-core.ts:460](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L460)

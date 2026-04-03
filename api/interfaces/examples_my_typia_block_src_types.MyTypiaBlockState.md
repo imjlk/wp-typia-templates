@@ -26,7 +26,7 @@ My Typia Block interactivity state
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:84](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L84)
+[examples/my-typia-block/src/types.ts:95](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L95)
 
 ___
 
@@ -36,7 +36,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:85](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L85)
+[examples/my-typia-block/src/types.ts:96](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L96)
 
 ___
 
@@ -46,7 +46,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:86](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L86)
+[examples/my-typia-block/src/types.ts:97](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L97)
 
 ___
 
@@ -56,7 +56,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:87](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L87)
+[examples/my-typia-block/src/types.ts:98](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L98)
 
 ___
 
@@ -66,7 +66,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:88](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L88)
+[examples/my-typia-block/src/types.ts:99](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L99)
 
 ___
 
@@ -76,7 +76,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:89](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L89)
+[examples/my-typia-block/src/types.ts:100](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L100)
 
 ___
 
@@ -86,4 +86,4 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/types.ts:90](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L90)
+[examples/my-typia-block/src/types.ts:101](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/types.ts#L101)

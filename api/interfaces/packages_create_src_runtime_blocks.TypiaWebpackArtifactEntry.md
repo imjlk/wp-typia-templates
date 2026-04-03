@@ -21,7 +21,7 @@ A generated artifact file that should be copied into the webpack output.
 
 #### Defined in
 
-[packages/create/src/runtime/blocks.ts:7](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/blocks.ts#L7)
+[packages/create/src/runtime/blocks.ts:36](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/blocks.ts#L36)
 
 ___
 
@@ -31,4 +31,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/blocks.ts:8](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/blocks.ts#L8)
+[packages/create/src/runtime/blocks.ts:37](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/blocks.ts#L37)

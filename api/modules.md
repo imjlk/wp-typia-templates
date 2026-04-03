@@ -107,6 +107,7 @@
 - [packages/wp-typia-block-types/src/block-editor](modules/packages_wp_typia_block_types_src_block_editor.md)
 - [packages/wp-typia-block-types/src/block-editor/layout](modules/packages_wp_typia_block_types_src_block_editor_layout.md)
 - [packages/wp-typia-block-types/src/block-editor/spacing](modules/packages_wp_typia_block_types_src_block_editor_spacing.md)
+- [packages/wp-typia-block-types/src/block-editor/style-attributes](modules/packages_wp_typia_block_types_src_block_editor_style_attributes.md)
 - [packages/wp-typia-block-types/src/block-editor/typography](modules/packages_wp_typia_block_types_src_block_editor_typography.md)
 - [packages/wp-typia-block-types/src/blocks](modules/packages_wp_typia_block_types_src_blocks.md)
 - [packages/wp-typia-block-types/src/blocks/supports](modules/packages_wp_typia_block_types_src_blocks_supports.md)
