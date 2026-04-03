@@ -2,6 +2,7 @@ import type {} from './typia-tags.js';
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 
 import {
@@ -402,6 +403,7 @@ const DEFAULT_CONSTRAINTS = (): AttributeConstraints => ({
 const SYNC_BLOCK_METADATA_FAILURE_CODE = Symbol(
   'sync-block-metadata-failure-code',
 );
+const RUNTIME_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 
 type TaggedSyncBlockMetadataError = Error & {
   [SYNC_BLOCK_METADATA_FAILURE_CODE]?: SyncBlockMetadataFailureCode;
@@ -855,6 +857,7 @@ function createAnalysisContext(
   };
 
   let rootNames = [typesFilePath];
+  const typiaTagsAugmentationPath = resolveTypiaTagsAugmentationPath();
 
   if (configPath !== undefined) {
     const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
@@ -877,7 +880,15 @@ function createAnalysisContext(
     rootNames = parsed.fileNames.includes(typesFilePath)
       ? parsed.fileNames
       : [...parsed.fileNames, typesFilePath];
+    if (
+      typiaTagsAugmentationPath &&
+      !rootNames.includes(typiaTagsAugmentationPath)
+    ) {
+      rootNames = [...rootNames, typiaTagsAugmentationPath];
+    }
     Object.assign(compilerOptions, parsed.options);
+  } else if (typiaTagsAugmentationPath) {
+    rootNames = [...rootNames, typiaTagsAugmentationPath];
   }
 
   const program = ts.createProgram({
@@ -888,8 +899,7 @@ function createAnalysisContext(
   const blockingDiagnostic = diagnostics.find(
     (diagnostic) =>
       diagnostic.category === ts.DiagnosticCategory.Error &&
-      diagnostic.file?.fileName === typesFilePath &&
-      !isIgnorableCustomTagDiagnostic(diagnostic),
+      diagnostic.file?.fileName === typesFilePath,
   );
   if (blockingDiagnostic) {
     throw formatDiagnosticError(blockingDiagnostic);
@@ -905,9 +915,19 @@ function createAnalysisContext(
   };
 }
 
-function isIgnorableCustomTagDiagnostic(diagnostic: ts.Diagnostic): boolean {
-  const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
-  return /has no exported member '(Source|Selector)'/.test(message);
+function resolveTypiaTagsAugmentationPath(): string | null {
+  const candidates = [
+    path.join(RUNTIME_DIRECTORY, 'typia-tags.d.ts'),
+    path.join(RUNTIME_DIRECTORY, 'typia-tags.ts'),
+  ];
+
+  for (const candidate of candidates) {
+    if (ts.sys.fileExists(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
 }
 
 function findNamedDeclaration(

@@ -317,7 +317,7 @@ export interface BlockAttributes {
         typesFile: 'src/types.ts',
       }),
     ).rejects.toThrow(
-      'Tag "Source" only supports "html", "text", or "rich-text" at BlockAttributes.content',
+      `Type '"attribute"' does not satisfy the constraint '"html" | "text" | "rich-text"'`,
     );
   });
 
