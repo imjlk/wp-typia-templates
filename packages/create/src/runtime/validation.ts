@@ -1,5 +1,5 @@
-import { applyTemplateDefaultsFromManifest } from "./defaults.js";
-import type { ManifestDefaultsDocument } from "./defaults.js";
+import { applyTemplateDefaultsFromManifest } from "@wp-typia/create/runtime/defaults";
+import type { ManifestDefaultsDocument } from "@wp-typia/create/runtime/defaults";
 
 export interface TypiaValidationError {
 	description?: string;
@@ -18,6 +18,10 @@ export interface ValidationState<T> extends ValidationResult<T> {
 	errorMessages: string[];
 }
 
+/**
+ * React-like hook bindings used to create a reusable validation hook without
+ * coupling the runtime package to a specific hook implementation.
+ */
 export interface ValidationHookBindings {
 	useEffect: (
 		effect: () => void | (() => void),
@@ -26,6 +30,10 @@ export interface ValidationHookBindings {
 	useState: <S>(initialState: S | (() => S)) => [S, (value: S) => void];
 }
 
+/**
+ * Shared inputs for scaffold validator toolkits that wrap Typia validators,
+ * default application, and validation-aware attribute updates.
+ */
 export interface ScaffoldValidatorToolkitOptions<T extends object> {
 	assert: (value: unknown) => T;
 	clone: (value: T) => T;
@@ -115,10 +123,16 @@ export function toValidationState<T>(
 ): ValidationState<T> {
 	return {
 		...result,
-		errorMessages: formatValidationErrors(result.errors),
+	errorMessages: formatValidationErrors(result.errors),
 	};
 }
 
+/**
+ * Creates a validation hook factory bound to the provided hook bindings.
+ *
+ * @param bindings React-like `useEffect` and `useState` implementations.
+ * @returns A `useTypiaValidation` hook that returns normalized validation state.
+ */
 export function createUseTypiaValidationHook({
 	useEffect,
 	useState,
@@ -139,6 +153,12 @@ export function createUseTypiaValidationHook({
 	};
 }
 
+/**
+ * Creates a scaffold-oriented validator toolkit around Typia-generated helpers.
+ *
+ * @param options Typia validators, manifest defaults, and optional finalize/error hooks.
+ * @returns Shared sanitize, validate, and validated attribute update helpers.
+ */
 export function createScaffoldValidatorToolkit<T extends object>({
 	assert,
 	clone,

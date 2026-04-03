@@ -1,10 +1,17 @@
 type EntryMap = Record<string, string>;
 
+/**
+ * A generated artifact file that should be copied into the webpack output.
+ */
 export interface TypiaWebpackArtifactEntry {
 	inputPath: string;
 	outputPath: string;
 }
 
+/**
+ * Options for creating scaffold webpack configs with shared Typia artifact and
+ * script-module handling.
+ */
 export interface TypiaWebpackConfigOptions {
 	defaultConfig: unknown;
 	fs: {
@@ -24,9 +31,38 @@ export interface TypiaWebpackConfigOptions {
 	};
 }
 
+interface ScaffoldBlockRegistrationSettings {
+	attributes?: unknown;
+	category?: unknown;
+	description?: unknown;
+	example?: unknown;
+	icon?: unknown;
+	parent?: unknown;
+	supports?: unknown;
+	title?: unknown;
+}
+
 interface BuildScaffoldBlockRegistrationResult<TSettings extends object> {
 	name: string;
 	settings: TSettings;
+}
+
+interface WebpackAsset {
+	name: string;
+	source: { source(): unknown };
+}
+
+interface WebpackCompilationLike {
+	getAsset(name: string): unknown;
+	getAssets(): WebpackAsset[];
+	emitAsset(name: string, source: unknown): void;
+	hooks: {
+		processAssets: {
+			tap(options: { name: string; stage: number }, cb: () => void): void;
+		};
+	};
+	outputOptions: { path?: string };
+	updateAsset(name: string, source: unknown): void;
 }
 
 function normalizeScriptModuleAssetSource(source: unknown): string {
@@ -73,6 +109,14 @@ function mergeEntries(
 			};
 }
 
+/**
+ * Builds a generated block registration payload while centralizing scaffold
+ * metadata casting and override merging.
+ *
+ * @param metadata Raw block metadata loaded from `block.json`.
+ * @param overrides Generated edit/save/example overrides to merge on top.
+ * @returns The block name and merged registration settings.
+ */
 export function buildScaffoldBlockRegistration<TSettings extends object>(
 	metadata: Record<string, unknown>,
 	overrides: Partial<TSettings> & Record<string, unknown>,
@@ -82,22 +126,39 @@ export function buildScaffoldBlockRegistration<TSettings extends object>(
 		throw new Error("Scaffold block metadata must include a string name.");
 	}
 
+	const filteredMetadata: ScaffoldBlockRegistrationSettings = {};
+	for (const key of [
+		"title",
+		"description",
+		"category",
+		"icon",
+		"supports",
+		"attributes",
+		"example",
+		"parent",
+	] as const) {
+		const value = metadata[key];
+		if (value !== undefined) {
+			filteredMetadata[key] = value;
+		}
+	}
+
 	return {
 		name,
 		settings: {
-			title: metadata.title,
-			description: metadata.description,
-			category: metadata.category,
-			icon: metadata.icon,
-			supports: metadata.supports,
-			attributes: metadata.attributes,
-			example: metadata.example,
-			parent: metadata.parent,
+			...filteredMetadata,
 			...overrides,
 		} as TSettings,
 	};
 }
 
+/**
+ * Creates a webpack config that shares Typia artifact copying and script-module
+ * normalization across generated scaffold templates.
+ *
+ * @param options Webpack config inputs plus template-specific discovery callbacks.
+ * @returns A webpack config or config array that matches the default config shape.
+ */
 export async function createTypiaWebpackConfig({
 	defaultConfig,
 	fs,
@@ -116,15 +177,16 @@ export async function createTypiaWebpackConfig({
 		typeof defaultConfig === "function"
 			? await (defaultConfig as () => Promise<unknown> | unknown)()
 			: defaultConfig;
-	const artifactEntries = getArtifactEntries();
-	const editorEntries = getEditorEntries?.();
-	const optionalModuleEntries = getOptionalModuleEntries?.();
 
 	class TypiaArtifactAssetPlugin {
 		apply(compiler: {
 			hooks: {
-				afterEmit: { tap(name: string, cb: (compilation: any) => void): void };
-				thisCompilation: { tap(name: string, cb: (compilation: any) => void): void };
+				afterEmit: {
+					tap(name: string, cb: (compilation: WebpackCompilationLike) => void): void;
+				};
+				thisCompilation: {
+					tap(name: string, cb: (compilation: WebpackCompilationLike) => void): void;
+				};
 			};
 			webpack: {
 				Compilation: { PROCESS_ASSETS_STAGE_ADDITIONS: number };
@@ -140,6 +202,7 @@ export async function createTypiaWebpackConfig({
 							stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
 						},
 						() => {
+							const artifactEntries = getArtifactEntries();
 							for (const entry of artifactEntries) {
 								if (compilation.getAsset(entry.outputPath)) {
 									continue;
@@ -200,14 +263,16 @@ export async function createTypiaWebpackConfig({
 	const configs = toWebpackConfigs(resolvedDefaultConfig).map((config) => ({
 		...(config as Record<string, unknown>),
 		entry: async () => {
-			const existingEntries = normalizeEntryMap(
-				typeof (config as { entry?: unknown }).entry === "function"
-					? await (config as { entry: () => Promise<unknown> | unknown }).entry()
-					: (config as { entry?: unknown }).entry,
-			);
+				const existingEntries = normalizeEntryMap(
+					typeof (config as { entry?: unknown }).entry === "function"
+						? await (config as { entry: () => Promise<unknown> | unknown }).entry()
+						: (config as { entry?: unknown }).entry,
+				);
+				const editorEntries = getEditorEntries?.();
+				const optionalModuleEntries = getOptionalModuleEntries?.();
 
-			if (isModuleConfig(config)) {
-				return mergeEntries(
+				if (isModuleConfig(config)) {
+					return mergeEntries(
 					existingEntries,
 					optionalModuleEntries,
 					moduleEntriesMode,
