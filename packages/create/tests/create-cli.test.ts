@@ -51,6 +51,7 @@ const generatedProjectTypecheckSupportPackages = [
 	"@types/react",
 	"@types/react-dom",
 ] as const;
+const builtWorkspacePackages = new Set<string>();
 
 function runCli(
 	command: string,
@@ -86,6 +87,23 @@ function resolveWorkspaceDependencyPath(packageName: string): string | null {
 	return null;
 }
 
+function ensureWorkspacePackageBuilt(
+	packageName: keyof typeof workspacePackagePaths,
+	packagePath: string,
+) {
+	if (builtWorkspacePackages.has(packageName)) {
+		return;
+	}
+
+	if (fs.existsSync(path.join(packagePath, "dist"))) {
+		builtWorkspacePackages.add(packageName);
+		return;
+	}
+
+	runCli("bun", ["run", "build"], { cwd: packagePath });
+	builtWorkspacePackages.add(packageName);
+}
+
 function linkWorkspaceNodeModules(targetDir: string) {
 	const nodeModulesPath = path.join(targetDir, "node_modules");
 
@@ -117,6 +135,10 @@ function linkWorkspaceNodeModules(targetDir: string) {
 		const workspacePackagePath =
 			workspacePackagePaths[packageName as keyof typeof workspacePackagePaths];
 		if (workspacePackagePath) {
+			ensureWorkspacePackageBuilt(
+				packageName as keyof typeof workspacePackagePaths,
+				workspacePackagePath,
+			);
 			ensureDirSymlink(
 				path.join(nodeModulesPath, ...packageName.split("/")),
 				workspacePackagePath,
