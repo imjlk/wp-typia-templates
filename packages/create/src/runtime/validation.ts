@@ -179,19 +179,48 @@ export function createScaffoldValidatorToolkit<T extends object>({
 	random,
 	validate,
 }: ScaffoldValidatorToolkitOptions<T>) {
+	/**
+	 * Runs Typia validation without applying manifest defaults or scaffold-specific
+	 * finalization. Use this when you need validation-only feedback for already
+	 * normalized values.
+	 */
 	const validateAttributes = (value: unknown): ValidationResult<T> =>
 		toValidationResult<T>(validate(value));
 
+	/**
+	 * Applies manifest defaults and scaffold finalization before asserting the
+	 * resulting value. Use this for edit-time normalization or any path that needs
+	 * synthesized fields such as runtime ids or persistence resource keys.
+	 */
 	const sanitizeAttributes = (value: Partial<T>): T => {
 		const normalized = applyTemplateDefaultsFromManifest<T>(manifest, value);
 
 		return assert(finalize ? finalize(normalized) : normalized);
 	};
 
+	const validateSanitizedAttributes = (value: T): ValidationResult<T> => {
+		try {
+			const data = sanitizeAttributes(value);
+
+			return {
+				data,
+				errors: [],
+				isValid: true,
+			};
+		} catch {
+			return validateAttributes(value);
+		}
+	};
+
+	/**
+	 * Creates an attribute updater that normalizes edit-time updates through
+	 * `sanitizeAttributes()` by default so manifest defaults and finalize hooks are
+	 * reflected during live editing.
+	 */
 	const createScaffoldAttributeUpdater = (
 		attributes: T,
 		setAttributes: (attrs: Partial<T>) => void,
-		validator: (value: T) => ValidationResult<T> = validateAttributes,
+		validator: (value: T) => ValidationResult<T> = validateSanitizedAttributes,
 	) =>
 		createAttributeUpdater(
 			attributes,
@@ -213,6 +242,21 @@ export function createScaffoldValidatorToolkit<T extends object>({
 			validate: validateAttributes,
 		},
 	};
+}
+
+function toChangedAttributePatch<T extends object>(
+	attributes: T,
+	nextAttributes: T,
+): Partial<T> {
+	const patch: Partial<T> = {};
+
+	for (const key of Object.keys(nextAttributes) as Array<keyof T>) {
+		if (!Object.is(attributes[key], nextAttributes[key])) {
+			patch[key] = nextAttributes[key];
+		}
+	}
+
+	return patch;
 }
 
 function mergeAttributeUpdate<T extends object, K extends keyof T>(
@@ -321,7 +365,12 @@ export function createAttributeUpdater<T extends object>(
 		const validation = validate(nextAttributes);
 
 		if (validation.isValid) {
-			setAttributes(toAttributePatch<T, K>(key, value) as Partial<T>);
+			const patch =
+				validation.data && typeof validation.data === "object"
+					? toChangedAttributePatch(attributes, validation.data)
+					: (toAttributePatch<T, K>(key, value) as Partial<T>);
+
+			setAttributes(patch);
 			return true;
 		}
 
@@ -341,7 +390,12 @@ export function createNestedAttributeUpdater<T extends object>(
 		const validation = validate(nextAttributes);
 
 		if (validation.isValid) {
-			setAttributes(toNestedAttributePatch(attributes, path, value));
+			const patch =
+				validation.data && typeof validation.data === "object"
+					? toChangedAttributePatch(attributes, validation.data)
+					: toNestedAttributePatch(attributes, path, value);
+
+			setAttributes(patch);
 			return true;
 		}
 
