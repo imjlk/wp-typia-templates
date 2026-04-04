@@ -56,6 +56,7 @@ const blockSupports: BlockSupports = {
   border: {
     color: true,
     radius: true,
+    __experimentalSkipSerialization: ['radius', 'width'],
   },
   color: {
     background: true,
@@ -63,6 +64,12 @@ const blockSupports: BlockSupports = {
     gradients: true,
     link: true,
     text: true,
+    __experimentalSkipSerialization: ['background', 'text'],
+  },
+  dimensions: {
+    aspectRatio: true,
+    minHeight: true,
+    __experimentalSkipSerialization: ['minHeight'],
   },
   interactivity: {
     clientNavigation: true,
@@ -88,9 +95,11 @@ const blockSupports: BlockSupports = {
   locking: true,
   spacing: {
     blockGap: ['horizontal', 'vertical'],
+    margin: ['top', 'bottom'],
     padding: ['top', 'bottom', 'left', 'right', 'horizontal'],
     spacingSizes: [spacingSize],
     units: ['px', 'rem', 'em'],
+    __experimentalSkipSerialization: ['margin', 'padding'],
   },
   typography: {
     dropCap: true,
@@ -98,6 +107,7 @@ const blockSupports: BlockSupports = {
     fontSize: true,
     textAlign: ['left', 'justify'],
     textTransform: true,
+    __experimentalSkipSerialization: true,
   },
 };
 const textAlignment: TextAlignment = 'justify';
