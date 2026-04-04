@@ -245,6 +245,10 @@ module.exports = async () => {
 						__dirname,
 						'../../packages/create/src/runtime/editor.ts'
 					),
+					'@wp-typia/create/runtime/inspector': path.resolve(
+						__dirname,
+						'../../packages/create/src/runtime/inspector.tsx'
+					),
 					'@wp-typia/create/runtime/schema-core': path.resolve(
 						__dirname,
 						'../../packages/create/src/runtime/schema-core.ts'

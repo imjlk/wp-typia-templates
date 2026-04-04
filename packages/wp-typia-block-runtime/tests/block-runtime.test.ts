@@ -10,17 +10,21 @@ describe("@wp-typia/block-runtime", () => {
 			rootModule,
 			defaultsModule,
 			editorModule,
+			inspectorModule,
 			validationModule,
 			createDefaultsModule,
 			createEditorModule,
+			createInspectorModule,
 			createValidationModule,
 		] = await Promise.all([
 			import("@wp-typia/block-runtime"),
 			import("@wp-typia/block-runtime/defaults"),
 			import("@wp-typia/block-runtime/editor"),
+			import("@wp-typia/block-runtime/inspector"),
 			import("@wp-typia/block-runtime/validation"),
 			import("@wp-typia/create/runtime/defaults"),
 			import("@wp-typia/create/runtime/editor"),
+			import("@wp-typia/create/runtime/inspector"),
 			import("@wp-typia/create/runtime/validation"),
 		]);
 
@@ -30,6 +34,7 @@ describe("@wp-typia/block-runtime", () => {
 		expect(typeof rootModule.createNestedAttributeUpdater).toBe("function");
 		expect(typeof defaultsModule.applyTemplateDefaultsFromManifest).toBe("function");
 		expect(typeof editorModule.createEditorModel).toBe("function");
+		expect(typeof inspectorModule.useEditorFields).toBe("function");
 		expect(typeof validationModule.toValidationResult).toBe("function");
 
 		expect(rootModule.applyTemplateDefaultsFromManifest).toBe(
@@ -46,6 +51,9 @@ describe("@wp-typia/block-runtime", () => {
 			createDefaultsModule.applyTemplateDefaultsFromManifest,
 		);
 		expect(editorModule.describeEditorField).toBe(createEditorModule.describeEditorField);
+		expect(inspectorModule.useTypedAttributeUpdater).toBe(
+			createInspectorModule.useTypedAttributeUpdater,
+		);
 		expect(validationModule.toValidationState).toBe(
 			createValidationModule.toValidationState,
 		);

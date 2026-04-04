@@ -171,7 +171,8 @@ repo-backed audit, see [`docs/runtime-surface.md`](./runtime-surface.md). For
 the current package graduation recommendation, see
 [`docs/package-graduation.md`](./package-graduation.md).
 
-The `runtime/editor` helper turns manifest metadata into editor control hints without trying to auto-generate the entire inspector UI.
+The `runtime/editor` helper turns manifest metadata into editor control hints
+without taking over inspector rendering by itself.
 
 ```ts
 import currentManifest from "./typia.manifest.json";
@@ -194,6 +195,40 @@ const editorFields = createEditorModel(currentManifest as ManifestDocument, {
 - default value, required flag, and Typia constraints
 - select options derived from `wp.enum`
 - unsupported/manual reasons for unions, arrays, and complex fields
+
+When you want a higher-level inspector layer, use
+`@wp-typia/create/runtime/inspector` on top of those descriptors:
+
+```tsx
+import currentManifest from "./typia.manifest.json";
+import {
+  InspectorFromManifest,
+  type ManifestDocument,
+  useEditorFields,
+  useTypedAttributeUpdater,
+} from "@wp-typia/create/runtime/inspector";
+
+const editorFields = useEditorFields(currentManifest as ManifestDocument, {
+  manual: ["content"],
+});
+const { updateField } = useTypedAttributeUpdater(attributes, setAttributes, validateAttributes);
+
+<InspectorFromManifest
+  attributes={attributes}
+  fieldLookup={editorFields}
+  onChange={updateField}
+  paths={["alignment", "isVisible"]}
+  title="Settings"
+/>;
+```
+
+`runtime/inspector` keeps `runtime/editor` as the descriptor/model layer and
+adds:
+
+- `useEditorFields()` for memoized field lookup, defaults, and select options
+- `useTypedAttributeUpdater()` for top-level and dotted-path updates from one hook
+- `FieldControl` for one manifest-backed WordPress control
+- `InspectorFromManifest` for ordered manifest-driven `PanelBody` rendering
 
 `runtime/validation` also exposes nested update helpers for dotted editor paths such as `padding.top`. They convert dotted paths into top-level Gutenberg attribute patches and run the same validation contract before calling `setAttributes`.
 

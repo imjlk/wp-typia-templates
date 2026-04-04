@@ -10,7 +10,7 @@
     "plugins": []
   },
   "include": [
-    "./src/runtime/**/*.ts"
+    "./src/runtime/**/*"
   ],
   "exclude": [
     "./tests/**/*"

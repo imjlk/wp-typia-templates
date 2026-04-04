@@ -17,6 +17,7 @@ For the normative generated-project runtime support policy, see
 - `@wp-typia/create/runtime/blocks`
 - `@wp-typia/create/runtime/defaults`
 - `@wp-typia/create/runtime/editor`
+- `@wp-typia/create/runtime/inspector`
 - `@wp-typia/create/runtime/schema-core`
 - `@wp-typia/create/runtime/validation`
 
@@ -35,6 +36,9 @@ These exports already behave like product APIs and are documented or used direct
 - `@wp-typia/create/runtime/editor`
   - documented in [`packages/create/README.md`](../packages/create/README.md) and [`docs/API.md`](./API.md)
   - used by examples and generated templates to build editor models from manifests
+- `@wp-typia/create/runtime/inspector`
+  - documented as the higher-level manifest-driven inspector layer above `runtime/editor`
+  - used by the reference app and the core single-block templates to reduce repeated field wiring
 - `@wp-typia/create/runtime/blocks`
   - generated templates now use it for scaffold block registration and shared webpack artifact/config helpers
   - this behaves like a supported generated-project runtime helper rather than a CLI-only internal
@@ -70,6 +74,8 @@ These are plausible future package candidates because they are already useful ou
   - nested patch/update helpers are reused across examples and templates and could eventually live in a narrower runtime package
 - editor model helpers
   - `createEditorModel()` is runtime-facing and developer-consumable in a way that resembles a standalone support package
+- inspector helpers
+  - `useEditorFields()` and `InspectorFromManifest` add a second, UI-facing layer that may eventually deserve its own package boundary
 - schema projection and manifest/schema utilities
   - recent work like `projectJsonSchemaDocument()` increases the amount of schema logic that could eventually outgrow the scaffolding package
 
@@ -78,18 +84,19 @@ These are plausible future package candidates because they are already useful ou
 ### Docs and public examples
 
 - `packages/create/README.md`
-  - documents root exports, `metadata-core`, `runtime/blocks`, `runtime/editor`, and `runtime/validation`
+  - documents root exports, `metadata-core`, `runtime/blocks`, `runtime/editor`, `runtime/inspector`, and `runtime/validation`
 - `docs/API.md`
-  - documents `runtime/blocks`, `runtime/defaults`, `runtime/editor`, and `runtime/validation` as generated-project imports
+  - documents `runtime/blocks`, `runtime/defaults`, `runtime/editor`, `runtime/inspector`, and `runtime/validation` as generated-project imports
 - repo examples
-  - `examples/my-typia-block` imports `runtime/defaults`, `runtime/editor`, and `runtime/validation`
+  - `examples/my-typia-block` imports `runtime/defaults`, `runtime/inspector`, and `runtime/validation`
   - `examples/persistence-examples` imports `metadata-core`, `runtime/defaults`, `runtime/editor`, and `runtime/validation`
   - `examples/rest-contract-adapter-poc` imports `metadata-core`
 
 ### Generated template usage
 
 - base and compound/persistence sync scripts import `@wp-typia/create/metadata-core`
-- `basic`, `interactivity`, persistence-capable templates, and compound block registrations import `runtime/blocks`, `runtime/editor`, `runtime/defaults`, and `runtime/validation`
+- `basic`, `interactivity`, and persistence-capable templates now import `runtime/blocks`, `runtime/inspector`, `runtime/defaults`, and `runtime/validation`
+- compound block registrations still import `runtime/blocks`, `runtime/defaults`, and `runtime/validation` without the higher-level inspector layer
 - generated templates currently do not import `runtime/schema-core` directly, but example webpack configs alias it for repo-local development
 
 ## Current mismatch
