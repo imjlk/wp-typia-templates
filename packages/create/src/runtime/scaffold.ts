@@ -16,6 +16,7 @@ import {
 	applyLocalDevPresetFiles,
 	getPrimaryDevelopmentScript,
 } from "./local-dev-presets.js";
+import { applyMigrationUiCapability } from "./migration-ui-capability.js";
 import { getPackageVersions } from "./package-versions.js";
 import {
 	getCompoundExtensionWorkflowSection,
@@ -155,6 +156,7 @@ interface ScaffoldProjectOptions {
 	projectDir: string;
 	templateId: string;
 	variant?: string;
+	withMigrationUi?: boolean;
 	withTestPreset?: boolean;
 	withWpEnv?: boolean;
 }
@@ -527,9 +529,11 @@ function buildReadme(
 	variables: ScaffoldTemplateVariables,
 	packageManager: PackageManagerId,
 	{
+		withMigrationUi = false,
 		withTestPreset = false,
 		withWpEnv = false,
 	}: {
+		withMigrationUi?: boolean;
 		withTestPreset?: boolean;
 		withWpEnv?: boolean;
 	} = {},
@@ -558,6 +562,9 @@ function buildReadme(
 		: "";
 	const testPresetSection = withTestPreset
 		? `## Local Test Preset\n\n\`\`\`bash\n${formatRunScript(packageManager, "wp-env:start:test")}\n${formatRunScript(packageManager, "wp-env:wait:test")}\n${formatRunScript(packageManager, "test:e2e")}\n\`\`\`\n\nThe generated smoke test uses \`.wp-env.test.json\` and verifies that the scaffolded block registers in the WordPress editor.`
+		: "";
+	const migrationSection = withMigrationUi
+		? `## Migration UI\n\nThis scaffold already includes an initialized migration workspace at \`1.0.0\`, generated deprecated/runtime artifacts, and an editor-embedded migration dashboard. Use the existing CLI commands to snapshot, diff, scaffold, verify, and fuzz future schema changes.\n\n\`\`\`bash\n${formatRunScript(packageManager, "migration:doctor")}\n${formatRunScript(packageManager, "migration:verify")}\n${formatRunScript(packageManager, "migration:fuzz")}\n\`\`\`\n\nRun \`migration:init\` only when retrofitting migration support into an older project that was not scaffolded with \`--with-migration-ui\`.`
 		: "";
 
 	return `# ${variables.title}
@@ -589,7 +596,7 @@ ${optionalOnboardingSteps.join("\n")}
 
 ${getOptionalOnboardingNote(packageManager, templateId)}
 
-${sourceOfTruthNote}${publicPersistencePolicyNote ? `\n\n${publicPersistencePolicyNote}` : ""}${compoundExtensionWorkflowSection ? `\n\n${compoundExtensionWorkflowSection}` : ""}${wpEnvSection ? `\n\n${wpEnvSection}` : ""}${testPresetSection ? `\n\n${testPresetSection}` : ""}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ""}
+${sourceOfTruthNote}${publicPersistencePolicyNote ? `\n\n${publicPersistencePolicyNote}` : ""}${migrationSection ? `\n\n${migrationSection}` : ""}${compoundExtensionWorkflowSection ? `\n\n${compoundExtensionWorkflowSection}` : ""}${wpEnvSection ? `\n\n${wpEnvSection}` : ""}${testPresetSection ? `\n\n${testPresetSection}` : ""}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ""}
 `;
 }
 
@@ -780,11 +787,15 @@ export async function scaffoldProject({
 	noInstall = false,
 	installDependencies = undefined,
 	variant,
+	withMigrationUi = false,
 	withTestPreset = false,
 	withWpEnv = false,
 }: ScaffoldProjectOptions): Promise<ScaffoldProjectResult> {
 	const resolvedPackageManager = getPackageManager(packageManager).id;
 	const isBuiltInTemplate = isBuiltInTemplateId(templateId);
+	if (withMigrationUi && !isBuiltInTemplate) {
+		throw new Error("`--with-migration-ui` is currently supported only for built-in templates.");
+	}
 
 	await ensureDirectory(projectDir, allowExistingDir);
 
@@ -819,12 +830,20 @@ export async function scaffoldProject({
 			withTestPreset,
 			withWpEnv,
 		});
+		if (withMigrationUi) {
+			await applyMigrationUiCapability({
+				projectDir,
+				templateId,
+				variables,
+			});
+		}
 	}
 	const readmePath = path.join(projectDir, "README.md");
 	if (!fs.existsSync(readmePath)) {
 		await fsp.writeFile(
 			readmePath,
 			buildReadme(templateId, variables, resolvedPackageManager, {
+				withMigrationUi: isBuiltInTemplate ? withMigrationUi : false,
 				withTestPreset: isBuiltInTemplate ? withTestPreset : false,
 				withWpEnv: isBuiltInTemplate ? withWpEnv : false,
 			}),

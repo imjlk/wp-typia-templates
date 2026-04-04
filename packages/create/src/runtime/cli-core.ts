@@ -33,6 +33,7 @@ import {
 	TEMPLATE_IDS,
 	getTemplateById,
 	getTemplateSelectOptions,
+	isBuiltInTemplateId,
 	listTemplates,
 } from "./template-registry.js";
 import type { TemplateDefinition } from "./template-registry.js";
@@ -96,12 +97,14 @@ interface RunScaffoldFlowOptions {
 	selectPackageManager?: () => Promise<PackageManagerId>;
 	selectPersistencePolicy?: () => Promise<PersistencePolicy>;
 	selectTemplate?: () => Promise<TemplateDefinition["id"]>;
+	selectWithMigrationUi?: () => Promise<boolean>;
 	selectWithTestPreset?: () => Promise<boolean>;
 	selectWithWpEnv?: () => Promise<boolean>;
 	templateId?: string;
 	textDomain?: string;
 	variant?: string;
 	persistencePolicy?: string;
+	withMigrationUi?: boolean;
 	withTestPreset?: boolean;
 	withWpEnv?: boolean;
 	yes?: boolean;
@@ -182,10 +185,11 @@ export function createReadlinePrompt(): ReadlinePrompt {
 
 export function formatHelpText(): string {
 	return `Usage:
-  wp-typia <project-dir> [--template <basic|interactivity|persistence|compound|./path|github:owner/repo/path[#ref]>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <basic|interactivity>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <./path|github:owner/repo/path[#ref]>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
   wp-typia <project-dir> [--template <npm-package>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia <project-dir> [--template persistence] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia <project-dir> [--template compound] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template persistence] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template compound] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
   wp-typia templates list
   wp-typia templates inspect <id>
   wp-typia migrations <init|snapshot|diff|scaffold|verify|doctor|fixtures|fuzz> [...]
@@ -411,6 +415,8 @@ export async function runScaffoldFlow({
 	variant,
 	selectWithTestPreset,
 	selectWithWpEnv,
+	selectWithMigrationUi,
+	withMigrationUi,
 	withTestPreset,
 	withWpEnv,
 }: RunScaffoldFlowOptions) {
@@ -482,6 +488,14 @@ export async function runScaffoldFlow({
 				: isInteractive && selectWithTestPreset
 					? await selectWithTestPreset()
 					: false;
+	const resolvedWithMigrationUi =
+		typeof withMigrationUi === "boolean"
+			? withMigrationUi
+			: yes || !isBuiltInTemplateId(resolvedTemplateId)
+				? false
+				: isInteractive && selectWithMigrationUi
+					? await selectWithMigrationUi()
+					: false;
 	const projectDir = path.resolve(cwd, projectInput);
 	const projectName = path.basename(projectDir);
 	const answers = await collectScaffoldAnswers({
@@ -508,6 +522,7 @@ export async function runScaffoldFlow({
 		projectDir,
 		templateId: resolvedTemplateId,
 		variant,
+		withMigrationUi: resolvedWithMigrationUi,
 		withTestPreset: resolvedWithTestPreset,
 		withWpEnv: resolvedWithWpEnv,
 	});

@@ -1,7 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
-
-import { FIXTURES_DIR, ROOT_MANIFEST, SNAPSHOT_DIR } from "./migration-constants.js";
+import {
+	getProjectPaths,
+	getFixtureFilePath,
+	getSnapshotManifestPath,
+} from "./migration-project.js";
 import { defaultValueForManifestAttribute } from "./migration-manifest.js";
 import {
 	cloneJsonValue,
@@ -17,6 +20,7 @@ import type {
 	JsonValue,
 	ManifestAttribute,
 	ManifestDocument,
+	MigrationBlockConfig,
 	MigrationDiff,
 	MigrationFixtureCase,
 	MigrationFixtureDocument,
@@ -26,17 +30,19 @@ import type {
 
 export function ensureEdgeFixtureFile(
 	projectDir: string,
+	block: MigrationBlockConfig,
 	fromVersion: string,
 	toVersion: string,
 	diff: MigrationDiff,
 	{ force = false }: { force?: boolean } = {},
 ): { fixturePath: string; written: boolean } {
-	const fixturePath = path.join(projectDir, FIXTURES_DIR, `${fromVersion}-to-${toVersion}.json`);
+	const fixturePath = getFixtureFilePath(getProjectPaths(projectDir), block, fromVersion, toVersion);
+	fs.mkdirSync(path.dirname(fixturePath), { recursive: true });
 	if (!force && fs.existsSync(fixturePath)) {
 		return { fixturePath, written: false };
 	}
 
-	const fixtureDocument = createEdgeFixtureDocument(projectDir, fromVersion, toVersion, diff);
+	const fixtureDocument = createEdgeFixtureDocument(projectDir, block, fromVersion, toVersion, diff);
 
 	fs.writeFileSync(fixturePath, `${JSON.stringify(fixtureDocument, null, "\t")}\n`, "utf8");
 	return { fixturePath, written: true };
@@ -44,11 +50,12 @@ export function ensureEdgeFixtureFile(
 
 export function createEdgeFixtureDocument(
 	projectDir: string,
+	block: MigrationBlockConfig,
 	fromVersion: string,
 	toVersion: string,
 	diff: MigrationDiff,
 ): MigrationFixtureDocument {
-	const manifest = readJson<ManifestDocument>(path.join(projectDir, SNAPSHOT_DIR, fromVersion, ROOT_MANIFEST));
+	const manifest = readJson<ManifestDocument>(getSnapshotManifestPath(projectDir, block, fromVersion));
 
 	const attributes: JsonObject = {};
 	for (const [key, attribute] of Object.entries(manifest.attributes ?? {})) {

@@ -331,6 +331,136 @@ function createVersionedMigrationProject(projectDir: string) {
 	fs.symlinkSync(repoTsxPath, path.join(localBinDir, "tsx"));
 }
 
+function writeMultiBlockCurrentFiles(
+	projectDir: string,
+	block: {
+		blockName: string;
+		blockSlug: string;
+		title: string;
+		typeName: string;
+	},
+) {
+	const blockDir = path.join(projectDir, "src", "blocks", block.blockSlug);
+	writeFile(
+		path.join(blockDir, "save.tsx"),
+		`export default function Save({ attributes }: { attributes: any }) {\n\treturn attributes.content ?? null;\n}\n`,
+	);
+	writeFile(
+		path.join(blockDir, "types.ts"),
+		`export interface ${block.typeName} {\n\tcontent: string;\n}\n`,
+	);
+	writeFile(
+		path.join(blockDir, "validators.ts"),
+		`export const validators = {\n\tvalidate(input: Record<string, unknown>) {\n\t\tconst success = typeof input.content === "string";\n\t\treturn success\n\t\t\t? { success: true as const, data: input }\n\t\t\t: { success: false as const, errors: [{ path: "$", expected: "${block.typeName}" }] };\n\t},\n\trandom() {\n\t\treturn { content: "Hello ${block.blockSlug}" };\n\t},\n};\n`,
+	);
+	writeJson(path.join(blockDir, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: `Hello ${block.blockSlug}`, type: "string" },
+		},
+		name: block.blockName,
+		title: block.title,
+	});
+	writeJson(path.join(blockDir, "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				defaultValue: `Hello ${block.blockSlug}`,
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: block.typeName,
+	});
+}
+
+function writeMultiBlockSnapshot(
+	projectDir: string,
+	version: string,
+	block: {
+		blockName: string;
+		blockSlug: string;
+		title: string;
+		typeName: string;
+	},
+	legacyLabel = `Legacy ${block.blockSlug}`,
+) {
+	const snapshotRoot = path.join(
+		projectDir,
+		"src",
+		"migrations",
+		"versions",
+		version,
+		block.blockSlug,
+	);
+	writeJson(path.join(snapshotRoot, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: legacyLabel, type: "string" },
+		},
+		name: block.blockName,
+		title: block.title,
+	});
+	writeJson(path.join(snapshotRoot, "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				defaultValue: legacyLabel,
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: block.typeName,
+	});
+	writeFile(
+		path.join(snapshotRoot, "save.tsx"),
+		`export default function Save({ attributes }: { attributes: any }) {\n\treturn attributes.content ?? null;\n}\n`,
+	);
+}
+
+function createMultiBlockMigrationProject(
+	projectDir: string,
+	{ includeLegacyChild = true }: { includeLegacyChild?: boolean } = {},
+) {
+	writeJson(path.join(projectDir, "package.json"), {
+		name: "multi-block-migration-smoke",
+		packageManager: "bun@1.3.10",
+		private: true,
+		scripts: {},
+		type: "module",
+		version: "0.1.0",
+	});
+
+	const parent = {
+		blockName: "create-block/multi-parent",
+		blockSlug: "multi-parent",
+		title: "Multi Parent",
+		typeName: "MultiParentAttributes",
+	};
+	const child = {
+		blockName: "create-block/multi-parent-item",
+		blockSlug: "multi-parent-item",
+		title: "Multi Parent Item",
+		typeName: "MultiParentItemAttributes",
+	};
+
+	writeMultiBlockCurrentFiles(projectDir, parent);
+	writeMultiBlockCurrentFiles(projectDir, child);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "config.ts"),
+		`export const migrationConfig = {\n\tcurrentVersion: "2.0.0",\n\tsupportedVersions: ["1.0.0", "2.0.0"],\n\tsnapshotDir: "src/migrations/versions",\n\tblocks: [\n\t\t{\n\t\t\tkey: "multi-parent",\n\t\t\tblockName: "create-block/multi-parent",\n\t\t\tblockJsonFile: "src/blocks/multi-parent/block.json",\n\t\t\tmanifestFile: "src/blocks/multi-parent/typia.manifest.json",\n\t\t\tsaveFile: "src/blocks/multi-parent/save.tsx",\n\t\t\ttypesFile: "src/blocks/multi-parent/types.ts",\n\t\t},\n\t\t{\n\t\t\tkey: "multi-parent-item",\n\t\t\tblockName: "create-block/multi-parent-item",\n\t\t\tblockJsonFile: "src/blocks/multi-parent-item/block.json",\n\t\t\tmanifestFile: "src/blocks/multi-parent-item/typia.manifest.json",\n\t\t\tsaveFile: "src/blocks/multi-parent-item/save.tsx",\n\t\t\ttypesFile: "src/blocks/multi-parent-item/types.ts",\n\t\t},\n\t],\n} as const;\n\nexport default migrationConfig;\n`,
+	);
+	writeFile(path.join(projectDir, "src", "migrations", "helpers.ts"), HELPERS_SOURCE);
+	writeMultiBlockSnapshot(projectDir, "2.0.0", parent, "Hello multi-parent");
+	writeMultiBlockSnapshot(projectDir, "2.0.0", child, "Hello multi-parent-item");
+	writeMultiBlockSnapshot(projectDir, "1.0.0", parent);
+	if (includeLegacyChild) {
+		writeMultiBlockSnapshot(projectDir, "1.0.0", child);
+	}
+
+	const localBinDir = path.join(projectDir, "node_modules", ".bin");
+	fs.mkdirSync(localBinDir, { recursive: true });
+	fs.symlinkSync(repoTsxPath, path.join(localBinDir, "tsx"));
+}
+
 function createRenameCandidateProject(projectDir: string) {
 	createProjectShell(projectDir);
 
@@ -1152,6 +1282,105 @@ describe("wp-typia migrations", () => {
 		expect(unionSummary.unionBreaking.count).toBeGreaterThan(0);
 	});
 
+	test("multi-block configs load and scaffold per-target migration artifacts", () => {
+		const projectDir = path.join(tempRoot, "multi-block-project");
+		createMultiBlockMigrationProject(projectDir, { includeLegacyChild: true });
+
+		const state = loadMigrationProject(projectDir);
+		expect(state.blocks).toHaveLength(2);
+		expect(state.blocks.map((block) => block.key)).toEqual([
+			"multi-parent",
+			"multi-parent-item",
+		]);
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		expect(
+			fs.existsSync(
+				path.join(projectDir, "src", "migrations", "rules", "multi-parent", "1.0.0-to-2.0.0.ts"),
+			),
+		).toBe(true);
+		expect(
+			fs.existsSync(
+				path.join(projectDir, "src", "migrations", "rules", "multi-parent-item", "1.0.0-to-2.0.0.ts"),
+			),
+		).toBe(true);
+		expect(
+			fs.existsSync(
+				path.join(projectDir, "src", "migrations", "generated", "multi-parent", "registry.ts"),
+			),
+		).toBe(true);
+		expect(
+			fs.existsSync(
+				path.join(projectDir, "src", "migrations", "generated", "multi-parent-item", "registry.ts"),
+			),
+		).toBe(true);
+		expect(
+			fs.existsSync(path.join(projectDir, "src", "migrations", "generated", "index.ts")),
+		).toBe(true);
+		const phpRegistry = fs.readFileSync(
+			path.join(projectDir, "typia-migration-registry.php"),
+			"utf8",
+		);
+		expect(phpRegistry).toContain("'blocks' =>");
+		expect(phpRegistry).toContain("'multi-parent'");
+		expect(phpRegistry).toContain("'multi-parent-item'");
+	});
+
+	test("createMigrationDiff requires an explicit block key for multi-block projects", () => {
+		const projectDir = path.join(tempRoot, "multi-block-diff-project");
+		createMultiBlockMigrationProject(projectDir, { includeLegacyChild: true });
+		const state = loadMigrationProject(projectDir);
+
+		expect(() =>
+			createMigrationDiff(state, "1.0.0", "2.0.0"),
+		).toThrow(/block key is required/i);
+		expect(() =>
+			createMigrationDiff(
+				state,
+				{ key: "missing-block" } as any,
+				"1.0.0",
+				"2.0.0",
+			),
+		).toThrow(/Unknown migration block key: missing-block/);
+	});
+
+	test("doctor tolerates block targets that appear only in later versions", () => {
+		const projectDir = path.join(tempRoot, "multi-block-late-child-project");
+		createMultiBlockMigrationProject(projectDir, { includeLegacyChild: false });
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const output = runCli("node", [entryPath, "migrations", "doctor", "--all"], {
+			cwd: projectDir,
+		});
+		expect(output).toContain("PASS Snapshot create-block/multi-parent-item @ 1.0.0: Not present for this version");
+		expect(output).toContain("PASS Migration doctor summary:");
+	});
+
+	test("doctor fails when a current multi-block snapshot root is missing after introduction", () => {
+		const projectDir = path.join(tempRoot, "multi-block-missing-current-snapshot-project");
+		createMultiBlockMigrationProject(projectDir, { includeLegacyChild: true });
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+		fs.rmSync(
+			path.join(projectDir, "src", "migrations", "versions", "2.0.0", "multi-parent-item"),
+			{ force: true, recursive: true },
+		);
+
+		expect(() =>
+			runCli("node", [entryPath, "migrations", "doctor", "--all"], {
+				cwd: projectDir,
+			}),
+		).toThrow(/Migration doctor failed/);
+	});
+
 	test("doctor passes on a healthy migration workspace", () => {
 		const projectDir = path.join(tempRoot, "doctor-success-project");
 		createVersionedMigrationProject(projectDir);
@@ -1366,5 +1595,38 @@ describe("wp-typia migrations", () => {
 				{ cwd: projectDir },
 			),
 		).toThrow(/Invalid seed: 10foo/);
+	});
+
+	test("verify and fuzz fail when selected legacy versions are missing scaffolded edges", () => {
+		const projectDir = path.join(tempRoot, "missing-edge-verification-project");
+		createVersionedMigrationProject(projectDir);
+		const configPath = path.join(projectDir, "src", "migrations", "config.ts");
+		const version100Root = path.join(projectDir, "src", "migrations", "versions", "1.0.0");
+		const version150Root = path.join(projectDir, "src", "migrations", "versions", "1.5.0");
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+		fs.cpSync(version100Root, version150Root, { recursive: true });
+		fs.writeFileSync(
+			configPath,
+			fs
+				.readFileSync(configPath, "utf8")
+				.replace('supportedVersions: ["1.0.0", "2.0.0"]', 'supportedVersions: ["1.0.0", "1.5.0", "2.0.0"]'),
+			"utf8",
+		);
+
+		expect(() =>
+			runCli("node", [entryPath, "migrations", "verify", "--all"], {
+				cwd: projectDir,
+			}),
+		).toThrow(/Missing migration verify inputs.*1\.5\.0/);
+		expect(() =>
+			runCli(
+				"node",
+				[entryPath, "migrations", "fuzz", "--all", "--iterations", "1", "--seed", "0"],
+				{ cwd: projectDir },
+			),
+		).toThrow(/Missing migration fuzz inputs.*1\.5\.0/);
 	});
 });

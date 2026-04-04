@@ -9,6 +9,7 @@ import {
 	ROOT_BLOCK_JSON,
 	ROOT_MANIFEST,
 	ROOT_SAVE_FILE,
+	ROOT_TYPES_FILE,
 	RULES_DIR,
 	SNAPSHOT_DIR,
 	SUPPORTED_PROJECT_FILES,
@@ -19,15 +20,72 @@ import {
 	runProjectScriptIfPresent,
 } from "./migration-utils.js";
 import type {
+	MigrationBlockConfig,
 	MigrationConfig,
 	MigrationEntry,
 	MigrationProjectPaths,
 	MigrationProjectState,
+	ResolvedMigrationBlockTarget,
 	RuleMetadata,
 } from "./migration-types.js";
 
-export function ensureAdvancedMigrationProject(projectDir: string): void {
-	const missing = SUPPORTED_PROJECT_FILES.filter((relativePath) => !fs.existsSync(path.join(projectDir, relativePath)));
+const DEFAULT_BLOCK_KEY = "default";
+
+function normalizeRelativePath(value: string): string {
+	return value.replace(/\\/g, "/");
+}
+
+function ensureRelativePath(projectDir: string, filePath: string): string {
+	return normalizeRelativePath(path.relative(projectDir, filePath));
+}
+
+function toImportPath(fromDir: string, targetPath: string, stripExtension = false): string {
+	let relativePath = normalizeRelativePath(path.relative(fromDir, targetPath));
+	if (!relativePath.startsWith(".")) {
+		relativePath = `./${relativePath}`;
+	}
+	if (stripExtension) {
+		relativePath = relativePath.replace(/\.[^.]+$/u, "");
+	}
+	return relativePath;
+}
+
+function createImplicitLegacyBlock(projectDir: string, blockName?: string): MigrationBlockConfig {
+	return {
+		blockJsonFile: ROOT_BLOCK_JSON,
+		blockName: blockName ?? readProjectBlockName(projectDir),
+		key: DEFAULT_BLOCK_KEY,
+		manifestFile: ROOT_MANIFEST,
+		saveFile: ROOT_SAVE_FILE,
+		typesFile: ROOT_TYPES_FILE,
+	};
+}
+
+function getRequiredProjectFiles(projectDir: string, blocks?: MigrationBlockConfig[]): string[] {
+	if (Array.isArray(blocks) && blocks.length > 0) {
+		return [
+			"package.json",
+			...blocks.flatMap((block) => [block.blockJsonFile, block.saveFile, block.typesFile]),
+		];
+	}
+
+	const configPath = path.join(projectDir, CONFIG_FILE);
+	if (fs.existsSync(configPath)) {
+		const config = parseMigrationConfig(fs.readFileSync(configPath, "utf8"));
+		const configuredBlocks = config.blocks ?? [createImplicitLegacyBlock(projectDir, config.blockName)];
+		return [
+			"package.json",
+			...configuredBlocks.flatMap((block) => [block.blockJsonFile, block.saveFile, block.typesFile]),
+		];
+	}
+
+	return SUPPORTED_PROJECT_FILES;
+}
+
+export function ensureAdvancedMigrationProject(projectDir: string, blocks?: MigrationBlockConfig[]): void {
+	const missing = getRequiredProjectFiles(projectDir, blocks).filter(
+		(relativePath) => !fs.existsSync(path.join(projectDir, relativePath)),
+	);
 	if (missing.length > 0) {
 		throw new Error(
 			`This directory is not a supported migration-capable project. Missing: ${missing.join(", ")}`,
@@ -45,25 +103,163 @@ export function getProjectPaths(projectDir: string): MigrationProjectPaths {
 	};
 }
 
-export function ensureMigrationDirectories(projectDir: string): void {
+export function resolveMigrationBlocks(
+	projectDir: string,
+	config: MigrationConfig,
+): ResolvedMigrationBlockTarget[] {
+	const configuredBlocks =
+		Array.isArray(config.blocks) && config.blocks.length > 0
+			? config.blocks
+			: [createImplicitLegacyBlock(projectDir, config.blockName)];
+
+	return configuredBlocks.map((block) => {
+		const blockJsonPath = path.join(projectDir, block.blockJsonFile);
+		const manifestPath = path.join(projectDir, block.manifestFile);
+		const savePath = path.join(projectDir, block.saveFile);
+		const typesPath = path.join(projectDir, block.typesFile);
+		return {
+			...block,
+			currentBlockJson: readJson(blockJsonPath),
+			currentManifest: readJson(manifestPath),
+			layout:
+				Array.isArray(config.blocks) && config.blocks.length > 0
+					? "multi"
+					: "legacy",
+		} satisfies ResolvedMigrationBlockTarget;
+	});
+}
+
+export function getSnapshotRoot(
+	projectDir: string,
+	block: MigrationBlockConfig | ResolvedMigrationBlockTarget,
+	version: string,
+): string {
+	if ("layout" in block && block.layout === "legacy") {
+		return path.join(projectDir, SNAPSHOT_DIR, version);
+	}
+	return path.join(projectDir, SNAPSHOT_DIR, version, block.key);
+}
+
+export function getSnapshotBlockJsonPath(
+	projectDir: string,
+	block: MigrationBlockConfig | ResolvedMigrationBlockTarget,
+	version: string,
+): string {
+	return path.join(getSnapshotRoot(projectDir, block, version), ROOT_BLOCK_JSON);
+}
+
+export function getSnapshotManifestPath(
+	projectDir: string,
+	block: MigrationBlockConfig | ResolvedMigrationBlockTarget,
+	version: string,
+): string {
+	return path.join(getSnapshotRoot(projectDir, block, version), ROOT_MANIFEST);
+}
+
+export function getSnapshotSavePath(
+	projectDir: string,
+	block: MigrationBlockConfig | ResolvedMigrationBlockTarget,
+	version: string,
+): string {
+	return path.join(getSnapshotRoot(projectDir, block, version), "save.tsx");
+}
+
+export function getGeneratedDirForBlock(
+	paths: MigrationProjectPaths,
+	block: MigrationBlockConfig | ResolvedMigrationBlockTarget,
+): string {
+	if ("layout" in block && block.layout === "legacy") {
+		return paths.generatedDir;
+	}
+	return path.join(paths.generatedDir, block.key);
+}
+
+export function getRuleFilePath(
+	paths: MigrationProjectPaths,
+	block: MigrationBlockConfig | ResolvedMigrationBlockTarget,
+	fromVersion: string,
+	toVersion: string,
+): string {
+	if ("layout" in block && block.layout === "legacy") {
+		return path.join(paths.rulesDir, `${fromVersion}-to-${toVersion}.ts`);
+	}
+	return path.join(paths.rulesDir, block.key, `${fromVersion}-to-${toVersion}.ts`);
+}
+
+export function getFixtureFilePath(
+	paths: MigrationProjectPaths,
+	block: MigrationBlockConfig | ResolvedMigrationBlockTarget,
+	fromVersion: string,
+	toVersion: string,
+): string {
+	if ("layout" in block && block.layout === "legacy") {
+		return path.join(paths.fixturesDir, `${fromVersion}-to-${toVersion}.json`);
+	}
+	return path.join(paths.fixturesDir, block.key, `${fromVersion}-to-${toVersion}.json`);
+}
+
+export function getValidatorsImportPath(
+	projectDir: string,
+	block: MigrationBlockConfig | ResolvedMigrationBlockTarget,
+	fromDir: string,
+): string {
+	const validatorPath = path.join(
+		projectDir,
+		block.typesFile.replace(/types\.ts$/u, "validators.ts"),
+	);
+	return toImportPath(fromDir, validatorPath, true);
+}
+
+export function ensureMigrationDirectories(projectDir: string, blocks?: MigrationBlockConfig[]): void {
 	const paths = getProjectPaths(projectDir);
 	fs.mkdirSync(paths.fixturesDir, { recursive: true });
 	fs.mkdirSync(paths.generatedDir, { recursive: true });
 	fs.mkdirSync(paths.rulesDir, { recursive: true });
 	fs.mkdirSync(paths.snapshotDir, { recursive: true });
+
+	if (!Array.isArray(blocks) || blocks.length === 0) {
+		return;
+	}
+
+	for (const block of blocks) {
+		fs.mkdirSync(path.join(paths.fixturesDir, block.key), { recursive: true });
+		fs.mkdirSync(path.join(paths.generatedDir, block.key), { recursive: true });
+		fs.mkdirSync(path.join(paths.rulesDir, block.key), { recursive: true });
+	}
 }
 
-export function writeInitialMigrationScaffold(projectDir: string, currentVersion: string): void {
+export function writeInitialMigrationScaffold(
+	projectDir: string,
+	currentVersion: string,
+	blocks?: MigrationBlockConfig[],
+): void {
 	const paths = getProjectPaths(projectDir);
 	const readmeFiles = [
 		[path.join(paths.snapshotDir, "README.md"), `# Version Snapshots\n\nSnapshots for ${currentVersion} and future versions live here.\n`],
-		[path.join(paths.rulesDir, "README.md"), `# Migration Rules\n\nScaffold direct legacy-to-current migration rules in this directory.\n`],
-		[path.join(paths.fixturesDir, "README.md"), `# Migration Fixtures\n\nGenerated fixtures are used by verify to assert migrations.\n`],
+		[path.join(paths.rulesDir, "README.md"), "# Migration Rules\n\nScaffold direct legacy-to-current migration rules in this directory.\n"],
+		[path.join(paths.fixturesDir, "README.md"), "# Migration Fixtures\n\nGenerated fixtures are used by verify to assert migrations.\n"],
 	];
 
 	for (const [targetPath, content] of readmeFiles) {
 		if (!fs.existsSync(targetPath)) {
 			fs.writeFileSync(targetPath, content, "utf8");
+		}
+	}
+
+	if (!Array.isArray(blocks) || blocks.length === 0) {
+		return;
+	}
+
+	for (const block of blocks) {
+		const scopedReadmes = [
+			[path.join(paths.rulesDir, block.key, "README.md"), `# ${block.blockName} Migration Rules\n\nScaffold direct legacy-to-current migration rules for ${block.blockName} in this directory.\n`],
+			[path.join(paths.fixturesDir, block.key, "README.md"), `# ${block.blockName} Migration Fixtures\n\nGenerated fixtures for ${block.blockName} are stored in this directory.\n`],
+		];
+		for (const [targetPath, content] of scopedReadmes) {
+			if (!fs.existsSync(targetPath)) {
+				fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+				fs.writeFileSync(targetPath, content, "utf8");
+			}
 		}
 	}
 }
@@ -73,24 +269,31 @@ export function loadMigrationProject(
 	{ allowMissingConfig = false }: { allowMissingConfig?: boolean } = {},
 ): MigrationProjectState {
 	ensureAdvancedMigrationProject(projectDir);
-	if (!fs.existsSync(path.join(projectDir, ROOT_MANIFEST))) {
-		runProjectScriptIfPresent(projectDir, "sync-types");
-	}
 
 	const paths = getProjectPaths(projectDir);
 	const config: MigrationConfig = allowMissingConfig && !fs.existsSync(paths.configFile)
 		? {
-			blockName: readProjectBlockName(projectDir),
+			blocks: [createImplicitLegacyBlock(projectDir)],
 			currentVersion: "0.0.0",
 			snapshotDir: SNAPSHOT_DIR.replace(/\\/g, "/"),
 			supportedVersions: [],
 		}
 		: parseMigrationConfig(fs.readFileSync(paths.configFile, "utf8"));
+	const configuredBlocks = config.blocks ?? [createImplicitLegacyBlock(projectDir, config.blockName)];
+	if (
+		configuredBlocks.some(
+			(block) => !fs.existsSync(path.join(projectDir, block.manifestFile)),
+		)
+	) {
+		runProjectScriptIfPresent(projectDir, "sync-types");
+	}
+	const blocks = resolveMigrationBlocks(projectDir, config);
 
 	return {
+		blocks,
 		config,
-		currentBlockJson: readJson(path.join(projectDir, ROOT_BLOCK_JSON)),
-		currentManifest: readJson(path.join(projectDir, ROOT_MANIFEST)),
+		currentBlockJson: blocks[0]?.currentBlockJson ?? readJson(path.join(projectDir, ROOT_BLOCK_JSON)),
+		currentManifest: blocks[0]?.currentManifest ?? readJson(path.join(projectDir, ROOT_MANIFEST)),
 		paths,
 		projectDir,
 	};
@@ -100,37 +303,53 @@ export function discoverMigrationEntries(state: MigrationProjectState): Migratio
 	const entries: MigrationEntry[] = [];
 	const currentVersion = state.config.currentVersion;
 
-	for (const version of state.config.supportedVersions) {
-		if (version === currentVersion) {
-			continue;
-		}
+	for (const block of state.blocks) {
+		const generatedDir = getGeneratedDirForBlock(state.paths, block);
 
-		const snapshotRoot = path.join(state.projectDir, SNAPSHOT_DIR, version);
-		const manifestPath = path.join(snapshotRoot, ROOT_MANIFEST);
-		const blockJsonPath = path.join(snapshotRoot, ROOT_BLOCK_JSON);
-		const savePath = path.join(snapshotRoot, "save.tsx");
-		const rulePath = getRuleFilePath(state.paths, version, currentVersion);
+		for (const version of state.config.supportedVersions) {
+			if (version === currentVersion) {
+				continue;
+			}
 
-		if (
-			fs.existsSync(manifestPath) &&
-			fs.existsSync(blockJsonPath) &&
-			fs.existsSync(savePath) &&
-			fs.existsSync(rulePath)
-		) {
+			const manifestPath = getSnapshotManifestPath(state.projectDir, block, version);
+			const blockJsonPath = getSnapshotBlockJsonPath(state.projectDir, block, version);
+			const savePath = getSnapshotSavePath(state.projectDir, block, version);
+			const rulePath = getRuleFilePath(state.paths, block, version, currentVersion);
+			if (
+				!fs.existsSync(manifestPath) ||
+				!fs.existsSync(blockJsonPath) ||
+				!fs.existsSync(savePath) ||
+				!fs.existsSync(rulePath)
+			) {
+				continue;
+			}
+
 			entries.push({
-				blockJsonImport: `../versions/${version}/block.json`,
-				fixtureImport: `../fixtures/${version}-to-${currentVersion}.json`,
+				block,
+				blockJsonImport: toImportPath(generatedDir, blockJsonPath),
+				fixtureImport: toImportPath(
+					generatedDir,
+					getFixtureFilePath(state.paths, block, version, currentVersion),
+				),
 				fromVersion: version,
-				manifestImport: `../versions/${version}/typia.manifest.json`,
-				ruleImport: `../rules/${version}-to-${currentVersion}`,
+				generatedDir,
+				manifestImport: toImportPath(generatedDir, manifestPath),
+				ruleImport: toImportPath(generatedDir, rulePath, true),
 				rulePath,
-				saveImport: `../versions/${version}/save`,
+				saveImport: toImportPath(generatedDir, savePath, true),
 				toVersion: currentVersion,
+				validatorImport: getValidatorsImportPath(state.projectDir, block, generatedDir),
 			});
 		}
 	}
 
-	return entries.sort((left, right) => compareSemver(right.fromVersion, left.fromVersion));
+	return entries.sort((left, right) => {
+		const versionDelta = compareSemver(right.fromVersion, left.fromVersion);
+		if (versionDelta !== 0) {
+			return versionDelta;
+		}
+		return left.block.key.localeCompare(right.block.key);
+	});
 }
 
 export function parseMigrationConfig(source: string): MigrationConfig {
@@ -138,9 +357,13 @@ export function parseMigrationConfig(source: string): MigrationConfig {
 	const currentVersion = matchConfigValue(source, "currentVersion");
 	const snapshotDir = matchConfigValue(source, "snapshotDir");
 	const supportedVersionsMatch = source.match(/supportedVersions:\s*\[([\s\S]*?)\]/);
+	const blocks = parseMigrationBlocks(source);
 
-	if (!blockName || !currentVersion || !snapshotDir || !supportedVersionsMatch) {
+	if (!currentVersion || !snapshotDir || !supportedVersionsMatch) {
 		throw new Error("Unable to parse migration config. Regenerate with `wp-typia migrations init`.");
+	}
+	if (!blockName && blocks.length === 0) {
+		throw new Error("Migration config must define `blockName` or `blocks`.");
 	}
 
 	const supportedVersions = supportedVersionsMatch[1]
@@ -150,11 +373,43 @@ export function parseMigrationConfig(source: string): MigrationConfig {
 		.sort(compareSemver);
 
 	return {
-		blockName,
+		blockName: blockName ?? undefined,
+		blocks: blocks.length > 0 ? blocks : undefined,
 		currentVersion,
 		snapshotDir,
 		supportedVersions,
 	};
+}
+
+function parseMigrationBlocks(source: string): MigrationBlockConfig[] {
+	const blocksMatch = source.match(/blocks:\s*\[([\s\S]*?)\]\s*,?\n/u);
+	if (!blocksMatch) {
+		return [];
+	}
+
+	const blockLiterals = [...blocksMatch[1].matchAll(/\{([\s\S]*?)\}/gu)];
+	return blockLiterals
+		.map((match) => {
+			const body = match[1];
+			const key = matchConfigValue(body, "key");
+			const blockName = matchConfigValue(body, "blockName");
+			const blockJsonFile = matchConfigValue(body, "blockJsonFile");
+			const manifestFile = matchConfigValue(body, "manifestFile");
+			const saveFile = matchConfigValue(body, "saveFile");
+			const typesFile = matchConfigValue(body, "typesFile");
+			if (!key || !blockName || !blockJsonFile || !manifestFile || !saveFile || !typesFile) {
+				return null;
+			}
+			return {
+				blockJsonFile,
+				blockName,
+				key,
+				manifestFile,
+				saveFile,
+				typesFile,
+			} satisfies MigrationBlockConfig;
+		})
+		.filter((block): block is MigrationBlockConfig => block !== null);
 }
 
 function matchConfigValue(source: string, key: string): string | null {
@@ -165,13 +420,46 @@ function matchConfigValue(source: string, key: string): string | null {
 export function writeMigrationConfig(projectDir: string, config: MigrationConfig): void {
 	const paths = getProjectPaths(projectDir);
 	fs.mkdirSync(path.dirname(paths.configFile), { recursive: true });
+	if (!config.blocks?.length) {
+		fs.writeFileSync(
+			paths.configFile,
+			`export const migrationConfig = {
+\tblockName: '${config.blockName ?? readProjectBlockName(projectDir)}',
+\tcurrentVersion: '${config.currentVersion}',
+\tsupportedVersions: [ ${config.supportedVersions.map((version) => `'${version}'`).join(", ")} ],
+\tsnapshotDir: '${config.snapshotDir}',
+} as const;
+
+export default migrationConfig;
+`,
+			"utf8",
+		);
+		return;
+	}
+
+	const blocks = config.blocks;
+	const blocksSource = blocks
+		.map(
+			(block) =>
+				`\t\t{
+\t\t\tkey: '${block.key}',
+\t\t\tblockName: '${block.blockName}',
+\t\t\tblockJsonFile: '${normalizeRelativePath(block.blockJsonFile)}',
+\t\t\tmanifestFile: '${normalizeRelativePath(block.manifestFile)}',
+\t\t\tsaveFile: '${normalizeRelativePath(block.saveFile)}',
+\t\t\ttypesFile: '${normalizeRelativePath(block.typesFile)}',
+\t\t},`,
+		)
+		.join("\n");
 	fs.writeFileSync(
 		paths.configFile,
 		`export const migrationConfig = {
-	blockName: '${config.blockName}',
-	currentVersion: '${config.currentVersion}',
-	supportedVersions: [ ${config.supportedVersions.map((version) => `'${version}'`).join(", ")} ],
-	snapshotDir: '${config.snapshotDir}',
+\tcurrentVersion: '${config.currentVersion}',
+\tsupportedVersions: [ ${config.supportedVersions.map((version) => `'${version}'`).join(", ")} ],
+\tsnapshotDir: '${config.snapshotDir}',
+\tblocks: [
+${blocksSource}
+\t],
 } as const;
 
 export default migrationConfig;
@@ -189,8 +477,13 @@ export function readProjectBlockName(projectDir: string): string {
 	return blockName;
 }
 
-export function assertRuleHasNoTodos(projectDir: string, fromVersion: string, toVersion: string): void {
-	const rulePath = getRuleFilePath(getProjectPaths(projectDir), fromVersion, toVersion);
+export function assertRuleHasNoTodos(
+	projectDir: string,
+	block: MigrationBlockConfig | ResolvedMigrationBlockTarget,
+	fromVersion: string,
+	toVersion: string,
+): void {
+	const rulePath = getRuleFilePath(getProjectPaths(projectDir), block, fromVersion, toVersion);
 	if (!fs.existsSync(rulePath)) {
 		throw new Error(`Missing migration rule: ${path.relative(projectDir, rulePath)}`);
 	}
@@ -198,10 +491,6 @@ export function assertRuleHasNoTodos(projectDir: string, fromVersion: string, to
 	if (source.includes(MIGRATION_TODO_PREFIX)) {
 		throw new Error(`Migration rule still contains ${MIGRATION_TODO_PREFIX} markers: ${path.relative(projectDir, rulePath)}`);
 	}
-}
-
-export function getRuleFilePath(paths: MigrationProjectPaths, fromVersion: string, toVersion: string): string {
-	return path.join(paths.rulesDir, `${fromVersion}-to-${toVersion}.ts`);
 }
 
 export function readRuleMetadata(rulePath: string): RuleMetadata {
@@ -224,4 +513,15 @@ export function readRuleMetadata(rulePath: string): RuleMetadata {
 		: [];
 
 	return { renameMap, transforms, unresolved };
+}
+
+export function createMigrationBlockConfig(block: MigrationBlockConfig): MigrationBlockConfig {
+	return {
+		blockJsonFile: ensureRelativePath(process.cwd(), block.blockJsonFile),
+		blockName: block.blockName,
+		key: block.key,
+		manifestFile: ensureRelativePath(process.cwd(), block.manifestFile),
+		saveFile: ensureRelativePath(process.cwd(), block.saveFile),
+		typesFile: ensureRelativePath(process.cwd(), block.typesFile),
+	};
 }

@@ -33,6 +33,7 @@ interface ParsedArgs {
 	template?: string;
 	textDomain?: string;
 	variant?: string;
+	withMigrationUi?: boolean;
 	withTestPreset?: boolean;
 	withWpEnv?: boolean;
 	yes: boolean;
@@ -60,6 +61,7 @@ function parseArgs(argv: string[]): ParsedArgs {
 		template: undefined,
 		textDomain: undefined,
 		variant: undefined,
+		withMigrationUi: undefined,
 		withTestPreset: undefined,
 		withWpEnv: undefined,
 		yes: false,
@@ -87,6 +89,10 @@ function parseArgs(argv: string[]): ParsedArgs {
 		}
 		if (arg === "--with-wp-env") {
 			parsed.withWpEnv = true;
+			continue;
+		}
+		if (arg === "--with-migration-ui") {
+			parsed.withMigrationUi = true;
 			continue;
 		}
 		if (arg === "--with-test-preset") {
@@ -232,6 +238,15 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 					],
 					1,
 				).then((value) => value === "yes"),
+			selectWithMigrationUi: () =>
+				prompt.select(
+					"Add migration UI support?",
+					[
+						{ label: "No", value: "no", hint: "Keep the scaffold lightweight" },
+						{ label: "Yes", value: "yes", hint: "Seed migration workspace and editor dashboard" },
+					],
+					1,
+				).then((value) => value === "yes"),
 			selectWithWpEnv: () =>
 				prompt.select(
 					"Add a local wp-env preset?",
@@ -245,6 +260,7 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 			textDomain: parsed.textDomain,
 			variant: parsed.variant,
 			persistencePolicy: parsed.persistencePolicy,
+			withMigrationUi: parsed.withMigrationUi,
 			withTestPreset: parsed.withTestPreset,
 			withWpEnv: parsed.withWpEnv,
 			yes: parsed.yes,
