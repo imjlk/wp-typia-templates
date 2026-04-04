@@ -5,28 +5,18 @@ import {
 	InspectorControls,
 	RichText,
 } from '@wordpress/block-editor';
-import {
-	Notice,
-	PanelBody,
-	RangeControl,
-	SelectControl,
-	TextControl,
-	ToggleControl,
-} from '@wordpress/components';
+import { Notice, PanelBody, RangeControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { useEffect } from '@wordpress/element';
+import { useEffect, useMemo } from '@wordpress/element';
 import currentManifest from '../typia.manifest.json';
 import {
-	createEditorModel,
-	type EditorFieldDescriptor,
+	InspectorFromManifest,
 	type ManifestDocument,
-} from '@wp-typia/create/runtime/editor';
+	useEditorFields,
+	useTypedAttributeUpdater,
+} from '@wp-typia/create/runtime/inspector';
 import { MyTypiaBlockAttributes } from './types';
-import {
-	createAttributeUpdater,
-	createNestedAttributeUpdater,
-	validators,
-} from './validators';
+import { sanitizeMyTypiaBlockAttributes, validators } from './validators';
 import { useTypiaValidation, useAttributeLogger, useDebounce } from './hooks';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { MigrationDashboard } from './admin/migration-dashboard';
@@ -48,6 +38,44 @@ const FONT_SIZE_STYLES = {
 	small: '0.875rem',
 	xlarge: '1.75rem',
 } as const satisfies Record< string, string >;
+const ALIGNMENT_VALUES = [ 'left', 'center', 'right', 'justify' ] as const;
+const ASPECT_RATIO_VALUES = [
+	'auto',
+	'1',
+	'1/1',
+	'4/3',
+	'3/4',
+	'3/2',
+	'2/3',
+	'16/9',
+	'9/16',
+	'21/9',
+] as const;
+const FONT_SIZE_VALUES = [ 'small', 'medium', 'large', 'xlarge' ] as const;
+const COLOR_VALUES = [
+	'transparent',
+	'currentColor',
+	'inherit',
+	'initial',
+	'unset',
+] as const;
+const SHOWCASE_INSPECTOR_PATHS = [
+	'isVisible',
+	'alignment',
+	'fontSize',
+	'textColor',
+	'backgroundColor',
+	'aspectRatio',
+	'borderRadius',
+] as const;
+
+function coerceStringEnum< T extends string >(
+	value: string,
+	allowedValues: readonly T[],
+	fallback: T
+): T {
+	return allowedValues.includes( value as T ) ? ( value as T ) : fallback;
+}
 
 function getFontSizeStyle( fontSize: FontSizeValue ): string {
 	switch ( fontSize ) {
@@ -63,135 +91,120 @@ function getFontSizeStyle( fontSize: FontSizeValue ): string {
 	}
 }
 
-function getBooleanDefault(
-	field: EditorFieldDescriptor | undefined,
-	fallback: boolean
-): boolean {
-	return typeof field?.defaultValue === 'boolean'
-		? field.defaultValue
-		: fallback;
-}
-
-function getNumberDefault(
-	field: EditorFieldDescriptor | undefined,
-	fallback: number
-): number {
-	return typeof field?.defaultValue === 'number'
-		? field.defaultValue
-		: fallback;
-}
-
-function getStringDefault(
-	field: EditorFieldDescriptor | undefined,
-	fallback: string
-): string {
-	return typeof field?.defaultValue === 'string'
-		? field.defaultValue
-		: fallback;
-}
-
-function toSelectOptions(
-	field: EditorFieldDescriptor | undefined
-): Array< { label: string; value: string } > {
-	return ( field?.options ?? [] ).map( ( option ) => ( {
-		label: option.label,
-		value: String( option.value ),
-	} ) );
-}
-
-function parseNumberInput( value: string ): number | null {
-	if ( value.trim() === '' ) {
-		return null;
-	}
-
-	const parsed = Number( value );
-	return Number.isFinite( parsed ) ? parsed : null;
-}
-
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const blockProps = useBlockProps();
-	const editorFields = createEditorModel(
-		currentManifest as ManifestDocument,
-		{
-			hidden: [ 'id', 'version' ],
-			labels: {
-				alignment: __( 'Alignment', 'my_typia_block' ),
-				animation: __( 'Animation', 'my_typia_block' ),
-				aspectRatio: __( 'Aspect Ratio', 'my_typia_block' ),
-				backgroundColor: __( 'Background Color', 'my_typia_block' ),
-				borderRadius: __( 'Border Radius', 'my_typia_block' ),
-				className: __( 'CSS Class', 'my_typia_block' ),
-				content: __( 'Content', 'my_typia_block' ),
-				fontSize: __( 'Font Size', 'my_typia_block' ),
-				isVisible: __( 'Visible', 'my_typia_block' ),
-				linkTarget: __( 'Link Target', 'my_typia_block' ),
-				'padding.bottom': __( 'Padding Bottom', 'my_typia_block' ),
-				'padding.left': __( 'Padding Left', 'my_typia_block' ),
-				'padding.right': __( 'Padding Right', 'my_typia_block' ),
-				'padding.top': __( 'Padding Top', 'my_typia_block' ),
-				textColor: __( 'Text Color', 'my_typia_block' ),
-			},
-			manual: [ 'animation', 'className', 'content', 'linkTarget' ],
-			preferTextarea: [ 'content' ],
-		}
+	const editorFields = useEditorFields( currentManifest as ManifestDocument, {
+		hidden: [ 'id', 'version' ],
+		labels: {
+			alignment: __( 'Alignment', 'my_typia_block' ),
+			animation: __( 'Animation', 'my_typia_block' ),
+			aspectRatio: __( 'Aspect Ratio', 'my_typia_block' ),
+			backgroundColor: __( 'Background Color', 'my_typia_block' ),
+			borderRadius: __( 'Border Radius', 'my_typia_block' ),
+			className: __( 'CSS Class', 'my_typia_block' ),
+			content: __( 'Content', 'my_typia_block' ),
+			fontSize: __( 'Font Size', 'my_typia_block' ),
+			isVisible: __( 'Visible', 'my_typia_block' ),
+			linkTarget: __( 'Link Target', 'my_typia_block' ),
+			'padding.bottom': __( 'Padding Bottom', 'my_typia_block' ),
+			'padding.left': __( 'Padding Left', 'my_typia_block' ),
+			'padding.right': __( 'Padding Right', 'my_typia_block' ),
+			'padding.top': __( 'Padding Top', 'my_typia_block' ),
+			textColor: __( 'Text Color', 'my_typia_block' ),
+		},
+		manual: [ 'animation', 'className', 'content', 'linkTarget' ],
+		preferTextarea: [ 'content' ],
+	} );
+	const paddingBottomField = editorFields.getField( 'padding.bottom' );
+	const paddingLeftField = editorFields.getField( 'padding.left' );
+	const paddingRightField = editorFields.getField( 'padding.right' );
+	const paddingTopField = editorFields.getField( 'padding.top' );
+	const alignment = coerceStringEnum< AlignmentValue >(
+		editorFields.getStringValue( attributes, 'alignment', 'left' ),
+		ALIGNMENT_VALUES,
+		'left'
 	);
-	const editorFieldMap = new Map< string, EditorFieldDescriptor >(
-		editorFields.map( ( field ) => [ field.path, field ] )
+	const aspectRatio = coerceStringEnum< AspectRatioValue >(
+		editorFields.getStringValue( attributes, 'aspectRatio', '16/9' ),
+		ASPECT_RATIO_VALUES,
+		'16/9'
 	);
-	const alignmentField = editorFieldMap.get( 'alignment' );
-	const aspectRatioField = editorFieldMap.get( 'aspectRatio' );
-	const backgroundColorField = editorFieldMap.get( 'backgroundColor' );
-	const borderRadiusField = editorFieldMap.get( 'borderRadius' );
-	const fontSizeField = editorFieldMap.get( 'fontSize' );
-	const isVisibleField = editorFieldMap.get( 'isVisible' );
-	const paddingBottomField = editorFieldMap.get( 'padding.bottom' );
-	const paddingLeftField = editorFieldMap.get( 'padding.left' );
-	const paddingRightField = editorFieldMap.get( 'padding.right' );
-	const paddingTopField = editorFieldMap.get( 'padding.top' );
-	const textColorField = editorFieldMap.get( 'textColor' );
-	const manualFields = editorFields.filter( ( field ) => ! field.supported );
-	const alignment = ( attributes.alignment ??
-		getStringDefault( alignmentField, 'left' ) ) as AlignmentValue;
-	const aspectRatio = ( attributes.aspectRatio ??
-		getStringDefault( aspectRatioField, '16/9' ) ) as AspectRatioValue;
-	const backgroundColor = ( attributes.backgroundColor ??
-		getStringDefault(
-			backgroundColorField,
+	const backgroundColor = coerceStringEnum< BackgroundColorValue >(
+		editorFields.getStringValue(
+			attributes,
+			'backgroundColor',
 			'transparent'
-		) ) as BackgroundColorValue;
-	const borderRadius =
-		attributes.borderRadius ?? getNumberDefault( borderRadiusField, 0 );
-	const fontSize = ( attributes.fontSize ??
-		getStringDefault( fontSizeField, 'medium' ) ) as FontSizeValue;
-	const isVisible =
-		attributes.isVisible ?? getBooleanDefault( isVisibleField, true );
+		),
+		COLOR_VALUES,
+		'transparent'
+	);
+	const borderRadius = editorFields.getNumberValue(
+		attributes,
+		'borderRadius',
+		0
+	);
+	const fontSize = coerceStringEnum< FontSizeValue >(
+		editorFields.getStringValue( attributes, 'fontSize', 'medium' ),
+		FONT_SIZE_VALUES,
+		'medium'
+	);
+	const isVisible = editorFields.getBooleanValue(
+		attributes,
+		'isVisible',
+		true
+	);
 	const padding = {
-		bottom:
-			attributes.padding?.bottom ??
-			getNumberDefault( paddingBottomField, 0 ),
-		left:
-			attributes.padding?.left ?? getNumberDefault( paddingLeftField, 0 ),
-		right:
-			attributes.padding?.right ??
-			getNumberDefault( paddingRightField, 0 ),
-		top: attributes.padding?.top ?? getNumberDefault( paddingTopField, 0 ),
+		bottom: editorFields.getNumberValue( attributes, 'padding.bottom', 0 ),
+		left: editorFields.getNumberValue( attributes, 'padding.left', 0 ),
+		right: editorFields.getNumberValue( attributes, 'padding.right', 0 ),
+		top: editorFields.getNumberValue( attributes, 'padding.top', 0 ),
 	};
-	const textColor = ( attributes.textColor ??
-		getStringDefault( textColorField, 'currentColor' ) ) as TextColorValue;
+	const textColor = coerceStringEnum< TextColorValue >(
+		editorFields.getStringValue( attributes, 'textColor', 'currentColor' ),
+		COLOR_VALUES,
+		'currentColor'
+	);
+	const inspectorPaths = useMemo(
+		() =>
+			SHOWCASE_INSPECTOR_PATHS.filter( ( path ) =>
+				editorFields.fieldMap.has( path )
+			),
+		[ editorFields.fieldMap ]
+	);
+	const missingInspectorPaths = useMemo(
+		() =>
+			SHOWCASE_INSPECTOR_PATHS.filter(
+				( path ) => ! editorFields.fieldMap.has( path )
+			),
+		[ editorFields.fieldMap ]
+	);
 	const { errorMessages, isValid } = useTypiaValidation(
 		attributes,
 		validators.validate
 	);
 	const debouncedAttributes = useDebounce( attributes, 300 );
-	const updateAttribute = createAttributeUpdater(
+	const validateEditorUpdate = ( nextAttributes: MyTypiaBlockAttributes ) => {
+		try {
+			return {
+				data: sanitizeMyTypiaBlockAttributes( nextAttributes ),
+				errors: [],
+				isValid: true as const,
+			};
+		} catch ( error ) {
+			if ( process.env.NODE_ENV !== 'production' ) {
+				console.warn(
+					'Sanitization failed, falling back to validation.',
+					error
+				);
+			}
+
+			return validators.validate( nextAttributes );
+		}
+	};
+	const { updateField } = useTypedAttributeUpdater(
 		attributes,
 		setAttributes,
-		validators.validate
-	);
-	const updateNestedAttribute = createNestedAttributeUpdater(
-		attributes,
-		setAttributes,
-		validators.validate
+		validateEditorUpdate
 	);
 
 	useEffect( () => {
@@ -212,8 +225,22 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	// Log attribute changes in development
 	useAttributeLogger( debouncedAttributes );
 
+	useEffect( () => {
+		if (
+			process.env.NODE_ENV === 'production' ||
+			missingInspectorPaths.length === 0
+		) {
+			return;
+		}
+
+		console.warn(
+			'InspectorFromManifest skipped unknown showcase paths.',
+			missingInspectorPaths
+		);
+	}, [ missingInspectorPaths ] );
+
 	const updatePadding = ( side: PaddingKey, nextValue: number ) =>
-		updateNestedAttribute( `padding.${ side }`, nextValue );
+		updateField( `padding.${ side }`, nextValue );
 
 	const previewStyle = {
 		aspectRatio: aspectRatio === 'auto' ? undefined : aspectRatio,
@@ -228,110 +255,13 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	return (
 		<ErrorBoundary>
 			<InspectorControls>
-				<PanelBody title={ __( 'Settings', 'my_typia_block' ) }>
-					<ToggleControl
-						label={
-							isVisibleField?.label ??
-							__( 'Visible', 'my_typia_block' )
-						}
-						checked={ isVisible }
-						onChange={ ( nextVisible ) =>
-							updateAttribute( 'isVisible', nextVisible )
-						}
-					/>
-					<SelectControl
-						label={
-							alignmentField?.label ??
-							__( 'Alignment', 'my_typia_block' )
-						}
-						value={ alignment }
-						options={ toSelectOptions( alignmentField ) }
-						onChange={ ( nextAlignment ) =>
-							updateAttribute(
-								'alignment',
-								nextAlignment as AlignmentValue
-							)
-						}
-					/>
-					<SelectControl
-						label={
-							fontSizeField?.label ??
-							__( 'Font Size', 'my_typia_block' )
-						}
-						value={ fontSize }
-						options={ toSelectOptions( fontSizeField ) }
-						onChange={ ( nextFontSize ) =>
-							updateAttribute(
-								'fontSize',
-								nextFontSize as FontSizeValue
-							)
-						}
-					/>
-					<SelectControl
-						label={
-							textColorField?.label ??
-							__( 'Text Color', 'my_typia_block' )
-						}
-						value={ textColor }
-						options={ toSelectOptions( textColorField ) }
-						onChange={ ( nextColor ) =>
-							updateAttribute(
-								'textColor',
-								nextColor as TextColorValue
-							)
-						}
-					/>
-					<SelectControl
-						label={
-							backgroundColorField?.label ??
-							__( 'Background Color', 'my_typia_block' )
-						}
-						value={ backgroundColor }
-						options={ toSelectOptions( backgroundColorField ) }
-						onChange={ ( nextColor ) =>
-							updateAttribute(
-								'backgroundColor',
-								nextColor as BackgroundColorValue
-							)
-						}
-					/>
-					<SelectControl
-						label={
-							aspectRatioField?.label ??
-							__( 'Aspect Ratio', 'my_typia_block' )
-						}
-						value={ aspectRatio }
-						options={ toSelectOptions( aspectRatioField ) }
-						onChange={ ( nextRatio ) =>
-							updateAttribute(
-								'aspectRatio',
-								nextRatio as AspectRatioValue
-							)
-						}
-					/>
-					<TextControl
-						label={
-							borderRadiusField?.label ??
-							__( 'Border Radius', 'my_typia_block' )
-						}
-						type="number"
-						min={ borderRadiusField?.minimum ?? 0 }
-						step={ borderRadiusField?.step ?? 1 }
-						value={ String( borderRadius ) }
-						onChange={ ( value ) => {
-							const parsed = parseNumberInput( value );
-							if ( parsed === null ) {
-								return;
-							}
-							updateAttribute(
-								'borderRadius',
-								Math.max(
-									parsed,
-									borderRadiusField?.minimum ?? parsed
-								)
-							);
-						} }
-					/>
+				<InspectorFromManifest
+					attributes={ attributes }
+					fieldLookup={ editorFields }
+					onChange={ updateField }
+					paths={ inspectorPaths }
+					title={ __( 'Settings', 'my_typia_block' ) }
+				>
 					<RangeControl
 						label={
 							paddingTopField?.label ??
@@ -401,8 +331,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 							</ul>
 						</div>
 					) }
-				</PanelBody>
-				{ manualFields.length > 0 && (
+				</InspectorFromManifest>
+				{ editorFields.manualFields.length > 0 && (
 					<PanelBody
 						title={ __( 'Manual Typia Fields', 'my_typia_block' ) }
 						initialOpen={ false }
@@ -415,7 +345,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 								) }
 							</p>
 							<ul style={ { margin: 0, paddingLeft: '1em' } }>
-								{ manualFields.map( ( field ) => (
+								{ editorFields.manualFields.map( ( field ) => (
 									<li key={ field.path }>
 										<strong>{ field.label }</strong>
 										{ field.reason
@@ -450,7 +380,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						tagName="p"
 						value={ attributes.content }
 						onChange={ ( content ) =>
-							updateAttribute( 'content', content )
+							updateField( 'content', content )
 						}
 						placeholder={ __(
 							'Enter your text…',

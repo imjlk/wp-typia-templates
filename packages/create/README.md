@@ -119,6 +119,35 @@ import { createNestedAttributeUpdater } from "@wp-typia/create/runtime/validatio
 
 Unions, arrays, formatted IDs/URLs, and paths marked as `manual` are reported as unsupported so projects can keep custom UI where it matters.
 
+`runtime/inspector` builds on top of those descriptors when you do want a
+higher-level inspector layer:
+
+```tsx
+import currentManifest from "./typia.manifest.json";
+import {
+  InspectorFromManifest,
+  type ManifestDocument,
+  useEditorFields,
+  useTypedAttributeUpdater,
+} from "@wp-typia/create/runtime/inspector";
+
+const editorFields = useEditorFields(currentManifest as ManifestDocument, {
+  manual: ["content"],
+});
+const { updateField } = useTypedAttributeUpdater(attributes, setAttributes);
+
+<InspectorFromManifest
+  attributes={attributes}
+  fieldLookup={editorFields}
+  onChange={updateField}
+  paths={["alignment", "isVisible"]}
+  title="Settings"
+/>;
+```
+
+Use `runtime/editor` for descriptor/model generation and `runtime/inspector`
+when you want a manifest-driven WordPress inspector surface.
+
 Data-backed projects can also opt into schema output from the existing sync pipeline:
 
 ```ts
@@ -236,10 +265,11 @@ metadata tags exist.
 
 Generated projects may continue using `@wp-typia/create`,
 `@wp-typia/create/metadata-core`, `@wp-typia/create/runtime/blocks`,
-`@wp-typia/create/runtime/defaults`, `@wp-typia/create/runtime/editor`, and
+`@wp-typia/create/runtime/defaults`, `@wp-typia/create/runtime/editor`,
+`@wp-typia/create/runtime/inspector`, and
 `@wp-typia/create/runtime/validation` as supported public paths through v1.
-Root exports for blocks, defaults, editor, validation, and schema helpers remain
-additive convenience aliases rather than a migration requirement.
+Root exports for blocks, defaults, editor, validation, and schema helpers
+remain additive convenience aliases rather than a migration requirement.
 
 `@wp-typia/create/runtime/schema-core` remains exported, but it is not the
 canonical generated-project import path. Prefer the root schema exports such as

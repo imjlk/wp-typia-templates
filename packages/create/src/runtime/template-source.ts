@@ -1,3 +1,5 @@
+/// <reference path="./external-template-modules.d.ts" />
+
 import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import os from "node:os";

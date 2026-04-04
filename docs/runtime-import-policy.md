@@ -16,6 +16,7 @@ Generated projects may rely on these import paths as supported public API:
 - `@wp-typia/create/runtime/blocks`
 - `@wp-typia/create/runtime/defaults`
 - `@wp-typia/create/runtime/editor`
+- `@wp-typia/create/runtime/inspector`
 - `@wp-typia/create/runtime/validation`
 
 ## Support promise

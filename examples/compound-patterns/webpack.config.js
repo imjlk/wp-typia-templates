@@ -231,6 +231,10 @@ module.exports = async () => {
 				isModuleConfig( config ) ? moduleEntries : editorEntries,
 			resolve: {
 				...( config.resolve || {} ),
+				extensionAlias: {
+					...( config.resolve?.extensionAlias || {} ),
+					'.js': [ '.js', '.ts', '.tsx' ],
+				},
 				alias: {
 					...( config.resolve?.alias || {} ),
 					'@wp-typia/create/runtime/blocks': path.resolve(
@@ -244,6 +248,10 @@ module.exports = async () => {
 					'@wp-typia/create/runtime/editor': path.resolve(
 						__dirname,
 						'../../packages/create/src/runtime/editor.ts'
+					),
+					'@wp-typia/create/runtime/inspector': path.resolve(
+						__dirname,
+						'../../packages/create/src/runtime/inspector.tsx'
 					),
 					'@wp-typia/create/runtime/schema-core': path.resolve(
 						__dirname,

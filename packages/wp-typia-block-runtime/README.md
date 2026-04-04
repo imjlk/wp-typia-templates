@@ -9,6 +9,7 @@ It currently re-exports the block runtime helper surface for:
 
 - manifest-driven defaults
 - editor model generation
+- manifest-driven inspector helpers
 - validation-aware attribute updates
 
 It does not include:
@@ -22,6 +23,7 @@ Typical usage:
 
 ```ts
 import { createEditorModel } from "@wp-typia/block-runtime/editor";
+import { InspectorFromManifest, useEditorFields } from "@wp-typia/block-runtime/inspector";
 import { createNestedAttributeUpdater } from "@wp-typia/block-runtime/validation";
 ```
 

@@ -19,6 +19,9 @@
       "@wp-typia/create/runtime/editor": [
         "packages/create/src/runtime/editor.ts"
       ],
+      "@wp-typia/create/runtime/inspector": [
+        "packages/create/src/runtime/inspector.tsx"
+      ],
       "@wp-typia/create/runtime/schema-core": [
         "packages/create/src/runtime/schema-core.ts"
       ],
@@ -45,6 +48,9 @@
       ],
       "@wp-typia/block-runtime/editor": [
         "packages/wp-typia-block-runtime/src/editor.ts"
+      ],
+      "@wp-typia/block-runtime/inspector": [
+        "packages/wp-typia-block-runtime/src/inspector.ts"
       ],
       "@wp-typia/block-runtime/validation": [
         "packages/wp-typia-block-runtime/src/validation.ts"

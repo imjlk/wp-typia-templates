@@ -8,90 +8,82 @@ import {
   RichText,
   useBlockProps,
 } from '@wordpress/block-editor';
-import { Notice, PanelBody, TextControl, ToggleControl, SelectControl } from '@wordpress/components';
+import { Notice, PanelBody, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import currentManifest from './typia.manifest.json';
-import { createEditorModel, type ManifestDocument } from '@wp-typia/create/runtime/editor';
+import {
+  InspectorFromManifest,
+  type ManifestDocument,
+  useEditorFields,
+  useTypedAttributeUpdater,
+} from '@wp-typia/create/runtime/inspector';
 import { {{pascalCase}}Attributes } from './types';
 import {
-  validators,
-  createAttributeUpdater,
+  sanitize{{pascalCase}}Attributes,
   validate{{pascalCase}}Attributes,
 } from './validators';
 import { useTypiaValidation } from './hooks';
 
 type EditProps = BlockEditProps<{{pascalCase}}Attributes>;
-type AlignmentValue = NonNullable<{{pascalCase}}Attributes['alignment']>;
 
 function Edit({ attributes, setAttributes }: EditProps) {
   const blockProps = useBlockProps();
-  const editorFieldMap = new Map(
-    createEditorModel(currentManifest as ManifestDocument, {
-      hidden: ['id', 'version'],
-      manual: ['content'],
-      labels: {
-        alignment: __('Alignment', '{{textDomain}}'),
-        className: __('CSS Class', '{{textDomain}}'),
-        content: __('Content', '{{textDomain}}'),
-        isVisible: __('Visible', '{{textDomain}}'),
-      },
-    }).map((field) => [field.path, field]),
-  );
-  const alignmentField = editorFieldMap.get('alignment');
-  const classNameField = editorFieldMap.get('className');
-  const isVisibleField = editorFieldMap.get('isVisible');
+  const editorFields = useEditorFields(currentManifest as ManifestDocument, {
+    hidden: ['id', 'version'],
+    manual: ['content'],
+    labels: {
+      alignment: __('Alignment', '{{textDomain}}'),
+      className: __('CSS Class', '{{textDomain}}'),
+      content: __('Content', '{{textDomain}}'),
+      isVisible: __('Visible', '{{textDomain}}'),
+    },
+  });
+  const classNameField = editorFields.getField('className');
   const { errorMessages, isValid } = useTypiaValidation(
     attributes,
     validate{{pascalCase}}Attributes
   );
-  const updateAttribute = createAttributeUpdater(
+  const validateEditorUpdate = (nextAttributes: {{pascalCase}}Attributes) => {
+    try {
+      return {
+        data: sanitize{{pascalCase}}Attributes(nextAttributes),
+        errors: [],
+        isValid: true as const,
+      };
+    } catch {
+      return validate{{pascalCase}}Attributes(nextAttributes);
+    }
+  };
+  const { updateField } = useTypedAttributeUpdater(
     attributes,
     setAttributes,
-    validators.validate
+    validateEditorUpdate
   );
-  const alignmentValue = attributes.alignment || (typeof alignmentField?.defaultValue === 'string' ? alignmentField.defaultValue : 'left');
-  const isVisible = attributes.isVisible ?? (typeof isVisibleField?.defaultValue === 'boolean' ? isVisibleField.defaultValue : true);
-  const alignmentOptions = (alignmentField?.options || []).map((option) => ({
-    label: ({
-      center: __('Center', '{{textDomain}}'),
-      justify: __('Justify', '{{textDomain}}'),
-      left: __('Left', '{{textDomain}}'),
-      right: __('Right', '{{textDomain}}'),
-    })[String(option.value)] || option.label,
-    value: String(option.value),
-  }));
 
   return (
     <>
       <InspectorControls>
-        <PanelBody title={__('Settings', '{{textDomain}}')}>
+        <InspectorFromManifest
+          attributes={attributes}
+          fieldLookup={editorFields}
+          onChange={updateField}
+          paths={['alignment', 'isVisible']}
+          title={__('Settings', '{{textDomain}}')}
+        >
           <TextControl
             label={__('Content', '{{textDomain}}')}
             value={attributes.content || ''}
-            onChange={(value) => updateAttribute('content', value)}
+            onChange={(value) => updateField('content', value)}
             help={__('Mirrors the main block content.', '{{textDomain}}')}
-          />
-
-          <SelectControl
-            label={alignmentField?.label || __('Alignment', '{{textDomain}}')}
-            value={alignmentValue}
-            options={alignmentOptions}
-            onChange={(value) => updateAttribute('alignment', value as AlignmentValue)}
           />
 
           <TextControl
             label={classNameField?.label || __('CSS Class', '{{textDomain}}')}
             value={attributes.className || ''}
-            onChange={(value) => updateAttribute('className', value)}
+            onChange={(value) => updateField('className', value)}
             help={__('Add an optional CSS class name.', '{{textDomain}}')}
           />
-
-          <ToggleControl
-            label={isVisibleField?.label || __('Visible', '{{textDomain}}')}
-            checked={isVisible}
-            onChange={(value) => updateAttribute('isVisible', value)}
-          />
-        </PanelBody>
+        </InspectorFromManifest>
 
         {!isValid && (
           <PanelBody title={__('Validation Errors', '{{textDomain}}')} initialOpen>
@@ -109,7 +101,7 @@ function Edit({ attributes, setAttributes }: EditProps) {
           <RichText
             tagName="p"
             value={attributes.content || ''}
-            onChange={(value) => updateAttribute('content', value)}
+            onChange={(value) => updateField('content', value)}
             placeholder={__('Add your content...', '{{textDomain}}')}
           />
         </div>

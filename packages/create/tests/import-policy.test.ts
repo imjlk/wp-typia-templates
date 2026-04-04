@@ -13,6 +13,7 @@ describe("@wp-typia/create import policy", () => {
 			blocksModule,
 			defaultsModule,
 			editorModule,
+			inspectorModule,
 			validationModule,
 			schemaCoreModule,
 		] = await Promise.all([
@@ -21,6 +22,7 @@ describe("@wp-typia/create import policy", () => {
 			import("@wp-typia/create/runtime/blocks"),
 			import("@wp-typia/create/runtime/defaults"),
 			import("@wp-typia/create/runtime/editor"),
+			import("@wp-typia/create/runtime/inspector"),
 			import("@wp-typia/create/runtime/validation"),
 			import("@wp-typia/create/runtime/schema-core"),
 		]);
@@ -46,6 +48,7 @@ describe("@wp-typia/create import policy", () => {
 		expect(typeof blocksModule.createTypiaWebpackConfig).toBe("function");
 		expect(typeof defaultsModule.applyTemplateDefaultsFromManifest).toBe("function");
 		expect(typeof editorModule.createEditorModel).toBe("function");
+		expect(typeof inspectorModule.useEditorFields).toBe("function");
 		expect(typeof validationModule.createAttributeUpdater).toBe("function");
 		expect(typeof validationModule.createScaffoldValidatorToolkit).toBe("function");
 		expect(typeof validationModule.createUseTypiaValidationHook).toBe("function");
@@ -76,6 +79,7 @@ describe("@wp-typia/create import policy", () => {
 		expect(importPolicyDoc).toContain("@wp-typia/create/runtime/blocks");
 		expect(importPolicyDoc).toContain("@wp-typia/create/runtime/defaults");
 		expect(importPolicyDoc).toContain("@wp-typia/create/runtime/editor");
+		expect(importPolicyDoc).toContain("@wp-typia/create/runtime/inspector");
 		expect(importPolicyDoc).toContain("@wp-typia/create/runtime/validation");
 		expect(importPolicyDoc).toContain("@wp-typia/create/metadata-core");
 		expect(importPolicyDoc).toContain("@wp-typia/create/runtime/schema-core");

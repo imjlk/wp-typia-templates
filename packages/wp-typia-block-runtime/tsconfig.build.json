@@ -15,6 +15,9 @@
       "@wp-typia/create/runtime/editor": [
         "../create/dist/runtime/editor"
       ],
+      "@wp-typia/create/runtime/inspector": [
+        "../create/dist/runtime/inspector"
+      ],
       "@wp-typia/create/runtime/validation": [
         "../create/dist/runtime/validation"
       ]
