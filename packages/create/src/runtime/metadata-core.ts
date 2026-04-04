@@ -1,5 +1,8 @@
+import type {} from './typia-tags.js';
+
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 
 import {
@@ -25,6 +28,7 @@ type WordPressAttributeKind =
   | 'boolean'
   | 'array'
   | 'object';
+type WordPressAttributeSource = 'html' | 'text' | 'rich-text';
 
 interface AttributeConstraints {
   exclusiveMaximum: number | null;
@@ -51,6 +55,10 @@ interface AttributeNode {
   properties?: Record<string, AttributeNode>;
   required: boolean;
   union?: AttributeUnion | null;
+  wp: {
+    selector: string | null;
+    source: WordPressAttributeSource | null;
+  };
 }
 
 interface AttributeUnion {
@@ -61,6 +69,8 @@ interface AttributeUnion {
 interface BlockJsonAttribute {
   default?: JsonValue;
   enum?: Array<string | number | boolean>;
+  selector?: string;
+  source?: WordPressAttributeSource;
   type: WordPressAttributeKind;
 }
 
@@ -81,6 +91,8 @@ interface ManifestAttribute {
     defaultValue: JsonValue | null;
     enum: Array<string | number | boolean> | null;
     hasDefault: boolean;
+    selector?: string | null;
+    source?: WordPressAttributeSource | null;
     type: WordPressAttributeKind;
   };
 }
@@ -368,6 +380,8 @@ const SUPPORTED_TAGS = new Set([
   'Minimum',
   'MultipleOf',
   'Pattern',
+  'Selector',
+  'Source',
   'Type',
 ]);
 
@@ -389,6 +403,7 @@ const DEFAULT_CONSTRAINTS = (): AttributeConstraints => ({
 const SYNC_BLOCK_METADATA_FAILURE_CODE = Symbol(
   'sync-block-metadata-failure-code',
 );
+const RUNTIME_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 
 type TaggedSyncBlockMetadataError = Error & {
   [SYNC_BLOCK_METADATA_FAILURE_CODE]?: SyncBlockMetadataFailureCode;
@@ -466,6 +481,7 @@ export async function syncBlockMetadata(
       `Source type "${options.sourceTypeName}" must resolve to an object shape`,
     );
   }
+  validateWordPressExtractionAttributes(rootNode.properties);
 
   const blockJson = JSON.parse(
     fs.readFileSync(blockJsonPath, 'utf8'),
@@ -841,6 +857,7 @@ function createAnalysisContext(
   };
 
   let rootNames = [typesFilePath];
+  const typiaTagsAugmentationPath = resolveTypiaTagsAugmentationPath();
 
   if (configPath !== undefined) {
     const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
@@ -863,7 +880,15 @@ function createAnalysisContext(
     rootNames = parsed.fileNames.includes(typesFilePath)
       ? parsed.fileNames
       : [...parsed.fileNames, typesFilePath];
+    if (
+      typiaTagsAugmentationPath &&
+      !rootNames.includes(typiaTagsAugmentationPath)
+    ) {
+      rootNames = [...rootNames, typiaTagsAugmentationPath];
+    }
     Object.assign(compilerOptions, parsed.options);
+  } else if (typiaTagsAugmentationPath) {
+    rootNames = [...rootNames, typiaTagsAugmentationPath];
   }
 
   const program = ts.createProgram({
@@ -888,6 +913,21 @@ function createAnalysisContext(
     program,
     recursionGuard: new Set<string>(),
   };
+}
+
+function resolveTypiaTagsAugmentationPath(): string | null {
+  const candidates = [
+    path.join(RUNTIME_DIRECTORY, 'typia-tags.d.ts'),
+    path.join(RUNTIME_DIRECTORY, 'typia-tags.ts'),
+  ];
+
+  for (const candidate of candidates) {
+    if (ts.sys.fileExists(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
 }
 
 function findNamedDeclaration(
@@ -981,6 +1021,10 @@ function parseInterfaceDeclaration(
     properties,
     required,
     union: null,
+    wp: {
+      selector: null,
+      source: null,
+    },
   };
 }
 
@@ -1016,6 +1060,10 @@ function parseTypeNode(
       path: pathLabel,
       required: true,
       union: null,
+      wp: {
+        selector: null,
+        source: null,
+      },
     };
   }
   if (ts.isLiteralTypeNode(node)) {
@@ -1134,6 +1182,10 @@ function parseUnionType(
       path: pathLabel,
       required: true,
       union: null,
+      wp: {
+        selector: null,
+        source: null,
+      },
     };
   }
 
@@ -1206,6 +1258,10 @@ function parseDiscriminatedUnion(
       branches,
       discriminator,
     },
+    wp: {
+      selector: null,
+      source: null,
+    },
   };
 }
 
@@ -1276,6 +1332,10 @@ function parseTypeLiteral(
     properties,
     required: true,
     union: null,
+    wp: {
+      selector: null,
+      source: null,
+    },
   };
 }
 
@@ -1297,6 +1357,10 @@ function parseLiteralType(
     path: pathLabel,
     required: true,
     union: null,
+    wp: {
+      selector: null,
+      source: null,
+    },
   };
 }
 
@@ -1322,6 +1386,10 @@ function parseTypeReference(
       path: pathLabel,
       required: true,
       union: null,
+      wp: {
+        selector: null,
+        source: null,
+      },
     };
   }
   if (typeArguments.length > 0) {
@@ -1624,6 +1692,12 @@ function applyTag(
         pathLabel,
       );
       return;
+    case 'Selector':
+      node.wp.selector = parseStringLikeArgument(arg, tagName, pathLabel);
+      return;
+    case 'Source':
+      node.wp.source = parseWordPressAttributeSource(arg, pathLabel);
+      return;
     case 'Type':
       node.constraints.typeTag = parseStringLikeArgument(
         arg,
@@ -1759,6 +1833,20 @@ function parseStringLikeArgument(
   return value;
 }
 
+function parseWordPressAttributeSource(
+  node: ts.TypeNode,
+  pathLabel: string,
+): WordPressAttributeSource {
+  const value = parseStringLikeArgument(node, 'Source', pathLabel);
+  if (value === 'html' || value === 'text' || value === 'rich-text') {
+    return value;
+  }
+
+  throw new Error(
+    `Tag "Source" only supports "html", "text", or "rich-text" at ${pathLabel}`,
+  );
+}
+
 function extractLiteralValue(
   node: ts.TypeNode | ts.Node,
 ): string | number | boolean | undefined {
@@ -1803,6 +1891,12 @@ function createBlockJsonAttribute(
   }
   if (node.enumValues !== null && node.enumValues.length > 0) {
     attribute.enum = [...node.enumValues];
+  }
+  if (node.wp.source !== null) {
+    attribute.source = node.wp.source;
+  }
+  if (node.wp.selector !== null) {
+    attribute.selector = node.wp.selector;
   }
 
   const reasons: string[] = [];
@@ -1869,9 +1963,59 @@ function createManifestAttribute(node: AttributeNode): ManifestAttribute {
         node.defaultValue === undefined ? null : cloneJson(node.defaultValue),
       enum: node.enumValues ? [...node.enumValues] : null,
       hasDefault: node.defaultValue !== undefined,
+      ...(node.wp.selector !== null ? { selector: node.wp.selector } : {}),
+      ...(node.wp.source !== null ? { source: node.wp.source } : {}),
       type: getWordPressKind(node),
     },
   };
+}
+
+function validateWordPressExtractionAttributes(
+  attributes: Record<string, AttributeNode>,
+): void {
+  for (const attribute of Object.values(attributes)) {
+    validateWordPressExtractionAttribute(attribute, true);
+  }
+}
+
+function validateWordPressExtractionAttribute(
+  node: AttributeNode,
+  isTopLevel = false,
+): void {
+  const hasSelector = node.wp.selector !== null;
+  const hasSource = node.wp.source !== null;
+
+  if (hasSelector || hasSource) {
+    if (!isTopLevel) {
+      throw new Error(
+        `WordPress extraction tags are only supported on top-level block attributes at ${node.path}`,
+      );
+    }
+    if (!hasSelector || !hasSource) {
+      throw new Error(
+        `WordPress extraction tags require both Source and Selector at ${node.path}`,
+      );
+    }
+    if (node.kind !== 'string') {
+      throw new Error(
+        `WordPress extraction tags are only supported on string attributes at ${node.path}`,
+      );
+    }
+  }
+
+  if (node.items !== undefined) {
+    validateWordPressExtractionAttribute(node.items, false);
+  }
+  if (node.properties !== undefined) {
+    for (const property of Object.values(node.properties)) {
+      validateWordPressExtractionAttribute(property, false);
+    }
+  }
+  if (node.union?.branches) {
+    for (const branch of Object.values(node.union.branches)) {
+      validateWordPressExtractionAttribute(branch, false);
+    }
+  }
 }
 
 function renderPhpValidator(manifest: ManifestDocument): {
@@ -2468,6 +2612,10 @@ function baseNode(kind: AttributeKind, pathLabel: string): AttributeNode {
     path: pathLabel,
     required: true,
     union: null,
+    wp: {
+      selector: null,
+      source: null,
+    },
   };
 }
 
@@ -2683,6 +2831,7 @@ function resolveSyncBlockMetadataFailureCode(
     message.startsWith('Mixed primitive enums are not supported at ') ||
     message.startsWith('Indexed access ') ||
     message.startsWith('Intersection at ') ||
+    message.startsWith('WordPress extraction ') ||
     message.startsWith('Generic type declarations are not supported at ') ||
     message.startsWith('Generic type references are not supported at ') ||
     message.startsWith('Class and enum references are not supported at ') ||

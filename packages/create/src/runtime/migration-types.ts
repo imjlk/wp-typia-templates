@@ -41,6 +41,8 @@ export interface ManifestWpMetadata {
 	defaultValue?: JsonValue | null;
 	enum?: JsonValue[] | null;
 	hasDefault?: boolean;
+	selector?: string | null;
+	source?: "html" | "text" | "rich-text" | null;
 	type?: string | null;
 }
 

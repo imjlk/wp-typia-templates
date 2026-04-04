@@ -118,6 +118,295 @@ export interface BlockAttributes {
     );
   });
 
+  test('projects source and selector tags into block.json and typia.manifest.json', async () => {
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify(
+        { attributes: {}, example: { attributes: {} } },
+        null,
+        2,
+      ),
+      'src/types.ts': `import { tags } from "typia";
+
+export interface BlockAttributes {
+  htmlContent: string & tags.Source<"html"> & tags.Selector<".wp-block-demo__html">;
+  textContent: string & tags.Source<"text"> & tags.Selector<".wp-block-demo__text">;
+  richContent: string & tags.Source<"rich-text"> & tags.Selector<".wp-block-demo__rich">;
+}
+`,
+      'tsconfig.json': JSON.stringify(
+        {
+          compilerOptions: {
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            resolveJsonModule: true,
+            strict: true,
+            target: 'ES2022',
+          },
+          include: ['src/**/*.ts'],
+        },
+        null,
+        2,
+      ),
+    });
+
+    const result = await syncBlockMetadata({
+      blockJsonFile: 'block.json',
+      manifestFile: 'typia.manifest.json',
+      projectRoot: fixtureDir,
+      sourceTypeName: 'BlockAttributes',
+      typesFile: 'src/types.ts',
+    });
+
+    const blockJson = JSON.parse(
+      fs.readFileSync(path.join(fixtureDir, 'block.json'), 'utf8'),
+    );
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(fixtureDir, 'typia.manifest.json'), 'utf8'),
+    );
+
+    expect(blockJson.attributes.htmlContent).toEqual({
+      selector: '.wp-block-demo__html',
+      source: 'html',
+      type: 'string',
+    });
+    expect(blockJson.attributes.textContent).toEqual({
+      selector: '.wp-block-demo__text',
+      source: 'text',
+      type: 'string',
+    });
+    expect(blockJson.attributes.richContent).toEqual({
+      selector: '.wp-block-demo__rich',
+      source: 'rich-text',
+      type: 'string',
+    });
+
+    expect(manifest.attributes.htmlContent.wp.source).toBe('html');
+    expect(manifest.attributes.htmlContent.wp.selector).toBe(
+      '.wp-block-demo__html',
+    );
+    expect(manifest.attributes.textContent.wp.source).toBe('text');
+    expect(manifest.attributes.textContent.wp.selector).toBe(
+      '.wp-block-demo__text',
+    );
+    expect(manifest.attributes.richContent.wp.source).toBe('rich-text');
+    expect(manifest.attributes.richContent.wp.selector).toBe(
+      '.wp-block-demo__rich',
+    );
+    expect(result.lossyProjectionWarnings).toEqual([]);
+  });
+
+  test('rejects selector tags without a matching source tag', async () => {
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify(
+        { attributes: {}, example: { attributes: {} } },
+        null,
+        2,
+      ),
+      'src/types.ts': `import { tags } from "typia";
+
+export interface BlockAttributes {
+  content: string & tags.Selector<".wp-block-demo__content">;
+}
+`,
+      'tsconfig.json': JSON.stringify(
+        {
+          compilerOptions: {
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            resolveJsonModule: true,
+            strict: true,
+            target: 'ES2022',
+          },
+          include: ['src/**/*.ts'],
+        },
+        null,
+        2,
+      ),
+    });
+
+    await expect(
+      syncBlockMetadata({
+        blockJsonFile: 'block.json',
+        manifestFile: 'typia.manifest.json',
+        projectRoot: fixtureDir,
+        sourceTypeName: 'BlockAttributes',
+        typesFile: 'src/types.ts',
+      }),
+    ).rejects.toThrow(
+      'WordPress extraction tags require both Source and Selector at BlockAttributes.content',
+    );
+  });
+
+  test('rejects source tags without a matching selector tag', async () => {
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify(
+        { attributes: {}, example: { attributes: {} } },
+        null,
+        2,
+      ),
+      'src/types.ts': `import { tags } from "typia";
+
+export interface BlockAttributes {
+  content: string & tags.Source<"html">;
+}
+`,
+      'tsconfig.json': JSON.stringify(
+        {
+          compilerOptions: {
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            resolveJsonModule: true,
+            strict: true,
+            target: 'ES2022',
+          },
+          include: ['src/**/*.ts'],
+        },
+        null,
+        2,
+      ),
+    });
+
+    await expect(
+      syncBlockMetadata({
+        blockJsonFile: 'block.json',
+        manifestFile: 'typia.manifest.json',
+        projectRoot: fixtureDir,
+        sourceTypeName: 'BlockAttributes',
+        typesFile: 'src/types.ts',
+      }),
+    ).rejects.toThrow(
+      'WordPress extraction tags require both Source and Selector at BlockAttributes.content',
+    );
+  });
+
+  test('rejects unsupported source literals', async () => {
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify(
+        { attributes: {}, example: { attributes: {} } },
+        null,
+        2,
+      ),
+      'src/types.ts': `import { tags } from "typia";
+
+export interface BlockAttributes {
+  content: string & tags.Source<"attribute"> & tags.Selector<".wp-block-demo__content">;
+}
+`,
+      'tsconfig.json': JSON.stringify(
+        {
+          compilerOptions: {
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            resolveJsonModule: true,
+            strict: true,
+            target: 'ES2022',
+          },
+          include: ['src/**/*.ts'],
+        },
+        null,
+        2,
+      ),
+    });
+
+    await expect(
+      syncBlockMetadata({
+        blockJsonFile: 'block.json',
+        manifestFile: 'typia.manifest.json',
+        projectRoot: fixtureDir,
+        sourceTypeName: 'BlockAttributes',
+        typesFile: 'src/types.ts',
+      }),
+    ).rejects.toThrow(
+      `Type '"attribute"' does not satisfy the constraint '"html" | "text" | "rich-text"'`,
+    );
+  });
+
+  test('rejects source and selector tags on non-string attributes', async () => {
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify(
+        { attributes: {}, example: { attributes: {} } },
+        null,
+        2,
+      ),
+      'src/types.ts': `import { tags } from "typia";
+
+export interface BlockAttributes {
+  count: number & tags.Source<"text"> & tags.Selector<".wp-block-demo__count">;
+}
+`,
+      'tsconfig.json': JSON.stringify(
+        {
+          compilerOptions: {
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            resolveJsonModule: true,
+            strict: true,
+            target: 'ES2022',
+          },
+          include: ['src/**/*.ts'],
+        },
+        null,
+        2,
+      ),
+    });
+
+    await expect(
+      syncBlockMetadata({
+        blockJsonFile: 'block.json',
+        manifestFile: 'typia.manifest.json',
+        projectRoot: fixtureDir,
+        sourceTypeName: 'BlockAttributes',
+        typesFile: 'src/types.ts',
+      }),
+    ).rejects.toThrow(
+      'WordPress extraction tags are only supported on string attributes at BlockAttributes.count',
+    );
+  });
+
+  test('rejects source and selector tags on nested properties', async () => {
+    const fixtureDir = createFixture({
+      'block.json': JSON.stringify(
+        { attributes: {}, example: { attributes: {} } },
+        null,
+        2,
+      ),
+      'src/types.ts': `import { tags } from "typia";
+
+export interface BlockAttributes {
+  content: {
+    text: string & tags.Source<"text"> & tags.Selector<".wp-block-demo__content">;
+  };
+}
+`,
+      'tsconfig.json': JSON.stringify(
+        {
+          compilerOptions: {
+            module: 'NodeNext',
+            moduleResolution: 'NodeNext',
+            resolveJsonModule: true,
+            strict: true,
+            target: 'ES2022',
+          },
+          include: ['src/**/*.ts'],
+        },
+        null,
+        2,
+      ),
+    });
+
+    await expect(
+      syncBlockMetadata({
+        blockJsonFile: 'block.json',
+        manifestFile: 'typia.manifest.json',
+        projectRoot: fixtureDir,
+        sourceTypeName: 'BlockAttributes',
+        typesFile: 'src/types.ts',
+      }),
+    ).rejects.toThrow(
+      'WordPress extraction tags are only supported on top-level block attributes at BlockAttributes.content.text',
+    );
+  });
+
   test('supports imported aliases from @wp-typia/block-types inside types.ts', async () => {
     const blockTypesSourceDir = path.resolve(
       import.meta.dir,

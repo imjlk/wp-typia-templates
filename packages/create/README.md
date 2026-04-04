@@ -210,6 +210,30 @@ const aiSafeSchema = projectJsonSchemaDocument(requestSchema, {
 
 `ai-structured-output` is an opt-in derived profile. It does not change the default generated REST/runtime artifacts.
 
+For saved-markup attributes that should project directly into `block.json`, the
+metadata sync pipeline also understands `Source` and `Selector` tags for the
+WordPress extraction sources that are fully expressible by those two values
+alone:
+
+```ts
+import { tags } from "typia";
+
+export interface MyBlockAttributes {
+  title: string &
+    tags.Source<"rich-text"> &
+    tags.Selector<".wp-block-my-block__title">;
+  eyebrow: string &
+    tags.Source<"text"> &
+    tags.Selector<".wp-block-my-block__eyebrow">;
+}
+```
+
+That projects `source` and `selector` into both `block.json` and
+`typia.manifest.json`. The first pass intentionally supports only
+`"html" | "text" | "rich-text"` and requires both tags together. WordPress
+sources such as `attribute` and `query` remain out of scope until companion
+metadata tags exist.
+
 Generated projects may continue using `@wp-typia/create`,
 `@wp-typia/create/metadata-core`, `@wp-typia/create/runtime/blocks`,
 `@wp-typia/create/runtime/defaults`, `@wp-typia/create/runtime/editor`, and
