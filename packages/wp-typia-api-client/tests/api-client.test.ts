@@ -335,4 +335,92 @@ describe("@wp-typia/api-client", () => {
 		expect(result.isValid).toBe(true);
 		expect(result.data).toEqual({ ok: true });
 	});
+
+	test("query-and-body endpoints serialize query params and JSON bodies together", async () => {
+		let seenMethod = "";
+		let seenUrl = "";
+		let seenBody = "";
+		const transport = createFetchTransport({
+			baseUrl: "https://example.test/api/",
+			fetchFn: async (input, init) => {
+				seenMethod = String(init?.method);
+				seenUrl = String(input);
+				seenBody = String(init?.body);
+				return new Response(JSON.stringify({ ok: true }));
+			},
+		});
+		const endpoint = createEndpoint<
+			{ query: { page: number; tag: string[] }; body: { title: string } },
+			{ ok: boolean }
+		>({
+			method: "POST",
+			path: "/items",
+			requestLocation: "query-and-body",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { query?: { page?: unknown } }).query?.page === "number" &&
+				typeof (input as { body?: { title?: unknown } }).body?.title === "string"
+					? toValidationResult(
+							success(
+								input as {
+									query: { page: number; tag: string[] };
+									body: { title: string };
+								},
+							),
+						)
+					: toValidationResult(
+							failure<{
+								query: { page: number; tag: string[] };
+								body: { title: string };
+							}>("{ query, body }"),
+						),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				(input as { ok?: unknown }).ok === true
+					? toValidationResult(success(input as { ok: boolean }))
+					: toValidationResult(failure<{ ok: boolean }>("{ ok: true }", "$.ok")),
+		});
+
+		const result = await callEndpoint(
+			endpoint,
+			{
+				body: { title: "Hello" },
+				query: { page: 2, tag: ["a", "b"] },
+			},
+			{ transport },
+		);
+
+		expect(seenMethod).toBe("POST");
+		expect(seenUrl).toBe("https://example.test/api/items?page=2&tag=a&tag=b");
+		expect(seenBody).toContain('"title":"Hello"');
+		expect(result.isValid).toBe(true);
+		expect(result.data).toEqual({ ok: true });
+	});
+
+	test('query-and-body endpoints reject malformed envelopes at runtime', async () => {
+		const transport = createFetchTransport({
+			baseUrl: "https://example.test/api/",
+			fetchFn: async () => new Response(JSON.stringify({ ok: true })),
+		});
+		const endpoint = createEndpoint<unknown, { ok: boolean }>({
+			method: "POST",
+			path: "/items",
+			requestLocation: "query-and-body",
+			validateRequest: (input: unknown) => toValidationResult(success(input)),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				(input as { ok?: unknown }).ok === true
+					? toValidationResult(success(input as { ok: boolean }))
+					: toValidationResult(failure<{ ok: boolean }>("{ ok: true }", "$.ok")),
+		});
+
+		await expect(
+			callEndpoint(endpoint, { query: { page: 2 } }, { transport }),
+		).rejects.toThrow(
+			'Endpoints with requestLocation "query-and-body" require requests shaped like { query, body }.',
+		);
+	});
 });

@@ -362,9 +362,9 @@ describe("metadata-core endpoint manifests", () => {
 		}
 	});
 
-	test("syncEndpointClient rejects endpoints that define both bodyContract and queryContract", async () => {
+	test("syncEndpointClient emits mixed query/body request helpers", async () => {
 		const project = createTempProject();
-		const ambiguousManifest = defineEndpointManifest({
+		const mixedManifest = defineEndpointManifest({
 			contracts: manifest.contracts,
 			endpoints: [
 				{
@@ -381,15 +381,29 @@ describe("metadata-core endpoint manifests", () => {
 		});
 
 		try {
-			await expect(
-				syncEndpointClient({
-					clientFile: "build/api-client.ts",
-					manifest: ambiguousManifest,
-					projectRoot: project.root,
-					typesFile: project.typesFile,
-				}),
-			).rejects.toThrow(
-				'Endpoint "writeCounterState" defines both bodyContract and queryContract; generated portable clients require a single request contract.',
+			await syncEndpointClient({
+				clientFile: "build/api-client.ts",
+				manifest: mixedManifest,
+				projectRoot: project.root,
+				typesFile: project.typesFile,
+			});
+			const generatedClient = fs.readFileSync(
+				path.join(project.root, "build", "api-client.ts"),
+				"utf8",
+			);
+
+			expect(generatedClient).toContain("\ttype ValidationError,");
+			expect(generatedClient).toContain("\ttype ValidationResult,");
+			expect(generatedClient).toContain("function validateCombinedRequest<TQuery, TBody>(");
+			expect(generatedClient).toContain("expected: '{ query, body }'");
+			expect(generatedClient).toContain("path: prefixPath( '$.query', error.path )");
+			expect(generatedClient).toContain("path: prefixPath( '$.body', error.path )");
+			expect(generatedClient).toContain("requestLocation: 'query-and-body'");
+			expect(generatedClient).toContain(
+				"\trequest: { query: CounterQuery; body: WriteCounterRequest },",
+			);
+			expect(generatedClient).toContain(
+				"validateRequest: (input) => validateCombinedRequest( input, apiValidators.query, apiValidators.request )",
 			);
 		} finally {
 			fs.rmSync(project.root, { force: true, recursive: true });

@@ -234,6 +234,13 @@ await syncEndpointClient({
 
 `src/api-types.ts` remains the source of truth for scaffolded REST contracts, and the endpoint manifest is the canonical TypeScript description of the scaffolded REST surface. `src/api-client.ts` is the generated portable client artifact for backend-neutral consumers, while `src/api.ts` remains the WordPress-facing helper layer for generated persistence scaffolds. `src/api-schemas/*.schema.json` remains the runtime-facing artifact for generated PHP validation, and `src/api.openapi.json` is the canonical endpoint-aware REST document when a scaffold defines route metadata. Per-contract `src/api-schemas/*.openapi.json` files remain available as compatibility fragments.
 
+When an endpoint manifest defines both `queryContract` and `bodyContract`,
+`syncEndpointClient(...)` now generates a portable request shape of
+`{ query, body }` and emits `requestLocation: 'query-and-body'` in the
+generated `src/api-client.ts` module. Other internal manifest consumers such as
+`typia.llm` and WordPress AI projection helpers keep their current
+mixed-input rejection behavior in this pass.
+
 When you need an AI- or tool-facing schema surface, derive it from the generated REST schema instead of creating a second hand-maintained contract:
 
 ```ts

@@ -42,7 +42,7 @@ export interface ApiEndpoint<Req, Res> {
 	method: EndpointMethod;
 	operationId?: string;
 	path: string;
-	requestLocation?: "body" | "query";
+	requestLocation?: "body" | "query" | "query-and-body";
 	validateRequest: (input: unknown) => ValidationResult<Req>;
 	validateResponse: (input: unknown) => ValidationResult<Res>;
 }
@@ -240,26 +240,27 @@ function mergeHeaderInputs(
 	return Object.fromEntries(mergedHeaders.entries());
 }
 
-function buildEndpointRequestOptions<Req>(
+function buildQueryRequestOptions<Req>(
 	endpoint: ApiEndpoint<Req, unknown>,
-	request: Req,
+	baseOptions: Partial<EndpointTransportRequest>,
+	request: unknown,
 ): EndpointTransportRequest {
-	const baseOptions = endpoint.buildRequestOptions?.(request) ?? {};
-	const requestLocation =
-		endpoint.requestLocation ?? (endpoint.method === "GET" ? "query" : "body");
+	const query = encodeGetLikeRequest(request);
+	const resolvedUrl = baseOptions.url ? joinUrlWithQuery(baseOptions.url, query) : undefined;
+	return {
+		...baseOptions,
+		method: endpoint.method,
+		...(resolvedUrl
+			? { path: undefined, url: resolvedUrl }
+			: { path: joinPathWithQuery(baseOptions.path ?? endpoint.path, query) }),
+	};
+}
 
-	if (requestLocation === "query") {
-		const query = encodeGetLikeRequest(request);
-		const resolvedUrl = baseOptions.url ? joinUrlWithQuery(baseOptions.url, query) : undefined;
-		return {
-			...baseOptions,
-			method: endpoint.method,
-			...(resolvedUrl
-				? { path: undefined, url: resolvedUrl }
-				: { path: joinPathWithQuery(baseOptions.path ?? endpoint.path, query) }),
-		};
-	}
-
+function buildBodyRequestOptions<Req>(
+	endpoint: ApiEndpoint<Req, unknown>,
+	baseOptions: Partial<EndpointTransportRequest>,
+	request: unknown,
+): EndpointTransportRequest {
 	if (isFormDataLike(request)) {
 		return {
 			...baseOptions,
@@ -280,6 +281,50 @@ function buildEndpointRequestOptions<Req>(
 			? { path: undefined, url: baseOptions.url }
 			: { path: baseOptions.path ?? endpoint.path }),
 	};
+}
+
+function resolveCombinedRequest(
+	request: unknown,
+): { body: unknown; query: unknown } {
+	if (
+		!isPlainObject(request) ||
+		!Object.prototype.hasOwnProperty.call(request, "body") ||
+		!Object.prototype.hasOwnProperty.call(request, "query")
+	) {
+		throw new Error(
+			`Endpoints with requestLocation "query-and-body" require requests shaped like { query, body }.`,
+		);
+	}
+
+	return {
+		body: request.body,
+		query: request.query,
+	};
+}
+
+function buildEndpointRequestOptions<Req>(
+	endpoint: ApiEndpoint<Req, unknown>,
+	request: Req,
+): EndpointTransportRequest {
+	const baseOptions = endpoint.buildRequestOptions?.(request) ?? {};
+	const requestLocation =
+		endpoint.requestLocation ?? (endpoint.method === "GET" ? "query" : "body");
+
+	if (requestLocation === "query") {
+		return buildQueryRequestOptions(endpoint, baseOptions, request);
+	}
+
+	if (requestLocation === "query-and-body") {
+		const combinedRequest = resolveCombinedRequest(request);
+		const bodyOptions = buildBodyRequestOptions(
+			endpoint,
+			baseOptions,
+			combinedRequest.body,
+		);
+		return buildQueryRequestOptions(endpoint, bodyOptions, combinedRequest.query);
+	}
+
+	return buildBodyRequestOptions(endpoint, baseOptions, request);
 }
 
 function mergeTransportOptions(
