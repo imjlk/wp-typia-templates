@@ -7,6 +7,7 @@ const STATIC_METADATA_FILENAMES = new Set( [
 	'render.php',
 	'typia.openapi.json',
 	'typia.manifest.json',
+	'typia-migration-registry.php',
 	'typia.schema.json',
 	'typia-validator.php',
 ] );
@@ -37,6 +38,17 @@ function getBlockDirs() {
 
 function getMetadataEntries() {
 	const entries = [];
+	const rootMigrationRegistryPath = path.resolve(
+		process.cwd(),
+		'typia-migration-registry.php'
+	);
+
+	if ( fs.existsSync( rootMigrationRegistryPath ) ) {
+		entries.push( {
+			inputPath: rootMigrationRegistryPath,
+			outputPath: 'typia-migration-registry.php',
+		} );
+	}
 
 	for ( const blockDir of getBlockDirs() ) {
 		for ( const inputPath of findMetadataFiles( blockDir.dir ) ) {

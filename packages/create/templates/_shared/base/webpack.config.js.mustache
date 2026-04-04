@@ -2,7 +2,12 @@ const fs = require("fs");
 const path = require("path");
 const defaultConfig = require("@wordpress/scripts/config/webpack.config");
 
-const STATIC_ARTIFACT_FILENAMES = new Set(["render.php", "typia.manifest.json", "typia-validator.php"]);
+const STATIC_ARTIFACT_FILENAMES = new Set([
+	"render.php",
+	"typia.manifest.json",
+	"typia-validator.php",
+	"typia-migration-registry.php",
+]);
 const ROOT_GENERATED_ARTIFACT_FILENAMES = new Set([
 	...STATIC_ARTIFACT_FILENAMES,
 	"typia.schema.json",

@@ -293,6 +293,50 @@ describe("@wp-typia/create scaffolding", () => {
 		typecheckGeneratedProject(targetDir);
 	});
 
+	test("scaffoldProject can opt into migration UI for built-in single-block templates", async () => {
+		const targetDir = path.join(tempRoot, "demo-migration-ui");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "basic",
+			packageManager: "npm",
+			noInstall: true,
+			withMigrationUi: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo migration UI block",
+				namespace: "create-block",
+				slug: "demo-migration-ui",
+				title: "Demo Migration UI",
+			},
+		});
+
+		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
+		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
+		const generatedEdit = fs.readFileSync(path.join(targetDir, "src", "edit.tsx"), "utf8");
+		const generatedIndex = fs.readFileSync(path.join(targetDir, "src", "index.tsx"), "utf8");
+		const migrationConfig = fs.readFileSync(
+			path.join(targetDir, "src", "migrations", "config.ts"),
+			"utf8",
+		);
+
+		expect(packageJson.dependencies["@wordpress/api-fetch"]).toBe("^7.29.0");
+		expect(packageJson.scripts["migration:init"]).toBe("wp-typia migrations init --current-version 1.0.0");
+		expect(packageJson.scripts["migration:doctor"]).toBe("wp-typia migrations doctor --all");
+		expect(readme).toContain("## Migration UI");
+		expect(readme).toContain("initialized migration workspace at `1.0.0`");
+		expect(generatedEdit).toContain("MigrationDashboard");
+		expect(generatedIndex).toContain("./migrations/generated/demo-migration-ui/deprecated");
+		expect(generatedIndex).toContain("deprecated as NonNullable<BlockConfiguration<DemoMigrationUiAttributes>['deprecated']>");
+		expect(migrationConfig).toContain("key: 'demo-migration-ui'");
+		expect(migrationConfig).toContain("blockJsonFile: 'src/block.json'");
+		expect(fs.existsSync(path.join(targetDir, "src", "admin", "migration-dashboard.tsx"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "src", "migrations", "generated", "index.ts"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "typia-migration-registry.php"))).toBe(true);
+
+		typecheckGeneratedProject(targetDir);
+	});
+
 	test(
 		"generated sync-types scripts support strict and JSON report modes",
 		async () => {
@@ -1028,6 +1072,92 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(blockConfig).not.toContain("restManifest");
 
 		typecheckGeneratedProject(targetDir);
+	});
+
+	test("compound scaffolds can opt into migration UI and keep add-child migration-aware", async () => {
+		const targetDir = path.join(tempRoot, "demo-compound-migration");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "compound",
+			packageManager: "npm",
+			noInstall: true,
+			withMigrationUi: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo compound migration block",
+				namespace: "create-block",
+				slug: "demo-compound-migration",
+				title: "Demo Compound Migration",
+			},
+		});
+
+		const migrationConfigPath = path.join(targetDir, "src", "migrations", "config.ts");
+		const parentIndexPath = path.join(
+			targetDir,
+			"src",
+			"blocks",
+			"demo-compound-migration",
+			"index.tsx",
+		);
+		const childIndexPath = path.join(
+			targetDir,
+			"src",
+			"blocks",
+			"demo-compound-migration-item",
+			"index.tsx",
+		);
+		const parentEditPath = path.join(
+			targetDir,
+			"src",
+			"blocks",
+			"demo-compound-migration",
+			"edit.tsx",
+		);
+		const addChildScriptPath = path.join(targetDir, "scripts", "add-compound-child.ts");
+
+		expect(fs.readFileSync(parentIndexPath, "utf8")).toContain(
+			"../../migrations/generated/demo-compound-migration/deprecated",
+		);
+		expect(fs.readFileSync(childIndexPath, "utf8")).toContain(
+			"../../migrations/generated/demo-compound-migration-item/deprecated",
+		);
+		expect(fs.readFileSync(parentEditPath, "utf8")).toContain("MigrationDashboard");
+		expect(fs.readFileSync(migrationConfigPath, "utf8")).toContain("key: 'demo-compound-migration'");
+		expect(fs.readFileSync(migrationConfigPath, "utf8")).toContain("key: 'demo-compound-migration-item'");
+		expect(fs.readFileSync(addChildScriptPath, "utf8")).toContain("appendMigrationBlockConfig");
+
+		runGeneratedScript(targetDir, "scripts/add-compound-child.ts", [
+			"--slug",
+			"faq-item",
+			"--title",
+			"FAQ Item",
+		]);
+
+		const nextMigrationConfig = fs.readFileSync(migrationConfigPath, "utf8");
+		expect(nextMigrationConfig).toContain("key: 'demo-compound-migration-faq-item'");
+		expect(nextMigrationConfig).toContain("blockName: 'create-block/demo-compound-migration-faq-item'");
+	});
+
+	test("migration UI capability rejects non-built-in templates", async () => {
+		const targetDir = path.join(tempRoot, "demo-migration-ui-remote");
+
+		await expect(
+			scaffoldProject({
+				projectDir: targetDir,
+				templateId: createBlockSubsetFixturePath,
+				packageManager: "npm",
+				noInstall: true,
+				withMigrationUi: true,
+				answers: {
+					author: "Test Runner",
+					description: "Demo remote migration ui block",
+					namespace: "create-block",
+					slug: "demo-migration-ui-remote",
+					title: "Demo Migration UI Remote",
+				},
+			}),
+		).rejects.toThrow("`--with-migration-ui` is currently supported only for built-in templates.");
 	});
 
 	test("compound scaffolds enable authenticated persistence when only data storage is provided", async () => {

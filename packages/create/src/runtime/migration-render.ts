@@ -3,12 +3,14 @@ import path from "node:path";
 
 import {
 	MIGRATION_TODO_PREFIX,
-	ROOT_BLOCK_JSON,
-	ROOT_MANIFEST,
-	SNAPSHOT_DIR,
 } from "./migration-constants.js";
 import { summarizeManifest, summarizeUnionBranches } from "./migration-manifest.js";
-import { readRuleMetadata } from "./migration-project.js";
+import {
+	getSnapshotBlockJsonPath,
+	getSnapshotManifestPath,
+	getSnapshotSavePath,
+	readRuleMetadata,
+} from "./migration-project.js";
 import {
 	createMigrationRiskSummary,
 	formatMigrationRiskSummary,
@@ -81,23 +83,35 @@ export function formatDiffReport(diff: MigrationDiff): string {
 }
 
 export function renderMigrationRuleFile({
+	block,
 	currentAttributes,
 	currentTypeName,
 	diff,
 	fromVersion,
+	projectDir,
+	rulePath,
 	targetVersion,
 }: MigrationRuleFileInput): string {
 	const activeRenameCandidates = diff.summary.renameCandidates.filter((candidate) => candidate.autoApply);
 	const suggestedRenameCandidates = diff.summary.renameCandidates.filter((candidate) => !candidate.autoApply);
 	const lines: string[] = [];
+	const ruleDir = path.dirname(rulePath);
+	const typesImport = normalizeImportPath(path.relative(ruleDir, path.join(projectDir, block.typesFile)));
+	const currentManifestImport = normalizeImportPath(
+		path.relative(ruleDir, path.join(projectDir, block.manifestFile)),
+	);
+	const helpersImport = normalizeImportPath(
+		path.relative(ruleDir, path.join(projectDir, "src", "migrations", "helpers.ts")),
+		true,
+	);
 
-	lines.push(`import type { ${currentTypeName} } from "../../types";`);
-	lines.push(`import currentManifest from "../../../${ROOT_MANIFEST}";`);
+	lines.push(`import type { ${currentTypeName} } from "${typesImport}";`);
+	lines.push(`import currentManifest from "${currentManifestImport}";`);
 	lines.push(`import {`);
 	lines.push(`\ttype RenameMap,`);
 	lines.push(`\ttype TransformMap,`);
 	lines.push(`\tresolveMigrationAttribute,`);
-	lines.push(`} from "../helpers";`);
+	lines.push(`} from "${helpersImport}";`);
 	lines.push("");
 	lines.push(`export const fromVersion = "${fromVersion}" as const;`);
 	lines.push(`export const toVersion = "${targetVersion}" as const;`);
@@ -173,11 +187,16 @@ export function renderMigrationRuleFile({
 
 export function renderMigrationRegistryFile(
 	state: MigrationProjectState,
+	blockKey: string,
 	entries: GeneratedMigrationEntry[],
 ): string {
+	const block = state.blocks.find((entry) => entry.key === blockKey);
+	if (!block) {
+		throw new Error(`Unknown migration block target: ${blockKey}`);
+	}
 	const imports = [
-		`import currentManifest from "../../../${ROOT_MANIFEST}";`,
-		`import type { ManifestDocument, MigrationRiskSummary } from "../helpers";`,
+		`import currentManifest from "${normalizeImportPath(path.relative(getGeneratedDir(block, state), path.join(state.projectDir, block.manifestFile)))}";`,
+		`import type { ManifestDocument, MigrationRiskSummary } from "${normalizeImportPath(path.relative(getGeneratedDir(block, state), path.join(state.projectDir, "src", "migrations", "helpers.ts")), true)}";`,
 	];
 	const body: string[] = [];
 
@@ -257,50 +276,114 @@ export const deprecated: NonNullable<BlockConfiguration["deprecated"]> = [${arra
 `;
 }
 
+export function renderGeneratedMigrationIndexFile(
+	state: MigrationProjectState,
+	entries: MigrationEntry[],
+): string {
+	if (state.blocks.length === 0) {
+		return `export const migrationBlocks = [] as const;\nexport default migrationBlocks;\n`;
+	}
+
+	const generatedDir = state.paths.generatedDir;
+	const imports: string[] = [];
+	const definitions: string[] = [];
+
+	state.blocks.forEach((block, index) => {
+		const scopedEntries = entries.filter((entry) => entry.block.key === block.key);
+		const registryImport =
+			block.layout === "legacy" ? "./registry" : `./${block.key}/registry`;
+		const deprecatedImport =
+			block.layout === "legacy" ? "./deprecated" : `./${block.key}/deprecated`;
+		const validatorsImport = normalizeImportPath(
+			path.relative(
+				generatedDir,
+				path.join(
+					state.projectDir,
+					block.typesFile.replace(/types\.ts$/u, "validators.ts"),
+				),
+			),
+			true,
+		);
+		imports.push(`import registry_${index} from "${registryImport}";`);
+		imports.push(`import { deprecated as deprecated_${index} } from "${deprecatedImport}";`);
+		imports.push(`import { validators as validators_${index} } from "${validatorsImport}";`);
+		definitions.push(`\t{`);
+		definitions.push(`\t\tkey: "${block.key}",`);
+		definitions.push(`\t\tblockName: "${block.blockName}",`);
+		definitions.push(`\t\tregistry: registry_${index},`);
+		definitions.push(`\t\tdeprecated: deprecated_${index},`);
+		definitions.push(`\t\tvalidators: validators_${index},`);
+		definitions.push(`\t\tlegacyVersions: ${JSON.stringify(scopedEntries.map((entry) => entry.fromVersion))},`);
+		definitions.push(`\t},`);
+	});
+
+	return `/* eslint-disable prettier/prettier */
+${imports.join("\n")}
+
+export const migrationBlocks = [
+${definitions.join("\n")}
+] as const;
+
+export default migrationBlocks;
+`;
+}
+
 export function renderPhpMigrationRegistryFile(
 	state: MigrationProjectState,
 	entries: MigrationEntry[],
 ): string {
-	const snapshots = Object.fromEntries(
-		state.config.supportedVersions.map((version) => {
-			const snapshotRoot = path.join(state.projectDir, SNAPSHOT_DIR, version);
-			const manifestPath = path.join(snapshotRoot, ROOT_MANIFEST);
-			const blockJsonPath = path.join(snapshotRoot, ROOT_BLOCK_JSON);
-			const savePath = path.join(snapshotRoot, "save.tsx");
+	const blocks = state.blocks.map((block) => {
+		const snapshots = Object.fromEntries(
+			state.config.supportedVersions.map((version) => {
+				const manifestPath = getSnapshotManifestPath(state.projectDir, block, version);
+				const blockJsonPath = getSnapshotBlockJsonPath(state.projectDir, block, version);
+				const savePath = getSnapshotSavePath(state.projectDir, block, version);
 
-			return [
-				version,
-				{
-					blockJson: fs.existsSync(blockJsonPath)
-						? {
-								attributeNames: Object.keys(
-									(readJson<{ attributes?: Record<string, unknown> }>(blockJsonPath).attributes ?? {}),
-								),
-								name: readJson<{ name?: string | null }>(blockJsonPath).name ?? null,
-							}
-						: null,
-					hasSaveSnapshot: fs.existsSync(savePath),
-					manifest: fs.existsSync(manifestPath)
-						? summarizeManifest(readJson<ManifestDocument>(manifestPath))
-						: null,
-				},
-			] as const;
-		}),
-	);
+				return [
+					version,
+					{
+						blockJson: fs.existsSync(blockJsonPath)
+							? {
+									attributeNames: Object.keys(
+										(readJson<{ attributes?: Record<string, unknown> }>(blockJsonPath).attributes ?? {}),
+									),
+									name: readJson<{ name?: string | null }>(blockJsonPath).name ?? null,
+								}
+							: null,
+						hasSaveSnapshot: fs.existsSync(savePath),
+						manifest: fs.existsSync(manifestPath)
+							? summarizeManifest(readJson<ManifestDocument>(manifestPath))
+							: null,
+					},
+				] as const;
+			}),
+		);
 
-	const edgeSummaries = entries.map((entry) => {
-		const ruleMetadata = readRuleMetadata(entry.rulePath);
-		const snapshotManifest = snapshots[entry.fromVersion]?.manifest ?? null;
+		const edgeSummaries = entries
+			.filter((entry) => entry.block.key === block.key)
+			.map((entry) => {
+				const ruleMetadata = readRuleMetadata(entry.rulePath);
+				const snapshotManifest = snapshots[entry.fromVersion]?.manifest ?? null;
+				return {
+					autoAppliedRenameCount: ruleMetadata.renameMap.length,
+					autoAppliedRenames: ruleMetadata.renameMap,
+					fromVersion: entry.fromVersion,
+					nestedPathRenames: ruleMetadata.renameMap.filter((item) => item.currentPath.includes(".")),
+					ruleFile: path.relative(state.projectDir, entry.rulePath).replace(/\\/g, "/"),
+					toVersion: entry.toVersion,
+					transformKeys: ruleMetadata.transforms,
+					unionBranches: snapshotManifest ? summarizeUnionBranches(snapshotManifest) : [],
+					unresolved: ruleMetadata.unresolved,
+				};
+			});
+
 		return {
-			autoAppliedRenameCount: ruleMetadata.renameMap.length,
-			autoAppliedRenames: ruleMetadata.renameMap,
-			fromVersion: entry.fromVersion,
-			nestedPathRenames: ruleMetadata.renameMap.filter((item) => item.currentPath.includes(".")),
-			ruleFile: path.relative(state.projectDir, entry.rulePath).replace(/\\/g, "/"),
-			toVersion: entry.toVersion,
-			transformKeys: ruleMetadata.transforms,
-			unionBranches: snapshotManifest ? summarizeUnionBranches(snapshotManifest) : [],
-			unresolved: ruleMetadata.unresolved,
+			blockName: block.blockName,
+			currentManifest: summarizeManifest(block.currentManifest),
+			edges: edgeSummaries,
+			key: block.key,
+			legacyVersions: state.config.supportedVersions.filter((version) => version !== state.config.currentVersion),
+			snapshots,
 		};
 	});
 
@@ -312,15 +395,9 @@ declare(strict_types=1);
  */
 return ${renderPhpValue(
 		{
-			blockName: state.config.blockName,
-			currentManifest: summarizeManifest(state.currentManifest),
 			currentVersion: state.config.currentVersion,
-			edges: edgeSummaries,
-			legacyVersions: state.config.supportedVersions.filter(
-				(version) => version !== state.config.currentVersion,
-			),
+			blocks,
 			snapshotDir: state.config.snapshotDir,
-			snapshots,
 			supportedVersions: state.config.supportedVersions,
 		},
 		0,
@@ -330,8 +407,13 @@ return ${renderPhpValue(
 
 export function renderVerifyFile(
 	state: MigrationProjectState,
+	blockKey: string,
 	entries: MigrationEntry[],
 ): string {
+	const block = state.blocks.find((entry) => entry.key === blockKey);
+	if (!block) {
+		throw new Error(`Unknown migration block target: ${blockKey}`);
+	}
 	if (entries.length === 0) {
 		return `/* eslint-disable no-console */
 console.log(
@@ -341,7 +423,7 @@ console.log(
 	}
 
 	const imports = [
-		`import { validators } from "../../validators";`,
+		`import { validators } from "${entries[0]?.validatorImport ?? "./validators"}";`,
 		`import { deprecated } from "./deprecated";`,
 	];
 	const checks: string[] = [];
@@ -407,14 +489,19 @@ if (deprecated.length !== ${entries.length}) {
 
 ${checks.join("\n")}
 
-console.log("Migration verification passed for ${state.config.blockName}");
+console.log("Migration verification passed for ${block.blockName}");
 `;
 }
 
 export function renderFuzzFile(
 	state: MigrationProjectState,
+	blockKey: string,
 	entries: GeneratedMigrationEntry[],
 ): string {
+	const block = state.blocks.find((entry) => entry.key === blockKey);
+	if (!block) {
+		throw new Error(`Unknown migration block target: ${blockKey}`);
+	}
 	if (entries.length === 0) {
 		return `/* eslint-disable no-console */
 console.log(
@@ -424,7 +511,7 @@ console.log(
 	}
 
 	const imports = [
-		`import { validators } from "../../validators";`,
+		`import { validators } from "${entries[0]?.entry.validatorImport ?? "./validators"}";`,
 	];
 	const edgeDefinitions: string[] = [];
 
@@ -764,6 +851,26 @@ if (selectedVersions.length > 0 && executedEdges === 0) {
 \t);
 }
 
-console.log("Migration fuzzing passed for ${state.config.blockName}");
+console.log("Migration fuzzing passed for ${block.blockName}");
 `;
+}
+
+function normalizeImportPath(relativePath: string, stripExtension = false): string {
+	let nextPath = relativePath.replace(/\\/g, "/");
+	if (!nextPath.startsWith(".")) {
+		nextPath = `./${nextPath}`;
+	}
+	if (stripExtension) {
+		nextPath = nextPath.replace(/\.[^.]+$/u, "");
+	}
+	return nextPath;
+}
+
+function getGeneratedDir(
+	block: MigrationProjectState["blocks"][number],
+	state: MigrationProjectState,
+): string {
+	return block.layout === "legacy"
+		? state.paths.generatedDir
+		: path.join(state.paths.generatedDir, block.key);
 }

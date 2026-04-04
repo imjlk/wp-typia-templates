@@ -307,6 +307,16 @@ wp-typia migrations verify --all
 wp-typia migrations fuzz --all --iterations 25 --seed 1
 ```
 
+Built-in templates can now opt into that workflow at scaffold time with
+`--with-migration-ui`. Those generated projects:
+
+- seed an initialized migration workspace at `1.0.0`
+- wire editor-side dashboard assets into the generated block editor
+- scaffold `src/migrations/config.ts` with explicit `blocks: []` entries for each migration-capable block target
+
+`migration:init` remains the retrofit command for older projects that were not
+scaffolded with `--with-migration-ui`.
+
 Repo development stays Bun-first. The generated project can use `bun`, `npm`, `pnpm`, or `yarn`.
 
 Inside the monorepo, reference-app commands use the `examples:*` namespace at the root:

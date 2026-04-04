@@ -3,11 +3,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 
 import {
-	GENERATED_DIR,
-	ROOT_BLOCK_JSON,
-	ROOT_MANIFEST,
 	ROOT_PHP_MIGRATION_REGISTRY,
-	ROOT_SAVE_FILE,
 	SNAPSHOT_DIR,
 } from "./migration-constants.js";
 import { createMigrationDiff } from "./migration-diff.js";
@@ -18,8 +14,14 @@ import {
 	discoverMigrationEntries,
 	ensureAdvancedMigrationProject,
 	ensureMigrationDirectories,
+	getFixtureFilePath,
+	getGeneratedDirForBlock,
 	getProjectPaths,
 	getRuleFilePath,
+	getSnapshotBlockJsonPath,
+	getSnapshotManifestPath,
+	getSnapshotRoot,
+	getSnapshotSavePath,
 	loadMigrationProject,
 	readProjectBlockName,
 	readRuleMetadata,
@@ -30,6 +32,7 @@ import {
 	formatDiffReport,
 	renderFuzzFile,
 	renderGeneratedDeprecatedFile,
+	renderGeneratedMigrationIndexFile,
 	renderMigrationRegistryFile,
 	renderMigrationRuleFile,
 	renderPhpMigrationRegistryFile,
@@ -49,6 +52,7 @@ import {
 } from "./migration-utils.js";
 import type {
 	ManifestDocument,
+	MigrationBlockConfig,
 	JsonObject,
 	ParsedMigrationArgs,
 	GeneratedMigrationEntry,
@@ -270,7 +274,6 @@ export function initProjectMigrations(
 ) {
 	ensureAdvancedMigrationProject(projectDir);
 	assertSemver(currentVersion, "current version");
-
 	const blockName = readProjectBlockName(projectDir);
 
 	ensureMigrationDirectories(projectDir);
@@ -295,31 +298,39 @@ export function snapshotProjectVersion(
 	{
 		renderLine = console.log as RenderLine,
 		skipConfigUpdate = false,
-	}: CommandRenderOptions & { skipConfigUpdate?: boolean } = {},
+		skipSyncTypes = false,
+	}: CommandRenderOptions & { skipConfigUpdate?: boolean; skipSyncTypes?: boolean } = {},
 ) {
 	ensureAdvancedMigrationProject(projectDir);
 	assertSemver(version, "snapshot version");
-	runProjectScriptIfPresent(projectDir, "sync-types");
+	if (!skipSyncTypes) {
+		runProjectScriptIfPresent(projectDir, "sync-types");
+	}
 
 	const state = loadMigrationProject(projectDir, { allowMissingConfig: skipConfigUpdate });
-	const snapshotRoot = path.join(projectDir, SNAPSHOT_DIR, version);
-	fs.mkdirSync(snapshotRoot, { recursive: true });
+	for (const block of state.blocks) {
+		const snapshotRoot = getSnapshotRoot(projectDir, block, version);
+		fs.mkdirSync(snapshotRoot, { recursive: true });
 
-	fs.writeFileSync(
-		path.join(snapshotRoot, ROOT_BLOCK_JSON),
-		`${JSON.stringify(
-			sanitizeSnapshotBlockJson(readJson<JsonObject>(path.join(projectDir, ROOT_BLOCK_JSON))),
-			null,
-			"\t",
-		)}\n`,
-		"utf8",
-	);
-	copyFile(path.join(projectDir, ROOT_MANIFEST), path.join(snapshotRoot, ROOT_MANIFEST));
-	fs.writeFileSync(
-		path.join(snapshotRoot, "save.tsx"),
-		sanitizeSaveSnapshotSource(fs.readFileSync(path.join(projectDir, ROOT_SAVE_FILE), "utf8")),
-		"utf8",
-	);
+		fs.writeFileSync(
+			getSnapshotBlockJsonPath(projectDir, block, version),
+			`${JSON.stringify(
+				sanitizeSnapshotBlockJson(readJson<JsonObject>(path.join(projectDir, block.blockJsonFile))),
+				null,
+				"\t",
+			)}\n`,
+			"utf8",
+		);
+		copyFile(
+			path.join(projectDir, block.manifestFile),
+			getSnapshotManifestPath(projectDir, block, version),
+		);
+		fs.writeFileSync(
+			getSnapshotSavePath(projectDir, block, version),
+			sanitizeSaveSnapshotSource(fs.readFileSync(path.join(projectDir, block.saveFile), "utf8")),
+			"utf8",
+		);
+	}
 
 	if (!skipConfigUpdate) {
 		const nextSupported = [...new Set([...state.config.supportedVersions, version])].sort(compareSemver);
@@ -344,9 +355,23 @@ export function diffProjectMigrations(
 	}
 	const state = loadMigrationProject(projectDir);
 	const targetVersion = resolveTargetVersion(state.config.currentVersion, toVersion);
-	const diff = createMigrationDiff(state, fromVersion, targetVersion);
-	renderLine(formatDiffReport(diff));
-	return diff;
+	const diffs = state.blocks
+		.filter((block) => hasSnapshotForVersion(state, block, fromVersion))
+		.map((block) => ({
+			block,
+			diff: createMigrationDiff(state, block, fromVersion, targetVersion),
+		}));
+
+	if (diffs.length === 0) {
+		throw new Error(`No migration block targets have a snapshot for ${fromVersion}.`);
+	}
+
+	for (const { block, diff } of diffs) {
+		renderLine(`Block: ${block.blockName}`);
+		renderLine(formatDiffReport(diff));
+	}
+
+	return diffs.length === 1 ? diffs[0].diff : diffs;
 }
 
 export function scaffoldProjectMigrations(
@@ -360,30 +385,47 @@ export function scaffoldProjectMigrations(
 	ensureMigrationDirectories(projectDir);
 	const state = loadMigrationProject(projectDir);
 	const targetVersion = resolveTargetVersion(state.config.currentVersion, toVersion);
-	const diff = createMigrationDiff(state, fromVersion, targetVersion);
 	const paths = getProjectPaths(projectDir);
-	const rulePath = getRuleFilePath(paths, fromVersion, targetVersion);
+	const scaffolded: Array<{ blockName: string; diff: ReturnType<typeof createMigrationDiff>; rulePath: string }> =
+		[];
 
-	if (!fs.existsSync(rulePath)) {
-		fs.writeFileSync(
-			rulePath,
-			renderMigrationRuleFile({
-				currentAttributes: state.currentManifest.attributes ?? {},
-				currentTypeName: state.currentManifest.sourceType,
-				diff,
-				fromVersion,
-				targetVersion,
-			}),
-			"utf8",
-		);
+	for (const block of state.blocks) {
+		if (!hasSnapshotForVersion(state, block, fromVersion)) {
+			renderLine(`Skipped ${block.blockName}: no snapshot for ${fromVersion}`);
+			continue;
+		}
+		const diff = createMigrationDiff(state, block, fromVersion, targetVersion);
+		const rulePath = getRuleFilePath(paths, block, fromVersion, targetVersion);
+
+		if (!fs.existsSync(rulePath)) {
+			fs.mkdirSync(path.dirname(rulePath), { recursive: true });
+			fs.writeFileSync(
+				rulePath,
+				renderMigrationRuleFile({
+					block,
+					currentAttributes: block.currentManifest.attributes ?? {},
+					currentTypeName: block.currentManifest.sourceType,
+					diff,
+					fromVersion,
+					projectDir,
+					rulePath,
+					targetVersion,
+				}),
+				"utf8",
+			);
+		}
+
+		ensureEdgeFixtureFile(projectDir, block, fromVersion, targetVersion, diff);
+		scaffolded.push({ blockName: block.blockName, diff, rulePath });
 	}
-
-	ensureEdgeFixtureFile(projectDir, fromVersion, targetVersion, diff);
 	regenerateGeneratedArtifacts(projectDir);
 
-	renderLine(formatDiffReport(diff));
-	renderLine(`Scaffolded ${path.relative(projectDir, rulePath)}`);
-	return { diff, rulePath };
+	for (const entry of scaffolded) {
+		renderLine(`Block: ${entry.blockName}`);
+		renderLine(formatDiffReport(entry.diff));
+		renderLine(`Scaffolded ${path.relative(projectDir, entry.rulePath)}`);
+	}
+	return scaffolded.length === 1 ? scaffolded[0] : { scaffolded };
 }
 
 /**
@@ -398,36 +440,49 @@ export function verifyProjectMigrations(
 	{ all = false, fromVersion, renderLine = console.log as RenderLine }: VerifyOptions = {},
 ) {
 	const state = loadMigrationProject(projectDir);
-	const verifyScriptPath = path.join(projectDir, GENERATED_DIR, "verify.ts");
-
-	if (!fs.existsSync(verifyScriptPath)) {
-		throw new Error(
-			"Generated verify script is missing. Run `wp-typia migrations scaffold --from <semver>` first.",
-		);
-	}
-
 	const targetVersions = resolveLegacyVersions(state, { all, fromVersion });
+	const blockEntries = groupEntriesByBlock(
+		discoverMigrationEntries(state).filter((entry) => targetVersions.includes(entry.fromVersion)),
+	);
+	const legacySingleBlock = isLegacySingleBlockProject(state);
 
 	if (targetVersions.length === 0) {
 		renderLine("No legacy versions configured for verification.");
 		return { verifiedVersions: [] };
 	}
 
-	for (const version of targetVersions) {
-		assertRuleHasNoTodos(projectDir, version, state.config.currentVersion);
+	const tsxBinary = getLocalTsxBinary(projectDir);
+	for (const [blockKey, entries] of Object.entries(blockEntries)) {
+		const block = state.blocks.find((entry) => entry.key === blockKey);
+		if (!block || entries.length === 0) {
+			continue;
+		}
+		for (const entry of entries) {
+			assertRuleHasNoTodos(projectDir, block, entry.fromVersion, state.config.currentVersion);
+		}
+		const verifyScriptPath = path.join(getGeneratedDirForBlock(state.paths, block), "verify.ts");
+		if (!fs.existsSync(verifyScriptPath)) {
+			throw new Error(
+				`Generated verify script is missing for ${block.blockName}. Run \`wp-typia migrations scaffold --from <semver>\` first.`,
+			);
+		}
+
+		const selectedVersionsForBlock = entries.map((entry) => entry.fromVersion);
+		const filteredArgs = all
+			? ["--all"]
+			: ["--from", selectedVersionsForBlock[0]];
+		execFileSync(tsxBinary, [verifyScriptPath, ...filteredArgs], {
+			cwd: projectDir,
+			shell: process.platform === "win32",
+			stdio: "inherit",
+		});
+		renderLine(
+			legacySingleBlock
+				? `Verified migrations for ${selectedVersionsForBlock.join(", ")}`
+				: `Verified ${block.blockName} migrations for ${selectedVersionsForBlock.join(", ")}`,
+		);
 	}
 
-	const tsxBinary = getLocalTsxBinary(projectDir);
-	const filteredArgs = all
-		? ["--all"]
-		: ["--from", targetVersions[0]];
-	execFileSync(tsxBinary, [verifyScriptPath, ...filteredArgs], {
-		cwd: projectDir,
-		shell: process.platform === "win32",
-		stdio: "inherit",
-	});
-
-	renderLine(`Verified migrations for ${targetVersions.join(", ")}`);
 	return { verifiedVersions: targetVersions };
 }
 
@@ -451,13 +506,21 @@ export function doctorProjectMigrations(
 	let state;
 	try {
 		state = loadMigrationProject(projectDir);
-		recordCheck("pass", "Migration config", `Loaded ${state.config.blockName} @ ${state.config.currentVersion}`);
+		const legacySingleBlock = isLegacySingleBlockProject(state);
+		recordCheck(
+			"pass",
+			"Migration config",
+			legacySingleBlock
+				? `Loaded ${state.blocks[0]?.blockName} @ ${state.config.currentVersion}`
+				: `Loaded ${state.blocks.length} block target(s) @ ${state.config.currentVersion}`,
+		);
 	} catch (error) {
 		recordCheck("fail", "Migration config", error instanceof Error ? error.message : String(error));
 		throw new Error("Migration doctor failed.");
 	}
 
 	const targetVersions = resolveLegacyVersions(state, { all, fromVersion });
+	const legacySingleBlock = isLegacySingleBlockProject(state);
 	const snapshotVersions = new Set(
 		targetVersions.length > 0
 			? [state.config.currentVersion, ...targetVersions]
@@ -465,54 +528,77 @@ export function doctorProjectMigrations(
 	);
 
 	for (const version of snapshotVersions) {
-		const snapshotRoot = path.join(projectDir, SNAPSHOT_DIR, version);
-		const requiredFiles = [
-			ROOT_BLOCK_JSON,
-			ROOT_MANIFEST,
-			"save.tsx",
-		];
+		for (const block of state.blocks) {
+			const snapshotRoot = getSnapshotRoot(projectDir, block, version);
+			const blockJsonPath = getSnapshotBlockJsonPath(projectDir, block, version);
+			const manifestPath = getSnapshotManifestPath(projectDir, block, version);
+			const savePath = getSnapshotSavePath(projectDir, block, version);
+			const hasSnapshot = fs.existsSync(snapshotRoot);
 
-		recordCheck(
-			fs.existsSync(snapshotRoot) ? "pass" : "fail",
-			`Snapshot ${version}`,
-			fs.existsSync(snapshotRoot)
-				? path.relative(projectDir, snapshotRoot)
-				: `Missing ${path.relative(projectDir, snapshotRoot)}`,
-		);
-
-		for (const relativePath of requiredFiles) {
-			const targetPath = path.join(snapshotRoot, relativePath);
 			recordCheck(
-				fs.existsSync(targetPath) ? "pass" : "fail",
-				`Snapshot file ${version}`,
-				fs.existsSync(targetPath)
-					? path.relative(projectDir, targetPath)
-					: `Missing ${path.relative(projectDir, targetPath)}`,
+				hasSnapshot || block.layout === "multi" ? "pass" : "fail",
+				legacySingleBlock ? `Snapshot ${version}` : `Snapshot ${block.blockName} @ ${version}`,
+				hasSnapshot
+					? path.relative(projectDir, snapshotRoot)
+					: `Not present for this version`,
 			);
+
+			if (!hasSnapshot) {
+				continue;
+			}
+
+			for (const targetPath of [blockJsonPath, manifestPath, savePath]) {
+				recordCheck(
+					fs.existsSync(targetPath) ? "pass" : "fail",
+					legacySingleBlock
+						? `Snapshot file ${version}`
+						: `Snapshot file ${block.blockName} @ ${version}`,
+					fs.existsSync(targetPath)
+						? path.relative(projectDir, targetPath)
+						: `Missing ${path.relative(projectDir, targetPath)}`,
+				);
+			}
 		}
 	}
 
 	try {
 		const generatedEntries = collectGeneratedMigrationEntries(state);
-		const expectedGeneratedFiles = new Map<string, string>([
-			["registry.ts", renderMigrationRegistryFile(state, generatedEntries)],
-			["deprecated.ts", renderGeneratedDeprecatedFile(generatedEntries.map(({ entry }) => entry))],
-			["verify.ts", renderVerifyFile(state, generatedEntries.map(({ entry }) => entry))],
-			["fuzz.ts", renderFuzzFile(state, generatedEntries)],
-			[
-				ROOT_PHP_MIGRATION_REGISTRY,
-				renderPhpMigrationRegistryFile(state, generatedEntries.map(({ entry }) => entry)),
-			],
-		]);
+		const expectedGeneratedFiles = new Map<string, string>();
+		for (const block of state.blocks) {
+			const blockGeneratedEntries = generatedEntries.filter(({ entry }) => entry.block.key === block.key);
+			const entries = blockGeneratedEntries.map(({ entry }) => entry);
+			const generatedDir = getGeneratedDirForBlock(state.paths, block);
+			expectedGeneratedFiles.set(
+				path.join(generatedDir, "registry.ts"),
+				renderMigrationRegistryFile(state, block.key, blockGeneratedEntries),
+			);
+			expectedGeneratedFiles.set(
+				path.join(generatedDir, "deprecated.ts"),
+				renderGeneratedDeprecatedFile(entries),
+			);
+			expectedGeneratedFiles.set(
+				path.join(generatedDir, "verify.ts"),
+				renderVerifyFile(state, block.key, entries),
+			);
+			expectedGeneratedFiles.set(
+				path.join(generatedDir, "fuzz.ts"),
+				renderFuzzFile(state, block.key, blockGeneratedEntries),
+			);
+		}
+		expectedGeneratedFiles.set(
+			path.join(state.paths.generatedDir, "index.ts"),
+			renderGeneratedMigrationIndexFile(state, generatedEntries.map(({ entry }) => entry)),
+		);
+		expectedGeneratedFiles.set(
+			path.join(projectDir, ROOT_PHP_MIGRATION_REGISTRY),
+			renderPhpMigrationRegistryFile(state, generatedEntries.map(({ entry }) => entry)),
+		);
 
-		for (const [fileName, expectedSource] of expectedGeneratedFiles) {
-			const filePath = fileName.endsWith(".php")
-				? path.join(projectDir, fileName)
-				: path.join(state.paths.generatedDir, fileName);
+		for (const [filePath, expectedSource] of expectedGeneratedFiles) {
 			const inSync = fs.existsSync(filePath) && fs.readFileSync(filePath, "utf8") === expectedSource;
 			recordCheck(
 				inSync ? "pass" : "fail",
-				`Generated ${fileName}`,
+				`Generated ${path.relative(projectDir, filePath)}`,
 				inSync ? "In sync" : `Run \`wp-typia migrations scaffold --from <semver>\` or regenerate artifacts`,
 			);
 		}
@@ -525,84 +611,121 @@ export function doctorProjectMigrations(
 	}
 
 	for (const version of targetVersions) {
-		const rulePath = getRuleFilePath(state.paths, version, state.config.currentVersion);
-		const fixturePath = path.join(state.paths.fixturesDir, `${version}-to-${state.config.currentVersion}.json`);
-
-		recordCheck(
-			fs.existsSync(rulePath) ? "pass" : "fail",
-			`Rule ${version}`,
-			fs.existsSync(rulePath) ? path.relative(projectDir, rulePath) : `Missing ${path.relative(projectDir, rulePath)}`,
-		);
-		recordCheck(
-			fs.existsSync(fixturePath) ? "pass" : "fail",
-			`Fixture ${version}`,
-			fs.existsSync(fixturePath)
-				? path.relative(projectDir, fixturePath)
-				: `Missing ${path.relative(projectDir, fixturePath)}`,
-		);
-
-		if (!fs.existsSync(rulePath) || !fs.existsSync(fixturePath)) {
-			continue;
-		}
-
-		try {
-			assertRuleHasNoTodos(projectDir, version, state.config.currentVersion);
-			recordCheck("pass", `Rule TODOs ${version}`, "No TODO MIGRATION markers remain");
-		} catch (error) {
-			recordCheck("fail", `Rule TODOs ${version}`, error instanceof Error ? error.message : String(error));
-		}
-
-		try {
-			const ruleMetadata = readRuleMetadata(rulePath);
-			recordCheck(
-				ruleMetadata.unresolved.length === 0 ? "pass" : "fail",
-				`Rule unresolved ${version}`,
-				ruleMetadata.unresolved.length === 0
-					? "No unresolved entries remain"
-					: ruleMetadata.unresolved.join(", "),
-			);
-		} catch (error) {
-			recordCheck(
-				"fail",
-				`Rule unresolved ${version}`,
-				error instanceof Error ? error.message : String(error),
-			);
-		}
-
-		try {
-			const fixtureDocument = readJson<{ cases?: Array<{ name?: string }> }>(fixturePath);
-			recordCheck(
-				Array.isArray(fixtureDocument.cases) && fixtureDocument.cases.length > 0 ? "pass" : "fail",
-				`Fixture parse ${version}`,
-				Array.isArray(fixtureDocument.cases) && fixtureDocument.cases.length > 0
-					? `${fixtureDocument.cases.length} case(s)`
-					: "Fixture document has no cases",
-			);
-
-			const diff = createMigrationDiff(state, version, state.config.currentVersion);
-			const expectedFixture = createEdgeFixtureDocument(
-				projectDir,
-				version,
-				state.config.currentVersion,
-				diff,
-			);
-			const actualCaseNames = new Set((fixtureDocument.cases ?? []).map((fixtureCase) => fixtureCase.name));
-			const missingCases = expectedFixture.cases
-				.map((fixtureCase) => fixtureCase.name)
-				.filter((name) => !actualCaseNames.has(name));
-			recordCheck(
-				missingCases.length === 0 ? "pass" : "fail",
-				`Fixture coverage ${version}`,
-				missingCases.length === 0 ? "All expected fixture cases are present" : `Missing ${missingCases.join(", ")}`,
-			);
+		for (const block of state.blocks) {
+			if (!hasSnapshotForVersion(state, block, version)) {
+				recordCheck("pass", `Snapshot coverage ${block.blockName} @ ${version}`, "Target not present for this version");
+				continue;
+			}
+			const rulePath = getRuleFilePath(state.paths, block, version, state.config.currentVersion);
+			const fixturePath = getFixtureFilePath(state.paths, block, version, state.config.currentVersion);
 
 			recordCheck(
-				"pass",
-				`Risk summary ${version}`,
-				formatMigrationRiskSummary(createMigrationRiskSummary(diff)),
+				fs.existsSync(rulePath) ? "pass" : "fail",
+				legacySingleBlock ? `Rule ${version}` : `Rule ${block.blockName} @ ${version}`,
+				fs.existsSync(rulePath)
+					? path.relative(projectDir, rulePath)
+					: `Missing ${path.relative(projectDir, rulePath)}`,
 			);
-		} catch (error) {
-			recordCheck("fail", `Fixture parse ${version}`, error instanceof Error ? error.message : String(error));
+			recordCheck(
+				fs.existsSync(fixturePath) ? "pass" : "fail",
+				legacySingleBlock ? `Fixture ${version}` : `Fixture ${block.blockName} @ ${version}`,
+				fs.existsSync(fixturePath)
+					? path.relative(projectDir, fixturePath)
+					: `Missing ${path.relative(projectDir, fixturePath)}`,
+			);
+
+			if (!fs.existsSync(rulePath) || !fs.existsSync(fixturePath)) {
+				continue;
+			}
+
+			try {
+				assertRuleHasNoTodos(projectDir, block, version, state.config.currentVersion);
+				recordCheck(
+					"pass",
+					legacySingleBlock
+						? `Rule TODOs ${version}`
+						: `Rule TODOs ${block.blockName} @ ${version}`,
+					"No TODO MIGRATION markers remain",
+				);
+			} catch (error) {
+				recordCheck(
+					"fail",
+					legacySingleBlock
+						? `Rule TODOs ${version}`
+						: `Rule TODOs ${block.blockName} @ ${version}`,
+					error instanceof Error ? error.message : String(error),
+				);
+			}
+
+			try {
+				const ruleMetadata = readRuleMetadata(rulePath);
+				recordCheck(
+					ruleMetadata.unresolved.length === 0 ? "pass" : "fail",
+					legacySingleBlock
+						? `Rule unresolved ${version}`
+						: `Rule unresolved ${block.blockName} @ ${version}`,
+					ruleMetadata.unresolved.length === 0
+						? "No unresolved entries remain"
+						: ruleMetadata.unresolved.join(", "),
+				);
+			} catch (error) {
+				recordCheck(
+					"fail",
+					legacySingleBlock
+						? `Rule unresolved ${version}`
+						: `Rule unresolved ${block.blockName} @ ${version}`,
+					error instanceof Error ? error.message : String(error),
+				);
+			}
+
+			try {
+				const fixtureDocument = readJson<{ cases?: Array<{ name?: string }> }>(fixturePath);
+				recordCheck(
+					Array.isArray(fixtureDocument.cases) && fixtureDocument.cases.length > 0 ? "pass" : "fail",
+					legacySingleBlock
+						? `Fixture parse ${version}`
+						: `Fixture parse ${block.blockName} @ ${version}`,
+					Array.isArray(fixtureDocument.cases) && fixtureDocument.cases.length > 0
+						? `${fixtureDocument.cases.length} case(s)`
+						: "Fixture document has no cases",
+				);
+
+				const diff = createMigrationDiff(state, block, version, state.config.currentVersion);
+				const expectedFixture = createEdgeFixtureDocument(
+					projectDir,
+					block,
+					version,
+					state.config.currentVersion,
+					diff,
+				);
+				const actualCaseNames = new Set((fixtureDocument.cases ?? []).map((fixtureCase) => fixtureCase.name));
+				const missingCases = expectedFixture.cases
+					.map((fixtureCase) => fixtureCase.name)
+					.filter((name) => !actualCaseNames.has(name));
+				recordCheck(
+					missingCases.length === 0 ? "pass" : "fail",
+					legacySingleBlock
+						? `Fixture coverage ${version}`
+						: `Fixture coverage ${block.blockName} @ ${version}`,
+					missingCases.length === 0 ? "All expected fixture cases are present" : `Missing ${missingCases.join(", ")}`,
+				);
+
+				recordCheck(
+					"pass",
+					legacySingleBlock
+						? `Risk summary ${version}`
+						: `Risk summary ${block.blockName} @ ${version}`,
+					formatMigrationRiskSummary(createMigrationRiskSummary(diff)),
+				);
+			} catch (error) {
+				recordCheck(
+					"fail",
+					legacySingleBlock
+						? `Fixture parse ${version}`
+						: `Fixture parse ${block.blockName} @ ${version}`,
+					error instanceof Error ? error.message : String(error),
+				);
+			}
 		}
 	}
 
@@ -652,14 +775,20 @@ export function fixturesProjectMigrations(
 	const skippedVersions: string[] = [];
 
 	for (const version of targetVersions) {
-		const diff = createMigrationDiff(state, version, targetVersion);
-		const result = ensureEdgeFixtureFile(projectDir, version, targetVersion, diff, { force });
-		if (result.written) {
-			generatedVersions.push(version);
-			renderLine(`Generated fixture ${path.relative(projectDir, result.fixturePath)}`);
-		} else {
-			skippedVersions.push(version);
-			renderLine(`Skipped existing fixture ${path.relative(projectDir, result.fixturePath)}`);
+		for (const block of state.blocks) {
+			if (!hasSnapshotForVersion(state, block, version)) {
+				continue;
+			}
+			const diff = createMigrationDiff(state, block, version, targetVersion);
+			const result = ensureEdgeFixtureFile(projectDir, block, version, targetVersion, diff, { force });
+			const scopedLabel = `${block.key}@${version}`;
+			if (result.written) {
+				generatedVersions.push(scopedLabel);
+				renderLine(`Generated fixture ${path.relative(projectDir, result.fixturePath)}`);
+			} else {
+				skippedVersions.push(scopedLabel);
+				renderLine(`Skipped existing fixture ${path.relative(projectDir, result.fixturePath)}`);
+			}
 		}
 	}
 
@@ -687,39 +816,51 @@ export function fuzzProjectMigrations(
 	}: FuzzOptions = {},
 ) {
 	const state = loadMigrationProject(projectDir);
-	const fuzzScriptPath = path.join(projectDir, GENERATED_DIR, "fuzz.ts");
-
-	if (!fs.existsSync(fuzzScriptPath)) {
-		throw new Error(
-			"Generated fuzz script is missing. Run `wp-typia migrations scaffold --from <semver>` first.",
-		);
-	}
-
 	const targetVersions = resolveLegacyVersions(state, { all, fromVersion });
+	const blockEntries = groupEntriesByBlock(
+		discoverMigrationEntries(state).filter((entry) => targetVersions.includes(entry.fromVersion)),
+	);
+	const legacySingleBlock = isLegacySingleBlockProject(state);
 	if (targetVersions.length === 0) {
 		renderLine("No legacy versions configured for fuzzing.");
 		return { fuzzedVersions: [] };
 	}
 
-	for (const version of targetVersions) {
-		assertRuleHasNoTodos(projectDir, version, state.config.currentVersion);
+	const tsxBinary = getLocalTsxBinary(projectDir);
+	for (const [blockKey, entries] of Object.entries(blockEntries)) {
+		const block = state.blocks.find((entry) => entry.key === blockKey);
+		if (!block || entries.length === 0) {
+			continue;
+		}
+		for (const entry of entries) {
+			assertRuleHasNoTodos(projectDir, block, entry.fromVersion, state.config.currentVersion);
+		}
+		const fuzzScriptPath = path.join(getGeneratedDirForBlock(state.paths, block), "fuzz.ts");
+		if (!fs.existsSync(fuzzScriptPath)) {
+			throw new Error(
+				`Generated fuzz script is missing for ${block.blockName}. Run \`wp-typia migrations scaffold --from <semver>\` first.`,
+			);
+		}
+		const selectedVersionsForBlock = entries.map((entry) => entry.fromVersion);
+		const args = [
+			fuzzScriptPath,
+			...(all ? ["--all"] : ["--from", selectedVersionsForBlock[0]]),
+			"--iterations",
+			String(iterations),
+			...(seed === undefined ? [] : ["--seed", String(seed)]),
+		];
+		execFileSync(tsxBinary, args, {
+			cwd: projectDir,
+			shell: process.platform === "win32",
+			stdio: "inherit",
+		});
+		renderLine(
+			legacySingleBlock
+				? `Fuzzed migrations for ${selectedVersionsForBlock.join(", ")}`
+				: `Fuzzed ${block.blockName} migrations for ${selectedVersionsForBlock.join(", ")}`,
+		);
 	}
 
-	const tsxBinary = getLocalTsxBinary(projectDir);
-	const args = [
-		fuzzScriptPath,
-		...(all ? ["--all"] : ["--from", targetVersions[0]]),
-		"--iterations",
-		String(iterations),
-		...(seed === undefined ? [] : ["--seed", String(seed)]),
-	];
-	execFileSync(tsxBinary, args, {
-		cwd: projectDir,
-		shell: process.platform === "win32",
-		stdio: "inherit",
-	});
-
-	renderLine(`Fuzzed migrations for ${targetVersions.join(", ")}`);
 	return { fuzzedVersions: targetVersions, seed };
 }
 
@@ -783,15 +924,19 @@ function collectGeneratedMigrationEntries(
 	state: ReturnType<typeof loadMigrationProject>,
 ): GeneratedMigrationEntry[] {
 	return discoverMigrationEntries(state).map((entry) => {
-		const diff = createMigrationDiff(state, entry.fromVersion, entry.toVersion);
+		const block = state.blocks.find((target) => target.key === entry.block.key);
+		if (!block) {
+			throw new Error(`Unknown migration block target: ${entry.block.key}`);
+		}
+		const diff = createMigrationDiff(state, entry.block, entry.fromVersion, entry.toVersion);
 		const legacyManifest = readJson<ManifestDocument>(
-			path.join(state.projectDir, SNAPSHOT_DIR, entry.fromVersion, ROOT_MANIFEST),
+			getSnapshotManifestPath(state.projectDir, entry.block, entry.fromVersion),
 		);
 
 		return {
 			diff,
 			entry,
-			fuzzPlan: createMigrationFuzzPlan(legacyManifest, state.currentManifest, diff),
+			fuzzPlan: createMigrationFuzzPlan(legacyManifest, block.currentManifest, diff),
 			riskSummary: createMigrationRiskSummary(diff),
 		};
 	});
@@ -800,32 +945,92 @@ function collectGeneratedMigrationEntries(
 function regenerateGeneratedArtifacts(projectDir: string): void {
 	const state = loadMigrationProject(projectDir);
 	const generatedEntries = collectGeneratedMigrationEntries(state);
-	const entries = generatedEntries.map(({ entry }) => entry);
-
-	fs.mkdirSync(state.paths.generatedDir, { recursive: true });
+	for (const block of state.blocks) {
+		const blockGeneratedEntries = generatedEntries.filter(({ entry }) => entry.block.key === block.key);
+		const entries = blockGeneratedEntries.map(({ entry }) => entry);
+		const generatedDir = getGeneratedDirForBlock(state.paths, block);
+		fs.mkdirSync(generatedDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(generatedDir, "registry.ts"),
+			renderMigrationRegistryFile(state, block.key, blockGeneratedEntries),
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(generatedDir, "deprecated.ts"),
+			renderGeneratedDeprecatedFile(entries),
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(generatedDir, "verify.ts"),
+			renderVerifyFile(state, block.key, entries),
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(generatedDir, "fuzz.ts"),
+			renderFuzzFile(state, block.key, blockGeneratedEntries),
+			"utf8",
+		);
+	}
 	fs.writeFileSync(
-		path.join(state.paths.generatedDir, "registry.ts"),
-		renderMigrationRegistryFile(state, generatedEntries),
-		"utf8",
-	);
-	fs.writeFileSync(
-		path.join(state.paths.generatedDir, "deprecated.ts"),
-		renderGeneratedDeprecatedFile(entries),
-		"utf8",
-	);
-	fs.writeFileSync(
-		path.join(state.paths.generatedDir, "verify.ts"),
-		renderVerifyFile(state, entries),
-		"utf8",
-	);
-	fs.writeFileSync(
-		path.join(state.paths.generatedDir, "fuzz.ts"),
-		renderFuzzFile(state, generatedEntries),
+		path.join(state.paths.generatedDir, "index.ts"),
+		renderGeneratedMigrationIndexFile(state, generatedEntries.map(({ entry }) => entry)),
 		"utf8",
 	);
 	fs.writeFileSync(
 		path.join(projectDir, ROOT_PHP_MIGRATION_REGISTRY),
-		renderPhpMigrationRegistryFile(state, entries),
+		renderPhpMigrationRegistryFile(state, generatedEntries.map(({ entry }) => entry)),
 		"utf8",
 	);
+}
+
+export function seedProjectMigrations(
+	projectDir: string,
+	currentVersion: string,
+	blocks: MigrationBlockConfig[],
+	{ renderLine = console.log as RenderLine }: CommandRenderOptions = {},
+) {
+	ensureAdvancedMigrationProject(projectDir, blocks);
+	assertSemver(currentVersion, "current version");
+	ensureMigrationDirectories(projectDir, blocks);
+	writeMigrationConfig(projectDir, {
+		blocks,
+		currentVersion,
+		snapshotDir: SNAPSHOT_DIR.replace(/\\/g, "/"),
+		supportedVersions: [currentVersion],
+	});
+	writeInitialMigrationScaffold(projectDir, currentVersion, blocks);
+	snapshotProjectVersion(projectDir, currentVersion, {
+		renderLine,
+		skipConfigUpdate: true,
+		skipSyncTypes: true,
+	});
+	regenerateGeneratedArtifacts(projectDir);
+	renderLine(
+		`Initialized migrations for ${blocks.map((block) => block.blockName).join(", ")} at version ${currentVersion}`,
+	);
+	return loadMigrationProject(projectDir);
+}
+
+function hasSnapshotForVersion(
+	state: ReturnType<typeof loadMigrationProject>,
+	block: ReturnType<typeof loadMigrationProject>["blocks"][number],
+	version: string,
+): boolean {
+	return fs.existsSync(getSnapshotManifestPath(state.projectDir, block, version));
+}
+
+function groupEntriesByBlock(entries: ReturnType<typeof discoverMigrationEntries>): Record<string, typeof entries> {
+	return entries.reduce<Record<string, typeof entries>>((accumulator, entry) => {
+		if (!accumulator[entry.block.key]) {
+			accumulator[entry.block.key] = [];
+		}
+		accumulator[entry.block.key].push(entry);
+		return accumulator;
+	}, {});
+}
+
+function isLegacySingleBlockProject(
+	state: ReturnType<typeof loadMigrationProject>,
+): boolean {
+	return state.blocks.length === 1 && state.blocks[0]?.layout === "legacy";
 }

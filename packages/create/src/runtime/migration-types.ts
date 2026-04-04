@@ -81,10 +81,26 @@ export interface UnionBranchSummary {
 }
 
 export interface MigrationConfig {
-	blockName: string;
+	blockName?: string;
+	blocks?: MigrationBlockConfig[];
 	currentVersion: string;
 	snapshotDir: string;
 	supportedVersions: string[];
+}
+
+export interface MigrationBlockConfig {
+	blockJsonFile: string;
+	blockName: string;
+	key: string;
+	manifestFile: string;
+	saveFile: string;
+	typesFile: string;
+}
+
+export interface ResolvedMigrationBlockTarget extends MigrationBlockConfig {
+	currentBlockJson: Record<string, unknown>;
+	currentManifest: ManifestDocument;
+	layout: "legacy" | "multi";
 }
 
 export interface MigrationProjectPaths {
@@ -96,6 +112,7 @@ export interface MigrationProjectPaths {
 }
 
 export interface MigrationProjectState {
+	blocks: ResolvedMigrationBlockTarget[];
 	config: MigrationConfig;
 	currentBlockJson: Record<string, unknown>;
 	currentManifest: ManifestDocument;
@@ -104,14 +121,17 @@ export interface MigrationProjectState {
 }
 
 export interface MigrationEntry {
+	block: MigrationBlockConfig;
 	blockJsonImport: string;
 	fixtureImport: string;
 	fromVersion: string;
+	generatedDir: string;
 	manifestImport: string;
 	ruleImport: string;
 	rulePath: string;
 	saveImport: string;
 	toVersion: string;
+	validatorImport: string;
 }
 
 export interface RuleMetadata {
@@ -199,10 +219,13 @@ export interface GeneratedMigrationEntry {
 }
 
 export interface MigrationRuleFileInput {
+	block: MigrationBlockConfig;
 	currentAttributes: Record<string, ManifestAttribute>;
 	currentTypeName: string | null | undefined;
 	diff: MigrationDiff;
 	fromVersion: string;
+	projectDir: string;
+	rulePath: string;
 	targetVersion: string;
 }
 

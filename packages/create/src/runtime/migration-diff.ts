@@ -1,22 +1,22 @@
 import fs from "node:fs";
-import path from "node:path";
-
-import { ROOT_MANIFEST, SNAPSHOT_DIR } from "./migration-constants.js";
 import {
 	flattenManifestLeafAttributes,
 	getAttributeByCurrentPath,
 	getManifestDefaultValue,
 	hasManifestDefault,
 } from "./migration-manifest.js";
+import { getSnapshotManifestPath } from "./migration-project.js";
 import { isNumber, readJson } from "./migration-utils.js";
 import type {
 	DiffOutcome,
 	FlattenedAttributeDescriptor,
 	ManifestAttribute,
 	ManifestDocument,
+	MigrationBlockConfig,
 	MigrationDiff,
 	MigrationProjectState,
 	RenameCandidate,
+	ResolvedMigrationBlockTarget,
 	TransformSuggestion,
 } from "./migration-types.js";
 
@@ -33,20 +33,37 @@ interface CreateTransformSuggestionsOptions {
 
 export function createMigrationDiff(
 	state: MigrationProjectState,
-	fromVersion: string,
-	toVersion: string,
+	blockOrFromVersion: MigrationBlockConfig | ResolvedMigrationBlockTarget | string,
+	fromVersionOrToVersion: string,
+	maybeToVersion?: string,
 ): MigrationDiff {
-	const snapshotManifestPath = path.join(state.projectDir, SNAPSHOT_DIR, fromVersion, ROOT_MANIFEST);
+	const block =
+		typeof blockOrFromVersion === "string"
+			? state.blocks[0]
+			: state.blocks.find((entry) => entry.key === blockOrFromVersion.key) ?? state.blocks[0];
+	const fromVersion =
+		typeof blockOrFromVersion === "string"
+			? blockOrFromVersion
+			: fromVersionOrToVersion;
+	const toVersion =
+		typeof blockOrFromVersion === "string"
+			? fromVersionOrToVersion
+			: maybeToVersion ?? state.config.currentVersion;
+	if (!block) {
+		throw new Error("No migration block targets are configured for this project.");
+	}
+
+	const snapshotManifestPath = getSnapshotManifestPath(state.projectDir, block, fromVersion);
 	if (!fs.existsSync(snapshotManifestPath)) {
 		throw new Error(
-			`Snapshot manifest for ${fromVersion} does not exist. Run \`migrations snapshot --version ${fromVersion}\` first.`,
+			`Snapshot manifest for ${block.blockName} @ ${fromVersion} does not exist. Run \`migrations snapshot --version ${fromVersion}\` first.`,
 		);
 	}
 
 	const targetManifest: ManifestDocument =
 		toVersion === state.config.currentVersion
-			? state.currentManifest
-			: readJson<ManifestDocument>(path.join(state.projectDir, SNAPSHOT_DIR, toVersion, ROOT_MANIFEST));
+			? block.currentManifest
+			: readJson<ManifestDocument>(getSnapshotManifestPath(state.projectDir, block, toVersion));
 
 	const oldManifest = readJson<ManifestDocument>(snapshotManifestPath);
 	const oldAttributes = oldManifest.attributes ?? {};
@@ -139,7 +156,7 @@ export function createMigrationDiff(
 	});
 
 	return {
-		currentTypeName: targetManifest.sourceType ?? state.currentManifest.sourceType,
+		currentTypeName: targetManifest.sourceType ?? block.currentManifest.sourceType,
 		fromVersion,
 		summary: {
 			auto: autoItems.length,

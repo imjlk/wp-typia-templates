@@ -1,6 +1,13 @@
 # Migration Guide
 
-`wp-typia` no longer treats migrations as a built-in scaffold template. Instead, the repository ships a migration-capable repo-local reference app at [`examples/my-typia-block`](../examples/my-typia-block), and the CLI migration commands remain available for projects that choose to keep the same workspace layout.
+`wp-typia` no longer treats migrations as a built-in scaffold template. Instead, the repository ships a migration-capable repo-local reference app at [`examples/my-typia-block`](../examples/my-typia-block), and built-in scaffolds can now opt into the same capability with `--with-migration-ui`.
+
+That opt-in scaffold mode:
+
+- seeds an initialized migration workspace at `1.0.0`
+- wires an editor-embedded migration dashboard into the generated block
+- keeps the CLI migration commands as the public workflow
+- stays optional, so default scaffolds remain lightweight
 
 From the repository root, treat the example app as the reference target and use `examples:*` commands for build/dev/test flows.
 
@@ -14,23 +21,35 @@ The `migration:*` and `sync-types` commands shown below are run inside `examples
 
 ## Snapshot model
 
-Legacy versions are stored as generated snapshots:
+Legacy versions are stored as generated snapshots.
+
+Single-block legacy projects may still use the original flat layout:
 
 - `src/migrations/versions/<semver>/block.json`
 - `src/migrations/versions/<semver>/typia.manifest.json`
 - `src/migrations/versions/<semver>/save.tsx`
 
+New `--with-migration-ui` scaffolds use the multi-block-aware layout instead:
+
+- `src/migrations/versions/<semver>/<blockKey>/block.json`
+- `src/migrations/versions/<semver>/<blockKey>/typia.manifest.json`
+- `src/migrations/versions/<semver>/<blockKey>/save.tsx`
+
 Those snapshots are committed so the project can keep deprecated Gutenberg entries and migration rules aligned with old releases.
 
 ## First release
 
-After creating or adopting a migration-capable project:
+After adopting an older project into the migration workflow:
 
 ```bash
 bun run migration:init
 ```
 
 This bootstraps the migration workspace and stores the first snapshot at `1.0.0`.
+
+If you scaffolded with `--with-migration-ui`, that initialization already
+happened during scaffold creation and you do not need to run `migration:init`
+again.
 
 ## New schema version
 
@@ -78,10 +97,22 @@ Scaffolded rules live in:
 src/migrations/rules/<from>-to-<to>.ts
 ```
 
+Multi-block scaffolds scope those files per target:
+
+```text
+src/migrations/rules/<blockKey>/<from>-to-<to>.ts
+```
+
 Edge fixtures now live next to them:
 
 ```text
 src/migrations/fixtures/<from>-to-<to>.json
+```
+
+Or, for multi-block scaffolds:
+
+```text
+src/migrations/fixtures/<blockKey>/<from>-to-<to>.json
 ```
 
 Automatic cases are filled for you:
@@ -138,11 +169,20 @@ The CLI also regenerates:
 - `src/migrations/generated/deprecated.ts`
 - `src/migrations/generated/verify.ts`
 
+Multi-block scaffolds use scoped generated directories such as:
+
+- `src/migrations/generated/<blockKey>/registry.ts`
+- `src/migrations/generated/<blockKey>/deprecated.ts`
+- `src/migrations/generated/<blockKey>/verify.ts`
+- `src/migrations/generated/<blockKey>/fuzz.ts`
+- `src/migrations/generated/index.ts`
+
 `src/index.tsx` wires `deprecated` into `registerBlockType`, so legacy blocks can be upgraded through the normal Gutenberg deprecation flow.
 
 ## Dashboard and site scan
 
-The reference app includes an admin-side migration dashboard that can:
+The reference app and `--with-migration-ui` scaffolds include an editor-side
+migration dashboard that can:
 
 - scan posts for legacy block attributes
 - summarize version distribution
@@ -153,6 +193,10 @@ The reference app includes an admin-side migration dashboard that can:
 This scan is REST-based and stays on the JavaScript side. It does not depend on PHP migration code.
 
 Dry-run and batch execution share the same `autoMigrate()` path, so the preview you see in the dashboard is the same migration logic that will be applied during writes.
+
+For compound scaffolds, the dashboard entrypoint lives on the parent block, but
+the scan and migration runtime cover both the parent and the scaffolded hidden
+child blocks.
 
 The dashboard preview now highlights:
 
