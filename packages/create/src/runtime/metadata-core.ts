@@ -956,7 +956,10 @@ export async function syncEndpointClient(
     `\tcreateEndpoint,`,
     `\ttype EndpointCallOptions,`,
     ...(inlineHelpers.has('validateCombinedRequest')
-      ? [`\ttype ValidationError,`, `\ttype ValidationResult,`]
+      ? [
+          `\ttype ValidationError as PortableValidationError,`,
+          `\ttype ValidationResult as PortableValidationResult,`,
+        ]
       : []),
     `} from '@wp-typia/api-client';`,
     ...(sortedTypeNames.length === 1
@@ -1006,9 +1009,9 @@ export async function syncEndpointClient(
       ? [
           `function validateCombinedRequest<TQuery, TBody>(`,
           `\tinput: unknown,`,
-          `\tvalidateQuery: (input: unknown) => ValidationResult<TQuery>,`,
-          `\tvalidateBody: (input: unknown) => ValidationResult<TBody>,`,
-          `): ValidationResult<{ query: TQuery; body: TBody }> {`,
+          `\tvalidateQuery: (input: unknown) => PortableValidationResult<TQuery>,`,
+          `\tvalidateBody: (input: unknown) => PortableValidationResult<TBody>,`,
+          `): PortableValidationResult<{ query: TQuery; body: TBody }> {`,
           `\tif ( input === null || typeof input !== 'object' || Array.isArray( input ) ) {`,
           `\t\treturn {`,
           `\t\t\tdata: undefined,`,
@@ -1048,7 +1051,7 @@ export async function syncEndpointClient(
           ``,
           `\tconst queryValidation = validateQuery( request.query );`,
           `\tconst bodyValidation = validateBody( request.body );`,
-          `\tconst errors: ValidationError[] = [`,
+          `\tconst errors: PortableValidationError[] = [`,
           `\t\t...queryValidation.errors.map( ( error ) => ( {`,
           `\t\t\t...error,`,
           `\t\t\tpath: prefixPath( '$.query', error.path ),`,
