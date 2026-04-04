@@ -471,4 +471,37 @@ describe("@wp-typia/api-client", () => {
 		);
 		expect(transportCalled).toBe(false);
 	});
+
+	test("query-and-body endpoints validate the envelope before custom request builders run", async () => {
+		let builderCalled = false;
+		const transport = createFetchTransport({
+			baseUrl: "https://example.test/api/",
+			fetchFn: async () => new Response(JSON.stringify({ ok: true })),
+		});
+		const endpoint = createEndpoint<unknown, { ok: boolean }>({
+			buildRequestOptions: (request) => {
+				builderCalled = true;
+				return {
+					path: `/items/${String((request as { query?: { page?: unknown } }).query?.page)}`,
+				};
+			},
+			method: "POST",
+			path: "/items",
+			requestLocation: "query-and-body",
+			validateRequest: (input: unknown) => toValidationResult(success(input)),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				(input as { ok?: unknown }).ok === true
+					? toValidationResult(success(input as { ok: boolean }))
+					: toValidationResult(failure<{ ok: boolean }>("{ ok: true }", "$.ok")),
+		});
+
+		await expect(
+			callEndpoint(endpoint, { query: { page: 2 } }, { transport }),
+		).rejects.toThrow(
+			'Endpoints with requestLocation "query-and-body" require requests shaped like { query, body }.',
+		);
+		expect(builderCalled).toBe(false);
+	});
 });

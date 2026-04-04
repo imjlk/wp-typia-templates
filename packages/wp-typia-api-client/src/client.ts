@@ -306,11 +306,11 @@ function buildEndpointRequestOptions<Req>(
 	endpoint: ApiEndpoint<Req, unknown>,
 	request: Req,
 ): EndpointTransportRequest {
-	const baseOptions = endpoint.buildRequestOptions?.(request) ?? {};
 	const requestLocation =
 		endpoint.requestLocation ?? (endpoint.method === "GET" ? "query" : "body");
 
 	if (requestLocation === "query") {
+		const baseOptions = endpoint.buildRequestOptions?.(request) ?? {};
 		return buildQueryRequestOptions(endpoint, baseOptions, request);
 	}
 
@@ -322,6 +322,7 @@ function buildEndpointRequestOptions<Req>(
 		}
 
 		const combinedRequest = resolveCombinedRequest(request);
+		const baseOptions = endpoint.buildRequestOptions?.(request) ?? {};
 		const bodyOptions = buildBodyRequestOptions(
 			endpoint,
 			baseOptions,
@@ -330,6 +331,7 @@ function buildEndpointRequestOptions<Req>(
 		return buildQueryRequestOptions(endpoint, bodyOptions, combinedRequest.query);
 	}
 
+	const baseOptions = endpoint.buildRequestOptions?.(request) ?? {};
 	return buildBodyRequestOptions(endpoint, baseOptions, request);
 }
 
