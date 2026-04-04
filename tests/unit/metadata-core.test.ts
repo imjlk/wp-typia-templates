@@ -217,6 +217,149 @@ describe("metadata-core endpoint manifests", () => {
 		}
 	});
 
+	test("syncEndpointClient rejects unresolved manifest source type names before emitting the client", async () => {
+		const project = createTempProject();
+		const brokenManifest = defineEndpointManifest({
+			contracts: {
+				query: { sourceTypeName: "MissingQuery" },
+				response: { sourceTypeName: "CounterResponse" },
+			},
+			endpoints: [
+				{
+					authMode: "public-read",
+					method: "GET",
+					operationId: "getCounterState",
+					path: "/demo/v1/counter/state",
+					queryContract: "query",
+					responseContract: "response",
+					tags: ["Counter"],
+				},
+			],
+		});
+
+		try {
+			await expect(
+				syncEndpointClient({
+					clientFile: "build/api-client.ts",
+					manifest: brokenManifest,
+					projectRoot: project.root,
+					typesFile: project.typesFile,
+				}),
+			).rejects.toThrow(/MissingQuery/u);
+		} finally {
+			fs.rmSync(project.root, { force: true, recursive: true });
+		}
+	});
+
+	test("syncEndpointClient rejects nonstandard types filenames when validatorsFile cannot be inferred", async () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-metadata-core-"));
+		const typesDir = path.join(root, "src");
+		fs.mkdirSync(typesDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(typesDir, "contracts.ts"),
+			"export interface CounterResponse { count: number; }\n",
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(typesDir, "contracts.validators.ts"),
+			"export const apiValidators = {};\n",
+			"utf8",
+		);
+
+		try {
+			await expect(
+				syncEndpointClient({
+					clientFile: "build/api-client.ts",
+					manifest: defineEndpointManifest({
+						contracts: {
+							response: { sourceTypeName: "CounterResponse" },
+						},
+						endpoints: [
+							{
+								authMode: "public-read",
+								method: "GET",
+								operationId: "getCounterState",
+								path: "/demo/v1/counter/state",
+								responseContract: "response",
+								tags: ["Counter"],
+							},
+						],
+					}),
+					projectRoot: root,
+					typesFile: "src/contracts.ts",
+				}),
+			).rejects.toThrow(
+				"syncEndpointClient() could not infer validatorsFile from typesFile; pass validatorsFile explicitly.",
+			);
+		} finally {
+			fs.rmSync(root, { force: true, recursive: true });
+		}
+	});
+
+	test("syncEndpointClient rejects colliding validator property names", async () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-metadata-core-"));
+		const typesDir = path.join(root, "src");
+		fs.mkdirSync(typesDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(typesDir, "api-types.ts"),
+			[
+				"export interface FirstQuery {",
+				"  page: number;",
+				"}",
+				"",
+				"export interface FirstResponse {",
+				"  ok: boolean;",
+				"}",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(typesDir, "api-validators.ts"),
+			"export const apiValidators = {};\n",
+			"utf8",
+		);
+
+		try {
+			await expect(
+				syncEndpointClient({
+					clientFile: "build/api-client.ts",
+					manifest: defineEndpointManifest({
+						contracts: {
+							"first-query": { sourceTypeName: "FirstQuery" },
+							"first--query": { sourceTypeName: "FirstQuery" },
+							response: { sourceTypeName: "FirstResponse" },
+						},
+						endpoints: [
+							{
+								authMode: "public-read",
+								method: "GET",
+								operationId: "getFirstState",
+								path: "/demo/v1/first/state",
+								queryContract: "first-query",
+								responseContract: "response",
+								tags: ["First"],
+							},
+							{
+								authMode: "public-read",
+								method: "GET",
+								operationId: "getSecondState",
+								path: "/demo/v1/second/state",
+								queryContract: "first--query",
+								responseContract: "response",
+								tags: ["Second"],
+							},
+						],
+					}),
+					projectRoot: root,
+					typesFile: "src/api-types.ts",
+				}),
+			).rejects.toThrow(/both normalize to apiValidators/u);
+		} finally {
+			fs.rmSync(root, { force: true, recursive: true });
+		}
+	});
+
 	test("syncEndpointClient rejects endpoints that define both bodyContract and queryContract", async () => {
 		const project = createTempProject();
 		const ambiguousManifest = defineEndpointManifest({

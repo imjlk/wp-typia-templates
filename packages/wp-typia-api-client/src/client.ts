@@ -47,7 +47,7 @@ export interface ApiEndpoint<Req, Res> {
 }
 
 export interface EndpointCallOptions {
-	requestOptions?: Partial<EndpointTransportRequest>;
+	requestOptions?: Partial<Omit<EndpointTransportRequest, "parse">>;
 	transport?: EndpointTransport;
 }
 
@@ -172,9 +172,19 @@ function encodeGetLikeRequest(request: unknown): string {
 		}
 		if (Array.isArray(value)) {
 			for (const item of value) {
+				if (!isQueryScalar(item)) {
+					throw new Error(
+						`GET/DELETE endpoint request field "${key}" only supports scalar array items.`,
+					);
+				}
 				params.append(key, String(item));
 			}
 			continue;
+		}
+		if (!isQueryScalar(value)) {
+			throw new Error(
+				`GET/DELETE endpoint request field "${key}" must be a scalar, URLSearchParams, or array of scalars.`,
+			);
 		}
 		params.set(key, String(value));
 	}
@@ -201,6 +211,14 @@ function joinUrlWithQuery(url: string, query: string): string {
 		: `${urlWithoutHash}?${query}`;
 
 	return hash ? `${nextUrl}#${hash}` : nextUrl;
+}
+
+function isQueryScalar(value: unknown): value is boolean | number | string {
+	return (
+		typeof value === "boolean" ||
+		typeof value === "number" ||
+		typeof value === "string"
+	);
 }
 
 function mergeHeaderInputs(
@@ -321,8 +339,9 @@ export async function callEndpoint<Req, Res>(
 	}
 
 	const payload = await transport<unknown, true>(
-		mergeTransportOptions(buildEndpointRequestOptions(endpoint, request), requestOptions) as EndpointTransportRequest & {
-			parse?: true;
+		{
+			...mergeTransportOptions(buildEndpointRequestOptions(endpoint, request), requestOptions),
+			parse: true,
 		},
 	);
 	return endpoint.validateResponse(payload);

@@ -197,4 +197,58 @@ describe("@wp-typia/api-client", () => {
 		expect(response.headers.get("X-Total-Pages")).toBe("3");
 		await expect(response.text()).resolves.toBe('{"ok":true}');
 	});
+
+	test("callEndpoint forces parsed responses even when requestOptions is cast with parse:false", async () => {
+		const transport = createFetchTransport({
+			baseUrl: "https://example.test/api/",
+			fetchFn: async () => new Response(JSON.stringify({ ok: true })),
+		});
+		const endpoint = createEndpoint<undefined, { ok: boolean }>({
+			method: "GET",
+			path: "/items",
+			validateRequest: () => toValidationResult(success(undefined)),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				(input as { ok?: unknown }).ok === true
+					? toValidationResult(success(input as { ok: boolean }))
+					: toValidationResult(failure<{ ok: boolean }>("{ ok: true }", "$.ok")),
+		});
+
+		const result = await callEndpoint(endpoint, undefined, {
+			requestOptions: { parse: false } as never,
+			transport,
+		});
+
+		expect(result.isValid).toBe(true);
+		expect(result.data).toEqual({ ok: true });
+	});
+
+	test("createFetchTransport rejects nested query objects instead of stringifying them", async () => {
+		const transport = createFetchTransport({
+			baseUrl: "https://example.test/api/",
+			fetchFn: async () => new Response(JSON.stringify({ ok: true })),
+		});
+		const endpoint = createEndpoint<
+			{ filters: { status: string } },
+			{ ok: boolean }
+		>({
+			method: "GET",
+			path: "/items",
+			validateRequest: (input: unknown) =>
+				toValidationResult(success(input as { filters: { status: string } })),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				(input as { ok?: unknown }).ok === true
+					? toValidationResult(success(input as { ok: boolean }))
+					: toValidationResult(failure<{ ok: boolean }>("{ ok: true }", "$.ok")),
+		});
+
+		await expect(
+			callEndpoint(endpoint, { filters: { status: "open" } }, { transport }),
+		).rejects.toThrow(
+			'GET/DELETE endpoint request field "filters" must be a scalar, URLSearchParams, or array of scalars.',
+		);
+	});
 });

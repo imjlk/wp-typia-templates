@@ -795,10 +795,15 @@ export async function syncEndpointClient(
 ): Promise<SyncEndpointClientResult> {
   const { clientPath, manifest, projectRoot, typesFile, validatorsFile } =
     normalizeSyncEndpointClientOptions(options);
+  analyzeSourceTypes(
+    { projectRoot, typesFile },
+    [...new Set(Object.values(manifest.contracts).map((contract) => contract.sourceTypeName))],
+  );
   const operationIds = new Set<string>();
   const importedTypeNames = new Set<string>();
   const endpointLines: string[] = [];
   const inlineHelpers = new Set<string>();
+  const validatorPropertyNames = new Map<string, string>();
 
   for (const endpoint of manifest.endpoints) {
     assertValidClientIdentifier(endpoint.operationId, 'operationId');
@@ -835,7 +840,10 @@ export async function syncEndpointClient(
         endpoint.bodyContract ? 'bodyContract' : 'queryContract',
       );
       requestTypeName = requestContract.sourceTypeName;
-      requestValidatorExpression = `apiValidators.${toClientPropertyName(requestContractKey)}`;
+      requestValidatorExpression = toValidatorAccessExpression(
+        requestContractKey,
+        validatorPropertyNames,
+      );
       importedTypeNames.add(requestContract.sourceTypeName);
     } else {
       inlineHelpers.add('validateNoRequest');
@@ -864,7 +872,10 @@ export async function syncEndpointClient(
         `\toperationId: ${toJavaScriptStringLiteral(endpoint.operationId)},`,
         `\tpath: ${toJavaScriptStringLiteral(endpoint.path)},`,
         `\tvalidateRequest: ${requestValidatorExpression},`,
-        `\tvalidateResponse: apiValidators.${toClientPropertyName(endpoint.responseContract)},`,
+        `\tvalidateResponse: ${toValidatorAccessExpression(
+          endpoint.responseContract,
+          validatorPropertyNames,
+        )},`,
         `} );`,
         '',
         `export function ${endpoint.operationId}(`,
@@ -974,11 +985,19 @@ function normalizeSyncEndpointClientOptions(
   const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
   const clientPath = path.resolve(projectRoot, options.clientFile);
   const typesFile = path.resolve(projectRoot, options.typesFile);
-  const validatorsFile = path.resolve(
-    projectRoot,
+  const inferredValidatorsFile =
     options.validatorsFile ??
-      options.typesFile.replace(/api-types\.ts$/u, 'api-validators.ts'),
-  );
+    (() => {
+      const nextPath = options.typesFile.replace(/api-types\.ts$/u, 'api-validators.ts');
+      if (nextPath === options.typesFile) {
+        throw new Error(
+          'syncEndpointClient() could not infer validatorsFile from typesFile; pass validatorsFile explicitly.',
+        );
+      }
+
+      return nextPath;
+    })();
+  const validatorsFile = path.resolve(projectRoot, inferredValidatorsFile);
 
   if (!fs.existsSync(typesFile)) {
     throw new Error(`Unable to generate an endpoint client because the types file does not exist: ${typesFile}`);
@@ -1018,6 +1037,27 @@ function toClientPropertyName(value: string): string {
   return value
     .replace(/[^A-Za-z0-9]+(.)/g, (_match, next: string) => next.toUpperCase())
     .replace(/^[A-Z]/, (match) => match.toLowerCase());
+}
+
+function toValidatorAccessExpression(
+  contractKey: string,
+  seenPropertyNames: Map<string, string>,
+): string {
+  const propertyName = toClientPropertyName(contractKey);
+  const previousContractKey = seenPropertyNames.get(propertyName);
+
+  if (previousContractKey && previousContractKey !== contractKey) {
+    throw new Error(
+      `Contract keys "${previousContractKey}" and "${contractKey}" both normalize to apiValidators[${toJavaScriptStringLiteral(
+        propertyName,
+      )}] while generating the endpoint client.`,
+    );
+  }
+
+  seenPropertyNames.set(propertyName, contractKey);
+  return /^[$A-Z_][0-9A-Z_$]*$/iu.test(propertyName)
+    ? `apiValidators.${propertyName}`
+    : `apiValidators[${toJavaScriptStringLiteral(propertyName)}]`;
 }
 
 function toModuleImportPath(fromFile: string, targetFile: string): string {

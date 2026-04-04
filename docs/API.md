@@ -366,7 +366,7 @@ When you opt `compound` into persistence with `--data-storage` or `--persistence
 
 For persistence-enabled `compound`, the parent block follows the same REST extension pattern as `persistence`. The hidden child block does not own REST routes or storage behavior.
 
-## 6. Repo-local example app
+## 7. Repo-local example app
 
 The repository keeps two reference apps:
 
@@ -388,7 +388,7 @@ bun run examples:test:e2e
 
 Legacy root shortcuts such as `bun run dev` and `bun run test:e2e` remain available as compatibility aliases.
 
-## 7. Generated reference docs
+## 8. Generated reference docs
 
 Contributor note:
 
