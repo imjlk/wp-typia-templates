@@ -36,6 +36,8 @@ Shared WordPress block semantic types derived from Gutenberg source and unoffici
 - support-generated block style attribute helpers
 - typography enums used by core block supports
 - structural block support types for `block.json`
+- additive stable Core coverage for drop caps, spacing sizes, layout gaps,
+  duotone, per-side border widths, and `js` / `locking`
 
 ## WordPress style support helpers
 
@@ -47,20 +49,30 @@ The package now exposes two complementary surfaces:
 Example:
 
 ```ts
-import type { BlockStyleSupportAttributes } from "@wp-typia/block-types/block-editor/style-attributes";
-import type { BlockSupports } from "@wp-typia/block-types/blocks/supports";
+import type { BlockStyleSupportAttributes } from '@wp-typia/block-types/block-editor/style-attributes';
+import type { BlockSupports } from '@wp-typia/block-types/blocks/supports';
 
 const supports: BlockSupports = {
-	color: { text: true, background: true, gradients: true },
-	spacing: { padding: true },
-	typography: { fontSize: true },
+  color: { text: true, background: true, gradients: true, enableAlpha: true },
+  spacing: {
+    padding: true,
+    units: ['px', 'rem'],
+    spacingSizes: [{ name: 'Large', slug: 'large', size: '2rem' }],
+  },
+  typography: { fontSize: true, dropCap: true },
+  js: true,
+  locking: true,
 };
 
 type MyBlockStyleAttrs = Pick<
-	BlockStyleSupportAttributes,
-	"backgroundColor" | "fontSize" | "style" | "textColor"
+  BlockStyleSupportAttributes,
+  'backgroundColor' | 'fontSize' | 'style' | 'textColor'
 >;
 ```
+
+Stable Core coverage now also includes support/style helpers for layout
+`rowGap` / `columnGap`, color `duotone`, per-side border widths, and other
+recently stabilized support keys.
 
 ## Typia pipeline notes
 

@@ -14,6 +14,7 @@ import type {
 } from './typography';
 
 export type PresetColorReference = `var:preset|color|${string}`;
+export type PresetDuotoneReference = `var:preset|duotone|${string}`;
 export type PresetGradientReference = `var:preset|gradient|${string}`;
 export type PresetFontFamilyReference = `var:preset|font-family|${string}`;
 export type PresetFontSizeReference = `var:preset|font-size|${string}`;
@@ -58,6 +59,7 @@ export type BlockStyleFontFamilyValue = string | PresetFontFamilyReference;
 export type BlockStyleSpacingValue = string | number;
 export type BlockStyleBorderWidthValue = string | number;
 export type BlockStyleBorderRadiusValue = string | number;
+export type BlockShadowStyleAttributes = string;
 
 export interface BlockLinkColorAttributes {
   readonly background?: BlockStyleColorValue;
@@ -72,6 +74,7 @@ export interface BlockElementsStyleAttributes {
 
 export interface BlockColorStyleAttributes {
   readonly background?: BlockStyleColorValue;
+  readonly duotone?: string | PresetDuotoneReference;
   readonly gradient?: BlockStyleGradientValue;
   readonly text?: BlockStyleColorValue;
 }
@@ -84,6 +87,10 @@ export interface BlockBorderStyleAttributes {
   readonly topRightRadius?: BlockStyleBorderRadiusValue;
   readonly bottomLeftRadius?: BlockStyleBorderRadiusValue;
   readonly bottomRightRadius?: BlockStyleBorderRadiusValue;
+  readonly bottomWidth?: BlockStyleBorderWidthValue;
+  readonly leftWidth?: BlockStyleBorderWidthValue;
+  readonly rightWidth?: BlockStyleBorderWidthValue;
+  readonly topWidth?: BlockStyleBorderWidthValue;
   readonly width?: BlockStyleBorderWidthValue;
 }
 
@@ -134,7 +141,7 @@ export interface BlockStyleAttributes {
   readonly dimensions?: BlockDimensionsStyleAttributes;
   readonly elements?: BlockElementsStyleAttributes;
   readonly position?: BlockPositionStyleAttributes;
-  readonly shadow?: string;
+  readonly shadow?: BlockShadowStyleAttributes;
   readonly spacing?: BlockSpacingStyleAttributes;
   readonly typography?: BlockTypographyStyleAttributes;
 }
