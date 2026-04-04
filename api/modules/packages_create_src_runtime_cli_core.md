@@ -53,7 +53,7 @@ Re-exports [listTemplates](packages_create_src_runtime_template_registry.md#list
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:128](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L128)
+[packages/create/src/runtime/cli-core.ts:131](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L131)
 
 ___
 
@@ -67,7 +67,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:183](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L183)
+[packages/create/src/runtime/cli-core.ts:186](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L186)
 
 ___
 
@@ -87,7 +87,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:198](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L198)
+[packages/create/src/runtime/cli-core.ts:202](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L202)
 
 ___
 
@@ -107,7 +107,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:202](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L202)
+[packages/create/src/runtime/cli-core.ts:206](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L206)
 
 ___
 
@@ -127,7 +127,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:206](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L206)
+[packages/create/src/runtime/cli-core.ts:210](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L210)
 
 ___
 
@@ -147,7 +147,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:272](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L272)
+[packages/create/src/runtime/cli-core.ts:276](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L276)
 
 ___
 
@@ -168,7 +168,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:344](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L344)
+[packages/create/src/runtime/cli-core.ts:348](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L348)
 
 ___
 
@@ -188,7 +188,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:361](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L361)
+[packages/create/src/runtime/cli-core.ts:365](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L365)
 
 ___
 
@@ -208,7 +208,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:378](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L378)
+[packages/create/src/runtime/cli-core.ts:382](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L382)
 
 ___
 
@@ -228,4 +228,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/cli-core.ts:391](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L391)
+[packages/create/src/runtime/cli-core.ts:395](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-core.ts#L395)

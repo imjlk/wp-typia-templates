@@ -13,13 +13,14 @@
 
 ### ensureEdgeFixtureFile
 
-▸ **ensureEdgeFixtureFile**(`projectDir`, `fromVersion`, `toVersion`, `diff`, `«destructured»?`): `Object`
+▸ **ensureEdgeFixtureFile**(`projectDir`, `block`, `fromVersion`, `toVersion`, `diff`, `«destructured»?`): `Object`
 
 #### Parameters
 
 | Name | Type | Default value |
 | :------ | :------ | :------ |
 | `projectDir` | `string` | `undefined` |
+| `block` | [`MigrationBlockConfig`](../interfaces/packages_create_src_runtime_migration_types.MigrationBlockConfig.md) | `undefined` |
 | `fromVersion` | `string` | `undefined` |
 | `toVersion` | `string` | `undefined` |
 | `diff` | [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) | `undefined` |
@@ -37,19 +38,20 @@
 
 #### Defined in
 
-[packages/create/src/runtime/migration-fixtures.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-fixtures.ts#L27)
+[packages/create/src/runtime/migration-fixtures.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-fixtures.ts#L31)
 
 ___
 
 ### createEdgeFixtureDocument
 
-▸ **createEdgeFixtureDocument**(`projectDir`, `fromVersion`, `toVersion`, `diff`): [`MigrationFixtureDocument`](../interfaces/packages_create_src_runtime_migration_types.MigrationFixtureDocument.md)
+▸ **createEdgeFixtureDocument**(`projectDir`, `block`, `fromVersion`, `toVersion`, `diff`): [`MigrationFixtureDocument`](../interfaces/packages_create_src_runtime_migration_types.MigrationFixtureDocument.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `projectDir` | `string` |
+| `block` | [`MigrationBlockConfig`](../interfaces/packages_create_src_runtime_migration_types.MigrationBlockConfig.md) |
 | `fromVersion` | `string` |
 | `toVersion` | `string` |
 | `diff` | [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) |
@@ -60,4 +62,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-fixtures.ts:45](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-fixtures.ts#L45)
+[packages/create/src/runtime/migration-fixtures.ts:51](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-fixtures.ts#L51)

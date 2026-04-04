@@ -10,6 +10,7 @@
 - [renderMigrationRuleFile](packages_create_src_runtime_migration_render.md#rendermigrationrulefile)
 - [renderMigrationRegistryFile](packages_create_src_runtime_migration_render.md#rendermigrationregistryfile)
 - [renderGeneratedDeprecatedFile](packages_create_src_runtime_migration_render.md#rendergenerateddeprecatedfile)
+- [renderGeneratedMigrationIndexFile](packages_create_src_runtime_migration_render.md#rendergeneratedmigrationindexfile)
 - [renderPhpMigrationRegistryFile](packages_create_src_runtime_migration_render.md#renderphpmigrationregistryfile)
 - [renderVerifyFile](packages_create_src_runtime_migration_render.md#renderverifyfile)
 - [renderFuzzFile](packages_create_src_runtime_migration_render.md#renderfuzzfile)
@@ -32,7 +33,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L27)
+[packages/create/src/runtime/migration-render.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L29)
 
 ___
 
@@ -52,19 +53,20 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:83](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L83)
+[packages/create/src/runtime/migration-render.ts:85](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L85)
 
 ___
 
 ### renderMigrationRegistryFile
 
-▸ **renderMigrationRegistryFile**(`state`, `entries`): `string`
+▸ **renderMigrationRegistryFile**(`state`, `blockKey`, `entries`): `string`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `state` | [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md) |
+| `blockKey` | `string` |
 | `entries` | [`GeneratedMigrationEntry`](../interfaces/packages_create_src_runtime_migration_types.GeneratedMigrationEntry.md)[] |
 
 #### Returns
@@ -73,7 +75,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:174](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L174)
+[packages/create/src/runtime/migration-render.ts:188](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L188)
 
 ___
 
@@ -93,7 +95,28 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:224](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L224)
+[packages/create/src/runtime/migration-render.ts:243](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L243)
+
+___
+
+### renderGeneratedMigrationIndexFile
+
+▸ **renderGeneratedMigrationIndexFile**(`state`, `entries`): `string`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `state` | [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md) |
+| `entries` | [`MigrationEntry`](../interfaces/packages_create_src_runtime_migration_types.MigrationEntry.md)[] |
+
+#### Returns
+
+`string`
+
+#### Defined in
+
+[packages/create/src/runtime/migration-render.ts:279](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L279)
 
 ___
 
@@ -114,19 +137,20 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:260](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L260)
+[packages/create/src/runtime/migration-render.ts:331](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L331)
 
 ___
 
 ### renderVerifyFile
 
-▸ **renderVerifyFile**(`state`, `entries`): `string`
+▸ **renderVerifyFile**(`state`, `blockKey`, `entries`): `string`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `state` | [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md) |
+| `blockKey` | `string` |
 | `entries` | [`MigrationEntry`](../interfaces/packages_create_src_runtime_migration_types.MigrationEntry.md)[] |
 
 #### Returns
@@ -135,19 +159,20 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:331](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L331)
+[packages/create/src/runtime/migration-render.ts:408](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L408)
 
 ___
 
 ### renderFuzzFile
 
-▸ **renderFuzzFile**(`state`, `entries`): `string`
+▸ **renderFuzzFile**(`state`, `blockKey`, `entries`): `string`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `state` | [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md) |
+| `blockKey` | `string` |
 | `entries` | [`GeneratedMigrationEntry`](../interfaces/packages_create_src_runtime_migration_types.GeneratedMigrationEntry.md)[] |
 
 #### Returns
@@ -156,4 +181,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:414](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L414)
+[packages/create/src/runtime/migration-render.ts:496](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L496)

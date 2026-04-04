@@ -86,6 +86,7 @@
 - [packages/create/src/runtime/migration-render](modules/packages_create_src_runtime_migration_render.md)
 - [packages/create/src/runtime/migration-risk](modules/packages_create_src_runtime_migration_risk.md)
 - [packages/create/src/runtime/migration-types](modules/packages_create_src_runtime_migration_types.md)
+- [packages/create/src/runtime/migration-ui-capability](modules/packages_create_src_runtime_migration_ui_capability.md)
 - [packages/create/src/runtime/migration-utils](modules/packages_create_src_runtime_migration_utils.md)
 - [packages/create/src/runtime/migrations](modules/packages_create_src_runtime_migrations.md)
 - [packages/create/src/runtime/package-managers](modules/packages_create_src_runtime_package_managers.md)

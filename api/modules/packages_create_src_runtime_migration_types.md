@@ -17,6 +17,8 @@
 - [ManifestSummary](../interfaces/packages_create_src_runtime_migration_types.ManifestSummary.md)
 - [UnionBranchSummary](../interfaces/packages_create_src_runtime_migration_types.UnionBranchSummary.md)
 - [MigrationConfig](../interfaces/packages_create_src_runtime_migration_types.MigrationConfig.md)
+- [MigrationBlockConfig](../interfaces/packages_create_src_runtime_migration_types.MigrationBlockConfig.md)
+- [ResolvedMigrationBlockTarget](../interfaces/packages_create_src_runtime_migration_types.ResolvedMigrationBlockTarget.md)
 - [MigrationProjectPaths](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectPaths.md)
 - [MigrationProjectState](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md)
 - [MigrationEntry](../interfaces/packages_create_src_runtime_migration_types.MigrationEntry.md)
@@ -97,7 +99,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:234](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L234)
+[packages/create/src/runtime/migration-types.ts:257](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L257)
 
 ___
 
@@ -107,4 +109,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:235](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L235)
+[packages/create/src/runtime/migration-types.ts:258](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L258)

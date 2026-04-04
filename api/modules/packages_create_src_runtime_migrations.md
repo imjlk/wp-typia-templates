@@ -21,6 +21,7 @@
 - [doctorProjectMigrations](packages_create_src_runtime_migrations.md#doctorprojectmigrations)
 - [fixturesProjectMigrations](packages_create_src_runtime_migrations.md#fixturesprojectmigrations)
 - [fuzzProjectMigrations](packages_create_src_runtime_migrations.md#fuzzprojectmigrations)
+- [seedProjectMigrations](packages_create_src_runtime_migrations.md#seedprojectmigrations)
 
 ## References
 
@@ -40,7 +41,7 @@ Re-exports [formatDiffReport](packages_create_src_runtime_migration_render.md#fo
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:90](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L90)
+[packages/create/src/runtime/migrations.ts:94](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L94)
 
 ___
 
@@ -60,13 +61,13 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:102](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L102)
+[packages/create/src/runtime/migrations.ts:106](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L106)
 
 ___
 
 ### runMigrationCommand
 
-▸ **runMigrationCommand**(`command`, `cwd`, `«destructured»?`): [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md) \| [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) \| \{ `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  } \| \{ `verifiedVersions`: `string`[] = targetVersions } \| \{ `checkedVersions`: `string`[] = targetVersions; `checks`: \{ `detail`: `string` ; `label`: `string` ; `status`: ``"pass"`` \| ``"fail"``  }[]  } \| \{ `generatedVersions`: `string`[] ; `skippedVersions`: `string`[]  } \| \{ `fuzzedVersions`: `never`[] = []; `seed`: `undefined`  } \| \{ `fuzzedVersions`: `string`[] = targetVersions; `seed`: `undefined` \| `number`  }
+▸ **runMigrationCommand**(`command`, `cwd`, `«destructured»?`): [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md) \| [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) \| \{ `block`: [`ResolvedMigrationBlockTarget`](../interfaces/packages_create_src_runtime_migration_types.ResolvedMigrationBlockTarget.md) ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md)  }[] \| \{ `blockName`: `string` ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  } \| \{ `scaffolded`: \{ `blockName`: `string` ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  }[]  } \| \{ `verifiedVersions`: `string`[] = targetVersions } \| \{ `checkedVersions`: `string`[] = targetVersions; `checks`: \{ `detail`: `string` ; `label`: `string` ; `status`: ``"fail"`` \| ``"pass"``  }[]  } \| \{ `generatedVersions`: `string`[] ; `skippedVersions`: `string`[]  } \| \{ `fuzzedVersions`: `never`[] = []; `seed`: `undefined`  } \| \{ `fuzzedVersions`: `string`[] = targetVersions; `seed`: `undefined` \| `number`  }
 
 #### Parameters
 
@@ -78,11 +79,11 @@ ___
 
 #### Returns
 
-[`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md) \| [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) \| \{ `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  } \| \{ `verifiedVersions`: `string`[] = targetVersions } \| \{ `checkedVersions`: `string`[] = targetVersions; `checks`: \{ `detail`: `string` ; `label`: `string` ; `status`: ``"pass"`` \| ``"fail"``  }[]  } \| \{ `generatedVersions`: `string`[] ; `skippedVersions`: `string`[]  } \| \{ `fuzzedVersions`: `never`[] = []; `seed`: `undefined`  } \| \{ `fuzzedVersions`: `string`[] = targetVersions; `seed`: `undefined` \| `number`  }
+[`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md) \| [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) \| \{ `block`: [`ResolvedMigrationBlockTarget`](../interfaces/packages_create_src_runtime_migration_types.ResolvedMigrationBlockTarget.md) ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md)  }[] \| \{ `blockName`: `string` ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  } \| \{ `scaffolded`: \{ `blockName`: `string` ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  }[]  } \| \{ `verifiedVersions`: `string`[] = targetVersions } \| \{ `checkedVersions`: `string`[] = targetVersions; `checks`: \{ `detail`: `string` ; `label`: `string` ; `status`: ``"fail"`` \| ``"pass"``  }[]  } \| \{ `generatedVersions`: `string`[] ; `skippedVersions`: `string`[]  } \| \{ `fuzzedVersions`: `never`[] = []; `seed`: `undefined`  } \| \{ `fuzzedVersions`: `string`[] = targetVersions; `seed`: `undefined` \| `number`  }
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:199](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L199)
+[packages/create/src/runtime/migrations.ts:203](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L203)
 
 ___
 
@@ -104,7 +105,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:266](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L266)
+[packages/create/src/runtime/migrations.ts:270](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L270)
 
 ___
 
@@ -118,7 +119,7 @@ ___
 | :------ | :------ |
 | `projectDir` | `string` |
 | `version` | `string` |
-| `«destructured»` | `CommandRenderOptions` & \{ `skipConfigUpdate?`: `boolean`  } |
+| `«destructured»` | `CommandRenderOptions` & \{ `skipConfigUpdate?`: `boolean` ; `skipSyncTypes?`: `boolean`  } |
 
 #### Returns
 
@@ -126,13 +127,13 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:292](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L292)
+[packages/create/src/runtime/migrations.ts:295](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L295)
 
 ___
 
 ### diffProjectMigrations
 
-▸ **diffProjectMigrations**(`projectDir`, `«destructured»?`): [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md)
+▸ **diffProjectMigrations**(`projectDir`, `«destructured»?`): [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) \| \{ `block`: [`ResolvedMigrationBlockTarget`](../interfaces/packages_create_src_runtime_migration_types.ResolvedMigrationBlockTarget.md) ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md)  }[]
 
 #### Parameters
 
@@ -143,17 +144,17 @@ ___
 
 #### Returns
 
-[`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md)
+[`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) \| \{ `block`: [`ResolvedMigrationBlockTarget`](../interfaces/packages_create_src_runtime_migration_types.ResolvedMigrationBlockTarget.md) ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md)  }[]
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:338](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L338)
+[packages/create/src/runtime/migrations.ts:349](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L349)
 
 ___
 
 ### scaffoldProjectMigrations
 
-▸ **scaffoldProjectMigrations**(`projectDir`, `«destructured»?`): `Object`
+▸ **scaffoldProjectMigrations**(`projectDir`, `«destructured»?`): \{ `blockName`: `string` ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  } \| \{ `scaffolded`: \{ `blockName`: `string` ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  }[]  }
 
 #### Parameters
 
@@ -164,16 +165,11 @@ ___
 
 #### Returns
 
-`Object`
-
-| Name | Type |
-| :------ | :------ |
-| `diff` | [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) |
-| `rulePath` | `string` |
+\{ `blockName`: `string` ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  } \| \{ `scaffolded`: \{ `blockName`: `string` ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  }[]  }
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:352](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L352)
+[packages/create/src/runtime/migrations.ts:377](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L377)
 
 ___
 
@@ -202,7 +198,7 @@ Verified legacy versions.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:396](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L396)
+[packages/create/src/runtime/migrations.ts:438](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L438)
 
 ___
 
@@ -228,11 +224,11 @@ Structured doctor check results for the selected legacy versions.
 | Name | Type |
 | :------ | :------ |
 | `checkedVersions` | `string`[] |
-| `checks` | \{ `detail`: `string` ; `label`: `string` ; `status`: ``"pass"`` \| ``"fail"``  }[] |
+| `checks` | \{ `detail`: `string` ; `label`: `string` ; `status`: ``"fail"`` \| ``"pass"``  }[] |
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:441](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L441)
+[packages/create/src/runtime/migrations.ts:494](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L494)
 
 ___
 
@@ -262,7 +258,7 @@ Generated and skipped legacy versions.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:631](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L631)
+[packages/create/src/runtime/migrations.ts:753](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L753)
 
 ___
 
@@ -287,4 +283,34 @@ Fuzzed legacy versions and the effective seed.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:679](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L679)
+[packages/create/src/runtime/migrations.ts:807](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L807)
+
+___
+
+### seedProjectMigrations
+
+▸ **seedProjectMigrations**(`projectDir`, `currentVersion`, `blocks`, `options?`): [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md)
+
+Initialize migration scaffolding for one or more block targets.
+
+Writes the migration config, creates the initial scaffold files, snapshots
+the current project state, and regenerates generated migration artifacts.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `projectDir` | `string` | Absolute or relative project directory containing the migration workspace. |
+| `currentVersion` | `string` | Initial semantic version to seed into the migration config. |
+| `blocks` | [`MigrationBlockConfig`](../interfaces/packages_create_src_runtime_migration_types.MigrationBlockConfig.md)[] | Block targets to register for migration-aware scaffolding. |
+| `options` | `CommandRenderOptions` | Console rendering options for initialization output. |
+
+#### Returns
+
+[`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md)
+
+The loaded migration project state after initialization completes.
+
+#### Defined in
+
+[packages/create/src/runtime/migrations.ts:995](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L995)

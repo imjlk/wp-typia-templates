@@ -12,15 +12,16 @@
 
 ### createMigrationDiff
 
-▸ **createMigrationDiff**(`state`, `fromVersion`, `toVersion`): [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md)
+▸ **createMigrationDiff**(`state`, `blockOrFromVersion`, `fromVersionOrToVersion`, `maybeToVersion?`): [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `state` | [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md) |
-| `fromVersion` | `string` |
-| `toVersion` | `string` |
+| `blockOrFromVersion` | `string` \| [`MigrationBlockConfig`](../interfaces/packages_create_src_runtime_migration_types.MigrationBlockConfig.md) \| [`ResolvedMigrationBlockTarget`](../interfaces/packages_create_src_runtime_migration_types.ResolvedMigrationBlockTarget.md) |
+| `fromVersionOrToVersion` | `string` |
+| `maybeToVersion?` | `string` |
 
 #### Returns
 

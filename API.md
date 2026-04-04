@@ -25,7 +25,8 @@ Built-in templates currently include `basic`, `interactivity`, `persistence`, an
 Generated built-in projects now scaffold starter `typia.manifest.json` files so
 editor/runtime imports resolve before the first sync, use `dev` as the primary
 watch workflow, and can opt into local presets with `--with-wp-env` and
-`--with-test-preset`.
+`--with-test-preset`. They can also opt into the migration dashboard/runtime
+bundle with `--with-migration-ui`.
 
 `persistence` also accepts:
 
@@ -33,6 +34,7 @@ watch workflow, and can opt into local presets with `--with-wp-env` and
 wp-typia my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
 wp-typia my-block --template persistence --data-storage custom-table --persistence-policy public --package-manager npm --yes --no-install
 wp-typia my-block --template persistence --package-manager npm --with-wp-env --with-test-preset --yes --no-install
+wp-typia my-block --template basic --with-migration-ui --package-manager bun --yes --no-install
 ```
 
 `compound` accepts the same persistence flags, but treats them as an optional parent-only layer:
@@ -67,6 +69,33 @@ wp-typia migrations fixtures --all --force
 wp-typia migrations verify --all
 wp-typia migrations fuzz --all --iterations 25 --seed 1
 ```
+
+When a built-in scaffold uses `--with-migration-ui`, the generated project is
+already initialized at `1.0.0`, includes `src/admin/migration-dashboard.tsx`,
+and writes `src/migrations/config.ts` in the newer multi-block shape:
+
+```ts
+export const migrationConfig = {
+  currentVersion: "1.0.0",
+  supportedVersions: ["1.0.0"],
+  snapshotDir: "src/migrations/versions",
+  blocks: [
+    {
+      key: "my-block",
+      blockName: "create-block/my-block",
+      blockJsonFile: "src/block.json",
+      manifestFile: "src/typia.manifest.json",
+      saveFile: "src/save.tsx",
+      typesFile: "src/types.ts",
+    },
+  ],
+} as const;
+```
+
+Compound scaffolds use the same config shape but seed both the parent block and
+the scaffolded hidden child block as migration-capable targets. `migration:init`
+remains the retrofit command for older projects that were not scaffolded with
+`--with-migration-ui`.
 
 Compatibility note: `create-wp-typia` remains available only as an unscoped shim for `bun create wp-typia` and historical installs. New users should start from `@wp-typia/create`.
 
@@ -245,6 +274,11 @@ Migration-capable reference apps or custom projects may also add:
 - `src/migrations/rules/`
 - `src/migrations/generated/`
 - `src/migrations/fixtures/`
+
+Migration-enabled generated projects may also wire:
+
+- `src/admin/migration-dashboard.tsx`
+- `src/migration-detector.ts`
 
 `migrations doctor` is the read-only workspace health check, `migrations fixtures` refreshes deterministic edge fixtures, and `migrations fuzz` replays those fixtures plus seeded random legacy-shaped inputs derived from the current Typia validator.
 

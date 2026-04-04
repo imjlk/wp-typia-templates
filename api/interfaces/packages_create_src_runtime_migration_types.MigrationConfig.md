@@ -9,6 +9,7 @@
 ### Properties
 
 - [blockName](packages_create_src_runtime_migration_types.MigrationConfig.md#blockname)
+- [blocks](packages_create_src_runtime_migration_types.MigrationConfig.md#blocks)
 - [currentVersion](packages_create_src_runtime_migration_types.MigrationConfig.md#currentversion)
 - [snapshotDir](packages_create_src_runtime_migration_types.MigrationConfig.md#snapshotdir)
 - [supportedVersions](packages_create_src_runtime_migration_types.MigrationConfig.md#supportedversions)
@@ -17,11 +18,21 @@
 
 ### blockName
 
-• **blockName**: `string`
+• `Optional` **blockName**: `string`
 
 #### Defined in
 
 [packages/create/src/runtime/migration-types.ts:84](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L84)
+
+___
+
+### blocks
+
+• `Optional` **blocks**: [`MigrationBlockConfig`](packages_create_src_runtime_migration_types.MigrationBlockConfig.md)[]
+
+#### Defined in
+
+[packages/create/src/runtime/migration-types.ts:85](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L85)
 
 ___
 
@@ -31,7 +42,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:85](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L85)
+[packages/create/src/runtime/migration-types.ts:86](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L86)
 
 ___
 
@@ -41,7 +52,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:86](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L86)
+[packages/create/src/runtime/migration-types.ts:87](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L87)
 
 ___
 
@@ -51,4 +62,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:87](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L87)
+[packages/create/src/runtime/migration-types.ts:88](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L88)
