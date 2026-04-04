@@ -441,9 +441,7 @@ export function verifyProjectMigrations(
 ) {
 	const state = loadMigrationProject(projectDir);
 	const targetVersions = resolveLegacyVersions(state, { all, fromVersion });
-	const blockEntries = groupEntriesByBlock(
-		discoverMigrationEntries(state).filter((entry) => targetVersions.includes(entry.fromVersion)),
-	);
+	const blockEntries = getSelectedEntriesByBlock(state, targetVersions, "verify");
 	const legacySingleBlock = isLegacySingleBlockProject(state);
 
 	if (targetVersions.length === 0) {
@@ -534,9 +532,10 @@ export function doctorProjectMigrations(
 			const manifestPath = getSnapshotManifestPath(projectDir, block, version);
 			const savePath = getSnapshotSavePath(projectDir, block, version);
 			const hasSnapshot = fs.existsSync(snapshotRoot);
+			const snapshotIsOptional = !hasSnapshot && isSnapshotOptionalForBlockVersion(state, block, version);
 
 			recordCheck(
-				hasSnapshot || block.layout === "multi" ? "pass" : "fail",
+				hasSnapshot || snapshotIsOptional ? "pass" : "fail",
 				legacySingleBlock ? `Snapshot ${version}` : `Snapshot ${block.blockName} @ ${version}`,
 				hasSnapshot
 					? path.relative(projectDir, snapshotRoot)
@@ -817,9 +816,7 @@ export function fuzzProjectMigrations(
 ) {
 	const state = loadMigrationProject(projectDir);
 	const targetVersions = resolveLegacyVersions(state, { all, fromVersion });
-	const blockEntries = groupEntriesByBlock(
-		discoverMigrationEntries(state).filter((entry) => targetVersions.includes(entry.fromVersion)),
-	);
+	const blockEntries = getSelectedEntriesByBlock(state, targetVersions, "fuzz");
 	const legacySingleBlock = isLegacySingleBlockProject(state);
 	if (targetVersions.length === 0) {
 		renderLine("No legacy versions configured for fuzzing.");
@@ -1017,6 +1014,57 @@ function hasSnapshotForVersion(
 	version: string,
 ): boolean {
 	return fs.existsSync(getSnapshotManifestPath(state.projectDir, block, version));
+}
+
+function getSelectedEntriesByBlock(
+	state: ReturnType<typeof loadMigrationProject>,
+	targetVersions: string[],
+	command: "fuzz" | "verify",
+) {
+	const discoveredEntries = discoverMigrationEntries(state);
+	const discoveredEntryKeys = new Set(
+		discoveredEntries.map((entry) => `${entry.block.key}:${entry.fromVersion}`),
+	);
+	const missingEntries = targetVersions.flatMap((version) =>
+		state.blocks
+			.filter((block) => hasSnapshotForVersion(state, block, version))
+			.filter((block) => !discoveredEntryKeys.has(`${block.key}:${version}`))
+			.map((block) => ({ block, version })),
+	);
+
+	if (missingEntries.length > 0) {
+		const missingLabels = missingEntries
+			.map(({ block, version }) => `${block.blockName} @ ${version}`)
+			.join(", ");
+		throw new Error(
+			`Missing migration ${command} inputs for ${missingLabels}. Run \`wp-typia migrations scaffold --from <semver>\` first.`,
+		);
+	}
+
+	return groupEntriesByBlock(
+		discoveredEntries.filter((entry) => targetVersions.includes(entry.fromVersion)),
+	);
+}
+
+function isSnapshotOptionalForBlockVersion(
+	state: ReturnType<typeof loadMigrationProject>,
+	block: ReturnType<typeof loadMigrationProject>["blocks"][number],
+	version: string,
+): boolean {
+	if (block.layout !== "multi") {
+		return false;
+	}
+
+	const introducedVersions = [...new Set(state.config.supportedVersions)]
+		.filter((candidateVersion) => hasSnapshotForVersion(state, block, candidateVersion))
+		.sort(compareSemver);
+	const firstIntroducedVersion = introducedVersions[0];
+
+	if (!firstIntroducedVersion) {
+		return false;
+	}
+
+	return compareSemver(version, firstIntroducedVersion) < 0;
 }
 
 function groupEntriesByBlock(entries: ReturnType<typeof discoverMigrationEntries>): Record<string, typeof entries> {

@@ -1344,6 +1344,25 @@ describe("wp-typia migrations", () => {
 		expect(output).toContain("PASS Migration doctor summary:");
 	});
 
+	test("doctor fails when a current multi-block snapshot root is missing after introduction", () => {
+		const projectDir = path.join(tempRoot, "multi-block-missing-current-snapshot-project");
+		createMultiBlockMigrationProject(projectDir, { includeLegacyChild: true });
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+		fs.rmSync(
+			path.join(projectDir, "src", "migrations", "versions", "2.0.0", "multi-parent-item"),
+			{ force: true, recursive: true },
+		);
+
+		expect(() =>
+			runCli("node", [entryPath, "migrations", "doctor", "--all"], {
+				cwd: projectDir,
+			}),
+		).toThrow(/Migration doctor failed/);
+	});
+
 	test("doctor passes on a healthy migration workspace", () => {
 		const projectDir = path.join(tempRoot, "doctor-success-project");
 		createVersionedMigrationProject(projectDir);
@@ -1558,5 +1577,38 @@ describe("wp-typia migrations", () => {
 				{ cwd: projectDir },
 			),
 		).toThrow(/Invalid seed: 10foo/);
+	});
+
+	test("verify and fuzz fail when selected legacy versions are missing scaffolded edges", () => {
+		const projectDir = path.join(tempRoot, "missing-edge-verification-project");
+		createVersionedMigrationProject(projectDir);
+		const configPath = path.join(projectDir, "src", "migrations", "config.ts");
+		const version100Root = path.join(projectDir, "src", "migrations", "versions", "1.0.0");
+		const version150Root = path.join(projectDir, "src", "migrations", "versions", "1.5.0");
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+		fs.cpSync(version100Root, version150Root, { recursive: true });
+		fs.writeFileSync(
+			configPath,
+			fs
+				.readFileSync(configPath, "utf8")
+				.replace('supportedVersions: ["1.0.0", "2.0.0"]', 'supportedVersions: ["1.0.0", "1.5.0", "2.0.0"]'),
+			"utf8",
+		);
+
+		expect(() =>
+			runCli("node", [entryPath, "migrations", "verify", "--all"], {
+				cwd: projectDir,
+			}),
+		).toThrow(/Missing migration verify inputs.*1\.5\.0/);
+		expect(() =>
+			runCli(
+				"node",
+				[entryPath, "migrations", "fuzz", "--all", "--iterations", "1", "--seed", "0"],
+				{ cwd: projectDir },
+			),
+		).toThrow(/Missing migration fuzz inputs.*1\.5\.0/);
 	});
 });
