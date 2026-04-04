@@ -96,7 +96,7 @@ const blockSupports: BlockSupports = {
     dropCap: true,
     fontFamily: true,
     fontSize: true,
-    textAlign: ['left', 'right'],
+    textAlign: ['left', 'justify'],
     textTransform: true,
   },
 };
