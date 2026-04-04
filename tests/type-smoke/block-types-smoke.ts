@@ -49,13 +49,16 @@ const spacingSize: SpacingSize = {
 const supportKey: TypographySupportKey = 'dropCap';
 const blockSupports: BlockSupports = {
   align: ['wide', 'full'],
+  background: {
+    backgroundImage: true,
+    backgroundSize: true,
+  },
   border: {
     color: true,
     radius: true,
   },
   color: {
     background: true,
-    backgroundImage: true,
     enableAlpha: true,
     gradients: true,
     link: true,
@@ -114,7 +117,7 @@ const supportStyleAttributes: BlockStyleSupportAttributes = {
       topWidth: '3px',
     },
     color: {
-      duotone: presetDuotone,
+      duotone: ['#111111', 'rgba(255, 255, 255, 0.95)'],
       text: 'var(--wp--preset--color--primary)',
       gradient: 'var:preset|gradient|sunset',
     },

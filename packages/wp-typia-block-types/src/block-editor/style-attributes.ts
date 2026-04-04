@@ -74,7 +74,10 @@ export interface BlockElementsStyleAttributes {
 
 export interface BlockColorStyleAttributes {
   readonly background?: BlockStyleColorValue;
-  readonly duotone?: string | PresetDuotoneReference;
+  readonly duotone?:
+    | string
+    | PresetDuotoneReference
+    | readonly [CssColorValue, CssColorValue];
   readonly gradient?: BlockStyleGradientValue;
   readonly text?: BlockStyleColorValue;
 }

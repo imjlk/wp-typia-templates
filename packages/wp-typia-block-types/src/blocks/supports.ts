@@ -16,6 +16,7 @@ export type BlockSupportFeature =
   | 'alignWide'
   | 'anchor'
   | 'ariaLabel'
+  | 'background'
   | 'border'
   | 'className'
   | 'color'
@@ -43,6 +44,7 @@ export const BLOCK_SUPPORT_FEATURES = [
   'alignWide',
   'anchor',
   'ariaLabel',
+  'background',
   'border',
   'className',
   'color',
@@ -117,9 +119,13 @@ export interface BlockBorderSupport {
   >;
 }
 
+export interface BlockBackgroundSupport {
+  readonly backgroundImage?: boolean;
+  readonly backgroundSize?: boolean;
+}
+
 export interface BlockColorSupport {
   readonly background?: boolean;
-  readonly backgroundImage?: boolean;
   /**
    * Dedicated button color support documented in the Block Supports reference
    * as stable since WordPress 6.5.
@@ -228,7 +234,7 @@ export interface BlockTypographySupport {
   readonly fontWeight?: boolean;
   readonly letterSpacing?: boolean;
   readonly lineHeight?: boolean;
-  readonly textAlign?: boolean | readonly Exclude<TextAlignment, 'justify'>[];
+  readonly textAlign?: boolean | readonly TextAlignment[];
   readonly textColumns?: boolean;
   readonly textDecoration?: boolean;
   readonly textTransform?: boolean;
@@ -248,6 +254,7 @@ export interface BlockSupports {
   readonly alignWide?: boolean;
   readonly anchor?: boolean;
   readonly ariaLabel?: boolean;
+  readonly background?: boolean | BlockBackgroundSupport;
   readonly border?: boolean | BlockBorderSupport;
   readonly className?: boolean;
   readonly color?: boolean | BlockColorSupport;
