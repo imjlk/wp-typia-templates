@@ -6,8 +6,10 @@ import { describe, expect, test } from "bun:test";
 
 import {
 	defineEndpointManifest,
+	syncEndpointClient,
 	syncRestOpenApi,
 	type EndpointManifestDefinition,
+	type SyncEndpointClientOptions,
 	type SyncRestOpenApiContractsOptions,
 	type SyncRestOpenApiManifestOptions,
 	type SyncRestOpenApiOptions,
@@ -50,6 +52,11 @@ const manifestOptions: SyncRestOpenApiManifestOptions = {
 	openApiFile: "src/api.openapi.json",
 	typesFile: "src/api-types.ts",
 };
+const clientOptions: SyncEndpointClientOptions = {
+	clientFile: "src/api-client.ts",
+	manifest,
+	typesFile: "src/api-types.ts",
+};
 
 const compatibilityOptions: SyncRestOpenApiContractsOptions = {
 	contracts: manifest.contracts,
@@ -65,6 +72,7 @@ const syncOptions: SyncRestOpenApiOptions = manifestOptions;
 void manifestShape;
 void syncOptions;
 void compatibilityOptions;
+void clientOptions;
 
 function createTempProject(): { root: string; typesFile: string } {
 	const root = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-metadata-core-"));
@@ -85,6 +93,25 @@ function createTempProject(): { root: string; typesFile: string } {
 			"export interface CounterResponse {",
 			"  count: number;",
 			"}",
+			"",
+		].join("\n"),
+		"utf8",
+	);
+	fs.writeFileSync(
+		path.join(typesDir, "api-validators.ts"),
+		[
+			"import type { ValidationResult } from '@wp-typia/api-client';",
+			"import type { CounterQuery, CounterResponse, WriteCounterRequest } from './api-types';",
+			"",
+			"function ok<T>(input: T): ValidationResult<T> {",
+			"  return { data: input, errors: [], isValid: true };",
+			"}",
+			"",
+			"export const apiValidators = {",
+			"  query: (input: unknown): ValidationResult<CounterQuery> => ok(input as CounterQuery),",
+			"  request: (input: unknown): ValidationResult<WriteCounterRequest> => ok(input as WriteCounterRequest),",
+			"  response: (input: unknown): ValidationResult<CounterResponse> => ok(input as CounterResponse),",
+			"};",
 			"",
 		].join("\n"),
 		"utf8",
@@ -148,6 +175,77 @@ describe("metadata-core endpoint manifests", () => {
 			expect(manifestOpenApi).toEqual(compatibilityOpenApi);
 			expect(manifestOpenApi.paths["/demo/v1/counter/state"].get).toBeDefined();
 			expect(manifestOpenApi.paths["/demo/v1/counter/state"].post).toBeDefined();
+		} finally {
+			fs.rmSync(project.root, { force: true, recursive: true });
+		}
+	});
+
+	test("syncEndpointClient emits a portable manifest-first client module", async () => {
+		const project = createTempProject();
+
+		try {
+			const result = await syncEndpointClient({
+				clientFile: "build/api-client.ts",
+				manifest,
+				projectRoot: project.root,
+				typesFile: project.typesFile,
+			});
+			const generatedClient = fs.readFileSync(
+				path.join(project.root, "build", "api-client.ts"),
+				"utf8",
+			);
+
+			expect(result.endpointCount).toBe(2);
+			expect(result.operationIds).toEqual([
+				"getCounterState",
+				"writeCounterState",
+			]);
+			expect(generatedClient).toContain("from '@wp-typia/api-client'");
+			expect(generatedClient).toContain("import type {");
+			expect(generatedClient).toContain("\tCounterQuery,");
+			expect(generatedClient).toContain("\tCounterResponse,");
+			expect(generatedClient).toContain("\tWriteCounterRequest,");
+			expect(generatedClient).toContain("import { apiValidators } from '../src/api-validators'");
+			expect(generatedClient).toContain("validateRequest: apiValidators.query");
+			expect(generatedClient).toContain("validateRequest: apiValidators.request");
+			expect(generatedClient).toContain("validateResponse: apiValidators.response");
+			expect(generatedClient).toContain("export const getCounterStateEndpoint = createEndpoint<");
+			expect(generatedClient).toContain("export function getCounterState(");
+			expect(generatedClient).toContain("export function writeCounterState(");
+		} finally {
+			fs.rmSync(project.root, { force: true, recursive: true });
+		}
+	});
+
+	test("syncEndpointClient rejects endpoints that define both bodyContract and queryContract", async () => {
+		const project = createTempProject();
+		const ambiguousManifest = defineEndpointManifest({
+			contracts: manifest.contracts,
+			endpoints: [
+				{
+					authMode: "public-read",
+					bodyContract: "request",
+					method: "POST",
+					operationId: "writeCounterState",
+					path: "/demo/v1/counter/state",
+					queryContract: "query",
+					responseContract: "response",
+					tags: ["Counter"],
+				},
+			],
+		});
+
+		try {
+			await expect(
+				syncEndpointClient({
+					clientFile: "build/api-client.ts",
+					manifest: ambiguousManifest,
+					projectRoot: project.root,
+					typesFile: project.typesFile,
+				}),
+			).rejects.toThrow(
+				'Endpoint "writeCounterState" defines both bodyContract and queryContract; generated portable clients require a single request contract.',
+			);
 		} finally {
 			fs.rmSync(project.root, { force: true, recursive: true });
 		}

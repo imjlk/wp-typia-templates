@@ -11,6 +11,9 @@ This package focuses on:
 
 It does not include any WordPress PHP bridge logic. Generated PHP route code stays in `@wp-typia/create` templates.
 
+If you need a backend-neutral consumer instead of WordPress-specific route
+resolution, use `@wp-typia/api-client`.
+
 Typical usage:
 
 ```ts

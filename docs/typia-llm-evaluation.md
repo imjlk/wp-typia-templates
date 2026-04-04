@@ -14,7 +14,7 @@ This repo-local proof of concept records the outcome of `#35`.
 ## What the PoC emits
 
 The adapter example now generates these typia.llm-facing artifacts under
-`examples/rest-contract-adapter-poc/src/typia-llm/`:
+`examples/api-contract-adapter-poc/src/typia-llm/`:
 
 - `counter.llm.generated.ts`
 - `counter.llm.application.json`

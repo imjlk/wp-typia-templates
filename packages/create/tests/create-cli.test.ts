@@ -30,6 +30,7 @@ const createBlockSubsetFixturePath = path.join(
 const createPackageManifest = JSON.parse(
 	fs.readFileSync(path.join(packageRoot, "package.json"), "utf8"),
 );
+const apiClientPackageVersion = createPackageManifest.dependencies["@wp-typia/api-client"];
 const createPackageVersion = `^${createPackageManifest.version}`;
 const blockTypesPackageVersion =
 	createPackageManifest.dependencies["@wp-typia/block-types"];
@@ -41,6 +42,7 @@ const workspaceBunNodeModulesPath = path.join(
 	"node_modules",
 );
 const workspacePackagePaths = {
+	"@wp-typia/api-client": path.resolve(packageRoot, "..", "wp-typia-api-client"),
 	"@wp-typia/block-types": path.resolve(packageRoot, "..", "wp-typia-block-types"),
 	"@wp-typia/create": packageRoot,
 	"@wp-typia/rest": path.resolve(packageRoot, "..", "wp-typia-rest"),
@@ -654,6 +656,7 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 
 		expect(packageJson.name).toBe("demo-persistence-public");
+		expect(packageJson.devDependencies["@wp-typia/api-client"]).toBe(apiClientPackageVersion);
 		expect(packageJson.devDependencies["@wp-typia/rest"]).toBe(restPackageVersion);
 		expect(packageJson.devDependencies["chokidar-cli"]).toBe("^3.0.0");
 		expect(packageJson.devDependencies.concurrently).toBe("^9.0.1");
@@ -696,6 +699,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedApi).toContain("@wp-typia/rest");
 		expect(generatedSyncRest).toContain("syncTypeSchemas");
 		expect(generatedSyncRest).toContain("defineEndpointManifest");
+		expect(generatedSyncRest).toContain("syncEndpointClient");
 		expect(generatedSyncRest).toContain("syncRestOpenApi");
 		expect(generatedSyncRest).toContain("@wp-typia/create/metadata-core");
 		expect(generatedSyncRest).toContain("const REST_ENDPOINT_MANIFEST = defineEndpointManifest");
@@ -723,6 +727,16 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(pluginBootstrap).toContain("Customize storage helpers");
 		expect(pluginBootstrap).toContain("Route handlers are the main product-level extension point");
 		expect(restPublicHelper).toContain("Customize the public write gate here");
+
+		runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts");
+
+		const generatedApiClient = fs.readFileSync(
+			path.join(targetDir, "src", "api-client.ts"),
+			"utf8",
+		);
+		expect(generatedApiClient).toContain("from '@wp-typia/api-client'");
+		expect(generatedApiClient).toContain("export const getDemoPersistencePublicStateEndpoint");
+		expect(generatedApiClient).toContain("export function writeDemoPersistencePublicState(");
 	});
 
 	test("scaffoldProject creates a persistence template with authenticated writes by default", async () => {
@@ -1160,8 +1174,10 @@ describe("@wp-typia/create scaffolding", () => {
 		).rejects.toThrow("`--with-migration-ui` is currently supported only for built-in templates.");
 	});
 
-	test("compound scaffolds enable authenticated persistence when only data storage is provided", async () => {
-		const targetDir = path.join(tempRoot, "demo-compound-storage");
+	test(
+		"compound scaffolds enable authenticated persistence when only data storage is provided",
+		async () => {
+			const targetDir = path.join(tempRoot, "demo-compound-storage");
 
 		await scaffoldProject({
 			projectDir: targetDir,
@@ -1245,6 +1261,7 @@ describe("@wp-typia/create scaffolding", () => {
 			"utf8",
 		);
 
+		expect(packageJson.devDependencies["@wp-typia/api-client"]).toBe(apiClientPackageVersion);
 		expect(packageJson.devDependencies["@wp-typia/rest"]).toBe(restPackageVersion);
 		expect(packageJson.scripts.dev).toBe(
 			'concurrently -k -n sync-types,sync-rest,editor -c yellow,magenta,blue "npm run watch:sync-types" "npm run watch:sync-rest" "npm run start:editor"',
@@ -1268,6 +1285,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(parentBlockJson.viewScriptModule).toBe("file:./interactivity.js");
 		expect(parentManifest.attributes.resourceKey.typia.defaultValue).toBe("primary");
 		expect(generatedSyncRest).toContain("syncRestOpenApi");
+		expect(generatedSyncRest).toContain("syncEndpointClient");
 		expect(generatedSyncRest).toContain("manifest: block.restManifest");
 		expect(generatedBlockConfig).toContain("src/blocks/demo-compound-storage/api.openapi.json");
 		expect(generatedBlockConfig).toContain("restManifest: defineEndpointManifest");
@@ -1305,7 +1323,35 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(readme).toContain("## PHP REST Extension Points");
 		expect(readme).toContain("The hidden child block does not own REST routes or storage.");
 		expect(pluginBootstrap).toContain("Customize storage helpers");
-	});
+
+		runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts");
+
+		const generatedApiClient = fs.readFileSync(
+			path.join(
+				targetDir,
+				"src",
+				"blocks",
+				"demo-compound-storage",
+				"api-client.ts",
+			),
+			"utf8",
+		);
+		expect(generatedApiClient).toContain("from '@wp-typia/api-client'");
+		expect(generatedApiClient).toContain("export const getDemoCompoundStorageStateEndpoint");
+			expect(
+				fs.existsSync(
+					path.join(
+						targetDir,
+						"src",
+						"blocks",
+						"demo-compound-storage-item",
+						"api-client.ts",
+					),
+				),
+			).toBe(false);
+		},
+		{ timeout: 15_000 },
+	);
 
 	test(
 		"compound add-child workflow scaffolds a new hidden child block and keeps the default template stable",

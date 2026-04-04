@@ -73,6 +73,7 @@ export type PersistencePolicy = (typeof PERSISTENCE_POLICIES)[number];
  * Normalized template variables shared by built-in and remote scaffold flows.
  */
 export interface ScaffoldTemplateVariables extends Record<string, string> {
+	apiClientPackageVersion: string;
 	author: string;
 	blockTypesPackageVersion: string;
 	category: string;
@@ -429,7 +430,12 @@ export function getTemplateVariables(
 	templateId: string,
 	answers: ScaffoldAnswers,
 ): ScaffoldTemplateVariables {
-	const { blockTypesPackageVersion, createPackageVersion, restPackageVersion } = getPackageVersions();
+	const {
+		apiClientPackageVersion,
+		blockTypesPackageVersion,
+		createPackageVersion,
+		restPackageVersion,
+	} = getPackageVersions();
 	const template = isBuiltInTemplateId(templateId) ? getTemplateById(templateId) : null;
 	const slug = toKebabCase(answers.slug);
 	const slugSnakeCase = toSnakeCase(slug);
@@ -468,6 +474,7 @@ export function getTemplateVariables(
 			: "authenticated";
 
 	return {
+		apiClientPackageVersion,
 		author: answers.author.trim(),
 		blockTypesPackageVersion,
 		category: template?.defaultCategory ?? "widgets",

@@ -327,7 +327,7 @@ async function compileGeneratedModule() {
 function getCompiledModuleFile(): string {
 	return path.join(
 		COMPILED_OUTPUT_DIR,
-		"rest-contract-adapter-poc",
+		"api-contract-adapter-poc",
 		"src",
 		"typia-llm",
 		"counter.llm.generated.js",

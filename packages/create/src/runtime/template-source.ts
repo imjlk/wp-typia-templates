@@ -34,6 +34,8 @@ type TemplateSourceFormat = "wp-typia" | "create-block-external" | "create-block
  * normalizes them into a scaffold project.
  */
 export interface TemplateVariableContext extends Record<string, unknown> {
+	/** Version string for `@wp-typia/api-client` used in generated dependencies. */
+	apiClientPackageVersion: string;
 	/** Version string for `@wp-typia/create` used in generated dependencies. */
 	createPackageVersion: string;
 	/** Version string for `@wp-typia/block-types` used in generated dependencies. */
@@ -331,9 +333,15 @@ function getDefaultCategory(sourceDir: string): string {
 }
 
 function getTemplateVariableContext(variables: { [key: string]: string }): TemplateVariableContext {
-	const { blockTypesPackageVersion, createPackageVersion, restPackageVersion } = getPackageVersions();
+	const {
+		apiClientPackageVersion,
+		blockTypesPackageVersion,
+		createPackageVersion,
+		restPackageVersion,
+	} = getPackageVersions();
 	return {
 		...variables,
+		apiClientPackageVersion: variables.apiClientPackageVersion ?? apiClientPackageVersion,
 		blockTypesPackageVersion: variables.blockTypesPackageVersion ?? blockTypesPackageVersion,
 		createPackageVersion: variables.createPackageVersion ?? createPackageVersion,
 		description: variables.description,

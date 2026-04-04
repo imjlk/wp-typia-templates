@@ -6,8 +6,8 @@ import {
 	counterEndpointManifest,
 	getCounterAdapterRouteTable,
 	startCounterAdapterServer,
-} from '../../examples/rest-contract-adapter-poc/src/counter-adapter';
-import { counterContractValidators } from '../../examples/rest-contract-adapter-poc/src/contract-validation';
+} from '../../examples/api-contract-adapter-poc/src/counter-adapter';
+import { counterContractValidators } from '../../examples/api-contract-adapter-poc/src/contract-validation';
 
 function toRouteSignature(
 	route: Pick< EndpointManifestEndpointDefinition, 'method' | 'path' >

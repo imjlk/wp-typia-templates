@@ -358,6 +358,45 @@ interface NormalizedSyncRestOpenApiOptions {
   typesFile: string;
 }
 
+interface SyncEndpointClientBaseOptions {
+  /** Output path for the generated portable client module. */
+  clientFile: string;
+  /** Optional project root used to resolve file paths. */
+  projectRoot?: string;
+  /** Source file that exports the endpoint contract types. */
+  typesFile: string;
+  /** Optional explicit path to the validator module. */
+  validatorsFile?: string;
+}
+
+/**
+ * Manifest-first options for writing a portable endpoint client module.
+ */
+export interface SyncEndpointClientOptions extends SyncEndpointClientBaseOptions {
+  /** Canonical endpoint manifest describing the REST surface. */
+  manifest: EndpointManifestDefinition;
+}
+
+/**
+ * Result returned after writing a generated portable endpoint client module.
+ */
+export interface SyncEndpointClientResult {
+  /** Number of endpoints included in the generated client file. */
+  endpointCount: number;
+  /** Absolute path to the generated client file. */
+  clientPath: string;
+  /** Operation ids emitted as endpoint constants and convenience wrappers. */
+  operationIds: string[];
+}
+
+interface NormalizedSyncEndpointClientOptions {
+  clientPath: string;
+  manifest: EndpointManifestDefinition;
+  projectRoot: string;
+  typesFile: string;
+  validatorsFile: string;
+}
+
 interface AnalysisContext {
   allowedExternalPackages: Set<string>;
   checker: ts.TypeChecker;
@@ -745,6 +784,148 @@ export async function syncRestOpenApi(
   };
 }
 
+/**
+ * Generate and write a manifest-first portable endpoint client module.
+ *
+ * @param options Manifest, source file, validator file, and output path settings.
+ * @returns Information about the generated client file and emitted operation ids.
+ */
+export async function syncEndpointClient(
+  options: SyncEndpointClientOptions,
+): Promise<SyncEndpointClientResult> {
+  const { clientPath, manifest, projectRoot, typesFile, validatorsFile } =
+    normalizeSyncEndpointClientOptions(options);
+  const operationIds = new Set<string>();
+  const importedTypeNames = new Set<string>();
+  const endpointLines: string[] = [];
+  const inlineHelpers = new Set<string>();
+
+  for (const endpoint of manifest.endpoints) {
+    assertValidClientIdentifier(endpoint.operationId, 'operationId');
+    if (operationIds.has(endpoint.operationId)) {
+      throw new Error(
+        `Duplicate endpoint operationId "${endpoint.operationId}" detected while generating the endpoint client.`,
+      );
+    }
+    operationIds.add(endpoint.operationId);
+
+    if (endpoint.bodyContract && endpoint.queryContract) {
+      throw new Error(
+        `Endpoint "${endpoint.operationId}" defines both bodyContract and queryContract; generated portable clients require a single request contract.`,
+      );
+    }
+
+    const requestContractKey = endpoint.bodyContract ?? endpoint.queryContract ?? null;
+    const responseContract = resolveEndpointClientContract(
+      manifest,
+      endpoint.responseContract,
+      endpoint.operationId,
+      'responseContract',
+    );
+    importedTypeNames.add(responseContract.sourceTypeName);
+
+    let requestTypeName = 'undefined';
+    let requestValidatorExpression = 'validateNoRequest';
+
+    if (requestContractKey) {
+      const requestContract = resolveEndpointClientContract(
+        manifest,
+        requestContractKey,
+        endpoint.operationId,
+        endpoint.bodyContract ? 'bodyContract' : 'queryContract',
+      );
+      requestTypeName = requestContract.sourceTypeName;
+      requestValidatorExpression = `apiValidators.${toClientPropertyName(requestContractKey)}`;
+      importedTypeNames.add(requestContract.sourceTypeName);
+    } else {
+      inlineHelpers.add('validateNoRequest');
+    }
+
+    const returnCallExpression = `callEndpoint( ${endpoint.operationId}Endpoint, request, options )`;
+    const returnCallLines =
+      returnCallExpression.length <= 68
+        ? [`\treturn ${returnCallExpression};`]
+        : [
+            `\treturn callEndpoint(`,
+            `\t\t${endpoint.operationId}Endpoint,`,
+            `\t\trequest,`,
+            `\t\toptions`,
+            `\t);`,
+          ];
+
+    endpointLines.push(
+      [
+        `export const ${endpoint.operationId}Endpoint = createEndpoint<`,
+        `\t${requestTypeName},`,
+        `\t${responseContract.sourceTypeName}`,
+        `>( {`,
+        `\tauthMode: ${toJavaScriptStringLiteral(endpoint.authMode)},`,
+        `\tmethod: ${toJavaScriptStringLiteral(endpoint.method)},`,
+        `\toperationId: ${toJavaScriptStringLiteral(endpoint.operationId)},`,
+        `\tpath: ${toJavaScriptStringLiteral(endpoint.path)},`,
+        `\tvalidateRequest: ${requestValidatorExpression},`,
+        `\tvalidateResponse: apiValidators.${toClientPropertyName(endpoint.responseContract)},`,
+        `} );`,
+        '',
+        `export function ${endpoint.operationId}(`,
+        `\trequest: ${requestTypeName},`,
+        `\toptions: EndpointCallOptions`,
+        `) {`,
+        ...returnCallLines,
+        `}`,
+      ].join('\n'),
+    );
+  }
+
+  const sortedTypeNames = [...importedTypeNames].sort();
+  const lines = [
+    `import {`,
+    `\tcallEndpoint,`,
+    `\tcreateEndpoint,`,
+    `\ttype EndpointCallOptions,`,
+    `} from '@wp-typia/api-client';`,
+    ...(sortedTypeNames.length === 1
+      ? [
+          `import type { ${sortedTypeNames[0]} } from ${toJavaScriptStringLiteral(
+            toModuleImportPath(clientPath, path.resolve(projectRoot, typesFile)),
+          )};`,
+        ]
+      : [
+          `import type {`,
+          ...sortedTypeNames.map((typeName) => `\t${typeName},`),
+          `} from ${toJavaScriptStringLiteral(
+            toModuleImportPath(clientPath, path.resolve(projectRoot, typesFile)),
+          )};`,
+        ]),
+    `import { apiValidators } from ${toJavaScriptStringLiteral(
+      toModuleImportPath(clientPath, path.resolve(projectRoot, validatorsFile)),
+    )};`,
+    '',
+    ...(inlineHelpers.has('validateNoRequest')
+      ? [
+          `function validateNoRequest() {`,
+          `\treturn {`,
+          `\t\tdata: undefined,`,
+          `\t\terrors: [],`,
+          `\t\tisValid: true,`,
+          `\t};`,
+          `}`,
+          '',
+        ]
+      : []),
+    ...endpointLines.flatMap((entry) => [entry, '']),
+  ];
+
+  fs.mkdirSync(path.dirname(clientPath), { recursive: true });
+  fs.writeFileSync(clientPath, `${lines.join('\n').trimEnd()}\n`, 'utf8');
+
+  return {
+    clientPath,
+    endpointCount: manifest.endpoints.length,
+    operationIds: [...operationIds],
+  };
+}
+
 function normalizeSyncRestOpenApiOptions(
   options: SyncRestOpenApiOptions,
 ): NormalizedSyncRestOpenApiOptions {
@@ -785,6 +966,83 @@ function normalizeSyncRestOpenApiOptions(
     projectRoot,
     typesFile: options.typesFile,
   };
+}
+
+function normalizeSyncEndpointClientOptions(
+  options: SyncEndpointClientOptions,
+): NormalizedSyncEndpointClientOptions {
+  const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
+  const clientPath = path.resolve(projectRoot, options.clientFile);
+  const typesFile = path.resolve(projectRoot, options.typesFile);
+  const validatorsFile = path.resolve(
+    projectRoot,
+    options.validatorsFile ??
+      options.typesFile.replace(/api-types\.ts$/u, 'api-validators.ts'),
+  );
+
+  if (!fs.existsSync(typesFile)) {
+    throw new Error(`Unable to generate an endpoint client because the types file does not exist: ${typesFile}`);
+  }
+  if (!fs.existsSync(validatorsFile)) {
+    throw new Error(
+      `Unable to generate an endpoint client because the validators file does not exist: ${validatorsFile}`,
+    );
+  }
+
+  return {
+    clientPath,
+    manifest: options.manifest,
+    projectRoot,
+    typesFile: options.typesFile,
+    validatorsFile: path.relative(projectRoot, validatorsFile),
+  };
+}
+
+function resolveEndpointClientContract(
+  manifest: EndpointManifestDefinition,
+  contractKey: string,
+  operationId: string,
+  fieldName: 'bodyContract' | 'queryContract' | 'responseContract',
+): EndpointManifestContractDefinition {
+  const contract = manifest.contracts[contractKey];
+  if (!contract) {
+    throw new Error(
+      `Endpoint "${operationId}" references missing ${fieldName} "${contractKey}" while generating the endpoint client.`,
+    );
+  }
+
+  return contract;
+}
+
+function toClientPropertyName(value: string): string {
+  return value
+    .replace(/[^A-Za-z0-9]+(.)/g, (_match, next: string) => next.toUpperCase())
+    .replace(/^[A-Z]/, (match) => match.toLowerCase());
+}
+
+function toModuleImportPath(fromFile: string, targetFile: string): string {
+  let relativePath = path.relative(path.dirname(fromFile), targetFile).replace(/\\/g, '/');
+  if (!relativePath.startsWith('.')) {
+    relativePath = `./${relativePath}`;
+  }
+
+  return relativePath.replace(/\.[^.]+$/u, '');
+}
+
+function toJavaScriptStringLiteral(value: string): string {
+  return `'${value
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n')}'`;
+}
+
+function assertValidClientIdentifier(value: string, label: string): void {
+  if (!/^[$A-Z_][0-9A-Z_$]*$/iu.test(value)) {
+    throw new Error(
+      `Generated endpoint client ${label} "${value}" is not a valid JavaScript identifier.`,
+    );
+  }
 }
 
 function analyzeSourceType(

@@ -1,6 +1,6 @@
 import Ajv2020, { type ErrorObject, type ValidateFunction } from 'ajv/dist/2020.js';
 
-import type { ValidationError, ValidationResult } from '@wp-typia/rest';
+import type { ValidationError, ValidationResult } from '@wp-typia/api-client';
 import counterQuerySchema from '../../persistence-examples/src/blocks/counter/api-schemas/counter-query.schema.json';
 import counterResponseSchema from '../../persistence-examples/src/blocks/counter/api-schemas/counter-response.schema.json';
 import incrementRequestSchema from '../../persistence-examples/src/blocks/counter/api-schemas/increment-request.schema.json';

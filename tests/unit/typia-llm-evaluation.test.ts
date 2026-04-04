@@ -3,8 +3,8 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import counterAiResponseSchema from "../../examples/persistence-examples/src/blocks/counter/wordpress-ai/counter-response.ai.schema.json";
-import counterLlmApplicationArtifact from "../../examples/rest-contract-adapter-poc/src/typia-llm/counter.llm.application.json";
-import counterStructuredOutputArtifact from "../../examples/rest-contract-adapter-poc/src/typia-llm/counter-response.structured-output.json";
+import counterLlmApplicationArtifact from "../../examples/api-contract-adapter-poc/src/typia-llm/counter.llm.application.json";
+import counterStructuredOutputArtifact from "../../examples/api-contract-adapter-poc/src/typia-llm/counter-response.structured-output.json";
 import {
 	buildCounterTypiaLlmArtifacts,
 	buildCounterTypiaLlmMethodDescriptors,
@@ -12,7 +12,7 @@ import {
 	type ProjectedTypiaLlmApplicationArtifact,
 	type ProjectedTypiaStructuredOutputArtifact,
 	renderCounterTypiaLlmGeneratedSource,
-} from "../../examples/rest-contract-adapter-poc/scripts/sync-typia-llm";
+} from "../../examples/api-contract-adapter-poc/scripts/sync-typia-llm";
 
 const checkedInApplicationArtifact =
 	counterLlmApplicationArtifact as ProjectedTypiaLlmApplicationArtifact;
@@ -22,7 +22,7 @@ const checkedInStructuredOutputArtifact =
 describe("typia.llm evaluation artifacts", () => {
 	test("checked-in generated source matches the rendered manifest-driven module", () => {
 		const generatedSource = readFileSync(
-			path.join(import.meta.dir, "..", "..", "examples", "rest-contract-adapter-poc", COUNTER_LLM_GENERATED_SOURCE_RELATIVE_PATH),
+			path.join(import.meta.dir, "..", "..", "examples", "api-contract-adapter-poc", COUNTER_LLM_GENERATED_SOURCE_RELATIVE_PATH),
 			"utf8",
 		);
 

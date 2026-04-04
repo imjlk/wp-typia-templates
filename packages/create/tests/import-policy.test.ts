@@ -43,6 +43,7 @@ describe("@wp-typia/create import policy", () => {
 
 		expect(typeof metadataCoreModule.defineEndpointManifest).toBe("function");
 		expect(typeof metadataCoreModule.runSyncBlockMetadata).toBe("function");
+		expect(typeof metadataCoreModule.syncEndpointClient).toBe("function");
 		expect(typeof metadataCoreModule.syncRestOpenApi).toBe("function");
 		expect(typeof blocksModule.buildScaffoldBlockRegistration).toBe("function");
 		expect(typeof blocksModule.createTypiaWebpackConfig).toBe("function");

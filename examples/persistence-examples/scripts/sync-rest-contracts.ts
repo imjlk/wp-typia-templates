@@ -2,6 +2,7 @@
 import path from 'node:path';
 
 import {
+	syncEndpointClient,
 	syncRestOpenApi,
 	syncTypeSchemas,
 } from '@wp-typia/create/metadata-core';
@@ -38,10 +39,21 @@ async function main() {
 			openApiFile: block.openApiFile,
 			typesFile: block.apiTypesFile,
 		} );
+
+		await syncEndpointClient( {
+			clientFile: path.join(
+				'src',
+				'blocks',
+				block.slug,
+				'api-client.ts'
+			),
+			manifest: block.restManifest,
+			typesFile: block.apiTypesFile,
+		} );
 	}
 
 	console.log(
-		'✅ REST contract schemas and endpoint-aware OpenAPI documents generated from TypeScript types!'
+		'✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated from TypeScript types!'
 	);
 }
 

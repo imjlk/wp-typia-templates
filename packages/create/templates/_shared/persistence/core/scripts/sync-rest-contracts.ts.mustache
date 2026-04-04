@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import {
 	defineEndpointManifest,
+	syncEndpointClient,
 	syncRestOpenApi,
 	syncTypeSchemas,
 } from '@wp-typia/create/metadata-core';
@@ -65,7 +66,13 @@ async function main() {
 		typesFile: 'src/api-types.ts',
 	} );
 
-	console.log( '✅ REST schemas and endpoint-aware OpenAPI documents were generated from TypeScript contracts!' );
+	await syncEndpointClient( {
+		clientFile: 'src/api-client.ts',
+		manifest: REST_ENDPOINT_MANIFEST,
+		typesFile: 'src/api-types.ts',
+	} );
+
+	console.log( '✅ REST schemas, portable API clients, and endpoint-aware OpenAPI documents were generated from TypeScript contracts!' );
 }
 
 main().catch( ( error ) => {
