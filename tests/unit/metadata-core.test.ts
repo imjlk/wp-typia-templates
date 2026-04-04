@@ -206,6 +206,8 @@ describe("metadata-core endpoint manifests", () => {
 			expect(generatedClient).toContain("\tCounterResponse,");
 			expect(generatedClient).toContain("\tWriteCounterRequest,");
 			expect(generatedClient).toContain("import { apiValidators } from '../src/api-validators'");
+			expect(generatedClient).toContain("requestLocation: 'query'");
+			expect(generatedClient).toContain("requestLocation: 'body'");
 			expect(generatedClient).toContain("validateRequest: apiValidators.query");
 			expect(generatedClient).toContain("validateRequest: apiValidators.request");
 			expect(generatedClient).toContain("validateResponse: apiValidators.response");
@@ -421,6 +423,80 @@ describe("metadata-core endpoint manifests", () => {
 				}),
 			).rejects.toThrow(
 				'Generated endpoint client operationId "default" is a reserved JavaScript identifier.',
+			);
+		} finally {
+			fs.rmSync(project.root, { force: true, recursive: true });
+		}
+	});
+
+	test("syncEndpointClient rejects helper and endpoint symbol collisions", async () => {
+		const project = createTempProject();
+
+		try {
+			await expect(
+				syncEndpointClient({
+					clientFile: "build/api-client.ts",
+					manifest: defineEndpointManifest({
+						contracts: {
+							response: { sourceTypeName: "CounterResponse" },
+						},
+						endpoints: [
+							{
+								authMode: "public-read",
+								method: "GET",
+								operationId: "callEndpoint",
+								path: "/demo/v1/counter/state",
+								responseContract: "response",
+								tags: ["Counter"],
+							},
+						],
+					}),
+					projectRoot: project.root,
+					typesFile: project.typesFile,
+				}),
+			).rejects.toThrow(
+				'Generated endpoint client identifier "callEndpoint" collides with another emitted symbol.',
+			);
+		} finally {
+			fs.rmSync(project.root, { force: true, recursive: true });
+		}
+	});
+
+	test("syncEndpointClient emits no-request wrappers without a request parameter", async () => {
+		const project = createTempProject();
+
+		try {
+			await syncEndpointClient({
+				clientFile: "build/api-client.ts",
+				manifest: defineEndpointManifest({
+					contracts: {
+						response: { sourceTypeName: "CounterResponse" },
+					},
+					endpoints: [
+						{
+							authMode: "public-read",
+							method: "GET",
+							operationId: "getCounterState",
+							path: "/demo/v1/counter/state",
+							responseContract: "response",
+							tags: ["Counter"],
+						},
+					],
+				}),
+				projectRoot: project.root,
+				typesFile: project.typesFile,
+			});
+			const generatedClient = fs.readFileSync(
+				path.join(project.root, "build", "api-client.ts"),
+				"utf8",
+			);
+
+			expect(generatedClient).toContain("function validateNoRequest(input: unknown)");
+			expect(generatedClient).toContain("expected: 'undefined'");
+			expect(generatedClient).toContain("export function getCounterState(");
+			expect(generatedClient).not.toContain("\trequest: undefined,");
+			expect(generatedClient).toContain(
+				"return callEndpoint( getCounterStateEndpoint, undefined, options );",
 			);
 		} finally {
 			fs.rmSync(project.root, { force: true, recursive: true });

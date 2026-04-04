@@ -18,6 +18,7 @@ export const getPersistenceCounterStateEndpoint = createEndpoint<
 	method: 'GET',
 	operationId: 'getPersistenceCounterState',
 	path: '/persistence-examples/v1/counter',
+	requestLocation: 'query',
 	validateRequest: apiValidators.counterQuery,
 	validateResponse: apiValidators.counterResponse,
 } );
@@ -37,6 +38,7 @@ export const incrementPersistenceCounterStateEndpoint = createEndpoint<
 	method: 'POST',
 	operationId: 'incrementPersistenceCounterState',
 	path: '/persistence-examples/v1/counter',
+	requestLocation: 'body',
 	validateRequest: apiValidators.incrementRequest,
 	validateResponse: apiValidators.counterResponse,
 } );

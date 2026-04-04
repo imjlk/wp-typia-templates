@@ -804,15 +804,36 @@ export async function syncEndpointClient(
   const endpointLines: string[] = [];
   const inlineHelpers = new Set<string>();
   const validatorPropertyNames = new Map<string, string>();
+  const occupiedIdentifiers = new Set([
+    'apiValidators',
+    'callEndpoint',
+    'createEndpoint',
+    ...(manifest.endpoints.some(
+      (endpoint) => !endpoint.bodyContract && !endpoint.queryContract,
+    )
+      ? ['validateNoRequest']
+      : []),
+  ]);
 
   for (const endpoint of manifest.endpoints) {
+    const endpointConstantName = `${endpoint.operationId}Endpoint`;
     assertValidClientIdentifier(endpoint.operationId, 'operationId');
+    assertValidClientIdentifier(endpointConstantName, 'endpoint constant');
     if (operationIds.has(endpoint.operationId)) {
       throw new Error(
         `Duplicate endpoint operationId "${endpoint.operationId}" detected while generating the endpoint client.`,
       );
     }
+    for (const identifier of [endpoint.operationId, endpointConstantName]) {
+      if (occupiedIdentifiers.has(identifier)) {
+        throw new Error(
+          `Generated endpoint client identifier "${identifier}" collides with another emitted symbol.`,
+        );
+      }
+    }
     operationIds.add(endpoint.operationId);
+    occupiedIdentifiers.add(endpoint.operationId);
+    occupiedIdentifiers.add(endpointConstantName);
 
     if (endpoint.bodyContract && endpoint.queryContract) {
       throw new Error(
@@ -831,6 +852,7 @@ export async function syncEndpointClient(
 
     let requestTypeName = 'undefined';
     let requestValidatorExpression = 'validateNoRequest';
+    let requestLocationExpression: string | null = null;
 
     if (requestContractKey) {
       const requestContract = resolveEndpointClientContract(
@@ -844,26 +866,30 @@ export async function syncEndpointClient(
         requestContractKey,
         validatorPropertyNames,
       );
+      requestLocationExpression = endpoint.queryContract ? "'query'" : "'body'";
       importedTypeNames.add(requestContract.sourceTypeName);
     } else {
       inlineHelpers.add('validateNoRequest');
     }
 
-    const returnCallExpression = `callEndpoint( ${endpoint.operationId}Endpoint, request, options )`;
+    const hasRequest = requestContractKey !== null;
+    const returnCallExpression = hasRequest
+      ? `callEndpoint( ${endpoint.operationId}Endpoint, request, options )`
+      : `callEndpoint( ${endpoint.operationId}Endpoint, undefined, options )`;
     const returnCallLines =
       returnCallExpression.length <= 68
         ? [`\treturn ${returnCallExpression};`]
         : [
             `\treturn callEndpoint(`,
             `\t\t${endpoint.operationId}Endpoint,`,
-            `\t\trequest,`,
+            `\t\t${hasRequest ? 'request' : 'undefined'},`,
             `\t\toptions`,
             `\t);`,
           ];
 
     endpointLines.push(
       [
-        `export const ${endpoint.operationId}Endpoint = createEndpoint<`,
+        `export const ${endpointConstantName} = createEndpoint<`,
         `\t${requestTypeName},`,
         `\t${responseContract.sourceTypeName}`,
         `>( {`,
@@ -871,6 +897,9 @@ export async function syncEndpointClient(
         `\tmethod: ${toJavaScriptStringLiteral(endpoint.method)},`,
         `\toperationId: ${toJavaScriptStringLiteral(endpoint.operationId)},`,
         `\tpath: ${toJavaScriptStringLiteral(endpoint.path)},`,
+        ...(requestLocationExpression
+          ? [`\trequestLocation: ${requestLocationExpression},`]
+          : []),
         `\tvalidateRequest: ${requestValidatorExpression},`,
         `\tvalidateResponse: ${toValidatorAccessExpression(
           endpoint.responseContract,
@@ -879,7 +908,7 @@ export async function syncEndpointClient(
         `} );`,
         '',
         `export function ${endpoint.operationId}(`,
-        `\trequest: ${requestTypeName},`,
+        ...(hasRequest ? [`\trequest: ${requestTypeName},`] : []),
         `\toptions: EndpointCallOptions`,
         `) {`,
         ...returnCallLines,
@@ -914,7 +943,21 @@ export async function syncEndpointClient(
     '',
     ...(inlineHelpers.has('validateNoRequest')
       ? [
-          `function validateNoRequest() {`,
+          `function validateNoRequest(input: unknown) {`,
+          `\tif (input !== undefined) {`,
+          `\t\treturn {`,
+          `\t\t\tdata: undefined,`,
+          `\t\t\terrors: [`,
+          `\t\t\t\t{`,
+          `\t\t\t\t\texpected: 'undefined',`,
+          `\t\t\t\t\tpath: '(root)',`,
+          `\t\t\t\t\tvalue: input,`,
+          `\t\t\t\t},`,
+          `\t\t\t],`,
+          `\t\t\tisValid: false,`,
+          `\t\t};`,
+          `\t}`,
+          '',
           `\treturn {`,
           `\t\tdata: undefined,`,
           `\t\terrors: [],`,
@@ -1098,13 +1141,20 @@ const RESERVED_CLIENT_IDENTIFIERS = new Set([
   'for',
   'function',
   'if',
+  'implements',
   'import',
   'in',
+  'interface',
   'instanceof',
   'let',
   'new',
   'null',
+  'package',
+  'private',
+  'protected',
+  'public',
   'return',
+  'static',
   'super',
   'switch',
   'this',
@@ -1119,6 +1169,13 @@ const RESERVED_CLIENT_IDENTIFIERS = new Set([
   'yield',
 ]);
 
+/**
+ * Guard generated client identifiers so emitted modules remain valid JavaScript.
+ *
+ * @param value Candidate identifier to validate before code generation.
+ * @param label Human-readable label for error reporting.
+ * @throws {Error} When the identifier is syntactically invalid or reserved.
+ */
 function assertValidClientIdentifier(value: string, label: string): void {
   if (!/^[$A-Z_][0-9A-Z_$]*$/iu.test(value)) {
     throw new Error(

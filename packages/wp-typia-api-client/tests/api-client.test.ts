@@ -197,9 +197,13 @@ describe("@wp-typia/api-client", () => {
 	});
 
 	test("callEndpoint returns response validation failures after transport execution", async () => {
+		let transportCalled = false;
 		const transport = createFetchTransport({
 			baseUrl: "https://example.test/api/",
-			fetchFn: async () => new Response(JSON.stringify({ ok: "nope" })),
+			fetchFn: async () => {
+				transportCalled = true;
+				return new Response(JSON.stringify({ ok: "nope" }));
+			},
 		});
 		const endpoint = createEndpoint<{ title: string }, { ok: boolean }>({
 			method: "POST",
@@ -215,6 +219,7 @@ describe("@wp-typia/api-client", () => {
 
 		const result = await callEndpoint(endpoint, { title: "Hello" }, { transport });
 
+		expect(transportCalled).toBe(true);
 		expect(result.isValid).toBe(false);
 		expect(result.errors[0]?.path).toBe("$.ok");
 	});
@@ -289,5 +294,45 @@ describe("@wp-typia/api-client", () => {
 		).rejects.toThrow(
 			'GET/DELETE endpoint request field "filters" must be a scalar, URLSearchParams, or array of scalars.',
 		);
+	});
+
+	test("DELETE endpoints can serialize query contracts into URL params", async () => {
+		let seenMethod = "";
+		let seenUrl = "";
+		let seenBody: BodyInit | null | undefined;
+		const transport = createFetchTransport({
+			baseUrl: "https://example.test/api/",
+			fetchFn: async (input, init) => {
+				seenMethod = String(init?.method);
+				seenUrl = String(input);
+				seenBody = init?.body;
+				return new Response(JSON.stringify({ ok: true }));
+			},
+		});
+		const endpoint = createEndpoint<{ force: boolean }, { ok: boolean }>({
+			method: "DELETE",
+			path: "/items",
+			requestLocation: "query",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { force?: unknown }).force === "boolean"
+					? toValidationResult(success(input as { force: boolean }))
+					: toValidationResult(failure<{ force: boolean }>("{ force: boolean }", "$.force")),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				(input as { ok?: unknown }).ok === true
+					? toValidationResult(success(input as { ok: boolean }))
+					: toValidationResult(failure<{ ok: boolean }>("{ ok: true }", "$.ok")),
+		});
+
+		const result = await callEndpoint(endpoint, { force: true }, { transport });
+
+		expect(seenMethod).toBe("DELETE");
+		expect(seenUrl).toBe("https://example.test/api/items?force=true");
+		expect(seenBody).toBeUndefined();
+		expect(result.isValid).toBe(true);
+		expect(result.data).toEqual({ ok: true });
 	});
 });

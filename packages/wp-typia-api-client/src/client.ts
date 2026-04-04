@@ -42,6 +42,7 @@ export interface ApiEndpoint<Req, Res> {
 	method: EndpointMethod;
 	operationId?: string;
 	path: string;
+	requestLocation?: "body" | "query";
 	validateRequest: (input: unknown) => ValidationResult<Req>;
 	validateResponse: (input: unknown) => ValidationResult<Res>;
 }
@@ -244,8 +245,10 @@ function buildEndpointRequestOptions<Req>(
 	request: Req,
 ): EndpointTransportRequest {
 	const baseOptions = endpoint.buildRequestOptions?.(request) ?? {};
+	const requestLocation =
+		endpoint.requestLocation ?? (endpoint.method === "GET" ? "query" : "body");
 
-	if (endpoint.method === "GET") {
+	if (requestLocation === "query") {
 		const query = encodeGetLikeRequest(request);
 		const resolvedUrl = baseOptions.url ? joinUrlWithQuery(baseOptions.url, query) : undefined;
 		return {

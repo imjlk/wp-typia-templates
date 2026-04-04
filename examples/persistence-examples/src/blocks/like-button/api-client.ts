@@ -18,6 +18,7 @@ export const getPersistenceLikeStatusEndpoint = createEndpoint<
 	method: 'GET',
 	operationId: 'getPersistenceLikeStatus',
 	path: '/persistence-examples/v1/likes',
+	requestLocation: 'query',
 	validateRequest: apiValidators.likeStatusQuery,
 	validateResponse: apiValidators.likeStatusResponse,
 } );
@@ -37,6 +38,7 @@ export const togglePersistenceLikeStatusEndpoint = createEndpoint<
 	method: 'POST',
 	operationId: 'togglePersistenceLikeStatus',
 	path: '/persistence-examples/v1/likes',
+	requestLocation: 'body',
 	validateRequest: apiValidators.toggleLikeRequest,
 	validateResponse: apiValidators.likeStatusResponse,
 } );
