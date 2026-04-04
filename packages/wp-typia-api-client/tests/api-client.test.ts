@@ -129,6 +129,45 @@ describe("@wp-typia/api-client", () => {
 		expect(result.data).toEqual({ ok: true });
 	});
 
+	test("createFetchTransport preserves JSON bodies for DELETE requests", async () => {
+		let seenBody = "";
+		let seenMethod = "";
+		let seenUrl = "";
+		const transport = createFetchTransport({
+			baseUrl: "https://example.test/api/",
+			fetchFn: async (input, init) => {
+				seenMethod = String(init?.method);
+				seenUrl = String(input);
+				seenBody = String(init?.body);
+				return new Response(JSON.stringify({ ok: true }));
+			},
+		});
+		const endpoint = createEndpoint<{ title: string }, { ok: boolean }>({
+			method: "DELETE",
+			path: "/items",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { title?: unknown }).title === "string"
+					? toValidationResult(success(input as { title: string }))
+					: toValidationResult(failure<{ title: string }>("{ title: string }", "$.title")),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				(input as { ok?: unknown }).ok === true
+					? toValidationResult(success(input as { ok: boolean }))
+					: toValidationResult(failure<{ ok: boolean }>("{ ok: true }", "$.ok")),
+		});
+
+		const result = await callEndpoint(endpoint, { title: "Hello" }, { transport });
+
+		expect(seenMethod).toBe("DELETE");
+		expect(seenUrl).toBe("https://example.test/api/items");
+		expect(seenBody).toContain("\"title\":\"Hello\"");
+		expect(result.isValid).toBe(true);
+		expect(result.data).toEqual({ ok: true });
+	});
+
 	test("callEndpoint returns request validation failures before transport execution", async () => {
 		let transportCalled = false;
 		const transport = createFetchTransport({

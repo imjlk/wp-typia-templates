@@ -394,6 +394,39 @@ describe("metadata-core endpoint manifests", () => {
 		}
 	});
 
+	test("syncEndpointClient rejects reserved-word operation identifiers", async () => {
+		const project = createTempProject();
+
+		try {
+			await expect(
+				syncEndpointClient({
+					clientFile: "build/api-client.ts",
+					manifest: defineEndpointManifest({
+						contracts: {
+							response: { sourceTypeName: "CounterResponse" },
+						},
+						endpoints: [
+							{
+								authMode: "public-read",
+								method: "GET",
+								operationId: "default",
+								path: "/demo/v1/counter/state",
+								responseContract: "response",
+								tags: ["Counter"],
+							},
+						],
+					}),
+					projectRoot: project.root,
+					typesFile: project.typesFile,
+				}),
+			).rejects.toThrow(
+				'Generated endpoint client operationId "default" is a reserved JavaScript identifier.',
+			);
+		} finally {
+			fs.rmSync(project.root, { force: true, recursive: true });
+		}
+	});
+
 	test("syncRestOpenApi rejects mixed manifest and decomposed inputs", async () => {
 		const project = createTempProject();
 

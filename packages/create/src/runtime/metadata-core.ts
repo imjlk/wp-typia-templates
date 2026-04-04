@@ -1077,10 +1077,57 @@ function toJavaScriptStringLiteral(value: string): string {
     .replace(/\n/g, '\\n')}'`;
 }
 
+const RESERVED_CLIENT_IDENTIFIERS = new Set([
+  'await',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'continue',
+  'debugger',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'enum',
+  'export',
+  'extends',
+  'false',
+  'finally',
+  'for',
+  'function',
+  'if',
+  'import',
+  'in',
+  'instanceof',
+  'let',
+  'new',
+  'null',
+  'return',
+  'super',
+  'switch',
+  'this',
+  'throw',
+  'true',
+  'try',
+  'typeof',
+  'var',
+  'void',
+  'while',
+  'with',
+  'yield',
+]);
+
 function assertValidClientIdentifier(value: string, label: string): void {
   if (!/^[$A-Z_][0-9A-Z_$]*$/iu.test(value)) {
     throw new Error(
       `Generated endpoint client ${label} "${value}" is not a valid JavaScript identifier.`,
+    );
+  }
+  if (RESERVED_CLIENT_IDENTIFIERS.has(value)) {
+    throw new Error(
+      `Generated endpoint client ${label} "${value}" is a reserved JavaScript identifier.`,
     );
   }
 }

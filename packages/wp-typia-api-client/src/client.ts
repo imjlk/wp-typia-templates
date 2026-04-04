@@ -245,7 +245,7 @@ function buildEndpointRequestOptions<Req>(
 ): EndpointTransportRequest {
 	const baseOptions = endpoint.buildRequestOptions?.(request) ?? {};
 
-	if (endpoint.method === "GET" || endpoint.method === "DELETE") {
+	if (endpoint.method === "GET") {
 		const query = encodeGetLikeRequest(request);
 		const resolvedUrl = baseOptions.url ? joinUrlWithQuery(baseOptions.url, query) : undefined;
 		return {
