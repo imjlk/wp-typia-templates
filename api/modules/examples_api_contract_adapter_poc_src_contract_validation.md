@@ -7,6 +7,7 @@
 ### Variables
 
 - [counterContractValidators](examples_api_contract_adapter_poc_src_contract_validation.md#countercontractvalidators)
+- [counterOperationResponseValidators](examples_api_contract_adapter_poc_src_contract_validation.md#counteroperationresponsevalidators)
 
 ## Variables
 
@@ -25,3 +26,20 @@
 #### Defined in
 
 [examples/api-contract-adapter-poc/src/contract-validation.ts:72](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/contract-validation.ts#L72)
+
+___
+
+### counterOperationResponseValidators
+
+• `Const` **counterOperationResponseValidators**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `getPersistenceCounterState` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceCounterResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\> |
+| `incrementPersistenceCounterState` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceCounterResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\> |
+
+#### Defined in
+
+[examples/api-contract-adapter-poc/src/contract-validation.ts:85](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/contract-validation.ts#L85)
