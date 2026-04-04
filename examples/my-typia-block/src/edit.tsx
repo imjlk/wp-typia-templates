@@ -5,11 +5,7 @@ import {
 	InspectorControls,
 	RichText,
 } from '@wordpress/block-editor';
-import {
-	Notice,
-	PanelBody,
-	RangeControl,
-} from '@wordpress/components';
+import { Notice, PanelBody, RangeControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { useEffect } from '@wordpress/element';
 import currentManifest from '../typia.manifest.json';
@@ -20,10 +16,7 @@ import {
 	useTypedAttributeUpdater,
 } from '@wp-typia/create/runtime/inspector';
 import { MyTypiaBlockAttributes } from './types';
-import {
-	sanitizeMyTypiaBlockAttributes,
-	validators,
-} from './validators';
+import { sanitizeMyTypiaBlockAttributes, validators } from './validators';
 import { useTypiaValidation, useAttributeLogger, useDebounce } from './hooks';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { MigrationDashboard } from './admin/migration-dashboard';
@@ -62,31 +55,28 @@ function getFontSizeStyle( fontSize: FontSizeValue ): string {
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const blockProps = useBlockProps();
-	const editorFields = useEditorFields(
-		currentManifest as ManifestDocument,
-		{
-			hidden: [ 'id', 'version' ],
-			labels: {
-				alignment: __( 'Alignment', 'my_typia_block' ),
-				animation: __( 'Animation', 'my_typia_block' ),
-				aspectRatio: __( 'Aspect Ratio', 'my_typia_block' ),
-				backgroundColor: __( 'Background Color', 'my_typia_block' ),
-				borderRadius: __( 'Border Radius', 'my_typia_block' ),
-				className: __( 'CSS Class', 'my_typia_block' ),
-				content: __( 'Content', 'my_typia_block' ),
-				fontSize: __( 'Font Size', 'my_typia_block' ),
-				isVisible: __( 'Visible', 'my_typia_block' ),
-				linkTarget: __( 'Link Target', 'my_typia_block' ),
-				'padding.bottom': __( 'Padding Bottom', 'my_typia_block' ),
-				'padding.left': __( 'Padding Left', 'my_typia_block' ),
-				'padding.right': __( 'Padding Right', 'my_typia_block' ),
-				'padding.top': __( 'Padding Top', 'my_typia_block' ),
-				textColor: __( 'Text Color', 'my_typia_block' ),
-			},
-			manual: [ 'animation', 'className', 'content', 'linkTarget' ],
-			preferTextarea: [ 'content' ],
-		}
-	);
+	const editorFields = useEditorFields( currentManifest as ManifestDocument, {
+		hidden: [ 'id', 'version' ],
+		labels: {
+			alignment: __( 'Alignment', 'my_typia_block' ),
+			animation: __( 'Animation', 'my_typia_block' ),
+			aspectRatio: __( 'Aspect Ratio', 'my_typia_block' ),
+			backgroundColor: __( 'Background Color', 'my_typia_block' ),
+			borderRadius: __( 'Border Radius', 'my_typia_block' ),
+			className: __( 'CSS Class', 'my_typia_block' ),
+			content: __( 'Content', 'my_typia_block' ),
+			fontSize: __( 'Font Size', 'my_typia_block' ),
+			isVisible: __( 'Visible', 'my_typia_block' ),
+			linkTarget: __( 'Link Target', 'my_typia_block' ),
+			'padding.bottom': __( 'Padding Bottom', 'my_typia_block' ),
+			'padding.left': __( 'Padding Left', 'my_typia_block' ),
+			'padding.right': __( 'Padding Right', 'my_typia_block' ),
+			'padding.top': __( 'Padding Top', 'my_typia_block' ),
+			textColor: __( 'Text Color', 'my_typia_block' ),
+		},
+		manual: [ 'animation', 'className', 'content', 'linkTarget' ],
+		preferTextarea: [ 'content' ],
+	} );
 	const paddingBottomField = editorFields.getField( 'padding.bottom' );
 	const paddingLeftField = editorFields.getField( 'padding.left' );
 	const paddingRightField = editorFields.getField( 'padding.right' );
@@ -122,12 +112,9 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		true
 	);
 	const padding = {
-		bottom:
-			editorFields.getNumberValue( attributes, 'padding.bottom', 0 ),
-		left:
-			editorFields.getNumberValue( attributes, 'padding.left', 0 ),
-		right:
-			editorFields.getNumberValue( attributes, 'padding.right', 0 ),
+		bottom: editorFields.getNumberValue( attributes, 'padding.bottom', 0 ),
+		left: editorFields.getNumberValue( attributes, 'padding.left', 0 ),
+		right: editorFields.getNumberValue( attributes, 'padding.right', 0 ),
 		top: editorFields.getNumberValue( attributes, 'padding.top', 0 ),
 	};
 	const textColor = editorFields.getStringValue(
@@ -140,9 +127,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		validators.validate
 	);
 	const debouncedAttributes = useDebounce( attributes, 300 );
-	const validateEditorUpdate = (
-		nextAttributes: MyTypiaBlockAttributes
-	) => {
+	const validateEditorUpdate = ( nextAttributes: MyTypiaBlockAttributes ) => {
 		try {
 			return {
 				data: sanitizeMyTypiaBlockAttributes( nextAttributes ),
