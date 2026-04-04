@@ -109,11 +109,18 @@ type BlockSupportDefaultControls<TFeature extends string> = Readonly<
   Partial<Record<TFeature, boolean>> & Record<string, boolean | undefined>
 >;
 
+export type SkipSerialization<TFeature extends string> =
+  | boolean
+  | readonly TFeature[];
+
 export interface BlockBorderSupport {
   readonly color?: boolean;
   readonly radius?: boolean;
   readonly style?: boolean;
   readonly width?: boolean;
+  readonly __experimentalSkipSerialization?: SkipSerialization<
+    'color' | 'radius' | 'style' | 'width'
+  >;
   readonly __experimentalDefaultControls?: BlockSupportDefaultControls<
     'color' | 'radius' | 'style' | 'width'
   >;
@@ -141,6 +148,9 @@ export interface BlockColorSupport {
   readonly heading?: boolean;
   readonly link?: boolean;
   readonly text?: boolean;
+  readonly __experimentalSkipSerialization?: SkipSerialization<
+    'background' | 'button' | 'gradients' | 'heading' | 'link' | 'text'
+  >;
   readonly __experimentalDefaultControls?: BlockSupportDefaultControls<
     'background' | 'gradients' | 'link' | 'text'
   >;
@@ -151,6 +161,9 @@ export interface BlockDimensionsSupport {
   readonly height?: boolean;
   readonly minHeight?: boolean;
   readonly width?: boolean;
+  readonly __experimentalSkipSerialization?: SkipSerialization<
+    'aspectRatio' | 'height' | 'minHeight' | 'width'
+  >;
   readonly __experimentalDefaultControls?: BlockSupportDefaultControls<
     'aspectRatio' | 'height' | 'minHeight' | 'width'
   >;
@@ -223,6 +236,7 @@ export interface BlockSpacingSupport {
   readonly padding?: boolean | readonly SpacingDimension[];
   readonly spacingSizes?: readonly SpacingSize[];
   readonly units?: readonly string[];
+  readonly __experimentalSkipSerialization?: SkipSerialization<SpacingSupportKey>;
   readonly __experimentalDefaultControls?: BlockSupportDefaultControls<SpacingSupportKey>;
 }
 
@@ -239,6 +253,7 @@ export interface BlockTypographySupport {
   readonly textDecoration?: boolean;
   readonly textTransform?: boolean;
   readonly writingMode?: boolean;
+  readonly __experimentalSkipSerialization?: SkipSerialization<TypographySupportKey>;
   readonly __experimentalDefaultControls?: BlockSupportDefaultControls<TypographySupportKey>;
 }
 

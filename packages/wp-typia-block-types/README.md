@@ -74,6 +74,11 @@ Stable Core coverage now also includes support/style helpers for layout
 `rowGap` / `columnGap`, color `duotone`, per-side border widths, and other
 recently stabilized support keys.
 
+`__experimentalSkipSerialization` is also typed on selected support sections
+for blocks that compute style output on the server. This follows Gutenberg's
+current experimental surface and should not be treated as a long-term
+stability guarantee.
+
 ## Typia pipeline notes
 
 - `CssColorValue` and `MinHeightValue` are richer DX aliases that currently rely on template literal types.
