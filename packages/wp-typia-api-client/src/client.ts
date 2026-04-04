@@ -190,16 +190,17 @@ function joinPathWithQuery(path: string, query: string): string {
 	return path.includes("?") ? `${path}&${query}` : `${path}?${query}`;
 }
 
-function joinUrlWithQuery(url: string, query: string, baseUrl: string): string {
+function joinUrlWithQuery(url: string, query: string): string {
 	if (!query) {
-		return new URL(url, baseUrl).toString();
+		return url;
 	}
 
-	const nextUrl = new URL(url, baseUrl);
-	for (const [key, value] of new URLSearchParams(query)) {
-		nextUrl.searchParams.append(key, value);
-	}
-	return nextUrl.toString();
+	const [urlWithoutHash, hash = ""] = url.split("#", 2);
+	const nextUrl = urlWithoutHash.includes("?")
+		? `${urlWithoutHash}&${query}`
+		: `${urlWithoutHash}?${query}`;
+
+	return hash ? `${nextUrl}#${hash}` : nextUrl;
 }
 
 function mergeHeaderInputs(
@@ -228,7 +229,7 @@ function buildEndpointRequestOptions<Req>(
 
 	if (endpoint.method === "GET" || endpoint.method === "DELETE") {
 		const query = encodeGetLikeRequest(request);
-		const resolvedUrl = baseOptions.url ? joinUrlWithQuery(baseOptions.url, query, "http://localhost") : undefined;
+		const resolvedUrl = baseOptions.url ? joinUrlWithQuery(baseOptions.url, query) : undefined;
 		return {
 			...baseOptions,
 			method: endpoint.method,

@@ -57,6 +57,42 @@ describe("@wp-typia/api-client", () => {
 		expect(result.data).toEqual({ items: [1, 2, 3] });
 	});
 
+	test("relative GET endpoint urls keep the configured transport baseUrl host", async () => {
+		let seenUrl = "";
+		const transport = createFetchTransport({
+			baseUrl: "https://example.test/api/",
+			fetchFn: async (input) => {
+				seenUrl = String(input);
+				return new Response(JSON.stringify({ items: [4, 5] }));
+			},
+		});
+		const endpoint = createEndpoint<{ page: number }, { items: number[] }>({
+			buildRequestOptions: () => ({
+				url: "/items/search",
+			}),
+			method: "GET",
+			path: "/items",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { page?: unknown }).page === "number"
+					? toValidationResult(success(input as { page: number }))
+					: toValidationResult(failure<{ page: number }>("{ page: number }", "$.page")),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				Array.isArray((input as { items?: unknown }).items)
+					? toValidationResult(success(input as { items: number[] }))
+					: toValidationResult(failure<{ items: number[] }>("{ items: number[] }", "$.items")),
+		});
+
+		const result = await callEndpoint(endpoint, { page: 2 }, { transport });
+
+		expect(seenUrl).toBe("https://example.test/items/search?page=2");
+		expect(result.isValid).toBe(true);
+		expect(result.data).toEqual({ items: [4, 5] });
+	});
+
 	test("createFetchTransport stringifies JSON bodies for non-GET requests", async () => {
 		let seenBody = "";
 		let seenMethod = "";

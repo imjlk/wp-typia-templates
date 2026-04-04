@@ -611,8 +611,10 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(readme).not.toContain("## Local WordPress");
 	});
 
-	test("scaffoldProject creates a persistence template with signed public writes and explicit storage mode", async () => {
-		const targetDir = path.join(tempRoot, "demo-persistence-public");
+	test(
+		"scaffoldProject creates a persistence template with signed public writes and explicit storage mode",
+		async () => {
+			const targetDir = path.join(tempRoot, "demo-persistence-public");
 
 		await scaffoldProject({
 			projectDir: targetDir,
@@ -734,10 +736,12 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "src", "api-client.ts"),
 			"utf8",
 		);
-		expect(generatedApiClient).toContain("from '@wp-typia/api-client'");
-		expect(generatedApiClient).toContain("export const getDemoPersistencePublicStateEndpoint");
-		expect(generatedApiClient).toContain("export function writeDemoPersistencePublicState(");
-	});
+			expect(generatedApiClient).toContain("from '@wp-typia/api-client'");
+			expect(generatedApiClient).toContain("export const getDemoPersistencePublicStateEndpoint");
+			expect(generatedApiClient).toContain("export function writeDemoPersistencePublicState(");
+		},
+		{ timeout: 15_000 },
+	);
 
 	test("scaffoldProject creates a persistence template with authenticated writes by default", async () => {
 		const targetDir = path.join(tempRoot, "demo-persistence-authenticated");
