@@ -81,3 +81,8 @@ export const counterContractValidators = {
 	): ValidationResult<PersistenceCounterIncrementRequest> =>
 		runSchemaValidation(validateIncrementRequestSchema, input),
 };
+
+export const counterOperationResponseValidators = {
+	getPersistenceCounterState: counterContractValidators.counterResponse,
+	incrementPersistenceCounterState: counterContractValidators.counterResponse,
+} as const;

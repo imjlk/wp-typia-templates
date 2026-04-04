@@ -375,6 +375,15 @@ The repository keeps two reference apps:
 - [`examples/compound-patterns`](../examples/compound-patterns) for compound parent/child patterns
 - [`examples/api-contract-adapter-poc`](../examples/api-contract-adapter-poc) for a minimal non-PHP proof that endpoint manifests can be served outside WordPress/PHP, plus the repo-local `typia.llm` evaluation described in [`docs/typia-llm-evaluation.md`](./typia-llm-evaluation.md)
 
+The repo-owned adapter conformance harness lives at
+[`tests/helpers/rest-adapter-conformance.ts`](../tests/helpers/rest-adapter-conformance.ts).
+Adapter experiments can plug into it by exporting a manifest, a
+`startServer(): Promise<{ url, close(), routeTable }>` helper, route metadata
+with `method`/`path`/`operationId`/`authMode`, response validators keyed by
+`operationId`, and scenario fixtures that describe valid plus invalid raw HTTP
+requests. The first pass checks contract-level route and response parity plus
+manifest-level auth metadata, not WordPress-specific auth runtime semantics.
+
 From the root workspace, example-oriented commands live under:
 
 ```bash
