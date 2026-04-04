@@ -321,4 +321,60 @@ describe( 'rest adapter conformance harness', () => {
 			} )
 		).resolves.toBeUndefined();
 	} );
+
+	test( 'preserves repeated query parameters from URLSearchParams inputs', async () => {
+		await expect(
+			runRestAdapterConformanceSuite( {
+				manifest: defineEndpointManifest( {
+					contracts: exampleManifest.contracts,
+					endpoints: [ readEndpoint ],
+				} ),
+				responseValidators: {
+					readExample: validateExampleResponse,
+				},
+				scenarios: [
+					{
+						name: 'duplicate query parameter scenario',
+						steps: [
+							{
+								assertBody: ( payload ) => {
+									expect( payload ).toEqual( { count: 2 } );
+								},
+								description: 'passes repeated query keys through unchanged',
+								expected: {
+									status: 200,
+								},
+								operationId: 'readExample',
+								rawRequest: {
+									query: new URLSearchParams( [
+										[ 'tag', 'a' ],
+										[ 'tag', 'b' ],
+									] ),
+								},
+							},
+						],
+					},
+				],
+				startServer: () =>
+					startMockAdapterServer( {
+						handleRequest: ( request, response ) => {
+							const url = new URL(
+								request.url ?? '/',
+								'http://127.0.0.1'
+							);
+
+							response.writeHead( 200, {
+								'content-type': 'application/json; charset=utf-8',
+							} );
+							response.end(
+								JSON.stringify( {
+									count: url.searchParams.getAll( 'tag' ).length,
+								} )
+							);
+						},
+						routeTable: toRouteTable( [ readEndpoint ] ),
+					} ),
+			} )
+		).resolves.toBeUndefined();
+	} );
 } );

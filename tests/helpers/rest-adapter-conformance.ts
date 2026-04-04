@@ -74,10 +74,15 @@ function appendQueryValues(
 	params: URLSearchParams,
 	query: Record< string, QueryValue > | URLSearchParams
 ): void {
-	const entries =
-		query instanceof URLSearchParams
-			? Array.from( query.entries() )
-			: Object.entries( query );
+	if ( query instanceof URLSearchParams ) {
+		for ( const [ key, value ] of query.entries() ) {
+			params.append( key, value );
+		}
+
+		return;
+	}
+
+	const entries = Object.entries( query );
 
 	for ( const [ key, value ] of entries ) {
 		if ( value === undefined || value === null ) {
