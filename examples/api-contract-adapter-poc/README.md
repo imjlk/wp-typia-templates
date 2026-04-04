@@ -15,6 +15,23 @@ This is an architecture proof only.
 - It does not attempt WordPress auth parity such as REST nonces or signed token verification.
 - It exists to validate contract portability ahead of follow-up work like `#35`.
 
+## Conformance harness
+
+The repo now validates this adapter through the shared conformance harness at
+[`tests/helpers/rest-adapter-conformance.ts`](../../tests/helpers/rest-adapter-conformance.ts).
+
+To plug another adapter experiment into the same harness, expose:
+
+- the shared endpoint manifest
+- a `startServer()` helper that returns `{ url, close(), routeTable }`
+- a route table whose entries include `method`, `path`, `operationId`, and `authMode`
+- response validators keyed by `operationId`
+- scenario fixtures that describe successful and invalid raw HTTP requests
+
+This first-pass harness checks manifest route parity, response contract parity,
+raw invalid-request behavior, and manifest-level auth metadata parity. It does
+not require runtime-specific WordPress nonce or signed-token enforcement.
+
 ## typia.llm evaluation
 
 Run the repo-local evaluation flow with:

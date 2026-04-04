@@ -7,7 +7,10 @@ import {
 	getCounterAdapterRouteTable,
 	startCounterAdapterServer,
 } from '../../examples/api-contract-adapter-poc/src/counter-adapter';
-import { counterContractValidators } from '../../examples/api-contract-adapter-poc/src/contract-validation';
+import {
+	counterOperationResponseValidators,
+} from '../../examples/api-contract-adapter-poc/src/contract-validation';
+import { runRestAdapterConformanceSuite } from '../helpers/rest-adapter-conformance';
 
 function toRouteSignature(
 	route: Pick< EndpointManifestEndpointDefinition, 'method' | 'path' >
@@ -50,102 +53,120 @@ describe('REST contract adapter PoC', () => {
 	});
 
 	test('serves GET and POST counter state with the shared TypeScript contracts', async () => {
-		const server = await startCounterAdapterServer();
-
-		try {
-			const initialResponse = await fetch(
-				`${server.url}/persistence-examples/v1/counter?postId=7&resourceKey=demo`
-			);
-			const initialPayload = await initialResponse.json();
-			const initialValidation =
-				counterContractValidators.counterResponse(initialPayload);
-
-			expect(initialResponse.status).toBe(200);
-			expect(initialValidation.isValid).toBe(true);
-			expect(initialValidation.data).toEqual({
-				count: 0,
-				postId: 7,
-				resourceKey: 'demo',
-				storage: 'custom-table',
-			});
-
-			const writeResponse = await fetch(
-				`${server.url}/persistence-examples/v1/counter`,
+		await runRestAdapterConformanceSuite( {
+			manifest: counterEndpointManifest,
+			responseValidators: counterOperationResponseValidators,
+			scenarios: [
 				{
-					body: JSON.stringify({
-						delta: 3,
-						postId: 7,
-						publicWriteRequestId: 'adapter-request-1',
-						publicWriteToken: 'adapter-proof-token',
-						resourceKey: 'demo',
-					}),
-					headers: {
-						'content-type': 'application/json',
-					},
-					method: 'POST',
-				}
-			);
-			const writePayload = await writeResponse.json();
-			const writeValidation =
-				counterContractValidators.counterResponse(writePayload);
-
-			expect(writeResponse.status).toBe(200);
-			expect(writeValidation.isValid).toBe(true);
-			expect(writeValidation.data?.count).toBe(3);
-
-			const followUpResponse = await fetch(
-				`${server.url}/persistence-examples/v1/counter?postId=7&resourceKey=demo`
-			);
-			const followUpPayload = await followUpResponse.json();
-			const followUpValidation =
-				counterContractValidators.counterResponse(followUpPayload);
-
-			expect(followUpResponse.status).toBe(200);
-			expect(followUpValidation.isValid).toBe(true);
-			expect(followUpValidation.data?.count).toBe(3);
-		} finally {
-			await server.close();
-		}
+					name: 'counter read/write flow',
+					steps: [
+						{
+							assertBody: ( payload ) => {
+								expect( payload ).toEqual( {
+									count: 0,
+									postId: 7,
+									resourceKey: 'demo',
+									storage: 'custom-table',
+								} );
+							},
+							description: 'reads the initial counter state',
+							expected: {
+								status: 200,
+							},
+							operationId: 'getPersistenceCounterState',
+							request: {
+								postId: 7,
+								resourceKey: 'demo',
+							},
+						},
+						{
+							assertBody: ( payload ) => {
+								expect(
+									( payload as { count?: unknown } ).count
+								).toBe( 3 );
+							},
+							description: 'increments the counter state',
+							expected: {
+								status: 200,
+							},
+							operationId: 'incrementPersistenceCounterState',
+							request: {
+								delta: 3,
+								postId: 7,
+								publicWriteRequestId: 'adapter-request-1',
+								publicWriteToken: 'adapter-proof-token',
+								resourceKey: 'demo',
+							},
+						},
+						{
+							assertBody: ( payload ) => {
+								expect(
+									( payload as { count?: unknown } ).count
+								).toBe( 3 );
+							},
+							description: 'reads the updated counter state',
+							expected: {
+								status: 200,
+							},
+							operationId: 'getPersistenceCounterState',
+							request: {
+								postId: 7,
+								resourceKey: 'demo',
+							},
+						},
+					],
+				},
+			],
+			startServer: () => startCounterAdapterServer(),
+		} );
 	});
 
 	test('rejects blank or out-of-contract identifiers instead of coercing them into valid state keys', async () => {
-		const server = await startCounterAdapterServer();
-
-		try {
-			const blankPostIdResponse = await fetch(
-				`${server.url}/persistence-examples/v1/counter?postId=&resourceKey=demo`
-			);
-			const blankPostIdPayload = await blankPostIdResponse.json();
-
-			expect(blankPostIdResponse.status).toBe(400);
-			expect(blankPostIdPayload.message).toBe(
-				'The request did not match the counter query contract.'
-			);
-
-			const fractionalWriteResponse = await fetch(
-				`${server.url}/persistence-examples/v1/counter`,
+		await runRestAdapterConformanceSuite( {
+			manifest: counterEndpointManifest,
+			responseValidators: counterOperationResponseValidators,
+			scenarios: [
 				{
-					body: JSON.stringify({
-						delta: 1,
-						postId: 1.5,
-						publicWriteRequestId: 'adapter-request-2',
-						publicWriteToken: 'adapter-proof-token',
-						resourceKey: 'demo',
-					}),
-					headers: {
-						'content-type': 'application/json',
-					},
-					method: 'POST',
-				}
-			);
-			const fractionalWritePayload = await fractionalWriteResponse.json();
-
-			expect(fractionalWriteResponse.status).toBe(400);
-			expect(fractionalWritePayload.message).toBe(
-				'The request did not match the counter write contract.'
-			);
-		} finally {
-			await server.close();
-		}
+					name: 'invalid counter inputs',
+					steps: [
+						{
+							description: 'rejects a blank post id in the query string',
+							expected: {
+								message: 'The request did not match the counter query contract.',
+								status: 400,
+							},
+							operationId: 'getPersistenceCounterState',
+							rawRequest: {
+								query: {
+									postId: '',
+									resourceKey: 'demo',
+								},
+							},
+						},
+						{
+							description: 'rejects a fractional post id in the write body',
+							expected: {
+								message: 'The request did not match the counter write contract.',
+								status: 400,
+							},
+							operationId: 'incrementPersistenceCounterState',
+							rawRequest: {
+								body: JSON.stringify( {
+									delta: 1,
+									postId: 1.5,
+									publicWriteRequestId: 'adapter-request-2',
+									publicWriteToken: 'adapter-proof-token',
+									resourceKey: 'demo',
+								} ),
+								headers: {
+									'content-type': 'application/json',
+								},
+							},
+						},
+					],
+				},
+			],
+			startServer: () => startCounterAdapterServer(),
+		} );
 	});
 });

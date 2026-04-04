@@ -1,0 +1,324 @@
+import http, {
+	type IncomingMessage,
+	type Server as NodeHttpServer,
+	type ServerResponse,
+} from 'node:http';
+import { once } from 'node:events';
+
+import { describe, expect, test } from 'bun:test';
+
+import {
+	defineEndpointManifest,
+	type EndpointManifestDefinition,
+	type EndpointManifestEndpointDefinition,
+} from '../../packages/create/src/runtime/metadata-core';
+import type { ValidationResult } from '@wp-typia/api-client';
+import {
+	runRestAdapterConformanceSuite,
+	type RestAdapterConformanceServer,
+	type RestAdapterRouteLike,
+} from '../helpers/rest-adapter-conformance';
+
+const readEndpoint = {
+	authMode: 'public-read',
+	method: 'GET',
+	operationId: 'readExample',
+	path: '/example/v1/item',
+	queryContract: 'read-query',
+	responseContract: 'example-response',
+	tags: [ 'Example' ],
+} as const satisfies EndpointManifestEndpointDefinition;
+
+const writeEndpoint = {
+	authMode: 'public-signed-token',
+	bodyContract: 'write-request',
+	method: 'POST',
+	operationId: 'writeExample',
+	path: '/example/v1/item',
+	responseContract: 'example-response',
+	tags: [ 'Example' ],
+} as const satisfies EndpointManifestEndpointDefinition;
+
+const exampleManifest = defineEndpointManifest( {
+	contracts: {
+		'example-response': {
+			sourceTypeName: 'ExampleResponse',
+		},
+		'read-query': {
+			sourceTypeName: 'ExampleQuery',
+		},
+		'write-request': {
+			sourceTypeName: 'ExampleWriteRequest',
+		},
+	},
+	endpoints: [ readEndpoint, writeEndpoint ],
+} );
+
+function success< T >( data: T ): ValidationResult< T > {
+	return {
+		data,
+		errors: [],
+		isValid: true,
+	};
+}
+
+function failure< T >(
+	expected: string,
+	path = '(root)'
+): ValidationResult< T > {
+	return {
+		data: undefined,
+		errors: [ { expected, path, value: undefined } ],
+		isValid: false,
+	};
+}
+
+function validateExampleResponse(
+	input: unknown
+): ValidationResult< { count: number } > {
+	if (
+		input !== null &&
+		typeof input === 'object' &&
+		typeof ( input as { count?: unknown } ).count === 'number'
+	) {
+		return success( input as { count: number } );
+	}
+
+	return failure( '{ count: number }', '$.count' );
+}
+
+function toRouteTable(
+	endpoints: readonly EndpointManifestEndpointDefinition[]
+): RestAdapterRouteLike[] {
+	return endpoints.map( ( endpoint ) => ( {
+		authMode: endpoint.authMode,
+		method: endpoint.method,
+		operationId: endpoint.operationId,
+		path: endpoint.path,
+	} ) );
+}
+
+async function startMockAdapterServer( {
+	handleRequest,
+	routeTable,
+}: {
+	handleRequest: (
+		request: IncomingMessage,
+		response: ServerResponse
+	) => Promise< void > | void;
+	routeTable: readonly RestAdapterRouteLike[];
+} ): Promise< RestAdapterConformanceServer > {
+	const server = http.createServer( ( request, response ) => {
+		void Promise.resolve( handleRequest( request, response ) ).catch( ( error ) => {
+			response.writeHead( 500, {
+				'content-type': 'application/json; charset=utf-8',
+			} );
+			response.end(
+				JSON.stringify( {
+					message:
+						error instanceof Error ? error.message : 'Unexpected mock adapter error.',
+				} )
+			);
+		} );
+	} );
+
+	server.listen( 0, '127.0.0.1' );
+	await once( server, 'listening' );
+
+	const address = server.address();
+	if ( address == null || typeof address === 'string' ) {
+		server.close();
+		throw new Error( 'Mock adapter server did not expose a numeric port.' );
+	}
+
+	return {
+		close: () => closeServer( server ),
+		routeTable,
+		url: `http://127.0.0.1:${ address.port }`,
+	};
+}
+
+function closeServer( server: NodeHttpServer ): Promise< void > {
+	return new Promise( ( resolve, reject ) => {
+		server.close( ( error ) => {
+			if ( error ) {
+				reject( error );
+				return;
+			}
+
+			resolve();
+		} );
+	} );
+}
+
+describe( 'rest adapter conformance harness', () => {
+	test( 'reports route mismatch against the manifest', async () => {
+		await expect(
+			runRestAdapterConformanceSuite( {
+				coveredOperationIds: [ 'readExample', 'writeExample' ],
+				manifest: exampleManifest,
+				responseValidators: {},
+				scenarios: [],
+				startServer: () =>
+					startMockAdapterServer( {
+						handleRequest: () => undefined,
+						routeTable: [
+							{
+								authMode: 'public-read',
+								method: 'GET',
+								operationId: 'readExample',
+								path: '/example/v1/wrong',
+							},
+							{
+								authMode: 'public-signed-token',
+								method: 'POST',
+								operationId: 'writeExample',
+								path: '/example/v1/item',
+							},
+						],
+					} ),
+			} )
+		).rejects.toThrow( /route table does not match the endpoint manifest/i );
+	} );
+
+	test( 'reports missing endpoint coverage', async () => {
+		await expect(
+			runRestAdapterConformanceSuite( {
+				manifest: exampleManifest,
+				responseValidators: {
+					readExample: validateExampleResponse,
+				},
+				scenarios: [
+					{
+						name: 'read scenario',
+						steps: [
+							{
+								description: 'read current state',
+								expected: {
+									status: 200,
+								},
+								operationId: 'readExample',
+								request: {
+									postId: 1,
+								},
+							},
+						],
+					},
+				],
+				startServer: () =>
+					startMockAdapterServer( {
+						handleRequest: ( _request, response ) => {
+							response.writeHead( 200, {
+								'content-type': 'application/json; charset=utf-8',
+							} );
+							response.end( JSON.stringify( { count: 1 } ) );
+						},
+						routeTable: toRouteTable( exampleManifest.endpoints ),
+					} ),
+			} )
+		).rejects.toThrow( /writeExample/u );
+	} );
+
+	test( 'reports response validation failures for successful responses', async () => {
+		await expect(
+			runRestAdapterConformanceSuite( {
+				manifest: defineEndpointManifest( {
+					contracts: exampleManifest.contracts,
+					endpoints: [ readEndpoint ],
+				} ),
+				responseValidators: {
+					readExample: validateExampleResponse,
+				},
+				scenarios: [
+					{
+						name: 'invalid response scenario',
+						steps: [
+							{
+								description: 'adapter returns an invalid payload',
+								expected: {
+									status: 200,
+								},
+								operationId: 'readExample',
+								request: {
+									postId: 1,
+								},
+							},
+						],
+					},
+				],
+				startServer: () =>
+					startMockAdapterServer( {
+						handleRequest: ( _request, response ) => {
+							response.writeHead( 200, {
+								'content-type': 'application/json; charset=utf-8',
+							} );
+							response.end( JSON.stringify( { count: 'wrong' } ) );
+						},
+						routeTable: toRouteTable( [ readEndpoint ] ),
+					} ),
+			} )
+		).rejects.toThrow( /did not satisfy the shared contract/i );
+	} );
+
+	test( 'accepts invalid-case status and message assertions', async () => {
+		await expect(
+			runRestAdapterConformanceSuite( {
+				manifest: defineEndpointManifest( {
+					contracts: exampleManifest.contracts,
+					endpoints: [ readEndpoint ],
+				} ),
+				responseValidators: {
+					readExample: validateExampleResponse,
+				},
+				scenarios: [
+					{
+						name: 'invalid request scenario',
+						steps: [
+							{
+								description: 'blank query input is rejected',
+								expected: {
+									message: 'Bad read request.',
+									status: 400,
+								},
+								operationId: 'readExample',
+								rawRequest: {
+									query: {
+										postId: '',
+									},
+								},
+							},
+						],
+					},
+				],
+				startServer: () =>
+					startMockAdapterServer( {
+						handleRequest: ( request, response ) => {
+							const url = new URL(
+								request.url ?? '/',
+								'http://127.0.0.1'
+							);
+							const postId = url.searchParams.get( 'postId' );
+
+							if ( ! postId ) {
+								response.writeHead( 400, {
+									'content-type': 'application/json; charset=utf-8',
+								} );
+								response.end(
+									JSON.stringify( {
+										message: 'Bad read request.',
+									} )
+								);
+								return;
+							}
+
+							response.writeHead( 200, {
+								'content-type': 'application/json; charset=utf-8',
+							} );
+							response.end( JSON.stringify( { count: 1 } ) );
+						},
+						routeTable: toRouteTable( [ readEndpoint ] ),
+					} ),
+			} )
+		).resolves.toBeUndefined();
+	} );
+} );
