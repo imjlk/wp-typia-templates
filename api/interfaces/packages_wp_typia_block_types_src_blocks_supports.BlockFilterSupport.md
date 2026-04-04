@@ -18,4 +18,4 @@
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:149](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L149)
+[packages/wp-typia-block-types/src/blocks/supports.ts:160](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L160)

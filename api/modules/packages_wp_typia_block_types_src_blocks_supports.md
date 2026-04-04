@@ -7,6 +7,7 @@
 ### Interfaces
 
 - [BlockBorderSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockBorderSupport.md)
+- [BlockBackgroundSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockBackgroundSupport.md)
 - [BlockColorSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockColorSupport.md)
 - [BlockDimensionsSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockDimensionsSupport.md)
 - [BlockFilterSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockFilterSupport.md)
@@ -16,6 +17,7 @@
 - [BlockLightboxSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockLightboxSupport.md)
 - [BlockPositionSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockPositionSupport.md)
 - [BlockShadowSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockShadowSupport.md)
+- [SpacingSize](../interfaces/packages_wp_typia_block_types_src_blocks_supports.SpacingSize.md)
 - [BlockSpacingSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockSpacingSupport.md)
 - [BlockTypographySupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockTypographySupport.md)
 - [BlockSupports](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockSupports.md)
@@ -36,24 +38,24 @@
 
 ### BlockSupportFeature
 
-Ƭ **BlockSupportFeature**: ``"align"`` \| ``"alignWide"`` \| ``"anchor"`` \| ``"ariaLabel"`` \| ``"border"`` \| ``"className"`` \| ``"color"`` \| ``"customClassName"`` \| ``"dimensions"`` \| ``"filter"`` \| ``"html"`` \| ``"inserter"`` \| ``"interactivity"`` \| ``"layout"`` \| ``"lightbox"`` \| ``"lock"`` \| ``"multiple"`` \| ``"position"`` \| ``"renaming"`` \| ``"reusable"`` \| ``"shadow"`` \| ``"spacing"`` \| ``"typography"``
+Ƭ **BlockSupportFeature**: ``"align"`` \| ``"alignWide"`` \| ``"anchor"`` \| ``"ariaLabel"`` \| ``"background"`` \| ``"border"`` \| ``"className"`` \| ``"color"`` \| ``"customClassName"`` \| ``"dimensions"`` \| ``"filter"`` \| ``"html"`` \| ``"inserter"`` \| ``"interactivity"`` \| ``"js"`` \| ``"layout"`` \| ``"lightbox"`` \| ``"lock"`` \| ``"locking"`` \| ``"multiple"`` \| ``"position"`` \| ``"renaming"`` \| ``"reusable"`` \| ``"shadow"`` \| ``"spacing"`` \| ``"typography"``
 
 Derived from Gutenberg block support keys and commonly used block.json
 support sections.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:17](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L17)
+[packages/wp-typia-block-types/src/blocks/supports.ts:14](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L14)
 
 ___
 
 ### TypographySupportKey
 
-Ƭ **TypographySupportKey**: ``"fontFamily"`` \| ``"fontSize"`` \| ``"fontStyle"`` \| ``"fontWeight"`` \| ``"letterSpacing"`` \| ``"lineHeight"`` \| ``"textAlign"`` \| ``"textColumns"`` \| ``"textDecoration"`` \| ``"textTransform"`` \| ``"writingMode"``
+Ƭ **TypographySupportKey**: ``"fontFamily"`` \| ``"fontSize"`` \| ``"fontStyle"`` \| ``"fontWeight"`` \| ``"letterSpacing"`` \| ``"lineHeight"`` \| ``"dropCap"`` \| ``"textAlign"`` \| ``"textColumns"`` \| ``"textDecoration"`` \| ``"textTransform"`` \| ``"writingMode"``
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:68](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L68)
+[packages/wp-typia-block-types/src/blocks/supports.ts:71](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L71)
 
 ___
 
@@ -63,13 +65,13 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:95](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L95)
+[packages/wp-typia-block-types/src/blocks/supports.ts:100](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L100)
 
 ## Variables
 
 ### BLOCK\_SUPPORT\_FEATURES
 
-• `Const` **BLOCK\_SUPPORT\_FEATURES**: readonly [``"align"``, ``"alignWide"``, ``"anchor"``, ``"ariaLabel"``, ``"border"``, ``"className"``, ``"color"``, ``"customClassName"``, ``"dimensions"``, ``"filter"``, ``"html"``, ``"inserter"``, ``"interactivity"``, ``"layout"``, ``"lightbox"``, ``"lock"``, ``"multiple"``, ``"position"``, ``"renaming"``, ``"reusable"``, ``"shadow"``, ``"spacing"``, ``"typography"``]
+• `Const` **BLOCK\_SUPPORT\_FEATURES**: readonly [``"align"``, ``"alignWide"``, ``"anchor"``, ``"ariaLabel"``, ``"background"``, ``"border"``, ``"className"``, ``"color"``, ``"customClassName"``, ``"dimensions"``, ``"filter"``, ``"html"``, ``"inserter"``, ``"interactivity"``, ``"js"``, ``"layout"``, ``"lightbox"``, ``"lock"``, ``"locking"``, ``"multiple"``, ``"position"``, ``"renaming"``, ``"reusable"``, ``"shadow"``, ``"spacing"``, ``"typography"``]
 
 #### Defined in
 
@@ -79,11 +81,11 @@ ___
 
 ### TYPOGRAPHY\_SUPPORT\_KEYS
 
-• `Const` **TYPOGRAPHY\_SUPPORT\_KEYS**: readonly [``"fontFamily"``, ``"fontSize"``, ``"fontStyle"``, ``"fontWeight"``, ``"letterSpacing"``, ``"lineHeight"``, ``"textAlign"``, ``"textColumns"``, ``"textDecoration"``, ``"textTransform"``, ``"writingMode"``]
+• `Const` **TYPOGRAPHY\_SUPPORT\_KEYS**: readonly [``"fontFamily"``, ``"fontSize"``, ``"fontStyle"``, ``"fontWeight"``, ``"letterSpacing"``, ``"lineHeight"``, ``"dropCap"``, ``"textAlign"``, ``"textColumns"``, ``"textDecoration"``, ``"textTransform"``, ``"writingMode"``]
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:81](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L81)
+[packages/wp-typia-block-types/src/blocks/supports.ts:85](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L85)
 
 ___
 
@@ -93,4 +95,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L97)
+[packages/wp-typia-block-types/src/blocks/supports.ts:102](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L102)

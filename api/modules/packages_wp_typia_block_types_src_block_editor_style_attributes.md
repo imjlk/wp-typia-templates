@@ -25,6 +25,7 @@
 ### Type Aliases
 
 - [PresetColorReference](packages_wp_typia_block_types_src_block_editor_style_attributes.md#presetcolorreference)
+- [PresetDuotoneReference](packages_wp_typia_block_types_src_block_editor_style_attributes.md#presetduotonereference)
 - [PresetGradientReference](packages_wp_typia_block_types_src_block_editor_style_attributes.md#presetgradientreference)
 - [PresetFontFamilyReference](packages_wp_typia_block_types_src_block_editor_style_attributes.md#presetfontfamilyreference)
 - [PresetFontSizeReference](packages_wp_typia_block_types_src_block_editor_style_attributes.md#presetfontsizereference)
@@ -39,6 +40,7 @@
 - [BlockStyleSpacingValue](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockstylespacingvalue)
 - [BlockStyleBorderWidthValue](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockstyleborderwidthvalue)
 - [BlockStyleBorderRadiusValue](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockstyleborderradiusvalue)
+- [BlockShadowStyleAttributes](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockshadowstyleattributes)
 
 ## Type Aliases
 
@@ -52,13 +54,23 @@
 
 ___
 
+### PresetDuotoneReference
+
+Ƭ **PresetDuotoneReference**: \`var:preset\|duotone\|$\{string}\`
+
+#### Defined in
+
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:17](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L17)
+
+___
+
 ### PresetGradientReference
 
 Ƭ **PresetGradientReference**: \`var:preset\|gradient\|$\{string}\`
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:17](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L17)
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:18](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L18)
 
 ___
 
@@ -68,7 +80,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:18](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L18)
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:19](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L19)
 
 ___
 
@@ -78,7 +90,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:19](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L19)
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:20](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L20)
 
 ___
 
@@ -95,7 +107,7 @@ semantic intent without narrowing beyond `string`.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L29)
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L30)
 
 ___
 
@@ -105,7 +117,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L30)
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L31)
 
 ___
 
@@ -115,7 +127,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L31)
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:32](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L32)
 
 ___
 
@@ -125,7 +137,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:32](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L32)
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:33](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L33)
 
 ___
 
@@ -138,7 +150,7 @@ the `style` attribute when a block uses color support.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:38](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L38)
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:39](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L39)
 
 ___
 
@@ -150,7 +162,7 @@ Practical gradient vocabulary for block support `style.color.gradient`.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:43](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L43)
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:44](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L44)
 
 ___
 
@@ -166,7 +178,7 @@ project-authored `types.ts`.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:56](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L56)
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:57](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L57)
 
 ___
 
@@ -176,7 +188,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:57](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L57)
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:58](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L58)
 
 ___
 
@@ -186,7 +198,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:58](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L58)
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:59](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L59)
 
 ___
 
@@ -196,7 +208,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:59](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L59)
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:60](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L60)
 
 ___
 
@@ -206,4 +218,14 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:60](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L60)
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:61](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L61)
+
+___
+
+### BlockShadowStyleAttributes
+
+Ƭ **BlockShadowStyleAttributes**: `string`
+
+#### Defined in
+
+[packages/wp-typia-block-types/src/block-editor/style-attributes.ts:62](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/block-editor/style-attributes.ts#L62)

@@ -11,6 +11,8 @@
 - [blockGap](packages_wp_typia_block_types_src_blocks_supports.BlockSpacingSupport.md#blockgap)
 - [margin](packages_wp_typia_block_types_src_blocks_supports.BlockSpacingSupport.md#margin)
 - [padding](packages_wp_typia_block_types_src_blocks_supports.BlockSpacingSupport.md#padding)
+- [spacingSizes](packages_wp_typia_block_types_src_blocks_supports.BlockSpacingSupport.md#spacingsizes)
+- [units](packages_wp_typia_block_types_src_blocks_supports.BlockSpacingSupport.md#units)
 - [\_\_experimentalDefaultControls](packages_wp_typia_block_types_src_blocks_supports.BlockSpacingSupport.md#__experimentaldefaultcontrols)
 
 ## Properties
@@ -21,7 +23,7 @@
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:202](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L202)
+[packages/wp-typia-block-types/src/blocks/supports.ts:221](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L221)
 
 ___
 
@@ -31,7 +33,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:203](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L203)
+[packages/wp-typia-block-types/src/blocks/supports.ts:222](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L222)
 
 ___
 
@@ -41,7 +43,27 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:204](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L204)
+[packages/wp-typia-block-types/src/blocks/supports.ts:223](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L223)
+
+___
+
+### spacingSizes
+
+• `Optional` `Readonly` **spacingSizes**: readonly [`SpacingSize`](packages_wp_typia_block_types_src_blocks_supports.SpacingSize.md)[]
+
+#### Defined in
+
+[packages/wp-typia-block-types/src/blocks/supports.ts:224](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L224)
+
+___
+
+### units
+
+• `Optional` `Readonly` **units**: readonly `string`[]
+
+#### Defined in
+
+[packages/wp-typia-block-types/src/blocks/supports.ts:225](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L225)
 
 ___
 
@@ -51,4 +73,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:205](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L205)
+[packages/wp-typia-block-types/src/blocks/supports.ts:226](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L226)

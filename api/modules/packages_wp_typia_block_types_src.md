@@ -38,6 +38,7 @@
 - [SpacingDimension](packages_wp_typia_block_types_src.md#spacingdimension)
 - [SPACING\_DIMENSIONS](packages_wp_typia_block_types_src.md#spacing_dimensions)
 - [PresetColorReference](packages_wp_typia_block_types_src.md#presetcolorreference)
+- [PresetDuotoneReference](packages_wp_typia_block_types_src.md#presetduotonereference)
 - [PresetGradientReference](packages_wp_typia_block_types_src.md#presetgradientreference)
 - [PresetFontFamilyReference](packages_wp_typia_block_types_src.md#presetfontfamilyreference)
 - [PresetFontSizeReference](packages_wp_typia_block_types_src.md#presetfontsizereference)
@@ -52,6 +53,7 @@
 - [BlockStyleSpacingValue](packages_wp_typia_block_types_src.md#blockstylespacingvalue)
 - [BlockStyleBorderWidthValue](packages_wp_typia_block_types_src.md#blockstyleborderwidthvalue)
 - [BlockStyleBorderRadiusValue](packages_wp_typia_block_types_src.md#blockstyleborderradiusvalue)
+- [BlockShadowStyleAttributes](packages_wp_typia_block_types_src.md#blockshadowstyleattributes)
 - [BlockLinkColorAttributes](packages_wp_typia_block_types_src.md#blocklinkcolorattributes)
 - [BlockElementsStyleAttributes](packages_wp_typia_block_types_src.md#blockelementsstyleattributes)
 - [BlockColorStyleAttributes](packages_wp_typia_block_types_src.md#blockcolorstyleattributes)
@@ -82,6 +84,7 @@
 - [SpacingSupportKey](packages_wp_typia_block_types_src.md#spacingsupportkey)
 - [SPACING\_SUPPORT\_KEYS](packages_wp_typia_block_types_src.md#spacing_support_keys)
 - [BlockBorderSupport](packages_wp_typia_block_types_src.md#blockbordersupport)
+- [BlockBackgroundSupport](packages_wp_typia_block_types_src.md#blockbackgroundsupport)
 - [BlockColorSupport](packages_wp_typia_block_types_src.md#blockcolorsupport)
 - [BlockDimensionsSupport](packages_wp_typia_block_types_src.md#blockdimensionssupport)
 - [BlockFilterSupport](packages_wp_typia_block_types_src.md#blockfiltersupport)
@@ -91,6 +94,7 @@
 - [BlockLightboxSupport](packages_wp_typia_block_types_src.md#blocklightboxsupport)
 - [BlockPositionSupport](packages_wp_typia_block_types_src.md#blockpositionsupport)
 - [BlockShadowSupport](packages_wp_typia_block_types_src.md#blockshadowsupport)
+- [SpacingSize](packages_wp_typia_block_types_src.md#spacingsize)
 - [BlockSpacingSupport](packages_wp_typia_block_types_src.md#blockspacingsupport)
 - [BlockTypographySupport](packages_wp_typia_block_types_src.md#blocktypographysupport)
 - [BlockSupports](packages_wp_typia_block_types_src.md#blocksupports)
@@ -289,6 +293,12 @@ Re-exports [PresetColorReference](packages_wp_typia_block_types_src_block_editor
 
 ___
 
+### PresetDuotoneReference
+
+Re-exports [PresetDuotoneReference](packages_wp_typia_block_types_src_block_editor_style_attributes.md#presetduotonereference)
+
+___
+
 ### PresetGradientReference
 
 Re-exports [PresetGradientReference](packages_wp_typia_block_types_src_block_editor_style_attributes.md#presetgradientreference)
@@ -370,6 +380,12 @@ ___
 ### BlockStyleBorderRadiusValue
 
 Re-exports [BlockStyleBorderRadiusValue](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockstyleborderradiusvalue)
+
+___
+
+### BlockShadowStyleAttributes
+
+Re-exports [BlockShadowStyleAttributes](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockshadowstyleattributes)
 
 ___
 
@@ -553,6 +569,12 @@ Re-exports [BlockBorderSupport](../interfaces/packages_wp_typia_block_types_src_
 
 ___
 
+### BlockBackgroundSupport
+
+Re-exports [BlockBackgroundSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockBackgroundSupport.md)
+
+___
+
 ### BlockColorSupport
 
 Re-exports [BlockColorSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockColorSupport.md)
@@ -604,6 +626,12 @@ ___
 ### BlockShadowSupport
 
 Re-exports [BlockShadowSupport](../interfaces/packages_wp_typia_block_types_src_blocks_supports.BlockShadowSupport.md)
+
+___
+
+### SpacingSize
+
+Re-exports [SpacingSize](../interfaces/packages_wp_typia_block_types_src_blocks_supports.SpacingSize.md)
 
 ___
 

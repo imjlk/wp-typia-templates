@@ -38,6 +38,7 @@
 - [SpacingDimension](packages_wp_typia_block_types_src_block_editor.md#spacingdimension)
 - [SPACING\_DIMENSIONS](packages_wp_typia_block_types_src_block_editor.md#spacing_dimensions)
 - [PresetColorReference](packages_wp_typia_block_types_src_block_editor.md#presetcolorreference)
+- [PresetDuotoneReference](packages_wp_typia_block_types_src_block_editor.md#presetduotonereference)
 - [PresetGradientReference](packages_wp_typia_block_types_src_block_editor.md#presetgradientreference)
 - [PresetFontFamilyReference](packages_wp_typia_block_types_src_block_editor.md#presetfontfamilyreference)
 - [PresetFontSizeReference](packages_wp_typia_block_types_src_block_editor.md#presetfontsizereference)
@@ -52,6 +53,7 @@
 - [BlockStyleSpacingValue](packages_wp_typia_block_types_src_block_editor.md#blockstylespacingvalue)
 - [BlockStyleBorderWidthValue](packages_wp_typia_block_types_src_block_editor.md#blockstyleborderwidthvalue)
 - [BlockStyleBorderRadiusValue](packages_wp_typia_block_types_src_block_editor.md#blockstyleborderradiusvalue)
+- [BlockShadowStyleAttributes](packages_wp_typia_block_types_src_block_editor.md#blockshadowstyleattributes)
 - [BlockLinkColorAttributes](packages_wp_typia_block_types_src_block_editor.md#blocklinkcolorattributes)
 - [BlockElementsStyleAttributes](packages_wp_typia_block_types_src_block_editor.md#blockelementsstyleattributes)
 - [BlockColorStyleAttributes](packages_wp_typia_block_types_src_block_editor.md#blockcolorstyleattributes)
@@ -270,6 +272,12 @@ Re-exports [PresetColorReference](packages_wp_typia_block_types_src_block_editor
 
 ___
 
+### PresetDuotoneReference
+
+Re-exports [PresetDuotoneReference](packages_wp_typia_block_types_src_block_editor_style_attributes.md#presetduotonereference)
+
+___
+
 ### PresetGradientReference
 
 Re-exports [PresetGradientReference](packages_wp_typia_block_types_src_block_editor_style_attributes.md#presetgradientreference)
@@ -351,6 +359,12 @@ ___
 ### BlockStyleBorderRadiusValue
 
 Re-exports [BlockStyleBorderRadiusValue](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockstyleborderradiusvalue)
+
+___
+
+### BlockShadowStyleAttributes
+
+Re-exports [BlockShadowStyleAttributes](packages_wp_typia_block_types_src_block_editor_style_attributes.md#blockshadowstyleattributes)
 
 ___
 

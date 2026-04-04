@@ -9,6 +9,7 @@
 ### Properties
 
 - [columnCount](packages_wp_typia_block_types_src_blocks_supports.BlockLayoutDefault.md#columncount)
+- [columnGap](packages_wp_typia_block_types_src_blocks_supports.BlockLayoutDefault.md#columngap)
 - [contentSize](packages_wp_typia_block_types_src_blocks_supports.BlockLayoutDefault.md#contentsize)
 - [allowInheriting](packages_wp_typia_block_types_src_blocks_supports.BlockLayoutDefault.md#allowinheriting)
 - [allowSizingOnChildren](packages_wp_typia_block_types_src_blocks_supports.BlockLayoutDefault.md#allowsizingonchildren)
@@ -16,6 +17,7 @@
 - [justifyContent](packages_wp_typia_block_types_src_blocks_supports.BlockLayoutDefault.md#justifycontent)
 - [minimumColumnWidth](packages_wp_typia_block_types_src_blocks_supports.BlockLayoutDefault.md#minimumcolumnwidth)
 - [orientation](packages_wp_typia_block_types_src_blocks_supports.BlockLayoutDefault.md#orientation)
+- [rowGap](packages_wp_typia_block_types_src_blocks_supports.BlockLayoutDefault.md#rowgap)
 - [type](packages_wp_typia_block_types_src_blocks_supports.BlockLayoutDefault.md#type)
 - [verticalAlignment](packages_wp_typia_block_types_src_blocks_supports.BlockLayoutDefault.md#verticalalignment)
 - [wideSize](packages_wp_typia_block_types_src_blocks_supports.BlockLayoutDefault.md#widesize)
@@ -28,7 +30,17 @@
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:158](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L158)
+[packages/wp-typia-block-types/src/blocks/supports.ts:169](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L169)
+
+___
+
+### columnGap
+
+• `Optional` `Readonly` **columnGap**: `string`
+
+#### Defined in
+
+[packages/wp-typia-block-types/src/blocks/supports.ts:170](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L170)
 
 ___
 
@@ -38,7 +50,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:159](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L159)
+[packages/wp-typia-block-types/src/blocks/supports.ts:171](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L171)
 
 ___
 
@@ -48,7 +60,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:160](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L160)
+[packages/wp-typia-block-types/src/blocks/supports.ts:172](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L172)
 
 ___
 
@@ -58,7 +70,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:161](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L161)
+[packages/wp-typia-block-types/src/blocks/supports.ts:173](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L173)
 
 ___
 
@@ -68,7 +80,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:162](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L162)
+[packages/wp-typia-block-types/src/blocks/supports.ts:174](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L174)
 
 ___
 
@@ -78,7 +90,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:163](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L163)
+[packages/wp-typia-block-types/src/blocks/supports.ts:175](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L175)
 
 ___
 
@@ -88,7 +100,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:164](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L164)
+[packages/wp-typia-block-types/src/blocks/supports.ts:176](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L176)
 
 ___
 
@@ -98,7 +110,17 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:165](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L165)
+[packages/wp-typia-block-types/src/blocks/supports.ts:177](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L177)
+
+___
+
+### rowGap
+
+• `Optional` `Readonly` **rowGap**: `string`
+
+#### Defined in
+
+[packages/wp-typia-block-types/src/blocks/supports.ts:178](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L178)
 
 ___
 
@@ -108,7 +130,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:166](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L166)
+[packages/wp-typia-block-types/src/blocks/supports.ts:179](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L179)
 
 ___
 
@@ -118,7 +140,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:167](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L167)
+[packages/wp-typia-block-types/src/blocks/supports.ts:180](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L180)
 
 ___
 
@@ -128,4 +150,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:168](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L168)
+[packages/wp-typia-block-types/src/blocks/supports.ts:181](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L181)
