@@ -197,6 +197,10 @@ module.exports = async () => {
 			} ),
 			resolve: {
 				...( config.resolve || {} ),
+				extensionAlias: {
+					...( config.resolve?.extensionAlias || {} ),
+					'.js': [ '.js', '.ts', '.tsx' ],
+				},
 				alias: {
 					...( config.resolve?.alias || {} ),
 					'@wp-typia/create/runtime/blocks': path.resolve(

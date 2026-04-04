@@ -134,7 +134,7 @@ import {
 const editorFields = useEditorFields(currentManifest as ManifestDocument, {
   manual: ["content"],
 });
-const { updateField } = useTypedAttributeUpdater(attributes, setAttributes, validateAttributes);
+const { updateField } = useTypedAttributeUpdater(attributes, setAttributes);
 
 <InspectorFromManifest
   attributes={attributes}

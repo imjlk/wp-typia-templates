@@ -134,7 +134,14 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				errors: [],
 				isValid: true as const,
 			};
-		} catch {
+		} catch ( error ) {
+			if ( process.env.NODE_ENV !== 'production' ) {
+				console.warn(
+					'Sanitization failed, falling back to validation.',
+					error
+				);
+			}
+
 			return validators.validate( nextAttributes );
 		}
 	};

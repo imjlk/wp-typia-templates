@@ -331,13 +331,18 @@ function parseSelectValue(
 	value: string,
 	overrideOptions?: readonly InspectorSelectOption[],
 ): string | number | boolean {
-	if (overrideOptions && overrideOptions.length > 0) {
+	const matchedOption = field.options.find(
+		(option) => String(option.value) === value,
+	);
+	if (matchedOption) {
+		return matchedOption.value;
+	}
+
+	if (overrideOptions?.some((option) => option.value === value)) {
 		return value;
 	}
 
-	return (
-		field.options.find((option) => String(option.value) === value)?.value ?? value
-	);
+	return value;
 }
 
 export function useEditorFields(

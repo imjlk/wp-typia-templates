@@ -442,6 +442,53 @@ describe("runtime inspector helpers", () => {
 		expect(rendered).toContain('data-options="left,right"');
 	});
 
+	test("FieldControl preserves manifest enum value types when select labels are overridden", () => {
+		const numericSelectField: EditorFieldDescriptor = {
+			constraints: {},
+			control: "select",
+			defaultValue: 1,
+			hasDefault: true,
+			key: "maxClicks",
+			kind: "number",
+			label: "Max Clicks",
+			maximum: null,
+			minimum: null,
+			options: [
+				{ label: "One", value: 1 },
+				{ label: "Two", value: 2 },
+			],
+			path: "maxClicks",
+			required: false,
+			step: 1,
+			supported: true,
+		};
+		let updatedValue: unknown;
+		const triggeringComponents: InspectorComponentMap = {
+			...TEST_COMPONENTS,
+			SelectControl: ( { onChange } ) => {
+				onChange?.( "1" );
+				return <div data-control="select" />;
+			},
+		};
+
+		renderToStaticMarkup(
+			<FieldControl
+				components={ triggeringComponents }
+				field={ numericSelectField }
+				onChange={ ( value ) => {
+					updatedValue = value;
+				} }
+				options={ [
+					{ label: "One click", value: "1" },
+					{ label: "Two clicks", value: "2" },
+				] }
+				value={ 2 }
+			/>,
+		);
+
+		expect( updatedValue ).toBe( 1 );
+	});
+
 	test("InspectorFromManifest preserves order and applies field overrides", () => {
 		const manifest: ManifestDocument = {
 			attributes: {
