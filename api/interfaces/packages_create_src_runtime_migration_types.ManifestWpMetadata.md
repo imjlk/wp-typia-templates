@@ -11,6 +11,8 @@
 - [defaultValue](packages_create_src_runtime_migration_types.ManifestWpMetadata.md#defaultvalue)
 - [enum](packages_create_src_runtime_migration_types.ManifestWpMetadata.md#enum)
 - [hasDefault](packages_create_src_runtime_migration_types.ManifestWpMetadata.md#hasdefault)
+- [selector](packages_create_src_runtime_migration_types.ManifestWpMetadata.md#selector)
+- [source](packages_create_src_runtime_migration_types.ManifestWpMetadata.md#source)
 - [type](packages_create_src_runtime_migration_types.ManifestWpMetadata.md#type)
 
 ## Properties
@@ -45,10 +47,30 @@ ___
 
 ___
 
+### selector
+
+• `Optional` **selector**: ``null`` \| `string`
+
+#### Defined in
+
+[packages/create/src/runtime/migration-types.ts:44](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L44)
+
+___
+
+### source
+
+• `Optional` **source**: ``null`` \| ``"text"`` \| ``"html"`` \| ``"rich-text"``
+
+#### Defined in
+
+[packages/create/src/runtime/migration-types.ts:45](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L45)
+
+___
+
 ### type
 
 • `Optional` **type**: ``null`` \| `string`
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:44](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L44)
+[packages/create/src/runtime/migration-types.ts:46](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L46)

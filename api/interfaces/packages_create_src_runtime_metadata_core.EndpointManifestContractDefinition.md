@@ -29,7 +29,7 @@ Optional component name override for the generated schema reference.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:228](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L228)
+[packages/create/src/runtime/metadata-core.ts:240](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L240)
 
 ___
 
@@ -41,4 +41,4 @@ Type name exported from the source `typesFile`.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:230](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L230)
+[packages/create/src/runtime/metadata-core.ts:242](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L242)

@@ -23,7 +23,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:209](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L209)
+[packages/create/src/runtime/metadata-core.ts:221](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L221)
 
 ___
 
@@ -33,7 +33,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:210](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L210)
+[packages/create/src/runtime/metadata-core.ts:222](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L222)
 
 ___
 
@@ -43,7 +43,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:211](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L211)
+[packages/create/src/runtime/metadata-core.ts:223](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L223)
 
 ___
 
@@ -53,7 +53,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:212](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L212)
+[packages/create/src/runtime/metadata-core.ts:224](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L224)
 
 ___
 
@@ -63,7 +63,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:213](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L213)
+[packages/create/src/runtime/metadata-core.ts:225](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L225)
 
 ___
 
@@ -73,4 +73,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:214](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L214)
+[packages/create/src/runtime/metadata-core.ts:226](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L226)

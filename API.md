@@ -121,6 +121,10 @@ Each scaffolded project exposes a few predictable files:
 - `typia-validator.php`: generated PHP validator for the supported server-side subset
 - optional `typia.schema.json` / `typia.openapi.json` when schema output is enabled
 
+The `types.ts -> block.json` projection can now also carry WordPress extraction
+metadata for top-level string attributes via `tags.Source<"html" | "text" |
+"rich-text">` plus `tags.Selector<"...">`.
+
 Generated projects also expose `sync-types` as the metadata generator entrypoint.
 It stays warn-only by default, supports `-- --fail-on-lossy` when CI should fail
 only on lossy WordPress projections, and supports

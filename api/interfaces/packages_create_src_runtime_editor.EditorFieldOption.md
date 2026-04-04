@@ -19,7 +19,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/editor.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L27)
+[packages/create/src/runtime/editor.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L29)
 
 ___
 
@@ -29,4 +29,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/editor.ts:28](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L28)
+[packages/create/src/runtime/editor.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L30)

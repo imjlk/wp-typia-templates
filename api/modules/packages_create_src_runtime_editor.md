@@ -66,7 +66,7 @@ Re-exports [ManifestTsKind](packages_create_src_runtime_migration_types.md#manif
 
 #### Defined in
 
-[packages/create/src/runtime/editor.ts:17](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L17)
+[packages/create/src/runtime/editor.ts:19](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L19)
 
 ## Functions
 
@@ -86,7 +86,7 @@ Re-exports [ManifestTsKind](packages_create_src_runtime_migration_types.md#manif
 
 #### Defined in
 
-[packages/create/src/runtime/editor.ts:188](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L188)
+[packages/create/src/runtime/editor.ts:190](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L190)
 
 ___
 
@@ -108,7 +108,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/editor.ts:203](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L203)
+[packages/create/src/runtime/editor.ts:205](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L205)
 
 ___
 
@@ -129,4 +129,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/editor.ts:261](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L261)
+[packages/create/src/runtime/editor.ts:263](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L263)

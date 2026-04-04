@@ -97,6 +97,7 @@
 - [packages/create/src/runtime/template-registry](modules/packages_create_src_runtime_template_registry.md)
 - [packages/create/src/runtime/template-render](modules/packages_create_src_runtime_template_render.md)
 - [packages/create/src/runtime/template-source](modules/packages_create_src_runtime_template_source.md)
+- [packages/create/src/runtime/typia-tags](modules/packages_create_src_runtime_typia_tags.md)
 - [packages/create/src/runtime/validation](modules/packages_create_src_runtime_validation.md)
 - [packages/wp-typia-block-runtime/src/defaults](modules/packages_wp_typia_block_runtime_src_defaults.md)
 - [packages/wp-typia-block-runtime/src/editor](modules/packages_wp_typia_block_runtime_src_editor.md)
