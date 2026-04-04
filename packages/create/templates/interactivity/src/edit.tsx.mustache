@@ -127,7 +127,7 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
           <RangeControl
             label={__('Max Clicks', '{{textDomain}}')}
             value={attributes.maxClicks}
-            onChange={(value) => updateField('maxClicks', value ?? (attributes.maxClicks ?? 0))}
+            onChange={(value) => updateField('maxClicks', value ?? attributes.maxClicks ?? 0)}
             min={0}
             max={100}
             help={__('Set to 0 for unlimited clicks', '{{textDomain}}')}
@@ -137,7 +137,7 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
             <RangeControl
               label={__('Auto Play Interval (ms)', '{{textDomain}}')}
               value={attributes.autoPlayInterval}
-              onChange={(value) => updateField('autoPlayInterval', value ?? (attributes.autoPlayInterval ?? 0))}
+              onChange={(value) => updateField('autoPlayInterval', value ?? attributes.autoPlayInterval ?? 0)}
               min={100}
               max={5000}
               step={100}

@@ -1,4 +1,10 @@
-import React, { type ReactNode, useMemo } from "react";
+import React, {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from "react";
 
 import {
 	createEditorModel,
@@ -65,6 +71,7 @@ export interface TextControlLikeProps {
 	label?: ReactNode;
 	max?: number;
 	min?: number;
+	onBlur?: () => void;
 	onChange?: (value: string) => void;
 	step?: number;
 	type?: string;
@@ -345,6 +352,73 @@ function parseSelectValue(
 	return value;
 }
 
+function formatNumberDraft(value: unknown): string {
+	return String(toNumberValue(value, 0));
+}
+
+function parseNumberDraft(value: string): number | undefined {
+	const trimmed = value.trim();
+	if (trimmed.length === 0) {
+		return undefined;
+	}
+
+	const parsed = Number(trimmed);
+	return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+interface StableEditorModelOptions {
+	hidden: string[];
+	labels: Record<string, string>;
+	manual: string[];
+	preferTextarea: string[];
+}
+
+interface NumberFieldControlProps {
+	context: FieldControlRenderContext;
+	onChange: (value: unknown) => void;
+	value: unknown;
+	TextControl: React.ElementType<TextControlLikeProps>;
+}
+
+function NumberFieldControl({
+	context,
+	onChange,
+	value,
+	TextControl,
+}: NumberFieldControlProps) {
+	const committedDraft = formatNumberDraft(value);
+	const [draft, setDraft] = useState(committedDraft);
+
+	useEffect(() => {
+		setDraft(committedDraft);
+	}, [committedDraft]);
+
+	const commitDraft = useCallback(() => {
+		const parsed = parseNumberDraft(draft);
+		if (parsed === undefined) {
+			setDraft(committedDraft);
+			return;
+		}
+
+		onChange(parsed);
+		setDraft(String(parsed));
+	}, [committedDraft, draft, onChange]);
+
+	return (
+		<TextControl
+			help={context.help}
+			label={context.label}
+			max={context.max}
+			min={context.min}
+			onBlur={commitDraft}
+			onChange={setDraft}
+			step={context.step}
+			type="number"
+			value={draft}
+		/>
+	);
+}
+
 export function useEditorFields(
 	manifest: ManifestDocument,
 	options: EditorModelOptions = {},
@@ -355,9 +429,13 @@ export function useEditorFields(
 		manual: options.manual ?? [],
 		preferTextarea: options.preferTextarea ?? [],
 	});
+	const stableOptions = useMemo(
+		() => JSON.parse(optionsKey) as StableEditorModelOptions,
+		[optionsKey],
+	);
 	const fields = useMemo(
-		() => createEditorModel(manifest, options),
-		[manifest, optionsKey],
+		() => createEditorModel(manifest, stableOptions),
+		[manifest, stableOptions],
 	);
 	const fieldMap = useMemo(
 		() => new Map(fields.map((field) => [field.path, field])),
@@ -423,25 +501,30 @@ export function useTypedAttributeUpdater<T extends object>(
 	setAttributes: (attrs: Partial<T>) => void,
 	validate?: (value: T) => ValidationResult<T>,
 ): TypedAttributeUpdater<T> {
-	const validateAttributes =
-		validate ?? ((value: T) => createValidationResult(value));
-	const updateAttribute = createAttributeUpdater(
-		attributes,
-		setAttributes,
-		validateAttributes,
+	const validateAttributes = useMemo(
+		() => validate ?? ((value: T) => createValidationResult(value)),
+		[validate],
 	);
-	const updatePath = createNestedAttributeUpdater(
-		attributes,
-		setAttributes,
-		validateAttributes,
+	const updateAttribute = useMemo(
+		() =>
+			createAttributeUpdater(attributes, setAttributes, validateAttributes),
+		[attributes, setAttributes, validateAttributes],
 	);
-	const updateField = <K extends keyof T>(path: K | string, value: unknown) => {
-		if (typeof path === "string" && path.includes(".")) {
-			return updatePath(path, value);
-		}
+	const updatePath = useMemo(
+		() =>
+			createNestedAttributeUpdater(attributes, setAttributes, validateAttributes),
+		[attributes, setAttributes, validateAttributes],
+	);
+	const updateField = useCallback(
+		<K extends keyof T>(path: K | string, value: unknown) => {
+			if (typeof path === "string" && path.includes(".")) {
+				return updatePath(path, value);
+			}
 
-		return updateAttribute(path as K, value as T[K]);
-	};
+			return updateAttribute(path as K, value as T[K]);
+		},
+		[updateAttribute, updatePath],
+	);
 
 	return {
 		updateAttribute,
@@ -556,20 +639,11 @@ export function FieldControl({
 			}
 
 			return (
-				<TextControl
-					help={context.help}
-					label={context.label}
-					max={context.max}
-					min={context.min}
-					onChange={(nextValue) => {
-						const parsed = Number(nextValue);
-						if (Number.isFinite(parsed)) {
-							onChange(parsed);
-						}
-					}}
-					step={context.step}
-					type="number"
-					value={String(toNumberValue(value, 0))}
+				<NumberFieldControl
+					context={context}
+					onChange={onChange}
+					TextControl={TextControl}
+					value={value}
 				/>
 			);
 		}

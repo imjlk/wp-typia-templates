@@ -7,7 +7,7 @@ import {
 } from '@wordpress/block-editor';
 import { Notice, PanelBody, RangeControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { useEffect } from '@wordpress/element';
+import { useEffect, useMemo } from '@wordpress/element';
 import currentManifest from '../typia.manifest.json';
 import {
 	InspectorFromManifest,
@@ -38,6 +38,44 @@ const FONT_SIZE_STYLES = {
 	small: '0.875rem',
 	xlarge: '1.75rem',
 } as const satisfies Record< string, string >;
+const ALIGNMENT_VALUES = [ 'left', 'center', 'right', 'justify' ] as const;
+const ASPECT_RATIO_VALUES = [
+	'auto',
+	'1',
+	'1/1',
+	'4/3',
+	'3/4',
+	'3/2',
+	'2/3',
+	'16/9',
+	'9/16',
+	'21/9',
+] as const;
+const FONT_SIZE_VALUES = [ 'small', 'medium', 'large', 'xlarge' ] as const;
+const COLOR_VALUES = [
+	'transparent',
+	'currentColor',
+	'inherit',
+	'initial',
+	'unset',
+] as const;
+const SHOWCASE_INSPECTOR_PATHS = [
+	'isVisible',
+	'alignment',
+	'fontSize',
+	'textColor',
+	'backgroundColor',
+	'aspectRatio',
+	'borderRadius',
+] as const;
+
+function coerceStringEnum< T extends string >(
+	value: string,
+	allowedValues: readonly T[],
+	fallback: T
+): T {
+	return allowedValues.includes( value as T ) ? ( value as T ) : fallback;
+}
 
 function getFontSizeStyle( fontSize: FontSizeValue ): string {
 	switch ( fontSize ) {
@@ -81,31 +119,35 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const paddingLeftField = editorFields.getField( 'padding.left' );
 	const paddingRightField = editorFields.getField( 'padding.right' );
 	const paddingTopField = editorFields.getField( 'padding.top' );
-	const alignment = editorFields.getStringValue(
-		attributes,
-		'alignment',
+	const alignment = coerceStringEnum< AlignmentValue >(
+		editorFields.getStringValue( attributes, 'alignment', 'left' ),
+		ALIGNMENT_VALUES,
 		'left'
-	) as AlignmentValue;
-	const aspectRatio = editorFields.getStringValue(
-		attributes,
-		'aspectRatio',
+	);
+	const aspectRatio = coerceStringEnum< AspectRatioValue >(
+		editorFields.getStringValue( attributes, 'aspectRatio', '16/9' ),
+		ASPECT_RATIO_VALUES,
 		'16/9'
-	) as AspectRatioValue;
-	const backgroundColor = editorFields.getStringValue(
-		attributes,
-		'backgroundColor',
+	);
+	const backgroundColor = coerceStringEnum< BackgroundColorValue >(
+		editorFields.getStringValue(
+			attributes,
+			'backgroundColor',
+			'transparent'
+		),
+		COLOR_VALUES,
 		'transparent'
-	) as BackgroundColorValue;
+	);
 	const borderRadius = editorFields.getNumberValue(
 		attributes,
 		'borderRadius',
 		0
 	);
-	const fontSize = editorFields.getStringValue(
-		attributes,
-		'fontSize',
+	const fontSize = coerceStringEnum< FontSizeValue >(
+		editorFields.getStringValue( attributes, 'fontSize', 'medium' ),
+		FONT_SIZE_VALUES,
 		'medium'
-	) as FontSizeValue;
+	);
 	const isVisible = editorFields.getBooleanValue(
 		attributes,
 		'isVisible',
@@ -117,11 +159,25 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 		right: editorFields.getNumberValue( attributes, 'padding.right', 0 ),
 		top: editorFields.getNumberValue( attributes, 'padding.top', 0 ),
 	};
-	const textColor = editorFields.getStringValue(
-		attributes,
-		'textColor',
+	const textColor = coerceStringEnum< TextColorValue >(
+		editorFields.getStringValue( attributes, 'textColor', 'currentColor' ),
+		COLOR_VALUES,
 		'currentColor'
-	) as TextColorValue;
+	);
+	const inspectorPaths = useMemo(
+		() =>
+			SHOWCASE_INSPECTOR_PATHS.filter( ( path ) =>
+				editorFields.fieldMap.has( path )
+			),
+		[ editorFields.fieldMap ]
+	);
+	const missingInspectorPaths = useMemo(
+		() =>
+			SHOWCASE_INSPECTOR_PATHS.filter(
+				( path ) => ! editorFields.fieldMap.has( path )
+			),
+		[ editorFields.fieldMap ]
+	);
 	const { errorMessages, isValid } = useTypiaValidation(
 		attributes,
 		validators.validate
@@ -169,6 +225,20 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	// Log attribute changes in development
 	useAttributeLogger( debouncedAttributes );
 
+	useEffect( () => {
+		if (
+			process.env.NODE_ENV === 'production' ||
+			missingInspectorPaths.length === 0
+		) {
+			return;
+		}
+
+		console.warn(
+			'InspectorFromManifest skipped unknown showcase paths.',
+			missingInspectorPaths
+		);
+	}, [ missingInspectorPaths ] );
+
 	const updatePadding = ( side: PaddingKey, nextValue: number ) =>
 		updateField( `padding.${ side }`, nextValue );
 
@@ -189,15 +259,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					attributes={ attributes }
 					fieldLookup={ editorFields }
 					onChange={ updateField }
-					paths={ [
-						'isVisible',
-						'alignment',
-						'fontSize',
-						'textColor',
-						'backgroundColor',
-						'aspectRatio',
-						'borderRadius',
-					] }
+					paths={ inspectorPaths }
 					title={ __( 'Settings', 'my_typia_block' ) }
 				>
 					<RangeControl
