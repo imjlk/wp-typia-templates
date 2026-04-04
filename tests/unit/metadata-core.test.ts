@@ -398,6 +398,14 @@ describe("metadata-core endpoint manifests", () => {
 			expect(generatedClient).toContain("expected: '{ query, body }'");
 			expect(generatedClient).toContain("path: prefixPath( '$.query', error.path )");
 			expect(generatedClient).toContain("path: prefixPath( '$.body', error.path )");
+			expect(generatedClient).not.toContain("queryValidation.data === undefined");
+			expect(generatedClient).not.toContain("bodyValidation.data === undefined");
+			expect(generatedClient).toContain(
+				"query: queryValidation.data ?? ( request.query as TQuery )",
+			);
+			expect(generatedClient).toContain(
+				"body: bodyValidation.data ?? ( request.body as TBody )",
+			);
 			expect(generatedClient).toContain("requestLocation: 'query-and-body'");
 			expect(generatedClient).toContain(
 				"\trequest: { query: CounterQuery; body: WriteCounterRequest },",

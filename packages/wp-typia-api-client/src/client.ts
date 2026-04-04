@@ -315,6 +315,12 @@ function buildEndpointRequestOptions<Req>(
 	}
 
 	if (requestLocation === "query-and-body") {
+		if (endpoint.method === "GET") {
+			throw new Error(
+				'requestLocation "query-and-body" is not supported for GET endpoints.',
+			);
+		}
+
 		const combinedRequest = resolveCombinedRequest(request);
 		const bodyOptions = buildBodyRequestOptions(
 			endpoint,

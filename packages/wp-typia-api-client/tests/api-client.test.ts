@@ -423,4 +423,52 @@ describe("@wp-typia/api-client", () => {
 			'Endpoints with requestLocation "query-and-body" require requests shaped like { query, body }.',
 		);
 	});
+
+	test("query-and-body endpoints reject GET methods before transport execution", async () => {
+		let transportCalled = false;
+		const transport = createFetchTransport({
+			baseUrl: "https://example.test/api/",
+			fetchFn: async () => {
+				transportCalled = true;
+				return new Response(JSON.stringify({ ok: true }));
+			},
+		});
+		const endpoint = createEndpoint<
+			{ query: { page: number }; body: { title: string } },
+			{ ok: boolean }
+		>({
+			method: "GET",
+			path: "/items",
+			requestLocation: "query-and-body",
+			validateRequest: (input: unknown) =>
+				toValidationResult(
+					success(
+						input as {
+							query: { page: number };
+							body: { title: string };
+						},
+					),
+				),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				(input as { ok?: unknown }).ok === true
+					? toValidationResult(success(input as { ok: boolean }))
+					: toValidationResult(failure<{ ok: boolean }>("{ ok: true }", "$.ok")),
+		});
+
+		await expect(
+			callEndpoint(
+				endpoint,
+				{
+					body: { title: "Hello" },
+					query: { page: 2 },
+				},
+				{ transport },
+			),
+		).rejects.toThrow(
+			'requestLocation "query-and-body" is not supported for GET endpoints.',
+		);
+		expect(transportCalled).toBe(false);
+	});
 });
