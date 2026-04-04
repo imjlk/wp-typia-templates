@@ -98,6 +98,19 @@ function toRouteTable(
 	} ) );
 }
 
+function readRequestBody( request: IncomingMessage ): Promise< string > {
+	return new Promise( ( resolve, reject ) => {
+		let body = '';
+
+		request.setEncoding( 'utf8' );
+		request.on( 'data', ( chunk ) => {
+			body += chunk;
+		} );
+		request.on( 'end', () => resolve( body ) );
+		request.on( 'error', reject );
+	} );
+}
+
 async function startMockAdapterServer( {
 	handleRequest,
 	routeTable,
@@ -122,12 +135,17 @@ async function startMockAdapterServer( {
 		} );
 	} );
 
-	server.listen( 0, '127.0.0.1' );
-	await once( server, 'listening' );
+	try {
+		server.listen( 0, '127.0.0.1' );
+		await once( server, 'listening' );
+	} catch ( error ) {
+		await closeServer( server ).catch( () => undefined );
+		throw error;
+	}
 
 	const address = server.address();
 	if ( address == null || typeof address === 'string' ) {
-		server.close();
+		await closeServer( server );
 		throw new Error( 'Mock adapter server did not expose a numeric port.' );
 	}
 
@@ -263,6 +281,7 @@ describe( 'rest adapter conformance harness', () => {
 	test( 'accepts invalid-case status and message assertions', async () => {
 		await expect(
 			runRestAdapterConformanceSuite( {
+				coveredOperationIds: [ 'readExample' ],
 				manifest: defineEndpointManifest( {
 					contracts: exampleManifest.contracts,
 					endpoints: [ readEndpoint ],
@@ -322,6 +341,56 @@ describe( 'rest adapter conformance harness', () => {
 		).resolves.toBeUndefined();
 	} );
 
+	test( 'requires a successful scenario step unless coverage is explicitly waived', async () => {
+		await expect(
+			runRestAdapterConformanceSuite( {
+				manifest: defineEndpointManifest( {
+					contracts: exampleManifest.contracts,
+					endpoints: [ readEndpoint ],
+				} ),
+				responseValidators: {
+					readExample: validateExampleResponse,
+				},
+				scenarios: [
+					{
+						name: 'invalid-only scenario',
+						steps: [
+							{
+								description: 'only invalid requests are exercised',
+								expected: {
+									message: 'Bad read request.',
+									status: 400,
+								},
+								operationId: 'readExample',
+								rawRequest: {
+									query: {
+										postId: '',
+									},
+								},
+							},
+						],
+					},
+				],
+				startServer: () =>
+					startMockAdapterServer( {
+						handleRequest: ( _request, response ) => {
+							response.writeHead( 400, {
+								'content-type': 'application/json; charset=utf-8',
+							} );
+							response.end(
+								JSON.stringify( {
+									message: 'Bad read request.',
+								} )
+							);
+						},
+						routeTable: toRouteTable( [ readEndpoint ] ),
+					} ),
+			} )
+		).rejects.toThrow(
+			/at least one successful scenario step or explicit coverage mapping/i
+		);
+	} );
+
 	test( 'preserves repeated query parameters from URLSearchParams inputs', async () => {
 		await expect(
 			runRestAdapterConformanceSuite( {
@@ -373,6 +442,78 @@ describe( 'rest adapter conformance harness', () => {
 							);
 						},
 						routeTable: toRouteTable( [ readEndpoint ] ),
+					} ),
+			} )
+		).resolves.toBeUndefined();
+	} );
+
+	test( 'supports endpoints that define both query and body contracts', async () => {
+		const mixedEndpoint = {
+			authMode: 'public-signed-token',
+			bodyContract: 'write-request',
+			method: 'POST',
+			operationId: 'writeExampleWithQuery',
+			path: '/example/v1/mixed',
+			queryContract: 'read-query',
+			responseContract: 'example-response',
+			tags: [ 'Example' ],
+		} as const satisfies EndpointManifestEndpointDefinition;
+
+		await expect(
+			runRestAdapterConformanceSuite( {
+				manifest: defineEndpointManifest( {
+					contracts: exampleManifest.contracts,
+					endpoints: [ mixedEndpoint ],
+				} ),
+				responseValidators: {
+					writeExampleWithQuery: validateExampleResponse,
+				},
+				scenarios: [
+					{
+						name: 'mixed query/body scenario',
+						steps: [
+							{
+								assertBody: ( payload ) => {
+									expect( payload ).toEqual( { count: 2 } );
+								},
+								description: 'sends both query params and a JSON body',
+								expected: {
+									status: 200,
+								},
+								operationId: 'writeExampleWithQuery',
+								request: {
+									body: {
+										delta: 1,
+									},
+									query: {
+										tag: [ 'a', 'b' ],
+									},
+								},
+							},
+						],
+					},
+				],
+				startServer: () =>
+					startMockAdapterServer( {
+						handleRequest: async ( request, response ) => {
+							const url = new URL(
+								request.url ?? '/',
+								'http://127.0.0.1'
+							);
+							const body = await readRequestBody( request );
+
+							response.writeHead( 200, {
+								'content-type': 'application/json; charset=utf-8',
+							} );
+							response.end(
+								JSON.stringify( {
+									count:
+										url.searchParams.getAll( 'tag' ).length +
+										( body.includes( '"delta":1' ) ? 0 : 100 ),
+								} )
+							);
+						},
+						routeTable: toRouteTable( [ mixedEndpoint ] ),
 					} ),
 			} )
 		).resolves.toBeUndefined();

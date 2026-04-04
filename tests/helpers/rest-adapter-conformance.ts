@@ -7,6 +7,11 @@ import type { ValidationResult } from '@wp-typia/api-client';
 type QueryScalar = boolean | number | string;
 type QueryValue = QueryScalar | readonly QueryScalar[] | null | undefined;
 
+export interface RestAdapterConformanceCompositeRequest {
+	body?: unknown;
+	query?: Record< string, QueryValue > | URLSearchParams;
+}
+
 export interface RestAdapterRouteLike
 	extends Pick<
 		EndpointManifestEndpointDefinition,
@@ -37,7 +42,7 @@ export interface RestAdapterConformanceStep {
 	};
 	operationId: string;
 	rawRequest?: RestAdapterConformanceRawRequest;
-	request?: unknown;
+	request?: RestAdapterConformanceCompositeRequest | unknown;
 }
 
 export interface RestAdapterConformanceScenario {
@@ -68,6 +73,33 @@ function isQueryScalar( value: unknown ): value is QueryScalar {
 		typeof value === 'number' ||
 		typeof value === 'string'
 	);
+}
+
+function isCompositeRequest(
+	value: unknown
+): value is RestAdapterConformanceCompositeRequest {
+	return (
+		isPlainObject( value ) &&
+		( 'body' in value || 'query' in value ) &&
+		Object.keys( value ).every( ( key ) => key === 'body' || key === 'query' )
+	);
+}
+
+function getCompositeRequest(
+	endpoint: EndpointManifestEndpointDefinition,
+	step: RestAdapterConformanceStep
+): RestAdapterConformanceCompositeRequest | null {
+	if ( ! endpoint.bodyContract || ! endpoint.queryContract ) {
+		return null;
+	}
+
+	if ( ! isCompositeRequest( step.request ) ) {
+		throw new Error(
+			`Conformance step "${ step.description }" must provide { body, query } when endpoint "${ endpoint.operationId }" defines both bodyContract and queryContract.`
+		);
+	}
+
+	return step.request;
 }
 
 function appendQueryValues(
@@ -129,25 +161,26 @@ function buildRequestUrl(
 		return url;
 	}
 
-	if ( endpoint.bodyContract && endpoint.queryContract ) {
-		throw new Error(
-			`Conformance harness does not support endpoints with both bodyContract and queryContract: ${ endpoint.operationId }.`
-		);
-	}
+	const compositeRequest = getCompositeRequest( endpoint, step );
+	const queryInput = compositeRequest?.query ?? step.request;
 
 	if ( endpoint.queryContract ) {
-		if ( step.request instanceof URLSearchParams ) {
-			appendQueryValues( url.searchParams, step.request );
+		if ( queryInput === undefined ) {
 			return url;
 		}
 
-		if ( ! isPlainObject( step.request ) ) {
+		if ( queryInput instanceof URLSearchParams ) {
+			appendQueryValues( url.searchParams, queryInput );
+			return url;
+		}
+
+		if ( ! isPlainObject( queryInput ) ) {
 			throw new Error(
 				`Conformance step "${ step.description }" must provide a plain object request for queryContract endpoint "${ endpoint.operationId }".`
 			);
 		}
 
-		appendQueryValues( url.searchParams, step.request );
+		appendQueryValues( url.searchParams, queryInput );
 	}
 
 	return url;
@@ -178,15 +211,16 @@ function buildRequestInit(
 		return requestInit;
 	}
 
-	if ( endpoint.bodyContract && endpoint.queryContract ) {
-		throw new Error(
-			`Conformance harness does not support endpoints with both bodyContract and queryContract: ${ endpoint.operationId }.`
-		);
-	}
+	const compositeRequest = getCompositeRequest( endpoint, step );
+	const bodyInput = compositeRequest?.body ?? step.request;
 
 	if ( endpoint.bodyContract ) {
-		if ( typeof step.request === 'string' || step.request instanceof FormData ) {
-			requestInit.body = step.request;
+		if ( bodyInput === undefined ) {
+			return requestInit;
+		}
+
+		if ( typeof bodyInput === 'string' || bodyInput instanceof FormData ) {
+			requestInit.body = bodyInput;
 			return requestInit;
 		}
 
@@ -194,7 +228,7 @@ function buildRequestInit(
 			headers.set( 'content-type', 'application/json' );
 		}
 
-		requestInit.body = JSON.stringify( step.request );
+		requestInit.body = JSON.stringify( bodyInput );
 		return requestInit;
 	}
 
@@ -263,13 +297,15 @@ function assertEndpointCoverage(
 	scenarios: readonly RestAdapterConformanceScenario[],
 	explicitCoverage: readonly string[] = []
 ): void {
-	const manifestOperationIds = new Set(
-		manifest.endpoints.map( ( endpoint ) => endpoint.operationId )
+	const manifestOperationIds = manifest.endpoints.map(
+		( endpoint ) => endpoint.operationId
 	);
+	const manifestOperationIdSet = new Set( manifestOperationIds );
 	const coveredOperationIds = new Set( explicitCoverage );
+	const successfulOperationIds = new Set( explicitCoverage );
 
 	for ( const coveredOperationId of explicitCoverage ) {
-		if ( ! manifestOperationIds.has( coveredOperationId ) ) {
+		if ( ! manifestOperationIdSet.has( coveredOperationId ) ) {
 			throw new Error(
 				`Conformance harness references unknown covered operationId "${ coveredOperationId }".`
 			);
@@ -278,7 +314,7 @@ function assertEndpointCoverage(
 
 	for ( const scenario of scenarios ) {
 		for ( const operationId of scenario.coveredOperationIds ?? [] ) {
-			if ( ! manifestOperationIds.has( operationId ) ) {
+			if ( ! manifestOperationIdSet.has( operationId ) ) {
 				throw new Error(
 					`Conformance scenario "${ scenario.name }" references unknown covered operationId "${ operationId }".`
 				);
@@ -288,23 +324,36 @@ function assertEndpointCoverage(
 		}
 
 		for ( const step of scenario.steps ) {
-			if ( ! manifestOperationIds.has( step.operationId ) ) {
+			if ( ! manifestOperationIdSet.has( step.operationId ) ) {
 				throw new Error(
 					`Conformance scenario "${ scenario.name }" references unknown endpoint operationId "${ step.operationId }".`
 				);
 			}
 
 			coveredOperationIds.add( step.operationId );
+			if ( step.expected.status >= 200 && step.expected.status < 300 ) {
+				successfulOperationIds.add( step.operationId );
+			}
 		}
 	}
 
-	const missingOperationIds = [ ...manifestOperationIds ].filter(
+	const missingOperationIds = manifestOperationIds.filter(
 		( operationId ) => ! coveredOperationIds.has( operationId )
 	);
 
 	if ( missingOperationIds.length > 0 ) {
 		throw new Error(
 			`Conformance harness is missing coverage for manifest endpoints: ${ missingOperationIds.join( ', ' ) }.`
+		);
+	}
+
+	const missingSuccessfulCoverageOperationIds = manifestOperationIds.filter(
+		( operationId ) => ! successfulOperationIds.has( operationId )
+	);
+
+	if ( missingSuccessfulCoverageOperationIds.length > 0 ) {
+		throw new Error(
+			`Conformance harness requires at least one successful scenario step or explicit coverage mapping for manifest endpoints: ${ missingSuccessfulCoverageOperationIds.join( ', ' ) }.`
 		);
 	}
 }

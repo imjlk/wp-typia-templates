@@ -123,6 +123,10 @@ describe('REST contract adapter PoC', () => {
 
 	test('rejects blank or out-of-contract identifiers instead of coercing them into valid state keys', async () => {
 		await runRestAdapterConformanceSuite( {
+			coveredOperationIds: [
+				'getPersistenceCounterState',
+				'incrementPersistenceCounterState',
+			],
 			manifest: counterEndpointManifest,
 			responseValidators: counterOperationResponseValidators,
 			scenarios: [
