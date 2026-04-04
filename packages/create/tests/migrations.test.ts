@@ -1329,6 +1329,24 @@ describe("wp-typia migrations", () => {
 		expect(phpRegistry).toContain("'multi-parent-item'");
 	});
 
+	test("createMigrationDiff requires an explicit block key for multi-block projects", () => {
+		const projectDir = path.join(tempRoot, "multi-block-diff-project");
+		createMultiBlockMigrationProject(projectDir, { includeLegacyChild: true });
+		const state = loadMigrationProject(projectDir);
+
+		expect(() =>
+			createMigrationDiff(state, "1.0.0", "2.0.0"),
+		).toThrow(/block key is required/i);
+		expect(() =>
+			createMigrationDiff(
+				state,
+				{ key: "missing-block" } as any,
+				"1.0.0",
+				"2.0.0",
+			),
+		).toThrow(/Unknown migration block key: missing-block/);
+	});
+
 	test("doctor tolerates block targets that appear only in later versions", () => {
 		const projectDir = path.join(tempRoot, "multi-block-late-child-project");
 		createMultiBlockMigrationProject(projectDir, { includeLegacyChild: false });

@@ -24,10 +24,25 @@ interface MigrationStats {
 	versions: Record< string, number >;
 }
 
+const TEXT_DOMAIN = '{{textDomain}}';
+
+function formatUnionStatus( status: BlockScanResult[ 'preview' ][ 'unionBranches' ][ number ][ 'status' ] ) {
+	switch ( status ) {
+		case 'auto':
+			return __( 'auto', TEXT_DOMAIN );
+		case 'current':
+			return __( 'current', TEXT_DOMAIN );
+		case 'manual':
+			return __( 'manual', TEXT_DOMAIN );
+		default:
+			return __( 'unknown', TEXT_DOMAIN );
+	}
+}
+
 function formatRiskSummaryLine(
 	result: BlockScanResult[ 'analysis' ]
 ): string {
-	return `additive ${ result.riskSummary.additive.count }, rename ${ result.riskSummary.rename.count }, transform ${ result.riskSummary.semanticTransform.count }, union breaking ${ result.riskSummary.unionBreaking.count }`;
+	return `${ __( 'additive', TEXT_DOMAIN ) } ${ result.riskSummary.additive.count }, ${ __( 'rename', TEXT_DOMAIN ) } ${ result.riskSummary.rename.count }, ${ __( 'transform', TEXT_DOMAIN ) } ${ result.riskSummary.semanticTransform.count }, ${ __( 'union breaking', TEXT_DOMAIN ) } ${ result.riskSummary.unionBreaking.count }`;
 }
 
 function collectStats( results: BlockScanResult[] ): MigrationStats {
@@ -80,15 +95,15 @@ function downloadFile( contents: string, fileName: string, type: string ) {
 
 function formatUnionSummary( result: BlockScanResult[ 'preview' ] ): string {
 	if ( result.unionBranches.length === 0 ) {
-		return __( 'No union branch changes', '{{textDomain}}' );
+		return __( 'No union branch changes', TEXT_DOMAIN );
 	}
 
 	return result.unionBranches
 		.map(
 			( branch ) =>
-				`${ branch.field }: ${ branch.legacyBranch ?? 'unknown' } → ${
-					branch.nextBranch ?? 'unknown'
-				} (${ branch.status })`
+				`${ branch.field }: ${ branch.legacyBranch ?? __( 'unknown', TEXT_DOMAIN ) } → ${
+					branch.nextBranch ?? __( 'unknown', TEXT_DOMAIN )
+				} (${ formatUnionStatus( branch.status ) })`
 		)
 		.join( ', ' );
 }
@@ -112,6 +127,8 @@ function renderJsonPreview( value: unknown ) {
 export function MigrationDashboard() {
 	const [ results, setResults ] = useState< BlockScanResult[] >( [] );
 	const [ dryRunResult, setDryRunResult ] =
+		useState< BatchMigrationResult | null >( null );
+	const [ executionResult, setExecutionResult ] =
 		useState< BatchMigrationResult | null >( null );
 	const [ isScanning, setIsScanning ] = useState( false );
 	const [ isMigrating, setIsMigrating ] = useState( false );
@@ -139,6 +156,7 @@ export function MigrationDashboard() {
 
 	const runDryRun = async () => {
 		setError( null );
+		setExecutionResult( null );
 
 		try {
 			setDryRunResult(
@@ -169,7 +187,7 @@ export function MigrationDashboard() {
 		setError( null );
 
 		try {
-			setDryRunResult(
+			setExecutionResult(
 				await batchMigrateScanResults( results, { dryRun: false } )
 			);
 			await runScan();
@@ -196,6 +214,7 @@ export function MigrationDashboard() {
 		downloadFile(
 			JSON.stringify(
 				{
+					executionResult,
 					dryRunResult,
 					results,
 				},
@@ -270,9 +289,13 @@ export function MigrationDashboard() {
 							<Button
 								variant="tertiary"
 								onClick={ downloadJson }
-								disabled={ results.length === 0 }
+								disabled={
+									results.length === 0 &&
+									dryRunResult === null &&
+									executionResult === null
+								}
 							>
-								{ __( 'Export JSON', '{{textDomain}}' ) }
+								{ __( 'Export JSON', TEXT_DOMAIN ) }
 							</Button>
 						</div>
 
@@ -295,14 +318,25 @@ export function MigrationDashboard() {
 							<strong>{ stats.unknown }</strong>
 						</Notice>
 
-						{ dryRunResult && (
+						{ executionResult && (
+							<Notice
+								status={ executionResult.failed > 0 ? 'warning' : 'success' }
+								isDismissible={ false }
+							>
+								{ __( 'Migration summary', TEXT_DOMAIN ) }: { executionResult.successful }{' '}
+								{ __( 'post(s) migrated,', TEXT_DOMAIN ) } { executionResult.failed }{' '}
+								{ __( 'post(s) blocked.', TEXT_DOMAIN ) }
+							</Notice>
+						) }
+
+						{ ! executionResult && dryRunResult && (
 							<Notice
 								status={ dryRunResult.failed > 0 ? 'warning' : 'success' }
 								isDismissible={ false }
 							>
-								{ __( 'Dry run summary', '{{textDomain}}' ) }: { dryRunResult.successful }{' '}
-								{ __( 'post(s) ready,', '{{textDomain}}' ) } { dryRunResult.failed }{' '}
-								{ __( 'post(s) blocked.', '{{textDomain}}' ) }
+								{ __( 'Dry run summary', TEXT_DOMAIN ) }: { dryRunResult.successful }{' '}
+								{ __( 'post(s) ready,', TEXT_DOMAIN ) } { dryRunResult.failed }{' '}
+								{ __( 'post(s) blocked.', TEXT_DOMAIN ) }
 							</Notice>
 						) }
 

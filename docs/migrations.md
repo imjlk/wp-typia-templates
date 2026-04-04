@@ -97,7 +97,7 @@ Scaffolded rules live in:
 src/migrations/rules/<from>-to-<to>.ts
 ```
 
-Multi-block scaffolds scope those files per target:
+Block-aware scaffolds scope those files per target:
 
 ```text
 src/migrations/rules/<blockKey>/<from>-to-<to>.ts
@@ -109,7 +109,7 @@ Edge fixtures now live next to them:
 src/migrations/fixtures/<from>-to-<to>.json
 ```
 
-Or, for multi-block scaffolds:
+Or, for block-aware scaffolds:
 
 ```text
 src/migrations/fixtures/<blockKey>/<from>-to-<to>.json
@@ -169,7 +169,7 @@ The CLI also regenerates:
 - `src/migrations/generated/deprecated.ts`
 - `src/migrations/generated/verify.ts`
 
-Multi-block scaffolds use scoped generated directories such as:
+Block-aware scaffolds use scoped generated directories such as:
 
 - `src/migrations/generated/<blockKey>/registry.ts`
 - `src/migrations/generated/<blockKey>/deprecated.ts`

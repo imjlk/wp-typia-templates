@@ -432,7 +432,9 @@ function isValidString(
 	}
 	if ( pattern ) {
 		try {
-			if ( ! new RegExp( pattern ).test( value ) ) {
+			// Typia manifests are generated from developer-authored block types, not end-user input.
+			const regex = new RegExp( pattern );
+			if ( ! regex.test( value ) ) {
 				return false;
 			}
 		} catch {

@@ -33,6 +33,7 @@ import {
 	TEMPLATE_IDS,
 	getTemplateById,
 	getTemplateSelectOptions,
+	isBuiltInTemplateId,
 	listTemplates,
 } from "./template-registry.js";
 import type { TemplateDefinition } from "./template-registry.js";
@@ -184,8 +185,9 @@ export function createReadlinePrompt(): ReadlinePrompt {
 
 export function formatHelpText(): string {
 	return `Usage:
-  wp-typia <project-dir> [--template <basic|interactivity|persistence|compound|./path|github:owner/repo/path[#ref]>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia <project-dir> [--template <npm-package>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <basic|interactivity>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <./path|github:owner/repo/path[#ref]>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <npm-package>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
   wp-typia <project-dir> [--template persistence] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
   wp-typia <project-dir> [--template compound] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
   wp-typia templates list
@@ -489,7 +491,7 @@ export async function runScaffoldFlow({
 	const resolvedWithMigrationUi =
 		typeof withMigrationUi === "boolean"
 			? withMigrationUi
-			: yes
+			: yes || !isBuiltInTemplateId(resolvedTemplateId)
 				? false
 				: isInteractive && selectWithMigrationUi
 					? await selectWithMigrationUi()

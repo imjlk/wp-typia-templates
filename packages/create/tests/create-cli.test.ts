@@ -5,7 +5,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 import { scaffoldProject } from "../src/runtime/index.js";
-import { runScaffoldFlow } from "../src/runtime/cli-core.js";
+import { formatHelpText, runScaffoldFlow } from "../src/runtime/cli-core.js";
 import { copyRenderedDirectory } from "../src/runtime/template-render.js";
 import {
 	parseGitHubTemplateLocator,
@@ -320,7 +320,7 @@ describe("@wp-typia/create scaffolding", () => {
 			"utf8",
 		);
 
-		expect(packageJson.dependencies["@wordpress/api-fetch"]).toBe("^7.29.0");
+		expect(packageJson.dependencies["@wordpress/api-fetch"]).toBe("^7.42.0");
 		expect(packageJson.scripts["migration:init"]).toBe("wp-typia migrations init --current-version 1.0.0");
 		expect(packageJson.scripts["migration:doctor"]).toBe("wp-typia migrations doctor --all");
 		expect(readme).toContain("## Migration UI");
@@ -1617,6 +1617,38 @@ describe("@wp-typia/create scaffolding", () => {
 		).rejects.toThrow(
 			'Built-in template "data" was removed. Use --template persistence --persistence-policy public instead.',
 		);
+	});
+
+	test("formatHelpText keeps migration UI flags out of external template usage", () => {
+		const helpText = formatHelpText();
+		const usageLines = helpText.split("\n").filter((line) => line.startsWith("  wp-typia "));
+		const externalPathLine = usageLines.find((line) => line.includes("./path|github:owner/repo/path[#ref]>"));
+		const externalPackageLine = usageLines.find((line) => line.includes("<npm-package>"));
+
+		expect(externalPathLine).toBeDefined();
+		expect(externalPathLine).not.toContain("--with-migration-ui");
+		expect(externalPackageLine).toBeDefined();
+		expect(externalPackageLine).not.toContain("--with-migration-ui");
+	});
+
+	test("runScaffoldFlow does not prompt for migration UI on external templates", async () => {
+		let promptedForMigrationUi = false;
+
+		await runScaffoldFlow({
+			cwd: tempRoot,
+			isInteractive: true,
+			noInstall: true,
+			packageManager: "npm",
+			projectInput: "demo-external-no-migration-ui-prompt",
+			promptText: async (_message, defaultValue) => defaultValue,
+			selectWithMigrationUi: async () => {
+				promptedForMigrationUi = true;
+				return true;
+			},
+			templateId: createBlockSubsetFixturePath,
+		});
+
+		expect(promptedForMigrationUi).toBe(false);
 	});
 
 	test("local create-block subset paths scaffold into a pnpm-ready wp-typia project", async () => {

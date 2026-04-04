@@ -37,10 +37,14 @@ export function createMigrationDiff(
 	fromVersionOrToVersion: string,
 	maybeToVersion?: string,
 ): MigrationDiff {
+	if (typeof blockOrFromVersion === "string" && state.blocks.length > 1) {
+		throw new Error("A block key is required when diffing a multi-block migration project.");
+	}
+
 	const block =
 		typeof blockOrFromVersion === "string"
 			? state.blocks[0]
-			: state.blocks.find((entry) => entry.key === blockOrFromVersion.key) ?? state.blocks[0];
+			: state.blocks.find((entry) => entry.key === blockOrFromVersion.key) ?? null;
 	const fromVersion =
 		typeof blockOrFromVersion === "string"
 			? blockOrFromVersion
@@ -50,7 +54,11 @@ export function createMigrationDiff(
 			? fromVersionOrToVersion
 			: maybeToVersion ?? state.config.currentVersion;
 	if (!block) {
-		throw new Error("No migration block targets are configured for this project.");
+		throw new Error(
+			typeof blockOrFromVersion === "string"
+				? "No migration block targets are configured for this project."
+				: `Unknown migration block key: ${blockOrFromVersion.key}`,
+		);
 	}
 
 	const snapshotManifestPath = getSnapshotManifestPath(state.projectDir, block, fromVersion);

@@ -980,6 +980,18 @@ function regenerateGeneratedArtifacts(projectDir: string): void {
 	);
 }
 
+/**
+ * Initialize migration scaffolding for one or more block targets.
+ *
+ * Writes the migration config, creates the initial scaffold files, snapshots
+ * the current project state, and regenerates generated migration artifacts.
+ *
+ * @param projectDir Absolute or relative project directory containing the migration workspace.
+ * @param currentVersion Initial semantic version to seed into the migration config.
+ * @param blocks Block targets to register for migration-aware scaffolding.
+ * @param options Console rendering options for initialization output.
+ * @returns The loaded migration project state after initialization completes.
+ */
 export function seedProjectMigrations(
 	projectDir: string,
 	currentVersion: string,

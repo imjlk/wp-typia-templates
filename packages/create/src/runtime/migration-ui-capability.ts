@@ -249,7 +249,7 @@ export async function applyMigrationUiCapability({
 	await mutatePackageJson(projectDir, (packageJson) => {
 		packageJson.dependencies = {
 			...(packageJson.dependencies ?? {}),
-			"@wordpress/api-fetch": "^7.29.0",
+			"@wordpress/api-fetch": "^7.42.0",
 		};
 		packageJson.scripts = {
 			...(packageJson.scripts ?? {}),
