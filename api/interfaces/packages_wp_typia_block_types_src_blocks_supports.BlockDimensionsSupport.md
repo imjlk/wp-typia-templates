@@ -12,6 +12,7 @@
 - [height](packages_wp_typia_block_types_src_blocks_supports.BlockDimensionsSupport.md#height)
 - [minHeight](packages_wp_typia_block_types_src_blocks_supports.BlockDimensionsSupport.md#minheight)
 - [width](packages_wp_typia_block_types_src_blocks_supports.BlockDimensionsSupport.md#width)
+- [\_\_experimentalSkipSerialization](packages_wp_typia_block_types_src_blocks_supports.BlockDimensionsSupport.md#__experimentalskipserialization)
 - [\_\_experimentalDefaultControls](packages_wp_typia_block_types_src_blocks_supports.BlockDimensionsSupport.md#__experimentaldefaultcontrols)
 
 ## Properties
@@ -22,7 +23,7 @@
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:150](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L150)
+[packages/wp-typia-block-types/src/blocks/supports.ts:160](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L160)
 
 ___
 
@@ -32,7 +33,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:151](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L151)
+[packages/wp-typia-block-types/src/blocks/supports.ts:161](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L161)
 
 ___
 
@@ -42,7 +43,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:152](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L152)
+[packages/wp-typia-block-types/src/blocks/supports.ts:162](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L162)
 
 ___
 
@@ -52,7 +53,17 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:153](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L153)
+[packages/wp-typia-block-types/src/blocks/supports.ts:163](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L163)
+
+___
+
+### \_\_experimentalSkipSerialization
+
+• `Optional` `Readonly` **\_\_experimentalSkipSerialization**: [`SkipSerialization`](../modules/packages_wp_typia_block_types_src_blocks_supports.md#skipserialization)\<``"width"`` \| ``"aspectRatio"`` \| ``"height"`` \| ``"minHeight"``\>
+
+#### Defined in
+
+[packages/wp-typia-block-types/src/blocks/supports.ts:164](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L164)
 
 ___
 
@@ -62,4 +73,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:154](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L154)
+[packages/wp-typia-block-types/src/blocks/supports.ts:167](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L167)

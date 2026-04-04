@@ -83,6 +83,7 @@
 - [TYPOGRAPHY\_SUPPORT\_KEYS](packages_wp_typia_block_types_src.md#typography_support_keys)
 - [SpacingSupportKey](packages_wp_typia_block_types_src.md#spacingsupportkey)
 - [SPACING\_SUPPORT\_KEYS](packages_wp_typia_block_types_src.md#spacing_support_keys)
+- [SkipSerialization](packages_wp_typia_block_types_src.md#skipserialization)
 - [BlockBorderSupport](packages_wp_typia_block_types_src.md#blockbordersupport)
 - [BlockBackgroundSupport](packages_wp_typia_block_types_src.md#blockbackgroundsupport)
 - [BlockColorSupport](packages_wp_typia_block_types_src.md#blockcolorsupport)
@@ -560,6 +561,12 @@ ___
 ### SPACING\_SUPPORT\_KEYS
 
 Re-exports [SPACING_SUPPORT_KEYS](packages_wp_typia_block_types_src_blocks_supports.md#spacing_support_keys)
+
+___
+
+### SkipSerialization
+
+Re-exports [SkipSerialization](packages_wp_typia_block_types_src_blocks_supports.md#skipserialization)
 
 ___
 

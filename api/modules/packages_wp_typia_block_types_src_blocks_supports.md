@@ -27,6 +27,7 @@
 - [BlockSupportFeature](packages_wp_typia_block_types_src_blocks_supports.md#blocksupportfeature)
 - [TypographySupportKey](packages_wp_typia_block_types_src_blocks_supports.md#typographysupportkey)
 - [SpacingSupportKey](packages_wp_typia_block_types_src_blocks_supports.md#spacingsupportkey)
+- [SkipSerialization](packages_wp_typia_block_types_src_blocks_supports.md#skipserialization)
 
 ### Variables
 
@@ -66,6 +67,22 @@ ___
 #### Defined in
 
 [packages/wp-typia-block-types/src/blocks/supports.ts:100](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L100)
+
+___
+
+### SkipSerialization
+
+Ƭ **SkipSerialization**\<`TFeature`\>: `boolean` \| readonly `TFeature`[]
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `TFeature` | extends `string` |
+
+#### Defined in
+
+[packages/wp-typia-block-types/src/blocks/supports.ts:112](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L112)
 
 ## Variables
 

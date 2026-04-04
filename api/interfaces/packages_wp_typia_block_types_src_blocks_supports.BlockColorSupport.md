@@ -16,6 +16,7 @@
 - [heading](packages_wp_typia_block_types_src_blocks_supports.BlockColorSupport.md#heading)
 - [link](packages_wp_typia_block_types_src_blocks_supports.BlockColorSupport.md#link)
 - [text](packages_wp_typia_block_types_src_blocks_supports.BlockColorSupport.md#text)
+- [\_\_experimentalSkipSerialization](packages_wp_typia_block_types_src_blocks_supports.BlockColorSupport.md#__experimentalskipserialization)
 - [\_\_experimentalDefaultControls](packages_wp_typia_block_types_src_blocks_supports.BlockColorSupport.md#__experimentaldefaultcontrols)
 
 ## Properties
@@ -26,7 +27,7 @@
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:128](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L128)
+[packages/wp-typia-block-types/src/blocks/supports.ts:135](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L135)
 
 ___
 
@@ -39,7 +40,7 @@ as stable since WordPress 6.5.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:133](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L133)
+[packages/wp-typia-block-types/src/blocks/supports.ts:140](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L140)
 
 ___
 
@@ -49,7 +50,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:134](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L134)
+[packages/wp-typia-block-types/src/blocks/supports.ts:141](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L141)
 
 ___
 
@@ -59,7 +60,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:135](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L135)
+[packages/wp-typia-block-types/src/blocks/supports.ts:142](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L142)
 
 ___
 
@@ -69,7 +70,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:136](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L136)
+[packages/wp-typia-block-types/src/blocks/supports.ts:143](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L143)
 
 ___
 
@@ -82,7 +83,7 @@ as stable since WordPress 6.5.
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:141](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L141)
+[packages/wp-typia-block-types/src/blocks/supports.ts:148](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L148)
 
 ___
 
@@ -92,7 +93,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:142](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L142)
+[packages/wp-typia-block-types/src/blocks/supports.ts:149](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L149)
 
 ___
 
@@ -102,7 +103,17 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:143](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L143)
+[packages/wp-typia-block-types/src/blocks/supports.ts:150](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L150)
+
+___
+
+### \_\_experimentalSkipSerialization
+
+• `Optional` `Readonly` **\_\_experimentalSkipSerialization**: [`SkipSerialization`](../modules/packages_wp_typia_block_types_src_blocks_supports.md#skipserialization)\<``"link"`` \| ``"text"`` \| ``"heading"`` \| ``"background"`` \| ``"gradients"`` \| ``"button"``\>
+
+#### Defined in
+
+[packages/wp-typia-block-types/src/blocks/supports.ts:151](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L151)
 
 ___
 
@@ -112,4 +123,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-types/src/blocks/supports.ts:144](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L144)
+[packages/wp-typia-block-types/src/blocks/supports.ts:154](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-types/src/blocks/supports.ts#L154)
