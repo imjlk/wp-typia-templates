@@ -21,6 +21,8 @@
 - [SyncRestOpenApiManifestOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiManifestOptions.md)
 - [SyncRestOpenApiContractsOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiContractsOptions.md)
 - [SyncRestOpenApiResult](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiResult.md)
+- [SyncEndpointClientOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncEndpointClientOptions.md)
+- [SyncEndpointClientResult](../interfaces/packages_create_src_runtime_metadata_core.SyncEndpointClientResult.md)
 
 ### Type Aliases
 
@@ -35,6 +37,7 @@
 - [runSyncBlockMetadata](packages_create_src_runtime_metadata_core.md#runsyncblockmetadata)
 - [syncTypeSchemas](packages_create_src_runtime_metadata_core.md#synctypeschemas)
 - [syncRestOpenApi](packages_create_src_runtime_metadata_core.md#syncrestopenapi)
+- [syncEndpointClient](packages_create_src_runtime_metadata_core.md#syncendpointclient)
 
 ## Type Aliases
 
@@ -134,7 +137,7 @@ PHP validator coverage warnings discovered during synchronization.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:472](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L472)
+[packages/create/src/runtime/metadata-core.ts:511](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L511)
 
 ___
 
@@ -164,7 +167,7 @@ A structured execution report describing generated paths, warnings, and failures
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:570](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L570)
+[packages/create/src/runtime/metadata-core.ts:609](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L609)
 
 ___
 
@@ -184,7 +187,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:621](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L621)
+[packages/create/src/runtime/metadata-core.ts:660](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L660)
 
 ___
 
@@ -208,4 +211,28 @@ Information about the generated OpenAPI document and included schema components.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:680](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L680)
+[packages/create/src/runtime/metadata-core.ts:719](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L719)
+
+___
+
+### syncEndpointClient
+
+▸ **syncEndpointClient**(`options`): `Promise`\<[`SyncEndpointClientResult`](../interfaces/packages_create_src_runtime_metadata_core.SyncEndpointClientResult.md)\>
+
+Generate and write a manifest-first portable endpoint client module.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `options` | [`SyncEndpointClientOptions`](../interfaces/packages_create_src_runtime_metadata_core.SyncEndpointClientOptions.md) | Manifest, source file, validator file, and output path settings. |
+
+#### Returns
+
+`Promise`\<[`SyncEndpointClientResult`](../interfaces/packages_create_src_runtime_metadata_core.SyncEndpointClientResult.md)\>
+
+Information about the generated client file and emitted operation ids.
+
+#### Defined in
+
+[packages/create/src/runtime/metadata-core.ts:793](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L793)

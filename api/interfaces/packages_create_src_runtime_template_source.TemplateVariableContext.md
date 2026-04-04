@@ -17,6 +17,7 @@ normalizes them into a scaffold project.
 
 ### Properties
 
+- [apiClientPackageVersion](packages_create_src_runtime_template_source.TemplateVariableContext.md#apiclientpackageversion)
 - [createPackageVersion](packages_create_src_runtime_template_source.TemplateVariableContext.md#createpackageversion)
 - [blockTypesPackageVersion](packages_create_src_runtime_template_source.TemplateVariableContext.md#blocktypespackageversion)
 - [pascalCase](packages_create_src_runtime_template_source.TemplateVariableContext.md#pascalcase)
@@ -30,6 +31,18 @@ normalizes them into a scaffold project.
 
 ## Properties
 
+### apiClientPackageVersion
+
+• **apiClientPackageVersion**: `string`
+
+Version string for `@wp-typia/api-client` used in generated dependencies.
+
+#### Defined in
+
+[packages/create/src/runtime/template-source.ts:38](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L38)
+
+___
+
 ### createPackageVersion
 
 • **createPackageVersion**: `string`
@@ -38,7 +51,7 @@ Version string for `@wp-typia/create` used in generated dependencies.
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:38](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L38)
+[packages/create/src/runtime/template-source.ts:40](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L40)
 
 ___
 
@@ -50,7 +63,7 @@ Version string for `@wp-typia/block-types` used in generated dependencies.
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:40](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L40)
+[packages/create/src/runtime/template-source.ts:42](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L42)
 
 ___
 
@@ -62,7 +75,7 @@ PascalCase block type name derived from the scaffold slug.
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:42](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L42)
+[packages/create/src/runtime/template-source.ts:44](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L44)
 
 ___
 
@@ -74,7 +87,7 @@ Snake_case PHP symbol prefix used for generated functions, constants, and keys.
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:44](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L44)
+[packages/create/src/runtime/template-source.ts:46](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L46)
 
 ___
 
@@ -86,7 +99,7 @@ Human-readable block title.
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:46](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L46)
+[packages/create/src/runtime/template-source.ts:48](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L48)
 
 ___
 
@@ -98,7 +111,7 @@ Human-readable project or block description.
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:48](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L48)
+[packages/create/src/runtime/template-source.ts:50](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L50)
 
 ___
 
@@ -110,7 +123,7 @@ Keyword string derived from the slug for generated block metadata.
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:50](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L50)
+[packages/create/src/runtime/template-source.ts:52](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L52)
 
 ___
 
@@ -122,7 +135,7 @@ Block namespace used in generated block names such as `namespace/slug`.
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:52](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L52)
+[packages/create/src/runtime/template-source.ts:54](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L54)
 
 ___
 
@@ -134,7 +147,7 @@ Kebab-case scaffold slug used for package names, paths, and block slugs.
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:54](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L54)
+[packages/create/src/runtime/template-source.ts:56](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L56)
 
 ___
 
@@ -146,4 +159,4 @@ Kebab-case text domain used for generated i18n strings and plugin headers.
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:56](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L56)
+[packages/create/src/runtime/template-source.ts:58](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L58)

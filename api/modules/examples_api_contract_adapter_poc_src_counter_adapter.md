@@ -1,22 +1,22 @@
-[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / examples/rest-contract-adapter-poc/src/counter-adapter
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / examples/api-contract-adapter-poc/src/counter-adapter
 
-# Module: examples/rest-contract-adapter-poc/src/counter-adapter
+# Module: examples/api-contract-adapter-poc/src/counter-adapter
 
 ## Table of contents
 
 ### Interfaces
 
-- [CounterAdapterRouteDefinition](../interfaces/examples_rest_contract_adapter_poc_src_counter_adapter.CounterAdapterRouteDefinition.md)
-- [CounterAdapterServer](../interfaces/examples_rest_contract_adapter_poc_src_counter_adapter.CounterAdapterServer.md)
+- [CounterAdapterRouteDefinition](../interfaces/examples_api_contract_adapter_poc_src_counter_adapter.CounterAdapterRouteDefinition.md)
+- [CounterAdapterServer](../interfaces/examples_api_contract_adapter_poc_src_counter_adapter.CounterAdapterServer.md)
 
 ### Variables
 
-- [counterEndpointManifest](examples_rest_contract_adapter_poc_src_counter_adapter.md#counterendpointmanifest)
+- [counterEndpointManifest](examples_api_contract_adapter_poc_src_counter_adapter.md#counterendpointmanifest)
 
 ### Functions
 
-- [getCounterAdapterRouteTable](examples_rest_contract_adapter_poc_src_counter_adapter.md#getcounteradapterroutetable)
-- [startCounterAdapterServer](examples_rest_contract_adapter_poc_src_counter_adapter.md#startcounteradapterserver)
+- [getCounterAdapterRouteTable](examples_api_contract_adapter_poc_src_counter_adapter.md#getcounteradapterroutetable)
+- [startCounterAdapterServer](examples_api_contract_adapter_poc_src_counter_adapter.md#startcounteradapterserver)
 
 ## Variables
 
@@ -26,13 +26,13 @@
 
 #### Defined in
 
-[examples/rest-contract-adapter-poc/src/counter-adapter.ts:48](https://github.com/imjlk/wp-typia/blob/main/examples/rest-contract-adapter-poc/src/counter-adapter.ts#L48)
+[examples/api-contract-adapter-poc/src/counter-adapter.ts:48](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L48)
 
 ## Functions
 
 ### getCounterAdapterRouteTable
 
-▸ **getCounterAdapterRouteTable**(`manifest?`): [`CounterAdapterRouteDefinition`](../interfaces/examples_rest_contract_adapter_poc_src_counter_adapter.CounterAdapterRouteDefinition.md)[]
+▸ **getCounterAdapterRouteTable**(`manifest?`): [`CounterAdapterRouteDefinition`](../interfaces/examples_api_contract_adapter_poc_src_counter_adapter.CounterAdapterRouteDefinition.md)[]
 
 #### Parameters
 
@@ -42,17 +42,17 @@
 
 #### Returns
 
-[`CounterAdapterRouteDefinition`](../interfaces/examples_rest_contract_adapter_poc_src_counter_adapter.CounterAdapterRouteDefinition.md)[]
+[`CounterAdapterRouteDefinition`](../interfaces/examples_api_contract_adapter_poc_src_counter_adapter.CounterAdapterRouteDefinition.md)[]
 
 #### Defined in
 
-[examples/rest-contract-adapter-poc/src/counter-adapter.ts:50](https://github.com/imjlk/wp-typia/blob/main/examples/rest-contract-adapter-poc/src/counter-adapter.ts#L50)
+[examples/api-contract-adapter-poc/src/counter-adapter.ts:50](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L50)
 
 ___
 
 ### startCounterAdapterServer
 
-▸ **startCounterAdapterServer**(`port?`): `Promise`\<[`CounterAdapterServer`](../interfaces/examples_rest_contract_adapter_poc_src_counter_adapter.CounterAdapterServer.md)\>
+▸ **startCounterAdapterServer**(`port?`): `Promise`\<[`CounterAdapterServer`](../interfaces/examples_api_contract_adapter_poc_src_counter_adapter.CounterAdapterServer.md)\>
 
 #### Parameters
 
@@ -62,8 +62,8 @@ ___
 
 #### Returns
 
-`Promise`\<[`CounterAdapterServer`](../interfaces/examples_rest_contract_adapter_poc_src_counter_adapter.CounterAdapterServer.md)\>
+`Promise`\<[`CounterAdapterServer`](../interfaces/examples_api_contract_adapter_poc_src_counter_adapter.CounterAdapterServer.md)\>
 
 #### Defined in
 
-[examples/rest-contract-adapter-poc/src/counter-adapter.ts:224](https://github.com/imjlk/wp-typia/blob/main/examples/rest-contract-adapter-poc/src/counter-adapter.ts#L224)
+[examples/api-contract-adapter-poc/src/counter-adapter.ts:224](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L224)

@@ -18,10 +18,10 @@
 
 | Name | Type |
 | :------ | :------ |
-| `likeStatusQuery` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`PersistenceLikeStatusQuery`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusQuery.md)\> |
-| `likeStatusResponse` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\> |
-| `toggleLikeRequest` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`PersistenceToggleLikeRequest`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeRequest.md)\> |
+| `likeStatusQuery` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceLikeStatusQuery`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusQuery.md)\> |
+| `likeStatusResponse` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\> |
+| `toggleLikeRequest` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceToggleLikeRequest`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeRequest.md)\> |
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/like-button/api-validators.ts:17](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-validators.ts#L17)
+[examples/persistence-examples/src/blocks/like-button/api-validators.ts:20](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-validators.ts#L20)

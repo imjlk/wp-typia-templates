@@ -1,18 +1,18 @@
-[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / examples/persistence-examples/src/blocks/counter/api-validators
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / examples/api-contract-adapter-poc/src/contract-validation
 
-# Module: examples/persistence-examples/src/blocks/counter/api-validators
+# Module: examples/api-contract-adapter-poc/src/contract-validation
 
 ## Table of contents
 
 ### Variables
 
-- [apiValidators](examples_persistence_examples_src_blocks_counter_api_validators.md#apivalidators)
+- [counterContractValidators](examples_api_contract_adapter_poc_src_contract_validation.md#countercontractvalidators)
 
 ## Variables
 
-### apiValidators
+### counterContractValidators
 
-• `Const` **apiValidators**: `Object`
+• `Const` **counterContractValidators**: `Object`
 
 #### Type declaration
 
@@ -24,4 +24,4 @@
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-validators.ts:19](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-validators.ts#L19)
+[examples/api-contract-adapter-poc/src/contract-validation.ts:72](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/contract-validation.ts#L72)

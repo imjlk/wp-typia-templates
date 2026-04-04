@@ -101,10 +101,13 @@
 - [SyncRestOpenApiContractsOptions](packages_create_src_runtime.md#syncrestopenapicontractsoptions)
 - [SyncRestOpenApiOptions](packages_create_src_runtime.md#syncrestopenapioptions)
 - [SyncRestOpenApiResult](packages_create_src_runtime.md#syncrestopenapiresult)
+- [SyncEndpointClientOptions](packages_create_src_runtime.md#syncendpointclientoptions)
+- [SyncEndpointClientResult](packages_create_src_runtime.md#syncendpointclientresult)
 - [syncBlockMetadata](packages_create_src_runtime.md#syncblockmetadata)
 - [runSyncBlockMetadata](packages_create_src_runtime.md#runsyncblockmetadata)
 - [syncTypeSchemas](packages_create_src_runtime.md#synctypeschemas)
 - [syncRestOpenApi](packages_create_src_runtime.md#syncrestopenapi)
+- [syncEndpointClient](packages_create_src_runtime.md#syncendpointclient)
 
 ## References
 
@@ -678,6 +681,18 @@ Re-exports [SyncRestOpenApiResult](../interfaces/packages_create_src_runtime_met
 
 ___
 
+### SyncEndpointClientOptions
+
+Re-exports [SyncEndpointClientOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncEndpointClientOptions.md)
+
+___
+
+### SyncEndpointClientResult
+
+Re-exports [SyncEndpointClientResult](../interfaces/packages_create_src_runtime_metadata_core.SyncEndpointClientResult.md)
+
+___
+
 ### syncBlockMetadata
 
 Re-exports [syncBlockMetadata](packages_create_src_runtime_metadata_core.md#syncblockmetadata)
@@ -699,3 +714,9 @@ ___
 ### syncRestOpenApi
 
 Re-exports [syncRestOpenApi](packages_create_src_runtime_metadata_core.md#syncrestopenapi)
+
+___
+
+### syncEndpointClient
+
+Re-exports [syncEndpointClient](packages_create_src_runtime_metadata_core.md#syncendpointclient)

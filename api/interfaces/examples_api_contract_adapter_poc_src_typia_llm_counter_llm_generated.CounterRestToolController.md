@@ -1,15 +1,15 @@
-[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / [examples/rest-contract-adapter-poc/src/typia-llm/counter.llm.generated](../modules/examples_rest_contract_adapter_poc_src_typia_llm_counter_llm_generated.md) / CounterRestToolController
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / [examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated](../modules/examples_api_contract_adapter_poc_src_typia_llm_counter_llm_generated.md) / CounterRestToolController
 
 # Interface: CounterRestToolController
 
-[examples/rest-contract-adapter-poc/src/typia-llm/counter.llm.generated](../modules/examples_rest_contract_adapter_poc_src_typia_llm_counter_llm_generated.md).CounterRestToolController
+[examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated](../modules/examples_api_contract_adapter_poc_src_typia_llm_counter_llm_generated.md).CounterRestToolController
 
 ## Table of contents
 
 ### Methods
 
-- [getPersistenceCounterState](examples_rest_contract_adapter_poc_src_typia_llm_counter_llm_generated.CounterRestToolController.md#getpersistencecounterstate)
-- [incrementPersistenceCounterState](examples_rest_contract_adapter_poc_src_typia_llm_counter_llm_generated.CounterRestToolController.md#incrementpersistencecounterstate)
+- [getPersistenceCounterState](examples_api_contract_adapter_poc_src_typia_llm_counter_llm_generated.CounterRestToolController.md#getpersistencecounterstate)
+- [incrementPersistenceCounterState](examples_api_contract_adapter_poc_src_typia_llm_counter_llm_generated.CounterRestToolController.md#incrementpersistencecounterstate)
 
 ## Methods
 
@@ -38,7 +38,7 @@ Counter
 
 #### Defined in
 
-[examples/rest-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts:16](https://github.com/imjlk/wp-typia/blob/main/examples/rest-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts#L16)
+[examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts:16](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts#L16)
 
 ___
 
@@ -67,4 +67,4 @@ Counter
 
 #### Defined in
 
-[examples/rest-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts:25](https://github.com/imjlk/wp-typia/blob/main/examples/rest-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts#L25)
+[examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts:25](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts#L25)
