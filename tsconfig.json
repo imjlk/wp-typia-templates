@@ -34,6 +34,12 @@
       "@wp-typia/rest/*": [
         "packages/wp-typia-rest/src/*"
       ],
+      "@wp-typia/api-client": [
+        "packages/wp-typia-api-client/src/index.ts"
+      ],
+      "@wp-typia/api-client/*": [
+        "packages/wp-typia-api-client/src/*"
+      ],
       "@wp-typia/block-types": [
         "packages/wp-typia-block-types/src/index.ts"
       ],

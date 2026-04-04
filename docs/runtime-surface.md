@@ -90,7 +90,7 @@ These are plausible future package candidates because they are already useful ou
 - repo examples
   - `examples/my-typia-block` imports `runtime/defaults`, `runtime/inspector`, and `runtime/validation`
   - `examples/persistence-examples` imports `metadata-core`, `runtime/defaults`, `runtime/editor`, and `runtime/validation`
-  - `examples/rest-contract-adapter-poc` imports `metadata-core`
+  - `examples/api-contract-adapter-poc` imports `metadata-core`
 
 ### Generated template usage
 

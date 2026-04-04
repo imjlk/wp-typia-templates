@@ -2,6 +2,7 @@
 import path from 'node:path';
 
 import {
+	syncEndpointClient,
 	syncRestOpenApi,
 	syncTypeSchemas,
 } from '@wp-typia/create/metadata-core';
@@ -40,16 +41,29 @@ async function main() {
 			} );
 		}
 
-		if ( block.restManifest.endpoints.length > 0 && block.openApiFile ) {
-			await syncRestOpenApi( {
+		if ( block.restManifest.endpoints.length > 0 ) {
+			await syncEndpointClient( {
+				clientFile: path.join(
+					'src',
+					'blocks',
+					block.slug,
+					'api-client.ts'
+				),
 				manifest: block.restManifest,
-				openApiFile: block.openApiFile,
 				typesFile: block.apiTypesFile,
 			} );
+
+			if ( block.openApiFile ) {
+				await syncRestOpenApi( {
+					manifest: block.restManifest,
+					openApiFile: block.openApiFile,
+					typesFile: block.apiTypesFile,
+				} );
+			}
 		}
 	}
 
-	console.log( '✅ REST contract schemas and endpoint-aware OpenAPI documents generated from TypeScript types!' );
+	console.log( '✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated from TypeScript types!' );
 }
 
 main().catch( ( error ) => {

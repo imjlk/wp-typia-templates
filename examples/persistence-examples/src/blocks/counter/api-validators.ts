@@ -1,6 +1,9 @@
 import typia from 'typia';
 
-import { toValidationResult, type ValidationResult } from '@wp-typia/rest';
+import {
+	toValidationResult,
+	type ValidationResult,
+} from '@wp-typia/api-client';
 import type {
 	PersistenceCounterIncrementRequest,
 	PersistenceCounterQuery,

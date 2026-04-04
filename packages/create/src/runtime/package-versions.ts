@@ -10,6 +10,7 @@ interface PackageManifest {
 }
 
 interface PackageVersions {
+	apiClientPackageVersion: string;
 	blockTypesPackageVersion: string;
 	createPackageVersion: string;
 	restPackageVersion: string;
@@ -68,6 +69,10 @@ export function getPackageVersions(): PackageVersions {
 		{};
 
 	cachedPackageVersions = {
+		apiClientPackageVersion: normalizeVersionRange(
+			createManifest.dependencies?.["@wp-typia/api-client"] ??
+				resolveInstalledPackageManifest("@wp-typia/api-client")?.version,
+		),
 		blockTypesPackageVersion: normalizeVersionRange(
 			createManifest.dependencies?.["@wp-typia/block-types"] ??
 				resolveInstalledPackageManifest("@wp-typia/block-types")?.version,

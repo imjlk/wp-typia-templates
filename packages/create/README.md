@@ -61,7 +61,8 @@ The `persistence` template adds:
 - `--data-storage <post-meta|custom-table>`
 - `--persistence-policy <authenticated|public>`
 - `sync-rest` contract/schema generation
-- a typed REST client through `@wp-typia/rest`
+- a WordPress-specific typed REST client through `@wp-typia/rest`
+- a generated portable `src/api-client.ts` module backed by `@wp-typia/api-client`
 - generated PHP route/bootstrap files for policy-aware persistence
 
 The `compound` template adds:
@@ -154,6 +155,7 @@ Data-backed projects can also opt into schema output from the existing sync pipe
 import {
   defineEndpointManifest,
   runSyncBlockMetadata,
+  syncEndpointClient,
   syncBlockMetadata,
   syncRestOpenApi,
   syncTypeSchemas,
@@ -222,9 +224,15 @@ await syncRestOpenApi({
   openApiFile: "src/api.openapi.json",
   typesFile: "src/api-types.ts",
 });
+
+await syncEndpointClient({
+  clientFile: "src/api-client.ts",
+  manifest: REST_ENDPOINT_MANIFEST,
+  typesFile: "src/api-types.ts",
+});
 ```
 
-`src/api-types.ts` remains the source of truth for scaffolded REST contracts, and the endpoint manifest is the canonical TypeScript description of the scaffolded REST surface. `src/api-schemas/*.schema.json` remains the runtime-facing artifact for generated PHP validation, and `src/api.openapi.json` is the canonical endpoint-aware REST document when a scaffold defines route metadata. Per-contract `src/api-schemas/*.openapi.json` files remain available as compatibility fragments.
+`src/api-types.ts` remains the source of truth for scaffolded REST contracts, and the endpoint manifest is the canonical TypeScript description of the scaffolded REST surface. `src/api-client.ts` is the generated portable client artifact for backend-neutral consumers, while `src/api.ts` remains the WordPress-facing helper layer for generated persistence scaffolds. `src/api-schemas/*.schema.json` remains the runtime-facing artifact for generated PHP validation, and `src/api.openapi.json` is the canonical endpoint-aware REST document when a scaffold defines route metadata. Per-contract `src/api-schemas/*.openapi.json` files remain available as compatibility fragments.
 
 When you need an AI- or tool-facing schema surface, derive it from the generated REST schema instead of creating a second hand-maintained contract:
 
