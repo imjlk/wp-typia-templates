@@ -663,6 +663,28 @@ function createRetrofitMultiBlockProject(projectDir: string) {
 	});
 }
 
+function createRetrofitMultiBlockProjectWithBrokenCandidate(projectDir: string) {
+	createRetrofitMultiBlockProject(projectDir);
+	writeJson(path.join(projectDir, "src", "blocks", "broken-item", "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Broken", type: "string" },
+		},
+		title: "Broken Item",
+	});
+}
+
+function createSingleBlockProjectWithBrokenMultiBlockCandidate(projectDir: string) {
+	createCurrentSingleBlockScaffoldProject(projectDir);
+	writeJson(path.join(projectDir, "src", "blocks", "broken-item", "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Broken", type: "string" },
+		},
+		title: "Broken Item",
+	});
+}
+
 function createRenameCandidateProject(projectDir: string) {
 	createProjectShell(projectDir);
 
@@ -1338,6 +1360,21 @@ describe("wp-typia migrations", () => {
 		expect(output).toContain("create-block/multi-parent-item");
 	});
 
+	test("migrations init ignores malformed multi-block candidates when valid block targets remain", () => {
+		const projectDir = path.join(tempRoot, "init-multi-block-project-with-broken-candidate");
+		createRetrofitMultiBlockProjectWithBrokenCandidate(projectDir);
+
+		const output = runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
+		expect(configSource).toContain("key: 'multi-parent'");
+		expect(configSource).toContain("key: 'multi-parent-item'");
+		expect(configSource).not.toContain("key: 'broken-item'");
+		expect(output).toContain("Detected multi-block migration retrofit (2 targets):");
+	});
+
 	test("migrations init prefers the legacy single-block fallback when only the root manifest exists", () => {
 		const projectDir = path.join(tempRoot, "init-mixed-single-block-project");
 		createMixedSingleBlockProject(projectDir);
@@ -1352,6 +1389,20 @@ describe("wp-typia migrations", () => {
 			fs.readFileSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), "utf8"),
 		);
 		expect(snapshotManifest.attributes.content.typia.defaultValue).toBe("Legacy");
+	});
+
+	test("migrations init falls back to single-block detection when all multi-block candidates are malformed", () => {
+		const projectDir = path.join(tempRoot, "init-single-block-with-broken-multi-block-candidate");
+		createSingleBlockProjectWithBrokenMultiBlockCandidate(projectDir);
+
+		const output = runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
+		expect(configSource).toContain("blockName: 'create-block/current-scaffold'");
+		expect(configSource).not.toContain("blocks: [");
+		expect(output).toContain("Detected single-block migration retrofit: create-block/current-scaffold");
 	});
 
 	test("migrations init ignores malformed non-selected single-block layouts", () => {

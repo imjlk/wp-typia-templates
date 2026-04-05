@@ -313,6 +313,7 @@ function discoverSingleBlockTarget(projectDir: string, preferredBlockName?: stri
 
 function discoverMigrationLayout(projectDir: string): DiscoveredMigrationLayout | null {
 	const blocksRoot = path.join(projectDir, "src", "blocks");
+	let firstMultiBlockError: Error | null = null;
 	if (fs.existsSync(blocksRoot) && fs.statSync(blocksRoot).isDirectory()) {
 		const blockDirectories = fs
 			.readdirSync(blocksRoot, { withFileTypes: true })
@@ -323,18 +324,19 @@ function discoverMigrationLayout(projectDir: string): DiscoveredMigrationLayout 
 		);
 
 		if (candidateDirectories.length > 0) {
-			const blocks = candidateDirectories.map((directory) => {
+			const blocks = candidateDirectories.flatMap((directory) => {
 				const saveFile = path.join("src", "blocks", directory, "save.tsx");
 				const typesFile = path.join("src", "blocks", directory, "types.ts");
 				const missingFiles = [saveFile, typesFile].filter(
 					(relativePath) => !fs.existsSync(path.join(projectDir, relativePath)),
 				);
 				if (missingFiles.length > 0) {
-					throw new Error(
+					firstMultiBlockError ??= new Error(
 						"Unable to auto-detect a supported migration retrofit layout. " +
 							`Detected ${path.join("src", "blocks", directory, "block.json")} but the block target is missing ${missingFiles.join(", ")}. ` +
 							"Create `src/migrations/config.ts` manually if your project uses a custom layout.",
 					);
+					return [];
 				}
 
 				const block = createBlockTarget(projectDir, {
@@ -345,19 +347,22 @@ function discoverMigrationLayout(projectDir: string): DiscoveredMigrationLayout 
 					typesFile,
 				});
 				if (!block) {
-					throw new Error(
+					firstMultiBlockError ??= new Error(
 						"Unable to auto-detect a supported migration retrofit layout. " +
 							`Could not read a valid block name from ${path.join("src", "blocks", directory, "block.json")}. ` +
 							"Create `src/migrations/config.ts` manually if your project uses a custom layout.",
 					);
+					return [];
 				}
-				return block;
+				return [block];
 			});
 
-			return {
-				blocks: blocks.sort((left, right) => left.key.localeCompare(right.key)),
-				mode: "multi",
-			};
+			if (blocks.length > 0) {
+				return {
+					blocks: blocks.sort((left, right) => left.key.localeCompare(right.key)),
+					mode: "multi",
+				};
+			}
 		}
 	}
 
@@ -368,6 +373,9 @@ function discoverMigrationLayout(projectDir: string): DiscoveredMigrationLayout 
 		};
 	} catch (error) {
 		if (error instanceof Error && error.message === SINGLE_BLOCK_LAYOUT_NOT_FOUND) {
+			if (firstMultiBlockError) {
+				throw firstMultiBlockError;
+			}
 			return null;
 		}
 		throw error;
