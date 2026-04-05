@@ -7,6 +7,7 @@ import * as path from "node:path";
 import { runUtf8Command } from "../../../tests/helpers/process-utils";
 import { scaffoldProject } from "../src/runtime/index.js";
 import { formatHelpText, getDoctorChecks, getNextSteps, runScaffoldFlow } from "../src/runtime/cli-core.js";
+import { collectScaffoldAnswers } from "../src/runtime/scaffold.js";
 import { copyRenderedDirectory } from "../src/runtime/template-render.js";
 import {
 	parseGitHubTemplateLocator,
@@ -1652,6 +1653,25 @@ describe("@wp-typia/create scaffolding", () => {
 			"npm run sync-types",
 			"npm run sync-rest",
 		]);
+	});
+
+	test("interactive scaffold answers recover when the project name normalizes to an empty slug", async () => {
+		const answers = await collectScaffoldAnswers({
+			projectName: "!!!",
+			promptText: async (message, defaultValue) => {
+				if (message === "Block slug") {
+					return "demo-recovered";
+				}
+
+				return defaultValue || "Recovered";
+			},
+			templateId: "basic",
+		});
+
+		expect(answers.slug).toBe("demo-recovered");
+		expect(answers.phpPrefix).toBe("demo_recovered");
+		expect(answers.textDomain).toBe("demo-recovered");
+		expect(answers.title).toBe("Demo Recovered");
 	});
 
 	test("runScaffoldFlow keeps compound next steps minimal while surfacing optional sync guidance", async () => {

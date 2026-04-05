@@ -294,9 +294,9 @@ export function getDefaultAnswers(
 		description: template?.description ?? "A WordPress block scaffolded from a remote template",
 		namespace: "create-block",
 		persistencePolicy: templateId === "persistence" ? "authenticated" : undefined,
-		phpPrefix: resolveValidatedPhpPrefix(slugDefault),
+		phpPrefix: toSnakeCase(slugDefault),
 		slug: slugDefault,
-		textDomain: resolveValidatedTextDomain(slugDefault),
+		textDomain: slugDefault,
 		title: toTitleCase(slugDefault),
 	};
 }
