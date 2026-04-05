@@ -4,6 +4,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
+import { runUtf8Command } from "../../../tests/helpers/process-utils";
 import { scaffoldProject } from "../src/runtime/index.js";
 import { formatHelpText, runScaffoldFlow } from "../src/runtime/cli-core.js";
 import { copyRenderedDirectory } from "../src/runtime/template-render.js";
@@ -58,12 +59,9 @@ const builtWorkspacePackages = new Set<string>();
 function runCli(
 	command: string,
 	args: string[],
-	options: Parameters<typeof execFileSync>[2] = {},
+	options: Parameters<typeof runUtf8Command>[2] = {},
 ) {
-	return execFileSync(command, args, {
-		encoding: "utf8",
-		...options,
-	});
+	return runUtf8Command(command, args, options);
 }
 
 function ensureDirSymlink(targetPath: string, sourcePath: string) {
@@ -394,11 +392,7 @@ describe("@wp-typia/create scaffolding", () => {
 				"scripts/sync-types-to-block-json.ts",
 				["--report", "json"],
 			);
-			const warningReport = JSON.parse(
-				typeof warningOutput === "string"
-					? warningOutput
-					: warningOutput.toString("utf8"),
-			);
+			const warningReport = JSON.parse(warningOutput);
 
 			expect(warningReport.status).toBe("warning");
 			expect(warningReport.strict).toBe(false);

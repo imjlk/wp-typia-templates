@@ -3,29 +3,14 @@ import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { syncBlockMetadata } from '../../scripts/lib/typia-metadata-core';
+import { createTempFixture, hasPhpBinary } from '../helpers/file-fixtures';
 import { getExampleShowcaseFixtureRoot } from './helpers/example-showcase';
 
 function createFixture(files: Record<string, string>) {
-  const baseDir = getExampleShowcaseFixtureRoot('.tmp-metadata-fixtures');
-  fs.mkdirSync(baseDir, { recursive: true });
-
-  const fixtureDir = fs.mkdtempSync(path.join(baseDir, 'fixture-'));
-  for (const [relativePath, content] of Object.entries(files)) {
-    const targetPath = path.join(fixtureDir, relativePath);
-    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-    fs.writeFileSync(targetPath, content);
-  }
-
-  return fixtureDir;
-}
-
-function hasPhpBinary() {
-  try {
-    execFileSync('php', ['-v'], { stdio: 'ignore' });
-    return true;
-  } catch {
-    return false;
-  }
+  return createTempFixture(files, {
+    baseDir: getExampleShowcaseFixtureRoot('.tmp-metadata-fixtures'),
+    prefix: 'fixture-',
+  });
 }
 
 describe('Typia metadata generator', () => {

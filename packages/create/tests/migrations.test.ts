@@ -1,9 +1,10 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
+import { runUtf8Command } from "../../../tests/helpers/process-utils";
+import { writeJsonFile, writeTextFile } from "../../../tests/helpers/file-fixtures";
 import { createMigrationDiff } from "../src/runtime/migration-diff.js";
 import { parseMigrationArgs } from "../src/runtime/index.js";
 import { loadMigrationProject } from "../src/runtime/migration-project.js";
@@ -17,21 +18,17 @@ const repoTsxPath = resolveRepoTsxBinary();
 function runCli(
 	command: string,
 	args: string[],
-	options: Parameters<typeof execFileSync>[2] = {},
+	options: Parameters<typeof runUtf8Command>[2] = {},
 ) {
-	return execFileSync(command, args, {
-		encoding: "utf8",
-		...options,
-	});
+	return runUtf8Command(command, args, options);
 }
 
 function writeFile(filePath: string, contents: string) {
-	fs.mkdirSync(path.dirname(filePath), { recursive: true });
-	fs.writeFileSync(filePath, contents, "utf8");
+	writeTextFile(filePath, contents);
 }
 
 function writeJson(filePath: string, value: unknown) {
-	writeFile(filePath, `${JSON.stringify(value, null, "\t")}\n`);
+	writeJsonFile(filePath, value, "\t");
 }
 
 function resolveRepoTsxBinary() {
