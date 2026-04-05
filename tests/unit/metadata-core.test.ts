@@ -506,6 +506,98 @@ describe("metadata-core endpoint manifests", () => {
 		}
 	});
 
+	test("syncEndpointClient picks non-conflicting helper aliases for imported portable types", async () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-metadata-core-"));
+		const typesDir = path.join(root, "src");
+		fs.mkdirSync(typesDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(typesDir, "api-types.ts"),
+			[
+				"export interface QueryContract {",
+				"  page: number;",
+				"}",
+				"",
+				"export interface PortableValidationError {",
+				"  title: string;",
+				"}",
+				"",
+				"export interface PortableValidationResult {",
+				"  ok: boolean;",
+				"}",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(typesDir, "api-validators.ts"),
+			[
+				"import type { ValidationResult } from '@wp-typia/api-client';",
+				"import type { QueryContract, PortableValidationError, PortableValidationResult } from './api-types';",
+				"",
+				"function ok<T>(input: T): ValidationResult<T> {",
+				"  return { data: input, errors: [], isValid: true };",
+				"}",
+				"",
+				"export const apiValidators = {",
+				"  body: (input: unknown): ValidationResult<PortableValidationError> => ok(input as PortableValidationError),",
+				"  query: (input: unknown): ValidationResult<QueryContract> => ok(input as QueryContract),",
+				"  response: (input: unknown): ValidationResult<PortableValidationResult> => ok(input as PortableValidationResult),",
+				"};",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+
+		try {
+			await syncEndpointClient({
+				clientFile: "build/api-client.ts",
+				manifest: defineEndpointManifest({
+					contracts: {
+						body: { sourceTypeName: "PortableValidationError" },
+						query: { sourceTypeName: "QueryContract" },
+						response: { sourceTypeName: "PortableValidationResult" },
+					},
+					endpoints: [
+						{
+							authMode: "public-read",
+							bodyContract: "body",
+							method: "POST",
+							operationId: "writeState",
+							path: "/demo/v1/state",
+							queryContract: "query",
+							responseContract: "response",
+							tags: ["State"],
+						},
+					],
+				}),
+				projectRoot: root,
+				typesFile: "src/api-types.ts",
+			});
+			const generatedClient = fs.readFileSync(
+				path.join(root, "build", "api-client.ts"),
+				"utf8",
+			);
+
+			expect(generatedClient).toContain(
+				"\ttype ValidationError as PortableValidationErrorAlias,",
+			);
+			expect(generatedClient).toContain(
+				"\ttype ValidationResult as PortableValidationResultAlias,",
+			);
+			expect(generatedClient).toContain(
+				"\tvalidateQuery: (input: unknown) => PortableValidationResultAlias<TQuery>,",
+			);
+			expect(generatedClient).toContain(
+				"\tconst errors: PortableValidationErrorAlias[] = [",
+			);
+			expect(generatedClient).toContain("\tQueryContract,");
+			expect(generatedClient).toContain("\tPortableValidationError,");
+			expect(generatedClient).toContain("\tPortableValidationResult,");
+		} finally {
+			fs.rmSync(root, { force: true, recursive: true });
+		}
+	});
+
 	test("syncEndpointClient rejects reserved-word operation identifiers", async () => {
 		const project = createTempProject();
 

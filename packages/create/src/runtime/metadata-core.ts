@@ -950,6 +950,13 @@ export async function syncEndpointClient(
   }
 
   const sortedTypeNames = [...importedTypeNames].sort();
+  const helperTypeNames = new Set(sortedTypeNames);
+  const combinedValidationErrorTypeName = inlineHelpers.has('validateCombinedRequest')
+    ? reserveUniqueClientTypeIdentifier('PortableValidationError', helperTypeNames)
+    : null;
+  const combinedValidationResultTypeName = inlineHelpers.has('validateCombinedRequest')
+    ? reserveUniqueClientTypeIdentifier('PortableValidationResult', helperTypeNames)
+    : null;
   const lines = [
     `import {`,
     `\tcallEndpoint,`,
@@ -957,8 +964,8 @@ export async function syncEndpointClient(
     `\ttype EndpointCallOptions,`,
     ...(inlineHelpers.has('validateCombinedRequest')
       ? [
-          `\ttype ValidationError as PortableValidationError,`,
-          `\ttype ValidationResult as PortableValidationResult,`,
+          `\ttype ValidationError as ${combinedValidationErrorTypeName},`,
+          `\ttype ValidationResult as ${combinedValidationResultTypeName},`,
         ]
       : []),
     `} from '@wp-typia/api-client';`,
@@ -1009,9 +1016,9 @@ export async function syncEndpointClient(
       ? [
           `function validateCombinedRequest<TQuery, TBody>(`,
           `\tinput: unknown,`,
-          `\tvalidateQuery: (input: unknown) => PortableValidationResult<TQuery>,`,
-          `\tvalidateBody: (input: unknown) => PortableValidationResult<TBody>,`,
-          `): PortableValidationResult<{ query: TQuery; body: TBody }> {`,
+          `\tvalidateQuery: (input: unknown) => ${combinedValidationResultTypeName}<TQuery>,`,
+          `\tvalidateBody: (input: unknown) => ${combinedValidationResultTypeName}<TBody>,`,
+          `): ${combinedValidationResultTypeName}<{ query: TQuery; body: TBody }> {`,
           `\tif ( input === null || typeof input !== 'object' || Array.isArray( input ) ) {`,
           `\t\treturn {`,
           `\t\t\tdata: undefined,`,
@@ -1051,7 +1058,7 @@ export async function syncEndpointClient(
           ``,
           `\tconst queryValidation = validateQuery( request.query );`,
           `\tconst bodyValidation = validateBody( request.body );`,
-          `\tconst errors: PortableValidationError[] = [`,
+          `\tconst errors: ${combinedValidationErrorTypeName}[] = [`,
           `\t\t...queryValidation.errors.map( ( error ) => ( {`,
           `\t\t\t...error,`,
           `\t\t\tpath: prefixPath( '$.query', error.path ),`,
@@ -1301,6 +1308,28 @@ function assertValidClientIdentifier(value: string, label: string): void {
     throw new Error(
       `Generated endpoint client ${label} "${value}" is a reserved JavaScript identifier.`,
     );
+  }
+}
+
+function reserveUniqueClientTypeIdentifier(
+  preferred: string,
+  occupied: Set<string>,
+): string {
+  let suffix = 0;
+
+  while (true) {
+    const candidate =
+      suffix === 0
+        ? preferred
+        : suffix === 1
+          ? `${preferred}Alias`
+          : `${preferred}Alias${suffix}`;
+    if (!occupied.has(candidate) && !RESERVED_CLIENT_IDENTIFIERS.has(candidate)) {
+      assertValidClientIdentifier(candidate, 'type alias');
+      occupied.add(candidate);
+      return candidate;
+    }
+    suffix += 1;
   }
 }
 
