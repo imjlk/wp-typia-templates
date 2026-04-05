@@ -226,13 +226,19 @@ function printDoctorLine({
 }
 
 async function runScaffold(parsed: ParsedArgs, cwd: string) {
-	const [{ createReadlinePrompt, runScaffoldFlow }, { getPackageManagerSelectOptions }, { getTemplateSelectOptions }] =
+	const [
+		{ createReadlinePrompt, runScaffoldFlow },
+		{ getPackageManagerSelectOptions },
+		{ getTemplateSelectOptions },
+		{ isInteractiveTerminal },
+	] =
 		await Promise.all([
 			import("./runtime/cli-scaffold.js"),
 			import("./runtime/package-managers.js"),
 			import("./runtime/template-registry.js"),
+			import("./runtime/migration-utils.js"),
 		]);
-	const isInteractive = Boolean(process.stdin.isTTY && process.stdout.isTTY);
+	const isInteractive = isInteractiveTerminal();
 	const prompt = createReadlinePrompt();
 
 	try {

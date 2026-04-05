@@ -312,6 +312,178 @@ function createCurrentProjectFiles(projectDir: string) {
 	});
 }
 
+function createCurrentSingleBlockScaffoldProject(projectDir: string) {
+	createProjectShell(projectDir);
+
+	writeJson(path.join(projectDir, "src", "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Hello", type: "string" },
+			isVisible: { default: false, type: "boolean" },
+		},
+		editorScript: "file:./index.js",
+		name: "create-block/current-scaffold",
+		title: "Current Scaffold",
+	});
+	writeJson(path.join(projectDir, "src", "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				defaultValue: "Hello",
+				required: true,
+			}),
+			isVisible: createManifestAttribute("boolean", {
+				defaultValue: false,
+				required: false,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "MigrationAttributes",
+	});
+}
+
+function createMixedSingleBlockProject(projectDir: string) {
+	createCurrentSingleBlockScaffoldProject(projectDir);
+	fs.rmSync(path.join(projectDir, "src", "typia.manifest.json"));
+
+	writeJson(path.join(projectDir, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Legacy", type: "string" },
+		},
+		name: "create-block/legacy-root-layout",
+		title: "Legacy Root Layout",
+	});
+	writeJson(path.join(projectDir, "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				defaultValue: "Legacy",
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "MigrationAttributes",
+	});
+}
+
+function createMalformedFallbackSingleBlockProject(projectDir: string) {
+	createCurrentSingleBlockScaffoldProject(projectDir);
+	writeJson(path.join(projectDir, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Legacy", type: "string" },
+		},
+		title: "Broken Legacy Root Layout",
+	});
+	writeJson(path.join(projectDir, "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				defaultValue: "Legacy",
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "MigrationAttributes",
+	});
+}
+
+function createMalformedPreferredSingleBlockProject(projectDir: string) {
+	createCurrentSingleBlockScaffoldProject(projectDir);
+
+	writeJson(path.join(projectDir, "src", "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Hello", type: "string" },
+			isVisible: { default: false, type: "boolean" },
+		},
+		editorScript: "file:./index.js",
+		title: "Broken Current Scaffold",
+	});
+	writeJson(path.join(projectDir, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Legacy", type: "string" },
+		},
+		name: "create-block/legacy-root-layout",
+		title: "Legacy Root Layout",
+	});
+	writeJson(path.join(projectDir, "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				defaultValue: "Legacy",
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "MigrationAttributes",
+	});
+}
+
+function createLegacyConfiguredMixedSingleBlockProject(projectDir: string) {
+	createMixedSingleBlockProject(projectDir);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "config.ts"),
+		`export const migrationConfig = {\n\tblockName: "create-block/legacy-root-layout",\n\tcurrentVersion: "1.0.0",\n\tsupportedVersions: ["1.0.0"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
+	);
+}
+
+function createLegacyConfiguredSameNameMixedSingleBlockProject(projectDir: string) {
+	createSameNameMixedSingleBlockProject(projectDir);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "config.ts"),
+		`export const migrationConfig = {\n\tblockName: "create-block/current-scaffold",\n\tcurrentVersion: "1.0.0",\n\tsupportedVersions: ["1.0.0"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
+	);
+}
+
+function createLegacyConfiguredCurrentPreferredSameNameMixedSingleBlockProject(projectDir: string) {
+	createCurrentSingleBlockScaffoldProject(projectDir);
+	writeJson(path.join(projectDir, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Legacy", type: "string" },
+		},
+		name: "create-block/current-scaffold",
+		title: "Legacy Root Layout",
+	});
+	writeJson(path.join(projectDir, "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				defaultValue: "Legacy",
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "MigrationAttributes",
+	});
+	writeFile(
+		path.join(projectDir, "src", "migrations", "config.ts"),
+		`export const migrationConfig = {\n\tblockName: "create-block/current-scaffold",\n\tcurrentVersion: "1.0.0",\n\tsupportedVersions: ["1.0.0"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
+	);
+}
+
+function createSameNameMixedSingleBlockProject(projectDir: string) {
+	createCurrentSingleBlockScaffoldProject(projectDir);
+	fs.rmSync(path.join(projectDir, "src", "typia.manifest.json"));
+
+	writeJson(path.join(projectDir, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Legacy", type: "string" },
+		},
+		name: "create-block/current-scaffold",
+		title: "Legacy Root Layout",
+	});
+	writeJson(path.join(projectDir, "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				defaultValue: "Legacy",
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "MigrationAttributes",
+	});
+}
+
 function writeCurrentSnapshot(projectDir: string, version = "2.0.0") {
 	writeJson(
 		path.join(projectDir, "src", "migrations", "versions", version, "block.json"),
@@ -499,6 +671,76 @@ function createMultiBlockMigrationProject(
 	const localBinDir = path.join(projectDir, "node_modules", ".bin");
 	fs.mkdirSync(localBinDir, { recursive: true });
 	fs.symlinkSync(repoTsxPath, path.join(localBinDir, "tsx"));
+}
+
+function createRetrofitMultiBlockProject(projectDir: string) {
+	writeJson(path.join(projectDir, "package.json"), {
+		name: "retrofit-multi-block",
+		packageManager: "bun@1.3.10",
+		private: true,
+		scripts: {},
+		type: "module",
+		version: "0.1.0",
+	});
+
+	writeMultiBlockCurrentFiles(projectDir, {
+		blockName: "create-block/multi-parent",
+		blockSlug: "multi-parent",
+		title: "Multi Parent",
+		typeName: "MultiParentAttributes",
+	});
+	writeMultiBlockCurrentFiles(projectDir, {
+		blockName: "create-block/multi-parent-item",
+		blockSlug: "multi-parent-item",
+		title: "Multi Parent Item",
+		typeName: "MultiParentItemAttributes",
+	});
+}
+
+function createRetrofitMultiBlockProjectWithBrokenCandidate(projectDir: string) {
+	createRetrofitMultiBlockProject(projectDir);
+	writeFile(
+		path.join(projectDir, "src", "blocks", "broken-item", "save.tsx"),
+		`export default function Save() {\n\treturn null;\n}\n`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "blocks", "broken-item", "types.ts"),
+		`export interface BrokenItemAttributes {}\n`,
+	);
+	writeFile(path.join(projectDir, "src", "blocks", "broken-item", "block.json"), '{"apiVersion":3,');
+}
+
+function createSingleBlockProjectWithBrokenMultiBlockCandidate(projectDir: string) {
+	createCurrentSingleBlockScaffoldProject(projectDir);
+	writeFile(
+		path.join(projectDir, "src", "blocks", "broken-item", "save.tsx"),
+		`export default function Save() {\n\treturn null;\n}\n`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "blocks", "broken-item", "types.ts"),
+		`export interface BrokenItemAttributes {}\n`,
+	);
+	writeFile(path.join(projectDir, "src", "blocks", "broken-item", "block.json"), '{"apiVersion":3,');
+}
+
+function createBrokenOnlyMultiBlockProject(projectDir: string) {
+	writeJson(path.join(projectDir, "package.json"), {
+		name: "broken-only-multi-block",
+		packageManager: "bun@1.3.10",
+		private: true,
+		scripts: {},
+		type: "module",
+		version: "0.1.0",
+	});
+	writeFile(
+		path.join(projectDir, "src", "blocks", "broken-item", "save.tsx"),
+		`export default function Save() {\n\treturn null;\n}\n`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "blocks", "broken-item", "types.ts"),
+		`export interface BrokenItemAttributes {}\n`,
+	);
+	writeFile(path.join(projectDir, "src", "blocks", "broken-item", "block.json"), '{"apiVersion":3,');
 }
 
 function createRenameCandidateProject(projectDir: string) {
@@ -1130,6 +1372,206 @@ describe("wp-typia migrations", () => {
 			),
 		);
 		expect(snapshotBlock.editorScript).toBeUndefined();
+	});
+
+	test("migrations init auto-detects current single-block scaffold layouts", () => {
+		const projectDir = path.join(tempRoot, "init-current-single-block-project");
+		createCurrentSingleBlockScaffoldProject(projectDir);
+
+		const output = runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
+		expect(configSource).toContain("blockName: 'create-block/current-scaffold'");
+		expect(configSource).not.toContain("blocks: [");
+		expect(fs.existsSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"))).toBe(true);
+		expect(fs.existsSync(path.join(projectDir, "src", "migrations", "generated", "registry.ts"))).toBe(true);
+		expect(output).toContain("Detected single-block migration retrofit: create-block/current-scaffold");
+		expect(output).toContain("Wrote src/migrations/config.ts");
+	});
+
+	test("migrations init auto-detects multi-block retrofit layouts including hidden compound children", () => {
+		const projectDir = path.join(tempRoot, "init-multi-block-project");
+		createRetrofitMultiBlockProject(projectDir);
+
+		const output = runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
+		expect(configSource).toContain("blocks: [");
+		expect(configSource).toContain("key: 'multi-parent'");
+		expect(configSource).toContain("key: 'multi-parent-item'");
+		expect(configSource).toContain("blockJsonFile: 'src/blocks/multi-parent/block.json'");
+		expect(configSource).toContain("blockJsonFile: 'src/blocks/multi-parent-item/block.json'");
+		expect(
+			fs.existsSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "multi-parent", "block.json")),
+		).toBe(true);
+		expect(
+			fs.existsSync(
+				path.join(projectDir, "src", "migrations", "versions", "1.0.0", "multi-parent-item", "block.json"),
+			),
+		).toBe(true);
+		expect(output).toContain("Detected multi-block migration retrofit (2 targets):");
+		expect(output).toContain("create-block/multi-parent");
+		expect(output).toContain("create-block/multi-parent-item");
+	});
+
+	test("migrations init ignores malformed multi-block candidates when valid block targets remain", () => {
+		const projectDir = path.join(tempRoot, "init-multi-block-project-with-broken-candidate");
+		createRetrofitMultiBlockProjectWithBrokenCandidate(projectDir);
+
+		const output = runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
+		expect(configSource).toContain("key: 'multi-parent'");
+		expect(configSource).toContain("key: 'multi-parent-item'");
+		expect(configSource).not.toContain("key: 'broken-item'");
+		expect(output).toContain("Detected multi-block migration retrofit (2 targets):");
+	});
+
+	test("migrations init prefers the legacy single-block fallback when only the root manifest exists", () => {
+		const projectDir = path.join(tempRoot, "init-mixed-single-block-project");
+		createMixedSingleBlockProject(projectDir);
+
+		runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
+		expect(configSource).toContain("blockName: 'create-block/legacy-root-layout'");
+		const snapshotManifest = JSON.parse(
+			fs.readFileSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), "utf8"),
+		);
+		expect(snapshotManifest.attributes.content.typia.defaultValue).toBe("Legacy");
+	});
+
+	test("migrations init falls back to single-block detection when all multi-block candidates are malformed", () => {
+		const projectDir = path.join(tempRoot, "init-single-block-with-broken-multi-block-candidate");
+		createSingleBlockProjectWithBrokenMultiBlockCandidate(projectDir);
+
+		const output = runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
+		expect(configSource).toContain("blockName: 'create-block/current-scaffold'");
+		expect(configSource).not.toContain("blocks: [");
+		expect(output).toContain("Detected single-block migration retrofit: create-block/current-scaffold");
+	});
+
+	test("migrations init reports actionable guidance when only malformed multi-block candidates exist", () => {
+		const projectDir = path.join(tempRoot, "init-broken-only-multi-block-project");
+		createBrokenOnlyMultiBlockProject(projectDir);
+
+		expect(() =>
+			runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+				cwd: projectDir,
+			}),
+		).toThrow(
+			/Unable to auto-detect a supported migration retrofit layout\.[\s\S]*src\/blocks\/broken-item\/block\.json[\s\S]*could not be parsed[\s\S]*src\/migrations\/config\.ts/,
+		);
+	});
+
+	test("migrations init ignores malformed non-selected single-block layouts", () => {
+		const projectDir = path.join(tempRoot, "init-malformed-fallback-single-block-project");
+		createMalformedFallbackSingleBlockProject(projectDir);
+
+		runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
+		expect(configSource).toContain("blockName: 'create-block/current-scaffold'");
+	});
+
+	test("migrations init falls back from malformed preferred single-block layouts", () => {
+		const projectDir = path.join(tempRoot, "init-malformed-preferred-single-block-project");
+		createMalformedPreferredSingleBlockProject(projectDir);
+
+		runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
+		expect(configSource).toContain("blockName: 'create-block/legacy-root-layout'");
+		const snapshotManifest = JSON.parse(
+			fs.readFileSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), "utf8"),
+		);
+		expect(snapshotManifest.attributes.content.typia.defaultValue).toBe("Legacy");
+	});
+
+	test("legacy migration configs stay bound to the configured single-block layout", () => {
+		const projectDir = path.join(tempRoot, "legacy-config-mixed-single-block-project");
+		createLegacyConfiguredMixedSingleBlockProject(projectDir);
+
+		const state = loadMigrationProject(projectDir);
+		expect(state.blocks[0]?.blockJsonFile).toBe("block.json");
+		expect(state.blocks[0]?.blockName).toBe("create-block/legacy-root-layout");
+		expect(state.currentManifest.attributes?.content?.typia.defaultValue).toBe("Legacy");
+	});
+
+	test("legacy migration configs keep the root layout when mixed single-block paths share a block name", () => {
+		const projectDir = path.join(tempRoot, "legacy-config-same-name-mixed-single-block-project");
+		createLegacyConfiguredSameNameMixedSingleBlockProject(projectDir);
+
+		const state = loadMigrationProject(projectDir);
+		expect(state.blocks[0]?.blockJsonFile).toBe("block.json");
+		expect(state.blocks[0]?.manifestFile).toBe("typia.manifest.json");
+		expect(state.currentManifest.attributes?.content?.typia.defaultValue).toBe("Legacy");
+	});
+
+	test("legacy migration configs keep the current scaffold layout when same-name mixed layouts both expose manifests", () => {
+		const projectDir = path.join(tempRoot, "legacy-config-current-preferred-same-name-mixed-single-block-project");
+		createLegacyConfiguredCurrentPreferredSameNameMixedSingleBlockProject(projectDir);
+
+		const state = loadMigrationProject(projectDir);
+		expect(state.blocks[0]?.blockJsonFile).toBe("src/block.json");
+		expect(state.blocks[0]?.manifestFile).toBe("src/typia.manifest.json");
+		expect(state.currentManifest.attributes?.content?.typia.defaultValue).toBe("Hello");
+	});
+
+	test("migrations init keeps manifest-priority when mixed single-block layouts share a block name", () => {
+		const projectDir = path.join(tempRoot, "init-same-name-mixed-single-block-project");
+		createSameNameMixedSingleBlockProject(projectDir);
+
+		runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
+		expect(configSource).toContain("blockName: 'create-block/current-scaffold'");
+		const snapshotManifest = JSON.parse(
+			fs.readFileSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), "utf8"),
+		);
+		expect(snapshotManifest.attributes.content.typia.defaultValue).toBe("Legacy");
+	});
+
+	test("migrations init fails with actionable guidance when no supported retrofit layout is found", () => {
+		const projectDir = path.join(tempRoot, "init-unsupported-layout-project");
+		writeJson(path.join(projectDir, "package.json"), {
+			name: "unsupported-migration-layout",
+			packageManager: "bun@1.3.10",
+			private: true,
+			scripts: {},
+			type: "module",
+			version: "0.1.0",
+		});
+
+		expect(() =>
+			runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+				cwd: projectDir,
+			}),
+		).toThrow(/Unable to auto-detect a supported migration retrofit layout[\s\S]*src\/migrations\/config\.ts/);
+	});
+
+	test("migrations help text explains retrofit auto-detection and --all workspace scope", () => {
+		expect(() => runCli("node", [entryPath, "migrations"])).toThrow(
+			/`migrations init` auto-detects supported single-block and `src\/blocks\/\*` multi-block layouts[\s\S]*--all runs across every configured legacy version and every configured block target\./,
+		);
 	});
 
 	test("migration arg parser ignores standalone script separators", () => {
