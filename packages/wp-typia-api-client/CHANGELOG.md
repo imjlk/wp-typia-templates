@@ -1,5 +1,13 @@
 # `@wp-typia/api-client`
 
+## 0.3.0 — 2026-04-05
+
+### Minor changes
+
+- [56d9906](https://github.com/imjlk/wp-typia/commit/56d9906401db82940cb1bb9b2840da0dcac694d4) Separate backend-neutral endpoint auth intent from WordPress-specific auth
+  mechanisms in endpoint manifests, generated OpenAPI metadata, and portable API
+  client endpoint metadata while preserving legacy `authMode` compatibility. — Thanks @imjlk!
+
 ## 0.2.0 — 2026-04-05
 
 ### Minor changes
