@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 
+import { formatRunScript } from "./package-managers.js";
 import {
 	ROOT_PHP_MIGRATION_REGISTRY,
 	SNAPSHOT_DIR,
@@ -43,6 +44,7 @@ import {
 	assertSemver,
 	compareSemver,
 	copyFile,
+	detectPackageManagerId,
 	getLocalTsxBinary,
 	readJson,
 	resolveTargetVersion,
@@ -77,8 +79,10 @@ type VerifyOptions = {
 
 type FixturesOptions = {
 	all?: boolean;
+	confirmOverwrite?: ((message: string) => boolean) | undefined;
 	force?: boolean;
 	fromVersion?: string;
+	isInteractive?: boolean;
 	renderLine?: RenderLine;
 	toVersion?: string;
 };
@@ -100,7 +104,12 @@ export function formatMigrationHelpText(): string {
   wp-typia migrations verify [--from <semver>|--all]
   wp-typia migrations doctor [--from <semver>|--all]
   wp-typia migrations fixtures [--from <semver>|--all] [--to current] [--force]
-  wp-typia migrations fuzz [--from <semver>|--all] [--iterations <n>] [--seed <n>]`;
+  wp-typia migrations fuzz [--from <semver>|--all] [--iterations <n>] [--seed <n>]
+
+Notes:
+  --all runs across every configured legacy version and every configured block target.
+  In TTY usage, \`migrations fixtures --force\` asks before overwriting existing fixture files.
+  In non-interactive usage, \`migrations fixtures --force\` overwrites immediately for script compatibility.`;
 }
 
 export function parseMigrationArgs(argv: string[]): ParsedMigrationArgs {
@@ -304,7 +313,18 @@ export function snapshotProjectVersion(
 	ensureAdvancedMigrationProject(projectDir);
 	assertSemver(version, "snapshot version");
 	if (!skipSyncTypes) {
-		runProjectScriptIfPresent(projectDir, "sync-types");
+		try {
+			runProjectScriptIfPresent(projectDir, "sync-types");
+		} catch (error) {
+			const syncTypesCommand = formatRunScript(detectPackageManagerId(projectDir), "sync-types");
+			const reason = error instanceof Error ? error.message : String(error);
+			throw new Error(
+				`Could not capture migration snapshot ${version} because \`${syncTypesCommand}\` failed first. ` +
+					`Install project dependencies if needed, rerun \`${syncTypesCommand}\` in the project root to inspect the underlying error, ` +
+					`then retry \`wp-typia migrations snapshot --version ${version}\`.\n` +
+					`Original error: ${reason}`,
+			);
+		}
 	}
 
 	const state = loadMigrationProject(projectDir, { allowMissingConfig: skipConfigUpdate });
@@ -355,6 +375,7 @@ export function diffProjectMigrations(
 	}
 	const state = loadMigrationProject(projectDir);
 	const targetVersion = resolveTargetVersion(state.config.currentVersion, toVersion);
+	assertDistinctMigrationEdge("diff", fromVersion, targetVersion);
 	const diffs = state.blocks
 		.filter((block) => hasSnapshotForVersion(state, block, fromVersion))
 		.map((block) => ({
@@ -363,7 +384,7 @@ export function diffProjectMigrations(
 		}));
 
 	if (diffs.length === 0) {
-		throw new Error(`No migration block targets have a snapshot for ${fromVersion}.`);
+		throw new Error(createMissingProjectSnapshotMessage(state, fromVersion));
 	}
 
 	for (const { block, diff } of diffs) {
@@ -385,15 +406,18 @@ export function scaffoldProjectMigrations(
 	ensureMigrationDirectories(projectDir);
 	const state = loadMigrationProject(projectDir);
 	const targetVersion = resolveTargetVersion(state.config.currentVersion, toVersion);
+	assertDistinctMigrationEdge("scaffold", fromVersion, targetVersion);
 	const paths = getProjectPaths(projectDir);
 	const scaffolded: Array<{ blockName: string; diff: ReturnType<typeof createMigrationDiff>; rulePath: string }> =
 		[];
+	let eligibleBlocks = 0;
 
 	for (const block of state.blocks) {
 		if (!hasSnapshotForVersion(state, block, fromVersion)) {
 			renderLine(`Skipped ${block.blockName}: no snapshot for ${fromVersion}`);
 			continue;
 		}
+		eligibleBlocks += 1;
 		const diff = createMigrationDiff(state, block, fromVersion, targetVersion);
 		const rulePath = getRuleFilePath(paths, block, fromVersion, targetVersion);
 
@@ -425,6 +449,11 @@ export function scaffoldProjectMigrations(
 		renderLine(formatDiffReport(entry.diff));
 		renderLine(`Scaffolded ${path.relative(projectDir, entry.rulePath)}`);
 	}
+
+	if (eligibleBlocks === 0) {
+		throw new Error(createMissingProjectSnapshotMessage(state, fromVersion));
+	}
+
 	return scaffolded.length === 1 ? scaffolded[0] : { scaffolded };
 }
 
@@ -460,8 +489,10 @@ export function verifyProjectMigrations(
 		}
 		const verifyScriptPath = path.join(getGeneratedDirForBlock(state.paths, block), "verify.ts");
 		if (!fs.existsSync(verifyScriptPath)) {
+			const selectedVersionsForBlock = entries.map((entry) => entry.fromVersion);
 			throw new Error(
-				`Generated verify script is missing for ${block.blockName}. Run \`wp-typia migrations scaffold --from <semver>\` first.`,
+				`Generated verify script is missing for ${block.blockName} (${selectedVersionsForBlock.join(", ")}). ` +
+					`Run \`${formatScaffoldCommand(selectedVersionsForBlock)}\` first, then \`wp-typia migrations doctor --all\` if the workspace should already be scaffolded.`,
 			);
 		}
 
@@ -754,8 +785,10 @@ export function fixturesProjectMigrations(
 	projectDir: string,
 	{
 		all = false,
+		confirmOverwrite,
 		force = false,
 		fromVersion,
+		isInteractive = isInteractiveTerminal(),
 		renderLine = console.log as RenderLine,
 		toVersion = "current",
 	}: FixturesOptions = {},
@@ -772,22 +805,39 @@ export function fixturesProjectMigrations(
 
 	const generatedVersions: string[] = [];
 	const skippedVersions: string[] = [];
+	const fixtureTargets = collectFixtureTargets(state, targetVersions, targetVersion);
 
-	for (const version of targetVersions) {
-		for (const block of state.blocks) {
-			if (!hasSnapshotForVersion(state, block, version)) {
-				continue;
+	if (force) {
+		const overwriteTargets = fixtureTargets.filter(({ fixturePath }) => fs.existsSync(fixturePath));
+		if (isInteractive && overwriteTargets.length > 0) {
+			const confirmed =
+				confirmOverwrite?.(
+					`About to overwrite ${overwriteTargets.length} existing migration fixture file(s). Continue?`,
+				) ?? promptForConfirmation(
+					`About to overwrite ${overwriteTargets.length} existing migration fixture file(s). Continue?`,
+				);
+
+			if (!confirmed) {
+				renderLine(
+					`Cancelled fixture refresh. Kept ${overwriteTargets.length} existing fixture file(s).`,
+				);
+				return {
+					generatedVersions,
+					skippedVersions: overwriteTargets.map(({ scopedLabel }) => scopedLabel),
+				};
 			}
-			const diff = createMigrationDiff(state, block, version, targetVersion);
-			const result = ensureEdgeFixtureFile(projectDir, block, version, targetVersion, diff, { force });
-			const scopedLabel = `${block.key}@${version}`;
-			if (result.written) {
-				generatedVersions.push(scopedLabel);
-				renderLine(`Generated fixture ${path.relative(projectDir, result.fixturePath)}`);
-			} else {
-				skippedVersions.push(scopedLabel);
-				renderLine(`Skipped existing fixture ${path.relative(projectDir, result.fixturePath)}`);
-			}
+		}
+	}
+
+	for (const { block, fixturePath, scopedLabel, version } of fixtureTargets) {
+		const diff = createMigrationDiff(state, block, version, targetVersion);
+		const result = ensureEdgeFixtureFile(projectDir, block, version, targetVersion, diff, { force });
+		if (result.written) {
+			generatedVersions.push(scopedLabel);
+			renderLine(`Generated fixture ${path.relative(projectDir, fixturePath)}`);
+		} else {
+			skippedVersions.push(scopedLabel);
+			renderLine(`Skipped existing fixture ${path.relative(projectDir, fixturePath)}`);
 		}
 	}
 
@@ -834,8 +884,10 @@ export function fuzzProjectMigrations(
 		}
 		const fuzzScriptPath = path.join(getGeneratedDirForBlock(state.paths, block), "fuzz.ts");
 		if (!fs.existsSync(fuzzScriptPath)) {
+			const selectedVersionsForBlock = entries.map((entry) => entry.fromVersion);
 			throw new Error(
-				`Generated fuzz script is missing for ${block.blockName}. Run \`wp-typia migrations scaffold --from <semver>\` first.`,
+				`Generated fuzz script is missing for ${block.blockName} (${selectedVersionsForBlock.join(", ")}). ` +
+					`Run \`${formatScaffoldCommand(selectedVersionsForBlock)}\` first, then \`wp-typia migrations doctor --all\` if the workspace should already be scaffolded.`,
 			);
 		}
 		const selectedVersionsForBlock = entries.map((entry) => entry.fromVersion);
@@ -901,11 +953,16 @@ function resolveLegacyVersions(
 ): string[] {
 	const legacyVersions = state.config.supportedVersions.filter(
 		(version) => version !== state.config.currentVersion,
-	);
+	).sort(compareSemver);
 
 	if (fromVersion) {
 		if (!legacyVersions.includes(fromVersion)) {
-			throw new Error(`Unsupported migration version: ${fromVersion}`);
+			throw new Error(
+				legacyVersions.length === 0
+					? `Unsupported migration version: ${fromVersion}. No legacy versions are configured yet. ` +
+						`Capture an older release with \`wp-typia migrations snapshot --version <semver>\` first.`
+					: `Unsupported migration version: ${fromVersion}. Available legacy versions: ${legacyVersions.join(", ")}.`,
+			);
 		}
 		return [fromVersion];
 	}
@@ -1048,8 +1105,10 @@ function getSelectedEntriesByBlock(
 		const missingLabels = missingEntries
 			.map(({ block, version }) => `${block.blockName} @ ${version}`)
 			.join(", ");
+		const missingVersions = [...new Set(missingEntries.map(({ version }) => version))].sort(compareSemver);
 		throw new Error(
-			`Missing migration ${command} inputs for ${missingLabels}. Run \`wp-typia migrations scaffold --from <semver>\` first.`,
+			`Missing migration ${command} inputs for ${missingLabels}. ` +
+				`Run \`${formatScaffoldCommand(missingVersions)}\` first, then \`wp-typia migrations doctor --all\` if the workspace should already be scaffolded.`,
 		);
 	}
 
@@ -1093,4 +1152,94 @@ function isLegacySingleBlockProject(
 	state: ReturnType<typeof loadMigrationProject>,
 ): boolean {
 	return state.blocks.length === 1 && state.blocks[0]?.layout === "legacy";
+}
+
+function assertDistinctMigrationEdge(
+	command: "diff" | "scaffold",
+	fromVersion: string,
+	toVersion: string,
+): void {
+	if (fromVersion === toVersion) {
+		throw new Error(
+			`\`migrations ${command}\` requires different source and target versions, but both resolved to ${fromVersion}. ` +
+				`Choose an older snapshot with \`--from <semver>\` or capture a newer release with \`wp-typia migrations snapshot --version <semver>\` first.`,
+		);
+	}
+}
+
+function createMissingProjectSnapshotMessage(
+	state: ReturnType<typeof loadMigrationProject>,
+	fromVersion: string,
+): string {
+	const snapshotVersions = [...new Set(
+		state.blocks.flatMap((block) => getAvailableSnapshotVersionsForBlock(state, block)),
+	)].sort(compareSemver);
+
+	return snapshotVersions.length === 0
+		? `No migration block targets have a snapshot for ${fromVersion}. No snapshots exist yet in this project. ` +
+				`Run \`wp-typia migrations snapshot --version ${fromVersion}\` first if you want to preserve that release.`
+		: `No migration block targets have a snapshot for ${fromVersion}. ` +
+				`Available snapshot versions in this project: ${snapshotVersions.join(", ")}. ` +
+				`Run \`wp-typia migrations snapshot --version ${fromVersion}\` first if you want to preserve that release.`;
+}
+
+function getAvailableSnapshotVersionsForBlock(
+	state: ReturnType<typeof loadMigrationProject>,
+	block: ReturnType<typeof loadMigrationProject>["blocks"][number],
+): string[] {
+	return state.config.supportedVersions
+		.filter((version) => hasSnapshotForVersion(state, block, version))
+		.sort(compareSemver);
+}
+
+function formatScaffoldCommand(versions: string[]): string {
+	const uniqueVersions = [...new Set(versions)].sort(compareSemver);
+	return uniqueVersions.length === 1
+		? `wp-typia migrations scaffold --from ${uniqueVersions[0]}`
+		: "wp-typia migrations scaffold --from <semver>";
+}
+
+function isInteractiveTerminal(): boolean {
+	return Boolean(process.stdin.isTTY && process.stdout.isTTY);
+}
+
+function promptForConfirmation(message: string): boolean {
+	process.stdout.write(`${message} [y/N]: `);
+
+	const buffer = Buffer.alloc(1);
+	let answer = "";
+
+	while (true) {
+		const bytesRead = fs.readSync(process.stdin.fd, buffer, 0, 1, null);
+		if (bytesRead === 0) {
+			break;
+		}
+
+		const char = buffer.toString("utf8", 0, bytesRead);
+		if (char === "\n" || char === "\r") {
+			break;
+		}
+
+		answer += char;
+	}
+
+	const normalized = answer.trim().toLowerCase();
+	return normalized === "y" || normalized === "yes";
+}
+
+function collectFixtureTargets(
+	state: ReturnType<typeof loadMigrationProject>,
+	targetVersions: string[],
+	targetVersion: string,
+) {
+	return targetVersions.flatMap((version) =>
+		state.blocks
+			.filter((block) => hasSnapshotForVersion(state, block, version))
+			.map((block) => ({
+				block,
+				fixturePath: getFixtureFilePath(state.paths, block, version, targetVersion),
+				scopedLabel: `${block.key}@${version}`,
+				version,
+			})),
+	);
 }

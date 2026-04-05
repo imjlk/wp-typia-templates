@@ -353,7 +353,7 @@ Migration-enabled generated projects may also wire:
 - `src/admin/migration-dashboard.tsx`
 - `src/migration-detector.ts`
 
-`migrations doctor` is the read-only workspace health check, `migrations fixtures` refreshes deterministic edge fixtures, and `migrations fuzz` replays those fixtures plus seeded random legacy-shaped inputs derived from the current Typia validator.
+`migrations doctor` is the read-only workspace health check, `migrations fixtures` refreshes deterministic edge fixtures, and `migrations fuzz` replays those fixtures plus seeded random legacy-shaped inputs derived from the current Typia validator. Without `--all`, migration commands target the first legacy version only; `--all` runs across every configured legacy version and every configured block target. In TTY usage, `migrations fixtures --force` asks before overwriting existing fixture files, while non-interactive runs overwrite immediately for script compatibility.
 
 The built-in `persistence` template adds another predictable layer:
 

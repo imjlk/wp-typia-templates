@@ -74,6 +74,10 @@ bun run migration:verify
 bun run migration:fuzz -- --all --iterations 25 --seed 1
 ```
 
+When omitted, `verify`, `doctor`, `fixtures`, and `fuzz` target the first legacy
+version only. Add `--all` to run across every configured legacy version and,
+for multi-block projects, every configured block target in the workspace.
+
 The intended authoring flow is:
 
 1. change `src/types.ts`
@@ -151,6 +155,11 @@ Scaffolded rules expose:
 
 `migration:fixtures` is the explicit refresh path for edge fixtures. Without `--force`, existing fixture files are preserved and reported as skipped.
 
+In TTY usage, `migration:fixtures -- --force` asks once before overwriting
+existing fixture files and reports how many files will be replaced. In
+non-interactive usage, `--force` still overwrites immediately so scripted flows
+stay compatible.
+
 `migration:fuzz` is intentionally separate from `migration:verify`. `verify` stays deterministic and fixture-driven, while `fuzz` replays fixture cases and then generates seeded random current samples with `validators.random()`, converts the safe subset back into legacy-shaped inputs, migrates them, and validates the result against the current Typia validator.
 
 High-confidence renames are written into `renameMap` automatically. Ambiguous candidates stay unresolved, and semantic-risk coercions are emitted as suggested transform bodies with unresolved markers left in place. Nested authoring uses the current-path convention:
@@ -160,6 +169,10 @@ High-confidence renames are written into `renameMap` automatically. Ambiguous ca
 - `linkTarget.url.href`
 
 If unresolved `TODO MIGRATION:` markers or unresolved entries remain, `migration:verify` fails on purpose.
+
+If `verify` or `fuzz` report missing generated inputs, rerun
+`migration:scaffold -- --from <semver>` for the missing edge and then
+`migration:doctor -- --all` to confirm the workspace is back in sync.
 
 ## Deprecated Gutenberg entries
 
