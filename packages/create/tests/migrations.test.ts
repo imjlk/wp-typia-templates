@@ -426,6 +426,14 @@ function createLegacyConfiguredMixedSingleBlockProject(projectDir: string) {
 	);
 }
 
+function createLegacyConfiguredSameNameMixedSingleBlockProject(projectDir: string) {
+	createSameNameMixedSingleBlockProject(projectDir);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "config.ts"),
+		`export const migrationConfig = {\n\tblockName: "create-block/current-scaffold",\n\tcurrentVersion: "1.0.0",\n\tsupportedVersions: ["1.0.0"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
+	);
+}
+
 function createSameNameMixedSingleBlockProject(projectDir: string) {
 	createCurrentSingleBlockScaffoldProject(projectDir);
 	fs.rmSync(path.join(projectDir, "src", "typia.manifest.json"));
@@ -665,24 +673,12 @@ function createRetrofitMultiBlockProject(projectDir: string) {
 
 function createRetrofitMultiBlockProjectWithBrokenCandidate(projectDir: string) {
 	createRetrofitMultiBlockProject(projectDir);
-	writeJson(path.join(projectDir, "src", "blocks", "broken-item", "block.json"), {
-		apiVersion: 3,
-		attributes: {
-			content: { default: "Broken", type: "string" },
-		},
-		title: "Broken Item",
-	});
+	writeFile(path.join(projectDir, "src", "blocks", "broken-item", "block.json"), '{"apiVersion":3,');
 }
 
 function createSingleBlockProjectWithBrokenMultiBlockCandidate(projectDir: string) {
 	createCurrentSingleBlockScaffoldProject(projectDir);
-	writeJson(path.join(projectDir, "src", "blocks", "broken-item", "block.json"), {
-		apiVersion: 3,
-		attributes: {
-			content: { default: "Broken", type: "string" },
-		},
-		title: "Broken Item",
-	});
+	writeFile(path.join(projectDir, "src", "blocks", "broken-item", "block.json"), '{"apiVersion":3,');
 }
 
 function createRenameCandidateProject(projectDir: string) {
@@ -1440,6 +1436,16 @@ describe("wp-typia migrations", () => {
 		const state = loadMigrationProject(projectDir);
 		expect(state.blocks[0]?.blockJsonFile).toBe("block.json");
 		expect(state.blocks[0]?.blockName).toBe("create-block/legacy-root-layout");
+		expect(state.currentManifest.attributes?.content?.typia.defaultValue).toBe("Legacy");
+	});
+
+	test("legacy migration configs keep the root layout when mixed single-block paths share a block name", () => {
+		const projectDir = path.join(tempRoot, "legacy-config-same-name-mixed-single-block-project");
+		createLegacyConfiguredSameNameMixedSingleBlockProject(projectDir);
+
+		const state = loadMigrationProject(projectDir);
+		expect(state.blocks[0]?.blockJsonFile).toBe("block.json");
+		expect(state.blocks[0]?.manifestFile).toBe("typia.manifest.json");
 		expect(state.currentManifest.attributes?.content?.typia.defaultValue).toBe("Legacy");
 	});
 

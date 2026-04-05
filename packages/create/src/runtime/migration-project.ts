@@ -43,6 +43,7 @@ const SINGLE_BLOCK_LAYOUT_CANDIDATES = [
 		manifestFile: ROOT_MANIFEST,
 	},
 ] as const;
+const LEGACY_ROOT_SINGLE_BLOCK_LAYOUT = SINGLE_BLOCK_LAYOUT_CANDIDATES[1];
 
 /**
  * Describes the migration retrofit layout discovered in a project directory.
@@ -144,6 +145,19 @@ function orderSingleBlockCandidates(
 }
 
 function createImplicitLegacyBlock(projectDir: string, blockName?: string): MigrationBlockConfig {
+	if (blockName) {
+		try {
+			const rootTarget = readSingleBlockTarget(projectDir, LEGACY_ROOT_SINGLE_BLOCK_LAYOUT);
+			if (rootTarget?.blockName === blockName) {
+				return {
+					...rootTarget,
+					key: DEFAULT_BLOCK_KEY,
+				};
+			}
+		} catch {
+			// Fall back to the shared discovery flow so malformed legacy roots do not block valid layouts.
+		}
+	}
 	const discovered = discoverSingleBlockTarget(projectDir, blockName);
 	return {
 		...discovered,
@@ -339,13 +353,26 @@ function discoverMigrationLayout(projectDir: string): DiscoveredMigrationLayout 
 					return [];
 				}
 
-				const block = createBlockTarget(projectDir, {
-					blockJsonFile: path.join("src", "blocks", directory, "block.json"),
-					key: directory,
-					manifestFile: path.join("src", "blocks", directory, "typia.manifest.json"),
-					saveFile,
-					typesFile,
-				});
+				let block: MigrationBlockConfig | null = null;
+				try {
+					block = createBlockTarget(projectDir, {
+						blockJsonFile: path.join("src", "blocks", directory, "block.json"),
+						key: directory,
+						manifestFile: path.join("src", "blocks", directory, "typia.manifest.json"),
+						saveFile,
+						typesFile,
+					});
+				} catch (error) {
+					firstMultiBlockError ??=
+						error instanceof Error
+							? error
+							: new Error(
+									"Unable to auto-detect a supported migration retrofit layout. " +
+										`Could not read ${path.join("src", "blocks", directory, "block.json")}. ` +
+										"Create `src/migrations/config.ts` manually if your project uses a custom layout.",
+							  );
+					return [];
+				}
 				if (!block) {
 					firstMultiBlockError ??= new Error(
 						"Unable to auto-detect a supported migration retrofit layout. " +
@@ -804,6 +831,13 @@ export default migrationConfig;
 	);
 }
 
+/**
+ * Returns the discovered block name for a supported single-block project.
+ *
+ * Uses `discoverSingleBlockTarget(projectDir)` internally and throws when the
+ * project directory does not resolve to a supported single-block migration
+ * layout.
+ */
 export function readProjectBlockName(projectDir: string): string {
 	return discoverSingleBlockTarget(projectDir).blockName;
 }
