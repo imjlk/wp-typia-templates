@@ -38,7 +38,7 @@ SyncRestOpenApiBaseOptions.openApiFile
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:301](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L301)
+[packages/create/src/runtime/metadata-core.ts:302](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L302)
 
 ___
 
@@ -54,7 +54,7 @@ SyncRestOpenApiBaseOptions.projectRoot
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:303](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L303)
+[packages/create/src/runtime/metadata-core.ts:304](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L304)
 
 ___
 
@@ -70,7 +70,7 @@ SyncRestOpenApiBaseOptions.typesFile
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:305](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L305)
+[packages/create/src/runtime/metadata-core.ts:306](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L306)
 
 ___
 
@@ -82,7 +82,7 @@ Canonical endpoint manifest describing the REST surface.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:313](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L313)
+[packages/create/src/runtime/metadata-core.ts:314](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L314)
 
 ___
 
@@ -94,7 +94,7 @@ Not accepted when `manifest` is provided.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:315](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L315)
+[packages/create/src/runtime/metadata-core.ts:316](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L316)
 
 ___
 
@@ -106,7 +106,7 @@ Not accepted when `manifest` is provided.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:317](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L317)
+[packages/create/src/runtime/metadata-core.ts:318](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L318)
 
 ___
 
@@ -118,4 +118,4 @@ Not accepted when `manifest` is provided.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:319](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L319)
+[packages/create/src/runtime/metadata-core.ts:320](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L320)

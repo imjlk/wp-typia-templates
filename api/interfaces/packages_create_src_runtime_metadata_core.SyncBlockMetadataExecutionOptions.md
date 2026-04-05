@@ -24,7 +24,7 @@ Promote lossy WordPress projection warnings to `error` status.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:177](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L177)
+[packages/create/src/runtime/metadata-core.ts:178](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L178)
 
 ___
 
@@ -36,7 +36,7 @@ Promote PHP validator coverage warnings to `error` status.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:179](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L179)
+[packages/create/src/runtime/metadata-core.ts:180](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L180)
 
 ___
 
@@ -51,4 +51,4 @@ When `true`, this behaves like setting both `failOnLossy` and
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:186](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L186)
+[packages/create/src/runtime/metadata-core.ts:187](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L187)
