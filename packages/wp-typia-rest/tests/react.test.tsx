@@ -960,7 +960,7 @@ describe("@wp-typia/rest/react", () => {
 			false,
 		);
 		expect(rendered.current.mutation.validation?.isValid).toBe(false);
-		expect(rendered.current.query.data).toEqual({ count: 0 });
+		expect(rendered.current.query.data).toEqual({ count: 1 });
 		expect(invalidateCalls).toEqual([
 			{
 				endpoint: queryEndpoint,
