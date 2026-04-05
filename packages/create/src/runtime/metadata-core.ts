@@ -1524,16 +1524,34 @@ function getAnalysisProgramDependencyPaths(
   program: ts.Program,
   configPath: string | null,
 ): string[] {
-  const dependencyPaths = program
+  const sourceFilePaths = program
     .getSourceFiles()
     .map((sourceFile) => sourceFile.fileName)
     .filter((filePath) => !filePath.startsWith(TYPESCRIPT_LIB_DIRECTORY));
+  const dependencyPaths = new Set(sourceFilePaths);
 
-  if (configPath) {
-    dependencyPaths.push(configPath);
+  for (const filePath of sourceFilePaths) {
+    let currentDir = path.dirname(filePath);
+    while (true) {
+      const packageJsonPath = path.join(currentDir, 'package.json');
+      if (ts.sys.fileExists(packageJsonPath)) {
+        dependencyPaths.add(packageJsonPath);
+      }
+
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) {
+        break;
+      }
+
+      currentDir = parentDir;
+    }
   }
 
-  return [...new Set(dependencyPaths)].sort();
+  if (configPath) {
+    dependencyPaths.add(configPath);
+  }
+
+  return [...dependencyPaths].sort();
 }
 
 function resolveAnalysisProgramInputs(

@@ -186,7 +186,10 @@ export function createReadlinePrompt(): ReadlinePrompt {
 }
 
 function quoteShellValue(value: string): string {
-	if (/^[A-Za-z0-9._/@:-]+(?:\/[A-Za-z0-9._@:-]+)*$/.test(value)) {
+	if (
+		!value.startsWith("-") &&
+		/^[A-Za-z0-9._/@:-]+(?:\/[A-Za-z0-9._@:-]+)*$/.test(value)
+	) {
 		return value;
 	}
 

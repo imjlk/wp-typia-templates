@@ -430,6 +430,118 @@ describe("metadata-core endpoint manifests", () => {
 		}
 	});
 
+	test("invalidates cached analysis when NodeNext package metadata changes resolution", async () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-metadata-package-json-cache-"));
+		const srcDir = path.join(root, "src");
+		const dependencyDir = path.join(root, "node_modules", "@wp-typia", "block-types");
+		fs.mkdirSync(srcDir, { recursive: true });
+		fs.mkdirSync(dependencyDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(dependencyDir, "v1.d.ts"),
+			[
+				"export interface ExternalCounterResponse {",
+				"  total: number;",
+				"}",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(dependencyDir, "v2.d.ts"),
+			[
+				"export interface ExternalCounterResponse {",
+				"  total: string;",
+				"}",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(dependencyDir, "package.json"),
+			JSON.stringify(
+				{
+					name: "@wp-typia/block-types",
+					type: "module",
+					types: "./v1.d.ts",
+				},
+				null,
+				2,
+			),
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(srcDir, "api-types.ts"),
+			[
+				'import type { ExternalCounterResponse } from "@wp-typia/block-types";',
+				"",
+				"export interface CounterResponse extends ExternalCounterResponse {}",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(root, "tsconfig.json"),
+			JSON.stringify(
+				{
+					compilerOptions: {
+						module: "NodeNext",
+						moduleResolution: "NodeNext",
+						resolveJsonModule: true,
+						strict: true,
+						target: "ES2022",
+					},
+					include: ["src/**/*.ts"],
+				},
+				null,
+				2,
+			),
+			"utf8",
+		);
+
+		try {
+			await syncTypeSchemas({
+				jsonSchemaFile: "build/counter.schema.json",
+				projectRoot: root,
+				sourceTypeName: "CounterResponse",
+				typesFile: "src/api-types.ts",
+			});
+
+			const firstSchema = JSON.parse(
+				fs.readFileSync(path.join(root, "build", "counter.schema.json"), "utf8"),
+			);
+
+			fs.writeFileSync(
+				path.join(dependencyDir, "package.json"),
+				JSON.stringify(
+					{
+						name: "@wp-typia/block-types",
+						type: "module",
+						types: "./v2.d.ts",
+					},
+					null,
+					2,
+				),
+				"utf8",
+			);
+
+			await syncTypeSchemas({
+				jsonSchemaFile: "build/counter.schema.json",
+				projectRoot: root,
+				sourceTypeName: "CounterResponse",
+				typesFile: "src/api-types.ts",
+			});
+
+			const secondSchema = JSON.parse(
+				fs.readFileSync(path.join(root, "build", "counter.schema.json"), "utf8"),
+			);
+
+			expect(firstSchema.properties.total.type).toBe("number");
+			expect(secondSchema.properties.total.type).toBe("string");
+		} finally {
+			fs.rmSync(root, { force: true, recursive: true });
+		}
+	});
+
 	test("syncRestOpenApi normalizes legacy authMode manifests identically to the new auth shape", async () => {
 		const project = createTempProject();
 		const legacyManifest = defineEndpointManifest({

@@ -6,7 +6,7 @@ import * as path from "node:path";
 
 import { runUtf8Command } from "../../../tests/helpers/process-utils";
 import { scaffoldProject } from "../src/runtime/index.js";
-import { formatHelpText, getNextSteps, runScaffoldFlow } from "../src/runtime/cli-core.js";
+import { formatHelpText, getDoctorChecks, getNextSteps, runScaffoldFlow } from "../src/runtime/cli-core.js";
 import { copyRenderedDirectory } from "../src/runtime/template-render.js";
 import {
 	parseGitHubTemplateLocator,
@@ -1702,6 +1702,10 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(externalPackageLine).not.toContain("--with-migration-ui");
 	});
 
+	test("cli-core barrel preserves doctor helper exports", () => {
+		expect(typeof getDoctorChecks).toBe("function");
+	});
+
 	test("getNextSteps quotes project paths with spaces", () => {
 		expect(
 			getNextSteps({
@@ -1714,6 +1718,18 @@ describe("@wp-typia/create scaffolding", () => {
 		).toEqual([
 			"cd 'demo project'",
 			"bun install",
+			"bun run dev",
+		]);
+		expect(
+			getNextSteps({
+				noInstall: false,
+				packageManager: "bun",
+				projectDir: "/tmp/-demo",
+				projectInput: "-demo",
+				templateId: "basic",
+			}),
+		).toEqual([
+			"cd '-demo'",
 			"bun run dev",
 		]);
 	});
