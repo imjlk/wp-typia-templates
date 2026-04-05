@@ -12,6 +12,7 @@ import { parseMigrationArgs } from "../src/runtime/index.js";
 import {
 	fixturesProjectMigrations,
 	planProjectMigrations,
+	runMigrationCommand,
 	snapshotProjectVersion,
 	wizardProjectMigrations,
 } from "../src/runtime/migrations.js";
@@ -1737,6 +1738,20 @@ describe("wp-typia migrations", () => {
 		).toBe(false);
 	});
 
+	test("plan stays read-only when current manifests are missing", () => {
+		const projectDir = path.join(tempRoot, "plan-read-only-manifest-project");
+		createVersionedMigrationProject(projectDir);
+		const manifestPath = path.join(projectDir, "typia.manifest.json");
+		fs.rmSync(manifestPath);
+
+		expect(() =>
+			planProjectMigrations(projectDir, {
+				fromVersion: "1.0.0",
+			}),
+		).toThrow(/Migration planning is read-only[\s\S]*Run your project's `sync-types` script/);
+		expect(fs.existsSync(manifestPath)).toBe(false);
+	});
+
 	test("plan omits current-version follow-up commands for non-current targets", () => {
 		const projectDir = path.join(tempRoot, "plan-non-current-target-project");
 		createVersionedMigrationProject(projectDir);
@@ -2355,6 +2370,16 @@ describe("wp-typia migrations", () => {
 				cwd: projectDir,
 			}),
 		).toThrow(/migrations scaffold` requires different source and target versions[\s\S]*1\.0\.0/);
+	});
+
+	test("runMigrationCommand preserves synchronous throws for direct callers", () => {
+		const projectDir = path.join(tempRoot, "run-command-sync-contract-project");
+		createVersionedMigrationProject(projectDir);
+		const command = parseMigrationArgs(["plan", "--from", "2.0.0"]);
+
+		expect(() => runMigrationCommand(command, projectDir)).toThrow(
+			/migrations plan` requires different source and target versions[\s\S]*2\.0\.0/,
+		);
 	});
 
 	test("verify defaults to the first legacy version and rejects malformed numeric flags", () => {

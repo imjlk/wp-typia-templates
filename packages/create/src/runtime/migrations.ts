@@ -240,7 +240,7 @@ export function parseMigrationArgs(argv: string[]): ParsedMigrationArgs {
 
 export { formatDiffReport };
 
-export async function runMigrationCommand(
+export function runMigrationCommand(
 	command: ParsedMigrationArgs,
 	cwd: string,
 	{ prompt, renderLine = console.log as RenderLine }: CommandRenderOptions = {},
@@ -336,7 +336,7 @@ export function planProjectMigrations(
 		throw new Error("`migrations plan` requires --from <semver>.");
 	}
 
-	const state = loadMigrationProject(projectDir);
+	const state = loadMigrationProject(projectDir, { allowSyncTypes: false });
 	const availableLegacyVersions = listLegacyVersions(state).sort(compareSemver).reverse();
 	const targetVersion = resolveTargetVersion(state.config.currentVersion, toVersion);
 	assertDistinctMigrationEdge("plan", fromVersion, targetVersion);
@@ -415,7 +415,7 @@ export async function wizardProjectMigrations(
 		);
 	}
 
-	const state = loadMigrationProject(projectDir);
+	const state = loadMigrationProject(projectDir, { allowSyncTypes: false });
 	const availableLegacyVersions = listLegacyVersions(state).sort(compareSemver).reverse();
 	if (availableLegacyVersions.length === 0) {
 		throw new Error(
