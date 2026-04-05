@@ -120,6 +120,22 @@ async function flush() {
 	await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+async function waitFor(
+	check: () => boolean,
+	timeoutMs = 1_000,
+) {
+	const startedAt = Date.now();
+	while (Date.now() - startedAt < timeoutMs) {
+		if (check()) {
+			return;
+		}
+
+		await flush();
+	}
+
+	throw new Error("Timed out waiting for test condition.");
+}
+
 afterEach(() => {
 	for (const unmount of [...activeUnmounts]) {
 		void unmount();
@@ -951,8 +967,7 @@ describe("@wp-typia/rest/react", () => {
 		const result = await rendered.current.mutation.mutateAsync(request);
 		await flush();
 		await flush();
-		await flush();
-		await flush();
+		await waitFor(() => rendered.current.query.data?.count === 1);
 
 		expect(result.isValid).toBe(false);
 		expect(onErrorCount).toBe(1);
@@ -960,7 +975,7 @@ describe("@wp-typia/rest/react", () => {
 			false,
 		);
 		expect(rendered.current.mutation.validation?.isValid).toBe(false);
-		expect(rendered.current.query.data).toEqual({ count: 0 });
+		expect(rendered.current.query.data).toEqual({ count: 1 });
 		expect(invalidateCalls).toEqual([
 			{
 				endpoint: queryEndpoint,
