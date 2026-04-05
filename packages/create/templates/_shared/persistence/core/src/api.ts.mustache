@@ -17,6 +17,10 @@ export function resolveRestNonce( fallback?: string ): string | undefined {
 		return fallback;
 	}
 
+	if ( typeof window === 'undefined' ) {
+		return undefined;
+	}
+
 	const wpApiSettings = ( window as typeof window & {
 		wpApiSettings?: { nonce?: string };
 	} ).wpApiSettings;

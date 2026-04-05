@@ -100,8 +100,16 @@ export default function Edit( {
 		liveErrorMessage = liveStatusQuery.error.message;
 	}
 	const liveStatus = liveStatusQuery.data;
-	const liveButtonLabel =
-		liveStatus?.likedByCurrentUser === true ? unlikeLabel : likeLabel;
+	let liveButtonLabel = likeLabel;
+	if ( liveStatus?.likedByCurrentUser === true ) {
+		liveButtonLabel = unlikeLabel;
+	}
+	let liveLikeStateLabel = __( 'Unknown', 'persistence-examples' ) as string;
+	if ( liveStatus?.likedByCurrentUser === true ) {
+		liveLikeStateLabel = __( 'Yes', 'persistence-examples' ) as string;
+	} else if ( liveStatus?.likedByCurrentUser === false ) {
+		liveLikeStateLabel = __( 'No', 'persistence-examples' ) as string;
+	}
 
 	return (
 		<>
@@ -195,9 +203,7 @@ export default function Edit( {
 										'Current user liked:',
 										'persistence-examples'
 									) }{ ' ' }
-									{ liveStatus?.likedByCurrentUser
-										? __( 'Yes', 'persistence-examples' )
-										: __( 'No', 'persistence-examples' ) }
+									{ liveLikeStateLabel }
 								</p>
 								<Button
 									variant="secondary"

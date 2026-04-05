@@ -69,14 +69,16 @@ interface InternalEndpointDataClient extends EndpointDataClient {
 	__subscribe(cacheKey: CacheKey, listener: EndpointDataListener): () => void;
 }
 
-export interface EndpointInvalidateTarget<Req = any, Res = any> {
-	endpoint: ApiEndpoint<Req, Res>;
-	request?: Req;
+export interface EndpointInvalidateTarget<
+	E extends ApiEndpoint<any, any> = ApiEndpoint<any, any>,
+> {
+	endpoint: E;
+	request?: E extends ApiEndpoint<infer Req, any> ? Req : never;
 }
 
 type EndpointInvalidateTargets =
-	| EndpointInvalidateTarget<any, any>
-	| readonly EndpointInvalidateTarget<any, any>[]
+	| EndpointInvalidateTarget
+	| readonly EndpointInvalidateTarget[]
 	| undefined;
 
 export interface UseEndpointQueryOptions<Req, Res, Selected = Res> {
@@ -172,7 +174,12 @@ const EMPTY_SNAPSHOT: EndpointDataSnapshot = {
 const EndpointDataClientContext = createContext<EndpointDataClient | null>(null);
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
-	return value !== null && typeof value === "object" && !Array.isArray(value);
+	if (value === null || typeof value !== "object" || Array.isArray(value)) {
+		return false;
+	}
+
+	const prototype = Object.getPrototypeOf(value);
+	return prototype === Object.prototype || prototype === null;
 }
 
 function normalizeCacheValue(value: unknown): unknown {
@@ -513,7 +520,8 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 		throw new Error("useEndpointQuery only supports GET endpoints in v1.");
 	}
 
-	const client = asInternalClient(options.client ?? useEndpointDataClient());
+	const defaultClient = useEndpointDataClient();
+	const client = asInternalClient(options.client ?? defaultClient);
 	const {
 		enabled = true,
 		fetchFn,
@@ -564,6 +572,8 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 	const executeQueryRef = useRef<
 		(force: boolean) => Promise<ValidationResult<Res>>
 	>();
+	// Keep these callbacks stable while still reading the latest runtime inputs
+	// from latestRef.current on each execution.
 	if (!executeQueryRef.current) {
 		executeQueryRef.current = async (force) => {
 			const latest = latestRef.current;
@@ -695,7 +705,8 @@ export function useEndpointMutation<Req, Res, Context = unknown>(
 	endpoint: ApiEndpoint<Req, Res>,
 	options: UseEndpointMutationOptions<Req, Res, Context> = {},
 ): UseEndpointMutationResult<Req, Res> {
-	const client = options.client ?? useEndpointDataClient();
+	const defaultClient = useEndpointDataClient();
+	const client = options.client ?? defaultClient;
 	const {
 		fetchFn,
 		invalidate,

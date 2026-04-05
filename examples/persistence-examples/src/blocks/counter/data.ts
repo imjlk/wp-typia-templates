@@ -97,15 +97,26 @@ export function useIncrementCounterMutation< Context = unknown >(
 
 				return {
 					...current,
-					count: current.count + ( request.delta ?? 1 ),
+					count: Math.max(
+						0,
+						current.count + ( request.delta ?? 1 )
+					),
 				};
 			} );
 
+			let userContext: Context | undefined;
+			try {
+				userContext = onMutate
+					? await onMutate( request, client )
+					: undefined;
+			} catch ( error ) {
+				client.setData( counterEndpoint, queryRequest, previous );
+				throw error;
+			}
+
 			return {
 				previous,
-				userContext: onMutate
-					? await onMutate( request, client )
-					: undefined,
+				userContext,
 			};
 		},
 	} );

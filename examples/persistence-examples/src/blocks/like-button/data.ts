@@ -132,11 +132,19 @@ export function useToggleLikeMutation< Context = unknown >(
 				};
 			} );
 
+			let userContext: Context | undefined;
+			try {
+				userContext = onMutate
+					? await onMutate( request, client )
+					: undefined;
+			} catch ( error ) {
+				client.setData( likeStatusEndpoint, queryRequest, previous );
+				throw error;
+			}
+
 			return {
 				previous,
-				userContext: onMutate
-					? await onMutate( request, client )
-					: undefined,
+				userContext,
 			};
 		},
 		resolveCallOptions: () => buildNonceRequestOptions( restNonce ),
