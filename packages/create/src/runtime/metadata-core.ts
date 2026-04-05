@@ -1494,7 +1494,7 @@ function buildAnalysisProgramStructureKey(
 
 function createAnalysisProgramContentFingerprint(
   filePaths: string[],
-  onMissingFile: 'return-null' | 'throw' = 'throw',
+  onMissingFile: 'hash-missing' | 'return-null' | 'throw' = 'throw',
 ): string | null {
   const hash = createHash('sha1');
   const fingerprintPaths = [...new Set(filePaths)].sort();
@@ -1504,6 +1504,13 @@ function createAnalysisProgramContentFingerprint(
     if (fileContents === undefined) {
       if (onMissingFile === 'return-null') {
         return null;
+      }
+      if (onMissingFile === 'hash-missing') {
+        hash.update(filePath);
+        hash.update('\0');
+        hash.update('__missing__');
+        hash.update('\0');
+        continue;
       }
 
       throw new Error(
@@ -1534,9 +1541,7 @@ function getAnalysisProgramDependencyPaths(
     let currentDir = path.dirname(filePath);
     while (true) {
       const packageJsonPath = path.join(currentDir, 'package.json');
-      if (ts.sys.fileExists(packageJsonPath)) {
-        dependencyPaths.add(packageJsonPath);
-      }
+      dependencyPaths.add(packageJsonPath);
 
       const parentDir = path.dirname(currentDir);
       if (parentDir === currentDir) {
@@ -1672,6 +1677,7 @@ function createAnalysisContext(
   );
   const dependencyFingerprint = createAnalysisProgramContentFingerprint(
     dependencyPaths,
+    'hash-missing',
   );
   if (dependencyFingerprint === null) {
     throw new Error('Unable to fingerprint metadata analysis dependencies.');
