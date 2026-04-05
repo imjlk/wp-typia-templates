@@ -426,6 +426,30 @@ function createLegacyConfiguredMixedSingleBlockProject(projectDir: string) {
 	);
 }
 
+function createSameNameMixedSingleBlockProject(projectDir: string) {
+	createCurrentSingleBlockScaffoldProject(projectDir);
+	fs.rmSync(path.join(projectDir, "src", "typia.manifest.json"));
+
+	writeJson(path.join(projectDir, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Legacy", type: "string" },
+		},
+		name: "create-block/current-scaffold",
+		title: "Legacy Root Layout",
+	});
+	writeJson(path.join(projectDir, "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				defaultValue: "Legacy",
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "MigrationAttributes",
+	});
+}
+
 function writeCurrentSnapshot(projectDir: string, version = "2.0.0") {
 	writeJson(
 		path.join(projectDir, "src", "migrations", "versions", version, "block.json"),
@@ -1366,6 +1390,22 @@ describe("wp-typia migrations", () => {
 		expect(state.blocks[0]?.blockJsonFile).toBe("block.json");
 		expect(state.blocks[0]?.blockName).toBe("create-block/legacy-root-layout");
 		expect(state.currentManifest.attributes?.content?.typia.defaultValue).toBe("Legacy");
+	});
+
+	test("migrations init keeps manifest-priority when mixed single-block layouts share a block name", () => {
+		const projectDir = path.join(tempRoot, "init-same-name-mixed-single-block-project");
+		createSameNameMixedSingleBlockProject(projectDir);
+
+		runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
+		expect(configSource).toContain("blockName: 'create-block/current-scaffold'");
+		const snapshotManifest = JSON.parse(
+			fs.readFileSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), "utf8"),
+		);
+		expect(snapshotManifest.attributes.content.typia.defaultValue).toBe("Legacy");
 	});
 
 	test("migrations init fails with actionable guidance when no supported retrofit layout is found", () => {

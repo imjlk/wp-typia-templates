@@ -127,6 +127,22 @@ function hasSingleBlockLayoutFiles(projectDir: string, blockJsonFile: string): b
 	);
 }
 
+function orderSingleBlockCandidates(
+	projectDir: string,
+	candidates: Array<{
+		blockJsonFile: string;
+		manifestFile: string;
+	}>,
+) {
+	const candidatesWithManifest = candidates.filter(({ manifestFile }) =>
+		fs.existsSync(path.join(projectDir, manifestFile)),
+	);
+	return [
+		...candidatesWithManifest,
+		...candidates.filter((candidate) => !candidatesWithManifest.includes(candidate)),
+	];
+}
+
 function createImplicitLegacyBlock(projectDir: string, blockName?: string): MigrationBlockConfig {
 	const discovered = discoverSingleBlockTarget(projectDir, blockName);
 	return {
@@ -237,12 +253,13 @@ function discoverSingleBlockTarget(projectDir: string, preferredBlockName?: stri
 
 	const readCandidate = (candidate: (typeof candidates)[number]) =>
 		readSingleBlockTarget(projectDir, candidate);
+	const orderedCandidates = orderSingleBlockCandidates(projectDir, candidates);
 
 	if (preferredBlockName) {
 		const validTargets: MigrationBlockConfig[] = [];
 		let firstReadError: Error | null = null;
 
-		for (const candidate of candidates) {
+		for (const candidate of orderedCandidates) {
 			try {
 				const target = readCandidate(candidate);
 				if (!target) {
@@ -271,16 +288,9 @@ function discoverSingleBlockTarget(projectDir: string, preferredBlockName?: stri
 		}
 	}
 
-	const candidatesWithManifest = candidates.filter(({ manifestFile }) =>
-		fs.existsSync(path.join(projectDir, manifestFile)),
-	);
-
 	let firstReadError: unknown;
 	let sawReadError = false;
-	for (const candidate of [
-		...candidatesWithManifest,
-		...candidates.filter((candidate) => !candidatesWithManifest.includes(candidate)),
-	]) {
+	for (const candidate of orderedCandidates) {
 		try {
 			const target = readCandidate(candidate);
 			if (target) {
