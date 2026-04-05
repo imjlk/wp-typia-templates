@@ -148,7 +148,12 @@ function createImplicitLegacyBlock(projectDir: string, blockName?: string): Migr
 	if (blockName) {
 		try {
 			const rootTarget = readSingleBlockTarget(projectDir, LEGACY_ROOT_SINGLE_BLOCK_LAYOUT);
-			if (rootTarget?.blockName === blockName) {
+			const srcTarget = readSingleBlockTarget(projectDir, SINGLE_BLOCK_LAYOUT_CANDIDATES[0]);
+			const hasSrcManifest = fs.existsSync(path.join(projectDir, SRC_MANIFEST));
+			if (
+				rootTarget?.blockName === blockName &&
+				(!srcTarget || srcTarget.blockName !== blockName || !hasSrcManifest)
+			) {
 				return {
 					...rootTarget,
 					key: DEFAULT_BLOCK_KEY,

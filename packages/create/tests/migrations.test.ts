@@ -434,6 +434,32 @@ function createLegacyConfiguredSameNameMixedSingleBlockProject(projectDir: strin
 	);
 }
 
+function createLegacyConfiguredCurrentPreferredSameNameMixedSingleBlockProject(projectDir: string) {
+	createCurrentSingleBlockScaffoldProject(projectDir);
+	writeJson(path.join(projectDir, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Legacy", type: "string" },
+		},
+		name: "create-block/current-scaffold",
+		title: "Legacy Root Layout",
+	});
+	writeJson(path.join(projectDir, "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				defaultValue: "Legacy",
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "MigrationAttributes",
+	});
+	writeFile(
+		path.join(projectDir, "src", "migrations", "config.ts"),
+		`export const migrationConfig = {\n\tblockName: "create-block/current-scaffold",\n\tcurrentVersion: "1.0.0",\n\tsupportedVersions: ["1.0.0"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
+	);
+}
+
 function createSameNameMixedSingleBlockProject(projectDir: string) {
 	createCurrentSingleBlockScaffoldProject(projectDir);
 	fs.rmSync(path.join(projectDir, "src", "typia.manifest.json"));
@@ -673,11 +699,27 @@ function createRetrofitMultiBlockProject(projectDir: string) {
 
 function createRetrofitMultiBlockProjectWithBrokenCandidate(projectDir: string) {
 	createRetrofitMultiBlockProject(projectDir);
+	writeFile(
+		path.join(projectDir, "src", "blocks", "broken-item", "save.tsx"),
+		`export default function Save() {\n\treturn null;\n}\n`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "blocks", "broken-item", "types.ts"),
+		`export interface BrokenItemAttributes {}\n`,
+	);
 	writeFile(path.join(projectDir, "src", "blocks", "broken-item", "block.json"), '{"apiVersion":3,');
 }
 
 function createSingleBlockProjectWithBrokenMultiBlockCandidate(projectDir: string) {
 	createCurrentSingleBlockScaffoldProject(projectDir);
+	writeFile(
+		path.join(projectDir, "src", "blocks", "broken-item", "save.tsx"),
+		`export default function Save() {\n\treturn null;\n}\n`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "blocks", "broken-item", "types.ts"),
+		`export interface BrokenItemAttributes {}\n`,
+	);
 	writeFile(path.join(projectDir, "src", "blocks", "broken-item", "block.json"), '{"apiVersion":3,');
 }
 
@@ -1447,6 +1489,16 @@ describe("wp-typia migrations", () => {
 		expect(state.blocks[0]?.blockJsonFile).toBe("block.json");
 		expect(state.blocks[0]?.manifestFile).toBe("typia.manifest.json");
 		expect(state.currentManifest.attributes?.content?.typia.defaultValue).toBe("Legacy");
+	});
+
+	test("legacy migration configs keep the current scaffold layout when same-name mixed layouts both expose manifests", () => {
+		const projectDir = path.join(tempRoot, "legacy-config-current-preferred-same-name-mixed-single-block-project");
+		createLegacyConfiguredCurrentPreferredSameNameMixedSingleBlockProject(projectDir);
+
+		const state = loadMigrationProject(projectDir);
+		expect(state.blocks[0]?.blockJsonFile).toBe("src/block.json");
+		expect(state.blocks[0]?.manifestFile).toBe("src/typia.manifest.json");
+		expect(state.currentManifest.attributes?.content?.typia.defaultValue).toBe("Hello");
 	});
 
 	test("migrations init keeps manifest-priority when mixed single-block layouts share a block name", () => {
