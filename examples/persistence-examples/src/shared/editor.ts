@@ -9,7 +9,7 @@ export function resolveCurrentEditorPostId(): number {
 				};
 			};
 		}
-	).wp?.data;
+	 ).wp?.data;
 
 	const editorStore = wpData?.select?.( 'core/editor' ) as
 		| { getCurrentPostId?: () => unknown }

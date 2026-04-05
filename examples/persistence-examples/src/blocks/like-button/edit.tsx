@@ -19,10 +19,7 @@ import {
 import { useTypiaValidation } from '../../shared/hooks';
 import { resolveCurrentEditorPostId } from '../../shared/editor';
 import type { PersistenceLikeButtonAttributes } from './types';
-import {
-	usePersistenceLikeStatusQuery,
-	useToggleLikeMutation,
-} from './data';
+import { usePersistenceLikeStatusQuery, useToggleLikeMutation } from './data';
 import { createAttributeUpdater, validators } from './validators';
 
 export default function Edit( {
@@ -84,22 +81,24 @@ export default function Edit( {
 		}
 	);
 	const liveToggleMutation = useToggleLikeMutation();
-	const liveToggleValidationMessages = liveToggleMutation.validation?.isValid === false
-		? liveToggleMutation.validation.errors.map(
-				( error ) => `${ error.path }: ${ error.expected }`
-		  )
-		: [];
-	const liveQueryValidationMessages = liveStatusQuery.validation?.isValid === false
-		? liveStatusQuery.validation.errors.map(
-				( error ) => `${ error.path }: ${ error.expected }`
-		  )
-		: [];
-	const liveErrorMessage =
-		liveToggleMutation.error instanceof Error
-			? liveToggleMutation.error.message
-			: liveStatusQuery.error instanceof Error
-				? liveStatusQuery.error.message
-				: null;
+	const liveToggleValidationMessages =
+		liveToggleMutation.validation?.isValid === false
+			? liveToggleMutation.validation.errors.map(
+					( error ) => `${ error.path }: ${ error.expected }`
+			  )
+			: [];
+	const liveQueryValidationMessages =
+		liveStatusQuery.validation?.isValid === false
+			? liveStatusQuery.validation.errors.map(
+					( error ) => `${ error.path }: ${ error.expected }`
+			  )
+			: [];
+	let liveErrorMessage: string | null = null;
+	if ( liveToggleMutation.error instanceof Error ) {
+		liveErrorMessage = liveToggleMutation.error.message;
+	} else if ( liveStatusQuery.error instanceof Error ) {
+		liveErrorMessage = liveStatusQuery.error.message;
+	}
 	const liveStatus = liveStatusQuery.data;
 	const liveButtonLabel =
 		liveStatus?.likedByCurrentUser === true ? unlikeLabel : likeLabel;

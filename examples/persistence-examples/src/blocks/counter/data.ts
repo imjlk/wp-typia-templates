@@ -12,10 +12,8 @@ import type {
 } from './api-types';
 import { counterEndpoint, incrementCounterEndpoint } from './api';
 
-interface CounterMutationContext<Context> {
-	previous:
-		| PersistenceCounterResponse
-		| undefined;
+interface CounterMutationContext< Context > {
+	previous: PersistenceCounterResponse | undefined;
 	userContext: Context | undefined;
 }
 
@@ -27,9 +25,8 @@ export type UsePersistenceCounterQueryOptions<
 	Selected
 >;
 
-export interface UseIncrementCounterMutationOptions<
-	Context = unknown,
-> extends Omit<
+export interface UseIncrementCounterMutationOptions< Context = unknown >
+	extends Omit<
 		UseEndpointMutationOptions<
 			PersistenceCounterIncrementRequest,
 			PersistenceCounterResponse,
@@ -42,14 +39,16 @@ export interface UseIncrementCounterMutationOptions<
 		request: PersistenceCounterIncrementRequest,
 		client: import('@wp-typia/rest/react').EndpointDataClient,
 		context: Context | undefined
-	) => void | Promise<void>;
+	) => void | Promise< void >;
 	onMutate?: (
 		request: PersistenceCounterIncrementRequest,
 		client: import('@wp-typia/rest/react').EndpointDataClient
-	) => Context | Promise<Context>;
+	) => Context | Promise< Context >;
 }
 
-export function usePersistenceCounterQuery< Selected = PersistenceCounterResponse >(
+export function usePersistenceCounterQuery<
+	Selected = PersistenceCounterResponse,
+>(
 	request: PersistenceCounterQuery,
 	options: UsePersistenceCounterQueryOptions< Selected > = {}
 ) {
@@ -59,11 +58,7 @@ export function usePersistenceCounterQuery< Selected = PersistenceCounterRespons
 export function useIncrementCounterMutation< Context = unknown >(
 	options: UseIncrementCounterMutationOptions< Context > = {}
 ) {
-	const {
-		onError,
-		onMutate,
-		...mutationOptions
-	} = options;
+	const { onError, onMutate, ...mutationOptions } = options;
 
 	return useEndpointMutation( incrementCounterEndpoint, {
 		...mutationOptions,
@@ -86,37 +81,25 @@ export function useIncrementCounterMutation< Context = unknown >(
 				);
 			}
 
-			await onError?.(
-				error,
-				request,
-				client,
-				context?.userContext
-			);
+			await onError?.( error, request, client, context?.userContext );
 		},
 		onMutate: async ( request, client ) => {
 			const queryRequest = {
 				postId: request.postId,
 				resourceKey: request.resourceKey,
 			} satisfies PersistenceCounterQuery;
-			const previous = client.getData(
-				counterEndpoint,
-				queryRequest
-			);
+			const previous = client.getData( counterEndpoint, queryRequest );
 
-			client.setData(
-				counterEndpoint,
-				queryRequest,
-				( current ) => {
-					if ( ! current ) {
-						return current;
-					}
-
-					return {
-						...current,
-						count: current.count + ( request.delta ?? 1 ),
-					};
+			client.setData( counterEndpoint, queryRequest, ( current ) => {
+				if ( ! current ) {
+					return current;
 				}
-			);
+
+				return {
+					...current,
+					count: current.count + ( request.delta ?? 1 ),
+				};
+			} );
 
 			return {
 				previous,

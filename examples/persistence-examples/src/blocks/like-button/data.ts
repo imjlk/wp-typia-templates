@@ -11,10 +11,7 @@ import type {
 	PersistenceLikeStatusResponse,
 	PersistenceToggleLikeRequest,
 } from './api-types';
-import {
-	likeStatusEndpoint,
-	toggleLikeEndpoint,
-} from './api';
+import { likeStatusEndpoint, toggleLikeEndpoint } from './api';
 
 function buildNonceRequestOptions( restNonce?: string ) {
 	const nonce = resolveRestNonce( restNonce );
@@ -26,50 +23,47 @@ function buildNonceRequestOptions( restNonce?: string ) {
 						'X-WP-Nonce': nonce,
 					},
 				},
-			}
+		  }
 		: undefined;
 }
 
 interface ToggleLikeMutationContext< Context > {
-	previous:
-		| PersistenceLikeStatusResponse
-		| undefined;
+	previous: PersistenceLikeStatusResponse | undefined;
 	userContext: Context | undefined;
 }
 
 export interface UsePersistenceLikeStatusQueryOptions<
 	Selected = PersistenceLikeStatusResponse,
 > extends Omit<
-	UseEndpointQueryOptions<
-		PersistenceLikeStatusQuery,
-		PersistenceLikeStatusResponse,
-		Selected
-	>,
-	'resolveCallOptions'
-> {
+		UseEndpointQueryOptions<
+			PersistenceLikeStatusQuery,
+			PersistenceLikeStatusResponse,
+			Selected
+		>,
+		'resolveCallOptions'
+	> {
 	restNonce?: string;
 }
 
-export interface UseToggleLikeMutationOptions<
-	Context = unknown,
-> extends Omit<
-	UseEndpointMutationOptions<
-		PersistenceToggleLikeRequest,
-		PersistenceLikeStatusResponse,
-		ToggleLikeMutationContext< Context >
-	>,
-	'invalidate' | 'onError' | 'onMutate' | 'resolveCallOptions'
-> {
+export interface UseToggleLikeMutationOptions< Context = unknown >
+	extends Omit<
+		UseEndpointMutationOptions<
+			PersistenceToggleLikeRequest,
+			PersistenceLikeStatusResponse,
+			ToggleLikeMutationContext< Context >
+		>,
+		'invalidate' | 'onError' | 'onMutate' | 'resolveCallOptions'
+	> {
 	onError?: (
 		error: unknown,
 		request: PersistenceToggleLikeRequest,
 		client: import('@wp-typia/rest/react').EndpointDataClient,
 		context: Context | undefined
-	) => void | Promise<void>;
+	) => void | Promise< void >;
 	onMutate?: (
 		request: PersistenceToggleLikeRequest,
 		client: import('@wp-typia/rest/react').EndpointDataClient
-	) => Context | Promise<Context>;
+	) => Context | Promise< Context >;
 	restNonce?: string;
 }
 
@@ -79,10 +73,7 @@ export function usePersistenceLikeStatusQuery<
 	request: PersistenceLikeStatusQuery,
 	options: UsePersistenceLikeStatusQueryOptions< Selected > = {}
 ) {
-	const {
-		restNonce,
-		...queryOptions
-	} = options;
+	const { restNonce, ...queryOptions } = options;
 
 	return useEndpointQuery( likeStatusEndpoint, request, {
 		...queryOptions,
@@ -90,15 +81,10 @@ export function usePersistenceLikeStatusQuery<
 	} );
 }
 
-export function useToggleLikeMutation<
-	Context = unknown,
->( options: UseToggleLikeMutationOptions< Context > = {} ) {
-	const {
-		onError,
-		onMutate,
-		restNonce,
-		...mutationOptions
-	} = options;
+export function useToggleLikeMutation< Context = unknown >(
+	options: UseToggleLikeMutationOptions< Context > = {}
+) {
+	const { onError, onMutate, restNonce, ...mutationOptions } = options;
 
 	return useEndpointMutation( toggleLikeEndpoint, {
 		...mutationOptions,
@@ -121,42 +107,30 @@ export function useToggleLikeMutation<
 				);
 			}
 
-			await onError?.(
-				error,
-				request,
-				client,
-				context?.userContext
-			);
+			await onError?.( error, request, client, context?.userContext );
 		},
 		onMutate: async ( request, client ) => {
 			const queryRequest = {
 				postId: request.postId,
 				resourceKey: request.resourceKey,
 			} satisfies PersistenceLikeStatusQuery;
-			const previous = client.getData(
-				likeStatusEndpoint,
-				queryRequest
-			);
+			const previous = client.getData( likeStatusEndpoint, queryRequest );
 
-			client.setData(
-				likeStatusEndpoint,
-				queryRequest,
-				( current ) => {
-					if ( ! current ) {
-						return current;
-					}
-
-					const nextLiked = ! current.likedByCurrentUser;
-					return {
-						...current,
-						count: Math.max(
-							0,
-							current.count + ( nextLiked ? 1 : -1 )
-						),
-						likedByCurrentUser: nextLiked,
-					};
+			client.setData( likeStatusEndpoint, queryRequest, ( current ) => {
+				if ( ! current ) {
+					return current;
 				}
-			);
+
+				const nextLiked = ! current.likedByCurrentUser;
+				return {
+					...current,
+					count: Math.max(
+						0,
+						current.count + ( nextLiked ? 1 : -1 )
+					),
+					likedByCurrentUser: nextLiked,
+				};
+			} );
 
 			return {
 				previous,
