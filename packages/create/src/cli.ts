@@ -1,25 +1,4 @@
 #!/usr/bin/env node
-import {
-	createReadlinePrompt,
-	formatHelpText,
-	formatTemplateDetails,
-	formatTemplateFeatures,
-	formatTemplateSummary,
-	getTemplateById,
-	getTemplateSelectOptions,
-	listTemplates,
-	runDoctor,
-	runScaffoldFlow,
-} from "./runtime/cli-core.js";
-import {
-	formatMigrationHelpText,
-	parseMigrationArgs,
-	runMigrationCommand,
-} from "./runtime/migrations.js";
-import {
-	PACKAGE_MANAGER_IDS,
-	getPackageManagerSelectOptions,
-} from "./runtime/package-managers.js";
 
 interface ParsedArgs {
 	dataStorage?: string;
@@ -192,6 +171,12 @@ function printDoctorLine({
 }
 
 async function runScaffold(parsed: ParsedArgs, cwd: string) {
+	const [{ createReadlinePrompt, runScaffoldFlow }, { getPackageManagerSelectOptions }, { getTemplateSelectOptions }] =
+		await Promise.all([
+			import("./runtime/cli-scaffold.js"),
+			import("./runtime/package-managers.js"),
+			import("./runtime/template-registry.js"),
+		]);
 	const isInteractive = Boolean(process.stdin.isTTY && process.stdout.isTTY);
 	const prompt = createReadlinePrompt();
 
@@ -292,6 +277,9 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 
 export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 	if (argv[0] === "migrations") {
+		const { formatMigrationHelpText, parseMigrationArgs, runMigrationCommand } = await import(
+			"./runtime/migrations.js"
+		);
 		const migrationCommand = parseMigrationArgs(argv.slice(1));
 		if (!migrationCommand.command) {
 			console.log(formatMigrationHelpText());
@@ -304,12 +292,20 @@ export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 	const parsed = parseArgs(argv);
 
 	if (parsed.help) {
+		const { formatHelpText } = await import("./runtime/cli-help.js");
 		console.log(formatHelpText());
 		return;
 	}
 
 	const [first, second] = parsed.positionals;
 	if (first === "templates") {
+		const {
+			formatTemplateDetails,
+			formatTemplateFeatures,
+			formatTemplateSummary,
+			getTemplateById,
+			listTemplates,
+		} = await import("./runtime/cli-templates.js");
 		if (second === "list") {
 			for (const template of listTemplates()) {
 				console.log(formatTemplateSummary(template));
@@ -331,11 +327,13 @@ export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 	}
 
 	if (first === "doctor") {
+		const { runDoctor } = await import("./runtime/cli-doctor.js");
 		await runDoctor(cwd, { renderLine: printDoctorLine });
 		return;
 	}
 
 	if (parsed.yes && !parsed.packageManager) {
+		const { PACKAGE_MANAGER_IDS } = await import("./runtime/package-managers.js");
 		throw new Error(
 			`Package manager is required when using --yes. Use --package-manager <${PACKAGE_MANAGER_IDS.join("|")}>.`,
 		);
