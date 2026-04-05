@@ -21,6 +21,11 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js",
+      "default": "./dist/react.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -56,9 +61,11 @@
   },
   "dependencies": {
     "@typia/interface": "^12.0.1",
-    "@wordpress/api-fetch": "^7.42.0"
+    "@wordpress/api-fetch": "^7.42.0",
+    "@wordpress/element": "^6.29.0"
   },
   "devDependencies": {
+    "happy-dom": "^20.8.9",
     "typescript": "^5.9.2"
   }
 }

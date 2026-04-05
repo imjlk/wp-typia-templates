@@ -640,6 +640,7 @@ describe("@wp-typia/create scaffolding", () => {
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 		const pluginBootstrap = fs.readFileSync(path.join(targetDir, "demo-persistence-public.php"), "utf8");
 		const generatedApi = fs.readFileSync(path.join(targetDir, "src", "api.ts"), "utf8");
+		const generatedData = fs.readFileSync(path.join(targetDir, "src", "data.ts"), "utf8");
 		const generatedSyncRest = fs.readFileSync(
 			path.join(targetDir, "scripts", "sync-rest-contracts.ts"),
 			"utf8",
@@ -706,6 +707,9 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedApi).toContain("getDemoPersistencePublicStateEndpoint");
 		expect(generatedApi).toContain("writeDemoPersistencePublicStateEndpoint");
 		expect(generatedApi).not.toContain("createEndpoint(");
+		expect(generatedData).toContain("from '@wp-typia/rest/react'");
+		expect(generatedData).toContain("useDemoPersistencePublicStateQuery");
+		expect(generatedData).toContain("useWriteDemoPersistencePublicStateMutation");
 		expect(generatedSyncRest).toContain("syncTypeSchemas");
 		expect(generatedSyncRest).toContain("defineEndpointManifest");
 		expect(generatedSyncRest).toContain("syncEndpointClient");
@@ -1357,12 +1361,25 @@ describe("@wp-typia/create scaffolding", () => {
 			),
 			"utf8",
 		);
+		const generatedParentData = fs.readFileSync(
+			path.join(
+				targetDir,
+				"src",
+				"blocks",
+				"demo-compound-storage",
+				"data.ts",
+			),
+			"utf8",
+		);
 		expect(generatedApiClient).toContain("from '@wp-typia/api-client'");
 		expect(generatedApiClient).toContain("export const getDemoCompoundStorageStateEndpoint");
 		expect(generatedParentApi).toContain("from './api-client'");
 		expect(generatedParentApi).toContain("getDemoCompoundStorageStateEndpoint");
 		expect(generatedParentApi).toContain("writeDemoCompoundStorageStateEndpoint");
 		expect(generatedParentApi).not.toContain("createEndpoint(");
+		expect(generatedParentData).toContain("from '@wp-typia/rest/react'");
+		expect(generatedParentData).toContain("useDemoCompoundStorageStateQuery");
+		expect(generatedParentData).toContain("useWriteDemoCompoundStorageStateMutation");
 			expect(
 				fs.existsSync(
 					path.join(

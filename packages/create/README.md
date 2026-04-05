@@ -62,6 +62,7 @@ The `persistence` template adds:
 - `--persistence-policy <authenticated|public>`
 - `sync-rest` contract/schema generation
 - a WordPress-specific typed REST client through `@wp-typia/rest`
+- a generated `src/data.ts` layer built on `@wp-typia/rest/react`
 - a generated portable `src/api-client.ts` module backed by `@wp-typia/api-client`
 - generated PHP route/bootstrap files for policy-aware persistence
 
@@ -246,7 +247,7 @@ WordPress-specific auth details remain an adapter overlay via
 Legacy `authMode` still works for compatibility, but new manifests should
 author `auth` plus `wordpressAuth` when needed.
 
-`src/api-types.ts` remains the source of truth for scaffolded REST contracts, and the endpoint manifest is the canonical TypeScript description of the scaffolded REST surface. `src/api-client.ts` is the generated portable client artifact and the canonical home for generated endpoint definitions. `src/api.ts` remains the WordPress-facing helper layer for generated persistence scaffolds, but now composes those generated endpoint exports to add WordPress-specific route resolution and nonce/header behavior. `src/api-schemas/*.schema.json` remains the runtime-facing artifact for generated PHP validation, and `src/api.openapi.json` is the canonical endpoint-aware REST document when a scaffold defines route metadata. Per-contract `src/api-schemas/*.openapi.json` files remain available as compatibility fragments.
+`src/api-types.ts` remains the source of truth for scaffolded REST contracts, and the endpoint manifest is the canonical TypeScript description of the scaffolded REST surface. `src/api-client.ts` is the generated portable client artifact and the canonical home for generated endpoint definitions. `src/api.ts` remains the WordPress-facing helper layer for generated persistence scaffolds, but now composes those generated endpoint exports to add WordPress-specific route resolution and nonce/header behavior. `src/data.ts` is the additive React/data convenience layer built on `@wp-typia/rest/react`. `src/api-schemas/*.schema.json` remains the runtime-facing artifact for generated PHP validation, and `src/api.openapi.json` is the canonical endpoint-aware REST document when a scaffold defines route metadata. Per-contract `src/api-schemas/*.openapi.json` files remain available as compatibility fragments.
 
 When an endpoint manifest defines both `queryContract` and `bodyContract`,
 `syncEndpointClient(...)` now generates a portable request shape of
