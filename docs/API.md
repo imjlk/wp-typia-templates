@@ -74,7 +74,8 @@ For older projects, `wp-typia migrations init --current-version <semver>` now
 auto-detects supported retrofit layouts:
 
 - single-block projects using `src/block.json`, `src/types.ts`, and `src/save.tsx`
-- legacy single-block projects still using root `block.json`
+- legacy single-block projects still using root `block.json` plus `src/types.ts`
+  and `src/save.tsx`
 - multi-block projects using `src/blocks/*/block.json`
 
 When `src/blocks/*` is detected, `migration:init` writes `src/migrations/config.ts`
@@ -104,7 +105,7 @@ export const migrationConfig = {
 ```
 
 Compound scaffolds use the same config shape but seed both the parent block and
-the scaffolded hidden child block as migration-capable targets. `migration:init`
+the scaffolded hidden child block as migration-capable targets. `migrations init`
 remains the retrofit command for older projects that were not scaffolded with
 `--with-migration-ui`. Add `--all` to migration verification, fixture refresh,
 and fuzzing commands when you want to cover every configured legacy version and

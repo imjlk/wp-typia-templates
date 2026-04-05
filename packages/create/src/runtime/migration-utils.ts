@@ -182,6 +182,10 @@ export function getLocalTsxBinary(projectDir: string): string {
 	return binaryPath;
 }
 
+/**
+ * Returns whether isInteractiveTerminal() is running with both stdin and stdout
+ * attached to a TTY so CLI and migration flows can safely prompt the user.
+ */
 export function isInteractiveTerminal(): boolean {
 	return Boolean(process.stdin.isTTY && process.stdout.isTTY);
 }

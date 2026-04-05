@@ -32,7 +32,15 @@ import type {
 } from "./migration-types.js";
 
 const DEFAULT_BLOCK_KEY = "default";
+const SINGLE_BLOCK_LAYOUT_NOT_FOUND = "No supported single-block migration layout was found.";
 
+/**
+ * Describes the migration retrofit layout discovered in a project directory.
+ *
+ * Multi-block discovery wins when block targets are discovered under
+ * `src/blocks/<slug>/block.json`.
+ * Otherwise the runtime falls back to a supported single-block layout.
+ */
 export type DiscoveredMigrationLayout =
 	| {
 			block: MigrationBlockConfig;
@@ -60,6 +68,36 @@ function toImportPath(fromDir: string, targetPath: string, stripExtension = fals
 		relativePath = relativePath.replace(/\.[^.]+$/u, "");
 	}
 	return relativePath;
+}
+
+function readSingleBlockTarget(
+	projectDir: string,
+	{
+		blockJsonFile,
+		manifestFile,
+	}: {
+		blockJsonFile: string;
+		manifestFile: string;
+	},
+): MigrationBlockConfig | null {
+	const requiredFiles = [blockJsonFile, ROOT_SAVE_FILE, ROOT_TYPES_FILE];
+	if (requiredFiles.some((relativePath) => !fs.existsSync(path.join(projectDir, relativePath)))) {
+		return null;
+	}
+
+	const blockName = readJson<{ name?: string }>(path.join(projectDir, blockJsonFile))?.name;
+	if (typeof blockName !== "string" || blockName.length === 0) {
+		throw new Error(`Unable to resolve block name from ${normalizeRelativePath(blockJsonFile)}`);
+	}
+
+	return {
+		blockJsonFile: normalizeRelativePath(blockJsonFile),
+		blockName,
+		key: DEFAULT_BLOCK_KEY,
+		manifestFile: normalizeRelativePath(manifestFile),
+		saveFile: ROOT_SAVE_FILE,
+		typesFile: ROOT_TYPES_FILE,
+	};
 }
 
 function createImplicitLegacyBlock(projectDir: string, blockName?: string): MigrationBlockConfig {
@@ -166,27 +204,31 @@ function createBlockTarget(
 }
 
 function discoverSingleBlockTarget(projectDir: string): MigrationBlockConfig {
-	const currentTarget =
-		createBlockTarget(projectDir, {
-			blockJsonFile: SRC_BLOCK_JSON,
-			key: DEFAULT_BLOCK_KEY,
-			manifestFile: SRC_MANIFEST,
-			saveFile: ROOT_SAVE_FILE,
-			typesFile: ROOT_TYPES_FILE,
-		}) ??
-		createBlockTarget(projectDir, {
-			blockJsonFile: ROOT_BLOCK_JSON,
-			key: DEFAULT_BLOCK_KEY,
-			manifestFile: ROOT_MANIFEST,
-			saveFile: ROOT_SAVE_FILE,
-			typesFile: ROOT_TYPES_FILE,
-		});
+	const currentTarget = readSingleBlockTarget(projectDir, {
+		blockJsonFile: SRC_BLOCK_JSON,
+		manifestFile: SRC_MANIFEST,
+	});
+	const legacyTarget = readSingleBlockTarget(projectDir, {
+		blockJsonFile: ROOT_BLOCK_JSON,
+		manifestFile: ROOT_MANIFEST,
+	});
+	const currentHasManifest = fs.existsSync(path.join(projectDir, SRC_MANIFEST));
+	const legacyHasManifest = fs.existsSync(path.join(projectDir, ROOT_MANIFEST));
 
-	if (!currentTarget) {
-		throw new Error("Unable to resolve block name from block.json");
+	if (currentTarget && currentHasManifest) {
+		return currentTarget;
+	}
+	if (legacyTarget && legacyHasManifest) {
+		return legacyTarget;
+	}
+	if (currentTarget) {
+		return currentTarget;
+	}
+	if (legacyTarget) {
+		return legacyTarget;
 	}
 
-	return currentTarget;
+	throw new Error(SINGLE_BLOCK_LAYOUT_NOT_FOUND);
 }
 
 function discoverMigrationLayout(projectDir: string): DiscoveredMigrationLayout | null {
@@ -244,11 +286,22 @@ function discoverMigrationLayout(projectDir: string): DiscoveredMigrationLayout 
 			block: discoverSingleBlockTarget(projectDir),
 			mode: "single",
 		};
-	} catch {
-		return null;
+	} catch (error) {
+		if (error instanceof Error && error.message === SINGLE_BLOCK_LAYOUT_NOT_FOUND) {
+			return null;
+		}
+		throw error;
 	}
 }
 
+/**
+ * Detects the supported migration retrofit layout for `migrations init`.
+ *
+ * Multi-block targets under `src/blocks/<slug>` take precedence over
+ * single-block layouts.
+ * Returns the detected layout on success and throws an actionable error when no
+ * supported first-party layout can be inferred.
+ */
 export function discoverMigrationInitLayout(projectDir: string): DiscoveredMigrationLayout {
 	const discoveredLayout = discoverMigrationLayout(projectDir);
 	if (discoveredLayout) {
@@ -316,6 +369,12 @@ export function getSnapshotManifestPath(
 	return path.join(getSnapshotRoot(projectDir, block, version), ROOT_MANIFEST);
 }
 
+/**
+ * Lists the snapshot versions currently present for a specific block target.
+ *
+ * Returns the sorted subset of `supportedVersions` that have a manifest on disk
+ * for the provided block, or an empty array when none exist.
+ */
 export function getAvailableSnapshotVersionsForBlock(
 	projectDir: string,
 	supportedVersions: string[],
@@ -326,6 +385,12 @@ export function getAvailableSnapshotVersionsForBlock(
 		.sort(compareSemver);
 }
 
+/**
+ * Formats the standard missing-snapshot guidance for a block target.
+ *
+ * Returns a user-facing message that either lists the available snapshot
+ * versions or explains that no snapshots exist yet for the block.
+ */
 export function createMissingBlockSnapshotMessage(
 	blockName: string,
 	fromVersion: string,
