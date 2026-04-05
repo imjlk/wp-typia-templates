@@ -467,7 +467,7 @@ return new class {
 
 	private function matchesMultipleOf($value, $multipleOf): bool
 	{
-		if ($multipleOf == 0) {
+		if ($multipleOf === 0) {
 			return true;
 		}
 		if (is_int($value) && is_int($multipleOf)) {

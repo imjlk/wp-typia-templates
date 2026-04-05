@@ -261,4 +261,50 @@ describe("sync-types reporting", () => {
 		expect(report.failure?.code).toBe("typescript-diagnostic");
 		expect(report.failure?.message).toContain("Cannot find module './missing'");
 	});
+
+	test("normalizes imported local TypeScript diagnostics into structured failures", async () => {
+		const fixtureDir = createFixture({
+			"block.json": JSON.stringify(
+				{ attributes: {}, example: { attributes: {} } },
+				null,
+				2,
+			),
+			"src/helper.ts": [
+				'import type { MissingType } from "./missing";',
+				"",
+				"export interface ImportedHelper {",
+				"  item: MissingType;",
+				"}",
+				"",
+			].join("\n"),
+			"src/types.ts": [
+				'import type { ImportedHelper } from "./helper";',
+				"",
+				"export interface BlockAttributes {",
+				"  helper: ImportedHelper;",
+				"}",
+				"",
+			].join("\n"),
+			"tsconfig.json": JSON.stringify(
+				{
+					compilerOptions: {
+						module: "NodeNext",
+						moduleResolution: "NodeNext",
+						resolveJsonModule: true,
+						strict: true,
+						target: "ES2022",
+					},
+					include: ["src/**/*.ts"],
+				},
+				null,
+				2,
+			),
+		});
+
+		const report = await runFixture(fixtureDir, "BlockAttributes");
+
+		expect(report.status).toBe("error");
+		expect(report.failure?.code).toBe("typescript-diagnostic");
+		expect(report.failure?.message).toContain("Cannot find module './missing'");
+	});
 });

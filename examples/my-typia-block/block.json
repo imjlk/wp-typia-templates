@@ -34,7 +34,7 @@
 			"animation": "none",
 			"linkTarget": {
 				"kind": "url",
-				"href": "Example href"
+				"href": "https://example.com"
 			}
 		}
 	},
