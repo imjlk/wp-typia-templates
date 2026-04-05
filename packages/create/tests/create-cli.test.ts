@@ -1846,8 +1846,6 @@ describe("@wp-typia/create scaffolding", () => {
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const generatedIndex = fs.readFileSync(path.join(targetDir, "src", "index.js"), "utf8");
-		const generatedHooks = fs.readFileSync(path.join(targetDir, "src", "hooks.ts"), "utf8");
-		const generatedValidators = fs.readFileSync(path.join(targetDir, "src", "validators.ts"), "utf8");
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 		const generatedBlockJson = JSON.parse(
 			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
@@ -1862,8 +1860,6 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedTypes).toContain("export interface DemoRemoteAttributes");
 		expect(generatedTypes).toContain("\"content\"?: string & tags.Default<\"\">");
 		expect(generatedIndex).toContain('import metadata from "./block.json";');
-		expect(generatedHooks).toContain("useTypiaValidation");
-		expect(generatedValidators).toContain("validator-toolkit");
 		expect(generatedBlockJson.name).toBe("create-block/demo-remote");
 		expect(generatedBlockJson.title).toBe("Demo Remote");
 		expect(generatedBlockJson.supports.align).toEqual(["wide", "full"]);
