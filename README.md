@@ -5,16 +5,32 @@
 [![npm version](https://badge.fury.io/js/%40wp-typia%2Fcreate.svg)](https://www.npmjs.com/package/@wp-typia/create)
 [![codecov](https://codecov.io/gh/imjlk/wp-typia/branch/main/graph/badge.svg)](https://codecov.io/gh/imjlk/wp-typia)
 
-Create practical WordPress blocks with Typia-driven metadata, validation, and shared scaffold tooling.
+Build WordPress blocks that can evolve safely.
 
-`wp-typia` is a Bun-first monorepo centered on a small set of packages:
+`wp-typia` is a type-first toolkit for WordPress block development. Use `src/types.ts` as the source of truth, then generate `block.json`, `typia.manifest.json`, `typia-validator.php`, and optional schema artifacts from the same contract.
 
-- [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create) for scaffolding
-- [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types) for reusable WordPress semantic types
-- [`@wp-typia/rest`](https://www.npmjs.com/package/@wp-typia/rest) for typed WordPress REST helpers
-- [`@wp-typia/block-runtime`](https://www.npmjs.com/package/@wp-typia/block-runtime) as the prototype graduation path for generated block runtime helpers
+It is built for projects where block attributes change over time, saved content must stay compatible, and data-backed or multi-block patterns should not turn into one-off glue code.
 
-It generates `block.json`, `typia.manifest.json`, `typia-validator.php`, and optional schema artifacts from `src/types.ts`, keeps runtime validation close to the block code, and now ships four built-in starting points that cover static, interactive, persistence-aware, and compound parent/child blocks.
+## Why wp-typia
+
+- Type-driven block metadata from `src/types.ts`
+- Runtime validation close to the block code
+- Opt-in migration workflows for versioned block evolution
+- Built-in templates for `basic`, `interactivity`, `persistence`, and `compound`
+- Typed REST and persistence contracts when blocks need data
+- Remote template seeding from local paths, GitHub locators, npm packages, and create-block-style configs
+
+## Choose the right tool
+
+Use **`@wordpress/create-block`** when you want the official minimal starting point for a new block.
+
+Use **`wp-typia`** when you need a block that will grow:
+
+- attributes that will change after release
+- validation and defaults derived from a shared contract
+- typed persistence and REST surfaces
+- compound parent/child block structures
+- a migration path for long-lived production blocks
 
 ## Quick Start
 
@@ -28,54 +44,28 @@ npx @wp-typia/create my-block
 npx create-wp-typia my-block
 ```
 
-Built-in templates:
-
-- `basic`
-- `interactivity`
-- `persistence`
-- `compound`
-
-Non-interactive examples:
-
-```bash
-npx @wp-typia/create my-block --template basic --package-manager pnpm --yes --no-install
-npx @wp-typia/create my-block --template interactivity --package-manager npm --yes --no-install
-npx @wp-typia/create my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
-npx @wp-typia/create my-block --template persistence --data-storage custom-table --persistence-policy public --package-manager npm --yes --no-install
-npx @wp-typia/create my-block --template compound --package-manager bun --yes --no-install
-npx @wp-typia/create my-block --template compound --persistence-policy public --package-manager npm --yes --no-install
-```
-
-Remote template examples:
-
-```bash
-npx @wp-typia/create my-block --template ./local-template-dir --package-manager npm --yes --no-install
-npx @wp-typia/create my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
-npx @wp-typia/create my-block --template @scope/create-block-template --variant hero --package-manager npm --yes --no-install
-```
-
-## Built-in Templates
+### Built-in templates
 
 | Template | What it optimizes for |
 | --- | --- |
-| `basic` | Minimal, clean boilerplate with Typia metadata sync and runtime validation |
+| `basic` | Minimal block scaffold with type sync and runtime validation |
 | `interactivity` | The same foundation plus WordPress Interactivity API wiring |
-| `persistence` | Typed REST contracts, schema sync, Interactivity API wiring, and a selectable `authenticated` or `public` persistence policy |
-| `compound` | A top-level parent block plus hidden implementation child blocks, with optional persistence when you pass `--data-storage` or `--persistence-policy` |
+| `persistence` | Typed REST contracts, storage policy options, and data-backed block patterns |
+| `compound` | Parent/child multi-block scaffolding with optional persistence on the parent layer |
 
-`full` and `advanced` are no longer built-in scaffold targets. Their older kitchen-sink responsibilities are now split between the repo-local reference apps and the built-in `persistence` template.
+## What makes it different
 
-## How the Scaffold Works
+### 1. Types are the source of truth
 
-1. `src/types.ts` is the source of truth.
-2. `bun run sync-types` derives:
-   - `block.json`
-   - `typia.manifest.json`
-   - `typia-validator.php`
-   - optional `typia.schema.json`
-   - optional `typia.openapi.json`
-3. `src/validators.ts` uses precompiled Typia validators and manifest-driven default application.
-4. Data-backed projects can also run `bun run sync-rest` to emit request/response/query schemas for REST contracts.
+Update `src/types.ts`, then sync the WordPress-facing artifacts from that contract.
+
+Generated outputs can include:
+
+- `block.json`
+- `typia.manifest.json`
+- `typia-validator.php`
+- optional `typia.schema.json`
+- optional `typia.openapi.json`
 
 Example:
 
@@ -89,6 +79,97 @@ export interface MyBlockAttributes {
   isVisible?: boolean & tags.Default<true>;
 }
 ```
+
+### 2. Blocks can evolve without treating old content as disposable
+
+`wp-typia` includes an opt-in migration workflow for projects that need to preserve compatibility over time.
+
+With migration support enabled, you can:
+
+- snapshot released schemas
+- scaffold migration edges from older versions
+- verify generated rules and fixtures
+- preview and batch migration behavior from a dashboard-enabled project
+
+Use `--with-migration-ui` when you want the scaffolded migration workspace from day one.
+
+### 3. Data-backed blocks are first-class
+
+When a block needs storage or API interaction, the `persistence` template adds a typed contract layer instead of leaving REST and validation as ad-hoc manual code.
+
+Use it for:
+
+- authenticated per-user actions
+- public aggregate actions
+- custom-table or post-meta backed flows
+- blocks that need both editor UX and runtime-safe API surfaces
+
+### 4. Compound blocks are scaffolded as a system
+
+The `compound` template creates a parent/child block structure with hidden implementation children, so complex `InnerBlocks` patterns start from a maintainable project shape rather than a one-off setup.
+
+## Example flows
+
+```bash
+npx @wp-typia/create my-block --template basic --package-manager pnpm --yes --no-install
+npx @wp-typia/create my-block --template interactivity --package-manager npm --yes --no-install
+npx @wp-typia/create my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
+npx @wp-typia/create my-block --template persistence --data-storage custom-table --persistence-policy public --package-manager npm --yes --no-install
+npx @wp-typia/create my-block --template compound --package-manager bun --yes --no-install
+npx @wp-typia/create my-block --template compound --persistence-policy public --package-manager npm --yes --no-install
+npx @wp-typia/create my-block --template basic --with-migration-ui --package-manager bun --yes --no-install
+```
+
+## Start here
+
+- Want the smallest possible starting point? Start with `basic`.
+- Need lightweight frontend behavior? Start with `interactivity`.
+- Need data, REST, or persistence policies? Start with `persistence`.
+- Need a parent/child block system? Start with `compound`.
+- Need schema evolution for a long-lived block? Enable `--with-migration-ui`.
+
+## Remote templates
+
+`@wp-typia/create` can scaffold from:
+
+- built-in template ids
+- local paths
+- GitHub locators in the form `github:owner/repo/path[#ref]`
+- npm package specs such as `@scope/create-block-template@latest`
+
+When the source is an official create-block external template config, `--variant <name>` is supported. If the config defines variants and no variant is passed, the first variant is selected automatically.
+
+The current remote adapter supports a create-block-style subset:
+
+- `block.json`
+- `src/index.*`, `src/edit.*`, `src/save.*`
+- optional `render.php`
+- style/editor/view assets
+
+The remote source is treated as a seed. `wp-typia` still regenerates its own package setup, Typia sync flow, and runtime helpers around it.
+
+External template configs execute trusted JavaScript (`index.js` / `index.cjs` / `index.mjs`) and can run a `transformer(view)` hook before normalization. Only use template sources you trust.
+
+Remote template examples:
+
+```bash
+npx @wp-typia/create my-block --template ./local-template-dir --package-manager npm --yes --no-install
+npx @wp-typia/create my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
+npx @wp-typia/create my-block --template @scope/create-block-template --variant hero --package-manager npm --yes --no-install
+```
+
+## Documentation
+
+- [Architecture Guide](docs/architecture.md)
+- [API Guide](docs/API.md)
+- [Migration Guide](docs/migrations.md)
+- [Interactivity Guide](docs/interactivity.md)
+- [Examples Guide](examples/EXAMPLES.md)
+- [Package Graduation](docs/package-graduation.md)
+- [Union Support Guide](docs/union-support.md)
+- [Basic Block Tutorial](docs/tutorials/basic-block-tutorial.md)
+- [Compound Block Tutorial](docs/tutorials/compound-block-tutorial.md)
+- [Contributing Guide](CONTRIBUTING.md)
 
 ## Reference Apps
 
@@ -113,33 +194,12 @@ export interface MyBlockAttributes {
 
 If you want to see the “everything included” shape of `wp-typia`, start with `my-typia-block`. If you want to study persistence policy behavior, start with `persistence-examples`. If you want to scaffold parent/child `InnerBlocks` structures, start with `compound-patterns`.
 
-## Remote Template Support
-
-`@wp-typia/create` can scaffold from:
-
-- built-in template ids
-- local paths
-- GitHub locators in the form `github:owner/repo/path[#ref]`
-- npm package specs such as `@scope/create-block-template@latest`
-
-When the source is an official create-block external template config, `--variant <name>` is supported. If the config defines variants and no variant is passed, the first variant is selected automatically.
-
-The current remote adapter supports a `create-block`-style subset:
-
-- `block.json`
-- `src/index.*`, `src/edit.*`, `src/save.*`
-- optional `render.php`
-- style/editor/view assets
-
-The remote source is treated as a seed. `wp-typia` still regenerates its own package setup, Typia sync flow, and runtime helpers around it.
-
-External template configs execute trusted JavaScript (`index.js` / `index.cjs` / `index.mjs`) and can run a `transformer(view)` hook before normalization. Only use template sources you trust.
-
 ## Packages
 
 - [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create)
 - [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types)
 - [`@wp-typia/rest`](https://www.npmjs.com/package/@wp-typia/rest)
+- [`@wp-typia/api-client`](https://www.npmjs.com/package/@wp-typia/api-client)
 - [`@wp-typia/block-runtime`](https://www.npmjs.com/package/@wp-typia/block-runtime) as the current graduation prototype for defaults/editor/validation helpers
 - [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia) for `bun create wp-typia` compatibility
 
@@ -150,6 +210,7 @@ wp-typia/
 ├── packages/
 │   ├── create/                 # Canonical scoped CLI source (@wp-typia/create)
 │   ├── create-wp-typia/        # Unscoped compatibility shim
+│   ├── wp-typia-api-client/    # Backend-neutral generated API client runtime
 │   ├── wp-typia-block-runtime/ # Prototype block runtime facade package
 │   ├── wp-typia-rest/          # Typed REST client helpers
 │   └── wp-typia-block-types/   # Shared semantic block types
@@ -161,19 +222,6 @@ wp-typia/
 ├── docs/
 └── .github/
 ```
-
-## Documentation
-
-- [Examples Guide](examples/EXAMPLES.md)
-- [Architecture Guide](docs/architecture.md)
-- [API Guide](docs/API.md)
-- [Package Graduation](docs/package-graduation.md)
-- [Interactivity Guide](docs/interactivity.md)
-- [Migration Guide](docs/migrations.md)
-- [Union Support Guide](docs/union-support.md)
-- [Basic Block Tutorial](docs/tutorials/basic-block-tutorial.md)
-- [Compound Block Tutorial](docs/tutorials/compound-block-tutorial.md)
-- [Contributing Guide](CONTRIBUTING.md)
 
 ## Repository Development
 
