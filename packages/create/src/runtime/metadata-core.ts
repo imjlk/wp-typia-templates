@@ -14,6 +14,7 @@ import {
   normalizeEndpointAuthDefinition,
   type OpenApiInfo,
 } from './schema-core.js';
+import { cloneJsonValue } from './json-utils.js';
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
@@ -2412,7 +2413,7 @@ function mergeDefaultValue(
       `Conflicting default values in intersection at ${pathLabel}`,
     );
   }
-  return cloneJson(left);
+  return cloneJsonValue(left);
 }
 
 function intersectEnumValues(
@@ -2672,7 +2673,7 @@ function createBlockJsonAttribute(
   };
 
   if (node.defaultValue !== undefined) {
-    attribute.default = cloneJson(node.defaultValue);
+    attribute.default = cloneJsonValue(node.defaultValue);
   }
   if (node.enumValues !== null && node.enumValues.length > 0) {
     attribute.enum = [...node.enumValues];
@@ -2716,7 +2717,7 @@ function createManifestAttribute(node: AttributeNode): ManifestAttribute {
     typia: {
       constraints: { ...node.constraints },
       defaultValue:
-        node.defaultValue === undefined ? null : cloneJson(node.defaultValue),
+        node.defaultValue === undefined ? null : cloneJsonValue(node.defaultValue),
       hasDefault: node.defaultValue !== undefined,
     },
     ts: {
@@ -2745,7 +2746,7 @@ function createManifestAttribute(node: AttributeNode): ManifestAttribute {
     },
     wp: {
       defaultValue:
-        node.defaultValue === undefined ? null : cloneJson(node.defaultValue),
+        node.defaultValue === undefined ? null : cloneJsonValue(node.defaultValue),
       enum: node.enumValues ? [...node.enumValues] : null,
       hasDefault: node.defaultValue !== undefined,
       ...(node.wp.selector !== null ? { selector: node.wp.selector } : {}),
@@ -3339,10 +3340,10 @@ function renderPhpValue(value: unknown, indentLevel: number): string {
 
 function createExampleValue(node: AttributeNode, key: string): JsonValue {
   if (node.defaultValue !== undefined) {
-    return cloneJson(node.defaultValue);
+    return cloneJsonValue(node.defaultValue);
   }
   if (node.enumValues !== null && node.enumValues.length > 0) {
-    return cloneJson(node.enumValues[0]);
+    return cloneJsonValue(node.enumValues[0]);
   }
 
   switch (node.kind) {
@@ -3437,12 +3438,6 @@ function cloneProperties(
       withRequired(node, node.required),
     ]),
   );
-}
-
-function cloneJson<T extends JsonValue | Array<string | number | boolean>>(
-  value: T,
-): T {
-  return JSON.parse(JSON.stringify(value)) as T;
 }
 
 function getPropertyName(name: ts.PropertyName): string {

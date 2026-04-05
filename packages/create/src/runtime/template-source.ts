@@ -18,8 +18,10 @@ import {
 	isBuiltInTemplateId,
 	type BuiltInTemplateId,
 } from "./template-registry.js";
+import { isPlainObject } from "./object-utils.js";
 import { resolveBuiltInTemplateSource } from "./template-builtins.js";
 import { getPackageVersions } from "./package-versions.js";
+import { toSegmentPascalCase } from "./string-case.js";
 import { copyRawDirectory, copyRenderedDirectory } from "./template-render.js";
 
 const EXTERNAL_TEMPLATE_ENTRY_CANDIDATES = ["index.js", "index.cjs", "index.mjs"] as const;
@@ -109,20 +111,6 @@ type RemoteTemplateLocator =
 
 function isTemplatePathLocator(templateId: string): boolean {
 	return path.isAbsolute(templateId) || templateId.startsWith("./") || templateId.startsWith("../");
-}
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-	return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function toPascalCase(input: string): string {
-	return input
-		.replace(/[^A-Za-z0-9]+/g, " ")
-		.trim()
-		.split(/\s+/)
-		.filter(Boolean)
-		.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-		.join("");
 }
 
 function getTemplateWarning(key: string): string {
@@ -687,7 +675,7 @@ async function loadExternalTemplateConfig(sourceDir: string): Promise<{
 }
 
 function getVariantFlagName(variantName: string): string {
-	return `is${toPascalCase(variantName)}Variant`;
+	return `is${toSegmentPascalCase(variantName)}Variant`;
 }
 
 function getVariantKeys(config: ExternalTemplateConfig): string[] {

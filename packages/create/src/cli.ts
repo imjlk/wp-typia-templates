@@ -157,6 +157,61 @@ function parseArgs(argv: string[]): ParsedArgs {
 	return parsed;
 }
 
+async function runMigrationCli(argv: string[], cwd: string) {
+	const { formatMigrationHelpText, parseMigrationArgs, runMigrationCommand } = await import(
+		"./runtime/migrations.js"
+	);
+	const migrationCommand = parseMigrationArgs(argv);
+	if (!migrationCommand.command) {
+		console.log(formatMigrationHelpText());
+		return;
+	}
+
+	await runMigrationCommand(migrationCommand, cwd, { renderLine: console.log });
+}
+
+async function runTemplatesCli(positionals: string[]) {
+	const {
+		formatTemplateDetails,
+		formatTemplateFeatures,
+		formatTemplateSummary,
+		getTemplateById,
+		listTemplates,
+	} = await import("./runtime/cli-templates.js");
+	const [, templateCommand, templateId] = positionals;
+
+	if (templateCommand === "list") {
+		for (const template of listTemplates()) {
+			console.log(formatTemplateSummary(template));
+			console.log(formatTemplateFeatures(template));
+		}
+		return;
+	}
+
+	if (templateCommand === "inspect") {
+		if (!templateId) {
+			throw new Error(
+				`Template ID is required. Use one of: ${listTemplates().map((template) => template.id).join(", ")}`,
+			);
+		}
+		console.log(formatTemplateDetails(getTemplateById(templateId)));
+		return;
+	}
+
+	throw new Error("Usage: wp-typia templates <list|inspect>");
+}
+
+async function assertYesModePackageManager(parsed: ParsedArgs) {
+	if (!parsed.yes || parsed.packageManager) {
+		return;
+	}
+
+	const { PACKAGE_MANAGER_IDS } = await import("./runtime/package-managers.js");
+	throw new Error(
+		`Package manager is required when using --yes. Use --package-manager <${PACKAGE_MANAGER_IDS.join("|")}>.`,
+	);
+}
+
 function printDoctorLine({
 	status,
 	label,
@@ -277,15 +332,7 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 
 export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 	if (argv[0] === "migrations") {
-		const { formatMigrationHelpText, parseMigrationArgs, runMigrationCommand } = await import(
-			"./runtime/migrations.js"
-		);
-		const migrationCommand = parseMigrationArgs(argv.slice(1));
-		if (!migrationCommand.command) {
-			console.log(formatMigrationHelpText());
-			return;
-		}
-		await runMigrationCommand(migrationCommand, cwd, { renderLine: console.log });
+		await runMigrationCli(argv.slice(1), cwd);
 		return;
 	}
 
@@ -297,33 +344,10 @@ export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 		return;
 	}
 
-	const [first, second] = parsed.positionals;
+	const [first] = parsed.positionals;
 	if (first === "templates") {
-		const {
-			formatTemplateDetails,
-			formatTemplateFeatures,
-			formatTemplateSummary,
-			getTemplateById,
-			listTemplates,
-		} = await import("./runtime/cli-templates.js");
-		if (second === "list") {
-			for (const template of listTemplates()) {
-				console.log(formatTemplateSummary(template));
-				console.log(formatTemplateFeatures(template));
-			}
-			return;
-		}
-		if (second === "inspect") {
-			const templateId = parsed.positionals[2];
-			if (!templateId) {
-				throw new Error(
-					`Template ID is required. Use one of: ${listTemplates().map((template) => template.id).join(", ")}`,
-				);
-			}
-			console.log(formatTemplateDetails(getTemplateById(templateId)));
-			return;
-		}
-		throw new Error("Usage: wp-typia templates <list|inspect>");
+		await runTemplatesCli(parsed.positionals);
+		return;
 	}
 
 	if (first === "doctor") {
@@ -332,12 +356,7 @@ export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 		return;
 	}
 
-	if (parsed.yes && !parsed.packageManager) {
-		const { PACKAGE_MANAGER_IDS } = await import("./runtime/package-managers.js");
-		throw new Error(
-			`Package manager is required when using --yes. Use --package-manager <${PACKAGE_MANAGER_IDS.join("|")}>.`,
-		);
-	}
+	await assertYesModePackageManager(parsed);
 
 	await runScaffold(parsed, cwd);
 }
