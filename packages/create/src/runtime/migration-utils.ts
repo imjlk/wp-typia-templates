@@ -4,10 +4,7 @@ import { execSync } from "node:child_process";
 
 import { formatRunScript } from "./package-managers.js";
 import type { JsonValue, ManifestAttribute, JsonObject } from "./migration-types.js";
-
-export function cloneJsonValue<T extends JsonValue>(value: T): T {
-	return JSON.parse(JSON.stringify(value));
-}
+export { cloneJsonValue } from "./json-utils.js";
 
 export function getValueAtPath(input: Record<string, unknown>, pathLabel: string): unknown {
 	return String(pathLabel)

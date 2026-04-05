@@ -1,5 +1,6 @@
 import { applyTemplateDefaultsFromManifest } from "@wp-typia/create/runtime/defaults";
 import type { ManifestDefaultsDocument } from "@wp-typia/create/runtime/defaults";
+import { isPlainObject as isRecord } from "./object-utils.js";
 
 export interface TypiaValidationError {
 	description?: string;
@@ -268,10 +269,6 @@ function mergeAttributeUpdate<T extends object, K extends keyof T>(
 		...attributes,
 		[key]: value,
 	} as T;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function getNestedPathSegments(path: string): string[] {

@@ -18,6 +18,7 @@ import {
 	createNestedAttributeUpdater,
 	type ValidationResult,
 } from "./validation.js";
+import { isPlainObject as isRecord } from "./object-utils.js";
 
 export type {
 	EditorFieldDescriptor,
@@ -176,10 +177,6 @@ export interface InspectorFromManifestProps<T extends UnknownRecord> {
 	onChange: (path: string, value: unknown) => void;
 	paths: readonly string[];
 	title?: ReactNode;
-}
-
-function isRecord(value: unknown): value is UnknownRecord {
-	return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function getPathSegments(path: string): string[] {

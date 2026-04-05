@@ -125,6 +125,91 @@ function templateUsesPersistenceSettings(
 	return Boolean(options.dataStorageMode || options.persistencePolicy);
 }
 
+function parseSelectableValue<T extends string>(
+	label: string,
+	value: string,
+	isValue: (input: string) => input is T,
+	allowedValues: readonly T[],
+): T {
+	if (isValue(value)) {
+		return value;
+	}
+
+	throw new Error(
+		`Unsupported ${label} "${value}". Expected one of: ${allowedValues.join(", ")}`,
+	);
+}
+
+async function resolveOptionalSelection<T extends string>({
+	defaultValue,
+	explicitValue,
+	isInteractive,
+	isValue,
+	label,
+	allowedValues,
+	select,
+	shouldResolve = true,
+	yes,
+}: {
+	defaultValue: T;
+	explicitValue?: string;
+	isInteractive: boolean;
+	isValue: (input: string) => input is T;
+	label: string;
+	allowedValues: readonly T[];
+	select?: () => Promise<T>;
+	shouldResolve?: boolean;
+	yes: boolean;
+}): Promise<T | undefined> {
+	if (!shouldResolve) {
+		return undefined;
+	}
+
+	if (explicitValue) {
+		return parseSelectableValue(label, explicitValue, isValue, allowedValues);
+	}
+
+	if (yes) {
+		return defaultValue;
+	}
+
+	if (isInteractive && select) {
+		return select();
+	}
+
+	return defaultValue;
+}
+
+async function resolveOptionalBooleanFlag({
+	defaultValue = false,
+	disabled = false,
+	explicitValue,
+	isInteractive,
+	select,
+	yes,
+}: {
+	defaultValue?: boolean;
+	disabled?: boolean;
+	explicitValue?: boolean;
+	isInteractive: boolean;
+	select?: () => Promise<boolean>;
+	yes: boolean;
+}): Promise<boolean> {
+	if (typeof explicitValue === "boolean") {
+		return explicitValue;
+	}
+
+	if (disabled || yes) {
+		return defaultValue;
+	}
+
+	if (isInteractive && select) {
+		return select();
+	}
+
+	return defaultValue;
+}
+
 /**
  * Create the default readline-backed prompt implementation for the CLI.
  *
@@ -289,68 +374,53 @@ export async function runScaffoldFlow({
 		dataStorageMode,
 		persistencePolicy,
 	});
-	const resolvedDataStorage =
-		!shouldResolvePersistence
-			? undefined
-			: dataStorageMode
-				? isDataStorageMode(dataStorageMode)
-					? dataStorageMode
-					: (() => {
-						throw new Error(
-							`Unsupported data storage mode "${dataStorageMode}". Expected one of: ${DATA_STORAGE_MODES.join(", ")}`,
-						);
-					})()
-				: yes
-					? "custom-table"
-					: isInteractive && selectDataStorage
-						? await selectDataStorage()
-						: "custom-table";
-	const resolvedPersistencePolicy =
-		!shouldResolvePersistence
-			? undefined
-			: persistencePolicy
-				? isPersistencePolicy(persistencePolicy)
-					? persistencePolicy
-					: (() => {
-						throw new Error(
-							`Unsupported persistence policy "${persistencePolicy}". Expected one of: ${PERSISTENCE_POLICIES.join(", ")}`,
-						);
-					})()
-				: yes
-					? "authenticated"
-					: isInteractive && selectPersistencePolicy
-						? await selectPersistencePolicy()
-						: "authenticated";
+	const resolvedDataStorage = await resolveOptionalSelection({
+		allowedValues: DATA_STORAGE_MODES,
+		defaultValue: "custom-table",
+		explicitValue: dataStorageMode,
+		isInteractive,
+		isValue: isDataStorageMode,
+		label: "data storage mode",
+		select: selectDataStorage,
+		shouldResolve: shouldResolvePersistence,
+		yes,
+	});
+	const resolvedPersistencePolicy = await resolveOptionalSelection({
+		allowedValues: PERSISTENCE_POLICIES,
+		defaultValue: "authenticated",
+		explicitValue: persistencePolicy,
+		isInteractive,
+		isValue: isPersistencePolicy,
+		label: "persistence policy",
+		select: selectPersistencePolicy,
+		shouldResolve: shouldResolvePersistence,
+		yes,
+	});
 	const resolvedPackageManager = await resolvePackageManagerId({
 		packageManager,
 		yes,
 		isInteractive,
 		selectPackageManager,
 	});
-	const resolvedWithWpEnv =
-		typeof withWpEnv === "boolean"
-			? withWpEnv
-			: yes
-				? false
-				: isInteractive && selectWithWpEnv
-					? await selectWithWpEnv()
-					: false;
-	const resolvedWithTestPreset =
-		typeof withTestPreset === "boolean"
-			? withTestPreset
-			: yes
-				? false
-				: isInteractive && selectWithTestPreset
-					? await selectWithTestPreset()
-					: false;
-	const resolvedWithMigrationUi =
-		typeof withMigrationUi === "boolean"
-			? withMigrationUi
-			: yes || !isBuiltInTemplateId(resolvedTemplateId)
-				? false
-				: isInteractive && selectWithMigrationUi
-					? await selectWithMigrationUi()
-					: false;
+	const resolvedWithWpEnv = await resolveOptionalBooleanFlag({
+		explicitValue: withWpEnv,
+		isInteractive,
+		select: selectWithWpEnv,
+		yes,
+	});
+	const resolvedWithTestPreset = await resolveOptionalBooleanFlag({
+		explicitValue: withTestPreset,
+		isInteractive,
+		select: selectWithTestPreset,
+		yes,
+	});
+	const resolvedWithMigrationUi = await resolveOptionalBooleanFlag({
+		disabled: !isBuiltInTemplateId(resolvedTemplateId),
+		explicitValue: withMigrationUi,
+		isInteractive,
+		select: selectWithMigrationUi,
+		yes,
+	});
 	const projectDir = path.resolve(cwd, projectInput);
 	const projectName = path.basename(projectDir);
 	const answers = await collectScaffoldAnswers({

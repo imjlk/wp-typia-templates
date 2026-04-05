@@ -26,6 +26,12 @@ import {
 	getTemplateSourceOfTruthNote,
 } from "./scaffold-onboarding.js";
 import { getStarterManifestFiles, stringifyStarterManifest } from "./starter-manifests.js";
+import {
+	toKebabCase,
+	toPascalCase,
+	toSnakeCase,
+	toTitleCase,
+} from "./string-case.js";
 import { copyInterpolatedDirectory } from "./template-render.js";
 import { TEMPLATE_IDS, getTemplateById, isBuiltInTemplateId } from "./template-registry.js";
 import type { BuiltInTemplateId } from "./template-registry.js";
@@ -173,36 +179,6 @@ export interface ScaffoldProjectResult {
 	warnings: string[];
 }
 
-function toKebabCase(input: string): string {
-	return input
-		.trim()
-		.replace(/([a-z0-9])([A-Z])/g, "$1-$2")
-		.replace(/[^A-Za-z0-9]+/g, "-")
-		.replace(/^-+|-+$/g, "")
-		.replace(/-{2,}/g, "-")
-		.toLowerCase();
-}
-
-function toSnakeCase(input: string): string {
-	return toKebabCase(input).replace(/-/g, "_");
-}
-
-function toPascalCase(input: string): string {
-	return toKebabCase(input)
-		.split("-")
-		.filter(Boolean)
-		.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-		.join("");
-}
-
-function toTitle(input: string): string {
-	return toKebabCase(input)
-		.split("-")
-		.filter(Boolean)
-		.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-		.join(" ");
-}
-
 function validateBlockSlug(input: string): true | string {
 	return BLOCK_SLUG_PATTERN.test(input) || "Use lowercase letters, numbers, and hyphens only";
 }
@@ -230,18 +206,6 @@ function validatePhpPrefix(input: string): true | string {
 		: "Use letters, numbers, and underscores only, starting with a letter";
 }
 
-function normalizeNamespace(input: string): string {
-	return toKebabCase(input);
-}
-
-function normalizeTextDomain(input: string): string {
-	return toKebabCase(input);
-}
-
-function normalizePhpPrefix(input: string): string {
-	return toSnakeCase(input);
-}
-
 function assertValidIdentifier(
 	label: string,
 	value: string,
@@ -253,6 +217,48 @@ function assertValidIdentifier(
 	}
 
 	return value;
+}
+
+function normalizeBlockSlug(input: string): string {
+	return toKebabCase(input);
+}
+
+function resolveValidatedNamespace(value: string): string {
+	return assertValidIdentifier("Namespace", toKebabCase(value), validateNamespace);
+}
+
+function resolveValidatedTextDomain(value: string): string {
+	return assertValidIdentifier("Text domain", toKebabCase(value), validateTextDomain);
+}
+
+function resolveValidatedPhpPrefix(value: string): string {
+	return assertValidIdentifier("PHP prefix", toSnakeCase(value), validatePhpPrefix);
+}
+
+function resolveScaffoldIdentifiers({
+	namespace,
+	phpPrefix,
+	slug,
+	textDomain,
+}: {
+	namespace: string;
+	phpPrefix?: string;
+	slug: string;
+	textDomain?: string;
+}): {
+	namespace: string;
+	phpPrefix: string;
+	slug: string;
+	textDomain: string;
+} {
+	const normalizedSlug = normalizeBlockSlug(slug);
+
+	return {
+		namespace: resolveValidatedNamespace(namespace),
+		phpPrefix: resolveValidatedPhpPrefix(phpPrefix ?? normalizedSlug),
+		slug: normalizedSlug,
+		textDomain: resolveValidatedTextDomain(textDomain ?? normalizedSlug),
+	};
 }
 
 export function isDataStorageMode(value: string): value is DataStorageMode {
@@ -281,17 +287,17 @@ export function getDefaultAnswers(
 	templateId: string,
 ): ScaffoldAnswers {
 	const template = isBuiltInTemplateId(templateId) ? getTemplateById(templateId) : null;
-	const slugDefault = toKebabCase(projectName || "my-wp-typia-block");
+	const slugDefault = normalizeBlockSlug(projectName || "my-wp-typia-block");
 	return {
 		author: detectAuthor(),
 		dataStorageMode: templateId === "persistence" ? "custom-table" : undefined,
 		description: template?.description ?? "A WordPress block scaffolded from a remote template",
 		namespace: "create-block",
 		persistencePolicy: templateId === "persistence" ? "authenticated" : undefined,
-		phpPrefix: toSnakeCase(slugDefault),
+		phpPrefix: resolveValidatedPhpPrefix(slugDefault),
 		slug: slugDefault,
-		textDomain: slugDefault,
-		title: toTitle(slugDefault),
+		textDomain: resolveValidatedTextDomain(slugDefault),
+		title: toTitleCase(slugDefault),
 	};
 }
 
@@ -367,26 +373,19 @@ export async function collectScaffoldAnswers({
 	const defaults = getDefaultAnswers(projectName, templateId);
 
 	if (yes) {
-		const derivedSlug = defaults.slug;
+		const identifiers = resolveScaffoldIdentifiers({
+			namespace: namespace ?? defaults.namespace,
+			phpPrefix,
+			slug: defaults.slug,
+			textDomain,
+		});
 		return {
 			...defaults,
 			dataStorageMode: dataStorageMode ?? defaults.dataStorageMode,
-			namespace: assertValidIdentifier(
-				"Namespace",
-				normalizeNamespace(namespace ?? defaults.namespace),
-				validateNamespace,
-			),
+			namespace: identifiers.namespace,
 			persistencePolicy: persistencePolicy ?? defaults.persistencePolicy,
-			phpPrefix: assertValidIdentifier(
-				"PHP prefix",
-				normalizePhpPrefix(phpPrefix ?? toSnakeCase(derivedSlug)),
-				validatePhpPrefix,
-			),
-			textDomain: assertValidIdentifier(
-				"Text domain",
-				normalizeTextDomain(textDomain ?? derivedSlug),
-				validateTextDomain,
-			),
+			phpPrefix: identifiers.phpPrefix,
+			textDomain: identifiers.textDomain,
 		};
 	}
 
@@ -394,37 +393,24 @@ export async function collectScaffoldAnswers({
 		throw new Error("Interactive answers require a promptText callback.");
 	}
 
-	const slug = toKebabCase(
-		await promptText("Block slug", defaults.slug, validateBlockSlug),
-	);
-	const normalizedNamespace = assertValidIdentifier(
-		"Namespace",
-		normalizeNamespace(
-			namespace ?? ( await promptText("Namespace", defaults.namespace, validateNamespace) )
-		),
-		validateNamespace,
-	);
-	const normalizedTextDomain = assertValidIdentifier(
-		"Text domain",
-		normalizeTextDomain(textDomain ?? slug),
-		validateTextDomain,
-	);
-	const normalizedPhpPrefix = assertValidIdentifier(
-		"PHP prefix",
-		normalizePhpPrefix(phpPrefix ?? slug),
-		validatePhpPrefix,
-	);
+	const identifiers = resolveScaffoldIdentifiers({
+		namespace:
+			namespace ?? (await promptText("Namespace", defaults.namespace, validateNamespace)),
+		phpPrefix,
+		slug: await promptText("Block slug", defaults.slug, validateBlockSlug),
+		textDomain,
+	});
 
 	return {
 		author: await promptText("Author", defaults.author),
 		dataStorageMode: dataStorageMode ?? defaults.dataStorageMode,
 		description: await promptText("Description", defaults.description),
-		namespace: normalizedNamespace,
+		namespace: identifiers.namespace,
 		persistencePolicy: persistencePolicy ?? defaults.persistencePolicy,
-		phpPrefix: normalizedPhpPrefix,
-		slug,
-		textDomain: normalizedTextDomain,
-		title: await promptText("Block title", toTitle(slug)),
+		phpPrefix: identifiers.phpPrefix,
+		slug: identifiers.slug,
+		textDomain: identifiers.textDomain,
+		title: await promptText("Block title", toTitleCase(identifiers.slug)),
 	};
 }
 
@@ -439,26 +425,20 @@ export function getTemplateVariables(
 		restPackageVersion,
 	} = getPackageVersions();
 	const template = isBuiltInTemplateId(templateId) ? getTemplateById(templateId) : null;
-	const slug = toKebabCase(answers.slug);
+	const identifiers = resolveScaffoldIdentifiers({
+		namespace: answers.namespace,
+		phpPrefix: answers.phpPrefix,
+		slug: answers.slug,
+		textDomain: answers.textDomain,
+	});
+	const slug = identifiers.slug;
 	const slugSnakeCase = toSnakeCase(slug);
 	const pascalCase = toPascalCase(slug);
 	const title = answers.title.trim();
-	const namespace = assertValidIdentifier(
-		"Namespace",
-		normalizeNamespace(answers.namespace),
-		validateNamespace,
-	);
+	const namespace = identifiers.namespace;
 	const description = answers.description.trim();
-	const textDomain = assertValidIdentifier(
-		"Text domain",
-		normalizeTextDomain(answers.textDomain ?? slug),
-		validateTextDomain,
-	);
-	const phpPrefix = assertValidIdentifier(
-		"PHP prefix",
-		normalizePhpPrefix(answers.phpPrefix ?? slug),
-		validatePhpPrefix,
-	);
+	const textDomain = identifiers.textDomain;
+	const phpPrefix = identifiers.phpPrefix;
 	const compoundChildTitle = `${title} Item`;
 	const compoundPersistenceEnabled =
 		templateId === "persistence"

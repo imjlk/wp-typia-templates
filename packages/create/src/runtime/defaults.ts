@@ -1,3 +1,5 @@
+import { cloneJsonValue } from "./json-utils.js";
+
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
@@ -22,15 +24,13 @@ export interface ManifestDefaultsDocument {
 	attributes: Record<string, ManifestDefaultAttribute>;
 }
 
-const cloneJson = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
-
 function isListArray(value: unknown[]): boolean {
 	return value.every((_, index) => index in value);
 }
 
 function deriveDefaultValue(attribute: ManifestDefaultAttribute): JsonValue | undefined {
 	if (attribute.typia.hasDefault) {
-		return cloneJson(attribute.typia.defaultValue);
+		return cloneJsonValue(attribute.typia.defaultValue);
 	}
 
 	if (attribute.ts.kind !== "object" || !attribute.ts.properties) {
