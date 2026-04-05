@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, test } from "bun:test";
 import type { ApiFetch } from "@wordpress/api-fetch";
 import {
@@ -348,6 +349,20 @@ describe("@wp-typia/rest", () => {
 		expect(seenUrl).toBe("http://localhost:8889/wp-json/demo/v1/items/?page=3");
 		expect(result.isValid).toBe(true);
 		expect(result.data).toEqual({ items: [3] });
+	});
+
+	test("build rewrites react dist imports for node esm consumers", () => {
+		const reactDist = readFileSync(
+			new URL("../dist/react.js", import.meta.url),
+			"utf8",
+		);
+		const reactTypes = readFileSync(
+			new URL("../dist/react.d.ts", import.meta.url),
+			"utf8",
+		);
+
+		expect(reactDist).toContain('from "./client.js"');
+		expect(reactTypes).toContain('from "./client.js"');
 	});
 
 	test("resolveRestRouteUrl canonicalizes wp-json roots and route slashes", () => {

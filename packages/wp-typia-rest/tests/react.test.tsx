@@ -262,6 +262,61 @@ describe("@wp-typia/rest/react", () => {
 		await rendered.unmount();
 	});
 
+	test("invalidate triggers a follow-up fetch when an older request resolves late", async () => {
+		let fetchCount = 0;
+		let resolveFirstFetch!: (value: { count: number }) => void;
+		const endpoint = createEndpoint<{ page: number }, { count: number }>({
+			method: "GET",
+			path: "/demo/v1/items",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { page?: unknown }).page === "number"
+					? toValidationResult(success(input as { page: number }))
+					: toValidationResult(
+							failure<{ page: number }>("{ page: number }", "$.page"),
+						),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { count?: unknown }).count === "number"
+					? toValidationResult(success(input as { count: number }))
+					: toValidationResult(
+							failure<{ count: number }>("{ count: number }", "$.count"),
+						),
+		});
+		const request = { page: 1 };
+		const client = createEndpointDataClient();
+		const rendered = await createHookRenderer(
+			() =>
+				useEndpointQuery(endpoint, request, {
+					fetchFn: (async () => {
+						fetchCount += 1;
+						if (fetchCount === 1) {
+							return await new Promise<{ count: number }>((resolve) => {
+								resolveFirstFetch = resolve;
+							});
+						}
+
+						return { count: 2 };
+					}) as never,
+					staleTime: 30_000,
+				}),
+			client,
+		);
+
+		client.invalidate(endpoint, request);
+		resolveFirstFetch({ count: 1 });
+
+		await flush();
+		await flush();
+
+		expect(fetchCount).toBe(2);
+		expect(rendered.current.data).toEqual({ count: 2 });
+
+		await rendered.unmount();
+	});
+
 	test("useEndpointMutation invalidates matching queries after a successful mutation", async () => {
 		let serverCount = 0;
 		const queryEndpoint = createEndpoint<undefined, { count: number }>({

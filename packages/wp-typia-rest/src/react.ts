@@ -428,13 +428,16 @@ export function createEndpointDataClient(): EndpointDataClient {
 				syncSnapshot(entry);
 				notify(cacheKey);
 
+				const startedAt = Date.now();
 				const promise = execute()
 					.then((validation) => {
 						entry.error = null;
-					entry.updatedAt = Date.now();
-					entry.validation = validation as ValidationResult<unknown>;
-						if (validation.isValid) {
-							entry.data = validation.data;
+						if (entry.invalidatedAt <= startedAt) {
+							entry.updatedAt = Date.now();
+							entry.validation = validation as ValidationResult<unknown>;
+							if (validation.isValid) {
+								entry.data = validation.data;
+							}
 						}
 						syncSnapshot(entry);
 						return validation;
