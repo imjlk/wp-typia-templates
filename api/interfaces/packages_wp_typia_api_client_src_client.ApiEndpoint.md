@@ -92,7 +92,7 @@ ___
 
 ### requestLocation
 
-• `Optional` **requestLocation**: ``"body"`` \| ``"query"``
+• `Optional` **requestLocation**: ``"body"`` \| ``"query"`` \| ``"query-and-body"``
 
 #### Defined in
 
