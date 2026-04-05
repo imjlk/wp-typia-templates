@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 
+import { createReadlinePrompt } from "./cli-prompt.js";
 import { formatRunScript } from "./package-managers.js";
 import {
 	ROOT_PHP_MIGRATION_REGISTRY,
@@ -62,8 +63,10 @@ import type {
 	GeneratedMigrationEntry,
 	RenderLine,
 } from "./migration-types.js";
+import type { ReadlinePrompt } from "./cli-prompt.js";
 
 type CommandRenderOptions = {
+	prompt?: ReadlinePrompt;
 	renderLine?: RenderLine;
 };
 
@@ -97,10 +100,33 @@ type FuzzOptions = {
 	seed?: number;
 };
 
+type MigrationPlanBlockSummary = {
+	blockName: string;
+	diff: ReturnType<typeof createMigrationDiff>;
+	riskSummary: ReturnType<typeof createMigrationRiskSummary>;
+};
+
+type MigrationPlanSummary = {
+	availableLegacyVersions: string[];
+	currentVersion: string;
+	fromVersion: string;
+	includedBlocks: string[];
+	nextSteps: string[];
+	skippedBlocks: string[];
+	summaries: MigrationPlanBlockSummary[];
+	targetVersion: string;
+};
+
+type WizardOptions = CommandRenderOptions & {
+	isInteractive?: boolean;
+};
+
 export function formatMigrationHelpText(): string {
 	return `Usage:
   wp-typia migrations init --current-version <semver>
   wp-typia migrations snapshot --version <semver>
+  wp-typia migrations plan --from <semver> [--to current]
+  wp-typia migrations wizard
   wp-typia migrations diff --from <semver> [--to current]
   wp-typia migrations scaffold --from <semver> [--to current]
   wp-typia migrations verify [--from <semver>|--all]
@@ -110,6 +136,8 @@ export function formatMigrationHelpText(): string {
 
 Notes:
   \`migrations init\` auto-detects supported single-block and \`src/blocks/*\` multi-block layouts.
+  \`migrations wizard\` is TTY-only and helps you choose one legacy version to preview.
+  \`migrations plan\` and \`migrations wizard\` are read-only previews; they do not scaffold rules or fixtures.
   --all runs across every configured legacy version and every configured block target.
   In TTY usage, \`migrations fixtures --force\` asks before overwriting existing fixture files.
   In non-interactive usage, \`migrations fixtures --force\` overwrites immediately for script compatibility.`;
@@ -212,10 +240,22 @@ export function parseMigrationArgs(argv: string[]): ParsedMigrationArgs {
 
 export { formatDiffReport };
 
+/**
+ * Dispatch a parsed migrations command to the matching runtime workflow.
+ *
+ * Most commands execute synchronously and preserve direct throw semantics for
+ * existing callers. The interactive `wizard` command returns a promise because
+ * it waits for prompt selection before running the shared read-only planner.
+ *
+ * @param command Parsed migration command and flags.
+ * @param cwd Project directory to operate on.
+ * @param options Optional prompt/render hooks for testable and interactive execution.
+ * @returns The command result, or a promise when the selected command is interactive.
+ */
 export function runMigrationCommand(
 	command: ParsedMigrationArgs,
 	cwd: string,
-	{ renderLine = console.log as RenderLine }: CommandRenderOptions = {},
+	{ prompt, renderLine = console.log as RenderLine }: CommandRenderOptions = {},
 ) {
 	switch (command.command) {
 		case "init":
@@ -228,6 +268,20 @@ export function runMigrationCommand(
 				throw new Error("`migrations snapshot` requires --version <semver>.");
 			}
 			return snapshotProjectVersion(cwd, command.flags.version, { renderLine });
+		case "plan":
+			if (!command.flags.from) {
+				throw new Error("`migrations plan` requires --from <semver>.");
+			}
+			return planProjectMigrations(cwd, {
+				fromVersion: command.flags.from,
+				renderLine,
+				toVersion: command.flags.to ?? "current",
+			});
+		case "wizard":
+			return wizardProjectMigrations(cwd, {
+				prompt,
+				renderLine,
+			});
 		case "diff":
 			if (!command.flags.from) {
 				throw new Error("`migrations diff` requires --from <semver>.");
@@ -276,6 +330,145 @@ export function runMigrationCommand(
 			});
 		default:
 			throw new Error(formatMigrationHelpText());
+	}
+}
+
+/**
+ * Preview one migration edge without scaffolding rules, fixtures, or generated files.
+ *
+ * @param projectDir Absolute or relative project directory containing the migration workspace.
+ * @param options Selected source/target versions plus optional line rendering overrides.
+ * @returns A structured summary of the selected edge, included/skipped block targets, and next steps.
+ */
+export function planProjectMigrations(
+	projectDir: string,
+	{ fromVersion, renderLine = console.log as RenderLine, toVersion = "current" }: DiffLikeOptions = {},
+): MigrationPlanSummary {
+	if (!fromVersion) {
+		throw new Error("`migrations plan` requires --from <semver>.");
+	}
+
+	const state = loadMigrationProject(projectDir, { allowSyncTypes: false });
+	const availableLegacyVersions = listPreviewableLegacyVersions(state).sort(compareSemver).reverse();
+	const targetVersion = resolveTargetVersion(state.config.currentVersion, toVersion);
+	assertDistinctMigrationEdge("plan", fromVersion, targetVersion);
+	resolveLegacyVersions(state, { fromVersion });
+
+	const includedBlocks = state.blocks.filter((block) => hasSnapshotForVersion(state, block, fromVersion));
+	if (includedBlocks.length === 0) {
+		throw new Error(createMissingProjectSnapshotMessage(state, fromVersion));
+	}
+	const skippedBlocks = state.blocks
+		.filter((block) => !hasSnapshotForVersion(state, block, fromVersion))
+		.map((block) => block.blockName);
+	const summaries = includedBlocks.map((block) => {
+		const diff = createMigrationDiff(state, block, fromVersion, targetVersion);
+		return {
+			blockName: block.blockName,
+			diff,
+			riskSummary: createMigrationRiskSummary(diff),
+		};
+	});
+	const nextSteps = createMigrationPlanNextSteps(fromVersion, targetVersion, state.config.currentVersion);
+
+	renderLine(`Current version: ${state.config.currentVersion}`);
+	renderLine(
+		`Available legacy versions: ${availableLegacyVersions.length > 0 ? availableLegacyVersions.join(", ") : "None configured"}`,
+	);
+	renderLine(`Selected edge: ${fromVersion} -> ${targetVersion}`);
+	renderLine(`Included block targets: ${includedBlocks.map((block) => block.blockName).join(", ")}`);
+	renderLine(`Skipped block targets: ${skippedBlocks.length > 0 ? skippedBlocks.join(", ") : "None"}`);
+
+	for (const summary of summaries) {
+		renderLine(`Block: ${summary.blockName}`);
+		renderLine(formatDiffReport(summary.diff, { includeRiskSummary: false }));
+		renderLine(`Risk summary: ${formatMigrationRiskSummary(summary.riskSummary)}`);
+	}
+
+	renderLine("Next steps:");
+	for (const command of nextSteps) {
+		renderLine(`  ${command}`);
+	}
+	renderLine(
+		`Optional after editing rules: ${formatEdgeCommand("fixtures", fromVersion, targetVersion, state.config.currentVersion)} --force`,
+	);
+
+	return {
+		availableLegacyVersions,
+		currentVersion: state.config.currentVersion,
+		fromVersion,
+		includedBlocks: includedBlocks.map((block) => block.blockName),
+		nextSteps,
+		skippedBlocks,
+		summaries,
+		targetVersion,
+	};
+}
+
+/**
+ * Interactively choose one legacy version to preview, then run the same read-only planner.
+ *
+ * @param projectDir Absolute or relative project directory containing the migration workspace.
+ * @param options Interactive prompt and rendering settings. Throws when no TTY is available.
+ * @returns The planned migration summary, or `{ cancelled: true }` when the user exits the wizard.
+ */
+export async function wizardProjectMigrations(
+	projectDir: string,
+	{
+		isInteractive = isInteractiveTerminal(),
+		prompt,
+		renderLine = console.log as RenderLine,
+	}: WizardOptions = {},
+) {
+	if (!isInteractive) {
+		throw new Error(
+			"`migrations wizard` requires an interactive terminal. " +
+				"Use `wp-typia migrations plan --from <semver>` for a read-only preview or run the direct migration commands with explicit flags.",
+		);
+	}
+
+	const state = loadMigrationProject(projectDir, { allowSyncTypes: false });
+	const availableLegacyVersions = listPreviewableLegacyVersions(state).sort(compareSemver).reverse();
+	if (availableLegacyVersions.length === 0) {
+		throw new Error(
+			"No legacy versions are configured yet. " +
+				"Capture an older release with `wp-typia migrations snapshot --version <semver>` first, then rerun `wp-typia migrations wizard`.",
+		);
+	}
+
+	const activePrompt = prompt ?? createReadlinePrompt();
+	const createdPrompt = !prompt;
+	try {
+		const selectedVersion = await activePrompt.select(
+			"Choose a legacy version to preview",
+			[
+				...availableLegacyVersions.map((version) => ({
+					hint: `Preview ${version} -> ${state.config.currentVersion}`,
+					label: version,
+					value: version,
+				})),
+				{
+					hint: "Exit without previewing a migration edge",
+					label: "Cancel",
+					value: "cancel",
+				},
+			],
+			1,
+		);
+
+		if (selectedVersion === "cancel") {
+			renderLine("Cancelled migration planning.");
+			return { cancelled: true as const };
+		}
+
+		return planProjectMigrations(projectDir, {
+			fromVersion: selectedVersion,
+			renderLine,
+		});
+	} finally {
+		if (createdPrompt) {
+			activePrompt.close();
+		}
 	}
 }
 
@@ -972,9 +1165,7 @@ function resolveLegacyVersions(
 	state: ReturnType<typeof loadMigrationProject>,
 	{ all = false, fromVersion }: { all?: boolean; fromVersion?: string },
 ): string[] {
-	const legacyVersions = state.config.supportedVersions.filter(
-		(version) => version !== state.config.currentVersion,
-	).sort(compareSemver);
+	const legacyVersions = listConfiguredLegacyVersions(state);
 
 	if (fromVersion) {
 		if (!legacyVersions.includes(fromVersion)) {
@@ -993,6 +1184,30 @@ function resolveLegacyVersions(
 	}
 
 	return legacyVersions.slice(0, 1);
+}
+
+function listConfiguredLegacyVersions(
+	state: ReturnType<typeof loadMigrationProject>,
+): string[] {
+	return state.config.supportedVersions
+		.filter((version) => version !== state.config.currentVersion)
+		.sort(compareSemver);
+}
+
+function listPreviewableLegacyVersions(
+	state: ReturnType<typeof loadMigrationProject>,
+): string[] {
+	return [...new Set(
+		state.blocks.flatMap((block) =>
+			getAvailableSnapshotVersionsForBlock(
+				state.projectDir,
+				state.config.supportedVersions,
+				block,
+			),
+		),
+	)]
+		.filter((version) => version !== state.config.currentVersion)
+		.sort(compareSemver);
 }
 
 function collectGeneratedMigrationEntries(
@@ -1176,7 +1391,7 @@ function isLegacySingleBlockProject(
 }
 
 function assertDistinctMigrationEdge(
-	command: "diff" | "scaffold",
+	command: "diff" | "plan" | "scaffold",
 	fromVersion: string,
 	toVersion: string,
 ): void {
@@ -1186,6 +1401,36 @@ function assertDistinctMigrationEdge(
 				`Choose an older snapshot with \`--from <semver>\` or capture a newer release with \`wp-typia migrations snapshot --version <semver>\` first.`,
 		);
 	}
+}
+
+function createMigrationPlanNextSteps(
+	fromVersion: string,
+	targetVersion: string,
+	currentVersion: string,
+): string[] {
+	if (targetVersion !== currentVersion) {
+		return [
+			formatEdgeCommand("scaffold", fromVersion, targetVersion, currentVersion),
+		];
+	}
+
+	return [
+		formatEdgeCommand("scaffold", fromVersion, targetVersion, currentVersion),
+		`wp-typia migrations doctor --from ${fromVersion}`,
+		`wp-typia migrations verify --from ${fromVersion}`,
+		`wp-typia migrations fuzz --from ${fromVersion}`,
+	];
+}
+
+function formatEdgeCommand(
+	command: "fixtures" | "scaffold",
+	fromVersion: string,
+	targetVersion: string,
+	currentVersion: string,
+): string {
+	return targetVersion === currentVersion
+		? `wp-typia migrations ${command} --from ${fromVersion}`
+		: `wp-typia migrations ${command} --from ${fromVersion} --to ${targetVersion}`;
 }
 
 function createMissingProjectSnapshotMessage(

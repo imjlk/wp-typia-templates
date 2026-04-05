@@ -6,11 +6,15 @@ import * as path from "node:path";
 
 import { runUtf8Command } from "../../../tests/helpers/process-utils";
 import { writeJsonFile, writeTextFile } from "../../../tests/helpers/file-fixtures";
+import type { ReadlinePrompt } from "../src/runtime/cli-prompt.js";
 import { createMigrationDiff } from "../src/runtime/migration-diff.js";
 import { parseMigrationArgs } from "../src/runtime/index.js";
 import {
 	fixturesProjectMigrations,
+	planProjectMigrations,
+	runMigrationCommand,
 	snapshotProjectVersion,
+	wizardProjectMigrations,
 } from "../src/runtime/migrations.js";
 import { loadMigrationProject } from "../src/runtime/migration-project.js";
 import { createMigrationRiskSummary } from "../src/runtime/migration-risk.js";
@@ -541,6 +545,77 @@ function createVersionedMigrationProject(projectDir: string) {
 	const localBinDir = path.join(projectDir, "node_modules", ".bin");
 	fs.mkdirSync(localBinDir, { recursive: true });
 	fs.symlinkSync(repoTsxPath, path.join(localBinDir, "tsx"));
+}
+
+function addLegacyVersion(projectDir: string, version: string, sourceVersion = "1.0.0") {
+	const configPath = path.join(projectDir, "src", "migrations", "config.ts");
+	const sourceSnapshotRoot = path.join(projectDir, "src", "migrations", "versions", sourceVersion);
+	const targetSnapshotRoot = path.join(projectDir, "src", "migrations", "versions", version);
+	fs.cpSync(sourceSnapshotRoot, targetSnapshotRoot, { recursive: true });
+
+	const configSource = fs.readFileSync(configPath, "utf8");
+	const match = configSource.match(/supportedVersions:\s*\[(.*?)\]/s);
+	if (!match) {
+		throw new Error("Could not locate supportedVersions in migration config.");
+	}
+
+	const versions = match[1]
+		.split(",")
+		.map((value) => value.trim().replace(/^"|"$/g, ""))
+		.filter(Boolean);
+	const nextVersions = [...new Set([...versions, version])].sort((left, right) =>
+		left.localeCompare(right, undefined, { numeric: true }),
+	);
+	const nextSource = configSource.replace(
+		match[0],
+		`supportedVersions: [${nextVersions.map((value) => `"${value}"`).join(", ")}]`,
+	);
+	fs.writeFileSync(configPath, nextSource, "utf8");
+}
+
+type PromptSelectionCall = {
+	defaultValue?: number;
+	message: string;
+	options: Array<{
+		hint?: string;
+		label: string;
+		value: string;
+	}>;
+};
+
+function createStubPrompt(selectedValue: string | undefined, calls: PromptSelectionCall[]): ReadlinePrompt {
+	return {
+		close(): void {
+			// Tests inject a no-op prompt and manage their own lifecycle.
+		},
+		async select<T extends string>(
+			message: string,
+			options: Array<{ hint?: string; label: string; value: T }>,
+			defaultValue?: number,
+		): Promise<T> {
+			calls.push({
+				defaultValue,
+				message,
+				options: options.map((option) => ({
+					hint: option.hint,
+					label: option.label,
+					value: option.value,
+				})),
+			});
+			if (
+				selectedValue === undefined &&
+				typeof defaultValue === "number" &&
+				defaultValue > 0 &&
+				options[defaultValue - 1]
+			) {
+				return options[defaultValue - 1].value;
+			}
+			return (selectedValue ?? options[0]?.value) as T;
+		},
+		async text(_message: string, defaultValue: string): Promise<string> {
+			return defaultValue;
+		},
+	};
 }
 
 function writeMultiBlockCurrentFiles(
@@ -1568,9 +1643,9 @@ describe("wp-typia migrations", () => {
 		).toThrow(/Unable to auto-detect a supported migration retrofit layout[\s\S]*src\/migrations\/config\.ts/);
 	});
 
-	test("migrations help text explains retrofit auto-detection and --all workspace scope", () => {
+	test("migrations help text explains retrofit auto-detection, read-only planning, and --all workspace scope", () => {
 		expect(() => runCli("node", [entryPath, "migrations"])).toThrow(
-			/`migrations init` auto-detects supported single-block and `src\/blocks\/\*` multi-block layouts[\s\S]*--all runs across every configured legacy version and every configured block target\./,
+			/`migrations init` auto-detects supported single-block and `src\/blocks\/\*` multi-block layouts[\s\S]*`migrations wizard` is TTY-only[\s\S]*`migrations plan` and `migrations wizard` are read-only previews[\s\S]*--all runs across every configured legacy version and every configured block target\./,
 		);
 	});
 
@@ -1578,6 +1653,220 @@ describe("wp-typia migrations", () => {
 		const parsed = parseMigrationArgs(["snapshot", "--", "--version", "1.0.0"]);
 		expect(parsed.command).toBe("snapshot");
 		expect(parsed.flags.version).toBe("1.0.0");
+	});
+
+	test("migration arg parser accepts plan and wizard commands", () => {
+		const plan = parseMigrationArgs(["plan", "--from", "1.0.0", "--to", "1.5.0"]);
+		expect(plan.command).toBe("plan");
+		expect(plan.flags.from).toBe("1.0.0");
+		expect(plan.flags.to).toBe("1.5.0");
+
+		const wizard = parseMigrationArgs(["wizard"]);
+		expect(wizard.command).toBe("wizard");
+		expect(wizard.flags.to).toBe("current");
+	});
+
+	test("plan requires --from", () => {
+		const projectDir = path.join(tempRoot, "plan-requires-from-project");
+		createVersionedMigrationProject(projectDir);
+
+		expect(() =>
+			runCli("node", [entryPath, "migrations", "plan"], {
+				cwd: projectDir,
+			}),
+		).toThrow(/`migrations plan` requires --from <semver>\./);
+	});
+
+	test("plan previews one selected migration edge without generating artifacts", () => {
+		const projectDir = path.join(tempRoot, "plan-preview-project");
+		createVersionedMigrationProject(projectDir);
+		addLegacyVersion(projectDir, "1.5.0");
+
+		const rulePath = path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts");
+		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json");
+		const generatedPath = path.join(projectDir, "src", "migrations", "generated", "deprecated.ts");
+		const lines: string[] = [];
+		const summary = planProjectMigrations(projectDir, {
+			fromVersion: "1.0.0",
+			renderLine: (line) => lines.push(line),
+			toVersion: "current",
+		});
+
+		const output = lines.join("\n");
+		expect(summary.availableLegacyVersions).toEqual(["1.5.0", "1.0.0"]);
+		expect(summary.currentVersion).toBe("2.0.0");
+		expect(summary.fromVersion).toBe("1.0.0");
+		expect(summary.targetVersion).toBe("2.0.0");
+		expect(summary.includedBlocks).toEqual(["create-block/migration-smoke"]);
+		expect(summary.skippedBlocks).toEqual([]);
+		expect(output).toContain("Current version: 2.0.0");
+		expect(output).toContain("Available legacy versions: 1.5.0, 1.0.0");
+		expect(output).toContain("Selected edge: 1.0.0 -> 2.0.0");
+		expect(output).toContain("Included block targets: create-block/migration-smoke");
+		expect(output).toContain("Skipped block targets: None");
+		expect(output).toContain("Migration diff: 1.0.0 -> 2.0.0");
+		expect(output).toContain("Risk summary:");
+		expect(output).toContain("Next steps:");
+		expect(output).toContain("wp-typia migrations scaffold --from 1.0.0");
+		expect(output).toContain("wp-typia migrations doctor --from 1.0.0");
+		expect(output).toContain("wp-typia migrations verify --from 1.0.0");
+		expect(output).toContain("wp-typia migrations fuzz --from 1.0.0");
+		expect(output).toContain("Optional after editing rules: wp-typia migrations fixtures --from 1.0.0 --force");
+		expect(output.indexOf("Current version:")).toBeLessThan(output.indexOf("Available legacy versions:"));
+		expect(output.indexOf("Available legacy versions:")).toBeLessThan(output.indexOf("Selected edge:"));
+		expect(output.indexOf("Selected edge:")).toBeLessThan(output.indexOf("Included block targets:"));
+		expect(output.indexOf("Included block targets:")).toBeLessThan(output.indexOf("Block: create-block/migration-smoke"));
+		expect(output.indexOf("Block: create-block/migration-smoke")).toBeLessThan(output.indexOf("Next steps:"));
+		expect(fs.existsSync(rulePath)).toBe(false);
+		expect(fs.existsSync(fixturePath)).toBe(false);
+		expect(fs.existsSync(generatedPath)).toBe(false);
+	});
+
+	test("plan previews multi-block edges and lists skipped targets that lack snapshots", () => {
+		const projectDir = path.join(tempRoot, "plan-multi-block-project");
+		createMultiBlockMigrationProject(projectDir, { includeLegacyChild: false });
+
+		const lines: string[] = [];
+		const summary = planProjectMigrations(projectDir, {
+			fromVersion: "1.0.0",
+			renderLine: (line) => lines.push(line),
+		});
+
+		const output = lines.join("\n");
+		expect(summary.includedBlocks).toEqual(["create-block/multi-parent"]);
+		expect(summary.skippedBlocks).toEqual(["create-block/multi-parent-item"]);
+		expect(output).toContain("Included block targets: create-block/multi-parent");
+		expect(output).toContain("Skipped block targets: create-block/multi-parent-item");
+		expect(output).toContain("Block: create-block/multi-parent");
+		expect(output).not.toContain("Block: create-block/multi-parent-item");
+		expect(
+			fs.existsSync(
+				path.join(projectDir, "src", "migrations", "rules", "multi-parent", "1.0.0-to-2.0.0.ts"),
+			),
+		).toBe(false);
+	});
+
+	test("plan stays read-only when current manifests are missing", () => {
+		const projectDir = path.join(tempRoot, "plan-read-only-manifest-project");
+		createVersionedMigrationProject(projectDir);
+		const manifestPath = path.join(projectDir, "typia.manifest.json");
+		fs.rmSync(manifestPath);
+
+		expect(() =>
+			planProjectMigrations(projectDir, {
+				fromVersion: "1.0.0",
+			}),
+		).toThrow(/Migration planning is read-only[\s\S]*Run your project's `sync-types` script/);
+		expect(fs.existsSync(manifestPath)).toBe(false);
+	});
+
+	test("plan only advertises legacy versions with snapshot coverage", () => {
+		const projectDir = path.join(tempRoot, "plan-previewable-versions-project");
+		createVersionedMigrationProject(projectDir);
+
+		const configPath = path.join(projectDir, "src", "migrations", "config.ts");
+		fs.writeFileSync(
+			configPath,
+			fs
+				.readFileSync(configPath, "utf8")
+				.replace('supportedVersions: ["1.0.0", "2.0.0"]', 'supportedVersions: ["1.0.0", "1.5.0", "2.0.0"]'),
+			"utf8",
+		);
+
+		const lines: string[] = [];
+		const summary = planProjectMigrations(projectDir, {
+			fromVersion: "1.0.0",
+			renderLine: (line) => lines.push(line),
+		});
+
+		expect(summary.availableLegacyVersions).toEqual(["1.0.0"]);
+		expect(lines.join("\n")).toContain("Available legacy versions: 1.0.0");
+		expect(lines.join("\n")).not.toContain("1.5.0");
+	});
+
+	test("plan omits current-version follow-up commands for non-current targets", () => {
+		const projectDir = path.join(tempRoot, "plan-non-current-target-project");
+		createVersionedMigrationProject(projectDir);
+		addLegacyVersion(projectDir, "1.5.0");
+
+		const lines: string[] = [];
+		const summary = planProjectMigrations(projectDir, {
+			fromVersion: "1.0.0",
+			renderLine: (line) => lines.push(line),
+			toVersion: "1.5.0",
+		});
+
+		const output = lines.join("\n");
+		expect(summary.targetVersion).toBe("1.5.0");
+		expect(summary.nextSteps).toEqual(["wp-typia migrations scaffold --from 1.0.0 --to 1.5.0"]);
+		expect(output).toContain("Selected edge: 1.0.0 -> 1.5.0");
+		expect(output).toContain("wp-typia migrations scaffold --from 1.0.0 --to 1.5.0");
+		expect(output).not.toContain("wp-typia migrations doctor --from 1.0.0");
+		expect(output).not.toContain("wp-typia migrations verify --from 1.0.0");
+		expect(output).not.toContain("wp-typia migrations fuzz --from 1.0.0");
+		expect(output).toContain("Optional after editing rules: wp-typia migrations fixtures --from 1.0.0 --to 1.5.0 --force");
+	});
+
+	test("wizard fails outside a TTY with actionable guidance", async () => {
+		const projectDir = path.join(tempRoot, "wizard-non-tty-project");
+		createVersionedMigrationProject(projectDir);
+
+		await expect(
+			wizardProjectMigrations(projectDir, {
+				isInteractive: false,
+			}),
+		).rejects.toThrow(
+			/`migrations wizard` requires an interactive terminal[\s\S]*wp-typia migrations plan --from <semver>/,
+		);
+	});
+
+	test("wizard previews the most recent legacy version by default order and stays read-only", async () => {
+		const projectDir = path.join(tempRoot, "wizard-preview-project");
+		createVersionedMigrationProject(projectDir);
+		addLegacyVersion(projectDir, "1.5.0");
+
+		const calls: PromptSelectionCall[] = [];
+		const lines: string[] = [];
+		const summary = await wizardProjectMigrations(projectDir, {
+			isInteractive: true,
+			prompt: createStubPrompt(undefined, calls),
+			renderLine: (line) => lines.push(line),
+		});
+
+		expect("cancelled" in summary).toBe(false);
+		expect(calls[0]?.message).toContain("Choose a legacy version to preview");
+		expect(calls[0]?.defaultValue).toBe(1);
+		expect(calls[0]?.options.map((option) => option.value)).toEqual(["1.5.0", "1.0.0", "cancel"]);
+		if ("cancelled" in summary) {
+			throw new Error("Expected wizard to return a plan summary.");
+		}
+		expect(summary.fromVersion).toBe("1.5.0");
+		expect(summary.targetVersion).toBe("2.0.0");
+		expect(lines.join("\n")).toContain("Selected edge: 1.5.0 -> 2.0.0");
+		expect(
+			fs.existsSync(path.join(projectDir, "src", "migrations", "rules", "1.5.0-to-2.0.0.ts")),
+		).toBe(false);
+	});
+
+	test("wizard cancellation exits cleanly without writing migration artifacts", async () => {
+		const projectDir = path.join(tempRoot, "wizard-cancel-project");
+		createVersionedMigrationProject(projectDir);
+
+		const lines: string[] = [];
+		const result = await wizardProjectMigrations(projectDir, {
+			isInteractive: true,
+			prompt: createStubPrompt("cancel", []),
+			renderLine: (line) => lines.push(line),
+		});
+
+		expect(result).toEqual({ cancelled: true });
+		expect(lines.join("\n")).toContain("Cancelled migration planning.");
+		expect(
+			fs.existsSync(path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts")),
+		).toBe(false);
+		expect(
+			fs.existsSync(path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json")),
+		).toBe(false);
 	});
 
 	test("scaffold and verify generate auto-migration artifacts for additive schema changes", () => {
@@ -2092,9 +2381,15 @@ describe("wp-typia migrations", () => {
 		).toThrow(/Unsupported migration version: 9.9.9[\s\S]*Available legacy versions: 1\.0\.0/);
 	});
 
-	test("diff and scaffold reject same-version migration edges early", () => {
+	test("plan, diff, and scaffold reject same-version migration edges early", () => {
 		const projectDir = path.join(tempRoot, "same-version-edge-project");
 		createVersionedMigrationProject(projectDir);
+
+		expect(() =>
+			runCli("node", [entryPath, "migrations", "plan", "--from", "2.0.0"], {
+				cwd: projectDir,
+			}),
+		).toThrow(/migrations plan` requires different source and target versions[\s\S]*2\.0\.0/);
 
 		expect(() =>
 			runCli("node", [entryPath, "migrations", "diff", "--from", "2.0.0"], {
@@ -2107,6 +2402,16 @@ describe("wp-typia migrations", () => {
 				cwd: projectDir,
 			}),
 		).toThrow(/migrations scaffold` requires different source and target versions[\s\S]*1\.0\.0/);
+	});
+
+	test("runMigrationCommand preserves synchronous throws for direct callers", () => {
+		const projectDir = path.join(tempRoot, "run-command-sync-contract-project");
+		createVersionedMigrationProject(projectDir);
+		const command = parseMigrationArgs(["plan", "--from", "2.0.0"]);
+
+		expect(() => runMigrationCommand(command, projectDir)).toThrow(
+			/migrations plan` requires different source and target versions[\s\S]*2\.0\.0/,
+		);
 	});
 
 	test("verify defaults to the first legacy version and rejects malformed numeric flags", () => {

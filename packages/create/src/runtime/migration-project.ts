@@ -636,7 +636,10 @@ export function writeInitialMigrationScaffold(
 
 export function loadMigrationProject(
 	projectDir: string,
-	{ allowMissingConfig = false }: { allowMissingConfig?: boolean } = {},
+	{
+		allowMissingConfig = false,
+		allowSyncTypes = true,
+	}: { allowMissingConfig?: boolean; allowSyncTypes?: boolean } = {},
 ): MigrationProjectState {
 	ensureAdvancedMigrationProject(projectDir);
 
@@ -650,11 +653,17 @@ export function loadMigrationProject(
 		}
 		: parseMigrationConfig(fs.readFileSync(paths.configFile, "utf8"));
 	const configuredBlocks = config.blocks ?? [createImplicitLegacyBlock(projectDir, config.blockName)];
-	if (
-		configuredBlocks.some(
-			(block) => !fs.existsSync(path.join(projectDir, block.manifestFile)),
-		)
-	) {
+	const missingManifestFiles = configuredBlocks
+		.filter((block) => !fs.existsSync(path.join(projectDir, block.manifestFile)))
+		.map((block) => block.manifestFile);
+	if (missingManifestFiles.length > 0) {
+		if (!allowSyncTypes) {
+			throw new Error(
+				"Migration planning is read-only and cannot run `sync-types` automatically. " +
+					`Missing current manifest file(s): ${missingManifestFiles.join(", ")}. ` +
+					"Run your project's `sync-types` script in the project root first, then rerun the planning command.",
+			);
+		}
 		runProjectScriptIfPresent(projectDir, "sync-types");
 	}
 	const blocks = resolveMigrationBlocks(projectDir, config);

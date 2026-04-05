@@ -26,7 +26,10 @@ import type {
 	MigrationRuleFileInput,
 } from "./migration-types.js";
 
-export function formatDiffReport(diff: MigrationDiff): string {
+export function formatDiffReport(
+	diff: MigrationDiff,
+	{ includeRiskSummary = true }: { includeRiskSummary?: boolean } = {},
+): string {
 	const lines = [
 		`Migration diff: ${diff.fromVersion} -> ${diff.toVersion}`,
 		`Current type: ${diff.currentTypeName}`,
@@ -77,7 +80,9 @@ export function formatDiffReport(diff: MigrationDiff): string {
 		}
 	}
 
-	lines.push("", `Risk summary: ${formatMigrationRiskSummary(createMigrationRiskSummary(diff))}`);
+	if (includeRiskSummary) {
+		lines.push("", `Risk summary: ${formatMigrationRiskSummary(createMigrationRiskSummary(diff))}`);
+	}
 
 	return lines.join("\n");
 }

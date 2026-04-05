@@ -329,6 +329,8 @@ The `migrations` commands remain available for projects that include the migrati
 
 ```bash
 wp-typia migrations init --current-version 1.0.0
+wp-typia migrations wizard
+wp-typia migrations plan --from 1.0.0
 wp-typia migrations doctor --all
 wp-typia migrations diff --from 1.0.0
 wp-typia migrations scaffold --from 1.0.0
@@ -346,6 +348,11 @@ Built-in templates can now opt into that workflow at scaffold time with
 
 `migration:init` remains the retrofit command for older projects that were not
 scaffolded with `--with-migration-ui`.
+
+`wp-typia migrations wizard` is the TTY-only guided preview flow, and
+`wp-typia migrations plan --from <semver>` is the read-only preview path when
+you already know the legacy version you want to inspect. Both stop before
+scaffolding rules or refreshing fixtures.
 
 Repo development stays Bun-first. The generated project can use `bun`, `npm`, `pnpm`, or `yarn`.
 
