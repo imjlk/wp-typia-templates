@@ -1,5 +1,15 @@
 # @wp-typia/create
 
+## 0.10.0 — 2026-04-05
+
+### Minor changes
+
+- [1192fc6](https://github.com/imjlk/wp-typia/commit/1192fc698734f32888284ea7878905bf94f4ba29) Add read-only `migrations plan` and TTY-guided `migrations wizard` commands so migration-capable projects can preview one selected legacy edge before scaffolding rules or fixtures. — Thanks @imjlk!
+
+### Patch changes
+
+- [44478ca](https://github.com/imjlk/wp-typia/commit/44478ca5bc396b40842484ee9f46613d426c83df) Restore the missing default plugin bootstrap for base scaffolds and tighten migration planning guidance around previewable legacy versions and manifest preflight errors. — Thanks @imjlk!
+
 ## 0.9.0 — 2026-04-05
 
 ### Minor changes
