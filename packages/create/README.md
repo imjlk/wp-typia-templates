@@ -349,9 +349,9 @@ Built-in templates can now opt into that workflow at scaffold time with
 `migration:init` remains the retrofit command for older projects that were not
 scaffolded with `--with-migration-ui`.
 
-`migration:wizard` is the TTY-only guided preview flow, and
-`migration:plan -- --from <semver>` is the read-only preview path when you
-already know the legacy version you want to inspect. Both stop before
+`wp-typia migrations wizard` is the TTY-only guided preview flow, and
+`wp-typia migrations plan --from <semver>` is the read-only preview path when
+you already know the legacy version you want to inspect. Both stop before
 scaffolding rules or refreshing fixtures.
 
 Repo development stays Bun-first. The generated project can use `bun`, `npm`, `pnpm`, or `yarn`.

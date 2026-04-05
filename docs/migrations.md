@@ -88,15 +88,16 @@ manually.
 
 The migration CLI now has two read-only preview entrypoints:
 
-- `bun run migration:wizard`: interactive, TTY-only legacy-version discovery
-- `bun run migration:plan -- --from <semver>`: scriptable preview when you already know the legacy version
+- `wp-typia migrations wizard`: interactive, TTY-only legacy-version discovery
+- `wp-typia migrations plan --from <semver>`: scriptable preview when you already know the legacy version
 
 Both commands stop after previewing one selected `from -> to` edge. They do not
 write rules, fixtures, snapshots, or generated artifacts.
 
-Use `migration:wizard` when you want the CLI to show the configured legacy
-versions first and let you pick one. Use `migration:plan` when you already know
-the version you want to inspect and just need a read-only summary of:
+Use `wp-typia migrations wizard` when you want the CLI to show the configured
+legacy versions first and let you pick one. Use
+`wp-typia migrations plan --from <semver>` when you already know the version
+you want to inspect and just need a read-only summary of:
 
 - the current version
 - available legacy versions
@@ -108,8 +109,8 @@ the version you want to inspect and just need a read-only summary of:
 For example:
 
 ```bash
-bun run migration:wizard
-bun run migration:plan -- --from 1.0.0
+wp-typia migrations wizard
+wp-typia migrations plan --from 1.0.0
 ```
 
 ## New schema version
@@ -127,7 +128,7 @@ Example:
 
 ```bash
 bun run sync-types
-bun run migration:plan -- --from 1.0.0
+wp-typia migrations plan --from 1.0.0
 bun run migration:snapshot -- --version 2.0.0
 bun run migration:doctor
 bun run migration:diff -- --from 1.0.0
@@ -145,7 +146,7 @@ The intended authoring flow is:
 
 1. change `src/types.ts`
 2. regenerate metadata with `bun run sync-types`
-3. preview the selected legacy edge with `bun run migration:wizard` or `bun run migration:plan -- --from <semver>`
+3. preview the selected legacy edge with `wp-typia migrations wizard` or `wp-typia migrations plan --from <semver>`
 4. snapshot the release you want to preserve
 5. scaffold the edge from the old snapshot to the current schema
 6. review auto-applied renames
@@ -238,8 +239,8 @@ If `verify` or `fuzz` report missing generated inputs, rerun
 `migration:scaffold -- --from <semver>` for the missing edge and then
 `migration:doctor -- --all` to confirm the workspace is back in sync.
 
-`migration:wizard` is TTY-only by design. If you are in a non-interactive shell,
-use `migration:plan -- --from <semver>` instead.
+`wp-typia migrations wizard` is TTY-only by design. If you are in a
+non-interactive shell, use `wp-typia migrations plan --from <semver>` instead.
 
 ## Deprecated Gutenberg entries
 

@@ -240,6 +240,18 @@ export function parseMigrationArgs(argv: string[]): ParsedMigrationArgs {
 
 export { formatDiffReport };
 
+/**
+ * Dispatch a parsed migrations command to the matching runtime workflow.
+ *
+ * Most commands execute synchronously and preserve direct throw semantics for
+ * existing callers. The interactive `wizard` command returns a promise because
+ * it waits for prompt selection before running the shared read-only planner.
+ *
+ * @param command Parsed migration command and flags.
+ * @param cwd Project directory to operate on.
+ * @param options Optional prompt/render hooks for testable and interactive execution.
+ * @returns The command result, or a promise when the selected command is interactive.
+ */
 export function runMigrationCommand(
 	command: ParsedMigrationArgs,
 	cwd: string,
@@ -337,7 +349,7 @@ export function planProjectMigrations(
 	}
 
 	const state = loadMigrationProject(projectDir, { allowSyncTypes: false });
-	const availableLegacyVersions = listLegacyVersions(state).sort(compareSemver).reverse();
+	const availableLegacyVersions = listPreviewableLegacyVersions(state).sort(compareSemver).reverse();
 	const targetVersion = resolveTargetVersion(state.config.currentVersion, toVersion);
 	assertDistinctMigrationEdge("plan", fromVersion, targetVersion);
 	resolveLegacyVersions(state, { fromVersion });
@@ -416,7 +428,7 @@ export async function wizardProjectMigrations(
 	}
 
 	const state = loadMigrationProject(projectDir, { allowSyncTypes: false });
-	const availableLegacyVersions = listLegacyVersions(state).sort(compareSemver).reverse();
+	const availableLegacyVersions = listPreviewableLegacyVersions(state).sort(compareSemver).reverse();
 	if (availableLegacyVersions.length === 0) {
 		throw new Error(
 			"No legacy versions are configured yet. " +
@@ -1153,7 +1165,7 @@ function resolveLegacyVersions(
 	state: ReturnType<typeof loadMigrationProject>,
 	{ all = false, fromVersion }: { all?: boolean; fromVersion?: string },
 ): string[] {
-	const legacyVersions = listLegacyVersions(state);
+	const legacyVersions = listConfiguredLegacyVersions(state);
 
 	if (fromVersion) {
 		if (!legacyVersions.includes(fromVersion)) {
@@ -1174,10 +1186,26 @@ function resolveLegacyVersions(
 	return legacyVersions.slice(0, 1);
 }
 
-function listLegacyVersions(
+function listConfiguredLegacyVersions(
 	state: ReturnType<typeof loadMigrationProject>,
 ): string[] {
 	return state.config.supportedVersions
+		.filter((version) => version !== state.config.currentVersion)
+		.sort(compareSemver);
+}
+
+function listPreviewableLegacyVersions(
+	state: ReturnType<typeof loadMigrationProject>,
+): string[] {
+	return [...new Set(
+		state.blocks.flatMap((block) =>
+			getAvailableSnapshotVersionsForBlock(
+				state.projectDir,
+				state.config.supportedVersions,
+				block,
+			),
+		),
+	)]
 		.filter((version) => version !== state.config.currentVersion)
 		.sort(compareSemver);
 }

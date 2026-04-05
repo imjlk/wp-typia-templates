@@ -583,7 +583,7 @@ type PromptSelectionCall = {
 	}>;
 };
 
-function createStubPrompt(selectedValue: string, calls: PromptSelectionCall[]): ReadlinePrompt {
+function createStubPrompt(selectedValue: string | undefined, calls: PromptSelectionCall[]): ReadlinePrompt {
 	return {
 		close(): void {
 			// Tests inject a no-op prompt and manage their own lifecycle.
@@ -602,7 +602,15 @@ function createStubPrompt(selectedValue: string, calls: PromptSelectionCall[]): 
 					value: option.value,
 				})),
 			});
-			return selectedValue as T;
+			if (
+				selectedValue === undefined &&
+				typeof defaultValue === "number" &&
+				defaultValue > 0 &&
+				options[defaultValue - 1]
+			) {
+				return options[defaultValue - 1].value;
+			}
+			return (selectedValue ?? options[0]?.value) as T;
 		},
 		async text(_message: string, defaultValue: string): Promise<string> {
 			return defaultValue;
@@ -1752,6 +1760,30 @@ describe("wp-typia migrations", () => {
 		expect(fs.existsSync(manifestPath)).toBe(false);
 	});
 
+	test("plan only advertises legacy versions with snapshot coverage", () => {
+		const projectDir = path.join(tempRoot, "plan-previewable-versions-project");
+		createVersionedMigrationProject(projectDir);
+
+		const configPath = path.join(projectDir, "src", "migrations", "config.ts");
+		fs.writeFileSync(
+			configPath,
+			fs
+				.readFileSync(configPath, "utf8")
+				.replace('supportedVersions: ["1.0.0", "2.0.0"]', 'supportedVersions: ["1.0.0", "1.5.0", "2.0.0"]'),
+			"utf8",
+		);
+
+		const lines: string[] = [];
+		const summary = planProjectMigrations(projectDir, {
+			fromVersion: "1.0.0",
+			renderLine: (line) => lines.push(line),
+		});
+
+		expect(summary.availableLegacyVersions).toEqual(["1.0.0"]);
+		expect(lines.join("\n")).toContain("Available legacy versions: 1.0.0");
+		expect(lines.join("\n")).not.toContain("1.5.0");
+	});
+
 	test("plan omits current-version follow-up commands for non-current targets", () => {
 		const projectDir = path.join(tempRoot, "plan-non-current-target-project");
 		createVersionedMigrationProject(projectDir);
@@ -1797,7 +1829,7 @@ describe("wp-typia migrations", () => {
 		const lines: string[] = [];
 		const summary = await wizardProjectMigrations(projectDir, {
 			isInteractive: true,
-			prompt: createStubPrompt("1.5.0", calls),
+			prompt: createStubPrompt(undefined, calls),
 			renderLine: (line) => lines.push(line),
 		});
 
