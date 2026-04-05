@@ -1638,7 +1638,7 @@ function createAnalysisContext(
   if (cachedAnalysis) {
     const currentDependencyFingerprint = createAnalysisProgramContentFingerprint(
       cachedAnalysis.dependencyPaths,
-      'return-null',
+      'hash-missing',
     );
     if (
       currentDependencyFingerprint !== null &&
