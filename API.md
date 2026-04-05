@@ -61,6 +61,8 @@ Migration commands remain available inside migration-capable projects such as [`
 
 ```bash
 wp-typia migrations init --current-version 1.0.0
+wp-typia migrations wizard
+wp-typia migrations plan --from 1.0.0
 wp-typia migrations snapshot --version 1.0.0
 wp-typia migrations doctor --all
 wp-typia migrations diff --from 1.0.0
@@ -81,6 +83,17 @@ auto-detects supported retrofit layouts:
 When `src/blocks/*` is detected, `migration:init` writes `src/migrations/config.ts`
 with `blocks: []` entries for every discovered block target, including scaffolded
 hidden compound child blocks.
+
+Migration-capable projects now also expose two read-only preview paths before
+you scaffold anything:
+
+- `wp-typia migrations wizard`: TTY-only guided legacy-version selection
+- `wp-typia migrations plan --from <semver>`: scriptable preview when you already know the edge
+
+Both commands preview one selected edge across every eligible block target,
+list skipped targets that do not have the selected snapshot yet, and stop after
+printing the next commands to run. They do not write rules, fixtures, or
+snapshots.
 
 When a built-in scaffold uses `--with-migration-ui`, the generated project is
 already initialized at `1.0.0`, includes `src/admin/migration-dashboard.tsx`,
@@ -367,7 +380,16 @@ Migration-enabled generated projects may also wire:
 - `src/admin/migration-dashboard.tsx`
 - `src/migration-detector.ts`
 
-`migrations doctor` is the read-only workspace health check, `migrations fixtures` refreshes deterministic edge fixtures, and `migrations fuzz` replays those fixtures plus seeded random legacy-shaped inputs derived from the current Typia validator. Without `--all`, migration commands target the first legacy version only; `--all` runs across every configured legacy version and every configured block target. In TTY usage, `migrations fixtures --force` asks before overwriting existing fixture files, while non-interactive runs overwrite immediately for script compatibility.
+`migrations wizard` and `migrations plan` are the read-only preview layer,
+`migrations doctor` is the read-only workspace health check, `migrations fixtures`
+refreshes deterministic edge fixtures, and `migrations fuzz` replays those
+fixtures plus seeded random legacy-shaped inputs derived from the current Typia
+validator. Without `--all`, migration commands target the first legacy version
+only; `--all` runs across every configured legacy version and every configured
+block target. `migrations wizard` requires a TTY; use `migrations plan --from
+<semver>` in non-interactive shells. In TTY usage, `migrations fixtures --force`
+asks before overwriting existing fixture files, while non-interactive runs
+overwrite immediately for script compatibility.
 
 The built-in `persistence` template adds another predictable layer:
 

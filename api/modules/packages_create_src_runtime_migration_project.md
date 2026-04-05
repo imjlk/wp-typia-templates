@@ -427,6 +427,7 @@ ___
 | `projectDir` | `string` | `undefined` |
 | `«destructured»` | `Object` | `{}` |
 | › `allowMissingConfig?` | `boolean` | `false` |
+| › `allowSyncTypes?` | `boolean` | `true` |
 
 #### Returns
 
@@ -454,7 +455,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:672](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L672)
+[packages/create/src/runtime/migration-project.ts:681](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L681)
 
 ___
 
@@ -474,7 +475,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:725](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L725)
+[packages/create/src/runtime/migration-project.ts:734](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L734)
 
 ___
 
@@ -495,7 +496,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:790](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L790)
+[packages/create/src/runtime/migration-project.ts:799](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L799)
 
 ___
 
@@ -521,7 +522,7 @@ layout.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:848](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L848)
+[packages/create/src/runtime/migration-project.ts:857](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L857)
 
 ___
 
@@ -544,7 +545,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:852](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L852)
+[packages/create/src/runtime/migration-project.ts:861](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L861)
 
 ___
 
@@ -564,7 +565,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:868](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L868)
+[packages/create/src/runtime/migration-project.ts:877](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L877)
 
 ___
 
@@ -584,4 +585,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:890](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L890)
+[packages/create/src/runtime/migration-project.ts:899](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L899)

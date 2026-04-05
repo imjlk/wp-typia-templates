@@ -4,36 +4,13 @@
 
 ## Table of contents
 
-### Interfaces
-
-- [ReadlinePrompt](../interfaces/packages_create_src_runtime_cli_scaffold.ReadlinePrompt.md)
-
 ### Functions
 
-- [createReadlinePrompt](packages_create_src_runtime_cli_scaffold.md#createreadlineprompt)
 - [getNextSteps](packages_create_src_runtime_cli_scaffold.md#getnextsteps)
 - [getOptionalOnboarding](packages_create_src_runtime_cli_scaffold.md#getoptionalonboarding)
 - [runScaffoldFlow](packages_create_src_runtime_cli_scaffold.md#runscaffoldflow)
 
 ## Functions
-
-### createReadlinePrompt
-
-▸ **createReadlinePrompt**(): [`ReadlinePrompt`](../interfaces/packages_create_src_runtime_cli_scaffold.ReadlinePrompt.md)
-
-Create the default readline-backed prompt implementation for the CLI.
-
-#### Returns
-
-[`ReadlinePrompt`](../interfaces/packages_create_src_runtime_cli_scaffold.ReadlinePrompt.md)
-
-A prompt adapter that reads from stdin and writes to stdout.
-
-#### Defined in
-
-[packages/create/src/runtime/cli-scaffold.ts:222](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L222)
-
-___
 
 ### getNextSteps
 
@@ -55,7 +32,7 @@ Ordered shell commands shown after scaffolding succeeds.
 
 #### Defined in
 
-[packages/create/src/runtime/cli-scaffold.ts:295](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L295)
+[packages/create/src/runtime/cli-scaffold.ts:201](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L201)
 
 ___
 
@@ -79,7 +56,7 @@ Optional onboarding note and step list.
 
 #### Defined in
 
-[packages/create/src/runtime/cli-scaffold.ts:319](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L319)
+[packages/create/src/runtime/cli-scaffold.ts:225](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L225)
 
 ___
 
@@ -103,4 +80,4 @@ The scaffold result together with next-step guidance.
 
 #### Defined in
 
-[packages/create/src/runtime/cli-scaffold.ts:339](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L339)
+[packages/create/src/runtime/cli-scaffold.ts:245](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L245)

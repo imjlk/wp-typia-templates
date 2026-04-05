@@ -10,10 +10,10 @@
 - [runDoctor](packages_create_src_runtime_cli_core.md#rundoctor)
 - [DoctorCheck](packages_create_src_runtime_cli_core.md#doctorcheck)
 - [formatHelpText](packages_create_src_runtime_cli_core.md#formathelptext)
-- [createReadlinePrompt](packages_create_src_runtime_cli_core.md#createreadlineprompt)
 - [getNextSteps](packages_create_src_runtime_cli_core.md#getnextsteps)
 - [getOptionalOnboarding](packages_create_src_runtime_cli_core.md#getoptionalonboarding)
 - [runScaffoldFlow](packages_create_src_runtime_cli_core.md#runscaffoldflow)
+- [createReadlinePrompt](packages_create_src_runtime_cli_core.md#createreadlineprompt)
 - [ReadlinePrompt](packages_create_src_runtime_cli_core.md#readlineprompt)
 - [formatTemplateDetails](packages_create_src_runtime_cli_core.md#formattemplatedetails)
 - [formatTemplateFeatures](packages_create_src_runtime_cli_core.md#formattemplatefeatures)
@@ -49,12 +49,6 @@ Re-exports [formatHelpText](packages_create_src_runtime_cli_help.md#formathelpte
 
 ___
 
-### createReadlinePrompt
-
-Re-exports [createReadlinePrompt](packages_create_src_runtime_cli_scaffold.md#createreadlineprompt)
-
-___
-
 ### getNextSteps
 
 Re-exports [getNextSteps](packages_create_src_runtime_cli_scaffold.md#getnextsteps)
@@ -73,9 +67,15 @@ Re-exports [runScaffoldFlow](packages_create_src_runtime_cli_scaffold.md#runscaf
 
 ___
 
+### createReadlinePrompt
+
+Re-exports [createReadlinePrompt](packages_create_src_runtime_cli_prompt.md#createreadlineprompt)
+
+___
+
 ### ReadlinePrompt
 
-Re-exports [ReadlinePrompt](../interfaces/packages_create_src_runtime_cli_scaffold.ReadlinePrompt.md)
+Re-exports [ReadlinePrompt](../interfaces/packages_create_src_runtime_cli_prompt.ReadlinePrompt.md)
 
 ___
 

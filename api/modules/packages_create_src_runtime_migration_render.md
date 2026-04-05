@@ -19,13 +19,15 @@
 
 ### formatDiffReport
 
-▸ **formatDiffReport**(`diff`): `string`
+▸ **formatDiffReport**(`diff`, `«destructured»?`): `string`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `diff` | [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) |
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `diff` | [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) | `undefined` |
+| `«destructured»` | `Object` | `{}` |
+| › `includeRiskSummary?` | `boolean` | `true` |
 
 #### Returns
 
@@ -53,7 +55,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:85](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L85)
+[packages/create/src/runtime/migration-render.ts:90](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L90)
 
 ___
 
@@ -75,7 +77,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:188](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L188)
+[packages/create/src/runtime/migration-render.ts:193](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L193)
 
 ___
 
@@ -95,7 +97,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:243](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L243)
+[packages/create/src/runtime/migration-render.ts:248](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L248)
 
 ___
 
@@ -116,7 +118,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:279](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L279)
+[packages/create/src/runtime/migration-render.ts:284](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L284)
 
 ___
 
@@ -137,7 +139,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:331](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L331)
+[packages/create/src/runtime/migration-render.ts:336](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L336)
 
 ___
 
@@ -159,7 +161,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:408](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L408)
+[packages/create/src/runtime/migration-render.ts:413](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L413)
 
 ___
 
@@ -181,4 +183,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:496](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L496)
+[packages/create/src/runtime/migration-render.ts:501](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L501)
