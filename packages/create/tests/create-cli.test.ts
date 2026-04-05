@@ -5,7 +5,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 import { runUtf8Command } from "../../../tests/helpers/process-utils";
-import { scaffoldProject } from "../src/runtime/index.js";
+import { getTemplateVariables, scaffoldProject } from "../src/runtime/index.js";
 import { formatHelpText, getDoctorChecks, getNextSteps, runScaffoldFlow } from "../src/runtime/cli-core.js";
 import { collectScaffoldAnswers } from "../src/runtime/scaffold.js";
 import { copyRenderedDirectory } from "../src/runtime/template-render.js";
@@ -1774,13 +1774,14 @@ describe("@wp-typia/create scaffolding", () => {
 	test("runScaffoldFlow does not prompt for migration UI on external templates", async () => {
 		let promptedForMigrationUi = false;
 
-		await runScaffoldFlow({
+		const flow = await runScaffoldFlow({
 			cwd: tempRoot,
 			isInteractive: true,
 			noInstall: true,
 			packageManager: "npm",
 			projectInput: "demo-external-no-migration-ui-prompt",
 			promptText: async (_message, defaultValue) => defaultValue,
+			withMigrationUi: true,
 			selectWithMigrationUi: async () => {
 				promptedForMigrationUi = true;
 				return true;
@@ -1789,6 +1790,21 @@ describe("@wp-typia/create scaffolding", () => {
 		});
 
 		expect(promptedForMigrationUi).toBe(false);
+		expect(flow.result.variables.needsMigration).toBe("{{needsMigration}}");
+	});
+
+	test("getTemplateVariables rejects slugs that normalize to an empty identifier", () => {
+		expect(() =>
+			getTemplateVariables("basic", {
+				author: "Test Runner",
+				description: "Invalid slug",
+				namespace: "create-block",
+				phpPrefix: "demo_slug",
+				slug: "!!!",
+				textDomain: "demo-slug",
+				title: "Invalid Slug",
+			}),
+		).toThrow("Block slug: Use lowercase letters, numbers, and hyphens only");
 	});
 
 	test("local create-block subset paths scaffold into a pnpm-ready wp-typia project", async () => {

@@ -195,11 +195,15 @@ async function resolveOptionalBooleanFlag({
 	select?: () => Promise<boolean>;
 	yes: boolean;
 }): Promise<boolean> {
+	if (disabled) {
+		return defaultValue;
+	}
+
 	if (typeof explicitValue === "boolean") {
 		return explicitValue;
 	}
 
-	if (disabled || yes) {
+	if (yes) {
 		return defaultValue;
 	}
 

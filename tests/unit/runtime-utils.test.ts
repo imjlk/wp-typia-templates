@@ -5,6 +5,7 @@ import { isPlainObject } from "../../packages/create/src/runtime/object-utils";
 import {
 	toKebabCase,
 	toPascalCase,
+	toSegmentPascalCase,
 	toSnakeCase,
 	toTitleCase,
 } from "../../packages/create/src/runtime/string-case";
@@ -17,16 +18,25 @@ describe("shared create runtime helpers", () => {
 
 		expect(toSnakeCase("DemoBlock Value")).toBe("demo_block_value");
 		expect(toPascalCase("demo-block_value")).toBe("DemoBlockValue");
+		expect(toSegmentPascalCase("ABTest")).toBe("ABTest");
+		expect(toSegmentPascalCase("v2HTML")).toBe("V2HTML");
 		expect(toTitleCase("demoBlock-value")).toBe("Demo Block Value");
 	});
 
 	test("identifies plain objects and rejects arrays, primitives, and null", () => {
+		class DemoRecord {
+			value = true;
+		}
+
 		expect(isPlainObject({ nested: { value: true } })).toBe(true);
 		expect(isPlainObject(Object.create(null))).toBe(true);
 		expect(isPlainObject([])).toBe(false);
 		expect(isPlainObject(null)).toBe(false);
 		expect(isPlainObject("demo")).toBe(false);
 		expect(isPlainObject(3)).toBe(false);
+		expect(isPlainObject(new Date())).toBe(false);
+		expect(isPlainObject(new Map())).toBe(false);
+		expect(isPlainObject(new DemoRecord())).toBe(false);
 	});
 
 	test("clones JSON-compatible values without retaining nested references", () => {

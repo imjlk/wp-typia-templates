@@ -21,7 +21,7 @@ import {
 import { isPlainObject } from "./object-utils.js";
 import { resolveBuiltInTemplateSource } from "./template-builtins.js";
 import { getPackageVersions } from "./package-versions.js";
-import { toPascalCase } from "./string-case.js";
+import { toSegmentPascalCase } from "./string-case.js";
 import { copyRawDirectory, copyRenderedDirectory } from "./template-render.js";
 
 const EXTERNAL_TEMPLATE_ENTRY_CANDIDATES = ["index.js", "index.cjs", "index.mjs"] as const;
@@ -675,7 +675,7 @@ async function loadExternalTemplateConfig(sourceDir: string): Promise<{
 }
 
 function getVariantFlagName(variantName: string): string {
-	return `is${toPascalCase(variantName)}Variant`;
+	return `is${toSegmentPascalCase(variantName)}Variant`;
 }
 
 function getVariantKeys(config: ExternalTemplateConfig): string[] {

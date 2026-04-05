@@ -223,6 +223,10 @@ function normalizeBlockSlug(input: string): string {
 	return toKebabCase(input);
 }
 
+function resolveValidatedBlockSlug(value: string): string {
+	return assertValidIdentifier("Block slug", normalizeBlockSlug(value), validateBlockSlug);
+}
+
 function resolveValidatedNamespace(value: string): string {
 	return assertValidIdentifier("Namespace", toKebabCase(value), validateNamespace);
 }
@@ -251,7 +255,7 @@ function resolveScaffoldIdentifiers({
 	slug: string;
 	textDomain: string;
 } {
-	const normalizedSlug = normalizeBlockSlug(slug);
+	const normalizedSlug = resolveValidatedBlockSlug(slug);
 
 	return {
 		namespace: resolveValidatedNamespace(namespace),
