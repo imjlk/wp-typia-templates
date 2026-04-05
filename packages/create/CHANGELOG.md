@@ -1,5 +1,34 @@
 # @wp-typia/create
 
+## 0.9.0 — 2026-04-05
+
+### Minor changes
+
+- [b6decd0](https://github.com/imjlk/wp-typia/commit/b6decd0aa905fac2e12dc739c4c5e43159501f9d) Add a React/data helper layer at `@wp-typia/rest/react` with query and mutation
+  hooks, then wire persistence examples and generated persistence scaffolds to
+  emit `src/data.ts` wrappers on top of the existing WordPress REST helpers. — Thanks @imjlk!
+- [56d9906](https://github.com/imjlk/wp-typia/commit/56d9906401db82940cb1bb9b2840da0dcac694d4) Separate backend-neutral endpoint auth intent from WordPress-specific auth
+  mechanisms in endpoint manifests, generated OpenAPI metadata, and portable API
+  client endpoint metadata while preserving legacy `authMode` compatibility. — Thanks @imjlk!
+- [ca31cc2](https://github.com/imjlk/wp-typia/commit/ca31cc230bb814f23559f652fe3b34320645ebf5) Harden generated WordPress templates with stronger plugin metadata, plugin-level textdomain bootstrap, safer dynamic rendering output, baseline accessibility improvements, and a lightweight PHPCS workflow for maintained example PHP plus generated scaffold smoke checks. — Thanks @imjlk!
+- [cf13504](https://github.com/imjlk/wp-typia/commit/cf13504cb4548e3f73d072072b74a0aeec1e5333) Dedup built-in template hooks and validator wiring, move the basic template onto the `.mustache` path, and fix interactivity scaffolds to respect custom namespaces in generated block names. — Thanks @imjlk!
+
+### Patch changes
+
+- [56e4272](https://github.com/imjlk/wp-typia/commit/56e42729816a8455b03c2a045a78b50ffcc9b2ae) Consolidate repeated internal runtime helpers in `@wp-typia/create` and
+  simplify scaffold and CLI helper resolution paths without changing scaffold
+  output semantics. — Thanks @imjlk!
+- [0016f4c](https://github.com/imjlk/wp-typia/commit/0016f4c7c51736f6a3138323fd26747d9d738c39) Improve `migrations init` retrofit detection for current single-block and `src/blocks/*` multi-block layouts, and clarify migration onboarding for retrofitted compound workspaces. — Thanks @imjlk!
+- [a29b175](https://github.com/imjlk/wp-typia/commit/a29b175bdece9dd1903a7ce462b0ad9c6a1c8d1c) Follow up the WordPress template hardening pass by improving generated interactivity accessibility markup and strengthening generated project smoke assertions for plugin bootstrap and render output safety. — Thanks @imjlk!
+- [9acb36d](https://github.com/imjlk/wp-typia/commit/9acb36d23d9654b9c9ba62534690bbfae7da5ede) Split the internal `metadata-core` implementation in `@wp-typia/create`
+  into focused analysis, parser, projection, and PHP rendering modules without
+  changing the public metadata sync API or generated artifact semantics. — Thanks @imjlk!
+- [66c4395](https://github.com/imjlk/wp-typia/commit/66c439587fc26f6d97c82566a53aec7c35179c29) Improve `@wp-typia/create` hot-path performance for repeated metadata sync
+  flows, restore the CLI runtime barrel compatibility export, and tighten the
+  runtime benchmark and CLI helper behavior around quoted next steps. — Thanks @imjlk!
+- [5ae2070](https://github.com/imjlk/wp-typia/commit/5ae2070549141857d6e34993a30186ee32ff8931) Improve migration CLI recovery guidance, same-version edge validation, and interactive safety for fixture overwrites. — Thanks @imjlk!
+- Updated dependencies: api-client (npm)@0.3.0, rest (npm)@0.3.0
+
 ## 0.8.0 — 2026-04-05
 
 ### Minor changes

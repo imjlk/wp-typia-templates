@@ -1,5 +1,13 @@
 # @wp-typia/rest
 
+## 0.3.0 — 2026-04-05
+
+### Minor changes
+
+- [b6decd0](https://github.com/imjlk/wp-typia/commit/b6decd0aa905fac2e12dc739c4c5e43159501f9d) Add a React/data helper layer at `@wp-typia/rest/react` with query and mutation
+  hooks, then wire persistence examples and generated persistence scaffolds to
+  emit `src/data.ts` wrappers on top of the existing WordPress REST helpers. — Thanks @imjlk!
+
 ## 0.2.0 — 2026-03-31
 
 ### Minor changes
