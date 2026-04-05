@@ -360,6 +360,62 @@ describe("@wp-typia/rest/react", () => {
 		await rendered.unmount();
 	});
 
+	test("invalidate preserves follow-up fetches when an older request fails late", async () => {
+		let fetchCount = 0;
+		let rejectFirstFetch!: (error: Error) => void;
+		const endpoint = createEndpoint<{ page: number }, { count: number }>({
+			method: "GET",
+			path: "/demo/v1/items",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { page?: unknown }).page === "number"
+					? toValidationResult(success(input as { page: number }))
+					: toValidationResult(
+							failure<{ page: number }>("{ page: number }", "$.page"),
+						),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { count?: unknown }).count === "number"
+					? toValidationResult(success(input as { count: number }))
+					: toValidationResult(
+							failure<{ count: number }>("{ count: number }", "$.count"),
+						),
+		});
+		const request = { page: 1 };
+		const client = createEndpointDataClient();
+		const rendered = await createHookRenderer(
+			() =>
+				useEndpointQuery(endpoint, request, {
+					fetchFn: (async () => {
+						fetchCount += 1;
+						if (fetchCount === 1) {
+							return await new Promise<{ count: number }>((_, reject) => {
+								rejectFirstFetch = reject as (error: Error) => void;
+							});
+						}
+
+						return { count: 2 };
+					}) as never,
+					staleTime: 30_000,
+				}),
+			client,
+		);
+
+		client.invalidate(endpoint, request);
+		rejectFirstFetch(new Error("offline"));
+
+		await flush();
+		await flush();
+
+		expect(fetchCount).toBe(2);
+		expect(rendered.current.data).toEqual({ count: 2 });
+		expect(rendered.current.error).toBeNull();
+
+		await rendered.unmount();
+	});
+
 	test("useEndpointMutation invalidates matching queries after a successful mutation", async () => {
 		let serverCount = 0;
 		const queryEndpoint = createEndpoint<undefined, { count: number }>({
@@ -644,6 +700,49 @@ describe("@wp-typia/rest/react", () => {
 		expect(rendered.current.error).toBeNull();
 		expect(rendered.current.validation?.isValid).toBe(true);
 		expect(seenNonce).toBe("nonce-b");
+	});
+
+	test("transport errors clear stale mutation validation from prior successes", async () => {
+		let shouldThrow = false;
+		const endpoint = createEndpoint<{ page: number }, { ok: boolean }>({
+			method: "POST",
+			path: "/demo/v1/items",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { page?: unknown }).page === "number"
+					? toValidationResult(success(input as { page: number }))
+					: toValidationResult(failure<{ page: number }>("{ page: number }", "$.page")),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				(input as { ok?: unknown }).ok === true
+					? toValidationResult(success(input as { ok: boolean }))
+					: toValidationResult(failure<{ ok: boolean }>("{ ok: true }", "$.ok")),
+		});
+		const rendered = await createHookRenderer(() =>
+			useEndpointMutation(endpoint, {
+				fetchFn: (async () => {
+					if (shouldThrow) {
+						throw new Error("offline");
+					}
+
+					return { ok: true };
+				}) as never,
+			}),
+		);
+
+		await rendered.current.mutateAsync({ page: 1 });
+		await flush();
+
+		expect(rendered.current.validation?.isValid).toBe(true);
+
+		shouldThrow = true;
+		await rendered.current.mutateAsync({ page: 2 }).catch(() => undefined);
+		await flush();
+
+		expect(rendered.current.error).toBeInstanceOf(Error);
+		expect(rendered.current.validation).toBeNull();
 	});
 
 	test("overlapping mutations keep isPending true until the last request settles", async () => {

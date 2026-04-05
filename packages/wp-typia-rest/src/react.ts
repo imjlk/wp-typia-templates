@@ -451,7 +451,9 @@ export function createEndpointDataClient(): EndpointDataClient {
 					})
 					.catch((error: unknown) => {
 						entry.error = error;
-						entry.updatedAt = Date.now();
+						if (entry.invalidatedAt <= startedAt) {
+							entry.updatedAt = Date.now();
+						}
 						syncSnapshot(entry);
 						throw error;
 					})
@@ -756,6 +758,7 @@ export function useEndpointMutation<Req, Res, Context = unknown>(
 			pendingCountRef.current += 1;
 			setIsPending(true);
 			setError(null);
+			setValidation(null);
 			let context: Context | undefined;
 
 			try {
@@ -803,6 +806,7 @@ export function useEndpointMutation<Req, Res, Context = unknown>(
 				return result;
 			} catch (nextError) {
 				setError(nextError);
+				setValidation(null);
 				await latest.onError?.(
 					nextError,
 					variables,
