@@ -18,21 +18,47 @@
 
 ### likeStatusEndpoint
 
-• `Const` **likeStatusEndpoint**: [`ApiEndpoint`](../interfaces/packages_wp_typia_rest_src_client.ApiEndpoint.md)\<[`PersistenceLikeStatusQuery`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusQuery.md), [`PersistenceLikeStatusResponse`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\>
+• `Const` **likeStatusEndpoint**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `buildRequestOptions` | () => \{ `url`: `string`  } |
+| `authMode?` | `string` |
+| `method` | [`EndpointMethod`](packages_wp_typia_api_client_src_client.md#endpointmethod) |
+| `operationId?` | `string` |
+| `path` | `string` |
+| `requestLocation?` | ``"body"`` \| ``"query"`` \| ``"query-and-body"`` |
+| `validateRequest` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceLikeStatusQuery`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusQuery.md)\> |
+| `validateResponse` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\> |
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/like-button/api.ts:17](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api.ts#L17)
+[examples/persistence-examples/src/blocks/like-button/api.ts:13](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api.ts#L13)
 
 ___
 
 ### toggleLikeEndpoint
 
-• `Const` **toggleLikeEndpoint**: [`ApiEndpoint`](../interfaces/packages_wp_typia_rest_src_client.ApiEndpoint.md)\<[`PersistenceToggleLikeRequest`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeRequest.md), [`PersistenceLikeStatusResponse`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\>
+• `Const` **toggleLikeEndpoint**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `buildRequestOptions` | () => \{ `url`: `string`  } |
+| `authMode?` | `string` |
+| `method` | [`EndpointMethod`](packages_wp_typia_api_client_src_client.md#endpointmethod) |
+| `operationId?` | `string` |
+| `path` | `string` |
+| `requestLocation?` | ``"body"`` \| ``"query"`` \| ``"query-and-body"`` |
+| `validateRequest` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceToggleLikeRequest`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeRequest.md)\> |
+| `validateResponse` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\> |
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/like-button/api.ts:30](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api.ts#L30)
+[examples/persistence-examples/src/blocks/like-button/api.ts:20](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api.ts#L20)
 
 ## Functions
 
@@ -53,7 +79,7 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/like-button/api.ts:43](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api.ts#L43)
+[examples/persistence-examples/src/blocks/like-button/api.ts:27](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api.ts#L27)
 
 ___
 
@@ -74,4 +100,4 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/like-button/api.ts:60](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api.ts#L60)
+[examples/persistence-examples/src/blocks/like-button/api.ts:44](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api.ts#L44)

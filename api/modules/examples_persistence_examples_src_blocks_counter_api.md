@@ -18,21 +18,47 @@
 
 ### counterEndpoint
 
-• `Const` **counterEndpoint**: [`ApiEndpoint`](../interfaces/packages_wp_typia_rest_src_client.ApiEndpoint.md)\<[`PersistenceCounterQuery`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterQuery.md), [`PersistenceCounterResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>
+• `Const` **counterEndpoint**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `buildRequestOptions` | () => \{ `url`: `string`  } |
+| `authMode?` | `string` |
+| `method` | [`EndpointMethod`](packages_wp_typia_api_client_src_client.md#endpointmethod) |
+| `operationId?` | `string` |
+| `path` | `string` |
+| `requestLocation?` | ``"body"`` \| ``"query"`` \| ``"query-and-body"`` |
+| `validateRequest` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceCounterQuery`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterQuery.md)\> |
+| `validateResponse` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceCounterResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\> |
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api.ts:13](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api.ts#L13)
+[examples/persistence-examples/src/blocks/counter/api.ts:12](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api.ts#L12)
 
 ___
 
 ### incrementCounterEndpoint
 
-• `Const` **incrementCounterEndpoint**: [`ApiEndpoint`](../interfaces/packages_wp_typia_rest_src_client.ApiEndpoint.md)\<[`PersistenceCounterIncrementRequest`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md), [`PersistenceCounterResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>
+• `Const` **incrementCounterEndpoint**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `buildRequestOptions` | () => \{ `url`: `string`  } |
+| `authMode?` | `string` |
+| `method` | [`EndpointMethod`](packages_wp_typia_api_client_src_client.md#endpointmethod) |
+| `operationId?` | `string` |
+| `path` | `string` |
+| `requestLocation?` | ``"body"`` \| ``"query"`` \| ``"query-and-body"`` |
+| `validateRequest` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceCounterIncrementRequest`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md)\> |
+| `validateResponse` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceCounterResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\> |
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api.ts:26](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api.ts#L26)
+[examples/persistence-examples/src/blocks/counter/api.ts:19](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api.ts#L19)
 
 ## Functions
 
@@ -52,7 +78,7 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api.ts:39](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api.ts#L39)
+[examples/persistence-examples/src/blocks/counter/api.ts:28](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api.ts#L28)
 
 ___
 
@@ -72,4 +98,4 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api.ts:43](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api.ts#L43)
+[examples/persistence-examples/src/blocks/counter/api.ts:32](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api.ts#L32)
