@@ -28,7 +28,7 @@ export const BLOCKS = [
 					tags: [ '{{title}}' ],
 				},
 				{
-					auth: '{{#isPublicPersistencePolicy}}public-write-protected{{/isPublicPersistencePolicy}}{{#isAuthenticatedPersistencePolicy}}authenticated{{/isAuthenticatedPersistencePolicy}}',
+					auth: '{{restWriteAuthIntent}}',
 					bodyContract: 'write-state-request',
 					method: 'POST',
 					operationId: 'write{{pascalCase}}State',
@@ -37,7 +37,7 @@ export const BLOCKS = [
 					summary: 'Write the current persisted state.',
 					tags: [ '{{title}}' ],
 					wordpressAuth: {
-						mechanism: '{{#isPublicPersistencePolicy}}public-signed-token{{/isPublicPersistencePolicy}}{{#isAuthenticatedPersistencePolicy}}rest-nonce{{/isAuthenticatedPersistencePolicy}}',
+						mechanism: '{{restWriteAuthMechanism}}',
 					},
 				},
 			],

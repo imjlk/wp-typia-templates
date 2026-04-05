@@ -156,7 +156,7 @@ internal manifest consumers such as `typia.llm` and WordPress AI projections
 still reject mixed query/body inputs.
 
 These header/auth decorators remain optional and adapter-level. They do not
-turn manifest `authIntent` or legacy `authMode` metadata into automatic
+turn manifest `auth` or legacy `authMode` metadata into automatic
 runtime behavior, and they do not replace WordPress-specific route resolution
 or nonce-aware ergonomics from `@wp-typia/rest`.
 

@@ -794,6 +794,25 @@ function compareNormalizedEndpointAuth(
 	);
 }
 
+/**
+ * Normalizes endpoint auth metadata into backend-neutral intent plus optional
+ * WordPress adapter details.
+ *
+ * This public runtime helper accepts either the authored `auth` and optional
+ * `wordpressAuth` shape or the deprecated `authMode` field. It validates that
+ * the provided fields are compatible, resolves the legacy compatibility mode,
+ * and returns a normalized definition without mutating the input endpoint.
+ *
+ * @param endpoint - Endpoint auth fields to normalize, including `auth`,
+ * `authMode`, `wordpressAuth`, and optional identity fields used in error
+ * messages (`operationId`, `path`, and `method`).
+ * @returns The normalized auth definition for the endpoint.
+ * @throws When `auth` and deprecated `authMode` conflict.
+ * @throws When `wordpressAuth` is attached to the `public` auth intent.
+ * @throws When the selected `wordpressAuth` mechanism is incompatible with the
+ * chosen auth intent.
+ * @throws When neither `auth` nor deprecated `authMode` is defined.
+ */
 export function normalizeEndpointAuthDefinition(
 	endpoint: Pick<
 		EndpointOpenApiEndpointDefinition,
