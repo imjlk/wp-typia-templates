@@ -28,4 +28,4 @@
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/like-button/edit.tsx:22](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/edit.tsx#L22)
+[examples/persistence-examples/src/blocks/like-button/edit.tsx:25](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/edit.tsx#L25)
