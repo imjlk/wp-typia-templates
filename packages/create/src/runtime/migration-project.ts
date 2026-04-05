@@ -100,6 +100,12 @@ function readSingleBlockTarget(
 	};
 }
 
+function hasSingleBlockLayoutFiles(projectDir: string, blockJsonFile: string): boolean {
+	return [blockJsonFile, ROOT_SAVE_FILE, ROOT_TYPES_FILE].every((relativePath) =>
+		fs.existsSync(path.join(projectDir, relativePath)),
+	);
+}
+
 function createImplicitLegacyBlock(projectDir: string, blockName?: string): MigrationBlockConfig {
 	const discovered = discoverSingleBlockTarget(projectDir);
 	return {
@@ -204,28 +210,34 @@ function createBlockTarget(
 }
 
 function discoverSingleBlockTarget(projectDir: string): MigrationBlockConfig {
-	const currentTarget = readSingleBlockTarget(projectDir, {
-		blockJsonFile: SRC_BLOCK_JSON,
-		manifestFile: SRC_MANIFEST,
-	});
-	const legacyTarget = readSingleBlockTarget(projectDir, {
-		blockJsonFile: ROOT_BLOCK_JSON,
-		manifestFile: ROOT_MANIFEST,
-	});
-	const currentHasManifest = fs.existsSync(path.join(projectDir, SRC_MANIFEST));
-	const legacyHasManifest = fs.existsSync(path.join(projectDir, ROOT_MANIFEST));
+	const currentHasFiles = hasSingleBlockLayoutFiles(projectDir, SRC_BLOCK_JSON);
+	const legacyHasFiles = hasSingleBlockLayoutFiles(projectDir, ROOT_BLOCK_JSON);
+	const currentHasManifest = currentHasFiles && fs.existsSync(path.join(projectDir, SRC_MANIFEST));
+	const legacyHasManifest = legacyHasFiles && fs.existsSync(path.join(projectDir, ROOT_MANIFEST));
 
-	if (currentTarget && currentHasManifest) {
-		return currentTarget;
+	if (currentHasManifest) {
+		return readSingleBlockTarget(projectDir, {
+			blockJsonFile: SRC_BLOCK_JSON,
+			manifestFile: SRC_MANIFEST,
+		})!;
 	}
-	if (legacyTarget && legacyHasManifest) {
-		return legacyTarget;
+	if (legacyHasManifest) {
+		return readSingleBlockTarget(projectDir, {
+			blockJsonFile: ROOT_BLOCK_JSON,
+			manifestFile: ROOT_MANIFEST,
+		})!;
 	}
-	if (currentTarget) {
-		return currentTarget;
+	if (currentHasFiles) {
+		return readSingleBlockTarget(projectDir, {
+			blockJsonFile: SRC_BLOCK_JSON,
+			manifestFile: SRC_MANIFEST,
+		})!;
 	}
-	if (legacyTarget) {
-		return legacyTarget;
+	if (legacyHasFiles) {
+		return readSingleBlockTarget(projectDir, {
+			blockJsonFile: ROOT_BLOCK_JSON,
+			manifestFile: ROOT_MANIFEST,
+		})!;
 	}
 
 	throw new Error(SINGLE_BLOCK_LAYOUT_NOT_FOUND);
@@ -717,11 +729,7 @@ export default migrationConfig;
 }
 
 export function readProjectBlockName(projectDir: string): string {
-	const blockName = discoverSingleBlockTarget(projectDir).blockName;
-	if (typeof blockName !== "string" || blockName.length === 0) {
-		throw new Error("Unable to resolve block name from block.json");
-	}
-	return blockName;
+	return discoverSingleBlockTarget(projectDir).blockName;
 }
 
 export function assertRuleHasNoTodos(
