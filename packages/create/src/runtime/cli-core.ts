@@ -12,12 +12,11 @@
 export { getDoctorChecks, runDoctor, type DoctorCheck } from "./cli-doctor.js";
 export { formatHelpText } from "./cli-help.js";
 export {
-	createReadlinePrompt,
 	getNextSteps,
 	getOptionalOnboarding,
 	runScaffoldFlow,
-	type ReadlinePrompt,
 } from "./cli-scaffold.js";
+export { createReadlinePrompt, type ReadlinePrompt } from "./cli-prompt.js";
 export {
 	formatTemplateDetails,
 	formatTemplateFeatures,

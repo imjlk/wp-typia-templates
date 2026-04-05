@@ -84,20 +84,50 @@ export const migrationConfig = {
 Custom layouts can still skip auto-detection and author `src/migrations/config.ts`
 manually.
 
+## Previewing an edge before scaffold
+
+The migration CLI now has two read-only preview entrypoints:
+
+- `bun run migration:wizard`: interactive, TTY-only legacy-version discovery
+- `bun run migration:plan -- --from <semver>`: scriptable preview when you already know the legacy version
+
+Both commands stop after previewing one selected `from -> to` edge. They do not
+write rules, fixtures, snapshots, or generated artifacts.
+
+Use `migration:wizard` when you want the CLI to show the configured legacy
+versions first and let you pick one. Use `migration:plan` when you already know
+the version you want to inspect and just need a read-only summary of:
+
+- the current version
+- available legacy versions
+- the selected edge
+- included and skipped block targets
+- per-block diffs and risk summaries
+- the exact next commands to run
+
+For example:
+
+```bash
+bun run migration:wizard
+bun run migration:plan -- --from 1.0.0
+```
+
 ## New schema version
 
 When the block schema changes:
 
 1. Update `src/types.ts`.
 2. Regenerate metadata.
-3. Snapshot the new release.
-4. Scaffold a direct migration edge from the old version.
-5. Verify the generated rule and fixture set.
+3. Preview the edge you want to preserve.
+4. Snapshot the new release.
+5. Scaffold a direct migration edge from the old version.
+6. Verify the generated rule and fixture set.
 
 Example:
 
 ```bash
 bun run sync-types
+bun run migration:plan -- --from 1.0.0
 bun run migration:snapshot -- --version 2.0.0
 bun run migration:doctor
 bun run migration:diff -- --from 1.0.0
@@ -115,16 +145,17 @@ The intended authoring flow is:
 
 1. change `src/types.ts`
 2. regenerate metadata with `bun run sync-types`
-3. snapshot the release you want to preserve
-4. scaffold the edge from the old snapshot to the current schema
-5. review auto-applied renames
-6. fill in any suggested semantic transforms
-7. adjust nested leaf paths like `settings.label` or `linkTarget.url.href` if object or union-branch fields moved
-8. adjust the generated fixture cases to match real legacy payloads
-9. run `migration:doctor`
-10. run `migration:verify`
-11. run `migration:fuzz`
-12. use the admin dashboard dry-run before batch migration
+3. preview the selected legacy edge with `bun run migration:wizard` or `bun run migration:plan -- --from <semver>`
+4. snapshot the release you want to preserve
+5. scaffold the edge from the old snapshot to the current schema
+6. review auto-applied renames
+7. fill in any suggested semantic transforms
+8. adjust nested leaf paths like `settings.label` or `linkTarget.url.href` if object or union-branch fields moved
+9. adjust the generated fixture cases to match real legacy payloads
+10. run `migration:doctor`
+11. run `migration:verify`
+12. run `migration:fuzz`
+13. use the admin dashboard dry-run before batch migration
 
 ## Generated rule files
 
@@ -206,6 +237,9 @@ If unresolved `TODO MIGRATION:` markers or unresolved entries remain, `migration
 If `verify` or `fuzz` report missing generated inputs, rerun
 `migration:scaffold -- --from <semver>` for the missing edge and then
 `migration:doctor -- --all` to confirm the workspace is back in sync.
+
+`migration:wizard` is TTY-only by design. If you are in a non-interactive shell,
+use `migration:plan -- --from <semver>` instead.
 
 ## Deprecated Gutenberg entries
 

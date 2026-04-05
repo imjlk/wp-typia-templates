@@ -233,7 +233,7 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 		{ isInteractiveTerminal },
 	] =
 		await Promise.all([
-			import("./runtime/cli-scaffold.js"),
+			import("./runtime/cli-core.js"),
 			import("./runtime/package-managers.js"),
 			import("./runtime/template-registry.js"),
 			import("./runtime/migration-utils.js"),
