@@ -1737,6 +1737,29 @@ describe("wp-typia migrations", () => {
 		).toBe(false);
 	});
 
+	test("plan omits current-version follow-up commands for non-current targets", () => {
+		const projectDir = path.join(tempRoot, "plan-non-current-target-project");
+		createVersionedMigrationProject(projectDir);
+		addLegacyVersion(projectDir, "1.5.0");
+
+		const lines: string[] = [];
+		const summary = planProjectMigrations(projectDir, {
+			fromVersion: "1.0.0",
+			renderLine: (line) => lines.push(line),
+			toVersion: "1.5.0",
+		});
+
+		const output = lines.join("\n");
+		expect(summary.targetVersion).toBe("1.5.0");
+		expect(summary.nextSteps).toEqual(["wp-typia migrations scaffold --from 1.0.0 --to 1.5.0"]);
+		expect(output).toContain("Selected edge: 1.0.0 -> 1.5.0");
+		expect(output).toContain("wp-typia migrations scaffold --from 1.0.0 --to 1.5.0");
+		expect(output).not.toContain("wp-typia migrations doctor --from 1.0.0");
+		expect(output).not.toContain("wp-typia migrations verify --from 1.0.0");
+		expect(output).not.toContain("wp-typia migrations fuzz --from 1.0.0");
+		expect(output).toContain("Optional after editing rules: wp-typia migrations fixtures --from 1.0.0 --to 1.5.0 --force");
+	});
+
 	test("wizard fails outside a TTY with actionable guidance", async () => {
 		const projectDir = path.join(tempRoot, "wizard-non-tty-project");
 		createVersionedMigrationProject(projectDir);

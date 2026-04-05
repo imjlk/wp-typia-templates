@@ -51,6 +51,10 @@ export function createReadlinePrompt(): ReadlinePrompt {
 			options: PromptOption<T>[],
 			defaultValue = 1,
 		): Promise<T> {
+			if (options.length === 0) {
+				throw new Error(`select() requires at least one option for prompt: ${message}`);
+			}
+
 			console.log(message);
 			options.forEach((option, index) => {
 				const hint = option.hint ? ` - ${option.hint}` : "";

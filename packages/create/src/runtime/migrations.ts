@@ -321,6 +321,13 @@ export async function runMigrationCommand(
 	}
 }
 
+/**
+ * Preview one migration edge without scaffolding rules, fixtures, or generated files.
+ *
+ * @param projectDir Absolute or relative project directory containing the migration workspace.
+ * @param options Selected source/target versions plus optional line rendering overrides.
+ * @returns A structured summary of the selected edge, included/skipped block targets, and next steps.
+ */
 export function planProjectMigrations(
 	projectDir: string,
 	{ fromVersion, renderLine = console.log as RenderLine, toVersion = "current" }: DiffLikeOptions = {},
@@ -386,6 +393,13 @@ export function planProjectMigrations(
 	};
 }
 
+/**
+ * Interactively choose one legacy version to preview, then run the same read-only planner.
+ *
+ * @param projectDir Absolute or relative project directory containing the migration workspace.
+ * @param options Interactive prompt and rendering settings. Throws when no TTY is available.
+ * @returns The planned migration summary, or `{ cancelled: true }` when the user exits the wizard.
+ */
 export async function wizardProjectMigrations(
 	projectDir: string,
 	{
@@ -1366,6 +1380,12 @@ function createMigrationPlanNextSteps(
 	targetVersion: string,
 	currentVersion: string,
 ): string[] {
+	if (targetVersion !== currentVersion) {
+		return [
+			formatEdgeCommand("scaffold", fromVersion, targetVersion, currentVersion),
+		];
+	}
+
 	return [
 		formatEdgeCommand("scaffold", fromVersion, targetVersion, currentVersion),
 		`wp-typia migrations doctor --from ${fromVersion}`,
