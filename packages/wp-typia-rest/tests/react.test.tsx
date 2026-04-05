@@ -262,6 +262,60 @@ describe("@wp-typia/rest/react", () => {
 		await rendered.unmount();
 	});
 
+	test("overlapping forced refetches reuse the in-flight query promise", async () => {
+		let fetchCount = 0;
+		let resolveFetch!: (value: { count: number }) => void;
+		const endpoint = createEndpoint<{ page: number }, { count: number }>({
+			method: "GET",
+			path: "/demo/v1/items",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { page?: unknown }).page === "number"
+					? toValidationResult(success(input as { page: number }))
+					: toValidationResult(failure<{ page: number }>("{ page: number }", "$.page")),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { count?: unknown }).count === "number"
+					? toValidationResult(success(input as { count: number }))
+					: toValidationResult(failure<{ count: number }>("{ count: number }", "$.count")),
+		});
+		const request = { page: 1 };
+		const client = createEndpointDataClient();
+		const rendered = await createHookRenderer(
+			() =>
+				useEndpointQuery(endpoint, request, {
+					fetchFn: (async () => {
+						fetchCount += 1;
+						return await new Promise<{ count: number }>((resolve) => {
+							resolveFetch = resolve;
+						});
+					}) as never,
+					staleTime: 30_000,
+				}),
+			client,
+		);
+
+		await flush();
+		expect(fetchCount).toBe(1);
+
+		const firstRefetch = client.refetch(endpoint, request);
+		const secondRefetch = client.refetch(endpoint, request);
+
+		await flush();
+		expect(fetchCount).toBe(1);
+
+		resolveFetch({ count: 1 });
+		await Promise.all([firstRefetch, secondRefetch]);
+		await flush();
+
+		expect(fetchCount).toBe(1);
+		expect(rendered.current.data).toEqual({ count: 1 });
+
+		await rendered.unmount();
+	});
+
 	test("default staleTime does not refetch successful queries on rerender", async () => {
 		let fetchCount = 0;
 		const endpoint = createEndpoint<{ page: number }, { count: number }>({

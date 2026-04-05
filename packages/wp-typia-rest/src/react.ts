@@ -421,52 +421,53 @@ export function createEndpointDataClient(): EndpointDataClient {
 		},
 			async __runQuery(cacheKey, execute, { force = false, staleTime }) {
 			const entry = getOrCreateEntry(entries, cacheKey);
+			if (entry.promise) {
+				return entry.promise as Promise<ValidationResult<any>>;
+			}
+
 			if (!force) {
-					if (entry.promise) {
-						return entry.promise as Promise<ValidationResult<any>>;
-					}
-					if (!isEntryStale(entry, staleTime) && entry.validation) {
-						return entry.validation as ValidationResult<any>;
-					}
+				if (!isEntryStale(entry, staleTime) && entry.validation) {
+					return entry.validation as ValidationResult<any>;
 				}
+			}
 
-				entry.error = null;
-				entry.isFetching = true;
-				syncSnapshot(entry);
-				notify(cacheKey);
+			entry.error = null;
+			entry.isFetching = true;
+			syncSnapshot(entry);
+			notify(cacheKey);
 
-				const startedAt = Date.now();
-				const promise = execute()
-					.then((validation) => {
-						entry.error = null;
-						if (entry.invalidatedAt <= startedAt) {
-							entry.updatedAt = Date.now();
-							entry.validation = validation as ValidationResult<unknown>;
-							if (validation.isValid) {
-								entry.data = validation.data;
-							}
+			const startedAt = Date.now();
+			const promise = execute()
+				.then((validation) => {
+					entry.error = null;
+					if (entry.invalidatedAt <= startedAt) {
+						entry.updatedAt = Date.now();
+						entry.validation = validation as ValidationResult<unknown>;
+						if (validation.isValid) {
+							entry.data = validation.data;
 						}
-						syncSnapshot(entry);
-						return validation;
-					})
-					.catch((error: unknown) => {
-						entry.error = error;
-						if (entry.invalidatedAt <= startedAt) {
-							entry.updatedAt = Date.now();
-						}
-						syncSnapshot(entry);
-						throw error;
-					})
-					.finally(() => {
-						entry.isFetching = false;
-						entry.promise = null;
-						syncSnapshot(entry);
-						notify(cacheKey);
-					});
+					}
+					syncSnapshot(entry);
+					return validation;
+				})
+				.catch((error: unknown) => {
+					entry.error = error;
+					if (entry.invalidatedAt <= startedAt) {
+						entry.updatedAt = Date.now();
+					}
+					syncSnapshot(entry);
+					throw error;
+				})
+				.finally(() => {
+					entry.isFetching = false;
+					entry.promise = null;
+					syncSnapshot(entry);
+					notify(cacheKey);
+				});
 
-				entry.promise = promise as Promise<ValidationResult<unknown>>;
-				return promise as Promise<ValidationResult<any>>;
-			},
+			entry.promise = promise as Promise<ValidationResult<unknown>>;
+			return promise as Promise<ValidationResult<any>>;
+		},
 		__seedData(cacheKey, data) {
 			const entry = getOrCreateEntry(entries, cacheKey);
 			if (entry.validation) {
