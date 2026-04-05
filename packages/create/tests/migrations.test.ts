@@ -312,6 +312,35 @@ function createCurrentProjectFiles(projectDir: string) {
 	});
 }
 
+function createCurrentSingleBlockScaffoldProject(projectDir: string) {
+	createProjectShell(projectDir);
+
+	writeJson(path.join(projectDir, "src", "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Hello", type: "string" },
+			isVisible: { default: false, type: "boolean" },
+		},
+		editorScript: "file:./index.js",
+		name: "create-block/current-scaffold",
+		title: "Current Scaffold",
+	});
+	writeJson(path.join(projectDir, "src", "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				defaultValue: "Hello",
+				required: true,
+			}),
+			isVisible: createManifestAttribute("boolean", {
+				defaultValue: false,
+				required: false,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "MigrationAttributes",
+	});
+}
+
 function writeCurrentSnapshot(projectDir: string, version = "2.0.0") {
 	writeJson(
 		path.join(projectDir, "src", "migrations", "versions", version, "block.json"),
@@ -499,6 +528,30 @@ function createMultiBlockMigrationProject(
 	const localBinDir = path.join(projectDir, "node_modules", ".bin");
 	fs.mkdirSync(localBinDir, { recursive: true });
 	fs.symlinkSync(repoTsxPath, path.join(localBinDir, "tsx"));
+}
+
+function createRetrofitMultiBlockProject(projectDir: string) {
+	writeJson(path.join(projectDir, "package.json"), {
+		name: "retrofit-multi-block",
+		packageManager: "bun@1.3.10",
+		private: true,
+		scripts: {},
+		type: "module",
+		version: "0.1.0",
+	});
+
+	writeMultiBlockCurrentFiles(projectDir, {
+		blockName: "create-block/multi-parent",
+		blockSlug: "multi-parent",
+		title: "Multi Parent",
+		typeName: "MultiParentAttributes",
+	});
+	writeMultiBlockCurrentFiles(projectDir, {
+		blockName: "create-block/multi-parent-item",
+		blockSlug: "multi-parent-item",
+		title: "Multi Parent Item",
+		typeName: "MultiParentItemAttributes",
+	});
 }
 
 function createRenameCandidateProject(projectDir: string) {
@@ -1130,6 +1183,74 @@ describe("wp-typia migrations", () => {
 			),
 		);
 		expect(snapshotBlock.editorScript).toBeUndefined();
+	});
+
+	test("migrations init auto-detects current single-block scaffold layouts", () => {
+		const projectDir = path.join(tempRoot, "init-current-single-block-project");
+		createCurrentSingleBlockScaffoldProject(projectDir);
+
+		const output = runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
+		expect(configSource).toContain("blockName: 'create-block/current-scaffold'");
+		expect(configSource).not.toContain("blocks: [");
+		expect(fs.existsSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"))).toBe(true);
+		expect(fs.existsSync(path.join(projectDir, "src", "migrations", "generated", "registry.ts"))).toBe(true);
+		expect(output).toContain("Detected single-block migration retrofit: create-block/current-scaffold");
+		expect(output).toContain("Wrote src/migrations/config.ts");
+	});
+
+	test("migrations init auto-detects multi-block retrofit layouts including hidden compound children", () => {
+		const projectDir = path.join(tempRoot, "init-multi-block-project");
+		createRetrofitMultiBlockProject(projectDir);
+
+		const output = runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
+		expect(configSource).toContain("blocks: [");
+		expect(configSource).toContain("key: 'multi-parent'");
+		expect(configSource).toContain("key: 'multi-parent-item'");
+		expect(configSource).toContain("blockJsonFile: 'src/blocks/multi-parent/block.json'");
+		expect(configSource).toContain("blockJsonFile: 'src/blocks/multi-parent-item/block.json'");
+		expect(
+			fs.existsSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "multi-parent", "block.json")),
+		).toBe(true);
+		expect(
+			fs.existsSync(
+				path.join(projectDir, "src", "migrations", "versions", "1.0.0", "multi-parent-item", "block.json"),
+			),
+		).toBe(true);
+		expect(output).toContain("Detected multi-block migration retrofit (2 targets):");
+		expect(output).toContain("create-block/multi-parent");
+		expect(output).toContain("create-block/multi-parent-item");
+	});
+
+	test("migrations init fails with actionable guidance when no supported retrofit layout is found", () => {
+		const projectDir = path.join(tempRoot, "init-unsupported-layout-project");
+		writeJson(path.join(projectDir, "package.json"), {
+			name: "unsupported-migration-layout",
+			packageManager: "bun@1.3.10",
+			private: true,
+			scripts: {},
+			type: "module",
+			version: "0.1.0",
+		});
+
+		expect(() =>
+			runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+				cwd: projectDir,
+			}),
+		).toThrow(/Unable to auto-detect a supported migration retrofit layout[\s\S]*src\/migrations\/config\.ts/);
+	});
+
+	test("migrations help text explains retrofit auto-detection and --all workspace scope", () => {
+		expect(() => runCli("node", [entryPath, "migrations"])).toThrow(
+			/`migrations init` auto-detects supported single-block and `src\/blocks\/\*` multi-block layouts[\s\S]*--all runs across every configured legacy version and every configured block target\./,
+		);
 	});
 
 	test("migration arg parser ignores standalone script separators", () => {

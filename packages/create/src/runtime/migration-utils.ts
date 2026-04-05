@@ -182,6 +182,10 @@ export function getLocalTsxBinary(projectDir: string): string {
 	return binaryPath;
 }
 
+export function isInteractiveTerminal(): boolean {
+	return Boolean(process.stdin.isTTY && process.stdout.isTTY);
+}
+
 export function resolveTargetVersion(currentVersion: string, value: string): string {
 	return value === "current" ? currentVersion : value;
 }

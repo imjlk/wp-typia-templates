@@ -12,10 +12,12 @@ import { createMigrationFuzzPlan } from "./migration-fuzz-plan.js";
 import { createEdgeFixtureDocument, ensureEdgeFixtureFile } from "./migration-fixtures.js";
 import {
 	assertRuleHasNoTodos,
+	discoverMigrationInitLayout,
 	discoverMigrationEntries,
 	ensureAdvancedMigrationProject,
 	ensureMigrationDirectories,
 	getFixtureFilePath,
+	getAvailableSnapshotVersionsForBlock,
 	getGeneratedDirForBlock,
 	getProjectPaths,
 	getRuleFilePath,
@@ -24,7 +26,6 @@ import {
 	getSnapshotRoot,
 	getSnapshotSavePath,
 	loadMigrationProject,
-	readProjectBlockName,
 	readRuleMetadata,
 	writeInitialMigrationScaffold,
 	writeMigrationConfig,
@@ -46,6 +47,7 @@ import {
 	copyFile,
 	detectPackageManagerId,
 	getLocalTsxBinary,
+	isInteractiveTerminal,
 	readJson,
 	resolveTargetVersion,
 	runProjectScriptIfPresent,
@@ -107,6 +109,7 @@ export function formatMigrationHelpText(): string {
   wp-typia migrations fuzz [--from <semver>|--all] [--iterations <n>] [--seed <n>]
 
 Notes:
+  \`migrations init\` auto-detects supported single-block and \`src/blocks/*\` multi-block layouts.
   --all runs across every configured legacy version and every configured block target.
   In TTY usage, \`migrations fixtures --force\` asks before overwriting existing fixture files.
   In non-interactive usage, \`migrations fixtures --force\` overwrites immediately for script compatibility.`;
@@ -281,23 +284,41 @@ export function initProjectMigrations(
 	currentVersion: string,
 	{ renderLine = console.log as RenderLine }: CommandRenderOptions = {},
 ) {
-	ensureAdvancedMigrationProject(projectDir);
 	assertSemver(currentVersion, "current version");
-	const blockName = readProjectBlockName(projectDir);
-
-	ensureMigrationDirectories(projectDir);
+	const discoveredLayout = discoverMigrationInitLayout(projectDir);
+	const configuredBlocks = discoveredLayout.mode === "multi" ? discoveredLayout.blocks : undefined;
+	ensureAdvancedMigrationProject(projectDir, configuredBlocks);
+	ensureMigrationDirectories(projectDir, configuredBlocks);
 	writeMigrationConfig(projectDir, {
-		blockName,
+		blockName:
+			discoveredLayout.mode === "single"
+				? discoveredLayout.block.blockName
+				: undefined,
+		blocks: configuredBlocks,
 		currentVersion,
 		snapshotDir: SNAPSHOT_DIR.replace(/\\/g, "/"),
 		supportedVersions: [currentVersion],
 	});
 
-	writeInitialMigrationScaffold(projectDir, currentVersion);
+	writeInitialMigrationScaffold(projectDir, currentVersion, configuredBlocks);
 	snapshotProjectVersion(projectDir, currentVersion, { renderLine, skipConfigUpdate: true });
 	regenerateGeneratedArtifacts(projectDir);
 
-	renderLine(`Initialized migrations for ${blockName} at version ${currentVersion}`);
+	if (discoveredLayout.mode === "multi") {
+		renderLine(
+			`Detected multi-block migration retrofit (${discoveredLayout.blocks.length} targets): ${discoveredLayout.blocks.map((block) => block.blockName).join(", ")}`,
+		);
+	} else {
+		renderLine(`Detected single-block migration retrofit: ${discoveredLayout.block.blockName}`);
+	}
+	renderLine("Wrote src/migrations/config.ts");
+	renderLine(
+		`Initialized migrations for ${
+			discoveredLayout.mode === "multi"
+				? discoveredLayout.blocks.map((block) => block.blockName).join(", ")
+				: discoveredLayout.block.blockName
+		} at version ${currentVersion}`,
+	);
 	return loadMigrationProject(projectDir);
 }
 
@@ -1172,7 +1193,9 @@ function createMissingProjectSnapshotMessage(
 	fromVersion: string,
 ): string {
 	const snapshotVersions = [...new Set(
-		state.blocks.flatMap((block) => getAvailableSnapshotVersionsForBlock(state, block)),
+		state.blocks.flatMap((block) =>
+			getAvailableSnapshotVersionsForBlock(state.projectDir, state.config.supportedVersions, block),
+		),
 	)].sort(compareSemver);
 
 	return snapshotVersions.length === 0
@@ -1183,24 +1206,11 @@ function createMissingProjectSnapshotMessage(
 				`Run \`wp-typia migrations snapshot --version ${fromVersion}\` first if you want to preserve that release.`;
 }
 
-function getAvailableSnapshotVersionsForBlock(
-	state: ReturnType<typeof loadMigrationProject>,
-	block: ReturnType<typeof loadMigrationProject>["blocks"][number],
-): string[] {
-	return state.config.supportedVersions
-		.filter((version) => hasSnapshotForVersion(state, block, version))
-		.sort(compareSemver);
-}
-
 function formatScaffoldCommand(versions: string[]): string {
 	const uniqueVersions = [...new Set(versions)].sort(compareSemver);
 	return uniqueVersions.length === 1
 		? `wp-typia migrations scaffold --from ${uniqueVersions[0]}`
 		: "wp-typia migrations scaffold --from <semver>";
-}
-
-function isInteractiveTerminal(): boolean {
-	return Boolean(process.stdin.isTTY && process.stdout.isTTY);
 }
 
 function promptForConfirmation(message: string): boolean {

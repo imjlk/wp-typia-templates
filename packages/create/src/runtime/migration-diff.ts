@@ -5,7 +5,11 @@ import {
 	getManifestDefaultValue,
 	hasManifestDefault,
 } from "./migration-manifest.js";
-import { getSnapshotManifestPath } from "./migration-project.js";
+import {
+	createMissingBlockSnapshotMessage,
+	getAvailableSnapshotVersionsForBlock,
+	getSnapshotManifestPath,
+} from "./migration-project.js";
 import { isNumber, readJson } from "./migration-utils.js";
 import type {
 	DiffOutcome,
@@ -63,18 +67,12 @@ export function createMigrationDiff(
 
 	const snapshotManifestPath = getSnapshotManifestPath(state.projectDir, block, fromVersion);
 	if (!fs.existsSync(snapshotManifestPath)) {
-		const availableSnapshotVersions = state.config.supportedVersions
-			.filter((version) =>
-				fs.existsSync(getSnapshotManifestPath(state.projectDir, block, version)),
-			)
-			.sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
 		throw new Error(
-			availableSnapshotVersions.length === 0
-				? `Snapshot manifest for ${block.blockName} @ ${fromVersion} does not exist. ` +
-					`No snapshots exist yet for ${block.blockName}. Run \`wp-typia migrations snapshot --version ${fromVersion}\` first.`
-				: `Snapshot manifest for ${block.blockName} @ ${fromVersion} does not exist. ` +
-					`Available snapshot versions for ${block.blockName}: ${availableSnapshotVersions.join(", ")}. ` +
-					`Run \`wp-typia migrations snapshot --version ${fromVersion}\` first if you want to preserve that release.`,
+			createMissingBlockSnapshotMessage(
+				block.blockName,
+				fromVersion,
+				getAvailableSnapshotVersionsForBlock(state.projectDir, state.config.supportedVersions, block),
+			),
 		);
 	}
 

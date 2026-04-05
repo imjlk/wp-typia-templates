@@ -3,6 +3,8 @@ import path from "node:path";
 export const ROOT_BLOCK_JSON = "block.json";
 export const ROOT_MANIFEST = "typia.manifest.json";
 export const ROOT_PHP_MIGRATION_REGISTRY = "typia-migration-registry.php";
+export const SRC_BLOCK_JSON = path.join("src", "block.json");
+export const SRC_MANIFEST = path.join("src", "typia.manifest.json");
 export const ROOT_SAVE_FILE = path.join("src", "save.tsx");
 export const ROOT_TYPES_FILE = path.join("src", "types.ts");
 export const MIGRATIONS_DIR = path.join("src", "migrations");

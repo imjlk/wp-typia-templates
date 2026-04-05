@@ -12,6 +12,8 @@ import {
 	ROOT_TYPES_FILE,
 	RULES_DIR,
 	SNAPSHOT_DIR,
+	SRC_BLOCK_JSON,
+	SRC_MANIFEST,
 	SUPPORTED_PROJECT_FILES,
 } from "./migration-constants.js";
 import {
@@ -30,6 +32,16 @@ import type {
 } from "./migration-types.js";
 
 const DEFAULT_BLOCK_KEY = "default";
+
+export type DiscoveredMigrationLayout =
+	| {
+			block: MigrationBlockConfig;
+			mode: "single";
+	  }
+	| {
+			blocks: MigrationBlockConfig[];
+			mode: "multi";
+	  };
 
 function normalizeRelativePath(value: string): string {
 	return value.replace(/\\/g, "/");
@@ -51,13 +63,11 @@ function toImportPath(fromDir: string, targetPath: string, stripExtension = fals
 }
 
 function createImplicitLegacyBlock(projectDir: string, blockName?: string): MigrationBlockConfig {
+	const discovered = discoverSingleBlockTarget(projectDir);
 	return {
-		blockJsonFile: ROOT_BLOCK_JSON,
-		blockName: blockName ?? readProjectBlockName(projectDir),
+		...discovered,
+		blockName: blockName ?? discovered.blockName,
 		key: DEFAULT_BLOCK_KEY,
-		manifestFile: ROOT_MANIFEST,
-		saveFile: ROOT_SAVE_FILE,
-		typesFile: ROOT_TYPES_FILE,
 	};
 }
 
@@ -76,6 +86,22 @@ function getRequiredProjectFiles(projectDir: string, blocks?: MigrationBlockConf
 		return [
 			"package.json",
 			...configuredBlocks.flatMap((block) => [block.blockJsonFile, block.saveFile, block.typesFile]),
+		];
+	}
+
+	const discoveredLayout = discoverMigrationLayout(projectDir);
+	if (discoveredLayout?.mode === "multi") {
+		return [
+			"package.json",
+			...discoveredLayout.blocks.flatMap((block) => [block.blockJsonFile, block.saveFile, block.typesFile]),
+		];
+	}
+	if (discoveredLayout?.mode === "single") {
+		return [
+			"package.json",
+			discoveredLayout.block.blockJsonFile,
+			discoveredLayout.block.saveFile,
+			discoveredLayout.block.typesFile,
 		];
 	}
 
@@ -101,6 +127,140 @@ export function getProjectPaths(projectDir: string): MigrationProjectPaths {
 		rulesDir: path.join(projectDir, RULES_DIR),
 		snapshotDir: path.join(projectDir, SNAPSHOT_DIR),
 	};
+}
+
+function createBlockTarget(
+	projectDir: string,
+	{
+		blockJsonFile,
+		key,
+		manifestFile,
+		saveFile,
+		typesFile,
+	}: {
+		blockJsonFile: string;
+		key: string;
+		manifestFile: string;
+		saveFile: string;
+		typesFile: string;
+	},
+): MigrationBlockConfig | null {
+	const requiredFiles = [blockJsonFile, saveFile, typesFile];
+	if (requiredFiles.some((relativePath) => !fs.existsSync(path.join(projectDir, relativePath)))) {
+		return null;
+	}
+
+	const blockName = readJson<{ name?: string }>(path.join(projectDir, blockJsonFile))?.name;
+	if (typeof blockName !== "string" || blockName.length === 0) {
+		return null;
+	}
+
+	return {
+		blockJsonFile: normalizeRelativePath(blockJsonFile),
+		blockName,
+		key,
+		manifestFile: normalizeRelativePath(manifestFile),
+		saveFile: normalizeRelativePath(saveFile),
+		typesFile: normalizeRelativePath(typesFile),
+	};
+}
+
+function discoverSingleBlockTarget(projectDir: string): MigrationBlockConfig {
+	const currentTarget =
+		createBlockTarget(projectDir, {
+			blockJsonFile: SRC_BLOCK_JSON,
+			key: DEFAULT_BLOCK_KEY,
+			manifestFile: SRC_MANIFEST,
+			saveFile: ROOT_SAVE_FILE,
+			typesFile: ROOT_TYPES_FILE,
+		}) ??
+		createBlockTarget(projectDir, {
+			blockJsonFile: ROOT_BLOCK_JSON,
+			key: DEFAULT_BLOCK_KEY,
+			manifestFile: ROOT_MANIFEST,
+			saveFile: ROOT_SAVE_FILE,
+			typesFile: ROOT_TYPES_FILE,
+		});
+
+	if (!currentTarget) {
+		throw new Error("Unable to resolve block name from block.json");
+	}
+
+	return currentTarget;
+}
+
+function discoverMigrationLayout(projectDir: string): DiscoveredMigrationLayout | null {
+	const blocksRoot = path.join(projectDir, "src", "blocks");
+	if (fs.existsSync(blocksRoot) && fs.statSync(blocksRoot).isDirectory()) {
+		const blockDirectories = fs
+			.readdirSync(blocksRoot, { withFileTypes: true })
+			.filter((entry) => entry.isDirectory())
+			.map((entry) => entry.name);
+		const candidateDirectories = blockDirectories.filter((directory) =>
+			fs.existsSync(path.join(blocksRoot, directory, "block.json")),
+		);
+
+		if (candidateDirectories.length > 0) {
+			const blocks = candidateDirectories.map((directory) => {
+				const saveFile = path.join("src", "blocks", directory, "save.tsx");
+				const typesFile = path.join("src", "blocks", directory, "types.ts");
+				const missingFiles = [saveFile, typesFile].filter(
+					(relativePath) => !fs.existsSync(path.join(projectDir, relativePath)),
+				);
+				if (missingFiles.length > 0) {
+					throw new Error(
+						"Unable to auto-detect a supported migration retrofit layout. " +
+							`Detected ${path.join("src", "blocks", directory, "block.json")} but the block target is missing ${missingFiles.join(", ")}. ` +
+							"Create `src/migrations/config.ts` manually if your project uses a custom layout.",
+					);
+				}
+
+				const block = createBlockTarget(projectDir, {
+					blockJsonFile: path.join("src", "blocks", directory, "block.json"),
+					key: directory,
+					manifestFile: path.join("src", "blocks", directory, "typia.manifest.json"),
+					saveFile,
+					typesFile,
+				});
+				if (!block) {
+					throw new Error(
+						"Unable to auto-detect a supported migration retrofit layout. " +
+							`Could not read a valid block name from ${path.join("src", "blocks", directory, "block.json")}. ` +
+							"Create `src/migrations/config.ts` manually if your project uses a custom layout.",
+					);
+				}
+				return block;
+			});
+
+			return {
+				blocks: blocks.sort((left, right) => left.key.localeCompare(right.key)),
+				mode: "multi",
+			};
+		}
+	}
+
+	try {
+		return {
+			block: discoverSingleBlockTarget(projectDir),
+			mode: "single",
+		};
+	} catch {
+		return null;
+	}
+}
+
+export function discoverMigrationInitLayout(projectDir: string): DiscoveredMigrationLayout {
+	const discoveredLayout = discoverMigrationLayout(projectDir);
+	if (discoveredLayout) {
+		return discoveredLayout;
+	}
+
+	throw new Error(
+		"Unable to auto-detect a supported migration retrofit layout. " +
+			"Expected either `src/blocks/*/block.json` with matching `types.ts` and `save.tsx`, " +
+			"or a single-block layout using `src/block.json` (or legacy root `block.json`) with `src/types.ts` and `src/save.tsx`. " +
+			"Create `src/migrations/config.ts` manually if your project uses a custom layout.",
+	);
 }
 
 export function resolveMigrationBlocks(
@@ -154,6 +314,29 @@ export function getSnapshotManifestPath(
 	version: string,
 ): string {
 	return path.join(getSnapshotRoot(projectDir, block, version), ROOT_MANIFEST);
+}
+
+export function getAvailableSnapshotVersionsForBlock(
+	projectDir: string,
+	supportedVersions: string[],
+	block: MigrationBlockConfig | ResolvedMigrationBlockTarget,
+): string[] {
+	return supportedVersions
+		.filter((version) => fs.existsSync(getSnapshotManifestPath(projectDir, block, version)))
+		.sort(compareSemver);
+}
+
+export function createMissingBlockSnapshotMessage(
+	blockName: string,
+	fromVersion: string,
+	availableSnapshotVersions: string[],
+): string {
+	return availableSnapshotVersions.length === 0
+		? `Snapshot manifest for ${blockName} @ ${fromVersion} does not exist. ` +
+				`No snapshots exist yet for ${blockName}. Run \`wp-typia migrations snapshot --version ${fromVersion}\` first.`
+		: `Snapshot manifest for ${blockName} @ ${fromVersion} does not exist. ` +
+				`Available snapshot versions for ${blockName}: ${availableSnapshotVersions.join(", ")}. ` +
+				`Run \`wp-typia migrations snapshot --version ${fromVersion}\` first if you want to preserve that release.`;
 }
 
 export function getSnapshotSavePath(
@@ -469,8 +652,7 @@ export default migrationConfig;
 }
 
 export function readProjectBlockName(projectDir: string): string {
-	const blockJson = readJson<{ name?: string }>(path.join(projectDir, ROOT_BLOCK_JSON));
-	const blockName = blockJson?.name;
+	const blockName = discoverSingleBlockTarget(projectDir).blockName;
 	if (typeof blockName !== "string" || blockName.length === 0) {
 		throw new Error("Unable to resolve block name from block.json");
 	}
