@@ -23,6 +23,7 @@
 - [runProjectScriptIfPresent](packages_create_src_runtime_migration_utils.md#runprojectscriptifpresent)
 - [detectPackageManagerId](packages_create_src_runtime_migration_utils.md#detectpackagemanagerid)
 - [getLocalTsxBinary](packages_create_src_runtime_migration_utils.md#getlocaltsxbinary)
+- [isInteractiveTerminal](packages_create_src_runtime_migration_utils.md#isinteractiveterminal)
 - [resolveTargetVersion](packages_create_src_runtime_migration_utils.md#resolvetargetversion)
 - [assertSemver](packages_create_src_runtime_migration_utils.md#assertsemver)
 - [compareSemver](packages_create_src_runtime_migration_utils.md#comparesemver)
@@ -312,6 +313,23 @@ ___
 
 ___
 
+### isInteractiveTerminal
+
+▸ **isInteractiveTerminal**(): `boolean`
+
+Returns whether isInteractiveTerminal() is running with both stdin and stdout
+attached to a TTY so CLI and migration flows can safely prompt the user.
+
+#### Returns
+
+`boolean`
+
+#### Defined in
+
+[packages/create/src/runtime/migration-utils.ts:189](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L189)
+
+___
+
 ### resolveTargetVersion
 
 ▸ **resolveTargetVersion**(`currentVersion`, `value`): `string`
@@ -329,7 +347,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:185](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L185)
+[packages/create/src/runtime/migration-utils.ts:193](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L193)
 
 ___
 
@@ -350,7 +368,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:189](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L189)
+[packages/create/src/runtime/migration-utils.ts:197](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L197)
 
 ___
 
@@ -371,7 +389,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:195](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L195)
+[packages/create/src/runtime/migration-utils.ts:203](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L203)
 
 ___
 
@@ -391,7 +409,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:209](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L209)
+[packages/create/src/runtime/migration-utils.ts:217](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L217)
 
 ___
 
@@ -411,7 +429,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:213](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L213)
+[packages/create/src/runtime/migration-utils.ts:221](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L221)
 
 ___
 
@@ -431,4 +449,4 @@ value is number
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:217](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L217)
+[packages/create/src/runtime/migration-utils.ts:225](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L225)

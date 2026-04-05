@@ -47,9 +47,42 @@ bun run migration:init
 
 This bootstraps the migration workspace and stores the first snapshot at `1.0.0`.
 
+For retrofit workflows, `migration:init` now auto-detects the common first-party
+layouts:
+
+- single-block projects using `src/block.json`, `src/types.ts`, and `src/save.tsx`
+- legacy single-block projects still using root `block.json` plus `src/types.ts` and `src/save.tsx`
+- multi-block projects using `src/blocks/*/block.json`
+
+When `src/blocks/*` is present, every detected block target is added to
+`src/migrations/config.ts`, including scaffolded hidden compound child blocks.
+
 If you scaffolded with `--with-migration-ui`, that initialization already
 happened during scaffold creation and you do not need to run `migration:init`
 again.
+
+For example, a retrofitted multi-block config now starts like this:
+
+```ts
+export const migrationConfig = {
+  currentVersion: "1.0.0",
+  supportedVersions: ["1.0.0"],
+  snapshotDir: "src/migrations/versions",
+  blocks: [
+    {
+      key: "compound-parent",
+      blockName: "create-block/compound-parent",
+      blockJsonFile: "src/blocks/compound-parent/block.json",
+      manifestFile: "src/blocks/compound-parent/typia.manifest.json",
+      saveFile: "src/blocks/compound-parent/save.tsx",
+      typesFile: "src/blocks/compound-parent/types.ts",
+    },
+  ],
+} as const;
+```
+
+Custom layouts can still skip auto-detection and author `src/migrations/config.ts`
+manually.
 
 ## New schema version
 
@@ -210,6 +243,10 @@ Dry-run and batch execution share the same `autoMigrate()` path, so the preview 
 For compound scaffolds, the dashboard entrypoint lives on the parent block, but
 the scan and migration runtime cover both the parent and the scaffolded hidden
 child blocks.
+
+That same parent-plus-hidden-child coverage now applies to retrofitted compound
+projects when `migration:init` discovers both block directories under
+`src/blocks/*`.
 
 The dashboard preview now highlights:
 

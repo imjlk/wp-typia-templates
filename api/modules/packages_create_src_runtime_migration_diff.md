@@ -29,4 +29,4 @@
 
 #### Defined in
 
-[packages/create/src/runtime/migration-diff.ts:34](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-diff.ts#L34)
+[packages/create/src/runtime/migration-diff.ts:38](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-diff.ts#L38)

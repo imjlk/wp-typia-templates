@@ -9,6 +9,8 @@
 - [ROOT\_BLOCK\_JSON](packages_create_src_runtime_migration_constants.md#root_block_json)
 - [ROOT\_MANIFEST](packages_create_src_runtime_migration_constants.md#root_manifest)
 - [ROOT\_PHP\_MIGRATION\_REGISTRY](packages_create_src_runtime_migration_constants.md#root_php_migration_registry)
+- [SRC\_BLOCK\_JSON](packages_create_src_runtime_migration_constants.md#src_block_json)
+- [SRC\_MANIFEST](packages_create_src_runtime_migration_constants.md#src_manifest)
 - [ROOT\_SAVE\_FILE](packages_create_src_runtime_migration_constants.md#root_save_file)
 - [ROOT\_TYPES\_FILE](packages_create_src_runtime_migration_constants.md#root_types_file)
 - [MIGRATIONS\_DIR](packages_create_src_runtime_migration_constants.md#migrations_dir)
@@ -52,13 +54,33 @@ ___
 
 ___
 
+### SRC\_BLOCK\_JSON
+
+• `Const` **SRC\_BLOCK\_JSON**: `string`
+
+#### Defined in
+
+[packages/create/src/runtime/migration-constants.ts:6](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L6)
+
+___
+
+### SRC\_MANIFEST
+
+• `Const` **SRC\_MANIFEST**: `string`
+
+#### Defined in
+
+[packages/create/src/runtime/migration-constants.ts:7](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L7)
+
+___
+
 ### ROOT\_SAVE\_FILE
 
 • `Const` **ROOT\_SAVE\_FILE**: `string`
 
 #### Defined in
 
-[packages/create/src/runtime/migration-constants.ts:6](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L6)
+[packages/create/src/runtime/migration-constants.ts:8](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L8)
 
 ___
 
@@ -68,7 +90,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-constants.ts:7](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L7)
+[packages/create/src/runtime/migration-constants.ts:9](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L9)
 
 ___
 
@@ -78,7 +100,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-constants.ts:8](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L8)
+[packages/create/src/runtime/migration-constants.ts:10](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L10)
 
 ___
 
@@ -88,7 +110,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-constants.ts:9](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L9)
+[packages/create/src/runtime/migration-constants.ts:11](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L11)
 
 ___
 
@@ -98,7 +120,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-constants.ts:10](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L10)
+[packages/create/src/runtime/migration-constants.ts:12](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L12)
 
 ___
 
@@ -108,7 +130,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-constants.ts:11](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L11)
+[packages/create/src/runtime/migration-constants.ts:13](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L13)
 
 ___
 
@@ -118,7 +140,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-constants.ts:12](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L12)
+[packages/create/src/runtime/migration-constants.ts:14](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L14)
 
 ___
 
@@ -128,7 +150,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-constants.ts:13](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L13)
+[packages/create/src/runtime/migration-constants.ts:15](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L15)
 
 ___
 
@@ -138,7 +160,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-constants.ts:14](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L14)
+[packages/create/src/runtime/migration-constants.ts:16](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L16)
 
 ___
 
@@ -148,4 +170,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-constants.ts:15](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L15)
+[packages/create/src/runtime/migration-constants.ts:17](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-constants.ts#L17)
