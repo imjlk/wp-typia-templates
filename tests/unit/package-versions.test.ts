@@ -1,0 +1,139 @@
+import { describe, expect, test } from "bun:test";
+import fs from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+
+import {
+	createTempDir,
+	writeJsonFile,
+	writeTextFile,
+} from "../helpers/file-fixtures";
+
+const PACKAGE_VERSIONS_SOURCE = fs.readFileSync(
+	path.resolve(
+		import.meta.dir,
+		"../../packages/create/src/runtime/package-versions.ts",
+	),
+	"utf8",
+);
+
+async function importPackageVersionsModule(options: {
+	createPackageRoot: string;
+	installedPackageManifests?: Record<string, unknown>;
+}): Promise<{
+	getPackageVersions(): {
+		apiClientPackageVersion: string;
+		blockTypesPackageVersion: string;
+		createPackageVersion: string;
+		restPackageVersion: string;
+	};
+}> {
+	const tempRoot = createTempDir("wp-typia-package-versions-");
+	const runtimeDir = path.join(tempRoot, "runtime");
+
+	fs.mkdirSync(runtimeDir, { recursive: true });
+	writeTextFile(
+		path.join(runtimeDir, "package-versions.ts"),
+		PACKAGE_VERSIONS_SOURCE,
+	);
+	writeTextFile(
+		path.join(runtimeDir, "template-registry.js"),
+		`export const CREATE_PACKAGE_ROOT = ${JSON.stringify(options.createPackageRoot)};\n`,
+	);
+
+	for (const [packageName, manifest] of Object.entries(
+		options.installedPackageManifests ?? {},
+	)) {
+		writeJsonFile(
+			path.join(tempRoot, "node_modules", ...packageName.split("/"), "package.json"),
+			manifest,
+		);
+	}
+
+	return import(
+		`${pathToFileURL(path.join(runtimeDir, "package-versions.ts")).href}?case=${Math.random()}`
+	);
+}
+
+describe("package version helpers", () => {
+	test("prefers the workspace create package manifest over installed package manifests", async () => {
+		const createPackageRoot = createTempDir("wp-typia-create-manifest-");
+
+		writeJsonFile(path.join(createPackageRoot, "package.json"), {
+			dependencies: {
+				"@wp-typia/api-client": "~1.2.3",
+				"@wp-typia/block-types": "2.3.4",
+				"@wp-typia/rest": "^3.4.5",
+			},
+			version: "4.5.6",
+		});
+
+		const module = await importPackageVersionsModule({
+			createPackageRoot,
+			installedPackageManifests: {
+				"@wp-typia/api-client": { version: "9.9.9" },
+				"@wp-typia/block-types": { version: "9.9.9" },
+				"@wp-typia/create": { version: "9.9.9" },
+				"@wp-typia/rest": { version: "9.9.9" },
+			},
+		});
+
+		expect(module.getPackageVersions()).toEqual({
+			apiClientPackageVersion: "~1.2.3",
+			blockTypesPackageVersion: "^2.3.4",
+			createPackageVersion: "^4.5.6",
+			restPackageVersion: "^3.4.5",
+		});
+	});
+
+	test("falls back to installed package manifests when the workspace manifest is missing", async () => {
+		const createPackageRoot = path.join(
+			createTempDir("wp-typia-missing-create-root-"),
+			"missing-create-root",
+		);
+		const module = await importPackageVersionsModule({
+			createPackageRoot,
+			installedPackageManifests: {
+				"@wp-typia/api-client": { version: "0.2.0" },
+				"@wp-typia/block-types": { version: "0.3.0" },
+				"@wp-typia/create": {
+					dependencies: {
+						"@wp-typia/api-client": "0.2.0",
+						"@wp-typia/block-types": "0.3.0",
+						"@wp-typia/rest": "~0.4.0",
+					},
+					version: "0.8.0",
+				},
+				"@wp-typia/rest": { version: "0.4.0" },
+			},
+		});
+
+		expect(module.getPackageVersions()).toEqual({
+			apiClientPackageVersion: "^0.2.0",
+			blockTypesPackageVersion: "^0.3.0",
+			createPackageVersion: "^0.8.0",
+			restPackageVersion: "~0.4.0",
+		});
+	});
+
+	test("defaults missing version data to ^0.0.0 and caches the computed result", async () => {
+		const createPackageRoot = path.join(
+			createTempDir("wp-typia-empty-create-root-"),
+			"empty-create-root",
+		);
+		const module = await importPackageVersionsModule({
+			createPackageRoot,
+		});
+
+		const firstResult = module.getPackageVersions();
+		const secondResult = module.getPackageVersions();
+
+		expect(firstResult).toEqual({
+			apiClientPackageVersion: "^0.0.0",
+			blockTypesPackageVersion: "^0.0.0",
+			createPackageVersion: "^0.0.0",
+			restPackageVersion: "^0.0.0",
+		});
+		expect(secondResult).toBe(firstResult);
+	});
+});
