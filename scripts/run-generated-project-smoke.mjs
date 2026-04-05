@@ -117,6 +117,10 @@ function getPackageManager(packageManager) {
 }
 
 function ensureCreateWpTypiaBuilt() {
+	const apiClientDistPath = path.resolve(
+		__dirname,
+		"../packages/wp-typia-api-client/dist/index.js",
+	);
 	const blockTypesDistPath = path.resolve(
 		__dirname,
 		"../packages/wp-typia-block-types/dist/index.js",
@@ -125,10 +129,18 @@ function ensureCreateWpTypiaBuilt() {
 		__dirname,
 		"../packages/wp-typia-rest/dist/index.js",
 	);
-	if (fs.existsSync(entryPath) && fs.existsSync(blockTypesDistPath) && fs.existsSync(restDistPath)) {
+	if (
+		fs.existsSync(entryPath) &&
+		fs.existsSync(apiClientDistPath) &&
+		fs.existsSync(blockTypesDistPath) &&
+		fs.existsSync(restDistPath)
+	) {
 		return;
 	}
 
+	run("bun", ["run", "--filter", "@wp-typia/api-client", "build"], {
+		cwd: path.resolve(__dirname, ".."),
+	});
 	run("bun", ["run", "--filter", "@wp-typia/block-types", "build"], {
 		cwd: path.resolve(__dirname, ".."),
 	});
