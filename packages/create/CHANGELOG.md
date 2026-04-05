@@ -1,5 +1,35 @@
 # @wp-typia/create
 
+## 0.8.0 — 2026-04-05
+
+### Minor changes
+
+- [58a8c97](https://github.com/imjlk/wp-typia/commit/58a8c97a52107eb16148a5fd5e3da2ab5a612fba) Add a new manifest-driven `runtime/inspector` surface for generated projects,
+  including `useEditorFields`, `useTypedAttributeUpdater`, `FieldControl`, and
+  `InspectorFromManifest`, and mirror that subpath through
+  `@wp-typia/block-runtime/inspector`. — Thanks @imjlk!
+- [faef0a6](https://github.com/imjlk/wp-typia/commit/faef0a66b974956373a42be8324db37c4be3f97f) Add first-class mixed `{ query, body }` request support to generated portable
+  endpoint clients so `syncEndpointClient(...)` and `@wp-typia/api-client` can
+  handle endpoints that define both `queryContract` and `bodyContract`. — Thanks @imjlk!
+- [ec0c3fb](https://github.com/imjlk/wp-typia/commit/ec0c3fb82abfa11be512f999e1acbd91d466cff1) Add a new transport-neutral `@wp-typia/api-client` package and manifest-first
+  `syncEndpointClient(...)` generation in `@wp-typia/create/metadata-core` so
+  persistence-style contracts can emit portable `api-client.ts` modules alongside
+  their existing WordPress-specific `api.ts` and aggregate OpenAPI artifacts. — Thanks @imjlk!
+- [5eff751](https://github.com/imjlk/wp-typia/commit/5eff75114df07b0f0de5cfaddb0c527c40f602a4) Add opt-in `--with-migration-ui` scaffold support for built-in templates, including seeded migration workspaces, editor-embedded migration dashboard assets, and multi-block migration config/artifact generation. — Thanks @imjlk!
+- [01630cc](https://github.com/imjlk/wp-typia/commit/01630cca3573af287269890c57d5fbc9deed69df) Add structured `sync-types` reporting to `@wp-typia/create/metadata-core` via `runSyncBlockMetadata(...)`, plus generated `sync-types --strict`, `sync-types --fail-on-lossy`, and `sync-types --report json` support for CI-friendly metadata sync workflows. — Thanks @imjlk!
+- [00e148e](https://github.com/imjlk/wp-typia/commit/00e148e788160dd2564faeebc7fba530c037bce8) Add first-class WordPress block support metadata types and public style-support helper types, and teach the scaffold metadata pipeline to understand indexed-access support attributes and primitive-compatible intersections from `@wp-typia/block-types`. — Thanks @imjlk!
+- [d9e70b6](https://github.com/imjlk/wp-typia/commit/d9e70b664c7b4ce98feb2805208f4b3703e2eac3) Refactor generated persistence `api.ts` helpers to compose the generated
+  portable `api-client.ts` endpoint exports instead of redefining the same
+  endpoint metadata locally. — Thanks @imjlk!
+- [6ec5640](https://github.com/imjlk/wp-typia/commit/6ec5640edc5c6e95c9ca8c0bd868d6e0a644a0e3) Add `tags.Source<...>` and `tags.Selector<...>` support to the `sync-types`
+  metadata pipeline so top-level string attributes can project WordPress
+  `source`/`selector` extraction metadata into `block.json` and
+  `typia.manifest.json`. — Thanks @imjlk!
+
+### Patch changes
+
+- Updated dependencies: api-client@0.2.0, block-types@0.2.0
+
 ## 0.7.0 — 2026-04-03
 
 ### Minor changes

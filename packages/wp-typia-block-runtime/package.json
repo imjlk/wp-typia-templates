@@ -1,6 +1,6 @@
 {
   "name": "@wp-typia/block-runtime",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Prototype block runtime facade for wp-typia generated-project helpers",
   "type": "module",
   "main": "dist/index.js",
@@ -74,7 +74,7 @@
     }
   },
   "dependencies": {
-    "@wp-typia/create": "^0.7.0"
+    "@wp-typia/create": "^0.8.0"
   },
   "devDependencies": {
     "typescript": "^5.9.2"
