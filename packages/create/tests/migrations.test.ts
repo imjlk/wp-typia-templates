@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
+import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -7,12 +8,16 @@ import { runUtf8Command } from "../../../tests/helpers/process-utils";
 import { writeJsonFile, writeTextFile } from "../../../tests/helpers/file-fixtures";
 import { createMigrationDiff } from "../src/runtime/migration-diff.js";
 import { parseMigrationArgs } from "../src/runtime/index.js";
+import {
+	fixturesProjectMigrations,
+	snapshotProjectVersion,
+} from "../src/runtime/migrations.js";
 import { loadMigrationProject } from "../src/runtime/migration-project.js";
 import { createMigrationRiskSummary } from "../src/runtime/migration-risk.js";
 
-const packageRoot = process.cwd();
+const packageRoot = resolvePackageRoot();
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-migrations-"));
-const entryPath = path.join(packageRoot, "dist", "cli.js");
+const entryPath = resolveCliEntryPath();
 const repoTsxPath = resolveRepoTsxBinary();
 
 function runCli(
@@ -33,6 +38,8 @@ function writeJson(filePath: string, value: unknown) {
 
 function resolveRepoTsxBinary() {
 	const candidates = [
+		path.resolve(packageRoot, "node_modules/.bin/tsx"),
+		path.resolve(packageRoot, "node_modules/.bun/tsx@4.21.0/node_modules/.bin/tsx"),
 		path.resolve(packageRoot, "../../node_modules/.bin/tsx"),
 		path.resolve(packageRoot, "../../node_modules/.bun/tsx@4.21.0/node_modules/.bin/tsx"),
 	];
@@ -43,6 +50,42 @@ function resolveRepoTsxBinary() {
 	}
 
 	return resolved;
+}
+
+function resolvePackageRoot() {
+	const cwd = process.cwd();
+	const directPackageRoot = path.join(cwd, "package.json");
+	if (fs.existsSync(directPackageRoot) && fs.existsSync(path.join(cwd, "src", "cli.ts"))) {
+		return cwd;
+	}
+
+	const nestedPackageRoot = path.join(cwd, "packages", "create");
+	if (
+		fs.existsSync(path.join(nestedPackageRoot, "package.json")) &&
+		fs.existsSync(path.join(nestedPackageRoot, "src", "cli.ts"))
+	) {
+		return nestedPackageRoot;
+	}
+
+	throw new Error("Unable to resolve the @wp-typia/create package root for migration tests.");
+}
+
+function resolveCliEntryPath() {
+	const cliPath = path.join(packageRoot, "dist", "cli.js");
+	if (fs.existsSync(cliPath)) {
+		return cliPath;
+	}
+
+	execFileSync("bun", ["run", "build"], {
+		cwd: packageRoot,
+		stdio: "inherit",
+	});
+
+	if (!fs.existsSync(cliPath)) {
+		throw new Error("Unable to build dist/cli.js for migration tests.");
+	}
+
+	return cliPath;
 }
 
 function createManifestAttribute(
@@ -1491,6 +1534,64 @@ describe("wp-typia migrations", () => {
 		expect(fs.readFileSync(fixturePath, "utf8")).not.toContain('"custom"');
 	});
 
+	test("fixtures --force prompts before overwriting existing fixtures in interactive mode", () => {
+		const projectDir = path.join(tempRoot, "fixtures-force-confirm-project");
+		createVersionedMigrationProject(projectDir);
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json");
+		fs.writeFileSync(
+			fixturePath,
+			`${JSON.stringify({ cases: [{ input: { content: "custom" }, name: "custom" }], fromVersion: "1.0.0", toVersion: "2.0.0" }, null, "\t")}\n`,
+			"utf8",
+		);
+
+		const prompts: string[] = [];
+		const lines: string[] = [];
+		const result = fixturesProjectMigrations(projectDir, {
+			all: true,
+			confirmOverwrite: (message) => {
+				prompts.push(message);
+				return false;
+			},
+			force: true,
+			isInteractive: true,
+			renderLine: (line) => lines.push(line),
+		});
+
+		expect(prompts[0]).toContain("overwrite 1 existing migration fixture file");
+		expect(lines.join("\n")).toContain("Cancelled fixture refresh");
+		expect(result.generatedVersions).toEqual([]);
+		expect(result.skippedVersions.length).toBe(1);
+		expect(fs.readFileSync(fixturePath, "utf8")).toContain('"custom"');
+	});
+
+	test("snapshot surfaces sync-types recovery guidance when the preflight script fails", () => {
+		const projectDir = path.join(tempRoot, "snapshot-sync-types-failure-project");
+		createVersionedMigrationProject(projectDir);
+
+		writeJson(
+			path.join(projectDir, "package.json"),
+			{
+				name: "migration-smoke",
+				packageManager: "bun@1.3.10",
+				private: true,
+				scripts: {
+					"sync-types": `node -e "process.stderr.write('sync-types failed'); process.exit(1)"`,
+				},
+				type: "module",
+				version: "0.1.0",
+			},
+		);
+
+		expect(() => snapshotProjectVersion(projectDir, "3.0.0")).toThrow(
+			/Could not capture migration snapshot 3\.0\.0 because `bun run sync-types` failed first[\s\S]*Install project dependencies[\s\S]*rerun `bun run sync-types`[\s\S]*Original error:/,
+		);
+	});
+
 	test("fuzz command succeeds on a healthy migration edge", () => {
 		const projectDir = path.join(tempRoot, "fuzz-success-project");
 		createVersionedMigrationProject(projectDir);
@@ -1546,7 +1647,24 @@ describe("wp-typia migrations", () => {
 				[entryPath, "migrations", "fuzz", "--from", "9.9.9", "--iterations", "1", "--seed", "0"],
 				{ cwd: projectDir },
 			),
-		).toThrow(/Unsupported migration version: 9.9.9/);
+		).toThrow(/Unsupported migration version: 9.9.9[\s\S]*Available legacy versions: 1\.0\.0/);
+	});
+
+	test("diff and scaffold reject same-version migration edges early", () => {
+		const projectDir = path.join(tempRoot, "same-version-edge-project");
+		createVersionedMigrationProject(projectDir);
+
+		expect(() =>
+			runCli("node", [entryPath, "migrations", "diff", "--from", "2.0.0"], {
+				cwd: projectDir,
+			}),
+		).toThrow(/migrations diff` requires different source and target versions[\s\S]*2\.0\.0/);
+
+		expect(() =>
+			runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0", "--to", "1.0.0"], {
+				cwd: projectDir,
+			}),
+		).toThrow(/migrations scaffold` requires different source and target versions[\s\S]*1\.0\.0/);
 	});
 
 	test("verify defaults to the first legacy version and rejects malformed numeric flags", () => {
@@ -1617,13 +1735,41 @@ describe("wp-typia migrations", () => {
 			runCli("node", [entryPath, "migrations", "verify", "--all"], {
 				cwd: projectDir,
 			}),
-		).toThrow(/Missing migration verify inputs.*1\.5\.0/);
+		).toThrow(/Missing migration verify inputs.*1\.5\.0[\s\S]*migrations scaffold --from 1\.5\.0[\s\S]*migrations doctor --all/);
 		expect(() =>
 			runCli(
 				"node",
 				[entryPath, "migrations", "fuzz", "--all", "--iterations", "1", "--seed", "0"],
 				{ cwd: projectDir },
 			),
-		).toThrow(/Missing migration fuzz inputs.*1\.5\.0/);
+		).toThrow(/Missing migration fuzz inputs.*1\.5\.0[\s\S]*migrations scaffold --from 1\.5\.0[\s\S]*migrations doctor --all/);
+	});
+
+	test("verify and fuzz fail with recovery guidance when generated scripts are missing", () => {
+		const projectDir = path.join(tempRoot, "missing-generated-script-project");
+		createVersionedMigrationProject(projectDir);
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		fs.rmSync(path.join(projectDir, "src", "migrations", "generated", "verify.ts"));
+		expect(() =>
+			runCli("node", [entryPath, "migrations", "verify", "--all"], {
+				cwd: projectDir,
+			}),
+		).toThrow(/Generated verify script is missing[\s\S]*1\.0\.0[\s\S]*migrations scaffold --from 1\.0\.0[\s\S]*migrations doctor --all/);
+
+		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+			cwd: projectDir,
+		});
+		fs.rmSync(path.join(projectDir, "src", "migrations", "generated", "fuzz.ts"));
+		expect(() =>
+			runCli(
+				"node",
+				[entryPath, "migrations", "fuzz", "--all", "--iterations", "1", "--seed", "0"],
+				{ cwd: projectDir },
+			),
+		).toThrow(/Generated fuzz script is missing[\s\S]*1\.0\.0[\s\S]*migrations scaffold --from 1\.0\.0[\s\S]*migrations doctor --all/);
 	});
 });
