@@ -143,7 +143,7 @@ The planned migration summary, or `{ cancelled: true }` when the user exits the 
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:415](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L415)
+[packages/create/src/runtime/migrations.ts:418](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L418)
 
 ___
 
@@ -165,7 +165,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:475](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L475)
+[packages/create/src/runtime/migrations.ts:478](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L478)
 
 ___
 
@@ -187,7 +187,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:518](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L518)
+[packages/create/src/runtime/migrations.ts:521](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L521)
 
 ___
 
@@ -208,7 +208,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:583](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L583)
+[packages/create/src/runtime/migrations.ts:586](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L586)
 
 ___
 
@@ -229,7 +229,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:612](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L612)
+[packages/create/src/runtime/migrations.ts:615](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L615)
 
 ___
 
@@ -258,7 +258,7 @@ Verified legacy versions.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:681](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L681)
+[packages/create/src/runtime/migrations.ts:684](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L684)
 
 ___
 
@@ -288,7 +288,7 @@ Structured doctor check results for the selected legacy versions.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:739](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L739)
+[packages/create/src/runtime/migrations.ts:742](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L742)
 
 ___
 
@@ -318,7 +318,7 @@ Generated and skipped legacy versions.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:998](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L998)
+[packages/create/src/runtime/migrations.ts:1001](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1001)
 
 ___
 
@@ -343,7 +343,7 @@ Fuzzed legacy versions and the effective seed.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:1071](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1071)
+[packages/create/src/runtime/migrations.ts:1074](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1074)
 
 ___
 
@@ -373,4 +373,4 @@ The loaded migration project state after initialization completes.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:1288](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1288)
+[packages/create/src/runtime/migrations.ts:1299](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1299)

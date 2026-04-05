@@ -418,24 +418,41 @@ ___
 
 ### loadMigrationProject
 
-▸ **loadMigrationProject**(`projectDir`, `«destructured»?`): [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md)
+▸ **loadMigrationProject**(`projectDir`, `options?`): [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md)
+
+Loads the migration workspace state for a project directory.
+
+By default this loader may run the project's `sync-types` script when the
+current manifest files are missing, because later migration commands depend
+on those generated artifacts. Pass `allowSyncTypes: false` to keep the call
+read-only and fail instead of mutating the workspace.
+
+When `allowMissingConfig` is enabled and the migration config file does not
+exist yet, the loader synthesizes a minimal legacy-root config so bootstrap
+flows can continue before the first config write.
 
 #### Parameters
 
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `projectDir` | `string` | `undefined` |
-| `«destructured»` | `Object` | `{}` |
-| › `allowMissingConfig?` | `boolean` | `false` |
-| › `allowSyncTypes?` | `boolean` | `true` |
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `projectDir` | `string` | `undefined` | Absolute or relative project directory containing the migration workspace. |
+| `options` | `Object` | `{}` | Loader flags controlling config fallback and `sync-types` side effects. |
+| `options.allowMissingConfig?` | `boolean` | `false` | - |
+| `options.allowSyncTypes?` | `boolean` | `true` | - |
 
 #### Returns
 
 [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md)
 
+The resolved migration project state, including config, block targets, and helper paths.
+
+**`Throws`**
+
+Error When the project is not migration-capable, required manifests remain missing, or generated files cannot be read.
+
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:637](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L637)
+[packages/create/src/runtime/migration-project.ts:654](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L654)
 
 ___
 
@@ -455,7 +472,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:681](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L681)
+[packages/create/src/runtime/migration-project.ts:707](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L707)
 
 ___
 
@@ -475,7 +492,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:734](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L734)
+[packages/create/src/runtime/migration-project.ts:760](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L760)
 
 ___
 
@@ -496,7 +513,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:799](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L799)
+[packages/create/src/runtime/migration-project.ts:825](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L825)
 
 ___
 
@@ -522,7 +539,7 @@ layout.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:857](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L857)
+[packages/create/src/runtime/migration-project.ts:883](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L883)
 
 ___
 
@@ -545,7 +562,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:861](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L861)
+[packages/create/src/runtime/migration-project.ts:887](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L887)
 
 ___
 
@@ -565,7 +582,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:877](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L877)
+[packages/create/src/runtime/migration-project.ts:903](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L903)
 
 ___
 
@@ -585,4 +602,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:899](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L899)
+[packages/create/src/runtime/migration-project.ts:925](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L925)
