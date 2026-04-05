@@ -275,11 +275,27 @@ function discoverSingleBlockTarget(projectDir: string, preferredBlockName?: stri
 		fs.existsSync(path.join(projectDir, manifestFile)),
 	);
 
-	for (const candidate of [...candidatesWithManifest, ...candidates.filter((candidate) => !candidatesWithManifest.includes(candidate))]) {
-		const target = readCandidate(candidate);
-		if (target) {
-			return target;
+	let firstReadError: unknown;
+	let sawReadError = false;
+	for (const candidate of [
+		...candidatesWithManifest,
+		...candidates.filter((candidate) => !candidatesWithManifest.includes(candidate)),
+	]) {
+		try {
+			const target = readCandidate(candidate);
+			if (target) {
+				return target;
+			}
+		} catch (error) {
+			if (!sawReadError) {
+				firstReadError = error;
+				sawReadError = true;
+			}
 		}
+	}
+
+	if (sawReadError) {
+		throw firstReadError;
 	}
 
 	throw new Error(SINGLE_BLOCK_LAYOUT_NOT_FOUND);

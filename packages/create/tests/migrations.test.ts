@@ -386,6 +386,38 @@ function createMalformedFallbackSingleBlockProject(projectDir: string) {
 	});
 }
 
+function createMalformedPreferredSingleBlockProject(projectDir: string) {
+	createCurrentSingleBlockScaffoldProject(projectDir);
+
+	writeJson(path.join(projectDir, "src", "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Hello", type: "string" },
+			isVisible: { default: false, type: "boolean" },
+		},
+		editorScript: "file:./index.js",
+		title: "Broken Current Scaffold",
+	});
+	writeJson(path.join(projectDir, "block.json"), {
+		apiVersion: 3,
+		attributes: {
+			content: { default: "Legacy", type: "string" },
+		},
+		name: "create-block/legacy-root-layout",
+		title: "Legacy Root Layout",
+	});
+	writeJson(path.join(projectDir, "typia.manifest.json"), {
+		attributes: {
+			content: createManifestAttribute("string", {
+				defaultValue: "Legacy",
+				required: true,
+			}),
+		},
+		manifestVersion: 2,
+		sourceType: "MigrationAttributes",
+	});
+}
+
 function createLegacyConfiguredMixedSingleBlockProject(projectDir: string) {
 	createMixedSingleBlockProject(projectDir);
 	writeFile(
@@ -1308,6 +1340,22 @@ describe("wp-typia migrations", () => {
 
 		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
 		expect(configSource).toContain("blockName: 'create-block/current-scaffold'");
+	});
+
+	test("migrations init falls back from malformed preferred single-block layouts", () => {
+		const projectDir = path.join(tempRoot, "init-malformed-preferred-single-block-project");
+		createMalformedPreferredSingleBlockProject(projectDir);
+
+		runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			cwd: projectDir,
+		});
+
+		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
+		expect(configSource).toContain("blockName: 'create-block/legacy-root-layout'");
+		const snapshotManifest = JSON.parse(
+			fs.readFileSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), "utf8"),
+		);
+		expect(snapshotManifest.attributes.content.typia.defaultValue).toBe("Legacy");
 	});
 
 	test("legacy migration configs stay bound to the configured single-block layout", () => {
