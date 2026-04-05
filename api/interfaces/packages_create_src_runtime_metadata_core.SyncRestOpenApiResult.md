@@ -24,7 +24,7 @@ Number of endpoints included in the generated OpenAPI file.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:350](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L350)
+[packages/create/src/runtime/metadata-core.ts:260](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L260)
 
 ___
 
@@ -36,7 +36,7 @@ Absolute path to the generated OpenAPI file.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:352](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L352)
+[packages/create/src/runtime/metadata-core.ts:262](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L262)
 
 ___
 
@@ -48,4 +48,4 @@ Component schema names included in the generated document.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:354](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L354)
+[packages/create/src/runtime/metadata-core.ts:264](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L264)

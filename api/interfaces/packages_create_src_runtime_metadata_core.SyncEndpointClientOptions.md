@@ -36,7 +36,7 @@ SyncEndpointClientBaseOptions.clientFile
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:366](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L366)
+[packages/create/src/runtime/metadata-core.ts:276](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L276)
 
 ___
 
@@ -52,7 +52,7 @@ SyncEndpointClientBaseOptions.projectRoot
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:368](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L368)
+[packages/create/src/runtime/metadata-core.ts:278](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L278)
 
 ___
 
@@ -68,7 +68,7 @@ SyncEndpointClientBaseOptions.typesFile
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:370](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L370)
+[packages/create/src/runtime/metadata-core.ts:280](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L280)
 
 ___
 
@@ -84,7 +84,7 @@ SyncEndpointClientBaseOptions.validatorsFile
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:372](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L372)
+[packages/create/src/runtime/metadata-core.ts:282](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L282)
 
 ___
 
@@ -96,4 +96,4 @@ Canonical endpoint manifest describing the REST surface.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:380](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L380)
+[packages/create/src/runtime/metadata-core.ts:290](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L290)

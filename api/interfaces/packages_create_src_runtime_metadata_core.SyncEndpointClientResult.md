@@ -24,7 +24,7 @@ Number of endpoints included in the generated client file.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:388](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L388)
+[packages/create/src/runtime/metadata-core.ts:298](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L298)
 
 ___
 
@@ -36,7 +36,7 @@ Absolute path to the generated client file.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:390](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L390)
+[packages/create/src/runtime/metadata-core.ts:300](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L300)
 
 ___
 
@@ -48,4 +48,4 @@ Operation ids emitted as endpoint constants and convenience wrappers.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:392](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L392)
+[packages/create/src/runtime/metadata-core.ts:302](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L302)

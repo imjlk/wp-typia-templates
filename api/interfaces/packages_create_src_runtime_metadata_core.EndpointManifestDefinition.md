@@ -31,7 +31,7 @@ Contract registry keyed by logical route contract ids.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:264](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L264)
+[packages/create/src/runtime/metadata-core.ts:174](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L174)
 
 ___
 
@@ -43,7 +43,7 @@ Route registry keyed by concrete REST path and method pairs.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:266](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L266)
+[packages/create/src/runtime/metadata-core.ts:176](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L176)
 
 ___
 
@@ -55,4 +55,4 @@ Optional document-level metadata for aggregate OpenAPI output.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:268](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L268)
+[packages/create/src/runtime/metadata-core.ts:178](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L178)
