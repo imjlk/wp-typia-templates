@@ -195,7 +195,7 @@ describe("@wp-typia/create scaffolding", () => {
 			answers: {
 				author: "Test Runner",
 				description: "Demo npm block",
-				namespace: "create-block",
+				namespace: "demo-space",
 				slug: "demo-npm",
 				title: "Demo Npm",
 			},
@@ -221,6 +221,10 @@ describe("@wp-typia/create scaffolding", () => {
 		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const generatedValidators = fs.readFileSync(path.join(targetDir, "src", "validators.ts"), "utf8");
+		const generatedValidatorToolkit = fs.readFileSync(
+			path.join(targetDir, "src", "validator-toolkit.ts"),
+			"utf8",
+		);
 		const generatedWebpackConfig = fs.readFileSync(
 			path.join(targetDir, "webpack.config.js"),
 			"utf8",
@@ -251,7 +255,7 @@ describe("@wp-typia/create scaffolding", () => {
 			"right",
 			"justify",
 		]);
-		expect(generatedHooks).toContain("export type {");
+		expect(generatedHooks).toContain("type TypiaValidationError");
 		expect(generatedHooks).toContain("useTypiaValidation");
 		expect(generatedEdit).toContain("RichText");
 		expect(generatedEdit).toContain("TextControl");
@@ -273,13 +277,11 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedIndex).toContain("} satisfies BlockSupports;");
 		expect(generatedIndex).toContain("Typia-powered type-safe block");
 		expect(generatedTypes).not.toMatch(/[가-힣]/u);
-		expect(generatedValidators).toContain("@wp-typia/create/runtime/defaults");
-		expect(generatedValidators).toContain("@wp-typia/create/runtime/validation");
-		expect(generatedValidators).toContain("createScaffoldValidatorToolkit");
-		expect(generatedValidators).not.toContain("createValidatedAttributeUpdater");
+		expect(generatedValidators).toContain('from "./validator-toolkit"');
+		expect(generatedValidators).not.toContain("createScaffoldValidatorToolkit");
 		expect(generatedValidators).not.toContain("applyTemplateDefaultsFromManifest");
-		expect(generatedValidators).toContain("clone");
-		expect(generatedValidators).toContain("prune");
+		expect(generatedValidatorToolkit).toContain("createScaffoldValidatorToolkit");
+		expect(generatedValidatorToolkit).toContain("typia.createValidate");
 		expect(generatedWebpackConfig).toContain("@wp-typia/create/runtime/blocks");
 		expect(generatedWebpackConfig).toContain("createTypiaWebpackConfig");
 		expect(generatedEdit).not.toMatch(/[가-힣]/u);
@@ -315,7 +317,7 @@ describe("@wp-typia/create scaffolding", () => {
 			answers: {
 				author: "Test Runner",
 				description: "Demo migration UI block",
-				namespace: "create-block",
+				namespace: "demo-space",
 				slug: "demo-migration-ui",
 				title: "Demo Migration UI",
 			},
@@ -454,7 +456,7 @@ describe("@wp-typia/create scaffolding", () => {
 			answers: {
 				author: "Test Runner",
 				description: "Demo interactivity block",
-				namespace: "create-block",
+				namespace: "demo-space",
 				slug: "demo-interactivity",
 				title: "Demo Interactivity",
 			},
@@ -489,6 +491,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(packageJson.scripts["watch:sync-types"]).toBe(
 			'chokidar "src/types.ts" --debounce 200 -c "npm run sync-types"',
 		);
+		expect(blockJson.name).toBe("demo-space/demo-interactivity");
 		expect(blockJson.textdomain).toBe("demo-interactivity");
 		expect(generatedManifest.manifestVersion).toBe(2);
 		expect(generatedManifest.sourceType).toBe("DemoInteractivityAttributes");
@@ -501,18 +504,15 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedTypes).toContain("ValidationResult");
 		expect(generatedHooks).toContain("useTypiaValidation");
 		expect(generatedHooks).toContain("createUseTypiaValidationHook");
-		expect(generatedValidators).toContain("createScaffoldValidatorToolkit");
-		expect(generatedValidators).not.toContain("createValidatedAttributeUpdater");
-		expect(generatedValidators).toContain("clone");
-		expect(generatedValidators).toContain("prune");
+		expect(generatedValidators).toContain('from "./validator-toolkit"');
+		expect(generatedValidators).not.toContain("createScaffoldValidatorToolkit");
 		expect(generatedEdit).toContain("@wp-typia/create/runtime/inspector");
 		expect(generatedEdit).not.toContain("@wp-typia/create/runtime/schema-core");
 		expect(generatedEdit).toContain("InspectorFromManifest");
 		expect(generatedEdit).toContain("useEditorFields");
 		expect(generatedEdit).toContain("useTypiaValidation");
 		expect(generatedEdit).toContain("useTypedAttributeUpdater");
-		expect(generatedValidators).toContain("@wp-typia/create/runtime/defaults");
-		expect(generatedValidators).toContain("@wp-typia/create/runtime/validation");
+		expect(generatedValidators).toContain('from "./validator-toolkit"');
 		expect(generatedIndex).toContain("@wp-typia/create/runtime/blocks");
 		expect(generatedIndex).toContain("buildScaffoldBlockRegistration");
 		expect(generatedIndex).toContain("type ScaffoldBlockMetadata");
@@ -651,6 +651,10 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "src", "api-types.ts"),
 			"utf8",
 		);
+		const generatedValidatorToolkit = fs.readFileSync(
+			path.join(targetDir, "src", "validator-toolkit.ts"),
+			"utf8",
+		);
 		const generatedManifest = JSON.parse(
 			fs.readFileSync(path.join(targetDir, "src", "typia.manifest.json"), "utf8"),
 		);
@@ -709,6 +713,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedApi).toContain("writeDemoPersistencePublicStateEndpoint");
 		expect(generatedApi).not.toContain("createEndpoint(");
 		expect(generatedData).toContain("from '@wp-typia/rest/react'");
+		expect(generatedValidatorToolkit).toContain("createScaffoldValidatorToolkit");
 		expect(generatedData).toContain("useDemoPersistencePublicStateQuery");
 		expect(generatedData).toContain("useWriteDemoPersistencePublicStateMutation");
 		expect(generatedSyncRest).toContain("syncTypeSchemas");
@@ -1003,6 +1008,11 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "src", "blocks", "demo-compound", "validators.ts"),
 			"utf8",
 		);
+		const generatedRootHooks = fs.readFileSync(path.join(targetDir, "src", "hooks.ts"), "utf8");
+		const generatedValidatorToolkit = fs.readFileSync(
+			path.join(targetDir, "src", "validator-toolkit.ts"),
+			"utf8",
+		);
 		const parentManifest = JSON.parse(
 			fs.readFileSync(
 				path.join(targetDir, "src", "blocks", "demo-compound", "typia.manifest.json"),
@@ -1073,19 +1083,21 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(parentEdit).toContain("ALLOWED_CHILD_BLOCKS");
 		expect(parentEdit).toContain("DEFAULT_CHILD_TEMPLATE");
 		expect(parentEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
+		expect(generatedRootHooks).toContain("useTypiaValidation");
 		expect(parentHooks).toContain("useTypiaValidation");
-		expect(parentHooks).toContain("createUseTypiaValidationHook");
-		expect(parentValidators).toContain("createScaffoldValidatorToolkit");
-		expect(parentValidators).not.toContain("createValidatedAttributeUpdater");
+		expect(parentHooks).toContain("from '../../hooks'");
+		expect(parentValidators).toContain("validator-toolkit");
+		expect(parentValidators).not.toContain("createScaffoldValidatorToolkit");
+		expect(generatedValidatorToolkit).toContain("createScaffoldValidatorToolkit");
 		expect(parentChildren).toContain("DEFAULT_CHILD_BLOCK_NAME");
 		expect(parentChildren).toContain("add-child: insert new allowed child block names here");
 		expect(childEdit).toContain("createAttributeUpdater");
 		expect(childEdit).toContain("useTypiaValidation");
 		expect(childEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
 		expect(childHooks).toContain("useTypiaValidation");
-		expect(childHooks).toContain("createUseTypiaValidationHook");
-		expect(childValidators).toContain("createScaffoldValidatorToolkit");
-		expect(childValidators).not.toContain("createValidatedAttributeUpdater");
+		expect(childHooks).toContain("from '../../hooks'");
+		expect(childValidators).toContain("validator-toolkit");
+		expect(childValidators).not.toContain("createScaffoldValidatorToolkit");
 		expect(addChildScript).toContain("createUseTypiaValidationHook");
 		expect(addChildScript).toContain("createScaffoldValidatorToolkit");
 		expect(addChildScript).toContain("buildScaffoldBlockRegistration");
@@ -1256,6 +1268,10 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "src", "blocks", "demo-compound-storage-item", "validators.ts"),
 			"utf8",
 		);
+		const generatedValidatorToolkit = fs.readFileSync(
+			path.join(targetDir, "src", "validator-toolkit.ts"),
+			"utf8",
+		);
 		const childManifest = JSON.parse(
 			fs.readFileSync(
 				path.join(targetDir, "src", "blocks", "demo-compound-storage-item", "typia.manifest.json"),
@@ -1324,9 +1340,10 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(childEdit).toContain("useTypiaValidation");
 		expect(childEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
 		expect(childHooks).toContain("useTypiaValidation");
-		expect(childHooks).toContain("createUseTypiaValidationHook");
-		expect(childValidators).toContain("createScaffoldValidatorToolkit");
-		expect(childValidators).not.toContain("createValidatedAttributeUpdater");
+		expect(childHooks).toContain("from '../../hooks'");
+		expect(childValidators).toContain("validator-toolkit");
+		expect(childValidators).not.toContain("createScaffoldValidatorToolkit");
+		expect(generatedValidatorToolkit).toContain("createScaffoldValidatorToolkit");
 		expect(generatedAddChild).toContain("ALLOWED_CHILD_MARKER");
 		expect(generatedAddChild).toContain("buildScaffoldBlockRegistration");
 		expect(generatedAddChild).toContain("type ScaffoldBlockMetadata");
@@ -1829,6 +1846,8 @@ describe("@wp-typia/create scaffolding", () => {
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const generatedIndex = fs.readFileSync(path.join(targetDir, "src", "index.js"), "utf8");
+		const generatedHooks = fs.readFileSync(path.join(targetDir, "src", "hooks.ts"), "utf8");
+		const generatedValidators = fs.readFileSync(path.join(targetDir, "src", "validators.ts"), "utf8");
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 		const generatedBlockJson = JSON.parse(
 			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
@@ -1843,6 +1862,8 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedTypes).toContain("export interface DemoRemoteAttributes");
 		expect(generatedTypes).toContain("\"content\"?: string & tags.Default<\"\">");
 		expect(generatedIndex).toContain('import metadata from "./block.json";');
+		expect(generatedHooks).toContain("useTypiaValidation");
+		expect(generatedValidators).toContain("validator-toolkit");
 		expect(generatedBlockJson.name).toBe("create-block/demo-remote");
 		expect(generatedBlockJson.title).toBe("Demo Remote");
 		expect(generatedBlockJson.supports.align).toEqual(["wide", "full"]);

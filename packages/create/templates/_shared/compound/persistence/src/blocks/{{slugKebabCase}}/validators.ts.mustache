@@ -1,30 +1,12 @@
-import typia from 'typia';
 import currentManifest from './typia.manifest.json';
-import {
-	type ManifestDefaultsDocument,
-} from '@wp-typia/create/runtime/defaults';
-import {
-	createScaffoldValidatorToolkit,
-} from '@wp-typia/create/runtime/validation';
 import type {
 	{{pascalCase}}Attributes,
 	{{pascalCase}}ValidationResult,
 } from './types';
+import { createTemplateValidatorToolkit } from '../../validator-toolkit';
 
-const validate = typia.createValidate< {{pascalCase}}Attributes >();
-const assert = typia.createAssert< {{pascalCase}}Attributes >();
-const is = typia.createIs< {{pascalCase}}Attributes >();
-const random = typia.createRandom< {{pascalCase}}Attributes >();
-const clone = typia.misc.createClone< {{pascalCase}}Attributes >();
-const prune = typia.misc.createPrune< {{pascalCase}}Attributes >();
-const scaffoldValidators = createScaffoldValidatorToolkit< {{pascalCase}}Attributes >( {
-	manifest: currentManifest as ManifestDefaultsDocument,
-	validate,
-	assert,
-	is,
-	random,
-	clone,
-	prune,
+const scaffoldValidators = createTemplateValidatorToolkit< {{pascalCase}}Attributes >( {
+	manifest: currentManifest,
 	finalize: ( normalized ) => ( {
 		...normalized,
 		resourceKey:
