@@ -832,6 +832,119 @@ describe("@wp-typia/rest/react", () => {
 		expect(rendered.current.validation).toBeNull();
 	});
 
+	test("invalid mutation validations trigger rollback handlers and invalidate dependent queries", async () => {
+		let serverCount = 0;
+		let onErrorCount = 0;
+		const invalidateCalls: Array<{ endpoint: unknown; request: unknown }> = [];
+		const queryEndpoint = createEndpoint<{ page: number }, { count: number }>({
+			method: "GET",
+			path: "/demo/v1/items",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { page?: unknown }).page === "number"
+					? toValidationResult(success(input as { page: number }))
+					: toValidationResult(failure<{ page: number }>("{ page: number }", "$.page")),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { count?: unknown }).count === "number"
+					? toValidationResult(success(input as { count: number }))
+					: toValidationResult(failure<{ count: number }>("{ count: number }", "$.count")),
+		});
+		const mutationEndpoint = createEndpoint<{ page: number }, { count: number }>({
+			method: "POST",
+			path: "/demo/v1/items",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { page?: unknown }).page === "number"
+					? toValidationResult(success(input as { page: number }))
+					: toValidationResult(failure<{ page: number }>("{ page: number }", "$.page")),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { count?: unknown }).count === "number"
+					? toValidationResult(success(input as { count: number }))
+					: toValidationResult(failure<{ count: number }>("{ count: number }", "$.count")),
+		});
+		const request = { page: 1 };
+		const client = createEndpointDataClient();
+		const originalInvalidate = client.invalidate.bind(client);
+		client.invalidate = ((endpoint, request) => {
+			invalidateCalls.push({ endpoint, request });
+			return originalInvalidate(endpoint, request);
+		}) as typeof client.invalidate;
+
+		const rendered = await createHookRenderer(() => ({
+			mutation: useEndpointMutation<
+				{ page: number },
+				{ count: number },
+				{ previous: { count: number } | undefined }
+			>(mutationEndpoint, {
+				fetchFn: (async (options: { method?: string }) => {
+					if (options.method === "GET") {
+						return { count: serverCount };
+					}
+
+					serverCount += 1;
+					return { nope: true };
+				}) as never,
+				invalidate: {
+					endpoint: queryEndpoint,
+					request,
+				},
+				onError: (error, variables, client, context) => {
+					onErrorCount += 1;
+					expect((error as { isValid?: boolean }).isValid).toBe(false);
+					if (context?.previous) {
+						client.setData(queryEndpoint, variables, context.previous);
+					}
+				},
+				onMutate: (variables, client) => {
+					const previous = client.getData(queryEndpoint, variables);
+					client.setData(queryEndpoint, variables, { count: 999 });
+					return { previous };
+				},
+			}),
+			query: useEndpointQuery(queryEndpoint, request, {
+				fetchFn: (async (options: { method?: string }) => {
+					if (options.method === "GET") {
+						return { count: serverCount };
+					}
+
+					serverCount += 1;
+					return { nope: true };
+				}) as never,
+				staleTime: 30_000,
+			}),
+		}), client);
+
+		await flush();
+		await flush();
+		expect(rendered.current.query.data).toEqual({ count: 0 });
+
+		const result = await rendered.current.mutation.mutateAsync(request);
+		await flush();
+		await flush();
+		await flush();
+		await flush();
+
+		expect(result.isValid).toBe(false);
+		expect(onErrorCount).toBe(1);
+		expect((rendered.current.mutation.error as { isValid?: boolean })?.isValid).toBe(
+			false,
+		);
+		expect(rendered.current.mutation.validation?.isValid).toBe(false);
+		expect(rendered.current.query.data).toEqual({ count: 0 });
+		expect(invalidateCalls).toEqual([
+			{
+				endpoint: queryEndpoint,
+				request,
+			},
+		]);
+	});
+
 	test("overlapping mutations keep isPending true until the last request settles", async () => {
 		const resolvers: Array<(value: { ok: boolean }) => void> = [];
 		const endpoint = createEndpoint<{ page: number }, { ok: boolean }>({

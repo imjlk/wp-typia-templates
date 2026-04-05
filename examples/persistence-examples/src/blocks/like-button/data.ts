@@ -117,21 +117,25 @@ export function useToggleLikeMutation< Context = unknown >(
 			const previous = client.getData( likeStatusEndpoint, queryRequest );
 
 			if ( previous !== undefined ) {
-				client.setData( likeStatusEndpoint, queryRequest, ( current ) => {
-					if ( ! current ) {
-						return current;
-					}
+				client.setData(
+					likeStatusEndpoint,
+					queryRequest,
+					( current ) => {
+						if ( ! current ) {
+							return current;
+						}
 
-					const nextLiked = ! current.likedByCurrentUser;
-					return {
-						...current,
-						count: Math.max(
-							0,
-							current.count + ( nextLiked ? 1 : -1 )
-						),
-						likedByCurrentUser: nextLiked,
-					};
-				} );
+						const nextLiked = ! current.likedByCurrentUser;
+						return {
+							...current,
+							count: Math.max(
+								0,
+								current.count + ( nextLiked ? 1 : -1 )
+							),
+							likedByCurrentUser: nextLiked,
+						};
+					}
+				);
 			}
 
 			let userContext: Context | undefined;
@@ -141,7 +145,11 @@ export function useToggleLikeMutation< Context = unknown >(
 					: undefined;
 			} catch ( error ) {
 				if ( previous !== undefined ) {
-					client.setData( likeStatusEndpoint, queryRequest, previous );
+					client.setData(
+						likeStatusEndpoint,
+						queryRequest,
+						previous
+					);
 				}
 				throw error;
 			}

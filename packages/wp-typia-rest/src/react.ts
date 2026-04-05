@@ -791,12 +791,31 @@ export function useEndpointMutation<Req, Res, Context = unknown>(
 					for (const target of targets) {
 						latest.client.invalidate(target.endpoint, target.request);
 					}
+				} else {
+					setData(undefined);
+					setError(result);
+
+					await latest.onError?.(
+						result,
+						variables,
+						latest.client,
+						context,
+					);
+
+					const targets = normalizeInvalidateTargets(
+						typeof latest.invalidate === "function"
+							? latest.invalidate(undefined, variables, result)
+							: latest.invalidate,
+					);
+					for (const target of targets) {
+						latest.client.invalidate(target.endpoint, target.request);
+					}
 				}
 
 				await latest.onSettled?.(
 					{
-						data: result.data,
-						error: null,
+						data: result.isValid ? result.data : undefined,
+						error: result.isValid ? null : result,
 						validation: result,
 					},
 					variables,
