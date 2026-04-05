@@ -21,6 +21,14 @@ const SUPPORTED_PHP_TYPE_TAGS = new Set([
 	"double",
 ]);
 
+/**
+ * Render a PHP validator class from one manifest document.
+ *
+ * @param manifest Manifest document describing the block attribute schema and
+ * Typia metadata to enforce in PHP.
+ * @returns Generated PHP source plus any warn-only coverage gaps discovered
+ * while traversing the manifest.
+ */
 export function renderPhpValidator(manifest: ManifestDocument): {
 	source: string;
 	warnings: string[];
@@ -432,7 +440,7 @@ return new class {
 
 \tprivate function matchesMultipleOf($value, $multipleOf): bool
 \t{
-\t\tif ($multipleOf == 0) {
+\t\tif ($multipleOf === 0) {
 \t\t\treturn true;
 \t\t}
 \t\tif (is_int($value) && is_int($multipleOf)) {
@@ -472,6 +480,13 @@ return new class {
 	};
 }
 
+/**
+ * Collect warn-only PHP validator generation gaps for one manifest branch.
+ *
+ * @param attribute Manifest attribute metadata to inspect.
+ * @param pathLabel Human-readable path used in emitted warning messages.
+ * @param warnings Mutable accumulator that receives any discovered warnings.
+ */
 export function collectPhpGenerationWarnings(
 	attribute: ManifestAttribute,
 	pathLabel: string,
@@ -508,6 +523,13 @@ export function collectPhpGenerationWarnings(
 	}
 }
 
+/**
+ * Render one JavaScript value into a PHP literal string.
+ *
+ * @param value JSON-like value to encode for the generated validator manifest.
+ * @param indentLevel Current indentation depth, expressed in tab levels.
+ * @returns PHP source code representing the provided value.
+ */
 export function renderPhpValue(value: unknown, indentLevel: number): string {
 	const indent = "\t".repeat(indentLevel);
 	const nestedIndent = "\t".repeat(indentLevel + 1);

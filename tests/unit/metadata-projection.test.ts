@@ -111,6 +111,36 @@ describe("metadata-projection", () => {
 		});
 	});
 
+	test("keeps fallback examples aligned with basic number, string, and array constraints", () => {
+		const boundedString = createNode("string", "slug", {
+			constraints: {
+				...defaultAttributeConstraints(),
+				maxLength: 4,
+				minLength: 4,
+			},
+		});
+		const boundedNumber = createNode("number", "count", {
+			constraints: {
+				...defaultAttributeConstraints(),
+				maximum: 3,
+			},
+		});
+		const boundedArray = createNode("array", "items", {
+			constraints: {
+				...defaultAttributeConstraints(),
+				minItems: 2,
+			},
+			items: createNode("string", "items[]"),
+		});
+
+		expect(createExampleValue(boundedString, "slug")).toBe("Exam");
+		expect(createExampleValue(boundedNumber, "count")).toBe(3);
+		expect(createExampleValue(boundedArray, "item")).toEqual([
+			"Example item1",
+			"Example item2",
+		]);
+	});
+
 	test("rejects nested WordPress extraction tags", () => {
 		expect(() =>
 			validateWordPressExtractionAttributes({

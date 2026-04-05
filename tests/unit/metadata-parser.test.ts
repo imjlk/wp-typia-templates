@@ -54,11 +54,12 @@ function createParserFixtureRoot(): string {
 			"  phone: string;",
 			"}",
 			"",
-			"export interface ParserDemo {",
-			'  title: string & tags.MinLength<3> & tags.Default<"Hello">;',
-			"  count: number & tags.Minimum<0> & tags.Maximum<10>;",
-			"  items: Array<string>;",
-			"  zip: ZipCode;",
+				"export interface ParserDemo {",
+				'  title: string & tags.MinLength<3> & tags.Default<"Hello">;',
+				"  count: number & tags.Minimum<0> & tags.Maximum<10>;",
+				'  aliasTitle: string & tags.Default<{ first: "a"; second: "b" }> & tags.Default<{ second: "b"; first: "a" }>;',
+				"  items: Array<string>;",
+				"  zip: ZipCode;",
 			"  status: Status;",
 			"  body: EmailBody | SmsBody;",
 			'  excerpt: string & tags.Source<"text"> & tags.Selector<".demo__excerpt">;',
@@ -101,6 +102,10 @@ describe("metadata-parser", () => {
 			const count = parserDemo.properties?.count;
 			expect(count?.constraints.minimum).toBe(0);
 			expect(count?.constraints.maximum).toBe(10);
+			expect(parserDemo.properties?.aliasTitle?.defaultValue).toEqual({
+				first: "a",
+				second: "b",
+			});
 
 			const items = parserDemo.properties?.items;
 			expect(items?.kind).toBe("array");

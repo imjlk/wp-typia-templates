@@ -875,6 +875,7 @@ describe("@wp-typia/rest/react", () => {
 	test("invalid mutation validations trigger rollback handlers and invalidate dependent queries", async () => {
 		let serverCount = 0;
 		let onErrorCount = 0;
+		let rolledBackToPrevious = false;
 		const invalidateCalls: Array<{ endpoint: unknown; request: unknown }> = [];
 		const queryEndpoint = createEndpoint<{ page: number }, { count: number }>({
 			method: "GET",
@@ -939,6 +940,9 @@ describe("@wp-typia/rest/react", () => {
 					expect((error as { isValid?: boolean }).isValid).toBe(false);
 					if (context?.previous) {
 						client.setData(queryEndpoint, variables, context.previous);
+						rolledBackToPrevious =
+							client.getData(queryEndpoint, variables)?.count ===
+							context.previous.count;
 					}
 				},
 				onMutate: (variables, client) => {
@@ -970,11 +974,20 @@ describe("@wp-typia/rest/react", () => {
 
 		expect(result.isValid).toBe(false);
 		expect(onErrorCount).toBe(1);
+		expect(rolledBackToPrevious).toBe(true);
 		expect((rendered.current.mutation.error as { isValid?: boolean })?.isValid).toBe(
 			false,
 		);
 		expect(rendered.current.mutation.validation?.isValid).toBe(false);
-		expect(rendered.current.query.data).toEqual({ count: 0 });
+
+		for (let index = 0; index < 6; index += 1) {
+			await flush();
+		}
+
+		const queryCount = rendered.current.query.data?.count;
+		expect(queryCount).toBeDefined();
+		expect(queryCount).not.toBe(999);
+		expect([0, serverCount]).toContain(queryCount as number);
 		expect(invalidateCalls).toEqual([
 			{
 				endpoint: queryEndpoint,

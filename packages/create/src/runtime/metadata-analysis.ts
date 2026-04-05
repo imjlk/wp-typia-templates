@@ -90,6 +90,92 @@ export function getTaggedSyncBlockMetadataFailureCode(
 	return (error as TaggedMetadataAnalysisError)[SYNC_BLOCK_METADATA_FAILURE_CODE];
 }
 
+function isProjectLocalSourceFile(
+	filePath: string,
+	projectRoot: string,
+): boolean {
+	if (filePath.startsWith(TYPESCRIPT_LIB_DIRECTORY)) {
+		return false;
+	}
+	if (filePath.includes(`${path.sep}node_modules${path.sep}`)) {
+		return false;
+	}
+
+	return !path.relative(projectRoot, filePath).startsWith("..");
+}
+
+function collectSourceFileModuleSpecifiers(sourceFile: ts.SourceFile): string[] {
+	const moduleSpecifiers: string[] = [];
+
+	for (const statement of sourceFile.statements) {
+		if (
+			(ts.isImportDeclaration(statement) ||
+				ts.isExportDeclaration(statement)) &&
+			statement.moduleSpecifier &&
+			ts.isStringLiteralLike(statement.moduleSpecifier)
+		) {
+			moduleSpecifiers.push(statement.moduleSpecifier.text);
+		}
+	}
+
+	ts.forEachChild(sourceFile, (node) => {
+		if (
+			ts.isImportTypeNode(node) &&
+			ts.isLiteralTypeNode(node.argument) &&
+			ts.isStringLiteral(node.argument.literal)
+		) {
+			moduleSpecifiers.push(node.argument.literal.text);
+		}
+	});
+
+	return moduleSpecifiers;
+}
+
+function collectReferencedLocalSourceFiles(
+	program: ts.Program,
+	entryFilePath: string,
+	compilerOptions: ts.CompilerOptions,
+	projectRoot: string,
+): Set<string> {
+	const visited = new Set<string>();
+	const queue = [entryFilePath];
+
+	while (queue.length > 0) {
+		const filePath = queue.pop();
+		if (
+			filePath === undefined ||
+			visited.has(filePath) ||
+			!isProjectLocalSourceFile(filePath, projectRoot)
+		) {
+			continue;
+		}
+
+		visited.add(filePath);
+		const sourceFile = program.getSourceFile(filePath);
+		if (sourceFile === undefined) {
+			continue;
+		}
+
+		for (const moduleSpecifier of collectSourceFileModuleSpecifiers(sourceFile)) {
+			const resolved = ts.resolveModuleName(
+				moduleSpecifier,
+				filePath,
+				compilerOptions,
+				ts.sys,
+			).resolvedModule;
+			const resolvedFileName = resolved?.resolvedFileName;
+			if (
+				resolvedFileName &&
+				isProjectLocalSourceFile(resolvedFileName, projectRoot)
+			) {
+				queue.push(resolvedFileName);
+			}
+		}
+	}
+
+	return visited;
+}
+
 function stableSerializeAnalysisValue(value: unknown): string {
 	if (value === undefined) {
 		return '"__undefined__"';
@@ -309,10 +395,17 @@ export function createAnalysisContext(
 		rootNames: analysisInputs.rootNames,
 	});
 	const diagnostics = ts.getPreEmitDiagnostics(program);
+	const localSourceFiles = collectReferencedLocalSourceFiles(
+		program,
+		typesFilePath,
+		analysisInputs.compilerOptions,
+		projectRoot,
+	);
 	const blockingDiagnostic = diagnostics.find(
 		(diagnostic) =>
 			diagnostic.category === ts.DiagnosticCategory.Error &&
-			diagnostic.file?.fileName === typesFilePath,
+			diagnostic.file !== undefined &&
+			localSourceFiles.has(diagnostic.file.fileName),
 	);
 	if (blockingDiagnostic) {
 		throw formatDiagnosticError(blockingDiagnostic);

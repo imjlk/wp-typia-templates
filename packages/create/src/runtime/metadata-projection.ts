@@ -174,16 +174,16 @@ export function createExampleValue(node: AttributeNode, key: string): JsonValue 
 
 	switch (node.kind) {
 		case "string":
-			if (node.constraints.format === "uuid") {
-				return "00000000-0000-4000-8000-000000000000";
-			}
-			return `Example ${key}`;
+			return fitStringExampleToConstraints(
+				createFormattedStringExample(node.constraints.format, key),
+				node.constraints,
+			);
 		case "number":
-			return node.constraints.minimum ?? 42;
+			return createNumericExample(node);
 		case "boolean":
 			return true;
 		case "array":
-			return [];
+			return createArrayExample(node, key);
 		case "object":
 			return Object.fromEntries(
 				Object.entries(node.properties ?? {}).map(
@@ -210,4 +210,99 @@ export function createExampleValue(node: AttributeNode, key: string): JsonValue 
 			);
 		}
 	}
+}
+
+function createFormattedStringExample(
+	format: AttributeNode["constraints"]["format"],
+	key: string,
+): string {
+	switch (format) {
+		case "uuid":
+			return "00000000-0000-4000-8000-000000000000";
+		case "email":
+			return "example@example.com";
+		case "url":
+		case "uri":
+			return "https://example.com";
+		case "ipv4":
+			return "127.0.0.1";
+		case "ipv6":
+			return "::1";
+		case "date-time":
+			return "2024-01-01T00:00:00Z";
+		default:
+			return `Example ${key}`;
+	}
+}
+
+function fitStringExampleToConstraints(
+	value: string,
+	constraints: AttributeNode["constraints"],
+): string {
+	let nextValue = value;
+
+	if (
+		constraints.maxLength !== null &&
+		nextValue.length > constraints.maxLength
+	) {
+		nextValue = nextValue.slice(0, constraints.maxLength);
+	}
+	if (
+		constraints.minLength !== null &&
+		nextValue.length < constraints.minLength
+	) {
+		nextValue = nextValue.padEnd(constraints.minLength, "x");
+	}
+
+	return nextValue;
+}
+
+function createNumericExample(node: AttributeNode): number {
+	const {
+		exclusiveMaximum,
+		exclusiveMinimum,
+		maximum,
+		minimum,
+		multipleOf,
+	} = node.constraints;
+	const step = multipleOf && multipleOf !== 0 ? multipleOf : 1;
+	const minCandidate =
+		minimum ?? (exclusiveMinimum !== null ? exclusiveMinimum + step : null);
+	const maxCandidate =
+		maximum ?? (exclusiveMaximum !== null ? exclusiveMaximum - step : null);
+
+	let candidate =
+		multipleOf && multipleOf !== 0
+			? minCandidate !== null
+				? Math.ceil(minCandidate / multipleOf) * multipleOf
+				: maxCandidate !== null
+					? Math.floor(maxCandidate / multipleOf) * multipleOf
+					: multipleOf
+			: minCandidate ?? maxCandidate ?? 42;
+
+	if (maxCandidate !== null && candidate > maxCandidate) {
+		candidate =
+			multipleOf && multipleOf !== 0
+				? Math.floor(maxCandidate / multipleOf) * multipleOf
+				: maxCandidate;
+	}
+	if (minCandidate !== null && candidate < minCandidate) {
+		candidate =
+			multipleOf && multipleOf !== 0
+				? Math.ceil(minCandidate / multipleOf) * multipleOf
+				: minCandidate;
+	}
+
+	return candidate;
+}
+
+function createArrayExample(node: AttributeNode, key: string): JsonValue[] {
+	const minimumItems = Math.max(node.constraints.minItems ?? 0, 0);
+	if (minimumItems === 0 || node.items === undefined) {
+		return [];
+	}
+
+	return Array.from({ length: minimumItems }, (_value, index) =>
+		createExampleValue(node.items!, `${key}${index + 1}`),
+	);
 }

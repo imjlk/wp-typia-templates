@@ -37,6 +37,14 @@ const SUPPORTED_TAGS = new Set([
 	"Type",
 ]);
 
+/**
+ * Analyze one named source type from a TypeScript module.
+ *
+ * @param options Metadata analysis options including the project root, source
+ * type name, and types file path.
+ * @returns The resolved project root plus the parsed root attribute node for
+ * the requested source type.
+ */
 export function analyzeSourceType(
 	options: {
 		projectRoot?: string;
@@ -59,6 +67,16 @@ export function analyzeSourceType(
 	};
 }
 
+/**
+ * Analyze multiple named source types from a TypeScript module.
+ *
+ * @param options Metadata analysis options including the optional project root
+ * and the relative types file path to parse.
+ * @param sourceTypeNames Exported type or interface names to resolve from the
+ * configured types file.
+ * @returns A record keyed by source type name with parsed attribute-node trees
+ * for each requested type.
+ */
 export function analyzeSourceTypes(
 	options: {
 		projectRoot?: string;
@@ -107,6 +125,16 @@ function findNamedDeclaration(
 	return undefined;
 }
 
+/**
+ * Parse an interface or type alias declaration into one attribute-node tree.
+ *
+ * @param declaration TypeScript declaration node to parse.
+ * @param ctx Shared analysis context used for type resolution and recursion
+ * detection.
+ * @param pathLabel Human-readable path label for diagnostics.
+ * @param required Whether the resulting node should be marked as required.
+ * @returns The parsed attribute-node representation for the declaration.
+ */
 export function parseNamedDeclaration(
 	declaration: ts.InterfaceDeclaration | ts.TypeAliasDeclaration,
 	ctx: AnalysisContext,
@@ -189,6 +217,14 @@ function parseInterfaceDeclaration(
 	};
 }
 
+/**
+ * Parse one TypeScript type node into the internal metadata model.
+ *
+ * @param node TypeScript AST node describing the source type shape.
+ * @param ctx Shared analysis context used for symbol and type resolution.
+ * @param pathLabel Human-readable path label used in parse errors and warnings.
+ * @returns The parsed attribute-node representation of the provided type node.
+ */
 export function parseTypeNode(
 	node: ts.TypeNode,
 	ctx: AnalysisContext,
@@ -788,12 +824,47 @@ function mergeDefaultValue(
 	if (right === undefined) {
 		return left;
 	}
-	if (JSON.stringify(left) !== JSON.stringify(right)) {
+	if (!jsonValuesEqual(left, right)) {
 		throw new Error(
 			`Conflicting default values in intersection at ${pathLabel}`,
 		);
 	}
 	return cloneJsonValue(left);
+}
+
+function jsonValuesEqual(left: JsonValue, right: JsonValue): boolean {
+	if (left === right) {
+		return true;
+	}
+	if (
+		left === null ||
+		right === null ||
+		typeof left !== "object" ||
+		typeof right !== "object"
+	) {
+		return false;
+	}
+	if (Array.isArray(left) || Array.isArray(right)) {
+		if (!Array.isArray(left) || !Array.isArray(right)) {
+			return false;
+		}
+		if (left.length !== right.length) {
+			return false;
+		}
+
+		return left.every((value, index) => jsonValuesEqual(value, right[index]));
+	}
+
+	const leftEntries = Object.entries(left);
+	const rightEntries = Object.entries(right);
+	if (leftEntries.length !== rightEntries.length) {
+		return false;
+	}
+
+	return leftEntries.every(([key, value]) =>
+		Object.prototype.hasOwnProperty.call(right, key) &&
+		jsonValuesEqual(value, right[key]),
+	);
 }
 
 function intersectEnumValues(
