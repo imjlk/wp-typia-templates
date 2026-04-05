@@ -4,15 +4,25 @@
  * Description:       Kitchen-sink showcase block for wp-typia.
  * Version:           0.1.0
  * Requires at least: 6.7
+ * Tested up to:      6.9
  * Requires PHP:      7.4
  * Author:            imjlk
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       my-typia-block
+ * Text Domain:       my_typia_block
+ * Domain Path:       /languages
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
+}
+
+function my_typia_block_load_textdomain() {
+	load_plugin_textdomain(
+		'my_typia_block',
+		false,
+		dirname( plugin_basename( __FILE__ ) ) . '/languages'
+	);
 }
 
 /**
@@ -149,6 +159,7 @@ function my_typia_block_get_counter( $post_id, $resource_key ) {
 	$table_name = my_typia_block_get_counter_table_name();
 	$count      = $wpdb->get_var(
 		$wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from an internal helper.
 			"SELECT count FROM {$table_name} WHERE post_id = %d AND resource_key = %s",
 			$post_id,
 			$resource_key
@@ -166,6 +177,7 @@ function my_typia_block_increment_counter( $post_id, $resource_key, $delta ) {
 	$insert_count = max( 0, $delta_value );
 	$result       = $wpdb->query(
 		$wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from an internal helper.
 			"INSERT INTO {$table_name} (post_id, resource_key, count, updated_at)
 			VALUES (%d, %s, %d, %s)
 			ON DUPLICATE KEY UPDATE
@@ -279,6 +291,7 @@ function my_typia_block_register_block() {
 
 	register_block_type( $build_dir );
 }
+add_action( 'init', 'my_typia_block_load_textdomain' );
 add_action( 'init', 'my_typia_block_register_block' );
 add_action( 'init', 'my_typia_block_ensure_counter_table' );
 add_action( 'rest_api_init', 'my_typia_block_register_routes' );

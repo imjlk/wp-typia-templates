@@ -522,6 +522,9 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedInteractivity).not.toContain("onInit:");
 		expect(generatedInteractivity).not.toContain("onInteraction:");
 		expect(generatedInteractivity).not.toContain("onDestroy:");
+		expect(generatedSave).toContain('role="status"');
+		expect(generatedSave).toContain('aria-live="polite"');
+		expect(generatedSave).toContain('aria-hidden="true"');
 		expect(generatedSave).not.toContain("data-clicks");
 		expect(generatedSave).not.toContain("data-is-animating");
 		expect(generatedSave).not.toContain("data-is-visible");
@@ -690,8 +693,12 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedManifest.attributes.resourceKey.typia.defaultValue).toBe("primary");
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(true);
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-public.php"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "languages", ".gitkeep"))).toBe(true);
 		expect(pluginBootstrap).toContain("post-meta");
 		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-public");
+		expect(pluginBootstrap).toContain("Tested up to:      6.9");
+		expect(pluginBootstrap).toContain("Domain Path:       /languages");
+		expect(pluginBootstrap).toContain("load_plugin_textdomain(");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-public.php';");
 		expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
@@ -729,6 +736,8 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedSyncRest).toContain("src/api.openapi.json");
 		expect(generatedSyncRest).not.toContain("openApiInfo: REST_ENDPOINT_MANIFEST.info");
 		expect(generatedRender).toContain("publicWriteToken");
+		expect(generatedRender).toContain('role="status"');
+		expect(generatedRender).toContain('aria-live="polite"');
 		expect(generatedApiTypes).toContain("publicWriteRequestId: string");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
 		expect(generatedSave).toContain("intentionally server-rendered");
@@ -811,7 +820,11 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedManifest.sourceType).toBe("DemoPersistenceAuthenticatedAttributes");
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(true);
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-auth.php"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "languages", ".gitkeep"))).toBe(true);
 		expect(pluginBootstrap).toContain("Text Domain:       demo-persistence-authenticated");
+		expect(pluginBootstrap).toContain("Tested up to:      6.9");
+		expect(pluginBootstrap).toContain("Domain Path:       /languages");
+		expect(pluginBootstrap).toContain("load_plugin_textdomain(");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-auth.php';");
 		expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
@@ -1309,7 +1322,11 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(true);
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-auth.php"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "languages", ".gitkeep"))).toBe(true);
 		expect(pluginBootstrap).toContain("can_write_authenticated");
+		expect(pluginBootstrap).toContain("Tested up to:      6.9");
+		expect(pluginBootstrap).toContain("Domain Path:       /languages");
+		expect(pluginBootstrap).toContain("load_plugin_textdomain(");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-auth.php';");
 		expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
@@ -1540,7 +1557,11 @@ describe("@wp-typia/create scaffolding", () => {
 
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(true);
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-public.php"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "languages", ".gitkeep"))).toBe(true);
 		expect(pluginBootstrap).toContain("permission_callback' => 'demo_compound_public_can_write_publicly'");
+		expect(pluginBootstrap).toContain("Tested up to:      6.9");
+		expect(pluginBootstrap).toContain("Domain Path:       /languages");
+		expect(pluginBootstrap).toContain("load_plugin_textdomain(");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-shared.php';");
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-public.php';");
 		expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
@@ -1555,6 +1576,9 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(restPublicHelper).toContain("SELECT GET_LOCK(%s, 5)");
 		expect(restPublicHelper).toContain("return 'wpt_pwl_' . md5(");
 		expect(parentRender).toContain("publicWriteToken");
+		expect(parentRender).toContain("wp_kses_post( $content )");
+		expect(parentRender).toContain('role="status"');
+		expect(parentRender).toContain('aria-live="polite"');
 		expect(generatedApiTypes).toContain("publicWriteRequestId: string");
 		expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
 		expect(restPublicHelper).toContain("Customize the public write gate here");

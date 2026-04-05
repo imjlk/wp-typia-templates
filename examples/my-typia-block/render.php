@@ -103,6 +103,11 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		>
 			<?php esc_html_e( 'Persist Count', 'my_typia_block' ); ?>
 		</button>
-		<span data-wp-text="state.count">0</span>
+		<span
+			role="status"
+			aria-live="polite"
+			aria-atomic="true"
+			data-wp-text="state.count"
+		>0</span>
 	</div>
 </div>

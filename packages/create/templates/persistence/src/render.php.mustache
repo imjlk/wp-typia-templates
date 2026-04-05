@@ -19,11 +19,11 @@ if ( ! is_object( $validator ) || ! method_exists( $validator, 'apply_defaults' 
 	return '';
 }
 
-$normalized  = $validator->apply_defaults( is_array( $attributes ) ? $attributes : array() );
-$validation  = $validator->validate( $normalized );
-$resourceKey = isset( $normalized['resourceKey'] ) ? (string) $normalized['resourceKey'] : '';
+$normalized   = $validator->apply_defaults( is_array( $attributes ) ? $attributes : array() );
+$validation   = $validator->validate( $normalized );
+$resource_key = isset( $normalized['resourceKey'] ) ? (string) $normalized['resourceKey'] : '';
 
-if ( empty( $validation['valid'] ) || '' === $resourceKey ) {
+if ( empty( $validation['valid'] ) || '' === $resource_key ) {
 	return '';
 }
 
@@ -46,7 +46,7 @@ $context            = array(
 	'isVisible'         => ! empty( $normalized['isVisible'] ),
 	'persistencePolicy' => $persistence_policy,
 	'postId'            => (int) $post_id,
-	'resourceKey'       => $resourceKey,
+	'resourceKey'       => $resource_key,
 	'storage'           => $storage_mode,
 );
 
@@ -56,7 +56,7 @@ if ( 'authenticated' === $persistence_policy ) {
 		$context['restNonce'] = wp_create_nonce( 'wp_rest' );
 	}
 } elseif ( $post_id > 0 && function_exists( '{{phpPrefix}}_create_public_write_token' ) ) {
-	$public_write = {{phpPrefix}}_create_public_write_token( (int) $post_id, $resourceKey );
+	$public_write = {{phpPrefix}}_create_public_write_token( (int) $post_id, $resource_key );
 	if ( is_array( $public_write ) ) {
 		$token      = isset( $public_write['token'] ) ? (string) $public_write['token'] : '';
 		$expires_at = isset( $public_write['expiresAt'] ) ? (int) $public_write['expiresAt'] : 0;
@@ -96,12 +96,21 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		<?php endif; ?>
 		<p
 			class="wp-block-{{slugKebabCase}}-frontend__error"
+			role="status"
+			aria-live="polite"
+			aria-atomic="true"
 			data-wp-bind--hidden="!state.error"
 			data-wp-text="state.error"
 			hidden
 		></p>
 		<?php if ( ! empty( $normalized['showCount'] ) ) : ?>
-			<span class="wp-block-{{slugKebabCase}}-frontend__count" data-wp-text="state.count">
+			<span
+				class="wp-block-{{slugKebabCase}}-frontend__count"
+				role="status"
+				aria-live="polite"
+				aria-atomic="true"
+				data-wp-text="state.count"
+			>
 				0
 			</span>
 		<?php endif; ?>

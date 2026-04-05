@@ -19,9 +19,9 @@ if ( ! is_object( $validator ) || ! method_exists( $validator, 'apply_defaults' 
 	return '';
 }
 
-$normalized        = $validator->apply_defaults( is_array( $attributes ) ? $attributes : array() );
-$validation        = $validator->validate( $normalized );
-$resourceKey       = isset( $normalized['resourceKey'] ) ? (string) $normalized['resourceKey'] : '';
+$normalized         = $validator->apply_defaults( is_array( $attributes ) ? $attributes : array() );
+$validation         = $validator->validate( $normalized );
+$resource_key       = isset( $normalized['resourceKey'] ) ? (string) $normalized['resourceKey'] : '';
 $heading           = isset( $normalized['heading'] ) ? (string) $normalized['heading'] : '{{title}}';
 $intro             = isset( $normalized['intro'] ) ? (string) $normalized['intro'] : '';
 $button_label      = isset( $normalized['buttonLabel'] ) ? (string) $normalized['buttonLabel'] : 'Persist Count';
@@ -37,7 +37,7 @@ $notice_message    = 'authenticated' === $persistence_policy
 	? __( 'Sign in to persist this counter.', '{{textDomain}}' )
 	: __( 'Reload the page to refresh this write token.', '{{textDomain}}' );
 
-if ( empty( $validation['valid'] ) || '' === $resourceKey ) {
+if ( empty( $validation['valid'] ) || '' === $resource_key ) {
 	return '';
 }
 
@@ -47,7 +47,7 @@ $context = array(
 	'count'             => 0,
 	'persistencePolicy' => $persistence_policy,
 	'postId'            => (int) $post_id,
-	'resourceKey'       => $resourceKey,
+	'resourceKey'       => $resource_key,
 	'showCount'         => $show_count,
 	'storage'           => $storage_mode,
 );
@@ -58,7 +58,7 @@ if ( 'authenticated' === $persistence_policy ) {
 		$context['restNonce'] = wp_create_nonce( 'wp_rest' );
 	}
 } elseif ( $post_id > 0 && function_exists( '{{phpPrefix}}_create_public_write_token' ) ) {
-	$public_write = {{phpPrefix}}_create_public_write_token( (int) $post_id, $resourceKey );
+	$public_write = {{phpPrefix}}_create_public_write_token( (int) $post_id, $resource_key );
 	if ( is_array( $public_write ) ) {
 		$token      = isset( $public_write['token'] ) ? (string) $public_write['token'] : '';
 		$expires_at = isset( $public_write['expiresAt'] ) ? (int) $public_write['expiresAt'] : 0;
@@ -100,13 +100,22 @@ $wrapper_attributes = get_block_wrapper_attributes(
 	<?php endif; ?>
 	<p
 		class="{{cssClassName}}__error"
+		role="status"
+		aria-live="polite"
+		aria-atomic="true"
 		data-wp-bind--hidden="!state.error"
 		data-wp-text="state.error"
 		hidden
 	></p>
 	<?php if ( $show_count ) : ?>
 		<div class="{{cssClassName}}__counter">
-			<span class="{{cssClassName}}__count" data-wp-text="state.count">0</span>
+			<span
+				class="{{cssClassName}}__count"
+				role="status"
+				aria-live="polite"
+				aria-atomic="true"
+				data-wp-text="state.count"
+			>0</span>
 			<button
 				type="button"
 				<?php echo $can_write ? '' : 'disabled'; ?>
@@ -118,6 +127,6 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		</div>
 	<?php endif; ?>
 	<div class="{{cssClassName}}__items">
-		<?php echo $content; ?>
+		<?php echo wp_kses_post( $content ); ?>
 	</div>
 </div>

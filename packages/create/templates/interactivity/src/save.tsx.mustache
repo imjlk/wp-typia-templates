@@ -34,7 +34,12 @@ export default function Save({ attributes }: { attributes: {{pascalCase}}Attribu
         />
 
         {attributes.showCounter && (
-          <div className="{{cssClassName}}__counter">
+          <div
+            className="{{cssClassName}}__counter"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             <span className="{{cssClassName}}__counter-label">
               Clicks:
             </span>
@@ -48,7 +53,7 @@ export default function Save({ attributes }: { attributes: {{pascalCase}}Attribu
         )}
 
         {attributes.maxClicks > 0 && (
-          <div className="{{cssClassName}}__progress">
+          <div className="{{cssClassName}}__progress" aria-hidden="true">
             <div
               className="{{cssClassName}}__progress-bar"
               data-wp-style--width="state.progress + '%'"
@@ -58,12 +63,16 @@ export default function Save({ attributes }: { attributes: {{pascalCase}}Attribu
 
         <div
           className={`{{cssClassName}}__animation ${attributes.animation}`}
+          aria-hidden="true"
           data-wp-class="is-active"
         />
 
         {attributes.maxClicks > 0 && (
           <div
             className="{{cssClassName}}__completion"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
             data-wp-bind--hidden="!state.isComplete"
           >
             🎉 Complete!

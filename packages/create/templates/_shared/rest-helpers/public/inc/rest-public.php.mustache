@@ -90,11 +90,11 @@ function {{phpPrefix}}_enforce_public_write_rate_limit( $post_id, $resource_key 
 		$post_id,
 		$resource_key,
 		'rate_limit',
-		function() use ( $post_id, $resource_key ) {
+		function () use ( $post_id, $resource_key ) {
 			$key   = {{phpPrefix}}_get_public_write_rate_limit_key( $post_id, $resource_key );
 			$count = (int) get_transient( $key );
 
-			if ( $count >= (int) {{phpPrefix}}_PUBLIC_WRITE_RATE_LIMIT_MAX ) {
+			if ( $count >= (int) {{phpPrefixUpper}}_PUBLIC_WRITE_RATE_LIMIT_MAX ) {
 				return new WP_Error(
 					'rest_rate_limited',
 					'Too many public write attempts. Wait a minute and try again.',
@@ -105,7 +105,7 @@ function {{phpPrefix}}_enforce_public_write_rate_limit( $post_id, $resource_key 
 			set_transient(
 				$key,
 				$count + 1,
-				(int) {{phpPrefix}}_PUBLIC_WRITE_RATE_LIMIT_WINDOW
+				(int) {{phpPrefixUpper}}_PUBLIC_WRITE_RATE_LIMIT_WINDOW
 			);
 
 			return true;
@@ -126,7 +126,7 @@ function {{phpPrefix}}_consume_public_write_request_id( $post_id, $resource_key,
 		$post_id,
 		$resource_key,
 		'replay',
-		function() use ( $post_id, $resource_key, $request_id ) {
+		function () use ( $post_id, $resource_key, $request_id ) {
 			$key = {{phpPrefix}}_get_public_write_request_replay_key( $post_id, $resource_key, $request_id );
 			if ( false !== get_transient( $key ) ) {
 				return new WP_Error(
@@ -136,7 +136,7 @@ function {{phpPrefix}}_consume_public_write_request_id( $post_id, $resource_key,
 				);
 			}
 
-			set_transient( $key, 1, (int) {{phpPrefix}}_PUBLIC_WRITE_TTL );
+			set_transient( $key, 1, (int) {{phpPrefixUpper}}_PUBLIC_WRITE_TTL );
 
 			return true;
 		},
@@ -154,7 +154,7 @@ function {{phpPrefix}}_release_public_write_request_id( $post_id, $resource_key,
 
 // Public write tokens are scaffold-owned by default; customize this flow if you need a different anonymous write policy.
 function {{phpPrefix}}_create_public_write_token( $post_id, $resource_key ) {
-	$expires_at = time() + (int) {{phpPrefix}}_PUBLIC_WRITE_TTL;
+	$expires_at = time() + (int) {{phpPrefixUpper}}_PUBLIC_WRITE_TTL;
 	$payload    = array(
 		'action'      => {{phpPrefix}}_get_public_write_action(),
 		'exp'         => $expires_at,
@@ -231,7 +231,7 @@ function {{phpPrefix}}_verify_public_write_token( $token, $post_id, $resource_ke
 	}
 
 	$expires_at = isset( $payload['exp'] ) ? (int) $payload['exp'] : 0;
-	if ( $expires_at < time() ) {
+	if ( time() > $expires_at ) {
 		return new WP_Error(
 			'rest_forbidden',
 			'The public write token has expired. Reload the page and try again.',
@@ -247,7 +247,7 @@ function {{phpPrefix}}_verify_public_write_token( $token, $post_id, $resource_ke
 		);
 	}
 
-	if ( (int) $post_id !== (int) ( isset( $payload['postId'] ) ? $payload['postId'] : 0 ) ) {
+	if ( (int) ( isset( $payload['postId'] ) ? $payload['postId'] : 0 ) !== (int) $post_id ) {
 		return new WP_Error(
 			'rest_forbidden',
 			'The public write token is not valid for this post.',
@@ -255,7 +255,7 @@ function {{phpPrefix}}_verify_public_write_token( $token, $post_id, $resource_ke
 		);
 	}
 
-	if ( (string) $resource_key !== (string) ( isset( $payload['resourceKey'] ) ? $payload['resourceKey'] : '' ) ) {
+	if ( (string) ( isset( $payload['resourceKey'] ) ? $payload['resourceKey'] : '' ) !== (string) $resource_key ) {
 		return new WP_Error(
 			'rest_forbidden',
 			'The public write token is not valid for this resource key.',

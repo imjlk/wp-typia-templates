@@ -4,15 +4,25 @@
  * Description:       Policy-aware persistence example blocks for wp-typia.
  * Version:           0.1.0
  * Requires at least: 6.7
+ * Tested up to:      6.9
  * Requires PHP:      7.4
  * Author:            imjlk
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       persistence-examples
+ * Domain Path:       /languages
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
+}
+
+function persistence_examples_load_textdomain() {
+	load_plugin_textdomain(
+		'persistence-examples',
+		false,
+		dirname( plugin_basename( __FILE__ ) ) . '/languages'
+	);
 }
 
 define( 'PERSISTENCE_EXAMPLES_PUBLIC_WRITE_TTL', 5 );
@@ -195,6 +205,7 @@ function persistence_examples_get_counter( $post_id, $resource_key ) {
 	$table_name = persistence_examples_get_counter_table_name();
 	$count      = $wpdb->get_var(
 		$wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from an internal helper.
 			"SELECT count FROM {$table_name} WHERE post_id = %d AND resource_key = %s",
 			$post_id,
 			$resource_key
@@ -212,6 +223,7 @@ function persistence_examples_increment_counter( $post_id, $resource_key, $delta
 	$insert_count = max( 0, $delta_value );
 	$result       = $wpdb->query(
 		$wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from an internal helper.
 			"INSERT INTO {$table_name} (post_id, resource_key, count, updated_at)
 			VALUES (%d, %s, %d, %s)
 			ON DUPLICATE KEY UPDATE
@@ -272,7 +284,7 @@ function persistence_examples_get_counter_rate_limit_key( $post_id, $resource_ke
 function persistence_examples_enforce_counter_rate_limit( $post_id, $resource_key ) {
 	return persistence_examples_with_lock(
 		persistence_examples_get_counter_rate_limit_key( $post_id, $resource_key ),
-		function() use ( $post_id, $resource_key ) {
+		function () use ( $post_id, $resource_key ) {
 			$key   = persistence_examples_get_counter_rate_limit_key( $post_id, $resource_key );
 			$count = (int) get_transient( $key );
 
@@ -312,7 +324,7 @@ function persistence_examples_consume_counter_request_id( $post_id, $resource_ke
 
 	return persistence_examples_with_lock(
 		persistence_examples_get_counter_replay_key( $post_id, $resource_key, $request_id ),
-		function() use ( $post_id, $resource_key, $request_id ) {
+		function () use ( $post_id, $resource_key, $request_id ) {
 			$key = persistence_examples_get_counter_replay_key( $post_id, $resource_key, $request_id );
 			if ( false !== get_transient( $key ) ) {
 				return new WP_Error(
@@ -431,7 +443,7 @@ function persistence_examples_verify_counter_public_write_token( $token, $post_i
 		);
 	}
 
-	if ( (int) $post_id !== (int) ( isset( $payload['postId'] ) ? $payload['postId'] : 0 ) ) {
+	if ( (int) ( isset( $payload['postId'] ) ? $payload['postId'] : 0 ) !== (int) $post_id ) {
 		return new WP_Error(
 			'rest_forbidden',
 			'The public write token is not valid for this post.',
@@ -439,7 +451,7 @@ function persistence_examples_verify_counter_public_write_token( $token, $post_i
 		);
 	}
 
-	if ( (string) $resource_key !== (string) ( isset( $payload['resourceKey'] ) ? $payload['resourceKey'] : '' ) ) {
+	if ( (string) ( isset( $payload['resourceKey'] ) ? $payload['resourceKey'] : '' ) !== (string) $resource_key ) {
 		return new WP_Error(
 			'rest_forbidden',
 			'The public write token is not valid for this resource key.',
@@ -604,6 +616,7 @@ function persistence_examples_get_like_count( $post_id, $resource_key ) {
 	$table_name = persistence_examples_get_like_table_name();
 	$count      = $wpdb->get_var(
 		$wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from an internal helper.
 			"SELECT COUNT(*) FROM {$table_name} WHERE post_id = %d AND resource_key = %s",
 			$post_id,
 			$resource_key
@@ -623,6 +636,7 @@ function persistence_examples_has_like( $post_id, $resource_key, $user_id ) {
 	$table_name = persistence_examples_get_like_table_name();
 	$exists     = $wpdb->get_var(
 		$wpdb->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name comes from an internal helper.
 			"SELECT 1 FROM {$table_name} WHERE post_id = %d AND resource_key = %s AND user_id = %d LIMIT 1",
 			$post_id,
 			$resource_key,
@@ -641,7 +655,7 @@ function persistence_examples_toggle_like_for_user( $post_id, $resource_key, $us
 
 	return persistence_examples_with_lock(
 		$lock_name,
-		function() use ( $post_id, $resource_key, $table_name, $user_id, $wpdb ) {
+		function () use ( $post_id, $resource_key, $table_name, $user_id, $wpdb ) {
 			$has_like = persistence_examples_has_like( $post_id, $resource_key, $user_id );
 
 			if ( $has_like ) {
@@ -786,6 +800,7 @@ function persistence_examples_register_routes() {
 }
 
 register_activation_hook( __FILE__, 'persistence_examples_install_storage' );
+add_action( 'init', 'persistence_examples_load_textdomain' );
 add_action( 'init', 'persistence_examples_ensure_storage' );
 add_action( 'init', 'persistence_examples_register_blocks' );
 add_action( 'rest_api_init', 'persistence_examples_register_routes' );
