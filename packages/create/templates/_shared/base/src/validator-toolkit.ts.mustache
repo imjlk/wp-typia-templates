@@ -1,0 +1,31 @@
+import typia from 'typia';
+
+import type { ManifestDefaultsDocument } from '@wp-typia/create/runtime/defaults';
+import {
+	createScaffoldValidatorToolkit,
+	type ScaffoldValidatorToolkitOptions,
+} from '@wp-typia/create/runtime/validation';
+
+interface TemplateValidatorToolkitOptions< T extends object > {
+	finalize?: ScaffoldValidatorToolkitOptions< T >['finalize'];
+	manifest: unknown;
+	onValidationError?: ScaffoldValidatorToolkitOptions< T >['onValidationError'];
+}
+
+export function createTemplateValidatorToolkit< T extends object >( {
+	finalize,
+	manifest,
+	onValidationError,
+}: TemplateValidatorToolkitOptions< T > ) {
+	return createScaffoldValidatorToolkit< T >( {
+		manifest: manifest as ManifestDefaultsDocument,
+		validate: typia.createValidate< T >(),
+		assert: typia.createAssert< T >(),
+		is: typia.createIs< T >(),
+		random: typia.createRandom< T >() as ( ...args: unknown[] ) => T,
+		clone: typia.misc.createClone< T >() as ( value: T ) => T,
+		prune: typia.misc.createPrune< T >(),
+		finalize,
+		onValidationError,
+	} );
+}

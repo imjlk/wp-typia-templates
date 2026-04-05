@@ -1,19 +1,11 @@
-import { useMemo } from '@wordpress/element';
-
-import {
-	createUseTypiaValidationHook,
-	formatValidationError,
-	formatValidationErrors,
-} from '@wp-typia/create/runtime/validation';
-
 export {
 	formatValidationError,
 	formatValidationErrors,
-	type TypiaValidationError,
-	type ValidationResult,
-	type ValidationState,
-} from '@wp-typia/create/runtime/validation';
+	useTypiaValidation,
+} from '../../hooks';
 
-export const useTypiaValidation = createUseTypiaValidationHook( {
-	useMemo,
-} );
+export type {
+	TypiaValidationError,
+	ValidationResult,
+	ValidationState,
+} from '../../hooks';
