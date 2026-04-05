@@ -150,5 +150,6 @@ describe("local development preset helpers", () => {
 		expect(getPrimaryDevelopmentScript("persistence")).toBe("dev");
 		expect(getPrimaryDevelopmentScript("compound")).toBe("dev");
 		expect(getPrimaryDevelopmentScript("github:owner/repo/template")).toBe("start");
+		expect(getPrimaryDevelopmentScript("owner/repo/template")).toBe("start");
 	});
 });

@@ -6,7 +6,7 @@ export function runUtf8Command(
 	options: Parameters<typeof execFileSync>[2] = {},
 ): string {
 	return execFileSync(command, args, {
-		encoding: "utf8",
 		...options,
-	}) as string;
+		encoding: "utf8",
+	});
 }

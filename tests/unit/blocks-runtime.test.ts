@@ -153,6 +153,7 @@ describe("block runtime helpers", () => {
 					category: "widgets",
 					name: "demo/block",
 					supports: {
+						align: true,
 						html: false,
 					},
 					title: "Demo Block",
@@ -319,9 +320,13 @@ describe("block runtime helpers", () => {
 			isScriptModuleAsset: (assetName) => assetName === "view.asset.php",
 			path,
 		});
-		const plugin = (config as { plugins: unknown[] }).plugins[1] as {
-			apply(compiler: ReturnType<typeof createFakeCompiler>): void;
-		};
+		const plugin = (config as { plugins: unknown[] }).plugins.find(
+			(candidate) =>
+				(candidate as { constructor?: { name?: string } })?.constructor?.name ===
+				"TypiaArtifactAssetPlugin",
+		) as
+			| { apply(compiler: ReturnType<typeof createFakeCompiler>): void }
+			| undefined;
 		const compilation = createFakeCompilation(
 			{
 				"style.css": "body{color:red;}",
@@ -331,7 +336,8 @@ describe("block runtime helpers", () => {
 		);
 		const compiler = createFakeCompiler(compilation);
 
-		plugin.apply(compiler);
+		expect(plugin).toBeDefined();
+		plugin!.apply(compiler);
 		compiler.runLifecycle();
 
 		expect(assetToString(compilation.readAsset("typia.manifest.json"))).toBe(

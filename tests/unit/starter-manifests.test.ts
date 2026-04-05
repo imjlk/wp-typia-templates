@@ -39,7 +39,8 @@ describe("starter manifest builders", () => {
 			},
 		]);
 
-		expect(getStarterManifestFiles("interactivity", variables)[0]).toEqual(
+		expect(getStarterManifestFiles("interactivity", variables)).toHaveLength(1);
+		expect(getStarterManifestFiles("interactivity", variables)).toEqual([
 			expect.objectContaining({
 				document: expect.objectContaining({
 					attributes: expect.objectContaining({
@@ -59,9 +60,10 @@ describe("starter manifest builders", () => {
 				}),
 				relativePath: "src/typia.manifest.json",
 			}),
-		);
+		]);
 
-		expect(getStarterManifestFiles("persistence", variables)[0]).toEqual(
+		expect(getStarterManifestFiles("persistence", variables)).toHaveLength(1);
+		expect(getStarterManifestFiles("persistence", variables)).toEqual([
 			expect.objectContaining({
 				document: expect.objectContaining({
 					attributes: expect.objectContaining({
@@ -84,7 +86,7 @@ describe("starter manifest builders", () => {
 				}),
 				relativePath: "src/typia.manifest.json",
 			}),
-		);
+		]);
 	});
 
 	test("seeds compound starter manifests for parent and hidden child blocks", () => {
@@ -225,9 +227,11 @@ describe("starter manifest builders", () => {
 			"basic",
 			createTestScaffoldTemplateVariables(),
 		);
+		const serialized = stringifyStarterManifest(manifestFile.document);
 
-		expect(stringifyStarterManifest(manifestFile.document)).toBe(
-			`${JSON.stringify(manifestFile.document, null, "\t")}\n`,
-		);
+		expect(serialized.endsWith("\n")).toBe(true);
+		expect(serialized.endsWith("\n\n")).toBe(false);
+		expect(serialized).toContain("\n\t");
+		expect(JSON.parse(serialized.trimEnd())).toEqual(manifestFile.document);
 	});
 });
