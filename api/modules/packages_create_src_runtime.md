@@ -29,17 +29,22 @@
 - [projectJsonSchemaDocument](packages_create_src_runtime.md#projectjsonschemadocument)
 - [manifestToJsonSchema](packages_create_src_runtime.md#manifesttojsonschema)
 - [manifestToOpenApi](packages_create_src_runtime.md#manifesttoopenapi)
+- [normalizeEndpointAuthDefinition](packages_create_src_runtime.md#normalizeendpointauthdefinition)
 - [buildCompoundChildStarterManifestDocument](packages_create_src_runtime.md#buildcompoundchildstartermanifestdocument)
 - [getStarterManifestFiles](packages_create_src_runtime.md#getstartermanifestfiles)
 - [stringifyStarterManifest](packages_create_src_runtime.md#stringifystartermanifest)
+- [EndpointAuthIntent](packages_create_src_runtime.md#endpointauthintent)
 - [EndpointOpenApiAuthMode](packages_create_src_runtime.md#endpointopenapiauthmode)
 - [EndpointOpenApiContractDocument](packages_create_src_runtime.md#endpointopenapicontractdocument)
 - [EndpointOpenApiDocumentOptions](packages_create_src_runtime.md#endpointopenapidocumentoptions)
 - [EndpointOpenApiEndpointDefinition](packages_create_src_runtime.md#endpointopenapiendpointdefinition)
 - [EndpointOpenApiMethod](packages_create_src_runtime.md#endpointopenapimethod)
+- [EndpointWordPressAuthDefinition](packages_create_src_runtime.md#endpointwordpressauthdefinition)
+- [EndpointWordPressAuthMechanism](packages_create_src_runtime.md#endpointwordpressauthmechanism)
 - [JsonSchemaDocument](packages_create_src_runtime.md#jsonschemadocument)
 - [JsonSchemaProjectionProfile](packages_create_src_runtime.md#jsonschemaprojectionprofile)
 - [JsonSchemaObject](packages_create_src_runtime.md#jsonschemaobject)
+- [NormalizedEndpointAuthDefinition](packages_create_src_runtime.md#normalizedendpointauthdefinition)
 - [OpenApiDocument](packages_create_src_runtime.md#openapidocument)
 - [OpenApiInfo](packages_create_src_runtime.md#openapiinfo)
 - [OpenApiOperation](packages_create_src_runtime.md#openapioperation)
@@ -249,6 +254,12 @@ Re-exports [manifestToOpenApi](packages_create_src_runtime_schema_core.md#manife
 
 ___
 
+### normalizeEndpointAuthDefinition
+
+Re-exports [normalizeEndpointAuthDefinition](packages_create_src_runtime_schema_core.md#normalizeendpointauthdefinition)
+
+___
+
 ### buildCompoundChildStarterManifestDocument
 
 Re-exports [buildCompoundChildStarterManifestDocument](packages_create_src_runtime_starter_manifests.md#buildcompoundchildstartermanifestdocument)
@@ -264,6 +275,12 @@ ___
 ### stringifyStarterManifest
 
 Re-exports [stringifyStarterManifest](packages_create_src_runtime_starter_manifests.md#stringifystartermanifest)
+
+___
+
+### EndpointAuthIntent
+
+Re-exports [EndpointAuthIntent](packages_create_src_runtime_schema_core.md#endpointauthintent)
 
 ___
 
@@ -287,13 +304,25 @@ ___
 
 ### EndpointOpenApiEndpointDefinition
 
-Re-exports [EndpointOpenApiEndpointDefinition](../interfaces/packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md)
+Re-exports [EndpointOpenApiEndpointDefinition](packages_create_src_runtime_schema_core.md#endpointopenapiendpointdefinition)
 
 ___
 
 ### EndpointOpenApiMethod
 
 Re-exports [EndpointOpenApiMethod](packages_create_src_runtime_schema_core.md#endpointopenapimethod)
+
+___
+
+### EndpointWordPressAuthDefinition
+
+Re-exports [EndpointWordPressAuthDefinition](../interfaces/packages_create_src_runtime_schema_core.EndpointWordPressAuthDefinition.md)
+
+___
+
+### EndpointWordPressAuthMechanism
+
+Re-exports [EndpointWordPressAuthMechanism](packages_create_src_runtime_schema_core.md#endpointwordpressauthmechanism)
 
 ___
 
@@ -312,6 +341,12 @@ ___
 ### JsonSchemaObject
 
 Re-exports [JsonSchemaObject](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaObject.md)
+
+___
+
+### NormalizedEndpointAuthDefinition
+
+Re-exports [NormalizedEndpointAuthDefinition](../interfaces/packages_create_src_runtime_schema_core.NormalizedEndpointAuthDefinition.md)
 
 ___
 
@@ -629,7 +664,7 @@ ___
 
 ### EndpointManifestEndpointDefinition
 
-Re-exports [EndpointManifestEndpointDefinition](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md)
+Re-exports [EndpointManifestEndpointDefinition](packages_create_src_runtime_metadata_core.md#endpointmanifestendpointdefinition)
 
 ___
 
@@ -653,7 +688,7 @@ ___
 
 ### RestOpenApiEndpointDefinition
 
-Re-exports [RestOpenApiEndpointDefinition](../interfaces/packages_create_src_runtime_metadata_core.RestOpenApiEndpointDefinition.md)
+Re-exports [RestOpenApiEndpointDefinition](packages_create_src_runtime_metadata_core.md#restopenapiendpointdefinition)
 
 ___
 

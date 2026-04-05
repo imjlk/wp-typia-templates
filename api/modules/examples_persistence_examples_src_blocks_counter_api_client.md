@@ -32,7 +32,7 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-client.ts:33](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L33)
+[examples/persistence-examples/src/blocks/counter/api-client.ts:34](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L34)
 
 ## Functions
 
@@ -53,7 +53,7 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-client.ts:26](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L26)
+[examples/persistence-examples/src/blocks/counter/api-client.ts:27](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L27)
 
 ___
 
@@ -74,4 +74,4 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-client.ts:46](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L46)
+[examples/persistence-examples/src/blocks/counter/api-client.ts:48](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L48)

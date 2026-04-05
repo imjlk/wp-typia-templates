@@ -26,4 +26,4 @@ Named tag entry surfaced at the top level of generated OpenAPI docs.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:113](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L113)
+[packages/create/src/runtime/schema-core.ts:114](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L114)

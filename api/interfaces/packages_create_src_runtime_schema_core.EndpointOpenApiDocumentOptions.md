@@ -24,19 +24,19 @@ Named contract documents keyed by the endpoint registry identifiers.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:191](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L191)
+[packages/create/src/runtime/schema-core.ts:234](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L234)
 
 ___
 
 ### endpoints
 
-• **endpoints**: readonly [`EndpointOpenApiEndpointDefinition`](packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md)[]
+• **endpoints**: readonly [`EndpointOpenApiEndpointDefinition`](../modules/packages_create_src_runtime_schema_core.md#endpointopenapiendpointdefinition)[]
 
 Route definitions that should appear in the generated OpenAPI file.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:193](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L193)
+[packages/create/src/runtime/schema-core.ts:236](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L236)
 
 ___
 
@@ -48,4 +48,4 @@ Optional document-level OpenAPI info metadata.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:195](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L195)
+[packages/create/src/runtime/schema-core.ts:238](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L238)

@@ -22,4 +22,4 @@ Projection profile that controls schema transformation rules.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:208](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L208)
+[packages/create/src/runtime/schema-core.ts:251](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L251)

@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:230](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L230)
+[packages/create/src/runtime/metadata-core.ts:231](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L231)
 
 ___
 
@@ -30,7 +30,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:231](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L231)
+[packages/create/src/runtime/metadata-core.ts:232](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L232)
 
 ___
 
@@ -40,4 +40,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:232](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L232)
+[packages/create/src/runtime/metadata-core.ts:233](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L233)

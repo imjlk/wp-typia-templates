@@ -20,7 +20,7 @@
 Read the current counter state.
 
 REST path: GET /persistence-examples/v1/counter
-Auth mode: public-read
+Auth intent: public
 
 #### Parameters
 
@@ -49,7 +49,8 @@ ___
 Increment the current counter state.
 
 REST path: POST /persistence-examples/v1/counter
-Auth mode: public-signed-token
+Auth intent: public-write-protected
+WordPress auth: public-signed-token (field: publicWriteToken)
 
 #### Parameters
 
@@ -67,4 +68,4 @@ Counter
 
 #### Defined in
 
-[examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts:25](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts#L25)
+[examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts:26](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts#L26)

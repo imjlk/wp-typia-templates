@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[packages/create/src/internal/wordpress-ai.ts:40](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/wordpress-ai.ts#L40)
+[packages/create/src/internal/wordpress-ai.ts:45](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/wordpress-ai.ts#L45)
 
 ___
 
@@ -37,7 +37,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/internal/wordpress-ai.ts:41](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/wordpress-ai.ts#L41)
+[packages/create/src/internal/wordpress-ai.ts:46](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/wordpress-ai.ts#L46)
 
 ___
 
@@ -55,4 +55,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/internal/wordpress-ai.ts:45](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/wordpress-ai.ts#L45)
+[packages/create/src/internal/wordpress-ai.ts:50](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/wordpress-ai.ts#L50)

@@ -25,6 +25,7 @@
 | Name | Type |
 | :------ | :------ |
 | `buildRequestOptions` | () => \{ `url`: `string`  } |
+| `authIntent?` | [`EndpointAuthIntent`](packages_wp_typia_api_client_src_client.md#endpointauthintent) |
 | `authMode?` | `string` |
 | `method` | [`EndpointMethod`](packages_wp_typia_api_client_src_client.md#endpointmethod) |
 | `operationId?` | `string` |
@@ -48,6 +49,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `buildRequestOptions` | () => \{ `url`: `string`  } |
+| `authIntent?` | [`EndpointAuthIntent`](packages_wp_typia_api_client_src_client.md#endpointauthintent) |
 | `authMode?` | `string` |
 | `method` | [`EndpointMethod`](packages_wp_typia_api_client_src_client.md#endpointmethod) |
 | `operationId?` | `string` |

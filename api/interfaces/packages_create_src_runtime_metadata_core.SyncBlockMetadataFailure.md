@@ -24,7 +24,7 @@ Stable failure bucket suitable for branching in scripts or CI.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:164](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L164)
+[packages/create/src/runtime/metadata-core.ts:165](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L165)
 
 ___
 
@@ -36,7 +36,7 @@ Human-readable error message captured from the original failure.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:166](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L166)
+[packages/create/src/runtime/metadata-core.ts:167](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L167)
 
 ___
 
@@ -48,4 +48,4 @@ Original thrown error name when available.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:168](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L168)
+[packages/create/src/runtime/metadata-core.ts:169](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L169)

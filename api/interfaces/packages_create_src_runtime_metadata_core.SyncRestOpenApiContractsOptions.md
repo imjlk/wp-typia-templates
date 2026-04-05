@@ -38,7 +38,7 @@ SyncRestOpenApiBaseOptions.openApiFile
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:300](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L300)
+[packages/create/src/runtime/metadata-core.ts:301](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L301)
 
 ___
 
@@ -54,7 +54,7 @@ SyncRestOpenApiBaseOptions.projectRoot
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:302](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L302)
+[packages/create/src/runtime/metadata-core.ts:303](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L303)
 
 ___
 
@@ -70,7 +70,7 @@ SyncRestOpenApiBaseOptions.typesFile
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:304](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L304)
+[packages/create/src/runtime/metadata-core.ts:305](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L305)
 
 ___
 
@@ -82,19 +82,19 @@ Contract registry keyed by logical route contract ids.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:326](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L326)
+[packages/create/src/runtime/metadata-core.ts:327](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L327)
 
 ___
 
 ### endpoints
 
-• **endpoints**: readonly [`RestOpenApiEndpointDefinition`](packages_create_src_runtime_metadata_core.RestOpenApiEndpointDefinition.md)[]
+• **endpoints**: readonly [`EndpointOpenApiEndpointDefinition`](../modules/packages_create_src_runtime_schema_core.md#endpointopenapiendpointdefinition)[]
 
 Endpoint registry describing the REST paths, methods, and auth policies to document.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:328](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L328)
+[packages/create/src/runtime/metadata-core.ts:329](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L329)
 
 ___
 
@@ -106,7 +106,7 @@ Optional OpenAPI document metadata.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:330](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L330)
+[packages/create/src/runtime/metadata-core.ts:331](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L331)
 
 ___
 
@@ -118,4 +118,4 @@ Not accepted when `contracts` and `endpoints` are provided directly.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:332](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L332)
+[packages/create/src/runtime/metadata-core.ts:333](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L333)

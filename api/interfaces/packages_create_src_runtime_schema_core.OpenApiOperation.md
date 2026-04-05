@@ -23,6 +23,7 @@ One generated OpenAPI operation for a scaffolded REST endpoint.
 - [security](packages_create_src_runtime_schema_core.OpenApiOperation.md#security)
 - [summary](packages_create_src_runtime_schema_core.OpenApiOperation.md#summary)
 - [tags](packages_create_src_runtime_schema_core.OpenApiOperation.md#tags)
+- [x-typia-authIntent](packages_create_src_runtime_schema_core.OpenApiOperation.md#x-typia-authintent)
 - [x-wp-typia-authPolicy](packages_create_src_runtime_schema_core.OpenApiOperation.md#x-wp-typia-authpolicy)
 - [x-wp-typia-publicTokenField](packages_create_src_runtime_schema_core.OpenApiOperation.md#x-wp-typia-publictokenfield)
 
@@ -98,13 +99,23 @@ ___
 
 ___
 
-### x-wp-typia-authPolicy
+### x-typia-authIntent
 
-• **x-wp-typia-authPolicy**: [`EndpointOpenApiAuthMode`](../modules/packages_create_src_runtime_schema_core.md#endpointopenapiauthmode)
+• **x-typia-authIntent**: [`EndpointAuthIntent`](../modules/packages_create_src_runtime_schema_core.md#endpointauthintent)
 
 #### Defined in
 
 [packages/create/src/runtime/schema-core.ts:99](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L99)
+
+___
+
+### x-wp-typia-authPolicy
+
+• `Optional` **x-wp-typia-authPolicy**: [`EndpointOpenApiAuthMode`](../modules/packages_create_src_runtime_schema_core.md#endpointopenapiauthmode)
+
+#### Defined in
+
+[packages/create/src/runtime/schema-core.ts:100](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L100)
 
 ___
 
@@ -114,4 +125,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:100](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L100)
+[packages/create/src/runtime/schema-core.ts:101](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L101)

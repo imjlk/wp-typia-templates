@@ -156,9 +156,22 @@ internal manifest consumers such as `typia.llm` and WordPress AI projections
 still reject mixed query/body inputs.
 
 These header/auth decorators remain optional and adapter-level. They do not
-turn manifest `authMode` into automatic runtime behavior, and they do not
-replace WordPress-specific route resolution or nonce-aware ergonomics from
-`@wp-typia/rest`.
+turn manifest `auth` or legacy `authMode` metadata into automatic
+runtime behavior, and they do not replace WordPress-specific route resolution
+or nonce-aware ergonomics from `@wp-typia/rest`.
+
+For new manifests, backend-neutral auth intent is the primary contract
+surface:
+
+- `auth: "public"`
+- `auth: "authenticated"`
+- `auth: "public-write-protected"`
+
+WordPress-specific auth remains an optional overlay via `wordpressAuth`, such
+as `{ mechanism: "rest-nonce" }` or
+`{ mechanism: "public-signed-token", publicTokenField: "publicWriteToken" }`.
+Legacy `authMode` is still accepted for compatibility, but it is now adapter
+metadata rather than the primary authored meaning.
 
 ## 5. `@wp-typia/block-runtime`
 

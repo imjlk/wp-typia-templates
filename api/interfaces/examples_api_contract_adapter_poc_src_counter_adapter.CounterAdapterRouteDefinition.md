@@ -17,11 +17,11 @@
 
 ### authMode
 
-• **authMode**: [`EndpointOpenApiAuthMode`](../modules/packages_create_src_runtime_schema_core.md#endpointopenapiauthmode)
+• **authMode**: `undefined` \| [`EndpointOpenApiAuthMode`](../modules/packages_create_src_runtime_schema_core.md#endpointopenapiauthmode)
 
 #### Defined in
 
-[examples/api-contract-adapter-poc/src/counter-adapter.ts:20](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L20)
+[examples/api-contract-adapter-poc/src/counter-adapter.ts:21](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L21)
 
 ___
 
@@ -31,7 +31,7 @@ ___
 
 #### Defined in
 
-[examples/api-contract-adapter-poc/src/counter-adapter.ts:21](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L21)
+[examples/api-contract-adapter-poc/src/counter-adapter.ts:22](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L22)
 
 ___
 
@@ -41,7 +41,7 @@ ___
 
 #### Defined in
 
-[examples/api-contract-adapter-poc/src/counter-adapter.ts:22](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L22)
+[examples/api-contract-adapter-poc/src/counter-adapter.ts:23](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L23)
 
 ___
 
@@ -51,4 +51,4 @@ ___
 
 #### Defined in
 
-[examples/api-contract-adapter-poc/src/counter-adapter.ts:23](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L23)
+[examples/api-contract-adapter-poc/src/counter-adapter.ts:24](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L24)

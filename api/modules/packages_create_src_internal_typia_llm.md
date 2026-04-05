@@ -24,7 +24,7 @@
 
 | Name | Type |
 | :------ | :------ |
-| `manifest` | [`EndpointManifestDefinition`](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestDefinition.md)\<`Readonly`\<`Record`\<`string`, [`EndpointManifestContractDefinition`](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestContractDefinition.md)\>\>, readonly [`EndpointManifestEndpointDefinition`](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md)[]\> |
+| `manifest` | [`EndpointManifestDefinition`](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestDefinition.md)\<`Readonly`\<`Record`\<`string`, [`EndpointManifestContractDefinition`](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestContractDefinition.md)\>\>, readonly [`EndpointOpenApiEndpointDefinition`](packages_create_src_runtime_schema_core.md#endpointopenapiendpointdefinition)[]\> |
 
 #### Returns
 
@@ -32,7 +32,7 @@
 
 #### Defined in
 
-[packages/create/src/internal/typia-llm.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L97)
+[packages/create/src/internal/typia-llm.ts:113](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L113)
 
 ___
 
@@ -52,4 +52,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/internal/typia-llm.ts:112](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L112)
+[packages/create/src/internal/typia-llm.ts:138](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L138)

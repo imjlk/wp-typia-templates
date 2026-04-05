@@ -15,6 +15,7 @@
 ### Type Aliases
 
 - [EndpointMethod](packages_wp_typia_api_client_src_client.md#endpointmethod)
+- [EndpointAuthIntent](packages_wp_typia_api_client_src_client.md#endpointauthintent)
 - [ValidationLike](packages_wp_typia_api_client_src_client.md#validationlike)
 - [EndpointTransport](packages_wp_typia_api_client_src_client.md#endpointtransport)
 
@@ -42,6 +43,16 @@
 
 ___
 
+### EndpointAuthIntent
+
+Ƭ **EndpointAuthIntent**: ``"authenticated"`` \| ``"public"`` \| ``"public-write-protected"``
+
+#### Defined in
+
+[packages/wp-typia-api-client/src/client.ts:4](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L4)
+
+___
+
 ### ValidationLike
 
 Ƭ **ValidationLike**\<`T`\>: `IValidation`\<`T`\> \| \{ `data?`: `unknown` ; `errors?`: `unknown` ; `success?`: `unknown`  }
@@ -54,7 +65,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:18](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L18)
+[packages/wp-typia-api-client/src/client.ts:22](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L22)
 
 ___
 
@@ -85,7 +96,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:35](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L35)
+[packages/wp-typia-api-client/src/client.ts:39](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L39)
 
 ## Functions
 
@@ -105,7 +116,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:99](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L99)
+[packages/wp-typia-api-client/src/client.ts:104](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L104)
 
 ___
 
@@ -131,7 +142,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:114](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L114)
+[packages/wp-typia-api-client/src/client.ts:119](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L119)
 
 ___
 
@@ -151,7 +162,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:373](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L373)
+[packages/wp-typia-api-client/src/client.ts:378](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L378)
 
 ___
 
@@ -172,7 +183,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:395](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L395)
+[packages/wp-typia-api-client/src/client.ts:400](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L400)
 
 ___
 
@@ -193,7 +204,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:402](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L402)
+[packages/wp-typia-api-client/src/client.ts:407](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L407)
 
 ___
 
@@ -215,7 +226,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:418](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L418)
+[packages/wp-typia-api-client/src/client.ts:423](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L423)
 
 ___
 
@@ -236,7 +247,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:435](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L435)
+[packages/wp-typia-api-client/src/client.ts:440](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L440)
 
 ___
 
@@ -263,7 +274,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:451](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L451)
+[packages/wp-typia-api-client/src/client.ts:456](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L456)
 
 ___
 
@@ -292,4 +303,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:455](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L455)
+[packages/wp-typia-api-client/src/client.ts:460](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L460)

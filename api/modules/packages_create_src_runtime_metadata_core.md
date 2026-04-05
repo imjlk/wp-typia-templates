@@ -14,10 +14,8 @@
 - [SyncTypeSchemaOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncTypeSchemaOptions.md)
 - [SyncTypeSchemaResult](../interfaces/packages_create_src_runtime_metadata_core.SyncTypeSchemaResult.md)
 - [EndpointManifestContractDefinition](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestContractDefinition.md)
-- [EndpointManifestEndpointDefinition](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md)
 - [EndpointManifestDefinition](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestDefinition.md)
 - [RestOpenApiContractDefinition](../interfaces/packages_create_src_runtime_metadata_core.RestOpenApiContractDefinition.md)
-- [RestOpenApiEndpointDefinition](../interfaces/packages_create_src_runtime_metadata_core.RestOpenApiEndpointDefinition.md)
 - [SyncRestOpenApiManifestOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiManifestOptions.md)
 - [SyncRestOpenApiContractsOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiContractsOptions.md)
 - [SyncRestOpenApiResult](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiResult.md)
@@ -28,6 +26,8 @@
 
 - [SyncBlockMetadataStatus](packages_create_src_runtime_metadata_core.md#syncblockmetadatastatus)
 - [SyncBlockMetadataFailureCode](packages_create_src_runtime_metadata_core.md#syncblockmetadatafailurecode)
+- [EndpointManifestEndpointDefinition](packages_create_src_runtime_metadata_core.md#endpointmanifestendpointdefinition)
+- [RestOpenApiEndpointDefinition](packages_create_src_runtime_metadata_core.md#restopenapiendpointdefinition)
 - [SyncRestOpenApiOptions](packages_create_src_runtime_metadata_core.md#syncrestopenapioptions)
 
 ### Functions
@@ -53,7 +53,7 @@ High-level outcome for one `runSyncBlockMetadata()` execution.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:140](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L140)
+[packages/create/src/runtime/metadata-core.ts:141](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L141)
 
 ___
 
@@ -65,7 +65,31 @@ Stable failure bucket for structured `sync-types` error reporting.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:145](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L145)
+[packages/create/src/runtime/metadata-core.ts:146](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L146)
+
+___
+
+### EndpointManifestEndpointDefinition
+
+Ƭ **EndpointManifestEndpointDefinition**: [`EndpointOpenApiEndpointDefinition`](packages_create_src_runtime_schema_core.md#endpointopenapiendpointdefinition)
+
+Portable route metadata stored in one endpoint manifest entry.
+
+#### Defined in
+
+[packages/create/src/runtime/metadata-core.ts:249](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L249)
+
+___
+
+### RestOpenApiEndpointDefinition
+
+Ƭ **RestOpenApiEndpointDefinition**: [`EndpointManifestEndpointDefinition`](packages_create_src_runtime_metadata_core.md#endpointmanifestendpointdefinition)
+
+Backward-compatible route metadata consumed by `syncRestOpenApi()`.
+
+#### Defined in
+
+[packages/create/src/runtime/metadata-core.ts:294](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L294)
 
 ___
 
@@ -77,7 +101,7 @@ Options for writing a canonical endpoint-aware REST OpenAPI document.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:338](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L338)
+[packages/create/src/runtime/metadata-core.ts:339](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L339)
 
 ## Functions
 
@@ -92,7 +116,7 @@ Preserve literal TypeScript inference for backend-neutral endpoint manifests.
 | Name | Type |
 | :------ | :------ |
 | `Contracts` | extends `Readonly`\<`Record`\<`string`, [`EndpointManifestContractDefinition`](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestContractDefinition.md)\>\> |
-| `Endpoints` | extends readonly [`EndpointManifestEndpointDefinition`](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md)[] |
+| `Endpoints` | extends readonly [`EndpointOpenApiEndpointDefinition`](packages_create_src_runtime_schema_core.md#endpointopenapiendpointdefinition)[] |
 
 #### Parameters
 
@@ -108,7 +132,7 @@ The same manifest object with literal contract and endpoint metadata preserved.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:274](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L274)
+[packages/create/src/runtime/metadata-core.ts:275](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L275)
 
 ___
 
@@ -137,7 +161,7 @@ PHP validator coverage warnings discovered during synchronization.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:511](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L511)
+[packages/create/src/runtime/metadata-core.ts:512](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L512)
 
 ___
 
@@ -167,7 +191,7 @@ A structured execution report describing generated paths, warnings, and failures
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:609](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L609)
+[packages/create/src/runtime/metadata-core.ts:610](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L610)
 
 ___
 
@@ -187,7 +211,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:660](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L660)
+[packages/create/src/runtime/metadata-core.ts:661](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L661)
 
 ___
 
@@ -211,7 +235,7 @@ Information about the generated OpenAPI document and included schema components.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:719](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L719)
+[packages/create/src/runtime/metadata-core.ts:720](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L720)
 
 ___
 
@@ -235,4 +259,4 @@ Information about the generated client file and emitted operation ids.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:793](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L793)
+[packages/create/src/runtime/metadata-core.ts:794](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L794)

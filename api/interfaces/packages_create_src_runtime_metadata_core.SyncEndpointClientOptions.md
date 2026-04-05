@@ -36,7 +36,7 @@ SyncEndpointClientBaseOptions.clientFile
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:363](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L363)
+[packages/create/src/runtime/metadata-core.ts:364](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L364)
 
 ___
 
@@ -52,7 +52,7 @@ SyncEndpointClientBaseOptions.projectRoot
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:365](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L365)
+[packages/create/src/runtime/metadata-core.ts:366](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L366)
 
 ___
 
@@ -68,7 +68,7 @@ SyncEndpointClientBaseOptions.typesFile
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:367](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L367)
+[packages/create/src/runtime/metadata-core.ts:368](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L368)
 
 ___
 
@@ -84,16 +84,16 @@ SyncEndpointClientBaseOptions.validatorsFile
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:369](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L369)
+[packages/create/src/runtime/metadata-core.ts:370](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L370)
 
 ___
 
 ### manifest
 
-• **manifest**: [`EndpointManifestDefinition`](packages_create_src_runtime_metadata_core.EndpointManifestDefinition.md)\<`Readonly`\<`Record`\<`string`, [`EndpointManifestContractDefinition`](packages_create_src_runtime_metadata_core.EndpointManifestContractDefinition.md)\>\>, readonly [`EndpointManifestEndpointDefinition`](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md)[]\>
+• **manifest**: [`EndpointManifestDefinition`](packages_create_src_runtime_metadata_core.EndpointManifestDefinition.md)\<`Readonly`\<`Record`\<`string`, [`EndpointManifestContractDefinition`](packages_create_src_runtime_metadata_core.EndpointManifestContractDefinition.md)\>\>, readonly [`EndpointOpenApiEndpointDefinition`](../modules/packages_create_src_runtime_schema_core.md#endpointopenapiendpointdefinition)[]\>
 
 Canonical endpoint manifest describing the REST surface.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:377](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L377)
+[packages/create/src/runtime/metadata-core.ts:378](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L378)

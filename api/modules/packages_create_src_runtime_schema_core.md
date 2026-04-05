@@ -19,16 +19,20 @@
 - [OpenApiTag](../interfaces/packages_create_src_runtime_schema_core.OpenApiTag.md)
 - [OpenApiComponents](../interfaces/packages_create_src_runtime_schema_core.OpenApiComponents.md)
 - [OpenApiDocument](../interfaces/packages_create_src_runtime_schema_core.OpenApiDocument.md)
+- [EndpointWordPressAuthDefinition](../interfaces/packages_create_src_runtime_schema_core.EndpointWordPressAuthDefinition.md)
 - [EndpointOpenApiContractDocument](../interfaces/packages_create_src_runtime_schema_core.EndpointOpenApiContractDocument.md)
-- [EndpointOpenApiEndpointDefinition](../interfaces/packages_create_src_runtime_schema_core.EndpointOpenApiEndpointDefinition.md)
+- [NormalizedEndpointAuthDefinition](../interfaces/packages_create_src_runtime_schema_core.NormalizedEndpointAuthDefinition.md)
 - [EndpointOpenApiDocumentOptions](../interfaces/packages_create_src_runtime_schema_core.EndpointOpenApiDocumentOptions.md)
 - [JsonSchemaProjectionOptions](../interfaces/packages_create_src_runtime_schema_core.JsonSchemaProjectionOptions.md)
 
 ### Type Aliases
 
 - [OpenApiPathItem](packages_create_src_runtime_schema_core.md#openapipathitem)
+- [EndpointAuthIntent](packages_create_src_runtime_schema_core.md#endpointauthintent)
+- [EndpointWordPressAuthMechanism](packages_create_src_runtime_schema_core.md#endpointwordpressauthmechanism)
 - [EndpointOpenApiAuthMode](packages_create_src_runtime_schema_core.md#endpointopenapiauthmode)
 - [EndpointOpenApiMethod](packages_create_src_runtime_schema_core.md#endpointopenapimethod)
+- [EndpointOpenApiEndpointDefinition](packages_create_src_runtime_schema_core.md#endpointopenapiendpointdefinition)
 - [JsonSchemaProjectionProfile](packages_create_src_runtime_schema_core.md#jsonschemaprojectionprofile)
 
 ### Functions
@@ -37,6 +41,7 @@
 - [manifestToJsonSchema](packages_create_src_runtime_schema_core.md#manifesttojsonschema)
 - [projectJsonSchemaDocument](packages_create_src_runtime_schema_core.md#projectjsonschemadocument)
 - [manifestToOpenApi](packages_create_src_runtime_schema_core.md#manifesttoopenapi)
+- [normalizeEndpointAuthDefinition](packages_create_src_runtime_schema_core.md#normalizeendpointauthdefinition)
 - [buildEndpointOpenApiDocument](packages_create_src_runtime_schema_core.md#buildendpointopenapidocument)
 
 ## Type Aliases
@@ -49,7 +54,31 @@ Path item containing one or more generated REST operations.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:106](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L106)
+[packages/create/src/runtime/schema-core.ts:107](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L107)
+
+___
+
+### EndpointAuthIntent
+
+Ƭ **EndpointAuthIntent**: ``"authenticated"`` \| ``"public"`` \| ``"public-write-protected"``
+
+Backend-neutral auth intent for one manifest-defined endpoint.
+
+#### Defined in
+
+[packages/create/src/runtime/schema-core.ts:143](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L143)
+
+___
+
+### EndpointWordPressAuthMechanism
+
+Ƭ **EndpointWordPressAuthMechanism**: ``"public-signed-token"`` \| ``"rest-nonce"``
+
+WordPress-specific authentication mechanisms that can implement neutral auth intent.
+
+#### Defined in
+
+[packages/create/src/runtime/schema-core.ts:151](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L151)
 
 ___
 
@@ -57,11 +86,11 @@ ___
 
 Ƭ **EndpointOpenApiAuthMode**: ``"authenticated-rest-nonce"`` \| ``"public-read"`` \| ``"public-signed-token"``
 
-Authentication mode metadata for generated REST OpenAPI endpoints.
+Legacy WordPress auth-mode literals kept for backward compatibility.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:142](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L142)
+[packages/create/src/runtime/schema-core.ts:166](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L166)
 
 ___
 
@@ -73,7 +102,19 @@ Supported HTTP methods for generated REST OpenAPI endpoints.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:150](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L150)
+[packages/create/src/runtime/schema-core.ts:174](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L174)
+
+___
+
+### EndpointOpenApiEndpointDefinition
+
+Ƭ **EndpointOpenApiEndpointDefinition**: `EndpointOpenApiEndpointBaseDefinition` & \{ `auth`: [`EndpointAuthIntent`](packages_create_src_runtime_schema_core.md#endpointauthintent)  } \| `EndpointOpenApiEndpointBaseDefinition` & \{ `authMode`: [`EndpointOpenApiAuthMode`](packages_create_src_runtime_schema_core.md#endpointopenapiauthmode)  }
+
+Route metadata for one REST endpoint in the aggregate OpenAPI document.
+
+#### Defined in
+
+[packages/create/src/runtime/schema-core.ts:214](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L214)
 
 ___
 
@@ -85,7 +126,7 @@ Supported schema projection profiles derived from one canonical wp-typia JSON Sc
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:201](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L201)
+[packages/create/src/runtime/schema-core.ts:244](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L244)
 
 ## Functions
 
@@ -109,7 +150,7 @@ A JSON-compatible schema fragment for the attribute.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:533](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L533)
+[packages/create/src/runtime/schema-core.ts:579](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L579)
 
 ___
 
@@ -133,7 +174,7 @@ A draft 2020-12 JSON Schema document for the manifest root object.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:606](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L606)
+[packages/create/src/runtime/schema-core.ts:652](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L652)
 
 ___
 
@@ -164,7 +205,7 @@ A cloned schema document adjusted for the requested profile.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:632](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L632)
+[packages/create/src/runtime/schema-core.ts:678](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L678)
 
 ___
 
@@ -189,7 +230,54 @@ An OpenAPI document containing the schema as a single component.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:657](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L657)
+[packages/create/src/runtime/schema-core.ts:703](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L703)
+
+___
+
+### normalizeEndpointAuthDefinition
+
+▸ **normalizeEndpointAuthDefinition**(`endpoint`): [`NormalizedEndpointAuthDefinition`](../interfaces/packages_create_src_runtime_schema_core.NormalizedEndpointAuthDefinition.md)
+
+Normalizes endpoint auth metadata into backend-neutral intent plus optional
+WordPress adapter details.
+
+This public runtime helper accepts either the authored `auth` and optional
+`wordpressAuth` shape or the deprecated `authMode` field. It validates that
+the provided fields are compatible, resolves the legacy compatibility mode,
+and returns a normalized definition without mutating the input endpoint.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `endpoint` | `Pick`\<[`EndpointOpenApiEndpointDefinition`](packages_create_src_runtime_schema_core.md#endpointopenapiendpointdefinition), ``"auth"`` \| ``"path"`` \| ``"operationId"`` \| ``"authMode"`` \| ``"wordpressAuth"`` \| ``"method"``\> | Endpoint auth fields to normalize, including `auth`, `authMode`, `wordpressAuth`, and optional identity fields used in error messages (`operationId`, `path`, and `method`). |
+
+#### Returns
+
+[`NormalizedEndpointAuthDefinition`](../interfaces/packages_create_src_runtime_schema_core.NormalizedEndpointAuthDefinition.md)
+
+The normalized auth definition for the endpoint.
+
+**`Throws`**
+
+When `auth` and deprecated `authMode` conflict.
+
+**`Throws`**
+
+When `wordpressAuth` is attached to the `public` auth intent.
+
+**`Throws`**
+
+When the selected `wordpressAuth` mechanism is incompatible with the
+chosen auth intent.
+
+**`Throws`**
+
+When neither `auth` nor deprecated `authMode` is defined.
+
+#### Defined in
+
+[packages/create/src/runtime/schema-core.ts:816](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L816)
 
 ___
 
@@ -213,4 +301,4 @@ A JSON-compatible OpenAPI document with paths, components, and auth metadata.
 
 #### Defined in
 
-[packages/create/src/runtime/schema-core.ts:802](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L802)
+[packages/create/src/runtime/schema-core.ts:1048](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/schema-core.ts#L1048)

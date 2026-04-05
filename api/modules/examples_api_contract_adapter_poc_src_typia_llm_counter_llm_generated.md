@@ -21,7 +21,7 @@
 
 #### Defined in
 
-[examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts:28](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts#L28)
+[examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts:29](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts#L29)
 
 ___
 
@@ -31,4 +31,4 @@ ___
 
 #### Defined in
 
-[examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts:31](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts#L31)
+[examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts:32](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/typia-llm/counter.llm.generated.ts#L32)

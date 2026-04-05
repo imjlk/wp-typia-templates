@@ -20,17 +20,17 @@
 
 #### Defined in
 
-[packages/create/src/internal/wordpress-ai.ts:53](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/wordpress-ai.ts#L53)
+[packages/create/src/internal/wordpress-ai.ts:58](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/wordpress-ai.ts#L58)
 
 ___
 
 ### endpoint
 
-• **endpoint**: [`EndpointManifestEndpointDefinition`](packages_create_src_runtime_metadata_core.EndpointManifestEndpointDefinition.md)
+• **endpoint**: [`EndpointOpenApiEndpointDefinition`](../modules/packages_create_src_runtime_schema_core.md#endpointopenapiendpointdefinition)
 
 #### Defined in
 
-[packages/create/src/internal/wordpress-ai.ts:54](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/wordpress-ai.ts#L54)
+[packages/create/src/internal/wordpress-ai.ts:59](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/wordpress-ai.ts#L59)
 
 ___
 
@@ -40,4 +40,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/internal/wordpress-ai.ts:55](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/wordpress-ai.ts#L55)
+[packages/create/src/internal/wordpress-ai.ts:60](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/wordpress-ai.ts#L60)

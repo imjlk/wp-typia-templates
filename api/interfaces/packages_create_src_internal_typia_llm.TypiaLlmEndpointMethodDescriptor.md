@@ -8,6 +8,7 @@
 
 ### Properties
 
+- [authIntent](packages_create_src_internal_typia_llm.TypiaLlmEndpointMethodDescriptor.md#authintent)
 - [authMode](packages_create_src_internal_typia_llm.TypiaLlmEndpointMethodDescriptor.md#authmode)
 - [description](packages_create_src_internal_typia_llm.TypiaLlmEndpointMethodDescriptor.md#description)
 - [inputTypeName](packages_create_src_internal_typia_llm.TypiaLlmEndpointMethodDescriptor.md#inputtypename)
@@ -16,16 +17,27 @@
 - [outputTypeName](packages_create_src_internal_typia_llm.TypiaLlmEndpointMethodDescriptor.md#outputtypename)
 - [path](packages_create_src_internal_typia_llm.TypiaLlmEndpointMethodDescriptor.md#path)
 - [tags](packages_create_src_internal_typia_llm.TypiaLlmEndpointMethodDescriptor.md#tags)
+- [wordpressAuth](packages_create_src_internal_typia_llm.TypiaLlmEndpointMethodDescriptor.md#wordpressauth)
 
 ## Properties
 
-### authMode
+### authIntent
 
-• **authMode**: [`EndpointOpenApiAuthMode`](../modules/packages_create_src_runtime_schema_core.md#endpointopenapiauthmode)
+• **authIntent**: [`EndpointAuthIntent`](../modules/packages_create_src_runtime_schema_core.md#endpointauthintent)
 
 #### Defined in
 
-[packages/create/src/internal/typia-llm.ts:7](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L7)
+[packages/create/src/internal/typia-llm.ts:12](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L12)
+
+___
+
+### authMode
+
+• `Optional` **authMode**: [`EndpointOpenApiAuthMode`](../modules/packages_create_src_runtime_schema_core.md#endpointopenapiauthmode)
+
+#### Defined in
+
+[packages/create/src/internal/typia-llm.ts:13](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L13)
 
 ___
 
@@ -35,7 +47,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/internal/typia-llm.ts:8](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L8)
+[packages/create/src/internal/typia-llm.ts:14](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L14)
 
 ___
 
@@ -45,7 +57,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/internal/typia-llm.ts:9](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L9)
+[packages/create/src/internal/typia-llm.ts:15](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L15)
 
 ___
 
@@ -55,7 +67,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/internal/typia-llm.ts:10](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L10)
+[packages/create/src/internal/typia-llm.ts:16](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L16)
 
 ___
 
@@ -65,7 +77,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/internal/typia-llm.ts:11](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L11)
+[packages/create/src/internal/typia-llm.ts:17](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L17)
 
 ___
 
@@ -75,7 +87,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/internal/typia-llm.ts:12](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L12)
+[packages/create/src/internal/typia-llm.ts:18](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L18)
 
 ___
 
@@ -85,7 +97,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/internal/typia-llm.ts:13](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L13)
+[packages/create/src/internal/typia-llm.ts:19](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L19)
 
 ___
 
@@ -95,4 +107,14 @@ ___
 
 #### Defined in
 
-[packages/create/src/internal/typia-llm.ts:14](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L14)
+[packages/create/src/internal/typia-llm.ts:20](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L20)
+
+___
+
+### wordpressAuth
+
+• `Optional` **wordpressAuth**: [`EndpointWordPressAuthDefinition`](packages_create_src_runtime_schema_core.EndpointWordPressAuthDefinition.md)
+
+#### Defined in
+
+[packages/create/src/internal/typia-llm.ts:21](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/internal/typia-llm.ts#L21)

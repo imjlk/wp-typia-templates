@@ -16,6 +16,7 @@
 - [withHeaders](packages_wp_typia_api_client_src.md#withheaders)
 - [withHeaderValue](packages_wp_typia_api_client_src.md#withheadervalue)
 - [ApiEndpoint](packages_wp_typia_api_client_src.md#apiendpoint)
+- [EndpointAuthIntent](packages_wp_typia_api_client_src.md#endpointauthintent)
 - [EndpointCallOptions](packages_wp_typia_api_client_src.md#endpointcalloptions)
 - [EndpointTransport](packages_wp_typia_api_client_src.md#endpointtransport)
 - [ValidationError](packages_wp_typia_api_client_src.md#validationerror)
@@ -81,6 +82,12 @@ ___
 ### ApiEndpoint
 
 Re-exports [ApiEndpoint](../interfaces/packages_wp_typia_api_client_src_client.ApiEndpoint.md)
+
+___
+
+### EndpointAuthIntent
+
+Re-exports [EndpointAuthIntent](packages_wp_typia_api_client_src_client.md#endpointauthintent)
 
 ___
 
