@@ -1895,6 +1895,16 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(doctorOutput).toContain("PASS Template basic");
 	});
 
+	test("node entry keeps help and migrations dispatch working after lazy loading", () => {
+		const helpOutput = runCli("node", [entryPath, "--help"]);
+
+		expect(helpOutput).toContain("wp-typia templates list");
+		expect(helpOutput).toContain("Package managers: bun, npm, pnpm, yarn");
+		expect(() => {
+			runCli("node", [entryPath, "migrations", "init"], { stdio: "pipe" });
+		}).toThrow();
+	});
+
 	test("bun entry exposes templates and doctor commands", () => {
 		const templatesOutput = runCli("bun", [entryPath, "templates", "list"]);
 		const doctorOutput = runCli("bun", [entryPath, "doctor"]);
@@ -1907,6 +1917,16 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(templatesOutput).not.toContain("full");
 		expect(doctorOutput).toContain("PASS Bun");
 		expect(doctorOutput).toContain("PASS Template basic");
+	});
+
+	test("bun entry keeps help and migrations dispatch working after lazy loading", () => {
+		const helpOutput = runCli("bun", [entryPath, "--help"]);
+
+		expect(helpOutput).toContain("wp-typia templates list");
+		expect(helpOutput).toContain("Package managers: bun, npm, pnpm, yarn");
+		expect(() => {
+			runCli("bun", [entryPath, "migrations", "init"], { stdio: "pipe" });
+		}).toThrow();
 	});
 
 	test("parses github template locators with refs", () => {

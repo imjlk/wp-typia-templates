@@ -1,25 +1,22 @@
 #!/usr/bin/env node
-import {
-	createReadlinePrompt,
-	formatHelpText,
-	formatTemplateDetails,
-	formatTemplateFeatures,
-	formatTemplateSummary,
-	getTemplateById,
-	getTemplateSelectOptions,
-	listTemplates,
-	runDoctor,
-	runScaffoldFlow,
-} from "./runtime/cli-core.js";
-import {
-	formatMigrationHelpText,
-	parseMigrationArgs,
-	runMigrationCommand,
-} from "./runtime/migrations.js";
-import {
-	PACKAGE_MANAGER_IDS,
-	getPackageManagerSelectOptions,
-} from "./runtime/package-managers.js";
+
+const PACKAGE_MANAGER_IDS = ["bun", "npm", "pnpm", "yarn"] as const;
+
+function formatHelpText(): string {
+	return `Usage:
+  wp-typia <project-dir> [--template <basic|interactivity>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <./path|github:owner/repo/path[#ref]>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template <npm-package>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template persistence] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [--template compound] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia templates list
+  wp-typia templates inspect <id>
+  wp-typia migrations <init|snapshot|diff|scaffold|verify|doctor|fixtures|fuzz> [...]
+  wp-typia doctor
+
+Built-in templates: basic, interactivity, persistence, compound
+Package managers: ${PACKAGE_MANAGER_IDS.join(", ")}`;
+}
 
 interface ParsedArgs {
 	dataStorage?: string;
@@ -192,6 +189,12 @@ function printDoctorLine({
 }
 
 async function runScaffold(parsed: ParsedArgs, cwd: string) {
+	const [{ createReadlinePrompt, runScaffoldFlow }, { getPackageManagerSelectOptions }, { getTemplateSelectOptions }] =
+		await Promise.all([
+			import("./runtime/cli-scaffold.js"),
+			import("./runtime/package-managers.js"),
+			import("./runtime/template-registry.js"),
+		]);
 	const isInteractive = Boolean(process.stdin.isTTY && process.stdout.isTTY);
 	const prompt = createReadlinePrompt();
 
@@ -292,6 +295,9 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 
 export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 	if (argv[0] === "migrations") {
+		const { formatMigrationHelpText, parseMigrationArgs, runMigrationCommand } = await import(
+			"./runtime/migrations.js"
+		);
 		const migrationCommand = parseMigrationArgs(argv.slice(1));
 		if (!migrationCommand.command) {
 			console.log(formatMigrationHelpText());
@@ -310,6 +316,13 @@ export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 
 	const [first, second] = parsed.positionals;
 	if (first === "templates") {
+		const {
+			formatTemplateDetails,
+			formatTemplateFeatures,
+			formatTemplateSummary,
+			getTemplateById,
+			listTemplates,
+		} = await import("./runtime/cli-templates.js");
 		if (second === "list") {
 			for (const template of listTemplates()) {
 				console.log(formatTemplateSummary(template));
@@ -331,6 +344,7 @@ export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 	}
 
 	if (first === "doctor") {
+		const { runDoctor } = await import("./runtime/cli-doctor.js");
 		await runDoctor(cwd, { renderLine: printDoctorLine });
 		return;
 	}
