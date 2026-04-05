@@ -301,6 +301,10 @@ function isEntryStale(entry: EndpointDataCacheEntry, staleTime: number): boolean
 		return true;
 	}
 
+	if (staleTime === 0) {
+		return true;
+	}
+
 	return Date.now() - entry.updatedAt > staleTime;
 }
 
