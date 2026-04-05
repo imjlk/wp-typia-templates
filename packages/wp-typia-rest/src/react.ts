@@ -600,10 +600,10 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 					{ force, staleTime: latest.staleTime },
 				);
 
-				if (validation.isValid && validation.data !== undefined) {
+				if (validation.isValid) {
 					const selected =
 						latest.select !== undefined
-							? latest.select(validation.data)
+							? latest.select(validation.data as Res)
 							: (validation.data as unknown as Selected);
 					await latest.onSuccess?.(selected, validation);
 				}

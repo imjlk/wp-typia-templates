@@ -116,21 +116,23 @@ export function useToggleLikeMutation< Context = unknown >(
 			} satisfies PersistenceLikeStatusQuery;
 			const previous = client.getData( likeStatusEndpoint, queryRequest );
 
-			client.setData( likeStatusEndpoint, queryRequest, ( current ) => {
-				if ( ! current ) {
-					return current;
-				}
+			if ( previous !== undefined ) {
+				client.setData( likeStatusEndpoint, queryRequest, ( current ) => {
+					if ( ! current ) {
+						return current;
+					}
 
-				const nextLiked = ! current.likedByCurrentUser;
-				return {
-					...current,
-					count: Math.max(
-						0,
-						current.count + ( nextLiked ? 1 : -1 )
-					),
-					likedByCurrentUser: nextLiked,
-				};
-			} );
+					const nextLiked = ! current.likedByCurrentUser;
+					return {
+						...current,
+						count: Math.max(
+							0,
+							current.count + ( nextLiked ? 1 : -1 )
+						),
+						likedByCurrentUser: nextLiked,
+					};
+				} );
+			}
 
 			let userContext: Context | undefined;
 			try {
@@ -138,7 +140,9 @@ export function useToggleLikeMutation< Context = unknown >(
 					? await onMutate( request, client )
 					: undefined;
 			} catch ( error ) {
-				client.setData( likeStatusEndpoint, queryRequest, previous );
+				if ( previous !== undefined ) {
+					client.setData( likeStatusEndpoint, queryRequest, previous );
+				}
 				throw error;
 			}
 

@@ -653,6 +653,39 @@ describe("@wp-typia/rest/react", () => {
 		expect(rendered.current.validation?.errors[0]?.path).toBe("$.count");
 	});
 
+	test("query onSuccess runs for successful undefined payloads", async () => {
+		let successCount = 0;
+		const endpoint = createEndpoint<undefined, undefined>({
+			method: "GET",
+			path: "/demo/v1/empty",
+			validateRequest: (input: unknown) =>
+				input === undefined
+					? toValidationResult(success(undefined))
+					: toValidationResult(failure<undefined>("undefined")),
+			validateResponse: (input: unknown) =>
+				input === undefined
+					? toValidationResult(success(undefined))
+					: toValidationResult(failure<undefined>("undefined")),
+		});
+		const rendered = await createHookRenderer(() =>
+			useEndpointQuery(endpoint, undefined, {
+				fetchFn: (async () => undefined) as never,
+				onSuccess: () => {
+					successCount += 1;
+				},
+			}),
+		);
+
+		await flush();
+		await flush();
+
+		expect(successCount).toBe(1);
+		expect(rendered.current.validation?.isValid).toBe(true);
+		expect(rendered.current.data).toBeUndefined();
+
+		await rendered.unmount();
+	});
+
 	test("query transport errors do not auto-retry until explicitly refetched", async () => {
 		let fetchCount = 0;
 		const endpoint = createEndpoint<{ page: number }, { count: number }>({

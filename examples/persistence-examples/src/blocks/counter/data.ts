@@ -90,19 +90,21 @@ export function useIncrementCounterMutation< Context = unknown >(
 			} satisfies PersistenceCounterQuery;
 			const previous = client.getData( counterEndpoint, queryRequest );
 
-			client.setData( counterEndpoint, queryRequest, ( current ) => {
-				if ( ! current ) {
-					return current;
-				}
+			if ( previous !== undefined ) {
+				client.setData( counterEndpoint, queryRequest, ( current ) => {
+					if ( ! current ) {
+						return current;
+					}
 
-				return {
-					...current,
-					count: Math.max(
-						0,
-						current.count + ( request.delta ?? 1 )
-					),
-				};
-			} );
+					return {
+						...current,
+						count: Math.max(
+							0,
+							current.count + ( request.delta ?? 1 )
+						),
+					};
+				} );
+			}
 
 			let userContext: Context | undefined;
 			try {
@@ -110,7 +112,9 @@ export function useIncrementCounterMutation< Context = unknown >(
 					? await onMutate( request, client )
 					: undefined;
 			} catch ( error ) {
-				client.setData( counterEndpoint, queryRequest, previous );
+				if ( previous !== undefined ) {
+					client.setData( counterEndpoint, queryRequest, previous );
+				}
 				throw error;
 			}
 
