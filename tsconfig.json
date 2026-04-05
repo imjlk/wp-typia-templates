@@ -71,6 +71,7 @@
     "packages/*/src/**/*",
     "packages/*/tests/**/*",
     "examples/**/src/**/*",
+    "scripts/**/*",
     "tests/**/*"
   ],
   "exclude": [

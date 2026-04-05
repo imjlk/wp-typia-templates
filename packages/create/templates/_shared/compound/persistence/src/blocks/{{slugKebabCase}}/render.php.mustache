@@ -76,6 +76,32 @@ if ( 'authenticated' === $persistence_policy ) {
 
 $context['canWrite'] = $can_write;
 
+$allowed_inner_html = wp_kses_allowed_html( 'post' );
+
+foreach ( $allowed_inner_html as &$allowed_attributes ) {
+	if ( ! is_array( $allowed_attributes ) ) {
+		continue;
+	}
+
+	$allowed_attributes['data-wp-bind--disabled'] = true;
+	$allowed_attributes['data-wp-bind--hidden'] = true;
+	$allowed_attributes['data-wp-bind--value'] = true;
+	$allowed_attributes['data-wp-class'] = true;
+	$allowed_attributes['data-wp-class--active'] = true;
+	$allowed_attributes['data-wp-context'] = true;
+	$allowed_attributes['data-wp-init'] = true;
+	$allowed_attributes['data-wp-interactive'] = true;
+	$allowed_attributes['data-wp-on--click'] = true;
+	$allowed_attributes['data-wp-on--mouseenter'] = true;
+	$allowed_attributes['data-wp-on--mouseleave'] = true;
+	$allowed_attributes['data-wp-run--mounted'] = true;
+	$allowed_attributes['data-wp-style--width'] = true;
+	$allowed_attributes['data-wp-text'] = true;
+}
+unset( $allowed_attributes );
+
+$sanitized_content = wp_kses( $content, $allowed_inner_html );
+
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
 		'class'                => '{{cssClassName}}',
@@ -127,6 +153,6 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		</div>
 	<?php endif; ?>
 	<div class="{{cssClassName}}__items">
-		<?php echo wp_kses_post( $content ); ?>
+		<?php echo $sanitized_content; ?>
 	</div>
 </div>

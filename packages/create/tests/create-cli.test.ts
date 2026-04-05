@@ -1576,7 +1576,9 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(restPublicHelper).toContain("SELECT GET_LOCK(%s, 5)");
 		expect(restPublicHelper).toContain("return 'wpt_pwl_' . md5(");
 		expect(parentRender).toContain("publicWriteToken");
-		expect(parentRender).toContain("wp_kses_post( $content )");
+		expect(parentRender).toContain("$allowed_inner_html = wp_kses_allowed_html( 'post' );");
+		expect(parentRender).toContain("$allowed_attributes['data-wp-interactive'] = true;");
+		expect(parentRender).toContain("wp_kses( $content, $allowed_inner_html )");
 		expect(parentRender).toContain('role="status"');
 		expect(parentRender).toContain('aria-live="polite"');
 		expect(generatedApiTypes).toContain("publicWriteRequestId: string");

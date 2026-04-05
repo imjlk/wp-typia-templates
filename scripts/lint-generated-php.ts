@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 
-import { scaffoldProject } from "../packages/create/src/runtime/scaffold.ts";
+import { scaffoldProject } from "../packages/create/src/runtime/scaffold";
 
 const repoRoot = path.resolve(import.meta.dir, "..");
 const phpcsBin = path.join(
@@ -20,17 +20,23 @@ if ( ! fs.existsSync( phpcsBin ) ) {
 const tempRoot = fs.mkdtempSync( path.join( os.tmpdir(), "wp-typia-phpcs-" ) );
 
 function runPhpcs( files: string[] ) {
+	const args = ["--standard=phpcs.xml.dist", ...files];
 	const result = spawnSync(
 		phpcsBin,
-		["--standard=phpcs.xml.dist", ...files],
+		args,
 		{
 			cwd: repoRoot,
+			shell: process.platform === "win32",
 			stdio: "inherit",
 		},
 	);
 
+	if ( result.error ) {
+		throw result.error;
+	}
+
 	if ( result.status !== 0 ) {
-		process.exit( result.status ?? 1 );
+		throw new Error( `PHPCS failed with exit code ${result.status ?? 1}` );
 	}
 }
 
