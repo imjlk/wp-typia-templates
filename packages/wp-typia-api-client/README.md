@@ -39,5 +39,30 @@ const endpoint = createEndpoint<MyRequest, MyResponse>({
 const result = await callEndpoint(endpoint, { title: "Hello" }, { transport });
 ```
 
+When an endpoint needs both query parameters and a request body, use
+`requestLocation: "query-and-body"` and pass a `{ query, body }` envelope:
+
+```ts
+const mixedEndpoint = createEndpoint<
+	{ query: { draft: boolean }; body: { title: string } },
+	{ ok: boolean }
+>({
+	method: "POST",
+	path: "/my-namespace/v1/demo",
+	requestLocation: "query-and-body",
+	validateRequest: validators.mixedRequest,
+	validateResponse: validators.response,
+});
+
+const result = await callEndpoint(
+	mixedEndpoint,
+	{
+		query: { draft: true },
+		body: { title: "Hello" },
+	},
+	{ transport },
+);
+```
+
 Use `@wp-typia/rest` when you want WordPress-specific helpers such as canonical
 REST route URL resolution and `@wordpress/api-fetch` integration.

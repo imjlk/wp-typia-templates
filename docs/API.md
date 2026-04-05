@@ -141,6 +141,13 @@ It does not include WordPress route resolution, `wpApiSettings`, or
 `src/api-client.ts` module through `syncEndpointClient(...)` in
 `@wp-typia/create/metadata-core`.
 
+When a manifest endpoint defines both `queryContract` and `bodyContract`, the
+portable generated client now uses a `{ query, body }` request envelope and
+marks the generated endpoint with `requestLocation: 'query-and-body'`.
+This support is currently limited to the portable client/runtime path; other
+internal manifest consumers such as `typia.llm` and WordPress AI projections
+still reject mixed query/body inputs.
+
 ## 5. `@wp-typia/block-runtime`
 
 `@wp-typia/block-runtime` is the current prototype graduation path for the

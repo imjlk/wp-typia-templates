@@ -362,9 +362,9 @@ describe("metadata-core endpoint manifests", () => {
 		}
 	});
 
-	test("syncEndpointClient rejects endpoints that define both bodyContract and queryContract", async () => {
+	test("syncEndpointClient emits mixed query/body request helpers", async () => {
 		const project = createTempProject();
-		const ambiguousManifest = defineEndpointManifest({
+		const mixedManifest = defineEndpointManifest({
 			contracts: manifest.contracts,
 			endpoints: [
 				{
@@ -381,18 +381,220 @@ describe("metadata-core endpoint manifests", () => {
 		});
 
 		try {
-			await expect(
-				syncEndpointClient({
-					clientFile: "build/api-client.ts",
-					manifest: ambiguousManifest,
-					projectRoot: project.root,
-					typesFile: project.typesFile,
-				}),
-			).rejects.toThrow(
-				'Endpoint "writeCounterState" defines both bodyContract and queryContract; generated portable clients require a single request contract.',
+			await syncEndpointClient({
+				clientFile: "build/api-client.ts",
+				manifest: mixedManifest,
+				projectRoot: project.root,
+				typesFile: project.typesFile,
+			});
+			const generatedClient = fs.readFileSync(
+				path.join(project.root, "build", "api-client.ts"),
+				"utf8",
+			);
+
+			expect(generatedClient).toContain(
+				"\ttype ValidationError as PortableValidationError,",
+			);
+			expect(generatedClient).toContain(
+				"\ttype ValidationResult as PortableValidationResult,",
+			);
+			expect(generatedClient).toContain("function validateCombinedRequest<TQuery, TBody>(");
+			expect(generatedClient).toContain("expected: '{ query, body }'");
+			expect(generatedClient).toContain("path: prefixPath( '$.query', error.path )");
+			expect(generatedClient).toContain("path: prefixPath( '$.body', error.path )");
+			expect(generatedClient).not.toContain("queryValidation.data === undefined");
+			expect(generatedClient).not.toContain("bodyValidation.data === undefined");
+			expect(generatedClient).toContain(
+				"query: queryValidation.data ?? ( request.query as TQuery )",
+			);
+			expect(generatedClient).toContain(
+				"body: bodyValidation.data ?? ( request.body as TBody )",
+			);
+			expect(generatedClient).toContain("requestLocation: 'query-and-body'");
+			expect(generatedClient).toContain(
+				"\trequest: { query: CounterQuery; body: WriteCounterRequest },",
+			);
+			expect(generatedClient).toContain(
+				"validateRequest: (input) => validateCombinedRequest( input, apiValidators.query, apiValidators.request )",
 			);
 		} finally {
 			fs.rmSync(project.root, { force: true, recursive: true });
+		}
+	});
+
+	test("syncEndpointClient aliases helper validation imports to avoid contract-name collisions", async () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-metadata-core-"));
+		const typesDir = path.join(root, "src");
+		fs.mkdirSync(typesDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(typesDir, "api-types.ts"),
+			[
+				"export interface QueryContract {",
+				"  page: number;",
+				"}",
+				"",
+				"export interface BodyContract {",
+				"  title: string;",
+				"}",
+				"",
+				"export interface ValidationError {",
+				"  code: string;",
+				"}",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(typesDir, "api-validators.ts"),
+			[
+				"import type { ValidationResult } from '@wp-typia/api-client';",
+				"import type { BodyContract, QueryContract, ValidationError } from './api-types';",
+				"",
+				"function ok<T>(input: T): ValidationResult<T> {",
+				"  return { data: input, errors: [], isValid: true };",
+				"}",
+				"",
+				"export const apiValidators = {",
+				"  body: (input: unknown): ValidationResult<BodyContract> => ok(input as BodyContract),",
+				"  query: (input: unknown): ValidationResult<QueryContract> => ok(input as QueryContract),",
+				"  response: (input: unknown): ValidationResult<ValidationError> => ok(input as ValidationError),",
+				"};",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+
+		try {
+			await syncEndpointClient({
+				clientFile: "build/api-client.ts",
+				manifest: defineEndpointManifest({
+					contracts: {
+						body: { sourceTypeName: "BodyContract" },
+						query: { sourceTypeName: "QueryContract" },
+						response: { sourceTypeName: "ValidationError" },
+					},
+					endpoints: [
+						{
+							authMode: "public-read",
+							bodyContract: "body",
+							method: "POST",
+							operationId: "writeState",
+							path: "/demo/v1/state",
+							queryContract: "query",
+							responseContract: "response",
+							tags: ["State"],
+						},
+					],
+				}),
+				projectRoot: root,
+				typesFile: "src/api-types.ts",
+			});
+			const generatedClient = fs.readFileSync(
+				path.join(root, "build", "api-client.ts"),
+				"utf8",
+			);
+
+			expect(generatedClient).toContain(
+				"type ValidationError as PortableValidationError,",
+			);
+			expect(generatedClient).toContain(
+				"type ValidationResult as PortableValidationResult,",
+			);
+			expect(generatedClient).toContain("\tValidationError,");
+		} finally {
+			fs.rmSync(root, { force: true, recursive: true });
+		}
+	});
+
+	test("syncEndpointClient picks non-conflicting helper aliases for imported portable types", async () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-metadata-core-"));
+		const typesDir = path.join(root, "src");
+		fs.mkdirSync(typesDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(typesDir, "api-types.ts"),
+			[
+				"export interface QueryContract {",
+				"  page: number;",
+				"}",
+				"",
+				"export interface PortableValidationError {",
+				"  title: string;",
+				"}",
+				"",
+				"export interface PortableValidationResult {",
+				"  ok: boolean;",
+				"}",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(typesDir, "api-validators.ts"),
+			[
+				"import type { ValidationResult } from '@wp-typia/api-client';",
+				"import type { QueryContract, PortableValidationError, PortableValidationResult } from './api-types';",
+				"",
+				"function ok<T>(input: T): ValidationResult<T> {",
+				"  return { data: input, errors: [], isValid: true };",
+				"}",
+				"",
+				"export const apiValidators = {",
+				"  body: (input: unknown): ValidationResult<PortableValidationError> => ok(input as PortableValidationError),",
+				"  query: (input: unknown): ValidationResult<QueryContract> => ok(input as QueryContract),",
+				"  response: (input: unknown): ValidationResult<PortableValidationResult> => ok(input as PortableValidationResult),",
+				"};",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+
+		try {
+			await syncEndpointClient({
+				clientFile: "build/api-client.ts",
+				manifest: defineEndpointManifest({
+					contracts: {
+						body: { sourceTypeName: "PortableValidationError" },
+						query: { sourceTypeName: "QueryContract" },
+						response: { sourceTypeName: "PortableValidationResult" },
+					},
+					endpoints: [
+						{
+							authMode: "public-read",
+							bodyContract: "body",
+							method: "POST",
+							operationId: "writeState",
+							path: "/demo/v1/state",
+							queryContract: "query",
+							responseContract: "response",
+							tags: ["State"],
+						},
+					],
+				}),
+				projectRoot: root,
+				typesFile: "src/api-types.ts",
+			});
+			const generatedClient = fs.readFileSync(
+				path.join(root, "build", "api-client.ts"),
+				"utf8",
+			);
+
+			expect(generatedClient).toContain(
+				"\ttype ValidationError as PortableValidationErrorAlias,",
+			);
+			expect(generatedClient).toContain(
+				"\ttype ValidationResult as PortableValidationResultAlias,",
+			);
+			expect(generatedClient).toContain(
+				"\tvalidateQuery: (input: unknown) => PortableValidationResultAlias<TQuery>,",
+			);
+			expect(generatedClient).toContain(
+				"\tconst errors: PortableValidationErrorAlias[] = [",
+			);
+			expect(generatedClient).toContain("\tQueryContract,");
+			expect(generatedClient).toContain("\tPortableValidationError,");
+			expect(generatedClient).toContain("\tPortableValidationResult,");
+		} finally {
+			fs.rmSync(root, { force: true, recursive: true });
 		}
 	});
 

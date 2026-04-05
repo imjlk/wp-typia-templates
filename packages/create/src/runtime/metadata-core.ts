@@ -804,6 +804,9 @@ export async function syncEndpointClient(
   const endpointLines: string[] = [];
   const inlineHelpers = new Set<string>();
   const validatorPropertyNames = new Map<string, string>();
+  const hasCombinedRequestEndpoints = manifest.endpoints.some(
+    (endpoint) => Boolean(endpoint.bodyContract && endpoint.queryContract),
+  );
   const occupiedIdentifiers = new Set([
     'apiValidators',
     'callEndpoint',
@@ -813,6 +816,7 @@ export async function syncEndpointClient(
     )
       ? ['validateNoRequest']
       : []),
+    ...(hasCombinedRequestEndpoints ? ['validateCombinedRequest'] : []),
   ]);
 
   for (const endpoint of manifest.endpoints) {
@@ -835,13 +839,9 @@ export async function syncEndpointClient(
     occupiedIdentifiers.add(endpoint.operationId);
     occupiedIdentifiers.add(endpointConstantName);
 
-    if (endpoint.bodyContract && endpoint.queryContract) {
-      throw new Error(
-        `Endpoint "${endpoint.operationId}" defines both bodyContract and queryContract; generated portable clients require a single request contract.`,
-      );
-    }
-
-    const requestContractKey = endpoint.bodyContract ?? endpoint.queryContract ?? null;
+    const queryContractKey = endpoint.queryContract ?? null;
+    const bodyContractKey = endpoint.bodyContract ?? null;
+    const hasRequest = Boolean(queryContractKey || bodyContractKey);
     const responseContract = resolveEndpointClientContract(
       manifest,
       endpoint.responseContract,
@@ -853,26 +853,58 @@ export async function syncEndpointClient(
     let requestTypeName = 'undefined';
     let requestValidatorExpression = 'validateNoRequest';
     let requestLocationExpression: string | null = null;
+    const queryContract = queryContractKey
+      ? resolveEndpointClientContract(
+          manifest,
+          queryContractKey,
+          endpoint.operationId,
+          'queryContract',
+        )
+      : null;
+    const bodyContract = bodyContractKey
+      ? resolveEndpointClientContract(
+          manifest,
+          bodyContractKey,
+          endpoint.operationId,
+          'bodyContract',
+        )
+      : null;
 
-    if (requestContractKey) {
-      const requestContract = resolveEndpointClientContract(
-        manifest,
-        requestContractKey,
-        endpoint.operationId,
-        endpoint.bodyContract ? 'bodyContract' : 'queryContract',
-      );
-      requestTypeName = requestContract.sourceTypeName;
-      requestValidatorExpression = toValidatorAccessExpression(
-        requestContractKey,
+    if (queryContract && bodyContract) {
+      const queryValidatorExpression = toValidatorAccessExpression(
+        queryContractKey!,
         validatorPropertyNames,
       );
-      requestLocationExpression = endpoint.queryContract ? "'query'" : "'body'";
-      importedTypeNames.add(requestContract.sourceTypeName);
+      const bodyValidatorExpression = toValidatorAccessExpression(
+        bodyContractKey!,
+        validatorPropertyNames,
+      );
+      requestTypeName = `{ query: ${queryContract.sourceTypeName}; body: ${bodyContract.sourceTypeName} }`;
+      requestValidatorExpression = `(input) => validateCombinedRequest( input, ${queryValidatorExpression}, ${bodyValidatorExpression} )`;
+      requestLocationExpression = "'query-and-body'";
+      importedTypeNames.add(queryContract.sourceTypeName);
+      importedTypeNames.add(bodyContract.sourceTypeName);
+      inlineHelpers.add('validateCombinedRequest');
+    } else if (queryContract) {
+      requestTypeName = queryContract.sourceTypeName;
+      requestValidatorExpression = toValidatorAccessExpression(
+        queryContractKey!,
+        validatorPropertyNames,
+      );
+      requestLocationExpression = "'query'";
+      importedTypeNames.add(queryContract.sourceTypeName);
+    } else if (bodyContract) {
+      requestTypeName = bodyContract.sourceTypeName;
+      requestValidatorExpression = toValidatorAccessExpression(
+        bodyContractKey!,
+        validatorPropertyNames,
+      );
+      requestLocationExpression = "'body'";
+      importedTypeNames.add(bodyContract.sourceTypeName);
     } else {
       inlineHelpers.add('validateNoRequest');
     }
 
-    const hasRequest = requestContractKey !== null;
     const returnCallExpression = hasRequest
       ? `callEndpoint( ${endpoint.operationId}Endpoint, request, options )`
       : `callEndpoint( ${endpoint.operationId}Endpoint, undefined, options )`;
@@ -918,11 +950,24 @@ export async function syncEndpointClient(
   }
 
   const sortedTypeNames = [...importedTypeNames].sort();
+  const helperTypeNames = new Set(sortedTypeNames);
+  const combinedValidationErrorTypeName = inlineHelpers.has('validateCombinedRequest')
+    ? reserveUniqueClientTypeIdentifier('PortableValidationError', helperTypeNames)
+    : null;
+  const combinedValidationResultTypeName = inlineHelpers.has('validateCombinedRequest')
+    ? reserveUniqueClientTypeIdentifier('PortableValidationResult', helperTypeNames)
+    : null;
   const lines = [
     `import {`,
     `\tcallEndpoint,`,
     `\tcreateEndpoint,`,
     `\ttype EndpointCallOptions,`,
+    ...(inlineHelpers.has('validateCombinedRequest')
+      ? [
+          `\ttype ValidationError as ${combinedValidationErrorTypeName},`,
+          `\ttype ValidationResult as ${combinedValidationResultTypeName},`,
+        ]
+      : []),
     `} from '@wp-typia/api-client';`,
     ...(sortedTypeNames.length === 1
       ? [
@@ -960,6 +1005,83 @@ export async function syncEndpointClient(
           '',
           `\treturn {`,
           `\t\tdata: undefined,`,
+          `\t\terrors: [],`,
+          `\t\tisValid: true,`,
+          `\t};`,
+          `}`,
+          '',
+        ]
+      : []),
+    ...(inlineHelpers.has('validateCombinedRequest')
+      ? [
+          `function validateCombinedRequest<TQuery, TBody>(`,
+          `\tinput: unknown,`,
+          `\tvalidateQuery: (input: unknown) => ${combinedValidationResultTypeName}<TQuery>,`,
+          `\tvalidateBody: (input: unknown) => ${combinedValidationResultTypeName}<TBody>,`,
+          `): ${combinedValidationResultTypeName}<{ query: TQuery; body: TBody }> {`,
+          `\tif ( input === null || typeof input !== 'object' || Array.isArray( input ) ) {`,
+          `\t\treturn {`,
+          `\t\t\tdata: undefined,`,
+          `\t\t\terrors: [`,
+          `\t\t\t\t{`,
+          `\t\t\t\t\texpected: '{ query, body }',`,
+          `\t\t\t\t\tpath: '(root)',`,
+          `\t\t\t\t\tvalue: input,`,
+          `\t\t\t\t},`,
+          `\t\t\t],`,
+          `\t\t\tisValid: false,`,
+          `\t\t};`,
+          `\t}`,
+          ``,
+          `\tconst request = input as { query?: unknown; body?: unknown };`,
+          `\tif ( !Object.prototype.hasOwnProperty.call( request, 'query' ) || !Object.prototype.hasOwnProperty.call( request, 'body' ) ) {`,
+          `\t\treturn {`,
+          `\t\t\tdata: undefined,`,
+          `\t\t\terrors: [`,
+          `\t\t\t\t{`,
+          `\t\t\t\t\texpected: '{ query, body }',`,
+          `\t\t\t\t\tpath: '(root)',`,
+          `\t\t\t\t\tvalue: input,`,
+          `\t\t\t\t},`,
+          `\t\t\t],`,
+          `\t\t\tisValid: false,`,
+          `\t\t};`,
+          `\t}`,
+          ``,
+          `\tconst prefixPath = (prefix: '$.query' | '$.body', path: string): string => {`,
+          `\t\tif ( path === '(root)' ) {`,
+          `\t\t\treturn prefix;`,
+          `\t\t}`,
+          ``,
+          `\t\treturn path.startsWith( '$' ) ? \`\${prefix}\${path.slice( 1 )}\` : \`\${prefix}.\${path}\`;`,
+          `\t};`,
+          ``,
+          `\tconst queryValidation = validateQuery( request.query );`,
+          `\tconst bodyValidation = validateBody( request.body );`,
+          `\tconst errors: ${combinedValidationErrorTypeName}[] = [`,
+          `\t\t...queryValidation.errors.map( ( error ) => ( {`,
+          `\t\t\t...error,`,
+          `\t\t\tpath: prefixPath( '$.query', error.path ),`,
+          `\t\t} ) ),`,
+          `\t\t...bodyValidation.errors.map( ( error ) => ( {`,
+          `\t\t\t...error,`,
+          `\t\t\tpath: prefixPath( '$.body', error.path ),`,
+          `\t\t} ) ),`,
+          `\t];`,
+          ``,
+          `\tif ( !queryValidation.isValid || !bodyValidation.isValid ) {`,
+          `\t\treturn {`,
+          `\t\t\tdata: undefined,`,
+          `\t\t\terrors,`,
+          `\t\t\tisValid: false,`,
+          `\t\t};`,
+          `\t}`,
+          ``,
+          `\treturn {`,
+          `\t\tdata: {`,
+          `\t\t\tbody: bodyValidation.data ?? ( request.body as TBody ),`,
+          `\t\t\tquery: queryValidation.data ?? ( request.query as TQuery ),`,
+          `\t\t},`,
           `\t\terrors: [],`,
           `\t\tisValid: true,`,
           `\t};`,
@@ -1186,6 +1308,28 @@ function assertValidClientIdentifier(value: string, label: string): void {
     throw new Error(
       `Generated endpoint client ${label} "${value}" is a reserved JavaScript identifier.`,
     );
+  }
+}
+
+function reserveUniqueClientTypeIdentifier(
+  preferred: string,
+  occupied: Set<string>,
+): string {
+  let suffix = 0;
+
+  while (true) {
+    const candidate =
+      suffix === 0
+        ? preferred
+        : suffix === 1
+          ? `${preferred}Alias`
+          : `${preferred}Alias${suffix}`;
+    if (!occupied.has(candidate) && !RESERVED_CLIENT_IDENTIFIERS.has(candidate)) {
+      assertValidClientIdentifier(candidate, 'type alias');
+      occupied.add(candidate);
+      return candidate;
+    }
+    suffix += 1;
   }
 }
 
