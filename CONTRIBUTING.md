@@ -59,6 +59,7 @@ bun run release
 - `bun run release` runs `sampo release` locally to inspect the version/changelog changes that the release PR workflow will generate
 - `bun run publish` remains a local/manual fallback and is not the primary CI publish path
 - `DRY_RUN=1 bun run publish:oidc` is the safest local way to preview the OIDC publish script behavior without pushing packages
+- `bun run publish:validate` checks that every publishable workspace package under `packages/` is covered by `scripts/publish-oidc.sh`
 
 GitHub release automation is split into two workflows:
 
@@ -69,6 +70,22 @@ GitHub release automation is split into two workflows:
 5. `.github/workflows/publish.yml` publishes packages with npm OIDC from that GitHub Release event
 
 `workflow_dispatch` remains available as a manual fallback if the publish workflow ever needs to be rerun for the current commit.
+
+### First release of a new npm package
+
+When you add a brand-new publishable workspace package under `packages/`, do all
+of the following before you rely on the normal release PR flow:
+
+1. Add the package directory to `scripts/publish-oidc.sh`.
+2. Run `bun run publish:validate` and make sure CI stays green.
+3. Seed the package name on npm with a manual first publish, typically `0.1.0`.
+4. Verify the bootstrap publish with `npm view <package-name> versions --json`.
+5. Only then merge PRs that make other released packages or generated-project smoke jobs depend on that package.
+6. After the bootstrap release exists, let the normal Sampo release PR automation publish subsequent versions.
+
+This matters because generated-project smoke jobs install released package
+versions from npm. If a newly referenced package has not been published yet,
+those jobs can fail even when the source tree and release PR look correct.
 
 ## Pull requests
 

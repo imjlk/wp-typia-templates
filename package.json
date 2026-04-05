@@ -53,6 +53,7 @@
     "publish": "sampo publish",
     "publish:dry-run": "bun run packages:build && DRY_RUN=1 bun run publish:oidc",
     "publish:oidc": "bash scripts/publish-oidc.sh",
+    "publish:validate": "node scripts/validate-publish-oidc-packages.mjs",
     "sampo:add": "sampo add",
     "changesets:validate": "bun scripts/validate-sampo-changesets.mjs",
     "docs:dev": "typedoc --watch",

@@ -41,6 +41,9 @@ jobs:
       - name: Validate pending changesets
         run: bun run changesets:validate
 
+      - name: Validate publish package coverage
+        run: bun run publish:validate
+
       - name: Install Sampo
         run: cargo install sampo --locked --version 0.17.0
 

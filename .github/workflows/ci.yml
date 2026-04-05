@@ -41,6 +41,9 @@ jobs:
       - name: Validate pending changesets
         run: bun run changesets:validate
 
+      - name: Validate publish package coverage
+        run: bun run publish:validate
+
       - name: Run example linting
         run: bun run examples:lint
 
