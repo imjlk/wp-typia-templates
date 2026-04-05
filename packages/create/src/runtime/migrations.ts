@@ -352,7 +352,10 @@ export function planProjectMigrations(
 	const availableLegacyVersions = listPreviewableLegacyVersions(state).sort(compareSemver).reverse();
 	const targetVersion = resolveTargetVersion(state.config.currentVersion, toVersion);
 	assertDistinctMigrationEdge("plan", fromVersion, targetVersion);
-	resolveLegacyVersions(state, { fromVersion });
+	resolveLegacyVersions(state, {
+		fromVersion,
+		availableVersions: availableLegacyVersions,
+	});
 
 	const includedBlocks = state.blocks.filter((block) => hasSnapshotForVersion(state, block, fromVersion));
 	if (includedBlocks.length === 0) {
@@ -1163,9 +1166,13 @@ function parseNonNegativeInteger(value: string | undefined, label: string): numb
 
 function resolveLegacyVersions(
 	state: ReturnType<typeof loadMigrationProject>,
-	{ all = false, fromVersion }: { all?: boolean; fromVersion?: string },
+	{
+		all = false,
+		availableVersions,
+		fromVersion,
+	}: { all?: boolean; availableVersions?: string[]; fromVersion?: string },
 ): string[] {
-	const legacyVersions = listConfiguredLegacyVersions(state);
+	const legacyVersions = availableVersions ?? listConfiguredLegacyVersions(state);
 
 	if (fromVersion) {
 		if (!legacyVersions.includes(fromVersion)) {

@@ -1760,6 +1760,18 @@ describe("wp-typia migrations", () => {
 		expect(fs.existsSync(manifestPath)).toBe(false);
 	});
 
+	test("loadMigrationProject rechecks manifests after attempting sync-types", () => {
+		const projectDir = path.join(tempRoot, "plan-missing-manifest-after-sync-project");
+		createVersionedMigrationProject(projectDir);
+		const manifestPath = path.join(projectDir, "typia.manifest.json");
+		fs.rmSync(manifestPath);
+
+		expect(() => loadMigrationProject(projectDir)).toThrow(
+			/Missing current manifest file\(s\): typia\.manifest\.json[\s\S]*Run your project's `sync-types` script/,
+		);
+		expect(fs.existsSync(manifestPath)).toBe(false);
+	});
+
 	test("plan only advertises legacy versions with snapshot coverage", () => {
 		const projectDir = path.join(tempRoot, "plan-previewable-versions-project");
 		createVersionedMigrationProject(projectDir);
@@ -1782,6 +1794,26 @@ describe("wp-typia migrations", () => {
 		expect(summary.availableLegacyVersions).toEqual(["1.0.0"]);
 		expect(lines.join("\n")).toContain("Available legacy versions: 1.0.0");
 		expect(lines.join("\n")).not.toContain("1.5.0");
+	});
+
+	test("plan unsupported-version guidance only lists previewable legacy versions", () => {
+		const projectDir = path.join(tempRoot, "plan-previewable-error-project");
+		createVersionedMigrationProject(projectDir);
+
+		const configPath = path.join(projectDir, "src", "migrations", "config.ts");
+		fs.writeFileSync(
+			configPath,
+			fs
+				.readFileSync(configPath, "utf8")
+				.replace('supportedVersions: ["1.0.0", "2.0.0"]', 'supportedVersions: ["1.0.0", "1.5.0", "2.0.0"]'),
+			"utf8",
+		);
+
+		expect(() =>
+			planProjectMigrations(projectDir, {
+				fromVersion: "9.9.9",
+			}),
+		).toThrow(/Unsupported migration version: 9.9.9[\s\S]*Available legacy versions: 1\.0\.0/);
 	});
 
 	test("plan omits current-version follow-up commands for non-current targets", () => {
