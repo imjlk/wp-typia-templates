@@ -185,6 +185,7 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
             <Button
               variant={isPreviewing ? 'primary' : 'secondary'}
               onClick={() => setIsPreviewing(!isPreviewing)}
+              aria-pressed={isPreviewing}
               isSmall
             >
               {isPreviewing

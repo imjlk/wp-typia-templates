@@ -53,9 +53,15 @@ export default function Save({ attributes }: { attributes: {{pascalCase}}Attribu
         )}
 
         {attributes.maxClicks > 0 && (
-          <div className="{{cssClassName}}__progress" aria-hidden="true">
+          <div className="{{cssClassName}}__progress">
             <div
               className="{{cssClassName}}__progress-bar"
+              role="progressbar"
+              aria-label="Click progress"
+              aria-valuemin={0}
+              aria-valuemax={attributes.maxClicks}
+              aria-valuenow={Math.min(attributes.clickCount, attributes.maxClicks)}
+              data-wp-bind--aria-valuenow="state.clampedClicks"
               data-wp-style--width="state.progress + '%'"
             />
           </div>
@@ -84,7 +90,10 @@ export default function Save({ attributes }: { attributes: {{pascalCase}}Attribu
           data-wp-on--click="actions.reset"
           aria-label="Reset counter"
         >
-          ↻
+          <span aria-hidden="true">↻</span>
+          <span className="screen-reader-text">
+            Reset counter
+          </span>
         </button>
       </div>
     </div>
