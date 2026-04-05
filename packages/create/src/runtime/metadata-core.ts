@@ -1,5 +1,6 @@
 import type {} from './typia-tags.js';
 
+import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -406,6 +407,24 @@ interface AnalysisContext {
   program: ts.Program;
   recursionGuard: Set<string>;
 }
+
+interface AnalysisProgramInputs {
+  cacheKey: string;
+  compilerOptions: ts.CompilerOptions;
+  configPath: string | null;
+  rootNames: string[];
+  structureKey: string;
+  typiaTagsAugmentationPath: string | null;
+}
+
+interface AnalysisProgramCacheEntry {
+  checker: ts.TypeChecker;
+  program: ts.Program;
+}
+
+const DEFAULT_ALLOWED_EXTERNAL_PACKAGES = ['@wp-typia/block-types'] as const;
+const analysisProgramCache = new Map<string, AnalysisProgramCacheEntry>();
+const analysisProgramStructureCache = new Map<string, ts.Program>();
 
 const SUPPORTED_TAGS = new Set([
   'Default',
@@ -1388,10 +1407,77 @@ function analyzeSourceTypes(
   );
 }
 
-function createAnalysisContext(
+function stableSerializeAnalysisValue(value: unknown): string {
+  if (value === undefined) {
+    return '"__undefined__"';
+  }
+
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value);
+  }
+
+  if (Array.isArray(value)) {
+    return `[${value.map((entry) => stableSerializeAnalysisValue(entry)).join(',')}]`;
+  }
+
+  return `{${Object.entries(value as Record<string, unknown>)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(
+      ([key, entry]) =>
+        `${JSON.stringify(key)}:${stableSerializeAnalysisValue(entry)}`,
+    )
+    .join(',')}}`;
+}
+
+function buildAnalysisProgramStructureKey(
   projectRoot: string,
   typesFilePath: string,
-): AnalysisContext {
+  {
+    compilerOptions,
+    configPath,
+    rootNames,
+    typiaTagsAugmentationPath,
+  }: {
+    compilerOptions: ts.CompilerOptions;
+    configPath: string | null;
+    rootNames: string[];
+    typiaTagsAugmentationPath: string | null;
+  },
+): string {
+  return stableSerializeAnalysisValue({
+    compilerOptions,
+    configPath,
+    projectRoot,
+    rootNames: [...rootNames].sort(),
+    typiaTagsAugmentationPath,
+    typesFilePath,
+  });
+}
+
+function createAnalysisProgramContentFingerprint(
+  rootNames: string[],
+  configPath: string | null,
+): string {
+  const hash = createHash('sha1');
+  const fingerprintPaths = [
+    ...(configPath ? [configPath] : []),
+    ...rootNames,
+  ].sort();
+
+  for (const filePath of fingerprintPaths) {
+    hash.update(filePath);
+    hash.update('\0');
+    hash.update(ts.sys.readFile(filePath) ?? '');
+    hash.update('\0');
+  }
+
+  return hash.digest('hex');
+}
+
+function resolveAnalysisProgramInputs(
+  projectRoot: string,
+  typesFilePath: string,
+): AnalysisProgramInputs {
   const configPath = ts.findConfigFile(
     projectRoot,
     ts.sys.fileExists,
@@ -1442,9 +1528,48 @@ function createAnalysisContext(
     rootNames = [...rootNames, typiaTagsAugmentationPath];
   }
 
-  const program = ts.createProgram({
-    options: compilerOptions,
+  const structureKey = buildAnalysisProgramStructureKey(projectRoot, typesFilePath, {
+    compilerOptions,
+    configPath: configPath ?? null,
     rootNames,
+    typiaTagsAugmentationPath,
+  });
+
+  return {
+    cacheKey: `${structureKey}:${createAnalysisProgramContentFingerprint(
+      rootNames,
+      configPath ?? null,
+    )}`,
+    compilerOptions,
+    configPath: configPath ?? null,
+    rootNames,
+    structureKey,
+    typiaTagsAugmentationPath,
+  };
+}
+
+function createAnalysisContext(
+  projectRoot: string,
+  typesFilePath: string,
+): AnalysisContext {
+  const analysisInputs = resolveAnalysisProgramInputs(projectRoot, typesFilePath);
+  const cachedAnalysis = analysisProgramCache.get(analysisInputs.cacheKey);
+  if (cachedAnalysis) {
+    return {
+      allowedExternalPackages: new Set(DEFAULT_ALLOWED_EXTERNAL_PACKAGES),
+      checker: cachedAnalysis.checker,
+      packageNameCache: new Map(),
+      projectRoot,
+      program: cachedAnalysis.program,
+      recursionGuard: new Set<string>(),
+    };
+  }
+
+  const cachedProgram = analysisProgramStructureCache.get(analysisInputs.structureKey);
+  const program = ts.createProgram({
+    oldProgram: cachedProgram,
+    options: analysisInputs.compilerOptions,
+    rootNames: analysisInputs.rootNames,
   });
   const diagnostics = ts.getPreEmitDiagnostics(program);
   const blockingDiagnostic = diagnostics.find(
@@ -1456,9 +1581,16 @@ function createAnalysisContext(
     throw formatDiagnosticError(blockingDiagnostic);
   }
 
+  const checker = program.getTypeChecker();
+  analysisProgramCache.set(analysisInputs.cacheKey, {
+    checker,
+    program,
+  });
+  analysisProgramStructureCache.set(analysisInputs.structureKey, program);
+
   return {
-    allowedExternalPackages: new Set(['@wp-typia/block-types']),
-    checker: program.getTypeChecker(),
+    allowedExternalPackages: new Set(DEFAULT_ALLOWED_EXTERNAL_PACKAGES),
+    checker,
     packageNameCache: new Map(),
     projectRoot,
     program,

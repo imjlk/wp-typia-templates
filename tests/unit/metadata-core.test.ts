@@ -6,8 +6,10 @@ import { describe, expect, test } from "bun:test";
 
 import {
 	defineEndpointManifest,
+	syncBlockMetadata,
 	syncEndpointClient,
 	syncRestOpenApi,
+	syncTypeSchemas,
 	type EndpointManifestDefinition,
 	type SyncEndpointClientOptions,
 	type SyncRestOpenApiContractsOptions,
@@ -221,6 +223,124 @@ describe("metadata-core endpoint manifests", () => {
 			expect(generatedClient).toContain("export const getCounterStateEndpoint = createEndpoint<");
 			expect(generatedClient).toContain("export function getCounterState(");
 			expect(generatedClient).toContain("export function writeCounterState(");
+		} finally {
+			fs.rmSync(project.root, { force: true, recursive: true });
+		}
+	});
+
+	test("reuses repeated analysis safely across sync flows and preserves typia tag projections", async () => {
+		const project = createTempProject();
+		const blockJsonPath = path.join(project.root, "block.json");
+		const blockTypesPath = path.join(project.root, "src", "block-types.ts");
+
+		fs.writeFileSync(
+			blockJsonPath,
+			JSON.stringify({ attributes: {}, example: { attributes: {} } }, null, 2),
+			"utf8",
+		);
+		fs.writeFileSync(
+			blockTypesPath,
+			[
+				'import { tags } from "typia";',
+				"",
+				"export interface DemoBlockAttributes {",
+				'  content: string & tags.Source<"html"> & tags.Selector<".wp-block-demo__content">;',
+				"}",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+		fs.mkdirSync(path.join(project.root, "node_modules", "typia"), { recursive: true });
+		fs.writeFileSync(
+			path.join(project.root, "node_modules", "typia", "index.d.ts"),
+			[
+				"export namespace tags {",
+				'  export type Selector<T extends string> = T & { readonly __selector?: unique symbol };',
+				'  export type Source<T extends string> = T & { readonly __source?: unique symbol };',
+				"}",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(project.root, "node_modules", "typia", "package.json"),
+			JSON.stringify({ name: "typia", types: "index.d.ts" }, null, 2),
+			"utf8",
+		);
+
+		try {
+			const querySchema = await syncTypeSchemas({
+				jsonSchemaFile: "build/query.schema.json",
+				openApiFile: "build/query.openapi.json",
+				projectRoot: project.root,
+				sourceTypeName: "CounterQuery",
+				typesFile: project.typesFile,
+			});
+			const requestSchema = await syncTypeSchemas({
+				jsonSchemaFile: "build/request.schema.json",
+				openApiFile: "build/request.openapi.json",
+				projectRoot: project.root,
+				sourceTypeName: "WriteCounterRequest",
+				typesFile: project.typesFile,
+			});
+			const openApiResult = await syncRestOpenApi({
+				manifest,
+				openApiFile: "build/reused.openapi.json",
+				projectRoot: project.root,
+				typesFile: project.typesFile,
+			});
+			const clientResult = await syncEndpointClient({
+				clientFile: "build/reused-client.ts",
+				manifest,
+				projectRoot: project.root,
+				typesFile: project.typesFile,
+			});
+			const blockResult = await syncBlockMetadata({
+				blockJsonFile: "block.json",
+				jsonSchemaFile: "build/block.schema.json",
+				manifestFile: "build/block.manifest.json",
+				openApiFile: "build/block.openapi.json",
+				projectRoot: project.root,
+				sourceTypeName: "DemoBlockAttributes",
+				typesFile: "src/block-types.ts",
+			});
+
+			const generatedBlockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8"));
+			const generatedManifest = JSON.parse(
+				fs.readFileSync(path.join(project.root, "build", "block.manifest.json"), "utf8"),
+			);
+			const generatedQuerySchema = JSON.parse(
+				fs.readFileSync(path.join(project.root, "build", "query.schema.json"), "utf8"),
+			);
+			const generatedRequestSchema = JSON.parse(
+				fs.readFileSync(path.join(project.root, "build", "request.schema.json"), "utf8"),
+			);
+
+			expect(querySchema.sourceTypeName).toBe("CounterQuery");
+			expect(requestSchema.sourceTypeName).toBe("WriteCounterRequest");
+			expect(openApiResult.schemaNames).toEqual([
+				"CounterQuery",
+				"WriteCounterRequest",
+				"CounterResponse",
+			]);
+			expect(clientResult.operationIds).toEqual([
+				"getCounterState",
+				"writeCounterState",
+			]);
+			expect(generatedQuerySchema.properties.postId.type).toBe("number");
+			expect(generatedRequestSchema.properties.publicWriteToken.type).toBe("string");
+			expect(blockResult.attributeNames).toEqual(["content"]);
+			expect(generatedBlockJson.attributes.content).toEqual({
+				selector: ".wp-block-demo__content",
+				source: "html",
+				type: "string",
+			});
+			expect(generatedBlockJson.example.attributes.content).toBe("Example content");
+			expect(generatedManifest.attributes.content.wp.selector).toBe(
+				".wp-block-demo__content",
+			);
+			expect(generatedManifest.attributes.content.wp.source).toBe("html");
+			expect(generatedManifest.attributes.content.ts.kind).toBe("string");
 		} finally {
 			fs.rmSync(project.root, { force: true, recursive: true });
 		}
