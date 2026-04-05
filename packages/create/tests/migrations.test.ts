@@ -1809,11 +1809,18 @@ describe("wp-typia migrations", () => {
 			"utf8",
 		);
 
-		expect(() =>
+		let thrown: unknown;
+		try {
 			planProjectMigrations(projectDir, {
 				fromVersion: "9.9.9",
-			}),
-		).toThrow(/Unsupported migration version: 9.9.9[\s\S]*Available legacy versions: 1\.0\.0/);
+			});
+		} catch (error) {
+			thrown = error;
+		}
+
+		expect(thrown).toBeInstanceOf(Error);
+		expect((thrown as Error).message).toContain("Available legacy versions: 1.0.0");
+		expect((thrown as Error).message).not.toContain("1.5.0");
 	});
 
 	test("plan omits current-version follow-up commands for non-current targets", () => {

@@ -1172,14 +1172,18 @@ function resolveLegacyVersions(
 		fromVersion,
 	}: { all?: boolean; availableVersions?: string[]; fromVersion?: string },
 ): string[] {
-	const legacyVersions = availableVersions ?? listConfiguredLegacyVersions(state);
+	const configuredLegacyVersions = listConfiguredLegacyVersions(state);
+	const legacyVersions = availableVersions ?? configuredLegacyVersions;
 
 	if (fromVersion) {
 		if (!legacyVersions.includes(fromVersion)) {
 			throw new Error(
 				legacyVersions.length === 0
-					? `Unsupported migration version: ${fromVersion}. No legacy versions are configured yet. ` +
-						`Capture an older release with \`wp-typia migrations snapshot --version <semver>\` first.`
+					? availableVersions && configuredLegacyVersions.length > 0
+						? `Unsupported migration version: ${fromVersion}. No previewable legacy versions are available yet because none currently have snapshot coverage. ` +
+							`Restore or recapture the missing snapshots first.`
+						: `Unsupported migration version: ${fromVersion}. No legacy versions are configured yet. ` +
+							`Capture an older release with \`wp-typia migrations snapshot --version <semver>\` first.`
 					: `Unsupported migration version: ${fromVersion}. Available legacy versions: ${legacyVersions.join(", ")}.`,
 			);
 		}

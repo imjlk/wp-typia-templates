@@ -532,6 +532,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedIndex).toContain("@wp-typia/block-types/blocks/supports");
 		expect(generatedIndex).toContain("} satisfies BlockSupports;");
 		expect(generatedPluginBootstrap).toContain("Plugin Name:       Demo Interactivity");
+		expect(generatedPluginBootstrap).toContain("Text Domain:       demo-interactivity");
 		expect(generatedPluginBootstrap).toContain("load_plugin_textdomain(");
 		expect(generatedPluginBootstrap).toContain("register_block_type( $build_dir );");
 		expect(generatedWebpackConfig).toContain("createTypiaWebpackConfig");
