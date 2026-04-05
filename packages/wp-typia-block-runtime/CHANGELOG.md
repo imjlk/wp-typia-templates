@@ -1,5 +1,11 @@
 # @wp-typia/block-runtime
 
+## 0.2.2 — 2026-04-05
+
+### Patch changes
+
+- Updated dependencies: create (npm)@0.10.0
+
 ## 0.2.1 — 2026-04-05
 
 ### Patch changes
