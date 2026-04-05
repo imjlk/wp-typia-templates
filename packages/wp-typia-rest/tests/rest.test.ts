@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import type { ApiFetch } from "@wordpress/api-fetch";
+import {
+	createEndpoint as createPortableEndpoint,
+	toValidationResult as toPortableValidationResult,
+} from "../../wp-typia-api-client/src/index";
 
 import {
 	callEndpoint,
@@ -289,6 +293,61 @@ describe("@wp-typia/rest", () => {
 
 		expect(seenUrl).toBe("http://localhost:8889/wp-json/demo/v1/items/");
 		expect(seenPath).toBeUndefined();
+	});
+
+	test("callEndpoint accepts endpoint objects created by @wp-typia/api-client", async () => {
+		let seenUrl = "";
+		let seenMethod = "";
+		const endpoint = {
+			...createPortableEndpoint<{ page: number }, { items: number[] }>({
+				method: "GET",
+				operationId: "getPortableItems",
+				path: "/demo/v1/items",
+				requestLocation: "query",
+				validateRequest: (input: unknown) =>
+					typeof input === "object" &&
+					input !== null &&
+					typeof (input as { page?: unknown }).page === "number"
+						? toPortableValidationResult<{ page: number }>({
+								data: input as { page: number },
+								errors: [],
+								success: true,
+							})
+						: toPortableValidationResult<{ page: number }>({
+								errors: [{ expected: "{ page: number }", path: "$.page", value: undefined }],
+								success: false,
+							}),
+				validateResponse: (input: unknown) =>
+					typeof input === "object" &&
+					input !== null &&
+					Array.isArray((input as { items?: unknown }).items)
+						? toPortableValidationResult<{ items: number[] }>({
+								data: input as { items: number[] },
+								errors: [],
+								success: true,
+							})
+						: toPortableValidationResult<{ items: number[] }>({
+								errors: [{ expected: "{ items: number[] }", path: "$.items", value: undefined }],
+								success: false,
+							}),
+			}),
+			buildRequestOptions: () => ({
+				url: resolveRestRouteUrl("/demo/v1/items", "http://localhost:8889/wp-json/"),
+			}),
+		};
+
+		const result = await callEndpoint(endpoint, { page: 3 }, {
+			fetchFn: asApiFetch(async (options: Record<string, unknown>) => {
+				seenMethod = String(options.method);
+				seenUrl = String(options.url);
+				return { items: [3] } as never;
+			}),
+		});
+
+		expect(seenMethod).toBe("GET");
+		expect(seenUrl).toBe("http://localhost:8889/wp-json/demo/v1/items/?page=3");
+		expect(result.isValid).toBe(true);
+		expect(result.data).toEqual({ items: [3] });
 	});
 
 	test("resolveRestRouteUrl canonicalizes wp-json roots and route slashes", () => {
