@@ -12,9 +12,13 @@ import {
 	write{{pascalCase}}StateEndpoint,
 } from './api-client';
 
-function resolveRestNonce( fallback?: string ): string | undefined {
+export function resolveRestNonce( fallback?: string ): string | undefined {
 	if ( typeof fallback === 'string' && fallback.length > 0 ) {
 		return fallback;
+	}
+
+	if ( typeof window === 'undefined' ) {
+		return undefined;
 	}
 
 	const wpApiSettings = ( window as typeof window & {

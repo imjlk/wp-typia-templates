@@ -5,6 +5,7 @@ import {
 	useBlockProps,
 } from '@wordpress/block-editor';
 import {
+	Button,
 	Notice,
 	PanelBody,
 	TextControl,
@@ -16,7 +17,9 @@ import {
 	type ManifestDocument,
 } from '@wp-typia/create/runtime/editor';
 import { useTypiaValidation } from '../../shared/hooks';
+import { resolveCurrentEditorPostId } from '../../shared/editor';
 import type { PersistenceLikeButtonAttributes } from './types';
+import { usePersistenceLikeStatusQuery, useToggleLikeMutation } from './data';
 import { createAttributeUpdater, validators } from './validators';
 
 export default function Edit( {
@@ -62,6 +65,51 @@ export default function Edit( {
 		( typeof unlikeLabelField?.defaultValue === 'string'
 			? unlikeLabelField.defaultValue
 			: 'Unlike' );
+	const currentPostId = resolveCurrentEditorPostId();
+	const liveQueryEnabled =
+		currentPostId > 0 &&
+		typeof attributes.resourceKey === 'string' &&
+		attributes.resourceKey.length > 0;
+	const liveStatusQuery = usePersistenceLikeStatusQuery(
+		{
+			postId: currentPostId,
+			resourceKey: attributes.resourceKey ?? '',
+		},
+		{
+			enabled: liveQueryEnabled,
+			staleTime: 5_000,
+		}
+	);
+	const liveToggleMutation = useToggleLikeMutation();
+	const liveToggleValidationMessages =
+		liveToggleMutation.validation?.isValid === false
+			? liveToggleMutation.validation.errors.map(
+					( error ) => `${ error.path }: ${ error.expected }`
+			  )
+			: [];
+	const liveQueryValidationMessages =
+		liveStatusQuery.validation?.isValid === false
+			? liveStatusQuery.validation.errors.map(
+					( error ) => `${ error.path }: ${ error.expected }`
+			  )
+			: [];
+	let liveErrorMessage: string | null = null;
+	if ( liveToggleMutation.error instanceof Error ) {
+		liveErrorMessage = liveToggleMutation.error.message;
+	} else if ( liveStatusQuery.error instanceof Error ) {
+		liveErrorMessage = liveStatusQuery.error.message;
+	}
+	const liveStatus = liveStatusQuery.data;
+	let liveButtonLabel = likeLabel;
+	if ( liveStatus?.likedByCurrentUser === true ) {
+		liveButtonLabel = unlikeLabel;
+	}
+	let liveLikeStateLabel = __( 'Unknown', 'persistence-examples' ) as string;
+	if ( liveStatus?.likedByCurrentUser === true ) {
+		liveLikeStateLabel = __( 'Yes', 'persistence-examples' ) as string;
+	} else if ( liveStatus?.likedByCurrentUser === false ) {
+		liveLikeStateLabel = __( 'No', 'persistence-examples' ) as string;
+	}
 
 	return (
 		<>
@@ -125,6 +173,115 @@ export default function Edit( {
 							'persistence-examples'
 						) }
 					</Notice>
+					<PanelBody
+						title={ __(
+							'Live Endpoint Preview',
+							'persistence-examples'
+						) }
+						initialOpen={ false }
+					>
+						{ liveQueryEnabled ? (
+							<>
+								<p>
+									{ __(
+										'Editor post ID:',
+										'persistence-examples'
+									) }{ ' ' }
+									{ currentPostId }
+								</p>
+								<p>
+									{ __(
+										'Live likes:',
+										'persistence-examples'
+									) }{ ' ' }
+									{ typeof liveStatus?.count === 'number'
+										? liveStatus.count
+										: '—' }
+								</p>
+								<p>
+									{ __(
+										'Current user liked:',
+										'persistence-examples'
+									) }{ ' ' }
+									{ liveLikeStateLabel }
+								</p>
+								<Button
+									variant="secondary"
+									disabled={
+										liveStatusQuery.isFetching ||
+										liveToggleMutation.isPending
+									}
+									onClick={ () =>
+										void liveToggleMutation.mutateAsync( {
+											postId: currentPostId,
+											resourceKey:
+												attributes.resourceKey ?? '',
+										} )
+									}
+								>
+									{ liveToggleMutation.isPending
+										? __(
+												'Updating…',
+												'persistence-examples'
+										  )
+										: liveButtonLabel }
+								</Button>
+								<Button
+									variant="tertiary"
+									disabled={
+										liveStatusQuery.isFetching ||
+										liveToggleMutation.isPending
+									}
+									onClick={ () =>
+										void liveStatusQuery.refetch()
+									}
+								>
+									{ liveStatusQuery.isFetching
+										? __(
+												'Refreshing…',
+												'persistence-examples'
+										  )
+										: __(
+												'Refresh live status',
+												'persistence-examples'
+										  ) }
+								</Button>
+								<Notice status="info" isDismissible={ false }>
+									{ __(
+										'This panel uses the new @wp-typia/rest/react query and mutation hooks against the authenticated endpoint surface.',
+										'persistence-examples'
+									) }
+								</Notice>
+								{ liveErrorMessage && (
+									<Notice
+										status="error"
+										isDismissible={ false }
+									>
+										{ liveErrorMessage }
+									</Notice>
+								) }
+								{ [
+									...liveQueryValidationMessages,
+									...liveToggleValidationMessages,
+								].map( ( message, index ) => (
+									<Notice
+										key={ `${ message }-${ index }` }
+										status="error"
+										isDismissible={ false }
+									>
+										{ message }
+									</Notice>
+								) ) }
+							</>
+						) : (
+							<Notice status="warning" isDismissible={ false }>
+								{ __(
+									'Set a resource key while editing a post to enable the live authenticated endpoint preview.',
+									'persistence-examples'
+								) }
+							</Notice>
+						) }
+					</PanelBody>
 				</PanelBody>
 			</InspectorControls>
 			<div { ...useBlockProps() }>

@@ -129,11 +129,21 @@ function ensureCreateWpTypiaBuilt() {
 		__dirname,
 		"../packages/wp-typia-rest/dist/index.js",
 	);
+	const restReactDistPath = path.resolve(
+		__dirname,
+		"../packages/wp-typia-rest/dist/react.js",
+	);
+	const restReactDtsPath = path.resolve(
+		__dirname,
+		"../packages/wp-typia-rest/dist/react.d.ts",
+	);
 	if (
 		fs.existsSync(entryPath) &&
 		fs.existsSync(apiClientDistPath) &&
 		fs.existsSync(blockTypesDistPath) &&
-		fs.existsSync(restDistPath)
+		fs.existsSync(restDistPath) &&
+		fs.existsSync(restReactDistPath) &&
+		fs.existsSync(restReactDtsPath)
 	) {
 		return;
 	}

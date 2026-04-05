@@ -229,7 +229,7 @@ module.exports = async () => {
 					),
 					'@wp-typia/rest': path.resolve(
 						process.cwd(),
-						'../../packages/wp-typia-rest/src/index.ts'
+						'../../packages/wp-typia-rest/src'
 					),
 				},
 			},
