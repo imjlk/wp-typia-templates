@@ -3,9 +3,9 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { performance } from "node:perf_hooks";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
-const repoRoot = path.resolve(new URL(".", import.meta.url).pathname, "..");
+const repoRoot = path.resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
 const measuredRuns = 5;
 const warmupRuns = 1;
 

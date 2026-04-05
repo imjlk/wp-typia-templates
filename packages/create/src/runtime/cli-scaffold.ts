@@ -33,9 +33,29 @@ interface PromptOption<T extends string> {
 	value: T;
 }
 
+/**
+ * Prompt adapter used by CLI scaffold flows and tests.
+ */
 export interface ReadlinePrompt {
+	/** Close the underlying prompt resources. */
 	close(): void;
+	/**
+	 * Prompt for one option from a fixed list.
+	 *
+	 * @param message Prompt message shown above the options.
+	 * @param options Available option definitions.
+	 * @param defaultValue One-based default option index.
+	 * @returns The selected option value.
+	 */
 	select<T extends string>(message: string, options: PromptOption<T>[], defaultValue?: number): Promise<T>;
+	/**
+	 * Prompt for free-form text with optional validation.
+	 *
+	 * @param message Prompt message shown to the user.
+	 * @param defaultValue Default value used when the response is empty.
+	 * @param validate Optional validator that can reject the response.
+	 * @returns The accepted text value.
+	 */
 	text(message: string, defaultValue: string, validate?: ValidateInput): Promise<string>;
 }
 
@@ -105,6 +125,11 @@ function templateUsesPersistenceSettings(
 	return Boolean(options.dataStorageMode || options.persistencePolicy);
 }
 
+/**
+ * Create the default readline-backed prompt implementation for the CLI.
+ *
+ * @returns A prompt adapter that reads from stdin and writes to stdout.
+ */
 export function createReadlinePrompt(): ReadlinePrompt {
 	const rl = readline.createInterface({
 		input: process.stdin,
@@ -160,6 +185,21 @@ export function createReadlinePrompt(): ReadlinePrompt {
 	};
 }
 
+function quoteShellValue(value: string): string {
+	if (/^[A-Za-z0-9._/@:-]+(?:\/[A-Za-z0-9._@:-]+)*$/.test(value)) {
+		return value;
+	}
+
+	return `'${value.replace(/'/g, `'\"'\"'`)}'`;
+}
+
+/**
+ * Build the printed next-step commands for a scaffolded project.
+ *
+ * @param options Project location and package-manager details used to format
+ * next-step commands.
+ * @returns Ordered shell commands shown after scaffolding succeeds.
+ */
 export function getNextSteps({
 	projectInput,
 	projectDir,
@@ -167,7 +207,8 @@ export function getNextSteps({
 	noInstall,
 	templateId,
 }: GetNextStepsOptions): string[] {
-	const steps = [`cd ${path.isAbsolute(projectInput) ? projectDir : projectInput}`];
+	const cdTarget = path.isAbsolute(projectInput) ? projectDir : projectInput;
+	const steps = [`cd ${quoteShellValue(cdTarget)}`];
 
 	if (noInstall) {
 		steps.push(formatInstallCommand(packageManager));
@@ -177,6 +218,12 @@ export function getNextSteps({
 	return steps;
 }
 
+/**
+ * Compute optional onboarding guidance shown after scaffolding completes.
+ *
+ * @param options Package-manager and template context for optional guidance.
+ * @returns Optional onboarding note and step list.
+ */
 export function getOptionalOnboarding({
 	packageManager,
 	templateId,
@@ -190,6 +237,13 @@ export function getOptionalOnboarding({
 	};
 }
 
+/**
+ * Resolve scaffold options, prompts, and follow-up steps for one CLI run.
+ *
+ * @param options CLI/runtime inputs used to collect answers and scaffold a
+ * project.
+ * @returns The scaffold result together with next-step guidance.
+ */
 export async function runScaffoldFlow({
 	projectInput,
 	cwd = process.cwd(),

@@ -1,6 +1,14 @@
 import { PACKAGE_MANAGER_IDS } from "./package-managers.js";
 import { TEMPLATE_IDS } from "./template-registry.js";
 
+/**
+ * Return the canonical CLI usage text for `wp-typia`.
+ *
+ * The rendered help includes the current built-in template ids and supported
+ * package manager ids from the runtime registry.
+ *
+ * @returns Human-readable help text for CLI usage output.
+ */
 export function formatHelpText(): string {
 	return `Usage:
   wp-typia <project-dir> [--template <basic|interactivity>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]

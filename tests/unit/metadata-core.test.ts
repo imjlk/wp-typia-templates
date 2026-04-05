@@ -346,6 +346,90 @@ describe("metadata-core endpoint manifests", () => {
 		}
 	});
 
+	test("invalidates cached analysis when an imported dependency file changes", async () => {
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-metadata-import-cache-"));
+		const srcDir = path.join(root, "src");
+		fs.mkdirSync(srcDir, { recursive: true });
+		fs.writeFileSync(
+			path.join(srcDir, "shared-types.ts"),
+			[
+				"export interface SharedCounterResponse {",
+				"  total: number;",
+				"}",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(srcDir, "api-types.ts"),
+			[
+				'import type { SharedCounterResponse } from "./shared-types";',
+				"",
+				"export interface CounterResponse extends SharedCounterResponse {}",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(root, "tsconfig.json"),
+			JSON.stringify(
+				{
+					compilerOptions: {
+						module: "NodeNext",
+						moduleResolution: "NodeNext",
+						resolveJsonModule: true,
+						strict: true,
+						target: "ES2022",
+					},
+					include: ["src/**/*.ts"],
+				},
+				null,
+				2,
+			),
+			"utf8",
+		);
+
+		try {
+			await syncTypeSchemas({
+				jsonSchemaFile: "build/counter.schema.json",
+				projectRoot: root,
+				sourceTypeName: "CounterResponse",
+				typesFile: "src/api-types.ts",
+			});
+
+			const firstSchema = JSON.parse(
+				fs.readFileSync(path.join(root, "build", "counter.schema.json"), "utf8"),
+			);
+
+			fs.writeFileSync(
+				path.join(srcDir, "shared-types.ts"),
+				[
+					"export interface SharedCounterResponse {",
+					"  total: string;",
+					"}",
+					"",
+				].join("\n"),
+				"utf8",
+			);
+
+			await syncTypeSchemas({
+				jsonSchemaFile: "build/counter.schema.json",
+				projectRoot: root,
+				sourceTypeName: "CounterResponse",
+				typesFile: "src/api-types.ts",
+			});
+
+			const secondSchema = JSON.parse(
+				fs.readFileSync(path.join(root, "build", "counter.schema.json"), "utf8"),
+			);
+
+			expect(firstSchema.properties.total.type).toBe("number");
+			expect(secondSchema.properties.total.type).toBe("string");
+		} finally {
+			fs.rmSync(root, { force: true, recursive: true });
+		}
+	});
+
 	test("syncRestOpenApi normalizes legacy authMode manifests identically to the new auth shape", async () => {
 		const project = createTempProject();
 		const legacyManifest = defineEndpointManifest({

@@ -1,23 +1,5 @@
 #!/usr/bin/env node
 
-const PACKAGE_MANAGER_IDS = ["bun", "npm", "pnpm", "yarn"] as const;
-
-function formatHelpText(): string {
-	return `Usage:
-  wp-typia <project-dir> [--template <basic|interactivity>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia <project-dir> [--template <./path|github:owner/repo/path[#ref]>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia <project-dir> [--template <npm-package>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia <project-dir> [--template persistence] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia <project-dir> [--template compound] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
-  wp-typia templates list
-  wp-typia templates inspect <id>
-  wp-typia migrations <init|snapshot|diff|scaffold|verify|doctor|fixtures|fuzz> [...]
-  wp-typia doctor
-
-Built-in templates: basic, interactivity, persistence, compound
-Package managers: ${PACKAGE_MANAGER_IDS.join(", ")}`;
-}
-
 interface ParsedArgs {
 	dataStorage?: string;
 	help: boolean;
@@ -310,6 +292,7 @@ export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 	const parsed = parseArgs(argv);
 
 	if (parsed.help) {
+		const { formatHelpText } = await import("./runtime/cli-help.js");
 		console.log(formatHelpText());
 		return;
 	}
@@ -350,6 +333,7 @@ export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 	}
 
 	if (parsed.yes && !parsed.packageManager) {
+		const { PACKAGE_MANAGER_IDS } = await import("./runtime/package-managers.js");
 		throw new Error(
 			`Package manager is required when using --yes. Use --package-manager <${PACKAGE_MANAGER_IDS.join("|")}>.`,
 		);

@@ -7,9 +7,15 @@ import { access, constants as fsConstants, rm, writeFile } from "node:fs/promise
 import { getBuiltInTemplateLayerDirs } from "./template-builtins.js";
 import { listTemplates } from "./template-registry.js";
 
+/**
+ * One doctor check rendered by the CLI diagnostics flow.
+ */
 export interface DoctorCheck {
+	/** Human-readable status detail rendered next to the label. */
 	detail: string;
+	/** Short label for the dependency, directory, or template check. */
 	label: string;
+	/** Final pass/fail status for this diagnostic row. */
 	status: "pass" | "fail";
 }
 
@@ -53,6 +59,15 @@ async function checkTempDirectory(): Promise<boolean> {
 	}
 }
 
+/**
+ * Collect all runtime doctor checks for the current environment.
+ *
+ * The returned array includes command availability checks, directory
+ * writability checks, and built-in template asset checks in display order.
+ *
+ * @param cwd Working directory to validate for writability.
+ * @returns Ordered doctor check rows ready for CLI rendering.
+ */
 export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 	const checks: DoctorCheck[] = [];
 	const bunVersion = readCommandVersion("bun");
@@ -125,6 +140,14 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 	return checks;
 }
 
+/**
+ * Run doctor checks, render each line, and fail when any check does not pass.
+ *
+ * @param cwd Working directory to validate.
+ * @param options Optional renderer override for each emitted check row.
+ * @returns The completed list of doctor checks.
+ * @throws {Error} When one or more checks fail.
+ */
 export async function runDoctor(
 	cwd: string,
 	{

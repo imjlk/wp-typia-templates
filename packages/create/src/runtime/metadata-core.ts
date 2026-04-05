@@ -409,7 +409,6 @@ interface AnalysisContext {
 }
 
 interface AnalysisProgramInputs {
-  cacheKey: string;
   compilerOptions: ts.CompilerOptions;
   configPath: string | null;
   rootNames: string[];
@@ -419,12 +418,51 @@ interface AnalysisProgramInputs {
 
 interface AnalysisProgramCacheEntry {
   checker: ts.TypeChecker;
+  dependencyFingerprint: string;
+  dependencyPaths: string[];
   program: ts.Program;
 }
 
+class LruCache<Key, Value> {
+  private readonly entries = new Map<Key, Value>();
+
+  constructor(private readonly maxEntries: number) {}
+
+  get(key: Key): Value | undefined {
+    const value = this.entries.get(key);
+    if (value === undefined) {
+      return undefined;
+    }
+
+    this.entries.delete(key);
+    this.entries.set(key, value);
+    return value;
+  }
+
+  set(key: Key, value: Value): void {
+    if (this.entries.has(key)) {
+      this.entries.delete(key);
+    }
+
+    this.entries.set(key, value);
+    if (this.entries.size <= this.maxEntries) {
+      return;
+    }
+
+    const oldestKey = this.entries.keys().next().value;
+    if (oldestKey !== undefined) {
+      this.entries.delete(oldestKey);
+    }
+  }
+}
+
 const DEFAULT_ALLOWED_EXTERNAL_PACKAGES = ['@wp-typia/block-types'] as const;
-const analysisProgramCache = new Map<string, AnalysisProgramCacheEntry>();
-const analysisProgramStructureCache = new Map<string, ts.Program>();
+const ANALYSIS_PROGRAM_CACHE_MAX_ENTRIES = 20;
+const TYPESCRIPT_LIB_DIRECTORY = path.dirname(ts.getDefaultLibFilePath({}));
+// Keep in-process analysis caches bounded so long-lived CLI runs do not grow indefinitely.
+const analysisProgramCache = new LruCache<string, AnalysisProgramCacheEntry>(
+  ANALYSIS_PROGRAM_CACHE_MAX_ENTRIES,
+);
 
 const SUPPORTED_TAGS = new Set([
   'Default',
@@ -1455,23 +1493,47 @@ function buildAnalysisProgramStructureKey(
 }
 
 function createAnalysisProgramContentFingerprint(
-  rootNames: string[],
-  configPath: string | null,
-): string {
+  filePaths: string[],
+  onMissingFile: 'return-null' | 'throw' = 'throw',
+): string | null {
   const hash = createHash('sha1');
-  const fingerprintPaths = [
-    ...(configPath ? [configPath] : []),
-    ...rootNames,
-  ].sort();
+  const fingerprintPaths = [...new Set(filePaths)].sort();
 
   for (const filePath of fingerprintPaths) {
+    const fileContents = ts.sys.readFile(filePath);
+    if (fileContents === undefined) {
+      if (onMissingFile === 'return-null') {
+        return null;
+      }
+
+      throw new Error(
+        `Unable to read metadata analysis dependency: ${filePath}`,
+      );
+    }
+
     hash.update(filePath);
     hash.update('\0');
-    hash.update(ts.sys.readFile(filePath) ?? '');
+    hash.update(fileContents);
     hash.update('\0');
   }
 
   return hash.digest('hex');
+}
+
+function getAnalysisProgramDependencyPaths(
+  program: ts.Program,
+  configPath: string | null,
+): string[] {
+  const dependencyPaths = program
+    .getSourceFiles()
+    .map((sourceFile) => sourceFile.fileName)
+    .filter((filePath) => !filePath.startsWith(TYPESCRIPT_LIB_DIRECTORY));
+
+  if (configPath) {
+    dependencyPaths.push(configPath);
+  }
+
+  return [...new Set(dependencyPaths)].sort();
 }
 
 function resolveAnalysisProgramInputs(
@@ -1536,10 +1598,6 @@ function resolveAnalysisProgramInputs(
   });
 
   return {
-    cacheKey: `${structureKey}:${createAnalysisProgramContentFingerprint(
-      rootNames,
-      configPath ?? null,
-    )}`,
     compilerOptions,
     configPath: configPath ?? null,
     rootNames,
@@ -1553,21 +1611,29 @@ function createAnalysisContext(
   typesFilePath: string,
 ): AnalysisContext {
   const analysisInputs = resolveAnalysisProgramInputs(projectRoot, typesFilePath);
-  const cachedAnalysis = analysisProgramCache.get(analysisInputs.cacheKey);
+  const cachedAnalysis = analysisProgramCache.get(analysisInputs.structureKey);
   if (cachedAnalysis) {
-    return {
-      allowedExternalPackages: new Set(DEFAULT_ALLOWED_EXTERNAL_PACKAGES),
-      checker: cachedAnalysis.checker,
-      packageNameCache: new Map(),
-      projectRoot,
-      program: cachedAnalysis.program,
-      recursionGuard: new Set<string>(),
-    };
+    const currentDependencyFingerprint = createAnalysisProgramContentFingerprint(
+      cachedAnalysis.dependencyPaths,
+      'return-null',
+    );
+    if (
+      currentDependencyFingerprint !== null &&
+      currentDependencyFingerprint === cachedAnalysis.dependencyFingerprint
+    ) {
+      return {
+        allowedExternalPackages: new Set(DEFAULT_ALLOWED_EXTERNAL_PACKAGES),
+        checker: cachedAnalysis.checker,
+        packageNameCache: new Map(),
+        projectRoot,
+        program: cachedAnalysis.program,
+        recursionGuard: new Set<string>(),
+      };
+    }
   }
 
-  const cachedProgram = analysisProgramStructureCache.get(analysisInputs.structureKey);
   const program = ts.createProgram({
-    oldProgram: cachedProgram,
+    oldProgram: cachedAnalysis?.program,
     options: analysisInputs.compilerOptions,
     rootNames: analysisInputs.rootNames,
   });
@@ -1582,11 +1648,23 @@ function createAnalysisContext(
   }
 
   const checker = program.getTypeChecker();
-  analysisProgramCache.set(analysisInputs.cacheKey, {
+  const dependencyPaths = getAnalysisProgramDependencyPaths(
+    program,
+    analysisInputs.configPath,
+  );
+  const dependencyFingerprint = createAnalysisProgramContentFingerprint(
+    dependencyPaths,
+  );
+  if (dependencyFingerprint === null) {
+    throw new Error('Unable to fingerprint metadata analysis dependencies.');
+  }
+
+  analysisProgramCache.set(analysisInputs.structureKey, {
     checker,
+    dependencyFingerprint,
+    dependencyPaths,
     program,
   });
-  analysisProgramStructureCache.set(analysisInputs.structureKey, program);
 
   return {
     allowedExternalPackages: new Set(DEFAULT_ALLOWED_EXTERNAL_PACKAGES),

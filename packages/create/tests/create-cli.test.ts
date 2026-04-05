@@ -6,7 +6,7 @@ import * as path from "node:path";
 
 import { runUtf8Command } from "../../../tests/helpers/process-utils";
 import { scaffoldProject } from "../src/runtime/index.js";
-import { formatHelpText, runScaffoldFlow } from "../src/runtime/cli-core.js";
+import { formatHelpText, getNextSteps, runScaffoldFlow } from "../src/runtime/cli-core.js";
 import { copyRenderedDirectory } from "../src/runtime/template-render.js";
 import {
 	parseGitHubTemplateLocator,
@@ -62,6 +62,15 @@ function runCli(
 	options: Parameters<typeof runUtf8Command>[2] = {},
 ) {
 	return runUtf8Command(command, args, options);
+}
+
+function getCommandErrorMessage(run: () => string): string {
+	try {
+		run();
+		return "";
+	} catch (error) {
+		return error instanceof Error ? error.message : String(error);
+	}
 }
 
 function ensureDirSymlink(targetPath: string, sourcePath: string) {
@@ -1693,6 +1702,22 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(externalPackageLine).not.toContain("--with-migration-ui");
 	});
 
+	test("getNextSteps quotes project paths with spaces", () => {
+		expect(
+			getNextSteps({
+				noInstall: true,
+				packageManager: "bun",
+				projectDir: "/tmp/demo project",
+				projectInput: "demo project",
+				templateId: "basic",
+			}),
+		).toEqual([
+			"cd 'demo project'",
+			"bun install",
+			"bun run dev",
+		]);
+	});
+
 	test("runScaffoldFlow does not prompt for migration UI on external templates", async () => {
 		let promptedForMigrationUi = false;
 
@@ -1897,12 +1922,13 @@ describe("@wp-typia/create scaffolding", () => {
 
 	test("node entry keeps help and migrations dispatch working after lazy loading", () => {
 		const helpOutput = runCli("node", [entryPath, "--help"]);
+		const errorMessage = getCommandErrorMessage(() =>
+			runCli("node", [entryPath, "migrations", "init"], { stdio: "pipe" }),
+		);
 
 		expect(helpOutput).toContain("wp-typia templates list");
 		expect(helpOutput).toContain("Package managers: bun, npm, pnpm, yarn");
-		expect(() => {
-			runCli("node", [entryPath, "migrations", "init"], { stdio: "pipe" });
-		}).toThrow();
+		expect(errorMessage).toContain("`migrations init` requires --current-version <semver>.");
 	});
 
 	test("bun entry exposes templates and doctor commands", () => {
@@ -1921,12 +1947,13 @@ describe("@wp-typia/create scaffolding", () => {
 
 	test("bun entry keeps help and migrations dispatch working after lazy loading", () => {
 		const helpOutput = runCli("bun", [entryPath, "--help"]);
+		const errorMessage = getCommandErrorMessage(() =>
+			runCli("bun", [entryPath, "migrations", "init"], { stdio: "pipe" }),
+		);
 
 		expect(helpOutput).toContain("wp-typia templates list");
 		expect(helpOutput).toContain("Package managers: bun, npm, pnpm, yarn");
-		expect(() => {
-			runCli("bun", [entryPath, "migrations", "init"], { stdio: "pipe" });
-		}).toThrow();
+		expect(errorMessage).toContain("`migrations init` requires --current-version <semver>.");
 	});
 
 	test("parses github template locators with refs", () => {
