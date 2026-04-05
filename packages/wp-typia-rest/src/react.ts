@@ -656,11 +656,12 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 		const shouldFetch =
 			snapshot.updatedAt === 0
 				? initialData === undefined
-				: (snapshot.error !== null &&
-						snapshot.invalidatedAt <= snapshot.updatedAt)
-					? false
-					: snapshot.invalidatedAt > snapshot.updatedAt ||
-					Date.now() - snapshot.updatedAt > staleTime;
+				: snapshot.invalidatedAt > snapshot.updatedAt
+					? true
+					: snapshot.error !== null
+						? false
+						: staleTime > 0 &&
+							Date.now() - snapshot.updatedAt > staleTime;
 
 		if (!shouldFetch) {
 			return;
@@ -724,6 +725,7 @@ export function useEndpointMutation<Req, Res, Context = unknown>(
 	const [error, setError] = useState<unknown>(null);
 	const [isPending, setIsPending] = useState(false);
 	const [validation, setValidation] = useState<ValidationResult<Res> | null>(null);
+	const pendingCountRef = useRef(0);
 	const latestRef = useRef({
 		client,
 		endpoint,
@@ -751,6 +753,7 @@ export function useEndpointMutation<Req, Res, Context = unknown>(
 	if (!mutateAsyncRef.current) {
 		mutateAsyncRef.current = async (variables: Req) => {
 			const latest = latestRef.current;
+			pendingCountRef.current += 1;
 			setIsPending(true);
 			setError(null);
 			let context: Context | undefined;
@@ -818,7 +821,8 @@ export function useEndpointMutation<Req, Res, Context = unknown>(
 				);
 				throw nextError;
 			} finally {
-				setIsPending(false);
+				pendingCountRef.current = Math.max(0, pendingCountRef.current - 1);
+				setIsPending(pendingCountRef.current > 0);
 			}
 		};
 	}
@@ -829,6 +833,7 @@ export function useEndpointMutation<Req, Res, Context = unknown>(
 	};
 
 	const reset = () => {
+		pendingCountRef.current = 0;
 		setData(undefined);
 		setError(null);
 		setIsPending(false);

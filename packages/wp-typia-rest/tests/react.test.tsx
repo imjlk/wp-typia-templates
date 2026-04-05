@@ -262,6 +262,49 @@ describe("@wp-typia/rest/react", () => {
 		await rendered.unmount();
 	});
 
+	test("default staleTime does not refetch successful queries on rerender", async () => {
+		let fetchCount = 0;
+		const endpoint = createEndpoint<{ page: number }, { count: number }>({
+			method: "GET",
+			path: "/demo/v1/items",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { page?: unknown }).page === "number"
+					? toValidationResult(success(input as { page: number }))
+					: toValidationResult(failure<{ page: number }>("{ page: number }", "$.page")),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { count?: unknown }).count === "number"
+					? toValidationResult(success(input as { count: number }))
+					: toValidationResult(failure<{ count: number }>("{ count: number }", "$.count")),
+		});
+		const rendered = await createHookRenderer(() =>
+			useEndpointQuery(endpoint, { page: 1 }, {
+				fetchFn: (async () => {
+					fetchCount += 1;
+					return { count: fetchCount };
+				}) as never,
+			}),
+		);
+
+		await flush();
+		await flush();
+
+		expect(fetchCount).toBe(1);
+		expect(rendered.current.data).toEqual({ count: 1 });
+
+		await rendered.rerender();
+		await flush();
+		await flush();
+
+		expect(fetchCount).toBe(1);
+		expect(rendered.current.data).toEqual({ count: 1 });
+
+		await rendered.unmount();
+	});
+
 	test("invalidate triggers a follow-up fetch when an older request resolves late", async () => {
 		let fetchCount = 0;
 		let resolveFirstFetch!: (value: { count: number }) => void;
@@ -601,6 +644,53 @@ describe("@wp-typia/rest/react", () => {
 		expect(rendered.current.error).toBeNull();
 		expect(rendered.current.validation?.isValid).toBe(true);
 		expect(seenNonce).toBe("nonce-b");
+	});
+
+	test("overlapping mutations keep isPending true until the last request settles", async () => {
+		const resolvers: Array<(value: { ok: boolean }) => void> = [];
+		const endpoint = createEndpoint<{ page: number }, { ok: boolean }>({
+			method: "POST",
+			path: "/demo/v1/items",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { page?: unknown }).page === "number"
+					? toValidationResult(success(input as { page: number }))
+					: toValidationResult(failure<{ page: number }>("{ page: number }", "$.page")),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				(input as { ok?: unknown }).ok === true
+					? toValidationResult(success(input as { ok: boolean }))
+					: toValidationResult(failure<{ ok: boolean }>("{ ok: true }", "$.ok")),
+		});
+		const rendered = await createHookRenderer(() =>
+			useEndpointMutation(endpoint, {
+				fetchFn: (() =>
+					new Promise<{ ok: boolean }>((resolve) => {
+						resolvers.push(resolve);
+					})) as never,
+			}),
+		);
+
+		const firstPending = rendered.current.mutateAsync({ page: 1 });
+		const secondPending = rendered.current.mutateAsync({ page: 2 });
+		await flush();
+
+		expect(rendered.current.isPending).toBe(true);
+		expect(resolvers).toHaveLength(2);
+
+		resolvers[0]!({ ok: true });
+		await firstPending;
+		await flush();
+
+		expect(rendered.current.isPending).toBe(true);
+
+		resolvers[1]!({ ok: true });
+		await secondPending;
+		await flush();
+
+		expect(rendered.current.isPending).toBe(false);
 	});
 });
 
