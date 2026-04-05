@@ -699,6 +699,10 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(restPublicHelper).toContain("SELECT RELEASE_LOCK(%s)");
 		expect(restPublicHelper).toContain("return 'wpt_pwl_' . md5(");
 		expect(generatedApi).toContain("@wp-typia/rest");
+		expect(generatedApi).toContain("from './api-client'");
+		expect(generatedApi).toContain("getDemoPersistencePublicStateEndpoint");
+		expect(generatedApi).toContain("writeDemoPersistencePublicStateEndpoint");
+		expect(generatedApi).not.toContain("createEndpoint(");
 		expect(generatedSyncRest).toContain("syncTypeSchemas");
 		expect(generatedSyncRest).toContain("defineEndpointManifest");
 		expect(generatedSyncRest).toContain("syncEndpointClient");
@@ -1340,8 +1344,22 @@ describe("@wp-typia/create scaffolding", () => {
 			),
 			"utf8",
 		);
+		const generatedParentApi = fs.readFileSync(
+			path.join(
+				targetDir,
+				"src",
+				"blocks",
+				"demo-compound-storage",
+				"api.ts",
+			),
+			"utf8",
+		);
 		expect(generatedApiClient).toContain("from '@wp-typia/api-client'");
 		expect(generatedApiClient).toContain("export const getDemoCompoundStorageStateEndpoint");
+		expect(generatedParentApi).toContain("from './api-client'");
+		expect(generatedParentApi).toContain("getDemoCompoundStorageStateEndpoint");
+		expect(generatedParentApi).toContain("writeDemoCompoundStorageStateEndpoint");
+		expect(generatedParentApi).not.toContain("createEndpoint(");
 			expect(
 				fs.existsSync(
 					path.join(

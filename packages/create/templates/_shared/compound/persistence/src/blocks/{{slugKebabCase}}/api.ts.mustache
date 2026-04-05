@@ -1,17 +1,16 @@
 import {
 	callEndpoint,
-	createEndpoint,
 	resolveRestRouteUrl,
 } from '@wp-typia/rest';
 
 import {
 	type {{pascalCase}}StateQuery,
-	type {{pascalCase}}StateResponse,
 	type {{pascalCase}}WriteStateRequest,
 } from './api-types';
-import { apiValidators } from './api-validators';
-
-const STATE_PATH = '/{{namespace}}/v1/{{slugKebabCase}}/state';
+import {
+	get{{pascalCase}}StateEndpoint,
+	write{{pascalCase}}StateEndpoint,
+} from './api-client';
 
 function resolveRestNonce( fallback?: string ): string | undefined {
 	if ( typeof fallback === 'string' && fallback.length > 0 ) {
@@ -27,31 +26,19 @@ function resolveRestNonce( fallback?: string ): string | undefined {
 		: undefined;
 }
 
-export const stateEndpoint = createEndpoint<
-	{{pascalCase}}StateQuery,
-	{{pascalCase}}StateResponse
->( {
+export const stateEndpoint = {
+	...get{{pascalCase}}StateEndpoint,
 	buildRequestOptions: () => ( {
-		url: resolveRestRouteUrl( STATE_PATH ),
+		url: resolveRestRouteUrl( get{{pascalCase}}StateEndpoint.path ),
 	} ),
-	method: 'GET',
-	path: STATE_PATH,
-	validateRequest: apiValidators.stateQuery,
-	validateResponse: apiValidators.stateResponse,
-} );
+};
 
-export const writeStateEndpoint = createEndpoint<
-	{{pascalCase}}WriteStateRequest,
-	{{pascalCase}}StateResponse
->( {
+export const writeStateEndpoint = {
+	...write{{pascalCase}}StateEndpoint,
 	buildRequestOptions: () => ( {
-		url: resolveRestRouteUrl( STATE_PATH ),
+		url: resolveRestRouteUrl( write{{pascalCase}}StateEndpoint.path ),
 	} ),
-	method: 'POST',
-	path: STATE_PATH,
-	validateRequest: apiValidators.writeStateRequest,
-	validateResponse: apiValidators.stateResponse,
-} );
+};
 
 export function fetchState(
 	request: {{pascalCase}}StateQuery

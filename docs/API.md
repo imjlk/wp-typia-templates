@@ -139,7 +139,10 @@ nonce-aware request wiring.
 It does not include WordPress route resolution, `wpApiSettings`, or
 `@wordpress/api-fetch`. Generated persistence contracts can emit a portable
 `src/api-client.ts` module through `syncEndpointClient(...)` in
-`@wp-typia/create/metadata-core`.
+`@wp-typia/create/metadata-core`. In persistence-style scaffolds, that
+generated module is the canonical endpoint-definition artifact, while
+WordPress-facing `src/api.ts` composes those generated endpoint exports to add
+WordPress route resolution and nonce/header behavior.
 
 When a manifest endpoint defines both `queryContract` and `bodyContract`, the
 portable generated client now uses a `{ query, body }` request envelope and

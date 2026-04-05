@@ -1,44 +1,28 @@
-import { callEndpoint, createEndpoint } from '@wp-typia/rest';
+import { callEndpoint, resolveRestRouteUrl } from '@wp-typia/rest';
 
-import {
-	buildRestPath,
-	resolveExampleRestRoute,
-	resolveRestNonce,
-} from '../../shared/rest';
+import { resolveRestNonce } from '../../shared/rest';
 import type {
 	PersistenceLikeStatusQuery,
-	PersistenceLikeStatusResponse,
 	PersistenceToggleLikeRequest,
 } from './api-types';
-import { apiValidators } from './api-validators';
+import {
+	getPersistenceLikeStatusEndpoint,
+	togglePersistenceLikeStatusEndpoint,
+} from './api-client';
 
-const LIKE_PATH = '/likes';
-
-export const likeStatusEndpoint = createEndpoint<
-	PersistenceLikeStatusQuery,
-	PersistenceLikeStatusResponse
->( {
+export const likeStatusEndpoint = {
+	...getPersistenceLikeStatusEndpoint,
 	buildRequestOptions: () => ( {
-		url: resolveExampleRestRoute( LIKE_PATH ),
+		url: resolveRestRouteUrl( getPersistenceLikeStatusEndpoint.path ),
 	} ),
-	method: 'GET',
-	path: buildRestPath( LIKE_PATH ),
-	validateRequest: apiValidators.likeStatusQuery,
-	validateResponse: apiValidators.likeStatusResponse,
-} );
+};
 
-export const toggleLikeEndpoint = createEndpoint<
-	PersistenceToggleLikeRequest,
-	PersistenceLikeStatusResponse
->( {
+export const toggleLikeEndpoint = {
+	...togglePersistenceLikeStatusEndpoint,
 	buildRequestOptions: () => ( {
-		url: resolveExampleRestRoute( LIKE_PATH ),
+		url: resolveRestRouteUrl( togglePersistenceLikeStatusEndpoint.path ),
 	} ),
-	method: 'POST',
-	path: buildRestPath( LIKE_PATH ),
-	validateRequest: apiValidators.toggleLikeRequest,
-	validateResponse: apiValidators.likeStatusResponse,
-} );
+};
 
 export function fetchLikeStatus(
 	request: PersistenceLikeStatusQuery,
