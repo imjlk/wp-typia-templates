@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { hasPhpBinary } from '../helpers/file-fixtures';
 import {
 	ensureExampleShowcaseSynced,
 	getExampleShowcaseDir,
@@ -240,15 +241,6 @@ function validatePayload(
     errors,
     valid: errors.length === 0,
   };
-}
-
-function hasPhpBinary() {
-  try {
-    execFileSync('php', ['-v'], { stdio: 'ignore' });
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 function runPhpValidator<T extends Record<string, unknown> | unknown[]>(

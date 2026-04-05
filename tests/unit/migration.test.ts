@@ -1,21 +1,14 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from 'node:fs';
-import * as path from 'node:path';
 import { syncBlockMetadata } from '../../scripts/lib/typia-metadata-core';
+import { createTempFixture } from '../helpers/file-fixtures';
 import { getExampleShowcaseFixtureRoot } from './helpers/example-showcase';
 
 function createFixture(files: Record<string, string>) {
-  const baseDir = getExampleShowcaseFixtureRoot('.tmp-metadata-fixtures-errors');
-  fs.mkdirSync(baseDir, { recursive: true });
-
-  const fixtureDir = fs.mkdtempSync(path.join(baseDir, 'fixture-'));
-  for (const [relativePath, content] of Object.entries(files)) {
-    const targetPath = path.join(fixtureDir, relativePath);
-    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-    fs.writeFileSync(targetPath, content);
-  }
-
-  return fixtureDir;
+  return createTempFixture(files, {
+    baseDir: getExampleShowcaseFixtureRoot('.tmp-metadata-fixtures-errors'),
+    prefix: 'fixture-',
+  });
 }
 
 describe('Typia metadata generator failure modes', () => {

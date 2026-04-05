@@ -3,20 +3,14 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { runSyncBlockMetadata } from "../../packages/create/src/runtime/metadata-core";
+import { createTempFixture } from "../helpers/file-fixtures";
 import { getExampleShowcaseFixtureRoot } from "./helpers/example-showcase";
 
 function createFixture(files: Record<string, string>) {
-	const baseDir = getExampleShowcaseFixtureRoot(".tmp-sync-types-reporting-fixtures");
-	fs.mkdirSync(baseDir, { recursive: true });
-
-	const fixtureDir = fs.mkdtempSync(path.join(baseDir, "fixture-"));
-	for (const [relativePath, content] of Object.entries(files)) {
-		const targetPath = path.join(fixtureDir, relativePath);
-		fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-		fs.writeFileSync(targetPath, content);
-	}
-
-	return fixtureDir;
+	return createTempFixture(files, {
+		baseDir: getExampleShowcaseFixtureRoot(".tmp-sync-types-reporting-fixtures"),
+		prefix: "fixture-",
+	});
 }
 
 function createTypecheckFixture(typesSource: string) {
