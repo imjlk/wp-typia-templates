@@ -134,6 +134,10 @@ nonce-aware request wiring.
 - `createEndpoint<Req, Res>()`
 - `callEndpoint<Req, Res>()`
 - `createFetchTransport({ baseUrl })`
+- `withHeaders(transport, headers)`
+- `withComputedHeaders(transport, resolveHeaders)`
+- `withHeaderValue(transport, headerName, resolveValue)`
+- `withBearerToken(transport, resolveToken)`
 - `toValidationResult(...)`
 
 It does not include WordPress route resolution, `wpApiSettings`, or
@@ -150,6 +154,11 @@ marks the generated endpoint with `requestLocation: 'query-and-body'`.
 This support is currently limited to the portable client/runtime path; other
 internal manifest consumers such as `typia.llm` and WordPress AI projections
 still reject mixed query/body inputs.
+
+These header/auth decorators remain optional and adapter-level. They do not
+turn manifest `authMode` into automatic runtime behavior, and they do not
+replace WordPress-specific route resolution or nonce-aware ergonomics from
+`@wp-typia/rest`.
 
 ## 5. `@wp-typia/block-runtime`
 

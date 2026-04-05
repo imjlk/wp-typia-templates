@@ -23,11 +23,15 @@ import {
 	callEndpoint,
 	createEndpoint,
 	createFetchTransport,
+	withBearerToken,
 } from "@wp-typia/api-client";
 
-const transport = createFetchTransport({
-	baseUrl: "http://127.0.0.1:8787",
-});
+const transport = withBearerToken(
+	createFetchTransport({
+		baseUrl: "http://127.0.0.1:8787",
+	}),
+	() => localStorage.getItem("access_token"),
+);
 
 const endpoint = createEndpoint<MyRequest, MyResponse>({
 	method: "POST",
@@ -37,6 +41,34 @@ const endpoint = createEndpoint<MyRequest, MyResponse>({
 });
 
 const result = await callEndpoint(endpoint, { title: "Hello" }, { transport });
+```
+
+Adapter-level decorators can enrich requests without making auth policy part of
+the endpoint contract itself:
+
+```ts
+import {
+	createFetchTransport,
+	withComputedHeaders,
+	withHeaderValue,
+	withHeaders,
+} from "@wp-typia/api-client";
+
+const transport = withComputedHeaders(
+	withHeaders(
+		createFetchTransport({ baseUrl: "https://api.example.test/" }),
+		{ "X-Client": "portable-demo" },
+	),
+	async (request) => ({
+		"X-Request-Method": String(request.method ?? "GET"),
+	}),
+);
+
+const wpTransport = withHeaderValue(
+	transport,
+	"X-WP-Nonce",
+	() => window.wpApiSettings?.nonce,
+);
 ```
 
 When an endpoint needs both query parameters and a request body, use
@@ -65,4 +97,8 @@ const result = await callEndpoint(
 ```
 
 Use `@wp-typia/rest` when you want WordPress-specific helpers such as canonical
-REST route URL resolution and `@wordpress/api-fetch` integration.
+REST route URL resolution and `@wordpress/api-fetch` integration. Manifest
+`authMode` remains metadata only; adapter-level decorators such as
+`withHeaders(...)`, `withHeaderValue(...)`, and `withBearerToken(...)` are the
+portable runtime layer for attaching headers or tokens when a consumer needs
+them.

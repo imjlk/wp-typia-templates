@@ -52,6 +52,18 @@ export interface EndpointCallOptions {
 	transport?: EndpointTransport;
 }
 
+type ComputedHeadersResolver = (
+	request: Readonly<EndpointTransportRequest>,
+) => HeadersInit | undefined | Promise<HeadersInit | undefined>;
+
+type HeaderValueResolver =
+	| string
+	| null
+	| undefined
+	| ((
+			request: Readonly<EndpointTransportRequest>,
+	  ) => string | null | undefined | Promise<string | null | undefined>);
+
 interface FetchTransportOptions {
 	baseUrl: string;
 	defaultHeaders?: HeadersInit;
@@ -240,6 +252,12 @@ function mergeHeaderInputs(
 	return Object.fromEntries(mergedHeaders.entries());
 }
 
+function createReadonlyTransportRequest(
+	request: EndpointTransportRequest,
+): Readonly<EndpointTransportRequest> {
+	return { ...request };
+}
+
 function buildQueryRequestOptions<Req>(
 	endpoint: ApiEndpoint<Req, unknown>,
 	baseOptions: Partial<EndpointTransportRequest>,
@@ -372,6 +390,62 @@ export function createFetchTransport({
 
 		return (await parseResponsePayload(response)) as Parse extends false ? Response : T;
 	};
+}
+
+export function withHeaders(
+	transport: EndpointTransport,
+	headers: HeadersInit,
+): EndpointTransport {
+	return withComputedHeaders(transport, () => headers);
+}
+
+export function withComputedHeaders(
+	transport: EndpointTransport,
+	resolveHeaders: ComputedHeadersResolver,
+): EndpointTransport {
+	return async <T = unknown, Parse extends boolean = true>(
+		options: EndpointTransportRequest & { parse?: Parse },
+	): Promise<Parse extends false ? Response : T> => {
+		const computedHeaders = await resolveHeaders(createReadonlyTransportRequest(options));
+
+		return transport<T, Parse>({
+			...options,
+			headers: mergeHeaderInputs(computedHeaders, options.headers),
+		});
+	};
+}
+
+export function withHeaderValue(
+	transport: EndpointTransport,
+	headerName: string,
+	resolveValue: HeaderValueResolver,
+): EndpointTransport {
+	return withComputedHeaders(transport, async (request) => {
+		const value =
+			typeof resolveValue === "function"
+				? await resolveValue(request)
+				: resolveValue;
+
+		return value === undefined || value === null
+			? undefined
+			: { [headerName]: value };
+	});
+}
+
+export function withBearerToken(
+	transport: EndpointTransport,
+	resolveToken: HeaderValueResolver,
+): EndpointTransport {
+	return withHeaderValue(transport, "Authorization", async (request) => {
+		const token =
+			typeof resolveToken === "function"
+				? await resolveToken(request)
+				: resolveToken;
+
+		return token === undefined || token === null || token === ""
+			? undefined
+			: `Bearer ${token}`;
+	});
 }
 
 export function createEndpoint<Req, Res>(config: ApiEndpoint<Req, Res>): ApiEndpoint<Req, Res> {
