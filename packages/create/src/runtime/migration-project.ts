@@ -634,6 +634,23 @@ export function writeInitialMigrationScaffold(
 	}
 }
 
+/**
+ * Loads the migration workspace state for a project directory.
+ *
+ * By default this loader may run the project's `sync-types` script when the
+ * current manifest files are missing, because later migration commands depend
+ * on those generated artifacts. Pass `allowSyncTypes: false` to keep the call
+ * read-only and fail instead of mutating the workspace.
+ *
+ * When `allowMissingConfig` is enabled and the migration config file does not
+ * exist yet, the loader synthesizes a minimal legacy-root config so bootstrap
+ * flows can continue before the first config write.
+ *
+ * @param projectDir Absolute or relative project directory containing the migration workspace.
+ * @param options Loader flags controlling config fallback and `sync-types` side effects.
+ * @returns The resolved migration project state, including config, block targets, and helper paths.
+ * @throws Error When the project is not migration-capable, required manifests remain missing, or generated files cannot be read.
+ */
 export function loadMigrationProject(
 	projectDir: string,
 	{
@@ -665,6 +682,15 @@ export function loadMigrationProject(
 			);
 		}
 		runProjectScriptIfPresent(projectDir, "sync-types");
+		const remainingManifestFiles = configuredBlocks
+			.filter((block) => !fs.existsSync(path.join(projectDir, block.manifestFile)))
+			.map((block) => block.manifestFile);
+		if (remainingManifestFiles.length > 0) {
+			throw new Error(
+				`Missing current manifest file(s): ${remainingManifestFiles.join(", ")}. ` +
+					"Run your project's `sync-types` script in the project root first, then retry.",
+			);
+		}
 	}
 	const blocks = resolveMigrationBlocks(projectDir, config);
 
