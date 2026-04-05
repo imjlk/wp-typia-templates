@@ -33,6 +33,16 @@ import type {
 
 const DEFAULT_BLOCK_KEY = "default";
 const SINGLE_BLOCK_LAYOUT_NOT_FOUND = "No supported single-block migration layout was found.";
+const SINGLE_BLOCK_LAYOUT_CANDIDATES = [
+	{
+		blockJsonFile: SRC_BLOCK_JSON,
+		manifestFile: SRC_MANIFEST,
+	},
+	{
+		blockJsonFile: ROOT_BLOCK_JSON,
+		manifestFile: ROOT_MANIFEST,
+	},
+] as const;
 
 /**
  * Describes the migration retrofit layout discovered in a project directory.
@@ -100,6 +110,17 @@ function readSingleBlockTarget(
 	};
 }
 
+function collectSingleBlockCandidates(
+	projectDir: string,
+): Array<{
+	blockJsonFile: string;
+	manifestFile: string;
+}> {
+	return SINGLE_BLOCK_LAYOUT_CANDIDATES.filter(({ blockJsonFile }) =>
+		hasSingleBlockLayoutFiles(projectDir, blockJsonFile),
+	);
+}
+
 function hasSingleBlockLayoutFiles(projectDir: string, blockJsonFile: string): boolean {
 	return [blockJsonFile, ROOT_SAVE_FILE, ROOT_TYPES_FILE].every((relativePath) =>
 		fs.existsSync(path.join(projectDir, relativePath)),
@@ -107,10 +128,9 @@ function hasSingleBlockLayoutFiles(projectDir: string, blockJsonFile: string): b
 }
 
 function createImplicitLegacyBlock(projectDir: string, blockName?: string): MigrationBlockConfig {
-	const discovered = discoverSingleBlockTarget(projectDir);
+	const discovered = discoverSingleBlockTarget(projectDir, blockName);
 	return {
 		...discovered,
-		blockName: blockName ?? discovered.blockName,
 		key: DEFAULT_BLOCK_KEY,
 	};
 }
@@ -209,35 +229,57 @@ function createBlockTarget(
 	};
 }
 
-function discoverSingleBlockTarget(projectDir: string): MigrationBlockConfig {
-	const currentHasFiles = hasSingleBlockLayoutFiles(projectDir, SRC_BLOCK_JSON);
-	const legacyHasFiles = hasSingleBlockLayoutFiles(projectDir, ROOT_BLOCK_JSON);
-	const currentHasManifest = currentHasFiles && fs.existsSync(path.join(projectDir, SRC_MANIFEST));
-	const legacyHasManifest = legacyHasFiles && fs.existsSync(path.join(projectDir, ROOT_MANIFEST));
+function discoverSingleBlockTarget(projectDir: string, preferredBlockName?: string): MigrationBlockConfig {
+	const candidates = collectSingleBlockCandidates(projectDir);
+	if (candidates.length === 0) {
+		throw new Error(SINGLE_BLOCK_LAYOUT_NOT_FOUND);
+	}
 
-	if (currentHasManifest) {
-		return readSingleBlockTarget(projectDir, {
-			blockJsonFile: SRC_BLOCK_JSON,
-			manifestFile: SRC_MANIFEST,
-		})!;
+	const readCandidate = (candidate: (typeof candidates)[number]) =>
+		readSingleBlockTarget(projectDir, candidate);
+
+	if (preferredBlockName) {
+		const validTargets: MigrationBlockConfig[] = [];
+		let firstReadError: Error | null = null;
+
+		for (const candidate of candidates) {
+			try {
+				const target = readCandidate(candidate);
+				if (!target) {
+					continue;
+				}
+				if (target.blockName === preferredBlockName) {
+					return target;
+				}
+				validTargets.push(target);
+			} catch (error) {
+				if (!firstReadError && error instanceof Error) {
+					firstReadError = error;
+				}
+			}
+		}
+
+		if (validTargets.length > 0) {
+			throw new Error(
+				`Configured migration blockName ${preferredBlockName} does not match the detected single-block layout(s): ${validTargets
+					.map((target) => target.blockName)
+					.join(", ")}.`,
+			);
+		}
+		if (firstReadError) {
+			throw firstReadError;
+		}
 	}
-	if (legacyHasManifest) {
-		return readSingleBlockTarget(projectDir, {
-			blockJsonFile: ROOT_BLOCK_JSON,
-			manifestFile: ROOT_MANIFEST,
-		})!;
-	}
-	if (currentHasFiles) {
-		return readSingleBlockTarget(projectDir, {
-			blockJsonFile: SRC_BLOCK_JSON,
-			manifestFile: SRC_MANIFEST,
-		})!;
-	}
-	if (legacyHasFiles) {
-		return readSingleBlockTarget(projectDir, {
-			blockJsonFile: ROOT_BLOCK_JSON,
-			manifestFile: ROOT_MANIFEST,
-		})!;
+
+	const candidatesWithManifest = candidates.filter(({ manifestFile }) =>
+		fs.existsSync(path.join(projectDir, manifestFile)),
+	);
+
+	for (const candidate of [...candidatesWithManifest, ...candidates.filter((candidate) => !candidatesWithManifest.includes(candidate))]) {
+		const target = readCandidate(candidate);
+		if (target) {
+			return target;
+		}
 	}
 
 	throw new Error(SINGLE_BLOCK_LAYOUT_NOT_FOUND);

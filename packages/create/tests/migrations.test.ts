@@ -386,6 +386,14 @@ function createMalformedFallbackSingleBlockProject(projectDir: string) {
 	});
 }
 
+function createLegacyConfiguredMixedSingleBlockProject(projectDir: string) {
+	createMixedSingleBlockProject(projectDir);
+	writeFile(
+		path.join(projectDir, "src", "migrations", "config.ts"),
+		`export const migrationConfig = {\n\tblockName: "create-block/legacy-root-layout",\n\tcurrentVersion: "1.0.0",\n\tsupportedVersions: ["1.0.0"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
+	);
+}
+
 function writeCurrentSnapshot(projectDir: string, version = "2.0.0") {
 	writeJson(
 		path.join(projectDir, "src", "migrations", "versions", version, "block.json"),
@@ -1300,6 +1308,16 @@ describe("wp-typia migrations", () => {
 
 		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
 		expect(configSource).toContain("blockName: 'create-block/current-scaffold'");
+	});
+
+	test("legacy migration configs stay bound to the configured single-block layout", () => {
+		const projectDir = path.join(tempRoot, "legacy-config-mixed-single-block-project");
+		createLegacyConfiguredMixedSingleBlockProject(projectDir);
+
+		const state = loadMigrationProject(projectDir);
+		expect(state.blocks[0]?.blockJsonFile).toBe("block.json");
+		expect(state.blocks[0]?.blockName).toBe("create-block/legacy-root-layout");
+		expect(state.currentManifest.attributes?.content?.typia.defaultValue).toBe("Legacy");
 	});
 
 	test("migrations init fails with actionable guidance when no supported retrofit layout is found", () => {
