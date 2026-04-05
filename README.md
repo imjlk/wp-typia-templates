@@ -101,7 +101,7 @@ Use it for:
 
 - authenticated per-user actions
 - public aggregate actions
-- custom-table or post-meta backed flows
+- custom-table or post-meta-backed flows
 - blocks that need both editor UX and runtime-safe API surfaces
 
 ### 4. Compound blocks are scaffolded as a system

@@ -39,13 +39,32 @@ function parsePublishScriptPackageDirs() {
 		throw new Error(`Unable to locate PACKAGES=(...) in ${path.relative(repoRoot, publishScriptPath)}.`);
 	}
 
-	return match[1]
+	const rawLines = match[1]
 		.split("\n")
 		.map((line) => line.trim())
-		.filter(Boolean)
-		.map((line) => line.match(/^"([^"]+)"$/u)?.[1] ?? null)
-		.filter((value) => value !== null)
-		.sort();
+		.filter(Boolean);
+
+	const packageDirs = rawLines.map((line, index) => {
+		const parsed = line.match(/^"([^"]+)"$/u)?.[1];
+		if (!parsed) {
+			throw new Error(
+				`Invalid PACKAGES entry at line ${index + 1}: ${line}`,
+			);
+		}
+		return parsed;
+	});
+
+	const duplicatePackageDirs = [...new Set(
+		packageDirs.filter((value, index) => packageDirs.indexOf(value) !== index),
+	)];
+
+	if (duplicatePackageDirs.length > 0) {
+		throw new Error(
+			`Duplicate PACKAGES entries in ${path.relative(repoRoot, publishScriptPath)}: ${duplicatePackageDirs.join(", ")}`,
+		);
+	}
+
+	return packageDirs.sort();
 }
 
 function diff(left, right) {
