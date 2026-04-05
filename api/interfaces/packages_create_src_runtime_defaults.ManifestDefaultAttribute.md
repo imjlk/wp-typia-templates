@@ -26,7 +26,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/defaults.ts:5](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/defaults.ts#L5)
+[packages/create/src/runtime/defaults.ts:7](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/defaults.ts#L7)
 
 ___
 
@@ -46,4 +46,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/defaults.ts:9](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/defaults.ts#L9)
+[packages/create/src/runtime/defaults.ts:11](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/defaults.ts#L11)

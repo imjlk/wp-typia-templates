@@ -40,7 +40,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:68](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L68)
+[packages/create/src/runtime/scaffold.ts:74](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L74)
 
 ___
 
@@ -50,7 +50,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:70](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L70)
+[packages/create/src/runtime/scaffold.ts:76](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L76)
 
 ## Variables
 
@@ -60,7 +60,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:67](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L67)
+[packages/create/src/runtime/scaffold.ts:73](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L73)
 
 ___
 
@@ -70,7 +70,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:69](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L69)
+[packages/create/src/runtime/scaffold.ts:75](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L75)
 
 ## Functions
 
@@ -90,7 +90,7 @@ value is "post-meta" \| "custom-table"
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:258](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L258)
+[packages/create/src/runtime/scaffold.ts:268](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L268)
 
 ___
 
@@ -110,7 +110,7 @@ value is "authenticated" \| "public"
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:262](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L262)
+[packages/create/src/runtime/scaffold.ts:272](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L272)
 
 ___
 
@@ -124,7 +124,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:266](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L266)
+[packages/create/src/runtime/scaffold.ts:276](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L276)
 
 ___
 
@@ -145,7 +145,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:279](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L279)
+[packages/create/src/runtime/scaffold.ts:289](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L289)
 
 ___
 
@@ -165,7 +165,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:298](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L298)
+[packages/create/src/runtime/scaffold.ts:308](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L308)
 
 ___
 
@@ -185,7 +185,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:331](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L331)
+[packages/create/src/runtime/scaffold.ts:341](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L341)
 
 ___
 
@@ -205,7 +205,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:356](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L356)
+[packages/create/src/runtime/scaffold.ts:366](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L366)
 
 ___
 
@@ -226,7 +226,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:431](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L431)
+[packages/create/src/runtime/scaffold.ts:421](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L421)
 
 ___
 
@@ -246,4 +246,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:793](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L793)
+[packages/create/src/runtime/scaffold.ts:777](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L777)

@@ -24,7 +24,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/inspector.tsx:60](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L60)
+[packages/create/src/runtime/inspector.tsx:61](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L61)
 
 ___
 
@@ -34,7 +34,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/inspector.tsx:61](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L61)
+[packages/create/src/runtime/inspector.tsx:62](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L62)
 
 ___
 
@@ -44,7 +44,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/inspector.tsx:62](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L62)
+[packages/create/src/runtime/inspector.tsx:63](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L63)
 
 ___
 
@@ -54,7 +54,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/inspector.tsx:63](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L63)
+[packages/create/src/runtime/inspector.tsx:64](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L64)
 
 ___
 
@@ -78,7 +78,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/inspector.tsx:64](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L64)
+[packages/create/src/runtime/inspector.tsx:65](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L65)
 
 ___
 
@@ -88,7 +88,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/inspector.tsx:65](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L65)
+[packages/create/src/runtime/inspector.tsx:66](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L66)
 
 ___
 
@@ -98,4 +98,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/inspector.tsx:66](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L66)
+[packages/create/src/runtime/inspector.tsx:67](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L67)

@@ -42,4 +42,4 @@ coupling the runtime package to a specific hook implementation.
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:26](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L26)
+[packages/create/src/runtime/validation.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L27)

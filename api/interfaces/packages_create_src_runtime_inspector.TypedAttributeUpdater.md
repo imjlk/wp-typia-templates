@@ -47,7 +47,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/inspector.tsx:125](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L125)
+[packages/create/src/runtime/inspector.tsx:126](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L126)
 
 ___
 
@@ -78,7 +78,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/inspector.tsx:126](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L126)
+[packages/create/src/runtime/inspector.tsx:127](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L127)
 
 ___
 
@@ -103,4 +103,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/inspector.tsx:127](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L127)
+[packages/create/src/runtime/inspector.tsx:128](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/inspector.tsx#L128)

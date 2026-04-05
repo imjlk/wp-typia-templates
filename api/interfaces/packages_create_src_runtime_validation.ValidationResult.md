@@ -32,7 +32,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:12](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L12)
+[packages/create/src/runtime/validation.ts:13](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L13)
 
 ___
 
@@ -42,7 +42,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:13](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L13)
+[packages/create/src/runtime/validation.ts:14](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L14)
 
 ___
 
@@ -52,4 +52,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:14](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L14)
+[packages/create/src/runtime/validation.ts:15](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L15)

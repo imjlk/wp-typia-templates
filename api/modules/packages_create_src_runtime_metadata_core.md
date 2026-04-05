@@ -53,7 +53,7 @@ High-level outcome for one `runSyncBlockMetadata()` execution.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:142](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L142)
+[packages/create/src/runtime/metadata-core.ts:143](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L143)
 
 ___
 
@@ -65,7 +65,7 @@ Stable failure bucket for structured `sync-types` error reporting.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:147](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L147)
+[packages/create/src/runtime/metadata-core.ts:148](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L148)
 
 ___
 
@@ -77,7 +77,7 @@ Portable route metadata stored in one endpoint manifest entry.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:250](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L250)
+[packages/create/src/runtime/metadata-core.ts:251](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L251)
 
 ___
 
@@ -89,7 +89,7 @@ Backward-compatible route metadata consumed by `syncRestOpenApi()`.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:295](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L295)
+[packages/create/src/runtime/metadata-core.ts:296](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L296)
 
 ___
 
@@ -101,7 +101,7 @@ Options for writing a canonical endpoint-aware REST OpenAPI document.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:340](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L340)
+[packages/create/src/runtime/metadata-core.ts:341](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L341)
 
 ## Functions
 
@@ -132,7 +132,7 @@ The same manifest object with literal contract and endpoint metadata preserved.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:276](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L276)
+[packages/create/src/runtime/metadata-core.ts:277](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L277)
 
 ___
 
@@ -161,7 +161,7 @@ PHP validator coverage warnings discovered during synchronization.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:569](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L569)
+[packages/create/src/runtime/metadata-core.ts:570](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L570)
 
 ___
 
@@ -191,7 +191,7 @@ A structured execution report describing generated paths, warnings, and failures
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:667](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L667)
+[packages/create/src/runtime/metadata-core.ts:668](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L668)
 
 ___
 
@@ -211,7 +211,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:718](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L718)
+[packages/create/src/runtime/metadata-core.ts:719](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L719)
 
 ___
 
@@ -235,7 +235,7 @@ Information about the generated OpenAPI document and included schema components.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:777](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L777)
+[packages/create/src/runtime/metadata-core.ts:778](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L778)
 
 ___
 
@@ -259,4 +259,4 @@ Information about the generated client file and emitted operation ids.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-core.ts:851](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L851)
+[packages/create/src/runtime/metadata-core.ts:852](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-core.ts#L852)

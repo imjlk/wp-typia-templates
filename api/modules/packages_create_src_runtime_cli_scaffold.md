@@ -31,7 +31,7 @@ A prompt adapter that reads from stdin and writes to stdout.
 
 #### Defined in
 
-[packages/create/src/runtime/cli-scaffold.ts:133](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L133)
+[packages/create/src/runtime/cli-scaffold.ts:222](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L222)
 
 ___
 
@@ -55,7 +55,7 @@ Ordered shell commands shown after scaffolding succeeds.
 
 #### Defined in
 
-[packages/create/src/runtime/cli-scaffold.ts:206](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L206)
+[packages/create/src/runtime/cli-scaffold.ts:295](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L295)
 
 ___
 
@@ -79,7 +79,7 @@ Optional onboarding note and step list.
 
 #### Defined in
 
-[packages/create/src/runtime/cli-scaffold.ts:230](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L230)
+[packages/create/src/runtime/cli-scaffold.ts:319](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L319)
 
 ___
 
@@ -103,4 +103,4 @@ The scaffold result together with next-step guidance.
 
 #### Defined in
 
-[packages/create/src/runtime/cli-scaffold.ts:250](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L250)
+[packages/create/src/runtime/cli-scaffold.ts:339](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L339)

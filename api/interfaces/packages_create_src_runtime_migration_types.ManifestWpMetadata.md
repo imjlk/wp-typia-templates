@@ -59,7 +59,7 @@ ___
 
 ### source
 
-• `Optional` **source**: ``null`` \| ``"text"`` \| ``"html"`` \| ``"rich-text"``
+• `Optional` **source**: ``null`` \| ``"html"`` \| ``"text"`` \| ``"rich-text"``
 
 #### Defined in
 

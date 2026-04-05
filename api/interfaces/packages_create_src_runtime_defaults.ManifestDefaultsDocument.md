@@ -18,4 +18,4 @@
 
 #### Defined in
 
-[packages/create/src/runtime/defaults.ts:22](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/defaults.ts#L22)
+[packages/create/src/runtime/defaults.ts:24](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/defaults.ts#L24)
