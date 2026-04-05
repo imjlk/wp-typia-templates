@@ -576,6 +576,10 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 	const executeQueryRef = useRef<
 		(force: boolean) => Promise<ValidationResult<Res>>
 	>();
+	const hasAutoFetchedZeroStaleRef = useRef(false);
+	useEffect(() => {
+		hasAutoFetchedZeroStaleRef.current = false;
+	}, [enabled, prepared.cacheKey, staleTime]);
 	// Keep these callbacks stable while still reading the latest runtime inputs
 	// from latestRef.current on each execution.
 	if (!executeQueryRef.current) {
@@ -663,13 +667,17 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 					? true
 					: snapshot.error !== null
 						? false
-						: staleTime > 0 &&
-							Date.now() - snapshot.updatedAt > staleTime;
+						: staleTime === 0
+							? !hasAutoFetchedZeroStaleRef.current
+							: Date.now() - snapshot.updatedAt > staleTime;
 
 		if (!shouldFetch) {
 			return;
 		}
 
+		if (staleTime === 0) {
+			hasAutoFetchedZeroStaleRef.current = true;
+		}
 		void executeQuery(false).catch(() => {});
 	}, [
 		client,

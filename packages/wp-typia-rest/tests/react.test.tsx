@@ -316,8 +316,9 @@ describe("@wp-typia/rest/react", () => {
 		await rendered.unmount();
 	});
 
-	test("default staleTime does not refetch successful queries on rerender", async () => {
+	test("default staleTime avoids same-mount loops but refetches on later mounts", async () => {
 		let fetchCount = 0;
+		const client = createEndpointDataClient();
 		const endpoint = createEndpoint<{ page: number }, { count: number }>({
 			method: "GET",
 			path: "/demo/v1/items",
@@ -334,13 +335,15 @@ describe("@wp-typia/rest/react", () => {
 					? toValidationResult(success(input as { count: number }))
 					: toValidationResult(failure<{ count: number }>("{ count: number }", "$.count")),
 		});
-		const rendered = await createHookRenderer(() =>
-			useEndpointQuery(endpoint, { page: 1 }, {
-				fetchFn: (async () => {
-					fetchCount += 1;
-					return { count: fetchCount };
-				}) as never,
-			}),
+		const rendered = await createHookRenderer(
+			() =>
+				useEndpointQuery(endpoint, { page: 1 }, {
+					fetchFn: (async () => {
+						fetchCount += 1;
+						return { count: fetchCount };
+					}) as never,
+				}),
+			client,
 		);
 
 		await flush();
@@ -356,6 +359,25 @@ describe("@wp-typia/rest/react", () => {
 		expect(fetchCount).toBe(1);
 		expect(rendered.current.data).toEqual({ count: 1 });
 
+		const second = await createHookRenderer(
+			() =>
+				useEndpointQuery(endpoint, { page: 1 }, {
+					fetchFn: (async () => {
+						fetchCount += 1;
+						return { count: fetchCount };
+					}) as never,
+				}),
+			client,
+		);
+
+		await flush();
+		await flush();
+
+		expect(fetchCount).toBe(2);
+		expect(rendered.current.data).toEqual({ count: 2 });
+		expect(second.current.data).toEqual({ count: 2 });
+
+		await second.unmount();
 		await rendered.unmount();
 	});
 
