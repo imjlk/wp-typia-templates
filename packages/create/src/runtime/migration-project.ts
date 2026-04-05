@@ -170,6 +170,14 @@ function createImplicitLegacyBlock(projectDir: string, blockName?: string): Migr
 	};
 }
 
+function createMalformedMultiBlockTargetError(directory: string, reason: string): Error {
+	return new Error(
+		"Unable to auto-detect a supported migration retrofit layout. " +
+			`Detected ${path.join("src", "blocks", directory, "block.json")} but ${reason}. ` +
+			"Create `src/migrations/config.ts` manually if your project uses a custom layout.",
+	);
+}
+
 function getRequiredProjectFiles(projectDir: string, blocks?: MigrationBlockConfig[]): string[] {
 	if (Array.isArray(blocks) && blocks.length > 0) {
 		return [
@@ -350,10 +358,9 @@ function discoverMigrationLayout(projectDir: string): DiscoveredMigrationLayout 
 					(relativePath) => !fs.existsSync(path.join(projectDir, relativePath)),
 				);
 				if (missingFiles.length > 0) {
-					firstMultiBlockError ??= new Error(
-						"Unable to auto-detect a supported migration retrofit layout. " +
-							`Detected ${path.join("src", "blocks", directory, "block.json")} but the block target is missing ${missingFiles.join(", ")}. ` +
-							"Create `src/migrations/config.ts` manually if your project uses a custom layout.",
+					firstMultiBlockError ??= createMalformedMultiBlockTargetError(
+						directory,
+						`the block target is missing ${missingFiles.join(", ")}`,
 					);
 					return [];
 				}
@@ -370,19 +377,14 @@ function discoverMigrationLayout(projectDir: string): DiscoveredMigrationLayout 
 				} catch (error) {
 					firstMultiBlockError ??=
 						error instanceof Error
-							? error
-							: new Error(
-									"Unable to auto-detect a supported migration retrofit layout. " +
-										`Could not read ${path.join("src", "blocks", directory, "block.json")}. ` +
-										"Create `src/migrations/config.ts` manually if your project uses a custom layout.",
-							  );
+							? createMalformedMultiBlockTargetError(directory, `could not be parsed (${error.message})`)
+							: createMalformedMultiBlockTargetError(directory, "could not be parsed");
 					return [];
 				}
 				if (!block) {
-					firstMultiBlockError ??= new Error(
-						"Unable to auto-detect a supported migration retrofit layout. " +
-							`Could not read a valid block name from ${path.join("src", "blocks", directory, "block.json")}. ` +
-							"Create `src/migrations/config.ts` manually if your project uses a custom layout.",
+					firstMultiBlockError ??= createMalformedMultiBlockTargetError(
+						directory,
+						"it does not expose a valid block name",
 					);
 					return [];
 				}

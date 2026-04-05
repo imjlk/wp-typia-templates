@@ -723,6 +723,26 @@ function createSingleBlockProjectWithBrokenMultiBlockCandidate(projectDir: strin
 	writeFile(path.join(projectDir, "src", "blocks", "broken-item", "block.json"), '{"apiVersion":3,');
 }
 
+function createBrokenOnlyMultiBlockProject(projectDir: string) {
+	writeJson(path.join(projectDir, "package.json"), {
+		name: "broken-only-multi-block",
+		packageManager: "bun@1.3.10",
+		private: true,
+		scripts: {},
+		type: "module",
+		version: "0.1.0",
+	});
+	writeFile(
+		path.join(projectDir, "src", "blocks", "broken-item", "save.tsx"),
+		`export default function Save() {\n\treturn null;\n}\n`,
+	);
+	writeFile(
+		path.join(projectDir, "src", "blocks", "broken-item", "types.ts"),
+		`export interface BrokenItemAttributes {}\n`,
+	);
+	writeFile(path.join(projectDir, "src", "blocks", "broken-item", "block.json"), '{"apiVersion":3,');
+}
+
 function createRenameCandidateProject(projectDir: string) {
 	createProjectShell(projectDir);
 
@@ -1441,6 +1461,19 @@ describe("wp-typia migrations", () => {
 		expect(configSource).toContain("blockName: 'create-block/current-scaffold'");
 		expect(configSource).not.toContain("blocks: [");
 		expect(output).toContain("Detected single-block migration retrofit: create-block/current-scaffold");
+	});
+
+	test("migrations init reports actionable guidance when only malformed multi-block candidates exist", () => {
+		const projectDir = path.join(tempRoot, "init-broken-only-multi-block-project");
+		createBrokenOnlyMultiBlockProject(projectDir);
+
+		expect(() =>
+			runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+				cwd: projectDir,
+			}),
+		).toThrow(
+			/Unable to auto-detect a supported migration retrofit layout\.[\s\S]*src\/blocks\/broken-item\/block\.json[\s\S]*could not be parsed[\s\S]*src\/migrations\/config\.ts/,
+		);
 	});
 
 	test("migrations init ignores malformed non-selected single-block layouts", () => {
