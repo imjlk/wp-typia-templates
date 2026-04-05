@@ -695,7 +695,9 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 
 	const data = useMemo(() => {
 		const rawData =
-			snapshot.data === undefined ? initialData : (snapshot.data as Res | undefined);
+			snapshot.data === undefined && snapshot.validation === null
+				? initialData
+				: (snapshot.data as Res | undefined);
 		if (rawData === undefined) {
 			return undefined;
 		}
@@ -703,7 +705,7 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 		return select !== undefined
 			? select(rawData)
 			: (rawData as unknown as Selected);
-	}, [initialData, select, snapshot.data]);
+	}, [initialData, select, snapshot.data, snapshot.validation]);
 
 	return {
 		data,
@@ -833,6 +835,7 @@ export function useEndpointMutation<Req, Res, Context = unknown>(
 
 				return result;
 			} catch (nextError) {
+				setData(undefined);
 				setError(nextError);
 				setValidation(null);
 				await latest.onError?.(

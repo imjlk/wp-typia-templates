@@ -692,6 +692,7 @@ describe("@wp-typia/rest/react", () => {
 		const rendered = await createHookRenderer(() =>
 			useEndpointQuery(endpoint, undefined, {
 				fetchFn: (async () => undefined) as never,
+				initialData: "boot" as never,
 				onSuccess: () => {
 					successCount += 1;
 				},
@@ -850,6 +851,7 @@ describe("@wp-typia/rest/react", () => {
 		await rendered.current.mutateAsync({ page: 2 }).catch(() => undefined);
 		await flush();
 
+		expect(rendered.current.data).toBeUndefined();
 		expect(rendered.current.error).toBeInstanceOf(Error);
 		expect(rendered.current.validation).toBeNull();
 	});
