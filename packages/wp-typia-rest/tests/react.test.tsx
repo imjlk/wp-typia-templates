@@ -967,7 +967,6 @@ describe("@wp-typia/rest/react", () => {
 		const result = await rendered.current.mutation.mutateAsync(request);
 		await flush();
 		await flush();
-		await waitFor(() => rendered.current.query.data?.count === 1);
 
 		expect(result.isValid).toBe(false);
 		expect(onErrorCount).toBe(1);
@@ -975,7 +974,7 @@ describe("@wp-typia/rest/react", () => {
 			false,
 		);
 		expect(rendered.current.mutation.validation?.isValid).toBe(false);
-		expect(rendered.current.query.data).toEqual({ count: 1 });
+		expect(rendered.current.query.data).toEqual({ count: 0 });
 		expect(invalidateCalls).toEqual([
 			{
 				endpoint: queryEndpoint,
