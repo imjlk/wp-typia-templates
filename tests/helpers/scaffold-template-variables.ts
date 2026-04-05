@@ -25,6 +25,7 @@ export function createTestScaffoldTemplateVariables(
 		pascalCase: "DemoBlock",
 		persistencePolicy: "authenticated",
 		phpPrefix: "demo_block",
+		phpPrefixUpper: "DEMO_BLOCK",
 		publicWriteRequestIdDeclaration: "publicWriteRequestId?: string;",
 		restPackageVersion: "^0.2.0",
 		restWriteAuthIntent: "authenticated",

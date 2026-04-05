@@ -19,11 +19,11 @@ if ( ! is_object( $validator ) || ! method_exists( $validator, 'apply_defaults' 
 	return '';
 }
 
-$normalized  = $validator->apply_defaults( is_array( $attributes ) ? $attributes : array() );
-$validation  = $validator->validate( $normalized );
-$resourceKey = isset( $normalized['resourceKey'] ) ? (string) $normalized['resourceKey'] : '';
+$normalized   = $validator->apply_defaults( is_array( $attributes ) ? $attributes : array() );
+$validation   = $validator->validate( $normalized );
+$resource_key = isset( $normalized['resourceKey'] ) ? (string) $normalized['resourceKey'] : '';
 
-if ( empty( $validation['valid'] ) || '' === $resourceKey ) {
+if ( empty( $validation['valid'] ) || '' === $resource_key ) {
 	return '';
 }
 
@@ -34,7 +34,7 @@ $post_id      = is_object( $block ) && isset( $block->context['postId'] )
 	? (int) $block->context['postId']
 	: (int) get_queried_object_id();
 $can_write    = $post_id > 0 && is_user_logged_in();
-$liked        = $can_write ? persistence_examples_has_like( (int) $post_id, $resourceKey, get_current_user_id() ) : false;
+$liked        = $can_write ? persistence_examples_has_like( (int) $post_id, $resource_key, get_current_user_id() ) : false;
 $context      = array(
 	'buttonLabel'         => $liked ? $unlike_label : $like_label,
 	'canWrite'            => $can_write,
@@ -42,7 +42,7 @@ $context      = array(
 	'likeLabel'           => $like_label,
 	'likedByCurrentUser'  => $liked,
 	'postId'              => (int) $post_id,
-	'resourceKey'         => $resourceKey,
+	'resourceKey'         => $resource_key,
 	'storage'             => 'custom-table',
 	'unlikeLabel'         => $unlike_label,
 );
@@ -71,12 +71,21 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		<?php endif; ?>
 		<p
 			class="persistence-like-button-frontend__error"
+			role="status"
+			aria-live="polite"
+			aria-atomic="true"
 			data-wp-bind--hidden="!state.error"
 			data-wp-text="state.error"
 			hidden
 		></p>
 		<?php if ( ! empty( $normalized['showCount'] ) ) : ?>
-			<span class="persistence-like-button-frontend__count" data-wp-text="state.count">0</span>
+			<span
+				class="persistence-like-button-frontend__count"
+				role="status"
+				aria-live="polite"
+				aria-atomic="true"
+				data-wp-text="state.count"
+			>0</span>
 		<?php endif; ?>
 		<button
 			type="button"

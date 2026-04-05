@@ -97,6 +97,7 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	needsMigration: string;
 	pascalCase: string;
 	phpPrefix: string;
+	phpPrefixUpper: string;
 	isAuthenticatedPersistencePolicy: "false" | "true";
 	isPublicPersistencePolicy: "false" | "true";
 	publicWriteRequestIdDeclaration: string;
@@ -443,6 +444,7 @@ export function getTemplateVariables(
 	const description = answers.description.trim();
 	const textDomain = identifiers.textDomain;
 	const phpPrefix = identifiers.phpPrefix;
+	const phpPrefixUpper = phpPrefix.toUpperCase();
 	const compoundChildTitle = `${title} Item`;
 	const compoundPersistenceEnabled =
 		templateId === "persistence"
@@ -481,6 +483,7 @@ export function getTemplateVariables(
 		needsMigration: "{{needsMigration}}",
 		pascalCase,
 		phpPrefix,
+		phpPrefixUpper,
 		restPackageVersion,
 		publicWriteRequestIdDeclaration:
 			persistencePolicy === "public"

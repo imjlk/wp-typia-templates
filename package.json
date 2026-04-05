@@ -45,6 +45,7 @@
     "test:watch": "bun test tests/unit --watch",
     "test:e2e": "bun run examples:test:e2e",
     "test:e2e:matrix": "bun run examples:test:e2e:matrix",
+    "lint:php": "composer lint:php && bun scripts/lint-generated-php.ts",
     "lint": "bun run examples:lint",
     "format": "bun run examples:format",
     "clean": "bun run --workspaces --if-present clean && rm -rf node_modules",

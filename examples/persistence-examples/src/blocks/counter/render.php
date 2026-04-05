@@ -19,11 +19,11 @@ if ( ! is_object( $validator ) || ! method_exists( $validator, 'apply_defaults' 
 	return '';
 }
 
-$normalized  = $validator->apply_defaults( is_array( $attributes ) ? $attributes : array() );
-$validation  = $validator->validate( $normalized );
-$resourceKey = isset( $normalized['resourceKey'] ) ? (string) $normalized['resourceKey'] : '';
+$normalized   = $validator->apply_defaults( is_array( $attributes ) ? $attributes : array() );
+$validation   = $validator->validate( $normalized );
+$resource_key = isset( $normalized['resourceKey'] ) ? (string) $normalized['resourceKey'] : '';
 
-if ( empty( $validation['valid'] ) || '' === $resourceKey ) {
+if ( empty( $validation['valid'] ) || '' === $resource_key ) {
 	return '';
 }
 
@@ -33,7 +33,7 @@ $post_id      = is_object( $block ) && isset( $block->context['postId'] )
 	? (int) $block->context['postId']
 	: (int) get_queried_object_id();
 $public_write = $post_id > 0
-	? persistence_examples_create_counter_public_write_token( (int) $post_id, $resourceKey )
+	? persistence_examples_create_counter_public_write_token( (int) $post_id, $resource_key )
 	: array(
 		'expiresAt' => 0,
 		'token'     => '',
@@ -43,7 +43,7 @@ $context      = array(
 	'canWrite'    => ! empty( $public_write['token'] ),
 	'count'       => 0,
 	'postId'      => (int) $post_id,
-	'resourceKey' => $resourceKey,
+	'resourceKey' => $resource_key,
 	'storage'     => 'custom-table',
 );
 
@@ -73,12 +73,21 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		</p>
 		<p
 			class="persistence-counter-frontend__error"
+			role="status"
+			aria-live="polite"
+			aria-atomic="true"
 			data-wp-bind--hidden="!state.error"
 			data-wp-text="state.error"
 			hidden
 		></p>
 		<?php if ( ! empty( $normalized['showCount'] ) ) : ?>
-			<span class="persistence-counter-frontend__count" data-wp-text="state.count">0</span>
+			<span
+				class="persistence-counter-frontend__count"
+				role="status"
+				aria-live="polite"
+				aria-atomic="true"
+				data-wp-text="state.count"
+			>0</span>
 		<?php endif; ?>
 		<button
 			type="button"

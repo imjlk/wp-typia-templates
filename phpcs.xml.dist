@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<ruleset name="wp-typia PHP Baseline">
+	<description>Lightweight PHPCS baseline for maintained WordPress-facing example PHP files.</description>
+
+	<arg name="basepath" value="."/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+	<arg name="warning-severity" value="0"/>
+
+	<config name="minimum_supported_wp_version" value="6.7"/>
+
+	<rule ref="WordPress-Core"/>
+	<exclude name="Generic.Formatting.MultipleStatementAlignment"/>
+	<exclude name="WordPress.Arrays.MultipleStatementAlignment"/>
+
+	<file>examples/my-typia-block/my-typia-block.php</file>
+	<file>examples/my-typia-block/render.php</file>
+	<file>examples/persistence-examples/persistence-examples.php</file>
+	<file>examples/persistence-examples/inc/wordpress-ai.php</file>
+	<file>examples/persistence-examples/src/blocks/counter/render.php</file>
+	<file>examples/persistence-examples/src/blocks/like-button/render.php</file>
+	<file>examples/compound-patterns/compound-patterns.php</file>
+
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+</ruleset>
