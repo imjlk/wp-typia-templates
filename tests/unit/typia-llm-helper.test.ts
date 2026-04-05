@@ -17,6 +17,7 @@ describe("typia.llm internal helper", () => {
 
 		expect(methods).toEqual([
 			{
+				authIntent: "public",
 				authMode: "public-read",
 				description: "Read the current counter state.",
 				inputTypeName: "PersistenceCounterQuery",
@@ -27,6 +28,7 @@ describe("typia.llm internal helper", () => {
 				tags: ["Counter"],
 			},
 			{
+				authIntent: "public-write-protected",
 				authMode: "public-signed-token",
 				description: "Increment the current counter state.",
 				inputTypeName: "PersistenceCounterIncrementRequest",
@@ -35,6 +37,10 @@ describe("typia.llm internal helper", () => {
 				outputTypeName: "PersistenceCounterResponse",
 				path: "/persistence-examples/v1/counter",
 				tags: ["Counter"],
+				wordpressAuth: {
+					mechanism: "public-signed-token",
+					publicTokenField: "publicWriteToken",
+				},
 			},
 		]);
 	});
@@ -61,6 +67,9 @@ describe("typia.llm internal helper", () => {
 		);
 		expect(source).toContain("REST path: GET /persistence-examples/v1/counter");
 		expect(source).toContain("REST path: POST /persistence-examples/v1/counter");
+		expect(source).toContain("Auth intent: public");
+		expect(source).toContain("Auth intent: public-write-protected");
+		expect(source).toContain("WordPress auth: public-signed-token (field: publicWriteToken)");
 		expect(source).toContain("@tag Counter");
 		expect(source).toContain(
 			"export const counterLlmApplication =\n\ttypia.llm.application<CounterRestToolController>();",
@@ -78,13 +87,16 @@ describe("typia.llm internal helper", () => {
 			},
 			endpoints: [
 				{
-					authMode: "authenticated-rest-nonce",
+					auth: "authenticated",
 					method: "DELETE",
 					operationId: "deletePersistenceCounterState",
 					path: "/persistence-examples/v1/counter",
 					queryContract: "deleteCounterQuery",
 					responseContract: "persistenceCounterResponse",
 					tags: ["Counter"],
+					wordpressAuth: {
+						mechanism: "rest-nonce",
+					},
 				},
 			],
 		} satisfies EndpointManifestDefinition;
@@ -131,7 +143,7 @@ describe("typia.llm internal helper", () => {
 			},
 			endpoints: [
 				{
-					authMode: "public-read",
+					auth: "public",
 					method: "GET",
 					operationId: "get-counter state",
 					path: "/persistence-examples/v1/counter",

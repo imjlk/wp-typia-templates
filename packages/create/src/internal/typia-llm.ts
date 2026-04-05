@@ -2,9 +2,15 @@ import type {
 	EndpointManifestDefinition,
 	EndpointManifestEndpointDefinition,
 } from "../runtime/metadata-core.js";
+import {
+	normalizeEndpointAuthDefinition,
+	type EndpointAuthIntent,
+	type EndpointWordPressAuthDefinition,
+} from "../runtime/schema-core.js";
 
 export interface TypiaLlmEndpointMethodDescriptor {
-	authMode: EndpointManifestEndpointDefinition["authMode"];
+	authIntent: EndpointAuthIntent;
+	authMode?: EndpointManifestEndpointDefinition["authMode"];
 	description?: string;
 	inputTypeName: string | null;
 	method: EndpointManifestEndpointDefinition["method"];
@@ -12,6 +18,7 @@ export interface TypiaLlmEndpointMethodDescriptor {
 	outputTypeName: string;
 	path: string;
 	tags: readonly string[];
+	wordpressAuth?: EndpointWordPressAuthDefinition;
 }
 
 export interface RenderTypiaLlmModuleOptions {
@@ -76,7 +83,16 @@ function renderMethodJsDoc(method: TypiaLlmEndpointMethodDescriptor): string {
 		` * ${escapeJsDocLine(method.description ?? method.operationId)}`,
 		" *",
 		` * REST path: ${method.method} ${method.path}`,
-		` * Auth mode: ${method.authMode}`,
+		` * Auth intent: ${method.authIntent}`,
+		...(method.wordpressAuth
+			? [
+					` * WordPress auth: ${method.wordpressAuth.mechanism}${
+						method.wordpressAuth.publicTokenField
+							? ` (field: ${method.wordpressAuth.publicTokenField})`
+							: ""
+					}`,
+			  ]
+			: []),
 		...method.tags.map((tag) => ` * @tag ${escapeJsDocLine(tag)}`),
 		" */",
 	];
@@ -97,16 +113,26 @@ function renderMethodSignature(method: TypiaLlmEndpointMethodDescriptor): string
 export function buildTypiaLlmEndpointMethodDescriptors(
 	manifest: EndpointManifestDefinition,
 ): TypiaLlmEndpointMethodDescriptor[] {
-	return manifest.endpoints.map((endpoint) => ({
-		authMode: endpoint.authMode,
-		description: endpoint.summary,
-		inputTypeName: getEndpointInputTypeName(manifest, endpoint),
-		method: endpoint.method,
-		operationId: endpoint.operationId,
-		outputTypeName: getEndpointOutputTypeName(manifest, endpoint),
-		path: endpoint.path,
-		tags: endpoint.tags ?? [],
-	}));
+	return manifest.endpoints.map((endpoint) => {
+		const normalizedAuth = normalizeEndpointAuthDefinition(endpoint);
+
+		return {
+			authIntent: normalizedAuth.auth,
+			...(normalizedAuth.authMode
+				? { authMode: normalizedAuth.authMode }
+				: {}),
+			description: endpoint.summary,
+			inputTypeName: getEndpointInputTypeName(manifest, endpoint),
+			method: endpoint.method,
+			operationId: endpoint.operationId,
+			outputTypeName: getEndpointOutputTypeName(manifest, endpoint),
+			path: endpoint.path,
+			tags: endpoint.tags ?? [],
+			...(normalizedAuth.wordpressAuth
+				? { wordpressAuth: normalizedAuth.wordpressAuth }
+				: {}),
+		};
+	});
 }
 
 export function renderTypiaLlmModule({

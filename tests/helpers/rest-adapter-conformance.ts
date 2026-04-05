@@ -2,6 +2,7 @@ import type {
 	EndpointManifestDefinition,
 	EndpointManifestEndpointDefinition,
 } from '@wp-typia/create/metadata-core';
+import { normalizeEndpointAuthDefinition } from '@wp-typia/create/runtime/schema-core';
 import type { ValidationResult } from '@wp-typia/api-client';
 
 type QueryScalar = boolean | number | string;
@@ -274,7 +275,16 @@ function assertRouteParity(
 	manifest: EndpointManifestDefinition,
 	routeTable: readonly RestAdapterRouteLike[]
 ): void {
-	const expectedRoutes = manifest.endpoints.map( toRouteSignature ).sort();
+	const expectedRoutes = manifest.endpoints
+		.map( ( endpoint ) =>
+			toRouteSignature( {
+				authMode: normalizeEndpointAuthDefinition( endpoint ).authMode,
+				method: endpoint.method,
+				operationId: endpoint.operationId,
+				path: endpoint.path,
+			} )
+		)
+		.sort();
 	const actualRoutes = routeTable.map( toRouteSignature ).sort();
 
 	if ( expectedRoutes.length !== actualRoutes.length ) {

@@ -1,6 +1,7 @@
 {
   "abilities": [
     {
+      "authIntent": "public",
       "authMode": "public-read",
       "category": "persistence-examples",
       "description": "Read the current counter state.",
@@ -78,6 +79,7 @@
       "permissionCallback": "persistence_examples_can_read_counter_ability"
     },
     {
+      "authIntent": "public-write-protected",
       "authMode": "public-signed-token",
       "category": "persistence-examples",
       "description": "Increment the current counter state.",
@@ -172,7 +174,11 @@
         "type": "object"
       },
       "path": "/persistence-examples/v1/counter",
-      "permissionCallback": "persistence_examples_can_execute_increment_counter_ability"
+      "permissionCallback": "persistence_examples_can_execute_increment_counter_ability",
+      "wordpressAuth": {
+        "mechanism": "public-signed-token",
+        "publicTokenField": "publicWriteToken"
+      }
     }
   ],
   "category": {

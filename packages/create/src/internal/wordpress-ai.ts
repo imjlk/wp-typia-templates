@@ -3,7 +3,10 @@ import type {
 	EndpointManifestEndpointDefinition,
 } from "../runtime/metadata-core.js";
 import {
+	normalizeEndpointAuthDefinition,
 	projectJsonSchemaDocument,
+	type EndpointAuthIntent,
+	type EndpointWordPressAuthDefinition,
 	type JsonSchemaDocument,
 } from "../runtime/schema-core.js";
 
@@ -21,7 +24,8 @@ export interface WordPressAbilityProjectionConfig {
 }
 
 export interface ProjectedWordPressAbilityDefinition {
-	authMode: EndpointManifestEndpointDefinition["authMode"];
+	authIntent: EndpointAuthIntent;
+	authMode?: EndpointManifestEndpointDefinition["authMode"];
 	category: string;
 	description: string;
 	executeCallback: string;
@@ -34,6 +38,7 @@ export interface ProjectedWordPressAbilityDefinition {
 	outputSchema: Record<string, unknown>;
 	path: string;
 	permissionCallback: string;
+	wordpressAuth?: EndpointWordPressAuthDefinition;
 }
 
 export interface ProjectedWordPressAbilitiesDocument {
@@ -160,8 +165,12 @@ export async function buildWordPressAbilitiesDocument({
 					: projectedInputSchema;
 			}
 
+			const normalizedAuth = normalizeEndpointAuthDefinition(endpoint);
 			return {
-				authMode: endpoint.authMode,
+				authIntent: normalizedAuth.auth,
+				...(normalizedAuth.authMode
+					? { authMode: normalizedAuth.authMode }
+					: {}),
 				category: category.id,
 				description: endpoint.summary ?? config.label,
 				executeCallback: config.executeCallback,
@@ -179,6 +188,9 @@ export async function buildWordPressAbilitiesDocument({
 				outputSchema,
 				path: endpoint.path,
 				permissionCallback: config.permissionCallback,
+				...(normalizedAuth.wordpressAuth
+					? { wordpressAuth: normalizedAuth.wordpressAuth }
+					: {}),
 			} satisfies ProjectedWordPressAbilityDefinition;
 		}),
 	);

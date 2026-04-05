@@ -20,7 +20,7 @@ const REST_ENDPOINT_MANIFEST = defineEndpointManifest( {
 	},
 	endpoints: [
 		{
-			authMode: 'public-read',
+			auth: 'public',
 			method: 'GET',
 			operationId: 'get{{pascalCase}}State',
 			path: '/{{namespace}}/v1/{{slugKebabCase}}/state',
@@ -30,7 +30,7 @@ const REST_ENDPOINT_MANIFEST = defineEndpointManifest( {
 			tags: [ '{{title}}' ],
 		},
 		{
-			authMode: '{{restWriteAuthMode}}',
+			auth: '{{restWriteAuthIntent}}',
 			bodyContract: 'write-state-request',
 			method: 'POST',
 			operationId: 'write{{pascalCase}}State',
@@ -38,6 +38,9 @@ const REST_ENDPOINT_MANIFEST = defineEndpointManifest( {
 			responseContract: 'state-response',
 			summary: 'Write the current persisted state.',
 			tags: [ '{{title}}' ],
+			wordpressAuth: {
+				mechanism: '{{restWriteAuthMechanism}}',
+			},
 		},
 	],
 	info: {

@@ -69,6 +69,7 @@ describe( 'WordPress AI internal helper', () => {
 
 		expect( abilitiesDocument.abilities ).toEqual( [
 			expect.objectContaining( {
+				authIntent: 'public',
 				authMode: 'public-read',
 				category: COUNTER_ABILITY_CATEGORY.id,
 				method: 'GET',
@@ -77,12 +78,17 @@ describe( 'WordPress AI internal helper', () => {
 				path: '/persistence-examples/v1/counter',
 			} ),
 			expect.objectContaining( {
+				authIntent: 'public-write-protected',
 				authMode: 'public-signed-token',
 				category: COUNTER_ABILITY_CATEGORY.id,
 				method: 'POST',
 				operationId: 'incrementPersistenceCounterState',
 				outputSchema: counterResponseAiSchemaDocument,
 				path: '/persistence-examples/v1/counter',
+				wordpressAuth: {
+					mechanism: 'public-signed-token',
+					publicTokenField: 'publicWriteToken',
+				},
 			} ),
 		] );
 

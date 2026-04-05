@@ -1,6 +1,10 @@
 import type { IValidation } from "@typia/interface";
 
 export type EndpointMethod = "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
+export type EndpointAuthIntent =
+	| "authenticated"
+	| "public"
+	| "public-write-protected";
 
 export interface ValidationError {
 	description?: string;
@@ -37,6 +41,7 @@ export type EndpointTransport = <T = unknown, Parse extends boolean = true>(
 ) => Promise<Parse extends false ? Response : T>;
 
 export interface ApiEndpoint<Req, Res> {
+	authIntent?: EndpointAuthIntent;
 	authMode?: string;
 	buildRequestOptions?: (request: Req) => Partial<EndpointTransportRequest>;
 	method: EndpointMethod;

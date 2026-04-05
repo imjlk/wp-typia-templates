@@ -95,6 +95,8 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	isPublicPersistencePolicy: "false" | "true";
 	publicWriteRequestIdDeclaration: string;
 	restPackageVersion: string;
+	restWriteAuthIntent: "authenticated" | "public-write-protected";
+	restWriteAuthMechanism: "public-signed-token" | "rest-nonce";
 	restWriteAuthMode: "authenticated-rest-nonce" | "public-signed-token";
 	slug: string;
 	slugCamelCase: string;
@@ -500,6 +502,12 @@ export function getTemplateVariables(
 			persistencePolicy === "public"
 				? "publicWriteRequestId: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;"
 				: "publicWriteRequestId?: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;",
+		restWriteAuthIntent:
+			persistencePolicy === "public"
+				? "public-write-protected"
+				: "authenticated",
+		restWriteAuthMechanism:
+			persistencePolicy === "public" ? "public-signed-token" : "rest-nonce",
 		restWriteAuthMode:
 			persistencePolicy === "public" ? "public-signed-token" : "authenticated-rest-nonce",
 		slug,

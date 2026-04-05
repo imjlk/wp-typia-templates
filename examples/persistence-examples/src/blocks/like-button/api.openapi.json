@@ -115,6 +115,7 @@
 				"tags": [
 					"Like Button"
 				],
+				"x-typia-authIntent": "public",
 				"x-wp-typia-authPolicy": "public-read",
 				"summary": "Read the current like status.",
 				"parameters": [
@@ -156,6 +157,7 @@
 				"tags": [
 					"Like Button"
 				],
+				"x-typia-authIntent": "authenticated",
 				"x-wp-typia-authPolicy": "authenticated-rest-nonce",
 				"summary": "Toggle the current like status.",
 				"requestBody": {

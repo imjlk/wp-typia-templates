@@ -10,6 +10,7 @@ import {
   type EndpointOpenApiEndpointDefinition,
   manifestToJsonSchema,
   manifestToOpenApi,
+  normalizeEndpointAuthDefinition,
   type OpenApiInfo,
 } from './schema-core.js';
 
@@ -245,7 +246,7 @@ export interface EndpointManifestContractDefinition {
 /**
  * Portable route metadata stored in one endpoint manifest entry.
  */
-export interface EndpointManifestEndpointDefinition extends EndpointOpenApiEndpointDefinition {}
+export type EndpointManifestEndpointDefinition = EndpointOpenApiEndpointDefinition;
 
 /**
  * Canonical TypeScript description of one scaffolded REST surface.
@@ -290,7 +291,7 @@ export interface RestOpenApiContractDefinition extends EndpointManifestContractD
 /**
  * Backward-compatible route metadata consumed by `syncRestOpenApi()`.
  */
-export interface RestOpenApiEndpointDefinition extends EndpointManifestEndpointDefinition {}
+export type RestOpenApiEndpointDefinition = EndpointManifestEndpointDefinition;
 
 /**
  * Shared file and project inputs for REST OpenAPI generation.
@@ -820,6 +821,7 @@ export async function syncEndpointClient(
   ]);
 
   for (const endpoint of manifest.endpoints) {
+    const normalizedAuth = normalizeEndpointAuthDefinition(endpoint);
     const endpointConstantName = `${endpoint.operationId}Endpoint`;
     assertValidClientIdentifier(endpoint.operationId, 'operationId');
     assertValidClientIdentifier(endpointConstantName, 'endpoint constant');
@@ -925,7 +927,10 @@ export async function syncEndpointClient(
         `\t${requestTypeName},`,
         `\t${responseContract.sourceTypeName}`,
         `>( {`,
-        `\tauthMode: ${toJavaScriptStringLiteral(endpoint.authMode)},`,
+        `\tauthIntent: ${toJavaScriptStringLiteral(normalizedAuth.auth)},`,
+        ...(normalizedAuth.authMode
+          ? [`\tauthMode: ${toJavaScriptStringLiteral(normalizedAuth.authMode)},`]
+          : []),
         `\tmethod: ${toJavaScriptStringLiteral(endpoint.method)},`,
         `\toperationId: ${toJavaScriptStringLiteral(endpoint.operationId)},`,
         `\tpath: ${toJavaScriptStringLiteral(endpoint.path)},`,

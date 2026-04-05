@@ -23,7 +23,7 @@ const manifest = defineEndpointManifest({
 	},
 	endpoints: [
 		{
-			authMode: "public-read",
+			auth: "public",
 			method: "GET",
 			operationId: "getCounterState",
 			path: "/demo/v1/counter/state",
@@ -32,13 +32,16 @@ const manifest = defineEndpointManifest({
 			tags: ["Counter"],
 		},
 		{
-			authMode: "authenticated-rest-nonce",
+			auth: "authenticated",
 			bodyContract: "request",
 			method: "POST",
 			operationId: "writeCounterState",
 			path: "/demo/v1/counter/state",
 			responseContract: "response",
 			tags: ["Counter"],
+			wordpressAuth: {
+				mechanism: "rest-nonce",
+			},
 		},
 	],
 	info: {
@@ -127,7 +130,7 @@ describe("metadata-core endpoint manifests", () => {
 	test("defineEndpointManifest preserves the manifest payload", () => {
 		expect(manifest.contracts.query.sourceTypeName).toBe("CounterQuery");
 		expect(manifest.endpoints[0]).toMatchObject({
-			authMode: "public-read",
+			auth: "public",
 			method: "GET",
 			operationId: "getCounterState",
 			path: "/demo/v1/counter/state",
@@ -206,14 +209,72 @@ describe("metadata-core endpoint manifests", () => {
 			expect(generatedClient).toContain("\tCounterResponse,");
 			expect(generatedClient).toContain("\tWriteCounterRequest,");
 			expect(generatedClient).toContain("import { apiValidators } from '../src/api-validators'");
+			expect(generatedClient).toContain("authIntent: 'public'");
+			expect(generatedClient).toContain("authIntent: 'authenticated'");
 			expect(generatedClient).toContain("requestLocation: 'query'");
 			expect(generatedClient).toContain("requestLocation: 'body'");
+			expect(generatedClient).toContain("authMode: 'public-read'");
+			expect(generatedClient).toContain("authMode: 'authenticated-rest-nonce'");
 			expect(generatedClient).toContain("validateRequest: apiValidators.query");
 			expect(generatedClient).toContain("validateRequest: apiValidators.request");
 			expect(generatedClient).toContain("validateResponse: apiValidators.response");
 			expect(generatedClient).toContain("export const getCounterStateEndpoint = createEndpoint<");
 			expect(generatedClient).toContain("export function getCounterState(");
 			expect(generatedClient).toContain("export function writeCounterState(");
+		} finally {
+			fs.rmSync(project.root, { force: true, recursive: true });
+		}
+	});
+
+	test("syncRestOpenApi normalizes legacy authMode manifests identically to the new auth shape", async () => {
+		const project = createTempProject();
+		const legacyManifest = defineEndpointManifest({
+			contracts: manifest.contracts,
+			endpoints: [
+				{
+					authMode: "public-read",
+					method: "GET",
+					operationId: "getCounterState",
+					path: "/demo/v1/counter/state",
+					queryContract: "query",
+					responseContract: "response",
+					tags: ["Counter"],
+				},
+				{
+					authMode: "authenticated-rest-nonce",
+					bodyContract: "request",
+					method: "POST",
+					operationId: "writeCounterState",
+					path: "/demo/v1/counter/state",
+					responseContract: "response",
+					tags: ["Counter"],
+				},
+			],
+			info: manifest.info,
+		});
+
+		try {
+			await syncRestOpenApi({
+				manifest,
+				openApiFile: "build/current.openapi.json",
+				projectRoot: project.root,
+				typesFile: project.typesFile,
+			});
+			await syncRestOpenApi({
+				manifest: legacyManifest,
+				openApiFile: "build/legacy.openapi.json",
+				projectRoot: project.root,
+				typesFile: project.typesFile,
+			});
+
+			const currentOpenApi = JSON.parse(
+				fs.readFileSync(path.join(project.root, "build", "current.openapi.json"), "utf8"),
+			);
+			const legacyOpenApi = JSON.parse(
+				fs.readFileSync(path.join(project.root, "build", "legacy.openapi.json"), "utf8"),
+			);
+
+			expect(currentOpenApi).toEqual(legacyOpenApi);
 		} finally {
 			fs.rmSync(project.root, { force: true, recursive: true });
 		}

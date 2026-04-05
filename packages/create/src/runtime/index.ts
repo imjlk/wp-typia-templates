@@ -33,6 +33,7 @@ export {
 	projectJsonSchemaDocument,
 	manifestToJsonSchema,
 	manifestToOpenApi,
+	normalizeEndpointAuthDefinition,
 } from "./schema-core.js";
 export {
 	buildCompoundChildStarterManifestDocument,
@@ -40,14 +41,18 @@ export {
 	stringifyStarterManifest,
 } from "./starter-manifests.js";
 export type {
+	EndpointAuthIntent,
 	EndpointOpenApiAuthMode,
 	EndpointOpenApiContractDocument,
 	EndpointOpenApiDocumentOptions,
 	EndpointOpenApiEndpointDefinition,
 	EndpointOpenApiMethod,
+	EndpointWordPressAuthDefinition,
+	EndpointWordPressAuthMechanism,
 	JsonSchemaDocument,
 	JsonSchemaProjectionProfile,
 	JsonSchemaObject,
+	NormalizedEndpointAuthDefinition,
 	OpenApiDocument,
 	OpenApiInfo,
 	OpenApiOperation,

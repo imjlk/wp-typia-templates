@@ -96,7 +96,8 @@ export interface OpenApiOperation extends JsonSchemaObject {
 	security?: Array<Record<string, string[]>>;
 	summary?: string;
 	tags: string[];
-	"x-wp-typia-authPolicy": EndpointOpenApiAuthMode;
+	"x-typia-authIntent": EndpointAuthIntent;
+	"x-wp-typia-authPolicy"?: EndpointOpenApiAuthMode;
 	"x-wp-typia-publicTokenField"?: string;
 }
 
@@ -137,7 +138,30 @@ export interface OpenApiDocument extends JsonSchemaObject {
 }
 
 /**
- * Authentication mode metadata for generated REST OpenAPI endpoints.
+ * Backend-neutral auth intent for one manifest-defined endpoint.
+ */
+export type EndpointAuthIntent =
+	| "authenticated"
+	| "public"
+	| "public-write-protected";
+
+/**
+ * WordPress-specific authentication mechanisms that can implement neutral auth intent.
+ */
+export type EndpointWordPressAuthMechanism =
+	| "public-signed-token"
+	| "rest-nonce";
+
+/**
+ * Optional WordPress adapter metadata that explains how the default runtime satisfies auth intent.
+ */
+export interface EndpointWordPressAuthDefinition {
+	mechanism: EndpointWordPressAuthMechanism;
+	publicTokenField?: string;
+}
+
+/**
+ * Legacy WordPress auth-mode literals kept for backward compatibility.
  */
 export type EndpointOpenApiAuthMode =
 	| "authenticated-rest-nonce"
@@ -159,12 +183,11 @@ export interface EndpointOpenApiContractDocument {
 	schemaName?: string;
 }
 
-/**
- * Route metadata for one REST endpoint in the aggregate OpenAPI document.
- */
-export interface EndpointOpenApiEndpointDefinition {
+interface EndpointOpenApiEndpointBaseDefinition {
 	/** Authentication policy surfaced in OpenAPI metadata. */
-	authMode: EndpointOpenApiAuthMode;
+	auth?: EndpointAuthIntent;
+	/** @deprecated Prefer `auth` plus `wordpressAuth` for new manifests. */
+	authMode?: EndpointOpenApiAuthMode;
 	/** Contract key for a JSON request body, when the endpoint accepts one. */
 	bodyContract?: string;
 	/** HTTP method exposed by the route. */
@@ -181,6 +204,26 @@ export interface EndpointOpenApiEndpointDefinition {
 	summary?: string;
 	/** OpenAPI tag names applied to this endpoint. */
 	tags: readonly string[];
+	/** Optional WordPress adapter metadata for the default runtime. */
+	wordpressAuth?: EndpointWordPressAuthDefinition;
+}
+
+/**
+ * Route metadata for one REST endpoint in the aggregate OpenAPI document.
+ */
+export type EndpointOpenApiEndpointDefinition =
+	| (EndpointOpenApiEndpointBaseDefinition & {
+			auth: EndpointAuthIntent;
+	  })
+	| (EndpointOpenApiEndpointBaseDefinition & {
+			/** @deprecated Prefer `auth` plus `wordpressAuth` for new manifests. */
+			authMode: EndpointOpenApiAuthMode;
+	  });
+
+export interface NormalizedEndpointAuthDefinition {
+	auth: EndpointAuthIntent;
+	authMode?: EndpointOpenApiAuthMode;
+	wordpressAuth?: EndpointWordPressAuthDefinition;
 }
 
 /**
@@ -209,6 +252,7 @@ export interface JsonSchemaProjectionOptions {
 }
 
 const WP_TYPIA_OPENAPI_EXTENSION_KEYS = {
+	AUTH_INTENT: "x-typia-authIntent",
 	AUTH_POLICY: "x-wp-typia-authPolicy",
 	PUBLIC_TOKEN_FIELD: "x-wp-typia-publicTokenField",
 	TYPE_TAG: "x-typeTag",
@@ -219,6 +263,8 @@ const WP_TYPIA_OPENAPI_LITERALS = {
 	PUBLIC_WRITE_TOKEN_FIELD: "publicWriteToken",
 	QUERY_LOCATION: "query" as const,
 	SUCCESS_RESPONSE_DESCRIPTION: "Successful response",
+	WORDPRESS_PUBLIC_TOKEN_MECHANISM: "public-signed-token" as const,
+	WORDPRESS_REST_NONCE_MECHANISM: "rest-nonce" as const,
 	WP_REST_NONCE_HEADER: "X-WP-Nonce",
 	WP_REST_NONCE_SCHEME: "wpRestNonce",
 } as const;
@@ -685,6 +731,192 @@ function formatEndpointDescription(endpoint: EndpointOpenApiEndpointDefinition):
 	return `${endpoint.operationId} (${endpoint.method} ${endpoint.path})`;
 }
 
+function normalizeWordPressAuthDefinition(
+	wordpressAuth: EndpointWordPressAuthDefinition | undefined,
+): EndpointWordPressAuthDefinition | undefined {
+	if (!wordpressAuth) {
+		return undefined;
+	}
+
+	if (
+		wordpressAuth.mechanism !==
+		WP_TYPIA_OPENAPI_LITERALS.WORDPRESS_PUBLIC_TOKEN_MECHANISM
+	) {
+		return {
+			mechanism: wordpressAuth.mechanism,
+		};
+	}
+
+	return {
+		mechanism: wordpressAuth.mechanism,
+		publicTokenField:
+			wordpressAuth.publicTokenField ??
+			WP_TYPIA_OPENAPI_LITERALS.PUBLIC_WRITE_TOKEN_FIELD,
+	};
+}
+
+function deriveLegacyAuthModeFromNormalizedAuth(
+	auth: EndpointAuthIntent,
+	wordpressAuth: EndpointWordPressAuthDefinition | undefined,
+): EndpointOpenApiAuthMode | undefined {
+	if (auth === "public") {
+		return "public-read";
+	}
+
+	if (
+		auth === "authenticated" &&
+		wordpressAuth?.mechanism ===
+			WP_TYPIA_OPENAPI_LITERALS.WORDPRESS_REST_NONCE_MECHANISM
+	) {
+		return "authenticated-rest-nonce";
+	}
+
+	if (
+		auth === "public-write-protected" &&
+		wordpressAuth?.mechanism ===
+			WP_TYPIA_OPENAPI_LITERALS.WORDPRESS_PUBLIC_TOKEN_MECHANISM
+	) {
+		return "public-signed-token";
+	}
+
+	return undefined;
+}
+
+function compareNormalizedEndpointAuth(
+	left: NormalizedEndpointAuthDefinition,
+	right: NormalizedEndpointAuthDefinition,
+): boolean {
+	return (
+		left.auth === right.auth &&
+		left.authMode === right.authMode &&
+		left.wordpressAuth?.mechanism === right.wordpressAuth?.mechanism &&
+		left.wordpressAuth?.publicTokenField === right.wordpressAuth?.publicTokenField
+	);
+}
+
+/**
+ * Normalizes endpoint auth metadata into backend-neutral intent plus optional
+ * WordPress adapter details.
+ *
+ * This public runtime helper accepts either the authored `auth` and optional
+ * `wordpressAuth` shape or the deprecated `authMode` field. It validates that
+ * the provided fields are compatible, resolves the legacy compatibility mode,
+ * and returns a normalized definition without mutating the input endpoint.
+ *
+ * @param endpoint - Endpoint auth fields to normalize, including `auth`,
+ * `authMode`, `wordpressAuth`, and optional identity fields used in error
+ * messages (`operationId`, `path`, and `method`).
+ * @returns The normalized auth definition for the endpoint.
+ * @throws When `auth` and deprecated `authMode` conflict.
+ * @throws When `wordpressAuth` is attached to the `public` auth intent.
+ * @throws When the selected `wordpressAuth` mechanism is incompatible with the
+ * chosen auth intent.
+ * @throws When neither `auth` nor deprecated `authMode` is defined.
+ */
+export function normalizeEndpointAuthDefinition(
+	endpoint: Pick<
+		EndpointOpenApiEndpointDefinition,
+		"auth" | "authMode" | "operationId" | "path" | "wordpressAuth" | "method"
+	>,
+): NormalizedEndpointAuthDefinition {
+	const endpointDescription =
+		typeof endpoint.operationId === "string" &&
+		typeof endpoint.path === "string" &&
+		typeof endpoint.method === "string"
+			? formatEndpointDescription(endpoint as EndpointOpenApiEndpointDefinition)
+			: "the current endpoint";
+	const nextWordPressAuth = normalizeWordPressAuthDefinition(
+		endpoint.wordpressAuth,
+	);
+
+	let normalized: NormalizedEndpointAuthDefinition | null = null;
+	if (endpoint.auth) {
+		normalized = {
+			auth: endpoint.auth,
+			authMode: deriveLegacyAuthModeFromNormalizedAuth(
+				endpoint.auth,
+				nextWordPressAuth,
+			),
+			...(nextWordPressAuth ? { wordpressAuth: nextWordPressAuth } : {}),
+		};
+
+		if (endpoint.auth === "public" && nextWordPressAuth) {
+			throw new Error(
+				`Endpoint "${endpointDescription}" cannot attach wordpressAuth when auth intent is "public".`,
+			);
+		}
+		if (
+			endpoint.auth === "authenticated" &&
+			nextWordPressAuth?.mechanism ===
+				WP_TYPIA_OPENAPI_LITERALS.WORDPRESS_PUBLIC_TOKEN_MECHANISM
+		) {
+			throw new Error(
+				`Endpoint "${endpointDescription}" uses auth intent "authenticated" but wordpressAuth mechanism "${nextWordPressAuth.mechanism}" only supports "public-write-protected".`,
+			);
+		}
+		if (
+			endpoint.auth === "public-write-protected" &&
+			nextWordPressAuth?.mechanism ===
+				WP_TYPIA_OPENAPI_LITERALS.WORDPRESS_REST_NONCE_MECHANISM
+		) {
+			throw new Error(
+				`Endpoint "${endpointDescription}" uses auth intent "public-write-protected" but wordpressAuth mechanism "${nextWordPressAuth.mechanism}" only supports "authenticated".`,
+			);
+		}
+	}
+
+	let legacyNormalized: NormalizedEndpointAuthDefinition | null = null;
+	if (endpoint.authMode) {
+		legacyNormalized =
+			endpoint.authMode === "public-read"
+				? {
+						auth: "public",
+						authMode: "public-read",
+				  }
+				: endpoint.authMode === "authenticated-rest-nonce"
+					? {
+							auth: "authenticated",
+							authMode: "authenticated-rest-nonce",
+							wordpressAuth: {
+								mechanism:
+									WP_TYPIA_OPENAPI_LITERALS.WORDPRESS_REST_NONCE_MECHANISM,
+							},
+					  }
+					: {
+							auth: "public-write-protected",
+							authMode: "public-signed-token",
+							wordpressAuth: {
+								mechanism:
+									WP_TYPIA_OPENAPI_LITERALS.WORDPRESS_PUBLIC_TOKEN_MECHANISM,
+								publicTokenField:
+									WP_TYPIA_OPENAPI_LITERALS.PUBLIC_WRITE_TOKEN_FIELD,
+							},
+					  };
+	}
+
+	if (normalized && legacyNormalized) {
+		if (!compareNormalizedEndpointAuth(normalized, legacyNormalized)) {
+			throw new Error(
+				`Endpoint "${endpointDescription}" defines conflicting auth metadata between auth/wordpressAuth and deprecated authMode.`,
+			);
+		}
+
+		return normalized;
+	}
+
+	if (normalized) {
+		return normalized;
+	}
+
+	if (legacyNormalized) {
+		return legacyNormalized;
+	}
+
+	throw new Error(
+		`Endpoint "${endpointDescription}" must define either auth or deprecated authMode.`,
+	);
+}
+
 function getContractSchemaName(
 	contractKey: string,
 	contract: EndpointOpenApiContractDocument | undefined,
@@ -730,6 +962,7 @@ function buildEndpointOpenApiOperation(
 	endpoint: EndpointOpenApiEndpointDefinition,
 	contracts: Readonly<Record<string, EndpointOpenApiContractDocument>>,
 ): OpenApiOperation {
+	const normalizedAuth = normalizeEndpointAuthDefinition(endpoint);
 	const operation: OpenApiOperation = {
 		operationId: endpoint.operationId,
 		responses: {
@@ -743,7 +976,13 @@ function buildEndpointOpenApiOperation(
 			),
 		},
 		tags: [ ...endpoint.tags ],
-		[WP_TYPIA_OPENAPI_EXTENSION_KEYS.AUTH_POLICY]: endpoint.authMode,
+		[WP_TYPIA_OPENAPI_EXTENSION_KEYS.AUTH_INTENT]: normalizedAuth.auth,
+		...(normalizedAuth.authMode
+			? {
+					[WP_TYPIA_OPENAPI_EXTENSION_KEYS.AUTH_POLICY]:
+						normalizedAuth.authMode,
+			  }
+			: {}),
 	};
 
 	if (typeof endpoint.summary === "string" && endpoint.summary.length > 0) {
@@ -779,14 +1018,21 @@ function buildEndpointOpenApiOperation(
 		};
 	}
 
-	if (endpoint.authMode === "authenticated-rest-nonce") {
+	if (
+		normalizedAuth.wordpressAuth?.mechanism ===
+		WP_TYPIA_OPENAPI_LITERALS.WORDPRESS_REST_NONCE_MECHANISM
+	) {
 		operation.security = [
 			{
 				[WP_TYPIA_OPENAPI_LITERALS.WP_REST_NONCE_SCHEME]: [],
 			},
 		];
-	} else if (endpoint.authMode === "public-signed-token") {
+	} else if (
+		normalizedAuth.wordpressAuth?.mechanism ===
+		WP_TYPIA_OPENAPI_LITERALS.WORDPRESS_PUBLIC_TOKEN_MECHANISM
+	) {
 		operation[WP_TYPIA_OPENAPI_EXTENSION_KEYS.PUBLIC_TOKEN_FIELD] =
+			normalizedAuth.wordpressAuth.publicTokenField ??
 			WP_TYPIA_OPENAPI_LITERALS.PUBLIC_WRITE_TOKEN_FIELD;
 	}
 
@@ -814,7 +1060,9 @@ export function buildEndpointOpenApiDocument(
 		.filter((tag) => typeof tag === "string" && tag.length > 0)
 		.map((name) => ({ name }));
 	const usesWpRestNonce = options.endpoints.some(
-		(endpoint) => endpoint.authMode === "authenticated-rest-nonce",
+		(endpoint) =>
+			normalizeEndpointAuthDefinition(endpoint).wordpressAuth?.mechanism ===
+			WP_TYPIA_OPENAPI_LITERALS.WORDPRESS_REST_NONCE_MECHANISM,
 	);
 
 	for (const endpoint of options.endpoints) {

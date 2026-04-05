@@ -18,7 +18,7 @@ export const BLOCKS = [
 			},
 			endpoints: [
 				{
-					authMode: 'public-read',
+					auth: 'public',
 					method: 'GET',
 					operationId: 'get{{pascalCase}}State',
 					path: '/{{namespace}}/v1/{{slugKebabCase}}/state',
@@ -28,7 +28,7 @@ export const BLOCKS = [
 					tags: [ '{{title}}' ],
 				},
 				{
-					authMode: '{{restWriteAuthMode}}',
+					auth: '{{restWriteAuthIntent}}',
 					bodyContract: 'write-state-request',
 					method: 'POST',
 					operationId: 'write{{pascalCase}}State',
@@ -36,6 +36,9 @@ export const BLOCKS = [
 					responseContract: 'state-response',
 					summary: 'Write the current persisted state.',
 					tags: [ '{{title}}' ],
+					wordpressAuth: {
+						mechanism: '{{restWriteAuthMechanism}}',
+					},
 				},
 			],
 			info: {

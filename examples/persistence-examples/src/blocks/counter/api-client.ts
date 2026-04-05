@@ -14,6 +14,7 @@ export const getPersistenceCounterStateEndpoint = createEndpoint<
 	PersistenceCounterQuery,
 	PersistenceCounterResponse
 >( {
+	authIntent: 'public',
 	authMode: 'public-read',
 	method: 'GET',
 	operationId: 'getPersistenceCounterState',
@@ -34,6 +35,7 @@ export const incrementPersistenceCounterStateEndpoint = createEndpoint<
 	PersistenceCounterIncrementRequest,
 	PersistenceCounterResponse
 >( {
+	authIntent: 'public-write-protected',
 	authMode: 'public-signed-token',
 	method: 'POST',
 	operationId: 'incrementPersistenceCounterState',

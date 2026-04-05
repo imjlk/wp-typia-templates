@@ -117,6 +117,10 @@ function getPackageManager(packageManager) {
 }
 
 function ensureCreateWpTypiaBuilt() {
+	const apiClientDistPath = path.resolve(
+		__dirname,
+		"../packages/wp-typia-api-client/dist/index.js",
+	);
 	const blockTypesDistPath = path.resolve(
 		__dirname,
 		"../packages/wp-typia-block-types/dist/index.js",
@@ -125,10 +129,18 @@ function ensureCreateWpTypiaBuilt() {
 		__dirname,
 		"../packages/wp-typia-rest/dist/index.js",
 	);
-	if (fs.existsSync(entryPath) && fs.existsSync(blockTypesDistPath) && fs.existsSync(restDistPath)) {
+	if (
+		fs.existsSync(entryPath) &&
+		fs.existsSync(apiClientDistPath) &&
+		fs.existsSync(blockTypesDistPath) &&
+		fs.existsSync(restDistPath)
+	) {
 		return;
 	}
 
+	run("bun", ["run", "--filter", "@wp-typia/api-client", "build"], {
+		cwd: path.resolve(__dirname, ".."),
+	});
 	run("bun", ["run", "--filter", "@wp-typia/block-types", "build"], {
 		cwd: path.resolve(__dirname, ".."),
 	});
@@ -366,12 +378,19 @@ function lintPhpArtifact(filePath) {
 function rewriteWorkspaceDependencies(projectDir) {
 	const packageJsonPath = path.join(projectDir, "package.json");
 	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+	const localApiClientDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-api-client")}`;
 	const localCreateDependency = `file:${path.resolve(__dirname, "../packages/create")}`;
 	const localBlockTypesDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-block-types")}`;
 	const localRestDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-rest")}`;
 
+	if (packageJson.devDependencies?.["@wp-typia/api-client"]) {
+		packageJson.devDependencies["@wp-typia/api-client"] = localApiClientDependency;
+	}
 	if (packageJson.devDependencies?.["@wp-typia/create"]) {
 		packageJson.devDependencies["@wp-typia/create"] = localCreateDependency;
+	}
+	if (packageJson.dependencies?.["@wp-typia/api-client"]) {
+		packageJson.dependencies["@wp-typia/api-client"] = localApiClientDependency;
 	}
 	if (packageJson.dependencies?.["@wp-typia/create"]) {
 		packageJson.dependencies["@wp-typia/create"] = localCreateDependency;
@@ -391,6 +410,7 @@ function rewriteWorkspaceDependencies(projectDir) {
 
 	packageJson.overrides = {
 		...(packageJson.overrides ?? {}),
+		"@wp-typia/api-client": localApiClientDependency,
 		"@wp-typia/block-types": localBlockTypesDependency,
 		"@wp-typia/create": localCreateDependency,
 		"@wp-typia/rest": localRestDependency,
@@ -399,6 +419,7 @@ function rewriteWorkspaceDependencies(projectDir) {
 		...(packageJson.pnpm ?? {}),
 		overrides: {
 			...(packageJson.pnpm?.overrides ?? {}),
+			"@wp-typia/api-client": localApiClientDependency,
 			"@wp-typia/block-types": localBlockTypesDependency,
 			"@wp-typia/create": localCreateDependency,
 			"@wp-typia/rest": localRestDependency,
@@ -406,6 +427,7 @@ function rewriteWorkspaceDependencies(projectDir) {
 	};
 	packageJson.resolutions = {
 		...(packageJson.resolutions ?? {}),
+		"@wp-typia/api-client": localApiClientDependency,
 		"@wp-typia/block-types": localBlockTypesDependency,
 		"@wp-typia/create": localCreateDependency,
 		"@wp-typia/rest": localRestDependency,
