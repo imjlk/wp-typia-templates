@@ -23,6 +23,10 @@
 - [normalizeValidationError](packages_wp_typia_api_client_src_client.md#normalizevalidationerror)
 - [toValidationResult](packages_wp_typia_api_client_src_client.md#tovalidationresult)
 - [createFetchTransport](packages_wp_typia_api_client_src_client.md#createfetchtransport)
+- [withHeaders](packages_wp_typia_api_client_src_client.md#withheaders)
+- [withComputedHeaders](packages_wp_typia_api_client_src_client.md#withcomputedheaders)
+- [withHeaderValue](packages_wp_typia_api_client_src_client.md#withheadervalue)
+- [withBearerToken](packages_wp_typia_api_client_src_client.md#withbearertoken)
 - [createEndpoint](packages_wp_typia_api_client_src_client.md#createendpoint)
 - [callEndpoint](packages_wp_typia_api_client_src_client.md#callendpoint)
 
@@ -101,7 +105,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:87](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L87)
+[packages/wp-typia-api-client/src/client.ts:99](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L99)
 
 ___
 
@@ -127,7 +131,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:102](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L102)
+[packages/wp-typia-api-client/src/client.ts:114](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L114)
 
 ___
 
@@ -147,7 +151,92 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:355](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L355)
+[packages/wp-typia-api-client/src/client.ts:373](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L373)
+
+___
+
+### withHeaders
+
+▸ **withHeaders**(`transport`, `headers`): [`EndpointTransport`](packages_wp_typia_api_client_src_client.md#endpointtransport)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `transport` | [`EndpointTransport`](packages_wp_typia_api_client_src_client.md#endpointtransport) |
+| `headers` | `HeadersInit` |
+
+#### Returns
+
+[`EndpointTransport`](packages_wp_typia_api_client_src_client.md#endpointtransport)
+
+#### Defined in
+
+[packages/wp-typia-api-client/src/client.ts:395](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L395)
+
+___
+
+### withComputedHeaders
+
+▸ **withComputedHeaders**(`transport`, `resolveHeaders`): [`EndpointTransport`](packages_wp_typia_api_client_src_client.md#endpointtransport)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `transport` | [`EndpointTransport`](packages_wp_typia_api_client_src_client.md#endpointtransport) |
+| `resolveHeaders` | `ComputedHeadersResolver` |
+
+#### Returns
+
+[`EndpointTransport`](packages_wp_typia_api_client_src_client.md#endpointtransport)
+
+#### Defined in
+
+[packages/wp-typia-api-client/src/client.ts:402](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L402)
+
+___
+
+### withHeaderValue
+
+▸ **withHeaderValue**(`transport`, `headerName`, `resolveValue`): [`EndpointTransport`](packages_wp_typia_api_client_src_client.md#endpointtransport)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `transport` | [`EndpointTransport`](packages_wp_typia_api_client_src_client.md#endpointtransport) |
+| `headerName` | `string` |
+| `resolveValue` | `HeaderValueResolver` |
+
+#### Returns
+
+[`EndpointTransport`](packages_wp_typia_api_client_src_client.md#endpointtransport)
+
+#### Defined in
+
+[packages/wp-typia-api-client/src/client.ts:418](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L418)
+
+___
+
+### withBearerToken
+
+▸ **withBearerToken**(`transport`, `resolveToken`): [`EndpointTransport`](packages_wp_typia_api_client_src_client.md#endpointtransport)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `transport` | [`EndpointTransport`](packages_wp_typia_api_client_src_client.md#endpointtransport) |
+| `resolveToken` | `HeaderValueResolver` |
+
+#### Returns
+
+[`EndpointTransport`](packages_wp_typia_api_client_src_client.md#endpointtransport)
+
+#### Defined in
+
+[packages/wp-typia-api-client/src/client.ts:435](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L435)
 
 ___
 
@@ -174,7 +263,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:377](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L377)
+[packages/wp-typia-api-client/src/client.ts:451](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L451)
 
 ___
 
@@ -203,4 +292,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:381](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L381)
+[packages/wp-typia-api-client/src/client.ts:455](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L455)

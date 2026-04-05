@@ -11,6 +11,10 @@
 - [callEndpoint](packages_wp_typia_api_client_src.md#callendpoint)
 - [normalizeValidationError](packages_wp_typia_api_client_src.md#normalizevalidationerror)
 - [toValidationResult](packages_wp_typia_api_client_src.md#tovalidationresult)
+- [withBearerToken](packages_wp_typia_api_client_src.md#withbearertoken)
+- [withComputedHeaders](packages_wp_typia_api_client_src.md#withcomputedheaders)
+- [withHeaders](packages_wp_typia_api_client_src.md#withheaders)
+- [withHeaderValue](packages_wp_typia_api_client_src.md#withheadervalue)
 - [ApiEndpoint](packages_wp_typia_api_client_src.md#apiendpoint)
 - [EndpointCallOptions](packages_wp_typia_api_client_src.md#endpointcalloptions)
 - [EndpointTransport](packages_wp_typia_api_client_src.md#endpointtransport)
@@ -47,6 +51,30 @@ ___
 ### toValidationResult
 
 Re-exports [toValidationResult](packages_wp_typia_api_client_src_client.md#tovalidationresult)
+
+___
+
+### withBearerToken
+
+Re-exports [withBearerToken](packages_wp_typia_api_client_src_client.md#withbearertoken)
+
+___
+
+### withComputedHeaders
+
+Re-exports [withComputedHeaders](packages_wp_typia_api_client_src_client.md#withcomputedheaders)
+
+___
+
+### withHeaders
+
+Re-exports [withHeaders](packages_wp_typia_api_client_src_client.md#withheaders)
+
+___
+
+### withHeaderValue
+
+Re-exports [withHeaderValue](packages_wp_typia_api_client_src_client.md#withheadervalue)
 
 ___
 
