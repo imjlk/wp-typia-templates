@@ -1,7 +1,7 @@
 {
   "functions": [
     {
-      "description": "Read the current counter state.\n\nREST path: GET /persistence-examples/v1/counter\nAuth mode: public-read",
+      "description": "Read the current counter state.\n\nREST path: GET /persistence-examples/v1/counter\nAuth intent: public",
       "name": "getPersistenceCounterState",
       "output": {
         "description": "Current Type: {@link PersistenceCounterResponse}",
@@ -62,7 +62,7 @@
       ]
     },
     {
-      "description": "Increment the current counter state.\n\nREST path: POST /persistence-examples/v1/counter\nAuth mode: public-signed-token",
+      "description": "Increment the current counter state.\n\nREST path: POST /persistence-examples/v1/counter\nAuth intent: public-write-protected\nWordPress auth: public-signed-token (field: publicWriteToken)",
       "name": "incrementPersistenceCounterState",
       "output": {
         "description": "Current Type: {@link PersistenceCounterResponse}",

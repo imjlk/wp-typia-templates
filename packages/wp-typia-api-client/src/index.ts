@@ -9,6 +9,7 @@ export {
 	withHeaders,
 	withHeaderValue,
 	type ApiEndpoint,
+	type EndpointAuthIntent,
 	type EndpointCallOptions,
 	type EndpointTransport,
 	type ValidationError,

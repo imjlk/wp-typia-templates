@@ -120,6 +120,7 @@
 				"tags": [
 					"Counter"
 				],
+				"x-typia-authIntent": "public",
 				"x-wp-typia-authPolicy": "public-read",
 				"summary": "Read the current counter state.",
 				"parameters": [
@@ -161,6 +162,7 @@
 				"tags": [
 					"Counter"
 				],
+				"x-typia-authIntent": "public-write-protected",
 				"x-wp-typia-authPolicy": "public-signed-token",
 				"summary": "Increment the current counter state.",
 				"requestBody": {

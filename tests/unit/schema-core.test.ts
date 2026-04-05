@@ -7,6 +7,7 @@ import {
 	projectJsonSchemaDocument,
 	manifestToJsonSchema,
 	manifestToOpenApi,
+	normalizeEndpointAuthDefinition,
 	type JsonSchemaDocument,
 } from "../../packages/create/src/runtime/schema-core";
 import type { ManifestAttribute, ManifestDocument } from "../../packages/create/src/runtime/editor";
@@ -540,7 +541,7 @@ describe("schema-core", () => {
 			},
 			endpoints: [
 				{
-					authMode: "public-read",
+					auth: "public",
 					method: "GET",
 					operationId: "getCounterState",
 					path: "/demo/v1/counter/state",
@@ -549,13 +550,16 @@ describe("schema-core", () => {
 					tags: ["Counter"],
 				},
 				{
-					authMode: "public-signed-token",
+					auth: "public-write-protected",
 					bodyContract: "request",
 					method: "POST",
 					operationId: "writeCounterState",
 					path: "/demo/v1/counter/state",
 					responseContract: "response",
 					tags: ["Counter"],
+					wordpressAuth: {
+						mechanism: "public-signed-token",
+					},
 				},
 			],
 			info: {
@@ -578,12 +582,14 @@ describe("schema-core", () => {
 		});
 		expect(openApi.tags).toEqual([{ name: "Counter" }]);
 		expect(paths["/demo/v1/counter/state"]).toBeDefined();
+		expect(getOperation["x-typia-authIntent"]).toBe("public");
 		expect(getOperation["x-wp-typia-authPolicy"]).toBe("public-read");
 		expect((getOperation.parameters as Array<Record<string, unknown>>)[0]).toMatchObject({
 			in: "query",
 			name: "postId",
 			required: true,
 		});
+		expect(postOperation["x-typia-authIntent"]).toBe("public-write-protected");
 		expect(postOperation["x-wp-typia-authPolicy"]).toBe("public-signed-token");
 		expect(postOperation["x-wp-typia-publicTokenField"]).toBe("publicWriteToken");
 		expect(
@@ -620,13 +626,16 @@ describe("schema-core", () => {
 			},
 			endpoints: [
 				{
-					authMode: "authenticated-rest-nonce",
+					auth: "authenticated",
 					bodyContract: "request",
 					method: "POST",
 					operationId: "toggleLikeStatus",
 					path: "/demo/v1/likes",
 					responseContract: "response",
 					tags: ["Likes"],
+					wordpressAuth: {
+						mechanism: "rest-nonce",
+					},
 				},
 			],
 		});
@@ -641,8 +650,52 @@ describe("schema-core", () => {
 			name: "X-WP-Nonce",
 			type: "apiKey",
 		});
+		expect(operation["x-typia-authIntent"]).toBe("authenticated");
 		expect(operation["x-wp-typia-authPolicy"]).toBe("authenticated-rest-nonce");
 		expect(operation.security).toEqual([{ wpRestNonce: [] }]);
+	});
+
+	test("normalizeEndpointAuthDefinition maps deprecated authMode values to neutral auth intent", () => {
+		expect(
+			normalizeEndpointAuthDefinition({
+				authMode: "public-read",
+				method: "GET",
+				operationId: "getCounterState",
+				path: "/demo/v1/counter/state",
+			}),
+		).toEqual({
+			auth: "public",
+			authMode: "public-read",
+		});
+		expect(
+			normalizeEndpointAuthDefinition({
+				authMode: "authenticated-rest-nonce",
+				method: "POST",
+				operationId: "writeCounterState",
+				path: "/demo/v1/counter/state",
+			}),
+		).toEqual({
+			auth: "authenticated",
+			authMode: "authenticated-rest-nonce",
+			wordpressAuth: {
+				mechanism: "rest-nonce",
+			},
+		});
+		expect(
+			normalizeEndpointAuthDefinition({
+				authMode: "public-signed-token",
+				method: "POST",
+				operationId: "incrementCounterState",
+				path: "/demo/v1/counter/state",
+			}),
+		).toEqual({
+			auth: "public-write-protected",
+			authMode: "public-signed-token",
+			wordpressAuth: {
+				mechanism: "public-signed-token",
+				publicTokenField: "publicWriteToken",
+			},
+		});
 	});
 
 	test("buildEndpointOpenApiDocument includes endpoint context in missing response contract errors", () => {

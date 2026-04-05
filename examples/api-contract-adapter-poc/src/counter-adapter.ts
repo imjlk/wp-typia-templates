@@ -9,6 +9,7 @@ import type {
 	EndpointManifestDefinition,
 	EndpointManifestEndpointDefinition,
 } from '@wp-typia/create/metadata-core';
+import { normalizeEndpointAuthDefinition } from '@wp-typia/create/runtime/schema-core';
 import { BLOCKS } from '../../persistence-examples/scripts/block-config';
 import type {
 	PersistenceCounterIncrementRequest,
@@ -51,7 +52,7 @@ export function getCounterAdapterRouteTable(
 	manifest = counterEndpointManifest
 ): CounterAdapterRouteDefinition[] {
 	return manifest.endpoints.map((endpoint) => ({
-		authMode: endpoint.authMode,
+		authMode: normalizeEndpointAuthDefinition(endpoint).authMode,
 		method: endpoint.method,
 		operationId: endpoint.operationId,
 		path: endpoint.path,

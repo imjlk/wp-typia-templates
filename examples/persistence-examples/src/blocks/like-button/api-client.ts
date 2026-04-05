@@ -14,6 +14,7 @@ export const getPersistenceLikeStatusEndpoint = createEndpoint<
 	PersistenceLikeStatusQuery,
 	PersistenceLikeStatusResponse
 >( {
+	authIntent: 'public',
 	authMode: 'public-read',
 	method: 'GET',
 	operationId: 'getPersistenceLikeStatus',
@@ -34,6 +35,7 @@ export const togglePersistenceLikeStatusEndpoint = createEndpoint<
 	PersistenceToggleLikeRequest,
 	PersistenceLikeStatusResponse
 >( {
+	authIntent: 'authenticated',
 	authMode: 'authenticated-rest-nonce',
 	method: 'POST',
 	operationId: 'togglePersistenceLikeStatus',

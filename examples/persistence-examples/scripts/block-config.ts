@@ -18,7 +18,7 @@ export const BLOCKS = [
 			},
 			endpoints: [
 				{
-					authMode: 'public-read',
+					auth: 'public',
 					method: 'GET',
 					operationId: 'getPersistenceCounterState',
 					path: '/persistence-examples/v1/counter',
@@ -28,7 +28,7 @@ export const BLOCKS = [
 					tags: [ 'Counter' ],
 				},
 				{
-					authMode: 'public-signed-token',
+					auth: 'public-write-protected',
 					bodyContract: 'increment-request',
 					method: 'POST',
 					operationId: 'incrementPersistenceCounterState',
@@ -36,6 +36,9 @@ export const BLOCKS = [
 					responseContract: 'counter-response',
 					summary: 'Increment the current counter state.',
 					tags: [ 'Counter' ],
+					wordpressAuth: {
+						mechanism: 'public-signed-token',
+					},
 				},
 			],
 			info: {
@@ -64,7 +67,7 @@ export const BLOCKS = [
 			},
 			endpoints: [
 				{
-					authMode: 'public-read',
+					auth: 'public',
 					method: 'GET',
 					operationId: 'getPersistenceLikeStatus',
 					path: '/persistence-examples/v1/likes',
@@ -74,7 +77,7 @@ export const BLOCKS = [
 					tags: [ 'Like Button' ],
 				},
 				{
-					authMode: 'authenticated-rest-nonce',
+					auth: 'authenticated',
 					bodyContract: 'toggle-like-request',
 					method: 'POST',
 					operationId: 'togglePersistenceLikeStatus',
@@ -82,6 +85,9 @@ export const BLOCKS = [
 					responseContract: 'like-status-response',
 					summary: 'Toggle the current like status.',
 					tags: [ 'Like Button' ],
+					wordpressAuth: {
+						mechanism: 'rest-nonce',
+					},
 				},
 			],
 			info: {

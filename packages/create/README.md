@@ -204,13 +204,16 @@ const REST_ENDPOINT_MANIFEST = defineEndpointManifest({
   },
   endpoints: [
     {
-      authMode: "authenticated-rest-nonce",
+      auth: "authenticated",
       bodyContract: "request",
       method: "POST",
       operationId: "writeMyRequest",
       path: "/create-block/v1/my-block/state",
       responseContract: "response",
       tags: ["My Block"],
+      wordpressAuth: {
+        mechanism: "rest-nonce",
+      },
     },
   ],
   info: {
@@ -231,6 +234,17 @@ await syncEndpointClient({
   typesFile: "src/api-types.ts",
 });
 ```
+
+Neutral auth intent is now the primary manifest surface:
+
+- `auth: "public"`
+- `auth: "authenticated"`
+- `auth: "public-write-protected"`
+
+WordPress-specific auth details remain an adapter overlay via
+`wordpressAuth`, for example `rest-nonce` or `public-signed-token`.
+Legacy `authMode` still works for compatibility, but new manifests should
+author `auth` plus `wordpressAuth` when needed.
 
 `src/api-types.ts` remains the source of truth for scaffolded REST contracts, and the endpoint manifest is the canonical TypeScript description of the scaffolded REST surface. `src/api-client.ts` is the generated portable client artifact and the canonical home for generated endpoint definitions. `src/api.ts` remains the WordPress-facing helper layer for generated persistence scaffolds, but now composes those generated endpoint exports to add WordPress-specific route resolution and nonce/header behavior. `src/api-schemas/*.schema.json` remains the runtime-facing artifact for generated PHP validation, and `src/api.openapi.json` is the canonical endpoint-aware REST document when a scaffold defines route metadata. Per-contract `src/api-schemas/*.openapi.json` files remain available as compatibility fragments.
 

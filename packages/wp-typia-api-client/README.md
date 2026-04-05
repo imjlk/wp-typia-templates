@@ -98,7 +98,8 @@ const result = await callEndpoint(
 
 Use `@wp-typia/rest` when you want WordPress-specific helpers such as canonical
 REST route URL resolution and `@wordpress/api-fetch` integration. Manifest
-`authMode` remains metadata only; adapter-level decorators such as
-`withHeaders(...)`, `withHeaderValue(...)`, and `withBearerToken(...)` are the
-portable runtime layer for attaching headers or tokens when a consumer needs
-them.
+`authIntent` is the primary portable metadata surface, while legacy
+`authMode` remains optional adapter metadata only. Adapter-level decorators
+such as `withHeaders(...)`, `withHeaderValue(...)`, and `withBearerToken(...)`
+are the portable runtime layer for attaching headers or tokens when a consumer
+needs them.

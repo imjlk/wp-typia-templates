@@ -10,7 +10,7 @@ export interface CounterRestToolController {
 	 * Read the current counter state.
 	 *
 	 * REST path: GET /persistence-examples/v1/counter
-	 * Auth mode: public-read
+	 * Auth intent: public
 	 * @tag Counter
 	 */
 	getPersistenceCounterState(input: PersistenceCounterQuery): PersistenceCounterResponse;
@@ -19,7 +19,8 @@ export interface CounterRestToolController {
 	 * Increment the current counter state.
 	 *
 	 * REST path: POST /persistence-examples/v1/counter
-	 * Auth mode: public-signed-token
+	 * Auth intent: public-write-protected
+	 * WordPress auth: public-signed-token (field: publicWriteToken)
 	 * @tag Counter
 	 */
 	incrementPersistenceCounterState(input: PersistenceCounterIncrementRequest): PersistenceCounterResponse;
