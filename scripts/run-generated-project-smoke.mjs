@@ -385,6 +385,27 @@ function lintPhpArtifact(filePath) {
 	});
 }
 
+function assertPluginBootstrapHardening(filePath) {
+	const source = fs.readFileSync(filePath, "utf8");
+
+	for (const expectedSnippet of [
+		"Tested up to:",
+		"Domain Path:",
+		"load_plugin_textdomain(",
+	]) {
+		if (!source.includes(expectedSnippet)) {
+			throw new Error(`Expected ${filePath} to include "${expectedSnippet}"`);
+		}
+	}
+}
+
+function assertNoRawRenderedContentEcho(filePath) {
+	const source = fs.readFileSync(filePath, "utf8");
+	if (/echo\s+\$content\s*;/.test(source)) {
+		throw new Error(`Expected ${filePath} to avoid raw $content echoes`);
+	}
+}
+
 function rewriteWorkspaceDependencies(projectDir) {
 	const packageJsonPath = path.join(projectDir, "package.json");
 	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
@@ -556,6 +577,12 @@ function main() {
 		]) {
 			if (fs.existsSync(artifact)) {
 				lintPhpArtifact(artifact);
+				if (artifact === path.join(projectDir, `${projectName}.php`)) {
+					assertPluginBootstrapHardening(artifact);
+				}
+				if (artifact.endsWith("render.php")) {
+					assertNoRawRenderedContentEcho(artifact);
+				}
 			}
 		}
 	} finally {

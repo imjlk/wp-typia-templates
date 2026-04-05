@@ -512,6 +512,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedEdit).toContain("useEditorFields");
 		expect(generatedEdit).toContain("useTypiaValidation");
 		expect(generatedEdit).toContain("useTypedAttributeUpdater");
+		expect(generatedEdit).toContain("aria-pressed={isPreviewing}");
 		expect(generatedValidators).toContain('from "./validator-toolkit"');
 		expect(generatedIndex).toContain("@wp-typia/create/runtime/blocks");
 		expect(generatedIndex).toContain("buildScaffoldBlockRegistration");
@@ -522,6 +523,10 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedInteractivity).not.toContain("onInit:");
 		expect(generatedInteractivity).not.toContain("onInteraction:");
 		expect(generatedInteractivity).not.toContain("onDestroy:");
+		expect(generatedSave).toContain("aria-label={__('Reset counter', 'demo-interactivity')}");
+		expect(generatedSave).toContain("className=\"screen-reader-text\"");
+		expect(generatedSave).toContain("role=\"progressbar\"");
+		expect(generatedSave).toContain("data-wp-bind--aria-valuenow=\"state.clicks\"");
 		expect(generatedSave).toContain('role="status"');
 		expect(generatedSave).toContain('aria-live="polite"');
 		expect(generatedSave).toContain('aria-hidden="true"');
