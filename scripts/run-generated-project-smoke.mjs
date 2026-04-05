@@ -399,6 +399,12 @@ function assertPluginBootstrapHardening(filePath) {
 	}
 }
 
+function assertPluginBootstrapExists(filePath) {
+	if (!fs.existsSync(filePath)) {
+		throw new Error(`Expected generated project to include plugin bootstrap: ${filePath}`);
+	}
+}
+
 function assertNoRawRenderedContentEcho(filePath) {
 	const source = fs.readFileSync(filePath, "utf8");
 	if (/echo\s*\(?\s*\$content\b/.test(source)) {
@@ -559,8 +565,10 @@ function main() {
 				persistencePolicy ?? "authenticated",
 			);
 		}
+		const pluginBootstrapPath = path.join(projectDir, `${projectName}.php`);
+		assertPluginBootstrapExists(pluginBootstrapPath);
 		for (const artifact of [
-			path.join(projectDir, `${projectName}.php`),
+			pluginBootstrapPath,
 			path.join(projectDir, "inc", "rest-shared.php"),
 			path.join(projectDir, "inc", "rest-auth.php"),
 			path.join(projectDir, "inc", "rest-public.php"),

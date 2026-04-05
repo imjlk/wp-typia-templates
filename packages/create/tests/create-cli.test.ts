@@ -225,6 +225,10 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "src", "validator-toolkit.ts"),
 			"utf8",
 		);
+		const generatedPluginBootstrap = fs.readFileSync(
+			path.join(targetDir, "demo-npm.php"),
+			"utf8",
+		);
 		const generatedWebpackConfig = fs.readFileSync(
 			path.join(targetDir, "webpack.config.js"),
 			"utf8",
@@ -282,6 +286,10 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedValidators).not.toContain("applyTemplateDefaultsFromManifest");
 		expect(generatedValidatorToolkit).toContain("createScaffoldValidatorToolkit");
 		expect(generatedValidatorToolkit).toContain("typia.createValidate");
+		expect(generatedPluginBootstrap).toContain("Plugin Name:       Demo Npm");
+		expect(generatedPluginBootstrap).toContain("Text Domain:       demo-npm");
+		expect(generatedPluginBootstrap).toContain("load_plugin_textdomain(");
+		expect(generatedPluginBootstrap).toContain("register_block_type( $build_dir );");
 		expect(generatedWebpackConfig).toContain("@wp-typia/create/runtime/blocks");
 		expect(generatedWebpackConfig).toContain("createTypiaWebpackConfig");
 		expect(generatedEdit).not.toMatch(/[가-힣]/u);
@@ -475,6 +483,10 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
 		const generatedIndex = fs.readFileSync(path.join(targetDir, "src", "index.tsx"), "utf8");
+		const generatedPluginBootstrap = fs.readFileSync(
+			path.join(targetDir, "demo-interactivity.php"),
+			"utf8",
+		);
 		const generatedWebpackConfig = fs.readFileSync(
 			path.join(targetDir, "webpack.config.js"),
 			"utf8",
@@ -519,6 +531,9 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedIndex).toContain("type ScaffoldBlockMetadata");
 		expect(generatedIndex).toContain("@wp-typia/block-types/blocks/supports");
 		expect(generatedIndex).toContain("} satisfies BlockSupports;");
+		expect(generatedPluginBootstrap).toContain("Plugin Name:       Demo Interactivity");
+		expect(generatedPluginBootstrap).toContain("load_plugin_textdomain(");
+		expect(generatedPluginBootstrap).toContain("register_block_type( $build_dir );");
 		expect(generatedWebpackConfig).toContain("createTypiaWebpackConfig");
 		expect(generatedInteractivity).not.toContain("onInit:");
 		expect(generatedInteractivity).not.toContain("onInteraction:");
