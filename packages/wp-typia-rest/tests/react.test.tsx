@@ -500,6 +500,52 @@ describe("@wp-typia/rest/react", () => {
 		expect(rendered.current.validation?.errors[0]?.path).toBe("$.count");
 	});
 
+	test("query transport errors do not auto-retry until explicitly refetched", async () => {
+		let fetchCount = 0;
+		const endpoint = createEndpoint<{ page: number }, { count: number }>({
+			method: "GET",
+			path: "/demo/v1/items",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { page?: unknown }).page === "number"
+					? toValidationResult(success(input as { page: number }))
+					: toValidationResult(
+							failure<{ page: number }>("{ page: number }", "$.page"),
+						),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { count?: unknown }).count === "number"
+					? toValidationResult(success(input as { count: number }))
+					: toValidationResult(
+							failure<{ count: number }>("{ count: number }", "$.count"),
+						),
+		});
+		const rendered = await createHookRenderer(() =>
+			useEndpointQuery(endpoint, { page: 1 }, {
+				fetchFn: (async () => {
+					fetchCount += 1;
+					throw new Error("offline");
+				}) as never,
+			}),
+		);
+
+		await flush();
+		await flush();
+		await flush();
+
+		expect(fetchCount).toBe(1);
+		expect(rendered.current.error).toBeInstanceOf(Error);
+
+		await rendered.current.refetch().catch(() => undefined);
+		await flush();
+
+		expect(fetchCount).toBe(2);
+
+		await rendered.unmount();
+	});
+
 	test("transport errors surface separately from validation and resolveCallOptions reruns per execution", async () => {
 		let shouldThrow = true;
 		let seenNonce = "";

@@ -451,6 +451,7 @@ export function createEndpointDataClient(): EndpointDataClient {
 					})
 					.catch((error: unknown) => {
 						entry.error = error;
+						entry.updatedAt = Date.now();
 						syncSnapshot(entry);
 						throw error;
 					})
@@ -655,7 +656,10 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 		const shouldFetch =
 			snapshot.updatedAt === 0
 				? initialData === undefined
-				: snapshot.invalidatedAt > snapshot.updatedAt ||
+				: (snapshot.error !== null &&
+						snapshot.invalidatedAt <= snapshot.updatedAt)
+					? false
+					: snapshot.invalidatedAt > snapshot.updatedAt ||
 					Date.now() - snapshot.updatedAt > staleTime;
 
 		if (!shouldFetch) {
