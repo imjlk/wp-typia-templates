@@ -41,7 +41,7 @@ Re-exports [formatDiffReport](packages_create_src_runtime_migration_render.md#fo
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:94](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L94)
+[packages/create/src/runtime/migrations.ts:98](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L98)
 
 ___
 
@@ -61,7 +61,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:106](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L106)
+[packages/create/src/runtime/migrations.ts:115](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L115)
 
 ___
 
@@ -83,7 +83,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:203](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L203)
+[packages/create/src/runtime/migrations.ts:212](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L212)
 
 ___
 
@@ -105,7 +105,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:270](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L270)
+[packages/create/src/runtime/migrations.ts:279](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L279)
 
 ___
 
@@ -127,7 +127,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:295](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L295)
+[packages/create/src/runtime/migrations.ts:304](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L304)
 
 ___
 
@@ -148,7 +148,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:349](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L349)
+[packages/create/src/runtime/migrations.ts:369](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L369)
 
 ___
 
@@ -169,7 +169,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:377](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L377)
+[packages/create/src/runtime/migrations.ts:398](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L398)
 
 ___
 
@@ -198,7 +198,7 @@ Verified legacy versions.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:438](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L438)
+[packages/create/src/runtime/migrations.ts:467](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L467)
 
 ___
 
@@ -228,7 +228,7 @@ Structured doctor check results for the selected legacy versions.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:494](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L494)
+[packages/create/src/runtime/migrations.ts:525](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L525)
 
 ___
 
@@ -258,7 +258,7 @@ Generated and skipped legacy versions.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:753](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L753)
+[packages/create/src/runtime/migrations.ts:784](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L784)
 
 ___
 
@@ -283,7 +283,7 @@ Fuzzed legacy versions and the effective seed.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:807](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L807)
+[packages/create/src/runtime/migrations.ts:857](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L857)
 
 ___
 
@@ -313,4 +313,4 @@ The loaded migration project state after initialization completes.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:995](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L995)
+[packages/create/src/runtime/migrations.ts:1052](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1052)
