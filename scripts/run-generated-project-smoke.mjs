@@ -401,7 +401,7 @@ function assertPluginBootstrapHardening(filePath) {
 
 function assertNoRawRenderedContentEcho(filePath) {
 	const source = fs.readFileSync(filePath, "utf8");
-	if (/echo\s+\$content\s*;/.test(source)) {
+	if (/echo\s*\(?\s*\$content(?:[\s.)]|$)/.test(source)) {
 		throw new Error(`Expected ${filePath} to avoid raw $content echoes`);
 	}
 }

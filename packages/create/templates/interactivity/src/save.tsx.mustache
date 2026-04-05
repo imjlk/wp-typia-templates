@@ -1,5 +1,4 @@
 import { useBlockProps, RichText } from '@wordpress/block-editor';
-import { __ } from '@wordpress/i18n';
 import type { {{pascalCase}}Attributes } from './types';
 
 export default function Save({ attributes }: { attributes: {{pascalCase}}Attributes }) {
@@ -47,8 +46,6 @@ export default function Save({ attributes }: { attributes: {{pascalCase}}Attribu
             <span
               className="{{cssClassName}}__counter-value"
               data-wp-text="state.clicks"
-              aria-live="polite"
-              aria-atomic="true"
             >
               {attributes.clickCount}
             </span>
@@ -60,11 +57,11 @@ export default function Save({ attributes }: { attributes: {{pascalCase}}Attribu
             <div
               className="{{cssClassName}}__progress-bar"
               role="progressbar"
-              aria-label={__('Click progress', '{{textDomain}}')}
+              aria-label="Click progress"
               aria-valuemin={0}
               aria-valuemax={attributes.maxClicks}
               aria-valuenow={Math.min(attributes.clickCount, attributes.maxClicks)}
-              data-wp-bind--aria-valuenow="state.clicks"
+              data-wp-bind--aria-valuenow="state.clampedClicks"
               data-wp-style--width="state.progress + '%'"
             />
           </div>
@@ -91,11 +88,11 @@ export default function Save({ attributes }: { attributes: {{pascalCase}}Attribu
         <button
           className="{{cssClassName}}__reset"
           data-wp-on--click="actions.reset"
-          aria-label={__('Reset counter', '{{textDomain}}')}
+          aria-label="Reset counter"
         >
           <span aria-hidden="true">↻</span>
           <span className="screen-reader-text">
-            {__('Reset counter', '{{textDomain}}')}
+            Reset counter
           </span>
         </button>
       </div>

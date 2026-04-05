@@ -523,13 +523,15 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedInteractivity).not.toContain("onInit:");
 		expect(generatedInteractivity).not.toContain("onInteraction:");
 		expect(generatedInteractivity).not.toContain("onDestroy:");
-		expect(generatedSave).toContain("aria-label={__('Reset counter', 'demo-interactivity')}");
+		expect(generatedInteractivity).toContain("get clampedClicks()");
+		expect(generatedSave).toContain('aria-label="Reset counter"');
 		expect(generatedSave).toContain("className=\"screen-reader-text\"");
 		expect(generatedSave).toContain("role=\"progressbar\"");
-		expect(generatedSave).toContain("data-wp-bind--aria-valuenow=\"state.clicks\"");
+		expect(generatedSave).toContain("data-wp-bind--aria-valuenow=\"state.clampedClicks\"");
 		expect(generatedSave).toContain('role="status"');
 		expect(generatedSave).toContain('aria-live="polite"');
 		expect(generatedSave).toContain('aria-hidden="true"');
+		expect(generatedSave).not.toContain('data-wp-text="state.clicks"\n              aria-live=');
 		expect(generatedSave).not.toContain("data-clicks");
 		expect(generatedSave).not.toContain("data-is-animating");
 		expect(generatedSave).not.toContain("data-is-visible");

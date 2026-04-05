@@ -37,6 +37,12 @@ store('{{slugKebabCase}}', {
       const context = getContext();
       return context.maxClicks > 0 ? (context.clicks / context.maxClicks) * 100 : 0;
     },
+    get clampedClicks() {
+      const context = getContext();
+      return context.maxClicks > 0
+        ? Math.min(context.clicks, context.maxClicks)
+        : context.clicks;
+    },
     get isComplete() {
       const context = getContext();
       return context.clicks >= context.maxClicks && context.maxClicks > 0;
