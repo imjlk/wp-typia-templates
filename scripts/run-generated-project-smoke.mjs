@@ -239,6 +239,7 @@ function assertBuildArtifacts(projectDir, projectName) {
 const blockMetadataFileFields = [
 	"editorScript",
 	"script",
+	"scriptModule",
 	"viewScript",
 	"viewScriptModule",
 	"style",
