@@ -9,6 +9,7 @@ const repoJsFiles = [
   "scripts/**/*.{js,mjs,cjs}",
   "tests/**/*.{js,mjs,cjs}",
   "packages/*/*.{js,mjs,cjs}",
+  "packages/*/src/**/*.{js,mjs,cjs}",
   "packages/*/tests/**/*.{js,mjs,cjs}",
   "packages/*/scripts/**/*.{js,mjs,cjs}",
   "packages/*/bin/**/*.{js,mjs,cjs}",
@@ -19,6 +20,7 @@ const repoTsFiles = [
   "scripts/**/*.ts",
   "tests/**/*.{ts,tsx}",
   "packages/*/*.ts",
+  "packages/*/src/**/*.{ts,tsx}",
   "packages/*/tests/**/*.{ts,tsx}",
   "packages/*/scripts/**/*.ts",
   "packages/*/bin/**/*.ts",
@@ -86,6 +88,7 @@ export default [
     rules: {
       ...tsPlugin.configs["eslint-recommended"].overrides[0].rules,
       ...tsPlugin.configs.recommended.rules,
+      "@typescript-eslint/no-namespace": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": [
         "error",
@@ -94,6 +97,7 @@ export default [
           varsIgnorePattern: "^_",
         },
       ],
+      "@typescript-eslint/triple-slash-reference": "off",
     },
   },
   eslintConfigPrettier,

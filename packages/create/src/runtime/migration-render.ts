@@ -18,7 +18,6 @@ import {
 import { escapeForCode, readJson, renderObjectKey, renderPhpValue } from "./migration-utils.js";
 import type {
 	GeneratedMigrationEntry,
-	ManifestAttribute,
 	ManifestDocument,
 	MigrationDiff,
 	MigrationEntry,

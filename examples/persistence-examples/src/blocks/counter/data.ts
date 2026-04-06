@@ -19,11 +19,7 @@ interface CounterMutationContext< Context > {
 
 export type UsePersistenceCounterQueryOptions<
 	Selected = PersistenceCounterResponse,
-> = UseEndpointQueryOptions<
-	PersistenceCounterQuery,
-	PersistenceCounterResponse,
-	Selected
->;
+> = UseEndpointQueryOptions< PersistenceCounterResponse, Selected >;
 
 export interface UseIncrementCounterMutationOptions< Context = unknown >
 	extends Omit<

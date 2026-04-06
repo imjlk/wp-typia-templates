@@ -81,7 +81,7 @@ type EndpointInvalidateTargets =
 	| readonly EndpointInvalidateTarget[]
 	| undefined;
 
-export interface UseEndpointQueryOptions<Req, Res, Selected = Res> {
+export interface UseEndpointQueryOptions<Res, Selected = Res> {
 	client?: EndpointDataClient;
 	enabled?: boolean;
 	fetchFn?: ApiFetch;
@@ -522,7 +522,7 @@ export function useEndpointDataClient(): EndpointDataClient {
 export function useEndpointQuery<Req, Res, Selected = Res>(
 	endpoint: ApiEndpoint<Req, Res>,
 	request: Req,
-	options: UseEndpointQueryOptions<Req, Res, Selected> = {},
+	options: UseEndpointQueryOptions<Res, Selected> = {},
 ): UseEndpointQueryResult<Res, Selected> {
 	if (endpoint.method !== "GET") {
 		throw new Error("useEndpointQuery only supports GET endpoints in v1.");

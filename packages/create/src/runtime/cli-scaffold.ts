@@ -22,7 +22,6 @@ import {
 	getOptionalOnboardingSteps,
 } from "./scaffold-onboarding.js";
 import { isBuiltInTemplateId } from "./template-registry.js";
-import type { ReadlinePrompt } from "./cli-prompt.js";
 import type { TemplateDefinition } from "./template-registry.js";
 
 interface GetNextStepsOptions {
