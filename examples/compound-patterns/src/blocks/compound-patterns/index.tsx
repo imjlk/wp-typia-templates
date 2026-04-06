@@ -3,7 +3,7 @@ import type { BlockConfiguration } from '@wordpress/blocks';
 import {
 	buildScaffoldBlockRegistration,
 	type ScaffoldBlockMetadata,
-} from '@wp-typia/create/runtime/blocks';
+} from '@wp-typia/block-runtime/blocks';
 
 import Edit from './edit';
 import Save from './save';

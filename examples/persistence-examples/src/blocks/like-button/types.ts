@@ -1,10 +1,10 @@
-import type { ValidationResult } from '@wp-typia/create/runtime/validation';
+import type { ValidationResult } from '@wp-typia/block-runtime/validation';
 import { tags } from 'typia';
 
 export type {
 	ValidationResult,
 	TypiaValidationError,
-} from '@wp-typia/create/runtime/validation';
+} from '@wp-typia/block-runtime/validation';
 
 export interface PersistenceLikeButtonAttributes {
 	content: string &

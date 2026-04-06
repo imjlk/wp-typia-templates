@@ -189,7 +189,7 @@ import type {
   MyCounterWriteStateRequest,
 } from './api-types';
 
-const STATE_PATH = '/create-block/v1/my-counter/state';
+const STATE_PATH = '/my-counter/v1/my-counter/state';
 
 export const stateEndpoint = createEndpoint<
   MyCounterStateQuery,
@@ -237,7 +237,7 @@ export function writeState(
 }
 ```
 
-The default namespace is `create-block`, so the generated route is `/create-block/v1/my-counter/state` unless you change the namespace during scaffolding.
+By default, the namespace follows the normalized project slug, so a scaffolded `my-counter` project generates `/my-counter/v1/my-counter/state` unless you change the namespace during scaffolding.
 
 ## Step 6: Implement Frontend Interactivity
 
@@ -502,14 +502,14 @@ Typical flow:
 
 ```bash
 # Get counter value
-curl "http://localhost:8888/wp-json/create-block/v1/my-counter/state?postId=1&resourceKey=primary"
+curl "http://localhost:8888/wp-json/my-counter/v1/my-counter/state?postId=1&resourceKey=primary"
 
 # Increment counter (default authenticated policy)
 curl -X POST \
   -H "X-WP-Nonce: <wp-rest-nonce>" \
   -H "Content-Type: application/json" \
   -d '{"postId":1,"resourceKey":"primary","delta":1}' \
-  "http://localhost:8888/wp-json/create-block/v1/my-counter/state"
+  "http://localhost:8888/wp-json/my-counter/v1/my-counter/state"
 ```
 
 If you scaffold with `--persistence-policy public`, send the `publicWriteToken` that the block render embeds in its frontend context plus a fresh `publicWriteRequestId` for each write attempt instead of a REST nonce.

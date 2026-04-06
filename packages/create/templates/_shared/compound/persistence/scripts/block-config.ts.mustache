@@ -1,4 +1,4 @@
-import { defineEndpointManifest } from '@wp-typia/create/metadata-core';
+import { defineEndpointManifest } from '@wp-typia/block-runtime/metadata-core';
 
 export const BLOCKS = [
 	{

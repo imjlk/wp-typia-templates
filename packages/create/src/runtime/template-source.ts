@@ -38,8 +38,8 @@ type TemplateSourceFormat = "wp-typia" | "create-block-external" | "create-block
 export interface TemplateVariableContext extends Record<string, unknown> {
 	/** Version string for `@wp-typia/api-client` used in generated dependencies. */
 	apiClientPackageVersion: string;
-	/** Version string for `@wp-typia/create` used in generated dependencies. */
-	createPackageVersion: string;
+	/** Version string for `@wp-typia/block-runtime` used in generated dependencies. */
+	blockRuntimePackageVersion: string;
 	/** Version string for `@wp-typia/block-types` used in generated dependencies. */
 	blockTypesPackageVersion: string;
 	/** PascalCase block type name derived from the scaffold slug. */
@@ -323,6 +323,7 @@ function getDefaultCategory(sourceDir: string): string {
 function getTemplateVariableContext(variables: { [key: string]: string }): TemplateVariableContext {
 	const {
 		apiClientPackageVersion,
+		blockRuntimePackageVersion,
 		blockTypesPackageVersion,
 		createPackageVersion,
 		restPackageVersion,
@@ -330,6 +331,8 @@ function getTemplateVariableContext(variables: { [key: string]: string }): Templ
 	return {
 		...variables,
 		apiClientPackageVersion: variables.apiClientPackageVersion ?? apiClientPackageVersion,
+		blockRuntimePackageVersion:
+			variables.blockRuntimePackageVersion ?? blockRuntimePackageVersion,
 		blockTypesPackageVersion: variables.blockTypesPackageVersion ?? blockTypesPackageVersion,
 		createPackageVersion: variables.createPackageVersion ?? createPackageVersion,
 		description: variables.description,
@@ -519,18 +522,27 @@ async function patchRemotePackageJson(templateDir: string, needsInteractivity: b
 		dependencies?: Record<string, string>;
 		devDependencies?: Record<string, string>;
 	};
+	const existingDependencies = { ...(packageJson.dependencies ?? {}) };
+	const existingDevDependencies = { ...(packageJson.devDependencies ?? {}) };
+
+	delete existingDependencies["@wp-typia/create"];
+	delete existingDevDependencies["@wp-typia/create"];
 
 	packageJson.devDependencies = {
+		"@wp-typia/block-runtime": "{{blockRuntimePackageVersion}}",
 		"@wp-typia/block-types": "{{blockTypesPackageVersion}}",
-		"@wp-typia/create": "{{createPackageVersion}}",
-		...(packageJson.devDependencies ?? {}),
+		...existingDevDependencies,
 	};
 
 	if (needsInteractivity) {
 		packageJson.dependencies = {
-			...(packageJson.dependencies ?? {}),
+			...existingDependencies,
 			"@wordpress/interactivity": "^6.29.0",
 		};
+	} else if (Object.keys(existingDependencies).length > 0) {
+		packageJson.dependencies = existingDependencies;
+	} else {
+		delete packageJson.dependencies;
 	}
 
 	await fsp.writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");

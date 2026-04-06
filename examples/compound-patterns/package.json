@@ -18,8 +18,8 @@
 		"format": "wp-scripts format"
 	},
 	"devDependencies": {
+		"@wp-typia/block-runtime": "workspace:*",
 		"@wp-typia/block-types": "workspace:*",
-		"@wp-typia/create": "workspace:*",
 		"@typia/unplugin": "^12.0.1",
 		"@wordpress/browserslist-config": "^6.42.0",
 		"@wordpress/scripts": "^30.22.0",

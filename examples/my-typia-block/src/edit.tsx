@@ -14,7 +14,7 @@ import {
 	type ManifestDocument,
 	useEditorFields,
 	useTypedAttributeUpdater,
-} from '@wp-typia/create/runtime/inspector';
+} from '@wp-typia/block-runtime/inspector';
 import { MyTypiaBlockAttributes } from './types';
 import { sanitizeMyTypiaBlockAttributes, validators } from './validators';
 import { useTypiaValidation, useAttributeLogger, useDebounce } from './hooks';

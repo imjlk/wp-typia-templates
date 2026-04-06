@@ -5,7 +5,7 @@ import {
 	syncEndpointClient,
 	syncRestOpenApi,
 	syncTypeSchemas,
-} from '@wp-typia/create/metadata-core';
+} from '@wp-typia/block-runtime/metadata-core';
 
 import { BLOCKS } from './block-config';
 

@@ -1,22 +1,10 @@
 /**
- * Augments `typia.tags` with wp-typia metadata tags consumed by the
- * block attribute projection pipeline.
+ * Compatibility shim that preserves typia tag augmentation for legacy
+ * `@wp-typia/create/runtime/*` editor and inspector imports.
  *
- * This module is imported for its declaration side effects so generated
- * projects can use `tags.Source` and `tags.Selector` during compile time.
+ * The canonical declaration now lives in `@wp-typia/block-runtime`, so this
+ * module imports that surface for its type side effects.
  */
-import type {} from 'typia';
-
-declare module 'typia' {
-  export namespace tags {
-    export type Source<Value extends 'html' | 'text' | 'rich-text'> = {
-      readonly __wpTypiaSource?: Value;
-    };
-
-    export type Selector<Value extends string> = {
-      readonly __wpTypiaSelector?: Value;
-    };
-  }
-}
+import type {} from "@wp-typia/block-runtime/metadata-core";
 
 export {};

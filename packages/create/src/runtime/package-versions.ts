@@ -11,6 +11,7 @@ interface PackageManifest {
 
 interface PackageVersions {
 	apiClientPackageVersion: string;
+	blockRuntimePackageVersion: string;
 	blockTypesPackageVersion: string;
 	createPackageVersion: string;
 	restPackageVersion: string;
@@ -67,12 +68,19 @@ export function getPackageVersions(): PackageVersions {
 		readPackageManifest(path.join(CREATE_PACKAGE_ROOT, "package.json")) ??
 		resolveInstalledPackageManifest("@wp-typia/create") ??
 		{};
+	const blockRuntimeManifest =
+		readPackageManifest(
+			path.join(CREATE_PACKAGE_ROOT, "..", "wp-typia-block-runtime", "package.json"),
+		) ??
+		resolveInstalledPackageManifest("@wp-typia/block-runtime") ??
+		{};
 
 	cachedPackageVersions = {
 		apiClientPackageVersion: normalizeVersionRange(
 			createManifest.dependencies?.["@wp-typia/api-client"] ??
 				resolveInstalledPackageManifest("@wp-typia/api-client")?.version,
 		),
+		blockRuntimePackageVersion: normalizeVersionRange(blockRuntimeManifest.version),
 		blockTypesPackageVersion: normalizeVersionRange(
 			createManifest.dependencies?.["@wp-typia/block-types"] ??
 				resolveInstalledPackageManifest("@wp-typia/block-types")?.version,

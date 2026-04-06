@@ -1,10 +1,10 @@
 import typia from 'typia';
 
-import type { ManifestDefaultsDocument } from '@wp-typia/create/runtime/defaults';
+import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';
 import {
 	createScaffoldValidatorToolkit,
 	type ScaffoldValidatorToolkitOptions,
-} from '@wp-typia/create/runtime/validation';
+} from '@wp-typia/block-runtime/validation';
 
 interface TemplateValidatorToolkitOptions< T extends object > {
 	finalize?: ScaffoldValidatorToolkitOptions< T >['finalize'];

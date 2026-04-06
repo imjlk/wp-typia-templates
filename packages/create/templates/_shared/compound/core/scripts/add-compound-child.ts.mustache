@@ -1,10 +1,6 @@
 /* eslint-disable no-console */
 import fs from 'node:fs';
 import path from 'node:path';
-import {
-	buildCompoundChildStarterManifestDocument,
-	stringifyStarterManifest,
-} from '@wp-typia/create';
 
 const PARENT_BLOCK_NAME = '{{namespace}}/{{slugKebabCase}}';
 const PARENT_BLOCK_SLUG = '{{slugKebabCase}}';
@@ -18,6 +14,12 @@ const ALLOWED_CHILD_MARKER = '// add-child: insert new allowed child block names
 const BLOCK_CONFIG_MARKER = '// add-child: insert new block config entries here';
 const CHILD_PLACEHOLDER = 'Add supporting details for this internal item.';
 const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
+
+type StarterManifestDocument = {
+	attributes: Record< string, unknown >;
+	manifestVersion: 2;
+	sourceType: string;
+};
 
 function parseArgs() {
 	const args = process.argv.slice( 2 );
@@ -80,6 +82,64 @@ function toTitleCase( input: string ): string {
 
 function escapeForRegExp( value: string ): string {
 	return value.replace( /[.*+?^${}()|[\]\\]/g, '\\$&' );
+}
+
+function createStringStarterAttribute(
+	defaultValue: string,
+	maxLength: number
+): Record< string, unknown > {
+	return {
+		ts: {
+			items: null,
+			kind: 'string',
+			properties: null,
+			required: true,
+			union: null,
+		},
+		typia: {
+			constraints: {
+				exclusiveMaximum: null,
+				exclusiveMinimum: null,
+				format: null,
+				maxItems: null,
+				maxLength,
+				maximum: null,
+				minItems: null,
+				minLength: 1,
+				minimum: null,
+				multipleOf: null,
+				pattern: null,
+				typeTag: null,
+			},
+			defaultValue,
+			hasDefault: true,
+		},
+		wp: {
+			defaultValue,
+			enum: null,
+			hasDefault: true,
+			type: 'string',
+		},
+	};
+}
+
+function createCompoundChildStarterManifest(
+	childTypeName: string,
+	childTitle: string,
+	bodyPlaceholder = CHILD_PLACEHOLDER
+): StarterManifestDocument {
+	return {
+		attributes: {
+			body: createStringStarterAttribute( bodyPlaceholder, 280 ),
+			title: createStringStarterAttribute( childTitle, 80 ),
+		},
+		manifestVersion: 2,
+		sourceType: childTypeName,
+	};
+}
+
+function stringifyStarterManifest( document: StarterManifestDocument ): string {
+	return `${ JSON.stringify( document, null, '\t' ) }\n`;
 }
 
 function insertBeforeMarker( filePath: string, marker: string, insertionLines: string[] ) {
@@ -172,7 +232,7 @@ function renderStarterManifestFile(
 	childTitle: string
 ): string {
 	return stringifyStarterManifest(
-		buildCompoundChildStarterManifestDocument(
+		createCompoundChildStarterManifest(
 			childTypeName,
 			childTitle,
 			CHILD_PLACEHOLDER
@@ -190,7 +250,7 @@ import {
 \ttype TypiaValidationError,
 \ttype ValidationResult,
 \ttype ValidationState,
-} from '@wp-typia/create/runtime/validation';
+} from '@wp-typia/block-runtime/validation';
 
 export {
 \tformatValidationError,
@@ -198,7 +258,7 @@ export {
 \ttype TypiaValidationError,
 \ttype ValidationResult,
 \ttype ValidationState,
-} from '@wp-typia/create/runtime/validation';
+} from '@wp-typia/block-runtime/validation';
 
 export const useTypiaValidation = createUseTypiaValidationHook( {
 \tuseMemo,
@@ -214,10 +274,10 @@ function renderValidatorsFile(
 import currentManifest from './typia.manifest.json';
 import {
 \ttype ManifestDefaultsDocument,
-} from '@wp-typia/create/runtime/defaults';
+} from '@wp-typia/block-runtime/defaults';
 import {
 \tcreateScaffoldValidatorToolkit,
-} from '@wp-typia/create/runtime/validation';
+} from '@wp-typia/block-runtime/validation';
 
 import type { ${ childTypeName } } from './types';
 
@@ -342,7 +402,7 @@ import type { BlockConfiguration } from '@wordpress/blocks';
 import {
 \tbuildScaffoldBlockRegistration,
 \ttype ScaffoldBlockMetadata,
-} from '@wp-typia/create/runtime/blocks';
+} from '@wp-typia/block-runtime/blocks';
 
 import Edit from './edit';
 import Save from './save';

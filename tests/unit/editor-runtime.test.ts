@@ -321,6 +321,48 @@ describe("runtime editor helpers", () => {
     expect(getDescriptor(fields, "slides").supported).toBe(false);
   });
 
+  test("createEditorModel keeps object paths marked manual as a single descriptor", () => {
+    const manifest: ManifestDocument = {
+      attributes: {
+        animation: createAttribute({
+          ts: {
+            items: null,
+            kind: "object",
+            properties: {
+              duration: createAttribute({
+                ts: {
+                  items: null,
+                  kind: "number",
+                  required: false,
+                  union: null,
+                },
+                wp: {
+                  type: "number",
+                },
+              }),
+            },
+            required: false,
+            union: null,
+          },
+          wp: {
+            type: "object",
+          },
+        }),
+      },
+      manifestVersion: 2,
+      sourceType: "SyntheticAttributes",
+    };
+
+    const fields = createEditorModel(manifest, {
+      manual: ["animation"],
+    });
+
+    expect(fields).toHaveLength(1);
+    expect(fields[0]?.path).toBe("animation");
+    expect(fields[0]?.supported).toBe(false);
+    expect(fields[0]?.reason).toContain("manual");
+  });
+
   test("example manifest produces editor descriptors for the showcase controls", () => {
     const exampleManifest = JSON.parse(
       fs.readFileSync(

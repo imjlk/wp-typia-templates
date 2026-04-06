@@ -10,16 +10,19 @@ interface SaveProps {
 }
 
 export default function Save({ attributes }: SaveProps) {
-  const blockProps = useBlockProps.save();
-
-  // Skip rendering when the block is explicitly hidden.
-  if (attributes.isVisible === false) {
-    return null;
-  }
+  const isVisible = attributes.isVisible !== false;
+  const blockProps = useBlockProps.save({
+    className: isVisible ? undefined : 'is-hidden',
+    hidden: isVisible ? undefined : true,
+    'aria-hidden': isVisible ? undefined : 'true',
+  });
 
   return (
     <div {...blockProps}>
-      <div className="wp-block-{{slug}}__content">
+      <div
+        className="wp-block-{{slug}}__content"
+        data-align={attributes.alignment || 'left'}
+      >
         <RichText.Content tagName="p" value={attributes.content} />
       </div>
     </div>

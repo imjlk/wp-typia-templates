@@ -6,6 +6,7 @@ export function createTestScaffoldTemplateVariables(
 	const base: ScaffoldTemplateVariables = {
 		apiClientPackageVersion: "^0.2.0",
 		author: "Test Author",
+		blockRuntimePackageVersion: "^0.2.3",
 		blockTypesPackageVersion: "^0.2.0",
 		category: "widgets",
 		compoundChildTitle: "Demo Item",

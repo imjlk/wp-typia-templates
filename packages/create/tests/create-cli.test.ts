@@ -33,7 +33,13 @@ const createPackageManifest = JSON.parse(
 	fs.readFileSync(path.join(packageRoot, "package.json"), "utf8"),
 );
 const apiClientPackageVersion = createPackageManifest.dependencies["@wp-typia/api-client"];
-const createPackageVersion = `^${createPackageManifest.version}`;
+const blockRuntimePackageManifest = JSON.parse(
+	fs.readFileSync(
+		path.resolve(packageRoot, "..", "wp-typia-block-runtime", "package.json"),
+		"utf8",
+	),
+);
+const blockRuntimePackageVersion = `^${blockRuntimePackageManifest.version}`;
 const blockTypesPackageVersion =
 	createPackageManifest.dependencies["@wp-typia/block-types"];
 const restPackageVersion = createPackageManifest.dependencies["@wp-typia/rest"];
@@ -45,6 +51,7 @@ const workspaceBunNodeModulesPath = path.join(
 );
 const workspacePackagePaths = {
 	"@wp-typia/api-client": path.resolve(packageRoot, "..", "wp-typia-api-client"),
+	"@wp-typia/block-runtime": path.resolve(packageRoot, "..", "wp-typia-block-runtime"),
 	"@wp-typia/block-types": path.resolve(packageRoot, "..", "wp-typia-block-types"),
 	"@wp-typia/create": packageRoot,
 	"@wp-typia/rest": path.resolve(packageRoot, "..", "wp-typia-rest"),
@@ -236,8 +243,9 @@ describe("@wp-typia/create scaffolding", () => {
 
 		expect(packageJson.name).toBe("demo-npm");
 		expect(packageJson.packageManager).toBe("npm@11.6.1");
+		expect(packageJson.devDependencies["@wp-typia/block-runtime"]).toBe(blockRuntimePackageVersion);
 		expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(blockTypesPackageVersion);
-		expect(packageJson.devDependencies["@wp-typia/create"]).toBe(createPackageVersion);
+		expect(packageJson.devDependencies["@wp-typia/create"]).toBeUndefined();
 		expect(packageJson.devDependencies["chokidar-cli"]).toBe("^3.0.0");
 		expect(packageJson.devDependencies.concurrently).toBe("^9.0.1");
 		expect(packageJson.scripts.build).toBe("npm run sync-types && wp-scripts build --experimental-modules");
@@ -250,7 +258,7 @@ describe("@wp-typia/create scaffolding", () => {
 			'chokidar "src/types.ts" --debounce 200 -c "npm run sync-types"',
 		);
 		expect(blockJson.textdomain).toBe("demo-npm");
-		expect(blockJson.editorStyle).toBeUndefined();
+		expect(blockJson.editorStyle).toBe("file:./index.css");
 		expect(generatedManifest.manifestVersion).toBe(2);
 		expect(generatedManifest.sourceType).toBe("DemoNpmAttributes");
 		expect(generatedManifest.attributes.content.typia.defaultValue).toBe("");
@@ -267,15 +275,16 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedEdit).toContain("label={__('Content'");
 		expect(generatedEdit).toContain("help={__('Mirrors the main block content.'");
 		expect(generatedEdit).toContain("placeholder={__('Add your content...'");
-		expect(generatedEdit).toContain("@wp-typia/create/runtime/inspector");
+		expect(generatedEdit).toContain("@wp-typia/block-runtime/inspector");
 		expect(generatedEdit).not.toContain("@wp-typia/create/runtime/schema-core");
 		expect(generatedEdit).toContain("InspectorFromManifest");
 		expect(generatedEdit).toContain("useEditorFields");
 		expect(generatedEdit).toContain("useTypedAttributeUpdater");
 		expect(generatedSave).toContain("RichText.Content");
-		expect(generatedHooks).toContain("@wp-typia/create/runtime/validation");
+		expect(generatedSave).not.toContain("return null;");
+		expect(generatedHooks).toContain("@wp-typia/block-runtime/validation");
 		expect(generatedHooks).toContain("createUseTypiaValidationHook");
-		expect(generatedIndex).toContain("@wp-typia/create/runtime/blocks");
+		expect(generatedIndex).toContain("@wp-typia/block-runtime/blocks");
 		expect(generatedIndex).toContain("buildScaffoldBlockRegistration");
 		expect(generatedIndex).toContain("type ScaffoldBlockMetadata");
 		expect(generatedIndex).toContain("@wp-typia/block-types/blocks/supports");
@@ -291,7 +300,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedPluginBootstrap).toContain("Text Domain:       demo-npm");
 		expect(generatedPluginBootstrap).toContain("load_plugin_textdomain(");
 		expect(generatedPluginBootstrap).toContain("register_block_type( $build_dir );");
-		expect(generatedWebpackConfig).toContain("@wp-typia/create/runtime/blocks");
+		expect(generatedWebpackConfig).toContain("@wp-typia/block-runtime/blocks");
 		expect(generatedWebpackConfig).toContain("createTypiaWebpackConfig");
 		expect(generatedEdit).not.toMatch(/[가-힣]/u);
 		expect(generatedSave).not.toMatch(/[가-힣]/u);
@@ -342,8 +351,13 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 
 		expect(packageJson.dependencies["@wordpress/api-fetch"]).toBe("^7.42.0");
-		expect(packageJson.scripts["migration:init"]).toBe("wp-typia migrations init --current-version 1.0.0");
-		expect(packageJson.scripts["migration:doctor"]).toBe("wp-typia migrations doctor --all");
+		expect(packageJson.devDependencies["@wp-typia/create"]).toBeUndefined();
+		expect(packageJson.scripts["migration:init"]).toBe(
+			`npx --yes @wp-typia/create@${createPackageManifest.version} migrations init --current-version 1.0.0`,
+		);
+		expect(packageJson.scripts["migration:doctor"]).toBe(
+			`npx --yes @wp-typia/create@${createPackageManifest.version} migrations doctor --all`,
+		);
 		expect(readme).toContain("## Migration UI");
 		expect(readme).toContain("initialized migration workspace at `1.0.0`");
 		expect(generatedEdit).toContain("MigrationDashboard");
@@ -520,7 +534,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedHooks).toContain("createUseTypiaValidationHook");
 		expect(generatedValidators).toContain('from "./validator-toolkit"');
 		expect(generatedValidators).not.toContain("createScaffoldValidatorToolkit");
-		expect(generatedEdit).toContain("@wp-typia/create/runtime/inspector");
+		expect(generatedEdit).toContain("@wp-typia/block-runtime/inspector");
 		expect(generatedEdit).not.toContain("@wp-typia/create/runtime/schema-core");
 		expect(generatedEdit).toContain("InspectorFromManifest");
 		expect(generatedEdit).toContain("useEditorFields");
@@ -528,7 +542,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedEdit).toContain("useTypedAttributeUpdater");
 		expect(generatedEdit).toContain("aria-pressed={isPreviewing}");
 		expect(generatedValidators).toContain('from "./validator-toolkit"');
-		expect(generatedIndex).toContain("@wp-typia/create/runtime/blocks");
+		expect(generatedIndex).toContain("@wp-typia/block-runtime/blocks");
 		expect(generatedIndex).toContain("buildScaffoldBlockRegistration");
 		expect(generatedIndex).toContain("type ScaffoldBlockMetadata");
 		expect(generatedIndex).toContain("@wp-typia/block-types/blocks/supports");
@@ -752,7 +766,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedSyncRest).toContain("defineEndpointManifest");
 		expect(generatedSyncRest).toContain("syncEndpointClient");
 		expect(generatedSyncRest).toContain("syncRestOpenApi");
-		expect(generatedSyncRest).toContain("@wp-typia/create/metadata-core");
+		expect(generatedSyncRest).toContain("@wp-typia/block-runtime/metadata-core");
 		expect(generatedSyncRest).toContain("const REST_ENDPOINT_MANIFEST = defineEndpointManifest");
 		expect(generatedSyncRest).toContain("manifest: REST_ENDPOINT_MANIFEST");
 		expect(generatedSyncRest).not.toContain("const CONTRACTS =");
@@ -1904,8 +1918,9 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 
 		expect(packageJson.packageManager).toBe("pnpm@8.3.1");
+		expect(packageJson.devDependencies["@wp-typia/block-runtime"]).toBe(blockRuntimePackageVersion);
 		expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(blockTypesPackageVersion);
-		expect(packageJson.devDependencies["@wp-typia/create"]).toBe(createPackageVersion);
+		expect(packageJson.devDependencies["@wp-typia/create"]).toBeUndefined();
 		expect(packageJson.scripts.build).toBe(
 			"pnpm run sync-types && wp-scripts build --experimental-modules",
 		);
@@ -1941,6 +1956,7 @@ describe("@wp-typia/create scaffolding", () => {
 
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const generatedEdit = fs.readFileSync(path.join(targetDir, "src", "edit.js"), "utf8");
+		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 		const generatedBlockJson = JSON.parse(
 			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
 		);
@@ -1951,6 +1967,8 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 		expect(fs.existsSync(path.join(targetDir, "assets", "remote-note.txt"))).toBe(true);
 		expect(fs.existsSync(path.join(targetDir, "src", "assets"))).toBe(false);
+		expect(packageJson.devDependencies["@wp-typia/create"]).toBeUndefined();
+		expect(packageJson.dependencies?.["@wp-typia/create"]).toBeUndefined();
 		expect(generatedTypes).toContain('"variantLabel"?: string & tags.Default<"standard">');
 		expect(generatedTypes).toContain('"transformedLabel"?: string & tags.Default<"standard-transformed">');
 		expect(generatedEdit).toContain("template-standard");

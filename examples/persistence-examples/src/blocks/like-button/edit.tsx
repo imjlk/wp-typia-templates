@@ -15,7 +15,7 @@ import currentManifest from './typia.manifest.json';
 import {
 	createEditorModel,
 	type ManifestDocument,
-} from '@wp-typia/create/runtime/editor';
+} from '@wp-typia/block-runtime/editor';
 import { useTypiaValidation } from '../../shared/hooks';
 import { resolveCurrentEditorPostId } from '../../shared/editor';
 import type { PersistenceLikeButtonAttributes } from './types';

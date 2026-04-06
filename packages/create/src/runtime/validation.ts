@@ -1,5 +1,5 @@
-import { applyTemplateDefaultsFromManifest } from "@wp-typia/create/runtime/defaults";
-import type { ManifestDefaultsDocument } from "@wp-typia/create/runtime/defaults";
+import { applyTemplateDefaultsFromManifest } from "./defaults.js";
+import type { ManifestDefaultsDocument } from "./defaults.js";
 import { isPlainObject as isRecord } from "./object-utils.js";
 
 export interface TypiaValidationError {
@@ -193,15 +193,19 @@ export function createScaffoldValidatorToolkit<T extends object>({
 	 * resulting value. Use this for edit-time normalization or any path that needs
 	 * synthesized fields such as runtime ids or persistence resource keys.
 	 */
-	const sanitizeAttributes = (value: Partial<T>): T => {
+	const normalizeAttributes = (value: Partial<T>): unknown => {
 		const normalized = applyTemplateDefaultsFromManifest<T>(manifest, value);
 
-		return assert(finalize ? finalize(normalized) : normalized);
+		return finalize ? finalize(normalized) : normalized;
 	};
 
+	const sanitizeAttributes = (value: Partial<T>): T => assert(normalizeAttributes(value));
+
 	const validateSanitizedAttributes = (value: T): ValidationResult<T> => {
+		const normalized = normalizeAttributes(value);
+
 		try {
-			const data = sanitizeAttributes(value);
+			const data = assert(normalized);
 
 			return {
 				data,
@@ -250,8 +254,16 @@ function toChangedAttributePatch<T extends object>(
 	nextAttributes: T,
 ): Partial<T> {
 	const patch: Partial<T> = {};
+	const keys = new Set<keyof T>([
+		...(Object.keys(attributes) as Array<keyof T>),
+		...(Object.keys(nextAttributes) as Array<keyof T>),
+	]);
 
-	for (const key of Object.keys(nextAttributes) as Array<keyof T>) {
+	for (const key of keys) {
+		if (!(key in nextAttributes)) {
+			patch[key] = undefined as T[keyof T];
+			continue;
+		}
 		if (!Object.is(attributes[key], nextAttributes[key])) {
 			patch[key] = nextAttributes[key];
 		}

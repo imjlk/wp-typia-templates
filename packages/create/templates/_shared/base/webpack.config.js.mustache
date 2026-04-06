@@ -80,7 +80,7 @@ function resolveOptionalEntry(name, candidates) {
 }
 
 module.exports = async () => {
-	const { createTypiaWebpackConfig } = await import("@wp-typia/create/runtime/blocks");
+	const { createTypiaWebpackConfig } = await import("@wp-typia/block-runtime/blocks");
 	const optionalModuleEntries = Object.fromEntries(
 		[
 			resolveOptionalEntry("interactivity", ["src/interactivity.ts", "src/interactivity.js"]),

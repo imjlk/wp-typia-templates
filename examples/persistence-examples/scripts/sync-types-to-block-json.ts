@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import path from 'node:path';
 
-import { syncBlockMetadata } from '@wp-typia/create/metadata-core';
+import { syncBlockMetadata } from '@wp-typia/block-runtime/metadata-core';
 
 import { BLOCKS } from './block-config';
 

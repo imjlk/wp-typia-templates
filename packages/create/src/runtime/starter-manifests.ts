@@ -133,7 +133,7 @@ function buildBasicStarterManifest(
 			required: false,
 			sourceType: "boolean",
 		}),
-		version: createAttribute({
+		schemaVersion: createAttribute({
 			constraints: {
 				typeTag: "uint32",
 			},

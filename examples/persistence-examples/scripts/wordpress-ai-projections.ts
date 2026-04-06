@@ -2,11 +2,11 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { type JsonSchemaDocument } from '@wp-typia/create';
 import type {
 	EndpointManifestDefinition,
 	EndpointManifestEndpointDefinition,
-} from '@wp-typia/create/metadata-core';
+} from '@wp-typia/block-runtime/metadata-core';
+import type { JsonSchemaDocument } from '../../../packages/wp-typia-block-runtime/src/schema-core';
 import {
 	buildWordPressAiArtifacts,
 	type ProjectedWordPressAbilitiesDocument,

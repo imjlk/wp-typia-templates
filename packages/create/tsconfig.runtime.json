@@ -7,10 +7,16 @@
     "declaration": true,
     "declarationMap": false,
     "sourceMap": false,
-    "plugins": []
+    "plugins": [],
+    "paths": {
+      "@wp-typia/block-runtime/metadata-core": [
+        "packages/create/build-shims/block-runtime-metadata-core-shim.d.ts"
+      ]
+    }
   },
   "include": [
-    "./src/runtime/**/*"
+    "./src/runtime/**/*",
+    "./build-shims/**/*.d.ts"
   ],
   "exclude": [
     "./tests/**/*"
