@@ -13,9 +13,13 @@ bun install
 ## Common checks
 
 ```bash
+bun run lint:repo
+bun run format:check
+bun run lint:all
 bun run typecheck
-bun run test
+bun run test:all
 bun run build
+bun run ci:local
 bun run examples:lint
 bun run examples:wp-env:start:test
 bun run examples:test:e2e
@@ -25,11 +29,25 @@ bun run test:coverage
 
 Quick command map:
 
+- `bun run lint:repo` = root ESLint for repo infrastructure code
+- `bun run lint:all` = root ESLint + example lint + PHP checks
+- `bun run format:check` = non-mutating Prettier check for repo-owned files
+- `bun run test:all` = root unit + CLI test aggregation
+- `bun run ci:local` = fast maintainer preflight mirroring the non-E2E CI path
 - `bun run build` = product packages + reference app
 - `bun run examples:build` = reference app only
 - `bun run --filter @wp-typia/create test` = CLI/runtime only
 - `bun run examples:test:e2e` = Playwright against the reference app
 - `bun run examples:test:e2e` expects `bun run examples:wp-env:start:test` to already be running
+
+Linting ownership is intentionally split:
+
+- root ESLint covers repo infrastructure code such as `scripts/**`, `tests/**`, root config files, and package-side non-example sources
+- example app source continues to live under `examples:lint` and `@wordpress/scripts`
+
+`bun run ci:local` is the recommended maintainer pre-PR command. It deliberately
+stops short of `wp-env` startup and Playwright E2E so everyday local checks stay
+fast.
 
 For generated project smoke checks:
 

@@ -5,17 +5,10 @@
     "examples/**/src/**/*.ts",
     "examples/**/src/**/*.tsx"
   ],
-  "exclude": [
-    "**/*.d.ts",
-    "**/node_modules/**",
-    "**/build/**",
-    "**/dist/**"
-  ],
+  "exclude": ["**/*.d.ts", "**/node_modules/**", "**/build/**", "**/dist/**"],
   "out": "docs/api",
   "theme": "default",
-  "plugin": [
-    "typedoc-plugin-markdown"
-  ],
+  "plugin": ["typedoc-plugin-markdown"],
   "readme": "README.md",
   "name": "wp-typia",
   "includeVersion": true,

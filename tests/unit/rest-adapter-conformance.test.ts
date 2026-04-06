@@ -9,7 +9,6 @@ import { describe, expect, test } from 'bun:test';
 
 import {
 	defineEndpointManifest,
-	type EndpointManifestDefinition,
 	type EndpointManifestEndpointDefinition,
 } from '../../packages/create/src/runtime/metadata-core';
 import type { ValidationResult } from '@wp-typia/api-client';

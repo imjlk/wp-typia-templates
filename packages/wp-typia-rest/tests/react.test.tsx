@@ -120,22 +120,6 @@ async function flush() {
 	await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-async function waitFor(
-	check: () => boolean,
-	timeoutMs = 1_000,
-) {
-	const startedAt = Date.now();
-	while (Date.now() - startedAt < timeoutMs) {
-		if (check()) {
-			return;
-		}
-
-		await flush();
-	}
-
-	throw new Error("Timed out waiting for test condition.");
-}
-
 afterEach(() => {
 	for (const unmount of [...activeUnmounts]) {
 		void unmount();
