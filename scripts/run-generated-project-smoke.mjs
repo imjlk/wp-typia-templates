@@ -370,10 +370,18 @@ function assertGeneratedPackageBoundary(projectDir) {
 		if (typeof scriptValue !== "string") {
 			continue;
 		}
-		if (
-			!scriptName.startsWith("migration:") &&
-			scriptValue.includes("@wp-typia/create")
-		) {
+		if (!scriptValue.includes("@wp-typia/create")) {
+			continue;
+		}
+		if (scriptName.startsWith("migration:")) {
+			if (!/@wp-typia\/create@\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?/u.test(scriptValue)) {
+				throw new Error(
+					`Expected generated migration script "${scriptName}" to pin @wp-typia/create`,
+				);
+			}
+			continue;
+		}
+		if (scriptValue.includes("@wp-typia/create")) {
 			throw new Error(
 				`Expected generated project script "${scriptName}" to avoid @wp-typia/create`,
 			);
