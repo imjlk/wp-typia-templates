@@ -250,6 +250,7 @@ describe("@wp-typia/create scaffolding", () => {
 			'chokidar "src/types.ts" --debounce 200 -c "npm run sync-types"',
 		);
 		expect(blockJson.textdomain).toBe("demo-npm");
+		expect(blockJson.editorStyle).toBeUndefined();
 		expect(generatedManifest.manifestVersion).toBe(2);
 		expect(generatedManifest.sourceType).toBe("DemoNpmAttributes");
 		expect(generatedManifest.attributes.content.typia.defaultValue).toBe("");
@@ -505,6 +506,7 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 		expect(blockJson.name).toBe("demo-space/demo-interactivity");
 		expect(blockJson.textdomain).toBe("demo-interactivity");
+		expect(blockJson.editorStyle).toBeUndefined();
 		expect(generatedManifest.manifestVersion).toBe(2);
 		expect(generatedManifest.sourceType).toBe("DemoInteractivityAttributes");
 		expect(generatedManifest.attributes.interactiveMode.wp.enum).toEqual([
@@ -1911,6 +1913,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedIndex).toContain('import metadata from "./block.json";');
 		expect(generatedBlockJson.name).toBe("create-block/demo-remote");
 		expect(generatedBlockJson.title).toBe("Demo Remote");
+		expect(generatedBlockJson.editorStyle).toBeUndefined();
 		expect(generatedBlockJson.supports.align).toEqual(["wide", "full"]);
 		expect(fs.existsSync(path.join(targetDir, ".wp-env.json"))).toBe(false);
 		expect(fs.existsSync(path.join(targetDir, ".wp-env.test.json"))).toBe(false);
@@ -1951,6 +1954,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedTypes).toContain('"transformedLabel"?: string & tags.Default<"standard-transformed">');
 		expect(generatedEdit).toContain("template-standard");
 		expect(generatedEdit).toContain("standard-transformed");
+		expect(generatedBlockJson.editorStyle).toBeUndefined();
 		expect(generatedBlockJson.supports.multiple).toBe(false);
 	});
 

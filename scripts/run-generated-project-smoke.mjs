@@ -236,6 +236,72 @@ function assertBuildArtifacts(projectDir, projectName) {
 	}
 }
 
+const blockMetadataFileFields = [
+	"editorScript",
+	"script",
+	"viewScript",
+	"viewScriptModule",
+	"style",
+	"editorStyle",
+	"render",
+];
+
+function collectBlockMetadataPaths(buildRoot) {
+	if (!fs.existsSync(buildRoot)) {
+		return [];
+	}
+
+	const pending = [buildRoot];
+	const blockMetadataPaths = [];
+
+	while (pending.length > 0) {
+		const currentDir = pending.pop();
+		for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
+			const entryPath = path.join(currentDir, entry.name);
+			if (entry.isDirectory()) {
+				pending.push(entryPath);
+				continue;
+			}
+			if (entry.isFile() && entry.name === "block.json") {
+				blockMetadataPaths.push(entryPath);
+			}
+		}
+	}
+
+	return blockMetadataPaths.sort();
+}
+
+function normalizeBlockMetadataFileRefs(value) {
+	if (typeof value === "string") {
+		return value.startsWith("file:./") ? [value.slice("file:./".length)] : [];
+	}
+	if (Array.isArray(value)) {
+		return value.flatMap((item) => normalizeBlockMetadataFileRefs(item));
+	}
+
+	return [];
+}
+
+function assertBlockMetadataFileReferences(projectDir) {
+	const buildRoot = path.join(projectDir, "build");
+
+	for (const blockMetadataPath of collectBlockMetadataPaths(buildRoot)) {
+		const blockMetadata = JSON.parse(fs.readFileSync(blockMetadataPath, "utf8"));
+		const blockDir = path.dirname(blockMetadataPath);
+
+		for (const field of blockMetadataFileFields) {
+			for (const relativePath of normalizeBlockMetadataFileRefs(blockMetadata[field])) {
+				const assetPath = path.join(blockDir, relativePath);
+				if (!fs.existsSync(assetPath)) {
+					throw new Error(
+						`Expected ${field} asset ${relativePath} referenced by ${blockMetadataPath} to exist at ${assetPath}`,
+					);
+				}
+			}
+		}
+	}
+}
+
 function assertPersistenceTemplateArtifacts(projectDir, projectName) {
 	const candidateDirs = [
 		path.join(projectDir, "build", projectName),
@@ -547,6 +613,7 @@ function main() {
 		} else {
 			assertBuildArtifacts(projectDir, projectName);
 		}
+		assertBlockMetadataFileReferences(projectDir);
 		if (template === "persistence") {
 			assertPersistenceTemplateArtifacts(projectDir, projectName);
 			assertPersistenceRestOpenApi(

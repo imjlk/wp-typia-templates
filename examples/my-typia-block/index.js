@@ -8,7 +8,6 @@ module.exports = {
 		dashicon: 'admin-site-alt3',
 		textdomain: '',
 		editorScript: 'file:./index.js',
-		editorStyle: 'file:./index.css',
 		style: 'file:./style-index.css',
 		viewScript: 'file:./view.js',
 	},
