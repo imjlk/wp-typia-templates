@@ -9,11 +9,11 @@
 ### Properties
 
 - [blockPath](examples_my_typia_block_src_migrations.BatchMigrationBlockResult.md#blockpath)
-- [currentVersion](examples_my_typia_block_src_migrations.BatchMigrationBlockResult.md#currentversion)
+- [currentMigrationVersion](examples_my_typia_block_src_migrations.BatchMigrationBlockResult.md#currentmigrationversion)
 - [preview](examples_my_typia_block_src_migrations.BatchMigrationBlockResult.md#preview)
 - [reason](examples_my_typia_block_src_migrations.BatchMigrationBlockResult.md#reason)
 - [status](examples_my_typia_block_src_migrations.BatchMigrationBlockResult.md#status)
-- [targetVersion](examples_my_typia_block_src_migrations.BatchMigrationBlockResult.md#targetversion)
+- [targetMigrationVersion](examples_my_typia_block_src_migrations.BatchMigrationBlockResult.md#targetmigrationversion)
 
 ## Properties
 
@@ -27,9 +27,9 @@
 
 ___
 
-### currentVersion
+### currentMigrationVersion
 
-• **currentVersion**: `string`
+• **currentMigrationVersion**: `string`
 
 #### Defined in
 
@@ -67,9 +67,9 @@ ___
 
 ___
 
-### targetVersion
+### targetMigrationVersion
 
-• **targetVersion**: `string`
+• **targetMigrationVersion**: `string`
 
 #### Defined in
 

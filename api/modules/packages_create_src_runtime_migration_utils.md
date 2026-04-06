@@ -24,9 +24,12 @@
 - [detectPackageManagerId](packages_create_src_runtime_migration_utils.md#detectpackagemanagerid)
 - [getLocalTsxBinary](packages_create_src_runtime_migration_utils.md#getlocaltsxbinary)
 - [isInteractiveTerminal](packages_create_src_runtime_migration_utils.md#isinteractiveterminal)
-- [resolveTargetVersion](packages_create_src_runtime_migration_utils.md#resolvetargetversion)
-- [assertSemver](packages_create_src_runtime_migration_utils.md#assertsemver)
-- [compareSemver](packages_create_src_runtime_migration_utils.md#comparesemver)
+- [resolveTargetMigrationVersion](packages_create_src_runtime_migration_utils.md#resolvetargetmigrationversion)
+- [isMigrationVersionLabel](packages_create_src_runtime_migration_utils.md#ismigrationversionlabel)
+- [isLegacySemverMigrationVersion](packages_create_src_runtime_migration_utils.md#islegacysemvermigrationversion)
+- [assertMigrationVersionLabel](packages_create_src_runtime_migration_utils.md#assertmigrationversionlabel)
+- [compareMigrationVersionLabels](packages_create_src_runtime_migration_utils.md#comparemigrationversionlabels)
+- [formatLegacyMigrationWorkspaceResetGuidance](packages_create_src_runtime_migration_utils.md#formatlegacymigrationworkspaceresetguidance)
 - [escapeForCode](packages_create_src_runtime_migration_utils.md#escapeforcode)
 - [renderObjectKey](packages_create_src_runtime_migration_utils.md#renderobjectkey)
 - [isNumber](packages_create_src_runtime_migration_utils.md#isnumber)
@@ -56,7 +59,7 @@ Re-exports [cloneJsonValue](packages_create_src_runtime_json_utils.md#clonejsonv
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:9](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L9)
+[packages/create/src/runtime/migration-utils.ts:12](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L12)
 
 ___
 
@@ -78,7 +81,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:19](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L19)
+[packages/create/src/runtime/migration-utils.ts:22](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L22)
 
 ___
 
@@ -99,7 +102,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:35](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L35)
+[packages/create/src/runtime/migration-utils.ts:38](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L38)
 
 ___
 
@@ -119,7 +122,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:48](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L48)
+[packages/create/src/runtime/migration-utils.ts:51](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L51)
 
 ___
 
@@ -140,7 +143,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:62](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L62)
+[packages/create/src/runtime/migration-utils.ts:65](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L65)
 
 ___
 
@@ -166,7 +169,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:75](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L75)
+[packages/create/src/runtime/migration-utils.ts:78](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L78)
 
 ___
 
@@ -187,7 +190,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:79](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L79)
+[packages/create/src/runtime/migration-utils.ts:82](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L82)
 
 ___
 
@@ -208,7 +211,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:114](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L114)
+[packages/create/src/runtime/migration-utils.ts:117](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L117)
 
 ___
 
@@ -228,7 +231,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:119](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L119)
+[packages/create/src/runtime/migration-utils.ts:122](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L122)
 
 ___
 
@@ -248,7 +251,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:131](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L131)
+[packages/create/src/runtime/migration-utils.ts:134](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L134)
 
 ___
 
@@ -269,7 +272,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:148](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L148)
+[packages/create/src/runtime/migration-utils.ts:151](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L151)
 
 ___
 
@@ -289,7 +292,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:163](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L163)
+[packages/create/src/runtime/migration-utils.ts:166](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L166)
 
 ___
 
@@ -309,7 +312,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:174](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L174)
+[packages/create/src/runtime/migration-utils.ts:177](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L177)
 
 ___
 
@@ -326,70 +329,158 @@ attached to a TTY so CLI and migration flows can safely prompt the user.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:189](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L189)
+[packages/create/src/runtime/migration-utils.ts:192](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L192)
 
 ___
 
-### resolveTargetVersion
+### resolveTargetMigrationVersion
 
-▸ **resolveTargetVersion**(`currentVersion`, `value`): `string`
+▸ **resolveTargetMigrationVersion**(`currentMigrationVersion`, `value`): `string`
+
+Resolves the `current` sentinel to the current migration version label.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `currentVersion` | `string` |
-| `value` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `currentMigrationVersion` | `string` | Current migration version label for the workspace. |
+| `value` | `string` | Requested target value, which may be `current`. |
 
 #### Returns
 
 `string`
 
+The concrete migration version label that should be used.
+
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:193](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L193)
+[packages/create/src/runtime/migration-utils.ts:203](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L203)
 
 ___
 
-### assertSemver
+### isMigrationVersionLabel
 
-▸ **assertSemver**(`value`, `label`): `void`
+▸ **isMigrationVersionLabel**(`value`): `boolean`
+
+Returns whether a value matches the canonical `vN` migration label format.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `value` | `string` |
-| `label` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `value` | `string` | Candidate migration version label. |
+
+#### Returns
+
+`boolean`
+
+`true` when the value is a valid `vN` label with `N >= 1`.
+
+#### Defined in
+
+[packages/create/src/runtime/migration-utils.ts:213](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L213)
+
+___
+
+### isLegacySemverMigrationVersion
+
+▸ **isLegacySemverMigrationVersion**(`value`): `boolean`
+
+Returns whether a value looks like a legacy semver-based migration label.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `value` | `string` | Candidate migration version label. |
+
+#### Returns
+
+`boolean`
+
+`true` when the value matches the legacy `x.y.z` semver pattern.
+
+#### Defined in
+
+[packages/create/src/runtime/migration-utils.ts:223](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L223)
+
+___
+
+### assertMigrationVersionLabel
+
+▸ **assertMigrationVersionLabel**(`value`, `label`): `void`
+
+Throws when a migration version label does not match the canonical `vN` format.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `value` | `string` | Candidate migration version label. |
+| `label` | `string` | Human-readable label used in the thrown error message. |
 
 #### Returns
 
 `void`
 
+Nothing.
+
+**`Throws`**
+
+Error When the provided value is not a valid `vN` migration label.
+
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:197](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L197)
+[packages/create/src/runtime/migration-utils.ts:235](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L235)
 
 ___
 
-### compareSemver
+### compareMigrationVersionLabels
 
-▸ **compareSemver**(`left`, `right`): `number`
+▸ **compareMigrationVersionLabels**(`left`, `right`): `number`
+
+Compares two migration version labels by their numeric suffix.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `left` | `string` |
-| `right` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `left` | `string` | Left migration version label. |
+| `right` | `string` | Right migration version label. |
 
 #### Returns
 
 `number`
 
+A negative number when `left < right`, zero when equal, and a positive number when `left > right`.
+
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:203](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L203)
+[packages/create/src/runtime/migration-utils.ts:256](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L256)
+
+___
+
+### formatLegacyMigrationWorkspaceResetGuidance
+
+▸ **formatLegacyMigrationWorkspaceResetGuidance**(`reason?`): `string`
+
+Formats the reset guidance shown when a legacy semver migration workspace is detected.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `reason?` | `string` | Optional leading reason that explains what legacy pattern was found. |
+
+#### Returns
+
+`string`
+
+A user-facing guidance string that explains how to reset to `v1` labels.
+
+#### Defined in
+
+[packages/create/src/runtime/migration-utils.ts:266](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L266)
 
 ___
 
@@ -409,7 +500,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:217](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L217)
+[packages/create/src/runtime/migration-utils.ts:274](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L274)
 
 ___
 
@@ -429,7 +520,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:221](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L221)
+[packages/create/src/runtime/migration-utils.ts:278](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L278)
 
 ___
 
@@ -449,4 +540,4 @@ value is number
 
 #### Defined in
 
-[packages/create/src/runtime/migration-utils.ts:225](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L225)
+[packages/create/src/runtime/migration-utils.ts:282](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-utils.ts#L282)

@@ -161,7 +161,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:413](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L413)
+[packages/create/src/runtime/migration-render.ts:415](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L415)
 
 ___
 
@@ -183,4 +183,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-render.ts:501](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L501)
+[packages/create/src/runtime/migration-render.ts:503](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-render.ts#L503)

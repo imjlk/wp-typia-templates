@@ -20,4 +20,4 @@
 
 #### Defined in
 
-[examples/my-typia-block/src/admin/migration-dashboard.tsx:126](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/admin/migration-dashboard.tsx#L126)
+[examples/my-typia-block/src/admin/migration-dashboard.tsx:127](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/admin/migration-dashboard.tsx#L127)

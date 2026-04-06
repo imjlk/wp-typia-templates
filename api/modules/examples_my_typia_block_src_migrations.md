@@ -36,12 +36,12 @@
 
 | Name | Type |
 | :------ | :------ |
-| `getStats` | () => \{ `blockName`: ``"create-block/my-typia-block"`` = migrationConfig.blockName; `currentVersion`: `string` = migrationRegistry.currentVersion; `deprecatedEntries`: `number` = deprecated.length; `supportedVersions`: `string`[]  } |
+| `getStats` | () => \{ `blockName`: ``"create-block/my-typia-block"`` = migrationConfig.blockName; `currentMigrationVersion`: `string` = migrationRegistry.currentMigrationVersion; `deprecatedEntries`: `number` = deprecated.length; `legacyMigrationVersions`: `string`[] ; `supportedMigrationVersions`: `string`[]  } |
 | `testMigration` | (`attributes`: `Record`\<`string`, `unknown`\>) => `Record`\<`string`, `unknown`\> |
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:379](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L379)
+[examples/my-typia-block/src/migrations/index.ts:381](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L381)
 
 ## Functions
 
@@ -143,4 +143,4 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:328](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L328)
+[examples/my-typia-block/src/migrations/index.ts:330](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L330)

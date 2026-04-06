@@ -4,7 +4,7 @@
 
 That opt-in scaffold mode:
 
-- seeds an initialized migration workspace at `1.0.0`
+- seeds an initialized migration workspace at `v1`
 - wires an editor-embedded migration dashboard into the generated block
 - keeps the CLI migration commands as the public workflow
 - stays optional, so default scaffolds remain lightweight
@@ -18,6 +18,17 @@ The `migration:*` and `sync-types` commands shown below are run inside `examples
 - `src/types.ts` describes the current block contract.
 - `block.json` is generated from that contract for WordPress.
 - `typia.manifest.json` v2 keeps richer Typia constraints, explicit default markers, and supported discriminated union metadata.
+- Migration version labels like `v1`, `v2`, and `v3` track schema lineage only. They do not replace your package version, plugin version, OpenAPI `info.version`, or block attribute `schemaVersion`.
+
+## Breaking reset for old workspaces
+
+Older semver-based migration workspaces are no longer supported in place. If
+you still have `currentVersion`, `supportedVersions`, or semver-named snapshot
+or rule paths under `src/migrations/`, the CLI now fails early and asks you to:
+
+1. back up `src/migrations/` if needed
+2. remove or reset the old migration workspace
+3. rerun `wp-typia migrations init --current-migration-version v1`
 
 ## Snapshot model
 
@@ -25,15 +36,15 @@ Legacy versions are stored as generated snapshots.
 
 Single-block legacy projects may still use the original flat layout:
 
-- `src/migrations/versions/<semver>/block.json`
-- `src/migrations/versions/<semver>/typia.manifest.json`
-- `src/migrations/versions/<semver>/save.tsx`
+- `src/migrations/versions/<label>/block.json`
+- `src/migrations/versions/<label>/typia.manifest.json`
+- `src/migrations/versions/<label>/save.tsx`
 
 New `--with-migration-ui` scaffolds use the multi-block-aware layout instead:
 
-- `src/migrations/versions/<semver>/<blockKey>/block.json`
-- `src/migrations/versions/<semver>/<blockKey>/typia.manifest.json`
-- `src/migrations/versions/<semver>/<blockKey>/save.tsx`
+- `src/migrations/versions/<label>/<blockKey>/block.json`
+- `src/migrations/versions/<label>/<blockKey>/typia.manifest.json`
+- `src/migrations/versions/<label>/<blockKey>/save.tsx`
 
 Those snapshots are committed so the project can keep deprecated Gutenberg entries and migration rules aligned with old releases.
 
@@ -45,7 +56,7 @@ After adopting an older project into the migration workflow:
 bun run migration:init
 ```
 
-This bootstraps the migration workspace and stores the first snapshot at `1.0.0`.
+This bootstraps the migration workspace and stores the first snapshot at `v1`.
 
 For retrofit workflows, `migration:init` now auto-detects the common first-party
 layouts:
@@ -65,8 +76,8 @@ For example, a retrofitted multi-block config now starts like this:
 
 ```ts
 export const migrationConfig = {
-  currentVersion: "1.0.0",
-  supportedVersions: ["1.0.0"],
+  currentMigrationVersion: "v1",
+  supportedMigrationVersions: ["v1"],
   snapshotDir: "src/migrations/versions",
   blocks: [
     {
@@ -89,19 +100,19 @@ manually.
 The migration CLI now has two read-only preview entrypoints:
 
 - `wp-typia migrations wizard`: interactive, TTY-only legacy-version discovery
-- `wp-typia migrations plan --from <semver>`: scriptable preview when you already know the legacy version
+- `wp-typia migrations plan --from-migration-version <label>`: scriptable preview when you already know the legacy migration version
 
 Both commands stop after previewing one selected `from -> to` edge. They do not
 write rules, fixtures, snapshots, or generated artifacts.
 
 Use `wp-typia migrations wizard` when you want the CLI to show the configured
-legacy versions first and let you pick one. Use
-`wp-typia migrations plan --from <semver>` when you already know the version
+legacy migration versions first and let you pick one. Use
+`wp-typia migrations plan --from-migration-version <label>` when you already know the migration version
 you want to inspect and just need a read-only summary of:
 
-- the current version
-- available legacy versions
-- the selected edge
+- the current migration version
+- available legacy migration versions
+- the selected migration edge
 - included and skipped block targets
 - per-block diffs and risk summaries
 - the exact next commands to run
@@ -110,7 +121,7 @@ For example:
 
 ```bash
 wp-typia migrations wizard
-wp-typia migrations plan --from 1.0.0
+wp-typia migrations plan --from-migration-version v1
 ```
 
 ## New schema version
@@ -121,32 +132,32 @@ When the block schema changes:
 2. Regenerate metadata.
 3. Preview the edge you want to preserve.
 4. Snapshot the new release.
-5. Scaffold a direct migration edge from the old version.
+5. Scaffold a direct migration edge from the old migration version.
 6. Verify the generated rule and fixture set.
 
 Example:
 
 ```bash
 bun run sync-types
-wp-typia migrations plan --from 1.0.0
-bun run migration:snapshot -- --version 2.0.0
+wp-typia migrations plan --from-migration-version v1
+bun run migration:snapshot -- --migration-version v3
 bun run migration:doctor
-bun run migration:diff -- --from 1.0.0
-bun run migration:scaffold -- --from 1.0.0
+bun run migration:diff -- --from-migration-version v1
+bun run migration:scaffold -- --from-migration-version v1
 bun run migration:fixtures -- --all --force
 bun run migration:verify
 bun run migration:fuzz -- --all --iterations 25 --seed 1
 ```
 
 When omitted, `verify`, `doctor`, `fixtures`, and `fuzz` target the first legacy
-version only. Add `--all` to run across every configured legacy version and,
+migration version only. Add `--all` to run across every configured legacy migration version and,
 for multi-block projects, every configured block target in the workspace.
 
 The intended authoring flow is:
 
 1. change `src/types.ts`
 2. regenerate metadata with `bun run sync-types`
-3. preview the selected legacy edge with `wp-typia migrations wizard` or `wp-typia migrations plan --from <semver>`
+3. preview the selected legacy migration edge with `wp-typia migrations wizard` or `wp-typia migrations plan --from-migration-version <label>`
 4. snapshot the release you want to preserve
 5. scaffold the edge from the old snapshot to the current schema
 6. review auto-applied renames
@@ -236,11 +247,11 @@ High-confidence renames are written into `renameMap` automatically. Ambiguous ca
 If unresolved `TODO MIGRATION:` markers or unresolved entries remain, `migration:verify` fails on purpose.
 
 If `verify` or `fuzz` report missing generated inputs, rerun
-`migration:scaffold -- --from <semver>` for the missing edge and then
+`migration:scaffold -- --from-migration-version <label>` for the missing edge and then
 `migration:doctor -- --all` to confirm the workspace is back in sync.
 
 `wp-typia migrations wizard` is TTY-only by design. If you are in a
-non-interactive shell, use `wp-typia migrations plan --from <semver>` instead.
+non-interactive shell, use `wp-typia migrations plan --from-migration-version <label>` instead.
 
 ## Deprecated Gutenberg entries
 
@@ -307,7 +318,7 @@ It demonstrates:
 - a semantic transform
 - a discriminated union branch change that still needs manual review
 
-The example pack does not register itself into `supportedVersions` and does not affect runtime migration execution.
+The example pack does not register itself into `supportedMigrationVersions` and does not affect runtime migration execution.
 
 ## Server-side foundation
 

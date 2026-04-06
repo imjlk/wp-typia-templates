@@ -32,4 +32,4 @@ hooks, and injects pinned migration scripts that shell out to the matching
 
 #### Defined in
 
-[packages/create/src/runtime/migration-ui-capability.ts:249](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-ui-capability.ts#L249)
+[packages/create/src/runtime/migration-ui-capability.ts:251](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-ui-capability.ts#L251)

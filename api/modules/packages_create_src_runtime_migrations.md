@@ -37,13 +37,17 @@ Re-exports [formatDiffReport](packages_create_src_runtime_migration_render.md#fo
 
 ▸ **formatMigrationHelpText**(): `string`
 
+Returns the formatted help text for migration CLI commands and flags.
+
 #### Returns
 
 `string`
 
+Multi-line usage text for the `wp-typia migrations` command surface.
+
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:124](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L124)
+[packages/create/src/runtime/migrations.ts:131](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L131)
 
 ___
 
@@ -51,19 +55,27 @@ ___
 
 ▸ **parseMigrationArgs**(`argv`): [`ParsedMigrationArgs`](../interfaces/packages_create_src_runtime_migration_types.ParsedMigrationArgs.md)
 
+Parses migration CLI arguments into a structured command payload.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `argv` | `string`[] |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `argv` | `string`[] | Command-line arguments that follow the `migrations` subcommand. |
 
 #### Returns
 
 [`ParsedMigrationArgs`](../interfaces/packages_create_src_runtime_migration_types.ParsedMigrationArgs.md)
 
+Parsed migration command and normalized flags for runtime dispatch.
+
+**`Throws`**
+
+Error When no arguments are provided, an unknown flag is encountered, or legacy semver flags are used.
+
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:146](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L146)
+[packages/create/src/runtime/migrations.ts:161](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L161)
 
 ___
 
@@ -93,7 +105,7 @@ The command result, or a promise when the selected command is interactive.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:255](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L255)
+[packages/create/src/runtime/migrations.ts:283](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L283)
 
 ___
 
@@ -118,7 +130,7 @@ A structured summary of the selected edge, included/skipped block targets, and n
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:343](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L343)
+[packages/create/src/runtime/migrations.ts:371](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L371)
 
 ___
 
@@ -143,93 +155,125 @@ The planned migration summary, or `{ cancelled: true }` when the user exits the 
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:418](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L418)
+[packages/create/src/runtime/migrations.ts:455](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L455)
 
 ___
 
 ### initProjectMigrations
 
-▸ **initProjectMigrations**(`projectDir`, `currentVersion`, `«destructured»?`): [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md)
+▸ **initProjectMigrations**(`projectDir`, `currentMigrationVersion`, `options?`): [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md)
+
+Initializes migration scaffolding for a detected single-block or multi-block project layout.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `projectDir` | `string` |
-| `currentVersion` | `string` |
-| `«destructured»` | `CommandRenderOptions` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `projectDir` | `string` | Absolute or relative project directory containing the migration workspace. |
+| `currentMigrationVersion` | `string` | Initial migration version label to seed, such as `v1`. |
+| `options` | `CommandRenderOptions` | Console rendering options used to report retrofit detection and initialization output. |
 
 #### Returns
 
 [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md)
 
+The loaded migration project state after the config, snapshots, and generated files are written.
+
+**`Throws`**
+
+Error When the project layout is unsupported or the migration version label is invalid.
+
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:478](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L478)
+[packages/create/src/runtime/migrations.ts:524](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L524)
 
 ___
 
 ### snapshotProjectVersion
 
-▸ **snapshotProjectVersion**(`projectDir`, `version`, `«destructured»?`): [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md)
+▸ **snapshotProjectVersion**(`projectDir`, `migrationVersion`, `options?`): [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md)
+
+Captures the current project state as a named migration snapshot and refreshes generated artifacts.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `projectDir` | `string` |
-| `version` | `string` |
-| `«destructured»` | `CommandRenderOptions` & \{ `skipConfigUpdate?`: `boolean` ; `skipSyncTypes?`: `boolean`  } |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `projectDir` | `string` | Absolute or relative project directory containing the migration workspace. |
+| `migrationVersion` | `string` | Migration version label to snapshot, such as `v2`. |
+| `options` | `CommandRenderOptions` & \{ `skipConfigUpdate?`: `boolean` ; `skipSyncTypes?`: `boolean`  } | Console rendering options and snapshot side-effect flags. |
 
 #### Returns
 
 [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md)
 
+The loaded migration project state after the snapshot files and registry outputs are refreshed.
+
+**`Throws`**
+
+Error When the label is invalid, the project is not migration-capable, or `sync-types` fails.
+
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:521](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L521)
+[packages/create/src/runtime/migrations.ts:577](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L577)
 
 ___
 
 ### diffProjectMigrations
 
-▸ **diffProjectMigrations**(`projectDir`, `«destructured»?`): [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) \| \{ `block`: [`ResolvedMigrationBlockTarget`](../interfaces/packages_create_src_runtime_migration_types.ResolvedMigrationBlockTarget.md) ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md)  }[]
+▸ **diffProjectMigrations**(`projectDir`, `options?`): [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) \| \{ `block`: [`ResolvedMigrationBlockTarget`](../interfaces/packages_create_src_runtime_migration_types.ResolvedMigrationBlockTarget.md) ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md)  }[]
+
+Computes and renders migration diffs for a selected legacy-to-target edge.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `projectDir` | `string` |
-| `«destructured»` | `DiffLikeOptions` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `projectDir` | `string` | Absolute or relative project directory containing the migration workspace. |
+| `options` | `DiffLikeOptions` | Selected source and target migration versions plus optional line rendering overrides. |
 
 #### Returns
 
 [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) \| \{ `block`: [`ResolvedMigrationBlockTarget`](../interfaces/packages_create_src_runtime_migration_types.ResolvedMigrationBlockTarget.md) ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md)  }[]
 
+A single diff for single-block workspaces, or an array of per-block diffs for multi-block workspaces.
+
+**`Throws`**
+
+Error When `fromMigrationVersion` is missing or no eligible snapshots exist for the selected edge.
+
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:586](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L586)
+[packages/create/src/runtime/migrations.ts:652](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L652)
 
 ___
 
 ### scaffoldProjectMigrations
 
-▸ **scaffoldProjectMigrations**(`projectDir`, `«destructured»?`): \{ `blockName`: `string` ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  } \| \{ `scaffolded`: \{ `blockName`: `string` ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  }[]  }
+▸ **scaffoldProjectMigrations**(`projectDir`, `options?`): \{ `blockName`: `string` ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  } \| \{ `scaffolded`: \{ `blockName`: `string` ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  }[]  }
+
+Scaffolds migration rule and fixture files for a selected legacy-to-target edge.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `projectDir` | `string` |
-| `«destructured»` | `DiffLikeOptions` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `projectDir` | `string` | Absolute or relative project directory containing the migration workspace. |
+| `options` | `DiffLikeOptions` | Selected source and target migration versions plus optional line rendering overrides. |
 
 #### Returns
 
 \{ `blockName`: `string` ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  } \| \{ `scaffolded`: \{ `blockName`: `string` ; `diff`: [`MigrationDiff`](../interfaces/packages_create_src_runtime_migration_types.MigrationDiff.md) ; `rulePath`: `string`  }[]  }
 
+A single scaffold result for single-block workspaces, or a grouped result for multi-block workspaces.
+
+**`Throws`**
+
+Error When `fromMigrationVersion` is missing or no eligible snapshots exist for the selected edge.
+
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:615](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L615)
+[packages/create/src/runtime/migrations.ts:696](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L696)
 
 ___
 
@@ -258,7 +302,7 @@ Verified legacy versions.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:684](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L684)
+[packages/create/src/runtime/migrations.ts:772](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L772)
 
 ___
 
@@ -288,7 +332,7 @@ Structured doctor check results for the selected legacy versions.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:742](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L742)
+[packages/create/src/runtime/migrations.ts:830](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L830)
 
 ___
 
@@ -318,7 +362,7 @@ Generated and skipped legacy versions.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:1001](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1001)
+[packages/create/src/runtime/migrations.ts:1091](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1091)
 
 ___
 
@@ -343,13 +387,13 @@ Fuzzed legacy versions and the effective seed.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:1074](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1074)
+[packages/create/src/runtime/migrations.ts:1167](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1167)
 
 ___
 
 ### seedProjectMigrations
 
-▸ **seedProjectMigrations**(`projectDir`, `currentVersion`, `blocks`, `options?`): [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md)
+▸ **seedProjectMigrations**(`projectDir`, `currentMigrationVersion`, `blocks`, `options?`): [`MigrationProjectState`](../interfaces/packages_create_src_runtime_migration_types.MigrationProjectState.md)
 
 Initialize migration scaffolding for one or more block targets.
 
@@ -361,7 +405,7 @@ the current project state, and regenerates generated migration artifacts.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `projectDir` | `string` | Absolute or relative project directory containing the migration workspace. |
-| `currentVersion` | `string` | Initial semantic version to seed into the migration config. |
+| `currentMigrationVersion` | `string` | Initial migration version label to seed into the migration config. |
 | `blocks` | [`MigrationBlockConfig`](../interfaces/packages_create_src_runtime_migration_types.MigrationBlockConfig.md)[] | Block targets to register for migration-aware scaffolding. |
 | `options` | `CommandRenderOptions` | Console rendering options for initialization output. |
 
@@ -373,4 +417,4 @@ The loaded migration project state after initialization completes.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:1299](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1299)
+[packages/create/src/runtime/migrations.ts:1392](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1392)

@@ -4,6 +4,8 @@
 
 [packages/create/src/runtime/migration-types](../modules/packages_create_src_runtime_migration_types.md).MigrationBlockConfig
 
+Declares one migration-capable block target inside a project workspace.
+
 ## Hierarchy
 
 - **`MigrationBlockConfig`**
@@ -27,9 +29,11 @@
 
 • **blockJsonFile**: `string`
 
+Relative path to the target block.json metadata file.
+
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:92](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L92)
+[packages/create/src/runtime/migration-types.ts:107](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L107)
 
 ___
 
@@ -37,9 +41,11 @@ ___
 
 • **blockName**: `string`
 
+Registered block name for this migration target.
+
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:93](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L93)
+[packages/create/src/runtime/migration-types.ts:109](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L109)
 
 ___
 
@@ -47,9 +53,11 @@ ___
 
 • **key**: `string`
 
+Stable block key used for generated file naming and registry entries.
+
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:94](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L94)
+[packages/create/src/runtime/migration-types.ts:111](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L111)
 
 ___
 
@@ -57,9 +65,11 @@ ___
 
 • **manifestFile**: `string`
 
+Relative path to the generated manifest snapshot input for the block.
+
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:95](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L95)
+[packages/create/src/runtime/migration-types.ts:113](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L113)
 
 ___
 
@@ -67,9 +77,11 @@ ___
 
 • **saveFile**: `string`
 
+Relative path to the saved-markup source file used for snapshot capture.
+
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:96](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L96)
+[packages/create/src/runtime/migration-types.ts:115](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L115)
 
 ___
 
@@ -77,6 +89,8 @@ ___
 
 • **typesFile**: `string`
 
+Relative path to the canonical types source for the block.
+
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L97)
+[packages/create/src/runtime/migration-types.ts:117](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L117)

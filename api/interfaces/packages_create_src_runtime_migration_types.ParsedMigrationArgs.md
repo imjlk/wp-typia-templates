@@ -19,7 +19,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:244](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L244)
+[packages/create/src/runtime/migration-types.ts:264](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L264)
 
 ___
 
@@ -32,14 +32,14 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `all` | `boolean` |
-| `currentVersion?` | `string` |
+| `currentMigrationVersion?` | `string` |
 | `force` | `boolean` |
-| `from?` | `string` |
+| `fromMigrationVersion?` | `string` |
 | `iterations?` | `string` |
+| `migrationVersion?` | `string` |
 | `seed?` | `string` |
-| `to?` | `string` |
-| `version?` | `string` |
+| `toMigrationVersion?` | `string` |
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:245](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L245)
+[packages/create/src/runtime/migration-types.ts:265](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L265)

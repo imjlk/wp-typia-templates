@@ -9,8 +9,8 @@
 ### Properties
 
 - [needsMigration](examples_my_typia_block_src_migrations.MigrationAnalysis.md#needsmigration)
-- [currentVersion](examples_my_typia_block_src_migrations.MigrationAnalysis.md#currentversion)
-- [targetVersion](examples_my_typia_block_src_migrations.MigrationAnalysis.md#targetversion)
+- [currentMigrationVersion](examples_my_typia_block_src_migrations.MigrationAnalysis.md#currentmigrationversion)
+- [targetMigrationVersion](examples_my_typia_block_src_migrations.MigrationAnalysis.md#targetmigrationversion)
 - [confidence](examples_my_typia_block_src_migrations.MigrationAnalysis.md#confidence)
 - [reasons](examples_my_typia_block_src_migrations.MigrationAnalysis.md#reasons)
 - [riskSummary](examples_my_typia_block_src_migrations.MigrationAnalysis.md#risksummary)
@@ -29,9 +29,9 @@
 
 ___
 
-### currentVersion
+### currentMigrationVersion
 
-• **currentVersion**: `string`
+• **currentMigrationVersion**: `string`
 
 #### Defined in
 
@@ -39,9 +39,9 @@ ___
 
 ___
 
-### targetVersion
+### targetMigrationVersion
 
-• **targetVersion**: `string`
+• **targetMigrationVersion**: `string`
 
 #### Defined in
 

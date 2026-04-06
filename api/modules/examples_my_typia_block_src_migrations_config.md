@@ -29,8 +29,8 @@ Renames and re-exports [migrationConfig](examples_my_typia_block_src_migrations_
 | Name | Type |
 | :------ | :------ |
 | `blockName` | ``"create-block/my-typia-block"`` |
-| `currentVersion` | ``"1.0.0"`` |
-| `supportedVersions` | readonly [``"1.0.0"``] |
+| `currentMigrationVersion` | ``"v1"`` |
+| `supportedMigrationVersions` | readonly [``"v1"``] |
 | `snapshotDir` | ``"src/migrations/versions"`` |
 
 #### Defined in

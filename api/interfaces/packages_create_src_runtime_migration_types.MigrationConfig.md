@@ -4,15 +4,20 @@
 
 [packages/create/src/runtime/migration-types](../modules/packages_create_src_runtime_migration_types.md).MigrationConfig
 
+Declares the migration-lineage labels and block targets used by a project migration workspace.
+
+These labels describe schema lineage such as `v1`, `v2`, and `v3`; they do
+not represent package, plugin, or release versions.
+
 ## Table of contents
 
 ### Properties
 
 - [blockName](packages_create_src_runtime_migration_types.MigrationConfig.md#blockname)
 - [blocks](packages_create_src_runtime_migration_types.MigrationConfig.md#blocks)
-- [currentVersion](packages_create_src_runtime_migration_types.MigrationConfig.md#currentversion)
+- [currentMigrationVersion](packages_create_src_runtime_migration_types.MigrationConfig.md#currentmigrationversion)
 - [snapshotDir](packages_create_src_runtime_migration_types.MigrationConfig.md#snapshotdir)
-- [supportedVersions](packages_create_src_runtime_migration_types.MigrationConfig.md#supportedversions)
+- [supportedMigrationVersions](packages_create_src_runtime_migration_types.MigrationConfig.md#supportedmigrationversions)
 
 ## Properties
 
@@ -20,9 +25,11 @@
 
 • `Optional` **blockName**: `string`
 
+Optional single-block name used by legacy-root retrofit layouts.
+
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:84](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L84)
+[packages/create/src/runtime/migration-types.ts:91](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L91)
 
 ___
 
@@ -30,19 +37,23 @@ ___
 
 • `Optional` **blocks**: [`MigrationBlockConfig`](packages_create_src_runtime_migration_types.MigrationBlockConfig.md)[]
 
+Optional explicit block target list for multi-block migration workspaces.
+
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:85](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L85)
+[packages/create/src/runtime/migration-types.ts:93](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L93)
 
 ___
 
-### currentVersion
+### currentMigrationVersion
 
-• **currentVersion**: `string`
+• **currentMigrationVersion**: `string`
+
+Current migration-lineage label for newly generated snapshots and rules.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:86](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L86)
+[packages/create/src/runtime/migration-types.ts:95](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L95)
 
 ___
 
@@ -50,16 +61,20 @@ ___
 
 • **snapshotDir**: `string`
 
+Relative directory that stores versioned migration snapshots.
+
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:87](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L87)
+[packages/create/src/runtime/migration-types.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L97)
 
 ___
 
-### supportedVersions
+### supportedMigrationVersions
 
-• **supportedVersions**: `string`[]
+• **supportedMigrationVersions**: `string`[]
+
+Ordered migration-lineage labels configured for this workspace, including the current label.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:88](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L88)
+[packages/create/src/runtime/migration-types.ts:99](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L99)

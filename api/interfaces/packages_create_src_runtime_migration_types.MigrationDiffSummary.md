@@ -23,7 +23,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:177](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L177)
+[packages/create/src/runtime/migration-types.ts:197](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L197)
 
 ___
 
@@ -33,7 +33,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:178](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L178)
+[packages/create/src/runtime/migration-types.ts:198](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L198)
 
 ___
 
@@ -43,7 +43,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:179](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L179)
+[packages/create/src/runtime/migration-types.ts:199](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L199)
 
 ___
 
@@ -53,7 +53,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:180](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L180)
+[packages/create/src/runtime/migration-types.ts:200](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L200)
 
 ___
 
@@ -63,7 +63,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:181](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L181)
+[packages/create/src/runtime/migration-types.ts:201](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L201)
 
 ___
 
@@ -73,4 +73,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-types.ts:182](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L182)
+[packages/create/src/runtime/migration-types.ts:202](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-types.ts#L202)

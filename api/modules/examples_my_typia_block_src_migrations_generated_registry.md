@@ -28,7 +28,7 @@ Renames and re-exports [migrationRegistry](examples_my_typia_block_src_migration
 
 | Name | Type |
 | :------ | :------ |
-| `currentVersion` | `string` |
+| `currentMigrationVersion` | `string` |
 | `currentManifest` | [`ManifestDocument`](../interfaces/examples_my_typia_block_src_migrations_helpers.ManifestDocument.md) |
 | `entries` | `MigrationRegistryEntry`[] |
 

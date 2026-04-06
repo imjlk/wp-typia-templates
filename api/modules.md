@@ -55,7 +55,7 @@
 - [examples/my-typia-block/src/edit](modules/examples_my_typia_block_src_edit.md)
 - [examples/my-typia-block/src](modules/examples_my_typia_block_src.md)
 - [examples/my-typia-block/src/migrations/examples/rename-transform-union/rule.example](modules/examples_my_typia_block_src_migrations_examples_rename_transform_union_rule_example.md)
-- [examples/my-typia-block/src/migrations/versions/1.0.0/save](modules/examples_my_typia_block_src_migrations_versions_1_0_0_save.md)
+- [examples/my-typia-block/src/migrations/versions/v1/save](modules/examples_my_typia_block_src_migrations_versions_v1_save.md)
 - [examples/my-typia-block/src/save](modules/examples_my_typia_block_src_save.md)
 - [examples/persistence-examples/src/blocks/counter/api](modules/examples_persistence_examples_src_blocks_counter_api.md)
 - [examples/persistence-examples/src/blocks/counter/data](modules/examples_persistence_examples_src_blocks_counter_data.md)

@@ -26,6 +26,7 @@
 - [getValidatorsImportPath](packages_create_src_runtime_migration_project.md#getvalidatorsimportpath)
 - [ensureMigrationDirectories](packages_create_src_runtime_migration_project.md#ensuremigrationdirectories)
 - [writeInitialMigrationScaffold](packages_create_src_runtime_migration_project.md#writeinitialmigrationscaffold)
+- [assertNoLegacySemverMigrationWorkspace](packages_create_src_runtime_migration_project.md#assertnolegacysemvermigrationworkspace)
 - [loadMigrationProject](packages_create_src_runtime_migration_project.md#loadmigrationproject)
 - [discoverMigrationEntries](packages_create_src_runtime_migration_project.md#discovermigrationentries)
 - [parseMigrationConfig](packages_create_src_runtime_migration_project.md#parsemigrationconfig)
@@ -49,7 +50,7 @@ Otherwise the runtime falls back to a supported single-block layout.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:55](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L55)
+[packages/create/src/runtime/migration-project.ts:59](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L59)
 
 ## Functions
 
@@ -70,7 +71,7 @@ Otherwise the runtime falls back to a supported single-block layout.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:218](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L218)
+[packages/create/src/runtime/migration-project.ts:590](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L590)
 
 ___
 
@@ -90,7 +91,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:229](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L229)
+[packages/create/src/runtime/migration-project.ts:601](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L601)
 
 ___
 
@@ -117,7 +118,7 @@ supported first-party layout can be inferred.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:427](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L427)
+[packages/create/src/runtime/migration-project.ts:799](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L799)
 
 ___
 
@@ -138,7 +139,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:441](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L441)
+[packages/create/src/runtime/migration-project.ts:813](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L813)
 
 ___
 
@@ -160,7 +161,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:467](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L467)
+[packages/create/src/runtime/migration-project.ts:839](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L839)
 
 ___
 
@@ -182,7 +183,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:478](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L478)
+[packages/create/src/runtime/migration-project.ts:850](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L850)
 
 ___
 
@@ -204,17 +205,17 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:486](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L486)
+[packages/create/src/runtime/migration-project.ts:858](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L858)
 
 ___
 
 ### getAvailableSnapshotVersionsForBlock
 
-▸ **getAvailableSnapshotVersionsForBlock**(`projectDir`, `supportedVersions`, `block`): `string`[]
+▸ **getAvailableSnapshotVersionsForBlock**(`projectDir`, `supportedMigrationVersions`, `block`): `string`[]
 
 Lists the snapshot versions currently present for a specific block target.
 
-Returns the sorted subset of `supportedVersions` that have a manifest on disk
+Returns the sorted subset of supported migration versions that have a manifest on disk
 for the provided block, or an empty array when none exist.
 
 #### Parameters
@@ -222,7 +223,7 @@ for the provided block, or an empty array when none exist.
 | Name | Type |
 | :------ | :------ |
 | `projectDir` | `string` |
-| `supportedVersions` | `string`[] |
+| `supportedMigrationVersions` | `string`[] |
 | `block` | [`MigrationBlockConfig`](../interfaces/packages_create_src_runtime_migration_types.MigrationBlockConfig.md) \| [`ResolvedMigrationBlockTarget`](../interfaces/packages_create_src_runtime_migration_types.ResolvedMigrationBlockTarget.md) |
 
 #### Returns
@@ -231,7 +232,7 @@ for the provided block, or an empty array when none exist.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:500](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L500)
+[packages/create/src/runtime/migration-project.ts:872](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L872)
 
 ___
 
@@ -258,7 +259,7 @@ versions or explains that no snapshots exist yet for the block.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:516](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L516)
+[packages/create/src/runtime/migration-project.ts:888](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L888)
 
 ___
 
@@ -280,7 +281,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:529](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L529)
+[packages/create/src/runtime/migration-project.ts:901](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L901)
 
 ___
 
@@ -301,7 +302,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:537](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L537)
+[packages/create/src/runtime/migration-project.ts:909](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L909)
 
 ___
 
@@ -324,7 +325,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:547](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L547)
+[packages/create/src/runtime/migration-project.ts:919](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L919)
 
 ___
 
@@ -347,7 +348,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:559](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L559)
+[packages/create/src/runtime/migration-project.ts:931](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L931)
 
 ___
 
@@ -369,7 +370,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:571](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L571)
+[packages/create/src/runtime/migration-project.ts:943](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L943)
 
 ___
 
@@ -390,20 +391,20 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:583](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L583)
+[packages/create/src/runtime/migration-project.ts:955](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L955)
 
 ___
 
 ### writeInitialMigrationScaffold
 
-▸ **writeInitialMigrationScaffold**(`projectDir`, `currentVersion`, `blocks?`): `void`
+▸ **writeInitialMigrationScaffold**(`projectDir`, `currentMigrationVersion`, `blocks?`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `projectDir` | `string` |
-| `currentVersion` | `string` |
+| `currentMigrationVersion` | `string` |
 | `blocks?` | [`MigrationBlockConfig`](../interfaces/packages_create_src_runtime_migration_types.MigrationBlockConfig.md)[] |
 
 #### Returns
@@ -412,7 +413,35 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:601](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L601)
+[packages/create/src/runtime/migration-project.ts:973](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L973)
+
+___
+
+### assertNoLegacySemverMigrationWorkspace
+
+▸ **assertNoLegacySemverMigrationWorkspace**(`projectDir`): `void`
+
+Guards a project directory against legacy semver-based migration workspaces.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `projectDir` | `string` | Absolute or relative project directory containing the migration workspace. |
+
+#### Returns
+
+`void`
+
+Nothing.
+
+**`Throws`**
+
+Error When legacy config keys or semver-named migration artifacts are detected.
+
+#### Defined in
+
+[packages/create/src/runtime/migration-project.ts:1054](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1054)
 
 ___
 
@@ -452,7 +481,7 @@ Error When the project is not migration-capable, required manifests remain missi
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:654](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L654)
+[packages/create/src/runtime/migration-project.ts:1090](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1090)
 
 ___
 
@@ -472,7 +501,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:707](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L707)
+[packages/create/src/runtime/migration-project.ts:1144](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1144)
 
 ___
 
@@ -492,7 +521,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:760](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L760)
+[packages/create/src/runtime/migration-project.ts:1197](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1197)
 
 ___
 
@@ -513,7 +542,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:825](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L825)
+[packages/create/src/runtime/migration-project.ts:1306](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1306)
 
 ___
 
@@ -539,13 +568,13 @@ layout.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:883](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L883)
+[packages/create/src/runtime/migration-project.ts:1364](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1364)
 
 ___
 
 ### assertRuleHasNoTodos
 
-▸ **assertRuleHasNoTodos**(`projectDir`, `block`, `fromVersion`, `toVersion`): `void`
+▸ **assertRuleHasNoTodos**(`projectDir`, `block`, `fromMigrationVersion`, `toMigrationVersion`): `void`
 
 #### Parameters
 
@@ -553,8 +582,8 @@ ___
 | :------ | :------ |
 | `projectDir` | `string` |
 | `block` | [`MigrationBlockConfig`](../interfaces/packages_create_src_runtime_migration_types.MigrationBlockConfig.md) \| [`ResolvedMigrationBlockTarget`](../interfaces/packages_create_src_runtime_migration_types.ResolvedMigrationBlockTarget.md) |
-| `fromVersion` | `string` |
-| `toVersion` | `string` |
+| `fromMigrationVersion` | `string` |
+| `toMigrationVersion` | `string` |
 
 #### Returns
 
@@ -562,7 +591,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:887](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L887)
+[packages/create/src/runtime/migration-project.ts:1368](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1368)
 
 ___
 
@@ -582,7 +611,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:903](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L903)
+[packages/create/src/runtime/migration-project.ts:1384](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1384)
 
 ___
 
@@ -602,4 +631,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:925](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L925)
+[packages/create/src/runtime/migration-project.ts:1406](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1406)
