@@ -25,6 +25,16 @@ const PACKAGE_MANAGERS = {
 	},
 };
 
+function normalizeBlockSlug(input) {
+	return input
+		.trim()
+		.replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+		.replace(/[^A-Za-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "")
+		.replace(/-{2,}/g, "-")
+		.toLowerCase();
+}
+
 function parseArgs(argv) {
 	const parsed = {
 		dataStorage: undefined,
@@ -355,6 +365,19 @@ function assertGeneratedPackageBoundary(projectDir) {
 	}
 	if (packageJson.devDependencies?.["@wp-typia/create"]) {
 		throw new Error("Expected generated project devDependencies to omit @wp-typia/create");
+	}
+	for (const [scriptName, scriptValue] of Object.entries(packageJson.scripts ?? {})) {
+		if (typeof scriptValue !== "string") {
+			continue;
+		}
+		if (
+			!scriptName.startsWith("migration:") &&
+			scriptValue.includes("@wp-typia/create")
+		) {
+			throw new Error(
+				`Expected generated project script "${scriptName}" to avoid @wp-typia/create`,
+			);
+		}
 	}
 }
 
@@ -700,7 +723,7 @@ function main() {
 			assertPersistenceRestOpenApi(
 				projectDir,
 				projectName,
-				namespace ?? projectName,
+				namespace ?? normalizeBlockSlug(projectName),
 				persistencePolicy ?? "authenticated",
 			);
 		}
@@ -709,7 +732,7 @@ function main() {
 			assertCompoundRestOpenApi(
 				projectDir,
 				projectName,
-				namespace ?? projectName,
+				namespace ?? normalizeBlockSlug(projectName),
 				persistencePolicy ?? "authenticated",
 			);
 		}

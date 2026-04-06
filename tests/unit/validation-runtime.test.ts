@@ -188,6 +188,36 @@ describe('runtime validation helpers', () => {
 		]);
 	});
 
+	test('createAttributeUpdater includes removed top-level attributes in the patch', () => {
+		type Attributes = {
+			content: string;
+			note?: string;
+		};
+
+		const patches: Array<Partial<Attributes>> = [];
+		const updateAttribute = createAttributeUpdater(
+			{ content: 'Hello', note: 'stale' },
+			(patch) => {
+				patches.push(patch);
+			},
+			(): ValidationResult<Attributes> => ({
+				data: {
+					content: 'Updated',
+				},
+				errors: [],
+				isValid: true,
+			})
+		);
+
+		expect(updateAttribute('content', 'Updated')).toBe(true);
+		expect(patches).toEqual([
+			{
+				content: 'Updated',
+				note: undefined,
+			},
+		]);
+	});
+
 	test('createAttributeUpdater blocks invalid patches and reports the validation result and key', () => {
 		const patches: Array<Partial<{ content: string; isVisible: boolean }>> = [];
 		const validationErrors: Array<ValidationResult<{ content: string; isVisible: boolean }>> = [];
@@ -537,5 +567,71 @@ describe('runtime validation helpers', () => {
 				id: 'generated-id',
 			},
 		]);
+	});
+
+	test('createScaffoldValidatorToolkit rethrows unexpected finalize failures', () => {
+		type Attributes = {
+			content: string;
+			id: string;
+		};
+
+		const scaffoldValidators = createScaffoldValidatorToolkit<Attributes>({
+			assert: (value): Attributes => value as Attributes,
+			clone: (value) => ({ ...value }),
+			finalize: () => {
+				throw new Error('finalize exploded');
+			},
+			is: (_value): _value is Attributes => true,
+			manifest: {
+				attributes: {
+					content: {
+						ts: {
+							items: null,
+							kind: 'string',
+							properties: null,
+							required: true,
+							union: null,
+						},
+						typia: {
+							defaultValue: null,
+							hasDefault: false,
+						},
+					},
+					id: {
+						ts: {
+							items: null,
+							kind: 'string',
+							properties: null,
+							required: true,
+							union: null,
+						},
+						typia: {
+							defaultValue: null,
+							hasDefault: false,
+						},
+					},
+				},
+			},
+			prune: (value) => value,
+			random: () => ({
+				content: 'random',
+				id: 'random-id',
+			}),
+			validate: () => ({
+				data: {
+					content: 'Updated',
+					id: 'generated-id',
+				},
+				errors: [],
+				success: true,
+			}),
+		});
+
+		const updateAttribute = scaffoldValidators.createAttributeUpdater(
+			{ content: 'Hello', id: '' },
+			() => {},
+		);
+
+		expect(() => updateAttribute('content', 'Updated')).toThrow('finalize exploded');
 	});
 });

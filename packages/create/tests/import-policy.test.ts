@@ -77,6 +77,7 @@ describe("@wp-typia/create import policy", () => {
 		expect(typeof createRuntimeValidationModule.createAttributeUpdater).toBe("function");
 		expect(typeof schemaCoreModule.projectJsonSchemaDocument).toBe("function");
 		expect(typeof schemaCoreModule.manifestToOpenApi).toBe("function");
+		expect("useEditorFields" in blockRuntimeRootModule).toBe(false);
 	});
 
 	test("public docs point to the normative import policy", () => {

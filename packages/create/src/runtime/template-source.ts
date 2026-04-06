@@ -522,18 +522,25 @@ async function patchRemotePackageJson(templateDir: string, needsInteractivity: b
 		dependencies?: Record<string, string>;
 		devDependencies?: Record<string, string>;
 	};
+	const existingDependencies = { ...(packageJson.dependencies ?? {}) };
+	const existingDevDependencies = { ...(packageJson.devDependencies ?? {}) };
+
+	delete existingDependencies["@wp-typia/create"];
+	delete existingDevDependencies["@wp-typia/create"];
 
 	packageJson.devDependencies = {
 		"@wp-typia/block-runtime": "{{blockRuntimePackageVersion}}",
 		"@wp-typia/block-types": "{{blockTypesPackageVersion}}",
-		...(packageJson.devDependencies ?? {}),
+		...existingDevDependencies,
 	};
 
 	if (needsInteractivity) {
 		packageJson.dependencies = {
-			...(packageJson.dependencies ?? {}),
+			...existingDependencies,
 			"@wordpress/interactivity": "^6.29.0",
 		};
+	} else if (Object.keys(existingDependencies).length > 0) {
+		packageJson.dependencies = existingDependencies;
 	}
 
 	await fsp.writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");

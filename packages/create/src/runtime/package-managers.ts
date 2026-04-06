@@ -97,6 +97,14 @@ export function formatInstallCommand(packageManagerId: PackageManagerId): string
 	return getPackageManager(packageManagerId).installCommand;
 }
 
+/**
+ * Format a package-manager-specific one-off package execution command.
+ *
+ * @param packageManagerId Package manager identifier.
+ * @param packageName Executable package name.
+ * @param extraArgs Optional extra CLI arguments appended after the package name.
+ * @returns Command string suitable for shell execution.
+ */
 export function formatPackageExecCommand(
 	packageManagerId: PackageManagerId,
 	packageName: string,
@@ -108,7 +116,7 @@ export function formatPackageExecCommand(
 		return args ? `bunx ${packageName} ${args}` : `bunx ${packageName}`;
 	}
 	if (packageManagerId === "npm") {
-		return args ? `npx ${packageName} ${args}` : `npx ${packageName}`;
+		return args ? `npx --yes ${packageName} ${args}` : `npx --yes ${packageName}`;
 	}
 	if (packageManagerId === "pnpm") {
 		return args ? `pnpm dlx ${packageName} ${args}` : `pnpm dlx ${packageName}`;

@@ -159,15 +159,19 @@ export function createScaffoldValidatorToolkit<T extends object>({
 	const validateAttributes = (value: unknown): ValidationResult<T> =>
 		toValidationResult<T>(validate(value));
 
-	const sanitizeAttributes = (value: Partial<T>): T => {
+	const normalizeAttributes = (value: Partial<T>): unknown => {
 		const normalized = applyTemplateDefaultsFromManifest<T>(manifest, value);
 
-		return assert(finalize ? finalize(normalized) : normalized);
+		return finalize ? finalize(normalized) : normalized;
 	};
 
+	const sanitizeAttributes = (value: Partial<T>): T => assert(normalizeAttributes(value));
+
 	const validateSanitizedAttributes = (value: T): ValidationResult<T> => {
+		const normalized = normalizeAttributes(value);
+
 		try {
-			const data = sanitizeAttributes(value);
+			const data = assert(normalized);
 
 			return {
 				data,
@@ -211,8 +215,16 @@ function toChangedAttributePatch<T extends object>(
 	nextAttributes: T,
 ): Partial<T> {
 	const patch: Partial<T> = {};
+	const keys = new Set<keyof T>([
+		...(Object.keys(attributes) as Array<keyof T>),
+		...(Object.keys(nextAttributes) as Array<keyof T>),
+	]);
 
-	for (const key of Object.keys(nextAttributes) as Array<keyof T>) {
+	for (const key of keys) {
+		if (!(key in nextAttributes)) {
+			patch[key] = undefined as T[keyof T];
+			continue;
+		}
 		if (!Object.is(attributes[key], nextAttributes[key])) {
 			patch[key] = nextAttributes[key];
 		}

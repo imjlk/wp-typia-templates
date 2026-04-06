@@ -217,7 +217,10 @@ return new class {
 \t\t\t\t$this->validateString($value, $attribute, $path, $errors);
 \t\t\t\treturn;
 \t\t\tcase 'number':
-\t\t\t\tif (!$this->isNumber($value)) {
+\t\t\t\t$allowsUint64String =
+\t\t\t\t\t($attribute['typia']['constraints']['typeTag'] ?? null) === 'uint64' &&
+\t\t\t\t\t$this->matchesUint64($value);
+\t\t\t\tif (!$this->isNumber($value) && !$allowsUint64String) {
 \t\t\t\t\t$errors[] = sprintf('%s must be number', $path);
 \t\t\t\t\treturn;
 \t\t\t\t}
@@ -429,13 +432,30 @@ return new class {
 \t\t\tcase 'int32':
 \t\t\t\treturn is_int($value) && $value >= -2147483648 && $value <= 2147483647;
 \t\t\tcase 'uint64':
-\t\t\t\treturn is_int($value) && $value >= 0;
+\t\t\t\treturn $this->matchesUint64($value);
 \t\t\tcase 'float':
 \t\t\tcase 'double':
 \t\t\t\treturn is_int($value) || is_float($value);
 \t\t\tdefault:
 \t\t\t\treturn true;
 \t\t}
+\t}
+
+\tprivate function matchesUint64($value): bool
+\t{
+\t\tif (is_int($value)) {
+\t\t\treturn $value >= 0;
+\t\t}
+\t\tif (!is_string($value) || $value === '' || !ctype_digit($value)) {
+\t\t\treturn false;
+\t\t}
+\t\tif (strlen($value) < 20) {
+\t\t\treturn true;
+\t\t}
+\t\tif (strlen($value) > 20) {
+\t\t\treturn false;
+\t\t}
+\t\treturn strcmp($value, '18446744073709551615') <= 0;
 \t}
 
 \tprivate function matchesMultipleOf($value, $multipleOf): bool

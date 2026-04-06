@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import {
 	PACKAGE_MANAGER_IDS,
 	PACKAGE_MANAGERS,
+	formatPackageExecCommand,
 	formatInstallCommand,
 	formatRunScript,
 	getPackageManager,
@@ -60,6 +61,21 @@ describe("package manager runtime helpers", () => {
 				formatRunScript(managerId, "sync-types", "--strict --report json"),
 			).toBe(expectations[managerId].runWithArgs);
 		}
+	});
+
+	test("formats one-off package execution commands per package manager", () => {
+		expect(formatPackageExecCommand("bun", "@wp-typia/create@0.10.1", "migrations init")).toBe(
+			"bunx @wp-typia/create@0.10.1 migrations init",
+		);
+		expect(formatPackageExecCommand("npm", "@wp-typia/create@0.10.1", "migrations init")).toBe(
+			"npx --yes @wp-typia/create@0.10.1 migrations init",
+		);
+		expect(formatPackageExecCommand("pnpm", "@wp-typia/create@0.10.1", "migrations init")).toBe(
+			"pnpm dlx @wp-typia/create@0.10.1 migrations init",
+		);
+		expect(formatPackageExecCommand("yarn", "@wp-typia/create@0.10.1", "migrations init")).toBe(
+			"yarn dlx @wp-typia/create@0.10.1 migrations init",
+		);
 	});
 
 	test("transforms bun-oriented install and run text without touching embedded substrings", () => {

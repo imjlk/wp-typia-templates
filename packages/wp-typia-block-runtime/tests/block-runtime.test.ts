@@ -27,7 +27,6 @@ describe("@wp-typia/block-runtime", () => {
 		expect(typeof rootModule.buildScaffoldBlockRegistration).toBe("function");
 		expect(typeof rootModule.applyTemplateDefaultsFromManifest).toBe("function");
 		expect(typeof rootModule.createEditorModel).toBe("function");
-		expect(typeof rootModule.useEditorFields).toBe("function");
 		expect(typeof rootModule.createAttributeUpdater).toBe("function");
 		expect(typeof rootModule.createNestedAttributeUpdater).toBe("function");
 		expect(typeof blocksModule.createTypiaWebpackConfig).toBe("function");
@@ -54,12 +53,10 @@ describe("@wp-typia/block-runtime", () => {
 		expect(builtIndexJs).toContain('export * from "./blocks.js";');
 		expect(builtIndexJs).toContain('export * from "./defaults.js";');
 		expect(builtIndexJs).toContain('export * from "./editor.js";');
-		expect(builtIndexJs).toContain('export * from "./inspector.js";');
 		expect(builtIndexJs).toContain('export * from "./validation.js";');
 		expect(builtIndexDts).toContain('export * from "./blocks.js";');
 		expect(builtIndexDts).toContain('export * from "./defaults.js";');
 		expect(builtIndexDts).toContain('export * from "./editor.js";');
-		expect(builtIndexDts).toContain('export * from "./inspector.js";');
 		expect(builtIndexDts).toContain('export * from "./validation.js";');
 	});
 });
