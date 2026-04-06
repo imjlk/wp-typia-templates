@@ -26,7 +26,7 @@ describe("starter manifest builders", () => {
 								defaultValue: "",
 							}),
 						}),
-						version: expect.objectContaining({
+						schemaVersion: expect.objectContaining({
 							typia: expect.objectContaining({
 								defaultValue: 1,
 							}),

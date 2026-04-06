@@ -23,6 +23,7 @@ async function importPackageVersionsModule(options: {
 }): Promise<{
 	getPackageVersions(): {
 		apiClientPackageVersion: string;
+		blockRuntimePackageVersion: string;
 		blockTypesPackageVersion: string;
 		createPackageVersion: string;
 		restPackageVersion: string;
@@ -67,6 +68,9 @@ describe("package version helpers", () => {
 			},
 			version: "4.5.6",
 		});
+		writeJsonFile(path.join(createPackageRoot, "..", "wp-typia-block-runtime", "package.json"), {
+			version: "7.8.9",
+		});
 
 		const module = await importPackageVersionsModule({
 			createPackageRoot,
@@ -80,6 +84,7 @@ describe("package version helpers", () => {
 
 		expect(module.getPackageVersions()).toEqual({
 			apiClientPackageVersion: "~1.2.3",
+			blockRuntimePackageVersion: "^7.8.9",
 			blockTypesPackageVersion: "^2.3.4",
 			createPackageVersion: "^4.5.6",
 			restPackageVersion: "^3.4.5",
@@ -104,12 +109,14 @@ describe("package version helpers", () => {
 					},
 					version: "0.8.0",
 				},
+				"@wp-typia/block-runtime": { version: "0.9.0" },
 				"@wp-typia/rest": { version: "0.4.0" },
 			},
 		});
 
 		expect(module.getPackageVersions()).toEqual({
 			apiClientPackageVersion: "^0.2.0",
+			blockRuntimePackageVersion: "^0.9.0",
 			blockTypesPackageVersion: "^0.3.0",
 			createPackageVersion: "^0.8.0",
 			restPackageVersion: "~0.4.0",
@@ -130,6 +137,7 @@ describe("package version helpers", () => {
 
 		expect(firstResult).toEqual({
 			apiClientPackageVersion: "^0.0.0",
+			blockRuntimePackageVersion: "^0.0.0",
 			blockTypesPackageVersion: "^0.0.0",
 			createPackageVersion: "^0.0.0",
 			restPackageVersion: "^0.0.0",

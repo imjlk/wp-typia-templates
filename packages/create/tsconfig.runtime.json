@@ -10,12 +10,13 @@
     "plugins": [],
     "paths": {
       "@wp-typia/block-runtime/metadata-core": [
-        "packages/wp-typia-block-runtime/dist/metadata-core.d.ts"
+        "packages/create/build-shims/block-runtime-metadata-core-shim.d.ts"
       ]
     }
   },
   "include": [
-    "./src/runtime/**/*"
+    "./src/runtime/**/*",
+    "./build-shims/**/*.d.ts"
   ],
   "exclude": [
     "./tests/**/*"

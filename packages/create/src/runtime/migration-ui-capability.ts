@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
 
+import { getPackageVersions } from "./package-versions.js";
 import { formatPackageExecCommand } from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
 import { seedProjectMigrations } from "./migrations.js";
@@ -251,8 +252,9 @@ export async function applyMigrationUiCapability({
 	await copyInterpolatedDirectory(commonTemplateDir, projectDir, variables);
 
 	await mutatePackageJson(projectDir, (packageJson) => {
+		const createCliSpecifier = `@wp-typia/create@${getPackageVersions().createPackageVersion.replace(/^[~^]/u, "")}`;
 		const migrationCli = (args: string) =>
-			formatPackageExecCommand(packageManager, "@wp-typia/create", `migrations ${args}`);
+			formatPackageExecCommand(packageManager, createCliSpecifier, `migrations ${args}`);
 		packageJson.dependencies = {
 			...(packageJson.dependencies ?? {}),
 			"@wordpress/api-fetch": "^7.42.0",

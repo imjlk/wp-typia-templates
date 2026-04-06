@@ -353,10 +353,10 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(packageJson.dependencies["@wordpress/api-fetch"]).toBe("^7.42.0");
 		expect(packageJson.devDependencies["@wp-typia/create"]).toBeUndefined();
 		expect(packageJson.scripts["migration:init"]).toBe(
-			"npx @wp-typia/create migrations init --current-version 1.0.0",
+			`npx @wp-typia/create@${createPackageManifest.version} migrations init --current-version 1.0.0`,
 		);
 		expect(packageJson.scripts["migration:doctor"]).toBe(
-			"npx @wp-typia/create migrations doctor --all",
+			`npx @wp-typia/create@${createPackageManifest.version} migrations doctor --all`,
 		);
 		expect(readme).toContain("## Migration UI");
 		expect(readme).toContain("initialized migration workspace at `1.0.0`");
