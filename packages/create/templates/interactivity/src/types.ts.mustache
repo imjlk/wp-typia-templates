@@ -2,10 +2,10 @@ import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment
 import type {
   TypiaValidationError,
   ValidationResult,
-} from "@wp-typia/create/runtime/validation";
+} from "@wp-typia/block-runtime/validation";
 import { tags } from "typia";
 
-export type { TypiaValidationError, ValidationResult } from "@wp-typia/create/runtime/validation";
+export type { TypiaValidationError, ValidationResult } from "@wp-typia/block-runtime/validation";
 
 export interface {{pascalCase}}Attributes {
   content: string & tags.MinLength<1> & tags.MaxLength<1000> & tags.Default<"">;

@@ -2,6 +2,8 @@ import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
 
+import { formatPackageExecCommand } from "./package-managers.js";
+import type { PackageManagerId } from "./package-managers.js";
 import { seedProjectMigrations } from "./migrations.js";
 import { copyInterpolatedDirectory } from "./template-render.js";
 import {
@@ -16,6 +18,7 @@ interface PackageJsonShape {
 }
 
 interface ApplyMigrationUiCapabilityOptions {
+	packageManager: PackageManagerId;
 	projectDir: string;
 	templateId: string;
 	variables: ScaffoldTemplateVariables;
@@ -236,6 +239,7 @@ async function applyCompoundPatches(
 }
 
 export async function applyMigrationUiCapability({
+	packageManager,
 	projectDir,
 	templateId,
 	variables,
@@ -247,20 +251,22 @@ export async function applyMigrationUiCapability({
 	await copyInterpolatedDirectory(commonTemplateDir, projectDir, variables);
 
 	await mutatePackageJson(projectDir, (packageJson) => {
+		const migrationCli = (args: string) =>
+			formatPackageExecCommand(packageManager, "@wp-typia/create", `migrations ${args}`);
 		packageJson.dependencies = {
 			...(packageJson.dependencies ?? {}),
 			"@wordpress/api-fetch": "^7.42.0",
 		};
 		packageJson.scripts = {
 			...(packageJson.scripts ?? {}),
-			"migration:init": "wp-typia migrations init --current-version 1.0.0",
-			"migration:snapshot": "wp-typia migrations snapshot",
-			"migration:diff": "wp-typia migrations diff",
-			"migration:scaffold": "wp-typia migrations scaffold",
-			"migration:doctor": "wp-typia migrations doctor --all",
-			"migration:fixtures": "wp-typia migrations fixtures --all",
-			"migration:verify": "wp-typia migrations verify --all",
-			"migration:fuzz": "wp-typia migrations fuzz --all",
+			"migration:init": migrationCli("init --current-version 1.0.0"),
+			"migration:snapshot": migrationCli("snapshot"),
+			"migration:diff": migrationCli("diff"),
+			"migration:scaffold": migrationCli("scaffold"),
+			"migration:doctor": migrationCli("doctor --all"),
+			"migration:fixtures": migrationCli("fixtures --all"),
+			"migration:verify": migrationCli("verify --all"),
+			"migration:fuzz": migrationCli("fuzz --all"),
 		};
 	});
 

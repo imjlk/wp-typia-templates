@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { runSyncBlockMetadata } from '@wp-typia/create/metadata-core';
+import { runSyncBlockMetadata } from '@wp-typia/block-runtime/metadata-core';
 
 type SyncTypesReportMode = 'human' | 'json';
 

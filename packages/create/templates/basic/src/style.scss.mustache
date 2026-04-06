@@ -9,6 +9,10 @@
 	background-color: #fff;
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
+	&.is-hidden {
+		display: none;
+	}
+
 	&__content {
 		font-size: 16px;
 		line-height: 1.6;
@@ -32,11 +36,5 @@
 	&:hover {
 		box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 		transition: box-shadow 0.2s ease;
-	}
-
-	// Editor styles
-	.wp-block-editor & {
-		outline: 1px dashed #ddd;
-		outline-offset: -1px;
 	}
 }

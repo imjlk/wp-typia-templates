@@ -3,12 +3,12 @@ import {
 	type TypiaValidationError,
 	type ValidationResult,
 	toValidationState,
-} from '@wp-typia/create/runtime/validation';
+} from '@wp-typia/block-runtime/validation';
 
 export type {
 	TypiaValidationError,
 	ValidationResult,
-} from '@wp-typia/create/runtime/validation';
+} from '@wp-typia/block-runtime/validation';
 
 export function useTypiaValidation< T >(
 	data: T,

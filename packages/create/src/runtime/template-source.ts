@@ -38,8 +38,8 @@ type TemplateSourceFormat = "wp-typia" | "create-block-external" | "create-block
 export interface TemplateVariableContext extends Record<string, unknown> {
 	/** Version string for `@wp-typia/api-client` used in generated dependencies. */
 	apiClientPackageVersion: string;
-	/** Version string for `@wp-typia/create` used in generated dependencies. */
-	createPackageVersion: string;
+	/** Version string for `@wp-typia/block-runtime` used in generated dependencies. */
+	blockRuntimePackageVersion: string;
 	/** Version string for `@wp-typia/block-types` used in generated dependencies. */
 	blockTypesPackageVersion: string;
 	/** PascalCase block type name derived from the scaffold slug. */
@@ -323,6 +323,7 @@ function getDefaultCategory(sourceDir: string): string {
 function getTemplateVariableContext(variables: { [key: string]: string }): TemplateVariableContext {
 	const {
 		apiClientPackageVersion,
+		blockRuntimePackageVersion,
 		blockTypesPackageVersion,
 		createPackageVersion,
 		restPackageVersion,
@@ -330,6 +331,8 @@ function getTemplateVariableContext(variables: { [key: string]: string }): Templ
 	return {
 		...variables,
 		apiClientPackageVersion: variables.apiClientPackageVersion ?? apiClientPackageVersion,
+		blockRuntimePackageVersion:
+			variables.blockRuntimePackageVersion ?? blockRuntimePackageVersion,
 		blockTypesPackageVersion: variables.blockTypesPackageVersion ?? blockTypesPackageVersion,
 		createPackageVersion: variables.createPackageVersion ?? createPackageVersion,
 		description: variables.description,
@@ -521,8 +524,8 @@ async function patchRemotePackageJson(templateDir: string, needsInteractivity: b
 	};
 
 	packageJson.devDependencies = {
+		"@wp-typia/block-runtime": "{{blockRuntimePackageVersion}}",
 		"@wp-typia/block-types": "{{blockTypesPackageVersion}}",
-		"@wp-typia/create": "{{createPackageVersion}}",
 		...(packageJson.devDependencies ?? {}),
 	};
 

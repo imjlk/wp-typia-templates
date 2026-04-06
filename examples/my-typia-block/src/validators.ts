@@ -4,13 +4,13 @@ import currentManifest from '../typia.manifest.json';
 import {
 	type ManifestDefaultsDocument,
 	applyTemplateDefaultsFromManifest,
-} from '@wp-typia/create/runtime/defaults';
+} from '@wp-typia/block-runtime/defaults';
 import {
 	createAttributeUpdater as createValidatedAttributeUpdater,
 	createNestedAttributeUpdater as createValidatedNestedAttributeUpdater,
 	type ValidationResult,
 	toValidationResult,
-} from '@wp-typia/create/runtime/validation';
+} from '@wp-typia/block-runtime/validation';
 import { MyTypiaBlockAttributes } from './types';
 
 /**

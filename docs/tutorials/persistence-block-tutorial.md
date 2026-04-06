@@ -237,7 +237,7 @@ export function writeState(
 }
 ```
 
-The default namespace is `create-block`, so the generated route is `/create-block/v1/my-counter/state` unless you change the namespace during scaffolding.
+By default, the namespace follows the normalized project slug, so a scaffolded `my-counter` project generates `/my-counter/v1/my-counter/state` unless you change the namespace during scaffolding.
 
 ## Step 6: Implement Frontend Interactivity
 

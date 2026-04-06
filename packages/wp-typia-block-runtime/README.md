@@ -1,22 +1,19 @@
 # `@wp-typia/block-runtime`
 
-Prototype block runtime helpers for `wp-typia` generated projects.
+Generated-project runtime and metadata sync helpers for `wp-typia`.
 
-This package is the current graduation path for the stable generated-project
-runtime helpers that still live canonically under `@wp-typia/create`.
-
-It currently re-exports the block runtime helper surface for:
+This is the supported generated-project package boundary for:
 
 - manifest-driven defaults
 - editor model generation
 - manifest-driven inspector helpers
 - validation-aware attribute updates
+- TypeScript-to-metadata sync
+- manifest-first REST/OpenAPI/client codegen
 
 It does not include:
 
 - scaffold or CLI internals
-- REST/OpenAPI metadata generation
-- schema generation helpers
 - migration tooling
 
 Typical usage:
@@ -25,8 +22,12 @@ Typical usage:
 import { createEditorModel } from "@wp-typia/block-runtime/editor";
 import { InspectorFromManifest, useEditorFields } from "@wp-typia/block-runtime/inspector";
 import { createNestedAttributeUpdater } from "@wp-typia/block-runtime/validation";
+import { runSyncBlockMetadata } from "@wp-typia/block-runtime/metadata-core";
 ```
 
-`@wp-typia/create` remains the canonical generated-project import surface
-through v1. This package exists to validate the long-term package boundary and
-migration path without changing scaffolds yet.
+`@wp-typia/create` remains the CLI/scaffolding package.
+
+`@wp-typia/create/metadata-core` and `@wp-typia/create/runtime/*` remain
+available as backward-compatible facades, but newly generated projects should
+prefer `@wp-typia/block-runtime/*` and
+`@wp-typia/block-runtime/metadata-core`.

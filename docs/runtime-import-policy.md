@@ -1,7 +1,7 @@
 # Runtime Import Policy
 
 This document is the normative generated-project runtime import policy for
-`@wp-typia/create`.
+wp-typia generated projects.
 
 It defines which import paths generated projects may rely on as supported
 public API through v1. The broader audit in
@@ -11,13 +11,13 @@ public API through v1. The broader audit in
 
 Generated projects may rely on these import paths as supported public API:
 
-- `@wp-typia/create`
-- `@wp-typia/create/metadata-core`
-- `@wp-typia/create/runtime/blocks`
-- `@wp-typia/create/runtime/defaults`
-- `@wp-typia/create/runtime/editor`
-- `@wp-typia/create/runtime/inspector`
-- `@wp-typia/create/runtime/validation`
+- `@wp-typia/block-runtime/metadata-core`
+- `@wp-typia/block-runtime`
+- `@wp-typia/block-runtime/blocks`
+- `@wp-typia/block-runtime/defaults`
+- `@wp-typia/block-runtime/editor`
+- `@wp-typia/block-runtime/inspector`
+- `@wp-typia/block-runtime/validation`
 
 ## Support promise
 
@@ -28,23 +28,21 @@ For the supported generated-project import paths above:
 - additive exports remain allowed
 - generated projects do not need to treat these paths as internal or unstable
 
-The root package remains public overall, but this policy only blesses the
-generated-project runtime subset listed above. It does not imply that every
-root export is part of the generated-project runtime support promise.
+`@wp-typia/create` remains public overall, but this policy only blesses
+`@wp-typia/block-runtime/metadata-core` plus the `@wp-typia/block-runtime` helper
+surface listed above for generated projects.
 
-The current graduation prototype for this helper set is
-`@wp-typia/block-runtime`, but generated projects should continue to treat
-`@wp-typia/create` as the canonical import surface through v1.
+## Compatibility exports
 
-## Root convenience aliases
+`@wp-typia/create/metadata-core` remains exported as a backward-compatible
+facade to `@wp-typia/block-runtime/metadata-core`.
 
-The root package also exposes convenience aliases for several runtime helpers,
-including block registration/webpack helpers, defaults, editor, validation, and
-schema helpers.
+`@wp-typia/create/runtime/*` remains exported for backward compatibility, but it
+is no longer the preferred generated-project import surface.
 
-Generated projects are not expected to migrate away from the supported
-`runtime/*` paths to use those aliases. They are additive convenience exports,
-not a preferred replacement for the documented generated-project imports.
+Newly generated projects should use `@wp-typia/block-runtime/*` for block
+runtime helpers and keep `@wp-typia/block-runtime/metadata-core` for TypeScript-to-
+metadata sync.
 
 ## Exported but non-canonical generated-project path
 

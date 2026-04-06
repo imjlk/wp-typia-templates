@@ -1,1 +1,1 @@
-export * from "@wp-typia/create/runtime/inspector";
+export * from "./inspector-runtime.js";

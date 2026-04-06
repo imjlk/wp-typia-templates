@@ -1,5 +1,5 @@
-import { applyTemplateDefaultsFromManifest } from "@wp-typia/create/runtime/defaults";
-import type { ManifestDefaultsDocument } from "@wp-typia/create/runtime/defaults";
+import { applyTemplateDefaultsFromManifest } from "./defaults.js";
+import type { ManifestDefaultsDocument } from "./defaults.js";
 import { isPlainObject as isRecord } from "./object-utils.js";
 
 export interface TypiaValidationError {

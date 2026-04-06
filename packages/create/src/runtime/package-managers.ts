@@ -97,6 +97,26 @@ export function formatInstallCommand(packageManagerId: PackageManagerId): string
 	return getPackageManager(packageManagerId).installCommand;
 }
 
+export function formatPackageExecCommand(
+	packageManagerId: PackageManagerId,
+	packageName: string,
+	extraArgs = "",
+): string {
+	const args = extraArgs.trim();
+
+	if (packageManagerId === "bun") {
+		return args ? `bunx ${packageName} ${args}` : `bunx ${packageName}`;
+	}
+	if (packageManagerId === "npm") {
+		return args ? `npx ${packageName} ${args}` : `npx ${packageName}`;
+	}
+	if (packageManagerId === "pnpm") {
+		return args ? `pnpm dlx ${packageName} ${args}` : `pnpm dlx ${packageName}`;
+	}
+
+	return args ? `yarn dlx ${packageName} ${args}` : `yarn dlx ${packageName}`;
+}
+
 function consumeCommandArguments(content: string, startIndex: number): {
 	args: string;
 	cursor: number;

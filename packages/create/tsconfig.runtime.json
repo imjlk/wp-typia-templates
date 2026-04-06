@@ -7,7 +7,12 @@
     "declaration": true,
     "declarationMap": false,
     "sourceMap": false,
-    "plugins": []
+    "plugins": [],
+    "paths": {
+      "@wp-typia/block-runtime/metadata-core": [
+        "packages/wp-typia-block-runtime/dist/metadata-core.d.ts"
+      ]
+    }
   },
   "include": [
     "./src/runtime/**/*"

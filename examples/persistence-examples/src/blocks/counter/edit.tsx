@@ -14,7 +14,7 @@ import currentManifest from './typia.manifest.json';
 import {
 	createEditorModel,
 	type ManifestDocument,
-} from '@wp-typia/create/runtime/editor';
+} from '@wp-typia/block-runtime/editor';
 import { useTypiaValidation } from '../../shared/hooks';
 import type { PersistenceCounterAttributes } from './types';
 import { createAttributeUpdater, validators } from './validators';

@@ -237,29 +237,25 @@ module.exports = async () => {
 				},
 				alias: {
 					...( config.resolve?.alias || {} ),
-					'@wp-typia/create/runtime/blocks': path.resolve(
+					'@wp-typia/block-runtime/blocks': path.resolve(
 						__dirname,
-						'../../packages/create/src/runtime/blocks.ts'
+						'../../packages/wp-typia-block-runtime/src/blocks.ts'
 					),
-					'@wp-typia/create/runtime/defaults': path.resolve(
+					'@wp-typia/block-runtime/defaults': path.resolve(
 						__dirname,
-						'../../packages/create/src/runtime/defaults.ts'
+						'../../packages/wp-typia-block-runtime/src/defaults.ts'
 					),
-					'@wp-typia/create/runtime/editor': path.resolve(
+					'@wp-typia/block-runtime/editor': path.resolve(
 						__dirname,
-						'../../packages/create/src/runtime/editor.ts'
+						'../../packages/wp-typia-block-runtime/src/editor.ts'
 					),
-					'@wp-typia/create/runtime/inspector': path.resolve(
+					'@wp-typia/block-runtime/inspector': path.resolve(
 						__dirname,
-						'../../packages/create/src/runtime/inspector.tsx'
+						'../../packages/wp-typia-block-runtime/src/inspector.ts'
 					),
-					'@wp-typia/create/runtime/schema-core': path.resolve(
+					'@wp-typia/block-runtime/validation': path.resolve(
 						__dirname,
-						'../../packages/create/src/runtime/schema-core.ts'
-					),
-					'@wp-typia/create/runtime/validation': path.resolve(
-						__dirname,
-						'../../packages/create/src/runtime/validation.ts'
+						'../../packages/wp-typia-block-runtime/src/validation.ts'
 					),
 				},
 			},

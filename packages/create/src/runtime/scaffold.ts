@@ -81,6 +81,7 @@ export type PersistencePolicy = (typeof PERSISTENCE_POLICIES)[number];
 export interface ScaffoldTemplateVariables extends Record<string, string> {
 	apiClientPackageVersion: string;
 	author: string;
+	blockRuntimePackageVersion: string;
 	blockTypesPackageVersion: string;
 	category: string;
 	compoundChildTitle: string;
@@ -292,12 +293,12 @@ export function getDefaultAnswers(
 	templateId: string,
 ): ScaffoldAnswers {
 	const template = isBuiltInTemplateId(templateId) ? getTemplateById(templateId) : null;
-	const slugDefault = normalizeBlockSlug(projectName || "my-wp-typia-block");
+	const slugDefault = normalizeBlockSlug(projectName) || "my-wp-typia-block";
 	return {
 		author: detectAuthor(),
 		dataStorageMode: templateId === "persistence" ? "custom-table" : undefined,
 		description: template?.description ?? "A WordPress block scaffolded from a remote template",
-		namespace: "create-block",
+		namespace: slugDefault,
 		persistencePolicy: templateId === "persistence" ? "authenticated" : undefined,
 		phpPrefix: toSnakeCase(slugDefault),
 		slug: slugDefault,
@@ -425,6 +426,7 @@ export function getTemplateVariables(
 ): ScaffoldTemplateVariables {
 	const {
 		apiClientPackageVersion,
+		blockRuntimePackageVersion,
 		blockTypesPackageVersion,
 		createPackageVersion,
 		restPackageVersion,
@@ -464,6 +466,7 @@ export function getTemplateVariables(
 	return {
 		apiClientPackageVersion,
 		author: answers.author.trim(),
+		blockRuntimePackageVersion,
 		blockTypesPackageVersion,
 		category: template?.defaultCategory ?? "widgets",
 		compoundChildTitle,
@@ -834,6 +837,7 @@ export async function scaffoldProject({
 		});
 		if (withMigrationUi) {
 			await applyMigrationUiCapability({
+				packageManager: resolvedPackageManager,
 				projectDir,
 				templateId,
 				variables,

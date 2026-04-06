@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { syncTypeSchemas } from '@wp-typia/create/metadata-core';
+import { syncTypeSchemas } from '@wp-typia/block-runtime/metadata-core';
 
 const CONTRACTS = [
 	{

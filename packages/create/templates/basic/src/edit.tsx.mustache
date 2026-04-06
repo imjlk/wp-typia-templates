@@ -16,7 +16,7 @@ import {
   type ManifestDocument,
   useEditorFields,
   useTypedAttributeUpdater,
-} from '@wp-typia/create/runtime/inspector';
+} from '@wp-typia/block-runtime/inspector';
 import { {{pascalCase}}Attributes } from './types';
 import {
   sanitize{{pascalCase}}Attributes,
@@ -27,9 +27,12 @@ import { useTypiaValidation } from './hooks';
 type EditProps = BlockEditProps<{{pascalCase}}Attributes>;
 
 function Edit({ attributes, setAttributes }: EditProps) {
-  const blockProps = useBlockProps();
+  const isVisible = attributes.isVisible !== false;
+  const blockProps = useBlockProps({
+    className: isVisible ? undefined : 'is-hidden',
+  });
   const editorFields = useEditorFields(currentManifest as ManifestDocument, {
-    hidden: ['id', 'version'],
+    hidden: ['id', 'schemaVersion'],
     manual: ['content'],
     labels: {
       alignment: __('Alignment', '{{textDomain}}'),

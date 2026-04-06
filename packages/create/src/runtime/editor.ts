@@ -1,5 +1,3 @@
-import type {} from "./typia-tags.js";
-
 import type {
   JsonValue,
   ManifestAttribute,

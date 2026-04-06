@@ -125,6 +125,10 @@ function ensureCreateWpTypiaBuilt() {
 		__dirname,
 		"../packages/wp-typia-block-types/dist/index.js",
 	);
+	const blockRuntimeDistPath = path.resolve(
+		__dirname,
+		"../packages/wp-typia-block-runtime/dist/index.js",
+	);
 	const restDistPath = path.resolve(
 		__dirname,
 		"../packages/wp-typia-rest/dist/index.js",
@@ -140,6 +144,7 @@ function ensureCreateWpTypiaBuilt() {
 	if (
 		fs.existsSync(entryPath) &&
 		fs.existsSync(apiClientDistPath) &&
+		fs.existsSync(blockRuntimeDistPath) &&
 		fs.existsSync(blockTypesDistPath) &&
 		fs.existsSync(restDistPath) &&
 		fs.existsSync(restReactDistPath) &&
@@ -152,6 +157,9 @@ function ensureCreateWpTypiaBuilt() {
 		cwd: path.resolve(__dirname, ".."),
 	});
 	run("bun", ["run", "--filter", "@wp-typia/block-types", "build"], {
+		cwd: path.resolve(__dirname, ".."),
+	});
+	run("bun", ["run", "--filter", "@wp-typia/block-runtime", "build"], {
 		cwd: path.resolve(__dirname, ".."),
 	});
 	run("bun", ["run", "--filter", "@wp-typia/rest", "build"], {
@@ -300,6 +308,73 @@ function assertBlockMetadataFileReferences(projectDir) {
 				}
 			}
 		}
+	}
+}
+
+function assertGeneratedRuntimeImports(projectDir) {
+	const pending = [
+		path.join(projectDir, "src"),
+		path.join(projectDir, "scripts"),
+		path.join(projectDir, "webpack.config.js"),
+	];
+
+	while (pending.length > 0) {
+		const currentPath = pending.pop();
+		if (!currentPath || !fs.existsSync(currentPath)) {
+			continue;
+		}
+
+		const stat = fs.statSync(currentPath);
+		if (stat.isDirectory()) {
+			for (const entry of fs.readdirSync(currentPath, { withFileTypes: true })) {
+				pending.push(path.join(currentPath, entry.name));
+			}
+			continue;
+		}
+
+		if (!/\.(?:[cm]?[jt]sx?|json)$/.test(currentPath)) {
+			continue;
+		}
+
+		const contents = fs.readFileSync(currentPath, "utf8");
+		if (contents.includes("@wp-typia/create/runtime/")) {
+			throw new Error(`Found deprecated generated runtime import in ${currentPath}`);
+		}
+		if (contents.includes("@wp-typia/create/metadata-core")) {
+			throw new Error(`Found deprecated generated metadata-core import in ${currentPath}`);
+		}
+	}
+}
+
+function assertGeneratedPackageBoundary(projectDir) {
+	const packageJsonPath = path.join(projectDir, "package.json");
+	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+
+	if (packageJson.dependencies?.["@wp-typia/create"]) {
+		throw new Error("Expected generated project dependencies to omit @wp-typia/create");
+	}
+	if (packageJson.devDependencies?.["@wp-typia/create"]) {
+		throw new Error("Expected generated project devDependencies to omit @wp-typia/create");
+	}
+}
+
+function assertBasicTemplateScaffold(projectDir) {
+	const blockJsonPath = path.join(projectDir, "src", "block.json");
+	const savePath = path.join(projectDir, "src", "save.tsx");
+	const blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8"));
+	const saveSource = fs.readFileSync(savePath, "utf8");
+
+	if (blockJson.editorStyle !== "file:./index.css") {
+		throw new Error("Expected basic scaffold block.json to include editorStyle: file:./index.css");
+	}
+	if ("version" in (blockJson.attributes ?? {})) {
+		throw new Error("Expected basic scaffold attributes to use schemaVersion instead of version");
+	}
+	if (!("schemaVersion" in (blockJson.attributes ?? {}))) {
+		throw new Error("Expected basic scaffold attributes to include schemaVersion");
+	}
+	if (saveSource.includes("return null;")) {
+		throw new Error("Expected basic scaffold save.tsx to serialize stable markup instead of returning null");
 	}
 }
 
@@ -483,21 +558,21 @@ function rewriteWorkspaceDependencies(projectDir) {
 	const packageJsonPath = path.join(projectDir, "package.json");
 	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 	const localApiClientDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-api-client")}`;
-	const localCreateDependency = `file:${path.resolve(__dirname, "../packages/create")}`;
+	const localBlockRuntimeDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-block-runtime")}`;
 	const localBlockTypesDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-block-types")}`;
 	const localRestDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-rest")}`;
 
 	if (packageJson.devDependencies?.["@wp-typia/api-client"]) {
 		packageJson.devDependencies["@wp-typia/api-client"] = localApiClientDependency;
 	}
-	if (packageJson.devDependencies?.["@wp-typia/create"]) {
-		packageJson.devDependencies["@wp-typia/create"] = localCreateDependency;
+	if (packageJson.devDependencies?.["@wp-typia/block-runtime"]) {
+		packageJson.devDependencies["@wp-typia/block-runtime"] = localBlockRuntimeDependency;
 	}
 	if (packageJson.dependencies?.["@wp-typia/api-client"]) {
 		packageJson.dependencies["@wp-typia/api-client"] = localApiClientDependency;
 	}
-	if (packageJson.dependencies?.["@wp-typia/create"]) {
-		packageJson.dependencies["@wp-typia/create"] = localCreateDependency;
+	if (packageJson.dependencies?.["@wp-typia/block-runtime"]) {
+		packageJson.dependencies["@wp-typia/block-runtime"] = localBlockRuntimeDependency;
 	}
 	if (packageJson.devDependencies?.["@wp-typia/block-types"]) {
 		packageJson.devDependencies["@wp-typia/block-types"] = localBlockTypesDependency;
@@ -514,26 +589,26 @@ function rewriteWorkspaceDependencies(projectDir) {
 
 	packageJson.overrides = {
 		...(packageJson.overrides ?? {}),
+		"@wp-typia/block-runtime": localBlockRuntimeDependency,
 		"@wp-typia/api-client": localApiClientDependency,
 		"@wp-typia/block-types": localBlockTypesDependency,
-		"@wp-typia/create": localCreateDependency,
 		"@wp-typia/rest": localRestDependency,
 	};
 	packageJson.pnpm = {
 		...(packageJson.pnpm ?? {}),
 		overrides: {
 			...(packageJson.pnpm?.overrides ?? {}),
+			"@wp-typia/block-runtime": localBlockRuntimeDependency,
 			"@wp-typia/api-client": localApiClientDependency,
 			"@wp-typia/block-types": localBlockTypesDependency,
-			"@wp-typia/create": localCreateDependency,
 			"@wp-typia/rest": localRestDependency,
 		},
 	};
 	packageJson.resolutions = {
 		...(packageJson.resolutions ?? {}),
+		"@wp-typia/block-runtime": localBlockRuntimeDependency,
 		"@wp-typia/api-client": localApiClientDependency,
 		"@wp-typia/block-types": localBlockTypesDependency,
-		"@wp-typia/create": localCreateDependency,
 		"@wp-typia/rest": localRestDependency,
 	};
 
@@ -615,12 +690,17 @@ function main() {
 			assertBuildArtifacts(projectDir, projectName);
 		}
 		assertBlockMetadataFileReferences(projectDir);
+		assertGeneratedRuntimeImports(projectDir);
+		assertGeneratedPackageBoundary(projectDir);
+		if (template === "basic") {
+			assertBasicTemplateScaffold(projectDir);
+		}
 		if (template === "persistence") {
 			assertPersistenceTemplateArtifacts(projectDir, projectName);
 			assertPersistenceRestOpenApi(
 				projectDir,
 				projectName,
-				namespace ?? "create-block",
+				namespace ?? projectName,
 				persistencePolicy ?? "authenticated",
 			);
 		}
@@ -629,7 +709,7 @@ function main() {
 			assertCompoundRestOpenApi(
 				projectDir,
 				projectName,
-				namespace ?? "create-block",
+				namespace ?? projectName,
 				persistencePolicy ?? "authenticated",
 			);
 		}

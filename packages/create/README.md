@@ -88,17 +88,17 @@ Defaults keep these concerns separate:
 
 Every generated project exposes `sync-types`, and persistence-enabled scaffolds also expose `sync-rest`. `start` and `build` already run the relevant sync scripts for you. Run them manually only when you want generated metadata/schema artifacts committed before the first `start` or `build` cycle. `sync-types` stays warn-only by default, supports `-- --fail-on-lossy` when CI should fail only on lossy WordPress projections, and supports `-- --strict --report json` when CI should fail on every warning while reading a machine-friendly JSON report from stdout. These syncs do not create migration history.
 
-Generated projects can also reuse small runtime helpers from `@wp-typia/create` instead of copying local utility code:
+Generated projects can also reuse small runtime helpers from `@wp-typia/block-runtime` instead of copying local utility code:
 
 ```ts
 import currentManifest from "./typia.manifest.json";
 import {
   createEditorModel,
   type ManifestDocument,
-} from "@wp-typia/create/runtime/editor";
+} from "@wp-typia/block-runtime/editor";
 
 const editorFields = createEditorModel(currentManifest as ManifestDocument, {
-  hidden: ["id", "version"],
+  hidden: ["id", "schemaVersion"],
   manual: ["content", "linkTarget"],
   preferTextarea: ["content"],
 });
@@ -107,7 +107,7 @@ const editorFields = createEditorModel(currentManifest as ManifestDocument, {
 For nested object leaves such as `padding.top`, generated projects can keep validation-aware updates inside the shared runtime layer too:
 
 ```ts
-import { createNestedAttributeUpdater } from "@wp-typia/create/runtime/validation";
+import { createNestedAttributeUpdater } from "@wp-typia/block-runtime/validation";
 ```
 
 `runtime/editor` is intentionally lightweight. It infers editor control hints from Typia manifest metadata:
@@ -121,7 +121,7 @@ import { createNestedAttributeUpdater } from "@wp-typia/create/runtime/validatio
 
 Unions, arrays, formatted IDs/URLs, and paths marked as `manual` are reported as unsupported so projects can keep custom UI where it matters.
 
-`runtime/inspector` builds on top of those descriptors when you do want a
+`block-runtime/inspector` builds on top of those descriptors when you do want a
 higher-level inspector layer:
 
 ```tsx
@@ -131,7 +131,7 @@ import {
   type ManifestDocument,
   useEditorFields,
   useTypedAttributeUpdater,
-} from "@wp-typia/create/runtime/inspector";
+} from "@wp-typia/block-runtime/inspector";
 
 const editorFields = useEditorFields(currentManifest as ManifestDocument, {
   manual: ["content"],
@@ -160,7 +160,7 @@ import {
   syncBlockMetadata,
   syncRestOpenApi,
   syncTypeSchemas,
-} from "@wp-typia/create/metadata-core";
+} from "@wp-typia/block-runtime/metadata-core";
 
 await syncBlockMetadata({
   blockJsonFile: "src/block.json",
@@ -293,13 +293,15 @@ That projects `source` and `selector` into both `block.json` and
 sources such as `attribute` and `query` remain out of scope until companion
 metadata tags exist.
 
-Generated projects may continue using `@wp-typia/create`,
-`@wp-typia/create/metadata-core`, `@wp-typia/create/runtime/blocks`,
-`@wp-typia/create/runtime/defaults`, `@wp-typia/create/runtime/editor`,
-`@wp-typia/create/runtime/inspector`, and
-`@wp-typia/create/runtime/validation` as supported public paths through v1.
-Root exports for blocks, defaults, editor, validation, and schema helpers
-remain additive convenience aliases rather than a migration requirement.
+Generated projects should use `@wp-typia/block-runtime/metadata-core` for TypeScript
+sync and `@wp-typia/block-runtime`, `@wp-typia/block-runtime/blocks`,
+`@wp-typia/block-runtime/defaults`, `@wp-typia/block-runtime/editor`,
+`@wp-typia/block-runtime/inspector`, and
+`@wp-typia/block-runtime/validation` for shared runtime helpers.
+`@wp-typia/create/metadata-core` remains exported as a backward-compatible
+facade, and `@wp-typia/create` remains the CLI/scaffolding package.
+`@wp-typia/create/runtime/*` remains exported as a backward-compatible surface,
+but it is no longer the preferred generated-project import path.
 
 `@wp-typia/create/runtime/schema-core` remains exported, but it is not the
 canonical generated-project import path. Prefer the root schema exports such as

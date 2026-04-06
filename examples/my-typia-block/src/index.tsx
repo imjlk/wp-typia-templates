@@ -2,7 +2,7 @@ import { registerBlockType, type BlockConfiguration } from '@wordpress/blocks';
 import {
 	buildScaffoldBlockRegistration,
 	type ScaffoldBlockMetadata,
-} from '@wp-typia/create/runtime/blocks';
+} from '@wp-typia/block-runtime/blocks';
 import metadata from '../block.json';
 import { deprecated } from './deprecated';
 import Edit from './edit';
