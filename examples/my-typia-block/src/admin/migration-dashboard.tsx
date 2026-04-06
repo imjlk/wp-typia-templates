@@ -55,8 +55,9 @@ function collectStats( results: BlockScanResult[] ): MigrationStats {
 				accumulator.unknown += 1;
 			}
 			accumulator.versions[ result.analysis.currentMigrationVersion ] =
-				( accumulator.versions[ result.analysis.currentMigrationVersion ] ??
-					0 ) + 1;
+				( accumulator.versions[
+					result.analysis.currentMigrationVersion
+				] ?? 0 ) + 1;
 			accumulator.riskTotals.additive +=
 				result.analysis.riskSummary.additive.count;
 			accumulator.riskTotals.rename +=

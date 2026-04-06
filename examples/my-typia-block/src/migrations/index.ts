@@ -240,11 +240,13 @@ export async function batchMigrateScanResults(
 
 			return {
 				blockPath: result.blockPath,
-				currentMigrationVersion: resolution.analysis.currentMigrationVersion,
+				currentMigrationVersion:
+					resolution.analysis.currentMigrationVersion,
 				preview: resolution.preview,
 				reason,
 				status,
-				targetMigrationVersion: resolution.analysis.targetMigrationVersion,
+				targetMigrationVersion:
+					resolution.analysis.targetMigrationVersion,
 			} satisfies BatchMigrationBlockResult;
 		} );
 
@@ -549,11 +551,13 @@ function resolveMigrationState(
 					removed: [],
 				},
 				confidence: 1,
-				currentMigrationVersion: migrationRegistry.currentMigrationVersion,
+				currentMigrationVersion:
+					migrationRegistry.currentMigrationVersion,
 				needsMigration: false,
 				reasons: [ 'Current Typia validator accepted the attributes.' ],
 				riskSummary: EMPTY_RISK_SUMMARY,
-				targetMigrationVersion: migrationRegistry.currentMigrationVersion,
+				targetMigrationVersion:
+					migrationRegistry.currentMigrationVersion,
 				warnings: [],
 			} satisfies MigrationAnalysis,
 			preview: createPreview( {
@@ -623,7 +627,8 @@ function resolveMigrationState(
 						),
 					],
 					riskSummary: entry.riskSummary ?? EMPTY_RISK_SUMMARY,
-					targetMigrationVersion: migrationRegistry.currentMigrationVersion,
+					targetMigrationVersion:
+						migrationRegistry.currentMigrationVersion,
 					warnings: [ ...unresolved, ...validationErrors ],
 				} satisfies MigrationAnalysis,
 				preview,
