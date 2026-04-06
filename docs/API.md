@@ -60,19 +60,19 @@ Security note: external template configs are trusted JavaScript and are executed
 Migration commands remain available inside migration-capable projects such as [`examples/my-typia-block`](../examples/my-typia-block):
 
 ```bash
-wp-typia migrations init --current-version 1.0.0
+wp-typia migrations init --current-migration-version v1
 wp-typia migrations wizard
-wp-typia migrations plan --from 1.0.0
-wp-typia migrations snapshot --version 1.0.0
+wp-typia migrations plan --from-migration-version v1
+wp-typia migrations snapshot --migration-version v1
 wp-typia migrations doctor --all
-wp-typia migrations diff --from 1.0.0
-wp-typia migrations scaffold --from 1.0.0
+wp-typia migrations diff --from-migration-version v1
+wp-typia migrations scaffold --from-migration-version v1
 wp-typia migrations fixtures --all --force
 wp-typia migrations verify --all
 wp-typia migrations fuzz --all --iterations 25 --seed 1
 ```
 
-For older projects, `wp-typia migrations init --current-version <semver>` now
+For older projects, `wp-typia migrations init --current-migration-version <label>` now
 auto-detects supported retrofit layouts:
 
 - single-block projects using `src/block.json`, `src/types.ts`, and `src/save.tsx`
@@ -84,11 +84,21 @@ When `src/blocks/*` is detected, `migration:init` writes `src/migrations/config.
 with `blocks: []` entries for every discovered block target, including scaffolded
 hidden compound child blocks.
 
+Migration versions now use strict schema labels like `v1`, `v2`, and `v3`.
+Those labels are separate from your package version, plugin version, OpenAPI
+`info.version`, PHP storage version options, and block attribute
+`schemaVersion`.
+
+Older semver-based migration workspaces are now a breaking reset. If a project
+still uses `currentVersion`, `supportedVersions`, or semver-named migration
+artifacts under `src/migrations/`, back up that folder if needed, remove or
+reset it, and rerun `wp-typia migrations init --current-migration-version v1`.
+
 Migration-capable projects now also expose two read-only preview paths before
 you scaffold anything:
 
-- `wp-typia migrations wizard`: TTY-only guided legacy-version selection
-- `wp-typia migrations plan --from <semver>`: scriptable preview when you already know the edge
+- `wp-typia migrations wizard`: TTY-only guided legacy migration version selection
+- `wp-typia migrations plan --from-migration-version <label>`: scriptable preview when you already know the migration edge
 
 Both commands preview one selected edge across every eligible block target,
 list skipped targets that do not have the selected snapshot yet, and stop after
@@ -96,13 +106,13 @@ printing the next commands to run. They do not write rules, fixtures, or
 snapshots.
 
 When a built-in scaffold uses `--with-migration-ui`, the generated project is
-already initialized at `1.0.0`, includes `src/admin/migration-dashboard.tsx`,
+already initialized at `v1`, includes `src/admin/migration-dashboard.tsx`,
 and writes `src/migrations/config.ts` in the newer multi-block shape:
 
 ```ts
 export const migrationConfig = {
-  currentVersion: "1.0.0",
-  supportedVersions: ["1.0.0"],
+  currentMigrationVersion: "v1",
+  supportedMigrationVersions: ["v1"],
   snapshotDir: "src/migrations/versions",
   blocks: [
     {
@@ -121,8 +131,9 @@ Compound scaffolds use the same config shape but seed both the parent block and
 the scaffolded hidden child block as migration-capable targets. `migrations init`
 remains the retrofit command for older projects that were not scaffolded with
 `--with-migration-ui`. Add `--all` to migration verification, fixture refresh,
-and fuzzing commands when you want to cover every configured legacy version and
-every configured block target in that workspace.
+and fuzzing commands when you want to cover every configured legacy migration version and
+every configured block target in that workspace. `migrations doctor` remains
+version-scoped and is not broadened by `--all`.
 
 Compatibility note: `create-wp-typia` remains available only as an unscoped shim for `bun create wp-typia` and historical installs. New users should start from `@wp-typia/create`.
 
@@ -390,10 +401,10 @@ Migration-enabled generated projects may also wire:
 `migrations doctor` is the read-only workspace health check, `migrations fixtures`
 refreshes deterministic edge fixtures, and `migrations fuzz` replays those
 fixtures plus seeded random legacy-shaped inputs derived from the current Typia
-validator. Without `--all`, migration commands target the first legacy version
-only; `--all` runs across every configured legacy version and every configured
-block target. `migrations wizard` requires a TTY; use `migrations plan --from
-<semver>` in non-interactive shells. In TTY usage, `migrations fixtures --force`
+validator. Without `--all`, migration commands target the first legacy migration
+version only; `--all` runs across every configured legacy migration version and every configured
+block target. `migrations wizard` requires a TTY; use `migrations plan --from-migration-version
+<label>` in non-interactive shells. In TTY usage, `migrations fixtures --force`
 asks before overwriting existing fixture files, while non-interactive runs
 overwrite immediately for script compatibility.
 

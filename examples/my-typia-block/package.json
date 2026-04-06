@@ -13,7 +13,7 @@
 		"build": "bun run sync-types && bun run sync-rest && wp-scripts build --experimental-modules",
 		"start": "bun run sync-types && bun run sync-rest && wp-scripts start --experimental-modules",
 		"dev": "bun run start",
-		"migration:init": "bunx @wp-typia/create@0.10.1 migrations init --current-version 1.0.0",
+		"migration:init": "bunx @wp-typia/create@0.10.1 migrations init --current-migration-version v1",
 		"migration:snapshot": "bunx @wp-typia/create@0.10.1 migrations snapshot",
 		"migration:diff": "bunx @wp-typia/create@0.10.1 migrations diff",
 		"migration:scaffold": "bunx @wp-typia/create@0.10.1 migrations scaffold",

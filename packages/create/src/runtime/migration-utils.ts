@@ -6,6 +6,9 @@ import { formatRunScript } from "./package-managers.js";
 import type { JsonValue, ManifestAttribute, JsonObject } from "./migration-types.js";
 export { cloneJsonValue } from "./json-utils.js";
 
+const MIGRATION_VERSION_LABEL_PATTERN = /^v([1-9]\d*)$/;
+const LEGACY_SEMVER_MIGRATION_VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
+
 export function getValueAtPath(input: Record<string, unknown>, pathLabel: string): unknown {
 	return String(pathLabel)
 		.split(".")
@@ -190,28 +193,82 @@ export function isInteractiveTerminal(): boolean {
 	return Boolean(process.stdin.isTTY && process.stdout.isTTY);
 }
 
-export function resolveTargetVersion(currentVersion: string, value: string): string {
-	return value === "current" ? currentVersion : value;
+/**
+ * Resolves the `current` sentinel to the current migration version label.
+ *
+ * @param currentMigrationVersion Current migration version label for the workspace.
+ * @param value Requested target value, which may be `current`.
+ * @returns The concrete migration version label that should be used.
+ */
+export function resolveTargetMigrationVersion(currentMigrationVersion: string, value: string): string {
+	return value === "current" ? currentMigrationVersion : value;
 }
 
-export function assertSemver(value: string, label: string): void {
-	if (!/^\d+\.\d+\.\d+$/.test(value)) {
-		throw new Error(`Invalid ${label}: ${value}. Expected x.y.z`);
+/**
+ * Returns whether a value matches the canonical `vN` migration label format.
+ *
+ * @param value Candidate migration version label.
+ * @returns `true` when the value is a valid `vN` label with `N >= 1`.
+ */
+export function isMigrationVersionLabel(value: string): boolean {
+	return MIGRATION_VERSION_LABEL_PATTERN.test(value);
+}
+
+/**
+ * Returns whether a value looks like a legacy semver-based migration label.
+ *
+ * @param value Candidate migration version label.
+ * @returns `true` when the value matches the legacy `x.y.z` semver pattern.
+ */
+export function isLegacySemverMigrationVersion(value: string): boolean {
+	return LEGACY_SEMVER_MIGRATION_VERSION_PATTERN.test(value);
+}
+
+/**
+ * Throws when a migration version label does not match the canonical `vN` format.
+ *
+ * @param value Candidate migration version label.
+ * @param label Human-readable label used in the thrown error message.
+ * @returns Nothing.
+ * @throws Error When the provided value is not a valid `vN` migration label.
+ */
+export function assertMigrationVersionLabel(value: string, label: string): void {
+	if (!isMigrationVersionLabel(value)) {
+		throw new Error(`Invalid ${label}: ${value}. Expected vN with N >= 1.`);
 	}
 }
 
-export function compareSemver(left: string, right: string): number {
-	const leftParts = left.split(".").map((part) => Number.parseInt(part, 10));
-	const rightParts = right.split(".").map((part) => Number.parseInt(part, 10));
-
-	for (let index = 0; index < Math.max(leftParts.length, rightParts.length); index += 1) {
-		const delta = (leftParts[index] ?? 0) - (rightParts[index] ?? 0);
-		if (delta !== 0) {
-			return delta;
-		}
+function parseMigrationVersionNumber(value: string): number {
+	const match = value.match(MIGRATION_VERSION_LABEL_PATTERN);
+	if (!match) {
+		throw new Error(`Invalid migration version label: ${value}. Expected vN with N >= 1.`);
 	}
+	return Number.parseInt(match[1], 10);
+}
 
-	return 0;
+/**
+ * Compares two migration version labels by their numeric suffix.
+ *
+ * @param left Left migration version label.
+ * @param right Right migration version label.
+ * @returns A negative number when `left < right`, zero when equal, and a positive number when `left > right`.
+ */
+export function compareMigrationVersionLabels(left: string, right: string): number {
+	return parseMigrationVersionNumber(left) - parseMigrationVersionNumber(right);
+}
+
+/**
+ * Formats the reset guidance shown when a legacy semver migration workspace is detected.
+ *
+ * @param reason Optional leading reason that explains what legacy pattern was found.
+ * @returns A user-facing guidance string that explains how to reset to `v1` labels.
+ */
+export function formatLegacyMigrationWorkspaceResetGuidance(reason?: string): string {
+	return [
+		reason ? `${reason} ` : "",
+		"Back up `src/migrations/` if needed, remove or reset the existing migration workspace, ",
+		"then rerun `wp-typia migrations init --current-migration-version v1`.",
+	].join("");
 }
 
 export function escapeForCode(value: unknown): string {

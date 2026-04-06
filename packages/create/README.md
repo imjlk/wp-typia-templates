@@ -330,12 +330,12 @@ For persistence-capable scaffolds, generated PHP stays intentionally boring glue
 The `migrations` commands remain available for projects that include the migration workspace, such as the repo-local reference app in [`examples/my-typia-block`](../../examples/my-typia-block) or compatible remote seeds:
 
 ```bash
-wp-typia migrations init --current-version 1.0.0
+wp-typia migrations init --current-migration-version v1
 wp-typia migrations wizard
-wp-typia migrations plan --from 1.0.0
+wp-typia migrations plan --from-migration-version v1
 wp-typia migrations doctor --all
-wp-typia migrations diff --from 1.0.0
-wp-typia migrations scaffold --from 1.0.0
+wp-typia migrations diff --from-migration-version v1
+wp-typia migrations scaffold --from-migration-version v1
 wp-typia migrations fixtures --all --force
 wp-typia migrations verify --all
 wp-typia migrations fuzz --all --iterations 25 --seed 1
@@ -344,7 +344,7 @@ wp-typia migrations fuzz --all --iterations 25 --seed 1
 Built-in templates can now opt into that workflow at scaffold time with
 `--with-migration-ui`. Those generated projects:
 
-- seed an initialized migration workspace at `1.0.0`
+- seed an initialized migration workspace at `v1`
 - wire editor-side dashboard assets into the generated block editor
 - scaffold `src/migrations/config.ts` with explicit `blocks: []` entries for each migration-capable block target
 
@@ -352,8 +352,10 @@ Built-in templates can now opt into that workflow at scaffold time with
 scaffolded with `--with-migration-ui`.
 
 `wp-typia migrations wizard` is the TTY-only guided preview flow, and
-`wp-typia migrations plan --from <semver>` is the read-only preview path when
-you already know the legacy version you want to inspect. Both stop before
+`wp-typia migrations plan --from-migration-version <label>` is the read-only preview path when
+you already know the legacy migration version you want to inspect. Migration
+version labels like `v1` and `v2` are schema-lineage markers, not package or
+plugin semver. Both stop before
 scaffolding rules or refreshing fixtures.
 
 Repo development stays Bun-first. The generated project can use `bun`, `npm`, `pnpm`, or `yarn`.

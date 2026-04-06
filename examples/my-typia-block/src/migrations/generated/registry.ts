@@ -3,7 +3,7 @@ import currentManifest from '../../../typia.manifest.json';
 import type { ManifestDocument, MigrationRiskSummary } from '../helpers';
 
 interface MigrationRegistryEntry {
-	fromVersion: string;
+	fromMigrationVersion: string;
 	manifest: ManifestDocument;
 	riskSummary: MigrationRiskSummary;
 	rule: {
@@ -13,11 +13,11 @@ interface MigrationRegistryEntry {
 }
 
 export const migrationRegistry: {
-	currentVersion: string;
+	currentMigrationVersion: string;
 	currentManifest: ManifestDocument;
 	entries: MigrationRegistryEntry[];
 } = {
-	currentVersion: '1.0.0',
+	currentMigrationVersion: 'v1',
 	currentManifest: currentManifest as ManifestDocument,
 	entries: [],
 };

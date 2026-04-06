@@ -33,13 +33,13 @@ bun run sync-types
 bun run migration:init
 
 # Compare the current schema with an older snapshot
-bun run migration:diff -- --from 1.0.0
+bun run migration:diff -- --from-migration-version v1
 
 # Run the read-only migration workspace check
 bun run migration:doctor
 
 # Scaffold a legacy-to-current migration edge
-bun run migration:scaffold -- --from 1.0.0
+bun run migration:scaffold -- --from-migration-version v1
 
 # Refresh deterministic fixture cases
 bun run migration:fixtures -- --all --force
@@ -128,8 +128,8 @@ Recommended flow:
 Example:
 
 ```bash
-bun run migration:snapshot -- --version 2.0.0
-bun run migration:scaffold -- --from 1.0.0
+bun run migration:snapshot -- --migration-version v2
+bun run migration:scaffold -- --from-migration-version v1
 # review auto-applied renameMap entries
 # review nested leaf paths like "settings.label" or "linkTarget.url.href"
 # fill suggested transforms if needed

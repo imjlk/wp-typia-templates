@@ -52,11 +52,11 @@ function collectStats( results: BlockScanResult[] ): MigrationStats {
 			if ( result.analysis.needsMigration ) {
 				accumulator.needsMigration += 1;
 			}
-			if ( result.analysis.currentVersion === 'unknown' ) {
+			if ( result.analysis.currentMigrationVersion === 'unknown' ) {
 				accumulator.unknown += 1;
 			}
-			accumulator.versions[ result.analysis.currentVersion ] =
-				( accumulator.versions[ result.analysis.currentVersion ] ??
+			accumulator.versions[ result.analysis.currentMigrationVersion ] =
+				( accumulator.versions[ result.analysis.currentMigrationVersion ] ??
 					0 ) + 1;
 			accumulator.riskTotals.additive +=
 				result.analysis.riskSummary.additive.count;
@@ -352,7 +352,7 @@ export function MigrationDashboard() {
 										<div>
 											<strong>{ result.postTitle }</strong> ({ result.blockName })
 											<div style={ { fontSize: '12px', opacity: 0.8 } }>
-												{ __( 'Version', '{{textDomain}}' ) }: { result.analysis.currentVersion } → { result.analysis.targetVersion }
+												{ __( 'Migration version', '{{textDomain}}' ) }: { result.analysis.currentMigrationVersion } → { result.analysis.targetMigrationVersion }
 											</div>
 										</div>
 										<div style={ { fontSize: '12px' } }>

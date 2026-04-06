@@ -16,7 +16,7 @@ Use it as a guide when editing generated files in:
 
 Recommended workflow:
 
-1. scaffold the real edge with `bun run migration:scaffold -- --from <semver>`
+1. scaffold the real edge with `bun run migration:scaffold -- --from-migration-version <label>`
 2. review auto-applied `renameMap`
 3. copy the relevant transform patterns from this example
 4. update the generated fixture to match your real legacy payload

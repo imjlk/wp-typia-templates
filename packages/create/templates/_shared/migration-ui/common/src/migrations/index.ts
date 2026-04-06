@@ -13,8 +13,8 @@ import {
 
 export interface MigrationAnalysis {
 	needsMigration: boolean;
-	currentVersion: string;
-	targetVersion: string;
+	currentMigrationVersion: string;
+	targetMigrationVersion: string;
 	confidence: number;
 	reasons: string[];
 	riskSummary: MigrationRiskSummary;
@@ -59,11 +59,11 @@ export interface BlockScanResult {
 export interface BatchMigrationBlockResult {
 	blockName: string;
 	blockPath: number[];
-	currentVersion: string;
+	currentMigrationVersion: string;
 	preview: MigrationPreview;
 	reason?: string;
 	status: 'failed' | 'success';
-	targetVersion: string;
+	targetMigrationVersion: string;
 }
 
 export interface BatchMigrationPostResult {
@@ -115,9 +115,9 @@ interface EditablePostRecord {
 
 interface GeneratedMigrationRegistry {
 	currentManifest: ManifestDocument;
-	currentVersion: string;
+	currentMigrationVersion: string;
 	entries: Array< {
-		fromVersion: string;
+		fromMigrationVersion: string;
 		manifest: ManifestDocument;
 		riskSummary: MigrationRiskSummary;
 		rule: {
@@ -131,7 +131,7 @@ interface MigrationTargetRuntime {
 	blockName: string;
 	deprecated: readonly unknown[];
 	key: string;
-	legacyVersions: readonly string[];
+	legacyMigrationVersions: readonly string[];
 	registry: GeneratedMigrationRegistry;
 	validators: {
 		validate(
@@ -291,11 +291,11 @@ export async function batchMigrateScanResults(
 				return {
 					blockName: result.blockName,
 					blockPath: result.blockPath,
-					currentVersion: 'unknown',
+					currentMigrationVersion: 'unknown',
 					preview: result.preview,
 					reason: `Unsupported migration block: ${ result.blockName }`,
 					status: 'failed',
-					targetVersion: 'unknown',
+					targetMigrationVersion: 'unknown',
 				} satisfies BatchMigrationBlockResult;
 			}
 			const resolution = resolveMigrationState( target, result.attributes );
@@ -313,11 +313,11 @@ export async function batchMigrateScanResults(
 			return {
 				blockName: result.blockName,
 				blockPath: result.blockPath,
-				currentVersion: resolution.analysis.currentVersion,
+				currentMigrationVersion: resolution.analysis.currentMigrationVersion,
 				preview: resolution.preview,
 				reason,
 				status,
-				targetVersion: resolution.analysis.targetVersion,
+				targetMigrationVersion: resolution.analysis.targetMigrationVersion,
 			} satisfies BatchMigrationBlockResult;
 		} );
 
@@ -409,7 +409,7 @@ export function generateMigrationReport(
 	for ( const entry of scanResults ) {
 		report += `## ${ entry.postTitle } (#${ entry.postId })\n`;
 		report += `- Block: ${ entry.blockName }\n`;
-		report += `- Version: ${ entry.analysis.currentVersion } -> ${ entry.analysis.targetVersion }\n`;
+		report += `- Migration version: ${ entry.analysis.currentMigrationVersion } -> ${ entry.analysis.targetMigrationVersion }\n`;
 		report += `- Confidence: ${ entry.analysis.confidence }\n`;
 		report += `- Risk summary: ${ formatRiskSummary(
 			entry.analysis.riskSummary
@@ -455,12 +455,14 @@ export const migrationUtils = {
 		return {
 			targets: targets.map( ( target ) => ( {
 				blockName: target.blockName,
-				currentVersion: target.registry.currentVersion,
+				currentMigrationVersion: target.registry.currentMigrationVersion,
 				deprecatedEntries: target.deprecated.length,
 				key: target.key,
-				supportedVersions: target.registry.entries.map(
-					( entry ) => entry.fromVersion
-				),
+				legacyMigrationVersions: target.legacyMigrationVersions,
+				supportedMigrationVersions: [
+					...target.legacyMigrationVersions,
+					target.registry.currentMigrationVersion,
+				],
 			} ) ),
 		};
 	},
@@ -621,11 +623,11 @@ function resolveMigrationState(
 					removed: [],
 				},
 				confidence: 1,
-				currentVersion: target.registry.currentVersion,
+				currentMigrationVersion: target.registry.currentMigrationVersion,
 				needsMigration: false,
 				reasons: [ 'Current Typia validator accepted the attributes.' ],
 				riskSummary: EMPTY_RISK_SUMMARY,
-				targetVersion: target.registry.currentVersion,
+				targetMigrationVersion: target.registry.currentMigrationVersion,
 				warnings: [],
 			} satisfies MigrationAnalysis,
 			preview: createPreview( {
@@ -683,10 +685,10 @@ function resolveMigrationState(
 				analysis: {
 					affectedFields: delta,
 					confidence: unresolved.length > 0 ? 0.8 : 0.95,
-					currentVersion: entry.fromVersion,
+					currentMigrationVersion: entry.fromMigrationVersion,
 					needsMigration: true,
 					reasons: [
-						`Snapshot ${ entry.fromVersion } matched this block.`,
+						`Snapshot ${ entry.fromMigrationVersion } matched this block.`,
 						...preview.unionBranches.map(
 							( branch ) =>
 								`Union ${ branch.field }: ${
@@ -697,7 +699,7 @@ function resolveMigrationState(
 						),
 					],
 					riskSummary: entry.riskSummary ?? EMPTY_RISK_SUMMARY,
-					targetVersion: target.registry.currentVersion,
+					targetMigrationVersion: target.registry.currentMigrationVersion,
 					warnings: [ ...unresolved, ...validationErrors ],
 				} satisfies MigrationAnalysis,
 				preview,
@@ -713,13 +715,13 @@ function resolveMigrationState(
 				removed: [],
 			},
 			confidence: 0.2,
-			currentVersion: 'unknown',
+			currentMigrationVersion: 'unknown',
 			needsMigration: true,
 			reasons: [
 				'No legacy snapshot matched and current Typia validator rejected the attributes.',
 			],
 			riskSummary: EMPTY_RISK_SUMMARY,
-			targetVersion: target.registry.currentVersion,
+			targetMigrationVersion: target.registry.currentMigrationVersion,
 			warnings: formatValidationErrors( currentValidation.errors ),
 		} satisfies MigrationAnalysis,
 		preview: createPreview( {

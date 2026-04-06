@@ -353,13 +353,13 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(packageJson.dependencies["@wordpress/api-fetch"]).toBe("^7.42.0");
 		expect(packageJson.devDependencies["@wp-typia/create"]).toBeUndefined();
 		expect(packageJson.scripts["migration:init"]).toBe(
-			`npx --yes @wp-typia/create@${createPackageManifest.version} migrations init --current-version 1.0.0`,
+			`npx --yes @wp-typia/create@${createPackageManifest.version} migrations init --current-migration-version v1`,
 		);
 		expect(packageJson.scripts["migration:doctor"]).toBe(
 			`npx --yes @wp-typia/create@${createPackageManifest.version} migrations doctor --all`,
 		);
 		expect(readme).toContain("## Migration UI");
-		expect(readme).toContain("initialized migration workspace at `1.0.0`");
+		expect(readme).toContain("initialized migration workspace at `v1`");
 		expect(generatedEdit).toContain("MigrationDashboard");
 		expect(generatedIndex).toContain("./migrations/generated/demo-migration-ui/deprecated");
 		expect(generatedIndex).toContain("deprecated as NonNullable<BlockConfiguration<DemoMigrationUiAttributes>['deprecated']>");
@@ -2086,7 +2086,7 @@ describe("@wp-typia/create scaffolding", () => {
 
 		expect(helpOutput).toContain("wp-typia templates list");
 		expect(helpOutput).toContain("Package managers: bun, npm, pnpm, yarn");
-		expect(errorMessage).toContain("`migrations init` requires --current-version <semver>.");
+		expect(errorMessage).toContain("`migrations init` requires --current-migration-version <label>.");
 	});
 
 	test("bun entry exposes templates and doctor commands", () => {
@@ -2111,7 +2111,7 @@ describe("@wp-typia/create scaffolding", () => {
 
 		expect(helpOutput).toContain("wp-typia templates list");
 		expect(helpOutput).toContain("Package managers: bun, npm, pnpm, yarn");
-		expect(errorMessage).toContain("`migrations init` requires --current-version <semver>.");
+		expect(errorMessage).toContain("`migrations init` requires --current-migration-version <label>.");
 	});
 
 	test("parses github template locators with refs", () => {
