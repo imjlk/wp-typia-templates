@@ -80,20 +80,40 @@ export interface UnionBranchSummary {
 	field: string;
 }
 
+/**
+ * Declares the migration-lineage labels and block targets used by a project migration workspace.
+ *
+ * These labels describe schema lineage such as `v1`, `v2`, and `v3`; they do
+ * not represent package, plugin, or release versions.
+ */
 export interface MigrationConfig {
+	/** Optional single-block name used by legacy-root retrofit layouts. */
 	blockName?: string;
+	/** Optional explicit block target list for multi-block migration workspaces. */
 	blocks?: MigrationBlockConfig[];
+	/** Current migration-lineage label for newly generated snapshots and rules. */
 	currentMigrationVersion: string;
+	/** Relative directory that stores versioned migration snapshots. */
 	snapshotDir: string;
+	/** Ordered migration-lineage labels configured for this workspace, including the current label. */
 	supportedMigrationVersions: string[];
 }
 
+/**
+ * Declares one migration-capable block target inside a project workspace.
+ */
 export interface MigrationBlockConfig {
+	/** Relative path to the target block.json metadata file. */
 	blockJsonFile: string;
+	/** Registered block name for this migration target. */
 	blockName: string;
+	/** Stable block key used for generated file naming and registry entries. */
 	key: string;
+	/** Relative path to the generated manifest snapshot input for the block. */
 	manifestFile: string;
+	/** Relative path to the saved-markup source file used for snapshot capture. */
 	saveFile: string;
+	/** Relative path to the canonical types source for the block. */
 	typesFile: string;
 }
 

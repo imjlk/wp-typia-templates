@@ -458,9 +458,11 @@ export const migrationUtils = {
 				currentMigrationVersion: target.registry.currentMigrationVersion,
 				deprecatedEntries: target.deprecated.length,
 				key: target.key,
-				supportedMigrationVersions: target.registry.entries.map(
-					( entry ) => entry.fromMigrationVersion
-				),
+				legacyMigrationVersions: target.legacyMigrationVersions,
+				supportedMigrationVersions: [
+					...target.legacyMigrationVersions,
+					target.registry.currentMigrationVersion,
+				],
 			} ) ),
 		};
 	},

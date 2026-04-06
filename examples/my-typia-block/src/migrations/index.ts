@@ -380,13 +380,18 @@ export function generateMigrationReport(
 
 export const migrationUtils = {
 	getStats() {
+		const legacyMigrationVersions = migrationRegistry.entries.map(
+			( entry ) => entry.fromMigrationVersion
+		);
 		return {
 			blockName: migrationConfig.blockName,
 			currentMigrationVersion: migrationRegistry.currentMigrationVersion,
 			deprecatedEntries: deprecated.length,
-			supportedMigrationVersions: migrationRegistry.entries.map(
-				( entry ) => entry.fromMigrationVersion
-			),
+			legacyMigrationVersions,
+			supportedMigrationVersions: [
+				...legacyMigrationVersions,
+				migrationRegistry.currentMigrationVersion,
+			],
 		};
 	},
 	testMigration(

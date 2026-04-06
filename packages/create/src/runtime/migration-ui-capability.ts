@@ -25,6 +25,8 @@ interface ApplyMigrationUiCapabilityOptions {
 	variables: ScaffoldTemplateVariables;
 }
 
+const INITIAL_MIGRATION_VERSION = "v1";
+
 async function mutatePackageJson(
 	projectDir: string,
 	mutate: (packageJson: PackageJsonShape) => void,
@@ -268,7 +270,7 @@ export async function applyMigrationUiCapability({
 		};
 		packageJson.scripts = {
 			...(packageJson.scripts ?? {}),
-			"migration:init": migrationCli("init --current-migration-version v1"),
+			"migration:init": migrationCli(`init --current-migration-version ${INITIAL_MIGRATION_VERSION}`),
 			"migration:snapshot": migrationCli("snapshot"),
 			"migration:diff": migrationCli("diff"),
 			"migration:scaffold": migrationCli("scaffold"),
@@ -285,5 +287,5 @@ export async function applyMigrationUiCapability({
 		await applySingleBlockPatches(projectDir, variables);
 	}
 
-	await seedProjectMigrations(projectDir, "v1", buildMigrationBlocks(templateId, variables));
+	await seedProjectMigrations(projectDir, INITIAL_MIGRATION_VERSION, buildMigrationBlocks(templateId, variables));
 }

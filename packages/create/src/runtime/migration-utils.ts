@@ -193,18 +193,45 @@ export function isInteractiveTerminal(): boolean {
 	return Boolean(process.stdin.isTTY && process.stdout.isTTY);
 }
 
+/**
+ * Resolves the `current` sentinel to the current migration version label.
+ *
+ * @param currentMigrationVersion Current migration version label for the workspace.
+ * @param value Requested target value, which may be `current`.
+ * @returns The concrete migration version label that should be used.
+ */
 export function resolveTargetMigrationVersion(currentMigrationVersion: string, value: string): string {
 	return value === "current" ? currentMigrationVersion : value;
 }
 
+/**
+ * Returns whether a value matches the canonical `vN` migration label format.
+ *
+ * @param value Candidate migration version label.
+ * @returns `true` when the value is a valid `vN` label with `N >= 1`.
+ */
 export function isMigrationVersionLabel(value: string): boolean {
 	return MIGRATION_VERSION_LABEL_PATTERN.test(value);
 }
 
+/**
+ * Returns whether a value looks like a legacy semver-based migration label.
+ *
+ * @param value Candidate migration version label.
+ * @returns `true` when the value matches the legacy `x.y.z` semver pattern.
+ */
 export function isLegacySemverMigrationVersion(value: string): boolean {
 	return LEGACY_SEMVER_MIGRATION_VERSION_PATTERN.test(value);
 }
 
+/**
+ * Throws when a migration version label does not match the canonical `vN` format.
+ *
+ * @param value Candidate migration version label.
+ * @param label Human-readable label used in the thrown error message.
+ * @returns Nothing.
+ * @throws Error When the provided value is not a valid `vN` migration label.
+ */
 export function assertMigrationVersionLabel(value: string, label: string): void {
 	if (!isMigrationVersionLabel(value)) {
 		throw new Error(`Invalid ${label}: ${value}. Expected vN with N >= 1.`);
@@ -219,10 +246,23 @@ function parseMigrationVersionNumber(value: string): number {
 	return Number.parseInt(match[1], 10);
 }
 
+/**
+ * Compares two migration version labels by their numeric suffix.
+ *
+ * @param left Left migration version label.
+ * @param right Right migration version label.
+ * @returns A negative number when `left < right`, zero when equal, and a positive number when `left > right`.
+ */
 export function compareMigrationVersionLabels(left: string, right: string): number {
 	return parseMigrationVersionNumber(left) - parseMigrationVersionNumber(right);
 }
 
+/**
+ * Formats the reset guidance shown when a legacy semver migration workspace is detected.
+ *
+ * @param reason Optional leading reason that explains what legacy pattern was found.
+ * @returns A user-facing guidance string that explains how to reset to `v1` labels.
+ */
 export function formatLegacyMigrationWorkspaceResetGuidance(reason?: string): string {
 	return [
 		reason ? `${reason} ` : "",

@@ -70,6 +70,103 @@ function normalizeRelativePath(value: string): string {
 	return value.replace(/\\/g, "/");
 }
 
+function stripCommentsAndStrings(source: string): string {
+	let result = "";
+	let index = 0;
+	let mode: "block-comment" | "code" | "double-quote" | "line-comment" | "single-quote" | "template" = "code";
+
+	while (index < source.length) {
+		const current = source[index];
+		const next = source[index + 1];
+
+		if (mode === "code") {
+			if (current === "/" && next === "/") {
+				result += "  ";
+				index += 2;
+				mode = "line-comment";
+				continue;
+			}
+			if (current === "/" && next === "*") {
+				result += "  ";
+				index += 2;
+				mode = "block-comment";
+				continue;
+			}
+			if (current === "'") {
+				result += current;
+				index += 1;
+				mode = "single-quote";
+				continue;
+			}
+			if (current === "\"") {
+				result += current;
+				index += 1;
+				mode = "double-quote";
+				continue;
+			}
+			if (current === "`") {
+				result += current;
+				index += 1;
+				mode = "template";
+				continue;
+			}
+			result += current;
+			index += 1;
+			continue;
+		}
+
+		if (mode === "line-comment") {
+			result += current === "\n" ? "\n" : " ";
+			index += 1;
+			if (current === "\n") {
+				mode = "code";
+			}
+			continue;
+		}
+
+		if (mode === "block-comment") {
+			if (current === "*" && next === "/") {
+				result += "  ";
+				index += 2;
+				mode = "code";
+				continue;
+			}
+			result += current === "\n" ? "\n" : " ";
+			index += 1;
+			continue;
+		}
+
+		if (current === "\\") {
+			result += index + 1 < source.length ? "  " : " ";
+			index += Math.min(2, source.length - index);
+			continue;
+		}
+
+		const closingQuote =
+			mode === "single-quote"
+				? "'"
+				: mode === "double-quote"
+					? "\""
+					: "`";
+		if (current === closingQuote) {
+			result += current;
+			index += 1;
+			mode = "code";
+			continue;
+		}
+
+		result += current === "\n" ? "\n" : " ";
+		index += 1;
+	}
+
+	return result;
+}
+
+function hasLegacyConfigKeys(source: string): boolean {
+	const sanitizedSource = stripCommentsAndStrings(source);
+	return /\bcurrentVersion\s*:/u.test(sanitizedSource) || /\bsupportedVersions\s*:/u.test(sanitizedSource);
+}
+
 function createLegacyMigrationWorkspaceResetError(reason: string): Error {
 	return new Error(
 		`Detected a legacy semver-based migration workspace. ${formatLegacyMigrationWorkspaceResetGuidance(reason)}`,
@@ -686,7 +783,7 @@ export function assertNoLegacySemverMigrationWorkspace(projectDir: string): void
 	const paths = getProjectPaths(projectDir);
 	if (fs.existsSync(paths.configFile)) {
 		const source = fs.readFileSync(paths.configFile, "utf8");
-		if (/\bcurrentVersion\s*:/.test(source) || /\bsupportedVersions\s*:/.test(source)) {
+		if (hasLegacyConfigKeys(source)) {
 			throw createLegacyMigrationWorkspaceResetError(
 				"Detected legacy config keys `currentVersion` / `supportedVersions` in `src/migrations/config.ts`.",
 			);
@@ -826,7 +923,7 @@ export function discoverMigrationEntries(state: MigrationProjectState): Migratio
 }
 
 export function parseMigrationConfig(source: string): MigrationConfig {
-	if (/\bcurrentVersion\s*:/.test(source) || /\bsupportedVersions\s*:/.test(source)) {
+	if (hasLegacyConfigKeys(source)) {
 		throw createLegacyMigrationWorkspaceResetError(
 			"Detected legacy config keys `currentVersion` / `supportedVersions` in `src/migrations/config.ts`.",
 		);

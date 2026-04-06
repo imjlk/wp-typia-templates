@@ -1947,6 +1947,17 @@ describe("wp-typia migrations", () => {
 		);
 	});
 
+	test("loadMigrationProject ignores commented legacy semver config key names", () => {
+		const projectDir = path.join(tempRoot, "commented-legacy-semver-config-project");
+		createCurrentProjectFiles(projectDir);
+		writeFile(
+			path.join(projectDir, "src", "migrations", "config.ts"),
+			`// renamed from currentVersion / supportedVersions during the vN reset\nexport const migrationConfig = {\n\tblockName: "create-block/migration-smoke",\n\tcurrentMigrationVersion: "v1",\n\tsupportedMigrationVersions: ["v1"],\n\tsnapshotDir: "src/migrations/versions",\n\tcomment: "legacy currentVersion should not trip reset guidance",\n} as const;\n\nexport default migrationConfig;\n`,
+		);
+
+		expect(() => loadMigrationProject(projectDir)).not.toThrow();
+	});
+
 	test("loadMigrationProject rejects legacy semver-named migration artifacts with reset guidance", () => {
 		const projectDir = path.join(tempRoot, "legacy-semver-artifacts-project");
 		createVersionedMigrationProject(projectDir);

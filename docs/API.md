@@ -132,7 +132,8 @@ the scaffolded hidden child block as migration-capable targets. `migrations init
 remains the retrofit command for older projects that were not scaffolded with
 `--with-migration-ui`. Add `--all` to migration verification, fixture refresh,
 and fuzzing commands when you want to cover every configured legacy migration version and
-every configured block target in that workspace.
+every configured block target in that workspace. `migrations doctor` remains
+version-scoped and is not broadened by `--all`.
 
 Compatibility note: `create-wp-typia` remains available only as an unscoped shim for `bun create wp-typia` and historical installs. New users should start from `@wp-typia/create`.
 

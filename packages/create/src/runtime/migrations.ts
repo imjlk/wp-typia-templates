@@ -245,7 +245,6 @@ export function parseMigrationArgs(argv: string[]): ParsedMigrationArgs {
 			arg.startsWith("--to=")
 		) {
 			throwLegacyMigrationFlagError(arg);
-			continue;
 		}
 
 		throw new Error(`Unknown migrations flag: ${arg}`);
@@ -500,6 +499,15 @@ export async function wizardProjectMigrations(
 	}
 }
 
+/**
+ * Initializes migration scaffolding for a detected single-block or multi-block project layout.
+ *
+ * @param projectDir Absolute or relative project directory containing the migration workspace.
+ * @param currentMigrationVersion Initial migration version label to seed, such as `v1`.
+ * @param options Console rendering options used to report retrofit detection and initialization output.
+ * @returns The loaded migration project state after the config, snapshots, and generated files are written.
+ * @throws Error When the project layout is unsupported or the migration version label is invalid.
+ */
 export function initProjectMigrations(
 	projectDir: string,
 	currentMigrationVersion: string,
@@ -543,6 +551,15 @@ export function initProjectMigrations(
 	return loadMigrationProject(projectDir);
 }
 
+/**
+ * Captures the current project state as a named migration snapshot and refreshes generated artifacts.
+ *
+ * @param projectDir Absolute or relative project directory containing the migration workspace.
+ * @param migrationVersion Migration version label to snapshot, such as `v2`.
+ * @param options Console rendering options and snapshot side-effect flags.
+ * @returns The loaded migration project state after the snapshot files and registry outputs are refreshed.
+ * @throws Error When the label is invalid, the project is not migration-capable, or `sync-types` fails.
+ */
 export function snapshotProjectVersion(
 	projectDir: string,
 	migrationVersion: string,
