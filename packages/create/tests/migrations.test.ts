@@ -1972,6 +1972,19 @@ describe("wp-typia migrations", () => {
 		expect(state.config.supportedMigrationVersions).toEqual(["v1", "v3"]);
 	});
 
+	test("loadMigrationProject ignores legacy-looking nested config helper objects", () => {
+		const projectDir = path.join(tempRoot, "nested-legacy-helper-config-project");
+		createCurrentProjectFiles(projectDir);
+		writeFile(
+			path.join(projectDir, "src", "migrations", "config.ts"),
+			`export const migrationConfig = {\n\thelperMetadata: {\n\t\tcurrentVersion: "legacy-note",\n\t\tsupportedVersions: ["legacy-note"],\n\t},\n\tblockName: "create-block/migration-smoke",\n\tcurrentMigrationVersion: "v3",\n\tsupportedMigrationVersions: ["v1", "v3"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
+		);
+
+		const state = loadMigrationProject(projectDir);
+		expect(state.config.currentMigrationVersion).toBe("v3");
+		expect(state.config.supportedMigrationVersions).toEqual(["v1", "v3"]);
+	});
+
 	test("loadMigrationProject rejects legacy semver-named migration artifacts with reset guidance", () => {
 		const projectDir = path.join(tempRoot, "legacy-semver-artifacts-project");
 		createVersionedMigrationProject(projectDir);
