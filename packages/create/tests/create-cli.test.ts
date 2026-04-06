@@ -1108,6 +1108,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(parentManifest.sourceType).toBe("DemoCompoundAttributes");
 		expect(parentManifest.attributes.heading.typia.defaultValue).toBe("Demo Compound");
 		expect(childBlockJson.parent).toEqual(["create-block/demo-compound"]);
+		expect(childBlockJson.style).toBeUndefined();
 		expect(childBlockJson.supports.inserter).toBe(false);
 		expect(childManifest.sourceType).toBe("DemoCompoundItemAttributes");
 		expect(childManifest.attributes.title.typia.defaultValue).toBe("Demo Compound Item");
