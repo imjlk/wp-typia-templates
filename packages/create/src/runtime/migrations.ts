@@ -13,6 +13,7 @@ import { createMigrationFuzzPlan } from "./migration-fuzz-plan.js";
 import { createEdgeFixtureDocument, ensureEdgeFixtureFile } from "./migration-fixtures.js";
 import {
 	assertRuleHasNoTodos,
+	assertNoLegacySemverMigrationWorkspace,
 	discoverMigrationInitLayout,
 	discoverMigrationEntries,
 	ensureAdvancedMigrationProject,
@@ -514,6 +515,7 @@ export function initProjectMigrations(
 	{ renderLine = console.log as RenderLine }: CommandRenderOptions = {},
 ) {
 	assertMigrationVersionLabel(currentMigrationVersion, "current migration version");
+	assertNoLegacySemverMigrationWorkspace(projectDir);
 	const discoveredLayout = discoverMigrationInitLayout(projectDir);
 	const configuredBlocks = discoveredLayout.mode === "multi" ? discoveredLayout.blocks : undefined;
 	ensureAdvancedMigrationProject(projectDir, configuredBlocks);

@@ -11,6 +11,7 @@ import { createMigrationDiff } from "../src/runtime/migration-diff.js";
 import { parseMigrationArgs } from "../src/runtime/index.js";
 import {
 	fixturesProjectMigrations,
+	initProjectMigrations,
 	planProjectMigrations,
 	runMigrationCommand,
 	snapshotProjectVersion,
@@ -1958,6 +1959,19 @@ describe("wp-typia migrations", () => {
 		expect(() => loadMigrationProject(projectDir)).not.toThrow();
 	});
 
+	test("loadMigrationProject ignores commented migration version label properties", () => {
+		const projectDir = path.join(tempRoot, "commented-migration-version-project");
+		createCurrentProjectFiles(projectDir);
+		writeFile(
+			path.join(projectDir, "src", "migrations", "config.ts"),
+			`// currentMigrationVersion: "v99"\n// supportedMigrationVersions: ["v99"]\nexport const migrationConfig = {\n\tblockName: "create-block/migration-smoke",\n\tcurrentMigrationVersion: "v3",\n\tsupportedMigrationVersions: ["v1", "v3"],\n\tsnapshotDir: "src/migrations/versions",\n\tnote: "currentMigrationVersion: 'v99' should not be parsed",\n} as const;\n\nexport default migrationConfig;\n`,
+		);
+
+		const state = loadMigrationProject(projectDir);
+		expect(state.config.currentMigrationVersion).toBe("v3");
+		expect(state.config.supportedMigrationVersions).toEqual(["v1", "v3"]);
+	});
+
 	test("loadMigrationProject rejects legacy semver-named migration artifacts with reset guidance", () => {
 		const projectDir = path.join(tempRoot, "legacy-semver-artifacts-project");
 		createVersionedMigrationProject(projectDir);
@@ -1973,6 +1987,19 @@ describe("wp-typia migrations", () => {
 		expect(() => loadMigrationProject(projectDir)).toThrow(
 			/Detected a legacy semver-based migration workspace[\s\S]*1\.0\.0[\s\S]*rerun `wp-typia migrations init --current-migration-version v1`/,
 		);
+	});
+
+	test("migrations init rejects legacy semver workspaces before rewriting the config", () => {
+		const projectDir = path.join(tempRoot, "legacy-semver-init-project");
+		createCurrentProjectFiles(projectDir);
+		const legacyConfigPath = path.join(projectDir, "src", "migrations", "config.ts");
+		const legacyConfigSource = `export const migrationConfig = {\n\tblockName: "create-block/migration-smoke",\n\tcurrentVersion: "1.0.0",\n\tsupportedVersions: ["1.0.0"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`;
+		writeFile(legacyConfigPath, legacyConfigSource);
+
+		expect(() => initProjectMigrations(projectDir, "v1")).toThrow(
+			/Detected a legacy semver-based migration workspace[\s\S]*rerun `wp-typia migrations init --current-migration-version v1`/,
+		);
+		expect(fs.readFileSync(legacyConfigPath, "utf8")).toBe(legacyConfigSource);
 	});
 
 	test("wizard cancellation exits cleanly without writing migration artifacts", async () => {

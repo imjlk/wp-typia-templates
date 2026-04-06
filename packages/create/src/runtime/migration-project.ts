@@ -167,6 +167,91 @@ function hasLegacyConfigKeys(source: string): boolean {
 	return /\bcurrentVersion\s*:/u.test(sanitizedSource) || /\bsupportedVersions\s*:/u.test(sanitizedSource);
 }
 
+function findConfigPropertyValueStart(source: string, key: string): number {
+	const sanitizedSource = stripCommentsAndStrings(source);
+	const pattern = new RegExp(`\\b${key}\\s*:\\s*`, "u");
+	const match = pattern.exec(sanitizedSource);
+	if (!match) {
+		return -1;
+	}
+	let index = match.index + match[0].length;
+	while (index < source.length && /\s/u.test(source[index])) {
+		index += 1;
+	}
+	return index;
+}
+
+function readQuotedString(source: string, startIndex: number): string | null {
+	const quote = source[startIndex];
+	if (quote !== "\"" && quote !== "'") {
+		return null;
+	}
+
+	let value = "";
+	let index = startIndex + 1;
+	while (index < source.length) {
+		const current = source[index];
+		if (current === "\\") {
+			if (index + 1 < source.length) {
+				value += source.slice(index, index + 2);
+				index += 2;
+				continue;
+			}
+			value += current;
+			index += 1;
+			continue;
+		}
+		if (current === quote) {
+			return value;
+		}
+		value += current;
+		index += 1;
+	}
+
+	return null;
+}
+
+function readStringArrayLiteral(source: string, startIndex: number): string[] | null {
+	if (source[startIndex] !== "[") {
+		return null;
+	}
+
+	let bracketDepth = 0;
+	let index = startIndex;
+	let quote: "'" | "\"" | null = null;
+	while (index < source.length) {
+		const current = source[index];
+		if (quote) {
+			if (current === "\\") {
+				index += 2;
+				continue;
+			}
+			if (current === quote) {
+				quote = null;
+			}
+			index += 1;
+			continue;
+		}
+		if (current === "\"" || current === "'") {
+			quote = current;
+			index += 1;
+			continue;
+		}
+		if (current === "[") {
+			bracketDepth += 1;
+		} else if (current === "]") {
+			bracketDepth -= 1;
+			if (bracketDepth === 0) {
+				const body = source.slice(startIndex + 1, index);
+				return [...body.matchAll(/["']([^"']+)["']/gu)].map((match) => match[1]);
+			}
+		}
+		index += 1;
+	}
+
+	return null;
+}
+
 function createLegacyMigrationWorkspaceResetError(reason: string): Error {
 	return new Error(
 		`Detected a legacy semver-based migration workspace. ${formatLegacyMigrationWorkspaceResetGuidance(reason)}`,
@@ -779,6 +864,13 @@ function findLegacySemverMigrationArtifacts(projectDir: string): string[] {
 	return matches;
 }
 
+/**
+ * Guards a project directory against legacy semver-based migration workspaces.
+ *
+ * @param projectDir Absolute or relative project directory containing the migration workspace.
+ * @returns Nothing.
+ * @throws Error When legacy config keys or semver-named migration artifacts are detected.
+ */
 export function assertNoLegacySemverMigrationWorkspace(projectDir: string): void {
 	const paths = getProjectPaths(projectDir);
 	if (fs.existsSync(paths.configFile)) {
@@ -932,20 +1024,15 @@ export function parseMigrationConfig(source: string): MigrationConfig {
 	const blockName = matchConfigValue(source, "blockName");
 	const currentMigrationVersion = matchConfigValue(source, "currentMigrationVersion");
 	const snapshotDir = matchConfigValue(source, "snapshotDir");
-	const supportedVersionsMatch = source.match(/supportedMigrationVersions:\s*\[([\s\S]*?)\]/);
+	const supportedMigrationVersions = matchConfigStringArrayValue(source, "supportedMigrationVersions");
 	const blocks = parseMigrationBlocks(source);
 
-	if (!currentMigrationVersion || !snapshotDir || !supportedVersionsMatch) {
+	if (!currentMigrationVersion || !snapshotDir || !supportedMigrationVersions) {
 		throw new Error("Unable to parse migration config. Regenerate with `wp-typia migrations init --current-migration-version v1`.");
 	}
 	if (!blockName && blocks.length === 0) {
 		throw new Error("Migration config must define `blockName` or `blocks`.");
 	}
-
-	const supportedMigrationVersions = supportedVersionsMatch[1]
-		.split(",")
-		.map((item) => item.trim().replace(/^["']|["']$/g, ""))
-		.filter(Boolean);
 
 	if (!isMigrationVersionLabel(currentMigrationVersion)) {
 		if (isLegacySemverMigrationVersion(currentMigrationVersion)) {
@@ -1009,8 +1096,19 @@ function parseMigrationBlocks(source: string): MigrationBlockConfig[] {
 }
 
 function matchConfigValue(source: string, key: string): string | null {
-	const pattern = new RegExp(`${key}:\\s*["']([^"']+)["']`);
-	return source.match(pattern)?.[1] ?? null;
+	const valueStart = findConfigPropertyValueStart(source, key);
+	if (valueStart < 0) {
+		return null;
+	}
+	return readQuotedString(source, valueStart);
+}
+
+function matchConfigStringArrayValue(source: string, key: string): string[] | null {
+	const valueStart = findConfigPropertyValueStart(source, key);
+	if (valueStart < 0) {
+		return null;
+	}
+	return readStringArrayLiteral(source, valueStart);
 }
 
 export function writeMigrationConfig(projectDir: string, config: MigrationConfig): void {
