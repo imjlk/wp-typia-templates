@@ -26,7 +26,7 @@ ___
 
 ### endpoint
 
-• **endpoint**: [`EndpointOpenApiEndpointDefinition`](../modules/packages_create_src_runtime_schema_core.md#endpointopenapiendpointdefinition)
+• **endpoint**: [`EndpointOpenApiEndpointDefinition`](../modules/packages_wp_typia_block_runtime_src_schema_core.md#endpointopenapiendpointdefinition)
 
 #### Defined in
 

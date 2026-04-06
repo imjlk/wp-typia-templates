@@ -33,7 +33,7 @@ ___
 
 ### authMode
 
-• `Optional` **authMode**: [`EndpointOpenApiAuthMode`](../modules/packages_create_src_runtime_schema_core.md#endpointopenapiauthmode)
+• `Optional` **authMode**: [`EndpointOpenApiAuthMode`](../modules/packages_wp_typia_block_runtime_src_schema_core.md#endpointopenapiauthmode)
 
 #### Defined in
 
@@ -63,7 +63,7 @@ ___
 
 ### method
 
-• **method**: [`EndpointOpenApiMethod`](../modules/packages_create_src_runtime_schema_core.md#endpointopenapimethod)
+• **method**: [`EndpointOpenApiMethod`](../modules/packages_wp_typia_block_runtime_src_schema_core.md#endpointopenapimethod)
 
 #### Defined in
 

@@ -18,7 +18,7 @@ normalizes them into a scaffold project.
 ### Properties
 
 - [apiClientPackageVersion](packages_create_src_runtime_template_source.TemplateVariableContext.md#apiclientpackageversion)
-- [createPackageVersion](packages_create_src_runtime_template_source.TemplateVariableContext.md#createpackageversion)
+- [blockRuntimePackageVersion](packages_create_src_runtime_template_source.TemplateVariableContext.md#blockruntimepackageversion)
 - [blockTypesPackageVersion](packages_create_src_runtime_template_source.TemplateVariableContext.md#blocktypespackageversion)
 - [pascalCase](packages_create_src_runtime_template_source.TemplateVariableContext.md#pascalcase)
 - [phpPrefix](packages_create_src_runtime_template_source.TemplateVariableContext.md#phpprefix)
@@ -43,11 +43,11 @@ Version string for `@wp-typia/api-client` used in generated dependencies.
 
 ___
 
-### createPackageVersion
+### blockRuntimePackageVersion
 
-• **createPackageVersion**: `string`
+• **blockRuntimePackageVersion**: `string`
 
-Version string for `@wp-typia/create` used in generated dependencies.
+Version string for `@wp-typia/block-runtime` used in generated dependencies.
 
 #### Defined in
 

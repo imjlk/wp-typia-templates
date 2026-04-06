@@ -14,6 +14,12 @@
 
 ▸ **applyMigrationUiCapability**(`«destructured»`): `Promise`\<`void`\>
 
+Layer the migration dashboard capability onto a freshly scaffolded project.
+
+This copies the shared migration UI files, wires template-specific editor
+hooks, and injects pinned migration scripts that shell out to the matching
+`@wp-typia/create` CLI version.
+
 #### Parameters
 
 | Name | Type |
@@ -26,4 +32,4 @@
 
 #### Defined in
 
-[packages/create/src/runtime/migration-ui-capability.ts:238](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-ui-capability.ts#L238)
+[packages/create/src/runtime/migration-ui-capability.ts:249](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-ui-capability.ts#L249)

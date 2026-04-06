@@ -255,7 +255,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:314](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L314)
+[packages/create/src/runtime/validation.ts:326](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L326)
 
 ___
 
@@ -283,7 +283,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:323](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L323)
+[packages/create/src/runtime/validation.ts:335](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L335)
 
 ___
 
@@ -311,7 +311,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:343](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L343)
+[packages/create/src/runtime/validation.ts:355](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L355)
 
 ___
 
@@ -359,7 +359,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:354](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L354)
+[packages/create/src/runtime/validation.ts:366](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L366)
 
 ___
 
@@ -401,4 +401,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/validation.ts:379](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L379)
+[packages/create/src/runtime/validation.ts:391](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/validation.ts#L391)

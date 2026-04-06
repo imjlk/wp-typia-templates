@@ -23,19 +23,19 @@
 
 ### ValidationResult
 
-Re-exports [ValidationResult](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)
+Re-exports [ValidationResult](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)
 
 ___
 
 ### TypiaValidationError
 
-Re-exports [TypiaValidationError](../interfaces/packages_create_src_runtime_validation.TypiaValidationError.md)
+Re-exports [TypiaValidationError](../interfaces/packages_wp_typia_block_runtime_src_validation.TypiaValidationError.md)
 
 ## Type Aliases
 
 ### PersistenceCounterValidationResult
 
-Ƭ **PersistenceCounterValidationResult**: [`ValidationResult`](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)\<[`PersistenceCounterAttributes`](../interfaces/examples_persistence_examples_src_blocks_counter_types.PersistenceCounterAttributes.md)\>
+Ƭ **PersistenceCounterValidationResult**: [`ValidationResult`](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)\<[`PersistenceCounterAttributes`](../interfaces/examples_persistence_examples_src_blocks_counter_types.PersistenceCounterAttributes.md)\>
 
 #### Defined in
 

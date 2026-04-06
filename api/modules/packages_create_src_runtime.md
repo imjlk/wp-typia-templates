@@ -604,154 +604,154 @@ ___
 
 ### SyncBlockMetadataOptions
 
-Re-exports [SyncBlockMetadataOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncBlockMetadataOptions.md)
+Re-exports [SyncBlockMetadataOptions](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncBlockMetadataOptions.md)
 
 ___
 
 ### SyncBlockMetadataResult
 
-Re-exports [SyncBlockMetadataResult](../interfaces/packages_create_src_runtime_metadata_core.SyncBlockMetadataResult.md)
+Re-exports [SyncBlockMetadataResult](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncBlockMetadataResult.md)
 
 ___
 
 ### SyncBlockMetadataStatus
 
-Re-exports [SyncBlockMetadataStatus](packages_create_src_runtime_metadata_core.md#syncblockmetadatastatus)
+Re-exports [SyncBlockMetadataStatus](packages_wp_typia_block_runtime_src_metadata_core.md#syncblockmetadatastatus)
 
 ___
 
 ### SyncBlockMetadataFailureCode
 
-Re-exports [SyncBlockMetadataFailureCode](packages_create_src_runtime_metadata_core.md#syncblockmetadatafailurecode)
+Re-exports [SyncBlockMetadataFailureCode](packages_wp_typia_block_runtime_src_metadata_core.md#syncblockmetadatafailurecode)
 
 ___
 
 ### SyncBlockMetadataFailure
 
-Re-exports [SyncBlockMetadataFailure](../interfaces/packages_create_src_runtime_metadata_core.SyncBlockMetadataFailure.md)
+Re-exports [SyncBlockMetadataFailure](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncBlockMetadataFailure.md)
 
 ___
 
 ### SyncBlockMetadataExecutionOptions
 
-Re-exports [SyncBlockMetadataExecutionOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncBlockMetadataExecutionOptions.md)
+Re-exports [SyncBlockMetadataExecutionOptions](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncBlockMetadataExecutionOptions.md)
 
 ___
 
 ### SyncBlockMetadataReport
 
-Re-exports [SyncBlockMetadataReport](../interfaces/packages_create_src_runtime_metadata_core.SyncBlockMetadataReport.md)
+Re-exports [SyncBlockMetadataReport](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncBlockMetadataReport.md)
 
 ___
 
 ### SyncTypeSchemaOptions
 
-Re-exports [SyncTypeSchemaOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncTypeSchemaOptions.md)
+Re-exports [SyncTypeSchemaOptions](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncTypeSchemaOptions.md)
 
 ___
 
 ### SyncTypeSchemaResult
 
-Re-exports [SyncTypeSchemaResult](../interfaces/packages_create_src_runtime_metadata_core.SyncTypeSchemaResult.md)
+Re-exports [SyncTypeSchemaResult](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncTypeSchemaResult.md)
 
 ___
 
 ### EndpointManifestContractDefinition
 
-Re-exports [EndpointManifestContractDefinition](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestContractDefinition.md)
+Re-exports [EndpointManifestContractDefinition](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.EndpointManifestContractDefinition.md)
 
 ___
 
 ### EndpointManifestEndpointDefinition
 
-Re-exports [EndpointManifestEndpointDefinition](packages_create_src_runtime_metadata_core.md#endpointmanifestendpointdefinition)
+Re-exports [EndpointManifestEndpointDefinition](packages_wp_typia_block_runtime_src_metadata_core.md#endpointmanifestendpointdefinition)
 
 ___
 
 ### EndpointManifestDefinition
 
-Re-exports [EndpointManifestDefinition](../interfaces/packages_create_src_runtime_metadata_core.EndpointManifestDefinition.md)
+Re-exports [EndpointManifestDefinition](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.EndpointManifestDefinition.md)
 
 ___
 
 ### defineEndpointManifest
 
-Re-exports [defineEndpointManifest](packages_create_src_runtime_metadata_core.md#defineendpointmanifest)
+Re-exports [defineEndpointManifest](packages_wp_typia_block_runtime_src_metadata_core.md#defineendpointmanifest)
 
 ___
 
 ### RestOpenApiContractDefinition
 
-Re-exports [RestOpenApiContractDefinition](../interfaces/packages_create_src_runtime_metadata_core.RestOpenApiContractDefinition.md)
+Re-exports [RestOpenApiContractDefinition](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.RestOpenApiContractDefinition.md)
 
 ___
 
 ### RestOpenApiEndpointDefinition
 
-Re-exports [RestOpenApiEndpointDefinition](packages_create_src_runtime_metadata_core.md#restopenapiendpointdefinition)
+Re-exports [RestOpenApiEndpointDefinition](packages_wp_typia_block_runtime_src_metadata_core.md#restopenapiendpointdefinition)
 
 ___
 
 ### SyncRestOpenApiManifestOptions
 
-Re-exports [SyncRestOpenApiManifestOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiManifestOptions.md)
+Re-exports [SyncRestOpenApiManifestOptions](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncRestOpenApiManifestOptions.md)
 
 ___
 
 ### SyncRestOpenApiContractsOptions
 
-Re-exports [SyncRestOpenApiContractsOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiContractsOptions.md)
+Re-exports [SyncRestOpenApiContractsOptions](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncRestOpenApiContractsOptions.md)
 
 ___
 
 ### SyncRestOpenApiOptions
 
-Re-exports [SyncRestOpenApiOptions](packages_create_src_runtime_metadata_core.md#syncrestopenapioptions)
+Re-exports [SyncRestOpenApiOptions](packages_wp_typia_block_runtime_src_metadata_core.md#syncrestopenapioptions)
 
 ___
 
 ### SyncRestOpenApiResult
 
-Re-exports [SyncRestOpenApiResult](../interfaces/packages_create_src_runtime_metadata_core.SyncRestOpenApiResult.md)
+Re-exports [SyncRestOpenApiResult](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncRestOpenApiResult.md)
 
 ___
 
 ### SyncEndpointClientOptions
 
-Re-exports [SyncEndpointClientOptions](../interfaces/packages_create_src_runtime_metadata_core.SyncEndpointClientOptions.md)
+Re-exports [SyncEndpointClientOptions](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncEndpointClientOptions.md)
 
 ___
 
 ### SyncEndpointClientResult
 
-Re-exports [SyncEndpointClientResult](../interfaces/packages_create_src_runtime_metadata_core.SyncEndpointClientResult.md)
+Re-exports [SyncEndpointClientResult](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncEndpointClientResult.md)
 
 ___
 
 ### syncBlockMetadata
 
-Re-exports [syncBlockMetadata](packages_create_src_runtime_metadata_core.md#syncblockmetadata)
+Re-exports [syncBlockMetadata](packages_wp_typia_block_runtime_src_metadata_core.md#syncblockmetadata)
 
 ___
 
 ### runSyncBlockMetadata
 
-Re-exports [runSyncBlockMetadata](packages_create_src_runtime_metadata_core.md#runsyncblockmetadata)
+Re-exports [runSyncBlockMetadata](packages_wp_typia_block_runtime_src_metadata_core.md#runsyncblockmetadata)
 
 ___
 
 ### syncTypeSchemas
 
-Re-exports [syncTypeSchemas](packages_create_src_runtime_metadata_core.md#synctypeschemas)
+Re-exports [syncTypeSchemas](packages_wp_typia_block_runtime_src_metadata_core.md#synctypeschemas)
 
 ___
 
 ### syncRestOpenApi
 
-Re-exports [syncRestOpenApi](packages_create_src_runtime_metadata_core.md#syncrestopenapi)
+Re-exports [syncRestOpenApi](packages_wp_typia_block_runtime_src_metadata_core.md#syncrestopenapi)
 
 ___
 
 ### syncEndpointClient
 
-Re-exports [syncEndpointClient](packages_create_src_runtime_metadata_core.md#syncendpointclient)
+Re-exports [syncEndpointClient](packages_wp_typia_block_runtime_src_metadata_core.md#syncendpointclient)

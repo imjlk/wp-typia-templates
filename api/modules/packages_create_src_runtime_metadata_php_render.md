@@ -62,7 +62,7 @@ Collect warn-only PHP validator generation gaps for one manifest branch.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-php-render.ts:490](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-php-render.ts#L490)
+[packages/create/src/runtime/metadata-php-render.ts:510](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-php-render.ts#L510)
 
 ___
 
@@ -87,4 +87,4 @@ PHP source code representing the provided value.
 
 #### Defined in
 
-[packages/create/src/runtime/metadata-php-render.ts:533](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-php-render.ts#L533)
+[packages/create/src/runtime/metadata-php-render.ts:553](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/metadata-php-render.ts#L553)

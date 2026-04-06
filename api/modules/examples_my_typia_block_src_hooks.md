@@ -24,31 +24,31 @@
 
 ### formatValidationError
 
-Re-exports [formatValidationError](packages_create_src_runtime_validation.md#formatvalidationerror)
+Re-exports [formatValidationError](packages_wp_typia_block_runtime_src_validation.md#formatvalidationerror)
 
 ___
 
 ### formatValidationErrors
 
-Re-exports [formatValidationErrors](packages_create_src_runtime_validation.md#formatvalidationerrors)
+Re-exports [formatValidationErrors](packages_wp_typia_block_runtime_src_validation.md#formatvalidationerrors)
 
 ___
 
 ### toValidationState
 
-Re-exports [toValidationState](packages_create_src_runtime_validation.md#tovalidationstate)
+Re-exports [toValidationState](packages_wp_typia_block_runtime_src_validation.md#tovalidationstate)
 
 ___
 
 ### TypiaValidationError
 
-Re-exports [TypiaValidationError](../interfaces/packages_create_src_runtime_validation.TypiaValidationError.md)
+Re-exports [TypiaValidationError](../interfaces/packages_wp_typia_block_runtime_src_validation.TypiaValidationError.md)
 
 ___
 
 ### ValidationResult
 
-Re-exports [ValidationResult](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)
+Re-exports [ValidationResult](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)
 
 ___
 
@@ -81,7 +81,7 @@ Hook for Typia validation with real-time feedback
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `data` | `T` | Value to validate. |
-| `validator` | (`value`: `T`) => [`ValidationResult`](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)\<`T`\> | Validation function. |
+| `validator` | (`value`: `T`) => [`ValidationResult`](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)\<`T`\> | Validation function. |
 
 #### Returns
 
@@ -92,7 +92,7 @@ Validation state and current errors.
 | Name | Type |
 | :------ | :------ |
 | `isValid` | `boolean` |
-| `errors` | [`TypiaValidationError`](../interfaces/packages_create_src_runtime_validation.TypiaValidationError.md)[] |
+| `errors` | [`TypiaValidationError`](../interfaces/packages_wp_typia_block_runtime_src_validation.TypiaValidationError.md)[] |
 | `errorMessages` | `string`[] |
 
 #### Defined in

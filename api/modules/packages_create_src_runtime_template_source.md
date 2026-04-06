@@ -97,4 +97,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:880](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L880)
+[packages/create/src/runtime/template-source.ts:892](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L892)

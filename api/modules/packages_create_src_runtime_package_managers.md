@@ -23,6 +23,7 @@
 - [getPackageManagerSelectOptions](packages_create_src_runtime_package_managers.md#getpackagemanagerselectoptions)
 - [formatRunScript](packages_create_src_runtime_package_managers.md#formatrunscript)
 - [formatInstallCommand](packages_create_src_runtime_package_managers.md#formatinstallcommand)
+- [formatPackageExecCommand](packages_create_src_runtime_package_managers.md#formatpackageexeccommand)
 - [transformPackageManagerText](packages_create_src_runtime_package_managers.md#transformpackagemanagertext)
 
 ## Type Aliases
@@ -133,6 +134,32 @@ ___
 
 ___
 
+### formatPackageExecCommand
+
+▸ **formatPackageExecCommand**(`packageManagerId`, `packageName`, `extraArgs?`): `string`
+
+Format a package-manager-specific one-off package execution command.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `packageManagerId` | [`PackageManagerId`](packages_create_src_runtime_package_managers.md#packagemanagerid) | `undefined` | Package manager identifier. |
+| `packageName` | `string` | `undefined` | Executable package name. |
+| `extraArgs` | `string` | `""` | Optional extra CLI arguments appended after the package name. |
+
+#### Returns
+
+`string`
+
+Command string suitable for shell execution.
+
+#### Defined in
+
+[packages/create/src/runtime/package-managers.ts:108](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L108)
+
+___
+
 ### transformPackageManagerText
 
 ▸ **transformPackageManagerText**(`content`, `packageManagerId`): `string`
@@ -150,4 +177,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/package-managers.ts:175](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L175)
+[packages/create/src/runtime/package-managers.ts:203](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/package-managers.ts#L203)

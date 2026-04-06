@@ -17,13 +17,13 @@
 
 ### TypiaValidationError
 
-Re-exports [TypiaValidationError](../interfaces/packages_create_src_runtime_validation.TypiaValidationError.md)
+Re-exports [TypiaValidationError](../interfaces/packages_wp_typia_block_runtime_src_validation.TypiaValidationError.md)
 
 ___
 
 ### ValidationResult
 
-Re-exports [ValidationResult](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)
+Re-exports [ValidationResult](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)
 
 ## Functions
 
@@ -42,7 +42,7 @@ Re-exports [ValidationResult](../interfaces/packages_create_src_runtime_validati
 | Name | Type |
 | :------ | :------ |
 | `data` | `T` |
-| `validator` | (`value`: `T`) => [`ValidationResult`](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)\<`T`\> |
+| `validator` | (`value`: `T`) => [`ValidationResult`](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)\<`T`\> |
 
 #### Returns
 
@@ -51,7 +51,7 @@ Re-exports [ValidationResult](../interfaces/packages_create_src_runtime_validati
 | Name | Type |
 | :------ | :------ |
 | `isValid` | `boolean` |
-| `errors` | [`TypiaValidationError`](../interfaces/packages_create_src_runtime_validation.TypiaValidationError.md)[] |
+| `errors` | [`TypiaValidationError`](../interfaces/packages_wp_typia_block_runtime_src_validation.TypiaValidationError.md)[] |
 | `errorMessages` | `string`[] |
 
 #### Defined in

@@ -35,142 +35,142 @@
 
 ### EditorFieldDescriptor
 
-Re-exports [EditorFieldDescriptor](../interfaces/packages_create_src_runtime_editor.EditorFieldDescriptor.md)
+Re-exports [EditorFieldDescriptor](../interfaces/packages_wp_typia_block_runtime_src_editor.EditorFieldDescriptor.md)
 
 ___
 
 ### EditorFieldOption
 
-Re-exports [EditorFieldOption](../interfaces/packages_create_src_runtime_editor.EditorFieldOption.md)
+Re-exports [EditorFieldOption](../interfaces/packages_wp_typia_block_runtime_src_editor.EditorFieldOption.md)
 
 ___
 
 ### EditorModelOptions
 
-Re-exports [EditorModelOptions](../interfaces/packages_create_src_runtime_editor.EditorModelOptions.md)
+Re-exports [EditorModelOptions](../interfaces/packages_wp_typia_block_runtime_src_editor.EditorModelOptions.md)
 
 ___
 
 ### ManifestAttribute
 
-Re-exports [ManifestAttribute](../interfaces/packages_create_src_runtime_migration_types.ManifestAttribute.md)
+Re-exports [ManifestAttribute](../interfaces/packages_wp_typia_block_runtime_src_migration_types.ManifestAttribute.md)
 
 ___
 
 ### ManifestDocument
 
-Re-exports [ManifestDocument](../interfaces/packages_create_src_runtime_migration_types.ManifestDocument.md)
+Re-exports [ManifestDocument](../interfaces/packages_wp_typia_block_runtime_src_migration_types.ManifestDocument.md)
 
 ___
 
 ### ValidationResult
 
-Re-exports [ValidationResult](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)
+Re-exports [ValidationResult](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)
 
 ___
 
 ### InspectorSelectOption
 
-Re-exports [InspectorSelectOption](../interfaces/packages_create_src_runtime_inspector.InspectorSelectOption.md)
+Re-exports [InspectorSelectOption](../interfaces/packages_wp_typia_block_runtime_src_inspector_runtime.InspectorSelectOption.md)
 
 ___
 
 ### PanelBodyLikeProps
 
-Re-exports [PanelBodyLikeProps](../interfaces/packages_create_src_runtime_inspector.PanelBodyLikeProps.md)
+Re-exports [PanelBodyLikeProps](../interfaces/packages_wp_typia_block_runtime_src_inspector_runtime.PanelBodyLikeProps.md)
 
 ___
 
 ### ToggleControlLikeProps
 
-Re-exports [ToggleControlLikeProps](../interfaces/packages_create_src_runtime_inspector.ToggleControlLikeProps.md)
+Re-exports [ToggleControlLikeProps](../interfaces/packages_wp_typia_block_runtime_src_inspector_runtime.ToggleControlLikeProps.md)
 
 ___
 
 ### SelectControlLikeProps
 
-Re-exports [SelectControlLikeProps](../interfaces/packages_create_src_runtime_inspector.SelectControlLikeProps.md)
+Re-exports [SelectControlLikeProps](../interfaces/packages_wp_typia_block_runtime_src_inspector_runtime.SelectControlLikeProps.md)
 
 ___
 
 ### RangeControlLikeProps
 
-Re-exports [RangeControlLikeProps](../interfaces/packages_create_src_runtime_inspector.RangeControlLikeProps.md)
+Re-exports [RangeControlLikeProps](../interfaces/packages_wp_typia_block_runtime_src_inspector_runtime.RangeControlLikeProps.md)
 
 ___
 
 ### TextControlLikeProps
 
-Re-exports [TextControlLikeProps](../interfaces/packages_create_src_runtime_inspector.TextControlLikeProps.md)
+Re-exports [TextControlLikeProps](../interfaces/packages_wp_typia_block_runtime_src_inspector_runtime.TextControlLikeProps.md)
 
 ___
 
 ### TextareaControlLikeProps
 
-Re-exports [TextareaControlLikeProps](../interfaces/packages_create_src_runtime_inspector.TextareaControlLikeProps.md)
+Re-exports [TextareaControlLikeProps](../interfaces/packages_wp_typia_block_runtime_src_inspector_runtime.TextareaControlLikeProps.md)
 
 ___
 
 ### InspectorComponentMap
 
-Re-exports [InspectorComponentMap](../interfaces/packages_create_src_runtime_inspector.InspectorComponentMap.md)
+Re-exports [InspectorComponentMap](../interfaces/packages_wp_typia_block_runtime_src_inspector_runtime.InspectorComponentMap.md)
 
 ___
 
 ### UseEditorFieldsResult
 
-Re-exports [UseEditorFieldsResult](../interfaces/packages_create_src_runtime_inspector.UseEditorFieldsResult.md)
+Re-exports [UseEditorFieldsResult](../interfaces/packages_wp_typia_block_runtime_src_inspector_runtime.UseEditorFieldsResult.md)
 
 ___
 
 ### TypedAttributeUpdater
 
-Re-exports [TypedAttributeUpdater](../interfaces/packages_create_src_runtime_inspector.TypedAttributeUpdater.md)
+Re-exports [TypedAttributeUpdater](../interfaces/packages_wp_typia_block_runtime_src_inspector_runtime.TypedAttributeUpdater.md)
 
 ___
 
 ### FieldControlRenderContext
 
-Re-exports [FieldControlRenderContext](../interfaces/packages_create_src_runtime_inspector.FieldControlRenderContext.md)
+Re-exports [FieldControlRenderContext](../interfaces/packages_wp_typia_block_runtime_src_inspector_runtime.FieldControlRenderContext.md)
 
 ___
 
 ### FieldControlProps
 
-Re-exports [FieldControlProps](../interfaces/packages_create_src_runtime_inspector.FieldControlProps.md)
+Re-exports [FieldControlProps](../interfaces/packages_wp_typia_block_runtime_src_inspector_runtime.FieldControlProps.md)
 
 ___
 
 ### InspectorFieldOverride
 
-Re-exports [InspectorFieldOverride](../interfaces/packages_create_src_runtime_inspector.InspectorFieldOverride.md)
+Re-exports [InspectorFieldOverride](../interfaces/packages_wp_typia_block_runtime_src_inspector_runtime.InspectorFieldOverride.md)
 
 ___
 
 ### InspectorFromManifestProps
 
-Re-exports [InspectorFromManifestProps](../interfaces/packages_create_src_runtime_inspector.InspectorFromManifestProps.md)
+Re-exports [InspectorFromManifestProps](../interfaces/packages_wp_typia_block_runtime_src_inspector_runtime.InspectorFromManifestProps.md)
 
 ___
 
 ### useEditorFields
 
-Re-exports [useEditorFields](packages_create_src_runtime_inspector.md#useeditorfields)
+Re-exports [useEditorFields](packages_wp_typia_block_runtime_src_inspector_runtime.md#useeditorfields)
 
 ___
 
 ### useTypedAttributeUpdater
 
-Re-exports [useTypedAttributeUpdater](packages_create_src_runtime_inspector.md#usetypedattributeupdater)
+Re-exports [useTypedAttributeUpdater](packages_wp_typia_block_runtime_src_inspector_runtime.md#usetypedattributeupdater)
 
 ___
 
 ### FieldControl
 
-Re-exports [FieldControl](packages_create_src_runtime_inspector.md#fieldcontrol)
+Re-exports [FieldControl](packages_wp_typia_block_runtime_src_inspector_runtime.md#fieldcontrol)
 
 ___
 
 ### InspectorFromManifest
 
-Re-exports [InspectorFromManifest](packages_create_src_runtime_inspector.md#inspectorfrommanifest)
+Re-exports [InspectorFromManifest](packages_wp_typia_block_runtime_src_inspector_runtime.md#inspectorfrommanifest)

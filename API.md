@@ -193,7 +193,7 @@ Refresh-sensitive auth remains explicit there:
 It does not include WordPress route resolution, `wpApiSettings`, or
 `@wordpress/api-fetch`. Generated persistence contracts can emit a portable
 `src/api-client.ts` module through `syncEndpointClient(...)` in
-`@wp-typia/create/metadata-core`. In persistence-style scaffolds, that
+`@wp-typia/block-runtime/metadata-core`. In persistence-style scaffolds, that
 generated module is the canonical endpoint-definition artifact, while
 WordPress-facing `src/api.ts` composes those generated endpoint exports to add
 WordPress route resolution and nonce/header behavior.
@@ -225,18 +225,22 @@ metadata rather than the primary authored meaning.
 
 ## 5. `@wp-typia/block-runtime`
 
-`@wp-typia/block-runtime` is the current prototype graduation path for the
-stable generated-project block runtime helpers that still live canonically under
-`@wp-typia/create`.
+`@wp-typia/block-runtime` is the normative generated-project runtime package for
+shared block helpers, while `@wp-typia/block-runtime/metadata-core` owns the
+generated-project TypeScript-to-metadata sync and REST/OpenAPI/client codegen
+surface.
 
-It currently re-exports:
+It currently exports:
 
+- block registration and webpack helpers
 - defaults helpers
 - editor model helpers
+- inspector helpers
 - validation-aware attribute update helpers
 
-It does not include schema/codegen helpers such as `metadata-core` or
-`schema-core`, and it is not yet the canonical scaffold import target.
+The root `@wp-typia/block-runtime` export does not include `metadata-core` or
+`schema-core` directly. Those stay on explicit subpaths, and this package is
+now the canonical scaffold import target for generated projects.
 
 ## 6. Generated project runtime
 
@@ -260,22 +264,24 @@ only on lossy WordPress projections, and supports
 machine-friendly JSON report from stdout. Hard source-analysis and unsupported
 type failures still exit non-zero regardless of mode.
 
-If you need the same behavior programmatically, `@wp-typia/create/metadata-core`
+If you need the same behavior programmatically, `@wp-typia/block-runtime/metadata-core`
 also exposes `runSyncBlockMetadata(...)` alongside the lower-level
 `syncBlockMetadata(...)`, plus `syncEndpointClient(...)` for portable endpoint
 client generation from a manifest-first REST surface.
 
-Generated projects can also import shared runtime helpers from `@wp-typia/create`:
+Generated projects can also import shared runtime helpers from `@wp-typia/block-runtime`:
 
-- `@wp-typia/create/runtime/blocks`
-- `@wp-typia/create/runtime/defaults`
-- `@wp-typia/create/runtime/validation`
-- `@wp-typia/create/runtime/editor`
+- `@wp-typia/block-runtime/blocks`
+- `@wp-typia/block-runtime/defaults`
+- `@wp-typia/block-runtime/validation`
+- `@wp-typia/block-runtime/editor`
 
-These `runtime/*` paths, along with `@wp-typia/create` and
-`@wp-typia/create/metadata-core`, remain the supported generated-project import
-paths through v1. Root exports for defaults, editor, validation, and schema
-helpers are additive convenience aliases rather than a migration requirement.
+Use `@wp-typia/block-runtime/metadata-core` for metadata sync and
+`@wp-typia/block-runtime/*` for generated-project runtime helpers.
+`@wp-typia/create/metadata-core` remains available as a backward-compatible
+facade, and `@wp-typia/create` remains the CLI package.
+`@wp-typia/create/runtime/*` remains exported for backward compatibility, but
+it is no longer the preferred generated-project import path.
 
 `runtime/blocks` is the shared generated-project surface for scaffold-owned
 block registration helpers and webpack artifact/config adapters.
@@ -287,7 +293,7 @@ projects can pass `supports` without dropping to `unknown`:
 import {
   buildScaffoldBlockRegistration,
   type ScaffoldBlockMetadata,
-} from "@wp-typia/create/runtime/blocks";
+} from "@wp-typia/block-runtime/blocks";
 ```
 
 `@wp-typia/create/runtime/schema-core` remains exported, but it is not the
@@ -308,10 +314,10 @@ import currentManifest from "./typia.manifest.json";
 import {
   createEditorModel,
   type ManifestDocument,
-} from "@wp-typia/create/runtime/editor";
+} from "@wp-typia/block-runtime/editor";
 
 const editorFields = createEditorModel(currentManifest as ManifestDocument, {
-  hidden: ["id", "version"],
+  hidden: ["id", "schemaVersion"],
   manual: ["content", "linkTarget"],
   preferTextarea: ["content"],
 });
@@ -326,7 +332,7 @@ const editorFields = createEditorModel(currentManifest as ManifestDocument, {
 - unsupported/manual reasons for unions, arrays, and complex fields
 
 When you want a higher-level inspector layer, use
-`@wp-typia/create/runtime/inspector` on top of those descriptors:
+`@wp-typia/block-runtime/inspector` on top of those descriptors:
 
 ```tsx
 import currentManifest from "./typia.manifest.json";
@@ -335,7 +341,7 @@ import {
   type ManifestDocument,
   useEditorFields,
   useTypedAttributeUpdater,
-} from "@wp-typia/create/runtime/inspector";
+} from "@wp-typia/block-runtime/inspector";
 
 const editorFields = useEditorFields(currentManifest as ManifestDocument, {
   manual: ["content"],
