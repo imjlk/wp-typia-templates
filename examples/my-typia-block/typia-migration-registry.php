@@ -565,12 +565,12 @@ return [
 		'manifestVersion' => 2,
 		'sourceType' => 'MyTypiaBlockAttributes'
 	],
-	'currentVersion' => '1.0.0',
+	'currentMigrationVersion' => 'v1',
 	'edges' => [],
-	'legacyVersions' => [],
+	'legacyMigrationVersions' => [],
 	'snapshotDir' => 'src/migrations/versions',
 	'snapshots' => [
-		'1.0.0' => [
+		'v1' => [
 			'blockJson' => [
 				'attributeNames' => [
 					'id',
@@ -1152,7 +1152,7 @@ return [
 			]
 		]
 	],
-	'supportedVersions' => [
-		'1.0.0'
+	'supportedMigrationVersions' => [
+		'v1'
 	]
 ];

@@ -268,7 +268,7 @@ export async function applyMigrationUiCapability({
 		};
 		packageJson.scripts = {
 			...(packageJson.scripts ?? {}),
-			"migration:init": migrationCli("init --current-version 1.0.0"),
+			"migration:init": migrationCli("init --current-migration-version v1"),
 			"migration:snapshot": migrationCli("snapshot"),
 			"migration:diff": migrationCli("diff"),
 			"migration:scaffold": migrationCli("scaffold"),
@@ -285,5 +285,5 @@ export async function applyMigrationUiCapability({
 		await applySingleBlockPatches(projectDir, variables);
 	}
 
-	await seedProjectMigrations(projectDir, "1.0.0", buildMigrationBlocks(templateId, variables));
+	await seedProjectMigrations(projectDir, "v1", buildMigrationBlocks(templateId, variables));
 }

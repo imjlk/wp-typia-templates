@@ -1,6 +1,6 @@
 {
-	"fromVersion": "1.0.0",
-	"toVersion": "2.0.0",
+	"fromMigrationVersion": "v1",
+	"toVersion": "v2",
 	"cases": [
 		{
 			"name": "rename-and-transform",

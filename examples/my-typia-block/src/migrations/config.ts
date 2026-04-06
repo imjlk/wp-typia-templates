@@ -1,7 +1,7 @@
 export const migrationConfig = {
 	blockName: 'create-block/my-typia-block',
-	currentVersion: '1.0.0',
-	supportedVersions: [ '1.0.0' ],
+	currentMigrationVersion: 'v1',
+	supportedMigrationVersions: [ 'v1' ],
 	snapshotDir: 'src/migrations/versions',
 } as const;
 

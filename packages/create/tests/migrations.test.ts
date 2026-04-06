@@ -426,7 +426,7 @@ function createLegacyConfiguredMixedSingleBlockProject(projectDir: string) {
 	createMixedSingleBlockProject(projectDir);
 	writeFile(
 		path.join(projectDir, "src", "migrations", "config.ts"),
-		`export const migrationConfig = {\n\tblockName: "create-block/legacy-root-layout",\n\tcurrentVersion: "1.0.0",\n\tsupportedVersions: ["1.0.0"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
+		`export const migrationConfig = {\n\tblockName: "create-block/legacy-root-layout",\n\tcurrentMigrationVersion: "v1",\n\tsupportedMigrationVersions: ["v1"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
 	);
 }
 
@@ -434,7 +434,7 @@ function createLegacyConfiguredSameNameMixedSingleBlockProject(projectDir: strin
 	createSameNameMixedSingleBlockProject(projectDir);
 	writeFile(
 		path.join(projectDir, "src", "migrations", "config.ts"),
-		`export const migrationConfig = {\n\tblockName: "create-block/current-scaffold",\n\tcurrentVersion: "1.0.0",\n\tsupportedVersions: ["1.0.0"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
+		`export const migrationConfig = {\n\tblockName: "create-block/current-scaffold",\n\tcurrentMigrationVersion: "v1",\n\tsupportedMigrationVersions: ["v1"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
 	);
 }
 
@@ -460,7 +460,7 @@ function createLegacyConfiguredCurrentPreferredSameNameMixedSingleBlockProject(p
 	});
 	writeFile(
 		path.join(projectDir, "src", "migrations", "config.ts"),
-		`export const migrationConfig = {\n\tblockName: "create-block/current-scaffold",\n\tcurrentVersion: "1.0.0",\n\tsupportedVersions: ["1.0.0"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
+		`export const migrationConfig = {\n\tblockName: "create-block/current-scaffold",\n\tcurrentMigrationVersion: "v1",\n\tsupportedMigrationVersions: ["v1"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
 	);
 }
 
@@ -488,7 +488,7 @@ function createSameNameMixedSingleBlockProject(projectDir: string) {
 	});
 }
 
-function writeCurrentSnapshot(projectDir: string, version = "2.0.0") {
+function writeCurrentSnapshot(projectDir: string, version = "v3") {
 	writeJson(
 		path.join(projectDir, "src", "migrations", "versions", version, "block.json"),
 		JSON.parse(fs.readFileSync(path.join(projectDir, "block.json"), "utf8")),
@@ -512,13 +512,13 @@ function createVersionedMigrationProject(projectDir: string) {
 	);
 	writeFile(
 		path.join(projectDir, "src", "migrations", "config.ts"),
-		`export const migrationConfig = {\n\tblockName: "create-block/migration-smoke",\n\tcurrentVersion: "2.0.0",\n\tsupportedVersions: ["1.0.0", "2.0.0"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
+		`export const migrationConfig = {\n\tblockName: "create-block/migration-smoke",\n\tcurrentMigrationVersion: "v3",\n\tsupportedMigrationVersions: ["v1", "v3"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
 	);
 	writeFile(
 		path.join(projectDir, "src", "migrations", "helpers.ts"),
 		HELPERS_SOURCE,
 	);
-	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "v1", "block.json"), {
 		apiVersion: 3,
 		attributes: {
 			content: { default: "Hello", type: "string" },
@@ -526,7 +526,7 @@ function createVersionedMigrationProject(projectDir: string) {
 		name: "create-block/migration-smoke",
 		title: "Migration Smoke",
 	});
-	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), {
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "v1", "typia.manifest.json"), {
 		attributes: {
 			content: createManifestAttribute("string", {
 				defaultValue: "Hello",
@@ -537,7 +537,7 @@ function createVersionedMigrationProject(projectDir: string) {
 		sourceType: "MigrationAttributes",
 	});
 	writeFile(
-		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"),
+		path.join(projectDir, "src", "migrations", "versions", "v1", "save.tsx"),
 		`export default function Save({ attributes }: { attributes: any }) {\n\treturn attributes.content ?? null;\n}\n`,
 	);
 	writeCurrentSnapshot(projectDir);
@@ -547,16 +547,16 @@ function createVersionedMigrationProject(projectDir: string) {
 	fs.symlinkSync(repoTsxPath, path.join(localBinDir, "tsx"));
 }
 
-function addLegacyVersion(projectDir: string, version: string, sourceVersion = "1.0.0") {
+function addLegacyVersion(projectDir: string, version: string, sourceVersion = "v1") {
 	const configPath = path.join(projectDir, "src", "migrations", "config.ts");
 	const sourceSnapshotRoot = path.join(projectDir, "src", "migrations", "versions", sourceVersion);
 	const targetSnapshotRoot = path.join(projectDir, "src", "migrations", "versions", version);
 	fs.cpSync(sourceSnapshotRoot, targetSnapshotRoot, { recursive: true });
 
 	const configSource = fs.readFileSync(configPath, "utf8");
-	const match = configSource.match(/supportedVersions:\s*\[(.*?)\]/s);
+	const match = configSource.match(/supportedMigrationVersions:\s*\[(.*?)\]/s);
 	if (!match) {
-		throw new Error("Could not locate supportedVersions in migration config.");
+		throw new Error("Could not locate supportedMigrationVersions in migration config.");
 	}
 
 	const versions = match[1]
@@ -568,7 +568,7 @@ function addLegacyVersion(projectDir: string, version: string, sourceVersion = "
 	);
 	const nextSource = configSource.replace(
 		match[0],
-		`supportedVersions: [${nextVersions.map((value) => `"${value}"`).join(", ")}]`,
+		`supportedMigrationVersions: [${nextVersions.map((value) => `"${value}"`).join(", ")}]`,
 	);
 	fs.writeFileSync(configPath, nextSource, "utf8");
 }
@@ -733,14 +733,14 @@ function createMultiBlockMigrationProject(
 	writeMultiBlockCurrentFiles(projectDir, child);
 	writeFile(
 		path.join(projectDir, "src", "migrations", "config.ts"),
-		`export const migrationConfig = {\n\tcurrentVersion: "2.0.0",\n\tsupportedVersions: ["1.0.0", "2.0.0"],\n\tsnapshotDir: "src/migrations/versions",\n\tblocks: [\n\t\t{\n\t\t\tkey: "multi-parent",\n\t\t\tblockName: "create-block/multi-parent",\n\t\t\tblockJsonFile: "src/blocks/multi-parent/block.json",\n\t\t\tmanifestFile: "src/blocks/multi-parent/typia.manifest.json",\n\t\t\tsaveFile: "src/blocks/multi-parent/save.tsx",\n\t\t\ttypesFile: "src/blocks/multi-parent/types.ts",\n\t\t},\n\t\t{\n\t\t\tkey: "multi-parent-item",\n\t\t\tblockName: "create-block/multi-parent-item",\n\t\t\tblockJsonFile: "src/blocks/multi-parent-item/block.json",\n\t\t\tmanifestFile: "src/blocks/multi-parent-item/typia.manifest.json",\n\t\t\tsaveFile: "src/blocks/multi-parent-item/save.tsx",\n\t\t\ttypesFile: "src/blocks/multi-parent-item/types.ts",\n\t\t},\n\t],\n} as const;\n\nexport default migrationConfig;\n`,
+		`export const migrationConfig = {\n\tcurrentMigrationVersion: "v3",\n\tsupportedMigrationVersions: ["v1", "v3"],\n\tsnapshotDir: "src/migrations/versions",\n\tblocks: [\n\t\t{\n\t\t\tkey: "multi-parent",\n\t\t\tblockName: "create-block/multi-parent",\n\t\t\tblockJsonFile: "src/blocks/multi-parent/block.json",\n\t\t\tmanifestFile: "src/blocks/multi-parent/typia.manifest.json",\n\t\t\tsaveFile: "src/blocks/multi-parent/save.tsx",\n\t\t\ttypesFile: "src/blocks/multi-parent/types.ts",\n\t\t},\n\t\t{\n\t\t\tkey: "multi-parent-item",\n\t\t\tblockName: "create-block/multi-parent-item",\n\t\t\tblockJsonFile: "src/blocks/multi-parent-item/block.json",\n\t\t\tmanifestFile: "src/blocks/multi-parent-item/typia.manifest.json",\n\t\t\tsaveFile: "src/blocks/multi-parent-item/save.tsx",\n\t\t\ttypesFile: "src/blocks/multi-parent-item/types.ts",\n\t\t},\n\t],\n} as const;\n\nexport default migrationConfig;\n`,
 	);
 	writeFile(path.join(projectDir, "src", "migrations", "helpers.ts"), HELPERS_SOURCE);
-	writeMultiBlockSnapshot(projectDir, "2.0.0", parent, "Hello multi-parent");
-	writeMultiBlockSnapshot(projectDir, "2.0.0", child, "Hello multi-parent-item");
-	writeMultiBlockSnapshot(projectDir, "1.0.0", parent);
+	writeMultiBlockSnapshot(projectDir, "v3", parent, "Hello multi-parent");
+	writeMultiBlockSnapshot(projectDir, "v3", child, "Hello multi-parent-item");
+	writeMultiBlockSnapshot(projectDir, "v1", parent);
 	if (includeLegacyChild) {
-		writeMultiBlockSnapshot(projectDir, "1.0.0", child);
+		writeMultiBlockSnapshot(projectDir, "v1", child);
 	}
 
 	const localBinDir = path.join(projectDir, "node_modules", ".bin");
@@ -840,8 +840,8 @@ function createRenameCandidateProject(projectDir: string) {
 		path.join(projectDir, "src", "migrations", "config.ts"),
 		`export const migrationConfig = {
 \tblockName: "create-block/rename-smoke",
-\tcurrentVersion: "2.0.0",
-\tsupportedVersions: ["1.0.0", "2.0.0"],
+\tcurrentMigrationVersion: "v3",
+\tsupportedMigrationVersions: ["v1", "v3"],
 \tsnapshotDir: "src/migrations/versions",
 } as const;
 
@@ -869,7 +869,7 @@ export default migrationConfig;
 		manifestVersion: 2,
 		sourceType: "RenameAttributes",
 	});
-	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "v1", "block.json"), {
 		apiVersion: 3,
 		attributes: {
 			headline: { type: "string" },
@@ -877,7 +877,7 @@ export default migrationConfig;
 		name: "create-block/rename-smoke",
 		title: "Rename Smoke",
 	});
-	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), {
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "v1", "typia.manifest.json"), {
 		attributes: {
 			headline: createManifestAttribute("string", {
 				required: true,
@@ -887,7 +887,7 @@ export default migrationConfig;
 		sourceType: "RenameAttributes",
 	});
 	writeFile(
-		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"),
+		path.join(projectDir, "src", "migrations", "versions", "v1", "save.tsx"),
 		`export default function Save({ attributes }: { attributes: any }) {
 \treturn attributes.headline ?? null;
 }
@@ -931,8 +931,8 @@ function createNestedRenameProject(projectDir: string) {
 		path.join(projectDir, "src", "migrations", "config.ts"),
 		`export const migrationConfig = {
 \tblockName: "create-block/nested-rename",
-\tcurrentVersion: "2.0.0",
-\tsupportedVersions: ["1.0.0", "2.0.0"],
+\tcurrentMigrationVersion: "v3",
+\tsupportedMigrationVersions: ["v1", "v3"],
 \tsnapshotDir: "src/migrations/versions",
 } as const;
 
@@ -989,7 +989,7 @@ export default migrationConfig;
 		manifestVersion: 2,
 		sourceType: "NestedRenameAttributes",
 	});
-	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "v1", "block.json"), {
 		apiVersion: 3,
 		attributes: {
 			settings: { type: "object" },
@@ -997,7 +997,7 @@ export default migrationConfig;
 		name: "create-block/nested-rename",
 		title: "Nested Rename",
 	});
-	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), {
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "v1", "typia.manifest.json"), {
 		attributes: {
 			settings: {
 				typia: {
@@ -1039,7 +1039,7 @@ export default migrationConfig;
 		sourceType: "NestedRenameAttributes",
 	});
 	writeFile(
-		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"),
+		path.join(projectDir, "src", "migrations", "versions", "v1", "save.tsx"),
 		`export default function Save({ attributes }: { attributes: any }) {
 \treturn attributes.settings?.title ?? null;
 }
@@ -1074,8 +1074,8 @@ function createAmbiguousRenameProject(projectDir: string) {
 		path.join(projectDir, "src", "migrations", "config.ts"),
 		`export const migrationConfig = {
 \tblockName: "create-block/ambiguous-rename",
-\tcurrentVersion: "2.0.0",
-\tsupportedVersions: ["1.0.0", "2.0.0"],
+\tcurrentMigrationVersion: "v3",
+\tsupportedMigrationVersions: ["v1", "v3"],
 \tsnapshotDir: "src/migrations/versions",
 } as const;
 
@@ -1103,7 +1103,7 @@ export default migrationConfig;
 		manifestVersion: 2,
 		sourceType: "AmbiguousRenameAttributes",
 	});
-	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "v1", "block.json"), {
 		apiVersion: 3,
 		attributes: {
 			body: { type: "string" },
@@ -1112,7 +1112,7 @@ export default migrationConfig;
 		name: "create-block/ambiguous-rename",
 		title: "Ambiguous Rename",
 	});
-	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), {
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "v1", "typia.manifest.json"), {
 		attributes: {
 			body: createManifestAttribute("string", {
 				required: true,
@@ -1125,7 +1125,7 @@ export default migrationConfig;
 		sourceType: "AmbiguousRenameAttributes",
 	});
 	writeFile(
-		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"),
+		path.join(projectDir, "src", "migrations", "versions", "v1", "save.tsx"),
 		`export default function Save({ attributes }: { attributes: any }) {
 \treturn attributes.headline ?? attributes.body ?? null;
 }
@@ -1165,8 +1165,8 @@ function createTypeCoercionProject(projectDir: string) {
 		path.join(projectDir, "src", "migrations", "config.ts"),
 		`export const migrationConfig = {
 \tblockName: "create-block/coercion-smoke",
-\tcurrentVersion: "2.0.0",
-\tsupportedVersions: ["1.0.0", "2.0.0"],
+\tcurrentMigrationVersion: "v3",
+\tsupportedMigrationVersions: ["v1", "v3"],
 \tsnapshotDir: "src/migrations/versions",
 } as const;
 
@@ -1194,7 +1194,7 @@ export default migrationConfig;
 		manifestVersion: 2,
 		sourceType: "CoercionAttributes",
 	});
-	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "v1", "block.json"), {
 		apiVersion: 3,
 		attributes: {
 			clickCount: { type: "string" },
@@ -1202,7 +1202,7 @@ export default migrationConfig;
 		name: "create-block/coercion-smoke",
 		title: "Coercion Smoke",
 	});
-	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), {
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "v1", "typia.manifest.json"), {
 		attributes: {
 			clickCount: createManifestAttribute("string", {
 				required: true,
@@ -1212,7 +1212,7 @@ export default migrationConfig;
 		sourceType: "CoercionAttributes",
 	});
 	writeFile(
-		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"),
+		path.join(projectDir, "src", "migrations", "versions", "v1", "save.tsx"),
 		`export default function Save({ attributes }: { attributes: any }) {
 \treturn attributes.clickCount ?? null;
 }
@@ -1253,8 +1253,8 @@ function createUnionProject(projectDir: string, { removeBranch = false }: { remo
 		path.join(projectDir, "src", "migrations", "config.ts"),
 		`export const migrationConfig = {
 \tblockName: "create-block/union-smoke",
-\tcurrentVersion: "2.0.0",
-\tsupportedVersions: ["1.0.0", "2.0.0"],
+\tcurrentMigrationVersion: "v3",
+\tsupportedMigrationVersions: ["v1", "v3"],
 \tsnapshotDir: "src/migrations/versions",
 } as const;
 
@@ -1310,7 +1310,7 @@ export default migrationConfig;
 		manifestVersion: 2,
 		sourceType: "UnionAttributes",
 	});
-	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "v1", "block.json"), {
 		apiVersion: 3,
 		attributes: {
 			linkTarget: { type: "object" },
@@ -1318,7 +1318,7 @@ export default migrationConfig;
 		name: "create-block/union-smoke",
 		title: "Union Smoke",
 	});
-	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), {
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "v1", "typia.manifest.json"), {
 		attributes: {
 			linkTarget: createUnionManifestAttribute("kind", legacyBranches),
 		},
@@ -1326,7 +1326,7 @@ export default migrationConfig;
 		sourceType: "UnionAttributes",
 	});
 	writeFile(
-		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"),
+		path.join(projectDir, "src", "migrations", "versions", "v1", "save.tsx"),
 		`export default function Save({ attributes }: { attributes: any }) {
 \treturn attributes.linkTarget ?? null;
 }
@@ -1361,8 +1361,8 @@ function createFuzzFailureProject(projectDir: string) {
 		path.join(projectDir, "src", "migrations", "config.ts"),
 		`export const migrationConfig = {
 \tblockName: "create-block/fuzz-failure",
-\tcurrentVersion: "2.0.0",
-\tsupportedVersions: ["1.0.0", "2.0.0"],
+\tcurrentMigrationVersion: "v3",
+\tsupportedMigrationVersions: ["v1", "v3"],
 \tsnapshotDir: "src/migrations/versions",
 } as const;
 
@@ -1391,7 +1391,7 @@ export default migrationConfig;
 		manifestVersion: 2,
 		sourceType: "FuzzFailureAttributes",
 	});
-	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "v1", "block.json"), {
 		apiVersion: 3,
 		attributes: {
 			content: { default: "Hello", type: "string" },
@@ -1399,7 +1399,7 @@ export default migrationConfig;
 		name: "create-block/fuzz-failure",
 		title: "Fuzz Failure",
 	});
-	writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), {
+	writeJson(path.join(projectDir, "src", "migrations", "versions", "v1", "typia.manifest.json"), {
 		attributes: {
 			content: createManifestAttribute("string", {
 				defaultValue: "Hello",
@@ -1410,7 +1410,7 @@ export default migrationConfig;
 		sourceType: "FuzzFailureAttributes",
 	});
 	writeFile(
-		path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"),
+		path.join(projectDir, "src", "migrations", "versions", "v1", "save.tsx"),
 		`export default function Save({ attributes }: { attributes: any }) {
 \treturn attributes.content ?? null;
 }
@@ -1432,7 +1432,7 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "init-project");
 		createCurrentProjectFiles(projectDir);
 
-		runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+		runCli("bun", [entryPath, "migrations", "init", "--current-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
@@ -1442,7 +1442,7 @@ describe("wp-typia migrations", () => {
 
 		const snapshotBlock = JSON.parse(
 			fs.readFileSync(
-				path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"),
+				path.join(projectDir, "src", "migrations", "versions", "v1", "block.json"),
 				"utf8",
 			),
 		);
@@ -1453,14 +1453,14 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "init-current-single-block-project");
 		createCurrentSingleBlockScaffoldProject(projectDir);
 
-		const output = runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+		const output = runCli("bun", [entryPath, "migrations", "init", "--current-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
 		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
 		expect(configSource).toContain("blockName: 'create-block/current-scaffold'");
 		expect(configSource).not.toContain("blocks: [");
-		expect(fs.existsSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"))).toBe(true);
+		expect(fs.existsSync(path.join(projectDir, "src", "migrations", "versions", "v1", "block.json"))).toBe(true);
 		expect(fs.existsSync(path.join(projectDir, "src", "migrations", "generated", "registry.ts"))).toBe(true);
 		expect(output).toContain("Detected single-block migration retrofit: create-block/current-scaffold");
 		expect(output).toContain("Wrote src/migrations/config.ts");
@@ -1470,7 +1470,7 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "init-multi-block-project");
 		createRetrofitMultiBlockProject(projectDir);
 
-		const output = runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+		const output = runCli("bun", [entryPath, "migrations", "init", "--current-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
@@ -1481,11 +1481,11 @@ describe("wp-typia migrations", () => {
 		expect(configSource).toContain("blockJsonFile: 'src/blocks/multi-parent/block.json'");
 		expect(configSource).toContain("blockJsonFile: 'src/blocks/multi-parent-item/block.json'");
 		expect(
-			fs.existsSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "multi-parent", "block.json")),
+			fs.existsSync(path.join(projectDir, "src", "migrations", "versions", "v1", "multi-parent", "block.json")),
 		).toBe(true);
 		expect(
 			fs.existsSync(
-				path.join(projectDir, "src", "migrations", "versions", "1.0.0", "multi-parent-item", "block.json"),
+				path.join(projectDir, "src", "migrations", "versions", "v1", "multi-parent-item", "block.json"),
 			),
 		).toBe(true);
 		expect(output).toContain("Detected multi-block migration retrofit (2 targets):");
@@ -1497,7 +1497,7 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "init-multi-block-project-with-broken-candidate");
 		createRetrofitMultiBlockProjectWithBrokenCandidate(projectDir);
 
-		const output = runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+		const output = runCli("bun", [entryPath, "migrations", "init", "--current-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
@@ -1512,14 +1512,14 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "init-mixed-single-block-project");
 		createMixedSingleBlockProject(projectDir);
 
-		runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+		runCli("bun", [entryPath, "migrations", "init", "--current-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
 		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
 		expect(configSource).toContain("blockName: 'create-block/legacy-root-layout'");
 		const snapshotManifest = JSON.parse(
-			fs.readFileSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), "utf8"),
+			fs.readFileSync(path.join(projectDir, "src", "migrations", "versions", "v1", "typia.manifest.json"), "utf8"),
 		);
 		expect(snapshotManifest.attributes.content.typia.defaultValue).toBe("Legacy");
 	});
@@ -1528,7 +1528,7 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "init-single-block-with-broken-multi-block-candidate");
 		createSingleBlockProjectWithBrokenMultiBlockCandidate(projectDir);
 
-		const output = runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+		const output = runCli("bun", [entryPath, "migrations", "init", "--current-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
@@ -1543,7 +1543,7 @@ describe("wp-typia migrations", () => {
 		createBrokenOnlyMultiBlockProject(projectDir);
 
 		expect(() =>
-			runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			runCli("bun", [entryPath, "migrations", "init", "--current-migration-version", "v1"], {
 				cwd: projectDir,
 			}),
 		).toThrow(
@@ -1555,7 +1555,7 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "init-malformed-fallback-single-block-project");
 		createMalformedFallbackSingleBlockProject(projectDir);
 
-		runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+		runCli("bun", [entryPath, "migrations", "init", "--current-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
@@ -1567,14 +1567,14 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "init-malformed-preferred-single-block-project");
 		createMalformedPreferredSingleBlockProject(projectDir);
 
-		runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+		runCli("bun", [entryPath, "migrations", "init", "--current-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
 		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
 		expect(configSource).toContain("blockName: 'create-block/legacy-root-layout'");
 		const snapshotManifest = JSON.parse(
-			fs.readFileSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), "utf8"),
+			fs.readFileSync(path.join(projectDir, "src", "migrations", "versions", "v1", "typia.manifest.json"), "utf8"),
 		);
 		expect(snapshotManifest.attributes.content.typia.defaultValue).toBe("Legacy");
 	});
@@ -1613,14 +1613,14 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "init-same-name-mixed-single-block-project");
 		createSameNameMixedSingleBlockProject(projectDir);
 
-		runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+		runCli("bun", [entryPath, "migrations", "init", "--current-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
 		const configSource = fs.readFileSync(path.join(projectDir, "src", "migrations", "config.ts"), "utf8");
 		expect(configSource).toContain("blockName: 'create-block/current-scaffold'");
 		const snapshotManifest = JSON.parse(
-			fs.readFileSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "typia.manifest.json"), "utf8"),
+			fs.readFileSync(path.join(projectDir, "src", "migrations", "versions", "v1", "typia.manifest.json"), "utf8"),
 		);
 		expect(snapshotManifest.attributes.content.typia.defaultValue).toBe("Legacy");
 	});
@@ -1637,7 +1637,7 @@ describe("wp-typia migrations", () => {
 		});
 
 		expect(() =>
-			runCli("bun", [entryPath, "migrations", "init", "--current-version", "1.0.0"], {
+			runCli("bun", [entryPath, "migrations", "init", "--current-migration-version", "v1"], {
 				cwd: projectDir,
 			}),
 		).toThrow(/Unable to auto-detect a supported migration retrofit layout[\s\S]*src\/migrations\/config\.ts/);
@@ -1645,28 +1645,41 @@ describe("wp-typia migrations", () => {
 
 	test("migrations help text explains retrofit auto-detection, read-only planning, and --all workspace scope", () => {
 		expect(() => runCli("node", [entryPath, "migrations"])).toThrow(
-			/`migrations init` auto-detects supported single-block and `src\/blocks\/\*` multi-block layouts[\s\S]*`migrations wizard` is TTY-only[\s\S]*`migrations plan` and `migrations wizard` are read-only previews[\s\S]*--all runs across every configured legacy version and every configured block target\./,
+			/`migrations init` auto-detects supported single-block and `src\/blocks\/\*` multi-block layouts[\s\S]*Migration versions use strict schema labels like `v1`, `v2`, and `v3`[\s\S]*`migrations wizard` is TTY-only[\s\S]*`migrations plan` and `migrations wizard` are read-only previews[\s\S]*--all runs across every configured legacy migration version and every configured block target\./,
 		);
 	});
 
 	test("migration arg parser ignores standalone script separators", () => {
-		const parsed = parseMigrationArgs(["snapshot", "--", "--version", "1.0.0"]);
+		const parsed = parseMigrationArgs(["snapshot", "--", "--migration-version", "v1"]);
 		expect(parsed.command).toBe("snapshot");
-		expect(parsed.flags.version).toBe("1.0.0");
+		expect(parsed.flags.migrationVersion).toBe("v1");
 	});
 
 	test("migration arg parser accepts plan and wizard commands", () => {
-		const plan = parseMigrationArgs(["plan", "--from", "1.0.0", "--to", "1.5.0"]);
+		const plan = parseMigrationArgs(["plan", "--from-migration-version", "v1", "--to-migration-version", "v2"]);
 		expect(plan.command).toBe("plan");
-		expect(plan.flags.from).toBe("1.0.0");
-		expect(plan.flags.to).toBe("1.5.0");
+		expect(plan.flags.fromMigrationVersion).toBe("v1");
+		expect(plan.flags.toMigrationVersion).toBe("v2");
 
 		const wizard = parseMigrationArgs(["wizard"]);
 		expect(wizard.command).toBe("wizard");
-		expect(wizard.flags.to).toBe("current");
+		expect(wizard.flags.toMigrationVersion).toBe("current");
 	});
 
-	test("plan requires --from", () => {
+	test("migration arg parser rejects legacy semver-era flag names with reset guidance", () => {
+		for (const argv of [
+			["init", "--current-version", "1.0.0"],
+			["snapshot", "--version", "1.0.0"],
+			["plan", "--from", "1.0.0"],
+			["plan", "--from-migration-version", "v1", "--to", "1.0.0"],
+		]) {
+			expect(() => parseMigrationArgs(argv)).toThrow(
+				/Legacy migrations flag[\s\S]*@wp-typia migrations init --current-migration-version v1|rerun `wp-typia migrations init --current-migration-version v1`/,
+			);
+		}
+	});
+
+	test("plan requires --from-migration-version", () => {
 		const projectDir = path.join(tempRoot, "plan-requires-from-project");
 		createVersionedMigrationProject(projectDir);
 
@@ -1674,47 +1687,47 @@ describe("wp-typia migrations", () => {
 			runCli("node", [entryPath, "migrations", "plan"], {
 				cwd: projectDir,
 			}),
-		).toThrow(/`migrations plan` requires --from <semver>\./);
+		).toThrow(/`migrations plan` requires --from-migration-version <label>\./);
 	});
 
 	test("plan previews one selected migration edge without generating artifacts", () => {
 		const projectDir = path.join(tempRoot, "plan-preview-project");
 		createVersionedMigrationProject(projectDir);
-		addLegacyVersion(projectDir, "1.5.0");
+		addLegacyVersion(projectDir, "v2");
 
-		const rulePath = path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts");
-		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json");
+		const rulePath = path.join(projectDir, "src", "migrations", "rules", "v1-to-v3.ts");
+		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "v1-to-v3.json");
 		const generatedPath = path.join(projectDir, "src", "migrations", "generated", "deprecated.ts");
 		const lines: string[] = [];
 		const summary = planProjectMigrations(projectDir, {
-			fromVersion: "1.0.0",
+			fromMigrationVersion: "v1",
 			renderLine: (line) => lines.push(line),
-			toVersion: "current",
+			toMigrationVersion: "current",
 		});
 
 		const output = lines.join("\n");
-		expect(summary.availableLegacyVersions).toEqual(["1.5.0", "1.0.0"]);
-		expect(summary.currentVersion).toBe("2.0.0");
-		expect(summary.fromVersion).toBe("1.0.0");
-		expect(summary.targetVersion).toBe("2.0.0");
+		expect(summary.availableLegacyVersions).toEqual(["v2", "v1"]);
+		expect(summary.currentMigrationVersion).toBe("v3");
+		expect(summary.fromMigrationVersion).toBe("v1");
+		expect(summary.targetMigrationVersion).toBe("v3");
 		expect(summary.includedBlocks).toEqual(["create-block/migration-smoke"]);
 		expect(summary.skippedBlocks).toEqual([]);
-		expect(output).toContain("Current version: 2.0.0");
-		expect(output).toContain("Available legacy versions: 1.5.0, 1.0.0");
-		expect(output).toContain("Selected edge: 1.0.0 -> 2.0.0");
+		expect(output).toContain("Current migration version: v3");
+		expect(output).toContain("Available legacy migration versions: v2, v1");
+		expect(output).toContain("Selected migration edge: v1 -> v3");
 		expect(output).toContain("Included block targets: create-block/migration-smoke");
 		expect(output).toContain("Skipped block targets: None");
-		expect(output).toContain("Migration diff: 1.0.0 -> 2.0.0");
+		expect(output).toContain("Migration diff: v1 -> v3");
 		expect(output).toContain("Risk summary:");
 		expect(output).toContain("Next steps:");
-		expect(output).toContain("wp-typia migrations scaffold --from 1.0.0");
-		expect(output).toContain("wp-typia migrations doctor --from 1.0.0");
-		expect(output).toContain("wp-typia migrations verify --from 1.0.0");
-		expect(output).toContain("wp-typia migrations fuzz --from 1.0.0");
-		expect(output).toContain("Optional after editing rules: wp-typia migrations fixtures --from 1.0.0 --force");
-		expect(output.indexOf("Current version:")).toBeLessThan(output.indexOf("Available legacy versions:"));
-		expect(output.indexOf("Available legacy versions:")).toBeLessThan(output.indexOf("Selected edge:"));
-		expect(output.indexOf("Selected edge:")).toBeLessThan(output.indexOf("Included block targets:"));
+		expect(output).toContain("wp-typia migrations scaffold --from-migration-version v1");
+		expect(output).toContain("wp-typia migrations doctor --from-migration-version v1");
+		expect(output).toContain("wp-typia migrations verify --from-migration-version v1");
+		expect(output).toContain("wp-typia migrations fuzz --from-migration-version v1");
+		expect(output).toContain("Optional after editing rules: wp-typia migrations fixtures --from-migration-version v1 --force");
+		expect(output.indexOf("Current migration version:")).toBeLessThan(output.indexOf("Available legacy migration versions:"));
+		expect(output.indexOf("Available legacy migration versions:")).toBeLessThan(output.indexOf("Selected migration edge:"));
+		expect(output.indexOf("Selected migration edge:")).toBeLessThan(output.indexOf("Included block targets:"));
 		expect(output.indexOf("Included block targets:")).toBeLessThan(output.indexOf("Block: create-block/migration-smoke"));
 		expect(output.indexOf("Block: create-block/migration-smoke")).toBeLessThan(output.indexOf("Next steps:"));
 		expect(fs.existsSync(rulePath)).toBe(false);
@@ -1728,7 +1741,7 @@ describe("wp-typia migrations", () => {
 
 		const lines: string[] = [];
 		const summary = planProjectMigrations(projectDir, {
-			fromVersion: "1.0.0",
+			fromMigrationVersion: "v1",
 			renderLine: (line) => lines.push(line),
 		});
 
@@ -1741,7 +1754,7 @@ describe("wp-typia migrations", () => {
 		expect(output).not.toContain("Block: create-block/multi-parent-item");
 		expect(
 			fs.existsSync(
-				path.join(projectDir, "src", "migrations", "rules", "multi-parent", "1.0.0-to-2.0.0.ts"),
+				path.join(projectDir, "src", "migrations", "rules", "multi-parent", "v1-to-v3.ts"),
 			),
 		).toBe(false);
 	});
@@ -1754,7 +1767,7 @@ describe("wp-typia migrations", () => {
 
 		expect(() =>
 			planProjectMigrations(projectDir, {
-				fromVersion: "1.0.0",
+				fromMigrationVersion: "v1",
 			}),
 		).toThrow(/Migration planning is read-only[\s\S]*Run your project's `sync-types` script/);
 		expect(fs.existsSync(manifestPath)).toBe(false);
@@ -1781,19 +1794,19 @@ describe("wp-typia migrations", () => {
 			configPath,
 			fs
 				.readFileSync(configPath, "utf8")
-				.replace('supportedVersions: ["1.0.0", "2.0.0"]', 'supportedVersions: ["1.0.0", "1.5.0", "2.0.0"]'),
+				.replace('supportedMigrationVersions: ["v1", "v3"]', 'supportedMigrationVersions: ["v1", "v2", "v3"]'),
 			"utf8",
 		);
 
 		const lines: string[] = [];
 		const summary = planProjectMigrations(projectDir, {
-			fromVersion: "1.0.0",
+			fromMigrationVersion: "v1",
 			renderLine: (line) => lines.push(line),
 		});
 
-		expect(summary.availableLegacyVersions).toEqual(["1.0.0"]);
-		expect(lines.join("\n")).toContain("Available legacy versions: 1.0.0");
-		expect(lines.join("\n")).not.toContain("1.5.0");
+		expect(summary.availableLegacyVersions).toEqual(["v1"]);
+		expect(lines.join("\n")).toContain("Available legacy migration versions: v1");
+		expect(lines.join("\n")).not.toContain("v2");
 	});
 
 	test("plan unsupported-version guidance only lists previewable legacy versions", () => {
@@ -1805,45 +1818,45 @@ describe("wp-typia migrations", () => {
 			configPath,
 			fs
 				.readFileSync(configPath, "utf8")
-				.replace('supportedVersions: ["1.0.0", "2.0.0"]', 'supportedVersions: ["1.0.0", "1.5.0", "2.0.0"]'),
+				.replace('supportedMigrationVersions: ["v1", "v3"]', 'supportedMigrationVersions: ["v1", "v2", "v3"]'),
 			"utf8",
 		);
 
 		let thrown: unknown;
 		try {
 			planProjectMigrations(projectDir, {
-				fromVersion: "9.9.9",
+				fromMigrationVersion: "9.9.9",
 			});
 		} catch (error) {
 			thrown = error;
 		}
 
 		expect(thrown).toBeInstanceOf(Error);
-		expect((thrown as Error).message).toContain("Available legacy versions: 1.0.0");
-		expect((thrown as Error).message).not.toContain("1.5.0");
+		expect((thrown as Error).message).toContain("Available legacy migration versions: v1");
+		expect((thrown as Error).message).not.toContain("v2");
 	});
 
-	test("plan omits current-version follow-up commands for non-current targets", () => {
+	test("plan omits current-migration-version follow-up commands for non-current targets", () => {
 		const projectDir = path.join(tempRoot, "plan-non-current-target-project");
 		createVersionedMigrationProject(projectDir);
-		addLegacyVersion(projectDir, "1.5.0");
+		addLegacyVersion(projectDir, "v2");
 
 		const lines: string[] = [];
 		const summary = planProjectMigrations(projectDir, {
-			fromVersion: "1.0.0",
+			fromMigrationVersion: "v1",
 			renderLine: (line) => lines.push(line),
-			toVersion: "1.5.0",
+			toMigrationVersion: "v2",
 		});
 
 		const output = lines.join("\n");
-		expect(summary.targetVersion).toBe("1.5.0");
-		expect(summary.nextSteps).toEqual(["wp-typia migrations scaffold --from 1.0.0 --to 1.5.0"]);
-		expect(output).toContain("Selected edge: 1.0.0 -> 1.5.0");
-		expect(output).toContain("wp-typia migrations scaffold --from 1.0.0 --to 1.5.0");
-		expect(output).not.toContain("wp-typia migrations doctor --from 1.0.0");
-		expect(output).not.toContain("wp-typia migrations verify --from 1.0.0");
-		expect(output).not.toContain("wp-typia migrations fuzz --from 1.0.0");
-		expect(output).toContain("Optional after editing rules: wp-typia migrations fixtures --from 1.0.0 --to 1.5.0 --force");
+		expect(summary.targetMigrationVersion).toBe("v2");
+		expect(summary.nextSteps).toEqual(["wp-typia migrations scaffold --from-migration-version v1 --to-migration-version v2"]);
+		expect(output).toContain("Selected migration edge: v1 -> v2");
+		expect(output).toContain("wp-typia migrations scaffold --from-migration-version v1 --to-migration-version v2");
+		expect(output).not.toContain("wp-typia migrations doctor --from-migration-version v1");
+		expect(output).not.toContain("wp-typia migrations verify --from-migration-version v1");
+		expect(output).not.toContain("wp-typia migrations fuzz --from-migration-version v1");
+		expect(output).toContain("Optional after editing rules: wp-typia migrations fixtures --from-migration-version v1 --to-migration-version v2 --force");
 	});
 
 	test("wizard fails outside a TTY with actionable guidance", async () => {
@@ -1855,14 +1868,14 @@ describe("wp-typia migrations", () => {
 				isInteractive: false,
 			}),
 		).rejects.toThrow(
-			/`migrations wizard` requires an interactive terminal[\s\S]*wp-typia migrations plan --from <semver>/,
+			/`migrations wizard` requires an interactive terminal[\s\S]*wp-typia migrations plan --from-migration-version <label>/,
 		);
 	});
 
 	test("wizard previews the most recent legacy version by default order and stays read-only", async () => {
 		const projectDir = path.join(tempRoot, "wizard-preview-project");
 		createVersionedMigrationProject(projectDir);
-		addLegacyVersion(projectDir, "1.5.0");
+		addLegacyVersion(projectDir, "v2");
 
 		const calls: PromptSelectionCall[] = [];
 		const lines: string[] = [];
@@ -1875,16 +1888,80 @@ describe("wp-typia migrations", () => {
 		expect("cancelled" in summary).toBe(false);
 		expect(calls[0]?.message).toContain("Choose a legacy version to preview");
 		expect(calls[0]?.defaultValue).toBe(1);
-		expect(calls[0]?.options.map((option) => option.value)).toEqual(["1.5.0", "1.0.0", "cancel"]);
+		expect(calls[0]?.options.map((option) => option.value)).toEqual(["v2", "v1", "cancel"]);
 		if ("cancelled" in summary) {
 			throw new Error("Expected wizard to return a plan summary.");
 		}
-		expect(summary.fromVersion).toBe("1.5.0");
-		expect(summary.targetVersion).toBe("2.0.0");
-		expect(lines.join("\n")).toContain("Selected edge: 1.5.0 -> 2.0.0");
+		expect(summary.fromMigrationVersion).toBe("v2");
+		expect(summary.targetMigrationVersion).toBe("v3");
+		expect(lines.join("\n")).toContain("Selected migration edge: v2 -> v3");
 		expect(
-			fs.existsSync(path.join(projectDir, "src", "migrations", "rules", "1.5.0-to-2.0.0.ts")),
+			fs.existsSync(path.join(projectDir, "src", "migrations", "rules", "v2-to-v3.ts")),
 		).toBe(false);
+	});
+
+	test("wizard orders migration labels numerically and defaults to the newest label", async () => {
+		const projectDir = path.join(tempRoot, "wizard-numeric-order-project");
+		createVersionedMigrationProject(projectDir);
+
+		const configPath = path.join(projectDir, "src", "migrations", "config.ts");
+		fs.cpSync(
+			path.join(projectDir, "src", "migrations", "versions", "v1"),
+			path.join(projectDir, "src", "migrations", "versions", "v9"),
+			{ recursive: true },
+		);
+		fs.cpSync(
+			path.join(projectDir, "src", "migrations", "versions", "v1"),
+			path.join(projectDir, "src", "migrations", "versions", "v10"),
+			{ recursive: true },
+		);
+		fs.writeFileSync(
+			configPath,
+			fs
+				.readFileSync(configPath, "utf8")
+				.replace('currentMigrationVersion: "v3"', 'currentMigrationVersion: "v11"')
+				.replace('supportedMigrationVersions: ["v1", "v3"]', 'supportedMigrationVersions: ["v1", "v9", "v10", "v11"]'),
+			"utf8",
+		);
+
+		const calls: PromptSelectionCall[] = [];
+		await wizardProjectMigrations(projectDir, {
+			isInteractive: true,
+			prompt: createStubPrompt(undefined, calls),
+			renderLine: () => undefined,
+		});
+
+		expect(calls[0]?.options.map((option) => option.value)).toEqual(["v10", "v9", "v1", "cancel"]);
+	});
+
+	test("loadMigrationProject rejects legacy semver config keys with reset guidance", () => {
+		const projectDir = path.join(tempRoot, "legacy-semver-config-project");
+		createCurrentProjectFiles(projectDir);
+		writeFile(
+			path.join(projectDir, "src", "migrations", "config.ts"),
+			`export const migrationConfig = {\n\tblockName: "create-block/migration-smoke",\n\tcurrentVersion: "1.0.0",\n\tsupportedVersions: ["1.0.0"],\n\tsnapshotDir: "src/migrations/versions",\n} as const;\n\nexport default migrationConfig;\n`,
+		);
+
+		expect(() => loadMigrationProject(projectDir)).toThrow(
+			/Detected legacy config keys `currentVersion` \/ `supportedVersions`[\s\S]*rerun `wp-typia migrations init --current-migration-version v1`/,
+		);
+	});
+
+	test("loadMigrationProject rejects legacy semver-named migration artifacts with reset guidance", () => {
+		const projectDir = path.join(tempRoot, "legacy-semver-artifacts-project");
+		createVersionedMigrationProject(projectDir);
+		writeJson(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "block.json"), {
+			apiVersion: 3,
+			attributes: {
+				content: { default: "Legacy", type: "string" },
+			},
+			name: "create-block/migration-smoke",
+			title: "Migration Smoke",
+		});
+
+		expect(() => loadMigrationProject(projectDir)).toThrow(
+			/Detected a legacy semver-based migration workspace[\s\S]*1\.0\.0[\s\S]*rerun `wp-typia migrations init --current-migration-version v1`/,
+		);
 	});
 
 	test("wizard cancellation exits cleanly without writing migration artifacts", async () => {
@@ -1901,10 +1978,10 @@ describe("wp-typia migrations", () => {
 		expect(result).toEqual({ cancelled: true });
 		expect(lines.join("\n")).toContain("Cancelled migration planning.");
 		expect(
-			fs.existsSync(path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts")),
+			fs.existsSync(path.join(projectDir, "src", "migrations", "rules", "v1-to-v3.ts")),
 		).toBe(false);
 		expect(
-			fs.existsSync(path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json")),
+			fs.existsSync(path.join(projectDir, "src", "migrations", "fixtures", "v1-to-v3.json")),
 		).toBe(false);
 	});
 
@@ -1912,19 +1989,19 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "verify-project");
 		createVersionedMigrationProject(projectDir);
 
-		const diffOutput = runCli("node", [entryPath, "migrations", "diff", "--from", "1.0.0"], {
+		const diffOutput = runCli("node", [entryPath, "migrations", "diff", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
-		expect(diffOutput).toContain("Migration diff: 1.0.0 -> 2.0.0");
+		expect(diffOutput).toContain("Migration diff: v1 -> v3");
 		expect(diffOutput).toContain("add-default");
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
-		const rulePath = path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts");
+		const rulePath = path.join(projectDir, "src", "migrations", "rules", "v1-to-v3.ts");
 		const deprecatedPath = path.join(projectDir, "src", "migrations", "generated", "deprecated.ts");
-		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json");
+		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "v1-to-v3.json");
 		const phpRegistryPath = path.join(projectDir, "typia-migration-registry.php");
 
 		expect(fs.existsSync(rulePath)).toBe(true);
@@ -1941,14 +2018,14 @@ describe("wp-typia migrations", () => {
 		expect(deprecatedSource).toContain("deprecated_0");
 		expect(Array.isArray(fixtureSource.cases)).toBe(true);
 		expect(fixtureSource.cases[0].name).toBe("default");
-		expect(phpRegistrySource).toContain("'currentVersion' => '2.0.0'");
-		expect(phpRegistrySource).toContain("'legacyVersions' =>");
-		expect(phpRegistrySource).toContain("'1.0.0'");
+		expect(phpRegistrySource).toContain("'currentMigrationVersion' => 'v3'");
+		expect(phpRegistrySource).toContain("'legacyMigrationVersions' =>");
+		expect(phpRegistrySource).toContain("'v1'");
 
 		const verifyOutput = runCli("node", [entryPath, "migrations", "verify", "--all"], {
 			cwd: projectDir,
 		});
-		expect(verifyOutput).toContain("Verified 1.0.0 -> 2.0.0");
+		expect(verifyOutput).toContain("Verified v1 -> v3");
 		expect(verifyOutput).toContain("Migration verification passed for create-block/migration-smoke");
 	});
 
@@ -1956,18 +2033,18 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "rename-project");
 		createRenameCandidateProject(projectDir);
 
-		const diffOutput = runCli("node", [entryPath, "migrations", "diff", "--from", "1.0.0"], {
+		const diffOutput = runCli("node", [entryPath, "migrations", "diff", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 		expect(diffOutput).toContain("Auto-applied renames:");
 		expect(diffOutput).toContain("content <- headline");
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
-		const rulePath = path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts");
-		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json");
+		const rulePath = path.join(projectDir, "src", "migrations", "rules", "v1-to-v3.ts");
+		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "v1-to-v3.json");
 		const ruleSource = fs.readFileSync(rulePath, "utf8");
 		const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
@@ -1981,24 +2058,24 @@ describe("wp-typia migrations", () => {
 		const verifyOutput = runCli("node", [entryPath, "migrations", "verify", "--all"], {
 			cwd: projectDir,
 		});
-		expect(verifyOutput).toContain("Verified 1.0.0 -> 2.0.0");
+		expect(verifyOutput).toContain("Verified v1 -> v3");
 	});
 
 	test("scaffold auto-applies nested leaf rename candidates", () => {
 		const projectDir = path.join(tempRoot, "nested-rename-project");
 		createNestedRenameProject(projectDir);
 
-		const diffOutput = runCli("node", [entryPath, "migrations", "diff", "--from", "1.0.0"], {
+		const diffOutput = runCli("node", [entryPath, "migrations", "diff", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 		expect(diffOutput).toContain("settings.label <- settings.title");
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
-		const rulePath = path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts");
-		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json");
+		const rulePath = path.join(projectDir, "src", "migrations", "rules", "v1-to-v3.ts");
+		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "v1-to-v3.json");
 		const ruleSource = fs.readFileSync(rulePath, "utf8");
 		const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
@@ -2011,18 +2088,18 @@ describe("wp-typia migrations", () => {
 		const verifyOutput = runCli("node", [entryPath, "migrations", "verify", "--all"], {
 			cwd: projectDir,
 		});
-		expect(verifyOutput).toContain("Verified 1.0.0 -> 2.0.0");
+		expect(verifyOutput).toContain("Verified v1 -> v3");
 	});
 
 	test("ambiguous rename candidates stay unresolved", () => {
 		const projectDir = path.join(tempRoot, "ambiguous-rename-project");
 		createAmbiguousRenameProject(projectDir);
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
-		const rulePath = path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts");
+		const rulePath = path.join(projectDir, "src", "migrations", "rules", "v1-to-v3.ts");
 		const ruleSource = fs.readFileSync(rulePath, "utf8");
 
 		expect(ruleSource).toContain('// "content": "headline",');
@@ -2033,11 +2110,11 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "coercion-project");
 		createTypeCoercionProject(projectDir);
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
-		const rulePath = path.join(projectDir, "src", "migrations", "rules", "1.0.0-to-2.0.0.ts");
+		const rulePath = path.join(projectDir, "src", "migrations", "rules", "v1-to-v3.ts");
 		const ruleSource = fs.readFileSync(rulePath, "utf8");
 
 		expect(ruleSource).toContain("export const transforms");
@@ -2049,14 +2126,14 @@ describe("wp-typia migrations", () => {
 	test("union diff distinguishes additive and removal changes", () => {
 		const additiveProjectDir = path.join(tempRoot, "union-additive-project");
 		createUnionProject(additiveProjectDir, { removeBranch: false });
-		const additiveOutput = runCli("node", [entryPath, "migrations", "diff", "--from", "1.0.0"], {
+		const additiveOutput = runCli("node", [entryPath, "migrations", "diff", "--from-migration-version", "v1"], {
 			cwd: additiveProjectDir,
 		});
 		expect(additiveOutput).toContain("union-branch-addition");
 
 		const removalProjectDir = path.join(tempRoot, "union-removal-project");
 		createUnionProject(removalProjectDir, { removeBranch: true });
-		const removalOutput = runCli("node", [entryPath, "migrations", "diff", "--from", "1.0.0"], {
+		const removalOutput = runCli("node", [entryPath, "migrations", "diff", "--from-migration-version", "v1"], {
 			cwd: removalProjectDir,
 		});
 		expect(removalOutput).toContain("union-branch-removal");
@@ -2066,28 +2143,28 @@ describe("wp-typia migrations", () => {
 		const additiveProjectDir = path.join(tempRoot, "risk-additive-project");
 		createVersionedMigrationProject(additiveProjectDir);
 		const additiveSummary = createMigrationRiskSummary(
-			createMigrationDiff(loadMigrationProject(additiveProjectDir), "1.0.0", "2.0.0"),
+			createMigrationDiff(loadMigrationProject(additiveProjectDir), "v1", "v3"),
 		);
 		expect(additiveSummary.additive.count).toBeGreaterThan(0);
 
 		const renameProjectDir = path.join(tempRoot, "risk-rename-project");
 		createRenameCandidateProject(renameProjectDir);
 		const renameSummary = createMigrationRiskSummary(
-			createMigrationDiff(loadMigrationProject(renameProjectDir), "1.0.0", "2.0.0"),
+			createMigrationDiff(loadMigrationProject(renameProjectDir), "v1", "v3"),
 		);
 		expect(renameSummary.rename.count).toBeGreaterThan(0);
 
 		const transformProjectDir = path.join(tempRoot, "risk-transform-project");
 		createTypeCoercionProject(transformProjectDir);
 		const transformSummary = createMigrationRiskSummary(
-			createMigrationDiff(loadMigrationProject(transformProjectDir), "1.0.0", "2.0.0"),
+			createMigrationDiff(loadMigrationProject(transformProjectDir), "v1", "v3"),
 		);
 		expect(transformSummary.semanticTransform.count).toBeGreaterThan(0);
 
 		const unionProjectDir = path.join(tempRoot, "risk-union-project");
 		createUnionProject(unionProjectDir, { removeBranch: true });
 		const unionSummary = createMigrationRiskSummary(
-			createMigrationDiff(loadMigrationProject(unionProjectDir), "1.0.0", "2.0.0"),
+			createMigrationDiff(loadMigrationProject(unionProjectDir), "v1", "v3"),
 		);
 		expect(unionSummary.unionBreaking.count).toBeGreaterThan(0);
 	});
@@ -2103,18 +2180,18 @@ describe("wp-typia migrations", () => {
 			"multi-parent-item",
 		]);
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
 		expect(
 			fs.existsSync(
-				path.join(projectDir, "src", "migrations", "rules", "multi-parent", "1.0.0-to-2.0.0.ts"),
+				path.join(projectDir, "src", "migrations", "rules", "multi-parent", "v1-to-v3.ts"),
 			),
 		).toBe(true);
 		expect(
 			fs.existsSync(
-				path.join(projectDir, "src", "migrations", "rules", "multi-parent-item", "1.0.0-to-2.0.0.ts"),
+				path.join(projectDir, "src", "migrations", "rules", "multi-parent-item", "v1-to-v3.ts"),
 			),
 		).toBe(true);
 		expect(
@@ -2145,14 +2222,14 @@ describe("wp-typia migrations", () => {
 		const state = loadMigrationProject(projectDir);
 
 		expect(() =>
-			createMigrationDiff(state, "1.0.0", "2.0.0"),
+			createMigrationDiff(state, "v1", "v3"),
 		).toThrow(/block key is required/i);
 		expect(() =>
 			createMigrationDiff(
 				state,
 				{ key: "missing-block" } as any,
-				"1.0.0",
-				"2.0.0",
+				"v1",
+				"v3",
 			),
 		).toThrow(/Unknown migration block key: missing-block/);
 	});
@@ -2161,14 +2238,14 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "multi-block-late-child-project");
 		createMultiBlockMigrationProject(projectDir, { includeLegacyChild: false });
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
 		const output = runCli("node", [entryPath, "migrations", "doctor", "--all"], {
 			cwd: projectDir,
 		});
-		expect(output).toContain("PASS Snapshot create-block/multi-parent-item @ 1.0.0: Not present for this version");
+		expect(output).toContain("PASS Snapshot create-block/multi-parent-item @ v1: Not present for this version");
 		expect(output).toContain("PASS Migration doctor summary:");
 	});
 
@@ -2176,11 +2253,11 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "multi-block-missing-current-snapshot-project");
 		createMultiBlockMigrationProject(projectDir, { includeLegacyChild: true });
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 		fs.rmSync(
-			path.join(projectDir, "src", "migrations", "versions", "2.0.0", "multi-parent-item"),
+			path.join(projectDir, "src", "migrations", "versions", "v3", "multi-parent-item"),
 			{ force: true, recursive: true },
 		);
 
@@ -2195,7 +2272,7 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "doctor-success-project");
 		createVersionedMigrationProject(projectDir);
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
@@ -2203,8 +2280,8 @@ describe("wp-typia migrations", () => {
 			cwd: projectDir,
 		});
 		expect(output).toContain("PASS Migration config:");
-		expect(output).toContain("PASS Fixture coverage 1.0.0:");
-		expect(output).toContain("PASS Risk summary 1.0.0:");
+		expect(output).toContain("PASS Fixture coverage v1:");
+		expect(output).toContain("PASS Risk summary v1:");
 		expect(output).toContain("PASS Migration doctor summary:");
 	});
 
@@ -2212,10 +2289,10 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "doctor-missing-snapshot-project");
 		createVersionedMigrationProject(projectDir);
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
-		fs.rmSync(path.join(projectDir, "src", "migrations", "versions", "1.0.0", "save.tsx"));
+		fs.rmSync(path.join(projectDir, "src", "migrations", "versions", "v1", "save.tsx"));
 
 		expect(() =>
 			runCli("node", [entryPath, "migrations", "doctor", "--all"], {
@@ -2228,10 +2305,10 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "doctor-missing-fixture-project");
 		createVersionedMigrationProject(projectDir);
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
-		fs.rmSync(path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json"));
+		fs.rmSync(path.join(projectDir, "src", "migrations", "fixtures", "v1-to-v3.json"));
 
 		expect(() =>
 			runCli("node", [entryPath, "migrations", "doctor", "--all"], {
@@ -2244,7 +2321,7 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "doctor-unresolved-project");
 		createAmbiguousRenameProject(projectDir);
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
@@ -2259,7 +2336,7 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "doctor-drift-project");
 		createVersionedMigrationProject(projectDir);
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 		fs.appendFileSync(
@@ -2279,14 +2356,14 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "fixtures-project");
 		createVersionedMigrationProject(projectDir);
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
-		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json");
+		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "v1-to-v3.json");
 		fs.writeFileSync(
 			fixturePath,
-			`${JSON.stringify({ cases: [{ input: { content: "custom" }, name: "custom" }], fromVersion: "1.0.0", toVersion: "2.0.0" }, null, "\t")}\n`,
+			`${JSON.stringify({ cases: [{ input: { content: "custom" }, name: "custom" }], fromVersion: "v1", toVersion: "v3" }, null, "\t")}\n`,
 			"utf8",
 		);
 
@@ -2308,14 +2385,14 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "fixtures-force-confirm-project");
 		createVersionedMigrationProject(projectDir);
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
-		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "1.0.0-to-2.0.0.json");
+		const fixturePath = path.join(projectDir, "src", "migrations", "fixtures", "v1-to-v3.json");
 		fs.writeFileSync(
 			fixturePath,
-			`${JSON.stringify({ cases: [{ input: { content: "custom" }, name: "custom" }], fromVersion: "1.0.0", toVersion: "2.0.0" }, null, "\t")}\n`,
+			`${JSON.stringify({ cases: [{ input: { content: "custom" }, name: "custom" }], fromVersion: "v1", toVersion: "v3" }, null, "\t")}\n`,
 			"utf8",
 		);
 
@@ -2357,8 +2434,8 @@ describe("wp-typia migrations", () => {
 			},
 		);
 
-		expect(() => snapshotProjectVersion(projectDir, "3.0.0")).toThrow(
-			/Could not capture migration snapshot 3\.0\.0 because `bun run sync-types` failed first[\s\S]*Install project dependencies[\s\S]*rerun `bun run sync-types`[\s\S]*Original error:/,
+		expect(() => snapshotProjectVersion(projectDir, "v4")).toThrow(
+			/Could not capture migration snapshot v4 because `bun run sync-types` failed first[\s\S]*Install project dependencies[\s\S]*rerun `bun run sync-types`[\s\S]*retry `wp-typia migrations snapshot --migration-version v4`[\s\S]*Original error:/,
 		);
 	});
 
@@ -2366,7 +2443,7 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "fuzz-success-project");
 		createVersionedMigrationProject(projectDir);
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
@@ -2375,7 +2452,7 @@ describe("wp-typia migrations", () => {
 			[entryPath, "migrations", "fuzz", "--all", "--iterations", "5", "--seed", "1"],
 			{ cwd: projectDir },
 		);
-		expect(output).toContain("Fuzzed 1.0.0 -> 2.0.0");
+		expect(output).toContain("Fuzzed v1 -> v3");
 		expect(output).toContain("Migration fuzzing passed for create-block/migration-smoke");
 	});
 
@@ -2383,7 +2460,7 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "fuzz-failure-project");
 		createFuzzFailureProject(projectDir);
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
@@ -2400,7 +2477,7 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "fuzz-seed-zero-project");
 		createVersionedMigrationProject(projectDir);
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
@@ -2409,15 +2486,15 @@ describe("wp-typia migrations", () => {
 			[entryPath, "migrations", "fuzz", "--all", "--iterations", "1", "--seed", "0"],
 			{ cwd: projectDir },
 		);
-		expect(zeroSeedOutput).toContain("Fuzzed 1.0.0 -> 2.0.0");
+		expect(zeroSeedOutput).toContain("Fuzzed v1 -> v3");
 
 		expect(() =>
 			runCli(
 				"node",
-				[entryPath, "migrations", "fuzz", "--from", "9.9.9", "--iterations", "1", "--seed", "0"],
+				[entryPath, "migrations", "fuzz", "--from-migration-version", "9.9.9", "--iterations", "1", "--seed", "0"],
 				{ cwd: projectDir },
 			),
-		).toThrow(/Unsupported migration version: 9.9.9[\s\S]*Available legacy versions: 1\.0\.0/);
+		).toThrow(/Unsupported migration version: 9.9.9[\s\S]*Available legacy migration versions: v1/);
 	});
 
 	test("plan, diff, and scaffold reject same-version migration edges early", () => {
@@ -2425,31 +2502,31 @@ describe("wp-typia migrations", () => {
 		createVersionedMigrationProject(projectDir);
 
 		expect(() =>
-			runCli("node", [entryPath, "migrations", "plan", "--from", "2.0.0"], {
+			runCli("node", [entryPath, "migrations", "plan", "--from-migration-version", "v3"], {
 				cwd: projectDir,
 			}),
-		).toThrow(/migrations plan` requires different source and target versions[\s\S]*2\.0\.0/);
+		).toThrow(/migrations plan` requires different source and target migration versions[\s\S]*v3/);
 
 		expect(() =>
-			runCli("node", [entryPath, "migrations", "diff", "--from", "2.0.0"], {
+			runCli("node", [entryPath, "migrations", "diff", "--from-migration-version", "v3"], {
 				cwd: projectDir,
 			}),
-		).toThrow(/migrations diff` requires different source and target versions[\s\S]*2\.0\.0/);
+		).toThrow(/migrations diff` requires different source and target migration versions[\s\S]*v3/);
 
 		expect(() =>
-			runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0", "--to", "1.0.0"], {
+			runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1", "--to-migration-version", "v1"], {
 				cwd: projectDir,
 			}),
-		).toThrow(/migrations scaffold` requires different source and target versions[\s\S]*1\.0\.0/);
+		).toThrow(/migrations scaffold` requires different source and target migration versions[\s\S]*v1/);
 	});
 
 	test("runMigrationCommand preserves synchronous throws for direct callers", () => {
 		const projectDir = path.join(tempRoot, "run-command-sync-contract-project");
 		createVersionedMigrationProject(projectDir);
-		const command = parseMigrationArgs(["plan", "--from", "2.0.0"]);
+		const command = parseMigrationArgs(["plan", "--from-migration-version", "v3"]);
 
 		expect(() => runMigrationCommand(command, projectDir)).toThrow(
-			/migrations plan` requires different source and target versions[\s\S]*2\.0\.0/,
+			/migrations plan` requires different source and target migration versions[\s\S]*v3/,
 		);
 	});
 
@@ -2457,10 +2534,10 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "verify-default-project");
 		createVersionedMigrationProject(projectDir);
 		const configPath = path.join(projectDir, "src", "migrations", "config.ts");
-		const version100Root = path.join(projectDir, "src", "migrations", "versions", "1.0.0");
-		const version150Root = path.join(projectDir, "src", "migrations", "versions", "1.5.0");
+		const version100Root = path.join(projectDir, "src", "migrations", "versions", "v1");
+		const version150Root = path.join(projectDir, "src", "migrations", "versions", "v2");
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 		fs.cpSync(version100Root, version150Root, { recursive: true });
@@ -2468,18 +2545,18 @@ describe("wp-typia migrations", () => {
 			configPath,
 			fs
 				.readFileSync(configPath, "utf8")
-				.replace('supportedVersions: ["1.0.0", "2.0.0"]', 'supportedVersions: ["1.0.0", "1.5.0", "2.0.0"]'),
+				.replace('supportedMigrationVersions: ["v1", "v3"]', 'supportedMigrationVersions: ["v1", "v2", "v3"]'),
 			"utf8",
 		);
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.5.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v2"], {
 			cwd: projectDir,
 		});
 
 		const verifyOutput = runCli("node", [entryPath, "migrations", "verify"], {
 			cwd: projectDir,
 		});
-		expect(verifyOutput).toContain("Verified migrations for 1.0.0");
-		expect(verifyOutput).not.toContain("1.5.0");
+		expect(verifyOutput).toContain("Verified migrations for v1");
+		expect(verifyOutput).not.toContain("v2");
 
 		expect(() =>
 			runCli(
@@ -2502,10 +2579,10 @@ describe("wp-typia migrations", () => {
 		const projectDir = path.join(tempRoot, "missing-edge-verification-project");
 		createVersionedMigrationProject(projectDir);
 		const configPath = path.join(projectDir, "src", "migrations", "config.ts");
-		const version100Root = path.join(projectDir, "src", "migrations", "versions", "1.0.0");
-		const version150Root = path.join(projectDir, "src", "migrations", "versions", "1.5.0");
+		const version100Root = path.join(projectDir, "src", "migrations", "versions", "v1");
+		const version150Root = path.join(projectDir, "src", "migrations", "versions", "v2");
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 		fs.cpSync(version100Root, version150Root, { recursive: true });
@@ -2513,7 +2590,7 @@ describe("wp-typia migrations", () => {
 			configPath,
 			fs
 				.readFileSync(configPath, "utf8")
-				.replace('supportedVersions: ["1.0.0", "2.0.0"]', 'supportedVersions: ["1.0.0", "1.5.0", "2.0.0"]'),
+				.replace('supportedMigrationVersions: ["v1", "v3"]', 'supportedMigrationVersions: ["v1", "v2", "v3"]'),
 			"utf8",
 		);
 
@@ -2521,21 +2598,21 @@ describe("wp-typia migrations", () => {
 			runCli("node", [entryPath, "migrations", "verify", "--all"], {
 				cwd: projectDir,
 			}),
-		).toThrow(/Missing migration verify inputs.*1\.5\.0[\s\S]*migrations scaffold --from 1\.5\.0[\s\S]*migrations doctor --all/);
+		).toThrow(/Missing migration verify inputs.*v2[\s\S]*migrations scaffold --from-migration-version v2[\s\S]*migrations doctor --all/);
 		expect(() =>
 			runCli(
 				"node",
 				[entryPath, "migrations", "fuzz", "--all", "--iterations", "1", "--seed", "0"],
 				{ cwd: projectDir },
 			),
-		).toThrow(/Missing migration fuzz inputs.*1\.5\.0[\s\S]*migrations scaffold --from 1\.5\.0[\s\S]*migrations doctor --all/);
+		).toThrow(/Missing migration fuzz inputs.*v2[\s\S]*migrations scaffold --from-migration-version v2[\s\S]*migrations doctor --all/);
 	});
 
 	test("verify and fuzz fail with recovery guidance when generated scripts are missing", () => {
 		const projectDir = path.join(tempRoot, "missing-generated-script-project");
 		createVersionedMigrationProject(projectDir);
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 
@@ -2544,9 +2621,9 @@ describe("wp-typia migrations", () => {
 			runCli("node", [entryPath, "migrations", "verify", "--all"], {
 				cwd: projectDir,
 			}),
-		).toThrow(/Generated verify script is missing[\s\S]*1\.0\.0[\s\S]*migrations scaffold --from 1\.0\.0[\s\S]*migrations doctor --all/);
+		).toThrow(/Generated verify script is missing[\s\S]*v1[\s\S]*migrations scaffold --from-migration-version v1[\s\S]*migrations doctor --all/);
 
-		runCli("node", [entryPath, "migrations", "scaffold", "--from", "1.0.0"], {
+		runCli("node", [entryPath, "migrations", "scaffold", "--from-migration-version", "v1"], {
 			cwd: projectDir,
 		});
 		fs.rmSync(path.join(projectDir, "src", "migrations", "generated", "fuzz.ts"));
@@ -2556,6 +2633,6 @@ describe("wp-typia migrations", () => {
 				[entryPath, "migrations", "fuzz", "--all", "--iterations", "1", "--seed", "0"],
 				{ cwd: projectDir },
 			),
-		).toThrow(/Generated fuzz script is missing[\s\S]*1\.0\.0[\s\S]*migrations scaffold --from 1\.0\.0[\s\S]*migrations doctor --all/);
+		).toThrow(/Generated fuzz script is missing[\s\S]*v1[\s\S]*migrations scaffold --from-migration-version v1[\s\S]*migrations doctor --all/);
 	});
 });

@@ -209,7 +209,7 @@ export function renderMigrationRegistryFile(
 		imports.push(`import manifest_${index} from "${entry.manifestImport}";`);
 		imports.push(`import * as rule_${index} from "${entry.ruleImport}";`);
 		body.push(`\t{`);
-		body.push(`\t\tfromVersion: "${entry.fromVersion}",`);
+		body.push(`\t\tfromMigrationVersion: "${entry.fromVersion}",`);
 		body.push(`\t\tmanifest: manifest_${index},`);
 		body.push(`\t\triskSummary: ${JSON.stringify(riskSummary, null, "\t").replace(/\n/g, "\n\t\t")},`);
 		body.push(`\t\trule: rule_${index},`);
@@ -220,7 +220,7 @@ export function renderMigrationRegistryFile(
 ${imports.join("\n")}
 
 interface MigrationRegistryEntry {
-	fromVersion: string;
+	fromMigrationVersion: string;
 	manifest: ManifestDocument;
 	riskSummary: MigrationRiskSummary;
 	rule: {
@@ -230,11 +230,11 @@ interface MigrationRegistryEntry {
 }
 
 export const migrationRegistry: {
-	currentVersion: string;
+	currentMigrationVersion: string;
 	currentManifest: ManifestDocument;
 	entries: MigrationRegistryEntry[];
 } = {
-	currentVersion: "${state.config.currentVersion}",
+	currentMigrationVersion: "${state.config.currentMigrationVersion}",
 	currentManifest: currentManifest as ManifestDocument,
 	entries: [
 ${body.join("\n")}
@@ -318,7 +318,7 @@ export function renderGeneratedMigrationIndexFile(
 		definitions.push(`\t\tregistry: registry_${index},`);
 		definitions.push(`\t\tdeprecated: deprecated_${index},`);
 		definitions.push(`\t\tvalidators: validators_${index},`);
-		definitions.push(`\t\tlegacyVersions: ${JSON.stringify(scopedEntries.map((entry) => entry.fromVersion))},`);
+		definitions.push(`\t\tlegacyMigrationVersions: ${JSON.stringify(scopedEntries.map((entry) => entry.fromVersion))},`);
 		definitions.push(`\t},`);
 	});
 
@@ -339,7 +339,7 @@ export function renderPhpMigrationRegistryFile(
 ): string {
 	const blocks = state.blocks.map((block) => {
 		const snapshots = Object.fromEntries(
-			state.config.supportedVersions.map((version) => {
+			state.config.supportedMigrationVersions.map((version) => {
 				const manifestPath = getSnapshotManifestPath(state.projectDir, block, version);
 				const blockJsonPath = getSnapshotBlockJsonPath(state.projectDir, block, version);
 				const savePath = getSnapshotSavePath(state.projectDir, block, version);
@@ -372,10 +372,10 @@ export function renderPhpMigrationRegistryFile(
 				return {
 					autoAppliedRenameCount: ruleMetadata.renameMap.length,
 					autoAppliedRenames: ruleMetadata.renameMap,
-					fromVersion: entry.fromVersion,
+					fromMigrationVersion: entry.fromVersion,
 					nestedPathRenames: ruleMetadata.renameMap.filter((item) => item.currentPath.includes(".")),
 					ruleFile: path.relative(state.projectDir, entry.rulePath).replace(/\\/g, "/"),
-					toVersion: entry.toVersion,
+					toMigrationVersion: entry.toVersion,
 					transformKeys: ruleMetadata.transforms,
 					unionBranches: snapshotManifest ? summarizeUnionBranches(snapshotManifest) : [],
 					unresolved: ruleMetadata.unresolved,
@@ -387,7 +387,9 @@ export function renderPhpMigrationRegistryFile(
 			currentManifest: summarizeManifest(block.currentManifest),
 			edges: edgeSummaries,
 			key: block.key,
-			legacyVersions: state.config.supportedVersions.filter((version) => version !== state.config.currentVersion),
+			legacyMigrationVersions: state.config.supportedMigrationVersions.filter(
+				(version) => version !== state.config.currentMigrationVersion,
+			),
 			snapshots,
 		};
 	});
@@ -400,10 +402,10 @@ declare(strict_types=1);
  */
 return ${renderPhpValue(
 		{
-			currentVersion: state.config.currentVersion,
+			currentMigrationVersion: state.config.currentMigrationVersion,
 			blocks,
 			snapshotDir: state.config.snapshotDir,
-			supportedVersions: state.config.supportedVersions,
+			supportedMigrationVersions: state.config.supportedMigrationVersions,
 		},
 		0,
 	)};
@@ -422,7 +424,7 @@ export function renderVerifyFile(
 	if (entries.length === 0) {
 		return `/* eslint-disable no-console */
 console.log(
-\t'Run \`wp-typia migrations scaffold --from <semver>\` before verify.'
+\t'Run \`wp-typia migrations scaffold --from-migration-version <label>\` before verify.'
 );
 `;
 	}
@@ -436,7 +438,7 @@ console.log(
 	entries.forEach((entry, index) => {
 		imports.push(`import fixture_${index} from "${entry.fixtureImport}";`);
 		imports.push(`import * as rule_${index} from "${entry.ruleImport}";`);
-		checks.push(`\tif (selectedVersions.length === 0 || selectedVersions.includes("${entry.fromVersion}")) {`);
+		checks.push(`\tif (selectedMigrationVersions.length === 0 || selectedMigrationVersions.includes("${entry.fromVersion}")) {`);
 		checks.push(`\t\tif (rule_${index}.unresolved.length > 0) {`);
 		checks.push(
 			`\t\t\tthrow new Error("Unresolved migration TODOs remain for ${entry.fromVersion} -> ${entry.toVersion}: " + rule_${index}.unresolved.join(", "));`,
@@ -481,10 +483,10 @@ function getValidationErrors(result: unknown): unknown[] {
 }
 
 const args = process.argv.slice(2);
-const selectedVersions =
+const selectedMigrationVersions =
 	args[0] === "--all"
 		? []
-		: args[0] === "--from" && args[1]
+		: args[0] === "--from-migration-version" && args[1]
 			? [args[1]]
 			: [];
 
@@ -510,7 +512,7 @@ export function renderFuzzFile(
 	if (entries.length === 0) {
 		return `/* eslint-disable no-console */
 console.log(
-\t'Run \`wp-typia migrations scaffold --from <semver>\` before fuzz.'
+\t'Run \`wp-typia migrations scaffold --from-migration-version <label>\` before fuzz.'
 );
 `;
 	}
@@ -525,8 +527,8 @@ console.log(
 		imports.push(`import manifest_${index} from "${entry.manifestImport}";`);
 		imports.push(`import * as rule_${index} from "${entry.ruleImport}";`);
 		edgeDefinitions.push(`{
-\tfromVersion: "${entry.fromVersion}",
-\ttoVersion: "${entry.toVersion}",
+\tfromMigrationVersion: "${entry.fromVersion}",
+\ttoMigrationVersion: "${entry.toVersion}",
 \tfixture: fixture_${index},
 \tlegacyManifest: manifest_${index},
 \trule: rule_${index},
@@ -570,7 +572,7 @@ type FixtureDocument = {
 
 type FuzzEdge = {
 \tfixture: FixtureDocument;
-\tfromVersion: string;
+\tfromMigrationVersion: string;
 \tlegacyManifest: ManifestDocument;
 \tplan: {
 \t\tblockedPaths: string[];
@@ -579,7 +581,7 @@ type FuzzEdge = {
 \trule: {
 \t\tmigrate(input: Record<string, unknown>): Record<string, unknown>;
 \t};
-\ttoVersion: string;
+\ttoMigrationVersion: string;
 };
 
 const edges: FuzzEdge[] = [
@@ -709,12 +711,12 @@ function withSeededRandom<T>(seed: number, callback: () => T): T {
 
 function parseArgs(argv: string[]): {
 \tall: boolean;
-\tfromVersion?: string;
+\tfromMigrationVersion?: string;
 \titerations: number;
 \tseed?: number;
 } {
 \tlet all = false;
-\tlet fromVersion: string | undefined;
+\tlet fromMigrationVersion: string | undefined;
 \tlet iterations = 25;
 \tlet seed: number | undefined;
 
@@ -726,8 +728,8 @@ function parseArgs(argv: string[]): {
 \t\t\tall = true;
 \t\t\tcontinue;
 \t\t}
-\t\tif (arg === "--from") {
-\t\t\tfromVersion = next;
+\t\tif (arg === "--from-migration-version") {
+\t\t\tfromMigrationVersion = next;
 \t\t\tindex += 1;
 \t\t\tcontinue;
 \t\t}
@@ -742,7 +744,7 @@ function parseArgs(argv: string[]): {
 \t\t}
 \t}
 
-\treturn { all, fromVersion, iterations, seed };
+\treturn { all, fromMigrationVersion, iterations, seed };
 }
 
 function applyCompatibleMappings(
@@ -773,9 +775,9 @@ function assertValidMigration(
 
 \tthrow new Error(
 \t\t"Migration fuzz failed for " +
-\t\t\tedge.fromVersion +
+\t\t\tedge.fromMigrationVersion +
 \t\t\t" -> " +
-\t\t\tedge.toVersion +
+\t\t\tedge.toMigrationVersion +
 \t\t\t" (seed " +
 \t\t\tString(iterationSeed) +
 \t\t\t", iteration " +
@@ -790,11 +792,11 @@ function assertValidMigration(
 }
 
 const parsed = parseArgs(process.argv.slice(2));
-const selectedVersions = parsed.all
+const selectedMigrationVersions = parsed.all
 \t? []
-\t: parsed.fromVersion
-\t\t? [parsed.fromVersion]
-\t\t: edges.map((edge) => edge.fromVersion);
+\t: parsed.fromMigrationVersion
+\t\t? [parsed.fromMigrationVersion]
+\t\t: edges.map((edge) => edge.fromMigrationVersion);
 const baseSeed = typeof parsed.seed === "number" ? parsed.seed : Date.now();
 
 if (!Number.isInteger(parsed.seed)) {
@@ -802,14 +804,14 @@ if (!Number.isInteger(parsed.seed)) {
 }
 
 if (edges.length === 0) {
-\tconsole.log("No legacy versions configured for migration fuzzing.");
+\tconsole.log("No legacy migration versions configured for migration fuzzing.");
 \tprocess.exit(0);
 }
 
 let executedEdges = 0;
 
 for (const [edgeIndex, edge] of edges.entries()) {
-\tif (selectedVersions.length > 0 && !selectedVersions.includes(edge.fromVersion)) {
+\tif (selectedMigrationVersions.length > 0 && !selectedMigrationVersions.includes(edge.fromMigrationVersion)) {
 \t\tcontinue;
 \t}
 
@@ -838,9 +840,9 @@ for (const [edgeIndex, edge] of edges.entries()) {
 
 \tconsole.log(
 \t\t"Fuzzed " +
-\t\t\tedge.fromVersion +
+\t\t\tedge.fromMigrationVersion +
 \t\t\t" -> " +
-\t\t\tedge.toVersion +
+\t\t\tedge.toMigrationVersion +
 \t\t\t" (" +
 \t\t\tString(fixtureCases.length) +
 \t\t\t" fixture case(s), " +
@@ -849,10 +851,10 @@ for (const [edgeIndex, edge] of edges.entries()) {
 \t);
 }
 
-if (selectedVersions.length > 0 && executedEdges === 0) {
+if (selectedMigrationVersions.length > 0 && executedEdges === 0) {
 \tthrow new Error(
 \t\t"Requested migration version was not exercised by fuzz: " +
-\t\t\tselectedVersions.join(", "),
+\t\t\tselectedMigrationVersions.join(", "),
 \t);
 }
 

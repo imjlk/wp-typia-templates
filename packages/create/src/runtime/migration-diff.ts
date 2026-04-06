@@ -56,7 +56,7 @@ export function createMigrationDiff(
 	const toVersion =
 		typeof blockOrFromVersion === "string"
 			? fromVersionOrToVersion
-			: maybeToVersion ?? state.config.currentVersion;
+			: maybeToVersion ?? state.config.currentMigrationVersion;
 	if (!block) {
 		throw new Error(
 			typeof blockOrFromVersion === "string"
@@ -71,13 +71,17 @@ export function createMigrationDiff(
 			createMissingBlockSnapshotMessage(
 				block.blockName,
 				fromVersion,
-				getAvailableSnapshotVersionsForBlock(state.projectDir, state.config.supportedVersions, block),
+				getAvailableSnapshotVersionsForBlock(
+					state.projectDir,
+					state.config.supportedMigrationVersions,
+					block,
+				),
 			),
 		);
 	}
 
 	const targetManifest: ManifestDocument =
-		toVersion === state.config.currentVersion
+		toVersion === state.config.currentMigrationVersion
 			? block.currentManifest
 			: readJson<ManifestDocument>(getSnapshotManifestPath(state.projectDir, block, toVersion));
 

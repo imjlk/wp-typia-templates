@@ -17,7 +17,10 @@ import {
 	SUPPORTED_PROJECT_FILES,
 } from "./migration-constants.js";
 import {
-	compareSemver,
+	compareMigrationVersionLabels,
+	formatLegacyMigrationWorkspaceResetGuidance,
+	isLegacySemverMigrationVersion,
+	isMigrationVersionLabel,
 	readJson,
 	runProjectScriptIfPresent,
 } from "./migration-utils.js";
@@ -33,6 +36,7 @@ import type {
 
 const DEFAULT_BLOCK_KEY = "default";
 const SINGLE_BLOCK_LAYOUT_NOT_FOUND = "No supported single-block migration layout was found.";
+const LEGACY_VERSIONED_EDGE_FILE_PATTERN = /^(\d+\.\d+\.\d+)-to-(\d+\.\d+\.\d+)\.(?:ts|json)$/;
 const SINGLE_BLOCK_LAYOUT_CANDIDATES = [
 	{
 		blockJsonFile: SRC_BLOCK_JSON,
@@ -64,6 +68,12 @@ export type DiscoveredMigrationLayout =
 
 function normalizeRelativePath(value: string): string {
 	return value.replace(/\\/g, "/");
+}
+
+function createLegacyMigrationWorkspaceResetError(reason: string): Error {
+	return new Error(
+		`Detected a legacy semver-based migration workspace. ${formatLegacyMigrationWorkspaceResetGuidance(reason)}`,
+	);
 }
 
 function ensureRelativePath(projectDir: string, filePath: string): string {
@@ -494,17 +504,17 @@ export function getSnapshotManifestPath(
 /**
  * Lists the snapshot versions currently present for a specific block target.
  *
- * Returns the sorted subset of `supportedVersions` that have a manifest on disk
+ * Returns the sorted subset of supported migration versions that have a manifest on disk
  * for the provided block, or an empty array when none exist.
  */
 export function getAvailableSnapshotVersionsForBlock(
 	projectDir: string,
-	supportedVersions: string[],
+	supportedMigrationVersions: string[],
 	block: MigrationBlockConfig | ResolvedMigrationBlockTarget,
 ): string[] {
-	return supportedVersions
+	return supportedMigrationVersions
 		.filter((version) => fs.existsSync(getSnapshotManifestPath(projectDir, block, version)))
-		.sort(compareSemver);
+		.sort(compareMigrationVersionLabels);
 }
 
 /**
@@ -520,10 +530,10 @@ export function createMissingBlockSnapshotMessage(
 ): string {
 	return availableSnapshotVersions.length === 0
 		? `Snapshot manifest for ${blockName} @ ${fromVersion} does not exist. ` +
-				`No snapshots exist yet for ${blockName}. Run \`wp-typia migrations snapshot --version ${fromVersion}\` first.`
+				`No snapshots exist yet for ${blockName}. Run \`wp-typia migrations snapshot --migration-version ${fromVersion}\` first.`
 		: `Snapshot manifest for ${blockName} @ ${fromVersion} does not exist. ` +
 				`Available snapshot versions for ${blockName}: ${availableSnapshotVersions.join(", ")}. ` +
-				`Run \`wp-typia migrations snapshot --version ${fromVersion}\` first if you want to preserve that release.`;
+				`Run \`wp-typia migrations snapshot --migration-version ${fromVersion}\` first if you want to preserve that release.`;
 }
 
 export function getSnapshotSavePath(
@@ -600,12 +610,12 @@ export function ensureMigrationDirectories(projectDir: string, blocks?: Migratio
 
 export function writeInitialMigrationScaffold(
 	projectDir: string,
-	currentVersion: string,
+	currentMigrationVersion: string,
 	blocks?: MigrationBlockConfig[],
 ): void {
 	const paths = getProjectPaths(projectDir);
 	const readmeFiles = [
-		[path.join(paths.snapshotDir, "README.md"), `# Version Snapshots\n\nSnapshots for ${currentVersion} and future versions live here.\n`],
+		[path.join(paths.snapshotDir, "README.md"), `# Migration Version Snapshots\n\nSnapshots for ${currentMigrationVersion} and future migration versions live here.\n`],
 		[path.join(paths.rulesDir, "README.md"), "# Migration Rules\n\nScaffold direct legacy-to-current migration rules in this directory.\n"],
 		[path.join(paths.fixturesDir, "README.md"), "# Migration Fixtures\n\nGenerated fixtures are used by verify to assert migrations.\n"],
 	];
@@ -634,6 +644,63 @@ export function writeInitialMigrationScaffold(
 	}
 }
 
+function findLegacySemverMigrationArtifacts(projectDir: string): string[] {
+	const paths = getProjectPaths(projectDir);
+	const matches: string[] = [];
+
+	if (fs.existsSync(paths.snapshotDir)) {
+		for (const entry of fs.readdirSync(paths.snapshotDir, { withFileTypes: true })) {
+			if (entry.isDirectory() && isLegacySemverMigrationVersion(entry.name)) {
+				matches.push(normalizeRelativePath(path.join(SNAPSHOT_DIR, entry.name)));
+			}
+		}
+	}
+
+	const scanEdgeDir = (directory: string, relativeRoot: string) => {
+		if (!fs.existsSync(directory)) {
+			return;
+		}
+
+		const walk = (currentDir: string, currentRelativeDir: string) => {
+			for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
+				if (entry.isDirectory()) {
+					walk(path.join(currentDir, entry.name), path.join(currentRelativeDir, entry.name));
+					continue;
+				}
+				if (LEGACY_VERSIONED_EDGE_FILE_PATTERN.test(entry.name)) {
+					matches.push(normalizeRelativePath(path.join(currentRelativeDir, entry.name)));
+				}
+			}
+		};
+
+		walk(directory, relativeRoot);
+	};
+
+	scanEdgeDir(paths.rulesDir, RULES_DIR);
+	scanEdgeDir(paths.fixturesDir, FIXTURES_DIR);
+
+	return matches;
+}
+
+export function assertNoLegacySemverMigrationWorkspace(projectDir: string): void {
+	const paths = getProjectPaths(projectDir);
+	if (fs.existsSync(paths.configFile)) {
+		const source = fs.readFileSync(paths.configFile, "utf8");
+		if (/\bcurrentVersion\s*:/.test(source) || /\bsupportedVersions\s*:/.test(source)) {
+			throw createLegacyMigrationWorkspaceResetError(
+				"Detected legacy config keys `currentVersion` / `supportedVersions` in `src/migrations/config.ts`.",
+			);
+		}
+	}
+
+	const artifactMatches = findLegacySemverMigrationArtifacts(projectDir);
+	if (artifactMatches.length > 0) {
+		throw createLegacyMigrationWorkspaceResetError(
+			`Detected legacy semver-named migration artifacts: ${artifactMatches.join(", ")}.`,
+		);
+	}
+}
+
 /**
  * Loads the migration workspace state for a project directory.
  *
@@ -658,15 +725,16 @@ export function loadMigrationProject(
 		allowSyncTypes = true,
 	}: { allowMissingConfig?: boolean; allowSyncTypes?: boolean } = {},
 ): MigrationProjectState {
+	assertNoLegacySemverMigrationWorkspace(projectDir);
 	ensureAdvancedMigrationProject(projectDir);
 
 	const paths = getProjectPaths(projectDir);
 	const config: MigrationConfig = allowMissingConfig && !fs.existsSync(paths.configFile)
 		? {
 			blocks: [createImplicitLegacyBlock(projectDir)],
-			currentVersion: "0.0.0",
+			currentMigrationVersion: "v1",
 			snapshotDir: SNAPSHOT_DIR.replace(/\\/g, "/"),
-			supportedVersions: [],
+			supportedMigrationVersions: [],
 		}
 		: parseMigrationConfig(fs.readFileSync(paths.configFile, "utf8"));
 	const configuredBlocks = config.blocks ?? [createImplicitLegacyBlock(projectDir, config.blockName)];
@@ -706,12 +774,12 @@ export function loadMigrationProject(
 
 export function discoverMigrationEntries(state: MigrationProjectState): MigrationEntry[] {
 	const entries: MigrationEntry[] = [];
-	const currentVersion = state.config.currentVersion;
+	const currentVersion = state.config.currentMigrationVersion;
 
 	for (const block of state.blocks) {
 		const generatedDir = getGeneratedDirForBlock(state.paths, block);
 
-		for (const version of state.config.supportedVersions) {
+		for (const version of state.config.supportedMigrationVersions) {
 			if (version === currentVersion) {
 				continue;
 			}
@@ -749,7 +817,7 @@ export function discoverMigrationEntries(state: MigrationProjectState): Migratio
 	}
 
 	return entries.sort((left, right) => {
-		const versionDelta = compareSemver(right.fromVersion, left.fromVersion);
+		const versionDelta = compareMigrationVersionLabels(right.fromVersion, left.fromVersion);
 		if (versionDelta !== 0) {
 			return versionDelta;
 		}
@@ -758,31 +826,57 @@ export function discoverMigrationEntries(state: MigrationProjectState): Migratio
 }
 
 export function parseMigrationConfig(source: string): MigrationConfig {
+	if (/\bcurrentVersion\s*:/.test(source) || /\bsupportedVersions\s*:/.test(source)) {
+		throw createLegacyMigrationWorkspaceResetError(
+			"Detected legacy config keys `currentVersion` / `supportedVersions` in `src/migrations/config.ts`.",
+		);
+	}
+
 	const blockName = matchConfigValue(source, "blockName");
-	const currentVersion = matchConfigValue(source, "currentVersion");
+	const currentMigrationVersion = matchConfigValue(source, "currentMigrationVersion");
 	const snapshotDir = matchConfigValue(source, "snapshotDir");
-	const supportedVersionsMatch = source.match(/supportedVersions:\s*\[([\s\S]*?)\]/);
+	const supportedVersionsMatch = source.match(/supportedMigrationVersions:\s*\[([\s\S]*?)\]/);
 	const blocks = parseMigrationBlocks(source);
 
-	if (!currentVersion || !snapshotDir || !supportedVersionsMatch) {
-		throw new Error("Unable to parse migration config. Regenerate with `wp-typia migrations init`.");
+	if (!currentMigrationVersion || !snapshotDir || !supportedVersionsMatch) {
+		throw new Error("Unable to parse migration config. Regenerate with `wp-typia migrations init --current-migration-version v1`.");
 	}
 	if (!blockName && blocks.length === 0) {
 		throw new Error("Migration config must define `blockName` or `blocks`.");
 	}
 
-	const supportedVersions = supportedVersionsMatch[1]
+	const supportedMigrationVersions = supportedVersionsMatch[1]
 		.split(",")
 		.map((item) => item.trim().replace(/^["']|["']$/g, ""))
-		.filter(Boolean)
-		.sort(compareSemver);
+		.filter(Boolean);
+
+	if (!isMigrationVersionLabel(currentMigrationVersion)) {
+		if (isLegacySemverMigrationVersion(currentMigrationVersion)) {
+			throw createLegacyMigrationWorkspaceResetError(
+				`Detected legacy semver migration version label \`${currentMigrationVersion}\` in \`src/migrations/config.ts\`.`,
+			);
+		}
+		throw new Error(`Invalid current migration version: ${currentMigrationVersion}. Expected vN with N >= 1.`);
+	}
+
+	for (const version of supportedMigrationVersions) {
+		if (!isMigrationVersionLabel(version)) {
+			if (isLegacySemverMigrationVersion(version)) {
+				throw createLegacyMigrationWorkspaceResetError(
+					`Detected legacy semver migration version label \`${version}\` in \`src/migrations/config.ts\`.`,
+				);
+			}
+			throw new Error(`Invalid supported migration version: ${version}. Expected vN with N >= 1.`);
+		}
+	}
+	supportedMigrationVersions.sort(compareMigrationVersionLabels);
 
 	return {
 		blockName: blockName ?? undefined,
 		blocks: blocks.length > 0 ? blocks : undefined,
-		currentVersion,
+		currentMigrationVersion,
 		snapshotDir,
-		supportedVersions,
+		supportedMigrationVersions,
 	};
 }
 
@@ -830,8 +924,8 @@ export function writeMigrationConfig(projectDir: string, config: MigrationConfig
 			paths.configFile,
 			`export const migrationConfig = {
 \tblockName: '${config.blockName ?? readProjectBlockName(projectDir)}',
-\tcurrentVersion: '${config.currentVersion}',
-\tsupportedVersions: [ ${config.supportedVersions.map((version) => `'${version}'`).join(", ")} ],
+\tcurrentMigrationVersion: '${config.currentMigrationVersion}',
+\tsupportedMigrationVersions: [ ${config.supportedMigrationVersions.map((version) => `'${version}'`).join(", ")} ],
 \tsnapshotDir: '${config.snapshotDir}',
 } as const;
 
@@ -859,8 +953,8 @@ export default migrationConfig;
 	fs.writeFileSync(
 		paths.configFile,
 		`export const migrationConfig = {
-\tcurrentVersion: '${config.currentVersion}',
-\tsupportedVersions: [ ${config.supportedVersions.map((version) => `'${version}'`).join(", ")} ],
+\tcurrentMigrationVersion: '${config.currentMigrationVersion}',
+\tsupportedMigrationVersions: [ ${config.supportedMigrationVersions.map((version) => `'${version}'`).join(", ")} ],
 \tsnapshotDir: '${config.snapshotDir}',
 \tblocks: [
 ${blocksSource}
@@ -887,10 +981,10 @@ export function readProjectBlockName(projectDir: string): string {
 export function assertRuleHasNoTodos(
 	projectDir: string,
 	block: MigrationBlockConfig | ResolvedMigrationBlockTarget,
-	fromVersion: string,
-	toVersion: string,
+	fromMigrationVersion: string,
+	toMigrationVersion: string,
 ): void {
-	const rulePath = getRuleFilePath(getProjectPaths(projectDir), block, fromVersion, toVersion);
+	const rulePath = getRuleFilePath(getProjectPaths(projectDir), block, fromMigrationVersion, toMigrationVersion);
 	if (!fs.existsSync(rulePath)) {
 		throw new Error(`Missing migration rule: ${path.relative(projectDir, rulePath)}`);
 	}

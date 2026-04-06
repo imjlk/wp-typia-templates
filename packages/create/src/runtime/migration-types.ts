@@ -83,9 +83,9 @@ export interface UnionBranchSummary {
 export interface MigrationConfig {
 	blockName?: string;
 	blocks?: MigrationBlockConfig[];
-	currentVersion: string;
+	currentMigrationVersion: string;
 	snapshotDir: string;
-	supportedVersions: string[];
+	supportedMigrationVersions: string[];
 }
 
 export interface MigrationBlockConfig {
@@ -244,13 +244,13 @@ export interface ParsedMigrationArgs {
 	command?: string;
 	flags: {
 		all: boolean;
-		currentVersion?: string;
+		currentMigrationVersion?: string;
 		force: boolean;
-		from?: string;
+		fromMigrationVersion?: string;
 		iterations?: string;
+		migrationVersion?: string;
 		seed?: string;
-		to?: string;
-		version?: string;
+		toMigrationVersion?: string;
 	};
 }
 
