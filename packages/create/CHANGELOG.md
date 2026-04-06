@@ -1,5 +1,11 @@
 # @wp-typia/create
 
+## 0.10.1 — 2026-04-06
+
+### Patch changes
+
+- [345d81e](https://github.com/imjlk/wp-typia/commit/345d81eee92583d5e4fb20230ece1ce5557e0482) Remove generated `editorStyle` metadata entries that pointed at a non-existent `index.css` asset, and harden scaffold smoke checks so built `block.json` file references stay aligned with emitted assets. — Thanks @imjlk!
+
 ## 0.10.0 — 2026-04-05
 
 ### Minor changes
