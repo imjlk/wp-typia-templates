@@ -123,6 +123,11 @@ type WizardOptions = CommandRenderOptions & {
 	isInteractive?: boolean;
 };
 
+/**
+ * Returns the formatted help text for migration CLI commands and flags.
+ *
+ * @returns Multi-line usage text for the `wp-typia migrations` command surface.
+ */
 export function formatMigrationHelpText(): string {
 	return `Usage:
   wp-typia migrations init --current-migration-version <label>
@@ -146,6 +151,13 @@ Notes:
   In non-interactive usage, \`migrations fixtures --force\` overwrites immediately for script compatibility.`;
 }
 
+/**
+ * Parses migration CLI arguments into a structured command payload.
+ *
+ * @param argv Command-line arguments that follow the `migrations` subcommand.
+ * @returns Parsed migration command and normalized flags for runtime dispatch.
+ * @throws Error When no arguments are provided, an unknown flag is encountered, or legacy semver flags are used.
+ */
 export function parseMigrationArgs(argv: string[]): ParsedMigrationArgs {
 	const parsed: ParsedMigrationArgs = {
 		command: undefined,
@@ -629,6 +641,14 @@ export function snapshotProjectVersion(
 	return loadMigrationProject(projectDir);
 }
 
+/**
+ * Computes and renders migration diffs for a selected legacy-to-target edge.
+ *
+ * @param projectDir Absolute or relative project directory containing the migration workspace.
+ * @param options Selected source and target migration versions plus optional line rendering overrides.
+ * @returns A single diff for single-block workspaces, or an array of per-block diffs for multi-block workspaces.
+ * @throws Error When `fromMigrationVersion` is missing or no eligible snapshots exist for the selected edge.
+ */
 export function diffProjectMigrations(
 	projectDir: string,
 	{
@@ -665,6 +685,14 @@ export function diffProjectMigrations(
 	return diffs.length === 1 ? diffs[0].diff : diffs;
 }
 
+/**
+ * Scaffolds migration rule and fixture files for a selected legacy-to-target edge.
+ *
+ * @param projectDir Absolute or relative project directory containing the migration workspace.
+ * @param options Selected source and target migration versions plus optional line rendering overrides.
+ * @returns A single scaffold result for single-block workspaces, or a grouped result for multi-block workspaces.
+ * @throws Error When `fromMigrationVersion` is missing or no eligible snapshots exist for the selected edge.
+ */
 export function scaffoldProjectMigrations(
 	projectDir: string,
 	{
