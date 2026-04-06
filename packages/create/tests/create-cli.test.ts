@@ -1956,6 +1956,7 @@ describe("@wp-typia/create scaffolding", () => {
 
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const generatedEdit = fs.readFileSync(path.join(targetDir, "src", "edit.js"), "utf8");
+		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
 		const generatedBlockJson = JSON.parse(
 			fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8"),
 		);
@@ -1966,6 +1967,8 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 		expect(fs.existsSync(path.join(targetDir, "assets", "remote-note.txt"))).toBe(true);
 		expect(fs.existsSync(path.join(targetDir, "src", "assets"))).toBe(false);
+		expect(packageJson.devDependencies["@wp-typia/create"]).toBeUndefined();
+		expect(packageJson.dependencies?.["@wp-typia/create"]).toBeUndefined();
 		expect(generatedTypes).toContain('"variantLabel"?: string & tags.Default<"standard">');
 		expect(generatedTypes).toContain('"transformedLabel"?: string & tags.Default<"standard-transformed">');
 		expect(generatedEdit).toContain("template-standard");

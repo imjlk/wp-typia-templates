@@ -541,6 +541,8 @@ async function patchRemotePackageJson(templateDir: string, needsInteractivity: b
 		};
 	} else if (Object.keys(existingDependencies).length > 0) {
 		packageJson.dependencies = existingDependencies;
+	} else {
+		delete packageJson.dependencies;
 	}
 
 	await fsp.writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");

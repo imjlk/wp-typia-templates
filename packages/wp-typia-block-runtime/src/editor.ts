@@ -236,34 +236,41 @@ export function describeEditorField(
 	};
 }
 
-function collectLeafFields(
-	fields: EditorFieldDescriptor[],
-	attributes: Record<string, ManifestAttribute> | undefined,
+function collectEditorFields(
+	path: string,
+	attribute: ManifestAttribute,
 	options: EditorModelOptions,
-	pathSegments: string[] = [],
-): void {
-	if (!attributes) {
-		return;
+): EditorFieldDescriptor[] {
+	if (isPathFlagged(path, options.hidden ?? [])) {
+		return [];
 	}
 
-	for (const [name, attribute] of Object.entries(attributes)) {
-		const path = [...pathSegments, name].join(".");
-		const field = describeEditorField(path, attribute, options);
-
-		if (attribute.ts.kind === "object" && attribute.ts.properties) {
-			collectLeafFields(fields, attribute.ts.properties, options, [...pathSegments, name]);
-			continue;
-		}
-
-		fields.push(field);
+	if (isPathFlagged(path, options.manual ?? [])) {
+		return [describeEditorField(path, attribute, options)];
 	}
+
+	if (attribute.ts.kind === "object" && attribute.ts.properties) {
+		const childFields = Object.entries(attribute.ts.properties).flatMap(
+			([key, child]) => collectEditorFields(`${path}.${key}`, child, options),
+		);
+
+		return childFields.length > 0
+			? childFields
+			: [describeEditorField(path, attribute, options)];
+	}
+
+	return [describeEditorField(path, attribute, options)];
 }
 
 export function createEditorModel(
 	manifest: ManifestDocument,
 	options: EditorModelOptions = {},
 ): EditorFieldDescriptor[] {
-	const fields: EditorFieldDescriptor[] = [];
-	collectLeafFields(fields, manifest.attributes, options);
-	return fields.filter((field) => !isPathFlagged(field.path, options.hidden ?? []));
+	if (!manifest.attributes) {
+		return [];
+	}
+
+	return Object.entries(manifest.attributes).flatMap(([path, attribute]) =>
+		collectEditorFields(path, attribute, options),
+	);
 }
