@@ -44,6 +44,7 @@ Linting ownership is intentionally split:
 
 - root ESLint covers repo infrastructure code such as `scripts/**`, `tests/**`, root config files, and package-side non-example sources
 - example app source continues to live under `examples:lint` and `@wordpress/scripts`
+- `@wp-typia/api-client/internal/runtime-primitives` is the single maintained home for shared client-runtime validation/object helpers consumed by `@wp-typia/rest`; avoid reintroducing local helper copies in either package
 
 `bun run ci:local` is the recommended maintainer pre-PR command. It deliberately
 stops short of `wp-env` startup and Playwright E2E so everyday local checks stay

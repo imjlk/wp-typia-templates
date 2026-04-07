@@ -1,26 +1,14 @@
 import type { APIFetchOptions, ApiFetch } from "@wordpress/api-fetch";
-import type { IValidation } from "@typia/interface";
+import {
+	isFormDataLike,
+	isPlainObject,
+	toValidationResult,
+	type ValidationLike,
+	type ValidationResult,
+} from "./internal/runtime-primitives.js";
 
-export interface ValidationError {
-	description?: string;
-	expected: string;
-	path: string;
-	value: unknown;
-}
-
-export interface ValidationResult<T> {
-	data?: T;
-	errors: ValidationError[];
-	isValid: boolean;
-}
-
-export type ValidationLike<T> =
-	| IValidation<T>
-	| {
-			data?: unknown;
-			errors?: unknown;
-			success?: unknown;
-	  };
+export type { ValidationError, ValidationLike, ValidationResult } from "./internal/runtime-primitives.js";
+export { isValidationResult, normalizeValidationError, toValidationResult } from "./internal/runtime-primitives.js";
 
 export interface ValidatedFetch<T> {
 	assertFetch(options: APIFetchOptions): Promise<T>;
@@ -42,13 +30,6 @@ export interface ApiEndpoint<Req, Res> {
 export interface EndpointCallOptions {
 	fetchFn?: ApiFetch;
 	requestOptions?: Partial<APIFetchOptions>;
-}
-
-interface RawValidationError {
-	description?: string;
-	expected?: string;
-	path?: string;
-	value?: unknown;
 }
 
 function getDefaultRestRoot(): string {
@@ -164,62 +145,6 @@ async function parseResponsePayload(response: Response): Promise<unknown> {
 	}
 }
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-	return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
-function isFormDataLike(value: unknown): value is FormData {
-	return typeof FormData !== "undefined" && value instanceof FormData;
-}
-
-function normalizePath(path: unknown): string {
-	return typeof path === "string" && path.length > 0 ? path : "(root)";
-}
-
-function normalizeExpected(expected: unknown): string {
-	return typeof expected === "string" && expected.length > 0 ? expected : "unknown";
-}
-
-export function normalizeValidationError(error: unknown): ValidationError {
-	const raw = isPlainObject(error) ? (error as RawValidationError) : {};
-
-	return {
-		description: typeof raw.description === "string" ? raw.description : undefined,
-		expected: normalizeExpected(raw.expected),
-		path: normalizePath(raw.path),
-		value: Object.prototype.hasOwnProperty.call(raw, "value") ? raw.value : undefined,
-	};
-}
-
-export function isValidationResult<T>(value: unknown): value is ValidationResult<T> {
-	return isPlainObject(value) && typeof value.isValid === "boolean" && Array.isArray(value.errors);
-}
-
-export function toValidationResult<T>(result: ValidationLike<T>): ValidationResult<T> {
-	const rawResult = result as {
-		data?: unknown;
-		errors?: unknown;
-		success?: unknown;
-	};
-	if (isValidationResult<T>(result)) {
-		return result;
-	}
-
-	if (rawResult.success === true) {
-		return {
-			data: rawResult.data as T | undefined,
-			errors: [],
-			isValid: true,
-		};
-	}
-
-	return {
-		data: undefined,
-		errors: Array.isArray(rawResult.errors) ? rawResult.errors.map(normalizeValidationError) : [],
-		isValid: false,
-	};
-}
-
 function encodeGetLikeRequest(request: unknown): string {
 	if (request === undefined || request === null) {
 		return "";
@@ -309,7 +234,7 @@ function buildEndpointFetchOptions<Req>(
 	if (isFormDataLike(request)) {
 		return {
 			...baseOptions,
-			body: request,
+			body: request as FormData,
 			method: endpoint.method,
 			...(baseOptions.url
 				? {

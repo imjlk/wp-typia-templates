@@ -18,6 +18,7 @@ import {
 	useEndpointMutation,
 	useEndpointQuery,
 } from "../src/react";
+import type { ApiFetch } from "@wordpress/api-fetch";
 
 function success<T>(data: T): ValidationLike<T> {
 	return {
@@ -32,6 +33,10 @@ function failure<T>(expected: string, path = "(root)"): ValidationLike<T> {
 		errors: [{ expected, path, value: undefined }],
 		success: false,
 	};
+}
+
+function asApiFetch(fn: (...args: any[]) => Promise<unknown>): ApiFetch {
+	return fn as unknown as ApiFetch;
 }
 
 const domWindow = new Window();
@@ -206,6 +211,54 @@ describe("@wp-typia/rest/react", () => {
 
 		await first.unmount();
 		await second.unmount();
+	});
+
+	test("useEndpointQuery reuses cache entries for Object.create(null) requests", async () => {
+		let fetchCount = 0;
+		let request: { page: number } = { page: 1 };
+		const endpoint = createEndpoint<{ page: number }, { count: number }>({
+			method: "GET",
+			path: "/demo/v1/plain-object-cache",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { page?: unknown }).page === "number"
+					? toValidationResult(success(input as { page: number }))
+					: toValidationResult(failure<{ page: number }>("{ page: number }", "$.page")),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { count?: unknown }).count === "number"
+					? toValidationResult(success(input as { count: number }))
+					: toValidationResult(failure<{ count: number }>("{ count: number }", "$.count")),
+		});
+		const client = createEndpointDataClient();
+		const renderer = await createHookRenderer(
+			() =>
+				useEndpointQuery(endpoint, request, {
+					client,
+					fetchFn: asApiFetch(async () => {
+						fetchCount += 1;
+						return { count: fetchCount };
+					}),
+				}),
+			client,
+		);
+
+		await waitForAssertion(() => {
+			expect(renderer.current.data).toEqual({ count: 1 });
+			expect(fetchCount).toBe(1);
+		});
+
+		request = Object.assign(Object.create(null), {
+			page: 1,
+		}) as { page: number };
+		await renderer.rerender();
+
+		expect(renderer.current.data).toEqual({ count: 1 });
+		expect(fetchCount).toBe(1);
+
+		await renderer.unmount();
 	});
 
 	test("useEndpointQuery throws for non-GET endpoints", () => {
