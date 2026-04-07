@@ -22,7 +22,7 @@
 
 ### id
 
-• **id**: ``"compound"`` \| ``"persistence"`` \| ``"basic"`` \| ``"interactivity"``
+• **id**: ``"basic"`` \| ``"interactivity"`` \| ``"persistence"`` \| ``"compound"``
 
 #### Defined in
 

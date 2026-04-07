@@ -123,6 +123,7 @@
 - [packages/create/src/runtime/starter-manifests](modules/packages_create_src_runtime_starter_manifests.md)
 - [packages/create/src/runtime/string-case](modules/packages_create_src_runtime_string_case.md)
 - [packages/create/src/runtime/template-builtins](modules/packages_create_src_runtime_template_builtins.md)
+- [packages/create/src/runtime/template-defaults](modules/packages_create_src_runtime_template_defaults.md)
 - [packages/create/src/runtime/template-registry](modules/packages_create_src_runtime_template_registry.md)
 - [packages/create/src/runtime/template-render](modules/packages_create_src_runtime_template_render.md)
 - [packages/create/src/runtime/template-source](modules/packages_create_src_runtime_template_source.md)
