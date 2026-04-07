@@ -11,7 +11,7 @@ const warmupRuns = 1;
 
 function ensureBuildArtifacts() {
 	const requiredPaths = [
-		path.join(repoRoot, "packages", "create", "dist", "cli.js"),
+		path.join(repoRoot, "packages", "wp-typia", "bin", "wp-typia.js"),
 		path.join(repoRoot, "packages", "create", "dist", "runtime", "template-render.js"),
 	];
 
@@ -141,14 +141,14 @@ async function main() {
 			run: () =>
 				measureProcessCommand(
 					"node",
-					["packages/create/dist/cli.js", "templates", "list"],
+					["packages/wp-typia/bin/wp-typia.js", "templates", "list"],
 					repoRoot,
 				),
 		},
 		{
 			name: "cli doctor",
 			run: () =>
-				measureProcessCommand("node", ["packages/create/dist/cli.js", "doctor"], repoRoot),
+				measureProcessCommand("node", ["packages/wp-typia/bin/wp-typia.js", "doctor"], repoRoot),
 		},
 		{
 			name: "template render hot path",

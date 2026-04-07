@@ -1,13 +1,13 @@
 # `create-wp-typia`
 
-Compatibility shim for [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create).
+Archived initializer package.
 
-Use this package when you need historical commands such as:
+This package is no longer a supported installation path for new projects.
 
-- `bun create wp-typia`
-- `npx create-wp-typia`
+Use these commands instead:
 
-For new installations, prefer:
+- `npx wp-typia my-block`
+- `bunx wp-typia my-block`
 
-- `npx @wp-typia/create`
-- `bunx @wp-typia/create`
+`@wp-typia/create` remains the compatibility and programmatic package for the
+scaffold runtime, but it no longer owns the CLI install surface.

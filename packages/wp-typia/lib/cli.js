@@ -1,24 +1,75 @@
-#!/usr/bin/env node
+/**
+ * @typedef {object} ParsedArgs
+ * @property {string | undefined} [dataStorage]
+ * @property {boolean} help
+ * @property {string | undefined} [namespace]
+ * @property {boolean} noInstall
+ * @property {string | undefined} [packageManager]
+ * @property {string | undefined} [persistencePolicy]
+ * @property {string | undefined} [phpPrefix]
+ * @property {string[]} positionals
+ * @property {string | undefined} [template]
+ * @property {string | undefined} [textDomain]
+ * @property {string | undefined} [variant]
+ * @property {boolean | undefined} [withMigrationUi]
+ * @property {boolean | undefined} [withTestPreset]
+ * @property {boolean | undefined} [withWpEnv]
+ * @property {boolean} yes
+ */
 
-interface ParsedArgs {
-	dataStorage?: string;
-	help: boolean;
-	namespace?: string;
-	noInstall: boolean;
-	packageManager?: string;
-	persistencePolicy?: string;
-	phpPrefix?: string;
-	positionals: string[];
-	template?: string;
-	textDomain?: string;
-	variant?: string;
-	withMigrationUi?: boolean;
-	withTestPreset?: boolean;
-	withWpEnv?: boolean;
-	yes: boolean;
+let cachedCreateRuntimePromise;
+let cachedCliCorePromise;
+
+function isMissingPackageImport(error, specifier) {
+	if (
+		typeof error !== "object" ||
+		error === null ||
+		!("message" in error) ||
+		typeof error.message !== "string"
+	) {
+		return false;
+	}
+
+	if (!("code" in error) || error.code !== "ERR_MODULE_NOT_FOUND") {
+		return false;
+	}
+
+	return (
+		error.message.includes(`Cannot find package '@wp-typia/create'`) ||
+		error.message.includes(`Cannot find package '${specifier}'`) ||
+		error.message.includes(`Cannot find module '${specifier}'`)
+	);
 }
 
-function getRequiredValue(argv: string[], index: number, flagName: string): string {
+async function importCreateModule(specifier, relativeFallbackPath) {
+	try {
+		return await import(specifier);
+	} catch (error) {
+		if (!isMissingPackageImport(error, specifier)) {
+			throw error;
+		}
+
+		return import(new URL(relativeFallbackPath, import.meta.url).href);
+	}
+}
+
+function loadCreateRuntime() {
+	cachedCreateRuntimePromise ||= importCreateModule(
+		"@wp-typia/create",
+		"../../create/dist/runtime/index.js",
+	);
+	return cachedCreateRuntimePromise;
+}
+
+function loadCliCore() {
+	cachedCliCorePromise ||= importCreateModule(
+		"@wp-typia/create/runtime/cli-core",
+		"../../create/dist/runtime/cli-core.js",
+	);
+	return cachedCliCorePromise;
+}
+
+function getRequiredValue(argv, index, flagName) {
 	const value = argv[index + 1];
 	if (value === undefined || value.startsWith("-")) {
 		throw new Error(`${flagName} requires a value`);
@@ -27,8 +78,15 @@ function getRequiredValue(argv: string[], index: number, flagName: string): stri
 	return value;
 }
 
-function parseArgs(argv: string[]): ParsedArgs {
-	const parsed: ParsedArgs = {
+/**
+ * Parse the canonical `wp-typia` CLI flags into a scaffold or utility command.
+ *
+ * @param {string[]} argv Raw CLI arguments without the node or bin prefix.
+ * @returns {ParsedArgs} Parsed CLI flags and positional arguments.
+ */
+export function parseArgs(argv) {
+	/** @type {ParsedArgs} */
+	const parsed = {
 		dataStorage: undefined,
 		help: false,
 		namespace: undefined,
@@ -101,6 +159,14 @@ function parseArgs(argv: string[]): ParsedArgs {
 			index += 1;
 			continue;
 		}
+		if (arg.startsWith("--package-manager=")) {
+			const value = arg.split("=", 2)[1];
+			if (!value) {
+				throw new Error("--package-manager requires a value");
+			}
+			parsed.packageManager = value;
+			continue;
+		}
 		if (arg === "--namespace") {
 			parsed.namespace = getRequiredValue(argv, index, "--namespace");
 			index += 1;
@@ -146,10 +212,6 @@ function parseArgs(argv: string[]): ParsedArgs {
 			parsed.persistencePolicy = arg.split("=", 2)[1];
 			continue;
 		}
-		if (arg.startsWith("--package-manager=")) {
-			parsed.packageManager = arg.split("=", 2)[1];
-			continue;
-		}
 
 		throw new Error(`Unknown flag: ${arg}`);
 	}
@@ -157,10 +219,9 @@ function parseArgs(argv: string[]): ParsedArgs {
 	return parsed;
 }
 
-async function runMigrationCli(argv: string[], cwd: string) {
-	const { formatMigrationHelpText, parseMigrationArgs, runMigrationCommand } = await import(
-		"./runtime/migrations.js"
-	);
+async function runMigrationCli(argv, cwd) {
+	const { formatMigrationHelpText, parseMigrationArgs, runMigrationCommand } =
+		await loadCreateRuntime();
 	const migrationCommand = parseMigrationArgs(argv);
 	if (!migrationCommand.command) {
 		console.log(formatMigrationHelpText());
@@ -170,14 +231,14 @@ async function runMigrationCli(argv: string[], cwd: string) {
 	await runMigrationCommand(migrationCommand, cwd, { renderLine: console.log });
 }
 
-async function runTemplatesCli(positionals: string[]) {
+async function runTemplatesCli(positionals) {
 	const {
 		formatTemplateDetails,
 		formatTemplateFeatures,
 		formatTemplateSummary,
 		getTemplateById,
 		listTemplates,
-	} = await import("./runtime/cli-templates.js");
+	} = await loadCliCore();
 	const [, templateCommand, templateId] = positionals;
 
 	if (templateCommand === "list") {
@@ -201,44 +262,27 @@ async function runTemplatesCli(positionals: string[]) {
 	throw new Error("Usage: wp-typia templates <list|inspect>");
 }
 
-async function assertYesModePackageManager(parsed: ParsedArgs) {
+async function assertYesModePackageManager(parsed) {
 	if (!parsed.yes || parsed.packageManager) {
 		return;
 	}
 
-	const { PACKAGE_MANAGER_IDS } = await import("./runtime/package-managers.js");
+	const { PACKAGE_MANAGER_IDS } = await loadCreateRuntime();
 	throw new Error(
 		`Package manager is required when using --yes. Use --package-manager <${PACKAGE_MANAGER_IDS.join("|")}>.`,
 	);
 }
 
-function printDoctorLine({
-	status,
-	label,
-	detail,
-}: {
-	status: "fail" | "pass" | "warn";
-	label: string;
-	detail: string;
-}) {
+function printDoctorLine({ status, label, detail }) {
 	const prefix = status === "pass" ? "PASS" : status === "fail" ? "FAIL" : "WARN";
 	console.log(`${prefix} ${label}: ${detail}`);
 }
 
-async function runScaffold(parsed: ParsedArgs, cwd: string) {
-	const [
-		{ createReadlinePrompt, runScaffoldFlow },
-		{ getPackageManagerSelectOptions },
-		{ getTemplateSelectOptions },
-		{ isInteractiveTerminal },
-	] =
-		await Promise.all([
-			import("./runtime/cli-core.js"),
-			import("./runtime/package-managers.js"),
-			import("./runtime/template-registry.js"),
-			import("./runtime/migration-utils.js"),
-		]);
-	const isInteractive = isInteractiveTerminal();
+async function runScaffold(parsed, cwd) {
+	const { getPackageManagerSelectOptions } = await loadCreateRuntime();
+	const { createReadlinePrompt, getTemplateSelectOptions, runScaffoldFlow } =
+		await loadCliCore();
+	const isInteractive = Boolean(process.stdin.isTTY && process.stdout.isTTY);
 	const prompt = createReadlinePrompt();
 
 	try {
@@ -251,7 +295,7 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 			packageManager: parsed.packageManager,
 			phpPrefix: parsed.phpPrefix,
 			projectInput: parsed.positionals[0],
-			promptText: (message: string, defaultValue: string, validate?: (input: string) => boolean | string) =>
+			promptText: (message, defaultValue, validate) =>
 				prompt.text(message, defaultValue, validate),
 			selectPackageManager: () =>
 				prompt.select("Choose a package manager", getPackageManagerSelectOptions(), 1),
@@ -336,6 +380,14 @@ async function runScaffold(parsed: ParsedArgs, cwd: string) {
 	}
 }
 
+/**
+ * Execute the canonical `wp-typia` CLI against the installed `@wp-typia/create`
+ * runtime helpers.
+ *
+ * @param {string[]} [argv] CLI arguments without the node or bin prefixes.
+ * @param {string} [cwd] Working directory to treat as the project root.
+ * @returns {Promise<void>} Resolves when the selected command completes.
+ */
 export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 	if (argv[0] === "migrations") {
 		await runMigrationCli(argv.slice(1), cwd);
@@ -345,7 +397,7 @@ export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 	const parsed = parseArgs(argv);
 
 	if (parsed.help) {
-		const { formatHelpText } = await import("./runtime/cli-help.js");
+		const { formatHelpText } = await loadCliCore();
 		console.log(formatHelpText());
 		return;
 	}
@@ -357,17 +409,11 @@ export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 	}
 
 	if (first === "doctor") {
-		const { runDoctor } = await import("./runtime/cli-doctor.js");
+		const { runDoctor } = await loadCliCore();
 		await runDoctor(cwd, { renderLine: printDoctorLine });
 		return;
 	}
 
 	await assertYesModePackageManager(parsed);
-
 	await runScaffold(parsed, cwd);
 }
-
-main().catch((error: unknown) => {
-	console.error("❌ wp-typia failed:", error instanceof Error ? error.message : error);
-	process.exit(1);
-});

@@ -121,6 +121,20 @@ describe("@wp-typia/create import policy", () => {
 		expect("useEditorFields" in blockRuntimeRootModule).toBe(false);
 	});
 
+	test("@wp-typia/create no longer exposes the CLI package surface", async () => {
+		const createManifest = JSON.parse(
+			fs.readFileSync(path.join(packageRoot, "package.json"), "utf8"),
+		) as {
+			bin?: Record<string, string>;
+			exports?: Record<string, unknown>;
+		};
+
+		expect(createManifest.bin).toBeUndefined();
+		expect(createManifest.exports?.["./cli"]).toBeUndefined();
+		const importRemovedCli = new Function("return import('@wp-typia/create/cli');") as () => Promise<unknown>;
+		await expect(importRemovedCli()).rejects.toThrow();
+	});
+
 	test("public docs point to the normative import policy", () => {
 		const createReadme = fs.readFileSync(
 			path.join(packageRoot, "README.md"),
@@ -141,6 +155,7 @@ describe("@wp-typia/create import policy", () => {
 		expect(runtimeSurfaceDoc).toContain("descriptive, not normative");
 		expect(runtimeSurfaceDoc).toContain("docs/runtime-import-policy.md");
 		expect(runtimeSurfaceDoc).toContain("@wp-typia/block-runtime/identifiers");
+		expect(runtimeSurfaceDoc).not.toContain("@wp-typia/create/cli");
 		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/blocks");
 		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/defaults");
 		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/editor");

@@ -1,6 +1,7 @@
 # Runtime Surface Audit
 
-This document audits the current public runtime surface around `@wp-typia/create`.
+This document audits the current public runtime surface around `wp-typia`,
+`@wp-typia/create`, and `@wp-typia/block-runtime`.
 
 It is intentionally descriptive, not normative. The goal is to capture what the repo currently exposes and relies on so follow-up issues can decide support policy and package boundaries without repeating discovery work.
 
@@ -9,11 +10,15 @@ For the normative generated-project runtime support policy, see
 
 ## Current exported surface
 
+`packages/wp-typia/package.json` currently exposes:
+
+- root package: `wp-typia`
+
 `packages/create/package.json` currently exposes:
 
 - root package: `@wp-typia/create`
-- `@wp-typia/create/cli`
 - `@wp-typia/create/metadata-core`
+- `@wp-typia/create/runtime/cli-core`
 - `@wp-typia/create/runtime/blocks`
 - `@wp-typia/create/runtime/defaults`
 - `@wp-typia/create/runtime/editor`
@@ -39,8 +44,11 @@ For the normative generated-project runtime support policy, see
 These exports already behave like product APIs and are documented or used directly in generated-project-facing material.
 
 - `@wp-typia/create`
-  - root runtime exports are documented in [`packages/create/README.md`](../packages/create/README.md) and used as the main public package surface
+  - root runtime exports are documented in [`packages/create/README.md`](../packages/create/README.md) and remain the compatibility/programmatic package surface
   - recent examples include `projectJsonSchemaDocument()` from the root export
+- `wp-typia`
+  - canonical CLI package documented in the root README and API guide
+  - owns the user-facing install surface for scaffold, doctor, template, and migration commands
 - `@wp-typia/block-runtime/metadata-core`
   - used by repo examples and scaffold sync scripts for `syncBlockMetadata()`, `syncTypeSchemas()`, `syncRestOpenApi()`, and `defineEndpointManifest()`
   - this is already the practical authoring surface for schema and manifest generation

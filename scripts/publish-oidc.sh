@@ -10,8 +10,8 @@ PACKAGES=(
   "packages/wp-typia-rest"
   "packages/wp-typia-api-client"
   "packages/create"
+  "packages/wp-typia"
   "packages/wp-typia-block-runtime"
-  "packages/create-wp-typia"
 )
 
 read_package_field() {

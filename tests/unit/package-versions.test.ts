@@ -27,6 +27,7 @@ async function importPackageVersionsModule(options: {
 		blockTypesPackageVersion: string;
 		createPackageVersion: string;
 		restPackageVersion: string;
+		wpTypiaPackageVersion: string;
 	};
 }> {
 	const tempRoot = createTempDir("wp-typia-package-versions-");
@@ -88,6 +89,7 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^2.3.4",
 			createPackageVersion: "^4.5.6",
 			restPackageVersion: "^3.4.5",
+			wpTypiaPackageVersion: "^0.0.0",
 		});
 	});
 
@@ -111,6 +113,7 @@ describe("package version helpers", () => {
 				},
 				"@wp-typia/block-runtime": { version: "0.9.0" },
 				"@wp-typia/rest": { version: "0.4.0" },
+				"wp-typia": { version: "0.8.0" },
 			},
 		});
 
@@ -120,10 +123,36 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^0.3.0",
 			createPackageVersion: "^0.8.0",
 			restPackageVersion: "~0.4.0",
+			wpTypiaPackageVersion: "^0.8.0",
 		});
 	});
 
-	test("uses the packaged create dependency range when no sibling block-runtime manifest is available", async () => {
+	test("prefers the installed wp-typia manifest when it differs from the create package version", async () => {
+		const createPackageRoot = path.join(
+			createTempDir("wp-typia-installed-cli-root-"),
+			"missing-create-root",
+		);
+		const module = await importPackageVersionsModule({
+			createPackageRoot,
+			installedPackageManifests: {
+				"@wp-typia/create": {
+					dependencies: {
+						"@wp-typia/api-client": "0.4.0",
+						"@wp-typia/block-runtime": "0.3.0",
+						"@wp-typia/block-types": "0.2.0",
+						"@wp-typia/rest": "0.3.1",
+					},
+					version: "1.0.0",
+				},
+				"wp-typia": { version: "0.12.0" },
+			},
+		});
+
+		expect(module.getPackageVersions().wpTypiaPackageVersion).toBe("^0.12.0");
+		expect(module.getPackageVersions().createPackageVersion).toBe("^1.0.0");
+	});
+
+	test("leaves wp-typia unresolved when only the packaged create manifest is available", async () => {
 		const createPackageRoot = createTempDir("wp-typia-packaged-create-root-");
 
 		writeJsonFile(path.join(createPackageRoot, "package.json"), {
@@ -146,6 +175,7 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^0.2.0",
 			createPackageVersion: "^0.11.0",
 			restPackageVersion: "^0.3.1",
+			wpTypiaPackageVersion: "^0.0.0",
 		});
 	});
 
@@ -167,6 +197,7 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^0.0.0",
 			createPackageVersion: "^0.0.0",
 			restPackageVersion: "^0.0.0",
+			wpTypiaPackageVersion: "^0.0.0",
 		});
 		expect(secondResult).toBe(firstResult);
 	});

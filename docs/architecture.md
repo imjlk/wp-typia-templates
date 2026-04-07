@@ -6,10 +6,12 @@
 
 ### 1. Product packages
 
+- `packages/wp-typia`
+  The canonical CLI package.
 - `packages/create`
-  The canonical CLI and shared scaffold runtime.
+  The compatibility/programmatic scaffold runtime package.
 - `packages/create-wp-typia`
-  The unscoped compatibility shim.
+  Archived initializer package kept only for repository history.
 - `packages/wp-typia-block-types`
   Shared WordPress semantic types for generated projects.
 - `packages/wp-typia-rest`
@@ -80,11 +82,13 @@ The `compound` template extends the same base with:
 - `InnerBlocks`-driven composition and default child seeding
 - optional parent-only persistence when either `--data-storage` or `--persistence-policy` is supplied
 
-Generated projects also import shared runtime helpers from `@wp-typia/create/runtime/*`, so validator/default/runtime behavior can evolve centrally instead of being copied into every generated block.
+Generated projects now treat `@wp-typia/block-runtime/*` as the maintained
+runtime helper surface, while `@wp-typia/create/runtime/*` remains exported only
+as compatibility shims.
 
 ## Intended Flow
 
-1. Scaffold a block with `@wp-typia/create`
+1. Scaffold a block with `wp-typia`
 2. Author the schema in `src/types.ts`
 3. Run `sync-types`
 4. Build and validate the block

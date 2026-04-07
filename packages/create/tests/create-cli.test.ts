@@ -17,7 +17,7 @@ import {
 
 const packageRoot = process.cwd();
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-create-"));
-const entryPath = path.join(packageRoot, "dist", "cli.js");
+const entryPath = path.resolve(packageRoot, "..", "wp-typia", "bin", "wp-typia.js");
 const createBlockExternalFixturePath = path.join(
 	packageRoot,
 	"tests",
@@ -32,6 +32,9 @@ const createBlockSubsetFixturePath = path.join(
 );
 const createPackageManifest = JSON.parse(
 	fs.readFileSync(path.join(packageRoot, "package.json"), "utf8"),
+);
+const wpTypiaPackageManifest = JSON.parse(
+	fs.readFileSync(path.resolve(packageRoot, "..", "wp-typia", "package.json"), "utf8"),
 );
 const apiClientPackageVersion = createPackageManifest.dependencies["@wp-typia/api-client"];
 const blockRuntimePackageManifest = JSON.parse(
@@ -373,10 +376,10 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(packageJson.dependencies["@wordpress/api-fetch"]).toBe("^7.42.0");
 		expect(packageJson.devDependencies["@wp-typia/create"]).toBeUndefined();
 		expect(packageJson.scripts["migration:init"]).toBe(
-			`npx --yes @wp-typia/create@${createPackageManifest.version} migrations init --current-migration-version v1`,
+			`npx --yes wp-typia@${wpTypiaPackageManifest.version} migrations init --current-migration-version v1`,
 		);
 		expect(packageJson.scripts["migration:doctor"]).toBe(
-			`npx --yes @wp-typia/create@${createPackageManifest.version} migrations doctor --all`,
+			`npx --yes wp-typia@${wpTypiaPackageManifest.version} migrations doctor --all`,
 		);
 		expect(readme).toContain("## Migration UI");
 		expect(readme).toContain("initialized migration workspace at `v1`");

@@ -1,4 +1,4 @@
-# Compound Block Tutorial: Scaffolding Parent/Child `InnerBlocks` Patterns with `@wp-typia/create`
+# Compound Block Tutorial: Scaffolding Parent/Child `InnerBlocks` Patterns with `wp-typia`
 
 This tutorial walks through the `compound` built-in template. It is the starting point for blocks that need one user-facing parent block plus hidden implementation child blocks managed through `InnerBlocks`.
 
@@ -24,7 +24,7 @@ By default it is a pure static compound block. If you also pass `--data-storage`
 Pure compound scaffold:
 
 ```bash
-npx @wp-typia/create compound-demo --template compound --package-manager npm --yes --no-install
+npx wp-typia compound-demo --template compound --package-manager npm --yes --no-install
 cd compound-demo
 npm install
 ```
@@ -32,7 +32,7 @@ npm install
 Compound scaffold with parent-only persistence:
 
 ```bash
-npx @wp-typia/create compound-demo \
+npx wp-typia compound-demo \
   --template compound \
   --persistence-policy authenticated \
   --package-manager npm \
