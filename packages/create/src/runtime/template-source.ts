@@ -18,6 +18,10 @@ import {
 	isBuiltInTemplateId,
 } from "./template-registry.js";
 import { isPlainObject } from "./object-utils.js";
+import {
+	getRemovedBuiltInTemplateMessage,
+	isRemovedBuiltInTemplateId,
+} from "./template-defaults.js";
 import { resolveBuiltInTemplateSource } from "./template-builtins.js";
 import { getPackageVersions } from "./package-versions.js";
 import { toSegmentPascalCase } from "./string-case.js";
@@ -26,7 +30,6 @@ import { copyRawDirectory, copyRenderedDirectory } from "./template-render.js";
 const EXTERNAL_TEMPLATE_ENTRY_CANDIDATES = ["index.js", "index.cjs", "index.mjs"] as const;
 const TEMPLATE_WARNING_MESSAGE =
 	"wp-typia owns package/tooling/sync setup for generated projects, so this external template setting is ignored.";
-const REMOVED_BUILTIN_TEMPLATE_IDS = ["data", "persisted"] as const;
 
 type TemplateSourceFormat = "wp-typia" | "create-block-external" | "create-block-subset";
 
@@ -277,12 +280,8 @@ export function parseNpmTemplateLocator(templateId: string): NpmTemplateLocator 
 }
 
 export function parseTemplateLocator(templateId: string): RemoteTemplateLocator {
-	if ((REMOVED_BUILTIN_TEMPLATE_IDS as readonly string[]).includes(templateId)) {
-		throw new Error(
-			`Built-in template "${templateId}" was removed. Use --template persistence --persistence-policy ${
-				templateId === "data" ? "public" : "authenticated"
-			} instead.`,
-		);
+	if (isRemovedBuiltInTemplateId(templateId)) {
+		throw new Error(getRemovedBuiltInTemplateMessage(templateId));
 	}
 
 	const githubLocator = parseGitHubTemplateLocator(templateId);

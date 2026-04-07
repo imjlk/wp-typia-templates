@@ -2,6 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { getBuiltInTemplateMetadataDefaults } from "./template-defaults.js";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export function resolvePackageRoot(startDir: string): string {
@@ -55,28 +57,28 @@ export const TEMPLATE_REGISTRY = Object.freeze<TemplateDefinition[]>([
 	{
 		id: "basic",
 		description: "A lightweight WordPress block with Typia validation",
-		defaultCategory: "text",
+		defaultCategory: getBuiltInTemplateMetadataDefaults("basic").category,
 		features: ["Type-safe attributes", "Runtime validation", "Minimal setup"],
 		templateDir: path.join(TEMPLATE_ROOT, "basic"),
 	},
 	{
 		id: "interactivity",
 		description: "An interactive WordPress block with Typia validation and Interactivity API",
-		defaultCategory: "widgets",
+		defaultCategory: getBuiltInTemplateMetadataDefaults("interactivity").category,
 		features: ["Interactivity API", "Client-side state", "Event handling"],
 		templateDir: path.join(TEMPLATE_ROOT, "interactivity"),
 	},
 	{
 		id: "persistence",
 		description: "A persistence-aware WordPress block with Typia validation, typed REST contracts, and selectable public or authenticated write policies",
-		defaultCategory: "widgets",
+		defaultCategory: getBuiltInTemplateMetadataDefaults("persistence").category,
 		features: ["Interactivity API", "Typed REST client", "Schema sync", "Persistence policies"],
 		templateDir: path.join(TEMPLATE_ROOT, "persistence"),
 	},
 	{
 		id: "compound",
 		description: "A parent-and-child WordPress block scaffold with InnerBlocks, optional persistence wiring, and hidden implementation child blocks",
-		defaultCategory: "widgets",
+		defaultCategory: getBuiltInTemplateMetadataDefaults("compound").category,
 		features: ["InnerBlocks", "Hidden child blocks", "Optional persistence layer"],
 		templateDir: path.join(TEMPLATE_ROOT, "compound"),
 	},
