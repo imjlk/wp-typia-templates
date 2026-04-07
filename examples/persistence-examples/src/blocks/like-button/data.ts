@@ -35,7 +35,11 @@ interface ToggleLikeMutationContext< Context > {
 export interface UsePersistenceLikeStatusQueryOptions<
 	Selected = PersistenceLikeStatusResponse,
 > extends Omit<
-		UseEndpointQueryOptions< PersistenceLikeStatusResponse, Selected >,
+		UseEndpointQueryOptions<
+			PersistenceLikeStatusQuery,
+			PersistenceLikeStatusResponse,
+			Selected
+		>,
 		'resolveCallOptions'
 	> {
 	restNonce?: string;
