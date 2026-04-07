@@ -1,5 +1,14 @@
 # @wp-typia/create
 
+## 0.11.1 — 2026-04-07
+
+### Patch changes
+
+- [fa8f580](https://github.com/imjlk/wp-typia/commit/fa8f5809bd1f54065160183aa8f781373ad79bbe) Patch scaffold DX regressions in `@wp-typia/create` by preserving the published
+  `@wp-typia/block-runtime` dependency range during version resolution, clarifying
+  fixture refresh messaging, and documenting the intentional static/basic
+  template defaults. — Thanks @imjlk!
+
 ## 0.11.0 — 2026-04-07
 
 ### Minor changes
