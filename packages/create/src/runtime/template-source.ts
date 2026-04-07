@@ -32,8 +32,6 @@ import { copyRawDirectory, copyRenderedDirectory } from "./template-render.js";
 const EXTERNAL_TEMPLATE_ENTRY_CANDIDATES = ["index.js", "index.cjs", "index.mjs"] as const;
 const TEMPLATE_WARNING_MESSAGE =
 	"wp-typia owns package/tooling/sync setup for generated projects, so this external template setting is ignored.";
-const require = createRequire(import.meta.url);
-
 type TemplateSourceFormat = "wp-typia" | "create-block-external" | "create-block-subset";
 
 /**
@@ -239,38 +237,24 @@ async function fetchNpmTemplateSource(locator: NpmTemplateLocator): Promise<Seed
 	}
 }
 
-async function copyWpTypiaTemplateDirectory(
-	sourceDir: string,
-	targetDir: string,
-): Promise<void> {
-	await fsp.mkdir(targetDir, { recursive: true });
-	for (const entry of await fsp.readdir(sourceDir, { withFileTypes: true })) {
-		const sourcePath = path.join(sourceDir, entry.name);
-		const targetPath = path.join(targetDir, entry.name);
-		const mustacheVariantPath = path.join(sourceDir, `${entry.name}.mustache`);
-
-		if (
-			entry.isFile() &&
-			(entry.name === "package.json" || entry.name === "README.md") &&
-			fs.existsSync(mustacheVariantPath)
-		) {
-			continue;
-		}
-
-		if (entry.isDirectory()) {
-			await copyWpTypiaTemplateDirectory(sourcePath, targetPath);
-			continue;
-		}
-
-		await fsp.mkdir(path.dirname(targetPath), { recursive: true });
-		await fsp.copyFile(sourcePath, targetPath);
-	}
-}
-
 async function normalizeWpTypiaTemplateSeed(seed: SeedSource): Promise<SeedSource> {
 	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-template-source-"));
 	const normalizedDir = path.join(tempRoot, "template");
-	await copyWpTypiaTemplateDirectory(seed.blockDir, normalizedDir);
+	try {
+		await copyRawDirectory(seed.blockDir, normalizedDir, {
+			filter: (sourcePath, _targetPath, entry) => {
+				const mustacheVariantPath = path.join(path.dirname(sourcePath), `${entry.name}.mustache`);
+				return !(
+					entry.isFile() &&
+					(entry.name === "package.json" || entry.name === "README.md") &&
+					fs.existsSync(mustacheVariantPath)
+				);
+			},
+		});
+	} catch (error) {
+		await fsp.rm(tempRoot, { force: true, recursive: true });
+		throw error;
+	}
 
 	return {
 		blockDir: normalizedDir,
@@ -284,8 +268,14 @@ async function normalizeWpTypiaTemplateSeed(seed: SeedSource): Promise<SeedSourc
 	};
 }
 
-function resolveInstalledNpmTemplateSource(locator: NpmTemplateLocator): SeedSource | null {
-	if (locator.rawSpec !== "*") {
+/**
+ * Resolve a locally installed npm template package from the caller workspace.
+ *
+ * Bare package ids are preferred here so monorepo and offline workflows can
+ * use an already-installed template without forcing a registry fetch.
+ */
+function resolveInstalledNpmTemplateSource(locator: NpmTemplateLocator, cwd: string): SeedSource | null {
+	if (locator.rawSpec !== "" && locator.rawSpec !== "*") {
 		return null;
 	}
 
@@ -314,20 +304,36 @@ function resolveInstalledNpmTemplateSource(locator: NpmTemplateLocator): SeedSou
 		}
 	}
 
+	const workspaceRequire = createRequire(path.join(path.resolve(cwd), "__wp_typia_template_resolver__.cjs"));
 	try {
-		const packageJsonPath = fs.realpathSync(require.resolve(`${locator.name}/package.json`));
+		const packageJsonPath = fs.realpathSync(
+			workspaceRequire.resolve(`${locator.name}/package.json`),
+		);
 		const sourceDir = path.dirname(packageJsonPath);
 		return {
 			blockDir: sourceDir,
 			rootDir: sourceDir,
 		};
 	} catch (error) {
+		const errorCode =
+			typeof error === "object" && error !== null && "code" in error
+				? String((error as { code: unknown }).code)
+				: "";
 		if (
-			typeof error === "object" &&
-			error !== null &&
-			"code" in error &&
-			String((error as { code: unknown }).code) === "MODULE_NOT_FOUND"
+			errorCode === "MODULE_NOT_FOUND" ||
+			errorCode === "ERR_PACKAGE_PATH_NOT_EXPORTED"
 		) {
+			for (const basePath of workspaceRequire.resolve.paths(locator.name) ?? []) {
+				const packageJsonPath = path.join(basePath, locator.name, "package.json");
+				if (!fs.existsSync(packageJsonPath)) {
+					continue;
+				}
+				const sourceDir = path.dirname(fs.realpathSync(packageJsonPath));
+				return {
+					blockDir: sourceDir,
+					rootDir: sourceDir,
+				};
+			}
 			return null;
 		}
 		throw error;
@@ -986,7 +992,7 @@ async function resolveTemplateSeed(
 		return resolveGitHubTemplateSource(locator.locator);
 	}
 
-	const installedSource = resolveInstalledNpmTemplateSource(locator.locator);
+	const installedSource = resolveInstalledNpmTemplateSource(locator.locator, cwd);
 	if (installedSource) {
 		await assertNoSymlinks(installedSource.blockDir);
 		return installedSource;

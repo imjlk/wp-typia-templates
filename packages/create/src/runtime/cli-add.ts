@@ -52,6 +52,8 @@ const WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
 const BLOCK_CONFIG_ENTRY_MARKER = "\t// wp-typia add block entries";
 const COLLECTION_IMPORT_LINE = "import '../../collection';";
 const EMPTY_BLOCKS_ARRAY = `${BLOCK_CONFIG_ENTRY_MARKER}\n];`;
+const REST_MANIFEST_IMPORT_PATTERN =
+	/import\s*\{[^}]*\bdefineEndpointManifest\b[^}]*\}\s*from\s*["']@wp-typia\/block-runtime\/metadata-core["'];?/m;
 
 interface WorkspacePackageJson {
 	author?: string;
@@ -376,7 +378,7 @@ async function addCollectionImportsForTemplate(
 function ensureBlockConfigCanAddRestManifests(source: string): string {
 	const importLine =
 		"import { defineEndpointManifest } from '@wp-typia/block-runtime/metadata-core';";
-	if (source.includes(importLine)) {
+	if (REST_MANIFEST_IMPORT_PATTERN.test(source)) {
 		return source;
 	}
 	return `${importLine}\n\n${source}`;
@@ -785,6 +787,8 @@ export async function runAddBlockCommand({
 	const migrationConfigSource = await readOptionalFile(
 		path.join(workspace.projectDir, "src", "migrations", "config.ts"),
 	);
+	const migrationConfig =
+		migrationConfigSource === null ? null : parseMigrationConfig(migrationConfigSource);
 
 	try {
 		const result = await scaffoldProject({
@@ -809,15 +813,13 @@ export async function runAddBlockCommand({
 			blockConfigSource,
 			migrationConfigSource,
 			snapshotDirs:
-				migrationConfigSource === null
+				migrationConfig === null
 					? []
 					: buildMigrationBlocks(resolvedTemplateId, result.variables).map((block) =>
 						path.join(
 							workspace.projectDir,
-							"src",
-							"migrations",
-							"versions",
-							parseMigrationConfig(migrationConfigSource).currentMigrationVersion,
+							...migrationConfig.snapshotDir.split("/"),
+							migrationConfig.currentMigrationVersion,
 							block.key,
 						),
 					),
