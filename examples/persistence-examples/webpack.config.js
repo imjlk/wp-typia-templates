@@ -250,6 +250,10 @@ module.exports = async () => {
 						process.cwd(),
 						'../../packages/wp-typia-block-runtime/src/editor.ts'
 					),
+					'@wp-typia/block-runtime/identifiers': path.resolve(
+						process.cwd(),
+						'../../packages/wp-typia-block-runtime/src/identifiers.ts'
+					),
 					'@wp-typia/block-runtime/inspector': path.resolve(
 						process.cwd(),
 						'../../packages/wp-typia-block-runtime/src/inspector.ts'

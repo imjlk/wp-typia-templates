@@ -16,6 +16,7 @@ describe("@wp-typia/create import policy", () => {
 			blockRuntimeBlocksModule,
 			blockRuntimeDefaultsModule,
 			blockRuntimeEditorModule,
+			blockRuntimeIdentifiersModule,
 			blockRuntimeInspectorModule,
 			blockRuntimeValidationModule,
 			createRuntimeBlocksModule,
@@ -32,6 +33,7 @@ describe("@wp-typia/create import policy", () => {
 			import("@wp-typia/block-runtime/blocks"),
 			import("@wp-typia/block-runtime/defaults"),
 			import("@wp-typia/block-runtime/editor"),
+			import("@wp-typia/block-runtime/identifiers"),
 			import("@wp-typia/block-runtime/inspector"),
 			import("@wp-typia/block-runtime/validation"),
 			import("@wp-typia/create/runtime/blocks"),
@@ -65,6 +67,8 @@ describe("@wp-typia/create import policy", () => {
 		expect(typeof blockRuntimeBlocksModule.createTypiaWebpackConfig).toBe("function");
 		expect(typeof blockRuntimeDefaultsModule.applyTemplateDefaultsFromManifest).toBe("function");
 		expect(typeof blockRuntimeEditorModule.createEditorModel).toBe("function");
+		expect(typeof blockRuntimeIdentifiersModule.generateBlockId).toBe("function");
+		expect(typeof blockRuntimeIdentifiersModule.generateResourceKey).toBe("function");
 		expect(typeof blockRuntimeInspectorModule.useEditorFields).toBe("function");
 		expect(typeof blockRuntimeValidationModule.createAttributeUpdater).toBe("function");
 		expect(typeof blockRuntimeValidationModule.createScaffoldValidatorToolkit).toBe("function");
@@ -113,6 +117,7 @@ describe("@wp-typia/create import policy", () => {
 		);
 		expect(typeof schemaCoreModule.projectJsonSchemaDocument).toBe("function");
 		expect(typeof schemaCoreModule.manifestToOpenApi).toBe("function");
+		expect("generateBlockId" in blockRuntimeRootModule).toBe(false);
 		expect("useEditorFields" in blockRuntimeRootModule).toBe(false);
 	});
 
@@ -135,9 +140,11 @@ describe("@wp-typia/create import policy", () => {
 		expect(apiGuide).toContain("docs/runtime-import-policy.md");
 		expect(runtimeSurfaceDoc).toContain("descriptive, not normative");
 		expect(runtimeSurfaceDoc).toContain("docs/runtime-import-policy.md");
+		expect(runtimeSurfaceDoc).toContain("@wp-typia/block-runtime/identifiers");
 		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/blocks");
 		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/defaults");
 		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/editor");
+		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/identifiers");
 		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/inspector");
 		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/validation");
 		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/metadata-core");

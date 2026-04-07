@@ -3,6 +3,7 @@ import type {
 	{{pascalCase}}Attributes,
 	{{pascalCase}}ValidationResult,
 } from './types';
+import { generateResourceKey } from '@wp-typia/block-runtime/identifiers';
 import { createTemplateValidatorToolkit } from './validator-toolkit';
 
 const scaffoldValidators = createTemplateValidatorToolkit< {{pascalCase}}Attributes >( {
@@ -12,7 +13,7 @@ const scaffoldValidators = createTemplateValidatorToolkit< {{pascalCase}}Attribu
 		resourceKey:
 			normalized.resourceKey && normalized.resourceKey.length > 0
 				? normalized.resourceKey
-				: generateResourceKey(),
+				: generateResourceKey( '{{slugKebabCase}}' ),
 	} ),
 } );
 
@@ -29,6 +30,3 @@ export const sanitize{{pascalCase}}Attributes =
 	) => {{pascalCase}}Attributes;
 
 export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;
-
-const generateResourceKey = (): string =>
-	'{{slugKebabCase}}-' + Math.random().toString( 36 ).slice( 2, 11 );

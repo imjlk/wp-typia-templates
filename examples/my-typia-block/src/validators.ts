@@ -5,6 +5,7 @@ import {
 	type ManifestDefaultsDocument,
 	applyTemplateDefaultsFromManifest,
 } from '@wp-typia/block-runtime/defaults';
+import { generateBlockId } from '@wp-typia/block-runtime/identifiers';
 import {
 	createAttributeUpdater as createValidatedAttributeUpdater,
 	createNestedAttributeUpdater as createValidatedNestedAttributeUpdater,
@@ -12,7 +13,6 @@ import {
 	toValidationResult,
 } from '@wp-typia/block-runtime/validation';
 import { MyTypiaBlockAttributes } from './types';
-import { generateUUID } from './utils';
 
 /**
  * Typia validators for the block attributes
@@ -55,7 +55,7 @@ export function sanitizeMyTypiaBlockAttributes(
 		id:
 			normalized.id && normalized.id.length > 0
 				? normalized.id
-				: generateUUID(),
+				: generateBlockId(),
 	} );
 }
 

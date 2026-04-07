@@ -314,7 +314,7 @@ metadata tags exist.
 Generated projects should use `@wp-typia/block-runtime/metadata-core` for TypeScript
 sync and `@wp-typia/block-runtime`, `@wp-typia/block-runtime/blocks`,
 `@wp-typia/block-runtime/defaults`, `@wp-typia/block-runtime/editor`,
-`@wp-typia/block-runtime/inspector`, and
+`@wp-typia/block-runtime/identifiers`, `@wp-typia/block-runtime/inspector`, and
 `@wp-typia/block-runtime/validation` for shared runtime helpers.
 `@wp-typia/create/metadata-core` remains exported as a backward-compatible
 facade, and `@wp-typia/create` remains the CLI/scaffolding package.
@@ -334,6 +334,11 @@ For the normative generated-project import policy, see
 [`docs/runtime-import-policy.md`](../../docs/runtime-import-policy.md). For a
 repo-backed inventory of the current public runtime surface and how it is used
 today, see [`docs/runtime-surface.md`](../../docs/runtime-surface.md).
+
+Generated projects should also treat
+`@wp-typia/block-runtime/identifiers` as the standard helper path for block
+ids, scoped client ids, persistence resource keys, and public write request
+ids instead of carrying local ad hoc generators.
 
 Scaffold flow internals, template rendering/composition internals, and CLI
 implementation internals are not part of the generated-project runtime support
