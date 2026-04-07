@@ -24,6 +24,7 @@ function getBlockSlugs() {
 function ensureEmptyWorkspaceArtifacts() {
 	const buildBlocksDir = path.join( process.cwd(), 'build', 'blocks' );
 	const manifestPath = path.join( process.cwd(), 'build', 'blocks-manifest.php' );
+	fs.rmSync( buildBlocksDir, { force: true, recursive: true } );
 	fs.mkdirSync( buildBlocksDir, { recursive: true } );
 	fs.writeFileSync(
 		manifestPath,

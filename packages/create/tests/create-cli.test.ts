@@ -140,16 +140,9 @@ function ensureWorkspacePackageBuilt(
 	builtWorkspacePackages.add(packageName);
 }
 
-function seedWorkspaceBinaryLinks(targetDir: string) {
+function ensureWorkspaceBinaryDirectory(targetDir: string) {
 	const targetBinDir = path.join(targetDir, "node_modules", ".bin");
 	fs.mkdirSync(targetBinDir, { recursive: true });
-
-	for (const entry of fs.readdirSync(path.join(workspaceNodeModulesPath, ".bin"))) {
-		ensureFileSymlink(
-			path.join(targetBinDir, entry),
-			fs.realpathSync(path.join(workspaceNodeModulesPath, ".bin", entry)),
-		);
-	}
 }
 
 function linkPackageBins(
@@ -193,7 +186,7 @@ function linkWorkspaceNodeModules(targetDir: string) {
 		fs.mkdirSync(nodeModulesPath, { recursive: true });
 	}
 
-	seedWorkspaceBinaryLinks(targetDir);
+	ensureWorkspaceBinaryDirectory(targetDir);
 
 	const packageJsonPath = path.join(targetDir, "package.json");
 	if (!fs.existsSync(packageJsonPath)) {
@@ -2329,6 +2322,34 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(fs.existsSync(path.join(targetDir, "src", "blocks", ".gitkeep"))).toBe(true);
 	});
 
+	test("official workspace templates accept local path references with migration UI", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-template-local-path");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: path.resolve(packageRoot, "..", "create-workspace-template"),
+			packageManager: "npm",
+			noInstall: true,
+			withMigrationUi: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo empty workspace local path",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-template-local-path",
+				textDomain: "demo-space",
+				title: "Demo Workspace Template Local Path",
+			},
+		});
+
+		const packageJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "package.json"), "utf8"),
+		);
+
+		expect(packageJson.wpTypia?.templatePackage).toBe(workspaceTemplatePackageManifest.name);
+		expect(packageJson.scripts["migration:doctor"]).toContain("wp-typia");
+	});
+
 	test("canonical CLI can add a basic block to an official workspace template", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-add-basic");
 
@@ -2639,6 +2660,7 @@ describe("@wp-typia/create scaffolding", () => {
 			fetchSpec: "^1.2.0",
 			name: "@scope/template-package",
 			raw: "@scope/template-package@^1.2.0",
+			rawSpec: "^1.2.0",
 			type: "range",
 		});
 	});

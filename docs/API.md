@@ -16,12 +16,14 @@ Common commands:
 ```bash
 wp-typia create my-block --template basic --package-manager bun --yes --no-install
 wp-typia add block counter-card --template basic
-wp-typia add variation
-wp-typia add pattern
+wp-typia add variation # placeholder
+wp-typia add pattern # placeholder
 wp-typia templates list
 wp-typia templates inspect basic
 wp-typia doctor
 ```
+
+Run `wp-typia add` from the workspace root after `cd`-ing into the generated project.
 
 Built-in templates currently include `basic`, `interactivity`, `persistence`, and `compound`.
 
@@ -37,6 +39,7 @@ Official empty workspace flow:
 
 ```bash
 wp-typia create my-plugin --template @wp-typia/create-workspace-template --package-manager bun --yes --no-install
+cd my-plugin
 wp-typia add block counter-card --template basic
 wp-typia add block faq-stack --template compound --persistence-policy public --data-storage custom-table
 ```

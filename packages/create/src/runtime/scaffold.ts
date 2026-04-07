@@ -911,17 +911,6 @@ export async function scaffoldProject({
 }: ScaffoldProjectOptions): Promise<ScaffoldProjectResult> {
 	const resolvedPackageManager = getPackageManager(packageManager).id;
 	const isBuiltInTemplate = isBuiltInTemplateId(templateId);
-	if (
-		withMigrationUi &&
-		!isBuiltInTemplate &&
-		templateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
-	) {
-		throw new Error(
-			"`--with-migration-ui` is currently supported only for built-in templates and @wp-typia/create-workspace-template.",
-		);
-	}
-
-	await ensureDirectory(projectDir, allowExistingDir);
 
 	const variables = getTemplateVariables(templateId, {
 		...answers,
@@ -936,6 +925,7 @@ export async function scaffoldProject({
 	);
 
 	try {
+		await ensureDirectory(projectDir, allowExistingDir);
 		await copyInterpolatedDirectory(
 			templateSource.templateDir,
 			projectDir,
@@ -965,6 +955,10 @@ export async function scaffoldProject({
 		}
 	} else if (withMigrationUi && isOfficialWorkspace) {
 		await applyWorkspaceMigrationCapability(projectDir, resolvedPackageManager);
+	} else if (withMigrationUi) {
+		throw new Error(
+			"`--with-migration-ui` is currently supported only for built-in templates and @wp-typia/create-workspace-template.",
+		);
 	}
 	const readmePath = path.join(projectDir, "README.md");
 	if (!fs.existsSync(readmePath)) {

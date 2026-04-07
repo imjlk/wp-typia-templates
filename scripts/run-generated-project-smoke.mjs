@@ -653,6 +653,9 @@ function assertWorkspaceBlockArtifacts(projectDir, blockSlugs) {
 		if (!fs.existsSync(path.join(blockDir, "typia.manifest.json"))) {
 			throw new Error(`Expected workspace build to include ${slug}/typia.manifest.json`);
 		}
+		if (!fs.existsSync(path.join(blockDir, "typia-validator.php"))) {
+			throw new Error(`Expected workspace build to include ${slug}/typia-validator.php`);
+		}
 	}
 
 	if (!fs.existsSync(path.join(projectDir, "build", "blocks-manifest.php"))) {

@@ -39,6 +39,9 @@ export const SHARED_PERSISTENCE_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, 
 export const SHARED_PRESET_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "presets");
 export const SHARED_REST_HELPER_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "rest-helpers");
 export const SHARED_MIGRATION_UI_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "migration-ui");
+/**
+ * Shared workspace template overlay root used by workspace scaffolding flows.
+ */
 export const SHARED_WORKSPACE_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "workspace");
 export const SHARED_TEST_PRESET_TEMPLATE_ROOT = path.join(SHARED_PRESET_TEMPLATE_ROOT, "test-preset");
 export const SHARED_WP_ENV_PRESET_TEMPLATE_ROOT = path.join(SHARED_PRESET_TEMPLATE_ROOT, "wp-env");

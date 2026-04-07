@@ -1,8 +1,9 @@
 /**
  * Public CLI runtime barrel for add, doctor, help, scaffold, and template helpers.
  *
- * Import `formatAddHelpText`, `runAddBlockCommand`, and
- * `createAddPlaceholderMessage` for explicit `wp-typia add` flows,
+ * Import `formatAddHelpText`, `runAddBlockCommand`,
+ * `createAddPlaceholderMessage`, and `seedWorkspaceMigrationProject` for
+ * explicit `wp-typia add` flows,
  * `getDoctorChecks`, `runDoctor`, and `DoctorCheck` for diagnostics,
  * `formatHelpText` for top-level CLI usage output, scaffold helpers such as
  * `createReadlinePrompt`, `getNextSteps`, `getOptionalOnboarding`,

@@ -31,9 +31,15 @@ import type { MigrationBlockConfig } from "./migration-types.js";
 import type { PackageManagerId } from "./package-managers.js";
 import type { ScaffoldTemplateVariables } from "./scaffold.js";
 
+/**
+ * Supported top-level `wp-typia add` kinds exposed by the canonical CLI.
+ */
 export const ADD_KIND_IDS = ["block", "variation", "pattern"] as const;
 export type AddKindId = (typeof ADD_KIND_IDS)[number];
 
+/**
+ * Supported built-in block families accepted by `wp-typia add block --template`.
+ */
 export const ADD_BLOCK_TEMPLATE_IDS = [
 	"basic",
 	"interactivity",
@@ -72,6 +78,13 @@ interface RunAddBlockCommandOptions {
 	dataStorageMode?: string;
 	persistencePolicy?: string;
 	templateId?: string;
+}
+
+interface WorkspaceMutationSnapshot {
+	blockConfigSource: string | null;
+	migrationConfigSource: string | null;
+	snapshotDirs: string[];
+	targetPaths: string[];
 }
 
 function parsePackageManagerId(packageManagerField: string | undefined): PackageManagerId {
@@ -300,6 +313,24 @@ async function patchFile(
 	if (nextSource !== currentSource) {
 		await fsp.writeFile(filePath, nextSource, "utf8");
 	}
+}
+
+async function readOptionalFile(filePath: string): Promise<string | null> {
+	if (!fs.existsSync(filePath)) {
+		return null;
+	}
+
+	return fsp.readFile(filePath, "utf8");
+}
+
+async function restoreOptionalFile(filePath: string, source: string | null): Promise<void> {
+	if (source === null) {
+		await fsp.rm(filePath, { force: true });
+		return;
+	}
+
+	await fsp.mkdir(path.dirname(filePath), { recursive: true });
+	await fsp.writeFile(filePath, source, "utf8");
 }
 
 async function ensureCollectionImport(filePath: string): Promise<void> {
@@ -675,6 +706,9 @@ Notes:
   \`wp-typia add variation\` and \`wp-typia add pattern\` are reserved placeholders for follow-up workflows.`;
 }
 
+/**
+ * Seeds an empty official workspace migration project before any blocks are added.
+ */
 export async function seedWorkspaceMigrationProject(
 	projectDir: string,
 	currentMigrationVersion: string,
@@ -689,6 +723,29 @@ export async function seedWorkspaceMigrationProject(
 	writeInitialMigrationScaffold(projectDir, currentMigrationVersion, []);
 }
 
+async function rollbackWorkspaceMutation(
+	projectDir: string,
+	snapshot: WorkspaceMutationSnapshot,
+): Promise<void> {
+	for (const targetPath of snapshot.targetPaths) {
+		await fsp.rm(targetPath, { force: true, recursive: true });
+	}
+	for (const snapshotDir of snapshot.snapshotDirs) {
+		await fsp.rm(snapshotDir, { force: true, recursive: true });
+	}
+	await restoreOptionalFile(
+		path.join(projectDir, "scripts", "block-config.ts"),
+		snapshot.blockConfigSource,
+	);
+	await restoreOptionalFile(
+		path.join(projectDir, "src", "migrations", "config.ts"),
+		snapshot.migrationConfigSource,
+	);
+}
+
+/**
+ * Adds one built-in block slice to an official workspace project.
+ */
 export async function runAddBlockCommand({
 	blockName,
 	cwd = process.cwd(),
@@ -722,6 +779,12 @@ export async function runAddBlockCommand({
 		workspace.workspace.phpPrefix,
 		normalizedSlug,
 	);
+	const blockConfigSource = await readOptionalFile(
+		path.join(workspace.projectDir, "scripts", "block-config.ts"),
+	);
+	const migrationConfigSource = await readOptionalFile(
+		path.join(workspace.projectDir, "src", "migrations", "config.ts"),
+	);
 
 	try {
 		const result = await scaffoldProject({
@@ -740,9 +803,32 @@ export async function runAddBlockCommand({
 			packageManager: workspace.packageManager,
 			persistencePolicy: persistencePolicy as "authenticated" | "public" | undefined,
 			projectDir: tempProjectDir,
-				templateId: resolvedTemplateId,
-			});
+			templateId: resolvedTemplateId,
+		});
+		const mutationSnapshot: WorkspaceMutationSnapshot = {
+			blockConfigSource,
+			migrationConfigSource,
+			snapshotDirs:
+				migrationConfigSource === null
+					? []
+					: buildMigrationBlocks(resolvedTemplateId, result.variables).map((block) =>
+						path.join(
+							workspace.projectDir,
+							"src",
+							"migrations",
+							"versions",
+							parseMigrationConfig(migrationConfigSource).currentMigrationVersion,
+							block.key,
+						),
+					),
+			targetPaths: collectWorkspaceBlockPaths(
+				workspace.projectDir,
+				resolvedTemplateId,
+				result.variables,
+			),
+		};
 
+		try {
 			assertBlockTargetsDoNotExist(workspace.projectDir, resolvedTemplateId, result.variables);
 			await copyScaffoldedBlockSlice(
 				workspace.projectDir,
@@ -772,7 +858,7 @@ export async function runAddBlockCommand({
 				buildMigrationBlocks(resolvedTemplateId, result.variables),
 			);
 
-		return {
+			return {
 				blockSlugs: collectWorkspaceBlockPaths(
 					workspace.projectDir,
 					resolvedTemplateId,
@@ -781,11 +867,18 @@ export async function runAddBlockCommand({
 				projectDir: workspace.projectDir,
 				templateId: resolvedTemplateId,
 			};
+		} catch (error) {
+			await rollbackWorkspaceMutation(workspace.projectDir, mutationSnapshot);
+			throw error;
+		}
 	} finally {
 		await fsp.rm(tempRoot, { force: true, recursive: true });
 	}
 }
 
+/**
+ * Returns the current placeholder guidance for unsupported `wp-typia add` kinds.
+ */
 export function createAddPlaceholderMessage(kind: Exclude<AddKindId, "block">): string {
 	const issueNumber = kind === "variation" ? "#157" : "#158";
 	return `\`wp-typia add ${kind}\` is not implemented yet. Track ${issueNumber} for the first supported ${kind} workflow.`;

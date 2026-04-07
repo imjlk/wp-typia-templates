@@ -25,6 +25,7 @@ import {
 	runProjectScriptIfPresent,
 } from "./migration-utils.js";
 import type {
+	ManifestDocument,
 	MigrationBlockConfig,
 	MigrationConfig,
 	MigrationEntry,
@@ -48,6 +49,18 @@ const SINGLE_BLOCK_LAYOUT_CANDIDATES = [
 	},
 ] as const;
 const LEGACY_ROOT_SINGLE_BLOCK_LAYOUT = SINGLE_BLOCK_LAYOUT_CANDIDATES[1];
+
+function createEmptyMigrationProjectBlockJson(): Record<string, unknown> {
+	return {};
+}
+
+function createEmptyMigrationProjectManifest(): ManifestDocument {
+	return {
+		attributes: {},
+		manifestVersion: 2,
+		sourceType: null,
+	};
+}
 
 /**
  * Describes the migration retrofit layout discovered in a project directory.
@@ -801,6 +814,10 @@ export function resolveMigrationBlocks(
 	config: MigrationConfig,
 ): ResolvedMigrationBlockTarget[] {
 	if (Array.isArray(config.blocks)) {
+		if (config.blocks.length === 0) {
+			return [];
+		}
+
 		return config.blocks.map((block) => {
 			const blockJsonPath = path.join(projectDir, block.blockJsonFile);
 			const manifestPath = path.join(projectDir, block.manifestFile);
@@ -1095,7 +1112,8 @@ export function loadMigrationProject(
 			supportedMigrationVersions: [],
 		}
 		: parseMigrationConfig(fs.readFileSync(paths.configFile, "utf8"));
-	const configuredBlocks = config.blocks ?? [createImplicitLegacyBlock(projectDir, config.blockName)];
+	const configuredBlocks =
+		config.blocks === undefined ? [createImplicitLegacyBlock(projectDir, config.blockName)] : config.blocks;
 	const missingManifestFiles = configuredBlocks
 		.filter((block) => !fs.existsSync(path.join(projectDir, block.manifestFile)))
 		.map((block) => block.manifestFile);
@@ -1123,8 +1141,16 @@ export function loadMigrationProject(
 	return {
 		blocks,
 		config,
-		currentBlockJson: blocks[0]?.currentBlockJson ?? readJson(path.join(projectDir, ROOT_BLOCK_JSON)),
-		currentManifest: blocks[0]?.currentManifest ?? readJson(path.join(projectDir, ROOT_MANIFEST)),
+		currentBlockJson:
+			blocks[0]?.currentBlockJson ??
+			(config.blocks !== undefined
+				? createEmptyMigrationProjectBlockJson()
+				: readJson(path.join(projectDir, ROOT_BLOCK_JSON))),
+		currentManifest:
+			blocks[0]?.currentManifest ??
+			(config.blocks !== undefined
+				? createEmptyMigrationProjectManifest()
+				: readJson(path.join(projectDir, ROOT_MANIFEST))),
 		paths,
 		projectDir,
 	};
@@ -1199,6 +1225,11 @@ export function parseMigrationConfig(source: string): MigrationConfig {
 
 	if (!currentMigrationVersion || !snapshotDir || !supportedMigrationVersions) {
 		throw new Error("Unable to parse migration config. Regenerate with `wp-typia migrations init --current-migration-version v1`.");
+	}
+	if (blocksArrayBody !== null && blocks.length === 0 && blocksArrayBody.trim().length > 0) {
+		throw new Error(
+			"Migration config defines `blocks`, but the array entries could not be parsed. Regenerate the config or fix the malformed block targets in `src/migrations/config.ts`.",
+		);
 	}
 	if (!blockName && blocks.length === 0 && blocksArrayBody === null) {
 		throw new Error("Migration config must define `blockName` or `blocks`.");

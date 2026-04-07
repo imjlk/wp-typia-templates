@@ -88,6 +88,7 @@ interface NpmTemplateLocator {
 	fetchSpec: string;
 	name: string;
 	raw: string;
+	rawSpec: string;
 	type: string;
 }
 
@@ -284,6 +285,10 @@ async function normalizeWpTypiaTemplateSeed(seed: SeedSource): Promise<SeedSourc
 }
 
 function resolveInstalledNpmTemplateSource(locator: NpmTemplateLocator): SeedSource | null {
+	if (locator.rawSpec !== "*") {
+		return null;
+	}
+
 	const workspacePackagesRoot = path.resolve(CREATE_PACKAGE_ROOT, "..");
 	if (fs.existsSync(workspacePackagesRoot)) {
 		for (const entry of fs.readdirSync(workspacePackagesRoot, { withFileTypes: true })) {
@@ -307,10 +312,6 @@ function resolveInstalledNpmTemplateSource(locator: NpmTemplateLocator): SeedSou
 				};
 			}
 		}
-	}
-
-	if (locator.fetchSpec.trim().length > 0) {
-		return null;
 	}
 
 	try {
@@ -365,11 +366,14 @@ export function parseNpmTemplateLocator(templateId: string): NpmTemplateLocator 
 		if (!parsed.registry || !parsed.name) {
 			return null;
 		}
+		const parsedWithRawSpec = parsed as unknown as { rawSpec?: unknown };
+		const rawSpec = typeof parsedWithRawSpec.rawSpec === "string" ? parsedWithRawSpec.rawSpec : "";
 
 		return {
 			fetchSpec: typeof parsed.fetchSpec === "string" ? parsed.fetchSpec : "",
 			name: parsed.name,
 			raw: templateId,
+			rawSpec,
 			type: parsed.type,
 		};
 	} catch {

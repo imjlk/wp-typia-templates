@@ -17,7 +17,7 @@ import {
 	snapshotProjectVersion,
 	wizardProjectMigrations,
 } from "../src/runtime/migrations.js";
-import { loadMigrationProject } from "../src/runtime/migration-project.js";
+import { loadMigrationProject, parseMigrationConfig } from "../src/runtime/migration-project.js";
 import { createMigrationRiskSummary } from "../src/runtime/migration-risk.js";
 
 const packageRoot = resolvePackageRoot();
@@ -1984,6 +1984,49 @@ describe("wp-typia migrations", () => {
 		const state = loadMigrationProject(projectDir);
 		expect(state.config.currentMigrationVersion).toBe("v3");
 		expect(state.config.supportedMigrationVersions).toEqual(["v1", "v3"]);
+	});
+
+	test("loadMigrationProject treats explicit empty block arrays as a valid zero-target workspace", () => {
+		const projectDir = path.join(tempRoot, "empty-workspace-migrations");
+		fs.mkdirSync(path.join(projectDir, "src", "migrations"), { recursive: true });
+		writeJson(path.join(projectDir, "package.json"), {
+			name: "empty-workspace-migrations",
+			version: "0.0.0",
+		});
+		writeFile(
+			path.join(projectDir, "src", "migrations", "config.ts"),
+			`export const migrationConfig = {
+\tcurrentMigrationVersion: 'v1',
+\tsupportedMigrationVersions: [ 'v1' ],
+\tsnapshotDir: 'src/migrations/versions',
+\tblocks: [],
+} as const;
+
+export default migrationConfig;
+`,
+		);
+
+		const state = loadMigrationProject(projectDir, { allowSyncTypes: false });
+
+		expect(state.blocks).toEqual([]);
+		expect(state.currentManifest.attributes).toEqual({});
+		expect(state.currentBlockJson).toEqual({});
+	});
+
+	test("parseMigrationConfig rejects malformed explicit block arrays", () => {
+		expect(() =>
+			parseMigrationConfig(`export const migrationConfig = {
+\tcurrentMigrationVersion: 'v1',
+\tsupportedMigrationVersions: [ 'v1' ],
+\tsnapshotDir: 'src/migrations/versions',
+\tblocks: [
+\t\t{ key: 'broken' },
+\t],
+} as const;
+
+export default migrationConfig;
+`),
+		).toThrow(/Migration config defines `blocks`, but the array entries could not be parsed/);
 	});
 
 	test("loadMigrationProject rejects legacy semver-named migration artifacts with reset guidance", () => {

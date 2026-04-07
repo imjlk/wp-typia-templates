@@ -48,6 +48,12 @@ describe("wp-typia package", () => {
 		);
 	});
 
+	test("requires a project directory for the explicit create command", () => {
+		expect(() => runUtf8Command("node", [entryPath, "create"])).toThrow(
+			"`wp-typia create` requires <project-dir>.",
+		);
+	});
+
 	test("rejects empty --package-manager= values during argument parsing", () => {
 		expect(() => parseArgs(["demo-block", "--package-manager="])).toThrow(
 			"--package-manager requires a value",

@@ -509,6 +509,9 @@ export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 			console.log(formatHelpText());
 			return;
 		}
+		if (!parsed.positionals[0]) {
+			throw new Error("`wp-typia create` requires <project-dir>.");
+		}
 		await assertYesModePackageManager(parsed);
 		await runScaffold(parsed, cwd, parsed.positionals[0]);
 		return;
