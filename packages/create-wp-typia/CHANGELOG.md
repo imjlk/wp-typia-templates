@@ -1,5 +1,11 @@
 # create-wp-typia
 
+## 1.3.8 — 2026-04-07
+
+### Patch changes
+
+- Updated dependencies: create (npm)@0.11.0
+
 ## 1.3.7 — 2026-04-06
 
 ### Patch changes

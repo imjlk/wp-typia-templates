@@ -1,5 +1,14 @@
 # `@wp-typia/api-client`
 
+## 0.4.0 — 2026-04-07
+
+### Minor changes
+
+- [9f9e6dd](https://github.com/imjlk/wp-typia/commit/9f9e6ddb0bdd041a678ecce381ff82db8a0123e8) Consolidate the shared validation/object/form-data runtime helpers used by
+  `@wp-typia/api-client` and `@wp-typia/rest` under one maintained internal
+  implementation owned by `@wp-typia/api-client`, while keeping the existing root
+  public APIs unchanged. — Thanks @imjlk!
+
 ## 0.3.0 — 2026-04-05
 
 ### Minor changes
