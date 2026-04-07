@@ -6,12 +6,12 @@ import {
 	manifestMatchesDocument,
 	summarizeVersionDelta,
 } from './helpers';
-import { isPlainObject } from './plain-object';
+import { isNonArrayObject } from './plain-object';
 import {
 	type MigrationAnalysis,
 	type MigrationPreview,
 	type UnionBranchPreview,
-	EMPTY_RISK_SUMMARY,
+	createEmptyRiskSummary,
 } from './types';
 
 interface MigrationResolution {
@@ -19,12 +19,20 @@ interface MigrationResolution {
 	preview: MigrationPreview;
 }
 
+/**
+ * Returns the migration analysis for one block attribute payload.
+ * @param attributes
+ */
 export function detectBlockMigration(
 	attributes: Record< string, unknown >
 ): MigrationAnalysis {
 	return resolveMigrationState( attributes ).analysis;
 }
 
+/**
+ * Applies the matching migration rule and returns the migrated attributes.
+ * @param attributes
+ */
 export function autoMigrate( attributes: Record< string, unknown > ) {
 	const resolution = resolveMigrationState( attributes );
 	if ( ! resolution.preview.after ) {
@@ -38,6 +46,10 @@ export function autoMigrate( attributes: Record< string, unknown > ) {
 	return resolution.preview.after;
 }
 
+/**
+ * Resolves the current migration state, preview, and risk metadata for one block.
+ * @param attributes
+ */
 export function resolveMigrationState(
 	attributes: Record< string, unknown >
 ): MigrationResolution {
@@ -55,7 +67,7 @@ export function resolveMigrationState(
 					migrationRegistry.currentMigrationVersion,
 				needsMigration: false,
 				reasons: [ 'Current Typia validator accepted the attributes.' ],
-				riskSummary: EMPTY_RISK_SUMMARY,
+				riskSummary: createEmptyRiskSummary(),
 				targetMigrationVersion:
 					migrationRegistry.currentMigrationVersion,
 				warnings: [],
@@ -126,7 +138,7 @@ export function resolveMigrationState(
 								})`
 						),
 					],
-					riskSummary: entry.riskSummary ?? EMPTY_RISK_SUMMARY,
+					riskSummary: entry.riskSummary ?? createEmptyRiskSummary(),
 					targetMigrationVersion:
 						migrationRegistry.currentMigrationVersion,
 					warnings: [ ...unresolved, ...validationErrors ],
@@ -149,7 +161,7 @@ export function resolveMigrationState(
 			reasons: [
 				'No legacy snapshot matched and current Typia validator rejected the attributes.',
 			],
-			riskSummary: EMPTY_RISK_SUMMARY,
+			riskSummary: createEmptyRiskSummary(),
 			targetMigrationVersion: migrationRegistry.currentMigrationVersion,
 			warnings: formatValidationErrors( currentValidation.errors ),
 		} satisfies MigrationAnalysis,
@@ -219,7 +231,7 @@ function collectChangedFieldPaths(
 		const left = before[ key ];
 		const right = after[ key ];
 
-		if ( isPlainObject( left ) && isPlainObject( right ) ) {
+		if ( isNonArrayObject( left ) && isNonArrayObject( right ) ) {
 			changes.push(
 				...collectChangedFieldPaths( left, right, nextPrefix )
 			);
@@ -283,7 +295,7 @@ function resolveUnionBranchKey(
 		! attribute ||
 		attribute.ts.kind !== 'union' ||
 		! attribute.ts.union ||
-		! isPlainObject( value )
+		! isNonArrayObject( value )
 	) {
 		return null;
 	}

@@ -4,6 +4,11 @@ interface ValidationErrorSummaryProps {
 	errors: string[];
 }
 
+/**
+ * Renders the shared validation error heading and message list used by the example UI.
+ * @param root0
+ * @param root0.errors
+ */
 export function ValidationErrorSummary( {
 	errors,
 }: ValidationErrorSummaryProps ) {

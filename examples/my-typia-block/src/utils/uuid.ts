@@ -1,6 +1,6 @@
 /**
  * Generate UUID v4
- * @param randomUUID
+ * @param randomUUID Optional native UUID generator for deterministic tests.
  */
 export function generateUUID(
 	randomUUID:

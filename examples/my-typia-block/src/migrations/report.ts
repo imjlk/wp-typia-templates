@@ -8,6 +8,10 @@ function formatRiskSummary( riskSummary: MigrationRiskSummary ): string {
 	return `additive ${ riskSummary.additive.count }, rename ${ riskSummary.rename.count }, transform ${ riskSummary.semanticTransform.count }, union breaking ${ riskSummary.unionBreaking.count }`;
 }
 
+/**
+ * Builds a Markdown report for the current migration scan results.
+ * @param scanResults
+ */
 export function generateMigrationReport(
 	scanResults: BlockScanResult[]
 ): string {

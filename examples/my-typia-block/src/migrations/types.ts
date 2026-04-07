@@ -70,21 +70,26 @@ export interface BatchMigrationResult {
 	total: number;
 }
 
-export const EMPTY_RISK_SUMMARY: MigrationRiskSummary = {
-	additive: {
-		count: 0,
-		items: [],
-	},
-	rename: {
-		count: 0,
-		items: [],
-	},
-	semanticTransform: {
-		count: 0,
-		items: [],
-	},
-	unionBreaking: {
-		count: 0,
-		items: [],
-	},
-};
+/**
+ * Creates an empty migration risk summary without sharing mutable arrays.
+ */
+export function createEmptyRiskSummary(): MigrationRiskSummary {
+	return {
+		additive: {
+			count: 0,
+			items: [],
+		},
+		rename: {
+			count: 0,
+			items: [],
+		},
+		semanticTransform: {
+			count: 0,
+			items: [],
+		},
+		unionBreaking: {
+			count: 0,
+			items: [],
+		},
+	};
+}

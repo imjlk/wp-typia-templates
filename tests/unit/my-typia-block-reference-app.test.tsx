@@ -4,7 +4,7 @@ import * as path from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { ValidationErrorSummary } from "../../examples/my-typia-block/src/components/ValidationErrorSummary";
-import { isPlainObject } from "../../examples/my-typia-block/src/migrations/plain-object";
+import { isNonArrayObject } from "../../examples/my-typia-block/src/migrations/plain-object";
 import { generateUUID } from "../../examples/my-typia-block/src/utils/uuid";
 
 describe("my-typia-block reference app helpers", () => {
@@ -17,14 +17,14 @@ describe("my-typia-block reference app helpers", () => {
     );
   });
 
-  test("migration plain-object helper preserves the example semantics", () => {
+  test("migration object helper preserves the example semantics", () => {
     class ExampleValue {}
 
-    expect(isPlainObject({})).toBe(true);
-    expect(isPlainObject(Object.create(null))).toBe(true);
-    expect(isPlainObject(new ExampleValue())).toBe(true);
-    expect(isPlainObject([])).toBe(false);
-    expect(isPlainObject(null)).toBe(false);
+    expect(isNonArrayObject({})).toBe(true);
+    expect(isNonArrayObject(Object.create(null))).toBe(true);
+    expect(isNonArrayObject(new ExampleValue())).toBe(true);
+    expect(isNonArrayObject([])).toBe(false);
+    expect(isNonArrayObject(null)).toBe(false);
   });
 
   test("ValidationErrorSummary renders the shared heading and list items", () => {
@@ -50,6 +50,8 @@ describe("my-typia-block reference app helpers", () => {
     );
 
     expect(migrationDetectorSource).toContain("BatchMigrationResult");
+    expect(migrationDetectorSource).toContain("BlockScanResult");
+    expect(migrationDetectorSource).toContain("MigrationAnalysis");
     expect(migrationDetectorSource).toContain("batchMigrateScanResults");
     expect(migrationDetectorSource).toContain("detectBlockMigration");
     expect(migrationDetectorSource).toContain("generateMigrationReport");

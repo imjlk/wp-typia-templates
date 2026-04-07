@@ -38,6 +38,10 @@ interface EditablePostType {
 
 type EditablePostRecord = WpPostRecord;
 
+/**
+ * Scans editable posts for blocks that still need migration work.
+ * @param blockName
+ */
 export async function scanSiteForMigrations(
 	blockName: string = migrationConfig.blockName
 ): Promise< BlockScanResult[] > {
@@ -90,6 +94,12 @@ export async function scanSiteForMigrations(
 	return results;
 }
 
+/**
+ * Replays a scan result set and writes migrated post content when requested.
+ * @param results
+ * @param root0
+ * @param root0.dryRun
+ */
 export async function batchMigrateScanResults(
 	results: BlockScanResult[],
 	{ dryRun = false }: { dryRun?: boolean } = {}
@@ -151,46 +161,53 @@ export async function batchMigrateScanResults(
 			continue;
 		}
 
-		const migratedContent = migratePostContent(
-			blockPreviews,
-			group.rawContent
-		);
-		if ( ! dryRun ) {
-			const latestPost = await fetchPostById(
-				group.restBase,
-				group.postId
+		try {
+			const migratedContent = migratePostContent(
+				blockPreviews,
+				group.rawContent
 			);
-			const latestContent = latestPost.content?.raw;
-			if (
-				typeof latestContent !== 'string' ||
-				latestContent !== group.rawContent
-			) {
-				summary.failed += 1;
-				summary.errors.push( {
-					postId: group.postId,
-					reason: 'Post content changed after the scan. Re-run the migration scan before writing.',
-				} );
-				summary.posts.push( {
-					postId: group.postId,
-					postTitle: group.postTitle,
-					postType: group.postType,
-					previews: blockPreviews,
-					reason: 'Post content changed after the scan. Re-run the migration scan before writing.',
-					status: 'failed',
-				} );
-				continue;
-			}
+			if ( ! dryRun ) {
+				const latestPost = await fetchPostById(
+					group.restBase,
+					group.postId
+				);
+				const latestContent = latestPost.content?.raw;
+				if (
+					typeof latestContent !== 'string' ||
+					latestContent !== group.rawContent
+				) {
+					recordBatchFailure(
+						summary,
+						group,
+						blockPreviews,
+						'Post content changed after the scan. Re-run the migration scan before writing.'
+					);
+					continue;
+				}
 
-			await apiFetch( {
-				body: typia.json.assertStringify< EditablePostUpdateRequest >( {
-					content: migratedContent,
-				} ),
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				method: 'POST',
-				path: `/wp/v2/${ group.restBase }/${ group.postId }`,
-			} );
+				await apiFetch( {
+					body: typia.json.assertStringify< EditablePostUpdateRequest >(
+						{
+							content: migratedContent,
+						}
+					),
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					method: 'POST',
+					path: `/wp/v2/${ group.restBase }/${ group.postId }`,
+				} );
+			}
+		} catch ( error ) {
+			recordBatchFailure(
+				summary,
+				group,
+				blockPreviews,
+				error instanceof Error
+					? error.message
+					: 'One or more posts could not be migrated.'
+			);
+			continue;
 		}
 
 		summary.successful += 1;
@@ -204,6 +221,27 @@ export async function batchMigrateScanResults(
 	}
 
 	return summary;
+}
+
+function recordBatchFailure(
+	summary: BatchMigrationResult,
+	group: GroupedScanResult,
+	blockPreviews: BatchMigrationBlockResult[],
+	reason: string
+) {
+	summary.failed += 1;
+	summary.errors.push( {
+		postId: group.postId,
+		reason,
+	} );
+	summary.posts.push( {
+		postId: group.postId,
+		postTitle: group.postTitle,
+		postType: group.postType,
+		previews: blockPreviews,
+		reason,
+		status: 'failed',
+	} );
 }
 
 async function fetchEditablePostTypes(): Promise< EditablePostType[] > {
