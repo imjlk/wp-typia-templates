@@ -266,20 +266,6 @@ function hasLegacyConfigKeys(source: string): boolean {
 	return /\bcurrentVersion\s*:/u.test(topLevelView) || /\bsupportedVersions\s*:/u.test(topLevelView);
 }
 
-function findConfigPropertyValueStart(source: string, key: string): number {
-	const sanitizedSource = stripCommentsAndStrings(source);
-	const pattern = new RegExp(`\\b${key}\\s*:\\s*`, "u");
-	const match = pattern.exec(sanitizedSource);
-	if (!match) {
-		return -1;
-	}
-	let index = match.index + match[0].length;
-	while (index < source.length && /\s/u.test(source[index])) {
-		index += 1;
-	}
-	return index;
-}
-
 function readQuotedString(source: string, startIndex: number): string | null {
 	const quote = source[startIndex];
 	if (quote !== "\"" && quote !== "'") {
@@ -822,8 +808,6 @@ export function resolveMigrationBlocks(
 	return configuredBlocks.map((block) => {
 		const blockJsonPath = path.join(projectDir, block.blockJsonFile);
 		const manifestPath = path.join(projectDir, block.manifestFile);
-		const savePath = path.join(projectDir, block.saveFile);
-		const typesPath = path.join(projectDir, block.typesFile);
 		return {
 			...block,
 			currentBlockJson: readJson(blockJsonPath),

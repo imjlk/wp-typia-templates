@@ -16,7 +16,6 @@ import {
 	SHARED_BASE_TEMPLATE_ROOT,
 	TEMPLATE_ROOT,
 	isBuiltInTemplateId,
-	type BuiltInTemplateId,
 } from "./template-registry.js";
 import { isPlainObject } from "./object-utils.js";
 import { resolveBuiltInTemplateSource } from "./template-builtins.js";

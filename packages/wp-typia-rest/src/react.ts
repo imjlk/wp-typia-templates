@@ -81,7 +81,7 @@ type EndpointInvalidateTargets =
 	| readonly EndpointInvalidateTarget[]
 	| undefined;
 
-export interface UseEndpointQueryOptions<Req, Res, Selected = Res> {
+export interface UseEndpointQueryOptions<_Req, Res, Selected = Res> {
 	client?: EndpointDataClient;
 	enabled?: boolean;
 	fetchFn?: ApiFetch;

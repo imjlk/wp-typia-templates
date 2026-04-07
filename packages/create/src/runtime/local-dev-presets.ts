@@ -10,7 +10,6 @@ import path from "node:path";
 
 import {
 	formatRunScript,
-	getPackageManager,
 	type PackageManagerId,
 } from "./package-managers.js";
 import {
@@ -45,7 +44,6 @@ function templateHasPersistenceSync(
 function getWatchSyncTypesScript(
 	packageManager: PackageManagerId,
 	templateId: string,
-	compoundPersistenceEnabled: boolean,
 ): string {
 	if (templateId === "compound") {
 		return `chokidar "src/blocks/**/types.ts" "scripts/block-config.ts" --debounce 200 -c "${formatRunScript(packageManager, "sync-types")}"`;
@@ -180,11 +178,10 @@ export async function applyGeneratedProjectDxPackageJson({
 			...(packageJson.scripts ?? {}),
 		};
 		scripts["start:editor"] = "wp-scripts start --experimental-modules";
-		scripts["watch:sync-types"] = getWatchSyncTypesScript(
-			packageManager,
-			templateId,
-			compoundPersistenceEnabled,
-		);
+			scripts["watch:sync-types"] = getWatchSyncTypesScript(
+				packageManager,
+				templateId,
+			);
 
 		if (hasPersistenceSync) {
 			scripts["watch:sync-rest"] = getWatchSyncRestScript(packageManager, templateId);

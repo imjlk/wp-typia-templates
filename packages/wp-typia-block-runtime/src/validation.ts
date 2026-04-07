@@ -44,7 +44,7 @@ interface RawTypiaValidationError {
 	value?: unknown;
 }
 
-interface RawTypiaValidationResult<T> {
+interface RawTypiaValidationResult {
 	data?: unknown;
 	errors?: unknown;
 	success?: unknown;
@@ -87,7 +87,7 @@ export function normalizeValidationError(error: unknown): TypiaValidationError {
 export function toValidationResult<T>(result: unknown): ValidationResult<T> {
 	const raw =
 		result !== null && typeof result === "object"
-			? (result as RawTypiaValidationResult<T>)
+			? (result as RawTypiaValidationResult)
 			: undefined;
 
 	if (raw?.success === true) {
