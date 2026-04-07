@@ -1,6 +1,6 @@
 {
   "name": "create-wp-typia",
-  "version": "1.3.8",
+  "version": "1.3.9",
   "description": "Compatibility shim for @wp-typia/create and bun create wp-typia",
   "packageManager": "bun@1.3.10",
   "type": "module",
@@ -32,6 +32,6 @@
     "bun": ">=1.3.10"
   },
   "dependencies": {
-    "@wp-typia/create": "^0.11.0"
+    "@wp-typia/create": "^0.11.1"
   }
 }
