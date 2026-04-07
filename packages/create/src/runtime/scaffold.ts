@@ -252,6 +252,14 @@ function resolveValidatedPhpPrefix(value: string): string {
 	return assertValidIdentifier("PHP prefix", toSnakeCase(value), validatePhpPrefix);
 }
 
+/**
+ * Builds the generated WordPress wrapper CSS class for a scaffolded block.
+ *
+ * Returns `wp-block-{namespace}-{slug}` when a non-empty namespace is present,
+ * or `wp-block-{slug}` when the namespace is empty or undefined. Both inputs
+ * are normalized and validated with the same scaffold identifier rules used for
+ * block names.
+ */
 export function buildBlockCssClassName(
 	namespace: string | undefined,
 	slug: string,

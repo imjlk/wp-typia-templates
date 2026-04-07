@@ -81,9 +81,32 @@ function toTitleCase( input: string ): string {
 		.join( ' ' );
 }
 
+function resolveValidatedNamespace( value: string ): string {
+	const normalizedNamespace = toKebabCase( value );
+
+	if ( ! BLOCK_SLUG_PATTERN.test( normalizedNamespace ) ) {
+		throw new Error( 'Use a block namespace with lowercase letters, numbers, and hyphens only.' );
+	}
+
+	return normalizedNamespace;
+}
+
+function resolveValidatedBlockSlug( value: string ): string {
+	const normalizedSlug = toKebabCase( value );
+
+	if ( ! BLOCK_SLUG_PATTERN.test( normalizedSlug ) ) {
+		throw new Error( 'Use a child slug with lowercase letters, numbers, and hyphens only.' );
+	}
+
+	return normalizedSlug;
+}
+
 function buildBlockCssClassName( namespace: string, slug: string ): string {
-	const normalizedSlug = toKebabCase( slug );
-	const normalizedNamespace = toKebabCase( namespace );
+	const normalizedSlug = resolveValidatedBlockSlug( slug );
+	const normalizedNamespace =
+		namespace.trim().length > 0
+			? resolveValidatedNamespace( namespace )
+			: '';
 
 	return normalizedNamespace.length > 0
 		? `wp-block-${ normalizedNamespace }-${ normalizedSlug }`
@@ -443,9 +466,9 @@ registerBlockType< ${ childTypeName } >(
 
 function main() {
 	const { slug, title } = parseArgs();
-	const normalizedSlug = slug ? toKebabCase( slug ) : '';
+	const normalizedSlug = slug ? resolveValidatedBlockSlug( slug ) : '';
 
-	if ( ! BLOCK_SLUG_PATTERN.test( normalizedSlug ) ) {
+	if ( normalizedSlug.length === 0 ) {
 		throw new Error( 'Use a child slug with lowercase letters, numbers, and hyphens only.' );
 	}
 
