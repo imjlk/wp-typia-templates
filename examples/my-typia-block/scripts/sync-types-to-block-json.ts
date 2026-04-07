@@ -4,6 +4,7 @@ import { runSyncBlockMetadata } from '@wp-typia/block-runtime/metadata-core';
 type SyncTypesReportMode = 'human' | 'json';
 
 interface SyncTypesCliOptions {
+	check: boolean;
 	failOnLossy: boolean;
 	report: SyncTypesReportMode;
 	strict: boolean;
@@ -11,6 +12,7 @@ interface SyncTypesCliOptions {
 
 function parseCliOptions( argv: string[] ): SyncTypesCliOptions {
 	const options: SyncTypesCliOptions = {
+		check: false,
 		failOnLossy: false,
 		report: 'human',
 		strict: false,
@@ -26,6 +28,11 @@ function parseCliOptions( argv: string[] ): SyncTypesCliOptions {
 
 		if ( argument === '--fail-on-lossy' ) {
 			options.failOnLossy = true;
+			continue;
+		}
+
+		if ( argument === '--check' ) {
+			options.check = true;
 			continue;
 		}
 
@@ -48,6 +55,7 @@ function parseCliOptions( argv: string[] ): SyncTypesCliOptions {
 }
 
 function printHumanReport(
+	options: SyncTypesCliOptions,
 	report: Awaited< ReturnType< typeof runSyncBlockMetadata > >
 ) {
 	if ( report.failure ) {
@@ -56,7 +64,9 @@ function printHumanReport(
 	}
 
 	console.log(
-		'✅ block.json, typia.manifest.json, typia-validator.php, typia.schema.json, and typia.openapi.json were generated from TypeScript types!'
+		options.check
+			? '✅ block.json, typia.manifest.json, typia-validator.php, typia.schema.json, and typia.openapi.json are already up to date with the TypeScript types!'
+			: '✅ block.json, typia.manifest.json, typia-validator.php, typia.schema.json, and typia.openapi.json were generated from TypeScript types!'
 	);
 	console.log( '📝 Generated attributes:', report.attributeNames );
 
@@ -97,6 +107,7 @@ async function main() {
 			typesFile: 'src/types.ts',
 		},
 		{
+			check: options.check,
 			failOnLossy: options.failOnLossy,
 			strict: options.strict,
 		}
@@ -105,7 +116,7 @@ async function main() {
 	if ( options.report === 'json' ) {
 		process.stdout.write( `${ JSON.stringify( report, null, 2 ) }\n` );
 	} else {
-		printHumanReport( report );
+		printHumanReport( options, report );
 	}
 
 	if ( report.status === 'error' ) {

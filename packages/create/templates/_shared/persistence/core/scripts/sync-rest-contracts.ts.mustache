@@ -6,6 +6,23 @@ import {
 	syncTypeSchemas,
 } from '@wp-typia/block-runtime/metadata-core';
 
+function parseCliOptions( argv: string[] ) {
+	const options = {
+		check: false,
+	};
+
+	for ( const argument of argv ) {
+		if ( argument === '--check' ) {
+			options.check = true;
+			continue;
+		}
+
+		throw new Error( `Unknown sync-rest flag: ${ argument }` );
+	}
+
+	return options;
+}
+
 const REST_ENDPOINT_MANIFEST = defineEndpointManifest( {
 	contracts: {
 		'state-query': {
@@ -50,6 +67,8 @@ const REST_ENDPOINT_MANIFEST = defineEndpointManifest( {
 } );
 
 async function main() {
+	const options = parseCliOptions( process.argv.slice( 2 ) );
+
 	for ( const [ baseName, contract ] of Object.entries( REST_ENDPOINT_MANIFEST.contracts ) ) {
 		await syncTypeSchemas( {
 			jsonSchemaFile: `src/api-schemas/${ baseName }.schema.json`,
@@ -60,6 +79,8 @@ async function main() {
 			},
 			sourceTypeName: contract.sourceTypeName,
 			typesFile: 'src/api-types.ts',
+		}, {
+			check: options.check,
 		} );
 	}
 
@@ -67,15 +88,23 @@ async function main() {
 		manifest: REST_ENDPOINT_MANIFEST,
 		openApiFile: 'src/api.openapi.json',
 		typesFile: 'src/api-types.ts',
+	}, {
+		check: options.check,
 	} );
 
 	await syncEndpointClient( {
 		clientFile: 'src/api-client.ts',
 		manifest: REST_ENDPOINT_MANIFEST,
 		typesFile: 'src/api-types.ts',
+	}, {
+		check: options.check,
 	} );
 
-	console.log( '✅ REST schemas, portable API clients, and endpoint-aware OpenAPI documents were generated from TypeScript contracts!' );
+	console.log(
+		options.check
+			? '✅ REST schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date with the TypeScript contracts!'
+			: '✅ REST schemas, portable API clients, and endpoint-aware OpenAPI documents were generated from TypeScript contracts!'
+	);
 }
 
 main().catch( ( error ) => {

@@ -43,6 +43,13 @@ export interface SyncBlockMetadataResult {
   phpValidatorPath: string;
 }
 
+export interface ArtifactSyncExecutionOptions {
+  /**
+   * Verify that generated artifacts are already current without rewriting them.
+   */
+  check?: boolean;
+}
+
 /**
  * High-level outcome for one `runSyncBlockMetadata()` execution.
  *
@@ -56,6 +63,8 @@ export type SyncBlockMetadataStatus = 'success' | 'warning' | 'error';
  * Stable failure bucket for structured `sync-types` error reporting.
  */
 export type SyncBlockMetadataFailureCode =
+  /** Generated artifact files are missing or stale relative to the current sources. */
+  | 'stale-generated-artifact'
   /** A TypeScript node kind is not supported by the metadata parser. */
   | 'unsupported-type-node'
   /** A supported node kind was used in an unsupported pattern or combination. */
@@ -84,7 +93,8 @@ export interface SyncBlockMetadataFailure {
 /**
  * Optional execution flags that control how warnings affect the final report status.
  */
-export interface SyncBlockMetadataExecutionOptions {
+export interface SyncBlockMetadataExecutionOptions
+  extends ArtifactSyncExecutionOptions {
   /** Promote lossy WordPress projection warnings to `error` status. */
   failOnLossy?: boolean;
   /** Promote PHP validator coverage warnings to `error` status. */
@@ -319,6 +329,69 @@ interface ResolvedSyncBlockMetadataPaths {
   projectRoot: string;
 }
 
+interface GeneratedArtifactFile {
+  content: string;
+  path: string;
+}
+
+interface GeneratedArtifactDriftIssue {
+  path: string;
+  reason: 'missing' | 'stale';
+}
+
+class GeneratedArtifactDriftError extends Error {
+  readonly issues: GeneratedArtifactDriftIssue[];
+
+  constructor(issues: GeneratedArtifactDriftIssue[]) {
+    const detail = issues
+      .map((issue) => `- ${issue.path} (${issue.reason})`)
+      .join('\n');
+
+    super(`Generated artifacts are missing or stale:\n${detail}`);
+    this.name = 'GeneratedArtifactDriftError';
+    this.issues = issues;
+  }
+}
+
+function reconcileGeneratedArtifacts(
+  artifacts: readonly GeneratedArtifactFile[],
+  executionOptions: ArtifactSyncExecutionOptions | undefined,
+  preexistingIssues: GeneratedArtifactDriftIssue[] = [],
+): void {
+  if (executionOptions?.check !== true) {
+    for (const artifact of artifacts) {
+      fs.mkdirSync(path.dirname(artifact.path), { recursive: true });
+      fs.writeFileSync(artifact.path, artifact.content, 'utf8');
+    }
+
+    return;
+  }
+
+  const issues = [...preexistingIssues];
+
+  for (const artifact of artifacts) {
+    if (!fs.existsSync(artifact.path)) {
+      issues.push({
+        path: artifact.path,
+        reason: 'missing',
+      });
+      continue;
+    }
+
+    const currentContent = fs.readFileSync(artifact.path, 'utf8');
+    if (currentContent !== artifact.content) {
+      issues.push({
+        path: artifact.path,
+        reason: 'stale',
+      });
+    }
+  }
+
+  if (issues.length > 0) {
+    throw new GeneratedArtifactDriftError(issues);
+  }
+}
+
 function resolveSyncBlockMetadataPaths(
   options: SyncBlockMetadataOptions,
 ): ResolvedSyncBlockMetadataPaths {
@@ -362,6 +435,7 @@ function resolveSyncBlockMetadataPaths(
  */
 export async function syncBlockMetadata(
   options: SyncBlockMetadataOptions,
+  executionOptions: ArtifactSyncExecutionOptions = {},
 ): Promise<SyncBlockMetadataResult> {
   const { blockJsonPath, jsonSchemaPath, manifestPath, openApiPath, phpValidatorPath } =
     resolveSyncBlockMetadataPaths(options);
@@ -374,59 +448,99 @@ export async function syncBlockMetadata(
   }
   validateWordPressExtractionAttributes(rootNode.properties);
 
-  const blockJson = JSON.parse(
-    fs.readFileSync(blockJsonPath, 'utf8'),
-  ) as Record<string, unknown>;
+  const driftIssues: GeneratedArtifactDriftIssue[] = [];
   const lossyProjectionWarnings: string[] = [];
+  let blockJsonArtifact: GeneratedArtifactFile | null = null;
 
-  blockJson.attributes = Object.fromEntries(
-    Object.entries(rootNode.properties).map(([key, node]) => [
-      key,
-      createBlockJsonAttribute(node, lossyProjectionWarnings),
-    ]),
-  );
-  blockJson.example = {
-    attributes: Object.fromEntries(
+  if (fs.existsSync(blockJsonPath)) {
+    const blockJson = JSON.parse(
+      fs.readFileSync(blockJsonPath, 'utf8'),
+    ) as Record<string, unknown>;
+
+    blockJson.attributes = Object.fromEntries(
       Object.entries(rootNode.properties).map(([key, node]) => [
         key,
-        createExampleValue(node, key),
+        createBlockJsonAttribute(node, lossyProjectionWarnings),
       ]),
-    ),
-  };
+    );
+    blockJson.example = {
+      attributes: Object.fromEntries(
+        Object.entries(rootNode.properties).map(([key, node]) => [
+          key,
+          createExampleValue(node, key),
+        ]),
+      ),
+    };
+
+    blockJsonArtifact = {
+      content: JSON.stringify(blockJson, null, '\t'),
+      path: blockJsonPath,
+    };
+  } else if (executionOptions.check === true) {
+    driftIssues.push({
+      path: blockJsonPath,
+      reason: 'missing',
+    });
+  } else {
+    fs.readFileSync(blockJsonPath, 'utf8');
+  }
+
+  if (blockJsonArtifact === null) {
+    Object.values(rootNode.properties).forEach((node) => {
+      createBlockJsonAttribute(node, lossyProjectionWarnings);
+    });
+  }
 
   const manifest = createManifestDocument(
     options.sourceTypeName,
     rootNode.properties,
   );
-
-  fs.writeFileSync(blockJsonPath, JSON.stringify(blockJson, null, '\t'));
-  fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
-  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, '\t'));
-
-  if (jsonSchemaPath) {
-    fs.mkdirSync(path.dirname(jsonSchemaPath), { recursive: true });
-    fs.writeFileSync(
-      jsonSchemaPath,
-      JSON.stringify(manifestToJsonSchema(manifest as never), null, '\t'),
-    );
-  }
-  if (openApiPath) {
-    fs.mkdirSync(path.dirname(openApiPath), { recursive: true });
-    fs.writeFileSync(
-      openApiPath,
-      JSON.stringify(
+  const manifestContent = JSON.stringify(manifest, null, '\t');
+  const jsonSchemaContent = jsonSchemaPath
+    ? JSON.stringify(manifestToJsonSchema(manifest as never), null, '\t')
+    : null;
+  const openApiContent = openApiPath
+    ? JSON.stringify(
         manifestToOpenApi(manifest as never, {
           title: options.sourceTypeName,
         }),
         null,
         '\t',
-      ),
-    );
-  }
-
+      )
+    : null;
   const phpValidator = renderPhpValidator(manifest);
-  fs.mkdirSync(path.dirname(phpValidatorPath), { recursive: true });
-  fs.writeFileSync(phpValidatorPath, phpValidator.source);
+
+  reconcileGeneratedArtifacts(
+    [
+      ...(blockJsonArtifact ? [blockJsonArtifact] : []),
+      {
+        content: manifestContent,
+        path: manifestPath,
+      },
+      ...(jsonSchemaContent && jsonSchemaPath
+        ? [
+            {
+              content: jsonSchemaContent,
+              path: jsonSchemaPath,
+            },
+          ]
+        : []),
+      ...(openApiContent && openApiPath
+        ? [
+            {
+              content: openApiContent,
+              path: openApiPath,
+            },
+          ]
+        : []),
+      {
+        content: phpValidator.source,
+        path: phpValidatorPath,
+      },
+    ],
+    executionOptions,
+    driftIssues,
+  );
 
   return {
     attributeNames: Object.keys(rootNode.properties),
@@ -462,7 +576,9 @@ export async function runSyncBlockMetadata(
   const resolvedPaths = resolveSyncBlockMetadataPaths(options);
 
   try {
-    const result = await syncBlockMetadata(options);
+    const result = await syncBlockMetadata(options, {
+      check: executionOptions.check,
+    });
     const hasLossyWarnings = result.lossyProjectionWarnings.length > 0;
     const hasPhpWarnings = result.phpGenerationWarnings.length > 0;
     const hasWarnings = hasLossyWarnings || hasPhpWarnings;
@@ -505,6 +621,7 @@ export async function runSyncBlockMetadata(
 
 export async function syncTypeSchemas(
   options: SyncTypeSchemaOptions,
+  executionOptions: ArtifactSyncExecutionOptions = {},
 ): Promise<SyncTypeSchemaResult> {
   const { projectRoot, rootNode } = analyzeSourceType(options);
   if (rootNode.kind !== 'object' || rootNode.properties === undefined) {
@@ -519,29 +636,33 @@ export async function syncTypeSchemas(
   );
 
   const jsonSchemaPath = path.resolve(projectRoot, options.jsonSchemaFile);
-  fs.mkdirSync(path.dirname(jsonSchemaPath), { recursive: true });
-  fs.writeFileSync(
-    jsonSchemaPath,
-    JSON.stringify(manifestToJsonSchema(manifest as never), null, '\t'),
-  );
-
   const openApiPath = options.openApiFile
     ? path.resolve(projectRoot, options.openApiFile)
     : undefined;
-  if (openApiPath) {
-    fs.mkdirSync(path.dirname(openApiPath), { recursive: true });
-    fs.writeFileSync(
-      openApiPath,
-      JSON.stringify(
-        manifestToOpenApi(
-          manifest as never,
-          options.openApiInfo ?? { title: options.sourceTypeName },
-        ),
-        null,
-        '\t',
-      ),
-    );
-  }
+  reconcileGeneratedArtifacts(
+    [
+      {
+        content: JSON.stringify(manifestToJsonSchema(manifest as never), null, '\t'),
+        path: jsonSchemaPath,
+      },
+      ...(openApiPath
+        ? [
+            {
+              content: JSON.stringify(
+                manifestToOpenApi(
+                  manifest as never,
+                  options.openApiInfo ?? { title: options.sourceTypeName },
+                ),
+                null,
+                '\t',
+              ),
+              path: openApiPath,
+            },
+          ]
+        : []),
+    ],
+    executionOptions,
+  );
 
   return {
     jsonSchemaPath,
@@ -558,6 +679,7 @@ export async function syncTypeSchemas(
  */
 export async function syncRestOpenApi(
   options: SyncRestOpenApiOptions,
+  executionOptions: ArtifactSyncExecutionOptions = {},
 ): Promise<SyncRestOpenApiResult> {
   const { manifest, openApiPath, projectRoot, typesFile } =
     normalizeSyncRestOpenApiOptions(options);
@@ -595,18 +717,22 @@ export async function syncRestOpenApi(
       ];
     }),
   );
-  fs.mkdirSync(path.dirname(openApiPath), { recursive: true });
-  fs.writeFileSync(
-    openApiPath,
-    JSON.stringify(
-      buildEndpointOpenApiDocument({
-        contracts,
-        endpoints: manifest.endpoints,
-        info: manifest.info,
-      }),
-      null,
-      '\t',
-    ),
+  reconcileGeneratedArtifacts(
+    [
+      {
+        content: JSON.stringify(
+          buildEndpointOpenApiDocument({
+            contracts,
+            endpoints: manifest.endpoints,
+            info: manifest.info,
+          }),
+          null,
+          '\t',
+        ),
+        path: openApiPath,
+      },
+    ],
+    executionOptions,
   );
 
   return {
@@ -626,6 +752,7 @@ export async function syncRestOpenApi(
  */
 export async function syncEndpointClient(
   options: SyncEndpointClientOptions,
+  executionOptions: ArtifactSyncExecutionOptions = {},
 ): Promise<SyncEndpointClientResult> {
   const { clientPath, manifest, projectRoot, typesFile, validatorsFile } =
     normalizeSyncEndpointClientOptions(options);
@@ -930,8 +1057,15 @@ export async function syncEndpointClient(
     ...endpointLines.flatMap((entry) => [entry, '']),
   ];
 
-  fs.mkdirSync(path.dirname(clientPath), { recursive: true });
-  fs.writeFileSync(clientPath, `${lines.join('\n').trimEnd()}\n`, 'utf8');
+  reconcileGeneratedArtifacts(
+    [
+      {
+        content: `${lines.join('\n').trimEnd()}\n`,
+        path: clientPath,
+      },
+    ],
+    executionOptions,
+  );
 
   return {
     clientPath,
@@ -1192,6 +1326,10 @@ function normalizeSyncBlockMetadataFailure(
 function resolveSyncBlockMetadataFailureCode(
   error: Error,
 ): SyncBlockMetadataFailureCode {
+  if (error instanceof GeneratedArtifactDriftError) {
+    return 'stale-generated-artifact';
+  }
+
   const taggedCode = getTaggedSyncBlockMetadataFailureCode(error);
   if (taggedCode) {
     return taggedCode;

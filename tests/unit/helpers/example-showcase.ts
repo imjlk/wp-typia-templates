@@ -5,7 +5,7 @@ import * as path from 'node:path';
 const EXAMPLE_DIR = path.join(import.meta.dir, '../../../examples/my-typia-block');
 const EXAMPLE_NAME = path.basename(EXAMPLE_DIR);
 
-let exampleSynced = false;
+let exampleVerified = false;
 
 export function getExampleShowcaseDir(): string {
 	return EXAMPLE_DIR;
@@ -41,14 +41,14 @@ export function getExampleShowcaseFixtureRoot(directoryName: string): string {
 }
 
 export function ensureExampleShowcaseSynced(): void {
-	if (exampleSynced) {
+	if (exampleVerified) {
 		return;
 	}
 
-	execSync('bun run sync-types', {
+	execSync('bun run sync-types --check', {
 		cwd: EXAMPLE_DIR,
 		stdio: 'inherit',
 	});
 
-	exampleSynced = true;
+	exampleVerified = true;
 }

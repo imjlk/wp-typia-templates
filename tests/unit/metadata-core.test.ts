@@ -228,6 +228,185 @@ describe("metadata-core endpoint manifests", () => {
 		}
 	});
 
+	test("check mode verifies generated artifacts and reports stale files without rewriting them", async () => {
+		const project = createTempProject();
+		const blockJsonPath = path.join(project.root, "block.json");
+		const blockTypesPath = path.join(project.root, "src", "block-types.ts");
+		const schemaPath = path.join(project.root, "build", "query.schema.json");
+		const openApiPath = path.join(project.root, "build", "manifest.openapi.json");
+		const clientPath = path.join(project.root, "build", "api-client.ts");
+		const blockManifestPath = path.join(project.root, "build", "block.manifest.json");
+
+		fs.writeFileSync(
+			blockJsonPath,
+			JSON.stringify({ attributes: {}, example: { attributes: {} } }, null, 2),
+			"utf8",
+		);
+		fs.writeFileSync(
+			blockTypesPath,
+			[
+				"export interface DemoBlockAttributes {",
+				"  title: string;",
+				"}",
+				"",
+			].join("\n"),
+			"utf8",
+		);
+
+		try {
+			await syncTypeSchemas(
+				{
+					jsonSchemaFile: "build/query.schema.json",
+					projectRoot: project.root,
+					sourceTypeName: "CounterQuery",
+					typesFile: project.typesFile,
+				},
+			);
+			await syncRestOpenApi(
+				{
+					manifest,
+					openApiFile: "build/manifest.openapi.json",
+					projectRoot: project.root,
+					typesFile: project.typesFile,
+				},
+			);
+			await syncEndpointClient(
+				{
+					clientFile: "build/api-client.ts",
+					manifest,
+					projectRoot: project.root,
+					typesFile: project.typesFile,
+				},
+			);
+			await syncBlockMetadata(
+				{
+					blockJsonFile: "block.json",
+					manifestFile: "build/block.manifest.json",
+					projectRoot: project.root,
+					sourceTypeName: "DemoBlockAttributes",
+					typesFile: "src/block-types.ts",
+				},
+			);
+
+			await syncTypeSchemas(
+				{
+					jsonSchemaFile: "build/query.schema.json",
+					projectRoot: project.root,
+					sourceTypeName: "CounterQuery",
+					typesFile: project.typesFile,
+				},
+				{ check: true },
+			);
+			await syncRestOpenApi(
+				{
+					manifest,
+					openApiFile: "build/manifest.openapi.json",
+					projectRoot: project.root,
+					typesFile: project.typesFile,
+				},
+				{ check: true },
+			);
+			await syncEndpointClient(
+				{
+					clientFile: "build/api-client.ts",
+					manifest,
+					projectRoot: project.root,
+					typesFile: project.typesFile,
+				},
+				{ check: true },
+			);
+			await syncBlockMetadata(
+				{
+					blockJsonFile: "block.json",
+					manifestFile: "build/block.manifest.json",
+					projectRoot: project.root,
+					sourceTypeName: "DemoBlockAttributes",
+					typesFile: "src/block-types.ts",
+				},
+				{ check: true },
+			);
+
+			fs.writeFileSync(schemaPath, "{\n  \"stale\": true\n}\n", "utf8");
+			await expect(
+				syncTypeSchemas(
+					{
+						jsonSchemaFile: "build/query.schema.json",
+						projectRoot: project.root,
+						sourceTypeName: "CounterQuery",
+						typesFile: project.typesFile,
+					},
+					{ check: true },
+				),
+			).rejects.toThrow(schemaPath);
+
+			await syncTypeSchemas(
+				{
+					jsonSchemaFile: "build/query.schema.json",
+					projectRoot: project.root,
+					sourceTypeName: "CounterQuery",
+					typesFile: project.typesFile,
+				},
+			);
+			fs.writeFileSync(openApiPath, "{\n  \"stale\": true\n}\n", "utf8");
+			await expect(
+				syncRestOpenApi(
+					{
+						manifest,
+						openApiFile: "build/manifest.openapi.json",
+						projectRoot: project.root,
+						typesFile: project.typesFile,
+					},
+					{ check: true },
+				),
+			).rejects.toThrow(openApiPath);
+
+			await syncRestOpenApi(
+				{
+					manifest,
+					openApiFile: "build/manifest.openapi.json",
+					projectRoot: project.root,
+					typesFile: project.typesFile,
+				},
+			);
+			fs.writeFileSync(clientPath, "// stale\n", "utf8");
+			await expect(
+				syncEndpointClient(
+					{
+						clientFile: "build/api-client.ts",
+						manifest,
+						projectRoot: project.root,
+						typesFile: project.typesFile,
+					},
+					{ check: true },
+				),
+			).rejects.toThrow(clientPath);
+
+			await syncEndpointClient(
+				{
+					clientFile: "build/api-client.ts",
+					manifest,
+					projectRoot: project.root,
+					typesFile: project.typesFile,
+				},
+			);
+			fs.rmSync(blockManifestPath);
+			await expect(
+				syncBlockMetadata(
+					{
+						blockJsonFile: "block.json",
+						manifestFile: "build/block.manifest.json",
+						projectRoot: project.root,
+						sourceTypeName: "DemoBlockAttributes",
+						typesFile: "src/block-types.ts",
+					},
+					{ check: true },
+				),
+			).rejects.toThrow(blockManifestPath);
+		} finally {
+			fs.rmSync(project.root, { force: true, recursive: true });
+		}
+	});
+
 	test("reuses repeated analysis safely across sync flows and preserves typia tag projections", async () => {
 		const project = createTempProject();
 		const blockJsonPath = path.join(project.root, "block.json");

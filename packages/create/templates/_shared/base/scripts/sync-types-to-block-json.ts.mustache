@@ -3,6 +3,7 @@ import { runSyncBlockMetadata } from "@wp-typia/block-runtime/metadata-core";
 type SyncTypesReportMode = "human" | "json";
 
 interface SyncTypesCliOptions {
+  check: boolean;
   failOnLossy: boolean;
   report: SyncTypesReportMode;
   strict: boolean;
@@ -10,6 +11,7 @@ interface SyncTypesCliOptions {
 
 function parseCliOptions(argv: string[]): SyncTypesCliOptions {
   const options: SyncTypesCliOptions = {
+    check: false,
     failOnLossy: false,
     report: "human",
     strict: false,
@@ -25,6 +27,11 @@ function parseCliOptions(argv: string[]): SyncTypesCliOptions {
 
     if (argument === "--fail-on-lossy") {
       options.failOnLossy = true;
+      continue;
+    }
+
+    if (argument === "--check") {
+      options.check = true;
       continue;
     }
 
@@ -45,6 +52,7 @@ function parseCliOptions(argv: string[]): SyncTypesCliOptions {
 }
 
 function printHumanReport(
+  options: SyncTypesCliOptions,
   report: Awaited<ReturnType<typeof runSyncBlockMetadata>>,
 ) {
   if (report.failure) {
@@ -52,7 +60,11 @@ function printHumanReport(
     return;
   }
 
-  console.log("✅ block.json, typia.manifest.json, and typia-validator.php were generated from TypeScript types!");
+  console.log(
+    options.check
+      ? "✅ block.json, typia.manifest.json, and typia-validator.php are already up to date with the TypeScript types!"
+      : "✅ block.json, typia.manifest.json, and typia-validator.php were generated from TypeScript types!",
+  );
   console.log("📝 Generated attributes:", report.attributeNames);
 
   if (report.lossyProjectionWarnings.length > 0) {
@@ -84,6 +96,7 @@ async function main() {
     sourceTypeName: "{{pascalCase}}Attributes",
     typesFile: "src/types.ts",
   }, {
+    check: options.check,
     failOnLossy: options.failOnLossy,
     strict: options.strict,
   });
@@ -91,7 +104,7 @@ async function main() {
   if (options.report === "json") {
     process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
   } else {
-    printHumanReport(report);
+    printHumanReport(options, report);
   }
 
   if (report.status === "error") {

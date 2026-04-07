@@ -9,7 +9,26 @@ import {
 
 import { BLOCKS } from './block-config';
 
+function parseCliOptions( argv: string[] ) {
+	const options = {
+		check: false,
+	};
+
+	for ( const argument of argv ) {
+		if ( argument === '--check' ) {
+			options.check = true;
+			continue;
+		}
+
+		throw new Error( `Unknown sync-rest flag: ${ argument }` );
+	}
+
+	return options;
+}
+
 async function main() {
+	const options = parseCliOptions( process.argv.slice( 2 ) );
+
 	for ( const block of BLOCKS ) {
 		const contracts = block.restManifest.contracts;
 
@@ -31,6 +50,8 @@ async function main() {
 				),
 				sourceTypeName: contract.sourceTypeName,
 				typesFile: block.apiTypesFile,
+			}, {
+				check: options.check,
 			} );
 		}
 
@@ -38,6 +59,8 @@ async function main() {
 			manifest: block.restManifest,
 			openApiFile: block.openApiFile,
 			typesFile: block.apiTypesFile,
+		}, {
+			check: options.check,
 		} );
 
 		await syncEndpointClient( {
@@ -49,11 +72,15 @@ async function main() {
 			),
 			manifest: block.restManifest,
 			typesFile: block.apiTypesFile,
+		}, {
+			check: options.check,
 		} );
 	}
 
 	console.log(
-		'✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated from TypeScript types!'
+		options.check
+			? '✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date with the TypeScript types!'
+			: '✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated from TypeScript types!'
 	);
 }
 

@@ -248,12 +248,15 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(packageJson.devDependencies["@wp-typia/create"]).toBeUndefined();
 		expect(packageJson.devDependencies["chokidar-cli"]).toBe("^3.0.0");
 		expect(packageJson.devDependencies.concurrently).toBe("^9.0.1");
-		expect(packageJson.scripts.build).toBe("npm run sync-types && wp-scripts build --experimental-modules");
+		expect(packageJson.scripts.build).toBe(
+			"npm run sync-types -- --check && wp-scripts build --experimental-modules",
+		);
 		expect(packageJson.scripts.dev).toBe(
 			'concurrently -k -n sync-types,editor -c yellow,blue "npm run watch:sync-types" "npm run start:editor"',
 		);
 		expect(packageJson.scripts["start:editor"]).toBe("wp-scripts start --experimental-modules");
 		expect(packageJson.scripts.start).toBe("npm run sync-types && wp-scripts start --experimental-modules");
+		expect(packageJson.scripts.typecheck).toBe("npm run sync-types -- --check && tsc --noEmit");
 		expect(packageJson.scripts["watch:sync-types"]).toBe(
 			'chokidar "src/types.ts" --debounce 200 -c "npm run sync-types"',
 		);
@@ -403,6 +406,7 @@ describe("@wp-typia/create scaffolding", () => {
 			expect(syncScript).toContain("--strict");
 			expect(syncScript).toContain("--report");
 			expect(syncScript).toContain("--fail-on-lossy");
+			expect(syncScript).toContain("--check");
 			expect(syncScript).toContain("Unknown sync-types flag");
 			expect(syncScript).toContain("Generated attributes");
 
@@ -464,6 +468,46 @@ describe("@wp-typia/create scaffolding", () => {
 			expect(strictReport.failOnPhpWarnings).toBe(true);
 			expect(strictReport.lossyProjectionWarnings.length).toBeGreaterThan(0);
 			expect(strictReport.phpGenerationWarnings.length).toBeGreaterThan(0);
+
+			runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts");
+
+			const checkOutput = runGeneratedScript(
+				targetDir,
+				"scripts/sync-types-to-block-json.ts",
+				["--check", "--report", "json"],
+			);
+			const checkReport = JSON.parse(checkOutput);
+
+			expect(checkReport.status).toBe("warning");
+			expect(checkReport.failure).toBeNull();
+
+			fs.writeFileSync(
+				path.join(targetDir, "src", "block.json"),
+				JSON.stringify({ attributes: {}, example: { attributes: {} } }, null, 2),
+			);
+
+			let staleError: unknown;
+			try {
+				runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
+					"--check",
+					"--report",
+					"json",
+				]);
+			} catch (error) {
+				staleError = error;
+			}
+
+			expect(staleError).toBeDefined();
+			const staleStdout = (staleError as { stdout?: Buffer | string }).stdout ?? "";
+			const staleReport = JSON.parse(
+				typeof staleStdout === "string"
+					? staleStdout
+					: staleStdout.toString("utf8"),
+			);
+
+			expect(staleReport.status).toBe("error");
+			expect(staleReport.failure?.code).toBe("stale-generated-artifact");
+			expect(staleReport.failure?.message).toContain(path.join(targetDir, "src", "block.json"));
 		},
 		{ timeout: 15_000 },
 	);
@@ -714,7 +758,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(packageJson.devDependencies["chokidar-cli"]).toBe("^3.0.0");
 		expect(packageJson.devDependencies.concurrently).toBe("^9.0.1");
 		expect(packageJson.scripts.build).toBe(
-			"npm run sync-types && npm run sync-rest && wp-scripts build --experimental-modules",
+			"npm run sync-types -- --check && npm run sync-rest -- --check && wp-scripts build --experimental-modules",
 		);
 		expect(packageJson.scripts.dev).toBe(
 			'concurrently -k -n sync-types,sync-rest,editor -c yellow,magenta,blue "npm run watch:sync-types" "npm run watch:sync-rest" "npm run start:editor"',
@@ -725,6 +769,9 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 		expect(packageJson.scripts["watch:sync-rest"]).toBe(
 			'chokidar "src/api-types.ts" --debounce 200 -c "npm run sync-rest"',
+		);
+		expect(packageJson.scripts.typecheck).toBe(
+			"npm run sync-types -- --check && npm run sync-rest -- --check && tsc --noEmit",
 		);
 		expect(blockJson.textdomain).toBe("demo-persistence-public");
 		expect(generatedManifest.manifestVersion).toBe(2);
@@ -766,6 +813,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedSyncRest).toContain("defineEndpointManifest");
 		expect(generatedSyncRest).toContain("syncEndpointClient");
 		expect(generatedSyncRest).toContain("syncRestOpenApi");
+		expect(generatedSyncRest).toContain("--check");
 		expect(generatedSyncRest).toContain("@wp-typia/block-runtime/metadata-core");
 		expect(generatedSyncRest).toContain("const REST_ENDPOINT_MANIFEST = defineEndpointManifest");
 		expect(generatedSyncRest).toContain("manifest: REST_ENDPOINT_MANIFEST");
@@ -796,6 +844,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(restPublicHelper).toContain("Customize the public write gate here");
 
 		runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts");
+		runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts", ["--check"]);
 
 		const generatedApiClient = fs.readFileSync(
 			path.join(targetDir, "src", "api-client.ts"),
@@ -1107,13 +1156,16 @@ describe("@wp-typia/create scaffolding", () => {
 			"utf8",
 		);
 
-		expect(packageJson.scripts.build).toBe("npm run sync-types && wp-scripts build --experimental-modules");
+		expect(packageJson.scripts.build).toBe(
+			"npm run sync-types -- --check && wp-scripts build --experimental-modules",
+		);
 		expect(packageJson.scripts.dev).toBe(
 			'concurrently -k -n sync-types,editor -c yellow,blue "npm run watch:sync-types" "npm run start:editor"',
 		);
 		expect(packageJson.scripts["watch:sync-types"]).toBe(
 			'chokidar "src/blocks/**/types.ts" "scripts/block-config.ts" --debounce 200 -c "npm run sync-types"',
 		);
+		expect(packageJson.scripts.typecheck).toBe("npm run sync-types -- --check && tsc --noEmit");
 		expect(pluginBootstrap).toContain("build/blocks");
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(false);
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-auth.php"))).toBe(false);
@@ -1358,7 +1410,10 @@ describe("@wp-typia/create scaffolding", () => {
 			'chokidar "src/blocks/**/api-types.ts" "scripts/block-config.ts" --debounce 200 -c "npm run sync-rest"',
 		);
 		expect(packageJson.scripts.build).toBe(
-			"npm run sync-types && npm run sync-rest && wp-scripts build --experimental-modules",
+			"npm run sync-types -- --check && npm run sync-rest -- --check && wp-scripts build --experimental-modules",
+		);
+		expect(packageJson.scripts.typecheck).toBe(
+			"npm run sync-types -- --check && npm run sync-rest -- --check && tsc --noEmit",
 		);
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(true);
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-auth.php"))).toBe(true);
@@ -1922,7 +1977,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(blockTypesPackageVersion);
 		expect(packageJson.devDependencies["@wp-typia/create"]).toBeUndefined();
 		expect(packageJson.scripts.build).toBe(
-			"pnpm run sync-types && wp-scripts build --experimental-modules",
+			"pnpm run sync-types -- --check && wp-scripts build --experimental-modules",
 		);
 		expect(generatedTypes).toContain("export interface DemoRemoteAttributes");
 		expect(generatedTypes).toContain("\"content\"?: string & tags.Default<\"\">");

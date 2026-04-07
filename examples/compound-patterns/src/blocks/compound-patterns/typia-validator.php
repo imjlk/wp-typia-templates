@@ -277,7 +277,10 @@ return new class {
 				$this->validateString($value, $attribute, $path, $errors);
 				return;
 			case 'number':
-				if (!$this->isNumber($value)) {
+				$allowsUint64String =
+					($attribute['typia']['constraints']['typeTag'] ?? null) === 'uint64' &&
+					$this->matchesUint64($value);
+				if (!$this->isNumber($value) && !$allowsUint64String) {
 					$errors[] = sprintf('%s must be number', $path);
 					return;
 				}
@@ -489,13 +492,30 @@ return new class {
 			case 'int32':
 				return is_int($value) && $value >= -2147483648 && $value <= 2147483647;
 			case 'uint64':
-				return is_int($value) && $value >= 0;
+				return $this->matchesUint64($value);
 			case 'float':
 			case 'double':
 				return is_int($value) || is_float($value);
 			default:
 				return true;
 		}
+	}
+
+	private function matchesUint64($value): bool
+	{
+		if (is_int($value)) {
+			return $value >= 0;
+		}
+		if (!is_string($value) || $value === '' || !ctype_digit($value)) {
+			return false;
+		}
+		if (strlen($value) < 20) {
+			return true;
+		}
+		if (strlen($value) > 20) {
+			return false;
+		}
+		return strcmp($value, '18446744073709551615') <= 0;
 	}
 
 	private function matchesMultipleOf($value, $multipleOf): bool

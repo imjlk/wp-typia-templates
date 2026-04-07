@@ -89,6 +89,50 @@ describe("sync-types reporting", () => {
 		expect(report.failOnPhpWarnings).toBe(false);
 	});
 
+	test("reports stale generated artifacts in check mode without rewriting files", async () => {
+		const fixtureDir = createTypecheckFixture(
+			[
+				"export interface BlockAttributes {",
+				'  title: "Hello";',
+				"}",
+				"",
+			].join("\n"),
+		);
+
+		const originalBlockJson = fs.readFileSync(path.join(fixtureDir, "block.json"), "utf8");
+		const report = await runFixture(fixtureDir, "BlockAttributes", {
+			check: true,
+		});
+
+		expect(report.status).toBe("error");
+		expect(report.failure?.code).toBe("stale-generated-artifact");
+		expect(report.failure?.message).toContain(path.join(fixtureDir, "block.json"));
+		expect(report.failure?.message).toContain(path.join(fixtureDir, "typia.manifest.json"));
+		expect(fs.readFileSync(path.join(fixtureDir, "block.json"), "utf8")).toBe(originalBlockJson);
+		expect(fs.existsSync(path.join(fixtureDir, "typia.manifest.json"))).toBe(false);
+	});
+
+	test("passes check mode after generated artifacts are already current", async () => {
+		const fixtureDir = createTypecheckFixture(
+			[
+				"export interface BlockAttributes {",
+				"  title: string;",
+				"}",
+				"",
+			].join("\n"),
+		);
+
+		const initialReport = await runFixture(fixtureDir, "BlockAttributes");
+		expect(initialReport.status).toBe("success");
+
+		const checkReport = await runFixture(fixtureDir, "BlockAttributes", {
+			check: true,
+		});
+
+		expect(checkReport.status).toBe("success");
+		expect(checkReport.failure).toBeNull();
+	});
+
 	test("reports warning status for lossy WordPress projections by default", async () => {
 		const fixtureDir = createTypecheckFixture(
 			[

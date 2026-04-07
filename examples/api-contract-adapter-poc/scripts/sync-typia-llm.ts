@@ -51,6 +51,15 @@ type OpenApiDocument = {
 	paths?: Record<string, JsonObject>;
 };
 
+interface SyncTypiaLlmCliOptions {
+	check: boolean;
+}
+
+interface GeneratedArtifactFile {
+	content: string;
+	path: string;
+}
+
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const EXAMPLE_ROOT = path.resolve(SCRIPT_DIR, "..");
 const COUNTER_BLOCK = (() => {
@@ -124,6 +133,67 @@ function getCounterOpenApiFile(): string {
 function toPosixRelativePath(fromFile: string, targetFile: string): string {
 	const relative = path.relative(path.dirname(fromFile), targetFile).split(path.sep).join("/");
 	return relative.startsWith(".") ? relative.replace(/\.ts$/, "") : `./${relative.replace(/\.ts$/, "")}`;
+}
+
+function parseCliOptions(argv: string[]): SyncTypiaLlmCliOptions {
+	const options: SyncTypiaLlmCliOptions = {
+		check: false,
+	};
+
+	for (const argument of argv) {
+		if (argument === "--check") {
+			options.check = true;
+			continue;
+		}
+
+		throw new Error(`Unknown sync-typia-llm flag: ${argument}`);
+	}
+
+	return options;
+}
+
+async function reconcileGeneratedArtifacts(
+	artifacts: readonly GeneratedArtifactFile[],
+	options: SyncTypiaLlmCliOptions,
+) {
+	if (options.check !== true) {
+		await mkdir(GENERATED_DIR, { recursive: true });
+
+		for (const artifact of artifacts) {
+			await writeFile(artifact.path, artifact.content, "utf8");
+		}
+
+		return;
+	}
+
+	const issues: string[] = [];
+
+	for (const artifact of artifacts) {
+		try {
+			const current = await readFile(artifact.path, "utf8");
+			if (current !== artifact.content) {
+				issues.push(`- ${artifact.path} (stale)`);
+			}
+		} catch (error) {
+			if (
+				error &&
+				typeof error === "object" &&
+				"code" in error &&
+				error.code === "ENOENT"
+			) {
+				issues.push(`- ${artifact.path} (missing)`);
+				continue;
+			}
+
+			throw error;
+		}
+	}
+
+	if (issues.length > 0) {
+		throw new Error(
+			`Generated artifacts are missing or stale:\n${issues.join("\n")}`,
+		);
+	}
 }
 
 function projectApplicationFunction(functionSchema: ILlmFunction): ProjectedTypiaLlmFunctionArtifact {
@@ -393,27 +463,28 @@ export async function buildCounterTypiaLlmArtifacts(): Promise<{
 	}
 }
 
-export async function syncCounterTypiaLlmArtifacts() {
-	await mkdir(GENERATED_DIR, { recursive: true });
-
-	await writeFile(
-		GENERATED_SOURCE_FILE,
-		renderCounterTypiaLlmGeneratedSource() + "\n",
-		"utf8",
-	);
-
+export async function syncCounterTypiaLlmArtifacts(
+	options: SyncTypiaLlmCliOptions = { check: false },
+) {
 	const { applicationArtifact, structuredOutputArtifact } =
 		await buildCounterTypiaLlmArtifacts();
 
-	await writeFile(
-		GENERATED_APPLICATION_FILE,
-		JSON.stringify(applicationArtifact, null, 2) + "\n",
-		"utf8",
-	);
-	await writeFile(
-		GENERATED_STRUCTURED_OUTPUT_FILE,
-		JSON.stringify(structuredOutputArtifact, null, 2) + "\n",
-		"utf8",
+	await reconcileGeneratedArtifacts(
+		[
+			{
+				content: renderCounterTypiaLlmGeneratedSource() + "\n",
+				path: GENERATED_SOURCE_FILE,
+			},
+			{
+				content: JSON.stringify(applicationArtifact, null, 2) + "\n",
+				path: GENERATED_APPLICATION_FILE,
+			},
+			{
+				content: JSON.stringify(structuredOutputArtifact, null, 2) + "\n",
+				path: GENERATED_STRUCTURED_OUTPUT_FILE,
+			},
+		],
+		options,
 	);
 }
 
@@ -422,7 +493,14 @@ const entrypoint = process.argv[1]
 	: null;
 
 if (entrypoint === import.meta.url) {
-	syncCounterTypiaLlmArtifacts().catch((error) => {
+	const options = parseCliOptions(process.argv.slice(2));
+	syncCounterTypiaLlmArtifacts(options).then(() => {
+		console.log(
+			options.check
+				? "✅ typia.llm artifacts are already up to date!"
+				: "✅ typia.llm artifacts generated from the REST manifest and Typia contracts!",
+		);
+	}).catch((error) => {
 		console.error("❌ typia.llm sync failed:", error);
 		process.exit(1);
 	});

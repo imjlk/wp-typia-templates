@@ -10,7 +10,7 @@
 	"scripts": {
 		"sync-types": "tsx scripts/sync-types-to-block-json.ts",
 		"sync-rest": "tsx scripts/sync-rest-contracts.ts",
-		"build": "bun run sync-types && bun run sync-rest && wp-scripts build --experimental-modules",
+		"build": "bun run sync-types --check && bun run sync-rest --check && wp-scripts build --experimental-modules",
 		"start": "bun run sync-types && bun run sync-rest && wp-scripts start --experimental-modules",
 		"dev": "bun run start",
 		"migration:init": "bunx @wp-typia/create@0.10.1 migrations init --current-migration-version v1",
@@ -21,7 +21,7 @@
 		"migration:fixtures": "bunx @wp-typia/create@0.10.1 migrations fixtures --all",
 		"migration:verify": "bunx @wp-typia/create@0.10.1 migrations verify --all",
 		"migration:fuzz": "bunx @wp-typia/create@0.10.1 migrations fuzz --all",
-		"typecheck": "tsc --noEmit",
+		"typecheck": "bun run sync-types --check && bun run sync-rest --check && tsc --noEmit",
 		"lint:js": "wp-scripts lint-js",
 		"lint:css": "wp-scripts lint-style",
 		"lint": "bun run lint:js && bun run lint:css",
