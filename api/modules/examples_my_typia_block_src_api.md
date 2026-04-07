@@ -13,7 +13,7 @@
 
 ### getCounter
 
-▸ **getCounter**(`request`): `Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`MyTypiaBlockCounterResponse`](../interfaces/examples_my_typia_block_src_api_types.MyTypiaBlockCounterResponse.md)\>\>
+▸ **getCounter**(`request`): `Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`MyTypiaBlockCounterResponse`](../interfaces/examples_my_typia_block_src_api_types.MyTypiaBlockCounterResponse.md)\>\>
 
 #### Parameters
 
@@ -23,7 +23,7 @@
 
 #### Returns
 
-`Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`MyTypiaBlockCounterResponse`](../interfaces/examples_my_typia_block_src_api_types.MyTypiaBlockCounterResponse.md)\>\>
+`Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`MyTypiaBlockCounterResponse`](../interfaces/examples_my_typia_block_src_api_types.MyTypiaBlockCounterResponse.md)\>\>
 
 #### Defined in
 
@@ -33,7 +33,7 @@ ___
 
 ### incrementCounter
 
-▸ **incrementCounter**(`request`, `restNonce?`): `Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`MyTypiaBlockCounterResponse`](../interfaces/examples_my_typia_block_src_api_types.MyTypiaBlockCounterResponse.md)\>\>
+▸ **incrementCounter**(`request`, `restNonce?`): `Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`MyTypiaBlockCounterResponse`](../interfaces/examples_my_typia_block_src_api_types.MyTypiaBlockCounterResponse.md)\>\>
 
 #### Parameters
 
@@ -44,7 +44,7 @@ ___
 
 #### Returns
 
-`Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`MyTypiaBlockCounterResponse`](../interfaces/examples_my_typia_block_src_api_types.MyTypiaBlockCounterResponse.md)\>\>
+`Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`MyTypiaBlockCounterResponse`](../interfaces/examples_my_typia_block_src_api_types.MyTypiaBlockCounterResponse.md)\>\>
 
 #### Defined in
 

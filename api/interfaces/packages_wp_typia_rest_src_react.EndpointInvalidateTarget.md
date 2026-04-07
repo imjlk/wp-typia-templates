@@ -25,7 +25,7 @@
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:75](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L75)
+[packages/wp-typia-rest/src/react.ts:76](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L76)
 
 ___
 
@@ -35,4 +35,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:76](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L76)
+[packages/wp-typia-rest/src/react.ts:77](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L77)

@@ -43,7 +43,7 @@
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:35](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L35)
+[packages/wp-typia-rest/src/client.ts:23](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L23)
 
 ___
 
@@ -53,7 +53,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:36](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L36)
+[packages/wp-typia-rest/src/client.ts:24](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L24)
 
 ___
 
@@ -63,17 +63,17 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:37](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L37)
+[packages/wp-typia-rest/src/client.ts:25](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L25)
 
 ___
 
 ### validateRequest
 
-• **validateRequest**: (`input`: `unknown`) => [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`Req`\>
+• **validateRequest**: (`input`: `unknown`) => [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Req`\>
 
 #### Type declaration
 
-▸ (`input`): [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`Req`\>
+▸ (`input`): [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Req`\>
 
 ##### Parameters
 
@@ -83,21 +83,21 @@ ___
 
 ##### Returns
 
-[`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`Req`\>
+[`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Req`\>
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:38](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L38)
+[packages/wp-typia-rest/src/client.ts:26](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L26)
 
 ___
 
 ### validateResponse
 
-• **validateResponse**: (`input`: `unknown`) => [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`Res`\>
+• **validateResponse**: (`input`: `unknown`) => [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Res`\>
 
 #### Type declaration
 
-▸ (`input`): [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`Res`\>
+▸ (`input`): [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Res`\>
 
 ##### Parameters
 
@@ -107,8 +107,8 @@ ___
 
 ##### Returns
 
-[`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`Res`\>
+[`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Res`\>
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:39](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L39)
+[packages/wp-typia-rest/src/client.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L27)

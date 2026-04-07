@@ -4,10 +4,16 @@
 
 ## Table of contents
 
+### References
+
+- [ValidationError](packages_wp_typia_api_client_src_client.md#validationerror)
+- [ValidationLike](packages_wp_typia_api_client_src_client.md#validationlike)
+- [ValidationResult](packages_wp_typia_api_client_src_client.md#validationresult)
+- [normalizeValidationError](packages_wp_typia_api_client_src_client.md#normalizevalidationerror)
+- [toValidationResult](packages_wp_typia_api_client_src_client.md#tovalidationresult)
+
 ### Interfaces
 
-- [ValidationError](../interfaces/packages_wp_typia_api_client_src_client.ValidationError.md)
-- [ValidationResult](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)
 - [EndpointTransportRequest](../interfaces/packages_wp_typia_api_client_src_client.EndpointTransportRequest.md)
 - [ApiEndpoint](../interfaces/packages_wp_typia_api_client_src_client.ApiEndpoint.md)
 - [EndpointCallOptions](../interfaces/packages_wp_typia_api_client_src_client.EndpointCallOptions.md)
@@ -16,13 +22,10 @@
 
 - [EndpointMethod](packages_wp_typia_api_client_src_client.md#endpointmethod)
 - [EndpointAuthIntent](packages_wp_typia_api_client_src_client.md#endpointauthintent)
-- [ValidationLike](packages_wp_typia_api_client_src_client.md#validationlike)
 - [EndpointTransport](packages_wp_typia_api_client_src_client.md#endpointtransport)
 
 ### Functions
 
-- [normalizeValidationError](packages_wp_typia_api_client_src_client.md#normalizevalidationerror)
-- [toValidationResult](packages_wp_typia_api_client_src_client.md#tovalidationresult)
 - [createFetchTransport](packages_wp_typia_api_client_src_client.md#createfetchtransport)
 - [withHeaders](packages_wp_typia_api_client_src_client.md#withheaders)
 - [withComputedHeaders](packages_wp_typia_api_client_src_client.md#withcomputedheaders)
@@ -30,6 +33,36 @@
 - [withBearerToken](packages_wp_typia_api_client_src_client.md#withbearertoken)
 - [createEndpoint](packages_wp_typia_api_client_src_client.md#createendpoint)
 - [callEndpoint](packages_wp_typia_api_client_src_client.md#callendpoint)
+
+## References
+
+### ValidationError
+
+Re-exports [ValidationError](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationError.md)
+
+___
+
+### ValidationLike
+
+Re-exports [ValidationLike](packages_wp_typia_api_client_src_internal_runtime_primitives.md#validationlike)
+
+___
+
+### ValidationResult
+
+Re-exports [ValidationResult](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)
+
+___
+
+### normalizeValidationError
+
+Re-exports [normalizeValidationError](packages_wp_typia_api_client_src_internal_runtime_primitives.md#normalizevalidationerror)
+
+___
+
+### toValidationResult
+
+Re-exports [toValidationResult](packages_wp_typia_api_client_src_internal_runtime_primitives.md#tovalidationresult)
 
 ## Type Aliases
 
@@ -39,7 +72,7 @@
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:3](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L3)
+[packages/wp-typia-api-client/src/client.ts:7](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L7)
 
 ___
 
@@ -49,23 +82,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:4](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L4)
-
-___
-
-### ValidationLike
-
-Ƭ **ValidationLike**\<`T`\>: `IValidation`\<`T`\> \| \{ `data?`: `unknown` ; `errors?`: `unknown` ; `success?`: `unknown`  }
-
-#### Type parameters
-
-| Name |
-| :------ |
-| `T` |
-
-#### Defined in
-
-[packages/wp-typia-api-client/src/client.ts:22](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L22)
+[packages/wp-typia-api-client/src/client.ts:8](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L8)
 
 ___
 
@@ -96,55 +113,9 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:39](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L39)
+[packages/wp-typia-api-client/src/client.ts:24](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L24)
 
 ## Functions
-
-### normalizeValidationError
-
-▸ **normalizeValidationError**(`error`): [`ValidationError`](../interfaces/packages_wp_typia_api_client_src_client.ValidationError.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `error` | `unknown` |
-
-#### Returns
-
-[`ValidationError`](../interfaces/packages_wp_typia_api_client_src_client.ValidationError.md)
-
-#### Defined in
-
-[packages/wp-typia-api-client/src/client.ts:104](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L104)
-
-___
-
-### toValidationResult
-
-▸ **toValidationResult**\<`T`\>(`result`): [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<`T`\>
-
-#### Type parameters
-
-| Name |
-| :------ |
-| `T` |
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `result` | [`ValidationLike`](packages_wp_typia_api_client_src_client.md#validationlike)\<`T`\> |
-
-#### Returns
-
-[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<`T`\>
-
-#### Defined in
-
-[packages/wp-typia-api-client/src/client.ts:119](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L119)
-
-___
 
 ### createFetchTransport
 
@@ -162,7 +133,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:378](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L378)
+[packages/wp-typia-api-client/src/client.ts:301](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L301)
 
 ___
 
@@ -183,7 +154,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:400](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L400)
+[packages/wp-typia-api-client/src/client.ts:323](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L323)
 
 ___
 
@@ -204,7 +175,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:407](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L407)
+[packages/wp-typia-api-client/src/client.ts:330](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L330)
 
 ___
 
@@ -226,7 +197,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:423](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L423)
+[packages/wp-typia-api-client/src/client.ts:346](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L346)
 
 ___
 
@@ -247,7 +218,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:440](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L440)
+[packages/wp-typia-api-client/src/client.ts:363](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L363)
 
 ___
 
@@ -274,13 +245,13 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:456](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L456)
+[packages/wp-typia-api-client/src/client.ts:379](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L379)
 
 ___
 
 ### callEndpoint
 
-▸ **callEndpoint**\<`Req`, `Res`\>(`endpoint`, `request`, `«destructured»?`): `Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<`Res`\>\>
+▸ **callEndpoint**\<`Req`, `Res`\>(`endpoint`, `request`, `«destructured»?`): `Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Res`\>\>
 
 #### Type parameters
 
@@ -299,8 +270,8 @@ ___
 
 #### Returns
 
-`Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)\<`Res`\>\>
+`Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Res`\>\>
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:460](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L460)
+[packages/wp-typia-api-client/src/client.ts:383](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L383)

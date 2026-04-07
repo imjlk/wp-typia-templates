@@ -18,12 +18,12 @@
 
 | Name | Type |
 | :------ | :------ |
-| `counterQuery` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`MyTypiaBlockCounterQuery`](../interfaces/examples_my_typia_block_src_api_types.MyTypiaBlockCounterQuery.md)\> |
-| `counterResponse` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`MyTypiaBlockCounterResponse`](../interfaces/examples_my_typia_block_src_api_types.MyTypiaBlockCounterResponse.md)\> |
-| `incrementRequest` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`MyTypiaBlockIncrementRequest`](../interfaces/examples_my_typia_block_src_api_types.MyTypiaBlockIncrementRequest.md)\> |
-| `post` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`WpPostRecord`](../interfaces/examples_my_typia_block_src_api_types.WpPostRecord.md)\> |
-| `postCollection` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`WpPostRecord`](../interfaces/examples_my_typia_block_src_api_types.WpPostRecord.md)[]\> |
-| `postTypes` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`WpPostTypeCollection`](examples_my_typia_block_src_api_types.md#wpposttypecollection)\> |
+| `counterQuery` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`MyTypiaBlockCounterQuery`](../interfaces/examples_my_typia_block_src_api_types.MyTypiaBlockCounterQuery.md)\> |
+| `counterResponse` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`MyTypiaBlockCounterResponse`](../interfaces/examples_my_typia_block_src_api_types.MyTypiaBlockCounterResponse.md)\> |
+| `incrementRequest` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`MyTypiaBlockIncrementRequest`](../interfaces/examples_my_typia_block_src_api_types.MyTypiaBlockIncrementRequest.md)\> |
+| `post` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`WpPostRecord`](../interfaces/examples_my_typia_block_src_api_types.WpPostRecord.md)\> |
+| `postCollection` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`WpPostRecord`](../interfaces/examples_my_typia_block_src_api_types.WpPostRecord.md)[]\> |
+| `postTypes` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`WpPostTypeCollection`](examples_my_typia_block_src_api_types.md#wpposttypecollection)\> |
 
 #### Defined in
 

@@ -15,11 +15,11 @@
 
 ### getCounterState
 
-• **getCounterState**: (`request`: [`PersistenceCounterQuery`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterQuery.md)) => `Promise`\<[`ValidationResult`](packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>\>
+• **getCounterState**: (`request`: [`PersistenceCounterQuery`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterQuery.md)) => `Promise`\<[`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>\>
 
 #### Type declaration
 
-▸ (`request`): `Promise`\<[`ValidationResult`](packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>\>
+▸ (`request`): `Promise`\<[`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>\>
 
 ##### Parameters
 
@@ -29,7 +29,7 @@
 
 ##### Returns
 
-`Promise`\<[`ValidationResult`](packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>\>
+`Promise`\<[`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>\>
 
 #### Defined in
 
@@ -39,11 +39,11 @@ ___
 
 ### incrementCounterState
 
-• **incrementCounterState**: (`request`: [`PersistenceCounterIncrementRequest`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md)) => `Promise`\<[`ValidationResult`](packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>\>
+• **incrementCounterState**: (`request`: [`PersistenceCounterIncrementRequest`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md)) => `Promise`\<[`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>\>
 
 #### Type declaration
 
-▸ (`request`): `Promise`\<[`ValidationResult`](packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>\>
+▸ (`request`): `Promise`\<[`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>\>
 
 ##### Parameters
 
@@ -53,7 +53,7 @@ ___
 
 ##### Returns
 
-`Promise`\<[`ValidationResult`](packages_wp_typia_api_client_src_client.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>\>
+`Promise`\<[`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>\>
 
 #### Defined in
 

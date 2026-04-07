@@ -19,7 +19,7 @@
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:43](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L43)
+[packages/wp-typia-rest/src/client.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L31)
 
 ___
 
@@ -29,4 +29,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:44](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L44)
+[packages/wp-typia-rest/src/client.ts:32](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L32)

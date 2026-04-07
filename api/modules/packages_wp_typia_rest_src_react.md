@@ -34,7 +34,7 @@
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:315](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L315)
+[packages/wp-typia-rest/src/react.ts:307](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L307)
 
 ___
 
@@ -54,7 +54,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:507](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L507)
+[packages/wp-typia-rest/src/react.ts:499](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L499)
 
 ___
 
@@ -68,7 +68,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:518](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L518)
+[packages/wp-typia-rest/src/react.ts:510](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L510)
 
 ___
 
@@ -98,7 +98,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:522](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L522)
+[packages/wp-typia-rest/src/react.ts:514](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L514)
 
 ___
 
@@ -127,4 +127,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:726](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L726)
+[packages/wp-typia-rest/src/react.ts:718](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L718)

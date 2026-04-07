@@ -45,13 +45,13 @@ ___
 
 ### normalizeValidationError
 
-Re-exports [normalizeValidationError](packages_wp_typia_api_client_src_client.md#normalizevalidationerror)
+Re-exports [normalizeValidationError](packages_wp_typia_api_client_src_internal_runtime_primitives.md#normalizevalidationerror)
 
 ___
 
 ### toValidationResult
 
-Re-exports [toValidationResult](packages_wp_typia_api_client_src_client.md#tovalidationresult)
+Re-exports [toValidationResult](packages_wp_typia_api_client_src_internal_runtime_primitives.md#tovalidationresult)
 
 ___
 
@@ -105,16 +105,16 @@ ___
 
 ### ValidationError
 
-Re-exports [ValidationError](../interfaces/packages_wp_typia_api_client_src_client.ValidationError.md)
+Re-exports [ValidationError](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationError.md)
 
 ___
 
 ### ValidationLike
 
-Re-exports [ValidationLike](packages_wp_typia_api_client_src_client.md#validationlike)
+Re-exports [ValidationLike](packages_wp_typia_api_client_src_internal_runtime_primitives.md#validationlike)
 
 ___
 
 ### ValidationResult
 
-Re-exports [ValidationResult](../interfaces/packages_wp_typia_api_client_src_client.ValidationResult.md)
+Re-exports [ValidationResult](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)

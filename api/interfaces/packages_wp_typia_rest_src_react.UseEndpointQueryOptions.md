@@ -34,7 +34,7 @@
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:85](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L85)
+[packages/wp-typia-rest/src/react.ts:86](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L86)
 
 ___
 
@@ -44,7 +44,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:86](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L86)
+[packages/wp-typia-rest/src/react.ts:87](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L87)
 
 ___
 
@@ -54,7 +54,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:87](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L87)
+[packages/wp-typia-rest/src/react.ts:88](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L88)
 
 ___
 
@@ -64,7 +64,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:88](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L88)
+[packages/wp-typia-rest/src/react.ts:89](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L89)
 
 ___
 
@@ -88,13 +88,13 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:89](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L89)
+[packages/wp-typia-rest/src/react.ts:90](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L90)
 
 ___
 
 ### onSuccess
 
-• `Optional` **onSuccess**: (`data`: `Selected`, `validation`: [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`Res`\>) => `void` \| `Promise`\<`void`\>
+• `Optional` **onSuccess**: (`data`: `Selected`, `validation`: [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Res`\>) => `void` \| `Promise`\<`void`\>
 
 #### Type declaration
 
@@ -105,7 +105,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `data` | `Selected` |
-| `validation` | [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`Res`\> |
+| `validation` | [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Res`\> |
 
 ##### Returns
 
@@ -113,7 +113,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:90](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L90)
+[packages/wp-typia-rest/src/react.ts:91](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L91)
 
 ___
 
@@ -131,7 +131,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:94](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L94)
+[packages/wp-typia-rest/src/react.ts:95](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L95)
 
 ___
 
@@ -155,7 +155,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:95](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L95)
+[packages/wp-typia-rest/src/react.ts:96](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L96)
 
 ___
 
@@ -165,4 +165,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:96](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L96)
+[packages/wp-typia-rest/src/react.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L97)

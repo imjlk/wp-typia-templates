@@ -37,13 +37,13 @@
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:26](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L26)
+[packages/wp-typia-rest/src/client.ts:14](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L14)
 
 ___
 
 ### fetch
 
-▸ **fetch**(`options`): `Promise`\<[`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`T`\>\>
+▸ **fetch**(`options`): `Promise`\<[`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`T`\>\>
 
 #### Parameters
 
@@ -53,17 +53,17 @@ ___
 
 #### Returns
 
-`Promise`\<[`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`T`\>\>
+`Promise`\<[`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`T`\>\>
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L27)
+[packages/wp-typia-rest/src/client.ts:15](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L15)
 
 ___
 
 ### fetchWithResponse
 
-▸ **fetchWithResponse**(`options`): `Promise`\<\{ `response`: `Response` ; `validation`: [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`T`\>  }\>
+▸ **fetchWithResponse**(`options`): `Promise`\<\{ `response`: `Response` ; `validation`: [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`T`\>  }\>
 
 #### Parameters
 
@@ -73,11 +73,11 @@ ___
 
 #### Returns
 
-`Promise`\<\{ `response`: `Response` ; `validation`: [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`T`\>  }\>
+`Promise`\<\{ `response`: `Response` ; `validation`: [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`T`\>  }\>
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:28](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L28)
+[packages/wp-typia-rest/src/client.ts:16](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L16)
 
 ___
 
@@ -97,4 +97,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L31)
+[packages/wp-typia-rest/src/client.ts:19](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L19)

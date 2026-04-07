@@ -14,7 +14,7 @@
 
 ### createQueryDecoder
 
-▸ **createQueryDecoder**\<`T`\>(`validate?`): (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<`T`\>
+▸ **createQueryDecoder**\<`T`\>(`validate?`): (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`T`\>
 
 #### Type parameters
 
@@ -32,7 +32,7 @@
 
 `fn`
 
-▸ (`input`): [`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<`T`\>
+▸ (`input`): [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`T`\>
 
 ##### Parameters
 
@@ -42,7 +42,7 @@
 
 ##### Returns
 
-[`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<`T`\>
+[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`T`\>
 
 #### Defined in
 
@@ -52,7 +52,7 @@ ___
 
 ### createHeadersDecoder
 
-▸ **createHeadersDecoder**\<`T`\>(`validate?`): (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<`T`\>
+▸ **createHeadersDecoder**\<`T`\>(`validate?`): (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`T`\>
 
 #### Type parameters
 
@@ -70,7 +70,7 @@ ___
 
 `fn`
 
-▸ (`input`): [`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<`T`\>
+▸ (`input`): [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`T`\>
 
 ##### Parameters
 
@@ -80,7 +80,7 @@ ___
 
 ##### Returns
 
-[`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<`T`\>
+[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`T`\>
 
 #### Defined in
 

@@ -52,7 +52,7 @@ Omit.client
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:85](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L85)
+[packages/wp-typia-rest/src/react.ts:86](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L86)
 
 ___
 
@@ -66,7 +66,7 @@ Omit.enabled
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:86](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L86)
+[packages/wp-typia-rest/src/react.ts:87](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L87)
 
 ___
 
@@ -80,7 +80,7 @@ Omit.fetchFn
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:87](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L87)
+[packages/wp-typia-rest/src/react.ts:88](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L88)
 
 ___
 
@@ -94,7 +94,7 @@ Omit.initialData
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:88](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L88)
+[packages/wp-typia-rest/src/react.ts:89](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L89)
 
 ___
 
@@ -122,13 +122,13 @@ Omit.onError
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:89](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L89)
+[packages/wp-typia-rest/src/react.ts:90](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L90)
 
 ___
 
 ### onSuccess
 
-• `Optional` **onSuccess**: (`data`: `Selected`, `validation`: [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\>) => `void` \| `Promise`\<`void`\>
+• `Optional` **onSuccess**: (`data`: `Selected`, `validation`: [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\>) => `void` \| `Promise`\<`void`\>
 
 #### Type declaration
 
@@ -139,7 +139,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `data` | `Selected` |
-| `validation` | [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\> |
+| `validation` | [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\> |
 
 ##### Returns
 
@@ -151,7 +151,7 @@ Omit.onSuccess
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:90](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L90)
+[packages/wp-typia-rest/src/react.ts:91](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L91)
 
 ___
 
@@ -179,7 +179,7 @@ Omit.select
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:95](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L95)
+[packages/wp-typia-rest/src/react.ts:96](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L96)
 
 ___
 
@@ -193,4 +193,4 @@ Omit.staleTime
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:96](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L96)
+[packages/wp-typia-rest/src/react.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L97)

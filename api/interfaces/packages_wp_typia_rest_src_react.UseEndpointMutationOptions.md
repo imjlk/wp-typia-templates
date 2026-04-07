@@ -33,7 +33,7 @@
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:109](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L109)
+[packages/wp-typia-rest/src/react.ts:110](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L110)
 
 ___
 
@@ -43,17 +43,17 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:110](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L110)
+[packages/wp-typia-rest/src/react.ts:111](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L111)
 
 ___
 
 ### invalidate
 
-• `Optional` **invalidate**: `EndpointInvalidateTargets` \| (`data`: `undefined` \| `Res`, `variables`: `Req`, `validation`: [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`Res`\>) => `EndpointInvalidateTargets`
+• `Optional` **invalidate**: `EndpointInvalidateTargets` \| (`data`: `undefined` \| `Res`, `variables`: `Req`, `validation`: [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Res`\>) => `EndpointInvalidateTargets`
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:111](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L111)
+[packages/wp-typia-rest/src/react.ts:112](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L112)
 
 ___
 
@@ -80,7 +80,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:118](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L118)
+[packages/wp-typia-rest/src/react.ts:119](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L119)
 
 ___
 
@@ -105,13 +105,13 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:124](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L124)
+[packages/wp-typia-rest/src/react.ts:125](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L125)
 
 ___
 
 ### onSettled
 
-• `Optional` **onSettled**: (`result`: \{ `data`: `undefined` \| `Res` ; `error`: `unknown` ; `validation`: ``null`` \| [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`Res`\>  }, `variables`: `Req`, `client`: [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md), `context`: `undefined` \| `Context`) => `void` \| `Promise`\<`void`\>
+• `Optional` **onSettled**: (`result`: \{ `data`: `undefined` \| `Res` ; `error`: `unknown` ; `validation`: ``null`` \| [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Res`\>  }, `variables`: `Req`, `client`: [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md), `context`: `undefined` \| `Context`) => `void` \| `Promise`\<`void`\>
 
 #### Type declaration
 
@@ -124,7 +124,7 @@ ___
 | `result` | `Object` |
 | `result.data` | `undefined` \| `Res` |
 | `result.error` | `unknown` |
-| `result.validation` | ``null`` \| [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`Res`\> |
+| `result.validation` | ``null`` \| [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Res`\> |
 | `variables` | `Req` |
 | `client` | [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md) |
 | `context` | `undefined` \| `Context` |
@@ -135,13 +135,13 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:128](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L128)
+[packages/wp-typia-rest/src/react.ts:129](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L129)
 
 ___
 
 ### onSuccess
 
-• `Optional` **onSuccess**: (`data`: `undefined` \| `Res`, `variables`: `Req`, `validation`: [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`Res`\>, `client`: [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md), `context`: `undefined` \| `Context`) => `void` \| `Promise`\<`void`\>
+• `Optional` **onSuccess**: (`data`: `undefined` \| `Res`, `variables`: `Req`, `validation`: [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Res`\>, `client`: [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md), `context`: `undefined` \| `Context`) => `void` \| `Promise`\<`void`\>
 
 #### Type declaration
 
@@ -153,7 +153,7 @@ ___
 | :------ | :------ |
 | `data` | `undefined` \| `Res` |
 | `variables` | `Req` |
-| `validation` | [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<`Res`\> |
+| `validation` | [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Res`\> |
 | `client` | [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md) |
 | `context` | `undefined` \| `Context` |
 
@@ -163,7 +163,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:138](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L138)
+[packages/wp-typia-rest/src/react.ts:139](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L139)
 
 ___
 
@@ -187,4 +187,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:145](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L145)
+[packages/wp-typia-rest/src/react.ts:146](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L146)

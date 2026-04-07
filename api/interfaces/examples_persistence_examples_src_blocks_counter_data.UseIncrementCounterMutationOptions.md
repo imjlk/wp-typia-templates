@@ -92,7 +92,7 @@ Omit.client
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:109](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L109)
+[packages/wp-typia-rest/src/react.ts:110](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L110)
 
 ___
 
@@ -106,13 +106,13 @@ Omit.fetchFn
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:110](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L110)
+[packages/wp-typia-rest/src/react.ts:111](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L111)
 
 ___
 
 ### onSettled
 
-• `Optional` **onSettled**: (`result`: \{ `data`: `undefined` \| [`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md) ; `error`: `unknown` ; `validation`: ``null`` \| [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>  }, `variables`: [`PersistenceCounterIncrementRequest`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md), `client`: [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md), `context`: `undefined` \| `CounterMutationContext`\<`Context`\>) => `void` \| `Promise`\<`void`\>
+• `Optional` **onSettled**: (`result`: \{ `data`: `undefined` \| [`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md) ; `error`: `unknown` ; `validation`: ``null`` \| [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>  }, `variables`: [`PersistenceCounterIncrementRequest`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md), `client`: [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md), `context`: `undefined` \| `CounterMutationContext`\<`Context`\>) => `void` \| `Promise`\<`void`\>
 
 #### Type declaration
 
@@ -125,7 +125,7 @@ ___
 | `result` | `Object` |
 | `result.data` | `undefined` \| [`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md) |
 | `result.error` | `unknown` |
-| `result.validation` | ``null`` \| [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\> |
+| `result.validation` | ``null`` \| [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\> |
 | `variables` | [`PersistenceCounterIncrementRequest`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md) |
 | `client` | [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md) |
 | `context` | `undefined` \| `CounterMutationContext`\<`Context`\> |
@@ -140,13 +140,13 @@ Omit.onSettled
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:128](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L128)
+[packages/wp-typia-rest/src/react.ts:129](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L129)
 
 ___
 
 ### onSuccess
 
-• `Optional` **onSuccess**: (`data`: `undefined` \| [`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md), `variables`: [`PersistenceCounterIncrementRequest`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md), `validation`: [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>, `client`: [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md), `context`: `undefined` \| `CounterMutationContext`\<`Context`\>) => `void` \| `Promise`\<`void`\>
+• `Optional` **onSuccess**: (`data`: `undefined` \| [`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md), `variables`: [`PersistenceCounterIncrementRequest`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md), `validation`: [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\>, `client`: [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md), `context`: `undefined` \| `CounterMutationContext`\<`Context`\>) => `void` \| `Promise`\<`void`\>
 
 #### Type declaration
 
@@ -158,7 +158,7 @@ ___
 | :------ | :------ |
 | `data` | `undefined` \| [`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md) |
 | `variables` | [`PersistenceCounterIncrementRequest`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md) |
-| `validation` | [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\> |
+| `validation` | [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterResponse`](examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\> |
 | `client` | [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md) |
 | `context` | `undefined` \| `CounterMutationContext`\<`Context`\> |
 
@@ -172,7 +172,7 @@ Omit.onSuccess
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:138](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L138)
+[packages/wp-typia-rest/src/react.ts:139](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L139)
 
 ___
 
@@ -200,4 +200,4 @@ Omit.resolveCallOptions
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:145](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L145)
+[packages/wp-typia-rest/src/react.ts:146](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L146)

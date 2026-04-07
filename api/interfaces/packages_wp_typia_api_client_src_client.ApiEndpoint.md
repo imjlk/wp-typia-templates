@@ -33,7 +33,7 @@
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:44](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L44)
+[packages/wp-typia-api-client/src/client.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L29)
 
 ___
 
@@ -43,7 +43,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:45](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L45)
+[packages/wp-typia-api-client/src/client.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L30)
 
 ___
 
@@ -67,7 +67,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:46](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L46)
+[packages/wp-typia-api-client/src/client.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L31)
 
 ___
 
@@ -77,7 +77,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:47](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L47)
+[packages/wp-typia-api-client/src/client.ts:32](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L32)
 
 ___
 
@@ -87,7 +87,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:48](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L48)
+[packages/wp-typia-api-client/src/client.ts:33](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L33)
 
 ___
 
@@ -97,7 +97,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:49](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L49)
+[packages/wp-typia-api-client/src/client.ts:34](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L34)
 
 ___
 
@@ -107,17 +107,17 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:50](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L50)
+[packages/wp-typia-api-client/src/client.ts:35](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L35)
 
 ___
 
 ### validateRequest
 
-• **validateRequest**: (`input`: `unknown`) => [`ValidationResult`](packages_wp_typia_api_client_src_client.ValidationResult.md)\<`Req`\>
+• **validateRequest**: (`input`: `unknown`) => [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Req`\>
 
 #### Type declaration
 
-▸ (`input`): [`ValidationResult`](packages_wp_typia_api_client_src_client.ValidationResult.md)\<`Req`\>
+▸ (`input`): [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Req`\>
 
 ##### Parameters
 
@@ -127,21 +127,21 @@ ___
 
 ##### Returns
 
-[`ValidationResult`](packages_wp_typia_api_client_src_client.ValidationResult.md)\<`Req`\>
+[`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Req`\>
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:51](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L51)
+[packages/wp-typia-api-client/src/client.ts:36](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L36)
 
 ___
 
 ### validateResponse
 
-• **validateResponse**: (`input`: `unknown`) => [`ValidationResult`](packages_wp_typia_api_client_src_client.ValidationResult.md)\<`Res`\>
+• **validateResponse**: (`input`: `unknown`) => [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Res`\>
 
 #### Type declaration
 
-▸ (`input`): [`ValidationResult`](packages_wp_typia_api_client_src_client.ValidationResult.md)\<`Res`\>
+▸ (`input`): [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Res`\>
 
 ##### Parameters
 
@@ -151,8 +151,8 @@ ___
 
 ##### Returns
 
-[`ValidationResult`](packages_wp_typia_api_client_src_client.ValidationResult.md)\<`Res`\>
+[`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<`Res`\>
 
 #### Defined in
 
-[packages/wp-typia-api-client/src/client.ts:52](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L52)
+[packages/wp-typia-api-client/src/client.ts:37](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-api-client/src/client.ts#L37)

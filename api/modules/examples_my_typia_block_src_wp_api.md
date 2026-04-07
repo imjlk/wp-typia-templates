@@ -14,11 +14,11 @@
 
 ### getEditablePostTypes
 
-▸ **getEditablePostTypes**(): `Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`WpPostTypeCollection`](examples_my_typia_block_src_api_types.md#wpposttypecollection)\>\>
+▸ **getEditablePostTypes**(): `Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`WpPostTypeCollection`](examples_my_typia_block_src_api_types.md#wpposttypecollection)\>\>
 
 #### Returns
 
-`Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`WpPostTypeCollection`](examples_my_typia_block_src_api_types.md#wpposttypecollection)\>\>
+`Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`WpPostTypeCollection`](examples_my_typia_block_src_api_types.md#wpposttypecollection)\>\>
 
 #### Defined in
 
@@ -28,7 +28,7 @@ ___
 
 ### getPostsByRestBase
 
-▸ **getPostsByRestBase**(`restBase`, `page`): `Promise`\<\{ `response`: `Response` ; `validation`: [`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`WpPostRecord`](../interfaces/examples_my_typia_block_src_api_types.WpPostRecord.md)[]\>  }\>
+▸ **getPostsByRestBase**(`restBase`, `page`): `Promise`\<\{ `response`: `Response` ; `validation`: [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`WpPostRecord`](../interfaces/examples_my_typia_block_src_api_types.WpPostRecord.md)[]\>  }\>
 
 #### Parameters
 
@@ -39,7 +39,7 @@ ___
 
 #### Returns
 
-`Promise`\<\{ `response`: `Response` ; `validation`: [`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`WpPostRecord`](../interfaces/examples_my_typia_block_src_api_types.WpPostRecord.md)[]\>  }\>
+`Promise`\<\{ `response`: `Response` ; `validation`: [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`WpPostRecord`](../interfaces/examples_my_typia_block_src_api_types.WpPostRecord.md)[]\>  }\>
 
 #### Defined in
 
@@ -49,7 +49,7 @@ ___
 
 ### getPostByRestBase
 
-▸ **getPostByRestBase**(`restBase`, `postId`): `Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`WpPostRecord`](../interfaces/examples_my_typia_block_src_api_types.WpPostRecord.md)\>\>
+▸ **getPostByRestBase**(`restBase`, `postId`): `Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`WpPostRecord`](../interfaces/examples_my_typia_block_src_api_types.WpPostRecord.md)\>\>
 
 #### Parameters
 
@@ -60,7 +60,7 @@ ___
 
 #### Returns
 
-`Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_rest_src_client.ValidationResult.md)\<[`WpPostRecord`](../interfaces/examples_my_typia_block_src_api_types.WpPostRecord.md)\>\>
+`Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`WpPostRecord`](../interfaces/examples_my_typia_block_src_api_types.WpPostRecord.md)\>\>
 
 #### Defined in
 

@@ -102,7 +102,7 @@ Omit.client
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:109](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L109)
+[packages/wp-typia-rest/src/react.ts:110](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L110)
 
 ___
 
@@ -116,13 +116,13 @@ Omit.fetchFn
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:110](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L110)
+[packages/wp-typia-rest/src/react.ts:111](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L111)
 
 ___
 
 ### onSettled
 
-• `Optional` **onSettled**: (`result`: \{ `data`: `undefined` \| [`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md) ; `error`: `unknown` ; `validation`: ``null`` \| [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\>  }, `variables`: [`PersistenceToggleLikeRequest`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeRequest.md), `client`: [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md), `context`: `undefined` \| `ToggleLikeMutationContext`\<`Context`\>) => `void` \| `Promise`\<`void`\>
+• `Optional` **onSettled**: (`result`: \{ `data`: `undefined` \| [`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md) ; `error`: `unknown` ; `validation`: ``null`` \| [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\>  }, `variables`: [`PersistenceToggleLikeRequest`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeRequest.md), `client`: [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md), `context`: `undefined` \| `ToggleLikeMutationContext`\<`Context`\>) => `void` \| `Promise`\<`void`\>
 
 #### Type declaration
 
@@ -135,7 +135,7 @@ ___
 | `result` | `Object` |
 | `result.data` | `undefined` \| [`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md) |
 | `result.error` | `unknown` |
-| `result.validation` | ``null`` \| [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\> |
+| `result.validation` | ``null`` \| [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\> |
 | `variables` | [`PersistenceToggleLikeRequest`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeRequest.md) |
 | `client` | [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md) |
 | `context` | `undefined` \| `ToggleLikeMutationContext`\<`Context`\> |
@@ -150,13 +150,13 @@ Omit.onSettled
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:128](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L128)
+[packages/wp-typia-rest/src/react.ts:129](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L129)
 
 ___
 
 ### onSuccess
 
-• `Optional` **onSuccess**: (`data`: `undefined` \| [`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md), `variables`: [`PersistenceToggleLikeRequest`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeRequest.md), `validation`: [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\>, `client`: [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md), `context`: `undefined` \| `ToggleLikeMutationContext`\<`Context`\>) => `void` \| `Promise`\<`void`\>
+• `Optional` **onSuccess**: (`data`: `undefined` \| [`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md), `variables`: [`PersistenceToggleLikeRequest`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeRequest.md), `validation`: [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\>, `client`: [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md), `context`: `undefined` \| `ToggleLikeMutationContext`\<`Context`\>) => `void` \| `Promise`\<`void`\>
 
 #### Type declaration
 
@@ -168,7 +168,7 @@ ___
 | :------ | :------ |
 | `data` | `undefined` \| [`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md) |
 | `variables` | [`PersistenceToggleLikeRequest`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeRequest.md) |
-| `validation` | [`ValidationResult`](packages_wp_typia_rest_src_client.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\> |
+| `validation` | [`ValidationResult`](packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\> |
 | `client` | [`EndpointDataClient`](packages_wp_typia_rest_src_react.EndpointDataClient.md) |
 | `context` | `undefined` \| `ToggleLikeMutationContext`\<`Context`\> |
 
@@ -182,4 +182,4 @@ Omit.onSuccess
 
 #### Defined in
 
-[packages/wp-typia-rest/src/react.ts:138](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L138)
+[packages/wp-typia-rest/src/react.ts:139](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/react.ts#L139)
