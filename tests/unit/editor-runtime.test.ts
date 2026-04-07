@@ -94,7 +94,7 @@ describe("runtime editor helpers", () => {
     expect(field.reason).toContain("manual");
   });
 
-  test("describeEditorField only exposes enum options for select controls", () => {
+  test("describeEditorField preserves legacy create compat semantics for manual enum fields", () => {
     const field = describeEditorField(
       "alignment",
       createAttribute({
