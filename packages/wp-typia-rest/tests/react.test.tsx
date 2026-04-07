@@ -120,6 +120,28 @@ async function flush() {
 	await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+async function waitForAssertion(
+	assertion: () => void,
+	timeoutMs = 1_000,
+): Promise<void> {
+	const startedAt = Date.now();
+	let lastError: unknown;
+
+	while (Date.now() - startedAt < timeoutMs) {
+		try {
+			assertion();
+			return;
+		} catch (error) {
+			lastError = error;
+			await flush();
+		}
+	}
+
+	throw lastError instanceof Error
+		? lastError
+		: new Error("Timed out waiting for assertion to pass.");
+}
+
 afterEach(() => {
 	for (const unmount of [...activeUnmounts]) {
 		void unmount();
@@ -482,12 +504,11 @@ describe("@wp-typia/rest/react", () => {
 		client.invalidate(endpoint, request);
 		rejectFirstFetch(new Error("offline"));
 
-		await flush();
-		await flush();
-
-		expect(fetchCount).toBe(2);
-		expect(rendered.current.data).toEqual({ count: 2 });
-		expect(rendered.current.error).toBeNull();
+		await waitForAssertion(() => {
+			expect(fetchCount).toBe(2);
+			expect(rendered.current.data).toEqual({ count: 2 });
+			expect(rendered.current.error).toBeNull();
+		});
 
 		await rendered.unmount();
 	});
