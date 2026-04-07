@@ -229,12 +229,17 @@ Scaffolded rules expose:
 - deprecated / generated registry drift
 - fixture coverage for default, rename, transform, and supported union-branch cases
 
-`migration:fixtures` is the explicit refresh path for edge fixtures. Without `--force`, existing fixture files are preserved and reported as skipped.
+`migration:fixtures` is the explicit refresh path for edge fixtures. Without
+`--force`, existing fixture files are preserved and reported as skipped. Use
+`--force` when you want the CLI to refresh those files from the current
+generated edge output.
 
 In TTY usage, `migration:fixtures -- --force` asks once before overwriting
 existing fixture files and reports how many files will be replaced. In
 non-interactive usage, `--force` still overwrites immediately so scripted flows
-stay compatible.
+stay compatible. `--all` does not change that overwrite rule by itself; it only
+widens the set of legacy migration versions and block targets considered for
+generation.
 
 `migration:fuzz` is intentionally separate from `migration:verify`. `verify` stays deterministic and fixture-driven, while `fuzz` replays fixture cases and then generates seeded random current samples with `validators.random()`, converts the safe subset back into legacy-shaped inputs, migrates them, and validates the result against the current Typia validator.
 

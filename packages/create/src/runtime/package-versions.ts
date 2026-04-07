@@ -80,7 +80,10 @@ export function getPackageVersions(): PackageVersions {
 			createManifest.dependencies?.["@wp-typia/api-client"] ??
 				resolveInstalledPackageManifest("@wp-typia/api-client")?.version,
 		),
-		blockRuntimePackageVersion: normalizeVersionRange(blockRuntimeManifest.version),
+		blockRuntimePackageVersion: normalizeVersionRange(
+			createManifest.dependencies?.["@wp-typia/block-runtime"] ??
+				blockRuntimeManifest.version,
+		),
 		blockTypesPackageVersion: normalizeVersionRange(
 			createManifest.dependencies?.["@wp-typia/block-types"] ??
 				resolveInstalledPackageManifest("@wp-typia/block-types")?.version,

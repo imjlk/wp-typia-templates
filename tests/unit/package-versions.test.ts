@@ -123,6 +123,32 @@ describe("package version helpers", () => {
 		});
 	});
 
+	test("uses the packaged create dependency range when no sibling block-runtime manifest is available", async () => {
+		const createPackageRoot = createTempDir("wp-typia-packaged-create-root-");
+
+		writeJsonFile(path.join(createPackageRoot, "package.json"), {
+			dependencies: {
+				"@wp-typia/api-client": "^0.4.0",
+				"@wp-typia/block-runtime": "^0.3.0",
+				"@wp-typia/block-types": "^0.2.0",
+				"@wp-typia/rest": "^0.3.1",
+			},
+			version: "0.11.0",
+		});
+
+		const module = await importPackageVersionsModule({
+			createPackageRoot,
+		});
+
+		expect(module.getPackageVersions()).toEqual({
+			apiClientPackageVersion: "^0.4.0",
+			blockRuntimePackageVersion: "^0.3.0",
+			blockTypesPackageVersion: "^0.2.0",
+			createPackageVersion: "^0.11.0",
+			restPackageVersion: "^0.3.1",
+		});
+	});
+
 	test("defaults missing version data to ^0.0.0 and caches the computed result", async () => {
 		const createPackageRoot = path.join(
 			createTempDir("wp-typia-empty-create-root-"),

@@ -86,6 +86,14 @@ Defaults keep these concerns separate:
 - text domains default to the kebab-case slug
 - PHP symbols default to a snake_case prefix derived from the slug
 
+For the built-in `basic` template, those defaults also imply a few intentional
+baselines:
+
+- it remains a static block, so no `render.php` file is generated
+- `src/save.tsx` always returns stable saved markup instead of `null`
+- the generated webpack config stays on the current `@wordpress/scripts` CommonJS baseline
+- wrapper CSS classes still follow `wp-block-namespace-slug`; when namespace and slug match, duplicated segments such as `wp-block-demo-block-demo-block` are expected
+
 Every generated project exposes `sync-types`, and persistence-enabled scaffolds also expose `sync-rest`. `start` still runs the relevant sync scripts for you, while `build` and `typecheck` verify that generated metadata/schema artifacts are already current and fail if they are stale. Run the sync scripts manually when you want generated metadata/schema artifacts refreshed before `build`, `typecheck`, or commit. `sync-types` stays warn-only by default, supports `-- --fail-on-lossy` when CI should fail only on lossy WordPress projections, and supports `-- --strict --report json` when CI should fail on every warning while reading a machine-friendly JSON report from stdout. These syncs do not create migration history.
 
 Generated projects can also reuse small runtime helpers from `@wp-typia/block-runtime` instead of copying local utility code:

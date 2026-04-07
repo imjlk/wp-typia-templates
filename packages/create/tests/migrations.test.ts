@@ -1646,7 +1646,7 @@ describe("wp-typia migrations", () => {
 
 	test("migrations help text explains retrofit auto-detection, read-only planning, and --all workspace scope", () => {
 		expect(() => runCli("node", [entryPath, "migrations"])).toThrow(
-			/`migrations init` auto-detects supported single-block and `src\/blocks\/\*` multi-block layouts[\s\S]*Migration versions use strict schema labels like `v1`, `v2`, and `v3`[\s\S]*`migrations wizard` is TTY-only[\s\S]*`migrations plan` and `migrations wizard` are read-only previews[\s\S]*--all runs across every configured legacy migration version and every configured block target\./,
+			/`migrations init` auto-detects supported single-block and `src\/blocks\/\*` multi-block layouts[\s\S]*Migration versions use strict schema labels like `v1`, `v2`, and `v3`[\s\S]*`migrations wizard` is TTY-only[\s\S]*`migrations plan` and `migrations wizard` are read-only previews[\s\S]*--all runs across every configured legacy migration version and every configured block target\.[\s\S]*Existing fixture files are preserved and reported as skipped unless you pass `--force`\.[\s\S]*Use `migrations fixtures --force` as the explicit refresh path/,
 		);
 	});
 
@@ -2421,13 +2421,14 @@ describe("wp-typia migrations", () => {
 		const skipOutput = runCli("node", [entryPath, "migrations", "fixtures", "--all"], {
 			cwd: projectDir,
 		});
-		expect(skipOutput).toContain("Skipped existing fixture");
+		expect(skipOutput).toContain("Preserved existing fixture");
+		expect(skipOutput).toContain("use --force to refresh");
 		expect(fs.readFileSync(fixturePath, "utf8")).toContain('"custom"');
 
 		const forceOutput = runCli("node", [entryPath, "migrations", "fixtures", "--all", "--force"], {
 			cwd: projectDir,
 		});
-		expect(forceOutput).toContain("Generated fixture");
+		expect(forceOutput).toContain("Refreshed fixture");
 		expect(fs.readFileSync(fixturePath, "utf8")).toContain('"default"');
 		expect(fs.readFileSync(fixturePath, "utf8")).not.toContain('"custom"');
 	});

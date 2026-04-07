@@ -226,6 +226,7 @@ describe("@wp-typia/create scaffolding", () => {
 			fs.readFileSync(path.join(targetDir, "src", "typia.manifest.json"), "utf8"),
 		);
 		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
+		const generatedStyle = fs.readFileSync(path.join(targetDir, "src", "style.scss"), "utf8");
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const generatedValidators = fs.readFileSync(path.join(targetDir, "src", "validators.ts"), "utf8");
 		const generatedValidatorToolkit = fs.readFileSync(
@@ -244,6 +245,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(packageJson.name).toBe("demo-npm");
 		expect(packageJson.packageManager).toBe("npm@11.6.1");
 		expect(packageJson.devDependencies["@wp-typia/block-runtime"]).toBe(blockRuntimePackageVersion);
+		expect(packageJson.devDependencies["@wp-typia/block-runtime"]).not.toBe("^0.0.0");
 		expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(blockTypesPackageVersion);
 		expect(packageJson.devDependencies["@wp-typia/create"]).toBeUndefined();
 		expect(packageJson.devDependencies["chokidar-cli"]).toBe("^3.0.0");
@@ -285,6 +287,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedEdit).toContain("useTypedAttributeUpdater");
 		expect(generatedSave).toContain("RichText.Content");
 		expect(generatedSave).not.toContain("return null;");
+		expect(generatedStyle).toContain(".wp-block-demo-space-demo-npm");
 		expect(generatedHooks).toContain("@wp-typia/block-runtime/validation");
 		expect(generatedHooks).toContain("createUseTypiaValidationHook");
 		expect(generatedIndex).toContain("@wp-typia/block-runtime/blocks");
@@ -1810,6 +1813,29 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(answers.phpPrefix).toBe("demo_recovered");
 		expect(answers.textDomain).toBe("demo-recovered");
 		expect(answers.title).toBe("Demo Recovered");
+	});
+
+	test("runScaffoldFlow keeps the default namespace equal to the slug for wrapper classes", async () => {
+		const projectInput = "demo-default-class";
+		const flow = await runScaffoldFlow({
+			cwd: tempRoot,
+			noInstall: true,
+			packageManager: "npm",
+			projectInput,
+			templateId: "basic",
+			yes: true,
+		});
+
+		const blockJson = JSON.parse(
+			fs.readFileSync(path.join(flow.projectDir, "src", "block.json"), "utf8"),
+		);
+		const generatedStyle = fs.readFileSync(
+			path.join(flow.projectDir, "src", "style.scss"),
+			"utf8",
+		);
+
+		expect(blockJson.name).toBe("demo-default-class/demo-default-class");
+		expect(generatedStyle).toContain(".wp-block-demo-default-class-demo-default-class");
 	});
 
 	test("runScaffoldFlow keeps compound next steps minimal while surfacing optional sync guidance", async () => {
