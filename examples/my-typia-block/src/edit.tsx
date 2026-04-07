@@ -213,10 +213,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 			return;
 		}
 
-		setAttributes( {
-			id: generateUUID(),
-		} );
-	}, [ attributes.id, setAttributes ] );
+		updateField( 'id', generateUUID() );
+	}, [ attributes.id, updateField ] );
 
 	// Log attribute changes in development
 	useAttributeLogger( debouncedAttributes );

@@ -120,11 +120,17 @@ export function resolveMigrationState(
 				entry.manifest as ManifestDocument,
 				migrationRegistry.currentManifest as ManifestDocument
 			);
+			let confidence = 0.95;
+			if ( ! migratedValidation.isValid ) {
+				confidence = 0.2;
+			} else if ( unresolved.length > 0 ) {
+				confidence = 0.8;
+			}
 
 			return {
 				analysis: {
 					affectedFields: delta,
-					confidence: unresolved.length > 0 ? 0.8 : 0.95,
+					confidence,
 					currentMigrationVersion: entry.fromMigrationVersion,
 					needsMigration: true,
 					reasons: [
