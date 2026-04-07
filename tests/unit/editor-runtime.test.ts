@@ -94,6 +94,31 @@ describe("runtime editor helpers", () => {
     expect(field.reason).toContain("manual");
   });
 
+  test("describeEditorField only exposes enum options for select controls", () => {
+    const field = describeEditorField(
+      "alignment",
+      createAttribute({
+        ts: {
+          items: null,
+          kind: "string",
+          required: false,
+          union: null,
+        },
+        wp: {
+          enum: ["left", "center", "right"],
+          hasDefault: true,
+          type: "string",
+        },
+      }),
+      {
+        manual: ["alignment"],
+      },
+    );
+
+    expect(field.control).toBe("unsupported");
+    expect(field.options).toEqual([]);
+  });
+
   test("createEditorModel infers controls and flattens nested object leaves", () => {
     const manifest: ManifestDocument = {
       attributes: {

@@ -227,7 +227,7 @@ export function describeEditorField(
 			isNumber(attribute.typia.constraints.minimum)
 				? attribute.typia.constraints.minimum
 				: null,
-		options: getOptions(attribute),
+		options: control === "select" ? getOptions(attribute) : [],
 		path,
 		reason,
 		required: attribute.ts.required === true,
