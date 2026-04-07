@@ -245,7 +245,7 @@ async function applyCompoundPatches(
  *
  * This copies the shared migration UI files, wires template-specific editor
  * hooks, and injects pinned migration scripts that shell out to the matching
- * `@wp-typia/create` CLI version.
+ * `wp-typia` CLI version.
  */
 export async function applyMigrationUiCapability({
 	packageManager,
@@ -260,9 +260,9 @@ export async function applyMigrationUiCapability({
 	await copyInterpolatedDirectory(commonTemplateDir, projectDir, variables);
 
 	await mutatePackageJson(projectDir, (packageJson) => {
-		const createCliSpecifier = `@wp-typia/create@${getPackageVersions().createPackageVersion.replace(/^[~^]/u, "")}`;
+		const canonicalCliSpecifier = `wp-typia@${getPackageVersions().wpTypiaPackageVersion.replace(/^[~^]/u, "")}`;
 		const migrationCli = (args: string) =>
-			formatPackageExecCommand(packageManager, createCliSpecifier, `migrations ${args}`);
+			formatPackageExecCommand(packageManager, canonicalCliSpecifier, `migrations ${args}`);
 		packageJson.dependencies = {
 			...(packageJson.dependencies ?? {}),
 			"@wordpress/api-fetch": "^7.42.0",

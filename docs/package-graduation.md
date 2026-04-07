@@ -7,12 +7,12 @@ stable runtime helpers out of `@wp-typia/create`.
 
 Current recommendation:
 
-- keep `@wp-typia/create` as the canonical generated-project import surface
-  through v1
-- introduce `@wp-typia/block-runtime` now as the graduation prototype for the
-  stable block runtime helper set
-- defer scaffold migration and source extraction until the facade package is
-  proven in docs, tests, and real usage
+- keep `wp-typia` as the canonical CLI package
+- keep `@wp-typia/create` as the compatibility/programmatic scaffold package
+- treat `@wp-typia/block-runtime` as the normative generated-project helper
+  surface for stable runtime helpers
+- continue narrowing `@wp-typia/create/runtime/*` toward compatibility shims
+  only
 
 ## Options considered
 
@@ -39,7 +39,7 @@ Pros:
 Cons:
 
 - one more package to build, test, and publish
-- temporary duplication while `@wp-typia/create` remains canonical
+- temporary duplication while `@wp-typia/create` remains a compatibility bridge
 
 ### 3. Split into narrower packages immediately
 
@@ -71,10 +71,10 @@ Keep these out of scope for the new package:
 ## Migration path
 
 1. Ship `@wp-typia/block-runtime` as a facade package.
-2. Keep `@wp-typia/create` canonical for generated projects through v1.
-3. Validate docs, tests, and external DX without changing scaffold imports.
-4. If the package boundary proves useful, migrate docs/examples later.
-5. Only then consider source extraction or scaffold adoption.
+2. Migrate generated projects, examples, and docs onto `@wp-typia/block-runtime/*`.
+3. Keep `@wp-typia/create` available as a compatibility/programmatic package.
+4. Validate docs, tests, and external DX on the new package boundary.
+5. Only then consider deeper source extraction or retiring compatibility layers.
 
 ## Release note for the first version
 

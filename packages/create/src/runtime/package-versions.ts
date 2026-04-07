@@ -15,6 +15,7 @@ interface PackageVersions {
 	blockTypesPackageVersion: string;
 	createPackageVersion: string;
 	restPackageVersion: string;
+	wpTypiaPackageVersion: string;
 }
 
 const require = createRequire(import.meta.url);
@@ -74,6 +75,10 @@ export function getPackageVersions(): PackageVersions {
 		) ??
 		resolveInstalledPackageManifest("@wp-typia/block-runtime") ??
 		{};
+	const wpTypiaManifest =
+		readPackageManifest(path.join(CREATE_PACKAGE_ROOT, "..", "wp-typia", "package.json")) ??
+		resolveInstalledPackageManifest("wp-typia") ??
+		{};
 
 	cachedPackageVersions = {
 		apiClientPackageVersion: normalizeVersionRange(
@@ -92,6 +97,9 @@ export function getPackageVersions(): PackageVersions {
 		restPackageVersion: normalizeVersionRange(
 			createManifest.dependencies?.["@wp-typia/rest"] ??
 				resolveInstalledPackageManifest("@wp-typia/rest")?.version,
+		),
+		wpTypiaPackageVersion: normalizeVersionRange(
+			wpTypiaManifest.version ?? createManifest.version,
 		),
 	};
 

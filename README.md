@@ -2,7 +2,7 @@
 
 [![CI/CD](https://github.com/imjlk/wp-typia/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/imjlk/wp-typia/actions)
 [![License: GPL-2.0+](https://img.shields.io/badge/License-GPL--2.0+-blue.svg)](https://opensource.org/licenses/GPL-2.0+)
-[![npm version](https://badge.fury.io/js/%40wp-typia%2Fcreate.svg)](https://www.npmjs.com/package/@wp-typia/create)
+[![npm version](https://badge.fury.io/js/wp-typia.svg)](https://www.npmjs.com/package/wp-typia)
 [![codecov](https://codecov.io/gh/imjlk/wp-typia/branch/main/graph/badge.svg)](https://codecov.io/gh/imjlk/wp-typia)
 
 Build WordPress blocks that can evolve safely.
@@ -35,13 +35,9 @@ Use **`wp-typia`** when you need a block that will grow:
 ## Quick Start
 
 ```bash
-bun create wp-typia my-block
+bunx wp-typia my-block
 # or
-bunx @wp-typia/create my-block
-# or
-npx @wp-typia/create my-block
-# compatibility
-npx create-wp-typia my-block
+npx wp-typia my-block
 ```
 
 ### Built-in templates
@@ -111,13 +107,13 @@ The `compound` template creates a parent/child block structure with hidden imple
 ## Example flows
 
 ```bash
-npx @wp-typia/create my-block --template basic --package-manager pnpm --yes --no-install
-npx @wp-typia/create my-block --template interactivity --package-manager npm --yes --no-install
-npx @wp-typia/create my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
-npx @wp-typia/create my-block --template persistence --data-storage custom-table --persistence-policy public --package-manager npm --yes --no-install
-npx @wp-typia/create my-block --template compound --package-manager bun --yes --no-install
-npx @wp-typia/create my-block --template compound --persistence-policy public --package-manager npm --yes --no-install
-npx @wp-typia/create my-block --template basic --with-migration-ui --package-manager bun --yes --no-install
+npx wp-typia my-block --template basic --package-manager pnpm --yes --no-install
+npx wp-typia my-block --template interactivity --package-manager npm --yes --no-install
+npx wp-typia my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
+npx wp-typia my-block --template persistence --data-storage custom-table --persistence-policy public --package-manager npm --yes --no-install
+npx wp-typia my-block --template compound --package-manager bun --yes --no-install
+npx wp-typia my-block --template compound --persistence-policy public --package-manager npm --yes --no-install
+npx wp-typia my-block --template basic --with-migration-ui --package-manager bun --yes --no-install
 ```
 
 ## Start here
@@ -130,7 +126,7 @@ npx @wp-typia/create my-block --template basic --with-migration-ui --package-man
 
 ## Remote templates
 
-`@wp-typia/create` can scaffold from:
+`wp-typia` can scaffold from:
 
 - built-in template ids
 - local paths
@@ -153,9 +149,9 @@ External template configs execute trusted JavaScript (`index.js` / `index.cjs` /
 Remote template examples:
 
 ```bash
-npx @wp-typia/create my-block --template ./local-template-dir --package-manager npm --yes --no-install
-npx @wp-typia/create my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
-npx @wp-typia/create my-block --template @scope/create-block-template --variant hero --package-manager npm --yes --no-install
+npx wp-typia my-block --template ./local-template-dir --package-manager npm --yes --no-install
+npx wp-typia my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
+npx wp-typia my-block --template @scope/create-block-template --variant hero --package-manager npm --yes --no-install
 ```
 
 ## Documentation
@@ -196,20 +192,20 @@ If you want to see the “everything included” shape of `wp-typia`, start with
 
 ## Packages
 
-- [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create)
+- [`wp-typia`](https://www.npmjs.com/package/wp-typia) as the canonical CLI package
+- [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create) as the compatibility/programmatic scaffold package
 - [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types)
 - [`@wp-typia/rest`](https://www.npmjs.com/package/@wp-typia/rest)
 - [`@wp-typia/api-client`](https://www.npmjs.com/package/@wp-typia/api-client)
 - [`@wp-typia/block-runtime`](https://www.npmjs.com/package/@wp-typia/block-runtime) as the current graduation prototype for defaults/editor/validation helpers
-- [`create-wp-typia`](https://www.npmjs.com/package/create-wp-typia) for `bun create wp-typia` compatibility
 
 ## Project Structure
 
 ```text
 wp-typia/
 ├── packages/
-│   ├── create/                 # Canonical scoped CLI source (@wp-typia/create)
-│   ├── create-wp-typia/        # Unscoped compatibility shim
+│   ├── wp-typia/               # Canonical CLI package
+│   ├── create/                 # Compatibility/programmatic scaffold runtime
 │   ├── wp-typia-api-client/    # Backend-neutral generated API client runtime
 │   ├── wp-typia-block-runtime/ # Prototype block runtime facade package
 │   ├── wp-typia-rest/          # Typed REST client helpers
@@ -267,7 +263,7 @@ Command map:
 | `bun run ci:local`                       | Fast maintainer preflight without E2E/wp-env      |
 | `bun run build`                          | Product packages and the repo-local reference app |
 | `bun run examples:build`                 | Reference app only                                |
-| `bun run --filter @wp-typia/create test` | CLI/runtime only                                  |
+| `bun run --filter wp-typia test`         | Canonical CLI package checks                      |
 | `bun run examples:test:e2e`              | Playwright against the reference app              |
 
 ## License

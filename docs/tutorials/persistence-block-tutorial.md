@@ -1,4 +1,4 @@
-# Persistence Block Tutorial: Building Data-Backed Blocks with `@wp-typia/create`
+# Persistence Block Tutorial: Building Data-Backed Blocks with `wp-typia`
 
 This tutorial walks through creating a WordPress block with server-side persistence using the `persistence` template. You'll learn how to build blocks that store and retrieve data via the WordPress REST API with type-safe validation.
 
@@ -21,7 +21,7 @@ The `persistence` template extends the basic block pattern with:
 ## Step 1: Create Your Block
 
 ```bash
-npx @wp-typia/create my-counter --template persistence --package-manager npm --yes --no-install
+npx wp-typia my-counter --template persistence --package-manager npm --yes --no-install
 cd my-counter
 npm install
 ```
@@ -40,7 +40,7 @@ The persistence template accepts additional CLI flags:
 Example with custom options:
 
 ```bash
-npx @wp-typia/create my-counter \
+npx wp-typia my-counter \
   --template persistence \
   --data-storage custom-table \
   --persistence-policy public \

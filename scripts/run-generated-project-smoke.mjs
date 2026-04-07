@@ -8,8 +8,8 @@ import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const packageRoot = path.resolve(__dirname, "../packages/create");
-const entryPath = path.resolve(packageRoot, "dist/cli.js");
+const wpTypiaPackageRoot = path.resolve(__dirname, "../packages/wp-typia");
+const entryPath = path.resolve(wpTypiaPackageRoot, "bin/wp-typia.js");
 const PACKAGE_MANAGERS = {
 	bun: {
 		packageManagerField: "bun@1.3.10",
@@ -126,7 +126,11 @@ function getPackageManager(packageManager) {
 	return manager;
 }
 
-function ensureCreateWpTypiaBuilt() {
+function ensureCanonicalCliReady() {
+	const createRuntimeIndexPath = path.resolve(
+		__dirname,
+		"../packages/create/dist/runtime/index.js",
+	);
 	const apiClientDistPath = path.resolve(
 		__dirname,
 		"../packages/wp-typia-api-client/dist/index.js",
@@ -153,6 +157,7 @@ function ensureCreateWpTypiaBuilt() {
 	);
 	if (
 		fs.existsSync(entryPath) &&
+		fs.existsSync(createRuntimeIndexPath) &&
 		fs.existsSync(apiClientDistPath) &&
 		fs.existsSync(blockRuntimeDistPath) &&
 		fs.existsSync(blockTypesDistPath) &&
@@ -381,20 +386,20 @@ function assertGeneratedPackageBoundary(projectDir) {
 		if (typeof scriptValue !== "string") {
 			continue;
 		}
-		if (!scriptValue.includes("@wp-typia/create")) {
+		if (!scriptValue.includes("wp-typia")) {
 			continue;
 		}
 		if (scriptName.startsWith("migration:")) {
-			if (!/@wp-typia\/create@\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?/u.test(scriptValue)) {
+			if (!/wp-typia@\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?/u.test(scriptValue)) {
 				throw new Error(
-					`Expected generated migration script "${scriptName}" to pin @wp-typia/create`,
+					`Expected generated migration script "${scriptName}" to pin wp-typia`,
 				);
 			}
 			continue;
 		}
-		if (scriptValue.includes("@wp-typia/create")) {
+		if (scriptValue.includes("wp-typia")) {
 			throw new Error(
-				`Expected generated project script "${scriptName}" to avoid @wp-typia/create`,
+				`Expected generated project script "${scriptName}" to avoid wp-typia`,
 			);
 		}
 	}
@@ -681,7 +686,7 @@ function main() {
 	const projectDir = path.join(tempRoot, projectName);
 
 	try {
-		ensureCreateWpTypiaBuilt();
+	ensureCanonicalCliReady();
 
 		run(runtime, [
 			entryPath,

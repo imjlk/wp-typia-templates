@@ -1,30 +1,31 @@
 # @wp-typia/create
 
-Scaffold WordPress Typia block templates with a selectable project package manager.
+Compatibility and programmatic scaffold runtime package for `wp-typia`.
 
 ## Usage
 
 ```bash
-bun create wp-typia my-block
+bunx wp-typia my-block
+# or
+npx wp-typia my-block
 ```
 
-Alternative entrypoints:
+This package no longer owns the CLI bin. Use the canonical CLI package for new
+scaffolds:
 
 ```bash
-bunx @wp-typia/create my-block
-npx @wp-typia/create my-block
-# compatibility
-npx create-wp-typia my-block
+bunx wp-typia my-block
+npx wp-typia my-block
 ```
 
 The CLI always asks which package manager the generated project should use.
 For non-interactive usage, pass it explicitly:
 
 ```bash
-npx @wp-typia/create my-block --template basic --package-manager pnpm --yes --no-install
-npx @wp-typia/create my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
-npx @wp-typia/create my-block --template compound --package-manager bun --yes --no-install
-npx @wp-typia/create my-block --template persistence --namespace experiments --text-domain my-block --php-prefix my_block --package-manager bun --yes --no-install
+npx wp-typia my-block --template basic --package-manager pnpm --yes --no-install
+npx wp-typia my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
+npx wp-typia my-block --template compound --package-manager bun --yes --no-install
+npx wp-typia my-block --template persistence --namespace experiments --text-domain my-block --php-prefix my_block --package-manager bun --yes --no-install
 ```
 
 Additional commands:
@@ -38,12 +39,12 @@ wp-typia doctor
 Remote template MVP:
 
 ```bash
-npx @wp-typia/create my-block --template ./local-template-dir --package-manager npm --yes --no-install
-npx @wp-typia/create my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
-npx @wp-typia/create my-block --template @scope/create-block-template --variant hero --package-manager npm --yes --no-install
+npx wp-typia my-block --template ./local-template-dir --package-manager npm --yes --no-install
+npx wp-typia my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
+npx wp-typia my-block --template @scope/create-block-template --variant hero --package-manager npm --yes --no-install
 ```
 
-When `--template` points at an official create-block external template config, `@wp-typia/create` supports `--variant <name>`. If the external template defines variants and you omit `--variant`, the first variant is selected automatically.
+When `--template` points at an official create-block external template config, `wp-typia` supports `--variant <name>`. If the external template defines variants and you omit `--variant`, the first variant is selected automatically.
 
 External template configs execute trusted JavaScript (`index.js` / `index.cjs` / `index.mjs`) in the same way `@wordpress/create-block` does. Only use local, GitHub, or npm template sources that you trust.
 
@@ -317,7 +318,7 @@ sync and `@wp-typia/block-runtime`, `@wp-typia/block-runtime/blocks`,
 `@wp-typia/block-runtime/identifiers`, `@wp-typia/block-runtime/inspector`, and
 `@wp-typia/block-runtime/validation` for shared runtime helpers.
 `@wp-typia/create/metadata-core` remains exported as a backward-compatible
-facade, and `@wp-typia/create` remains the CLI/scaffolding package.
+facade, and `@wp-typia/create` remains the compatibility/programmatic scaffold package.
 `@wp-typia/create/runtime/*` remains exported as a backward-compatible surface,
 but it is no longer the preferred generated-project import path.
 
@@ -391,4 +392,6 @@ bun run examples:lint
 bun run examples:test:e2e
 ```
 
-`@wp-typia/create` is the canonical package. `create-wp-typia` remains only as a compatibility shim for `bun create wp-typia` and existing unscoped installs.
+`wp-typia` is the canonical CLI package. `@wp-typia/create` remains available
+for programmatic scaffold/runtime imports and compatibility exports only.
+`create-wp-typia` is archived and should not be used for new installs.

@@ -60,14 +60,14 @@ function resolveRepoTsxBinary() {
 function resolvePackageRoot() {
 	const cwd = process.cwd();
 	const directPackageRoot = path.join(cwd, "package.json");
-	if (fs.existsSync(directPackageRoot) && fs.existsSync(path.join(cwd, "src", "cli.ts"))) {
+	if (fs.existsSync(directPackageRoot) && fs.existsSync(path.join(cwd, "src", "runtime"))) {
 		return cwd;
 	}
 
 	const nestedPackageRoot = path.join(cwd, "packages", "create");
 	if (
 		fs.existsSync(path.join(nestedPackageRoot, "package.json")) &&
-		fs.existsSync(path.join(nestedPackageRoot, "src", "cli.ts"))
+		fs.existsSync(path.join(nestedPackageRoot, "src", "runtime"))
 	) {
 		return nestedPackageRoot;
 	}
@@ -76,8 +76,9 @@ function resolvePackageRoot() {
 }
 
 function resolveCliEntryPath() {
-	const cliPath = path.join(packageRoot, "dist", "cli.js");
-	if (fs.existsSync(cliPath)) {
+	const cliPath = path.resolve(packageRoot, "..", "wp-typia", "bin", "wp-typia.js");
+	const createRuntimeIndexPath = path.join(packageRoot, "dist", "runtime", "index.js");
+	if (fs.existsSync(cliPath) && fs.existsSync(createRuntimeIndexPath)) {
 		return cliPath;
 	}
 
@@ -86,8 +87,8 @@ function resolveCliEntryPath() {
 		stdio: "inherit",
 	});
 
-	if (!fs.existsSync(cliPath)) {
-		throw new Error("Unable to build dist/cli.js for migration tests.");
+	if (!fs.existsSync(cliPath) || !fs.existsSync(createRuntimeIndexPath)) {
+		throw new Error("Unable to resolve the canonical wp-typia bin for migration tests.");
 	}
 
 	return cliPath;

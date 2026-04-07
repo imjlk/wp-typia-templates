@@ -1,8 +1,9 @@
 {
   "name": "create-wp-typia",
   "version": "1.3.9",
-  "description": "Compatibility shim for @wp-typia/create and bun create wp-typia",
+  "description": "Archived wp-typia initializer package kept only for repository history",
   "packageManager": "bun@1.3.10",
+  "private": true,
   "type": "module",
   "bin": {
     "create-wp-typia": "bin/create-wp-typia.js"
@@ -23,15 +24,10 @@
     "url": "https://github.com/imjlk/wp-typia/issues"
   },
   "homepage": "https://github.com/imjlk/wp-typia/tree/main/packages/create-wp-typia#readme",
-  "publishConfig": {
-    "access": "public"
-  },
   "engines": {
     "node": ">=20.0.0",
     "npm": ">=10.0.0",
     "bun": ">=1.3.10"
   },
-  "dependencies": {
-    "@wp-typia/create": "^0.11.1"
-  }
+  "dependencies": {}
 }
