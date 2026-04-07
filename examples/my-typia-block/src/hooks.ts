@@ -1,27 +1,27 @@
 /* eslint-disable no-console */
-import { useEffect, useState } from "@wordpress/element";
+import { useEffect, useState } from '@wordpress/element';
 import {
-  type TypiaValidationError,
-  type ValidationResult,
-  toValidationState,
-} from "@wp-typia/block-runtime/validation";
-import { generateUUID } from "./utils";
+	type TypiaValidationError,
+	type ValidationResult,
+	toValidationState,
+} from '@wp-typia/block-runtime/validation';
+import { generateUUID } from './utils';
 
 export {
-  formatValidationError,
-  formatValidationErrors,
-  toValidationState,
-} from "@wp-typia/block-runtime/validation";
+	formatValidationError,
+	formatValidationErrors,
+	toValidationState,
+} from '@wp-typia/block-runtime/validation';
 export type {
-  TypiaValidationError,
-  ValidationResult,
-} from "@wp-typia/block-runtime/validation";
+	TypiaValidationError,
+	ValidationResult,
+} from '@wp-typia/block-runtime/validation';
 
 /**
  * Custom hooks for My Typia Block
  */
-export * from "./hooks/useDebounce";
-export * from "./hooks/useLocalStorage";
+export * from './hooks/useDebounce';
+export * from './hooks/useLocalStorage';
 
 /**
  * Hook for Typia validation with real-time feedback
@@ -29,22 +29,22 @@ export * from "./hooks/useLocalStorage";
  * @param validator Validation function.
  * @return Validation state and current errors.
  */
-export function useTypiaValidation<T>(
-  data: T,
-  validator: (value: T) => ValidationResult<T>
+export function useTypiaValidation< T >(
+	data: T,
+	validator: ( value: T ) => ValidationResult< T >
 ) {
-  const [isValid, setIsValid] = useState(true);
-  const [errors, setErrors] = useState<TypiaValidationError[]>([]);
-  const [errorMessages, setErrorMessages] = useState<string[]>([]);
+	const [ isValid, setIsValid ] = useState( true );
+	const [ errors, setErrors ] = useState< TypiaValidationError[] >( [] );
+	const [ errorMessages, setErrorMessages ] = useState< string[] >( [] );
 
-  useEffect(() => {
-    const result = toValidationState(validator(data));
-    setIsValid(result.isValid);
-    setErrors(result.errors);
-    setErrorMessages(result.errorMessages);
-  }, [data, validator]);
+	useEffect( () => {
+		const result = toValidationState( validator( data ) );
+		setIsValid( result.isValid );
+		setErrors( result.errors );
+		setErrorMessages( result.errorMessages );
+	}, [ data, validator ] );
 
-  return { isValid, errors, errorMessages };
+	return { isValid, errors, errorMessages };
 }
 
 /**
@@ -52,20 +52,20 @@ export function useTypiaValidation<T>(
  * @return A stable UUID for the lifetime of the component.
  */
 export function useUUID() {
-  const [uuid] = useState(() => generateUUID());
+	const [ uuid ] = useState( () => generateUUID() );
 
-  return uuid;
+	return uuid;
 }
 
 /**
  * Hook for logging attribute changes in development
  * @param attributes Current block attributes.
  */
-export function useAttributeLogger(attributes: Record<string, unknown>) {
-  useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.log("My Typia Block attributes changed:", attributes);
-    }
-  }, [attributes]);
+export function useAttributeLogger( attributes: Record< string, unknown > ) {
+	useEffect( () => {
+		if ( process.env.NODE_ENV === 'development' ) {
+			// eslint-disable-next-line no-console
+			console.log( 'My Typia Block attributes changed:', attributes );
+		}
+	}, [ attributes ] );
 }
