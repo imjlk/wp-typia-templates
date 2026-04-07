@@ -75,6 +75,14 @@ describe( '@wp-typia/block-runtime/identifiers', () => {
 		expect( generateScopedClientId( 'demo' ) ).toBe( 'demo-012345678' );
 		expect( generateResourceKey( 'demo' ) ).toBe( 'demo-012345678' );
 	} );
+
+	test( 'prefixed helpers fall back to Math.random when crypto is unavailable', () => {
+		mockCrypto( undefined );
+		Math.random = () => 0.5;
+
+		expect( generateScopedClientId( 'demo' ) ).toMatch( /^demo-[a-z0-9]{9}$/ );
+		expect( generateResourceKey( 'demo' ) ).toMatch( /^demo-[a-z0-9]{9}$/ );
+	} );
 } );
 
 function mockCrypto(

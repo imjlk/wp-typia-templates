@@ -17,7 +17,7 @@ export function generateBlockId(): string {
  * @param prefix Prefix chosen by the scaffold/template.
  */
 export function generateScopedClientId( prefix: string ): string {
-	return `${ prefix }-${ generateScopedSuffix() }`;
+	return generatePrefixedScopedId( prefix );
 }
 
 /**
@@ -25,7 +25,7 @@ export function generateScopedClientId( prefix: string ): string {
  * @param prefix Prefix chosen by the scaffold/template.
  */
 export function generateResourceKey( prefix: string ): string {
-	return `${ prefix }-${ generateScopedSuffix() }`;
+	return generatePrefixedScopedId( prefix );
 }
 
 /**
@@ -60,6 +60,10 @@ function generateUuidV4(): string {
 			return value.toString( UUID_HEX_RADIX );
 		}
 	);
+}
+
+function generatePrefixedScopedId( prefix: string ): string {
+	return `${ prefix }-${ generateScopedSuffix() }`;
 }
 
 function generateScopedSuffix(): string {
