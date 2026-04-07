@@ -27,7 +27,8 @@ describe('repository DX baseline', () => {
 
 		expect(eslintConfig).toContain('scripts/**/*');
 		expect(eslintConfig).toContain('tests/**/*');
-		expect(eslintConfig).toContain('examples/**');
+		expect(eslintConfig).toMatch(/const repoIgnores = \[[\s\S]*["']examples\/\*\*["']/);
+		expect(scripts).toHaveProperty('examples:lint');
 		expect(scripts['examples:lint']).toContain('ESLINT_USE_FLAT_CONFIG=false');
 	});
 

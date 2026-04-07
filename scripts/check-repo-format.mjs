@@ -5,7 +5,17 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const repoRoot = path.resolve(import.meta.dirname, "..");
-const prettierBin = require.resolve("prettier/bin-prettier.js");
+const prettierPkg = require("prettier/package.json");
+const prettierBinRel =
+  typeof prettierPkg.bin === "string"
+    ? prettierPkg.bin
+    : prettierPkg.bin?.prettier;
+
+if (!prettierBinRel) {
+  throw new Error("Unable to resolve Prettier CLI bin path.");
+}
+
+const prettierBin = require.resolve(`prettier/${prettierBinRel}`);
 const prettierMode = process.argv.includes("--write") ? "--write" : "--check";
 
 const patterns = [
