@@ -12,6 +12,7 @@ describe("@wp-typia/block-runtime", () => {
 			metadataCoreModule,
 			defaultsModule,
 			editorModule,
+			identifiersModule,
 			inspectorModule,
 			validationModule,
 		] = await Promise.all([
@@ -20,6 +21,7 @@ describe("@wp-typia/block-runtime", () => {
 			import("@wp-typia/block-runtime/metadata-core"),
 			import("@wp-typia/block-runtime/defaults"),
 			import("@wp-typia/block-runtime/editor"),
+			import("@wp-typia/block-runtime/identifiers"),
 			import("@wp-typia/block-runtime/inspector"),
 			import("@wp-typia/block-runtime/validation"),
 		]);
@@ -34,9 +36,12 @@ describe("@wp-typia/block-runtime", () => {
 		expect(typeof metadataCoreModule.syncRestOpenApi).toBe("function");
 		expect(typeof defaultsModule.applyTemplateDefaultsFromManifest).toBe("function");
 		expect(typeof editorModule.createEditorModel).toBe("function");
+		expect(typeof identifiersModule.generateBlockId).toBe("function");
+		expect(typeof identifiersModule.generatePublicWriteRequestId).toBe("function");
 		expect(typeof inspectorModule.useEditorFields).toBe("function");
 		expect(typeof validationModule.toValidationResult).toBe("function");
 
+		expect("generateBlockId" in rootModule).toBe(false);
 		expect("manifestToOpenApi" in rootModule).toBe(false);
 		expect("syncRestOpenApi" in rootModule).toBe(false);
 	});

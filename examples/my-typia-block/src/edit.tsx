@@ -15,13 +15,14 @@ import {
 	useEditorFields,
 	useTypedAttributeUpdater,
 } from '@wp-typia/block-runtime/inspector';
+import { generateBlockId } from '@wp-typia/block-runtime/identifiers';
 import { MyTypiaBlockAttributes } from './types';
 import { sanitizeMyTypiaBlockAttributes, validators } from './validators';
 import { useTypiaValidation, useAttributeLogger, useDebounce } from './hooks';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ValidationErrorSummary } from './components/ValidationErrorSummary';
 import { MigrationDashboard } from './admin/migration-dashboard';
-import { classNames, generateUUID } from './utils';
+import { classNames } from './utils';
 
 type EditProps = BlockEditProps< MyTypiaBlockAttributes >;
 type AlignmentValue = NonNullable< MyTypiaBlockAttributes[ 'alignment' ] >;
@@ -213,7 +214,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 			return;
 		}
 
-		updateField( 'id', generateUUID() );
+		updateField( 'id', generateBlockId() );
 	}, [ attributes.id, updateField ] );
 
 	// Log attribute changes in development

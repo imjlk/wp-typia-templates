@@ -5,6 +5,7 @@ import {
 	type ManifestDefaultsDocument,
 	applyTemplateDefaultsFromManifest,
 } from '@wp-typia/block-runtime/defaults';
+import { generateResourceKey } from '@wp-typia/block-runtime/identifiers';
 import {
 	createAttributeUpdater as createValidatedAttributeUpdater,
 	type ValidationResult,
@@ -51,7 +52,7 @@ export const sanitizePersistenceCounterAttributes = (
 		resourceKey:
 			normalized.resourceKey && normalized.resourceKey.length > 0
 				? normalized.resourceKey
-				: generateResourceKey(),
+				: generateResourceKey( 'persistence-counter' ),
 	} );
 };
 
@@ -74,6 +75,3 @@ export function createAttributeUpdater(
 		}
 	);
 }
-
-const generateResourceKey = (): string =>
-	'persistence-counter-' + Math.random().toString( 36 ).slice( 2, 11 );

@@ -47,6 +47,9 @@
       "@wp-typia/block-runtime/editor": [
         "packages/wp-typia-block-runtime/src/editor.ts"
       ],
+      "@wp-typia/block-runtime/identifiers": [
+        "packages/wp-typia-block-runtime/src/identifiers.ts"
+      ],
       "@wp-typia/block-runtime/inspector": [
         "packages/wp-typia-block-runtime/src/inspector.ts"
       ],

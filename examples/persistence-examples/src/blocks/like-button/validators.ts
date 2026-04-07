@@ -5,6 +5,7 @@ import {
 	type ManifestDefaultsDocument,
 	applyTemplateDefaultsFromManifest,
 } from '@wp-typia/block-runtime/defaults';
+import { generateResourceKey } from '@wp-typia/block-runtime/identifiers';
 import {
 	createAttributeUpdater as createValidatedAttributeUpdater,
 	type ValidationResult,
@@ -51,7 +52,7 @@ export const sanitizePersistenceLikeButtonAttributes = (
 		resourceKey:
 			normalized.resourceKey && normalized.resourceKey.length > 0
 				? normalized.resourceKey
-				: generateResourceKey(),
+				: generateResourceKey( 'persistence-like-button' ),
 	} );
 };
 
@@ -76,6 +77,3 @@ export function createAttributeUpdater(
 		}
 	);
 }
-
-const generateResourceKey = (): string =>
-	'persistence-like-button-' + Math.random().toString( 36 ).slice( 2, 11 );

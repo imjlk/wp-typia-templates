@@ -5,7 +5,7 @@ import {
 	type ValidationResult,
 	toValidationState,
 } from '@wp-typia/block-runtime/validation';
-import { generateUUID } from './utils';
+import { generateBlockId } from '@wp-typia/block-runtime/identifiers';
 
 export {
 	formatValidationError,
@@ -52,7 +52,7 @@ export function useTypiaValidation< T >(
  * @return A stable UUID for the lifetime of the component.
  */
 export function useUUID() {
-	const [ uuid ] = useState( () => generateUUID() );
+	const [ uuid ] = useState( () => generateBlockId() );
 
 	return uuid;
 }

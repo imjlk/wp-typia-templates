@@ -5,18 +5,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { ValidationErrorSummary } from "../../examples/my-typia-block/src/components/ValidationErrorSummary";
 import { isNonArrayObject } from "../../examples/my-typia-block/src/migrations/plain-object";
-import { generateUUID } from "../../examples/my-typia-block/src/utils/uuid";
 
 describe("my-typia-block reference app helpers", () => {
-  test("generateUUID uses native randomUUID when available and falls back to a valid UUID v4", () => {
-    const nativeUuid = "00000000-0000-4000-8000-000000000000";
-
-    expect(generateUUID(() => nativeUuid)).toBe(nativeUuid);
-    expect(generateUUID(null)).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-    );
-  });
-
   test("migration object helper preserves the example semantics", () => {
     class ExampleValue {}
 
@@ -56,5 +46,29 @@ describe("my-typia-block reference app helpers", () => {
     expect(migrationDetectorSource).toContain("detectBlockMigration");
     expect(migrationDetectorSource).toContain("generateMigrationReport");
     expect(migrationDetectorSource).toContain("scanSiteForMigrations");
+  });
+
+  test("reference app imports the shared runtime identifier helper instead of a local UUID utility", () => {
+    const editSource = fs.readFileSync(
+      path.join(import.meta.dir, "../../examples/my-typia-block/src/edit.tsx"),
+      "utf8"
+    );
+    const hooksSource = fs.readFileSync(
+      path.join(import.meta.dir, "../../examples/my-typia-block/src/hooks.ts"),
+      "utf8"
+    );
+    const validatorsSource = fs.readFileSync(
+      path.join(import.meta.dir, "../../examples/my-typia-block/src/validators.ts"),
+      "utf8"
+    );
+
+    expect(editSource).toContain("@wp-typia/block-runtime/identifiers");
+    expect(hooksSource).toContain("@wp-typia/block-runtime/identifiers");
+    expect(validatorsSource).toContain("@wp-typia/block-runtime/identifiers");
+    expect(
+      fs.existsSync(
+        path.join(import.meta.dir, "../../examples/my-typia-block/src/utils/uuid.ts")
+      )
+    ).toBe(false);
   });
 });

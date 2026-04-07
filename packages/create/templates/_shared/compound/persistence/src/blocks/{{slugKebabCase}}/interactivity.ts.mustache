@@ -1,4 +1,5 @@
 import { getContext, store } from '@wordpress/interactivity';
+import { generatePublicWriteRequestId } from '@wp-typia/block-runtime/identifiers';
 
 import { fetchState, writeState } from './api';
 import type { {{pascalCase}}Context, {{pascalCase}}State } from './types';
@@ -20,23 +21,6 @@ function getWriteBlockedMessage(
 	return context.persistencePolicy === 'authenticated'
 		? 'Sign in to persist this counter.'
 		: 'Reload the page to refresh this write token.';
-}
-
-function createPublicWriteRequestId(): string {
-	if ( typeof globalThis.crypto?.randomUUID === 'function' ) {
-		return globalThis.crypto.randomUUID();
-	}
-
-	if ( typeof globalThis.crypto?.getRandomValues === 'function' ) {
-		const bytes = new Uint8Array( 16 );
-		globalThis.crypto.getRandomValues( bytes );
-		return Array.from(
-			bytes,
-			( byte ) => byte.toString( 16 ).padStart( 2, '0' )
-		).join( '' );
-	}
-
-	return `req-${ Date.now() }-${ Math.random().toString( 16 ).slice( 2, 10 ) }`;
 }
 
 const { actions, state } = store( '{{slugKebabCase}}', {
@@ -103,7 +87,7 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 					postId: context.postId,
 					publicWriteRequestId:
 						context.persistencePolicy === 'public'
-							? createPublicWriteRequestId()
+							? generatePublicWriteRequestId()
 							: undefined,
 					publicWriteToken:
 						context.persistencePolicy === 'public' &&
