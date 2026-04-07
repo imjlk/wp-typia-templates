@@ -18,7 +18,7 @@ Layer the migration dashboard capability onto a freshly scaffolded project.
 
 This copies the shared migration UI files, wires template-specific editor
 hooks, and injects pinned migration scripts that shell out to the matching
-`@wp-typia/create` CLI version.
+`wp-typia` CLI version.
 
 #### Parameters
 

@@ -373,7 +373,7 @@ ___
 
 ### restWriteAuthMode
 
-• **restWriteAuthMode**: ``"public-signed-token"`` \| ``"authenticated-rest-nonce"``
+• **restWriteAuthMode**: ``"authenticated-rest-nonce"`` \| ``"public-signed-token"``
 
 #### Defined in
 
@@ -473,7 +473,7 @@ ___
 
 ### persistencePolicy
 
-• **persistencePolicy**: ``"public"`` \| ``"authenticated"``
+• **persistencePolicy**: ``"authenticated"`` \| ``"public"``
 
 #### Defined in
 

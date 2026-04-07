@@ -250,7 +250,7 @@ and returns a normalized definition without mutating the input endpoint.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `endpoint` | `Pick`\<[`EndpointOpenApiEndpointDefinition`](packages_wp_typia_block_runtime_src_schema_core.md#endpointopenapiendpointdefinition), ``"auth"`` \| ``"path"`` \| ``"operationId"`` \| ``"authMode"`` \| ``"wordpressAuth"`` \| ``"method"``\> | Endpoint auth fields to normalize, including `auth`, `authMode`, `wordpressAuth`, and optional identity fields used in error messages (`operationId`, `path`, and `method`). |
+| `endpoint` | `Pick`\<[`EndpointOpenApiEndpointDefinition`](packages_wp_typia_block_runtime_src_schema_core.md#endpointopenapiendpointdefinition), ``"operationId"`` \| ``"auth"`` \| ``"authMode"`` \| ``"path"`` \| ``"wordpressAuth"`` \| ``"method"``\> | Endpoint auth fields to normalize, including `auth`, `authMode`, `wordpressAuth`, and optional identity fields used in error messages (`operationId`, `path`, and `method`). |
 
 #### Returns
 

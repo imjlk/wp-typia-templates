@@ -18,7 +18,7 @@
 
 ### id
 
-• **id**: ``"basic"`` \| ``"interactivity"`` \| ``"persistence"`` \| ``"compound"``
+• **id**: ``"interactivity"`` \| ``"basic"`` \| ``"persistence"`` \| ``"compound"``
 
 #### Defined in
 

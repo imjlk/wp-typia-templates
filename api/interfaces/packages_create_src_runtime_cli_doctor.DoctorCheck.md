@@ -42,7 +42,7 @@ ___
 
 ### status
 
-• **status**: ``"fail"`` \| ``"pass"``
+• **status**: ``"pass"`` \| ``"fail"``
 
 Final pass/fail status for this diagnostic row.
 

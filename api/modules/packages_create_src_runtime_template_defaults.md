@@ -93,7 +93,7 @@ Returns the metadata defaults for a built-in scaffold template id.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `templateId` | ``"basic"`` \| ``"interactivity"`` \| ``"persistence"`` \| ``"compound"`` | Built-in template id whose metadata defaults should be read. |
+| `templateId` | ``"interactivity"`` \| ``"basic"`` \| ``"persistence"`` \| ``"compound"`` | Built-in template id whose metadata defaults should be read. |
 
 #### Returns
 

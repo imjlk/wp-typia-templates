@@ -47,7 +47,7 @@ resolve to the shared base plus their own template directory.
 
 | Name | Type |
 | :------ | :------ |
-| `templateId` | ``"basic"`` \| ``"interactivity"`` \| ``"persistence"`` \| ``"compound"`` |
+| `templateId` | ``"interactivity"`` \| ``"basic"`` \| ``"persistence"`` \| ``"compound"`` |
 | `«destructured»` | [`BuiltInTemplateVariantOptions`](../interfaces/packages_create_src_runtime_template_builtins.BuiltInTemplateVariantOptions.md) |
 
 #### Returns
@@ -75,7 +75,7 @@ removed before the error is rethrown.
 
 | Name | Type |
 | :------ | :------ |
-| `templateId` | ``"basic"`` \| ``"interactivity"`` \| ``"persistence"`` \| ``"compound"`` |
+| `templateId` | ``"interactivity"`` \| ``"basic"`` \| ``"persistence"`` \| ``"compound"`` |
 | `options` | [`BuiltInTemplateVariantOptions`](../interfaces/packages_create_src_runtime_template_builtins.BuiltInTemplateVariantOptions.md) |
 
 #### Returns

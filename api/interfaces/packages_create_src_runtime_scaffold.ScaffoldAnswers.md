@@ -70,7 +70,7 @@ ___
 
 ### persistencePolicy
 
-• `Optional` **persistencePolicy**: ``"public"`` \| ``"authenticated"``
+• `Optional` **persistencePolicy**: ``"authenticated"`` \| ``"public"``
 
 #### Defined in
 

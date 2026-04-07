@@ -1,6 +1,6 @@
-# Basic Block Tutorial: Building Your First Typia Block with `@wp-typia/create`
+# Basic Block Tutorial: Building Your First Typia Block with `wp-typia`
 
-Welcome to the basic block tutorial for `wp-typia`. This hands-on guide walks through creating a fully functional, type-safe WordPress block with runtime validation. For clarity, this tutorial uses `@wp-typia/create` with `npm`; if you choose a different package manager, swap the generated project commands accordingly.
+Welcome to the basic block tutorial for `wp-typia`. This hands-on guide walks through creating a fully functional, type-safe WordPress block with runtime validation. For clarity, this tutorial uses `wp-typia` with `npm`; if you choose a different package manager, swap the generated project commands accordingly.
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ Welcome to the basic block tutorial for `wp-typia`. This hands-on guide walks th
 Let's start by creating a new block using the Basic template:
 
 ```bash
-npx @wp-typia/create my-typia-block --template basic --package-manager npm --yes --no-install
+npx wp-typia my-typia-block --template basic --package-manager npm --yes --no-install
 cd my-typia-block
 npm install
 ```

@@ -2,14 +2,13 @@
 
 This repository has six public surfaces:
 
-## 1. `@wp-typia/create`
+## 1. `wp-typia`
 
 The CLI is the primary entrypoint for new users.
 
 ```bash
-bun create wp-typia my-block
-bunx @wp-typia/create my-block
-npx @wp-typia/create my-block
+bunx wp-typia my-block
+npx wp-typia my-block
 ```
 
 Common commands:
@@ -135,9 +134,19 @@ and fuzzing commands when you want to cover every configured legacy migration ve
 every configured block target in that workspace. `migrations doctor` remains
 version-scoped and is not broadened by `--all`.
 
-Compatibility note: `create-wp-typia` remains available only as an unscoped shim for `bun create wp-typia` and historical installs. New users should start from `@wp-typia/create`.
+Compatibility note: `@wp-typia/create` remains available for programmatic imports and compatibility exports, but `wp-typia` is the canonical CLI package. `create-wp-typia` is archived and no longer a supported path for new installs.
 
-## 2. `@wp-typia/block-types`
+## 2. `@wp-typia/create`
+
+`@wp-typia/create` now owns the non-CLI scaffold/runtime export surface:
+
+- root runtime exports such as `projectJsonSchemaDocument()`
+- `@wp-typia/create/metadata-core` as a compatibility facade
+- `@wp-typia/create/runtime/*` compatibility subpaths
+
+It is still publishable, but it is no longer the canonical CLI install surface.
+
+## 3. `@wp-typia/block-types`
 
 Generated projects can import shared semantic unions, block support metadata
 types, and support-generated style attribute helpers directly in `src/types.ts`
@@ -149,7 +158,7 @@ import type { BlockStyleSupportAttributes } from "@wp-typia/block-types/block-ed
 import type { BlockSupports } from "@wp-typia/block-types/blocks/supports";
 ```
 
-## 3. `@wp-typia/rest`
+## 4. `@wp-typia/rest`
 
 `@wp-typia/rest` provides typed client-side helpers for WordPress REST usage:
 
@@ -188,7 +197,7 @@ Refresh-sensitive auth remains explicit there:
 - there is no built-in automatic retry when nonce or token state is stale; the
   caller refreshes state and then invokes `refetch()` or `mutate()` again
 
-## 4. `@wp-typia/api-client`
+## 5. `@wp-typia/api-client`
 
 `@wp-typia/api-client` is the transport-neutral sibling to `@wp-typia/rest`.
 
@@ -234,7 +243,7 @@ as `{ mechanism: "rest-nonce" }` or
 Legacy `authMode` is still accepted for compatibility, but it is now adapter
 metadata rather than the primary authored meaning.
 
-## 5. `@wp-typia/block-runtime`
+## 6. `@wp-typia/block-runtime`
 
 `@wp-typia/block-runtime` is the normative generated-project runtime package for
 shared block helpers, while `@wp-typia/block-runtime/metadata-core` owns the
@@ -253,7 +262,7 @@ The root `@wp-typia/block-runtime` export does not include `metadata-core` or
 `schema-core` directly. Those stay on explicit subpaths, and this package is
 now the canonical scaffold import target for generated projects.
 
-## 6. Generated project runtime
+## 7. Generated project runtime
 
 Each scaffolded project exposes a few predictable files:
 
@@ -291,7 +300,7 @@ Generated projects can also import shared runtime helpers from `@wp-typia/block-
 Use `@wp-typia/block-runtime/metadata-core` for metadata sync and
 `@wp-typia/block-runtime/*` for generated-project runtime helpers.
 `@wp-typia/create/metadata-core` remains available as a backward-compatible
-facade, and `@wp-typia/create` remains the CLI package.
+facade, and `@wp-typia/create` remains the compatibility/programmatic package.
 `@wp-typia/create/runtime/*` remains exported for backward compatibility, but
 it is no longer the preferred generated-project import path.
 
@@ -479,7 +488,7 @@ When you opt `compound` into persistence with `--data-storage` or `--persistence
 
 For persistence-enabled `compound`, the parent block follows the same REST extension pattern as `persistence`. The hidden child block does not own REST routes or storage behavior.
 
-## 7. Repo-local example app
+## 8. Repo-local example app
 
 The repository keeps two reference apps:
 
@@ -510,7 +519,7 @@ bun run examples:test:e2e
 
 Legacy root shortcuts such as `bun run dev` and `bun run test:e2e` remain available as compatibility aliases.
 
-## 8. Generated reference docs
+## 9. Generated reference docs
 
 Contributor note:
 

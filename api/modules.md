@@ -81,7 +81,6 @@
 - [examples/persistence-examples/src/blocks/like-button/save](modules/examples_persistence_examples_src_blocks_like_button_save.md)
 - [examples/persistence-examples/src/blocks/like-button/types](modules/examples_persistence_examples_src_blocks_like_button_types.md)
 - [examples/persistence-examples/src/blocks/like-button/validators](modules/examples_persistence_examples_src_blocks_like_button_validators.md)
-- [packages/create/src/cli](modules/packages_create_src_cli.md)
 - [packages/create/src/internal/typia-llm](modules/packages_create_src_internal_typia_llm.md)
 - [packages/create/src/internal/wordpress-ai](modules/packages_create_src_internal_wordpress_ai.md)
 - [packages/create/src/runtime/blocks](modules/packages_create_src_runtime_blocks.md)

@@ -103,7 +103,7 @@ ___
 
 ### requestLocation
 
-• `Optional` **requestLocation**: ``"body"`` \| ``"query"`` \| ``"query-and-body"``
+• `Optional` **requestLocation**: ``"query"`` \| ``"body"`` \| ``"query-and-body"``
 
 #### Defined in
 

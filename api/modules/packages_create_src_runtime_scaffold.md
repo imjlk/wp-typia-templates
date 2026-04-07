@@ -125,7 +125,7 @@ ___
 
 ### isPersistencePolicy
 
-▸ **isPersistencePolicy**(`value`): value is "public" \| "authenticated"
+▸ **isPersistencePolicy**(`value`): value is "authenticated" \| "public"
 
 #### Parameters
 
@@ -135,7 +135,7 @@ ___
 
 #### Returns
 
-value is "public" \| "authenticated"
+value is "authenticated" \| "public"
 
 #### Defined in
 

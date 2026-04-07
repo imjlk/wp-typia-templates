@@ -109,7 +109,7 @@ ___
 
 ### \_\_experimentalSkipSerialization
 
-• `Optional` `Readonly` **\_\_experimentalSkipSerialization**: [`SkipSerialization`](../modules/packages_wp_typia_block_types_src_blocks_supports.md#skipserialization)\<``"text"`` \| ``"link"`` \| ``"heading"`` \| ``"background"`` \| ``"gradients"`` \| ``"button"``\>
+• `Optional` `Readonly` **\_\_experimentalSkipSerialization**: [`SkipSerialization`](../modules/packages_wp_typia_block_types_src_blocks_supports.md#skipserialization)\<``"text"`` \| ``"link"`` \| ``"background"`` \| ``"gradients"`` \| ``"heading"`` \| ``"button"``\>
 
 #### Defined in
 

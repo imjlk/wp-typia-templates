@@ -192,7 +192,7 @@ ___
 
 ### TEMPLATE\_IDS
 
-• `Const` **TEMPLATE\_IDS**: (``"basic"`` \| ``"interactivity"`` \| ``"persistence"`` \| ``"compound"``)[]
+• `Const` **TEMPLATE\_IDS**: (``"interactivity"`` \| ``"basic"`` \| ``"persistence"`` \| ``"compound"``)[]
 
 #### Defined in
 
@@ -222,7 +222,7 @@ ___
 
 ### isBuiltInTemplateId
 
-▸ **isBuiltInTemplateId**(`templateId`): templateId is "basic" \| "interactivity" \| "persistence" \| "compound"
+▸ **isBuiltInTemplateId**(`templateId`): templateId is "interactivity" \| "basic" \| "persistence" \| "compound"
 
 #### Parameters
 
@@ -232,7 +232,7 @@ ___
 
 #### Returns
 
-templateId is "basic" \| "interactivity" \| "persistence" \| "compound"
+templateId is "interactivity" \| "basic" \| "persistence" \| "compound"
 
 #### Defined in
 
