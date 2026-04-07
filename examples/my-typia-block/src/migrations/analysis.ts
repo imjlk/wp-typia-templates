@@ -305,7 +305,10 @@ function resolveUnionBranchKey(
 		return null;
 	}
 
-	return discriminatorValue in attribute.ts.union.branches
+	return Object.prototype.hasOwnProperty.call(
+		attribute.ts.union.branches,
+		discriminatorValue
+	)
 		? discriminatorValue
 		: null;
 }
