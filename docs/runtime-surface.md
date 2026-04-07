@@ -124,6 +124,10 @@ But the long-term stability level is not stated clearly:
 - some exports appear public mainly because generated projects need them today
 - package boundaries still reflect the scaffolding origin more than the runtime developer experience
 
+The current direction is to make `@wp-typia/create/runtime/*` compatibility
+facades only, while `@wp-typia/block-runtime/*` becomes the single maintained
+source of truth for generated-project runtime helpers.
+
 ## Policy input for #53
 
 `#53` should decide:

@@ -227,7 +227,9 @@ export function describeEditorField(
 			isNumber(attribute.typia.constraints.minimum)
 				? attribute.typia.constraints.minimum
 				: null,
-		options: getOptions(attribute),
+		// Preserve the legacy `@wp-typia/create/runtime/editor` descriptor contract
+		// for compatibility shims: enum options are only exposed for select controls.
+		options: control === "select" ? getOptions(attribute) : [],
 		path,
 		reason,
 		required: attribute.ts.required === true,
