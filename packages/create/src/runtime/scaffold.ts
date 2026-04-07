@@ -32,6 +32,13 @@ import {
 	toSnakeCase,
 	toTitleCase,
 } from "./string-case.js";
+import {
+	BUILTIN_BLOCK_METADATA_VERSION,
+	COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS,
+	getBuiltInTemplateMetadataDefaults,
+	getRemovedBuiltInTemplateMessage,
+	isRemovedBuiltInTemplateId,
+} from "./template-defaults.js";
 import { copyInterpolatedDirectory } from "./template-render.js";
 import { TEMPLATE_IDS, getTemplateById, isBuiltInTemplateId } from "./template-registry.js";
 import type { BuiltInTemplateId } from "./template-registry.js";
@@ -40,7 +47,6 @@ import { resolveTemplateSource } from "./template-source.js";
 const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
 const PHP_PREFIX_PATTERN = /^[a-z_][a-z0-9_]*$/;
 const PHP_PREFIX_MAX_LENGTH = 50;
-const REMOVED_BUILTIN_TEMPLATE_IDS = ["data", "persisted"] as const;
 const LOCKFILES: Record<PackageManagerId, string[]> = {
 	bun: ["bun.lock", "bun.lockb"],
 	npm: ["package-lock.json"],
@@ -82,15 +88,18 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	apiClientPackageVersion: string;
 	author: string;
 	blockRuntimePackageVersion: string;
+	blockMetadataVersion: string;
 	blockTypesPackageVersion: string;
 	category: string;
+	icon: string;
 	compoundChildTitle: string;
+	compoundChildCategory: string;
+	compoundChildIcon: string;
 	compoundChildTitleJson: string;
 	compoundPersistenceEnabled: "false" | "true";
 	createPackageVersion: string;
 	cssClassName: string;
 	dashCase: string;
-	dashicon: string;
 	dataStorageMode: DataStorageMode;
 	description: string;
 	keyword: string;
@@ -314,12 +323,8 @@ export async function resolveTemplateId({
 	selectTemplate,
 }: ResolveTemplateOptions): Promise<string> {
 	if (templateId) {
-		if ((REMOVED_BUILTIN_TEMPLATE_IDS as readonly string[]).includes(templateId)) {
-			throw new Error(
-				`Built-in template "${templateId}" was removed. Use --template persistence --persistence-policy ${
-					templateId === "data" ? "public" : "authenticated"
-				} instead.`,
-			);
+		if (isRemovedBuiltInTemplateId(templateId)) {
+			throw new Error(getRemovedBuiltInTemplateMessage(templateId));
 		}
 		if (isBuiltInTemplateId(templateId)) {
 			return getTemplateById(templateId).id;
@@ -432,6 +437,9 @@ export function getTemplateVariables(
 		restPackageVersion,
 	} = getPackageVersions();
 	const template = isBuiltInTemplateId(templateId) ? getTemplateById(templateId) : null;
+	const metadataDefaults = isBuiltInTemplateId(templateId)
+		? getBuiltInTemplateMetadataDefaults(templateId)
+		: null;
 	const identifiers = resolveScaffoldIdentifiers({
 		namespace: answers.namespace,
 		phpPrefix: answers.phpPrefix,
@@ -467,16 +475,19 @@ export function getTemplateVariables(
 		apiClientPackageVersion,
 		author: answers.author.trim(),
 		blockRuntimePackageVersion,
+		blockMetadataVersion: BUILTIN_BLOCK_METADATA_VERSION,
 		blockTypesPackageVersion,
-		category: template?.defaultCategory ?? "widgets",
+		category: metadataDefaults?.category ?? template?.defaultCategory ?? "widgets",
+		icon: metadataDefaults?.icon ?? "smiley",
 		compoundChildTitle,
+		compoundChildCategory: COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS.category,
+		compoundChildIcon: COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS.icon,
 		compoundChildTitleJson: JSON.stringify(compoundChildTitle),
 		compoundPersistenceEnabled: compoundPersistenceEnabled ? "true" : "false",
 		createPackageVersion,
 		cssClassName: `wp-block-${slug}`,
 		dataStorageMode,
 		dashCase: slug,
-		dashicon: "smiley",
 		description,
 		isAuthenticatedPersistencePolicy:
 			persistencePolicy === "authenticated" ? "true" : "false",

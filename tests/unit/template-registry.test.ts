@@ -10,6 +10,14 @@ import {
 	listTemplates,
 	resolvePackageRoot,
 } from "../../packages/create/src/runtime/template-registry";
+import {
+	BUILTIN_BLOCK_METADATA_VERSION,
+	BUILTIN_TEMPLATE_METADATA_DEFAULTS,
+	COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS,
+	REMOVED_BUILTIN_TEMPLATE_IDS,
+	getRemovedBuiltInTemplateMessage,
+	isRemovedBuiltInTemplateId,
+} from "../../packages/create/src/runtime/template-defaults";
 import { createTempDir, writeJsonFile, writeTextFile } from "../helpers/file-fixtures";
 
 describe("template registry runtime helpers", () => {
@@ -68,6 +76,36 @@ describe("template registry runtime helpers", () => {
 				value: "compound",
 			},
 		]);
+	});
+
+	test("shared template defaults preserve built-in metadata values and removed template ids", () => {
+		expect(BUILTIN_BLOCK_METADATA_VERSION).toBe("0.1.0");
+		expect(BUILTIN_TEMPLATE_METADATA_DEFAULTS.basic).toEqual({
+			category: "text",
+			icon: "smiley",
+		});
+		expect(BUILTIN_TEMPLATE_METADATA_DEFAULTS.interactivity).toEqual({
+			category: "widgets",
+			icon: "smiley",
+		});
+		expect(BUILTIN_TEMPLATE_METADATA_DEFAULTS.persistence).toEqual({
+			category: "widgets",
+			icon: "database",
+		});
+		expect(BUILTIN_TEMPLATE_METADATA_DEFAULTS.compound).toEqual({
+			category: "widgets",
+			icon: "screenoptions",
+		});
+		expect(COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS).toEqual({
+			category: "widgets",
+			icon: "excerpt-view",
+		});
+		expect([...REMOVED_BUILTIN_TEMPLATE_IDS]).toEqual(["data", "persisted"]);
+		expect(isRemovedBuiltInTemplateId("data")).toBe(true);
+		expect(isRemovedBuiltInTemplateId("basic")).toBe(false);
+		expect(getRemovedBuiltInTemplateMessage("persisted")).toBe(
+			'Built-in template "persisted" was removed. Use --template persistence --persistence-policy authenticated instead.',
+		);
 	});
 
 	test("throws a helpful error for unknown template ids", () => {

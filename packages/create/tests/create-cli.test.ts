@@ -12,6 +12,7 @@ import { copyRenderedDirectory } from "../src/runtime/template-render.js";
 import {
 	parseGitHubTemplateLocator,
 	parseNpmTemplateLocator,
+	parseTemplateLocator,
 } from "../src/runtime/template-source.js";
 
 const packageRoot = process.cwd();
@@ -263,6 +264,9 @@ describe("@wp-typia/create scaffolding", () => {
 			'chokidar "src/types.ts" --debounce 200 -c "npm run sync-types"',
 		);
 		expect(blockJson.textdomain).toBe("demo-npm");
+		expect(blockJson.version).toBe("0.1.0");
+		expect(blockJson.category).toBe("text");
+		expect(blockJson.icon).toBe("smiley");
 		expect(blockJson.editorStyle).toBe("file:./index.css");
 		expect(generatedManifest.manifestVersion).toBe(2);
 		expect(generatedManifest.sourceType).toBe("DemoNpmAttributes");
@@ -570,6 +574,9 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 		expect(blockJson.name).toBe("demo-space/demo-interactivity");
 		expect(blockJson.textdomain).toBe("demo-interactivity");
+		expect(blockJson.version).toBe("0.1.0");
+		expect(blockJson.category).toBe("widgets");
+		expect(blockJson.icon).toBe("smiley");
 		expect(blockJson.editorStyle).toBeUndefined();
 		expect(generatedManifest.manifestVersion).toBe(2);
 		expect(generatedManifest.sourceType).toBe("DemoInteractivityAttributes");
@@ -791,6 +798,9 @@ describe("@wp-typia/create scaffolding", () => {
 			"npm run sync-types -- --check && npm run sync-rest -- --check && tsc --noEmit",
 		);
 		expect(blockJson.textdomain).toBe("demo-persistence-public");
+		expect(blockJson.version).toBe("0.1.0");
+		expect(blockJson.category).toBe("widgets");
+		expect(blockJson.icon).toBe("database");
 		expect(generatedManifest.manifestVersion).toBe(2);
 		expect(generatedManifest.sourceType).toBe("DemoPersistencePublicAttributes");
 		expect(generatedManifest.attributes.resourceKey.typia.defaultValue).toBe("primary");
@@ -1194,9 +1204,15 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-auth.php"))).toBe(false);
 		expect(fs.existsSync(path.join(targetDir, "inc", "rest-public.php"))).toBe(false);
 		expect(parentBlockJson.name).toBe("create-block/demo-compound");
+		expect(parentBlockJson.version).toBe("0.1.0");
+		expect(parentBlockJson.category).toBe("widgets");
+		expect(parentBlockJson.icon).toBe("screenoptions");
 		expect(parentManifest.sourceType).toBe("DemoCompoundAttributes");
 		expect(parentManifest.attributes.heading.typia.defaultValue).toBe("Demo Compound");
 		expect(childBlockJson.parent).toEqual(["create-block/demo-compound"]);
+		expect(childBlockJson.version).toBe("0.1.0");
+		expect(childBlockJson.category).toBe("widgets");
+		expect(childBlockJson.icon).toBe("excerpt-view");
 		expect(childBlockJson.style).toBeUndefined();
 		expect(childBlockJson.supports.inserter).toBe(false);
 		expect(childManifest.sourceType).toBe("DemoCompoundItemAttributes");
@@ -1623,6 +1639,9 @@ describe("@wp-typia/create scaffolding", () => {
 			);
 			const blockConfig = fs.readFileSync(blockConfigPath, "utf8");
 			const childrenRegistry = fs.readFileSync(childrenRegistryPath, "utf8");
+			const newChildBlockJson = JSON.parse(
+				fs.readFileSync(path.join(newChildDir, "block.json"), "utf8"),
+			);
 			const newChildHooks = fs.readFileSync(path.join(newChildDir, "hooks.ts"), "utf8");
 			const newChildIndex = fs.readFileSync(path.join(newChildDir, "index.tsx"), "utf8");
 			const newChildValidators = fs.readFileSync(path.join(newChildDir, "validators.ts"), "utf8");
@@ -1635,6 +1654,9 @@ describe("@wp-typia/create scaffolding", () => {
 			expect(fs.existsSync(path.join(newChildDir, "typia.manifest.json"))).toBe(true);
 			expect(fs.existsSync(path.join(newChildDir, "types.ts"))).toBe(true);
 			expect(fs.existsSync(path.join(newChildDir, "validators.ts"))).toBe(true);
+			expect(newChildBlockJson.version).toBe("0.1.0");
+			expect(newChildBlockJson.category).toBe("widgets");
+			expect(newChildBlockJson.icon).toBe("excerpt-view");
 			expect(blockConfig).toContain("demo-compound-add-child-faq-item");
 			expect(blockConfig).toContain("DemoCompoundAddChildFaqItemAttributes");
 			expect(childrenRegistry).toContain("'create-block/demo-compound-add-child-faq-item'");
@@ -2236,6 +2258,12 @@ describe("@wp-typia/create scaffolding", () => {
 			ref: "main",
 			sourcePath: "templates/card",
 		});
+	});
+
+	test("removed built-in template ids are rejected consistently during template locator parsing", () => {
+		expect(() => parseTemplateLocator("persisted")).toThrow(
+			'Built-in template "persisted" was removed. Use --template persistence --persistence-policy authenticated instead.',
+		);
 	});
 
 	test("parses npm template locators for package specs", () => {

@@ -2,10 +2,10 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
 	"name": "{{namespace}}/{{slugKebabCase}}-item",
-	"version": "0.1.0",
+	"version": "{{blockMetadataVersion}}",
 	"title": {{compoundChildTitleJson}},
-	"category": "widgets",
-	"icon": "excerpt-view",
+	"category": "{{compoundChildCategory}}",
+	"icon": "{{compoundChildIcon}}",
 	"description": "Internal item block used by {{title}}.",
 	"parent": [
 		"{{namespace}}/{{slugKebabCase}}"
