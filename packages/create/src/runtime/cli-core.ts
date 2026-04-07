@@ -1,15 +1,19 @@
 /**
- * Public CLI runtime barrel for doctor, help, scaffold, and template helpers.
+ * Public CLI runtime barrel for add, doctor, help, scaffold, and template helpers.
  *
- * Import `getDoctorChecks`, `runDoctor`, and `DoctorCheck` for diagnostics,
- * `formatHelpText` for CLI usage output, scaffold helpers such as `createReadlinePrompt`,
- * `getNextSteps`, `getOptionalOnboarding`, `runScaffoldFlow`, and
- * `ReadlinePrompt` for interactive project creation, and template helpers such
- * as `formatTemplateDetails`, `formatTemplateFeatures`,
- * `formatTemplateSummary`, `getTemplateById`, `getTemplateSelectOptions`,
- * `listTemplates`, and `isBuiltInTemplateId` for template inspection flows.
+ * Import `formatAddHelpText`, `runAddBlockCommand`, and
+ * `createAddPlaceholderMessage` for explicit `wp-typia add` flows,
+ * `getDoctorChecks`, `runDoctor`, and `DoctorCheck` for diagnostics,
+ * `formatHelpText` for top-level CLI usage output, scaffold helpers such as
+ * `createReadlinePrompt`, `getNextSteps`, `getOptionalOnboarding`,
+ * `runScaffoldFlow`, and `ReadlinePrompt` for interactive project creation,
+ * and template helpers such as `formatTemplateDetails`,
+ * `formatTemplateFeatures`, `formatTemplateSummary`, `getTemplateById`,
+ * `getTemplateSelectOptions`, `listTemplates`, and `isBuiltInTemplateId` for
+ * template inspection flows.
  */
 export { getDoctorChecks, runDoctor, type DoctorCheck } from "./cli-doctor.js";
+export { createAddPlaceholderMessage, formatAddHelpText, runAddBlockCommand, seedWorkspaceMigrationProject } from "./cli-add.js";
 export { formatHelpText } from "./cli-help.js";
 export {
 	getNextSteps,

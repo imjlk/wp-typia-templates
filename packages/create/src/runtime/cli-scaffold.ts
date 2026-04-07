@@ -24,6 +24,8 @@ import {
 import { isBuiltInTemplateId } from "./template-registry.js";
 import type { TemplateDefinition } from "./template-registry.js";
 
+const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
+
 interface GetNextStepsOptions {
 	noInstall: boolean;
 	packageManager: PackageManagerId;
@@ -270,7 +272,9 @@ export async function runScaffoldFlow({
 	withWpEnv,
 }: RunScaffoldFlowOptions) {
 	if (!projectInput) {
-		throw new Error("Project directory is required. Usage: wp-typia <project-dir>");
+		throw new Error(
+			"Project directory is required. Usage: wp-typia create <project-dir> (or wp-typia <project-dir>).",
+		);
 	}
 
 	const resolvedTemplateId = await resolveTemplateId({
@@ -324,7 +328,9 @@ export async function runScaffoldFlow({
 		yes,
 	});
 	const resolvedWithMigrationUi = await resolveOptionalBooleanFlag({
-		disabled: !isBuiltInTemplateId(resolvedTemplateId),
+		disabled:
+			!isBuiltInTemplateId(resolvedTemplateId) &&
+			resolvedTemplateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 		explicitValue: withMigrationUi,
 		isInteractive,
 		select: selectWithMigrationUi,

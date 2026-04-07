@@ -1,19 +1,23 @@
 # API Guide
 
-This repository has six public surfaces:
+This repository has seven public surfaces:
 
 ## 1. `wp-typia`
 
 The CLI is the primary entrypoint for new users.
 
 ```bash
-bunx wp-typia my-block
-npx wp-typia my-block
+bunx wp-typia create my-block
+npx wp-typia create my-block
 ```
 
 Common commands:
 
 ```bash
+wp-typia create my-block --template basic --package-manager bun --yes --no-install
+wp-typia add block counter-card --template basic
+wp-typia add variation
+wp-typia add pattern
 wp-typia templates list
 wp-typia templates inspect basic
 wp-typia doctor
@@ -27,29 +31,39 @@ watch workflow, and can opt into local presets with `--with-wp-env` and
 `--with-test-preset`. They can also opt into the migration dashboard/runtime
 bundle with `--with-migration-ui`.
 
+The positional `wp-typia <project-dir>` form remains available as a backward-compatible alias to `create`.
+
+Official empty workspace flow:
+
+```bash
+wp-typia create my-plugin --template @wp-typia/create-workspace-template --package-manager bun --yes --no-install
+wp-typia add block counter-card --template basic
+wp-typia add block faq-stack --template compound --persistence-policy public --data-storage custom-table
+```
+
 `persistence` also accepts:
 
 ```bash
-wp-typia my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
-wp-typia my-block --template persistence --data-storage custom-table --persistence-policy public --package-manager npm --yes --no-install
-wp-typia my-block --template persistence --package-manager npm --with-wp-env --with-test-preset --yes --no-install
-wp-typia my-block --template basic --with-migration-ui --package-manager bun --yes --no-install
+wp-typia create my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
+wp-typia create my-block --template persistence --data-storage custom-table --persistence-policy public --package-manager npm --yes --no-install
+wp-typia create my-block --template persistence --package-manager npm --with-wp-env --with-test-preset --yes --no-install
+wp-typia create my-block --template basic --with-migration-ui --package-manager bun --yes --no-install
 ```
 
 `compound` accepts the same persistence flags, but treats them as an optional parent-only layer:
 
 ```bash
-wp-typia my-block --template compound --package-manager bun --yes --no-install
-wp-typia my-block --template compound --persistence-policy authenticated --package-manager bun --yes --no-install
-wp-typia my-block --template compound --data-storage post-meta --package-manager npm --yes --no-install
+wp-typia create my-block --template compound --package-manager bun --yes --no-install
+wp-typia create my-block --template compound --persistence-policy authenticated --package-manager bun --yes --no-install
+wp-typia create my-block --template compound --data-storage post-meta --package-manager npm --yes --no-install
 ```
 
 Remote template MVP:
 
 ```bash
-wp-typia my-block --template ./local-template-dir --package-manager npm --yes --no-install
-wp-typia my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
-wp-typia my-block --template @scope/create-block-template --variant hero --package-manager npm --yes --no-install
+wp-typia create my-block --template ./local-template-dir --package-manager npm --yes --no-install
+wp-typia create my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
+wp-typia create my-block --template @scope/create-block-template --variant hero --package-manager npm --yes --no-install
 ```
 
 `--variant` only applies to official create-block external template configs. If a config defines variants and `--variant` is omitted, the first variant becomes the default.

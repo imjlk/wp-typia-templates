@@ -800,22 +800,27 @@ export function resolveMigrationBlocks(
 	projectDir: string,
 	config: MigrationConfig,
 ): ResolvedMigrationBlockTarget[] {
-	const configuredBlocks =
-		Array.isArray(config.blocks) && config.blocks.length > 0
-			? config.blocks
-			: [createImplicitLegacyBlock(projectDir, config.blockName)];
+	if (Array.isArray(config.blocks)) {
+		return config.blocks.map((block) => {
+			const blockJsonPath = path.join(projectDir, block.blockJsonFile);
+			const manifestPath = path.join(projectDir, block.manifestFile);
+			return {
+				...block,
+				currentBlockJson: readJson(blockJsonPath),
+				currentManifest: readJson(manifestPath),
+				layout: "multi",
+			} satisfies ResolvedMigrationBlockTarget;
+		});
+	}
 
-	return configuredBlocks.map((block) => {
+	return [createImplicitLegacyBlock(projectDir, config.blockName)].map((block) => {
 		const blockJsonPath = path.join(projectDir, block.blockJsonFile);
 		const manifestPath = path.join(projectDir, block.manifestFile);
 		return {
 			...block,
 			currentBlockJson: readJson(blockJsonPath),
 			currentManifest: readJson(manifestPath),
-			layout:
-				Array.isArray(config.blocks) && config.blocks.length > 0
-					? "multi"
-					: "legacy",
+			layout: "legacy",
 		} satisfies ResolvedMigrationBlockTarget;
 	});
 }
@@ -1189,12 +1194,13 @@ export function parseMigrationConfig(source: string): MigrationConfig {
 	const currentMigrationVersion = matchRootConfigValue(source, "currentMigrationVersion");
 	const snapshotDir = matchRootConfigValue(source, "snapshotDir");
 	const supportedMigrationVersions = matchRootConfigStringArrayValue(source, "supportedMigrationVersions");
-	const blocks = parseMigrationBlocks(source);
+	const blocksArrayBody = matchRootConfigArrayBody(source, "blocks");
+	const blocks = blocksArrayBody === null ? [] : parseMigrationBlocks(source);
 
 	if (!currentMigrationVersion || !snapshotDir || !supportedMigrationVersions) {
 		throw new Error("Unable to parse migration config. Regenerate with `wp-typia migrations init --current-migration-version v1`.");
 	}
-	if (!blockName && blocks.length === 0) {
+	if (!blockName && blocks.length === 0 && blocksArrayBody === null) {
 		throw new Error("Migration config must define `blockName` or `blocks`.");
 	}
 
@@ -1221,7 +1227,7 @@ export function parseMigrationConfig(source: string): MigrationConfig {
 
 	return {
 		blockName: blockName ?? undefined,
-		blocks: blocks.length > 0 ? blocks : undefined,
+		blocks: blocksArrayBody === null ? undefined : blocks,
 		currentMigrationVersion,
 		snapshotDir,
 		supportedMigrationVersions,
@@ -1290,7 +1296,7 @@ function matchRootConfigArrayBody(source: string, key: string): string | null {
 export function writeMigrationConfig(projectDir: string, config: MigrationConfig): void {
 	const paths = getProjectPaths(projectDir);
 	fs.mkdirSync(path.dirname(paths.configFile), { recursive: true });
-	if (!config.blocks?.length) {
+	if (!Array.isArray(config.blocks)) {
 		fs.writeFileSync(
 			paths.configFile,
 			`export const migrationConfig = {

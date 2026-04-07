@@ -4,6 +4,7 @@
     "noEmit": false,
     "outDir": "./dist/runtime",
     "rootDir": "./src/runtime",
+    "baseUrl": "../..",
     "declaration": true,
     "declarationMap": false,
     "sourceMap": false,

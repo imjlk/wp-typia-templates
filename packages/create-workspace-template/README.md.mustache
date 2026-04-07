@@ -1,0 +1,32 @@
+# {{title}}
+
+{{description}}
+
+## Workspace
+
+This scaffold is the official empty `wp-typia` workspace shell. It starts with
+an empty `src/blocks/*` inventory and grows through `wp-typia add block`.
+
+## First Block
+
+```bash
+wp-typia add block counter-card --template basic
+```
+
+Persistence-ready blocks and compound parent/child blocks can be added later:
+
+```bash
+wp-typia add block counter-card --template persistence --data-storage custom-table --persistence-policy authenticated
+wp-typia add block faq-stack --template compound --data-storage custom-table --persistence-policy public
+```
+
+## Development
+
+```bash
+bun run build
+bun run typecheck
+```
+
+If you scaffolded the workspace with `--with-migration-ui`, the migration
+workspace is seeded at `v1` and `wp-typia add block` updates the migration
+config plus current-version snapshots for newly added blocks.

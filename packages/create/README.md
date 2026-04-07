@@ -5,27 +5,35 @@ Compatibility and programmatic scaffold runtime package for `wp-typia`.
 ## Usage
 
 ```bash
-bunx wp-typia my-block
+bunx wp-typia create my-block
 # or
-npx wp-typia my-block
+npx wp-typia create my-block
 ```
 
 This package no longer owns the CLI bin. Use the canonical CLI package for new
 scaffolds:
 
 ```bash
-bunx wp-typia my-block
-npx wp-typia my-block
+bunx wp-typia create my-block
+npx wp-typia create my-block
 ```
 
 The CLI always asks which package manager the generated project should use.
 For non-interactive usage, pass it explicitly:
 
 ```bash
-npx wp-typia my-block --template basic --package-manager pnpm --yes --no-install
-npx wp-typia my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
-npx wp-typia my-block --template compound --package-manager bun --yes --no-install
-npx wp-typia my-block --template persistence --namespace experiments --text-domain my-block --php-prefix my_block --package-manager bun --yes --no-install
+npx wp-typia create my-block --template basic --package-manager pnpm --yes --no-install
+npx wp-typia create my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
+npx wp-typia create my-block --template compound --package-manager bun --yes --no-install
+npx wp-typia create my-block --template persistence --namespace experiments --text-domain my-block --php-prefix my_block --package-manager bun --yes --no-install
+```
+
+Empty workspace flow:
+
+```bash
+npx wp-typia create my-plugin --template @wp-typia/create-workspace-template --package-manager bun --yes --no-install
+cd my-plugin
+wp-typia add block counter-card --template basic
 ```
 
 Additional commands:
@@ -39,9 +47,9 @@ wp-typia doctor
 Remote template MVP:
 
 ```bash
-npx wp-typia my-block --template ./local-template-dir --package-manager npm --yes --no-install
-npx wp-typia my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
-npx wp-typia my-block --template @scope/create-block-template --variant hero --package-manager npm --yes --no-install
+npx wp-typia create my-block --template ./local-template-dir --package-manager npm --yes --no-install
+npx wp-typia create my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
+npx wp-typia create my-block --template @scope/create-block-template --variant hero --package-manager npm --yes --no-install
 ```
 
 When `--template` points at an official create-block external template config, `wp-typia` supports `--variant <name>`. If the external template defines variants and you omit `--variant`, the first variant is selected automatically.

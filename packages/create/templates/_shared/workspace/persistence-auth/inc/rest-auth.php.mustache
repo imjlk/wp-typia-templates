@@ -1,0 +1,36 @@
+<?php
+
+function {{phpPrefix}}_get_rest_nonce( WP_REST_Request $request ) {
+	$header_nonce = $request->get_header( 'X-WP-Nonce' );
+	if ( is_string( $header_nonce ) && '' !== $header_nonce ) {
+		return $header_nonce;
+	}
+
+	$query_nonce = $request->get_param( '_wpnonce' );
+	if ( is_string( $query_nonce ) && '' !== $query_nonce ) {
+		return $query_nonce;
+	}
+
+	return null;
+}
+
+function {{phpPrefix}}_can_write_authenticated( WP_REST_Request $request ) {
+	if ( ! is_user_logged_in() ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'Authentication is required to update this block state.',
+			array( 'status' => rest_authorization_required_code() )
+		);
+	}
+
+	$nonce = {{phpPrefix}}_get_rest_nonce( $request );
+	if ( ! is_string( $nonce ) || '' === $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+		return new WP_Error(
+			'rest_forbidden',
+			'The REST nonce is missing or invalid.',
+			array( 'status' => 403 )
+		);
+	}
+
+	return true;
+}

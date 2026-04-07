@@ -28,9 +28,24 @@ describe("wp-typia package", () => {
 		const helpOutput = runUtf8Command("node", [entryPath, "--help"]);
 
 		expect(helpOutput).toContain("Usage:");
-		expect(helpOutput).toContain("wp-typia <project-dir>");
+		expect(helpOutput).toContain("wp-typia create <project-dir>");
+		expect(helpOutput).toContain("wp-typia <project-dir> [create flags...]");
+		expect(helpOutput).toContain("wp-typia add block <name>");
 		expect(helpOutput).toContain("wp-typia templates list");
 		expect(helpOutput).toContain("wp-typia migrations");
+	});
+
+	test("documents create as the canonical verb while keeping the positional alias", () => {
+		const helpOutput = runUtf8Command("node", [entryPath, "--help"]);
+
+		expect(helpOutput).toContain("`wp-typia create` is the canonical scaffold command.");
+		expect(helpOutput).toContain("backward-compatible alias");
+	});
+
+	test("fails add variation with an actionable placeholder message", () => {
+		expect(() => runUtf8Command("node", [entryPath, "add", "variation"])).toThrow(
+			"`wp-typia add variation` is not implemented yet.",
+		);
 	});
 
 	test("rejects empty --package-manager= values during argument parsing", () => {

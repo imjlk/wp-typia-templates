@@ -15,7 +15,7 @@ import {
 	parseTemplateLocator,
 } from "../src/runtime/template-source.js";
 
-const packageRoot = process.cwd();
+const packageRoot = path.resolve(import.meta.dir, "..");
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-create-"));
 const entryPath = path.resolve(packageRoot, "..", "wp-typia", "bin", "wp-typia.js");
 const createBlockExternalFixturePath = path.join(
@@ -32,6 +32,12 @@ const createBlockSubsetFixturePath = path.join(
 );
 const createPackageManifest = JSON.parse(
 	fs.readFileSync(path.join(packageRoot, "package.json"), "utf8"),
+);
+const workspaceTemplatePackageManifest = JSON.parse(
+	fs.readFileSync(
+		path.resolve(packageRoot, "..", "create-workspace-template", "package.json"),
+		"utf8",
+	),
 );
 const wpTypiaPackageManifest = JSON.parse(
 	fs.readFileSync(path.resolve(packageRoot, "..", "wp-typia", "package.json"), "utf8"),
@@ -94,6 +100,15 @@ function ensureDirSymlink(targetPath: string, sourcePath: string) {
 	fs.symlinkSync(sourcePath, targetPath, "dir");
 }
 
+function ensureFileSymlink(targetPath: string, sourcePath: string) {
+	if (fs.existsSync(targetPath)) {
+		return;
+	}
+
+	fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+	fs.symlinkSync(sourcePath, targetPath, "file");
+}
+
 function resolveWorkspaceDependencyPath(packageName: string): string | null {
 	const directPath = path.join(workspaceNodeModulesPath, packageName);
 	if (fs.existsSync(directPath)) {
@@ -125,6 +140,52 @@ function ensureWorkspacePackageBuilt(
 	builtWorkspacePackages.add(packageName);
 }
 
+function seedWorkspaceBinaryLinks(targetDir: string) {
+	const targetBinDir = path.join(targetDir, "node_modules", ".bin");
+	fs.mkdirSync(targetBinDir, { recursive: true });
+
+	for (const entry of fs.readdirSync(path.join(workspaceNodeModulesPath, ".bin"))) {
+		ensureFileSymlink(
+			path.join(targetBinDir, entry),
+			fs.realpathSync(path.join(workspaceNodeModulesPath, ".bin", entry)),
+		);
+	}
+}
+
+function linkPackageBins(
+	targetDir: string,
+	packageName: string,
+	sourcePath: string,
+) {
+	const packageJsonPath = path.join(sourcePath, "package.json");
+	if (!fs.existsSync(packageJsonPath)) {
+		return;
+	}
+
+	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+		bin?: Record<string, string> | string;
+		name?: string;
+	};
+	const binField = packageJson.bin;
+	if (!binField) {
+		return;
+	}
+
+	const normalizedBins =
+		typeof binField === "string"
+			? {
+				[(packageJson.name ?? packageName).split("/").slice(-1)[0] ?? packageName]: binField,
+			}
+			: binField;
+
+	for (const [binName, relativeBinPath] of Object.entries(normalizedBins)) {
+		ensureFileSymlink(
+			path.join(targetDir, "node_modules", ".bin", binName),
+			path.join(sourcePath, relativeBinPath),
+		);
+	}
+}
+
 function linkWorkspaceNodeModules(targetDir: string) {
 	const nodeModulesPath = path.join(targetDir, "node_modules");
 
@@ -132,10 +193,7 @@ function linkWorkspaceNodeModules(targetDir: string) {
 		fs.mkdirSync(nodeModulesPath, { recursive: true });
 	}
 
-	ensureDirSymlink(
-		path.join(nodeModulesPath, ".bin"),
-		fs.realpathSync(path.join(workspaceNodeModulesPath, ".bin")),
-	);
+	seedWorkspaceBinaryLinks(targetDir);
 
 	const packageJsonPath = path.join(targetDir, "package.json");
 	if (!fs.existsSync(packageJsonPath)) {
@@ -164,6 +222,7 @@ function linkWorkspaceNodeModules(targetDir: string) {
 				path.join(nodeModulesPath, ...packageName.split("/")),
 				workspacePackagePath,
 			);
+			linkPackageBins(targetDir, packageName, workspacePackagePath);
 			continue;
 		}
 
@@ -173,6 +232,7 @@ function linkWorkspaceNodeModules(targetDir: string) {
 		}
 
 		ensureDirSymlink(path.join(nodeModulesPath, ...packageName.split("/")), sourcePath);
+		linkPackageBins(targetDir, packageName, sourcePath);
 	}
 }
 
@@ -1390,7 +1450,9 @@ describe("@wp-typia/create scaffolding", () => {
 					title: "Demo Migration UI Remote",
 				},
 			}),
-		).rejects.toThrow("`--with-migration-ui` is currently supported only for built-in templates.");
+		).rejects.toThrow(
+			"`--with-migration-ui` is currently supported only for built-in templates and @wp-typia/create-workspace-template.",
+		);
 	});
 
 	test(
@@ -2217,6 +2279,218 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedBlockJson.supports.multiple).toBe(true);
 	});
 
+	test("official workspace template scaffolds through the local npm template resolver", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-template");
+
+		const result = await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo empty workspace",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-template",
+				textDomain: "demo-space",
+				title: "Demo Workspace Template",
+			},
+		});
+
+		const packageJson = JSON.parse(
+			fs.readFileSync(path.join(targetDir, "package.json"), "utf8"),
+		);
+		const bootstrapSource = fs.readFileSync(
+			path.join(targetDir, "demo-workspace-template.php"),
+			"utf8",
+		);
+		const buildWorkspaceSource = fs.readFileSync(
+			path.join(targetDir, "scripts", "build-workspace.mjs"),
+			"utf8",
+		);
+		const blockConfigSource = fs.readFileSync(
+			path.join(targetDir, "scripts", "block-config.ts"),
+			"utf8",
+		);
+
+		expect(result.templateId).toBe(workspaceTemplatePackageManifest.name);
+		expect(packageJson.wpTypia).toEqual({
+			projectType: "workspace",
+			templatePackage: workspaceTemplatePackageManifest.name,
+			namespace: "demo-space",
+			textDomain: "demo-space",
+			phpPrefix: "demo_space",
+		});
+		expect(blockConfigSource).toContain("// wp-typia add block entries");
+		expect(buildWorkspaceSource).toContain("--blocks-manifest");
+		expect(bootstrapSource).toContain("wp_register_block_metadata_collection");
+		expect(bootstrapSource).toContain("wp_register_block_types_from_metadata_collection");
+		expect(fs.existsSync(path.join(targetDir, "src", "blocks", ".gitkeep"))).toBe(true);
+	});
+
+	test("canonical CLI can add a basic block to an official workspace template", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-add-basic");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace add basic",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-add-basic",
+				textDomain: "demo-space",
+				title: "Demo Workspace Add Basic",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+			cwd: targetDir,
+		});
+
+		const blockConfigSource = fs.readFileSync(
+			path.join(targetDir, "scripts", "block-config.ts"),
+			"utf8",
+		);
+		const indexSource = fs.readFileSync(
+			path.join(targetDir, "src", "blocks", "counter-card", "index.tsx"),
+			"utf8",
+		);
+		const blockJson = JSON.parse(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "counter-card", "block.json"),
+				"utf8",
+			),
+		);
+
+		expect(blockConfigSource).toContain('slug: "counter-card"');
+		expect(indexSource).toContain("import '../../collection';");
+		expect(blockJson.name).toBe("demo-space/counter-card");
+		typecheckGeneratedProject(targetDir);
+		runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", ["--check"]);
+	});
+
+	test("canonical CLI can add a compound persistence block to an official workspace template", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-add-compound");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace add compound",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-add-compound",
+				textDomain: "demo-space",
+				title: "Demo Workspace Add Compound",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		runCli(
+			"node",
+			[
+				entryPath,
+				"add",
+				"block",
+				"faq-stack",
+				"--template",
+				"compound",
+				"--data-storage",
+				"custom-table",
+				"--persistence-policy",
+				"public",
+			],
+			{
+				cwd: targetDir,
+			},
+		);
+
+		const blockConfigSource = fs.readFileSync(
+			path.join(targetDir, "scripts", "block-config.ts"),
+			"utf8",
+		);
+		const serverModuleSource = fs.readFileSync(
+			path.join(targetDir, "src", "blocks", "faq-stack", "server.php"),
+			"utf8",
+		);
+		const parentBlockJson = JSON.parse(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "faq-stack", "block.json"),
+				"utf8",
+			),
+		);
+
+		expect(blockConfigSource).toContain("defineEndpointManifest");
+		expect(blockConfigSource).toContain('slug: "faq-stack-item"');
+		expect(serverModuleSource).toContain("rest-public.php");
+		expect(parentBlockJson.name).toBe("demo-space/faq-stack");
+		runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", ["--check"]);
+		runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts", ["--check"]);
+	}, 15_000);
+
+	test("add block updates migration config in a migration-enabled workspace template", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-add-migration");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			withMigrationUi: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace add migration",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-add-migration",
+				textDomain: "demo-space",
+				title: "Demo Workspace Add Migration",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		runCli("node", [entryPath, "add", "block", "release-note", "--template", "basic"], {
+			cwd: targetDir,
+		});
+
+		const migrationConfigSource = fs.readFileSync(
+			path.join(targetDir, "src", "migrations", "config.ts"),
+			"utf8",
+		);
+
+		expect(migrationConfigSource).toContain("key: 'release-note'");
+		expect(
+			fs.existsSync(
+				path.join(
+					targetDir,
+					"src",
+					"migrations",
+					"versions",
+					"v1",
+					"release-note",
+					"typia.manifest.json",
+				),
+			),
+		).toBe(true);
+
+		const doctorOutput = runCli("node", [entryPath, "migrations", "doctor", "--all"], {
+			cwd: targetDir,
+		});
+		expect(doctorOutput).toContain("Loaded");
+	});
+
 	test("rendered template paths cannot escape the target directory", async () => {
 		const templateRoot = fs.mkdtempSync(path.join(tempRoot, "render-escape-template-"));
 		const targetDir = fs.mkdtempSync(path.join(tempRoot, "render-escape-target-"));
@@ -2286,6 +2560,25 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(doctorOutput).toContain("PASS Template basic");
 	});
 
+	test("node entry supports the explicit create command", () => {
+		const targetDir = path.join(tempRoot, "demo-node-create-command");
+
+		runCli("node", [
+			entryPath,
+			"create",
+			targetDir,
+			"--template",
+			"basic",
+			"--package-manager",
+			"npm",
+			"--yes",
+			"--no-install",
+		]);
+
+		expect(fs.existsSync(path.join(targetDir, "package.json"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "src", "block.json"))).toBe(true);
+	});
+
 	test("node entry keeps help and migrations dispatch working after lazy loading", () => {
 		const helpOutput = runCli("node", [entryPath, "--help"]);
 		const errorMessage = getCommandErrorMessage(() =>
@@ -2293,6 +2586,8 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 
 		expect(helpOutput).toContain("wp-typia templates list");
+		expect(helpOutput).toContain("wp-typia create <project-dir>");
+		expect(helpOutput).toContain("wp-typia add block <name>");
 		expect(helpOutput).toContain("Package managers: bun, npm, pnpm, yarn");
 		expect(errorMessage).toContain("`migrations init` requires --current-migration-version <label>.");
 	});
@@ -2318,6 +2613,8 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 
 		expect(helpOutput).toContain("wp-typia templates list");
+		expect(helpOutput).toContain("wp-typia create <project-dir>");
+		expect(helpOutput).toContain("wp-typia add block <name>");
 		expect(helpOutput).toContain("Package managers: bun, npm, pnpm, yarn");
 		expect(errorMessage).toContain("`migrations init` requires --current-migration-version <label>.");
 	});

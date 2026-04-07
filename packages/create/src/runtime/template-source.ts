@@ -2,6 +2,7 @@
 
 import fs from "node:fs";
 import { promises as fsp } from "node:fs";
+import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
@@ -13,6 +14,7 @@ import { x as extractTarball } from "tar";
 
 import {
 	BUILTIN_TEMPLATE_IDS,
+	CREATE_PACKAGE_ROOT,
 	SHARED_BASE_TEMPLATE_ROOT,
 	TEMPLATE_ROOT,
 	isBuiltInTemplateId,
@@ -30,6 +32,7 @@ import { copyRawDirectory, copyRenderedDirectory } from "./template-render.js";
 const EXTERNAL_TEMPLATE_ENTRY_CANDIDATES = ["index.js", "index.cjs", "index.mjs"] as const;
 const TEMPLATE_WARNING_MESSAGE =
 	"wp-typia owns package/tooling/sync setup for generated projects, so this external template setting is ignored.";
+const require = createRequire(import.meta.url);
 
 type TemplateSourceFormat = "wp-typia" | "create-block-external" | "create-block-subset";
 
@@ -231,6 +234,101 @@ async function fetchNpmTemplateSource(locator: NpmTemplateLocator): Promise<Seed
 		};
 	} catch (error) {
 		await cleanup();
+		throw error;
+	}
+}
+
+async function copyWpTypiaTemplateDirectory(
+	sourceDir: string,
+	targetDir: string,
+): Promise<void> {
+	await fsp.mkdir(targetDir, { recursive: true });
+	for (const entry of await fsp.readdir(sourceDir, { withFileTypes: true })) {
+		const sourcePath = path.join(sourceDir, entry.name);
+		const targetPath = path.join(targetDir, entry.name);
+		const mustacheVariantPath = path.join(sourceDir, `${entry.name}.mustache`);
+
+		if (
+			entry.isFile() &&
+			(entry.name === "package.json" || entry.name === "README.md") &&
+			fs.existsSync(mustacheVariantPath)
+		) {
+			continue;
+		}
+
+		if (entry.isDirectory()) {
+			await copyWpTypiaTemplateDirectory(sourcePath, targetPath);
+			continue;
+		}
+
+		await fsp.mkdir(path.dirname(targetPath), { recursive: true });
+		await fsp.copyFile(sourcePath, targetPath);
+	}
+}
+
+async function normalizeWpTypiaTemplateSeed(seed: SeedSource): Promise<SeedSource> {
+	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-template-source-"));
+	const normalizedDir = path.join(tempRoot, "template");
+	await copyWpTypiaTemplateDirectory(seed.blockDir, normalizedDir);
+
+	return {
+		blockDir: normalizedDir,
+		cleanup: async () => {
+			await fsp.rm(tempRoot, { force: true, recursive: true });
+			await seed.cleanup?.();
+		},
+		rootDir: normalizedDir,
+		selectedVariant: seed.selectedVariant,
+		warnings: seed.warnings,
+	};
+}
+
+function resolveInstalledNpmTemplateSource(locator: NpmTemplateLocator): SeedSource | null {
+	const workspacePackagesRoot = path.resolve(CREATE_PACKAGE_ROOT, "..");
+	if (fs.existsSync(workspacePackagesRoot)) {
+		for (const entry of fs.readdirSync(workspacePackagesRoot, { withFileTypes: true })) {
+			if (!entry.isDirectory()) {
+				continue;
+			}
+
+			const packageDir = path.join(workspacePackagesRoot, entry.name);
+			const packageJsonPath = path.join(packageDir, "package.json");
+			if (!fs.existsSync(packageJsonPath)) {
+				continue;
+			}
+
+			const manifest = JSON.parse(
+				fs.readFileSync(packageJsonPath, "utf8"),
+			) as { name?: string };
+			if (manifest.name === locator.name) {
+				return {
+					blockDir: packageDir,
+					rootDir: packageDir,
+				};
+			}
+		}
+	}
+
+	if (locator.fetchSpec.trim().length > 0) {
+		return null;
+	}
+
+	try {
+		const packageJsonPath = fs.realpathSync(require.resolve(`${locator.name}/package.json`));
+		const sourceDir = path.dirname(packageJsonPath);
+		return {
+			blockDir: sourceDir,
+			rootDir: sourceDir,
+		};
+	} catch (error) {
+		if (
+			typeof error === "object" &&
+			error !== null &&
+			"code" in error &&
+			String((error as { code: unknown }).code) === "MODULE_NOT_FOUND"
+		) {
+			return null;
+		}
 		throw error;
 	}
 }
@@ -884,6 +982,12 @@ async function resolveTemplateSeed(
 		return resolveGitHubTemplateSource(locator.locator);
 	}
 
+	const installedSource = resolveInstalledNpmTemplateSource(locator.locator);
+	if (installedSource) {
+		await assertNoSymlinks(installedSource.blockDir);
+		return installedSource;
+	}
+
 	return fetchNpmTemplateSource(locator.locator);
 }
 
@@ -917,14 +1021,15 @@ export async function resolveTemplateSource(
 			if (variant) {
 				throw new Error(`--variant is only supported for official external template configs. Received variant "${variant}" for "${templateId}".`);
 			}
+			const normalizedSeed = await normalizeWpTypiaTemplateSeed(seed);
 			return {
 				id: templateId,
 				defaultCategory: getDefaultCategory(seed.blockDir),
 				description: "A remote wp-typia template source",
 				features: ["Remote source", "wp-typia format"],
 				format,
-				templateDir: seed.blockDir,
-				cleanup: seed.cleanup,
+				templateDir: normalizedSeed.blockDir,
+				cleanup: normalizedSeed.cleanup,
 			};
 		}
 

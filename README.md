@@ -35,10 +35,12 @@ Use **`wp-typia`** when you need a block that will grow:
 ## Quick Start
 
 ```bash
-bunx wp-typia my-block
+bunx wp-typia create my-block
 # or
-npx wp-typia my-block
+npx wp-typia create my-block
 ```
+
+`wp-typia <project-dir>` remains available as a backward-compatible alias to `create`.
 
 ### Built-in templates
 
@@ -107,13 +109,22 @@ The `compound` template creates a parent/child block structure with hidden imple
 ## Example flows
 
 ```bash
-npx wp-typia my-block --template basic --package-manager pnpm --yes --no-install
-npx wp-typia my-block --template interactivity --package-manager npm --yes --no-install
-npx wp-typia my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
-npx wp-typia my-block --template persistence --data-storage custom-table --persistence-policy public --package-manager npm --yes --no-install
-npx wp-typia my-block --template compound --package-manager bun --yes --no-install
-npx wp-typia my-block --template compound --persistence-policy public --package-manager npm --yes --no-install
-npx wp-typia my-block --template basic --with-migration-ui --package-manager bun --yes --no-install
+npx wp-typia create my-block --template basic --package-manager pnpm --yes --no-install
+npx wp-typia create my-block --template interactivity --package-manager npm --yes --no-install
+npx wp-typia create my-block --template persistence --data-storage custom-table --persistence-policy authenticated --package-manager bun --yes --no-install
+npx wp-typia create my-block --template persistence --data-storage custom-table --persistence-policy public --package-manager npm --yes --no-install
+npx wp-typia create my-block --template compound --package-manager bun --yes --no-install
+npx wp-typia create my-block --template compound --persistence-policy public --package-manager npm --yes --no-install
+npx wp-typia create my-block --template basic --with-migration-ui --package-manager bun --yes --no-install
+```
+
+Empty workspace flow:
+
+```bash
+npx wp-typia create my-plugin --template @wp-typia/create-workspace-template --package-manager bun --yes --no-install
+cd my-plugin
+wp-typia add block counter-card --template basic
+wp-typia add block faq-stack --template compound --persistence-policy public --data-storage custom-table
 ```
 
 ## Start here
@@ -149,9 +160,9 @@ External template configs execute trusted JavaScript (`index.js` / `index.cjs` /
 Remote template examples:
 
 ```bash
-npx wp-typia my-block --template ./local-template-dir --package-manager npm --yes --no-install
-npx wp-typia my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
-npx wp-typia my-block --template @scope/create-block-template --variant hero --package-manager npm --yes --no-install
+npx wp-typia create my-block --template ./local-template-dir --package-manager npm --yes --no-install
+npx wp-typia create my-block --template github:owner/repo/path#main --package-manager npm --yes --no-install
+npx wp-typia create my-block --template @scope/create-block-template --variant hero --package-manager npm --yes --no-install
 ```
 
 ## Documentation
@@ -193,6 +204,7 @@ If you want to see the “everything included” shape of `wp-typia`, start with
 ## Packages
 
 - [`wp-typia`](https://www.npmjs.com/package/wp-typia) as the canonical CLI package
+- [`@wp-typia/create-workspace-template`](https://www.npmjs.com/package/@wp-typia/create-workspace-template) as the official empty workspace template package
 - [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create) as the compatibility/programmatic scaffold package
 - [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types)
 - [`@wp-typia/rest`](https://www.npmjs.com/package/@wp-typia/rest)
@@ -206,6 +218,7 @@ wp-typia/
 ├── packages/
 │   ├── wp-typia/               # Canonical CLI package
 │   ├── create/                 # Compatibility/programmatic scaffold runtime
+│   ├── create-workspace-template/ # Official empty workspace template package
 │   ├── wp-typia-api-client/    # Backend-neutral generated API client runtime
 │   ├── wp-typia-block-runtime/ # Prototype block runtime facade package
 │   ├── wp-typia-rest/          # Typed REST client helpers
