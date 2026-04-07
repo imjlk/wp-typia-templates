@@ -351,7 +351,7 @@ describe("@wp-typia/rest", () => {
 		expect(result.data).toEqual({ items: [3] });
 	});
 
-	test("build rewrites react dist imports for node esm consumers", () => {
+	test("build rewrites dist imports for node esm consumers", () => {
 		const reactDist = readFileSync(
 			new URL("../dist/react.js", import.meta.url),
 			"utf8",
@@ -360,9 +360,23 @@ describe("@wp-typia/rest", () => {
 			new URL("../dist/react.d.ts", import.meta.url),
 			"utf8",
 		);
+		const sharedRuntimePrimitivesDist = readFileSync(
+			new URL("../dist/internal/runtime-primitives.js", import.meta.url),
+			"utf8",
+		);
+		const sharedRuntimePrimitivesTypes = readFileSync(
+			new URL("../dist/internal/runtime-primitives.d.ts", import.meta.url),
+			"utf8",
+		);
 
 		expect(reactDist).toContain('from "./client.js"');
 		expect(reactTypes).toContain('from "./client.js"');
+		expect(sharedRuntimePrimitivesDist).toContain(
+			'from "@wp-typia/api-client/internal/runtime-primitives"',
+		);
+		expect(sharedRuntimePrimitivesTypes).toContain(
+			'from "@wp-typia/api-client/internal/runtime-primitives"',
+		);
 	});
 
 	test("resolveRestRouteUrl canonicalizes wp-json roots and route slashes", () => {

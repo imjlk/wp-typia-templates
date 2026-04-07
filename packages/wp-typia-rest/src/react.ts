@@ -16,6 +16,7 @@ import {
 	type EndpointCallOptions,
 	type ValidationResult,
 } from "./client";
+import { isPlainObject } from "./internal/runtime-primitives.js";
 
 type CacheKey = string;
 
@@ -172,15 +173,6 @@ const EMPTY_SNAPSHOT: EndpointDataSnapshot = {
 };
 
 const EndpointDataClientContext = createContext<EndpointDataClient | null>(null);
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-	if (value === null || typeof value !== "object" || Array.isArray(value)) {
-		return false;
-	}
-
-	const prototype = Object.getPrototypeOf(value);
-	return prototype === Object.prototype || prototype === null;
-}
 
 function normalizeCacheValue(value: unknown): unknown {
 	if (value === undefined) {

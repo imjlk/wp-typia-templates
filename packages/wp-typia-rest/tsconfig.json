@@ -3,6 +3,11 @@
   "compilerOptions": {
     "baseUrl": ".",
     "rootDir": "./src",
+    "paths": {
+      "@wp-typia/api-client/internal/runtime-primitives": [
+        "../wp-typia-api-client/src/internal/runtime-primitives.ts"
+      ]
+    },
     "types": []
   },
   "include": [

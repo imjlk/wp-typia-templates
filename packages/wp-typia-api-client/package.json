@@ -11,6 +11,11 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./internal/runtime-primitives": {
+      "types": "./dist/internal/runtime-primitives.d.ts",
+      "import": "./dist/internal/runtime-primitives.js",
+      "default": "./dist/internal/runtime-primitives.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
