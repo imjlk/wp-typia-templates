@@ -147,6 +147,8 @@ Notes:
   \`migrations wizard\` is TTY-only and helps you choose one legacy migration version to preview.
   \`migrations plan\` and \`migrations wizard\` are read-only previews; they do not scaffold rules or fixtures.
   --all runs across every configured legacy migration version and every configured block target.
+  Existing fixture files are preserved and reported as skipped unless you pass \`--force\`.
+  Use \`migrations fixtures --force\` as the explicit refresh path for generated fixture files.
   In TTY usage, \`migrations fixtures --force\` asks before overwriting existing fixture files.
   In non-interactive usage, \`migrations fixtures --force\` overwrites immediately for script compatibility.`;
 }
@@ -1140,14 +1142,19 @@ export function fixturesProjectMigrations(
 	}
 
 	for (const { block, fixturePath, scopedLabel, version } of fixtureTargets) {
+		const existed = fs.existsSync(fixturePath);
 		const diff = createMigrationDiff(state, block, version, targetMigrationVersion);
 		const result = ensureEdgeFixtureFile(projectDir, block, version, targetMigrationVersion, diff, { force });
 		if (result.written) {
 			generatedVersions.push(scopedLabel);
-			renderLine(`Generated fixture ${path.relative(projectDir, fixturePath)}`);
+			renderLine(
+				`${existed ? "Refreshed" : "Generated"} fixture ${path.relative(projectDir, fixturePath)}`,
+			);
 		} else {
 			skippedVersions.push(scopedLabel);
-			renderLine(`Skipped existing fixture ${path.relative(projectDir, fixturePath)}`);
+			renderLine(
+				`Preserved existing fixture ${path.relative(projectDir, fixturePath)} (use --force to refresh)`,
+			);
 		}
 	}
 
