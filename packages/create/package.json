@@ -60,7 +60,7 @@
     "package.json"
   ],
   "scripts": {
-    "build": "rm -rf dist && bunli build --runtime node && tsc -p tsconfig.runtime.json",
+    "build": "bun run --filter @wp-typia/block-runtime build && rm -rf dist && bunli build --runtime node && tsc -p tsconfig.runtime.json",
     "dev": "bun run src/cli.ts",
     "test": "bun run --filter @wp-typia/block-runtime build && bun run build && bunli test --pattern ./tests/create-cli.test.ts && bunli test --pattern ./tests/import-policy.test.ts && bunli test --pattern ./tests/migrations.test.ts",
     "test:coverage": "bun run --filter @wp-typia/block-runtime build && bun run build && bunli test --pattern ./tests/create-cli.test.ts --coverage && bunli test --pattern ./tests/import-policy.test.ts --coverage && bunli test --pattern ./tests/migrations.test.ts --coverage && bun test tests/*.test.ts --coverage --coverage-reporter=lcov --coverage-dir=coverage",

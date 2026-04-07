@@ -75,6 +75,42 @@ describe("@wp-typia/create import policy", () => {
 		expect(typeof createRuntimeEditorModule.createEditorModel).toBe("function");
 		expect(typeof createRuntimeInspectorModule.useEditorFields).toBe("function");
 		expect(typeof createRuntimeValidationModule.createAttributeUpdater).toBe("function");
+		expect(createRuntimeBlocksModule.buildScaffoldBlockRegistration).toBe(
+			blockRuntimeBlocksModule.buildScaffoldBlockRegistration,
+		);
+		expect(createRuntimeBlocksModule.createTypiaWebpackConfig).toBe(
+			blockRuntimeBlocksModule.createTypiaWebpackConfig,
+		);
+		expect(createRuntimeDefaultsModule.applyTemplateDefaultsFromManifest).toBe(
+			blockRuntimeDefaultsModule.applyTemplateDefaultsFromManifest,
+		);
+		expect(createRuntimeEditorModule.createEditorModel).toBe(
+			blockRuntimeEditorModule.createEditorModel,
+		);
+		expect(createRuntimeEditorModule.describeEditorField).toBe(
+			blockRuntimeEditorModule.describeEditorField,
+		);
+		expect(createRuntimeEditorModule.formatEditorFieldLabel).toBe(
+			blockRuntimeEditorModule.formatEditorFieldLabel,
+		);
+		expect(createRuntimeInspectorModule.useEditorFields).toBe(
+			blockRuntimeInspectorModule.useEditorFields,
+		);
+		expect(createRuntimeInspectorModule.InspectorFromManifest).toBe(
+			blockRuntimeInspectorModule.InspectorFromManifest,
+		);
+		expect(createRuntimeValidationModule.createAttributeUpdater).toBe(
+			blockRuntimeValidationModule.createAttributeUpdater,
+		);
+		expect(createRuntimeValidationModule.createNestedAttributeUpdater).toBe(
+			blockRuntimeValidationModule.createNestedAttributeUpdater,
+		);
+		expect(createRuntimeValidationModule.createScaffoldValidatorToolkit).toBe(
+			blockRuntimeValidationModule.createScaffoldValidatorToolkit,
+		);
+		expect(createRuntimeValidationModule.toValidationResult).toBe(
+			blockRuntimeValidationModule.toValidationResult,
+		);
 		expect(typeof schemaCoreModule.projectJsonSchemaDocument).toBe("function");
 		expect(typeof schemaCoreModule.manifestToOpenApi).toBe("function");
 		expect("useEditorFields" in blockRuntimeRootModule).toBe(false);
@@ -108,6 +144,10 @@ describe("@wp-typia/create import policy", () => {
 		expect(importPolicyDoc).toContain("@wp-typia/create/metadata-core");
 		expect(importPolicyDoc).toContain("@wp-typia/create/runtime/*");
 		expect(importPolicyDoc).toContain("@wp-typia/create/runtime/schema-core");
+		expect(importPolicyDoc).toContain("compatibility shims");
+		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/*` owns the");
 		expect(importPolicyDoc).toMatch(/^- `@wp-typia\/block-runtime`$/m);
+		expect(runtimeSurfaceDoc).toMatch(/compatibility\s+facades/);
+		expect(runtimeSurfaceDoc).toMatch(/single maintained\s+source of truth/);
 	});
 });
