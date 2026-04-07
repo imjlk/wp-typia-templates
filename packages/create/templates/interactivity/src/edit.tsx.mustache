@@ -79,7 +79,7 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
   );
 
   const blockProps = useBlockProps({
-    className: `wp-block-{{slugKebabCase}} wp-block-{{slugKebabCase}}--${interactiveMode}`,
+    className: `{{cssClassName}} {{cssClassName}}--${interactiveMode}`,
     'data-wp-interactive': '{{slugKebabCase}}',
     'data-wp-context': JSON.stringify({
       clicks: attributes.clickCount,

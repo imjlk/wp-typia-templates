@@ -8,15 +8,15 @@ export default function Save( {
 	attributes: {{pascalCase}}ItemAttributes;
 } ) {
 	return (
-		<div { ...useBlockProps.save( { className: 'wp-block-{{slugKebabCase}}-item' } ) }>
+		<div { ...useBlockProps.save( { className: '{{compoundChildCssClassName}}' } ) }>
 			<RichText.Content
 				tagName="h4"
-				className="wp-block-{{slugKebabCase}}-item__title"
+				className="{{compoundChildCssClassName}}__title"
 				value={ attributes.title }
 			/>
 			<RichText.Content
 				tagName="p"
-				className="wp-block-{{slugKebabCase}}-item__body"
+				className="{{compoundChildCssClassName}}__body"
 				value={ attributes.body }
 			/>
 		</div>

@@ -20,13 +20,13 @@
 		"title": {
 			"type": "string",
 			"source": "html",
-			"selector": ".wp-block-{{slugKebabCase}}-item__title",
+			"selector": ".{{compoundChildCssClassName}}__title",
 			"default": {{compoundChildTitleJson}}
 		},
 		"body": {
 			"type": "string",
 			"source": "html",
-			"selector": ".wp-block-{{slugKebabCase}}-item__body",
+			"selector": ".{{compoundChildCssClassName}}__body",
 			"default": "Add supporting details for this internal item."
 		}
 	},

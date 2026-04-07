@@ -3,7 +3,7 @@ import type { {{pascalCase}}Attributes } from './types';
 
 export default function Save({ attributes }: { attributes: {{pascalCase}}Attributes }) {
   const blockProps = useBlockProps.save({
-    className: `wp-block-{{slugKebabCase}} wp-block-{{slugKebabCase}}--${attributes.interactiveMode}`,
+    className: `{{cssClassName}} {{cssClassName}}--${attributes.interactiveMode}`,
     'data-wp-interactive': '{{slugKebabCase}}',
     'data-wp-context': JSON.stringify({
       clicks: attributes.clickCount,

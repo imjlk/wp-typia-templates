@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { cloneJsonValue } from "../../packages/create/src/runtime/json-utils";
 import { isPlainObject } from "../../packages/create/src/runtime/object-utils";
+import { buildBlockCssClassName } from "../../packages/create/src/runtime/scaffold";
 import {
 	toKebabCase,
 	toPascalCase,
@@ -55,5 +56,17 @@ describe("shared create runtime helpers", () => {
 
 		(clone.attributes.items[1] as { count: number }).count = 2;
 		expect((source.attributes.items[1] as { count: number }).count).toBe(1);
+	});
+
+	test("builds namespace-aware block wrapper classes with an empty-namespace fallback", () => {
+		expect(buildBlockCssClassName("demo-space", "demo-block")).toBe(
+			"wp-block-demo-space-demo-block",
+		);
+		expect(buildBlockCssClassName("", "demo-block")).toBe(
+			"wp-block-demo-block",
+		);
+		expect(buildBlockCssClassName("demo-block", "demo-block")).toBe(
+			"wp-block-demo-block-demo-block",
+		);
 	});
 });

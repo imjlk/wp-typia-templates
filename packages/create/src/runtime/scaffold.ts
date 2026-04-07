@@ -94,6 +94,7 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	icon: string;
 	compoundChildTitle: string;
 	compoundChildCategory: string;
+	compoundChildCssClassName: string;
 	compoundChildIcon: string;
 	compoundChildTitleJson: string;
 	compoundPersistenceEnabled: "false" | "true";
@@ -102,6 +103,7 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	dashCase: string;
 	dataStorageMode: DataStorageMode;
 	description: string;
+	frontendCssClassName: string;
 	keyword: string;
 	namespace: string;
 	needsMigration: string;
@@ -248,6 +250,33 @@ function resolveValidatedTextDomain(value: string): string {
 
 function resolveValidatedPhpPrefix(value: string): string {
 	return assertValidIdentifier("PHP prefix", toSnakeCase(value), validatePhpPrefix);
+}
+
+/**
+ * Builds the generated WordPress wrapper CSS class for a scaffolded block.
+ *
+ * Returns `wp-block-{namespace}-{slug}` when a non-empty namespace is present,
+ * or `wp-block-{slug}` when the namespace is empty or undefined. Both inputs
+ * are normalized and validated with the same scaffold identifier rules used for
+ * block names.
+ */
+export function buildBlockCssClassName(
+	namespace: string | undefined,
+	slug: string,
+): string {
+	const normalizedSlug = resolveValidatedBlockSlug(slug);
+	const normalizedNamespace =
+		typeof namespace === "string" && namespace.trim().length > 0
+			? resolveValidatedNamespace(namespace)
+			: "";
+
+	return normalizedNamespace.length > 0
+		? `wp-block-${normalizedNamespace}-${normalizedSlug}`
+		: `wp-block-${normalizedSlug}`;
+}
+
+function buildFrontendCssClassName(blockCssClassName: string): string {
+	return `${blockCssClassName}-frontend`;
 }
 
 function resolveScaffoldIdentifiers({
@@ -456,6 +485,8 @@ export function getTemplateVariables(
 	const phpPrefix = identifiers.phpPrefix;
 	const phpPrefixUpper = phpPrefix.toUpperCase();
 	const compoundChildTitle = `${title} Item`;
+	const cssClassName = buildBlockCssClassName(namespace, slug);
+	const compoundChildCssClassName = buildBlockCssClassName(namespace, `${slug}-item`);
 	const compoundPersistenceEnabled =
 		templateId === "persistence"
 			? true
@@ -481,14 +512,16 @@ export function getTemplateVariables(
 		icon: metadataDefaults?.icon ?? "smiley",
 		compoundChildTitle,
 		compoundChildCategory: COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS.category,
+		compoundChildCssClassName,
 		compoundChildIcon: COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS.icon,
 		compoundChildTitleJson: JSON.stringify(compoundChildTitle),
 		compoundPersistenceEnabled: compoundPersistenceEnabled ? "true" : "false",
 		createPackageVersion,
-		cssClassName: `wp-block-${slug}`,
+		cssClassName,
 		dataStorageMode,
 		dashCase: slug,
 		description,
+		frontendCssClassName: buildFrontendCssClassName(cssClassName),
 		isAuthenticatedPersistencePolicy:
 			persistencePolicy === "authenticated" ? "true" : "false",
 		isPublicPersistencePolicy: persistencePolicy === "public" ? "true" : "false",

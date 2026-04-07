@@ -85,17 +85,17 @@ $wrapper_attributes = get_block_wrapper_attributes(
 ?>
 
 <div <?php echo $wrapper_attributes; ?>>
-	<div class="wp-block-{{slugKebabCase}}-frontend">
-		<p class="wp-block-{{slugKebabCase}}-frontend__content" style="<?php echo esc_attr( 'text-align:' . $alignment ); ?>">
+	<div class="{{frontendCssClassName}}">
+		<p class="{{frontendCssClassName}}__content" style="<?php echo esc_attr( 'text-align:' . $alignment ); ?>">
 			<?php echo esc_html( $content ); ?>
 		</p>
 		<?php if ( ! $can_write ) : ?>
-			<p class="wp-block-{{slugKebabCase}}-frontend__notice">
+			<p class="{{frontendCssClassName}}__notice">
 				<?php echo esc_html( $notice_message ); ?>
 			</p>
 		<?php endif; ?>
 		<p
-			class="wp-block-{{slugKebabCase}}-frontend__error"
+			class="{{frontendCssClassName}}__error"
 			role="status"
 			aria-live="polite"
 			aria-atomic="true"
@@ -105,7 +105,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		></p>
 		<?php if ( ! empty( $normalized['showCount'] ) ) : ?>
 			<span
-				class="wp-block-{{slugKebabCase}}-frontend__count"
+				class="{{frontendCssClassName}}__count"
 				role="status"
 				aria-live="polite"
 				aria-atomic="true"

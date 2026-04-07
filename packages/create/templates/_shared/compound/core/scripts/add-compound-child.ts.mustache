@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const PARENT_BLOCK_NAME = '{{namespace}}/{{slugKebabCase}}';
+const PARENT_BLOCK_NAMESPACE = '{{namespace}}';
 const PARENT_BLOCK_SLUG = '{{slugKebabCase}}';
 const PARENT_BLOCK_TITLE = {{titleJson}};
 const PARENT_TYPE_NAME = '{{pascalCase}}';
@@ -78,6 +79,38 @@ function toTitleCase( input: string ): string {
 		.filter( Boolean )
 		.map( ( segment ) => segment.charAt( 0 ).toUpperCase() + segment.slice( 1 ) )
 		.join( ' ' );
+}
+
+function resolveValidatedNamespace( value: string ): string {
+	const normalizedNamespace = toKebabCase( value );
+
+	if ( ! BLOCK_SLUG_PATTERN.test( normalizedNamespace ) ) {
+		throw new Error( 'Use a block namespace with lowercase letters, numbers, and hyphens only.' );
+	}
+
+	return normalizedNamespace;
+}
+
+function resolveValidatedBlockSlug( value: string ): string {
+	const normalizedSlug = toKebabCase( value );
+
+	if ( ! BLOCK_SLUG_PATTERN.test( normalizedSlug ) ) {
+		throw new Error( 'Use a child slug with lowercase letters, numbers, and hyphens only.' );
+	}
+
+	return normalizedSlug;
+}
+
+function buildBlockCssClassName( namespace: string, slug: string ): string {
+	const normalizedSlug = resolveValidatedBlockSlug( slug );
+	const normalizedNamespace =
+		namespace.trim().length > 0
+			? resolveValidatedNamespace( namespace )
+			: '';
+
+	return normalizedNamespace.length > 0
+		? `wp-block-${ normalizedNamespace }-${ normalizedSlug }`
+		: `wp-block-${ normalizedSlug }`;
 }
 
 function escapeForRegExp( value: string ): string {
@@ -172,6 +205,8 @@ function renderBlockJson(
 	childFolderSlug: string,
 	childTitle: string
 ): string {
+	const childCssClassName = buildBlockCssClassName( PARENT_BLOCK_NAMESPACE, childFolderSlug );
+
 	return `${ JSON.stringify(
 		{
 			$schema: 'https://schemas.wp.org/trunk/block.json',
@@ -193,13 +228,13 @@ function renderBlockJson(
 				title: {
 					type: 'string',
 					source: 'html',
-					selector: `.wp-block-${ childFolderSlug }__title`,
+					selector: `.${ childCssClassName }__title`,
 					default: childTitle,
 				},
 				body: {
 					type: 'string',
 					source: 'html',
-					selector: `.wp-block-${ childFolderSlug }__body`,
+					selector: `.${ childCssClassName }__body`,
 					default: CHILD_PLACEHOLDER,
 				},
 			},
@@ -313,6 +348,8 @@ function renderEditFile(
 	childInterfaceName: string,
 	childTitle: string
 ): string {
+	const childCssClassName = buildBlockCssClassName( PARENT_BLOCK_NAMESPACE, childFolderSlug );
+
 	return `import { RichText, useBlockProps } from '@wordpress/block-editor';
 import { Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
@@ -338,17 +375,17 @@ export default function Edit( {
 \t);
 
 \treturn (
-\t\t<div { ...useBlockProps( { className: 'wp-block-${ childFolderSlug }' } ) }>
+\t\t<div { ...useBlockProps( { className: '${ childCssClassName }' } ) }>
 \t\t\t<RichText
 \t\t\t\ttagName="h4"
-\t\t\t\tclassName="wp-block-${ childFolderSlug }__title"
+\t\t\t\tclassName="${ childCssClassName }__title"
 \t\t\t\tvalue={ attributes.title ?? '' }
 \t\t\t\tonChange={ ( title ) => updateAttribute( 'title', title ) }
 \t\t\t\tplaceholder={ __( ${ JSON.stringify( childTitle ) }, '${ TEXT_DOMAIN }' ) }
 \t\t\t/>
 \t\t\t<RichText
 \t\t\t\ttagName="p"
-\t\t\t\tclassName="wp-block-${ childFolderSlug }__body"
+\t\t\t\tclassName="${ childCssClassName }__body"
 \t\t\t\tvalue={ attributes.body ?? '' }
 \t\t\t\tonChange={ ( body ) => updateAttribute( 'body', body ) }
 \t\t\t\tplaceholder={ __( ${ JSON.stringify( CHILD_PLACEHOLDER ) }, '${ TEXT_DOMAIN }' ) }
@@ -369,6 +406,8 @@ export default function Edit( {
 }
 
 function renderSaveFile( childFolderSlug: string, childTypeName: string ): string {
+	const childCssClassName = buildBlockCssClassName( PARENT_BLOCK_NAMESPACE, childFolderSlug );
+
 	return `import { RichText, useBlockProps } from '@wordpress/block-editor';
 
 import type { ${ childTypeName } } from './types';
@@ -379,15 +418,15 @@ export default function Save( {
 \tattributes: ${ childTypeName };
 } ) {
 \treturn (
-\t\t<div { ...useBlockProps.save( { className: 'wp-block-${ childFolderSlug }' } ) }>
+\t\t<div { ...useBlockProps.save( { className: '${ childCssClassName }' } ) }>
 \t\t\t<RichText.Content
 \t\t\t\ttagName="h4"
-\t\t\t\tclassName="wp-block-${ childFolderSlug }__title"
+\t\t\t\tclassName="${ childCssClassName }__title"
 \t\t\t\tvalue={ attributes.title }
 \t\t\t/>
 \t\t\t<RichText.Content
 \t\t\t\ttagName="p"
-\t\t\t\tclassName="wp-block-${ childFolderSlug }__body"
+\t\t\t\tclassName="${ childCssClassName }__body"
 \t\t\t\tvalue={ attributes.body }
 \t\t\t/>
 \t\t</div>
@@ -427,9 +466,9 @@ registerBlockType< ${ childTypeName } >(
 
 function main() {
 	const { slug, title } = parseArgs();
-	const normalizedSlug = slug ? toKebabCase( slug ) : '';
+	const normalizedSlug = slug ? resolveValidatedBlockSlug( slug ) : '';
 
-	if ( ! BLOCK_SLUG_PATTERN.test( normalizedSlug ) ) {
+	if ( normalizedSlug.length === 0 ) {
 		throw new Error( 'Use a child slug with lowercase letters, numbers, and hyphens only.' );
 	}
 

@@ -23,17 +23,17 @@ export default function Edit( {
 	);
 
 	return (
-		<div { ...useBlockProps( { className: 'wp-block-{{slugKebabCase}}-item' } ) }>
+		<div { ...useBlockProps( { className: '{{compoundChildCssClassName}}' } ) }>
 			<RichText
 				tagName="h4"
-				className="wp-block-{{slugKebabCase}}-item__title"
+				className="{{compoundChildCssClassName}}__title"
 				value={ attributes.title ?? '' }
 				onChange={ ( title ) => updateAttribute( 'title', title ) }
 				placeholder={ __( {{compoundChildTitleJson}}, '{{textDomain}}' ) }
 			/>
 			<RichText
 				tagName="p"
-				className="wp-block-{{slugKebabCase}}-item__body"
+				className="{{compoundChildCssClassName}}__body"
 				value={ attributes.body ?? '' }
 				onChange={ ( body ) => updateAttribute( 'body', body ) }
 				placeholder={ __( 'Add supporting details for this internal item.', '{{textDomain}}' ) }
