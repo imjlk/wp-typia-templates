@@ -129,4 +129,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/editor.ts:265](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/editor.ts#L265)
+[packages/wp-typia-block-runtime/src/editor.ts:267](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/editor.ts#L267)

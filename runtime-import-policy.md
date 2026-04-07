@@ -38,7 +38,9 @@ surface listed above for generated projects.
 facade to `@wp-typia/block-runtime/metadata-core`.
 
 `@wp-typia/create/runtime/*` remains exported for backward compatibility, but it
-is no longer the preferred generated-project import surface.
+is no longer the preferred generated-project import surface. These create
+runtime subpaths are compatibility shims; `@wp-typia/block-runtime/*` owns the
+maintained implementation.
 
 Newly generated projects should use `@wp-typia/block-runtime/*` for block
 runtime helpers and keep `@wp-typia/block-runtime/metadata-core` for TypeScript-to-

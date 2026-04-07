@@ -11,19 +11,10 @@
 - [ManifestConstraints](packages_create_src_runtime_editor.md#manifestconstraints)
 - [ManifestDocument](packages_create_src_runtime_editor.md#manifestdocument)
 - [ManifestTsKind](packages_create_src_runtime_editor.md#manifesttskind)
-
-### Interfaces
-
-- [EditorFieldOption](../interfaces/packages_create_src_runtime_editor.EditorFieldOption.md)
-- [EditorFieldDescriptor](../interfaces/packages_create_src_runtime_editor.EditorFieldDescriptor.md)
-- [EditorModelOptions](../interfaces/packages_create_src_runtime_editor.EditorModelOptions.md)
-
-### Type Aliases
-
 - [EditorControlKind](packages_create_src_runtime_editor.md#editorcontrolkind)
-
-### Functions
-
+- [EditorFieldOption](packages_create_src_runtime_editor.md#editorfieldoption)
+- [EditorFieldDescriptor](packages_create_src_runtime_editor.md#editorfielddescriptor)
+- [EditorModelOptions](packages_create_src_runtime_editor.md#editormodeloptions)
 - [formatEditorFieldLabel](packages_create_src_runtime_editor.md#formateditorfieldlabel)
 - [describeEditorField](packages_create_src_runtime_editor.md#describeeditorfield)
 - [createEditorModel](packages_create_src_runtime_editor.md#createeditormodel)
@@ -32,101 +23,70 @@
 
 ### JsonValue
 
-Re-exports [JsonValue](packages_create_src_runtime_migration_types.md#jsonvalue)
+Re-exports [JsonValue](packages_wp_typia_block_runtime_src_migration_types.md#jsonvalue)
 
 ___
 
 ### ManifestAttribute
 
-Re-exports [ManifestAttribute](../interfaces/packages_create_src_runtime_migration_types.ManifestAttribute.md)
+Re-exports [ManifestAttribute](../interfaces/packages_wp_typia_block_runtime_src_migration_types.ManifestAttribute.md)
 
 ___
 
 ### ManifestConstraints
 
-Re-exports [ManifestConstraints](../interfaces/packages_create_src_runtime_migration_types.ManifestConstraints.md)
+Re-exports [ManifestConstraints](../interfaces/packages_wp_typia_block_runtime_src_migration_types.ManifestConstraints.md)
 
 ___
 
 ### ManifestDocument
 
-Re-exports [ManifestDocument](../interfaces/packages_create_src_runtime_migration_types.ManifestDocument.md)
+Re-exports [ManifestDocument](../interfaces/packages_wp_typia_block_runtime_src_migration_types.ManifestDocument.md)
 
 ___
 
 ### ManifestTsKind
 
-Re-exports [ManifestTsKind](packages_create_src_runtime_migration_types.md#manifesttskind)
+Re-exports [ManifestTsKind](packages_wp_typia_block_runtime_src_migration_types.md#manifesttskind)
 
-## Type Aliases
+___
 
 ### EditorControlKind
 
-Ƭ **EditorControlKind**: ``"toggle"`` \| ``"select"`` \| ``"range"`` \| ``"number"`` \| ``"text"`` \| ``"textarea"`` \| ``"unsupported"``
+Re-exports [EditorControlKind](packages_wp_typia_block_runtime_src_editor.md#editorcontrolkind)
 
-#### Defined in
+___
 
-[packages/create/src/runtime/editor.ts:19](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L19)
+### EditorFieldOption
 
-## Functions
+Re-exports [EditorFieldOption](../interfaces/packages_wp_typia_block_runtime_src_editor.EditorFieldOption.md)
+
+___
+
+### EditorFieldDescriptor
+
+Re-exports [EditorFieldDescriptor](../interfaces/packages_wp_typia_block_runtime_src_editor.EditorFieldDescriptor.md)
+
+___
+
+### EditorModelOptions
+
+Re-exports [EditorModelOptions](../interfaces/packages_wp_typia_block_runtime_src_editor.EditorModelOptions.md)
+
+___
 
 ### formatEditorFieldLabel
 
-▸ **formatEditorFieldLabel**(`path`): `string`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `path` | `string` |
-
-#### Returns
-
-`string`
-
-#### Defined in
-
-[packages/create/src/runtime/editor.ts:190](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L190)
+Re-exports [formatEditorFieldLabel](packages_wp_typia_block_runtime_src_editor.md#formateditorfieldlabel)
 
 ___
 
 ### describeEditorField
 
-▸ **describeEditorField**(`path`, `attribute`, `options?`): [`EditorFieldDescriptor`](../interfaces/packages_create_src_runtime_editor.EditorFieldDescriptor.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `path` | `string` |
-| `attribute` | [`ManifestAttribute`](../interfaces/packages_create_src_runtime_migration_types.ManifestAttribute.md) |
-| `options` | [`EditorModelOptions`](../interfaces/packages_create_src_runtime_editor.EditorModelOptions.md) |
-
-#### Returns
-
-[`EditorFieldDescriptor`](../interfaces/packages_create_src_runtime_editor.EditorFieldDescriptor.md)
-
-#### Defined in
-
-[packages/create/src/runtime/editor.ts:205](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L205)
+Re-exports [describeEditorField](packages_wp_typia_block_runtime_src_editor.md#describeeditorfield)
 
 ___
 
 ### createEditorModel
 
-▸ **createEditorModel**(`manifest`, `options?`): [`EditorFieldDescriptor`](../interfaces/packages_create_src_runtime_editor.EditorFieldDescriptor.md)[]
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `manifest` | [`ManifestDocument`](../interfaces/packages_create_src_runtime_migration_types.ManifestDocument.md) |
-| `options` | [`EditorModelOptions`](../interfaces/packages_create_src_runtime_editor.EditorModelOptions.md) |
-
-#### Returns
-
-[`EditorFieldDescriptor`](../interfaces/packages_create_src_runtime_editor.EditorFieldDescriptor.md)[]
-
-#### Defined in
-
-[packages/create/src/runtime/editor.ts:263](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/editor.ts#L263)
+Re-exports [createEditorModel](packages_wp_typia_block_runtime_src_editor.md#createeditormodel)

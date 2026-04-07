@@ -4,38 +4,26 @@
 
 ## Table of contents
 
-### Interfaces
+### References
 
-- [ManifestDefaultAttribute](../interfaces/packages_create_src_runtime_defaults.ManifestDefaultAttribute.md)
-- [ManifestDefaultsDocument](../interfaces/packages_create_src_runtime_defaults.ManifestDefaultsDocument.md)
-
-### Functions
-
+- [ManifestDefaultAttribute](packages_create_src_runtime_defaults.md#manifestdefaultattribute)
+- [ManifestDefaultsDocument](packages_create_src_runtime_defaults.md#manifestdefaultsdocument)
 - [applyTemplateDefaultsFromManifest](packages_create_src_runtime_defaults.md#applytemplatedefaultsfrommanifest)
 
-## Functions
+## References
+
+### ManifestDefaultAttribute
+
+Re-exports [ManifestDefaultAttribute](../interfaces/packages_wp_typia_block_runtime_src_defaults.ManifestDefaultAttribute.md)
+
+___
+
+### ManifestDefaultsDocument
+
+Re-exports [ManifestDefaultsDocument](../interfaces/packages_wp_typia_block_runtime_src_defaults.ManifestDefaultsDocument.md)
+
+___
 
 ### applyTemplateDefaultsFromManifest
 
-▸ **applyTemplateDefaultsFromManifest**\<`T`\>(`manifest`, `value`): `Partial`\<`T`\>
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `T` | extends `object` |
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `manifest` | [`ManifestDefaultsDocument`](../interfaces/packages_create_src_runtime_defaults.ManifestDefaultsDocument.md) |
-| `value` | `Partial`\<`T`\> |
-
-#### Returns
-
-`Partial`\<`T`\>
-
-#### Defined in
-
-[packages/create/src/runtime/defaults.ts:117](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/defaults.ts#L117)
+Re-exports [applyTemplateDefaultsFromManifest](packages_wp_typia_block_runtime_src_defaults.md#applytemplatedefaultsfrommanifest)

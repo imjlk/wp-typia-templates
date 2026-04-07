@@ -4,91 +4,61 @@
 
 ## Table of contents
 
-### Interfaces
+### References
 
-- [TypiaWebpackArtifactEntry](../interfaces/packages_create_src_runtime_blocks.TypiaWebpackArtifactEntry.md)
-- [TypiaWebpackConfigOptions](../interfaces/packages_create_src_runtime_blocks.TypiaWebpackConfigOptions.md)
-- [ScaffoldBlockRegistrationSettings](../interfaces/packages_create_src_runtime_blocks.ScaffoldBlockRegistrationSettings.md)
-- [ScaffoldBlockMetadata](../interfaces/packages_create_src_runtime_blocks.ScaffoldBlockMetadata.md)
-- [BuildScaffoldBlockRegistrationResult](../interfaces/packages_create_src_runtime_blocks.BuildScaffoldBlockRegistrationResult.md)
-
-### Type Aliases
-
+- [TypiaWebpackArtifactEntry](packages_create_src_runtime_blocks.md#typiawebpackartifactentry)
+- [TypiaWebpackConfigOptions](packages_create_src_runtime_blocks.md#typiawebpackconfigoptions)
 - [ScaffoldBlockSupports](packages_create_src_runtime_blocks.md#scaffoldblocksupports)
-
-### Functions
-
+- [ScaffoldBlockRegistrationSettings](packages_create_src_runtime_blocks.md#scaffoldblockregistrationsettings)
+- [ScaffoldBlockMetadata](packages_create_src_runtime_blocks.md#scaffoldblockmetadata)
+- [BuildScaffoldBlockRegistrationResult](packages_create_src_runtime_blocks.md#buildscaffoldblockregistrationresult)
 - [buildScaffoldBlockRegistration](packages_create_src_runtime_blocks.md#buildscaffoldblockregistration)
 - [createTypiaWebpackConfig](packages_create_src_runtime_blocks.md#createtypiawebpackconfig)
 
-## Type Aliases
+## References
+
+### TypiaWebpackArtifactEntry
+
+Re-exports [TypiaWebpackArtifactEntry](../interfaces/packages_wp_typia_block_runtime_src_blocks.TypiaWebpackArtifactEntry.md)
+
+___
+
+### TypiaWebpackConfigOptions
+
+Re-exports [TypiaWebpackConfigOptions](../interfaces/packages_wp_typia_block_runtime_src_blocks.TypiaWebpackConfigOptions.md)
+
+___
 
 ### ScaffoldBlockSupports
 
-Ƭ **ScaffoldBlockSupports**: `OverrideProperties`\<`WordPressBlockSupports`, `ScaffoldBlockSupportsOverride`\>
+Re-exports [ScaffoldBlockSupports](packages_wp_typia_block_runtime_src_blocks.md#scaffoldblocksupports)
 
-Extended block support surface used by scaffold registration helpers.
+___
 
-This keeps compatibility with `@wordpress/blocks` while replacing overlapping
-support keys with WordPress-compatible boolean-or-object overrides.
+### ScaffoldBlockRegistrationSettings
 
-#### Defined in
+Re-exports [ScaffoldBlockRegistrationSettings](../interfaces/packages_wp_typia_block_runtime_src_blocks.ScaffoldBlockRegistrationSettings.md)
 
-[packages/create/src/runtime/blocks.ts:253](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/blocks.ts#L253)
+___
 
-## Functions
+### ScaffoldBlockMetadata
+
+Re-exports [ScaffoldBlockMetadata](../interfaces/packages_wp_typia_block_runtime_src_blocks.ScaffoldBlockMetadata.md)
+
+___
+
+### BuildScaffoldBlockRegistrationResult
+
+Re-exports [BuildScaffoldBlockRegistrationResult](../interfaces/packages_wp_typia_block_runtime_src_blocks.BuildScaffoldBlockRegistrationResult.md)
+
+___
 
 ### buildScaffoldBlockRegistration
 
-▸ **buildScaffoldBlockRegistration**\<`TSettings`\>(`metadata`, `overrides`): [`BuildScaffoldBlockRegistrationResult`](../interfaces/packages_create_src_runtime_blocks.BuildScaffoldBlockRegistrationResult.md)\<`TSettings`\>
-
-Builds a generated block registration payload while centralizing scaffold
-metadata casting, override merging, and full `block.json` field forwarding.
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `TSettings` | extends `object` |
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `metadata` | [`ScaffoldBlockMetadata`](../interfaces/packages_create_src_runtime_blocks.ScaffoldBlockMetadata.md) | Raw block metadata loaded from `block.json`. |
-| `overrides` | `Partial`\<`TSettings`\> & `Record`\<`string`, `unknown`\> | Generated edit/save/example overrides to merge on top. |
-
-#### Returns
-
-[`BuildScaffoldBlockRegistrationResult`](../interfaces/packages_create_src_runtime_blocks.BuildScaffoldBlockRegistrationResult.md)\<`TSettings`\>
-
-The block name and merged registration settings.
-
-#### Defined in
-
-[packages/create/src/runtime/blocks.ts:370](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/blocks.ts#L370)
+Re-exports [buildScaffoldBlockRegistration](packages_wp_typia_block_runtime_src_blocks.md#buildscaffoldblockregistration)
 
 ___
 
 ### createTypiaWebpackConfig
 
-▸ **createTypiaWebpackConfig**(`options`): `Promise`\<\{ `entry`: () => `Promise`\<`Record`\<`string`, `unknown`\>\> ; `plugins`: `unknown`[]  } \| \{ `entry`: () => `Promise`\<`Record`\<`string`, `unknown`\>\> ; `plugins`: `unknown`[]  }[]\>
-
-Creates a webpack config that shares Typia artifact copying and script-module
-normalization across generated scaffold templates.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `options` | [`TypiaWebpackConfigOptions`](../interfaces/packages_create_src_runtime_blocks.TypiaWebpackConfigOptions.md) | Webpack config inputs plus template-specific discovery callbacks. |
-
-#### Returns
-
-`Promise`\<\{ `entry`: () => `Promise`\<`Record`\<`string`, `unknown`\>\> ; `plugins`: `unknown`[]  } \| \{ `entry`: () => `Promise`\<`Record`\<`string`, `unknown`\>\> ; `plugins`: `unknown`[]  }[]\>
-
-A webpack config or config array that matches the default config shape.
-
-#### Defined in
-
-[packages/create/src/runtime/blocks.ts:398](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/blocks.ts#L398)
+Re-exports [createTypiaWebpackConfig](packages_wp_typia_block_runtime_src_blocks.md#createtypiawebpackconfig)

@@ -172,61 +172,61 @@ ___
 
 ### applyTemplateDefaultsFromManifest
 
-Re-exports [applyTemplateDefaultsFromManifest](packages_create_src_runtime_defaults.md#applytemplatedefaultsfrommanifest)
+Re-exports [applyTemplateDefaultsFromManifest](packages_wp_typia_block_runtime_src_defaults.md#applytemplatedefaultsfrommanifest)
 
 ___
 
 ### createEditorModel
 
-Re-exports [createEditorModel](packages_create_src_runtime_editor.md#createeditormodel)
+Re-exports [createEditorModel](packages_wp_typia_block_runtime_src_editor.md#createeditormodel)
 
 ___
 
 ### describeEditorField
 
-Re-exports [describeEditorField](packages_create_src_runtime_editor.md#describeeditorfield)
+Re-exports [describeEditorField](packages_wp_typia_block_runtime_src_editor.md#describeeditorfield)
 
 ___
 
 ### formatEditorFieldLabel
 
-Re-exports [formatEditorFieldLabel](packages_create_src_runtime_editor.md#formateditorfieldlabel)
+Re-exports [formatEditorFieldLabel](packages_wp_typia_block_runtime_src_editor.md#formateditorfieldlabel)
 
 ___
 
 ### buildScaffoldBlockRegistration
 
-Re-exports [buildScaffoldBlockRegistration](packages_create_src_runtime_blocks.md#buildscaffoldblockregistration)
+Re-exports [buildScaffoldBlockRegistration](packages_wp_typia_block_runtime_src_blocks.md#buildscaffoldblockregistration)
 
 ___
 
 ### createTypiaWebpackConfig
 
-Re-exports [createTypiaWebpackConfig](packages_create_src_runtime_blocks.md#createtypiawebpackconfig)
+Re-exports [createTypiaWebpackConfig](packages_wp_typia_block_runtime_src_blocks.md#createtypiawebpackconfig)
 
 ___
 
 ### BuildScaffoldBlockRegistrationResult
 
-Re-exports [BuildScaffoldBlockRegistrationResult](../interfaces/packages_create_src_runtime_blocks.BuildScaffoldBlockRegistrationResult.md)
+Re-exports [BuildScaffoldBlockRegistrationResult](../interfaces/packages_wp_typia_block_runtime_src_blocks.BuildScaffoldBlockRegistrationResult.md)
 
 ___
 
 ### ScaffoldBlockMetadata
 
-Re-exports [ScaffoldBlockMetadata](../interfaces/packages_create_src_runtime_blocks.ScaffoldBlockMetadata.md)
+Re-exports [ScaffoldBlockMetadata](../interfaces/packages_wp_typia_block_runtime_src_blocks.ScaffoldBlockMetadata.md)
 
 ___
 
 ### ScaffoldBlockRegistrationSettings
 
-Re-exports [ScaffoldBlockRegistrationSettings](../interfaces/packages_create_src_runtime_blocks.ScaffoldBlockRegistrationSettings.md)
+Re-exports [ScaffoldBlockRegistrationSettings](../interfaces/packages_wp_typia_block_runtime_src_blocks.ScaffoldBlockRegistrationSettings.md)
 
 ___
 
 ### ScaffoldBlockSupports
 
-Re-exports [ScaffoldBlockSupports](packages_create_src_runtime_blocks.md#scaffoldblocksupports)
+Re-exports [ScaffoldBlockSupports](packages_wp_typia_block_runtime_src_blocks.md#scaffoldblocksupports)
 
 ___
 
@@ -388,145 +388,145 @@ ___
 
 ### EditorControlKind
 
-Re-exports [EditorControlKind](packages_create_src_runtime_editor.md#editorcontrolkind)
+Re-exports [EditorControlKind](packages_wp_typia_block_runtime_src_editor.md#editorcontrolkind)
 
 ___
 
 ### EditorFieldDescriptor
 
-Re-exports [EditorFieldDescriptor](../interfaces/packages_create_src_runtime_editor.EditorFieldDescriptor.md)
+Re-exports [EditorFieldDescriptor](../interfaces/packages_wp_typia_block_runtime_src_editor.EditorFieldDescriptor.md)
 
 ___
 
 ### EditorFieldOption
 
-Re-exports [EditorFieldOption](../interfaces/packages_create_src_runtime_editor.EditorFieldOption.md)
+Re-exports [EditorFieldOption](../interfaces/packages_wp_typia_block_runtime_src_editor.EditorFieldOption.md)
 
 ___
 
 ### EditorModelOptions
 
-Re-exports [EditorModelOptions](../interfaces/packages_create_src_runtime_editor.EditorModelOptions.md)
+Re-exports [EditorModelOptions](../interfaces/packages_wp_typia_block_runtime_src_editor.EditorModelOptions.md)
 
 ___
 
 ### ManifestAttribute
 
-Re-exports [ManifestAttribute](../interfaces/packages_create_src_runtime_migration_types.ManifestAttribute.md)
+Re-exports [ManifestAttribute](../interfaces/packages_wp_typia_block_runtime_src_migration_types.ManifestAttribute.md)
 
 ___
 
 ### ManifestConstraints
 
-Re-exports [ManifestConstraints](../interfaces/packages_create_src_runtime_migration_types.ManifestConstraints.md)
+Re-exports [ManifestConstraints](../interfaces/packages_wp_typia_block_runtime_src_migration_types.ManifestConstraints.md)
 
 ___
 
 ### ManifestDocument
 
-Re-exports [ManifestDocument](../interfaces/packages_create_src_runtime_migration_types.ManifestDocument.md)
+Re-exports [ManifestDocument](../interfaces/packages_wp_typia_block_runtime_src_migration_types.ManifestDocument.md)
 
 ___
 
 ### ManifestTsKind
 
-Re-exports [ManifestTsKind](packages_create_src_runtime_migration_types.md#manifesttskind)
+Re-exports [ManifestTsKind](packages_wp_typia_block_runtime_src_migration_types.md#manifesttskind)
 
 ___
 
 ### JsonValue
 
-Re-exports [JsonValue](packages_create_src_runtime_migration_types.md#jsonvalue)
+Re-exports [JsonValue](packages_wp_typia_block_runtime_src_migration_types.md#jsonvalue)
 
 ___
 
 ### createAttributeUpdater
 
-Re-exports [createAttributeUpdater](packages_create_src_runtime_validation.md#createattributeupdater)
+Re-exports [createAttributeUpdater](packages_wp_typia_block_runtime_src_validation.md#createattributeupdater)
 
 ___
 
 ### createScaffoldValidatorToolkit
 
-Re-exports [createScaffoldValidatorToolkit](packages_create_src_runtime_validation.md#createscaffoldvalidatortoolkit)
+Re-exports [createScaffoldValidatorToolkit](packages_wp_typia_block_runtime_src_validation.md#createscaffoldvalidatortoolkit)
 
 ___
 
 ### createUseTypiaValidationHook
 
-Re-exports [createUseTypiaValidationHook](packages_create_src_runtime_validation.md#createusetypiavalidationhook)
+Re-exports [createUseTypiaValidationHook](packages_wp_typia_block_runtime_src_validation.md#createusetypiavalidationhook)
 
 ___
 
 ### createNestedAttributeUpdater
 
-Re-exports [createNestedAttributeUpdater](packages_create_src_runtime_validation.md#createnestedattributeupdater)
+Re-exports [createNestedAttributeUpdater](packages_wp_typia_block_runtime_src_validation.md#createnestedattributeupdater)
 
 ___
 
 ### formatValidationError
 
-Re-exports [formatValidationError](packages_create_src_runtime_validation.md#formatvalidationerror)
+Re-exports [formatValidationError](packages_wp_typia_block_runtime_src_validation.md#formatvalidationerror)
 
 ___
 
 ### formatValidationErrors
 
-Re-exports [formatValidationErrors](packages_create_src_runtime_validation.md#formatvalidationerrors)
+Re-exports [formatValidationErrors](packages_wp_typia_block_runtime_src_validation.md#formatvalidationerrors)
 
 ___
 
 ### mergeNestedAttributeUpdate
 
-Re-exports [mergeNestedAttributeUpdate](packages_create_src_runtime_validation.md#mergenestedattributeupdate)
+Re-exports [mergeNestedAttributeUpdate](packages_wp_typia_block_runtime_src_validation.md#mergenestedattributeupdate)
 
 ___
 
 ### normalizeValidationError
 
-Re-exports [normalizeValidationError](packages_create_src_runtime_validation.md#normalizevalidationerror)
+Re-exports [normalizeValidationError](packages_wp_typia_block_runtime_src_validation.md#normalizevalidationerror)
 
 ___
 
 ### toAttributePatch
 
-Re-exports [toAttributePatch](packages_create_src_runtime_validation.md#toattributepatch)
+Re-exports [toAttributePatch](packages_wp_typia_block_runtime_src_validation.md#toattributepatch)
 
 ___
 
 ### toNestedAttributePatch
 
-Re-exports [toNestedAttributePatch](packages_create_src_runtime_validation.md#tonestedattributepatch)
+Re-exports [toNestedAttributePatch](packages_wp_typia_block_runtime_src_validation.md#tonestedattributepatch)
 
 ___
 
 ### toValidationResult
 
-Re-exports [toValidationResult](packages_create_src_runtime_validation.md#tovalidationresult)
+Re-exports [toValidationResult](packages_wp_typia_block_runtime_src_validation.md#tovalidationresult)
 
 ___
 
 ### toValidationState
 
-Re-exports [toValidationState](packages_create_src_runtime_validation.md#tovalidationstate)
+Re-exports [toValidationState](packages_wp_typia_block_runtime_src_validation.md#tovalidationstate)
 
 ___
 
 ### TypiaValidationError
 
-Re-exports [TypiaValidationError](../interfaces/packages_create_src_runtime_validation.TypiaValidationError.md)
+Re-exports [TypiaValidationError](../interfaces/packages_wp_typia_block_runtime_src_validation.TypiaValidationError.md)
 
 ___
 
 ### ValidationResult
 
-Re-exports [ValidationResult](../interfaces/packages_create_src_runtime_validation.ValidationResult.md)
+Re-exports [ValidationResult](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)
 
 ___
 
 ### ValidationState
 
-Re-exports [ValidationState](../interfaces/packages_create_src_runtime_validation.ValidationState.md)
+Re-exports [ValidationState](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationState.md)
 
 ___
 
