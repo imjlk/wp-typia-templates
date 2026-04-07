@@ -18,6 +18,7 @@ describe('repository DX baseline', () => {
 		expect(scripts['format:check']).toBeDefined();
 		expect(scripts['test:all']).toBeDefined();
 		expect(scripts['ci:local']).toBeDefined();
+		expect(scripts['examples:build']).toBe('node scripts/run-clean-examples-build.mjs');
 	});
 
 	test('root ESLint scope stays on repo infrastructure while examples keep wp-scripts ownership', () => {
@@ -35,6 +36,16 @@ describe('repository DX baseline', () => {
 	test('.vscode workspace baseline exists', () => {
 		expect(fs.existsSync(path.join(repoRoot, '.vscode', 'extensions.json'))).toBe(true);
 		expect(fs.existsSync(path.join(repoRoot, '.vscode', 'settings.json'))).toBe(true);
+	});
+
+	test('example build cleanliness guard exists', () => {
+		const guardScript = fs.readFileSync(
+			path.join(repoRoot, 'scripts', 'run-clean-examples-build.mjs'),
+			'utf8',
+		);
+
+		expect(guardScript).toContain('git');
+		expect(guardScript).toContain('Example builds modified files under examples/.');
 	});
 
 	test('docs explain lint ownership and ci:local guidance', () => {

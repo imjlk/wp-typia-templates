@@ -17,7 +17,7 @@
     "lint:repo": "eslint . --max-warnings=0",
     "lint:all": "bun run lint:repo && bun run examples:lint && bun run lint:php",
     "packages:build": "bun run --filter @wp-typia/block-types build && bun run --filter @wp-typia/rest build && bun run --filter @wp-typia/api-client build && bun run --filter @wp-typia/create build && bun run --filter @wp-typia/block-runtime build",
-    "examples:build": "bun run --filter my-typia-block build && bun run --filter persistence-examples build && bun run --filter compound-patterns build && bun run --filter api-contract-adapter-poc build",
+    "examples:build": "node scripts/run-clean-examples-build.mjs",
     "examples:dev": "bun run --filter my-typia-block --if-present dev",
     "examples:dev:persistence": "bun run --filter persistence-examples --if-present dev",
     "examples:dev:compound": "bun run --filter compound-patterns --if-present dev",

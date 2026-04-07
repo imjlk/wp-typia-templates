@@ -230,6 +230,17 @@ function getInstallCommand(packageManager) {
 	}
 }
 
+function runScaffoldRefreshScripts(projectDir, packageManager, packageJson) {
+	for (const scriptName of ["sync-types", "sync-rest", "sync-wordpress-ai", "sync-typia-llm"]) {
+		if (typeof packageJson.scripts?.[scriptName] !== "string") {
+			continue;
+		}
+
+		const [command, args] = getRunScriptCommand(packageManager, scriptName);
+		run(command, args, { cwd: projectDir });
+	}
+}
+
 function ensureCorepackPackageManager(packageManager) {
 	if (packageManager !== "pnpm" && packageManager !== "yarn") {
 		return;
@@ -708,9 +719,11 @@ function main() {
 				...process.env,
 				...(packageManager === "yarn"
 					? { YARN_ENABLE_IMMUTABLE_INSTALLS: "false" }
-					: {}),
+				: {}),
 			},
 		});
+
+		runScaffoldRefreshScripts(projectDir, packageManager, packageJson);
 
 		const [buildCommand, buildArgs] = getRunCommand(packageManager);
 		run(buildCommand, buildArgs, { cwd: projectDir });

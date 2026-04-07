@@ -82,6 +82,73 @@ const COUNTER_BLOCK = ( () => {
 	return block;
 } )();
 
+interface GeneratedArtifactFile {
+	content: string;
+	path: string;
+}
+
+interface ArtifactSyncOptions {
+	check?: boolean;
+}
+
+function normalizeGeneratedArtifactContentForComparison(
+	content: string
+): string {
+	return content.replace( /\r\n?/g, '\n' );
+}
+
+async function reconcileGeneratedArtifacts(
+	artifacts: readonly GeneratedArtifactFile[],
+	options: ArtifactSyncOptions = {}
+) {
+	if ( options.check !== true ) {
+		for ( const artifact of artifacts ) {
+			await mkdir( path.dirname( artifact.path ), {
+				recursive: true,
+			} );
+			await writeFile( artifact.path, artifact.content, 'utf8' );
+		}
+
+		return;
+	}
+
+	const issues: string[] = [];
+
+	for ( const artifact of artifacts ) {
+		try {
+			const current = normalizeGeneratedArtifactContentForComparison(
+				await readFile( artifact.path, 'utf8' )
+			);
+			const expected = normalizeGeneratedArtifactContentForComparison(
+				artifact.content
+			);
+			if ( current !== expected ) {
+				issues.push( `- ${ artifact.path } (stale)` );
+			}
+		} catch ( error ) {
+			if (
+				error &&
+				typeof error === 'object' &&
+				'code' in error &&
+				error.code === 'ENOENT'
+			) {
+				issues.push( `- ${ artifact.path } (missing)` );
+				continue;
+			}
+
+			throw error;
+		}
+	}
+
+	if ( issues.length > 0 ) {
+		throw new Error(
+			`Generated artifacts are missing or stale:\n${ issues.join(
+				'\n'
+			) }`
+		);
+	}
+}
+
 function toAbilityId( operationId: string ): string {
 	return `persistence-examples/${ operationId
 		.replace( /([a-z0-9])([A-Z])/g, '$1-$2' )
@@ -230,33 +297,29 @@ export async function buildCounterWordPressAiArtifacts( options?: {
 	} );
 }
 
-export async function syncCounterWordPressAiArtifacts() {
+export async function syncCounterWordPressAiArtifacts(
+	options: ArtifactSyncOptions = {}
+) {
 	const { abilitiesDocument, aiResponseSchema } =
 		await buildCounterWordPressAiArtifacts();
 
-	const outputDirectory = getBlockArtifactPath(
-		COUNTER_BLOCK.slug,
-		WORDPRESS_AI_ROOT
-	);
-	await mkdir( outputDirectory, {
-		recursive: true,
-	} );
-
-	await writeFile(
-		getBlockArtifactPath(
-			COUNTER_BLOCK.slug,
-			COUNTER_AI_RESPONSE_SCHEMA_RELATIVE_PATH
-		),
-		JSON.stringify( aiResponseSchema, null, 2 ) + '\n',
-		'utf8'
-	);
-
-	await writeFile(
-		getBlockArtifactPath(
-			COUNTER_BLOCK.slug,
-			COUNTER_ABILITIES_RELATIVE_PATH
-		),
-		JSON.stringify( abilitiesDocument, null, 2 ) + '\n',
-		'utf8'
+	await reconcileGeneratedArtifacts(
+		[
+			{
+				content: JSON.stringify( aiResponseSchema, null, 2 ) + '\n',
+				path: getBlockArtifactPath(
+					COUNTER_BLOCK.slug,
+					COUNTER_AI_RESPONSE_SCHEMA_RELATIVE_PATH
+				),
+			},
+			{
+				content: JSON.stringify( abilitiesDocument, null, 2 ) + '\n',
+				path: getBlockArtifactPath(
+					COUNTER_BLOCK.slug,
+					COUNTER_ABILITIES_RELATIVE_PATH
+				),
+			},
+		],
+		options
 	);
 }

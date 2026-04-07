@@ -86,7 +86,7 @@ Defaults keep these concerns separate:
 - text domains default to the kebab-case slug
 - PHP symbols default to a snake_case prefix derived from the slug
 
-Every generated project exposes `sync-types`, and persistence-enabled scaffolds also expose `sync-rest`. `start` and `build` already run the relevant sync scripts for you. Run them manually only when you want generated metadata/schema artifacts committed before the first `start` or `build` cycle. `sync-types` stays warn-only by default, supports `-- --fail-on-lossy` when CI should fail only on lossy WordPress projections, and supports `-- --strict --report json` when CI should fail on every warning while reading a machine-friendly JSON report from stdout. These syncs do not create migration history.
+Every generated project exposes `sync-types`, and persistence-enabled scaffolds also expose `sync-rest`. `start` still runs the relevant sync scripts for you, while `build` and `typecheck` verify that generated metadata/schema artifacts are already current and fail if they are stale. Run the sync scripts manually when you want generated metadata/schema artifacts refreshed before `build`, `typecheck`, or commit. `sync-types` stays warn-only by default, supports `-- --fail-on-lossy` when CI should fail only on lossy WordPress projections, and supports `-- --strict --report json` when CI should fail on every warning while reading a machine-friendly JSON report from stdout. These syncs do not create migration history.
 
 Generated projects can also reuse small runtime helpers from `@wp-typia/block-runtime` instead of copying local utility code:
 
@@ -197,6 +197,16 @@ await syncTypeSchemas({
   sourceTypeName: "MyRequestContract",
   typesFile: "src/api-types.ts",
 });
+
+await syncTypeSchemas(
+  {
+    jsonSchemaFile: "src/api-schemas/request.schema.json",
+    openApiFile: "src/api-schemas/request.openapi.json",
+    sourceTypeName: "MyRequestContract",
+    typesFile: "src/api-types.ts",
+  },
+  { check: true },
+);
 
 const REST_ENDPOINT_MANIFEST = defineEndpointManifest({
   contracts: {

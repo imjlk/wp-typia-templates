@@ -57,14 +57,24 @@ export function getOptionalOnboardingNote(
 	templateId = "basic",
 ): string {
 	const developmentScript = getPrimaryDevelopmentScript(templateId);
+	const failOnLossySyncCommand = formatRunScript(
+		packageManager,
+		"sync-types",
+		"--fail-on-lossy",
+	);
 	const syncTypesCommand = formatRunScript(packageManager, "sync-types");
-	const strictSyncCommand = `${syncTypesCommand} -- --strict --report json`;
+	const typecheckCommand = formatRunScript(packageManager, "typecheck");
+	const strictSyncCommand = formatRunScript(
+		packageManager,
+		"sync-types",
+		"--strict --report json",
+	);
 
 	return `${formatRunScript(packageManager, developmentScript)} ${
 		developmentScript === "dev"
 			? "watches the relevant sync scripts during local development."
 			: "remains the primary local entry point."
-	} ${formatRunScript(packageManager, "start")} and ${formatRunScript(packageManager, "build")} still run one-shot syncs before starting or building. Run the sync scripts manually only if you want generated metadata/schema artifacts committed before your first ${developmentScript}/start/build cycle. ${syncTypesCommand} stays warn-only by default; add \`-- --fail-on-lossy\` to fail only on lossy WordPress projections, or \`-- --strict --report json\` for CI-friendly JSON output that fails on all warnings. They do not create migration history. For example: \`${strictSyncCommand}\`.`;
+	} ${formatRunScript(packageManager, "start")} still runs one-shot syncs before starting, while ${formatRunScript(packageManager, "build")} and ${typecheckCommand} verify that generated metadata/schema artifacts are already current and fail if they are stale. Run the sync scripts manually when you want to refresh generated artifacts before build, typecheck, or commit. ${syncTypesCommand} stays warn-only by default; use \`${failOnLossySyncCommand}\` to fail only on lossy WordPress projections, or \`${strictSyncCommand}\` for a CI-friendly JSON report that fails on all warnings. They do not create migration history.`;
 }
 
 /**
@@ -106,7 +116,11 @@ export function getCompoundExtensionWorkflowSection(
 	return `## Compound Extension Workflow
 
 \`\`\`bash
-${ formatRunScript( packageManager, "add-child" ) } -- --slug faq-item --title "FAQ Item"
+${ formatRunScript(
+		packageManager,
+		"add-child",
+		'--slug faq-item --title "FAQ Item"'
+	) }
 \`\`\`
 
 This scaffolds a new hidden child block type, updates \`scripts/block-config.ts\` and \`src/blocks/*/children.ts\`, and leaves the default seeded child template unchanged.`;

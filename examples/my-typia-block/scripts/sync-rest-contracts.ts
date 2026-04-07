@@ -16,17 +16,45 @@ const CONTRACTS = [
 	},
 ] as const;
 
-async function main() {
-	for ( const contract of CONTRACTS ) {
-		await syncTypeSchemas( {
-			jsonSchemaFile: `src/api-schemas/${ contract.baseName }.schema.json`,
-			openApiFile: `src/api-schemas/${ contract.baseName }.openapi.json`,
-			sourceTypeName: contract.sourceTypeName,
-			typesFile: 'src/api-types.ts',
-		} );
+function parseCliOptions( argv: string[] ) {
+	const options = {
+		check: false,
+	};
+
+	for ( const argument of argv ) {
+		if ( argument === '--check' ) {
+			options.check = true;
+			continue;
+		}
+
+		throw new Error( `Unknown sync-rest flag: ${ argument }` );
 	}
 
-	console.log( '✅ REST contract schemas generated from TypeScript types!' );
+	return options;
+}
+
+async function main() {
+	const options = parseCliOptions( process.argv.slice( 2 ) );
+
+	for ( const contract of CONTRACTS ) {
+		await syncTypeSchemas(
+			{
+				jsonSchemaFile: `src/api-schemas/${ contract.baseName }.schema.json`,
+				openApiFile: `src/api-schemas/${ contract.baseName }.openapi.json`,
+				sourceTypeName: contract.sourceTypeName,
+				typesFile: 'src/api-types.ts',
+			},
+			{
+				check: options.check,
+			}
+		);
+	}
+
+	console.log(
+		options.check
+			? '✅ REST contract schemas are already up to date with the TypeScript types!'
+			: '✅ REST contract schemas generated from TypeScript types!'
+	);
 }
 
 main().catch( ( error ) => {

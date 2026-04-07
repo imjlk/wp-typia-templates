@@ -9,14 +9,14 @@
 	"scripts": {
 		"sync-types": "tsx scripts/sync-types-to-block-json.ts",
 		"sync-rest": "tsx scripts/sync-rest-contracts.ts",
-		"build": "bun run sync-types && bun run sync-rest && wp-scripts build --experimental-modules",
+		"build": "bun run sync-types --check && bun run sync-rest --check && wp-scripts build --experimental-modules",
 		"start": "bun run sync-types && bun run sync-rest && wp-scripts start --experimental-modules",
 		"dev": "bun run start",
 		"lint:js": "wp-scripts lint-js",
 		"lint:css": "wp-scripts lint-style",
 		"lint": "bun run lint:js && bun run lint:css",
 		"format": "wp-scripts format",
-		"typecheck": "bun run sync-types && bun run sync-rest && tsc --noEmit"
+		"typecheck": "bun run sync-types --check && bun run sync-rest --check && tsc --noEmit"
 	},
 	"devDependencies": {
 		"@wp-typia/block-runtime": "{{blockRuntimePackageVersion}}",

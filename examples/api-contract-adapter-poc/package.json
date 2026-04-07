@@ -8,9 +8,9 @@
 	"license": "GPL-2.0-or-later",
 	"scripts": {
 		"sync-typia-llm": "tsx scripts/sync-typia-llm.ts",
-		"build": "bun run sync-typia-llm && bun run typecheck",
+		"build": "bun run typecheck",
 		"start": "tsx src/server.ts",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "bun run sync-typia-llm --check && tsc --noEmit"
 	},
 	"devDependencies": {
 		"@wp-typia/api-client": "workspace:*",

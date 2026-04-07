@@ -87,7 +87,7 @@ export function formatRunScript(packageManagerId: PackageManagerId, scriptName: 
 		return args ? `npm run ${scriptName} -- ${args}` : `npm run ${scriptName}`;
 	}
 	if (packageManagerId === "pnpm") {
-		return args ? `pnpm run ${scriptName} -- ${args}` : `pnpm run ${scriptName}`;
+		return args ? `pnpm run ${scriptName} ${args}` : `pnpm run ${scriptName}`;
 	}
 
 	return args ? `yarn run ${scriptName} ${args}` : `yarn run ${scriptName}`;
