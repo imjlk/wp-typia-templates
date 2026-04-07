@@ -131,7 +131,9 @@ async function reconcileGeneratedArtifacts(
 
 	if ( issues.length > 0 ) {
 		throw new Error(
-			`Generated artifacts are missing or stale:\n${ issues.join( '\n' ) }`
+			`Generated artifacts are missing or stale:\n${ issues.join(
+				'\n'
+			) }`
 		);
 	}
 }

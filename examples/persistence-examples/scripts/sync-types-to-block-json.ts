@@ -27,23 +27,31 @@ async function main() {
 
 	for ( const block of BLOCKS ) {
 		const baseDir = path.join( 'src', 'blocks', block.slug );
-		const result = await syncBlockMetadata( {
-			blockJsonFile: path.join( baseDir, 'block.json' ),
-			jsonSchemaFile: path.join( baseDir, 'typia.schema.json' ),
-			manifestFile: path.join( baseDir, 'typia.manifest.json' ),
-			openApiFile: path.join( baseDir, 'typia.openapi.json' ),
-			sourceTypeName: block.attributeTypeName,
-			typesFile: block.typesFile,
-		}, {
-			check: options.check,
-		} );
+		const result = await syncBlockMetadata(
+			{
+				blockJsonFile: path.join( baseDir, 'block.json' ),
+				jsonSchemaFile: path.join( baseDir, 'typia.schema.json' ),
+				manifestFile: path.join( baseDir, 'typia.manifest.json' ),
+				openApiFile: path.join( baseDir, 'typia.openapi.json' ),
+				sourceTypeName: block.attributeTypeName,
+				typesFile: block.typesFile,
+			},
+			{
+				check: options.check,
+			}
+		);
 
 		console.log(
 			options.check
 				? `✅ ${ block.slug }: block.json, typia.manifest.json, typia-validator.php, typia.schema.json, and typia.openapi.json are already up to date with the TypeScript types!`
 				: `✅ ${ block.slug }: block.json, typia.manifest.json, typia-validator.php, typia.schema.json, and typia.openapi.json were generated from TypeScript types!`
 		);
-		console.log( '📝 Generated attributes:', result.attributeNames );
+		console.log(
+			options.check
+				? '📝 Checked attributes:'
+				: '📝 Generated attributes:',
+			result.attributeNames
+		);
 	}
 }
 

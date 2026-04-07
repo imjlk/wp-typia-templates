@@ -8,7 +8,7 @@
 	"license": "GPL-2.0-or-later",
 	"scripts": {
 		"sync-typia-llm": "tsx scripts/sync-typia-llm.ts",
-		"build": "bun run sync-typia-llm --check && bun run typecheck",
+		"build": "bun run typecheck",
 		"start": "tsx src/server.ts",
 		"typecheck": "bun run sync-typia-llm --check && tsc --noEmit"
 	},

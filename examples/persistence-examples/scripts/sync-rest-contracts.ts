@@ -33,48 +33,57 @@ async function main() {
 		const contracts = block.restManifest.contracts;
 
 		for ( const [ baseName, contract ] of Object.entries( contracts ) ) {
-			await syncTypeSchemas( {
-				jsonSchemaFile: path.join(
-					'src',
-					'blocks',
-					block.slug,
-					'api-schemas',
-					`${ baseName }.schema.json`
-				),
-				openApiFile: path.join(
-					'src',
-					'blocks',
-					block.slug,
-					'api-schemas',
-					`${ baseName }.openapi.json`
-				),
-				sourceTypeName: contract.sourceTypeName,
-				typesFile: block.apiTypesFile,
-			}, {
-				check: options.check,
-			} );
+			await syncTypeSchemas(
+				{
+					jsonSchemaFile: path.join(
+						'src',
+						'blocks',
+						block.slug,
+						'api-schemas',
+						`${ baseName }.schema.json`
+					),
+					openApiFile: path.join(
+						'src',
+						'blocks',
+						block.slug,
+						'api-schemas',
+						`${ baseName }.openapi.json`
+					),
+					sourceTypeName: contract.sourceTypeName,
+					typesFile: block.apiTypesFile,
+				},
+				{
+					check: options.check,
+				}
+			);
 		}
 
-		await syncRestOpenApi( {
-			manifest: block.restManifest,
-			openApiFile: block.openApiFile,
-			typesFile: block.apiTypesFile,
-		}, {
-			check: options.check,
-		} );
+		await syncRestOpenApi(
+			{
+				manifest: block.restManifest,
+				openApiFile: block.openApiFile,
+				typesFile: block.apiTypesFile,
+			},
+			{
+				check: options.check,
+			}
+		);
 
-		await syncEndpointClient( {
-			clientFile: path.join(
-				'src',
-				'blocks',
-				block.slug,
-				'api-client.ts'
-			),
-			manifest: block.restManifest,
-			typesFile: block.apiTypesFile,
-		}, {
-			check: options.check,
-		} );
+		await syncEndpointClient(
+			{
+				clientFile: path.join(
+					'src',
+					'blocks',
+					block.slug,
+					'api-client.ts'
+				),
+				manifest: block.restManifest,
+				typesFile: block.apiTypesFile,
+			},
+			{
+				check: options.check,
+			}
+		);
 	}
 
 	console.log(

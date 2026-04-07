@@ -379,7 +379,10 @@ function reconcileGeneratedArtifacts(
     }
 
     const currentContent = fs.readFileSync(artifact.path, 'utf8');
-    if (currentContent !== artifact.content) {
+    if (
+      normalizeGeneratedArtifactContentForComparison(currentContent) !==
+      normalizeGeneratedArtifactContentForComparison(artifact.content)
+    ) {
       issues.push({
         path: artifact.path,
         reason: 'stale',
@@ -390,6 +393,10 @@ function reconcileGeneratedArtifacts(
   if (issues.length > 0) {
     throw new GeneratedArtifactDriftError(issues);
   }
+}
+
+function normalizeGeneratedArtifactContentForComparison(content: string): string {
+  return content.replace(/\r\n?/g, '\n');
 }
 
 function resolveSyncBlockMetadataPaths(

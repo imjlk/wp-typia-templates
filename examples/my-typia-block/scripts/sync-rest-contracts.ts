@@ -37,14 +37,17 @@ async function main() {
 	const options = parseCliOptions( process.argv.slice( 2 ) );
 
 	for ( const contract of CONTRACTS ) {
-		await syncTypeSchemas( {
-			jsonSchemaFile: `src/api-schemas/${ contract.baseName }.schema.json`,
-			openApiFile: `src/api-schemas/${ contract.baseName }.openapi.json`,
-			sourceTypeName: contract.sourceTypeName,
-			typesFile: 'src/api-types.ts',
-		}, {
-			check: options.check,
-		} );
+		await syncTypeSchemas(
+			{
+				jsonSchemaFile: `src/api-schemas/${ contract.baseName }.schema.json`,
+				openApiFile: `src/api-schemas/${ contract.baseName }.openapi.json`,
+				sourceTypeName: contract.sourceTypeName,
+				typesFile: 'src/api-types.ts',
+			},
+			{
+				check: options.check,
+			}
+		);
 	}
 
 	console.log(
