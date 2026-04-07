@@ -38,7 +38,7 @@ SyncRestOpenApiBaseOptions.openApiFile
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:213](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L213)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:223](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L223)
 
 ___
 
@@ -54,7 +54,7 @@ SyncRestOpenApiBaseOptions.projectRoot
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:215](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L215)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:225](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L225)
 
 ___
 
@@ -70,7 +70,7 @@ SyncRestOpenApiBaseOptions.typesFile
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:217](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L217)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:227](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L227)
 
 ___
 
@@ -82,7 +82,7 @@ Contract registry keyed by logical route contract ids.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:239](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L239)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:249](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L249)
 
 ___
 
@@ -94,7 +94,7 @@ Endpoint registry describing the REST paths, methods, and auth policies to docum
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:241](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L241)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:251](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L251)
 
 ___
 
@@ -106,7 +106,7 @@ Optional OpenAPI document metadata.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:243](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L243)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:253](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L253)
 
 ___
 
@@ -118,4 +118,4 @@ Not accepted when `contracts` and `endpoints` are provided directly.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:245](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L245)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:255](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L255)

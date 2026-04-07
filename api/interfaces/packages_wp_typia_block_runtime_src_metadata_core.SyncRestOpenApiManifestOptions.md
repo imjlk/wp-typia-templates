@@ -38,7 +38,7 @@ SyncRestOpenApiBaseOptions.openApiFile
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:213](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L213)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:223](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L223)
 
 ___
 
@@ -54,7 +54,7 @@ SyncRestOpenApiBaseOptions.projectRoot
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:215](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L215)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:225](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L225)
 
 ___
 
@@ -70,7 +70,7 @@ SyncRestOpenApiBaseOptions.typesFile
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:217](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L217)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:227](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L227)
 
 ___
 
@@ -82,7 +82,7 @@ Canonical endpoint manifest describing the REST surface.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:225](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L225)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:235](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L235)
 
 ___
 
@@ -94,7 +94,7 @@ Not accepted when `manifest` is provided.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:227](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L227)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:237](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L237)
 
 ___
 
@@ -106,7 +106,7 @@ Not accepted when `manifest` is provided.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:229](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L229)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:239](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L239)
 
 ___
 
@@ -118,4 +118,4 @@ Not accepted when `manifest` is provided.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:231](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L231)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:241](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L241)

@@ -78,14 +78,14 @@ my-counter/
 └── webpack.config.js
 ```
 
-Fresh scaffolds already include a starter `src/typia.manifest.json` so editor/runtime imports resolve before the first sync. After you run `npm run sync-types`, `npm run dev`, `npm run start`, or `npm run build`, the scaffold also generates:
+Fresh scaffolds already include a starter `src/typia.manifest.json` so editor/runtime imports resolve before the first sync. After you run `npm run sync-types`, `npm run dev`, or `npm run start`, the scaffold also generates:
 
 - `src/typia.manifest.json`
 - `src/typia.schema.json`
 - `src/typia.openapi.json`
 - `src/typia-validator.php`
 
-After you run `npm run sync-rest`, it also generates:
+After you run `npm run sync-rest`, `npm run dev`, or `npm run start`, it also generates:
 
 - `src/api.openapi.json`
 - `src/api-schemas/*.schema.json`
@@ -464,7 +464,7 @@ This creates:
 - `src/api-schemas/*.schema.json` - JSON Schema files
 - `src/api-schemas/*.openapi.json` - per-contract OpenAPI compatibility fragments
 
-You only need to run `npm run sync-types` / `npm run sync-rest` manually when you want generated metadata and REST schemas committed before the first `npm run dev`, `npm run start`, or `npm run build`. The generated `dev` workflow watches both sync commands for persistence scaffolds, and `start` / `build` still run them as one-shot syncs. `npm run sync-types` stays warn-only by default, `npm run sync-types -- --fail-on-lossy` fails only on lossy WordPress projection warnings, and `npm run sync-types -- --strict --report json` emits a CI-friendly JSON report while failing on every warning. They do not create migration history.
+You only need to run `npm run sync-types` / `npm run sync-rest` manually when you want generated metadata and REST schemas refreshed before `npm run build`, `npm run typecheck`, or commit. The generated `dev` workflow watches both sync commands for persistence scaffolds, `npm run start` still runs them as one-shot syncs, and both `npm run build` and `npm run typecheck` verify that the checked-in artifacts are already current. `npm run sync-types` stays warn-only by default, `npm run sync-types -- --fail-on-lossy` fails only on lossy WordPress projection warnings, and `npm run sync-types -- --strict --report json` emits a CI-friendly JSON report while failing on every warning. They do not create migration history.
 
 For persistence scaffolds, `src/api.openapi.json` is the canonical REST document because it includes the actual route paths, methods, and auth policy metadata. The files in `src/api-schemas/` remain useful per-contract artifacts for validation and compatibility.
 

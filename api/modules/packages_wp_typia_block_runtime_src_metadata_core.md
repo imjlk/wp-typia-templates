@@ -8,6 +8,7 @@
 
 - [SyncBlockMetadataOptions](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncBlockMetadataOptions.md)
 - [SyncBlockMetadataResult](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncBlockMetadataResult.md)
+- [ArtifactSyncExecutionOptions](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.ArtifactSyncExecutionOptions.md)
 - [SyncBlockMetadataFailure](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncBlockMetadataFailure.md)
 - [SyncBlockMetadataExecutionOptions](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncBlockMetadataExecutionOptions.md)
 - [SyncBlockMetadataReport](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncBlockMetadataReport.md)
@@ -53,19 +54,19 @@ High-level outcome for one `runSyncBlockMetadata()` execution.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:53](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L53)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:60](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L60)
 
 ___
 
 ### SyncBlockMetadataFailureCode
 
-Ƭ **SyncBlockMetadataFailureCode**: ``"unsupported-type-node"`` \| ``"unsupported-type-pattern"`` \| ``"recursive-type"`` \| ``"invalid-source-type"`` \| ``"typescript-diagnostic"`` \| ``"unknown-internal-error"``
+Ƭ **SyncBlockMetadataFailureCode**: ``"stale-generated-artifact"`` \| ``"unsupported-type-node"`` \| ``"unsupported-type-pattern"`` \| ``"recursive-type"`` \| ``"invalid-source-type"`` \| ``"typescript-diagnostic"`` \| ``"unknown-internal-error"``
 
 Stable failure bucket for structured `sync-types` error reporting.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:58](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L58)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:65](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L65)
 
 ___
 
@@ -77,7 +78,7 @@ Portable route metadata stored in one endpoint manifest entry.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:161](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L161)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:171](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L171)
 
 ___
 
@@ -89,7 +90,7 @@ Backward-compatible route metadata consumed by `syncRestOpenApi()`.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:206](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L206)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:216](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L216)
 
 ___
 
@@ -101,7 +102,7 @@ Options for writing a canonical endpoint-aware REST OpenAPI document.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:251](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L251)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:261](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L261)
 
 ## Functions
 
@@ -132,13 +133,13 @@ The same manifest object with literal contract and endpoint metadata preserved.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:187](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L187)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:197](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L197)
 
 ___
 
 ### syncBlockMetadata
 
-▸ **syncBlockMetadata**(`options`): `Promise`\<[`SyncBlockMetadataResult`](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncBlockMetadataResult.md)\>
+▸ **syncBlockMetadata**(`options`, `executionOptions?`): `Promise`\<[`SyncBlockMetadataResult`](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncBlockMetadataResult.md)\>
 
 Synchronizes block metadata artifacts from a source TypeScript contract.
 
@@ -151,6 +152,7 @@ the same source type.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `options` | [`SyncBlockMetadataOptions`](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncBlockMetadataOptions.md) | Configuration for locating the project root, source types file/type name, and output artifact paths. |
+| `executionOptions` | [`ArtifactSyncExecutionOptions`](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.ArtifactSyncExecutionOptions.md) | - |
 
 #### Returns
 
@@ -161,7 +163,7 @@ PHP validator coverage warnings discovered during synchronization.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:363](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L363)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:443](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L443)
 
 ___
 
@@ -191,19 +193,20 @@ A structured execution report describing generated paths, warnings, and failures
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:455](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L455)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:576](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L576)
 
 ___
 
 ### syncTypeSchemas
 
-▸ **syncTypeSchemas**(`options`): `Promise`\<[`SyncTypeSchemaResult`](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncTypeSchemaResult.md)\>
+▸ **syncTypeSchemas**(`options`, `executionOptions?`): `Promise`\<[`SyncTypeSchemaResult`](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncTypeSchemaResult.md)\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `options` | [`SyncTypeSchemaOptions`](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncTypeSchemaOptions.md) |
+| `executionOptions` | [`ArtifactSyncExecutionOptions`](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.ArtifactSyncExecutionOptions.md) |
 
 #### Returns
 
@@ -211,13 +214,13 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:506](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L506)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:629](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L629)
 
 ___
 
 ### syncRestOpenApi
 
-▸ **syncRestOpenApi**(`options`): `Promise`\<[`SyncRestOpenApiResult`](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncRestOpenApiResult.md)\>
+▸ **syncRestOpenApi**(`options`, `executionOptions?`): `Promise`\<[`SyncRestOpenApiResult`](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncRestOpenApiResult.md)\>
 
 Generate and write a canonical OpenAPI document for scaffolded REST contracts.
 
@@ -226,6 +229,7 @@ Generate and write a canonical OpenAPI document for scaffolded REST contracts.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `options` | [`SyncRestOpenApiOptions`](packages_wp_typia_block_runtime_src_metadata_core.md#syncrestopenapioptions) | Contracts, endpoint metadata, source file, and output file settings. |
+| `executionOptions` | [`ArtifactSyncExecutionOptions`](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.ArtifactSyncExecutionOptions.md) | - |
 
 #### Returns
 
@@ -235,13 +239,13 @@ Information about the generated OpenAPI document and included schema components.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:559](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L559)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:687](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L687)
 
 ___
 
 ### syncEndpointClient
 
-▸ **syncEndpointClient**(`options`): `Promise`\<[`SyncEndpointClientResult`](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncEndpointClientResult.md)\>
+▸ **syncEndpointClient**(`options`, `executionOptions?`): `Promise`\<[`SyncEndpointClientResult`](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncEndpointClientResult.md)\>
 
 Generate and write a manifest-first portable endpoint client module.
 
@@ -250,6 +254,7 @@ Generate and write a manifest-first portable endpoint client module.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `options` | [`SyncEndpointClientOptions`](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncEndpointClientOptions.md) | Manifest, source file, validator file, and output path settings. |
+| `executionOptions` | [`ArtifactSyncExecutionOptions`](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.ArtifactSyncExecutionOptions.md) | - |
 
 #### Returns
 
@@ -259,4 +264,4 @@ Information about the generated client file and emitted operation ids.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:627](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L627)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:760](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L760)

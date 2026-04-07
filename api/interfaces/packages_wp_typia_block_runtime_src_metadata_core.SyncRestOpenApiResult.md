@@ -24,7 +24,7 @@ Number of endpoints included in the generated OpenAPI file.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:260](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L260)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:270](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L270)
 
 ___
 
@@ -36,7 +36,7 @@ Absolute path to the generated OpenAPI file.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:262](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L262)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:272](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L272)
 
 ___
 
@@ -48,4 +48,4 @@ Component schema names included in the generated document.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:264](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L264)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:274](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L274)

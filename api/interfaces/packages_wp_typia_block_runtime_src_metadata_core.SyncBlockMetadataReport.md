@@ -34,7 +34,7 @@ Attribute keys discovered from the source type. Empty when analysis fails early.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:106](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L106)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:116](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L116)
 
 ___
 
@@ -46,7 +46,7 @@ Absolute path to the generated or target `block.json`.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:108](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L108)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:118](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L118)
 
 ___
 
@@ -58,7 +58,7 @@ Absolute path to the generated JSON Schema file when schema output is enabled.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:110](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L110)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:120](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L120)
 
 ___
 
@@ -70,7 +70,7 @@ Warn-only notices for Typia constraints that cannot round-trip into `block.json`
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:112](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L112)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:122](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L122)
 
 ___
 
@@ -82,7 +82,7 @@ Absolute path to the generated or target manifest file.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:114](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L114)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:124](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L124)
 
 ___
 
@@ -94,7 +94,7 @@ Absolute path to the generated aggregate OpenAPI file when enabled.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:116](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L116)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:126](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L126)
 
 ___
 
@@ -106,7 +106,7 @@ Warn-only notices for Typia constraints not yet enforced by PHP validation.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:118](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L118)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:128](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L128)
 
 ___
 
@@ -118,7 +118,7 @@ Absolute path to the generated or target PHP validator file.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:120](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L120)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:130](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L130)
 
 ___
 
@@ -130,7 +130,7 @@ Structured failure payload when analysis or generation throws.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:122](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L122)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:132](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L132)
 
 ___
 
@@ -142,7 +142,7 @@ Effective lossy-warning failure flag after `strict` has been applied.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:124](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L124)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:134](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L134)
 
 ___
 
@@ -154,7 +154,7 @@ Effective PHP-warning failure flag after `strict` has been applied.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:126](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L126)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:136](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L136)
 
 ___
 
@@ -166,7 +166,7 @@ Final execution status after warnings and failure handling are applied.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:128](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L128)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:138](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L138)
 
 ___
 
@@ -178,4 +178,4 @@ Whether the report was computed in strict mode.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:130](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L130)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:140](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L140)

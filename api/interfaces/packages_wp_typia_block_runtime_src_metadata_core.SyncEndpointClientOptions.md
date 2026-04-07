@@ -36,7 +36,7 @@ SyncEndpointClientBaseOptions.clientFile
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:276](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L276)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:286](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L286)
 
 ___
 
@@ -52,7 +52,7 @@ SyncEndpointClientBaseOptions.projectRoot
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:278](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L278)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:288](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L288)
 
 ___
 
@@ -68,7 +68,7 @@ SyncEndpointClientBaseOptions.typesFile
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:280](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L280)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:290](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L290)
 
 ___
 
@@ -84,7 +84,7 @@ SyncEndpointClientBaseOptions.validatorsFile
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:282](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L282)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:292](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L292)
 
 ___
 
@@ -96,4 +96,4 @@ Canonical endpoint manifest describing the REST surface.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:290](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L290)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:300](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L300)

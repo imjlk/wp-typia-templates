@@ -23,7 +23,7 @@
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:134](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L134)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:144](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L144)
 
 ___
 
@@ -33,7 +33,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:135](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L135)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:145](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L145)
 
 ___
 
@@ -43,7 +43,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:136](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L136)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:146](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L146)
 
 ___
 
@@ -53,7 +53,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:137](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L137)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:147](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L147)
 
 ___
 
@@ -63,7 +63,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:138](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L138)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:148](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L148)
 
 ___
 
@@ -73,4 +73,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:139](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L139)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:149](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L149)

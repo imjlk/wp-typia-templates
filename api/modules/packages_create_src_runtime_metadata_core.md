@@ -8,6 +8,7 @@
 
 - [SyncBlockMetadataOptions](packages_create_src_runtime_metadata_core.md#syncblockmetadataoptions)
 - [SyncBlockMetadataResult](packages_create_src_runtime_metadata_core.md#syncblockmetadataresult)
+- [ArtifactSyncExecutionOptions](packages_create_src_runtime_metadata_core.md#artifactsyncexecutionoptions)
 - [SyncBlockMetadataStatus](packages_create_src_runtime_metadata_core.md#syncblockmetadatastatus)
 - [SyncBlockMetadataFailureCode](packages_create_src_runtime_metadata_core.md#syncblockmetadatafailurecode)
 - [SyncBlockMetadataFailure](packages_create_src_runtime_metadata_core.md#syncblockmetadatafailure)
@@ -44,6 +45,12 @@ ___
 ### SyncBlockMetadataResult
 
 Re-exports [SyncBlockMetadataResult](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.SyncBlockMetadataResult.md)
+
+___
+
+### ArtifactSyncExecutionOptions
+
+Re-exports [ArtifactSyncExecutionOptions](../interfaces/packages_wp_typia_block_runtime_src_metadata_core.ArtifactSyncExecutionOptions.md)
 
 ___
 

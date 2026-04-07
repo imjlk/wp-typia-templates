@@ -80,7 +80,7 @@ compound-demo/
 └── webpack.config.js
 ```
 
-Fresh scaffolds already include starter `typia.manifest.json` files in the parent and default child block directories so editor/runtime imports resolve before the first sync. After you run `npm run sync-types`, each block directory also gains:
+Fresh scaffolds already include starter `typia.manifest.json` files in the parent and default child block directories so editor/runtime imports resolve before the first sync. After you run `npm run sync-types`, `npm run dev`, or `npm run start`, each block directory also gains:
 
 - `typia.manifest.json`
 - `typia.schema.json`
@@ -217,7 +217,7 @@ If you enabled persistence on the parent block:
 npm run sync-rest
 ```
 
-Run those sync commands manually only when you want generated metadata or REST schemas committed before the first `npm run dev`, `npm run start`, or `npm run build`. The generated `dev` workflow watches the relevant sync steps for compound scaffolds, and `start` / `build` still run them as one-shot syncs. They do not create migration history.
+Run those sync commands manually only when you want generated metadata or REST schemas refreshed before `npm run build`, `npm run typecheck`, or commit. The generated `dev` workflow watches the relevant sync steps for compound scaffolds, `npm run start` still runs them as one-shot syncs, and both `npm run build` and `npm run typecheck` verify that the checked-in artifacts are already current. They do not create migration history.
 
 Then load the plugin in your WordPress environment and verify:
 
