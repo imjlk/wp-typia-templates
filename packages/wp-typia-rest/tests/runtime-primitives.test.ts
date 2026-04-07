@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import * as apiClientInternal from "../../wp-typia-api-client/dist/internal/runtime-primitives.js";
+import * as apiClientInternal from "../../wp-typia-api-client/src/internal/runtime-primitives";
 
 import * as restRoot from "../src/index";
 import * as restInternal from "../src/internal/runtime-primitives";

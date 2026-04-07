@@ -36,9 +36,9 @@
   "scripts": {
     "build": "bun run --filter @wp-typia/api-client build && rm -rf dist && tsc -p tsconfig.build.json && bun ./scripts/fix-dist-imports.mjs",
     "clean": "rm -rf dist",
-    "test": "bun run build && bun test tests",
-    "test:coverage": "bun run build && bun test tests --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage",
-    "typecheck": "bun run --filter @wp-typia/api-client build && tsc -p tsconfig.json --noEmit"
+    "test": "bun run build && cd ../.. && bun test packages/wp-typia-rest/tests",
+    "test:coverage": "bun run build && cd ../.. && bun test packages/wp-typia-rest/tests --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=packages/wp-typia-rest/coverage",
+    "typecheck": "bun run --filter @wp-typia/api-client build && tsc -p tsconfig.build.json --noEmit"
   },
   "author": "imjlk",
   "license": "GPL-2.0-or-later",

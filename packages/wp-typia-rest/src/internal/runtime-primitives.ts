@@ -10,4 +10,4 @@ export {
 	type ValidationError,
 	type ValidationLike,
 	type ValidationResult,
-} from "../../../wp-typia-api-client/dist/internal/runtime-primitives.js";
+} from "@wp-typia/api-client/internal/runtime-primitives";

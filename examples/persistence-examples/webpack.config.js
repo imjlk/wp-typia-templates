@@ -258,6 +258,11 @@ module.exports = async () => {
 						process.cwd(),
 						'../../packages/wp-typia-block-runtime/src/validation.ts'
 					),
+					'@wp-typia/api-client/internal/runtime-primitives':
+						path.resolve(
+							process.cwd(),
+							'../../packages/wp-typia-api-client/src/internal/runtime-primitives.ts'
+						),
 					'@wp-typia/rest': path.resolve(
 						process.cwd(),
 						'../../packages/wp-typia-rest/src'
