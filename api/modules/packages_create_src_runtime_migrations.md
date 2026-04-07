@@ -75,7 +75,7 @@ Error When no arguments are provided, an unknown flag is encountered, or legacy 
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:161](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L161)
+[packages/create/src/runtime/migrations.ts:163](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L163)
 
 ___
 
@@ -105,7 +105,7 @@ The command result, or a promise when the selected command is interactive.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:283](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L283)
+[packages/create/src/runtime/migrations.ts:285](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L285)
 
 ___
 
@@ -130,7 +130,7 @@ A structured summary of the selected edge, included/skipped block targets, and n
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:371](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L371)
+[packages/create/src/runtime/migrations.ts:373](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L373)
 
 ___
 
@@ -155,7 +155,7 @@ The planned migration summary, or `{ cancelled: true }` when the user exits the 
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:455](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L455)
+[packages/create/src/runtime/migrations.ts:457](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L457)
 
 ___
 
@@ -185,7 +185,7 @@ Error When the project layout is unsupported or the migration version label is i
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:524](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L524)
+[packages/create/src/runtime/migrations.ts:526](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L526)
 
 ___
 
@@ -215,7 +215,7 @@ Error When the label is invalid, the project is not migration-capable, or `sync-
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:577](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L577)
+[packages/create/src/runtime/migrations.ts:579](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L579)
 
 ___
 
@@ -244,7 +244,7 @@ Error When `fromMigrationVersion` is missing or no eligible snapshots exist for 
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:652](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L652)
+[packages/create/src/runtime/migrations.ts:654](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L654)
 
 ___
 
@@ -273,7 +273,7 @@ Error When `fromMigrationVersion` is missing or no eligible snapshots exist for 
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:696](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L696)
+[packages/create/src/runtime/migrations.ts:698](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L698)
 
 ___
 
@@ -302,7 +302,7 @@ Verified legacy versions.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:772](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L772)
+[packages/create/src/runtime/migrations.ts:774](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L774)
 
 ___
 
@@ -332,7 +332,7 @@ Structured doctor check results for the selected legacy versions.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:830](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L830)
+[packages/create/src/runtime/migrations.ts:832](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L832)
 
 ___
 
@@ -362,7 +362,7 @@ Generated and skipped legacy versions.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:1091](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1091)
+[packages/create/src/runtime/migrations.ts:1093](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1093)
 
 ___
 
@@ -387,7 +387,7 @@ Fuzzed legacy versions and the effective seed.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:1167](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1167)
+[packages/create/src/runtime/migrations.ts:1174](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1174)
 
 ___
 
@@ -417,4 +417,4 @@ The loaded migration project state after initialization completes.
 
 #### Defined in
 
-[packages/create/src/runtime/migrations.ts:1392](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1392)
+[packages/create/src/runtime/migrations.ts:1399](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migrations.ts#L1399)

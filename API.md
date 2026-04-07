@@ -406,7 +406,9 @@ version only; `--all` runs across every configured legacy migration version and 
 block target. `migrations wizard` requires a TTY; use `migrations plan --from-migration-version
 <label>` in non-interactive shells. In TTY usage, `migrations fixtures --force`
 asks before overwriting existing fixture files, while non-interactive runs
-overwrite immediately for script compatibility.
+overwrite immediately for script compatibility. Existing fixture files are
+otherwise preserved and reported as skipped, so `--force` is the explicit
+refresh path even when `--all` is present.
 
 The built-in `persistence` template adds another predictable layer:
 
