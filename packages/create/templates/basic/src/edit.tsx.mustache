@@ -100,7 +100,7 @@ function Edit({ attributes, setAttributes }: EditProps) {
       </InspectorControls>
 
       <div {...blockProps}>
-        <div className="wp-block-{{slug}}__content">
+        <div className="{{cssClassName}}__content">
           <RichText
             tagName="p"
             value={attributes.content || ''}

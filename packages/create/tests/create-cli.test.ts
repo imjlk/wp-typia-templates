@@ -226,6 +226,10 @@ describe("@wp-typia/create scaffolding", () => {
 		const generatedManifest = JSON.parse(
 			fs.readFileSync(path.join(targetDir, "src", "typia.manifest.json"), "utf8"),
 		);
+		const generatedEditorStyle = fs.readFileSync(
+			path.join(targetDir, "src", "editor.scss"),
+			"utf8",
+		);
 		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
 		const generatedStyle = fs.readFileSync(path.join(targetDir, "src", "style.scss"), "utf8");
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
@@ -291,6 +295,9 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedEdit).toContain("useTypedAttributeUpdater");
 		expect(generatedSave).toContain("RichText.Content");
 		expect(generatedSave).not.toContain("return null;");
+		expect(generatedEdit).toContain('className="wp-block-demo-space-demo-npm__content"');
+		expect(generatedSave).toContain('className="wp-block-demo-space-demo-npm__content"');
+		expect(generatedEditorStyle).toContain(".wp-block-demo-space-demo-npm");
 		expect(generatedStyle).toContain(".wp-block-demo-space-demo-npm");
 		expect(generatedHooks).toContain("@wp-typia/block-runtime/validation");
 		expect(generatedHooks).toContain("createUseTypiaValidationHook");
@@ -551,6 +558,7 @@ describe("@wp-typia/create scaffolding", () => {
 			fs.readFileSync(path.join(targetDir, "src", "typia.manifest.json"), "utf8"),
 		);
 		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
+		const generatedStyle = fs.readFileSync(path.join(targetDir, "src", "style.scss"), "utf8");
 		const generatedIndex = fs.readFileSync(path.join(targetDir, "src", "index.tsx"), "utf8");
 		const generatedPluginBootstrap = fs.readFileSync(
 			path.join(targetDir, "demo-interactivity.php"),
@@ -601,6 +609,10 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedEdit).toContain("useTypiaValidation");
 		expect(generatedEdit).toContain("useTypedAttributeUpdater");
 		expect(generatedEdit).toContain("aria-pressed={isPreviewing}");
+		expect(generatedEdit).toContain(
+			"className: `wp-block-demo-space-demo-interactivity wp-block-demo-space-demo-interactivity--${interactiveMode}`",
+		);
+		expect(generatedEdit).toContain("wp-block-demo-space-demo-interactivity__content");
 		expect(generatedValidators).toContain('from "./validator-toolkit"');
 		expect(generatedIndex).toContain("@wp-typia/block-runtime/blocks");
 		expect(generatedIndex).toContain("buildScaffoldBlockRegistration");
@@ -623,11 +635,16 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedSave).toContain('role="status"');
 		expect(generatedSave).toContain('aria-live="polite"');
 		expect(generatedSave).toContain('aria-hidden="true"');
+		expect(generatedSave).toContain(
+			"className: `wp-block-demo-space-demo-interactivity wp-block-demo-space-demo-interactivity--${attributes.interactiveMode}`",
+		);
+		expect(generatedSave).toContain("wp-block-demo-space-demo-interactivity__content");
 		expect(generatedSave).not.toContain('data-wp-text="state.clicks"\n              aria-live=');
 		expect(generatedSave).not.toContain("data-clicks");
 		expect(generatedSave).not.toContain("data-is-animating");
 		expect(generatedSave).not.toContain("data-is-visible");
 		expect(generatedSave).not.toContain("data-unique-id");
+		expect(generatedStyle).toContain(".wp-block-demo-space-demo-interactivity");
 	});
 
 	test("scaffoldProject supports the optional local wp-env preset without adding test files", async () => {
@@ -769,6 +786,7 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "src", "validators.ts"),
 			"utf8",
 		);
+		const generatedStyle = fs.readFileSync(path.join(targetDir, "src", "style.scss"), "utf8");
 		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 		const restPublicHelper = fs.readFileSync(path.join(targetDir, "inc", "rest-public.php"), "utf8");
@@ -855,7 +873,11 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedSyncRest).not.toContain("@wp-typia/create/runtime/schema-core");
 		expect(generatedSyncRest).toContain("src/api.openapi.json");
 		expect(generatedSyncRest).not.toContain("openApiInfo: REST_ENDPOINT_MANIFEST.info");
+		expect(generatedStyle).toContain(".wp-block-create-block-demo-persistence-public");
+		expect(generatedStyle).toContain(".wp-block-create-block-demo-persistence-public-frontend");
 		expect(generatedRender).toContain("publicWriteToken");
+		expect(generatedRender).toContain('class="wp-block-create-block-demo-persistence-public-frontend"');
+		expect(generatedRender).toContain("wp-block-create-block-demo-persistence-public-frontend__content");
 		expect(generatedRender).toContain('role="status"');
 		expect(generatedRender).toContain('aria-live="polite"');
 		expect(generatedApiTypes).toContain("publicWriteRequestId: string");
@@ -925,6 +947,7 @@ describe("@wp-typia/create scaffolding", () => {
 		);
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const generatedEdit = fs.readFileSync(path.join(targetDir, "src", "edit.tsx"), "utf8");
+		const generatedStyle = fs.readFileSync(path.join(targetDir, "src", "style.scss"), "utf8");
 		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
 		const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 		const packageJson = JSON.parse(fs.readFileSync(path.join(targetDir, "package.json"), "utf8"));
@@ -954,6 +977,13 @@ describe("@wp-typia/create scaffolding", () => {
 			/'callback'\s*=>\s*'demo_persistence_authenticated_handle_write_state'[\s\S]*?'permission_callback'\s*=>\s*'__return_true'/,
 		);
 		expect(restAuthHelper).toContain("function demo_persistence_authenticated_can_write_authenticated");
+		expect(generatedStyle).toContain(".wp-block-create-block-demo-persistence-authenticated");
+		expect(generatedStyle).toContain(
+			".wp-block-create-block-demo-persistence-authenticated-frontend",
+		);
+		expect(generatedRender).toContain(
+			'class="wp-block-create-block-demo-persistence-authenticated-frontend"',
+		);
 		expect(generatedRender).toContain("Sign in to persist this counter.");
 		expect(generatedApiTypes).toContain("publicWriteRequestId?: string");
 		expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
@@ -1157,6 +1187,10 @@ describe("@wp-typia/create scaffolding", () => {
 			path.join(targetDir, "src", "blocks", "demo-compound", "children.ts"),
 			"utf8",
 		);
+		const parentStyle = fs.readFileSync(
+			path.join(targetDir, "src", "blocks", "demo-compound", "style.scss"),
+			"utf8",
+		);
 		const childEdit = fs.readFileSync(
 			path.join(targetDir, "src", "blocks", "demo-compound-item", "edit.tsx"),
 			"utf8",
@@ -1235,19 +1269,29 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(generatedValidatorToolkit).toContain("createScaffoldValidatorToolkit");
 		expect(parentChildren).toContain("DEFAULT_CHILD_BLOCK_NAME");
 		expect(parentChildren).toContain("add-child: insert new allowed child block names here");
+		expect(parentStyle).toContain(".wp-block-create-block-demo-compound");
+		expect(parentStyle).toContain(".wp-block-create-block-demo-compound-item");
 		expect(childEdit).toContain("createAttributeUpdater");
 		expect(childEdit).toContain("useTypiaValidation");
 		expect(childEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
+		expect(childEdit).toContain("wp-block-create-block-demo-compound-item__title");
 		expect(childHooks).toContain("useTypiaValidation");
 		expect(childHooks).toContain("from '../../hooks'");
 		expect(childValidators).toContain("validator-toolkit");
 		expect(childValidators).not.toContain("createScaffoldValidatorToolkit");
+		expect(childBlockJson.attributes.title.selector).toBe(
+			".wp-block-create-block-demo-compound-item__title",
+		);
+		expect(childBlockJson.attributes.body.selector).toBe(
+			".wp-block-create-block-demo-compound-item__body",
+		);
 		expect(addChildScript).toContain("createUseTypiaValidationHook");
 		expect(addChildScript).toContain("createScaffoldValidatorToolkit");
 		expect(addChildScript).toContain("buildScaffoldBlockRegistration");
 		expect(addChildScript).toContain("type ScaffoldBlockMetadata");
 		expect(addChildScript).toContain("ALLOWED_CHILD_MARKER");
 		expect(addChildScript).toContain("BLOCK_CONFIG_MARKER");
+		expect(addChildScript).toContain("buildBlockCssClassName");
 		expect(generatedWebpackConfig).toContain("createTypiaWebpackConfig");
 		expect(readme).toContain("npm run sync-types");
 		expect(readme).not.toContain("npm run sync-rest");
@@ -1642,8 +1686,10 @@ describe("@wp-typia/create scaffolding", () => {
 			const newChildBlockJson = JSON.parse(
 				fs.readFileSync(path.join(newChildDir, "block.json"), "utf8"),
 			);
+			const newChildEdit = fs.readFileSync(path.join(newChildDir, "edit.tsx"), "utf8");
 			const newChildHooks = fs.readFileSync(path.join(newChildDir, "hooks.ts"), "utf8");
 			const newChildIndex = fs.readFileSync(path.join(newChildDir, "index.tsx"), "utf8");
+			const newChildSave = fs.readFileSync(path.join(newChildDir, "save.tsx"), "utf8");
 			const newChildValidators = fs.readFileSync(path.join(newChildDir, "validators.ts"), "utf8");
 
 			expect(fs.existsSync(path.join(newChildDir, "block.json"))).toBe(true);
@@ -1664,6 +1710,14 @@ describe("@wp-typia/create scaffolding", () => {
 			expect(newChildValidators).toContain("createScaffoldValidatorToolkit");
 			expect(newChildIndex).toContain("buildScaffoldBlockRegistration");
 			expect(newChildIndex).toContain("type ScaffoldBlockMetadata");
+			expect(newChildEdit).toContain("wp-block-create-block-demo-compound-add-child-faq-item");
+			expect(newChildSave).toContain("wp-block-create-block-demo-compound-add-child-faq-item");
+			expect(newChildBlockJson.attributes.title.selector).toBe(
+				".wp-block-create-block-demo-compound-add-child-faq-item__title",
+			);
+			expect(newChildBlockJson.attributes.body.selector).toBe(
+				".wp-block-create-block-demo-compound-add-child-faq-item__body",
+			);
 			expect(
 				(childrenRegistry.match(/create-block\/demo-compound-add-child-faq-item/g) ?? []).length,
 			).toBe(1);
@@ -1885,6 +1939,14 @@ describe("@wp-typia/create scaffolding", () => {
 		const blockJson = JSON.parse(
 			fs.readFileSync(path.join(flow.projectDir, "src", "block.json"), "utf8"),
 		);
+		const generatedEdit = fs.readFileSync(
+			path.join(flow.projectDir, "src", "edit.tsx"),
+			"utf8",
+		);
+		const generatedSave = fs.readFileSync(
+			path.join(flow.projectDir, "src", "save.tsx"),
+			"utf8",
+		);
 		const generatedStyle = fs.readFileSync(
 			path.join(flow.projectDir, "src", "style.scss"),
 			"utf8",
@@ -1892,6 +1954,12 @@ describe("@wp-typia/create scaffolding", () => {
 
 		expect(blockJson.name).toBe("demo-default-class/demo-default-class");
 		expect(generatedStyle).toContain(".wp-block-demo-default-class-demo-default-class");
+		expect(generatedEdit).toContain(
+			'className="wp-block-demo-default-class-demo-default-class__content"',
+		);
+		expect(generatedSave).toContain(
+			'className="wp-block-demo-default-class-demo-default-class__content"',
+		);
 	});
 
 	test("runScaffoldFlow keeps compound next steps minimal while surfacing optional sync guidance", async () => {

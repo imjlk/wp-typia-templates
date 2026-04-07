@@ -92,7 +92,7 @@ baselines:
 - it remains a static block, so no `render.php` file is generated
 - `src/save.tsx` always returns stable saved markup instead of `null`
 - the generated webpack config stays on the current `@wordpress/scripts` CommonJS baseline
-- wrapper CSS classes still follow `wp-block-namespace-slug`; when namespace and slug match, duplicated segments such as `wp-block-demo-block-demo-block` are expected
+- wrapper CSS classes follow `wp-block-namespace-slug` when a namespace is present and fall back to `wp-block-slug` only when the namespace is empty; when namespace and slug match, duplicated segments such as `wp-block-demo-block-demo-block` are expected
 
 Every generated project exposes `sync-types`, and persistence-enabled scaffolds also expose `sync-rest`. `start` still runs the relevant sync scripts for you, while `build` and `typecheck` verify that generated metadata/schema artifacts are already current and fail if they are stale. Run the sync scripts manually when you want generated metadata/schema artifacts refreshed before `build`, `typecheck`, or commit. `sync-types` stays warn-only by default, supports `-- --fail-on-lossy` when CI should fail only on lossy WordPress projections, and supports `-- --strict --report json` when CI should fail on every warning while reading a machine-friendly JSON report from stdout. These syncs do not create migration history.
 

@@ -20,7 +20,7 @@ export default function Save({ attributes }: SaveProps) {
   return (
     <div {...blockProps}>
       <div
-        className="wp-block-{{slug}}__content"
+        className="{{cssClassName}}__content"
         data-align={attributes.alignment || 'left'}
       >
         <RichText.Content tagName="p" value={attributes.content} />
