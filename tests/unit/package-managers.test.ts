@@ -45,7 +45,7 @@ describe("package manager runtime helpers", () => {
 			pnpm: {
 				install: "pnpm install",
 				run: "pnpm run sync-types",
-				runWithArgs: "pnpm run sync-types -- --strict --report json",
+				runWithArgs: "pnpm run sync-types --strict --report json",
 			},
 			yarn: {
 				install: "yarn install",

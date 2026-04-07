@@ -165,6 +165,10 @@ function parseCliOptions(argv: string[]): SyncTypiaLlmCliOptions {
   return options;
 }
 
+function normalizeGeneratedArtifactContentForComparison(content: string): string {
+  return content.replace(/\r\n?/g, "\n");
+}
+
 async function reconcileGeneratedArtifacts(
   artifacts: readonly GeneratedArtifactFile[],
   options: SyncTypiaLlmCliOptions
@@ -184,7 +188,10 @@ async function reconcileGeneratedArtifacts(
   for (const artifact of artifacts) {
     try {
       const current = await readFile(artifact.path, "utf8");
-      if (current !== artifact.content) {
+      if (
+        normalizeGeneratedArtifactContentForComparison(current) !==
+        normalizeGeneratedArtifactContentForComparison(artifact.content)
+      ) {
         issues.push(`- ${artifact.path} (stale)`);
       }
     } catch (error) {

@@ -1977,7 +1977,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(blockTypesPackageVersion);
 		expect(packageJson.devDependencies["@wp-typia/create"]).toBeUndefined();
 		expect(packageJson.scripts.build).toBe(
-			"pnpm run sync-types -- --check && wp-scripts build --experimental-modules",
+			"pnpm run sync-types --check && wp-scripts build --experimental-modules",
 		);
 		expect(generatedTypes).toContain("export interface DemoRemoteAttributes");
 		expect(generatedTypes).toContain("\"content\"?: string & tags.Default<\"\">");

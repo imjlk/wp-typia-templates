@@ -91,6 +91,12 @@ interface ArtifactSyncOptions {
 	check?: boolean;
 }
 
+function normalizeGeneratedArtifactContentForComparison(
+	content: string
+): string {
+	return content.replace( /\r\n?/g, '\n' );
+}
+
 async function reconcileGeneratedArtifacts(
 	artifacts: readonly GeneratedArtifactFile[],
 	options: ArtifactSyncOptions = {}
@@ -110,8 +116,13 @@ async function reconcileGeneratedArtifacts(
 
 	for ( const artifact of artifacts ) {
 		try {
-			const current = await readFile( artifact.path, 'utf8' );
-			if ( current !== artifact.content ) {
+			const current = normalizeGeneratedArtifactContentForComparison(
+				await readFile( artifact.path, 'utf8' )
+			);
+			const expected = normalizeGeneratedArtifactContentForComparison(
+				artifact.content
+			);
+			if ( current !== expected ) {
 				issues.push( `- ${ artifact.path } (stale)` );
 			}
 		} catch ( error ) {
