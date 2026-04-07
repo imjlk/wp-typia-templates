@@ -28,6 +28,7 @@ For the normative generated-project runtime support policy, see
 - `@wp-typia/block-runtime/metadata-core`
 - `@wp-typia/block-runtime/defaults`
 - `@wp-typia/block-runtime/editor`
+- `@wp-typia/block-runtime/identifiers`
 - `@wp-typia/block-runtime/inspector`
 - `@wp-typia/block-runtime/validation`
 
@@ -46,6 +47,11 @@ These exports already behave like product APIs and are documented or used direct
 - `@wp-typia/block-runtime/editor`
   - documented in [`packages/create/README.md`](../packages/create/README.md) and [`docs/API.md`](./API.md)
   - used by examples and generated templates to build editor models from manifests
+- `@wp-typia/block-runtime/identifiers`
+  - used by templates and repo examples for generated block ids, resource keys,
+    and public write request ids
+  - behaves like a supported generated-project helper surface rather than a
+    CLI-only internal
 - `@wp-typia/block-runtime/inspector`
   - documented as the higher-level manifest-driven inspector layer above `runtime/editor`
   - used by the reference app and the core single-block templates to reduce repeated field wiring
@@ -98,14 +104,14 @@ These are plausible future package candidates because they are already useful ou
 - `docs/API.md`
   - documents `@wp-typia/block-runtime/metadata-core` plus `@wp-typia/block-runtime/blocks`, `defaults`, `editor`, `inspector`, and `validation` as generated-project imports
 - repo examples
-  - `examples/my-typia-block` imports `@wp-typia/block-runtime/metadata-core`, `defaults`, `inspector`, and `validation`
-  - `examples/persistence-examples` imports `@wp-typia/block-runtime/metadata-core`, `defaults`, `editor`, and `validation`
+  - `examples/my-typia-block` imports `@wp-typia/block-runtime/metadata-core`, `defaults`, `identifiers`, `inspector`, and `validation`
+  - `examples/persistence-examples` imports `@wp-typia/block-runtime/metadata-core`, `defaults`, `editor`, `identifiers`, and `validation`
   - `examples/api-contract-adapter-poc` still uses `@wp-typia/create/metadata-core` as a compatibility path
 
 ### Generated template usage
 
 - base and compound/persistence sync scripts import `@wp-typia/block-runtime/metadata-core`
-- `basic`, `interactivity`, and persistence-capable templates now import `@wp-typia/block-runtime/blocks`, `inspector`, `defaults`, and `validation`
+- `basic`, `interactivity`, and persistence-capable templates now import `@wp-typia/block-runtime/blocks`, `defaults`, `identifiers`, `inspector`, and `validation`
 - compound block registrations still import `@wp-typia/block-runtime/blocks`, `defaults`, and `validation` without the higher-level inspector layer
 - generated templates currently do not import `runtime/schema-core` directly, but example webpack configs alias it for repo-local development
 

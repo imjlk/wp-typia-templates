@@ -4,27 +4,96 @@
 
 ## Table of contents
 
-### Interfaces
+### References
 
-- [MigrationAnalysis](../interfaces/examples_my_typia_block_src_migrations.MigrationAnalysis.md)
-- [UnionBranchPreview](../interfaces/examples_my_typia_block_src_migrations.UnionBranchPreview.md)
-- [MigrationPreview](../interfaces/examples_my_typia_block_src_migrations.MigrationPreview.md)
-- [BlockScanResult](../interfaces/examples_my_typia_block_src_migrations.BlockScanResult.md)
-- [BatchMigrationBlockResult](../interfaces/examples_my_typia_block_src_migrations.BatchMigrationBlockResult.md)
-- [BatchMigrationPostResult](../interfaces/examples_my_typia_block_src_migrations.BatchMigrationPostResult.md)
-- [BatchMigrationResult](../interfaces/examples_my_typia_block_src_migrations.BatchMigrationResult.md)
+- [BatchMigrationBlockResult](examples_my_typia_block_src_migrations.md#batchmigrationblockresult)
+- [BatchMigrationPostResult](examples_my_typia_block_src_migrations.md#batchmigrationpostresult)
+- [BatchMigrationResult](examples_my_typia_block_src_migrations.md#batchmigrationresult)
+- [BlockScanResult](examples_my_typia_block_src_migrations.md#blockscanresult)
+- [MigrationAnalysis](examples_my_typia_block_src_migrations.md#migrationanalysis)
+- [MigrationPreview](examples_my_typia_block_src_migrations.md#migrationpreview)
+- [UnionBranchPreview](examples_my_typia_block_src_migrations.md#unionbranchpreview)
+- [autoMigrate](examples_my_typia_block_src_migrations.md#automigrate)
+- [batchMigrateScanResults](examples_my_typia_block_src_migrations.md#batchmigratescanresults)
+- [detectBlockMigration](examples_my_typia_block_src_migrations.md#detectblockmigration)
+- [generateMigrationReport](examples_my_typia_block_src_migrations.md#generatemigrationreport)
+- [scanSiteForMigrations](examples_my_typia_block_src_migrations.md#scansiteformigrations)
 
 ### Variables
 
 - [migrationUtils](examples_my_typia_block_src_migrations.md#migrationutils)
 
-### Functions
+## References
 
-- [detectBlockMigration](examples_my_typia_block_src_migrations.md#detectblockmigration)
-- [autoMigrate](examples_my_typia_block_src_migrations.md#automigrate)
-- [scanSiteForMigrations](examples_my_typia_block_src_migrations.md#scansiteformigrations)
-- [batchMigrateScanResults](examples_my_typia_block_src_migrations.md#batchmigratescanresults)
-- [generateMigrationReport](examples_my_typia_block_src_migrations.md#generatemigrationreport)
+### BatchMigrationBlockResult
+
+Re-exports [BatchMigrationBlockResult](../interfaces/examples_my_typia_block_src_migrations_types.BatchMigrationBlockResult.md)
+
+___
+
+### BatchMigrationPostResult
+
+Re-exports [BatchMigrationPostResult](../interfaces/examples_my_typia_block_src_migrations_types.BatchMigrationPostResult.md)
+
+___
+
+### BatchMigrationResult
+
+Re-exports [BatchMigrationResult](../interfaces/examples_my_typia_block_src_migrations_types.BatchMigrationResult.md)
+
+___
+
+### BlockScanResult
+
+Re-exports [BlockScanResult](../interfaces/examples_my_typia_block_src_migrations_types.BlockScanResult.md)
+
+___
+
+### MigrationAnalysis
+
+Re-exports [MigrationAnalysis](../interfaces/examples_my_typia_block_src_migrations_types.MigrationAnalysis.md)
+
+___
+
+### MigrationPreview
+
+Re-exports [MigrationPreview](../interfaces/examples_my_typia_block_src_migrations_types.MigrationPreview.md)
+
+___
+
+### UnionBranchPreview
+
+Re-exports [UnionBranchPreview](../interfaces/examples_my_typia_block_src_migrations_types.UnionBranchPreview.md)
+
+___
+
+### autoMigrate
+
+Re-exports [autoMigrate](examples_my_typia_block_src_migrations_analysis.md#automigrate)
+
+___
+
+### batchMigrateScanResults
+
+Re-exports [batchMigrateScanResults](examples_my_typia_block_src_migrations_site.md#batchmigratescanresults)
+
+___
+
+### detectBlockMigration
+
+Re-exports [detectBlockMigration](examples_my_typia_block_src_migrations_analysis.md#detectblockmigration)
+
+___
+
+### generateMigrationReport
+
+Re-exports [generateMigrationReport](examples_my_typia_block_src_migrations_report.md#generatemigrationreport)
+
+___
+
+### scanSiteForMigrations
+
+Re-exports [scanSiteForMigrations](examples_my_typia_block_src_migrations_site.md#scansiteformigrations)
 
 ## Variables
 
@@ -41,106 +110,4 @@
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/index.ts:381](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L381)
-
-## Functions
-
-### detectBlockMigration
-
-▸ **detectBlockMigration**(`attributes`): [`MigrationAnalysis`](../interfaces/examples_my_typia_block_src_migrations.MigrationAnalysis.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `attributes` | `Record`\<`string`, `unknown`\> |
-
-#### Returns
-
-[`MigrationAnalysis`](../interfaces/examples_my_typia_block_src_migrations.MigrationAnalysis.md)
-
-#### Defined in
-
-[examples/my-typia-block/src/migrations/index.ts:143](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L143)
-
-___
-
-### autoMigrate
-
-▸ **autoMigrate**(`attributes`): `Record`\<`string`, `unknown`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `attributes` | `Record`\<`string`, `unknown`\> |
-
-#### Returns
-
-`Record`\<`string`, `unknown`\>
-
-#### Defined in
-
-[examples/my-typia-block/src/migrations/index.ts:149](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L149)
-
-___
-
-### scanSiteForMigrations
-
-▸ **scanSiteForMigrations**(`blockName?`): `Promise`\<[`BlockScanResult`](../interfaces/examples_my_typia_block_src_migrations.BlockScanResult.md)[]\>
-
-#### Parameters
-
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `blockName` | `string` | `migrationConfig.blockName` |
-
-#### Returns
-
-`Promise`\<[`BlockScanResult`](../interfaces/examples_my_typia_block_src_migrations.BlockScanResult.md)[]\>
-
-#### Defined in
-
-[examples/my-typia-block/src/migrations/index.ts:162](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L162)
-
-___
-
-### batchMigrateScanResults
-
-▸ **batchMigrateScanResults**(`results`, `«destructured»?`): `Promise`\<[`BatchMigrationResult`](../interfaces/examples_my_typia_block_src_migrations.BatchMigrationResult.md)\>
-
-#### Parameters
-
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `results` | [`BlockScanResult`](../interfaces/examples_my_typia_block_src_migrations.BlockScanResult.md)[] | `undefined` |
-| `«destructured»` | `Object` | `{}` |
-| › `dryRun?` | `boolean` | `false` |
-
-#### Returns
-
-`Promise`\<[`BatchMigrationResult`](../interfaces/examples_my_typia_block_src_migrations.BatchMigrationResult.md)\>
-
-#### Defined in
-
-[examples/my-typia-block/src/migrations/index.ts:214](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L214)
-
-___
-
-### generateMigrationReport
-
-▸ **generateMigrationReport**(`scanResults`): `string`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `scanResults` | [`BlockScanResult`](../interfaces/examples_my_typia_block_src_migrations.BlockScanResult.md)[] |
-
-#### Returns
-
-`string`
-
-#### Defined in
-
-[examples/my-typia-block/src/migrations/index.ts:330](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L330)
+[examples/my-typia-block/src/migrations/index.ts:26](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/index.ts#L26)

@@ -19,7 +19,7 @@
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/helpers.ts:42](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/helpers.ts#L42)
+[examples/my-typia-block/src/migrations/helpers.ts:44](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/helpers.ts#L44)
 
 ___
 
@@ -29,4 +29,4 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/helpers.ts:43](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/helpers.ts#L43)
+[examples/my-typia-block/src/migrations/helpers.ts:45](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/helpers.ts#L45)

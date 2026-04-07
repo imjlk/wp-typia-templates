@@ -33,7 +33,7 @@
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/validators.ts:31](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/validators.ts#L31)
+[examples/persistence-examples/src/blocks/counter/validators.ts:32](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/validators.ts#L32)
 
 ## Functions
 
@@ -53,7 +53,7 @@
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/validators.ts:25](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/validators.ts#L25)
+[examples/persistence-examples/src/blocks/counter/validators.ts:26](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/validators.ts#L26)
 
 ___
 
@@ -73,7 +73,7 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/validators.ts:40](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/validators.ts#L40)
+[examples/persistence-examples/src/blocks/counter/validators.ts:41](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/validators.ts#L41)
 
 ___
 
@@ -114,4 +114,4 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/validators.ts:58](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/validators.ts#L58)
+[examples/persistence-examples/src/blocks/counter/validators.ts:59](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/validators.ts#L59)

@@ -245,14 +245,9 @@ The `src/interactivity.ts` file uses the WordPress Interactivity API:
 
 ```typescript
 import { getContext, store } from '@wordpress/interactivity';
+import { generatePublicWriteRequestId } from '@wp-typia/block-runtime/identifiers';
 import { fetchState, writeState } from './api';
 import type { MyCounterContext, MyCounterState } from './types';
-
-function createPublicWriteRequestId(): string {
-  return typeof globalThis.crypto?.randomUUID === 'function'
-    ? globalThis.crypto.randomUUID()
-    : `req-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
-}
 
 function hasExpiredPublicWriteToken(context: MyCounterContext): boolean {
   return (
@@ -337,7 +332,7 @@ const { actions, state } = store('my-counter', {
             postId: context.postId,
             publicWriteRequestId:
               context.persistencePolicy === 'public'
-                ? createPublicWriteRequestId()
+                ? generatePublicWriteRequestId()
                 : undefined,
             publicWriteToken:
               context.persistencePolicy === 'public'
@@ -513,6 +508,11 @@ curl -X POST \
 ```
 
 If you scaffold with `--persistence-policy public`, send the `publicWriteToken` that the block render embeds in its frontend context plus a fresh `publicWriteRequestId` for each write attempt instead of a REST nonce.
+
+Scaffolded validators and interactivity modules now use
+`@wp-typia/block-runtime/identifiers` as the shared source of truth for
+generated `resourceKey` and `publicWriteRequestId` values instead of carrying
+local inline generator helpers.
 
 ## Understanding Storage Modes
 

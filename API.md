@@ -286,6 +286,7 @@ Generated projects can also import shared runtime helpers from `@wp-typia/block-
 - `@wp-typia/block-runtime/defaults`
 - `@wp-typia/block-runtime/validation`
 - `@wp-typia/block-runtime/editor`
+- `@wp-typia/block-runtime/identifiers`
 
 Use `@wp-typia/block-runtime/metadata-core` for metadata sync and
 `@wp-typia/block-runtime/*` for generated-project runtime helpers.

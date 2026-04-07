@@ -34,7 +34,7 @@
 
 #### Defined in
 
-[examples/my-typia-block/src/validators.ts:34](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L34)
+[examples/my-typia-block/src/validators.ts:35](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L35)
 
 ## Functions
 
@@ -54,7 +54,7 @@
 
 #### Defined in
 
-[examples/my-typia-block/src/validators.ts:26](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L26)
+[examples/my-typia-block/src/validators.ts:27](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L27)
 
 ___
 
@@ -74,7 +74,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/validators.ts:43](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L43)
+[examples/my-typia-block/src/validators.ts:44](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L44)
 
 ___
 
@@ -117,7 +117,7 @@ Create safe attribute updater with validation
 
 #### Defined in
 
-[examples/my-typia-block/src/validators.ts:67](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L67)
+[examples/my-typia-block/src/validators.ts:68](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L68)
 
 ___
 
@@ -152,4 +152,4 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/validators.ts:87](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L87)
+[examples/my-typia-block/src/validators.ts:88](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/validators.ts#L88)

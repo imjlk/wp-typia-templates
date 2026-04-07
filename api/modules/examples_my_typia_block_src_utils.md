@@ -10,8 +10,6 @@
 - [blockClass](examples_my_typia_block_src_utils.md#blockclass)
 - [debounce](examples_my_typia_block_src_utils.md#debounce)
 - [throttle](examples_my_typia_block_src_utils.md#throttle)
-- [generateUUID](examples_my_typia_block_src_utils.md#generateuuid)
-- [generateShortId](examples_my_typia_block_src_utils.md#generateshortid)
 
 ## References
 
@@ -36,15 +34,3 @@ ___
 ### throttle
 
 Re-exports [throttle](examples_my_typia_block_src_utils_debounce.md#throttle)
-
-___
-
-### generateUUID
-
-Re-exports [generateUUID](examples_my_typia_block_src_utils_uuid.md#generateuuid)
-
-___
-
-### generateShortId
-
-Re-exports [generateShortId](examples_my_typia_block_src_utils_uuid.md#generateshortid)

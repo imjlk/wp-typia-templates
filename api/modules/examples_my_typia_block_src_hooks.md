@@ -97,7 +97,7 @@ Validation state and current errors.
 
 #### Defined in
 
-[examples/my-typia-block/src/hooks.ts:31](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/hooks.ts#L31)
+[examples/my-typia-block/src/hooks.ts:32](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/hooks.ts#L32)
 
 ___
 
@@ -115,7 +115,7 @@ A stable UUID for the lifetime of the component.
 
 #### Defined in
 
-[examples/my-typia-block/src/hooks.ts:53](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/hooks.ts#L53)
+[examples/my-typia-block/src/hooks.ts:54](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/hooks.ts#L54)
 
 ___
 
@@ -137,4 +137,4 @@ Hook for logging attribute changes in development
 
 #### Defined in
 
-[examples/my-typia-block/src/hooks.ts:76](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/hooks.ts#L76)
+[examples/my-typia-block/src/hooks.ts:64](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/hooks.ts#L64)

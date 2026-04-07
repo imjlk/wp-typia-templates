@@ -18,40 +18,40 @@
 
 ### BatchMigrationResult
 
-Re-exports [BatchMigrationResult](../interfaces/examples_my_typia_block_src_migrations.BatchMigrationResult.md)
+Re-exports [BatchMigrationResult](../interfaces/examples_my_typia_block_src_migrations_types.BatchMigrationResult.md)
 
 ___
 
 ### BlockScanResult
 
-Re-exports [BlockScanResult](../interfaces/examples_my_typia_block_src_migrations.BlockScanResult.md)
+Re-exports [BlockScanResult](../interfaces/examples_my_typia_block_src_migrations_types.BlockScanResult.md)
 
 ___
 
 ### MigrationAnalysis
 
-Re-exports [MigrationAnalysis](../interfaces/examples_my_typia_block_src_migrations.MigrationAnalysis.md)
+Re-exports [MigrationAnalysis](../interfaces/examples_my_typia_block_src_migrations_types.MigrationAnalysis.md)
 
 ___
 
 ### batchMigrateScanResults
 
-Re-exports [batchMigrateScanResults](examples_my_typia_block_src_migrations.md#batchmigratescanresults)
+Re-exports [batchMigrateScanResults](examples_my_typia_block_src_migrations_site.md#batchmigratescanresults)
 
 ___
 
 ### detectBlockMigration
 
-Re-exports [detectBlockMigration](examples_my_typia_block_src_migrations.md#detectblockmigration)
+Re-exports [detectBlockMigration](examples_my_typia_block_src_migrations_analysis.md#detectblockmigration)
 
 ___
 
 ### generateMigrationReport
 
-Re-exports [generateMigrationReport](examples_my_typia_block_src_migrations.md#generatemigrationreport)
+Re-exports [generateMigrationReport](examples_my_typia_block_src_migrations_report.md#generatemigrationreport)
 
 ___
 
 ### scanSiteForMigrations
 
-Re-exports [scanSiteForMigrations](examples_my_typia_block_src_migrations.md#scansiteformigrations)
+Re-exports [scanSiteForMigrations](examples_my_typia_block_src_migrations_site.md#scansiteformigrations)

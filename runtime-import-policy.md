@@ -16,6 +16,7 @@ Generated projects may rely on these import paths as supported public API:
 - `@wp-typia/block-runtime/blocks`
 - `@wp-typia/block-runtime/defaults`
 - `@wp-typia/block-runtime/editor`
+- `@wp-typia/block-runtime/identifiers`
 - `@wp-typia/block-runtime/inspector`
 - `@wp-typia/block-runtime/validation`
 
@@ -44,7 +45,9 @@ maintained implementation.
 
 Newly generated projects should use `@wp-typia/block-runtime/*` for block
 runtime helpers and keep `@wp-typia/block-runtime/metadata-core` for TypeScript-to-
-metadata sync.
+metadata sync. That includes `@wp-typia/block-runtime/identifiers` for
+generated block ids, scoped client ids, persistence resource keys, and public
+write request ids.
 
 ## Exported but non-canonical generated-project path
 

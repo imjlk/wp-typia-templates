@@ -35,7 +35,7 @@
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/helpers.ts:7](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/helpers.ts#L7)
+[examples/my-typia-block/src/migrations/helpers.ts:9](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/helpers.ts#L9)
 
 ___
 
@@ -55,7 +55,7 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/helpers.ts:20](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/helpers.ts#L20)
+[examples/my-typia-block/src/migrations/helpers.ts:22](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/helpers.ts#L22)
 
 ___
 
@@ -74,4 +74,4 @@ ___
 
 #### Defined in
 
-[examples/my-typia-block/src/migrations/helpers.ts:27](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/helpers.ts#L27)
+[examples/my-typia-block/src/migrations/helpers.ts:29](https://github.com/imjlk/wp-typia/blob/main/examples/my-typia-block/src/migrations/helpers.ts#L29)
