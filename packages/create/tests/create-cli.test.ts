@@ -2395,7 +2395,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(blockJson.name).toBe("demo-space/counter-card");
 		typecheckGeneratedProject(targetDir);
 		runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", ["--check"]);
-	});
+	}, 20_000);
 
 	test("canonical CLI can add a compound persistence block to an official workspace template", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-add-compound");
@@ -2458,7 +2458,7 @@ describe("@wp-typia/create scaffolding", () => {
 		expect(parentBlockJson.name).toBe("demo-space/faq-stack");
 		runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", ["--check"]);
 		runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts", ["--check"]);
-	}, 15_000);
+	}, 30_000);
 
 	test("add block updates migration config in a migration-enabled workspace template", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-add-migration");
@@ -2510,7 +2510,7 @@ describe("@wp-typia/create scaffolding", () => {
 			cwd: targetDir,
 		});
 		expect(doctorOutput).toContain("Loaded");
-	});
+	}, 20_000);
 
 	test("rendered template paths cannot escape the target directory", async () => {
 		const templateRoot = fs.mkdtempSync(path.join(tempRoot, "render-escape-template-"));

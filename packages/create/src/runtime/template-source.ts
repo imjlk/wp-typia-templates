@@ -1025,7 +1025,7 @@ export async function resolveTemplateSource(
 			if (variant) {
 				throw new Error(`--variant is only supported for official external template configs. Received variant "${variant}" for "${templateId}".`);
 			}
-			const normalizedSeed = await normalizeWpTypiaTemplateSeed(seed);
+			normalizedSeed = await normalizeWpTypiaTemplateSeed(seed);
 			return {
 				id: templateId,
 				defaultCategory: getDefaultCategory(seed.blockDir),
