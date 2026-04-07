@@ -5,6 +5,7 @@ import {
 	type ValidationResult,
 	toValidationState,
 } from '@wp-typia/block-runtime/validation';
+import { generateUUID } from './utils';
 
 export {
 	formatValidationError,
@@ -51,20 +52,7 @@ export function useTypiaValidation< T >(
  * @return A stable UUID for the lifetime of the component.
  */
 export function useUUID() {
-	const [ uuid ] = useState( () => {
-		if ( globalThis.crypto?.randomUUID ) {
-			return globalThis.crypto.randomUUID();
-		}
-
-		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-			/[xy]/g,
-			( c ) => {
-				const r = Math.floor( Math.random() * 16 );
-				const v = c === 'x' ? r : ( r % 4 ) + 8;
-				return v.toString( 16 );
-			}
-		);
-	} );
+	const [ uuid ] = useState( () => generateUUID() );
 
 	return uuid;
 }

@@ -1,15 +1,22 @@
 /**
  * Generate UUID v4
+ * @param randomUUID Optional native UUID generator for deterministic tests.
  */
-export function generateUUID(): string {
-	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-		/[xy]/g,
-		function ( c ) {
-			const r = Math.floor( Math.random() * 16 );
-			const v = c === 'x' ? r : ( r % 4 ) + 8;
-			return v.toString( 16 );
-		}
-	);
+export function generateUUID(
+	randomUUID:
+		| ( () => `${ string }-${ string }-${ string }-${ string }-${ string }` )
+		| null = globalThis.crypto?.randomUUID?.bind( globalThis.crypto ) ??
+		null
+): string {
+	if ( randomUUID ) {
+		return randomUUID();
+	}
+
+	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace( /[xy]/g, ( c ) => {
+		const r = Math.floor( Math.random() * 16 );
+		const v = c === 'x' ? r : ( r % 4 ) + 8;
+		return v.toString( 16 );
+	} );
 }
 
 /**

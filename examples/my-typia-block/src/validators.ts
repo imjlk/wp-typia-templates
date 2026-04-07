@@ -12,6 +12,7 @@ import {
 	toValidationResult,
 } from '@wp-typia/block-runtime/validation';
 import { MyTypiaBlockAttributes } from './types';
+import { generateUUID } from './utils';
 
 /**
  * Typia validators for the block attributes
@@ -54,7 +55,7 @@ export function sanitizeMyTypiaBlockAttributes(
 		id:
 			normalized.id && normalized.id.length > 0
 				? normalized.id
-				: generateBlockId(),
+				: generateUUID(),
 	} );
 }
 
@@ -103,14 +104,3 @@ export function createNestedAttributeUpdater(
 		}
 	);
 }
-
-const generateBlockId = (): string => {
-	if (
-		typeof crypto !== 'undefined' &&
-		typeof crypto.randomUUID === 'function'
-	) {
-		return crypto.randomUUID();
-	}
-
-	return 'my-typia-block-' + Math.random().toString( 36 ).slice( 2, 11 );
-};

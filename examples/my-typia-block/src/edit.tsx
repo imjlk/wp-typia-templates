@@ -19,8 +19,9 @@ import { MyTypiaBlockAttributes } from './types';
 import { sanitizeMyTypiaBlockAttributes, validators } from './validators';
 import { useTypiaValidation, useAttributeLogger, useDebounce } from './hooks';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ValidationErrorSummary } from './components/ValidationErrorSummary';
 import { MigrationDashboard } from './admin/migration-dashboard';
-import { classNames } from './utils';
+import { classNames, generateUUID } from './utils';
 
 type EditProps = BlockEditProps< MyTypiaBlockAttributes >;
 type AlignmentValue = NonNullable< MyTypiaBlockAttributes[ 'alignment' ] >;
@@ -212,15 +213,8 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 			return;
 		}
 
-		if (
-			typeof crypto !== 'undefined' &&
-			typeof crypto.randomUUID === 'function'
-		) {
-			setAttributes( {
-				id: crypto.randomUUID(),
-			} );
-		}
-	}, [ attributes.id, setAttributes ] );
+		updateField( 'id', generateUUID() );
+	}, [ attributes.id, updateField ] );
 
 	// Log attribute changes in development
 	useAttributeLogger( debouncedAttributes );
@@ -316,19 +310,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					/>
 					{ ! isValid && (
 						<div className="components-notice is-error">
-							<p>
-								<strong>
-									{ __(
-										'Validation Errors:',
-										'my_typia_block'
-									) }
-								</strong>
-							</p>
-							<ul style={ { margin: 0, paddingLeft: '1em' } }>
-								{ errorMessages.map( ( error, index ) => (
-									<li key={ index }>{ error }</li>
-								) ) }
-							</ul>
+							<ValidationErrorSummary errors={ errorMessages } />
 						</div>
 					) }
 				</InspectorFromManifest>
@@ -394,16 +376,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</div>
 				{ ! isValid && (
 					<Notice status="error" isDismissible={ false }>
-						<p>
-							<strong>
-								{ __( 'Validation Errors:', 'my_typia_block' ) }
-							</strong>
-						</p>
-						<ul style={ { margin: 0, paddingLeft: '1em' } }>
-							{ errorMessages.map( ( error, index ) => (
-								<li key={ index }>{ error }</li>
-							) ) }
-						</ul>
+						<ValidationErrorSummary errors={ errorMessages } />
 					</Notice>
 				) }
 

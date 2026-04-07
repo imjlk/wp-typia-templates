@@ -1,3 +1,5 @@
+import { isNonArrayObject } from './plain-object';
+
 export interface ManifestUnion {
 	branches: Record< string, ManifestAttribute >;
 	discriminator: string;
@@ -177,7 +179,7 @@ export function resolveMigrationAttribute(
 		}
 		case 'union': {
 			const legacyValue = getValueAtPath( input, sourcePath );
-			if ( ! isPlainObject( legacyValue ) || ! attribute.ts.union ) {
+			if ( ! isNonArrayObject( legacyValue ) || ! attribute.ts.union ) {
 				return createDefaultValue( attribute );
 			}
 
@@ -257,7 +259,7 @@ export function coerceValueFromManifest(
 				)
 			);
 		case 'object':
-			if ( ! isPlainObject( value ) ) {
+			if ( ! isNonArrayObject( value ) ) {
 				return createDefaultValue( attribute );
 			}
 			return Object.fromEntries(
@@ -358,7 +360,7 @@ function manifestMatchesAttribute(
 			);
 		case 'object':
 			return (
-				isPlainObject( value ) &&
+				isNonArrayObject( value ) &&
 				Object.entries( attribute.ts.properties ?? {} ).every(
 					( [ key, property ] ) =>
 						manifestMatchesAttribute(
@@ -378,7 +380,7 @@ function matchesUnionAttribute(
 	attribute: ManifestAttribute,
 	value: unknown
 ): boolean {
-	if ( ! isPlainObject( value ) || ! attribute.ts.union ) {
+	if ( ! isNonArrayObject( value ) || ! attribute.ts.union ) {
 		return false;
 	}
 
@@ -396,7 +398,7 @@ function coerceUnionValue(
 	attribute: ManifestAttribute,
 	value: unknown
 ): unknown {
-	if ( ! isPlainObject( value ) || ! attribute.ts.union ) {
+	if ( ! isNonArrayObject( value ) || ! attribute.ts.union ) {
 		return createDefaultValue( attribute );
 	}
 
@@ -479,10 +481,4 @@ function isValidNumber(
 	}
 
 	return true;
-}
-
-function isPlainObject( value: unknown ): value is Record< string, unknown > {
-	return (
-		typeof value === 'object' && value !== null && ! Array.isArray( value )
-	);
 }
