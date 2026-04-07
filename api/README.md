@@ -48,12 +48,12 @@ npx create-wp-typia my-block
 
 ### Built-in templates
 
-| Template | What it optimizes for |
-| --- | --- |
-| `basic` | Minimal block scaffold with type sync and runtime validation |
-| `interactivity` | The same foundation plus WordPress Interactivity API wiring |
-| `persistence` | Typed REST contracts, storage policy options, and data-backed block patterns |
-| `compound` | Parent/child multi-block scaffolding with optional persistence on the parent layer |
+| Template        | What it optimizes for                                                              |
+| --------------- | ---------------------------------------------------------------------------------- |
+| `basic`         | Minimal block scaffold with type sync and runtime validation                       |
+| `interactivity` | The same foundation plus WordPress Interactivity API wiring                        |
+| `persistence`   | Typed REST contracts, storage policy options, and data-backed block patterns       |
+| `compound`      | Parent/child multi-block scaffolding with optional persistence on the parent layer |
 
 ## What makes it different
 
@@ -231,11 +231,19 @@ The repository itself stays Bun-first even though generated projects can use `bu
 
 ```bash
 bun install
+bun run lint:repo
+bun run format:check
 bun run typecheck
-bun run test
+bun run test:all
 bun run build
+bun run ci:local
 bun run examples:test:e2e
 ```
+
+Root ESLint covers repository infrastructure code such as `scripts/**`,
+`tests/**`, root config files, and package-side non-example sources. Example app
+source stays under the existing `examples:lint` workflow powered by
+`@wordpress/scripts`.
 
 Example-specific commands live under the `examples:*` namespace:
 
@@ -246,14 +254,23 @@ bun run examples:lint
 bun run examples:test:e2e
 ```
 
+`bun run ci:local` is the recommended maintainer pre-PR command. It mirrors the
+fast CI path for changesets, publish validation, linting, typechecking, tests,
+and builds, but intentionally excludes `wp-env` startup and Playwright E2E.
+
 Command map:
 
-| Command | What it targets |
-| --- | --- |
-| `bun run build` | Product packages and the repo-local reference app |
-| `bun run examples:build` | Reference app only |
-| `bun run --filter @wp-typia/create test` | CLI/runtime only |
-| `bun run examples:test:e2e` | Playwright against the reference app |
+| Command                                  | What it targets                                   |
+| ---------------------------------------- | ------------------------------------------------- |
+| `bun run lint:repo`                      | Root ESLint for repo infrastructure code          |
+| `bun run lint:all`                       | Root ESLint, example linting, and PHP checks      |
+| `bun run format:check`                   | Non-mutating Prettier check for repo-owned files  |
+| `bun run test:all`                       | Root unit and CLI test aggregation                |
+| `bun run ci:local`                       | Fast maintainer preflight without E2E/wp-env      |
+| `bun run build`                          | Product packages and the repo-local reference app |
+| `bun run examples:build`                 | Reference app only                                |
+| `bun run --filter @wp-typia/create test` | CLI/runtime only                                  |
+| `bun run examples:test:e2e`              | Playwright against the reference app              |
 
 ## License
 

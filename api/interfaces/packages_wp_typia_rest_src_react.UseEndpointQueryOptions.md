@@ -1,6 +1,6 @@
 [wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / [packages/wp-typia-rest/src/react](../modules/packages_wp_typia_rest_src_react.md) / UseEndpointQueryOptions
 
-# Interface: UseEndpointQueryOptions\<Req, Res, Selected\>
+# Interface: UseEndpointQueryOptions\<_Req, Res, Selected\>
 
 [packages/wp-typia-rest/src/react](../modules/packages_wp_typia_rest_src_react.md).UseEndpointQueryOptions
 
@@ -8,7 +8,7 @@
 
 | Name | Type |
 | :------ | :------ |
-| `Req` | `Req` |
+| `_Req` | `_Req` |
 | `Res` | `Res` |
 | `Selected` | `Res` |
 

@@ -32,7 +32,7 @@ Ordered shell commands shown after scaffolding succeeds.
 
 #### Defined in
 
-[packages/create/src/runtime/cli-scaffold.ts:201](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L201)
+[packages/create/src/runtime/cli-scaffold.ts:200](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L200)
 
 ___
 
@@ -56,7 +56,7 @@ Optional onboarding note and step list.
 
 #### Defined in
 
-[packages/create/src/runtime/cli-scaffold.ts:225](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L225)
+[packages/create/src/runtime/cli-scaffold.ts:224](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L224)
 
 ___
 
@@ -80,4 +80,4 @@ The scaffold result together with next-step guidance.
 
 #### Defined in
 
-[packages/create/src/runtime/cli-scaffold.ts:245](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L245)
+[packages/create/src/runtime/cli-scaffold.ts:244](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/cli-scaffold.ts#L244)

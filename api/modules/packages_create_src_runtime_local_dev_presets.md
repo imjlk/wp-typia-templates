@@ -30,7 +30,7 @@ Copies opt-in local development preset files into a generated project.
 
 #### Defined in
 
-[packages/create/src/runtime/local-dev-presets.ts:126](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/local-dev-presets.ts#L126)
+[packages/create/src/runtime/local-dev-presets.ts:124](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/local-dev-presets.ts#L124)
 
 ___
 
@@ -53,7 +53,7 @@ Adds generated-project watch scripts and preset-specific dependencies to
 
 #### Defined in
 
-[packages/create/src/runtime/local-dev-presets.ts:154](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/local-dev-presets.ts#L154)
+[packages/create/src/runtime/local-dev-presets.ts:152](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/local-dev-presets.ts#L152)
 
 ___
 
@@ -76,4 +76,4 @@ scaffolded template.
 
 #### Defined in
 
-[packages/create/src/runtime/local-dev-presets.ts:219](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/local-dev-presets.ts#L219)
+[packages/create/src/runtime/local-dev-presets.ts:216](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/local-dev-presets.ts#L216)

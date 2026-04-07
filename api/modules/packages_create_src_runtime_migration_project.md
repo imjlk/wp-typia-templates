@@ -71,7 +71,7 @@ Otherwise the runtime falls back to a supported single-block layout.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:590](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L590)
+[packages/create/src/runtime/migration-project.ts:576](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L576)
 
 ___
 
@@ -91,7 +91,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:601](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L601)
+[packages/create/src/runtime/migration-project.ts:587](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L587)
 
 ___
 
@@ -118,7 +118,7 @@ supported first-party layout can be inferred.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:799](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L799)
+[packages/create/src/runtime/migration-project.ts:785](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L785)
 
 ___
 
@@ -139,7 +139,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:813](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L813)
+[packages/create/src/runtime/migration-project.ts:799](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L799)
 
 ___
 
@@ -161,7 +161,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:839](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L839)
+[packages/create/src/runtime/migration-project.ts:823](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L823)
 
 ___
 
@@ -183,7 +183,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:850](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L850)
+[packages/create/src/runtime/migration-project.ts:834](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L834)
 
 ___
 
@@ -205,7 +205,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:858](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L858)
+[packages/create/src/runtime/migration-project.ts:842](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L842)
 
 ___
 
@@ -232,7 +232,7 @@ for the provided block, or an empty array when none exist.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:872](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L872)
+[packages/create/src/runtime/migration-project.ts:856](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L856)
 
 ___
 
@@ -259,7 +259,7 @@ versions or explains that no snapshots exist yet for the block.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:888](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L888)
+[packages/create/src/runtime/migration-project.ts:872](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L872)
 
 ___
 
@@ -281,7 +281,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:901](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L901)
+[packages/create/src/runtime/migration-project.ts:885](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L885)
 
 ___
 
@@ -302,7 +302,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:909](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L909)
+[packages/create/src/runtime/migration-project.ts:893](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L893)
 
 ___
 
@@ -325,7 +325,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:919](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L919)
+[packages/create/src/runtime/migration-project.ts:903](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L903)
 
 ___
 
@@ -348,7 +348,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:931](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L931)
+[packages/create/src/runtime/migration-project.ts:915](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L915)
 
 ___
 
@@ -370,7 +370,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:943](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L943)
+[packages/create/src/runtime/migration-project.ts:927](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L927)
 
 ___
 
@@ -391,7 +391,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:955](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L955)
+[packages/create/src/runtime/migration-project.ts:939](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L939)
 
 ___
 
@@ -413,7 +413,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:973](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L973)
+[packages/create/src/runtime/migration-project.ts:957](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L957)
 
 ___
 
@@ -441,7 +441,7 @@ Error When legacy config keys or semver-named migration artifacts are detected.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:1054](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1054)
+[packages/create/src/runtime/migration-project.ts:1038](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1038)
 
 ___
 
@@ -481,7 +481,7 @@ Error When the project is not migration-capable, required manifests remain missi
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:1090](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1090)
+[packages/create/src/runtime/migration-project.ts:1074](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1074)
 
 ___
 
@@ -501,7 +501,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:1144](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1144)
+[packages/create/src/runtime/migration-project.ts:1128](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1128)
 
 ___
 
@@ -521,7 +521,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:1197](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1197)
+[packages/create/src/runtime/migration-project.ts:1181](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1181)
 
 ___
 
@@ -542,7 +542,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:1306](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1306)
+[packages/create/src/runtime/migration-project.ts:1290](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1290)
 
 ___
 
@@ -568,7 +568,7 @@ layout.
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:1364](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1364)
+[packages/create/src/runtime/migration-project.ts:1348](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1348)
 
 ___
 
@@ -591,7 +591,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:1368](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1368)
+[packages/create/src/runtime/migration-project.ts:1352](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1352)
 
 ___
 
@@ -611,7 +611,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:1384](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1384)
+[packages/create/src/runtime/migration-project.ts:1368](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1368)
 
 ___
 
@@ -631,4 +631,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/migration-project.ts:1406](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1406)
+[packages/create/src/runtime/migration-project.ts:1390](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/migration-project.ts#L1390)
