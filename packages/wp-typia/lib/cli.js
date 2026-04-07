@@ -30,12 +30,13 @@ function isMissingPackageImport(error, specifier) {
 		return false;
 	}
 
-	if ("code" in error && error.code === "ERR_MODULE_NOT_FOUND") {
-		return true;
+	if (!("code" in error) || error.code !== "ERR_MODULE_NOT_FOUND") {
+		return false;
 	}
 
 	return (
 		error.message.includes(`Cannot find package '@wp-typia/create'`) ||
+		error.message.includes(`Cannot find package '${specifier}'`) ||
 		error.message.includes(`Cannot find module '${specifier}'`)
 	);
 }
@@ -159,7 +160,11 @@ export function parseArgs(argv) {
 			continue;
 		}
 		if (arg.startsWith("--package-manager=")) {
-			parsed.packageManager = arg.split("=", 2)[1];
+			const value = arg.split("=", 2)[1];
+			if (!value) {
+				throw new Error("--package-manager requires a value");
+			}
+			parsed.packageManager = value;
 			continue;
 		}
 		if (arg === "--namespace") {

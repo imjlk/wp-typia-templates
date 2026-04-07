@@ -98,9 +98,7 @@ export function getPackageVersions(): PackageVersions {
 			createManifest.dependencies?.["@wp-typia/rest"] ??
 				resolveInstalledPackageManifest("@wp-typia/rest")?.version,
 		),
-		wpTypiaPackageVersion: normalizeVersionRange(
-			wpTypiaManifest.version ?? createManifest.version,
-		),
+		wpTypiaPackageVersion: normalizeVersionRange(wpTypiaManifest.version),
 	};
 
 	return cachedPackageVersions;

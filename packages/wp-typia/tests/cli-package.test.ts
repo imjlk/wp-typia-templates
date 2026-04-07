@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import fs from "node:fs";
 import path from "node:path";
 
+import { parseArgs } from "../lib/cli.js";
+
 import { runUtf8Command } from "../../../tests/helpers/process-utils";
 
 const packageRoot = path.resolve(import.meta.dir, "..");
@@ -29,5 +31,11 @@ describe("wp-typia package", () => {
 		expect(helpOutput).toContain("wp-typia <project-dir>");
 		expect(helpOutput).toContain("wp-typia templates list");
 		expect(helpOutput).toContain("wp-typia migrations");
+	});
+
+	test("rejects empty --package-manager= values during argument parsing", () => {
+		expect(() => parseArgs(["demo-block", "--package-manager="])).toThrow(
+			"--package-manager requires a value",
+		);
 	});
 });

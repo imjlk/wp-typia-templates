@@ -260,7 +260,11 @@ export async function applyMigrationUiCapability({
 	await copyInterpolatedDirectory(commonTemplateDir, projectDir, variables);
 
 	await mutatePackageJson(projectDir, (packageJson) => {
-		const canonicalCliSpecifier = `wp-typia@${getPackageVersions().wpTypiaPackageVersion.replace(/^[~^]/u, "")}`;
+		const wpTypiaPackageVersion = getPackageVersions().wpTypiaPackageVersion;
+		const canonicalCliSpecifier =
+			wpTypiaPackageVersion === "^0.0.0"
+				? "wp-typia"
+				: `wp-typia@${wpTypiaPackageVersion.replace(/^[~^]/u, "")}`;
 		const migrationCli = (args: string) =>
 			formatPackageExecCommand(packageManager, canonicalCliSpecifier, `migrations ${args}`);
 		packageJson.dependencies = {

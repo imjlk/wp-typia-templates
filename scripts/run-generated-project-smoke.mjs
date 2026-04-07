@@ -131,6 +131,10 @@ function ensureCanonicalCliReady() {
 		__dirname,
 		"../packages/create/dist/runtime/index.js",
 	);
+	const createRuntimeCliCorePath = path.resolve(
+		__dirname,
+		"../packages/create/dist/runtime/cli-core.js",
+	);
 	const apiClientDistPath = path.resolve(
 		__dirname,
 		"../packages/wp-typia-api-client/dist/index.js",
@@ -158,6 +162,7 @@ function ensureCanonicalCliReady() {
 	if (
 		fs.existsSync(entryPath) &&
 		fs.existsSync(createRuntimeIndexPath) &&
+		fs.existsSync(createRuntimeCliCorePath) &&
 		fs.existsSync(apiClientDistPath) &&
 		fs.existsSync(blockRuntimeDistPath) &&
 		fs.existsSync(blockTypesDistPath) &&

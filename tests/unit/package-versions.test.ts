@@ -89,7 +89,7 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^2.3.4",
 			createPackageVersion: "^4.5.6",
 			restPackageVersion: "^3.4.5",
-			wpTypiaPackageVersion: "^4.5.6",
+			wpTypiaPackageVersion: "^0.0.0",
 		});
 	});
 
@@ -152,7 +152,7 @@ describe("package version helpers", () => {
 		expect(module.getPackageVersions().createPackageVersion).toBe("^1.0.0");
 	});
 
-	test("uses the packaged create dependency range when no sibling block-runtime manifest is available", async () => {
+	test("leaves wp-typia unresolved when only the packaged create manifest is available", async () => {
 		const createPackageRoot = createTempDir("wp-typia-packaged-create-root-");
 
 		writeJsonFile(path.join(createPackageRoot, "package.json"), {
@@ -175,7 +175,7 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^0.2.0",
 			createPackageVersion: "^0.11.0",
 			restPackageVersion: "^0.3.1",
-			wpTypiaPackageVersion: "^0.11.0",
+			wpTypiaPackageVersion: "^0.0.0",
 		});
 	});
 
