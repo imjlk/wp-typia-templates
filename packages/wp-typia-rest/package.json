@@ -36,6 +36,8 @@
   "scripts": {
     "build": "bun run --filter @wp-typia/api-client build && rm -rf dist && tsc -p tsconfig.build.json && bun ./scripts/fix-dist-imports.mjs",
     "clean": "rm -rf dist",
+    "prepack": "bun run build && node ./scripts/publish-manifest.mjs prepare",
+    "postpack": "node ./scripts/publish-manifest.mjs restore",
     "test": "bun run build && cd ../.. && bun test packages/wp-typia-rest/tests",
     "test:coverage": "bun run build && cd ../.. && bun test packages/wp-typia-rest/tests --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=packages/wp-typia-rest/coverage",
     "typecheck": "bun run --filter @wp-typia/api-client build && tsc -p tsconfig.build.json --noEmit"

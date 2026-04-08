@@ -1,13 +1,21 @@
 #!/usr/bin/env node
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import {
+	findWorkspaceProtocolLeaks,
+	packWorkspacePackage,
+	readPackedPackageManifest,
+	readJson,
+	repoRoot,
+} from "./publish-package-utils.mjs";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, "..");
 const packagesRoot = path.join(repoRoot, "packages");
 const publishScriptPath = path.join(repoRoot, "scripts", "publish-oidc.sh");
 
@@ -26,15 +34,14 @@ function findPublishablePackageDirs() {
 				return false;
 			}
 
-			const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+			const packageJson = readJson(packageJsonPath);
 			return packageJson.private !== true && typeof packageJson.name === "string";
 		})
 		.sort();
 }
 
 function readPackageJson(packageDir) {
-	const packageJsonPath = path.join(repoRoot, packageDir, "package.json");
-	return JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+	return readJson(path.join(repoRoot, packageDir, "package.json"));
 }
 
 function parsePublishScriptPackageDirs() {
@@ -70,7 +77,7 @@ function parsePublishScriptPackageDirs() {
 		);
 	}
 
-	return packageDirs.sort();
+	return packageDirs;
 }
 
 function diff(left, right) {
@@ -120,8 +127,52 @@ function checkSeedPublish(packageName) {
 	}
 }
 
+function findPublishOrderViolations(configuredPackageDirs) {
+	const packageNamesByDir = new Map(
+		configuredPackageDirs.map((packageDir) => [packageDir, readPackageJson(packageDir).name]),
+	);
+	const orderIndexByName = new Map(
+		configuredPackageDirs.map((packageDir, index) => [packageNamesByDir.get(packageDir), index]),
+	);
+	const violations = [];
+
+	for (const packageDir of configuredPackageDirs) {
+		const packageJson = readPackageJson(packageDir);
+		const packageName = packageNamesByDir.get(packageDir);
+		const packageIndex = orderIndexByName.get(packageName);
+		const dependencies = packageJson.dependencies ?? {};
+
+		for (const dependencyName of Object.keys(dependencies)) {
+			const dependencyIndex = orderIndexByName.get(dependencyName);
+			if (
+				typeof dependencyIndex === "number" &&
+				typeof packageIndex === "number" &&
+				dependencyIndex > packageIndex
+			) {
+				violations.push(
+					`${packageDir} (${packageName}) publishes before ${dependencyName}, but depends on it`,
+				);
+			}
+		}
+	}
+
+	return violations;
+}
+
+function validatePackedRestManifest() {
+	const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-rest-pack-validate-"));
+	try {
+		const tarballPath = packWorkspacePackage("packages/wp-typia-rest", tempDir);
+		const packedManifest = readPackedPackageManifest(tarballPath);
+		return findWorkspaceProtocolLeaks(packedManifest);
+	} finally {
+		fs.rmSync(tempDir, { force: true, recursive: true });
+	}
+}
+
 const expectedPackageDirs = findPublishablePackageDirs();
 const configuredPackageDirs = parsePublishScriptPackageDirs();
+const publishOrderViolations = findPublishOrderViolations(configuredPackageDirs);
 
 const missingFromPublishScript = diff(expectedPackageDirs, configuredPackageDirs);
 const extraInPublishScript = diff(configuredPackageDirs, expectedPackageDirs);
@@ -139,12 +190,15 @@ const packagesMissingSeedPublish = publishablePackages.filter(
 const seedPublishValidationErrors = publishablePackages.filter(
 	({ seedPublishStatus }) => seedPublishStatus.error !== null,
 );
+const packedRestManifestLeaks = validatePackedRestManifest();
 
 if (
 	missingFromPublishScript.length === 0 &&
 	extraInPublishScript.length === 0 &&
+	publishOrderViolations.length === 0 &&
 	packagesMissingSeedPublish.length === 0 &&
-	seedPublishValidationErrors.length === 0
+	seedPublishValidationErrors.length === 0 &&
+	packedRestManifestLeaks.length === 0
 ) {
 	console.log(
 		`Validated publish-oidc package coverage and npm seed publishes for ${expectedPackageDirs.length} publishable workspace packages.`,
@@ -168,6 +222,13 @@ if (extraInPublishScript.length > 0) {
 	}
 }
 
+if (publishOrderViolations.length > 0) {
+	console.error("Publish order violates internal dependency order:");
+	for (const violation of publishOrderViolations) {
+		console.error(`- ${violation}`);
+	}
+}
+
 if (packagesMissingSeedPublish.length > 0) {
 	console.error("Missing initial npm publishes:");
 	for (const { packageDir, packageName } of packagesMissingSeedPublish) {
@@ -179,6 +240,13 @@ if (seedPublishValidationErrors.length > 0) {
 	console.error("Unable to verify npm seed publishes:");
 	for (const { packageDir, seedPublishStatus } of seedPublishValidationErrors) {
 		console.error(`- ${packageDir}: ${seedPublishStatus.error}`);
+	}
+}
+
+if (packedRestManifestLeaks.length > 0) {
+	console.error("Packed @wp-typia/rest manifest still contains workspace protocol dependencies:");
+	for (const leak of packedRestManifestLeaks) {
+		console.error(`- ${leak}`);
 	}
 }
 
