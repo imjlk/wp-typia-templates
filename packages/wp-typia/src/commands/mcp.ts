@@ -30,7 +30,9 @@ export const mcpCommand = defineCommand({
 				tools: group.tools.map((tool) => tool.name),
 			}));
 			const prefersStructuredOutput =
-				!args.formatExplicit && (args.agent || Boolean(args.context?.store?.isAIAgent));
+				(args.formatExplicit && args.format !== "toon") ||
+				args.agent ||
+				Boolean(args.context?.store?.isAIAgent);
 			if (prefersStructuredOutput) {
 				args.output({ groups: summary });
 				return;

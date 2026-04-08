@@ -10,7 +10,9 @@ export const templatesCommand = defineCommand({
 		const subcommand = (args.positional[0] ?? "list") as string;
 		const id = args.positional[1] ?? (args.flags.id as string | undefined);
 		const prefersStructuredOutput =
-			!args.formatExplicit && (args.agent || Boolean(args.context?.store?.isAIAgent));
+			(args.formatExplicit && args.format !== "toon") ||
+			args.agent ||
+			Boolean(args.context?.store?.isAIAgent);
 
 		if (prefersStructuredOutput) {
 			if (subcommand === "list") {

@@ -6,7 +6,9 @@ export const doctorCommand = defineCommand({
 	description: "Run repository and project diagnostics.",
 	handler: async (args) => {
 		const prefersStructuredOutput =
-			!args.formatExplicit && (args.agent || Boolean(args.context?.store?.isAIAgent));
+			(args.formatExplicit && args.format !== "toon") ||
+			args.agent ||
+			Boolean(args.context?.store?.isAIAgent);
 		if (prefersStructuredOutput) {
 			args.output({ checks: await getDoctorChecks(args.cwd) });
 			return;

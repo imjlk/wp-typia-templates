@@ -117,4 +117,62 @@ describe("wp-typia package", () => {
 			fs.rmSync(tempRoot, { force: true, recursive: true });
 		}
 	});
+
+	test("honors explicit machine-readable output for mcp list", () => {
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-mcp-format-"));
+		const schemaPath = path.join(tempRoot, "mcp-tools.json");
+		const configPath = path.join(tempRoot, "wp-typia.config.json");
+
+		try {
+			fs.writeFileSync(
+				schemaPath,
+				`${JSON.stringify([{ description: "Ping test tool", name: "ping" }], null, 2)}\n`,
+				"utf8",
+			);
+			fs.writeFileSync(
+				configPath,
+				`${JSON.stringify({
+					mcp: {
+						schemaSources: [
+							{
+								namespace: "demo",
+								path: schemaPath,
+							},
+						],
+					},
+				}, null, 2)}\n`,
+				"utf8",
+			);
+
+			const output = runUtf8Command("node", [
+				entryPath,
+				"--config",
+				configPath,
+				"mcp",
+				"list",
+				"--format",
+				"json",
+			]);
+			const parsed = JSON.parse(output) as {
+				groups: Array<{ namespace: string; toolCount: number; tools: string[] }>;
+			};
+			expect(parsed.groups[0]).toEqual({
+				namespace: "demo",
+				toolCount: 1,
+				tools: ["ping"],
+			});
+		} finally {
+			fs.rmSync(tempRoot, { force: true, recursive: true });
+		}
+	});
+
+	test("honors explicit machine-readable output for templates list", () => {
+		const output = runUtf8Command("node", [entryPath, "templates", "list", "--format", "json"]);
+		const parsed = JSON.parse(output) as {
+			templates: Array<{ id: string }>;
+		};
+
+		expect(parsed.templates.length).toBeGreaterThan(0);
+		expect(parsed.templates.some((entry) => entry.id === "basic")).toBe(true);
+	});
 });
