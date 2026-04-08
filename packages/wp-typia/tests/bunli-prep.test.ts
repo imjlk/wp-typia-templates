@@ -82,5 +82,11 @@ describe("wp-typia Bunli preparation", () => {
 		expect(
 			normalizeWpTypiaArgv(["-t", "basic", "demo-block"]),
 		).toEqual(["-t", "basic", "create", "demo-block"]);
+		expect(
+			normalizeWpTypiaArgv(["--config", "./custom.json", "templates", "list"]),
+		).toEqual(["--config", "./custom.json", "templates", "list"]);
+		expect(
+			normalizeWpTypiaArgv(["-c", "./custom.json", "templates", "list"]),
+		).toEqual(["-c", "./custom.json", "templates", "list"]);
 	});
 });

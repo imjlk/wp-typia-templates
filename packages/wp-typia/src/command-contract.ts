@@ -52,12 +52,14 @@ const STRING_OPTION_NAMES_BY_COMMAND = {
 } as const;
 
 const GLOBAL_STRING_OPTION_NAMES = new Set([
+	"config",
 	"format",
 	"id",
 	"output-dir",
 ]);
 
 const SHORT_OPTION_NAMES_WITH_VALUES = new Set([
+	"c",
 	"p",
 	"t",
 ]);
