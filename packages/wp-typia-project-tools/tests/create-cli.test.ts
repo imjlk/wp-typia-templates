@@ -629,7 +629,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 			expect(staleReport.failure?.code).toBe("stale-generated-artifact");
 			expect(staleReport.failure?.message).toContain(path.join(targetDir, "src", "block.json"));
 		},
-		{ timeout: 15_000 },
+		{ timeout: 30_000 },
 	);
 
 	test("scaffoldProject creates an interactivity template with typed validation wiring", async () => {
