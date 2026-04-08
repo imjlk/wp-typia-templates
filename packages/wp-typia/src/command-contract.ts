@@ -51,6 +51,53 @@ const STRING_OPTION_NAMES_BY_COMMAND = {
 	]),
 } as const;
 
+const GLOBAL_STRING_OPTION_NAMES = new Set([
+	"format",
+	"id",
+	"output-dir",
+]);
+
+const SHORT_OPTION_NAMES_WITH_VALUES = new Set([
+	"p",
+	"t",
+]);
+
+function isLongOptionValueConsumer(optionName: string): boolean {
+	if (GLOBAL_STRING_OPTION_NAMES.has(optionName)) {
+		return true;
+	}
+
+	return Object.values(STRING_OPTION_NAMES_BY_COMMAND).some((optionNames) =>
+		optionNames.has(optionName as never),
+	);
+}
+
+function findFirstPositionalIndex(argv: string[]): number {
+	for (let index = 0; index < argv.length; index += 1) {
+		const arg = argv[index];
+		if (arg === "--") {
+			return index + 1 < argv.length ? index + 1 : -1;
+		}
+		if (!arg.startsWith("-") || arg === "-") {
+			return index;
+		}
+		if (arg.startsWith("--")) {
+			if (arg.includes("=")) {
+				continue;
+			}
+			if (isLongOptionValueConsumer(arg.slice(2))) {
+				index += 1;
+			}
+			continue;
+		}
+		if (arg.length === 2 && SHORT_OPTION_NAMES_WITH_VALUES.has(arg.slice(1))) {
+			index += 1;
+		}
+	}
+
+	return -1;
+}
+
 export const WP_TYPIA_FUTURE_COMMAND_TREE = [
 	{
 		description: "Scaffold a new wp-typia project.",
@@ -100,7 +147,7 @@ export function isReservedTopLevelCommandName(value: string): boolean {
 }
 
 function assertStringOptionValues(argv: string[]): void {
-	const firstPositionalIndex = argv.findIndex((arg) => !arg.startsWith("-"));
+	const firstPositionalIndex = findFirstPositionalIndex(argv);
 	if (firstPositionalIndex === -1) {
 		return;
 	}
@@ -141,7 +188,12 @@ function assertStringOptionValues(argv: string[]): void {
 }
 
 export function normalizeWpTypiaArgv(argv: string[]): string[] {
-	const firstPositional = argv.find((arg) => !arg.startsWith("-"));
+	const firstPositionalIndex = findFirstPositionalIndex(argv);
+	if (firstPositionalIndex === -1) {
+		return argv;
+	}
+
+	const firstPositional = argv[firstPositionalIndex];
 	if (!firstPositional) {
 		return argv;
 	}
@@ -157,11 +209,10 @@ export function normalizeWpTypiaArgv(argv: string[]): string[] {
 		return argv;
 	}
 
-	const positionalIndex = argv.indexOf(firstPositional);
 	const normalizedArgv = [
-		...argv.slice(0, positionalIndex),
+		...argv.slice(0, firstPositionalIndex),
 		"create",
-		...argv.slice(positionalIndex),
+		...argv.slice(firstPositionalIndex),
 	];
 	assertStringOptionValues(normalizedArgv);
 	return normalizedArgv;

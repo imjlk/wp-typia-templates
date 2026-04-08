@@ -9,6 +9,7 @@ import {
 	WP_TYPIA_FUTURE_COMMAND_TREE,
 	WP_TYPIA_POSITIONAL_ALIAS_USAGE,
 	WP_TYPIA_TOP_LEVEL_COMMAND_NAMES,
+	normalizeWpTypiaArgv,
 } from "../src/command-contract";
 import { wpTypiaCommands } from "../src/command-list";
 
@@ -69,5 +70,17 @@ describe("wp-typia Bunli preparation", () => {
 		expect(migrationDoc).toContain(`\`${WP_TYPIA_POSITIONAL_ALIAS_USAGE}\``);
 		expect(createReadme).toContain("deprecated legacy package shell");
 		expect(createReadme).toContain("use `wp-typia` for CLI");
+	});
+
+	test("alias normalization ignores option values before the first command positional", () => {
+		expect(
+			normalizeWpTypiaArgv(["--template", "basic", "demo-block"]),
+		).toEqual(["--template", "basic", "create", "demo-block"]);
+		expect(
+			normalizeWpTypiaArgv(["--format", "json", "templates", "list"]),
+		).toEqual(["--format", "json", "templates", "list"]);
+		expect(
+			normalizeWpTypiaArgv(["-t", "basic", "demo-block"]),
+		).toEqual(["-t", "basic", "create", "demo-block"]);
 	});
 });
