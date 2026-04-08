@@ -32,6 +32,7 @@ interface RunDoctorOptions {
 }
 
 const WORKSPACE_COLLECTION_IMPORT_LINE = "import '../../collection';";
+const WORKSPACE_COLLECTION_IMPORT_PATTERN = /^\s*import\s+["']\.\.\/\.\.\/collection["']\s*;?\s*$/m;
 const WORKSPACE_GENERATED_BLOCK_ARTIFACTS = [
 	"block.json",
 	"typia.manifest.json",
@@ -242,12 +243,13 @@ function checkWorkspaceBlockCollectionImport(
 	}
 
 	const source = fs.readFileSync(entryPath, "utf8");
+	const hasCollectionImport = WORKSPACE_COLLECTION_IMPORT_PATTERN.test(source);
 	return createDoctorCheck(
 		`Block collection ${blockSlug}`,
-		source.includes(WORKSPACE_COLLECTION_IMPORT_LINE) ? "pass" : "fail",
-		source.includes(WORKSPACE_COLLECTION_IMPORT_LINE)
+		hasCollectionImport ? "pass" : "fail",
+		hasCollectionImport
 			? "Shared block collection import is present"
-			: `Missing ${WORKSPACE_COLLECTION_IMPORT_LINE}`,
+			: `Missing a shared collection import like ${WORKSPACE_COLLECTION_IMPORT_LINE}`,
 	);
 }
 

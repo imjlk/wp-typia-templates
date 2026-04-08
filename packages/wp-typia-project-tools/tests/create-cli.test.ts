@@ -3063,7 +3063,58 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		const collectionCheck = checks.find((check) => check.label === "Block collection counter-card");
 
 		expect(collectionCheck?.status).toBe("fail");
-		expect(collectionCheck?.detail).toContain("import '../../collection';");
+		expect(collectionCheck?.detail).toContain("shared collection import");
+	}, 20_000);
+
+	test("doctor accepts equivalent shared collection import formatting", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-doctor-collection-formatting");
+
+		await scaffoldOfficialWorkspace(targetDir, {
+			description: "Demo workspace doctor collection formatting",
+			slug: "demo-workspace-doctor-collection-formatting",
+			title: "Demo Workspace Doctor Collection Formatting",
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+		runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+			cwd: targetDir,
+		});
+
+		const blockEntryPath = path.join(targetDir, "src", "blocks", "counter-card", "index.tsx");
+		const entrySource = fs.readFileSync(blockEntryPath, "utf8");
+		fs.writeFileSync(
+			blockEntryPath,
+			entrySource.replace("import '../../collection';", 'import "../../collection"'),
+			"utf8",
+		);
+
+		const checks = await getDoctorChecks(targetDir);
+		const collectionCheck = checks.find((check) => check.label === "Block collection counter-card");
+
+		expect(collectionCheck?.status).toBe("pass");
+	}, 20_000);
+
+	test("doctor fails when workspace package metadata becomes invalid", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-doctor-invalid-metadata");
+
+		await scaffoldOfficialWorkspace(targetDir, {
+			description: "Demo workspace doctor invalid metadata",
+			slug: "demo-workspace-doctor-invalid-metadata",
+			title: "Demo Workspace Doctor Invalid Metadata",
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		const packageJsonPath = path.join(targetDir, "package.json");
+		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+		packageJson.wpTypia.namespace = "   ";
+		fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2), "utf8");
+
+		const checks = await getDoctorChecks(targetDir);
+		const metadataCheck = checks.find((check) => check.label === "Workspace package metadata");
+
+		expect(metadataCheck?.status).toBe("fail");
+		expect(metadataCheck?.detail).toContain("wpTypia.namespace must be a non-empty string");
 	}, 20_000);
 
 	test("doctor fails on missing variation and pattern inventory files", async () => {

@@ -27,6 +27,10 @@ export interface WorkspaceProject {
 	workspace: Required<NonNullable<WorkspacePackageJson["wpTypia"]>>;
 }
 
+function hasNonEmptyString(value: unknown): value is string {
+	return typeof value === "string" && value.trim().length > 0;
+}
+
 function parseWorkspacePackageJson(packageJsonPath: string): WorkspacePackageJson {
 	try {
 		return JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as WorkspacePackageJson;
@@ -52,19 +56,28 @@ function getWorkspaceMetadataIssues(packageJson: WorkspacePackageJson): string[]
 	if (packageJson.wpTypia.templatePackage !== WORKSPACE_TEMPLATE_PACKAGE) {
 		issues.push(`wpTypia.templatePackage must be "${WORKSPACE_TEMPLATE_PACKAGE}"`);
 	}
-	if (typeof packageJson.wpTypia.namespace !== "string" || packageJson.wpTypia.namespace.length === 0) {
+	if (!hasNonEmptyString(packageJson.wpTypia.namespace)) {
 		issues.push("wpTypia.namespace must be a non-empty string");
 	}
-	if (typeof packageJson.wpTypia.textDomain !== "string" || packageJson.wpTypia.textDomain.length === 0) {
+	if (!hasNonEmptyString(packageJson.wpTypia.textDomain)) {
 		issues.push("wpTypia.textDomain must be a non-empty string");
 	}
-	if (typeof packageJson.wpTypia.phpPrefix !== "string" || packageJson.wpTypia.phpPrefix.length === 0) {
+	if (!hasNonEmptyString(packageJson.wpTypia.phpPrefix)) {
 		issues.push("wpTypia.phpPrefix must be a non-empty string");
 	}
 
 	return issues;
 }
 
+/**
+ * Explain why a nearby wp-typia workspace cannot be resolved from `startDir`.
+ *
+ * @param startDir Directory to begin walking upward from.
+ * @returns A human-readable validation error when a candidate workspace package
+ * manifest is found but its `wpTypia` metadata is invalid, or `null` when no
+ * invalid workspace candidate is discovered.
+ * @throws {Error} When a discovered `package.json` cannot be parsed.
+ */
 export function getInvalidWorkspaceProjectReason(startDir: string): string | null {
 	let currentDir = path.resolve(startDir);
 
@@ -129,9 +142,9 @@ export function tryResolveWorkspaceProject(startDir: string): WorkspaceProject |
 			if (
 				packageJson.wpTypia?.projectType === "workspace" &&
 				packageJson.wpTypia?.templatePackage === WORKSPACE_TEMPLATE_PACKAGE &&
-				typeof packageJson.wpTypia.namespace === "string" &&
-				typeof packageJson.wpTypia.textDomain === "string" &&
-				typeof packageJson.wpTypia.phpPrefix === "string"
+				hasNonEmptyString(packageJson.wpTypia.namespace) &&
+				hasNonEmptyString(packageJson.wpTypia.textDomain) &&
+				hasNonEmptyString(packageJson.wpTypia.phpPrefix)
 			) {
 				return {
 					author: typeof packageJson.author === "string" ? packageJson.author : "Your Name",
