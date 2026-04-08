@@ -94,11 +94,11 @@ ___
 
 ### WP\_TYPIA\_FUTURE\_COMMAND\_TREE
 
-• `Const` **WP\_TYPIA\_FUTURE\_COMMAND\_TREE**: readonly [\{ `description`: ``"Scaffold a new wp-typia project."`` = "Scaffold a new wp-typia project."; `name`: ``"create"`` = "create" }, \{ `description`: ``"Extend an official wp-typia workspace."`` = "Extend an official wp-typia workspace."; `name`: ``"add"`` = "add"; `subcommands`: readonly [``"block"``, ``"variation"``, ``"pattern"``]  }, \{ `description`: ``"Run migration workflows."`` = "Run migration workflows."; `name`: ``"migrate"`` = "migrate"; `subcommands`: readonly [``"init"``, ``"snapshot"``, ``"diff"``, ``"scaffold"``, ``"plan"``, ``"wizard"``, ``"verify"``, ``"doctor"``, ``"fixtures"``, ``"fuzz"``]  }, \{ `description`: ``"Inspect scaffold templates."`` = "Inspect scaffold templates."; `name`: ``"templates"`` = "templates"; `subcommands`: readonly [``"list"``, ``"inspect"``]  }, \{ `description`: ``"Run repository and project diagnostics."`` = "Run repository and project diagnostics."; `name`: ``"doctor"`` = "doctor" }, \{ `description`: ``"Inspect or sync schema-driven MCP metadata."`` = "Inspect or sync schema-driven MCP metadata."; `name`: ``"mcp"`` = "mcp"; `subcommands`: readonly [``"list"``, ``"sync"``]  }]
+• `Const` **WP\_TYPIA\_FUTURE\_COMMAND\_TREE**: readonly [\{ `description`: ``"Scaffold a new wp-typia project."`` = "Scaffold a new wp-typia project."; `name`: ``"create"`` = "create" }, \{ `description`: ``"Extend an official wp-typia workspace."`` = "Extend an official wp-typia workspace."; `name`: ``"add"`` = "add"; `subcommands`: readonly [``"block"``, ``"variation"``, ``"pattern"``, ``"binding-source"``, ``"hooked-block"``]  }, \{ `description`: ``"Run migration workflows."`` = "Run migration workflows."; `name`: ``"migrate"`` = "migrate"; `subcommands`: readonly [``"init"``, ``"snapshot"``, ``"diff"``, ``"scaffold"``, ``"plan"``, ``"wizard"``, ``"verify"``, ``"doctor"``, ``"fixtures"``, ``"fuzz"``]  }, \{ `description`: ``"Inspect scaffold templates."`` = "Inspect scaffold templates."; `name`: ``"templates"`` = "templates"; `subcommands`: readonly [``"list"``, ``"inspect"``]  }, \{ `description`: ``"Run repository and project diagnostics."`` = "Run repository and project diagnostics."; `name`: ``"doctor"`` = "doctor" }, \{ `description`: ``"Inspect or sync schema-driven MCP metadata."`` = "Inspect or sync schema-driven MCP metadata."; `name`: ``"mcp"`` = "mcp"; `subcommands`: readonly [``"list"``, ``"sync"``]  }]
 
 #### Defined in
 
-[packages/wp-typia/src/command-contract.ts:104](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L104)
+[packages/wp-typia/src/command-contract.ts:106](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L106)
 
 ## Functions
 
@@ -118,7 +118,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/command-contract.ts:146](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L146)
+[packages/wp-typia/src/command-contract.ts:148](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L148)
 
 ___
 
@@ -138,4 +138,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/command-contract.ts:203](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L203)
+[packages/wp-typia/src/command-contract.ts:205](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L205)

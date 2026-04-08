@@ -26,6 +26,7 @@
 - [runAddVariationCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddvariationcommand)
 - [runAddPatternCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddpatterncommand)
 - [runAddBindingSourceCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddbindingsourcecommand)
+- [runAddHookedBlockCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddhookedblockcommand)
 
 ## References
 
@@ -41,7 +42,7 @@ Re-exports [getWorkspaceBlockSelectOptions](packages_wp_typia_project_tools_src_
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:49](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L49)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:54](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L54)
 
 ___
 
@@ -51,19 +52,19 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:60](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L60)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:65](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L65)
 
 ## Variables
 
 ### ADD\_KIND\_IDS
 
-• `Const` **ADD\_KIND\_IDS**: readonly [``"block"``, ``"variation"``, ``"pattern"``, ``"binding-source"``]
+• `Const` **ADD\_KIND\_IDS**: readonly [``"block"``, ``"variation"``, ``"pattern"``, ``"binding-source"``, ``"hooked-block"``]
 
 Supported top-level `wp-typia add` kinds exposed by the canonical CLI.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:48](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L48)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:53](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L53)
 
 ___
 
@@ -75,7 +76,7 @@ Supported built-in block families accepted by `wp-typia add block --template`.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:54](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L54)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:59](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L59)
 
 ## Functions
 
@@ -91,7 +92,7 @@ Returns help text for the canonical `wp-typia add` subcommands.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1137](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1137)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1159](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1159)
 
 ___
 
@@ -114,7 +115,7 @@ Seeds an empty official workspace migration project before any blocks are added.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1154](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1154)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1178](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1178)
 
 ___
 
@@ -136,7 +137,7 @@ Adds one built-in block slice to an official workspace project.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1183](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1183)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1207](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1207)
 
 ___
 
@@ -168,7 +169,7 @@ conflicting file or inventory entry already exists.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1407](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1407)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1501](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1501)
 
 ___
 
@@ -200,7 +201,7 @@ already exists.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1482](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1482)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1576](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1576)
 
 ___
 
@@ -231,4 +232,35 @@ the slug is invalid, or when a conflicting file or inventory entry exists.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1548](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1548)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1642](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1642)
+
+___
+
+### runAddHookedBlockCommand
+
+▸ **runAddHookedBlockCommand**(`options`): `Promise`\<\{ `anchorBlockName`: `string` ; `blockSlug`: `string` ; `position`: [`HookedBlockPositionId`](packages_wp_typia_project_tools_src_runtime_hooked_blocks.md#hookedblockpositionid) ; `projectDir`: `string`  }\>
+
+Add one `blockHooks` entry to an existing official workspace block.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `options` | `RunAddHookedBlockCommandOptions` | Command options for the hooked-block workflow. |
+
+#### Returns
+
+`Promise`\<\{ `anchorBlockName`: `string` ; `blockSlug`: `string` ; `position`: [`HookedBlockPositionId`](packages_wp_typia_project_tools_src_runtime_hooked_blocks.md#hookedblockpositionid) ; `projectDir`: `string`  }\>
+
+A promise that resolves with the normalized target block slug, anchor
+block name, position, and owning project directory after `block.json` is written.
+
+**`Throws`**
+
+When the command is run outside an official workspace, when
+the target block is unknown, when required flags are missing, or when the
+block already defines a hook for the requested anchor.
+
+#### Defined in
+
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1722](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1722)

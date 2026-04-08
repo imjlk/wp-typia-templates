@@ -125,6 +125,7 @@
 - [packages/wp-typia-project-tools/src/runtime/cli-prompt](modules/packages_wp_typia_project_tools_src_runtime_cli_prompt.md)
 - [packages/wp-typia-project-tools/src/runtime/cli-scaffold](modules/packages_wp_typia_project_tools_src_runtime_cli_scaffold.md)
 - [packages/wp-typia-project-tools/src/runtime/cli-templates](modules/packages_wp_typia_project_tools_src_runtime_cli_templates.md)
+- [packages/wp-typia-project-tools/src/runtime/hooked-blocks](modules/packages_wp_typia_project_tools_src_runtime_hooked_blocks.md)
 - [packages/wp-typia-project-tools/src/runtime](modules/packages_wp_typia_project_tools_src_runtime.md)
 - [packages/wp-typia-project-tools/src/runtime/json-utils](modules/packages_wp_typia_project_tools_src_runtime_json_utils.md)
 - [packages/wp-typia-project-tools/src/runtime/local-dev-presets](modules/packages_wp_typia_project_tools_src_runtime_local_dev_presets.md)

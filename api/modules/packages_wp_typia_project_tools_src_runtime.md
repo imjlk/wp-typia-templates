@@ -67,13 +67,16 @@
 - [getNextSteps](packages_wp_typia_project_tools_src_runtime.md#getnextsteps)
 - [getOptionalOnboarding](packages_wp_typia_project_tools_src_runtime.md#getoptionalonboarding)
 - [getWorkspaceBlockSelectOptions](packages_wp_typia_project_tools_src_runtime.md#getworkspaceblockselectoptions)
+- [HOOKED\_BLOCK\_POSITION\_IDS](packages_wp_typia_project_tools_src_runtime.md#hooked_block_position_ids)
 - [runAddBindingSourceCommand](packages_wp_typia_project_tools_src_runtime.md#runaddbindingsourcecommand)
 - [runAddBlockCommand](packages_wp_typia_project_tools_src_runtime.md#runaddblockcommand)
+- [runAddHookedBlockCommand](packages_wp_typia_project_tools_src_runtime.md#runaddhookedblockcommand)
 - [runAddPatternCommand](packages_wp_typia_project_tools_src_runtime.md#runaddpatterncommand)
 - [runDoctor](packages_wp_typia_project_tools_src_runtime.md#rundoctor)
 - [runAddVariationCommand](packages_wp_typia_project_tools_src_runtime.md#runaddvariationcommand)
 - [runScaffoldFlow](packages_wp_typia_project_tools_src_runtime.md#runscaffoldflow)
 - [DoctorCheck](packages_wp_typia_project_tools_src_runtime.md#doctorcheck)
+- [HookedBlockPositionId](packages_wp_typia_project_tools_src_runtime.md#hookedblockpositionid)
 - [ReadlinePrompt](packages_wp_typia_project_tools_src_runtime.md#readlineprompt)
 
 ## References
@@ -444,6 +447,12 @@ Re-exports [getWorkspaceBlockSelectOptions](packages_wp_typia_project_tools_src_
 
 ___
 
+### HOOKED\_BLOCK\_POSITION\_IDS
+
+Re-exports [HOOKED_BLOCK_POSITION_IDS](packages_wp_typia_project_tools_src_runtime_hooked_blocks.md#hooked_block_position_ids)
+
+___
+
 ### runAddBindingSourceCommand
 
 Re-exports [runAddBindingSourceCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddbindingsourcecommand)
@@ -453,6 +462,12 @@ ___
 ### runAddBlockCommand
 
 Re-exports [runAddBlockCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddblockcommand)
+
+___
+
+### runAddHookedBlockCommand
+
+Re-exports [runAddHookedBlockCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddhookedblockcommand)
 
 ___
 
@@ -483,6 +498,12 @@ ___
 ### DoctorCheck
 
 Re-exports [DoctorCheck](../interfaces/packages_wp_typia_project_tools_src_runtime_cli_doctor.DoctorCheck.md)
+
+___
+
+### HookedBlockPositionId
+
+Re-exports [HookedBlockPositionId](packages_wp_typia_project_tools_src_runtime_hooked_blocks.md#hookedblockpositionid)
 
 ___
 

@@ -55,7 +55,7 @@ Re-exports [listTemplates](packages_wp_typia_project_tools_src_runtime_template_
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:124](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L124)
+[packages/wp-typia/src/runtime-bridge.ts:125](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L125)
 
 ___
 
@@ -75,7 +75,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:216](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L216)
+[packages/wp-typia/src/runtime-bridge.ts:217](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L217)
 
 ___
 
@@ -96,7 +96,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:313](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L313)
+[packages/wp-typia/src/runtime-bridge.ts:345](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L345)
 
 ___
 
@@ -116,7 +116,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:351](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L351)
+[packages/wp-typia/src/runtime-bridge.ts:383](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L383)
 
 ___
 
@@ -136,7 +136,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:355](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L355)
+[packages/wp-typia/src/runtime-bridge.ts:387](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L387)
 
 ___
 
@@ -156,4 +156,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:396](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L396)
+[packages/wp-typia/src/runtime-bridge.ts:428](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L428)

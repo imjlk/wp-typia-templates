@@ -13,9 +13,12 @@
 - [getWorkspaceBlockSelectOptions](packages_wp_typia_project_tools_src_runtime_cli_core.md#getworkspaceblockselectoptions)
 - [runAddBindingSourceCommand](packages_wp_typia_project_tools_src_runtime_cli_core.md#runaddbindingsourcecommand)
 - [runAddBlockCommand](packages_wp_typia_project_tools_src_runtime_cli_core.md#runaddblockcommand)
+- [runAddHookedBlockCommand](packages_wp_typia_project_tools_src_runtime_cli_core.md#runaddhookedblockcommand)
 - [runAddPatternCommand](packages_wp_typia_project_tools_src_runtime_cli_core.md#runaddpatterncommand)
 - [runAddVariationCommand](packages_wp_typia_project_tools_src_runtime_cli_core.md#runaddvariationcommand)
 - [seedWorkspaceMigrationProject](packages_wp_typia_project_tools_src_runtime_cli_core.md#seedworkspacemigrationproject)
+- [HOOKED\_BLOCK\_POSITION\_IDS](packages_wp_typia_project_tools_src_runtime_cli_core.md#hooked_block_position_ids)
+- [HookedBlockPositionId](packages_wp_typia_project_tools_src_runtime_cli_core.md#hookedblockpositionid)
 - [formatHelpText](packages_wp_typia_project_tools_src_runtime_cli_core.md#formathelptext)
 - [getNextSteps](packages_wp_typia_project_tools_src_runtime_cli_core.md#getnextsteps)
 - [getOptionalOnboarding](packages_wp_typia_project_tools_src_runtime_cli_core.md#getoptionalonboarding)
@@ -74,6 +77,12 @@ Re-exports [runAddBlockCommand](packages_wp_typia_project_tools_src_runtime_cli_
 
 ___
 
+### runAddHookedBlockCommand
+
+Re-exports [runAddHookedBlockCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddhookedblockcommand)
+
+___
+
 ### runAddPatternCommand
 
 Re-exports [runAddPatternCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddpatterncommand)
@@ -89,6 +98,18 @@ ___
 ### seedWorkspaceMigrationProject
 
 Re-exports [seedWorkspaceMigrationProject](packages_wp_typia_project_tools_src_runtime_cli_add.md#seedworkspacemigrationproject)
+
+___
+
+### HOOKED\_BLOCK\_POSITION\_IDS
+
+Re-exports [HOOKED_BLOCK_POSITION_IDS](packages_wp_typia_project_tools_src_runtime_hooked_blocks.md#hooked_block_position_ids)
+
+___
+
+### HookedBlockPositionId
+
+Re-exports [HookedBlockPositionId](packages_wp_typia_project_tools_src_runtime_hooked_blocks.md#hookedblockpositionid)
 
 ___
 
