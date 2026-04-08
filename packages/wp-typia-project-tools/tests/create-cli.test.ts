@@ -2725,7 +2725,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		).toBe(originalBlockConfigSource);
 	});
 
-	test("hooked-block workflow rejects unknown blocks, invalid positions, and duplicate anchors", async () => {
+	test("hooked-block workflow rejects unknown blocks, invalid anchors, invalid positions, and duplicate anchors", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-hooked-block-invalid");
 
 		await scaffoldOfficialWorkspace(targetDir, {
@@ -2757,6 +2757,25 @@ describe("@wp-typia/project-tools scaffolding", () => {
 				),
 			),
 		).toContain("Unknown workspace block");
+
+		expect(
+			getCommandErrorMessage(() =>
+				runCli(
+					"node",
+					[
+						entryPath,
+						"add",
+						"hooked-block",
+						"counter-card",
+						"--anchor",
+						"post-content",
+						"--position",
+						"after",
+					],
+					{ cwd: targetDir },
+				),
+			),
+		).toContain("full `namespace/slug` block name format");
 
 		expect(
 			getCommandErrorMessage(() =>
@@ -3643,7 +3662,7 @@ export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
 		const blockJsonPath = path.join(targetDir, "src", "blocks", "counter-card", "block.json");
 		const blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8"));
 		blockJson.blockHooks = {
-			"core/post-content": "around",
+			"post-content": "after",
 		};
 		fs.writeFileSync(blockJsonPath, JSON.stringify(blockJson, null, 2), "utf8");
 
@@ -3651,7 +3670,7 @@ export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
 		const blockHooksCheck = checks.find((check) => check.label === "Block hooks counter-card");
 
 		expect(blockHooksCheck?.status).toBe("fail");
-		expect(blockHooksCheck?.detail).toContain("core/post-content => around");
+		expect(blockHooksCheck?.detail).toContain("post-content => after");
 	}, 20_000);
 
 	test("doctor fails when workspace package metadata becomes invalid", async () => {

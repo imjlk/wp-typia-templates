@@ -5,7 +5,10 @@ import { execFileSync } from "node:child_process";
 import { access, constants as fsConstants, rm, writeFile } from "node:fs/promises";
 
 import { getBuiltInTemplateLayerDirs } from "./template-builtins.js";
-import { HOOKED_BLOCK_POSITION_SET } from "./hooked-blocks.js";
+import {
+	HOOKED_BLOCK_ANCHOR_PATTERN,
+	HOOKED_BLOCK_POSITION_SET,
+} from "./hooked-blocks.js";
 import { listTemplates } from "./template-registry.js";
 import { readWorkspaceInventory, type WorkspaceInventory } from "./workspace-inventory.js";
 import {
@@ -264,6 +267,7 @@ function checkWorkspaceBlockHooks(
 		([anchor, position]) =>
 			anchor.trim().length === 0 ||
 			anchor !== anchor.trim() ||
+			!HOOKED_BLOCK_ANCHOR_PATTERN.test(anchor) ||
 			typeof position !== "string" ||
 			!HOOKED_BLOCK_POSITION_SET.has(position),
 	);

@@ -37,6 +37,7 @@ import {
 	type WorkspaceInventory,
 } from "./workspace-inventory.js";
 import {
+	HOOKED_BLOCK_ANCHOR_PATTERN,
 	HOOKED_BLOCK_POSITION_IDS,
 	type HookedBlockPositionId,
 } from "./hooked-blocks.js";
@@ -1350,6 +1351,11 @@ function assertValidHookAnchor(anchorBlockName: string): string {
 	if (!trimmed) {
 		throw new Error(
 			"`wp-typia add hooked-block` requires --anchor <anchor-block-name>.",
+		);
+	}
+	if (!HOOKED_BLOCK_ANCHOR_PATTERN.test(trimmed)) {
+		throw new Error(
+			"`wp-typia add hooked-block` requires --anchor <anchor-block-name> to use the full `namespace/slug` block name format.",
 		);
 	}
 
