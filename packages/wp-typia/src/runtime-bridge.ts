@@ -69,6 +69,21 @@ function readOptionalStringFlag(
 	return value;
 }
 
+function readOptionalLooseStringFlag(
+	flags: Record<string, unknown>,
+	name: string,
+): string | undefined {
+	const value = flags[name];
+	if (value === undefined || value === null) {
+		return undefined;
+	}
+	if (typeof value !== "string") {
+		throw new Error(`\`--${name}\` requires a value.`);
+	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
 function pushFlag(argv: string[], name: string, value: unknown): void {
 	if (value === undefined || value === null || value === false) {
 		return;
@@ -299,12 +314,24 @@ export async function executeMigrateCommand({
 	const argv = [command];
 	pushFlag(argv, "all", flags.all);
 	pushFlag(argv, "force", flags.force);
-	pushFlag(argv, "current-migration-version", readOptionalStringFlag(flags, "current-migration-version"));
-	pushFlag(argv, "migration-version", readOptionalStringFlag(flags, "migration-version"));
-	pushFlag(argv, "from-migration-version", readOptionalStringFlag(flags, "from-migration-version"));
-	pushFlag(argv, "to-migration-version", readOptionalStringFlag(flags, "to-migration-version"));
-	pushFlag(argv, "iterations", readOptionalStringFlag(flags, "iterations"));
-	pushFlag(argv, "seed", readOptionalStringFlag(flags, "seed"));
+	pushFlag(
+		argv,
+		"current-migration-version",
+		readOptionalLooseStringFlag(flags, "current-migration-version"),
+	);
+	pushFlag(argv, "migration-version", readOptionalLooseStringFlag(flags, "migration-version"));
+	pushFlag(
+		argv,
+		"from-migration-version",
+		readOptionalLooseStringFlag(flags, "from-migration-version"),
+	);
+	pushFlag(
+		argv,
+		"to-migration-version",
+		readOptionalLooseStringFlag(flags, "to-migration-version"),
+	);
+	pushFlag(argv, "iterations", readOptionalLooseStringFlag(flags, "iterations"));
+	pushFlag(argv, "seed", readOptionalLooseStringFlag(flags, "seed"));
 
 	const parsed = parseMigrationArgs(argv);
 	await runMigrationCommand(parsed, cwd, {

@@ -36,6 +36,17 @@ type MigrateFlowProps = {
 	initialValues: Partial<MigrateFlowValues>;
 };
 
+function sanitizeMigrateValues(values: MigrateFlowValues): Record<string, unknown> {
+	return Object.fromEntries(
+		Object.entries(values).flatMap(([key, value]) => {
+			if (typeof value === "string" && value.trim().length === 0) {
+				return [];
+			}
+			return [[key, value]];
+		}),
+	);
+}
+
 export function MigrateFlow({ cwd, initialValues }: MigrateFlowProps) {
 	const runtime = useRuntime();
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -161,7 +172,7 @@ export function MigrateFlow({ cwd, initialValues }: MigrateFlowProps) {
 						await executeMigrateCommand({
 							command: values.command,
 							cwd,
-							flags: values,
+							flags: sanitizeMigrateValues(values),
 						});
 						runtime.exit();
 					} catch (error) {

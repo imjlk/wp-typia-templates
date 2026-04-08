@@ -89,17 +89,18 @@ export const migrateCommand = defineCommand({
 										| "fixtures"
 										| "fuzz"
 										| undefined) ?? "plan",
-								"current-migration-version":
-									(args.flags["current-migration-version"] as string | undefined) ??
-									"",
+								"current-migration-version": args.flags[
+									"current-migration-version"
+								] as string | undefined,
 								force: Boolean(args.flags.force ?? false),
-								"from-migration-version":
-									(args.flags["from-migration-version"] as string | undefined) ??
-									"",
-								iterations: (args.flags.iterations as string | undefined) ?? "",
-								"migration-version":
-									(args.flags["migration-version"] as string | undefined) ?? "",
-								seed: (args.flags.seed as string | undefined) ?? "",
+								"from-migration-version": args.flags[
+									"from-migration-version"
+								] as string | undefined,
+								iterations: args.flags.iterations as string | undefined,
+								"migration-version": args.flags[
+									"migration-version"
+								] as string | undefined,
+								seed: args.flags.seed as string | undefined,
 								"to-migration-version":
 									(args.flags["to-migration-version"] as string | undefined) ??
 									"current",

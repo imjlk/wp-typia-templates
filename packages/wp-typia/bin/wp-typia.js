@@ -43,8 +43,9 @@ if (result.error) {
 if ((result.status ?? 1) === 0) {
 	if (result.stdout) {
 		process.stdout.write(result.stdout);
-	} else if (result.stderr) {
-		process.stdout.write(result.stderr);
+	}
+	if (result.stderr) {
+		process.stderr.write(result.stderr);
 	}
 } else {
 	if (result.stderr) {
