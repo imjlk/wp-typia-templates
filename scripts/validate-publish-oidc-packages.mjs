@@ -80,12 +80,23 @@ function diff(left, right) {
 
 function checkSeedPublish(packageName) {
 	try {
-		const output = execFileSync("npm", ["view", packageName, "version", "--json"], {
-			cwd: repoRoot,
-			encoding: "utf8",
-			shell: true,
-			stdio: ["ignore", "pipe", "pipe"],
-		}).trim();
+		const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+		const output = execFileSync(
+			npmCommand,
+			[
+				"view",
+				packageName,
+				"version",
+				"--json",
+				"--registry",
+				"https://registry.npmjs.org/",
+			],
+			{
+				cwd: repoRoot,
+				encoding: "utf8",
+				stdio: ["ignore", "pipe", "pipe"],
+			},
+		).trim();
 		return {
 			error: null,
 			published: output.length > 0,
