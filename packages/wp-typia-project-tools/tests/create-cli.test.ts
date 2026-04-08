@@ -2898,7 +2898,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 			"utf8",
 		);
 
-		expect(packageJson.packageManager).toBe("bun@1.3.10");
+		expect(packageJson.packageManager).toBe("bun@1.3.11");
 		expect(blockJson.name).toBe("experiments/demo-bun-entry");
 		expect(blockJson.textdomain).toBe("demo-bun-entry-text");
 		expect(pluginBootstrap).toContain("Text Domain:       demo-bun-entry-text");

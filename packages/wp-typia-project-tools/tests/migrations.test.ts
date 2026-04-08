@@ -273,7 +273,7 @@ export function resolveMigrationAttribute(
 function createProjectShell(projectDir: string) {
 	writeJson(path.join(projectDir, "package.json"), {
 		name: "migration-smoke",
-		packageManager: "bun@1.3.10",
+		packageManager: "bun@1.3.11",
 		private: true,
 		scripts: {},
 		type: "module",
@@ -711,7 +711,7 @@ function createMultiBlockMigrationProject(
 ) {
 	writeJson(path.join(projectDir, "package.json"), {
 		name: "multi-block-migration-smoke",
-		packageManager: "bun@1.3.10",
+		packageManager: "bun@1.3.11",
 		private: true,
 		scripts: {},
 		type: "module",
@@ -753,7 +753,7 @@ function createMultiBlockMigrationProject(
 function createRetrofitMultiBlockProject(projectDir: string) {
 	writeJson(path.join(projectDir, "package.json"), {
 		name: "retrofit-multi-block",
-		packageManager: "bun@1.3.10",
+		packageManager: "bun@1.3.11",
 		private: true,
 		scripts: {},
 		type: "module",
@@ -803,7 +803,7 @@ function createSingleBlockProjectWithBrokenMultiBlockCandidate(projectDir: strin
 function createBrokenOnlyMultiBlockProject(projectDir: string) {
 	writeJson(path.join(projectDir, "package.json"), {
 		name: "broken-only-multi-block",
-		packageManager: "bun@1.3.10",
+		packageManager: "bun@1.3.11",
 		private: true,
 		scripts: {},
 		type: "module",
@@ -1631,7 +1631,7 @@ describe("wp-typia migrate", () => {
 		const projectDir = path.join(tempRoot, "init-unsupported-layout-project");
 		writeJson(path.join(projectDir, "package.json"), {
 			name: "unsupported-migration-layout",
-			packageManager: "bun@1.3.10",
+			packageManager: "bun@1.3.11",
 			private: true,
 			scripts: {},
 			type: "module",
@@ -2520,7 +2520,7 @@ export default migrationConfig;
 			path.join(projectDir, "package.json"),
 			{
 				name: "migration-smoke",
-				packageManager: "bun@1.3.10",
+				packageManager: "bun@1.3.11",
 				private: true,
 				scripts: {
 					"sync-types": `node -e "process.stderr.write('sync-types failed'); process.exit(1)"`,

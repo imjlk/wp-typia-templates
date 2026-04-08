@@ -6,7 +6,7 @@ on:
     - cron: "0 0 * * 1"
 
 env:
-  BUN_VERSION: "1.3.10"
+  BUN_VERSION: "1.3.11"
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:

@@ -12,7 +12,7 @@ const wpTypiaPackageRoot = path.resolve(__dirname, "../packages/wp-typia");
 const entryPath = path.resolve(wpTypiaPackageRoot, "bin/wp-typia.js");
 const PACKAGE_MANAGERS = {
 	bun: {
-		packageManagerField: "bun@1.3.10",
+		packageManagerField: "bun@1.3.11",
 	},
 	npm: {
 		packageManagerField: "npm@11.6.1",

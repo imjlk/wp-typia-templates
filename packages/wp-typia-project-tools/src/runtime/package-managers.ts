@@ -12,7 +12,7 @@ const PACKAGE_MANAGER_DATA: PackageManagerDefinition[] = [
 	{
 		id: "bun",
 		label: "Bun",
-		packageManagerField: "bun@1.3.10",
+		packageManagerField: "bun@1.3.11",
 		installCommand: "bun install",
 		frozenInstallCommand: "bun install --frozen-lockfile",
 	},
