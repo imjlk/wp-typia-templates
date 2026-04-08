@@ -37,6 +37,10 @@ import {
 	type WorkspaceInventory,
 } from "./workspace-inventory.js";
 import {
+	HOOKED_BLOCK_POSITION_IDS,
+	type HookedBlockPositionId,
+} from "./hooked-blocks.js";
+import {
 	resolveWorkspaceProject,
 	WORKSPACE_TEMPLATE_PACKAGE,
 	type WorkspaceProject,
@@ -69,8 +73,6 @@ const BINDING_SOURCE_SERVER_GLOB = "/src/bindings/*/server.php";
 const BINDING_SOURCE_EDITOR_SCRIPT = "build/bindings/index.js";
 const BINDING_SOURCE_EDITOR_ASSET = "build/bindings/index.asset.php";
 const WORKSPACE_GENERATED_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
-const HOOKED_BLOCK_POSITION_IDS = ["before", "after", "firstChild", "lastChild"] as const;
-type HookedBlockPositionId = (typeof HOOKED_BLOCK_POSITION_IDS)[number];
 
 interface RunAddVariationCommandOptions {
 	blockName: string;

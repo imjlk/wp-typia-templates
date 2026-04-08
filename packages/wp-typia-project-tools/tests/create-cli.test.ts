@@ -2655,6 +2655,17 @@ describe("@wp-typia/project-tools scaffolding", () => {
 			"core/post-content": "after",
 		});
 
+		runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts");
+		const syncedBlockJson = JSON.parse(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "counter-card", "block.json"),
+				"utf8",
+			),
+		);
+		expect(syncedBlockJson.blockHooks).toEqual({
+			"core/post-content": "after",
+		});
+
 		const doctorOutput = runCli("node", [entryPath, "doctor"], {
 			cwd: targetDir,
 		});

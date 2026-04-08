@@ -5,6 +5,7 @@ import { execFileSync } from "node:child_process";
 import { access, constants as fsConstants, rm, writeFile } from "node:fs/promises";
 
 import { getBuiltInTemplateLayerDirs } from "./template-builtins.js";
+import { HOOKED_BLOCK_POSITION_SET } from "./hooked-blocks.js";
 import { listTemplates } from "./template-registry.js";
 import { readWorkspaceInventory, type WorkspaceInventory } from "./workspace-inventory.js";
 import {
@@ -37,7 +38,6 @@ const WORKSPACE_COLLECTION_IMPORT_PATTERN = /^\s*import\s+["']\.\.\/\.\.\/collec
 const WORKSPACE_BINDING_SERVER_GLOB = "/src/bindings/*/server.php";
 const WORKSPACE_BINDING_EDITOR_SCRIPT = "build/bindings/index.js";
 const WORKSPACE_BINDING_EDITOR_ASSET = "build/bindings/index.asset.php";
-const WORKSPACE_BLOCK_HOOK_POSITIONS = new Set(["before", "after", "firstChild", "lastChild"]);
 const WORKSPACE_GENERATED_BLOCK_ARTIFACTS = [
 	"block.json",
 	"typia.manifest.json",
@@ -263,8 +263,9 @@ function checkWorkspaceBlockHooks(
 	const invalidEntries = Object.entries(blockHooks).filter(
 		([anchor, position]) =>
 			anchor.trim().length === 0 ||
+			anchor !== anchor.trim() ||
 			typeof position !== "string" ||
-			!WORKSPACE_BLOCK_HOOK_POSITIONS.has(position),
+			!HOOKED_BLOCK_POSITION_SET.has(position),
 	);
 
 	return createDoctorCheck(

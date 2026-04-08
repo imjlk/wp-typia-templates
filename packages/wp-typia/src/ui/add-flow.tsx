@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { useRuntime } from "@bunli/runtime/app";
 import { Alert, SchemaForm } from "@bunli/tui";
+import { HOOKED_BLOCK_POSITION_IDS } from "@wp-typia/project-tools";
 import { z } from "zod";
 
 import { executeAddCommand } from "../runtime-bridge";
@@ -27,6 +28,16 @@ type AddFlowProps = {
 		name: string;
 		value: string;
 	}>;
+};
+
+const HOOKED_BLOCK_POSITION_DESCRIPTIONS: Record<
+	(typeof HOOKED_BLOCK_POSITION_IDS)[number],
+	string
+> = {
+	after: "Insert after the anchor block",
+	before: "Insert before the anchor block",
+	firstChild: "Insert as the first child of the anchor block",
+	lastChild: "Insert as the last child of the anchor block",
 };
 
 export function AddFlow({ cwd, initialValues, workspaceBlockOptions }: AddFlowProps) {
@@ -140,20 +151,11 @@ export function AddFlow({ cwd, initialValues, workspaceBlockOptions }: AddFlowPr
 						kind: "select",
 						label: "Hook position",
 						name: "position",
-						options: [
-							{ name: "after", description: "Insert after the anchor block", value: "after" },
-							{ name: "before", description: "Insert before the anchor block", value: "before" },
-							{
-								name: "firstChild",
-								description: "Insert as the first child of the anchor block",
-								value: "firstChild",
-							},
-							{
-								name: "lastChild",
-								description: "Insert as the last child of the anchor block",
-								value: "lastChild",
-							},
-						],
+						options: HOOKED_BLOCK_POSITION_IDS.map((position) => ({
+							name: position,
+							description: HOOKED_BLOCK_POSITION_DESCRIPTIONS[position],
+							value: position,
+						})),
 						visibleWhen: (values) => values.kind === "hooked-block",
 					},
 					{

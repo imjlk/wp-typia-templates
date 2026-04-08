@@ -6,7 +6,8 @@
  * Consumers should prefer these exports for scaffold, add, migrate, doctor,
  * and workspace-aware helpers such as `getWorkspaceBlockSelectOptions`,
  * `runAddBlockCommand`, `runAddVariationCommand`, `runAddPatternCommand`,
- * `runAddBindingSourceCommand`, and `runDoctor`.
+ * `runAddBindingSourceCommand`, `runAddHookedBlockCommand`,
+ * `HOOKED_BLOCK_POSITION_IDS`, and `runDoctor`.
  */
 export {
 	scaffoldProject,
@@ -86,6 +87,7 @@ export {
 	getNextSteps,
 	getOptionalOnboarding,
 	getWorkspaceBlockSelectOptions,
+	HOOKED_BLOCK_POSITION_IDS,
 	runAddBindingSourceCommand,
 	runAddBlockCommand,
 	runAddHookedBlockCommand,
@@ -94,4 +96,4 @@ export {
 	runAddVariationCommand,
 	runScaffoldFlow,
 } from "./cli-core.js";
-export type { DoctorCheck, ReadlinePrompt } from "./cli-core.js";
+export type { DoctorCheck, HookedBlockPositionId, ReadlinePrompt } from "./cli-core.js";
