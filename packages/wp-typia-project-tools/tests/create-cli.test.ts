@@ -252,6 +252,44 @@ function typecheckGeneratedProject(targetDir: string) {
 	});
 }
 
+async function scaffoldOfficialWorkspace(
+	targetDir: string,
+	{
+		description = "Demo workspace",
+		namespace = "demo-space",
+		phpPrefix = "demo_space",
+		slug = path.basename(targetDir),
+		textDomain = "demo-space",
+		title = "Demo Workspace",
+		withMigrationUi = false,
+	}: {
+		description?: string;
+		namespace?: string;
+		phpPrefix?: string;
+		slug?: string;
+		textDomain?: string;
+		title?: string;
+		withMigrationUi?: boolean;
+	} = {},
+) {
+	await scaffoldProject({
+		projectDir: targetDir,
+		templateId: workspaceTemplatePackageManifest.name,
+		packageManager: "npm",
+		noInstall: true,
+		withMigrationUi,
+		answers: {
+			author: "Test Runner",
+			description,
+			namespace,
+			phpPrefix,
+			slug,
+			textDomain,
+			title,
+		},
+	});
+}
+
 describe("@wp-typia/project-tools scaffolding", () => {
 	afterAll(() => {
 		fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -2806,6 +2844,10 @@ describe("@wp-typia/project-tools scaffolding", () => {
 			cwd: targetDir,
 		});
 		expect(doctorOutput).toContain("PASS Migration config");
+		const rootDoctorChecks = await getDoctorChecks(targetDir);
+		expect(
+			rootDoctorChecks.find((check) => check.label === "Migration workspace")?.status,
+		).toBe("pass");
 		expect(doctorOutput).toContain("PASS Migration doctor summary");
 	}, 20_000);
 
@@ -2874,6 +2916,149 @@ describe("@wp-typia/project-tools scaffolding", () => {
 			doctorChecks.checks.find((check) => check.label === "Pattern hero-layout")?.status,
 		).toBe("pass");
 	}, 15_000);
+
+	test("doctor passes on a healthy multi-block workspace", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-doctor-multi-block");
+
+		await scaffoldOfficialWorkspace(targetDir, {
+			description: "Demo workspace doctor multi block",
+			slug: "demo-workspace-doctor-multi-block",
+			title: "Demo Workspace Doctor Multi Block",
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+			cwd: targetDir,
+		});
+		runCli("node", [entryPath, "add", "block", "author-bio", "--template", "interactivity"], {
+			cwd: targetDir,
+		});
+
+		const checks = await getDoctorChecks(targetDir);
+
+		expect(
+			checks.find((check) => check.label === "Workspace package metadata")?.status,
+		).toBe("pass");
+		expect(checks.find((check) => check.label === "Block counter-card")?.status).toBe("pass");
+		expect(
+			checks.find((check) => check.label === "Block metadata counter-card")?.status,
+		).toBe("pass");
+		expect(
+			checks.find((check) => check.label === "Block collection counter-card")?.status,
+		).toBe("pass");
+		expect(checks.find((check) => check.label === "Block author-bio")?.status).toBe("pass");
+		expect(
+			checks.find((check) => check.label === "Block metadata author-bio")?.status,
+		).toBe("pass");
+		expect(
+			checks.find((check) => check.label === "Block collection author-bio")?.status,
+		).toBe("pass");
+	}, 20_000);
+
+	test("doctor fails when block.json names drift from workspace conventions", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-doctor-block-name-drift");
+
+		await scaffoldOfficialWorkspace(targetDir, {
+			description: "Demo workspace doctor block name drift",
+			slug: "demo-workspace-doctor-block-name-drift",
+			title: "Demo Workspace Doctor Block Name Drift",
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+		runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+			cwd: targetDir,
+		});
+
+		const blockJsonPath = path.join(targetDir, "src", "blocks", "counter-card", "block.json");
+		const blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8"));
+		blockJson.name = "demo-space/counter-card-renamed";
+		fs.writeFileSync(blockJsonPath, JSON.stringify(blockJson, null, 2), "utf8");
+
+		const checks = await getDoctorChecks(targetDir);
+		const metadataCheck = checks.find((check) => check.label === "Block metadata counter-card");
+
+		expect(metadataCheck?.status).toBe("fail");
+		expect(metadataCheck?.detail).toContain('block.json name must equal "demo-space/counter-card"');
+	}, 20_000);
+
+	test("doctor fails when block.json textdomains drift from workspace conventions", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-doctor-textdomain-drift");
+
+		await scaffoldOfficialWorkspace(targetDir, {
+			description: "Demo workspace doctor textdomain drift",
+			slug: "demo-workspace-doctor-textdomain-drift",
+			title: "Demo Workspace Doctor Textdomain Drift",
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+		runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+			cwd: targetDir,
+		});
+
+		const blockJsonPath = path.join(targetDir, "src", "blocks", "counter-card", "block.json");
+		const blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8"));
+		blockJson.textdomain = "other-space";
+		fs.writeFileSync(blockJsonPath, JSON.stringify(blockJson, null, 2), "utf8");
+
+		const checks = await getDoctorChecks(targetDir);
+		const metadataCheck = checks.find((check) => check.label === "Block metadata counter-card");
+
+		expect(metadataCheck?.status).toBe("fail");
+		expect(metadataCheck?.detail).toContain('block.json textdomain must equal "demo-space"');
+	}, 20_000);
+
+	test("doctor fails when generated block artifacts are missing", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-doctor-artifact-drift");
+
+		await scaffoldOfficialWorkspace(targetDir, {
+			description: "Demo workspace doctor artifact drift",
+			slug: "demo-workspace-doctor-artifact-drift",
+			title: "Demo Workspace Doctor Artifact Drift",
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+		runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+			cwd: targetDir,
+		});
+
+		fs.rmSync(path.join(targetDir, "src", "blocks", "counter-card", "typia-validator.php"));
+
+		const checks = await getDoctorChecks(targetDir);
+		const blockCheck = checks.find((check) => check.label === "Block counter-card");
+
+		expect(blockCheck?.status).toBe("fail");
+		expect(blockCheck?.detail).toContain("typia-validator.php");
+	}, 20_000);
+
+	test("doctor fails when block entrypoints lose the shared collection import", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-doctor-collection-drift");
+
+		await scaffoldOfficialWorkspace(targetDir, {
+			description: "Demo workspace doctor collection drift",
+			slug: "demo-workspace-doctor-collection-drift",
+			title: "Demo Workspace Doctor Collection Drift",
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+		runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+			cwd: targetDir,
+		});
+
+		const blockEntryPath = path.join(targetDir, "src", "blocks", "counter-card", "index.tsx");
+		const entrySource = fs.readFileSync(blockEntryPath, "utf8");
+		fs.writeFileSync(
+			blockEntryPath,
+			entrySource.replace("import '../../collection';\n", ""),
+			"utf8",
+		);
+
+		const checks = await getDoctorChecks(targetDir);
+		const collectionCheck = checks.find((check) => check.label === "Block collection counter-card");
+
+		expect(collectionCheck?.status).toBe("fail");
+		expect(collectionCheck?.detail).toContain("import '../../collection';");
+	}, 20_000);
 
 	test("doctor fails on missing variation and pattern inventory files", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-doctor-drift");

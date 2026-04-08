@@ -57,9 +57,12 @@ import {
 	sanitizeSaveSnapshotSource,
 	sanitizeSnapshotBlockJson,
 } from "./migration-utils.js";
+import { readWorkspaceInventory } from "./workspace-inventory.js";
+import { tryResolveWorkspaceProject } from "./workspace-project.js";
 import type {
 	ManifestDocument,
 	MigrationBlockConfig,
+	MigrationProjectState,
 	JsonObject,
 	ParsedMigrationArgs,
 	GeneratedMigrationEntry,
@@ -822,6 +825,62 @@ export function verifyProjectMigrations(
 	return { verifiedVersions: targetVersions };
 }
 
+function recordWorkspaceMigrationTargetAlignment(
+	projectDir: string,
+	state: MigrationProjectState,
+	recordCheck: (status: "fail" | "pass", label: string, detail: string) => void,
+): void {
+	let workspace;
+	try {
+		workspace = tryResolveWorkspaceProject(projectDir);
+	} catch (error) {
+		recordCheck(
+			"fail",
+			"Workspace migration targets",
+			error instanceof Error ? error.message : String(error),
+		);
+		return;
+	}
+	if (!workspace) {
+		return;
+	}
+
+	try {
+		const inventory = readWorkspaceInventory(workspace.projectDir);
+		const expectedTargets = inventory.blocks.map(
+			(block) => `${workspace.workspace.namespace}/${block.slug}`,
+		);
+		const configuredTargets = state.blocks.map((block) => block.blockName);
+		const expectedTargetSet = new Set(expectedTargets);
+		const configuredTargetSet = new Set(configuredTargets);
+		const missingTargets = expectedTargets.filter((target) => !configuredTargetSet.has(target));
+		const staleTargets = configuredTargets.filter((target) => !expectedTargetSet.has(target));
+
+		recordCheck(
+			missingTargets.length === 0 && staleTargets.length === 0 ? "pass" : "fail",
+			"Workspace migration targets",
+			missingTargets.length === 0 && staleTargets.length === 0
+				? `${expectedTargets.length} workspace block target(s) align with migration config`
+				: [
+						missingTargets.length > 0
+							? `Missing from migration config: ${missingTargets.join(", ")}`
+							: null,
+						staleTargets.length > 0
+							? `Not present in scripts/block-config.ts: ${staleTargets.join(", ")}`
+							: null,
+					]
+						.filter((detail): detail is string => typeof detail === "string")
+						.join("; "),
+		);
+	} catch (error) {
+		recordCheck(
+			"fail",
+			"Workspace migration targets",
+			error instanceof Error ? error.message : String(error),
+		);
+	}
+}
+
 /**
  * Validate the migration workspace without mutating files.
  *
@@ -862,6 +921,8 @@ export function doctorProjectMigrations(
 			? [state.config.currentMigrationVersion, ...targetVersions]
 			: state.config.supportedMigrationVersions,
 	);
+
+	recordWorkspaceMigrationTargetAlignment(projectDir, state, recordCheck);
 
 	for (const version of snapshotVersions) {
 		for (const block of state.blocks) {

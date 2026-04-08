@@ -35,5 +35,7 @@ Notes:
   \`wp-typia <project-dir>\` remains a backward-compatible alias to \`create\`.
   \`add variation\` uses an existing workspace block from \`scripts/block-config.ts\`.
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
+  \`wp-typia doctor\` checks environment readiness plus workspace inventory and source-tree drift.
+  \`wp-typia migrate doctor --all\` checks migration target alignment, snapshots, fixtures, and generated migration artifacts.
   \`migrate\` is the canonical migration command; \`migrations\` is no longer supported.`;
 }

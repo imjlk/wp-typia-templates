@@ -299,6 +299,12 @@ function runLocalMigrationDoctor(projectDir, runtime) {
 	});
 }
 
+function runLocalDoctor(projectDir, runtime) {
+	run(runtime, [entryPath, "doctor"], {
+		cwd: projectDir,
+	});
+}
+
 function ensureCorepackPackageManager(packageManager) {
 	if (packageManager !== "pnpm" && packageManager !== "yarn") {
 		return;
@@ -901,6 +907,10 @@ function main() {
 			run(runtime, [entryPath, "add", "pattern", addPatternName], {
 				cwd: projectDir,
 			});
+		}
+
+		if (template === "@wp-typia/create-workspace-template") {
+			runLocalDoctor(projectDir, runtime);
 		}
 
 		if (withMigrationUi && typeof packageJson.scripts?.["migration:doctor"] === "string") {

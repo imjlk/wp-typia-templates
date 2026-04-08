@@ -9,6 +9,7 @@ export interface WorkspacePackageJson {
 	author?: string;
 	name?: string;
 	packageManager?: string;
+	scripts?: Record<string, string>;
 	wpTypia?: {
 		namespace?: string;
 		phpPrefix?: string;
