@@ -1,8 +1,38 @@
 #!/usr/bin/env node
 
-import { main } from "../lib/cli.js";
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
-main().catch((error) => {
-	console.error("❌ wp-typia failed:", error instanceof Error ? error.message : error);
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const cliEntrypoint = path.join(packageRoot, "src", "cli.ts");
+const bunBinary = process.env.BUN_BIN || "bun";
+
+const result = spawnSync(
+	bunBinary,
+	[
+		"--eval",
+		`
+			const [moduleUrl, ...argv] = process.argv.slice(1);
+			const mod = await import(moduleUrl);
+			await mod.main(argv);
+		`,
+		pathToFileURL(cliEntrypoint).href,
+		...process.argv.slice(2),
+	],
+	{
+		cwd: process.cwd(),
+		env: process.env,
+		stdio: "inherit",
+	},
+);
+
+if (result.error) {
+	console.error(
+		"❌ wp-typia requires Bun 1.3.11+ to run the Bunli-powered CLI. Install Bun or set BUN_BIN to a compatible runtime.",
+	);
+	console.error(result.error instanceof Error ? result.error.message : result.error);
 	process.exit(1);
-});
+}
+
+process.exit(result.status ?? 1);

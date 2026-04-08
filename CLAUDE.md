@@ -12,8 +12,12 @@ The repo has three practical layers:
 
 ## Packages
 
+- `wp-typia`
+  Canonical CLI for scaffolding, add-block flows, migrations, and Bunli-owned terminal UX.
+- `@wp-typia/project-tools`
+  Canonical project orchestration package for scaffold, add, migrate, template, doctor, and schema helpers.
 - `@wp-typia/create`
-  Canonical CLI for scaffolding `basic` and `interactivity` blocks plus remote template seeds.
+  Deprecated legacy package shell kept publishable for migration messaging.
 - `create-wp-typia`
   Compatibility shim for `bun create wp-typia` and existing unscoped installs.
 - `@wp-typia/block-types`
@@ -33,7 +37,7 @@ This example is not a built-in scaffold target. It exists to demonstrate the ful
   - `block.json`
   - `typia.manifest.json`
   - `typia-validator.php`
-- `@wp-typia/create/runtime/*` exposes shared runtime helpers used by generated projects.
+- `@wp-typia/block-runtime/*` exposes shared generated-project runtime helpers.
 - Migration flows live in the reference app and remain available through the CLI.
 - Built-in templates are composed from a shared base layer plus per-template overlays inside `packages/create/templates/`.
 
@@ -59,8 +63,8 @@ bun run build
   Builds the product packages and the reference app.
 - `bun run examples:build`
   Builds the reference app only.
-- `bun run --filter @wp-typia/create test`
-  Focused CLI/runtime regression checks.
+- `bun run --filter @wp-typia/project-tools test`
+  Focused project orchestration/runtime regression checks.
 - `bun run examples:test:e2e`
   Playwright coverage against the repo-local reference app.
 
@@ -98,9 +102,9 @@ Release flow:
 
 ## High-Value Paths
 
-- `packages/create/src/runtime/`
-  CLI/runtime implementation and shared scaffold helpers
-- `packages/create/templates/`
+- `packages/wp-typia-project-tools/src/runtime/`
+  Project orchestration implementation and shared scaffold helpers
+- `packages/wp-typia-project-tools/templates/`
   Built-in template layers (`_shared/base` + per-template overlays)
 - `examples/my-typia-block/`
   Reference app used by E2E and fixture tests

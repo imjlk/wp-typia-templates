@@ -1,23 +1,45 @@
-import { defineCommand, defineGroup } from "@bunli/core";
+import { defineCommand } from "@bunli/core";
+import { z } from "zod";
 
-import { runPreparationOnlyCommand } from "../preparation-handler";
+import { executeTemplatesCommand, listTemplates } from "../runtime-bridge";
 
-const templatesListCommand = defineCommand({
-	description: "List the available scaffold templates.",
-	handler: async () => runPreparationOnlyCommand("templates list"),
-	name: "list",
-});
+export const templatesCommand = defineCommand({
+	defaultFormat: "json",
+	description: "Inspect built-in and external scaffold templates.",
+	handler: async (args) => {
+		const subcommand = (args.positional[0] ?? "list") as string;
+		const id = args.positional[1] ?? (args.flags.id as string | undefined);
+		const prefersStructuredOutput =
+			(args.formatExplicit && args.format !== "toon") ||
+			args.agent ||
+			Boolean(args.context?.store?.isAIAgent);
 
-const templatesInspectCommand = defineCommand({
-	description: "Inspect one scaffold template in detail.",
-	handler: async () => runPreparationOnlyCommand("templates inspect"),
-	name: "inspect",
-});
+		if (prefersStructuredOutput) {
+			if (subcommand === "list") {
+				args.output({ templates: listTemplates() });
+				return;
+			}
+			if (subcommand === "inspect" && id) {
+				await executeTemplatesCommand({
+					flags: { id, subcommand },
+				}, () => {});
+				const template = listTemplates().find((entry) => entry.id === id);
+				args.output({ template });
+				return;
+			}
+		}
 
-export const templatesCommand = defineGroup({
-	commands: [templatesListCommand, templatesInspectCommand],
-	description: "Inspect scaffold templates.",
+		await executeTemplatesCommand({
+			flags: { id, subcommand },
+		});
+	},
 	name: "templates",
+	options: {
+		id: {
+			description: "Template id for `templates inspect`.",
+			schema: z.string().optional(),
+		},
+	},
 });
 
 export default templatesCommand;

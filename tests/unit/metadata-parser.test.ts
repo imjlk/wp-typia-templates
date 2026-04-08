@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { describe, expect, test } from "bun:test";
 
-import { analyzeSourceTypes } from "../../packages/create/src/runtime/metadata-parser";
+import { analyzeSourceTypes } from "../../packages/wp-typia-project-tools/src/runtime/metadata-parser";
 
 function createParserFixtureRoot(): string {
 	const root = fs.mkdtempSync(

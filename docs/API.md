@@ -2,6 +2,22 @@
 
 This repository has seven public surfaces:
 
+## Package Map
+
+- `wp-typia`
+  Canonical CLI package.
+- `@wp-typia/project-tools`
+  Project orchestration package for scaffold, add, migrate, template, doctor,
+  package-manager, and starter-manifest helpers.
+- `@wp-typia/project-tools/schema-core`
+  Project schema/OpenAPI helpers.
+- `@wp-typia/block-runtime`
+  Generated-project runtime helper root.
+- `@wp-typia/block-runtime/metadata-core`
+  Metadata sync and endpoint manifest helpers.
+- `@wp-typia/create`
+  Deprecated legacy package shell only.
+
 ## 1. `wp-typia`
 
 The CLI is the primary entrypoint for new users.
@@ -76,19 +92,19 @@ Security note: external template configs are trusted JavaScript and are executed
 Migration commands remain available inside migration-capable projects such as [`examples/my-typia-block`](../examples/my-typia-block):
 
 ```bash
-wp-typia migrations init --current-migration-version v1
-wp-typia migrations wizard
-wp-typia migrations plan --from-migration-version v1
-wp-typia migrations snapshot --migration-version v1
-wp-typia migrations doctor --all
-wp-typia migrations diff --from-migration-version v1
-wp-typia migrations scaffold --from-migration-version v1
-wp-typia migrations fixtures --all --force
-wp-typia migrations verify --all
-wp-typia migrations fuzz --all --iterations 25 --seed 1
+wp-typia migrate init --current-migration-version v1
+wp-typia migrate wizard
+wp-typia migrate plan --from-migration-version v1
+wp-typia migrate snapshot --migration-version v1
+wp-typia migrate doctor --all
+wp-typia migrate diff --from-migration-version v1
+wp-typia migrate scaffold --from-migration-version v1
+wp-typia migrate fixtures --all --force
+wp-typia migrate verify --all
+wp-typia migrate fuzz --all --iterations 25 --seed 1
 ```
 
-For older projects, `wp-typia migrations init --current-migration-version <label>` now
+For older projects, `wp-typia migrate init --current-migration-version <label>` now
 auto-detects supported retrofit layouts:
 
 - single-block projects using `src/block.json`, `src/types.ts`, and `src/save.tsx`
@@ -108,13 +124,13 @@ Those labels are separate from your package version, plugin version, OpenAPI
 Older semver-based migration workspaces are now a breaking reset. If a project
 still uses `currentVersion`, `supportedVersions`, or semver-named migration
 artifacts under `src/migrations/`, back up that folder if needed, remove or
-reset it, and rerun `wp-typia migrations init --current-migration-version v1`.
+reset it, and rerun `wp-typia migrate init --current-migration-version v1`.
 
 Migration-capable projects now also expose two read-only preview paths before
 you scaffold anything:
 
-- `wp-typia migrations wizard`: TTY-only guided legacy migration version selection
-- `wp-typia migrations plan --from-migration-version <label>`: scriptable preview when you already know the migration edge
+- `wp-typia migrate wizard`: TTY-only guided legacy migration version selection
+- `wp-typia migrate plan --from-migration-version <label>`: scriptable preview when you already know the migration edge
 
 Both commands preview one selected edge across every eligible block target,
 list skipped targets that do not have the selected snapshot yet, and stop after
@@ -144,14 +160,14 @@ export const migrationConfig = {
 ```
 
 Compound scaffolds use the same config shape but seed both the parent block and
-the scaffolded hidden child block as migration-capable targets. `migrations init`
+the scaffolded hidden child block as migration-capable targets. `migrate init`
 remains the retrofit command for older projects that were not scaffolded with
 `--with-migration-ui`. Add `--all` to migration verification, fixture refresh,
 and fuzzing commands when you want to cover every configured legacy migration version and
-every configured block target in that workspace. `migrations doctor` remains
+every configured block target in that workspace. `migrate doctor` remains
 version-scoped and is not broadened by `--all`.
 
-Compatibility note: `@wp-typia/create` remains available for programmatic imports and compatibility exports, but `wp-typia` is the canonical CLI package. `create-wp-typia` is archived and no longer a supported path for new installs.
+Compatibility note: `@wp-typia/project-tools` is the canonical programmatic package, `wp-typia` is the canonical CLI package, and `@wp-typia/create` is now the deprecated legacy package shell. `create-wp-typia` is archived and no longer a supported path for new installs.
 
 ## 2. `@wp-typia/create`
 
@@ -424,14 +440,14 @@ Migration-enabled generated projects may also wire:
 - `src/admin/migration-dashboard.tsx`
 - `src/migration-detector.ts`
 
-`migrations wizard` and `migrations plan` are the read-only preview layer,
-`migrations doctor` is the read-only workspace health check, `migrations fixtures`
-refreshes deterministic edge fixtures, and `migrations fuzz` replays those
+`migrate wizard` and `migrate plan` are the read-only preview layer,
+`migrate doctor` is the read-only workspace health check, `migrate fixtures`
+refreshes deterministic edge fixtures, and `migrate fuzz` replays those
 fixtures plus seeded random legacy-shaped inputs derived from the current Typia
 validator. Without `--all`, migration commands target the first legacy migration
 version only; `--all` runs across every configured legacy migration version and every configured
-block target. `migrations wizard` requires a TTY; use `migrations plan --from-migration-version
-<label>` in non-interactive shells. In TTY usage, `migrations fixtures --force`
+block target. `migrate wizard` requires a TTY; use `migrate plan --from-migration-version
+<label>` in non-interactive shells. In TTY usage, `migrate fixtures --force`
 asks before overwriting existing fixture files, while non-interactive runs
 overwrite immediately for script compatibility. Existing fixture files are
 otherwise preserved and reported as skipped, so `--force` is the explicit

@@ -4,7 +4,7 @@ import {
 	buildCompoundChildStarterManifestDocument,
 	getStarterManifestFiles,
 	stringifyStarterManifest,
-} from "../../packages/create/src/runtime/starter-manifests";
+} from "../../packages/wp-typia-project-tools/src/runtime/starter-manifests";
 import { createTestScaffoldTemplateVariables } from "../helpers/scaffold-template-variables";
 
 describe("starter manifest builders", () => {

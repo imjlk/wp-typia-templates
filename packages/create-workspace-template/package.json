@@ -2,7 +2,7 @@
   "name": "@wp-typia/create-workspace-template",
   "version": "0.11.1",
   "description": "Official empty wp-typia workspace template package",
-  "packageManager": "bun@1.3.10",
+  "packageManager": "bun@1.3.11",
   "type": "module",
   "files": [
     "package.json.mustache",
@@ -41,6 +41,6 @@
   "engines": {
     "node": ">=20.0.0",
     "npm": ">=10.0.0",
-    "bun": ">=1.3.10"
+    "bun": ">=1.3.11"
   }
 }

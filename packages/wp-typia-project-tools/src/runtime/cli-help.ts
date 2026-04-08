@@ -1,0 +1,38 @@
+import { PACKAGE_MANAGER_IDS } from "./package-managers.js";
+import { TEMPLATE_IDS } from "./template-registry.js";
+
+/**
+ * Return the canonical CLI usage text for `wp-typia`.
+ *
+ * The rendered help includes the current built-in template ids and supported
+ * package manager ids from the runtime registry.
+ *
+ * @returns Human-readable help text for CLI usage output.
+ */
+export function formatHelpText(): string {
+	return `Usage:
+  wp-typia create <project-dir> [--template <basic|interactivity>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia create <project-dir> [--template <./path|github:owner/repo/path[#ref]>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia create <project-dir> [--template <npm-package>] [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia create <project-dir> [--template persistence] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia create <project-dir> [--template compound] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
+  wp-typia <project-dir> [create flags...]
+  wp-typia add block <name> --template <basic|interactivity|persistence|compound> [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
+  wp-typia add variation
+  wp-typia add pattern
+  wp-typia migrate <init|snapshot|diff|scaffold|verify|doctor|fixtures|fuzz> [...]
+  wp-typia templates list
+  wp-typia templates inspect <id>
+  wp-typia doctor
+  wp-typia mcp <list|sync>
+  wp-typia skills <list|sync>
+  wp-typia completions <bash|zsh|fish|powershell>
+
+Built-in templates: ${TEMPLATE_IDS.join(", ")}
+Package managers: ${PACKAGE_MANAGER_IDS.join(", ")}
+Notes:
+  \`wp-typia create\` is the canonical scaffold command.
+  \`wp-typia <project-dir>\` remains a backward-compatible alias to \`create\`.
+  \`add variation\` and \`add pattern\` are reserved placeholders in this release.
+  \`migrate\` is the canonical migration command; \`migrations\` is no longer supported.`;
+}

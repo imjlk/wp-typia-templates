@@ -38,6 +38,7 @@ const repoIgnores = [
   "packages/**/dist/**",
   "packages/create/templates/**",
   "packages/create/tests/fixtures/**",
+  "packages/wp-typia-project-tools/tests/fixtures/**",
   "playwright-report/**",
   "test-results/**",
   "vendor/**",

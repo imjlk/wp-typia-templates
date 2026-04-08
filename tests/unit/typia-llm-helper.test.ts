@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
 import { BLOCKS } from "../../examples/persistence-examples/scripts/block-config";
-import type { EndpointManifestDefinition } from "../../packages/create/src/runtime/metadata-core";
+import type { EndpointManifestDefinition } from "../../packages/wp-typia-block-runtime/src/metadata-core";
 import {
 	buildTypiaLlmEndpointMethodDescriptors,
 	renderTypiaLlmModule,
-} from "../../packages/create/src/internal/typia-llm";
+} from "../../packages/wp-typia-project-tools/src/internal/typia-llm";
 
 const counterManifest = BLOCKS.find((block) => block.slug === "counter")?.restManifest;
 

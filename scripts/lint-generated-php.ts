@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 
-import { scaffoldProject } from "../packages/create/src/runtime/scaffold";
+import { scaffoldProject } from "../packages/wp-typia-project-tools/src/runtime/scaffold";
 
 const repoRoot = path.resolve(import.meta.dir, "..");
 const phpcsBin = path.join(

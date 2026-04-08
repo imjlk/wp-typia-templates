@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { EndpointManifestEndpointDefinition } from '../../packages/create/src/runtime/metadata-core';
+import type { EndpointManifestEndpointDefinition } from '../../packages/wp-typia-block-runtime/src/metadata-core';
 import counterOpenApiDocument from '../../examples/persistence-examples/src/blocks/counter/api.openapi.json';
 import {
 	counterEndpointManifest,

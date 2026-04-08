@@ -23,7 +23,7 @@ Use the reference app when you want to:
 - copy migration workspace patterns into a real block
 - understand the app that powers the repo's E2E and fixture coverage
 
-Use the built-in scaffolds from `@wp-typia/create` when you want a smaller starting point:
+Use the built-in scaffolds from `wp-typia` when you want a smaller starting point:
 
 - `basic`
 - `interactivity`

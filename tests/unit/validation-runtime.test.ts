@@ -11,7 +11,7 @@ import {
 	toValidationResult,
 	toValidationState,
 	type ValidationResult,
-} from '../../packages/create/src/runtime/validation';
+} from '../../packages/wp-typia-block-runtime/src/validation';
 
 describe('runtime validation helpers', () => {
 	test('formatValidationError includes path, expectation, and received value type', () => {

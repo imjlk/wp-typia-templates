@@ -36,7 +36,7 @@ Quick command map:
 - `bun run ci:local` = fast maintainer preflight mirroring the non-E2E CI path
 - `bun run build` = product packages + reference app
 - `bun run examples:build` = reference app only
-- `bun run --filter @wp-typia/create test` = CLI/runtime only
+- `bun run --filter @wp-typia/project-tools test` = project orchestration/runtime only
 - `bun run examples:test:e2e` = Playwright against the reference app
 - `bun run examples:test:e2e` expects `bun run examples:wp-env:start:test` to already be running
 
@@ -73,7 +73,7 @@ bun run release
 ```
 
 - `bun run sampo:add` creates a new pending release note in `.sampo/changesets/`
-- pending changesets must use canonical package ids like `npm/@wp-typia/create`
+- pending changesets must use canonical package ids like `npm/@wp-typia/project-tools`
 - `bun run changesets:validate` is the quickest preflight check before you push or update the release PR
 - `bun run release` runs `sampo release` locally to inspect the version/changelog changes that the release PR workflow will generate
 - `bun run publish` remains a local/manual fallback and is not the primary CI publish path

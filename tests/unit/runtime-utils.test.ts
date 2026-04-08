@@ -1,15 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
-import { cloneJsonValue } from "../../packages/create/src/runtime/json-utils";
-import { isPlainObject } from "../../packages/create/src/runtime/object-utils";
-import { buildBlockCssClassName } from "../../packages/create/src/runtime/scaffold";
+import { cloneJsonValue } from "../../packages/wp-typia-project-tools/src/runtime/json-utils";
+import { isPlainObject } from "../../packages/wp-typia-project-tools/src/runtime/object-utils";
+import { buildBlockCssClassName } from "../../packages/wp-typia-project-tools/src/runtime/scaffold";
 import {
 	toKebabCase,
 	toPascalCase,
 	toSegmentPascalCase,
 	toSnakeCase,
 	toTitleCase,
-} from "../../packages/create/src/runtime/string-case";
+} from "../../packages/wp-typia-project-tools/src/runtime/string-case";
 
 describe("shared create runtime helpers", () => {
 	test("normalizes case conversions across slugs, camelCase, and repeated separators", () => {

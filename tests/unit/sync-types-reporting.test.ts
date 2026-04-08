@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-import { runSyncBlockMetadata } from "../../packages/create/src/runtime/metadata-core";
+import { runSyncBlockMetadata } from "../../packages/wp-typia-block-runtime/src/metadata-core";
 import { createTempFixture } from "../helpers/file-fixtures";
 import { getExampleShowcaseFixtureRoot } from "./helpers/example-showcase";
 

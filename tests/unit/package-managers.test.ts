@@ -10,7 +10,7 @@ import {
 	getPackageManagerSelectOptions,
 	transformPackageManagerText,
 	type PackageManagerId,
-} from "../../packages/create/src/runtime/package-managers";
+} from "../../packages/wp-typia-project-tools/src/runtime/package-managers";
 
 describe("package manager runtime helpers", () => {
 	test("returns stable definitions and select options for every supported package manager", () => {
@@ -64,17 +64,17 @@ describe("package manager runtime helpers", () => {
 	});
 
 	test("formats one-off package execution commands per package manager", () => {
-		expect(formatPackageExecCommand("bun", "@wp-typia/create@0.10.1", "migrations init")).toBe(
-			"bunx @wp-typia/create@0.10.1 migrations init",
+		expect(formatPackageExecCommand("bun", "wp-typia@0.10.1", "migrate init")).toBe(
+			"bunx wp-typia@0.10.1 migrate init",
 		);
-		expect(formatPackageExecCommand("npm", "@wp-typia/create@0.10.1", "migrations init")).toBe(
-			"npx --yes @wp-typia/create@0.10.1 migrations init",
+		expect(formatPackageExecCommand("npm", "wp-typia@0.10.1", "migrate init")).toBe(
+			"npx --yes wp-typia@0.10.1 migrate init",
 		);
-		expect(formatPackageExecCommand("pnpm", "@wp-typia/create@0.10.1", "migrations init")).toBe(
-			"pnpm dlx @wp-typia/create@0.10.1 migrations init",
+		expect(formatPackageExecCommand("pnpm", "wp-typia@0.10.1", "migrate init")).toBe(
+			"pnpm dlx wp-typia@0.10.1 migrate init",
 		);
-		expect(formatPackageExecCommand("yarn", "@wp-typia/create@0.10.1", "migrations init")).toBe(
-			"yarn dlx @wp-typia/create@0.10.1 migrations init",
+		expect(formatPackageExecCommand("yarn", "wp-typia@0.10.1", "migrate init")).toBe(
+			"yarn dlx wp-typia@0.10.1 migrate init",
 		);
 	});
 

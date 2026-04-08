@@ -15,7 +15,7 @@ import {
   type SyncRestOpenApiContractsOptions,
   type SyncRestOpenApiManifestOptions,
   type SyncRestOpenApiOptions,
-} from "../../packages/create/src/runtime/metadata-core";
+} from "../../packages/wp-typia-block-runtime/src/metadata-core";
 
 const manifest = defineEndpointManifest({
   contracts: {

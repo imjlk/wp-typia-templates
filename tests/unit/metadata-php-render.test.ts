@@ -4,12 +4,12 @@ import {
 	defaultAttributeConstraints,
 	type ManifestAttribute,
 	type ManifestDocument,
-} from "../../packages/create/src/runtime/metadata-model";
+} from "../../packages/wp-typia-project-tools/src/runtime/metadata-model";
 import {
 	collectPhpGenerationWarnings,
 	renderPhpValidator,
 	renderPhpValue,
-} from "../../packages/create/src/runtime/metadata-php-render";
+} from "../../packages/wp-typia-project-tools/src/runtime/metadata-php-render";
 
 type AttributeOverride = {
 	typia?: Partial<ManifestAttribute["typia"]>;

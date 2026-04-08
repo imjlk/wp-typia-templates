@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { JsonSchemaDocument } from '@wp-typia/create';
+import type { JsonSchemaDocument } from '@wp-typia/project-tools';
 
 import counterQuerySchema from '../../examples/persistence-examples/src/blocks/counter/api-schemas/counter-query.schema.json';
 import counterResponseSchema from '../../examples/persistence-examples/src/blocks/counter/api-schemas/counter-response.schema.json';
@@ -15,7 +15,7 @@ import {
 	buildWordPressAiArtifacts,
 	buildWordPressAbilitiesDocument,
 	projectWordPressAiSchema,
-} from '../../packages/create/src/internal/wordpress-ai';
+} from '../../packages/wp-typia-project-tools/src/internal/wordpress-ai';
 
 const counterManifest = BLOCKS.find( ( block ) => block.slug === 'counter' )
 	?.restManifest;

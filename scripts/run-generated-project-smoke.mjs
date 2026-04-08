@@ -12,7 +12,7 @@ const wpTypiaPackageRoot = path.resolve(__dirname, "../packages/wp-typia");
 const entryPath = path.resolve(wpTypiaPackageRoot, "bin/wp-typia.js");
 const PACKAGE_MANAGERS = {
 	bun: {
-		packageManagerField: "bun@1.3.10",
+		packageManagerField: "bun@1.3.11",
 	},
 	npm: {
 		packageManagerField: "npm@11.6.1",
@@ -156,13 +156,9 @@ function getPackageManager(packageManager) {
 }
 
 function ensureCanonicalCliReady() {
-	const createRuntimeIndexPath = path.resolve(
+	const projectToolsRuntimeIndexPath = path.resolve(
 		__dirname,
-		"../packages/create/dist/runtime/index.js",
-	);
-	const createRuntimeCliCorePath = path.resolve(
-		__dirname,
-		"../packages/create/dist/runtime/cli-core.js",
+		"../packages/wp-typia-project-tools/dist/runtime/index.js",
 	);
 	const apiClientDistPath = path.resolve(
 		__dirname,
@@ -190,8 +186,7 @@ function ensureCanonicalCliReady() {
 	);
 	if (
 		fs.existsSync(entryPath) &&
-		fs.existsSync(createRuntimeIndexPath) &&
-		fs.existsSync(createRuntimeCliCorePath) &&
+		fs.existsSync(projectToolsRuntimeIndexPath) &&
 		fs.existsSync(apiClientDistPath) &&
 		fs.existsSync(blockRuntimeDistPath) &&
 		fs.existsSync(blockTypesDistPath) &&
@@ -214,7 +209,7 @@ function ensureCanonicalCliReady() {
 	run("bun", ["run", "--filter", "@wp-typia/rest", "build"], {
 		cwd: path.resolve(__dirname, ".."),
 	});
-	run("bun", ["run", "--filter", "@wp-typia/create", "build"], {
+	run("bun", ["run", "--filter", "@wp-typia/project-tools", "build"], {
 		cwd: path.resolve(__dirname, ".."),
 	});
 }
@@ -397,11 +392,14 @@ function assertGeneratedRuntimeImports(projectDir) {
 		}
 
 		const contents = fs.readFileSync(currentPath, "utf8");
-		if (contents.includes("@wp-typia/create/runtime/")) {
+		if (contents.includes("@wp-typia/project-tools/runtime/")) {
 			throw new Error(`Found deprecated generated runtime import in ${currentPath}`);
 		}
-		if (contents.includes("@wp-typia/create/metadata-core")) {
-			throw new Error(`Found deprecated generated metadata-core import in ${currentPath}`);
+		if (contents.includes("@wp-typia/project-tools/schema-core")) {
+			throw new Error(`Found deprecated generated schema-core import in ${currentPath}`);
+		}
+		if (contents.includes("@wp-typia/create/")) {
+			throw new Error(`Found deprecated legacy create import in ${currentPath}`);
 		}
 	}
 }
@@ -410,11 +408,11 @@ function assertGeneratedPackageBoundary(projectDir) {
 	const packageJsonPath = path.join(projectDir, "package.json");
 	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
-	if (packageJson.dependencies?.["@wp-typia/create"]) {
-		throw new Error("Expected generated project dependencies to omit @wp-typia/create");
+	if (packageJson.dependencies?.["@wp-typia/project-tools"]) {
+		throw new Error("Expected generated project dependencies to omit @wp-typia/project-tools");
 	}
-	if (packageJson.devDependencies?.["@wp-typia/create"]) {
-		throw new Error("Expected generated project devDependencies to omit @wp-typia/create");
+	if (packageJson.devDependencies?.["@wp-typia/project-tools"]) {
+		throw new Error("Expected generated project devDependencies to omit @wp-typia/project-tools");
 	}
 	for (const [scriptName, scriptValue] of Object.entries(packageJson.scripts ?? {})) {
 		if (typeof scriptValue !== "string") {

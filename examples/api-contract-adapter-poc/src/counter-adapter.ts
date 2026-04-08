@@ -8,8 +8,8 @@ import { once } from 'node:events';
 import type {
 	EndpointManifestDefinition,
 	EndpointManifestEndpointDefinition,
-} from '@wp-typia/create/metadata-core';
-import { normalizeEndpointAuthDefinition } from '@wp-typia/create/runtime/schema-core';
+} from '@wp-typia/block-runtime/metadata-core';
+import { normalizeEndpointAuthDefinition } from '@wp-typia/project-tools/schema-core';
 import { BLOCKS } from '../../persistence-examples/scripts/block-config';
 import type {
 	PersistenceCounterIncrementRequest,

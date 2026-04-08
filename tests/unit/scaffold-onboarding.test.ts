@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { getPhpRestExtensionPointsSection } from "../../packages/create/src/runtime/scaffold-onboarding";
+import { getPhpRestExtensionPointsSection } from "../../packages/wp-typia-project-tools/src/runtime/scaffold-onboarding";
 
 describe("scaffold-onboarding", () => {
 	test("persistence and compound persistence sections share the common rest guidance", () => {

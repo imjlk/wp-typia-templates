@@ -29,7 +29,7 @@ function createTempRepo() {
 
 	fs.writeFileSync(
 		path.join(repoRoot, "packages", "create", "package.json"),
-		JSON.stringify({ name: "@wp-typia/create", version: "0.1.0" }, null, 2),
+		JSON.stringify({ name: "@wp-typia/project-tools", version: "0.1.0" }, null, 2),
 	);
 	fs.writeFileSync(
 		path.join(repoRoot, "packages", "rest", "package.json"),
@@ -52,7 +52,7 @@ describe("validate-sampo-changesets", () => {
 		const repoRoot = createTempRepo();
 
 		expect(findPublishablePackageIds(repoRoot)).toEqual([
-			"npm/@wp-typia/create",
+			"npm/@wp-typia/project-tools",
 			"npm/@wp-typia/rest",
 			"npm/compound-patterns",
 		]);
@@ -61,10 +61,10 @@ describe("validate-sampo-changesets", () => {
 	test("parseChangesetFrontmatter rejects duplicate package ids", () => {
 		expect(() =>
 			parseChangesetFrontmatter(
-				["---", "npm/@wp-typia/create: patch", "npm/@wp-typia/create: minor", "---"].join("\n"),
+				["---", "npm/@wp-typia/project-tools: patch", "npm/@wp-typia/project-tools: minor", "---"].join("\n"),
 				"duplicate.md",
 			),
-		).toThrow('duplicate.md: duplicate package id "npm/@wp-typia/create" in frontmatter');
+		).toThrow('duplicate.md: duplicate package id "npm/@wp-typia/project-tools" in frontmatter');
 	});
 
 	test("validateSampoChangesets passes for canonical package ids", () => {
@@ -72,7 +72,7 @@ describe("validate-sampo-changesets", () => {
 
 		fs.writeFileSync(
 			path.join(repoRoot, ".sampo", "changesets", "valid.md"),
-			["---", "npm/@wp-typia/create: patch", "npm/compound-patterns: patch", "---", "", "Valid."].join(
+			["---", "npm/@wp-typia/project-tools: patch", "npm/compound-patterns: patch", "---", "", "Valid."].join(
 				"\n",
 			),
 		);
@@ -88,14 +88,14 @@ describe("validate-sampo-changesets", () => {
 
 		fs.writeFileSync(
 			path.join(repoRoot, ".sampo", "changesets", "missing-prefix.md"),
-			["---", "@wp-typia/create: patch", "---", "", "Invalid."].join("\n"),
+			["---", "@wp-typia/project-tools: patch", "---", "", "Invalid."].join("\n"),
 		);
 
 		const result = validateSampoChangesets(repoRoot);
 
 		expect(result.valid).toBe(false);
 		expect(result.errors).toContain(
-			'.sampo/changesets/missing-prefix.md: "@wp-typia/create" must use the canonical npm/<package-name> format',
+			'.sampo/changesets/missing-prefix.md: "@wp-typia/project-tools" must use the canonical npm/<package-name> format',
 		);
 	});
 
