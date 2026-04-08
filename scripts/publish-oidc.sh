@@ -9,6 +9,7 @@ PACKAGES=(
   "packages/wp-typia-block-types"
   "packages/wp-typia-rest"
   "packages/wp-typia-api-client"
+  "packages/wp-typia-project-tools"
   "packages/create"
   "packages/wp-typia"
   "packages/create-workspace-template"

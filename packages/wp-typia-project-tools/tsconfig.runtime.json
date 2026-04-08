@@ -1,0 +1,40 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./dist/runtime",
+    "rootDir": "./src/runtime",
+    "baseUrl": "../..",
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": false,
+    "plugins": [],
+    "paths": {
+      "@wp-typia/block-runtime/blocks": [
+        "packages/wp-typia-block-runtime/dist/blocks.d.ts"
+      ],
+      "@wp-typia/block-runtime/defaults": [
+        "packages/wp-typia-block-runtime/dist/defaults.d.ts"
+      ],
+      "@wp-typia/block-runtime/editor": [
+        "packages/wp-typia-block-runtime/dist/editor.d.ts"
+      ],
+      "@wp-typia/block-runtime/inspector": [
+        "packages/wp-typia-block-runtime/dist/inspector.d.ts"
+      ],
+      "@wp-typia/block-runtime/metadata-core": [
+        "packages/wp-typia-project-tools/build-shims/block-runtime-metadata-core-shim.d.ts"
+      ],
+      "@wp-typia/block-runtime/validation": [
+        "packages/wp-typia-block-runtime/dist/validation.d.ts"
+      ]
+    }
+  },
+  "include": [
+    "./src/runtime/**/*",
+    "./build-shims/**/*.d.ts"
+  ],
+  "exclude": [
+    "./tests/**/*"
+  ]
+}

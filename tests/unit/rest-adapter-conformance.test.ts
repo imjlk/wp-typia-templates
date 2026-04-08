@@ -10,7 +10,7 @@ import { describe, expect, test } from 'bun:test';
 import {
 	defineEndpointManifest,
 	type EndpointManifestEndpointDefinition,
-} from '../../packages/create/src/runtime/metadata-core';
+} from '../../packages/wp-typia-block-runtime/src/metadata-core';
 import type { ValidationResult } from '@wp-typia/api-client';
 import {
 	runRestAdapterConformanceSuite,

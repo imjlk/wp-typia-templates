@@ -4,13 +4,13 @@ import {
 	baseNode,
 	defaultAttributeConstraints,
 	type AttributeNode,
-} from "../../packages/create/src/runtime/metadata-model";
+} from "../../packages/wp-typia-project-tools/src/runtime/metadata-model";
 import {
 	createBlockJsonAttribute,
 	createExampleValue,
 	createManifestAttribute,
 	validateWordPressExtractionAttributes,
-} from "../../packages/create/src/runtime/metadata-projection";
+} from "../../packages/wp-typia-project-tools/src/runtime/metadata-projection";
 
 function createNode(
 	kind: AttributeNode["kind"],

@@ -1,4 +1,4 @@
-import type { ScaffoldTemplateVariables } from "../../packages/create/src/runtime/scaffold";
+import type { ScaffoldTemplateVariables } from "../../packages/wp-typia-project-tools/src/runtime/scaffold";
 
 export function createTestScaffoldTemplateVariables(
 	overrides: Partial<ScaffoldTemplateVariables> = {},
@@ -16,7 +16,7 @@ export function createTestScaffoldTemplateVariables(
 		compoundChildTitle: "Demo Item",
 		compoundChildTitleJson: JSON.stringify("Demo Item"),
 		compoundPersistenceEnabled: "false",
-		createPackageVersion: "^0.8.0",
+		projectToolsPackageVersion: "^0.8.0",
 		cssClassName: "wp-block-demo-demo-block",
 		dashCase: "demo-block",
 		dataStorageMode: "custom-table",

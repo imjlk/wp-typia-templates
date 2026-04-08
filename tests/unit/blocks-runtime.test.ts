@@ -5,7 +5,7 @@ import path from "node:path";
 import {
 	buildScaffoldBlockRegistration,
 	createTypiaWebpackConfig,
-} from "../../packages/create/src/runtime/blocks";
+} from "../../packages/wp-typia-block-runtime/src/blocks";
 import { createTempDir, writeTextFile } from "../helpers/file-fixtures";
 
 class FakeRawSource {

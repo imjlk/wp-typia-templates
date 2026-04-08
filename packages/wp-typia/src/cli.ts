@@ -1,56 +1,79 @@
-import { createCLI, type CLI, type Command } from "@bunli/core";
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
+
+import { createCLI, type CLI } from "@bunli/core";
+import { aiAgentPlugin } from "@bunli/plugin-ai-detect";
+import { completionsPlugin } from "@bunli/plugin-completions";
+import { configMergerPlugin } from "@bunli/plugin-config";
+import { skillsPlugin } from "@bunli/plugin-skills";
 
 import packageJson from "../package.json";
-import { addCommand } from "./commands/add";
-import { createCommand } from "./commands/create";
-import { doctorCommand } from "./commands/doctor";
-import { migrationsCommand } from "./commands/migrations";
-import { templatesCommand } from "./commands/templates";
+import { bunliConfig } from "../bunli.config";
+import { normalizeWpTypiaArgv } from "./command-contract";
+import { wpTypiaCommands } from "./command-list";
+import { WP_TYPIA_CONFIG_SOURCES } from "./config";
+import { createWpTypiaSkillsMetadataPlugin } from "./plugins/wp-typia-skills";
+import { wpTypiaUserConfigPlugin } from "./plugins/wp-typia-user-config";
 
-export const bunliPreparedCommands: Command<any, any>[] = [
-	createCommand,
-	addCommand,
-	templatesCommand,
-	migrationsCommand,
-	doctorCommand,
-];
+function resolveGeneratedMetadataPath(moduleUrl: string): string {
+	const candidates = [
+		new URL("./.bunli/commands.gen.js", moduleUrl),
+		new URL("../lib/.bunli/commands.gen.js", moduleUrl),
+		new URL("../.bunli/commands.gen.ts", moduleUrl),
+	];
 
-/**
- * Create the future Bunli-owned `wp-typia` CLI without switching the active
- * published runtime in this release.
- *
- * The current `bin/wp-typia.js` entry remains authoritative until the next
- * migration round wires this CLI into the published package surface.
- *
- * @returns Prepared Bunli CLI instance for command-tree validation.
- */
-export async function createPreparedWpTypiaCli(): Promise<CLI> {
+	for (const candidate of candidates) {
+		const candidatePath = fileURLToPath(candidate);
+		if (fs.existsSync(candidatePath)) {
+			return candidatePath;
+		}
+	}
+
+	return fileURLToPath(new URL("../.bunli/commands.gen.ts", moduleUrl));
+}
+
+export async function createWpTypiaCli(): Promise<CLI> {
 	const cli = await createCLI({
-		build: {
-			entry: "./src/cli.ts",
-			outdir: "./dist-bunli",
-			sourcemap: true,
-		},
-		commands: {
-			entry: "./src/cli.ts",
-			directory: "./src/commands",
-			generateReport: true,
-		},
+		...bunliConfig,
 		description: packageJson.description,
 		name: packageJson.name,
-		test: {
-			coverage: false,
-			pattern: ["tests/*.test.ts"],
-			watch: false,
-		},
+		plugins: [
+			configMergerPlugin({
+				mergeStrategy: "deep",
+				sources: [...WP_TYPIA_CONFIG_SOURCES],
+			}),
+			wpTypiaUserConfigPlugin({}),
+			aiAgentPlugin({}),
+			createWpTypiaSkillsMetadataPlugin(wpTypiaCommands),
+			skillsPlugin({
+				description: packageJson.description,
+			}),
+			completionsPlugin({
+				commandName: "wp-typia",
+				executable: "wp-typia",
+				generatedPath: resolveGeneratedMetadataPath(import.meta.url),
+			}),
+		],
 		version: packageJson.version,
 	});
 
-	for (const command of bunliPreparedCommands) {
+	for (const command of wpTypiaCommands) {
 		cli.command(command);
 	}
 
 	return cli;
 }
 
-export default createPreparedWpTypiaCli;
+export async function main(argv = process.argv.slice(2)): Promise<void> {
+	const cli = await createWpTypiaCli();
+	await cli.run(normalizeWpTypiaArgv(argv));
+}
+
+if (import.meta.main) {
+	void main().catch((error) => {
+		console.error(error instanceof Error ? error.message : error);
+		process.exit(1);
+	});
+}
+
+export default createWpTypiaCli;

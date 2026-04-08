@@ -10,7 +10,7 @@ This package focuses on:
 - a React/data convenience layer at `@wp-typia/rest/react`
 - optional query/header decoder helpers that can wrap Typia-generated HTTP decoders
 
-It does not include any WordPress PHP bridge logic. Generated PHP route code stays in `@wp-typia/create` templates.
+It does not include any WordPress PHP bridge logic. Generated PHP route code stays in `@wp-typia/project-tools` templates.
 
 If you need a backend-neutral consumer instead of WordPress-specific route
 resolution, use `@wp-typia/api-client`.

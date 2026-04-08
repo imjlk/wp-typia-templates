@@ -1,13 +1,17 @@
-# Bunli UI Staging Area
+# `wp-typia` Bunli TUI Surface
 
-This directory is intentionally empty in the current release.
+This directory hosts the render-based terminal flows used by the Bunli runtime.
 
-The next `wp-typia` CLI migration round should move the interactive TUI work
-for these flows into this directory:
+Current fullscreen flows:
 
 - `wp-typia create`
 - `wp-typia add`
-- `wp-typia migrations`
+- `wp-typia migrate`
 
-The published `npx wp-typia` and `bunx wp-typia` paths must stay scriptable in
-non-TTY mode even after the full TUI cutover lands.
+Constraints:
+
+- TTY mode can render fullscreen interfaces with the alternate buffer.
+- Non-TTY mode must continue to use deterministic handler execution for CI and
+  shell automation.
+- `@wp-typia/project-tools` remains the runtime library; these screens should only
+  collect input and hand the resolved command state back to `wp-typia`.

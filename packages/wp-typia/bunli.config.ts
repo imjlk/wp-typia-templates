@@ -2,7 +2,7 @@ import { defineConfig } from "@bunli/core";
 
 import packageJson from "./package.json";
 
-export default defineConfig({
+export const bunliConfig = defineConfig({
 	name: packageJson.name,
 	version: packageJson.version,
 	description: packageJson.description,
@@ -21,4 +21,11 @@ export default defineConfig({
 		coverage: false,
 		watch: false,
 	},
+	tui: {
+		renderer: {
+			bufferMode: "alternate",
+		},
+	},
 });
+
+export default bunliConfig;

@@ -8,12 +8,12 @@ import { promisify } from "node:util";
 
 import type { ILlmFunction, ILlmSchema, ILlmStructuredOutput } from "typia";
 import { BLOCKS } from "../../persistence-examples/scripts/block-config";
-import type { EndpointManifestDefinition } from "../../../packages/create/src/runtime/metadata-core";
+import type { EndpointManifestDefinition } from "../../../packages/wp-typia-block-runtime/src/metadata-core";
 import {
   buildTypiaLlmEndpointMethodDescriptors,
   renderTypiaLlmModule,
   type TypiaLlmEndpointMethodDescriptor,
-} from "../../../packages/create/src/internal/typia-llm";
+} from "../../../packages/wp-typia-project-tools/src/internal/typia-llm";
 
 const execFileAsync = promisify(execFile);
 

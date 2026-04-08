@@ -25,9 +25,8 @@ import { createNestedAttributeUpdater } from "@wp-typia/block-runtime/validation
 import { runSyncBlockMetadata } from "@wp-typia/block-runtime/metadata-core";
 ```
 
-`@wp-typia/create` remains the CLI/scaffolding package.
+`wp-typia` remains the CLI package.
 
-`@wp-typia/create/metadata-core` and `@wp-typia/create/runtime/*` remain
-available as backward-compatible facades, but newly generated projects should
-prefer `@wp-typia/block-runtime/*` and
-`@wp-typia/block-runtime/metadata-core`.
+`@wp-typia/project-tools` is the canonical programmatic project orchestration
+package, while newly generated projects should prefer `@wp-typia/block-runtime/*`
+and `@wp-typia/block-runtime/metadata-core`.

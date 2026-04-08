@@ -9,8 +9,8 @@ import {
 	manifestToOpenApi,
 	normalizeEndpointAuthDefinition,
 	type JsonSchemaDocument,
-} from "../../packages/create/src/runtime/schema-core";
-import type { ManifestAttribute, ManifestDocument } from "../../packages/create/src/runtime/editor";
+} from "../../packages/wp-typia-project-tools/src/runtime/schema-core";
+import type { ManifestAttribute, ManifestDocument } from "../../packages/wp-typia-block-runtime/src/editor";
 import incrementRequestSchema from "../../examples/persistence-examples/src/blocks/counter/api-schemas/increment-request.schema.json";
 
 interface AttributeOverride {

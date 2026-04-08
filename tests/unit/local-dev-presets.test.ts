@@ -6,7 +6,7 @@ import {
 	applyGeneratedProjectDxPackageJson,
 	applyLocalDevPresetFiles,
 	getPrimaryDevelopmentScript,
-} from "../../packages/create/src/runtime/local-dev-presets";
+} from "../../packages/wp-typia-project-tools/src/runtime/local-dev-presets";
 import {
 	createTempDir,
 	writeJsonFile,

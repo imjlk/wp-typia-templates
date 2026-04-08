@@ -14,7 +14,8 @@ Use this package for new installs:
 
 Compatibility notes:
 
-- `@wp-typia/create` remains available for programmatic scaffold/runtime imports and compatibility exports
+- `@wp-typia/project-tools` is the canonical programmatic project orchestration package
+- `@wp-typia/create` is the deprecated legacy package shell
 - `create-wp-typia` is archived and should not be used for new installs
 
 Maintainers: see [`docs/bunli-cli-migration.md`](../../docs/bunli-cli-migration.md)

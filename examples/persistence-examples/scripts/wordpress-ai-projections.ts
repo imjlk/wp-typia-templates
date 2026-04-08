@@ -12,14 +12,14 @@ import {
 	type ProjectedWordPressAbilitiesDocument,
 	type WordPressAbilityProjectionConfig,
 	type WordPressAiInputSchemaTransformContext,
-} from '../../../packages/create/src/internal/wordpress-ai';
+} from '../../../packages/wp-typia-project-tools/src/internal/wordpress-ai';
 
 import { BLOCKS } from './block-config';
 export type {
 	ProjectedWordPressAbilitiesDocument,
 	ProjectedWordPressAbilityDefinition,
 	WordPressAbilityProjectionConfig,
-} from '../../../packages/create/src/internal/wordpress-ai';
+} from '../../../packages/wp-typia-project-tools/src/internal/wordpress-ai';
 
 const WORDPRESS_AI_ROOT = 'wordpress-ai';
 

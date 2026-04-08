@@ -9,5 +9,6 @@ Use these commands instead:
 - `npx wp-typia my-block`
 - `bunx wp-typia my-block`
 
-`@wp-typia/create` remains the compatibility and programmatic package for the
-scaffold runtime, but it no longer owns the CLI install surface.
+`@wp-typia/project-tools` is the canonical programmatic package for scaffold,
+add, migrate, template, and doctor orchestration. `@wp-typia/create` is the
+deprecated legacy package shell and no longer owns the CLI install surface.

@@ -28,7 +28,7 @@ or rule paths under `src/migrations/`, the CLI now fails early and asks you to:
 
 1. back up `src/migrations/` if needed
 2. remove or reset the old migration workspace
-3. rerun `wp-typia migrations init --current-migration-version v1`
+3. rerun `wp-typia migrate init --current-migration-version v1`
 
 ## Snapshot model
 
@@ -99,15 +99,15 @@ manually.
 
 The migration CLI now has two read-only preview entrypoints:
 
-- `wp-typia migrations wizard`: interactive, TTY-only legacy-version discovery
-- `wp-typia migrations plan --from-migration-version <label>`: scriptable preview when you already know the legacy migration version
+- `wp-typia migrate wizard`: interactive, TTY-only legacy-version discovery
+- `wp-typia migrate plan --from-migration-version <label>`: scriptable preview when you already know the legacy migration version
 
 Both commands stop after previewing one selected `from -> to` edge. They do not
 write rules, fixtures, snapshots, or generated artifacts.
 
-Use `wp-typia migrations wizard` when you want the CLI to show the configured
+Use `wp-typia migrate wizard` when you want the CLI to show the configured
 legacy migration versions first and let you pick one. Use
-`wp-typia migrations plan --from-migration-version <label>` when you already know the migration version
+`wp-typia migrate plan --from-migration-version <label>` when you already know the migration version
 you want to inspect and just need a read-only summary of:
 
 - the current migration version
@@ -120,8 +120,8 @@ you want to inspect and just need a read-only summary of:
 For example:
 
 ```bash
-wp-typia migrations wizard
-wp-typia migrations plan --from-migration-version v1
+wp-typia migrate wizard
+wp-typia migrate plan --from-migration-version v1
 ```
 
 ## New schema version
@@ -139,7 +139,7 @@ Example:
 
 ```bash
 bun run sync-types
-wp-typia migrations plan --from-migration-version v1
+wp-typia migrate plan --from-migration-version v1
 bun run migration:snapshot -- --migration-version v3
 bun run migration:doctor
 bun run migration:diff -- --from-migration-version v1
@@ -157,7 +157,7 @@ The intended authoring flow is:
 
 1. change `src/types.ts`
 2. regenerate metadata with `bun run sync-types`
-3. preview the selected legacy migration edge with `wp-typia migrations wizard` or `wp-typia migrations plan --from-migration-version <label>`
+3. preview the selected legacy migration edge with `wp-typia migrate wizard` or `wp-typia migrate plan --from-migration-version <label>`
 4. snapshot the release you want to preserve
 5. scaffold the edge from the old snapshot to the current schema
 6. review auto-applied renames
@@ -255,8 +255,8 @@ If `verify` or `fuzz` report missing generated inputs, rerun
 `migration:scaffold -- --from-migration-version <label>` for the missing edge and then
 `migration:doctor -- --all` to confirm the workspace is back in sync.
 
-`wp-typia migrations wizard` is TTY-only by design. If you are in a
-non-interactive shell, use `wp-typia migrations plan --from-migration-version <label>` instead.
+`wp-typia migrate wizard` is TTY-only by design. If you are in a
+non-interactive shell, use `wp-typia migrate plan --from-migration-version <label>` instead.
 
 ## Deprecated Gutenberg entries
 

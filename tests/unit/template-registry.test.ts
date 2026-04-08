@@ -9,7 +9,7 @@ import {
 	isBuiltInTemplateId,
 	listTemplates,
 	resolvePackageRoot,
-} from "../../packages/create/src/runtime/template-registry";
+} from "../../packages/wp-typia-project-tools/src/runtime/template-registry";
 import {
 	BUILTIN_BLOCK_METADATA_VERSION,
 	BUILTIN_TEMPLATE_METADATA_DEFAULTS,
@@ -17,7 +17,7 @@ import {
 	REMOVED_BUILTIN_TEMPLATE_IDS,
 	getRemovedBuiltInTemplateMessage,
 	isRemovedBuiltInTemplateId,
-} from "../../packages/create/src/runtime/template-defaults";
+} from "../../packages/wp-typia-project-tools/src/runtime/template-defaults";
 import { createTempDir, writeJsonFile, writeTextFile } from "../helpers/file-fixtures";
 
 describe("template registry runtime helpers", () => {
@@ -26,7 +26,7 @@ describe("template registry runtime helpers", () => {
 		const nestedDir = path.join(packageRoot, "src", "runtime", "nested");
 
 		writeJsonFile(path.join(packageRoot, "package.json"), {
-			name: "@wp-typia/create",
+			name: "@wp-typia/project-tools",
 		});
 		writeTextFile(path.join(packageRoot, "src", "runtime", "package.json"), "{not-json");
 
@@ -37,7 +37,7 @@ describe("template registry runtime helpers", () => {
 		const startDir = createTempDir("wp-typia-missing-template-root-");
 
 		expect(() => resolvePackageRoot(startDir)).toThrow(
-			"Unable to resolve the @wp-typia/create package root.",
+			"Unable to resolve the @wp-typia/project-tools package root.",
 		);
 	});
 

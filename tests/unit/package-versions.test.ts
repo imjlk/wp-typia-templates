@@ -12,7 +12,7 @@ import {
 const PACKAGE_VERSIONS_SOURCE = fs.readFileSync(
 	path.resolve(
 		import.meta.dir,
-		"../../packages/create/src/runtime/package-versions.ts",
+		"../../packages/wp-typia-project-tools/src/runtime/package-versions.ts",
 	),
 	"utf8",
 );
@@ -25,7 +25,7 @@ async function importPackageVersionsModule(options: {
 		apiClientPackageVersion: string;
 		blockRuntimePackageVersion: string;
 		blockTypesPackageVersion: string;
-		createPackageVersion: string;
+		projectToolsPackageVersion: string;
 		restPackageVersion: string;
 		wpTypiaPackageVersion: string;
 	};
@@ -40,7 +40,7 @@ async function importPackageVersionsModule(options: {
 	);
 	writeTextFile(
 		path.join(runtimeDir, "template-registry.js"),
-		`export const CREATE_PACKAGE_ROOT = ${JSON.stringify(options.createPackageRoot)};\n`,
+		`export const PROJECT_TOOLS_PACKAGE_ROOT = ${JSON.stringify(options.createPackageRoot)};\n`,
 	);
 
 	for (const [packageName, manifest] of Object.entries(
@@ -78,7 +78,7 @@ describe("package version helpers", () => {
 			installedPackageManifests: {
 				"@wp-typia/api-client": { version: "9.9.9" },
 				"@wp-typia/block-types": { version: "9.9.9" },
-				"@wp-typia/create": { version: "9.9.9" },
+				"@wp-typia/project-tools": { version: "9.9.9" },
 				"@wp-typia/rest": { version: "9.9.9" },
 			},
 		});
@@ -87,7 +87,7 @@ describe("package version helpers", () => {
 			apiClientPackageVersion: "~1.2.3",
 			blockRuntimePackageVersion: "^7.8.9",
 			blockTypesPackageVersion: "^2.3.4",
-			createPackageVersion: "^4.5.6",
+			projectToolsPackageVersion: "^4.5.6",
 			restPackageVersion: "^3.4.5",
 			wpTypiaPackageVersion: "^0.0.0",
 		});
@@ -103,7 +103,7 @@ describe("package version helpers", () => {
 			installedPackageManifests: {
 				"@wp-typia/api-client": { version: "0.2.0" },
 				"@wp-typia/block-types": { version: "0.3.0" },
-				"@wp-typia/create": {
+				"@wp-typia/project-tools": {
 					dependencies: {
 						"@wp-typia/api-client": "0.2.0",
 						"@wp-typia/block-types": "0.3.0",
@@ -121,7 +121,7 @@ describe("package version helpers", () => {
 			apiClientPackageVersion: "^0.2.0",
 			blockRuntimePackageVersion: "^0.9.0",
 			blockTypesPackageVersion: "^0.3.0",
-			createPackageVersion: "^0.8.0",
+			projectToolsPackageVersion: "^0.8.0",
 			restPackageVersion: "~0.4.0",
 			wpTypiaPackageVersion: "^0.8.0",
 		});
@@ -135,7 +135,7 @@ describe("package version helpers", () => {
 		const module = await importPackageVersionsModule({
 			createPackageRoot,
 			installedPackageManifests: {
-				"@wp-typia/create": {
+				"@wp-typia/project-tools": {
 					dependencies: {
 						"@wp-typia/api-client": "0.4.0",
 						"@wp-typia/block-runtime": "0.3.0",
@@ -149,7 +149,7 @@ describe("package version helpers", () => {
 		});
 
 		expect(module.getPackageVersions().wpTypiaPackageVersion).toBe("^0.12.0");
-		expect(module.getPackageVersions().createPackageVersion).toBe("^1.0.0");
+		expect(module.getPackageVersions().projectToolsPackageVersion).toBe("^1.0.0");
 	});
 
 	test("leaves wp-typia unresolved when only the packaged create manifest is available", async () => {
@@ -173,7 +173,7 @@ describe("package version helpers", () => {
 			apiClientPackageVersion: "^0.4.0",
 			blockRuntimePackageVersion: "^0.3.0",
 			blockTypesPackageVersion: "^0.2.0",
-			createPackageVersion: "^0.11.0",
+			projectToolsPackageVersion: "^0.11.0",
 			restPackageVersion: "^0.3.1",
 			wpTypiaPackageVersion: "^0.0.0",
 		});
@@ -195,7 +195,7 @@ describe("package version helpers", () => {
 			apiClientPackageVersion: "^0.0.0",
 			blockRuntimePackageVersion: "^0.0.0",
 			blockTypesPackageVersion: "^0.0.0",
-			createPackageVersion: "^0.0.0",
+			projectToolsPackageVersion: "^0.0.0",
 			restPackageVersion: "^0.0.0",
 			wpTypiaPackageVersion: "^0.0.0",
 		});

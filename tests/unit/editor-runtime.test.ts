@@ -8,7 +8,7 @@ import {
   formatEditorFieldLabel,
   type ManifestAttribute,
   type ManifestDocument,
-} from "../../packages/create/src/runtime/editor";
+} from "../../packages/wp-typia-block-runtime/src/editor";
 
 interface AttributeOverride {
   typia?: Partial<ManifestAttribute["typia"]>;

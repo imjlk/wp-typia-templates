@@ -12,7 +12,7 @@ import {
 	type ManifestAttribute,
 	type ManifestDocument,
 	type ValidationResult,
-} from "../../packages/create/src/runtime/inspector";
+} from "../../packages/wp-typia-block-runtime/src/inspector";
 
 interface AttributeOverride {
 	typia?: Partial<ManifestAttribute["typia"]>;

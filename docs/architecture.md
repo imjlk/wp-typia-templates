@@ -8,8 +8,10 @@
 
 - `packages/wp-typia`
   The canonical CLI package.
+- `packages/wp-typia-project-tools`
+  The canonical project orchestration package.
 - `packages/create`
-  The compatibility/programmatic scaffold runtime package.
+  The deprecated legacy package shell.
 - `packages/create-workspace-template`
   The official empty workspace template package used by `wp-typia add block`.
 - `packages/wp-typia-block-types`
@@ -59,7 +61,7 @@ Built-in templates stay limited to:
 - `persistence`
 - `compound`
 
-Inside `@wp-typia/create`, built-in templates are composed from:
+Inside `@wp-typia/project-tools`, built-in templates are composed from:
 
 - a shared base layer for common project assets
 - a persistence `core` layer for shared typed REST/interactivity wiring
@@ -86,8 +88,9 @@ The `compound` template extends the same base with:
 - optional parent-only persistence when either `--data-storage` or `--persistence-policy` is supplied
 
 Generated projects now treat `@wp-typia/block-runtime/*` as the maintained
-runtime helper surface, while `@wp-typia/create/runtime/*` remains exported only
-as compatibility shims.
+runtime helper surface. Project orchestration lives in
+`@wp-typia/project-tools`, while `@wp-typia/create` remains only as a deprecated
+legacy package shell.
 
 ## Intended Flow
 

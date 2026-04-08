@@ -1,29 +1,91 @@
-import { defineCommand, defineGroup } from "@bunli/core";
+import { createElement } from "react";
 
-import { runPreparationOnlyCommand } from "../preparation-handler";
+import { defineCommand } from "@bunli/core";
+import { z } from "zod";
 
-const addBlockCommand = defineCommand({
-	description: "Add a block to an official wp-typia workspace.",
-	handler: async () => runPreparationOnlyCommand("add block"),
-	name: "block",
-});
+import { getAddBlockDefaults } from "../config";
+import { resolveBundledModuleHref } from "../render-loader";
+import { executeAddCommand } from "../runtime-bridge";
+import { LazyFlow } from "../ui/lazy-flow";
 
-const addVariationCommand = defineCommand({
-	description: "Reserved placeholder for future variation scaffolding.",
-	handler: async () => runPreparationOnlyCommand("add variation"),
-	name: "variation",
-});
+const supportsInteractiveTui = typeof Bun !== "undefined";
 
-const addPatternCommand = defineCommand({
-	description: "Reserved placeholder for future pattern scaffolding.",
-	handler: async () => runPreparationOnlyCommand("add pattern"),
-	name: "pattern",
-});
+function loadAddFlow() {
+	return import(
+		resolveBundledModuleHref(import.meta.url, [
+			"./ui/add-flow.js",
+			"../ui/add-flow.js",
+			"../ui/add-flow.tsx",
+		]),
+	).then((module) => ({ default: module.AddFlow }));
+}
 
-export const addCommand = defineGroup({
-	commands: [addBlockCommand, addVariationCommand, addPatternCommand],
-	description: "Extend an official wp-typia workspace.",
+const addOptions = {
+	"data-storage": {
+		description: "Persistence storage mode for persistence-capable templates.",
+		schema: z.string().optional(),
+	},
+	"persistence-policy": {
+		description: "Persistence write policy for persistence-capable templates.",
+		schema: z.string().optional(),
+	},
+	template: {
+		description: "Built-in block family for the new block.",
+		schema: z.string().optional(),
+	},
+};
+
+export const addCommand = defineCommand({
+	description: "Extend an official wp-typia workspace with blocks, variations, or patterns.",
+	handler: async (args) => {
+		await executeAddCommand({
+			cwd: args.cwd,
+			flags: args.flags as Record<string, unknown>,
+			kind: args.positional[0],
+			name: args.positional[1],
+		});
+	},
 	name: "add",
+	options: addOptions,
+	...(supportsInteractiveTui
+		? {
+				render: (args: any) => {
+					const config =
+						args.context?.store?.wpTypiaUserConfig &&
+						typeof args.context.store.wpTypiaUserConfig === "object"
+							? getAddBlockDefaults(args.context.store.wpTypiaUserConfig)
+							: {};
+					return createElement(LazyFlow, {
+						loader: loadAddFlow,
+						props: {
+							cwd: args.cwd,
+							initialValues: {
+								"data-storage":
+									(args.flags["data-storage"] as string | undefined) ??
+									config["data-storage"],
+								kind:
+									(args.positional[0] as
+										| "block"
+										| "variation"
+										| "pattern"
+										| undefined) ?? "block",
+								name: args.positional[1] ?? "",
+								"persistence-policy":
+									(args.flags["persistence-policy"] as string | undefined) ??
+									config["persistence-policy"],
+								template:
+									(args.flags.template as string | undefined) ?? config.template,
+							},
+						},
+					});
+				},
+				tui: {
+					renderer: {
+						bufferMode: "alternate" as const,
+					},
+				},
+			}
+		: {}),
 });
 
 export default addCommand;
