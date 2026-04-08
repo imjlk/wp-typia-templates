@@ -73,7 +73,10 @@ function getPropertyNameText(name: ts.PropertyName): string | null {
 function findExportedArrayLiteral(
 	sourceFile: ts.SourceFile,
 	exportName: string,
-): ts.ArrayLiteralExpression | null {
+): {
+	array: ts.ArrayLiteralExpression | null;
+	found: boolean;
+} {
 	for (const statement of sourceFile.statements) {
 		if (!ts.isVariableStatement(statement)) {
 			continue;
@@ -89,13 +92,22 @@ function findExportedArrayLiteral(
 				continue;
 			}
 			if (declaration.initializer && ts.isArrayLiteralExpression(declaration.initializer)) {
-				return declaration.initializer;
+				return {
+					array: declaration.initializer,
+					found: true,
+				};
 			}
-			return null;
+			return {
+				array: null,
+				found: true,
+			};
 		}
 	}
 
-	return null;
+	return {
+		array: null,
+		found: false,
+	};
 }
 
 function getOptionalStringProperty(
@@ -210,19 +222,25 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 		ts.ScriptKind.TS,
 	);
 	const blockArray = findExportedArrayLiteral(sourceFile, "BLOCKS");
-	if (!blockArray) {
+	if (!blockArray.found || !blockArray.array) {
 		throw new Error("scripts/block-config.ts must export a BLOCKS array.");
 	}
 	const variationArray = findExportedArrayLiteral(sourceFile, "VARIATIONS");
 	const patternArray = findExportedArrayLiteral(sourceFile, "PATTERNS");
+	if (variationArray.found && !variationArray.array) {
+		throw new Error("scripts/block-config.ts must export VARIATIONS as an array literal.");
+	}
+	if (patternArray.found && !patternArray.array) {
+		throw new Error("scripts/block-config.ts must export PATTERNS as an array literal.");
+	}
 
 	return {
-		blocks: parseBlockEntries(blockArray),
-		hasPatternsSection: patternArray !== null,
-		hasVariationsSection: variationArray !== null,
-		patterns: patternArray ? parsePatternEntries(patternArray) : [],
+		blocks: parseBlockEntries(blockArray.array),
+		hasPatternsSection: patternArray.found,
+		hasVariationsSection: variationArray.found,
+		patterns: patternArray.array ? parsePatternEntries(patternArray.array) : [],
 		source,
-		variations: variationArray ? parseVariationEntries(variationArray) : [],
+		variations: variationArray.array ? parseVariationEntries(variationArray.array) : [],
 	};
 }
 

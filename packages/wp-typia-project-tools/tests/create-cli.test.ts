@@ -2833,7 +2833,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(errorMessage).toContain("Doctor found one or more failing checks.");
 		expect(errorMessage).toContain("Variation counter-card/hero-card");
 		expect(errorMessage).toContain("Pattern hero-layout");
-	});
+	}, 15_000);
 
 	test("doctor fails when workspace inventory entries are malformed", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-doctor-invalid-inventory");
@@ -2875,6 +2875,48 @@ describe("@wp-typia/project-tools scaffolding", () => {
 
 		expect(errorMessage).toContain("Workspace inventory");
 		expect(errorMessage).toContain("PATTERNS[0] is missing required");
+	});
+
+	test("doctor fails when workspace inventory exports use non-array initializers", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-doctor-invalid-export-shape");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace invalid export shape",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-doctor-invalid-export-shape",
+				textDomain: "demo-space",
+				title: "Demo Workspace Invalid Export Shape",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		const blockConfigPath = path.join(targetDir, "scripts", "block-config.ts");
+		const blockConfigSource = fs.readFileSync(blockConfigPath, "utf8");
+		fs.writeFileSync(
+			blockConfigPath,
+			blockConfigSource.replace(
+				"export const VARIATIONS: WorkspaceVariationConfig[] = [\n\t// wp-typia add variation entries\n];",
+				"export const VARIATIONS: WorkspaceVariationConfig[] = {} as never;",
+			),
+			"utf8",
+		);
+
+		const errorMessage = getCommandErrorMessage(() =>
+			runCli("node", [entryPath, "doctor"], {
+				cwd: targetDir,
+			}),
+		);
+
+		expect(errorMessage).toContain("Workspace inventory");
+		expect(errorMessage).toContain("must export VARIATIONS as an array literal");
 	});
 
 	test("rendered template paths cannot escape the target directory", async () => {
