@@ -409,7 +409,31 @@ function buildPatternConfigEntry(patternSlug: string): string {
 }
 
 function buildVariationConstName(variationSlug: string): string {
-	return `${toKebabCase(variationSlug).replace(/-([a-z0-9])/g, (_, char) => char.toUpperCase())}Variation`;
+	const identifierSegments = toKebabCase(variationSlug)
+		.split("-")
+		.filter(Boolean);
+
+	return `workspaceVariation_${identifierSegments.join("_")}`;
+}
+
+function getVariationConstBindings(
+	variationSlugs: string[],
+): Array<{ constName: string; variationSlug: string }> {
+	const seenConstNames = new Map<string, string>();
+
+	return variationSlugs.map((variationSlug) => {
+		const constName = buildVariationConstName(variationSlug);
+		const previousSlug = seenConstNames.get(constName);
+
+		if (previousSlug && previousSlug !== variationSlug) {
+			throw new Error(
+				`Variation slugs "${previousSlug}" and "${variationSlug}" generate the same registry identifier "${constName}". Rename one of the variations.`,
+			);
+		}
+
+		seenConstNames.set(constName, variationSlug);
+		return { constName, variationSlug };
+	});
 }
 
 function buildVariationSource(
@@ -438,13 +462,15 @@ export const ${variationConstName} = {
 function buildVariationIndexSource(
 	variationSlugs: string[],
 ): string {
-	const importLines = variationSlugs
-		.map((variationSlug) => {
-			const variationConstName = buildVariationConstName(variationSlug);
-			return `import { ${variationConstName} } from './${variationSlug}';`;
+	const variationBindings = getVariationConstBindings(variationSlugs);
+	const importLines = variationBindings
+		.map(({ constName, variationSlug }) => {
+			return `import { ${constName} } from './${variationSlug}';`;
 		})
 		.join("\n");
-	const variationConstNames = variationSlugs.map(buildVariationConstName).join(",\n\t\t");
+	const variationConstNames = variationBindings
+		.map(({ constName }) => constName)
+		.join(",\n\t\t");
 
 	return `import { registerBlockVariation } from '@wordpress/blocks';
 import metadata from '../block.json';

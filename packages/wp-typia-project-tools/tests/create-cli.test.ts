@@ -2365,6 +2365,35 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(packageJson.scripts["migration:doctor"]).toContain("wp-typia");
 	});
 
+	test("official workspace template escapes apostrophes in pattern category labels", async () => {
+		const targetDir = path.join(tempRoot, "johns-workspace-template");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Workspace title escaping",
+				namespace: "johns-space",
+				phpPrefix: "johns_space",
+				slug: "johns-workspace-template",
+				textDomain: "johns-space",
+				title: "John's Blocks",
+			},
+		});
+
+		const bootstrapSource = fs.readFileSync(
+			path.join(targetDir, "johns-workspace-template.php"),
+			"utf8",
+		);
+
+		expect(bootstrapSource).toContain("sprintf(");
+		expect(bootstrapSource).toContain("__( '%s Patterns', 'johns-space' )");
+		expect(bootstrapSource).toContain("\"John's Blocks\"");
+	});
+
 	test("canonical CLI can add a basic block to an official workspace template", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-add-basic");
 
@@ -2463,7 +2492,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(blockConfigSource).toContain('slug: "hero-card"');
 		expect(blockIndexSource).toContain("registerWorkspaceVariations");
 		expect(blockIndexSource).toContain("registerWorkspaceVariations();");
-		expect(variationsIndexSource).toContain("heroCardVariation");
+		expect(variationsIndexSource).toContain("workspaceVariation_hero_card");
 		expect(variationSource).toContain("BlockVariation");
 		expect(variationSource).toContain("A starter variation for Hero Card.");
 
@@ -2482,6 +2511,56 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(
 			doctorChecks.checks.find((check) => check.label === "Variation entrypoint counter-card")?.status,
 		).toBe("pass");
+
+		runCli("npm", ["run", "build"], { cwd: targetDir });
+	}, 30_000);
+
+	test("variation workflow keeps registry identifiers unique for similar slugs", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-add-variation-collision-safe");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace variation collision safe",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-add-variation-collision-safe",
+				textDomain: "demo-space",
+				title: "Demo Workspace Variation Collision Safe",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+			cwd: targetDir,
+		});
+		runCli(
+			"node",
+			[entryPath, "add", "variation", "hero-2-card", "--block", "counter-card"],
+			{ cwd: targetDir },
+		);
+		runCli(
+			"node",
+			[entryPath, "add", "variation", "hero2-card", "--block", "counter-card"],
+			{ cwd: targetDir },
+		);
+
+		const variationsIndexSource = fs.readFileSync(
+			path.join(targetDir, "src", "blocks", "counter-card", "variations", "index.ts"),
+			"utf8",
+		);
+
+		expect(variationsIndexSource).toContain(
+			"import { workspaceVariation_hero_2_card } from './hero-2-card';",
+		);
+		expect(variationsIndexSource).toContain(
+			"import { workspaceVariation_hero2_card } from './hero2-card';",
+		);
 
 		runCli("npm", ["run", "build"], { cwd: targetDir });
 	}, 30_000);

@@ -94,7 +94,10 @@ function {{phpPrefix}}_register_pattern_category() {
 		register_block_pattern_category(
 			'{{namespace}}',
 			array(
-				'label' => __( '{{title}} Patterns', '{{textDomain}}' ),
+				'label' => sprintf(
+					__( '%s Patterns', '{{textDomain}}' ),
+					{{titleJson}}
+				),
 			)
 		);
 	}
