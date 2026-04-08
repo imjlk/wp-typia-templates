@@ -7,6 +7,7 @@
  *
  * Import `formatAddHelpText`, `runAddBlockCommand`,
  * `runAddVariationCommand`, `runAddPatternCommand`,
+ * `runAddBindingSourceCommand`,
  * `getWorkspaceBlockSelectOptions`, and `seedWorkspaceMigrationProject` for
  * explicit `wp-typia add` flows,
  * `getDoctorChecks`, `runDoctor`, and `DoctorCheck` for diagnostics,
@@ -22,6 +23,7 @@ export { getDoctorChecks, runDoctor, type DoctorCheck } from "./cli-doctor.js";
 export {
 	formatAddHelpText,
 	getWorkspaceBlockSelectOptions,
+	runAddBindingSourceCommand,
 	runAddBlockCommand,
 	runAddPatternCommand,
 	runAddVariationCommand,

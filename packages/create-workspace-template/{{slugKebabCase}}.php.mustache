@@ -89,6 +89,34 @@ function {{phpPrefix}}_register_blocks() {
 	{{phpPrefix}}_register_blocks_from_manifest_fallback();
 }
 
+function {{phpPrefix}}_register_binding_sources() {
+	foreach ( glob( __DIR__ . '/src/bindings/*/server.php' ) ?: array() as $binding_source_module ) {
+		require_once $binding_source_module;
+	}
+}
+
+function {{phpPrefix}}_enqueue_binding_sources_editor() {
+	$script_path = __DIR__ . '/build/bindings/index.js';
+	$asset_path  = __DIR__ . '/build/bindings/index.asset.php';
+
+	if ( ! file_exists( $script_path ) || ! file_exists( $asset_path ) ) {
+		return;
+	}
+
+	$asset = require $asset_path;
+	if ( ! is_array( $asset ) ) {
+		$asset = array();
+	}
+
+	wp_enqueue_script(
+		'{{slugKebabCase}}-binding-sources',
+		plugins_url( 'build/bindings/index.js', __FILE__ ),
+		isset( $asset['dependencies'] ) && is_array( $asset['dependencies'] ) ? $asset['dependencies'] : array(),
+		isset( $asset['version'] ) ? $asset['version'] : filemtime( $script_path ),
+		true
+	);
+}
+
 function {{phpPrefix}}_register_pattern_category() {
 	if ( function_exists( 'register_block_pattern_category' ) ) {
 		register_block_pattern_category(
@@ -111,5 +139,7 @@ function {{phpPrefix}}_register_patterns() {
 
 add_action( 'init', '{{phpPrefix}}_load_textdomain' );
 add_action( 'init', '{{phpPrefix}}_register_blocks' );
+add_action( 'init', '{{phpPrefix}}_register_binding_sources', 20 );
 add_action( 'init', '{{phpPrefix}}_register_pattern_category' );
 add_action( 'init', '{{phpPrefix}}_register_patterns', 20 );
+add_action( 'enqueue_block_editor_assets', '{{phpPrefix}}_enqueue_binding_sources_editor' );

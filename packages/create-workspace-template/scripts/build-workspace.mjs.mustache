@@ -21,6 +21,16 @@ function getBlockSlugs() {
 		.sort();
 }
 
+function hasSharedEditorEntries() {
+	for ( const relativePath of [ 'src/bindings/index.ts', 'src/bindings/index.js' ] ) {
+		if ( fs.existsSync( path.join( process.cwd(), relativePath ) ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 function ensureEmptyWorkspaceArtifacts() {
 	const buildBlocksDir = path.join( process.cwd(), 'build', 'blocks' );
 	const manifestPath = path.join( process.cwd(), 'build', 'blocks-manifest.php' );
@@ -50,7 +60,8 @@ function main() {
 	}
 
 	const blockSlugs = getBlockSlugs();
-	if ( blockSlugs.length === 0 ) {
+	const hasSharedEntries = hasSharedEditorEntries();
+	if ( blockSlugs.length === 0 && ! hasSharedEntries ) {
 		ensureEmptyWorkspaceArtifacts();
 		console.log(
 			mode === 'start'
@@ -68,6 +79,10 @@ function main() {
 			stdio: 'inherit',
 		}
 	);
+
+	if ( blockSlugs.length === 0 ) {
+		ensureEmptyWorkspaceArtifacts();
+	}
 }
 
 main();

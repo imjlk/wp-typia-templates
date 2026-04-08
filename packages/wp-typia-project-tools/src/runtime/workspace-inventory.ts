@@ -23,9 +23,17 @@ export interface WorkspacePatternInventoryEntry {
 	slug: string;
 }
 
+export interface WorkspaceBindingSourceInventoryEntry {
+	editorFile: string;
+	serverFile: string;
+	slug: string;
+}
+
 export interface WorkspaceInventory {
+	bindingSources: WorkspaceBindingSourceInventoryEntry[];
 	blockConfigPath: string;
 	blocks: WorkspaceBlockInventoryEntry[];
+	hasBindingSourcesSection: boolean;
 	hasPatternsSection: boolean;
 	hasVariationsSection: boolean;
 	patterns: WorkspacePatternInventoryEntry[];
@@ -36,29 +44,52 @@ export interface WorkspaceInventory {
 export const BLOCK_CONFIG_ENTRY_MARKER = "\t// wp-typia add block entries";
 export const VARIATION_CONFIG_ENTRY_MARKER = "\t// wp-typia add variation entries";
 export const PATTERN_CONFIG_ENTRY_MARKER = "\t// wp-typia add pattern entries";
+export const BINDING_SOURCE_CONFIG_ENTRY_MARKER = "\t// wp-typia add binding-source entries";
 
-const VARIATIONS_SECTION = `
+const VARIATIONS_INTERFACE_SECTION = `
 
 export interface WorkspaceVariationConfig {
 \tblock: string;
 \tfile: string;
 \tslug: string;
 }
+`;
+
+const VARIATIONS_CONST_SECTION = `
 
 export const VARIATIONS: WorkspaceVariationConfig[] = [
 \t// wp-typia add variation entries
 ];
 `;
 
-const PATTERNS_SECTION = `
+const PATTERNS_INTERFACE_SECTION = `
 
 export interface WorkspacePatternConfig {
 \tfile: string;
 \tslug: string;
 }
+`;
+
+const PATTERNS_CONST_SECTION = `
 
 export const PATTERNS: WorkspacePatternConfig[] = [
 \t// wp-typia add pattern entries
+];
+`;
+
+const BINDING_SOURCES_INTERFACE_SECTION = `
+
+export interface WorkspaceBindingSourceConfig {
+\teditorFile: string;
+\tserverFile: string;
+\tslug: string;
+}
+`;
+
+const BINDING_SOURCES_CONST_SECTION = `
+
+export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
+\t// wp-typia add binding-source entries
 ];
 `;
 
@@ -206,6 +237,24 @@ function parsePatternEntries(arrayLiteral: ts.ArrayLiteralExpression): Workspace
 	});
 }
 
+function parseBindingSourceEntries(
+	arrayLiteral: ts.ArrayLiteralExpression,
+): WorkspaceBindingSourceInventoryEntry[] {
+	return arrayLiteral.elements.map((element, elementIndex) => {
+		if (!ts.isObjectLiteralExpression(element)) {
+			throw new Error(
+				`BINDING_SOURCES[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
+			);
+		}
+
+		return {
+			editorFile: getRequiredStringProperty("BINDING_SOURCES", elementIndex, element, "editorFile"),
+			serverFile: getRequiredStringProperty("BINDING_SOURCES", elementIndex, element, "serverFile"),
+			slug: getRequiredStringProperty("BINDING_SOURCES", elementIndex, element, "slug"),
+		};
+	});
+}
+
 /**
  * Parse workspace inventory entries from the source of `scripts/block-config.ts`.
  *
@@ -227,15 +276,23 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 	}
 	const variationArray = findExportedArrayLiteral(sourceFile, "VARIATIONS");
 	const patternArray = findExportedArrayLiteral(sourceFile, "PATTERNS");
+	const bindingSourceArray = findExportedArrayLiteral(sourceFile, "BINDING_SOURCES");
 	if (variationArray.found && !variationArray.array) {
 		throw new Error("scripts/block-config.ts must export VARIATIONS as an array literal.");
 	}
 	if (patternArray.found && !patternArray.array) {
 		throw new Error("scripts/block-config.ts must export PATTERNS as an array literal.");
 	}
+	if (bindingSourceArray.found && !bindingSourceArray.array) {
+		throw new Error("scripts/block-config.ts must export BINDING_SOURCES as an array literal.");
+	}
 
 	return {
+		bindingSources: bindingSourceArray.array
+			? parseBindingSourceEntries(bindingSourceArray.array)
+			: [],
 		blocks: parseBlockEntries(blockArray.array),
+		hasBindingSourcesSection: bindingSourceArray.found,
 		hasPatternsSection: patternArray.found,
 		hasVariationsSection: variationArray.found,
 		patterns: patternArray.array ? parsePatternEntries(patternArray.array) : [],
@@ -301,25 +358,24 @@ function ensureWorkspaceInventorySections(source: string): string {
 	let nextSource = source.trimEnd();
 
 	if (!/export\s+interface\s+WorkspaceVariationConfig\b/u.test(nextSource)) {
-		nextSource += VARIATIONS_SECTION;
-	} else if (!/export\s+const\s+VARIATIONS\b/u.test(nextSource)) {
-		nextSource += `
-
-export const VARIATIONS: WorkspaceVariationConfig[] = [
-\t// wp-typia add variation entries
-];
-`;
+		nextSource += VARIATIONS_INTERFACE_SECTION;
+	}
+	if (!/export\s+const\s+VARIATIONS\b/u.test(nextSource)) {
+		nextSource += VARIATIONS_CONST_SECTION;
 	}
 
 	if (!/export\s+interface\s+WorkspacePatternConfig\b/u.test(nextSource)) {
-		nextSource += PATTERNS_SECTION;
-	} else if (!/export\s+const\s+PATTERNS\b/u.test(nextSource)) {
-		nextSource += `
+		nextSource += PATTERNS_INTERFACE_SECTION;
+	}
+	if (!/export\s+const\s+PATTERNS\b/u.test(nextSource)) {
+		nextSource += PATTERNS_CONST_SECTION;
+	}
 
-export const PATTERNS: WorkspacePatternConfig[] = [
-\t// wp-typia add pattern entries
-];
-`;
+	if (!/export\s+interface\s+WorkspaceBindingSourceConfig\b/u.test(nextSource)) {
+		nextSource += BINDING_SOURCES_INTERFACE_SECTION;
+	}
+	if (!/export\s+const\s+BINDING_SOURCES\b/u.test(nextSource)) {
+		nextSource += BINDING_SOURCES_CONST_SECTION;
 	}
 
 	return `${nextSource}\n`;
@@ -351,11 +407,13 @@ export function updateWorkspaceInventorySource(
 	source: string,
 	{
 		blockEntries = [],
+		bindingSourceEntries = [],
 		patternEntries = [],
 		variationEntries = [],
 		transformSource,
 	}: {
 		blockEntries?: string[];
+		bindingSourceEntries?: string[];
 		patternEntries?: string[];
 		transformSource?: (source: string) => string;
 		variationEntries?: string[];
@@ -368,6 +426,11 @@ export function updateWorkspaceInventorySource(
 	nextSource = appendEntriesAtMarker(nextSource, BLOCK_CONFIG_ENTRY_MARKER, blockEntries);
 	nextSource = appendEntriesAtMarker(nextSource, VARIATION_CONFIG_ENTRY_MARKER, variationEntries);
 	nextSource = appendEntriesAtMarker(nextSource, PATTERN_CONFIG_ENTRY_MARKER, patternEntries);
+	nextSource = appendEntriesAtMarker(
+		nextSource,
+		BINDING_SOURCE_CONFIG_ENTRY_MARKER,
+		bindingSourceEntries,
+	);
 	return nextSource;
 }
 

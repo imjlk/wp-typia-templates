@@ -20,6 +20,12 @@ export interface WorkspacePatternConfig {
 	slug: string;
 }
 
+export interface WorkspaceBindingSourceConfig {
+	editorFile: string;
+	serverFile: string;
+	slug: string;
+}
+
 export const BLOCKS: WorkspaceBlockConfig[] = [
 	// wp-typia add block entries
 ];
@@ -30,4 +36,8 @@ export const VARIATIONS: WorkspaceVariationConfig[] = [
 
 export const PATTERNS: WorkspacePatternConfig[] = [
 	// wp-typia add pattern entries
+];
+
+export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
+	// wp-typia add binding-source entries
 ];

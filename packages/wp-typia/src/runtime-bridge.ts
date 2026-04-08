@@ -11,6 +11,7 @@ import {
 	listTemplates,
 	parseMigrationArgs,
 	tryResolveWorkspaceProject,
+	runAddBindingSourceCommand,
 	runAddBlockCommand,
 	runAddPatternCommand,
 	runAddVariationCommand,
@@ -259,8 +260,25 @@ export async function executeAddCommand({
 		return;
 	}
 
+	if (kind === "binding-source") {
+		if (!name) {
+			throw new Error(
+				"`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name>.",
+			);
+		}
+
+		const result = await runAddBindingSourceCommand({
+			bindingSourceName: name,
+			cwd,
+		});
+		console.log(`✅ Added binding source ${result.bindingSourceSlug} in ${result.projectDir}.`);
+		return;
+	}
+
 	if (kind !== "block") {
-		throw new Error(`Unknown add kind "${kind}". Expected one of: block, variation, pattern.`);
+		throw new Error(
+			`Unknown add kind "${kind}". Expected one of: block, variation, pattern, binding-source.`,
+		);
 	}
 
 	if (!name) {

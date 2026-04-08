@@ -215,6 +215,11 @@ jobs:
             package_manager: npm
             project_name: smoke-workspace-add-pattern-npm
             add_pattern_name: hero-layout
+          - runtime: node
+            template: "@wp-typia/create-workspace-template"
+            package_manager: npm
+            project_name: smoke-workspace-add-binding-source-npm
+            add_binding_source_name: hero-data
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -289,6 +294,9 @@ jobs:
           fi
           if [ -n "${{ matrix.add_pattern_name || '' }}" ]; then
             args+=(--add-pattern-name "${{ matrix.add_pattern_name }}")
+          fi
+          if [ -n "${{ matrix.add_binding_source_name || '' }}" ]; then
+            args+=(--add-binding-source-name "${{ matrix.add_binding_source_name }}")
           fi
           node scripts/run-generated-project-smoke.mjs "${args[@]}"
 

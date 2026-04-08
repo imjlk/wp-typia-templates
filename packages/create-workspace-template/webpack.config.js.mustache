@@ -186,6 +186,22 @@ function getEditorEntries() {
 	);
 }
 
+function getSharedEditorEntries() {
+	const entries = [];
+
+	for ( const relativePath of [ 'src/bindings/index.ts', 'src/bindings/index.js' ] ) {
+		const entryPath = path.resolve( process.cwd(), relativePath );
+		if ( ! fs.existsSync( entryPath ) ) {
+			continue;
+		}
+
+		entries.push( [ 'bindings/index', entryPath ] );
+		break;
+	}
+
+	return Object.fromEntries( entries );
+}
+
 function getOptionalModuleEntries() {
 	const entries = [];
 
@@ -222,7 +238,10 @@ module.exports = async () => {
 		typeof defaultConfig === 'function'
 			? await defaultConfig()
 			: defaultConfig;
-	const editorEntries = getEditorEntries();
+	const editorEntries = {
+		...getSharedEditorEntries(),
+		...getEditorEntries(),
+	};
 	const moduleEntries = getOptionalModuleEntries();
 	const configs = toWebpackConfigs( resolvedDefaultConfig ).map(
 		( config ) => ( {
