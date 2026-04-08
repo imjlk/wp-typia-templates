@@ -54,6 +54,9 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 	fs.writeFileSync(
 		path.join(projectDir, "package.json"),
 		`${JSON.stringify({
+			dependencies: {
+				"wp-typia": `file:${tarballs.get("wp-typia")}`,
+			},
 			name: "wp-typia-publish-install-smoke",
 			overrides: Object.fromEntries(
 				[...tarballs.entries()].map(([packageName, tarballPath]) => [
@@ -63,12 +66,6 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 			),
 			private: true,
 			packageManager: "bun@1.3.11",
-			dependencies: Object.fromEntries(
-				[...tarballs.entries()].map(([packageName, tarballPath]) => [
-					packageName,
-					`file:${tarballPath}`,
-				]),
-			),
 		}, null, 2)}\n`,
 		"utf8",
 	);

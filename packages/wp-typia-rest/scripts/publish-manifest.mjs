@@ -69,9 +69,7 @@ function prepareManifest() {
 	const manifest = JSON.parse(currentSource);
 	const versions = getWorkspacePackageVersions();
 
-	if (!fs.existsSync(backupPath)) {
-		fs.writeFileSync(backupPath, currentSource, "utf8");
-	}
+	fs.writeFileSync(backupPath, currentSource, "utf8");
 
 	for (const field of DEPENDENCY_FIELDS) {
 		const section = manifest[field];
