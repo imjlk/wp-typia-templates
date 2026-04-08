@@ -13,6 +13,7 @@
 - [description](packages_create_src_runtime_template_source.ResolvedTemplateSource.md#description)
 - [features](packages_create_src_runtime_template_source.ResolvedTemplateSource.md#features)
 - [format](packages_create_src_runtime_template_source.ResolvedTemplateSource.md#format)
+- [isOfficialWorkspaceTemplate](packages_create_src_runtime_template_source.ResolvedTemplateSource.md#isofficialworkspacetemplate)
 - [templateDir](packages_create_src_runtime_template_source.ResolvedTemplateSource.md#templatedir)
 - [cleanup](packages_create_src_runtime_template_source.ResolvedTemplateSource.md#cleanup)
 - [selectedVariant](packages_create_src_runtime_template_source.ResolvedTemplateSource.md#selectedvariant)
@@ -26,7 +27,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:66](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L66)
+[packages/create/src/runtime/template-source.ts:68](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L68)
 
 ___
 
@@ -36,7 +37,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:67](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L67)
+[packages/create/src/runtime/template-source.ts:69](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L69)
 
 ___
 
@@ -46,7 +47,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:68](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L68)
+[packages/create/src/runtime/template-source.ts:70](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L70)
 
 ___
 
@@ -56,7 +57,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:69](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L69)
+[packages/create/src/runtime/template-source.ts:71](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L71)
 
 ___
 
@@ -66,7 +67,17 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:70](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L70)
+[packages/create/src/runtime/template-source.ts:72](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L72)
+
+___
+
+### isOfficialWorkspaceTemplate
+
+• `Optional` **isOfficialWorkspaceTemplate**: `boolean`
+
+#### Defined in
+
+[packages/create/src/runtime/template-source.ts:73](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L73)
 
 ___
 
@@ -76,7 +87,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:71](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L71)
+[packages/create/src/runtime/template-source.ts:74](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L74)
 
 ___
 
@@ -94,7 +105,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:72](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L72)
+[packages/create/src/runtime/template-source.ts:75](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L75)
 
 ___
 
@@ -104,7 +115,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:73](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L73)
+[packages/create/src/runtime/template-source.ts:76](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L76)
 
 ___
 
@@ -114,4 +125,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-source.ts:74](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L74)
+[packages/create/src/runtime/template-source.ts:77](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-source.ts#L77)

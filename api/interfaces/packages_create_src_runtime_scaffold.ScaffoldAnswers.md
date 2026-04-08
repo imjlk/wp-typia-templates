@@ -32,7 +32,7 @@ predictable.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:65](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L65)
+[packages/create/src/runtime/scaffold.ts:72](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L72)
 
 ___
 
@@ -42,7 +42,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:66](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L66)
+[packages/create/src/runtime/scaffold.ts:73](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L73)
 
 ___
 
@@ -52,7 +52,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:67](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L67)
+[packages/create/src/runtime/scaffold.ts:74](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L74)
 
 ___
 
@@ -64,7 +64,7 @@ Block namespace used in generated block names such as `namespace/slug`.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:69](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L69)
+[packages/create/src/runtime/scaffold.ts:76](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L76)
 
 ___
 
@@ -74,7 +74,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:70](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L70)
+[packages/create/src/runtime/scaffold.ts:77](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L77)
 
 ___
 
@@ -86,7 +86,7 @@ Snake_case PHP symbol prefix used for generated functions, constants, and keys.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:72](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L72)
+[packages/create/src/runtime/scaffold.ts:79](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L79)
 
 ___
 
@@ -96,7 +96,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:73](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L73)
+[packages/create/src/runtime/scaffold.ts:80](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L80)
 
 ___
 
@@ -108,7 +108,7 @@ Kebab-case WordPress text domain used in block metadata and i18n strings.
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:75](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L75)
+[packages/create/src/runtime/scaffold.ts:82](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L82)
 
 ___
 
@@ -118,4 +118,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/scaffold.ts:76](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L76)
+[packages/create/src/runtime/scaffold.ts:83](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/scaffold.ts#L83)

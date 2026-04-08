@@ -24,6 +24,7 @@
 - [SHARED\_PRESET\_TEMPLATE\_ROOT](packages_create_src_runtime_template_registry.md#shared_preset_template_root)
 - [SHARED\_REST\_HELPER\_TEMPLATE\_ROOT](packages_create_src_runtime_template_registry.md#shared_rest_helper_template_root)
 - [SHARED\_MIGRATION\_UI\_TEMPLATE\_ROOT](packages_create_src_runtime_template_registry.md#shared_migration_ui_template_root)
+- [SHARED\_WORKSPACE\_TEMPLATE\_ROOT](packages_create_src_runtime_template_registry.md#shared_workspace_template_root)
 - [SHARED\_TEST\_PRESET\_TEMPLATE\_ROOT](packages_create_src_runtime_template_registry.md#shared_test_preset_template_root)
 - [SHARED\_WP\_ENV\_PRESET\_TEMPLATE\_ROOT](packages_create_src_runtime_template_registry.md#shared_wp_env_preset_template_root)
 - [BUILTIN\_TEMPLATE\_IDS](packages_create_src_runtime_template_registry.md#builtin_template_ids)
@@ -46,7 +47,7 @@
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:45](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L45)
+[packages/create/src/runtime/template-registry.ts:49](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L49)
 
 ___
 
@@ -56,7 +57,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:46](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L46)
+[packages/create/src/runtime/template-registry.ts:50](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L50)
 
 ## Variables
 
@@ -150,13 +151,25 @@ ___
 
 ___
 
+### SHARED\_WORKSPACE\_TEMPLATE\_ROOT
+
+• `Const` **SHARED\_WORKSPACE\_TEMPLATE\_ROOT**: `string`
+
+Shared workspace template overlay root used by workspace scaffolding flows.
+
+#### Defined in
+
+[packages/create/src/runtime/template-registry.ts:45](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L45)
+
+___
+
 ### SHARED\_TEST\_PRESET\_TEMPLATE\_ROOT
 
 • `Const` **SHARED\_TEST\_PRESET\_TEMPLATE\_ROOT**: `string`
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:42](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L42)
+[packages/create/src/runtime/template-registry.ts:46](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L46)
 
 ___
 
@@ -166,7 +179,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:43](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L43)
+[packages/create/src/runtime/template-registry.ts:47](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L47)
 
 ___
 
@@ -176,7 +189,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:44](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L44)
+[packages/create/src/runtime/template-registry.ts:48](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L48)
 
 ___
 
@@ -186,7 +199,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:56](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L56)
+[packages/create/src/runtime/template-registry.ts:60](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L60)
 
 ___
 
@@ -196,7 +209,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:87](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L87)
+[packages/create/src/runtime/template-registry.ts:91](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L91)
 
 ## Functions
 
@@ -236,7 +249,7 @@ templateId is "interactivity" \| "basic" \| "persistence" \| "compound"
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:89](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L89)
+[packages/create/src/runtime/template-registry.ts:93](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L93)
 
 ___
 
@@ -250,7 +263,7 @@ readonly [`TemplateDefinition`](../interfaces/packages_create_src_runtime_templa
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:93](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L93)
+[packages/create/src/runtime/template-registry.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L97)
 
 ___
 
@@ -270,7 +283,7 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L97)
+[packages/create/src/runtime/template-registry.ts:101](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L101)
 
 ___
 
@@ -284,4 +297,4 @@ ___
 
 #### Defined in
 
-[packages/create/src/runtime/template-registry.ts:105](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L105)
+[packages/create/src/runtime/template-registry.ts:109](https://github.com/imjlk/wp-typia/blob/main/packages/create/src/runtime/template-registry.ts#L109)

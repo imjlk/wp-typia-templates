@@ -9,6 +9,10 @@
 - [getDoctorChecks](packages_create_src_runtime_cli_core.md#getdoctorchecks)
 - [runDoctor](packages_create_src_runtime_cli_core.md#rundoctor)
 - [DoctorCheck](packages_create_src_runtime_cli_core.md#doctorcheck)
+- [createAddPlaceholderMessage](packages_create_src_runtime_cli_core.md#createaddplaceholdermessage)
+- [formatAddHelpText](packages_create_src_runtime_cli_core.md#formataddhelptext)
+- [runAddBlockCommand](packages_create_src_runtime_cli_core.md#runaddblockcommand)
+- [seedWorkspaceMigrationProject](packages_create_src_runtime_cli_core.md#seedworkspacemigrationproject)
 - [formatHelpText](packages_create_src_runtime_cli_core.md#formathelptext)
 - [getNextSteps](packages_create_src_runtime_cli_core.md#getnextsteps)
 - [getOptionalOnboarding](packages_create_src_runtime_cli_core.md#getoptionalonboarding)
@@ -40,6 +44,30 @@ ___
 ### DoctorCheck
 
 Re-exports [DoctorCheck](../interfaces/packages_create_src_runtime_cli_doctor.DoctorCheck.md)
+
+___
+
+### createAddPlaceholderMessage
+
+Re-exports [createAddPlaceholderMessage](packages_create_src_runtime_cli_add.md#createaddplaceholdermessage)
+
+___
+
+### formatAddHelpText
+
+Re-exports [formatAddHelpText](packages_create_src_runtime_cli_add.md#formataddhelptext)
+
+___
+
+### runAddBlockCommand
+
+Re-exports [runAddBlockCommand](packages_create_src_runtime_cli_add.md#runaddblockcommand)
+
+___
+
+### seedWorkspaceMigrationProject
+
+Re-exports [seedWorkspaceMigrationProject](packages_create_src_runtime_cli_add.md#seedworkspacemigrationproject)
 
 ___
 
