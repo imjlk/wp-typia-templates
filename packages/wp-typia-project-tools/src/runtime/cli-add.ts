@@ -65,6 +65,7 @@ const REST_MANIFEST_IMPORT_PATTERN =
 const VARIATIONS_IMPORT_LINE = "import { registerWorkspaceVariations } from './variations';";
 const VARIATIONS_CALL_LINE = "registerWorkspaceVariations();";
 const PATTERN_BOOTSTRAP_CATEGORY = "register_block_pattern_category";
+const WORKSPACE_GENERATED_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
 
 interface RunAddVariationCommandOptions {
 	blockName: string;
@@ -96,6 +97,24 @@ interface WorkspaceMutationSnapshot {
 
 function normalizeBlockSlug(input: string): string {
 	return toKebabCase(input);
+}
+
+function assertValidGeneratedSlug(label: string, slug: string, usage: string): string {
+	if (!slug) {
+		throw new Error(`${label} is required. Use \`${usage}\`.`);
+	}
+	if (!WORKSPACE_GENERATED_SLUG_PATTERN.test(slug)) {
+		throw new Error(
+			`${label} must start with a letter and contain only lowercase letters, numbers, and hyphens.`,
+		);
+	}
+
+	return slug;
+}
+
+function getWorkspaceBootstrapPath(workspace: WorkspaceProject): string {
+	const workspaceBaseName = workspace.packageName.split("/").pop() ?? workspace.packageName;
+	return path.join(workspace.projectDir, `${workspaceBaseName}.php`);
 }
 
 function buildWorkspacePhpPrefix(workspacePhpPrefix: string, slug: string): string {
@@ -535,7 +554,7 @@ async function writeVariationRegistry(
 
 async function ensurePatternBootstrapAnchors(workspace: WorkspaceProject): Promise<void> {
 	const workspaceBaseName = workspace.packageName.split("/").pop() ?? workspace.packageName;
-	const bootstrapPath = path.join(workspace.projectDir, `${workspaceBaseName}.php`);
+	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
 	await patchFile(bootstrapPath, (source) => {
 		let nextSource = source;
 		const patternCategoryFunctionName = `${workspace.workspace.phpPrefix}_register_pattern_category`;
@@ -1121,12 +1140,11 @@ export async function runAddVariationCommand({
 }> {
 	const workspace = resolveWorkspaceProject(cwd);
 	const blockSlug = normalizeBlockSlug(blockName);
-	const variationSlug = normalizeBlockSlug(variationName);
-	if (!variationSlug) {
-		throw new Error(
-			"Variation name is required. Use `wp-typia add variation <name> --block <block-slug>`.",
-		);
-	}
+	const variationSlug = assertValidGeneratedSlug(
+		"Variation name",
+		normalizeBlockSlug(variationName),
+		"wp-typia add variation <name> --block <block-slug>",
+	);
 
 	const inventory = readWorkspaceInventory(workspace.projectDir);
 	resolveWorkspaceBlock(inventory, blockSlug);
@@ -1191,7 +1209,7 @@ export async function runAddPatternCommand({
 	assertPatternDoesNotExist(workspace.projectDir, patternSlug, inventory);
 
 	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
-	const bootstrapPath = path.join(workspace.projectDir, `${workspace.packageName}.php`);
+	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
 	const patternFilePath = path.join(workspace.projectDir, "src", "patterns", `${patternSlug}.php`);
 	const mutationSnapshot: WorkspaceMutationSnapshot = {
 		fileSources: await snapshotWorkspaceFiles([blockConfigPath, bootstrapPath]),

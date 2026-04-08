@@ -2568,6 +2568,15 @@ describe("@wp-typia/project-tools scaffolding", () => {
 				),
 			),
 		).toContain("missing-card");
+		expect(
+			getCommandErrorMessage(() =>
+				runCli(
+					"node",
+					[entryPath, "add", "variation", "2024-hero", "--block", "counter-card"],
+					{ cwd: targetDir },
+				),
+			),
+		).toContain("Variation name must start with a letter");
 
 		runCli(
 			"node",
