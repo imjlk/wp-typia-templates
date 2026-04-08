@@ -78,7 +78,7 @@ bun run release
 - `bun run release` runs `sampo release` locally to inspect the version/changelog changes that the release PR workflow will generate
 - `bun run publish` remains a local/manual fallback and is not the primary CI publish path
 - `DRY_RUN=1 bun run publish:oidc` is the safest local way to preview the OIDC publish script behavior without pushing packages
-- `bun run publish:validate` checks that every publishable workspace package under `packages/` is covered by `scripts/publish-oidc.sh`
+- `bun run publish:validate` checks that every publishable workspace package under `packages/` is covered by `scripts/publish-oidc.sh` and already has an initial npm seed publish
 
 GitHub release automation is split into two workflows:
 
