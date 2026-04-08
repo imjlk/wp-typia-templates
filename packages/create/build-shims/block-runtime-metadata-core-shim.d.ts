@@ -1,4 +1,5 @@
 import type {} from "typia";
+export * from "../../wp-typia-block-runtime/dist/metadata-core.js";
 
 declare module "typia" {
 	export namespace tags {
@@ -11,5 +12,3 @@ declare module "typia" {
 		};
 	}
 }
-
-export {};

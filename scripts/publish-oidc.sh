@@ -11,6 +11,7 @@ PACKAGES=(
   "packages/wp-typia-api-client"
   "packages/create"
   "packages/wp-typia"
+  "packages/create-workspace-template"
   "packages/wp-typia-block-runtime"
 )
 

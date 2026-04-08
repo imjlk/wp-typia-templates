@@ -5,6 +5,7 @@ import { execSync } from "node:child_process";
 
 import {
 	PACKAGE_MANAGER_IDS,
+	formatPackageExecCommand,
 	formatInstallCommand,
 	formatRunScript,
 	getPackageManager,
@@ -18,6 +19,11 @@ import {
 } from "./local-dev-presets.js";
 import { applyMigrationUiCapability } from "./migration-ui-capability.js";
 import { getPackageVersions } from "./package-versions.js";
+import {
+	ensureMigrationDirectories,
+	writeInitialMigrationScaffold,
+	writeMigrationConfig,
+} from "./migration-project.js";
 import {
 	getCompoundExtensionWorkflowSection,
 	getOptionalOnboardingNote,
@@ -47,6 +53,7 @@ import { resolveTemplateSource } from "./template-source.js";
 const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
 const PHP_PREFIX_PATTERN = /^[a-z_][a-z0-9_]*$/;
 const PHP_PREFIX_MAX_LENGTH = 50;
+const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
 const LOCKFILES: Record<PackageManagerId, string[]> = {
 	bun: ["bun.lock", "bun.lockb"],
 	npm: ["package-lock.json"],
@@ -190,6 +197,15 @@ export interface ScaffoldProjectResult {
 	templateId: string;
 	variables: ScaffoldTemplateVariables;
 	warnings: string[];
+}
+
+interface GeneratedPackageJson {
+	dependencies?: Record<string, string>;
+	scripts?: Record<string, string>;
+	wpTypia?: {
+		projectType?: string;
+		templatePackage?: string;
+	};
 }
 
 function validateBlockSlug(input: string): true | string {
@@ -824,6 +840,59 @@ async function defaultInstallDependencies({
 	});
 }
 
+function isOfficialWorkspaceProject(projectDir: string): boolean {
+	const packageJsonPath = path.join(projectDir, "package.json");
+	if (!fs.existsSync(packageJsonPath)) {
+		return false;
+	}
+
+	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as GeneratedPackageJson;
+	return (
+		packageJson.wpTypia?.projectType === "workspace" &&
+		packageJson.wpTypia?.templatePackage === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
+	);
+}
+
+async function applyWorkspaceMigrationCapability(
+	projectDir: string,
+	packageManager: PackageManagerId,
+): Promise<void> {
+	const packageJsonPath = path.join(projectDir, "package.json");
+	const packageJson = JSON.parse(
+		await fsp.readFile(packageJsonPath, "utf8"),
+	) as GeneratedPackageJson;
+	const wpTypiaPackageVersion = getPackageVersions().wpTypiaPackageVersion;
+	const canonicalCliSpecifier =
+		wpTypiaPackageVersion === "^0.0.0"
+			? "wp-typia"
+			: `wp-typia@${wpTypiaPackageVersion.replace(/^[~^]/u, "")}`;
+	const migrationCli = (args: string) =>
+		formatPackageExecCommand(packageManager, canonicalCliSpecifier, `migrations ${args}`);
+
+	packageJson.scripts = {
+		...(packageJson.scripts ?? {}),
+		"migration:init": migrationCli("init --current-migration-version v1"),
+		"migration:snapshot": migrationCli("snapshot"),
+		"migration:diff": migrationCli("diff"),
+		"migration:scaffold": migrationCli("scaffold"),
+		"migration:doctor": migrationCli("doctor --all"),
+		"migration:fixtures": migrationCli("fixtures --all"),
+		"migration:verify": migrationCli("verify --all"),
+		"migration:fuzz": migrationCli("fuzz --all"),
+	};
+
+	await fsp.writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, "\t")}\n`, "utf8");
+
+	writeMigrationConfig(projectDir, {
+		blocks: [],
+		currentMigrationVersion: "v1",
+		snapshotDir: "src/migrations/versions",
+		supportedMigrationVersions: ["v1"],
+	});
+	ensureMigrationDirectories(projectDir, []);
+	writeInitialMigrationScaffold(projectDir, "v1", []);
+}
+
 export async function scaffoldProject({
 	projectDir,
 	templateId,
@@ -842,11 +911,6 @@ export async function scaffoldProject({
 }: ScaffoldProjectOptions): Promise<ScaffoldProjectResult> {
 	const resolvedPackageManager = getPackageManager(packageManager).id;
 	const isBuiltInTemplate = isBuiltInTemplateId(templateId);
-	if (withMigrationUi && !isBuiltInTemplate) {
-		throw new Error("`--with-migration-ui` is currently supported only for built-in templates.");
-	}
-
-	await ensureDirectory(projectDir, allowExistingDir);
 
 	const variables = getTemplateVariables(templateId, {
 		...answers,
@@ -859,8 +923,16 @@ export async function scaffoldProject({
 		variables,
 		variant,
 	);
+	const supportsMigrationUi = isBuiltInTemplate || templateSource.isOfficialWorkspaceTemplate === true;
+	if (withMigrationUi && !supportsMigrationUi) {
+		await templateSource.cleanup?.();
+		throw new Error(
+			"`--with-migration-ui` is currently supported only for built-in templates and @wp-typia/create-workspace-template.",
+		);
+	}
 
 	try {
+		await ensureDirectory(projectDir, allowExistingDir);
 		await copyInterpolatedDirectory(
 			templateSource.templateDir,
 			projectDir,
@@ -871,6 +943,7 @@ export async function scaffoldProject({
 			await templateSource.cleanup();
 		}
 	}
+	const isOfficialWorkspace = isOfficialWorkspaceProject(projectDir);
 	if (isBuiltInTemplate) {
 		await writeStarterManifestFiles(projectDir, templateId, variables);
 		await applyLocalDevPresetFiles({
@@ -887,13 +960,16 @@ export async function scaffoldProject({
 				variables,
 			});
 		}
+	} else if (withMigrationUi && isOfficialWorkspace) {
+		await applyWorkspaceMigrationCapability(projectDir, resolvedPackageManager);
 	}
 	const readmePath = path.join(projectDir, "README.md");
 	if (!fs.existsSync(readmePath)) {
 		await fsp.writeFile(
 			readmePath,
 			buildReadme(templateId, variables, resolvedPackageManager, {
-				withMigrationUi: isBuiltInTemplate ? withMigrationUi : false,
+				withMigrationUi:
+					isBuiltInTemplate || isOfficialWorkspace ? withMigrationUi : false,
 				withTestPreset: isBuiltInTemplate ? withTestPreset : false,
 				withWpEnv: isBuiltInTemplate ? withWpEnv : false,
 			}),

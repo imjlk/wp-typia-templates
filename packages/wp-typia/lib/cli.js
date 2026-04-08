@@ -19,6 +19,16 @@
 
 let cachedCreateRuntimePromise;
 let cachedCliCorePromise;
+// Keep this command list in sync with packages/wp-typia/src/commands/*
+// until the active runtime switches over to Bunli. See
+// docs/bunli-cli-migration.md for the cutover contract.
+const RESERVED_TOP_LEVEL_COMMANDS = new Set([
+	"add",
+	"create",
+	"doctor",
+	"migrations",
+	"templates",
+]);
 
 function isMissingPackageImport(error, specifier) {
 	if (
@@ -262,6 +272,59 @@ async function runTemplatesCli(positionals) {
 	throw new Error("Usage: wp-typia templates <list|inspect>");
 }
 
+function parseAddCommandArgs(argv) {
+	const parsed = {
+		dataStorage: undefined,
+		help: false,
+		persistencePolicy: undefined,
+		positionals: [],
+		template: undefined,
+	};
+
+	for (let index = 0; index < argv.length; index += 1) {
+		const arg = argv[index];
+		if (!arg.startsWith("-")) {
+			parsed.positionals.push(arg);
+			continue;
+		}
+		if (arg === "--help" || arg === "-h") {
+			parsed.help = true;
+			continue;
+		}
+		if (arg === "--template" || arg === "-t") {
+			parsed.template = getRequiredValue(argv, index, "--template");
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--template=")) {
+			parsed.template = arg.split("=", 2)[1];
+			continue;
+		}
+		if (arg === "--data-storage") {
+			parsed.dataStorage = getRequiredValue(argv, index, "--data-storage");
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--data-storage=")) {
+			parsed.dataStorage = arg.split("=", 2)[1];
+			continue;
+		}
+		if (arg === "--persistence-policy") {
+			parsed.persistencePolicy = getRequiredValue(argv, index, "--persistence-policy");
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--persistence-policy=")) {
+			parsed.persistencePolicy = arg.split("=", 2)[1];
+			continue;
+		}
+
+		throw new Error(`Unknown flag: ${arg}`);
+	}
+
+	return parsed;
+}
+
 async function assertYesModePackageManager(parsed) {
 	if (!parsed.yes || parsed.packageManager) {
 		return;
@@ -278,7 +341,7 @@ function printDoctorLine({ status, label, detail }) {
 	console.log(`${prefix} ${label}: ${detail}`);
 }
 
-async function runScaffold(parsed, cwd) {
+async function runScaffold(parsed, cwd, projectInput = parsed.positionals[0]) {
 	const { getPackageManagerSelectOptions } = await loadCreateRuntime();
 	const { createReadlinePrompt, getTemplateSelectOptions, runScaffoldFlow } =
 		await loadCliCore();
@@ -294,7 +357,7 @@ async function runScaffold(parsed, cwd) {
 			noInstall: parsed.noInstall,
 			packageManager: parsed.packageManager,
 			phpPrefix: parsed.phpPrefix,
-			projectInput: parsed.positionals[0],
+			projectInput,
 			promptText: (message, defaultValue, validate) =>
 				prompt.text(message, defaultValue, validate),
 			selectPackageManager: () =>
@@ -380,6 +443,49 @@ async function runScaffold(parsed, cwd) {
 	}
 }
 
+async function runAddCli(argv, cwd) {
+	const parsed = parseAddCommandArgs(argv);
+	const { createAddPlaceholderMessage, formatAddHelpText, runAddBlockCommand } =
+		await loadCliCore();
+
+	if (parsed.help || parsed.positionals.length === 0) {
+		console.log(formatAddHelpText());
+		return;
+	}
+
+	const [kind, name] = parsed.positionals;
+	if (kind === "block") {
+		if (!name) {
+			throw new Error(
+				"`wp-typia add block` requires <name>. Usage: wp-typia add block <name> --template <basic|interactivity|persistence|compound>",
+			);
+		}
+		if (!parsed.template) {
+			throw new Error(
+				"`wp-typia add block` requires --template <basic|interactivity|persistence|compound>.",
+			);
+		}
+
+		const result = await runAddBlockCommand({
+			blockName: name,
+			cwd,
+			dataStorageMode: parsed.dataStorage,
+			persistencePolicy: parsed.persistencePolicy,
+			templateId: parsed.template,
+		});
+		console.log(
+			`✅ Added ${result.blockSlugs.join(", ")} to ${result.projectDir} using the ${result.templateId} family.`,
+		);
+		return;
+	}
+
+	if (kind === "variation" || kind === "pattern") {
+		throw new Error(createAddPlaceholderMessage(kind));
+	}
+
+	throw new Error(`Unknown add kind "${kind}". Expected one of: block, variation, pattern.`);
+}
+
 /**
  * Execute the canonical `wp-typia` CLI against the installed `@wp-typia/create`
  * runtime helpers.
@@ -394,6 +500,26 @@ export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 		return;
 	}
 
+	if (argv[0] === "add") {
+		await runAddCli(argv.slice(1), cwd);
+		return;
+	}
+
+	if (argv[0] === "create") {
+		const parsed = parseArgs(argv.slice(1));
+		if (parsed.help) {
+			const { formatHelpText } = await loadCliCore();
+			console.log(formatHelpText());
+			return;
+		}
+		if (!parsed.positionals[0]) {
+			throw new Error("`wp-typia create` requires <project-dir>.");
+		}
+		await assertYesModePackageManager(parsed);
+		await runScaffold(parsed, cwd, parsed.positionals[0]);
+		return;
+	}
+
 	const parsed = parseArgs(argv);
 
 	if (parsed.help) {
@@ -403,15 +529,19 @@ export async function main(argv = process.argv.slice(2), cwd = process.cwd()) {
 	}
 
 	const [first] = parsed.positionals;
-	if (first === "templates") {
-		await runTemplatesCli(parsed.positionals);
-		return;
-	}
+	if (first && RESERVED_TOP_LEVEL_COMMANDS.has(first)) {
+		if (first === "templates") {
+			await runTemplatesCli(parsed.positionals);
+			return;
+		}
 
-	if (first === "doctor") {
-		const { runDoctor } = await loadCliCore();
-		await runDoctor(cwd, { renderLine: printDoctorLine });
-		return;
+		if (first === "doctor") {
+			const { runDoctor } = await loadCliCore();
+			await runDoctor(cwd, { renderLine: printDoctorLine });
+			return;
+		}
+
+		throw new Error(`Unknown or incomplete command "${first}". Run wp-typia --help for usage.`);
 	}
 
 	await assertYesModePackageManager(parsed);

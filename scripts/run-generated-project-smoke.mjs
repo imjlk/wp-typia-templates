@@ -37,6 +37,10 @@ function normalizeBlockSlug(input) {
 
 function parseArgs(argv) {
 	const parsed = {
+		addBlockName: undefined,
+		addDataStorage: undefined,
+		addPersistencePolicy: undefined,
+		addTemplate: undefined,
 		dataStorage: undefined,
 		namespace: undefined,
 		packageManager: undefined,
@@ -47,6 +51,7 @@ function parseArgs(argv) {
 		template: undefined,
 		textDomain: undefined,
 		variant: undefined,
+		withMigrationUi: false,
 	};
 
 	for (let index = 0; index < argv.length; index += 1) {
@@ -55,6 +60,26 @@ function parseArgs(argv) {
 
 		if (arg === "--runtime") {
 			parsed.runtime = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--add-block-name") {
+			parsed.addBlockName = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--add-template") {
+			parsed.addTemplate = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--add-data-storage") {
+			parsed.addDataStorage = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--add-persistence-policy") {
+			parsed.addPersistencePolicy = next;
 			index += 1;
 			continue;
 		}
@@ -101,6 +126,10 @@ function parseArgs(argv) {
 		if (arg === "--persistence-policy") {
 			parsed.persistencePolicy = next;
 			index += 1;
+			continue;
+		}
+		if (arg === "--with-migration-ui") {
+			parsed.withMigrationUi = true;
 			continue;
 		}
 
@@ -599,6 +628,41 @@ function assertPluginBootstrapExists(filePath) {
 	}
 }
 
+function assertWorkspaceTemplateScaffold(projectDir) {
+	const packageJson = JSON.parse(fs.readFileSync(path.join(projectDir, "package.json"), "utf8"));
+
+	if (packageJson.wpTypia?.projectType !== "workspace") {
+		throw new Error("Expected generated workspace package.json to include wpTypia.projectType = workspace");
+	}
+	if (
+		packageJson.wpTypia?.templatePackage !== "@wp-typia/create-workspace-template"
+	) {
+		throw new Error("Expected generated workspace package.json to record the official workspace template package");
+	}
+	if (!fs.existsSync(path.join(projectDir, "scripts", "build-workspace.mjs"))) {
+		throw new Error("Expected official workspace template to include scripts/build-workspace.mjs");
+	}
+}
+
+function assertWorkspaceBlockArtifacts(projectDir, blockSlugs) {
+	for (const slug of blockSlugs) {
+		const blockDir = path.join(projectDir, "build", "blocks", slug);
+		if (!fs.existsSync(path.join(blockDir, "block.json"))) {
+			throw new Error(`Expected workspace build to include ${slug}/block.json`);
+		}
+		if (!fs.existsSync(path.join(blockDir, "typia.manifest.json"))) {
+			throw new Error(`Expected workspace build to include ${slug}/typia.manifest.json`);
+		}
+		if (!fs.existsSync(path.join(blockDir, "typia-validator.php"))) {
+			throw new Error(`Expected workspace build to include ${slug}/typia-validator.php`);
+		}
+	}
+
+	if (!fs.existsSync(path.join(projectDir, "build", "blocks-manifest.php"))) {
+		throw new Error("Expected workspace build to include blocks-manifest.php");
+	}
+}
+
 function assertNoRawRenderedContentEcho(filePath) {
 	const source = fs.readFileSync(filePath, "utf8");
 	if (/echo\s*\(?\s*\$content\b/.test(source)) {
@@ -679,11 +743,16 @@ function main() {
 		namespace,
 		textDomain,
 		phpPrefix,
+		addBlockName,
+		addDataStorage,
+		addPersistencePolicy,
+		addTemplate,
+		withMigrationUi,
 	} = parseArgs(process.argv.slice(2));
 
 	if (!runtime || !template || !packageManager || !projectName) {
 		throw new Error(
-			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] --package-manager <id> --project-name <name>",
+			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--with-migration-ui] [--add-block-name <name> --add-template <basic|interactivity|persistence|compound> [--add-data-storage <post-meta|custom-table>] [--add-persistence-policy <authenticated|public>]] --package-manager <id> --project-name <name>",
 		);
 	}
 
@@ -704,6 +773,7 @@ function main() {
 			...(phpPrefix ? ["--php-prefix", phpPrefix] : []),
 			...(dataStorage ? ["--data-storage", dataStorage] : []),
 			...(persistencePolicy ? ["--persistence-policy", persistencePolicy] : []),
+			...(withMigrationUi ? ["--with-migration-ui"] : []),
 			"--yes",
 			"--no-install",
 			"--package-manager",
@@ -735,10 +805,46 @@ function main() {
 
 		runScaffoldRefreshScripts(projectDir, packageManager, packageJson);
 
+		if (addBlockName) {
+			if (!addTemplate) {
+				throw new Error("--add-template is required when --add-block-name is provided.");
+			}
+
+			run(runtime, [
+				entryPath,
+				"add",
+				"block",
+				addBlockName,
+				"--template",
+				addTemplate,
+				...(addDataStorage ? ["--data-storage", addDataStorage] : []),
+				...(addPersistencePolicy
+					? ["--persistence-policy", addPersistencePolicy]
+					: []),
+			], {
+				cwd: projectDir,
+			});
+
+			runScaffoldRefreshScripts(projectDir, packageManager, packageJson);
+		}
+
 		const [buildCommand, buildArgs] = getRunCommand(packageManager);
 		run(buildCommand, buildArgs, { cwd: projectDir });
 
-		if (template === "compound") {
+		if (template === "@wp-typia/create-workspace-template") {
+			assertWorkspaceTemplateScaffold(projectDir);
+			assertWorkspaceBlockArtifacts(
+				projectDir,
+				addTemplate === "compound"
+					? [
+						normalizeBlockSlug(addBlockName ?? ""),
+						`${normalizeBlockSlug(addBlockName ?? "")}-item`,
+					].filter(Boolean)
+					: addBlockName
+						? [normalizeBlockSlug(addBlockName)]
+						: [],
+			);
+		} else if (template === "compound") {
 			assertCompoundTemplateArtifacts(projectDir, projectName);
 		} else {
 			assertBuildArtifacts(projectDir, projectName);

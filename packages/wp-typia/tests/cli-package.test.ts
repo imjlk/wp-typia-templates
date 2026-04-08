@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { parseArgs } from "../lib/cli.js";
+import { WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES } from "../src/command-contract";
 
 import { runUtf8Command } from "../../../tests/helpers/process-utils";
 
@@ -28,9 +29,30 @@ describe("wp-typia package", () => {
 		const helpOutput = runUtf8Command("node", [entryPath, "--help"]);
 
 		expect(helpOutput).toContain("Usage:");
-		expect(helpOutput).toContain("wp-typia <project-dir>");
-		expect(helpOutput).toContain("wp-typia templates list");
-		expect(helpOutput).toContain("wp-typia migrations");
+		expect(helpOutput).toContain("wp-typia create <project-dir>");
+		expect(helpOutput).toContain("wp-typia <project-dir> [create flags...]");
+		for (const commandName of WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES) {
+			expect(helpOutput).toContain(`wp-typia ${commandName}`);
+		}
+	});
+
+	test("documents create as the canonical verb while keeping the positional alias", () => {
+		const helpOutput = runUtf8Command("node", [entryPath, "--help"]);
+
+		expect(helpOutput).toContain("`wp-typia create` is the canonical scaffold command.");
+		expect(helpOutput).toContain("backward-compatible alias");
+	});
+
+	test("fails add variation with an actionable placeholder message", () => {
+		expect(() => runUtf8Command("node", [entryPath, "add", "variation"])).toThrow(
+			"`wp-typia add variation` is not implemented yet.",
+		);
+	});
+
+	test("requires a project directory for the explicit create command", () => {
+		expect(() => runUtf8Command("node", [entryPath, "create"])).toThrow(
+			"`wp-typia create` requires <project-dir>.",
+		);
 	});
 
 	test("rejects empty --package-manager= values during argument parsing", () => {

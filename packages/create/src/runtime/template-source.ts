@@ -2,6 +2,7 @@
 
 import fs from "node:fs";
 import { promises as fsp } from "node:fs";
+import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
@@ -13,6 +14,7 @@ import { x as extractTarball } from "tar";
 
 import {
 	BUILTIN_TEMPLATE_IDS,
+	CREATE_PACKAGE_ROOT,
 	SHARED_BASE_TEMPLATE_ROOT,
 	TEMPLATE_ROOT,
 	isBuiltInTemplateId,
@@ -30,7 +32,7 @@ import { copyRawDirectory, copyRenderedDirectory } from "./template-render.js";
 const EXTERNAL_TEMPLATE_ENTRY_CANDIDATES = ["index.js", "index.cjs", "index.mjs"] as const;
 const TEMPLATE_WARNING_MESSAGE =
 	"wp-typia owns package/tooling/sync setup for generated projects, so this external template setting is ignored.";
-
+const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
 type TemplateSourceFormat = "wp-typia" | "create-block-external" | "create-block-subset";
 
 /**
@@ -68,6 +70,7 @@ export interface ResolvedTemplateSource {
 	description: string;
 	features: string[];
 	format: TemplateSourceFormat;
+	isOfficialWorkspaceTemplate?: boolean;
 	templateDir: string;
 	cleanup?: () => Promise<void>;
 	selectedVariant?: string | null;
@@ -85,6 +88,7 @@ interface NpmTemplateLocator {
 	fetchSpec: string;
 	name: string;
 	raw: string;
+	rawSpec: string;
 	type: string;
 }
 
@@ -235,6 +239,123 @@ async function fetchNpmTemplateSource(locator: NpmTemplateLocator): Promise<Seed
 	}
 }
 
+async function normalizeWpTypiaTemplateSeed(seed: SeedSource): Promise<SeedSource> {
+	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-template-source-"));
+	const normalizedDir = path.join(tempRoot, "template");
+	try {
+		await copyRawDirectory(seed.blockDir, normalizedDir, {
+			filter: (sourcePath, _targetPath, entry) => {
+				const mustacheVariantPath = path.join(path.dirname(sourcePath), `${entry.name}.mustache`);
+				return !(
+					entry.isFile() &&
+					(entry.name === "package.json" || entry.name === "README.md") &&
+					fs.existsSync(mustacheVariantPath)
+				);
+			},
+		});
+	} catch (error) {
+		await fsp.rm(tempRoot, { force: true, recursive: true });
+		throw error;
+	}
+
+	return {
+		blockDir: normalizedDir,
+		cleanup: async () => {
+			await fsp.rm(tempRoot, { force: true, recursive: true });
+			await seed.cleanup?.();
+		},
+		rootDir: normalizedDir,
+		selectedVariant: seed.selectedVariant,
+		warnings: seed.warnings,
+	};
+}
+
+/**
+ * Resolve a locally installed npm template package from the caller workspace.
+ *
+ * Bare package ids are preferred here so monorepo and offline workflows can
+ * use an already-installed template without forcing a registry fetch.
+ */
+function resolveInstalledNpmTemplateSource(locator: NpmTemplateLocator, cwd: string): SeedSource | null {
+	if (locator.rawSpec !== "" && locator.rawSpec !== "*") {
+		return null;
+	}
+
+	const workspacePackagesRoot = path.resolve(CREATE_PACKAGE_ROOT, "..");
+	if (fs.existsSync(workspacePackagesRoot)) {
+		for (const entry of fs.readdirSync(workspacePackagesRoot, { withFileTypes: true })) {
+			if (!entry.isDirectory()) {
+				continue;
+			}
+
+			const packageDir = path.join(workspacePackagesRoot, entry.name);
+			const packageJsonPath = path.join(packageDir, "package.json");
+			if (!fs.existsSync(packageJsonPath)) {
+				continue;
+			}
+
+			const manifest = JSON.parse(
+				fs.readFileSync(packageJsonPath, "utf8"),
+			) as { name?: string };
+			if (manifest.name === locator.name) {
+				return {
+					blockDir: packageDir,
+					rootDir: packageDir,
+				};
+			}
+		}
+	}
+
+	const workspaceRequire = createRequire(path.join(path.resolve(cwd), "__wp_typia_template_resolver__.cjs"));
+	try {
+		const packageJsonPath = fs.realpathSync(
+			workspaceRequire.resolve(`${locator.name}/package.json`),
+		);
+		const sourceDir = path.dirname(packageJsonPath);
+		return {
+			blockDir: sourceDir,
+			rootDir: sourceDir,
+		};
+	} catch (error) {
+		const errorCode =
+			typeof error === "object" && error !== null && "code" in error
+				? String((error as { code: unknown }).code)
+				: "";
+		if (
+			errorCode === "MODULE_NOT_FOUND" ||
+			errorCode === "ERR_PACKAGE_PATH_NOT_EXPORTED"
+		) {
+			for (const basePath of workspaceRequire.resolve.paths(locator.name) ?? []) {
+				const packageJsonPath = path.join(basePath, locator.name, "package.json");
+				if (!fs.existsSync(packageJsonPath)) {
+					continue;
+				}
+				const sourceDir = path.dirname(fs.realpathSync(packageJsonPath));
+				return {
+					blockDir: sourceDir,
+					rootDir: sourceDir,
+				};
+			}
+			return null;
+		}
+		throw error;
+	}
+}
+
+function isOfficialWorkspaceTemplateSeed(seed: SeedSource): boolean {
+	const packageJsonPath = path.join(seed.rootDir, "package.json");
+	if (!fs.existsSync(packageJsonPath)) {
+		return false;
+	}
+
+	try {
+		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as { name?: string };
+		return packageJson.name === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE;
+	} catch {
+		return false;
+	}
+}
+
 export function parseGitHubTemplateLocator(templateId: string): GitHubTemplateLocator | null {
 	if (!templateId.startsWith("github:")) {
 		return null;
@@ -267,11 +388,14 @@ export function parseNpmTemplateLocator(templateId: string): NpmTemplateLocator 
 		if (!parsed.registry || !parsed.name) {
 			return null;
 		}
+		const parsedWithRawSpec = parsed as unknown as { rawSpec?: unknown };
+		const rawSpec = typeof parsedWithRawSpec.rawSpec === "string" ? parsedWithRawSpec.rawSpec : "";
 
 		return {
 			fetchSpec: typeof parsed.fetchSpec === "string" ? parsed.fetchSpec : "",
 			name: parsed.name,
 			raw: templateId,
+			rawSpec,
 			type: parsed.type,
 		};
 	} catch {
@@ -884,6 +1008,12 @@ async function resolveTemplateSeed(
 		return resolveGitHubTemplateSource(locator.locator);
 	}
 
+	const installedSource = resolveInstalledNpmTemplateSource(locator.locator, cwd);
+	if (installedSource) {
+		await assertNoSymlinks(installedSource.blockDir);
+		return installedSource;
+	}
+
 	return fetchNpmTemplateSource(locator.locator);
 }
 
@@ -909,6 +1039,7 @@ export async function resolveTemplateSource(
 	const locator = parseTemplateLocator(templateId);
 	const context = getTemplateVariableContext(variables);
 	const seed = await resolveTemplateSeed(locator, cwd);
+	const isOfficialWorkspaceTemplate = isOfficialWorkspaceTemplateSeed(seed);
 	let normalizedSeed: SeedSource | null = null;
 
 	try {
@@ -917,14 +1048,16 @@ export async function resolveTemplateSource(
 			if (variant) {
 				throw new Error(`--variant is only supported for official external template configs. Received variant "${variant}" for "${templateId}".`);
 			}
+			normalizedSeed = await normalizeWpTypiaTemplateSeed(seed);
 			return {
 				id: templateId,
 				defaultCategory: getDefaultCategory(seed.blockDir),
 				description: "A remote wp-typia template source",
 				features: ["Remote source", "wp-typia format"],
 				format,
-				templateDir: seed.blockDir,
-				cleanup: seed.cleanup,
+				isOfficialWorkspaceTemplate,
+				templateDir: normalizedSeed.blockDir,
+				cleanup: normalizedSeed.cleanup,
 			};
 		}
 
@@ -948,13 +1081,18 @@ export async function resolveTemplateSource(
 					description: "A wp-typia scaffold normalized from an official create-block external template",
 					features: ["Remote source", "official external template", "Typia metadata pipeline"],
 					format,
-				id: "remote:create-block-external",
-				selectedVariant: normalizedSeed.selectedVariant ?? null,
-				warnings: normalizedSeed.warnings ?? [],
-			};
-		}
+					id: "remote:create-block-external",
+					isOfficialWorkspaceTemplate,
+					selectedVariant: normalizedSeed.selectedVariant ?? null,
+					warnings: normalizedSeed.warnings ?? [],
+				};
+			}
 
-		return normalizeCreateBlockSubset(normalizedSeed, context);
+		const normalized = await normalizeCreateBlockSubset(normalizedSeed, context);
+		return {
+			...normalized,
+			isOfficialWorkspaceTemplate,
+		};
 	} catch (error) {
 		if (normalizedSeed?.cleanup && normalizedSeed !== seed) {
 			await normalizedSeed.cleanup();

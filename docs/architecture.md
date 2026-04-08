@@ -10,8 +10,8 @@
   The canonical CLI package.
 - `packages/create`
   The compatibility/programmatic scaffold runtime package.
-- `packages/create-wp-typia`
-  Archived initializer package kept only for repository history.
+- `packages/create-workspace-template`
+  The official empty workspace template package used by `wp-typia add block`.
 - `packages/wp-typia-block-types`
   Shared WordPress semantic types for generated projects.
 - `packages/wp-typia-rest`
@@ -46,6 +46,9 @@ The root workspace owns:
 Release publishing is intentionally package-only and rerun-safe. Example builds stay in CI/dev flows, while npm publish paths build only publishable workspaces and treat partially published reruns as a normal recovery path.
 
 Example-specific root commands use the `examples:*` namespace so the boundary between product packages and the reference app stays explicit.
+
+Maintainers: the staged Bunli cutover for `packages/wp-typia` is tracked in
+[`docs/bunli-cli-migration.md`](./bunli-cli-migration.md).
 
 ## Template Model
 
@@ -88,11 +91,13 @@ as compatibility shims.
 
 ## Intended Flow
 
-1. Scaffold a block with `wp-typia`
-2. Author the schema in `src/types.ts`
-3. Run `sync-types`
-4. Build and validate the block
-5. Use `persistence --persistence-policy public` for signed public writes
-6. Use `persistence --persistence-policy authenticated` for logged-in writes
-7. Use `compound` when you need a scaffolded parent/child `InnerBlocks` structure
-8. Use the reference apps when you need kitchen-sink, policy-specific, or compound runtime patterns
+1. Scaffold a block with `wp-typia create`
+2. Or scaffold an empty workspace with `wp-typia create --template @wp-typia/create-workspace-template`
+3. Grow that workspace with `wp-typia add block`
+4. Author the schema in `src/types.ts`
+5. Run `sync-types`
+6. Build and validate the block
+7. Use `persistence --persistence-policy public` for signed public writes
+8. Use `persistence --persistence-policy authenticated` for logged-in writes
+9. Use `compound` when you need a scaffolded parent/child `InnerBlocks` structure
+10. Use the reference apps when you need kitchen-sink, policy-specific, or compound runtime patterns

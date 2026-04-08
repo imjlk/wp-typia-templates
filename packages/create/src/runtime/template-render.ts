@@ -26,6 +26,25 @@ const BINARY_EXTENSIONS = new Set([
 Mustache.escape = (value: string) => value;
 
 export type TemplateRenderView = Record<string, unknown>;
+/**
+ * Optional controls for raw directory copies.
+ *
+ * The filter runs for each discovered entry before copying. Returning `false`
+ * skips only that entry; when the skipped entry is a directory, the subtree is
+ * skipped as well.
+ */
+export interface CopyRawDirectoryOptions {
+	/**
+	 * Predicate that decides whether a discovered entry should be copied.
+	 *
+	 * Throwing or rejecting aborts the copy and bubbles to the caller.
+	 */
+	filter?: (
+		sourcePath: string,
+		targetPath: string,
+		entry: fs.Dirent,
+	) => boolean | Promise<boolean>;
+}
 
 function renderMustacheTemplateString(template: string, view: TemplateRenderView): string {
 	return Mustache.render(template, view);
@@ -56,9 +75,29 @@ function resolveRenderedPath(targetDir: string, destinationName: string): string
 	return resolvedDestinationPath;
 }
 
-export async function copyRawDirectory(sourceDir: string, targetDir: string): Promise<void> {
-	await fsp.mkdir(path.dirname(targetDir), { recursive: true });
-	await fsp.cp(sourceDir, targetDir, { recursive: true });
+/**
+ * Recursively copies a directory tree without rendering template contents.
+ */
+export async function copyRawDirectory(
+	sourceDir: string,
+	targetDir: string,
+	options: CopyRawDirectoryOptions = {},
+): Promise<void> {
+	await fsp.mkdir(targetDir, { recursive: true });
+	for (const entry of await fsp.readdir(sourceDir, { withFileTypes: true })) {
+		const sourcePath = path.join(sourceDir, entry.name);
+		const targetPath = path.join(targetDir, entry.name);
+		if (options.filter && !(await options.filter(sourcePath, targetPath, entry))) {
+			continue;
+		}
+		if (entry.isDirectory()) {
+			await copyRawDirectory(sourcePath, targetPath, options);
+			continue;
+		}
+
+		await fsp.mkdir(path.dirname(targetPath), { recursive: true });
+		await fsp.copyFile(sourcePath, targetPath);
+	}
 }
 
 export async function copyRenderedDirectory(
