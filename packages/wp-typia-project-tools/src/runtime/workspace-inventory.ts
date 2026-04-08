@@ -46,38 +46,47 @@ export const VARIATION_CONFIG_ENTRY_MARKER = "\t// wp-typia add variation entrie
 export const PATTERN_CONFIG_ENTRY_MARKER = "\t// wp-typia add pattern entries";
 export const BINDING_SOURCE_CONFIG_ENTRY_MARKER = "\t// wp-typia add binding-source entries";
 
-const VARIATIONS_SECTION = `
+const VARIATIONS_INTERFACE_SECTION = `
 
 export interface WorkspaceVariationConfig {
 \tblock: string;
 \tfile: string;
 \tslug: string;
 }
+`;
+
+const VARIATIONS_CONST_SECTION = `
 
 export const VARIATIONS: WorkspaceVariationConfig[] = [
 \t// wp-typia add variation entries
 ];
 `;
 
-const PATTERNS_SECTION = `
+const PATTERNS_INTERFACE_SECTION = `
 
 export interface WorkspacePatternConfig {
 \tfile: string;
 \tslug: string;
 }
+`;
+
+const PATTERNS_CONST_SECTION = `
 
 export const PATTERNS: WorkspacePatternConfig[] = [
 \t// wp-typia add pattern entries
 ];
 `;
 
-const BINDING_SOURCES_SECTION = `
+const BINDING_SOURCES_INTERFACE_SECTION = `
 
 export interface WorkspaceBindingSourceConfig {
 \teditorFile: string;
 \tserverFile: string;
 \tslug: string;
 }
+`;
+
+const BINDING_SOURCES_CONST_SECTION = `
 
 export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
 \t// wp-typia add binding-source entries
@@ -349,36 +358,24 @@ function ensureWorkspaceInventorySections(source: string): string {
 	let nextSource = source.trimEnd();
 
 	if (!/export\s+interface\s+WorkspaceVariationConfig\b/u.test(nextSource)) {
-		nextSource += VARIATIONS_SECTION;
-	} else if (!/export\s+const\s+VARIATIONS\b/u.test(nextSource)) {
-		nextSource += `
-
-export const VARIATIONS: WorkspaceVariationConfig[] = [
-\t// wp-typia add variation entries
-];
-`;
+		nextSource += VARIATIONS_INTERFACE_SECTION;
+	}
+	if (!/export\s+const\s+VARIATIONS\b/u.test(nextSource)) {
+		nextSource += VARIATIONS_CONST_SECTION;
 	}
 
 	if (!/export\s+interface\s+WorkspacePatternConfig\b/u.test(nextSource)) {
-		nextSource += PATTERNS_SECTION;
-	} else if (!/export\s+const\s+PATTERNS\b/u.test(nextSource)) {
-		nextSource += `
-
-export const PATTERNS: WorkspacePatternConfig[] = [
-\t// wp-typia add pattern entries
-];
-`;
+		nextSource += PATTERNS_INTERFACE_SECTION;
+	}
+	if (!/export\s+const\s+PATTERNS\b/u.test(nextSource)) {
+		nextSource += PATTERNS_CONST_SECTION;
 	}
 
 	if (!/export\s+interface\s+WorkspaceBindingSourceConfig\b/u.test(nextSource)) {
-		nextSource += BINDING_SOURCES_SECTION;
-	} else if (!/export\s+const\s+BINDING_SOURCES\b/u.test(nextSource)) {
-		nextSource += `
-
-export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
-\t// wp-typia add binding-source entries
-];
-`;
+		nextSource += BINDING_SOURCES_INTERFACE_SECTION;
+	}
+	if (!/export\s+const\s+BINDING_SOURCES\b/u.test(nextSource)) {
+		nextSource += BINDING_SOURCES_CONST_SECTION;
 	}
 
 	return `${nextSource}\n`;

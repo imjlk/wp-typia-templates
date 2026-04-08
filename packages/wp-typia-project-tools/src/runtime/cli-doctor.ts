@@ -291,13 +291,19 @@ function checkWorkspaceBindingSourcesIndex(
 	projectDir: string,
 	bindingSources: WorkspaceInventory["bindingSources"],
 ): DoctorCheck {
-	const indexRelativePath = path.join("src", "bindings", "index.ts");
-	const indexPath = path.join(projectDir, indexRelativePath);
+	const indexRelativePath = [path.join("src", "bindings", "index.ts"), path.join("src", "bindings", "index.js")].find(
+		(relativePath) => fs.existsSync(path.join(projectDir, relativePath)),
+	);
 
-	if (!fs.existsSync(indexPath)) {
-		return createDoctorCheck("Binding sources index", "fail", `Missing ${indexRelativePath}`);
+	if (!indexRelativePath) {
+		return createDoctorCheck(
+			"Binding sources index",
+			"fail",
+			"Missing src/bindings/index.ts or src/bindings/index.js",
+		);
 	}
 
+	const indexPath = path.join(projectDir, indexRelativePath);
 	const source = fs.readFileSync(indexPath, "utf8");
 	const missingImports = bindingSources.filter(
 		(bindingSource) => !source.includes(`./${bindingSource.slug}/editor`),

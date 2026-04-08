@@ -756,13 +756,16 @@ async function ensureBindingSourceBootstrapAnchors(workspace: WorkspaceProject):
 		const bindingEditorEnqueueFunctionName = `${workspace.workspace.phpPrefix}_enqueue_binding_sources_editor`;
 		const bindingRegistrationHook = `add_action( 'init', '${bindingRegistrationFunctionName}', 20 );`;
 		const bindingEditorEnqueueHook = `add_action( 'enqueue_block_editor_assets', '${bindingEditorEnqueueFunctionName}' );`;
-		const bindingFunctions = `
+		const bindingRegistrationFunction = `
 
 function ${bindingRegistrationFunctionName}() {
 \tforeach ( glob( __DIR__ . '${BINDING_SOURCE_SERVER_GLOB}' ) ?: array() as $binding_source_module ) {
 \t\trequire_once $binding_source_module;
 \t}
 }
+`;
+
+		const bindingEditorEnqueueFunction = `
 
 function ${bindingEditorEnqueueFunctionName}() {
 \t$script_path = __DIR__ . '/${BINDING_SOURCE_EDITOR_SCRIPT}';
@@ -787,35 +790,43 @@ function ${bindingEditorEnqueueFunctionName}() {
 }
 `;
 
-		if (
-			!nextSource.includes(bindingRegistrationFunctionName) ||
-			!nextSource.includes(bindingEditorEnqueueFunctionName)
-		) {
-			const insertionAnchors = [
-				/add_action\(\s*["']init["']\s*,\s*["'][^"']+_load_textdomain["']\s*\);\s*\n/u,
-				/\?>\s*$/u,
-			];
-			let inserted = false;
-
+		const insertionAnchors = [
+			/add_action\(\s*["']init["']\s*,\s*["'][^"']+_load_textdomain["']\s*\);\s*\n/u,
+			/\?>\s*$/u,
+		];
+		const hasPhpFunctionDefinition = (functionName: string): boolean =>
+			new RegExp(`function\\s+${functionName}\\s*\\(`, "u").test(nextSource);
+		const insertPhpSnippet = (snippet: string): void => {
 			for (const anchor of insertionAnchors) {
-				const candidate = nextSource.replace(anchor, (match) => `${bindingFunctions}\n${match}`);
+				const candidate = nextSource.replace(anchor, (match) => `${snippet}\n${match}`);
 				if (candidate !== nextSource) {
 					nextSource = candidate;
-					inserted = true;
-					break;
+					return;
 				}
 			}
-
-			if (!inserted) {
-				nextSource = `${nextSource.trimEnd()}\n${bindingFunctions}\n`;
+			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
+		};
+		const appendPhpSnippet = (snippet: string): void => {
+			const closingTagPattern = /\?>\s*$/u;
+			if (closingTagPattern.test(nextSource)) {
+				nextSource = nextSource.replace(closingTagPattern, `${snippet}\n?>`);
+				return;
 			}
+			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
+		};
+
+		if (!hasPhpFunctionDefinition(bindingRegistrationFunctionName)) {
+			insertPhpSnippet(bindingRegistrationFunction);
+		}
+		if (!hasPhpFunctionDefinition(bindingEditorEnqueueFunctionName)) {
+			insertPhpSnippet(bindingEditorEnqueueFunction);
 		}
 
 		if (!nextSource.includes(bindingRegistrationHook)) {
-			nextSource = `${nextSource.trimEnd()}\n${bindingRegistrationHook}\n`;
+			appendPhpSnippet(bindingRegistrationHook);
 		}
 		if (!nextSource.includes(bindingEditorEnqueueHook)) {
-			nextSource = `${nextSource.trimEnd()}\n${bindingEditorEnqueueHook}\n`;
+			appendPhpSnippet(bindingEditorEnqueueHook);
 		}
 
 		return nextSource;

@@ -14,6 +14,7 @@ import {
 	parseNpmTemplateLocator,
 	parseTemplateLocator,
 } from "../src/runtime/template-source.js";
+import { updateWorkspaceInventorySource } from "../src/runtime/workspace-inventory.js";
 
 const packageRoot = path.resolve(import.meta.dir, "..");
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-create-"));
@@ -98,6 +99,13 @@ function getCommandErrorMessage(run: () => string): string {
 		}
 		return String(error);
 	}
+}
+
+function stripPhpFunction(source: string, functionName: string): string {
+	return source.replace(
+		new RegExp(`\\nfunction\\s+${functionName}\\s*\\(\\)\\s*\\{[\\s\\S]*?\\n\\}`, "u"),
+		"",
+	);
 }
 
 function ensureDirSymlink(targetPath: string, sourcePath: string) {
@@ -3061,6 +3069,144 @@ describe("@wp-typia/project-tools scaffolding", () => {
 			fs.readFileSync(path.join(targetDir, "scripts", "block-config.ts"), "utf8"),
 		).toBe(originalInventorySource);
 	}, 15_000);
+
+	test("doctor accepts workspaces that keep binding registries in src/bindings/index.js", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-binding-source-index-js");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace binding index js",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-binding-source-index-js",
+				textDomain: "demo-space",
+				title: "Demo Workspace Binding Source Index Js",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+		runCli("node", [entryPath, "add", "binding-source", "hero-data"], {
+			cwd: targetDir,
+		});
+
+		const bindingsTsPath = path.join(targetDir, "src", "bindings", "index.ts");
+		const bindingsJsPath = path.join(targetDir, "src", "bindings", "index.js");
+		fs.renameSync(bindingsTsPath, bindingsJsPath);
+
+		const doctorOutput = runCli("node", [entryPath, "doctor"], {
+			cwd: targetDir,
+		});
+		const doctorChecks = JSON.parse(doctorOutput) as {
+			checks: Array<{ detail: string; label: string; status: string }>;
+		};
+
+		expect(
+			doctorChecks.checks.find((check) => check.label === "Binding sources index")?.status,
+		).toBe("pass");
+	}, 15_000);
+
+	test("binding source workflow repairs missing bootstrap functions even when hooks remain", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-binding-source-bootstrap-repair");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace binding bootstrap repair",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-binding-source-bootstrap-repair",
+				textDomain: "demo-space",
+				title: "Demo Workspace Binding Bootstrap Repair",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+		runCli("node", [entryPath, "add", "binding-source", "hero-data"], {
+			cwd: targetDir,
+		});
+
+		const bootstrapPath = path.join(
+			targetDir,
+			"demo-workspace-binding-source-bootstrap-repair.php",
+		);
+		const brokenBootstrap = `${stripPhpFunction(
+			stripPhpFunction(
+				fs.readFileSync(bootstrapPath, "utf8"),
+				"demo_space_register_binding_sources",
+			),
+			"demo_space_enqueue_binding_sources_editor",
+		).trimEnd()}\n?>\n`;
+		fs.writeFileSync(bootstrapPath, brokenBootstrap, "utf8");
+
+		runCli("node", [entryPath, "add", "binding-source", "news-data"], {
+			cwd: targetDir,
+		});
+
+		const repairedBootstrap = fs.readFileSync(bootstrapPath, "utf8");
+		expect(
+			repairedBootstrap.match(/function\s+demo_space_register_binding_sources\s*\(/gu)?.length,
+		).toBe(1);
+		expect(
+			repairedBootstrap.match(/function\s+demo_space_enqueue_binding_sources_editor\s*\(/gu)?.length,
+		).toBe(1);
+		expect(
+			repairedBootstrap.match(/add_action\( 'init', 'demo_space_register_binding_sources', 20 \);/gu)
+				?.length,
+		).toBe(1);
+		expect(
+			repairedBootstrap.match(
+				/add_action\( 'enqueue_block_editor_assets', 'demo_space_enqueue_binding_sources_editor' \);/gu,
+			)?.length,
+		).toBe(1);
+		expect(repairedBootstrap.trimEnd().endsWith("?>")).toBe(true);
+		expect(repairedBootstrap.slice(repairedBootstrap.lastIndexOf("?>") + 2).trim()).toBe("");
+		expect(repairedBootstrap).toContain("src/bindings/*/server.php");
+		expect(repairedBootstrap).toContain("build/bindings/index.js");
+	}, 15_000);
+
+	test("workspace inventory repair avoids duplicating existing section constants", () => {
+		const repairedSource = updateWorkspaceInventorySource(
+			`export const VARIATIONS: WorkspaceVariationConfig[] = [
+\t// wp-typia add variation entries
+];
+
+export interface WorkspacePatternConfig {
+\tfile: string;
+\tslug: string;
+}
+
+export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
+\t// wp-typia add binding-source entries
+];
+`,
+			{
+				patternEntries: ['\t{ file: "src/patterns/hero.php", slug: "hero" },'],
+				variationEntries: [
+					'\t{ block: "counter-card", file: "src/blocks/counter-card/variations/hero.ts", slug: "hero" },',
+				],
+				bindingSourceEntries: [
+					'\t{ editorFile: "src/bindings/hero/editor.ts", serverFile: "src/bindings/hero/server.php", slug: "hero" },',
+				],
+			},
+		);
+
+		expect(repairedSource.match(/export const VARIATIONS\b/gu)?.length).toBe(1);
+		expect(repairedSource.match(/export const PATTERNS\b/gu)?.length).toBe(1);
+		expect(repairedSource.match(/export const BINDING_SOURCES\b/gu)?.length).toBe(1);
+		expect(repairedSource).toContain("export interface WorkspaceVariationConfig");
+		expect(repairedSource).toContain("export interface WorkspacePatternConfig");
+		expect(repairedSource).toContain("export interface WorkspaceBindingSourceConfig");
+		expect(repairedSource).toContain('slug: "hero"');
+	});
 
 	test("doctor passes on a healthy multi-block workspace", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-doctor-multi-block");
