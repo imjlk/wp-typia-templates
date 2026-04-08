@@ -45,7 +45,7 @@ import {
 /**
  * Supported top-level `wp-typia add` kinds exposed by the canonical CLI.
  */
-export const ADD_KIND_IDS = ["block", "variation", "pattern"] as const;
+export const ADD_KIND_IDS = ["block", "variation", "pattern", "binding-source"] as const;
 export type AddKindId = (typeof ADD_KIND_IDS)[number];
 
 /**
@@ -65,6 +65,9 @@ const REST_MANIFEST_IMPORT_PATTERN =
 const VARIATIONS_IMPORT_LINE = "import { registerWorkspaceVariations } from './variations';";
 const VARIATIONS_CALL_LINE = "registerWorkspaceVariations();";
 const PATTERN_BOOTSTRAP_CATEGORY = "register_block_pattern_category";
+const BINDING_SOURCE_SERVER_GLOB = "/src/bindings/*/server.php";
+const BINDING_SOURCE_EDITOR_SCRIPT = "build/bindings/index.js";
+const BINDING_SOURCE_EDITOR_ASSET = "build/bindings/index.asset.php";
 const WORKSPACE_GENERATED_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
 
 interface RunAddVariationCommandOptions {
@@ -76,6 +79,11 @@ interface RunAddVariationCommandOptions {
 interface RunAddPatternCommandOptions {
 	cwd?: string;
 	patternName: string;
+}
+
+interface RunAddBindingSourceCommandOptions {
+	bindingSourceName: string;
+	cwd?: string;
 }
 
 interface RunAddBlockCommandOptions {
@@ -408,6 +416,16 @@ function buildPatternConfigEntry(patternSlug: string): string {
 	].join("\n");
 }
 
+function buildBindingSourceConfigEntry(bindingSourceSlug: string): string {
+	return [
+		"\t{",
+		`\t\teditorFile: ${quoteTsString(`src/bindings/${bindingSourceSlug}/editor.ts`)},`,
+		`\t\tserverFile: ${quoteTsString(`src/bindings/${bindingSourceSlug}/server.php`)},`,
+		`\t\tslug: ${quoteTsString(bindingSourceSlug)},`,
+		"\t},",
+	].join("\n");
+}
+
 function buildVariationConstName(variationSlug: string): string {
 	const identifierSegments = toKebabCase(variationSlug)
 		.split("-")
@@ -511,6 +529,86 @@ register_block_pattern(
 \t)
 );
 `;
+}
+
+function buildBindingSourceServerSource(
+	bindingSourceSlug: string,
+	namespace: string,
+	textDomain: string,
+): string {
+	const bindingSourceTitle = toTitleCase(bindingSourceSlug);
+
+	return `<?php
+if ( ! defined( 'ABSPATH' ) ) {
+\treturn;
+}
+
+if ( ! function_exists( 'register_block_bindings_source' ) ) {
+\treturn;
+}
+
+register_block_bindings_source(
+\t'${namespace}/${bindingSourceSlug}',
+\tarray(
+\t\t'label' => __( ${JSON.stringify(bindingSourceTitle)}, '${textDomain}' ),
+\t\t'get_value_callback' => static function( array $source_args ) : string {
+\t\t\t$field = isset( $source_args['field'] ) && is_string( $source_args['field'] )
+\t\t\t\t? $source_args['field']
+\t\t\t\t: '${bindingSourceSlug}';
+
+\t\t\treturn sprintf(
+\t\t\t\t__( 'Replace %s with real binding source data.', '${textDomain}' ),
+\t\t\t\t$field
+\t\t\t);
+\t\t},
+\t)
+);
+`;
+}
+
+function buildBindingSourceEditorSource(
+	bindingSourceSlug: string,
+	namespace: string,
+	textDomain: string,
+): string {
+	const bindingSourceTitle = toTitleCase(bindingSourceSlug);
+
+	return `import { registerBlockBindingsSource } from '@wordpress/blocks';
+import { __ } from '@wordpress/i18n';
+
+registerBlockBindingsSource( {
+\tname: ${quoteTsString(`${namespace}/${bindingSourceSlug}`)},
+\tlabel: __( ${quoteTsString(bindingSourceTitle)}, ${quoteTsString(textDomain)} ),
+\tgetFieldsList() {
+\t\treturn [
+\t\t\t{
+\t\t\t\tlabel: __( ${quoteTsString(bindingSourceTitle)}, ${quoteTsString(textDomain)} ),
+\t\t\t\ttype: 'string',
+\t\t\t\targs: {
+\t\t\t\t\tfield: ${quoteTsString(bindingSourceSlug)},
+\t\t\t\t},
+\t\t\t},
+\t\t];
+\t},
+\tgetValues( { bindings } ) {
+\t\tconst values: Record<string, string> = {};
+\t\tfor ( const attributeName of Object.keys( bindings ) ) {
+\t\t\tvalues[ attributeName ] = ${quoteTsString(
+				`TODO: replace ${bindingSourceSlug} with real editor-side values.`,
+			)};
+\t\t}
+\t\treturn values;
+\t},
+} );
+`;
+}
+
+function buildBindingSourceIndexSource(bindingSourceSlugs: string[]): string {
+	const importLines = bindingSourceSlugs
+		.map((bindingSourceSlug) => `import './${bindingSourceSlug}/editor';`)
+		.join("\n");
+
+	return `${importLines}${importLines ? "\n\n" : ""}// wp-typia add binding-source entries\n`;
 }
 
 async function ensureVariationRegistrationHook(blockIndexPath: string): Promise<void> {
@@ -648,6 +746,82 @@ function ${patternRegistrationFunctionName}() {
 	});
 }
 
+async function ensureBindingSourceBootstrapAnchors(workspace: WorkspaceProject): Promise<void> {
+	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
+
+	await patchFile(bootstrapPath, (source) => {
+		let nextSource = source;
+		const workspaceBaseName = workspace.packageName.split("/").pop() ?? workspace.packageName;
+		const bindingRegistrationFunctionName = `${workspace.workspace.phpPrefix}_register_binding_sources`;
+		const bindingEditorEnqueueFunctionName = `${workspace.workspace.phpPrefix}_enqueue_binding_sources_editor`;
+		const bindingRegistrationHook = `add_action( 'init', '${bindingRegistrationFunctionName}', 20 );`;
+		const bindingEditorEnqueueHook = `add_action( 'enqueue_block_editor_assets', '${bindingEditorEnqueueFunctionName}' );`;
+		const bindingFunctions = `
+
+function ${bindingRegistrationFunctionName}() {
+\tforeach ( glob( __DIR__ . '${BINDING_SOURCE_SERVER_GLOB}' ) ?: array() as $binding_source_module ) {
+\t\trequire_once $binding_source_module;
+\t}
+}
+
+function ${bindingEditorEnqueueFunctionName}() {
+\t$script_path = __DIR__ . '/${BINDING_SOURCE_EDITOR_SCRIPT}';
+\t$asset_path  = __DIR__ . '/${BINDING_SOURCE_EDITOR_ASSET}';
+
+\tif ( ! file_exists( $script_path ) || ! file_exists( $asset_path ) ) {
+\t\treturn;
+\t}
+
+\t$asset = require $asset_path;
+\tif ( ! is_array( $asset ) ) {
+\t\t$asset = array();
+\t}
+
+\twp_enqueue_script(
+\t\t'${workspaceBaseName}-binding-sources',
+\t\tplugins_url( '${BINDING_SOURCE_EDITOR_SCRIPT}', __FILE__ ),
+\t\tisset( $asset['dependencies'] ) && is_array( $asset['dependencies'] ) ? $asset['dependencies'] : array(),
+\t\tisset( $asset['version'] ) ? $asset['version'] : filemtime( $script_path ),
+\t\ttrue
+\t);
+}
+`;
+
+		if (
+			!nextSource.includes(bindingRegistrationFunctionName) ||
+			!nextSource.includes(bindingEditorEnqueueFunctionName)
+		) {
+			const insertionAnchors = [
+				/add_action\(\s*["']init["']\s*,\s*["'][^"']+_load_textdomain["']\s*\);\s*\n/u,
+				/\?>\s*$/u,
+			];
+			let inserted = false;
+
+			for (const anchor of insertionAnchors) {
+				const candidate = nextSource.replace(anchor, (match) => `${bindingFunctions}\n${match}`);
+				if (candidate !== nextSource) {
+					nextSource = candidate;
+					inserted = true;
+					break;
+				}
+			}
+
+			if (!inserted) {
+				nextSource = `${nextSource.trimEnd()}\n${bindingFunctions}\n`;
+			}
+		}
+
+		if (!nextSource.includes(bindingRegistrationHook)) {
+			nextSource = `${nextSource.trimEnd()}\n${bindingRegistrationHook}\n`;
+		}
+		if (!nextSource.includes(bindingEditorEnqueueHook)) {
+			nextSource = `${nextSource.trimEnd()}\n${bindingEditorEnqueueHook}\n`;
+		}
+
+		return nextSource;
+	});
+}
+
 function ensureBlockConfigCanAddRestManifests(source: string): string {
 	const importLine =
 		"import { defineEndpointManifest } from '@wp-typia/block-runtime/metadata-core';";
@@ -666,6 +840,30 @@ async function appendBlockConfigEntries(
 		blockEntries: entries,
 		transformSource: needsRestManifestImport ? ensureBlockConfigCanAddRestManifests : undefined,
 	});
+}
+
+async function writeBindingSourceRegistry(
+	projectDir: string,
+	bindingSourceSlug: string,
+): Promise<void> {
+	const bindingsDir = path.join(projectDir, "src", "bindings");
+	const bindingsIndexPath = path.join(bindingsDir, "index.ts");
+	await fsp.mkdir(bindingsDir, { recursive: true });
+
+	const existingBindingSourceSlugs = fs.existsSync(bindingsDir)
+		? fs
+				.readdirSync(bindingsDir, { withFileTypes: true })
+				.filter((entry) => entry.isDirectory())
+				.map((entry) => entry.name)
+		: [];
+	const nextBindingSourceSlugs = Array.from(
+		new Set([...existingBindingSourceSlugs, bindingSourceSlug]),
+	).sort();
+	await fsp.writeFile(
+		bindingsIndexPath,
+		buildBindingSourceIndexSource(nextBindingSourceSlugs),
+		"utf8",
+	);
 }
 
 async function snapshotWorkspaceFiles(filePaths: string[]): Promise<WorkspaceMutationSnapshot["fileSources"]> {
@@ -923,11 +1121,13 @@ export function formatAddHelpText(): string {
   wp-typia add block <name> --template <${ADD_BLOCK_TEMPLATE_IDS.join("|")}> [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
   wp-typia add variation <name> --block <block-slug>
   wp-typia add pattern <name>
+  wp-typia add binding-source <name>
 
 Notes:
   \`wp-typia add\` runs only inside official ${WORKSPACE_TEMPLATE_PACKAGE} workspaces.
   \`add variation\` targets an existing block slug from \`scripts/block-config.ts\`.
-  \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.`;
+  \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
+  \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.`;
 }
 
 /**
@@ -1152,6 +1352,24 @@ function assertPatternDoesNotExist(
 	}
 }
 
+function assertBindingSourceDoesNotExist(
+	projectDir: string,
+	bindingSourceSlug: string,
+	inventory: WorkspaceInventory,
+): void {
+	const bindingSourceDir = path.join(projectDir, "src", "bindings", bindingSourceSlug);
+	if (fs.existsSync(bindingSourceDir)) {
+		throw new Error(
+			`A binding source already exists at ${path.relative(projectDir, bindingSourceDir)}. Choose a different name.`,
+		);
+	}
+	if (inventory.bindingSources.some((entry) => entry.slug === bindingSourceSlug)) {
+		throw new Error(
+			`A binding source inventory entry already exists for ${bindingSourceSlug}. Choose a different name.`,
+		);
+	}
+}
+
 /**
  * Add one variation entry to an existing workspace block.
  *
@@ -1287,6 +1505,85 @@ export async function runAddPatternCommand({
 
 		return {
 			patternSlug,
+			projectDir: workspace.projectDir,
+		};
+	} catch (error) {
+		await rollbackWorkspaceMutation(mutationSnapshot);
+		throw error;
+	}
+}
+
+/**
+ * Add one block binding source scaffold to an official workspace project.
+ *
+ * @param options Command options for the binding-source scaffold workflow.
+ * @param options.bindingSourceName Human-entered binding source name that will
+ * be normalized and validated before files are written.
+ * @param options.cwd Working directory used to resolve the nearest official
+ * workspace. Defaults to `process.cwd()`.
+ * @returns A promise that resolves with the normalized `bindingSourceSlug` and
+ * owning `projectDir` after the server/editor files and inventory entry have
+ * been written successfully.
+ * @throws {Error} When the command is run outside an official workspace, when
+ * the slug is invalid, or when a conflicting file or inventory entry exists.
+ */
+export async function runAddBindingSourceCommand({
+	bindingSourceName,
+	cwd = process.cwd(),
+}: RunAddBindingSourceCommandOptions): Promise<{
+	bindingSourceSlug: string;
+	projectDir: string;
+}> {
+	const workspace = resolveWorkspaceProject(cwd);
+	const bindingSourceSlug = assertValidGeneratedSlug(
+		"Binding source name",
+		normalizeBlockSlug(bindingSourceName),
+		"wp-typia add binding-source <name>",
+	);
+
+	const inventory = readWorkspaceInventory(workspace.projectDir);
+	assertBindingSourceDoesNotExist(workspace.projectDir, bindingSourceSlug, inventory);
+
+	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
+	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
+	const bindingsIndexPath = path.join(workspace.projectDir, "src", "bindings", "index.ts");
+	const bindingSourceDir = path.join(workspace.projectDir, "src", "bindings", bindingSourceSlug);
+	const serverFilePath = path.join(bindingSourceDir, "server.php");
+	const editorFilePath = path.join(bindingSourceDir, "editor.ts");
+	const mutationSnapshot: WorkspaceMutationSnapshot = {
+		fileSources: await snapshotWorkspaceFiles([blockConfigPath, bootstrapPath, bindingsIndexPath]),
+		snapshotDirs: [],
+		targetPaths: [bindingSourceDir],
+	};
+
+	try {
+		await fsp.mkdir(bindingSourceDir, { recursive: true });
+		await ensureBindingSourceBootstrapAnchors(workspace);
+		await fsp.writeFile(
+			serverFilePath,
+			buildBindingSourceServerSource(
+				bindingSourceSlug,
+				workspace.workspace.namespace,
+				workspace.workspace.textDomain,
+			),
+			"utf8",
+		);
+		await fsp.writeFile(
+			editorFilePath,
+			buildBindingSourceEditorSource(
+				bindingSourceSlug,
+				workspace.workspace.namespace,
+				workspace.workspace.textDomain,
+			),
+			"utf8",
+		);
+		await writeBindingSourceRegistry(workspace.projectDir, bindingSourceSlug);
+		await appendWorkspaceInventoryEntries(workspace.projectDir, {
+			bindingSourceEntries: [buildBindingSourceConfigEntry(bindingSourceSlug)],
+		});
+
+		return {
+			bindingSourceSlug,
 			projectDir: workspace.projectDir,
 		};
 	} catch (error) {

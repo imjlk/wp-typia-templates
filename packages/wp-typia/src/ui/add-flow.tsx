@@ -9,7 +9,7 @@ import { executeAddCommand } from "../runtime-bridge";
 const addFlowSchema = z.object({
 	block: z.string().optional(),
 	"data-storage": z.string().optional(),
-	kind: z.enum(["block", "variation", "pattern"]).default("block"),
+	kind: z.enum(["block", "variation", "pattern", "binding-source"]).default("block"),
 	name: z.string().optional(),
 	"persistence-policy": z.string().optional(),
 	template: z.string().optional(),
@@ -53,6 +53,11 @@ export function AddFlow({ cwd, initialValues, workspaceBlockOptions }: AddFlowPr
 								name: "pattern",
 								description: "Add a PHP block pattern shell",
 								value: "pattern",
+							},
+							{
+								name: "binding-source",
+								description: "Add a shared block bindings source",
+								value: "binding-source",
 							},
 						],
 					},
@@ -104,6 +109,12 @@ export function AddFlow({ cwd, initialValues, workspaceBlockOptions }: AddFlowPr
 						label: "Pattern name",
 						name: "name",
 						visibleWhen: (values) => values.kind === "pattern",
+					},
+					{
+						kind: "text",
+						label: "Binding source name",
+						name: "name",
+						visibleWhen: (values) => values.kind === "binding-source",
 					},
 					{
 						kind: "select",

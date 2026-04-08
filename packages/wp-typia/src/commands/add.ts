@@ -40,7 +40,7 @@ const addOptions = {
 };
 
 export const addCommand = defineCommand({
-	description: "Extend an official wp-typia workspace with blocks, variations, or patterns.",
+	description: "Extend an official wp-typia workspace with blocks, variations, patterns, or binding sources.",
 	handler: async (args) => {
 		await executeAddCommand({
 			cwd: args.cwd,
@@ -73,6 +73,7 @@ export const addCommand = defineCommand({
 										| "block"
 										| "variation"
 										| "pattern"
+										| "binding-source"
 										| undefined) ?? "block",
 								name: args.positional[1] ?? "",
 								"persistence-policy":

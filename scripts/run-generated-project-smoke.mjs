@@ -37,6 +37,7 @@ function normalizeBlockSlug(input) {
 
 function parseArgs(argv) {
 	const parsed = {
+		addBindingSourceName: undefined,
 		addBlockName: undefined,
 		addDataStorage: undefined,
 		addPatternName: undefined,
@@ -68,6 +69,11 @@ function parseArgs(argv) {
 		}
 		if (arg === "--add-block-name") {
 			parsed.addBlockName = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--add-binding-source-name") {
+			parsed.addBindingSourceName = next;
 			index += 1;
 			continue;
 		}
@@ -714,6 +720,27 @@ function assertWorkspacePatternArtifacts(projectDir, patternSlug) {
 	lintPhpArtifact(patternPath);
 }
 
+function assertWorkspaceBindingSourceArtifacts(projectDir, bindingSourceSlug) {
+	const bindingSourceDir = path.join(projectDir, "src", "bindings", bindingSourceSlug);
+	const serverPath = path.join(bindingSourceDir, "server.php");
+	const editorPath = path.join(bindingSourceDir, "editor.ts");
+
+	if (!fs.existsSync(serverPath)) {
+		throw new Error(`Expected workspace binding source server file at ${serverPath}`);
+	}
+	if (!fs.existsSync(editorPath)) {
+		throw new Error(`Expected workspace binding source editor file at ${editorPath}`);
+	}
+	if (!fs.existsSync(path.join(projectDir, "build", "bindings", "index.js"))) {
+		throw new Error("Expected workspace build to include build/bindings/index.js");
+	}
+	if (!fs.existsSync(path.join(projectDir, "build", "bindings", "index.asset.php"))) {
+		throw new Error("Expected workspace build to include build/bindings/index.asset.php");
+	}
+
+	lintPhpArtifact(serverPath);
+}
+
 function assertNoRawRenderedContentEcho(filePath) {
 	const source = fs.readFileSync(filePath, "utf8");
 	if (/echo\s*\(?\s*\$content\b/.test(source)) {
@@ -795,6 +822,7 @@ function main() {
 		textDomain,
 		phpPrefix,
 		addBlockName,
+		addBindingSourceName,
 		addDataStorage,
 		addPatternName,
 		addPersistencePolicy,
@@ -806,7 +834,7 @@ function main() {
 
 	if (!runtime || !template || !packageManager || !projectName) {
 		throw new Error(
-			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--with-migration-ui] [--add-block-name <name> --add-template <basic|interactivity|persistence|compound> [--add-data-storage <post-meta|custom-table>] [--add-persistence-policy <authenticated|public>]] [--add-variation-name <name> --add-variation-block <block-slug>] [--add-pattern-name <name>] --package-manager <id> --project-name <name>",
+			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--with-migration-ui] [--add-block-name <name> --add-template <basic|interactivity|persistence|compound> [--add-data-storage <post-meta|custom-table>] [--add-persistence-policy <authenticated|public>]] [--add-variation-name <name> --add-variation-block <block-slug>] [--add-pattern-name <name>] [--add-binding-source-name <name>] --package-manager <id> --project-name <name>",
 		);
 	}
 
@@ -909,6 +937,12 @@ function main() {
 			});
 		}
 
+		if (addBindingSourceName) {
+			run(runtime, [entryPath, "add", "binding-source", addBindingSourceName], {
+				cwd: projectDir,
+			});
+		}
+
 		if (template === "@wp-typia/create-workspace-template") {
 			runLocalDoctor(projectDir, runtime);
 		}
@@ -942,6 +976,12 @@ function main() {
 			}
 			if (addPatternName) {
 				assertWorkspacePatternArtifacts(projectDir, normalizeBlockSlug(addPatternName));
+			}
+			if (addBindingSourceName) {
+				assertWorkspaceBindingSourceArtifacts(
+					projectDir,
+					normalizeBlockSlug(addBindingSourceName),
+				);
 			}
 		} else if (template === "compound") {
 			assertCompoundTemplateArtifacts(projectDir, projectName);

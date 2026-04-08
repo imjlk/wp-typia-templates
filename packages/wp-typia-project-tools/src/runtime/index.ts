@@ -5,8 +5,8 @@
  * CLI while keeping reusable project logic out of the CLI package itself.
  * Consumers should prefer these exports for scaffold, add, migrate, doctor,
  * and workspace-aware helpers such as `getWorkspaceBlockSelectOptions`,
- * `runAddBlockCommand`, `runAddVariationCommand`, `runAddPatternCommand`, and
- * `runDoctor`.
+ * `runAddBlockCommand`, `runAddVariationCommand`, `runAddPatternCommand`,
+ * `runAddBindingSourceCommand`, and `runDoctor`.
  */
 export {
 	scaffoldProject,
@@ -86,6 +86,7 @@ export {
 	getNextSteps,
 	getOptionalOnboarding,
 	getWorkspaceBlockSelectOptions,
+	runAddBindingSourceCommand,
 	runAddBlockCommand,
 	runAddPatternCommand,
 	runDoctor,

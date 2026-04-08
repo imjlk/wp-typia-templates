@@ -2366,12 +2366,16 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(blockConfigSource).toContain("// wp-typia add block entries");
 		expect(blockConfigSource).toContain("// wp-typia add variation entries");
 		expect(blockConfigSource).toContain("// wp-typia add pattern entries");
+		expect(blockConfigSource).toContain("// wp-typia add binding-source entries");
 		expect(buildWorkspaceSource).toContain("--blocks-manifest");
 		expect(bootstrapSource).toContain("wp_register_block_metadata_collection");
 		expect(bootstrapSource).toContain("wp_register_block_types_from_metadata_collection");
+		expect(bootstrapSource).toContain("src/bindings/*/server.php");
+		expect(bootstrapSource).toContain("enqueue_block_editor_assets");
 		expect(bootstrapSource).toContain("register_block_pattern_category");
 		expect(bootstrapSource).toContain("/src/patterns/*.php");
 		expect(fs.existsSync(path.join(targetDir, "src", "blocks", ".gitkeep"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "src", "bindings", ".gitkeep"))).toBe(true);
 		expect(fs.existsSync(path.join(targetDir, "src", "patterns", ".gitkeep"))).toBe(true);
 	});
 
@@ -2920,6 +2924,142 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(
 			doctorChecks.checks.find((check) => check.label === "Pattern hero-layout")?.status,
 		).toBe("pass");
+	}, 15_000);
+
+	test("canonical CLI can add a binding source to an official workspace template", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-add-binding-source");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace add binding source",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-add-binding-source",
+				textDomain: "demo-space",
+				title: "Demo Workspace Add Binding Source",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		runCli("node", [entryPath, "add", "binding-source", "hero-data"], {
+			cwd: targetDir,
+		});
+
+		const blockConfigSource = fs.readFileSync(
+			path.join(targetDir, "scripts", "block-config.ts"),
+			"utf8",
+		);
+		const bootstrapSource = fs.readFileSync(
+			path.join(targetDir, "demo-workspace-add-binding-source.php"),
+			"utf8",
+		);
+		const bindingsIndexSource = fs.readFileSync(
+			path.join(targetDir, "src", "bindings", "index.ts"),
+			"utf8",
+		);
+		const bindingServerSource = fs.readFileSync(
+			path.join(targetDir, "src", "bindings", "hero-data", "server.php"),
+			"utf8",
+		);
+		const bindingEditorSource = fs.readFileSync(
+			path.join(targetDir, "src", "bindings", "hero-data", "editor.ts"),
+			"utf8",
+		);
+
+		expect(blockConfigSource).toContain('slug: "hero-data"');
+		expect(blockConfigSource).toContain('serverFile: "src/bindings/hero-data/server.php"');
+		expect(blockConfigSource).toContain('editorFile: "src/bindings/hero-data/editor.ts"');
+		expect(bootstrapSource).toContain("src/bindings/*/server.php");
+		expect(bootstrapSource).toContain("build/bindings/index.js");
+		expect(bindingsIndexSource).toContain("import './hero-data/editor';");
+		expect(bindingServerSource).toContain("register_block_bindings_source");
+		expect(bindingEditorSource).toContain("registerBlockBindingsSource");
+		expect(bindingEditorSource).toContain("getFieldsList()");
+
+		const doctorOutput = runCli("node", [entryPath, "doctor"], {
+			cwd: targetDir,
+		});
+		const doctorChecks = JSON.parse(doctorOutput) as {
+			checks: Array<{ detail: string; label: string; status: string }>;
+		};
+		expect(
+			doctorChecks.checks.find((check) => check.label === "Binding bootstrap")?.status,
+		).toBe("pass");
+		expect(
+			doctorChecks.checks.find((check) => check.label === "Binding sources index")?.status,
+		).toBe("pass");
+		expect(
+			doctorChecks.checks.find((check) => check.label === "Binding source hero-data")?.status,
+		).toBe("pass");
+
+		runCli("npm", ["run", "build"], { cwd: targetDir });
+		expect(fs.existsSync(path.join(targetDir, "build", "bindings", "index.js"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "build", "bindings", "index.asset.php"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "build", "blocks-manifest.php"))).toBe(true);
+	}, 30_000);
+
+	test("binding source workflow preserves existing files on duplicate failure", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-binding-source-duplicate");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace binding source duplicate",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-binding-source-duplicate",
+				textDomain: "demo-space",
+				title: "Demo Workspace Binding Source Duplicate",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		expect(
+			getCommandErrorMessage(() =>
+				runCli("node", [entryPath, "add", "binding-source", "2024-hero"], {
+					cwd: targetDir,
+				}),
+			),
+		).toContain("Binding source name must start with a letter");
+
+		runCli("node", [entryPath, "add", "binding-source", "hero-data"], {
+			cwd: targetDir,
+		});
+
+		const originalServerSource = fs.readFileSync(
+			path.join(targetDir, "src", "bindings", "hero-data", "server.php"),
+			"utf8",
+		);
+		const originalInventorySource = fs.readFileSync(
+			path.join(targetDir, "scripts", "block-config.ts"),
+			"utf8",
+		);
+
+		expect(
+			getCommandErrorMessage(() =>
+				runCli("node", [entryPath, "add", "binding-source", "hero-data"], {
+					cwd: targetDir,
+				}),
+			),
+		).toContain("A binding source already exists");
+
+		expect(
+			fs.readFileSync(path.join(targetDir, "src", "bindings", "hero-data", "server.php"), "utf8"),
+		).toBe(originalServerSource);
+		expect(
+			fs.readFileSync(path.join(targetDir, "scripts", "block-config.ts"), "utf8"),
+		).toBe(originalInventorySource);
 	}, 15_000);
 
 	test("doctor passes on a healthy multi-block workspace", async () => {

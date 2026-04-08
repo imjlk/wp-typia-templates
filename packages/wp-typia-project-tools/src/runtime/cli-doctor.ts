@@ -34,6 +34,9 @@ interface RunDoctorOptions {
 
 const WORKSPACE_COLLECTION_IMPORT_LINE = "import '../../collection';";
 const WORKSPACE_COLLECTION_IMPORT_PATTERN = /^\s*import\s+["']\.\.\/\.\.\/collection["']\s*;?\s*$/m;
+const WORKSPACE_BINDING_SERVER_GLOB = "/src/bindings/*/server.php";
+const WORKSPACE_BINDING_EDITOR_SCRIPT = "build/bindings/index.js";
+const WORKSPACE_BINDING_EDITOR_ASSET = "build/bindings/index.asset.php";
 const WORKSPACE_GENERATED_BLOCK_ARTIFACTS = [
 	"block.json",
 	"typia.manifest.json",
@@ -258,6 +261,57 @@ function checkWorkspacePatternBootstrap(projectDir: string, packageName: string)
 	);
 }
 
+function checkWorkspaceBindingBootstrap(projectDir: string, packageName: string): DoctorCheck {
+	const packageBaseName = packageName.split("/").pop() ?? packageName;
+	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
+	if (!fs.existsSync(bootstrapPath)) {
+		return createDoctorCheck(
+			"Binding bootstrap",
+			"fail",
+			`Missing ${path.basename(bootstrapPath)}`,
+		);
+	}
+
+	const source = fs.readFileSync(bootstrapPath, "utf8");
+	const hasServerGlob = source.includes(WORKSPACE_BINDING_SERVER_GLOB);
+	const hasEditorEnqueueHook = source.includes("enqueue_block_editor_assets");
+	const hasEditorScript = source.includes(WORKSPACE_BINDING_EDITOR_SCRIPT);
+	const hasEditorAsset = source.includes(WORKSPACE_BINDING_EDITOR_ASSET);
+
+	return createDoctorCheck(
+		"Binding bootstrap",
+		hasServerGlob && hasEditorEnqueueHook && hasEditorScript && hasEditorAsset ? "pass" : "fail",
+		hasServerGlob && hasEditorEnqueueHook && hasEditorScript && hasEditorAsset
+			? "Binding source PHP and editor bootstrap hooks are present"
+			: "Missing binding source PHP require glob or editor enqueue hook",
+	);
+}
+
+function checkWorkspaceBindingSourcesIndex(
+	projectDir: string,
+	bindingSources: WorkspaceInventory["bindingSources"],
+): DoctorCheck {
+	const indexRelativePath = path.join("src", "bindings", "index.ts");
+	const indexPath = path.join(projectDir, indexRelativePath);
+
+	if (!fs.existsSync(indexPath)) {
+		return createDoctorCheck("Binding sources index", "fail", `Missing ${indexRelativePath}`);
+	}
+
+	const source = fs.readFileSync(indexPath, "utf8");
+	const missingImports = bindingSources.filter(
+		(bindingSource) => !source.includes(`./${bindingSource.slug}/editor`),
+	);
+
+	return createDoctorCheck(
+		"Binding sources index",
+		missingImports.length === 0 ? "pass" : "fail",
+		missingImports.length === 0
+			? "Binding source editor registrations are aggregated"
+			: `Missing editor imports for: ${missingImports.map((entry) => entry.slug).join(", ")}`,
+	);
+}
+
 function checkVariationEntrypoint(projectDir: string, blockSlug: string): DoctorCheck {
 	const entryPath = path.join(projectDir, "src", "blocks", blockSlug, "index.tsx");
 	if (!fs.existsSync(entryPath)) {
@@ -438,7 +492,7 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 			createDoctorCheck(
 				"Workspace inventory",
 				"pass",
-				`${inventory.blocks.length} block(s), ${inventory.variations.length} variation(s), ${inventory.patterns.length} pattern(s)`,
+				`${inventory.blocks.length} block(s), ${inventory.variations.length} variation(s), ${inventory.patterns.length} pattern(s), ${inventory.bindingSources.length} binding source(s)`,
 			),
 		);
 
@@ -488,6 +542,21 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 		for (const pattern of inventory.patterns) {
 			checks.push(
 				checkExistingFiles(workspace.projectDir, `Pattern ${pattern.slug}`, [pattern.file]),
+			);
+		}
+
+		if (inventory.bindingSources.length > 0) {
+			checks.push(checkWorkspaceBindingBootstrap(workspace.projectDir, workspace.packageName));
+			checks.push(
+				checkWorkspaceBindingSourcesIndex(workspace.projectDir, inventory.bindingSources),
+			);
+		}
+		for (const bindingSource of inventory.bindingSources) {
+			checks.push(
+				checkExistingFiles(workspace.projectDir, `Binding source ${bindingSource.slug}`, [
+					bindingSource.serverFile,
+					bindingSource.editorFile,
+				]),
 			);
 		}
 
