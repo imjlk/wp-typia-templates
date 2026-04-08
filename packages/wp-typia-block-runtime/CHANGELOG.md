@@ -1,5 +1,13 @@
 # @wp-typia/block-runtime
 
+## 0.4.0 — 2026-04-08
+
+### Minor changes
+
+- [e20511a](https://github.com/imjlk/wp-typia/commit/e20511af33a65a9a78cde9b015dac8ec1e9ad4f5) Standardize generated block ids, scoped client ids, persistence resource keys,
+  and public write request ids under `@wp-typia/block-runtime/identifiers` for
+  templates and repo examples. — Thanks @imjlk!
+
 ## 0.3.0 — 2026-04-07
 
 ### Minor changes
