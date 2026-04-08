@@ -59,7 +59,7 @@ ___
 
 ### \_\_experimentalSkipSerialization
 
-• `Optional` `Readonly` **\_\_experimentalSkipSerialization**: [`SkipSerialization`](../modules/packages_wp_typia_block_types_src_blocks_supports.md#skipserialization)\<``"width"`` \| ``"aspectRatio"`` \| ``"height"`` \| ``"minHeight"``\>
+• `Optional` `Readonly` **\_\_experimentalSkipSerialization**: [`SkipSerialization`](../modules/packages_wp_typia_block_types_src_blocks_supports.md#skipserialization)\<``"width"`` \| ``"height"`` \| ``"aspectRatio"`` \| ``"minHeight"``\>
 
 #### Defined in
 
@@ -69,7 +69,7 @@ ___
 
 ### \_\_experimentalDefaultControls
 
-• `Optional` `Readonly` **\_\_experimentalDefaultControls**: `Readonly`\<`Partial`\<`Record`\<``"width"`` \| ``"aspectRatio"`` \| ``"height"`` \| ``"minHeight"``, `boolean`\>\> & `Record`\<`string`, `undefined` \| `boolean`\>\>
+• `Optional` `Readonly` **\_\_experimentalDefaultControls**: `Readonly`\<`Partial`\<`Record`\<``"width"`` \| ``"height"`` \| ``"aspectRatio"`` \| ``"minHeight"``, `boolean`\>\> & `Record`\<`string`, `undefined` \| `boolean`\>\>
 
 #### Defined in
 

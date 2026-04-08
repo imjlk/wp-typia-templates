@@ -4,27 +4,21 @@
 
 ## Table of contents
 
-### Type Aliases
-
-- [WpTypiaReservedTopLevelCommandName](packages_wp_typia_src_command_contract.md#wptypiareservedtoplevelcommandname)
-
 ### Variables
 
 - [WP\_TYPIA\_CANONICAL\_CREATE\_USAGE](packages_wp_typia_src_command_contract.md#wp_typia_canonical_create_usage)
 - [WP\_TYPIA\_POSITIONAL\_ALIAS\_USAGE](packages_wp_typia_src_command_contract.md#wp_typia_positional_alias_usage)
+- [WP\_TYPIA\_CANONICAL\_MIGRATE\_USAGE](packages_wp_typia_src_command_contract.md#wp_typia_canonical_migrate_usage)
+- [WP\_TYPIA\_DEPRECATED\_MIGRATIONS\_USAGE](packages_wp_typia_src_command_contract.md#wp_typia_deprecated_migrations_usage)
 - [WP\_TYPIA\_BUNLI\_MIGRATION\_DOC](packages_wp_typia_src_command_contract.md#wp_typia_bunli_migration_doc)
 - [WP\_TYPIA\_RESERVED\_TOP\_LEVEL\_COMMAND\_NAMES](packages_wp_typia_src_command_contract.md#wp_typia_reserved_top_level_command_names)
+- [WP\_TYPIA\_TOP\_LEVEL\_COMMAND\_NAMES](packages_wp_typia_src_command_contract.md#wp_typia_top_level_command_names)
 - [WP\_TYPIA\_FUTURE\_COMMAND\_TREE](packages_wp_typia_src_command_contract.md#wp_typia_future_command_tree)
 
-## Type Aliases
+### Functions
 
-### WpTypiaReservedTopLevelCommandName
-
-Ƭ **WpTypiaReservedTopLevelCommandName**: typeof [`WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES`](packages_wp_typia_src_command_contract.md#wp_typia_reserved_top_level_command_names)[`number`]
-
-#### Defined in
-
-[packages/wp-typia/src/command-contract.ts:13](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L13)
+- [isReservedTopLevelCommandName](packages_wp_typia_src_command_contract.md#isreservedtoplevelcommandname)
+- [normalizeWpTypiaArgv](packages_wp_typia_src_command_contract.md#normalizewptypiaargv)
 
 ## Variables
 
@@ -48,9 +42,9 @@ ___
 
 ___
 
-### WP\_TYPIA\_BUNLI\_MIGRATION\_DOC
+### WP\_TYPIA\_CANONICAL\_MIGRATE\_USAGE
 
-• `Const` **WP\_TYPIA\_BUNLI\_MIGRATION\_DOC**: ``"docs/bunli-cli-migration.md"``
+• `Const` **WP\_TYPIA\_CANONICAL\_MIGRATE\_USAGE**: ``"wp-typia migrate <subcommand>"``
 
 #### Defined in
 
@@ -58,9 +52,19 @@ ___
 
 ___
 
-### WP\_TYPIA\_RESERVED\_TOP\_LEVEL\_COMMAND\_NAMES
+### WP\_TYPIA\_DEPRECATED\_MIGRATIONS\_USAGE
 
-• `Const` **WP\_TYPIA\_RESERVED\_TOP\_LEVEL\_COMMAND\_NAMES**: readonly [``"create"``, ``"add"``, ``"templates"``, ``"migrations"``, ``"doctor"``]
+• `Const` **WP\_TYPIA\_DEPRECATED\_MIGRATIONS\_USAGE**: ``"wp-typia migrations <subcommand>"``
+
+#### Defined in
+
+[packages/wp-typia/src/command-contract.ts:4](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L4)
+
+___
+
+### WP\_TYPIA\_BUNLI\_MIGRATION\_DOC
+
+• `Const` **WP\_TYPIA\_BUNLI\_MIGRATION\_DOC**: ``"docs/bunli-cli-migration.md"``
 
 #### Defined in
 
@@ -68,10 +72,70 @@ ___
 
 ___
 
-### WP\_TYPIA\_FUTURE\_COMMAND\_TREE
+### WP\_TYPIA\_RESERVED\_TOP\_LEVEL\_COMMAND\_NAMES
 
-• `Const` **WP\_TYPIA\_FUTURE\_COMMAND\_TREE**: readonly [\{ `description`: ``"Scaffold a new wp-typia project."`` = "Scaffold a new wp-typia project."; `name`: ``"create"`` = "create" }, \{ `description`: ``"Extend an official wp-typia workspace."`` = "Extend an official wp-typia workspace."; `name`: ``"add"`` = "add"; `subcommands`: readonly [``"block"``, ``"variation"``, ``"pattern"``]  }, \{ `description`: ``"Inspect scaffold templates."`` = "Inspect scaffold templates."; `name`: ``"templates"`` = "templates"; `subcommands`: readonly [``"list"``, ``"inspect"``]  }, \{ `description`: ``"Run migration workflows."`` = "Run migration workflows."; `name`: ``"migrations"`` = "migrations"; `subcommands`: readonly [``"init"``, ``"snapshot"``, ``"diff"``, ``"scaffold"``, ``"plan"``, ``"wizard"``, ``"verify"``, ``"doctor"``, ``"fixtures"``, ``"fuzz"``]  }, \{ `description`: ``"Run repository and project diagnostics."`` = "Run repository and project diagnostics."; `name`: ``"doctor"`` = "doctor" }]
+• `Const` **WP\_TYPIA\_RESERVED\_TOP\_LEVEL\_COMMAND\_NAMES**: readonly [``"create"``, ``"add"``, ``"migrate"``, ``"templates"``, ``"doctor"``, ``"mcp"``, ``"skills"``, ``"completions"``, ``"complete"``]
 
 #### Defined in
 
-[packages/wp-typia/src/command-contract.ts:16](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L16)
+[packages/wp-typia/src/command-contract.ts:7](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L7)
+
+___
+
+### WP\_TYPIA\_TOP\_LEVEL\_COMMAND\_NAMES
+
+• `Const` **WP\_TYPIA\_TOP\_LEVEL\_COMMAND\_NAMES**: readonly [``"create"``, ``"add"``, ``"migrate"``, ``"templates"``, ``"doctor"``, ``"mcp"``]
+
+#### Defined in
+
+[packages/wp-typia/src/command-contract.ts:19](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L19)
+
+___
+
+### WP\_TYPIA\_FUTURE\_COMMAND\_TREE
+
+• `Const` **WP\_TYPIA\_FUTURE\_COMMAND\_TREE**: readonly [\{ `description`: ``"Scaffold a new wp-typia project."`` = "Scaffold a new wp-typia project."; `name`: ``"create"`` = "create" }, \{ `description`: ``"Extend an official wp-typia workspace."`` = "Extend an official wp-typia workspace."; `name`: ``"add"`` = "add"; `subcommands`: readonly [``"block"``, ``"variation"``, ``"pattern"``]  }, \{ `description`: ``"Run migration workflows."`` = "Run migration workflows."; `name`: ``"migrate"`` = "migrate"; `subcommands`: readonly [``"init"``, ``"snapshot"``, ``"diff"``, ``"scaffold"``, ``"plan"``, ``"wizard"``, ``"verify"``, ``"doctor"``, ``"fixtures"``, ``"fuzz"``]  }, \{ `description`: ``"Inspect scaffold templates."`` = "Inspect scaffold templates."; `name`: ``"templates"`` = "templates"; `subcommands`: readonly [``"list"``, ``"inspect"``]  }, \{ `description`: ``"Run repository and project diagnostics."`` = "Run repository and project diagnostics."; `name`: ``"doctor"`` = "doctor" }, \{ `description`: ``"Inspect or sync schema-driven MCP metadata."`` = "Inspect or sync schema-driven MCP metadata."; `name`: ``"mcp"`` = "mcp"; `subcommands`: readonly [``"list"``, ``"sync"``]  }]
+
+#### Defined in
+
+[packages/wp-typia/src/command-contract.ts:103](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L103)
+
+## Functions
+
+### isReservedTopLevelCommandName
+
+▸ **isReservedTopLevelCommandName**(`value`): `boolean`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `value` | `string` |
+
+#### Returns
+
+`boolean`
+
+#### Defined in
+
+[packages/wp-typia/src/command-contract.ts:145](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L145)
+
+___
+
+### normalizeWpTypiaArgv
+
+▸ **normalizeWpTypiaArgv**(`argv`): `string`[]
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `argv` | `string`[] |
+
+#### Returns
+
+`string`[]
+
+#### Defined in
+
+[packages/wp-typia/src/command-contract.ts:202](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L202)

@@ -1,0 +1,100 @@
+[wp-typia - v1.0.0](../README.md) / [Modules](../modules.md) / packages/wp-typia-project-tools/src/runtime/template-source
+
+# Module: packages/wp-typia-project-tools/src/runtime/template-source
+
+## Table of contents
+
+### Interfaces
+
+- [TemplateVariableContext](../interfaces/packages_wp_typia_project_tools_src_runtime_template_source.TemplateVariableContext.md)
+- [ResolvedTemplateSource](../interfaces/packages_wp_typia_project_tools_src_runtime_template_source.ResolvedTemplateSource.md)
+
+### Functions
+
+- [parseGitHubTemplateLocator](packages_wp_typia_project_tools_src_runtime_template_source.md#parsegithubtemplatelocator)
+- [parseNpmTemplateLocator](packages_wp_typia_project_tools_src_runtime_template_source.md#parsenpmtemplatelocator)
+- [parseTemplateLocator](packages_wp_typia_project_tools_src_runtime_template_source.md#parsetemplatelocator)
+- [resolveTemplateSource](packages_wp_typia_project_tools_src_runtime_template_source.md#resolvetemplatesource)
+
+## Functions
+
+### parseGitHubTemplateLocator
+
+▸ **parseGitHubTemplateLocator**(`templateId`): `GitHubTemplateLocator` \| ``null``
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `templateId` | `string` |
+
+#### Returns
+
+`GitHubTemplateLocator` \| ``null``
+
+#### Defined in
+
+[packages/wp-typia-project-tools/src/runtime/template-source.ts:359](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-source.ts#L359)
+
+___
+
+### parseNpmTemplateLocator
+
+▸ **parseNpmTemplateLocator**(`templateId`): `NpmTemplateLocator` \| ``null``
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `templateId` | `string` |
+
+#### Returns
+
+`NpmTemplateLocator` \| ``null``
+
+#### Defined in
+
+[packages/wp-typia-project-tools/src/runtime/template-source.ts:381](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-source.ts#L381)
+
+___
+
+### parseTemplateLocator
+
+▸ **parseTemplateLocator**(`templateId`): `RemoteTemplateLocator`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `templateId` | `string` |
+
+#### Returns
+
+`RemoteTemplateLocator`
+
+#### Defined in
+
+[packages/wp-typia-project-tools/src/runtime/template-source.ts:406](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-source.ts#L406)
+
+___
+
+### resolveTemplateSource
+
+▸ **resolveTemplateSource**(`templateId`, `cwd`, `variables`, `variant?`): `Promise`\<[`ResolvedTemplateSource`](../interfaces/packages_wp_typia_project_tools_src_runtime_template_source.ResolvedTemplateSource.md)\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `templateId` | `string` |
+| `cwd` | `string` |
+| `variables` | `Object` |
+| `variant?` | `string` |
+
+#### Returns
+
+`Promise`\<[`ResolvedTemplateSource`](../interfaces/packages_wp_typia_project_tools_src_runtime_template_source.ResolvedTemplateSource.md)\>
+
+#### Defined in
+
+[packages/wp-typia-project-tools/src/runtime/template-source.ts:1020](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-source.ts#L1020)

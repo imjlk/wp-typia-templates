@@ -109,7 +109,7 @@ ___
 
 ### \_\_experimentalSkipSerialization
 
-• `Optional` `Readonly` **\_\_experimentalSkipSerialization**: [`SkipSerialization`](../modules/packages_wp_typia_block_types_src_blocks_supports.md#skipserialization)\<``"text"`` \| ``"link"`` \| ``"background"`` \| ``"gradients"`` \| ``"heading"`` \| ``"button"``\>
+• `Optional` `Readonly` **\_\_experimentalSkipSerialization**: [`SkipSerialization`](../modules/packages_wp_typia_block_types_src_blocks_supports.md#skipserialization)\<``"link"`` \| ``"text"`` \| ``"heading"`` \| ``"button"`` \| ``"background"`` \| ``"gradients"``\>
 
 #### Defined in
 
@@ -119,7 +119,7 @@ ___
 
 ### \_\_experimentalDefaultControls
 
-• `Optional` `Readonly` **\_\_experimentalDefaultControls**: `Readonly`\<`Partial`\<`Record`\<``"text"`` \| ``"link"`` \| ``"background"`` \| ``"gradients"``, `boolean`\>\> & `Record`\<`string`, `undefined` \| `boolean`\>\>
+• `Optional` `Readonly` **\_\_experimentalDefaultControls**: `Readonly`\<`Partial`\<`Record`\<``"link"`` \| ``"text"`` \| ``"background"`` \| ``"gradients"``, `boolean`\>\> & `Record`\<`string`, `undefined` \| `boolean`\>\>
 
 #### Defined in
 

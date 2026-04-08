@@ -30,7 +30,7 @@
 | `method` | [`EndpointMethod`](packages_wp_typia_api_client_src_client.md#endpointmethod) |
 | `operationId?` | `string` |
 | `path` | `string` |
-| `requestLocation?` | ``"query"`` \| ``"body"`` \| ``"query-and-body"`` |
+| `requestLocation?` | ``"body"`` \| ``"query"`` \| ``"query-and-body"`` |
 | `validateRequest` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterQuery`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterQuery.md)\> |
 | `validateResponse` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\> |
 
@@ -54,7 +54,7 @@ ___
 | `method` | [`EndpointMethod`](packages_wp_typia_api_client_src_client.md#endpointmethod) |
 | `operationId?` | `string` |
 | `path` | `string` |
-| `requestLocation?` | ``"query"`` \| ``"body"`` \| ``"query-and-body"`` |
+| `requestLocation?` | ``"body"`` \| ``"query"`` \| ``"query-and-body"`` |
 | `validateRequest` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterIncrementRequest`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md)\> |
 | `validateResponse` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\> |
 

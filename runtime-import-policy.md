@@ -1,18 +1,20 @@
 # Runtime Import Policy
 
-This document is the normative generated-project runtime import policy for
-wp-typia generated projects.
+This document is the normative import policy for public `wp-typia` package
+surfaces.
 
-It defines which import paths generated projects may rely on as supported
-public API through v1. The broader audit in
-[`docs/runtime-surface.md`](./runtime-surface.md) remains descriptive only.
+## Canonical package map
 
-## Supported generated-project import paths
-
-Generated projects may rely on these import paths as supported public API:
-
-- `@wp-typia/block-runtime/metadata-core`
+- `wp-typia`
+  CLI only.
+- `@wp-typia/project-tools`
+  Project orchestration and programmatic tooling.
+- `@wp-typia/project-tools/schema-core`
+  Project schema and OpenAPI helpers.
 - `@wp-typia/block-runtime`
+  Generated-project block helper root.
+- `@wp-typia/block-runtime/metadata-core`
+  Metadata sync and endpoint manifest helpers.
 - `@wp-typia/block-runtime/blocks`
 - `@wp-typia/block-runtime/defaults`
 - `@wp-typia/block-runtime/editor`
@@ -20,56 +22,37 @@ Generated projects may rely on these import paths as supported public API:
 - `@wp-typia/block-runtime/inspector`
 - `@wp-typia/block-runtime/validation`
 
-## Support promise
+## Generated-project support promise
 
-For the supported generated-project import paths above:
+Generated projects may rely on `@wp-typia/block-runtime/*` and
+`@wp-typia/block-runtime/metadata-core` as supported public API.
+
+That means:
 
 - breaking removals are semver-significant
 - breaking signature changes are semver-significant
 - additive exports remain allowed
-- generated projects do not need to treat these paths as internal or unstable
 
-`@wp-typia/create` remains public overall, but this policy only blesses
-`@wp-typia/block-runtime/metadata-core` plus the `@wp-typia/block-runtime` helper
-surface listed above for generated projects.
+## Programmatic project tooling
 
-## Compatibility exports
+Manual orchestration or repo tooling should use:
 
-`@wp-typia/create/metadata-core` remains exported as a backward-compatible
-facade to `@wp-typia/block-runtime/metadata-core`.
+- `@wp-typia/project-tools`
+- `@wp-typia/project-tools/schema-core`
 
-`@wp-typia/create/runtime/*` remains exported for backward compatibility, but it
-is no longer the preferred generated-project import surface. These create
-runtime subpaths are compatibility shims; `@wp-typia/block-runtime/*` owns the
-maintained implementation.
+Those imports cover scaffold, add-block, migrate, template, doctor, package
+manager, starter manifest, and schema/OpenAPI project helpers.
 
-Newly generated projects should use `@wp-typia/block-runtime/*` for block
-runtime helpers and keep `@wp-typia/block-runtime/metadata-core` for TypeScript-to-
-metadata sync. That includes `@wp-typia/block-runtime/identifiers` for
-generated block ids, scoped client ids, persistence resource keys, and public
-write request ids.
+## Deprecated surface
 
-## Exported but non-canonical generated-project path
+`@wp-typia/create` remains publishable only as a deprecated legacy package
+shell. It is not a supported runtime import target anymore.
 
-`@wp-typia/create/runtime/schema-core` remains exported, but it is not a
-canonical generated-project import path.
+## Out of scope
 
-That subpath is still available when someone explicitly wants it, but the docs
-prefer the root schema exports for manual imports, such as:
+These areas are not covered by the generated-project compatibility promise:
 
-- `projectJsonSchemaDocument()`
-- `manifestToJsonSchema()`
-- `manifestToOpenApi()`
-
-## Not part of the generated-project runtime policy
-
-The following areas are not part of the generated-project runtime support
-policy:
-
-- scaffold flow internals
-- template registry, rendering, and composition internals
 - CLI implementation internals
-
-Those areas may still be exported or reachable indirectly today, but they are
-not covered by the generated-project runtime compatibility promise in this
-document.
+- Bunli command composition
+- template rendering internals
+- project-scaffold orchestration internals

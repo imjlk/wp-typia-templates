@@ -59,7 +59,7 @@ ___
 
 ### \_\_experimentalSkipSerialization
 
-• `Optional` `Readonly` **\_\_experimentalSkipSerialization**: [`SkipSerialization`](../modules/packages_wp_typia_block_types_src_blocks_supports.md#skipserialization)\<``"color"`` \| ``"radius"`` \| ``"style"`` \| ``"width"``\>
+• `Optional` `Readonly` **\_\_experimentalSkipSerialization**: [`SkipSerialization`](../modules/packages_wp_typia_block_types_src_blocks_supports.md#skipserialization)\<``"width"`` \| ``"style"`` \| ``"color"`` \| ``"radius"``\>
 
 #### Defined in
 
@@ -69,7 +69,7 @@ ___
 
 ### \_\_experimentalDefaultControls
 
-• `Optional` `Readonly` **\_\_experimentalDefaultControls**: `Readonly`\<`Partial`\<`Record`\<``"color"`` \| ``"radius"`` \| ``"style"`` \| ``"width"``, `boolean`\>\> & `Record`\<`string`, `undefined` \| `boolean`\>\>
+• `Optional` `Readonly` **\_\_experimentalDefaultControls**: `Readonly`\<`Partial`\<`Record`\<``"width"`` \| ``"style"`` \| ``"color"`` \| ``"radius"``, `boolean`\>\> & `Record`\<`string`, `undefined` \| `boolean`\>\>
 
 #### Defined in
 

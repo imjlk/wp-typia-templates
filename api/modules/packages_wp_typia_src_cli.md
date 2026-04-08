@@ -8,48 +8,54 @@
 
 - [default](packages_wp_typia_src_cli.md#default)
 
-### Variables
-
-- [bunliPreparedCommands](packages_wp_typia_src_cli.md#bunlipreparedcommands)
-
 ### Functions
 
-- [createPreparedWpTypiaCli](packages_wp_typia_src_cli.md#createpreparedwptypiacli)
+- [createWpTypiaCli](packages_wp_typia_src_cli.md#createwptypiacli)
+- [main](packages_wp_typia_src_cli.md#main)
 
 ## References
 
 ### default
 
-Renames and re-exports [createPreparedWpTypiaCli](packages_wp_typia_src_cli.md#createpreparedwptypiacli)
-
-## Variables
-
-### bunliPreparedCommands
-
-• `Const` **bunliPreparedCommands**: `Command`\<`any`, `any`\>[]
-
-#### Defined in
-
-[packages/wp-typia/src/cli.ts:10](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/cli.ts#L10)
+Renames and re-exports [createWpTypiaCli](packages_wp_typia_src_cli.md#createwptypiacli)
 
 ## Functions
 
-### createPreparedWpTypiaCli
+### createWpTypiaCli
 
-▸ **createPreparedWpTypiaCli**(): `Promise`\<`CLI`\>
+▸ **createWpTypiaCli**(`options?`): `Promise`\<`CLI`\>
 
-Create the future Bunli-owned `wp-typia` CLI without switching the active
-published runtime in this release.
+#### Parameters
 
-The current `bin/wp-typia.js` entry remains authoritative until the next
-migration round wires this CLI into the published package surface.
+| Name | Type |
+| :------ | :------ |
+| `options` | `Object` |
+| `options.configOverridePath?` | `string` |
 
 #### Returns
 
 `Promise`\<`CLI`\>
 
-Prepared Bunli CLI instance for command-tree validation.
+#### Defined in
+
+[packages/wp-typia/src/cli.ts:76](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/cli.ts#L76)
+
+___
+
+### main
+
+▸ **main**(`argv?`): `Promise`\<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `argv` | `string`[] |
+
+#### Returns
+
+`Promise`\<`void`\>
 
 #### Defined in
 
-[packages/wp-typia/src/cli.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/cli.ts#L27)
+[packages/wp-typia/src/cli.ts:112](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/cli.ts#L112)

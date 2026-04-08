@@ -22,8 +22,8 @@ Renames and re-exports [addCommand](packages_wp_typia_src_commands_add.md#addcom
 
 ### addCommand
 
-• `Const` **addCommand**: `Group`\<{}, ``"add"``\>
+• `Const` **addCommand**: `RunnableCommand`\<\{ `data-storage`: \{ `description`: `string` = "Persistence storage mode for persistence-capable templates."; `schema`: `ZodOptional`\<`ZodString`\>  } ; `persistence-policy`: \{ `description`: `string` = "Persistence write policy for persistence-capable templates."; `schema`: `ZodOptional`\<`ZodString`\>  } ; `template`: \{ `description`: `string` = "Built-in block family for the new block."; `schema`: `ZodOptional`\<`ZodString`\>  }  }, {}, `string`\> & {}
 
 #### Defined in
 
-[packages/wp-typia/src/commands/add.ts:23](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/commands/add.ts#L23)
+[packages/wp-typia/src/commands/add.ts:38](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/commands/add.ts#L38)

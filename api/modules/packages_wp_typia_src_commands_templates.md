@@ -22,8 +22,8 @@ Renames and re-exports [templatesCommand](packages_wp_typia_src_commands_templat
 
 ### templatesCommand
 
-• `Const` **templatesCommand**: `Group`\<{}, ``"templates"``\>
+• `Const` **templatesCommand**: `RunnableCommand`\<\{ `id`: \{ `description`: `string` = "Template id for \`templates inspect\`."; `schema`: `ZodOptional`\<`ZodString`\>  }  }, {}, `string`\> & {}
 
 #### Defined in
 
-[packages/wp-typia/src/commands/templates.ts:17](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/commands/templates.ts#L17)
+[packages/wp-typia/src/commands/templates.ts:6](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/commands/templates.ts#L6)
