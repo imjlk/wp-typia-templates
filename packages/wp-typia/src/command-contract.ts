@@ -155,9 +155,9 @@ function assertStringOptionValues(argv: string[]): void {
 	}
 
 	const commandName = argv[firstPositionalIndex] as keyof typeof STRING_OPTION_NAMES_BY_COMMAND;
-	const stringOptionNames = STRING_OPTION_NAMES_BY_COMMAND[commandName];
-	if (!stringOptionNames) {
-		return;
+	const stringOptionNames = new Set<string>(GLOBAL_STRING_OPTION_NAMES);
+	for (const optionName of STRING_OPTION_NAMES_BY_COMMAND[commandName] ?? []) {
+		stringOptionNames.add(optionName);
 	}
 
 	for (let index = firstPositionalIndex + 1; index < argv.length; index += 1) {
@@ -165,12 +165,22 @@ function assertStringOptionValues(argv: string[]): void {
 		if (arg === "--") {
 			break;
 		}
+		if (arg.length === 2 && arg.startsWith("-")) {
+			if (SHORT_OPTION_NAMES_WITH_VALUES.has(arg.slice(1))) {
+				const next = argv[index + 1];
+				if (!next || next.startsWith("-")) {
+					throw new Error(`\`${arg}\` requires a value.`);
+				}
+				index += 1;
+			}
+			continue;
+		}
 		if (!arg.startsWith("--")) {
 			continue;
 		}
 
 		const [rawName, inlineValue] = arg.slice(2).split("=", 2);
-		if (!stringOptionNames.has(rawName as never)) {
+		if (!stringOptionNames.has(rawName)) {
 			continue;
 		}
 

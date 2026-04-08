@@ -15,6 +15,47 @@ import { WP_TYPIA_CONFIG_SOURCES } from "./config";
 import { createWpTypiaSkillsMetadataPlugin } from "./plugins/wp-typia-skills";
 import { wpTypiaUserConfigPlugin } from "./plugins/wp-typia-user-config";
 
+function extractWpTypiaConfigOverride(argv: string[]): {
+	argv: string[];
+	configOverridePath?: string;
+} {
+	const nextArgv: string[] = [];
+	let configOverridePath: string | undefined;
+
+	for (let index = 0; index < argv.length; index += 1) {
+		const arg = argv[index];
+		if (!arg) {
+			continue;
+		}
+
+		if (arg === "--config" || arg === "-c") {
+			const next = argv[index + 1];
+			if (!next || next.startsWith("-")) {
+				throw new Error(`\`${arg}\` requires a value.`);
+			}
+			configOverridePath = next;
+			index += 1;
+			continue;
+		}
+
+		if (arg.startsWith("--config=")) {
+			const inlineValue = arg.slice("--config=".length);
+			if (!inlineValue) {
+				throw new Error("`--config` requires a value.");
+			}
+			configOverridePath = inlineValue;
+			continue;
+		}
+
+		nextArgv.push(arg);
+	}
+
+	return {
+		argv: nextArgv,
+		configOverridePath,
+	};
+}
+
 function resolveGeneratedMetadataPath(moduleUrl: string): string {
 	const candidates = [
 		new URL("./.bunli/commands.gen.js", moduleUrl),
@@ -32,7 +73,9 @@ function resolveGeneratedMetadataPath(moduleUrl: string): string {
 	return fileURLToPath(new URL("../.bunli/commands.gen.ts", moduleUrl));
 }
 
-export async function createWpTypiaCli(): Promise<CLI> {
+export async function createWpTypiaCli(options: {
+	configOverridePath?: string;
+} = {}): Promise<CLI> {
 	const cli = await createCLI({
 		...bunliConfig,
 		description: packageJson.description,
@@ -42,7 +85,9 @@ export async function createWpTypiaCli(): Promise<CLI> {
 				mergeStrategy: "deep",
 				sources: [...WP_TYPIA_CONFIG_SOURCES],
 			}),
-			wpTypiaUserConfigPlugin({}),
+			wpTypiaUserConfigPlugin({
+				overrideSource: options.configOverridePath,
+			}),
 			aiAgentPlugin({}),
 			createWpTypiaSkillsMetadataPlugin(wpTypiaCommands),
 			skillsPlugin({
@@ -65,8 +110,10 @@ export async function createWpTypiaCli(): Promise<CLI> {
 }
 
 export async function main(argv = process.argv.slice(2)): Promise<void> {
-	const cli = await createWpTypiaCli();
-	await cli.run(normalizeWpTypiaArgv(argv));
+	const normalizedArgv = normalizeWpTypiaArgv(argv);
+	const { argv: cliArgv, configOverridePath } = extractWpTypiaConfigOverride(normalizedArgv);
+	const cli = await createWpTypiaCli({ configOverridePath });
+	await cli.run(cliArgv);
 }
 
 if (import.meta.main) {

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 
 import { WP_TYPIA_TOP_LEVEL_COMMAND_NAMES } from "../src/command-contract";
 
@@ -73,5 +74,47 @@ describe("wp-typia package", () => {
 		expect(() => runUtf8Command("node", [entryPath, "mcp", "list"])).toThrow(
 			"No MCP schema sources are configured.",
 		);
+	});
+
+	test("loads MCP schema sources from an explicit --config override", () => {
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-mcp-config-"));
+		const schemaPath = path.join(tempRoot, "mcp-tools.json");
+		const configPath = path.join(tempRoot, "wp-typia.config.json");
+
+		try {
+			fs.writeFileSync(
+				schemaPath,
+				`${JSON.stringify([{ description: "Ping test tool", name: "ping" }], null, 2)}\n`,
+				"utf8",
+			);
+			fs.writeFileSync(
+				configPath,
+				`${JSON.stringify({
+					mcp: {
+						schemaSources: [
+							{
+								namespace: "demo",
+								path: schemaPath,
+							},
+						],
+					},
+				}, null, 2)}\n`,
+				"utf8",
+			);
+
+			const output = runUtf8Command("node", [entryPath, "--config", configPath, "mcp", "list"]);
+			const parsed = JSON.parse(output) as {
+				groups: Array<{ namespace: string; toolCount: number; tools: string[] }>;
+			};
+			expect(parsed.groups).toEqual([
+				{
+					namespace: "demo",
+					toolCount: 1,
+					tools: ["ping"],
+				},
+			]);
+		} finally {
+			fs.rmSync(tempRoot, { force: true, recursive: true });
+		}
 	});
 });

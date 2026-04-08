@@ -1,6 +1,11 @@
 import { createPlugin } from "@bunli/core/plugin";
 
-import { loadWpTypiaUserConfig, type WpTypiaUserConfig } from "../config";
+import {
+	loadWpTypiaUserConfig,
+	loadWpTypiaUserConfigFromSource,
+	mergeWpTypiaUserConfig,
+	type WpTypiaUserConfig,
+} from "../config";
 
 declare module "@bunli/core/plugin" {
 	interface CommandContext {
@@ -11,13 +16,20 @@ declare module "@bunli/core/plugin" {
 	}
 }
 
-export const wpTypiaUserConfigPlugin = createPlugin(() => {
+export const wpTypiaUserConfigPlugin = createPlugin((options: { overrideSource?: string } = {}) => {
 	let resolvedConfig: WpTypiaUserConfig = {};
 
 	return {
 		name: "wp-typia-user-config",
 		async setup(context) {
 			resolvedConfig = await loadWpTypiaUserConfig(context.paths.cwd);
+			if (options.overrideSource) {
+				const overrideConfig = await loadWpTypiaUserConfigFromSource(
+					context.paths.cwd,
+					options.overrideSource,
+				);
+				resolvedConfig = mergeWpTypiaUserConfig(resolvedConfig, overrideConfig);
+			}
 		},
 		beforeCommand(context) {
 			context.store.wpTypiaUserConfig = resolvedConfig;

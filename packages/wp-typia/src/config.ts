@@ -90,6 +90,21 @@ function resolveConfigPath(cwd: string, source: string): string {
 	return path.resolve(cwd, source);
 }
 
+export function mergeWpTypiaUserConfig(
+	base: WpTypiaUserConfig,
+	incoming: WpTypiaUserConfig,
+): WpTypiaUserConfig {
+	return deepMerge(base as JsonRecord, incoming as JsonRecord) as WpTypiaUserConfig;
+}
+
+export async function loadWpTypiaUserConfigFromSource(
+	cwd: string,
+	source: string,
+): Promise<WpTypiaUserConfig> {
+	const config = await readJsonFile(resolveConfigPath(cwd, source));
+	return (config ?? {}) as WpTypiaUserConfig;
+}
+
 export async function loadWpTypiaUserConfig(cwd: string): Promise<WpTypiaUserConfig> {
 	let merged: JsonRecord = {};
 
