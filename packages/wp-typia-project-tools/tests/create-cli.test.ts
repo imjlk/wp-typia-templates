@@ -2751,6 +2751,14 @@ describe("@wp-typia/project-tools scaffolding", () => {
 
 		linkWorkspaceNodeModules(targetDir);
 
+		expect(
+			getCommandErrorMessage(() =>
+				runCli("node", [entryPath, "add", "pattern", "2024-hero"], {
+					cwd: targetDir,
+				}),
+			),
+		).toContain("Pattern name must start with a letter");
+
 		runCli("node", [entryPath, "add", "pattern", "hero-layout"], {
 			cwd: targetDir,
 		});

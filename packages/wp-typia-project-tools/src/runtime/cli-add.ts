@@ -1127,7 +1127,20 @@ function assertPatternDoesNotExist(
 }
 
 /**
- * Adds one variation entry to an existing workspace block.
+ * Add one variation entry to an existing workspace block.
+ *
+ * @param options Command options for the variation scaffold workflow.
+ * @param options.blockName Target workspace block slug that will own the variation.
+ * @param options.cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @param options.variationName Human-entered variation name that will be normalized
+ * and validated before files are written.
+ * @returns A promise that resolves with the normalized `blockSlug`,
+ * `variationSlug`, and owning `projectDir` after the variation files and
+ * inventory entry have been written successfully.
+ * @throws {Error} When the command is run outside an official workspace, when
+ * the target block is unknown, when the variation slug is invalid, or when a
+ * conflicting file or inventory entry already exists.
  */
 export async function runAddVariationCommand({
 	blockName,
@@ -1190,7 +1203,19 @@ export async function runAddVariationCommand({
 }
 
 /**
- * Adds one PHP block pattern shell to an official workspace project.
+ * Add one PHP block pattern shell to an official workspace project.
+ *
+ * @param options Command options for the pattern scaffold workflow.
+ * @param options.cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @param options.patternName Human-entered pattern name that will be normalized
+ * and validated before files are written.
+ * @returns A promise that resolves with the normalized `patternSlug` and
+ * owning `projectDir` after the pattern file and inventory entry have been
+ * written successfully.
+ * @throws {Error} When the command is run outside an official workspace, when
+ * the pattern slug is invalid, or when a conflicting file or inventory entry
+ * already exists.
  */
 export async function runAddPatternCommand({
 	cwd = process.cwd(),
@@ -1200,10 +1225,11 @@ export async function runAddPatternCommand({
 	projectDir: string;
 }> {
 	const workspace = resolveWorkspaceProject(cwd);
-	const patternSlug = normalizeBlockSlug(patternName);
-	if (!patternSlug) {
-		throw new Error("Pattern name is required. Use `wp-typia add pattern <name>`.");
-	}
+	const patternSlug = assertValidGeneratedSlug(
+		"Pattern name",
+		normalizeBlockSlug(patternName),
+		"wp-typia add pattern <name>",
+	);
 
 	const inventory = readWorkspaceInventory(workspace.projectDir);
 	assertPatternDoesNotExist(workspace.projectDir, patternSlug, inventory);
