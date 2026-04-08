@@ -3071,6 +3071,56 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		).toBe(originalInventorySource);
 	}, 15_000);
 
+	test("binding source rollback restores an existing src/bindings/index.js registry", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-binding-source-js-rollback");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace binding js rollback",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-binding-source-js-rollback",
+				textDomain: "demo-space",
+				title: "Demo Workspace Binding Js Rollback",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+		runCli("node", [entryPath, "add", "binding-source", "hero-data"], {
+			cwd: targetDir,
+		});
+
+		const bindingsTsPath = path.join(targetDir, "src", "bindings", "index.ts");
+		const bindingsJsPath = path.join(targetDir, "src", "bindings", "index.js");
+		fs.renameSync(bindingsTsPath, bindingsJsPath);
+		const originalBindingsIndexSource = fs.readFileSync(bindingsJsPath, "utf8");
+
+		const blockConfigPath = path.join(targetDir, "scripts", "block-config.ts");
+		fs.writeFileSync(
+			blockConfigPath,
+			fs
+				.readFileSync(blockConfigPath, "utf8")
+				.replace("// wp-typia add binding-source entries", "// missing binding source marker"),
+			"utf8",
+		);
+
+		expect(
+			getCommandErrorMessage(() =>
+				runCli("node", [entryPath, "add", "binding-source", "news-data"], {
+					cwd: targetDir,
+				}),
+			),
+		).toContain("Workspace inventory marker");
+
+		expect(fs.existsSync(bindingsTsPath)).toBe(false);
+		expect(fs.readFileSync(bindingsJsPath, "utf8")).toBe(originalBindingsIndexSource);
+	}, 15_000);
+
 	test("doctor accepts workspaces that keep binding registries in src/bindings/index.js", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-binding-source-index-js");
 

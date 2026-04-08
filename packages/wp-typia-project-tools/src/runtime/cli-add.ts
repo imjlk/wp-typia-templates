@@ -858,9 +858,7 @@ async function writeBindingSourceRegistry(
 	bindingSourceSlug: string,
 ): Promise<void> {
 	const bindingsDir = path.join(projectDir, "src", "bindings");
-	const bindingsIndexPath = [path.join(bindingsDir, "index.ts"), path.join(bindingsDir, "index.js")].find(
-		(candidatePath) => fs.existsSync(candidatePath),
-	) ?? path.join(bindingsDir, "index.ts");
+	const bindingsIndexPath = resolveBindingSourceRegistryPath(projectDir);
 	await fsp.mkdir(bindingsDir, { recursive: true });
 
 	const existingBindingSourceSlugs = fs.existsSync(bindingsDir)
@@ -877,6 +875,13 @@ async function writeBindingSourceRegistry(
 		buildBindingSourceIndexSource(nextBindingSourceSlugs),
 		"utf8",
 	);
+}
+
+function resolveBindingSourceRegistryPath(projectDir: string): string {
+	const bindingsDir = path.join(projectDir, "src", "bindings");
+	return [path.join(bindingsDir, "index.ts"), path.join(bindingsDir, "index.js")].find(
+		(candidatePath) => fs.existsSync(candidatePath),
+	) ?? path.join(bindingsDir, "index.ts");
 }
 
 async function snapshotWorkspaceFiles(filePaths: string[]): Promise<WorkspaceMutationSnapshot["fileSources"]> {
@@ -1559,7 +1564,7 @@ export async function runAddBindingSourceCommand({
 
 	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
 	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
-	const bindingsIndexPath = path.join(workspace.projectDir, "src", "bindings", "index.ts");
+	const bindingsIndexPath = resolveBindingSourceRegistryPath(workspace.projectDir);
 	const bindingSourceDir = path.join(workspace.projectDir, "src", "bindings", bindingSourceSlug);
 	const serverFilePath = path.join(bindingSourceDir, "server.php");
 	const editorFilePath = path.join(bindingSourceDir, "editor.ts");
