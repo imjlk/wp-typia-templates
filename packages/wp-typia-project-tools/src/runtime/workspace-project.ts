@@ -27,6 +27,67 @@ export interface WorkspaceProject {
 	workspace: Required<NonNullable<WorkspacePackageJson["wpTypia"]>>;
 }
 
+function parseWorkspacePackageJson(packageJsonPath: string): WorkspacePackageJson {
+	try {
+		return JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as WorkspacePackageJson;
+	} catch (error) {
+		throw new Error(
+			`Failed to parse workspace package manifest at ${packageJsonPath}: ${
+				error instanceof Error ? error.message : String(error)
+			}`,
+		);
+	}
+}
+
+function getWorkspaceMetadataIssues(packageJson: WorkspacePackageJson): string[] {
+	if (!packageJson.wpTypia) {
+		return [];
+	}
+
+	const issues: string[] = [];
+
+	if (packageJson.wpTypia.projectType !== "workspace") {
+		issues.push('wpTypia.projectType must be "workspace"');
+	}
+	if (packageJson.wpTypia.templatePackage !== WORKSPACE_TEMPLATE_PACKAGE) {
+		issues.push(`wpTypia.templatePackage must be "${WORKSPACE_TEMPLATE_PACKAGE}"`);
+	}
+	if (typeof packageJson.wpTypia.namespace !== "string" || packageJson.wpTypia.namespace.length === 0) {
+		issues.push("wpTypia.namespace must be a non-empty string");
+	}
+	if (typeof packageJson.wpTypia.textDomain !== "string" || packageJson.wpTypia.textDomain.length === 0) {
+		issues.push("wpTypia.textDomain must be a non-empty string");
+	}
+	if (typeof packageJson.wpTypia.phpPrefix !== "string" || packageJson.wpTypia.phpPrefix.length === 0) {
+		issues.push("wpTypia.phpPrefix must be a non-empty string");
+	}
+
+	return issues;
+}
+
+export function getInvalidWorkspaceProjectReason(startDir: string): string | null {
+	let currentDir = path.resolve(startDir);
+
+	while (true) {
+		const packageJsonPath = path.join(currentDir, "package.json");
+		if (fs.existsSync(packageJsonPath)) {
+			const packageJson = parseWorkspacePackageJson(packageJsonPath);
+			const issues = getWorkspaceMetadataIssues(packageJson);
+			if (issues.length > 0) {
+				return `Invalid wp-typia workspace metadata at ${packageJsonPath}: ${issues.join("; ")}`;
+			}
+		}
+
+		const parentDir = path.dirname(currentDir);
+		if (parentDir === currentDir) {
+			break;
+		}
+		currentDir = parentDir;
+	}
+
+	return null;
+}
+
 /**
  * Parse a package-manager identifier from a `packageManager` field.
  *
@@ -63,18 +124,7 @@ export function tryResolveWorkspaceProject(startDir: string): WorkspaceProject |
 	while (true) {
 		const packageJsonPath = path.join(currentDir, "package.json");
 		if (fs.existsSync(packageJsonPath)) {
-			let packageJson: WorkspacePackageJson;
-			try {
-				packageJson = JSON.parse(
-					fs.readFileSync(packageJsonPath, "utf8"),
-				) as WorkspacePackageJson;
-			} catch (error) {
-				throw new Error(
-					`Failed to parse workspace package manifest at ${packageJsonPath}: ${
-						error instanceof Error ? error.message : String(error)
-					}`,
-				);
-			}
+			const packageJson = parseWorkspacePackageJson(packageJsonPath);
 
 			if (
 				packageJson.wpTypia?.projectType === "workspace" &&

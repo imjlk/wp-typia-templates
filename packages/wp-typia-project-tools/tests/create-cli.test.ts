@@ -2844,9 +2844,14 @@ describe("@wp-typia/project-tools scaffolding", () => {
 			cwd: targetDir,
 		});
 		expect(doctorOutput).toContain("PASS Migration config");
-		const rootDoctorChecks = await getDoctorChecks(targetDir);
+		const rootDoctorOutput = runCli("node", [entryPath, "doctor"], {
+			cwd: targetDir,
+		});
+		const rootDoctorChecks = JSON.parse(rootDoctorOutput) as {
+			checks: Array<{ label: string; status: string }>;
+		};
 		expect(
-			rootDoctorChecks.find((check) => check.label === "Migration workspace")?.status,
+			rootDoctorChecks.checks.find((check) => check.label === "Migration workspace")?.status,
 		).toBe("pass");
 		expect(doctorOutput).toContain("PASS Migration doctor summary");
 	}, 20_000);
@@ -2937,6 +2942,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 
 		const checks = await getDoctorChecks(targetDir);
 
+		expect(checks.find((check) => check.label === "Workspace inventory")?.status).toBe("pass");
 		expect(
 			checks.find((check) => check.label === "Workspace package metadata")?.status,
 		).toBe("pass");

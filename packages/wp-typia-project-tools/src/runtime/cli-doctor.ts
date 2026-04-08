@@ -8,6 +8,7 @@ import { getBuiltInTemplateLayerDirs } from "./template-builtins.js";
 import { listTemplates } from "./template-registry.js";
 import { readWorkspaceInventory, type WorkspaceInventory } from "./workspace-inventory.js";
 import {
+	getInvalidWorkspaceProjectReason,
 	WORKSPACE_TEMPLATE_PACKAGE,
 	tryResolveWorkspaceProject,
 	type WorkspacePackageJson,
@@ -391,7 +392,9 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 	}
 
 	let workspace: WorkspaceProject | null = null;
+	let invalidWorkspaceReason: string | null = null;
 	try {
+		invalidWorkspaceReason = getInvalidWorkspaceProjectReason(cwd);
 		workspace = tryResolveWorkspaceProject(cwd);
 	} catch (error) {
 		checks.push(
@@ -404,6 +407,15 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 		return checks;
 	}
 	if (!workspace) {
+		if (invalidWorkspaceReason) {
+			checks.push(
+				createDoctorCheck(
+					"Workspace package metadata",
+					"fail",
+					invalidWorkspaceReason,
+				),
+			);
+		}
 		return checks;
 	}
 

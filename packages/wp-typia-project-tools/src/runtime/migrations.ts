@@ -58,7 +58,7 @@ import {
 	sanitizeSnapshotBlockJson,
 } from "./migration-utils.js";
 import { readWorkspaceInventory } from "./workspace-inventory.js";
-import { tryResolveWorkspaceProject } from "./workspace-project.js";
+import { getInvalidWorkspaceProjectReason, tryResolveWorkspaceProject } from "./workspace-project.js";
 import type {
 	ManifestDocument,
 	MigrationBlockConfig,
@@ -830,8 +830,10 @@ function recordWorkspaceMigrationTargetAlignment(
 	state: MigrationProjectState,
 	recordCheck: (status: "fail" | "pass", label: string, detail: string) => void,
 ): void {
+	let invalidWorkspaceReason: string | null = null;
 	let workspace;
 	try {
+		invalidWorkspaceReason = getInvalidWorkspaceProjectReason(projectDir);
 		workspace = tryResolveWorkspaceProject(projectDir);
 	} catch (error) {
 		recordCheck(
@@ -842,6 +844,9 @@ function recordWorkspaceMigrationTargetAlignment(
 		return;
 	}
 	if (!workspace) {
+		if (invalidWorkspaceReason) {
+			recordCheck("fail", "Workspace migration targets", invalidWorkspaceReason);
+		}
 		return;
 	}
 
