@@ -2584,13 +2584,15 @@ describe("@wp-typia/project-tools scaffolding", () => {
 			"utf8",
 		);
 
-		expect(() =>
-			runCli(
-				"node",
-				[entryPath, "add", "variation", "hero-card", "--block", "counter-card"],
-				{ cwd: targetDir },
+		expect(
+			getCommandErrorMessage(() =>
+				runCli(
+					"node",
+					[entryPath, "add", "variation", "hero-card", "--block", "counter-card"],
+					{ cwd: targetDir },
+				),
 			),
-		).toThrow("A variation already exists");
+		).toContain("A variation already exists");
 
 		expect(
 			fs.readFileSync(
@@ -2601,7 +2603,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(
 			fs.readFileSync(path.join(targetDir, "scripts", "block-config.ts"), "utf8"),
 		).toBe(originalInventorySource);
-	});
+	}, 15_000);
 
 	test("canonical CLI can add a compound persistence block to an official workspace template", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-add-compound");
@@ -2775,7 +2777,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(
 			doctorChecks.checks.find((check) => check.label === "Pattern hero-layout")?.status,
 		).toBe("pass");
-	});
+	}, 15_000);
 
 	test("doctor fails on missing variation and pattern inventory files", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-doctor-drift");

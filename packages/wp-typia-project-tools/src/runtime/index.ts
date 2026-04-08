@@ -1,3 +1,13 @@
+/**
+ * Public runtime surface for wp-typia project tools.
+ *
+ * This barrel exposes the stable orchestration APIs that power the `wp-typia`
+ * CLI while keeping reusable project logic out of the CLI package itself.
+ * Consumers should prefer these exports for scaffold, add, migrate, doctor,
+ * and workspace-aware helpers such as `getWorkspaceBlockSelectOptions`,
+ * `runAddBlockCommand`, `runAddVariationCommand`, `runAddPatternCommand`, and
+ * `runDoctor`.
+ */
 export {
 	scaffoldProject,
 	collectScaffoldAnswers,
@@ -11,6 +21,11 @@ export {
 	parseMigrationArgs,
 	runMigrationCommand,
 } from "./migrations.js";
+export {
+	parseWorkspacePackageManagerId,
+	resolveWorkspaceProject,
+	tryResolveWorkspaceProject,
+} from "./workspace-project.js";
 export {
 	manifestAttributeToJsonSchema,
 	projectJsonSchemaDocument,

@@ -85,7 +85,8 @@ function checkExistingFiles(
 }
 
 function checkWorkspacePatternBootstrap(projectDir: string, packageName: string): DoctorCheck {
-	const bootstrapPath = path.join(projectDir, `${packageName}.php`);
+	const packageBaseName = packageName.split("/").pop() ?? packageName;
+	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
 	if (!fs.existsSync(bootstrapPath)) {
 		return createDoctorCheck("Pattern bootstrap", "fail", `Missing ${path.basename(bootstrapPath)}`);
 	}
@@ -234,8 +235,20 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 			);
 		}
 
+		const registeredBlockSlugs = new Set(inventory.blocks.map((block) => block.slug));
 		const variationTargetBlocks = new Set<string>();
 		for (const variation of inventory.variations) {
+			if (!registeredBlockSlugs.has(variation.block)) {
+				checks.push(
+					createDoctorCheck(
+						`Variation ${variation.block}/${variation.slug}`,
+						"fail",
+						`Variation references unknown block "${variation.block}"`,
+					),
+				);
+				continue;
+			}
+
 			variationTargetBlocks.add(variation.block);
 			checks.push(
 				checkExistingFiles(

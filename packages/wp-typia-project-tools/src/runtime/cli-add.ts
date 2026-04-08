@@ -477,9 +477,32 @@ async function ensureVariationRegistrationHook(blockIndexPath: string): Promise<
 		}
 
 		if (!nextSource.includes(VARIATIONS_CALL_LINE)) {
-			nextSource = nextSource.replace(
-				/(registerBlockType<[\s\S]*?\);\n?)/u,
-				(match) => `${match}\n${VARIATIONS_CALL_LINE}\n`,
+			const callInsertionPatterns = [
+				/(registerBlockType<[\s\S]*?\);\s*)/u,
+				/(registerBlockType\([\s\S]*?\);\s*)/u,
+			];
+			let inserted = false;
+
+			for (const pattern of callInsertionPatterns) {
+				const candidate = nextSource.replace(
+					pattern,
+					(match) => `${match}\n${VARIATIONS_CALL_LINE}\n`,
+				);
+				if (candidate !== nextSource) {
+					nextSource = candidate;
+					inserted = true;
+					break;
+				}
+			}
+
+			if (!inserted) {
+				nextSource = `${nextSource.trimEnd()}\n\n${VARIATIONS_CALL_LINE}\n`;
+			}
+		}
+
+		if (!nextSource.includes(VARIATIONS_CALL_LINE)) {
+			throw new Error(
+				`Unable to inject ${VARIATIONS_CALL_LINE} into ${path.basename(blockIndexPath)}.`,
 			);
 		}
 
@@ -511,41 +534,69 @@ async function writeVariationRegistry(
 }
 
 async function ensurePatternBootstrapAnchors(workspace: WorkspaceProject): Promise<void> {
-	const bootstrapPath = path.join(workspace.projectDir, `${workspace.packageName}.php`);
+	const workspaceBaseName = workspace.packageName.split("/").pop() ?? workspace.packageName;
+	const bootstrapPath = path.join(workspace.projectDir, `${workspaceBaseName}.php`);
 	await patchFile(bootstrapPath, (source) => {
 		let nextSource = source;
+		const patternCategoryFunctionName = `${workspace.workspace.phpPrefix}_register_pattern_category`;
+		const patternRegistrationFunctionName = `${workspace.workspace.phpPrefix}_register_patterns`;
+		const patternCategoryHook = `add_action( 'init', '${patternCategoryFunctionName}' );`;
+		const patternRegistrationHook = `add_action( 'init', '${patternRegistrationFunctionName}', 20 );`;
+		const patternFunctions = `
 
-		if (!nextSource.includes(PATTERN_BOOTSTRAP_CATEGORY)) {
-			const patternFunctions = `
-
-function ${workspace.workspace.phpPrefix}_register_pattern_category() {
+function ${patternCategoryFunctionName}() {
 \tif ( function_exists( 'register_block_pattern_category' ) ) {
 \t\tregister_block_pattern_category(
 \t\t\t'${workspace.workspace.namespace}',
 \t\t\tarray(
-\t\t\t\t'label' => __( ${JSON.stringify(`${toTitleCase(workspace.packageName)} Patterns`)}, '${workspace.workspace.textDomain}' ),
+\t\t\t\t'label' => __( ${JSON.stringify(`${toTitleCase(workspaceBaseName)} Patterns`)}, '${workspace.workspace.textDomain}' ),
 \t\t\t)
 \t\t);
 \t}
 }
 
-function ${workspace.workspace.phpPrefix}_register_patterns() {
+function ${patternRegistrationFunctionName}() {
 \tforeach ( glob( __DIR__ . '/src/patterns/*.php' ) ?: array() as $pattern_module ) {
 \t\trequire $pattern_module;
 \t}
 }
 `;
-			nextSource = nextSource.replace(
-				/add_action\( 'init', '[^']+_load_textdomain' \);\n/u,
-				(match) => `${patternFunctions}\n${match}`,
+
+		if (!nextSource.includes(PATTERN_BOOTSTRAP_CATEGORY)) {
+			const insertionAnchors = [
+				/add_action\(\s*["']init["']\s*,\s*["'][^"']+_load_textdomain["']\s*\);\s*\n/u,
+				/\?>\s*$/u,
+			];
+			let inserted = false;
+
+			for (const anchor of insertionAnchors) {
+				const candidate = nextSource.replace(anchor, (match) => `${patternFunctions}\n${match}`);
+				if (candidate !== nextSource) {
+					nextSource = candidate;
+					inserted = true;
+					break;
+				}
+			}
+
+			if (!inserted) {
+				nextSource = `${nextSource.trimEnd()}\n${patternFunctions}\n`;
+			}
+		}
+
+		if (
+			!nextSource.includes(patternCategoryFunctionName) ||
+			!nextSource.includes(patternRegistrationFunctionName)
+		) {
+			throw new Error(
+				`Unable to inject pattern bootstrap functions into ${path.basename(bootstrapPath)}.`,
 			);
 		}
 
-		if (!nextSource.includes(`${workspace.workspace.phpPrefix}_register_pattern_category`)) {
-			nextSource += `\nadd_action( 'init', '${workspace.workspace.phpPrefix}_register_pattern_category' );`;
+		if (!nextSource.includes(patternCategoryHook)) {
+			nextSource = `${nextSource.trimEnd()}\n${patternCategoryHook}\n`;
 		}
-		if (!nextSource.includes(`${workspace.workspace.phpPrefix}_register_patterns`)) {
-			nextSource += `\nadd_action( 'init', '${workspace.workspace.phpPrefix}_register_patterns', 20 );`;
+		if (!nextSource.includes(patternRegistrationHook)) {
+			nextSource = `${nextSource.trimEnd()}\n${patternRegistrationHook}\n`;
 		}
 
 		return nextSource;

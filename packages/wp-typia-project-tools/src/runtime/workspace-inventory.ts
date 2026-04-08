@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { readFile, writeFile } from "node:fs/promises";
 
 import ts from "typescript";
 
@@ -193,6 +194,13 @@ function parsePatternEntries(arrayLiteral: ts.ArrayLiteralExpression): Workspace
 	});
 }
 
+/**
+ * Parse workspace inventory entries from the source of `scripts/block-config.ts`.
+ *
+ * @param source Raw TypeScript source from `scripts/block-config.ts`.
+ * @returns Parsed inventory sections without the resolved `blockConfigPath`.
+ * @throws {Error} When `BLOCKS` is missing or any inventory entry is malformed.
+ */
 export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInventory, "blockConfigPath"> {
 	const sourceFile = ts.createSourceFile(
 		"block-config.ts",
@@ -218,15 +226,47 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 	};
 }
 
+/**
+ * Read and parse the canonical workspace inventory file.
+ *
+ * @param projectDir Workspace root directory.
+ * @returns Parsed `WorkspaceInventory` including the resolved `blockConfigPath`.
+ * @throws {Error} When `scripts/block-config.ts` is missing or invalid.
+ */
 export function readWorkspaceInventory(projectDir: string): WorkspaceInventory {
 	const blockConfigPath = path.join(projectDir, "scripts", "block-config.ts");
-	const source = fs.readFileSync(blockConfigPath, "utf8");
+	let source: string;
+	try {
+		source = fs.readFileSync(blockConfigPath, "utf8");
+	} catch (error) {
+		if (
+			typeof error === "object" &&
+			error !== null &&
+			"code" in error &&
+			error.code === "ENOENT"
+		) {
+			throw new Error(
+				`Workspace inventory file is missing at ${blockConfigPath}. Expected scripts/block-config.ts to exist.`,
+			);
+		}
+		throw error;
+	}
+
 	return {
 		blockConfigPath,
 		...parseWorkspaceInventorySource(source),
 	};
 }
 
+/**
+ * Return select options for the current workspace block inventory.
+ *
+ * The `description` field mirrors `block.typesFile`, while `name` and `value`
+ * both map to the block slug for use in interactive add flows.
+ *
+ * @param projectDir Workspace root directory.
+ * @returns Block options for variation-target selection.
+ */
 export function getWorkspaceBlockSelectOptions(projectDir: string): Array<{
 	description: string;
 	name: string;
@@ -278,6 +318,17 @@ function appendEntriesAtMarker(source: string, marker: string, entries: string[]
 	return source.replace(marker, `${entries.join("\n")}\n${marker}`);
 }
 
+/**
+ * Update `scripts/block-config.ts` source text with additional inventory entries.
+ *
+ * Missing `VARIATIONS` and `PATTERNS` sections are created automatically before
+ * new entries are appended at their marker comments. When provided,
+ * `transformSource` runs before any entries are inserted.
+ *
+ * @param source Existing `scripts/block-config.ts` source.
+ * @param options Entry lists plus an optional source transformer.
+ * @returns Updated source text with all requested inventory entries appended.
+ */
 export function updateWorkspaceInventorySource(
 	source: string,
 	{
@@ -302,14 +353,22 @@ export function updateWorkspaceInventorySource(
 	return nextSource;
 }
 
+/**
+ * Append new entries to the canonical workspace inventory file on disk.
+ *
+ * @param projectDir Workspace root directory.
+ * @param options Entry lists and optional source transform passed through to
+ * `updateWorkspaceInventorySource`.
+ * @returns Resolves once `scripts/block-config.ts` has been updated if needed.
+ */
 export async function appendWorkspaceInventoryEntries(
 	projectDir: string,
 	options: Parameters<typeof updateWorkspaceInventorySource>[1],
 ): Promise<void> {
 	const blockConfigPath = path.join(projectDir, "scripts", "block-config.ts");
-	const source = fs.readFileSync(blockConfigPath, "utf8");
+	const source = await readFile(blockConfigPath, "utf8");
 	const nextSource = updateWorkspaceInventorySource(source, options);
 	if (nextSource !== source) {
-		fs.writeFileSync(blockConfigPath, nextSource, "utf8");
+		await writeFile(blockConfigPath, nextSource, "utf8");
 	}
 }

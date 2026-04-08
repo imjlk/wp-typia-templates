@@ -10,6 +10,7 @@ import {
 	getTemplateSelectOptions,
 	listTemplates,
 	parseMigrationArgs,
+	tryResolveWorkspaceProject,
 	runAddBlockCommand,
 	runAddPatternCommand,
 	runAddVariationCommand,
@@ -375,11 +376,12 @@ export async function executeMigrateCommand({
 }
 
 export function getAddWorkspaceBlockOptions(cwd: string) {
-	try {
-		return getWorkspaceBlockSelectOptions(cwd);
-	} catch {
+	const workspace = tryResolveWorkspaceProject(cwd);
+	if (!workspace) {
 		return [];
 	}
+
+	return getWorkspaceBlockSelectOptions(workspace.projectDir);
 }
 
 export { formatAddHelpText, formatMigrationHelpText, listTemplates };

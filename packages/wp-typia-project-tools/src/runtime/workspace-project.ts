@@ -26,6 +26,13 @@ export interface WorkspaceProject {
 	workspace: Required<NonNullable<WorkspacePackageJson["wpTypia"]>>;
 }
 
+/**
+ * Parse a package-manager identifier from a `packageManager` field.
+ *
+ * @param packageManagerField Raw package-manager field such as `bun@1.3.11`.
+ * @returns A normalized `PackageManagerId`, defaulting to `"bun"` when the
+ * field is missing or unsupported.
+ */
 export function parseWorkspacePackageManagerId(
 	packageManagerField: string | undefined,
 ): PackageManagerId {
@@ -41,15 +48,33 @@ export function parseWorkspacePackageManagerId(
 	}
 }
 
+/**
+ * Try to resolve the nearest official wp-typia workspace from `startDir`.
+ *
+ * @param startDir Directory to begin walking upward from.
+ * @returns The resolved `WorkspaceProject`, or `null` when no
+ * `WORKSPACE_TEMPLATE_PACKAGE` workspace is found.
+ * @throws {Error} When a discovered `package.json` cannot be parsed.
+ */
 export function tryResolveWorkspaceProject(startDir: string): WorkspaceProject | null {
 	let currentDir = path.resolve(startDir);
 
 	while (true) {
 		const packageJsonPath = path.join(currentDir, "package.json");
 		if (fs.existsSync(packageJsonPath)) {
-			const packageJson = JSON.parse(
-				fs.readFileSync(packageJsonPath, "utf8"),
-			) as WorkspacePackageJson;
+			let packageJson: WorkspacePackageJson;
+			try {
+				packageJson = JSON.parse(
+					fs.readFileSync(packageJsonPath, "utf8"),
+				) as WorkspacePackageJson;
+			} catch (error) {
+				throw new Error(
+					`Failed to parse workspace package manifest at ${packageJsonPath}: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+				);
+			}
+
 			if (
 				packageJson.wpTypia?.projectType === "workspace" &&
 				packageJson.wpTypia?.templatePackage === WORKSPACE_TEMPLATE_PACKAGE &&
@@ -86,6 +111,13 @@ export function tryResolveWorkspaceProject(startDir: string): WorkspaceProject |
 	return null;
 }
 
+/**
+ * Resolve the nearest official wp-typia workspace from `startDir`.
+ *
+ * @param startDir Directory to begin walking upward from.
+ * @returns The resolved `WorkspaceProject`.
+ * @throws {Error} When no `WORKSPACE_TEMPLATE_PACKAGE` workspace can be found.
+ */
 export function resolveWorkspaceProject(startDir: string): WorkspaceProject {
 	const workspace = tryResolveWorkspaceProject(startDir);
 	if (workspace) {

@@ -704,6 +704,8 @@ function assertWorkspacePatternArtifacts(projectDir, patternSlug) {
 	if (!fs.existsSync(patternPath)) {
 		throw new Error(`Expected workspace pattern to exist at ${patternPath}`);
 	}
+
+	lintPhpArtifact(patternPath);
 }
 
 function assertNoRawRenderedContentEcho(filePath) {
