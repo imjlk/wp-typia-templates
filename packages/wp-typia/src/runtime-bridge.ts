@@ -131,13 +131,13 @@ export async function executeCreateCommand({
 	try {
 		const flow = await runScaffoldFlow({
 			cwd,
-			dataStorageMode: readOptionalStringFlag(flags, "data-storage"),
+			dataStorageMode: readOptionalLooseStringFlag(flags, "data-storage"),
 			isInteractive: Boolean(activePrompt),
-			namespace: readOptionalStringFlag(flags, "namespace"),
+			namespace: readOptionalLooseStringFlag(flags, "namespace"),
 			noInstall: Boolean(flags["no-install"]),
-			packageManager: readOptionalStringFlag(flags, "package-manager"),
-			persistencePolicy: readOptionalStringFlag(flags, "persistence-policy"),
-			phpPrefix: readOptionalStringFlag(flags, "php-prefix"),
+			packageManager: readOptionalLooseStringFlag(flags, "package-manager"),
+			persistencePolicy: readOptionalLooseStringFlag(flags, "persistence-policy"),
+			phpPrefix: readOptionalLooseStringFlag(flags, "php-prefix"),
 			projectInput: projectDir,
 			promptText: activePrompt
 				? (message, defaultValue, validate) => activePrompt.text(message, defaultValue, validate)
@@ -174,9 +174,9 @@ export async function executeCreateCommand({
 						(await activePrompt.select("Include a local wp-env preset?", [...BOOLEAN_PROMPT_OPTIONS], 2)) ===
 						"yes"
 				: undefined,
-			templateId: readOptionalStringFlag(flags, "template"),
-			textDomain: readOptionalStringFlag(flags, "text-domain"),
-			variant: readOptionalStringFlag(flags, "variant"),
+			templateId: readOptionalLooseStringFlag(flags, "template"),
+			textDomain: readOptionalLooseStringFlag(flags, "text-domain"),
+			variant: readOptionalLooseStringFlag(flags, "variant"),
 			withMigrationUi: flags["with-migration-ui"] as boolean | undefined,
 			withTestPreset: flags["with-test-preset"] as boolean | undefined,
 			withWpEnv: flags["with-wp-env"] as boolean | undefined,

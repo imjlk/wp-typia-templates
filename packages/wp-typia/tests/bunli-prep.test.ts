@@ -22,6 +22,7 @@ const packageManifest = JSON.parse(
 describe("wp-typia Bunli preparation", () => {
 	test("checks in the Bunli prep tree without replacing the active bin", () => {
 		expect(packageManifest.bin["wp-typia"]).toBe("bin/wp-typia.js");
+		expect(packageManifest.files).toContain("bunli.config.ts");
 		expect(packageManifest.scripts["bunli:build"]).toBe("bun run build");
 		expect(packageManifest.scripts["bunli:dev"]).toBe("bun src/cli.ts");
 		expect(packageManifest.scripts["bunli:test"]).toBe("bun test tests/*.test.ts");

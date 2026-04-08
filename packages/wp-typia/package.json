@@ -10,6 +10,7 @@
   "files": [
     ".bunli/",
     "bin/",
+    "bunli.config.ts",
     "src/",
     "README.md",
     "package.json"
