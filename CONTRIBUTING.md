@@ -96,9 +96,9 @@ When you add a brand-new publishable workspace package under `packages/`, do all
 of the following before you rely on the normal release PR flow:
 
 1. Add the package directory to `scripts/publish-oidc.sh`.
-2. Run `bun run publish:validate` and make sure CI stays green.
-3. Seed the package name on npm with a manual first publish, typically `0.1.0`.
-4. Verify the bootstrap publish with `npm view <package-name> versions --json`.
+2. Seed the package name on npm with a manual first publish, typically `0.1.0`.
+3. Wait until `npm view <package-name> version` succeeds from a normal registry read.
+4. Run `bun run publish:validate` and make sure CI stays green.
 5. Only then merge PRs that make other released packages or generated-project smoke jobs depend on that package.
 6. After the bootstrap release exists, let the normal Sampo release PR automation publish subsequent versions.
 

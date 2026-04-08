@@ -78,23 +78,34 @@ function diff(left, right) {
 	return left.filter((value) => !rightSet.has(value));
 }
 
-function isSeedPublished(packageName) {
+function checkSeedPublish(packageName) {
 	try {
 		const output = execFileSync("npm", ["view", packageName, "version", "--json"], {
 			cwd: repoRoot,
 			encoding: "utf8",
+			shell: true,
 			stdio: ["ignore", "pipe", "pipe"],
 		}).trim();
-		return output.length > 0;
+		return {
+			error: null,
+			published: output.length > 0,
+		};
 	} catch (error) {
 		const stderr =
 			error && typeof error === "object" && "stderr" in error && typeof error.stderr === "string"
 				? error.stderr
 				: "";
 		if (stderr.includes("E404") || stderr.includes("Not Found")) {
-			return false;
+			return {
+				error: null,
+				published: false,
+			};
 		}
-		throw error;
+		const message = stderr.trim() || (error instanceof Error ? error.message : String(error));
+		return {
+			error: `Unable to query npm for ${packageName}: ${message}`,
+			published: false,
+		};
 	}
 }
 
@@ -103,17 +114,26 @@ const configuredPackageDirs = parsePublishScriptPackageDirs();
 
 const missingFromPublishScript = diff(expectedPackageDirs, configuredPackageDirs);
 const extraInPublishScript = diff(configuredPackageDirs, expectedPackageDirs);
-const packagesMissingSeedPublish = expectedPackageDirs
-	.map((packageDir) => ({
+const publishablePackages = expectedPackageDirs.map((packageDir) => {
+	const packageName = readPackageJson(packageDir).name;
+	return {
 		packageDir,
-		packageName: readPackageJson(packageDir).name,
-	}))
-	.filter(({ packageName }) => !isSeedPublished(packageName));
+		packageName,
+		seedPublishStatus: checkSeedPublish(packageName),
+	};
+});
+const packagesMissingSeedPublish = publishablePackages.filter(
+	({ seedPublishStatus }) => seedPublishStatus.published === false && seedPublishStatus.error === null,
+);
+const seedPublishValidationErrors = publishablePackages.filter(
+	({ seedPublishStatus }) => seedPublishStatus.error !== null,
+);
 
 if (
 	missingFromPublishScript.length === 0 &&
 	extraInPublishScript.length === 0 &&
-	packagesMissingSeedPublish.length === 0
+	packagesMissingSeedPublish.length === 0 &&
+	seedPublishValidationErrors.length === 0
 ) {
 	console.log(
 		`Validated publish-oidc package coverage and npm seed publishes for ${expectedPackageDirs.length} publishable workspace packages.`,
@@ -141,6 +161,13 @@ if (packagesMissingSeedPublish.length > 0) {
 	console.error("Missing initial npm publishes:");
 	for (const { packageDir, packageName } of packagesMissingSeedPublish) {
 		console.error(`- ${packageDir} (${packageName})`);
+	}
+}
+
+if (seedPublishValidationErrors.length > 0) {
+	console.error("Unable to verify npm seed publishes:");
+	for (const { packageDir, seedPublishStatus } of seedPublishValidationErrors) {
+		console.error(`- ${packageDir}: ${seedPublishStatus.error}`);
 	}
 }
 
