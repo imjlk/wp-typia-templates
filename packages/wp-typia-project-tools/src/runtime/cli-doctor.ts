@@ -6,6 +6,8 @@ import { access, constants as fsConstants, rm, writeFile } from "node:fs/promise
 
 import { getBuiltInTemplateLayerDirs } from "./template-builtins.js";
 import { listTemplates } from "./template-registry.js";
+import { readWorkspaceInventory } from "./workspace-inventory.js";
+import { tryResolveWorkspaceProject } from "./workspace-project.js";
 
 /**
  * One doctor check rendered by the CLI diagnostics flow.
@@ -57,6 +59,68 @@ async function checkTempDirectory(): Promise<boolean> {
 	} catch {
 		return false;
 	}
+}
+
+function createDoctorCheck(
+	label: string,
+	status: DoctorCheck["status"],
+	detail: string,
+): DoctorCheck {
+	return { detail, label, status };
+}
+
+function checkExistingFiles(
+	projectDir: string,
+	label: string,
+	filePaths: Array<string | undefined>,
+): DoctorCheck {
+	const missing = filePaths
+		.filter((filePath): filePath is string => typeof filePath === "string")
+		.filter((filePath) => !fs.existsSync(path.join(projectDir, filePath)));
+	return createDoctorCheck(
+		label,
+		missing.length === 0 ? "pass" : "fail",
+		missing.length === 0 ? "All referenced files exist" : `Missing: ${missing.join(", ")}`,
+	);
+}
+
+function checkWorkspacePatternBootstrap(projectDir: string, packageName: string): DoctorCheck {
+	const packageBaseName = packageName.split("/").pop() ?? packageName;
+	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
+	if (!fs.existsSync(bootstrapPath)) {
+		return createDoctorCheck("Pattern bootstrap", "fail", `Missing ${path.basename(bootstrapPath)}`);
+	}
+	const source = fs.readFileSync(bootstrapPath, "utf8");
+	const hasCategoryAnchor = source.includes("register_block_pattern_category");
+	const hasPatternGlob = source.includes("/src/patterns/*.php");
+	return createDoctorCheck(
+		"Pattern bootstrap",
+		hasCategoryAnchor && hasPatternGlob ? "pass" : "fail",
+		hasCategoryAnchor && hasPatternGlob
+			? "Pattern category and loader hooks are present"
+			: "Missing pattern category registration or src/patterns loader hook",
+	);
+}
+
+function checkVariationEntrypoint(projectDir: string, blockSlug: string): DoctorCheck {
+	const entryPath = path.join(projectDir, "src", "blocks", blockSlug, "index.tsx");
+	if (!fs.existsSync(entryPath)) {
+		return createDoctorCheck(
+			`Variation entrypoint ${blockSlug}`,
+			"fail",
+			`Missing ${path.relative(projectDir, entryPath)}`,
+		);
+	}
+	const source = fs.readFileSync(entryPath, "utf8");
+	const hasImport = source.includes("./variations");
+	const hasCall = source.includes("registerWorkspaceVariations()");
+	return createDoctorCheck(
+		`Variation entrypoint ${blockSlug}`,
+		hasImport && hasCall ? "pass" : "fail",
+		hasImport && hasCall
+			? "Variations registration hook is present"
+			: "Missing ./variations import or registerWorkspaceVariations() call",
+	);
 }
 
 /**
@@ -135,6 +199,88 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 			label: `Template ${template.id}`,
 			detail: hasAssets ? layerDirs.join(" + ") : "Missing core template assets",
 		});
+	}
+
+	const workspace = tryResolveWorkspaceProject(cwd);
+	if (!workspace) {
+		return checks;
+	}
+
+	checks.push(
+		createDoctorCheck(
+			"Workspace marker",
+			"pass",
+			`Official workspace detected for ${workspace.workspace.namespace}`,
+		),
+	);
+
+	try {
+		const inventory = readWorkspaceInventory(workspace.projectDir);
+		checks.push(
+			createDoctorCheck(
+				"Workspace inventory",
+				"pass",
+				`${inventory.blocks.length} block(s), ${inventory.variations.length} variation(s), ${inventory.patterns.length} pattern(s)`,
+			),
+		);
+
+		for (const block of inventory.blocks) {
+			checks.push(
+				checkExistingFiles(workspace.projectDir, `Block ${block.slug}`, [
+					block.typesFile,
+					block.apiTypesFile,
+					block.openApiFile,
+					path.join("src", "blocks", block.slug, "index.tsx"),
+				]),
+			);
+		}
+
+		const registeredBlockSlugs = new Set(inventory.blocks.map((block) => block.slug));
+		const variationTargetBlocks = new Set<string>();
+		for (const variation of inventory.variations) {
+			if (!registeredBlockSlugs.has(variation.block)) {
+				checks.push(
+					createDoctorCheck(
+						`Variation ${variation.block}/${variation.slug}`,
+						"fail",
+						`Variation references unknown block "${variation.block}"`,
+					),
+				);
+				continue;
+			}
+
+			variationTargetBlocks.add(variation.block);
+			checks.push(
+				checkExistingFiles(
+					workspace.projectDir,
+					`Variation ${variation.block}/${variation.slug}`,
+					[variation.file],
+				),
+			);
+		}
+		for (const blockSlug of variationTargetBlocks) {
+			checks.push(checkVariationEntrypoint(workspace.projectDir, blockSlug));
+		}
+
+		const shouldCheckPatternBootstrap =
+			inventory.patterns.length > 0 ||
+			fs.existsSync(path.join(workspace.projectDir, "src", "patterns"));
+		if (shouldCheckPatternBootstrap) {
+			checks.push(checkWorkspacePatternBootstrap(workspace.projectDir, workspace.packageName));
+		}
+		for (const pattern of inventory.patterns) {
+			checks.push(
+				checkExistingFiles(workspace.projectDir, `Pattern ${pattern.slug}`, [pattern.file]),
+			);
+		}
+	} catch (error) {
+		checks.push(
+			createDoctorCheck(
+				"Workspace inventory",
+				"fail",
+				error instanceof Error ? error.message : String(error),
+			),
+		);
 	}
 
 	return checks;

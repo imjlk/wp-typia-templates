@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { getAddBlockDefaults } from "../config";
 import { resolveBundledModuleHref } from "../render-loader";
-import { executeAddCommand } from "../runtime-bridge";
+import { executeAddCommand, getAddWorkspaceBlockOptions } from "../runtime-bridge";
 import { LazyFlow } from "../ui/lazy-flow";
 
 const supportsInteractiveTui = typeof Bun !== "undefined";
@@ -21,6 +21,10 @@ function loadAddFlow() {
 }
 
 const addOptions = {
+	block: {
+		description: "Target block slug for variation workflows.",
+		schema: z.string().optional(),
+	},
 	"data-storage": {
 		description: "Persistence storage mode for persistence-capable templates.",
 		schema: z.string().optional(),
@@ -63,6 +67,7 @@ export const addCommand = defineCommand({
 								"data-storage":
 									(args.flags["data-storage"] as string | undefined) ??
 									config["data-storage"],
+								block: (args.flags.block as string | undefined) ?? "",
 								kind:
 									(args.positional[0] as
 										| "block"
@@ -76,6 +81,7 @@ export const addCommand = defineCommand({
 								template:
 									(args.flags.template as string | undefined) ?? config.template,
 							},
+							workspaceBlockOptions: getAddWorkspaceBlockOptions(args.cwd),
 						},
 					});
 				},

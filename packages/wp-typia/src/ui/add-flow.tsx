@@ -7,6 +7,7 @@ import { z } from "zod";
 import { executeAddCommand } from "../runtime-bridge";
 
 const addFlowSchema = z.object({
+	block: z.string().optional(),
 	"data-storage": z.string().optional(),
 	kind: z.enum(["block", "variation", "pattern"]).default("block"),
 	name: z.string().optional(),
@@ -19,9 +20,14 @@ type AddFlowValues = z.infer<typeof addFlowSchema>;
 type AddFlowProps = {
 	cwd: string;
 	initialValues: Partial<AddFlowValues>;
+	workspaceBlockOptions: Array<{
+		description: string;
+		name: string;
+		value: string;
+	}>;
 };
 
-export function AddFlow({ cwd, initialValues }: AddFlowProps) {
+export function AddFlow({ cwd, initialValues, workspaceBlockOptions }: AddFlowProps) {
 	const runtime = useRuntime();
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -40,12 +46,12 @@ export function AddFlow({ cwd, initialValues }: AddFlowProps) {
 							{ name: "block", description: "Add a real block slice", value: "block" },
 							{
 								name: "variation",
-								description: "Coming soon placeholder",
+								description: "Add a variation to an existing block",
 								value: "variation",
 							},
 							{
 								name: "pattern",
-								description: "Coming soon placeholder",
+								description: "Add a PHP block pattern shell",
 								value: "pattern",
 							},
 						],
@@ -79,6 +85,25 @@ export function AddFlow({ cwd, initialValues }: AddFlowProps) {
 							},
 						],
 						visibleWhen: (values) => values.kind === "block",
+					},
+					{
+						kind: "text",
+						label: "Variation name",
+						name: "name",
+						visibleWhen: (values) => values.kind === "variation",
+					},
+					{
+						kind: workspaceBlockOptions.length > 0 ? "select" : "text",
+						label: "Target block",
+						name: "block",
+						options: workspaceBlockOptions,
+						visibleWhen: (values) => values.kind === "variation",
+					},
+					{
+						kind: "text",
+						label: "Pattern name",
+						name: "name",
+						visibleWhen: (values) => values.kind === "pattern",
 					},
 					{
 						kind: "select",

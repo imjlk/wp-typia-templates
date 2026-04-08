@@ -18,8 +18,8 @@ export function formatHelpText(): string {
   wp-typia create <project-dir> [--template compound] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--no-install] [--package-manager <id>]
   wp-typia <project-dir> [create flags...]
   wp-typia add block <name> --template <basic|interactivity|persistence|compound> [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
-  wp-typia add variation
-  wp-typia add pattern
+  wp-typia add variation <name> --block <block-slug>
+  wp-typia add pattern <name>
   wp-typia migrate <init|snapshot|diff|scaffold|verify|doctor|fixtures|fuzz> [...]
   wp-typia templates list
   wp-typia templates inspect <id>
@@ -33,6 +33,7 @@ Package managers: ${PACKAGE_MANAGER_IDS.join(", ")}
 Notes:
   \`wp-typia create\` is the canonical scaffold command.
   \`wp-typia <project-dir>\` remains a backward-compatible alias to \`create\`.
-  \`add variation\` and \`add pattern\` are reserved placeholders in this release.
+  \`add variation\` uses an existing workspace block from \`scripts/block-config.ts\`.
+  \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
   \`migrate\` is the canonical migration command; \`migrations\` is no longer supported.`;
 }

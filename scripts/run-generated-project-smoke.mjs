@@ -39,8 +39,11 @@ function parseArgs(argv) {
 	const parsed = {
 		addBlockName: undefined,
 		addDataStorage: undefined,
+		addPatternName: undefined,
 		addPersistencePolicy: undefined,
 		addTemplate: undefined,
+		addVariationBlock: undefined,
+		addVariationName: undefined,
 		dataStorage: undefined,
 		namespace: undefined,
 		packageManager: undefined,
@@ -70,6 +73,21 @@ function parseArgs(argv) {
 		}
 		if (arg === "--add-template") {
 			parsed.addTemplate = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--add-variation-name") {
+			parsed.addVariationName = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--add-variation-block") {
+			parsed.addVariationBlock = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--add-pattern-name") {
+			parsed.addPatternName = next;
 			index += 1;
 			continue;
 		}
@@ -273,6 +291,12 @@ function runScaffoldRefreshScripts(projectDir, packageManager, packageJson) {
 		const [command, args] = getRunScriptCommand(packageManager, scriptName);
 		run(command, args, { cwd: projectDir });
 	}
+}
+
+function runLocalMigrationDoctor(projectDir, runtime) {
+	run(runtime, [entryPath, "migrate", "doctor", "--all"], {
+		cwd: projectDir,
+	});
 }
 
 function ensureCorepackPackageManager(packageManager) {
@@ -661,6 +685,29 @@ function assertWorkspaceBlockArtifacts(projectDir, blockSlugs) {
 	}
 }
 
+function assertWorkspaceVariationArtifacts(projectDir, blockSlug, variationSlug) {
+	const variationPath = path.join(
+		projectDir,
+		"src",
+		"blocks",
+		blockSlug,
+		"variations",
+		`${variationSlug}.ts`,
+	);
+	if (!fs.existsSync(variationPath)) {
+		throw new Error(`Expected workspace variation to exist at ${variationPath}`);
+	}
+}
+
+function assertWorkspacePatternArtifacts(projectDir, patternSlug) {
+	const patternPath = path.join(projectDir, "src", "patterns", `${patternSlug}.php`);
+	if (!fs.existsSync(patternPath)) {
+		throw new Error(`Expected workspace pattern to exist at ${patternPath}`);
+	}
+
+	lintPhpArtifact(patternPath);
+}
+
 function assertNoRawRenderedContentEcho(filePath) {
 	const source = fs.readFileSync(filePath, "utf8");
 	if (/echo\s*\(?\s*\$content\b/.test(source)) {
@@ -743,14 +790,17 @@ function main() {
 		phpPrefix,
 		addBlockName,
 		addDataStorage,
+		addPatternName,
 		addPersistencePolicy,
 		addTemplate,
+		addVariationBlock,
+		addVariationName,
 		withMigrationUi,
 	} = parseArgs(process.argv.slice(2));
 
 	if (!runtime || !template || !packageManager || !projectName) {
 		throw new Error(
-			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--with-migration-ui] [--add-block-name <name> --add-template <basic|interactivity|persistence|compound> [--add-data-storage <post-meta|custom-table>] [--add-persistence-policy <authenticated|public>]] --package-manager <id> --project-name <name>",
+			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--with-migration-ui] [--add-block-name <name> --add-template <basic|interactivity|persistence|compound> [--add-data-storage <post-meta|custom-table>] [--add-persistence-policy <authenticated|public>]] [--add-variation-name <name> --add-variation-block <block-slug>] [--add-pattern-name <name>] --package-manager <id> --project-name <name>",
 		);
 	}
 
@@ -826,6 +876,37 @@ function main() {
 			runScaffoldRefreshScripts(projectDir, packageManager, packageJson);
 		}
 
+		if (addVariationName) {
+			if (!addVariationBlock) {
+				throw new Error("--add-variation-block is required when --add-variation-name is provided.");
+			}
+
+			run(
+				runtime,
+				[
+					entryPath,
+					"add",
+					"variation",
+					addVariationName,
+					"--block",
+					addVariationBlock,
+				],
+				{
+					cwd: projectDir,
+				},
+			);
+		}
+
+		if (addPatternName) {
+			run(runtime, [entryPath, "add", "pattern", addPatternName], {
+				cwd: projectDir,
+			});
+		}
+
+		if (withMigrationUi && typeof packageJson.scripts?.["migration:doctor"] === "string") {
+			runLocalMigrationDoctor(projectDir, runtime);
+		}
+
 		const [buildCommand, buildArgs] = getRunCommand(packageManager);
 		run(buildCommand, buildArgs, { cwd: projectDir });
 
@@ -842,6 +923,16 @@ function main() {
 						? [normalizeBlockSlug(addBlockName)]
 						: [],
 			);
+			if (addVariationName && addVariationBlock) {
+				assertWorkspaceVariationArtifacts(
+					projectDir,
+					normalizeBlockSlug(addVariationBlock),
+					normalizeBlockSlug(addVariationName),
+				);
+			}
+			if (addPatternName) {
+				assertWorkspacePatternArtifacts(projectDir, normalizeBlockSlug(addPatternName));
+			}
 		} else if (template === "compound") {
 			assertCompoundTemplateArtifacts(projectDir, projectName);
 		} else {

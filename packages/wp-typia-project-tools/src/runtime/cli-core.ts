@@ -6,7 +6,8 @@
  * `packages/wp-typia`.
  *
  * Import `formatAddHelpText`, `runAddBlockCommand`,
- * `createAddPlaceholderMessage`, and `seedWorkspaceMigrationProject` for
+ * `runAddVariationCommand`, `runAddPatternCommand`,
+ * `getWorkspaceBlockSelectOptions`, and `seedWorkspaceMigrationProject` for
  * explicit `wp-typia add` flows,
  * `getDoctorChecks`, `runDoctor`, and `DoctorCheck` for diagnostics,
  * `formatHelpText` for top-level CLI usage output, scaffold helpers such as
@@ -18,7 +19,14 @@
  * template inspection flows.
  */
 export { getDoctorChecks, runDoctor, type DoctorCheck } from "./cli-doctor.js";
-export { createAddPlaceholderMessage, formatAddHelpText, runAddBlockCommand, seedWorkspaceMigrationProject } from "./cli-add.js";
+export {
+	formatAddHelpText,
+	getWorkspaceBlockSelectOptions,
+	runAddBlockCommand,
+	runAddPatternCommand,
+	runAddVariationCommand,
+	seedWorkspaceMigrationProject,
+} from "./cli-add.js";
 export { formatHelpText } from "./cli-help.js";
 export {
 	getNextSteps,

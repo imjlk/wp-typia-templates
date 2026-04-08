@@ -1,16 +1,19 @@
 import {
 	createReadlinePrompt,
-	createAddPlaceholderMessage,
 	formatAddHelpText,
 	formatMigrationHelpText,
 	formatTemplateDetails,
 	formatTemplateFeatures,
 	formatTemplateSummary,
+	getWorkspaceBlockSelectOptions,
 	getTemplateById,
 	getTemplateSelectOptions,
 	listTemplates,
 	parseMigrationArgs,
+	tryResolveWorkspaceProject,
 	runAddBlockCommand,
+	runAddPatternCommand,
+	runAddVariationCommand,
 	runDoctor,
 	runMigrationCommand,
 	runScaffoldFlow,
@@ -220,8 +223,40 @@ export async function executeAddCommand({
 		return;
 	}
 
-	if (kind === "variation" || kind === "pattern") {
-		throw new Error(createAddPlaceholderMessage(kind));
+	if (kind === "variation") {
+		if (!name) {
+			throw new Error(
+				"`wp-typia add variation` requires <name>. Usage: wp-typia add variation <name> --block <block-slug>",
+			);
+		}
+
+		const blockSlug = readOptionalStringFlag(flags, "block");
+		if (!blockSlug) {
+			throw new Error("`wp-typia add variation` requires --block <block-slug>.");
+		}
+
+		const result = await runAddVariationCommand({
+			blockName: blockSlug,
+			cwd,
+			variationName: name,
+		});
+		console.log(`✅ Added variation ${result.variationSlug} to ${result.blockSlug} in ${result.projectDir}.`);
+		return;
+	}
+
+	if (kind === "pattern") {
+		if (!name) {
+			throw new Error(
+				"`wp-typia add pattern` requires <name>. Usage: wp-typia add pattern <name>.",
+			);
+		}
+
+		const result = await runAddPatternCommand({
+			cwd,
+			patternName: name,
+		});
+		console.log(`✅ Added pattern ${result.patternSlug} in ${result.projectDir}.`);
+		return;
 	}
 
 	if (kind !== "block") {
@@ -338,6 +373,15 @@ export async function executeMigrateCommand({
 		prompt,
 		renderLine,
 	});
+}
+
+export function getAddWorkspaceBlockOptions(cwd: string) {
+	const workspace = tryResolveWorkspaceProject(cwd);
+	if (!workspace) {
+		return [];
+	}
+
+	return getWorkspaceBlockSelectOptions(workspace.projectDir);
 }
 
 export { formatAddHelpText, formatMigrationHelpText, listTemplates };

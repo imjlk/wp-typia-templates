@@ -39,9 +39,9 @@ describe("wp-typia package", () => {
 		);
 	});
 
-	test("fails add variation with an actionable placeholder message", () => {
-		expect(() => runUtf8Command("node", [entryPath, "add", "variation"])).toThrow(
-			"`wp-typia add variation` is not implemented yet.",
+	test("requires --block for add variation", () => {
+		expect(() => runUtf8Command("node", [entryPath, "add", "variation", "promo-card"])).toThrow(
+			"`wp-typia add variation` requires --block <block-slug>.",
 		);
 	});
 
