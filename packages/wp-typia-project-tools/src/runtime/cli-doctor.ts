@@ -9,6 +9,7 @@ import { listTemplates } from "./template-registry.js";
 import { readWorkspaceInventory, type WorkspaceInventory } from "./workspace-inventory.js";
 import {
 	getInvalidWorkspaceProjectReason,
+	parseWorkspacePackageJson,
 	WORKSPACE_TEMPLATE_PACKAGE,
 	tryResolveWorkspaceProject,
 	type WorkspacePackageJson,
@@ -83,20 +84,6 @@ function createDoctorCheck(
 	detail: string,
 ): DoctorCheck {
 	return { detail, label, status };
-}
-
-function loadWorkspacePackageManifest(projectDir: string): WorkspacePackageJson {
-	const packageJsonPath = path.join(projectDir, "package.json");
-
-	try {
-		return JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as WorkspacePackageJson;
-	} catch (error) {
-		throw new Error(
-			`Failed to parse workspace package manifest at ${packageJsonPath}: ${
-				error instanceof Error ? error.message : String(error)
-			}`,
-		);
-	}
 }
 
 function getWorkspaceBootstrapRelativePath(packageName: string): string {
@@ -431,7 +418,7 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 
 	let workspacePackageJson: WorkspacePackageJson;
 	try {
-		workspacePackageJson = loadWorkspacePackageManifest(workspace.projectDir);
+		workspacePackageJson = parseWorkspacePackageJson(workspace.projectDir);
 	} catch (error) {
 		checks.push(
 			createDoctorCheck(

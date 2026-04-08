@@ -31,7 +31,20 @@ function hasNonEmptyString(value: unknown): value is string {
 	return typeof value === "string" && value.trim().length > 0;
 }
 
-function parseWorkspacePackageJson(packageJsonPath: string): WorkspacePackageJson {
+/**
+ * Parse a workspace package manifest from a project directory or `package.json` path.
+ *
+ * @param projectDirOrManifestPath Absolute or relative project directory, or a direct
+ * path to `package.json`.
+ * @returns The parsed workspace package manifest.
+ * @throws {Error} When the manifest cannot be parsed.
+ */
+export function parseWorkspacePackageJson(projectDirOrManifestPath: string): WorkspacePackageJson {
+	const packageJsonPath =
+		path.basename(projectDirOrManifestPath) === "package.json"
+			? projectDirOrManifestPath
+			: path.join(projectDirOrManifestPath, "package.json");
+
 	try {
 		return JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as WorkspacePackageJson;
 	} catch (error) {
