@@ -813,6 +813,7 @@ export async function runAddBlockCommand({
 			projectDir: tempProjectDir,
 			templateId: resolvedTemplateId,
 		});
+		assertBlockTargetsDoNotExist(workspace.projectDir, resolvedTemplateId, result.variables);
 		const mutationSnapshot: WorkspaceMutationSnapshot = {
 			blockConfigSource,
 			migrationConfigSource,
@@ -835,7 +836,6 @@ export async function runAddBlockCommand({
 		};
 
 		try {
-			assertBlockTargetsDoNotExist(workspace.projectDir, resolvedTemplateId, result.variables);
 			await copyScaffoldedBlockSlice(
 				workspace.projectDir,
 				resolvedTemplateId,

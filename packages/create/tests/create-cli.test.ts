@@ -2398,6 +2398,54 @@ describe("@wp-typia/create scaffolding", () => {
 		runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", ["--check"]);
 	}, 20_000);
 
+	test("duplicate add block failures preserve existing workspace blocks", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-add-duplicate");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace add duplicate",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-add-duplicate",
+				textDomain: "demo-space",
+				title: "Demo Workspace Add Duplicate",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+			cwd: targetDir,
+		});
+
+		const originalIndexSource = fs.readFileSync(
+			path.join(targetDir, "src", "blocks", "counter-card", "index.tsx"),
+			"utf8",
+		);
+		const originalBlockConfigSource = fs.readFileSync(
+			path.join(targetDir, "scripts", "block-config.ts"),
+			"utf8",
+		);
+
+		expect(() =>
+			runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+				cwd: targetDir,
+			}),
+		).toThrow('A block already exists at src/blocks/counter-card. Choose a different name.');
+
+		expect(
+			fs.readFileSync(path.join(targetDir, "src", "blocks", "counter-card", "index.tsx"), "utf8"),
+		).toBe(originalIndexSource);
+		expect(
+			fs.readFileSync(path.join(targetDir, "scripts", "block-config.ts"), "utf8"),
+		).toBe(originalBlockConfigSource);
+	});
+
 	test("canonical CLI can add a compound persistence block to an official workspace template", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-add-compound");
 
