@@ -33,6 +33,16 @@ type CreateFlowProps = {
 export function CreateFlow({ cwd, initialValues }: CreateFlowProps) {
 	const runtime = useRuntime();
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const defaultPrompt = {
+		close() {},
+		select<T extends string>(_message: string, options: Array<{ value: T }>, defaultValue = 1) {
+			const fallback = options[Math.max(0, defaultValue - 1)] ?? options[0];
+			return Promise.resolve(fallback.value);
+		},
+		text(_message: string, defaultValue: string) {
+			return Promise.resolve(defaultValue);
+		},
+	};
 
 	return (
 		<>
@@ -144,7 +154,9 @@ export function CreateFlow({ cwd, initialValues }: CreateFlowProps) {
 						await executeCreateCommand({
 							cwd,
 							flags: values,
+							interactive: true,
 							projectDir: values["project-dir"],
+							prompt: defaultPrompt,
 						});
 						runtime.exit();
 					} catch (error) {

@@ -62,6 +62,7 @@ export {
 } from "./template-registry.js";
 export {
 	createAddPlaceholderMessage,
+	createReadlinePrompt,
 	formatAddHelpText,
 	formatHelpText,
 	formatTemplateDetails,

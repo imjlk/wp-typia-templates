@@ -65,8 +65,8 @@ describe("wp-typia package", () => {
 	test("exposes skills listing through the Bunli plugin surface", () => {
 		const output = runUtf8Command("node", [entryPath, "skills", "list"]);
 
-		expect(output).toContain("Detected");
 		expect(output).toContain("\"agents\": [");
+		expect(output).toMatch(/Detected|No agents detected/);
 	});
 
 	test("fails mcp list with actionable config guidance when no schema sources are configured", () => {

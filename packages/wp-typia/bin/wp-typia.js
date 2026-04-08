@@ -7,6 +7,10 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cliEntrypoint = path.join(packageRoot, "src", "cli.ts");
 const bunBinary = process.env.BUN_BIN || "bun";
+const interactiveStdio =
+	Boolean(process.stdin.isTTY) &&
+	Boolean(process.stdout.isTTY) &&
+	Boolean(process.stderr.isTTY);
 
 const result = spawnSync(
 	bunBinary,
@@ -21,11 +25,11 @@ const result = spawnSync(
 		...process.argv.slice(2),
 	],
 	{
-	cwd: process.cwd(),
-	encoding: "utf8",
-	env: process.env,
-	stdio: ["inherit", "pipe", "pipe"],
-},
+		cwd: process.cwd(),
+		encoding: "utf8",
+		env: process.env,
+		stdio: interactiveStdio ? ["inherit", "inherit", "inherit"] : ["inherit", "pipe", "pipe"],
+	},
 );
 
 if (result.error) {

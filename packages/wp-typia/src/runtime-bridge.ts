@@ -1,4 +1,5 @@
 import {
+	createReadlinePrompt,
 	createAddPlaceholderMessage,
 	formatAddHelpText,
 	formatMigrationHelpText,
@@ -6,6 +7,7 @@ import {
 	formatTemplateFeatures,
 	formatTemplateSummary,
 	getTemplateById,
+	getTemplateSelectOptions,
 	listTemplates,
 	parseMigrationArgs,
 	runAddBlockCommand,
@@ -19,6 +21,8 @@ type CreateExecutionInput = {
 	projectDir: string;
 	cwd: string;
 	flags: Record<string, unknown>;
+	interactive?: boolean;
+	prompt?: ReadlinePrompt;
 };
 
 type AddExecutionInput = {
@@ -76,48 +80,117 @@ function pushFlag(argv: string[], name: string, value: unknown): void {
 	argv.push(`--${name}`, String(value));
 }
 
+const PACKAGE_MANAGER_PROMPT_OPTIONS = [
+	{ label: "npm", value: "npm", hint: "Use npm" },
+	{ label: "pnpm", value: "pnpm", hint: "Use pnpm" },
+	{ label: "yarn", value: "yarn", hint: "Use yarn" },
+	{ label: "bun", value: "bun", hint: "Use bun" },
+] as const;
+
+const DATA_STORAGE_PROMPT_OPTIONS = [
+	{ label: "custom-table", value: "custom-table", hint: "Dedicated custom table storage" },
+	{ label: "post-meta", value: "post-meta", hint: "Persist through post meta" },
+] as const;
+
+const PERSISTENCE_POLICY_PROMPT_OPTIONS = [
+	{ label: "authenticated", value: "authenticated", hint: "Authenticated write policy" },
+	{ label: "public", value: "public", hint: "Public token policy" },
+] as const;
+
+const BOOLEAN_PROMPT_OPTIONS = [
+	{ label: "Yes", value: "yes", hint: "Enable this option" },
+	{ label: "No", value: "no", hint: "Keep the default disabled state" },
+] as const;
+
 export async function executeCreateCommand({
 	projectDir,
 	cwd,
 	flags,
+	interactive,
+	prompt,
 }: CreateExecutionInput): Promise<void> {
-	const flow = await runScaffoldFlow({
-		cwd,
-		dataStorageMode: readOptionalStringFlag(flags, "data-storage"),
-		isInteractive: false,
-		namespace: readOptionalStringFlag(flags, "namespace"),
-		noInstall: Boolean(flags["no-install"]),
-		packageManager: readOptionalStringFlag(flags, "package-manager"),
-		persistencePolicy: readOptionalStringFlag(flags, "persistence-policy"),
-		phpPrefix: readOptionalStringFlag(flags, "php-prefix"),
-		projectInput: projectDir,
-		templateId: readOptionalStringFlag(flags, "template"),
-		textDomain: readOptionalStringFlag(flags, "text-domain"),
-		variant: readOptionalStringFlag(flags, "variant"),
-		withMigrationUi: flags["with-migration-ui"] as boolean | undefined,
-		withTestPreset: flags["with-test-preset"] as boolean | undefined,
-		withWpEnv: flags["with-wp-env"] as boolean | undefined,
-		yes: Boolean(flags.yes),
-	});
+	const shouldPrompt =
+		interactive ?? (!Boolean(flags.yes) && Boolean(process.stdin.isTTY) && Boolean(process.stdout.isTTY));
+	const activePrompt = shouldPrompt ? (prompt ?? createReadlinePrompt()) : undefined;
 
-	if (flow.result.selectedVariant) {
-		console.log(`Template variant: ${flow.result.selectedVariant}`);
-	}
-	for (const warning of flow.result.warnings) {
-		console.warn(`⚠️ ${warning}`);
-	}
+	try {
+		const flow = await runScaffoldFlow({
+			cwd,
+			dataStorageMode: readOptionalStringFlag(flags, "data-storage"),
+			isInteractive: Boolean(activePrompt),
+			namespace: readOptionalStringFlag(flags, "namespace"),
+			noInstall: Boolean(flags["no-install"]),
+			packageManager: readOptionalStringFlag(flags, "package-manager"),
+			persistencePolicy: readOptionalStringFlag(flags, "persistence-policy"),
+			phpPrefix: readOptionalStringFlag(flags, "php-prefix"),
+			projectInput: projectDir,
+			promptText: activePrompt
+				? (message, defaultValue, validate) => activePrompt.text(message, defaultValue, validate)
+				: undefined,
+			selectDataStorage: activePrompt
+				? () => activePrompt.select("Select a data storage mode", [...DATA_STORAGE_PROMPT_OPTIONS], 1)
+				: undefined,
+			selectPackageManager: activePrompt
+				? () => activePrompt.select("Select a package manager", [...PACKAGE_MANAGER_PROMPT_OPTIONS], 1)
+				: undefined,
+			selectPersistencePolicy: activePrompt
+				? () =>
+						activePrompt.select(
+							"Select a persistence policy",
+							[...PERSISTENCE_POLICY_PROMPT_OPTIONS],
+							1,
+						)
+				: undefined,
+			selectTemplate: activePrompt
+				? () => activePrompt.select("Select a template", getTemplateSelectOptions(), 1)
+				: undefined,
+			selectWithMigrationUi: activePrompt
+				? async () =>
+						(await activePrompt.select("Enable migration UI support?", [...BOOLEAN_PROMPT_OPTIONS], 2)) ===
+						"yes"
+				: undefined,
+			selectWithTestPreset: activePrompt
+				? async () =>
+						(await activePrompt.select("Include the Playwright test preset?", [...BOOLEAN_PROMPT_OPTIONS], 2)) ===
+						"yes"
+				: undefined,
+			selectWithWpEnv: activePrompt
+				? async () =>
+						(await activePrompt.select("Include a local wp-env preset?", [...BOOLEAN_PROMPT_OPTIONS], 2)) ===
+						"yes"
+				: undefined,
+			templateId: readOptionalStringFlag(flags, "template"),
+			textDomain: readOptionalStringFlag(flags, "text-domain"),
+			variant: readOptionalStringFlag(flags, "variant"),
+			withMigrationUi: flags["with-migration-ui"] as boolean | undefined,
+			withTestPreset: flags["with-test-preset"] as boolean | undefined,
+			withWpEnv: flags["with-wp-env"] as boolean | undefined,
+			yes: Boolean(flags.yes),
+		});
 
-	console.log(`\n✅ Created ${flow.result.variables.title} in ${flow.projectDir}`);
-	console.log("Next steps:");
-	for (const step of flow.nextSteps) {
-		console.log(`  ${step}`);
-	}
-	if (flow.optionalOnboarding.steps.length > 0) {
-		console.log("\nOptional before first commit:");
-		for (const step of flow.optionalOnboarding.steps) {
+		if (flow.result.selectedVariant) {
+			console.log(`Template variant: ${flow.result.selectedVariant}`);
+		}
+		for (const warning of flow.result.warnings) {
+			console.warn(`⚠️ ${warning}`);
+		}
+
+		console.log(`\n✅ Created ${flow.result.variables.title} in ${flow.projectDir}`);
+		console.log("Next steps:");
+		for (const step of flow.nextSteps) {
 			console.log(`  ${step}`);
 		}
-		console.log(`Note: ${flow.optionalOnboarding.note}`);
+		if (flow.optionalOnboarding.steps.length > 0) {
+			console.log("\nOptional before first commit:");
+			for (const step of flow.optionalOnboarding.steps) {
+				console.log(`  ${step}`);
+			}
+			console.log(`Note: ${flow.optionalOnboarding.note}`);
+		}
+	} finally {
+		if (activePrompt && activePrompt !== prompt) {
+			activePrompt.close();
+		}
 	}
 }
 
