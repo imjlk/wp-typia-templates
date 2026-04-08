@@ -10,7 +10,11 @@ export const doctorCommand = defineCommand({
 			args.agent ||
 			Boolean(args.context?.store?.isAIAgent);
 		if (prefersStructuredOutput) {
-			args.output({ checks: await getDoctorChecks(args.cwd) });
+			const checks = await getDoctorChecks(args.cwd);
+			args.output({ checks });
+			if (checks.some((check) => check.status === "fail")) {
+				throw new Error("Doctor found one or more failing checks.");
+			}
 			return;
 		}
 		await runDoctor(args.cwd);

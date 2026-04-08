@@ -87,7 +87,16 @@ function getCommandErrorMessage(run: () => string): string {
 		run();
 		return "";
 	} catch (error) {
-		return error instanceof Error ? error.message : String(error);
+		if (typeof error === "object" && error !== null) {
+			const message =
+				"message" in error && typeof error.message === "string" ? error.message : String(error);
+			const stdout =
+				"stdout" in error && typeof error.stdout === "string" ? error.stdout : "";
+			const stderr =
+				"stderr" in error && typeof error.stderr === "string" ? error.stderr : "";
+			return [message, stdout, stderr].filter(Boolean).join("\n");
+		}
+		return String(error);
 	}
 }
 
@@ -2317,10 +2326,15 @@ describe("@wp-typia/project-tools scaffolding", () => {
 			phpPrefix: "demo_space",
 		});
 		expect(blockConfigSource).toContain("// wp-typia add block entries");
+		expect(blockConfigSource).toContain("// wp-typia add variation entries");
+		expect(blockConfigSource).toContain("// wp-typia add pattern entries");
 		expect(buildWorkspaceSource).toContain("--blocks-manifest");
 		expect(bootstrapSource).toContain("wp_register_block_metadata_collection");
 		expect(bootstrapSource).toContain("wp_register_block_types_from_metadata_collection");
+		expect(bootstrapSource).toContain("register_block_pattern_category");
+		expect(bootstrapSource).toContain("/src/patterns/*.php");
 		expect(fs.existsSync(path.join(targetDir, "src", "blocks", ".gitkeep"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "src", "patterns", ".gitkeep"))).toBe(true);
 	});
 
 	test("official workspace templates accept local path references with migration UI", async () => {
@@ -2398,6 +2412,80 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", ["--check"]);
 	}, 20_000);
 
+	test("canonical CLI can add a variation to an official workspace template", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-add-variation");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace add variation",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-add-variation",
+				textDomain: "demo-space",
+				title: "Demo Workspace Add Variation",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+			cwd: targetDir,
+		});
+		runCli(
+			"node",
+			[entryPath, "add", "variation", "hero-card", "--block", "counter-card"],
+			{ cwd: targetDir },
+		);
+
+		const blockConfigSource = fs.readFileSync(
+			path.join(targetDir, "scripts", "block-config.ts"),
+			"utf8",
+		);
+		const blockIndexSource = fs.readFileSync(
+			path.join(targetDir, "src", "blocks", "counter-card", "index.tsx"),
+			"utf8",
+		);
+		const variationsIndexSource = fs.readFileSync(
+			path.join(targetDir, "src", "blocks", "counter-card", "variations", "index.ts"),
+			"utf8",
+		);
+		const variationSource = fs.readFileSync(
+			path.join(targetDir, "src", "blocks", "counter-card", "variations", "hero-card.ts"),
+			"utf8",
+		);
+
+		expect(blockConfigSource).toContain('block: "counter-card"');
+		expect(blockConfigSource).toContain('slug: "hero-card"');
+		expect(blockIndexSource).toContain("registerWorkspaceVariations");
+		expect(blockIndexSource).toContain("registerWorkspaceVariations();");
+		expect(variationsIndexSource).toContain("heroCardVariation");
+		expect(variationSource).toContain("BlockVariation");
+		expect(variationSource).toContain("A starter variation for Hero Card.");
+
+		const doctorOutput = runCli("node", [entryPath, "doctor"], {
+			cwd: targetDir,
+		});
+		const doctorChecks = JSON.parse(doctorOutput) as {
+			checks: Array<{ detail: string; label: string; status: string }>;
+		};
+		expect(
+			doctorChecks.checks.find((check) => check.label === "Workspace inventory")?.status,
+		).toBe("pass");
+		expect(
+			doctorChecks.checks.find((check) => check.label === "Variation counter-card/hero-card")?.status,
+		).toBe("pass");
+		expect(
+			doctorChecks.checks.find((check) => check.label === "Variation entrypoint counter-card")?.status,
+		).toBe("pass");
+
+		runCli("npm", ["run", "build"], { cwd: targetDir });
+	}, 30_000);
+
 	test("duplicate add block failures preserve existing workspace blocks", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-add-duplicate");
 
@@ -2444,6 +2532,75 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(
 			fs.readFileSync(path.join(targetDir, "scripts", "block-config.ts"), "utf8"),
 		).toBe(originalBlockConfigSource);
+	});
+
+	test("variation workflow rejects unknown blocks and preserves existing variation files on duplicate failure", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-variation-duplicate");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace variation duplicate",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-variation-duplicate",
+				textDomain: "demo-space",
+				title: "Demo Workspace Variation Duplicate",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+			cwd: targetDir,
+		});
+
+		expect(
+			getCommandErrorMessage(() =>
+				runCli(
+					"node",
+					[entryPath, "add", "variation", "hero-card", "--block", "missing-card"],
+					{ cwd: targetDir },
+				),
+			),
+		).toContain("missing-card");
+
+		runCli(
+			"node",
+			[entryPath, "add", "variation", "hero-card", "--block", "counter-card"],
+			{ cwd: targetDir },
+		);
+
+		const originalVariationSource = fs.readFileSync(
+			path.join(targetDir, "src", "blocks", "counter-card", "variations", "hero-card.ts"),
+			"utf8",
+		);
+		const originalInventorySource = fs.readFileSync(
+			path.join(targetDir, "scripts", "block-config.ts"),
+			"utf8",
+		);
+
+		expect(() =>
+			runCli(
+				"node",
+				[entryPath, "add", "variation", "hero-card", "--block", "counter-card"],
+				{ cwd: targetDir },
+			),
+		).toThrow("A variation already exists");
+
+		expect(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "counter-card", "variations", "hero-card.ts"),
+				"utf8",
+			),
+		).toBe(originalVariationSource);
+		expect(
+			fs.readFileSync(path.join(targetDir, "scripts", "block-config.ts"), "utf8"),
+		).toBe(originalInventorySource);
 	});
 
 	test("canonical CLI can add a compound persistence block to an official workspace template", async () => {
@@ -2561,6 +2718,153 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(doctorOutput).toContain("PASS Migration config");
 		expect(doctorOutput).toContain("PASS Migration doctor summary");
 	}, 20_000);
+
+	test("canonical CLI can add a pattern to an official workspace template", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-add-pattern");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace add pattern",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-add-pattern",
+				textDomain: "demo-space",
+				title: "Demo Workspace Add Pattern",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		runCli("node", [entryPath, "add", "pattern", "hero-layout"], {
+			cwd: targetDir,
+		});
+
+		const blockConfigSource = fs.readFileSync(
+			path.join(targetDir, "scripts", "block-config.ts"),
+			"utf8",
+		);
+		const bootstrapSource = fs.readFileSync(
+			path.join(targetDir, "demo-workspace-add-pattern.php"),
+			"utf8",
+		);
+		const patternSource = fs.readFileSync(
+			path.join(targetDir, "src", "patterns", "hero-layout.php"),
+			"utf8",
+		);
+
+		expect(blockConfigSource).toContain('slug: "hero-layout"');
+		expect(blockConfigSource).toContain('file: "src/patterns/hero-layout.php"');
+		expect(bootstrapSource).toContain("register_block_pattern_category");
+		expect(bootstrapSource).toContain("/src/patterns/*.php");
+		expect(patternSource).toContain("demo-space/hero-layout");
+
+		const doctorOutput = runCli("node", [entryPath, "doctor"], {
+			cwd: targetDir,
+		});
+		const doctorChecks = JSON.parse(doctorOutput) as {
+			checks: Array<{ detail: string; label: string; status: string }>;
+		};
+		expect(
+			doctorChecks.checks.find((check) => check.label === "Pattern bootstrap")?.status,
+		).toBe("pass");
+		expect(
+			doctorChecks.checks.find((check) => check.label === "Pattern hero-layout")?.status,
+		).toBe("pass");
+	});
+
+	test("doctor fails on missing variation and pattern inventory files", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-doctor-drift");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace doctor drift",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-doctor-drift",
+				textDomain: "demo-space",
+				title: "Demo Workspace Doctor Drift",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+			cwd: targetDir,
+		});
+		runCli(
+			"node",
+			[entryPath, "add", "variation", "hero-card", "--block", "counter-card"],
+			{ cwd: targetDir },
+		);
+		runCli("node", [entryPath, "add", "pattern", "hero-layout"], {
+			cwd: targetDir,
+		});
+
+		fs.rmSync(path.join(targetDir, "src", "blocks", "counter-card", "variations", "hero-card.ts"));
+		fs.rmSync(path.join(targetDir, "src", "patterns", "hero-layout.php"));
+
+		const errorMessage = getCommandErrorMessage(() =>
+			runCli("node", [entryPath, "doctor"], {
+				cwd: targetDir,
+			}),
+		);
+
+		expect(errorMessage).toContain("Doctor found one or more failing checks.");
+		expect(errorMessage).toContain("Variation counter-card/hero-card");
+		expect(errorMessage).toContain("Pattern hero-layout");
+	});
+
+	test("doctor fails when workspace inventory entries are malformed", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-doctor-invalid-inventory");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace invalid inventory",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-doctor-invalid-inventory",
+				textDomain: "demo-space",
+				title: "Demo Workspace Invalid Inventory",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+
+		const blockConfigPath = path.join(targetDir, "scripts", "block-config.ts");
+		const blockConfigSource = fs.readFileSync(blockConfigPath, "utf8");
+		fs.writeFileSync(
+			blockConfigPath,
+			blockConfigSource.replace(
+				"// wp-typia add pattern entries",
+				`\t{\n\t\tslug: "broken-pattern",\n\t},\n\t// wp-typia add pattern entries`,
+			),
+			"utf8",
+		);
+
+		const errorMessage = getCommandErrorMessage(() =>
+			runCli("node", [entryPath, "doctor"], {
+				cwd: targetDir,
+			}),
+		);
+
+		expect(errorMessage).toContain("Workspace inventory");
+		expect(errorMessage).toContain("PATTERNS[0] is missing required");
+	});
 
 	test("rendered template paths cannot escape the target directory", async () => {
 		const templateRoot = fs.mkdtempSync(path.join(tempRoot, "render-escape-template-"));

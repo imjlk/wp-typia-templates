@@ -27,6 +27,7 @@ export const WP_TYPIA_TOP_LEVEL_COMMAND_NAMES = [
 
 const STRING_OPTION_NAMES_BY_COMMAND = {
 	add: new Set([
+		"block",
 		"data-storage",
 		"persistence-policy",
 		"template",

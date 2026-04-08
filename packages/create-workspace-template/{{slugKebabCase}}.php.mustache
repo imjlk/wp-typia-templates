@@ -89,5 +89,24 @@ function {{phpPrefix}}_register_blocks() {
 	{{phpPrefix}}_register_blocks_from_manifest_fallback();
 }
 
+function {{phpPrefix}}_register_pattern_category() {
+	if ( function_exists( 'register_block_pattern_category' ) ) {
+		register_block_pattern_category(
+			'{{namespace}}',
+			array(
+				'label' => __( '{{title}} Patterns', '{{textDomain}}' ),
+			)
+		);
+	}
+}
+
+function {{phpPrefix}}_register_patterns() {
+	foreach ( glob( __DIR__ . '/src/patterns/*.php' ) ?: array() as $pattern_module ) {
+		require $pattern_module;
+	}
+}
+
 add_action( 'init', '{{phpPrefix}}_load_textdomain' );
 add_action( 'init', '{{phpPrefix}}_register_blocks' );
+add_action( 'init', '{{phpPrefix}}_register_pattern_category' );
+add_action( 'init', '{{phpPrefix}}_register_patterns', 20 );

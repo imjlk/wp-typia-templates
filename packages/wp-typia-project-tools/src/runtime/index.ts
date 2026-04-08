@@ -61,7 +61,6 @@ export {
 	listTemplates,
 } from "./template-registry.js";
 export {
-	createAddPlaceholderMessage,
 	createReadlinePrompt,
 	formatAddHelpText,
 	formatHelpText,
@@ -71,8 +70,11 @@ export {
 	getDoctorChecks,
 	getNextSteps,
 	getOptionalOnboarding,
+	getWorkspaceBlockSelectOptions,
 	runAddBlockCommand,
+	runAddPatternCommand,
 	runDoctor,
+	runAddVariationCommand,
 	runScaffoldFlow,
 } from "./cli-core.js";
 export type { DoctorCheck, ReadlinePrompt } from "./cli-core.js";

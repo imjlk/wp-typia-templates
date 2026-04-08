@@ -5,7 +5,7 @@
 ## Workspace
 
 This scaffold is the official empty `wp-typia` workspace shell. It starts with
-an empty `src/blocks/*` inventory and grows through `wp-typia add block`.
+an empty `src/blocks/*` inventory and grows through `wp-typia add`.
 
 ## First Block
 
@@ -18,6 +18,13 @@ Persistence-ready blocks and compound parent/child blocks can be added later:
 ```bash
 wp-typia add block counter-card --template persistence --data-storage custom-table --persistence-policy authenticated
 wp-typia add block faq-stack --template compound --data-storage custom-table --persistence-policy public
+```
+
+Variations and patterns can also be added after the first block exists:
+
+```bash
+wp-typia add variation hero-card --block counter-card
+wp-typia add pattern hero-layout
 ```
 
 ## Development

@@ -9,6 +9,25 @@ export interface WorkspaceBlockConfig {
 	>;
 }
 
+export interface WorkspaceVariationConfig {
+	block: string;
+	file: string;
+	slug: string;
+}
+
+export interface WorkspacePatternConfig {
+	file: string;
+	slug: string;
+}
+
 export const BLOCKS: WorkspaceBlockConfig[] = [
 	// wp-typia add block entries
+];
+
+export const VARIATIONS: WorkspaceVariationConfig[] = [
+	// wp-typia add variation entries
+];
+
+export const PATTERNS: WorkspacePatternConfig[] = [
+	// wp-typia add pattern entries
 ];

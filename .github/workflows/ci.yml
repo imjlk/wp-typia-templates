@@ -201,6 +201,20 @@ jobs:
             variant: hero
             package_manager: npm
             project_name: smoke-remote-create-block-external
+          - runtime: node
+            template: "@wp-typia/create-workspace-template"
+            package_manager: npm
+            project_name: smoke-workspace-add-variation-npm
+            with_migration_ui: true
+            add_block_name: counter-card
+            add_template: basic
+            add_variation_name: hero-card
+            add_variation_block: counter-card
+          - runtime: node
+            template: "@wp-typia/create-workspace-template"
+            package_manager: npm
+            project_name: smoke-workspace-add-pattern-npm
+            add_pattern_name: hero-layout
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -251,6 +265,30 @@ jobs:
           fi
           if [ -n "${{ matrix.persistence_policy || '' }}" ]; then
             args+=(--persistence-policy "${{ matrix.persistence_policy }}")
+          fi
+          if [ "${{ matrix.with_migration_ui || false }}" = "true" ]; then
+            args+=(--with-migration-ui)
+          fi
+          if [ -n "${{ matrix.add_block_name || '' }}" ]; then
+            args+=(--add-block-name "${{ matrix.add_block_name }}")
+          fi
+          if [ -n "${{ matrix.add_template || '' }}" ]; then
+            args+=(--add-template "${{ matrix.add_template }}")
+          fi
+          if [ -n "${{ matrix.add_data_storage || '' }}" ]; then
+            args+=(--add-data-storage "${{ matrix.add_data_storage }}")
+          fi
+          if [ -n "${{ matrix.add_persistence_policy || '' }}" ]; then
+            args+=(--add-persistence-policy "${{ matrix.add_persistence_policy }}")
+          fi
+          if [ -n "${{ matrix.add_variation_name || '' }}" ]; then
+            args+=(--add-variation-name "${{ matrix.add_variation_name }}")
+          fi
+          if [ -n "${{ matrix.add_variation_block || '' }}" ]; then
+            args+=(--add-variation-block "${{ matrix.add_variation_block }}")
+          fi
+          if [ -n "${{ matrix.add_pattern_name || '' }}" ]; then
+            args+=(--add-pattern-name "${{ matrix.add_pattern_name }}")
           fi
           node scripts/run-generated-project-smoke.mjs "${args[@]}"
 

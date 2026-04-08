@@ -25,11 +25,22 @@ import {
 import { copyInterpolatedDirectory } from "./template-render.js";
 import {
 	toKebabCase,
+	toTitleCase,
 	toSnakeCase,
 } from "./string-case.js";
 import type { MigrationBlockConfig } from "./migration-types.js";
-import type { PackageManagerId } from "./package-managers.js";
 import type { ScaffoldTemplateVariables } from "./scaffold.js";
+import {
+	appendWorkspaceInventoryEntries,
+	getWorkspaceBlockSelectOptions,
+	readWorkspaceInventory,
+	type WorkspaceInventory,
+} from "./workspace-inventory.js";
+import {
+	resolveWorkspaceProject,
+	WORKSPACE_TEMPLATE_PACKAGE,
+	type WorkspaceProject,
+} from "./workspace-project.js";
 
 /**
  * Supported top-level `wp-typia add` kinds exposed by the canonical CLI.
@@ -48,30 +59,22 @@ export const ADD_BLOCK_TEMPLATE_IDS = [
 ] as const;
 export type AddBlockTemplateId = (typeof ADD_BLOCK_TEMPLATE_IDS)[number];
 
-const WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
-const BLOCK_CONFIG_ENTRY_MARKER = "\t// wp-typia add block entries";
 const COLLECTION_IMPORT_LINE = "import '../../collection';";
-const EMPTY_BLOCKS_ARRAY = `${BLOCK_CONFIG_ENTRY_MARKER}\n];`;
 const REST_MANIFEST_IMPORT_PATTERN =
 	/import\s*\{[^}]*\bdefineEndpointManifest\b[^}]*\}\s*from\s*["']@wp-typia\/block-runtime\/metadata-core["'];?/m;
+const VARIATIONS_IMPORT_LINE = "import { registerWorkspaceVariations } from './variations';";
+const VARIATIONS_CALL_LINE = "registerWorkspaceVariations();";
+const PATTERN_BOOTSTRAP_CATEGORY = "register_block_pattern_category";
 
-interface WorkspacePackageJson {
-	author?: string;
-	packageManager?: string;
-	wpTypia?: {
-		namespace?: string;
-		phpPrefix?: string;
-		projectType?: string;
-		templatePackage?: string;
-		textDomain?: string;
-	};
+interface RunAddVariationCommandOptions {
+	blockName: string;
+	cwd?: string;
+	variationName: string;
 }
 
-interface WorkspaceProject {
-	author: string;
-	packageManager: PackageManagerId;
-	projectDir: string;
-	workspace: Required<NonNullable<WorkspacePackageJson["wpTypia"]>>;
+interface RunAddPatternCommandOptions {
+	cwd?: string;
+	patternName: string;
 }
 
 interface RunAddBlockCommandOptions {
@@ -83,23 +86,12 @@ interface RunAddBlockCommandOptions {
 }
 
 interface WorkspaceMutationSnapshot {
-	blockConfigSource: string | null;
-	migrationConfigSource: string | null;
+	fileSources: Array<{
+		filePath: string;
+		source: string | null;
+	}>;
 	snapshotDirs: string[];
 	targetPaths: string[];
-}
-
-function parsePackageManagerId(packageManagerField: string | undefined): PackageManagerId {
-	const packageManagerId = packageManagerField?.split("@", 1)[0];
-	switch (packageManagerId) {
-		case "bun":
-		case "npm":
-		case "pnpm":
-		case "yarn":
-			return packageManagerId;
-		default:
-			return "bun";
-	}
 }
 
 function normalizeBlockSlug(input: string): string {
@@ -375,6 +367,191 @@ async function addCollectionImportsForTemplate(
 	);
 }
 
+function buildVariationConfigEntry(
+	blockSlug: string,
+	variationSlug: string,
+): string {
+	return [
+		"\t{",
+		`\t\tblock: ${quoteTsString(blockSlug)},`,
+		`\t\tfile: ${quoteTsString(`src/blocks/${blockSlug}/variations/${variationSlug}.ts`)},`,
+		`\t\tslug: ${quoteTsString(variationSlug)},`,
+		"\t},",
+	].join("\n");
+}
+
+function buildPatternConfigEntry(patternSlug: string): string {
+	return [
+		"\t{",
+		`\t\tfile: ${quoteTsString(`src/patterns/${patternSlug}.php`)},`,
+		`\t\tslug: ${quoteTsString(patternSlug)},`,
+		"\t},",
+	].join("\n");
+}
+
+function buildVariationConstName(variationSlug: string): string {
+	return `${toKebabCase(variationSlug).replace(/-([a-z0-9])/g, (_, char) => char.toUpperCase())}Variation`;
+}
+
+function buildVariationSource(
+	variationSlug: string,
+	textDomain: string,
+): string {
+	const variationTitle = toTitleCase(variationSlug);
+	const variationConstName = buildVariationConstName(variationSlug);
+
+	return `import type { BlockVariation } from '@wordpress/blocks';
+import { __ } from '@wordpress/i18n';
+
+export const ${variationConstName} = {
+\tname: ${quoteTsString(variationSlug)},
+\ttitle: __( ${quoteTsString(variationTitle)}, ${quoteTsString(textDomain)} ),
+\tdescription: __(
+\t\t${quoteTsString(`A starter variation for ${variationTitle}.`)},
+\t\t${quoteTsString(textDomain)},
+\t),
+\tattributes: {},
+\tscope: ['inserter'],
+} satisfies BlockVariation;
+`;
+}
+
+function buildVariationIndexSource(
+	variationSlugs: string[],
+): string {
+	const importLines = variationSlugs
+		.map((variationSlug) => {
+			const variationConstName = buildVariationConstName(variationSlug);
+			return `import { ${variationConstName} } from './${variationSlug}';`;
+		})
+		.join("\n");
+	const variationConstNames = variationSlugs.map(buildVariationConstName).join(",\n\t\t");
+
+	return `import { registerBlockVariation } from '@wordpress/blocks';
+import metadata from '../block.json';
+${importLines ? `\n${importLines}` : ""}
+
+const WORKSPACE_VARIATIONS = [
+\t${variationConstNames}
+\t// wp-typia add variation entries
+];
+
+export function registerWorkspaceVariations() {
+\tfor (const variation of WORKSPACE_VARIATIONS) {
+\t\tregisterBlockVariation(metadata.name, variation);
+\t}
+}
+`;
+}
+
+function buildPatternSource(
+	patternSlug: string,
+	namespace: string,
+	textDomain: string,
+): string {
+	const patternTitle = toTitleCase(patternSlug);
+
+	return `<?php
+if ( ! defined( 'ABSPATH' ) ) {
+\treturn;
+}
+
+register_block_pattern(
+\t'${namespace}/${patternSlug}',
+\tarray(
+\t\t'title'       => __( ${JSON.stringify(patternTitle)}, '${textDomain}' ),
+\t\t'description' => __( ${JSON.stringify(`A starter pattern for ${patternTitle}.`)}, '${textDomain}' ),
+\t\t'categories'  => array( '${namespace}' ),
+\t\t'content'     => '<!-- wp:paragraph --><p>' . esc_html__( 'Describe this pattern here.', '${textDomain}' ) . '</p><!-- /wp:paragraph -->',
+\t)
+);
+`;
+}
+
+async function ensureVariationRegistrationHook(blockIndexPath: string): Promise<void> {
+	await patchFile(blockIndexPath, (source) => {
+		let nextSource = source;
+
+		if (!nextSource.includes(VARIATIONS_IMPORT_LINE)) {
+			nextSource = `${VARIATIONS_IMPORT_LINE}\n${nextSource}`;
+		}
+
+		if (!nextSource.includes(VARIATIONS_CALL_LINE)) {
+			nextSource = nextSource.replace(
+				/(registerBlockType<[\s\S]*?\);\n?)/u,
+				(match) => `${match}\n${VARIATIONS_CALL_LINE}\n`,
+			);
+		}
+
+		return nextSource;
+	});
+}
+
+async function writeVariationRegistry(
+	projectDir: string,
+	blockSlug: string,
+	variationSlug: string,
+): Promise<void> {
+	const variationsDir = path.join(projectDir, "src", "blocks", blockSlug, "variations");
+	const variationsIndexPath = path.join(variationsDir, "index.ts");
+	await fsp.mkdir(variationsDir, { recursive: true });
+
+	const existingVariationSlugs = fs.existsSync(variationsDir)
+		? fs
+				.readdirSync(variationsDir)
+				.filter((entry) => entry.endsWith(".ts") && entry !== "index.ts")
+				.map((entry) => entry.replace(/\.ts$/u, ""))
+		: [];
+	const nextVariationSlugs = Array.from(new Set([...existingVariationSlugs, variationSlug])).sort();
+	await fsp.writeFile(
+		variationsIndexPath,
+		buildVariationIndexSource(nextVariationSlugs),
+		"utf8",
+	);
+}
+
+async function ensurePatternBootstrapAnchors(workspace: WorkspaceProject): Promise<void> {
+	const bootstrapPath = path.join(workspace.projectDir, `${workspace.packageName}.php`);
+	await patchFile(bootstrapPath, (source) => {
+		let nextSource = source;
+
+		if (!nextSource.includes(PATTERN_BOOTSTRAP_CATEGORY)) {
+			const patternFunctions = `
+
+function ${workspace.workspace.phpPrefix}_register_pattern_category() {
+\tif ( function_exists( 'register_block_pattern_category' ) ) {
+\t\tregister_block_pattern_category(
+\t\t\t'${workspace.workspace.namespace}',
+\t\t\tarray(
+\t\t\t\t'label' => __( ${JSON.stringify(`${toTitleCase(workspace.packageName)} Patterns`)}, '${workspace.workspace.textDomain}' ),
+\t\t\t)
+\t\t);
+\t}
+}
+
+function ${workspace.workspace.phpPrefix}_register_patterns() {
+\tforeach ( glob( __DIR__ . '/src/patterns/*.php' ) ?: array() as $pattern_module ) {
+\t\trequire $pattern_module;
+\t}
+}
+`;
+			nextSource = nextSource.replace(
+				/add_action\( 'init', '[^']+_load_textdomain' \);\n/u,
+				(match) => `${patternFunctions}\n${match}`,
+			);
+		}
+
+		if (!nextSource.includes(`${workspace.workspace.phpPrefix}_register_pattern_category`)) {
+			nextSource += `\nadd_action( 'init', '${workspace.workspace.phpPrefix}_register_pattern_category' );`;
+		}
+		if (!nextSource.includes(`${workspace.workspace.phpPrefix}_register_patterns`)) {
+			nextSource += `\nadd_action( 'init', '${workspace.workspace.phpPrefix}_register_patterns', 20 );`;
+		}
+
+		return nextSource;
+	});
+}
+
 function ensureBlockConfigCanAddRestManifests(source: string): string {
 	const importLine =
 		"import { defineEndpointManifest } from '@wp-typia/block-runtime/metadata-core';";
@@ -389,32 +566,20 @@ async function appendBlockConfigEntries(
 	entries: string[],
 	needsRestManifestImport: boolean,
 ): Promise<void> {
-	const blockConfigPath = path.join(projectDir, "scripts", "block-config.ts");
-	await patchFile(blockConfigPath, (source) => {
-		let nextSource = source;
-		if (needsRestManifestImport) {
-			nextSource = ensureBlockConfigCanAddRestManifests(nextSource);
-		}
-
-		if (nextSource.includes(BLOCK_CONFIG_ENTRY_MARKER)) {
-			return nextSource.replace(
-				BLOCK_CONFIG_ENTRY_MARKER,
-				`${entries.join("\n")}\n${BLOCK_CONFIG_ENTRY_MARKER}`,
-			);
-		}
-
-		if (nextSource.includes(EMPTY_BLOCKS_ARRAY)) {
-			return nextSource.replace(
-				EMPTY_BLOCKS_ARRAY,
-				`${entries.join("\n")}\n];`,
-			);
-		}
-
-		return nextSource.replace(
-			"];",
-			`${entries.join("\n")}\n];`,
-		);
+	await appendWorkspaceInventoryEntries(projectDir, {
+		blockEntries: entries,
+		transformSource: needsRestManifestImport ? ensureBlockConfigCanAddRestManifests : undefined,
 	});
+}
+
+async function snapshotWorkspaceFiles(filePaths: string[]): Promise<WorkspaceMutationSnapshot["fileSources"]> {
+	const uniquePaths = Array.from(new Set(filePaths));
+	return Promise.all(
+		uniquePaths.map(async (filePath) => ({
+			filePath,
+			source: await readOptionalFile(filePath),
+		})),
+	);
 }
 
 async function renderWorkspacePersistenceServerModule(
@@ -615,49 +780,6 @@ async function syncWorkspaceAddedBlockArtifacts(
 	}
 }
 
-function resolveWorkspaceProject(startDir: string): WorkspaceProject {
-	let currentDir = path.resolve(startDir);
-
-	while (true) {
-		const packageJsonPath = path.join(currentDir, "package.json");
-		if (fs.existsSync(packageJsonPath)) {
-			const packageJson = JSON.parse(
-				fs.readFileSync(packageJsonPath, "utf8"),
-			) as WorkspacePackageJson;
-			if (
-				packageJson.wpTypia?.projectType === "workspace" &&
-				packageJson.wpTypia?.templatePackage === WORKSPACE_TEMPLATE_PACKAGE &&
-				typeof packageJson.wpTypia.namespace === "string" &&
-				typeof packageJson.wpTypia.textDomain === "string" &&
-				typeof packageJson.wpTypia.phpPrefix === "string"
-			) {
-				return {
-					author: typeof packageJson.author === "string" ? packageJson.author : "Your Name",
-					packageManager: parsePackageManagerId(packageJson.packageManager),
-					projectDir: currentDir,
-					workspace: {
-						namespace: packageJson.wpTypia.namespace,
-						phpPrefix: packageJson.wpTypia.phpPrefix,
-						projectType: "workspace",
-						templatePackage: WORKSPACE_TEMPLATE_PACKAGE,
-						textDomain: packageJson.wpTypia.textDomain,
-					},
-				};
-			}
-		}
-
-		const parentDir = path.dirname(currentDir);
-		if (parentDir === currentDir) {
-			break;
-		}
-		currentDir = parentDir;
-	}
-
-	throw new Error(
-		`This command must run inside a ${WORKSPACE_TEMPLATE_PACKAGE} project. Create one with \`wp-typia create my-plugin --template ${WORKSPACE_TEMPLATE_PACKAGE}\` first.`,
-	);
-}
-
 function assertPersistenceFlagsAllowed(
 	templateId: AddBlockTemplateId,
 	options: Pick<RunAddBlockCommandOptions, "dataStorageMode" | "persistencePolicy">,
@@ -703,12 +825,13 @@ function assertPersistenceFlagsAllowed(
 export function formatAddHelpText(): string {
 	return `Usage:
   wp-typia add block <name> --template <${ADD_BLOCK_TEMPLATE_IDS.join("|")}> [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
-  wp-typia add variation
-  wp-typia add pattern
+  wp-typia add variation <name> --block <block-slug>
+  wp-typia add pattern <name>
 
 Notes:
-  \`wp-typia add block\` runs only inside official ${WORKSPACE_TEMPLATE_PACKAGE} workspaces.
-  \`wp-typia add variation\` and \`wp-typia add pattern\` are reserved placeholders for follow-up workflows.`;
+  \`wp-typia add\` runs only inside official ${WORKSPACE_TEMPLATE_PACKAGE} workspaces.
+  \`add variation\` targets an existing block slug from \`scripts/block-config.ts\`.
+  \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.`;
 }
 
 /**
@@ -728,24 +851,16 @@ export async function seedWorkspaceMigrationProject(
 	writeInitialMigrationScaffold(projectDir, currentMigrationVersion, []);
 }
 
-async function rollbackWorkspaceMutation(
-	projectDir: string,
-	snapshot: WorkspaceMutationSnapshot,
-): Promise<void> {
+async function rollbackWorkspaceMutation(snapshot: WorkspaceMutationSnapshot): Promise<void> {
 	for (const targetPath of snapshot.targetPaths) {
 		await fsp.rm(targetPath, { force: true, recursive: true });
 	}
 	for (const snapshotDir of snapshot.snapshotDirs) {
 		await fsp.rm(snapshotDir, { force: true, recursive: true });
 	}
-	await restoreOptionalFile(
-		path.join(projectDir, "scripts", "block-config.ts"),
-		snapshot.blockConfigSource,
-	);
-	await restoreOptionalFile(
-		path.join(projectDir, "src", "migrations", "config.ts"),
-		snapshot.migrationConfigSource,
-	);
+	for (const { filePath, source } of snapshot.fileSources) {
+		await restoreOptionalFile(filePath, source);
+	}
 }
 
 /**
@@ -783,16 +898,13 @@ export async function runAddBlockCommand({
 	try {
 		tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-add-block-"));
 		const tempProjectDir = path.join(tempRoot, normalizedSlug);
+		const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
+		const migrationConfigPath = path.join(workspace.projectDir, "src", "migrations", "config.ts");
 		const blockPhpPrefix = buildWorkspacePhpPrefix(
 			workspace.workspace.phpPrefix,
 			normalizedSlug,
 		);
-		const blockConfigSource = await readOptionalFile(
-			path.join(workspace.projectDir, "scripts", "block-config.ts"),
-		);
-		const migrationConfigSource = await readOptionalFile(
-			path.join(workspace.projectDir, "src", "migrations", "config.ts"),
-		);
+		const migrationConfigSource = await readOptionalFile(migrationConfigPath);
 		const migrationConfig =
 			migrationConfigSource === null ? null : parseMigrationConfig(migrationConfigSource);
 		const result = await scaffoldProject({
@@ -815,8 +927,7 @@ export async function runAddBlockCommand({
 		});
 		assertBlockTargetsDoNotExist(workspace.projectDir, resolvedTemplateId, result.variables);
 		const mutationSnapshot: WorkspaceMutationSnapshot = {
-			blockConfigSource,
-			migrationConfigSource,
+			fileSources: await snapshotWorkspaceFiles([blockConfigPath, migrationConfigPath]),
 			snapshotDirs:
 				migrationConfig === null
 					? []
@@ -874,7 +985,7 @@ export async function runAddBlockCommand({
 				templateId: resolvedTemplateId,
 			};
 		} catch (error) {
-			await rollbackWorkspaceMutation(workspace.projectDir, mutationSnapshot);
+			await rollbackWorkspaceMutation(mutationSnapshot);
 			throw error;
 		}
 	} finally {
@@ -884,10 +995,183 @@ export async function runAddBlockCommand({
 	}
 }
 
-/**
- * Returns the current placeholder guidance for unsupported `wp-typia add` kinds.
- */
-export function createAddPlaceholderMessage(kind: Exclude<AddKindId, "block">): string {
-	const issueNumber = kind === "variation" ? "#157" : "#158";
-	return `\`wp-typia add ${kind}\` is not implemented yet. Track ${issueNumber} for the first supported ${kind} workflow.`;
+function resolveWorkspaceBlock(
+	inventory: WorkspaceInventory,
+	blockSlug: string,
+): WorkspaceInventory["blocks"][number] {
+	const block = inventory.blocks.find((entry) => entry.slug === blockSlug);
+	if (!block) {
+		throw new Error(
+			`Unknown workspace block "${blockSlug}". Choose one of: ${inventory.blocks.map((entry) => entry.slug).join(", ")}`,
+		);
+	}
+	return block;
 }
+
+function assertVariationDoesNotExist(
+	projectDir: string,
+	blockSlug: string,
+	variationSlug: string,
+	inventory: WorkspaceInventory,
+): void {
+	const variationPath = path.join(
+		projectDir,
+		"src",
+		"blocks",
+		blockSlug,
+		"variations",
+		`${variationSlug}.ts`,
+	);
+	if (fs.existsSync(variationPath)) {
+		throw new Error(
+			`A variation already exists at ${path.relative(projectDir, variationPath)}. Choose a different name.`,
+		);
+	}
+	if (
+		inventory.variations.some(
+			(entry) => entry.block === blockSlug && entry.slug === variationSlug,
+		)
+	) {
+		throw new Error(
+			`A variation inventory entry already exists for ${blockSlug}/${variationSlug}. Choose a different name.`,
+		);
+	}
+}
+
+function assertPatternDoesNotExist(
+	projectDir: string,
+	patternSlug: string,
+	inventory: WorkspaceInventory,
+): void {
+	const patternPath = path.join(projectDir, "src", "patterns", `${patternSlug}.php`);
+	if (fs.existsSync(patternPath)) {
+		throw new Error(
+			`A pattern already exists at ${path.relative(projectDir, patternPath)}. Choose a different name.`,
+		);
+	}
+	if (inventory.patterns.some((entry) => entry.slug === patternSlug)) {
+		throw new Error(
+			`A pattern inventory entry already exists for ${patternSlug}. Choose a different name.`,
+		);
+	}
+}
+
+/**
+ * Adds one variation entry to an existing workspace block.
+ */
+export async function runAddVariationCommand({
+	blockName,
+	cwd = process.cwd(),
+	variationName,
+}: RunAddVariationCommandOptions): Promise<{
+	blockSlug: string;
+	projectDir: string;
+	variationSlug: string;
+}> {
+	const workspace = resolveWorkspaceProject(cwd);
+	const blockSlug = normalizeBlockSlug(blockName);
+	const variationSlug = normalizeBlockSlug(variationName);
+	if (!variationSlug) {
+		throw new Error(
+			"Variation name is required. Use `wp-typia add variation <name> --block <block-slug>`.",
+		);
+	}
+
+	const inventory = readWorkspaceInventory(workspace.projectDir);
+	resolveWorkspaceBlock(inventory, blockSlug);
+	assertVariationDoesNotExist(workspace.projectDir, blockSlug, variationSlug, inventory);
+
+	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
+	const blockIndexPath = path.join(workspace.projectDir, "src", "blocks", blockSlug, "index.tsx");
+	const variationsDir = path.join(workspace.projectDir, "src", "blocks", blockSlug, "variations");
+	const variationFilePath = path.join(variationsDir, `${variationSlug}.ts`);
+	const variationsIndexPath = path.join(variationsDir, "index.ts");
+	const mutationSnapshot: WorkspaceMutationSnapshot = {
+		fileSources: await snapshotWorkspaceFiles([
+			blockConfigPath,
+			blockIndexPath,
+			variationsIndexPath,
+		]),
+		snapshotDirs: [],
+		targetPaths: [variationFilePath],
+	};
+
+	try {
+		await fsp.mkdir(variationsDir, { recursive: true });
+		await fsp.writeFile(
+			variationFilePath,
+			buildVariationSource(variationSlug, workspace.workspace.textDomain),
+			"utf8",
+		);
+		await writeVariationRegistry(workspace.projectDir, blockSlug, variationSlug);
+		await ensureVariationRegistrationHook(blockIndexPath);
+		await appendWorkspaceInventoryEntries(workspace.projectDir, {
+			variationEntries: [buildVariationConfigEntry(blockSlug, variationSlug)],
+		});
+
+		return {
+			blockSlug,
+			projectDir: workspace.projectDir,
+			variationSlug,
+		};
+	} catch (error) {
+		await rollbackWorkspaceMutation(mutationSnapshot);
+		throw error;
+	}
+}
+
+/**
+ * Adds one PHP block pattern shell to an official workspace project.
+ */
+export async function runAddPatternCommand({
+	cwd = process.cwd(),
+	patternName,
+}: RunAddPatternCommandOptions): Promise<{
+	patternSlug: string;
+	projectDir: string;
+}> {
+	const workspace = resolveWorkspaceProject(cwd);
+	const patternSlug = normalizeBlockSlug(patternName);
+	if (!patternSlug) {
+		throw new Error("Pattern name is required. Use `wp-typia add pattern <name>`.");
+	}
+
+	const inventory = readWorkspaceInventory(workspace.projectDir);
+	assertPatternDoesNotExist(workspace.projectDir, patternSlug, inventory);
+
+	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
+	const bootstrapPath = path.join(workspace.projectDir, `${workspace.packageName}.php`);
+	const patternFilePath = path.join(workspace.projectDir, "src", "patterns", `${patternSlug}.php`);
+	const mutationSnapshot: WorkspaceMutationSnapshot = {
+		fileSources: await snapshotWorkspaceFiles([blockConfigPath, bootstrapPath]),
+		snapshotDirs: [],
+		targetPaths: [patternFilePath],
+	};
+
+	try {
+		await fsp.mkdir(path.dirname(patternFilePath), { recursive: true });
+		await ensurePatternBootstrapAnchors(workspace);
+		await fsp.writeFile(
+			patternFilePath,
+			buildPatternSource(
+				patternSlug,
+				workspace.workspace.namespace,
+				workspace.workspace.textDomain,
+			),
+			"utf8",
+		);
+		await appendWorkspaceInventoryEntries(workspace.projectDir, {
+			patternEntries: [buildPatternConfigEntry(patternSlug)],
+		});
+
+		return {
+			patternSlug,
+			projectDir: workspace.projectDir,
+		};
+	} catch (error) {
+		await rollbackWorkspaceMutation(mutationSnapshot);
+		throw error;
+	}
+}
+
+export { getWorkspaceBlockSelectOptions };
