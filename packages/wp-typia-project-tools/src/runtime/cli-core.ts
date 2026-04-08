@@ -7,7 +7,8 @@
  *
  * Import `formatAddHelpText`, `runAddBlockCommand`,
  * `runAddVariationCommand`, `runAddPatternCommand`,
- * `runAddBindingSourceCommand`,
+ * `runAddBindingSourceCommand`, `runAddHookedBlockCommand`,
+ * and `HOOKED_BLOCK_POSITION_IDS`,
  * `getWorkspaceBlockSelectOptions`, and `seedWorkspaceMigrationProject` for
  * explicit `wp-typia add` flows,
  * `getDoctorChecks`, `runDoctor`, and `DoctorCheck` for diagnostics,
@@ -25,10 +26,13 @@ export {
 	getWorkspaceBlockSelectOptions,
 	runAddBindingSourceCommand,
 	runAddBlockCommand,
+	runAddHookedBlockCommand,
 	runAddPatternCommand,
 	runAddVariationCommand,
 	seedWorkspaceMigrationProject,
 } from "./cli-add.js";
+export { HOOKED_BLOCK_POSITION_IDS } from "./hooked-blocks.js";
+export type { HookedBlockPositionId } from "./hooked-blocks.js";
 export { formatHelpText } from "./cli-help.js";
 export {
 	getNextSteps,

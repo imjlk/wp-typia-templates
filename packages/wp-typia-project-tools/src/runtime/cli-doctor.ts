@@ -5,6 +5,10 @@ import { execFileSync } from "node:child_process";
 import { access, constants as fsConstants, rm, writeFile } from "node:fs/promises";
 
 import { getBuiltInTemplateLayerDirs } from "./template-builtins.js";
+import {
+	HOOKED_BLOCK_ANCHOR_PATTERN,
+	HOOKED_BLOCK_POSITION_SET,
+} from "./hooked-blocks.js";
 import { listTemplates } from "./template-registry.js";
 import { readWorkspaceInventory, type WorkspaceInventory } from "./workspace-inventory.js";
 import {
@@ -214,6 +218,73 @@ function checkWorkspaceBlockMetadata(
 		issues.length === 0
 			? `block.json matches ${expectedName} and ${workspace.workspace.textDomain}`
 			: issues.join("; "),
+	);
+}
+
+function checkWorkspaceBlockHooks(
+	projectDir: string,
+	blockSlug: string,
+): DoctorCheck {
+	const blockJsonRelativePath = path.join("src", "blocks", blockSlug, "block.json");
+	const blockJsonPath = path.join(projectDir, blockJsonRelativePath);
+
+	if (!fs.existsSync(blockJsonPath)) {
+		return createDoctorCheck(
+			`Block hooks ${blockSlug}`,
+			"fail",
+			`Missing ${blockJsonRelativePath}`,
+		);
+	}
+
+	let blockJson: Record<string, unknown>;
+	try {
+		blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8")) as Record<string, unknown>;
+	} catch (error) {
+		return createDoctorCheck(
+			`Block hooks ${blockSlug}`,
+			"fail",
+			error instanceof Error ? error.message : String(error),
+		);
+	}
+
+	const blockHooks = blockJson.blockHooks;
+	if (blockHooks === undefined) {
+		return createDoctorCheck(
+			`Block hooks ${blockSlug}`,
+			"pass",
+			"No blockHooks metadata configured",
+		);
+	}
+	if (!blockHooks || typeof blockHooks !== "object" || Array.isArray(blockHooks)) {
+		return createDoctorCheck(
+			`Block hooks ${blockSlug}`,
+			"fail",
+			`${blockJsonRelativePath} must define blockHooks as an object when present.`,
+		);
+	}
+
+	const blockName =
+		typeof blockJson.name === "string" && blockJson.name.trim().length > 0
+			? blockJson.name.trim()
+			: null;
+	const invalidEntries = Object.entries(blockHooks).filter(
+		([anchor, position]) =>
+			(blockName !== null && anchor.trim() === blockName) ||
+			anchor.trim().length === 0 ||
+			anchor !== anchor.trim() ||
+			!HOOKED_BLOCK_ANCHOR_PATTERN.test(anchor) ||
+			typeof position !== "string" ||
+			!HOOKED_BLOCK_POSITION_SET.has(position),
+	);
+
+	return createDoctorCheck(
+		`Block hooks ${blockSlug}`,
+		invalidEntries.length === 0 ? "pass" : "fail",
+		invalidEntries.length === 0
+			? `blockHooks metadata is valid${Object.keys(blockHooks).length > 0 ? ` (${Object.keys(blockHooks).join(", ")})` : ""}`
+			: `Invalid blockHooks entries: ${invalidEntries
+					.map(([anchor, position]) => `${anchor || "<empty>"} => ${String(position)}`)
+					.join(", ")}`,
 	);
 }
 
@@ -509,6 +580,7 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 				]),
 			);
 			checks.push(checkWorkspaceBlockMetadata(workspace.projectDir, workspace, block));
+			checks.push(checkWorkspaceBlockHooks(workspace.projectDir, block.slug));
 			checks.push(checkWorkspaceBlockCollectionImport(workspace.projectDir, block.slug));
 		}
 

@@ -89,6 +89,25 @@ describe("wp-typia Bunli preparation", () => {
 		expect(
 			normalizeWpTypiaArgv(["-c", "./custom.json", "templates", "list"]),
 		).toEqual(["-c", "./custom.json", "templates", "list"]);
+		expect(
+			normalizeWpTypiaArgv([
+				"add",
+				"hooked-block",
+				"promo-card",
+				"--anchor",
+				"core/post-content",
+				"--position",
+				"after",
+			]),
+		).toEqual([
+			"add",
+			"hooked-block",
+			"promo-card",
+			"--anchor",
+			"core/post-content",
+			"--position",
+			"after",
+		]);
 		expect(() => normalizeWpTypiaArgv(["templates", "inspect", "--id"])).toThrow(
 			/`--id` requires a value\./,
 		);

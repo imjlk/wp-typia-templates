@@ -2616,6 +2616,67 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		runCli("npm", ["run", "build"], { cwd: targetDir });
 	}, 30_000);
 
+	test("canonical CLI can add hooked-block metadata to an official workspace block", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-add-hooked-block");
+
+		await scaffoldOfficialWorkspace(targetDir, {
+			description: "Demo workspace add hooked block",
+			slug: "demo-workspace-add-hooked-block",
+			title: "Demo Workspace Add Hooked Block",
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+		runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+			cwd: targetDir,
+		});
+		runCli(
+			"node",
+			[
+				entryPath,
+				"add",
+				"hooked-block",
+				"counter-card",
+				"--anchor",
+				"core/post-content",
+				"--position",
+				"after",
+			],
+			{ cwd: targetDir },
+		);
+
+		const blockJson = JSON.parse(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "counter-card", "block.json"),
+				"utf8",
+			),
+		);
+
+		expect(blockJson.blockHooks).toEqual({
+			"core/post-content": "after",
+		});
+
+		runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts");
+		const syncedBlockJson = JSON.parse(
+			fs.readFileSync(
+				path.join(targetDir, "src", "blocks", "counter-card", "block.json"),
+				"utf8",
+			),
+		);
+		expect(syncedBlockJson.blockHooks).toEqual({
+			"core/post-content": "after",
+		});
+
+		const doctorOutput = runCli("node", [entryPath, "doctor"], {
+			cwd: targetDir,
+		});
+		const doctorChecks = JSON.parse(doctorOutput) as {
+			checks: Array<{ detail: string; label: string; status: string }>;
+		};
+		expect(
+			doctorChecks.checks.find((check) => check.label === "Block hooks counter-card")?.status,
+		).toBe("pass");
+	}, 20_000);
+
 	test("duplicate add block failures preserve existing workspace blocks", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-add-duplicate");
 
@@ -2663,6 +2724,139 @@ describe("@wp-typia/project-tools scaffolding", () => {
 			fs.readFileSync(path.join(targetDir, "scripts", "block-config.ts"), "utf8"),
 		).toBe(originalBlockConfigSource);
 	});
+
+	test("hooked-block workflow rejects unknown blocks, invalid anchors, self-hooks, invalid positions, and duplicate anchors", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-hooked-block-invalid");
+
+		await scaffoldOfficialWorkspace(targetDir, {
+			description: "Demo workspace hooked block invalid",
+			slug: "demo-workspace-hooked-block-invalid",
+			title: "Demo Workspace Hooked Block Invalid",
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+		runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+			cwd: targetDir,
+		});
+
+		expect(
+			getCommandErrorMessage(() =>
+				runCli(
+					"node",
+					[
+						entryPath,
+						"add",
+						"hooked-block",
+						"missing-card",
+						"--anchor",
+						"core/post-content",
+						"--position",
+						"after",
+					],
+					{ cwd: targetDir },
+				),
+			),
+		).toContain("Unknown workspace block");
+
+		expect(
+			getCommandErrorMessage(() =>
+				runCli(
+					"node",
+					[
+						entryPath,
+						"add",
+						"hooked-block",
+						"counter-card",
+						"--anchor",
+						"post-content",
+						"--position",
+						"after",
+					],
+					{ cwd: targetDir },
+				),
+			),
+		).toContain("full `namespace/slug` block name format");
+
+		expect(
+			getCommandErrorMessage(() =>
+				runCli(
+					"node",
+					[
+						entryPath,
+						"add",
+						"hooked-block",
+						"counter-card",
+						"--anchor",
+						"demo-space/counter-card",
+						"--position",
+						"after",
+					],
+					{ cwd: targetDir },
+				),
+			),
+		).toContain("cannot hook a block relative to its own block name");
+
+		expect(
+			getCommandErrorMessage(() =>
+				runCli(
+					"node",
+					[
+						entryPath,
+						"add",
+						"hooked-block",
+						"counter-card",
+						"--anchor",
+						"core/post-content",
+						"--position",
+						"around",
+					],
+					{ cwd: targetDir },
+				),
+			),
+		).toContain("Hook position must be one of: before, after, firstChild, lastChild.");
+
+		runCli(
+			"node",
+			[
+				entryPath,
+				"add",
+				"hooked-block",
+				"counter-card",
+				"--anchor",
+				"core/post-content",
+				"--position",
+				"after",
+			],
+			{ cwd: targetDir },
+		);
+
+		const originalBlockJsonSource = fs.readFileSync(
+			path.join(targetDir, "src", "blocks", "counter-card", "block.json"),
+			"utf8",
+		);
+
+		expect(
+			getCommandErrorMessage(() =>
+				runCli(
+					"node",
+					[
+						entryPath,
+						"add",
+						"hooked-block",
+						"counter-card",
+						"--anchor",
+						"core/post-content",
+						"--position",
+						"before",
+					],
+					{ cwd: targetDir },
+				),
+			),
+		).toContain("already defines a blockHooks entry");
+		expect(
+			fs.readFileSync(path.join(targetDir, "src", "blocks", "counter-card", "block.json"), "utf8"),
+		).toBe(originalBlockJsonSource);
+	}, 20_000);
 
 	test("variation workflow rejects unknown blocks and preserves existing variation files on duplicate failure", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-variation-duplicate");
@@ -3468,6 +3662,34 @@ export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
 		const collectionCheck = checks.find((check) => check.label === "Block collection counter-card");
 
 		expect(collectionCheck?.status).toBe("pass");
+	}, 20_000);
+
+	test("doctor fails when block.json blockHooks use malformed metadata", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-doctor-hooked-block-drift");
+
+		await scaffoldOfficialWorkspace(targetDir, {
+			description: "Demo workspace doctor hooked block drift",
+			slug: "demo-workspace-doctor-hooked-block-drift",
+			title: "Demo Workspace Doctor Hooked Block Drift",
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+		runCli("node", [entryPath, "add", "block", "counter-card", "--template", "basic"], {
+			cwd: targetDir,
+		});
+
+		const blockJsonPath = path.join(targetDir, "src", "blocks", "counter-card", "block.json");
+		const blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8"));
+		blockJson.blockHooks = {
+			"demo-space/counter-card": "after",
+		};
+		fs.writeFileSync(blockJsonPath, JSON.stringify(blockJson, null, 2), "utf8");
+
+		const checks = await getDoctorChecks(targetDir);
+		const blockHooksCheck = checks.find((check) => check.label === "Block hooks counter-card");
+
+		expect(blockHooksCheck?.status).toBe("fail");
+		expect(blockHooksCheck?.detail).toContain("demo-space/counter-card => after");
 	}, 20_000);
 
 	test("doctor fails when workspace package metadata becomes invalid", async () => {

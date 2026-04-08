@@ -2,16 +2,19 @@ import { useState } from "react";
 
 import { useRuntime } from "@bunli/runtime/app";
 import { Alert, SchemaForm } from "@bunli/tui";
+import { HOOKED_BLOCK_POSITION_IDS } from "@wp-typia/project-tools";
 import { z } from "zod";
 
 import { executeAddCommand } from "../runtime-bridge";
 
 const addFlowSchema = z.object({
+	anchor: z.string().optional(),
 	block: z.string().optional(),
 	"data-storage": z.string().optional(),
-	kind: z.enum(["block", "variation", "pattern", "binding-source"]).default("block"),
+	kind: z.enum(["block", "variation", "pattern", "binding-source", "hooked-block"]).default("block"),
 	name: z.string().optional(),
 	"persistence-policy": z.string().optional(),
+	position: z.string().optional(),
 	template: z.string().optional(),
 });
 
@@ -25,6 +28,16 @@ type AddFlowProps = {
 		name: string;
 		value: string;
 	}>;
+};
+
+const HOOKED_BLOCK_POSITION_DESCRIPTIONS: Record<
+	(typeof HOOKED_BLOCK_POSITION_IDS)[number],
+	string
+> = {
+	after: "Insert after the anchor block",
+	before: "Insert before the anchor block",
+	firstChild: "Insert as the first child of the anchor block",
+	lastChild: "Insert as the last child of the anchor block",
 };
 
 export function AddFlow({ cwd, initialValues, workspaceBlockOptions }: AddFlowProps) {
@@ -58,6 +71,11 @@ export function AddFlow({ cwd, initialValues, workspaceBlockOptions }: AddFlowPr
 								name: "binding-source",
 								description: "Add a shared block bindings source",
 								value: "binding-source",
+							},
+							{
+								name: "hooked-block",
+								description: "Add block.json hook metadata to an existing block",
+								value: "hooked-block",
 							},
 						],
 					},
@@ -115,6 +133,30 @@ export function AddFlow({ cwd, initialValues, workspaceBlockOptions }: AddFlowPr
 						label: "Binding source name",
 						name: "name",
 						visibleWhen: (values) => values.kind === "binding-source",
+					},
+					{
+						kind: workspaceBlockOptions.length > 0 ? "select" : "text",
+						label: "Target block",
+						name: "name",
+						options: workspaceBlockOptions,
+						visibleWhen: (values) => values.kind === "hooked-block",
+					},
+					{
+						kind: "text",
+						label: "Anchor block name",
+						name: "anchor",
+						visibleWhen: (values) => values.kind === "hooked-block",
+					},
+					{
+						kind: "select",
+						label: "Hook position",
+						name: "position",
+						options: HOOKED_BLOCK_POSITION_IDS.map((position) => ({
+							name: position,
+							description: HOOKED_BLOCK_POSITION_DESCRIPTIONS[position],
+							value: position,
+						})),
+						visibleWhen: (values) => values.kind === "hooked-block",
 					},
 					{
 						kind: "select",
