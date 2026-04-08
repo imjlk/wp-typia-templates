@@ -923,6 +923,13 @@ export async function scaffoldProject({
 		variables,
 		variant,
 	);
+	const supportsMigrationUi = isBuiltInTemplate || templateSource.isOfficialWorkspaceTemplate === true;
+	if (withMigrationUi && !supportsMigrationUi) {
+		await templateSource.cleanup?.();
+		throw new Error(
+			"`--with-migration-ui` is currently supported only for built-in templates and @wp-typia/create-workspace-template.",
+		);
+	}
 
 	try {
 		await ensureDirectory(projectDir, allowExistingDir);
@@ -955,10 +962,6 @@ export async function scaffoldProject({
 		}
 	} else if (withMigrationUi && isOfficialWorkspace) {
 		await applyWorkspaceMigrationCapability(projectDir, resolvedPackageManager);
-	} else if (withMigrationUi) {
-		throw new Error(
-			"`--with-migration-ui` is currently supported only for built-in templates and @wp-typia/create-workspace-template.",
-		);
 	}
 	const readmePath = path.join(projectDir, "README.md");
 	if (!fs.existsSync(readmePath)) {

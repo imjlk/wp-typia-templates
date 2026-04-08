@@ -26,7 +26,19 @@ const BINARY_EXTENSIONS = new Set([
 Mustache.escape = (value: string) => value;
 
 export type TemplateRenderView = Record<string, unknown>;
+/**
+ * Optional controls for raw directory copies.
+ *
+ * The filter runs for each discovered entry before copying. Returning `false`
+ * skips only that entry; when the skipped entry is a directory, the subtree is
+ * skipped as well.
+ */
 export interface CopyRawDirectoryOptions {
+	/**
+	 * Predicate that decides whether a discovered entry should be copied.
+	 *
+	 * Throwing or rejecting aborts the copy and bubbles to the caller.
+	 */
 	filter?: (
 		sourcePath: string,
 		targetPath: string,
@@ -63,6 +75,9 @@ function resolveRenderedPath(targetDir: string, destinationName: string): string
 	return resolvedDestinationPath;
 }
 
+/**
+ * Recursively copies a directory tree without rendering template contents.
+ */
 export async function copyRawDirectory(
 	sourceDir: string,
 	targetDir: string,

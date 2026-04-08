@@ -1446,6 +1446,7 @@ describe("@wp-typia/create scaffolding", () => {
 		).rejects.toThrow(
 			"`--with-migration-ui` is currently supported only for built-in templates and @wp-typia/create-workspace-template.",
 		);
+		expect(fs.existsSync(targetDir)).toBe(false);
 	});
 
 	test(

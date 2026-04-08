@@ -32,6 +32,7 @@ import { copyRawDirectory, copyRenderedDirectory } from "./template-render.js";
 const EXTERNAL_TEMPLATE_ENTRY_CANDIDATES = ["index.js", "index.cjs", "index.mjs"] as const;
 const TEMPLATE_WARNING_MESSAGE =
 	"wp-typia owns package/tooling/sync setup for generated projects, so this external template setting is ignored.";
+const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
 type TemplateSourceFormat = "wp-typia" | "create-block-external" | "create-block-subset";
 
 /**
@@ -69,6 +70,7 @@ export interface ResolvedTemplateSource {
 	description: string;
 	features: string[];
 	format: TemplateSourceFormat;
+	isOfficialWorkspaceTemplate?: boolean;
 	templateDir: string;
 	cleanup?: () => Promise<void>;
 	selectedVariant?: string | null;
@@ -337,6 +339,20 @@ function resolveInstalledNpmTemplateSource(locator: NpmTemplateLocator, cwd: str
 			return null;
 		}
 		throw error;
+	}
+}
+
+function isOfficialWorkspaceTemplateSeed(seed: SeedSource): boolean {
+	const packageJsonPath = path.join(seed.rootDir, "package.json");
+	if (!fs.existsSync(packageJsonPath)) {
+		return false;
+	}
+
+	try {
+		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as { name?: string };
+		return packageJson.name === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE;
+	} catch {
+		return false;
 	}
 }
 
@@ -1023,6 +1039,7 @@ export async function resolveTemplateSource(
 	const locator = parseTemplateLocator(templateId);
 	const context = getTemplateVariableContext(variables);
 	const seed = await resolveTemplateSeed(locator, cwd);
+	const isOfficialWorkspaceTemplate = isOfficialWorkspaceTemplateSeed(seed);
 	let normalizedSeed: SeedSource | null = null;
 
 	try {
@@ -1038,6 +1055,7 @@ export async function resolveTemplateSource(
 				description: "A remote wp-typia template source",
 				features: ["Remote source", "wp-typia format"],
 				format,
+				isOfficialWorkspaceTemplate,
 				templateDir: normalizedSeed.blockDir,
 				cleanup: normalizedSeed.cleanup,
 			};
@@ -1063,13 +1081,18 @@ export async function resolveTemplateSource(
 					description: "A wp-typia scaffold normalized from an official create-block external template",
 					features: ["Remote source", "official external template", "Typia metadata pipeline"],
 					format,
-				id: "remote:create-block-external",
-				selectedVariant: normalizedSeed.selectedVariant ?? null,
-				warnings: normalizedSeed.warnings ?? [],
-			};
-		}
+					id: "remote:create-block-external",
+					isOfficialWorkspaceTemplate,
+					selectedVariant: normalizedSeed.selectedVariant ?? null,
+					warnings: normalizedSeed.warnings ?? [],
+				};
+			}
 
-		return normalizeCreateBlockSubset(normalizedSeed, context);
+		const normalized = await normalizeCreateBlockSubset(normalizedSeed, context);
+		return {
+			...normalized,
+			isOfficialWorkspaceTemplate,
+		};
 	} catch (error) {
 		if (normalizedSeed?.cleanup && normalizedSeed !== seed) {
 			await normalizedSeed.cleanup();

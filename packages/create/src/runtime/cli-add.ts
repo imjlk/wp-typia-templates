@@ -697,6 +697,9 @@ function assertPersistenceFlagsAllowed(
 	);
 }
 
+/**
+ * Returns help text for the canonical `wp-typia add` subcommands.
+ */
 export function formatAddHelpText(): string {
 	return `Usage:
   wp-typia add block <name> --template <${ADD_BLOCK_TEMPLATE_IDS.join("|")}> [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
@@ -775,22 +778,23 @@ export async function runAddBlockCommand({
 	}
 
 	const defaults = getDefaultAnswers(normalizedSlug, resolvedTemplateId);
-	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-add-block-"));
-	const tempProjectDir = path.join(tempRoot, normalizedSlug);
-	const blockPhpPrefix = buildWorkspacePhpPrefix(
-		workspace.workspace.phpPrefix,
-		normalizedSlug,
-	);
-	const blockConfigSource = await readOptionalFile(
-		path.join(workspace.projectDir, "scripts", "block-config.ts"),
-	);
-	const migrationConfigSource = await readOptionalFile(
-		path.join(workspace.projectDir, "src", "migrations", "config.ts"),
-	);
-	const migrationConfig =
-		migrationConfigSource === null ? null : parseMigrationConfig(migrationConfigSource);
+	let tempRoot = "";
 
 	try {
+		tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-add-block-"));
+		const tempProjectDir = path.join(tempRoot, normalizedSlug);
+		const blockPhpPrefix = buildWorkspacePhpPrefix(
+			workspace.workspace.phpPrefix,
+			normalizedSlug,
+		);
+		const blockConfigSource = await readOptionalFile(
+			path.join(workspace.projectDir, "scripts", "block-config.ts"),
+		);
+		const migrationConfigSource = await readOptionalFile(
+			path.join(workspace.projectDir, "src", "migrations", "config.ts"),
+		);
+		const migrationConfig =
+			migrationConfigSource === null ? null : parseMigrationConfig(migrationConfigSource);
 		const result = await scaffoldProject({
 			answers: {
 				...defaults,
@@ -874,7 +878,9 @@ export async function runAddBlockCommand({
 			throw error;
 		}
 	} finally {
-		await fsp.rm(tempRoot, { force: true, recursive: true });
+		if (tempRoot) {
+			await fsp.rm(tempRoot, { force: true, recursive: true });
+		}
 	}
 }
 
