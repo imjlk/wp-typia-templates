@@ -6,8 +6,15 @@ import { access, constants as fsConstants, rm, writeFile } from "node:fs/promise
 
 import { getBuiltInTemplateLayerDirs } from "./template-builtins.js";
 import { listTemplates } from "./template-registry.js";
-import { readWorkspaceInventory } from "./workspace-inventory.js";
-import { tryResolveWorkspaceProject } from "./workspace-project.js";
+import { readWorkspaceInventory, type WorkspaceInventory } from "./workspace-inventory.js";
+import {
+	getInvalidWorkspaceProjectReason,
+	parseWorkspacePackageJson,
+	WORKSPACE_TEMPLATE_PACKAGE,
+	tryResolveWorkspaceProject,
+	type WorkspacePackageJson,
+	type WorkspaceProject,
+} from "./workspace-project.js";
 
 /**
  * One doctor check rendered by the CLI diagnostics flow.
@@ -24,6 +31,16 @@ export interface DoctorCheck {
 interface RunDoctorOptions {
 	renderLine?: (check: DoctorCheck) => void;
 }
+
+const WORKSPACE_COLLECTION_IMPORT_LINE = "import '../../collection';";
+const WORKSPACE_COLLECTION_IMPORT_PATTERN = /^\s*import\s+["']\.\.\/\.\.\/collection["']\s*;?\s*$/m;
+const WORKSPACE_GENERATED_BLOCK_ARTIFACTS = [
+	"block.json",
+	"typia.manifest.json",
+	"typia.schema.json",
+	"typia-validator.php",
+	"typia.openapi.json",
+] as const;
 
 function readCommandVersion(command: string, args: string[] = ["--version"]): string | null {
 	try {
@@ -69,6 +86,11 @@ function createDoctorCheck(
 	return { detail, label, status };
 }
 
+function getWorkspaceBootstrapRelativePath(packageName: string): string {
+	const packageBaseName = packageName.split("/").pop() ?? packageName;
+	return `${packageBaseName}.php`;
+}
+
 function checkExistingFiles(
 	projectDir: string,
 	label: string,
@@ -81,6 +103,140 @@ function checkExistingFiles(
 		label,
 		missing.length === 0 ? "pass" : "fail",
 		missing.length === 0 ? "All referenced files exist" : `Missing: ${missing.join(", ")}`,
+	);
+}
+
+function checkWorkspacePackageMetadata(
+	workspace: WorkspaceProject,
+	packageJson: WorkspacePackageJson,
+): DoctorCheck {
+	const issues: string[] = [];
+	const packageName = packageJson.name;
+	const bootstrapRelativePath = getWorkspaceBootstrapRelativePath(
+		typeof packageName === "string" && packageName.length > 0 ? packageName : workspace.packageName,
+	);
+	const wpTypia = packageJson.wpTypia;
+
+	if (typeof packageName !== "string" || packageName.length === 0) {
+		issues.push("package.json must define a string name for workspace bootstrap resolution");
+	}
+	if (wpTypia?.projectType !== "workspace") {
+		issues.push('wpTypia.projectType must be "workspace"');
+	}
+	if (wpTypia?.templatePackage !== WORKSPACE_TEMPLATE_PACKAGE) {
+		issues.push(`wpTypia.templatePackage must be "${WORKSPACE_TEMPLATE_PACKAGE}"`);
+	}
+	if (wpTypia?.namespace !== workspace.workspace.namespace) {
+		issues.push(`wpTypia.namespace must equal "${workspace.workspace.namespace}"`);
+	}
+	if (wpTypia?.textDomain !== workspace.workspace.textDomain) {
+		issues.push(`wpTypia.textDomain must equal "${workspace.workspace.textDomain}"`);
+	}
+	if (wpTypia?.phpPrefix !== workspace.workspace.phpPrefix) {
+		issues.push(`wpTypia.phpPrefix must equal "${workspace.workspace.phpPrefix}"`);
+	}
+	if (!fs.existsSync(path.join(workspace.projectDir, bootstrapRelativePath))) {
+		issues.push(`Missing bootstrap file ${bootstrapRelativePath}`);
+	}
+
+	return createDoctorCheck(
+		"Workspace package metadata",
+		issues.length === 0 ? "pass" : "fail",
+		issues.length === 0
+			? `package.json metadata aligns with ${workspace.packageName} and ${bootstrapRelativePath}`
+			: issues.join("; "),
+	);
+}
+
+function getWorkspaceBlockRequiredFiles(
+	block: WorkspaceInventory["blocks"][number],
+): string[] {
+	const blockDir = path.join("src", "blocks", block.slug);
+
+	return Array.from(
+		new Set(
+			[
+				block.typesFile,
+				block.apiTypesFile,
+				block.openApiFile,
+				path.join(blockDir, "index.tsx"),
+				...WORKSPACE_GENERATED_BLOCK_ARTIFACTS.map((fileName) => path.join(blockDir, fileName)),
+			].filter((filePath): filePath is string => typeof filePath === "string"),
+		),
+	);
+}
+
+function checkWorkspaceBlockMetadata(
+	projectDir: string,
+	workspace: WorkspaceProject,
+	block: WorkspaceInventory["blocks"][number],
+): DoctorCheck {
+	const blockJsonRelativePath = path.join("src", "blocks", block.slug, "block.json");
+	const blockJsonPath = path.join(projectDir, blockJsonRelativePath);
+
+	if (!fs.existsSync(blockJsonPath)) {
+		return createDoctorCheck(
+			`Block metadata ${block.slug}`,
+			"fail",
+			`Missing ${blockJsonRelativePath}`,
+		);
+	}
+
+	let blockJson: { name?: string; textdomain?: string };
+	try {
+		blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8")) as {
+			name?: string;
+			textdomain?: string;
+		};
+	} catch (error) {
+		return createDoctorCheck(
+			`Block metadata ${block.slug}`,
+			"fail",
+			error instanceof Error ? error.message : String(error),
+		);
+	}
+
+	const expectedName = `${workspace.workspace.namespace}/${block.slug}`;
+	const issues: string[] = [];
+	if (blockJson.name !== expectedName) {
+		issues.push(`block.json name must equal "${expectedName}"`);
+	}
+	if (blockJson.textdomain !== workspace.workspace.textDomain) {
+		issues.push(`block.json textdomain must equal "${workspace.workspace.textDomain}"`);
+	}
+
+	return createDoctorCheck(
+		`Block metadata ${block.slug}`,
+		issues.length === 0 ? "pass" : "fail",
+		issues.length === 0
+			? `block.json matches ${expectedName} and ${workspace.workspace.textDomain}`
+			: issues.join("; "),
+	);
+}
+
+function checkWorkspaceBlockCollectionImport(
+	projectDir: string,
+	blockSlug: string,
+): DoctorCheck {
+	const entryRelativePath = path.join("src", "blocks", blockSlug, "index.tsx");
+	const entryPath = path.join(projectDir, entryRelativePath);
+
+	if (!fs.existsSync(entryPath)) {
+		return createDoctorCheck(
+			`Block collection ${blockSlug}`,
+			"fail",
+			`Missing ${entryRelativePath}`,
+		);
+	}
+
+	const source = fs.readFileSync(entryPath, "utf8");
+	const hasCollectionImport = WORKSPACE_COLLECTION_IMPORT_PATTERN.test(source);
+	return createDoctorCheck(
+		`Block collection ${blockSlug}`,
+		hasCollectionImport ? "pass" : "fail",
+		hasCollectionImport
+			? "Shared block collection import is present"
+			: `Missing a shared collection import like ${WORKSPACE_COLLECTION_IMPORT_LINE}`,
 	);
 }
 
@@ -120,6 +276,29 @@ function checkVariationEntrypoint(projectDir: string, blockSlug: string): Doctor
 		hasImport && hasCall
 			? "Variations registration hook is present"
 			: "Missing ./variations import or registerWorkspaceVariations() call",
+	);
+}
+
+function checkMigrationWorkspaceHint(
+	workspace: WorkspaceProject,
+	packageJson: WorkspacePackageJson,
+): DoctorCheck | null {
+	const hasMigrationScript = typeof packageJson.scripts?.["migration:doctor"] === "string";
+	const migrationConfigRelativePath = path.join("src", "migrations", "config.ts");
+	const hasMigrationConfig = fs.existsSync(
+		path.join(workspace.projectDir, migrationConfigRelativePath),
+	);
+
+	if (!hasMigrationScript && !hasMigrationConfig) {
+		return null;
+	}
+
+	return createDoctorCheck(
+		"Migration workspace",
+		hasMigrationConfig ? "pass" : "fail",
+		hasMigrationConfig
+			? "Run `wp-typia migrate doctor --all` for migration target, snapshot, fixture, and generated artifact checks"
+			: `Missing ${migrationConfigRelativePath} for the configured migration workspace`,
 	);
 }
 
@@ -201,8 +380,31 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 		});
 	}
 
-	const workspace = tryResolveWorkspaceProject(cwd);
+	let workspace: WorkspaceProject | null = null;
+	let invalidWorkspaceReason: string | null = null;
+	try {
+		invalidWorkspaceReason = getInvalidWorkspaceProjectReason(cwd);
+		workspace = tryResolveWorkspaceProject(cwd);
+	} catch (error) {
+		checks.push(
+			createDoctorCheck(
+				"Workspace package metadata",
+				"fail",
+				error instanceof Error ? error.message : String(error),
+			),
+		);
+		return checks;
+	}
 	if (!workspace) {
+		if (invalidWorkspaceReason) {
+			checks.push(
+				createDoctorCheck(
+					"Workspace package metadata",
+					"fail",
+					invalidWorkspaceReason,
+				),
+			);
+		}
 		return checks;
 	}
 
@@ -213,6 +415,22 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 			`Official workspace detected for ${workspace.workspace.namespace}`,
 		),
 	);
+
+	let workspacePackageJson: WorkspacePackageJson;
+	try {
+		workspacePackageJson = parseWorkspacePackageJson(workspace.projectDir);
+	} catch (error) {
+		checks.push(
+			createDoctorCheck(
+				"Workspace package metadata",
+				"fail",
+				error instanceof Error ? error.message : String(error),
+			),
+		);
+		return checks;
+	}
+
+	checks.push(checkWorkspacePackageMetadata(workspace, workspacePackageJson));
 
 	try {
 		const inventory = readWorkspaceInventory(workspace.projectDir);
@@ -227,12 +445,11 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 		for (const block of inventory.blocks) {
 			checks.push(
 				checkExistingFiles(workspace.projectDir, `Block ${block.slug}`, [
-					block.typesFile,
-					block.apiTypesFile,
-					block.openApiFile,
-					path.join("src", "blocks", block.slug, "index.tsx"),
+					...getWorkspaceBlockRequiredFiles(block),
 				]),
 			);
+			checks.push(checkWorkspaceBlockMetadata(workspace.projectDir, workspace, block));
+			checks.push(checkWorkspaceBlockCollectionImport(workspace.projectDir, block.slug));
 		}
 
 		const registeredBlockSlugs = new Set(inventory.blocks.map((block) => block.slug));
@@ -272,6 +489,14 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 			checks.push(
 				checkExistingFiles(workspace.projectDir, `Pattern ${pattern.slug}`, [pattern.file]),
 			);
+		}
+
+		const migrationWorkspaceCheck = checkMigrationWorkspaceHint(
+			workspace,
+			workspacePackageJson,
+		);
+		if (migrationWorkspaceCheck) {
+			checks.push(migrationWorkspaceCheck);
 		}
 	} catch (error) {
 		checks.push(

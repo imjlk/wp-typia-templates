@@ -10,6 +10,7 @@ import type { ReadlinePrompt } from "../src/runtime/cli-prompt.js";
 import { createMigrationDiff } from "../src/runtime/migration-diff.js";
 import { parseMigrationArgs } from "../src/runtime/index.js";
 import {
+	doctorProjectMigrations,
 	fixturesProjectMigrations,
 	initProjectMigrations,
 	planProjectMigrations,
@@ -748,6 +749,66 @@ function createMultiBlockMigrationProject(
 	const localBinDir = path.join(projectDir, "node_modules", ".bin");
 	fs.mkdirSync(localBinDir, { recursive: true });
 	fs.symlinkSync(repoTsxPath, path.join(localBinDir, "tsx"));
+}
+
+function addOfficialWorkspaceInventory(
+	projectDir: string,
+	blockSlugs: string[],
+) {
+	const packageJsonPath = path.join(projectDir, "package.json");
+	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+	packageJson.wpTypia = {
+		projectType: "workspace",
+		templatePackage: "@wp-typia/create-workspace-template",
+		namespace: "create-block",
+		textDomain: "create-block",
+		phpPrefix: "create_block",
+	};
+	writeJson(packageJsonPath, packageJson);
+
+	const blockEntries = blockSlugs
+		.map(
+			(blockSlug) => `\t{
+\t\tslug: "${blockSlug}",
+\t\tattributeTypeName: "${blockSlug
+				.split("-")
+				.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+				.join("")}Attributes",
+\t\ttypesFile: "src/blocks/${blockSlug}/types.ts",
+\t},`,
+		)
+		.join("\n");
+
+	writeFile(
+		path.join(projectDir, "scripts", "block-config.ts"),
+		`export interface WorkspaceBlockConfig {
+\tslug: string;
+\tattributeTypeName: string;
+\ttypesFile: string;
+\tapiTypesFile?: string;
+\topenApiFile?: string;
+}
+
+export interface WorkspaceVariationConfig {
+\tblock: string;
+\tfile: string;
+\tslug: string;
+}
+
+export interface WorkspacePatternConfig {
+\tfile: string;
+\tslug: string;
+}
+
+export const BLOCKS: WorkspaceBlockConfig[] = [
+${blockEntries}
+];
+
+export const VARIATIONS: WorkspaceVariationConfig[] = [];
+
+export const PATTERNS: WorkspacePatternConfig[] = [];
+`,
+	);
 }
 
 function createRetrofitMultiBlockProject(projectDir: string) {
@@ -2378,6 +2439,81 @@ export default migrationConfig;
 		expect(output).toContain("PASS Fixture coverage v1:");
 		expect(output).toContain("PASS Risk summary v1:");
 		expect(output).toContain("PASS Migration doctor summary:");
+	});
+
+	test("doctor passes when official workspace inventory and migration targets align", () => {
+		const projectDir = path.join(tempRoot, "doctor-workspace-target-pass-project");
+		createMultiBlockMigrationProject(projectDir, { includeLegacyChild: true });
+		addOfficialWorkspaceInventory(projectDir, ["multi-parent", "multi-parent-item"]);
+
+		runCli("node", [entryPath, "migrate", "scaffold", "--from-migration-version", "v1"], {
+			cwd: projectDir,
+		});
+
+		const result = doctorProjectMigrations(projectDir, {
+			all: true,
+			renderLine() {},
+		});
+
+		expect(
+			result.checks.find((check) => check.label === "Workspace migration targets")?.status,
+		).toBe("pass");
+	});
+
+	test("doctor fails when workspace inventory blocks are missing from migration config", () => {
+		const projectDir = path.join(tempRoot, "doctor-workspace-target-missing-project");
+		createMultiBlockMigrationProject(projectDir, { includeLegacyChild: true });
+		addOfficialWorkspaceInventory(projectDir, ["multi-parent", "multi-parent-item"]);
+
+		const migrationConfigPath = path.join(projectDir, "src", "migrations", "config.ts");
+		const migrationConfigSource = fs.readFileSync(migrationConfigPath, "utf8");
+		fs.writeFileSync(
+			migrationConfigPath,
+			migrationConfigSource.replace(
+				'blockName: "create-block/multi-parent-item"',
+				'blockName: "create-block/multi-parent-item-renamed"',
+			),
+			"utf8",
+		);
+
+		runCli("node", [entryPath, "migrate", "scaffold", "--from-migration-version", "v1"], {
+			cwd: projectDir,
+		});
+
+		const lines: string[] = [];
+		expect(() =>
+			doctorProjectMigrations(projectDir, {
+				all: true,
+				renderLine: (line) => lines.push(line),
+			}),
+		).toThrow(/Migration doctor failed/);
+		expect(lines.join("\n")).toContain("Workspace migration targets");
+		expect(lines.join("\n")).toContain("Missing from migration config: create-block/multi-parent-item");
+		expect(lines.join("\n")).toContain(
+			"Not present in scripts/block-config.ts: create-block/multi-parent-item-renamed",
+		);
+	});
+
+	test("doctor fails when migration config keeps workspace-removed block targets", () => {
+		const projectDir = path.join(tempRoot, "doctor-workspace-target-stale-project");
+		createMultiBlockMigrationProject(projectDir, { includeLegacyChild: true });
+		addOfficialWorkspaceInventory(projectDir, ["multi-parent"]);
+
+		runCli("node", [entryPath, "migrate", "scaffold", "--from-migration-version", "v1"], {
+			cwd: projectDir,
+		});
+
+		const lines: string[] = [];
+		expect(() =>
+			doctorProjectMigrations(projectDir, {
+				all: true,
+				renderLine: (line) => lines.push(line),
+			}),
+		).toThrow(/Migration doctor failed/);
+		expect(lines.join("\n")).toContain("Workspace migration targets");
+		expect(lines.join("\n")).toContain(
+			"Not present in scripts/block-config.ts: create-block/multi-parent-item",
+		);
 	});
 
 	test("doctor fails when a snapshot file is missing", () => {

@@ -220,8 +220,11 @@ Scaffolded rules expose:
 - `unresolved`: issues that must be resolved before `verify`
 - `migrate()`: the generated edge implementation used by deprecated entries and batch migration
 
-`migration:doctor` now acts as the read-only workspace check. It verifies:
+`migration:doctor` is the deep read-only audit for migration-enabled workspaces.
+Use root `wp-typia doctor` for environment readiness and lightweight workspace
+source-tree drift checks. Use `migration:doctor` when you want to verify:
 
+- migration block targets stay aligned with the current workspace `BLOCKS` inventory
 - snapshot directories and required files
 - generated `registry.ts`, `deprecated.ts`, `verify.ts`, and `fuzz.ts`
 - missing or empty edge fixtures
