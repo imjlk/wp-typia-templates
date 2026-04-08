@@ -263,8 +263,13 @@ function checkWorkspaceBlockHooks(
 		);
 	}
 
+	const blockName =
+		typeof blockJson.name === "string" && blockJson.name.trim().length > 0
+			? blockJson.name.trim()
+			: null;
 	const invalidEntries = Object.entries(blockHooks).filter(
 		([anchor, position]) =>
+			(blockName !== null && anchor.trim() === blockName) ||
 			anchor.trim().length === 0 ||
 			anchor !== anchor.trim() ||
 			!HOOKED_BLOCK_ANCHOR_PATTERN.test(anchor) ||

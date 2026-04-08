@@ -1162,7 +1162,7 @@ export function formatAddHelpText(): string {
   wp-typia add variation <name> --block <block-slug>
   wp-typia add pattern <name>
   wp-typia add binding-source <name>
-  wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>
+  wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <${HOOKED_BLOCK_POSITION_IDS.join("|")}>
 
 Notes:
   \`wp-typia add\` runs only inside official ${WORKSPACE_TEMPLATE_PACKAGE} workspaces.
@@ -1737,6 +1737,12 @@ export async function runAddHookedBlockCommand({
 
 	const resolvedAnchorBlockName = assertValidHookAnchor(anchorBlockName);
 	const resolvedPosition = assertValidHookedBlockPosition(position);
+	const selfHookAnchor = `${workspace.workspace.namespace}/${blockSlug}`;
+	if (resolvedAnchorBlockName === selfHookAnchor) {
+		throw new Error(
+			"`wp-typia add hooked-block` cannot hook a block relative to its own block name.",
+		);
+	}
 	const { blockJson, blockJsonPath } = readWorkspaceBlockJson(workspace.projectDir, blockSlug);
 	const blockJsonRelativePath = path.relative(workspace.projectDir, blockJsonPath);
 	const blockHooks = getMutableBlockHooks(blockJson, blockJsonRelativePath);
