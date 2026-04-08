@@ -22,8 +22,8 @@
     "bunli:dev": "bun src/cli.ts",
     "bunli:test": "bun test tests/*.test.ts",
     "dev": "bun run generate && node bin/wp-typia.js",
-    "test": "cd ../create && bun run build && cd ../wp-typia && bun run generate && bun test tests/*.test.ts",
-    "test:coverage": "cd ../create && bun run build && cd ../wp-typia && bun run generate && bun test tests/*.test.ts --coverage --coverage-reporter=lcov --coverage-dir=coverage",
+    "test": "cd ../wp-typia-project-tools && bun run build && cd ../wp-typia && bun run generate && bun test tests/*.test.ts",
+    "test:coverage": "cd ../wp-typia-project-tools && bun run build && cd ../wp-typia && bun run generate && bun test tests/*.test.ts --coverage --coverage-reporter=lcov --coverage-dir=coverage",
     "clean": "rm -rf .bunli"
   },
   "keywords": [
