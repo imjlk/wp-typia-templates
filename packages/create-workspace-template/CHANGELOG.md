@@ -1,5 +1,13 @@
 # @wp-typia/create-workspace-template
 
+## 0.13.0 — 2026-04-08
+
+### Minor changes
+
+- [1d12a52](https://github.com/imjlk/wp-typia/commit/1d12a52efc0f7215b130257cfe1f010a963cf232) Add the first-class `wp-typia add binding-source <name>` workspace workflow with
+  inventory entries, shared PHP/editor bootstrap wiring, workspace doctor checks,
+  and generated-project smoke coverage for binding-source builds. — Thanks @imjlk!
+
 ## 0.12.0 — 2026-04-08
 
 ### Minor changes
