@@ -14,6 +14,9 @@
     "package.json"
   ],
   "scripts": {
+    "bunli:build": "bunli build",
+    "bunli:dev": "bunli dev",
+    "bunli:test": "bunli test",
     "dev": "node bin/wp-typia.js",
     "test": "cd ../create && bun run build && cd ../wp-typia && bun test tests/*.test.ts",
     "test:coverage": "cd ../create && bun run build && cd ../wp-typia && bun test tests/*.test.ts --coverage --coverage-reporter=lcov --coverage-dir=coverage"
@@ -47,5 +50,10 @@
   },
   "dependencies": {
     "@wp-typia/create": "0.11.1"
+  },
+  "devDependencies": {
+    "@bunli/core": "0.9.0",
+    "@bunli/test": "0.6.0",
+    "bunli": "0.9.0"
   }
 }

@@ -1,5 +1,9 @@
 /**
- * Public CLI runtime barrel for add, doctor, help, scaffold, and template helpers.
+ * Public runtime helper barrel consumed by the canonical `wp-typia` package.
+ *
+ * These exports do not make `@wp-typia/create` the CLI owner again. Command
+ * taxonomy, help text ownership, and published bin responsibility stay in
+ * `packages/wp-typia`.
  *
  * Import `formatAddHelpText`, `runAddBlockCommand`,
  * `createAddPlaceholderMessage`, and `seedWorkspaceMigrationProject` for

@@ -19,6 +19,9 @@
 
 let cachedCreateRuntimePromise;
 let cachedCliCorePromise;
+// Keep this command list in sync with packages/wp-typia/src/commands/*
+// until the active runtime switches over to Bunli. See
+// docs/bunli-cli-migration.md for the cutover contract.
 const RESERVED_TOP_LEVEL_COMMANDS = new Set([
 	"add",
 	"create",

@@ -16,3 +16,6 @@ Compatibility notes:
 
 - `@wp-typia/create` remains available for programmatic scaffold/runtime imports and compatibility exports
 - `create-wp-typia` is archived and should not be used for new installs
+
+Maintainers: see [`docs/bunli-cli-migration.md`](../../docs/bunli-cli-migration.md)
+for the active CLI ownership contract and the staged Bunli cutover plan.
