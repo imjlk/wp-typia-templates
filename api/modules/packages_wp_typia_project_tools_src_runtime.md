@@ -15,6 +15,9 @@
 - [formatMigrationHelpText](packages_wp_typia_project_tools_src_runtime.md#formatmigrationhelptext)
 - [parseMigrationArgs](packages_wp_typia_project_tools_src_runtime.md#parsemigrationargs)
 - [runMigrationCommand](packages_wp_typia_project_tools_src_runtime.md#runmigrationcommand)
+- [parseWorkspacePackageManagerId](packages_wp_typia_project_tools_src_runtime.md#parseworkspacepackagemanagerid)
+- [resolveWorkspaceProject](packages_wp_typia_project_tools_src_runtime.md#resolveworkspaceproject)
+- [tryResolveWorkspaceProject](packages_wp_typia_project_tools_src_runtime.md#tryresolveworkspaceproject)
 - [manifestAttributeToJsonSchema](packages_wp_typia_project_tools_src_runtime.md#manifestattributetojsonschema)
 - [projectJsonSchemaDocument](packages_wp_typia_project_tools_src_runtime.md#projectjsonschemadocument)
 - [manifestToJsonSchema](packages_wp_typia_project_tools_src_runtime.md#manifesttojsonschema)
@@ -54,7 +57,6 @@
 - [getTemplateById](packages_wp_typia_project_tools_src_runtime.md#gettemplatebyid)
 - [getTemplateSelectOptions](packages_wp_typia_project_tools_src_runtime.md#gettemplateselectoptions)
 - [listTemplates](packages_wp_typia_project_tools_src_runtime.md#listtemplates)
-- [createAddPlaceholderMessage](packages_wp_typia_project_tools_src_runtime.md#createaddplaceholdermessage)
 - [createReadlinePrompt](packages_wp_typia_project_tools_src_runtime.md#createreadlineprompt)
 - [formatAddHelpText](packages_wp_typia_project_tools_src_runtime.md#formataddhelptext)
 - [formatHelpText](packages_wp_typia_project_tools_src_runtime.md#formathelptext)
@@ -64,8 +66,11 @@
 - [getDoctorChecks](packages_wp_typia_project_tools_src_runtime.md#getdoctorchecks)
 - [getNextSteps](packages_wp_typia_project_tools_src_runtime.md#getnextsteps)
 - [getOptionalOnboarding](packages_wp_typia_project_tools_src_runtime.md#getoptionalonboarding)
+- [getWorkspaceBlockSelectOptions](packages_wp_typia_project_tools_src_runtime.md#getworkspaceblockselectoptions)
 - [runAddBlockCommand](packages_wp_typia_project_tools_src_runtime.md#runaddblockcommand)
+- [runAddPatternCommand](packages_wp_typia_project_tools_src_runtime.md#runaddpatterncommand)
 - [runDoctor](packages_wp_typia_project_tools_src_runtime.md#rundoctor)
+- [runAddVariationCommand](packages_wp_typia_project_tools_src_runtime.md#runaddvariationcommand)
 - [runScaffoldFlow](packages_wp_typia_project_tools_src_runtime.md#runscaffoldflow)
 - [DoctorCheck](packages_wp_typia_project_tools_src_runtime.md#doctorcheck)
 - [ReadlinePrompt](packages_wp_typia_project_tools_src_runtime.md#readlineprompt)
@@ -123,6 +128,24 @@ ___
 ### runMigrationCommand
 
 Re-exports [runMigrationCommand](packages_wp_typia_project_tools_src_runtime_migrations.md#runmigrationcommand)
+
+___
+
+### parseWorkspacePackageManagerId
+
+Re-exports [parseWorkspacePackageManagerId](packages_wp_typia_project_tools_src_runtime_workspace_project.md#parseworkspacepackagemanagerid)
+
+___
+
+### resolveWorkspaceProject
+
+Re-exports [resolveWorkspaceProject](packages_wp_typia_project_tools_src_runtime_workspace_project.md#resolveworkspaceproject)
+
+___
+
+### tryResolveWorkspaceProject
+
+Re-exports [tryResolveWorkspaceProject](packages_wp_typia_project_tools_src_runtime_workspace_project.md#tryresolveworkspaceproject)
 
 ___
 
@@ -360,12 +383,6 @@ Re-exports [listTemplates](packages_wp_typia_project_tools_src_runtime_template_
 
 ___
 
-### createAddPlaceholderMessage
-
-Re-exports [createAddPlaceholderMessage](packages_wp_typia_project_tools_src_runtime_cli_add.md#createaddplaceholdermessage)
-
-___
-
 ### createReadlinePrompt
 
 Re-exports [createReadlinePrompt](packages_wp_typia_project_tools_src_runtime_cli_prompt.md#createreadlineprompt)
@@ -420,15 +437,33 @@ Re-exports [getOptionalOnboarding](packages_wp_typia_project_tools_src_runtime_c
 
 ___
 
+### getWorkspaceBlockSelectOptions
+
+Re-exports [getWorkspaceBlockSelectOptions](packages_wp_typia_project_tools_src_runtime_workspace_inventory.md#getworkspaceblockselectoptions)
+
+___
+
 ### runAddBlockCommand
 
 Re-exports [runAddBlockCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddblockcommand)
 
 ___
 
+### runAddPatternCommand
+
+Re-exports [runAddPatternCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddpatterncommand)
+
+___
+
 ### runDoctor
 
 Re-exports [runDoctor](packages_wp_typia_project_tools_src_runtime_cli_doctor.md#rundoctor)
+
+___
+
+### runAddVariationCommand
+
+Re-exports [runAddVariationCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddvariationcommand)
 
 ___
 

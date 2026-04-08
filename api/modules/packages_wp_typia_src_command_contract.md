@@ -98,7 +98,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/command-contract.ts:103](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L103)
+[packages/wp-typia/src/command-contract.ts:104](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L104)
 
 ## Functions
 
@@ -118,7 +118,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/command-contract.ts:145](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L145)
+[packages/wp-typia/src/command-contract.ts:146](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L146)
 
 ___
 
@@ -138,4 +138,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/command-contract.ts:202](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L202)
+[packages/wp-typia/src/command-contract.ts:203](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L203)

@@ -9,9 +9,11 @@
 - [getDoctorChecks](packages_wp_typia_project_tools_src_runtime_cli_core.md#getdoctorchecks)
 - [runDoctor](packages_wp_typia_project_tools_src_runtime_cli_core.md#rundoctor)
 - [DoctorCheck](packages_wp_typia_project_tools_src_runtime_cli_core.md#doctorcheck)
-- [createAddPlaceholderMessage](packages_wp_typia_project_tools_src_runtime_cli_core.md#createaddplaceholdermessage)
 - [formatAddHelpText](packages_wp_typia_project_tools_src_runtime_cli_core.md#formataddhelptext)
+- [getWorkspaceBlockSelectOptions](packages_wp_typia_project_tools_src_runtime_cli_core.md#getworkspaceblockselectoptions)
 - [runAddBlockCommand](packages_wp_typia_project_tools_src_runtime_cli_core.md#runaddblockcommand)
+- [runAddPatternCommand](packages_wp_typia_project_tools_src_runtime_cli_core.md#runaddpatterncommand)
+- [runAddVariationCommand](packages_wp_typia_project_tools_src_runtime_cli_core.md#runaddvariationcommand)
 - [seedWorkspaceMigrationProject](packages_wp_typia_project_tools_src_runtime_cli_core.md#seedworkspacemigrationproject)
 - [formatHelpText](packages_wp_typia_project_tools_src_runtime_cli_core.md#formathelptext)
 - [getNextSteps](packages_wp_typia_project_tools_src_runtime_cli_core.md#getnextsteps)
@@ -47,21 +49,33 @@ Re-exports [DoctorCheck](../interfaces/packages_wp_typia_project_tools_src_runti
 
 ___
 
-### createAddPlaceholderMessage
-
-Re-exports [createAddPlaceholderMessage](packages_wp_typia_project_tools_src_runtime_cli_add.md#createaddplaceholdermessage)
-
-___
-
 ### formatAddHelpText
 
 Re-exports [formatAddHelpText](packages_wp_typia_project_tools_src_runtime_cli_add.md#formataddhelptext)
 
 ___
 
+### getWorkspaceBlockSelectOptions
+
+Re-exports [getWorkspaceBlockSelectOptions](packages_wp_typia_project_tools_src_runtime_workspace_inventory.md#getworkspaceblockselectoptions)
+
+___
+
 ### runAddBlockCommand
 
 Re-exports [runAddBlockCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddblockcommand)
+
+___
+
+### runAddPatternCommand
+
+Re-exports [runAddPatternCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddpatterncommand)
+
+___
+
+### runAddVariationCommand
+
+Re-exports [runAddVariationCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddvariationcommand)
 
 ___
 

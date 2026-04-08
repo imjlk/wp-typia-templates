@@ -4,6 +4,10 @@
 
 ## Table of contents
 
+### References
+
+- [getWorkspaceBlockSelectOptions](packages_wp_typia_project_tools_src_runtime_cli_add.md#getworkspaceblockselectoptions)
+
 ### Type Aliases
 
 - [AddKindId](packages_wp_typia_project_tools_src_runtime_cli_add.md#addkindid)
@@ -19,7 +23,14 @@
 - [formatAddHelpText](packages_wp_typia_project_tools_src_runtime_cli_add.md#formataddhelptext)
 - [seedWorkspaceMigrationProject](packages_wp_typia_project_tools_src_runtime_cli_add.md#seedworkspacemigrationproject)
 - [runAddBlockCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddblockcommand)
-- [createAddPlaceholderMessage](packages_wp_typia_project_tools_src_runtime_cli_add.md#createaddplaceholdermessage)
+- [runAddVariationCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddvariationcommand)
+- [runAddPatternCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddpatterncommand)
+
+## References
+
+### getWorkspaceBlockSelectOptions
+
+Re-exports [getWorkspaceBlockSelectOptions](packages_wp_typia_project_tools_src_runtime_workspace_inventory.md#getworkspaceblockselectoptions)
 
 ## Type Aliases
 
@@ -29,7 +40,7 @@
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:38](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L38)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:49](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L49)
 
 ___
 
@@ -39,7 +50,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:49](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L49)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:60](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L60)
 
 ## Variables
 
@@ -51,7 +62,7 @@ Supported top-level `wp-typia add` kinds exposed by the canonical CLI.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:37](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L37)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:48](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L48)
 
 ___
 
@@ -63,7 +74,7 @@ Supported built-in block families accepted by `wp-typia add block --template`.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:43](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L43)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:54](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L54)
 
 ## Functions
 
@@ -79,7 +90,7 @@ Returns help text for the canonical `wp-typia add` subcommands.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:703](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L703)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:921](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L921)
 
 ___
 
@@ -102,7 +113,7 @@ Seeds an empty official workspace migration project before any blocks are added.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:717](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L717)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:936](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L936)
 
 ___
 
@@ -124,26 +135,68 @@ Adds one built-in block slice to an official workspace project.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:754](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L754)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:965](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L965)
 
 ___
 
-### createAddPlaceholderMessage
+### runAddVariationCommand
 
-▸ **createAddPlaceholderMessage**(`kind`): `string`
+▸ **runAddVariationCommand**(`options`): `Promise`\<\{ `blockSlug`: `string` ; `projectDir`: `string` ; `variationSlug`: `string`  }\>
 
-Returns the current placeholder guidance for unsupported `wp-typia add` kinds.
+Add one variation entry to an existing workspace block.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `kind` | ``"pattern"`` \| ``"variation"`` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `options` | `RunAddVariationCommandOptions` | Command options for the variation scaffold workflow. |
 
 #### Returns
 
-`string`
+`Promise`\<\{ `blockSlug`: `string` ; `projectDir`: `string` ; `variationSlug`: `string`  }\>
+
+A promise that resolves with the normalized `blockSlug`,
+`variationSlug`, and owning `projectDir` after the variation files and
+inventory entry have been written successfully.
+
+**`Throws`**
+
+When the command is run outside an official workspace, when
+the target block is unknown, when the variation slug is invalid, or when a
+conflicting file or inventory entry already exists.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:890](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L890)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1171](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1171)
+
+___
+
+### runAddPatternCommand
+
+▸ **runAddPatternCommand**(`options`): `Promise`\<\{ `patternSlug`: `string` ; `projectDir`: `string`  }\>
+
+Add one PHP block pattern shell to an official workspace project.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `options` | `RunAddPatternCommandOptions` | Command options for the pattern scaffold workflow. |
+
+#### Returns
+
+`Promise`\<\{ `patternSlug`: `string` ; `projectDir`: `string`  }\>
+
+A promise that resolves with the normalized `patternSlug` and
+owning `projectDir` after the pattern file and inventory entry have been
+written successfully.
+
+**`Throws`**
+
+When the command is run outside an official workspace, when
+the pattern slug is invalid, or when a conflicting file or inventory entry
+already exists.
+
+#### Defined in
+
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1246](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1246)

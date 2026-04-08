@@ -17,6 +17,7 @@
 - [executeTemplatesCommand](packages_wp_typia_src_runtime_bridge.md#executetemplatescommand)
 - [executeDoctorCommand](packages_wp_typia_src_runtime_bridge.md#executedoctorcommand)
 - [executeMigrateCommand](packages_wp_typia_src_runtime_bridge.md#executemigratecommand)
+- [getAddWorkspaceBlockOptions](packages_wp_typia_src_runtime_bridge.md#getaddworkspaceblockoptions)
 
 ## References
 
@@ -54,7 +55,7 @@ Re-exports [listTemplates](packages_wp_typia_project_tools_src_runtime_template_
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:120](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L120)
+[packages/wp-typia/src/runtime-bridge.ts:123](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L123)
 
 ___
 
@@ -74,7 +75,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:212](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L212)
+[packages/wp-typia/src/runtime-bridge.ts:215](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L215)
 
 ___
 
@@ -95,7 +96,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:260](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L260)
+[packages/wp-typia/src/runtime-bridge.ts:295](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L295)
 
 ___
 
@@ -115,7 +116,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:298](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L298)
+[packages/wp-typia/src/runtime-bridge.ts:333](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L333)
 
 ___
 
@@ -135,4 +136,24 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:302](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L302)
+[packages/wp-typia/src/runtime-bridge.ts:337](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L337)
+
+___
+
+### getAddWorkspaceBlockOptions
+
+▸ **getAddWorkspaceBlockOptions**(`cwd`): \{ `description`: `string` ; `name`: `string` ; `value`: `string`  }[]
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `cwd` | `string` |
+
+#### Returns
+
+\{ `description`: `string` ; `name`: `string` ; `value`: `string`  }[]
+
+#### Defined in
+
+[packages/wp-typia/src/runtime-bridge.ts:378](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L378)

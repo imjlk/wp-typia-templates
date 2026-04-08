@@ -38,7 +38,7 @@ Ordered doctor check rows ready for CLI rendering.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-doctor.ts:71](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-doctor.ts#L71)
+[packages/wp-typia-project-tools/src/runtime/cli-doctor.ts:135](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-doctor.ts#L135)
 
 ___
 
@@ -67,4 +67,4 @@ When one or more checks fail.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-doctor.ts:151](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-doctor.ts#L151)
+[packages/wp-typia-project-tools/src/runtime/cli-doctor.ts:297](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-doctor.ts#L297)

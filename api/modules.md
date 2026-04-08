@@ -159,6 +159,8 @@
 - [packages/wp-typia-project-tools/src/runtime/template-render](modules/packages_wp_typia_project_tools_src_runtime_template_render.md)
 - [packages/wp-typia-project-tools/src/runtime/template-source](modules/packages_wp_typia_project_tools_src_runtime_template_source.md)
 - [packages/wp-typia-project-tools/src/runtime/typia-tags](modules/packages_wp_typia_project_tools_src_runtime_typia_tags.md)
+- [packages/wp-typia-project-tools/src/runtime/workspace-inventory](modules/packages_wp_typia_project_tools_src_runtime_workspace_inventory.md)
+- [packages/wp-typia-project-tools/src/runtime/workspace-project](modules/packages_wp_typia_project_tools_src_runtime_workspace_project.md)
 - [packages/wp-typia-rest/src/client](modules/packages_wp_typia_rest_src_client.md)
 - [packages/wp-typia-rest/src/http](modules/packages_wp_typia_rest_src_http.md)
 - [packages/wp-typia-rest/src](modules/packages_wp_typia_rest_src.md)

@@ -24,7 +24,7 @@ Human-readable status detail rendered next to the label.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-doctor.ts:15](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-doctor.ts#L15)
+[packages/wp-typia-project-tools/src/runtime/cli-doctor.ts:17](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-doctor.ts#L17)
 
 ___
 
@@ -36,7 +36,7 @@ Short label for the dependency, directory, or template check.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-doctor.ts:17](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-doctor.ts#L17)
+[packages/wp-typia-project-tools/src/runtime/cli-doctor.ts:19](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-doctor.ts#L19)
 
 ___
 
@@ -48,4 +48,4 @@ Final pass/fail status for this diagnostic row.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-doctor.ts:19](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-doctor.ts#L19)
+[packages/wp-typia-project-tools/src/runtime/cli-doctor.ts:21](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-doctor.ts#L21)
