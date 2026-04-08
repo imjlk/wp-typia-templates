@@ -47,7 +47,7 @@ Multi-line usage text for the `wp-typia migrate` command surface.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/migrations.ts:131](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L131)
+[packages/wp-typia-project-tools/src/runtime/migrations.ts:134](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L134)
 
 ___
 
@@ -75,7 +75,7 @@ Error When no arguments are provided, an unknown flag is encountered, or legacy 
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/migrations.ts:163](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L163)
+[packages/wp-typia-project-tools/src/runtime/migrations.ts:166](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L166)
 
 ___
 
@@ -105,7 +105,7 @@ The command result, or a promise when the selected command is interactive.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/migrations.ts:285](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L285)
+[packages/wp-typia-project-tools/src/runtime/migrations.ts:288](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L288)
 
 ___
 
@@ -130,7 +130,7 @@ A structured summary of the selected edge, included/skipped block targets, and n
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/migrations.ts:373](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L373)
+[packages/wp-typia-project-tools/src/runtime/migrations.ts:376](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L376)
 
 ___
 
@@ -155,7 +155,7 @@ The planned migration summary, or `{ cancelled: true }` when the user exits the 
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/migrations.ts:457](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L457)
+[packages/wp-typia-project-tools/src/runtime/migrations.ts:460](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L460)
 
 ___
 
@@ -185,7 +185,7 @@ Error When the project layout is unsupported or the migration version label is i
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/migrations.ts:526](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L526)
+[packages/wp-typia-project-tools/src/runtime/migrations.ts:529](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L529)
 
 ___
 
@@ -215,7 +215,7 @@ Error When the label is invalid, the project is not migration-capable, or `sync-
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/migrations.ts:579](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L579)
+[packages/wp-typia-project-tools/src/runtime/migrations.ts:582](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L582)
 
 ___
 
@@ -244,7 +244,7 @@ Error When `fromMigrationVersion` is missing or no eligible snapshots exist for 
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/migrations.ts:654](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L654)
+[packages/wp-typia-project-tools/src/runtime/migrations.ts:657](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L657)
 
 ___
 
@@ -273,7 +273,7 @@ Error When `fromMigrationVersion` is missing or no eligible snapshots exist for 
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/migrations.ts:698](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L698)
+[packages/wp-typia-project-tools/src/runtime/migrations.ts:701](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L701)
 
 ___
 
@@ -302,7 +302,7 @@ Verified legacy versions.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/migrations.ts:774](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L774)
+[packages/wp-typia-project-tools/src/runtime/migrations.ts:777](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L777)
 
 ___
 
@@ -332,7 +332,7 @@ Structured doctor check results for the selected legacy versions.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/migrations.ts:832](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L832)
+[packages/wp-typia-project-tools/src/runtime/migrations.ts:896](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L896)
 
 ___
 
@@ -362,7 +362,7 @@ Generated and skipped legacy versions.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/migrations.ts:1093](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L1093)
+[packages/wp-typia-project-tools/src/runtime/migrations.ts:1159](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L1159)
 
 ___
 
@@ -387,7 +387,7 @@ Fuzzed legacy versions and the effective seed.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/migrations.ts:1174](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L1174)
+[packages/wp-typia-project-tools/src/runtime/migrations.ts:1240](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L1240)
 
 ___
 
@@ -417,4 +417,4 @@ The loaded migration project state after initialization completes.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/migrations.ts:1399](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L1399)
+[packages/wp-typia-project-tools/src/runtime/migrations.ts:1465](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/migrations.ts#L1465)

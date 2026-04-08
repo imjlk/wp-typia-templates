@@ -15,6 +15,8 @@
 
 ### Functions
 
+- [parseWorkspacePackageJson](packages_wp_typia_project_tools_src_runtime_workspace_project.md#parseworkspacepackagejson)
+- [getInvalidWorkspaceProjectReason](packages_wp_typia_project_tools_src_runtime_workspace_project.md#getinvalidworkspaceprojectreason)
 - [parseWorkspacePackageManagerId](packages_wp_typia_project_tools_src_runtime_workspace_project.md#parseworkspacepackagemanagerid)
 - [tryResolveWorkspaceProject](packages_wp_typia_project_tools_src_runtime_workspace_project.md#tryresolveworkspaceproject)
 - [resolveWorkspaceProject](packages_wp_typia_project_tools_src_runtime_workspace_project.md#resolveworkspaceproject)
@@ -30,6 +32,64 @@
 [packages/wp-typia-project-tools/src/runtime/workspace-project.ts:6](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/workspace-project.ts#L6)
 
 ## Functions
+
+### parseWorkspacePackageJson
+
+▸ **parseWorkspacePackageJson**(`projectDirOrManifestPath`): [`WorkspacePackageJson`](../interfaces/packages_wp_typia_project_tools_src_runtime_workspace_project.WorkspacePackageJson.md)
+
+Parse a workspace package manifest from a project directory or `package.json` path.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `projectDirOrManifestPath` | `string` | Absolute or relative project directory, or a direct path to `package.json`. |
+
+#### Returns
+
+[`WorkspacePackageJson`](../interfaces/packages_wp_typia_project_tools_src_runtime_workspace_project.WorkspacePackageJson.md)
+
+The parsed workspace package manifest.
+
+**`Throws`**
+
+When the manifest cannot be parsed.
+
+#### Defined in
+
+[packages/wp-typia-project-tools/src/runtime/workspace-project.ts:42](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/workspace-project.ts#L42)
+
+___
+
+### getInvalidWorkspaceProjectReason
+
+▸ **getInvalidWorkspaceProjectReason**(`startDir`): `string` \| ``null``
+
+Explain why a nearby wp-typia workspace cannot be resolved from `startDir`.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `startDir` | `string` | Directory to begin walking upward from. |
+
+#### Returns
+
+`string` \| ``null``
+
+A human-readable validation error when a candidate workspace package
+manifest is found but its `wpTypia` metadata is invalid, or `null` when no
+invalid workspace candidate is discovered.
+
+**`Throws`**
+
+When a discovered `package.json` cannot be parsed.
+
+#### Defined in
+
+[packages/wp-typia-project-tools/src/runtime/workspace-project.ts:94](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/workspace-project.ts#L94)
+
+___
 
 ### parseWorkspacePackageManagerId
 
@@ -52,7 +112,7 @@ field is missing or unsupported.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/workspace-project.ts:36](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/workspace-project.ts#L36)
+[packages/wp-typia-project-tools/src/runtime/workspace-project.ts:124](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/workspace-project.ts#L124)
 
 ___
 
@@ -81,7 +141,7 @@ When a discovered `package.json` cannot be parsed.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/workspace-project.ts:59](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/workspace-project.ts#L59)
+[packages/wp-typia-project-tools/src/runtime/workspace-project.ts:147](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/workspace-project.ts#L147)
 
 ___
 
@@ -109,4 +169,4 @@ When no `WORKSPACE_TEMPLATE_PACKAGE` workspace can be found.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/workspace-project.ts:121](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/workspace-project.ts#L121)
+[packages/wp-typia-project-tools/src/runtime/workspace-project.ts:198](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/workspace-project.ts#L198)

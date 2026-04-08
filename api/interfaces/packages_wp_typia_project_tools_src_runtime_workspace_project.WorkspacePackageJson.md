@@ -11,6 +11,7 @@
 - [author](packages_wp_typia_project_tools_src_runtime_workspace_project.WorkspacePackageJson.md#author)
 - [name](packages_wp_typia_project_tools_src_runtime_workspace_project.WorkspacePackageJson.md#name)
 - [packageManager](packages_wp_typia_project_tools_src_runtime_workspace_project.WorkspacePackageJson.md#packagemanager)
+- [scripts](packages_wp_typia_project_tools_src_runtime_workspace_project.WorkspacePackageJson.md#scripts)
 - [wpTypia](packages_wp_typia_project_tools_src_runtime_workspace_project.WorkspacePackageJson.md#wptypia)
 
 ## Properties
@@ -45,6 +46,16 @@ ___
 
 ___
 
+### scripts
+
+• `Optional` **scripts**: `Record`\<`string`, `string`\>
+
+#### Defined in
+
+[packages/wp-typia-project-tools/src/runtime/workspace-project.ts:12](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/workspace-project.ts#L12)
+
+___
+
 ### wpTypia
 
 • `Optional` **wpTypia**: `Object`
@@ -61,4 +72,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/workspace-project.ts:12](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/workspace-project.ts#L12)
+[packages/wp-typia-project-tools/src/runtime/workspace-project.ts:13](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/workspace-project.ts#L13)
