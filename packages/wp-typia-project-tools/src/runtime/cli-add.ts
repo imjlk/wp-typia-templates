@@ -858,7 +858,9 @@ async function writeBindingSourceRegistry(
 	bindingSourceSlug: string,
 ): Promise<void> {
 	const bindingsDir = path.join(projectDir, "src", "bindings");
-	const bindingsIndexPath = path.join(bindingsDir, "index.ts");
+	const bindingsIndexPath = [path.join(bindingsDir, "index.ts"), path.join(bindingsDir, "index.js")].find(
+		(candidatePath) => fs.existsSync(candidatePath),
+	) ?? path.join(bindingsDir, "index.ts");
 	await fsp.mkdir(bindingsDir, { recursive: true });
 
 	const existingBindingSourceSlugs = fs.existsSync(bindingsDir)

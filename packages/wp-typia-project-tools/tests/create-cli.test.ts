@@ -3110,6 +3110,45 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		).toBe("pass");
 	}, 15_000);
 
+	test("binding source workflow preserves an existing src/bindings/index.js registry", async () => {
+		const targetDir = path.join(tempRoot, "demo-workspace-binding-source-existing-js-index");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: workspaceTemplatePackageManifest.name,
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				description: "Demo workspace binding existing js index",
+				namespace: "demo-space",
+				phpPrefix: "demo_space",
+				slug: "demo-workspace-binding-source-existing-js-index",
+				textDomain: "demo-space",
+				title: "Demo Workspace Binding Existing Js Index",
+			},
+		});
+
+		linkWorkspaceNodeModules(targetDir);
+		runCli("node", [entryPath, "add", "binding-source", "hero-data"], {
+			cwd: targetDir,
+		});
+
+		const bindingsTsPath = path.join(targetDir, "src", "bindings", "index.ts");
+		const bindingsJsPath = path.join(targetDir, "src", "bindings", "index.js");
+		fs.renameSync(bindingsTsPath, bindingsJsPath);
+
+		runCli("node", [entryPath, "add", "binding-source", "news-data"], {
+			cwd: targetDir,
+		});
+
+		expect(fs.existsSync(bindingsTsPath)).toBe(false);
+		expect(fs.existsSync(bindingsJsPath)).toBe(true);
+		const bindingsIndexSource = fs.readFileSync(bindingsJsPath, "utf8");
+		expect(bindingsIndexSource).toContain("import './hero-data/editor';");
+		expect(bindingsIndexSource).toContain("import './news-data/editor';");
+	}, 15_000);
+
 	test("binding source workflow repairs missing bootstrap functions even when hooks remain", async () => {
 		const targetDir = path.join(tempRoot, "demo-workspace-binding-source-bootstrap-repair");
 
