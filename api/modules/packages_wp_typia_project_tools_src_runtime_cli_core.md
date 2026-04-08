@@ -11,6 +11,7 @@
 - [DoctorCheck](packages_wp_typia_project_tools_src_runtime_cli_core.md#doctorcheck)
 - [formatAddHelpText](packages_wp_typia_project_tools_src_runtime_cli_core.md#formataddhelptext)
 - [getWorkspaceBlockSelectOptions](packages_wp_typia_project_tools_src_runtime_cli_core.md#getworkspaceblockselectoptions)
+- [runAddBindingSourceCommand](packages_wp_typia_project_tools_src_runtime_cli_core.md#runaddbindingsourcecommand)
 - [runAddBlockCommand](packages_wp_typia_project_tools_src_runtime_cli_core.md#runaddblockcommand)
 - [runAddPatternCommand](packages_wp_typia_project_tools_src_runtime_cli_core.md#runaddpatterncommand)
 - [runAddVariationCommand](packages_wp_typia_project_tools_src_runtime_cli_core.md#runaddvariationcommand)
@@ -58,6 +59,12 @@ ___
 ### getWorkspaceBlockSelectOptions
 
 Re-exports [getWorkspaceBlockSelectOptions](packages_wp_typia_project_tools_src_runtime_workspace_inventory.md#getworkspaceblockselectoptions)
+
+___
+
+### runAddBindingSourceCommand
+
+Re-exports [runAddBindingSourceCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddbindingsourcecommand)
 
 ___
 

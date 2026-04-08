@@ -34,6 +34,7 @@ wp-typia create my-block --template basic --package-manager bun --yes --no-insta
 wp-typia add block counter-card --template basic
 wp-typia add variation hero-card --block counter-card
 wp-typia add pattern hero-layout
+wp-typia add binding-source hero-data
 wp-typia templates list
 wp-typia templates inspect basic
 wp-typia doctor
@@ -59,6 +60,7 @@ cd my-plugin
 wp-typia add block counter-card --template basic
 wp-typia add variation hero-card --block counter-card
 wp-typia add pattern hero-layout
+wp-typia add binding-source hero-data
 wp-typia add block faq-stack --template compound --persistence-policy public --data-storage custom-table
 ```
 
@@ -515,16 +517,19 @@ npm run add-child -- --slug faq-item --title "FAQ Item"
 That command updates `scripts/block-config.ts` plus `src/blocks/<parent>/children.ts`
 without changing the parent block's default seeded template.
 
-Official workspaces also support first-class variation and pattern expansion:
+Official workspaces also support first-class variation, pattern, and binding-source expansion:
 
 ```bash
 wp-typia add variation hero-card --block counter-card
 wp-typia add pattern hero-layout
+wp-typia add binding-source hero-data
 ```
 
 Variations are generated under `src/blocks/<block>/variations/*.ts` and wired
 through the target block entrypoint. Patterns are generated as namespaced PHP
 shells under `src/patterns/*.php` and loaded by the workspace bootstrap.
+Binding sources are generated under `src/bindings/*/{server.php,editor.ts}` and
+wired through the shared workspace bootstrap plus editor bundle.
 
 When you opt `compound` into persistence with `--data-storage` or `--persistence-policy`, the parent block also gains:
 

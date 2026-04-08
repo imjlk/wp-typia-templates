@@ -25,6 +25,7 @@
 - [runAddBlockCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddblockcommand)
 - [runAddVariationCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddvariationcommand)
 - [runAddPatternCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddpatterncommand)
+- [runAddBindingSourceCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddbindingsourcecommand)
 
 ## References
 
@@ -56,7 +57,7 @@ ___
 
 ### ADD\_KIND\_IDS
 
-• `Const` **ADD\_KIND\_IDS**: readonly [``"block"``, ``"variation"``, ``"pattern"``]
+• `Const` **ADD\_KIND\_IDS**: readonly [``"block"``, ``"variation"``, ``"pattern"``, ``"binding-source"``]
 
 Supported top-level `wp-typia add` kinds exposed by the canonical CLI.
 
@@ -90,7 +91,7 @@ Returns help text for the canonical `wp-typia add` subcommands.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:921](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L921)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1137](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1137)
 
 ___
 
@@ -113,7 +114,7 @@ Seeds an empty official workspace migration project before any blocks are added.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:936](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L936)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1154](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1154)
 
 ___
 
@@ -135,7 +136,7 @@ Adds one built-in block slice to an official workspace project.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:965](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L965)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1183](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1183)
 
 ___
 
@@ -167,7 +168,7 @@ conflicting file or inventory entry already exists.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1171](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1171)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1407](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1407)
 
 ___
 
@@ -199,4 +200,35 @@ already exists.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1246](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1246)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1482](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1482)
+
+___
+
+### runAddBindingSourceCommand
+
+▸ **runAddBindingSourceCommand**(`options`): `Promise`\<\{ `bindingSourceSlug`: `string` ; `projectDir`: `string`  }\>
+
+Add one block binding source scaffold to an official workspace project.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `options` | `RunAddBindingSourceCommandOptions` | Command options for the binding-source scaffold workflow. |
+
+#### Returns
+
+`Promise`\<\{ `bindingSourceSlug`: `string` ; `projectDir`: `string`  }\>
+
+A promise that resolves with the normalized `bindingSourceSlug` and
+owning `projectDir` after the server/editor files and inventory entry have
+been written successfully.
+
+**`Throws`**
+
+When the command is run outside an official workspace, when
+the slug is invalid, or when a conflicting file or inventory entry exists.
+
+#### Defined in
+
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1548](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1548)

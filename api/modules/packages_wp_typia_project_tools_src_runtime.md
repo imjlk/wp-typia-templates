@@ -67,6 +67,7 @@
 - [getNextSteps](packages_wp_typia_project_tools_src_runtime.md#getnextsteps)
 - [getOptionalOnboarding](packages_wp_typia_project_tools_src_runtime.md#getoptionalonboarding)
 - [getWorkspaceBlockSelectOptions](packages_wp_typia_project_tools_src_runtime.md#getworkspaceblockselectoptions)
+- [runAddBindingSourceCommand](packages_wp_typia_project_tools_src_runtime.md#runaddbindingsourcecommand)
 - [runAddBlockCommand](packages_wp_typia_project_tools_src_runtime.md#runaddblockcommand)
 - [runAddPatternCommand](packages_wp_typia_project_tools_src_runtime.md#runaddpatterncommand)
 - [runDoctor](packages_wp_typia_project_tools_src_runtime.md#rundoctor)
@@ -440,6 +441,12 @@ ___
 ### getWorkspaceBlockSelectOptions
 
 Re-exports [getWorkspaceBlockSelectOptions](packages_wp_typia_project_tools_src_runtime_workspace_inventory.md#getworkspaceblockselectoptions)
+
+___
+
+### runAddBindingSourceCommand
+
+Re-exports [runAddBindingSourceCommand](packages_wp_typia_project_tools_src_runtime_cli_add.md#runaddbindingsourcecommand)
 
 ___
 
