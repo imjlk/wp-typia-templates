@@ -27,9 +27,11 @@ export const WP_TYPIA_TOP_LEVEL_COMMAND_NAMES = [
 
 const STRING_OPTION_NAMES_BY_COMMAND = {
 	add: new Set([
+		"anchor",
 		"block",
 		"data-storage",
 		"persistence-policy",
+		"position",
 		"template",
 	]),
 	create: new Set([
@@ -109,7 +111,7 @@ export const WP_TYPIA_FUTURE_COMMAND_TREE = [
 	{
 		description: "Extend an official wp-typia workspace.",
 		name: "add",
-		subcommands: ["block", "variation", "pattern"],
+		subcommands: ["block", "variation", "pattern", "binding-source", "hooked-block"],
 	},
 	{
 		description: "Run migration workflows.",

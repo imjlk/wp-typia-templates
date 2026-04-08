@@ -88,6 +88,7 @@ export {
 	getWorkspaceBlockSelectOptions,
 	runAddBindingSourceCommand,
 	runAddBlockCommand,
+	runAddHookedBlockCommand,
 	runAddPatternCommand,
 	runDoctor,
 	runAddVariationCommand,

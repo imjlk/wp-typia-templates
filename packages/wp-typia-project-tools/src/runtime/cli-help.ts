@@ -20,6 +20,8 @@ export function formatHelpText(): string {
   wp-typia add block <name> --template <basic|interactivity|persistence|compound> [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
   wp-typia add variation <name> --block <block-slug>
   wp-typia add pattern <name>
+  wp-typia add binding-source <name>
+  wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>
   wp-typia migrate <init|snapshot|diff|scaffold|verify|doctor|fixtures|fuzz> [...]
   wp-typia templates list
   wp-typia templates inspect <id>
@@ -35,6 +37,8 @@ Notes:
   \`wp-typia <project-dir>\` remains a backward-compatible alias to \`create\`.
   \`add variation\` uses an existing workspace block from \`scripts/block-config.ts\`.
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
+  \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.
+  \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.
   \`wp-typia doctor\` checks environment readiness plus workspace inventory and source-tree drift.
   \`wp-typia migrate doctor --all\` checks migration target alignment, snapshots, fixtures, and generated migration artifacts.
   \`migrate\` is the canonical migration command; \`migrations\` is no longer supported.`;

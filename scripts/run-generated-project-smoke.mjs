@@ -40,6 +40,9 @@ function parseArgs(argv) {
 		addBindingSourceName: undefined,
 		addBlockName: undefined,
 		addDataStorage: undefined,
+		addHookedBlockAnchor: undefined,
+		addHookedBlockPosition: undefined,
+		addHookedBlockSlug: undefined,
 		addPatternName: undefined,
 		addPersistencePolicy: undefined,
 		addTemplate: undefined,
@@ -74,6 +77,21 @@ function parseArgs(argv) {
 		}
 		if (arg === "--add-binding-source-name") {
 			parsed.addBindingSourceName = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--add-hooked-block-slug") {
+			parsed.addHookedBlockSlug = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--add-hooked-block-anchor") {
+			parsed.addHookedBlockAnchor = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--add-hooked-block-position") {
+			parsed.addHookedBlockPosition = next;
 			index += 1;
 			continue;
 		}
@@ -741,6 +759,20 @@ function assertWorkspaceBindingSourceArtifacts(projectDir, bindingSourceSlug) {
 	lintPhpArtifact(serverPath);
 }
 
+function assertWorkspaceHookedBlockArtifacts(projectDir, blockSlug, anchorBlockName, position) {
+	const blockJsonPath = path.join(projectDir, "src", "blocks", blockSlug, "block.json");
+	if (!fs.existsSync(blockJsonPath)) {
+		throw new Error(`Expected hooked workspace block metadata at ${blockJsonPath}`);
+	}
+
+	const blockJson = readJsonFile(blockJsonPath);
+	if (blockJson.blockHooks?.[anchorBlockName] !== position) {
+		throw new Error(
+			`Expected ${blockJsonPath} to define blockHooks.${anchorBlockName} = ${position}`,
+		);
+	}
+}
+
 function assertNoRawRenderedContentEcho(filePath) {
 	const source = fs.readFileSync(filePath, "utf8");
 	if (/echo\s*\(?\s*\$content\b/.test(source)) {
@@ -824,6 +856,9 @@ function main() {
 		addBlockName,
 		addBindingSourceName,
 		addDataStorage,
+		addHookedBlockAnchor,
+		addHookedBlockPosition,
+		addHookedBlockSlug,
 		addPatternName,
 		addPersistencePolicy,
 		addTemplate,
@@ -834,7 +869,7 @@ function main() {
 
 	if (!runtime || !template || !packageManager || !projectName) {
 		throw new Error(
-			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--with-migration-ui] [--add-block-name <name> --add-template <basic|interactivity|persistence|compound> [--add-data-storage <post-meta|custom-table>] [--add-persistence-policy <authenticated|public>]] [--add-variation-name <name> --add-variation-block <block-slug>] [--add-pattern-name <name>] [--add-binding-source-name <name>] --package-manager <id> --project-name <name>",
+			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--with-migration-ui] [--add-block-name <name> --add-template <basic|interactivity|persistence|compound> [--add-data-storage <post-meta|custom-table>] [--add-persistence-policy <authenticated|public>]] [--add-variation-name <name> --add-variation-block <block-slug>] [--add-pattern-name <name>] [--add-binding-source-name <name>] [--add-hooked-block-slug <block-slug> --add-hooked-block-anchor <anchor-block-name> --add-hooked-block-position <before|after|firstChild|lastChild>] --package-manager <id> --project-name <name>",
 		);
 	}
 
@@ -943,6 +978,31 @@ function main() {
 			});
 		}
 
+		if (addHookedBlockSlug || addHookedBlockAnchor || addHookedBlockPosition) {
+			if (!addHookedBlockSlug || !addHookedBlockAnchor || !addHookedBlockPosition) {
+				throw new Error(
+					"--add-hooked-block-slug, --add-hooked-block-anchor, and --add-hooked-block-position must be provided together.",
+				);
+			}
+
+			run(
+				runtime,
+				[
+					entryPath,
+					"add",
+					"hooked-block",
+					addHookedBlockSlug,
+					"--anchor",
+					addHookedBlockAnchor,
+					"--position",
+					addHookedBlockPosition,
+				],
+				{
+					cwd: projectDir,
+				},
+			);
+		}
+
 		if (template === "@wp-typia/create-workspace-template") {
 			runLocalDoctor(projectDir, runtime);
 		}
@@ -981,6 +1041,14 @@ function main() {
 				assertWorkspaceBindingSourceArtifacts(
 					projectDir,
 					normalizeBlockSlug(addBindingSourceName),
+				);
+			}
+			if (addHookedBlockSlug && addHookedBlockAnchor && addHookedBlockPosition) {
+				assertWorkspaceHookedBlockArtifacts(
+					projectDir,
+					normalizeBlockSlug(addHookedBlockSlug),
+					addHookedBlockAnchor,
+					addHookedBlockPosition,
 				);
 			}
 		} else if (template === "compound") {

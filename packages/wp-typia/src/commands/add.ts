@@ -21,6 +21,10 @@ function loadAddFlow() {
 }
 
 const addOptions = {
+	anchor: {
+		description: "Anchor block name for hooked-block workflows.",
+		schema: z.string().optional(),
+	},
 	block: {
 		description: "Target block slug for variation workflows.",
 		schema: z.string().optional(),
@@ -33,6 +37,10 @@ const addOptions = {
 		description: "Persistence write policy for persistence-capable templates.",
 		schema: z.string().optional(),
 	},
+	position: {
+		description: "Hook position for hooked-block workflows.",
+		schema: z.string().optional(),
+	},
 	template: {
 		description: "Built-in block family for the new block.",
 		schema: z.string().optional(),
@@ -40,7 +48,7 @@ const addOptions = {
 };
 
 export const addCommand = defineCommand({
-	description: "Extend an official wp-typia workspace with blocks, variations, patterns, or binding sources.",
+	description: "Extend an official wp-typia workspace with blocks, variations, patterns, binding sources, or hooked blocks.",
 	handler: async (args) => {
 		await executeAddCommand({
 			cwd: args.cwd,
@@ -67,6 +75,7 @@ export const addCommand = defineCommand({
 								"data-storage":
 									(args.flags["data-storage"] as string | undefined) ??
 									config["data-storage"],
+								anchor: (args.flags.anchor as string | undefined) ?? "",
 								block: (args.flags.block as string | undefined) ?? "",
 								kind:
 									(args.positional[0] as
@@ -74,11 +83,13 @@ export const addCommand = defineCommand({
 										| "variation"
 										| "pattern"
 										| "binding-source"
+										| "hooked-block"
 										| undefined) ?? "block",
 								name: args.positional[1] ?? "",
 								"persistence-policy":
 									(args.flags["persistence-policy"] as string | undefined) ??
 									config["persistence-policy"],
+								position: (args.flags.position as string | undefined) ?? "after",
 								template:
 									(args.flags.template as string | undefined) ?? config.template,
 							},

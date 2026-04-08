@@ -13,6 +13,7 @@ import {
 	tryResolveWorkspaceProject,
 	runAddBindingSourceCommand,
 	runAddBlockCommand,
+	runAddHookedBlockCommand,
 	runAddPatternCommand,
 	runAddVariationCommand,
 	runDoctor,
@@ -275,9 +276,40 @@ export async function executeAddCommand({
 		return;
 	}
 
+	if (kind === "hooked-block") {
+		if (!name) {
+			throw new Error(
+				"`wp-typia add hooked-block` requires <block-slug>. Usage: wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>.",
+			);
+		}
+
+		const anchorBlockName = readOptionalStringFlag(flags, "anchor");
+		if (!anchorBlockName) {
+			throw new Error("`wp-typia add hooked-block` requires --anchor <anchor-block-name>.");
+		}
+
+		const position = readOptionalStringFlag(flags, "position");
+		if (!position) {
+			throw new Error(
+				"`wp-typia add hooked-block` requires --position <before|after|firstChild|lastChild>.",
+			);
+		}
+
+		const result = await runAddHookedBlockCommand({
+			anchorBlockName,
+			blockName: name,
+			cwd,
+			position,
+		});
+		console.log(
+			`✅ Added blockHooks metadata for ${result.blockSlug} relative to ${result.anchorBlockName} (${result.position}) in ${result.projectDir}.`,
+		);
+		return;
+	}
+
 	if (kind !== "block") {
 		throw new Error(
-			`Unknown add kind "${kind}". Expected one of: block, variation, pattern, binding-source.`,
+			`Unknown add kind "${kind}". Expected one of: block, variation, pattern, binding-source, hooked-block.`,
 		);
 	}
 

@@ -7,11 +7,13 @@ import { z } from "zod";
 import { executeAddCommand } from "../runtime-bridge";
 
 const addFlowSchema = z.object({
+	anchor: z.string().optional(),
 	block: z.string().optional(),
 	"data-storage": z.string().optional(),
-	kind: z.enum(["block", "variation", "pattern", "binding-source"]).default("block"),
+	kind: z.enum(["block", "variation", "pattern", "binding-source", "hooked-block"]).default("block"),
 	name: z.string().optional(),
 	"persistence-policy": z.string().optional(),
+	position: z.string().optional(),
 	template: z.string().optional(),
 });
 
@@ -58,6 +60,11 @@ export function AddFlow({ cwd, initialValues, workspaceBlockOptions }: AddFlowPr
 								name: "binding-source",
 								description: "Add a shared block bindings source",
 								value: "binding-source",
+							},
+							{
+								name: "hooked-block",
+								description: "Add block.json hook metadata to an existing block",
+								value: "hooked-block",
 							},
 						],
 					},
@@ -115,6 +122,39 @@ export function AddFlow({ cwd, initialValues, workspaceBlockOptions }: AddFlowPr
 						label: "Binding source name",
 						name: "name",
 						visibleWhen: (values) => values.kind === "binding-source",
+					},
+					{
+						kind: workspaceBlockOptions.length > 0 ? "select" : "text",
+						label: "Target block",
+						name: "name",
+						options: workspaceBlockOptions,
+						visibleWhen: (values) => values.kind === "hooked-block",
+					},
+					{
+						kind: "text",
+						label: "Anchor block name",
+						name: "anchor",
+						visibleWhen: (values) => values.kind === "hooked-block",
+					},
+					{
+						kind: "select",
+						label: "Hook position",
+						name: "position",
+						options: [
+							{ name: "after", description: "Insert after the anchor block", value: "after" },
+							{ name: "before", description: "Insert before the anchor block", value: "before" },
+							{
+								name: "firstChild",
+								description: "Insert as the first child of the anchor block",
+								value: "firstChild",
+							},
+							{
+								name: "lastChild",
+								description: "Insert as the last child of the anchor block",
+								value: "lastChild",
+							},
+						],
+						visibleWhen: (values) => values.kind === "hooked-block",
 					},
 					{
 						kind: "select",

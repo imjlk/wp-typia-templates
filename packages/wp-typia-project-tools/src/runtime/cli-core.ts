@@ -25,6 +25,7 @@ export {
 	getWorkspaceBlockSelectOptions,
 	runAddBindingSourceCommand,
 	runAddBlockCommand,
+	runAddHookedBlockCommand,
 	runAddPatternCommand,
 	runAddVariationCommand,
 	seedWorkspaceMigrationProject,

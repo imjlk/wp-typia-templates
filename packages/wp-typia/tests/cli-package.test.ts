@@ -45,6 +45,24 @@ describe("wp-typia package", () => {
 		);
 	});
 
+	test("requires --anchor and --position for add hooked-block", () => {
+		expect(() => runUtf8Command("node", [entryPath, "add", "hooked-block", "promo-card"])).toThrow(
+			"`wp-typia add hooked-block` requires --anchor <anchor-block-name>.",
+		);
+		expect(() =>
+			runUtf8Command("node", [
+				entryPath,
+				"add",
+				"hooked-block",
+				"promo-card",
+				"--anchor",
+				"core/post-content",
+			]),
+		).toThrow(
+			"`wp-typia add hooked-block` requires --position <before|after|firstChild|lastChild>.",
+		);
+	});
+
 	test("requires a project directory for the explicit create command", () => {
 		expect(() => runUtf8Command("node", [entryPath, "create"])).toThrow(
 			"`wp-typia create` requires <project-dir>.",

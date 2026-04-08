@@ -35,6 +35,7 @@ wp-typia add block counter-card --template basic
 wp-typia add variation hero-card --block counter-card
 wp-typia add pattern hero-layout
 wp-typia add binding-source hero-data
+wp-typia add hooked-block counter-card --anchor core/post-content --position after
 wp-typia templates list
 wp-typia templates inspect basic
 wp-typia doctor
@@ -61,6 +62,7 @@ wp-typia add block counter-card --template basic
 wp-typia add variation hero-card --block counter-card
 wp-typia add pattern hero-layout
 wp-typia add binding-source hero-data
+wp-typia add hooked-block counter-card --anchor core/post-content --position after
 wp-typia add block faq-stack --template compound --persistence-policy public --data-storage custom-table
 ```
 
@@ -517,12 +519,13 @@ npm run add-child -- --slug faq-item --title "FAQ Item"
 That command updates `scripts/block-config.ts` plus `src/blocks/<parent>/children.ts`
 without changing the parent block's default seeded template.
 
-Official workspaces also support first-class variation, pattern, and binding-source expansion:
+Official workspaces also support first-class variation, pattern, binding-source, and hooked-block expansion:
 
 ```bash
 wp-typia add variation hero-card --block counter-card
 wp-typia add pattern hero-layout
 wp-typia add binding-source hero-data
+wp-typia add hooked-block counter-card --anchor core/post-content --position after
 ```
 
 Variations are generated under `src/blocks/<block>/variations/*.ts` and wired
@@ -530,6 +533,8 @@ through the target block entrypoint. Patterns are generated as namespaced PHP
 shells under `src/patterns/*.php` and loaded by the workspace bootstrap.
 Binding sources are generated under `src/bindings/*/{server.php,editor.ts}` and
 wired through the shared workspace bootstrap plus editor bundle.
+Hooked blocks patch `src/blocks/<block>/block.json` with `blockHooks` metadata
+so the target block is inserted relative to the chosen anchor block.
 
 When you opt `compound` into persistence with `--data-storage` or `--persistence-policy`, the parent block also gains:
 

@@ -37,6 +37,7 @@ const WORKSPACE_COLLECTION_IMPORT_PATTERN = /^\s*import\s+["']\.\.\/\.\.\/collec
 const WORKSPACE_BINDING_SERVER_GLOB = "/src/bindings/*/server.php";
 const WORKSPACE_BINDING_EDITOR_SCRIPT = "build/bindings/index.js";
 const WORKSPACE_BINDING_EDITOR_ASSET = "build/bindings/index.asset.php";
+const WORKSPACE_BLOCK_HOOK_POSITIONS = new Set(["before", "after", "firstChild", "lastChild"]);
 const WORKSPACE_GENERATED_BLOCK_ARTIFACTS = [
 	"block.json",
 	"typia.manifest.json",
@@ -214,6 +215,66 @@ function checkWorkspaceBlockMetadata(
 		issues.length === 0
 			? `block.json matches ${expectedName} and ${workspace.workspace.textDomain}`
 			: issues.join("; "),
+	);
+}
+
+function checkWorkspaceBlockHooks(
+	projectDir: string,
+	blockSlug: string,
+): DoctorCheck {
+	const blockJsonRelativePath = path.join("src", "blocks", blockSlug, "block.json");
+	const blockJsonPath = path.join(projectDir, blockJsonRelativePath);
+
+	if (!fs.existsSync(blockJsonPath)) {
+		return createDoctorCheck(
+			`Block hooks ${blockSlug}`,
+			"fail",
+			`Missing ${blockJsonRelativePath}`,
+		);
+	}
+
+	let blockJson: Record<string, unknown>;
+	try {
+		blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8")) as Record<string, unknown>;
+	} catch (error) {
+		return createDoctorCheck(
+			`Block hooks ${blockSlug}`,
+			"fail",
+			error instanceof Error ? error.message : String(error),
+		);
+	}
+
+	const blockHooks = blockJson.blockHooks;
+	if (blockHooks === undefined) {
+		return createDoctorCheck(
+			`Block hooks ${blockSlug}`,
+			"pass",
+			"No blockHooks metadata configured",
+		);
+	}
+	if (!blockHooks || typeof blockHooks !== "object" || Array.isArray(blockHooks)) {
+		return createDoctorCheck(
+			`Block hooks ${blockSlug}`,
+			"fail",
+			`${blockJsonRelativePath} must define blockHooks as an object when present.`,
+		);
+	}
+
+	const invalidEntries = Object.entries(blockHooks).filter(
+		([anchor, position]) =>
+			anchor.trim().length === 0 ||
+			typeof position !== "string" ||
+			!WORKSPACE_BLOCK_HOOK_POSITIONS.has(position),
+	);
+
+	return createDoctorCheck(
+		`Block hooks ${blockSlug}`,
+		invalidEntries.length === 0 ? "pass" : "fail",
+		invalidEntries.length === 0
+			? `blockHooks metadata is valid${Object.keys(blockHooks).length > 0 ? ` (${Object.keys(blockHooks).join(", ")})` : ""}`
+			: `Invalid blockHooks entries: ${invalidEntries
+					.map(([anchor, position]) => `${anchor || "<empty>"} => ${String(position)}`)
+					.join(", ")}`,
 	);
 }
 
@@ -509,6 +570,7 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 				]),
 			);
 			checks.push(checkWorkspaceBlockMetadata(workspace.projectDir, workspace, block));
+			checks.push(checkWorkspaceBlockHooks(workspace.projectDir, block.slug));
 			checks.push(checkWorkspaceBlockCollectionImport(workspace.projectDir, block.slug));
 		}
 

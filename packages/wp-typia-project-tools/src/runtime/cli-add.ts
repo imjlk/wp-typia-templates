@@ -45,7 +45,7 @@ import {
 /**
  * Supported top-level `wp-typia add` kinds exposed by the canonical CLI.
  */
-export const ADD_KIND_IDS = ["block", "variation", "pattern", "binding-source"] as const;
+export const ADD_KIND_IDS = ["block", "variation", "pattern", "binding-source", "hooked-block"] as const;
 export type AddKindId = (typeof ADD_KIND_IDS)[number];
 
 /**
@@ -69,6 +69,8 @@ const BINDING_SOURCE_SERVER_GLOB = "/src/bindings/*/server.php";
 const BINDING_SOURCE_EDITOR_SCRIPT = "build/bindings/index.js";
 const BINDING_SOURCE_EDITOR_ASSET = "build/bindings/index.asset.php";
 const WORKSPACE_GENERATED_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
+const HOOKED_BLOCK_POSITION_IDS = ["before", "after", "firstChild", "lastChild"] as const;
+type HookedBlockPositionId = (typeof HOOKED_BLOCK_POSITION_IDS)[number];
 
 interface RunAddVariationCommandOptions {
 	blockName: string;
@@ -84,6 +86,13 @@ interface RunAddPatternCommandOptions {
 interface RunAddBindingSourceCommandOptions {
 	bindingSourceName: string;
 	cwd?: string;
+}
+
+interface RunAddHookedBlockCommandOptions {
+	anchorBlockName: string;
+	blockName: string;
+	cwd?: string;
+	position: string;
 }
 
 interface RunAddBlockCommandOptions {
@@ -118,6 +127,16 @@ function assertValidGeneratedSlug(label: string, slug: string, usage: string): s
 	}
 
 	return slug;
+}
+
+function assertValidHookedBlockPosition(position: string): HookedBlockPositionId {
+	if ((HOOKED_BLOCK_POSITION_IDS as readonly string[]).includes(position)) {
+		return position as HookedBlockPositionId;
+	}
+
+	throw new Error(
+		`Hook position must be one of: ${HOOKED_BLOCK_POSITION_IDS.join(", ")}.`,
+	);
 }
 
 function getWorkspaceBootstrapPath(workspace: WorkspaceProject): string {
@@ -1140,12 +1159,14 @@ export function formatAddHelpText(): string {
   wp-typia add variation <name> --block <block-slug>
   wp-typia add pattern <name>
   wp-typia add binding-source <name>
+  wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>
 
 Notes:
   \`wp-typia add\` runs only inside official ${WORKSPACE_TEMPLATE_PACKAGE} workspaces.
   \`add variation\` targets an existing block slug from \`scripts/block-config.ts\`.
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
-  \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.`;
+  \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.
+  \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.`;
 }
 
 /**
@@ -1320,6 +1341,71 @@ function resolveWorkspaceBlock(
 		);
 	}
 	return block;
+}
+
+function assertValidHookAnchor(anchorBlockName: string): string {
+	const trimmed = anchorBlockName.trim();
+	if (!trimmed) {
+		throw new Error(
+			"`wp-typia add hooked-block` requires --anchor <anchor-block-name>.",
+		);
+	}
+
+	return trimmed;
+}
+
+function readWorkspaceBlockJson(
+	projectDir: string,
+	blockSlug: string,
+): {
+	blockJson: Record<string, unknown>;
+	blockJsonPath: string;
+} {
+	const blockJsonPath = path.join(projectDir, "src", "blocks", blockSlug, "block.json");
+	if (!fs.existsSync(blockJsonPath)) {
+		throw new Error(
+			`Missing ${path.relative(projectDir, blockJsonPath)} for workspace block "${blockSlug}".`,
+		);
+	}
+
+	let blockJson: unknown;
+	try {
+		blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8"));
+	} catch (error) {
+		throw new Error(
+			error instanceof Error
+				? `Failed to parse ${path.relative(projectDir, blockJsonPath)}: ${error.message}`
+				: `Failed to parse ${path.relative(projectDir, blockJsonPath)}.`,
+		);
+	}
+
+	if (!blockJson || typeof blockJson !== "object" || Array.isArray(blockJson)) {
+		throw new Error(
+			`${path.relative(projectDir, blockJsonPath)} must contain a JSON object.`,
+		);
+	}
+
+	return {
+		blockJson: blockJson as Record<string, unknown>,
+		blockJsonPath,
+	};
+}
+
+function getMutableBlockHooks(
+	blockJson: Record<string, unknown>,
+	blockJsonRelativePath: string,
+): Record<string, string> {
+	const blockHooks = blockJson.blockHooks;
+	if (blockHooks === undefined) {
+		const nextHooks: Record<string, string> = {};
+		blockJson.blockHooks = nextHooks;
+		return nextHooks;
+	}
+	if (!blockHooks || typeof blockHooks !== "object" || Array.isArray(blockHooks)) {
+		throw new Error(`${blockJsonRelativePath} must define blockHooks as an object when present.`);
+	}
+
+	return blockHooks as Record<string, string>;
 }
 
 function assertVariationDoesNotExist(
@@ -1602,6 +1688,71 @@ export async function runAddBindingSourceCommand({
 
 		return {
 			bindingSourceSlug,
+			projectDir: workspace.projectDir,
+		};
+	} catch (error) {
+		await rollbackWorkspaceMutation(mutationSnapshot);
+		throw error;
+	}
+}
+
+/**
+ * Add one `blockHooks` entry to an existing official workspace block.
+ *
+ * @param options Command options for the hooked-block workflow.
+ * @param options.anchorBlockName Full block name that will anchor the insertion.
+ * @param options.blockName Existing workspace block slug to patch.
+ * @param options.cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @param options.position Hook position to store in `block.json`.
+ * @returns A promise that resolves with the normalized target block slug, anchor
+ * block name, position, and owning project directory after `block.json` is written.
+ * @throws {Error} When the command is run outside an official workspace, when
+ * the target block is unknown, when required flags are missing, or when the
+ * block already defines a hook for the requested anchor.
+ */
+export async function runAddHookedBlockCommand({
+	anchorBlockName,
+	blockName,
+	cwd = process.cwd(),
+	position,
+}: RunAddHookedBlockCommandOptions): Promise<{
+	anchorBlockName: string;
+	blockSlug: string;
+	position: HookedBlockPositionId;
+	projectDir: string;
+}> {
+	const workspace = resolveWorkspaceProject(cwd);
+	const blockSlug = normalizeBlockSlug(blockName);
+	const inventory = readWorkspaceInventory(workspace.projectDir);
+	resolveWorkspaceBlock(inventory, blockSlug);
+
+	const resolvedAnchorBlockName = assertValidHookAnchor(anchorBlockName);
+	const resolvedPosition = assertValidHookedBlockPosition(position);
+	const { blockJson, blockJsonPath } = readWorkspaceBlockJson(workspace.projectDir, blockSlug);
+	const blockJsonRelativePath = path.relative(workspace.projectDir, blockJsonPath);
+	const blockHooks = getMutableBlockHooks(blockJson, blockJsonRelativePath);
+
+	if (Object.prototype.hasOwnProperty.call(blockHooks, resolvedAnchorBlockName)) {
+		throw new Error(
+			`${blockJsonRelativePath} already defines a blockHooks entry for "${resolvedAnchorBlockName}".`,
+		);
+	}
+
+	const mutationSnapshot: WorkspaceMutationSnapshot = {
+		fileSources: await snapshotWorkspaceFiles([blockJsonPath]),
+		snapshotDirs: [],
+		targetPaths: [],
+	};
+
+	try {
+		blockHooks[resolvedAnchorBlockName] = resolvedPosition;
+		await fsp.writeFile(blockJsonPath, JSON.stringify(blockJson, null, "\t"), "utf8");
+
+		return {
+			anchorBlockName: resolvedAnchorBlockName,
+			blockSlug,
+			position: resolvedPosition,
 			projectDir: workspace.projectDir,
 		};
 	} catch (error) {
