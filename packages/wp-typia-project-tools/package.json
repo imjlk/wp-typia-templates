@@ -1,6 +1,6 @@
 {
   "name": "@wp-typia/project-tools",
-  "version": "0.15.1",
+  "version": "0.15.2",
   "description": "Project orchestration and programmatic tooling for wp-typia",
   "packageManager": "bun@1.3.11",
   "type": "module",
@@ -61,10 +61,10 @@
     "bun": ">=1.3.11"
   },
   "dependencies": {
-    "@wp-typia/api-client": "^0.4.1",
-    "@wp-typia/block-runtime": "^0.4.1",
-    "@wp-typia/rest": "^0.3.4",
-    "@wp-typia/block-types": "^0.2.0",
+    "@wp-typia/api-client": "^0.4.2",
+    "@wp-typia/block-runtime": "^0.4.2",
+    "@wp-typia/rest": "^0.3.5",
+    "@wp-typia/block-types": "^0.2.1",
     "mustache": "^4.2.0",
     "npm-package-arg": "^13.0.0",
     "semver": "^7.7.3",
