@@ -2,7 +2,6 @@
 	"components": {
 		"schemas": {
 			"PersistenceCounterQuery": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
@@ -26,7 +25,6 @@
 				"type": "object"
 			},
 			"PersistenceCounterBootstrapQuery": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
@@ -50,7 +48,6 @@
 				"type": "object"
 			},
 			"PersistenceCounterIncrementRequest": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
@@ -93,7 +90,6 @@
 				"type": "object"
 			},
 			"PersistenceCounterBootstrapResponse": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
 					"canWrite": {
@@ -146,7 +142,6 @@
 				]
 			},
 			"PersistenceCounterResponse": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
@@ -280,7 +275,23 @@
 								}
 							}
 						},
-						"description": "Successful response"
+						"description": "Successful response",
+						"headers": {
+							"Cache-Control": {
+								"description": "Must be non-cacheable for fresh bootstrap write/session state.",
+								"schema": {
+									"type": "string",
+									"example": "private, no-store, no-cache, must-revalidate"
+								}
+							},
+							"Pragma": {
+								"description": "Legacy non-cacheable bootstrap response directive.",
+								"schema": {
+									"type": "string",
+									"example": "no-cache"
+								}
+							}
+						}
 					}
 				},
 				"tags": [

@@ -73,6 +73,7 @@ export interface OpenApiResponse extends JsonSchemaObject {
 		"application/json": OpenApiMediaType;
 	};
 	description: string;
+	headers?: Record<string, JsonSchemaObject>;
 }
 
 /**
@@ -830,6 +831,7 @@ export function manifestToOpenApi(
 	const projectedSchema = projectJsonSchemaDocument(manifestToJsonSchema(doc), {
 		profile: "rest",
 	});
+	delete (projectedSchema as { $schema?: string }).$schema;
 	return {
 		components: {
 			schemas: {
@@ -1072,7 +1074,48 @@ function buildQueryParameters(contract: EndpointOpenApiContractDocument): OpenAp
 	}));
 }
 
-function createSuccessResponse(schemaName: string): OpenApiResponse {
+function createBootstrapResponseHeaders(
+	normalizedAuth: NormalizedEndpointAuthDefinition,
+): Record<string, JsonSchemaObject> {
+	const headers: Record<string, JsonSchemaObject> = {
+		"Cache-Control": {
+			description:
+				"Must be non-cacheable for fresh bootstrap write/session state.",
+			schema: {
+				type: "string",
+				example: "private, no-store, no-cache, must-revalidate",
+			},
+		},
+		Pragma: {
+			description: "Legacy non-cacheable bootstrap response directive.",
+			schema: {
+				type: "string",
+				example: "no-cache",
+			},
+		},
+	};
+
+	if (
+		normalizedAuth.wordpressAuth?.mechanism ===
+		WP_TYPIA_OPENAPI_LITERALS.WORDPRESS_REST_NONCE_MECHANISM
+	) {
+		headers.Vary = {
+			description:
+				"Viewer-aware bootstrap responses should vary on cookie-backed auth state.",
+			schema: {
+				type: "string",
+				example: "Cookie",
+			},
+		};
+	}
+
+	return headers;
+}
+
+function createSuccessResponse(
+	schemaName: string,
+	headers?: Record<string, JsonSchemaObject>,
+): OpenApiResponse {
 	return {
 		content: {
 			[WP_TYPIA_OPENAPI_LITERALS.JSON_CONTENT_TYPE]: {
@@ -1080,6 +1123,7 @@ function createSuccessResponse(schemaName: string): OpenApiResponse {
 			},
 		},
 		description: WP_TYPIA_OPENAPI_LITERALS.SUCCESS_RESPONSE_DESCRIPTION,
+		...(headers ? { headers } : {}),
 	};
 }
 
@@ -1088,6 +1132,7 @@ function buildEndpointOpenApiOperation(
 	contracts: Readonly<Record<string, EndpointOpenApiContractDocument>>,
 ): OpenApiOperation {
 	const normalizedAuth = normalizeEndpointAuthDefinition(endpoint);
+	const isBootstrapEndpoint = endpoint.path.endsWith("/bootstrap");
 	const operation: OpenApiOperation = {
 		operationId: endpoint.operationId,
 		responses: {
@@ -1098,6 +1143,9 @@ function buildEndpointOpenApiOperation(
 					endpoint,
 					"response",
 				),
+				isBootstrapEndpoint
+					? createBootstrapResponseHeaders(normalizedAuth)
+					: undefined,
 			),
 		},
 		tags: [ ...endpoint.tags ],
@@ -1175,12 +1223,17 @@ export function buildEndpointOpenApiDocument(
 ): OpenApiDocument {
 	const contractEntries = Object.entries(options.contracts);
 	const schemas = Object.fromEntries(
-		contractEntries.map(([contractKey, contract]) => [
-			getContractSchemaName(contractKey, contract),
-			projectJsonSchemaDocument(manifestToJsonSchema(contract.document), {
-				profile: "rest",
-			}),
-		]),
+		contractEntries.map(([contractKey, contract]) => {
+			const projectedSchema = projectJsonSchemaDocument(
+				manifestToJsonSchema(contract.document),
+				{
+					profile: "rest",
+				},
+			);
+			delete (projectedSchema as { $schema?: string }).$schema;
+
+			return [getContractSchemaName(contractKey, contract), projectedSchema];
+		}),
 	);
 	const paths: Record<string, OpenApiPathItem> = {};
 	const topLevelTags = [...new Set(options.endpoints.flatMap((endpoint) => endpoint.tags))]

@@ -2,7 +2,6 @@
 	"components": {
 		"schemas": {
 			"PersistenceLikeStatusQuery": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
@@ -26,7 +25,6 @@
 				"type": "object"
 			},
 			"PersistenceLikeBootstrapQuery": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
@@ -50,7 +48,6 @@
 				"type": "object"
 			},
 			"PersistenceToggleLikeRequest": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
@@ -74,7 +71,6 @@
 				"type": "object"
 			},
 			"PersistenceLikeBootstrapResponse": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
 					"canWrite": {
@@ -123,7 +119,6 @@
 				]
 			},
 			"PersistenceLikeStatusResponse": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
@@ -162,7 +157,6 @@
 				"type": "object"
 			},
 			"PersistenceToggleLikeResponse": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
@@ -312,7 +306,23 @@
 								}
 							}
 						},
-						"description": "Successful response"
+						"description": "Successful response",
+						"headers": {
+							"Cache-Control": {
+								"description": "Must be non-cacheable for fresh bootstrap write/session state.",
+								"schema": {
+									"type": "string",
+									"example": "private, no-store, no-cache, must-revalidate"
+								}
+							},
+							"Pragma": {
+								"description": "Legacy non-cacheable bootstrap response directive.",
+								"schema": {
+									"type": "string",
+									"example": "no-cache"
+								}
+							}
+						}
 					}
 				},
 				"tags": [

@@ -659,6 +659,78 @@ describe("schema-core", () => {
 		expect(operation.security).toEqual([{ wpRestNonce: [] }]);
 	});
 
+	test("buildEndpointOpenApiDocument marks bootstrap responses as non-cacheable and omits embedded $schema keys", () => {
+		const bootstrapDocument: ManifestDocument = {
+			attributes: {
+				canWrite: createAttribute({
+					ts: { kind: "boolean", required: true },
+					wp: { type: "boolean" },
+				}),
+				restNonce: createAttribute({
+					ts: { kind: "string", required: false },
+					typia: {
+						constraints: {
+							maxLength: 128,
+							minLength: 1,
+						},
+					},
+					wp: { type: "string" },
+				}),
+			},
+			manifestVersion: 2,
+			sourceType: "BootstrapResponse",
+		};
+
+		const openApi = buildEndpointOpenApiDocument({
+			contracts: {
+				bootstrap: { document: bootstrapDocument },
+			},
+			endpoints: [
+				{
+					auth: "authenticated",
+					method: "GET",
+					operationId: "getBootstrap",
+					path: "/demo/v1/counter/bootstrap",
+					queryContract: "bootstrap",
+					responseContract: "bootstrap",
+					tags: ["Counter"],
+					wordpressAuth: {
+						mechanism: "rest-nonce",
+					},
+				},
+			],
+		});
+
+		const schemas = (openApi.components as Record<string, Record<string, unknown>>)
+			.schemas as Record<string, Record<string, unknown>>;
+		const operation = (
+			openApi.paths as Record<string, Record<string, Record<string, unknown>>>
+		)["/demo/v1/counter/bootstrap"].get;
+
+		expect(schemas.BootstrapResponse.$schema).toBeUndefined();
+		expect(operation.responses).toMatchObject({
+			"200": {
+				headers: {
+					"Cache-Control": {
+						schema: {
+							type: "string",
+						},
+					},
+					Pragma: {
+						schema: {
+							type: "string",
+						},
+					},
+					Vary: {
+						schema: {
+							type: "string",
+						},
+					},
+				},
+			},
+		});
+	});
+
 	test("normalizeEndpointAuthDefinition maps deprecated authMode values to neutral auth intent", () => {
 		expect(
 			normalizeEndpointAuthDefinition({
