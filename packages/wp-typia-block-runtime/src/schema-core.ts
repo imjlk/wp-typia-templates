@@ -73,6 +73,7 @@ export interface OpenApiResponse extends JsonSchemaObject {
 		"application/json": OpenApiMediaType;
 	};
 	description: string;
+	headers?: Record<string, JsonSchemaObject>;
 }
 
 /**
@@ -467,12 +468,33 @@ function applyProjectedTypeTag(
 	}
 }
 
+function canProjectTypeTag(typeTag: string): boolean {
+	switch (typeTag) {
+		case "uint32":
+		case "int32":
+		case "float":
+		case "double":
+			return true;
+		default:
+			return false;
+	}
+}
+
 function projectSchemaArrayItemsForAiStructuredOutput(
 	items: JsonSchemaObject[],
 	path: string,
 ): JsonSchemaObject[] {
 	return items.map((item, index) =>
 		projectSchemaObjectForAiStructuredOutput(item, `${path}/${index}`),
+	);
+}
+
+function projectSchemaArrayItemsForRest(
+	items: JsonSchemaObject[],
+	path: string,
+): JsonSchemaObject[] {
+	return items.map((item, index) =>
+		projectSchemaObjectForRest(item, `${path}/${index}`),
 	);
 }
 
@@ -484,6 +506,18 @@ function projectSchemaPropertyMapForAiStructuredOutput(
 		Object.entries(properties).map(([key, value]) => [
 			key,
 			projectSchemaObjectForAiStructuredOutput(value, `${path}/${key}`),
+		]),
+	);
+}
+
+function projectSchemaPropertyMapForRest(
+	properties: Record<string, JsonSchemaObject>,
+	path: string,
+): Record<string, JsonSchemaObject> {
+	return Object.fromEntries(
+		Object.entries(properties).map(([key, value]) => [
+			key,
+			projectSchemaObjectForRest(value, `${path}/${key}`),
 		]),
 	);
 }
@@ -537,6 +571,156 @@ function projectSchemaObjectForAiStructuredOutput(
 	}
 
 	return projectedNode;
+}
+
+function projectSchemaObjectForRest(
+	node: JsonSchemaObject,
+	path: string,
+): JsonSchemaObject {
+	const projectedNode = cloneJsonSchemaNode(node);
+	const rawTypeTag = projectedNode[WP_TYPIA_OPENAPI_EXTENSION_KEYS.TYPE_TAG];
+
+	if (typeof rawTypeTag === "string" && canProjectTypeTag(rawTypeTag)) {
+		applyProjectedTypeTag(projectedNode, rawTypeTag, path);
+	}
+
+	for (const key of Object.keys(projectedNode)) {
+		const child = projectedNode[key];
+		if (Array.isArray(child)) {
+			projectedNode[key] = child.every(isJsonSchemaObject)
+				? projectSchemaArrayItemsForRest(
+						child as JsonSchemaObject[],
+						`${path}/${key}`,
+					)
+				: child;
+			continue;
+		}
+
+		if (!isJsonSchemaObject(child)) {
+			continue;
+		}
+
+		if (key === "properties") {
+			projectedNode[key] = projectSchemaPropertyMapForRest(
+				child as Record<string, JsonSchemaObject>,
+				`${path}/${key}`,
+			);
+			continue;
+		}
+
+		projectedNode[key] = projectSchemaObjectForRest(child, `${path}/${key}`);
+	}
+
+	applyProjectedBootstrapContract(projectedNode);
+
+	return projectedNode;
+}
+
+function applyProjectedBootstrapContract(schema: JsonSchemaObject): void {
+	if (schema.type !== "object" || !isJsonSchemaObject(schema.properties)) {
+		return;
+	}
+
+	const properties = schema.properties as Record<string, JsonSchemaObject>;
+	if (properties.canWrite?.type !== "boolean") {
+		return;
+	}
+
+	const allOf = Array.isArray(schema.allOf)
+		? [...(schema.allOf as JsonSchemaObject[])]
+		: [];
+	const canWriteIsTrue: JsonSchemaObject = {
+		properties: {
+			canWrite: {
+				const: true,
+			},
+		},
+		required: ["canWrite"],
+	};
+	const buildRequiredPropertyObject = (
+		requiredKeys: string[],
+	): Record<string, JsonSchemaObject> =>
+		Object.fromEntries(
+			requiredKeys.map((requiredKey) => [requiredKey, properties[requiredKey] ?? {}]),
+		);
+	const hasRestNonce = properties.restNonce?.type === "string";
+	const hasPublicWriteCredential =
+		properties.publicWriteToken?.type === "string" &&
+		isJsonSchemaObject(properties.publicWriteExpiresAt);
+
+	if (hasRestNonce && hasPublicWriteCredential) {
+		allOf.push({
+			if: canWriteIsTrue,
+			then: {
+				anyOf: [
+					{
+						properties: buildRequiredPropertyObject(["restNonce"]),
+						required: ["restNonce"],
+					},
+					{
+						properties: buildRequiredPropertyObject([
+							"publicWriteExpiresAt",
+							"publicWriteToken",
+						]),
+						required: ["publicWriteExpiresAt", "publicWriteToken"],
+					},
+				],
+			},
+			else: {
+				not: {
+					anyOf: [
+						{
+							properties: buildRequiredPropertyObject(["restNonce"]),
+							required: ["restNonce"],
+						},
+						{
+							properties: buildRequiredPropertyObject(["publicWriteToken"]),
+							required: ["publicWriteToken"],
+						},
+					],
+				},
+			},
+		});
+	}
+
+	if (hasRestNonce && !hasPublicWriteCredential) {
+		allOf.push({
+			if: canWriteIsTrue,
+			then: {
+				properties: buildRequiredPropertyObject(["restNonce"]),
+				required: ["restNonce"],
+			},
+			else: {
+				not: {
+					properties: buildRequiredPropertyObject(["restNonce"]),
+					required: ["restNonce"],
+				},
+			},
+		});
+	}
+
+	if (hasPublicWriteCredential && !hasRestNonce) {
+		allOf.push({
+			if: canWriteIsTrue,
+			then: {
+				properties: buildRequiredPropertyObject([
+					"publicWriteExpiresAt",
+					"publicWriteToken",
+				]),
+				required: ["publicWriteExpiresAt", "publicWriteToken"],
+			},
+			else: {
+				not: {
+					properties: buildRequiredPropertyObject(["publicWriteToken"]),
+					required: ["publicWriteToken"],
+				},
+			},
+		});
+	}
+
+	if (allOf.length > 0) {
+		schema.allOf = allOf;
+	}
 }
 
 function manifestUnionToJsonSchema(union: ManifestUnionMetadata): JsonSchemaObject {
@@ -679,7 +863,7 @@ export function projectJsonSchemaDocument<
 	Schema extends JsonSchemaDocument | JsonSchemaObject,
 >(schema: Schema, options: JsonSchemaProjectionOptions): Schema {
 	if (options.profile === "rest") {
-		return cloneJsonSchemaNode(schema);
+		return projectSchemaObjectForRest(schema, "#") as Schema;
 	}
 
 	if (options.profile === "ai-structured-output") {
@@ -705,10 +889,14 @@ export function manifestToOpenApi(
 	info: OpenApiInfo = {},
 ): OpenApiDocument {
 	const schemaName = doc.sourceType ?? "TypiaDocument";
+	const projectedSchema = projectJsonSchemaDocument(manifestToJsonSchema(doc), {
+		profile: "rest",
+	});
+	delete (projectedSchema as { $schema?: string }).$schema;
 	return {
 		components: {
 			schemas: {
-				[schemaName]: manifestToJsonSchema(doc),
+				[schemaName]: projectedSchema,
 			},
 		},
 		info: {
@@ -947,7 +1135,48 @@ function buildQueryParameters(contract: EndpointOpenApiContractDocument): OpenAp
 	}));
 }
 
-function createSuccessResponse(schemaName: string): OpenApiResponse {
+function createBootstrapResponseHeaders(
+	normalizedAuth: NormalizedEndpointAuthDefinition,
+): Record<string, JsonSchemaObject> {
+	const headers: Record<string, JsonSchemaObject> = {
+		"Cache-Control": {
+			description:
+				"Must be non-cacheable for fresh bootstrap write/session state.",
+			schema: {
+				type: "string",
+				example: "private, no-store, no-cache, must-revalidate",
+			},
+		},
+		Pragma: {
+			description: "Legacy non-cacheable bootstrap response directive.",
+			schema: {
+				type: "string",
+				example: "no-cache",
+			},
+		},
+	};
+
+	if (
+		normalizedAuth.wordpressAuth?.mechanism ===
+		WP_TYPIA_OPENAPI_LITERALS.WORDPRESS_REST_NONCE_MECHANISM
+	) {
+		headers.Vary = {
+			description:
+				"Viewer-aware bootstrap responses should vary on cookie-backed auth state.",
+			schema: {
+				type: "string",
+				example: "Cookie",
+			},
+		};
+	}
+
+	return headers;
+}
+
+function createSuccessResponse(
+	schemaName: string,
+	headers?: Record<string, JsonSchemaObject>,
+): OpenApiResponse {
 	return {
 		content: {
 			[WP_TYPIA_OPENAPI_LITERALS.JSON_CONTENT_TYPE]: {
@@ -955,6 +1184,7 @@ function createSuccessResponse(schemaName: string): OpenApiResponse {
 			},
 		},
 		description: WP_TYPIA_OPENAPI_LITERALS.SUCCESS_RESPONSE_DESCRIPTION,
+		...(headers ? { headers } : {}),
 	};
 }
 
@@ -963,6 +1193,7 @@ function buildEndpointOpenApiOperation(
 	contracts: Readonly<Record<string, EndpointOpenApiContractDocument>>,
 ): OpenApiOperation {
 	const normalizedAuth = normalizeEndpointAuthDefinition(endpoint);
+	const isBootstrapEndpoint = endpoint.path.endsWith("/bootstrap");
 	const operation: OpenApiOperation = {
 		operationId: endpoint.operationId,
 		responses: {
@@ -973,6 +1204,9 @@ function buildEndpointOpenApiOperation(
 					endpoint,
 					"response",
 				),
+				isBootstrapEndpoint
+					? createBootstrapResponseHeaders(normalizedAuth)
+					: undefined,
 			),
 		},
 		tags: [ ...endpoint.tags ],
@@ -1050,10 +1284,17 @@ export function buildEndpointOpenApiDocument(
 ): OpenApiDocument {
 	const contractEntries = Object.entries(options.contracts);
 	const schemas = Object.fromEntries(
-		contractEntries.map(([contractKey, contract]) => [
-			getContractSchemaName(contractKey, contract),
-			manifestToJsonSchema(contract.document),
-		]),
+		contractEntries.map(([contractKey, contract]) => {
+			const projectedSchema = projectJsonSchemaDocument(
+				manifestToJsonSchema(contract.document),
+				{
+					profile: "rest",
+				},
+			);
+			delete (projectedSchema as { $schema?: string }).$schema;
+
+			return [getContractSchemaName(contractKey, contract), projectedSchema];
+		}),
 	);
 	const paths: Record<string, OpenApiPathItem> = {};
 	const topLevelTags = [...new Set(options.endpoints.flatMap((endpoint) => endpoint.tags))]

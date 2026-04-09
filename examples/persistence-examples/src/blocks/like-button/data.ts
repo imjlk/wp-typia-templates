@@ -7,11 +7,18 @@ import {
 
 import { resolveRestNonce } from '../../shared/rest';
 import type {
+	PersistenceLikeBootstrapQuery,
+	PersistenceLikeBootstrapResponse,
 	PersistenceLikeStatusQuery,
 	PersistenceLikeStatusResponse,
 	PersistenceToggleLikeRequest,
+	PersistenceToggleLikeResponse,
 } from './api-types';
-import { likeStatusEndpoint, toggleLikeEndpoint } from './api';
+import {
+	likeBootstrapEndpoint,
+	likeStatusEndpoint,
+	toggleLikeEndpoint,
+} from './api';
 
 function buildNonceRequestOptions( restNonce?: string ) {
 	const nonce = resolveRestNonce( restNonce );
@@ -28,6 +35,7 @@ function buildNonceRequestOptions( restNonce?: string ) {
 }
 
 interface ToggleLikeMutationContext< Context > {
+	bootstrapPrevious: PersistenceLikeBootstrapResponse | undefined;
 	previous: PersistenceLikeStatusResponse | undefined;
 	userContext: Context | undefined;
 }
@@ -41,18 +49,31 @@ export interface UsePersistenceLikeStatusQueryOptions<
 			Selected
 		>,
 		'resolveCallOptions'
-	> {
-	restNonce?: string;
-}
+	> {}
+
+export interface UsePersistenceLikeBootstrapQueryOptions<
+	Selected = PersistenceLikeBootstrapResponse,
+> extends Omit<
+		UseEndpointQueryOptions<
+			PersistenceLikeBootstrapQuery,
+			PersistenceLikeBootstrapResponse,
+			Selected
+		>,
+		'resolveCallOptions'
+	> {}
 
 export interface UseToggleLikeMutationOptions< Context = unknown >
 	extends Omit<
 		UseEndpointMutationOptions<
 			PersistenceToggleLikeRequest,
-			PersistenceLikeStatusResponse,
+			PersistenceToggleLikeResponse,
 			ToggleLikeMutationContext< Context >
 		>,
-		'invalidate' | 'onError' | 'onMutate' | 'resolveCallOptions'
+		| 'invalidate'
+		| 'onError'
+		| 'onMutate'
+		| 'onSuccess'
+		| 'resolveCallOptions'
 	> {
 	onError?: (
 		error: unknown,
@@ -64,6 +85,13 @@ export interface UseToggleLikeMutationOptions< Context = unknown >
 		request: PersistenceToggleLikeRequest,
 		client: import('@wp-typia/rest/react').EndpointDataClient
 	) => Context | Promise< Context >;
+	onSuccess?: (
+		data: PersistenceToggleLikeResponse | undefined,
+		request: PersistenceToggleLikeRequest,
+		validation: import('@wp-typia/rest').ValidationResult< PersistenceToggleLikeResponse >,
+		client: import('@wp-typia/rest/react').EndpointDataClient,
+		context: Context | undefined
+	) => void | Promise< void >;
 	restNonce?: string;
 }
 
@@ -73,18 +101,27 @@ export function usePersistenceLikeStatusQuery<
 	request: PersistenceLikeStatusQuery,
 	options: UsePersistenceLikeStatusQueryOptions< Selected > = {}
 ) {
-	const { restNonce, ...queryOptions } = options;
-
 	return useEndpointQuery( likeStatusEndpoint, request, {
-		...queryOptions,
-		resolveCallOptions: () => buildNonceRequestOptions( restNonce ),
+		...options,
+	} );
+}
+
+export function usePersistenceLikeBootstrapQuery<
+	Selected = PersistenceLikeBootstrapResponse,
+>(
+	request: PersistenceLikeBootstrapQuery,
+	options: UsePersistenceLikeBootstrapQueryOptions< Selected > = {}
+) {
+	return useEndpointQuery( likeBootstrapEndpoint, request, {
+		...options,
 	} );
 }
 
 export function useToggleLikeMutation< Context = unknown >(
 	options: UseToggleLikeMutationOptions< Context > = {}
 ) {
-	const { onError, onMutate, restNonce, ...mutationOptions } = options;
+	const { onError, onMutate, onSuccess, restNonce, ...mutationOptions } =
+		options;
 
 	return useEndpointMutation( toggleLikeEndpoint, {
 		...mutationOptions,
@@ -106,6 +143,16 @@ export function useToggleLikeMutation< Context = unknown >(
 					context.previous
 				);
 			}
+			if ( context?.bootstrapPrevious ) {
+				client.setData(
+					likeBootstrapEndpoint,
+					{
+						postId: request.postId,
+						resourceKey: request.resourceKey,
+					},
+					context.bootstrapPrevious
+				);
+			}
 
 			await onError?.( error, request, client, context?.userContext );
 		},
@@ -115,17 +162,26 @@ export function useToggleLikeMutation< Context = unknown >(
 				resourceKey: request.resourceKey,
 			} satisfies PersistenceLikeStatusQuery;
 			const previous = client.getData( likeStatusEndpoint, queryRequest );
+			const bootstrapRequest = {
+				postId: request.postId,
+				resourceKey: request.resourceKey,
+			} satisfies PersistenceLikeBootstrapQuery;
+			const bootstrapPrevious = client.getData(
+				likeBootstrapEndpoint,
+				bootstrapRequest
+			);
 
 			if ( previous !== undefined ) {
 				client.setData(
 					likeStatusEndpoint,
 					queryRequest,
 					( current ) => {
-						if ( ! current ) {
+						if ( ! current || bootstrapPrevious === undefined ) {
 							return current;
 						}
 
-						const nextLiked = ! current.likedByCurrentUser;
+						const nextLiked =
+							! bootstrapPrevious.likedByCurrentUser;
 						return {
 							...current,
 							count: Math.max(
@@ -133,6 +189,22 @@ export function useToggleLikeMutation< Context = unknown >(
 								current.count + ( nextLiked ? 1 : -1 )
 							),
 							likedByCurrentUser: nextLiked,
+						};
+					}
+				);
+			}
+			if ( bootstrapPrevious !== undefined ) {
+				client.setData(
+					likeBootstrapEndpoint,
+					bootstrapRequest,
+					( current ) => {
+						if ( ! current ) {
+							return current;
+						}
+
+						return {
+							...current,
+							likedByCurrentUser: ! current.likedByCurrentUser,
 						};
 					}
 				);
@@ -151,13 +223,61 @@ export function useToggleLikeMutation< Context = unknown >(
 						previous
 					);
 				}
+				if ( bootstrapPrevious !== undefined ) {
+					client.setData(
+						likeBootstrapEndpoint,
+						bootstrapRequest,
+						bootstrapPrevious
+					);
+				}
 				throw error;
 			}
 
 			return {
+				bootstrapPrevious,
 				previous,
 				userContext,
 			};
+		},
+		onSuccess: async ( data, request, validation, client, context ) => {
+			if ( data ) {
+				const queryRequest = {
+					postId: request.postId,
+					resourceKey: request.resourceKey,
+				} satisfies PersistenceLikeStatusQuery;
+
+				client.setData(
+					likeStatusEndpoint,
+					queryRequest,
+					( current ) =>
+						current
+							? {
+									...current,
+									count: data.count,
+									likedByCurrentUser: data.likedByCurrentUser,
+							  }
+							: current
+				);
+				client.setData(
+					likeBootstrapEndpoint,
+					queryRequest,
+					( current ) =>
+						current
+							? {
+									...current,
+									likedByCurrentUser: data.likedByCurrentUser,
+							  }
+							: current
+				);
+			}
+
+			await onSuccess?.(
+				data,
+				request,
+				validation,
+				client,
+				context?.userContext
+			);
 		},
 		resolveCallOptions: () => buildNonceRequestOptions( restNonce ),
 	} );

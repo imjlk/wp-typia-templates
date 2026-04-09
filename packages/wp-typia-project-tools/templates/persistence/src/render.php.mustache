@@ -35,44 +35,36 @@ $post_id            = is_object( $block ) && isset( $block->context['postId'] )
 	: (int) get_queried_object_id();
 $storage_mode       = '{{dataStorageMode}}';
 $persistence_policy = '{{persistencePolicy}}';
-$can_write          = false;
-$notice_message     = 'authenticated' === $persistence_policy
-	? __( 'Sign in to persist this counter.', '{{textDomain}}' )
-	: __( 'Reload the page to refresh this write token.', '{{textDomain}}' );
-$context            = array(
-	'buttonLabel'       => $button_label,
-	'canWrite'          => false,
-	'count'             => 0,
-	'isVisible'         => ! empty( $normalized['isVisible'] ),
-	'persistencePolicy' => $persistence_policy,
-	'postId'            => (int) $post_id,
-	'resourceKey'       => $resource_key,
-	'storage'           => $storage_mode,
+
+{{phpPrefix}}_record_rendered_block_instance(
+	(int) $post_id,
+	'{{namespace}}/{{slugKebabCase}}',
+	$resource_key
 );
 
-if ( 'authenticated' === $persistence_policy ) {
-	$can_write = $post_id > 0 && is_user_logged_in();
-	if ( $can_write ) {
-		$context['restNonce'] = wp_create_nonce( 'wp_rest' );
-	}
-} elseif ( $post_id > 0 && function_exists( '{{phpPrefix}}_create_public_write_token' ) ) {
-	$public_write = {{phpPrefix}}_create_public_write_token( (int) $post_id, $resource_key );
-	if ( is_array( $public_write ) ) {
-		$token      = isset( $public_write['token'] ) ? (string) $public_write['token'] : '';
-		$expires_at = isset( $public_write['expiresAt'] ) ? (int) $public_write['expiresAt'] : 0;
-
-		if ( '' !== $token ) {
-			$context['publicWriteToken'] = $token;
-			$can_write                   = true;
-		}
-
-		if ( $expires_at > 0 ) {
-			$context['publicWriteExpiresAt'] = $expires_at;
-		}
-	}
-}
-
-$context['canWrite'] = $can_write;
+$notice_message     = 'authenticated' === $persistence_policy
+	? __( 'Sign in to persist this counter.', '{{textDomain}}' )
+	: __( 'Public writes are temporarily unavailable.', '{{textDomain}}' );
+$context            = array(
+	'bootstrapReady'       => false,
+	'buttonLabel'          => $button_label,
+	'canWrite'             => false,
+	'client'               => array(
+		'writeExpiry' => 0,
+		'writeNonce'  => '',
+		'writeToken'  => '',
+	),
+	'count'                => 0,
+	'error'                => '',
+	'isBootstrapping'      => false,
+	'isLoading'            => false,
+	'isSaving'             => false,
+	'isVisible'            => ! empty( $normalized['isVisible'] ),
+	'persistencePolicy'    => $persistence_policy,
+	'postId'               => (int) $post_id,
+	'resourceKey'          => $resource_key,
+	'storage'              => $storage_mode,
+);
 
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
@@ -89,18 +81,20 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		<p class="{{frontendCssClassName}}__content" style="<?php echo esc_attr( 'text-align:' . $alignment ); ?>">
 			<?php echo esc_html( $content ); ?>
 		</p>
-		<?php if ( ! $can_write ) : ?>
-			<p class="{{frontendCssClassName}}__notice">
-				<?php echo esc_html( $notice_message ); ?>
-			</p>
-		<?php endif; ?>
+		<p
+			class="{{frontendCssClassName}}__notice"
+			data-wp-bind--hidden="!context.bootstrapReady || context.canWrite"
+			hidden
+		>
+			<?php echo esc_html( $notice_message ); ?>
+		</p>
 		<p
 			class="{{frontendCssClassName}}__error"
 			role="status"
 			aria-live="polite"
 			aria-atomic="true"
-			data-wp-bind--hidden="!state.error"
-			data-wp-text="state.error"
+			data-wp-bind--hidden="!context.error"
+			data-wp-text="context.error"
 			hidden
 		></p>
 		<?php if ( ! empty( $normalized['showCount'] ) ) : ?>
@@ -109,14 +103,14 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				role="status"
 				aria-live="polite"
 				aria-atomic="true"
-				data-wp-text="state.count"
+				data-wp-text="context.count"
 			>
 				0
 			</span>
 		<?php endif; ?>
 		<button
 			type="button"
-			<?php echo $can_write ? '' : 'disabled'; ?>
+			disabled
 			data-wp-bind--disabled="!context.canWrite"
 			data-wp-on--click="actions.increment"
 		>

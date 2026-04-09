@@ -226,7 +226,7 @@ function {{phpPrefix}}_verify_public_write_token( $token, $post_id, $resource_ke
 	if ( time() > (int) ( $payload['exp'] ?? 0 ) ) {
 		return new WP_Error(
 			'rest_forbidden',
-			'The public write token has expired. Reload the page and try again.',
+			'The public write token has expired. Refresh write access and try again.',
 			array( 'status' => 403 )
 		);
 	}

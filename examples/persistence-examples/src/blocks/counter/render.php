@@ -32,28 +32,30 @@ $button_label = isset( $normalized['buttonLabel'] ) ? (string) $normalized['butt
 $post_id      = is_object( $block ) && isset( $block->context['postId'] )
 	? (int) $block->context['postId']
 	: (int) get_queried_object_id();
-$public_write = $post_id > 0
-	? persistence_examples_create_counter_public_write_token( (int) $post_id, $resource_key )
-	: array(
-		'expiresAt' => 0,
-		'token'     => '',
-	);
-$context      = array(
-	'buttonLabel' => $button_label,
-	'canWrite'    => ! empty( $public_write['token'] ),
-	'count'       => 0,
-	'postId'      => (int) $post_id,
-	'resourceKey' => $resource_key,
-	'storage'     => 'custom-table',
+
+persistence_examples_record_rendered_block_instance(
+	(int) $post_id,
+	'create-block/persistence-counter',
+	$resource_key
 );
 
-if ( ! empty( $public_write['token'] ) ) {
-	$context['publicWriteToken'] = (string) $public_write['token'];
-}
-
-if ( ! empty( $public_write['expiresAt'] ) ) {
-	$context['publicWriteExpiresAt'] = (int) $public_write['expiresAt'];
-}
+$context      = array(
+	'bootstrapReady' => false,
+	'buttonLabel' => $button_label,
+	'canWrite'       => false,
+	'client'         => array(
+		'writeExpiry' => 0,
+		'writeToken'  => '',
+	),
+	'count'          => 0,
+	'error'          => '',
+	'isBootstrapping' => false,
+	'isLoading'      => false,
+	'isSaving'       => false,
+	'postId'         => (int) $post_id,
+	'resourceKey'    => $resource_key,
+	'storage'        => 'custom-table',
+);
 
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
@@ -76,8 +78,8 @@ $wrapper_attributes = get_block_wrapper_attributes(
 			role="status"
 			aria-live="polite"
 			aria-atomic="true"
-			data-wp-bind--hidden="!state.error"
-			data-wp-text="state.error"
+			data-wp-bind--hidden="!context.error"
+			data-wp-text="context.error"
 			hidden
 		></p>
 		<?php if ( ! empty( $normalized['showCount'] ) ) : ?>
@@ -86,12 +88,12 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				role="status"
 				aria-live="polite"
 				aria-atomic="true"
-				data-wp-text="state.count"
+				data-wp-text="context.count"
 			>0</span>
 		<?php endif; ?>
 		<button
 			type="button"
-			<?php echo ! empty( $context['canWrite'] ) ? '' : 'disabled'; ?>
+			disabled
 			data-wp-bind--disabled="!context.canWrite"
 			data-wp-on--click="actions.increment"
 		>

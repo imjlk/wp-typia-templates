@@ -6,11 +6,17 @@ import {
 } from '@wp-typia/rest/react';
 
 import type {
+	PersistenceCounterBootstrapQuery,
+	PersistenceCounterBootstrapResponse,
 	PersistenceCounterIncrementRequest,
 	PersistenceCounterQuery,
 	PersistenceCounterResponse,
 } from './api-types';
-import { counterEndpoint, incrementCounterEndpoint } from './api';
+import {
+	counterBootstrapEndpoint,
+	counterEndpoint,
+	incrementCounterEndpoint,
+} from './api';
 
 interface CounterMutationContext< Context > {
 	previous: PersistenceCounterResponse | undefined;
@@ -22,6 +28,14 @@ export type UsePersistenceCounterQueryOptions<
 > = UseEndpointQueryOptions<
 	PersistenceCounterQuery,
 	PersistenceCounterResponse,
+	Selected
+>;
+
+export type UsePersistenceCounterBootstrapQueryOptions<
+	Selected = PersistenceCounterBootstrapResponse,
+> = UseEndpointQueryOptions<
+	PersistenceCounterBootstrapQuery,
+	PersistenceCounterBootstrapResponse,
 	Selected
 >;
 
@@ -53,6 +67,15 @@ export function usePersistenceCounterQuery<
 	options: UsePersistenceCounterQueryOptions< Selected > = {}
 ) {
 	return useEndpointQuery( counterEndpoint, request, options );
+}
+
+export function usePersistenceCounterBootstrapQuery<
+	Selected = PersistenceCounterBootstrapResponse,
+>(
+	request: PersistenceCounterBootstrapQuery,
+	options: UsePersistenceCounterBootstrapQueryOptions< Selected > = {}
+) {
+	return useEndpointQuery( counterBootstrapEndpoint, request, options );
 }
 
 export function useIncrementCounterMutation< Context = unknown >(

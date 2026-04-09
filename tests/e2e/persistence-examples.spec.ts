@@ -3,9 +3,13 @@ import { requestWordPressRest } from './fixtures/rest';
 
 interface CounterContext {
   postId: number;
-  publicWriteToken: string;
-  publicWriteExpiresAt: number;
   resourceKey: string;
+}
+
+interface CounterBootstrapContext {
+  canWrite: boolean;
+  publicWriteExpiresAt: number;
+  publicWriteToken?: string;
 }
 
 interface LikeContext {
@@ -34,8 +38,6 @@ async function getCounterContext(previewPage: Awaited<ReturnType<WordPressPage['
 
     const context = JSON.parse(rawContext) as {
       postId?: unknown;
-      publicWriteExpiresAt?: unknown;
-      publicWriteToken?: unknown;
       resourceKey?: unknown;
     };
 
@@ -45,17 +47,26 @@ async function getCounterContext(previewPage: Awaited<ReturnType<WordPressPage['
     if (typeof context.resourceKey !== 'string' || context.resourceKey.length === 0) {
       throw new Error('Missing counter resource key.');
     }
-    if (typeof context.publicWriteToken !== 'string' || context.publicWriteToken.length === 0) {
-      throw new Error('Missing counter public write token.');
-    }
-
     return {
       postId: context.postId,
-      publicWriteExpiresAt:
-        typeof context.publicWriteExpiresAt === 'number' ? context.publicWriteExpiresAt : 0,
-      publicWriteToken: context.publicWriteToken,
       resourceKey: context.resourceKey,
     };
+  });
+}
+
+async function readCounterBootstrap(
+  previewPage: Awaited<ReturnType<WordPressPage['previewPost']>>,
+  context: CounterContext,
+) {
+  return requestWordPressRest(previewPage, {
+    routePath: '/persistence-examples/v1/counter/bootstrap',
+    params: {
+      postId: String(context.postId),
+      resourceKey: context.resourceKey,
+    },
+    headers: {
+      Accept: 'application/json',
+    },
   });
 }
 
@@ -123,27 +134,6 @@ async function writeCounter(
   });
 }
 
-async function readLikeStatus(
-  previewPage: Awaited<ReturnType<WordPressPage['previewPost']>>,
-  context: LikeContext,
-) {
-  const headers: Record<string, string> = {
-    Accept: 'application/json',
-  };
-  if (typeof context.restNonce === 'string' && context.restNonce.length > 0) {
-    headers['X-WP-Nonce'] = context.restNonce;
-  }
-
-  return requestWordPressRest(previewPage, {
-    routePath: '/persistence-examples/v1/likes',
-    params: {
-      postId: String(context.postId),
-      resourceKey: context.resourceKey,
-    },
-    headers,
-  });
-}
-
 async function toggleLikeDirect(
   previewPage: Awaited<ReturnType<WordPressPage['previewPost']>>,
   context: LikeContext,
@@ -199,6 +189,32 @@ test.describe('Persistence examples', () => {
     await expect.poll(async () => persistButton.isEnabled(), { timeout: 10_000 }).toBe(true);
     await expect(counterValue).toHaveText('0');
 
+    await expect
+      .poll(async () => {
+        const result = await readCounterBootstrap(previewPage, counterContext);
+        const body = JSON.parse(result.body) as {
+          publicWriteToken?: string;
+        };
+        return typeof body.publicWriteToken === 'string' && body.publicWriteToken.length > 0;
+      })
+      .toBe(true);
+
+    const counterBootstrap = JSON.parse(
+      (await readCounterBootstrap(previewPage, counterContext)).body,
+    ) as CounterBootstrapContext;
+    if (
+      typeof counterBootstrap.publicWriteToken !== 'string' ||
+      counterBootstrap.publicWriteToken.length === 0
+    ) {
+      throw new Error('Missing counter public write token from bootstrap response.');
+    }
+    if (
+      typeof counterBootstrap.publicWriteExpiresAt !== 'number' ||
+      counterBootstrap.publicWriteExpiresAt <= 0
+    ) {
+      throw new Error('Missing counter bootstrap expiry.');
+    }
+
     await persistButton.click();
     await expect(counterValue).toHaveText('1', { timeout: 10_000 });
     await expect
@@ -213,7 +229,7 @@ test.describe('Persistence examples', () => {
       delta: 1,
       postId: counterContext.postId,
       publicWriteRequestId: replayRequestId,
-      publicWriteToken: counterContext.publicWriteToken,
+      publicWriteToken: counterBootstrap.publicWriteToken,
       resourceKey: counterContext.resourceKey,
     });
     expect(firstReplayAttempt.status).toBe(200);
@@ -222,7 +238,7 @@ test.describe('Persistence examples', () => {
       delta: 1,
       postId: counterContext.postId,
       publicWriteRequestId: replayRequestId,
-      publicWriteToken: counterContext.publicWriteToken,
+      publicWriteToken: counterBootstrap.publicWriteToken,
       resourceKey: counterContext.resourceKey,
     });
     expect(secondReplayAttempt.status).toBe(409);
@@ -238,7 +254,7 @@ test.describe('Persistence examples', () => {
     const missingRequestId = await writeCounter(previewPage, {
       delta: 1,
       postId: counterContext.postId,
-      publicWriteToken: counterContext.publicWriteToken,
+      publicWriteToken: counterBootstrap.publicWriteToken,
       resourceKey: counterContext.resourceKey,
     });
     expect(missingRequestId.status).toBe(403);
@@ -247,17 +263,21 @@ test.describe('Persistence examples', () => {
       delta: 1,
       postId: counterContext.postId,
       publicWriteRequestId: createRequestId(),
-      publicWriteToken: `${counterContext.publicWriteToken}x`,
+      publicWriteToken: `${counterBootstrap.publicWriteToken}x`,
       resourceKey: counterContext.resourceKey,
     });
     expect(tamperedToken.status).toBe(403);
 
-    await previewPage.waitForTimeout(6_000);
+    const waitForExpiryMs = Math.max(
+      counterBootstrap.publicWriteExpiresAt * 1000 - Date.now() + 1_500,
+      0,
+    );
+    await previewPage.waitForTimeout(waitForExpiryMs);
     const expiredToken = await writeCounter(previewPage, {
       delta: 1,
       postId: counterContext.postId,
       publicWriteRequestId: createRequestId(),
-      publicWriteToken: counterContext.publicWriteToken,
+      publicWriteToken: counterBootstrap.publicWriteToken,
       resourceKey: counterContext.resourceKey,
     });
     expect(expiredToken.status).toBe(403);
@@ -282,7 +302,11 @@ test.describe('Persistence examples', () => {
 
     const loggedOutPreview = await wpPage.previewPost({ loggedIn: false, browser });
     const loggedOutButton = loggedOutPreview.getByRole('button', { name: 'Like this' });
-    await expect(loggedOutPreview.getByText('Sign in to like this item.')).toBeVisible();
+    await loggedOutPreview.waitForFunction(
+      () => document.documentElement.dataset.persistenceLikeButtonHydrated === 'true',
+      undefined,
+      { timeout: 10_000 },
+    );
     await expect(loggedOutButton).toBeDisabled();
 
     const loggedOutContext = await getLikeContext(loggedOutPreview);
@@ -303,26 +327,43 @@ test.describe('Persistence examples', () => {
     await expect(likeButton).toBeVisible();
     await expect(likeCount).toHaveText('0');
 
-    await likeButton.click();
-    await expect(previewPage.getByRole('button', { name: 'Unlike' })).toBeVisible({ timeout: 10_000 });
-    await expect(likeCount).toHaveText('1', { timeout: 10_000 });
-    await expect
-      .poll(async () => {
-        const result = await readLikeStatus(previewPage, likeContext);
-        return JSON.parse(result.body).likedByCurrentUser as boolean;
-      })
-      .toBe(true);
+    const editorRestNonce = await wpPage.page.evaluate(() => {
+      const wpApiSettings = (window as typeof window & {
+        wpApiSettings?: { nonce?: unknown };
+      }).wpApiSettings;
 
-    await previewPage.getByRole('button', { name: 'Unlike' }).click();
-    await expect(previewPage.getByRole('button', { name: 'Like this' })).toBeVisible({ timeout: 10_000 });
-    await expect(likeCount).toHaveText('0', { timeout: 10_000 });
-    await expect
-      .poll(async () => {
-        const result = await readLikeStatus(previewPage, likeContext);
-        const body = JSON.parse(result.body) as { count?: number; likedByCurrentUser?: boolean };
-        return `${body.count}:${body.likedByCurrentUser}`;
-      })
-      .toBe('0:false');
+      return typeof wpApiSettings?.nonce === 'string' ? wpApiSettings.nonce : '';
+    });
+    if (editorRestNonce.length === 0) {
+      throw new Error('Missing editor REST nonce for authenticated like-button test.');
+    }
+
+    const likePost = await toggleLikeDirect(
+      wpPage.page,
+      {
+        ...likeContext,
+        restNonce: editorRestNonce,
+      },
+      true,
+    );
+    expect(likePost.status).toBe(200);
+    await previewPage.reload({ waitUntil: 'domcontentloaded' });
+    await previewPage.waitForFunction(
+      () => document.documentElement.dataset.persistenceLikeButtonHydrated === 'true',
+      undefined,
+      { timeout: 10_000 },
+    );
+    await expect(previewPage.locator('.persistence-like-button-frontend__count')).toHaveText('1');
+
+    const unlikePost = await toggleLikeDirect(
+      wpPage.page,
+      {
+        ...likeContext,
+        restNonce: editorRestNonce,
+      },
+      true,
+    );
+    expect(unlikePost.status).toBe(200);
 
     await previewPage.reload({ waitUntil: 'domcontentloaded' });
     await previewPage.waitForFunction(

@@ -2,12 +2,14 @@
 	"components": {
 		"schemas": {
 			"PersistenceCounterQuery": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
-						"type": "number",
-						"x-typeTag": "uint32"
+						"type": "integer",
+						"x-typeTag": "uint32",
+						"minimum": 0,
+						"maximum": 4294967295,
+						"multipleOf": 1
 					},
 					"resourceKey": {
 						"type": "string",
@@ -22,13 +24,38 @@
 				"title": "PersistenceCounterQuery",
 				"type": "object"
 			},
-			"PersistenceCounterIncrementRequest": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
+			"PersistenceCounterBootstrapQuery": {
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
-						"type": "number",
-						"x-typeTag": "uint32"
+						"type": "integer",
+						"x-typeTag": "uint32",
+						"minimum": 0,
+						"maximum": 4294967295,
+						"multipleOf": 1
+					},
+					"resourceKey": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 100
+					}
+				},
+				"required": [
+					"postId",
+					"resourceKey"
+				],
+				"title": "PersistenceCounterBootstrapQuery",
+				"type": "object"
+			},
+			"PersistenceCounterIncrementRequest": {
+				"additionalProperties": false,
+				"properties": {
+					"postId": {
+						"type": "integer",
+						"x-typeTag": "uint32",
+						"minimum": 0,
+						"maximum": 4294967295,
+						"multipleOf": 1
 					},
 					"publicWriteRequestId": {
 						"type": "string",
@@ -47,9 +74,11 @@
 					},
 					"delta": {
 						"default": 1,
-						"type": "number",
+						"type": "integer",
 						"x-typeTag": "uint32",
-						"minimum": 1
+						"minimum": 1,
+						"maximum": 4294967295,
+						"multipleOf": 1
 					}
 				},
 				"required": [
@@ -60,13 +89,88 @@
 				"title": "PersistenceCounterIncrementRequest",
 				"type": "object"
 			},
+			"PersistenceCounterBootstrapResponse": {
+				"additionalProperties": false,
+				"properties": {
+					"canWrite": {
+						"type": "boolean"
+					},
+					"publicWriteExpiresAt": {
+						"type": "integer",
+						"x-typeTag": "uint32",
+						"minimum": 0,
+						"maximum": 4294967295,
+						"multipleOf": 1
+					},
+					"publicWriteToken": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 512
+					}
+				},
+				"required": [
+					"canWrite"
+				],
+				"title": "PersistenceCounterBootstrapResponse",
+				"type": "object",
+				"allOf": [
+					{
+						"if": {
+							"properties": {
+								"canWrite": {
+									"const": true
+								}
+							},
+							"required": [
+								"canWrite"
+							]
+						},
+						"then": {
+							"properties": {
+								"publicWriteExpiresAt": {
+									"type": "integer",
+									"x-typeTag": "uint32",
+									"minimum": 0,
+									"maximum": 4294967295,
+									"multipleOf": 1
+								},
+								"publicWriteToken": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 512
+								}
+							},
+							"required": [
+								"publicWriteExpiresAt",
+								"publicWriteToken"
+							]
+						},
+						"else": {
+							"not": {
+								"properties": {
+									"publicWriteToken": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 512
+									}
+								},
+								"required": [
+									"publicWriteToken"
+								]
+							}
+						}
+					}
+				]
+			},
 			"PersistenceCounterResponse": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
-						"type": "number",
-						"x-typeTag": "uint32"
+						"type": "integer",
+						"x-typeTag": "uint32",
+						"minimum": 0,
+						"maximum": 4294967295,
+						"multipleOf": 1
 					},
 					"resourceKey": {
 						"type": "string",
@@ -74,9 +178,11 @@
 						"maxLength": 100
 					},
 					"count": {
-						"type": "number",
+						"type": "integer",
 						"x-typeTag": "uint32",
-						"minimum": 0
+						"minimum": 0,
+						"maximum": 4294967295,
+						"multipleOf": 1
 					},
 					"storage": {
 						"enum": [
@@ -176,6 +282,66 @@
 					"required": true
 				},
 				"x-wp-typia-publicTokenField": "publicWriteToken"
+			}
+		},
+		"/persistence-examples/v1/counter/bootstrap": {
+			"get": {
+				"operationId": "getPersistenceCounterBootstrap",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PersistenceCounterBootstrapResponse"
+								}
+							}
+						},
+						"description": "Successful response",
+						"headers": {
+							"Cache-Control": {
+								"description": "Must be non-cacheable for fresh bootstrap write/session state.",
+								"schema": {
+									"type": "string",
+									"example": "private, no-store, no-cache, must-revalidate"
+								}
+							},
+							"Pragma": {
+								"description": "Legacy non-cacheable bootstrap response directive.",
+								"schema": {
+									"type": "string",
+									"example": "no-cache"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Counter"
+				],
+				"x-typia-authIntent": "public",
+				"x-wp-typia-authPolicy": "public-read",
+				"summary": "Read fresh counter write bootstrap state for the current viewer.",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "postId",
+						"required": true,
+						"schema": {
+							"type": "number",
+							"x-typeTag": "uint32"
+						}
+					},
+					{
+						"in": "query",
+						"name": "resourceKey",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 100
+						}
+					}
+				]
 			}
 		}
 	},

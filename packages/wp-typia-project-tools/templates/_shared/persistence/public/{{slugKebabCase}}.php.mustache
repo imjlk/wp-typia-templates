@@ -200,6 +200,126 @@ function {{phpPrefix}}_build_state_response( $post_id, $resource_key, $count ) {
 	);
 }
 
+function {{phpPrefix}}_block_tree_has_resource_key( $blocks, $block_name, $resource_key ) {
+	if ( ! is_array( $blocks ) ) {
+		return false;
+	}
+
+	foreach ( $blocks as $block ) {
+		if ( ! is_array( $block ) ) {
+			continue;
+		}
+
+		if ( (string) ( $block['blockName'] ?? '' ) === $block_name ) {
+			$attributes = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
+			$candidate_resource_key = array_key_exists( 'resourceKey', $attributes )
+				? (string) $attributes['resourceKey']
+				: 'primary';
+			if ( (string) $resource_key === $candidate_resource_key ) {
+				return true;
+			}
+		}
+
+		if (
+			isset( $block['innerBlocks'] ) &&
+			{{phpPrefix}}_block_tree_has_resource_key( $block['innerBlocks'], $block_name, $resource_key )
+		) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function {{phpPrefix}}_get_rendered_block_instance_key( $post_id, $block_name, $resource_key ) {
+	return 'wpt_pri_' . md5( implode( '|', array( (string) $block_name, (int) $post_id, (string) $resource_key ) ) );
+}
+
+function {{phpPrefix}}_record_rendered_block_instance( $post_id, $block_name, $resource_key ) {
+	if ( $post_id <= 0 || '' === (string) $resource_key || '' === (string) $block_name ) {
+		return;
+	}
+
+	set_transient(
+		{{phpPrefix}}_get_rendered_block_instance_key( $post_id, $block_name, $resource_key ),
+		1,
+		5 * MINUTE_IN_SECONDS
+	);
+}
+
+function {{phpPrefix}}_has_rendered_block_instance( $post_id, $resource_key ) {
+	if ( $post_id <= 0 || '' === (string) $resource_key ) {
+		return false;
+	}
+
+	if (
+		false !== get_transient(
+			{{phpPrefix}}_get_rendered_block_instance_key(
+				$post_id,
+				'{{namespace}}/{{slugKebabCase}}',
+				$resource_key
+			)
+		)
+	) {
+		return true;
+	}
+
+	$post = get_post( $post_id );
+	if ( ! ( $post instanceof WP_Post ) ) {
+		return false;
+	}
+
+	if ( ! is_post_publicly_viewable( $post ) ) {
+		return false;
+	}
+
+	return {{phpPrefix}}_block_tree_has_resource_key(
+		parse_blocks( (string) $post->post_content ),
+		'{{namespace}}/{{slugKebabCase}}',
+		(string) $resource_key
+	);
+}
+
+function {{phpPrefix}}_build_bootstrap_response( $post_id, $resource_key ) {
+	$response = array(
+		'canWrite' => false,
+	);
+	$post = get_post( $post_id );
+
+	if (
+		$post_id <= 0 ||
+		! ( $post instanceof WP_Post ) ||
+		! is_post_publicly_viewable( $post ) ||
+		! function_exists( '{{phpPrefix}}_create_public_write_token' ) ||
+		! {{phpPrefix}}_has_rendered_block_instance( (int) $post_id, (string) $resource_key )
+	) {
+		return $response;
+	}
+
+	$public_write = {{phpPrefix}}_create_public_write_token( (int) $post_id, (string) $resource_key );
+	if ( ! is_array( $public_write ) ) {
+		return $response;
+	}
+
+	$token      = isset( $public_write['token'] ) ? (string) $public_write['token'] : '';
+	$expires_at = isset( $public_write['expiresAt'] ) ? (int) $public_write['expiresAt'] : 0;
+	$is_expired = $expires_at > 0 && $expires_at <= time();
+
+	if ( '' !== $token && $expires_at > 0 && ! $is_expired ) {
+		$response['publicWriteToken'] = $token;
+		$response['canWrite']         = true;
+	}
+
+	if ( $expires_at > 0 ) {
+		$response['publicWriteExpiresAt'] = $expires_at;
+		if ( $is_expired ) {
+			$response['canWrite'] = false;
+		}
+	}
+
+	return $response;
+}
+
 // Route handlers are the main product-level extension point for request/response shaping.
 function {{phpPrefix}}_handle_get_state( WP_REST_Request $request ) {
 	$payload = {{phpPrefix}}_validate_and_sanitize_request(
@@ -224,6 +344,33 @@ function {{phpPrefix}}_handle_get_state( WP_REST_Request $request ) {
 			$count
 		)
 	);
+}
+
+function {{phpPrefix}}_handle_get_bootstrap( WP_REST_Request $request ) {
+	$payload = {{phpPrefix}}_validate_and_sanitize_request(
+		array(
+			'postId'      => $request->get_param( 'postId' ),
+			'resourceKey' => $request->get_param( 'resourceKey' ),
+		),
+		{{phpPrefix}}_get_rest_build_dir(),
+		'bootstrap-query',
+		'query'
+	);
+
+	if ( is_wp_error( $payload ) ) {
+		return $payload;
+	}
+
+	$response = rest_ensure_response(
+		{{phpPrefix}}_build_bootstrap_response(
+			(int) $payload['postId'],
+			(string) $payload['resourceKey']
+		)
+	);
+
+	$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0' );
+	$response->header( 'Pragma', 'no-cache' );
+	return $response;
 }
 
 function {{phpPrefix}}_handle_write_state( WP_REST_Request $request ) {
@@ -287,6 +434,18 @@ function {{phpPrefix}}_register_routes() {
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => '{{phpPrefix}}_handle_write_state',
 				'permission_callback' => '{{phpPrefix}}_can_write_publicly',
+			),
+		)
+	);
+
+	register_rest_route(
+		'{{namespace}}/v1',
+		'/{{slugKebabCase}}/bootstrap',
+		array(
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => '{{phpPrefix}}_handle_get_bootstrap',
+				'permission_callback' => '__return_true',
 			),
 		)
 	);

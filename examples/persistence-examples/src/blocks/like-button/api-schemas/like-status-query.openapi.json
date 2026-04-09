@@ -2,12 +2,14 @@
 	"components": {
 		"schemas": {
 			"PersistenceLikeStatusQuery": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
-						"type": "number",
-						"x-typeTag": "uint32"
+						"type": "integer",
+						"x-typeTag": "uint32",
+						"minimum": 0,
+						"maximum": 4294967295,
+						"multipleOf": 1
 					},
 					"resourceKey": {
 						"type": "string",

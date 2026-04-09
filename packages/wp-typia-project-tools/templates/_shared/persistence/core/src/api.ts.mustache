@@ -3,10 +3,12 @@ import {
 } from '@wp-typia/rest';
 
 import {
+	type {{pascalCase}}BootstrapQuery,
 	type {{pascalCase}}StateQuery,
 	type {{pascalCase}}WriteStateRequest,
 } from './api-types';
 import {
+	get{{pascalCase}}BootstrapEndpoint,
 	get{{pascalCase}}StateEndpoint,
 	write{{pascalCase}}StateEndpoint,
 } from './api-client';
@@ -14,6 +16,10 @@ import {
 	resolveTransportCallOptions,
 	type PersistenceTransportOptions,
 } from './transport';
+
+export const bootstrapEndpoint = {
+	...get{{pascalCase}}BootstrapEndpoint,
+};
 
 export const stateEndpoint = {
 	...get{{pascalCase}}StateEndpoint,
@@ -34,6 +40,23 @@ export function fetchState(
 			options.transportTarget ?? 'frontend',
 			'read',
 			stateEndpoint,
+			request,
+			options
+		)
+	);
+}
+
+export function fetchBootstrap(
+	request: {{pascalCase}}BootstrapQuery,
+	options: PersistenceTransportOptions = {}
+) {
+	return callEndpoint(
+		bootstrapEndpoint,
+		request,
+		resolveTransportCallOptions(
+			options.transportTarget ?? 'frontend',
+			'read',
+			bootstrapEndpoint,
 			request,
 			options
 		)

@@ -102,8 +102,10 @@
         "type": "object",
         "properties": {
           "postId": {
-            "type": "number",
-            "minimum": 0
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295,
+            "multipleOf": 1
           },
           "publicWriteRequestId": {
             "type": "string",
@@ -121,9 +123,11 @@
             "maxLength": 512
           },
           "delta": {
-            "type": "number",
+            "type": "integer",
             "minimum": 1,
-            "default": 1
+            "default": 1,
+            "maximum": 4294967295,
+            "multipleOf": 1
           }
         },
         "required": [

@@ -271,8 +271,38 @@ describe("schema-core", () => {
 		const schema = manifestToJsonSchema(manifest);
 		const projected = projectJsonSchemaDocument(schema, { profile: "rest" });
 
-		expect(projected).toEqual(schema);
 		expect(projected).not.toBe(schema);
+		expect(projected.properties.count.type).toBe("integer");
+		expect(projected.properties.count.minimum).toBe(0);
+		expect(projected.properties.count.maximum).toBe(10);
+		expect(projected.properties.count.multipleOf).toBe(1);
+		expect(projected.properties.count["x-typeTag"]).toBe("uint32");
+	});
+
+	test("projectJsonSchemaDocument preserves unsupported wp-typia type tags for the rest profile", () => {
+		const schema: JsonSchemaDocument = {
+			$schema: "https://json-schema.org/draft/2020-12/schema",
+			additionalProperties: false,
+			properties: {
+				id: {
+					maximum: 9007199254740991,
+					minimum: 0,
+					type: "number",
+					"x-typeTag": "uint64",
+				},
+			},
+			required: ["id"],
+			title: "RestUnsupportedTypeTag",
+			type: "object",
+		};
+
+		const projected = projectJsonSchemaDocument(schema, { profile: "rest" });
+		const idProperty = projected.properties.id as Record<string, unknown>;
+
+		expect(idProperty.type).toBe("number");
+		expect(idProperty.minimum).toBe(0);
+		expect(idProperty.maximum).toBe(9007199254740991);
+		expect(idProperty["x-typeTag"]).toBe("uint64");
 	});
 
 	test("projectJsonSchemaDocument removes wp-typia extension keys and projects uint32 for ai-structured-output", () => {
@@ -653,6 +683,164 @@ describe("schema-core", () => {
 		expect(operation["x-typia-authIntent"]).toBe("authenticated");
 		expect(operation["x-wp-typia-authPolicy"]).toBe("authenticated-rest-nonce");
 		expect(operation.security).toEqual([{ wpRestNonce: [] }]);
+	});
+
+	test("buildEndpointOpenApiDocument marks bootstrap responses as non-cacheable and omits embedded $schema keys", () => {
+		const bootstrapDocument: ManifestDocument = {
+			attributes: {
+				canWrite: createAttribute({
+					ts: { kind: "boolean", required: true },
+					wp: { type: "boolean" },
+				}),
+				restNonce: createAttribute({
+					ts: { kind: "string", required: false },
+					typia: {
+						constraints: {
+							maxLength: 128,
+							minLength: 1,
+						},
+					},
+					wp: { type: "string" },
+				}),
+			},
+			manifestVersion: 2,
+			sourceType: "BootstrapResponse",
+		};
+
+		const openApi = buildEndpointOpenApiDocument({
+			contracts: {
+				bootstrap: { document: bootstrapDocument },
+			},
+			endpoints: [
+				{
+					auth: "authenticated",
+					method: "GET",
+					operationId: "getBootstrap",
+					path: "/demo/v1/counter/bootstrap",
+					queryContract: "bootstrap",
+					responseContract: "bootstrap",
+					tags: ["Counter"],
+					wordpressAuth: {
+						mechanism: "rest-nonce",
+					},
+				},
+			],
+		});
+
+		const schemas = (openApi.components as Record<string, Record<string, unknown>>)
+			.schemas as Record<string, Record<string, unknown>>;
+		const operation = (
+			openApi.paths as Record<string, Record<string, Record<string, unknown>>>
+		)["/demo/v1/counter/bootstrap"].get;
+
+		expect(schemas.BootstrapResponse.$schema).toBeUndefined();
+		expect(operation.responses).toMatchObject({
+			"200": {
+				headers: {
+					"Cache-Control": {
+						schema: {
+							type: "string",
+						},
+					},
+					Pragma: {
+						schema: {
+							type: "string",
+						},
+					},
+					Vary: {
+						schema: {
+							type: "string",
+						},
+					},
+				},
+			},
+		});
+	});
+
+	test("buildEndpointOpenApiDocument accepts either bootstrap credential family when both are projected", () => {
+		const bootstrapDocument: ManifestDocument = {
+			attributes: {
+				canWrite: createAttribute({
+					ts: { kind: "boolean", required: true },
+					wp: { type: "boolean" },
+				}),
+				publicWriteExpiresAt: createAttribute({
+					ts: { kind: "number", required: false },
+					typia: {
+						constraints: {
+							typeTag: "uint32",
+						},
+					},
+					wp: { type: "number" },
+				}),
+				publicWriteToken: createAttribute({
+					ts: { kind: "string", required: false },
+					typia: {
+						constraints: {
+							maxLength: 512,
+							minLength: 1,
+						},
+					},
+					wp: { type: "string" },
+				}),
+				restNonce: createAttribute({
+					ts: { kind: "string", required: false },
+					typia: {
+						constraints: {
+							maxLength: 128,
+							minLength: 1,
+						},
+					},
+					wp: { type: "string" },
+				}),
+			},
+			manifestVersion: 2,
+			sourceType: "BootstrapResponse",
+		};
+
+		const openApi = buildEndpointOpenApiDocument({
+			contracts: {
+				bootstrap: { document: bootstrapDocument },
+			},
+			endpoints: [
+				{
+					auth: "public",
+					method: "GET",
+					operationId: "getBootstrap",
+					path: "/demo/v1/counter/bootstrap",
+					queryContract: "bootstrap",
+					responseContract: "bootstrap",
+					tags: ["Counter"],
+				},
+			],
+		});
+		const schemas = (openApi.components as Record<string, Record<string, unknown>>)
+			.schemas as Record<string, JsonSchemaDocument>;
+		const projected = projectJsonSchemaDocument(schemas.BootstrapResponse, {
+			profile: "ai-structured-output",
+		});
+		const ajv = new Ajv2020({
+			allErrors: true,
+			strict: true,
+		});
+		const validate = ajv.compile(projected);
+
+		expect(validate({ canWrite: true, restNonce: "nonce-demo" })).toBe(true);
+		expect(
+			validate({
+				canWrite: true,
+				publicWriteExpiresAt: 123,
+				publicWriteToken: "token-demo",
+			}),
+		).toBe(true);
+		expect(validate({ canWrite: true })).toBe(false);
+		expect(
+			validate({
+				canWrite: true,
+				publicWriteToken: "token-demo",
+			}),
+		).toBe(false);
+		expect(validate({ canWrite: false, restNonce: "nonce-demo" })).toBe(false);
 	});
 
 	test("normalizeEndpointAuthDefinition maps deprecated authMode values to neutral auth intent", () => {

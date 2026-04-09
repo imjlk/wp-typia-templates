@@ -119,6 +119,7 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	phpPrefixUpper: string;
 	isAuthenticatedPersistencePolicy: "false" | "true";
 	isPublicPersistencePolicy: "false" | "true";
+	bootstrapCredentialDeclarations: string;
 	publicWriteRequestIdDeclaration: string;
 	restPackageVersion: string;
 	restWriteAuthIntent: "authenticated" | "public-write-protected";
@@ -547,6 +548,10 @@ export function getTemplateVariables(
 		isAuthenticatedPersistencePolicy:
 			persistencePolicy === "authenticated" ? "true" : "false",
 		isPublicPersistencePolicy: persistencePolicy === "public" ? "true" : "false",
+		bootstrapCredentialDeclarations:
+			persistencePolicy === "public"
+				? "publicWriteExpiresAt?: number & tags.Type< 'uint32' >;\n\tpublicWriteToken?: string & tags.MinLength< 1 > & tags.MaxLength< 512 >;"
+				: "restNonce?: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;",
 		keyword: slug.replace(/-/g, " "),
 		namespace,
 		needsMigration: "{{needsMigration}}",

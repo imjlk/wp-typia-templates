@@ -30,26 +30,30 @@ export interface {{pascalCase}}Attributes {
 
 export interface {{pascalCase}}Context {
 	buttonLabel: string;
+	bootstrapReady: boolean;
 	canWrite: boolean;
 	count: number;
+	error: string;
+	isBootstrapping: boolean;
+	isLoading: boolean;
+	isSaving: boolean;
 	persistencePolicy: 'authenticated' | 'public';
 	postId: number;
-	publicWriteExpiresAt?: number;
-	publicWriteToken?: string;
 	resourceKey: string;
-	restNonce?: string;
 	storage: 'post-meta' | 'custom-table';
 	isVisible: boolean;
+	client?: {{pascalCase}}ClientState;
 }
 
 export interface {{pascalCase}}State {
-	canWrite: boolean;
-	count: number;
-	error?: string;
 	isHydrated: boolean;
-	isLoading: boolean;
-	isSaving: boolean;
-	isVisible: boolean;
+}
+
+export interface {{pascalCase}}ClientState {
+	bootstrapError: string;
+	writeExpiry: number;
+	writeNonce: string;
+	writeToken: string;
 }
 
 export type {{pascalCase}}ValidationResult = ValidationResult< {{pascalCase}}Attributes >;

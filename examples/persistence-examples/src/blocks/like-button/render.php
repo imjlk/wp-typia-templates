@@ -33,23 +33,32 @@ $unlike_label = isset( $normalized['unlikeLabel'] ) ? (string) $normalized['unli
 $post_id      = is_object( $block ) && isset( $block->context['postId'] )
 	? (int) $block->context['postId']
 	: (int) get_queried_object_id();
-$can_write    = $post_id > 0 && is_user_logged_in();
-$liked        = $can_write ? persistence_examples_has_like( (int) $post_id, $resource_key, get_current_user_id() ) : false;
-$context      = array(
-	'buttonLabel'         => $liked ? $unlike_label : $like_label,
-	'canWrite'            => $can_write,
-	'count'               => 0,
-	'likeLabel'           => $like_label,
-	'likedByCurrentUser'  => $liked,
-	'postId'              => (int) $post_id,
-	'resourceKey'         => $resource_key,
-	'storage'             => 'custom-table',
-	'unlikeLabel'         => $unlike_label,
+
+persistence_examples_record_rendered_block_instance(
+	(int) $post_id,
+	'create-block/persistence-like-button',
+	$resource_key
 );
 
-if ( $can_write ) {
-	$context['restNonce'] = wp_create_nonce( 'wp_rest' );
-}
+$context      = array(
+	'bootstrapReady' => false,
+	'buttonLabel'    => $like_label,
+	'canWrite'       => false,
+	'client'         => array(
+		'liked'      => false,
+		'writeNonce' => '',
+	),
+	'count'          => 0,
+	'error'          => '',
+	'isBootstrapping' => false,
+	'isLoading'      => false,
+	'isSaving'       => false,
+	'likeLabel'      => $like_label,
+	'postId'         => (int) $post_id,
+	'resourceKey'    => $resource_key,
+	'storage'        => 'custom-table',
+	'unlikeLabel'    => $unlike_label,
+);
 
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
@@ -64,18 +73,20 @@ $wrapper_attributes = get_block_wrapper_attributes(
 <div <?php echo $wrapper_attributes; ?>>
 	<div class="persistence-like-button-frontend">
 		<p class="persistence-like-button-frontend__content"><?php echo esc_html( $content ); ?></p>
-		<?php if ( ! $can_write ) : ?>
-			<p class="persistence-like-button-frontend__notice">
-				<?php esc_html_e( 'Sign in to like this item.', 'persistence-examples' ); ?>
-			</p>
-		<?php endif; ?>
+		<p
+			class="persistence-like-button-frontend__notice"
+			data-wp-bind--hidden="!context.bootstrapReady || context.canWrite"
+			hidden
+		>
+			<?php esc_html_e( 'Sign in to like this item.', 'persistence-examples' ); ?>
+		</p>
 		<p
 			class="persistence-like-button-frontend__error"
 			role="status"
 			aria-live="polite"
 			aria-atomic="true"
-			data-wp-bind--hidden="!state.error"
-			data-wp-text="state.error"
+			data-wp-bind--hidden="!context.error"
+			data-wp-text="context.error"
 			hidden
 		></p>
 		<?php if ( ! empty( $normalized['showCount'] ) ) : ?>
@@ -84,17 +95,17 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				role="status"
 				aria-live="polite"
 				aria-atomic="true"
-				data-wp-text="state.count"
+				data-wp-text="context.count"
 			>0</span>
 		<?php endif; ?>
 		<button
 			type="button"
-			<?php echo $can_write ? '' : 'disabled'; ?>
+			disabled
 			data-wp-bind--disabled="!context.canWrite"
 			data-wp-on--click="actions.toggle"
-			data-wp-text="state.buttonLabel"
+			data-wp-text="context.buttonLabel"
 		>
-			<?php echo esc_html( $liked ? $unlike_label : $like_label ); ?>
+			<?php echo esc_html( $like_label ); ?>
 		</button>
 	</div>
 </div>

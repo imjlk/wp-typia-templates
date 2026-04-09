@@ -4,9 +4,12 @@ import {
 	type EndpointCallOptions,
 } from '@wp-typia/api-client';
 import type {
+	PersistenceLikeBootstrapQuery,
+	PersistenceLikeBootstrapResponse,
 	PersistenceLikeStatusQuery,
 	PersistenceLikeStatusResponse,
 	PersistenceToggleLikeRequest,
+	PersistenceToggleLikeResponse,
 } from './api-types';
 import { apiValidators } from './api-validators';
 
@@ -33,7 +36,7 @@ export function getPersistenceLikeStatus(
 
 export const togglePersistenceLikeStatusEndpoint = createEndpoint<
 	PersistenceToggleLikeRequest,
-	PersistenceLikeStatusResponse
+	PersistenceToggleLikeResponse
 >( {
 	authIntent: 'authenticated',
 	authMode: 'authenticated-rest-nonce',
@@ -42,7 +45,7 @@ export const togglePersistenceLikeStatusEndpoint = createEndpoint<
 	path: '/persistence-examples/v1/likes',
 	requestLocation: 'body',
 	validateRequest: apiValidators.toggleLikeRequest,
-	validateResponse: apiValidators.likeStatusResponse,
+	validateResponse: apiValidators.toggleLikeResponse,
 } );
 
 export function togglePersistenceLikeStatus(
@@ -51,6 +54,31 @@ export function togglePersistenceLikeStatus(
 ) {
 	return callEndpoint(
 		togglePersistenceLikeStatusEndpoint,
+		request,
+		options
+	);
+}
+
+export const getPersistenceLikeBootstrapEndpoint = createEndpoint<
+	PersistenceLikeBootstrapQuery,
+	PersistenceLikeBootstrapResponse
+>( {
+	authIntent: 'public',
+	authMode: 'public-read',
+	method: 'GET',
+	operationId: 'getPersistenceLikeBootstrap',
+	path: '/persistence-examples/v1/likes/bootstrap',
+	requestLocation: 'query',
+	validateRequest: apiValidators.likeBootstrapQuery,
+	validateResponse: apiValidators.likeBootstrapResponse,
+} );
+
+export function getPersistenceLikeBootstrap(
+	request: PersistenceLikeBootstrapQuery,
+	options: EndpointCallOptions
+) {
+	return callEndpoint(
+		getPersistenceLikeBootstrapEndpoint,
 		request,
 		options
 	);

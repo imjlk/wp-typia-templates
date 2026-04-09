@@ -430,7 +430,7 @@ function persistence_examples_verify_counter_public_write_token( $token, $post_i
 	if ( $expires_at < time() ) {
 		return new WP_Error(
 			'rest_forbidden',
-			'The public write token has expired. Reload the page and try again.',
+			'The public write token has expired. Refresh write access and try again.',
 			array( 'status' => 403 )
 		);
 	}
@@ -502,6 +502,124 @@ function persistence_examples_build_counter_response( $post_id, $resource_key, $
 	);
 }
 
+function persistence_examples_block_tree_has_resource_key( $blocks, $block_name, $resource_key ) {
+	if ( ! is_array( $blocks ) ) {
+		return false;
+	}
+
+	foreach ( $blocks as $block ) {
+		if ( ! is_array( $block ) ) {
+			continue;
+		}
+
+		if ( (string) ( $block['blockName'] ?? '' ) === $block_name ) {
+			$attributes = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
+			$candidate_resource_key = array_key_exists( 'resourceKey', $attributes )
+				? (string) $attributes['resourceKey']
+				: 'primary';
+			if ( (string) $resource_key === $candidate_resource_key ) {
+				return true;
+			}
+		}
+
+		if (
+			isset( $block['innerBlocks'] ) &&
+			persistence_examples_block_tree_has_resource_key( $block['innerBlocks'], $block_name, $resource_key )
+		) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function persistence_examples_get_rendered_block_instance_key( $post_id, $block_name, $resource_key ) {
+	return 'wpt_pri_' . md5( implode( '|', array( (string) $block_name, (int) $post_id, (string) $resource_key ) ) );
+}
+
+function persistence_examples_record_rendered_block_instance( $post_id, $block_name, $resource_key ) {
+	if ( $post_id <= 0 || '' === (string) $resource_key || '' === (string) $block_name ) {
+		return;
+	}
+
+	set_transient(
+		persistence_examples_get_rendered_block_instance_key( $post_id, $block_name, $resource_key ),
+		1,
+		5 * MINUTE_IN_SECONDS
+	);
+}
+
+function persistence_examples_has_rendered_block_instance( $post_id, $block_name, $resource_key ) {
+	if ( $post_id <= 0 || '' === (string) $resource_key ) {
+		return false;
+	}
+
+	if (
+		false !== get_transient(
+			persistence_examples_get_rendered_block_instance_key( $post_id, $block_name, $resource_key )
+		)
+	) {
+		return true;
+	}
+
+	$post = get_post( $post_id );
+	if ( ! ( $post instanceof WP_Post ) ) {
+		return false;
+	}
+
+	return persistence_examples_block_tree_has_resource_key(
+		parse_blocks( (string) $post->post_content ),
+		(string) $block_name,
+		(string) $resource_key
+	);
+}
+
+function persistence_examples_build_counter_bootstrap_response( $post_id, $resource_key ) {
+	$response = array(
+		'canWrite' => false,
+	);
+
+	$post = get_post( $post_id );
+	if (
+		$post_id <= 0 ||
+		! ( $post instanceof WP_Post ) ||
+		! is_post_publicly_viewable( $post ) ||
+		! persistence_examples_has_rendered_block_instance(
+			(int) $post_id,
+			'create-block/persistence-counter',
+			(string) $resource_key
+		)
+	) {
+		return $response;
+	}
+
+	$public_write = persistence_examples_create_counter_public_write_token(
+		(int) $post_id,
+		(string) $resource_key
+	);
+
+	if ( ! is_array( $public_write ) ) {
+		return $response;
+	}
+
+	$token      = isset( $public_write['token'] ) ? (string) $public_write['token'] : '';
+	$expires_at = isset( $public_write['expiresAt'] ) ? (int) $public_write['expiresAt'] : 0;
+
+	if ( '' !== $token && $expires_at > 0 && $expires_at > time() ) {
+		$response['publicWriteToken'] = $token;
+		$response['canWrite']         = true;
+	}
+
+	if ( $expires_at > 0 ) {
+		$response['publicWriteExpiresAt'] = $expires_at;
+		if ( $expires_at <= time() ) {
+			$response['canWrite'] = false;
+		}
+	}
+
+	return $response;
+}
+
 function persistence_examples_handle_get_counter( WP_REST_Request $request ) {
 	$payload = persistence_examples_validate_and_sanitize_request(
 		'counter',
@@ -527,6 +645,33 @@ function persistence_examples_handle_get_counter( WP_REST_Request $request ) {
 			)
 		)
 	);
+}
+
+function persistence_examples_handle_get_counter_bootstrap( WP_REST_Request $request ) {
+	$payload = persistence_examples_validate_and_sanitize_request(
+		'counter',
+		array(
+			'postId'      => $request->get_param( 'postId' ),
+			'resourceKey' => $request->get_param( 'resourceKey' ),
+		),
+		'counter-bootstrap-query',
+		'query'
+	);
+
+	if ( is_wp_error( $payload ) ) {
+		return $payload;
+	}
+
+	$response = rest_ensure_response(
+		persistence_examples_build_counter_bootstrap_response(
+			(int) $payload['postId'],
+			(string) $payload['resourceKey']
+		)
+	);
+
+	$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0' );
+	$response->header( 'Pragma', 'no-cache' );
+	return $response;
 }
 
 function persistence_examples_handle_increment_counter( WP_REST_Request $request ) {
@@ -701,6 +846,41 @@ function persistence_examples_build_like_response( $post_id, $resource_key, $use
 		'postId'              => (int) $post_id,
 		'resourceKey'         => (string) $resource_key,
 		'count'               => persistence_examples_get_like_count( $post_id, $resource_key ),
+		'storage'             => 'custom-table',
+	);
+}
+
+function persistence_examples_build_like_bootstrap_response( $post_id, $resource_key, $user_id ) {
+	$post          = get_post( $post_id );
+	$can_read_post =
+		$post instanceof WP_Post &&
+		(
+			is_post_publicly_viewable( $post ) ||
+			current_user_can( 'read_post', $post->ID )
+		);
+	$has_instance = $can_read_post && persistence_examples_has_rendered_block_instance(
+		(int) $post_id,
+		'create-block/persistence-like-button',
+		(string) $resource_key
+	);
+	$can_write = $post_id > 0 && $user_id > 0 && $can_read_post && $has_instance;
+	$response  = array(
+		'canWrite'           => $can_write,
+		'likedByCurrentUser' => $has_instance && persistence_examples_has_like( $post_id, $resource_key, $user_id ),
+	);
+
+	if ( $can_write ) {
+		$response['restNonce'] = wp_create_nonce( 'wp_rest' );
+	}
+
+	return $response;
+}
+
+function persistence_examples_build_toggle_like_response( $post_id, $resource_key, $user_id ) {
+	return array(
+		'postId'              => (int) $post_id,
+		'resourceKey'         => (string) $resource_key,
+		'count'               => persistence_examples_get_like_count( $post_id, $resource_key ),
 		'likedByCurrentUser'  => persistence_examples_has_like( $post_id, $resource_key, $user_id ),
 		'storage'             => 'custom-table',
 	);
@@ -731,6 +911,36 @@ function persistence_examples_handle_get_like_status( WP_REST_Request $request )
 	);
 }
 
+function persistence_examples_handle_get_like_bootstrap( WP_REST_Request $request ) {
+	$payload = persistence_examples_validate_and_sanitize_request(
+		'like-button',
+		array(
+			'postId'      => $request->get_param( 'postId' ),
+			'resourceKey' => $request->get_param( 'resourceKey' ),
+		),
+		'like-bootstrap-query',
+		'query'
+	);
+
+	if ( is_wp_error( $payload ) ) {
+		return $payload;
+	}
+
+	$user_id = is_user_logged_in() ? get_current_user_id() : 0;
+	$response = rest_ensure_response(
+		persistence_examples_build_like_bootstrap_response(
+			(int) $payload['postId'],
+			(string) $payload['resourceKey'],
+			(int) $user_id
+		)
+	);
+
+	$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0' );
+	$response->header( 'Pragma', 'no-cache' );
+	$response->header( 'Vary', 'Cookie' );
+	return $response;
+}
+
 function persistence_examples_handle_toggle_like( WP_REST_Request $request ) {
 	$payload = persistence_examples_validate_and_sanitize_request(
 		'like-button',
@@ -755,7 +965,7 @@ function persistence_examples_handle_toggle_like( WP_REST_Request $request ) {
 	}
 
 	return rest_ensure_response(
-		persistence_examples_build_like_response(
+		persistence_examples_build_toggle_like_response(
 			(int) $payload['postId'],
 			(string) $payload['resourceKey'],
 			(int) $user_id
@@ -783,6 +993,18 @@ function persistence_examples_register_routes() {
 
 	register_rest_route(
 		'persistence-examples/v1',
+		'/counter/bootstrap',
+		array(
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => 'persistence_examples_handle_get_counter_bootstrap',
+				'permission_callback' => '__return_true',
+			),
+		)
+	);
+
+	register_rest_route(
+		'persistence-examples/v1',
 		'/likes',
 		array(
 			array(
@@ -794,6 +1016,18 @@ function persistence_examples_register_routes() {
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => 'persistence_examples_handle_toggle_like',
 				'permission_callback' => 'persistence_examples_can_toggle_like',
+			),
+		)
+	);
+
+	register_rest_route(
+		'persistence-examples/v1',
+		'/likes/bootstrap',
+		array(
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => 'persistence_examples_handle_get_like_bootstrap',
+				'permission_callback' => '__return_true',
 			),
 		)
 	);

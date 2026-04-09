@@ -19,7 +19,11 @@ import {
 import { useTypiaValidation } from '../../shared/hooks';
 import { resolveCurrentEditorPostId } from '../../shared/editor';
 import type { PersistenceLikeButtonAttributes } from './types';
-import { usePersistenceLikeStatusQuery, useToggleLikeMutation } from './data';
+import {
+	usePersistenceLikeBootstrapQuery,
+	usePersistenceLikeStatusQuery,
+	useToggleLikeMutation,
+} from './data';
 import { createAttributeUpdater, validators } from './validators';
 
 export default function Edit( {
@@ -80,6 +84,16 @@ export default function Edit( {
 			staleTime: 5_000,
 		}
 	);
+	const liveBootstrapQuery = usePersistenceLikeBootstrapQuery(
+		{
+			postId: currentPostId,
+			resourceKey: attributes.resourceKey ?? '',
+		},
+		{
+			enabled: liveQueryEnabled,
+			staleTime: 5_000,
+		}
+	);
 	const liveToggleMutation = useToggleLikeMutation();
 	const liveToggleValidationMessages =
 		liveToggleMutation.validation?.isValid === false
@@ -98,16 +112,19 @@ export default function Edit( {
 		liveErrorMessage = liveToggleMutation.error.message;
 	} else if ( liveStatusQuery.error instanceof Error ) {
 		liveErrorMessage = liveStatusQuery.error.message;
+	} else if ( liveBootstrapQuery.error instanceof Error ) {
+		liveErrorMessage = liveBootstrapQuery.error.message;
 	}
 	const liveStatus = liveStatusQuery.data;
+	const liveBootstrap = liveBootstrapQuery.data;
 	let liveButtonLabel = likeLabel;
-	if ( liveStatus?.likedByCurrentUser === true ) {
+	if ( liveBootstrap?.likedByCurrentUser === true ) {
 		liveButtonLabel = unlikeLabel;
 	}
 	let liveLikeStateLabel = __( 'Unknown', 'persistence-examples' ) as string;
-	if ( liveStatus?.likedByCurrentUser === true ) {
+	if ( liveBootstrap?.likedByCurrentUser === true ) {
 		liveLikeStateLabel = __( 'Yes', 'persistence-examples' ) as string;
-	} else if ( liveStatus?.likedByCurrentUser === false ) {
+	} else if ( liveBootstrap?.likedByCurrentUser === false ) {
 		liveLikeStateLabel = __( 'No', 'persistence-examples' ) as string;
 	}
 
@@ -209,6 +226,7 @@ export default function Edit( {
 									variant="secondary"
 									disabled={
 										liveStatusQuery.isFetching ||
+										liveBootstrapQuery.isFetching ||
 										liveToggleMutation.isPending
 									}
 									onClick={ () =>
@@ -230,10 +248,14 @@ export default function Edit( {
 									variant="tertiary"
 									disabled={
 										liveStatusQuery.isFetching ||
+										liveBootstrapQuery.isFetching ||
 										liveToggleMutation.isPending
 									}
 									onClick={ () =>
-										void liveStatusQuery.refetch()
+										void Promise.all( [
+											liveStatusQuery.refetch(),
+											liveBootstrapQuery.refetch(),
+										] )
 									}
 								>
 									{ liveStatusQuery.isFetching

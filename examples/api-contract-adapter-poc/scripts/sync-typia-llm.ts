@@ -72,6 +72,12 @@ const COUNTER_BLOCK = (() => {
 
   return block;
 })();
+const COUNTER_LLM_MANIFEST: EndpointManifestDefinition = {
+  ...COUNTER_BLOCK.restManifest,
+  endpoints: COUNTER_BLOCK.restManifest.endpoints.filter(
+    (endpoint) => endpoint.operationId !== "getPersistenceCounterBootstrap"
+  ),
+};
 
 const GENERATED_DIR = path.join(EXAMPLE_ROOT, "src", "typia-llm");
 const GENERATED_SOURCE_FILE = path.join(
@@ -165,7 +171,9 @@ function parseCliOptions(argv: string[]): SyncTypiaLlmCliOptions {
   return options;
 }
 
-function normalizeGeneratedArtifactContentForComparison(content: string): string {
+function normalizeGeneratedArtifactContentForComparison(
+  content: string
+): string {
   return content.replace(/\r\n?/g, "\n");
 }
 
@@ -454,13 +462,13 @@ function getCompiledModuleFile(): string {
 }
 
 export function buildCounterTypiaLlmMethodDescriptors(
-  manifest: EndpointManifestDefinition = COUNTER_BLOCK.restManifest
+  manifest: EndpointManifestDefinition = COUNTER_LLM_MANIFEST
 ): TypiaLlmEndpointMethodDescriptor[] {
   return buildTypiaLlmEndpointMethodDescriptors(manifest);
 }
 
 export function renderCounterTypiaLlmGeneratedSource(
-  manifest: EndpointManifestDefinition = COUNTER_BLOCK.restManifest
+  manifest: EndpointManifestDefinition = COUNTER_LLM_MANIFEST
 ): string {
   return renderTypiaLlmModule({
     applicationExportName: "counterLlmApplication",

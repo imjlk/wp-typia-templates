@@ -476,7 +476,7 @@ The built-in `persistence` template adds another predictable layer:
 - `scripts/sync-rest-contracts.ts`
 - a plugin bootstrap PHP file with generated REST route/storage wiring
 
-For persistence-capable scaffolds, the endpoint manifest authored in TypeScript is the canonical description of the REST surface and the primary input to `syncRestOpenApi()`. `src/api-client.ts` is the generated portable endpoint-definition artifact, `src/transport.ts` is the first-class runtime seam for editor/frontend transport wiring, `src/api.ts` is the typed call helper layer that composes those two pieces, and `src/data.ts` is the additive React/data wrapper layer built on `@wp-typia/rest/react`. `src/api.openapi.json` is the canonical endpoint-aware REST document, `src/api-schemas/*.schema.json` files remain the runtime contract artifacts, and `src/api-schemas/*.openapi.json` files remain available as per-contract compatibility fragments.
+For persistence-capable scaffolds, the endpoint manifest authored in TypeScript is the canonical description of the REST surface and the primary input to `syncRestOpenApi()`. `src/api-client.ts` is the generated portable endpoint-definition artifact, `src/transport.ts` is the first-class runtime seam for editor/frontend transport wiring, `src/api.ts` is the typed call helper layer that composes those two pieces, and `src/data.ts` is the additive React/data wrapper layer built on `@wp-typia/rest/react`. `src/api.openapi.json` is the canonical endpoint-aware REST document, `src/api-schemas/*.schema.json` files remain the runtime contract artifacts, and `src/api-schemas/*.openapi.json` files remain available as per-contract compatibility fragments. Persistence scaffolds now split durable reads from session-only bootstrap state: `/state` remains the durable persisted-state surface, while `/bootstrap` returns fresh write-access data such as REST nonces or public signed-token metadata.
 
 ```ts
 await syncRestOpenApi({
@@ -491,7 +491,8 @@ When you customize the generated PHP:
 - edit the plugin bootstrap file for storage helpers, route handlers, response shaping, and route registration
 - edit `inc/rest-auth.php` or `inc/rest-public.php` for permission policy changes
 - edit `src/transport.ts` when you need to route editor or frontend requests through a contract-compatible proxy or BFF without changing the endpoint contracts
-- keep `src/api-types.ts` plus the endpoint manifest as the source of truth for REST contracts, then regenerate `src/api-schemas/*` and `src/api.openapi.json`
+- keep durable data on the `/state` endpoints and return fresh viewer/session-only write data from the dedicated `/bootstrap` endpoint
+- treat the endpoint manifest and authored contract definitions as the source of truth for REST contracts, then regenerate `src/api-types.ts`, `src/api-schemas/*`, and `src/api.openapi.json`
 - avoid hand-editing generated schema and OpenAPI artifacts unless you are debugging the generation output itself
 
 `persistence` keeps one minimal aggregate-counter scaffold and lets you choose between:
@@ -548,7 +549,7 @@ When you opt `compound` into persistence with `--data-storage` or `--persistence
 - `src/blocks/<parent>/interactivity.ts`
 - generated PHP route/storage wiring in the plugin bootstrap
 
-For persistence-enabled `compound`, the parent block follows the same REST extension pattern as `persistence`. The hidden child block does not own REST routes or storage behavior.
+For persistence-enabled `compound`, the parent block follows the same REST extension pattern as `persistence`, including the dedicated `/bootstrap` endpoint for fresh session-only write data. The hidden child block does not own REST routes or storage behavior.
 
 ## 8. Repo-local example app
 

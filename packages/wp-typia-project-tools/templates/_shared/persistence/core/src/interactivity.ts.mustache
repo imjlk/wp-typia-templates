@@ -1,17 +1,20 @@
 import { getContext, store } from '@wordpress/interactivity';
 import { generatePublicWriteRequestId } from '@wp-typia/block-runtime/identifiers';
 
-import { fetchState, writeState } from './api';
-import type { {{pascalCase}}Context, {{pascalCase}}State } from './types';
+import { fetchBootstrap, fetchState, writeState } from './api';
+import type {
+	{{pascalCase}}ClientState,
+	{{pascalCase}}Context,
+	{{pascalCase}}State,
+} from './types';
 
 function hasExpiredPublicWriteToken(
-	context: {{pascalCase}}Context
+	expiresAt?: number
 ): boolean {
 	return (
-		context.persistencePolicy === 'public' &&
-		typeof context.publicWriteExpiresAt === 'number' &&
-		context.publicWriteExpiresAt > 0 &&
-		Date.now() >= context.publicWriteExpiresAt * 1000
+		typeof expiresAt === 'number' &&
+		expiresAt > 0 &&
+		Date.now() >= expiresAt * 1000
 	);
 }
 
@@ -20,70 +23,212 @@ function getWriteBlockedMessage(
 ): string {
 	return context.persistencePolicy === 'authenticated'
 		? 'Sign in to persist this counter.'
-		: 'Reload the page to refresh this write token.';
+		: 'Public writes are temporarily unavailable.';
+}
+
+const BOOTSTRAP_MAX_ATTEMPTS = 3;
+const BOOTSTRAP_RETRY_DELAYS_MS = [ 250, 500 ];
+
+async function waitForBootstrapRetry( delayMs: number ): Promise< void > {
+	await new Promise( ( resolve ) => {
+		setTimeout( resolve, delayMs );
+	} );
+}
+
+function getClientState(
+	context: {{pascalCase}}Context
+): {{pascalCase}}ClientState {
+	if ( context.client ) {
+		return context.client;
+	}
+
+	context.client = {
+		bootstrapError: '',
+		writeExpiry: 0,
+		writeNonce: '',
+		writeToken: '',
+	};
+
+	return context.client;
+}
+
+function clearBootstrapError(
+	context: {{pascalCase}}Context,
+	clientState: {{pascalCase}}ClientState
+): void {
+	if ( context.error === clientState.bootstrapError ) {
+		context.error = '';
+	}
+	clientState.bootstrapError = '';
+}
+
+function setBootstrapError(
+	context: {{pascalCase}}Context,
+	clientState: {{pascalCase}}ClientState,
+	message: string
+): void {
+	clientState.bootstrapError = message;
+	context.error = message;
 }
 
 const { actions, state } = store( '{{slugKebabCase}}', {
 	state: {
-		canWrite: false,
-		count: 0,
-		error: undefined,
 		isHydrated: false,
-		isLoading: false,
-		isSaving: false,
-		isVisible: true,
 	} as {{pascalCase}}State,
 
 	actions: {
-		async loadCounter() {
+		async loadState() {
 			const context = getContext< {{pascalCase}}Context >();
 			if ( context.postId <= 0 || ! context.resourceKey ) {
 				return;
 			}
 
-			state.isLoading = true;
-			state.error = undefined;
+			context.isLoading = true;
+			context.error = '';
 
 			try {
 				const result = await fetchState( {
 					postId: context.postId,
 					resourceKey: context.resourceKey,
 				}, {
-					restNonce: context.restNonce,
 					transportTarget: 'frontend',
 				} );
 				if ( ! result.isValid || ! result.data ) {
-					state.error = result.errors[ 0 ]?.expected ?? 'Unable to load counter';
+					context.error = result.errors[ 0 ]?.expected ?? 'Unable to load counter';
 					return;
 				}
 				context.count = result.data.count;
-				context.storage = result.data.storage;
-				state.count = result.data.count;
 			} catch ( error ) {
-				state.error =
+				context.error =
 					error instanceof Error ? error.message : 'Unknown loading error';
 			} finally {
-				state.isLoading = false;
+				context.isLoading = false;
 			}
 		},
-		async increment() {
+		async loadBootstrap() {
 			const context = getContext< {{pascalCase}}Context >();
+			const clientState = getClientState( context );
 			if ( context.postId <= 0 || ! context.resourceKey ) {
-				return;
-			}
-			if ( hasExpiredPublicWriteToken( context ) ) {
+				context.bootstrapReady = true;
 				context.canWrite = false;
-				state.canWrite = false;
-				state.error = getWriteBlockedMessage( context );
-				return;
-			}
-			if ( ! context.canWrite || ! state.canWrite ) {
-				state.error = getWriteBlockedMessage( context );
+				clientState.bootstrapError = '';
+				clientState.writeExpiry = 0;
+				clientState.writeNonce = '';
+				clientState.writeToken = '';
 				return;
 			}
 
-			state.isSaving = true;
-			state.error = undefined;
+			context.isBootstrapping = true;
+
+			let bootstrapSucceeded = false;
+			let lastBootstrapError =
+				'Unable to initialize write access';
+
+			for ( let attempt = 1; attempt <= BOOTSTRAP_MAX_ATTEMPTS; attempt += 1 ) {
+				try {
+					const result = await fetchBootstrap( {
+						postId: context.postId,
+						resourceKey: context.resourceKey,
+					}, {
+						transportTarget: 'frontend',
+					} );
+					if ( ! result.isValid || ! result.data ) {
+						lastBootstrapError =
+							result.errors[ 0 ]?.expected ??
+							'Unable to initialize write access';
+						if ( attempt < BOOTSTRAP_MAX_ATTEMPTS ) {
+							await waitForBootstrapRetry(
+								BOOTSTRAP_RETRY_DELAYS_MS[ attempt - 1 ] ?? 750
+							);
+							continue;
+						}
+						break;
+					}
+
+					clientState.writeExpiry =
+						typeof result.data.publicWriteExpiresAt === 'number' &&
+						result.data.publicWriteExpiresAt > 0
+							? result.data.publicWriteExpiresAt
+							: 0;
+					clientState.writeToken =
+						typeof result.data.publicWriteToken === 'string' &&
+						result.data.publicWriteToken.length > 0
+							? result.data.publicWriteToken
+							: '';
+					clientState.writeNonce =
+						typeof result.data.restNonce === 'string' &&
+						result.data.restNonce.length > 0
+							? result.data.restNonce
+							: '';
+					context.bootstrapReady = true;
+					context.canWrite =
+						result.data.canWrite === true &&
+						(
+							context.persistencePolicy === 'authenticated'
+								? clientState.writeNonce.length > 0
+								: clientState.writeToken.length > 0 &&
+									! hasExpiredPublicWriteToken( clientState.writeExpiry )
+						);
+					clearBootstrapError( context, clientState );
+					bootstrapSucceeded = true;
+					break;
+				} catch ( error ) {
+					lastBootstrapError =
+						error instanceof Error ? error.message : 'Unknown bootstrap error';
+					if ( attempt < BOOTSTRAP_MAX_ATTEMPTS ) {
+						await waitForBootstrapRetry(
+							BOOTSTRAP_RETRY_DELAYS_MS[ attempt - 1 ] ?? 750
+						);
+						continue;
+					}
+					break;
+				}
+			}
+
+			if ( ! bootstrapSucceeded ) {
+				context.bootstrapReady = false;
+				context.canWrite = false;
+				clientState.writeExpiry = 0;
+				clientState.writeNonce = '';
+				clientState.writeToken = '';
+				setBootstrapError( context, clientState, lastBootstrapError );
+			}
+			context.isBootstrapping = false;
+		},
+		async increment() {
+			const context = getContext< {{pascalCase}}Context >();
+			const clientState = getClientState( context );
+			if ( context.postId <= 0 || ! context.resourceKey ) {
+				return;
+			}
+			if ( ! context.bootstrapReady ) {
+				await actions.loadBootstrap();
+			}
+			if ( ! context.bootstrapReady ) {
+				context.error = 'Write access is still initializing.';
+				return;
+			}
+			if (
+				context.persistencePolicy === 'public' &&
+				hasExpiredPublicWriteToken( clientState.writeExpiry )
+			) {
+				await actions.loadBootstrap();
+			}
+			if (
+				context.persistencePolicy === 'public' &&
+				hasExpiredPublicWriteToken( clientState.writeExpiry )
+			) {
+				context.canWrite = false;
+				context.error = getWriteBlockedMessage( context );
+				return;
+			}
+			if ( ! context.canWrite ) {
+				context.error = getWriteBlockedMessage( context );
+				return;
+			}
+
+			context.isSaving = true;
+			context.error = '';
 
 			try {
 				const result = await writeState( {
@@ -95,27 +240,28 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 							: undefined,
 					publicWriteToken:
 						context.persistencePolicy === 'public' &&
-						typeof context.publicWriteToken === 'string' &&
-						context.publicWriteToken.length > 0
-							? context.publicWriteToken
+						clientState.writeToken.length > 0
+							? clientState.writeToken
 							: undefined,
 					resourceKey: context.resourceKey,
 				}, {
-					restNonce: context.restNonce,
+					restNonce:
+						clientState.writeNonce.length > 0
+							? clientState.writeNonce
+							: undefined,
 					transportTarget: 'frontend',
 				} );
 				if ( ! result.isValid || ! result.data ) {
-					state.error = result.errors[ 0 ]?.expected ?? 'Unable to update counter';
+					context.error = result.errors[ 0 ]?.expected ?? 'Unable to update counter';
 					return;
 				}
 				context.count = result.data.count;
 				context.storage = result.data.storage;
-				state.count = result.data.count;
 			} catch ( error ) {
-				state.error =
+				context.error =
 					error instanceof Error ? error.message : 'Unknown update error';
 			} finally {
-				state.isSaving = false;
+				context.isSaving = false;
 			}
 		},
 	},
@@ -123,18 +269,29 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 	callbacks: {
 		init() {
 			const context = getContext< {{pascalCase}}Context >();
-			context.canWrite =
-				context.canWrite && ! hasExpiredPublicWriteToken( context );
-			state.canWrite = context.canWrite;
-			state.isVisible = context.isVisible;
-			state.count = context.count;
+			context.client = {
+				bootstrapError: '',
+				writeExpiry: 0,
+				writeNonce: '',
+				writeToken: '',
+			};
+			context.bootstrapReady = false;
+			context.canWrite = false;
+			context.count = 0;
+			context.error = '';
+			context.isBootstrapping = false;
+			context.isLoading = false;
+			context.isSaving = false;
 		},
 		mounted() {
 			state.isHydrated = true;
 			if ( typeof document !== 'undefined' ) {
 				document.documentElement.dataset[ '{{slugCamelCase}}Hydrated' ] = 'true';
 			}
-			void actions.loadCounter();
+			void Promise.allSettled( [
+				actions.loadState(),
+				actions.loadBootstrap(),
+			] );
 		},
 	},
 } );

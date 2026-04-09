@@ -192,6 +192,105 @@ function {{phpPrefix}}_build_state_response( $post_id, $resource_key, $count ) {
 	);
 }
 
+function {{phpPrefix}}_block_tree_has_resource_key( $blocks, $block_name, $resource_key ) {
+	if ( ! is_array( $blocks ) ) {
+		return false;
+	}
+
+	foreach ( $blocks as $block ) {
+		if ( ! is_array( $block ) ) {
+			continue;
+		}
+
+		if ( (string) ( $block['blockName'] ?? '' ) === $block_name ) {
+			$attributes = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
+			$candidate_resource_key = array_key_exists( 'resourceKey', $attributes )
+				? (string) $attributes['resourceKey']
+				: 'primary';
+			if ( (string) $resource_key === $candidate_resource_key ) {
+				return true;
+			}
+		}
+
+		if (
+			isset( $block['innerBlocks'] ) &&
+			{{phpPrefix}}_block_tree_has_resource_key( $block['innerBlocks'], $block_name, $resource_key )
+		) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function {{phpPrefix}}_get_rendered_block_instance_key( $post_id, $block_name, $resource_key ) {
+	return 'wpt_pri_' . md5( implode( '|', array( (string) $block_name, (int) $post_id, (string) $resource_key ) ) );
+}
+
+function {{phpPrefix}}_record_rendered_block_instance( $post_id, $block_name, $resource_key ) {
+	if ( $post_id <= 0 || '' === (string) $resource_key || '' === (string) $block_name ) {
+		return;
+	}
+
+	set_transient(
+		{{phpPrefix}}_get_rendered_block_instance_key( $post_id, $block_name, $resource_key ),
+		1,
+		5 * MINUTE_IN_SECONDS
+	);
+}
+
+function {{phpPrefix}}_has_rendered_block_instance( $post_id, $resource_key ) {
+	if ( $post_id <= 0 || '' === (string) $resource_key ) {
+		return false;
+	}
+
+	if (
+		false !== get_transient(
+			{{phpPrefix}}_get_rendered_block_instance_key(
+				$post_id,
+				'{{namespace}}/{{slugKebabCase}}',
+				$resource_key
+			)
+		)
+	) {
+		return true;
+	}
+
+	$post = get_post( $post_id );
+	if ( ! ( $post instanceof WP_Post ) ) {
+		return false;
+	}
+
+	return {{phpPrefix}}_block_tree_has_resource_key(
+		parse_blocks( (string) $post->post_content ),
+		'{{namespace}}/{{slugKebabCase}}',
+		(string) $resource_key
+	);
+}
+
+function {{phpPrefix}}_build_bootstrap_response( $post_id, $resource_key ) {
+	$post          = get_post( $post_id );
+	$can_read_post =
+		$post instanceof WP_Post &&
+		(
+			is_post_publicly_viewable( $post ) ||
+			current_user_can( 'read_post', $post->ID )
+		);
+	$can_write = $post_id > 0 &&
+		is_user_logged_in() &&
+		$can_read_post &&
+		{{phpPrefix}}_has_rendered_block_instance( (int) $post_id, (string) $resource_key );
+	$response  = array(
+		'canWrite' => $can_write,
+	);
+
+	if ( $can_write ) {
+		$response['restNonce'] = wp_create_nonce( 'wp_rest' );
+	}
+
+	return $response;
+}
+
 // Route handlers are the main product-level extension point for parent-block request/response shaping.
 function {{phpPrefix}}_handle_get_state( WP_REST_Request $request ) {
 	$payload = {{phpPrefix}}_validate_and_sanitize_request(
@@ -216,6 +315,34 @@ function {{phpPrefix}}_handle_get_state( WP_REST_Request $request ) {
 			$count
 		)
 	);
+}
+
+function {{phpPrefix}}_handle_get_bootstrap( WP_REST_Request $request ) {
+	$payload = {{phpPrefix}}_validate_and_sanitize_request(
+		array(
+			'postId'      => $request->get_param( 'postId' ),
+			'resourceKey' => $request->get_param( 'resourceKey' ),
+		),
+		{{phpPrefix}}_get_rest_build_dir(),
+		'bootstrap-query',
+		'query'
+	);
+
+	if ( is_wp_error( $payload ) ) {
+		return $payload;
+	}
+
+	$response = rest_ensure_response(
+		{{phpPrefix}}_build_bootstrap_response(
+			(int) $payload['postId'],
+			(string) $payload['resourceKey']
+		)
+	);
+
+	$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0' );
+	$response->header( 'Pragma', 'no-cache' );
+	$response->header( 'Vary', 'Cookie' );
+	return $response;
 }
 
 function {{phpPrefix}}_handle_write_state( WP_REST_Request $request ) {
@@ -264,6 +391,18 @@ function {{phpPrefix}}_register_routes() {
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => '{{phpPrefix}}_handle_write_state',
 				'permission_callback' => '{{phpPrefix}}_can_write_authenticated',
+			),
+		)
+	);
+
+	register_rest_route(
+		'{{namespace}}/v1',
+		'/{{slugKebabCase}}/bootstrap',
+		array(
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => '{{phpPrefix}}_handle_get_bootstrap',
+				'permission_callback' => '__return_true',
 			),
 		)
 	);

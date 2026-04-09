@@ -12,6 +12,7 @@ import type {
 import { normalizeEndpointAuthDefinition } from '@wp-typia/project-tools/schema-core';
 import { BLOCKS } from '../../persistence-examples/scripts/block-config';
 import type {
+	PersistenceCounterBootstrapResponse,
 	PersistenceCounterIncrementRequest,
 	PersistenceCounterResponse,
 } from '../../persistence-examples/src/blocks/counter/api-types';
@@ -75,10 +76,12 @@ function readRequestBody(request: IncomingMessage): Promise<string> {
 function sendJson(
 	response: ServerResponse,
 	statusCode: number,
-	payload: unknown
+	payload: unknown,
+	headers: Record<string, string> = {}
 ): void {
 	response.writeHead(statusCode, {
 		'content-type': 'application/json; charset=utf-8',
+		...headers,
 	});
 	response.end(JSON.stringify(payload));
 }
@@ -91,6 +94,20 @@ function validateCounterResponse(
 	if (!validation.isValid || validation.data === undefined) {
 		throw new Error(
 			'The adapter produced a counter response that does not satisfy the shared TypeScript contract.'
+		);
+	}
+
+	return validation.data;
+}
+
+function validateCounterBootstrapResponse(
+	payload: PersistenceCounterBootstrapResponse
+): PersistenceCounterBootstrapResponse {
+	const validation = counterContractValidators.counterBootstrapResponse(payload);
+
+	if (!validation.isValid || validation.data === undefined) {
+		throw new Error(
+			'The adapter produced a bootstrap response that does not satisfy the shared TypeScript contract.'
 		);
 	}
 
@@ -147,6 +164,39 @@ async function handleGetCounter(
 			resourceKey: validation.data.resourceKey,
 			storage: 'custom-table',
 		})
+	);
+}
+
+async function handleGetCounterBootstrap(
+	request: IncomingMessage,
+	response: ServerResponse
+): Promise<void> {
+	const url = new URL(request.url ?? '/', 'http://127.0.0.1');
+	const queryInput = {
+		postId: parseQueryPostId(url.searchParams.get('postId')),
+		resourceKey: url.searchParams.get('resourceKey') ?? '',
+	};
+	const validation = counterContractValidators.counterBootstrapQuery(queryInput);
+
+	if (!validation.isValid || validation.data === undefined) {
+		sendJson(response, 400, {
+			errors: validation.errors,
+			message: 'The request did not match the counter bootstrap query contract.',
+		});
+		return;
+	}
+
+	sendJson(
+		response,
+		200,
+		validateCounterBootstrapResponse({
+			canWrite: true,
+			publicWriteExpiresAt: Math.floor(Date.now() / 1000) + 300,
+			publicWriteToken: 'adapter-proof-token',
+		}),
+		{
+			'cache-control': 'private, no-store',
+		}
 	);
 }
 
@@ -224,6 +274,10 @@ async function dispatchCounterRequest(
 	}
 
 	if (matchedRoute.method === 'GET') {
+		if (matchedRoute.operationId === 'getPersistenceCounterBootstrap') {
+			await handleGetCounterBootstrap(request, response);
+			return;
+		}
 		await handleGetCounter(request, response, counts);
 		return;
 	}

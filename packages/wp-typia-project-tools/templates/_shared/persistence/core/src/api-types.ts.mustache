@@ -5,12 +5,22 @@ export interface {{pascalCase}}StateQuery {
 	resourceKey: string & tags.MinLength< 1 > & tags.MaxLength< 100 >;
 }
 
+export interface {{pascalCase}}BootstrapQuery {
+	postId: number & tags.Type< 'uint32' >;
+	resourceKey: string & tags.MinLength< 1 > & tags.MaxLength< 100 >;
+}
+
 export interface {{pascalCase}}WriteStateRequest {
 	postId: number & tags.Type< 'uint32' >;
 	{{publicWriteRequestIdDeclaration}}
 	publicWriteToken?: string & tags.MinLength< 1 > & tags.MaxLength< 512 >;
 	resourceKey: string & tags.MinLength< 1 > & tags.MaxLength< 100 >;
 	delta?: number & tags.Minimum< 1 > & tags.Type< 'uint32' > & tags.Default< 1 >;
+}
+
+export interface {{pascalCase}}BootstrapResponse {
+	canWrite: boolean;
+	{{bootstrapCredentialDeclarations}}
 }
 
 export interface {{pascalCase}}StateResponse {

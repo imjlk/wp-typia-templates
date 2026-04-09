@@ -2,10 +2,12 @@ import { callEndpoint, resolveRestRouteUrl } from '@wp-typia/rest';
 
 import { resolveRestNonce } from '../../shared/rest';
 import type {
+	PersistenceLikeBootstrapQuery,
 	PersistenceLikeStatusQuery,
 	PersistenceToggleLikeRequest,
 } from './api-types';
 import {
+	getPersistenceLikeBootstrapEndpoint,
 	getPersistenceLikeStatusEndpoint,
 	togglePersistenceLikeStatusEndpoint,
 } from './api-client';
@@ -17,6 +19,13 @@ export const likeStatusEndpoint = {
 	} ),
 };
 
+export const likeBootstrapEndpoint = {
+	...getPersistenceLikeBootstrapEndpoint,
+	buildRequestOptions: () => ( {
+		url: resolveRestRouteUrl( getPersistenceLikeBootstrapEndpoint.path ),
+	} ),
+};
+
 export const toggleLikeEndpoint = {
 	...togglePersistenceLikeStatusEndpoint,
 	buildRequestOptions: () => ( {
@@ -24,21 +33,12 @@ export const toggleLikeEndpoint = {
 	} ),
 };
 
-export function fetchLikeStatus(
-	request: PersistenceLikeStatusQuery,
-	restNonce?: string
-) {
-	const nonce = resolveRestNonce( restNonce );
+export function fetchLikeStatus( request: PersistenceLikeStatusQuery ) {
+	return callEndpoint( likeStatusEndpoint, request );
+}
 
-	return callEndpoint( likeStatusEndpoint, request, {
-		requestOptions: nonce
-			? {
-					headers: {
-						'X-WP-Nonce': nonce,
-					},
-			  }
-			: undefined,
-	} );
+export function fetchLikeBootstrap( request: PersistenceLikeBootstrapQuery ) {
+	return callEndpoint( likeBootstrapEndpoint, request );
 }
 
 export function toggleLike(

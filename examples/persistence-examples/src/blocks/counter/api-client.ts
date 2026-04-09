@@ -4,6 +4,8 @@ import {
 	type EndpointCallOptions,
 } from '@wp-typia/api-client';
 import type {
+	PersistenceCounterBootstrapQuery,
+	PersistenceCounterBootstrapResponse,
 	PersistenceCounterIncrementRequest,
 	PersistenceCounterQuery,
 	PersistenceCounterResponse,
@@ -51,6 +53,31 @@ export function incrementPersistenceCounterState(
 ) {
 	return callEndpoint(
 		incrementPersistenceCounterStateEndpoint,
+		request,
+		options
+	);
+}
+
+export const getPersistenceCounterBootstrapEndpoint = createEndpoint<
+	PersistenceCounterBootstrapQuery,
+	PersistenceCounterBootstrapResponse
+>( {
+	authIntent: 'public',
+	authMode: 'public-read',
+	method: 'GET',
+	operationId: 'getPersistenceCounterBootstrap',
+	path: '/persistence-examples/v1/counter/bootstrap',
+	requestLocation: 'query',
+	validateRequest: apiValidators.counterBootstrapQuery,
+	validateResponse: apiValidators.counterBootstrapResponse,
+} );
+
+export function getPersistenceCounterBootstrap(
+	request: PersistenceCounterBootstrapQuery,
+	options: EndpointCallOptions
+) {
+	return callEndpoint(
+		getPersistenceCounterBootstrapEndpoint,
 		request,
 		options
 	);
