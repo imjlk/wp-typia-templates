@@ -77,12 +77,29 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 
 	run("bun", ["install"], { cwd: projectDir });
 
+	const installedManifest = JSON.parse(
+		fs.readFileSync(path.join(projectDir, "node_modules", "wp-typia", "package.json"), "utf8"),
+	);
+	const binEntry =
+		typeof installedManifest.bin === "string"
+			? installedManifest.bin
+			: installedManifest.bin?.["wp-typia"] ??
+				Object.values(installedManifest.bin ?? {})[0];
+	if (typeof binEntry !== "string" || binEntry.length === 0) {
+		throw new Error("Unable to resolve wp-typia CLI entry from the installed package manifest.");
+	}
+
 	const versionOutput = run(
 		"node",
-		[path.join(projectDir, "node_modules", "wp-typia", "bin", "wp-typia.js"), "--version"],
+		[path.join(projectDir, "node_modules", "wp-typia", binEntry), "--version"],
 		{ cwd: projectDir },
 	).trim();
-	const parsed = JSON.parse(versionOutput);
+	let parsed;
+	try {
+		parsed = JSON.parse(versionOutput);
+	} catch {
+		throw new Error(`wp-typia --version did not return JSON: ${versionOutput}`);
+	}
 
 	if (
 		!parsed ||
