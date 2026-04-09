@@ -18,11 +18,11 @@
 
 ### id
 
-• **id**: ``"basic"`` \| ``"interactivity"`` \| ``"persistence"`` \| ``"compound"``
+• **id**: `string`
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/template-registry.ts:53](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L53)
+[packages/wp-typia-project-tools/src/runtime/template-registry.ts:54](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L54)
 
 ___
 
@@ -32,7 +32,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/template-registry.ts:54](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L54)
+[packages/wp-typia-project-tools/src/runtime/template-registry.ts:55](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L55)
 
 ___
 
@@ -42,7 +42,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/template-registry.ts:55](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L55)
+[packages/wp-typia-project-tools/src/runtime/template-registry.ts:56](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L56)
 
 ___
 
@@ -52,7 +52,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/template-registry.ts:56](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L56)
+[packages/wp-typia-project-tools/src/runtime/template-registry.ts:57](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L57)
 
 ___
 
@@ -62,4 +62,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/template-registry.ts:57](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L57)
+[packages/wp-typia-project-tools/src/runtime/template-registry.ts:58](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L58)

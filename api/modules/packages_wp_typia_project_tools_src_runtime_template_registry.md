@@ -28,6 +28,7 @@
 - [SHARED\_TEST\_PRESET\_TEMPLATE\_ROOT](packages_wp_typia_project_tools_src_runtime_template_registry.md#shared_test_preset_template_root)
 - [SHARED\_WP\_ENV\_PRESET\_TEMPLATE\_ROOT](packages_wp_typia_project_tools_src_runtime_template_registry.md#shared_wp_env_preset_template_root)
 - [BUILTIN\_TEMPLATE\_IDS](packages_wp_typia_project_tools_src_runtime_template_registry.md#builtin_template_ids)
+- [OFFICIAL\_WORKSPACE\_TEMPLATE\_PACKAGE](packages_wp_typia_project_tools_src_runtime_template_registry.md#official_workspace_template_package)
 - [TEMPLATE\_REGISTRY](packages_wp_typia_project_tools_src_runtime_template_registry.md#template_registry)
 - [TEMPLATE\_IDS](packages_wp_typia_project_tools_src_runtime_template_registry.md#template_ids)
 
@@ -47,7 +48,7 @@
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/template-registry.ts:49](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L49)
+[packages/wp-typia-project-tools/src/runtime/template-registry.ts:50](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L50)
 
 ___
 
@@ -57,7 +58,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/template-registry.ts:50](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L50)
+[packages/wp-typia-project-tools/src/runtime/template-registry.ts:51](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L51)
 
 ## Variables
 
@@ -193,13 +194,23 @@ ___
 
 ___
 
+### OFFICIAL\_WORKSPACE\_TEMPLATE\_PACKAGE
+
+• `Const` **OFFICIAL\_WORKSPACE\_TEMPLATE\_PACKAGE**: ``"@wp-typia/create-workspace-template"``
+
+#### Defined in
+
+[packages/wp-typia-project-tools/src/runtime/template-registry.ts:49](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L49)
+
+___
+
 ### TEMPLATE\_REGISTRY
 
 • `Const` **TEMPLATE\_REGISTRY**: readonly [`TemplateDefinition`](../interfaces/packages_wp_typia_project_tools_src_runtime_template_registry.TemplateDefinition.md)[]
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/template-registry.ts:60](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L60)
+[packages/wp-typia-project-tools/src/runtime/template-registry.ts:61](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L61)
 
 ___
 
@@ -209,7 +220,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/template-registry.ts:91](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L91)
+[packages/wp-typia-project-tools/src/runtime/template-registry.ts:99](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L99)
 
 ## Functions
 
@@ -249,7 +260,7 @@ templateId is "basic" \| "interactivity" \| "persistence" \| "compound"
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/template-registry.ts:93](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L93)
+[packages/wp-typia-project-tools/src/runtime/template-registry.ts:101](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L101)
 
 ___
 
@@ -263,7 +274,7 @@ readonly [`TemplateDefinition`](../interfaces/packages_wp_typia_project_tools_sr
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/template-registry.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L97)
+[packages/wp-typia-project-tools/src/runtime/template-registry.ts:105](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L105)
 
 ___
 
@@ -283,7 +294,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/template-registry.ts:101](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L101)
+[packages/wp-typia-project-tools/src/runtime/template-registry.ts:109](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L109)
 
 ___
 
@@ -297,4 +308,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/template-registry.ts:109](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L109)
+[packages/wp-typia-project-tools/src/runtime/template-registry.ts:122](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/template-registry.ts#L122)

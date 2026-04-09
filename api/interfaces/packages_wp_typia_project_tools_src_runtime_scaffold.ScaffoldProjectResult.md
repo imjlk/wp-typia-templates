@@ -23,7 +23,7 @@
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:195](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L195)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:211](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L211)
 
 ___
 
@@ -33,7 +33,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:196](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L196)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:212](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L212)
 
 ___
 
@@ -43,7 +43,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:197](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L197)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:213](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L213)
 
 ___
 
@@ -53,7 +53,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:198](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L198)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:214](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L214)
 
 ___
 
@@ -63,7 +63,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:199](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L199)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:215](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L215)
 
 ___
 
@@ -73,4 +73,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:200](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L200)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:216](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L216)

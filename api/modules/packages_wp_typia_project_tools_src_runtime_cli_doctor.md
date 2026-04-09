@@ -67,4 +67,4 @@ When one or more checks fail.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-doctor.ts:669](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-doctor.ts#L669)
+[packages/wp-typia-project-tools/src/runtime/cli-doctor.ts:687](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-doctor.ts#L687)
