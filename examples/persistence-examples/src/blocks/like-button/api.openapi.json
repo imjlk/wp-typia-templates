@@ -104,12 +104,26 @@
 							]
 						},
 						"then": {
+							"properties": {
+								"restNonce": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 128
+								}
+							},
 							"required": [
 								"restNonce"
 							]
 						},
 						"else": {
 							"not": {
+								"properties": {
+									"restNonce": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 128
+									}
+								},
 								"required": [
 									"restNonce"
 								]

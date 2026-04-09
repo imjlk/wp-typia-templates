@@ -279,6 +279,32 @@ describe("schema-core", () => {
 		expect(projected.properties.count["x-typeTag"]).toBe("uint32");
 	});
 
+	test("projectJsonSchemaDocument preserves unsupported wp-typia type tags for the rest profile", () => {
+		const schema: JsonSchemaDocument = {
+			$schema: "https://json-schema.org/draft/2020-12/schema",
+			additionalProperties: false,
+			properties: {
+				id: {
+					maximum: 9007199254740991,
+					minimum: 0,
+					type: "number",
+					"x-typeTag": "uint64",
+				},
+			},
+			required: ["id"],
+			title: "RestUnsupportedTypeTag",
+			type: "object",
+		};
+
+		const projected = projectJsonSchemaDocument(schema, { profile: "rest" });
+		const idProperty = projected.properties.id as Record<string, unknown>;
+
+		expect(idProperty.type).toBe("number");
+		expect(idProperty.minimum).toBe(0);
+		expect(idProperty.maximum).toBe(9007199254740991);
+		expect(idProperty["x-typeTag"]).toBe("uint64");
+	});
+
 	test("projectJsonSchemaDocument removes wp-typia extension keys and projects uint32 for ai-structured-output", () => {
 		const schema: JsonSchemaDocument = {
 			$schema: "https://json-schema.org/draft/2020-12/schema",

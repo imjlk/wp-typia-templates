@@ -468,6 +468,18 @@ function applyProjectedTypeTag(
 	}
 }
 
+function canProjectTypeTag(typeTag: string): boolean {
+	switch (typeTag) {
+		case "uint32":
+		case "int32":
+		case "float":
+		case "double":
+			return true;
+		default:
+			return false;
+	}
+}
+
 function projectSchemaArrayItemsForAiStructuredOutput(
 	items: JsonSchemaObject[],
 	path: string,
@@ -568,7 +580,7 @@ function projectSchemaObjectForRest(
 	const projectedNode = cloneJsonSchemaNode(node);
 	const rawTypeTag = projectedNode[WP_TYPIA_OPENAPI_EXTENSION_KEYS.TYPE_TAG];
 
-	if (typeof rawTypeTag === "string") {
+	if (typeof rawTypeTag === "string" && canProjectTypeTag(rawTypeTag)) {
 		applyProjectedTypeTag(projectedNode, rawTypeTag, path);
 	}
 

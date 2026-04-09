@@ -69,7 +69,11 @@ export interface UseToggleLikeMutationOptions< Context = unknown >
 			PersistenceToggleLikeResponse,
 			ToggleLikeMutationContext< Context >
 		>,
-		'invalidate' | 'onError' | 'onMutate' | 'resolveCallOptions'
+		| 'invalidate'
+		| 'onError'
+		| 'onMutate'
+		| 'onSuccess'
+		| 'resolveCallOptions'
 	> {
 	onError?: (
 		error: unknown,
@@ -81,6 +85,13 @@ export interface UseToggleLikeMutationOptions< Context = unknown >
 		request: PersistenceToggleLikeRequest,
 		client: import('@wp-typia/rest/react').EndpointDataClient
 	) => Context | Promise< Context >;
+	onSuccess?: (
+		data: PersistenceToggleLikeResponse | undefined,
+		request: PersistenceToggleLikeRequest,
+		validation: import('@wp-typia/rest').ValidationResult< PersistenceToggleLikeResponse >,
+		client: import('@wp-typia/rest/react').EndpointDataClient,
+		context: Context | undefined
+	) => void | Promise< void >;
 	restNonce?: string;
 }
 
@@ -109,7 +120,8 @@ export function usePersistenceLikeBootstrapQuery<
 export function useToggleLikeMutation< Context = unknown >(
 	options: UseToggleLikeMutationOptions< Context > = {}
 ) {
-	const { onError, onMutate, restNonce, ...mutationOptions } = options;
+	const { onError, onMutate, onSuccess, restNonce, ...mutationOptions } =
+		options;
 
 	return useEndpointMutation( toggleLikeEndpoint, {
 		...mutationOptions,
@@ -226,6 +238,46 @@ export function useToggleLikeMutation< Context = unknown >(
 				previous,
 				userContext,
 			};
+		},
+		onSuccess: async ( data, request, validation, client, context ) => {
+			if ( data ) {
+				const queryRequest = {
+					postId: request.postId,
+					resourceKey: request.resourceKey,
+				} satisfies PersistenceLikeStatusQuery;
+
+				client.setData(
+					likeStatusEndpoint,
+					queryRequest,
+					( current ) =>
+						current
+							? {
+									...current,
+									count: data.count,
+									likedByCurrentUser: data.likedByCurrentUser,
+							  }
+							: current
+				);
+				client.setData(
+					likeBootstrapEndpoint,
+					queryRequest,
+					( current ) =>
+						current
+							? {
+									...current,
+									likedByCurrentUser: data.likedByCurrentUser,
+							  }
+							: current
+				);
+			}
+
+			await onSuccess?.(
+				data,
+				request,
+				validation,
+				client,
+				context?.userContext
+			);
 		},
 		resolveCallOptions: () => buildNonceRequestOptions( restNonce ),
 	} );

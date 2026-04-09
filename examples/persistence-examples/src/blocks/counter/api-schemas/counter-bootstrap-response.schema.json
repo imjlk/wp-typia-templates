@@ -36,6 +36,20 @@
 				]
 			},
 			"then": {
+				"properties": {
+					"publicWriteExpiresAt": {
+						"type": "integer",
+						"x-typeTag": "uint32",
+						"minimum": 0,
+						"maximum": 4294967295,
+						"multipleOf": 1
+					},
+					"publicWriteToken": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 512
+					}
+				},
 				"required": [
 					"publicWriteExpiresAt",
 					"publicWriteToken"
@@ -43,6 +57,13 @@
 			},
 			"else": {
 				"not": {
+					"properties": {
+						"publicWriteToken": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 512
+						}
+					},
 					"required": [
 						"publicWriteToken"
 					]
