@@ -7,7 +7,6 @@
   "workspaces": [
     "packages/wp-typia",
     "packages/wp-typia-project-tools",
-    "packages/create",
     "packages/create-workspace-template",
     "packages/wp-typia-block-runtime",
     "packages/wp-typia-rest",
