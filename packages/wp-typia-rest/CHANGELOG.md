@@ -1,5 +1,11 @@
 # @wp-typia/rest
 
+## 0.3.4 — 2026-04-09
+
+### Patch changes
+
+- [a451f32](https://github.com/imjlk/wp-typia/commit/a451f327279e717c4bd98eb4c400e9d88c42017a) Prevent the `@wp-typia/rest` postpack restore step from reverting the manifest before npm registry metadata is finalized during publish, while still restoring after the publish wrapper completes. — Thanks @imjlk!
+
 ## 0.3.3 — 2026-04-09
 
 ### Patch changes
