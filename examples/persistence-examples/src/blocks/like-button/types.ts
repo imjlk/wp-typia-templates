@@ -48,6 +48,7 @@ export interface PersistenceLikeButtonState {
 }
 
 export interface PersistenceLikeButtonClientState {
+	bootstrapError: string;
 	liked: boolean;
 	writeNonce: string;
 }

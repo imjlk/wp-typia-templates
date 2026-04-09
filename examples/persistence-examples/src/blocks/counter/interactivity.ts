@@ -37,11 +37,31 @@ function getClientState(
 	}
 
 	context.client = {
+		bootstrapError: '',
 		writeExpiry: 0,
 		writeToken: '',
 	};
 
 	return context.client;
+}
+
+function clearBootstrapError(
+	context: PersistenceCounterContext,
+	clientState: PersistenceCounterClientState
+) {
+	if ( context.error === clientState.bootstrapError ) {
+		context.error = '';
+	}
+	clientState.bootstrapError = '';
+}
+
+function setBootstrapError(
+	context: PersistenceCounterContext,
+	clientState: PersistenceCounterClientState,
+	message: string
+) {
+	clientState.bootstrapError = message;
+	context.error = message;
 }
 
 const { actions, state } = store( 'persistenceExamplesCounter', {
@@ -87,6 +107,7 @@ const { actions, state } = store( 'persistenceExamplesCounter', {
 			if ( context.postId <= 0 || ! context.resourceKey ) {
 				context.bootstrapReady = true;
 				context.canWrite = false;
+				clientState.bootstrapError = '';
 				clientState.writeExpiry = 0;
 				clientState.writeToken = '';
 				return;
@@ -135,7 +156,7 @@ const { actions, state } = store( 'persistenceExamplesCounter', {
 						result.data.canWrite === true &&
 						clientState.writeToken.length > 0 &&
 						! hasExpiredPublicWriteToken( clientState.writeExpiry );
-					context.error = '';
+					clearBootstrapError( context, clientState );
 					bootstrapSucceeded = true;
 					break;
 				} catch ( error ) {
@@ -158,7 +179,7 @@ const { actions, state } = store( 'persistenceExamplesCounter', {
 				context.canWrite = false;
 				clientState.writeExpiry = 0;
 				clientState.writeToken = '';
-				context.error = lastBootstrapError;
+				setBootstrapError( context, clientState, lastBootstrapError );
 			}
 			context.isBootstrapping = false;
 		},
@@ -222,6 +243,7 @@ const { actions, state } = store( 'persistenceExamplesCounter', {
 		init() {
 			const context = getContext< PersistenceCounterContext >();
 			context.client = {
+				bootstrapError: '',
 				writeExpiry: 0,
 				writeToken: '',
 			};

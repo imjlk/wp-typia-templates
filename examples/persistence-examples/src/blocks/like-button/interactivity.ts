@@ -31,11 +31,31 @@ function getClientState(
 	}
 
 	context.client = {
+		bootstrapError: '',
 		liked: false,
 		writeNonce: '',
 	};
 
 	return context.client;
+}
+
+function clearBootstrapError(
+	context: PersistenceLikeButtonContext,
+	clientState: PersistenceLikeButtonClientState
+) {
+	if ( context.error === clientState.bootstrapError ) {
+		context.error = '';
+	}
+	clientState.bootstrapError = '';
+}
+
+function setBootstrapError(
+	context: PersistenceLikeButtonContext,
+	clientState: PersistenceLikeButtonClientState,
+	message: string
+) {
+	clientState.bootstrapError = message;
+	context.error = message;
 }
 
 const { actions, state } = store( 'persistenceExamplesLikeButton', {
@@ -82,6 +102,7 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 				context.bootstrapReady = true;
 				context.buttonLabel = context.likeLabel;
 				context.canWrite = false;
+				clientState.bootstrapError = '';
 				clientState.liked = false;
 				clientState.writeNonce = '';
 				return;
@@ -129,7 +150,7 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 						context,
 						clientState.liked
 					);
-					context.error = '';
+					clearBootstrapError( context, clientState );
 					bootstrapSucceeded = true;
 					break;
 				} catch ( error ) {
@@ -152,7 +173,7 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 				context.canWrite = false;
 				clientState.liked = false;
 				clientState.writeNonce = '';
-				context.error = lastBootstrapError;
+				setBootstrapError( context, clientState, lastBootstrapError );
 			}
 			context.isBootstrapping = false;
 		},
@@ -212,6 +233,7 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 		init() {
 			const context = getContext< PersistenceLikeButtonContext >();
 			context.client = {
+				bootstrapError: '',
 				liked: false,
 				writeNonce: '',
 			};

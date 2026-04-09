@@ -42,6 +42,7 @@ export interface PersistenceCounterState {
 }
 
 export interface PersistenceCounterClientState {
+	bootstrapError: string;
 	writeExpiry: number;
 	writeToken: string;
 }
