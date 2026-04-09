@@ -1,19 +1,13 @@
 import { getContext, store } from '@wordpress/interactivity';
 import { generatePublicWriteRequestId } from '@wp-typia/block-runtime/identifiers';
 
-import {
-	fetchCounter,
-	fetchCounterBootstrap,
-	incrementCounter,
-} from './api';
+import { fetchCounter, fetchCounterBootstrap, incrementCounter } from './api';
 import type {
 	PersistenceCounterContext,
 	PersistenceCounterState,
 } from './types';
 
-function hasExpiredPublicWriteToken(
-	expiresAt?: number
-): boolean {
+function hasExpiredPublicWriteToken( expiresAt?: number ): boolean {
 	return (
 		typeof expiresAt === 'number' &&
 		expiresAt > 0 &&

@@ -90,6 +90,18 @@ const COUNTER_WORDPRESS_AI_MANIFEST: EndpointManifestDefinition = {
 	),
 };
 
+function filterCounterWordPressAiManifest(
+	manifest: EndpointManifestDefinition
+): EndpointManifestDefinition {
+	return {
+		...manifest,
+		endpoints: manifest.endpoints.filter(
+			( endpoint ) =>
+				endpoint.operationId !== 'getPersistenceCounterBootstrap'
+		),
+	};
+}
+
 interface GeneratedArtifactFile {
 	content: string;
 	path: string;
@@ -262,7 +274,9 @@ export async function buildCounterWordPressAiArtifacts( options?: {
 	abilitiesDocument: ProjectedWordPressAbilitiesDocument;
 	aiResponseSchema: Record< string, unknown >;
 } > {
-	const manifest = options?.manifest ?? COUNTER_WORDPRESS_AI_MANIFEST;
+	const manifest = filterCounterWordPressAiManifest(
+		options?.manifest ?? COUNTER_WORDPRESS_AI_MANIFEST
+	);
 	const abilityConfig = ( options?.abilityConfig ??
 		COUNTER_WORDPRESS_ABILITY_CONFIG ) as Record<
 		string,

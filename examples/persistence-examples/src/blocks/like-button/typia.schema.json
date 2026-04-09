@@ -31,9 +31,7 @@
 			"maxLength": 100
 		}
 	},
-	"required": [
-		"content"
-	],
+	"required": ["content"],
 	"title": "PersistenceLikeButtonAttributes",
 	"type": "object"
 }

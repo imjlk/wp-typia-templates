@@ -1,10 +1,6 @@
 import { getContext, store } from '@wordpress/interactivity';
 
-import {
-	fetchLikeBootstrap,
-	fetchLikeStatus,
-	toggleLike,
-} from './api';
+import { fetchLikeBootstrap, fetchLikeStatus, toggleLike } from './api';
 import type {
 	PersistenceLikeButtonContext,
 	PersistenceLikeButtonState,
@@ -103,7 +99,8 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 					result.data.canWrite === true &&
 					typeof state.restNonce === 'string' &&
 					state.restNonce.length > 0;
-				state.likedByCurrentUser = result.data.likedByCurrentUser === true;
+				state.likedByCurrentUser =
+					result.data.likedByCurrentUser === true;
 				state.buttonLabel = getButtonLabel(
 					context,
 					state.likedByCurrentUser

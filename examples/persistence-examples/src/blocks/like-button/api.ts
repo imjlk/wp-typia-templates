@@ -33,15 +33,11 @@ export const toggleLikeEndpoint = {
 	} ),
 };
 
-export function fetchLikeStatus(
-	request: PersistenceLikeStatusQuery
-) {
+export function fetchLikeStatus( request: PersistenceLikeStatusQuery ) {
 	return callEndpoint( likeStatusEndpoint, request );
 }
 
-export function fetchLikeBootstrap(
-	request: PersistenceLikeBootstrapQuery
-) {
+export function fetchLikeBootstrap( request: PersistenceLikeBootstrapQuery ) {
 	return callEndpoint( likeBootstrapEndpoint, request );
 }
 

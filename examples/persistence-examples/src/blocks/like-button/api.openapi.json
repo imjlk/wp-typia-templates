@@ -15,10 +15,7 @@
 						"maxLength": 100
 					}
 				},
-				"required": [
-					"postId",
-					"resourceKey"
-				],
+				"required": ["postId", "resourceKey"],
 				"title": "PersistenceLikeStatusQuery",
 				"type": "object"
 			},
@@ -36,10 +33,7 @@
 						"maxLength": 100
 					}
 				},
-				"required": [
-					"postId",
-					"resourceKey"
-				],
+				"required": ["postId", "resourceKey"],
 				"title": "PersistenceLikeBootstrapQuery",
 				"type": "object"
 			},
@@ -57,10 +51,7 @@
 						"maxLength": 100
 					}
 				},
-				"required": [
-					"postId",
-					"resourceKey"
-				],
+				"required": ["postId", "resourceKey"],
 				"title": "PersistenceToggleLikeRequest",
 				"type": "object"
 			},
@@ -80,10 +71,7 @@
 						"maxLength": 128
 					}
 				},
-				"required": [
-					"canWrite",
-					"likedByCurrentUser"
-				],
+				"required": ["canWrite", "likedByCurrentUser"],
 				"title": "PersistenceLikeBootstrapResponse",
 				"type": "object"
 			},
@@ -106,18 +94,11 @@
 						"minimum": 0
 					},
 					"storage": {
-						"enum": [
-							"custom-table"
-						],
+						"enum": ["custom-table"],
 						"type": "string"
 					}
 				},
-				"required": [
-					"postId",
-					"resourceKey",
-					"count",
-					"storage"
-				],
+				"required": ["postId", "resourceKey", "count", "storage"],
 				"title": "PersistenceLikeStatusResponse",
 				"type": "object"
 			},
@@ -143,9 +124,7 @@
 						"type": "boolean"
 					},
 					"storage": {
-						"enum": [
-							"custom-table"
-						],
+						"enum": ["custom-table"],
 						"type": "string"
 					}
 				},
@@ -190,9 +169,7 @@
 						"description": "Successful response"
 					}
 				},
-				"tags": [
-					"Like Button"
-				],
+				"tags": ["Like Button"],
 				"x-typia-authIntent": "public",
 				"x-wp-typia-authPolicy": "public-read",
 				"summary": "Read the current like status.",
@@ -232,9 +209,7 @@
 						"description": "Successful response"
 					}
 				},
-				"tags": [
-					"Like Button"
-				],
+				"tags": ["Like Button"],
 				"x-typia-authIntent": "authenticated",
 				"x-wp-typia-authPolicy": "authenticated-rest-nonce",
 				"summary": "Toggle the current like status.",
@@ -270,9 +245,7 @@
 						"description": "Successful response"
 					}
 				},
-				"tags": [
-					"Like Button"
-				],
+				"tags": ["Like Button"],
 				"x-typia-authIntent": "public",
 				"x-wp-typia-authPolicy": "public-read",
 				"summary": "Read fresh viewer-aware like bootstrap state.",

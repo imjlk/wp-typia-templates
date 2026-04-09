@@ -17,18 +17,11 @@
 			"minimum": 0
 		},
 		"storage": {
-			"enum": [
-				"custom-table"
-			],
+			"enum": ["custom-table"],
 			"type": "string"
 		}
 	},
-	"required": [
-		"postId",
-		"resourceKey",
-		"count",
-		"storage"
-	],
+	"required": ["postId", "resourceKey", "count", "storage"],
 	"title": "PersistenceCounterResponse",
 	"type": "object"
 }

@@ -20,9 +20,7 @@
 			"type": "boolean"
 		},
 		"storage": {
-			"enum": [
-				"custom-table"
-			],
+			"enum": ["custom-table"],
 			"type": "string"
 		}
 	},

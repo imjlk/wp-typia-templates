@@ -53,7 +53,8 @@ export const BLOCKS = [
 					path: '/persistence-examples/v1/counter/bootstrap',
 					queryContract: 'counter-bootstrap-query',
 					responseContract: 'counter-bootstrap-response',
-					summary: 'Read fresh counter write bootstrap state for the current viewer.',
+					summary:
+						'Read fresh counter write bootstrap state for the current viewer.',
 					tags: [ 'Counter' ],
 				},
 			],

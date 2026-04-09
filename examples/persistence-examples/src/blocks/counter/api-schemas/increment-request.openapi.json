@@ -31,11 +31,7 @@
 						"minimum": 1
 					}
 				},
-				"required": [
-					"postId",
-					"publicWriteRequestId",
-					"resourceKey"
-				],
+				"required": ["postId", "publicWriteRequestId", "resourceKey"],
 				"title": "PersistenceCounterIncrementRequest",
 				"type": "object"
 			}
