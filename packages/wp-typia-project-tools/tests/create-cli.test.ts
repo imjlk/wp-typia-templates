@@ -1189,7 +1189,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
         path.join(targetDir, "src", "api.ts"),
         "utf8"
       );
-      const generatedApiClient = fs.readFileSync(
+      const seededApiClient = fs.readFileSync(
         path.join(targetDir, "src", "api-client.ts"),
         "utf8"
       );
@@ -1416,8 +1416,8 @@ describe("@wp-typia/project-tools scaffolding", () => {
       expect(generatedStyle).toContain(
         ".wp-block-create-block-demo-persistence-public-frontend"
       );
-      expect(generatedApiClient).toContain("from '@wp-typia/api-client'");
-      expect(generatedApiClient).toContain(
+      expect(seededApiClient).toContain("from '@wp-typia/api-client'");
+      expect(seededApiClient).toContain(
         "export const getDemoPersistencePublicBootstrapEndpoint"
       );
       expect(
@@ -1502,13 +1502,17 @@ describe("@wp-typia/project-tools scaffolding", () => {
       runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts", [
         "--check",
       ]);
-      expect(generatedApiClient).toContain(
+      const syncedApiClient = fs.readFileSync(
+        path.join(targetDir, "src", "api-client.ts"),
+        "utf8"
+      );
+      expect(syncedApiClient).toContain(
         "export const getDemoPersistencePublicBootstrapEndpoint"
       );
-      expect(generatedApiClient).toContain(
+      expect(syncedApiClient).toContain(
         "export const getDemoPersistencePublicStateEndpoint"
       );
-      expect(generatedApiClient).toContain(
+      expect(syncedApiClient).toContain(
         "export function writeDemoPersistencePublicState("
       );
     },

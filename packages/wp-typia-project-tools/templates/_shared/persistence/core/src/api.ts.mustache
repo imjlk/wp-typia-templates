@@ -26,6 +26,8 @@ function createRestEndpoint< Req, Res >(
 		validateResponse: RestApiEndpoint< Req, Res >[ 'validateResponse' ];
 	}
 ): RestApiEndpoint< Req, Res > {
+	// Strip generator-only helper fields so the runtime client only sees the
+	// canonical RestApiEndpoint surface it expects.
 	return {
 		method: endpoint.method,
 		path: endpoint.path,

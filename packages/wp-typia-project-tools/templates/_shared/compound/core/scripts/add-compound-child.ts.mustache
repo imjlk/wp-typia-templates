@@ -85,7 +85,17 @@ function toTitleCase( input: string ): string {
 }
 
 function readJsonFile( filePath: string ): Record< string, unknown > {
-	const parsed = JSON.parse( fs.readFileSync( filePath, 'utf8' ) );
+	let parsed: unknown;
+
+	try {
+		parsed = JSON.parse( fs.readFileSync( filePath, 'utf8' ) );
+	} catch ( error ) {
+		const errorMessage = error instanceof Error ? error.message : String( error );
+		throw new Error(
+			`Unable to parse JSON from ${ filePath }: ${ errorMessage }`,
+			{ cause: error instanceof Error ? error : undefined }
+		);
+	}
 
 	if ( ! parsed || typeof parsed !== 'object' || Array.isArray( parsed ) ) {
 		throw new Error( `${ filePath } must contain a JSON object.` );
@@ -162,8 +172,8 @@ function resolveCompoundParentConfig(): CompoundParentConfig {
 			: toTitleCase( parentSlug );
 	const textDomain =
 		typeof blockJson.textdomain === 'string' &&
-		toKebabCase( blockJson.textdomain ).length > 0
-			? toKebabCase( blockJson.textdomain )
+		blockJson.textdomain.trim().length > 0
+			? blockJson.textdomain.trim()
 			: parentSlug;
 
 	return {

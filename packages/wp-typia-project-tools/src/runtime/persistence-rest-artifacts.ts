@@ -23,6 +23,13 @@ interface SyncPersistenceRestArtifactsOptions {
 	variables: PersistenceTemplateVariablesLike;
 }
 
+/**
+ * Build the canonical persistence REST endpoint manifest for scaffold-time
+ * schema, OpenAPI, and client generation.
+ *
+ * @param variables Persistence template naming and auth metadata.
+ * @returns Endpoint manifest covering bootstrap, state read, and state write operations.
+ */
 export function buildPersistenceEndpointManifest(
 	variables: PersistenceTemplateVariablesLike,
 ) {
@@ -86,6 +93,12 @@ export function buildPersistenceEndpointManifest(
 	});
 }
 
+/**
+ * Generate the REST-derived persistence artifacts for a scaffolded block.
+ *
+ * @param options Scaffold output paths plus persistence template variables.
+ * @returns A promise that resolves after schema, OpenAPI, and client files are written.
+ */
 export async function syncPersistenceRestArtifacts({
 	apiTypesFile,
 	outputDir,

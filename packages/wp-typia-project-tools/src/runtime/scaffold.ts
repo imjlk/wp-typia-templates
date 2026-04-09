@@ -145,6 +145,14 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	persistencePolicy: PersistencePolicy;
 }
 
+/**
+ * Resolve scaffold template input from either built-in template ids or custom
+ * template identifiers such as local paths, GitHub refs, and npm packages.
+ *
+ * The callback returns `Promise<string>` on purpose so interactive selection
+ * can surface custom ids. Downstream code uses `isBuiltInTemplateId()` to
+ * distinguish built-in templates from custom sources.
+ */
 interface ResolveTemplateOptions {
 	isInteractive?: boolean;
 	selectTemplate?: () => Promise<string>;
@@ -749,6 +757,15 @@ async function writeStarterManifestFiles(
 	}
 }
 
+/**
+ * Seed REST-derived persistence artifacts into a newly scaffolded built-in
+ * project before the first manual `sync-rest` run.
+ *
+ * @param targetDir Absolute scaffold target directory.
+ * @param templateId Built-in template id being scaffolded.
+ * @param variables Resolved scaffold template variables for the project.
+ * @returns A promise that resolves after any required persistence artifacts are generated.
+ */
 async function seedBuiltInPersistenceArtifacts(
 	targetDir: string,
 	templateId: BuiltInTemplateId,
@@ -776,6 +793,17 @@ async function seedBuiltInPersistenceArtifacts(
 	});
 }
 
+/**
+ * Locate a node_modules directory containing `typia` relative to the project
+ * tools package root.
+ *
+ * Search order:
+ * 1. `PROJECT_TOOLS_PACKAGE_ROOT/node_modules`
+ * 2. The monorepo root resolved from `PROJECT_TOOLS_PACKAGE_ROOT`
+ * 3. The monorepo root `node_modules`
+ *
+ * @returns The first matching path, or `null` when no candidate contains `typia`.
+ */
 function resolveScaffoldGeneratorNodeModulesPath(): string | null {
 	const candidates = [
 		path.join(PROJECT_TOOLS_PACKAGE_ROOT, "node_modules"),
@@ -792,6 +820,19 @@ function resolveScaffoldGeneratorNodeModulesPath(): string | null {
 	return null;
 }
 
+/**
+ * Temporarily symlink a scaffold generator node_modules directory into the
+ * target project while running an async callback.
+ *
+ * The helper resolves the source path via `resolveScaffoldGeneratorNodeModulesPath()`
+ * and uses `EPHEMERAL_NODE_MODULES_LINK_TYPE` for the symlink. The temporary
+ * link is removed in the `finally` block so cleanup still happens if the
+ * callback throws.
+ *
+ * @param targetDir Absolute scaffold target directory.
+ * @param callback Async work that requires a resolvable `node_modules`.
+ * @returns A promise that resolves after the callback and cleanup complete.
+ */
 async function withEphemeralScaffoldNodeModules(
 	targetDir: string,
 	callback: () => Promise<void>,
