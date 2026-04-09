@@ -64,12 +64,27 @@ function normalizeWorkspaceSpec(packageName, spec, versions) {
 	return protocolValue;
 }
 
+function hasWorkspaceProtocolDependency(manifest) {
+	return DEPENDENCY_FIELDS.some((field) => {
+		const section = manifest[field];
+		if (!section || typeof section !== "object") {
+			return false;
+		}
+
+		return Object.values(section).some(
+			(spec) => typeof spec === "string" && spec.startsWith("workspace:"),
+		);
+	});
+}
+
 function prepareManifest() {
 	const currentSource = fs.readFileSync(packageJsonPath, "utf8");
 	const manifest = JSON.parse(currentSource);
 	const versions = getWorkspacePackageVersions();
 
-	fs.writeFileSync(backupPath, currentSource, "utf8");
+	if (!fs.existsSync(backupPath) || hasWorkspaceProtocolDependency(manifest)) {
+		fs.writeFileSync(backupPath, currentSource, "utf8");
+	}
 
 	for (const field of DEPENDENCY_FIELDS) {
 		const section = manifest[field];
