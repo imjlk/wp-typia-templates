@@ -557,6 +557,10 @@ describe("@wp-typia/rest/react", () => {
 			client,
 		);
 
+		await waitForAssertion(() => {
+			expect(fetchCount).toBe(1);
+		});
+
 		client.invalidate(endpoint, request);
 		rejectFirstFetch(new Error("offline"));
 
