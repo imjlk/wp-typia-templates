@@ -5,11 +5,17 @@ import {
 	type ValidationResult,
 } from '@wp-typia/api-client';
 import type {
+	{{pascalCase}}BootstrapQuery,
+	{{pascalCase}}BootstrapResponse,
 	{{pascalCase}}StateQuery,
 	{{pascalCase}}StateResponse,
 	{{pascalCase}}WriteStateRequest,
 } from './api-types';
 
+const validateBootstrapQuery =
+	typia.createValidate< {{pascalCase}}BootstrapQuery >();
+const validateBootstrapResponse =
+	typia.createValidate< {{pascalCase}}BootstrapResponse >();
 const validateStateQuery = typia.createValidate< {{pascalCase}}StateQuery >();
 const validateWriteStateRequest =
 	typia.createValidate< {{pascalCase}}WriteStateRequest >();
@@ -17,6 +23,14 @@ const validateStateResponse =
 	typia.createValidate< {{pascalCase}}StateResponse >();
 
 export const apiValidators = {
+	bootstrapQuery: (
+		input: unknown
+	): ValidationResult< {{pascalCase}}BootstrapQuery > =>
+		toValidationResult( validateBootstrapQuery( input ) ),
+	bootstrapResponse: (
+		input: unknown
+	): ValidationResult< {{pascalCase}}BootstrapResponse > =>
+		toValidationResult( validateBootstrapResponse( input ) ),
 	stateQuery: (
 		input: unknown
 	): ValidationResult< {{pascalCase}}StateQuery > =>

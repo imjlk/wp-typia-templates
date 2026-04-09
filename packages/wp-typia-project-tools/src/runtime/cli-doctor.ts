@@ -9,7 +9,7 @@ import {
 	HOOKED_BLOCK_ANCHOR_PATTERN,
 	HOOKED_BLOCK_POSITION_SET,
 } from "./hooked-blocks.js";
-import { listTemplates } from "./template-registry.js";
+import { isBuiltInTemplateId, listTemplates } from "./template-registry.js";
 import { readWorkspaceInventory, type WorkspaceInventory } from "./workspace-inventory.js";
 import {
 	getInvalidWorkspaceProjectReason,
@@ -477,29 +477,42 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 	});
 
 	for (const template of listTemplates()) {
+		if (!isBuiltInTemplateId(template.id)) {
+			const hasAssets =
+				fs.existsSync(template.templateDir) &&
+				fs.existsSync(path.join(template.templateDir, "package.json.mustache"));
+			checks.push({
+				status: hasAssets ? "pass" : "fail",
+				label: `Template ${template.id}`,
+				detail: hasAssets ? template.templateDir : "Missing core template assets",
+			});
+			continue;
+		}
+
+		const builtInTemplateId = template.id;
 		const layerDirs =
-			template.id === "persistence"
+			builtInTemplateId === "persistence"
 				? Array.from(
 						new Set([
-							...getBuiltInTemplateLayerDirs(template.id, { persistencePolicy: "authenticated" }),
-							...getBuiltInTemplateLayerDirs(template.id, { persistencePolicy: "public" }),
+							...getBuiltInTemplateLayerDirs(builtInTemplateId, { persistencePolicy: "authenticated" }),
+							...getBuiltInTemplateLayerDirs(builtInTemplateId, { persistencePolicy: "public" }),
 						]),
 					)
-				: template.id === "compound"
+				: builtInTemplateId === "compound"
 					? Array.from(
 							new Set([
-								...getBuiltInTemplateLayerDirs(template.id),
-								...getBuiltInTemplateLayerDirs(template.id, {
+								...getBuiltInTemplateLayerDirs(builtInTemplateId),
+								...getBuiltInTemplateLayerDirs(builtInTemplateId, {
 									persistenceEnabled: true,
 									persistencePolicy: "authenticated",
 								}),
-								...getBuiltInTemplateLayerDirs(template.id, {
+								...getBuiltInTemplateLayerDirs(builtInTemplateId, {
 									persistenceEnabled: true,
 									persistencePolicy: "public",
 								}),
 							]),
 						)
-					: getBuiltInTemplateLayerDirs(template.id);
+					: getBuiltInTemplateLayerDirs(builtInTemplateId);
 		const hasAssets =
 			layerDirs.every((layerDir) => fs.existsSync(layerDir)) &&
 			layerDirs.some((layerDir) => fs.existsSync(path.join(layerDir, "package.json.mustache"))) &&

@@ -27,6 +27,9 @@ export function createTestScaffoldTemplateVariables(
 		isPublicPersistencePolicy: "false",
 		bootstrapCredentialDeclarations:
 			"restNonce?: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;",
+		persistencePolicyDescriptionJson: JSON.stringify(
+			"Writes require a logged-in user and a valid REST nonce.",
+		),
 		keyword: "demo",
 		namespace: "demo",
 		needsMigration: "false",

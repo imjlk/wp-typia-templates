@@ -24,6 +24,7 @@ import {
 	writeInitialMigrationScaffold,
 	writeMigrationConfig,
 } from "./migration-project.js";
+import { syncPersistenceRestArtifacts } from "./persistence-rest-artifacts.js";
 import {
 	getCompoundExtensionWorkflowSection,
 	getOptionalOnboardingNote,
@@ -46,7 +47,12 @@ import {
 	isRemovedBuiltInTemplateId,
 } from "./template-defaults.js";
 import { copyInterpolatedDirectory } from "./template-render.js";
-import { TEMPLATE_IDS, getTemplateById, isBuiltInTemplateId } from "./template-registry.js";
+import {
+	PROJECT_TOOLS_PACKAGE_ROOT,
+	TEMPLATE_IDS,
+	getTemplateById,
+	isBuiltInTemplateId,
+} from "./template-registry.js";
 import type { BuiltInTemplateId } from "./template-registry.js";
 import { resolveTemplateSource } from "./template-source.js";
 
@@ -54,6 +60,7 @@ const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
 const PHP_PREFIX_PATTERN = /^[a-z_][a-z0-9_]*$/;
 const PHP_PREFIX_MAX_LENGTH = 50;
 const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
+const EPHEMERAL_NODE_MODULES_LINK_TYPE = process.platform === "win32" ? "junction" : "dir";
 const LOCKFILES: Record<PackageManagerId, string[]> = {
 	bun: ["bun.lock", "bun.lockb"],
 	npm: ["package-lock.json"],
@@ -120,6 +127,7 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	isAuthenticatedPersistencePolicy: "false" | "true";
 	isPublicPersistencePolicy: "false" | "true";
 	bootstrapCredentialDeclarations: string;
+	persistencePolicyDescriptionJson: string;
 	publicWriteRequestIdDeclaration: string;
 	restPackageVersion: string;
 	restWriteAuthIntent: "authenticated" | "public-write-protected";
@@ -139,7 +147,7 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 
 interface ResolveTemplateOptions {
 	isInteractive?: boolean;
-	selectTemplate?: () => Promise<BuiltInTemplateId>;
+	selectTemplate?: () => Promise<string>;
 	templateId?: string;
 	yes?: boolean;
 }
@@ -552,6 +560,11 @@ export function getTemplateVariables(
 			persistencePolicy === "public"
 				? "publicWriteExpiresAt?: number & tags.Type< 'uint32' >;\n\tpublicWriteToken?: string & tags.MinLength< 1 > & tags.MaxLength< 512 >;"
 				: "restNonce?: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;",
+		persistencePolicyDescriptionJson: JSON.stringify(
+			persistencePolicy === "authenticated"
+				? "Writes require a logged-in user and a valid REST nonce."
+				: "Anonymous writes use signed short-lived public tokens, per-request ids, and coarse rate limiting.",
+		),
 		keyword: slug.replace(/-/g, " "),
 		namespace,
 		needsMigration: "{{needsMigration}}",
@@ -733,6 +746,75 @@ async function writeStarterManifestFiles(
 		const destinationPath = path.join(targetDir, relativePath);
 		await fsp.mkdir(path.dirname(destinationPath), { recursive: true });
 		await fsp.writeFile(destinationPath, stringifyStarterManifest(document), "utf8");
+	}
+}
+
+async function seedBuiltInPersistenceArtifacts(
+	targetDir: string,
+	templateId: BuiltInTemplateId,
+	variables: ScaffoldTemplateVariables,
+): Promise<void> {
+	await withEphemeralScaffoldNodeModules(targetDir, async () => {
+		if (templateId === "persistence") {
+			await syncPersistenceRestArtifacts({
+				apiTypesFile: path.join("src", "api-types.ts"),
+				outputDir: "src",
+				projectDir: targetDir,
+				variables,
+			});
+			return;
+		}
+
+		if (templateId === "compound" && variables.compoundPersistenceEnabled === "true") {
+			await syncPersistenceRestArtifacts({
+				apiTypesFile: path.join("src", "blocks", variables.slugKebabCase, "api-types.ts"),
+				outputDir: path.join("src", "blocks", variables.slugKebabCase),
+				projectDir: targetDir,
+				variables,
+			});
+		}
+	});
+}
+
+function resolveScaffoldGeneratorNodeModulesPath(): string | null {
+	const candidates = [
+		path.join(PROJECT_TOOLS_PACKAGE_ROOT, "node_modules"),
+		path.resolve(PROJECT_TOOLS_PACKAGE_ROOT, "..", ".."),
+		path.resolve(PROJECT_TOOLS_PACKAGE_ROOT, "..", "..", "node_modules"),
+	];
+
+	for (const candidate of candidates) {
+		if (fs.existsSync(path.join(candidate, "typia", "package.json"))) {
+			return candidate;
+		}
+	}
+
+	return null;
+}
+
+async function withEphemeralScaffoldNodeModules(
+	targetDir: string,
+	callback: () => Promise<void>,
+): Promise<void> {
+	const targetNodeModulesPath = path.join(targetDir, "node_modules");
+	if (fs.existsSync(targetNodeModulesPath)) {
+		await callback();
+		return;
+	}
+
+	const sourceNodeModulesPath = resolveScaffoldGeneratorNodeModulesPath();
+	if (!sourceNodeModulesPath) {
+		throw new Error(
+			"Unable to resolve a node_modules directory with typia for scaffold-time REST artifact generation.",
+		);
+	}
+
+	await fsp.symlink(sourceNodeModulesPath, targetNodeModulesPath, EPHEMERAL_NODE_MODULES_LINK_TYPE);
+
+	try {
+		await callback();
+	} finally {
+		await fsp.rm(targetNodeModulesPath, { force: true, recursive: true });
 	}
 }
 
@@ -957,6 +1039,7 @@ export async function scaffoldProject({
 	const isOfficialWorkspace = isOfficialWorkspaceProject(projectDir);
 	if (isBuiltInTemplate) {
 		await writeStarterManifestFiles(projectDir, templateId, variables);
+		await seedBuiltInPersistenceArtifacts(projectDir, templateId, variables);
 		await applyLocalDevPresetFiles({
 			projectDir,
 			variables,

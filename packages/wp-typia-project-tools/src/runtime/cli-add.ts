@@ -4,11 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 import {
-	defineEndpointManifest,
 	syncBlockMetadata,
-	syncEndpointClient,
-	syncRestOpenApi,
-	syncTypeSchemas,
 } from "@wp-typia/block-runtime/metadata-core";
 
 import {
@@ -17,6 +13,9 @@ import {
 	writeInitialMigrationScaffold,
 	writeMigrationConfig,
 } from "./migration-project.js";
+import {
+	syncPersistenceRestArtifacts,
+} from "./persistence-rest-artifacts.js";
 import { snapshotProjectVersion } from "./migrations.js";
 import { getDefaultAnswers, scaffoldProject } from "./scaffold.js";
 import {
@@ -183,14 +182,20 @@ function buildPersistenceBlockConfigEntry(variables: ScaffoldTemplateVariables):
 		`\t\tattributeTypeName: ${quoteTsString(`${variables.pascalCase}Attributes`)},`,
 		"\t\trestManifest: defineEndpointManifest( {",
 		"\t\t\tcontracts: {",
+		"\t\t\t\t'bootstrap-query': {",
+		`\t\t\t\t\tsourceTypeName: ${quoteTsString(`${variables.pascalCase}BootstrapQuery`)},`,
+		"\t\t\t\t},",
+		"\t\t\t\t'bootstrap-response': {",
+		`\t\t\t\t\tsourceTypeName: ${quoteTsString(`${variables.pascalCase}BootstrapResponse`)},`,
+		"\t\t\t\t},",
 		"\t\t\t\t'state-query': {",
 		`\t\t\t\t\tsourceTypeName: ${quoteTsString(`${variables.pascalCase}StateQuery`)},`,
 		"\t\t\t\t},",
-		"\t\t\t\t'write-state-request': {",
-		`\t\t\t\t\tsourceTypeName: ${quoteTsString(`${variables.pascalCase}WriteStateRequest`)},`,
-		"\t\t\t\t},",
 		"\t\t\t\t'state-response': {",
 		`\t\t\t\t\tsourceTypeName: ${quoteTsString(`${variables.pascalCase}StateResponse`)},`,
+		"\t\t\t\t},",
+		"\t\t\t\t'write-state-request': {",
+		`\t\t\t\t\tsourceTypeName: ${quoteTsString(`${variables.pascalCase}WriteStateRequest`)},`,
 		"\t\t\t\t},",
 		"\t\t\t},",
 		"\t\t\tendpoints: [",
@@ -217,6 +222,16 @@ function buildPersistenceBlockConfigEntry(variables: ScaffoldTemplateVariables):
 		`\t\t\t\t\t\tmechanism: ${quoteTsString(variables.restWriteAuthMechanism)},`,
 		"\t\t\t\t\t},",
 		"\t\t\t\t},",
+		"\t\t\t\t{",
+		"\t\t\t\t\tauth: 'public',",
+		"\t\t\t\t\tmethod: 'GET',",
+		`\t\t\t\t\toperationId: ${quoteTsString(`get${variables.pascalCase}Bootstrap`)},`,
+		`\t\t\t\t\tpath: ${quoteTsString(`/${variables.namespace}/v1/${variables.slugKebabCase}/bootstrap`)},`,
+		"\t\t\t\t\tqueryContract: 'bootstrap-query',",
+		"\t\t\t\t\tresponseContract: 'bootstrap-response',",
+		`\t\t\t\t\tsummary: 'Read fresh session bootstrap state for the current viewer.',`,
+		`\t\t\t\t\ttags: [ ${quoteTsString(variables.title)} ],`,
+		"\t\t\t\t},",
 		"\t\t\t],",
 		"\t\t\tinfo: {",
 		`\t\t\t\ttitle: ${quoteTsString(`${variables.title} REST API`)},`,
@@ -228,51 +243,6 @@ function buildPersistenceBlockConfigEntry(variables: ScaffoldTemplateVariables):
 		`\t\ttypesFile: ${quoteTsString(`src/blocks/${variables.slugKebabCase}/types.ts`)},`,
 		"\t},",
 	].join("\n");
-}
-
-function buildPersistenceEndpointManifest(variables: ScaffoldTemplateVariables) {
-	return defineEndpointManifest({
-		contracts: {
-			"state-query": {
-				sourceTypeName: `${variables.pascalCase}StateQuery`,
-			},
-			"write-state-request": {
-				sourceTypeName: `${variables.pascalCase}WriteStateRequest`,
-			},
-			"state-response": {
-				sourceTypeName: `${variables.pascalCase}StateResponse`,
-			},
-		},
-		endpoints: [
-			{
-				auth: "public",
-				method: "GET",
-				operationId: `get${variables.pascalCase}State`,
-				path: `/${variables.namespace}/v1/${variables.slugKebabCase}/state`,
-				queryContract: "state-query",
-				responseContract: "state-response",
-				summary: "Read the current persisted state.",
-				tags: [variables.title],
-			},
-			{
-				auth: variables.restWriteAuthIntent,
-				bodyContract: "write-state-request",
-				method: "POST",
-				operationId: `write${variables.pascalCase}State`,
-				path: `/${variables.namespace}/v1/${variables.slugKebabCase}/state`,
-				responseContract: "state-response",
-				summary: "Write the current persisted state.",
-				tags: [variables.title],
-				wordpressAuth: {
-					mechanism: variables.restWriteAuthMechanism,
-				},
-			},
-		],
-		info: {
-			title: `${variables.title} REST API`,
-			version: "1.0.0",
-		},
-	});
 }
 
 function buildCompoundChildConfigEntry(variables: ScaffoldTemplateVariables): string {
@@ -1037,52 +1007,12 @@ async function syncWorkspacePersistenceArtifacts(
 	projectDir: string,
 	variables: ScaffoldTemplateVariables,
 ): Promise<void> {
-	const manifest = buildPersistenceEndpointManifest(variables);
-	const apiTypesFile = path.join("src", "blocks", variables.slugKebabCase, "api-types.ts");
-
-	for (const [baseName, contract] of Object.entries(manifest.contracts) as Array<
-		[string, { sourceTypeName: string }]
-	>) {
-		await syncTypeSchemas(
-			{
-				jsonSchemaFile: path.join(
-					"src",
-					"blocks",
-					variables.slugKebabCase,
-					"api-schemas",
-					`${baseName}.schema.json`,
-				),
-				openApiFile: path.join(
-					"src",
-					"blocks",
-					variables.slugKebabCase,
-					"api-schemas",
-					`${baseName}.openapi.json`,
-				),
-				projectRoot: projectDir,
-				sourceTypeName: contract.sourceTypeName,
-				typesFile: apiTypesFile,
-			},
-		);
-	}
-
-	await syncRestOpenApi(
-		{
-			manifest,
-			openApiFile: path.join("src", "blocks", variables.slugKebabCase, "api.openapi.json"),
-			projectRoot: projectDir,
-			typesFile: apiTypesFile,
-		},
-	);
-
-	await syncEndpointClient(
-		{
-			clientFile: path.join("src", "blocks", variables.slugKebabCase, "api-client.ts"),
-			manifest,
-			projectRoot: projectDir,
-			typesFile: apiTypesFile,
-		},
-	);
+	await syncPersistenceRestArtifacts({
+		apiTypesFile: path.join("src", "blocks", variables.slugKebabCase, "api-types.ts"),
+		outputDir: path.join("src", "blocks", variables.slugKebabCase),
+		projectDir,
+		variables,
+	});
 }
 
 async function syncWorkspaceAddedBlockArtifacts(

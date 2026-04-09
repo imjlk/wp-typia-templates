@@ -35,6 +35,7 @@ Package managers: ${PACKAGE_MANAGER_IDS.join(", ")}
 Notes:
   \`wp-typia create\` is the canonical scaffold command.
   \`wp-typia <project-dir>\` remains a backward-compatible alias to \`create\`.
+  Use \`--template @wp-typia/create-workspace-template\` for the official empty workspace scaffold behind \`wp-typia add ...\`.
   \`add variation\` uses an existing workspace block from \`scripts/block-config.ts\`.
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
   \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.

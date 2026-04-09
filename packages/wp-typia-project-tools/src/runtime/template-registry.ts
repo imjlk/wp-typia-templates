@@ -46,11 +46,12 @@ export const SHARED_WORKSPACE_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "w
 export const SHARED_TEST_PRESET_TEMPLATE_ROOT = path.join(SHARED_PRESET_TEMPLATE_ROOT, "test-preset");
 export const SHARED_WP_ENV_PRESET_TEMPLATE_ROOT = path.join(SHARED_PRESET_TEMPLATE_ROOT, "wp-env");
 export const BUILTIN_TEMPLATE_IDS = ["basic", "interactivity", "persistence", "compound"] as const;
+export const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
 export type BuiltInTemplateId = (typeof BUILTIN_TEMPLATE_IDS)[number];
 export type PersistencePolicy = "authenticated" | "public";
 
 export interface TemplateDefinition {
-	id: BuiltInTemplateId;
+	id: string;
 	description: string;
 	defaultCategory: string;
 	features: string[];
@@ -86,9 +87,16 @@ export const TEMPLATE_REGISTRY = Object.freeze<TemplateDefinition[]>([
 		features: ["InnerBlocks", "Hidden child blocks", "Optional persistence layer"],
 		templateDir: path.join(TEMPLATE_ROOT, "compound"),
 	},
+	{
+		id: OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
+		description: "The official empty workspace template that powers `wp-typia add ...` workflows",
+		defaultCategory: "workspace",
+		features: ["Workspace inventory", "Add block workflows", "Workspace doctor and migrate"],
+		templateDir: path.resolve(PROJECT_TOOLS_PACKAGE_ROOT, "..", "create-workspace-template"),
+	},
 ]);
 
-export const TEMPLATE_IDS = TEMPLATE_REGISTRY.map((template) => template.id) as BuiltInTemplateId[];
+export const TEMPLATE_IDS = [...BUILTIN_TEMPLATE_IDS] as BuiltInTemplateId[];
 
 export function isBuiltInTemplateId(templateId: string): templateId is BuiltInTemplateId {
 	return (BUILTIN_TEMPLATE_IDS as readonly string[]).includes(templateId);
@@ -101,7 +109,12 @@ export function listTemplates(): readonly TemplateDefinition[] {
 export function getTemplateById(templateId: string): TemplateDefinition {
 	const template = TEMPLATE_REGISTRY.find((entry) => entry.id === templateId);
 	if (!template) {
-		throw new Error(`Unknown template "${templateId}". Expected one of: ${TEMPLATE_IDS.join(", ")}`);
+		throw new Error(
+			`Unknown template "${templateId}". Expected one of: ${[
+				...TEMPLATE_IDS,
+				OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
+			].join(", ")}`,
+		);
 	}
 	return template;
 }

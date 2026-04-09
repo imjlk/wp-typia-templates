@@ -2,14 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const PARENT_BLOCK_NAME = '{{namespace}}/{{slugKebabCase}}';
-const PARENT_BLOCK_NAMESPACE = '{{namespace}}';
-const PARENT_BLOCK_SLUG = '{{slugKebabCase}}';
-const PARENT_BLOCK_TITLE = {{titleJson}};
-const PARENT_TYPE_NAME = '{{pascalCase}}';
-const PARENT_STYLE_IMPORT = '../{{slugKebabCase}}/style.scss';
 const PROJECT_ROOT = process.cwd();
-const TEXT_DOMAIN = '{{textDomain}}';
 
 const ALLOWED_CHILD_MARKER = '// add-child: insert new allowed child block names here';
 const BLOCK_CONFIG_MARKER = '// add-child: insert new block config entries here';
@@ -20,6 +13,16 @@ type StarterManifestDocument = {
 	attributes: Record< string, unknown >;
 	manifestVersion: 2;
 	sourceType: string;
+};
+
+type CompoundParentConfig = {
+	blockName: string;
+	namespace: string;
+	slug: string;
+	styleImport: string;
+	textDomain: string;
+	title: string;
+	typeName: string;
 };
 
 function parseArgs() {
@@ -81,6 +84,16 @@ function toTitleCase( input: string ): string {
 		.join( ' ' );
 }
 
+function readJsonFile( filePath: string ): Record< string, unknown > {
+	const parsed = JSON.parse( fs.readFileSync( filePath, 'utf8' ) );
+
+	if ( ! parsed || typeof parsed !== 'object' || Array.isArray( parsed ) ) {
+		throw new Error( `${ filePath } must contain a JSON object.` );
+	}
+
+	return parsed as Record< string, unknown >;
+}
+
 function resolveValidatedNamespace( value: string ): string {
 	const normalizedNamespace = toKebabCase( value );
 
@@ -100,6 +113,79 @@ function resolveValidatedBlockSlug( value: string ): string {
 
 	return normalizedSlug;
 }
+
+function resolveCompoundParentConfig(): CompoundParentConfig {
+	const blocksRoot = path.join( PROJECT_ROOT, 'src', 'blocks' );
+
+	if ( ! fs.existsSync( blocksRoot ) ) {
+		throw new Error(
+			'This command expects a compound scaffold with src/blocks/<parent>/children.ts and scripts/block-config.ts.'
+		);
+	}
+
+	const parentCandidates = fs
+		.readdirSync( blocksRoot, { withFileTypes: true } )
+		.filter( ( entry ) => entry.isDirectory() )
+		.map( ( entry ) => path.join( blocksRoot, entry.name ) )
+		.filter( ( candidateDir ) =>
+			fs.existsSync( path.join( candidateDir, 'children.ts' ) )
+		);
+
+	if ( parentCandidates.length !== 1 ) {
+		throw new Error(
+			`Unable to resolve the compound parent block. Expected exactly one src/blocks/<parent>/children.ts entry, found ${ parentCandidates.length }.`
+		);
+	}
+
+	const parentDir = parentCandidates[ 0 ];
+	const parentSlug = resolveValidatedBlockSlug( path.basename( parentDir ) );
+	const blockJsonPath = path.join( parentDir, 'block.json' );
+
+	if ( ! fs.existsSync( blockJsonPath ) ) {
+		throw new Error( `Unable to resolve ${ blockJsonPath } for the compound parent block.` );
+	}
+
+	const blockJson = readJsonFile( blockJsonPath );
+	const blockName = typeof blockJson.name === 'string' ? blockJson.name.trim() : '';
+	const separatorIndex = blockName.indexOf( '/' );
+
+	if ( separatorIndex <= 0 || separatorIndex === blockName.length - 1 ) {
+		throw new Error(
+			`The parent block metadata at ${ blockJsonPath } must declare a valid "name" like "namespace/slug".`
+		);
+	}
+
+	const namespace = resolveValidatedNamespace( blockName.slice( 0, separatorIndex ) );
+	const title =
+		typeof blockJson.title === 'string' && blockJson.title.trim().length > 0
+			? blockJson.title.trim()
+			: toTitleCase( parentSlug );
+	const textDomain =
+		typeof blockJson.textdomain === 'string' &&
+		toKebabCase( blockJson.textdomain ).length > 0
+			? toKebabCase( blockJson.textdomain )
+			: parentSlug;
+
+	return {
+		blockName,
+		namespace,
+		slug: parentSlug,
+		styleImport: `../${ parentSlug }/style.scss`,
+		textDomain,
+		title,
+		typeName: toPascalCase( parentSlug ),
+	};
+}
+
+const {
+	blockName: PARENT_BLOCK_NAME,
+	namespace: PARENT_BLOCK_NAMESPACE,
+	slug: PARENT_BLOCK_SLUG,
+	styleImport: PARENT_STYLE_IMPORT,
+	textDomain: TEXT_DOMAIN,
+	title: PARENT_BLOCK_TITLE,
+	typeName: PARENT_TYPE_NAME,
+} = resolveCompoundParentConfig();
 
 function buildBlockCssClassName( namespace: string, slug: string ): string {
 	const normalizedSlug = resolveValidatedBlockSlug( slug );

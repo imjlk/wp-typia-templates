@@ -39,6 +39,17 @@ export function formatTemplateFeatures(template: TemplateDefinition): string {
  * @returns Multi-line template details text for CLI output.
  */
 export function formatTemplateDetails(template: TemplateDefinition): string {
+	if (!isBuiltInTemplateId(template.id)) {
+		return [
+			template.id,
+			template.description,
+			`Category: ${template.defaultCategory}`,
+			`Overlay path: ${template.templateDir}`,
+			"Layers: workspace package scaffold",
+			`Features: ${template.features.join(", ")}`,
+		].join("\n");
+	}
+
 	const layers =
 		template.id === "persistence"
 			? [

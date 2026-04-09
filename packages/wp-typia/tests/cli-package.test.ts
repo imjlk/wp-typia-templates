@@ -205,5 +205,46 @@ describe("wp-typia package", () => {
 
 		expect(parsed.templates.length).toBeGreaterThan(0);
 		expect(parsed.templates.some((entry) => entry.id === "basic")).toBe(true);
+		expect(
+			parsed.templates.some(
+				(entry) => entry.id === "@wp-typia/create-workspace-template",
+			),
+		).toBe(true);
+	});
+
+	test("treats templates --id as an alias for templates inspect", () => {
+		const output = runUtf8Command("node", [
+			entryPath,
+			"templates",
+			"--id",
+			"basic",
+			"--format",
+			"json",
+		]);
+		const parsed = JSON.parse(output) as {
+			template?: { id?: string; description?: string };
+			templates?: Array<{ id: string }>;
+		};
+
+		expect(parsed.templates).toBeUndefined();
+		expect(parsed.template?.id).toBe("basic");
+		expect(parsed.template?.description).toContain("Typia validation");
+	});
+
+	test("inspects the official workspace template through the canonical templates command", () => {
+		const output = runUtf8Command("node", [
+			entryPath,
+			"templates",
+			"inspect",
+			"@wp-typia/create-workspace-template",
+			"--format",
+			"json",
+		]);
+		const parsed = JSON.parse(output) as {
+			template?: { id?: string; description?: string };
+		};
+
+		expect(parsed.template?.id).toBe("@wp-typia/create-workspace-template");
+		expect(parsed.template?.description).toContain("official empty workspace");
 	});
 });

@@ -121,7 +121,7 @@ export async function resolveBuiltInTemplateSource(
 	}
 
 	return {
-		id: template.id,
+		id: templateId,
 		defaultCategory: template.defaultCategory,
 		description: template.description,
 		features: template.features,

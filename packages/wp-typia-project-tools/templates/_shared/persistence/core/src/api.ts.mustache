@@ -1,5 +1,6 @@
 import {
 	callEndpoint,
+	type ApiEndpoint as RestApiEndpoint,
 } from '@wp-typia/rest';
 
 import {
@@ -17,17 +18,33 @@ import {
 	type PersistenceTransportOptions,
 } from './transport';
 
-export const bootstrapEndpoint = {
-	...get{{pascalCase}}BootstrapEndpoint,
-};
+function createRestEndpoint< Req, Res >(
+	endpoint: {
+		method: RestApiEndpoint< Req, Res >[ 'method' ];
+		path: string;
+		validateRequest: RestApiEndpoint< Req, Res >[ 'validateRequest' ];
+		validateResponse: RestApiEndpoint< Req, Res >[ 'validateResponse' ];
+	}
+): RestApiEndpoint< Req, Res > {
+	return {
+		method: endpoint.method,
+		path: endpoint.path,
+		validateRequest: endpoint.validateRequest,
+		validateResponse: endpoint.validateResponse,
+	};
+}
 
-export const stateEndpoint = {
-	...get{{pascalCase}}StateEndpoint,
-};
+export const bootstrapEndpoint = createRestEndpoint(
+	get{{pascalCase}}BootstrapEndpoint
+);
 
-export const writeStateEndpoint = {
-	...write{{pascalCase}}StateEndpoint,
-};
+export const stateEndpoint = createRestEndpoint(
+	get{{pascalCase}}StateEndpoint
+);
+
+export const writeStateEndpoint = createRestEndpoint(
+	write{{pascalCase}}StateEndpoint
+);
 
 export function fetchState(
 	request: {{pascalCase}}StateQuery,
