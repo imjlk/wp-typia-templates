@@ -1317,6 +1317,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
       expect(pluginBootstrap).toContain(
         "array_key_exists( 'resourceKey', $attributes )"
       );
+      expect(pluginBootstrap).toContain("is_post_publicly_viewable( $post )");
       expect(pluginBootstrap).toContain(": 'primary';");
       expect(restPublicHelper).toContain(
         "function demo_persistence_public_verify_public_write_token"
@@ -1621,6 +1622,8 @@ describe("@wp-typia/project-tools scaffolding", () => {
     );
     expect(generatedRender).toContain("Sign in to persist this counter.");
     expect(generatedApiTypes).toContain("publicWriteRequestId?: string");
+    expect(generatedApiTypes).toContain("restNonce?: string");
+    expect(generatedApiTypes).not.toContain("publicWriteExpiresAt?: number");
     expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
     expect(generatedTransport).toContain("resolveRestNonce");
     expect(generatedTransport).toContain("includeRestNonce: true");
@@ -2870,6 +2873,8 @@ console.log(JSON.stringify({ initial, updated, reread }));
         /auth:\s*'public'[\s\S]*?operationId:\s*'getDemoCompoundStorageBootstrap'/
       );
       expect(generatedApiTypes).toContain("publicWriteRequestId?: string");
+      expect(generatedApiTypes).toContain("restNonce?: string");
+      expect(generatedApiTypes).not.toContain("publicWriteExpiresAt?: number");
       expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
       expect(generatedBlockConfig).not.toContain("contracts: [");
       expect(generatedBlockConfig).not.toContain("openApiInfo:");
@@ -4583,6 +4588,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(serverModuleSource).toContain(
       "array_key_exists( 'resourceKey', $attributes )"
     );
+    expect(serverModuleSource).toContain("is_post_publicly_viewable( $post )");
     expect(serverModuleSource).toContain(": 'primary';");
     expect(parentBlockJson.name).toBe("demo-space/faq-stack");
     runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [

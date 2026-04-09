@@ -25,6 +25,8 @@ export function createTestScaffoldTemplateVariables(
 		icon: "smiley",
 		isAuthenticatedPersistencePolicy: "true",
 		isPublicPersistencePolicy: "false",
+		bootstrapCredentialDeclarations:
+			"restNonce?: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;",
 		keyword: "demo",
 		namespace: "demo",
 		needsMigration: "false",

@@ -579,8 +579,11 @@ function persistence_examples_build_counter_bootstrap_response( $post_id, $resou
 		'canWrite' => false,
 	);
 
+	$post = get_post( $post_id );
 	if (
 		$post_id <= 0 ||
+		! ( $post instanceof WP_Post ) ||
+		! is_post_publicly_viewable( $post ) ||
 		! persistence_examples_has_rendered_block_instance(
 			(int) $post_id,
 			'create-block/persistence-counter',

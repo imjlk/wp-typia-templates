@@ -269,6 +269,10 @@ function {{phpPrefix}}_has_rendered_block_instance( $post_id, $resource_key ) {
 		return false;
 	}
 
+	if ( ! is_post_publicly_viewable( $post ) ) {
+		return false;
+	}
+
 	return {{phpPrefix}}_block_tree_has_resource_key(
 		parse_blocks( (string) $post->post_content ),
 		'{{namespace}}/{{slugKebabCase}}',

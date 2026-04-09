@@ -731,6 +731,92 @@ describe("schema-core", () => {
 		});
 	});
 
+	test("buildEndpointOpenApiDocument accepts either bootstrap credential family when both are projected", () => {
+		const bootstrapDocument: ManifestDocument = {
+			attributes: {
+				canWrite: createAttribute({
+					ts: { kind: "boolean", required: true },
+					wp: { type: "boolean" },
+				}),
+				publicWriteExpiresAt: createAttribute({
+					ts: { kind: "number", required: false },
+					typia: {
+						constraints: {
+							typeTag: "uint32",
+						},
+					},
+					wp: { type: "number" },
+				}),
+				publicWriteToken: createAttribute({
+					ts: { kind: "string", required: false },
+					typia: {
+						constraints: {
+							maxLength: 512,
+							minLength: 1,
+						},
+					},
+					wp: { type: "string" },
+				}),
+				restNonce: createAttribute({
+					ts: { kind: "string", required: false },
+					typia: {
+						constraints: {
+							maxLength: 128,
+							minLength: 1,
+						},
+					},
+					wp: { type: "string" },
+				}),
+			},
+			manifestVersion: 2,
+			sourceType: "BootstrapResponse",
+		};
+
+		const openApi = buildEndpointOpenApiDocument({
+			contracts: {
+				bootstrap: { document: bootstrapDocument },
+			},
+			endpoints: [
+				{
+					auth: "public",
+					method: "GET",
+					operationId: "getBootstrap",
+					path: "/demo/v1/counter/bootstrap",
+					queryContract: "bootstrap",
+					responseContract: "bootstrap",
+					tags: ["Counter"],
+				},
+			],
+		});
+		const schemas = (openApi.components as Record<string, Record<string, unknown>>)
+			.schemas as Record<string, JsonSchemaDocument>;
+		const projected = projectJsonSchemaDocument(schemas.BootstrapResponse, {
+			profile: "ai-structured-output",
+		});
+		const ajv = new Ajv2020({
+			allErrors: true,
+			strict: true,
+		});
+		const validate = ajv.compile(projected);
+
+		expect(validate({ canWrite: true, restNonce: "nonce-demo" })).toBe(true);
+		expect(
+			validate({
+				canWrite: true,
+				publicWriteExpiresAt: 123,
+				publicWriteToken: "token-demo",
+			}),
+		).toBe(true);
+		expect(validate({ canWrite: true })).toBe(false);
+		expect(
+			validate({
+				canWrite: true,
+				publicWriteToken: "token-demo",
+			}),
+		).toBe(false);
+		expect(validate({ canWrite: false, restNonce: "nonce-demo" })).toBe(false);
+	});
+
 	test("normalizeEndpointAuthDefinition maps deprecated authMode values to neutral auth intent", () => {
 		expect(
 			normalizeEndpointAuthDefinition({

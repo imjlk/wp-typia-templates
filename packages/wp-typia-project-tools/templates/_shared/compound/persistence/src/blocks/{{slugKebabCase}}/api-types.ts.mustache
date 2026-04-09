@@ -20,9 +20,7 @@ export interface {{pascalCase}}WriteStateRequest {
 
 export interface {{pascalCase}}BootstrapResponse {
 	canWrite: boolean;
-	publicWriteExpiresAt?: number & tags.Type< 'uint32' >;
-	publicWriteToken?: string & tags.MinLength< 1 > & tags.MaxLength< 512 >;
-	restNonce?: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;
+	{{bootstrapCredentialDeclarations}}
 }
 
 export interface {{pascalCase}}StateResponse {
