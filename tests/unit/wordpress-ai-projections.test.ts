@@ -219,8 +219,10 @@ describe("WordPress AI projections", () => {
     expect(pluginSource).toContain(
       "function persistence_examples_handle_get_like_bootstrap"
     );
-    expect(pluginSource).toContain(
-      "Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0'"
-    );
+    expect(
+      pluginSource.match(
+        /Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0'/g
+      ) ?? []
+    ).toHaveLength(2);
   });
 });

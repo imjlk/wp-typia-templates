@@ -1440,6 +1440,9 @@ describe("@wp-typia/project-tools scaffolding", () => {
       expect(pluginBootstrap).toContain(
         "Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0'"
       );
+      expect(pluginBootstrap).toContain(
+        "if ( '' !== $token && $expires_at > 0 && ! $is_expired ) {"
+      );
       expect(restPublicHelper).toContain(
         "Customize the public write gate here"
       );
@@ -3217,6 +3220,9 @@ console.log(JSON.stringify({ initial, updated, reread }));
     );
     expect(pluginBootstrap).toContain(
       "Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0'"
+    );
+    expect(pluginBootstrap).toContain(
+      "if ( '' !== $token && $expires_at > 0 && ! $is_expired ) {"
     );
     expect(restPublicHelper).toContain(
       "function demo_compound_public_verify_public_write_token"

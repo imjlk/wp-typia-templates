@@ -523,7 +523,7 @@ function persistence_examples_build_counter_bootstrap_response( $post_id, $resou
 	$token      = isset( $public_write['token'] ) ? (string) $public_write['token'] : '';
 	$expires_at = isset( $public_write['expiresAt'] ) ? (int) $public_write['expiresAt'] : 0;
 
-	if ( '' !== $token ) {
+	if ( '' !== $token && $expires_at > 0 && $expires_at > time() ) {
 		$response['publicWriteToken'] = $token;
 		$response['canWrite']         = true;
 	}

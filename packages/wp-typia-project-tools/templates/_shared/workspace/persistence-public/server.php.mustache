@@ -176,7 +176,7 @@ function {{phpPrefix}}_build_bootstrap_response( $post_id, $resource_key ) {
 	$expires_at = isset( $public_write['expiresAt'] ) ? (int) $public_write['expiresAt'] : 0;
 	$is_expired = $expires_at > 0 && $expires_at <= time();
 
-	if ( '' !== $token && ! $is_expired ) {
+	if ( '' !== $token && $expires_at > 0 && ! $is_expired ) {
 		$response['publicWriteToken'] = $token;
 		$response['canWrite']         = true;
 	}
