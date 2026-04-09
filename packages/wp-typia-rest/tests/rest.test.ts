@@ -352,6 +352,14 @@ describe("@wp-typia/rest", () => {
 	});
 
 	test("build rewrites dist imports for node esm consumers", () => {
+		const clientDist = readFileSync(
+			new URL("../dist/client.js", import.meta.url),
+			"utf8",
+		);
+		const clientTypes = readFileSync(
+			new URL("../dist/client.d.ts", import.meta.url),
+			"utf8",
+		);
 		const reactDist = readFileSync(
 			new URL("../dist/react.js", import.meta.url),
 			"utf8",
@@ -369,13 +377,38 @@ describe("@wp-typia/rest", () => {
 			"utf8",
 		);
 
+		expect(clientDist).toContain('from "@wp-typia/api-client/client-utils"');
+		expect(clientTypes).toContain('from "./internal/runtime-primitives.js"');
 		expect(reactDist).toContain('from "./client.js"');
 		expect(reactTypes).toContain('from "./client.js"');
 		expect(sharedRuntimePrimitivesDist).toContain(
-			'from "@wp-typia/api-client/internal/runtime-primitives"',
+			'from "@wp-typia/api-client/runtime-primitives"',
 		);
 		expect(sharedRuntimePrimitivesTypes).toContain(
-			'from "@wp-typia/api-client/internal/runtime-primitives"',
+			'from "@wp-typia/api-client/runtime-primitives"',
+		);
+	});
+
+	test("GET endpoints reject nested query values before invoking api-fetch", async () => {
+		const endpoint = createEndpoint<{ filters: { status: string } }, { ok: boolean }>({
+			method: "GET",
+			path: "/items",
+			validateRequest: (input: unknown) =>
+				toValidationResult(success(input as { filters: { status: string } })),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				(input as { ok?: unknown }).ok === true
+					? toValidationResult(success(input as { ok: boolean }))
+					: toValidationResult(failure<{ ok: boolean }>("{ ok: true }", "$.ok")),
+		});
+
+		await expect(
+			callEndpoint(endpoint, { filters: { status: "open" } }, {
+				fetchFn: asApiFetch(async () => ({ ok: true }) as never),
+			}),
+		).rejects.toThrow(
+			'GET/DELETE endpoint request field "filters" must be a scalar, URLSearchParams, or array of scalars.',
 		);
 	});
 

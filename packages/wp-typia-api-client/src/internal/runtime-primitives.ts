@@ -75,14 +75,14 @@ export function isValidationResult<T>(
 	);
 }
 
-export function toValidationResult<T>(
-	result: ValidationLike<T>
-): ValidationResult<T> {
-	const rawResult = result as {
-		data?: unknown;
-		errors?: unknown;
-		success?: unknown;
-	};
+export function toValidationResult<T>(result: unknown): ValidationResult<T> {
+	const rawResult = isPlainObject(result)
+		? (result as {
+				data?: unknown;
+				errors?: unknown;
+				success?: unknown;
+			})
+		: {};
 
 	if (isValidationResult<T>(result)) {
 		return result;

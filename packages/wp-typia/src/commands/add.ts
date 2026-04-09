@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getAddBlockDefaults } from "../config";
 import { resolveBundledModuleHref } from "../render-loader";
 import { executeAddCommand, getAddWorkspaceBlockOptions } from "../runtime-bridge";
+import type { WpTypiaRenderArgs } from "./render-types";
 import { LazyFlow } from "../ui/lazy-flow";
 
 const supportsInteractiveTui = typeof Bun !== "undefined";
@@ -61,7 +62,7 @@ export const addCommand = defineCommand({
 	options: addOptions,
 	...(supportsInteractiveTui
 		? {
-				render: (args: any) => {
+				render: (args: WpTypiaRenderArgs) => {
 					const config =
 						args.context?.store?.wpTypiaUserConfig &&
 						typeof args.context.store.wpTypiaUserConfig === "object"

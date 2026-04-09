@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, test } from "bun:test";
 
 import * as apiClient from "../src/index";
+import * as publicRuntimePrimitives from "../src/runtime-primitives";
 import {
 	isPlainObject,
 	normalizeValidationError,
@@ -20,6 +21,11 @@ describe("@wp-typia/api-client internal runtime primitives", () => {
 			default: "./dist/internal/runtime-primitives.js",
 			import: "./dist/internal/runtime-primitives.js",
 			types: "./dist/internal/runtime-primitives.d.ts",
+		});
+		expect(packageJson.exports?.["./runtime-primitives"]).toEqual({
+			default: "./dist/runtime-primitives.js",
+			import: "./dist/runtime-primitives.js",
+			types: "./dist/runtime-primitives.d.ts",
 		});
 		expect("isPlainObject" in apiClient).toBe(false);
 		expect("isFormDataLike" in apiClient).toBe(false);
@@ -43,6 +49,7 @@ describe("@wp-typia/api-client internal runtime primitives", () => {
 		expect(isPlainObject(new Date())).toBe(false);
 		expect(isPlainObject(new Map())).toBe(false);
 		expect(isPlainObject(new DemoRecord())).toBe(false);
+		expect(publicRuntimePrimitives.isPlainObject).toBe(isPlainObject);
 	});
 
 	test("normalizes validation-like payloads through the shared helper owner", () => {
@@ -85,6 +92,24 @@ describe("@wp-typia/api-client internal runtime primitives", () => {
 					value: 7,
 				},
 			],
+			isValid: false,
+		});
+	});
+
+	test("tolerates malformed typia-like payloads without throwing", () => {
+		expect(toValidationResult(null)).toEqual({
+			data: undefined,
+			errors: [],
+			isValid: false,
+		});
+		expect(
+			toValidationResult({
+				data: "unexpected",
+				success: "yes",
+			}),
+		).toEqual({
+			data: undefined,
+			errors: [],
 			isValid: false,
 		});
 	});

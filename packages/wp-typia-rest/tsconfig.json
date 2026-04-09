@@ -4,8 +4,11 @@
     "baseUrl": ".",
     "rootDir": "./src",
     "paths": {
-      "@wp-typia/api-client/internal/runtime-primitives": [
-        "../wp-typia-api-client/src/internal/runtime-primitives.ts"
+      "@wp-typia/api-client/client-utils": [
+        "../wp-typia-api-client/src/client-utils.ts"
+      ],
+      "@wp-typia/api-client/runtime-primitives": [
+        "../wp-typia-api-client/src/runtime-primitives.ts"
       ]
     },
     "types": []

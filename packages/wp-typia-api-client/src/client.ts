@@ -2,7 +2,14 @@ import {
 	isFormDataLike,
 	isPlainObject,
 	type ValidationResult,
-} from "./internal/runtime-primitives.js";
+} from "./runtime-primitives.js";
+import {
+	encodeGetLikeRequest,
+	joinPathWithQuery,
+	joinUrlWithQuery,
+	mergeHeaderInputs,
+	parseResponsePayload,
+} from "./client-utils.js";
 
 export type EndpointMethod = "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
 export type EndpointAuthIntent =
@@ -10,7 +17,7 @@ export type EndpointAuthIntent =
 	| "public"
 	| "public-write-protected";
 
-export type { ValidationError, ValidationLike, ValidationResult } from "./internal/runtime-primitives.js";
+export type { ValidationError, ValidationLike, ValidationResult } from "./runtime-primitives.js";
 
 export interface EndpointTransportRequest {
 	body?: BodyInit | null;
@@ -62,7 +69,7 @@ interface FetchTransportOptions {
 		init?: RequestInit,
 	) => Promise<Response>;
 }
-export { normalizeValidationError, toValidationResult } from "./internal/runtime-primitives.js";
+export { normalizeValidationError, toValidationResult } from "./runtime-primitives.js";
 
 function resolveRequestUrl(options: EndpointTransportRequest, baseUrl: string): string {
 	if (typeof options.url === "string" && options.url.length > 0) {
@@ -74,110 +81,6 @@ function resolveRequestUrl(options: EndpointTransportRequest, baseUrl: string): 
 	}
 
 	throw new Error("Transport requests must include either a path or a url.");
-}
-
-async function parseResponsePayload(response: Response): Promise<unknown> {
-	if (response.status === 204) {
-		return undefined;
-	}
-
-	const text = await response.text();
-	if (!text) {
-		return undefined;
-	}
-
-	try {
-		return JSON.parse(text);
-	} catch {
-		return text;
-	}
-}
-
-function encodeGetLikeRequest(request: unknown): string {
-	if (request === undefined || request === null) {
-		return "";
-	}
-
-	if (request instanceof URLSearchParams) {
-		return request.toString();
-	}
-
-	if (!isPlainObject(request)) {
-		throw new Error("GET/DELETE endpoint requests must be plain objects or URLSearchParams.");
-	}
-
-	const params = new URLSearchParams();
-	for (const [key, value] of Object.entries(request)) {
-		if (value === undefined || value === null) {
-			continue;
-		}
-		if (Array.isArray(value)) {
-			for (const item of value) {
-				if (!isQueryScalar(item)) {
-					throw new Error(
-						`GET/DELETE endpoint request field "${key}" only supports scalar array items.`,
-					);
-				}
-				params.append(key, String(item));
-			}
-			continue;
-		}
-		if (!isQueryScalar(value)) {
-			throw new Error(
-				`GET/DELETE endpoint request field "${key}" must be a scalar, URLSearchParams, or array of scalars.`,
-			);
-		}
-		params.set(key, String(value));
-	}
-
-	return params.toString();
-}
-
-function joinPathWithQuery(path: string, query: string): string {
-	if (!query) {
-		return path;
-	}
-
-	return path.includes("?") ? `${path}&${query}` : `${path}?${query}`;
-}
-
-function joinUrlWithQuery(url: string, query: string): string {
-	if (!query) {
-		return url;
-	}
-
-	const [urlWithoutHash, hash = ""] = url.split("#", 2);
-	const nextUrl = urlWithoutHash.includes("?")
-		? `${urlWithoutHash}&${query}`
-		: `${urlWithoutHash}?${query}`;
-
-	return hash ? `${nextUrl}#${hash}` : nextUrl;
-}
-
-function isQueryScalar(value: unknown): value is boolean | number | string {
-	return (
-		typeof value === "boolean" ||
-		typeof value === "number" ||
-		typeof value === "string"
-	);
-}
-
-function mergeHeaderInputs(
-	baseHeaders?: HeadersInit,
-	requestHeaders?: HeadersInit,
-): Record<string, string> | undefined {
-	if (!baseHeaders && !requestHeaders) {
-		return undefined;
-	}
-
-	const mergedHeaders = new Headers(baseHeaders);
-	const nextHeaders = new Headers(requestHeaders);
-
-	for (const [key, value] of nextHeaders.entries()) {
-		mergedHeaders.set(key, value);
-	}
-
-	return Object.fromEntries(mergedHeaders.entries());
 }
 
 function createReadonlyTransportRequest(

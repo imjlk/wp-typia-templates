@@ -6,6 +6,11 @@
     "declarationMap": false,
     "noEmit": false,
     "outDir": "./dist",
+    "paths": {
+      "@wp-typia/api-client/runtime-primitives": [
+        "../wp-typia-api-client/dist/runtime-primitives.d.ts"
+      ]
+    },
     "rootDir": "./src",
     "sourceMap": false
   }

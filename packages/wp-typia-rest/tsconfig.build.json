@@ -8,8 +8,11 @@
     "rootDir": "./src",
     "sourceMap": false,
     "paths": {
-      "@wp-typia/api-client/internal/runtime-primitives": [
-        "../wp-typia-api-client/dist/internal/runtime-primitives.d.ts"
+      "@wp-typia/api-client/client-utils": [
+        "../wp-typia-api-client/dist/client-utils.d.ts"
+      ],
+      "@wp-typia/api-client/runtime-primitives": [
+        "../wp-typia-api-client/dist/runtime-primitives.d.ts"
       ]
     }
   }

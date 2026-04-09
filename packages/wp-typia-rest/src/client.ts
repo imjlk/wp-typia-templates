@@ -1,7 +1,13 @@
 import type { APIFetchOptions, ApiFetch } from "@wordpress/api-fetch";
 import {
+	encodeGetLikeRequest,
+	joinPathWithQuery,
+	joinUrlWithQuery,
+	mergeHeaderInputs,
+	parseResponsePayload,
+} from "@wp-typia/api-client/client-utils";
+import {
 	isFormDataLike,
-	isPlainObject,
 	toValidationResult,
 	type ValidationLike,
 	type ValidationResult,
@@ -128,91 +134,6 @@ async function defaultFetch<T = unknown, Parse extends boolean = true>(
 	}
 }
 
-async function parseResponsePayload(response: Response): Promise<unknown> {
-	if (response.status === 204) {
-		return undefined;
-	}
-
-	const text = await response.text();
-	if (!text) {
-		return undefined;
-	}
-
-	try {
-		return JSON.parse(text);
-	} catch {
-		return text;
-	}
-}
-
-function encodeGetLikeRequest(request: unknown): string {
-	if (request === undefined || request === null) {
-		return "";
-	}
-
-	if (request instanceof URLSearchParams) {
-		return request.toString();
-	}
-
-	if (!isPlainObject(request)) {
-		throw new Error("GET/DELETE endpoint requests must be plain objects or URLSearchParams.");
-	}
-
-	const params = new URLSearchParams();
-	for (const [key, value] of Object.entries(request)) {
-		if (value === undefined || value === null) {
-			continue;
-		}
-		if (Array.isArray(value)) {
-			for (const item of value) {
-				params.append(key, String(item));
-			}
-			continue;
-		}
-		params.set(key, String(value));
-	}
-
-	return params.toString();
-}
-
-function joinPathWithQuery(path: string, query: string): string {
-	if (!query) {
-		return path;
-	}
-
-	return path.includes("?") ? `${path}&${query}` : `${path}?${query}`;
-}
-
-function joinUrlWithQuery(url: string, query: string): string {
-	if (!query) {
-		return url;
-	}
-
-	const nextUrl = new URL(url, typeof window !== "undefined" ? window.location.origin : "http://localhost");
-	for (const [key, value] of new URLSearchParams(query)) {
-		nextUrl.searchParams.append(key, value);
-	}
-	return nextUrl.toString();
-}
-
-function mergeHeaderInputs(
-	baseHeaders?: APIFetchOptions["headers"],
-	requestHeaders?: APIFetchOptions["headers"],
-): Record<string, string> | undefined {
-	if (!baseHeaders && !requestHeaders) {
-		return undefined;
-	}
-
-	const mergedHeaders = new Headers(baseHeaders as HeadersInit | undefined);
-	const nextHeaders = new Headers(requestHeaders as HeadersInit | undefined);
-
-	for (const [key, value] of nextHeaders.entries()) {
-		mergedHeaders.set(key, value);
-	}
-
-	return Object.fromEntries(mergedHeaders.entries());
-}
-
 function buildEndpointFetchOptions<Req>(
 	endpoint: ApiEndpoint<Req, unknown>,
 	request: Req,
@@ -252,7 +173,7 @@ function buildEndpointFetchOptions<Req>(
 		body: typeof request === "string" ? request : JSON.stringify(request),
 		headers: mergeHeaderInputs(
 			{ "Content-Type": "application/json" },
-			baseOptions.headers,
+			baseOptions.headers as HeadersInit | undefined,
 		),
 		method: endpoint.method,
 		...(baseOptions.url

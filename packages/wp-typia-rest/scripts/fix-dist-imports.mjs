@@ -18,8 +18,12 @@ for (const relativeFile of [
 		.replaceAll('from "./client"', 'from "./client.js"')
 		.replaceAll('from "./http"', 'from "./http.js"')
 		.replaceAll(
-			'from "../../../wp-typia-api-client/dist/internal/runtime-primitives.js"',
-			'from "@wp-typia/api-client/internal/runtime-primitives"',
+			'from "../../../wp-typia-api-client/dist/runtime-primitives.js"',
+			'from "@wp-typia/api-client/runtime-primitives"',
+		)
+		.replaceAll(
+			'from "../../wp-typia-api-client/dist/client-utils.js"',
+			'from "@wp-typia/api-client/client-utils"',
 		);
 
 	if (next !== source) {

@@ -1,22 +1,22 @@
 import { describe, expect, test } from "bun:test";
 
-import * as apiClientInternal from "../../wp-typia-api-client/src/internal/runtime-primitives";
+import * as apiClientRuntimePrimitives from "../../wp-typia-api-client/src/runtime-primitives";
 
 import * as restRoot from "../src/index";
 import * as restInternal from "../src/internal/runtime-primitives";
 
 describe("@wp-typia/rest runtime primitive shims", () => {
 	test("forwards shared helpers from api-client by identity", () => {
-		expect(restInternal.isPlainObject).toBe(apiClientInternal.isPlainObject);
-		expect(restInternal.isFormDataLike).toBe(apiClientInternal.isFormDataLike);
+		expect(restInternal.isPlainObject).toBe(apiClientRuntimePrimitives.isPlainObject);
+		expect(restInternal.isFormDataLike).toBe(apiClientRuntimePrimitives.isFormDataLike);
 		expect(restInternal.normalizeValidationError).toBe(
-			apiClientInternal.normalizeValidationError,
+			apiClientRuntimePrimitives.normalizeValidationError,
 		);
 		expect(restInternal.isValidationResult).toBe(
-			apiClientInternal.isValidationResult,
+			apiClientRuntimePrimitives.isValidationResult,
 		);
 		expect(restInternal.toValidationResult).toBe(
-			apiClientInternal.toValidationResult,
+			apiClientRuntimePrimitives.toValidationResult,
 		);
 	});
 
@@ -30,7 +30,7 @@ describe("@wp-typia/rest runtime primitive shims", () => {
 		const formData = new FormData();
 
 		expect(restInternal.normalizeValidationError(rawError)).toEqual(
-			apiClientInternal.normalizeValidationError(rawError),
+			apiClientRuntimePrimitives.normalizeValidationError(rawError),
 		);
 		expect(
 			restInternal.toValidationResult({
@@ -38,13 +38,13 @@ describe("@wp-typia/rest runtime primitive shims", () => {
 				success: false,
 			}),
 		).toEqual(
-			apiClientInternal.toValidationResult({
+			apiClientRuntimePrimitives.toValidationResult({
 				errors: [rawError],
 				success: false,
 			}),
 		);
 		expect(restInternal.isFormDataLike(formData)).toBe(true);
-		expect(apiClientInternal.isFormDataLike(formData)).toBe(true);
+		expect(apiClientRuntimePrimitives.isFormDataLike(formData)).toBe(true);
 	});
 
 	test("keeps the rest root surface transport-oriented", () => {
