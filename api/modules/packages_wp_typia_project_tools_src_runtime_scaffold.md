@@ -82,9 +82,11 @@ ___
 Builds the generated WordPress wrapper CSS class for a scaffolded block.
 
 Returns `wp-block-{namespace}-{slug}` when a non-empty namespace is present,
-or `wp-block-{slug}` when the namespace is empty or undefined. Both inputs
-are normalized and validated with the same scaffold identifier rules used for
-block names.
+or `wp-block-{slug}` when the namespace is empty or undefined. When the
+normalized namespace equals the normalized slug, appends `-block` so the
+generated class avoids repeated namespace segments without colliding with the
+default core wrapper classes. Both inputs are normalized and validated with
+the same scaffold identifier rules used for block names.
 
 #### Parameters
 
@@ -99,7 +101,7 @@ block names.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:279](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L279)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:281](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L281)
 
 ___
 
@@ -119,7 +121,7 @@ value is "post-meta" \| "custom-table"
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:324](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L324)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:330](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L330)
 
 ___
 
@@ -139,7 +141,7 @@ value is "public" \| "authenticated"
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:328](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L328)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:334](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L334)
 
 ___
 
@@ -153,7 +155,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:332](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L332)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:338](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L338)
 
 ___
 
@@ -174,7 +176,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:345](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L345)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:351](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L351)
 
 ___
 
@@ -194,7 +196,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:364](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L364)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:370](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L370)
 
 ___
 
@@ -214,7 +216,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:393](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L393)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:399](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L399)
 
 ___
 
@@ -234,7 +236,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:418](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L418)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:424](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L424)
 
 ___
 
@@ -255,7 +257,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:473](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L473)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:479](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L479)
 
 ___
 
@@ -275,4 +277,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold.ts:896](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L896)
+[packages/wp-typia-project-tools/src/runtime/scaffold.ts:902](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold.ts#L902)
