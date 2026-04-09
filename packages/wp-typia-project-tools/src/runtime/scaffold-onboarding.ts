@@ -99,7 +99,7 @@ export function getTemplateSourceOfTruthNote(
 		return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include a starter `typia.manifest.json` so editor imports resolve before the first sync. `src/api-types.ts` remains the source of truth for `src/api-schemas/*` when you run `sync-rest`. This scaffold is intentionally server-rendered: `src/render.php` is the canonical frontend entry, and `src/save.tsx` returns `null` so PHP can inject post context, storage-backed state, and write-policy bootstrap data before hydration.";
 	}
 
-	return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include a starter `typia.manifest.json` so editor imports resolve before the first sync. The basic scaffold stays static by design: it does not generate `render.php`, `src/save.tsx` always returns stable markup, and the generated webpack config keeps the current `@wordpress/scripts` CommonJS baseline.";
+	return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include a starter `typia.manifest.json` so editor imports resolve before the first sync. The basic scaffold stays static by design: `src/render.php` is only an opt-in server placeholder, `src/save.tsx` remains the canonical frontend output, and the generated webpack config keeps the current `@wordpress/scripts` CommonJS baseline unless you intentionally add `render` to `block.json`.";
 }
 
 /**

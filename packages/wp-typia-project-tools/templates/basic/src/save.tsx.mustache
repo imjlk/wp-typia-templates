@@ -12,7 +12,7 @@ interface SaveProps {
 export default function Save({ attributes }: SaveProps) {
   const isVisible = attributes.isVisible !== false;
   const blockProps = useBlockProps.save({
-    className: isVisible ? undefined : 'is-hidden',
+    className: `{{cssClassName}}${isVisible ? '' : ' is-hidden'}`,
     hidden: isVisible ? undefined : true,
     'aria-hidden': isVisible ? undefined : 'true',
   });

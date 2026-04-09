@@ -29,7 +29,7 @@ type EditProps = BlockEditProps<{{pascalCase}}Attributes>;
 function Edit({ attributes, setAttributes }: EditProps) {
   const isVisible = attributes.isVisible !== false;
   const blockProps = useBlockProps({
-    className: isVisible ? undefined : 'is-hidden',
+    className: `{{cssClassName}}${isVisible ? '' : ' is-hidden'}`,
   });
   const editorFields = useEditorFields(currentManifest as ManifestDocument, {
     hidden: ['id', 'schemaVersion'],
