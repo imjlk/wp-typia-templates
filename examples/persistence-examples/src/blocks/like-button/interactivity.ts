@@ -90,10 +90,13 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 			context.isBootstrapping = true;
 
 			let bootstrapSucceeded = false;
-			let lastBootstrapError =
-				'Unable to initialize write access';
+			let lastBootstrapError = 'Unable to initialize write access';
 
-			for ( let attempt = 1; attempt <= BOOTSTRAP_MAX_ATTEMPTS; attempt += 1 ) {
+			for (
+				let attempt = 1;
+				attempt <= BOOTSTRAP_MAX_ATTEMPTS;
+				attempt += 1
+			) {
 				try {
 					const result = await fetchLikeBootstrap( {
 						postId: context.postId,
@@ -121,8 +124,7 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 					context.canWrite =
 						result.data.canWrite === true &&
 						clientState.writeNonce.length > 0;
-					clientState.liked =
-						result.data.likedByCurrentUser === true;
+					clientState.liked = result.data.likedByCurrentUser === true;
 					context.buttonLabel = getButtonLabel(
 						context,
 						clientState.liked
@@ -156,7 +158,6 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 		},
 		async toggle() {
 			const context = getContext< PersistenceLikeButtonContext >();
-			const clientState = getClientState( context );
 			if ( context.postId <= 0 || ! context.resourceKey ) {
 				return;
 			}
@@ -168,6 +169,7 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 				context.error = 'Sign in to like this item.';
 				return;
 			}
+			const clientState = getClientState( context );
 
 			context.isSaving = true;
 			context.error = '';
@@ -183,7 +185,7 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 				if ( ! result.isValid || ! result.data ) {
 					context.error =
 						result.errors[ 0 ]?.expected ?? 'Unable to toggle like';
-						return;
+					return;
 				}
 
 				context.count = result.data.count;

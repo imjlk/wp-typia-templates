@@ -94,11 +94,14 @@ const { actions, state } = store( 'persistenceExamplesCounter', {
 
 			context.isBootstrapping = true;
 
-			let lastBootstrapError =
-				'Unable to initialize write access';
+			let lastBootstrapError = 'Unable to initialize write access';
 			let bootstrapSucceeded = false;
 
-			for ( let attempt = 1; attempt <= BOOTSTRAP_MAX_ATTEMPTS; attempt += 1 ) {
+			for (
+				let attempt = 1;
+				attempt <= BOOTSTRAP_MAX_ATTEMPTS;
+				attempt += 1
+			) {
 				try {
 					const result = await fetchCounterBootstrap( {
 						postId: context.postId,
@@ -161,7 +164,6 @@ const { actions, state } = store( 'persistenceExamplesCounter', {
 		},
 		async increment() {
 			const context = getContext< PersistenceCounterContext >();
-			const clientState = getClientState( context );
 			if ( context.postId <= 0 || ! context.resourceKey ) {
 				return;
 			}
@@ -169,6 +171,7 @@ const { actions, state } = store( 'persistenceExamplesCounter', {
 				context.error = 'Write access is still initializing.';
 				return;
 			}
+			const clientState = getClientState( context );
 			if ( hasExpiredPublicWriteToken( clientState.writeExpiry ) ) {
 				await actions.loadBootstrap();
 			}

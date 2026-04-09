@@ -168,7 +168,8 @@ export function useToggleLikeMutation< Context = unknown >(
 							return current;
 						}
 
-						const nextLiked = ! bootstrapPrevious.likedByCurrentUser;
+						const nextLiked =
+							! bootstrapPrevious.likedByCurrentUser;
 						return {
 							...current,
 							count: Math.max(
