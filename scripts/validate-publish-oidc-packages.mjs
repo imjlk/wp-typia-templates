@@ -172,10 +172,13 @@ function validatePackedRestManifest() {
 
 const expectedPackageDirs = findPublishablePackageDirs();
 const configuredPackageDirs = parsePublishScriptPackageDirs();
-const publishOrderViolations = findPublishOrderViolations(configuredPackageDirs);
 
 const missingFromPublishScript = diff(expectedPackageDirs, configuredPackageDirs);
 const extraInPublishScript = diff(configuredPackageDirs, expectedPackageDirs);
+const publishOrderViolations =
+	missingFromPublishScript.length === 0 && extraInPublishScript.length === 0
+		? findPublishOrderViolations(configuredPackageDirs)
+		: [];
 const publishablePackages = expectedPackageDirs.map((packageDir) => {
 	const packageName = readPackageJson(packageDir).name;
 	return {
