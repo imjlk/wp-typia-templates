@@ -36,7 +36,10 @@ function resolveEndpointUrl(
 	baseUrl?: string
 ): string {
 	if ( typeof baseUrl === 'string' && baseUrl.trim().length > 0 ) {
-		return new URL( endpointPath, baseUrl ).toString();
+		const normalizedBaseUrl = baseUrl.endsWith( '/' ) ? baseUrl : `${ baseUrl }/`;
+		const normalizedEndpointPath = endpointPath.replace( /^\/+/, '' );
+
+		return new URL( normalizedEndpointPath, normalizedBaseUrl ).toString();
 	}
 
 	return resolveRestRouteUrl( endpointPath );

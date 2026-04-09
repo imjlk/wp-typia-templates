@@ -1350,6 +1350,60 @@ console.log(JSON.stringify({
 		expect(transportChecks.frontendWrite?.headers?.["X-WP-Nonce"]).toBe("wp-fallback-nonce");
 	});
 
+	test("generated persistence transport preserves proxy subpaths when overriding base URLs", async () => {
+		const targetDir = path.join(tempRoot, "demo-persistence-proxy-subpath");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "persistence",
+			dataStorageMode: "custom-table",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				dataStorageMode: "custom-table",
+				description: "Demo persistence proxy subpath transport behavior",
+				namespace: "create-block",
+				persistencePolicy: "public",
+				slug: "demo-persistence-proxy-subpath",
+				title: "Demo Persistence Proxy Subpath",
+			},
+			persistencePolicy: "public",
+		});
+
+		replaceGeneratedTransportBaseUrls(
+			path.join(targetDir, "src", "transport.ts"),
+			"https://example.test/proxy/",
+		);
+
+		const transportChecks = runGeneratedJsonScript(
+			targetDir,
+			"verify-proxy-subpath-transport.ts",
+			`
+import { resolveTransportCallOptions } from './src/transport';
+
+const endpoint = { path: '/demo/v1/state' };
+const editorRead = resolveTransportCallOptions('editor', 'read', endpoint, {
+	transportTarget: 'editor',
+});
+const frontendWrite = resolveTransportCallOptions('frontend', 'write', endpoint, {
+	transportTarget: 'frontend',
+});
+
+console.log(JSON.stringify({
+	editorRead: editorRead.requestOptions,
+	frontendWrite: frontendWrite.requestOptions,
+}));
+			`,
+		) as {
+			editorRead?: { url?: string };
+			frontendWrite?: { url?: string };
+		};
+
+		expect(transportChecks.editorRead?.url).toBe("https://example.test/proxy/demo/v1/state");
+		expect(transportChecks.frontendWrite?.url).toBe("https://example.test/proxy/demo/v1/state");
+	});
+
 	test(
 		"generated persistence transport can point at the adapter PoC by editing only src/transport.ts",
 		async () => {
