@@ -164,13 +164,11 @@ export function useToggleLikeMutation< Context = unknown >(
 					likeStatusEndpoint,
 					queryRequest,
 					( current ) => {
-						if ( ! current ) {
+						if ( ! current || bootstrapPrevious === undefined ) {
 							return current;
 						}
 
-						const nextLiked = bootstrapPrevious
-							? ! bootstrapPrevious.likedByCurrentUser
-							: true;
+						const nextLiked = ! bootstrapPrevious.likedByCurrentUser;
 						return {
 							...current,
 							count: Math.max(
