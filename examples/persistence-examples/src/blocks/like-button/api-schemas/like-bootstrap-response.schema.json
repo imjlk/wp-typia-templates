@@ -19,5 +19,31 @@
 		"likedByCurrentUser"
 	],
 	"title": "PersistenceLikeBootstrapResponse",
-	"type": "object"
+	"type": "object",
+	"allOf": [
+		{
+			"if": {
+				"properties": {
+					"canWrite": {
+						"const": true
+					}
+				},
+				"required": [
+					"canWrite"
+				]
+			},
+			"then": {
+				"required": [
+					"restNonce"
+				]
+			},
+			"else": {
+				"not": {
+					"required": [
+						"restNonce"
+					]
+				}
+			}
+		}
+	]
 }

@@ -32,6 +32,13 @@ $button_label = isset( $normalized['buttonLabel'] ) ? (string) $normalized['butt
 $post_id      = is_object( $block ) && isset( $block->context['postId'] )
 	? (int) $block->context['postId']
 	: (int) get_queried_object_id();
+
+persistence_examples_record_rendered_block_instance(
+	(int) $post_id,
+	'create-block/persistence-counter',
+	$resource_key
+);
+
 $context      = array(
 	'bootstrapReady' => false,
 	'buttonLabel' => $button_label,

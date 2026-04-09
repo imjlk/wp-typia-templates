@@ -19,6 +19,7 @@ import {
   manifestToOpenApi,
   normalizeEndpointAuthDefinition,
   type OpenApiInfo,
+  projectJsonSchemaDocument,
 } from './schema-core.js';
 
 export interface SyncBlockMetadataOptions {
@@ -649,7 +650,13 @@ export async function syncTypeSchemas(
   reconcileGeneratedArtifacts(
     [
       {
-        content: JSON.stringify(manifestToJsonSchema(manifest as never), null, '\t'),
+        content: JSON.stringify(
+          projectJsonSchemaDocument(manifestToJsonSchema(manifest as never), {
+            profile: 'rest',
+          }),
+          null,
+          '\t',
+        ),
         path: jsonSchemaPath,
       },
       ...(openApiPath

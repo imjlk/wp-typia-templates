@@ -6,8 +6,11 @@
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
-						"type": "number",
-						"x-typeTag": "uint32"
+						"type": "integer",
+						"x-typeTag": "uint32",
+						"minimum": 0,
+						"maximum": 4294967295,
+						"multipleOf": 1
 					},
 					"resourceKey": {
 						"type": "string",
@@ -27,8 +30,11 @@
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
-						"type": "number",
-						"x-typeTag": "uint32"
+						"type": "integer",
+						"x-typeTag": "uint32",
+						"minimum": 0,
+						"maximum": 4294967295,
+						"multipleOf": 1
 					},
 					"resourceKey": {
 						"type": "string",
@@ -48,8 +54,11 @@
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
-						"type": "number",
-						"x-typeTag": "uint32"
+						"type": "integer",
+						"x-typeTag": "uint32",
+						"minimum": 0,
+						"maximum": 4294967295,
+						"multipleOf": 1
 					},
 					"resourceKey": {
 						"type": "string",
@@ -85,15 +94,44 @@
 					"likedByCurrentUser"
 				],
 				"title": "PersistenceLikeBootstrapResponse",
-				"type": "object"
+				"type": "object",
+				"allOf": [
+					{
+						"if": {
+							"properties": {
+								"canWrite": {
+									"const": true
+								}
+							},
+							"required": [
+								"canWrite"
+							]
+						},
+						"then": {
+							"required": [
+								"restNonce"
+							]
+						},
+						"else": {
+							"not": {
+								"required": [
+									"restNonce"
+								]
+							}
+						}
+					}
+				]
 			},
 			"PersistenceLikeStatusResponse": {
 				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
-						"type": "number",
-						"x-typeTag": "uint32"
+						"type": "integer",
+						"x-typeTag": "uint32",
+						"minimum": 0,
+						"maximum": 4294967295,
+						"multipleOf": 1
 					},
 					"resourceKey": {
 						"type": "string",
@@ -101,9 +139,11 @@
 						"maxLength": 100
 					},
 					"count": {
-						"type": "number",
+						"type": "integer",
 						"x-typeTag": "uint32",
-						"minimum": 0
+						"minimum": 0,
+						"maximum": 4294967295,
+						"multipleOf": 1
 					},
 					"storage": {
 						"enum": [
@@ -126,8 +166,11 @@
 				"additionalProperties": false,
 				"properties": {
 					"postId": {
-						"type": "number",
-						"x-typeTag": "uint32"
+						"type": "integer",
+						"x-typeTag": "uint32",
+						"minimum": 0,
+						"maximum": 4294967295,
+						"multipleOf": 1
 					},
 					"resourceKey": {
 						"type": "string",
@@ -135,9 +178,11 @@
 						"maxLength": 100
 					},
 					"count": {
-						"type": "number",
+						"type": "integer",
 						"x-typeTag": "uint32",
-						"minimum": 0
+						"minimum": 0,
+						"maximum": 4294967295,
+						"multipleOf": 1
 					},
 					"likedByCurrentUser": {
 						"type": "boolean"

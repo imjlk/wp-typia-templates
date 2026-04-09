@@ -1310,6 +1310,10 @@ describe("@wp-typia/project-tools scaffolding", () => {
       expect(pluginBootstrap).toContain(
         "demo_persistence_public_handle_get_bootstrap"
       );
+      expect(pluginBootstrap).toContain(
+        "function demo_persistence_public_has_rendered_block_instance"
+      );
+      expect(pluginBootstrap).toContain("create-block/demo-persistence-public");
       expect(restPublicHelper).toContain(
         "function demo_persistence_public_verify_public_write_token"
       );
@@ -1394,6 +1398,9 @@ describe("@wp-typia/project-tools scaffolding", () => {
         ".wp-block-create-block-demo-persistence-public-frontend"
       );
       expect(generatedRender).not.toContain("publicWriteToken");
+      expect(generatedRender).toContain(
+        "demo_persistence_public_record_rendered_block_instance"
+      );
       expect(generatedRender).toContain(
         "context.bootstrapReady || context.canWrite"
       );
@@ -1582,6 +1589,12 @@ describe("@wp-typia/project-tools scaffolding", () => {
       "demo_persistence_authenticated_handle_get_bootstrap"
     );
     expect(pluginBootstrap).toContain(
+      "function demo_persistence_authenticated_has_rendered_block_instance"
+    );
+    expect(pluginBootstrap).toContain(
+      "create-block/demo-persistence-authenticated"
+    );
+    expect(pluginBootstrap).toContain(
       "Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0'"
     );
     expect(restAuthHelper).toContain(
@@ -1598,6 +1611,9 @@ describe("@wp-typia/project-tools scaffolding", () => {
     );
     expect(generatedRender).toContain(
       'class="wp-block-create-block-demo-persistence-authenticated-frontend"'
+    );
+    expect(generatedRender).toContain(
+      "demo_persistence_authenticated_record_rendered_block_instance"
     );
     expect(generatedRender).toContain("Sign in to persist this counter.");
     expect(generatedApiTypes).toContain("publicWriteRequestId?: string");
@@ -3219,6 +3235,10 @@ console.log(JSON.stringify({ initial, updated, reread }));
       "demo_compound_public_handle_get_bootstrap"
     );
     expect(pluginBootstrap).toContain(
+      "function demo_compound_public_has_rendered_block_instance"
+    );
+    expect(pluginBootstrap).toContain("create-block/demo-compound-public");
+    expect(pluginBootstrap).toContain(
       "Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0'"
     );
     expect(pluginBootstrap).toContain(
@@ -3233,6 +3253,9 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(restPublicHelper).toContain("SELECT GET_LOCK(%s, 5)");
     expect(restPublicHelper).toContain("return 'wpt_pwl_' . md5(");
     expect(parentRender).not.toContain("publicWriteToken");
+    expect(parentRender).toContain(
+      "demo_compound_public_record_rendered_block_instance"
+    );
     expect(parentRender).toContain(
       "context.bootstrapReady || context.canWrite"
     );

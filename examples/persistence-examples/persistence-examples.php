@@ -502,12 +502,91 @@ function persistence_examples_build_counter_response( $post_id, $resource_key, $
 	);
 }
 
+function persistence_examples_block_tree_has_resource_key( $blocks, $block_name, $resource_key ) {
+	if ( ! is_array( $blocks ) ) {
+		return false;
+	}
+
+	foreach ( $blocks as $block ) {
+		if ( ! is_array( $block ) ) {
+			continue;
+		}
+
+		if ( $block_name === (string) ( $block['blockName'] ?? '' ) ) {
+			$attributes = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
+			$candidate_resource_key = array_key_exists( 'resourceKey', $attributes )
+				? (string) $attributes['resourceKey']
+				: 'primary';
+			if ( $candidate_resource_key === (string) $resource_key ) {
+				return true;
+			}
+		}
+
+		if (
+			isset( $block['innerBlocks'] ) &&
+			persistence_examples_block_tree_has_resource_key( $block['innerBlocks'], $block_name, $resource_key )
+		) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function persistence_examples_get_rendered_block_instance_key( $post_id, $block_name, $resource_key ) {
+	return 'wpt_pri_' . md5( implode( '|', array( (string) $block_name, (int) $post_id, (string) $resource_key ) ) );
+}
+
+function persistence_examples_record_rendered_block_instance( $post_id, $block_name, $resource_key ) {
+	if ( $post_id <= 0 || '' === (string) $resource_key || '' === (string) $block_name ) {
+		return;
+	}
+
+	set_transient(
+		persistence_examples_get_rendered_block_instance_key( $post_id, $block_name, $resource_key ),
+		1,
+		5 * MINUTE_IN_SECONDS
+	);
+}
+
+function persistence_examples_has_rendered_block_instance( $post_id, $block_name, $resource_key ) {
+	if ( $post_id <= 0 || '' === (string) $resource_key ) {
+		return false;
+	}
+
+	if (
+		false !== get_transient(
+			persistence_examples_get_rendered_block_instance_key( $post_id, $block_name, $resource_key )
+		)
+	) {
+		return true;
+	}
+
+	$post = get_post( $post_id );
+	if ( ! ( $post instanceof WP_Post ) ) {
+		return false;
+	}
+
+	return persistence_examples_block_tree_has_resource_key(
+		parse_blocks( (string) $post->post_content ),
+		(string) $block_name,
+		(string) $resource_key
+	);
+}
+
 function persistence_examples_build_counter_bootstrap_response( $post_id, $resource_key ) {
 	$response = array(
 		'canWrite' => false,
 	);
 
-	if ( $post_id <= 0 ) {
+	if (
+		$post_id <= 0 ||
+		! persistence_examples_has_rendered_block_instance(
+			(int) $post_id,
+			'create-block/persistence-counter',
+			(string) $resource_key
+		)
+	) {
 		return $response;
 	}
 
@@ -768,10 +847,15 @@ function persistence_examples_build_like_response( $post_id, $resource_key, $use
 }
 
 function persistence_examples_build_like_bootstrap_response( $post_id, $resource_key, $user_id ) {
-	$can_write = $post_id > 0 && $user_id > 0;
+	$has_instance = persistence_examples_has_rendered_block_instance(
+		(int) $post_id,
+		'create-block/persistence-like-button',
+		(string) $resource_key
+	);
+	$can_write = $post_id > 0 && $user_id > 0 && $has_instance;
 	$response  = array(
 		'canWrite'           => $can_write,
-		'likedByCurrentUser' => persistence_examples_has_like( $post_id, $resource_key, $user_id ),
+		'likedByCurrentUser' => $has_instance && persistence_examples_has_like( $post_id, $resource_key, $user_id ),
 	);
 
 	if ( $can_write ) {

@@ -6,8 +6,11 @@
 			"type": "boolean"
 		},
 		"publicWriteExpiresAt": {
-			"type": "number",
-			"x-typeTag": "uint32"
+			"type": "integer",
+			"x-typeTag": "uint32",
+			"minimum": 0,
+			"maximum": 4294967295,
+			"multipleOf": 1
 		},
 		"publicWriteToken": {
 			"type": "string",
@@ -19,5 +22,32 @@
 		"canWrite"
 	],
 	"title": "PersistenceCounterBootstrapResponse",
-	"type": "object"
+	"type": "object",
+	"allOf": [
+		{
+			"if": {
+				"properties": {
+					"canWrite": {
+						"const": true
+					}
+				},
+				"required": [
+					"canWrite"
+				]
+			},
+			"then": {
+				"required": [
+					"publicWriteExpiresAt",
+					"publicWriteToken"
+				]
+			},
+			"else": {
+				"not": {
+					"required": [
+						"publicWriteToken"
+					]
+				}
+			}
+		}
+	]
 }

@@ -196,4 +196,19 @@ describe('REST contract adapter PoC', () => {
 			startServer: () => startCounterAdapterServer(),
 		} );
 	});
+
+	test('marks bootstrap responses as private no-store', async () => {
+		const server = await startCounterAdapterServer();
+
+		try {
+			const response = await fetch(
+				`${ server.url }/persistence-examples/v1/counter/bootstrap?postId=7&resourceKey=demo`
+			);
+
+			expect(response.status).toBe(200);
+			expect(response.headers.get('cache-control')).toBe('private, no-store');
+		} finally {
+			await server.close();
+		}
+	});
 });

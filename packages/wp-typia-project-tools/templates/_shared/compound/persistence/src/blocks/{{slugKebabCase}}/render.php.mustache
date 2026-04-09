@@ -32,6 +32,13 @@ $post_id           = is_object( $block ) && isset( $block->context['postId'] )
 	: (int) get_queried_object_id();
 $storage_mode      = '{{dataStorageMode}}';
 $persistence_policy = '{{persistencePolicy}}';
+
+{{phpPrefix}}_record_rendered_block_instance(
+	(int) $post_id,
+	'{{namespace}}/{{slugKebabCase}}',
+	$resource_key
+);
+
 $notice_message    = 'authenticated' === $persistence_policy
 	? __( 'Sign in to persist this counter.', '{{textDomain}}' )
 	: __( 'Public writes are temporarily unavailable.', '{{textDomain}}' );

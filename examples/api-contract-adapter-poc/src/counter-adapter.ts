@@ -76,10 +76,12 @@ function readRequestBody(request: IncomingMessage): Promise<string> {
 function sendJson(
 	response: ServerResponse,
 	statusCode: number,
-	payload: unknown
+	payload: unknown,
+	headers: Record<string, string> = {}
 ): void {
 	response.writeHead(statusCode, {
 		'content-type': 'application/json; charset=utf-8',
+		...headers,
 	});
 	response.end(JSON.stringify(payload));
 }
@@ -191,7 +193,10 @@ async function handleGetCounterBootstrap(
 			canWrite: true,
 			publicWriteExpiresAt: Math.floor(Date.now() / 1000) + 300,
 			publicWriteToken: 'adapter-proof-token',
-		})
+		}),
+		{
+			'cache-control': 'private, no-store',
+		}
 	);
 }
 

@@ -248,10 +248,14 @@ export default function Edit( {
 									variant="tertiary"
 									disabled={
 										liveStatusQuery.isFetching ||
+										liveBootstrapQuery.isFetching ||
 										liveToggleMutation.isPending
 									}
 									onClick={ () =>
-										void liveStatusQuery.refetch()
+										void Promise.all( [
+											liveStatusQuery.refetch(),
+											liveBootstrapQuery.refetch(),
+										] )
 									}
 								>
 									{ liveStatusQuery.isFetching

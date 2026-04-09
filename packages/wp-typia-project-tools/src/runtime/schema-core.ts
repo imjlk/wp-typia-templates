@@ -476,6 +476,15 @@ function projectSchemaArrayItemsForAiStructuredOutput(
 	);
 }
 
+function projectSchemaArrayItemsForRest(
+	items: JsonSchemaObject[],
+	path: string,
+): JsonSchemaObject[] {
+	return items.map((item, index) =>
+		projectSchemaObjectForRest(item, `${path}/${index}`),
+	);
+}
+
 function projectSchemaPropertyMapForAiStructuredOutput(
 	properties: Record<string, JsonSchemaObject>,
 	path: string,
@@ -484,6 +493,18 @@ function projectSchemaPropertyMapForAiStructuredOutput(
 		Object.entries(properties).map(([key, value]) => [
 			key,
 			projectSchemaObjectForAiStructuredOutput(value, `${path}/${key}`),
+		]),
+	);
+}
+
+function projectSchemaPropertyMapForRest(
+	properties: Record<string, JsonSchemaObject>,
+	path: string,
+): Record<string, JsonSchemaObject> {
+	return Object.fromEntries(
+		Object.entries(properties).map(([key, value]) => [
+			key,
+			projectSchemaObjectForRest(value, `${path}/${key}`),
 		]),
 	);
 }
@@ -537,6 +558,107 @@ function projectSchemaObjectForAiStructuredOutput(
 	}
 
 	return projectedNode;
+}
+
+function projectSchemaObjectForRest(
+	node: JsonSchemaObject,
+	path: string,
+): JsonSchemaObject {
+	const projectedNode = cloneJsonSchemaNode(node);
+	const rawTypeTag = projectedNode[WP_TYPIA_OPENAPI_EXTENSION_KEYS.TYPE_TAG];
+
+	if (typeof rawTypeTag === "string") {
+		applyProjectedTypeTag(projectedNode, rawTypeTag, path);
+	}
+
+	for (const key of Object.keys(projectedNode)) {
+		const child = projectedNode[key];
+		if (Array.isArray(child)) {
+			projectedNode[key] = child.every(isJsonSchemaObject)
+				? projectSchemaArrayItemsForRest(
+						child as JsonSchemaObject[],
+						`${path}/${key}`,
+					)
+				: child;
+			continue;
+		}
+
+		if (!isJsonSchemaObject(child)) {
+			continue;
+		}
+
+		if (key === "properties") {
+			projectedNode[key] = projectSchemaPropertyMapForRest(
+				child as Record<string, JsonSchemaObject>,
+				`${path}/${key}`,
+			);
+			continue;
+		}
+
+		projectedNode[key] = projectSchemaObjectForRest(child, `${path}/${key}`);
+	}
+
+	applyProjectedBootstrapContract(projectedNode);
+
+	return projectedNode;
+}
+
+function applyProjectedBootstrapContract(schema: JsonSchemaObject): void {
+	if (schema.type !== "object" || !isJsonSchemaObject(schema.properties)) {
+		return;
+	}
+
+	const properties = schema.properties as Record<string, JsonSchemaObject>;
+	if (properties.canWrite?.type !== "boolean") {
+		return;
+	}
+
+	const allOf = Array.isArray(schema.allOf)
+		? [...(schema.allOf as JsonSchemaObject[])]
+		: [];
+	const canWriteIsTrue: JsonSchemaObject = {
+		properties: {
+			canWrite: {
+				const: true,
+			},
+		},
+		required: ["canWrite"],
+	};
+
+	if (properties.restNonce?.type === "string") {
+		allOf.push({
+			if: canWriteIsTrue,
+			then: {
+				required: ["restNonce"],
+			},
+			else: {
+				not: {
+					required: ["restNonce"],
+				},
+			},
+		});
+	}
+
+	if (
+		properties.publicWriteToken?.type === "string" &&
+		isJsonSchemaObject(properties.publicWriteExpiresAt)
+	) {
+		allOf.push({
+			if: canWriteIsTrue,
+			then: {
+				required: ["publicWriteExpiresAt", "publicWriteToken"],
+			},
+			else: {
+				not: {
+					required: ["publicWriteToken"],
+				},
+			},
+		});
+	}
+
+	if (allOf.length > 0) {
+		schema.allOf = allOf;
+	}
 }
 
 function manifestUnionToJsonSchema(union: ManifestUnionMetadata): JsonSchemaObject {
@@ -679,7 +801,7 @@ export function projectJsonSchemaDocument<
 	Schema extends JsonSchemaDocument | JsonSchemaObject,
 >(schema: Schema, options: JsonSchemaProjectionOptions): Schema {
 	if (options.profile === "rest") {
-		return cloneJsonSchemaNode(schema);
+		return projectSchemaObjectForRest(schema, "#") as Schema;
 	}
 
 	if (options.profile === "ai-structured-output") {
@@ -705,10 +827,13 @@ export function manifestToOpenApi(
 	info: OpenApiInfo = {},
 ): OpenApiDocument {
 	const schemaName = doc.sourceType ?? "TypiaDocument";
+	const projectedSchema = projectJsonSchemaDocument(manifestToJsonSchema(doc), {
+		profile: "rest",
+	});
 	return {
 		components: {
 			schemas: {
-				[schemaName]: manifestToJsonSchema(doc),
+				[schemaName]: projectedSchema,
 			},
 		},
 		info: {
@@ -1052,7 +1177,9 @@ export function buildEndpointOpenApiDocument(
 	const schemas = Object.fromEntries(
 		contractEntries.map(([contractKey, contract]) => [
 			getContractSchemaName(contractKey, contract),
-			manifestToJsonSchema(contract.document),
+			projectJsonSchemaDocument(manifestToJsonSchema(contract.document), {
+				profile: "rest",
+			}),
 		]),
 	);
 	const paths: Record<string, OpenApiPathItem> = {};

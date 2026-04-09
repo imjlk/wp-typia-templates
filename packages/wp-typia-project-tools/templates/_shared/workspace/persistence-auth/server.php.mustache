@@ -158,8 +158,83 @@ function {{phpPrefix}}_build_state_response( $post_id, $resource_key, $count ) {
 	);
 }
 
+function {{phpPrefix}}_block_tree_has_resource_key( $blocks, $block_name, $resource_key ) {
+	if ( ! is_array( $blocks ) ) {
+		return false;
+	}
+
+	foreach ( $blocks as $block ) {
+		if ( ! is_array( $block ) ) {
+			continue;
+		}
+
+		if ( $block_name === (string) ( $block['blockName'] ?? '' ) ) {
+			$attributes = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
+			if ( (string) ( $attributes['resourceKey'] ?? '' ) === (string) $resource_key ) {
+				return true;
+			}
+		}
+
+		if (
+			isset( $block['innerBlocks'] ) &&
+			{{phpPrefix}}_block_tree_has_resource_key( $block['innerBlocks'], $block_name, $resource_key )
+		) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function {{phpPrefix}}_get_rendered_block_instance_key( $post_id, $block_name, $resource_key ) {
+	return 'wpt_pri_' . md5( implode( '|', array( (string) $block_name, (int) $post_id, (string) $resource_key ) ) );
+}
+
+function {{phpPrefix}}_record_rendered_block_instance( $post_id, $block_name, $resource_key ) {
+	if ( $post_id <= 0 || '' === (string) $resource_key || '' === (string) $block_name ) {
+		return;
+	}
+
+	set_transient(
+		{{phpPrefix}}_get_rendered_block_instance_key( $post_id, $block_name, $resource_key ),
+		1,
+		5 * MINUTE_IN_SECONDS
+	);
+}
+
+function {{phpPrefix}}_has_rendered_block_instance( $post_id, $resource_key ) {
+	if ( $post_id <= 0 || '' === (string) $resource_key ) {
+		return false;
+	}
+
+	if (
+		false !== get_transient(
+			{{phpPrefix}}_get_rendered_block_instance_key(
+				$post_id,
+				'{{namespace}}/{{slugKebabCase}}',
+				$resource_key
+			)
+		)
+	) {
+		return true;
+	}
+
+	$post = get_post( $post_id );
+	if ( ! ( $post instanceof WP_Post ) ) {
+		return false;
+	}
+
+	return {{phpPrefix}}_block_tree_has_resource_key(
+		parse_blocks( (string) $post->post_content ),
+		'{{namespace}}/{{slugKebabCase}}',
+		(string) $resource_key
+	);
+}
+
 function {{phpPrefix}}_build_bootstrap_response( $post_id, $resource_key ) {
-	$can_write = $post_id > 0 && is_user_logged_in();
+	$can_write = $post_id > 0 &&
+		is_user_logged_in() &&
+		{{phpPrefix}}_has_rendered_block_instance( (int) $post_id, (string) $resource_key );
 	$response  = array(
 		'canWrite' => $can_write,
 	);

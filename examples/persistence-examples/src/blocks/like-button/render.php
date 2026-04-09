@@ -33,6 +33,13 @@ $unlike_label = isset( $normalized['unlikeLabel'] ) ? (string) $normalized['unli
 $post_id      = is_object( $block ) && isset( $block->context['postId'] )
 	? (int) $block->context['postId']
 	: (int) get_queried_object_id();
+
+persistence_examples_record_rendered_block_instance(
+	(int) $post_id,
+	'create-block/persistence-like-button',
+	$resource_key
+);
+
 $context      = array(
 	'bootstrapReady' => false,
 	'buttonLabel'    => $like_label,

@@ -271,8 +271,12 @@ describe("schema-core", () => {
 		const schema = manifestToJsonSchema(manifest);
 		const projected = projectJsonSchemaDocument(schema, { profile: "rest" });
 
-		expect(projected).toEqual(schema);
 		expect(projected).not.toBe(schema);
+		expect(projected.properties.count.type).toBe("integer");
+		expect(projected.properties.count.minimum).toBe(0);
+		expect(projected.properties.count.maximum).toBe(10);
+		expect(projected.properties.count.multipleOf).toBe(1);
+		expect(projected.properties.count["x-typeTag"]).toBe("uint32");
 	});
 
 	test("projectJsonSchemaDocument removes wp-typia extension keys and projects uint32 for ai-structured-output", () => {
