@@ -342,6 +342,10 @@ describe("@wp-typia/project-tools scaffolding", () => {
 			"utf8",
 		);
 		const generatedSave = fs.readFileSync(path.join(targetDir, "src", "save.tsx"), "utf8");
+		const generatedRenderPlaceholder = fs.readFileSync(
+			path.join(targetDir, "src", "render.php"),
+			"utf8",
+		);
 		const generatedStyle = fs.readFileSync(path.join(targetDir, "src", "style.scss"), "utf8");
 		const generatedTypes = fs.readFileSync(path.join(targetDir, "src", "types.ts"), "utf8");
 		const generatedValidators = fs.readFileSync(path.join(targetDir, "src", "validators.ts"), "utf8");
@@ -383,6 +387,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(blockJson.category).toBe("text");
 		expect(blockJson.icon).toBe("smiley");
 		expect(blockJson.editorStyle).toBe("file:./index.css");
+		expect(blockJson.render).toBeUndefined();
 		expect(generatedManifest.manifestVersion).toBe(2);
 		expect(generatedManifest.sourceType).toBe("DemoNpmAttributes");
 		expect(generatedManifest.attributes.content.typia.defaultValue).toBe("");
@@ -406,6 +411,8 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(generatedEdit).toContain("useTypedAttributeUpdater");
 		expect(generatedSave).toContain("RichText.Content");
 		expect(generatedSave).not.toContain("return null;");
+		expect(generatedRenderPlaceholder).toContain("Optional server render placeholder");
+		expect(generatedRenderPlaceholder).toContain("Server render placeholder.");
 		expect(generatedEdit).toContain('className="wp-block-demo-space-demo-npm__content"');
 		expect(generatedSave).toContain('className="wp-block-demo-space-demo-npm__content"');
 		expect(generatedEditorStyle).toContain(".wp-block-demo-space-demo-npm");
@@ -447,6 +454,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(readme).toContain("-- --fail-on-lossy");
 		expect(readme).toContain("-- --strict --report json");
 		expect(readme).not.toContain("npm run sync-rest");
+		expect(readme).toContain("`src/render.php` is only an opt-in server placeholder");
 		expect(readme).toContain("watches the relevant sync scripts during local development");
 		expect(readme).toContain("do not create migration history");
 		expect(readme).not.toContain("## PHP REST Extension Points");
@@ -2039,7 +2047,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(answers.title).toBe("Demo Recovered");
 	});
 
-	test("runScaffoldFlow keeps the default namespace equal to the slug for wrapper classes", async () => {
+	test("runScaffoldFlow avoids duplicate namespace segments in wrapper classes", async () => {
 		const projectInput = "demo-default-class";
 		const flow = await runScaffoldFlow({
 			cwd: tempRoot,
@@ -2067,12 +2075,13 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		);
 
 		expect(blockJson.name).toBe("demo-default-class/demo-default-class");
-		expect(generatedStyle).toContain(".wp-block-demo-default-class-demo-default-class");
+		expect(generatedStyle).toContain(".wp-block-demo-default-class");
+		expect(generatedStyle).not.toContain(".wp-block-demo-default-class-demo-default-class");
 		expect(generatedEdit).toContain(
-			'className="wp-block-demo-default-class-demo-default-class__content"',
+			'className="wp-block-demo-default-class__content"',
 		);
 		expect(generatedSave).toContain(
-			'className="wp-block-demo-default-class-demo-default-class__content"',
+			'className="wp-block-demo-default-class__content"',
 		);
 	});
 

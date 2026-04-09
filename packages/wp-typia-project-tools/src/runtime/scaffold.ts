@@ -286,6 +286,10 @@ export function buildBlockCssClassName(
 			? resolveValidatedNamespace(namespace)
 			: "";
 
+	if (normalizedNamespace === normalizedSlug) {
+		return `wp-block-${normalizedSlug}`;
+	}
+
 	return normalizedNamespace.length > 0
 		? `wp-block-${normalizedNamespace}-${normalizedSlug}`
 		: `wp-block-${normalizedSlug}`;

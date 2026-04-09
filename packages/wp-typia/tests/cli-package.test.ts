@@ -33,6 +33,19 @@ describe("wp-typia package", () => {
 		}
 	});
 
+	test("returns structured version output through the canonical bin", () => {
+		const output = runUtf8Command("node", [entryPath, "--version"]);
+		const parsed = JSON.parse(output) as {
+			data?: { name?: string; type?: string; version?: string };
+			ok?: boolean;
+		};
+
+		expect(parsed.ok).toBe(true);
+		expect(parsed.data?.type).toBe("version");
+		expect(parsed.data?.name).toBe("wp-typia");
+		expect(parsed.data?.version).toBe(packageManifest.version);
+	});
+
 	test("rejects the removed migrations alias with actionable guidance", () => {
 		expect(() => runUtf8Command("node", [entryPath, "migrations", "plan"])).toThrow(
 			/removed in favor of `wp-typia migrate`/,

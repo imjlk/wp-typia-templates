@@ -1,0 +1,19 @@
+<?php
+/**
+ * Optional server render placeholder for {{title}}.
+ *
+ * The basic scaffold stays static by default. Keep `src/save.tsx` as the
+ * canonical frontend output unless you intentionally convert this block into a
+ * dynamic render path and add `render` to `block.json`.
+ *
+ * @package {{slug}}
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+?>
+<div class="{{cssClassName}}__server-placeholder" hidden>
+	<?php esc_html_e( 'Server render placeholder.', '{{textDomain}}' ); ?>
+</div>
