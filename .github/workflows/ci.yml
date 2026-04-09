@@ -1,5 +1,9 @@
 name: CI/CD Pipeline
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -93,7 +97,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: ./coverage/unit/lcov.info,./packages/wp-typia-rest/coverage/lcov.info,./packages/wp-typia-project-tools/coverage/lcov.info
+          files: ./coverage/unit/lcov.info,./packages/wp-typia-api-client/coverage/lcov.info,./packages/wp-typia-block-runtime/coverage/lcov.info,./packages/wp-typia-rest/coverage/lcov.info,./packages/wp-typia-project-tools/coverage/lcov.info,./packages/wp-typia/coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
 

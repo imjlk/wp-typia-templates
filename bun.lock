@@ -138,10 +138,6 @@
         "typia": "^12.0.1",
       },
     },
-    "packages/create": {
-      "name": "@wp-typia/create",
-      "version": "1.0.0",
-    },
     "packages/create-workspace-template": {
       "name": "@wp-typia/create-workspace-template",
       "version": "0.13.0",
@@ -1589,8 +1585,6 @@
     "@wp-typia/block-runtime": ["@wp-typia/block-runtime@workspace:packages/wp-typia-block-runtime"],
 
     "@wp-typia/block-types": ["@wp-typia/block-types@workspace:packages/wp-typia-block-types"],
-
-    "@wp-typia/create": ["@wp-typia/create@workspace:packages/create"],
 
     "@wp-typia/create-workspace-template": ["@wp-typia/create-workspace-template@workspace:packages/create-workspace-template"],
 
