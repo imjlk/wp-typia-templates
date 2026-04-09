@@ -72,7 +72,12 @@ export function joinPathWithQuery(path: string, query: string): string {
 		return path;
 	}
 
-	return path.includes("?") ? `${path}&${query}` : `${path}?${query}`;
+	const [pathWithoutHash, hash = ""] = path.split("#", 2);
+	const nextPath = pathWithoutHash.includes("?")
+		? `${pathWithoutHash}&${query}`
+		: `${pathWithoutHash}?${query}`;
+
+	return hash ? `${nextPath}#${hash}` : nextPath;
 }
 
 export function joinUrlWithQuery(url: string, query: string): string {

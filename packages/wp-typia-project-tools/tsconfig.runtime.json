@@ -45,9 +45,6 @@
       ],
       "@wp-typia/block-runtime/json-utils": [
         "packages/wp-typia-block-runtime/dist/json-utils.d.ts"
-      ],
-      "@wp-typia/api-client/runtime-primitives": [
-        "packages/wp-typia-api-client/dist/runtime-primitives.d.ts"
       ]
     }
   },

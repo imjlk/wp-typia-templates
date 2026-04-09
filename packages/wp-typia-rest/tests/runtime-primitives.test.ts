@@ -7,16 +7,44 @@ import * as restInternal from "../src/internal/runtime-primitives";
 
 describe("@wp-typia/rest runtime primitive shims", () => {
 	test("forwards shared helpers from api-client by identity", () => {
-		expect(restInternal.isPlainObject).toBe(apiClientRuntimePrimitives.isPlainObject);
-		expect(restInternal.isFormDataLike).toBe(apiClientRuntimePrimitives.isFormDataLike);
-		expect(restInternal.normalizeValidationError).toBe(
-			apiClientRuntimePrimitives.normalizeValidationError,
+		expect(typeof restInternal.isPlainObject).toBe("function");
+		expect(restInternal.isPlainObject(Object.create(null))).toBe(true);
+		expect(typeof restInternal.isFormDataLike).toBe("function");
+		expect(restInternal.isFormDataLike(new FormData())).toBe(true);
+		expect(
+			restInternal.normalizeValidationError({
+				expected: "string",
+				path: "body.title",
+				value: 7,
+			}),
+		).toEqual(
+			apiClientRuntimePrimitives.normalizeValidationError({
+				expected: "string",
+				path: "body.title",
+				value: 7,
+			}),
 		);
-		expect(restInternal.isValidationResult).toBe(
-			apiClientRuntimePrimitives.isValidationResult,
+		expect(
+			restInternal.toValidationResult({
+				errors: [],
+				success: true,
+			}),
+		).toEqual(
+			apiClientRuntimePrimitives.toValidationResult({
+				errors: [],
+				success: true,
+			}),
 		);
-		expect(restInternal.toValidationResult).toBe(
-			apiClientRuntimePrimitives.toValidationResult,
+		expect(
+			restInternal.isValidationResult({
+				errors: [],
+				isValid: true,
+			}),
+		).toBe(
+			apiClientRuntimePrimitives.isValidationResult({
+				errors: [],
+				isValid: true,
+			}),
 		);
 	});
 

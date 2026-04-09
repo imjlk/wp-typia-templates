@@ -84,7 +84,7 @@
     "package.json"
   ],
   "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "build": "bun run --filter @wp-typia/api-client build && rm -rf dist && tsc -p tsconfig.build.json",
     "clean": "rm -rf dist",
     "test:prepare": "bun run build",
     "test": "bun run test:prepare && bun test tests",

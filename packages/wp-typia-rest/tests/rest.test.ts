@@ -390,6 +390,7 @@ describe("@wp-typia/rest", () => {
 	});
 
 	test("GET endpoints reject nested query values before invoking api-fetch", async () => {
+		let fetchCalled = false;
 		const endpoint = createEndpoint<{ filters: { status: string } }, { ok: boolean }>({
 			method: "GET",
 			path: "/items",
@@ -405,11 +406,15 @@ describe("@wp-typia/rest", () => {
 
 		await expect(
 			callEndpoint(endpoint, { filters: { status: "open" } }, {
-				fetchFn: asApiFetch(async () => ({ ok: true }) as never),
+				fetchFn: asApiFetch(async () => {
+					fetchCalled = true;
+					return { ok: true } as never;
+				}),
 			}),
 		).rejects.toThrow(
 			'GET/DELETE endpoint request field "filters" must be a scalar, URLSearchParams, or array of scalars.',
 		);
+		expect(fetchCalled).toBe(false);
 	});
 
 	test("resolveRestRouteUrl canonicalizes wp-json roots and route slashes", () => {

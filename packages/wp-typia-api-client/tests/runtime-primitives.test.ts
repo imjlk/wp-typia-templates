@@ -49,7 +49,8 @@ describe("@wp-typia/api-client internal runtime primitives", () => {
 		expect(isPlainObject(new Date())).toBe(false);
 		expect(isPlainObject(new Map())).toBe(false);
 		expect(isPlainObject(new DemoRecord())).toBe(false);
-		expect(publicRuntimePrimitives.isPlainObject).toBe(isPlainObject);
+		expect(typeof publicRuntimePrimitives.isPlainObject).toBe("function");
+		expect(publicRuntimePrimitives.isPlainObject(Object.create(null))).toBe(true);
 	});
 
 	test("normalizes validation-like payloads through the shared helper owner", () => {

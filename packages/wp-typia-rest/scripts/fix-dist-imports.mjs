@@ -4,9 +4,11 @@ const distDir = new URL("../dist/", import.meta.url);
 
 for (const relativeFile of [
 	"index.js",
+	"client.js",
 	"http.js",
 	"react.js",
 	"index.d.ts",
+	"client.d.ts",
 	"http.d.ts",
 	"react.d.ts",
 	"internal/runtime-primitives.js",
