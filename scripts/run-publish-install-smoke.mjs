@@ -30,6 +30,11 @@ function run(command, args, options = {}) {
 	});
 }
 
+execFileSync("bun", ["run", "packages:build"], {
+	cwd: repoRoot,
+	stdio: "inherit",
+});
+
 withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 	const tarballDir = path.join(tempRoot, "tarballs");
 	const projectDir = path.join(tempRoot, "project");
