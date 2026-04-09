@@ -8,11 +8,13 @@
 
 - [getPersistenceCounterStateEndpoint](examples_persistence_examples_src_blocks_counter_api_client.md#getpersistencecounterstateendpoint)
 - [incrementPersistenceCounterStateEndpoint](examples_persistence_examples_src_blocks_counter_api_client.md#incrementpersistencecounterstateendpoint)
+- [getPersistenceCounterBootstrapEndpoint](examples_persistence_examples_src_blocks_counter_api_client.md#getpersistencecounterbootstrapendpoint)
 
 ### Functions
 
 - [getPersistenceCounterState](examples_persistence_examples_src_blocks_counter_api_client.md#getpersistencecounterstate)
 - [incrementPersistenceCounterState](examples_persistence_examples_src_blocks_counter_api_client.md#incrementpersistencecounterstate)
+- [getPersistenceCounterBootstrap](examples_persistence_examples_src_blocks_counter_api_client.md#getpersistencecounterbootstrap)
 
 ## Variables
 
@@ -22,7 +24,7 @@
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-client.ts:13](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L13)
+[examples/persistence-examples/src/blocks/counter/api-client.ts:15](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L15)
 
 ___
 
@@ -32,7 +34,17 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-client.ts:34](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L34)
+[examples/persistence-examples/src/blocks/counter/api-client.ts:36](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L36)
+
+___
+
+### getPersistenceCounterBootstrapEndpoint
+
+• `Const` **getPersistenceCounterBootstrapEndpoint**: [`ApiEndpoint`](../interfaces/packages_wp_typia_api_client_src_client.ApiEndpoint.md)\<[`PersistenceCounterBootstrapQuery`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterBootstrapQuery.md), [`PersistenceCounterBootstrapResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterBootstrapResponse.md)\>
+
+#### Defined in
+
+[examples/persistence-examples/src/blocks/counter/api-client.ts:61](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L61)
 
 ## Functions
 
@@ -53,7 +65,7 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-client.ts:27](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L27)
+[examples/persistence-examples/src/blocks/counter/api-client.ts:29](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L29)
 
 ___
 
@@ -74,4 +86,25 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-client.ts:48](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L48)
+[examples/persistence-examples/src/blocks/counter/api-client.ts:50](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L50)
+
+___
+
+### getPersistenceCounterBootstrap
+
+▸ **getPersistenceCounterBootstrap**(`request`, `options`): `Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterBootstrapResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterBootstrapResponse.md)\>\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `request` | [`PersistenceCounterBootstrapQuery`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterBootstrapQuery.md) |
+| `options` | [`EndpointCallOptions`](../interfaces/packages_wp_typia_api_client_src_client.EndpointCallOptions.md) |
+
+#### Returns
+
+`Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterBootstrapResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterBootstrapResponse.md)\>\>
+
+#### Defined in
+
+[examples/persistence-examples/src/blocks/counter/api-client.ts:75](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-client.ts#L75)

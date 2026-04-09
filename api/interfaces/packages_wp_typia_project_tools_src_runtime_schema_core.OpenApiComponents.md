@@ -27,7 +27,7 @@ OpenAPI component registry for generated schemas and security schemes.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/schema-core.ts:121](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L121)
+[packages/wp-typia-project-tools/src/runtime/schema-core.ts:122](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L122)
 
 ___
 
@@ -37,4 +37,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/schema-core.ts:122](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L122)
+[packages/wp-typia-project-tools/src/runtime/schema-core.ts:123](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L123)

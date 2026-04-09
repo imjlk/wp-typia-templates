@@ -24,7 +24,7 @@ Stable failure bucket suitable for branching in scripts or CI.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:86](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L86)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:87](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L87)
 
 ___
 
@@ -36,7 +36,7 @@ Human-readable error message captured from the original failure.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:88](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L88)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:89](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L89)
 
 ___
 
@@ -48,4 +48,4 @@ Original thrown error name when available.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:90](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L90)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:91](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L91)

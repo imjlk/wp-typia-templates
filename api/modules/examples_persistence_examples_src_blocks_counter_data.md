@@ -11,10 +11,12 @@
 ### Type Aliases
 
 - [UsePersistenceCounterQueryOptions](examples_persistence_examples_src_blocks_counter_data.md#usepersistencecounterqueryoptions)
+- [UsePersistenceCounterBootstrapQueryOptions](examples_persistence_examples_src_blocks_counter_data.md#usepersistencecounterbootstrapqueryoptions)
 
 ### Functions
 
 - [usePersistenceCounterQuery](examples_persistence_examples_src_blocks_counter_data.md#usepersistencecounterquery)
+- [usePersistenceCounterBootstrapQuery](examples_persistence_examples_src_blocks_counter_data.md#usepersistencecounterbootstrapquery)
 - [useIncrementCounterMutation](examples_persistence_examples_src_blocks_counter_data.md#useincrementcountermutation)
 
 ## Type Aliases
@@ -31,7 +33,23 @@
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/data.ts:20](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/data.ts#L20)
+[examples/persistence-examples/src/blocks/counter/data.ts:26](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/data.ts#L26)
+
+___
+
+### UsePersistenceCounterBootstrapQueryOptions
+
+Ƭ **UsePersistenceCounterBootstrapQueryOptions**\<`Selected`\>: [`UseEndpointQueryOptions`](../interfaces/packages_wp_typia_rest_src_react.UseEndpointQueryOptions.md)\<[`PersistenceCounterBootstrapQuery`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterBootstrapQuery.md), [`PersistenceCounterBootstrapResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterBootstrapResponse.md), `Selected`\>
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `Selected` | [`PersistenceCounterBootstrapResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterBootstrapResponse.md) |
+
+#### Defined in
+
+[examples/persistence-examples/src/blocks/counter/data.ts:34](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/data.ts#L34)
 
 ## Functions
 
@@ -58,7 +76,34 @@
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/data.ts:49](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/data.ts#L49)
+[examples/persistence-examples/src/blocks/counter/data.ts:63](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/data.ts#L63)
+
+___
+
+### usePersistenceCounterBootstrapQuery
+
+▸ **usePersistenceCounterBootstrapQuery**\<`Selected`\>(`request`, `options?`): [`UseEndpointQueryResult`](../interfaces/packages_wp_typia_rest_src_react.UseEndpointQueryResult.md)\<[`PersistenceCounterBootstrapResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterBootstrapResponse.md), `Selected`\>
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `Selected` | [`PersistenceCounterBootstrapResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterBootstrapResponse.md) |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `request` | [`PersistenceCounterBootstrapQuery`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterBootstrapQuery.md) |
+| `options` | [`UsePersistenceCounterBootstrapQueryOptions`](examples_persistence_examples_src_blocks_counter_data.md#usepersistencecounterbootstrapqueryoptions)\<`Selected`\> |
+
+#### Returns
+
+[`UseEndpointQueryResult`](../interfaces/packages_wp_typia_rest_src_react.UseEndpointQueryResult.md)\<[`PersistenceCounterBootstrapResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterBootstrapResponse.md), `Selected`\>
+
+#### Defined in
+
+[examples/persistence-examples/src/blocks/counter/data.ts:72](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/data.ts#L72)
 
 ___
 
@@ -84,4 +129,4 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/data.ts:58](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/data.ts#L58)
+[examples/persistence-examples/src/blocks/counter/data.ts:81](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/data.ts#L81)

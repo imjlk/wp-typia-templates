@@ -24,7 +24,7 @@ Number of endpoints included in the generated client file.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:308](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L308)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:309](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L309)
 
 ___
 
@@ -36,7 +36,7 @@ Absolute path to the generated client file.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:310](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L310)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:311](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L311)
 
 ___
 
@@ -48,4 +48,4 @@ Operation ids emitted as endpoint constants and convenience wrappers.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:312](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L312)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:313](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L313)

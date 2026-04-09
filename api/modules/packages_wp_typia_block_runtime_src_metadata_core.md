@@ -54,7 +54,7 @@ High-level outcome for one `runSyncBlockMetadata()` execution.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:60](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L60)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:61](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L61)
 
 ___
 
@@ -66,7 +66,7 @@ Stable failure bucket for structured `sync-types` error reporting.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:65](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L65)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:66](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L66)
 
 ___
 
@@ -78,7 +78,7 @@ Portable route metadata stored in one endpoint manifest entry.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:171](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L171)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:172](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L172)
 
 ___
 
@@ -90,7 +90,7 @@ Backward-compatible route metadata consumed by `syncRestOpenApi()`.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:216](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L216)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:217](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L217)
 
 ___
 
@@ -102,7 +102,7 @@ Options for writing a canonical endpoint-aware REST OpenAPI document.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:261](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L261)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:262](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L262)
 
 ## Functions
 
@@ -133,7 +133,7 @@ The same manifest object with literal contract and endpoint metadata preserved.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:197](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L197)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:198](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L198)
 
 ___
 
@@ -163,7 +163,7 @@ PHP validator coverage warnings discovered during synchronization.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:443](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L443)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:444](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L444)
 
 ___
 
@@ -193,7 +193,7 @@ A structured execution report describing generated paths, warnings, and failures
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:576](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L576)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:577](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L577)
 
 ___
 
@@ -214,7 +214,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:629](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L629)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:630](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L630)
 
 ___
 
@@ -239,7 +239,7 @@ Information about the generated OpenAPI document and included schema components.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:687](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L687)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:694](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L694)
 
 ___
 
@@ -264,4 +264,4 @@ Information about the generated client file and emitted operation ids.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:760](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L760)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:767](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L767)

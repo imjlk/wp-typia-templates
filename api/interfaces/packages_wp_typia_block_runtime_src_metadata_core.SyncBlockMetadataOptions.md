@@ -25,7 +25,7 @@
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:25](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L25)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:26](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L26)
 
 ___
 
@@ -35,7 +35,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:26](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L26)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L27)
 
 ___
 
@@ -45,7 +45,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L27)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:28](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L28)
 
 ___
 
@@ -55,7 +55,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:28](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L28)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L29)
 
 ___
 
@@ -65,7 +65,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L29)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L30)
 
 ___
 
@@ -75,7 +75,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L30)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L31)
 
 ___
 
@@ -85,7 +85,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L31)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:32](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L32)
 
 ___
 
@@ -95,4 +95,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:32](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L32)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:33](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L33)

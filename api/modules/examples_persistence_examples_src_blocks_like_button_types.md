@@ -14,6 +14,7 @@
 - [PersistenceLikeButtonAttributes](../interfaces/examples_persistence_examples_src_blocks_like_button_types.PersistenceLikeButtonAttributes.md)
 - [PersistenceLikeButtonContext](../interfaces/examples_persistence_examples_src_blocks_like_button_types.PersistenceLikeButtonContext.md)
 - [PersistenceLikeButtonState](../interfaces/examples_persistence_examples_src_blocks_like_button_types.PersistenceLikeButtonState.md)
+- [PersistenceLikeButtonClientState](../interfaces/examples_persistence_examples_src_blocks_like_button_types.PersistenceLikeButtonClientState.md)
 
 ### Type Aliases
 
@@ -39,4 +40,4 @@ Re-exports [TypiaValidationError](../interfaces/packages_wp_typia_block_runtime_
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/like-button/types.ts:53](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/types.ts#L53)
+[examples/persistence-examples/src/blocks/like-button/types.ts:56](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/types.ts#L56)

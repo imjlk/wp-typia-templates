@@ -35,7 +35,7 @@ Verify that generated artifacts are already current without rewriting them.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:50](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L50)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:51](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L51)
 
 ___
 
@@ -47,7 +47,7 @@ Promote lossy WordPress projection warnings to `error` status.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:99](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L99)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:100](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L100)
 
 ___
 
@@ -59,7 +59,7 @@ Promote PHP validator coverage warnings to `error` status.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:101](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L101)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:102](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L102)
 
 ___
 
@@ -74,4 +74,4 @@ When `true`, this behaves like setting both `failOnLossy` and
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:108](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L108)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:109](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L109)

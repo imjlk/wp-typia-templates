@@ -24,7 +24,7 @@ Named contract documents keyed by the endpoint registry identifiers.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:234](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L234)
+[packages/wp-typia-block-runtime/src/schema-core.ts:235](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L235)
 
 ___
 
@@ -36,7 +36,7 @@ Route definitions that should appear in the generated OpenAPI file.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:236](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L236)
+[packages/wp-typia-block-runtime/src/schema-core.ts:237](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L237)
 
 ___
 
@@ -48,4 +48,4 @@ Optional document-level OpenAPI info metadata.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:238](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L238)
+[packages/wp-typia-block-runtime/src/schema-core.ts:239](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L239)

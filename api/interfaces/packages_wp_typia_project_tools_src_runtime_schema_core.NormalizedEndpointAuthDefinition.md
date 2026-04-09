@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/schema-core.ts:224](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L224)
+[packages/wp-typia-project-tools/src/runtime/schema-core.ts:225](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L225)
 
 ___
 
@@ -30,7 +30,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/schema-core.ts:225](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L225)
+[packages/wp-typia-project-tools/src/runtime/schema-core.ts:226](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L226)
 
 ___
 
@@ -40,4 +40,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/schema-core.ts:226](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L226)
+[packages/wp-typia-project-tools/src/runtime/schema-core.ts:227](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L227)

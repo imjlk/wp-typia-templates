@@ -21,7 +21,7 @@ Optional WordPress adapter metadata that explains how the default runtime satisf
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:159](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L159)
+[packages/wp-typia-block-runtime/src/schema-core.ts:160](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L160)
 
 ___
 
@@ -31,4 +31,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:160](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L160)
+[packages/wp-typia-block-runtime/src/schema-core.ts:161](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L161)

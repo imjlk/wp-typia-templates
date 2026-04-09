@@ -54,7 +54,7 @@ Path item containing one or more generated REST operations.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:107](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L107)
+[packages/wp-typia-block-runtime/src/schema-core.ts:108](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L108)
 
 ___
 
@@ -66,7 +66,7 @@ Backend-neutral auth intent for one manifest-defined endpoint.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:143](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L143)
+[packages/wp-typia-block-runtime/src/schema-core.ts:144](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L144)
 
 ___
 
@@ -78,7 +78,7 @@ WordPress-specific authentication mechanisms that can implement neutral auth int
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:151](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L151)
+[packages/wp-typia-block-runtime/src/schema-core.ts:152](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L152)
 
 ___
 
@@ -90,7 +90,7 @@ Legacy WordPress auth-mode literals kept for backward compatibility.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:166](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L166)
+[packages/wp-typia-block-runtime/src/schema-core.ts:167](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L167)
 
 ___
 
@@ -102,7 +102,7 @@ Supported HTTP methods for generated REST OpenAPI endpoints.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:174](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L174)
+[packages/wp-typia-block-runtime/src/schema-core.ts:175](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L175)
 
 ___
 
@@ -114,7 +114,7 @@ Route metadata for one REST endpoint in the aggregate OpenAPI document.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:214](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L214)
+[packages/wp-typia-block-runtime/src/schema-core.ts:215](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L215)
 
 ___
 
@@ -126,7 +126,7 @@ Supported schema projection profiles derived from one canonical wp-typia JSON Sc
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:244](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L244)
+[packages/wp-typia-block-runtime/src/schema-core.ts:245](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L245)
 
 ## Functions
 
@@ -150,7 +150,7 @@ A JSON-compatible schema fragment for the attribute.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:579](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L579)
+[packages/wp-typia-block-runtime/src/schema-core.ts:763](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L763)
 
 ___
 
@@ -174,7 +174,7 @@ A draft 2020-12 JSON Schema document for the manifest root object.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:652](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L652)
+[packages/wp-typia-block-runtime/src/schema-core.ts:836](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L836)
 
 ___
 
@@ -205,7 +205,7 @@ A cloned schema document adjusted for the requested profile.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:678](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L678)
+[packages/wp-typia-block-runtime/src/schema-core.ts:862](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L862)
 
 ___
 
@@ -230,7 +230,7 @@ An OpenAPI document containing the schema as a single component.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:703](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L703)
+[packages/wp-typia-block-runtime/src/schema-core.ts:887](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L887)
 
 ___
 
@@ -277,7 +277,7 @@ When neither `auth` nor deprecated `authMode` is defined.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:816](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L816)
+[packages/wp-typia-block-runtime/src/schema-core.ts:1004](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L1004)
 
 ___
 
@@ -301,4 +301,4 @@ A JSON-compatible OpenAPI document with paths, components, and auth metadata.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:1048](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L1048)
+[packages/wp-typia-block-runtime/src/schema-core.ts:1282](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L1282)

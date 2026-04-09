@@ -18,6 +18,7 @@ Successful JSON response entry in the generated OpenAPI document.
 
 - [content](packages_wp_typia_project_tools_src_runtime_schema_core.OpenApiResponse.md#content)
 - [description](packages_wp_typia_project_tools_src_runtime_schema_core.OpenApiResponse.md#description)
+- [headers](packages_wp_typia_project_tools_src_runtime_schema_core.OpenApiResponse.md#headers)
 
 ## Properties
 
@@ -44,3 +45,13 @@ ___
 #### Defined in
 
 [packages/wp-typia-project-tools/src/runtime/schema-core.ts:75](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L75)
+
+___
+
+### headers
+
+• `Optional` **headers**: `Record`\<`string`, [`JsonSchemaObject`](packages_wp_typia_project_tools_src_runtime_schema_core.JsonSchemaObject.md)\>
+
+#### Defined in
+
+[packages/wp-typia-project-tools/src/runtime/schema-core.ts:76](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L76)

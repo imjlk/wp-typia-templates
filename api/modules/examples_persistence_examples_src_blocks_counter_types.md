@@ -14,6 +14,7 @@
 - [PersistenceCounterAttributes](../interfaces/examples_persistence_examples_src_blocks_counter_types.PersistenceCounterAttributes.md)
 - [PersistenceCounterContext](../interfaces/examples_persistence_examples_src_blocks_counter_types.PersistenceCounterContext.md)
 - [PersistenceCounterState](../interfaces/examples_persistence_examples_src_blocks_counter_types.PersistenceCounterState.md)
+- [PersistenceCounterClientState](../interfaces/examples_persistence_examples_src_blocks_counter_types.PersistenceCounterClientState.md)
 
 ### Type Aliases
 
@@ -39,4 +40,4 @@ Re-exports [TypiaValidationError](../interfaces/packages_wp_typia_block_runtime_
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/types.ts:45](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L45)
+[examples/persistence-examples/src/blocks/counter/types.ts:50](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L50)

@@ -20,7 +20,6 @@
 
 ### Properties
 
-- [restNonce](examples_persistence_examples_src_blocks_like_button_data.UsePersistenceLikeStatusQueryOptions.md#restnonce)
 - [client](examples_persistence_examples_src_blocks_like_button_data.UsePersistenceLikeStatusQueryOptions.md#client)
 - [enabled](examples_persistence_examples_src_blocks_like_button_data.UsePersistenceLikeStatusQueryOptions.md#enabled)
 - [fetchFn](examples_persistence_examples_src_blocks_like_button_data.UsePersistenceLikeStatusQueryOptions.md#fetchfn)
@@ -31,16 +30,6 @@
 - [staleTime](examples_persistence_examples_src_blocks_like_button_data.UsePersistenceLikeStatusQueryOptions.md#staletime)
 
 ## Properties
-
-### restNonce
-
-• `Optional` **restNonce**: `string`
-
-#### Defined in
-
-[examples/persistence-examples/src/blocks/like-button/data.ts:45](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/data.ts#L45)
-
-___
 
 ### client
 

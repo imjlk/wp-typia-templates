@@ -8,11 +8,13 @@
 
 - [getPersistenceLikeStatusEndpoint](examples_persistence_examples_src_blocks_like_button_api_client.md#getpersistencelikestatusendpoint)
 - [togglePersistenceLikeStatusEndpoint](examples_persistence_examples_src_blocks_like_button_api_client.md#togglepersistencelikestatusendpoint)
+- [getPersistenceLikeBootstrapEndpoint](examples_persistence_examples_src_blocks_like_button_api_client.md#getpersistencelikebootstrapendpoint)
 
 ### Functions
 
 - [getPersistenceLikeStatus](examples_persistence_examples_src_blocks_like_button_api_client.md#getpersistencelikestatus)
 - [togglePersistenceLikeStatus](examples_persistence_examples_src_blocks_like_button_api_client.md#togglepersistencelikestatus)
+- [getPersistenceLikeBootstrap](examples_persistence_examples_src_blocks_like_button_api_client.md#getpersistencelikebootstrap)
 
 ## Variables
 
@@ -22,17 +24,27 @@
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/like-button/api-client.ts:13](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-client.ts#L13)
+[examples/persistence-examples/src/blocks/like-button/api-client.ts:16](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-client.ts#L16)
 
 ___
 
 ### togglePersistenceLikeStatusEndpoint
 
-• `Const` **togglePersistenceLikeStatusEndpoint**: [`ApiEndpoint`](../interfaces/packages_wp_typia_api_client_src_client.ApiEndpoint.md)\<[`PersistenceToggleLikeRequest`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeRequest.md), [`PersistenceLikeStatusResponse`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\>
+• `Const` **togglePersistenceLikeStatusEndpoint**: [`ApiEndpoint`](../interfaces/packages_wp_typia_api_client_src_client.ApiEndpoint.md)\<[`PersistenceToggleLikeRequest`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeRequest.md), [`PersistenceToggleLikeResponse`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeResponse.md)\>
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/like-button/api-client.ts:34](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-client.ts#L34)
+[examples/persistence-examples/src/blocks/like-button/api-client.ts:37](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-client.ts#L37)
+
+___
+
+### getPersistenceLikeBootstrapEndpoint
+
+• `Const` **getPersistenceLikeBootstrapEndpoint**: [`ApiEndpoint`](../interfaces/packages_wp_typia_api_client_src_client.ApiEndpoint.md)\<[`PersistenceLikeBootstrapQuery`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeBootstrapQuery.md), [`PersistenceLikeBootstrapResponse`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeBootstrapResponse.md)\>
+
+#### Defined in
+
+[examples/persistence-examples/src/blocks/like-button/api-client.ts:62](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-client.ts#L62)
 
 ## Functions
 
@@ -53,13 +65,13 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/like-button/api-client.ts:27](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-client.ts#L27)
+[examples/persistence-examples/src/blocks/like-button/api-client.ts:30](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-client.ts#L30)
 
 ___
 
 ### togglePersistenceLikeStatus
 
-▸ **togglePersistenceLikeStatus**(`request`, `options`): `Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\>\>
+▸ **togglePersistenceLikeStatus**(`request`, `options`): `Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceToggleLikeResponse`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeResponse.md)\>\>
 
 #### Parameters
 
@@ -70,8 +82,29 @@ ___
 
 #### Returns
 
-`Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceLikeStatusResponse`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)\>\>
+`Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceToggleLikeResponse`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeResponse.md)\>\>
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/like-button/api-client.ts:48](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-client.ts#L48)
+[examples/persistence-examples/src/blocks/like-button/api-client.ts:51](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-client.ts#L51)
+
+___
+
+### getPersistenceLikeBootstrap
+
+▸ **getPersistenceLikeBootstrap**(`request`, `options`): `Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceLikeBootstrapResponse`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeBootstrapResponse.md)\>\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `request` | [`PersistenceLikeBootstrapQuery`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeBootstrapQuery.md) |
+| `options` | [`EndpointCallOptions`](../interfaces/packages_wp_typia_api_client_src_client.EndpointCallOptions.md) |
+
+#### Returns
+
+`Promise`\<[`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceLikeBootstrapResponse`](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeBootstrapResponse.md)\>\>
+
+#### Defined in
+
+[examples/persistence-examples/src/blocks/like-button/api-client.ts:76](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-client.ts#L76)

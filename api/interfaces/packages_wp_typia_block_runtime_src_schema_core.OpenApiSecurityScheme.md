@@ -29,7 +29,7 @@ Header-based security scheme used by authenticated WordPress REST routes.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:82](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L82)
+[packages/wp-typia-block-runtime/src/schema-core.ts:83](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L83)
 
 ___
 
@@ -39,7 +39,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:83](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L83)
+[packages/wp-typia-block-runtime/src/schema-core.ts:84](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L84)
 
 ___
 
@@ -49,7 +49,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:84](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L84)
+[packages/wp-typia-block-runtime/src/schema-core.ts:85](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L85)
 
 ___
 
@@ -59,4 +59,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:85](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L85)
+[packages/wp-typia-block-runtime/src/schema-core.ts:86](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L86)

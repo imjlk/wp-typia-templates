@@ -19,13 +19,15 @@
 
 | Name | Type |
 | :------ | :------ |
+| `counterBootstrapQuery` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterBootstrapQuery`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterBootstrapQuery.md)\> |
+| `counterBootstrapResponse` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterBootstrapResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterBootstrapResponse.md)\> |
 | `counterQuery` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterQuery`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterQuery.md)\> |
 | `counterResponse` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\> |
 | `incrementRequest` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterIncrementRequest`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterIncrementRequest.md)\> |
 
 #### Defined in
 
-[examples/api-contract-adapter-poc/src/contract-validation.ts:72](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/contract-validation.ts#L72)
+[examples/api-contract-adapter-poc/src/contract-validation.ts:80](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/contract-validation.ts#L80)
 
 ___
 
@@ -37,9 +39,10 @@ ___
 
 | Name | Type |
 | :------ | :------ |
+| `getPersistenceCounterBootstrap` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterBootstrapResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterBootstrapResponse.md)\> |
 | `getPersistenceCounterState` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\> |
 | `incrementPersistenceCounterState` | (`input`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationResult.md)\<[`PersistenceCounterResponse`](../interfaces/examples_persistence_examples_src_blocks_counter_api_types.PersistenceCounterResponse.md)\> |
 
 #### Defined in
 
-[examples/api-contract-adapter-poc/src/contract-validation.ts:85](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/contract-validation.ts#L85)
+[examples/api-contract-adapter-poc/src/contract-validation.ts:101](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/contract-validation.ts#L101)

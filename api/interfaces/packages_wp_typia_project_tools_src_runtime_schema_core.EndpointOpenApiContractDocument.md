@@ -23,7 +23,7 @@ Manifest-derived contract document for this schema component.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/schema-core.ts:181](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L181)
+[packages/wp-typia-project-tools/src/runtime/schema-core.ts:182](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L182)
 
 ___
 
@@ -35,4 +35,4 @@ Optional component name override for the generated schema reference.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/schema-core.ts:183](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L183)
+[packages/wp-typia-project-tools/src/runtime/schema-core.ts:184](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L184)

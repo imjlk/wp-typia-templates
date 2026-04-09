@@ -22,7 +22,7 @@
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-types.ts:9](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L9)
+[examples/persistence-examples/src/blocks/counter/api-types.ts:14](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L14)
 
 ___
 
@@ -32,7 +32,7 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-types.ts:10](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L10)
+[examples/persistence-examples/src/blocks/counter/api-types.ts:15](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L15)
 
 ___
 
@@ -42,7 +42,7 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-types.ts:11](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L11)
+[examples/persistence-examples/src/blocks/counter/api-types.ts:16](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L16)
 
 ___
 
@@ -52,7 +52,7 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-types.ts:12](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L12)
+[examples/persistence-examples/src/blocks/counter/api-types.ts:17](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L17)
 
 ___
 
@@ -62,4 +62,4 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/api-types.ts:13](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L13)
+[examples/persistence-examples/src/blocks/counter/api-types.ts:18](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/api-types.ts#L18)

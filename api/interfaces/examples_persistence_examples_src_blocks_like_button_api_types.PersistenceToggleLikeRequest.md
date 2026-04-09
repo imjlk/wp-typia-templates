@@ -19,7 +19,7 @@
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/like-button/api-types.ts:9](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-types.ts#L9)
+[examples/persistence-examples/src/blocks/like-button/api-types.ts:14](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-types.ts#L14)
 
 ___
 
@@ -29,4 +29,4 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/like-button/api-types.ts:10](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-types.ts#L10)
+[examples/persistence-examples/src/blocks/like-button/api-types.ts:15](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/like-button/api-types.ts#L15)

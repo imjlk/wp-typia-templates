@@ -7,5 +7,8 @@
 ### Interfaces
 
 - [PersistenceLikeStatusQuery](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusQuery.md)
+- [PersistenceLikeBootstrapQuery](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeBootstrapQuery.md)
 - [PersistenceToggleLikeRequest](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeRequest.md)
+- [PersistenceLikeBootstrapResponse](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeBootstrapResponse.md)
 - [PersistenceLikeStatusResponse](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceLikeStatusResponse.md)
+- [PersistenceToggleLikeResponse](../interfaces/examples_persistence_examples_src_blocks_like_button_api_types.PersistenceToggleLikeResponse.md)

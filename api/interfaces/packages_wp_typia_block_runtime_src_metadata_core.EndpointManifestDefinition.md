@@ -31,7 +31,7 @@ Contract registry keyed by logical route contract ids.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:184](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L184)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:185](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L185)
 
 ___
 
@@ -43,7 +43,7 @@ Route registry keyed by concrete REST path and method pairs.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:186](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L186)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:187](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L187)
 
 ___
 
@@ -55,4 +55,4 @@ Optional document-level metadata for aggregate OpenAPI output.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:188](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L188)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:189](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L189)

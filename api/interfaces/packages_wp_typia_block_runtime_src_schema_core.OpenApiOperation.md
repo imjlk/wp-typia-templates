@@ -35,7 +35,7 @@ One generated OpenAPI operation for a scaffolded REST endpoint.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:92](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L92)
+[packages/wp-typia-block-runtime/src/schema-core.ts:93](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L93)
 
 ___
 
@@ -45,7 +45,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:93](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L93)
+[packages/wp-typia-block-runtime/src/schema-core.ts:94](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L94)
 
 ___
 
@@ -55,7 +55,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:94](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L94)
+[packages/wp-typia-block-runtime/src/schema-core.ts:95](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L95)
 
 ___
 
@@ -65,7 +65,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:95](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L95)
+[packages/wp-typia-block-runtime/src/schema-core.ts:96](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L96)
 
 ___
 
@@ -75,7 +75,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:96](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L96)
+[packages/wp-typia-block-runtime/src/schema-core.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L97)
 
 ___
 
@@ -85,7 +85,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L97)
+[packages/wp-typia-block-runtime/src/schema-core.ts:98](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L98)
 
 ___
 
@@ -95,7 +95,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:98](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L98)
+[packages/wp-typia-block-runtime/src/schema-core.ts:99](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L99)
 
 ___
 
@@ -105,7 +105,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:99](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L99)
+[packages/wp-typia-block-runtime/src/schema-core.ts:100](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L100)
 
 ___
 
@@ -115,7 +115,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:100](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L100)
+[packages/wp-typia-block-runtime/src/schema-core.ts:101](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L101)
 
 ___
 
@@ -125,4 +125,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/schema-core.ts:101](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L101)
+[packages/wp-typia-block-runtime/src/schema-core.ts:102](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/schema-core.ts#L102)

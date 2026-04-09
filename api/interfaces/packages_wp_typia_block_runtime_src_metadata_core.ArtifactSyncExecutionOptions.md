@@ -26,4 +26,4 @@ Verify that generated artifacts are already current without rewriting them.
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/metadata-core.ts:50](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L50)
+[packages/wp-typia-block-runtime/src/metadata-core.ts:51](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/metadata-core.ts#L51)

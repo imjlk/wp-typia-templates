@@ -29,7 +29,7 @@
 
 #### Defined in
 
-[examples/api-contract-adapter-poc/src/counter-adapter.ts:28](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L28)
+[examples/api-contract-adapter-poc/src/counter-adapter.ts:29](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L29)
 
 ___
 
@@ -39,7 +39,7 @@ ___
 
 #### Defined in
 
-[examples/api-contract-adapter-poc/src/counter-adapter.ts:29](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L29)
+[examples/api-contract-adapter-poc/src/counter-adapter.ts:30](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L30)
 
 ___
 
@@ -49,7 +49,7 @@ ___
 
 #### Defined in
 
-[examples/api-contract-adapter-poc/src/counter-adapter.ts:30](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L30)
+[examples/api-contract-adapter-poc/src/counter-adapter.ts:31](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L31)
 
 ___
 
@@ -59,4 +59,4 @@ ___
 
 #### Defined in
 
-[examples/api-contract-adapter-poc/src/counter-adapter.ts:31](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L31)
+[examples/api-contract-adapter-poc/src/counter-adapter.ts:32](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L32)

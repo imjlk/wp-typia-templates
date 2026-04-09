@@ -9,13 +9,17 @@
 ### Properties
 
 - [buttonLabel](examples_persistence_examples_src_blocks_counter_types.PersistenceCounterContext.md#buttonlabel)
+- [bootstrapReady](examples_persistence_examples_src_blocks_counter_types.PersistenceCounterContext.md#bootstrapready)
 - [canWrite](examples_persistence_examples_src_blocks_counter_types.PersistenceCounterContext.md#canwrite)
 - [count](examples_persistence_examples_src_blocks_counter_types.PersistenceCounterContext.md#count)
+- [error](examples_persistence_examples_src_blocks_counter_types.PersistenceCounterContext.md#error)
+- [isBootstrapping](examples_persistence_examples_src_blocks_counter_types.PersistenceCounterContext.md#isbootstrapping)
+- [isLoading](examples_persistence_examples_src_blocks_counter_types.PersistenceCounterContext.md#isloading)
+- [isSaving](examples_persistence_examples_src_blocks_counter_types.PersistenceCounterContext.md#issaving)
 - [postId](examples_persistence_examples_src_blocks_counter_types.PersistenceCounterContext.md#postid)
-- [publicWriteExpiresAt](examples_persistence_examples_src_blocks_counter_types.PersistenceCounterContext.md#publicwriteexpiresat)
-- [publicWriteToken](examples_persistence_examples_src_blocks_counter_types.PersistenceCounterContext.md#publicwritetoken)
 - [resourceKey](examples_persistence_examples_src_blocks_counter_types.PersistenceCounterContext.md#resourcekey)
 - [storage](examples_persistence_examples_src_blocks_counter_types.PersistenceCounterContext.md#storage)
+- [client](examples_persistence_examples_src_blocks_counter_types.PersistenceCounterContext.md#client)
 
 ## Properties
 
@@ -29,13 +33,23 @@
 
 ___
 
+### bootstrapReady
+
+• **bootstrapReady**: `boolean`
+
+#### Defined in
+
+[examples/persistence-examples/src/blocks/counter/types.ts:27](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L27)
+
+___
+
 ### canWrite
 
 • **canWrite**: `boolean`
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/types.ts:27](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L27)
+[examples/persistence-examples/src/blocks/counter/types.ts:28](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L28)
 
 ___
 
@@ -45,7 +59,47 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/types.ts:28](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L28)
+[examples/persistence-examples/src/blocks/counter/types.ts:29](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L29)
+
+___
+
+### error
+
+• **error**: `string`
+
+#### Defined in
+
+[examples/persistence-examples/src/blocks/counter/types.ts:30](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L30)
+
+___
+
+### isBootstrapping
+
+• **isBootstrapping**: `boolean`
+
+#### Defined in
+
+[examples/persistence-examples/src/blocks/counter/types.ts:31](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L31)
+
+___
+
+### isLoading
+
+• **isLoading**: `boolean`
+
+#### Defined in
+
+[examples/persistence-examples/src/blocks/counter/types.ts:32](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L32)
+
+___
+
+### isSaving
+
+• **isSaving**: `boolean`
+
+#### Defined in
+
+[examples/persistence-examples/src/blocks/counter/types.ts:33](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L33)
 
 ___
 
@@ -55,27 +109,7 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/types.ts:29](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L29)
-
-___
-
-### publicWriteExpiresAt
-
-• `Optional` **publicWriteExpiresAt**: `number`
-
-#### Defined in
-
-[examples/persistence-examples/src/blocks/counter/types.ts:30](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L30)
-
-___
-
-### publicWriteToken
-
-• `Optional` **publicWriteToken**: `string`
-
-#### Defined in
-
-[examples/persistence-examples/src/blocks/counter/types.ts:31](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L31)
+[examples/persistence-examples/src/blocks/counter/types.ts:34](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L34)
 
 ___
 
@@ -85,7 +119,7 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/types.ts:32](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L32)
+[examples/persistence-examples/src/blocks/counter/types.ts:35](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L35)
 
 ___
 
@@ -95,4 +129,14 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/types.ts:33](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L33)
+[examples/persistence-examples/src/blocks/counter/types.ts:36](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L36)
+
+___
+
+### client
+
+• `Optional` **client**: [`PersistenceCounterClientState`](examples_persistence_examples_src_blocks_counter_types.PersistenceCounterClientState.md)
+
+#### Defined in
+
+[examples/persistence-examples/src/blocks/counter/types.ts:37](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/types.ts#L37)

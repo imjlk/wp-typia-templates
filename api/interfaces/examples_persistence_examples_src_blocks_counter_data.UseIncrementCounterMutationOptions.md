@@ -53,7 +53,7 @@
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/data.ts:37](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/data.ts#L37)
+[examples/persistence-examples/src/blocks/counter/data.ts:51](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/data.ts#L51)
 
 ___
 
@@ -78,7 +78,7 @@ ___
 
 #### Defined in
 
-[examples/persistence-examples/src/blocks/counter/data.ts:43](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/data.ts#L43)
+[examples/persistence-examples/src/blocks/counter/data.ts:57](https://github.com/imjlk/wp-typia/blob/main/examples/persistence-examples/src/blocks/counter/data.ts#L57)
 
 ___
 

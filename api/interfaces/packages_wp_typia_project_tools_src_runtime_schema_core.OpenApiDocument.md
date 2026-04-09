@@ -30,7 +30,7 @@ Complete OpenAPI 3.1 document emitted for endpoint-aware REST contracts.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/schema-core.ts:129](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L129)
+[packages/wp-typia-project-tools/src/runtime/schema-core.ts:130](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L130)
 
 ___
 
@@ -48,7 +48,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/schema-core.ts:130](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L130)
+[packages/wp-typia-project-tools/src/runtime/schema-core.ts:131](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L131)
 
 ___
 
@@ -58,7 +58,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/schema-core.ts:135](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L135)
+[packages/wp-typia-project-tools/src/runtime/schema-core.ts:136](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L136)
 
 ___
 
@@ -68,7 +68,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/schema-core.ts:136](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L136)
+[packages/wp-typia-project-tools/src/runtime/schema-core.ts:137](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L137)
 
 ___
 
@@ -78,4 +78,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/schema-core.ts:137](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L137)
+[packages/wp-typia-project-tools/src/runtime/schema-core.ts:138](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/schema-core.ts#L138)
