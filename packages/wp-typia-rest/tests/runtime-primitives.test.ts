@@ -1,22 +1,50 @@
 import { describe, expect, test } from "bun:test";
 
-import * as apiClientInternal from "../../wp-typia-api-client/src/internal/runtime-primitives";
+import * as apiClientRuntimePrimitives from "../../wp-typia-api-client/src/runtime-primitives";
 
 import * as restRoot from "../src/index";
 import * as restInternal from "../src/internal/runtime-primitives";
 
 describe("@wp-typia/rest runtime primitive shims", () => {
-	test("forwards shared helpers from api-client by identity", () => {
-		expect(restInternal.isPlainObject).toBe(apiClientInternal.isPlainObject);
-		expect(restInternal.isFormDataLike).toBe(apiClientInternal.isFormDataLike);
-		expect(restInternal.normalizeValidationError).toBe(
-			apiClientInternal.normalizeValidationError,
+	test("forwards shared helpers from api-client with matching behavior", () => {
+		expect(typeof restInternal.isPlainObject).toBe("function");
+		expect(restInternal.isPlainObject(Object.create(null))).toBe(true);
+		expect(typeof restInternal.isFormDataLike).toBe("function");
+		expect(restInternal.isFormDataLike(new FormData())).toBe(true);
+		expect(
+			restInternal.normalizeValidationError({
+				expected: "string",
+				path: "body.title",
+				value: 7,
+			}),
+		).toEqual(
+			apiClientRuntimePrimitives.normalizeValidationError({
+				expected: "string",
+				path: "body.title",
+				value: 7,
+			}),
 		);
-		expect(restInternal.isValidationResult).toBe(
-			apiClientInternal.isValidationResult,
+		expect(
+			restInternal.toValidationResult({
+				errors: [],
+				success: true,
+			}),
+		).toEqual(
+			apiClientRuntimePrimitives.toValidationResult({
+				errors: [],
+				success: true,
+			}),
 		);
-		expect(restInternal.toValidationResult).toBe(
-			apiClientInternal.toValidationResult,
+		expect(
+			restInternal.isValidationResult({
+				errors: [],
+				isValid: true,
+			}),
+		).toBe(
+			apiClientRuntimePrimitives.isValidationResult({
+				errors: [],
+				isValid: true,
+			}),
 		);
 	});
 
@@ -30,7 +58,7 @@ describe("@wp-typia/rest runtime primitive shims", () => {
 		const formData = new FormData();
 
 		expect(restInternal.normalizeValidationError(rawError)).toEqual(
-			apiClientInternal.normalizeValidationError(rawError),
+			apiClientRuntimePrimitives.normalizeValidationError(rawError),
 		);
 		expect(
 			restInternal.toValidationResult({
@@ -38,13 +66,13 @@ describe("@wp-typia/rest runtime primitive shims", () => {
 				success: false,
 			}),
 		).toEqual(
-			apiClientInternal.toValidationResult({
+			apiClientRuntimePrimitives.toValidationResult({
 				errors: [rawError],
 				success: false,
 			}),
 		);
 		expect(restInternal.isFormDataLike(formData)).toBe(true);
-		expect(apiClientInternal.isFormDataLike(formData)).toBe(true);
+		expect(apiClientRuntimePrimitives.isFormDataLike(formData)).toBe(true);
 	});
 
 	test("keeps the rest root surface transport-oriented", () => {

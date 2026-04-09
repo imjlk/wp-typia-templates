@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { resolveBundledModuleHref } from "../render-loader";
 import { executeMigrateCommand } from "../runtime-bridge";
+import type { WpTypiaRenderArgs } from "./render-types";
 import { LazyFlow } from "../ui/lazy-flow";
 
 const supportsInteractiveTui = typeof Bun !== "undefined";
@@ -69,7 +70,7 @@ export const migrateCommand = defineCommand({
 	options: migrateOptions,
 	...(supportsInteractiveTui
 		? {
-				render: (args: any) =>
+				render: (args: WpTypiaRenderArgs) =>
 					createElement(LazyFlow, {
 						loader: loadMigrateFlow,
 						props: {

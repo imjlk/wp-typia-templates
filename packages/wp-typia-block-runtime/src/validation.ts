@@ -1,19 +1,17 @@
 import { applyTemplateDefaultsFromManifest } from "./defaults.js";
 import type { ManifestDefaultsDocument } from "./defaults.js";
-import { isPlainObject as isRecord } from "./object-utils.js";
+import {
+	isPlainObject as isRecord,
+	normalizeValidationError as normalizeSharedValidationError,
+	toValidationResult as toSharedValidationResult,
+	type ValidationError as SharedValidationError,
+	type ValidationLike as SharedValidationLike,
+	type ValidationResult as SharedValidationResult,
+} from "@wp-typia/api-client/runtime-primitives";
 
-export interface TypiaValidationError {
-	description?: string;
-	expected: string;
-	path: string;
-	value: unknown;
-}
+export type TypiaValidationError = SharedValidationError;
 
-export interface ValidationResult<T> {
-	data?: T;
-	errors: TypiaValidationError[];
-	isValid: boolean;
-}
+export type ValidationResult<T> = SharedValidationResult<T>;
 
 export interface ValidationState<T> extends ValidationResult<T> {
 	errorMessages: string[];
@@ -37,19 +35,6 @@ export interface ScaffoldValidatorToolkitOptions<T extends object> {
 
 const UNSAFE_PATH_SEGMENTS = new Set(["__proto__", "constructor", "prototype"]);
 
-interface RawTypiaValidationError {
-	description?: string;
-	expected?: string;
-	path?: string;
-	value?: unknown;
-}
-
-interface RawTypiaValidationResult {
-	data?: unknown;
-	errors?: unknown;
-	success?: unknown;
-}
-
 function getValueType(value: unknown): string {
 	if (value === null) {
 		return "null";
@@ -71,40 +56,11 @@ function redactValidationErrors(
 }
 
 export function normalizeValidationError(error: unknown): TypiaValidationError {
-	const raw =
-		error !== null && typeof error === "object"
-			? (error as RawTypiaValidationError)
-			: {};
-
-	return {
-		description: typeof raw.description === "string" ? raw.description : undefined,
-		expected: typeof raw.expected === "string" ? raw.expected : "unknown",
-		path: typeof raw.path === "string" && raw.path.length > 0 ? raw.path : "(root)",
-		value: Object.prototype.hasOwnProperty.call(raw, "value") ? raw.value : undefined,
-	};
+	return normalizeSharedValidationError(error);
 }
 
 export function toValidationResult<T>(result: unknown): ValidationResult<T> {
-	const raw =
-		result !== null && typeof result === "object"
-			? (result as RawTypiaValidationResult)
-			: undefined;
-
-	if (raw?.success === true) {
-		return {
-			data: raw.data as T | undefined,
-			errors: [],
-			isValid: true,
-		};
-	}
-
-	const rawErrors = Array.isArray(raw?.errors) ? raw.errors : [];
-
-	return {
-		data: undefined,
-		errors: rawErrors.map(normalizeValidationError),
-		isValid: false,
-	};
+	return toSharedValidationResult<T>(result as SharedValidationLike<T>);
 }
 
 export function formatValidationError(error: TypiaValidationError): string {

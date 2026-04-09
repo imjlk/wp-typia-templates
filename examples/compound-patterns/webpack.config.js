@@ -257,6 +257,10 @@ module.exports = async () => {
 						__dirname,
 						'../../packages/wp-typia-block-runtime/src/validation.ts'
 					),
+					'@wp-typia/api-client/runtime-primitives': path.resolve(
+						__dirname,
+						'../../packages/wp-typia-api-client/src/runtime-primitives.ts'
+					),
 				},
 			},
 			plugins: [

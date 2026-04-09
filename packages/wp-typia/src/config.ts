@@ -2,6 +2,8 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
+import { isPlainObject as isRecord } from "@wp-typia/api-client/runtime-primitives";
+
 export type WpTypiaSchemaSource = {
 	namespace: string;
 	path: string;
@@ -40,12 +42,7 @@ export const WP_TYPIA_CONFIG_SOURCES = [
 	".wp-typiarc",
 	".wp-typiarc.json",
 ] as const;
-
 type JsonRecord = Record<string, unknown>;
-
-function isRecord(value: unknown): value is JsonRecord {
-	return typeof value === "object" && value !== null && !Array.isArray(value);
-}
 
 function deepMerge<T extends JsonRecord>(base: T, incoming: JsonRecord): T {
 	const merged: JsonRecord = { ...base };
