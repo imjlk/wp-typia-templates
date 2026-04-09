@@ -14,6 +14,15 @@ function getButtonLabel(
 	return liked ? context.unlikeLabel : context.likeLabel;
 }
 
+const BOOTSTRAP_MAX_ATTEMPTS = 3;
+const BOOTSTRAP_RETRY_DELAYS_MS = [ 250, 500 ];
+
+async function waitForBootstrapRetry( delayMs: number ): Promise< void > {
+	await new Promise( ( resolve ) => {
+		setTimeout( resolve, delayMs );
+	} );
+}
+
 function getClientState(
 	context: PersistenceLikeButtonContext
 ): PersistenceLikeButtonClientState {
@@ -80,49 +89,70 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 
 			context.isBootstrapping = true;
 
-			try {
-				const result = await fetchLikeBootstrap( {
-					postId: context.postId,
-					resourceKey: context.resourceKey,
-				} );
-				if ( ! result.isValid || ! result.data ) {
-					context.bootstrapReady = true;
-					context.canWrite = false;
-					clientState.liked = false;
-					clientState.writeNonce = '';
-					context.error =
-						result.errors[ 0 ]?.expected ??
-						'Unable to initialize write access';
-					return;
-				}
+			let bootstrapSucceeded = false;
+			let lastBootstrapError =
+				'Unable to initialize write access';
 
-				context.bootstrapReady = true;
-				clientState.writeNonce =
-					typeof result.data.restNonce === 'string' &&
-					result.data.restNonce.length > 0
-						? result.data.restNonce
-						: '';
-				context.canWrite =
-					result.data.canWrite === true &&
-					clientState.writeNonce.length > 0;
-				clientState.liked =
-					result.data.likedByCurrentUser === true;
-				context.buttonLabel = getButtonLabel(
-					context,
-					clientState.liked
-				);
-			} catch ( error ) {
-				context.bootstrapReady = true;
+			for ( let attempt = 1; attempt <= BOOTSTRAP_MAX_ATTEMPTS; attempt += 1 ) {
+				try {
+					const result = await fetchLikeBootstrap( {
+						postId: context.postId,
+						resourceKey: context.resourceKey,
+					} );
+					if ( ! result.isValid || ! result.data ) {
+						lastBootstrapError =
+							result.errors[ 0 ]?.expected ??
+							'Unable to initialize write access';
+						if ( attempt < BOOTSTRAP_MAX_ATTEMPTS ) {
+							await waitForBootstrapRetry(
+								BOOTSTRAP_RETRY_DELAYS_MS[ attempt - 1 ] ?? 750
+							);
+							continue;
+						}
+						break;
+					}
+
+					context.bootstrapReady = true;
+					clientState.writeNonce =
+						typeof result.data.restNonce === 'string' &&
+						result.data.restNonce.length > 0
+							? result.data.restNonce
+							: '';
+					context.canWrite =
+						result.data.canWrite === true &&
+						clientState.writeNonce.length > 0;
+					clientState.liked =
+						result.data.likedByCurrentUser === true;
+					context.buttonLabel = getButtonLabel(
+						context,
+						clientState.liked
+					);
+					context.error = '';
+					bootstrapSucceeded = true;
+					break;
+				} catch ( error ) {
+					lastBootstrapError =
+						error instanceof Error
+							? error.message
+							: 'Unknown bootstrap error';
+					if ( attempt < BOOTSTRAP_MAX_ATTEMPTS ) {
+						await waitForBootstrapRetry(
+							BOOTSTRAP_RETRY_DELAYS_MS[ attempt - 1 ] ?? 750
+						);
+						continue;
+					}
+					break;
+				}
+			}
+
+			if ( ! bootstrapSucceeded ) {
+				context.bootstrapReady = false;
 				context.canWrite = false;
 				clientState.liked = false;
 				clientState.writeNonce = '';
-				context.error =
-					error instanceof Error
-						? error.message
-						: 'Unknown bootstrap error';
-			} finally {
-				context.isBootstrapping = false;
+				context.error = lastBootstrapError;
 			}
+			context.isBootstrapping = false;
 		},
 		async toggle() {
 			const context = getContext< PersistenceLikeButtonContext >();

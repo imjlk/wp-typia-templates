@@ -20,6 +20,15 @@ function getWriteBlockedMessage(): string {
 	return 'Public writes are temporarily unavailable.';
 }
 
+const BOOTSTRAP_MAX_ATTEMPTS = 3;
+const BOOTSTRAP_RETRY_DELAYS_MS = [ 250, 500 ];
+
+async function waitForBootstrapRetry( delayMs: number ): Promise< void > {
+	await new Promise( ( resolve ) => {
+		setTimeout( resolve, delayMs );
+	} );
+}
+
 function getClientState(
 	context: PersistenceCounterContext
 ): PersistenceCounterClientState {
@@ -85,49 +94,70 @@ const { actions, state } = store( 'persistenceExamplesCounter', {
 
 			context.isBootstrapping = true;
 
-			try {
-				const result = await fetchCounterBootstrap( {
-					postId: context.postId,
-					resourceKey: context.resourceKey,
-				} );
-				if ( ! result.isValid || ! result.data ) {
-					context.bootstrapReady = true;
-					context.canWrite = false;
-					clientState.writeExpiry = 0;
-					clientState.writeToken = '';
-					context.error =
-						result.errors[ 0 ]?.expected ??
-						'Unable to initialize write access';
-					return;
-				}
+			let lastBootstrapError =
+				'Unable to initialize write access';
+			let bootstrapSucceeded = false;
 
-				clientState.writeExpiry =
-					typeof result.data.publicWriteExpiresAt === 'number' &&
-					result.data.publicWriteExpiresAt > 0
-						? result.data.publicWriteExpiresAt
-						: 0;
-				clientState.writeToken =
-					typeof result.data.publicWriteToken === 'string' &&
-					result.data.publicWriteToken.length > 0
-						? result.data.publicWriteToken
-						: '';
-				context.bootstrapReady = true;
-				context.canWrite =
-					result.data.canWrite === true &&
-					clientState.writeToken.length > 0 &&
-					! hasExpiredPublicWriteToken( clientState.writeExpiry );
-			} catch ( error ) {
-				context.bootstrapReady = true;
+			for ( let attempt = 1; attempt <= BOOTSTRAP_MAX_ATTEMPTS; attempt += 1 ) {
+				try {
+					const result = await fetchCounterBootstrap( {
+						postId: context.postId,
+						resourceKey: context.resourceKey,
+					} );
+					if ( ! result.isValid || ! result.data ) {
+						lastBootstrapError =
+							result.errors[ 0 ]?.expected ??
+							'Unable to initialize write access';
+						if ( attempt < BOOTSTRAP_MAX_ATTEMPTS ) {
+							await waitForBootstrapRetry(
+								BOOTSTRAP_RETRY_DELAYS_MS[ attempt - 1 ] ?? 750
+							);
+							continue;
+						}
+						break;
+					}
+
+					clientState.writeExpiry =
+						typeof result.data.publicWriteExpiresAt === 'number' &&
+						result.data.publicWriteExpiresAt > 0
+							? result.data.publicWriteExpiresAt
+							: 0;
+					clientState.writeToken =
+						typeof result.data.publicWriteToken === 'string' &&
+						result.data.publicWriteToken.length > 0
+							? result.data.publicWriteToken
+							: '';
+					context.bootstrapReady = true;
+					context.canWrite =
+						result.data.canWrite === true &&
+						clientState.writeToken.length > 0 &&
+						! hasExpiredPublicWriteToken( clientState.writeExpiry );
+					context.error = '';
+					bootstrapSucceeded = true;
+					break;
+				} catch ( error ) {
+					lastBootstrapError =
+						error instanceof Error
+							? error.message
+							: 'Unknown bootstrap error';
+					if ( attempt < BOOTSTRAP_MAX_ATTEMPTS ) {
+						await waitForBootstrapRetry(
+							BOOTSTRAP_RETRY_DELAYS_MS[ attempt - 1 ] ?? 750
+						);
+						continue;
+					}
+					break;
+				}
+			}
+
+			if ( ! bootstrapSucceeded ) {
+				context.bootstrapReady = false;
 				context.canWrite = false;
 				clientState.writeExpiry = 0;
 				clientState.writeToken = '';
-				context.error =
-					error instanceof Error
-						? error.message
-						: 'Unknown bootstrap error';
-			} finally {
-				context.isBootstrapping = false;
+				context.error = lastBootstrapError;
 			}
+			context.isBootstrapping = false;
 		},
 		async increment() {
 			const context = getContext< PersistenceCounterContext >();

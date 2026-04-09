@@ -208,6 +208,12 @@ test.describe('Persistence examples', () => {
     ) {
       throw new Error('Missing counter public write token from bootstrap response.');
     }
+    if (
+      typeof counterBootstrap.publicWriteExpiresAt !== 'number' ||
+      counterBootstrap.publicWriteExpiresAt <= 0
+    ) {
+      throw new Error('Missing counter bootstrap expiry.');
+    }
 
     await persistButton.click();
     await expect(counterValue).toHaveText('1', { timeout: 10_000 });
@@ -262,7 +268,11 @@ test.describe('Persistence examples', () => {
     });
     expect(tamperedToken.status).toBe(403);
 
-    await previewPage.waitForTimeout(6_000);
+    const waitForExpiryMs = Math.max(
+      counterBootstrap.publicWriteExpiresAt * 1000 - Date.now() + 1_500,
+      0,
+    );
+    await previewPage.waitForTimeout(waitForExpiryMs);
     const expiredToken = await writeCounter(previewPage, {
       delta: 1,
       postId: counterContext.postId,
