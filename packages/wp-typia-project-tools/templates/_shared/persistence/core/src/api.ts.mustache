@@ -1,6 +1,5 @@
 import {
 	callEndpoint,
-	resolveRestRouteUrl,
 } from '@wp-typia/rest';
 
 import {
@@ -11,58 +10,47 @@ import {
 	get{{pascalCase}}StateEndpoint,
 	write{{pascalCase}}StateEndpoint,
 } from './api-client';
-
-export function resolveRestNonce( fallback?: string ): string | undefined {
-	if ( typeof fallback === 'string' && fallback.length > 0 ) {
-		return fallback;
-	}
-
-	if ( typeof window === 'undefined' ) {
-		return undefined;
-	}
-
-	const wpApiSettings = ( window as typeof window & {
-		wpApiSettings?: { nonce?: string };
-	} ).wpApiSettings;
-
-	return typeof wpApiSettings?.nonce === 'string' && wpApiSettings.nonce.length > 0
-		? wpApiSettings.nonce
-		: undefined;
-}
+import {
+	resolveTransportCallOptions,
+	type PersistenceTransportOptions,
+} from './transport';
 
 export const stateEndpoint = {
 	...get{{pascalCase}}StateEndpoint,
-	buildRequestOptions: () => ( {
-		url: resolveRestRouteUrl( get{{pascalCase}}StateEndpoint.path ),
-	} ),
 };
 
 export const writeStateEndpoint = {
 	...write{{pascalCase}}StateEndpoint,
-	buildRequestOptions: () => ( {
-		url: resolveRestRouteUrl( write{{pascalCase}}StateEndpoint.path ),
-	} ),
 };
 
 export function fetchState(
-	request: {{pascalCase}}StateQuery
+	request: {{pascalCase}}StateQuery,
+	options: PersistenceTransportOptions = {}
 ) {
-	return callEndpoint( stateEndpoint, request );
+	return callEndpoint(
+		stateEndpoint,
+		request,
+		resolveTransportCallOptions(
+			options.transportTarget ?? 'frontend',
+			'read',
+			stateEndpoint,
+			options
+		)
+	);
 }
 
 export function writeState(
 	request: {{pascalCase}}WriteStateRequest,
-	restNonce?: string
+	options: PersistenceTransportOptions = {}
 ) {
-	const nonce = resolveRestNonce( restNonce );
-
-	return callEndpoint( writeStateEndpoint, request, {
-		requestOptions: nonce
-			? {
-					headers: {
-						'X-WP-Nonce': nonce,
-					},
-				}
-			: undefined,
-	} );
+	return callEndpoint(
+		writeStateEndpoint,
+		request,
+		resolveTransportCallOptions(
+			options.transportTarget ?? 'frontend',
+			'write',
+			writeStateEndpoint,
+			options
+		)
+	);
 }

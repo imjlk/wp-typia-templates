@@ -48,6 +48,9 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 				const result = await fetchState( {
 					postId: context.postId,
 					resourceKey: context.resourceKey,
+				}, {
+					restNonce: context.restNonce,
+					transportTarget: 'frontend',
 				} );
 				if ( ! result.isValid || ! result.data ) {
 					state.error = result.errors[ 0 ]?.expected ?? 'Unable to load counter';
@@ -97,7 +100,10 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 							? context.publicWriteToken
 							: undefined,
 					resourceKey: context.resourceKey,
-				}, context.restNonce );
+				}, {
+					restNonce: context.restNonce,
+					transportTarget: 'frontend',
+				} );
 				if ( ! result.isValid || ! result.data ) {
 					state.error = result.errors[ 0 ]?.expected ?? 'Unable to update counter';
 					return;

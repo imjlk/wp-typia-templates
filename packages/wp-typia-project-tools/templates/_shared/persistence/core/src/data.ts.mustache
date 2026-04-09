@@ -11,26 +11,13 @@ import type {
 	{{pascalCase}}WriteStateRequest,
 } from './api-types';
 import {
-	resolveRestNonce,
 	stateEndpoint,
 	writeStateEndpoint,
 } from './api';
-
-{{#isAuthenticatedPersistencePolicy}}
-function buildWriteCallOptions( restNonce?: string ) {
-	const nonce = resolveRestNonce( restNonce );
-
-	return nonce
-		? {
-				requestOptions: {
-					headers: {
-						'X-WP-Nonce': nonce,
-					},
-				},
-			}
-		: undefined;
-}
-{{/isAuthenticatedPersistencePolicy}}
+import {
+	resolveTransportCallOptions,
+	type PersistenceTransportTarget,
+} from './transport';
 
 interface WriteStateMutationContext< Context > {
 	previous:
@@ -49,9 +36,8 @@ export interface Use{{pascalCase}}StateQueryOptions<
 	>,
 	'resolveCallOptions'
 > {
-	{{#isAuthenticatedPersistencePolicy}}
 	restNonce?: string;
-	{{/isAuthenticatedPersistencePolicy}}
+	transportTarget?: PersistenceTransportTarget;
 }
 
 export interface UseWrite{{pascalCase}}StateMutationOptions<
@@ -62,7 +48,7 @@ export interface UseWrite{{pascalCase}}StateMutationOptions<
 		{{pascalCase}}StateResponse,
 		WriteStateMutationContext< Context >
 	>,
-	'invalidate' | 'onError' | 'onMutate'{{#isAuthenticatedPersistencePolicy}} | 'resolveCallOptions'{{/isAuthenticatedPersistencePolicy}}
+	'invalidate' | 'onError' | 'onMutate' | 'resolveCallOptions'
 > {
 	onError?: (
 		error: unknown,
@@ -74,9 +60,8 @@ export interface UseWrite{{pascalCase}}StateMutationOptions<
 		request: {{pascalCase}}WriteStateRequest,
 		client: import('@wp-typia/rest/react').EndpointDataClient
 	) => Context | Promise<Context>;
-	{{#isAuthenticatedPersistencePolicy}}
 	restNonce?: string;
-	{{/isAuthenticatedPersistencePolicy}}
+	transportTarget?: PersistenceTransportTarget;
 }
 
 export function use{{pascalCase}}StateQuery<
@@ -85,20 +70,25 @@ export function use{{pascalCase}}StateQuery<
 	request: {{pascalCase}}StateQuery,
 	options: Use{{pascalCase}}StateQueryOptions< Selected > = {}
 ) {
-	{{#isAuthenticatedPersistencePolicy}}
 	const {
 		restNonce,
+		transportTarget = 'editor',
 		...queryOptions
 	} = options;
 
 	return useEndpointQuery( stateEndpoint, request, {
 		...queryOptions,
-		resolveCallOptions: () => buildWriteCallOptions( restNonce ),
+		resolveCallOptions: () =>
+			resolveTransportCallOptions(
+				transportTarget,
+				'read',
+				stateEndpoint,
+				{
+					restNonce,
+					transportTarget,
+				}
+			),
 	} );
-	{{/isAuthenticatedPersistencePolicy}}
-	{{^isAuthenticatedPersistencePolicy}}
-	return useEndpointQuery( stateEndpoint, request, options );
-	{{/isAuthenticatedPersistencePolicy}}
 }
 
 export function useWrite{{pascalCase}}StateMutation<
@@ -109,9 +99,8 @@ export function useWrite{{pascalCase}}StateMutation<
 	const {
 		onError,
 		onMutate,
-		{{#isAuthenticatedPersistencePolicy}}
 		restNonce,
-		{{/isAuthenticatedPersistencePolicy}}
+		transportTarget = 'editor',
 		...mutationOptions
 	} = options;
 
@@ -185,8 +174,15 @@ export function useWrite{{pascalCase}}StateMutation<
 				userContext,
 			};
 		},
-		{{#isAuthenticatedPersistencePolicy}}
-		resolveCallOptions: () => buildWriteCallOptions( restNonce ),
-		{{/isAuthenticatedPersistencePolicy}}
+		resolveCallOptions: () =>
+			resolveTransportCallOptions(
+				transportTarget,
+				'write',
+				writeStateEndpoint,
+				{
+					restNonce,
+					transportTarget,
+				}
+			),
 	} );
 }

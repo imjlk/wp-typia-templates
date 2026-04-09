@@ -468,6 +468,7 @@ The built-in `persistence` template adds another predictable layer:
 - `src/api-types.ts`
 - `src/api-validators.ts`
 - `src/api-client.ts`
+- `src/transport.ts`
 - `src/api.ts`
 - `src/data.ts`
 - `src/api.openapi.json`
@@ -475,7 +476,7 @@ The built-in `persistence` template adds another predictable layer:
 - `scripts/sync-rest-contracts.ts`
 - a plugin bootstrap PHP file with generated REST route/storage wiring
 
-For persistence-capable scaffolds, the endpoint manifest authored in TypeScript is the canonical description of the REST surface and the primary input to `syncRestOpenApi()`. `src/api-client.ts` is the generated portable endpoint-definition artifact, `src/api.ts` is the WordPress-specific call helper layer, and `src/data.ts` is the additive React/data wrapper layer built on `@wp-typia/rest/react`. `src/api.openapi.json` is the canonical endpoint-aware REST document, `src/api-schemas/*.schema.json` files remain the runtime contract artifacts, and `src/api-schemas/*.openapi.json` files remain available as per-contract compatibility fragments.
+For persistence-capable scaffolds, the endpoint manifest authored in TypeScript is the canonical description of the REST surface and the primary input to `syncRestOpenApi()`. `src/api-client.ts` is the generated portable endpoint-definition artifact, `src/transport.ts` is the first-class runtime seam for editor/frontend transport wiring, `src/api.ts` is the typed call helper layer that composes those two pieces, and `src/data.ts` is the additive React/data wrapper layer built on `@wp-typia/rest/react`. `src/api.openapi.json` is the canonical endpoint-aware REST document, `src/api-schemas/*.schema.json` files remain the runtime contract artifacts, and `src/api-schemas/*.openapi.json` files remain available as per-contract compatibility fragments.
 
 ```ts
 await syncRestOpenApi({
@@ -489,6 +490,7 @@ When you customize the generated PHP:
 
 - edit the plugin bootstrap file for storage helpers, route handlers, response shaping, and route registration
 - edit `inc/rest-auth.php` or `inc/rest-public.php` for permission policy changes
+- edit `src/transport.ts` when you need to route editor or frontend requests through a contract-compatible proxy or BFF without changing the endpoint contracts
 - keep `src/api-types.ts` plus the endpoint manifest as the source of truth for REST contracts, then regenerate `src/api-schemas/*` and `src/api.openapi.json`
 - avoid hand-editing generated schema and OpenAPI artifacts unless you are debugging the generation output itself
 

@@ -1,0 +1,133 @@
+import {
+	type EndpointCallOptions,
+	resolveRestRouteUrl,
+} from '@wp-typia/rest';
+
+export type PersistenceTransportTarget = 'editor' | 'frontend';
+export type PersistenceTransportOperation = 'read' | 'write';
+
+export interface PersistenceTransportOptions {
+	restNonce?: string;
+	transportTarget?: PersistenceTransportTarget;
+}
+
+interface EndpointWithPath {
+	path: string;
+}
+
+type PersistenceTransportResolver = (
+	endpoint: EndpointWithPath,
+	options?: PersistenceTransportOptions
+) => EndpointCallOptions;
+
+interface PersistenceTransportTargetResolvers {
+	read: PersistenceTransportResolver;
+	write: PersistenceTransportResolver;
+}
+
+// Replace any of these base URLs to route a given target through a contract-compatible proxy or BFF.
+const EDITOR_READ_BASE_URL: string | undefined = undefined;
+const EDITOR_WRITE_BASE_URL: string | undefined = undefined;
+const FRONTEND_READ_BASE_URL: string | undefined = undefined;
+const FRONTEND_WRITE_BASE_URL: string | undefined = undefined;
+
+function resolveEndpointUrl(
+	endpointPath: string,
+	baseUrl?: string
+): string {
+	if ( typeof baseUrl === 'string' && baseUrl.trim().length > 0 ) {
+		return new URL( endpointPath, baseUrl ).toString();
+	}
+
+	return resolveRestRouteUrl( endpointPath );
+}
+
+export function resolveRestNonce( fallback?: string ): string | undefined {
+	if ( typeof fallback === 'string' && fallback.length > 0 ) {
+		return fallback;
+	}
+
+	if ( typeof window === 'undefined' ) {
+		return undefined;
+	}
+
+	const wpApiSettings = ( window as typeof window & {
+		wpApiSettings?: { nonce?: string };
+	} ).wpApiSettings;
+
+	return typeof wpApiSettings?.nonce === 'string' && wpApiSettings.nonce.length > 0
+		? wpApiSettings.nonce
+		: undefined;
+}
+
+function buildCallOptions( {
+	baseUrl,
+	endpoint,
+	includeRestNonce,
+	options,
+}: {
+	baseUrl?: string;
+	endpoint: EndpointWithPath;
+	includeRestNonce: boolean;
+	options?: PersistenceTransportOptions;
+} ): EndpointCallOptions {
+	const nonce = includeRestNonce ? resolveRestNonce( options?.restNonce ) : undefined;
+
+	return {
+		requestOptions: {
+			headers: nonce
+				? {
+						'X-WP-Nonce': nonce,
+					}
+				: undefined,
+			url: resolveEndpointUrl( endpoint.path, baseUrl ),
+		},
+	};
+}
+
+export const persistenceTransportTargets: Record<
+	PersistenceTransportTarget,
+	PersistenceTransportTargetResolvers
+> = {
+	editor: {
+		read: ( endpoint, options ) =>
+			buildCallOptions( {
+				baseUrl: EDITOR_READ_BASE_URL,
+				endpoint,
+				includeRestNonce: {{isAuthenticatedPersistencePolicy}},
+				options,
+			} ),
+		write: ( endpoint, options ) =>
+			buildCallOptions( {
+				baseUrl: EDITOR_WRITE_BASE_URL,
+				endpoint,
+				includeRestNonce: {{isAuthenticatedPersistencePolicy}},
+				options,
+			} ),
+	},
+	frontend: {
+		read: ( endpoint, options ) =>
+			buildCallOptions( {
+				baseUrl: FRONTEND_READ_BASE_URL,
+				endpoint,
+				includeRestNonce: false,
+				options,
+			} ),
+		write: ( endpoint, options ) =>
+			buildCallOptions( {
+				baseUrl: FRONTEND_WRITE_BASE_URL,
+				endpoint,
+				includeRestNonce: {{isAuthenticatedPersistencePolicy}},
+				options,
+			} ),
+	},
+};
+
+export function resolveTransportCallOptions(
+	target: PersistenceTransportTarget,
+	operation: PersistenceTransportOperation,
+	endpoint: EndpointWithPath,
+	options?: PersistenceTransportOptions
+): EndpointCallOptions {
+	return persistenceTransportTargets[ target ][ operation ]( endpoint, options );
+}
