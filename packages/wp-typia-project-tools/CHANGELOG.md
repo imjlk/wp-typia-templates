@@ -1,5 +1,11 @@
 # @wp-typia/project-tools
 
+## 0.15.1 — 2026-04-09
+
+### Patch changes
+
+- [70137df](https://github.com/imjlk/wp-typia/commit/70137df4e131872e1d01b2d883e9fc890a42a673) Fix scaffold DX regressions by seeding persistence REST artifacts during create, restoring interactivity editor styles, exposing the official workspace template in `templates`, and making compound child scaffolds read live parent metadata. — Thanks @imjlk!
+
 ## 0.15.0 — 2026-04-09
 
 ### Minor changes
