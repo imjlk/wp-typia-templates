@@ -2,6 +2,7 @@ import { getContext, store } from '@wordpress/interactivity';
 
 import { fetchLikeBootstrap, fetchLikeStatus, toggleLike } from './api';
 import type {
+	PersistenceLikeButtonClientState,
 	PersistenceLikeButtonContext,
 	PersistenceLikeButtonState,
 } from './types';
@@ -13,19 +14,24 @@ function getButtonLabel(
 	return liked ? context.unlikeLabel : context.likeLabel;
 }
 
+function getClientState(
+	context: PersistenceLikeButtonContext
+): PersistenceLikeButtonClientState {
+	if ( context.client ) {
+		return context.client;
+	}
+
+	context.client = {
+		liked: false,
+		writeNonce: '',
+	};
+
+	return context.client;
+}
+
 const { actions, state } = store( 'persistenceExamplesLikeButton', {
 	state: {
-		bootstrapReady: false,
-		buttonLabel: 'Like this',
-		canWrite: false,
-		count: 0,
-		error: undefined,
-		isBootstrapping: false,
 		isHydrated: false,
-		isLoading: false,
-		isSaving: false,
-		likedByCurrentUser: false,
-		restNonce: undefined,
 	} as PersistenceLikeButtonState,
 
 	actions: {
@@ -35,8 +41,8 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 				return;
 			}
 
-			state.isLoading = true;
-			state.error = undefined;
+			context.isLoading = true;
+			context.error = '';
 
 			try {
 				const result = await fetchLikeStatus( {
@@ -44,34 +50,35 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 					resourceKey: context.resourceKey,
 				} );
 				if ( ! result.isValid || ! result.data ) {
-					state.error =
+					context.error =
 						result.errors[ 0 ]?.expected ??
 						'Unable to load like state';
 					return;
 				}
 
-				state.count = result.data.count;
+				context.count = result.data.count;
 			} catch ( error ) {
-				state.error =
+				context.error =
 					error instanceof Error
 						? error.message
 						: 'Unknown loading error';
 			} finally {
-				state.isLoading = false;
+				context.isLoading = false;
 			}
 		},
 		async loadBootstrap() {
 			const context = getContext< PersistenceLikeButtonContext >();
+			const clientState = getClientState( context );
 			if ( context.postId <= 0 || ! context.resourceKey ) {
-				state.bootstrapReady = true;
-				state.buttonLabel = context.likeLabel;
-				state.canWrite = false;
-				state.likedByCurrentUser = false;
-				state.restNonce = undefined;
+				context.bootstrapReady = true;
+				context.buttonLabel = context.likeLabel;
+				context.canWrite = false;
+				clientState.liked = false;
+				clientState.writeNonce = '';
 				return;
 			}
 
-			state.isBootstrapping = true;
+			context.isBootstrapping = true;
 
 			try {
 				const result = await fetchLikeBootstrap( {
@@ -79,61 +86,61 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 					resourceKey: context.resourceKey,
 				} );
 				if ( ! result.isValid || ! result.data ) {
-					state.bootstrapReady = true;
-					state.canWrite = false;
-					state.likedByCurrentUser = false;
-					state.restNonce = undefined;
-					state.error =
+					context.bootstrapReady = true;
+					context.canWrite = false;
+					clientState.liked = false;
+					clientState.writeNonce = '';
+					context.error =
 						result.errors[ 0 ]?.expected ??
 						'Unable to initialize write access';
 					return;
 				}
 
-				state.bootstrapReady = true;
-				state.restNonce =
+				context.bootstrapReady = true;
+				clientState.writeNonce =
 					typeof result.data.restNonce === 'string' &&
 					result.data.restNonce.length > 0
 						? result.data.restNonce
-						: undefined;
-				state.canWrite =
+						: '';
+				context.canWrite =
 					result.data.canWrite === true &&
-					typeof state.restNonce === 'string' &&
-					state.restNonce.length > 0;
-				state.likedByCurrentUser =
+					clientState.writeNonce.length > 0;
+				clientState.liked =
 					result.data.likedByCurrentUser === true;
-				state.buttonLabel = getButtonLabel(
+				context.buttonLabel = getButtonLabel(
 					context,
-					state.likedByCurrentUser
+					clientState.liked
 				);
 			} catch ( error ) {
-				state.bootstrapReady = true;
-				state.canWrite = false;
-				state.likedByCurrentUser = false;
-				state.restNonce = undefined;
-				state.error =
+				context.bootstrapReady = true;
+				context.canWrite = false;
+				clientState.liked = false;
+				clientState.writeNonce = '';
+				context.error =
 					error instanceof Error
 						? error.message
 						: 'Unknown bootstrap error';
 			} finally {
-				state.isBootstrapping = false;
+				context.isBootstrapping = false;
 			}
 		},
 		async toggle() {
 			const context = getContext< PersistenceLikeButtonContext >();
+			const clientState = getClientState( context );
 			if ( context.postId <= 0 || ! context.resourceKey ) {
 				return;
 			}
-			if ( ! state.bootstrapReady ) {
-				state.error = 'Write access is still initializing.';
+			if ( ! context.bootstrapReady ) {
+				context.error = 'Write access is still initializing.';
 				return;
 			}
-			if ( ! state.canWrite ) {
-				state.error = 'Sign in to like this item.';
+			if ( ! context.canWrite ) {
+				context.error = 'Sign in to like this item.';
 				return;
 			}
 
-			state.isSaving = true;
-			state.error = undefined;
+			context.isSaving = true;
+			context.error = '';
 
 			try {
 				const result = await toggleLike(
@@ -141,27 +148,27 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 						postId: context.postId,
 						resourceKey: context.resourceKey,
 					},
-					state.restNonce
+					clientState.writeNonce
 				);
 				if ( ! result.isValid || ! result.data ) {
-					state.error =
+					context.error =
 						result.errors[ 0 ]?.expected ?? 'Unable to toggle like';
-					return;
+						return;
 				}
 
-				state.count = result.data.count;
-				state.likedByCurrentUser = result.data.likedByCurrentUser;
-				state.buttonLabel = getButtonLabel(
+				context.count = result.data.count;
+				clientState.liked = result.data.likedByCurrentUser;
+				context.buttonLabel = getButtonLabel(
 					context,
 					result.data.likedByCurrentUser
 				);
 			} catch ( error ) {
-				state.error =
+				context.error =
 					error instanceof Error
 						? error.message
 						: 'Unknown update error';
 			} finally {
-				state.isSaving = false;
+				context.isSaving = false;
 			}
 		},
 	},
@@ -169,12 +176,18 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 	callbacks: {
 		init() {
 			const context = getContext< PersistenceLikeButtonContext >();
-			state.bootstrapReady = false;
-			state.buttonLabel = context.likeLabel;
-			state.canWrite = false;
-			state.count = 0;
-			state.likedByCurrentUser = false;
-			state.restNonce = undefined;
+			context.client = {
+				liked: false,
+				writeNonce: '',
+			};
+			context.bootstrapReady = false;
+			context.buttonLabel = context.likeLabel;
+			context.canWrite = false;
+			context.count = 0;
+			context.error = '';
+			context.isBootstrapping = false;
+			context.isLoading = false;
+			context.isSaving = false;
 		},
 		mounted() {
 			state.isHydrated = true;

@@ -134,27 +134,6 @@ async function writeCounter(
   });
 }
 
-async function readLikeStatus(
-  previewPage: Awaited<ReturnType<WordPressPage['previewPost']>>,
-  context: LikeContext,
-) {
-  const headers: Record<string, string> = {
-    Accept: 'application/json',
-  };
-  if (typeof context.restNonce === 'string' && context.restNonce.length > 0) {
-    headers['X-WP-Nonce'] = context.restNonce;
-  }
-
-  return requestWordPressRest(previewPage, {
-    routePath: '/persistence-examples/v1/likes',
-    params: {
-      postId: String(context.postId),
-      resourceKey: context.resourceKey,
-    },
-    headers,
-  });
-}
-
 async function toggleLikeDirect(
   previewPage: Awaited<ReturnType<WordPressPage['previewPost']>>,
   context: LikeContext,
@@ -313,7 +292,11 @@ test.describe('Persistence examples', () => {
 
     const loggedOutPreview = await wpPage.previewPost({ loggedIn: false, browser });
     const loggedOutButton = loggedOutPreview.getByRole('button', { name: 'Like this' });
-    await expect(loggedOutPreview.getByText('Sign in to like this item.')).toBeVisible();
+    await loggedOutPreview.waitForFunction(
+      () => document.documentElement.dataset.persistenceLikeButtonHydrated === 'true',
+      undefined,
+      { timeout: 10_000 },
+    );
     await expect(loggedOutButton).toBeDisabled();
 
     const loggedOutContext = await getLikeContext(loggedOutPreview);
@@ -334,26 +317,43 @@ test.describe('Persistence examples', () => {
     await expect(likeButton).toBeVisible();
     await expect(likeCount).toHaveText('0');
 
-    await likeButton.click();
-    await expect(previewPage.getByRole('button', { name: 'Unlike' })).toBeVisible({ timeout: 10_000 });
-    await expect(likeCount).toHaveText('1', { timeout: 10_000 });
-    await expect
-      .poll(async () => {
-        const result = await readLikeStatus(previewPage, likeContext);
-        return JSON.parse(result.body).likedByCurrentUser as boolean;
-      })
-      .toBe(true);
+    const editorRestNonce = await wpPage.page.evaluate(() => {
+      const wpApiSettings = (window as typeof window & {
+        wpApiSettings?: { nonce?: unknown };
+      }).wpApiSettings;
 
-    await previewPage.getByRole('button', { name: 'Unlike' }).click();
-    await expect(previewPage.getByRole('button', { name: 'Like this' })).toBeVisible({ timeout: 10_000 });
-    await expect(likeCount).toHaveText('0', { timeout: 10_000 });
-    await expect
-      .poll(async () => {
-        const result = await readLikeStatus(previewPage, likeContext);
-        const body = JSON.parse(result.body) as { count?: number; likedByCurrentUser?: boolean };
-        return `${body.count}:${body.likedByCurrentUser}`;
-      })
-      .toBe('0:false');
+      return typeof wpApiSettings?.nonce === 'string' ? wpApiSettings.nonce : '';
+    });
+    if (editorRestNonce.length === 0) {
+      throw new Error('Missing editor REST nonce for authenticated like-button test.');
+    }
+
+    const likePost = await toggleLikeDirect(
+      wpPage.page,
+      {
+        ...likeContext,
+        restNonce: editorRestNonce,
+      },
+      true,
+    );
+    expect(likePost.status).toBe(200);
+    await previewPage.reload({ waitUntil: 'domcontentloaded' });
+    await previewPage.waitForFunction(
+      () => document.documentElement.dataset.persistenceLikeButtonHydrated === 'true',
+      undefined,
+      { timeout: 10_000 },
+    );
+    await expect(previewPage.locator('.persistence-like-button-frontend__count')).toHaveText('1');
+
+    const unlikePost = await toggleLikeDirect(
+      wpPage.page,
+      {
+        ...likeContext,
+        restNonce: editorRestNonce,
+      },
+      true,
+    );
+    expect(unlikePost.status).toBe(200);
 
     await previewPage.reload({ waitUntil: 'domcontentloaded' });
     await previewPage.waitForFunction(

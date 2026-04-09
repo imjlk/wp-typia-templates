@@ -41,12 +41,24 @@ if ( empty( $validation['valid'] ) || '' === $resource_key ) {
 }
 
 $context = array(
-	'buttonLabel'       => $button_label,
-	'persistencePolicy' => $persistence_policy,
-	'postId'            => (int) $post_id,
-	'resourceKey'       => $resource_key,
-	'showCount'         => $show_count,
-	'storage'           => $storage_mode,
+	'bootstrapReady'       => false,
+	'buttonLabel'          => $button_label,
+	'canWrite'             => false,
+	'client'               => array(
+		'writeExpiry' => 0,
+		'writeNonce'  => '',
+		'writeToken'  => '',
+	),
+	'count'                => 0,
+	'error'                => '',
+	'isBootstrapping'      => false,
+	'isLoading'            => false,
+	'isSaving'             => false,
+	'persistencePolicy'    => $persistence_policy,
+	'postId'               => (int) $post_id,
+	'resourceKey'          => $resource_key,
+	'showCount'            => $show_count,
+	'storage'              => $storage_mode,
 );
 
 $allowed_inner_html = wp_kses_allowed_html( 'post' );
@@ -94,7 +106,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 	<?php endif; ?>
 	<p
 		class="{{cssClassName}}__notice"
-		data-wp-bind--hidden="!state.bootstrapReady || state.canWrite"
+		data-wp-bind--hidden="!context.bootstrapReady || context.canWrite"
 		hidden
 	>
 		<?php echo esc_html( $notice_message ); ?>
@@ -104,8 +116,8 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		role="status"
 		aria-live="polite"
 		aria-atomic="true"
-		data-wp-bind--hidden="!state.error"
-		data-wp-text="state.error"
+		data-wp-bind--hidden="!context.error"
+		data-wp-text="context.error"
 		hidden
 	></p>
 	<?php if ( $show_count ) : ?>
@@ -115,12 +127,12 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				role="status"
 				aria-live="polite"
 				aria-atomic="true"
-				data-wp-text="state.count"
+				data-wp-text="context.count"
 			>0</span>
 			<button
 				type="button"
 				disabled
-				data-wp-bind--disabled="!state.canWrite"
+				data-wp-bind--disabled="!context.canWrite"
 				data-wp-on--click="actions.increment"
 			>
 				<?php echo esc_html( $button_label ); ?>

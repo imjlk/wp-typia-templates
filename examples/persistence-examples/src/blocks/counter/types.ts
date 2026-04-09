@@ -24,22 +24,26 @@ export interface PersistenceCounterAttributes {
 
 export interface PersistenceCounterContext {
 	buttonLabel: string;
-	postId: number;
-	resourceKey: string;
-	storage: 'custom-table';
-}
-
-export interface PersistenceCounterState {
 	bootstrapReady: boolean;
 	canWrite: boolean;
 	count: number;
-	error?: string;
+	error: string;
 	isBootstrapping: boolean;
-	isHydrated: boolean;
 	isLoading: boolean;
 	isSaving: boolean;
-	publicWriteExpiresAt?: number;
-	publicWriteToken?: string;
+	postId: number;
+	resourceKey: string;
+	storage: 'custom-table';
+	client?: PersistenceCounterClientState;
+}
+
+export interface PersistenceCounterState {
+	isHydrated: boolean;
+}
+
+export interface PersistenceCounterClientState {
+	writeExpiry: number;
+	writeToken: string;
 }
 
 export type PersistenceCounterValidationResult =

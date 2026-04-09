@@ -3,6 +3,7 @@ import { generatePublicWriteRequestId } from '@wp-typia/block-runtime/identifier
 
 import { fetchCounter, fetchCounterBootstrap, incrementCounter } from './api';
 import type {
+	PersistenceCounterClientState,
 	PersistenceCounterContext,
 	PersistenceCounterState,
 } from './types';
@@ -19,18 +20,24 @@ function getWriteBlockedMessage(): string {
 	return 'Public writes are temporarily unavailable.';
 }
 
+function getClientState(
+	context: PersistenceCounterContext
+): PersistenceCounterClientState {
+	if ( context.client ) {
+		return context.client;
+	}
+
+	context.client = {
+		writeExpiry: 0,
+		writeToken: '',
+	};
+
+	return context.client;
+}
+
 const { actions, state } = store( 'persistenceExamplesCounter', {
 	state: {
-		bootstrapReady: false,
-		canWrite: false,
-		count: 0,
-		error: undefined,
-		isBootstrapping: false,
 		isHydrated: false,
-		isLoading: false,
-		isSaving: false,
-		publicWriteExpiresAt: undefined,
-		publicWriteToken: undefined,
 	} as PersistenceCounterState,
 
 	actions: {
@@ -40,8 +47,8 @@ const { actions, state } = store( 'persistenceExamplesCounter', {
 				return;
 			}
 
-			state.isLoading = true;
-			state.error = undefined;
+			context.isLoading = true;
+			context.error = '';
 
 			try {
 				const result = await fetchCounter( {
@@ -49,33 +56,34 @@ const { actions, state } = store( 'persistenceExamplesCounter', {
 					resourceKey: context.resourceKey,
 				} );
 				if ( ! result.isValid || ! result.data ) {
-					state.error =
+					context.error =
 						result.errors[ 0 ]?.expected ??
 						'Unable to load the counter';
 					return;
 				}
 
-				state.count = result.data.count;
+				context.count = result.data.count;
 			} catch ( error ) {
-				state.error =
+				context.error =
 					error instanceof Error
 						? error.message
 						: 'Unknown loading error';
 			} finally {
-				state.isLoading = false;
+				context.isLoading = false;
 			}
 		},
 		async loadBootstrap() {
 			const context = getContext< PersistenceCounterContext >();
+			const clientState = getClientState( context );
 			if ( context.postId <= 0 || ! context.resourceKey ) {
-				state.bootstrapReady = true;
-				state.canWrite = false;
-				state.publicWriteExpiresAt = undefined;
-				state.publicWriteToken = undefined;
+				context.bootstrapReady = true;
+				context.canWrite = false;
+				clientState.writeExpiry = 0;
+				clientState.writeToken = '';
 				return;
 			}
 
-			state.isBootstrapping = true;
+			context.isBootstrapping = true;
 
 			try {
 				const result = await fetchCounterBootstrap( {
@@ -83,104 +91,111 @@ const { actions, state } = store( 'persistenceExamplesCounter', {
 					resourceKey: context.resourceKey,
 				} );
 				if ( ! result.isValid || ! result.data ) {
-					state.bootstrapReady = true;
-					state.canWrite = false;
-					state.publicWriteExpiresAt = undefined;
-					state.publicWriteToken = undefined;
-					state.error =
+					context.bootstrapReady = true;
+					context.canWrite = false;
+					clientState.writeExpiry = 0;
+					clientState.writeToken = '';
+					context.error =
 						result.errors[ 0 ]?.expected ??
 						'Unable to initialize write access';
 					return;
 				}
 
-				state.publicWriteExpiresAt =
+				clientState.writeExpiry =
 					typeof result.data.publicWriteExpiresAt === 'number' &&
 					result.data.publicWriteExpiresAt > 0
 						? result.data.publicWriteExpiresAt
-						: undefined;
-				state.publicWriteToken =
+						: 0;
+				clientState.writeToken =
 					typeof result.data.publicWriteToken === 'string' &&
 					result.data.publicWriteToken.length > 0
 						? result.data.publicWriteToken
-						: undefined;
-				state.bootstrapReady = true;
-				state.canWrite =
+						: '';
+				context.bootstrapReady = true;
+				context.canWrite =
 					result.data.canWrite === true &&
-					typeof state.publicWriteToken === 'string' &&
-					state.publicWriteToken.length > 0 &&
-					! hasExpiredPublicWriteToken( state.publicWriteExpiresAt );
+					clientState.writeToken.length > 0 &&
+					! hasExpiredPublicWriteToken( clientState.writeExpiry );
 			} catch ( error ) {
-				state.bootstrapReady = true;
-				state.canWrite = false;
-				state.publicWriteExpiresAt = undefined;
-				state.publicWriteToken = undefined;
-				state.error =
+				context.bootstrapReady = true;
+				context.canWrite = false;
+				clientState.writeExpiry = 0;
+				clientState.writeToken = '';
+				context.error =
 					error instanceof Error
 						? error.message
 						: 'Unknown bootstrap error';
 			} finally {
-				state.isBootstrapping = false;
+				context.isBootstrapping = false;
 			}
 		},
 		async increment() {
 			const context = getContext< PersistenceCounterContext >();
+			const clientState = getClientState( context );
 			if ( context.postId <= 0 || ! context.resourceKey ) {
 				return;
 			}
-			if ( ! state.bootstrapReady ) {
-				state.error = 'Write access is still initializing.';
+			if ( ! context.bootstrapReady ) {
+				context.error = 'Write access is still initializing.';
 				return;
 			}
-			if ( hasExpiredPublicWriteToken( state.publicWriteExpiresAt ) ) {
+			if ( hasExpiredPublicWriteToken( clientState.writeExpiry ) ) {
 				await actions.loadBootstrap();
 			}
-			if ( hasExpiredPublicWriteToken( state.publicWriteExpiresAt ) ) {
-				state.canWrite = false;
-				state.error = getWriteBlockedMessage();
+			if ( hasExpiredPublicWriteToken( clientState.writeExpiry ) ) {
+				context.canWrite = false;
+				context.error = getWriteBlockedMessage();
 				return;
 			}
-			if ( ! state.canWrite ) {
-				state.error = getWriteBlockedMessage();
+			if ( ! context.canWrite ) {
+				context.error = getWriteBlockedMessage();
 				return;
 			}
 
-			state.isSaving = true;
-			state.error = undefined;
+			context.isSaving = true;
+			context.error = '';
 
 			try {
 				const result = await incrementCounter( {
 					delta: 1,
 					postId: context.postId,
 					publicWriteRequestId: generatePublicWriteRequestId(),
-					publicWriteToken: state.publicWriteToken,
+					publicWriteToken: clientState.writeToken,
 					resourceKey: context.resourceKey,
 				} );
 				if ( ! result.isValid || ! result.data ) {
-					state.error =
+					context.error =
 						result.errors[ 0 ]?.expected ??
 						'Unable to update the counter';
 					return;
 				}
 
-				state.count = result.data.count;
+				context.count = result.data.count;
 			} catch ( error ) {
-				state.error =
+				context.error =
 					error instanceof Error
 						? error.message
 						: 'Unknown update error';
 			} finally {
-				state.isSaving = false;
+				context.isSaving = false;
 			}
 		},
 	},
 
 	callbacks: {
 		init() {
-			state.bootstrapReady = false;
-			state.canWrite = false;
-			state.count = 0;
-			state.publicWriteExpiresAt = undefined;
-			state.publicWriteToken = undefined;
+			const context = getContext< PersistenceCounterContext >();
+			context.client = {
+				writeExpiry: 0,
+				writeToken: '',
+			};
+			context.bootstrapReady = false;
+			context.canWrite = false;
+			context.count = 0;
+			context.error = '';
+			context.isBootstrapping = false;
+			context.isLoading = false;
+			context.isSaving = false;
 		},
 		mounted() {
 			state.isHydrated = true;

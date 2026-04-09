@@ -34,11 +34,23 @@ $post_id      = is_object( $block ) && isset( $block->context['postId'] )
 	? (int) $block->context['postId']
 	: (int) get_queried_object_id();
 $context      = array(
-	'likeLabel'           => $like_label,
-	'postId'              => (int) $post_id,
-	'resourceKey'         => $resource_key,
-	'storage'             => 'custom-table',
-	'unlikeLabel'         => $unlike_label,
+	'bootstrapReady' => false,
+	'buttonLabel'    => $like_label,
+	'canWrite'       => false,
+	'client'         => array(
+		'liked'      => false,
+		'writeNonce' => '',
+	),
+	'count'          => 0,
+	'error'          => '',
+	'isBootstrapping' => false,
+	'isLoading'      => false,
+	'isSaving'       => false,
+	'likeLabel'      => $like_label,
+	'postId'         => (int) $post_id,
+	'resourceKey'    => $resource_key,
+	'storage'        => 'custom-table',
+	'unlikeLabel'    => $unlike_label,
 );
 
 $wrapper_attributes = get_block_wrapper_attributes(
@@ -56,7 +68,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		<p class="persistence-like-button-frontend__content"><?php echo esc_html( $content ); ?></p>
 		<p
 			class="persistence-like-button-frontend__notice"
-			data-wp-bind--hidden="!state.bootstrapReady || state.canWrite"
+			data-wp-bind--hidden="!context.bootstrapReady || context.canWrite"
 			hidden
 		>
 			<?php esc_html_e( 'Sign in to like this item.', 'persistence-examples' ); ?>
@@ -66,8 +78,8 @@ $wrapper_attributes = get_block_wrapper_attributes(
 			role="status"
 			aria-live="polite"
 			aria-atomic="true"
-			data-wp-bind--hidden="!state.error"
-			data-wp-text="state.error"
+			data-wp-bind--hidden="!context.error"
+			data-wp-text="context.error"
 			hidden
 		></p>
 		<?php if ( ! empty( $normalized['showCount'] ) ) : ?>
@@ -76,15 +88,15 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				role="status"
 				aria-live="polite"
 				aria-atomic="true"
-				data-wp-text="state.count"
+				data-wp-text="context.count"
 			>0</span>
 		<?php endif; ?>
 		<button
 			type="button"
 			disabled
-			data-wp-bind--disabled="!state.canWrite"
+			data-wp-bind--disabled="!context.canWrite"
 			data-wp-on--click="actions.toggle"
-			data-wp-text="state.buttonLabel"
+			data-wp-text="context.buttonLabel"
 		>
 			<?php echo esc_html( $like_label ); ?>
 		</button>

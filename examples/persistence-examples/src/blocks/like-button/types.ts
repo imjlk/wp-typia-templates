@@ -27,25 +27,29 @@ export interface PersistenceLikeButtonAttributes {
 }
 
 export interface PersistenceLikeButtonContext {
+	bootstrapReady: boolean;
+	buttonLabel: string;
+	canWrite: boolean;
+	count: number;
+	error: string;
+	isBootstrapping: boolean;
+	isLoading: boolean;
+	isSaving: boolean;
 	likeLabel: string;
 	postId: number;
 	resourceKey: string;
 	storage: 'custom-table';
 	unlikeLabel: string;
+	client?: PersistenceLikeButtonClientState;
 }
 
 export interface PersistenceLikeButtonState {
-	bootstrapReady: boolean;
-	buttonLabel: string;
-	canWrite: boolean;
-	count: number;
-	error?: string;
-	isBootstrapping: boolean;
 	isHydrated: boolean;
-	isLoading: boolean;
-	isSaving: boolean;
-	likedByCurrentUser: boolean;
-	restNonce?: string;
+}
+
+export interface PersistenceLikeButtonClientState {
+	liked: boolean;
+	writeNonce: string;
 }
 
 export type PersistenceLikeButtonValidationResult =

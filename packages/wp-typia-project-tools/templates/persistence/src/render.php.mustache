@@ -39,12 +39,24 @@ $notice_message     = 'authenticated' === $persistence_policy
 	? __( 'Sign in to persist this counter.', '{{textDomain}}' )
 	: __( 'Public writes are temporarily unavailable.', '{{textDomain}}' );
 $context            = array(
-	'buttonLabel'       => $button_label,
-	'isVisible'         => ! empty( $normalized['isVisible'] ),
-	'persistencePolicy' => $persistence_policy,
-	'postId'            => (int) $post_id,
-	'resourceKey'       => $resource_key,
-	'storage'           => $storage_mode,
+	'bootstrapReady'       => false,
+	'buttonLabel'          => $button_label,
+	'canWrite'             => false,
+	'client'               => array(
+		'writeExpiry' => 0,
+		'writeNonce'  => '',
+		'writeToken'  => '',
+	),
+	'count'                => 0,
+	'error'                => '',
+	'isBootstrapping'      => false,
+	'isLoading'            => false,
+	'isSaving'             => false,
+	'isVisible'            => ! empty( $normalized['isVisible'] ),
+	'persistencePolicy'    => $persistence_policy,
+	'postId'               => (int) $post_id,
+	'resourceKey'          => $resource_key,
+	'storage'              => $storage_mode,
 );
 
 $wrapper_attributes = get_block_wrapper_attributes(
@@ -64,7 +76,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		</p>
 		<p
 			class="{{frontendCssClassName}}__notice"
-			data-wp-bind--hidden="!state.bootstrapReady || state.canWrite"
+			data-wp-bind--hidden="!context.bootstrapReady || context.canWrite"
 			hidden
 		>
 			<?php echo esc_html( $notice_message ); ?>
@@ -74,8 +86,8 @@ $wrapper_attributes = get_block_wrapper_attributes(
 			role="status"
 			aria-live="polite"
 			aria-atomic="true"
-			data-wp-bind--hidden="!state.error"
-			data-wp-text="state.error"
+			data-wp-bind--hidden="!context.error"
+			data-wp-text="context.error"
 			hidden
 		></p>
 		<?php if ( ! empty( $normalized['showCount'] ) ) : ?>
@@ -84,7 +96,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 				role="status"
 				aria-live="polite"
 				aria-atomic="true"
-				data-wp-text="state.count"
+				data-wp-text="context.count"
 			>
 				0
 			</span>
@@ -92,7 +104,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		<button
 			type="button"
 			disabled
-			data-wp-bind--disabled="!state.canWrite"
+			data-wp-bind--disabled="!context.canWrite"
 			data-wp-on--click="actions.increment"
 		>
 			<?php echo esc_html( $button_label ); ?>

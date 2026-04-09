@@ -1395,7 +1395,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
       );
       expect(generatedRender).not.toContain("publicWriteToken");
       expect(generatedRender).toContain(
-        "state.bootstrapReady || state.canWrite"
+        "context.bootstrapReady || context.canWrite"
       );
       expect(generatedRender).toContain(
         'class="wp-block-create-block-demo-persistence-public-frontend"'
@@ -3233,7 +3233,9 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(restPublicHelper).toContain("SELECT GET_LOCK(%s, 5)");
     expect(restPublicHelper).toContain("return 'wpt_pwl_' . md5(");
     expect(parentRender).not.toContain("publicWriteToken");
-    expect(parentRender).toContain("state.bootstrapReady || state.canWrite");
+    expect(parentRender).toContain(
+      "context.bootstrapReady || context.canWrite"
+    );
     expect(parentRender).toContain(
       "$allowed_inner_html = wp_kses_allowed_html( 'post' );"
     );
