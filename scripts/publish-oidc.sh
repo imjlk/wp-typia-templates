@@ -64,7 +64,7 @@ publish_package() {
 
   if (
     cd "$package_dir"
-    npm publish "${publish_args[@]}"
+    WP_TYPIA_SKIP_POSTPACK_RESTORE=1 npm publish "${publish_args[@]}"
   ) >"$publish_log" 2>&1; then
     if [[ "$manifest_prepared" == "1" ]]; then
       node "$publish_manifest_script" restore

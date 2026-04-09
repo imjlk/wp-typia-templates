@@ -105,6 +105,10 @@ function prepareManifest() {
 }
 
 function restoreManifest() {
+	if (process.env.WP_TYPIA_SKIP_POSTPACK_RESTORE === "1") {
+		return;
+	}
+
 	if (!fs.existsSync(backupPath)) {
 		return;
 	}
