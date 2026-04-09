@@ -6,7 +6,7 @@ import * as restRoot from "../src/index";
 import * as restInternal from "../src/internal/runtime-primitives";
 
 describe("@wp-typia/rest runtime primitive shims", () => {
-	test("forwards shared helpers from api-client by identity", () => {
+	test("forwards shared helpers from api-client with matching behavior", () => {
 		expect(typeof restInternal.isPlainObject).toBe("function");
 		expect(restInternal.isPlainObject(Object.create(null))).toBe(true);
 		expect(typeof restInternal.isFormDataLike).toBe("function");
