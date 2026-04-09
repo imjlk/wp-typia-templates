@@ -1,5 +1,11 @@
 # @wp-typia/rest
 
+## 0.3.3 — 2026-04-09
+
+### Patch changes
+
+- [896bc10](https://github.com/imjlk/wp-typia/commit/896bc10908c0f32951998a538434ce64d24113c0) Ensure npm publish rewrites `@wp-typia/rest` workspace protocol dependencies before the registry captures package metadata, so published installs resolve `@wp-typia/api-client` through a semver range instead of `workspace:*`. — Thanks @imjlk!
+
 ## 0.3.2 — 2026-04-09
 
 ### Patch changes
