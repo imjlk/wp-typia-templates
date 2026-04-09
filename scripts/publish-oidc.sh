@@ -31,8 +31,10 @@ publish_package() {
   local package_name
   local package_version
   local package_main
+  local publish_manifest_script="$package_dir/scripts/publish-manifest.mjs"
   local publish_log
   local publish_args=("--access" "public")
+  local manifest_prepared=0
 
   package_name="$(read_package_field "$package_json" "name")"
   package_version="$(read_package_field "$package_json" "version")"
@@ -52,6 +54,11 @@ publish_package() {
     publish_args+=("--dry-run")
   fi
 
+  if [[ -f "$publish_manifest_script" ]]; then
+    node "$publish_manifest_script" prepare
+    manifest_prepared=1
+  fi
+
   echo "Publishing ${package_name}@${package_version}..."
   publish_log="$(mktemp)"
 
@@ -59,9 +66,16 @@ publish_package() {
     cd "$package_dir"
     npm publish "${publish_args[@]}"
   ) >"$publish_log" 2>&1; then
+    if [[ "$manifest_prepared" == "1" ]]; then
+      node "$publish_manifest_script" restore
+    fi
     cat "$publish_log"
     rm -f "$publish_log"
     return
+  fi
+
+  if [[ "$manifest_prepared" == "1" ]]; then
+    node "$publish_manifest_script" restore
   fi
 
   cat "$publish_log"
