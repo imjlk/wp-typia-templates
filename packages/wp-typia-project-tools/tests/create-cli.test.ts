@@ -1038,9 +1038,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(pluginBootstrap).toContain("permission_callback' => 'demo_persistence_public_can_write_publicly'");
 		expect(pluginBootstrap).toContain("PUBLIC_WRITE_RATE_LIMIT_WINDOW");
 		expect(pluginBootstrap).toContain("PUBLIC_WRITE_RATE_LIMIT_MAX");
-		expect(pluginBootstrap).not.toMatch(
-			/'callback'\s*=>\s*'demo_persistence_public_handle_write_state'[\s\S]*?'permission_callback'\s*=>\s*'__return_true'/,
-		);
+		expect(pluginBootstrap).toContain("demo_persistence_public_handle_get_bootstrap");
 		expect(restPublicHelper).toContain("function demo_persistence_public_verify_public_write_token");
 		expect(restPublicHelper).toContain("function demo_persistence_public_consume_public_write_request_id");
 		expect(restPublicHelper).toContain("function demo_persistence_public_enforce_public_write_rate_limit");
@@ -1050,11 +1048,13 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(generatedApi).toContain("@wp-typia/rest");
 		expect(generatedApi).toContain("from './api-client'");
 		expect(generatedApi).toContain("from './transport'");
+		expect(generatedApi).toContain("getDemoPersistencePublicBootstrapEndpoint");
 		expect(generatedApi).toContain("getDemoPersistencePublicStateEndpoint");
 		expect(generatedApi).toContain("writeDemoPersistencePublicStateEndpoint");
 		expect(generatedApi).not.toContain("createEndpoint(");
 		expect(generatedData).toContain("from '@wp-typia/rest/react'");
 		expect(generatedData).toContain("transportTarget = 'editor'");
+		expect(generatedData).toContain("useDemoPersistencePublicBootstrapQuery");
 		expect(generatedTransport).toContain("const EDITOR_READ_BASE_URL: string | undefined = undefined;");
 		expect(generatedTransport).toContain("const FRONTEND_WRITE_BASE_URL: string | undefined = undefined;");
 		expect(generatedTransport).toContain("resolveTransportCallOptions");
@@ -1085,7 +1085,8 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(generatedSyncRest).not.toContain("openApiInfo: REST_ENDPOINT_MANIFEST.info");
 		expect(generatedStyle).toContain(".wp-block-create-block-demo-persistence-public");
 		expect(generatedStyle).toContain(".wp-block-create-block-demo-persistence-public-frontend");
-		expect(generatedRender).toContain("publicWriteToken");
+		expect(generatedRender).not.toContain("publicWriteToken");
+		expect(generatedRender).toContain("state.bootstrapReady || state.canWrite");
 		expect(generatedRender).toContain('class="wp-block-create-block-demo-persistence-public-frontend"');
 		expect(generatedRender).toContain("wp-block-create-block-demo-persistence-public-frontend__content");
 		expect(generatedRender).toContain('role="status"');
@@ -1118,6 +1119,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 			"utf8",
 		);
 			expect(generatedApiClient).toContain("from '@wp-typia/api-client'");
+			expect(generatedApiClient).toContain("export const getDemoPersistencePublicBootstrapEndpoint");
 			expect(generatedApiClient).toContain("export const getDemoPersistencePublicStateEndpoint");
 			expect(generatedApiClient).toContain("export function writeDemoPersistencePublicState(");
 		},
@@ -1189,9 +1191,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(pluginBootstrap).toContain("require_once __DIR__ . '/inc/rest-auth.php';");
 		expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
 		expect(pluginBootstrap).toContain("permission_callback' => 'demo_persistence_authenticated_can_write_authenticated'");
-		expect(pluginBootstrap).not.toMatch(
-			/'callback'\s*=>\s*'demo_persistence_authenticated_handle_write_state'[\s\S]*?'permission_callback'\s*=>\s*'__return_true'/,
-		);
+		expect(pluginBootstrap).toContain("demo_persistence_authenticated_handle_get_bootstrap");
 		expect(restAuthHelper).toContain("function demo_persistence_authenticated_can_write_authenticated");
 		expect(generatedStyle).toContain(".wp-block-create-block-demo-persistence-authenticated");
 		expect(generatedStyle).toContain(
@@ -1208,7 +1208,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(generatedTransport).toContain("includeRestNonce: false");
 		expect(generatedTypes).toContain("persistencePolicy: 'authenticated' | 'public';");
 		expect(generatedEdit).toContain("Stable persisted identifier used by the storage-backed counter endpoint.");
-		expect(generatedEdit).toContain("Render mode: dynamic. `render.php` bootstraps post context, storage-backed state, and write-policy data before hydration.");
+		expect(generatedEdit).toContain("Render mode: dynamic. `render.php` bootstraps durable post context, while fresh session-only write data is loaded from the dedicated `/bootstrap` endpoint after hydration.");
 		expect(generatedSave).toContain("intentionally server-rendered");
 		expect(generatedSave).toContain("return null;");
 		expect(readme).toContain("npm run dev");
@@ -1562,7 +1562,9 @@ console.log(JSON.stringify({
 import openApiDocument from './src/api.openapi.json';
 import { resolveTransportCallOptions } from './src/transport';
 
-const statePath = Object.keys(openApiDocument.paths)[0];
+const statePath = Object.keys(openApiDocument.paths).find((candidatePath) =>
+	candidatePath.endsWith('/state')
+);
 if (typeof statePath !== 'string') {
 	throw new Error('Unable to resolve the generated state route path.');
 }
@@ -2450,14 +2452,13 @@ console.log(JSON.stringify({ initial, updated, reread }));
 		expect(pluginBootstrap).toContain("HOUR_IN_SECONDS");
 		expect(pluginBootstrap).toContain("PUBLIC_WRITE_RATE_LIMIT_WINDOW");
 		expect(pluginBootstrap).toContain("PUBLIC_WRITE_RATE_LIMIT_MAX");
-		expect(pluginBootstrap).not.toMatch(
-			/'callback'\s*=>\s*'demo_compound_public_handle_write_state'[\s\S]*?'permission_callback'\s*=>\s*'__return_true'/,
-		);
+		expect(pluginBootstrap).toContain("demo_compound_public_handle_get_bootstrap");
 		expect(restPublicHelper).toContain("function demo_compound_public_verify_public_write_token");
 		expect(restPublicHelper).toContain("function demo_compound_public_consume_public_write_request_id");
 		expect(restPublicHelper).toContain("SELECT GET_LOCK(%s, 5)");
 		expect(restPublicHelper).toContain("return 'wpt_pwl_' . md5(");
-		expect(parentRender).toContain("publicWriteToken");
+		expect(parentRender).not.toContain("publicWriteToken");
+		expect(parentRender).toContain("state.bootstrapReady || state.canWrite");
 		expect(parentRender).toContain("$allowed_inner_html = wp_kses_allowed_html( 'post' );");
 		expect(parentRender).toContain("$allowed_attributes['data-wp-interactive'] = true;");
 		expect(parentRender).toContain("wp_kses( $content, $allowed_inner_html )");

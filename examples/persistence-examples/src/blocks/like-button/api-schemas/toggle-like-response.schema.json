@@ -16,6 +16,9 @@
 			"x-typeTag": "uint32",
 			"minimum": 0
 		},
+		"likedByCurrentUser": {
+			"type": "boolean"
+		},
 		"storage": {
 			"enum": [
 				"custom-table"
@@ -27,8 +30,9 @@
 		"postId",
 		"resourceKey",
 		"count",
+		"likedByCurrentUser",
 		"storage"
 	],
-	"title": "PersistenceLikeStatusResponse",
+	"title": "PersistenceToggleLikeResponse",
 	"type": "object"
 }

@@ -112,7 +112,7 @@ export default function Edit( {
 						{ persistencePolicyDescription }
 					</Notice>
 					<Notice status="info" isDismissible={ false }>
-						{ __( 'Render mode: dynamic. `render.php` bootstraps post context, storage-backed state, and write-policy data before hydration.', '{{textDomain}}' ) }
+						{ __( 'Render mode: dynamic. `render.php` bootstraps durable post context, while fresh session-only write data is loaded from the dedicated `/bootstrap` endpoint after hydration.', '{{textDomain}}' ) }
 					</Notice>
 				</InspectorFromManifest>
 				{ ! isValid && (

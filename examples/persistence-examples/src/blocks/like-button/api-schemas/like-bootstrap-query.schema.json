@@ -10,25 +10,12 @@
 			"type": "string",
 			"minLength": 1,
 			"maxLength": 100
-		},
-		"count": {
-			"type": "number",
-			"x-typeTag": "uint32",
-			"minimum": 0
-		},
-		"storage": {
-			"enum": [
-				"custom-table"
-			],
-			"type": "string"
 		}
 	},
 	"required": [
 		"postId",
-		"resourceKey",
-		"count",
-		"storage"
+		"resourceKey"
 	],
-	"title": "PersistenceLikeStatusResponse",
+	"title": "PersistenceLikeBootstrapQuery",
 	"type": "object"
 }

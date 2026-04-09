@@ -97,7 +97,7 @@ export function getTemplateSourceOfTruthNote(
 	}
 
 	if (templateId === "persistence") {
-		return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include a starter `typia.manifest.json` so editor imports resolve before the first sync. `src/api-types.ts` remains the source of truth for `src/api-schemas/*` when you run `sync-rest`, while `src/transport.ts` is the first-class transport seam for editor and frontend requests. This scaffold is intentionally server-rendered: `src/render.php` is the canonical frontend entry, and `src/save.tsx` returns `null` so PHP can inject post context, storage-backed state, and write-policy bootstrap data before hydration.";
+		return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include a starter `typia.manifest.json` so editor imports resolve before the first sync. `src/api-types.ts` remains the source of truth for `src/api-schemas/*` when you run `sync-rest`, while `src/transport.ts` is the first-class transport seam for editor and frontend requests. This scaffold is intentionally server-rendered: `src/render.php` is the canonical frontend entry, `src/save.tsx` returns `null`, and session-only write data now refreshes through the dedicated `/bootstrap` endpoint after hydration instead of being frozen into markup.";
 	}
 
 	return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include a starter `typia.manifest.json` so editor imports resolve before the first sync. The basic scaffold stays static by design: `src/render.php` is only an opt-in server placeholder, `src/save.tsx` remains the canonical frontend output, and the generated webpack config keeps the current `@wordpress/scripts` CommonJS baseline unless you intentionally add `render` to `block.json`.";
@@ -169,13 +169,14 @@ export function getPhpRestExtensionPointsSection(
 			mainPhpPath: `${slug}.php`,
 			mainPhpScope: "change storage helpers, route handlers, response shaping, or route registration",
 			transportPath: "src/transport.ts",
+			extraNote: "Keep durable state on the `/state` endpoints and treat the dedicated `/bootstrap` endpoint as the place to return fresh session-only write access data such as nonces or public write tokens.",
 		});
 	}
 
 	if (templateId === "compound" && compoundPersistenceEnabled) {
 		return formatPhpRestExtensionPointsSection({
 			apiTypesPath: `src/blocks/${slug}/api-types.ts`,
-			extraNote: "The hidden child block does not own REST routes or storage.",
+			extraNote: "The hidden child block does not own REST routes or storage. Keep durable parent-block state on the `/state` endpoints and return fresh session-only write access data from the dedicated `/bootstrap` endpoint.",
 			mainPhpPath: `${slug}.php`,
 			mainPhpScope:
 				"change parent-block storage helpers, route handlers, response shaping, or route registration",

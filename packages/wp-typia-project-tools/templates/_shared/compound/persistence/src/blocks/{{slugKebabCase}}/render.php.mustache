@@ -32,10 +32,9 @@ $post_id           = is_object( $block ) && isset( $block->context['postId'] )
 	: (int) get_queried_object_id();
 $storage_mode      = '{{dataStorageMode}}';
 $persistence_policy = '{{persistencePolicy}}';
-$can_write         = false;
 $notice_message    = 'authenticated' === $persistence_policy
 	? __( 'Sign in to persist this counter.', '{{textDomain}}' )
-	: __( 'Reload the page to refresh this write token.', '{{textDomain}}' );
+	: __( 'Public writes are temporarily unavailable.', '{{textDomain}}' );
 
 if ( empty( $validation['valid'] ) || '' === $resource_key ) {
 	return '';
@@ -43,38 +42,12 @@ if ( empty( $validation['valid'] ) || '' === $resource_key ) {
 
 $context = array(
 	'buttonLabel'       => $button_label,
-	'canWrite'          => false,
-	'count'             => 0,
 	'persistencePolicy' => $persistence_policy,
 	'postId'            => (int) $post_id,
 	'resourceKey'       => $resource_key,
 	'showCount'         => $show_count,
 	'storage'           => $storage_mode,
 );
-
-if ( 'authenticated' === $persistence_policy ) {
-	$can_write = $post_id > 0 && is_user_logged_in();
-	if ( $can_write ) {
-		$context['restNonce'] = wp_create_nonce( 'wp_rest' );
-	}
-} elseif ( $post_id > 0 && function_exists( '{{phpPrefix}}_create_public_write_token' ) ) {
-	$public_write = {{phpPrefix}}_create_public_write_token( (int) $post_id, $resource_key );
-	if ( is_array( $public_write ) ) {
-		$token      = isset( $public_write['token'] ) ? (string) $public_write['token'] : '';
-		$expires_at = isset( $public_write['expiresAt'] ) ? (int) $public_write['expiresAt'] : 0;
-
-		if ( '' !== $token ) {
-			$context['publicWriteToken'] = $token;
-			$can_write                   = true;
-		}
-
-		if ( $expires_at > 0 ) {
-			$context['publicWriteExpiresAt'] = $expires_at;
-		}
-	}
-}
-
-$context['canWrite'] = $can_write;
 
 $allowed_inner_html = wp_kses_allowed_html( 'post' );
 
@@ -119,11 +92,13 @@ $wrapper_attributes = get_block_wrapper_attributes(
 	<?php if ( '' !== $intro ) : ?>
 		<p class="{{cssClassName}}__intro"><?php echo esc_html( $intro ); ?></p>
 	<?php endif; ?>
-	<?php if ( ! $can_write ) : ?>
-		<p class="{{cssClassName}}__notice">
-			<?php echo esc_html( $notice_message ); ?>
-		</p>
-	<?php endif; ?>
+	<p
+		class="{{cssClassName}}__notice"
+		data-wp-bind--hidden="!state.bootstrapReady || state.canWrite"
+		hidden
+	>
+		<?php echo esc_html( $notice_message ); ?>
+	</p>
 	<p
 		class="{{cssClassName}}__error"
 		role="status"
@@ -144,8 +119,8 @@ $wrapper_attributes = get_block_wrapper_attributes(
 			>0</span>
 			<button
 				type="button"
-				<?php echo $can_write ? '' : 'disabled'; ?>
-				data-wp-bind--disabled="!context.canWrite"
+				disabled
+				data-wp-bind--disabled="!state.canWrite"
 				data-wp-on--click="actions.increment"
 			>
 				<?php echo esc_html( $button_label ); ?>

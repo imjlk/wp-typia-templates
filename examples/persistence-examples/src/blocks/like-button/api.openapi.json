@@ -22,6 +22,27 @@
 				"title": "PersistenceLikeStatusQuery",
 				"type": "object"
 			},
+			"PersistenceLikeBootstrapQuery": {
+				"$schema": "https://json-schema.org/draft/2020-12/schema",
+				"additionalProperties": false,
+				"properties": {
+					"postId": {
+						"type": "number",
+						"x-typeTag": "uint32"
+					},
+					"resourceKey": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 100
+					}
+				},
+				"required": [
+					"postId",
+					"resourceKey"
+				],
+				"title": "PersistenceLikeBootstrapQuery",
+				"type": "object"
+			},
 			"PersistenceToggleLikeRequest": {
 				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
@@ -43,7 +64,64 @@
 				"title": "PersistenceToggleLikeRequest",
 				"type": "object"
 			},
+			"PersistenceLikeBootstrapResponse": {
+				"$schema": "https://json-schema.org/draft/2020-12/schema",
+				"additionalProperties": false,
+				"properties": {
+					"canWrite": {
+						"type": "boolean"
+					},
+					"likedByCurrentUser": {
+						"type": "boolean"
+					},
+					"restNonce": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 128
+					}
+				},
+				"required": [
+					"canWrite",
+					"likedByCurrentUser"
+				],
+				"title": "PersistenceLikeBootstrapResponse",
+				"type": "object"
+			},
 			"PersistenceLikeStatusResponse": {
+				"$schema": "https://json-schema.org/draft/2020-12/schema",
+				"additionalProperties": false,
+				"properties": {
+					"postId": {
+						"type": "number",
+						"x-typeTag": "uint32"
+					},
+					"resourceKey": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 100
+					},
+					"count": {
+						"type": "number",
+						"x-typeTag": "uint32",
+						"minimum": 0
+					},
+					"storage": {
+						"enum": [
+							"custom-table"
+						],
+						"type": "string"
+					}
+				},
+				"required": [
+					"postId",
+					"resourceKey",
+					"count",
+					"storage"
+				],
+				"title": "PersistenceLikeStatusResponse",
+				"type": "object"
+			},
+			"PersistenceToggleLikeResponse": {
 				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
@@ -78,7 +156,7 @@
 					"likedByCurrentUser",
 					"storage"
 				],
-				"title": "PersistenceLikeStatusResponse",
+				"title": "PersistenceToggleLikeResponse",
 				"type": "object"
 			}
 		},
@@ -147,7 +225,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/PersistenceLikeStatusResponse"
+									"$ref": "#/components/schemas/PersistenceToggleLikeResponse"
 								}
 							}
 						},
@@ -173,6 +251,50 @@
 				"security": [
 					{
 						"wpRestNonce": []
+					}
+				]
+			}
+		},
+		"/persistence-examples/v1/likes/bootstrap": {
+			"get": {
+				"operationId": "getPersistenceLikeBootstrap",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PersistenceLikeBootstrapResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					}
+				},
+				"tags": [
+					"Like Button"
+				],
+				"x-typia-authIntent": "public",
+				"x-wp-typia-authPolicy": "public-read",
+				"summary": "Read fresh viewer-aware like bootstrap state.",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "postId",
+						"required": true,
+						"schema": {
+							"type": "number",
+							"x-typeTag": "uint32"
+						}
+					},
+					{
+						"in": "query",
+						"name": "resourceKey",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 100
+						}
 					}
 				]
 			}

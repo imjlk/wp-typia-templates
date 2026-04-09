@@ -123,27 +123,27 @@ export interface MyCounterAttributes {
 // Context passed from server to client
 export interface MyCounterContext {
   buttonLabel: string;
-  canWrite: boolean;
-  count: number;
   persistencePolicy: 'authenticated' | 'public';
   postId: number;
-  publicWriteExpiresAt?: number;
-  publicWriteToken?: string;
   resourceKey: string;
-  restNonce?: string;
   storage: 'post-meta' | 'custom-table';
   isVisible: boolean;
 }
 
 // Client-side state
 export interface MyCounterState {
+  bootstrapReady: boolean;
   canWrite: boolean;
   count: number;
   error?: string;
+  isBootstrapping: boolean;
   isHydrated: boolean;
   isLoading: boolean;
   isSaving: boolean;
   isVisible: boolean;
+  publicWriteExpiresAt?: number;
+  publicWriteToken?: string;
+  restNonce?: string;
 }
 ```
 
@@ -159,12 +159,24 @@ export interface MyCounterStateQuery {
   resourceKey: string & tags.MinLength<1> & tags.MaxLength<100>;
 }
 
+export interface MyCounterBootstrapQuery {
+  postId: number & tags.Type<'uint32'>;
+  resourceKey: string & tags.MinLength<1> & tags.MaxLength<100>;
+}
+
 export interface MyCounterWriteStateRequest {
   postId: number & tags.Type<'uint32'>;
   publicWriteRequestId: string & tags.MinLength<1> & tags.MaxLength<128>;
   publicWriteToken?: string & tags.MinLength<1> & tags.MaxLength<512>;
   resourceKey: string & tags.MinLength<1> & tags.MaxLength<100>;
   delta?: number & tags.Minimum<1> & tags.Type<'uint32'> & tags.Default<1>;
+}
+
+export interface MyCounterBootstrapResponse {
+  canWrite: boolean;
+  publicWriteExpiresAt?: number & tags.Type<'uint32'>;
+  publicWriteToken?: string & tags.MinLength<1> & tags.MaxLength<512>;
+  restNonce?: string & tags.MinLength<1> & tags.MaxLength<128>;
 }
 
 export interface MyCounterStateResponse {
@@ -223,6 +235,12 @@ To route the hydrated frontend through a contract-compatible proxy or adapter, e
 
 For hybrid setups, the scaffold exposes separate `editor` and `frontend` targets so the editor can keep direct WordPress REST while the frontend points somewhere else.
 
+The generated REST surface is now intentionally split:
+
+- `GET /<namespace>/v1/<slug>/state` returns durable persisted state
+- `POST /<namespace>/v1/<slug>/state` writes durable persisted state
+- `GET /<namespace>/v1/<slug>/bootstrap` returns fresh session-only write data such as `restNonce`, `publicWriteToken`, and `publicWriteExpiresAt`
+
 ## Step 6: Implement Frontend Interactivity
 
 The `src/interactivity.ts` file uses the WordPress Interactivity API:
@@ -230,118 +248,103 @@ The `src/interactivity.ts` file uses the WordPress Interactivity API:
 ```typescript
 import { getContext, store } from '@wordpress/interactivity';
 import { generatePublicWriteRequestId } from '@wp-typia/block-runtime/identifiers';
-import { fetchState, writeState } from './api';
+import { fetchBootstrap, fetchState, writeState } from './api';
 import type { MyCounterContext, MyCounterState } from './types';
 
-function hasExpiredPublicWriteToken(context: MyCounterContext): boolean {
-  return (
-    context.persistencePolicy === 'public' &&
-    typeof context.publicWriteExpiresAt === 'number' &&
-    context.publicWriteExpiresAt > 0 &&
-    Date.now() >= context.publicWriteExpiresAt * 1000
-  );
-}
-
-function getWriteBlockedMessage(context: MyCounterContext): string {
-  return context.persistencePolicy === 'authenticated'
-    ? 'Sign in to persist this counter.'
-    : 'Reload the page to refresh this write token.';
+function hasExpiredPublicWriteToken(expiresAt?: number): boolean {
+  return typeof expiresAt === 'number' && expiresAt > 0 && Date.now() >= expiresAt * 1000;
 }
 
 const { actions, state } = store('my-counter', {
   state: {
+    bootstrapReady: false,
     canWrite: false,
     count: 0,
     error: undefined,
+    isBootstrapping: false,
     isHydrated: false,
     isLoading: false,
     isSaving: false,
     isVisible: true,
+    publicWriteExpiresAt: undefined,
+    publicWriteToken: undefined,
+    restNonce: undefined,
   } as MyCounterState,
 
   actions: {
-    async loadCounter() {
+    async loadState() {
       const context = getContext<MyCounterContext>();
-      if (context.postId <= 0 || !context.resourceKey) {
+      const result = await fetchState(
+        { postId: context.postId, resourceKey: context.resourceKey },
+        { transportTarget: 'frontend' }
+      );
+      if (result.isValid && result.data) {
+        state.count = result.data.count;
+      }
+    },
+
+    async loadBootstrap() {
+      const context = getContext<MyCounterContext>();
+      const result = await fetchBootstrap(
+        { postId: context.postId, resourceKey: context.resourceKey },
+        { transportTarget: 'frontend' }
+      );
+
+      state.bootstrapReady = true;
+      if (!result.isValid || !result.data) {
+        state.canWrite = false;
         return;
       }
 
-      state.isLoading = true;
-      state.error = undefined;
-
-      try {
-        const result = await fetchState({
-          postId: context.postId,
-          resourceKey: context.resourceKey,
-        });
-
-        if (!result.isValid || !result.data) {
-          state.error = result.errors[0]?.expected ?? 'Unable to load counter';
-          return;
-        }
-
-        context.count = result.data.count;
-        context.storage = result.data.storage;
-        state.count = result.data.count;
-      } catch (error) {
-        state.error = error instanceof Error ? error.message : 'Unknown error';
-      } finally {
-        state.isLoading = false;
-      }
+      state.publicWriteExpiresAt = result.data.publicWriteExpiresAt;
+      state.publicWriteToken = result.data.publicWriteToken;
+      state.restNonce = result.data.restNonce;
+      state.canWrite =
+        result.data.canWrite === true &&
+        !hasExpiredPublicWriteToken(result.data.publicWriteExpiresAt);
     },
 
     async increment() {
       const context = getContext<MyCounterContext>();
-      if (context.postId <= 0 || !context.resourceKey) {
-        return;
-      }
-      if (hasExpiredPublicWriteToken(context)) {
-        context.canWrite = false;
-        state.canWrite = false;
-        state.error = getWriteBlockedMessage(context);
-        return;
-      }
-      if (!context.canWrite || !state.canWrite) {
-        state.error = getWriteBlockedMessage(context);
+
+      if (!state.bootstrapReady) {
+        state.error = 'Write access is still initializing.';
         return;
       }
 
-      state.isSaving = true;
-      state.error = undefined;
+      if (hasExpiredPublicWriteToken(state.publicWriteExpiresAt)) {
+        await actions.loadBootstrap();
+      }
 
-      try {
-        const result = await writeState(
-          {
-            delta: 1,
-            postId: context.postId,
-            publicWriteRequestId:
-              context.persistencePolicy === 'public'
-                ? generatePublicWriteRequestId()
-                : undefined,
-            publicWriteToken:
-              context.persistencePolicy === 'public'
-                ? context.publicWriteToken
-                : undefined,
-            resourceKey: context.resourceKey,
-          },
-          {
-            restNonce: context.restNonce,
-            transportTarget: 'frontend',
-          }
-        );
+      if (!state.canWrite) {
+        state.error = context.persistencePolicy === 'authenticated'
+          ? 'Sign in to persist this counter.'
+          : 'Public writes are temporarily unavailable.';
+        return;
+      }
 
-        if (!result.isValid || !result.data) {
-          state.error = result.errors[0]?.expected ?? 'Unable to update counter';
-          return;
+      const result = await writeState(
+        {
+          delta: 1,
+          postId: context.postId,
+          publicWriteRequestId:
+            context.persistencePolicy === 'public'
+              ? generatePublicWriteRequestId()
+              : undefined,
+          publicWriteToken:
+            context.persistencePolicy === 'public'
+              ? state.publicWriteToken
+              : undefined,
+          resourceKey: context.resourceKey,
+        },
+        {
+          restNonce: state.restNonce,
+          transportTarget: 'frontend',
         }
+      );
 
-        context.count = result.data.count;
-        context.storage = result.data.storage;
+      if (result.isValid && result.data) {
         state.count = result.data.count;
-      } catch (error) {
-        state.error = error instanceof Error ? error.message : 'Unknown error';
-      } finally {
-        state.isSaving = false;
       }
     },
   },
@@ -349,17 +352,11 @@ const { actions, state } = store('my-counter', {
   callbacks: {
     init() {
       const context = getContext<MyCounterContext>();
-      context.canWrite = context.canWrite && !hasExpiredPublicWriteToken(context);
-      state.canWrite = context.canWrite;
       state.isVisible = context.isVisible;
-      state.count = context.count;
     },
     mounted() {
       state.isHydrated = true;
-      if (typeof document !== 'undefined') {
-        document.documentElement.dataset.myCounterHydrated = 'true';
-      }
-      void actions.loadCounter();
+      void Promise.allSettled([actions.loadState(), actions.loadBootstrap()]);
     },
   },
 });
@@ -367,7 +364,7 @@ const { actions, state } = store('my-counter', {
 
 ## Step 7: Server-Side Render
 
-The `render.php` file provides the initial SSR output with context:
+The `render.php` file now keeps only durable block identity in the frozen HTML context. Session-only write access data moves to `/bootstrap`:
 
 ```php
 <?php
@@ -383,34 +380,14 @@ $resourceKey = (string) $normalized['resourceKey'];
 $post_id = $block->context['postId'] ?? get_queried_object_id();
 $persistence_policy = 'authenticated'; // scaffold replaces this with the selected policy
 $storage_mode = 'custom-table'; // scaffold replaces this with the selected storage mode
-$can_write = false;
-
 $context = [
     'buttonLabel' => (string) $normalized['buttonLabel'],
-    'canWrite' => false,
-    'count' => 0,
     'isVisible' => ! empty($normalized['isVisible']),
     'persistencePolicy' => $persistence_policy,
     'postId' => (int) $post_id,
     'resourceKey' => $resourceKey,
     'storage' => $storage_mode,
 ];
-
-if ('authenticated' === $persistence_policy) {
-    $can_write = $post_id > 0 && is_user_logged_in();
-    if ($can_write) {
-        $context['restNonce'] = wp_create_nonce('wp_rest');
-    }
-} elseif ($post_id > 0 && function_exists('my_counter_create_public_write_token')) {
-    $public_write = my_counter_create_public_write_token((int) $post_id, $resourceKey);
-    if (is_array($public_write) && ! empty($public_write['token'])) {
-        $context['publicWriteToken'] = (string) $public_write['token'];
-        $context['publicWriteExpiresAt'] = (int) ($public_write['expiresAt'] ?? 0);
-        $can_write = true;
-    }
-}
-
-$context['canWrite'] = $can_write;
 
 $wrapper_attributes = get_block_wrapper_attributes([
     'data-wp-context' => wp_json_encode($context),
@@ -424,8 +401,8 @@ $wrapper_attributes = get_block_wrapper_attributes([
     <span data-wp-text="state.count">0</span>
     <button
         type="button"
-        <?php echo $can_write ? '' : 'disabled'; ?>
-        data-wp-bind--disabled="!context.canWrite"
+        disabled
+        data-wp-bind--disabled="!state.canWrite"
         data-wp-on--click="actions.increment"
     >
         <?php echo esc_html($normalized['buttonLabel']); ?>
@@ -494,7 +471,7 @@ curl -X POST \
   "http://localhost:8888/wp-json/my-counter/v1/my-counter/state"
 ```
 
-If you scaffold with `--persistence-policy public`, send the `publicWriteToken` that the block render embeds in its frontend context plus a fresh `publicWriteRequestId` for each write attempt instead of a REST nonce.
+If you scaffold with `--persistence-policy public`, call the dedicated `/bootstrap` endpoint first to fetch a fresh `publicWriteToken`, then send that token plus a fresh `publicWriteRequestId` for each write attempt instead of a REST nonce.
 
 Scaffolded validators and interactivity modules now use
 `@wp-typia/block-runtime/identifiers` as the shared source of truth for
@@ -529,9 +506,10 @@ Data stored in a dedicated table:
 
 - Anonymous writes allowed
 - Uses signed short-lived tokens
+- Refreshes write access through the dedicated `/bootstrap` endpoint instead of freezing tokens into cached HTML
 - Requires a fresh request id per write attempt
 - Applies coarse rate limiting before the write handler runs
-- Token embedded in render output, validated on write
+- Token validated on write
 
 For experiments, impressions, or other high-value metrics, treat those defaults as a starting point and add application-specific abuse controls.
 

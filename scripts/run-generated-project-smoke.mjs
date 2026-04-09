@@ -518,6 +518,8 @@ function assertPersistenceTemplateArtifacts(projectDir, projectName) {
 	];
 
 	for (const artifact of [
+		path.join("api-schemas", "bootstrap-query.schema.json"),
+		path.join("api-schemas", "bootstrap-response.schema.json"),
 		"typia.schema.json",
 		"typia.openapi.json",
 		path.join("api-schemas", "state-query.schema.json"),
@@ -551,16 +553,25 @@ function assertPersistenceRestOpenApi(projectDir, projectName, namespace, persis
 
 	const openApi = readJsonFile(candidatePath);
 	const routePath = `/${namespace}/v1/${projectName}/state`;
+	const bootstrapPath = `/${namespace}/v1/${projectName}/bootstrap`;
 	const pathItem = openApi.paths?.[routePath];
+	const bootstrapPathItem = openApi.paths?.[bootstrapPath];
 	const getOperation = pathItem?.get;
 	const postOperation = pathItem?.post;
+	const bootstrapOperation = bootstrapPathItem?.get;
 
 	if (!getOperation || !postOperation) {
 		throw new Error(`Expected GET and POST operations for ${routePath} in ${candidatePath}`);
 	}
+	if (!bootstrapOperation) {
+		throw new Error(`Expected GET operation for ${bootstrapPath} in ${candidatePath}`);
+	}
 
 	if (getOperation["x-wp-typia-authPolicy"] !== "public-read") {
 		throw new Error(`Expected public-read auth policy on ${routePath} GET`);
+	}
+	if (bootstrapOperation["x-wp-typia-authPolicy"] !== "public-read") {
+		throw new Error(`Expected public-read auth policy on ${bootstrapPath} GET`);
 	}
 
 	if (persistencePolicy === "public") {
@@ -598,6 +609,8 @@ function assertCompoundPersistenceArtifacts(projectDir, projectName) {
 	const parentDir = path.join(projectDir, "build", "blocks", projectName);
 
 	for (const artifact of [
+		path.join("api-schemas", "bootstrap-query.schema.json"),
+		path.join("api-schemas", "bootstrap-response.schema.json"),
 		"typia.schema.json",
 		"typia.openapi.json",
 		path.join("api-schemas", "state-query.schema.json"),
@@ -620,16 +633,25 @@ function assertCompoundRestOpenApi(projectDir, projectName, namespace, persisten
 
 	const openApi = readJsonFile(openApiPath);
 	const routePath = `/${namespace}/v1/${projectName}/state`;
+	const bootstrapPath = `/${namespace}/v1/${projectName}/bootstrap`;
 	const pathItem = openApi.paths?.[routePath];
+	const bootstrapPathItem = openApi.paths?.[bootstrapPath];
 	const getOperation = pathItem?.get;
 	const postOperation = pathItem?.post;
+	const bootstrapOperation = bootstrapPathItem?.get;
 
 	if (!getOperation || !postOperation) {
 		throw new Error(`Expected GET and POST operations for ${routePath} in ${openApiPath}`);
 	}
+	if (!bootstrapOperation) {
+		throw new Error(`Expected GET operation for ${bootstrapPath} in ${openApiPath}`);
+	}
 
 	if (getOperation["x-wp-typia-authPolicy"] !== "public-read") {
 		throw new Error(`Expected public-read auth policy on ${routePath} GET`);
+	}
+	if (bootstrapOperation["x-wp-typia-authPolicy"] !== "public-read") {
+		throw new Error(`Expected public-read auth policy on ${bootstrapPath} GET`);
 	}
 
 	if (persistencePolicy === "public") {

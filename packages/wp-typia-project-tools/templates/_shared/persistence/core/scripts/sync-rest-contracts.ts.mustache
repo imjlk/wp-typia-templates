@@ -28,8 +28,14 @@ const REST_ENDPOINT_MANIFEST = defineEndpointManifest( {
 		'state-query': {
 			sourceTypeName: '{{pascalCase}}StateQuery',
 		},
+		'bootstrap-query': {
+			sourceTypeName: '{{pascalCase}}BootstrapQuery',
+		},
 		'write-state-request': {
 			sourceTypeName: '{{pascalCase}}WriteStateRequest',
+		},
+		'bootstrap-response': {
+			sourceTypeName: '{{pascalCase}}BootstrapResponse',
 		},
 		'state-response': {
 			sourceTypeName: '{{pascalCase}}StateResponse',
@@ -58,6 +64,16 @@ const REST_ENDPOINT_MANIFEST = defineEndpointManifest( {
 			wordpressAuth: {
 				mechanism: '{{restWriteAuthMechanism}}',
 			},
+		},
+		{
+			auth: 'public',
+			method: 'GET',
+			operationId: 'get{{pascalCase}}Bootstrap',
+			path: '/{{namespace}}/v1/{{slugKebabCase}}/bootstrap',
+			queryContract: 'bootstrap-query',
+			responseContract: 'bootstrap-response',
+			summary: 'Read fresh session bootstrap state for the current viewer.',
+			tags: [ '{{title}}' ],
 		},
 	],
 	info: {

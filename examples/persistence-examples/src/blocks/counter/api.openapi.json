@@ -22,6 +22,27 @@
 				"title": "PersistenceCounterQuery",
 				"type": "object"
 			},
+			"PersistenceCounterBootstrapQuery": {
+				"$schema": "https://json-schema.org/draft/2020-12/schema",
+				"additionalProperties": false,
+				"properties": {
+					"postId": {
+						"type": "number",
+						"x-typeTag": "uint32"
+					},
+					"resourceKey": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 100
+					}
+				},
+				"required": [
+					"postId",
+					"resourceKey"
+				],
+				"title": "PersistenceCounterBootstrapQuery",
+				"type": "object"
+			},
 			"PersistenceCounterIncrementRequest": {
 				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
@@ -58,6 +79,29 @@
 					"resourceKey"
 				],
 				"title": "PersistenceCounterIncrementRequest",
+				"type": "object"
+			},
+			"PersistenceCounterBootstrapResponse": {
+				"$schema": "https://json-schema.org/draft/2020-12/schema",
+				"additionalProperties": false,
+				"properties": {
+					"canWrite": {
+						"type": "boolean"
+					},
+					"publicWriteExpiresAt": {
+						"type": "number",
+						"x-typeTag": "uint32"
+					},
+					"publicWriteToken": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 512
+					}
+				},
+				"required": [
+					"canWrite"
+				],
+				"title": "PersistenceCounterBootstrapResponse",
 				"type": "object"
 			},
 			"PersistenceCounterResponse": {
@@ -176,6 +220,50 @@
 					"required": true
 				},
 				"x-wp-typia-publicTokenField": "publicWriteToken"
+			}
+		},
+		"/persistence-examples/v1/counter/bootstrap": {
+			"get": {
+				"operationId": "getPersistenceCounterBootstrap",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PersistenceCounterBootstrapResponse"
+								}
+							}
+						},
+						"description": "Successful response"
+					}
+				},
+				"tags": [
+					"Counter"
+				],
+				"x-typia-authIntent": "public",
+				"x-wp-typia-authPolicy": "public-read",
+				"summary": "Read fresh counter write bootstrap state for the current viewer.",
+				"parameters": [
+					{
+						"in": "query",
+						"name": "postId",
+						"required": true,
+						"schema": {
+							"type": "number",
+							"x-typeTag": "uint32"
+						}
+					},
+					{
+						"in": "query",
+						"name": "resourceKey",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 100
+						}
+					}
+				]
 			}
 		}
 	},

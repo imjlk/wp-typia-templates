@@ -7,11 +7,18 @@ import {
 
 import { resolveRestNonce } from '../../shared/rest';
 import type {
+	PersistenceLikeBootstrapQuery,
+	PersistenceLikeBootstrapResponse,
 	PersistenceLikeStatusQuery,
 	PersistenceLikeStatusResponse,
 	PersistenceToggleLikeRequest,
+	PersistenceToggleLikeResponse,
 } from './api-types';
-import { likeStatusEndpoint, toggleLikeEndpoint } from './api';
+import {
+	likeBootstrapEndpoint,
+	likeStatusEndpoint,
+	toggleLikeEndpoint,
+} from './api';
 
 function buildNonceRequestOptions( restNonce?: string ) {
 	const nonce = resolveRestNonce( restNonce );
@@ -28,6 +35,7 @@ function buildNonceRequestOptions( restNonce?: string ) {
 }
 
 interface ToggleLikeMutationContext< Context > {
+	bootstrapPrevious: PersistenceLikeBootstrapResponse | undefined;
 	previous: PersistenceLikeStatusResponse | undefined;
 	userContext: Context | undefined;
 }
@@ -41,15 +49,24 @@ export interface UsePersistenceLikeStatusQueryOptions<
 			Selected
 		>,
 		'resolveCallOptions'
-	> {
-	restNonce?: string;
-}
+	> {}
+
+export interface UsePersistenceLikeBootstrapQueryOptions<
+	Selected = PersistenceLikeBootstrapResponse,
+> extends Omit<
+		UseEndpointQueryOptions<
+			PersistenceLikeBootstrapQuery,
+			PersistenceLikeBootstrapResponse,
+			Selected
+		>,
+		'resolveCallOptions'
+	> {}
 
 export interface UseToggleLikeMutationOptions< Context = unknown >
 	extends Omit<
 		UseEndpointMutationOptions<
 			PersistenceToggleLikeRequest,
-			PersistenceLikeStatusResponse,
+			PersistenceToggleLikeResponse,
 			ToggleLikeMutationContext< Context >
 		>,
 		'invalidate' | 'onError' | 'onMutate' | 'resolveCallOptions'
@@ -73,11 +90,19 @@ export function usePersistenceLikeStatusQuery<
 	request: PersistenceLikeStatusQuery,
 	options: UsePersistenceLikeStatusQueryOptions< Selected > = {}
 ) {
-	const { restNonce, ...queryOptions } = options;
-
 	return useEndpointQuery( likeStatusEndpoint, request, {
-		...queryOptions,
-		resolveCallOptions: () => buildNonceRequestOptions( restNonce ),
+		...options,
+	} );
+}
+
+export function usePersistenceLikeBootstrapQuery<
+	Selected = PersistenceLikeBootstrapResponse,
+>(
+	request: PersistenceLikeBootstrapQuery,
+	options: UsePersistenceLikeBootstrapQueryOptions< Selected > = {}
+) {
+	return useEndpointQuery( likeBootstrapEndpoint, request, {
+		...options,
 	} );
 }
 
@@ -106,6 +131,16 @@ export function useToggleLikeMutation< Context = unknown >(
 					context.previous
 				);
 			}
+			if ( context?.bootstrapPrevious ) {
+				client.setData(
+					likeBootstrapEndpoint,
+					{
+						postId: request.postId,
+						resourceKey: request.resourceKey,
+					},
+					context.bootstrapPrevious
+				);
+			}
 
 			await onError?.( error, request, client, context?.userContext );
 		},
@@ -115,6 +150,14 @@ export function useToggleLikeMutation< Context = unknown >(
 				resourceKey: request.resourceKey,
 			} satisfies PersistenceLikeStatusQuery;
 			const previous = client.getData( likeStatusEndpoint, queryRequest );
+			const bootstrapRequest = {
+				postId: request.postId,
+				resourceKey: request.resourceKey,
+			} satisfies PersistenceLikeBootstrapQuery;
+			const bootstrapPrevious = client.getData(
+				likeBootstrapEndpoint,
+				bootstrapRequest
+			);
 
 			if ( previous !== undefined ) {
 				client.setData(
@@ -125,7 +168,9 @@ export function useToggleLikeMutation< Context = unknown >(
 							return current;
 						}
 
-						const nextLiked = ! current.likedByCurrentUser;
+						const nextLiked = bootstrapPrevious
+							? ! bootstrapPrevious.likedByCurrentUser
+							: true;
 						return {
 							...current,
 							count: Math.max(
@@ -133,6 +178,22 @@ export function useToggleLikeMutation< Context = unknown >(
 								current.count + ( nextLiked ? 1 : -1 )
 							),
 							likedByCurrentUser: nextLiked,
+						};
+					}
+				);
+			}
+			if ( bootstrapPrevious !== undefined ) {
+				client.setData(
+					likeBootstrapEndpoint,
+					bootstrapRequest,
+					( current ) => {
+						if ( ! current ) {
+							return current;
+						}
+
+						return {
+							...current,
+							likedByCurrentUser: ! current.likedByCurrentUser,
 						};
 					}
 				);
@@ -151,10 +212,18 @@ export function useToggleLikeMutation< Context = unknown >(
 						previous
 					);
 				}
+				if ( bootstrapPrevious !== undefined ) {
+					client.setData(
+						likeBootstrapEndpoint,
+						bootstrapRequest,
+						bootstrapPrevious
+					);
+				}
 				throw error;
 			}
 
 			return {
+				bootstrapPrevious,
 				previous,
 				userContext,
 			};

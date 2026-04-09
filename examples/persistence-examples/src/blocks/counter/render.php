@@ -32,28 +32,12 @@ $button_label = isset( $normalized['buttonLabel'] ) ? (string) $normalized['butt
 $post_id      = is_object( $block ) && isset( $block->context['postId'] )
 	? (int) $block->context['postId']
 	: (int) get_queried_object_id();
-$public_write = $post_id > 0
-	? persistence_examples_create_counter_public_write_token( (int) $post_id, $resource_key )
-	: array(
-		'expiresAt' => 0,
-		'token'     => '',
-	);
 $context      = array(
 	'buttonLabel' => $button_label,
-	'canWrite'    => ! empty( $public_write['token'] ),
-	'count'       => 0,
 	'postId'      => (int) $post_id,
 	'resourceKey' => $resource_key,
 	'storage'     => 'custom-table',
 );
-
-if ( ! empty( $public_write['token'] ) ) {
-	$context['publicWriteToken'] = (string) $public_write['token'];
-}
-
-if ( ! empty( $public_write['expiresAt'] ) ) {
-	$context['publicWriteExpiresAt'] = (int) $public_write['expiresAt'];
-}
 
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
@@ -91,8 +75,8 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		<?php endif; ?>
 		<button
 			type="button"
-			<?php echo ! empty( $context['canWrite'] ) ? '' : 'disabled'; ?>
-			data-wp-bind--disabled="!context.canWrite"
+			disabled
+			data-wp-bind--disabled="!state.canWrite"
 			data-wp-on--click="actions.increment"
 		>
 			<?php echo esc_html( $button_label ); ?>

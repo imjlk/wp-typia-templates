@@ -62,6 +62,28 @@ describe('REST contract adapter PoC', () => {
 					steps: [
 						{
 							assertBody: ( payload ) => {
+								expect(
+									( payload as { canWrite?: unknown } ).canWrite
+								).toBe( true );
+								expect(
+									typeof ( payload as { publicWriteExpiresAt?: unknown } ).publicWriteExpiresAt
+								).toBe( 'number' );
+								expect(
+									( payload as { publicWriteToken?: unknown } ).publicWriteToken
+								).toBe( 'adapter-proof-token' );
+							},
+							description: 'reads the fresh counter bootstrap state',
+							expected: {
+								status: 200,
+							},
+							operationId: 'getPersistenceCounterBootstrap',
+							request: {
+								postId: 7,
+								resourceKey: 'demo',
+							},
+						},
+						{
+							assertBody: ( payload ) => {
 								expect( payload ).toEqual( {
 									count: 0,
 									postId: 7,
@@ -124,6 +146,7 @@ describe('REST contract adapter PoC', () => {
 	test('rejects blank or out-of-contract identifiers instead of coercing them into valid state keys', async () => {
 		await runRestAdapterConformanceSuite( {
 			coveredOperationIds: [
+				'getPersistenceCounterBootstrap',
 				'getPersistenceCounterState',
 				'incrementPersistenceCounterState',
 			],

@@ -1,7 +1,7 @@
 {
 	"components": {
 		"schemas": {
-			"PersistenceLikeStatusResponse": {
+			"PersistenceToggleLikeResponse": {
 				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
@@ -19,6 +19,9 @@
 						"x-typeTag": "uint32",
 						"minimum": 0
 					},
+					"likedByCurrentUser": {
+						"type": "boolean"
+					},
 					"storage": {
 						"enum": [
 							"custom-table"
@@ -30,15 +33,16 @@
 					"postId",
 					"resourceKey",
 					"count",
+					"likedByCurrentUser",
 					"storage"
 				],
-				"title": "PersistenceLikeStatusResponse",
+				"title": "PersistenceToggleLikeResponse",
 				"type": "object"
 			}
 		}
 	},
 	"info": {
-		"title": "PersistenceLikeStatusResponse",
+		"title": "PersistenceToggleLikeResponse",
 		"version": "1.0.0"
 	},
 	"openapi": "3.1.0",

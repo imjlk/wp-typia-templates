@@ -1,7 +1,7 @@
 {
 	"components": {
 		"schemas": {
-			"PersistenceLikeStatusResponse": {
+			"PersistenceLikeBootstrapQuery": {
 				"$schema": "https://json-schema.org/draft/2020-12/schema",
 				"additionalProperties": false,
 				"properties": {
@@ -13,32 +13,19 @@
 						"type": "string",
 						"minLength": 1,
 						"maxLength": 100
-					},
-					"count": {
-						"type": "number",
-						"x-typeTag": "uint32",
-						"minimum": 0
-					},
-					"storage": {
-						"enum": [
-							"custom-table"
-						],
-						"type": "string"
 					}
 				},
 				"required": [
 					"postId",
-					"resourceKey",
-					"count",
-					"storage"
+					"resourceKey"
 				],
-				"title": "PersistenceLikeStatusResponse",
+				"title": "PersistenceLikeBootstrapQuery",
 				"type": "object"
 			}
 		}
 	},
 	"info": {
-		"title": "PersistenceLikeStatusResponse",
+		"title": "PersistenceLikeBootstrapQuery",
 		"version": "1.0.0"
 	},
 	"openapi": "3.1.0",

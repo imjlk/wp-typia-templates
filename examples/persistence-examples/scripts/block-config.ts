@@ -9,8 +9,14 @@ export const BLOCKS = [
 				'counter-query': {
 					sourceTypeName: 'PersistenceCounterQuery',
 				},
+				'counter-bootstrap-query': {
+					sourceTypeName: 'PersistenceCounterBootstrapQuery',
+				},
 				'increment-request': {
 					sourceTypeName: 'PersistenceCounterIncrementRequest',
+				},
+				'counter-bootstrap-response': {
+					sourceTypeName: 'PersistenceCounterBootstrapResponse',
 				},
 				'counter-response': {
 					sourceTypeName: 'PersistenceCounterResponse',
@@ -40,6 +46,16 @@ export const BLOCKS = [
 						mechanism: 'public-signed-token',
 					},
 				},
+				{
+					auth: 'public',
+					method: 'GET',
+					operationId: 'getPersistenceCounterBootstrap',
+					path: '/persistence-examples/v1/counter/bootstrap',
+					queryContract: 'counter-bootstrap-query',
+					responseContract: 'counter-bootstrap-response',
+					summary: 'Read fresh counter write bootstrap state for the current viewer.',
+					tags: [ 'Counter' ],
+				},
 			],
 			info: {
 				title: 'Persistence Counter REST API',
@@ -58,11 +74,20 @@ export const BLOCKS = [
 				'like-status-query': {
 					sourceTypeName: 'PersistenceLikeStatusQuery',
 				},
+				'like-bootstrap-query': {
+					sourceTypeName: 'PersistenceLikeBootstrapQuery',
+				},
 				'toggle-like-request': {
 					sourceTypeName: 'PersistenceToggleLikeRequest',
 				},
+				'like-bootstrap-response': {
+					sourceTypeName: 'PersistenceLikeBootstrapResponse',
+				},
 				'like-status-response': {
 					sourceTypeName: 'PersistenceLikeStatusResponse',
+				},
+				'toggle-like-response': {
+					sourceTypeName: 'PersistenceToggleLikeResponse',
 				},
 			},
 			endpoints: [
@@ -82,12 +107,22 @@ export const BLOCKS = [
 					method: 'POST',
 					operationId: 'togglePersistenceLikeStatus',
 					path: '/persistence-examples/v1/likes',
-					responseContract: 'like-status-response',
+					responseContract: 'toggle-like-response',
 					summary: 'Toggle the current like status.',
 					tags: [ 'Like Button' ],
 					wordpressAuth: {
 						mechanism: 'rest-nonce',
 					},
+				},
+				{
+					auth: 'public',
+					method: 'GET',
+					operationId: 'getPersistenceLikeBootstrap',
+					path: '/persistence-examples/v1/likes/bootstrap',
+					queryContract: 'like-bootstrap-query',
+					responseContract: 'like-bootstrap-response',
+					summary: 'Read fresh viewer-aware like bootstrap state.',
+					tags: [ 'Like Button' ],
 				},
 			],
 			info: {

@@ -13,7 +13,7 @@ This is still an architecture proof, but it is now the reference example for
 the generated `src/transport.ts` seam used by persistence scaffolds.
 
 - It is not a first-class runtime package or a drop-in deployment target for generated scaffolds.
-- It accepts generated persistence scaffold `/state` route aliases so scaffolded `src/transport.ts` files can point only their base URLs at the adapter during transport-seam verification.
+- It accepts generated persistence scaffold `/state` route aliases and serves the dedicated `/bootstrap` route so scaffolded `src/transport.ts` files can point only their base URLs at the adapter during transport-seam verification.
 - It does not attempt WordPress auth parity such as REST nonces or signed token verification.
 - It exists to validate contract portability ahead of follow-up work like `#35`.
 

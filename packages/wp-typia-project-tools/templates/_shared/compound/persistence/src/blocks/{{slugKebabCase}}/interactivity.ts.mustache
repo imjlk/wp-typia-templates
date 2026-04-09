@@ -1,17 +1,16 @@
 import { getContext, store } from '@wordpress/interactivity';
 import { generatePublicWriteRequestId } from '@wp-typia/block-runtime/identifiers';
 
-import { fetchState, writeState } from './api';
+import { fetchBootstrap, fetchState, writeState } from './api';
 import type { {{pascalCase}}Context, {{pascalCase}}State } from './types';
 
 function hasExpiredPublicWriteToken(
-	context: {{pascalCase}}Context
+	expiresAt?: number
 ): boolean {
 	return (
-		context.persistencePolicy === 'public' &&
-		typeof context.publicWriteExpiresAt === 'number' &&
-		context.publicWriteExpiresAt > 0 &&
-		Date.now() >= context.publicWriteExpiresAt * 1000
+		typeof expiresAt === 'number' &&
+		expiresAt > 0 &&
+		Date.now() >= expiresAt * 1000
 	);
 }
 
@@ -20,21 +19,26 @@ function getWriteBlockedMessage(
 ): string {
 	return context.persistencePolicy === 'authenticated'
 		? 'Sign in to persist this counter.'
-		: 'Reload the page to refresh this write token.';
+		: 'Public writes are temporarily unavailable.';
 }
 
 const { actions, state } = store( '{{slugKebabCase}}', {
 	state: {
+		bootstrapReady: false,
 		canWrite: false,
 		count: 0,
 		error: undefined,
+		isBootstrapping: false,
 		isHydrated: false,
 		isLoading: false,
 		isSaving: false,
+		publicWriteExpiresAt: undefined,
+		publicWriteToken: undefined,
+		restNonce: undefined,
 	} as {{pascalCase}}State,
 
 	actions: {
-		async loadCounter() {
+		async loadState() {
 			const context = getContext< {{pascalCase}}Context >();
 			if ( context.postId <= 0 || ! context.resourceKey ) {
 				return;
@@ -48,15 +52,12 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 					postId: context.postId,
 					resourceKey: context.resourceKey,
 				}, {
-					restNonce: context.restNonce,
 					transportTarget: 'frontend',
 				} );
 				if ( ! result.isValid || ! result.data ) {
 					state.error = result.errors[ 0 ]?.expected ?? 'Unable to load counter';
 					return;
 				}
-				context.count = result.data.count;
-				context.storage = result.data.storage;
 				state.count = result.data.count;
 			} catch ( error ) {
 				state.error =
@@ -65,18 +66,98 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 				state.isLoading = false;
 			}
 		},
+		async loadBootstrap() {
+			const context = getContext< {{pascalCase}}Context >();
+			if ( context.postId <= 0 || ! context.resourceKey ) {
+				state.bootstrapReady = true;
+				state.canWrite = false;
+				state.publicWriteExpiresAt = undefined;
+				state.publicWriteToken = undefined;
+				state.restNonce = undefined;
+				return;
+			}
+
+			state.isBootstrapping = true;
+
+			try {
+				const result = await fetchBootstrap( {
+					postId: context.postId,
+					resourceKey: context.resourceKey,
+				}, {
+					transportTarget: 'frontend',
+				} );
+				if ( ! result.isValid || ! result.data ) {
+					state.canWrite = false;
+					state.bootstrapReady = true;
+					state.publicWriteExpiresAt = undefined;
+					state.publicWriteToken = undefined;
+					state.restNonce = undefined;
+					state.error = result.errors[ 0 ]?.expected ?? 'Unable to initialize write access';
+					return;
+				}
+
+				state.publicWriteExpiresAt =
+					typeof result.data.publicWriteExpiresAt === 'number' &&
+					result.data.publicWriteExpiresAt > 0
+						? result.data.publicWriteExpiresAt
+						: undefined;
+				state.publicWriteToken =
+					typeof result.data.publicWriteToken === 'string' &&
+					result.data.publicWriteToken.length > 0
+						? result.data.publicWriteToken
+						: undefined;
+				state.restNonce =
+					typeof result.data.restNonce === 'string' &&
+					result.data.restNonce.length > 0
+						? result.data.restNonce
+						: undefined;
+				state.bootstrapReady = true;
+				state.canWrite =
+					result.data.canWrite === true &&
+					(
+						context.persistencePolicy === 'authenticated'
+							? typeof state.restNonce === 'string' &&
+								state.restNonce.length > 0
+							: typeof state.publicWriteToken === 'string' &&
+								state.publicWriteToken.length > 0 &&
+								! hasExpiredPublicWriteToken( state.publicWriteExpiresAt )
+					);
+			} catch ( error ) {
+				state.bootstrapReady = true;
+				state.canWrite = false;
+				state.publicWriteExpiresAt = undefined;
+				state.publicWriteToken = undefined;
+				state.restNonce = undefined;
+				state.error =
+					error instanceof Error ? error.message : 'Unknown bootstrap error';
+			} finally {
+				state.isBootstrapping = false;
+			}
+		},
 		async increment() {
 			const context = getContext< {{pascalCase}}Context >();
 			if ( context.postId <= 0 || ! context.resourceKey ) {
 				return;
 			}
-			if ( hasExpiredPublicWriteToken( context ) ) {
-				context.canWrite = false;
+			if ( ! state.bootstrapReady ) {
+				state.error = 'Write access is still initializing.';
+				return;
+			}
+			if (
+				context.persistencePolicy === 'public' &&
+				hasExpiredPublicWriteToken( state.publicWriteExpiresAt )
+			) {
+				await actions.loadBootstrap();
+			}
+			if (
+				context.persistencePolicy === 'public' &&
+				hasExpiredPublicWriteToken( state.publicWriteExpiresAt )
+			) {
 				state.canWrite = false;
 				state.error = getWriteBlockedMessage( context );
 				return;
 			}
-			if ( ! context.canWrite || ! state.canWrite ) {
+			if ( ! state.canWrite ) {
 				state.error = getWriteBlockedMessage( context );
 				return;
 			}
@@ -94,13 +175,13 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 							: undefined,
 					publicWriteToken:
 						context.persistencePolicy === 'public' &&
-						typeof context.publicWriteToken === 'string' &&
-						context.publicWriteToken.length > 0
-							? context.publicWriteToken
+						typeof state.publicWriteToken === 'string' &&
+						state.publicWriteToken.length > 0
+							? state.publicWriteToken
 							: undefined,
 					resourceKey: context.resourceKey,
 				}, {
-					restNonce: context.restNonce,
+					restNonce: state.restNonce,
 					transportTarget: 'frontend',
 				} );
 				if ( ! result.isValid || ! result.data ) {
@@ -122,17 +203,22 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 	callbacks: {
 		init() {
 			const context = getContext< {{pascalCase}}Context >();
-			context.canWrite =
-				context.canWrite && ! hasExpiredPublicWriteToken( context );
-			state.canWrite = context.canWrite;
-			state.count = context.count;
+			state.bootstrapReady = false;
+			state.canWrite = false;
+			state.count = 0;
+			state.publicWriteExpiresAt = undefined;
+			state.publicWriteToken = undefined;
+			state.restNonce = undefined;
 		},
 		mounted() {
 			state.isHydrated = true;
 			if ( typeof document !== 'undefined' ) {
 				document.documentElement.dataset[ '{{slugCamelCase}}Hydrated' ] = 'true';
 			}
-			void actions.loadCounter();
+			void Promise.allSettled( [
+				actions.loadState(),
+				actions.loadBootstrap(),
+			] );
 		},
 	},
 } );

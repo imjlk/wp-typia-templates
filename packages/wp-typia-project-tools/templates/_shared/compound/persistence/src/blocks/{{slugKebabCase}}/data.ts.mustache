@@ -6,11 +6,14 @@ import {
 } from '@wp-typia/rest/react';
 
 import type {
+	{{pascalCase}}BootstrapQuery,
+	{{pascalCase}}BootstrapResponse,
 	{{pascalCase}}StateQuery,
 	{{pascalCase}}StateResponse,
 	{{pascalCase}}WriteStateRequest,
 } from './api-types';
 import {
+	bootstrapEndpoint,
 	stateEndpoint,
 	writeStateEndpoint,
 } from './api';
@@ -32,6 +35,20 @@ export interface Use{{pascalCase}}StateQueryOptions<
 	UseEndpointQueryOptions<
 		{{pascalCase}}StateQuery,
 		{{pascalCase}}StateResponse,
+		Selected
+	>,
+	'resolveCallOptions'
+> {
+	restNonce?: string;
+	transportTarget?: PersistenceTransportTarget;
+}
+
+export interface Use{{pascalCase}}BootstrapQueryOptions<
+	Selected = {{pascalCase}}BootstrapResponse,
+> extends Omit<
+	UseEndpointQueryOptions<
+		{{pascalCase}}BootstrapQuery,
+		{{pascalCase}}BootstrapResponse,
 		Selected
 	>,
 	'resolveCallOptions'
@@ -83,6 +100,34 @@ export function use{{pascalCase}}StateQuery<
 				transportTarget,
 				'read',
 				stateEndpoint,
+				request,
+				{
+					restNonce,
+					transportTarget,
+				}
+			),
+	} );
+}
+
+export function use{{pascalCase}}BootstrapQuery<
+	Selected = {{pascalCase}}BootstrapResponse,
+>(
+	request: {{pascalCase}}BootstrapQuery,
+	options: Use{{pascalCase}}BootstrapQueryOptions< Selected > = {}
+) {
+	const {
+		restNonce,
+		transportTarget = 'editor',
+		...queryOptions
+	} = options;
+
+	return useEndpointQuery( bootstrapEndpoint, request, {
+		...queryOptions,
+		resolveCallOptions: () =>
+			resolveTransportCallOptions(
+				transportTarget,
+				'read',
+				bootstrapEndpoint,
 				request,
 				{
 					restNonce,
