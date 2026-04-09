@@ -235,8 +235,16 @@ function {{phpPrefix}}_has_rendered_block_instance( $post_id, $resource_key ) {
 }
 
 function {{phpPrefix}}_build_bootstrap_response( $post_id, $resource_key ) {
+	$post          = get_post( $post_id );
+	$can_read_post =
+		$post instanceof WP_Post &&
+		(
+			is_post_publicly_viewable( $post ) ||
+			current_user_can( 'read_post', $post->ID )
+		);
 	$can_write = $post_id > 0 &&
 		is_user_logged_in() &&
+		$can_read_post &&
 		{{phpPrefix}}_has_rendered_block_instance( (int) $post_id, (string) $resource_key );
 	$response  = array(
 		'canWrite' => $can_write,

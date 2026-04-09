@@ -1597,6 +1597,8 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(pluginBootstrap).toContain(
       "function demo_persistence_authenticated_has_rendered_block_instance"
     );
+    expect(pluginBootstrap).toContain("is_post_publicly_viewable( $post )");
+    expect(pluginBootstrap).toContain("current_user_can( 'read_post', $post->ID )");
     expect(pluginBootstrap).toContain(
       "create-block/demo-persistence-authenticated"
     );
@@ -2843,6 +2845,10 @@ console.log(JSON.stringify({ initial, updated, reread }));
         true
       );
       expect(pluginBootstrap).toContain("can_write_authenticated");
+      expect(pluginBootstrap).toContain("is_post_publicly_viewable( $post )");
+      expect(pluginBootstrap).toContain(
+        "current_user_can( 'read_post', $post->ID )"
+      );
       expect(pluginBootstrap).toContain("Tested up to:      6.9");
       expect(pluginBootstrap).toContain("Domain Path:       /languages");
       expect(pluginBootstrap).toContain("load_plugin_textdomain(");

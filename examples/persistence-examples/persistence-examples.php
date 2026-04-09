@@ -850,12 +850,19 @@ function persistence_examples_build_like_response( $post_id, $resource_key, $use
 }
 
 function persistence_examples_build_like_bootstrap_response( $post_id, $resource_key, $user_id ) {
-	$has_instance = persistence_examples_has_rendered_block_instance(
+	$post          = get_post( $post_id );
+	$can_read_post =
+		$post instanceof WP_Post &&
+		(
+			is_post_publicly_viewable( $post ) ||
+			current_user_can( 'read_post', $post->ID )
+		);
+	$has_instance = $can_read_post && persistence_examples_has_rendered_block_instance(
 		(int) $post_id,
 		'create-block/persistence-like-button',
 		(string) $resource_key
 	);
-	$can_write = $post_id > 0 && $user_id > 0 && $has_instance;
+	$can_write = $post_id > 0 && $user_id > 0 && $can_read_post && $has_instance;
 	$response  = array(
 		'canWrite'           => $can_write,
 		'likedByCurrentUser' => $has_instance && persistence_examples_has_like( $post_id, $resource_key, $user_id ),
