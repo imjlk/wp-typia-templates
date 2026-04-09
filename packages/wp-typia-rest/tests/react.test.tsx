@@ -499,14 +499,17 @@ describe("@wp-typia/rest/react", () => {
 			client,
 		);
 
+		await waitForAssertion(() => {
+			expect(fetchCount).toBe(1);
+		});
+
 		client.invalidate(endpoint, request);
 		resolveFirstFetch({ count: 1 });
 
-		await flush();
-		await flush();
-
-		expect(fetchCount).toBe(2);
-		expect(rendered.current.data).toEqual({ count: 2 });
+		await waitForAssertion(() => {
+			expect(fetchCount).toBe(2);
+			expect(rendered.current.data).toEqual({ count: 2 });
+		});
 
 		await rendered.unmount();
 	});
