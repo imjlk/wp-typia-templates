@@ -413,6 +413,8 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(generatedSave).not.toContain("return null;");
 		expect(generatedRenderPlaceholder).toContain("Optional server render placeholder");
 		expect(generatedRenderPlaceholder).toContain("Server render placeholder.");
+		expect(generatedEdit).toContain("className: `wp-block-demo-space-demo-npm${isVisible ? '' : ' is-hidden'}`");
+		expect(generatedSave).toContain("className: `wp-block-demo-space-demo-npm${isVisible ? '' : ' is-hidden'}`");
 		expect(generatedEdit).toContain('className="wp-block-demo-space-demo-npm__content"');
 		expect(generatedSave).toContain('className="wp-block-demo-space-demo-npm__content"');
 		expect(generatedEditorStyle).toContain(".wp-block-demo-space-demo-npm");
@@ -2077,6 +2079,8 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(blockJson.name).toBe("demo-default-class/demo-default-class");
 		expect(generatedStyle).toContain(".wp-block-demo-default-class");
 		expect(generatedStyle).not.toContain(".wp-block-demo-default-class-demo-default-class");
+		expect(generatedEdit).toContain("className: `wp-block-demo-default-class${isVisible ? '' : ' is-hidden'}`");
+		expect(generatedSave).toContain("className: `wp-block-demo-default-class${isVisible ? '' : ' is-hidden'}`");
 		expect(generatedEdit).toContain(
 			'className="wp-block-demo-default-class__content"',
 		);
