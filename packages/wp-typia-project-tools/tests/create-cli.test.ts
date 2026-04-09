@@ -1318,6 +1318,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
         "array_key_exists( 'resourceKey', $attributes )"
       );
       expect(pluginBootstrap).toContain("is_post_publicly_viewable( $post )");
+      expect(pluginBootstrap).toContain("! is_post_publicly_viewable( $post ) ||");
       expect(pluginBootstrap).toContain(": 'primary';");
       expect(restPublicHelper).toContain(
         "function demo_persistence_public_verify_public_write_token"
@@ -3261,6 +3262,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(pluginBootstrap).toContain(
       "if ( '' !== $token && $expires_at > 0 && ! $is_expired ) {"
     );
+    expect(pluginBootstrap).toContain("! is_post_publicly_viewable( $post ) ||");
     expect(restPublicHelper).toContain(
       "function demo_compound_public_verify_public_write_token"
     );

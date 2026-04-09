@@ -242,9 +242,12 @@ function {{phpPrefix}}_build_bootstrap_response( $post_id, $resource_key ) {
 	$response = array(
 		'canWrite' => false,
 	);
+	$post = get_post( $post_id );
 
 	if (
 		$post_id <= 0 ||
+		! ( $post instanceof WP_Post ) ||
+		! is_post_publicly_viewable( $post ) ||
 		! function_exists( '{{phpPrefix}}_create_public_write_token' ) ||
 		! {{phpPrefix}}_has_rendered_block_instance( (int) $post_id, (string) $resource_key )
 	) {
