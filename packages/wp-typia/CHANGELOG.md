@@ -1,5 +1,15 @@
 # wp-typia
 
+## 0.14.0 — 2026-04-09
+
+### Minor changes
+
+- [6c0af4a](https://github.com/imjlk/wp-typia/commit/6c0af4af622d18435ef4a03d3a1c4928d6c55db6) Add a generated `src/transport.ts` seam for persistence scaffolds so editor and frontend runtime calls can be redirected to contract-compatible proxies or BFFs without rewriting generated API glue. — Thanks @imjlk!
+
+### Patch changes
+
+- Updated dependencies: project-tools (npm)@0.14.0
+
 ## 0.13.4 — 2026-04-09
 
 ### Patch changes
