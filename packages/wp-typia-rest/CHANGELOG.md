@@ -1,5 +1,11 @@
 # @wp-typia/rest
 
+## 0.3.2 — 2026-04-09
+
+### Patch changes
+
+- [66b9ccc](https://github.com/imjlk/wp-typia/commit/66b9cccd918a50326adcf0b1f7eb693e0144e2ad) Fix the published `@wp-typia/rest` manifest so workspace protocol dependencies are rewritten to npm-safe version ranges during pack/publish, and add CI validation for tarball-based install smoke coverage. — Thanks @imjlk!
+
 ## 0.3.1 — 2026-04-07
 
 ### Patch changes
