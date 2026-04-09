@@ -71,7 +71,7 @@ ___
 
 ### ValidationResult
 
-Re-exports [ValidationResult](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)
+Re-exports [ValidationResult](packages_wp_typia_block_runtime_src_validation.md#validationresult)
 
 ## Functions
 
@@ -112,7 +112,7 @@ ___
 | :------ | :------ |
 | `attributes` | `T` |
 | `setAttributes` | (`attrs`: `Partial`\<`T`\>) => `void` |
-| `validate?` | (`value`: `T`) => [`ValidationResult`](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)\<`T`\> |
+| `validate?` | (`value`: `T`) => [`ValidationResult`](packages_wp_typia_block_runtime_src_validation.md#validationresult)\<`T`\> |
 
 #### Returns
 

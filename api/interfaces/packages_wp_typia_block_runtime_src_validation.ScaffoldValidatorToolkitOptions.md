@@ -46,7 +46,7 @@
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/validation.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L27)
+[packages/wp-typia-block-runtime/src/validation.ts:25](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L25)
 
 ___
 
@@ -70,7 +70,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/validation.ts:28](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L28)
+[packages/wp-typia-block-runtime/src/validation.ts:26](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L26)
 
 ___
 
@@ -94,7 +94,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/validation.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L29)
+[packages/wp-typia-block-runtime/src/validation.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L27)
 
 ___
 
@@ -118,7 +118,7 @@ value is T
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/validation.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L30)
+[packages/wp-typia-block-runtime/src/validation.ts:28](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L28)
 
 ___
 
@@ -128,13 +128,13 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/validation.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L31)
+[packages/wp-typia-block-runtime/src/validation.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L29)
 
 ___
 
 ### onValidationError
 
-• `Optional` **onValidationError**: (`result`: [`ValidationResult`](packages_wp_typia_block_runtime_src_validation.ValidationResult.md)\<`T`\>, `key`: keyof `T`) => `void`
+• `Optional` **onValidationError**: (`result`: [`ValidationResult`](../modules/packages_wp_typia_block_runtime_src_validation.md#validationresult)\<`T`\>, `key`: keyof `T`) => `void`
 
 #### Type declaration
 
@@ -144,7 +144,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `result` | [`ValidationResult`](packages_wp_typia_block_runtime_src_validation.ValidationResult.md)\<`T`\> |
+| `result` | [`ValidationResult`](../modules/packages_wp_typia_block_runtime_src_validation.md#validationresult)\<`T`\> |
 | `key` | keyof `T` |
 
 ##### Returns
@@ -153,7 +153,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/validation.ts:32](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L32)
+[packages/wp-typia-block-runtime/src/validation.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L30)
 
 ___
 
@@ -177,7 +177,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/validation.ts:33](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L33)
+[packages/wp-typia-block-runtime/src/validation.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L31)
 
 ___
 
@@ -201,7 +201,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/validation.ts:34](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L34)
+[packages/wp-typia-block-runtime/src/validation.ts:32](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L32)
 
 ___
 
@@ -225,4 +225,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/validation.ts:35](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L35)
+[packages/wp-typia-block-runtime/src/validation.ts:33](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L33)

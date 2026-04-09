@@ -20,7 +20,7 @@
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/object-utils.ts:1](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/object-utils.ts#L1)
+[packages/wp-typia-block-runtime/src/object-utils.ts:3](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/object-utils.ts#L3)
 
 ## Functions
 
@@ -40,4 +40,4 @@ value is UnknownRecord
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/object-utils.ts:3](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/object-utils.ts#L3)
+[packages/wp-typia-block-runtime/src/object-utils.ts:5](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/object-utils.ts#L5)

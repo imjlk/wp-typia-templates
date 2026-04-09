@@ -182,7 +182,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `result` | [`ValidationLike`](packages_wp_typia_api_client_src_internal_runtime_primitives.md#validationlike)\<`T`\> |
+| `result` | `unknown` |
 
 #### Returns
 

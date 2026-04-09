@@ -37,7 +37,7 @@
 
 #### Defined in
 
-[packages/wp-typia/src/config.ts:5](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L5)
+[packages/wp-typia/src/config.ts:7](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L7)
 
 ___
 
@@ -73,7 +73,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/config.ts:10](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L10)
+[packages/wp-typia/src/config.ts:12](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L12)
 
 ## Variables
 
@@ -83,7 +83,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/config.ts:38](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L38)
+[packages/wp-typia/src/config.ts:40](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L40)
 
 ## Functions
 
@@ -104,7 +104,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/config.ts:93](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L93)
+[packages/wp-typia/src/config.ts:90](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L90)
 
 ___
 
@@ -125,7 +125,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/config.ts:100](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L100)
+[packages/wp-typia/src/config.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L97)
 
 ___
 
@@ -145,7 +145,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/config.ts:108](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L108)
+[packages/wp-typia/src/config.ts:105](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L105)
 
 ___
 
@@ -165,7 +165,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/config.ts:127](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L127)
+[packages/wp-typia/src/config.ts:124](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L124)
 
 ___
 
@@ -185,7 +185,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/config.ts:131](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L131)
+[packages/wp-typia/src/config.ts:128](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L128)
 
 ___
 
@@ -205,4 +205,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/config.ts:137](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L137)
+[packages/wp-typia/src/config.ts:134](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/config.ts#L134)

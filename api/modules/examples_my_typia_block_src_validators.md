@@ -25,7 +25,7 @@
 
 | Name | Type |
 | :------ | :------ |
-| `validate` | (`attributes`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\> |
+| `validate` | (`attributes`: `unknown`) => [`ValidationResult`](packages_wp_typia_block_runtime_src_validation.md#validationresult)\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\> |
 | `assert` | (`input`: `unknown`) => [`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md) |
 | `is` | (`input`: `unknown`) => input is MyTypiaBlockAttributes |
 | `random` | () => [`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md) |
@@ -40,7 +40,7 @@
 
 ### validateMyTypiaBlockAttributes
 
-▸ **validateMyTypiaBlockAttributes**(`attributes`): [`ValidationResult`](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\>
+▸ **validateMyTypiaBlockAttributes**(`attributes`): [`ValidationResult`](packages_wp_typia_block_runtime_src_validation.md#validationresult)\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\>
 
 #### Parameters
 
@@ -50,7 +50,7 @@
 
 #### Returns
 
-[`ValidationResult`](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\>
+[`ValidationResult`](packages_wp_typia_block_runtime_src_validation.md#validationresult)\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\>
 
 #### Defined in
 
@@ -90,7 +90,7 @@ Create safe attribute updater with validation
 | :------ | :------ | :------ |
 | `attributes` | [`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md) | `undefined` |
 | `setAttributes` | (`attrs`: `Partial`\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\>) => `void` | `undefined` |
-| `validator` | (`attributes`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\> | `validators.validate` |
+| `validator` | (`attributes`: `unknown`) => [`ValidationResult`](packages_wp_typia_block_runtime_src_validation.md#validationresult)\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\> | `validators.validate` |
 
 #### Returns
 
@@ -131,7 +131,7 @@ ___
 | :------ | :------ | :------ |
 | `attributes` | [`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md) | `undefined` |
 | `setAttributes` | (`attrs`: `Partial`\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\>) => `void` | `undefined` |
-| `validator` | (`attributes`: `unknown`) => [`ValidationResult`](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\> | `validators.validate` |
+| `validator` | (`attributes`: `unknown`) => [`ValidationResult`](packages_wp_typia_block_runtime_src_validation.md#validationresult)\<[`MyTypiaBlockAttributes`](../interfaces/examples_my_typia_block_src_types.MyTypiaBlockAttributes.md)\> | `validators.validate` |
 
 #### Returns
 

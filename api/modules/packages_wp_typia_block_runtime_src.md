@@ -189,13 +189,13 @@ ___
 
 ### TypiaValidationError
 
-Re-exports [TypiaValidationError](../interfaces/packages_wp_typia_block_runtime_src_validation.TypiaValidationError.md)
+Re-exports [TypiaValidationError](packages_wp_typia_block_runtime_src_validation.md#typiavalidationerror)
 
 ___
 
 ### ValidationResult
 
-Re-exports [ValidationResult](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)
+Re-exports [ValidationResult](packages_wp_typia_block_runtime_src_validation.md#validationresult)
 
 ___
 

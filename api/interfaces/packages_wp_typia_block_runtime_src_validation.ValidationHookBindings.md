@@ -39,4 +39,4 @@
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/validation.ts:23](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L23)
+[packages/wp-typia-block-runtime/src/validation.ts:21](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/validation.ts#L21)

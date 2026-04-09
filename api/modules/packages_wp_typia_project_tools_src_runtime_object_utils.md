@@ -22,7 +22,7 @@ Generic record type used for JSON-like plain-object inspection.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/object-utils.ts:4](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/object-utils.ts#L4)
+[packages/wp-typia-project-tools/src/runtime/object-utils.ts:6](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/object-utils.ts#L6)
 
 ## Functions
 
@@ -30,7 +30,7 @@ Generic record type used for JSON-like plain-object inspection.
 
 ▸ **isPlainObject**(`value`): value is UnknownRecord
 
-Check whether a value is a plain object record.
+Delegate plain-object detection to the shared runtime primitive owner.
 
 #### Parameters
 
@@ -47,4 +47,4 @@ value is UnknownRecord
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/object-utils.ts:13](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/object-utils.ts#L13)
+[packages/wp-typia-project-tools/src/runtime/object-utils.ts:15](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/object-utils.ts#L15)

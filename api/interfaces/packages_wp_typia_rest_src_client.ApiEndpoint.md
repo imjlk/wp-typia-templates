@@ -43,7 +43,7 @@
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:23](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L23)
+[packages/wp-typia-rest/src/client.ts:29](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L29)
 
 ___
 
@@ -53,7 +53,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:24](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L24)
+[packages/wp-typia-rest/src/client.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L30)
 
 ___
 
@@ -63,7 +63,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:25](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L25)
+[packages/wp-typia-rest/src/client.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L31)
 
 ___
 
@@ -87,7 +87,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:26](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L26)
+[packages/wp-typia-rest/src/client.ts:32](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L32)
 
 ___
 
@@ -111,4 +111,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-rest/src/client.ts:27](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L27)
+[packages/wp-typia-rest/src/client.ts:33](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-rest/src/client.ts#L33)

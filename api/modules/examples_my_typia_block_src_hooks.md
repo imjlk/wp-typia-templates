@@ -42,13 +42,13 @@ ___
 
 ### TypiaValidationError
 
-Re-exports [TypiaValidationError](../interfaces/packages_wp_typia_block_runtime_src_validation.TypiaValidationError.md)
+Re-exports [TypiaValidationError](packages_wp_typia_block_runtime_src_validation.md#typiavalidationerror)
 
 ___
 
 ### ValidationResult
 
-Re-exports [ValidationResult](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)
+Re-exports [ValidationResult](packages_wp_typia_block_runtime_src_validation.md#validationresult)
 
 ___
 
@@ -81,7 +81,7 @@ Hook for Typia validation with real-time feedback
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `data` | `T` | Value to validate. |
-| `validator` | (`value`: `T`) => [`ValidationResult`](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)\<`T`\> | Validation function. |
+| `validator` | (`value`: `T`) => [`ValidationResult`](packages_wp_typia_block_runtime_src_validation.md#validationresult)\<`T`\> | Validation function. |
 
 #### Returns
 
@@ -92,7 +92,7 @@ Validation state and current errors.
 | Name | Type |
 | :------ | :------ |
 | `isValid` | `boolean` |
-| `errors` | [`TypiaValidationError`](../interfaces/packages_wp_typia_block_runtime_src_validation.TypiaValidationError.md)[] |
+| `errors` | [`ValidationError`](../interfaces/packages_wp_typia_api_client_src_internal_runtime_primitives.ValidationError.md)[] |
 | `errorMessages` | `string`[] |
 
 #### Defined in

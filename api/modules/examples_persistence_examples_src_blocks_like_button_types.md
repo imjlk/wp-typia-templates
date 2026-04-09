@@ -24,19 +24,19 @@
 
 ### ValidationResult
 
-Re-exports [ValidationResult](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)
+Re-exports [ValidationResult](packages_wp_typia_block_runtime_src_validation.md#validationresult)
 
 ___
 
 ### TypiaValidationError
 
-Re-exports [TypiaValidationError](../interfaces/packages_wp_typia_block_runtime_src_validation.TypiaValidationError.md)
+Re-exports [TypiaValidationError](packages_wp_typia_block_runtime_src_validation.md#typiavalidationerror)
 
 ## Type Aliases
 
 ### PersistenceLikeButtonValidationResult
 
-Ƭ **PersistenceLikeButtonValidationResult**: [`ValidationResult`](../interfaces/packages_wp_typia_block_runtime_src_validation.ValidationResult.md)\<[`PersistenceLikeButtonAttributes`](../interfaces/examples_persistence_examples_src_blocks_like_button_types.PersistenceLikeButtonAttributes.md)\>
+Ƭ **PersistenceLikeButtonValidationResult**: [`ValidationResult`](packages_wp_typia_block_runtime_src_validation.md#validationresult)\<[`PersistenceLikeButtonAttributes`](../interfaces/examples_persistence_examples_src_blocks_like_button_types.PersistenceLikeButtonAttributes.md)\>
 
 #### Defined in
 
