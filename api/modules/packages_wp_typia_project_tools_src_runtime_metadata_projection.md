@@ -2,9 +2,13 @@
 
 # Module: packages/wp-typia-project-tools/src/runtime/metadata-projection
 
+Re-exports metadata projection utilities from `@wp-typia/block-runtime`.
+This adapter keeps the public project-tools runtime path stable while the
+implementation is consolidated in block-runtime.
+
 ## Table of contents
 
-### Functions
+### References
 
 - [createBlockJsonAttribute](packages_wp_typia_project_tools_src_runtime_metadata_projection.md#createblockjsonattribute)
 - [createManifestAttribute](packages_wp_typia_project_tools_src_runtime_metadata_projection.md#createmanifestattribute)
@@ -13,126 +17,38 @@
 - [validateWordPressExtractionAttribute](packages_wp_typia_project_tools_src_runtime_metadata_projection.md#validatewordpressextractionattribute)
 - [createExampleValue](packages_wp_typia_project_tools_src_runtime_metadata_projection.md#createexamplevalue)
 
-## Functions
+## References
 
 ### createBlockJsonAttribute
 
-▸ **createBlockJsonAttribute**(`node`, `warnings`): [`BlockJsonAttribute`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.BlockJsonAttribute.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `node` | [`AttributeNode`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md) |
-| `warnings` | `string`[] |
-
-#### Returns
-
-[`BlockJsonAttribute`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.BlockJsonAttribute.md)
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-projection.ts:11](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-projection.ts#L11)
+Re-exports [createBlockJsonAttribute](packages_wp_typia_block_runtime_src_metadata_projection.md#createblockjsonattribute)
 
 ___
 
 ### createManifestAttribute
 
-▸ **createManifestAttribute**(`node`): [`ManifestAttribute`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.ManifestAttribute.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `node` | [`AttributeNode`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md) |
-
-#### Returns
-
-[`ManifestAttribute`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.ManifestAttribute.md)
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-projection.ts:59](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-projection.ts#L59)
+Re-exports [createManifestAttribute](packages_wp_typia_block_runtime_src_metadata_projection.md#createmanifestattribute)
 
 ___
 
 ### createManifestDocument
 
-▸ **createManifestDocument**(`sourceTypeName`, `attributes`): [`ManifestDocument`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.ManifestDocument.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `sourceTypeName` | `string` |
-| `attributes` | `Record`\<`string`, [`AttributeNode`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md)\> |
-
-#### Returns
-
-[`ManifestDocument`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.ManifestDocument.md)
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-projection.ts:103](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-projection.ts#L103)
+Re-exports [createManifestDocument](packages_wp_typia_block_runtime_src_metadata_projection.md#createmanifestdocument)
 
 ___
 
 ### validateWordPressExtractionAttributes
 
-▸ **validateWordPressExtractionAttributes**(`attributes`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `attributes` | `Record`\<`string`, [`AttributeNode`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md)\> |
-
-#### Returns
-
-`void`
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-projection.ts:119](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-projection.ts#L119)
+Re-exports [validateWordPressExtractionAttributes](packages_wp_typia_block_runtime_src_metadata_projection.md#validatewordpressextractionattributes)
 
 ___
 
 ### validateWordPressExtractionAttribute
 
-▸ **validateWordPressExtractionAttribute**(`node`, `isTopLevel?`): `void`
-
-#### Parameters
-
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `node` | [`AttributeNode`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md) | `undefined` |
-| `isTopLevel` | `boolean` | `false` |
-
-#### Returns
-
-`void`
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-projection.ts:127](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-projection.ts#L127)
+Re-exports [validateWordPressExtractionAttribute](packages_wp_typia_block_runtime_src_metadata_projection.md#validatewordpressextractionattribute)
 
 ___
 
 ### createExampleValue
 
-▸ **createExampleValue**(`node`, `key`): [`JsonValue`](packages_wp_typia_project_tools_src_runtime_metadata_model.md#jsonvalue)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `node` | [`AttributeNode`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md) |
-| `key` | `string` |
-
-#### Returns
-
-[`JsonValue`](packages_wp_typia_project_tools_src_runtime_metadata_model.md#jsonvalue)
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-projection.ts:167](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-projection.ts#L167)
+Re-exports [createExampleValue](packages_wp_typia_block_runtime_src_metadata_projection.md#createexamplevalue)

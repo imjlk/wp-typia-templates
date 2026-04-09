@@ -38,7 +38,7 @@
 
 ### cloneJsonValue
 
-Re-exports [cloneJsonValue](packages_wp_typia_project_tools_src_runtime_json_utils.md#clonejsonvalue)
+Re-exports [cloneJsonValue](packages_wp_typia_block_runtime_src_json_utils.md#clonejsonvalue)
 
 ## Functions
 

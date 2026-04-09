@@ -2,41 +2,18 @@
 
 # Module: packages/wp-typia-project-tools/src/runtime/json-utils
 
+Re-exports JSON cloning helpers from `@wp-typia/block-runtime`.
+This adapter keeps the existing project-tools module path stable while the
+runtime implementation now lives in block-runtime.
+
 ## Table of contents
 
-### Functions
+### References
 
 - [cloneJsonValue](packages_wp_typia_project_tools_src_runtime_json_utils.md#clonejsonvalue)
 
-## Functions
+## References
 
 ### cloneJsonValue
 
-▸ **cloneJsonValue**\<`T`\>(`value`): `T`
-
-Create a deep clone of a JSON-serializable value.
-
-#### Type parameters
-
-| Name |
-| :------ |
-| `T` |
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `value` | `T` | JSON-compatible data to clone. |
-
-#### Returns
-
-`T`
-
-A deep-cloned copy created with `JSON.parse(JSON.stringify(...))`.
-
-Values that are not JSON-serializable, such as functions, `undefined`,
-`BigInt`, class instances, and `Date` objects, are not preserved faithfully.
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/json-utils.ts:10](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/json-utils.ts#L10)
+Re-exports [cloneJsonValue](packages_wp_typia_block_runtime_src_json_utils.md#clonejsonvalue)

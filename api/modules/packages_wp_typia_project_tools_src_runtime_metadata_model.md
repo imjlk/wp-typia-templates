@@ -2,28 +2,26 @@
 
 # Module: packages/wp-typia-project-tools/src/runtime/metadata-model
 
+Re-exports the metadata model types and helpers from `@wp-typia/block-runtime`.
+This adapter keeps the public project-tools runtime path stable while the
+implementation is consolidated in block-runtime.
+
 ## Table of contents
 
-### Interfaces
-
-- [AttributeConstraints](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeConstraints.md)
-- [AttributeNode](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md)
-- [AttributeUnion](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeUnion.md)
-- [BlockJsonAttribute](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.BlockJsonAttribute.md)
-- [ManifestAttribute](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.ManifestAttribute.md)
-- [ManifestUnion](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.ManifestUnion.md)
-- [ManifestDocument](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.ManifestDocument.md)
-
-### Type Aliases
+### References
 
 - [JsonPrimitive](packages_wp_typia_project_tools_src_runtime_metadata_model.md#jsonprimitive)
 - [JsonValue](packages_wp_typia_project_tools_src_runtime_metadata_model.md#jsonvalue)
 - [AttributeKind](packages_wp_typia_project_tools_src_runtime_metadata_model.md#attributekind)
 - [WordPressAttributeKind](packages_wp_typia_project_tools_src_runtime_metadata_model.md#wordpressattributekind)
 - [WordPressAttributeSource](packages_wp_typia_project_tools_src_runtime_metadata_model.md#wordpressattributesource)
-
-### Functions
-
+- [AttributeConstraints](packages_wp_typia_project_tools_src_runtime_metadata_model.md#attributeconstraints)
+- [AttributeNode](packages_wp_typia_project_tools_src_runtime_metadata_model.md#attributenode)
+- [AttributeUnion](packages_wp_typia_project_tools_src_runtime_metadata_model.md#attributeunion)
+- [BlockJsonAttribute](packages_wp_typia_project_tools_src_runtime_metadata_model.md#blockjsonattribute)
+- [ManifestAttribute](packages_wp_typia_project_tools_src_runtime_metadata_model.md#manifestattribute)
+- [ManifestUnion](packages_wp_typia_project_tools_src_runtime_metadata_model.md#manifestunion)
+- [ManifestDocument](packages_wp_typia_project_tools_src_runtime_metadata_model.md#manifestdocument)
 - [defaultAttributeConstraints](packages_wp_typia_project_tools_src_runtime_metadata_model.md#defaultattributeconstraints)
 - [getWordPressKind](packages_wp_typia_project_tools_src_runtime_metadata_model.md#getwordpresskind)
 - [baseNode](packages_wp_typia_project_tools_src_runtime_metadata_model.md#basenode)
@@ -31,168 +29,110 @@
 - [cloneUnion](packages_wp_typia_project_tools_src_runtime_metadata_model.md#cloneunion)
 - [cloneProperties](packages_wp_typia_project_tools_src_runtime_metadata_model.md#cloneproperties)
 
-## Type Aliases
+## References
 
 ### JsonPrimitive
 
-Ƭ **JsonPrimitive**: `string` \| `number` \| `boolean` \| ``null``
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-model.ts:1](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-model.ts#L1)
+Re-exports [JsonPrimitive](packages_wp_typia_block_runtime_src_metadata_model.md#jsonprimitive)
 
 ___
 
 ### JsonValue
 
-Ƭ **JsonValue**: [`JsonPrimitive`](packages_wp_typia_project_tools_src_runtime_metadata_model.md#jsonprimitive) \| [`JsonValue`](packages_wp_typia_project_tools_src_runtime_metadata_model.md#jsonvalue)[] \| \{ `[key: string]`: [`JsonValue`](packages_wp_typia_project_tools_src_runtime_metadata_model.md#jsonvalue);  }
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-model.ts:2](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-model.ts#L2)
+Re-exports [JsonValue](packages_wp_typia_block_runtime_src_metadata_model.md#jsonvalue)
 
 ___
 
 ### AttributeKind
 
-Ƭ **AttributeKind**: ``"string"`` \| ``"number"`` \| ``"boolean"`` \| ``"array"`` \| ``"object"`` \| ``"union"``
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-model.ts:4](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-model.ts#L4)
+Re-exports [AttributeKind](packages_wp_typia_block_runtime_src_metadata_model.md#attributekind)
 
 ___
 
 ### WordPressAttributeKind
 
-Ƭ **WordPressAttributeKind**: ``"string"`` \| ``"number"`` \| ``"boolean"`` \| ``"array"`` \| ``"object"``
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-model.ts:12](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-model.ts#L12)
+Re-exports [WordPressAttributeKind](packages_wp_typia_block_runtime_src_metadata_model.md#wordpressattributekind)
 
 ___
 
 ### WordPressAttributeSource
 
-Ƭ **WordPressAttributeSource**: ``"html"`` \| ``"text"`` \| ``"rich-text"``
+Re-exports [WordPressAttributeSource](packages_wp_typia_block_runtime_src_metadata_model.md#wordpressattributesource)
 
-#### Defined in
+___
 
-[packages/wp-typia-project-tools/src/runtime/metadata-model.ts:19](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-model.ts#L19)
+### AttributeConstraints
 
-## Functions
+Re-exports [AttributeConstraints](../interfaces/packages_wp_typia_block_runtime_src_metadata_model.AttributeConstraints.md)
+
+___
+
+### AttributeNode
+
+Re-exports [AttributeNode](../interfaces/packages_wp_typia_block_runtime_src_metadata_model.AttributeNode.md)
+
+___
+
+### AttributeUnion
+
+Re-exports [AttributeUnion](../interfaces/packages_wp_typia_block_runtime_src_metadata_model.AttributeUnion.md)
+
+___
+
+### BlockJsonAttribute
+
+Re-exports [BlockJsonAttribute](../interfaces/packages_wp_typia_block_runtime_src_metadata_model.BlockJsonAttribute.md)
+
+___
+
+### ManifestAttribute
+
+Re-exports [ManifestAttribute](../interfaces/packages_wp_typia_block_runtime_src_metadata_model.ManifestAttribute.md)
+
+___
+
+### ManifestUnion
+
+Re-exports [ManifestUnion](../interfaces/packages_wp_typia_block_runtime_src_metadata_model.ManifestUnion.md)
+
+___
+
+### ManifestDocument
+
+Re-exports [ManifestDocument](../interfaces/packages_wp_typia_block_runtime_src_metadata_model.ManifestDocument.md)
+
+___
 
 ### defaultAttributeConstraints
 
-▸ **defaultAttributeConstraints**(): [`AttributeConstraints`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeConstraints.md)
-
-#### Returns
-
-[`AttributeConstraints`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeConstraints.md)
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-model.ts:99](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-model.ts#L99)
+Re-exports [defaultAttributeConstraints](packages_wp_typia_block_runtime_src_metadata_model.md#defaultattributeconstraints)
 
 ___
 
 ### getWordPressKind
 
-▸ **getWordPressKind**(`node`): [`WordPressAttributeKind`](packages_wp_typia_project_tools_src_runtime_metadata_model.md#wordpressattributekind)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `node` | [`AttributeNode`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md) |
-
-#### Returns
-
-[`WordPressAttributeKind`](packages_wp_typia_project_tools_src_runtime_metadata_model.md#wordpressattributekind)
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-model.ts:116](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-model.ts#L116)
+Re-exports [getWordPressKind](packages_wp_typia_block_runtime_src_metadata_model.md#getwordpresskind)
 
 ___
 
 ### baseNode
 
-▸ **baseNode**(`kind`, `pathLabel`): [`AttributeNode`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `kind` | [`AttributeKind`](packages_wp_typia_project_tools_src_runtime_metadata_model.md#attributekind) |
-| `pathLabel` | `string` |
-
-#### Returns
-
-[`AttributeNode`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md)
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-model.ts:120](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-model.ts#L120)
+Re-exports [baseNode](packages_wp_typia_block_runtime_src_metadata_model.md#basenode)
 
 ___
 
 ### withRequired
 
-▸ **withRequired**(`node`, `required`): [`AttributeNode`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `node` | [`AttributeNode`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md) |
-| `required` | `boolean` |
-
-#### Returns
-
-[`AttributeNode`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md)
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-model.ts:135](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-model.ts#L135)
+Re-exports [withRequired](packages_wp_typia_block_runtime_src_metadata_model.md#withrequired)
 
 ___
 
 ### cloneUnion
 
-▸ **cloneUnion**(`union`): [`AttributeUnion`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeUnion.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `union` | [`AttributeUnion`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeUnion.md) |
-
-#### Returns
-
-[`AttributeUnion`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeUnion.md)
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-model.ts:150](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-model.ts#L150)
+Re-exports [cloneUnion](packages_wp_typia_block_runtime_src_metadata_model.md#cloneunion)
 
 ___
 
 ### cloneProperties
 
-▸ **cloneProperties**(`properties`): `Record`\<`string`, [`AttributeNode`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md)\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `properties` | `Record`\<`string`, [`AttributeNode`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md)\> |
-
-#### Returns
-
-`Record`\<`string`, [`AttributeNode`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_model.AttributeNode.md)\>
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-model.ts:162](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-model.ts#L162)
+Re-exports [cloneProperties](packages_wp_typia_block_runtime_src_metadata_model.md#cloneproperties)

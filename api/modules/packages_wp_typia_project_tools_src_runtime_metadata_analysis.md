@@ -2,54 +2,32 @@
 
 # Module: packages/wp-typia-project-tools/src/runtime/metadata-analysis
 
+Re-exports metadata analysis helpers from `@wp-typia/block-runtime`.
+This adapter preserves the public project-tools module path while sharing
+the runtime implementation with block-runtime.
+
 ## Table of contents
 
-### Interfaces
+### References
 
-- [AnalysisContext](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_analysis.AnalysisContext.md)
-
-### Functions
-
+- [AnalysisContext](packages_wp_typia_project_tools_src_runtime_metadata_analysis.md#analysiscontext)
 - [getTaggedSyncBlockMetadataFailureCode](packages_wp_typia_project_tools_src_runtime_metadata_analysis.md#gettaggedsyncblockmetadatafailurecode)
 - [createAnalysisContext](packages_wp_typia_project_tools_src_runtime_metadata_analysis.md#createanalysiscontext)
 
-## Functions
+## References
+
+### AnalysisContext
+
+Re-exports [AnalysisContext](../interfaces/packages_wp_typia_block_runtime_src_metadata_analysis.AnalysisContext.md)
+
+___
 
 ### getTaggedSyncBlockMetadataFailureCode
 
-▸ **getTaggedSyncBlockMetadataFailureCode**(`error`): ``"typescript-diagnostic"`` \| `undefined`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `error` | `Error` |
-
-#### Returns
-
-``"typescript-diagnostic"`` \| `undefined`
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-analysis.ts:87](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-analysis.ts#L87)
+Re-exports [getTaggedSyncBlockMetadataFailureCode](packages_wp_typia_block_runtime_src_metadata_analysis.md#gettaggedsyncblockmetadatafailurecode)
 
 ___
 
 ### createAnalysisContext
 
-▸ **createAnalysisContext**(`projectRoot`, `typesFilePath`): [`AnalysisContext`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_analysis.AnalysisContext.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `projectRoot` | `string` |
-| `typesFilePath` | `string` |
-
-#### Returns
-
-[`AnalysisContext`](../interfaces/packages_wp_typia_project_tools_src_runtime_metadata_analysis.AnalysisContext.md)
-
-#### Defined in
-
-[packages/wp-typia-project-tools/src/runtime/metadata-analysis.ts:366](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/metadata-analysis.ts#L366)
+Re-exports [createAnalysisContext](packages_wp_typia_block_runtime_src_metadata_analysis.md#createanalysiscontext)
