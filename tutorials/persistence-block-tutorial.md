@@ -56,10 +56,12 @@ The persistence template scaffolds the same editor/runtime foundation as the oth
 ```text
 my-counter/
 ├── src/
+│   ├── api-client.ts
 │   ├── api-types.ts
 │   ├── api-validators.ts
 │   ├── api.ts
 │   ├── block.json
+│   ├── data.ts
 │   ├── edit.tsx
 │   ├── hooks.ts
 │   ├── index.tsx
@@ -67,6 +69,7 @@ my-counter/
 │   ├── render.php
 │   ├── save.tsx
 │   ├── style.scss
+│   ├── transport.ts
 │   ├── types.ts
 │   └── validators.ts
 ├── scripts/
@@ -172,72 +175,53 @@ export interface MyCounterStateResponse {
 }
 ```
 
-## Step 5: Use the REST Client
+## Step 5: Use the generated transport seam
 
-The generated `src/api.ts` provides typed helpers:
+Persistence scaffolds now split the runtime client layer into three files:
+
+- `src/api-client.ts`: portable contract client generated from `src/api-types.ts`
+- `src/transport.ts`: editor/frontend transport wiring
+- `src/api.ts`: typed helpers that compose the portable endpoints with the selected transport target
+
+The generated `src/transport.ts` is the first place to customize runtime routing:
 
 ```typescript
 import {
-  callEndpoint,
-  createEndpoint,
+  type EndpointCallOptions,
   resolveRestRouteUrl,
 } from '@wp-typia/rest';
-import { apiValidators } from './api-validators';
-import type {
-  MyCounterStateQuery,
-  MyCounterStateResponse,
-  MyCounterWriteStateRequest,
-} from './api-types';
 
-const STATE_PATH = '/my-counter/v1/my-counter/state';
+const FRONTEND_READ_BASE_URL: string | undefined = undefined;
+const FRONTEND_WRITE_BASE_URL: string | undefined = undefined;
 
-export const stateEndpoint = createEndpoint<
-  MyCounterStateQuery,
-  MyCounterStateResponse
->({
-  buildRequestOptions: () => ({
-    url: resolveRestRouteUrl(STATE_PATH),
-  }),
-  method: 'GET',
-  path: STATE_PATH,
-  validateRequest: apiValidators.stateQuery,
-  validateResponse: apiValidators.stateResponse,
-});
-
-export const writeStateEndpoint = createEndpoint<
-  MyCounterWriteStateRequest,
-  MyCounterStateResponse
->({
-  buildRequestOptions: () => ({
-    url: resolveRestRouteUrl(STATE_PATH),
-  }),
-  method: 'POST',
-  path: STATE_PATH,
-  validateRequest: apiValidators.writeStateRequest,
-  validateResponse: apiValidators.stateResponse,
-});
-
-export function fetchState(request: MyCounterStateQuery) {
-  return callEndpoint(stateEndpoint, request);
+function buildCallOptions(
+  endpointPath: string,
+  baseUrl?: string
+): EndpointCallOptions {
+  return {
+    requestOptions: {
+      url:
+        typeof baseUrl === 'string' && baseUrl.length > 0
+          ? new URL(endpointPath, baseUrl).toString()
+          : resolveRestRouteUrl(endpointPath),
+    },
+  };
 }
 
-export function writeState(
-  request: MyCounterWriteStateRequest,
-  restNonce?: string
-) {
-  return callEndpoint(writeStateEndpoint, request, {
-    requestOptions: restNonce
-      ? {
-          headers: {
-            'X-WP-Nonce': restNonce,
-          },
-        }
-      : undefined,
-  });
-}
+// Default: direct WordPress REST
+export const persistenceTransportTargets = {
+  frontend: {
+    read: (endpoint: { path: string }) =>
+      buildCallOptions(endpoint.path, FRONTEND_READ_BASE_URL),
+    write: (endpoint: { path: string }) =>
+      buildCallOptions(endpoint.path, FRONTEND_WRITE_BASE_URL),
+  },
+};
 ```
 
-By default, the namespace follows the normalized project slug, so a scaffolded `my-counter` project generates `/my-counter/v1/my-counter/state` unless you change the namespace during scaffolding.
+To route the hydrated frontend through a contract-compatible proxy or adapter, edit only the base URL constants in `src/transport.ts`. You do not need to rewrite `src/api.ts`, `src/data.ts`, `src/interactivity.ts`, or `src/api-client.ts`.
+
+For hybrid setups, the scaffold exposes separate `editor` and `frontend` targets so the editor can keep direct WordPress REST while the frontend points somewhere else.
 
 ## Step 6: Implement Frontend Interactivity
 
@@ -340,7 +324,10 @@ const { actions, state } = store('my-counter', {
                 : undefined,
             resourceKey: context.resourceKey,
           },
-          context.restNonce
+          {
+            restNonce: context.restNonce,
+            transportTarget: 'frontend',
+          }
         );
 
         if (!result.isValid || !result.data) {

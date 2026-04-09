@@ -66,4 +66,4 @@ ___
 
 #### Defined in
 
-[examples/api-contract-adapter-poc/src/counter-adapter.ts:225](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L225)
+[examples/api-contract-adapter-poc/src/counter-adapter.ts:234](https://github.com/imjlk/wp-typia/blob/main/examples/api-contract-adapter-poc/src/counter-adapter.ts#L234)
