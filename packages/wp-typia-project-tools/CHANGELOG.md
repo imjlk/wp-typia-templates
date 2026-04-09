@@ -1,5 +1,11 @@
 # @wp-typia/project-tools
 
+## 0.13.2 — 2026-04-09
+
+### Patch changes
+
+- Updated dependencies: rest (npm)@0.3.3
+
 ## 0.13.1 — 2026-04-09
 
 ### Patch changes
