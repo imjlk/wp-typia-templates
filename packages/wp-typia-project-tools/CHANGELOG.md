@@ -1,5 +1,11 @@
 # @wp-typia/project-tools
 
+## 0.13.4 — 2026-04-09
+
+### Patch changes
+
+- [fb2f09a](https://github.com/imjlk/wp-typia/commit/fb2f09ad62cf8c789f22111db110ea9dffef2504) Polish the basic scaffold and CLI regression surface by adding a static `render.php` placeholder to the basic template, avoiding duplicate wrapper CSS class segments when the namespace matches the slug, and locking `wp-typia --version` behavior with an explicit regression test. — Thanks @imjlk!
+
 ## 0.13.3 — 2026-04-09
 
 ### Patch changes
