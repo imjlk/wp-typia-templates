@@ -83,6 +83,7 @@ export function use{{pascalCase}}StateQuery<
 				transportTarget,
 				'read',
 				stateEndpoint,
+				request,
 				{
 					restNonce,
 					transportTarget,
@@ -174,11 +175,12 @@ export function useWrite{{pascalCase}}StateMutation<
 				userContext,
 			};
 		},
-		resolveCallOptions: () =>
+		resolveCallOptions: ( request ) =>
 			resolveTransportCallOptions(
 				transportTarget,
 				'write',
 				writeStateEndpoint,
+				request,
 				{
 					restNonce,
 					transportTarget,

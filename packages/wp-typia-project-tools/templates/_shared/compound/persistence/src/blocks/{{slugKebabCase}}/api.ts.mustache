@@ -34,6 +34,7 @@ export function fetchState(
 			options.transportTarget ?? 'frontend',
 			'read',
 			stateEndpoint,
+			request,
 			options
 		)
 	);
@@ -50,6 +51,7 @@ export function writeState(
 			options.transportTarget ?? 'frontend',
 			'write',
 			writeStateEndpoint,
+			request,
 			options
 		)
 	);

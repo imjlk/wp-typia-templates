@@ -17,6 +17,7 @@ interface EndpointWithPath {
 
 type PersistenceTransportResolver = (
 	endpoint: EndpointWithPath,
+	request?: unknown,
 	options?: PersistenceTransportOptions
 ) => EndpointCallOptions;
 
@@ -45,6 +46,72 @@ function resolveEndpointUrl(
 	return resolveRestRouteUrl( endpointPath );
 }
 
+function isPlainObject(
+	value: unknown
+): value is Record< string, unknown > {
+	if ( Object.prototype.toString.call( value ) !== '[object Object]' ) {
+		return false;
+	}
+
+	const prototype = Object.getPrototypeOf( value );
+	return prototype === null || prototype === Object.prototype;
+}
+
+function encodeRequestQuery( request: unknown ): string {
+	if ( request === undefined || request === null ) {
+		return '';
+	}
+
+	if ( request instanceof URLSearchParams ) {
+		return request.toString();
+	}
+
+	if ( ! isPlainObject( request ) ) {
+		throw new Error(
+			'Persistence transport read requests must be plain objects or URLSearchParams.'
+		);
+	}
+
+	const params = new URLSearchParams();
+
+	for ( const [ key, value ] of Object.entries( request ) ) {
+		if ( value === undefined || value === null ) {
+			continue;
+		}
+
+		if ( Array.isArray( value ) ) {
+			for ( const item of value ) {
+				params.append( key, String( item ) );
+			}
+			continue;
+		}
+
+		params.set( key, String( value ) );
+	}
+
+	return params.toString();
+}
+
+function joinUrlWithQuery(
+	url: string,
+	query: string
+): string {
+	if ( ! query ) {
+		return url;
+	}
+
+	const nextUrl = new URL(
+		url,
+		typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
+	);
+
+	for ( const [ key, value ] of new URLSearchParams( query ) ) {
+		nextUrl.searchParams.append( key, value );
+	}
+
+	return nextUrl.toString();
+}
+
 export function resolveRestNonce( fallback?: string ): string | undefined {
 	if ( typeof fallback === 'string' && fallback.length > 0 ) {
 		return fallback;
@@ -67,25 +134,39 @@ function buildCallOptions( {
 	baseUrl,
 	endpoint,
 	includeRestNonce,
+	operation,
 	options,
+	request,
 }: {
 	baseUrl?: string;
 	endpoint: EndpointWithPath;
 	includeRestNonce: boolean;
+	operation: PersistenceTransportOperation;
 	options?: PersistenceTransportOptions;
+	request?: unknown;
 } ): EndpointCallOptions {
 	const nonce = includeRestNonce ? resolveRestNonce( options?.restNonce ) : undefined;
+	const requestOptions: EndpointCallOptions['requestOptions'] = {};
 
-	return {
-		requestOptions: {
-			headers: nonce
-				? {
-						'X-WP-Nonce': nonce,
-					}
-				: undefined,
-			url: resolveEndpointUrl( endpoint.path, baseUrl ),
-		},
-	};
+	if ( nonce ) {
+		requestOptions.headers = {
+			'X-WP-Nonce': nonce,
+		};
+	}
+
+	if ( typeof baseUrl === 'string' && baseUrl.trim().length > 0 ) {
+		const endpointUrl = resolveEndpointUrl( endpoint.path, baseUrl );
+		requestOptions.url =
+			operation === 'read'
+				? joinUrlWithQuery( endpointUrl, encodeRequestQuery( request ) )
+				: endpointUrl;
+	}
+
+	return Object.keys( requestOptions ).length > 0
+		? {
+				requestOptions,
+			}
+		: {};
 }
 
 export const persistenceTransportTargets: Record<
@@ -93,35 +174,43 @@ export const persistenceTransportTargets: Record<
 	PersistenceTransportTargetResolvers
 > = {
 	editor: {
-		read: ( endpoint, options ) =>
+		read: ( endpoint, request, options ) =>
 			buildCallOptions( {
 				baseUrl: EDITOR_READ_BASE_URL,
 				endpoint,
 				includeRestNonce: {{isAuthenticatedPersistencePolicy}},
+				operation: 'read',
 				options,
+				request,
 			} ),
-		write: ( endpoint, options ) =>
+		write: ( endpoint, request, options ) =>
 			buildCallOptions( {
 				baseUrl: EDITOR_WRITE_BASE_URL,
 				endpoint,
 				includeRestNonce: {{isAuthenticatedPersistencePolicy}},
+				operation: 'write',
 				options,
+				request,
 			} ),
 	},
 	frontend: {
-		read: ( endpoint, options ) =>
+		read: ( endpoint, request, options ) =>
 			buildCallOptions( {
 				baseUrl: FRONTEND_READ_BASE_URL,
 				endpoint,
 				includeRestNonce: false,
+				operation: 'read',
 				options,
+				request,
 			} ),
-		write: ( endpoint, options ) =>
+		write: ( endpoint, request, options ) =>
 			buildCallOptions( {
 				baseUrl: FRONTEND_WRITE_BASE_URL,
 				endpoint,
 				includeRestNonce: {{isAuthenticatedPersistencePolicy}},
+				operation: 'write',
 				options,
+				request,
 			} ),
 	},
 };
@@ -130,7 +219,8 @@ export function resolveTransportCallOptions(
 	target: PersistenceTransportTarget,
 	operation: PersistenceTransportOperation,
 	endpoint: EndpointWithPath,
+	request?: unknown,
 	options?: PersistenceTransportOptions
 ): EndpointCallOptions {
-	return persistenceTransportTargets[ target ][ operation ]( endpoint, options );
+	return persistenceTransportTargets[ target ][ operation ]( endpoint, request, options );
 }

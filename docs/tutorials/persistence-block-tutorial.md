@@ -56,10 +56,12 @@ The persistence template scaffolds the same editor/runtime foundation as the oth
 ```text
 my-counter/
 ├── src/
+│   ├── api-client.ts
 │   ├── api-types.ts
 │   ├── api-validators.ts
 │   ├── api.ts
 │   ├── block.json
+│   ├── data.ts
 │   ├── edit.tsx
 │   ├── hooks.ts
 │   ├── index.tsx
@@ -67,6 +69,7 @@ my-counter/
 │   ├── render.php
 │   ├── save.tsx
 │   ├── style.scss
+│   ├── transport.ts
 │   ├── types.ts
 │   └── validators.ts
 ├── scripts/
@@ -321,7 +324,10 @@ const { actions, state } = store('my-counter', {
                 : undefined,
             resourceKey: context.resourceKey,
           },
-          context.restNonce
+          {
+            restNonce: context.restNonce,
+            transportTarget: 'frontend',
+          }
         );
 
         if (!result.isValid || !result.data) {

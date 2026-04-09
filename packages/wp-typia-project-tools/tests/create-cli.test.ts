@@ -1257,11 +1257,11 @@ import { resolveTransportCallOptions } from './src/transport';
 };
 
 const endpoint = { path: '/demo/v1/state' };
-const editorWrite = resolveTransportCallOptions('editor', 'write', endpoint, {
+const editorWrite = resolveTransportCallOptions('editor', 'write', endpoint, undefined, {
 	restNonce: 'explicit-nonce',
 	transportTarget: 'editor',
 });
-const frontendWrite = resolveTransportCallOptions('frontend', 'write', endpoint, {
+const frontendWrite = resolveTransportCallOptions('frontend', 'write', endpoint, undefined, {
 	restNonce: 'explicit-nonce',
 	transportTarget: 'frontend',
 });
@@ -1276,8 +1276,8 @@ console.log(JSON.stringify({
 			frontendWrite?: { headers?: Record<string, string>; url?: string };
 		};
 
-		expect(transportChecks.editorWrite?.url).toBe("https://example.test/wp-json/demo/v1/state/");
-		expect(transportChecks.frontendWrite?.url).toBe("https://example.test/wp-json/demo/v1/state/");
+		expect(transportChecks.editorWrite?.url).toBeUndefined();
+		expect(transportChecks.frontendWrite?.url).toBeUndefined();
 		expect(transportChecks.editorWrite?.headers).toBeUndefined();
 		expect(transportChecks.frontendWrite?.headers).toBeUndefined();
 	});
@@ -1318,11 +1318,11 @@ import { resolveTransportCallOptions } from './src/transport';
 
 const endpoint = { path: '/demo/v1/state' };
 const editorReadDefault = resolveTransportCallOptions('editor', 'read', endpoint);
-const editorReadExplicit = resolveTransportCallOptions('editor', 'read', endpoint, {
+const editorReadExplicit = resolveTransportCallOptions('editor', 'read', endpoint, undefined, {
 	restNonce: 'explicit-nonce',
 	transportTarget: 'editor',
 });
-const frontendRead = resolveTransportCallOptions('frontend', 'read', endpoint, {
+const frontendRead = resolveTransportCallOptions('frontend', 'read', endpoint, undefined, {
 	restNonce: 'ignored-nonce',
 	transportTarget: 'frontend',
 });
@@ -1342,11 +1342,12 @@ console.log(JSON.stringify({
 			frontendWrite?: { headers?: Record<string, string>; url?: string };
 		};
 
-		expect(transportChecks.editorReadDefault?.url).toBe("https://example.test/wp-json/demo/v1/state/");
+		expect(transportChecks.editorReadDefault?.url).toBeUndefined();
 		expect(transportChecks.editorReadDefault?.headers?.["X-WP-Nonce"]).toBe("wp-fallback-nonce");
 		expect(transportChecks.editorReadExplicit?.headers?.["X-WP-Nonce"]).toBe("explicit-nonce");
-		expect(transportChecks.frontendRead?.url).toBe("https://example.test/wp-json/demo/v1/state/");
+		expect(transportChecks.frontendRead?.url).toBeUndefined();
 		expect(transportChecks.frontendRead?.headers).toBeUndefined();
+		expect(transportChecks.frontendWrite?.url).toBeUndefined();
 		expect(transportChecks.frontendWrite?.headers?.["X-WP-Nonce"]).toBe("wp-fallback-nonce");
 	});
 
@@ -1384,9 +1385,16 @@ import { resolveTransportCallOptions } from './src/transport';
 
 const endpoint = { path: '/demo/v1/state' };
 const editorRead = resolveTransportCallOptions('editor', 'read', endpoint, {
+	postId: 7,
+	resourceKey: 'demo',
+}, {
 	transportTarget: 'editor',
 });
 const frontendWrite = resolveTransportCallOptions('frontend', 'write', endpoint, {
+	delta: 1,
+	postId: 7,
+	resourceKey: 'demo',
+}, {
 	transportTarget: 'frontend',
 });
 
@@ -1400,7 +1408,7 @@ console.log(JSON.stringify({
 			frontendWrite?: { url?: string };
 		};
 
-		expect(transportChecks.editorRead?.url).toBe("https://example.test/proxy/demo/v1/state");
+		expect(transportChecks.editorRead?.url).toBe("https://example.test/proxy/demo/v1/state?postId=7&resourceKey=demo");
 		expect(transportChecks.frontendWrite?.url).toBe("https://example.test/proxy/demo/v1/state");
 	});
 
@@ -1451,17 +1459,28 @@ const readOptions = resolveTransportCallOptions(
 	'frontend',
 	'read',
 	{ path: statePath },
+	{
+		postId: 7,
+		resourceKey: 'demo',
+	},
 	{ transportTarget: 'frontend' },
 );
 const writeOptions = resolveTransportCallOptions(
 	'frontend',
 	'write',
 	{ path: statePath },
+	{
+		delta: 2,
+		postId: 7,
+		publicWriteRequestId: 'adapter-request-1',
+		publicWriteToken: 'adapter-proof-token',
+		resourceKey: 'demo',
+	},
 	{ transportTarget: 'frontend' },
 );
 
 const initialResponse = await fetch(
-	\`\${readOptions.requestOptions?.url}?postId=7&resourceKey=demo\`,
+	readOptions.requestOptions?.url ?? '',
 	{
 		headers: readOptions.requestOptions?.headers as HeadersInit | undefined,
 	},
@@ -1486,7 +1505,7 @@ const updatedResponse = await fetch(
 );
 const updated = await updatedResponse.json();
 const rereadResponse = await fetch(
-	\`\${readOptions.requestOptions?.url}?postId=7&resourceKey=demo\`,
+	readOptions.requestOptions?.url ?? '',
 	{
 		headers: readOptions.requestOptions?.headers as HeadersInit | undefined,
 	},
