@@ -512,12 +512,12 @@ function persistence_examples_block_tree_has_resource_key( $blocks, $block_name,
 			continue;
 		}
 
-		if ( $block_name === (string) ( $block['blockName'] ?? '' ) ) {
+		if ( (string) ( $block['blockName'] ?? '' ) === $block_name ) {
 			$attributes = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
 			$candidate_resource_key = array_key_exists( 'resourceKey', $attributes )
 				? (string) $attributes['resourceKey']
 				: 'primary';
-			if ( $candidate_resource_key === (string) $resource_key ) {
+			if ( (string) $resource_key === $candidate_resource_key ) {
 				return true;
 			}
 		}

@@ -210,9 +210,12 @@ function {{phpPrefix}}_block_tree_has_resource_key( $blocks, $block_name, $resou
 			continue;
 		}
 
-		if ( $block_name === (string) ( $block['blockName'] ?? '' ) ) {
+		if ( (string) ( $block['blockName'] ?? '' ) === $block_name ) {
 			$attributes = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
-			if ( (string) ( $attributes['resourceKey'] ?? '' ) === (string) $resource_key ) {
+			$candidate_resource_key = array_key_exists( 'resourceKey', $attributes )
+				? (string) $attributes['resourceKey']
+				: 'primary';
+			if ( (string) $resource_key === $candidate_resource_key ) {
 				return true;
 			}
 		}

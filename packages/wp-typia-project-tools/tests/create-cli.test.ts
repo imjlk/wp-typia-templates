@@ -1314,6 +1314,10 @@ describe("@wp-typia/project-tools scaffolding", () => {
         "function demo_persistence_public_has_rendered_block_instance"
       );
       expect(pluginBootstrap).toContain("create-block/demo-persistence-public");
+      expect(pluginBootstrap).toContain(
+        "array_key_exists( 'resourceKey', $attributes )"
+      );
+      expect(pluginBootstrap).toContain(": 'primary';");
       expect(restPublicHelper).toContain(
         "function demo_persistence_public_verify_public_write_token"
       );
@@ -4576,6 +4580,10 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(blockConfigSource).toContain("defineEndpointManifest");
     expect(blockConfigSource).toContain('slug: "faq-stack-item"');
     expect(serverModuleSource).toContain("rest-public.php");
+    expect(serverModuleSource).toContain(
+      "array_key_exists( 'resourceKey', $attributes )"
+    );
+    expect(serverModuleSource).toContain(": 'primary';");
     expect(parentBlockJson.name).toBe("demo-space/faq-stack");
     runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
       "--check",
