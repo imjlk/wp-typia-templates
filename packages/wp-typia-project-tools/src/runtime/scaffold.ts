@@ -272,9 +272,11 @@ function resolveValidatedPhpPrefix(value: string): string {
  * Builds the generated WordPress wrapper CSS class for a scaffolded block.
  *
  * Returns `wp-block-{namespace}-{slug}` when a non-empty namespace is present,
- * or `wp-block-{slug}` when the namespace is empty or undefined. Both inputs
- * are normalized and validated with the same scaffold identifier rules used for
- * block names.
+ * or `wp-block-{slug}` when the namespace is empty or undefined. When the
+ * normalized namespace equals the normalized slug, appends `-block` so the
+ * generated class avoids repeated namespace segments without colliding with the
+ * default core wrapper classes. Both inputs are normalized and validated with
+ * the same scaffold identifier rules used for block names.
  */
 export function buildBlockCssClassName(
 	namespace: string | undefined,
@@ -287,7 +289,7 @@ export function buildBlockCssClassName(
 			: "";
 
 	if (normalizedNamespace === normalizedSlug) {
-		return `wp-block-${normalizedSlug}`;
+		return `wp-block-${normalizedSlug}-block`;
 	}
 
 	return normalizedNamespace.length > 0

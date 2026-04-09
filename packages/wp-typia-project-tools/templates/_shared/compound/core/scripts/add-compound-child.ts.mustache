@@ -109,7 +109,7 @@ function buildBlockCssClassName( namespace: string, slug: string ): string {
 			: '';
 
 	if ( normalizedNamespace === normalizedSlug ) {
-		return `wp-block-${ normalizedSlug }`;
+		return `wp-block-${ normalizedSlug }-block`;
 	}
 
 	return normalizedNamespace.length > 0

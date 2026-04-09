@@ -66,7 +66,10 @@ describe("shared create runtime helpers", () => {
 			"wp-block-demo-block",
 		);
 		expect(buildBlockCssClassName("demo-block", "demo-block")).toBe(
-			"wp-block-demo-block-demo-block",
+			"wp-block-demo-block-block",
+		);
+		expect(buildBlockCssClassName("paragraph", "paragraph")).toBe(
+			"wp-block-paragraph-block",
 		);
 	});
 });

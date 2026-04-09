@@ -2049,7 +2049,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		expect(answers.title).toBe("Demo Recovered");
 	});
 
-	test("runScaffoldFlow avoids duplicate namespace segments in wrapper classes", async () => {
+	test("runScaffoldFlow avoids duplicate namespace segments without colliding with core wrapper classes", async () => {
 		const projectInput = "demo-default-class";
 		const flow = await runScaffoldFlow({
 			cwd: tempRoot,
@@ -2077,15 +2077,16 @@ describe("@wp-typia/project-tools scaffolding", () => {
 		);
 
 		expect(blockJson.name).toBe("demo-default-class/demo-default-class");
-		expect(generatedStyle).toContain(".wp-block-demo-default-class");
+		expect(generatedStyle).toContain(".wp-block-demo-default-class-block");
 		expect(generatedStyle).not.toContain(".wp-block-demo-default-class-demo-default-class");
-		expect(generatedEdit).toContain("className: `wp-block-demo-default-class${isVisible ? '' : ' is-hidden'}`");
-		expect(generatedSave).toContain("className: `wp-block-demo-default-class${isVisible ? '' : ' is-hidden'}`");
+		expect(generatedStyle).not.toContain(".wp-block-demo-default-class {");
+		expect(generatedEdit).toContain("className: `wp-block-demo-default-class-block${isVisible ? '' : ' is-hidden'}`");
+		expect(generatedSave).toContain("className: `wp-block-demo-default-class-block${isVisible ? '' : ' is-hidden'}`");
 		expect(generatedEdit).toContain(
-			'className="wp-block-demo-default-class__content"',
+			'className="wp-block-demo-default-class-block__content"',
 		);
 		expect(generatedSave).toContain(
-			'className="wp-block-demo-default-class__content"',
+			'className="wp-block-demo-default-class-block__content"',
 		);
 	});
 
