@@ -227,10 +227,14 @@ module.exports = async () => {
 						process.cwd(),
 						'../../packages/wp-typia-block-runtime/src/validation.ts'
 					),
-					'@wp-typia/api-client/internal/runtime-primitives':
+					'@wp-typia/api-client/runtime-primitives':
 						path.resolve(
 							process.cwd(),
-							'../../packages/wp-typia-api-client/src/internal/runtime-primitives.ts'
+							'../../packages/wp-typia-api-client/src/runtime-primitives.ts'
+						),
+					'@wp-typia/api-client/client-utils': path.resolve(
+						process.cwd(),
+						'../../packages/wp-typia-api-client/src/client-utils.ts'
 						),
 					'@wp-typia/rest': path.resolve(
 						process.cwd(),
