@@ -63,6 +63,7 @@ jobs:
           exit "$status"
 
       - name: Create or update release PR
+        id: release_pr
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -78,9 +79,27 @@ jobs:
             - consumes pending `.sampo/changesets/*`
 
             Merge this PR with **Squash and merge** to automatically create a GitHub Release and trigger npm OIDC publish from `main`.
-          labels: |
-            release
           add-paths: |
             .sampo/**
             packages/**/package.json
             packages/**/CHANGELOG.md
+
+      - name: Add release label
+        if: steps.release_pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.release_pr.outputs.pull-request-number }}
+        shell: bash
+        run: |
+          set +e
+
+          for attempt in 1 2 3; do
+            if gh pr edit "$PR_NUMBER" --add-label release; then
+              exit 0
+            fi
+
+            echo "Attempt ${attempt} to add the release label failed; retrying..."
+            sleep $((attempt * 5))
+          done
+
+          echo "::warning::Failed to add the release label to PR #${PR_NUMBER}; continuing."
