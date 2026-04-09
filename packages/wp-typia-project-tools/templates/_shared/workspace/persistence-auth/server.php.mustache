@@ -211,12 +211,15 @@ function {{phpPrefix}}_handle_get_bootstrap( WP_REST_Request $request ) {
 		return $payload;
 	}
 
-	return rest_ensure_response(
+	$response = rest_ensure_response(
 		{{phpPrefix}}_build_bootstrap_response(
 			(int) $payload['postId'],
 			(string) $payload['resourceKey']
 		)
 	);
+
+	$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0' );
+	return $response;
 }
 
 function {{phpPrefix}}_handle_write_state( WP_REST_Request $request ) {

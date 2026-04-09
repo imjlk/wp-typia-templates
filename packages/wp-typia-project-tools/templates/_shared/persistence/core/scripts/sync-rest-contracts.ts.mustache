@@ -66,7 +66,7 @@ const REST_ENDPOINT_MANIFEST = defineEndpointManifest( {
 			},
 		},
 		{
-			auth: 'public',
+			auth: '{{restWriteAuthIntent}}',
 			method: 'GET',
 			operationId: 'get{{pascalCase}}Bootstrap',
 			path: '/{{namespace}}/v1/{{slugKebabCase}}/bootstrap',
