@@ -580,12 +580,15 @@ function persistence_examples_handle_get_counter_bootstrap( WP_REST_Request $req
 		return $payload;
 	}
 
-	return rest_ensure_response(
+	$response = rest_ensure_response(
 		persistence_examples_build_counter_bootstrap_response(
 			(int) $payload['postId'],
 			(string) $payload['resourceKey']
 		)
 	);
+
+	$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0' );
+	return $response;
 }
 
 function persistence_examples_handle_increment_counter( WP_REST_Request $request ) {
@@ -829,13 +832,16 @@ function persistence_examples_handle_get_like_bootstrap( WP_REST_Request $reques
 	}
 
 	$user_id = is_user_logged_in() ? get_current_user_id() : 0;
-	return rest_ensure_response(
+	$response = rest_ensure_response(
 		persistence_examples_build_like_bootstrap_response(
 			(int) $payload['postId'],
 			(string) $payload['resourceKey'],
 			(int) $user_id
 		)
 	);
+
+	$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0' );
+	return $response;
 }
 
 function persistence_examples_handle_toggle_like( WP_REST_Request $request ) {

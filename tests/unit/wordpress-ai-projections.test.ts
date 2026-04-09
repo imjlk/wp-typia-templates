@@ -199,4 +199,28 @@ describe("WordPress AI projections", () => {
     );
     expect(phpSource).toContain("function_exists( 'wp_register_ability' )");
   });
+
+  test("marks bootstrap example handlers as no-store to avoid caching viewer state", () => {
+    const pluginSource = readFileSync(
+      path.join(
+        import.meta.dir,
+        "..",
+        "..",
+        "examples",
+        "persistence-examples",
+        "persistence-examples.php"
+      ),
+      "utf8"
+    );
+
+    expect(pluginSource).toContain(
+      "function persistence_examples_handle_get_counter_bootstrap"
+    );
+    expect(pluginSource).toContain(
+      "function persistence_examples_handle_get_like_bootstrap"
+    );
+    expect(pluginSource).toContain(
+      "Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0'"
+    );
+  });
 });
