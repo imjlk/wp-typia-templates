@@ -162,6 +162,9 @@ const { actions, state } = store( 'persistenceExamplesLikeButton', {
 				return;
 			}
 			if ( ! context.bootstrapReady ) {
+				await actions.loadBootstrap();
+			}
+			if ( ! context.bootstrapReady ) {
 				context.error = 'Write access is still initializing.';
 				return;
 			}

@@ -1359,6 +1359,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
       expect(generatedInteractivity).not.toContain(
         "function createPublicWriteRequestId"
       );
+      expect(generatedInteractivity).toContain("await actions.loadBootstrap();");
       expect(generatedInteractivity).toContain("transportTarget: 'frontend'");
       expect(generatedValidatorToolkit).toContain(
         "createScaffoldValidatorToolkit"
@@ -2893,6 +2894,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
       expect(parentInteractivity).not.toContain(
         "function createPublicWriteRequestId"
       );
+      expect(parentInteractivity).toContain("await actions.loadBootstrap();");
       expect(parentInteractivity).toContain("transportTarget: 'frontend'");
       expect(generatedTransport).toContain("resolveTransportCallOptions");
       expect(generatedTransport).toContain("includeRestNonce: true");

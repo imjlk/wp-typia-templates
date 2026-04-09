@@ -168,6 +168,9 @@ const { actions, state } = store( 'persistenceExamplesCounter', {
 				return;
 			}
 			if ( ! context.bootstrapReady ) {
+				await actions.loadBootstrap();
+			}
+			if ( ! context.bootstrapReady ) {
 				context.error = 'Write access is still initializing.';
 				return;
 			}

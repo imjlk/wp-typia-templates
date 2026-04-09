@@ -492,7 +492,7 @@ When you customize the generated PHP:
 - edit `inc/rest-auth.php` or `inc/rest-public.php` for permission policy changes
 - edit `src/transport.ts` when you need to route editor or frontend requests through a contract-compatible proxy or BFF without changing the endpoint contracts
 - keep durable data on the `/state` endpoints and return fresh viewer/session-only write data from the dedicated `/bootstrap` endpoint
-- keep `src/api-types.ts` plus the endpoint manifest as the source of truth for REST contracts, then regenerate `src/api-schemas/*` and `src/api.openapi.json`
+- treat the endpoint manifest and authored contract definitions as the source of truth for REST contracts, then regenerate `src/api-types.ts`, `src/api-schemas/*`, and `src/api.openapi.json`
 - avoid hand-editing generated schema and OpenAPI artifacts unless you are debugging the generation output itself
 
 `persistence` keeps one minimal aggregate-counter scaffold and lets you choose between:

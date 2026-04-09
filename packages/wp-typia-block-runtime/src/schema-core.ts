@@ -625,32 +625,81 @@ function applyProjectedBootstrapContract(schema: JsonSchemaObject): void {
 		},
 		required: ["canWrite"],
 	};
+	const buildRequiredPropertyObject = (
+		requiredKeys: string[],
+	): Record<string, JsonSchemaObject> =>
+		Object.fromEntries(
+			requiredKeys.map((requiredKey) => [requiredKey, properties[requiredKey] ?? {}]),
+		);
+	const hasRestNonce = properties.restNonce?.type === "string";
+	const hasPublicWriteCredential =
+		properties.publicWriteToken?.type === "string" &&
+		isJsonSchemaObject(properties.publicWriteExpiresAt);
 
-	if (properties.restNonce?.type === "string") {
+	if (hasRestNonce && hasPublicWriteCredential) {
 		allOf.push({
 			if: canWriteIsTrue,
 			then: {
+				anyOf: [
+					{
+						properties: buildRequiredPropertyObject(["restNonce"]),
+						required: ["restNonce"],
+					},
+					{
+						properties: buildRequiredPropertyObject([
+							"publicWriteExpiresAt",
+							"publicWriteToken",
+						]),
+						required: ["publicWriteExpiresAt", "publicWriteToken"],
+					},
+				],
+			},
+			else: {
+				not: {
+					anyOf: [
+						{
+							properties: buildRequiredPropertyObject(["restNonce"]),
+							required: ["restNonce"],
+						},
+						{
+							properties: buildRequiredPropertyObject(["publicWriteToken"]),
+							required: ["publicWriteToken"],
+						},
+					],
+				},
+			},
+		});
+	}
+
+	if (hasRestNonce && !hasPublicWriteCredential) {
+		allOf.push({
+			if: canWriteIsTrue,
+			then: {
+				properties: buildRequiredPropertyObject(["restNonce"]),
 				required: ["restNonce"],
 			},
 			else: {
 				not: {
+					properties: buildRequiredPropertyObject(["restNonce"]),
 					required: ["restNonce"],
 				},
 			},
 		});
 	}
 
-	if (
-		properties.publicWriteToken?.type === "string" &&
-		isJsonSchemaObject(properties.publicWriteExpiresAt)
-	) {
+	if (hasPublicWriteCredential && !hasRestNonce) {
 		allOf.push({
 			if: canWriteIsTrue,
 			then: {
+				properties: buildRequiredPropertyObject([
+					"publicWriteExpiresAt",
+					"publicWriteToken",
+				]),
 				required: ["publicWriteExpiresAt", "publicWriteToken"],
 			},
 			else: {
 				not: {
+					properties: buildRequiredPropertyObject(["publicWriteToken"]),
 					required: ["publicWriteToken"],
 				},
 			},
