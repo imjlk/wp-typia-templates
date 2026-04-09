@@ -37,14 +37,38 @@ function resolveEndpointUrl(
 	baseUrl?: string
 ): string {
 	if ( typeof baseUrl === 'string' && baseUrl.trim().length > 0 ) {
-		const normalizedBaseUrlInput = baseUrl.endsWith( '/' ) ? baseUrl : `${ baseUrl }/`;
-		const normalizedBaseUrl = new URL(
-			normalizedBaseUrlInput,
-			typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
-		).toString();
-		const normalizedEndpointPath = endpointPath.replace( /^\/+/, '' );
+		const origin =
+			typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+		const resolvedBaseUrl = new URL( baseUrl.trim(), origin );
+		const [ pathWithQuery, hash = '' ] = endpointPath.split( '#', 2 );
+		const [ rawPath, rawQuery = '' ] = pathWithQuery.split( '?', 2 );
+		const normalizedEndpointPath = rawPath.replace( /^\/+/, '' );
 
-		return new URL( normalizedEndpointPath, normalizedBaseUrl ).toString();
+		if ( resolvedBaseUrl.searchParams.has( 'rest_route' ) ) {
+			const restRouteBase = resolvedBaseUrl.searchParams.get( 'rest_route' ) ?? '/';
+			const normalizedRestRouteBase = restRouteBase
+				.replace( /^\/+/, '' )
+				.replace( /\/+$/, '' );
+			const nextRestRoute = normalizedRestRouteBase.length > 0
+				? `/${ normalizedRestRouteBase }/${ normalizedEndpointPath }`
+				: `/${ normalizedEndpointPath }`;
+			resolvedBaseUrl.searchParams.set( 'rest_route', nextRestRoute );
+		} else {
+			const basePath = resolvedBaseUrl.pathname.endsWith( '/' )
+				? resolvedBaseUrl.pathname
+				: `${ resolvedBaseUrl.pathname }/`;
+			resolvedBaseUrl.pathname = `${ basePath }${ normalizedEndpointPath }`;
+		}
+
+		for ( const [ key, value ] of new URLSearchParams( rawQuery ) ) {
+			resolvedBaseUrl.searchParams.append( key, value );
+		}
+
+		if ( hash ) {
+			resolvedBaseUrl.hash = hash;
+		}
+
+		return resolvedBaseUrl.toString();
 	}
 
 	return resolveRestRouteUrl( endpointPath );

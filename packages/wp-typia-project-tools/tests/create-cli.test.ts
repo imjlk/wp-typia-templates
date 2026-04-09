@@ -1467,6 +1467,63 @@ console.log(JSON.stringify({
 		expect(transportChecks.frontendRead?.url).toBe("https://example.test/proxy/demo/v1/state?postId=7&resourceKey=demo");
 	});
 
+	test("generated persistence transport preserves query-based WordPress proxy roots", async () => {
+		const targetDir = path.join(tempRoot, "demo-persistence-query-proxy");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "persistence",
+			dataStorageMode: "custom-table",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				dataStorageMode: "custom-table",
+				description: "Demo persistence query proxy transport behavior",
+				namespace: "create-block",
+				persistencePolicy: "public",
+				slug: "demo-persistence-query-proxy",
+				title: "Demo Persistence Query Proxy",
+			},
+			persistencePolicy: "public",
+		});
+
+		replaceGeneratedTransportBaseUrls(
+			path.join(targetDir, "src", "transport.ts"),
+			"/index.php?rest_route=/proxy/",
+		);
+
+		const transportChecks = runGeneratedJsonScript(
+			targetDir,
+			"verify-query-proxy-transport.ts",
+			`
+import { resolveTransportCallOptions } from './src/transport';
+
+(globalThis as typeof globalThis & { window?: unknown }).window = {
+	location: { origin: 'https://example.test' },
+};
+
+const endpoint = { path: '/demo/v1/state' };
+const frontendRead = resolveTransportCallOptions('frontend', 'read', endpoint, {
+	postId: 7,
+	resourceKey: 'demo',
+}, {
+	transportTarget: 'frontend',
+});
+
+console.log(JSON.stringify({
+	frontendRead: frontendRead.requestOptions,
+}));
+			`,
+		) as {
+			frontendRead?: { url?: string };
+		};
+
+		expect(transportChecks.frontendRead?.url).toBe(
+			"https://example.test/index.php?rest_route=%2Fproxy%2Fdemo%2Fv1%2Fstate&postId=7&resourceKey=demo",
+		);
+	});
+
 	test(
 		"generated persistence transport can point at the adapter PoC by editing only src/transport.ts",
 		async () => {
