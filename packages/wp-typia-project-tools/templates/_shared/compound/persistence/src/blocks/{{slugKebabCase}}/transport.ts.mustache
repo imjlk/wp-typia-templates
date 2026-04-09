@@ -37,7 +37,11 @@ function resolveEndpointUrl(
 	baseUrl?: string
 ): string {
 	if ( typeof baseUrl === 'string' && baseUrl.trim().length > 0 ) {
-		const normalizedBaseUrl = baseUrl.endsWith( '/' ) ? baseUrl : `${ baseUrl }/`;
+		const normalizedBaseUrlInput = baseUrl.endsWith( '/' ) ? baseUrl : `${ baseUrl }/`;
+		const normalizedBaseUrl = new URL(
+			normalizedBaseUrlInput,
+			typeof window !== 'undefined' ? window.location.origin : 'http://localhost'
+		).toString();
 		const normalizedEndpointPath = endpointPath.replace( /^\/+/, '' );
 
 		return new URL( normalizedEndpointPath, normalizedBaseUrl ).toString();

@@ -1412,6 +1412,61 @@ console.log(JSON.stringify({
 		expect(transportChecks.frontendWrite?.url).toBe("https://example.test/proxy/demo/v1/state");
 	});
 
+	test("generated persistence transport resolves same-origin relative base URLs", async () => {
+		const targetDir = path.join(tempRoot, "demo-persistence-relative-proxy");
+
+		await scaffoldProject({
+			projectDir: targetDir,
+			templateId: "persistence",
+			dataStorageMode: "custom-table",
+			packageManager: "npm",
+			noInstall: true,
+			answers: {
+				author: "Test Runner",
+				dataStorageMode: "custom-table",
+				description: "Demo persistence relative proxy transport behavior",
+				namespace: "create-block",
+				persistencePolicy: "public",
+				slug: "demo-persistence-relative-proxy",
+				title: "Demo Persistence Relative Proxy",
+			},
+			persistencePolicy: "public",
+		});
+
+		replaceGeneratedTransportBaseUrls(
+			path.join(targetDir, "src", "transport.ts"),
+			"/proxy/",
+		);
+
+		const transportChecks = runGeneratedJsonScript(
+			targetDir,
+			"verify-relative-proxy-transport.ts",
+			`
+import { resolveTransportCallOptions } from './src/transport';
+
+(globalThis as typeof globalThis & { window?: unknown }).window = {
+	location: { origin: 'https://example.test' },
+};
+
+const endpoint = { path: '/demo/v1/state' };
+const frontendRead = resolveTransportCallOptions('frontend', 'read', endpoint, {
+	postId: 7,
+	resourceKey: 'demo',
+}, {
+	transportTarget: 'frontend',
+});
+
+console.log(JSON.stringify({
+	frontendRead: frontendRead.requestOptions,
+}));
+			`,
+		) as {
+			frontendRead?: { url?: string };
+		};
+
+		expect(transportChecks.frontendRead?.url).toBe("https://example.test/proxy/demo/v1/state?postId=7&resourceKey=demo");
+	});
+
 	test(
 		"generated persistence transport can point at the adapter PoC by editing only src/transport.ts",
 		async () => {
