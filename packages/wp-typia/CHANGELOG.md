@@ -1,5 +1,15 @@
 # wp-typia
 
+## 0.15.0 — 2026-04-09
+
+### Minor changes
+
+- [e4610ff](https://github.com/imjlk/wp-typia/commit/e4610ffe8201d47f2de6c03a41a89fb4c63fcebc) Add dedicated static-safe `/bootstrap` endpoints for persistence scaffolds and align generated runtime flow around fresh session-only write access hydration. — Thanks @imjlk!
+
+### Patch changes
+
+- Updated dependencies: project-tools (npm)@0.15.0
+
 ## 0.14.0 — 2026-04-09
 
 ### Minor changes
