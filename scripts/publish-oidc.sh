@@ -7,13 +7,13 @@ DRY_RUN="${DRY_RUN:-0}"
 
 PACKAGES=(
   "packages/wp-typia-block-types"
-  "packages/wp-typia-rest"
   "packages/wp-typia-api-client"
-  "packages/wp-typia-project-tools"
-  "packages/create"
-  "packages/wp-typia"
-  "packages/create-workspace-template"
+  "packages/wp-typia-rest"
   "packages/wp-typia-block-runtime"
+  "packages/wp-typia-project-tools"
+  "packages/wp-typia"
+  "packages/create"
+  "packages/create-workspace-template"
 )
 
 read_package_field() {

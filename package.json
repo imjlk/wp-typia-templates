@@ -43,6 +43,7 @@
     "test:unit": "bun test tests/unit",
     "test:cli": "bun run --filter @wp-typia/rest test && bun run --filter @wp-typia/api-client test && bun run --filter @wp-typia/project-tools test && bun run --filter wp-typia test && bun run --filter @wp-typia/block-runtime test",
     "test:generated-smoke": "node scripts/run-generated-project-smoke.mjs",
+    "test:publish-install-smoke": "node scripts/run-publish-install-smoke.mjs",
     "benchmark:create-runtime": "node scripts/benchmark-create-runtime-hotpaths.mjs",
     "test:coverage": "bun run test:unit:coverage && bun run test:cli:coverage",
     "test:unit:coverage": "bun test tests/unit --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage/unit",
