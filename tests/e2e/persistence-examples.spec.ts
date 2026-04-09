@@ -3,9 +3,13 @@ import { requestWordPressRest } from './fixtures/rest';
 
 interface CounterContext {
   postId: number;
-  publicWriteToken: string;
-  publicWriteExpiresAt: number;
   resourceKey: string;
+}
+
+interface CounterBootstrapContext {
+  canWrite: boolean;
+  publicWriteExpiresAt: number;
+  publicWriteToken?: string;
 }
 
 interface LikeContext {
@@ -34,8 +38,6 @@ async function getCounterContext(previewPage: Awaited<ReturnType<WordPressPage['
 
     const context = JSON.parse(rawContext) as {
       postId?: unknown;
-      publicWriteExpiresAt?: unknown;
-      publicWriteToken?: unknown;
       resourceKey?: unknown;
     };
 
@@ -45,17 +47,26 @@ async function getCounterContext(previewPage: Awaited<ReturnType<WordPressPage['
     if (typeof context.resourceKey !== 'string' || context.resourceKey.length === 0) {
       throw new Error('Missing counter resource key.');
     }
-    if (typeof context.publicWriteToken !== 'string' || context.publicWriteToken.length === 0) {
-      throw new Error('Missing counter public write token.');
-    }
-
     return {
       postId: context.postId,
-      publicWriteExpiresAt:
-        typeof context.publicWriteExpiresAt === 'number' ? context.publicWriteExpiresAt : 0,
-      publicWriteToken: context.publicWriteToken,
       resourceKey: context.resourceKey,
     };
+  });
+}
+
+async function readCounterBootstrap(
+  previewPage: Awaited<ReturnType<WordPressPage['previewPost']>>,
+  context: CounterContext,
+) {
+  return requestWordPressRest(previewPage, {
+    routePath: '/persistence-examples/v1/counter/bootstrap',
+    params: {
+      postId: String(context.postId),
+      resourceKey: context.resourceKey,
+    },
+    headers: {
+      Accept: 'application/json',
+    },
   });
 }
 
@@ -199,6 +210,26 @@ test.describe('Persistence examples', () => {
     await expect.poll(async () => persistButton.isEnabled(), { timeout: 10_000 }).toBe(true);
     await expect(counterValue).toHaveText('0');
 
+    await expect
+      .poll(async () => {
+        const result = await readCounterBootstrap(previewPage, counterContext);
+        const body = JSON.parse(result.body) as {
+          publicWriteToken?: string;
+        };
+        return typeof body.publicWriteToken === 'string' && body.publicWriteToken.length > 0;
+      })
+      .toBe(true);
+
+    const counterBootstrap = JSON.parse(
+      (await readCounterBootstrap(previewPage, counterContext)).body,
+    ) as CounterBootstrapContext;
+    if (
+      typeof counterBootstrap.publicWriteToken !== 'string' ||
+      counterBootstrap.publicWriteToken.length === 0
+    ) {
+      throw new Error('Missing counter public write token from bootstrap response.');
+    }
+
     await persistButton.click();
     await expect(counterValue).toHaveText('1', { timeout: 10_000 });
     await expect
@@ -213,7 +244,7 @@ test.describe('Persistence examples', () => {
       delta: 1,
       postId: counterContext.postId,
       publicWriteRequestId: replayRequestId,
-      publicWriteToken: counterContext.publicWriteToken,
+      publicWriteToken: counterBootstrap.publicWriteToken,
       resourceKey: counterContext.resourceKey,
     });
     expect(firstReplayAttempt.status).toBe(200);
@@ -222,7 +253,7 @@ test.describe('Persistence examples', () => {
       delta: 1,
       postId: counterContext.postId,
       publicWriteRequestId: replayRequestId,
-      publicWriteToken: counterContext.publicWriteToken,
+      publicWriteToken: counterBootstrap.publicWriteToken,
       resourceKey: counterContext.resourceKey,
     });
     expect(secondReplayAttempt.status).toBe(409);
@@ -238,7 +269,7 @@ test.describe('Persistence examples', () => {
     const missingRequestId = await writeCounter(previewPage, {
       delta: 1,
       postId: counterContext.postId,
-      publicWriteToken: counterContext.publicWriteToken,
+      publicWriteToken: counterBootstrap.publicWriteToken,
       resourceKey: counterContext.resourceKey,
     });
     expect(missingRequestId.status).toBe(403);
@@ -247,7 +278,7 @@ test.describe('Persistence examples', () => {
       delta: 1,
       postId: counterContext.postId,
       publicWriteRequestId: createRequestId(),
-      publicWriteToken: `${counterContext.publicWriteToken}x`,
+      publicWriteToken: `${counterBootstrap.publicWriteToken}x`,
       resourceKey: counterContext.resourceKey,
     });
     expect(tamperedToken.status).toBe(403);
@@ -257,7 +288,7 @@ test.describe('Persistence examples', () => {
       delta: 1,
       postId: counterContext.postId,
       publicWriteRequestId: createRequestId(),
-      publicWriteToken: counterContext.publicWriteToken,
+      publicWriteToken: counterBootstrap.publicWriteToken,
       resourceKey: counterContext.resourceKey,
     });
     expect(expiredToken.status).toBe(403);
