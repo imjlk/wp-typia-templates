@@ -1,5 +1,12 @@
 # wp-typia
 
+## 0.15.2 — 2026-04-09
+
+### Patch changes
+
+- [ab7d1c9](https://github.com/imjlk/wp-typia/commit/ab7d1c9afaf4039b5053991ca9fe88cabcd46a13) Publish shared API client utilities and runtime primitives from `@wp-typia/api-client`, reuse them across rest and runtime packages, and align active package Bun minimums with `1.3.11`. — Thanks @imjlk!
+- Updated dependencies: api-client (npm)@0.4.2, project-tools (npm)@0.15.2
+
 ## 0.15.1 — 2026-04-09
 
 ### Patch changes

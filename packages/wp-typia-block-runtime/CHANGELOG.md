@@ -1,12 +1,16 @@
 # @wp-typia/block-runtime
 
-## 0.4.0 — 2026-04-08
+## 0.4.2 — 2026-04-09
 
 ### Minor changes
 
 - [e20511a](https://github.com/imjlk/wp-typia/commit/e20511af33a65a9a78cde9b015dac8ec1e9ad4f5) Standardize generated block ids, scoped client ids, persistence resource keys,
-  and public write request ids under `@wp-typia/block-runtime/identifiers` for
-  templates and repo examples. — Thanks @imjlk!
+
+### Patch changes
+
+- [ab7d1c9](https://github.com/imjlk/wp-typia/commit/ab7d1c9afaf4039b5053991ca9fe88cabcd46a13) Publish shared API client utilities and runtime primitives from `@wp-typia/api-client`, reuse them across rest and runtime packages, and align active package Bun minimums with `1.3.11`. — Thanks @imjlk!
+- [0cc5a61](https://github.com/imjlk/wp-typia/commit/0cc5a61bb50bc0fd871645b6dad29b01bb66950b) Make block metadata helpers live in `@wp-typia/block-runtime` as the single source of truth and have `@wp-typia/project-tools` re-export the identical runtime modules instead of carrying duplicate copies. — Thanks @imjlk!
+- Updated dependencies: api-client (npm)@0.4.2
 
 ## 0.3.0 — 2026-04-07
 

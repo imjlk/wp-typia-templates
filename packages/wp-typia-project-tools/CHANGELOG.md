@@ -1,5 +1,13 @@
 # @wp-typia/project-tools
 
+## 0.15.2 — 2026-04-09
+
+### Patch changes
+
+- [ab7d1c9](https://github.com/imjlk/wp-typia/commit/ab7d1c9afaf4039b5053991ca9fe88cabcd46a13) Publish shared API client utilities and runtime primitives from `@wp-typia/api-client`, reuse them across rest and runtime packages, and align active package Bun minimums with `1.3.11`. — Thanks @imjlk!
+- [0cc5a61](https://github.com/imjlk/wp-typia/commit/0cc5a61bb50bc0fd871645b6dad29b01bb66950b) Make block metadata helpers live in `@wp-typia/block-runtime` as the single source of truth and have `@wp-typia/project-tools` re-export the identical runtime modules instead of carrying duplicate copies. — Thanks @imjlk!
+- Updated dependencies: api-client (npm)@0.4.2, block-runtime (npm)@0.4.2, block-types (npm)@0.2.1, rest (npm)@0.3.5
+
 ## 0.15.1 — 2026-04-09
 
 ### Patch changes
