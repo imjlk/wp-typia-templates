@@ -670,6 +670,7 @@ function persistence_examples_handle_get_counter_bootstrap( WP_REST_Request $req
 	);
 
 	$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0' );
+	$response->header( 'Pragma', 'no-cache' );
 	return $response;
 }
 
@@ -935,6 +936,8 @@ function persistence_examples_handle_get_like_bootstrap( WP_REST_Request $reques
 	);
 
 	$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0' );
+	$response->header( 'Pragma', 'no-cache' );
+	$response->header( 'Vary', 'Cookie' );
 	return $response;
 }
 

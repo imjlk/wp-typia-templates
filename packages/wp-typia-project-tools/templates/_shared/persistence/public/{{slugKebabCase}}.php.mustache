@@ -369,6 +369,7 @@ function {{phpPrefix}}_handle_get_bootstrap( WP_REST_Request $request ) {
 	);
 
 	$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0' );
+	$response->header( 'Pragma', 'no-cache' );
 	return $response;
 }
 

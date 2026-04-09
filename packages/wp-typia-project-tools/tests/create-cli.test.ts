@@ -1295,6 +1295,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
       expect(pluginBootstrap).toContain("Tested up to:      6.9");
       expect(pluginBootstrap).toContain("Domain Path:       /languages");
       expect(pluginBootstrap).toContain("load_plugin_textdomain(");
+      expect(pluginBootstrap).toContain("Pragma', 'no-cache'");
       expect(pluginBootstrap).toContain(
         "require_once __DIR__ . '/inc/rest-shared.php';"
       );
@@ -1454,6 +1455,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
       expect(pluginBootstrap).toContain(
         "Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0'"
       );
+      expect(pluginBootstrap).toContain("Pragma', 'no-cache'");
       expect(pluginBootstrap).toContain(
         "if ( '' !== $token && $expires_at > 0 && ! $is_expired ) {"
       );
@@ -1606,6 +1608,8 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(pluginBootstrap).toContain(
       "Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0'"
     );
+    expect(pluginBootstrap).toContain("Pragma', 'no-cache'");
+    expect(pluginBootstrap).toContain("Vary', 'Cookie'");
     expect(restAuthHelper).toContain(
       "function demo_persistence_authenticated_can_write_authenticated"
     );
@@ -3259,6 +3263,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(pluginBootstrap).toContain(
       "Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0'"
     );
+    expect(pluginBootstrap).toContain("Pragma', 'no-cache'");
     expect(pluginBootstrap).toContain(
       "if ( '' !== $token && $expires_at > 0 && ! $is_expired ) {"
     );
