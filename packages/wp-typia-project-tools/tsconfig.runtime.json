@@ -25,8 +25,26 @@
       "@wp-typia/block-runtime/metadata-core": [
         "packages/wp-typia-project-tools/build-shims/block-runtime-metadata-core-shim.d.ts"
       ],
+      "@wp-typia/block-runtime/metadata-analysis": [
+        "packages/wp-typia-block-runtime/dist/metadata-analysis.d.ts"
+      ],
+      "@wp-typia/block-runtime/metadata-model": [
+        "packages/wp-typia-block-runtime/dist/metadata-model.d.ts"
+      ],
+      "@wp-typia/block-runtime/metadata-parser": [
+        "packages/wp-typia-block-runtime/dist/metadata-parser.d.ts"
+      ],
+      "@wp-typia/block-runtime/metadata-php-render": [
+        "packages/wp-typia-block-runtime/dist/metadata-php-render.d.ts"
+      ],
+      "@wp-typia/block-runtime/metadata-projection": [
+        "packages/wp-typia-block-runtime/dist/metadata-projection.d.ts"
+      ],
       "@wp-typia/block-runtime/validation": [
         "packages/wp-typia-block-runtime/dist/validation.d.ts"
+      ],
+      "@wp-typia/block-runtime/json-utils": [
+        "packages/wp-typia-block-runtime/dist/json-utils.d.ts"
       ]
     }
   },
