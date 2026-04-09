@@ -12,7 +12,10 @@
 			"maxLength": 100
 		}
 	},
-	"required": ["postId", "resourceKey"],
+	"required": [
+		"postId",
+		"resourceKey"
+	],
 	"title": "PersistenceCounterQuery",
 	"type": "object"
 }

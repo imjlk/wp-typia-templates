@@ -14,7 +14,10 @@
 			"maxLength": 128
 		}
 	},
-	"required": ["canWrite", "likedByCurrentUser"],
+	"required": [
+		"canWrite",
+		"likedByCurrentUser"
+	],
 	"title": "PersistenceLikeBootstrapResponse",
 	"type": "object"
 }

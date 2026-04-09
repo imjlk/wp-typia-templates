@@ -1385,7 +1385,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
         "openApiInfo: REST_ENDPOINT_MANIFEST.info"
       );
       expect(generatedSyncRest).toMatch(
-        /auth:\s*'public-write-protected'[\s\S]*?operationId:\s*'getDemoPersistencePublicBootstrap'/
+        /auth:\s*'public'[\s\S]*?operationId:\s*'getDemoPersistencePublicBootstrap'/
       );
       expect(generatedStyle).toContain(
         ".wp-block-create-block-demo-persistence-public"
@@ -1585,7 +1585,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
       "function demo_persistence_authenticated_can_write_authenticated"
     );
     expect(generatedSyncRest).toMatch(
-      /auth:\s*'authenticated'[\s\S]*?operationId:\s*'getDemoPersistenceAuthenticatedBootstrap'/
+      /auth:\s*'public'[\s\S]*?operationId:\s*'getDemoPersistenceAuthenticatedBootstrap'/
     );
     expect(generatedStyle).toContain(
       ".wp-block-create-block-demo-persistence-authenticated"
@@ -2844,7 +2844,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
         "add-child: insert new block config entries here"
       );
       expect(generatedBlockConfig).toMatch(
-        /auth:\s*'authenticated'[\s\S]*?operationId:\s*'getDemoCompoundStorageBootstrap'/
+        /auth:\s*'public'[\s\S]*?operationId:\s*'getDemoCompoundStorageBootstrap'/
       );
       expect(generatedApiTypes).toContain("publicWriteRequestId?: string");
       expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");

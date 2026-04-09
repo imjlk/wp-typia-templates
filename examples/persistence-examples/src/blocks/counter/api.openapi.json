@@ -15,7 +15,10 @@
 						"maxLength": 100
 					}
 				},
-				"required": ["postId", "resourceKey"],
+				"required": [
+					"postId",
+					"resourceKey"
+				],
 				"title": "PersistenceCounterQuery",
 				"type": "object"
 			},
@@ -33,7 +36,10 @@
 						"maxLength": 100
 					}
 				},
-				"required": ["postId", "resourceKey"],
+				"required": [
+					"postId",
+					"resourceKey"
+				],
 				"title": "PersistenceCounterBootstrapQuery",
 				"type": "object"
 			},
@@ -67,7 +73,11 @@
 						"minimum": 1
 					}
 				},
-				"required": ["postId", "publicWriteRequestId", "resourceKey"],
+				"required": [
+					"postId",
+					"publicWriteRequestId",
+					"resourceKey"
+				],
 				"title": "PersistenceCounterIncrementRequest",
 				"type": "object"
 			},
@@ -88,7 +98,9 @@
 						"maxLength": 512
 					}
 				},
-				"required": ["canWrite"],
+				"required": [
+					"canWrite"
+				],
 				"title": "PersistenceCounterBootstrapResponse",
 				"type": "object"
 			},
@@ -111,11 +123,18 @@
 						"minimum": 0
 					},
 					"storage": {
-						"enum": ["custom-table"],
+						"enum": [
+							"custom-table"
+						],
 						"type": "string"
 					}
 				},
-				"required": ["postId", "resourceKey", "count", "storage"],
+				"required": [
+					"postId",
+					"resourceKey",
+					"count",
+					"storage"
+				],
 				"title": "PersistenceCounterResponse",
 				"type": "object"
 			}
@@ -142,7 +161,9 @@
 						"description": "Successful response"
 					}
 				},
-				"tags": ["Counter"],
+				"tags": [
+					"Counter"
+				],
 				"x-typia-authIntent": "public",
 				"x-wp-typia-authPolicy": "public-read",
 				"summary": "Read the current counter state.",
@@ -182,7 +203,9 @@
 						"description": "Successful response"
 					}
 				},
-				"tags": ["Counter"],
+				"tags": [
+					"Counter"
+				],
 				"x-typia-authIntent": "public-write-protected",
 				"x-wp-typia-authPolicy": "public-signed-token",
 				"summary": "Increment the current counter state.",
@@ -214,7 +237,9 @@
 						"description": "Successful response"
 					}
 				},
-				"tags": ["Counter"],
+				"tags": [
+					"Counter"
+				],
 				"x-typia-authIntent": "public",
 				"x-wp-typia-authPolicy": "public-read",
 				"summary": "Read fresh counter write bootstrap state for the current viewer.",

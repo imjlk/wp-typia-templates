@@ -15,7 +15,10 @@
 						"maxLength": 100
 					}
 				},
-				"required": ["postId", "resourceKey"],
+				"required": [
+					"postId",
+					"resourceKey"
+				],
 				"title": "PersistenceCounterBootstrapQuery",
 				"type": "object"
 			}

@@ -15,7 +15,9 @@
 			"maxLength": 512
 		}
 	},
-	"required": ["canWrite"],
+	"required": [
+		"canWrite"
+	],
 	"title": "PersistenceCounterBootstrapResponse",
 	"type": "object"
 }

@@ -1,176 +1,193 @@
 {
-	"abilities": [
-		{
-			"authIntent": "public",
-			"authMode": "public-read",
-			"category": "persistence-examples",
-			"description": "Read the current counter state.",
-			"executeCallback": "persistence_examples_execute_get_counter_ability",
-			"id": "persistence-examples/get-persistence-counter-state",
-			"inputSchema": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
-				"additionalProperties": false,
-				"properties": {
-					"postId": {
-						"type": "integer",
-						"minimum": 0,
-						"maximum": 4294967295,
-						"multipleOf": 1
-					},
-					"resourceKey": {
-						"type": "string",
-						"minLength": 1,
-						"maxLength": 100
-					}
-				},
-				"required": ["postId", "resourceKey"],
-				"title": "PersistenceCounterQuery",
-				"type": "object"
-			},
-			"label": "Get Counter State",
-			"meta": {
-				"idempotent": true,
-				"readonly": true,
-				"show_in_rest": true
-			},
-			"method": "GET",
-			"operationId": "getPersistenceCounterState",
-			"outputSchema": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
-				"additionalProperties": false,
-				"properties": {
-					"postId": {
-						"type": "integer",
-						"minimum": 0,
-						"maximum": 4294967295,
-						"multipleOf": 1
-					},
-					"resourceKey": {
-						"type": "string",
-						"minLength": 1,
-						"maxLength": 100
-					},
-					"count": {
-						"type": "integer",
-						"minimum": 0,
-						"maximum": 4294967295,
-						"multipleOf": 1
-					},
-					"storage": {
-						"enum": ["custom-table"],
-						"type": "string"
-					}
-				},
-				"required": ["postId", "resourceKey", "count", "storage"],
-				"title": "PersistenceCounterResponse",
-				"type": "object"
-			},
-			"path": "/persistence-examples/v1/counter",
-			"permissionCallback": "persistence_examples_can_read_counter_ability"
-		},
-		{
-			"authIntent": "public-write-protected",
-			"authMode": "public-signed-token",
-			"category": "persistence-examples",
-			"description": "Increment the current counter state.",
-			"executeCallback": "persistence_examples_execute_increment_counter_ability",
-			"id": "persistence-examples/increment-persistence-counter-state",
-			"inputSchema": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
-				"additionalProperties": false,
-				"properties": {
-					"postId": {
-						"type": "integer",
-						"minimum": 1,
-						"maximum": 4294967295,
-						"multipleOf": 1
-					},
-					"publicWriteRequestId": {
-						"type": "string",
-						"minLength": 1,
-						"maxLength": 128
-					},
-					"resourceKey": {
-						"type": "string",
-						"minLength": 1,
-						"maxLength": 100
-					},
-					"publicWriteToken": {
-						"type": "string",
-						"minLength": 1,
-						"maxLength": 512
-					},
-					"delta": {
-						"default": 1,
-						"type": "integer",
-						"minimum": 1,
-						"maximum": 4294967295,
-						"multipleOf": 1
-					}
-				},
-				"required": [
-					"postId",
-					"publicWriteRequestId",
-					"resourceKey",
-					"publicWriteToken"
-				],
-				"title": "PersistenceCounterIncrementRequest",
-				"type": "object"
-			},
-			"label": "Increment Counter State",
-			"meta": {
-				"destructive": false,
-				"idempotent": false,
-				"readonly": false,
-				"show_in_rest": true
-			},
-			"method": "POST",
-			"operationId": "incrementPersistenceCounterState",
-			"outputSchema": {
-				"$schema": "https://json-schema.org/draft/2020-12/schema",
-				"additionalProperties": false,
-				"properties": {
-					"postId": {
-						"type": "integer",
-						"minimum": 0,
-						"maximum": 4294967295,
-						"multipleOf": 1
-					},
-					"resourceKey": {
-						"type": "string",
-						"minLength": 1,
-						"maxLength": 100
-					},
-					"count": {
-						"type": "integer",
-						"minimum": 0,
-						"maximum": 4294967295,
-						"multipleOf": 1
-					},
-					"storage": {
-						"enum": ["custom-table"],
-						"type": "string"
-					}
-				},
-				"required": ["postId", "resourceKey", "count", "storage"],
-				"title": "PersistenceCounterResponse",
-				"type": "object"
-			},
-			"path": "/persistence-examples/v1/counter",
-			"permissionCallback": "persistence_examples_can_execute_increment_counter_ability",
-			"wordpressAuth": {
-				"mechanism": "public-signed-token",
-				"publicTokenField": "publicWriteToken"
-			}
-		}
-	],
-	"category": {
-		"id": "persistence-examples",
-		"label": "Persistence Examples"
-	},
-	"generatedFrom": {
-		"blockSlug": "counter",
-		"responseSchemaPath": "wordpress-ai/counter-response.ai.schema.json",
-		"schemaProfile": "ai-structured-output"
-	}
+  "abilities": [
+    {
+      "authIntent": "public",
+      "authMode": "public-read",
+      "category": "persistence-examples",
+      "description": "Read the current counter state.",
+      "executeCallback": "persistence_examples_execute_get_counter_ability",
+      "id": "persistence-examples/get-persistence-counter-state",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "postId": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295,
+            "multipleOf": 1
+          },
+          "resourceKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "postId",
+          "resourceKey"
+        ],
+        "title": "PersistenceCounterQuery",
+        "type": "object"
+      },
+      "label": "Get Counter State",
+      "meta": {
+        "idempotent": true,
+        "readonly": true,
+        "show_in_rest": true
+      },
+      "method": "GET",
+      "operationId": "getPersistenceCounterState",
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "postId": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295,
+            "multipleOf": 1
+          },
+          "resourceKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295,
+            "multipleOf": 1
+          },
+          "storage": {
+            "enum": [
+              "custom-table"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "postId",
+          "resourceKey",
+          "count",
+          "storage"
+        ],
+        "title": "PersistenceCounterResponse",
+        "type": "object"
+      },
+      "path": "/persistence-examples/v1/counter",
+      "permissionCallback": "persistence_examples_can_read_counter_ability"
+    },
+    {
+      "authIntent": "public-write-protected",
+      "authMode": "public-signed-token",
+      "category": "persistence-examples",
+      "description": "Increment the current counter state.",
+      "executeCallback": "persistence_examples_execute_increment_counter_ability",
+      "id": "persistence-examples/increment-persistence-counter-state",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "postId": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295,
+            "multipleOf": 1
+          },
+          "publicWriteRequestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "resourceKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "publicWriteToken": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "delta": {
+            "default": 1,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295,
+            "multipleOf": 1
+          }
+        },
+        "required": [
+          "postId",
+          "publicWriteRequestId",
+          "resourceKey",
+          "publicWriteToken"
+        ],
+        "title": "PersistenceCounterIncrementRequest",
+        "type": "object"
+      },
+      "label": "Increment Counter State",
+      "meta": {
+        "destructive": false,
+        "idempotent": false,
+        "readonly": false,
+        "show_in_rest": true
+      },
+      "method": "POST",
+      "operationId": "incrementPersistenceCounterState",
+      "outputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "additionalProperties": false,
+        "properties": {
+          "postId": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295,
+            "multipleOf": 1
+          },
+          "resourceKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295,
+            "multipleOf": 1
+          },
+          "storage": {
+            "enum": [
+              "custom-table"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "postId",
+          "resourceKey",
+          "count",
+          "storage"
+        ],
+        "title": "PersistenceCounterResponse",
+        "type": "object"
+      },
+      "path": "/persistence-examples/v1/counter",
+      "permissionCallback": "persistence_examples_can_execute_increment_counter_ability",
+      "wordpressAuth": {
+        "mechanism": "public-signed-token",
+        "publicTokenField": "publicWriteToken"
+      }
+    }
+  ],
+  "category": {
+    "id": "persistence-examples",
+    "label": "Persistence Examples"
+  },
+  "generatedFrom": {
+    "blockSlug": "counter",
+    "responseSchemaPath": "wordpress-ai/counter-response.ai.schema.json",
+    "schemaProfile": "ai-structured-output"
+  }
 }
