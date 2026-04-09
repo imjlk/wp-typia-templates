@@ -9,9 +9,11 @@ This example proves that a `wp-typia` endpoint manifest can drive a small non-PH
 - It now also evaluates `typia.llm` as a build-time downstream consumer of the
   same counter contracts.
 
-This is an architecture proof only.
+This is still an architecture proof, but it is now the reference example for
+the generated `src/transport.ts` seam used by persistence scaffolds.
 
-- It is not a supported alternative runtime for generated scaffolds.
+- It is not a first-class runtime package or a drop-in deployment target for generated scaffolds.
+- It accepts generated persistence scaffold `/state` route aliases so scaffolded `src/transport.ts` files can point only their base URLs at the adapter during transport-seam verification.
 - It does not attempt WordPress auth parity such as REST nonces or signed token verification.
 - It exists to validate contract portability ahead of follow-up work like `#35`.
 

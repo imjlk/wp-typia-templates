@@ -15,6 +15,7 @@ interface PhpRestSectionOptions {
 	extraNote?: string;
 	mainPhpPath: string;
 	mainPhpScope: string;
+	transportPath: string;
 }
 
 function templateHasPersistenceSync(
@@ -89,14 +90,14 @@ export function getTemplateSourceOfTruthNote(
 			"`src/blocks/*/types.ts` files remain the source of truth for each block's `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include starter `typia.manifest.json` files so editor imports resolve before the first sync.";
 
 		if (compoundPersistenceEnabled) {
-			return `${compoundBase} For persistence-enabled parents, \`src/blocks/*/api-types.ts\` files remain the source of truth for \`src/blocks/*/api-schemas/*\` when you run \`sync-rest\`.`;
+			return `${compoundBase} For persistence-enabled parents, \`src/blocks/*/api-types.ts\` files remain the source of truth for \`src/blocks/*/api-schemas/*\` when you run \`sync-rest\`, while \`src/blocks/*/transport.ts\` is the first-class transport seam for editor and frontend requests.`;
 		}
 
 		return compoundBase;
 	}
 
 	if (templateId === "persistence") {
-		return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include a starter `typia.manifest.json` so editor imports resolve before the first sync. `src/api-types.ts` remains the source of truth for `src/api-schemas/*` when you run `sync-rest`. This scaffold is intentionally server-rendered: `src/render.php` is the canonical frontend entry, and `src/save.tsx` returns `null` so PHP can inject post context, storage-backed state, and write-policy bootstrap data before hydration.";
+		return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include a starter `typia.manifest.json` so editor imports resolve before the first sync. `src/api-types.ts` remains the source of truth for `src/api-schemas/*` when you run `sync-rest`, while `src/transport.ts` is the first-class transport seam for editor and frontend requests. This scaffold is intentionally server-rendered: `src/render.php` is the canonical frontend entry, and `src/save.tsx` returns `null` so PHP can inject post context, storage-backed state, and write-policy bootstrap data before hydration.";
 	}
 
 	return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include a starter `typia.manifest.json` so editor imports resolve before the first sync. The basic scaffold stays static by design: `src/render.php` is only an opt-in server placeholder, `src/save.tsx` remains the canonical frontend output, and the generated webpack config keeps the current `@wordpress/scripts` CommonJS baseline unless you intentionally add `render` to `block.json`.";
@@ -131,6 +132,7 @@ function formatPhpRestExtensionPointsSection({
 	extraNote,
 	mainPhpPath,
 	mainPhpScope,
+	transportPath,
 }: PhpRestSectionOptions): string {
 	const schemaJsonGlob = apiTypesPath.replace(/api-types\.ts$/u, "api-schemas/*.schema.json");
 	const perContractOpenApiGlob = apiTypesPath.replace(
@@ -142,6 +144,7 @@ function formatPhpRestExtensionPointsSection({
 	const lines = [
 		`- Edit \`${mainPhpPath}\` when you need to ${mainPhpScope}.`,
 		"- Edit `inc/rest-auth.php` or `inc/rest-public.php` when you need to customize write permissions or token/request-id/nonce checks for the selected policy.",
+		`- Edit \`${transportPath}\` when you need to switch between direct WordPress REST and a contract-compatible proxy or BFF without changing the endpoint contracts.`,
 		`- Keep \`${apiTypesPath}\` as the source of truth for request and response contracts, then regenerate \`${schemaJsonGlob}\`, per-contract \`${perContractOpenApiGlob}\`, and \`${aggregateOpenApiPath}\` with \`sync-rest\`.`,
 		"- Avoid hand-editing generated schema and OpenAPI artifacts unless you are debugging generated output; they are meant to be regenerated from TypeScript contracts.",
 	];
@@ -165,6 +168,7 @@ export function getPhpRestExtensionPointsSection(
 			apiTypesPath: "src/api-types.ts",
 			mainPhpPath: `${slug}.php`,
 			mainPhpScope: "change storage helpers, route handlers, response shaping, or route registration",
+			transportPath: "src/transport.ts",
 		});
 	}
 
@@ -175,6 +179,7 @@ export function getPhpRestExtensionPointsSection(
 			mainPhpPath: `${slug}.php`,
 			mainPhpScope:
 				"change parent-block storage helpers, route handlers, response shaping, or route registration",
+			transportPath: `src/blocks/${slug}/transport.ts`,
 		});
 	}
 

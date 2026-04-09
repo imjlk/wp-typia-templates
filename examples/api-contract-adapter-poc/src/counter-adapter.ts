@@ -203,9 +203,18 @@ async function dispatchCounterRequest(
 ): Promise<void> {
 	const url = new URL(request.url ?? '/', 'http://127.0.0.1');
 	const method = request.method ?? 'GET';
-	const matchedRoute = routeTable.find(
-		(route) => route.method === method && route.path === url.pathname
-	);
+	const routeCandidates = [url.pathname];
+	const generatedScaffoldPath = url.pathname.replace(/\/state\/?$/u, '');
+
+	if (generatedScaffoldPath !== url.pathname) {
+		routeCandidates.push(generatedScaffoldPath);
+	}
+
+	const matchedRoute = routeCandidates
+		.map((candidatePath) =>
+			routeTable.find((route) => route.method === method && route.path === candidatePath)
+		)
+		.find((route) => route !== undefined);
 
 	if (!matchedRoute) {
 		sendJson(response, 404, {
