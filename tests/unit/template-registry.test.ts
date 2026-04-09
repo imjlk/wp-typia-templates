@@ -3,6 +3,7 @@ import path from "node:path";
 
 import {
 	BUILTIN_TEMPLATE_IDS,
+	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	TEMPLATE_IDS,
 	getTemplateById,
 	getTemplateSelectOptions,
@@ -44,7 +45,10 @@ describe("template registry runtime helpers", () => {
 	test("reports built-in template metadata and select options", () => {
 		expect([...BUILTIN_TEMPLATE_IDS]).toEqual(["basic", "interactivity", "persistence", "compound"]);
 		expect([...TEMPLATE_IDS]).toEqual([...BUILTIN_TEMPLATE_IDS]);
-		expect(listTemplates().map((template) => template.id)).toEqual([...BUILTIN_TEMPLATE_IDS]);
+		expect(listTemplates().map((template) => template.id)).toEqual([
+			...BUILTIN_TEMPLATE_IDS,
+			OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
+		]);
 		expect(isBuiltInTemplateId("compound")).toBe(true);
 		expect(isBuiltInTemplateId("remote-template")).toBe(false);
 		expect(getTemplateById("persistence")).toEqual(
@@ -74,6 +78,11 @@ describe("template registry runtime helpers", () => {
 				hint: "InnerBlocks, Hidden child blocks, Optional persistence layer",
 				label: "compound",
 				value: "compound",
+			},
+			{
+				hint: "Workspace inventory, Add block workflows, Workspace doctor and migrate",
+				label: OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
+				value: OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 			},
 		]);
 	});
@@ -110,7 +119,7 @@ describe("template registry runtime helpers", () => {
 
 	test("throws a helpful error for unknown template ids", () => {
 		expect(() => getTemplateById("workspace")).toThrow(
-			'Unknown template "workspace". Expected one of: basic, interactivity, persistence, compound',
+			`Unknown template "workspace". Expected one of: basic, interactivity, persistence, compound, ${OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE}`,
 		);
 	});
 });

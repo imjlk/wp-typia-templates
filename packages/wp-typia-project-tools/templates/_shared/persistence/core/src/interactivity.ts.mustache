@@ -7,6 +7,9 @@ import type {
 	{{pascalCase}}Context,
 	{{pascalCase}}State,
 } from './types';
+import type {
+	{{pascalCase}}WriteStateRequest,
+} from './api-types';
 
 function hasExpiredPublicWriteToken(
 	expiresAt?: number
@@ -123,6 +126,7 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 			let bootstrapSucceeded = false;
 			let lastBootstrapError =
 				'Unable to initialize write access';
+			const includeRestNonce = {{isAuthenticatedPersistencePolicy}};
 
 			for ( let attempt = 1; attempt <= BOOTSTRAP_MAX_ATTEMPTS; attempt += 1 ) {
 				try {
@@ -156,6 +160,8 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 							? result.data.publicWriteToken
 							: '';
 					clientState.writeNonce =
+						includeRestNonce &&
+						'restNonce' in result.data &&
 						typeof result.data.restNonce === 'string' &&
 						result.data.restNonce.length > 0
 							? result.data.restNonce
@@ -231,20 +237,20 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 			context.error = '';
 
 			try {
-				const result = await writeState( {
+				const request = {
 					delta: 1,
 					postId: context.postId,
-					publicWriteRequestId:
-						context.persistencePolicy === 'public'
-							? generatePublicWriteRequestId()
-							: undefined,
-					publicWriteToken:
-						context.persistencePolicy === 'public' &&
-						clientState.writeToken.length > 0
-							? clientState.writeToken
-							: undefined,
 					resourceKey: context.resourceKey,
-				}, {
+				} as {{pascalCase}}WriteStateRequest;
+				if ( {{isPublicPersistencePolicy}} ) {
+					request.publicWriteRequestId =
+						generatePublicWriteRequestId() as {{pascalCase}}WriteStateRequest[ 'publicWriteRequestId' ];
+					if ( clientState.writeToken.length > 0 ) {
+						request.publicWriteToken =
+							clientState.writeToken as {{pascalCase}}WriteStateRequest[ 'publicWriteToken' ];
+					}
+				}
+				const result = await writeState( request, {
 					restNonce:
 						clientState.writeNonce.length > 0
 							? clientState.writeNonce

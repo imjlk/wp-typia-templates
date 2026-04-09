@@ -66,15 +66,15 @@ export default function Edit( {
 		validateEditorUpdate
 	);
 	const alignmentValue = editorFields.getStringValue(
-		attributes,
+		attributes as unknown as Record< string, unknown >,
 		'alignment',
 		'left'
 	);
 	const persistencePolicy = '{{persistencePolicy}}';
-	const persistencePolicyDescription =
-		persistencePolicy === 'authenticated'
-			? __( 'Writes require a logged-in user and a valid REST nonce.', '{{textDomain}}' )
-			: __( 'Anonymous writes use signed short-lived public tokens, per-request ids, and coarse rate limiting.', '{{textDomain}}' );
+	const persistencePolicyDescription = __(
+		{{persistencePolicyDescriptionJson}},
+		'{{textDomain}}'
+	);
 
 	return (
 		<>
@@ -91,7 +91,7 @@ export default function Edit( {
 			</BlockControls>
 			<InspectorControls>
 				<InspectorFromManifest
-					attributes={ attributes }
+					attributes={ attributes as unknown as Record< string, unknown > }
 					fieldLookup={ editorFields }
 					onChange={ updateField }
 					paths={ [ 'alignment', 'isVisible', 'showCount', 'buttonLabel' ] }

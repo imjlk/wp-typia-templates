@@ -610,6 +610,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(generatedIndex).toContain("buildScaffoldBlockRegistration");
     expect(generatedIndex).toContain("type ScaffoldBlockMetadata");
     expect(generatedIndex).toContain("@wp-typia/block-types/blocks/supports");
+    expect(generatedIndex).toContain("import './editor.scss';");
     expect(generatedIndex).toContain("} satisfies BlockSupports;");
     expect(generatedIndex).toContain("Typia-powered type-safe block");
     expect(generatedTypes).not.toMatch(/[가-힣]/u);
@@ -928,6 +929,10 @@ describe("@wp-typia/project-tools scaffolding", () => {
       path.join(targetDir, "src", "style.scss"),
       "utf8"
     );
+    const generatedEditorStyle = fs.readFileSync(
+      path.join(targetDir, "src", "editor.scss"),
+      "utf8"
+    );
     const generatedIndex = fs.readFileSync(
       path.join(targetDir, "src", "index.tsx"),
       "utf8"
@@ -959,7 +964,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(blockJson.version).toBe("0.1.0");
     expect(blockJson.category).toBe("widgets");
     expect(blockJson.icon).toBe("smiley");
-    expect(blockJson.editorStyle).toBeUndefined();
+    expect(blockJson.editorStyle).toBe("file:./index.css");
     expect(generatedManifest.manifestVersion).toBe(2);
     expect(generatedManifest.sourceType).toBe("DemoInteractivityAttributes");
     expect(generatedManifest.attributes.interactiveMode.wp.enum).toEqual([
@@ -1037,6 +1042,9 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(generatedSave).not.toContain("data-is-visible");
     expect(generatedSave).not.toContain("data-unique-id");
     expect(generatedStyle).toContain(".wp-block-demo-space-demo-interactivity");
+    expect(generatedEditorStyle).toContain(
+      ".wp-block-demo-space-demo-interactivity"
+    );
   });
 
   test("scaffoldProject supports the optional local wp-env preset without adding test files", async () => {
@@ -1180,6 +1188,10 @@ describe("@wp-typia/project-tools scaffolding", () => {
       );
       const generatedApi = fs.readFileSync(
         path.join(targetDir, "src", "api.ts"),
+        "utf8"
+      );
+      const seededApiClient = fs.readFileSync(
+        path.join(targetDir, "src", "api-client.ts"),
         "utf8"
       );
       const generatedData = fs.readFileSync(
@@ -1405,6 +1417,28 @@ describe("@wp-typia/project-tools scaffolding", () => {
       expect(generatedStyle).toContain(
         ".wp-block-create-block-demo-persistence-public-frontend"
       );
+      expect(seededApiClient).toContain("from '@wp-typia/api-client'");
+      expect(seededApiClient).toContain(
+        "export const getDemoPersistencePublicBootstrapEndpoint"
+      );
+      expect(
+        fs.existsSync(
+          path.join(targetDir, "src", "api-schemas", "bootstrap-query.schema.json")
+        )
+      ).toBe(true);
+      expect(
+        fs.existsSync(
+          path.join(
+            targetDir,
+            "src",
+            "api-schemas",
+            "bootstrap-response.schema.json"
+          )
+        )
+      ).toBe(true);
+      expect(fs.existsSync(path.join(targetDir, "src", "api.openapi.json"))).toBe(
+        true
+      );
       expect(generatedRender).not.toContain("publicWriteToken");
       expect(generatedRender).toContain(
         "demo_persistence_public_record_rendered_block_instance"
@@ -1463,23 +1497,23 @@ describe("@wp-typia/project-tools scaffolding", () => {
         "Customize the public write gate here"
       );
 
+      typecheckGeneratedProject(targetDir);
+
       runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts");
       runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts", [
         "--check",
       ]);
-
-      const generatedApiClient = fs.readFileSync(
+      const syncedApiClient = fs.readFileSync(
         path.join(targetDir, "src", "api-client.ts"),
         "utf8"
       );
-      expect(generatedApiClient).toContain("from '@wp-typia/api-client'");
-      expect(generatedApiClient).toContain(
+      expect(syncedApiClient).toContain(
         "export const getDemoPersistencePublicBootstrapEndpoint"
       );
-      expect(generatedApiClient).toContain(
+      expect(syncedApiClient).toContain(
         "export const getDemoPersistencePublicStateEndpoint"
       );
-      expect(generatedApiClient).toContain(
+      expect(syncedApiClient).toContain(
         "export function writeDemoPersistencePublicState("
       );
     },
@@ -1616,6 +1650,14 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(generatedSyncRest).toMatch(
       /auth:\s*'public'[\s\S]*?operationId:\s*'getDemoPersistenceAuthenticatedBootstrap'/
     );
+    expect(fs.existsSync(path.join(targetDir, "src", "api-client.ts"))).toBe(
+      true
+    );
+    expect(
+      fs.existsSync(
+        path.join(targetDir, "src", "api-schemas", "bootstrap-query.schema.json")
+      )
+    ).toBe(true);
     expect(generatedStyle).toContain(
       ".wp-block-create-block-demo-persistence-authenticated"
     );
@@ -2888,6 +2930,29 @@ console.log(JSON.stringify({ initial, updated, reread }));
       expect(generatedApiTypes).toContain("restNonce?: string");
       expect(generatedApiTypes).not.toContain("publicWriteExpiresAt?: number");
       expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
+      expect(
+        fs.existsSync(
+          path.join(
+            targetDir,
+            "src",
+            "blocks",
+            "demo-compound-storage",
+            "api-client.ts"
+          )
+        )
+      ).toBe(true);
+      expect(
+        fs.existsSync(
+          path.join(
+            targetDir,
+            "src",
+            "blocks",
+            "demo-compound-storage",
+            "api-schemas",
+            "bootstrap-query.schema.json"
+          )
+        )
+      ).toBe(true);
       expect(generatedBlockConfig).not.toContain("contracts: [");
       expect(generatedBlockConfig).not.toContain("openApiInfo:");
       expect(
@@ -3168,6 +3233,77 @@ console.log(JSON.stringify({ initial, updated, reread }));
     },
     { timeout: 15_000 }
   );
+
+  test("compound add-child reads live parent metadata from disk", async () => {
+    const targetDir = path.join(tempRoot, "demo-compound-live-parent");
+
+    await scaffoldProject({
+      projectDir: targetDir,
+      templateId: "compound",
+      packageManager: "npm",
+      noInstall: true,
+      answers: {
+        author: "Test Runner",
+        description: "Demo compound live parent metadata",
+        namespace: "create-block",
+        slug: "demo-compound-live-parent",
+        title: "Demo Compound Live Parent",
+      },
+    });
+
+    const parentBlockJsonPath = path.join(
+      targetDir,
+      "src",
+      "blocks",
+      "demo-compound-live-parent",
+      "block.json"
+    );
+    const parentBlockJson = JSON.parse(
+      fs.readFileSync(parentBlockJsonPath, "utf8")
+    );
+    parentBlockJson.name = "renamed-space/renamed-parent";
+    parentBlockJson.textdomain = "renamed-parent";
+    parentBlockJson.title = "Renamed Parent";
+    fs.writeFileSync(
+      parentBlockJsonPath,
+      `${JSON.stringify(parentBlockJson, null, "\t")}\n`,
+      "utf8"
+    );
+
+    runGeneratedScript(targetDir, "scripts/add-compound-child.ts", [
+      "--slug",
+      "faq-item",
+      "--title",
+      "FAQ Item",
+    ]);
+
+    const childDir = path.join(
+      targetDir,
+      "src",
+      "blocks",
+      "demo-compound-live-parent-faq-item"
+    );
+    const childBlockJson = JSON.parse(
+      fs.readFileSync(path.join(childDir, "block.json"), "utf8")
+    );
+    const childrenRegistry = fs.readFileSync(
+      path.join(
+        targetDir,
+        "src",
+        "blocks",
+        "demo-compound-live-parent",
+        "children.ts"
+      ),
+      "utf8"
+    );
+    const childEdit = fs.readFileSync(path.join(childDir, "edit.tsx"), "utf8");
+
+    expect(childBlockJson.name).toBe("renamed-space/renamed-parent-faq-item");
+    expect(childBlockJson.parent).toEqual(["renamed-space/renamed-parent"]);
+    expect(childBlockJson.textdomain).toBe("renamed-parent");
+    expect(childrenRegistry).toContain("'renamed-space/renamed-parent-faq-item'");
+    expect(childEdit).toContain("'renamed-parent'");
+  });
 
   test("compound scaffolds enable public persistence when only a public policy is provided", async () => {
     const targetDir = path.join(tempRoot, "demo-compound-public");
@@ -5752,6 +5888,7 @@ export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
     expect(templatesOutput).toContain("interactivity");
     expect(templatesOutput).toContain("persistence");
     expect(templatesOutput).toContain("compound");
+    expect(templatesOutput).toContain("@wp-typia/create-workspace-template");
     expect(templatesOutput).not.toContain("advanced");
     expect(templatesOutput).not.toContain("full");
     expect(doctorOutput).toContain('"label": "Bun"');
@@ -5805,6 +5942,7 @@ export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
     expect(templatesOutput).toContain("interactivity");
     expect(templatesOutput).toContain("persistence");
     expect(templatesOutput).toContain("compound");
+    expect(templatesOutput).toContain("@wp-typia/create-workspace-template");
     expect(templatesOutput).not.toContain("advanced");
     expect(templatesOutput).not.toContain("full");
     expect(doctorOutput).toContain('"label": "Bun"');
