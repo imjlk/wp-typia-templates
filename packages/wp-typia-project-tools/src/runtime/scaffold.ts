@@ -771,6 +771,14 @@ async function seedBuiltInPersistenceArtifacts(
 	templateId: BuiltInTemplateId,
 	variables: ScaffoldTemplateVariables,
 ): Promise<void> {
+	const needsPersistenceArtifacts =
+		templateId === "persistence" ||
+		(templateId === "compound" && variables.compoundPersistenceEnabled === "true");
+
+	if (!needsPersistenceArtifacts) {
+		return;
+	}
+
 	await withEphemeralScaffoldNodeModules(targetDir, async () => {
 		if (templateId === "persistence") {
 			await syncPersistenceRestArtifacts({
@@ -782,14 +790,12 @@ async function seedBuiltInPersistenceArtifacts(
 			return;
 		}
 
-		if (templateId === "compound" && variables.compoundPersistenceEnabled === "true") {
-			await syncPersistenceRestArtifacts({
-				apiTypesFile: path.join("src", "blocks", variables.slugKebabCase, "api-types.ts"),
-				outputDir: path.join("src", "blocks", variables.slugKebabCase),
-				projectDir: targetDir,
-				variables,
-			});
-		}
+		await syncPersistenceRestArtifacts({
+			apiTypesFile: path.join("src", "blocks", variables.slugKebabCase, "api-types.ts"),
+			outputDir: path.join("src", "blocks", variables.slugKebabCase),
+			projectDir: targetDir,
+			variables,
+		});
 	});
 }
 

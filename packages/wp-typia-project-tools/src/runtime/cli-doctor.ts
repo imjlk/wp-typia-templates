@@ -478,13 +478,18 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 
 	for (const template of listTemplates()) {
 		if (!isBuiltInTemplateId(template.id)) {
+			const templateDirExists = fs.existsSync(template.templateDir);
 			const hasAssets =
-				fs.existsSync(template.templateDir) &&
+				templateDirExists &&
 				fs.existsSync(path.join(template.templateDir, "package.json.mustache"));
 			checks.push({
-				status: hasAssets ? "pass" : "fail",
+				status: !templateDirExists || hasAssets ? "pass" : "fail",
 				label: `Template ${template.id}`,
-				detail: hasAssets ? template.templateDir : "Missing core template assets",
+				detail: !templateDirExists
+					? "External template metadata only; local overlay package is not installed."
+					: hasAssets
+						? template.templateDir
+						: "Missing core template assets",
 			});
 			continue;
 		}

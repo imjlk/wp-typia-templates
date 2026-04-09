@@ -610,6 +610,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(generatedIndex).toContain("buildScaffoldBlockRegistration");
     expect(generatedIndex).toContain("type ScaffoldBlockMetadata");
     expect(generatedIndex).toContain("@wp-typia/block-types/blocks/supports");
+    expect(generatedIndex).toContain("import './editor.scss';");
     expect(generatedIndex).toContain("} satisfies BlockSupports;");
     expect(generatedIndex).toContain("Typia-powered type-safe block");
     expect(generatedTypes).not.toMatch(/[가-힣]/u);
