@@ -1,12 +1,7 @@
 /**
- * Create a deep clone of a JSON-serializable value.
- *
- * @param value JSON-compatible data to clone.
- * @returns A deep-cloned copy created with `JSON.parse(JSON.stringify(...))`.
- *
- * Values that are not JSON-serializable, such as functions, `undefined`,
- * `BigInt`, class instances, and `Date` objects, are not preserved faithfully.
+ * Re-exports JSON cloning helpers from `@wp-typia/block-runtime`.
+ * This adapter keeps the existing project-tools module path stable while the
+ * runtime implementation now lives in block-runtime.
+ * @module
  */
-export function cloneJsonValue<T>(value: T): T {
-	return JSON.parse(JSON.stringify(value)) as T;
-}
+export * from "@wp-typia/block-runtime/json-utils";

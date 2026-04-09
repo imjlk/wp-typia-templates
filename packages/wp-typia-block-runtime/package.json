@@ -1,6 +1,6 @@
 {
   "name": "@wp-typia/block-runtime",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Generated-project runtime and metadata sync helpers for wp-typia",
   "type": "module",
   "main": "dist/index.js",
@@ -20,6 +20,31 @@
       "types": "./dist/metadata-core.d.ts",
       "import": "./dist/metadata-core.js",
       "default": "./dist/metadata-core.js"
+    },
+    "./metadata-analysis": {
+      "types": "./dist/metadata-analysis.d.ts",
+      "import": "./dist/metadata-analysis.js",
+      "default": "./dist/metadata-analysis.js"
+    },
+    "./metadata-model": {
+      "types": "./dist/metadata-model.d.ts",
+      "import": "./dist/metadata-model.js",
+      "default": "./dist/metadata-model.js"
+    },
+    "./metadata-parser": {
+      "types": "./dist/metadata-parser.d.ts",
+      "import": "./dist/metadata-parser.js",
+      "default": "./dist/metadata-parser.js"
+    },
+    "./metadata-php-render": {
+      "types": "./dist/metadata-php-render.d.ts",
+      "import": "./dist/metadata-php-render.js",
+      "default": "./dist/metadata-php-render.js"
+    },
+    "./metadata-projection": {
+      "types": "./dist/metadata-projection.d.ts",
+      "import": "./dist/metadata-projection.js",
+      "default": "./dist/metadata-projection.js"
     },
     "./defaults": {
       "types": "./dist/defaults.d.ts",
@@ -45,6 +70,11 @@
       "types": "./dist/validation.d.ts",
       "import": "./dist/validation.js",
       "default": "./dist/validation.js"
+    },
+    "./json-utils": {
+      "types": "./dist/json-utils.d.ts",
+      "import": "./dist/json-utils.js",
+      "default": "./dist/json-utils.js"
     },
     "./package.json": "./package.json"
   },

@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "@wp-typia/api-client": "^0.4.0",
-    "@wp-typia/block-runtime": "^0.4.0",
+    "@wp-typia/block-runtime": "^0.4.1",
     "@wp-typia/rest": "^0.3.4",
     "@wp-typia/block-types": "^0.2.0",
     "mustache": "^4.2.0",
