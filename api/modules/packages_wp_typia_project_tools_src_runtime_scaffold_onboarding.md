@@ -34,7 +34,7 @@ Returns the optional sync script names to suggest for a template.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts:31](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts#L31)
+[packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts:36](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts#L36)
 
 ___
 
@@ -58,13 +58,13 @@ Formats optional onboarding sync commands for the selected package manager.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts:43](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts#L43)
+[packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts:65](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts#L65)
 
 ___
 
 ### getOptionalOnboardingNote
 
-▸ **getOptionalOnboardingNote**(`packageManager`, `templateId?`): `string`
+▸ **getOptionalOnboardingNote**(`packageManager`, `templateId?`, `options?`): `string`
 
 Returns the onboarding note explaining when manual sync is optional.
 
@@ -74,6 +74,7 @@ Returns the onboarding note explaining when manual sync is optional.
 | :------ | :------ | :------ |
 | `packageManager` | [`PackageManagerId`](packages_wp_typia_project_tools_src_runtime_package_managers.md#packagemanagerid) | `undefined` |
 | `templateId` | `string` | `"basic"` |
+| `options` | `SyncOnboardingOptions` | `{}` |
 
 #### Returns
 
@@ -81,7 +82,7 @@ Returns the onboarding note explaining when manual sync is optional.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts:56](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts#L56)
+[packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts:78](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts#L78)
 
 ___
 
@@ -104,7 +105,7 @@ Returns source-of-truth guidance for generated artifacts by template mode.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts:84](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts#L84)
+[packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts:136](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts#L136)
 
 ___
 
@@ -127,7 +128,7 @@ Returns the generated-project extension workflow for compound child blocks.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts:109](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts#L109)
+[packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts:161](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts#L161)
 
 ___
 
@@ -150,4 +151,4 @@ Returns scaffold-local guidance for the main PHP REST customization points.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts:162](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts#L162)
+[packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts:214](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/scaffold-onboarding.ts#L214)

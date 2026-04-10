@@ -16,6 +16,7 @@
 - [executeAddCommand](packages_wp_typia_src_runtime_bridge.md#executeaddcommand)
 - [executeTemplatesCommand](packages_wp_typia_src_runtime_bridge.md#executetemplatescommand)
 - [executeDoctorCommand](packages_wp_typia_src_runtime_bridge.md#executedoctorcommand)
+- [executeSyncCommand](packages_wp_typia_src_runtime_bridge.md#executesynccommand)
 - [executeMigrateCommand](packages_wp_typia_src_runtime_bridge.md#executemigratecommand)
 - [getAddWorkspaceBlockOptions](packages_wp_typia_src_runtime_bridge.md#getaddworkspaceblockoptions)
 
@@ -55,7 +56,7 @@ Re-exports [listTemplates](packages_wp_typia_project_tools_src_runtime_template_
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:125](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L125)
+[packages/wp-typia/src/runtime-bridge.ts:268](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L268)
 
 ___
 
@@ -75,7 +76,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:217](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L217)
+[packages/wp-typia/src/runtime-bridge.ts:360](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L360)
 
 ___
 
@@ -96,7 +97,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:345](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L345)
+[packages/wp-typia/src/runtime-bridge.ts:488](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L488)
 
 ___
 
@@ -116,7 +117,27 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:383](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L383)
+[packages/wp-typia/src/runtime-bridge.ts:526](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L526)
+
+___
+
+### executeSyncCommand
+
+▸ **executeSyncCommand**(`«destructured»`): `Promise`\<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `«destructured»` | `SyncExecutionInput` |
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Defined in
+
+[packages/wp-typia/src/runtime-bridge.ts:530](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L530)
 
 ___
 
@@ -136,7 +157,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:387](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L387)
+[packages/wp-typia/src/runtime-bridge.ts:549](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L549)
 
 ___
 
@@ -156,4 +177,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/runtime-bridge.ts:428](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L428)
+[packages/wp-typia/src/runtime-bridge.ts:590](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/runtime-bridge.ts#L590)

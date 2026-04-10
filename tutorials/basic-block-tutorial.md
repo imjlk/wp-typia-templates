@@ -66,17 +66,17 @@ export interface MyTypiaBlockAttributes {
 
 ## Step 3: Generate block.json
 
-Run the sync script to generate WordPress attributes:
+Run the common sync script to regenerate the current type-derived artifacts, including `src/block.json`, `src/typia.manifest.json`, and `src/typia-validator.php`:
 
 ```bash
-npm run sync-types
+npm run sync
 ```
 
-Check `src/block.json` - it should contain all your attributes with proper types and defaults!
+Check `src/block.json` - it should contain all your attributes with proper types and defaults.
 
 Fresh scaffolds already include a starter `src/typia.manifest.json` so editor/runtime imports resolve before the first sync.
 
-You only need to run this manually when you want the generated metadata committed before `npm run build`, `npm run typecheck`, or commit. The generated `dev` workflow watches `npm run sync-types` for you, `npm run start` still runs it as a one-shot sync, and both `npm run build` and `npm run typecheck` verify that the checked-in artifacts are already current. `npm run sync-types` stays warn-only by default, `npm run sync-types -- --fail-on-lossy` fails only on lossy WordPress projection warnings, and `npm run sync-types -- --strict --report json` emits a CI-friendly JSON report while failing on every warning. This sync only generates metadata artifacts, not migration history.
+Use `npm run sync` for the common-case one-shot refresh before `npm run build`, `npm run typecheck`, or commit. The generated `dev` workflow watches `npm run sync-types` for you, `npm run start` still runs the same sync as a one-shot, and both `npm run build` and `npm run typecheck` verify that the checked-in artifacts are already current. `npm run sync-types` remains available for advanced/manual runs: it stays warn-only by default, `npm run sync-types -- --fail-on-lossy` fails only on lossy WordPress projection warnings, and `npm run sync-types -- --strict --report json` emits a CI-friendly JSON report while failing on every warning. This sync only generates metadata artifacts, not migration history.
 
 ## Step 4: Build the Edit Component
 

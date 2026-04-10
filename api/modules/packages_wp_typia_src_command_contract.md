@@ -74,7 +74,7 @@ ___
 
 ### WP\_TYPIA\_RESERVED\_TOP\_LEVEL\_COMMAND\_NAMES
 
-• `Const` **WP\_TYPIA\_RESERVED\_TOP\_LEVEL\_COMMAND\_NAMES**: readonly [``"create"``, ``"add"``, ``"migrate"``, ``"templates"``, ``"doctor"``, ``"mcp"``, ``"skills"``, ``"completions"``, ``"complete"``]
+• `Const` **WP\_TYPIA\_RESERVED\_TOP\_LEVEL\_COMMAND\_NAMES**: readonly [``"create"``, ``"sync"``, ``"add"``, ``"migrate"``, ``"templates"``, ``"doctor"``, ``"mcp"``, ``"skills"``, ``"completions"``, ``"complete"``]
 
 #### Defined in
 
@@ -84,21 +84,21 @@ ___
 
 ### WP\_TYPIA\_TOP\_LEVEL\_COMMAND\_NAMES
 
-• `Const` **WP\_TYPIA\_TOP\_LEVEL\_COMMAND\_NAMES**: readonly [``"create"``, ``"add"``, ``"migrate"``, ``"templates"``, ``"doctor"``, ``"mcp"``]
+• `Const` **WP\_TYPIA\_TOP\_LEVEL\_COMMAND\_NAMES**: readonly [``"create"``, ``"sync"``, ``"add"``, ``"migrate"``, ``"templates"``, ``"doctor"``, ``"mcp"``]
 
 #### Defined in
 
-[packages/wp-typia/src/command-contract.ts:19](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L19)
+[packages/wp-typia/src/command-contract.ts:20](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L20)
 
 ___
 
 ### WP\_TYPIA\_FUTURE\_COMMAND\_TREE
 
-• `Const` **WP\_TYPIA\_FUTURE\_COMMAND\_TREE**: readonly [\{ `description`: ``"Scaffold a new wp-typia project."`` = "Scaffold a new wp-typia project."; `name`: ``"create"`` = "create" }, \{ `description`: ``"Extend an official wp-typia workspace."`` = "Extend an official wp-typia workspace."; `name`: ``"add"`` = "add"; `subcommands`: readonly [``"block"``, ``"variation"``, ``"pattern"``, ``"binding-source"``, ``"hooked-block"``]  }, \{ `description`: ``"Run migration workflows."`` = "Run migration workflows."; `name`: ``"migrate"`` = "migrate"; `subcommands`: readonly [``"init"``, ``"snapshot"``, ``"diff"``, ``"scaffold"``, ``"plan"``, ``"wizard"``, ``"verify"``, ``"doctor"``, ``"fixtures"``, ``"fuzz"``]  }, \{ `description`: ``"Inspect scaffold templates."`` = "Inspect scaffold templates."; `name`: ``"templates"`` = "templates"; `subcommands`: readonly [``"list"``, ``"inspect"``]  }, \{ `description`: ``"Run repository and project diagnostics."`` = "Run repository and project diagnostics."; `name`: ``"doctor"`` = "doctor" }, \{ `description`: ``"Inspect or sync schema-driven MCP metadata."`` = "Inspect or sync schema-driven MCP metadata."; `name`: ``"mcp"`` = "mcp"; `subcommands`: readonly [``"list"``, ``"sync"``]  }]
+• `Const` **WP\_TYPIA\_FUTURE\_COMMAND\_TREE**: readonly [\{ `description`: ``"Scaffold a new wp-typia project."`` = "Scaffold a new wp-typia project."; `name`: ``"create"`` = "create" }, \{ `description`: ``"Run the common generated-project sync workflow."`` = "Run the common generated-project sync workflow."; `name`: ``"sync"`` = "sync" }, \{ `description`: ``"Extend an official wp-typia workspace."`` = "Extend an official wp-typia workspace."; `name`: ``"add"`` = "add"; `subcommands`: readonly [``"block"``, ``"variation"``, ``"pattern"``, ``"binding-source"``, ``"hooked-block"``]  }, \{ `description`: ``"Run migration workflows."`` = "Run migration workflows."; `name`: ``"migrate"`` = "migrate"; `subcommands`: readonly [``"init"``, ``"snapshot"``, ``"diff"``, ``"scaffold"``, ``"plan"``, ``"wizard"``, ``"verify"``, ``"doctor"``, ``"fixtures"``, ``"fuzz"``]  }, \{ `description`: ``"Inspect scaffold templates."`` = "Inspect scaffold templates."; `name`: ``"templates"`` = "templates"; `subcommands`: readonly [``"list"``, ``"inspect"``]  }, \{ `description`: ``"Run repository and project diagnostics."`` = "Run repository and project diagnostics."; `name`: ``"doctor"`` = "doctor" }, \{ `description`: ``"Inspect or sync schema-driven MCP metadata."`` = "Inspect or sync schema-driven MCP metadata."; `name`: ``"mcp"`` = "mcp"; `subcommands`: readonly [``"list"``, ``"sync"``]  }]
 
 #### Defined in
 
-[packages/wp-typia/src/command-contract.ts:106](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L106)
+[packages/wp-typia/src/command-contract.ts:108](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L108)
 
 ## Functions
 
@@ -118,7 +118,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/command-contract.ts:148](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L148)
+[packages/wp-typia/src/command-contract.ts:154](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L154)
 
 ___
 
@@ -138,4 +138,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/command-contract.ts:205](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L205)
+[packages/wp-typia/src/command-contract.ts:211](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-contract.ts#L211)

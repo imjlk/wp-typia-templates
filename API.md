@@ -321,12 +321,15 @@ The `types.ts -> block.json` projection can now also carry WordPress extraction
 metadata for top-level string attributes via `tags.Source<"html" | "text" |
 "rich-text">` plus `tags.Selector<"...">`.
 
-Generated projects also expose `sync-types` as the metadata generator entrypoint.
-It stays warn-only by default, supports `-- --fail-on-lossy` when CI should fail
-only on lossy WordPress projections, and supports
-`-- --strict --report json` when CI should fail on all warnings while reading a
-machine-friendly JSON report from stdout. Hard source-analysis and unsupported
-type failures still exit non-zero regardless of mode.
+Generated projects now expose `sync` as the common-case metadata refresh
+entrypoint, with `sync-types` still available for advanced/manual runs. `sync`
+supports `--check` only and simply orchestrates the same generated sync steps
+that `build`, `start`, and `typecheck` expect. `sync-types` stays warn-only by
+default, supports `-- --fail-on-lossy` when CI should fail only on lossy
+WordPress projections, and supports `-- --strict --report json` when CI should
+fail on all warnings while reading a machine-friendly JSON report from stdout.
+Hard source-analysis and unsupported type failures still exit non-zero
+regardless of mode.
 
 If you need the same behavior programmatically, `@wp-typia/block-runtime/metadata-core`
 also exposes `runSyncBlockMetadata(...)` alongside the lower-level
@@ -473,10 +476,11 @@ The built-in `persistence` template adds another predictable layer:
 - `src/data.ts`
 - `src/api.openapi.json`
 - `src/api-schemas/`
+- `scripts/sync-project.ts`
 - `scripts/sync-rest-contracts.ts`
 - a plugin bootstrap PHP file with generated REST route/storage wiring
 
-For persistence-capable scaffolds, the endpoint manifest authored in TypeScript is the canonical description of the REST surface and the primary input to `syncRestOpenApi()`. `src/api-client.ts` is the generated portable endpoint-definition artifact, `src/transport.ts` is the first-class runtime seam for editor/frontend transport wiring, `src/api.ts` is the typed call helper layer that composes those two pieces, and `src/data.ts` is the additive React/data wrapper layer built on `@wp-typia/rest/react`. `src/api.openapi.json` is the canonical endpoint-aware REST document, `src/api-schemas/*.schema.json` files remain the runtime contract artifacts, and `src/api-schemas/*.openapi.json` files remain available as per-contract compatibility fragments. Persistence scaffolds now split durable reads from session-only bootstrap state: `/state` remains the durable persisted-state surface, while `/bootstrap` returns fresh write-access data such as REST nonces or public signed-token metadata.
+For persistence-capable scaffolds, the endpoint manifest authored in TypeScript is the canonical description of the REST surface and the primary input to `syncRestOpenApi()`. `src/api-client.ts` is the generated portable endpoint-definition artifact, `src/transport.ts` is the first-class runtime seam for editor/frontend transport wiring, `src/api.ts` is the typed call helper layer that composes those two pieces, and `src/data.ts` is the additive React/data wrapper layer built on `@wp-typia/rest/react`. `src/api.openapi.json` is the canonical endpoint-aware REST document, `src/api-schemas/*.schema.json` files remain the runtime contract artifacts, and `src/api-schemas/*.openapi.json` files remain available as per-contract compatibility fragments. Persistence scaffolds now split durable reads from session-only bootstrap state: `/state` remains the durable persisted-state surface, while `/bootstrap` returns fresh write-access data such as REST nonces or public signed-token metadata. `sync-rest` is intentionally no longer auto-healing: it fails fast when the type-derived metadata layer is stale, and the supported recovery path is `sync` or `sync-types` first.
 
 ```ts
 await syncRestOpenApi({

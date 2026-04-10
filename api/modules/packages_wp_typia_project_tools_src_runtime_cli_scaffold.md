@@ -32,7 +32,7 @@ Ordered shell commands shown after scaffolding succeeds.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-scaffold.ts:202](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-scaffold.ts#L202)
+[packages/wp-typia-project-tools/src/runtime/cli-scaffold.ts:204](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-scaffold.ts#L204)
 
 ___
 
@@ -56,7 +56,7 @@ Optional onboarding note and step list.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-scaffold.ts:226](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-scaffold.ts#L226)
+[packages/wp-typia-project-tools/src/runtime/cli-scaffold.ts:228](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-scaffold.ts#L228)
 
 ___
 
@@ -80,4 +80,4 @@ The scaffold result together with next-step guidance.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-scaffold.ts:246](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-scaffold.ts#L246)
+[packages/wp-typia-project-tools/src/runtime/cli-scaffold.ts:253](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-scaffold.ts#L253)

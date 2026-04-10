@@ -16,4 +16,4 @@
 
 #### Defined in
 
-[packages/wp-typia/src/command-list.ts:10](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-list.ts#L10)
+[packages/wp-typia/src/command-list.ts:11](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/command-list.ts#L11)
