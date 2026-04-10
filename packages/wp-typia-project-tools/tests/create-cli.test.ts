@@ -4846,6 +4846,23 @@ console.log(JSON.stringify({ initial, updated, reread }));
       },
     });
 
+    linkWorkspaceNodeModules(targetDir);
+
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "faq-stack",
+        "--template",
+        "compound",
+      ],
+      {
+        cwd: targetDir,
+      }
+    );
+
     fs.writeFileSync(
       path.join(targetDir, "src", "validator-toolkit.ts"),
       [
@@ -4877,7 +4894,47 @@ console.log(JSON.stringify({ initial, updated, reread }));
       "utf8"
     );
 
-    linkWorkspaceNodeModules(targetDir);
+    const writeLegacyCompoundValidator = (
+      blockSlug: string,
+      typeName: string,
+      exportSuffix: string
+    ) => {
+      fs.writeFileSync(
+        path.join(targetDir, "src", "blocks", blockSlug, "validators.ts"),
+        [
+          `import currentManifest from './typia.manifest.json';`,
+          `import type { ${typeName} } from './types';`,
+          `import { createTemplateValidatorToolkit } from '../../validator-toolkit';`,
+          "",
+          `const scaffoldValidators = createTemplateValidatorToolkit< ${typeName} >( {`,
+          "\tmanifest: currentManifest,",
+          "} );",
+          "",
+          `export const validate${exportSuffix} =`,
+          "\tscaffoldValidators.validateAttributes;",
+          "",
+          "export const validators = scaffoldValidators.validators;",
+          "",
+          `export const sanitize${exportSuffix} =`,
+          "\tscaffoldValidators.sanitizeAttributes;",
+          "",
+          "export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;",
+          "",
+        ].join("\n"),
+        "utf8"
+      );
+    };
+
+    writeLegacyCompoundValidator(
+      "faq-stack",
+      "FaqStackAttributes",
+      "FaqStackAttributes"
+    );
+    writeLegacyCompoundValidator(
+      "faq-stack-item",
+      "FaqStackItemAttributes",
+      "FaqStackItemAttributes"
+    );
 
     runCli(
       "node",
@@ -4885,7 +4942,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
         entryPath,
         "add",
         "block",
-        "faq-stack",
+        "feature-grid",
         "--template",
         "compound",
       ],
@@ -4898,10 +4955,26 @@ console.log(JSON.stringify({ initial, updated, reread }));
       path.join(targetDir, "src", "validator-toolkit.ts"),
       "utf8"
     );
+    const repairedParentValidatorSource = fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),
+      "utf8"
+    );
+    const repairedChildValidatorSource = fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "faq-stack-item", "validators.ts"),
+      "utf8"
+    );
 
     expect(validatorToolkitSource).toContain("interface TemplateValidatorFunctions<");
     expect(validatorToolkitSource).toContain(
       "assert: ScaffoldValidatorToolkitOptions< T >['assert'];"
+    );
+    expect(repairedParentValidatorSource).toContain("import typia from 'typia';");
+    expect(repairedParentValidatorSource).toContain(
+      "assert: typia.createAssert< FaqStackAttributes >()"
+    );
+    expect(repairedChildValidatorSource).toContain("import typia from 'typia';");
+    expect(repairedChildValidatorSource).toContain(
+      "assert: typia.createAssert< FaqStackItemAttributes >()"
     );
     typecheckGeneratedProject(targetDir);
   }, 30_000);

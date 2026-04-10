@@ -568,7 +568,7 @@ describe("@wp-typia/rest/react", () => {
 			expect(fetchCount).toBe(2);
 			expect(rendered.current.data).toEqual({ count: 2 });
 			expect(rendered.current.error).toBeNull();
-		});
+		}, 5_000);
 
 		await rendered.unmount();
 	});

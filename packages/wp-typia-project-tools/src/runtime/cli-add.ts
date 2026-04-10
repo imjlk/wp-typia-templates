@@ -906,9 +906,85 @@ function shouldRefreshCompoundValidatorToolkit(source: string | null): boolean {
 	);
 }
 
+function isLegacyCompoundValidatorSource(source: string | null): source is string {
+	return (
+		typeof source === "string" &&
+		source.includes("from '../../validator-toolkit'") &&
+		!source.includes("assert: typia.createAssert<")
+	);
+}
+
+function upgradeLegacyCompoundValidatorSource(source: string): string {
+	const typeNameMatch = source.match(
+		/import type \{ (?<typeName>[A-Za-z0-9_]+) \} from '\.\/types';/u,
+	);
+	const typeName = typeNameMatch?.groups?.typeName;
+	if (!typeName) {
+		throw new Error(
+			"Unable to upgrade a legacy compound validator without a generated type import.",
+		);
+	}
+
+	let nextSource = source;
+	if (!nextSource.includes("import typia from 'typia';")) {
+		nextSource = `import typia from 'typia';\n${nextSource}`;
+	}
+
+	nextSource = nextSource.replace(
+		new RegExp(
+			`createTemplateValidatorToolkit<\\s*${typeName}\\s*>\\s*\\(\\s*\\{\\n`,
+			"u",
+		),
+		[
+			`createTemplateValidatorToolkit< ${typeName} >( {`,
+			`\tassert: typia.createAssert< ${typeName} >(),`,
+			`\tclone: typia.misc.createClone< ${typeName} >() as (`,
+			`\t\tvalue: ${typeName},`,
+			`\t) => ${typeName},`,
+			`\tis: typia.createIs< ${typeName} >(),`,
+		].join("\n") + "\n",
+	);
+
+	nextSource = nextSource.replace(
+		"\n\tmanifest: currentManifest,",
+		[
+			"",
+			"\tmanifest: currentManifest,",
+			`\tprune: typia.misc.createPrune< ${typeName} >(),`,
+			`\trandom: typia.createRandom< ${typeName} >() as (`,
+			"\t\t...args: unknown[]",
+			`\t) => ${typeName},`,
+			`\tvalidate: typia.createValidate< ${typeName} >(),`,
+		].join("\n"),
+	);
+
+	return nextSource;
+}
+
+async function collectLegacyCompoundValidatorPaths(projectDir: string): Promise<string[]> {
+	const blocksDir = path.join(projectDir, "src", "blocks");
+	if (!fs.existsSync(blocksDir)) {
+		return [];
+	}
+
+	const blockEntries = await fsp.readdir(blocksDir, { withFileTypes: true });
+	const validatorPaths = await Promise.all(
+		blockEntries
+			.filter((entry) => entry.isDirectory())
+			.map(async (entry) => {
+				const validatorPath = path.join(blocksDir, entry.name, "validators.ts");
+				const validatorSource = await readOptionalFile(validatorPath);
+				return isLegacyCompoundValidatorSource(validatorSource) ? validatorPath : null;
+			}),
+	);
+
+	return validatorPaths.filter((validatorPath): validatorPath is string => validatorPath !== null);
+}
+
 async function ensureCompoundWorkspaceSupportFiles(
 	projectDir: string,
 	tempProjectDir: string,
+	legacyValidatorPaths: readonly string[],
 ): Promise<void> {
 	for (const fileName of COMPOUND_SHARED_SUPPORT_FILES) {
 		const sourcePath = path.join(tempProjectDir, "src", fileName);
@@ -927,6 +1003,19 @@ async function ensureCompoundWorkspaceSupportFiles(
 			await fsp.copyFile(sourcePath, targetPath);
 		}
 	}
+
+	for (const validatorPath of legacyValidatorPaths) {
+		const currentSource = await readOptionalFile(validatorPath);
+		if (!isLegacyCompoundValidatorSource(currentSource)) {
+			continue;
+		}
+
+		await fsp.writeFile(
+			validatorPath,
+			upgradeLegacyCompoundValidatorSource(currentSource),
+			"utf8",
+		);
+	}
 }
 
 async function copyScaffoldedBlockSlice(
@@ -934,9 +1023,14 @@ async function copyScaffoldedBlockSlice(
 	templateId: AddBlockTemplateId,
 	tempProjectDir: string,
 	variables: ScaffoldTemplateVariables,
+	legacyValidatorPaths: readonly string[] = [],
 ): Promise<void> {
 	if (templateId === "compound") {
-		await ensureCompoundWorkspaceSupportFiles(projectDir, tempProjectDir);
+		await ensureCompoundWorkspaceSupportFiles(
+			projectDir,
+			tempProjectDir,
+			legacyValidatorPaths,
+		);
 		await copyTempDirectory(
 			path.join(tempProjectDir, "src", "blocks", variables.slugKebabCase),
 			path.join(projectDir, "src", "blocks", variables.slugKebabCase),
@@ -1216,6 +1310,10 @@ export async function runAddBlockCommand({
 						path.join(workspace.projectDir, "src", fileName),
 					)
 				: [];
+		const legacyCompoundValidatorPaths =
+			resolvedTemplateId === "compound"
+				? await collectLegacyCompoundValidatorPaths(workspace.projectDir)
+				: [];
 		const result = await scaffoldProject({
 			answers: {
 				...defaults,
@@ -1240,6 +1338,7 @@ export async function runAddBlockCommand({
 				blockConfigPath,
 				migrationConfigPath,
 				...compoundSupportPaths,
+				...legacyCompoundValidatorPaths,
 			]),
 			snapshotDirs:
 				migrationConfig === null
@@ -1265,6 +1364,7 @@ export async function runAddBlockCommand({
 				resolvedTemplateId,
 				tempProjectDir,
 				result.variables,
+				legacyCompoundValidatorPaths,
 			);
 			await addCollectionImportsForTemplate(
 				workspace.projectDir,
