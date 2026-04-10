@@ -1617,9 +1617,18 @@ describe("@wp-typia/project-tools scaffolding", () => {
         },
       });
 
-      fs.appendFileSync(
-        path.join(targetDir, "src", "types.ts"),
-        "\n// stale guard coverage\n",
+      const staleBlockJsonPath = path.join(targetDir, "src", "block.json");
+      const staleBlockJson = JSON.parse(
+        fs.readFileSync(staleBlockJsonPath, "utf8")
+      );
+
+      staleBlockJson.attributes.__staleCoverage = {
+        type: "string",
+      };
+
+      fs.writeFileSync(
+        staleBlockJsonPath,
+        `${JSON.stringify(staleBlockJson, null, 2)}\n`,
         "utf8"
       );
 
@@ -3236,15 +3245,24 @@ console.log(JSON.stringify({ initial, updated, reread }));
         },
       });
 
-      fs.appendFileSync(
-        path.join(
-          targetDir,
-          "src",
-          "blocks",
-          "demo-compound-sync-stale",
-          "types.ts"
-        ),
-        "\n// stale guard coverage\n",
+      const staleCompoundBlockJsonPath = path.join(
+        targetDir,
+        "src",
+        "blocks",
+        "demo-compound-sync-stale",
+        "block.json"
+      );
+      const staleCompoundBlockJson = JSON.parse(
+        fs.readFileSync(staleCompoundBlockJsonPath, "utf8")
+      );
+
+      staleCompoundBlockJson.attributes.__staleCoverage = {
+        type: "string",
+      };
+
+      fs.writeFileSync(
+        staleCompoundBlockJsonPath,
+        `${JSON.stringify(staleCompoundBlockJson, null, 2)}\n`,
         "utf8"
       );
 
