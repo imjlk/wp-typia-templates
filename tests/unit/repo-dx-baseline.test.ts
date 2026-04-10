@@ -38,6 +38,24 @@ describe('repository DX baseline', () => {
 		expect(fs.existsSync(path.join(repoRoot, '.vscode', 'settings.json'))).toBe(true);
 	});
 
+	test('repo meta docs and GitHub templates exist', () => {
+		expect(fs.existsSync(path.join(repoRoot, 'UPGRADE.md'))).toBe(true);
+		expect(fs.existsSync(path.join(repoRoot, 'SECURITY.md'))).toBe(true);
+		expect(fs.existsSync(path.join(repoRoot, '.github', 'PULL_REQUEST_TEMPLATE.md'))).toBe(true);
+		expect(fs.existsSync(path.join(repoRoot, '.github', 'ISSUE_TEMPLATE', 'bug-report.yml'))).toBe(
+			true,
+		);
+		expect(
+			fs.existsSync(path.join(repoRoot, '.github', 'ISSUE_TEMPLATE', 'feature-request.yml')),
+		).toBe(true);
+		expect(
+			fs.existsSync(path.join(repoRoot, '.github', 'ISSUE_TEMPLATE', 'docs-process.yml')),
+		).toBe(true);
+		expect(fs.existsSync(path.join(repoRoot, '.github', 'ISSUE_TEMPLATE', 'config.yml'))).toBe(
+			true,
+		);
+	});
+
 	test('example build cleanliness guard exists', () => {
 		const guardScript = fs.readFileSync(
 			path.join(repoRoot, 'scripts', 'run-clean-examples-build.mjs'),
@@ -51,10 +69,18 @@ describe('repository DX baseline', () => {
 	test('docs explain lint ownership and ci:local guidance', () => {
 		const readme = fs.readFileSync(path.join(repoRoot, 'README.md'), 'utf8');
 		const contributing = fs.readFileSync(path.join(repoRoot, 'CONTRIBUTING.md'), 'utf8');
+		const cliReadme = fs.readFileSync(path.join(repoRoot, 'packages', 'wp-typia', 'README.md'), 'utf8');
 
 		expect(readme).toContain('bun run ci:local');
 		expect(readme).toContain('Root ESLint covers repository infrastructure code');
+		expect(readme).toContain('## Who this is for');
+		expect(readme).toContain('[Upgrade Guide](UPGRADE.md)');
+		expect(readme).toContain('[Security Policy](SECURITY.md)');
 		expect(contributing).toContain('Linting ownership is intentionally split');
 		expect(contributing).toContain('bun run lint:repo');
+		expect(contributing).toContain('## Project meta docs');
+		expect(contributing).toContain('[`SECURITY.md`](./SECURITY.md)');
+		expect(cliReadme).toContain('https://github.com/imjlk/wp-typia/blob/main/UPGRADE.md');
+		expect(cliReadme).toContain('https://github.com/imjlk/wp-typia/blob/main/SECURITY.md');
 	});
 });
