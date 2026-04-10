@@ -15,7 +15,6 @@ import {
 	getTemplateSelectOptions,
 	listTemplates,
 	parseMigrationArgs,
-	parseWorkspacePackageManagerId,
 	tryResolveWorkspaceProject,
 	runAddBindingSourceCommand,
 	runAddBlockCommand,
@@ -125,6 +124,40 @@ function getSyncRootError(cwd: string): Error {
 	);
 }
 
+function inferSyncPackageManager(cwd: string, packageManagerField?: string): PackageManagerId {
+	const field = String(packageManagerField ?? "");
+	if (field.startsWith("bun@")) return "bun";
+	if (field.startsWith("npm@")) return "npm";
+	if (field.startsWith("pnpm@")) return "pnpm";
+	if (field.startsWith("yarn@")) return "yarn";
+
+	if (
+		fs.existsSync(path.join(cwd, "bun.lock")) ||
+		fs.existsSync(path.join(cwd, "bun.lockb"))
+	) {
+		return "bun";
+	}
+	if (fs.existsSync(path.join(cwd, "pnpm-lock.yaml"))) {
+		return "pnpm";
+	}
+	if (
+		fs.existsSync(path.join(cwd, "yarn.lock")) ||
+		fs.existsSync(path.join(cwd, ".pnp.cjs")) ||
+		fs.existsSync(path.join(cwd, ".pnp.loader.mjs")) ||
+		fs.existsSync(path.join(cwd, ".yarnrc.yml"))
+	) {
+		return "yarn";
+	}
+	if (
+		fs.existsSync(path.join(cwd, "package-lock.json")) ||
+		fs.existsSync(path.join(cwd, "npm-shrinkwrap.json"))
+	) {
+		return "npm";
+	}
+
+	return "npm";
+}
+
 function resolveSyncProjectContext(cwd: string): SyncProjectContext {
 	const packageJsonPath = path.join(cwd, "package.json");
 	if (!fs.existsSync(packageJsonPath)) {
@@ -153,7 +186,7 @@ function resolveSyncProjectContext(cwd: string): SyncProjectContext {
 	return {
 		cwd,
 		packageJsonPath,
-		packageManager: parseWorkspacePackageManagerId(packageJson.packageManager),
+		packageManager: inferSyncPackageManager(cwd, packageJson.packageManager),
 		scripts: syncScripts,
 	};
 }

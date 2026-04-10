@@ -17,7 +17,7 @@ const projectToolsPackageManifest = JSON.parse(
 );
 
 function createSyncFixture(options: {
-	packageManager?: string;
+	packageManager?: string | null;
 	scripts: Record<string, string>;
 	withSyncTypesMarker?: boolean;
 	withSyncRestMarker?: boolean;
@@ -31,7 +31,11 @@ function createSyncFixture(options: {
 		`${JSON.stringify(
 			{
 				name: path.basename(fixtureRoot),
-				packageManager: options.packageManager ?? "npm@11.6.1",
+				...(options.packageManager === null
+					? {}
+					: {
+							packageManager: options.packageManager ?? "npm@11.6.1",
+					  }),
 				private: true,
 				scripts: options.scripts,
 			},
@@ -155,6 +159,31 @@ describe("wp-typia package", () => {
 
 	test("accepts custom scaffold sync scripts without the built-in sync-types marker", () => {
 		const { fixtureRoot, logPath } = createSyncFixture({
+			scripts: {
+				sync: "node scripts/record.mjs sync",
+			},
+			withSyncTypesMarker: false,
+		});
+
+		try {
+			runUtf8Command("node", [entryPath, "sync", "--check"], {
+				cwd: fixtureRoot,
+			});
+
+			expect(readSyncLog(logPath)).toEqual([
+				{
+					args: ["--check"],
+					label: "sync",
+				},
+			]);
+		} finally {
+			fs.rmSync(fixtureRoot, { force: true, recursive: true });
+		}
+	});
+
+	test("infers npm when a legacy sync project omits the packageManager field", () => {
+		const { fixtureRoot, logPath } = createSyncFixture({
+			packageManager: null,
 			scripts: {
 				sync: "node scripts/record.mjs sync",
 			},

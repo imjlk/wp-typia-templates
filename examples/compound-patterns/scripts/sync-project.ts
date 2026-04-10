@@ -23,23 +23,28 @@ function parseCliOptions( argv: string[] ): SyncCliOptions {
 	return options;
 }
 
-function getPathKey() {
-	return (
-		Object.keys( process.env ).find(
-			( key ) => key.toLowerCase() === 'path'
-		) ?? 'PATH'
-	);
-}
-
 function getSyncScriptEnv() {
-	const pathKey = getPathKey();
 	const binaryDirectory = path.join( process.cwd(), 'node_modules', '.bin' );
-	const inheritedPath = process.env[ pathKey ] ?? '';
-
-	return {
+	const inheritedPath =
+		process.env.PATH ??
+		process.env.Path ??
+		Object.entries( process.env ).find(
+			( [ key ] ) => key.toLowerCase() === 'path'
+		)?.[ 1 ] ??
+		'';
+	const env: NodeJS.ProcessEnv = {
 		...process.env,
-		[ pathKey ]: `${ binaryDirectory }${ path.delimiter }${ inheritedPath }`,
 	};
+
+	for ( const key of Object.keys( env ) ) {
+		if ( key.toLowerCase() === 'path' ) {
+			delete env[ key ];
+		}
+	}
+
+	env.PATH = `${ binaryDirectory }${ path.delimiter }${ inheritedPath }`;
+
+	return env;
 }
 
 function runSyncScript( scriptPath: string, options: SyncCliOptions ) {
