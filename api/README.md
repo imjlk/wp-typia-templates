@@ -13,6 +13,16 @@ Build WordPress blocks that can evolve safely.
 
 It is built for projects where block attributes change over time, saved content must stay compatible, and data-backed or multi-block patterns should not turn into one-off glue code.
 
+## Who this is for
+
+`wp-typia` is for teams building WordPress blocks that are expected to evolve:
+
+- long-lived blocks with changing attributes and compatibility pressure
+- blocks that need typed persistence or REST contracts
+- plugin workspaces that may grow into multi-block, variation, pattern, binding-source, or hooked-block workflows
+
+If you only need the smallest possible starter for a single block, `@wordpress/create-block` is still the better default.
+
 ## Why wp-typia
 
 - Type-driven block metadata from `src/types.ts`
@@ -174,6 +184,8 @@ npx wp-typia create my-block --template @scope/create-block-template --variant h
 - [Architecture Guide](docs/architecture.md)
 - [API Guide](docs/API.md)
 - [Migration Guide](docs/migrations.md)
+- [Upgrade Guide](UPGRADE.md)
+- [Security Policy](SECURITY.md)
 - [Interactivity Guide](docs/interactivity.md)
 - [Examples Guide](examples/EXAMPLES.md)
 - [Package Graduation](docs/package-graduation.md)
