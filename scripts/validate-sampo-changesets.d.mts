@@ -25,6 +25,10 @@ export declare function parseChangesetFrontmatter(
 	source: string,
 	filePath?: string,
 ): ParsedChangesetEntry[];
+export declare function toPosixRelativePath(
+	repoRoot: string,
+	targetPath: string,
+): string;
 export declare function validateSampoChangesets(
 	repoRoot: string,
 ): SampoChangesetValidationResult;
