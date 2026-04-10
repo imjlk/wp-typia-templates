@@ -1,14 +1,25 @@
+import typia from 'typia';
 import currentManifest from "./typia.manifest.json";
 import { {{pascalCase}}Attributes, {{pascalCase}}ValidationResult } from "./types";
 import { generateBlockId } from "@wp-typia/block-runtime/identifiers";
 import { createTemplateValidatorToolkit } from "./validator-toolkit";
 
 const scaffoldValidators = createTemplateValidatorToolkit<{{pascalCase}}Attributes>({
+  assert: typia.createAssert<{{pascalCase}}Attributes>(),
+  clone: typia.misc.createClone<{{pascalCase}}Attributes>() as (
+    value: {{pascalCase}}Attributes,
+  ) => {{pascalCase}}Attributes,
+  is: typia.createIs<{{pascalCase}}Attributes>(),
   manifest: currentManifest,
+  prune: typia.misc.createPrune<{{pascalCase}}Attributes>(),
+  random: typia.createRandom<{{pascalCase}}Attributes>() as (
+    ...args: unknown[]
+  ) => {{pascalCase}}Attributes,
   finalize: (normalized) => ({
     ...normalized,
     id: normalized.id && normalized.id.length > 0 ? normalized.id : generateBlockId(),
   }),
+  validate: typia.createValidate<{{pascalCase}}Attributes>(),
 });
 
 export const validate{{pascalCase}}Attributes =

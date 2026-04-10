@@ -231,9 +231,13 @@ function getOptionalModuleEntries() {
 }
 
 module.exports = async () => {
-	const { default: UnpluginTypia } = await import(
-		'@typia/unplugin/webpack'
+	const { loadCompatibleTypiaWebpackPlugin } = await import(
+		'@wp-typia/block-runtime/blocks'
 	);
+	const UnpluginTypia = await loadCompatibleTypiaWebpackPlugin( {
+		importTypiaWebpackPlugin: () => import( '@typia/unplugin/webpack' ),
+		projectRoot: process.cwd(),
+	} );
 	const resolvedDefaultConfig =
 		typeof defaultConfig === 'function'
 			? await defaultConfig()

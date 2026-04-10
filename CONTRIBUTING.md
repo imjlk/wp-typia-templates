@@ -71,6 +71,19 @@ bun run docs:build
 If you change user-facing workflows, keep the relevant meta docs in sync in the
 same PR.
 
+## Generated project toolchain matrix
+
+Generated project Webpack defaults are currently regression-covered against:
+
+- `typia` 12.x
+- `@typia/unplugin` 12.x
+- `@wordpress/scripts` 30.x with Webpack 5
+
+The generated Webpack helpers now fail fast outside that matrix so broken
+version tuples surface as a clear compatibility error instead of a cryptic
+transform crash. If you intentionally expand the supported matrix, add or update
+generated-project build smoke coverage in the same PR before relaxing the guard.
+
 ## Releases
 
 Release management now uses Sampo for release metadata and GitHub Actions for publish:

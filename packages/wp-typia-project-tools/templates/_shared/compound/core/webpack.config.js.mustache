@@ -137,5 +137,6 @@ module.exports = async () => {
 		importTypiaWebpackPlugin: () => import( '@typia/unplugin/webpack' ),
 		moduleEntriesMode: 'replace',
 		nonModuleEntriesMode: 'replace',
+		projectRoot: process.cwd(),
 	} );
 };

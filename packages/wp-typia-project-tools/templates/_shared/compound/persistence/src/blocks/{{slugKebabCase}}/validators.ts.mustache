@@ -1,3 +1,4 @@
+import typia from 'typia';
 import currentManifest from './typia.manifest.json';
 import type {
 	{{pascalCase}}Attributes,
@@ -7,7 +8,16 @@ import { generateResourceKey } from '@wp-typia/block-runtime/identifiers';
 import { createTemplateValidatorToolkit } from '../../validator-toolkit';
 
 const scaffoldValidators = createTemplateValidatorToolkit< {{pascalCase}}Attributes >( {
+	assert: typia.createAssert< {{pascalCase}}Attributes >(),
+	clone: typia.misc.createClone< {{pascalCase}}Attributes >() as (
+		value: {{pascalCase}}Attributes,
+	) => {{pascalCase}}Attributes,
+	is: typia.createIs< {{pascalCase}}Attributes >(),
 	manifest: currentManifest,
+	prune: typia.misc.createPrune< {{pascalCase}}Attributes >(),
+	random: typia.createRandom< {{pascalCase}}Attributes >() as (
+		...args: unknown[]
+	) => {{pascalCase}}Attributes,
 	finalize: ( normalized ) => ( {
 		...normalized,
 		resourceKey:
@@ -15,6 +25,7 @@ const scaffoldValidators = createTemplateValidatorToolkit< {{pascalCase}}Attribu
 				? normalized.resourceKey
 				: generateResourceKey( '{{slugKebabCase}}' ),
 	} ),
+	validate: typia.createValidate< {{pascalCase}}Attributes >(),
 } );
 
 export const validators = scaffoldValidators.validators;

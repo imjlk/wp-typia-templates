@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { execFile, execFileSync } from "node:child_process";
+import { execFile, execFileSync, spawnSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -339,6 +339,34 @@ function typecheckGeneratedProject(targetDir: string) {
   );
 }
 
+function buildGeneratedProject(targetDir: string) {
+  linkWorkspaceNodeModules(targetDir);
+  const result = spawnSync(
+    path.join(targetDir, "node_modules", ".bin", "wp-scripts"),
+    ["build", "--experimental-modules"],
+    {
+      cwd: targetDir,
+      encoding: "utf8",
+    }
+  );
+  const output = [result.stdout, result.stderr].filter(Boolean).join("\n");
+
+  if (result.error) {
+    throw result.error;
+  }
+  if (result.status !== 0) {
+    const error = new Error(output || "Generated project build failed.");
+    Object.assign(error, {
+      status: result.status,
+      stderr: result.stderr,
+      stdout: result.stdout,
+    });
+    throw error;
+  }
+
+  return output;
+}
+
 function replaceGeneratedTransportBaseUrls(
   transportPath: string,
   baseUrl: string
@@ -438,7 +466,9 @@ describe("@wp-typia/project-tools scaffolding", () => {
     fs.rmSync(tempRoot, { recursive: true, force: true });
   });
 
-  test("scaffoldProject creates an npm-ready basic template", async () => {
+  test(
+    "scaffoldProject creates an npm-ready basic template",
+    async () => {
     const targetDir = path.join(tempRoot, "demo-npm");
 
     await scaffoldProject({
@@ -615,10 +645,14 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(generatedIndex).toContain("Typia-powered type-safe block");
     expect(generatedTypes).not.toMatch(/[가-힣]/u);
     expect(generatedValidators).toContain('from "./validator-toolkit"');
+    expect(generatedValidators).toContain("import typia from 'typia';");
     expect(generatedValidators).toContain(
       "@wp-typia/block-runtime/identifiers"
     );
     expect(generatedValidators).toContain("generateBlockId");
+    expect(generatedValidators).toMatch(
+      /typia\.createValidate<\s*DemoNpmAttributes\s*>\(\)/
+    );
     expect(generatedValidators).not.toContain("createScaffoldValidatorToolkit");
     expect(generatedValidators).not.toContain(
       "applyTemplateDefaultsFromManifest"
@@ -627,7 +661,8 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(generatedValidatorToolkit).toContain(
       "createScaffoldValidatorToolkit"
     );
-    expect(generatedValidatorToolkit).toContain("typia.createValidate");
+    expect(generatedValidatorToolkit).not.toContain("import typia from 'typia';");
+    expect(generatedValidatorToolkit).not.toContain("typia.createValidate");
     expect(generatedPluginBootstrap).toContain("Plugin Name:       Demo Npm");
     expect(generatedPluginBootstrap).toContain("Text Domain:       demo-npm");
     expect(generatedPluginBootstrap).toContain("load_plugin_textdomain(");
@@ -662,7 +697,12 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(readme).not.toContain("## PHP REST Extension Points");
 
     typecheckGeneratedProject(targetDir);
-  });
+    runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts");
+    const buildOutput = buildGeneratedProject(targetDir);
+    expect(buildOutput).not.toContain("non-specified generic argument");
+    },
+    { timeout: 15_000 }
+  );
 
   test("scaffoldProject can opt into migration UI for built-in single-block templates", async () => {
     const targetDir = path.join(tempRoot, "demo-migration-ui");
@@ -1378,10 +1418,14 @@ describe("@wp-typia/project-tools scaffolding", () => {
       expect(generatedValidatorToolkit).toContain(
         "createScaffoldValidatorToolkit"
       );
+      expect(generatedValidatorToolkit).not.toContain("typia.createValidate");
       expect(generatedValidators).toContain(
         "@wp-typia/block-runtime/identifiers"
       );
       expect(generatedValidators).toContain("generateResourceKey");
+      expect(generatedValidators).toMatch(
+        /typia\.createValidate<\s*DemoPersistencePublicAttributes\s*>\(\)/
+      );
       expect(generatedValidators).not.toContain("const generateResourceKey");
       expect(generatedData).toContain("useDemoPersistencePublicStateQuery");
       expect(generatedData).toContain(
@@ -2326,7 +2370,9 @@ console.log(JSON.stringify({ initial, updated, reread }));
     );
   });
 
-  test("scaffoldProject creates a pure compound template with parent and hidden child blocks", async () => {
+  test(
+    "scaffoldProject creates a pure compound template with parent and hidden child blocks",
+    async () => {
     const targetDir = path.join(tempRoot, "demo-compound");
 
     await scaffoldProject({
@@ -2518,10 +2564,12 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(parentHooks).toContain("useTypiaValidation");
     expect(parentHooks).toContain("from '../../hooks'");
     expect(parentValidators).toContain("validator-toolkit");
+    expect(parentValidators).toContain("import typia from 'typia';");
     expect(parentValidators).not.toContain("createScaffoldValidatorToolkit");
     expect(generatedValidatorToolkit).toContain(
       "createScaffoldValidatorToolkit"
     );
+    expect(generatedValidatorToolkit).not.toContain("typia.createValidate");
     expect(parentChildren).toContain("DEFAULT_CHILD_BLOCK_NAME");
     expect(parentChildren).toContain(
       "add-child: insert new allowed child block names here"
@@ -2537,6 +2585,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(childHooks).toContain("useTypiaValidation");
     expect(childHooks).toContain("from '../../hooks'");
     expect(childValidators).toContain("validator-toolkit");
+    expect(childValidators).toContain("import typia from 'typia';");
     expect(childValidators).not.toContain("createScaffoldValidatorToolkit");
     expect(childBlockJson.attributes.title.selector).toBe(
       ".wp-block-create-block-demo-compound-item__title"
@@ -2563,7 +2612,12 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(blockConfig).not.toContain("restManifest");
 
     typecheckGeneratedProject(targetDir);
-  });
+    runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts");
+    const buildOutput = buildGeneratedProject(targetDir);
+    expect(buildOutput).not.toContain("non-specified generic argument");
+    },
+    { timeout: 20_000 }
+  );
 
   test("compound scaffolds can opt into migration UI and keep add-child migration-aware", async () => {
     const targetDir = path.join(tempRoot, "demo-compound-migration");
@@ -2990,10 +3044,12 @@ console.log(JSON.stringify({ initial, updated, reread }));
       expect(childHooks).toContain("useTypiaValidation");
       expect(childHooks).toContain("from '../../hooks'");
       expect(childValidators).toContain("validator-toolkit");
+      expect(childValidators).toContain("import typia from 'typia';");
       expect(childValidators).not.toContain("createScaffoldValidatorToolkit");
       expect(generatedValidatorToolkit).toContain(
         "createScaffoldValidatorToolkit"
       );
+      expect(generatedValidatorToolkit).not.toContain("typia.createValidate");
       expect(generatedAddChild).toContain("ALLOWED_CHILD_MARKER");
       expect(generatedAddChild).toContain("buildScaffoldBlockRegistration");
       expect(generatedAddChild).toContain("type ScaffoldBlockMetadata");

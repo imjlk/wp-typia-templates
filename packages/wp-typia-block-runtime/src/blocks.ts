@@ -51,7 +51,27 @@ export interface TypiaWebpackConfigOptions {
 	path: {
 		join(...paths: string[]): string;
 	};
+	projectRoot?: string;
 }
+
+export interface TypiaWebpackPluginLoaderOptions {
+	importTypiaWebpackPlugin: () => Promise<{ default: () => unknown }>;
+	projectRoot?: string;
+}
+
+interface TypiaWebpackVersionMatrix {
+	"@typia/unplugin": string | null;
+	"@wordpress/scripts": string | null;
+	typia: string | null;
+	webpack: string | null;
+}
+
+type NodeFsModule = typeof import("node:fs");
+type NodeModuleBuiltin = typeof import("node:module");
+type NodePathBuiltin = typeof import("node:path");
+type NodePathJoiner = {
+	join(...paths: string[]): string;
+};
 
 type OverrideProperties<TBase, TOverride> = Omit<TBase, keyof TOverride> & TOverride;
 type ScaffoldSupportDefaultControls<TFeature extends string> = Readonly<
@@ -265,6 +285,163 @@ function isModuleConfig(config: unknown): boolean {
 	);
 }
 
+function parseMajorVersion(version: string | null): number | null {
+	if (!version) {
+		return null;
+	}
+
+	const match = /^(\d+)/u.exec(version);
+	return match ? Number.parseInt(match[1], 10) : null;
+}
+
+function readPackageVersion(
+	readFileSync: NodeFsModule["readFileSync"],
+	packageJsonPath: string,
+): string | null {
+	try {
+		return (
+			JSON.parse(readFileSync(packageJsonPath, "utf8")) as { version?: unknown }
+		).version as string | null;
+	} catch {
+		return null;
+	}
+}
+
+async function loadNodeRuntimeHelpers() {
+	const importNodeModule = Function(
+		"specifier",
+		"return import(specifier);",
+	) as (specifier: string) => Promise<unknown>;
+	const [fsModule, moduleBuiltin, pathBuiltin] = (await Promise.all([
+		importNodeModule("node:fs"),
+		importNodeModule("node:module"),
+		importNodeModule("node:path"),
+	])) as [NodeFsModule, NodeModuleBuiltin, NodePathBuiltin];
+
+	return {
+		createRequire: moduleBuiltin.createRequire,
+		pathModule: pathBuiltin as unknown as NodePathJoiner,
+		readFileSync: fsModule.readFileSync,
+	};
+}
+
+function resolveInstalledPackageVersion(
+	readFileSync: NodeFsModule["readFileSync"],
+	requireFromProject: NodeJS.Require,
+	packageName: string,
+): string | null {
+	try {
+		return readPackageVersion(
+			readFileSync,
+			requireFromProject.resolve(`${packageName}/package.json`),
+		);
+	} catch {
+		return null;
+	}
+}
+
+function resolveWebpackVersion(
+	readFileSync: NodeFsModule["readFileSync"],
+	requireFromProject: NodeJS.Require,
+	createRequire: NodeModuleBuiltin["createRequire"],
+): string | null {
+	const directVersion = resolveInstalledPackageVersion(
+		readFileSync,
+		requireFromProject,
+		"webpack",
+	);
+	if (directVersion) {
+		return directVersion;
+	}
+
+	try {
+		const wordpressScriptsPackageJsonPath = requireFromProject.resolve(
+			"@wordpress/scripts/package.json",
+		);
+		const requireFromWordPressScripts = createRequire(wordpressScriptsPackageJsonPath);
+		return resolveInstalledPackageVersion(
+			readFileSync,
+			requireFromWordPressScripts,
+			"webpack",
+		);
+	} catch {
+		return null;
+	}
+}
+
+async function getTypiaWebpackVersionMatrix(
+	projectRoot = process.cwd(),
+): Promise<TypiaWebpackVersionMatrix> {
+	const { createRequire, pathModule, readFileSync } = await loadNodeRuntimeHelpers();
+	const packageJsonPath = pathModule.join(projectRoot, "package.json");
+	const requireFromProject = createRequire(packageJsonPath);
+
+	return {
+		"@typia/unplugin": resolveInstalledPackageVersion(
+			readFileSync,
+			requireFromProject,
+			"@typia/unplugin",
+		),
+		"@wordpress/scripts": resolveInstalledPackageVersion(
+			readFileSync,
+			requireFromProject,
+			"@wordpress/scripts",
+		),
+		typia: resolveInstalledPackageVersion(readFileSync, requireFromProject, "typia"),
+		webpack: resolveWebpackVersion(
+			readFileSync,
+			requireFromProject,
+			createRequire,
+		),
+	};
+}
+
+function formatInstalledMatrix(
+	versionMatrix: TypiaWebpackVersionMatrix,
+): string {
+	return [
+		`typia=${versionMatrix.typia ?? "missing"}`,
+		`@typia/unplugin=${versionMatrix["@typia/unplugin"] ?? "missing"}`,
+		`@wordpress/scripts=${versionMatrix["@wordpress/scripts"] ?? "missing"}`,
+		`webpack=${versionMatrix.webpack ?? "missing"}`,
+	].join(", ");
+}
+
+export async function assertTypiaWebpackCompatibility({
+	projectRoot = process.cwd(),
+}: {
+	projectRoot?: string;
+} = {}): Promise<TypiaWebpackVersionMatrix> {
+	const versionMatrix = await getTypiaWebpackVersionMatrix(projectRoot);
+	const isSupported =
+		parseMajorVersion(versionMatrix.typia) === 12 &&
+		parseMajorVersion(versionMatrix["@typia/unplugin"]) === 12 &&
+		parseMajorVersion(versionMatrix["@wordpress/scripts"]) === 30 &&
+		parseMajorVersion(versionMatrix.webpack) === 5;
+
+	if (isSupported) {
+		return versionMatrix;
+	}
+
+	throw new Error(
+		[
+			"Unsupported Typia/Webpack toolchain for generated wp-typia projects.",
+			`Installed versions: ${formatInstalledMatrix(versionMatrix)}.`,
+			"Supported matrix: typia 12.x, @typia/unplugin 12.x, @wordpress/scripts 30.x with webpack 5.x.",
+			"Generated project defaults were tested against this matrix.",
+		].join(" "),
+	);
+}
+
+export async function loadCompatibleTypiaWebpackPlugin({
+	importTypiaWebpackPlugin,
+	projectRoot = process.cwd(),
+}: TypiaWebpackPluginLoaderOptions): Promise<() => unknown> {
+	await assertTypiaWebpackCompatibility({ projectRoot });
+	const { default: UnpluginTypia } = await importTypiaWebpackPlugin();
+	return UnpluginTypia;
+}
+
 function mergeEntries(
 	existingEntries: Record<string, unknown>,
 	nextEntries: EntryMap | undefined,
@@ -315,8 +492,12 @@ export async function createTypiaWebpackConfig({
 	moduleEntriesMode = "merge",
 	nonModuleEntriesMode = "merge",
 	path,
+	projectRoot = process.cwd(),
 }: TypiaWebpackConfigOptions) {
-	const { default: UnpluginTypia } = await importTypiaWebpackPlugin();
+	const UnpluginTypia = await loadCompatibleTypiaWebpackPlugin({
+		importTypiaWebpackPlugin,
+		projectRoot,
+	});
 	const resolvedDefaultConfig =
 		typeof defaultConfig === "function"
 			? await (defaultConfig as () => Promise<unknown> | unknown)()
