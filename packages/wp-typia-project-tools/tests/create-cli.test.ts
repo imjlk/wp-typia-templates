@@ -4899,15 +4899,20 @@ console.log(JSON.stringify({ initial, updated, reread }));
       typeName: string,
       exportSuffix: string,
       options?: {
+        includeTypiaImport?: boolean;
         lineEnding?: "\n" | "\r\n";
         quoteStyle?: "'" | '"';
       }
     ) => {
+      const includeTypiaImport = options?.includeTypiaImport ?? false;
       const lineEnding = options?.lineEnding ?? "\n";
       const quoteStyle = options?.quoteStyle ?? "'";
       fs.writeFileSync(
         path.join(targetDir, "src", "blocks", blockSlug, "validators.ts"),
         [
+          ...(includeTypiaImport
+            ? [`import typia from ${quoteStyle}typia${quoteStyle};`]
+            : []),
           `import currentManifest from ${quoteStyle}./typia.manifest.json${quoteStyle};`,
           "import type {",
           `\t${typeName},`,
@@ -4988,6 +4993,544 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(repairedChildValidatorSource).toContain(
       "assert: typia.createAssert< FaqStackItemAttributes >()"
     );
+    typecheckGeneratedProject(targetDir);
+  }, 30_000);
+
+  test("add compound block does not duplicate an existing typia import during legacy validator repair", async () => {
+    const targetDir = path.join(
+      tempRoot,
+      "demo-workspace-add-compound-legacy-validator-typia-import"
+    );
+
+    await scaffoldProject({
+      projectDir: targetDir,
+      templateId: workspaceTemplatePackageManifest.name,
+      packageManager: "npm",
+      noInstall: true,
+      answers: {
+        author: "Test Runner",
+        description: "Demo workspace add compound legacy validator typia import",
+        namespace: "demo-space",
+        phpPrefix: "demo_space",
+        slug: "demo-workspace-add-compound-legacy-validator-typia-import",
+        textDomain: "demo-space",
+        title: "Demo Workspace Add Compound Legacy Validator Typia Import",
+      },
+    });
+
+    linkWorkspaceNodeModules(targetDir);
+
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "faq-stack",
+        "--template",
+        "compound",
+      ],
+      {
+        cwd: targetDir,
+      }
+    );
+
+    fs.writeFileSync(
+      path.join(targetDir, "src", "validator-toolkit.ts"),
+      [
+        "import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
+        "import {",
+        "\tcreateScaffoldValidatorToolkit,",
+        "\ttype ScaffoldValidatorToolkitOptions,",
+        "} from '@wp-typia/block-runtime/validation';",
+        "",
+        "interface TemplateValidatorToolkitOptions< T extends object > {",
+        "\tfinalize?: ScaffoldValidatorToolkitOptions< T >['finalize'];",
+        "\tmanifest: unknown;",
+        "\tonValidationError?: ScaffoldValidatorToolkitOptions< T >['onValidationError'];",
+        "}",
+        "",
+        "export function createTemplateValidatorToolkit< T extends object >( {",
+        "\tfinalize,",
+        "\tmanifest,",
+        "\tonValidationError,",
+        "}: TemplateValidatorToolkitOptions< T > ) {",
+        "\treturn createScaffoldValidatorToolkit< T >( {",
+        "\t\tmanifest: manifest as ManifestDefaultsDocument,",
+        "\t\tfinalize,",
+        "\t\tonValidationError,",
+        "\t} );",
+        "}",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    const writeLegacyCompoundValidator = (
+      blockSlug: string,
+      typeName: string,
+      exportSuffix: string
+    ) => {
+      fs.writeFileSync(
+        path.join(targetDir, "src", "blocks", blockSlug, "validators.ts"),
+        [
+          'import typia from "typia";',
+          'import currentManifest from "./typia.manifest.json";',
+          "import type {",
+          `\t${typeName},`,
+          '} from "./types";',
+          'import { createTemplateValidatorToolkit } from "../../validator-toolkit";',
+          "",
+          `const scaffoldValidators = createTemplateValidatorToolkit< ${typeName} >( {`,
+          "\tmanifest: currentManifest,",
+          "} );",
+          "",
+          `export const validate${exportSuffix} =`,
+          "\tscaffoldValidators.validateAttributes;",
+          "",
+          "export const validators = scaffoldValidators.validators;",
+          "",
+          `export const sanitize${exportSuffix} =`,
+          "\tscaffoldValidators.sanitizeAttributes;",
+          "",
+          "export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;",
+          "",
+        ].join("\n"),
+        "utf8"
+      );
+    };
+
+    writeLegacyCompoundValidator(
+      "faq-stack",
+      "FaqStackAttributes",
+      "FaqStackAttributes"
+    );
+
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "feature-grid",
+        "--template",
+        "compound",
+      ],
+      {
+        cwd: targetDir,
+      }
+    );
+
+    const repairedParentValidatorSource = fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),
+      "utf8"
+    );
+    const typiaImportMatches = repairedParentValidatorSource.match(
+      /import typia from ['"]typia['"];/gu
+    );
+
+    expect(typiaImportMatches).toHaveLength(1);
+    expect(repairedParentValidatorSource).toContain(
+      "assert: typia.createAssert< FaqStackAttributes >()"
+    );
+
+    typecheckGeneratedProject(targetDir);
+  }, 30_000);
+
+  test("add compound block does not duplicate a BOM-prefixed typia import during legacy validator repair", async () => {
+    const targetDir = path.join(
+      tempRoot,
+      "demo-workspace-add-compound-legacy-validator-bom-typia-import"
+    );
+
+    await scaffoldProject({
+      projectDir: targetDir,
+      templateId: workspaceTemplatePackageManifest.name,
+      packageManager: "npm",
+      noInstall: true,
+      answers: {
+        author: "Test Runner",
+        description: "Demo workspace add compound legacy validator BOM typia import",
+        namespace: "demo-space",
+        phpPrefix: "demo_space",
+        slug: "demo-workspace-add-compound-legacy-validator-bom-typia-import",
+        textDomain: "demo-space",
+        title: "Demo Workspace Add Compound Legacy Validator BOM Typia Import",
+      },
+    });
+
+    linkWorkspaceNodeModules(targetDir);
+
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "faq-stack",
+        "--template",
+        "compound",
+      ],
+      {
+        cwd: targetDir,
+      }
+    );
+
+    fs.writeFileSync(
+      path.join(targetDir, "src", "validator-toolkit.ts"),
+      [
+        "import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
+        "import {",
+        "\tcreateScaffoldValidatorToolkit,",
+        "\ttype ScaffoldValidatorToolkitOptions,",
+        "} from '@wp-typia/block-runtime/validation';",
+        "",
+        "interface TemplateValidatorToolkitOptions< T extends object > {",
+        "\tfinalize?: ScaffoldValidatorToolkitOptions< T >['finalize'];",
+        "\tmanifest: unknown;",
+        "\tonValidationError?: ScaffoldValidatorToolkitOptions< T >['onValidationError'];",
+        "}",
+        "",
+        "export function createTemplateValidatorToolkit< T extends object >( {",
+        "\tfinalize,",
+        "\tmanifest,",
+        "\tonValidationError,",
+        "}: TemplateValidatorToolkitOptions< T > ) {",
+        "\treturn createScaffoldValidatorToolkit< T >( {",
+        "\t\tmanifest: manifest as ManifestDefaultsDocument,",
+        "\t\tfinalize,",
+        "\t\tonValidationError,",
+        "\t} );",
+        "}",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    fs.writeFileSync(
+      path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),
+      [
+        '\uFEFFimport typia from "typia";',
+        'import currentManifest from "./typia.manifest.json";',
+        "import type {",
+        "\tFaqStackAttributes,",
+        '} from "./types";',
+        'import { createTemplateValidatorToolkit } from "../../validator-toolkit";',
+        "",
+        "const scaffoldValidators = createTemplateValidatorToolkit< FaqStackAttributes >( {",
+        "\tmanifest: currentManifest,",
+        "} );",
+        "",
+        "export const validateFaqStackAttributes =",
+        "\tscaffoldValidators.validateAttributes;",
+        "",
+        "export const validators = scaffoldValidators.validators;",
+        "",
+        "export const sanitizeFaqStackAttributes =",
+        "\tscaffoldValidators.sanitizeAttributes;",
+        "",
+        "export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "feature-grid",
+        "--template",
+        "compound",
+      ],
+      {
+        cwd: targetDir,
+      }
+    );
+
+    const repairedParentValidatorSource = fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),
+      "utf8"
+    );
+    const typiaImportMatches = repairedParentValidatorSource.match(
+      /^[\uFEFF \t]*import typia from ['"]typia['"];/gmu
+    );
+
+    expect(typiaImportMatches).toHaveLength(1);
+    expect(repairedParentValidatorSource).toContain(
+      "assert: typia.createAssert< FaqStackAttributes >()"
+    );
+
+    typecheckGeneratedProject(targetDir);
+  }, 30_000);
+
+  test("add compound block ignores a commented typia import during legacy validator repair", async () => {
+    const targetDir = path.join(
+      tempRoot,
+      "demo-workspace-add-compound-legacy-validator-commented-typia-import"
+    );
+
+    await scaffoldProject({
+      projectDir: targetDir,
+      templateId: workspaceTemplatePackageManifest.name,
+      packageManager: "npm",
+      noInstall: true,
+      answers: {
+        author: "Test Runner",
+        description:
+          "Demo workspace add compound legacy validator commented typia import",
+        namespace: "demo-space",
+        phpPrefix: "demo_space",
+        slug: "demo-workspace-add-compound-legacy-validator-commented-typia-import",
+        textDomain: "demo-space",
+        title:
+          "Demo Workspace Add Compound Legacy Validator Commented Typia Import",
+      },
+    });
+
+    linkWorkspaceNodeModules(targetDir);
+
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "faq-stack",
+        "--template",
+        "compound",
+      ],
+      {
+        cwd: targetDir,
+      }
+    );
+
+    fs.writeFileSync(
+      path.join(targetDir, "src", "validator-toolkit.ts"),
+      [
+        "import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
+        "import {",
+        "\tcreateScaffoldValidatorToolkit,",
+        "\ttype ScaffoldValidatorToolkitOptions,",
+        "} from '@wp-typia/block-runtime/validation';",
+        "",
+        "interface TemplateValidatorToolkitOptions< T extends object > {",
+        "\tfinalize?: ScaffoldValidatorToolkitOptions< T >['finalize'];",
+        "\tmanifest: unknown;",
+        "\tonValidationError?: ScaffoldValidatorToolkitOptions< T >['onValidationError'];",
+        "}",
+        "",
+        "export function createTemplateValidatorToolkit< T extends object >( {",
+        "\tfinalize,",
+        "\tmanifest,",
+        "\tonValidationError,",
+        "}: TemplateValidatorToolkitOptions< T > ) {",
+        "\treturn createScaffoldValidatorToolkit< T >( {",
+        "\t\tmanifest: manifest as ManifestDefaultsDocument,",
+        "\t\tfinalize,",
+        "\t\tonValidationError,",
+        "\t} );",
+        "}",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    fs.writeFileSync(
+      path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),
+      [
+        '// import typia from "typia";',
+        'import currentManifest from "./typia.manifest.json";',
+        "import type {",
+        "\tFaqStackAttributes,",
+        '} from "./types";',
+        'import { createTemplateValidatorToolkit } from "../../validator-toolkit";',
+        "",
+        "const scaffoldValidators = createTemplateValidatorToolkit< FaqStackAttributes >( {",
+        "\tmanifest: currentManifest,",
+        "} );",
+        "",
+        "export const validateFaqStackAttributes =",
+        "\tscaffoldValidators.validateAttributes;",
+        "",
+        "export const validators = scaffoldValidators.validators;",
+        "",
+        "export const sanitizeFaqStackAttributes =",
+        "\tscaffoldValidators.sanitizeAttributes;",
+        "",
+        "export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "feature-grid",
+        "--template",
+        "compound",
+      ],
+      {
+        cwd: targetDir,
+      }
+    );
+
+    const repairedParentValidatorSource = fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),
+      "utf8"
+    );
+    const typiaImportMatches = repairedParentValidatorSource
+      .replace(/\/\*[\s\S]*?\*\//gu, "")
+      .match(/^[ \t]*import typia from ['"]typia['"];/gmu);
+
+    expect(typiaImportMatches).toHaveLength(1);
+    expect(repairedParentValidatorSource).toContain(
+      '// import typia from "typia";'
+    );
+    expect(repairedParentValidatorSource).toContain(
+      "assert: typia.createAssert< FaqStackAttributes >()"
+    );
+
+    typecheckGeneratedProject(targetDir);
+  }, 30_000);
+
+  test("add compound block ignores a block-commented typia import during legacy validator repair", async () => {
+    const targetDir = path.join(
+      tempRoot,
+      "demo-workspace-add-compound-legacy-validator-block-commented-typia-import"
+    );
+
+    await scaffoldProject({
+      projectDir: targetDir,
+      templateId: workspaceTemplatePackageManifest.name,
+      packageManager: "npm",
+      noInstall: true,
+      answers: {
+        author: "Test Runner",
+        description:
+          "Demo workspace add compound legacy validator block commented typia import",
+        namespace: "demo-space",
+        phpPrefix: "demo_space",
+        slug: "demo-workspace-add-compound-legacy-validator-block-commented-typia-import",
+        textDomain: "demo-space",
+        title:
+          "Demo Workspace Add Compound Legacy Validator Block Commented Typia Import",
+      },
+    });
+
+    linkWorkspaceNodeModules(targetDir);
+
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "faq-stack",
+        "--template",
+        "compound",
+      ],
+      {
+        cwd: targetDir,
+      }
+    );
+
+    fs.writeFileSync(
+      path.join(targetDir, "src", "validator-toolkit.ts"),
+      [
+        "import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
+        "import {",
+        "\tcreateScaffoldValidatorToolkit,",
+        "\ttype ScaffoldValidatorToolkitOptions,",
+        "} from '@wp-typia/block-runtime/validation';",
+        "",
+        "interface TemplateValidatorToolkitOptions< T extends object > {",
+        "\tfinalize?: ScaffoldValidatorToolkitOptions< T >['finalize'];",
+        "\tmanifest: unknown;",
+        "\tonValidationError?: ScaffoldValidatorToolkitOptions< T >['onValidationError'];",
+        "}",
+        "",
+        "export function createTemplateValidatorToolkit< T extends object >( {",
+        "\tfinalize,",
+        "\tmanifest,",
+        "\tonValidationError,",
+        "}: TemplateValidatorToolkitOptions< T > ) {",
+        "\treturn createScaffoldValidatorToolkit< T >( {",
+        "\t\tmanifest: manifest as ManifestDefaultsDocument,",
+        "\t\tfinalize,",
+        "\t\tonValidationError,",
+        "\t} );",
+        "}",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    fs.writeFileSync(
+      path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),
+      [
+        "/*",
+        'import typia from "typia";',
+        "*/",
+        'import currentManifest from "./typia.manifest.json";',
+        "import type {",
+        "\tFaqStackAttributes,",
+        '} from "./types";',
+        'import { createTemplateValidatorToolkit } from "../../validator-toolkit";',
+        "",
+        "const scaffoldValidators = createTemplateValidatorToolkit< FaqStackAttributes >( {",
+        "\tmanifest: currentManifest,",
+        "} );",
+        "",
+        "export const validateFaqStackAttributes =",
+        "\tscaffoldValidators.validateAttributes;",
+        "",
+        "export const validators = scaffoldValidators.validators;",
+        "",
+        "export const sanitizeFaqStackAttributes =",
+        "\tscaffoldValidators.sanitizeAttributes;",
+        "",
+        "export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "feature-grid",
+        "--template",
+        "compound",
+      ],
+      {
+        cwd: targetDir,
+      }
+    );
+
+    const repairedParentValidatorSource = fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),
+      "utf8"
+    );
+    const typiaImportMatches = repairedParentValidatorSource
+      .replace(/\/\*[\s\S]*?\*\//gu, "")
+      .match(/^[ \t]*import typia from ['"]typia['"];/gmu);
+
+    expect(typiaImportMatches).toHaveLength(1);
+    expect(repairedParentValidatorSource).toContain("/*");
+    expect(repairedParentValidatorSource).toContain(
+      "assert: typia.createAssert< FaqStackAttributes >()"
+    );
+
     typecheckGeneratedProject(targetDir);
   }, 30_000);
 
