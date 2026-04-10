@@ -1,5 +1,13 @@
 # wp-typia
 
+## 0.15.5 — 2026-04-10
+
+### Patch changes
+
+- [c935242](https://github.com/imjlk/wp-typia/commit/c9352422b12ad7168425125c39932381a57e56dc) Avoid duplicating existing `typia` imports when `wp-typia add block --template compound`
+  repairs legacy compound validator files inside older workspaces. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.15.4
+
 ## 0.15.4 — 2026-04-10
 
 ### Patch changes
