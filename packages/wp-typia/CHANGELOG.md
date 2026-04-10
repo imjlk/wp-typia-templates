@@ -1,5 +1,12 @@
 # wp-typia
 
+## 0.15.3 — 2026-04-10
+
+### Patch changes
+
+- [d4ec944](https://github.com/imjlk/wp-typia/commit/d4ec94407e77933245dba1017f753b7eda5ed353) Add repository upgrade and security docs, GitHub issue/PR templates, and link
+  the new meta guidance from the published `wp-typia` README. — Thanks @imjlk!
+
 ## 0.15.2 — 2026-04-09
 
 ### Patch changes
