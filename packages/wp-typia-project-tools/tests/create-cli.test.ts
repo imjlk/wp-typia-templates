@@ -4897,16 +4897,22 @@ console.log(JSON.stringify({ initial, updated, reread }));
     const writeLegacyCompoundValidator = (
       blockSlug: string,
       typeName: string,
-      exportSuffix: string
+      exportSuffix: string,
+      options?: {
+        lineEnding?: "\n" | "\r\n";
+        quoteStyle?: "'" | '"';
+      }
     ) => {
+      const lineEnding = options?.lineEnding ?? "\n";
+      const quoteStyle = options?.quoteStyle ?? "'";
       fs.writeFileSync(
         path.join(targetDir, "src", "blocks", blockSlug, "validators.ts"),
         [
-          `import currentManifest from './typia.manifest.json';`,
+          `import currentManifest from ${quoteStyle}./typia.manifest.json${quoteStyle};`,
           "import type {",
           `\t${typeName},`,
-          "} from './types';",
-          `import { createTemplateValidatorToolkit } from '../../validator-toolkit';`,
+          `} from ${quoteStyle}./types${quoteStyle};`,
+          `import { createTemplateValidatorToolkit } from ${quoteStyle}../../validator-toolkit${quoteStyle};`,
           "",
           `const scaffoldValidators = createTemplateValidatorToolkit< ${typeName} >( {`,
           "\tmanifest: currentManifest,",
@@ -4922,7 +4928,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
           "",
           "export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;",
           "",
-        ].join("\n"),
+        ].join(lineEnding),
         "utf8"
       );
     };
@@ -4935,7 +4941,11 @@ console.log(JSON.stringify({ initial, updated, reread }));
     writeLegacyCompoundValidator(
       "faq-stack-item",
       "FaqStackItemAttributes",
-      "FaqStackItemAttributes"
+      "FaqStackItemAttributes",
+      {
+        lineEnding: "\r\n",
+        quoteStyle: '"',
+      }
     );
 
     runCli(

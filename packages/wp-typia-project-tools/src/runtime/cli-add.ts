@@ -896,6 +896,12 @@ async function renderWorkspacePersistenceServerModule(
 }
 
 const COMPOUND_SHARED_SUPPORT_FILES = ["hooks.ts", "validator-toolkit.ts"] as const;
+const LEGACY_ASSERT_PATTERN = /assert:\s*typia\.createAssert</u;
+const LEGACY_MANIFEST_PATTERN = /\r?\n[ \t]*manifest:\s*currentManifest,/u;
+const LEGACY_TOOLKIT_CALL_PATTERN =
+	/createTemplateValidatorToolkit<\s*(?<typeName>[A-Za-z0-9_]+)\s*>\s*\(\s*\{/u;
+const LEGACY_VALIDATOR_TOOLKIT_IMPORT_PATTERN =
+	/from\s*["']\.\.\/\.\.\/validator-toolkit["']/u;
 
 function shouldRefreshCompoundValidatorToolkit(source: string | null): boolean {
 	return (
@@ -909,15 +915,13 @@ function shouldRefreshCompoundValidatorToolkit(source: string | null): boolean {
 function isLegacyCompoundValidatorSource(source: string | null): source is string {
 	return (
 		typeof source === "string" &&
-		source.includes("from '../../validator-toolkit'") &&
-		!source.includes("assert: typia.createAssert<")
+		LEGACY_VALIDATOR_TOOLKIT_IMPORT_PATTERN.test(source) &&
+		!LEGACY_ASSERT_PATTERN.test(source)
 	);
 }
 
 function upgradeLegacyCompoundValidatorSource(source: string): string {
-	const typeNameMatch = source.match(
-		/createTemplateValidatorToolkit<\s*(?<typeName>[A-Za-z0-9_]+)\s*>\s*\(\s*\{/u,
-	);
+	const typeNameMatch = source.match(LEGACY_TOOLKIT_CALL_PATTERN);
 	const typeName = typeNameMatch?.groups?.typeName;
 	if (!typeName) {
 		throw new Error(
@@ -931,10 +935,7 @@ function upgradeLegacyCompoundValidatorSource(source: string): string {
 	}
 
 	nextSource = nextSource.replace(
-		new RegExp(
-			`createTemplateValidatorToolkit<\\s*${typeName}\\s*>\\s*\\(\\s*\\{\\n`,
-			"u",
-		),
+		LEGACY_TOOLKIT_CALL_PATTERN,
 		[
 			`createTemplateValidatorToolkit< ${typeName} >( {`,
 			`\tassert: typia.createAssert< ${typeName} >(),`,
@@ -945,8 +946,8 @@ function upgradeLegacyCompoundValidatorSource(source: string): string {
 		].join("\n") + "\n",
 	);
 
-	nextSource = nextSource.replace(
-		"\n\tmanifest: currentManifest,",
+	const replacedManifest = nextSource.replace(
+		LEGACY_MANIFEST_PATTERN,
 		[
 			"",
 			"\tmanifest: currentManifest,",
@@ -957,8 +958,13 @@ function upgradeLegacyCompoundValidatorSource(source: string): string {
 			`\tvalidate: typia.createValidate< ${typeName} >(),`,
 		].join("\n"),
 	);
+	if (replacedManifest === nextSource) {
+		throw new Error(
+			"Unable to upgrade legacy compound validator: manifest anchor not found.",
+		);
+	}
 
-	return nextSource;
+	return replacedManifest;
 }
 
 async function collectLegacyCompoundValidatorPaths(projectDir: string): Promise<string[]> {
