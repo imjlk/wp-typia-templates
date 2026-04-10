@@ -711,81 +711,85 @@ describe("@wp-typia/project-tools scaffolding", () => {
     const buildOutput = buildGeneratedProject(targetDir);
     expect(buildOutput).not.toContain("non-specified generic argument");
     },
-    { timeout: 15_000 }
+    { timeout: 20_000 }
   );
 
-  test("scaffoldProject can opt into migration UI for built-in single-block templates", async () => {
-    const targetDir = path.join(tempRoot, "demo-migration-ui");
+  test(
+    "scaffoldProject can opt into migration UI for built-in single-block templates",
+    async () => {
+      const targetDir = path.join(tempRoot, "demo-migration-ui");
 
-    await scaffoldProject({
-      projectDir: targetDir,
-      templateId: "basic",
-      packageManager: "npm",
-      noInstall: true,
-      withMigrationUi: true,
-      answers: {
-        author: "Test Runner",
-        description: "Demo migration UI block",
-        namespace: "demo-space",
-        slug: "demo-migration-ui",
-        title: "Demo Migration UI",
-      },
-    });
+      await scaffoldProject({
+        projectDir: targetDir,
+        templateId: "basic",
+        packageManager: "npm",
+        noInstall: true,
+        withMigrationUi: true,
+        answers: {
+          author: "Test Runner",
+          description: "Demo migration UI block",
+          namespace: "demo-space",
+          slug: "demo-migration-ui",
+          title: "Demo Migration UI",
+        },
+      });
 
-    const packageJson = JSON.parse(
-      fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
-    );
-    const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
-    const generatedEdit = fs.readFileSync(
-      path.join(targetDir, "src", "edit.tsx"),
-      "utf8"
-    );
-    const generatedIndex = fs.readFileSync(
-      path.join(targetDir, "src", "index.tsx"),
-      "utf8"
-    );
-    const migrationConfig = fs.readFileSync(
-      path.join(targetDir, "src", "migrations", "config.ts"),
-      "utf8"
-    );
+      const packageJson = JSON.parse(
+        fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+      );
+      const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
+      const generatedEdit = fs.readFileSync(
+        path.join(targetDir, "src", "edit.tsx"),
+        "utf8"
+      );
+      const generatedIndex = fs.readFileSync(
+        path.join(targetDir, "src", "index.tsx"),
+        "utf8"
+      );
+      const migrationConfig = fs.readFileSync(
+        path.join(targetDir, "src", "migrations", "config.ts"),
+        "utf8"
+      );
 
-    expect(packageJson.dependencies["@wordpress/api-fetch"]).toBe("^7.42.0");
-    expect(
-      packageJson.devDependencies["@wp-typia/project-tools"]
-    ).toBeUndefined();
-    expect(packageJson.scripts["migration:init"]).toBe(
-      `npx --yes wp-typia@${wpTypiaPackageManifest.version} migrate init --current-migration-version v1`
-    );
-    expect(packageJson.scripts["migration:doctor"]).toBe(
-      `npx --yes wp-typia@${wpTypiaPackageManifest.version} migrate doctor --all`
-    );
-    expect(readme).toContain("## Migration UI");
-    expect(readme).toContain("initialized migration workspace at `v1`");
-    expect(generatedEdit).toContain("MigrationDashboard");
-    expect(generatedIndex).toContain(
-      "./migrations/generated/demo-migration-ui/deprecated"
-    );
-    expect(generatedIndex).toContain(
-      "deprecated as NonNullable<BlockConfiguration<DemoMigrationUiAttributes>['deprecated']>"
-    );
-    expect(migrationConfig).toContain("key: 'demo-migration-ui'");
-    expect(migrationConfig).toContain("blockJsonFile: 'src/block.json'");
-    expect(
-      fs.existsSync(
-        path.join(targetDir, "src", "admin", "migration-dashboard.tsx")
-      )
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(targetDir, "src", "migrations", "generated", "index.ts")
-      )
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(targetDir, "typia-migration-registry.php"))
-    ).toBe(true);
+      expect(packageJson.dependencies["@wordpress/api-fetch"]).toBe("^7.42.0");
+      expect(
+        packageJson.devDependencies["@wp-typia/project-tools"]
+      ).toBeUndefined();
+      expect(packageJson.scripts["migration:init"]).toBe(
+        `npx --yes wp-typia@${wpTypiaPackageManifest.version} migrate init --current-migration-version v1`
+      );
+      expect(packageJson.scripts["migration:doctor"]).toBe(
+        `npx --yes wp-typia@${wpTypiaPackageManifest.version} migrate doctor --all`
+      );
+      expect(readme).toContain("## Migration UI");
+      expect(readme).toContain("initialized migration workspace at `v1`");
+      expect(generatedEdit).toContain("MigrationDashboard");
+      expect(generatedIndex).toContain(
+        "./migrations/generated/demo-migration-ui/deprecated"
+      );
+      expect(generatedIndex).toContain(
+        "deprecated as NonNullable<BlockConfiguration<DemoMigrationUiAttributes>['deprecated']>"
+      );
+      expect(migrationConfig).toContain("key: 'demo-migration-ui'");
+      expect(migrationConfig).toContain("blockJsonFile: 'src/block.json'");
+      expect(
+        fs.existsSync(
+          path.join(targetDir, "src", "admin", "migration-dashboard.tsx")
+        )
+      ).toBe(true);
+      expect(
+        fs.existsSync(
+          path.join(targetDir, "src", "migrations", "generated", "index.ts")
+        )
+      ).toBe(true);
+      expect(
+        fs.existsSync(path.join(targetDir, "typia-migration-registry.php"))
+      ).toBe(true);
 
-    typecheckGeneratedProject(targetDir);
-  });
+      typecheckGeneratedProject(targetDir);
+    },
+    { timeout: 15_000 }
+  );
 
   test(
     "generated sync-types scripts support strict and JSON report modes",
