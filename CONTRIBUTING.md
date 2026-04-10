@@ -97,6 +97,7 @@ bun run release
 - `bun run sampo:add` creates a new pending release note in `.sampo/changesets/`
 - pending changesets must use canonical package ids like `npm/@wp-typia/project-tools`
 - `bun run changesets:validate` is the quickest preflight check before you push or update the release PR
+- `bun run runtime-coupling:validate` enforces the runtime-family dependency policy before CI or the release PR can proceed
 - `bun run release` runs `sampo release` locally to inspect the version/changelog changes that the release PR workflow will generate
 - `bun run publish` remains a local/manual fallback and is not the primary CI publish path
 - `DRY_RUN=1 bun run publish:oidc` is the safest local way to preview the OIDC publish script behavior without pushing packages
@@ -127,6 +128,27 @@ of the following before you rely on the normal release PR flow:
 This matters because generated-project smoke jobs install released package
 versions from npm. If a newly referenced package has not been published yet,
 those jobs can fail even when the source tree and release PR look correct.
+
+## Runtime package dependency policy
+
+The runtime-oriented package family is intentionally coupled:
+
+- `@wp-typia/rest` depends on `@wp-typia/api-client` with a caret range
+- `@wp-typia/block-runtime` depends on `@wp-typia/api-client` with a caret range
+- `@wp-typia/project-tools` depends on `@wp-typia/api-client`, `@wp-typia/block-runtime`, `@wp-typia/rest`, and `@wp-typia/block-types` with caret ranges
+- `wp-typia` pins `@wp-typia/project-tools` exactly and depends on `@wp-typia/api-client` with a caret range
+
+Why this split exists:
+
+- runtime helpers that shipped/generated projects need at install time stay in `dependencies`
+- host-provided integrations such as `react` or `@wordpress/element` stay in `peerDependencies`
+- `wp-typia -> @wp-typia/project-tools` stays exact because the published CLI and orchestration package are tested and released as a locked pair
+
+Validation uses publish truth, not just source truth:
+
+- `@wp-typia/rest` keeps `workspace:*` in source so local development stays ergonomic
+- the coupling validator reads the packed manifest for packages that rewrite dependency specs during publish
+- if an upstream runtime package change falls outside the current policy lane, the dependent package must carry both a manifest update and a pending changeset in the same PR
 
 ## Pull requests
 
