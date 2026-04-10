@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { execFileSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -49,10 +49,19 @@ function runSyncScript( scriptPath: string, options: SyncCliOptions ) {
 		args.push( '--check' );
 	}
 
-	execFileSync( getLocalTsxBinary(), args, {
+	const result = spawnSync( getLocalTsxBinary(), args, {
 		cwd: process.cwd(),
+		shell: process.platform === 'win32',
 		stdio: 'inherit',
 	} );
+
+	if ( result.error ) {
+		throw result.error;
+	}
+
+	if ( result.status !== 0 ) {
+		throw new Error( `Sync script failed: ${ scriptPath }` );
+	}
 }
 
 const options = parseCliOptions( process.argv.slice( 2 ) );

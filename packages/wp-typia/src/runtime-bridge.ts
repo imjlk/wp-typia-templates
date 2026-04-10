@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -194,16 +194,17 @@ function runProjectScript(
 		extraArgs,
 	);
 
-	try {
-		execFileSync(invocation.command, invocation.args, {
-			cwd: project.cwd,
-			stdio: "inherit",
-		});
-	} catch (error) {
+	const result = spawnSync(invocation.command, invocation.args, {
+		cwd: project.cwd,
+		shell: process.platform === "win32",
+		stdio: "inherit",
+	});
+
+	if (result.error || result.status !== 0) {
 		throw new Error(
 			`\`${formatRunScript(project.packageManager, scriptName, extraArgs.join(" "))}\` failed.`,
 			{
-				cause: error instanceof Error ? error : undefined,
+				cause: result.error,
 			},
 		);
 	}

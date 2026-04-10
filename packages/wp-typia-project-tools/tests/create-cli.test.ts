@@ -1514,6 +1514,14 @@ describe("@wp-typia/project-tools scaffolding", () => {
       expect(
         fs.existsSync(path.join(targetDir, "scripts", "sync-project.ts"))
       ).toBe(true);
+      const generatedSyncProject = fs.readFileSync(
+        path.join(targetDir, "scripts", "sync-project.ts"),
+        "utf8"
+      );
+      expect(generatedSyncProject).toContain("spawnSync");
+      expect(generatedSyncProject).toContain(
+        "shell: process.platform === 'win32'"
+      );
       expect(generatedRender).not.toContain("publicWriteToken");
       expect(generatedRender).toContain(
         "demo_persistence_public_record_rendered_block_instance"
@@ -3143,6 +3151,14 @@ console.log(JSON.stringify({ initial, updated, reread }));
       expect(
         fs.existsSync(path.join(targetDir, "scripts", "sync-project.ts"))
       ).toBe(true);
+      const generatedParentSyncProject = fs.readFileSync(
+        path.join(targetDir, "scripts", "sync-project.ts"),
+        "utf8"
+      );
+      expect(generatedParentSyncProject).toContain("spawnSync");
+      expect(generatedParentSyncProject).toContain(
+        "shell: process.platform === 'win32'"
+      );
       expect(generatedWebpackConfig).toContain("createTypiaWebpackConfig");
       expect(readme).toContain("npm run dev");
       expect(readme).toContain("npm run sync");
@@ -4230,6 +4246,14 @@ console.log(JSON.stringify({ initial, updated, reread }));
     ).toBe(true);
     expect(fs.existsSync(path.join(targetDir, "scripts", "sync-project.ts"))).toBe(
       true
+    );
+    const workspaceSyncProjectSource = fs.readFileSync(
+      path.join(targetDir, "scripts", "sync-project.ts"),
+      "utf8"
+    );
+    expect(workspaceSyncProjectSource).toContain("spawnSync");
+    expect(workspaceSyncProjectSource).toContain(
+      "shell: process.platform === 'win32'"
     );
   });
 

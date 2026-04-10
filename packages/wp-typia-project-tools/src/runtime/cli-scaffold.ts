@@ -373,14 +373,25 @@ export async function runScaffoldFlow({
 		withTestPreset: resolvedWithTestPreset,
 		withWpEnv: resolvedWithWpEnv,
 	});
-	const generatedPackageScripts = JSON.parse(
-		fs.readFileSync(path.join(projectDir, "package.json"), "utf8"),
-	) as {
-		scripts?: Record<string, unknown>;
-	};
-	const availableScripts = Object.entries(generatedPackageScripts.scripts ?? {})
-		.filter(([, value]) => typeof value === "string")
-		.map(([scriptName]) => scriptName);
+	let availableScripts: string[] | undefined;
+	try {
+		const parsedPackageJson = JSON.parse(
+			fs.readFileSync(path.join(projectDir, "package.json"), "utf8"),
+		) as {
+			scripts?: unknown;
+		};
+		const scripts =
+			parsedPackageJson.scripts &&
+			typeof parsedPackageJson.scripts === "object" &&
+			!Array.isArray(parsedPackageJson.scripts)
+				? parsedPackageJson.scripts
+				: {};
+		availableScripts = Object.entries(scripts)
+			.filter(([, value]) => typeof value === "string")
+			.map(([scriptName]) => scriptName);
+	} catch {
+		availableScripts = undefined;
+	}
 
 	return {
 		optionalOnboarding: getOptionalOnboarding({
