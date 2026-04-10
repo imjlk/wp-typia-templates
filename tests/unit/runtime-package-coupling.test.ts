@@ -116,6 +116,7 @@ describe("runtime-package-policy", () => {
 	test("policy specs reject pre-release and build suffixes until semver-aware ordering is implemented", () => {
 		expect(specAllowsVersion("^0.4.2-beta.1", "0.4.2", RANGE_POLICY.caret)).toBe(false);
 		expect(specAllowsVersion("0.15.4+build.1", "0.15.4", RANGE_POLICY.exact)).toBe(false);
+		expect(specAllowsVersion("^0.4.2", "0.4.3-beta.1", RANGE_POLICY.caret)).toBe(false);
 	});
 
 	test("exact policy only allows the exact planned version", () => {

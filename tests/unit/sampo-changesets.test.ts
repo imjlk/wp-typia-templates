@@ -67,6 +67,17 @@ describe("validate-sampo-changesets", () => {
 		).toThrow('duplicate.md: duplicate package id "npm/@wp-typia/project-tools" in frontmatter');
 	});
 
+	test("parseChangesetFrontmatter rejects inherited object keys as release types", () => {
+		expect(() =>
+			parseChangesetFrontmatter(
+				["---", "npm/@wp-typia/project-tools: toString", "---"].join("\n"),
+				"invalid-release-type.md",
+			),
+		).toThrow(
+			'invalid-release-type.md: unsupported release type "toString" for "npm/@wp-typia/project-tools"',
+		);
+	});
+
 	test("validateSampoChangesets passes for canonical package ids", () => {
 		const repoRoot = createTempRepo();
 

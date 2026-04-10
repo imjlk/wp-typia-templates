@@ -136,7 +136,12 @@ export function specAllowsVersion(spec, version, rangePolicy) {
 		return spec === version;
 	}
 
-	const current = parseVersion(version);
+	let current;
+	try {
+		current = parseVersion(version);
+	} catch {
+		return false;
+	}
 	const base = parseVersion(spec.slice(1));
 
 	if (compareParsedVersions(current, base) < 0) {

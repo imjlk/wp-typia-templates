@@ -89,7 +89,7 @@ export function parseChangesetFrontmatter(source, filePath = "<changeset>") {
 			throw new Error(`${filePath}: malformed frontmatter line "${rawLine}"`);
 		}
 
-		if (!(releaseType in RELEASE_TYPE_PRIORITY)) {
+		if (!Object.hasOwn(RELEASE_TYPE_PRIORITY, releaseType)) {
 			throw new Error(`${filePath}: unsupported release type "${releaseType}" for "${packageId}"`);
 		}
 
