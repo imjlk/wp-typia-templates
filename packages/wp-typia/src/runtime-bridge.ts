@@ -131,10 +131,6 @@ function resolveSyncProjectContext(cwd: string): SyncProjectContext {
 		throw getSyncRootError(cwd);
 	}
 
-	if (!fs.existsSync(path.join(cwd, "scripts", "sync-types-to-block-json.ts"))) {
-		throw getSyncRootError(cwd);
-	}
-
 	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
 		packageManager?: string;
 		scripts?: Record<string, unknown>;

@@ -19,6 +19,7 @@ const projectToolsPackageManifest = JSON.parse(
 function createSyncFixture(options: {
 	packageManager?: string;
 	scripts: Record<string, string>;
+	withSyncTypesMarker?: boolean;
 	withSyncRestMarker?: boolean;
 }): { fixtureRoot: string; logPath: string } {
 	const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-sync-fixture-"));
@@ -50,11 +51,13 @@ fs.appendFileSync(logPath, \`\${JSON.stringify({ args, label })}\n\`);
 `,
 		"utf8",
 	);
-	fs.writeFileSync(
-		path.join(fixtureRoot, "scripts", "sync-types-to-block-json.ts"),
-		"export {};\n",
-		"utf8",
-	);
+	if (options.withSyncTypesMarker !== false) {
+		fs.writeFileSync(
+			path.join(fixtureRoot, "scripts", "sync-types-to-block-json.ts"),
+			"export {};\n",
+			"utf8",
+		);
+	}
 
 	if (options.withSyncRestMarker) {
 		fs.writeFileSync(
@@ -150,11 +153,59 @@ describe("wp-typia package", () => {
 		}
 	});
 
+	test("accepts custom scaffold sync scripts without the built-in sync-types marker", () => {
+		const { fixtureRoot, logPath } = createSyncFixture({
+			scripts: {
+				sync: "node scripts/record.mjs sync",
+			},
+			withSyncTypesMarker: false,
+		});
+
+		try {
+			runUtf8Command("node", [entryPath, "sync", "--check"], {
+				cwd: fixtureRoot,
+			});
+
+			expect(readSyncLog(logPath)).toEqual([
+				{
+					args: ["--check"],
+					label: "sync",
+				},
+			]);
+		} finally {
+			fs.rmSync(fixtureRoot, { force: true, recursive: true });
+		}
+	});
+
 	test("falls back to sync-types only for legacy single-block projects", () => {
 		const { fixtureRoot, logPath } = createSyncFixture({
 			scripts: {
 				"sync-types": "node scripts/record.mjs sync-types",
 			},
+		});
+
+		try {
+			runUtf8Command("node", [entryPath, "sync"], {
+				cwd: fixtureRoot,
+			});
+
+			expect(readSyncLog(logPath)).toEqual([
+				{
+					args: [],
+					label: "sync-types",
+				},
+			]);
+		} finally {
+			fs.rmSync(fixtureRoot, { force: true, recursive: true });
+		}
+	});
+
+	test("falls back to sync-types without requiring the built-in marker layout", () => {
+		const { fixtureRoot, logPath } = createSyncFixture({
+			scripts: {
+				"sync-types": "node scripts/record.mjs sync-types",
+			},
+			withSyncTypesMarker: false,
 		});
 
 		try {

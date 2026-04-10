@@ -12,6 +12,7 @@ import {
   formatHelpText,
   getDoctorChecks,
   getNextSteps,
+  getOptionalOnboarding,
   runScaffoldFlow,
 } from "../src/runtime/cli-core.js";
 import { collectScaffoldAnswers } from "../src/runtime/scaffold.js";
@@ -3852,6 +3853,26 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(flow.optionalOnboarding.note).toContain(
       "do not create migration history"
     );
+  });
+
+  test("optional onboarding derives sync steps from available custom-template scripts", () => {
+    const onboarding = getOptionalOnboarding({
+      availableScripts: ["sync-types", "sync-rest"],
+      packageManager: "npm",
+      templateId: "/tmp/custom-template",
+    });
+
+    expect(onboarding.steps).toEqual([
+      "npm run sync-types",
+      "npm run sync-rest",
+    ]);
+    expect(onboarding.note).toContain(
+      "Run npm run sync-types then npm run sync-rest manually before build, typecheck, or commit."
+    );
+    expect(onboarding.note).toContain(
+      "npm run sync-types -- --check verifies the current type-derived artifacts without rewriting them."
+    );
+    expect(onboarding.note).not.toContain("npm run sync -- --check");
   });
 
   test("runScaffoldFlow rejects unsupported persistence policies", async () => {

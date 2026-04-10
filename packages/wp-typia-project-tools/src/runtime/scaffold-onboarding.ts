@@ -1,8 +1,13 @@
 import { formatRunScript } from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
 import { getPrimaryDevelopmentScript } from "./local-dev-presets.js";
+import {
+	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
+	isBuiltInTemplateId,
+} from "./template-registry.js";
 
 interface SyncOnboardingOptions {
+	availableScripts?: string[];
 	compoundPersistenceEnabled?: boolean;
 }
 
@@ -32,6 +37,25 @@ export function getOptionalSyncScriptNames(
 	templateId: string,
 	options: SyncOnboardingOptions = {},
 ): string[] {
+	const availableScripts = new Set(options.availableScripts ?? []);
+	if (availableScripts.has("sync")) {
+		return ["sync"];
+	}
+
+	const fallbackScripts = ["sync-types", "sync-rest"].filter((scriptName) =>
+		availableScripts.has(scriptName),
+	);
+	if (fallbackScripts.length > 0) {
+		return fallbackScripts;
+	}
+
+	if (
+		!isBuiltInTemplateId(templateId) &&
+		templateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
+	) {
+		return [];
+	}
+
 	return ["sync"];
 }
 
@@ -56,9 +80,21 @@ export function getOptionalOnboardingNote(
 	templateId = "basic",
 	options: SyncOnboardingOptions = {},
 ): string {
+	const optionalSyncScripts = getOptionalSyncScriptNames(templateId, options);
+	const hasUnifiedSync = optionalSyncScripts.includes("sync");
+	const syncSteps = optionalSyncScripts.map((scriptName) =>
+		formatRunScript(packageManager, scriptName),
+	);
 	const developmentScript = getPrimaryDevelopmentScript(templateId);
-	const syncCommand = formatRunScript(packageManager, "sync");
-	const syncCheckCommand = formatRunScript(packageManager, "sync", "--check");
+	const syncCommand = formatRunScript(
+		packageManager,
+		hasUnifiedSync ? "sync" : "sync-types",
+	);
+	const syncCheckCommand = formatRunScript(
+		packageManager,
+		hasUnifiedSync ? "sync" : "sync-types",
+		"--check",
+	);
 	const failOnLossySyncCommand = formatRunScript(
 		packageManager,
 		"sync-types",
@@ -75,6 +111,17 @@ export function getOptionalOnboardingNote(
 	const advancedPersistenceNote = templateHasPersistenceSync(templateId, options)
 		? ` ${syncRestCommand} remains available for advanced REST-only refreshes, but it now fails fast when type-derived artifacts are stale; run \`${syncCommand}\` or \`${syncTypesCommand}\` first.`
 		: "";
+	const fallbackCustomTemplateNote =
+		!hasUnifiedSync &&
+		syncSteps.length > 0 &&
+		!isBuiltInTemplateId(templateId) &&
+		templateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
+			? `Run ${syncSteps.join(" then ")} manually before build, typecheck, or commit. ${syncCheckCommand} verifies the current type-derived artifacts without rewriting them.${optionalSyncScripts.includes("sync-rest") ? ` ${syncRestCommand} remains available for REST-only refreshes after ${syncTypesCommand}.` : ""}`
+			: null;
+
+	if (fallbackCustomTemplateNote) {
+		return fallbackCustomTemplateNote;
+	}
 
 	return `${formatRunScript(packageManager, developmentScript)} ${
 		developmentScript === "dev"
