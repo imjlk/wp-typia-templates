@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import {
 	defineEndpointManifest,
+	runSyncBlockMetadata,
 	syncEndpointClient,
 	syncRestOpenApi,
 	syncTypeSchemas,
@@ -21,6 +22,31 @@ function parseCliOptions( argv: string[] ) {
 	}
 
 	return options;
+}
+
+async function assertTypeArtifactsCurrent() {
+	const report = await runSyncBlockMetadata( {
+		blockJsonFile: 'src/block.json',
+		jsonSchemaFile: 'src/typia.schema.json',
+		manifestFile: 'src/typia.manifest.json',
+		openApiFile: 'src/typia.openapi.json',
+		sourceTypeName: '{{pascalCase}}Attributes',
+		typesFile: 'src/types.ts',
+	}, {
+		check: true,
+	} );
+
+	if ( report.failure?.code === 'stale-generated-artifact' ) {
+		throw new Error(
+			`${ report.failure.message }\nRun \`sync\` or \`sync-types\` first to refresh type-derived artifacts before rerunning \`sync-rest\`.`
+		);
+	}
+
+	if ( report.failure ) {
+		throw new Error(
+			`Type-derived artifact preflight failed before sync-rest.\n${ report.failure.message }`
+		);
+	}
 }
 
 const REST_ENDPOINT_MANIFEST = defineEndpointManifest( {
@@ -84,6 +110,8 @@ const REST_ENDPOINT_MANIFEST = defineEndpointManifest( {
 
 async function main() {
 	const options = parseCliOptions( process.argv.slice( 2 ) );
+
+	await assertTypeArtifactsCurrent();
 
 	for ( const [ baseName, contract ] of Object.entries( REST_ENDPOINT_MANIFEST.contracts ) ) {
 		await syncTypeSchemas( {

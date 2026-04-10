@@ -73,6 +73,7 @@ my-counter/
 │   ├── types.ts
 │   └── validators.ts
 ├── scripts/
+│   ├── sync-project.ts
 │   ├── sync-rest-contracts.ts
 │   └── sync-types-to-block-json.ts
 ├── my-counter.php
@@ -81,14 +82,14 @@ my-counter/
 └── webpack.config.js
 ```
 
-Fresh scaffolds already include a starter `src/typia.manifest.json` so editor/runtime imports resolve before the first sync. After you run `npm run sync-types`, `npm run dev`, or `npm run start`, the scaffold also generates:
+Fresh scaffolds already include a starter `src/typia.manifest.json` so editor/runtime imports resolve before the first sync. After you run `npm run sync`, `npm run dev`, or `npm run start`, the scaffold also generates:
 
 - `src/typia.manifest.json`
 - `src/typia.schema.json`
 - `src/typia.openapi.json`
 - `src/typia-validator.php`
 
-After you run `npm run sync-rest`, `npm run dev`, or `npm run start`, it also generates:
+The same `npm run sync` flow also refreshes the REST-derived artifacts:
 
 - `src/api.openapi.json`
 - `src/api-schemas/*.schema.json`
@@ -412,7 +413,7 @@ $wrapper_attributes = get_block_wrapper_attributes([
 
 ## Step 8: Generate REST Schemas
 
-Run the sync script to generate OpenAPI and JSON Schema files:
+Run the REST sync directly when you only want to refresh the endpoint-derived artifacts:
 
 ```bash
 npm run sync-rest
@@ -423,7 +424,7 @@ This creates:
 - `src/api-schemas/*.schema.json` - JSON Schema files
 - `src/api-schemas/*.openapi.json` - per-contract OpenAPI compatibility fragments
 
-You only need to run `npm run sync-types` / `npm run sync-rest` manually when you want generated metadata and REST schemas refreshed before `npm run build`, `npm run typecheck`, or commit. The generated `dev` workflow watches both sync commands for persistence scaffolds, `npm run start` still runs them as one-shot syncs, and both `npm run build` and `npm run typecheck` verify that the checked-in artifacts are already current. `npm run sync-types` stays warn-only by default, `npm run sync-types -- --fail-on-lossy` fails only on lossy WordPress projection warnings, and `npm run sync-types -- --strict --report json` emits a CI-friendly JSON report while failing on every warning. They do not create migration history.
+Use `npm run sync` for the common-case metadata + REST refresh before `npm run build`, `npm run typecheck`, or commit. The generated `dev` workflow watches both sync commands for persistence scaffolds, `npm run start` still runs the same one-shot ordering, and both `npm run build` and `npm run typecheck` verify that the checked-in artifacts are already current. `npm run sync-types` and `npm run sync-rest` remain available for advanced/manual runs. `npm run sync-types` stays warn-only by default, `npm run sync-types -- --fail-on-lossy` fails only on lossy WordPress projection warnings, and `npm run sync-types -- --strict --report json` emits a CI-friendly JSON report while failing on every warning. `npm run sync-rest` now fails fast when type-derived artifacts are stale or missing, so run `npm run sync` or `npm run sync-types` first when it tells you the metadata layer is out of date. These commands do not create migration history.
 
 For persistence scaffolds, `src/api.openapi.json` is the canonical REST document because it includes the actual route paths, methods, and auth policy metadata. The files in `src/api-schemas/` remain useful per-contract artifacts for validation and compatibility.
 

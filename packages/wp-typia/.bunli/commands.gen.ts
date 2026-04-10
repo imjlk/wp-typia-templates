@@ -9,10 +9,11 @@ import Create from '../src/commands/create.js'
 import Doctor from '../src/commands/doctor.js'
 import Mcp from '../src/commands/mcp.js'
 import Migrate from '../src/commands/migrate.js'
+import Sync from '../src/commands/sync.js'
 import Templates from '../src/commands/templates.js'
 
 // Narrow list of command names to avoid typeof-cycles in types
-const names = ['add', 'create', 'doctor', 'mcp', 'migrate', 'templates'] as const
+const names = ['add', 'create', 'doctor', 'mcp', 'migrate', 'sync', 'templates'] as const
 type GeneratedNames = typeof names[number]
 
 const modules: Record<GeneratedNames, Command<any>> = {
@@ -21,6 +22,7 @@ const modules: Record<GeneratedNames, Command<any>> = {
   'doctor': Doctor,
   'mcp': Mcp,
   'migrate': Migrate,
+  'sync': Sync,
   'templates': Templates
 } as const
 
@@ -49,6 +51,11 @@ const metadata: Record<GeneratedNames, GeneratedCommandMeta> = {
       name: 'migrate',
       description: 'Run migration workflows for migration-capable wp-typia projects.',
       path: './src/commands/migrate'
+    },
+  'sync': {
+      name: 'sync',
+      description: 'Run the common generated-project sync workflow.',
+      path: './src/commands/sync'
     },
   'templates': {
       name: 'templates',

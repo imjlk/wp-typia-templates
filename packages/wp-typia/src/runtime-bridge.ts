@@ -1,5 +1,10 @@
+import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+
 import {
 	createReadlinePrompt,
+	formatRunScript,
 	formatAddHelpText,
 	formatMigrationHelpText,
 	formatTemplateDetails,
@@ -10,6 +15,7 @@ import {
 	getTemplateSelectOptions,
 	listTemplates,
 	parseMigrationArgs,
+	parseWorkspacePackageManagerId,
 	tryResolveWorkspaceProject,
 	runAddBindingSourceCommand,
 	runAddBlockCommand,
@@ -44,6 +50,11 @@ type TemplatesExecutionInput = {
 	};
 };
 
+type SyncExecutionInput = {
+	check?: boolean;
+	cwd: string;
+};
+
 type MigrateExecutionInput = {
 	command?: string;
 	cwd: string;
@@ -53,6 +64,14 @@ type MigrateExecutionInput = {
 };
 
 type PrintLine = (line: string) => void;
+type PackageManagerId = "bun" | "npm" | "pnpm" | "yarn";
+
+type SyncProjectContext = {
+	cwd: string;
+	packageJsonPath: string;
+	packageManager: PackageManagerId;
+	scripts: Partial<Record<"sync" | "sync-rest" | "sync-types", string>>;
+};
 
 function printBlock(lines: string[], printLine: PrintLine): void {
 	for (const line of lines) {
@@ -98,6 +117,100 @@ function pushFlag(argv: string[], name: string, value: unknown): void {
 		return;
 	}
 	argv.push(`--${name}`, String(value));
+}
+
+function getSyncRootError(cwd: string): Error {
+	return new Error(
+		`No generated wp-typia project root was found at ${cwd}. Run \`wp-typia sync\` from a scaffolded project or official workspace root.`,
+	);
+}
+
+function resolveSyncProjectContext(cwd: string): SyncProjectContext {
+	const packageJsonPath = path.join(cwd, "package.json");
+	if (!fs.existsSync(packageJsonPath)) {
+		throw getSyncRootError(cwd);
+	}
+
+	if (!fs.existsSync(path.join(cwd, "scripts", "sync-types-to-block-json.ts"))) {
+		throw getSyncRootError(cwd);
+	}
+
+	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+		packageManager?: string;
+		scripts?: Record<string, unknown>;
+	};
+	const scripts = packageJson.scripts ?? {};
+	const syncScripts = {
+		sync: typeof scripts.sync === "string" ? scripts.sync : undefined,
+		"sync-rest":
+			typeof scripts["sync-rest"] === "string" ? scripts["sync-rest"] : undefined,
+		"sync-types":
+			typeof scripts["sync-types"] === "string" ? scripts["sync-types"] : undefined,
+	} satisfies SyncProjectContext["scripts"];
+
+	if (!syncScripts.sync && !syncScripts["sync-types"]) {
+		throw new Error(
+			`Expected ${packageJsonPath} to define either a \`sync\` or \`sync-types\` script.`,
+		);
+	}
+
+	return {
+		cwd,
+		packageJsonPath,
+		packageManager: parseWorkspacePackageManagerId(packageJson.packageManager),
+		scripts: syncScripts,
+	};
+}
+
+function getPackageManagerRunInvocation(
+	packageManager: PackageManagerId,
+	scriptName: string,
+	extraArgs: string[],
+): { args: string[]; command: string } {
+	switch (packageManager) {
+		case "bun":
+			return { args: ["run", scriptName, ...extraArgs], command: "bun" };
+		case "npm":
+			return {
+				args: ["run", scriptName, ...(extraArgs.length > 0 ? ["--", ...extraArgs] : [])],
+				command: "npm",
+			};
+		case "pnpm":
+			return { args: ["run", scriptName, ...extraArgs], command: "pnpm" };
+		case "yarn":
+			return { args: ["run", scriptName, ...extraArgs], command: "yarn" };
+	}
+}
+
+function runProjectScript(
+	project: SyncProjectContext,
+	scriptName: "sync" | "sync-rest" | "sync-types",
+	extraArgs: string[],
+): void {
+	const script = project.scripts[scriptName];
+	if (!script) {
+		return;
+	}
+
+	const invocation = getPackageManagerRunInvocation(
+		project.packageManager,
+		scriptName,
+		extraArgs,
+	);
+
+	try {
+		execFileSync(invocation.command, invocation.args, {
+			cwd: project.cwd,
+			stdio: "inherit",
+		});
+	} catch (error) {
+		throw new Error(
+			`\`${formatRunScript(project.packageManager, scriptName, extraArgs.join(" "))}\` failed.`,
+			{
+				cause: error instanceof Error ? error : undefined,
+			},
+		);
+	}
 }
 
 const PACKAGE_MANAGER_PROMPT_OPTIONS = [
@@ -382,6 +495,25 @@ export async function executeTemplatesCommand(
 
 export async function executeDoctorCommand(cwd: string): Promise<void> {
 	await runDoctor(cwd);
+}
+
+export async function executeSyncCommand({
+	check = false,
+	cwd,
+}: SyncExecutionInput): Promise<void> {
+	const project = resolveSyncProjectContext(cwd);
+	const extraArgs = check ? ["--check"] : [];
+
+	if (project.scripts.sync) {
+		runProjectScript(project, "sync", extraArgs);
+		return;
+	}
+
+	runProjectScript(project, "sync-types", extraArgs);
+
+	if (project.scripts["sync-rest"]) {
+		runProjectScript(project, "sync-rest", extraArgs);
+	}
 }
 
 export async function executeMigrateCommand({

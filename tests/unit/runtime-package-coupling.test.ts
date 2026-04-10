@@ -234,16 +234,43 @@ describe("validate-runtime-package-coupling", () => {
 		);
 	});
 
-	test("fails when a dependent has a changeset but keeps a stale dependency spec", () => {
+	test("allows an exact source pin to stay on the current version until release versioning runs", () => {
 		const repoRoot = createRuntimeRepo();
 		writeChangeset(repoRoot, "project-tools-patch.md", ["npm/@wp-typia/project-tools: patch"]);
 		writeChangeset(repoRoot, "wp-typia-patch.md", ["npm/wp-typia: patch"]);
 
 		const result = validateRuntimePackageCoupling(repoRoot);
 
+		expect(result.valid).toBe(true);
+		expect(result.errors).toEqual([]);
+	});
+
+	test("fails when a dependent has a changeset but keeps an exact dependency spec on the wrong source version", () => {
+		const repoRoot = createRuntimeRepo();
+		writeChangeset(repoRoot, "project-tools-patch.md", ["npm/@wp-typia/project-tools: patch"]);
+		writeChangeset(repoRoot, "wp-typia-patch.md", ["npm/wp-typia: patch"]);
+
+		const wpTypiaPackageJsonPath = path.join(
+			repoRoot,
+			"packages",
+			"wp-typia",
+			"package.json",
+		);
+		const wpTypiaPackageJson = JSON.parse(
+			fs.readFileSync(wpTypiaPackageJsonPath, "utf8"),
+		);
+		wpTypiaPackageJson.dependencies["@wp-typia/project-tools"] = "0.15.3";
+		fs.writeFileSync(
+			wpTypiaPackageJsonPath,
+			`${JSON.stringify(wpTypiaPackageJson, null, 2)}\n`,
+			"utf8",
+		);
+
+		const result = validateRuntimePackageCoupling(repoRoot);
+
 		expect(result.valid).toBe(false);
 		expect(result.errors).toContain(
-			'wp-typia has a pending patch changeset, but dependencies.@wp-typia/project-tools="0.15.4" still does not allow planned @wp-typia/project-tools@0.15.5.',
+			'wp-typia has a pending patch changeset, but dependencies.@wp-typia/project-tools="0.15.3" still does not allow planned @wp-typia/project-tools@0.15.5.',
 		);
 	});
 

@@ -307,7 +307,12 @@ function getInstallCommand(packageManager) {
 }
 
 function runScaffoldRefreshScripts(projectDir, packageManager, packageJson) {
-	for (const scriptName of ["sync-types", "sync-rest", "sync-wordpress-ai", "sync-typia-llm"]) {
+	const scriptNames =
+		typeof packageJson.scripts?.sync === "string"
+			? ["sync", "sync-wordpress-ai", "sync-typia-llm"]
+			: ["sync-types", "sync-rest", "sync-wordpress-ai", "sync-typia-llm"];
+
+	for (const scriptName of scriptNames) {
 		if (typeof packageJson.scripts?.[scriptName] !== "string") {
 			continue;
 		}

@@ -2,6 +2,7 @@
 import path from 'node:path';
 
 import {
+	runSyncBlockMetadata,
 	syncEndpointClient,
 	syncRestOpenApi,
 	syncTypeSchemas,
@@ -41,6 +42,34 @@ function isRestEnabledBlock(
 	);
 }
 
+async function assertTypeArtifactsCurrent( block: WorkspaceBlockConfig ) {
+	const report = await runSyncBlockMetadata(
+		{
+			blockJsonFile: path.join( 'src', 'blocks', block.slug, 'block.json' ),
+			jsonSchemaFile: path.join( 'src', 'blocks', block.slug, 'typia.schema.json' ),
+			manifestFile: path.join( 'src', 'blocks', block.slug, 'typia.manifest.json' ),
+			openApiFile: path.join( 'src', 'blocks', block.slug, 'typia.openapi.json' ),
+			sourceTypeName: block.attributeTypeName,
+			typesFile: block.typesFile,
+		},
+		{
+			check: true,
+		}
+	);
+
+	if ( report.failure?.code === 'stale-generated-artifact' ) {
+		throw new Error(
+			`${ block.slug }: ${ report.failure.message }\nRun \`sync\` or \`sync-types\` first to refresh type-derived artifacts before rerunning \`sync-rest\`.`
+		);
+	}
+
+	if ( report.failure ) {
+		throw new Error(
+			`${ block.slug }: type-derived artifact preflight failed before sync-rest.\n${ report.failure.message }`
+		);
+	}
+}
+
 async function main() {
 	const options = parseCliOptions( process.argv.slice( 2 ) );
 	const restBlocks = BLOCKS.filter( isRestEnabledBlock );
@@ -55,6 +84,8 @@ async function main() {
 	}
 
 	for ( const block of restBlocks ) {
+		await assertTypeArtifactsCurrent( block );
+
 		const contracts = block.restManifest.contracts;
 
 		for ( const [ baseName, contract ] of Object.entries( contracts ) ) {

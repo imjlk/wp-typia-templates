@@ -229,7 +229,9 @@ export function getOptionalOnboarding({
 	compoundPersistenceEnabled = false,
 }: GetOptionalOnboardingOptions): OptionalOnboardingGuidance {
 	return {
-		note: getOptionalOnboardingNote(packageManager, templateId),
+		note: getOptionalOnboardingNote(packageManager, templateId, {
+			compoundPersistenceEnabled,
+		}),
 		steps: getOptionalOnboardingSteps(packageManager, templateId, {
 			compoundPersistenceEnabled,
 		}),

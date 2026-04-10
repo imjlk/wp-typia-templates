@@ -148,7 +148,8 @@ Validation uses planned publish truth, not just source truth:
 
 - `@wp-typia/rest` keeps `workspace:*` in source so local development stays ergonomic
 - the coupling validator only materializes the sanctioned `@wp-typia/rest -> @wp-typia/api-client` workspace edge against the planned next version before checking the release lane
-- if an upstream runtime package change falls outside the current policy lane, the dependent package must carry both a manifest update and a pending changeset in the same PR
+- caret-coupled dependents still need a manifest update plus a pending changeset in the same PR when an upstream change falls outside the current lane
+- the `wp-typia -> @wp-typia/project-tools` exact pin may stay on the current source version during a changeset PR, because the release PR/versioning step rewrites that exact dependency to the published next version
 
 ## Pull requests
 

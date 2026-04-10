@@ -641,6 +641,7 @@ function buildReadme(
 	const sourceOfTruthNote = getTemplateSourceOfTruthNote(templateId, {
 		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
 	});
+	const compoundPersistenceEnabled = variables.compoundPersistenceEnabled === "true";
 	const publicPersistencePolicyNote =
 		variables.isPublicPersistencePolicy === "true"
 			? "Public persistence writes use signed short-lived tokens, per-request ids, and coarse rate limiting by default. Add application-specific abuse controls before using the same pattern for high-value metrics or experiments."
@@ -650,7 +651,7 @@ function buildReadme(
 		templateId,
 	);
 	const phpRestExtensionPointsSection = getPhpRestExtensionPointsSection(templateId, {
-		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
+		compoundPersistenceEnabled,
 		slug: variables.slug,
 	});
 	const developmentScript = getPrimaryDevelopmentScript(templateId);
@@ -691,7 +692,9 @@ ${formatRunScript(packageManager, "build")}
 ${optionalOnboardingSteps.join("\n")}
 \`\`\`
 
-${getOptionalOnboardingNote(packageManager, templateId)}
+${getOptionalOnboardingNote(packageManager, templateId, {
+		compoundPersistenceEnabled,
+	})}
 
 ${sourceOfTruthNote}${publicPersistencePolicyNote ? `\n\n${publicPersistencePolicyNote}` : ""}${migrationSection ? `\n\n${migrationSection}` : ""}${compoundExtensionWorkflowSection ? `\n\n${compoundExtensionWorkflowSection}` : ""}${wpEnvSection ? `\n\n${wpEnvSection}` : ""}${testPresetSection ? `\n\n${testPresetSection}` : ""}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ""}
 `;

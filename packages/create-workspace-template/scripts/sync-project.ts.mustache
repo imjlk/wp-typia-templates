@@ -1,0 +1,73 @@
+/* eslint-disable no-console */
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+
+interface SyncCliOptions {
+	check: boolean;
+}
+
+function parseCliOptions( argv: string[] ): SyncCliOptions {
+	const options: SyncCliOptions = {
+		check: false,
+	};
+
+	for ( const argument of argv ) {
+		if ( argument === '--check' ) {
+			options.check = true;
+			continue;
+		}
+
+		throw new Error( `Unknown sync flag: ${ argument }` );
+	}
+
+	return options;
+}
+
+function getLocalTsxBinary() {
+	const binaryName = process.platform === 'win32' ? 'tsx.cmd' : 'tsx';
+	const binaryPath = path.join( process.cwd(), 'node_modules', '.bin', binaryName );
+
+	if ( ! fs.existsSync( binaryPath ) ) {
+		throw new Error(
+			'Local tsx binary was not found. Install project dependencies before running `sync`.'
+		);
+	}
+
+	return binaryPath;
+}
+
+function runSyncScript( scriptPath: string, options: SyncCliOptions ) {
+	const args = [ scriptPath ];
+	if ( options.check ) {
+		args.push( '--check' );
+	}
+
+	execFileSync( getLocalTsxBinary(), args, {
+		cwd: process.cwd(),
+		stdio: 'inherit',
+	} );
+}
+
+async function main() {
+	const options = parseCliOptions( process.argv.slice( 2 ) );
+	const syncTypesScriptPath = path.join( 'scripts', 'sync-types-to-block-json.ts' );
+	const syncRestScriptPath = path.join( 'scripts', 'sync-rest-contracts.ts' );
+
+	runSyncScript( syncTypesScriptPath, options );
+
+	if ( fs.existsSync( path.resolve( process.cwd(), syncRestScriptPath ) ) ) {
+		runSyncScript( syncRestScriptPath, options );
+	}
+
+	console.log(
+		options.check
+			? '✅ Generated project metadata and REST artifacts are already synchronized.'
+			: '✅ Generated project metadata and REST artifacts were synchronized.'
+	);
+}
+
+main().catch( ( error ) => {
+	console.error( '❌ Project sync failed:', error );
+	process.exit( 1 );
+} );
