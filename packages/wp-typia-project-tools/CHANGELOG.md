@@ -1,5 +1,13 @@
 # @wp-typia/project-tools
 
+## 0.16.0 — 2026-04-10
+
+### Minor changes
+
+- [1470cc5](https://github.com/imjlk/wp-typia/commit/1470cc5ed02064e616292faa1e38765ce80b7da0) Add a unified `sync` entrypoint for generated projects and the `wp-typia sync`
+  CLI, and make `sync-rest` fail fast when type-derived metadata artifacts are
+  stale or missing. — Thanks @imjlk!
+
 ## 0.15.4 — 2026-04-10
 
 ### Patch changes
