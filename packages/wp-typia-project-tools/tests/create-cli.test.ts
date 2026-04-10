@@ -4903,7 +4903,9 @@ console.log(JSON.stringify({ initial, updated, reread }));
         path.join(targetDir, "src", "blocks", blockSlug, "validators.ts"),
         [
           `import currentManifest from './typia.manifest.json';`,
-          `import type { ${typeName} } from './types';`,
+          "import type {",
+          `\t${typeName},`,
+          "} from './types';",
           `import { createTemplateValidatorToolkit } from '../../validator-toolkit';`,
           "",
           `const scaffoldValidators = createTemplateValidatorToolkit< ${typeName} >( {`,

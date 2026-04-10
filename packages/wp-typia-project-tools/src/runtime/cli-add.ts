@@ -916,7 +916,7 @@ function isLegacyCompoundValidatorSource(source: string | null): source is strin
 
 function upgradeLegacyCompoundValidatorSource(source: string): string {
 	const typeNameMatch = source.match(
-		/import type \{ (?<typeName>[A-Za-z0-9_]+) \} from '\.\/types';/u,
+		/createTemplateValidatorToolkit<\s*(?<typeName>[A-Za-z0-9_]+)\s*>\s*\(\s*\{/u,
 	);
 	const typeName = typeNameMatch?.groups?.typeName;
 	if (!typeName) {
