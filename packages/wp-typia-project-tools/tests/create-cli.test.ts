@@ -347,12 +347,22 @@ function buildGeneratedProject(targetDir: string) {
     {
       cwd: targetDir,
       encoding: "utf8",
+      maxBuffer: 10 * 1024 * 1024,
     }
   );
   const output = [result.stdout, result.stderr].filter(Boolean).join("\n");
 
   if (result.error) {
-    throw result.error;
+    const error = new Error(
+      output || `Generated project build failed to start for ${targetDir}.`,
+      { cause: result.error }
+    );
+    Object.assign(error, {
+      status: result.status,
+      stderr: result.stderr,
+      stdout: result.stdout,
+    });
+    throw error;
   }
   if (result.status !== 0) {
     const error = new Error(output || "Generated project build failed.");

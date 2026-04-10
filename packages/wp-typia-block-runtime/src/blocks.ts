@@ -71,6 +71,7 @@ type NodeModuleBuiltin = typeof import("node:module");
 type NodePathBuiltin = typeof import("node:path");
 type NodePathJoiner = {
 	join(...paths: string[]): string;
+	resolve(...paths: string[]): string;
 };
 
 type OverrideProperties<TBase, TOverride> = Omit<TBase, keyof TOverride> & TOverride;
@@ -369,7 +370,7 @@ async function getTypiaWebpackVersionMatrix(
 	projectRoot = process.cwd(),
 ): Promise<TypiaWebpackVersionMatrix> {
 	const { createRequire, pathModule, readFileSync } = await loadNodeRuntimeHelpers();
-	const packageJsonPath = pathModule.join(projectRoot, "package.json");
+	const packageJsonPath = pathModule.resolve(projectRoot, "package.json");
 	const requireFromProject = createRequire(packageJsonPath);
 
 	return {
