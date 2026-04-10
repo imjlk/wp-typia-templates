@@ -10,6 +10,7 @@ import {
 import {
 	RUNTIME_PACKAGE_COUPLINGS,
 	RUNTIME_PACKAGE_NAMES,
+	WORKSPACE_PROTOCOL_POLICY_EXCEPTIONS,
 	bumpVersion,
 	getRequiredDependentReleaseType,
 	isPolicySpec,
@@ -34,20 +35,20 @@ function readPolicyManifest(packageInfo, plannedByName) {
 
 	const materializedManifest = JSON.parse(JSON.stringify(sourceManifest));
 
-	for (const coupling of RUNTIME_PACKAGE_COUPLINGS) {
-		if (coupling.dependentName !== packageInfo.packageName) {
+	for (const exception of WORKSPACE_PROTOCOL_POLICY_EXCEPTIONS) {
+		if (exception.dependentName !== packageInfo.packageName) {
 			continue;
 		}
 
-		const dependencyInfo = plannedByName.get(coupling.dependencyName);
+		const dependencyInfo = plannedByName.get(exception.dependencyName);
 		if (!dependencyInfo) {
 			continue;
 		}
 
-		const currentSpec = materializedManifest.dependencies?.[coupling.dependencyName];
+		const currentSpec = materializedManifest.dependencies?.[exception.dependencyName];
 		if (typeof currentSpec === "string" && currentSpec.startsWith("workspace:")) {
-			materializedManifest.dependencies[coupling.dependencyName] = renderPolicySpec(
-				coupling.rangePolicy,
+			materializedManifest.dependencies[exception.dependencyName] = renderPolicySpec(
+				exception.rangePolicy,
 				dependencyInfo.plannedVersion,
 			);
 		}

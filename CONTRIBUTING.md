@@ -147,7 +147,7 @@ Why this split exists:
 Validation uses planned publish truth, not just source truth:
 
 - `@wp-typia/rest` keeps `workspace:*` in source so local development stays ergonomic
-- the coupling validator materializes workspace-protocol runtime dependencies against the planned next versions before checking the release lane
+- the coupling validator only materializes the sanctioned `@wp-typia/rest -> @wp-typia/api-client` workspace edge against the planned next version before checking the release lane
 - if an upstream runtime package change falls outside the current policy lane, the dependent package must carry both a manifest update and a pending changeset in the same PR
 
 ## Pull requests

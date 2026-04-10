@@ -255,4 +255,24 @@ describe("validate-runtime-package-coupling", () => {
 		expect(result.valid).toBe(true);
 		expect(result.errors).toEqual([]);
 	});
+
+	test("fails when an unsanctioned runtime package keeps a workspace protocol dependency", () => {
+		const repoRoot = createRuntimeRepo();
+		const packageJsonPath = path.join(
+			repoRoot,
+			"packages",
+			"wp-typia-block-runtime",
+			"package.json",
+		);
+		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+		packageJson.dependencies["@wp-typia/api-client"] = "workspace:*";
+		fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
+
+		const result = validateRuntimePackageCoupling(repoRoot);
+
+		expect(result.valid).toBe(false);
+		expect(result.errors).toContain(
+			'@wp-typia/block-runtime must use a caret dependency spec for @wp-typia/api-client, found "workspace:*".',
+		);
+	});
 });

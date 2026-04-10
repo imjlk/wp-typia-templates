@@ -52,6 +52,14 @@ export const RUNTIME_PACKAGE_COUPLINGS = [
 	},
 ];
 
+export const WORKSPACE_PROTOCOL_POLICY_EXCEPTIONS = [
+	{
+		dependencyName: "@wp-typia/api-client",
+		dependentName: "@wp-typia/rest",
+		rangePolicy: RANGE_POLICY.caret,
+	},
+];
+
 export const RUNTIME_PACKAGE_NAMES = [
 	...new Set(
 		RUNTIME_PACKAGE_COUPLINGS.flatMap(({ dependencyName, dependentName }) => [
