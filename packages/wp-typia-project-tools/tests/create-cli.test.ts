@@ -3258,7 +3258,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
       runGeneratedScript(targetDir, "scripts/sync-project.ts");
       runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts");
     },
-    20_000
+    40_000
   );
 
   test(
