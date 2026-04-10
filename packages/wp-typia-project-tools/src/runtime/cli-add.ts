@@ -902,6 +902,7 @@ const LEGACY_TOOLKIT_CALL_PATTERN =
 	/createTemplateValidatorToolkit<\s*(?<typeName>[A-Za-z0-9_]+)\s*>\s*\(\s*\{/u;
 const LEGACY_VALIDATOR_TOOLKIT_IMPORT_PATTERN =
 	/from\s*["']\.\.\/\.\.\/validator-toolkit["']/u;
+const TYPIA_IMPORT_PATTERN = /import\s+typia\s+from\s*["']typia["'];?/u;
 const COMPATIBLE_COMPOUND_TOOLKIT_PATTERNS = [
 	/interface\s+TemplateValidatorFunctions\s*<\s*T\s+extends\s+object\s*>\s*\{/u,
 	/\bassert\s*:\s*ScaffoldValidatorToolkitOptions\s*<\s*T\s*>\s*\[\s*["']assert["']\s*\]/u,
@@ -940,7 +941,7 @@ function upgradeLegacyCompoundValidatorSource(source: string): string {
 	}
 
 	let nextSource = source;
-	if (!nextSource.includes("import typia from 'typia';")) {
+	if (!TYPIA_IMPORT_PATTERN.test(nextSource)) {
 		nextSource = `import typia from 'typia';\n${nextSource}`;
 	}
 
