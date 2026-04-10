@@ -6,6 +6,7 @@ import path from "node:path";
 import {
 	findPublishablePackageIds,
 	parseChangesetFrontmatter,
+	toPosixRelativePath,
 	validateSampoChangesets,
 } from "../../scripts/validate-sampo-changesets.mjs";
 
@@ -65,6 +66,26 @@ describe("validate-sampo-changesets", () => {
 				"duplicate.md",
 			),
 		).toThrow('duplicate.md: duplicate package id "npm/@wp-typia/project-tools" in frontmatter');
+	});
+
+	test("parseChangesetFrontmatter rejects inherited object keys as release types", () => {
+		expect(() =>
+			parseChangesetFrontmatter(
+				["---", "npm/@wp-typia/project-tools: toString", "---"].join("\n"),
+				"invalid-release-type.md",
+			),
+		).toThrow(
+			'invalid-release-type.md: unsupported release type "toString" for "npm/@wp-typia/project-tools"',
+		);
+	});
+
+	test("toPosixRelativePath normalizes separators for validator output", () => {
+		expect(toPosixRelativePath("/repo", "/repo/.sampo/changesets/valid.md")).toBe(
+			".sampo/changesets/valid.md",
+		);
+		expect(toPosixRelativePath("C:\\repo", "C:\\repo\\.sampo\\changesets\\valid.md")).toBe(
+			".sampo/changesets/valid.md",
+		);
 	});
 
 	test("validateSampoChangesets passes for canonical package ids", () => {

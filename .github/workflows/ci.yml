@@ -59,6 +59,9 @@ jobs:
       - name: Validate publish package coverage
         run: bun run publish:validate
 
+      - name: Validate runtime package coupling
+        run: bun run runtime-coupling:validate
+
       - name: Run example linting
         run: bun run examples:lint
 

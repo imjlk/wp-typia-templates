@@ -44,6 +44,9 @@ jobs:
       - name: Validate publish package coverage
         run: bun run publish:validate
 
+      - name: Validate runtime package coupling
+        run: bun run runtime-coupling:validate
+
       - name: Install Sampo
         run: cargo install sampo --locked --version 0.17.0
 
