@@ -932,6 +932,10 @@ function isLegacyCompoundValidatorSource(source: string | null): source is strin
 	);
 }
 
+function hasTypiaImport(source: string): boolean {
+	return TYPIA_IMPORT_PATTERN.test(source.replace(/\/\*[\s\S]*?\*\//gu, ""));
+}
+
 function upgradeLegacyCompoundValidatorSource(source: string): string {
 	const typeNameMatch = source.match(LEGACY_TOOLKIT_CALL_PATTERN);
 	const typeName = typeNameMatch?.groups?.typeName;
@@ -942,7 +946,7 @@ function upgradeLegacyCompoundValidatorSource(source: string): string {
 	}
 
 	let nextSource = source;
-	if (!TYPIA_IMPORT_PATTERN.test(nextSource)) {
+	if (!hasTypiaImport(nextSource)) {
 		nextSource = `import typia from 'typia';\n${nextSource}`;
 	}
 
