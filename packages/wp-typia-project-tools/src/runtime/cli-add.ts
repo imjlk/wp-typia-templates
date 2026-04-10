@@ -903,7 +903,7 @@ const LEGACY_TOOLKIT_CALL_PATTERN =
 const LEGACY_VALIDATOR_TOOLKIT_IMPORT_PATTERN =
 	/from\s*["']\.\.\/\.\.\/validator-toolkit["']/u;
 const TYPIA_IMPORT_PATTERN =
-	/^[ \t]*import\s+typia\s+from\s*["']typia["'];?/mu;
+	/^[\uFEFF \t]*import\s+typia\s+from\s*["']typia["'];?/mu;
 const COMPATIBLE_COMPOUND_TOOLKIT_PATTERNS = [
 	/interface\s+TemplateValidatorFunctions\s*<\s*T\s+extends\s+object\s*>\s*\{/u,
 	/\bassert\s*:\s*ScaffoldValidatorToolkitOptions\s*<\s*T\s*>\s*\[\s*["']assert["']\s*\]/u,
