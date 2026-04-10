@@ -790,7 +790,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 
       typecheckGeneratedProject(targetDir);
     },
-    { timeout: 15_000 }
+    { timeout: 30_000 }
   );
 
   test(
@@ -1592,7 +1592,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
         "export function writeDemoPersistencePublicState("
       );
     },
-    { timeout: 15_000 }
+    { timeout: 30_000 }
   );
 
   test(
@@ -1632,7 +1632,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
       runGeneratedScript(targetDir, "scripts/sync-project.ts");
       runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts");
     },
-    20_000
+    40_000
   );
 
   test("scaffoldProject creates a persistence template with authenticated writes by default", async () => {

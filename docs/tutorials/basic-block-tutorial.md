@@ -66,13 +66,13 @@ export interface MyTypiaBlockAttributes {
 
 ## Step 3: Generate block.json
 
-Run the common sync script to generate WordPress attributes:
+Run the common sync script to regenerate the current type-derived artifacts, including `src/block.json`, `src/typia.manifest.json`, and `src/typia-validator.php`:
 
 ```bash
 npm run sync
 ```
 
-Check `src/block.json` - it should contain all your attributes with proper types and defaults!
+Check `src/block.json` - it should contain all your attributes with proper types and defaults.
 
 Fresh scaffolds already include a starter `src/typia.manifest.json` so editor/runtime imports resolve before the first sync.
 
