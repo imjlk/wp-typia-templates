@@ -92,7 +92,7 @@ Returns help text for the canonical `wp-typia add` subcommands.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1234](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1234)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1240](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1240)
 
 ___
 
@@ -115,7 +115,7 @@ Seeds an empty official workspace migration project before any blocks are added.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1253](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1253)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1259](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1259)
 
 ___
 
@@ -137,7 +137,7 @@ Adds one built-in block slice to an official workspace project.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1282](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1282)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1288](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1288)
 
 ___
 
@@ -169,7 +169,7 @@ conflicting file or inventory entry already exists.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1592](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1592)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1598](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1598)
 
 ___
 
@@ -201,7 +201,7 @@ already exists.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1667](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1667)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1673](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1673)
 
 ___
 
@@ -232,7 +232,7 @@ the slug is invalid, or when a conflicting file or inventory entry exists.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1733](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1733)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1739](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1739)
 
 ___
 
@@ -263,4 +263,4 @@ block already defines a hook for the requested anchor.
 
 #### Defined in
 
-[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1813](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1813)
+[packages/wp-typia-project-tools/src/runtime/cli-add.ts:1819](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-project-tools/src/runtime/cli-add.ts#L1819)
