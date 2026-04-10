@@ -113,6 +113,11 @@ describe("runtime-package-policy", () => {
 		expect(specAllowsVersion("^0.4.2", "0.5.0", RANGE_POLICY.caret)).toBe(false);
 	});
 
+	test("policy specs reject pre-release and build suffixes until semver-aware ordering is implemented", () => {
+		expect(specAllowsVersion("^0.4.2-beta.1", "0.4.2", RANGE_POLICY.caret)).toBe(false);
+		expect(specAllowsVersion("0.15.4+build.1", "0.15.4", RANGE_POLICY.exact)).toBe(false);
+	});
+
 	test("exact policy only allows the exact planned version", () => {
 		expect(specAllowsVersion("0.15.4", "0.15.4", RANGE_POLICY.exact)).toBe(true);
 		expect(specAllowsVersion("0.15.4", "0.15.5", RANGE_POLICY.exact)).toBe(false);
@@ -169,6 +174,52 @@ describe("validate-runtime-package-coupling", () => {
 		expect(result.errors).toContain(
 			"@wp-typia/api-client is planned for 0.4.2 -> 0.5.0; wp-typia must add a pending changeset and update dependencies.@wp-typia/api-client.",
 		);
+	});
+
+	test("passes when an api-client minor bump is paired with dependent changesets and forward-updated manifests", () => {
+		const repoRoot = createRuntimeRepo();
+		writeChangeset(repoRoot, "api-client-minor.md", ["npm/@wp-typia/api-client: minor"]);
+		writeChangeset(repoRoot, "block-runtime-patch.md", ["npm/@wp-typia/block-runtime: patch"]);
+		writeChangeset(repoRoot, "rest-patch.md", ["npm/@wp-typia/rest: patch"]);
+		writeChangeset(repoRoot, "project-tools-patch.md", ["npm/@wp-typia/project-tools: patch"]);
+		writeChangeset(repoRoot, "wp-typia-patch.md", ["npm/wp-typia: patch"]);
+
+		const updateDependency = (
+			packageDir: string,
+			packageName: string,
+			nextSpec: string,
+		) => {
+			const packageJsonPath = path.join(repoRoot, packageDir, "package.json");
+			const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+			packageJson.dependencies[packageName] = nextSpec;
+			fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
+		};
+
+		updateDependency("packages/wp-typia-block-runtime", "@wp-typia/api-client", "^0.5.0");
+		updateDependency("packages/wp-typia-rest", "@wp-typia/api-client", "^0.5.0");
+		updateDependency("packages/wp-typia-project-tools", "@wp-typia/api-client", "^0.5.0");
+		updateDependency("packages/wp-typia", "@wp-typia/api-client", "^0.5.0");
+
+		const projectToolsPackageJsonPath = path.join(
+			repoRoot,
+			"packages",
+			"wp-typia",
+			"package.json",
+		);
+		const wpTypiaPackageJson = JSON.parse(
+			fs.readFileSync(projectToolsPackageJsonPath, "utf8"),
+		);
+		wpTypiaPackageJson.dependencies["@wp-typia/project-tools"] = "0.15.5";
+		fs.writeFileSync(
+			projectToolsPackageJsonPath,
+			`${JSON.stringify(wpTypiaPackageJson, null, 2)}\n`,
+			"utf8",
+		);
+
+		const result = validateRuntimePackageCoupling(repoRoot);
+
+		expect(result.valid).toBe(true);
+		expect(result.errors).toEqual([]);
 	});
 
 	test("fails when project-tools changes but wp-typia keeps a stale exact dependency without a changeset", () => {

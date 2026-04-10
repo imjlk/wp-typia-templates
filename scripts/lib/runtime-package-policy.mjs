@@ -63,7 +63,7 @@ export const RUNTIME_PACKAGE_NAMES = [
 
 function parseVersion(version) {
 	const match = version.match(
-		/^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:[-+].*)?$/u,
+		/^(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)$/u,
 	);
 	if (!match?.groups) {
 		throw new Error(`Unsupported semver version "${version}".`);
@@ -119,9 +119,9 @@ export function renderPolicySpec(rangePolicy, version) {
 export function isPolicySpec(rangePolicy, spec) {
 	switch (rangePolicy) {
 		case RANGE_POLICY.exact:
-			return /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:[-+].*)?$/u.test(spec);
+			return /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/u.test(spec);
 		case RANGE_POLICY.caret:
-			return /^\^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:[-+].*)?$/u.test(spec);
+			return /^\^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/u.test(spec);
 		default:
 			return false;
 	}
