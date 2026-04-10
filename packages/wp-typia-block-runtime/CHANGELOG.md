@@ -1,5 +1,14 @@
 # @wp-typia/block-runtime
 
+## 0.4.3 — 2026-04-10
+
+### Patch changes
+
+- [4a02664](https://github.com/imjlk/wp-typia/commit/4a026642692b6b101d454bd14c70d0b5c28b900e) Fix generated-project Typia/Webpack compatibility by moving generic Typia
+  factory calls out of the shared validator helper, adding a fail-fast supported
+  toolchain guard around the Webpack integration, and covering the path with
+  generated-project build smoke tests. — Thanks @imjlk!
+
 ## 0.4.2 — 2026-04-09
 
 ### Minor changes
