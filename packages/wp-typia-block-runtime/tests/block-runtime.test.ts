@@ -132,4 +132,47 @@ describe("@wp-typia/block-runtime", () => {
 			rmSync(projectRoot, { force: true, recursive: true });
 		}
 	});
+
+	test("Typia/Webpack compatibility preflight prefers webpack resolved from @wordpress/scripts", async () => {
+		const blocksModule = await import("@wp-typia/block-runtime/blocks");
+		const projectRoot = mkdtempSync(resolve(tmpdir(), "wp-typia-compat-nested-"));
+
+		try {
+			writeFileSync(
+				resolve(projectRoot, "package.json"),
+				JSON.stringify({ name: "compat-nested", private: true }, null, 2),
+				"utf8",
+			);
+			writeMockPackage(projectRoot, "typia", "12.0.1");
+			writeMockPackage(projectRoot, "@typia/unplugin", "12.0.1");
+			writeMockPackage(projectRoot, "@wordpress/scripts", "30.22.0");
+			writeMockPackage(projectRoot, "webpack", "4.47.0");
+
+			const wordpressScriptsNodeModules = resolve(
+				projectRoot,
+				"node_modules",
+				"@wordpress",
+				"scripts",
+				"node_modules",
+			);
+			mkdirSync(resolve(wordpressScriptsNodeModules, "webpack"), {
+				recursive: true,
+			});
+			writeFileSync(
+				resolve(wordpressScriptsNodeModules, "webpack", "package.json"),
+				JSON.stringify({ name: "webpack", version: "5.106.0" }, null, 2),
+				"utf8",
+			);
+
+			await expect(
+				blocksModule.assertTypiaWebpackCompatibility({ projectRoot }),
+			).resolves.toEqual(
+				expect.objectContaining({
+					webpack: "5.106.0",
+				}),
+			);
+		} finally {
+			rmSync(projectRoot, { force: true, recursive: true });
+		}
+	});
 });

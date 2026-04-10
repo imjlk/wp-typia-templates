@@ -345,28 +345,24 @@ function resolveWebpackVersion(
 	requireFromProject: NodeJS.Require,
 	createRequire: NodeModuleBuiltin["createRequire"],
 ): string | null {
-	const directVersion = resolveInstalledPackageVersion(
-		readFileSync,
-		requireFromProject,
-		"webpack",
-	);
-	if (directVersion) {
-		return directVersion;
-	}
-
 	try {
 		const wordpressScriptsPackageJsonPath = requireFromProject.resolve(
 			"@wordpress/scripts/package.json",
 		);
 		const requireFromWordPressScripts = createRequire(wordpressScriptsPackageJsonPath);
-		return resolveInstalledPackageVersion(
+		const bundledWebpackVersion = resolveInstalledPackageVersion(
 			readFileSync,
 			requireFromWordPressScripts,
 			"webpack",
 		);
+		if (bundledWebpackVersion) {
+			return bundledWebpackVersion;
+		}
 	} catch {
-		return null;
+		// fall through to the project-level webpack resolution below
 	}
+
+	return resolveInstalledPackageVersion(readFileSync, requireFromProject, "webpack");
 }
 
 async function getTypiaWebpackVersionMatrix(
