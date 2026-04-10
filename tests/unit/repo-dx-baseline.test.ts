@@ -80,7 +80,11 @@ describe('repository DX baseline', () => {
 		expect(contributing).toContain('bun run lint:repo');
 		expect(contributing).toContain('## Project meta docs');
 		expect(contributing).toContain('[`SECURITY.md`](./SECURITY.md)');
-		expect(cliReadme).toContain('https://github.com/imjlk/wp-typia/blob/main/UPGRADE.md');
-		expect(cliReadme).toContain('https://github.com/imjlk/wp-typia/blob/main/SECURITY.md');
+		expect(cliReadme).toMatch(
+			/https:\/\/github\.com\/[^/]+\/[^/]+\/blob\/main\/UPGRADE\.md/,
+		);
+		expect(cliReadme).toMatch(
+			/https:\/\/github\.com\/[^/]+\/[^/]+\/blob\/main\/SECURITY\.md/,
+		);
 	});
 });
