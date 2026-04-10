@@ -8,6 +8,7 @@ import {
 	findPublishablePackages,
 } from "./lib/sampo-changesets.mjs";
 import {
+	RANGE_POLICY,
 	RUNTIME_PACKAGE_COUPLINGS,
 	RUNTIME_PACKAGE_NAMES,
 	WORKSPACE_PROTOCOL_POLICY_EXCEPTIONS,
@@ -148,7 +149,23 @@ export function validateRuntimePackageCoupling(repoRoot) {
 			continue;
 		}
 
-		if (!specAllowsVersion(spec, dependencyInfo.plannedVersion, coupling.rangePolicy)) {
+		const allowsCurrentVersion = specAllowsVersion(
+			spec,
+			dependencyInfo.currentVersion,
+			coupling.rangePolicy,
+		);
+		const allowsPlannedVersion = specAllowsVersion(
+			spec,
+			dependencyInfo.plannedVersion,
+			coupling.rangePolicy,
+		);
+		const allowsSourceExactPinUntilRelease =
+			coupling.rangePolicy === RANGE_POLICY.exact &&
+			dependentInfo.pendingReleaseType !== null &&
+			dependencyInfo.currentVersion !== dependencyInfo.plannedVersion &&
+			allowsCurrentVersion;
+
+		if (!allowsPlannedVersion && !allowsSourceExactPinUntilRelease) {
 			if (dependentInfo.pendingReleaseType !== null) {
 				errors.push(
 					`${coupling.dependentName} has a pending ${dependentInfo.pendingReleaseType} changeset, but dependencies.${coupling.dependencyName}="${spec}" still does not allow planned ${coupling.dependencyName}@${dependencyInfo.plannedVersion}.`,

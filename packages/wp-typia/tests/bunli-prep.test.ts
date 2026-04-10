@@ -32,6 +32,7 @@ describe("wp-typia Bunli preparation", () => {
 		expect(fs.existsSync(path.join(packageRoot, "bunli.config.ts"))).toBe(true);
 		expect(fs.existsSync(path.join(packageRoot, "src", "cli.ts"))).toBe(true);
 		expect(fs.existsSync(path.join(packageRoot, "src", "commands", "create.ts"))).toBe(true);
+		expect(fs.existsSync(path.join(packageRoot, "src", "commands", "sync.ts"))).toBe(true);
 		expect(fs.existsSync(path.join(packageRoot, "src", "commands", "add.ts"))).toBe(true);
 		expect(fs.existsSync(path.join(packageRoot, "src", "commands", "templates.ts"))).toBe(true);
 		expect(fs.existsSync(path.join(packageRoot, "src", "commands", "migrate.ts"))).toBe(true);

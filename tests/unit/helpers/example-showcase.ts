@@ -45,7 +45,7 @@ export function ensureExampleShowcaseSynced(): void {
 		return;
 	}
 
-	execSync('bun run sync-types --check', {
+	execSync('bun run sync --check', {
 		cwd: EXAMPLE_DIR,
 		stdio: 'inherit',
 	});

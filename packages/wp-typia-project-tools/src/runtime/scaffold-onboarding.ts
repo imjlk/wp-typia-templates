@@ -1,8 +1,13 @@
 import { formatRunScript } from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
 import { getPrimaryDevelopmentScript } from "./local-dev-presets.js";
+import {
+	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
+	isBuiltInTemplateId,
+} from "./template-registry.js";
 
 interface SyncOnboardingOptions {
+	availableScripts?: string[];
 	compoundPersistenceEnabled?: boolean;
 }
 
@@ -32,9 +37,26 @@ export function getOptionalSyncScriptNames(
 	templateId: string,
 	options: SyncOnboardingOptions = {},
 ): string[] {
-	return templateHasPersistenceSync(templateId, options)
-		? ["sync-types", "sync-rest"]
-		: ["sync-types"];
+	const availableScripts = new Set(options.availableScripts ?? []);
+	if (availableScripts.has("sync")) {
+		return ["sync"];
+	}
+
+	const fallbackScripts = ["sync-types", "sync-rest"].filter((scriptName) =>
+		availableScripts.has(scriptName),
+	);
+	if (fallbackScripts.length > 0) {
+		return fallbackScripts;
+	}
+
+	if (
+		!isBuiltInTemplateId(templateId) &&
+		templateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
+	) {
+		return [];
+	}
+
+	return ["sync"];
 }
 
 /**
@@ -56,26 +78,56 @@ export function getOptionalOnboardingSteps(
 export function getOptionalOnboardingNote(
 	packageManager: PackageManagerId,
 	templateId = "basic",
+	options: SyncOnboardingOptions = {},
 ): string {
+	const optionalSyncScripts = getOptionalSyncScriptNames(templateId, options);
+	const hasUnifiedSync = optionalSyncScripts.includes("sync");
+	const syncSteps = optionalSyncScripts.map((scriptName) =>
+		formatRunScript(packageManager, scriptName),
+	);
 	const developmentScript = getPrimaryDevelopmentScript(templateId);
+	const syncCommand = formatRunScript(
+		packageManager,
+		hasUnifiedSync ? "sync" : "sync-types",
+	);
+	const syncCheckCommand = formatRunScript(
+		packageManager,
+		hasUnifiedSync ? "sync" : "sync-types",
+		"--check",
+	);
 	const failOnLossySyncCommand = formatRunScript(
 		packageManager,
 		"sync-types",
 		"--fail-on-lossy",
 	);
 	const syncTypesCommand = formatRunScript(packageManager, "sync-types");
+	const syncRestCommand = formatRunScript(packageManager, "sync-rest");
 	const typecheckCommand = formatRunScript(packageManager, "typecheck");
 	const strictSyncCommand = formatRunScript(
 		packageManager,
 		"sync-types",
 		"--strict --report json",
 	);
+	const advancedPersistenceNote = templateHasPersistenceSync(templateId, options)
+		? ` ${syncRestCommand} remains available for advanced REST-only refreshes, but it now fails fast when type-derived artifacts are stale; run \`${syncCommand}\` or \`${syncTypesCommand}\` first.`
+		: "";
+	const fallbackCustomTemplateNote =
+		!hasUnifiedSync &&
+		syncSteps.length > 0 &&
+		!isBuiltInTemplateId(templateId) &&
+		templateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
+			? `Run ${syncSteps.join(" then ")} manually before build, typecheck, or commit. ${syncCheckCommand} verifies the current type-derived artifacts without rewriting them.${optionalSyncScripts.includes("sync-rest") ? ` ${syncRestCommand} remains available for REST-only refreshes after ${syncTypesCommand}.` : ""}`
+			: null;
+
+	if (fallbackCustomTemplateNote) {
+		return fallbackCustomTemplateNote;
+	}
 
 	return `${formatRunScript(packageManager, developmentScript)} ${
 		developmentScript === "dev"
 			? "watches the relevant sync scripts during local development."
 			: "remains the primary local entry point."
-	} ${formatRunScript(packageManager, "start")} still runs one-shot syncs before starting, while ${formatRunScript(packageManager, "build")} and ${typecheckCommand} verify that generated metadata/schema artifacts are already current and fail if they are stale. Run the sync scripts manually when you want to refresh generated artifacts before build, typecheck, or commit. ${syncTypesCommand} stays warn-only by default; use \`${failOnLossySyncCommand}\` to fail only on lossy WordPress projections, or \`${strictSyncCommand}\` for a CI-friendly JSON report that fails on all warnings. They do not create migration history.`;
+	} ${formatRunScript(packageManager, "start")} still runs one-shot syncs before starting, while ${formatRunScript(packageManager, "build")} and ${typecheckCommand} verify that generated metadata/schema artifacts are already current through ${syncCheckCommand}. Run ${syncCommand} manually when you want to refresh generated artifacts before build, typecheck, or commit. ${syncTypesCommand} stays warn-only by default; use \`${failOnLossySyncCommand}\` to fail only on lossy WordPress projections, or \`${strictSyncCommand}\` for a CI-friendly JSON report that fails on all warnings.${advancedPersistenceNote} They do not create migration history.`;
 }
 
 /**
@@ -90,14 +142,14 @@ export function getTemplateSourceOfTruthNote(
 			"`src/blocks/*/types.ts` files remain the source of truth for each block's `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include starter `typia.manifest.json` files so editor imports resolve before the first sync.";
 
 		if (compoundPersistenceEnabled) {
-			return `${compoundBase} For persistence-enabled parents, \`src/blocks/*/api-types.ts\` files remain the source of truth for \`src/blocks/*/api-schemas/*\` when you run \`sync-rest\`, while \`src/blocks/*/transport.ts\` is the first-class transport seam for editor and frontend requests.`;
+			return `${compoundBase} For persistence-enabled parents, \`src/blocks/*/api-types.ts\` files remain the source of truth for \`src/blocks/*/api-schemas/*\` when you run \`sync\` or \`sync-rest\`, while \`src/blocks/*/transport.ts\` is the first-class transport seam for editor and frontend requests.`;
 		}
 
 		return compoundBase;
 	}
 
 	if (templateId === "persistence") {
-		return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include a starter `typia.manifest.json` so editor imports resolve before the first sync. `src/api-types.ts` remains the source of truth for `src/api-schemas/*` when you run `sync-rest`, while `src/transport.ts` is the first-class transport seam for editor and frontend requests. This scaffold is intentionally server-rendered: `src/render.php` is the canonical frontend entry, `src/save.tsx` returns `null`, and session-only write data now refreshes through the dedicated `/bootstrap` endpoint after hydration instead of being frozen into markup.";
+		return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include a starter `typia.manifest.json` so editor imports resolve before the first sync. `src/api-types.ts` remains the source of truth for `src/api-schemas/*` when you run `sync` or `sync-rest`, while `src/transport.ts` is the first-class transport seam for editor and frontend requests. This scaffold is intentionally server-rendered: `src/render.php` is the canonical frontend entry, `src/save.tsx` returns `null`, and session-only write data now refreshes through the dedicated `/bootstrap` endpoint after hydration instead of being frozen into markup.";
 	}
 
 	return "`src/types.ts` remains the source of truth for `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include a starter `typia.manifest.json` so editor imports resolve before the first sync. The basic scaffold stays static by design: `src/render.php` is only an opt-in server placeholder, `src/save.tsx` remains the canonical frontend output, and the generated webpack config keeps the current `@wordpress/scripts` CommonJS baseline unless you intentionally add `render` to `block.json`.";
@@ -145,7 +197,7 @@ function formatPhpRestExtensionPointsSection({
 		`- Edit \`${mainPhpPath}\` when you need to ${mainPhpScope}.`,
 		"- Edit `inc/rest-auth.php` or `inc/rest-public.php` when you need to customize write permissions or token/request-id/nonce checks for the selected policy.",
 		`- Edit \`${transportPath}\` when you need to switch between direct WordPress REST and a contract-compatible proxy or BFF without changing the endpoint contracts.`,
-		`- Keep \`${apiTypesPath}\` as the source of truth for request and response contracts, then regenerate \`${schemaJsonGlob}\`, per-contract \`${perContractOpenApiGlob}\`, and \`${aggregateOpenApiPath}\` with \`sync-rest\`.`,
+		`- Keep \`${apiTypesPath}\` as the source of truth for request and response contracts, then regenerate \`${schemaJsonGlob}\`, per-contract \`${perContractOpenApiGlob}\`, and \`${aggregateOpenApiPath}\` with \`sync\` (or \`sync-rest\` after \`sync-types\` when you only need the REST layer).`,
 		"- Avoid hand-editing generated schema and OpenAPI artifacts unless you are debugging generated output; they are meant to be regenerated from TypeScript contracts.",
 	];
 

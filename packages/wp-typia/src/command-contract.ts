@@ -6,6 +6,7 @@ export const WP_TYPIA_BUNLI_MIGRATION_DOC = "docs/bunli-cli-migration.md";
 
 export const WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES = [
 	"create",
+	"sync",
 	"add",
 	"migrate",
 	"templates",
@@ -18,6 +19,7 @@ export const WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES = [
 
 export const WP_TYPIA_TOP_LEVEL_COMMAND_NAMES = [
 	"create",
+	"sync",
 	"add",
 	"migrate",
 	"templates",
@@ -107,6 +109,10 @@ export const WP_TYPIA_FUTURE_COMMAND_TREE = [
 	{
 		description: "Scaffold a new wp-typia project.",
 		name: "create",
+	},
+	{
+		description: "Run the common generated-project sync workflow.",
+		name: "sync",
 	},
 	{
 		description: "Extend an official wp-typia workspace.",

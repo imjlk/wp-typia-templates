@@ -16,6 +16,77 @@ const projectToolsPackageManifest = JSON.parse(
 	fs.readFileSync(path.resolve(packageRoot, "..", "wp-typia-project-tools", "package.json"), "utf8"),
 );
 
+function createSyncFixture(options: {
+	packageManager?: string | null;
+	scripts: Record<string, string>;
+	withSyncTypesMarker?: boolean;
+	withSyncRestMarker?: boolean;
+}): { fixtureRoot: string; logPath: string } {
+	const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-sync-fixture-"));
+	const logPath = path.join(fixtureRoot, ".sync-log.jsonl");
+
+	fs.mkdirSync(path.join(fixtureRoot, "scripts"), { recursive: true });
+	fs.writeFileSync(
+		path.join(fixtureRoot, "package.json"),
+		`${JSON.stringify(
+			{
+				name: path.basename(fixtureRoot),
+				...(options.packageManager === null
+					? {}
+					: {
+							packageManager: options.packageManager ?? "npm@11.6.1",
+					  }),
+				private: true,
+				scripts: options.scripts,
+			},
+			null,
+			2,
+		)}\n`,
+		"utf8",
+	);
+	fs.writeFileSync(
+		path.join(fixtureRoot, "scripts", "record.mjs"),
+		`import fs from "node:fs";
+import path from "node:path";
+
+const [, , label, ...args] = process.argv;
+const logPath = path.join(process.cwd(), ".sync-log.jsonl");
+fs.appendFileSync(logPath, \`\${JSON.stringify({ args, label })}\n\`);
+`,
+		"utf8",
+	);
+	if (options.withSyncTypesMarker !== false) {
+		fs.writeFileSync(
+			path.join(fixtureRoot, "scripts", "sync-types-to-block-json.ts"),
+			"export {};\n",
+			"utf8",
+		);
+	}
+
+	if (options.withSyncRestMarker) {
+		fs.writeFileSync(
+			path.join(fixtureRoot, "scripts", "sync-rest-contracts.ts"),
+			"export {};\n",
+			"utf8",
+		);
+	}
+
+	return { fixtureRoot, logPath };
+}
+
+function readSyncLog(logPath: string): Array<{ args: string[]; label: string }> {
+	if (!fs.existsSync(logPath)) {
+		return [];
+	}
+
+	return fs
+		.readFileSync(logPath, "utf8")
+		.trim()
+		.split("\n")
+		.filter(Boolean)
+		.map((line) => JSON.parse(line) as { args: string[]; label: string });
+}
+
 describe("wp-typia package", () => {
 	test("owns the canonical CLI bin and keeps project-tools as a library dependency", () => {
 		expect(packageManifest.name).toBe("wp-typia");
@@ -44,6 +115,171 @@ describe("wp-typia package", () => {
 		expect(parsed.data?.type).toBe("version");
 		expect(parsed.data?.name).toBe("wp-typia");
 		expect(parsed.data?.version).toBe(packageManifest.version);
+	});
+
+	test("rejects sync outside a generated project root with explicit guidance", () => {
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-sync-outside-"));
+
+		try {
+			expect(() =>
+				runUtf8Command("node", [entryPath, "sync"], {
+					cwd: tempRoot,
+				}),
+			).toThrow(/Run `wp-typia sync` from a scaffolded project or official workspace root/);
+		} finally {
+			fs.rmSync(tempRoot, { force: true, recursive: true });
+		}
+	});
+
+	test("prefers the project-local sync script and forwards --check", () => {
+		const { fixtureRoot, logPath } = createSyncFixture({
+			scripts: {
+				sync: "node scripts/record.mjs sync",
+				"sync-rest": "node scripts/record.mjs sync-rest",
+				"sync-types": "node scripts/record.mjs sync-types",
+			},
+			withSyncRestMarker: true,
+		});
+
+		try {
+			runUtf8Command("node", [entryPath, "sync", "--check"], {
+				cwd: fixtureRoot,
+			});
+
+			expect(readSyncLog(logPath)).toEqual([
+				{
+					args: ["--check"],
+					label: "sync",
+				},
+			]);
+		} finally {
+			fs.rmSync(fixtureRoot, { force: true, recursive: true });
+		}
+	});
+
+	test("accepts custom scaffold sync scripts without the built-in sync-types marker", () => {
+		const { fixtureRoot, logPath } = createSyncFixture({
+			scripts: {
+				sync: "node scripts/record.mjs sync",
+			},
+			withSyncTypesMarker: false,
+		});
+
+		try {
+			runUtf8Command("node", [entryPath, "sync", "--check"], {
+				cwd: fixtureRoot,
+			});
+
+			expect(readSyncLog(logPath)).toEqual([
+				{
+					args: ["--check"],
+					label: "sync",
+				},
+			]);
+		} finally {
+			fs.rmSync(fixtureRoot, { force: true, recursive: true });
+		}
+	});
+
+	test("infers npm when a legacy sync project omits the packageManager field", () => {
+		const { fixtureRoot, logPath } = createSyncFixture({
+			packageManager: null,
+			scripts: {
+				sync: "node scripts/record.mjs sync",
+			},
+			withSyncTypesMarker: false,
+		});
+
+		try {
+			runUtf8Command("node", [entryPath, "sync", "--check"], {
+				cwd: fixtureRoot,
+			});
+
+			expect(readSyncLog(logPath)).toEqual([
+				{
+					args: ["--check"],
+					label: "sync",
+				},
+			]);
+		} finally {
+			fs.rmSync(fixtureRoot, { force: true, recursive: true });
+		}
+	});
+
+	test("falls back to sync-types only for legacy single-block projects", () => {
+		const { fixtureRoot, logPath } = createSyncFixture({
+			scripts: {
+				"sync-types": "node scripts/record.mjs sync-types",
+			},
+		});
+
+		try {
+			runUtf8Command("node", [entryPath, "sync"], {
+				cwd: fixtureRoot,
+			});
+
+			expect(readSyncLog(logPath)).toEqual([
+				{
+					args: [],
+					label: "sync-types",
+				},
+			]);
+		} finally {
+			fs.rmSync(fixtureRoot, { force: true, recursive: true });
+		}
+	});
+
+	test("falls back to sync-types without requiring the built-in marker layout", () => {
+		const { fixtureRoot, logPath } = createSyncFixture({
+			scripts: {
+				"sync-types": "node scripts/record.mjs sync-types",
+			},
+			withSyncTypesMarker: false,
+		});
+
+		try {
+			runUtf8Command("node", [entryPath, "sync"], {
+				cwd: fixtureRoot,
+			});
+
+			expect(readSyncLog(logPath)).toEqual([
+				{
+					args: [],
+					label: "sync-types",
+				},
+			]);
+		} finally {
+			fs.rmSync(fixtureRoot, { force: true, recursive: true });
+		}
+	});
+
+	test("falls back to sync-types then sync-rest for legacy persistence projects", () => {
+		const { fixtureRoot, logPath } = createSyncFixture({
+			scripts: {
+				"sync-rest": "node scripts/record.mjs sync-rest",
+				"sync-types": "node scripts/record.mjs sync-types",
+			},
+			withSyncRestMarker: true,
+		});
+
+		try {
+			runUtf8Command("node", [entryPath, "sync", "--check"], {
+				cwd: fixtureRoot,
+			});
+
+			expect(readSyncLog(logPath)).toEqual([
+				{
+					args: ["--check"],
+					label: "sync-types",
+				},
+				{
+					args: ["--check"],
+					label: "sync-rest",
+				},
+			]);
+		} finally {
+			fs.rmSync(fixtureRoot, { force: true, recursive: true });
+		}
 	});
 
 	test("rejects the removed migrations alias with actionable guidance", () => {

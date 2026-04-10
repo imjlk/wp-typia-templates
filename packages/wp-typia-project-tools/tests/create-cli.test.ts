@@ -12,6 +12,7 @@ import {
   formatHelpText,
   getDoctorChecks,
   getNextSteps,
+  getOptionalOnboarding,
   runScaffoldFlow,
 } from "../src/runtime/cli-core.js";
 import { collectScaffoldAnswers } from "../src/runtime/scaffold.js";
@@ -577,8 +578,9 @@ describe("@wp-typia/project-tools scaffolding", () => {
     ).toBeUndefined();
     expect(packageJson.devDependencies["chokidar-cli"]).toBe("^3.0.0");
     expect(packageJson.devDependencies.concurrently).toBe("^9.0.1");
+    expect(packageJson.scripts.sync).toBe("tsx scripts/sync-project.ts");
     expect(packageJson.scripts.build).toBe(
-      "npm run sync-types -- --check && wp-scripts build --experimental-modules"
+      "npm run sync -- --check && wp-scripts build --experimental-modules"
     );
     expect(packageJson.scripts.dev).toBe(
       'concurrently -k -n sync-types,editor -c yellow,blue "npm run watch:sync-types" "npm run start:editor"'
@@ -587,10 +589,10 @@ describe("@wp-typia/project-tools scaffolding", () => {
       "wp-scripts start --experimental-modules"
     );
     expect(packageJson.scripts.start).toBe(
-      "npm run sync-types && wp-scripts start --experimental-modules"
+      "npm run sync && wp-scripts start --experimental-modules"
     );
     expect(packageJson.scripts.typecheck).toBe(
-      "npm run sync-types -- --check && tsc --noEmit"
+      "npm run sync -- --check && tsc --noEmit"
     );
     expect(packageJson.scripts["watch:sync-types"]).toBe(
       'chokidar "src/types.ts" --debounce 200 -c "npm run sync-types"'
@@ -693,6 +695,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(readme).toContain("npm run dev");
     expect(readme).toContain("npm run start");
     expect(readme).toContain("## Optional First Sync");
+    expect(readme).toContain("npm run sync");
     expect(readme).toContain("npm run sync-types");
     expect(readme).toContain("-- --fail-on-lossy");
     expect(readme).toContain("-- --strict --report json");
@@ -788,7 +791,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 
       typecheckGeneratedProject(targetDir);
     },
-    { timeout: 15_000 }
+    { timeout: 30_000 }
   );
 
   test(
@@ -1007,8 +1010,18 @@ describe("@wp-typia/project-tools scaffolding", () => {
     );
 
     expect(packageJson.name).toBe("demo-interactivity");
+    expect(packageJson.scripts.sync).toBe("tsx scripts/sync-project.ts");
     expect(packageJson.scripts.dev).toBe(
       'concurrently -k -n sync-types,editor -c yellow,blue "npm run watch:sync-types" "npm run start:editor"'
+    );
+    expect(packageJson.scripts.build).toBe(
+      "npm run sync -- --check && wp-scripts build --experimental-modules"
+    );
+    expect(packageJson.scripts.start).toBe(
+      "npm run sync && wp-scripts start --experimental-modules"
+    );
+    expect(packageJson.scripts.typecheck).toBe(
+      "npm run sync -- --check && tsc --noEmit"
     );
     expect(packageJson.scripts["watch:sync-types"]).toBe(
       'chokidar "src/types.ts" --debounce 200 -c "npm run sync-types"'
@@ -1316,8 +1329,9 @@ describe("@wp-typia/project-tools scaffolding", () => {
       );
       expect(packageJson.devDependencies["chokidar-cli"]).toBe("^3.0.0");
       expect(packageJson.devDependencies.concurrently).toBe("^9.0.1");
+      expect(packageJson.scripts.sync).toBe("tsx scripts/sync-project.ts");
       expect(packageJson.scripts.build).toBe(
-        "npm run sync-types -- --check && npm run sync-rest -- --check && wp-scripts build --experimental-modules"
+        "npm run sync -- --check && wp-scripts build --experimental-modules"
       );
       expect(packageJson.scripts.dev).toBe(
         'concurrently -k -n sync-types,sync-rest,editor -c yellow,magenta,blue "npm run watch:sync-types" "npm run watch:sync-rest" "npm run start:editor"'
@@ -1332,7 +1346,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
         'chokidar "src/api-types.ts" --debounce 200 -c "npm run sync-rest"'
       );
       expect(packageJson.scripts.typecheck).toBe(
-        "npm run sync-types -- --check && npm run sync-rest -- --check && tsc --noEmit"
+        "npm run sync -- --check && tsc --noEmit"
       );
       expect(blockJson.textdomain).toBe("demo-persistence-public");
       expect(blockJson.version).toBe("0.1.0");
@@ -1497,6 +1511,19 @@ describe("@wp-typia/project-tools scaffolding", () => {
       expect(fs.existsSync(path.join(targetDir, "src", "api.openapi.json"))).toBe(
         true
       );
+      expect(
+        fs.existsSync(path.join(targetDir, "scripts", "sync-project.ts"))
+      ).toBe(true);
+      const generatedSyncProject = fs.readFileSync(
+        path.join(targetDir, "scripts", "sync-project.ts"),
+        "utf8"
+      );
+      expect(generatedSyncProject).toContain("spawnSync");
+      expect(generatedSyncProject).toContain(
+        "shell: process.platform === 'win32'"
+      );
+      expect(generatedSyncProject).toContain("spawnSync( 'tsx', args");
+      expect(generatedSyncProject).not.toContain("getLocalTsxBinary");
       expect(generatedRender).not.toContain("publicWriteToken");
       expect(generatedRender).toContain(
         "demo_persistence_public_record_rendered_block_instance"
@@ -1519,6 +1546,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
       expect(generatedSave).toContain("intentionally server-rendered");
       expect(generatedSave).toContain("return null;");
       expect(readme).toContain("npm run dev");
+      expect(readme).toContain("npm run sync");
       expect(readme).toContain("npm run sync-types");
       expect(readme).toContain("npm run sync-rest");
       expect(readme).toContain("src/api-types.ts");
@@ -1557,7 +1585,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
 
       typecheckGeneratedProject(targetDir);
 
-      runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts");
+      runGeneratedScript(targetDir, "scripts/sync-project.ts");
       runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts", [
         "--check",
       ]);
@@ -1575,7 +1603,56 @@ describe("@wp-typia/project-tools scaffolding", () => {
         "export function writeDemoPersistencePublicState("
       );
     },
-    { timeout: 15_000 }
+    { timeout: 30_000 }
+  );
+
+  test(
+    "persistence sync-rest fails fast when type-derived artifacts are stale",
+    async () => {
+      const targetDir = path.join(tempRoot, "demo-persistence-stale-guard");
+
+      await scaffoldProject({
+        projectDir: targetDir,
+        templateId: "persistence",
+        dataStorageMode: "custom-table",
+        packageManager: "npm",
+        noInstall: true,
+        answers: {
+          author: "Test Runner",
+          dataStorageMode: "custom-table",
+          description: "Demo stale guard block",
+          namespace: "create-block",
+          persistencePolicy: "authenticated",
+          slug: "demo-persistence-stale-guard",
+          title: "Demo Persistence Stale Guard",
+        },
+      });
+
+      const staleBlockJsonPath = path.join(targetDir, "src", "block.json");
+      const staleBlockJson = JSON.parse(
+        fs.readFileSync(staleBlockJsonPath, "utf8")
+      );
+
+      staleBlockJson.attributes.__staleCoverage = {
+        type: "string",
+      };
+
+      fs.writeFileSync(
+        staleBlockJsonPath,
+        `${JSON.stringify(staleBlockJson, null, 2)}\n`,
+        "utf8"
+      );
+
+      const errorMessage = getCommandErrorMessage(() =>
+        runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts")
+      );
+
+      expect(errorMessage).toContain("Run `sync` or `sync-types` first");
+
+      runGeneratedScript(targetDir, "scripts/sync-project.ts");
+      runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts");
+    },
+    40_000
   );
 
   test("scaffoldProject creates a persistence template with authenticated writes by default", async () => {
@@ -2108,7 +2185,7 @@ console.log(JSON.stringify({
           persistencePolicy: "public",
         });
 
-        runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts");
+        runGeneratedScript(targetDir, "scripts/sync-project.ts");
         replaceGeneratedTransportBaseUrls(
           path.join(targetDir, "src", "transport.ts"),
           adapterServer.url
@@ -2512,8 +2589,9 @@ console.log(JSON.stringify({ initial, updated, reread }));
       "utf8"
     );
 
+    expect(packageJson.scripts.sync).toBe("tsx scripts/sync-project.ts");
     expect(packageJson.scripts.build).toBe(
-      "npm run sync-types -- --check && wp-scripts build --experimental-modules"
+      "npm run sync -- --check && wp-scripts build --experimental-modules"
     );
     expect(packageJson.scripts.dev).toBe(
       'concurrently -k -n sync-types,editor -c yellow,blue "npm run watch:sync-types" "npm run start:editor"'
@@ -2522,7 +2600,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
       'chokidar "src/blocks/**/types.ts" "scripts/block-config.ts" --debounce 200 -c "npm run sync-types"'
     );
     expect(packageJson.scripts.typecheck).toBe(
-      "npm run sync-types -- --check && tsc --noEmit"
+      "npm run sync -- --check && tsc --noEmit"
     );
     expect(pluginBootstrap).toContain("build/blocks");
     expect(fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))).toBe(
@@ -2615,6 +2693,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(addChildScript).toContain("BLOCK_CONFIG_MARKER");
     expect(addChildScript).toContain("buildBlockCssClassName");
     expect(generatedWebpackConfig).toContain("createTypiaWebpackConfig");
+    expect(readme).toContain("npm run sync");
     expect(readme).toContain("npm run sync-types");
     expect(readme).not.toContain("npm run sync-rest");
     expect(readme).toContain("npm run dev");
@@ -2944,11 +3023,12 @@ console.log(JSON.stringify({ initial, updated, reread }));
       expect(packageJson.scripts["watch:sync-rest"]).toBe(
         'chokidar "src/blocks/**/api-types.ts" "scripts/block-config.ts" --debounce 200 -c "npm run sync-rest"'
       );
+      expect(packageJson.scripts.sync).toBe("tsx scripts/sync-project.ts");
       expect(packageJson.scripts.build).toBe(
-        "npm run sync-types -- --check && npm run sync-rest -- --check && wp-scripts build --experimental-modules"
+        "npm run sync -- --check && wp-scripts build --experimental-modules"
       );
       expect(packageJson.scripts.typecheck).toBe(
-        "npm run sync-types -- --check && npm run sync-rest -- --check && tsc --noEmit"
+        "npm run sync -- --check && tsc --noEmit"
       );
       expect(
         fs.existsSync(path.join(targetDir, "inc", "rest-shared.php"))
@@ -3070,8 +3150,22 @@ console.log(JSON.stringify({ initial, updated, reread }));
       expect(packageJson.scripts["add-child"]).toBe(
         "tsx scripts/add-compound-child.ts"
       );
+      expect(
+        fs.existsSync(path.join(targetDir, "scripts", "sync-project.ts"))
+      ).toBe(true);
+      const generatedParentSyncProject = fs.readFileSync(
+        path.join(targetDir, "scripts", "sync-project.ts"),
+        "utf8"
+      );
+      expect(generatedParentSyncProject).toContain("spawnSync");
+      expect(generatedParentSyncProject).toContain(
+        "shell: process.platform === 'win32'"
+      );
+      expect(generatedParentSyncProject).toContain("spawnSync( 'tsx', args");
+      expect(generatedParentSyncProject).not.toContain("getLocalTsxBinary");
       expect(generatedWebpackConfig).toContain("createTypiaWebpackConfig");
       expect(readme).toContain("npm run dev");
+      expect(readme).toContain("npm run sync");
       expect(readme).toContain("npm run sync-rest");
       expect(readme).toContain("src/blocks/*/api-types.ts");
       expect(readme).toContain("src/blocks/*/transport.ts");
@@ -3087,7 +3181,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
       );
       expect(pluginBootstrap).toContain("Customize storage helpers");
 
-      runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts");
+      runGeneratedScript(targetDir, "scripts/sync-project.ts");
 
       const generatedApiClient = fs.readFileSync(
         path.join(
@@ -3149,6 +3243,61 @@ console.log(JSON.stringify({ initial, updated, reread }));
       ).toBe(false);
     },
     { timeout: 15_000 }
+  );
+
+  test(
+    "compound persistence sync-rest fails fast when block metadata is stale",
+    async () => {
+      const targetDir = path.join(tempRoot, "demo-compound-sync-stale");
+
+      await scaffoldProject({
+        projectDir: targetDir,
+        templateId: "compound",
+        dataStorageMode: "post-meta",
+        packageManager: "npm",
+        noInstall: true,
+        answers: {
+          author: "Test Runner",
+          dataStorageMode: "post-meta",
+          description: "Demo compound stale guard",
+          namespace: "create-block",
+          slug: "demo-compound-sync-stale",
+          title: "Demo Compound Sync Stale",
+        },
+      });
+
+      const staleCompoundBlockJsonPath = path.join(
+        targetDir,
+        "src",
+        "blocks",
+        "demo-compound-sync-stale",
+        "block.json"
+      );
+      const staleCompoundBlockJson = JSON.parse(
+        fs.readFileSync(staleCompoundBlockJsonPath, "utf8")
+      );
+
+      staleCompoundBlockJson.attributes.__staleCoverage = {
+        type: "string",
+      };
+
+      fs.writeFileSync(
+        staleCompoundBlockJsonPath,
+        `${JSON.stringify(staleCompoundBlockJson, null, 2)}\n`,
+        "utf8"
+      );
+
+      const errorMessage = getCommandErrorMessage(() =>
+        runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts")
+      );
+
+      expect(errorMessage).toContain("Run `sync` or `sync-types` first");
+      expect(errorMessage).toContain("demo-compound-sync-stale");
+
+      runGeneratedScript(targetDir, "scripts/sync-project.ts");
+      runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts");
+    },
+    40_000
   );
 
   test(
@@ -3593,10 +3742,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
       "npm install",
       "npm run dev",
     ]);
-    expect(flow.optionalOnboarding.steps).toEqual([
-      "npm run sync-types",
-      "npm run sync-rest",
-    ]);
+    expect(flow.optionalOnboarding.steps).toEqual(["npm run sync"]);
   });
 
   test("runScaffoldFlow accepts prompted persistence policy selections in interactive mode", async () => {
@@ -3638,10 +3784,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(fs.existsSync(path.join(flow.projectDir, ".wp-env.test.json"))).toBe(
       true
     );
-    expect(flow.optionalOnboarding.steps).toEqual([
-      "npm run sync-types",
-      "npm run sync-rest",
-    ]);
+    expect(flow.optionalOnboarding.steps).toEqual(["npm run sync"]);
   });
 
   test("interactive scaffold answers recover when the project name normalizes to an empty slug", async () => {
@@ -3726,10 +3869,30 @@ console.log(JSON.stringify({ initial, updated, reread }));
       "npm install",
       "npm run dev",
     ]);
-    expect(flow.optionalOnboarding.steps).toEqual(["npm run sync-types"]);
+    expect(flow.optionalOnboarding.steps).toEqual(["npm run sync"]);
     expect(flow.optionalOnboarding.note).toContain(
       "do not create migration history"
     );
+  });
+
+  test("optional onboarding derives sync steps from available custom-template scripts", () => {
+    const onboarding = getOptionalOnboarding({
+      availableScripts: ["sync-types", "sync-rest"],
+      packageManager: "npm",
+      templateId: "/tmp/custom-template",
+    });
+
+    expect(onboarding.steps).toEqual([
+      "npm run sync-types",
+      "npm run sync-rest",
+    ]);
+    expect(onboarding.note).toContain(
+      "Run npm run sync-types then npm run sync-rest manually before build, typecheck, or commit."
+    );
+    expect(onboarding.note).toContain(
+      "npm run sync-types -- --check verifies the current type-derived artifacts without rewriting them."
+    );
+    expect(onboarding.note).not.toContain("npm run sync -- --check");
   });
 
   test("runScaffoldFlow rejects unsupported persistence policies", async () => {
@@ -3890,7 +4053,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
       packageJson.devDependencies["@wp-typia/project-tools"]
     ).toBeUndefined();
     expect(packageJson.scripts.build).toBe(
-      "pnpm run sync-types --check && wp-scripts build --experimental-modules"
+      "pnpm run sync --check && wp-scripts build --experimental-modules"
     );
     expect(generatedTypes).toContain("export interface DemoRemoteAttributes");
     expect(generatedTypes).toContain('"content"?: string & tags.Default<"">');
@@ -4056,6 +4219,16 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(blockConfigSource).toContain(
       "// wp-typia add binding-source entries"
     );
+    expect(packageJson.scripts.sync).toBe("tsx scripts/sync-project.ts");
+    expect(packageJson.scripts.build).toBe(
+      "npm run sync -- --check && node scripts/build-workspace.mjs build"
+    );
+    expect(packageJson.scripts.start).toBe(
+      "npm run sync && node scripts/build-workspace.mjs start"
+    );
+    expect(packageJson.scripts.typecheck).toBe(
+      "npm run sync -- --check && tsc --noEmit"
+    );
     expect(buildWorkspaceSource).toContain("--blocks-manifest");
     expect(buildWorkspaceSource).toContain("if ( blockSlugs.length === 0 )");
     expect(bootstrapSource).toContain("wp_register_block_metadata_collection");
@@ -4075,6 +4248,19 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(
       fs.existsSync(path.join(targetDir, "src", "patterns", ".gitkeep"))
     ).toBe(true);
+    expect(fs.existsSync(path.join(targetDir, "scripts", "sync-project.ts"))).toBe(
+      true
+    );
+    const workspaceSyncProjectSource = fs.readFileSync(
+      path.join(targetDir, "scripts", "sync-project.ts"),
+      "utf8"
+    );
+    expect(workspaceSyncProjectSource).toContain("spawnSync");
+    expect(workspaceSyncProjectSource).toContain(
+      "shell: process.platform === 'win32'"
+    );
+    expect(workspaceSyncProjectSource).toContain("spawnSync( 'tsx', args");
+    expect(workspaceSyncProjectSource).not.toContain("getLocalTsxBinary");
   });
 
   test("official workspace templates accept local path references with migration UI", async () => {

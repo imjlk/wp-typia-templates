@@ -74,13 +74,14 @@ compound-demo/
 ├── scripts/
 │   ├── add-compound-child.ts
 │   ├── block-config.ts
+│   ├── sync-project.ts
 │   └── sync-types-to-block-json.ts
 ├── compound-demo.php
 ├── package.json
 └── webpack.config.js
 ```
 
-Fresh scaffolds already include starter `typia.manifest.json` files in the parent and default child block directories so editor/runtime imports resolve before the first sync. After you run `npm run sync-types`, `npm run dev`, or `npm run start`, each block directory also gains:
+Fresh scaffolds already include starter `typia.manifest.json` files in the parent and default child block directories so editor/runtime imports resolve before the first sync. After you run `npm run sync`, `npm run dev`, or `npm run start`, each block directory also gains:
 
 - `typia.manifest.json`
 - `typia.schema.json`
@@ -181,10 +182,10 @@ That command:
 After adding the child block type, run:
 
 ```bash
-npm run sync-types
+npm run sync
 ```
 
-`npm run sync-types` stays warn-only by default, `npm run sync-types -- --fail-on-lossy` fails only on lossy WordPress projection warnings, and `npm run sync-types -- --strict --report json` emits a CI-friendly JSON report while failing on every warning.
+`npm run sync` is the common-case entrypoint. `npm run sync-types` remains available when you want metadata-only control; it stays warn-only by default, `npm run sync-types -- --fail-on-lossy` fails only on lossy WordPress projection warnings, and `npm run sync-types -- --strict --report json` emits a CI-friendly JSON report while failing on every warning.
 
 ## Step 7: Optional Persistence on the Parent
 
@@ -207,7 +208,7 @@ This is a good fit for patterns like:
 Run the normal scaffold lifecycle:
 
 ```bash
-npm run sync-types
+npm run sync
 npm run build
 ```
 
@@ -217,7 +218,7 @@ If you enabled persistence on the parent block:
 npm run sync-rest
 ```
 
-Run those sync commands manually only when you want generated metadata or REST schemas refreshed before `npm run build`, `npm run typecheck`, or commit. The generated `dev` workflow watches the relevant sync steps for compound scaffolds, `npm run start` still runs them as one-shot syncs, and both `npm run build` and `npm run typecheck` verify that the checked-in artifacts are already current. They do not create migration history.
+Use `npm run sync` for the common-case metadata + REST refresh before `npm run build`, `npm run typecheck`, or commit. `npm run sync-rest` remains available when you only want to refresh the parent REST layer, but it now fails fast when the block metadata artifacts are stale, so run `npm run sync` or `npm run sync-types` first when needed. The generated `dev` workflow watches the relevant sync steps for compound scaffolds, `npm run start` still runs them as one-shot syncs, and both `npm run build` and `npm run typecheck` verify that the checked-in artifacts are already current. They do not create migration history.
 
 Then load the plugin in your WordPress environment and verify:
 

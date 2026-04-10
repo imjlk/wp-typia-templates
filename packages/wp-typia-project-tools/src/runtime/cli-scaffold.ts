@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 
 import {
@@ -35,6 +36,7 @@ interface GetNextStepsOptions {
 }
 
 interface GetOptionalOnboardingOptions {
+	availableScripts?: string[];
 	packageManager: PackageManagerId;
 	templateId: string;
 	compoundPersistenceEnabled?: boolean;
@@ -224,13 +226,18 @@ export function getNextSteps({
  * @returns Optional onboarding note and step list.
  */
 export function getOptionalOnboarding({
+	availableScripts,
 	packageManager,
 	templateId,
 	compoundPersistenceEnabled = false,
 }: GetOptionalOnboardingOptions): OptionalOnboardingGuidance {
 	return {
-		note: getOptionalOnboardingNote(packageManager, templateId),
+		note: getOptionalOnboardingNote(packageManager, templateId, {
+			availableScripts,
+			compoundPersistenceEnabled,
+		}),
 		steps: getOptionalOnboardingSteps(packageManager, templateId, {
+			availableScripts,
 			compoundPersistenceEnabled,
 		}),
 	};
@@ -366,9 +373,29 @@ export async function runScaffoldFlow({
 		withTestPreset: resolvedWithTestPreset,
 		withWpEnv: resolvedWithWpEnv,
 	});
+	let availableScripts: string[] | undefined;
+	try {
+		const parsedPackageJson = JSON.parse(
+			fs.readFileSync(path.join(projectDir, "package.json"), "utf8"),
+		) as {
+			scripts?: unknown;
+		};
+		const scripts =
+			parsedPackageJson.scripts &&
+			typeof parsedPackageJson.scripts === "object" &&
+			!Array.isArray(parsedPackageJson.scripts)
+				? parsedPackageJson.scripts
+				: {};
+		availableScripts = Object.entries(scripts)
+			.filter(([, value]) => typeof value === "string")
+			.map(([scriptName]) => scriptName);
+	} catch {
+		availableScripts = undefined;
+	}
 
 	return {
 		optionalOnboarding: getOptionalOnboarding({
+			availableScripts,
 			packageManager: resolvedPackageManager,
 			templateId: resolvedTemplateId,
 			compoundPersistenceEnabled: result.variables.compoundPersistenceEnabled === "true",

@@ -5,10 +5,12 @@ import { createCommand } from "./commands/create";
 import { doctorCommand } from "./commands/doctor";
 import { mcpCommand } from "./commands/mcp";
 import { migrateCommand } from "./commands/migrate";
+import { syncCommand } from "./commands/sync";
 import { templatesCommand } from "./commands/templates";
 
 export const wpTypiaCommands: Command<any, any>[] = [
 	createCommand,
+	syncCommand,
 	addCommand,
 	migrateCommand,
 	templatesCommand,
