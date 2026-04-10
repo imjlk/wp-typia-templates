@@ -1522,6 +1522,8 @@ describe("@wp-typia/project-tools scaffolding", () => {
       expect(generatedSyncProject).toContain(
         "shell: process.platform === 'win32'"
       );
+      expect(generatedSyncProject).toContain("spawnSync( 'tsx', args");
+      expect(generatedSyncProject).not.toContain("getLocalTsxBinary");
       expect(generatedRender).not.toContain("publicWriteToken");
       expect(generatedRender).toContain(
         "demo_persistence_public_record_rendered_block_instance"
@@ -3159,6 +3161,8 @@ console.log(JSON.stringify({ initial, updated, reread }));
       expect(generatedParentSyncProject).toContain(
         "shell: process.platform === 'win32'"
       );
+      expect(generatedParentSyncProject).toContain("spawnSync( 'tsx', args");
+      expect(generatedParentSyncProject).not.toContain("getLocalTsxBinary");
       expect(generatedWebpackConfig).toContain("createTypiaWebpackConfig");
       expect(readme).toContain("npm run dev");
       expect(readme).toContain("npm run sync");
@@ -4255,6 +4259,8 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(workspaceSyncProjectSource).toContain(
       "shell: process.platform === 'win32'"
     );
+    expect(workspaceSyncProjectSource).toContain("spawnSync( 'tsx', args");
+    expect(workspaceSyncProjectSource).not.toContain("getLocalTsxBinary");
   });
 
   test("official workspace templates accept local path references with migration UI", async () => {

@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 import { spawnSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 
 interface SyncCliOptions {
@@ -24,23 +23,23 @@ function parseCliOptions( argv: string[] ): SyncCliOptions {
 	return options;
 }
 
-function getLocalTsxBinary() {
-	const projectDir = process.cwd();
-	const binaryName = process.platform === 'win32' ? 'tsx.cmd' : 'tsx';
-	const binaryPath = path.join(
-		projectDir,
-		'node_modules',
-		'.bin',
-		binaryName
+function getPathKey() {
+	return (
+		Object.keys( process.env ).find(
+			( key ) => key.toLowerCase() === 'path'
+		) ?? 'PATH'
 	);
+}
 
-	if ( ! fs.existsSync( binaryPath ) ) {
-		throw new Error(
-			`Missing local tsx binary at ${ binaryPath }. Run the project install step first.`
-		);
-	}
+function getSyncScriptEnv() {
+	const pathKey = getPathKey();
+	const binaryDirectory = path.join( process.cwd(), 'node_modules', '.bin' );
+	const inheritedPath = process.env[ pathKey ] ?? '';
 
-	return binaryPath;
+	return {
+		...process.env,
+		[ pathKey ]: `${ binaryDirectory }${ path.delimiter }${ inheritedPath }`,
+	};
 }
 
 function runSyncScript( scriptPath: string, options: SyncCliOptions ) {
@@ -49,13 +48,20 @@ function runSyncScript( scriptPath: string, options: SyncCliOptions ) {
 		args.push( '--check' );
 	}
 
-	const result = spawnSync( getLocalTsxBinary(), args, {
+	const result = spawnSync( 'tsx', args, {
 		cwd: process.cwd(),
+		env: getSyncScriptEnv(),
 		shell: process.platform === 'win32',
 		stdio: 'inherit',
 	} );
 
 	if ( result.error ) {
+		if ( ( result.error as NodeJS.ErrnoException ).code === 'ENOENT' ) {
+			throw new Error(
+				'Unable to resolve `tsx` for project sync. Install project dependencies or rerun the command through your package manager.'
+			);
+		}
+
 		throw result.error;
 	}
 
