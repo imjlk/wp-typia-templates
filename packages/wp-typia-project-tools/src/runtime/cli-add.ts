@@ -902,13 +902,23 @@ const LEGACY_TOOLKIT_CALL_PATTERN =
 	/createTemplateValidatorToolkit<\s*(?<typeName>[A-Za-z0-9_]+)\s*>\s*\(\s*\{/u;
 const LEGACY_VALIDATOR_TOOLKIT_IMPORT_PATTERN =
 	/from\s*["']\.\.\/\.\.\/validator-toolkit["']/u;
+const COMPATIBLE_COMPOUND_TOOLKIT_PATTERNS = [
+	/interface\s+TemplateValidatorFunctions\s*<\s*T\s+extends\s+object\s*>\s*\{/u,
+	/\bassert\s*:\s*ScaffoldValidatorToolkitOptions\s*<\s*T\s*>\s*\[\s*["']assert["']\s*\]/u,
+	/\bclone\s*:\s*ScaffoldValidatorToolkitOptions\s*<\s*T\s*>\s*\[\s*["']clone["']\s*\]/u,
+	/\bis\s*:\s*ScaffoldValidatorToolkitOptions\s*<\s*T\s*>\s*\[\s*["']is["']\s*\]/u,
+	/\bprune\s*:\s*ScaffoldValidatorToolkitOptions\s*<\s*T\s*>\s*\[\s*["']prune["']\s*\]/u,
+	/\brandom\s*:\s*ScaffoldValidatorToolkitOptions\s*<\s*T\s*>\s*\[\s*["']random["']\s*\]/u,
+	/\bvalidate\s*:\s*ScaffoldValidatorToolkitOptions\s*<\s*T\s*>\s*\[\s*["']validate["']\s*\]/u,
+	/createTemplateValidatorToolkit\s*<\s*T\s+extends\s+object\s*>\s*\(\s*\{/u,
+] as const;
 
 function shouldRefreshCompoundValidatorToolkit(source: string | null): boolean {
 	return (
 		source === null ||
-		!source.includes("interface TemplateValidatorFunctions<") ||
-		!source.includes("assert: ScaffoldValidatorToolkitOptions< T >['assert'];") ||
-		!source.includes("validate,")
+		!COMPATIBLE_COMPOUND_TOOLKIT_PATTERNS.every((pattern) =>
+			pattern.test(source),
+		)
 	);
 }
 
