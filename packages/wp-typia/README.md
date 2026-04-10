@@ -22,3 +22,9 @@ Compatibility notes:
 
 Maintainers: see [`docs/bunli-cli-migration.md`](../../docs/bunli-cli-migration.md)
 for the active CLI ownership contract and the staged Bunli cutover plan.
+
+Project meta docs:
+
+- [Upgrade Guide](https://github.com/imjlk/wp-typia/blob/main/UPGRADE.md)
+- [Security Policy](https://github.com/imjlk/wp-typia/blob/main/SECURITY.md)
+- [Contributing Guide](https://github.com/imjlk/wp-typia/blob/main/CONTRIBUTING.md)

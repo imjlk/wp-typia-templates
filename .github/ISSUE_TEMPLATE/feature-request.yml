@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose a user-facing capability or workflow improvement.
+title: "[Feature]: "
+labels: []
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What user or maintainer pain point is this addressing?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed direction
+      description: Describe the intended behavior or workflow at a high level.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints or non-goals
+      description: Call out compatibility concerns, rollout boundaries, or explicit non-goals.
+    validations:
+      required: false

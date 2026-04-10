@@ -62,6 +62,15 @@ node scripts/run-generated-project-smoke.mjs --runtime node --template basic --p
 bun run docs:build
 ```
 
+## Project meta docs
+
+- [`README.md`](./README.md) is the main product/audience entry point
+- [`UPGRADE.md`](./UPGRADE.md) collects high-signal maintainer upgrade notes
+- [`SECURITY.md`](./SECURITY.md) explains private vulnerability reporting
+
+If you change user-facing workflows, keep the relevant meta docs in sync in the
+same PR.
+
 ## Releases
 
 Release management now uses Sampo for release metadata and GitHub Actions for publish:
@@ -112,3 +121,4 @@ those jobs can fail even when the source tree and release PR look correct.
 - Add or update tests when behavior changes.
 - If a template workflow changes, update the user-facing README or tutorial in the same PR.
 - If migration behavior or snapshot tooling changes, verify at least one `migration:*` flow in `examples/my-typia-block` before opening the PR.
+- Do not file security issues publicly; use the private reporting flow described in [`SECURITY.md`](./SECURITY.md).

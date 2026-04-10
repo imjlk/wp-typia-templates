@@ -1,0 +1,26 @@
+name: Docs or process update
+description: Request documentation, release-process, contributor-flow, or repo-meta improvements.
+title: "[Docs/Process]: "
+labels: []
+body:
+  - type: textarea
+    id: gap
+    attributes:
+      label: What is missing or confusing?
+      description: Describe the current docs/process gap.
+    validations:
+      required: true
+  - type: textarea
+    id: audience
+    attributes:
+      label: Who is affected?
+      description: New users, maintainers, plugin authors, migration users, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: suggested_change
+    attributes:
+      label: Suggested update
+      description: If you already know the right doc or workflow surface, note it here.
+    validations:
+      required: false
