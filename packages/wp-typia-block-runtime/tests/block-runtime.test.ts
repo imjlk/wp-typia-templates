@@ -1,8 +1,19 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 
 const importModule = (specifier: string) => import(specifier);
+
+function writeMockPackage(projectRoot: string, packageName: string, version: string) {
+	const packageDir = resolve(projectRoot, "node_modules", ...packageName.split("/"));
+	mkdirSync(packageDir, { recursive: true });
+	writeFileSync(
+		resolve(packageDir, "package.json"),
+		JSON.stringify({ name: packageName, version }, null, 2),
+		"utf8",
+	);
+}
 
 describe("@wp-typia/block-runtime", () => {
 	test("supported self imports resolve through the published entrypoints", async () => {
@@ -40,6 +51,8 @@ describe("@wp-typia/block-runtime", () => {
 		expect(typeof identifiersModule.generatePublicWriteRequestId).toBe("function");
 		expect(typeof inspectorModule.useEditorFields).toBe("function");
 		expect(typeof validationModule.toValidationResult).toBe("function");
+		expect(typeof blocksModule.assertTypiaWebpackCompatibility).toBe("function");
+		expect(typeof blocksModule.loadCompatibleTypiaWebpackPlugin).toBe("function");
 
 		expect("generateBlockId" in rootModule).toBe(false);
 		expect("manifestToOpenApi" in rootModule).toBe(false);
@@ -63,5 +76,103 @@ describe("@wp-typia/block-runtime", () => {
 		expect(builtIndexDts).toContain('export * from "./defaults.js";');
 		expect(builtIndexDts).toContain('export * from "./editor.js";');
 		expect(builtIndexDts).toContain('export * from "./validation.js";');
+	});
+
+	test("Typia/Webpack compatibility preflight accepts the supported matrix", async () => {
+		const blocksModule = await import("@wp-typia/block-runtime/blocks");
+		const projectRoot = mkdtempSync(resolve(tmpdir(), "wp-typia-compat-ok-"));
+
+		try {
+			writeFileSync(
+				resolve(projectRoot, "package.json"),
+				JSON.stringify({ name: "compat-ok", private: true }, null, 2),
+				"utf8",
+			);
+			writeMockPackage(projectRoot, "typia", "12.0.1");
+			writeMockPackage(projectRoot, "@typia/unplugin", "12.0.1");
+			writeMockPackage(projectRoot, "@wordpress/scripts", "30.22.0");
+			writeMockPackage(projectRoot, "webpack", "5.106.0");
+
+			await expect(
+				blocksModule.assertTypiaWebpackCompatibility({ projectRoot }),
+			).resolves.toEqual(
+				expect.objectContaining({
+					"@typia/unplugin": "12.0.1",
+					"@wordpress/scripts": "30.22.0",
+					typia: "12.0.1",
+					webpack: "5.106.0",
+				}),
+			);
+		} finally {
+			rmSync(projectRoot, { force: true, recursive: true });
+		}
+	});
+
+	test("Typia/Webpack compatibility preflight explains unsupported tuples", async () => {
+		const blocksModule = await import("@wp-typia/block-runtime/blocks");
+		const projectRoot = mkdtempSync(resolve(tmpdir(), "wp-typia-compat-bad-"));
+
+		try {
+			writeFileSync(
+				resolve(projectRoot, "package.json"),
+				JSON.stringify({ name: "compat-bad", private: true }, null, 2),
+				"utf8",
+			);
+			writeMockPackage(projectRoot, "typia", "11.0.0");
+			writeMockPackage(projectRoot, "@typia/unplugin", "12.0.1");
+			writeMockPackage(projectRoot, "@wordpress/scripts", "30.22.0");
+			writeMockPackage(projectRoot, "webpack", "5.106.0");
+
+			await expect(
+				blocksModule.assertTypiaWebpackCompatibility({ projectRoot }),
+			).rejects.toThrow(
+				/Installed versions: typia=11\.0\.0, @typia\/unplugin=12\.0\.1, @wordpress\/scripts=30\.22\.0, webpack=5\.106\.0\..*Supported matrix: typia 12\.x, @typia\/unplugin 12\.x, @wordpress\/scripts 30\.x with webpack 5\.x\./s,
+			);
+		} finally {
+			rmSync(projectRoot, { force: true, recursive: true });
+		}
+	});
+
+	test("Typia/Webpack compatibility preflight prefers webpack resolved from @wordpress/scripts", async () => {
+		const blocksModule = await import("@wp-typia/block-runtime/blocks");
+		const projectRoot = mkdtempSync(resolve(tmpdir(), "wp-typia-compat-nested-"));
+
+		try {
+			writeFileSync(
+				resolve(projectRoot, "package.json"),
+				JSON.stringify({ name: "compat-nested", private: true }, null, 2),
+				"utf8",
+			);
+			writeMockPackage(projectRoot, "typia", "12.0.1");
+			writeMockPackage(projectRoot, "@typia/unplugin", "12.0.1");
+			writeMockPackage(projectRoot, "@wordpress/scripts", "30.22.0");
+			writeMockPackage(projectRoot, "webpack", "4.47.0");
+
+			const wordpressScriptsNodeModules = resolve(
+				projectRoot,
+				"node_modules",
+				"@wordpress",
+				"scripts",
+				"node_modules",
+			);
+			mkdirSync(resolve(wordpressScriptsNodeModules, "webpack"), {
+				recursive: true,
+			});
+			writeFileSync(
+				resolve(wordpressScriptsNodeModules, "webpack", "package.json"),
+				JSON.stringify({ name: "webpack", version: "5.106.0" }, null, 2),
+				"utf8",
+			);
+
+			await expect(
+				blocksModule.assertTypiaWebpackCompatibility({ projectRoot }),
+			).resolves.toEqual(
+				expect.objectContaining({
+					webpack: "5.106.0",
+				}),
+			);
+		} finally {
+			rmSync(projectRoot, { force: true, recursive: true });
+		}
 	});
 });

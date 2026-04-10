@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { execFile, execFileSync } from "node:child_process";
+import { execFile, execFileSync, spawnSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -339,6 +339,44 @@ function typecheckGeneratedProject(targetDir: string) {
   );
 }
 
+function buildGeneratedProject(targetDir: string) {
+  linkWorkspaceNodeModules(targetDir);
+  const result = spawnSync(
+    path.join(targetDir, "node_modules", ".bin", "wp-scripts"),
+    ["build", "--experimental-modules"],
+    {
+      cwd: targetDir,
+      encoding: "utf8",
+      maxBuffer: 10 * 1024 * 1024,
+    }
+  );
+  const output = [result.stdout, result.stderr].filter(Boolean).join("\n");
+
+  if (result.error) {
+    const error = new Error(
+      output || `Generated project build failed to start for ${targetDir}.`,
+      { cause: result.error }
+    );
+    Object.assign(error, {
+      status: result.status,
+      stderr: result.stderr,
+      stdout: result.stdout,
+    });
+    throw error;
+  }
+  if (result.status !== 0) {
+    const error = new Error(output || "Generated project build failed.");
+    Object.assign(error, {
+      status: result.status,
+      stderr: result.stderr,
+      stdout: result.stdout,
+    });
+    throw error;
+  }
+
+  return output;
+}
+
 function replaceGeneratedTransportBaseUrls(
   transportPath: string,
   baseUrl: string
@@ -438,7 +476,9 @@ describe("@wp-typia/project-tools scaffolding", () => {
     fs.rmSync(tempRoot, { recursive: true, force: true });
   });
 
-  test("scaffoldProject creates an npm-ready basic template", async () => {
+  test(
+    "scaffoldProject creates an npm-ready basic template",
+    async () => {
     const targetDir = path.join(tempRoot, "demo-npm");
 
     await scaffoldProject({
@@ -615,10 +655,14 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(generatedIndex).toContain("Typia-powered type-safe block");
     expect(generatedTypes).not.toMatch(/[가-힣]/u);
     expect(generatedValidators).toContain('from "./validator-toolkit"');
+    expect(generatedValidators).toContain("import typia from 'typia';");
     expect(generatedValidators).toContain(
       "@wp-typia/block-runtime/identifiers"
     );
     expect(generatedValidators).toContain("generateBlockId");
+    expect(generatedValidators).toMatch(
+      /typia\.createValidate<\s*DemoNpmAttributes\s*>\(\)/
+    );
     expect(generatedValidators).not.toContain("createScaffoldValidatorToolkit");
     expect(generatedValidators).not.toContain(
       "applyTemplateDefaultsFromManifest"
@@ -627,7 +671,8 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(generatedValidatorToolkit).toContain(
       "createScaffoldValidatorToolkit"
     );
-    expect(generatedValidatorToolkit).toContain("typia.createValidate");
+    expect(generatedValidatorToolkit).not.toContain("import typia from 'typia';");
+    expect(generatedValidatorToolkit).not.toContain("typia.createValidate");
     expect(generatedPluginBootstrap).toContain("Plugin Name:       Demo Npm");
     expect(generatedPluginBootstrap).toContain("Text Domain:       demo-npm");
     expect(generatedPluginBootstrap).toContain("load_plugin_textdomain(");
@@ -662,80 +707,89 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(readme).not.toContain("## PHP REST Extension Points");
 
     typecheckGeneratedProject(targetDir);
-  });
+    runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts");
+    const buildOutput = buildGeneratedProject(targetDir);
+    expect(buildOutput).not.toContain("non-specified generic argument");
+    },
+    { timeout: 20_000 }
+  );
 
-  test("scaffoldProject can opt into migration UI for built-in single-block templates", async () => {
-    const targetDir = path.join(tempRoot, "demo-migration-ui");
+  test(
+    "scaffoldProject can opt into migration UI for built-in single-block templates",
+    async () => {
+      const targetDir = path.join(tempRoot, "demo-migration-ui");
 
-    await scaffoldProject({
-      projectDir: targetDir,
-      templateId: "basic",
-      packageManager: "npm",
-      noInstall: true,
-      withMigrationUi: true,
-      answers: {
-        author: "Test Runner",
-        description: "Demo migration UI block",
-        namespace: "demo-space",
-        slug: "demo-migration-ui",
-        title: "Demo Migration UI",
-      },
-    });
+      await scaffoldProject({
+        projectDir: targetDir,
+        templateId: "basic",
+        packageManager: "npm",
+        noInstall: true,
+        withMigrationUi: true,
+        answers: {
+          author: "Test Runner",
+          description: "Demo migration UI block",
+          namespace: "demo-space",
+          slug: "demo-migration-ui",
+          title: "Demo Migration UI",
+        },
+      });
 
-    const packageJson = JSON.parse(
-      fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
-    );
-    const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
-    const generatedEdit = fs.readFileSync(
-      path.join(targetDir, "src", "edit.tsx"),
-      "utf8"
-    );
-    const generatedIndex = fs.readFileSync(
-      path.join(targetDir, "src", "index.tsx"),
-      "utf8"
-    );
-    const migrationConfig = fs.readFileSync(
-      path.join(targetDir, "src", "migrations", "config.ts"),
-      "utf8"
-    );
+      const packageJson = JSON.parse(
+        fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+      );
+      const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
+      const generatedEdit = fs.readFileSync(
+        path.join(targetDir, "src", "edit.tsx"),
+        "utf8"
+      );
+      const generatedIndex = fs.readFileSync(
+        path.join(targetDir, "src", "index.tsx"),
+        "utf8"
+      );
+      const migrationConfig = fs.readFileSync(
+        path.join(targetDir, "src", "migrations", "config.ts"),
+        "utf8"
+      );
 
-    expect(packageJson.dependencies["@wordpress/api-fetch"]).toBe("^7.42.0");
-    expect(
-      packageJson.devDependencies["@wp-typia/project-tools"]
-    ).toBeUndefined();
-    expect(packageJson.scripts["migration:init"]).toBe(
-      `npx --yes wp-typia@${wpTypiaPackageManifest.version} migrate init --current-migration-version v1`
-    );
-    expect(packageJson.scripts["migration:doctor"]).toBe(
-      `npx --yes wp-typia@${wpTypiaPackageManifest.version} migrate doctor --all`
-    );
-    expect(readme).toContain("## Migration UI");
-    expect(readme).toContain("initialized migration workspace at `v1`");
-    expect(generatedEdit).toContain("MigrationDashboard");
-    expect(generatedIndex).toContain(
-      "./migrations/generated/demo-migration-ui/deprecated"
-    );
-    expect(generatedIndex).toContain(
-      "deprecated as NonNullable<BlockConfiguration<DemoMigrationUiAttributes>['deprecated']>"
-    );
-    expect(migrationConfig).toContain("key: 'demo-migration-ui'");
-    expect(migrationConfig).toContain("blockJsonFile: 'src/block.json'");
-    expect(
-      fs.existsSync(
-        path.join(targetDir, "src", "admin", "migration-dashboard.tsx")
-      )
-    ).toBe(true);
-    expect(
-      fs.existsSync(
-        path.join(targetDir, "src", "migrations", "generated", "index.ts")
-      )
-    ).toBe(true);
-    expect(
-      fs.existsSync(path.join(targetDir, "typia-migration-registry.php"))
-    ).toBe(true);
+      expect(packageJson.dependencies["@wordpress/api-fetch"]).toBe("^7.42.0");
+      expect(
+        packageJson.devDependencies["@wp-typia/project-tools"]
+      ).toBeUndefined();
+      expect(packageJson.scripts["migration:init"]).toBe(
+        `npx --yes wp-typia@${wpTypiaPackageManifest.version} migrate init --current-migration-version v1`
+      );
+      expect(packageJson.scripts["migration:doctor"]).toBe(
+        `npx --yes wp-typia@${wpTypiaPackageManifest.version} migrate doctor --all`
+      );
+      expect(readme).toContain("## Migration UI");
+      expect(readme).toContain("initialized migration workspace at `v1`");
+      expect(generatedEdit).toContain("MigrationDashboard");
+      expect(generatedIndex).toContain(
+        "./migrations/generated/demo-migration-ui/deprecated"
+      );
+      expect(generatedIndex).toContain(
+        "deprecated as NonNullable<BlockConfiguration<DemoMigrationUiAttributes>['deprecated']>"
+      );
+      expect(migrationConfig).toContain("key: 'demo-migration-ui'");
+      expect(migrationConfig).toContain("blockJsonFile: 'src/block.json'");
+      expect(
+        fs.existsSync(
+          path.join(targetDir, "src", "admin", "migration-dashboard.tsx")
+        )
+      ).toBe(true);
+      expect(
+        fs.existsSync(
+          path.join(targetDir, "src", "migrations", "generated", "index.ts")
+        )
+      ).toBe(true);
+      expect(
+        fs.existsSync(path.join(targetDir, "typia-migration-registry.php"))
+      ).toBe(true);
 
-    typecheckGeneratedProject(targetDir);
-  });
+      typecheckGeneratedProject(targetDir);
+    },
+    { timeout: 15_000 }
+  );
 
   test(
     "generated sync-types scripts support strict and JSON report modes",
@@ -1378,10 +1432,14 @@ describe("@wp-typia/project-tools scaffolding", () => {
       expect(generatedValidatorToolkit).toContain(
         "createScaffoldValidatorToolkit"
       );
+      expect(generatedValidatorToolkit).not.toContain("typia.createValidate");
       expect(generatedValidators).toContain(
         "@wp-typia/block-runtime/identifiers"
       );
       expect(generatedValidators).toContain("generateResourceKey");
+      expect(generatedValidators).toMatch(
+        /typia\.createValidate<\s*DemoPersistencePublicAttributes\s*>\(\)/
+      );
       expect(generatedValidators).not.toContain("const generateResourceKey");
       expect(generatedData).toContain("useDemoPersistencePublicStateQuery");
       expect(generatedData).toContain(
@@ -2326,7 +2384,9 @@ console.log(JSON.stringify({ initial, updated, reread }));
     );
   });
 
-  test("scaffoldProject creates a pure compound template with parent and hidden child blocks", async () => {
+  test(
+    "scaffoldProject creates a pure compound template with parent and hidden child blocks",
+    async () => {
     const targetDir = path.join(tempRoot, "demo-compound");
 
     await scaffoldProject({
@@ -2518,10 +2578,12 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(parentHooks).toContain("useTypiaValidation");
     expect(parentHooks).toContain("from '../../hooks'");
     expect(parentValidators).toContain("validator-toolkit");
+    expect(parentValidators).toContain("import typia from 'typia';");
     expect(parentValidators).not.toContain("createScaffoldValidatorToolkit");
     expect(generatedValidatorToolkit).toContain(
       "createScaffoldValidatorToolkit"
     );
+    expect(generatedValidatorToolkit).not.toContain("typia.createValidate");
     expect(parentChildren).toContain("DEFAULT_CHILD_BLOCK_NAME");
     expect(parentChildren).toContain(
       "add-child: insert new allowed child block names here"
@@ -2537,6 +2599,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(childHooks).toContain("useTypiaValidation");
     expect(childHooks).toContain("from '../../hooks'");
     expect(childValidators).toContain("validator-toolkit");
+    expect(childValidators).toContain("import typia from 'typia';");
     expect(childValidators).not.toContain("createScaffoldValidatorToolkit");
     expect(childBlockJson.attributes.title.selector).toBe(
       ".wp-block-create-block-demo-compound-item__title"
@@ -2563,7 +2626,12 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(blockConfig).not.toContain("restManifest");
 
     typecheckGeneratedProject(targetDir);
-  });
+    runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts");
+    const buildOutput = buildGeneratedProject(targetDir);
+    expect(buildOutput).not.toContain("non-specified generic argument");
+    },
+    { timeout: 20_000 }
+  );
 
   test("compound scaffolds can opt into migration UI and keep add-child migration-aware", async () => {
     const targetDir = path.join(tempRoot, "demo-compound-migration");
@@ -2990,10 +3058,12 @@ console.log(JSON.stringify({ initial, updated, reread }));
       expect(childHooks).toContain("useTypiaValidation");
       expect(childHooks).toContain("from '../../hooks'");
       expect(childValidators).toContain("validator-toolkit");
+      expect(childValidators).toContain("import typia from 'typia';");
       expect(childValidators).not.toContain("createScaffoldValidatorToolkit");
       expect(generatedValidatorToolkit).toContain(
         "createScaffoldValidatorToolkit"
       );
+      expect(generatedValidatorToolkit).not.toContain("typia.createValidate");
       expect(generatedAddChild).toContain("ALLOWED_CHILD_MARKER");
       expect(generatedAddChild).toContain("buildScaffoldBlockRegistration");
       expect(generatedAddChild).toContain("type ScaffoldBlockMetadata");
@@ -4742,12 +4812,303 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(serverModuleSource).toContain("is_post_publicly_viewable( $post )");
     expect(serverModuleSource).toContain(": 'primary';");
     expect(parentBlockJson.name).toBe("demo-space/faq-stack");
+    expect(fs.existsSync(path.join(targetDir, "src", "hooks.ts"))).toBe(true);
+    expect(fs.existsSync(path.join(targetDir, "src", "validator-toolkit.ts"))).toBe(
+      true
+    );
     runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
       "--check",
     ]);
     runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts", [
       "--check",
     ]);
+  }, 30_000);
+
+  test("add compound block repairs a legacy shared validator toolkit in an official workspace template", async () => {
+    const targetDir = path.join(
+      tempRoot,
+      "demo-workspace-add-compound-legacy-validator-toolkit"
+    );
+
+    await scaffoldProject({
+      projectDir: targetDir,
+      templateId: workspaceTemplatePackageManifest.name,
+      packageManager: "npm",
+      noInstall: true,
+      answers: {
+        author: "Test Runner",
+        description: "Demo workspace add compound legacy validator toolkit",
+        namespace: "demo-space",
+        phpPrefix: "demo_space",
+        slug: "demo-workspace-add-compound-legacy-validator-toolkit",
+        textDomain: "demo-space",
+        title: "Demo Workspace Add Compound Legacy Validator Toolkit",
+      },
+    });
+
+    linkWorkspaceNodeModules(targetDir);
+
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "faq-stack",
+        "--template",
+        "compound",
+      ],
+      {
+        cwd: targetDir,
+      }
+    );
+
+    fs.writeFileSync(
+      path.join(targetDir, "src", "validator-toolkit.ts"),
+      [
+        "import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
+        "import {",
+        "\tcreateScaffoldValidatorToolkit,",
+        "\ttype ScaffoldValidatorToolkitOptions,",
+        "} from '@wp-typia/block-runtime/validation';",
+        "",
+        "interface TemplateValidatorToolkitOptions< T extends object > {",
+        "\tfinalize?: ScaffoldValidatorToolkitOptions< T >['finalize'];",
+        "\tmanifest: unknown;",
+        "\tonValidationError?: ScaffoldValidatorToolkitOptions< T >['onValidationError'];",
+        "}",
+        "",
+        "export function createTemplateValidatorToolkit< T extends object >( {",
+        "\tfinalize,",
+        "\tmanifest,",
+        "\tonValidationError,",
+        "}: TemplateValidatorToolkitOptions< T > ) {",
+        "\treturn createScaffoldValidatorToolkit< T >( {",
+        "\t\tmanifest: manifest as ManifestDefaultsDocument,",
+        "\t\tfinalize,",
+        "\t\tonValidationError,",
+        "\t} );",
+        "}",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    const writeLegacyCompoundValidator = (
+      blockSlug: string,
+      typeName: string,
+      exportSuffix: string,
+      options?: {
+        lineEnding?: "\n" | "\r\n";
+        quoteStyle?: "'" | '"';
+      }
+    ) => {
+      const lineEnding = options?.lineEnding ?? "\n";
+      const quoteStyle = options?.quoteStyle ?? "'";
+      fs.writeFileSync(
+        path.join(targetDir, "src", "blocks", blockSlug, "validators.ts"),
+        [
+          `import currentManifest from ${quoteStyle}./typia.manifest.json${quoteStyle};`,
+          "import type {",
+          `\t${typeName},`,
+          `} from ${quoteStyle}./types${quoteStyle};`,
+          `import { createTemplateValidatorToolkit } from ${quoteStyle}../../validator-toolkit${quoteStyle};`,
+          "",
+          `const scaffoldValidators = createTemplateValidatorToolkit< ${typeName} >( {`,
+          "\tmanifest: currentManifest,",
+          "} );",
+          "",
+          `export const validate${exportSuffix} =`,
+          "\tscaffoldValidators.validateAttributes;",
+          "",
+          "export const validators = scaffoldValidators.validators;",
+          "",
+          `export const sanitize${exportSuffix} =`,
+          "\tscaffoldValidators.sanitizeAttributes;",
+          "",
+          "export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;",
+          "",
+        ].join(lineEnding),
+        "utf8"
+      );
+    };
+
+    writeLegacyCompoundValidator(
+      "faq-stack",
+      "FaqStackAttributes",
+      "FaqStackAttributes"
+    );
+    writeLegacyCompoundValidator(
+      "faq-stack-item",
+      "FaqStackItemAttributes",
+      "FaqStackItemAttributes",
+      {
+        lineEnding: "\r\n",
+        quoteStyle: '"',
+      }
+    );
+
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "feature-grid",
+        "--template",
+        "compound",
+      ],
+      {
+        cwd: targetDir,
+      }
+    );
+
+    const validatorToolkitSource = fs.readFileSync(
+      path.join(targetDir, "src", "validator-toolkit.ts"),
+      "utf8"
+    );
+    const repairedParentValidatorSource = fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),
+      "utf8"
+    );
+    const repairedChildValidatorSource = fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "faq-stack-item", "validators.ts"),
+      "utf8"
+    );
+
+    expect(validatorToolkitSource).toContain("interface TemplateValidatorFunctions<");
+    expect(validatorToolkitSource).toContain(
+      "assert: ScaffoldValidatorToolkitOptions< T >['assert'];"
+    );
+    expect(repairedParentValidatorSource).toContain("import typia from 'typia';");
+    expect(repairedParentValidatorSource).toContain(
+      "assert: typia.createAssert< FaqStackAttributes >()"
+    );
+    expect(repairedChildValidatorSource).toContain("import typia from 'typia';");
+    expect(repairedChildValidatorSource).toContain(
+      "assert: typia.createAssert< FaqStackItemAttributes >()"
+    );
+    typecheckGeneratedProject(targetDir);
+  }, 30_000);
+
+  test("add compound block preserves a compatible shared validator toolkit with different formatting", async () => {
+    const targetDir = path.join(
+      tempRoot,
+      "demo-workspace-add-compound-compatible-validator-toolkit"
+    );
+
+    await scaffoldProject({
+      projectDir: targetDir,
+      templateId: workspaceTemplatePackageManifest.name,
+      packageManager: "npm",
+      noInstall: true,
+      answers: {
+        author: "Test Runner",
+        description: "Demo workspace add compound compatible validator toolkit",
+        namespace: "demo-space",
+        phpPrefix: "demo_space",
+        slug: "demo-workspace-add-compound-compatible-validator-toolkit",
+        textDomain: "demo-space",
+        title: "Demo Workspace Add Compound Compatible Validator Toolkit",
+      },
+    });
+
+    linkWorkspaceNodeModules(targetDir);
+
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "faq-stack",
+        "--template",
+        "compound",
+      ],
+      {
+        cwd: targetDir,
+      }
+    );
+
+    const validatorToolkitPath = path.join(
+      targetDir,
+      "src",
+      "validator-toolkit.ts"
+    );
+    fs.writeFileSync(
+      validatorToolkitPath,
+      [
+        "// preserve-compatible-toolkit",
+        "import type { ManifestDefaultsDocument } from \"@wp-typia/block-runtime/defaults\";",
+        "import {",
+        "\tcreateScaffoldValidatorToolkit,",
+        "\ttype ScaffoldValidatorToolkitOptions,",
+        "} from \"@wp-typia/block-runtime/validation\";",
+        "",
+        "interface TemplateValidatorFunctions<T extends object>{",
+        "\tassert:ScaffoldValidatorToolkitOptions<T>[\"assert\"];",
+        "\tclone:ScaffoldValidatorToolkitOptions<T>[\"clone\"];",
+        "\tis:ScaffoldValidatorToolkitOptions<T>[\"is\"];",
+        "\tprune:ScaffoldValidatorToolkitOptions<T>[\"prune\"];",
+        "\trandom:ScaffoldValidatorToolkitOptions<T>[\"random\"];",
+        "\tvalidate:ScaffoldValidatorToolkitOptions<T>[\"validate\"];",
+        "}",
+        "",
+        "interface TemplateValidatorToolkitOptions<T extends object>",
+        "\textends TemplateValidatorFunctions<T> {",
+        "\tfinalize?: ScaffoldValidatorToolkitOptions<T>[\"finalize\"];",
+        "\tmanifest: unknown;",
+        "\tonValidationError?: ScaffoldValidatorToolkitOptions<T>[\"onValidationError\"];",
+        "}",
+        "",
+        "export function createTemplateValidatorToolkit<T extends object>({",
+        "\tassert,",
+        "\tclone,",
+        "\tfinalize,",
+        "\tis,",
+        "\tmanifest,",
+        "\tonValidationError,",
+        "\tprune,",
+        "\trandom,",
+        "\tvalidate ,",
+        "}: TemplateValidatorToolkitOptions<T>) {",
+        "\treturn createScaffoldValidatorToolkit<T>({",
+        "\t\tmanifest: manifest as ManifestDefaultsDocument,",
+        "\t\tvalidate,",
+        "\t\tassert,",
+        "\t\tis,",
+        "\t\trandom,",
+        "\t\tclone,",
+        "\t\tprune,",
+        "\t\tfinalize,",
+        "\t\tonValidationError,",
+        "\t});",
+        "}",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "feature-grid",
+        "--template",
+        "compound",
+      ],
+      {
+        cwd: targetDir,
+      }
+    );
+
+    const validatorToolkitSource = fs.readFileSync(validatorToolkitPath, "utf8");
+
+    expect(validatorToolkitSource).toContain("// preserve-compatible-toolkit");
+
+    typecheckGeneratedProject(targetDir);
   }, 30_000);
 
   test("add block updates migration config in a migration-enabled workspace template", async () => {

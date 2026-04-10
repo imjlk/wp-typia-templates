@@ -46,6 +46,30 @@ function createWebpackFsAdapter() {
 	};
 }
 
+function writeMockPackage(projectRoot: string, packageName: string, version: string) {
+	const packageDir = path.join(projectRoot, "node_modules", ...packageName.split("/"));
+	fs.mkdirSync(packageDir, { recursive: true });
+	fs.writeFileSync(
+		path.join(packageDir, "package.json"),
+		JSON.stringify({ name: packageName, version }, null, 2),
+		"utf8",
+	);
+}
+
+function createSupportedWebpackProjectRoot() {
+	const projectRoot = createTempDir("wp-typia-webpack-project-");
+	writeTextFile(
+		path.join(projectRoot, "package.json"),
+		JSON.stringify({ name: "webpack-project", private: true }, null, 2),
+	);
+	writeMockPackage(projectRoot, "typia", "12.0.1");
+	writeMockPackage(projectRoot, "@typia/unplugin", "12.0.1");
+	writeMockPackage(projectRoot, "@wordpress/scripts", "30.22.0");
+	writeMockPackage(projectRoot, "webpack", "5.106.0");
+
+	return projectRoot;
+}
+
 function createFakeCompilation(
 	initialAssets: Record<string, unknown> = {},
 	outputPath?: string,
@@ -195,6 +219,7 @@ describe("block runtime helpers", () => {
 
 	test("createTypiaWebpackConfig merges editor and module entries and preserves plugin ordering", async () => {
 		const existingPlugin = { name: "existing-plugin" };
+		const projectRoot = createSupportedWebpackProjectRoot();
 		const config = await createTypiaWebpackConfig({
 			defaultConfig: async () => [
 				{
@@ -224,6 +249,7 @@ describe("block runtime helpers", () => {
 				default: () => ({ name: "typia-plugin" }),
 			}),
 			path,
+			projectRoot,
 		});
 
 		expect(Array.isArray(config)).toBe(true);
@@ -249,6 +275,7 @@ describe("block runtime helpers", () => {
 	});
 
 	test("createTypiaWebpackConfig respects replace modes for editor and module entries", async () => {
+		const projectRoot = createSupportedWebpackProjectRoot();
 		const config = await createTypiaWebpackConfig({
 			defaultConfig: [
 				{
@@ -279,6 +306,7 @@ describe("block runtime helpers", () => {
 			moduleEntriesMode: "replace",
 			nonModuleEntriesMode: "replace",
 			path,
+			projectRoot,
 		});
 
 		const [editorConfig, moduleConfig] = config as Array<{
@@ -295,6 +323,7 @@ describe("block runtime helpers", () => {
 
 	test("createTypiaWebpackConfig copies missing artifacts and normalizes script-module assets", async () => {
 		const outputDir = createTempDir("wp-typia-webpack-output-");
+		const projectRoot = createSupportedWebpackProjectRoot();
 		const artifactPath = path.join(outputDir, "typia.manifest.json");
 		const emittedAssetPath = path.join(outputDir, "view.asset.php");
 		const rawAssetSource =
@@ -319,6 +348,7 @@ describe("block runtime helpers", () => {
 			}),
 			isScriptModuleAsset: (assetName) => assetName === "view.asset.php",
 			path,
+			projectRoot,
 		});
 		const plugin = (config as { plugins: unknown[] }).plugins.find(
 			(candidate) =>

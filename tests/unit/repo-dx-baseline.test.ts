@@ -70,6 +70,10 @@ describe('repository DX baseline', () => {
 		const readme = fs.readFileSync(path.join(repoRoot, 'README.md'), 'utf8');
 		const contributing = fs.readFileSync(path.join(repoRoot, 'CONTRIBUTING.md'), 'utf8');
 		const cliReadme = fs.readFileSync(path.join(repoRoot, 'packages', 'wp-typia', 'README.md'), 'utf8');
+		const workspaceWebpackTemplate = fs.readFileSync(
+			path.join(repoRoot, 'packages', 'create-workspace-template', 'webpack.config.js.mustache'),
+			'utf8',
+		);
 
 		expect(readme).toContain('bun run ci:local');
 		expect(readme).toContain('Root ESLint covers repository infrastructure code');
@@ -81,11 +85,16 @@ describe('repository DX baseline', () => {
 		expect(contributing).toContain('## Project meta docs');
 		expect(contributing).toContain('[`UPGRADE.md`](./UPGRADE.md)');
 		expect(contributing).toContain('[`SECURITY.md`](./SECURITY.md)');
+		expect(contributing).toContain('## Generated project toolchain matrix');
+		expect(contributing).toContain('`typia` 12.x');
+		expect(contributing).toContain('`@wordpress/scripts` 30.x');
 		expect(cliReadme).toMatch(
 			/https:\/\/github\.com\/[^/]+\/[^/]+\/blob\/[^/]+\/UPGRADE\.md/,
 		);
 		expect(cliReadme).toMatch(
 			/https:\/\/github\.com\/[^/]+\/[^/]+\/blob\/[^/]+\/SECURITY\.md/,
 		);
+		expect(workspaceWebpackTemplate).toContain('loadCompatibleTypiaWebpackPlugin');
+		expect(workspaceWebpackTemplate).toContain('projectRoot: process.cwd()');
 	});
 });

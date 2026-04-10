@@ -1,9 +1,20 @@
+import typia from 'typia';
 import currentManifest from './typia.manifest.json';
 import type { {{pascalCase}}ItemAttributes } from './types';
 import { createTemplateValidatorToolkit } from '../../validator-toolkit';
 
 const scaffoldValidators = createTemplateValidatorToolkit< {{pascalCase}}ItemAttributes >( {
+	assert: typia.createAssert< {{pascalCase}}ItemAttributes >(),
+	clone: typia.misc.createClone< {{pascalCase}}ItemAttributes >() as (
+		value: {{pascalCase}}ItemAttributes,
+	) => {{pascalCase}}ItemAttributes,
+	is: typia.createIs< {{pascalCase}}ItemAttributes >(),
 	manifest: currentManifest,
+	prune: typia.misc.createPrune< {{pascalCase}}ItemAttributes >(),
+	random: typia.createRandom< {{pascalCase}}ItemAttributes >() as (
+		...args: unknown[]
+	) => {{pascalCase}}ItemAttributes,
+	validate: typia.createValidate< {{pascalCase}}ItemAttributes >(),
 } );
 
 export const validate{{pascalCase}}ItemAttributes =
