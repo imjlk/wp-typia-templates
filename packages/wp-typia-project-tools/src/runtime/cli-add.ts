@@ -895,6 +895,40 @@ async function renderWorkspacePersistenceServerModule(
 	await copyInterpolatedDirectory(templateDir, targetDir, variables);
 }
 
+const COMPOUND_SHARED_SUPPORT_FILES = ["hooks.ts", "validator-toolkit.ts"] as const;
+
+function shouldRefreshCompoundValidatorToolkit(source: string | null): boolean {
+	return (
+		source === null ||
+		!source.includes("interface TemplateValidatorFunctions<") ||
+		!source.includes("assert: ScaffoldValidatorToolkitOptions< T >['assert'];") ||
+		!source.includes("validate,")
+	);
+}
+
+async function ensureCompoundWorkspaceSupportFiles(
+	projectDir: string,
+	tempProjectDir: string,
+): Promise<void> {
+	for (const fileName of COMPOUND_SHARED_SUPPORT_FILES) {
+		const sourcePath = path.join(tempProjectDir, "src", fileName);
+		if (!fs.existsSync(sourcePath)) {
+			continue;
+		}
+
+		const targetPath = path.join(projectDir, "src", fileName);
+		const currentSource = await readOptionalFile(targetPath);
+		if (
+			fileName === "validator-toolkit.ts"
+				? shouldRefreshCompoundValidatorToolkit(currentSource)
+				: currentSource === null
+		) {
+			await fsp.mkdir(path.dirname(targetPath), { recursive: true });
+			await fsp.copyFile(sourcePath, targetPath);
+		}
+	}
+}
+
 async function copyScaffoldedBlockSlice(
 	projectDir: string,
 	templateId: AddBlockTemplateId,
@@ -902,6 +936,7 @@ async function copyScaffoldedBlockSlice(
 	variables: ScaffoldTemplateVariables,
 ): Promise<void> {
 	if (templateId === "compound") {
+		await ensureCompoundWorkspaceSupportFiles(projectDir, tempProjectDir);
 		await copyTempDirectory(
 			path.join(tempProjectDir, "src", "blocks", variables.slugKebabCase),
 			path.join(projectDir, "src", "blocks", variables.slugKebabCase),
@@ -1175,6 +1210,12 @@ export async function runAddBlockCommand({
 		const migrationConfigSource = await readOptionalFile(migrationConfigPath);
 		const migrationConfig =
 			migrationConfigSource === null ? null : parseMigrationConfig(migrationConfigSource);
+		const compoundSupportPaths =
+			resolvedTemplateId === "compound"
+				? COMPOUND_SHARED_SUPPORT_FILES.map((fileName) =>
+						path.join(workspace.projectDir, "src", fileName),
+					)
+				: [];
 		const result = await scaffoldProject({
 			answers: {
 				...defaults,
@@ -1195,7 +1236,11 @@ export async function runAddBlockCommand({
 		});
 		assertBlockTargetsDoNotExist(workspace.projectDir, resolvedTemplateId, result.variables);
 		const mutationSnapshot: WorkspaceMutationSnapshot = {
-			fileSources: await snapshotWorkspaceFiles([blockConfigPath, migrationConfigPath]),
+			fileSources: await snapshotWorkspaceFiles([
+				blockConfigPath,
+				migrationConfigPath,
+				...compoundSupportPaths,
+			]),
 			snapshotDirs:
 				migrationConfig === null
 					? []

@@ -4812,12 +4812,98 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(serverModuleSource).toContain("is_post_publicly_viewable( $post )");
     expect(serverModuleSource).toContain(": 'primary';");
     expect(parentBlockJson.name).toBe("demo-space/faq-stack");
+    expect(fs.existsSync(path.join(targetDir, "src", "hooks.ts"))).toBe(true);
+    expect(fs.existsSync(path.join(targetDir, "src", "validator-toolkit.ts"))).toBe(
+      true
+    );
     runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
       "--check",
     ]);
     runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts", [
       "--check",
     ]);
+  }, 30_000);
+
+  test("add compound block repairs a legacy shared validator toolkit in an official workspace template", async () => {
+    const targetDir = path.join(
+      tempRoot,
+      "demo-workspace-add-compound-legacy-validator-toolkit"
+    );
+
+    await scaffoldProject({
+      projectDir: targetDir,
+      templateId: workspaceTemplatePackageManifest.name,
+      packageManager: "npm",
+      noInstall: true,
+      answers: {
+        author: "Test Runner",
+        description: "Demo workspace add compound legacy validator toolkit",
+        namespace: "demo-space",
+        phpPrefix: "demo_space",
+        slug: "demo-workspace-add-compound-legacy-validator-toolkit",
+        textDomain: "demo-space",
+        title: "Demo Workspace Add Compound Legacy Validator Toolkit",
+      },
+    });
+
+    fs.writeFileSync(
+      path.join(targetDir, "src", "validator-toolkit.ts"),
+      [
+        "import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
+        "import {",
+        "\tcreateScaffoldValidatorToolkit,",
+        "\ttype ScaffoldValidatorToolkitOptions,",
+        "} from '@wp-typia/block-runtime/validation';",
+        "",
+        "interface TemplateValidatorToolkitOptions< T extends object > {",
+        "\tfinalize?: ScaffoldValidatorToolkitOptions< T >['finalize'];",
+        "\tmanifest: unknown;",
+        "\tonValidationError?: ScaffoldValidatorToolkitOptions< T >['onValidationError'];",
+        "}",
+        "",
+        "export function createTemplateValidatorToolkit< T extends object >( {",
+        "\tfinalize,",
+        "\tmanifest,",
+        "\tonValidationError,",
+        "}: TemplateValidatorToolkitOptions< T > ) {",
+        "\treturn createScaffoldValidatorToolkit< T >( {",
+        "\t\tmanifest: manifest as ManifestDefaultsDocument,",
+        "\t\tfinalize,",
+        "\t\tonValidationError,",
+        "\t} );",
+        "}",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    linkWorkspaceNodeModules(targetDir);
+
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "faq-stack",
+        "--template",
+        "compound",
+      ],
+      {
+        cwd: targetDir,
+      }
+    );
+
+    const validatorToolkitSource = fs.readFileSync(
+      path.join(targetDir, "src", "validator-toolkit.ts"),
+      "utf8"
+    );
+
+    expect(validatorToolkitSource).toContain("interface TemplateValidatorFunctions<");
+    expect(validatorToolkitSource).toContain(
+      "assert: ScaffoldValidatorToolkitOptions< T >['assert'];"
+    );
+    typecheckGeneratedProject(targetDir);
   }, 30_000);
 
   test("add block updates migration config in a migration-enabled workspace template", async () => {
