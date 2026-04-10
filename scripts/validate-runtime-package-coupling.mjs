@@ -13,29 +13,47 @@ import {
 	bumpVersion,
 	getRequiredDependentReleaseType,
 	isPolicySpec,
+	renderPolicySpec,
 	specAllowsVersion,
 } from "./lib/runtime-package-policy.mjs";
 import {
 	findWorkspaceProtocolLeaks,
-	packWorkspacePackage,
 	readJson,
-	readPackedPackageManifest,
-	withTempDir,
 } from "./publish-package-utils.mjs";
 
 function getPackageId(packageName) {
 	return `npm/${packageName}`;
 }
 
-function readPolicyManifest(packageInfo, tempDir) {
+function readPolicyManifest(packageInfo, plannedByName) {
 	const sourceManifest = readJson(packageInfo.packageJsonPath);
 
 	if (findWorkspaceProtocolLeaks(sourceManifest).length === 0) {
 		return sourceManifest;
 	}
 
-	const tarballPath = packWorkspacePackage(packageInfo.absolutePackageDir, tempDir);
-	return readPackedPackageManifest(tarballPath);
+	const materializedManifest = JSON.parse(JSON.stringify(sourceManifest));
+
+	for (const coupling of RUNTIME_PACKAGE_COUPLINGS) {
+		if (coupling.dependentName !== packageInfo.packageName) {
+			continue;
+		}
+
+		const dependencyInfo = plannedByName.get(coupling.dependencyName);
+		if (!dependencyInfo) {
+			continue;
+		}
+
+		const currentSpec = materializedManifest.dependencies?.[coupling.dependencyName];
+		if (typeof currentSpec === "string" && currentSpec.startsWith("workspace:")) {
+			materializedManifest.dependencies[coupling.dependencyName] = renderPolicySpec(
+				coupling.rangePolicy,
+				dependencyInfo.plannedVersion,
+			);
+		}
+	}
+
+	return materializedManifest;
 }
 
 export function collectPlannedRuntimePackages(repoRoot) {
@@ -80,11 +98,9 @@ export function validateRuntimePackageCoupling(repoRoot) {
 	const plannedByName = new Map(plannedPackages.map((packageInfo) => [packageInfo.packageName, packageInfo]));
 	const errors = [];
 
-	withTempDir("wp-typia-runtime-coupling-", (tempDir) => {
-		for (const packageInfo of plannedPackages) {
-			packageInfo.policyManifest = readPolicyManifest(packageInfo, tempDir);
-		}
-	});
+	for (const packageInfo of plannedPackages) {
+		packageInfo.policyManifest = readPolicyManifest(packageInfo, plannedByName);
+	}
 
 	for (const coupling of RUNTIME_PACKAGE_COUPLINGS) {
 		const dependencyInfo = plannedByName.get(coupling.dependencyName);

@@ -144,10 +144,10 @@ Why this split exists:
 - host-provided integrations such as `react` or `@wordpress/element` stay in `peerDependencies`
 - `wp-typia -> @wp-typia/project-tools` stays exact because the published CLI and orchestration package are tested and released as a locked pair
 
-Validation uses publish truth, not just source truth:
+Validation uses planned publish truth, not just source truth:
 
 - `@wp-typia/rest` keeps `workspace:*` in source so local development stays ergonomic
-- the coupling validator reads the packed manifest for packages that rewrite dependency specs during publish
+- the coupling validator materializes workspace-protocol runtime dependencies against the planned next versions before checking the release lane
 - if an upstream runtime package change falls outside the current policy lane, the dependent package must carry both a manifest update and a pending changeset in the same PR
 
 ## Pull requests

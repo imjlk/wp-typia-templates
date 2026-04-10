@@ -164,7 +164,7 @@ describe("validate-runtime-package-coupling", () => {
 
 		expect(result.valid).toBe(false);
 		expect(result.errors).toContain(
-			"@wp-typia/api-client is planned for 0.4.2 -> 0.5.0; @wp-typia/rest must add a pending changeset and update dependencies.@wp-typia/api-client.",
+			"@wp-typia/api-client is planned for 0.4.2 -> 0.5.0; @wp-typia/rest must also receive a pending changeset because its caret policy requires a dependency update.",
 		);
 		expect(result.errors).toContain(
 			"@wp-typia/api-client is planned for 0.4.2 -> 0.5.0; @wp-typia/block-runtime must add a pending changeset and update dependencies.@wp-typia/api-client.",
@@ -177,7 +177,7 @@ describe("validate-runtime-package-coupling", () => {
 		);
 	});
 
-	test("passes when an api-client minor bump is paired with dependent changesets and forward-updated manifests", () => {
+	test("passes when an api-client minor bump is paired with dependent changesets and planned publish manifests", () => {
 		const repoRoot = createRuntimeRepo();
 		writeChangeset(repoRoot, "api-client-minor.md", ["npm/@wp-typia/api-client: minor"]);
 		writeChangeset(repoRoot, "block-runtime-patch.md", ["npm/@wp-typia/block-runtime: patch"]);
@@ -197,7 +197,6 @@ describe("validate-runtime-package-coupling", () => {
 		};
 
 		updateDependency("packages/wp-typia-block-runtime", "@wp-typia/api-client", "^0.5.0");
-		updateDependency("packages/wp-typia-rest", "@wp-typia/api-client", "^0.5.0");
 		updateDependency("packages/wp-typia-project-tools", "@wp-typia/api-client", "^0.5.0");
 		updateDependency("packages/wp-typia", "@wp-typia/api-client", "^0.5.0");
 
