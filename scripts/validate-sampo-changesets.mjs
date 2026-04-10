@@ -13,6 +13,7 @@ import {
 export {
 	findPublishablePackageIds,
 	parseChangesetFrontmatter,
+	toPosixRelativePath,
 	validateSampoChangesets,
 } from "./lib/sampo-changesets.mjs";
 

@@ -6,6 +6,7 @@ import path from "node:path";
 import {
 	findPublishablePackageIds,
 	parseChangesetFrontmatter,
+	toPosixRelativePath,
 	validateSampoChangesets,
 } from "../../scripts/validate-sampo-changesets.mjs";
 
@@ -75,6 +76,15 @@ describe("validate-sampo-changesets", () => {
 			),
 		).toThrow(
 			'invalid-release-type.md: unsupported release type "toString" for "npm/@wp-typia/project-tools"',
+		);
+	});
+
+	test("toPosixRelativePath normalizes separators for validator output", () => {
+		expect(toPosixRelativePath("/repo", "/repo/.sampo/changesets/valid.md")).toBe(
+			".sampo/changesets/valid.md",
+		);
+		expect(toPosixRelativePath("C:\\repo", "C:\\repo\\.sampo\\changesets\\valid.md")).toBe(
+			".sampo/changesets/valid.md",
 		);
 	});
 

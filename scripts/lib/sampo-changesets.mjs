@@ -11,6 +11,12 @@ export const RELEASE_TYPE_PRIORITY = {
 	major: 2,
 };
 
+export function toPosixRelativePath(repoRoot, targetPath) {
+	const pathApi =
+		repoRoot.includes("\\") || targetPath.includes("\\") ? path.win32 : path;
+	return pathApi.relative(repoRoot, targetPath).split(pathApi.sep).join("/");
+}
+
 export function findPublishablePackages(repoRoot) {
 	const packages = [];
 
@@ -127,7 +133,7 @@ export function getChangesetFiles(repoRoot) {
 
 export function readPendingChangesets(repoRoot) {
 	return getChangesetFiles(repoRoot).map((filePath) => {
-		const relativePath = path.relative(repoRoot, filePath);
+		const relativePath = toPosixRelativePath(repoRoot, filePath);
 		return {
 			entries: parseChangesetFrontmatter(fs.readFileSync(filePath, "utf8"), relativePath),
 			filePath,
@@ -160,7 +166,7 @@ export function validateSampoChangesets(repoRoot) {
 	const errors = [];
 
 	for (const filePath of files) {
-		const relativePath = path.relative(repoRoot, filePath);
+		const relativePath = toPosixRelativePath(repoRoot, filePath);
 		const source = fs.readFileSync(filePath, "utf8");
 
 		try {
@@ -187,7 +193,7 @@ export function validateSampoChangesets(repoRoot) {
 	return {
 		allowedPackageIds: [...allowedPackageIds].sort(),
 		errors,
-		files: files.map((filePath) => path.relative(repoRoot, filePath)),
+		files: files.map((filePath) => toPosixRelativePath(repoRoot, filePath)),
 		valid: errors.length === 0,
 	};
 }

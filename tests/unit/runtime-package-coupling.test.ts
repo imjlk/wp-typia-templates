@@ -275,4 +275,26 @@ describe("validate-runtime-package-coupling", () => {
 			'@wp-typia/block-runtime must use a caret dependency spec for @wp-typia/api-client, found "workspace:*".',
 		);
 	});
+
+	test("fails when a coupled dependency is also declared in peerDependencies", () => {
+		const repoRoot = createRuntimeRepo();
+		const packageJsonPath = path.join(
+			repoRoot,
+			"packages",
+			"wp-typia-project-tools",
+			"package.json",
+		);
+		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+		packageJson.peerDependencies = {
+			"@wp-typia/rest": "^0.3.5",
+		};
+		fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
+
+		const result = validateRuntimePackageCoupling(repoRoot);
+
+		expect(result.valid).toBe(false);
+		expect(result.errors).toContain(
+			'@wp-typia/project-tools must declare @wp-typia/rest only in dependencies, not peerDependencies (^0.3.5).',
+		);
+	});
 });

@@ -134,6 +134,13 @@ export function validateRuntimePackageCoupling(repoRoot) {
 			continue;
 		}
 
+		if (typeof peerSpec === "string") {
+			errors.push(
+				`${coupling.dependentName} must declare ${coupling.dependencyName} only in dependencies, not peerDependencies (${peerSpec}).`,
+			);
+			continue;
+		}
+
 		if (!isPolicySpec(coupling.rangePolicy, spec)) {
 			errors.push(
 				`${coupling.dependentName} must use a ${coupling.rangePolicy} dependency spec for ${coupling.dependencyName}, found "${spec}".`,
