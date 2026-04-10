@@ -79,12 +79,13 @@ describe('repository DX baseline', () => {
 		expect(contributing).toContain('Linting ownership is intentionally split');
 		expect(contributing).toContain('bun run lint:repo');
 		expect(contributing).toContain('## Project meta docs');
+		expect(contributing).toContain('[`UPGRADE.md`](./UPGRADE.md)');
 		expect(contributing).toContain('[`SECURITY.md`](./SECURITY.md)');
 		expect(cliReadme).toMatch(
-			/https:\/\/github\.com\/[^/]+\/[^/]+\/blob\/main\/UPGRADE\.md/,
+			/https:\/\/github\.com\/[^/]+\/[^/]+\/blob\/[^/]+\/UPGRADE\.md/,
 		);
 		expect(cliReadme).toMatch(
-			/https:\/\/github\.com\/[^/]+\/[^/]+\/blob\/main\/SECURITY\.md/,
+			/https:\/\/github\.com\/[^/]+\/[^/]+\/blob\/[^/]+\/SECURITY\.md/,
 		);
 	});
 });
