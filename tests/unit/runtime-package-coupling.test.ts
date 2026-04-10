@@ -276,6 +276,21 @@ describe("validate-runtime-package-coupling", () => {
 		);
 	});
 
+	test("fails when the sanctioned rest edge uses an unsupported workspace protocol variant", () => {
+		const repoRoot = createRuntimeRepo();
+		const packageJsonPath = path.join(repoRoot, "packages", "wp-typia-rest", "package.json");
+		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+		packageJson.dependencies["@wp-typia/api-client"] = "workspace:^";
+		fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
+
+		const result = validateRuntimePackageCoupling(repoRoot);
+
+		expect(result.valid).toBe(false);
+		expect(result.errors).toContain(
+			'@wp-typia/rest must use a caret dependency spec for @wp-typia/api-client, found "workspace:^".',
+		);
+	});
+
 	test("fails when a coupled dependency is also declared in peerDependencies", () => {
 		const repoRoot = createRuntimeRepo();
 		const packageJsonPath = path.join(

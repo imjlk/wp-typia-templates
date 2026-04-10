@@ -46,7 +46,7 @@ function readPolicyManifest(packageInfo, plannedByName) {
 		}
 
 		const currentSpec = materializedManifest.dependencies?.[exception.dependencyName];
-		if (typeof currentSpec === "string" && currentSpec.startsWith("workspace:")) {
+		if (currentSpec === "workspace:*") {
 			materializedManifest.dependencies[exception.dependencyName] = renderPolicySpec(
 				exception.rangePolicy,
 				dependencyInfo.plannedVersion,
