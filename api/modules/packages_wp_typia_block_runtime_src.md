@@ -8,10 +8,13 @@
 
 - [TypiaWebpackArtifactEntry](packages_wp_typia_block_runtime_src.md#typiawebpackartifactentry)
 - [TypiaWebpackConfigOptions](packages_wp_typia_block_runtime_src.md#typiawebpackconfigoptions)
+- [TypiaWebpackPluginLoaderOptions](packages_wp_typia_block_runtime_src.md#typiawebpackpluginloaderoptions)
 - [ScaffoldBlockSupports](packages_wp_typia_block_runtime_src.md#scaffoldblocksupports)
 - [ScaffoldBlockRegistrationSettings](packages_wp_typia_block_runtime_src.md#scaffoldblockregistrationsettings)
 - [ScaffoldBlockMetadata](packages_wp_typia_block_runtime_src.md#scaffoldblockmetadata)
 - [BuildScaffoldBlockRegistrationResult](packages_wp_typia_block_runtime_src.md#buildscaffoldblockregistrationresult)
+- [assertTypiaWebpackCompatibility](packages_wp_typia_block_runtime_src.md#asserttypiawebpackcompatibility)
+- [loadCompatibleTypiaWebpackPlugin](packages_wp_typia_block_runtime_src.md#loadcompatibletypiawebpackplugin)
 - [buildScaffoldBlockRegistration](packages_wp_typia_block_runtime_src.md#buildscaffoldblockregistration)
 - [createTypiaWebpackConfig](packages_wp_typia_block_runtime_src.md#createtypiawebpackconfig)
 - [ManifestDefaultAttribute](packages_wp_typia_block_runtime_src.md#manifestdefaultattribute)
@@ -61,6 +64,12 @@ Re-exports [TypiaWebpackConfigOptions](../interfaces/packages_wp_typia_block_run
 
 ___
 
+### TypiaWebpackPluginLoaderOptions
+
+Re-exports [TypiaWebpackPluginLoaderOptions](../interfaces/packages_wp_typia_block_runtime_src_blocks.TypiaWebpackPluginLoaderOptions.md)
+
+___
+
 ### ScaffoldBlockSupports
 
 Re-exports [ScaffoldBlockSupports](packages_wp_typia_block_runtime_src_blocks.md#scaffoldblocksupports)
@@ -82,6 +91,18 @@ ___
 ### BuildScaffoldBlockRegistrationResult
 
 Re-exports [BuildScaffoldBlockRegistrationResult](../interfaces/packages_wp_typia_block_runtime_src_blocks.BuildScaffoldBlockRegistrationResult.md)
+
+___
+
+### assertTypiaWebpackCompatibility
+
+Re-exports [assertTypiaWebpackCompatibility](packages_wp_typia_block_runtime_src_blocks.md#asserttypiawebpackcompatibility)
+
+___
+
+### loadCompatibleTypiaWebpackPlugin
+
+Re-exports [loadCompatibleTypiaWebpackPlugin](packages_wp_typia_block_runtime_src_blocks.md#loadcompatibletypiawebpackplugin)
 
 ___
 

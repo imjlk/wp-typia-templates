@@ -18,6 +18,7 @@
 - [moduleEntriesMode](packages_wp_typia_block_runtime_src_blocks.TypiaWebpackConfigOptions.md#moduleentriesmode)
 - [nonModuleEntriesMode](packages_wp_typia_block_runtime_src_blocks.TypiaWebpackConfigOptions.md#nonmoduleentriesmode)
 - [path](packages_wp_typia_block_runtime_src_blocks.TypiaWebpackConfigOptions.md#path)
+- [projectRoot](packages_wp_typia_block_runtime_src_blocks.TypiaWebpackConfigOptions.md#projectroot)
 
 ## Properties
 
@@ -178,3 +179,13 @@ ___
 #### Defined in
 
 [packages/wp-typia-block-runtime/src/blocks.ts:51](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/blocks.ts#L51)
+
+___
+
+### projectRoot
+
+• `Optional` **projectRoot**: `string`
+
+#### Defined in
+
+[packages/wp-typia-block-runtime/src/blocks.ts:54](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/blocks.ts#L54)

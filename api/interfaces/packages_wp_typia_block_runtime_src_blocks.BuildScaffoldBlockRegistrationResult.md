@@ -25,7 +25,7 @@
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/blocks.ts:219](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/blocks.ts#L219)
+[packages/wp-typia-block-runtime/src/blocks.ts:240](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/blocks.ts#L240)
 
 ___
 
@@ -35,4 +35,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/blocks.ts:220](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/blocks.ts#L220)
+[packages/wp-typia-block-runtime/src/blocks.ts:241](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/blocks.ts#L241)

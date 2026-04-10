@@ -8,6 +8,7 @@
 
 - [TypiaWebpackArtifactEntry](../interfaces/packages_wp_typia_block_runtime_src_blocks.TypiaWebpackArtifactEntry.md)
 - [TypiaWebpackConfigOptions](../interfaces/packages_wp_typia_block_runtime_src_blocks.TypiaWebpackConfigOptions.md)
+- [TypiaWebpackPluginLoaderOptions](../interfaces/packages_wp_typia_block_runtime_src_blocks.TypiaWebpackPluginLoaderOptions.md)
 - [ScaffoldBlockRegistrationSettings](../interfaces/packages_wp_typia_block_runtime_src_blocks.ScaffoldBlockRegistrationSettings.md)
 - [ScaffoldBlockMetadata](../interfaces/packages_wp_typia_block_runtime_src_blocks.ScaffoldBlockMetadata.md)
 - [BuildScaffoldBlockRegistrationResult](../interfaces/packages_wp_typia_block_runtime_src_blocks.BuildScaffoldBlockRegistrationResult.md)
@@ -18,6 +19,8 @@
 
 ### Functions
 
+- [assertTypiaWebpackCompatibility](packages_wp_typia_block_runtime_src_blocks.md#asserttypiawebpackcompatibility)
+- [loadCompatibleTypiaWebpackPlugin](packages_wp_typia_block_runtime_src_blocks.md#loadcompatibletypiawebpackplugin)
 - [buildScaffoldBlockRegistration](packages_wp_typia_block_runtime_src_blocks.md#buildscaffoldblockregistration)
 - [createTypiaWebpackConfig](packages_wp_typia_block_runtime_src_blocks.md#createtypiawebpackconfig)
 
@@ -29,9 +32,50 @@
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/blocks.ts:197](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/blocks.ts#L197)
+[packages/wp-typia-block-runtime/src/blocks.ts:218](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/blocks.ts#L218)
 
 ## Functions
+
+### assertTypiaWebpackCompatibility
+
+▸ **assertTypiaWebpackCompatibility**(`«destructured»?`): `Promise`\<`TypiaWebpackVersionMatrix`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `«destructured»` | `Object` |
+| › `projectRoot?` | `string` |
+
+#### Returns
+
+`Promise`\<`TypiaWebpackVersionMatrix`\>
+
+#### Defined in
+
+[packages/wp-typia-block-runtime/src/blocks.ts:407](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/blocks.ts#L407)
+
+___
+
+### loadCompatibleTypiaWebpackPlugin
+
+▸ **loadCompatibleTypiaWebpackPlugin**(`«destructured»`): `Promise`\<() => `unknown`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `«destructured»` | [`TypiaWebpackPluginLoaderOptions`](../interfaces/packages_wp_typia_block_runtime_src_blocks.TypiaWebpackPluginLoaderOptions.md) |
+
+#### Returns
+
+`Promise`\<() => `unknown`\>
+
+#### Defined in
+
+[packages/wp-typia-block-runtime/src/blocks.ts:433](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/blocks.ts#L433)
+
+___
 
 ### buildScaffoldBlockRegistration
 
@@ -56,7 +100,7 @@
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/blocks.ts:285](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/blocks.ts#L285)
+[packages/wp-typia-block-runtime/src/blocks.ts:459](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/blocks.ts#L459)
 
 ___
 
@@ -76,4 +120,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia-block-runtime/src/blocks.ts:306](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/blocks.ts#L306)
+[packages/wp-typia-block-runtime/src/blocks.ts:480](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia-block-runtime/src/blocks.ts#L480)
