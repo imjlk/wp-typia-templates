@@ -14,10 +14,6 @@
 - [createFlowSchema](packages_wp_typia_src_ui_create_flow_model.md#createflowschema)
 - [CREATE\_CHECKBOX\_FIELD\_NAMES](packages_wp_typia_src_ui_create_flow_model.md#create_checkbox_field_names)
 - [CREATE\_FIELD\_ORDER](packages_wp_typia_src_ui_create_flow_model.md#create_field_order)
-- [CREATE\_FIELD\_GAP](packages_wp_typia_src_ui_create_flow_model.md#create_field_gap)
-- [CREATE\_SELECT\_FIELD\_LABEL\_GAP](packages_wp_typia_src_ui_create_flow_model.md#create_select_field_label_gap)
-- [CREATE\_SELECT\_FIELD\_CONTROL\_HEIGHT](packages_wp_typia_src_ui_create_flow_model.md#create_select_field_control_height)
-- [CREATE\_SELECT\_FIELD\_BODY\_HEIGHT](packages_wp_typia_src_ui_create_flow_model.md#create_select_field_body_height)
 
 ### Functions
 
@@ -35,7 +31,7 @@
 
 #### Defined in
 
-[packages/wp-typia/src/ui/create-flow-model.ts:20](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L20)
+[packages/wp-typia/src/ui/create-flow-model.ts:28](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L28)
 
 ___
 
@@ -45,7 +41,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/ui/create-flow-model.ts:22](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L22)
+[packages/wp-typia/src/ui/create-flow-model.ts:30](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L30)
 
 ## Variables
 
@@ -55,7 +51,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/ui/create-flow-model.ts:3](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L3)
+[packages/wp-typia/src/ui/create-flow-model.ts:11](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L11)
 
 ___
 
@@ -65,7 +61,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/ui/create-flow-model.ts:37](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L37)
+[packages/wp-typia/src/ui/create-flow-model.ts:45](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L45)
 
 ___
 
@@ -75,47 +71,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/ui/create-flow-model.ts:45](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L45)
-
-___
-
-### CREATE\_FIELD\_GAP
-
-• `Const` **CREATE\_FIELD\_GAP**: ``1``
-
-#### Defined in
-
-[packages/wp-typia/src/ui/create-flow-model.ts:57](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L57)
-
-___
-
-### CREATE\_SELECT\_FIELD\_LABEL\_GAP
-
-• `Const` **CREATE\_SELECT\_FIELD\_LABEL\_GAP**: ``1``
-
-#### Defined in
-
-[packages/wp-typia/src/ui/create-flow-model.ts:58](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L58)
-
-___
-
-### CREATE\_SELECT\_FIELD\_CONTROL\_HEIGHT
-
-• `Const` **CREATE\_SELECT\_FIELD\_CONTROL\_HEIGHT**: ``3``
-
-#### Defined in
-
-[packages/wp-typia/src/ui/create-flow-model.ts:59](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L59)
-
-___
-
-### CREATE\_SELECT\_FIELD\_BODY\_HEIGHT
-
-• `Const` **CREATE\_SELECT\_FIELD\_BODY\_HEIGHT**: `number`
-
-#### Defined in
-
-[packages/wp-typia/src/ui/create-flow-model.ts:60](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L60)
+[packages/wp-typia/src/ui/create-flow-model.ts:53](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L53)
 
 ## Functions
 
@@ -135,7 +91,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/ui/create-flow-model.ts:79](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L79)
+[packages/wp-typia/src/ui/create-flow-model.ts:81](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L81)
 
 ___
 
@@ -155,7 +111,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/ui/create-flow-model.ts:83](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L83)
+[packages/wp-typia/src/ui/create-flow-model.ts:85](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L85)
 
 ___
 
@@ -175,7 +131,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/ui/create-flow-model.ts:95](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L95)
+[packages/wp-typia/src/ui/create-flow-model.ts:97](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L97)
 
 ___
 
@@ -198,7 +154,7 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/ui/create-flow-model.ts:99](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L99)
+[packages/wp-typia/src/ui/create-flow-model.ts:101](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L101)
 
 ___
 
@@ -232,4 +188,4 @@ ___
 
 #### Defined in
 
-[packages/wp-typia/src/ui/create-flow-model.ts:130](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L130)
+[packages/wp-typia/src/ui/create-flow-model.ts:115](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/create-flow-model.ts#L115)
