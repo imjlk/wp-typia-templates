@@ -52,6 +52,11 @@ describe("typescript-runtime-policy", () => {
 				'export { type SourceFile } from "typescript";',
 			),
 		).toBe(false);
+		expect(
+			sourceImportsTypeScriptAtRuntime(
+				'import ts = require("typescript");',
+			),
+		).toBe(true);
 	});
 
 	test("ignores declaration-file variants when walking runtime roots", () => {

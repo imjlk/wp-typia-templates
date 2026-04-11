@@ -198,6 +198,17 @@ export function sourceImportsTypeScriptAtRuntime(source, filePath = "source.ts")
 			return;
 		}
 
+		if (
+			ts.isImportEqualsDeclaration(node) &&
+			ts.isExternalModuleReference(node.moduleReference) &&
+			node.moduleReference.expression &&
+			ts.isStringLiteralLike(node.moduleReference.expression) &&
+			node.moduleReference.expression.text === "typescript"
+		) {
+			found = true;
+			return;
+		}
+
 		if (ts.isCallExpression(node) && node.arguments.length === 1) {
 			const [argument] = node.arguments;
 			if (ts.isStringLiteralLike(argument) && argument.text === "typescript") {
