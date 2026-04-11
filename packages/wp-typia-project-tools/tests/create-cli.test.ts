@@ -1698,6 +1698,10 @@ describe("@wp-typia/project-tools scaffolding", () => {
       path.join(targetDir, "src", "transport.ts"),
       "utf8"
     );
+    const generatedInteractivity = fs.readFileSync(
+      path.join(targetDir, "src", "interactivity.ts"),
+      "utf8"
+    );
     const generatedSyncRest = fs.readFileSync(
       path.join(targetDir, "scripts", "sync-rest-contracts.ts"),
       "utf8"
@@ -1813,9 +1817,22 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(generatedApiTypes).toContain("restNonce?: string");
     expect(generatedApiTypes).not.toContain("publicWriteExpiresAt?: number");
     expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
+    expect(generatedInteractivity).toContain("includePublicWriteCredentials = false");
+    expect(generatedInteractivity).toContain("'publicWriteExpiresAt' in result.data");
+    expect(generatedInteractivity).toContain("'publicWriteToken' in result.data");
+    expect(generatedInteractivity).toContain("'restNonce' in result.data");
     expect(generatedTransport).toContain("resolveRestNonce");
     expect(generatedTransport).toContain("includeRestNonce: true");
     expect(generatedTransport).toContain("includeRestNonce: false");
+    expect(pluginBootstrap).toContain(
+      "define( 'DEMO_PERSISTENCE_AUTHENTICATED_DATA_STORAGE_MODE', 'custom-table' );"
+    );
+    expect(pluginBootstrap).toContain(
+      "if ( 'custom-table' === DEMO_PERSISTENCE_AUTHENTICATED_DATA_STORAGE_MODE"
+    );
+    expect(pluginBootstrap).toContain(
+      "'storage'     => DEMO_PERSISTENCE_AUTHENTICATED_DATA_STORAGE_MODE,"
+    );
     expect(generatedTypes).toContain(
       "persistencePolicy: 'authenticated' | 'public';"
     );
@@ -1843,6 +1860,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(restAuthHelper).toContain(
       "Customize authenticated write policy here"
     );
+    typecheckGeneratedProject(targetDir);
   });
 
   test("generated public persistence transport skips nonce injection even when wpApiSettings is present", async () => {
@@ -2459,6 +2477,15 @@ console.log(JSON.stringify({ initial, updated, reread }));
       "Text Domain:       demo-persistence-text"
     );
     expect(pluginBootstrap).toContain("function ab_test_metrics_get_counter");
+    expect(pluginBootstrap).toContain(
+      "define( 'AB_TEST_METRICS_DATA_STORAGE_MODE', 'post-meta' );"
+    );
+    expect(pluginBootstrap).toContain(
+      "if ( 'custom-table' !== AB_TEST_METRICS_DATA_STORAGE_MODE )"
+    );
+    expect(pluginBootstrap).toContain(
+      "'storage'     => AB_TEST_METRICS_DATA_STORAGE_MODE,"
+    );
     expect(restPublicHelper).toContain(
       "function ab_test_metrics_create_public_write_token"
     );
@@ -3081,6 +3108,16 @@ console.log(JSON.stringify({ initial, updated, reread }));
       expect(generatedApiTypes).toContain("restNonce?: string");
       expect(generatedApiTypes).not.toContain("publicWriteExpiresAt?: number");
       expect(generatedApiTypes).not.toContain("{{#isPublicPersistencePolicy}}");
+      expect(parentInteractivity).toContain(
+        "includePublicWriteCredentials = false"
+      );
+      expect(parentInteractivity).toContain(
+        "'publicWriteExpiresAt' in result.data"
+      );
+      expect(parentInteractivity).toContain(
+        "'publicWriteToken' in result.data"
+      );
+      expect(parentInteractivity).toContain("'restNonce' in result.data");
       expect(
         fs.existsSync(
           path.join(
@@ -3123,6 +3160,15 @@ console.log(JSON.stringify({ initial, updated, reread }));
       );
       expect(parentInteractivity).toContain("await actions.loadBootstrap();");
       expect(parentInteractivity).toContain("transportTarget: 'frontend'");
+      expect(pluginBootstrap).toContain(
+        "define( 'DEMO_COMPOUND_STORAGE_DATA_STORAGE_MODE', 'post-meta' );"
+      );
+      expect(pluginBootstrap).toContain(
+        "if ( 'custom-table' !== DEMO_COMPOUND_STORAGE_DATA_STORAGE_MODE )"
+      );
+      expect(pluginBootstrap).toContain(
+        "'storage'     => DEMO_COMPOUND_STORAGE_DATA_STORAGE_MODE,"
+      );
       expect(generatedTransport).toContain("resolveTransportCallOptions");
       expect(generatedTransport).toContain("includeRestNonce: true");
       expect(generatedTransport).toContain("includeRestNonce: false");
@@ -4999,6 +5045,15 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(serverModuleSource).toContain("rest-public.php");
     expect(serverModuleSource).toContain(
       "array_key_exists( 'resourceKey', $attributes )"
+    );
+    expect(serverModuleSource).toContain(
+      "define( 'DEMO_SPACE_FAQ_STACK_DATA_STORAGE_MODE', 'custom-table' );"
+    );
+    expect(serverModuleSource).toContain(
+      "if ( 'custom-table' === DEMO_SPACE_FAQ_STACK_DATA_STORAGE_MODE"
+    );
+    expect(serverModuleSource).toContain(
+      "'storage'     => DEMO_SPACE_FAQ_STACK_DATA_STORAGE_MODE,"
     );
     expect(serverModuleSource).toContain("is_post_publicly_viewable( $post )");
     expect(serverModuleSource).toContain(": 'primary';");

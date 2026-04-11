@@ -81,7 +81,7 @@ function {{phpPrefix}}_with_counter_lock( $post_id, $resource_key, $callback ) {
 }
 
 function {{phpPrefix}}_maybe_install_storage() {
-	if ( 'custom-table' !== '{{dataStorageMode}}' ) {
+	if ( 'custom-table' !== {{phpPrefixUpper}}_DATA_STORAGE_MODE ) {
 		return;
 	}
 
@@ -112,7 +112,7 @@ function {{phpPrefix}}_maybe_install_storage() {
 }
 
 function {{phpPrefix}}_ensure_storage_installed() {
-	if ( 'custom-table' === '{{dataStorageMode}}' && '1.0.0' !== get_option( '{{phpPrefix}}_storage_version', '' ) ) {
+	if ( 'custom-table' === {{phpPrefixUpper}}_DATA_STORAGE_MODE && '1.0.0' !== get_option( '{{phpPrefix}}_storage_version', '' ) ) {
 		{{phpPrefix}}_maybe_install_storage();
 	}
 }
@@ -170,7 +170,7 @@ function {{phpPrefix}}_validate_and_sanitize_request( $value, $schema_name, $par
 function {{phpPrefix}}_get_counter( $post_id, $resource_key ) {
 	global $wpdb;
 
-	if ( 'custom-table' === '{{dataStorageMode}}' ) {
+	if ( 'custom-table' === {{phpPrefixUpper}}_DATA_STORAGE_MODE ) {
 		$table_name = {{phpPrefix}}_get_counter_table_name();
 		$count      = $wpdb->get_var(
 			$wpdb->prepare(
@@ -191,7 +191,7 @@ function {{phpPrefix}}_get_counter( $post_id, $resource_key ) {
 function {{phpPrefix}}_increment_counter( $post_id, $resource_key, $delta ) {
 	global $wpdb;
 
-	if ( 'custom-table' === '{{dataStorageMode}}' ) {
+	if ( 'custom-table' === {{phpPrefixUpper}}_DATA_STORAGE_MODE ) {
 		$table_name    = {{phpPrefix}}_get_counter_table_name();
 		$delta_value   = (int) $delta;
 		$initial_count = max( 0, $delta_value );
@@ -235,7 +235,7 @@ function {{phpPrefix}}_build_state_response( $post_id, $resource_key, $count ) {
 		'postId'      => (int) $post_id,
 		'resourceKey' => (string) $resource_key,
 		'count'       => (int) $count,
-		'storage'     => '{{dataStorageMode}}',
+		'storage'     => {{phpPrefixUpper}}_DATA_STORAGE_MODE,
 	);
 }
 

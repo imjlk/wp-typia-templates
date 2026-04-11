@@ -235,9 +235,10 @@ jobs:
             project_name: smoke-compound-authenticated-bun
           - runtime: node
             template: compound
+            data_storage: post-meta
             persistence_policy: public
             package_manager: npm
-            project_name: smoke-compound-public-npm
+            project_name: smoke-compound-public-post-meta-npm
           - runtime: node
             template: ./packages/wp-typia-project-tools/tests/fixtures/create-block-external
             variant: hero
