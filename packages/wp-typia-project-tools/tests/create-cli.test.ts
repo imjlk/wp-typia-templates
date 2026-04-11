@@ -1473,7 +1473,9 @@ describe("@wp-typia/project-tools scaffolding", () => {
       expect(generatedEdit).toContain(
         "const alignmentValue = editorFields.getStringValue("
       );
-      expect(generatedEdit).toContain("\t\tattributes,");
+      expect(generatedEdit).toMatch(
+        /editorFields\.getStringValue\(\s*attributes,\s*['"]alignment['"]/u
+      );
       expect(generatedEdit).toContain("attributes={ attributes }");
       expect(generatedEdit).not.toContain(
         "attributes as unknown as Record< string, unknown >"
@@ -1865,7 +1867,9 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(generatedEdit).toContain(
       "const alignmentValue = editorFields.getStringValue("
     );
-    expect(generatedEdit).toContain("\t\tattributes,");
+    expect(generatedEdit).toMatch(
+      /editorFields\.getStringValue\(\s*attributes,\s*['"]alignment['"]/u
+    );
     expect(generatedEdit).toContain("attributes={ attributes }");
     expect(generatedEdit).not.toContain(
       "attributes as unknown as Record< string, unknown >"
