@@ -16,7 +16,7 @@ export function getWrappedFieldNeighbors<TName extends string>(
 	previousFieldName?: TName;
 } {
 	const index = visibleFieldNames.indexOf(fieldName);
-	if (index === -1 || visibleFieldNames.length === 0) {
+	if (index === -1 || visibleFieldNames.length < 2) {
 		return {};
 	}
 

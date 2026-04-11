@@ -87,6 +87,15 @@ function isSelectPreviousKey(key: Parameters<typeof selectKeymap.match>[1]) {
 	);
 }
 
+function isCheckboxToggleKey(key: Parameters<typeof checkboxKeymap.match>[1]) {
+	return (
+		checkboxKeymap.match("toggle", key) ||
+		key.sequence === " " ||
+		key.sequence === "\r" ||
+		key.sequence === "\n"
+	);
+}
+
 function useFirstPartyFieldNavigation(options: {
 	focused: boolean;
 	keyboardScopeId: string;
@@ -362,7 +371,7 @@ export function FirstPartyCheckboxField({
 				return false;
 			}
 
-			if (checkboxKeymap.match("toggle", key)) {
+			if (isCheckboxToggleKey(key)) {
 				toggle();
 				return true;
 			}

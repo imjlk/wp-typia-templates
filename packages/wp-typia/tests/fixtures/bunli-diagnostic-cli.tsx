@@ -25,18 +25,18 @@ const diagnosticFields: SchemaField<typeof diagnosticSchema>[] = [
 	},
 	{
 		kind: "text",
-		label: "Fixture name",
+		label: "Name",
 		name: "name",
 	},
 	{
 		kind: "text",
-		label: "Advanced target",
+		label: "Target",
 		name: "target",
 		visibleWhen: (values) => values.mode === "advanced",
 	},
 	{
 		kind: "checkbox",
-		label: "Enable advanced toggle",
+		label: "Toggle advanced",
 		name: "advanced",
 		visibleWhen: (values) => values.mode === "advanced",
 	},
@@ -49,7 +49,7 @@ function DiagnosticFlow() {
 		fields: diagnosticFields,
 		initialValues: {
 			advanced: false,
-			mode: "advanced",
+			mode: "basic",
 			name: "diagnostic-fixture",
 			target: "",
 		},

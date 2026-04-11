@@ -3,19 +3,23 @@
 from __future__ import annotations
 
 import os
-import pty
 import re
 import select
 import shutil
 import struct
 import subprocess
 import sys
-import termios
 import time
 import tempfile
-import fcntl
 from dataclasses import dataclass
 from pathlib import Path
+
+if os.name != "posix":
+    raise SystemExit("tui_smoke.py requires a POSIX environment (pty/termios/fcntl).")
+
+import fcntl
+import pty
+import termios
 
 
 ANSI_PATTERN = re.compile(
@@ -244,7 +248,7 @@ class PtySession:
             )
 
 
-def create_workspace_fixture(pkg_dir: Path, smoke_root: Path) -> Path:
+def create_workspace_fixture(pkg_dir: Path, smoke_root: Path, repo_root: Path) -> Path:
     ensure_success(
         [
             "bun",
@@ -255,11 +259,33 @@ def create_workspace_fixture(pkg_dir: Path, smoke_root: Path) -> Path:
             "workspace",
             "--package-manager",
             "bun",
+            "--no-install",
             "-y",
         ],
         smoke_root,
     )
     workspace = smoke_root / "smoke-workspace"
+    workspace_node_modules = workspace / "node_modules"
+    if not workspace_node_modules.exists():
+        shutil.copytree(
+            repo_root / "node_modules",
+            workspace_node_modules,
+            symlinks=True,
+            dirs_exist_ok=True,
+        )
+    wp_typia_node_modules = workspace_node_modules / "@wp-typia"
+    wp_typia_node_modules.mkdir(parents=True, exist_ok=True)
+    for package_name, package_path in {
+        "api-client": repo_root / "packages/wp-typia-api-client",
+        "block-runtime": repo_root / "packages/wp-typia-block-runtime",
+        "block-types": repo_root / "packages/wp-typia-block-types",
+        "project-tools": repo_root / "packages/wp-typia-project-tools",
+        "rest": repo_root / "packages/wp-typia-rest",
+    }.items():
+        target = wp_typia_node_modules / package_name
+        if target.exists() or target.is_symlink():
+            continue
+        target.symlink_to(package_path, target_is_directory=True)
     ensure_success(
         [
             "bun",
@@ -431,15 +457,12 @@ def run_bunli_diagnostic_smoke(pkg_dir: Path, repo_root: Path) -> None:
     )
     try:
         session.wait_for("Bunli diagnostic fixture")
-        session.wait_for("Fixture name")
-        session.wait_for_any(["Advanced target", "Advancedntarget", "Advancedtarget"])
-        session.wait_for_any(
-            [
-                "Enable advanced toggle",
-                "Enableaadvanced",
-                "Enable advanced",
-            ]
-        )
+        session.wait_for_any(["> Mode", "Mode"])
+        session.select_next()
+        session.wait_for_any(["Target", "─Target"])
+        session.wait_for_any(["Toggle advanced", "Toggle─advanced", "[a]gToggle", "Toggle"])
+        session.send_tabs(3)
+        session.send(" ")
         session.send("\x1b")
         session.wait_for_exit()
         session.assert_returncode(0)
@@ -448,7 +471,7 @@ def run_bunli_diagnostic_smoke(pkg_dir: Path, repo_root: Path) -> None:
 
 
 def main() -> int:
-    repo_root = Path(__file__).resolve().parents[2]
+    repo_root = Path(__file__).resolve().parents[3]
     pkg_dir = Path(__file__).resolve().parents[1]
 
     subprocess.run(["bun", "run", "generate"], cwd=pkg_dir, check=True, stdout=subprocess.DEVNULL)
@@ -457,7 +480,7 @@ def main() -> int:
 
     try:
         print("Preparing workspace fixture...", flush=True)
-        workspace = create_workspace_fixture(pkg_dir, smoke_root)
+        workspace = create_workspace_fixture(pkg_dir, smoke_root, repo_root)
         run_create_basic_smoke(pkg_dir, smoke_root)
         run_create_persistence_smoke(pkg_dir, smoke_root)
         run_add_variation_smoke(pkg_dir, workspace)
