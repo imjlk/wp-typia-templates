@@ -37,8 +37,9 @@ export function reportAlternateBufferFailure({
 	exit,
 	log = console.error,
 }: AlternateBufferFailureOptions): void {
-	log(describeAlternateBufferFailure(context, error));
+	const message = describeAlternateBufferFailure(context, error);
 	exit();
+	log(message);
 }
 
 export async function runAlternateBufferAction({

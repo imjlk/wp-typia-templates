@@ -47,7 +47,7 @@ describe("alternate-buffer TUI lifecycle", () => {
 		});
 
 		expect(messages).toEqual(["wp-typia migrate failed: bad state"]);
-		expect(events).toEqual(["log", "exit"]);
+		expect(events).toEqual(["exit", "log"]);
 		expect(exited).toBe(1);
 	});
 
