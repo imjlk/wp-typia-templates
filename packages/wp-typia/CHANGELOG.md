@@ -1,5 +1,11 @@
 # wp-typia
 
+## 0.16.1 — 2026-04-11
+
+### Patch changes
+
+- [7c8a2ef](https://github.com/imjlk/wp-typia/commit/7c8a2efac24f97abb92b9d20b73366c2a4bc6f17) Fixed alternate-buffer TUI lifecycle handling so interactive create/add/migrate flows exit cleanly on submit, cancel, quit, lazy-load failure, and runtime command failure. — Thanks @imjlk!
+
 ## 0.16.0 — 2026-04-10
 
 ### Minor changes
