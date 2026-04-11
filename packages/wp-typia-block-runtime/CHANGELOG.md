@@ -1,5 +1,11 @@
 # @wp-typia/block-runtime
 
+## 0.4.4 — 2026-04-11
+
+### Patch changes
+
+- [f3ad2ae](https://github.com/imjlk/wp-typia/commit/f3ad2ae8a94f5db626e080c9972e4749e03a1927) Align persistence and compound scaffold validator and inspector conventions, including generated storage-mode labels and compound add-child validator wiring. — Thanks @imjlk!
+
 ## 0.4.3 — 2026-04-10
 
 ### Patch changes
