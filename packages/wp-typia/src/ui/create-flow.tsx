@@ -1,31 +1,31 @@
-import { createElement, useCallback, useEffect, useId, useMemo, useRef } from "react";
+import { createElement, useMemo } from "react";
 
-import { useScopedKeyboard } from "@bunli/runtime/app";
 import {
 	Form,
-	FormField,
 	type SelectOption,
-	createKeyMatcher,
 	useFormContext,
-	useFormField,
 	useTerminalDimensions,
-	useTuiTheme,
 } from "@bunli/tui";
 
 import { executeCreateCommand } from "../runtime-bridge";
 import { useAlternateBufferLifecycle } from "./alternate-buffer-lifecycle";
 import {
-	CREATE_FIELD_GAP,
 	type CreateFlowValues,
 	CREATE_CHECKBOX_FIELD_NAMES,
-	CREATE_SELECT_FIELD_CONTROL_HEIGHT,
-	CREATE_SELECT_FIELD_LABEL_GAP,
 	createFlowSchema,
 	getCreateScrollTop,
 	getCreateViewportHeight,
+	getVisibleCreateFieldNames,
 	isCreatePersistenceTemplate,
 	sanitizeCreateSubmitValues,
 } from "./create-flow-model";
+import {
+	FirstPartyCheckboxField,
+	FirstPartyScrollBox,
+	FirstPartySelectField,
+	FirstPartyTextField,
+} from "./first-party-form";
+import { getWrappedFieldNeighbors } from "./first-party-form-model";
 
 const templateOptions: SelectOption[] = [
 	{ description: "Basic block scaffold", name: "basic", value: "basic" },
@@ -60,15 +60,6 @@ const checkboxLabels: Record<(typeof CREATE_CHECKBOX_FIELD_NAMES)[number], strin
 	"with-migration-ui": "Add migration UI",
 };
 
-const checkboxKeymap = createKeyMatcher({
-	toggle: ["space", "enter"],
-});
-
-const selectKeymap = createKeyMatcher({
-	next: ["down", "enter", "right", "space"],
-	previous: ["left", "up"],
-});
-
 type CreateFlowProps = {
 	cwd: string;
 	initialValues: Partial<CreateFlowValues>;
@@ -78,232 +69,94 @@ type CreateSelectFieldName = {
 	[K in keyof CreateFlowValues]-?: CreateFlowValues[K] extends string | undefined ? K : never;
 }[keyof CreateFlowValues];
 
-type CreateSelectFieldProps = {
-	defaultValue?: string;
-	label: string;
-	name: CreateSelectFieldName;
-	options: SelectOption[];
-};
-
-function CreateSelectField({
-	defaultValue,
-	label,
-	name,
-	options,
-}: CreateSelectFieldProps) {
-	const { tokens } = useTuiTheme();
-	const field = useFormField<string>(name, {
-		defaultValue: defaultValue ?? String(options[0]?.value ?? ""),
-		submitOnEnter: false,
-	});
-
-	const selectedIndex = useMemo(() => {
-		const index = options.findIndex((option) => option.value === field.value);
-		return index >= 0 ? index : 0;
-	}, [field.value, options]);
-
-	const selectedOption = options[selectedIndex] ?? options[0];
-	const keyboardScopeId = `create-select:${name}`;
-
-	const moveSelection = useCallback(
-		(delta: number) => {
-			if (!selectedOption || options.length === 0) {
-				return;
-			}
-
-			const nextIndex = (selectedIndex + delta + options.length) % options.length;
-			const nextOption = options[nextIndex];
-			if (!nextOption) {
-				return;
-			}
-
-			field.setValue(String(nextOption.value));
-		},
-		[field, options, selectedIndex, selectedOption],
-	);
-
-	useScopedKeyboard(
-		keyboardScopeId,
-		(key) => {
-			if (!field.focused) {
-				return false;
-			}
-
-			if (selectKeymap.match("next", key)) {
-				moveSelection(1);
-				return true;
-			}
-
-			if (selectKeymap.match("previous", key)) {
-				moveSelection(-1);
-				return true;
-			}
-
-			return false;
-		},
-		{ active: field.focused },
-	);
-
-	return createElement(
-		"box",
-		{
-			style: {
-				flexDirection: "column",
-				gap: CREATE_SELECT_FIELD_LABEL_GAP,
-				marginBottom: CREATE_FIELD_GAP,
-			},
-		},
-		createElement("text", {
-			content: `${field.focused ? ">" : " "} ${label}`,
-			fg: field.focused ? tokens.accent : tokens.textPrimary,
-		}),
-		createElement(
-			"box",
-			{
-				border: true,
-				height: CREATE_SELECT_FIELD_CONTROL_HEIGHT,
-				style: {
-					borderColor: field.error
-						? tokens.textDanger
-						: field.focused
-							? tokens.accent
-							: tokens.borderMuted,
-				},
-			},
-			createElement("text", {
-				content: `${field.focused ? "▶" : " "} ${selectedOption?.name ?? ""}`,
-				fg: field.focused ? tokens.accent : tokens.textPrimary,
-			}),
-		),
-		selectedOption?.description
-			? createElement("text", {
-					content: `  ${selectedOption.description}`,
-					fg: tokens.textMuted,
-				})
-			: null,
-		field.error
-			? createElement("text", { content: field.error, fg: tokens.textDanger })
-			: null,
-	);
-}
-
-function CreateCheckboxField({
-	label,
-	name,
-}: {
-	label: string;
-	name: (typeof CREATE_CHECKBOX_FIELD_NAMES)[number];
-}) {
-	const { tokens } = useTuiTheme();
-	const reactScopeId = useId();
-	const field = useFormField<boolean>(name, {
-		defaultValue: false,
-		submitOnEnter: false,
-	});
-	const keyboardScopeId = `create-checkbox:${name}:${reactScopeId}`;
-
-	const toggle = useCallback(() => {
-		field.setValue(!field.value);
-	}, [field]);
-
-	useScopedKeyboard(
-		keyboardScopeId,
-		(key) => {
-			if (!field.focused) {
-				return false;
-			}
-
-			if (checkboxKeymap.match("toggle", key)) {
-				toggle();
-				return true;
-			}
-
-			return false;
-		},
-		{ active: field.focused },
-	);
-
-	return createElement(
-		"box",
-		{ style: { flexDirection: "column", marginBottom: CREATE_FIELD_GAP } },
-		createElement("text", {
-			content: `${field.focused ? ">" : " "} ${field.value ? "[x]" : "[ ]"} ${label}`,
-			fg: field.focused ? tokens.accent : tokens.textPrimary,
-		}),
-		field.error
-			? createElement("text", { content: field.error, fg: tokens.textDanger })
-			: null,
-	);
-}
-
 function CreateFlowFields() {
-	const { tokens } = useTuiTheme();
 	const { activeFieldName, values } = useFormContext();
 	const { height: terminalHeight = 24 } = useTerminalDimensions();
-	const bodyRef = useRef<{ scrollTop: number } | null>(null);
 	const createValues = values as Partial<CreateFlowValues>;
 	const template = createValues.template;
 	const viewportHeight = getCreateViewportHeight(terminalHeight);
-
-	useEffect(() => {
-		if (!bodyRef.current) {
-			return;
-		}
-
-		bodyRef.current.scrollTop = getCreateScrollTop({
-			activeFieldName,
-			values: createValues,
-			viewportHeight,
-		});
-	}, [activeFieldName, createValues, viewportHeight]);
+	const visibleFields = useMemo(() => getVisibleCreateFieldNames(createValues), [createValues]);
+	const scrollValues = useMemo(() => ({ template }), [template]);
+	const scrollTop = useMemo(
+		() =>
+			getCreateScrollTop({
+				activeFieldName,
+				values: scrollValues,
+				viewportHeight,
+			}),
+		[activeFieldName, scrollValues, viewportHeight],
+	);
 
 	return createElement(
-		"scrollbox",
-		{
-			ref: bodyRef,
-			height: viewportHeight,
-			scrollY: true,
-			scrollbarOptions: {
-				visible: true,
-				trackOptions: {
-					backgroundColor: tokens.backgroundMuted,
-					foregroundColor: tokens.borderMuted,
-				},
-			},
-			viewportOptions: { width: "100%" },
-			contentOptions: { width: "100%" },
-		},
-		createElement(
-			"box",
-			{ width: "100%", style: { flexDirection: "column" } },
-			<FormField label="Project directory" name="project-dir" required />,
-			<CreateSelectField label="Template" name="template" options={templateOptions} />,
-			<CreateSelectField
-				label="Package manager"
-				name="package-manager"
-				options={packageManagerOptions}
-			/>,
-			<FormField label="Namespace" name="namespace" />,
-			<FormField label="Text domain" name="text-domain" />,
-			<FormField label="PHP prefix" name="php-prefix" />,
-			isCreatePersistenceTemplate(template) ? (
-				<CreateSelectField
-					label="Data storage"
-					name="data-storage"
-					options={dataStorageOptions}
-				/>
-			) : null,
-			isCreatePersistenceTemplate(template) ? (
-				<CreateSelectField
-					label="Persistence policy"
-					name="persistence-policy"
-					options={persistencePolicyOptions}
-				/>
-			) : null,
-			...CREATE_CHECKBOX_FIELD_NAMES.map((name) => (
-				<CreateCheckboxField key={name} label={checkboxLabels[name]} name={name} />
-			)),
-		),
+		FirstPartyScrollBox,
+		{ scrollTop, viewportHeight },
+		[
+			createElement(FirstPartyTextField, {
+				...getWrappedFieldNeighbors(visibleFields, "project-dir"),
+				key: "project-dir",
+				label: "Project directory",
+				name: "project-dir",
+				required: true,
+			}),
+			createElement(FirstPartySelectField, {
+				...getWrappedFieldNeighbors(visibleFields, "template"),
+				key: "template",
+				label: "Template",
+				name: "template" satisfies CreateSelectFieldName,
+				options: templateOptions,
+			}),
+			createElement(FirstPartySelectField, {
+				...getWrappedFieldNeighbors(visibleFields, "package-manager"),
+				key: "package-manager",
+				label: "Package manager",
+				name: "package-manager" satisfies CreateSelectFieldName,
+				options: packageManagerOptions,
+			}),
+			createElement(FirstPartyTextField, {
+				...getWrappedFieldNeighbors(visibleFields, "namespace"),
+				key: "namespace",
+				label: "Namespace",
+				name: "namespace",
+			}),
+			createElement(FirstPartyTextField, {
+				...getWrappedFieldNeighbors(visibleFields, "text-domain"),
+				key: "text-domain",
+				label: "Text domain",
+				name: "text-domain",
+			}),
+			createElement(FirstPartyTextField, {
+				...getWrappedFieldNeighbors(visibleFields, "php-prefix"),
+				key: "php-prefix",
+				label: "PHP prefix",
+				name: "php-prefix",
+			}),
+			isCreatePersistenceTemplate(template)
+				? createElement(FirstPartySelectField, {
+						...getWrappedFieldNeighbors(visibleFields, "data-storage"),
+						key: "data-storage",
+						label: "Data storage",
+						name: "data-storage" satisfies CreateSelectFieldName,
+						options: dataStorageOptions,
+					})
+				: null,
+			isCreatePersistenceTemplate(template)
+				? createElement(FirstPartySelectField, {
+						...getWrappedFieldNeighbors(visibleFields, "persistence-policy"),
+						key: "persistence-policy",
+						label: "Persistence policy",
+						name: "persistence-policy" satisfies CreateSelectFieldName,
+						options: persistencePolicyOptions,
+					})
+				: null,
+			...CREATE_CHECKBOX_FIELD_NAMES.map((name) =>
+				createElement(FirstPartyCheckboxField, {
+					...getWrappedFieldNeighbors(visibleFields, name),
+					key: name,
+					label: checkboxLabels[name],
+					name,
+				}),
+			),
+		],
 	);
 }
 
