@@ -283,6 +283,24 @@ describe("validate-runtime-package-coupling", () => {
 		expect(result.errors).toEqual([]);
 	});
 
+	test("passes when project-tools uses the sanctioned workspace protocol edge for block-runtime", () => {
+		const repoRoot = createRuntimeRepo();
+		const packageJsonPath = path.join(
+			repoRoot,
+			"packages",
+			"wp-typia-project-tools",
+			"package.json",
+		);
+		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+		packageJson.dependencies["@wp-typia/block-runtime"] = "workspace:*";
+		fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
+
+		const result = validateRuntimePackageCoupling(repoRoot);
+
+		expect(result.valid).toBe(true);
+		expect(result.errors).toEqual([]);
+	});
+
 	test("fails when an unsanctioned runtime package keeps a workspace protocol dependency", () => {
 		const repoRoot = createRuntimeRepo();
 		const packageJsonPath = path.join(

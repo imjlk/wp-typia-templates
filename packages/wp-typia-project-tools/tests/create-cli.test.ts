@@ -70,8 +70,22 @@ const wpTypiaPackageManifest = JSON.parse(
 );
 const apiClientPackageVersion =
   createPackageManifest.dependencies["@wp-typia/api-client"];
-const blockRuntimePackageVersion =
-  createPackageManifest.dependencies["@wp-typia/block-runtime"];
+const blockRuntimePackageManifest = JSON.parse(
+  fs.readFileSync(
+    path.resolve(packageRoot, "..", "wp-typia-block-runtime", "package.json"),
+    "utf8"
+  )
+);
+const blockRuntimePackageVersion = blockRuntimePackageManifest.version;
+if (
+  typeof blockRuntimePackageVersion !== "string" ||
+  blockRuntimePackageVersion.length === 0
+) {
+  throw new Error(
+    'Expected "packages/wp-typia-block-runtime/package.json" to define a version.'
+  );
+}
+const normalizedBlockRuntimePackageVersion = `^${blockRuntimePackageVersion}`;
 const blockTypesPackageVersion =
   createPackageManifest.dependencies["@wp-typia/block-types"];
 const restPackageVersion = createPackageManifest.dependencies["@wp-typia/rest"];
@@ -563,7 +577,7 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(packageJson.name).toBe("demo-npm");
     expect(packageJson.packageManager).toBe("npm@11.6.1");
     expect(packageJson.devDependencies["@wp-typia/block-runtime"]).toBe(
-      blockRuntimePackageVersion
+      normalizedBlockRuntimePackageVersion
     );
     expect(packageJson.devDependencies["@wp-typia/block-runtime"]).not.toBe(
       "^0.0.0"
@@ -4156,7 +4170,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
 
     expect(packageJson.packageManager).toBe("pnpm@8.3.1");
     expect(packageJson.devDependencies["@wp-typia/block-runtime"]).toBe(
-      blockRuntimePackageVersion
+      normalizedBlockRuntimePackageVersion
     );
     expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(
       blockTypesPackageVersion

@@ -34,6 +34,9 @@ function normalizeVersionRange(value: string | undefined): string {
 	if (!trimmed) {
 		return DEFAULT_VERSION_RANGE;
 	}
+	if (trimmed.startsWith("workspace:")) {
+		return DEFAULT_VERSION_RANGE;
+	}
 
 	return /^[~^<>=]/.test(trimmed) ? trimmed : `^${trimmed}`;
 }
@@ -79,16 +82,19 @@ export function getPackageVersions(): PackageVersions {
 		readPackageManifest(path.join(PROJECT_TOOLS_PACKAGE_ROOT, "..", "wp-typia", "package.json")) ??
 		resolveInstalledPackageManifest("wp-typia") ??
 		{};
+	const blockRuntimeDependencyVersion = normalizeVersionRange(
+		createManifest.dependencies?.["@wp-typia/block-runtime"],
+	);
 
 	cachedPackageVersions = {
 		apiClientPackageVersion: normalizeVersionRange(
 			createManifest.dependencies?.["@wp-typia/api-client"] ??
 				resolveInstalledPackageManifest("@wp-typia/api-client")?.version,
 		),
-		blockRuntimePackageVersion: normalizeVersionRange(
-			createManifest.dependencies?.["@wp-typia/block-runtime"] ??
-				blockRuntimeManifest.version,
-		),
+		blockRuntimePackageVersion:
+			blockRuntimeDependencyVersion !== DEFAULT_VERSION_RANGE
+				? blockRuntimeDependencyVersion
+				: normalizeVersionRange(blockRuntimeManifest.version),
 		blockTypesPackageVersion: normalizeVersionRange(
 			createManifest.dependencies?.["@wp-typia/block-types"] ??
 				resolveInstalledPackageManifest("@wp-typia/block-types")?.version,

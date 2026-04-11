@@ -27,12 +27,14 @@
   ],
   "scripts": {
     "build": "bun run --filter @wp-typia/api-client build && bun run --filter @wp-typia/block-runtime build && rm -rf dist && tsc -p tsconfig.runtime.json",
+    "prepack": "bun run build && node ./scripts/publish-manifest.mjs prepare",
+    "postpack": "node ./scripts/publish-manifest.mjs restore",
     "test": "bun run build && bun test tests/*.test.ts",
     "test:scaffolding": "bun run build && bun test tests/create-cli.test.ts tests/import-policy.test.ts",
     "test:migrations": "bun run build && bun test tests/migrations.test.ts",
     "test:coverage": "bun run build && bun test tests/*.test.ts --coverage --coverage-reporter=lcov --coverage-dir=coverage",
     "clean": "rm -rf dist",
-    "prepack": "bun run build"
+    "prepublishOnly": "bun run build"
   },
   "keywords": [
     "wordpress",
@@ -64,7 +66,7 @@
   },
   "dependencies": {
     "@wp-typia/api-client": "^0.4.2",
-    "@wp-typia/block-runtime": "^0.4.5",
+    "@wp-typia/block-runtime": "workspace:*",
     "@wp-typia/rest": "^0.3.5",
     "@wp-typia/block-types": "^0.2.1",
     "mustache": "^4.2.0",
