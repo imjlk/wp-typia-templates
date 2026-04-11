@@ -258,7 +258,7 @@ export default function Edit({ attributes, setAttributes, isSelected }: {
           {animation !== 'none' && (
             <div
               className={`{{cssClassName}}__animation ${attributes.isAnimating ? 'is-active' : ''}`}
-              data-wp-class="is-active"
+              data-wp-class--is-active="state.isAnimating"
             >
               {animation}
             </div>
