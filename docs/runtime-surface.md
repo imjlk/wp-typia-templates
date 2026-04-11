@@ -13,6 +13,7 @@ This document is descriptive, not normative. For support guarantees, see
   Schema and OpenAPI helpers for project-level documents.
 - `@wp-typia/block-runtime`
   Generated-project helper root.
+- `@wp-typia/block-runtime/schema-core`
 - `@wp-typia/block-runtime/metadata-core`
 - `@wp-typia/block-runtime/blocks`
 - `@wp-typia/block-runtime/defaults`
@@ -30,6 +31,7 @@ This document is descriptive, not normative. For support guarantees, see
 - `wp-typia`
 - `@wp-typia/project-tools`
 - `@wp-typia/project-tools/schema-core`
+- `@wp-typia/block-runtime/schema-core`
 - `@wp-typia/block-runtime/*`
 - `@wp-typia/block-runtime/metadata-core`
 
@@ -43,6 +45,8 @@ This document is descriptive, not normative. For support guarantees, see
 
 - `wp-typia` owns the CLI, help, TUI, completions, skills, MCP, and bin entry.
 - `@wp-typia/project-tools` owns scaffold, add-block, migrate, template,
-  doctor, package-manager, starter-manifest, and schema project helpers.
-- `@wp-typia/block-runtime/*` owns generated-project runtime helpers directly.
+  doctor, package-manager, starter-manifest, and the preferred schema project
+  imports.
+- `@wp-typia/block-runtime/*` owns generated-project runtime helpers directly,
+  including the canonical `schema-core` implementation.
 - `@wp-typia/create` no longer owns runtime exports or CLI behavior.

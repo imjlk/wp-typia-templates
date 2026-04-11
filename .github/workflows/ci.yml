@@ -74,8 +74,8 @@ jobs:
       - name: Run type check
         run: bun run typecheck
 
-  test:
-    name: Unit Tests
+  test-core:
+    name: Unit Tests (Core)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -98,19 +98,125 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Run tests
-        run: bun run test:coverage
+        run: bun run test:coverage:packages
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
-          files: ./coverage/unit/lcov.info,./packages/wp-typia-api-client/coverage/lcov.info,./packages/wp-typia-block-runtime/coverage/lcov.info,./packages/wp-typia-rest/coverage/lcov.info,./packages/wp-typia-project-tools/coverage/lcov.info,./packages/wp-typia/coverage/lcov.info
-          flags: unittests
-          name: codecov-umbrella
+          disable_search: true
+          files: ./coverage/unit/lcov.info,./packages/wp-typia-api-client/coverage/lcov.info,./packages/wp-typia-block-runtime/coverage/lcov.info,./packages/wp-typia-rest/coverage/lcov.info,./packages/wp-typia/coverage/lcov.info
+          flags: unit-core
+          name: codecov-unit-core
+
+  test-project-tools-scaffolding:
+    name: Project Tools Regression (Scaffolding)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache Bun install cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run scaffolding regression tests
+        run: bun run test:project-tools:scaffolding
+
+  test-project-tools-migrations:
+    name: Project Tools Regression (Migrations)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache Bun install cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run migration regression tests
+        run: bun run test:project-tools:migrations
+
+  test-project-tools-coverage:
+    name: Project Tools Coverage
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache Bun install cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run coverage tests
+        run: bun run test:coverage:project-tools
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v6
+        with:
+          disable_search: true
+          files: ./packages/wp-typia-project-tools/coverage/lcov.info
+          flags: project-tools
+          name: codecov-project-tools
+
+  test-project-tools:
+    name: Unit Tests (Project Tools)
+    runs-on: ubuntu-latest
+    needs:
+      - test-project-tools-scaffolding
+      - test-project-tools-migrations
+      - test-project-tools-coverage
+    if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+    steps:
+      - name: Confirm project-tools test lane
+        run: |
+          echo "project-tools test lane completed successfully"
+          echo "scaffolding=${{ needs.test-project-tools-scaffolding.result }}"
+          echo "migrations=${{ needs.test-project-tools-migrations.result }}"
+          echo "coverage=${{ needs.test-project-tools-coverage.result }}"
 
   build:
     name: Build CLI and Example
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: [lint, test-core, test-project-tools]
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -137,28 +243,28 @@ jobs:
           bun run examples:build
 
       - name: Upload CLI artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wp-typia-project-tools-dist
           path: packages/wp-typia-project-tools/dist/
           retention-days: 7
 
       - name: Upload reference app build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: my-typia-block-build
           path: examples/my-typia-block/build/
           retention-days: 7
 
       - name: Upload persistence examples build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: persistence-examples-build
           path: examples/persistence-examples/build/
           retention-days: 7
 
       - name: Upload compound patterns build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: compound-patterns-build
           path: examples/compound-patterns/build/
@@ -167,7 +273,7 @@ jobs:
   publish-install-smoke:
     name: Published Install Smoke
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: [lint, test-core, test-project-tools]
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -298,7 +404,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Download CLI artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: wp-typia-project-tools-dist
           path: packages/wp-typia-project-tools/dist
@@ -386,19 +492,19 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Download example build artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: my-typia-block-build
           path: examples/my-typia-block/build
 
       - name: Download persistence examples build artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: persistence-examples-build
           path: examples/persistence-examples/build
 
       - name: Download compound patterns build artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: compound-patterns-build
           path: examples/compound-patterns/build
@@ -433,7 +539,7 @@ jobs:
         run: bun run examples:test:e2e:ci
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
@@ -448,10 +554,15 @@ jobs:
   deploy-docs:
     name: Deploy Documentation
     runs-on: ubuntu-latest
-    needs: [lint, test, build]
+    needs: [lint, test-core, test-project-tools, build]
     if: github.ref == 'refs/heads/main'
     permissions:
-      contents: write
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -475,8 +586,14 @@ jobs:
       - name: Build documentation
         run: bun run docs:build
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload documentation artifact
+        uses: actions/upload-pages-artifact@v5
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
+          path: ./docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

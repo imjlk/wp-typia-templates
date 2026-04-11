@@ -58,6 +58,11 @@ export const WORKSPACE_PROTOCOL_POLICY_EXCEPTIONS = [
 		dependentName: "@wp-typia/rest",
 		rangePolicy: RANGE_POLICY.caret,
 	},
+	{
+		dependencyName: "@wp-typia/block-runtime",
+		dependentName: "@wp-typia/project-tools",
+		rangePolicy: RANGE_POLICY.caret,
+	},
 ];
 
 export const RUNTIME_PACKAGE_NAMES = [

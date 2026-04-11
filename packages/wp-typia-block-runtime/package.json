@@ -16,6 +16,11 @@
       "import": "./dist/blocks.js",
       "default": "./dist/blocks.js"
     },
+    "./schema-core": {
+      "types": "./dist/schema-core.d.ts",
+      "import": "./dist/schema-core.js",
+      "default": "./dist/schema-core.js"
+    },
     "./metadata-core": {
       "types": "./dist/metadata-core.d.ts",
       "import": "./dist/metadata-core.js",

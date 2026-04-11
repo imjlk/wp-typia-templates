@@ -93,6 +93,36 @@ describe("package version helpers", () => {
 		});
 	});
 
+	test("falls back to the sibling block-runtime manifest when the source dependency uses workspace protocol", async () => {
+		const createPackageRoot = createTempDir("wp-typia-workspace-protocol-root-");
+
+		writeJsonFile(path.join(createPackageRoot, "package.json"), {
+			dependencies: {
+				"@wp-typia/api-client": "~1.2.3",
+				"@wp-typia/block-runtime": "workspace:*",
+				"@wp-typia/block-types": "2.3.4",
+				"@wp-typia/rest": "^3.4.5",
+			},
+			version: "4.5.6",
+		});
+		writeJsonFile(path.join(createPackageRoot, "..", "wp-typia-block-runtime", "package.json"), {
+			version: "7.8.9",
+		});
+
+		const module = await importPackageVersionsModule({
+			createPackageRoot,
+		});
+
+		expect(module.getPackageVersions()).toEqual({
+			apiClientPackageVersion: "~1.2.3",
+			blockRuntimePackageVersion: "^7.8.9",
+			blockTypesPackageVersion: "^2.3.4",
+			projectToolsPackageVersion: "^4.5.6",
+			restPackageVersion: "^3.4.5",
+			wpTypiaPackageVersion: "^0.0.0",
+		});
+	});
+
 	test("falls back to installed package manifests when the workspace manifest is missing", async () => {
 		const createPackageRoot = path.join(
 			createTempDir("wp-typia-missing-create-root-"),

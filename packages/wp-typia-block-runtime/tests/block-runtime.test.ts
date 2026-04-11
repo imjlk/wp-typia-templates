@@ -20,6 +20,7 @@ describe("@wp-typia/block-runtime", () => {
 		const [
 			rootModule,
 			blocksModule,
+			schemaCoreModule,
 			metadataCoreModule,
 			defaultsModule,
 			editorModule,
@@ -29,6 +30,7 @@ describe("@wp-typia/block-runtime", () => {
 		] = await Promise.all([
 			import("@wp-typia/block-runtime"),
 			import("@wp-typia/block-runtime/blocks"),
+			import("@wp-typia/block-runtime/schema-core"),
 			import("@wp-typia/block-runtime/metadata-core"),
 			import("@wp-typia/block-runtime/defaults"),
 			import("@wp-typia/block-runtime/editor"),
@@ -43,6 +45,8 @@ describe("@wp-typia/block-runtime", () => {
 		expect(typeof rootModule.createAttributeUpdater).toBe("function");
 		expect(typeof rootModule.createNestedAttributeUpdater).toBe("function");
 		expect(typeof blocksModule.createTypiaWebpackConfig).toBe("function");
+		expect(typeof schemaCoreModule.manifestToJsonSchema).toBe("function");
+		expect(typeof schemaCoreModule.manifestToOpenApi).toBe("function");
 		expect(typeof metadataCoreModule.runSyncBlockMetadata).toBe("function");
 		expect(typeof metadataCoreModule.syncRestOpenApi).toBe("function");
 		expect(typeof defaultsModule.applyTemplateDefaultsFromManifest).toBe("function");
@@ -60,7 +64,7 @@ describe("@wp-typia/block-runtime", () => {
 	});
 
 	test("unsupported subpaths are not exported", async () => {
-		await expect(importModule("@wp-typia/block-runtime/schema-core")).rejects.toThrow();
+		await expect(importModule("@wp-typia/block-runtime/runtime")).rejects.toThrow();
 	});
 
 	test("built root entry preserves ESM-safe .js re-export specifiers", () => {

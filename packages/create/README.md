@@ -6,6 +6,7 @@ Use:
 
 - `wp-typia` for the CLI
 - `@wp-typia/project-tools` for project orchestration APIs
+- `@wp-typia/project-tools/schema-core` for schema and OpenAPI helpers
 - `@wp-typia/block-runtime/*` for generated-project runtime helpers
 
 This package no longer owns the CLI bin and no longer exposes the previous
