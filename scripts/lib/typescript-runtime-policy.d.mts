@@ -19,6 +19,11 @@ export declare function collectTypeScriptImportFiles(
 	runtimeSourceRoots: string[],
 ): string[];
 
+export declare function sourceImportsTypeScriptAtRuntime(
+	source: string,
+	filePath?: string,
+): boolean;
+
 export declare function getTypeScriptDependencyPlacement(
 	packageJson: Record<string, unknown>,
 ): "dependencies" | "devDependencies" | "missing";

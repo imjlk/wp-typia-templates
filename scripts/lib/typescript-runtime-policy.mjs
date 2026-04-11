@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import ts from "typescript";
+
 export const TYPESCRIPT_DEPENDENCY_POLICY = {
 	dependency: "dependency",
 	nonRuntime: "non-runtime",
@@ -66,9 +68,6 @@ export const TYPESCRIPT_RUNTIME_PACKAGE_POLICIES = [
 	},
 ];
 
-const TYPESCRIPT_IMPORT_PATTERN =
-	/\bfrom\s*["']typescript["']|\brequire\(\s*["']typescript["']\s*\)|\bimport\(\s*["']typescript["']\s*\)/u;
-
 function toPosixRelativePath(basePath, targetPath) {
 	return path.relative(basePath, targetPath).split(path.sep).join("/");
 }
@@ -106,6 +105,63 @@ function walkFiles(rootDir) {
 	return files.sort((left, right) => left.localeCompare(right));
 }
 
+export function sourceImportsTypeScriptAtRuntime(source, filePath = "source.ts") {
+	let found = false;
+	const sourceFile = ts.createSourceFile(
+		filePath,
+		source,
+		ts.ScriptTarget.Latest,
+		true,
+		ts.ScriptKind.TS,
+	);
+
+	const visit = (node) => {
+		if (found) {
+			return;
+		}
+
+		if (
+			ts.isImportDeclaration(node) &&
+			ts.isStringLiteralLike(node.moduleSpecifier) &&
+			node.moduleSpecifier.text === "typescript"
+		) {
+			if (node.importClause === undefined || node.importClause.isTypeOnly !== true) {
+				found = true;
+				return;
+			}
+		}
+
+		if (
+			ts.isExportDeclaration(node) &&
+			node.moduleSpecifier &&
+			ts.isStringLiteralLike(node.moduleSpecifier) &&
+			node.moduleSpecifier.text === "typescript" &&
+			node.isTypeOnly !== true
+		) {
+			found = true;
+			return;
+		}
+
+		if (ts.isCallExpression(node) && node.arguments.length === 1) {
+			const [argument] = node.arguments;
+			if (ts.isStringLiteralLike(argument) && argument.text === "typescript") {
+				if (
+					(ts.isIdentifier(node.expression) && node.expression.text === "require") ||
+					node.expression.kind === ts.SyntaxKind.ImportKeyword
+				) {
+					found = true;
+					return;
+				}
+			}
+		}
+
+		ts.forEachChild(node, visit);
+	};
+
+	visit(sourceFile);
+	return found;
+}
+
 export function collectTypeScriptImportFiles(packageDir, runtimeSourceRoots) {
 	const absolutePackageDir = path.resolve(packageDir);
 	const files = new Set();
@@ -114,7 +170,7 @@ export function collectTypeScriptImportFiles(packageDir, runtimeSourceRoots) {
 		const absoluteRoot = path.join(absolutePackageDir, root);
 		for (const filePath of walkFiles(absoluteRoot)) {
 			const source = fs.readFileSync(filePath, "utf8");
-			if (TYPESCRIPT_IMPORT_PATTERN.test(source)) {
+			if (sourceImportsTypeScriptAtRuntime(source, filePath)) {
 				files.add(toPosixRelativePath(absolutePackageDir, filePath));
 			}
 		}
