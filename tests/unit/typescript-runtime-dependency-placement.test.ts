@@ -1,4 +1,7 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 import {
 	collectTypeScriptImportFiles,
@@ -6,6 +9,15 @@ import {
 	sourceImportsTypeScriptAtRuntime,
 	TYPESCRIPT_DEPENDENCY_POLICY,
 } from "../../scripts/lib/typescript-runtime-policy.mjs";
+
+const tempDirs = [];
+
+afterEach(() => {
+	for (const tempDir of tempDirs) {
+		fs.rmSync(tempDir, { force: true, recursive: true });
+	}
+	tempDirs.length = 0;
+});
 
 describe("typescript-runtime-policy", () => {
 	test("detects shipped runtime source imports of typescript", () => {
@@ -27,9 +39,41 @@ describe("typescript-runtime-policy", () => {
 		).toBe(false);
 		expect(
 			sourceImportsTypeScriptAtRuntime(
+				'import { type SourceFile } from "typescript";',
+			),
+		).toBe(false);
+		expect(
+			sourceImportsTypeScriptAtRuntime(
 				'export type { SourceFile } from "typescript";',
 			),
 		).toBe(false);
+		expect(
+			sourceImportsTypeScriptAtRuntime(
+				'export { type SourceFile } from "typescript";',
+			),
+		).toBe(false);
+	});
+
+	test("ignores declaration-file variants when walking runtime roots", () => {
+		const tempDir = fs.mkdtempSync(
+			path.join(os.tmpdir(), "wp-typia-typescript-runtime-policy-"),
+		);
+		tempDirs.push(tempDir);
+		fs.mkdirSync(path.join(tempDir, "src"), { recursive: true });
+		fs.writeFileSync(
+			path.join(tempDir, "src", "runtime.d.mts"),
+			'import "typescript";\n',
+			"utf8",
+		);
+		fs.writeFileSync(
+			path.join(tempDir, "src", "runtime.d.cts"),
+			'import type { SourceFile } from "typescript";\n',
+			"utf8",
+		);
+
+		const importFiles = collectTypeScriptImportFiles(tempDir, ["src"]);
+
+		expect(importFiles).toEqual([]);
 	});
 
 	test("fails when a runtime-critical package keeps typescript only in devDependencies", () => {

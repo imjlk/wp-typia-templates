@@ -95,7 +95,7 @@ function walkFiles(rootDir) {
 			if (
 				entry.isFile() &&
 				/\.(?:c|m)?tsx?$/u.test(entry.name) &&
-				!entry.name.endsWith(".d.ts")
+				!/\.d\.(?:c|m)?ts$/u.test(entry.name)
 			) {
 				files.push(absolutePath);
 			}
@@ -103,6 +103,62 @@ function walkFiles(rootDir) {
 	}
 
 	return files.sort((left, right) => left.localeCompare(right));
+}
+
+function importClauseHasRuntimeBindings(importClause) {
+	if (importClause === undefined) {
+		return true;
+	}
+
+	if (importClause.isTypeOnly) {
+		return false;
+	}
+
+	if (importClause.name) {
+		return true;
+	}
+
+	if (importClause.namedBindings === undefined) {
+		return false;
+	}
+
+	if (ts.isNamespaceImport(importClause.namedBindings)) {
+		return true;
+	}
+
+	if (ts.isNamedImports(importClause.namedBindings)) {
+		return (
+			importClause.namedBindings.elements.length === 0 ||
+			importClause.namedBindings.elements.some(
+				(element) => element.isTypeOnly !== true,
+			)
+		);
+	}
+
+	return false;
+}
+
+function exportDeclarationHasRuntimeBindings(node) {
+	if (node.isTypeOnly) {
+		return false;
+	}
+
+	if (node.exportClause === undefined) {
+		return true;
+	}
+
+	if (ts.isNamespaceExport(node.exportClause)) {
+		return true;
+	}
+
+	if (ts.isNamedExports(node.exportClause)) {
+		return (
+			node.exportClause.elements.length === 0 ||
+			node.exportClause.elements.some((element) => element.isTypeOnly !== true)
+		);
+	}
+
+	return true;
 }
 
 export function sourceImportsTypeScriptAtRuntime(source, filePath = "source.ts") {
@@ -125,7 +181,7 @@ export function sourceImportsTypeScriptAtRuntime(source, filePath = "source.ts")
 			ts.isStringLiteralLike(node.moduleSpecifier) &&
 			node.moduleSpecifier.text === "typescript"
 		) {
-			if (node.importClause === undefined || node.importClause.isTypeOnly !== true) {
+			if (importClauseHasRuntimeBindings(node.importClause)) {
 				found = true;
 				return;
 			}
@@ -136,7 +192,7 @@ export function sourceImportsTypeScriptAtRuntime(source, filePath = "source.ts")
 			node.moduleSpecifier &&
 			ts.isStringLiteralLike(node.moduleSpecifier) &&
 			node.moduleSpecifier.text === "typescript" &&
-			node.isTypeOnly !== true
+			exportDeclarationHasRuntimeBindings(node)
 		) {
 			found = true;
 			return;
