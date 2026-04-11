@@ -113,7 +113,7 @@ ___
 
 ### textColor
 
-• `Optional` **textColor**: ("inherit" \| "initial" \| "transparent" \| "currentColor" \| "unset") & Default\<"currentColor"\>
+• `Optional` **textColor**: ("inherit" \| "initial" \| "unset" \| "transparent" \| "currentColor") & Default\<"currentColor"\>
 
 Pipeline-compatible semantic color values from @wp-typia/block-types.
 
@@ -125,7 +125,7 @@ ___
 
 ### backgroundColor
 
-• `Optional` **backgroundColor**: ("inherit" \| "initial" \| "transparent" \| "currentColor" \| "unset") & Default\<"transparent"\>
+• `Optional` **backgroundColor**: ("inherit" \| "initial" \| "unset" \| "transparent" \| "currentColor") & Default\<"transparent"\>
 
 #### Defined in
 
