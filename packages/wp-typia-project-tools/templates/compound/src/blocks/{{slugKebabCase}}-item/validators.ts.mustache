@@ -1,6 +1,9 @@
 import typia from 'typia';
 import currentManifest from './typia.manifest.json';
-import type { {{pascalCase}}ItemAttributes } from './types';
+import type {
+	{{pascalCase}}ItemAttributes,
+	{{pascalCase}}ItemValidationResult,
+} from './types';
 import { createTemplateValidatorToolkit } from '../../validator-toolkit';
 
 const scaffoldValidators = createTemplateValidatorToolkit< {{pascalCase}}ItemAttributes >( {
@@ -18,11 +21,15 @@ const scaffoldValidators = createTemplateValidatorToolkit< {{pascalCase}}ItemAtt
 } );
 
 export const validate{{pascalCase}}ItemAttributes =
-	scaffoldValidators.validateAttributes;
+	scaffoldValidators.validateAttributes as (
+		attributes: unknown
+	) => {{pascalCase}}ItemValidationResult;
 
 export const validators = scaffoldValidators.validators;
 
 export const sanitize{{pascalCase}}ItemAttributes =
-	scaffoldValidators.sanitizeAttributes;
+	scaffoldValidators.sanitizeAttributes as (
+		attributes: Partial< {{pascalCase}}ItemAttributes >
+	) => {{pascalCase}}ItemAttributes;
 
 export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;

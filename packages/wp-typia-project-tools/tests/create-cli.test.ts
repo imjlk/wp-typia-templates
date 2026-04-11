@@ -1310,6 +1310,10 @@ describe("@wp-typia/project-tools scaffolding", () => {
         path.join(targetDir, "src", "types.ts"),
         "utf8"
       );
+      const generatedEdit = fs.readFileSync(
+        path.join(targetDir, "src", "edit.tsx"),
+        "utf8"
+      );
       const generatedValidators = fs.readFileSync(
         path.join(targetDir, "src", "validators.ts"),
         "utf8"
@@ -1466,6 +1470,20 @@ describe("@wp-typia/project-tools scaffolding", () => {
         /typia\.createValidate<\s*DemoPersistencePublicAttributes\s*>\(\)/
       );
       expect(generatedValidators).not.toContain("const generateResourceKey");
+      expect(generatedEdit).toContain(
+        "const alignmentValue = editorFields.getStringValue("
+      );
+      expect(generatedEdit).toContain("\t\tattributes,");
+      expect(generatedEdit).toContain("attributes={ attributes }");
+      expect(generatedEdit).not.toContain(
+        "attributes as unknown as Record< string, unknown >"
+      );
+      expect(generatedEdit).toContain(
+        "{ __( 'Storage mode: post-meta', 'demo-persistence-public' ) }"
+      );
+      expect(generatedEdit).toContain(
+        "{ __( 'Storage mode:', 'demo-persistence-public' ) } post-meta"
+      );
       expect(generatedData).toContain("useDemoPersistencePublicStateQuery");
       expect(generatedData).toContain(
         "useWriteDemoPersistencePublicStateMutation"
@@ -1843,6 +1861,20 @@ describe("@wp-typia/project-tools scaffolding", () => {
     );
     expect(generatedTypes).toContain(
       "persistencePolicy: 'authenticated' | 'public';"
+    );
+    expect(generatedEdit).toContain(
+      "const alignmentValue = editorFields.getStringValue("
+    );
+    expect(generatedEdit).toContain("\t\tattributes,");
+    expect(generatedEdit).toContain("attributes={ attributes }");
+    expect(generatedEdit).not.toContain(
+      "attributes as unknown as Record< string, unknown >"
+    );
+    expect(generatedEdit).toContain(
+      "{ __( 'Storage mode: custom-table', 'demo-persistence-authenticated' ) }"
+    );
+    expect(generatedEdit).toContain(
+      "{ __( 'Storage mode:', 'demo-persistence-authenticated' ) } custom-table"
     );
     expect(generatedEdit).toContain(
       "Stable persisted identifier used by the storage-backed counter endpoint."
@@ -2696,6 +2728,10 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(parentValidators).toContain("validator-toolkit");
     expect(parentValidators).toContain("import typia from 'typia';");
     expect(parentValidators).not.toContain("createScaffoldValidatorToolkit");
+    expect(parentValidators).toContain("DemoCompoundValidationResult");
+    expect(parentValidators).toContain(
+      "scaffoldValidators.validateAttributes as ("
+    );
     expect(generatedValidatorToolkit).toContain(
       "createScaffoldValidatorToolkit"
     );
@@ -2717,6 +2753,10 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(childValidators).toContain("validator-toolkit");
     expect(childValidators).toContain("import typia from 'typia';");
     expect(childValidators).not.toContain("createScaffoldValidatorToolkit");
+    expect(childValidators).toContain("DemoCompoundItemValidationResult");
+    expect(childValidators).toContain(
+      "scaffoldValidators.validateAttributes as ("
+    );
     expect(childBlockJson.attributes.title.selector).toBe(
       ".wp-block-create-block-demo-compound-item__title"
     );
@@ -2724,7 +2764,8 @@ console.log(JSON.stringify({ initial, updated, reread }));
       ".wp-block-create-block-demo-compound-item__body"
     );
     expect(addChildScript).toContain("createUseTypiaValidationHook");
-    expect(addChildScript).toContain("createScaffoldValidatorToolkit");
+    expect(addChildScript).toContain("createTemplateValidatorToolkit");
+    expect(addChildScript).not.toContain("createScaffoldValidatorToolkit");
     expect(addChildScript).toContain("buildScaffoldBlockRegistration");
     expect(addChildScript).toContain("type ScaffoldBlockMetadata");
     expect(addChildScript).toContain("ALLOWED_CHILD_MARKER");
@@ -3197,6 +3238,10 @@ console.log(JSON.stringify({ initial, updated, reread }));
       expect(childValidators).toContain("validator-toolkit");
       expect(childValidators).toContain("import typia from 'typia';");
       expect(childValidators).not.toContain("createScaffoldValidatorToolkit");
+      expect(childValidators).toContain("DemoCompoundStorageItemValidationResult");
+      expect(childValidators).toContain(
+        "scaffoldValidators.validateAttributes as ("
+      );
       expect(generatedValidatorToolkit).toContain(
         "createScaffoldValidatorToolkit"
       );
@@ -3204,6 +3249,8 @@ console.log(JSON.stringify({ initial, updated, reread }));
       expect(generatedAddChild).toContain("ALLOWED_CHILD_MARKER");
       expect(generatedAddChild).toContain("buildScaffoldBlockRegistration");
       expect(generatedAddChild).toContain("type ScaffoldBlockMetadata");
+      expect(generatedAddChild).toContain("createTemplateValidatorToolkit");
+      expect(generatedAddChild).not.toContain("createScaffoldValidatorToolkit");
       expect(packageJson.scripts["add-child"]).toBe(
         "tsx scripts/add-compound-child.ts"
       );
@@ -3469,7 +3516,14 @@ console.log(JSON.stringify({ initial, updated, reread }));
         "'create-block/demo-compound-add-child-faq-item'"
       );
       expect(newChildHooks).toContain("createUseTypiaValidationHook");
-      expect(newChildValidators).toContain("createScaffoldValidatorToolkit");
+      expect(newChildValidators).toContain("createTemplateValidatorToolkit");
+      expect(newChildValidators).not.toContain("createScaffoldValidatorToolkit");
+      expect(newChildValidators).toContain(
+        "DemoCompoundAddChildFaqItemValidationResult"
+      );
+      expect(newChildValidators).toContain(
+        "scaffoldValidators.validateAttributes as ("
+      );
       expect(newChildIndex).toContain("buildScaffoldBlockRegistration");
       expect(newChildIndex).toContain("type ScaffoldBlockMetadata");
       expect(newChildEdit).toContain(
