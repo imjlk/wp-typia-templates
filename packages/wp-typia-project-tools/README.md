@@ -14,6 +14,12 @@ Supported public imports:
 - `@wp-typia/project-tools`
 - `@wp-typia/project-tools/schema-core`
 
+Implementation note:
+
+- `@wp-typia/project-tools/schema-core` remains the preferred project-tooling
+  import path.
+- The shared implementation now lives in `@wp-typia/block-runtime/schema-core`.
+
 Example:
 
 ```ts

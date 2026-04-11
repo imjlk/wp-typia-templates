@@ -13,6 +13,8 @@ surfaces.
   Project schema and OpenAPI helpers.
 - `@wp-typia/block-runtime`
   Generated-project block helper root.
+- `@wp-typia/block-runtime/schema-core`
+  Shared schema/OpenAPI implementation owner.
 - `@wp-typia/block-runtime/metadata-core`
   Metadata sync and endpoint manifest helpers.
 - `@wp-typia/block-runtime/blocks`
@@ -42,6 +44,9 @@ Manual orchestration or repo tooling should use:
 
 Those imports cover scaffold, add-block, migrate, template, doctor, package
 manager, starter manifest, and schema/OpenAPI project helpers.
+
+`@wp-typia/block-runtime/schema-core` is public and stable, but it is the
+implementation owner path rather than the preferred project-tooling import.
 
 ## Deprecated surface
 

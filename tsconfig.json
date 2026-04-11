@@ -20,6 +20,9 @@
       "@wp-typia/block-runtime/blocks": [
         "packages/wp-typia-block-runtime/src/blocks.ts"
       ],
+      "@wp-typia/block-runtime/schema-core": [
+        "packages/wp-typia-block-runtime/src/schema-core.ts"
+      ],
       "@wp-typia/block-runtime/metadata-core": [
         "packages/wp-typia-block-runtime/src/metadata-core.ts"
       ],

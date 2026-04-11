@@ -13,6 +13,9 @@
       "@wp-typia/block-runtime/blocks": [
         "packages/wp-typia-block-runtime/dist/blocks.d.ts"
       ],
+      "@wp-typia/block-runtime/schema-core": [
+        "packages/wp-typia-block-runtime/dist/schema-core.d.ts"
+      ],
       "@wp-typia/block-runtime/defaults": [
         "packages/wp-typia-block-runtime/dist/defaults.d.ts"
       ],

@@ -81,13 +81,16 @@ describe("@wp-typia/project-tools import policy", () => {
 
 		expect(projectToolsReadme).toContain("@wp-typia/project-tools");
 		expect(projectToolsReadme).toContain("@wp-typia/block-runtime/*");
+		expect(projectToolsReadme).toContain("@wp-typia/block-runtime/schema-core");
 		expect(createReadme).toContain("deprecated legacy package shell");
 		expect(createReadme).toContain("@wp-typia/project-tools");
 		expect(apiGuide).toContain("@wp-typia/project-tools");
 		expect(apiGuide).toContain("@wp-typia/block-runtime/metadata-core");
 		expect(runtimeSurfaceDoc).toContain("@wp-typia/project-tools");
+		expect(runtimeSurfaceDoc).toContain("@wp-typia/block-runtime/schema-core");
 		expect(runtimeSurfaceDoc).not.toContain("@wp-typia/project-tools/runtime/*");
 		expect(importPolicyDoc).toContain("@wp-typia/project-tools");
+		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/schema-core");
 		expect(importPolicyDoc).not.toContain("@wp-typia/project-tools/runtime/*");
 	});
 });
