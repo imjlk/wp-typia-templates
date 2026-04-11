@@ -89,6 +89,11 @@ class PtySession:
         attributes = termios.tcgetattr(slave_fd)
         attributes[0] &= ~(termios.IXON | termios.IXOFF)
         termios.tcsetattr(slave_fd, termios.TCSANOW, attributes)
+
+        def configure_child() -> None:
+            os.setsid()
+            fcntl.ioctl(slave_fd, termios.TIOCSCTTY, 0)
+
         self.process = subprocess.Popen(
             self.command,
             cwd=self.cwd,
@@ -97,6 +102,7 @@ class PtySession:
             stdout=slave_fd,
             stderr=slave_fd,
             close_fds=True,
+            preexec_fn=configure_child,
         )
         os.close(slave_fd)
         os.set_blocking(master_fd, False)
