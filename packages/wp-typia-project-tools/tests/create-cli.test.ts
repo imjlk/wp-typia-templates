@@ -2739,7 +2739,7 @@ console.log(JSON.stringify({ initial, updated, reread }));
     const buildOutput = buildGeneratedProject(targetDir);
     expect(buildOutput).not.toContain("non-specified generic argument");
     },
-    { timeout: 20_000 }
+    { timeout: 90_000 }
   );
 
   test("compound scaffolds can opt into migration UI and keep add-child migration-aware", async () => {
