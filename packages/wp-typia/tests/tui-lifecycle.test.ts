@@ -30,29 +30,36 @@ describe("alternate-buffer TUI lifecycle", () => {
 
 	test("reports failures and exits immediately", () => {
 		const messages: string[] = [];
+		const events: string[] = [];
 		let exited = 0;
 
 		reportAlternateBufferFailure({
 			context: "wp-typia migrate failed",
 			error: new Error("bad state"),
 			exit: () => {
+				events.push("exit");
 				exited += 1;
 			},
 			log: (message) => {
+				events.push("log");
 				messages.push(message);
 			},
 		});
 
 		expect(messages).toEqual(["wp-typia migrate failed: bad state"]);
+		expect(events).toEqual(["log", "exit"]);
 		expect(exited).toBe(1);
 	});
 
 	test("run helper exits after success", async () => {
 		const messages: string[] = [];
 		let exited = 0;
+		let ran = false;
 
 		await runAlternateBufferAction({
-			action: async () => {},
+			action: async () => {
+				ran = true;
+			},
 			context: "wp-typia create failed",
 			exit: () => {
 				exited += 1;
@@ -62,6 +69,7 @@ describe("alternate-buffer TUI lifecycle", () => {
 			},
 		});
 
+		expect(ran).toBe(true);
 		expect(messages).toEqual([]);
 		expect(exited).toBe(1);
 	});

@@ -13,7 +13,9 @@ type LazyFlowProps<TProps> = {
 
 export function LazyFlow<TProps>({ loader, props }: LazyFlowProps<TProps>) {
 	const [Component, setComponent] = useState<ComponentType<TProps> | null>(null);
-	const { handleFailure } = useAlternateBufferLifecycle("wp-typia TUI flow failed");
+	const { handleFailure } = useAlternateBufferLifecycle("wp-typia TUI flow failed", {
+		enableExitKeys: false,
+	});
 
 	useAlternateBufferExitKeys({
 		enabled: Component === null,

@@ -97,14 +97,22 @@ export function useAlternateBufferExitKeys(options: {
 	});
 }
 
-export function useAlternateBufferLifecycle(context: string): {
+export function useAlternateBufferLifecycle(
+	context: string,
+	options: {
+		enableExitKeys?: boolean;
+	} = {},
+): {
 	handleCancel: () => void;
 	handleFailure: (error: unknown) => void;
 	handleSubmit: (action: () => Promise<void>) => Promise<void>;
 } {
 	const runtime = useRuntime();
 
-	useAlternateBufferExitKeys({ exit: runtime.exit });
+	useAlternateBufferExitKeys({
+		enabled: options.enableExitKeys ?? true,
+		exit: runtime.exit,
+	});
 
 	const handleCancel = useCallback(() => {
 		runtime.exit();
