@@ -1,10 +1,8 @@
-import { useState } from "react";
-
-import { useRuntime } from "@bunli/runtime/app";
-import { Alert, SchemaForm } from "@bunli/tui";
+import { SchemaForm } from "@bunli/tui";
 import { z } from "zod";
 
 import { executeCreateCommand } from "../runtime-bridge";
+import { useAlternateBufferLifecycle } from "./alternate-buffer-lifecycle";
 
 const createFlowSchema = z.object({
 	"data-storage": z.string().optional(),
@@ -31,8 +29,7 @@ type CreateFlowProps = {
 };
 
 export function CreateFlow({ cwd, initialValues }: CreateFlowProps) {
-	const runtime = useRuntime();
-	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const { handleCancel, handleSubmit } = useAlternateBufferLifecycle("wp-typia create failed");
 	const defaultPrompt = {
 		close() {},
 		select<T extends string>(_message: string, options: Array<{ value: T }>, defaultValue = 1) {
@@ -45,16 +42,8 @@ export function CreateFlow({ cwd, initialValues }: CreateFlowProps) {
 	};
 
 	return (
-		<>
-			{errorMessage ? (
-				<Alert
-					message={errorMessage}
-					title="Create failed"
-					tone="danger"
-				/>
-			) : null}
-			<SchemaForm
-				fields={[
+		<SchemaForm
+			fields={[
 					{ kind: "text", label: "Project directory", name: "project-dir", required: true },
 					{
 						kind: "select",
@@ -146,11 +135,10 @@ export function CreateFlow({ cwd, initialValues }: CreateFlowProps) {
 						name: "with-migration-ui",
 					},
 				]}
-				initialValues={initialValues}
-				onCancel={() => runtime.exit()}
-				onSubmit={async (values) => {
-					try {
-						setErrorMessage(null);
+			initialValues={initialValues}
+			onCancel={handleCancel}
+			onSubmit={async (values) =>
+				handleSubmit(async () => {
 						await executeCreateCommand({
 							cwd,
 							flags: values,
@@ -158,14 +146,10 @@ export function CreateFlow({ cwd, initialValues }: CreateFlowProps) {
 							projectDir: values["project-dir"],
 							prompt: defaultPrompt,
 						});
-						runtime.exit();
-					} catch (error) {
-						setErrorMessage(error instanceof Error ? error.message : String(error));
-					}
-				}}
-				schema={createFlowSchema}
-				title="Create a wp-typia project"
-			/>
-		</>
+				})
+			}
+			schema={createFlowSchema}
+			title="Create a wp-typia project"
+		/>
 	);
 }

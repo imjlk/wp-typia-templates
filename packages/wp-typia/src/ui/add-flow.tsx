@@ -1,11 +1,9 @@
-import { useState } from "react";
-
-import { useRuntime } from "@bunli/runtime/app";
-import { Alert, SchemaForm } from "@bunli/tui";
+import { SchemaForm } from "@bunli/tui";
 import { HOOKED_BLOCK_POSITION_IDS } from "@wp-typia/project-tools";
 import { z } from "zod";
 
 import { executeAddCommand } from "../runtime-bridge";
+import { useAlternateBufferLifecycle } from "./alternate-buffer-lifecycle";
 
 const addFlowSchema = z.object({
 	anchor: z.string().optional(),
@@ -41,16 +39,11 @@ const HOOKED_BLOCK_POSITION_DESCRIPTIONS: Record<
 };
 
 export function AddFlow({ cwd, initialValues, workspaceBlockOptions }: AddFlowProps) {
-	const runtime = useRuntime();
-	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const { handleCancel, handleSubmit } = useAlternateBufferLifecycle("wp-typia add failed");
 
 	return (
-		<>
-			{errorMessage ? (
-				<Alert message={errorMessage} title="Add failed" tone="danger" />
-			) : null}
-			<SchemaForm
-				fields={[
+		<SchemaForm
+			fields={[
 					{
 						kind: "select",
 						label: "Kind",
@@ -195,25 +188,20 @@ export function AddFlow({ cwd, initialValues, workspaceBlockOptions }: AddFlowPr
 							(values.template === "persistence" || values.template === "compound"),
 					},
 				]}
-				initialValues={initialValues}
-				onCancel={() => runtime.exit()}
-				onSubmit={async (values) => {
-					try {
-						setErrorMessage(null);
+			initialValues={initialValues}
+			onCancel={handleCancel}
+			onSubmit={async (values) =>
+				handleSubmit(async () => {
 						await executeAddCommand({
 							cwd,
 							flags: values,
 							kind: values.kind,
 							name: values.name,
 						});
-						runtime.exit();
-					} catch (error) {
-						setErrorMessage(error instanceof Error ? error.message : String(error));
-					}
-				}}
-				schema={addFlowSchema}
-				title="Extend a wp-typia workspace"
-			/>
-		</>
+				})
+			}
+			schema={addFlowSchema}
+			title="Extend a wp-typia workspace"
+		/>
 	);
 }

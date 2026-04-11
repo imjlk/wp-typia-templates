@@ -1,10 +1,8 @@
-import { useState } from "react";
-
-import { useRuntime } from "@bunli/runtime/app";
-import { Alert, SchemaForm } from "@bunli/tui";
+import { SchemaForm } from "@bunli/tui";
 import { z } from "zod";
 
 import { executeMigrateCommand } from "../runtime-bridge";
+import { useAlternateBufferLifecycle } from "./alternate-buffer-lifecycle";
 
 const migrateFlowSchema = z.object({
 	all: z.boolean().default(false),
@@ -48,16 +46,11 @@ function sanitizeMigrateValues(values: MigrateFlowValues): Record<string, unknow
 }
 
 export function MigrateFlow({ cwd, initialValues }: MigrateFlowProps) {
-	const runtime = useRuntime();
-	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const { handleCancel, handleSubmit } = useAlternateBufferLifecycle("wp-typia migrate failed");
 
 	return (
-		<>
-			{errorMessage ? (
-				<Alert message={errorMessage} title="Migrate failed" tone="danger" />
-			) : null}
-			<SchemaForm
-				fields={[
+		<SchemaForm
+			fields={[
 					{
 						kind: "select",
 						label: "Migration command",
@@ -164,24 +157,19 @@ export function MigrateFlow({ cwd, initialValues }: MigrateFlowProps) {
 						visibleWhen: (values) => values.command === "fuzz",
 					},
 				]}
-				initialValues={initialValues}
-				onCancel={() => runtime.exit()}
-				onSubmit={async (values) => {
-					try {
-						setErrorMessage(null);
+			initialValues={initialValues}
+			onCancel={handleCancel}
+			onSubmit={async (values) =>
+				handleSubmit(async () => {
 						await executeMigrateCommand({
 							command: values.command,
 							cwd,
 							flags: sanitizeMigrateValues(values),
 						});
-						runtime.exit();
-					} catch (error) {
-						setErrorMessage(error instanceof Error ? error.message : String(error));
-					}
-				}}
-				schema={migrateFlowSchema}
-				title="Run wp-typia migration workflows"
-			/>
-		</>
+				})
+			}
+			schema={migrateFlowSchema}
+			title="Run wp-typia migration workflows"
+		/>
 	);
 }
