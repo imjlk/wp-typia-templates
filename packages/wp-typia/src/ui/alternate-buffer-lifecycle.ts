@@ -83,7 +83,7 @@ export function useAlternateBufferExitKeys(options: {
 	exit?: () => void;
 } = {}): void {
 	const runtime = useRuntime();
-	const exit = options.exit ?? runtime.exit;
+	const exit = options.exit ?? (() => runtime.exit());
 	const enabled = options.enabled ?? true;
 
 	useKeyboard((key: AlternateBufferKeyEvent) => {
@@ -108,25 +108,28 @@ export function useAlternateBufferLifecycle(
 	handleSubmit: (action: () => Promise<void>) => Promise<void>;
 } {
 	const runtime = useRuntime();
+	const exit = useCallback(() => {
+		runtime.exit();
+	}, [runtime]);
 
 	useAlternateBufferExitKeys({
 		enabled: options.enableExitKeys ?? true,
-		exit: runtime.exit,
+		exit,
 	});
 
 	const handleCancel = useCallback(() => {
-		runtime.exit();
-	}, [runtime]);
+		exit();
+	}, [exit]);
 
 	const handleFailure = useCallback(
 		(error: unknown) => {
 			reportAlternateBufferFailure({
 				context,
 				error,
-				exit: runtime.exit,
+				exit,
 			});
 		},
-		[context, runtime],
+		[context, exit],
 	);
 
 	const handleSubmit = useCallback(
@@ -134,10 +137,10 @@ export function useAlternateBufferLifecycle(
 			await runAlternateBufferAction({
 				action,
 				context,
-				exit: runtime.exit,
+				exit,
 			});
 		},
-		[context, runtime],
+		[context, exit],
 	);
 
 	return {
