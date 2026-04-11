@@ -1,6 +1,9 @@
 import typia from 'typia';
 import currentManifest from './typia.manifest.json';
-import type { {{pascalCase}}Attributes } from './types';
+import type {
+	{{pascalCase}}Attributes,
+	{{pascalCase}}ValidationResult,
+} from './types';
 import { createTemplateValidatorToolkit } from '../../validator-toolkit';
 
 const scaffoldValidators = createTemplateValidatorToolkit< {{pascalCase}}Attributes >( {
@@ -18,11 +21,15 @@ const scaffoldValidators = createTemplateValidatorToolkit< {{pascalCase}}Attribu
 } );
 
 export const validate{{pascalCase}}Attributes =
-	scaffoldValidators.validateAttributes;
+	scaffoldValidators.validateAttributes as (
+		attributes: unknown
+	) => {{pascalCase}}ValidationResult;
 
 export const validators = scaffoldValidators.validators;
 
 export const sanitize{{pascalCase}}Attributes =
-	scaffoldValidators.sanitizeAttributes;
+	scaffoldValidators.sanitizeAttributes as (
+		attributes: Partial< {{pascalCase}}Attributes >
+	) => {{pascalCase}}Attributes;
 
 export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;

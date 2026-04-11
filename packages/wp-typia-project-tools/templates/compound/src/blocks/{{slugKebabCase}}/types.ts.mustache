@@ -1,4 +1,7 @@
+import type { ValidationResult } from '@wp-typia/block-runtime/validation';
 import { tags } from 'typia';
+
+export type { ValidationResult } from '@wp-typia/block-runtime/validation';
 
 export interface {{pascalCase}}Attributes {
 	heading: string &
@@ -11,3 +14,5 @@ export interface {{pascalCase}}Attributes {
 		tags.Default< 'Add and reorder internal items inside this compound block.' >;
 	showDividers?: boolean & tags.Default< true >;
 }
+
+export type {{pascalCase}}ValidationResult = ValidationResult< {{pascalCase}}Attributes >;

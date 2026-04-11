@@ -99,13 +99,13 @@ export interface UseEditorFieldsResult {
 	fields: EditorFieldDescriptor[];
 	fieldMap: Map<string, EditorFieldDescriptor>;
 	getBooleanValue: (
-		source: UnknownRecord,
+		source: object,
 		path: string,
 		fallback: boolean,
 	) => boolean;
 	getField: (path: string) => EditorFieldDescriptor | undefined;
 	getNumberValue: (
-		source: UnknownRecord,
+		source: object,
 		path: string,
 		fallback: number,
 	) => number;
@@ -114,7 +114,7 @@ export interface UseEditorFieldsResult {
 		labelMap?: Record<string, string>,
 	) => InspectorSelectOption[];
 	getStringValue: (
-		source: UnknownRecord,
+		source: object,
 		path: string,
 		fallback: string,
 	) => string;
@@ -167,7 +167,7 @@ export interface InspectorFieldOverride {
 	step?: number;
 }
 
-export interface InspectorFromManifestProps<T extends UnknownRecord> {
+export interface InspectorFromManifestProps<T extends object> {
 	attributes: T;
 	children?: ReactNode;
 	components?: InspectorComponentMap;
@@ -194,14 +194,14 @@ function getDefaultValue(
 	return fallback;
 }
 
-function getValueAtPath(source: UnknownRecord, path: string): unknown {
+function getValueAtPath(source: object, path: string): unknown {
 	return getPathSegments(path).reduce<unknown>((current, segment) => {
 		if (!isRecord(current)) {
 			return undefined;
 		}
 
 		return current[segment];
-	}, source);
+	}, source as UnknownRecord);
 }
 
 function toStringValue(value: unknown, fallback: string): string {
@@ -280,7 +280,7 @@ function resolveInspectorComponents(
 
 function getFieldValue(
 	field: EditorFieldDescriptor,
-	source: UnknownRecord,
+	source: object,
 ): unknown {
 	const currentValue = getValueAtPath(source, field.path);
 
@@ -441,7 +441,7 @@ export function useEditorFields(
 
 	const getField = (path: string) => fieldMap.get(path);
 	const getStringValue = (
-		source: UnknownRecord,
+		source: object,
 		path: string,
 		fallback: string,
 	) =>
@@ -450,7 +450,7 @@ export function useEditorFields(
 			fallback,
 		);
 	const getNumberValue = (
-		source: UnknownRecord,
+		source: object,
 		path: string,
 		fallback: number,
 	) =>
@@ -459,7 +459,7 @@ export function useEditorFields(
 			fallback,
 		);
 	const getBooleanValue = (
-		source: UnknownRecord,
+		source: object,
 		path: string,
 		fallback: boolean,
 	) =>
@@ -675,7 +675,7 @@ export function FieldControl({
 	}
 }
 
-export function InspectorFromManifest<T extends UnknownRecord>({
+export function InspectorFromManifest<T extends object>({
 	attributes,
 	children,
 	components,

@@ -66,7 +66,7 @@ export default function Edit( {
 		validateEditorUpdate
 	);
 	const alignmentValue = editorFields.getStringValue(
-		attributes as unknown as Record< string, unknown >,
+		attributes,
 		'alignment',
 		'left'
 	);
@@ -91,7 +91,7 @@ export default function Edit( {
 			</BlockControls>
 			<InspectorControls>
 				<InspectorFromManifest
-					attributes={ attributes as unknown as Record< string, unknown > }
+					attributes={ attributes }
 					fieldLookup={ editorFields }
 					onChange={ updateField }
 					paths={ [ 'alignment', 'isVisible', 'showCount', 'buttonLabel' ] }

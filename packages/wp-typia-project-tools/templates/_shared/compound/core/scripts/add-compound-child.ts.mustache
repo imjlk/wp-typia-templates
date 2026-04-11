@@ -346,8 +346,15 @@ function renderBlockJson(
 	) }\n`;
 }
 
-function renderTypesFile( childTypeName: string, childTitle: string ): string {
-	return `import { tags } from 'typia';
+function renderTypesFile(
+	childTypeName: string,
+	childInterfaceName: string,
+	childTitle: string
+): string {
+	return `import type { ValidationResult } from '@wp-typia/block-runtime/validation';
+import { tags } from 'typia';
+
+export type { ValidationResult } from '@wp-typia/block-runtime/validation';
 
 export interface ${ childTypeName } {
 \ttitle: string &
@@ -359,6 +366,8 @@ export interface ${ childTypeName } {
 \t\ttags.MaxLength< 280 > &
 \t\ttags.Default< ${ JSON.stringify( CHILD_PLACEHOLDER ) } >;
 }
+
+export type ${ childInterfaceName }ValidationResult = ValidationResult< ${ childTypeName } >;
 `;
 }
 
@@ -407,36 +416,37 @@ function renderValidatorsFile(
 ): string {
 	return `import typia from 'typia';
 import currentManifest from './typia.manifest.json';
-import {
-\ttype ManifestDefaultsDocument,
-} from '@wp-typia/block-runtime/defaults';
-import {
-\tcreateScaffoldValidatorToolkit,
-} from '@wp-typia/block-runtime/validation';
+import type {
+\t${ childTypeName },
+\t${ childInterfaceName }ValidationResult,
+} from './types';
+import { createTemplateValidatorToolkit } from '../../validator-toolkit';
 
-import type { ${ childTypeName } } from './types';
-
-const validate = typia.createValidate< ${ childTypeName } >();
-const assert = typia.createAssert< ${ childTypeName } >();
-const is = typia.createIs< ${ childTypeName } >();
-const random = typia.createRandom< ${ childTypeName } >();
-const clone = typia.misc.createClone< ${ childTypeName } >();
-const prune = typia.misc.createPrune< ${ childTypeName } >();
-const scaffoldValidators = createScaffoldValidatorToolkit< ${ childTypeName } >( {
-\tmanifest: currentManifest as ManifestDefaultsDocument,
-\tvalidate,
-\tassert,
-\tis,
-\trandom,
-\tclone,
-\tprune,
+const scaffoldValidators = createTemplateValidatorToolkit< ${ childTypeName } >( {
+\tassert: typia.createAssert< ${ childTypeName } >(),
+\tclone: typia.misc.createClone< ${ childTypeName } >() as (
+\t\tvalue: ${ childTypeName },
+\t) => ${ childTypeName },
+\tis: typia.createIs< ${ childTypeName } >(),
+\tmanifest: currentManifest,
+\tprune: typia.misc.createPrune< ${ childTypeName } >(),
+\trandom: typia.createRandom< ${ childTypeName } >() as (
+\t\t...args: unknown[]
+\t) => ${ childTypeName },
+\tvalidate: typia.createValidate< ${ childTypeName } >(),
 } );
 
-export const validate${ childInterfaceName } = scaffoldValidators.validateAttributes;
+export const validate${ childInterfaceName } =
+\tscaffoldValidators.validateAttributes as (
+\t\tattributes: unknown
+\t) => ${ childInterfaceName }ValidationResult;
 
 export const validators = scaffoldValidators.validators;
 
-export const sanitize${ childInterfaceName } = scaffoldValidators.sanitizeAttributes;
+export const sanitize${ childInterfaceName } =
+\tscaffoldValidators.sanitizeAttributes as (
+\t\tattributes: Partial< ${ childTypeName } >
+\t) => ${ childTypeName };
 
 export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;
 `;
@@ -605,7 +615,11 @@ function main() {
 		renderBlockJson( childBlockName, childFolderSlug, childTitle ),
 		'utf8'
 	);
-	fs.writeFileSync( path.join( childDir, 'types.ts' ), renderTypesFile( childTypeName, childTitle ), 'utf8' );
+	fs.writeFileSync(
+		path.join( childDir, 'types.ts' ),
+		renderTypesFile( childTypeName, childInterfaceName, childTitle ),
+		'utf8'
+	);
 	fs.writeFileSync(
 		path.join( childDir, 'typia.manifest.json' ),
 		renderStarterManifestFile( childTypeName, childTitle ),
