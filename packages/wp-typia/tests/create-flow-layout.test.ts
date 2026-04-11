@@ -6,6 +6,7 @@ import {
 	getCreateViewportHeight,
 	getVisibleCreateFieldNames,
 	isCreatePersistenceTemplate,
+	sanitizeCreateSubmitValues,
 } from "../src/ui/create-flow-model";
 
 describe("create flow layout model", () => {
@@ -85,5 +86,54 @@ describe("create flow layout model", () => {
 				viewportHeight,
 			}),
 		);
+	});
+
+	test("strips persistence-only fields before submitting non-persistence templates", () => {
+		expect(
+			sanitizeCreateSubmitValues({
+				"data-storage": "custom-table",
+				namespace: "demo",
+				"no-install": false,
+				"package-manager": "npm",
+				"persistence-policy": "authenticated",
+				"php-prefix": "DEMO",
+				"project-dir": "demo-project",
+				template: "basic",
+				"text-domain": "demo",
+				variant: undefined,
+				"with-migration-ui": false,
+				"with-test-preset": false,
+				"with-wp-env": true,
+				yes: false,
+			}),
+		).toMatchObject({
+			"data-storage": undefined,
+			"persistence-policy": undefined,
+			template: "basic",
+			"with-wp-env": true,
+		});
+
+		expect(
+			sanitizeCreateSubmitValues({
+				"data-storage": "custom-table",
+				namespace: "demo",
+				"no-install": false,
+				"package-manager": "npm",
+				"persistence-policy": "authenticated",
+				"php-prefix": "DEMO",
+				"project-dir": "demo-project",
+				template: "compound",
+				"text-domain": "demo",
+				variant: undefined,
+				"with-migration-ui": false,
+				"with-test-preset": false,
+				"with-wp-env": true,
+				yes: false,
+			}),
+		).toMatchObject({
+			"data-storage": "custom-table",
+			"persistence-policy": "authenticated",
+			template: "compound",
+		});
 	});
 });

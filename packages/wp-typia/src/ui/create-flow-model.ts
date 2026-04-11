@@ -122,3 +122,15 @@ export function getCreateScrollTop(options: {
 
 	return 0;
 }
+
+export function sanitizeCreateSubmitValues(values: CreateFlowValues): CreateFlowValues {
+	if (isCreatePersistenceTemplate(values.template)) {
+		return values;
+	}
+
+	return {
+		...values,
+		"data-storage": undefined,
+		"persistence-policy": undefined,
+	};
+}

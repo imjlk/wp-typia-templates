@@ -21,6 +21,7 @@ import {
 	getCreateScrollTop,
 	getCreateViewportHeight,
 	isCreatePersistenceTemplate,
+	sanitizeCreateSubmitValues,
 } from "./create-flow-model";
 
 const templateOptions: SelectOption[] = [
@@ -60,6 +61,11 @@ const checkboxKeymap = createKeyMatcher({
 	toggle: ["space", "enter"],
 });
 
+const selectKeymap = createKeyMatcher({
+	next: ["down", "enter", "right", "space"],
+	previous: ["left", "up"],
+});
+
 type CreateFlowProps = {
 	cwd: string;
 	initialValues: Partial<CreateFlowValues>;
@@ -89,16 +95,46 @@ function CreateSelectField({
 		return index >= 0 ? index : 0;
 	}, [field.value, options]);
 
-	const handleChange = useCallback(
-		(_index: number, option: SelectOption | null) => {
-			if (!option) {
+	const selectedOption = options[selectedIndex] ?? options[0];
+	const keyboardScopeId = `create-select:${name}`;
+
+	const moveSelection = useCallback(
+		(delta: number) => {
+			if (!selectedOption || options.length === 0) {
 				return;
 			}
 
-			field.setValue(String(option.value));
-			field.blur();
+			const nextIndex = (selectedIndex + delta + options.length) % options.length;
+			const nextOption = options[nextIndex];
+			if (!nextOption) {
+				return;
+			}
+
+			field.setValue(String(nextOption.value));
 		},
-		[field],
+		[field, options, selectedIndex, selectedOption],
+	);
+
+	useScopedKeyboard(
+		keyboardScopeId,
+		(key) => {
+			if (!field.focused) {
+				return false;
+			}
+
+			if (selectKeymap.match("next", key)) {
+				moveSelection(1);
+				return true;
+			}
+
+			if (selectKeymap.match("previous", key)) {
+				moveSelection(-1);
+				return true;
+			}
+
+			return false;
+		},
+		{ active: field.focused },
 	);
 
 	return createElement(
@@ -112,7 +148,7 @@ function CreateSelectField({
 			"box",
 			{
 				border: true,
-				height: 5,
+				height: 3,
 				style: {
 					borderColor: field.error
 						? tokens.textDanger
@@ -121,14 +157,17 @@ function CreateSelectField({
 							: tokens.borderMuted,
 				},
 			},
-			createElement("select", {
-				focused: field.focused,
-				onChange: handleChange,
-				options,
-				selectedIndex,
-				style: { flexGrow: 1 },
+			createElement("text", {
+				content: `${field.focused ? "▶" : " "} ${selectedOption?.name ?? ""}`,
+				fg: field.focused ? tokens.accent : tokens.textPrimary,
 			}),
 		),
+		selectedOption?.description
+			? createElement("text", {
+					content: `  ${selectedOption.description}`,
+					fg: tokens.textMuted,
+				})
+			: null,
 		field.error
 			? createElement("text", { content: field.error, fg: tokens.textDanger })
 			: null,
@@ -274,9 +313,10 @@ export function CreateFlow({ cwd, initialValues }: CreateFlowProps) {
 			onCancel={handleCancel}
 			onSubmit={async (values) =>
 				handleSubmit(async () => {
+					const flags = sanitizeCreateSubmitValues(values);
 					await executeCreateCommand({
 						cwd,
-						flags: values,
+						flags,
 						interactive: true,
 						projectDir: values["project-dir"],
 						prompt: defaultPrompt,
