@@ -54,23 +54,27 @@ export const CREATE_FIELD_ORDER = [
 	...CREATE_CHECKBOX_FIELD_NAMES,
 ] as const satisfies ReadonlyArray<CreateFieldName>;
 
+export const CREATE_FIELD_GAP = 1;
+export const CREATE_SELECT_FIELD_LABEL_GAP = 1;
+export const CREATE_SELECT_FIELD_CONTROL_HEIGHT = 3;
+export const CREATE_SELECT_FIELD_BODY_HEIGHT =
+	1 + CREATE_SELECT_FIELD_LABEL_GAP + CREATE_SELECT_FIELD_CONTROL_HEIGHT + 1;
+
 const CREATE_FIELD_HEIGHTS: Record<CreateFieldName, number> = {
-	"data-storage": 5,
+	"data-storage": CREATE_SELECT_FIELD_BODY_HEIGHT,
 	namespace: 6,
 	"no-install": 2,
-	"package-manager": 5,
-	"persistence-policy": 5,
+	"package-manager": CREATE_SELECT_FIELD_BODY_HEIGHT,
+	"persistence-policy": CREATE_SELECT_FIELD_BODY_HEIGHT,
 	"php-prefix": 6,
 	"project-dir": 6,
-	template: 5,
+	template: CREATE_SELECT_FIELD_BODY_HEIGHT,
 	"text-domain": 6,
 	yes: 2,
 	"with-migration-ui": 2,
 	"with-test-preset": 2,
 	"with-wp-env": 2,
 };
-
-const CREATE_FIELD_GAP = 1;
 
 export function isCreatePersistenceTemplate(template?: string): boolean {
 	return template === "persistence" || template === "compound";

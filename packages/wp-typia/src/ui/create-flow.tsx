@@ -15,8 +15,11 @@ import {
 import { executeCreateCommand } from "../runtime-bridge";
 import { useAlternateBufferLifecycle } from "./alternate-buffer-lifecycle";
 import {
+	CREATE_FIELD_GAP,
 	type CreateFlowValues,
 	CREATE_CHECKBOX_FIELD_NAMES,
+	CREATE_SELECT_FIELD_CONTROL_HEIGHT,
+	CREATE_SELECT_FIELD_LABEL_GAP,
 	createFlowSchema,
 	getCreateScrollTop,
 	getCreateViewportHeight,
@@ -71,10 +74,14 @@ type CreateFlowProps = {
 	initialValues: Partial<CreateFlowValues>;
 };
 
+type CreateSelectFieldName = {
+	[K in keyof CreateFlowValues]-?: CreateFlowValues[K] extends string | undefined ? K : never;
+}[keyof CreateFlowValues];
+
 type CreateSelectFieldProps = {
 	defaultValue?: string;
 	label: string;
-	name: keyof CreateFlowValues;
+	name: CreateSelectFieldName;
 	options: SelectOption[];
 };
 
@@ -139,7 +146,13 @@ function CreateSelectField({
 
 	return createElement(
 		"box",
-		{ style: { flexDirection: "column", gap: 1, marginBottom: 1 } },
+		{
+			style: {
+				flexDirection: "column",
+				gap: CREATE_SELECT_FIELD_LABEL_GAP,
+				marginBottom: CREATE_FIELD_GAP,
+			},
+		},
 		createElement("text", {
 			content: `${field.focused ? ">" : " "} ${label}`,
 			fg: field.focused ? tokens.accent : tokens.textPrimary,
@@ -148,7 +161,7 @@ function CreateSelectField({
 			"box",
 			{
 				border: true,
-				height: 3,
+				height: CREATE_SELECT_FIELD_CONTROL_HEIGHT,
 				style: {
 					borderColor: field.error
 						? tokens.textDanger
@@ -212,7 +225,7 @@ function CreateCheckboxField({
 
 	return createElement(
 		"box",
-		{ style: { flexDirection: "column", marginBottom: 1 } },
+		{ style: { flexDirection: "column", marginBottom: CREATE_FIELD_GAP } },
 		createElement("text", {
 			content: `${field.focused ? ">" : " "} ${field.value ? "[x]" : "[ ]"} ${label}`,
 			fg: field.focused ? tokens.accent : tokens.textPrimary,
