@@ -723,6 +723,14 @@ function assertWorkspaceTemplateScaffold(projectDir) {
 	}
 }
 
+function isWorkspaceTemplateRequest(template, packageJson) {
+	return (
+		template === "workspace" ||
+		template === "@wp-typia/create-workspace-template" ||
+		packageJson.wpTypia?.projectType === "workspace"
+	);
+}
+
 function assertWorkspaceBlockArtifacts(projectDir, blockSlugs) {
 	for (const slug of blockSlugs) {
 		const blockDir = path.join(projectDir, "build", "blocks", slug);
@@ -1030,7 +1038,7 @@ function main() {
 			);
 		}
 
-		if (template === "@wp-typia/create-workspace-template") {
+		if (isWorkspaceTemplateRequest(template, packageJson)) {
 			runLocalDoctor(projectDir, runtime);
 		}
 
@@ -1041,7 +1049,7 @@ function main() {
 		const [buildCommand, buildArgs] = getRunCommand(packageManager);
 		run(buildCommand, buildArgs, { cwd: projectDir });
 
-		if (template === "@wp-typia/create-workspace-template") {
+		if (isWorkspaceTemplateRequest(template, packageJson)) {
 			assertWorkspaceTemplateScaffold(projectDir);
 			assertWorkspaceBlockArtifacts(
 				projectDir,

@@ -15,7 +15,10 @@ import {
   getOptionalOnboarding,
   runScaffoldFlow,
 } from "../src/runtime/cli-core.js";
-import { collectScaffoldAnswers } from "../src/runtime/scaffold.js";
+import {
+  collectScaffoldAnswers,
+  resolveTemplateId,
+} from "../src/runtime/scaffold.js";
 import { copyRenderedDirectory } from "../src/runtime/template-render.js";
 import {
   parseGitHubTemplateLocator,
@@ -3944,6 +3947,8 @@ console.log(JSON.stringify({ initial, updated, reread }));
     expect(externalPathLine).not.toContain("--with-migration-ui");
     expect(externalPackageLine).toBeDefined();
     expect(externalPackageLine).not.toContain("--with-migration-ui");
+    expect(helpText).toContain("--template workspace");
+    expect(helpText).toContain("@wp-typia/create-workspace-template");
   });
 
   test("cli-core barrel preserves doctor helper exports", () => {
@@ -7083,6 +7088,53 @@ export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
       raw: "@scope/template-package@^1.2.0",
       rawSpec: "^1.2.0",
       type: "range",
+    });
+  });
+
+  test("normalizes the workspace template alias to the official package id", async () => {
+    await expect(
+      resolveTemplateId({
+        templateId: "workspace",
+      })
+    ).resolves.toBe("@wp-typia/create-workspace-template");
+
+    await expect(
+      resolveTemplateId({
+        templateId: "@wp-typia/create-workspace-template",
+      })
+    ).resolves.toBe("@wp-typia/create-workspace-template");
+  });
+
+  test("workspace alias scaffolds through the official local template resolver", async () => {
+    const targetDir = path.join(tempRoot, "demo-workspace-template-alias");
+
+    const result = await scaffoldProject({
+      projectDir: targetDir,
+      templateId: "workspace",
+      packageManager: "npm",
+      noInstall: true,
+      answers: {
+        author: "Test Runner",
+        description: "Demo empty workspace alias",
+        namespace: "demo-space",
+        phpPrefix: "demo_space",
+        slug: "demo-workspace-template-alias",
+        textDomain: "demo-space",
+        title: "Demo Workspace Template Alias",
+      },
+    });
+
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+    );
+
+    expect(result.templateId).toBe("@wp-typia/create-workspace-template");
+    expect(packageJson.wpTypia).toEqual({
+      projectType: "workspace",
+      templatePackage: "@wp-typia/create-workspace-template",
+      namespace: "demo-space",
+      textDomain: "demo-space",
+      phpPrefix: "demo_space",
     });
   });
 

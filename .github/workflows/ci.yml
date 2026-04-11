@@ -253,7 +253,7 @@ jobs:
             add_variation_name: hero-card
             add_variation_block: counter-card
           - runtime: node
-            template: "@wp-typia/create-workspace-template"
+            template: "workspace"
             package_manager: npm
             project_name: smoke-workspace-add-pattern-npm
             add_pattern_name: hero-layout
