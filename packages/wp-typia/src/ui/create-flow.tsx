@@ -67,9 +67,9 @@ export function CreateFlow({ cwd, initialValues }: CreateFlowProps) {
 								value: "compound",
 							},
 							{
-								name: "@wp-typia/create-workspace-template",
+								name: "workspace",
 								description: "Official empty workspace template",
-								value: "@wp-typia/create-workspace-template",
+								value: "workspace",
 							},
 						],
 					},

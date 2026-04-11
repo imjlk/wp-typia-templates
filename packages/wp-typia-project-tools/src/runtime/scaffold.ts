@@ -60,6 +60,7 @@ const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
 const PHP_PREFIX_PATTERN = /^[a-z_][a-z0-9_]*$/;
 const PHP_PREFIX_MAX_LENGTH = 50;
 const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
+const WORKSPACE_TEMPLATE_ALIAS = "workspace";
 const EPHEMERAL_NODE_MODULES_LINK_TYPE = process.platform === "win32" ? "junction" : "dir";
 const LOCKFILES: Record<PackageManagerId, string[]> = {
 	bun: ["bun.lock", "bun.lockb"],
@@ -384,6 +385,12 @@ export function getDefaultAnswers(
 	};
 }
 
+function normalizeTemplateSelection(templateId: string): string {
+	return templateId === WORKSPACE_TEMPLATE_ALIAS
+		? OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
+		: templateId;
+}
+
 export async function resolveTemplateId({
 	templateId,
 	yes = false,
@@ -391,13 +398,14 @@ export async function resolveTemplateId({
 	selectTemplate,
 }: ResolveTemplateOptions): Promise<string> {
 	if (templateId) {
+		const normalizedTemplateId = normalizeTemplateSelection(templateId);
 		if (isRemovedBuiltInTemplateId(templateId)) {
 			throw new Error(getRemovedBuiltInTemplateMessage(templateId));
 		}
-		if (isBuiltInTemplateId(templateId)) {
-			return getTemplateById(templateId).id;
+		if (isBuiltInTemplateId(normalizedTemplateId)) {
+			return getTemplateById(normalizedTemplateId).id;
 		}
-		return templateId;
+		return normalizedTemplateId;
 	}
 
 	if (yes) {
@@ -410,7 +418,7 @@ export async function resolveTemplateId({
 		);
 	}
 
-	return selectTemplate();
+	return normalizeTemplateSelection(await selectTemplate());
 }
 
 export async function resolvePackageManagerId({
@@ -1052,16 +1060,17 @@ export async function scaffoldProject({
 	withTestPreset = false,
 	withWpEnv = false,
 }: ScaffoldProjectOptions): Promise<ScaffoldProjectResult> {
+	const resolvedTemplateId = normalizeTemplateSelection(templateId);
 	const resolvedPackageManager = getPackageManager(packageManager).id;
-	const isBuiltInTemplate = isBuiltInTemplateId(templateId);
+	const isBuiltInTemplate = isBuiltInTemplateId(resolvedTemplateId);
 
-	const variables = getTemplateVariables(templateId, {
+	const variables = getTemplateVariables(resolvedTemplateId, {
 		...answers,
 		dataStorageMode: dataStorageMode ?? answers.dataStorageMode,
 		persistencePolicy: persistencePolicy ?? answers.persistencePolicy,
 	});
 	const templateSource = await resolveTemplateSource(
-		templateId,
+		resolvedTemplateId,
 		cwd,
 		variables,
 		variant,
@@ -1088,8 +1097,8 @@ export async function scaffoldProject({
 	}
 	const isOfficialWorkspace = isOfficialWorkspaceProject(projectDir);
 	if (isBuiltInTemplate) {
-		await writeStarterManifestFiles(projectDir, templateId, variables);
-		await seedBuiltInPersistenceArtifacts(projectDir, templateId, variables);
+		await writeStarterManifestFiles(projectDir, resolvedTemplateId, variables);
+		await seedBuiltInPersistenceArtifacts(projectDir, resolvedTemplateId, variables);
 		await applyLocalDevPresetFiles({
 			projectDir,
 			variables,
@@ -1100,7 +1109,7 @@ export async function scaffoldProject({
 			await applyMigrationUiCapability({
 				packageManager: resolvedPackageManager,
 				projectDir,
-				templateId,
+				templateId: resolvedTemplateId,
 				variables,
 			});
 		}
@@ -1111,7 +1120,7 @@ export async function scaffoldProject({
 	if (!fs.existsSync(readmePath)) {
 		await fsp.writeFile(
 			readmePath,
-			buildReadme(templateId, variables, resolvedPackageManager, {
+			buildReadme(resolvedTemplateId, variables, resolvedPackageManager, {
 				withMigrationUi:
 					isBuiltInTemplate || isOfficialWorkspace ? withMigrationUi : false,
 				withTestPreset: isBuiltInTemplate ? withTestPreset : false,
@@ -1135,7 +1144,7 @@ export async function scaffoldProject({
 			compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
 			packageManager: resolvedPackageManager,
 			projectDir,
-			templateId,
+			templateId: resolvedTemplateId,
 			withTestPreset,
 			withWpEnv,
 		});
@@ -1155,7 +1164,7 @@ export async function scaffoldProject({
 	return {
 		projectDir,
 		selectedVariant: templateSource.selectedVariant ?? null,
-		templateId,
+		templateId: resolvedTemplateId,
 		packageManager: resolvedPackageManager,
 		variables,
 		warnings: templateSource.warnings ?? [],
