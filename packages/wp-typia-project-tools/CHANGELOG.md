@@ -1,5 +1,15 @@
 # @wp-typia/project-tools
 
+## 0.16.1 — 2026-04-11
+
+### Patch changes
+
+- [3dd1c99](https://github.com/imjlk/wp-typia/commit/3dd1c99df1aa69cd11563861adf9b75f5ec5be71) Fix generated interactivity scaffolds to emit valid `data-wp-class--is-active` directives for animation state toggling. — Thanks @imjlk!
+- [548c95b](https://github.com/imjlk/wp-typia/commit/548c95b07b97b8e4264af94651c5d9dea9974c8b) Fix `wp-typia create --template workspace` to normalize the shorthand alias before npm template resolution. — Thanks @imjlk!
+- [f3ad2ae](https://github.com/imjlk/wp-typia/commit/f3ad2ae8a94f5db626e080c9972e4749e03a1927) Align persistence and compound scaffold validator and inspector conventions, including generated storage-mode labels and compound add-child validator wiring. — Thanks @imjlk!
+- [024bab0](https://github.com/imjlk/wp-typia/commit/024bab003d1e20a2248c08ffe772cf7875ae0acb) Fix persistence scaffold regressions in authenticated bootstrap typing and generated PHP storage-mode handling. — Thanks @imjlk!
+- Updated dependencies: block-runtime (npm)@0.4.4
+
 ## 0.16.0 — 2026-04-10
 
 ### Minor changes
