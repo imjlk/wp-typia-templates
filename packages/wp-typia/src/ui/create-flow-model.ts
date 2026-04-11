@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+import {
+	FIRST_PARTY_CHECKBOX_FIELD_BODY_HEIGHT,
+	FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+	FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+	getFirstPartyScrollTop,
+	getFirstPartyViewportHeight,
+} from "./first-party-form-model";
+
 export const createFlowSchema = z.object({
 	"data-storage": z.string().optional(),
 	namespace: z.string().optional(),
@@ -54,26 +62,20 @@ export const CREATE_FIELD_ORDER = [
 	...CREATE_CHECKBOX_FIELD_NAMES,
 ] as const satisfies ReadonlyArray<CreateFieldName>;
 
-export const CREATE_FIELD_GAP = 1;
-export const CREATE_SELECT_FIELD_LABEL_GAP = 1;
-export const CREATE_SELECT_FIELD_CONTROL_HEIGHT = 3;
-export const CREATE_SELECT_FIELD_BODY_HEIGHT =
-	1 + CREATE_SELECT_FIELD_LABEL_GAP + CREATE_SELECT_FIELD_CONTROL_HEIGHT + 1;
-
 const CREATE_FIELD_HEIGHTS: Record<CreateFieldName, number> = {
-	"data-storage": CREATE_SELECT_FIELD_BODY_HEIGHT,
-	namespace: 6,
-	"no-install": 2,
-	"package-manager": CREATE_SELECT_FIELD_BODY_HEIGHT,
-	"persistence-policy": CREATE_SELECT_FIELD_BODY_HEIGHT,
-	"php-prefix": 6,
-	"project-dir": 6,
-	template: CREATE_SELECT_FIELD_BODY_HEIGHT,
-	"text-domain": 6,
-	yes: 2,
-	"with-migration-ui": 2,
-	"with-test-preset": 2,
-	"with-wp-env": 2,
+	"data-storage": FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+	namespace: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+	"no-install": FIRST_PARTY_CHECKBOX_FIELD_BODY_HEIGHT,
+	"package-manager": FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+	"persistence-policy": FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+	"php-prefix": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+	"project-dir": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+	template: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+	"text-domain": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+	yes: FIRST_PARTY_CHECKBOX_FIELD_BODY_HEIGHT,
+	"with-migration-ui": FIRST_PARTY_CHECKBOX_FIELD_BODY_HEIGHT,
+	"with-test-preset": FIRST_PARTY_CHECKBOX_FIELD_BODY_HEIGHT,
+	"with-wp-env": FIRST_PARTY_CHECKBOX_FIELD_BODY_HEIGHT,
 };
 
 export function isCreatePersistenceTemplate(template?: string): boolean {
@@ -93,7 +95,7 @@ export function getVisibleCreateFieldNames(
 }
 
 export function getCreateViewportHeight(terminalHeight = 24): number {
-	return Math.max(8, Math.min(28, terminalHeight - 12));
+	return getFirstPartyViewportHeight(terminalHeight);
 }
 
 export function getCreateScrollTop(options: {
@@ -102,29 +104,12 @@ export function getCreateScrollTop(options: {
 	viewportHeight: number;
 }): number {
 	const { activeFieldName, values, viewportHeight } = options;
-	if (!activeFieldName) {
-		return 0;
-	}
-
-	const visibleFields = getVisibleCreateFieldNames(values);
-	let offset = 0;
-
-	for (const fieldName of visibleFields) {
-		const fieldHeight = CREATE_FIELD_HEIGHTS[fieldName];
-		if (fieldName === activeFieldName) {
-			const safeViewportHeight = Math.max(4, viewportHeight - 2);
-			const fieldBottom = offset + fieldHeight;
-			if (fieldBottom <= safeViewportHeight) {
-				return 0;
-			}
-
-			return Math.max(0, fieldBottom - safeViewportHeight + 1);
-		}
-
-		offset += fieldHeight + CREATE_FIELD_GAP;
-	}
-
-	return 0;
+	return getFirstPartyScrollTop({
+		activeFieldName,
+		fieldHeights: CREATE_FIELD_HEIGHTS,
+		visibleFieldNames: getVisibleCreateFieldNames(values),
+		viewportHeight,
+	});
 }
 
 export function sanitizeCreateSubmitValues(values: CreateFlowValues): CreateFlowValues {
