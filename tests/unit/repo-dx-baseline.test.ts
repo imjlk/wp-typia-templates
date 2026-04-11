@@ -18,6 +18,9 @@ describe('repository DX baseline', () => {
 		expect(scripts['format:check']).toBeDefined();
 		expect(scripts['test:all']).toBeDefined();
 		expect(scripts['ci:local']).toBeDefined();
+		expect(scripts['typescript-runtime:validate']).toBe(
+			'node scripts/validate-typescript-runtime-dependency-placement.mjs',
+		);
 		expect(scripts['examples:build']).toBe('node scripts/run-clean-examples-build.mjs');
 	});
 
@@ -86,6 +89,10 @@ describe('repository DX baseline', () => {
 		expect(contributing).toContain('[`UPGRADE.md`](./UPGRADE.md)');
 		expect(contributing).toContain('[`SECURITY.md`](./SECURITY.md)');
 		expect(contributing).toContain('## Generated project toolchain matrix');
+		expect(contributing).toContain('## TypeScript runtime dependency audit');
+		expect(contributing).toContain('`bun run typescript-runtime:validate`');
+		expect(contributing).toContain('`@wp-typia/block-runtime` keeps `typescript` in `dependencies`');
+		expect(contributing).toContain('`@wp-typia/project-tools` keeps `typescript` in `dependencies`');
 		expect(contributing).toContain('`typia` 12.x');
 		expect(contributing).toContain('`@wordpress/scripts` 30.x');
 		expect(cliReadme).toMatch(
