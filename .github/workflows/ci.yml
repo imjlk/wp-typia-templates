@@ -131,10 +131,16 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run tests
+      - name: Run regression tests
+        if: github.event_name == 'pull_request'
+        run: bun run test:project-tools
+
+      - name: Run coverage tests
+        if: github.event_name == 'push'
         run: bun run test:coverage:project-tools
 
       - name: Upload coverage to Codecov
+        if: github.event_name == 'push'
         uses: codecov/codecov-action@v6
         with:
           disable_search: true

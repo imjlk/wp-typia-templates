@@ -4,4 +4,4 @@ npm/@wp-typia/project-tools: patch
 npm/wp-typia: patch
 ---
 
-Deduplicate schema-core behind the block-runtime implementation owner while keeping the project-tools import path stable, and streamline CI coverage jobs and workflow actions to reduce wall-clock time and remove Node 20 runtime warnings.
+Deduplicate schema-core behind the block-runtime implementation owner while keeping the project-tools import path stable, run project-tools regression tests on pull requests while keeping coverage uploads on main, and refresh workflow actions to reduce wall-clock time and remove Node 20 runtime warnings.
