@@ -70,13 +70,8 @@ const wpTypiaPackageManifest = JSON.parse(
 );
 const apiClientPackageVersion =
   createPackageManifest.dependencies["@wp-typia/api-client"];
-const blockRuntimePackageManifest = JSON.parse(
-  fs.readFileSync(
-    path.resolve(packageRoot, "..", "wp-typia-block-runtime", "package.json"),
-    "utf8"
-  )
-);
-const blockRuntimePackageVersion = `^${blockRuntimePackageManifest.version}`;
+const blockRuntimePackageVersion =
+  createPackageManifest.dependencies["@wp-typia/block-runtime"];
 const blockTypesPackageVersion =
   createPackageManifest.dependencies["@wp-typia/block-types"];
 const restPackageVersion = createPackageManifest.dependencies["@wp-typia/rest"];

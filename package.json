@@ -46,6 +46,8 @@
     "benchmark:create-runtime": "node scripts/benchmark-create-runtime-hotpaths.mjs",
     "test:coverage": "bun run test:coverage:packages && bun run test:coverage:project-tools",
     "test:project-tools": "bun run --filter @wp-typia/project-tools test",
+    "test:project-tools:scaffolding": "bun run --filter @wp-typia/project-tools test:scaffolding",
+    "test:project-tools:migrations": "bun run --filter @wp-typia/project-tools test:migrations",
     "test:coverage:packages": "bun run test:unit:coverage && bun run --filter @wp-typia/rest test:coverage && bun run --filter @wp-typia/api-client test:coverage && bun run --filter wp-typia test:coverage && bun run --filter @wp-typia/block-runtime test:coverage",
     "test:coverage:project-tools": "bun run --filter @wp-typia/project-tools test:coverage",
     "test:unit:coverage": "bun test tests/unit --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage/unit",

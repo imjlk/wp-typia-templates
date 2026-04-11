@@ -108,9 +108,10 @@ jobs:
           flags: unit-core
           name: codecov-unit-core
 
-  test-project-tools:
-    name: Unit Tests (Project Tools)
+  test-project-tools-scaffolding:
+    name: Project Tools Regression (Scaffolding)
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -131,22 +132,86 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run regression tests
-        if: github.event_name == 'pull_request'
-        run: bun run test:project-tools
+      - name: Run scaffolding regression tests
+        run: bun run test:project-tools:scaffolding
+
+  test-project-tools-migrations:
+    name: Project Tools Regression (Migrations)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache Bun install cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run migration regression tests
+        run: bun run test:project-tools:migrations
+
+  test-project-tools-coverage:
+    name: Project Tools Coverage
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache Bun install cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
       - name: Run coverage tests
-        if: github.event_name == 'push'
         run: bun run test:coverage:project-tools
 
       - name: Upload coverage to Codecov
-        if: github.event_name == 'push'
         uses: codecov/codecov-action@v6
         with:
           disable_search: true
           files: ./packages/wp-typia-project-tools/coverage/lcov.info
           flags: project-tools
           name: codecov-project-tools
+
+  test-project-tools:
+    name: Unit Tests (Project Tools)
+    runs-on: ubuntu-latest
+    needs:
+      - test-project-tools-scaffolding
+      - test-project-tools-migrations
+      - test-project-tools-coverage
+    if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+    steps:
+      - name: Confirm project-tools test lane
+        run: |
+          echo "project-tools test lane completed successfully"
+          echo "scaffolding=${{ needs.test-project-tools-scaffolding.result }}"
+          echo "migrations=${{ needs.test-project-tools-migrations.result }}"
+          echo "coverage=${{ needs.test-project-tools-coverage.result }}"
 
   build:
     name: Build CLI and Example
