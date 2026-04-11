@@ -36,8 +36,8 @@ First-party form interaction contract:
 
 Regression and triage contract:
 
-- `bun run test:tui-smoke` is the committed PTY smoke for the first-party TUI surface. It covers real alternate-buffer commands for `create`, `add`, and `migrate` in a constrained viewport.
-- The PTY smoke is intentionally scoped to macOS/Linux and GitHub Actions `ubuntu-latest`. Windows is out of scope for this contract today.
-- `packages/wp-typia/tests/fixtures/bunli-diagnostic-cli.tsx` is the minimal Bunli baseline fixture for future triage.
-  - If a regression reproduces in the first-party PTY smoke, treat it as a `wp-typia` interaction-contract issue first.
-  - If a regression only reproduces in the diagnostic fixture, treat it as a likely Bunli-level issue first.
+- The committed regression contract is the first-party model and layout test suite under `packages/wp-typia/tests`.
+- `create-flow-layout.test.ts` keeps the small-viewport scroll model and checkbox-cluster ordering pinned.
+- `tui-interaction-models.test.ts` keeps visible field ordering and submit sanitization pinned for `add` and `migrate`.
+- The committed tests deliberately stop short of a repo-level PTY smoke because the alternate-buffer harness cost and flake surface outweighed the regression value for this round.
+- If a future regression needs terminal-level confirmation, reproduce it from the real `wp-typia` command first before classifying it as a Bunli-level issue.

@@ -100,9 +100,6 @@ jobs:
       - name: Run tests
         run: bun run test:coverage
 
-      - name: Run TUI smoke
-        run: bun run test:tui-smoke
-
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:

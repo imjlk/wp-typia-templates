@@ -5,12 +5,21 @@ import {
 	isAddPersistenceTemplate,
 	sanitizeAddSubmitValues,
 } from "../src/ui/add-flow-model";
+import { getWrappedFieldNeighbors } from "../src/ui/first-party-form-model";
 import {
 	getVisibleMigrateFieldNames,
 	sanitizeMigrateSubmitValues,
 } from "../src/ui/migrate-flow-model";
 
 describe("first-party TUI interaction models", () => {
+	test("field neighbor lookup avoids self-loops for single-field states", () => {
+		expect(getWrappedFieldNeighbors(["command"], "command")).toEqual({});
+		expect(getWrappedFieldNeighbors(["kind", "name", "template"], "name")).toEqual({
+			nextFieldName: "template",
+			previousFieldName: "kind",
+		});
+	});
+
 	test("add flow keeps visible field ordering stable across kind switches", () => {
 		expect(getVisibleAddFieldNames({ kind: "block", template: "basic" })).toEqual([
 			"kind",
