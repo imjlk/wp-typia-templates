@@ -123,6 +123,8 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 			let bootstrapSucceeded = false;
 			let lastBootstrapError =
 				'Unable to initialize write access';
+			const includePublicWriteCredentials = {{isPublicPersistencePolicy}};
+			const includeRestNonce = {{isAuthenticatedPersistencePolicy}};
 
 			for ( let attempt = 1; attempt <= BOOTSTRAP_MAX_ATTEMPTS; attempt += 1 ) {
 				try {
@@ -146,16 +148,22 @@ const { actions, state } = store( '{{slugKebabCase}}', {
 					}
 
 					clientState.writeExpiry =
+						includePublicWriteCredentials &&
+						'publicWriteExpiresAt' in result.data &&
 						typeof result.data.publicWriteExpiresAt === 'number' &&
 						result.data.publicWriteExpiresAt > 0
 							? result.data.publicWriteExpiresAt
 							: 0;
 					clientState.writeToken =
+						includePublicWriteCredentials &&
+						'publicWriteToken' in result.data &&
 						typeof result.data.publicWriteToken === 'string' &&
 						result.data.publicWriteToken.length > 0
 							? result.data.publicWriteToken
 							: '';
 					clientState.writeNonce =
+						includeRestNonce &&
+						'restNonce' in result.data &&
 						typeof result.data.restNonce === 'string' &&
 						result.data.restNonce.length > 0
 							? result.data.restNonce
