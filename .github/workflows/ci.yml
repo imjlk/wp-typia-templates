@@ -62,6 +62,9 @@ jobs:
       - name: Validate runtime package coupling
         run: bun run runtime-coupling:validate
 
+      - name: Validate TypeScript runtime dependency placement
+        run: bun run typescript-runtime:validate
+
       - name: Run example linting
         run: bun run examples:lint
 

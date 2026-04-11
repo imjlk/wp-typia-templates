@@ -30,6 +30,12 @@ function run(command, args, options = {}) {
 	});
 }
 
+function runNodeScript(projectDir, fileName, source, args = []) {
+	const scriptPath = path.join(projectDir, fileName);
+	fs.writeFileSync(scriptPath, source, "utf8");
+	return run("node", [scriptPath, ...args], { cwd: projectDir });
+}
+
 execFileSync("bun", ["run", "packages:build"], {
 	cwd: repoRoot,
 	stdio: "inherit",
@@ -110,5 +116,96 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 		throw new Error(`Unexpected wp-typia --version output: ${versionOutput}`);
 	}
 
-	process.stdout.write(`Verified published-install smoke for wp-typia ${parsed.data.version}.\n`);
+	const blockRuntimeSmokeDir = path.join(projectDir, "block-runtime-smoke");
+	fs.mkdirSync(blockRuntimeSmokeDir, { recursive: true });
+	fs.writeFileSync(
+		path.join(blockRuntimeSmokeDir, "types.ts"),
+		[
+			"export interface CounterAttributes {",
+			'\tlabel: string;',
+			"\tcount: number;",
+			"}",
+			"",
+		].join("\n"),
+		"utf8",
+	);
+	fs.writeFileSync(
+		path.join(blockRuntimeSmokeDir, "block.json"),
+		`${JSON.stringify({ name: "smoke/counter" }, null, 2)}\n`,
+		"utf8",
+	);
+	runNodeScript(
+		projectDir,
+		"block-runtime-smoke.mjs",
+		[
+			'import fs from "node:fs";',
+			'import path from "node:path";',
+			'import { runSyncBlockMetadata } from "@wp-typia/block-runtime/metadata-core";',
+			"",
+			"const projectRoot = path.resolve(process.argv[2]);",
+			"const report = await runSyncBlockMetadata(",
+			"\t{",
+			'\t\tblockJsonFile: "block.json",',
+			'\t\tjsonSchemaFile: "schema.json",',
+			'\t\tmanifestFile: "manifest.json",',
+			'\t\topenApiFile: "openapi.json",',
+			'\t\tphpValidatorFile: "validator.php",',
+			"\t\tprojectRoot,",
+			'\t\tsourceTypeName: "CounterAttributes",',
+			'\t\ttypesFile: "types.ts",',
+			"\t},",
+			");",
+			'if (report.status !== "success") {',
+			"\tconst warningMessage = [",
+			"\t\t...report.lossyProjectionWarnings,",
+			"\t\t...report.phpGenerationWarnings,",
+			'\t].join("; ");',
+			'\tconst detail = report.failure?.message ?? (warningMessage || report.status);',
+			'\tthrow new Error(`block-runtime smoke failed: ${detail}`);',
+			"}",
+			'for (const artifact of ["manifest.json", "schema.json", "openapi.json", "validator.php"]) {',
+			"\tif (!fs.existsSync(path.join(projectRoot, artifact))) {",
+			'\t\tthrow new Error(`Missing generated artifact: ${artifact}`);',
+			"\t}",
+			"}",
+			"",
+		].join("\n"),
+		[blockRuntimeSmokeDir],
+	);
+
+	const projectToolsSmokeDir = path.join(projectDir, "project-tools-smoke");
+	fs.mkdirSync(path.join(projectToolsSmokeDir, "scripts"), { recursive: true });
+	fs.writeFileSync(
+		path.join(projectToolsSmokeDir, "scripts", "block-config.ts"),
+		[
+			"export const BLOCKS = [",
+			"\t{",
+			'\t\tslug: "counter-card",',
+			'\t\ttypesFile: "src/blocks/counter-card/types.ts",',
+			"\t},",
+			"];",
+			"",
+		].join("\n"),
+		"utf8",
+	);
+	runNodeScript(
+		projectDir,
+		"project-tools-smoke.mjs",
+		[
+			'import { getWorkspaceBlockSelectOptions } from "@wp-typia/project-tools";',
+			'import path from "node:path";',
+			"",
+			"const projectRoot = path.resolve(process.argv[2]);",
+			"const options = getWorkspaceBlockSelectOptions(projectRoot);",
+			'if (options.length !== 1 || options[0]?.value !== "counter-card") {',
+			'\tthrow new Error(`Unexpected workspace options: ${JSON.stringify(options)}`);',
+			"}",
+			"",
+		].join("\n"),
+		[projectToolsSmokeDir],
+	);
+
+	process.stdout.write(
+		`Verified published-install smoke for wp-typia ${parsed.data.version}, block-runtime metadata sync, and project-tools workspace inventory runtime paths.\n`,
+	);
 });

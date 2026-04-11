@@ -151,6 +151,18 @@ Validation uses planned publish truth, not just source truth:
 - caret-coupled dependents still need a manifest update plus a pending changeset in the same PR when an upstream change falls outside the current lane
 - the `wp-typia -> @wp-typia/project-tools` exact pin may stay on the current source version during a changeset PR, because the release PR/versioning step rewrites that exact dependency to the published next version
 
+## TypeScript runtime dependency audit
+
+`typescript` is **not** a blanket runtime dependency across the repo.
+
+- `@wp-typia/block-runtime` keeps `typescript` in `dependencies` because the published metadata parser/analysis/core paths use the TypeScript compiler API at runtime
+- `@wp-typia/project-tools` keeps `typescript` in `dependencies` because the published workspace inventory helpers used by `add`, `doctor`, `migrations`, and workspace block selection parse `scripts/block-config.ts` through the TypeScript compiler API
+- `wp-typia`, `@wp-typia/rest`, `@wp-typia/api-client`, and `@wp-typia/block-types` do **not** need `typescript` in `dependencies`; they stay build/test-only consumers
+
+This is enforced by `bun run typescript-runtime:validate` in local CI and GitHub Actions.
+
+If you want to move `typescript` out of `dependencies` for `@wp-typia/block-runtime` or `@wp-typia/project-tools`, first remove the runtime compiler-API usage itself. A dependency-only manifest edit without that refactor is not safe.
+
 ## Pull requests
 
 - Keep changes scoped and intentional.
