@@ -10,7 +10,7 @@ import {
 	TYPESCRIPT_DEPENDENCY_POLICY,
 } from "../../scripts/lib/typescript-runtime-policy.mjs";
 
-const tempDirs = [];
+const tempDirs: string[] = [];
 
 afterEach(() => {
 	for (const tempDir of tempDirs) {
