@@ -152,7 +152,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends `UnknownRecord` |
+| `T` | extends `object` |
 
 #### Parameters
 

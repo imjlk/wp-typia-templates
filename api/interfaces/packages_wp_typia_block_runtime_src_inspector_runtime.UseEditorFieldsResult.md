@@ -42,7 +42,7 @@ ___
 
 ### getBooleanValue
 
-• **getBooleanValue**: (`source`: `UnknownRecord`, `path`: `string`, `fallback`: `boolean`) => `boolean`
+• **getBooleanValue**: (`source`: `object`, `path`: `string`, `fallback`: `boolean`) => `boolean`
 
 #### Type declaration
 
@@ -52,7 +52,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `source` | `UnknownRecord` |
+| `source` | `object` |
 | `path` | `string` |
 | `fallback` | `boolean` |
 
@@ -92,7 +92,7 @@ ___
 
 ### getNumberValue
 
-• **getNumberValue**: (`source`: `UnknownRecord`, `path`: `string`, `fallback`: `number`) => `number`
+• **getNumberValue**: (`source`: `object`, `path`: `string`, `fallback`: `number`) => `number`
 
 #### Type declaration
 
@@ -102,7 +102,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `source` | `UnknownRecord` |
+| `source` | `object` |
 | `path` | `string` |
 | `fallback` | `number` |
 
@@ -143,7 +143,7 @@ ___
 
 ### getStringValue
 
-• **getStringValue**: (`source`: `UnknownRecord`, `path`: `string`, `fallback`: `string`) => `string`
+• **getStringValue**: (`source`: `object`, `path`: `string`, `fallback`: `string`) => `string`
 
 #### Type declaration
 
@@ -153,7 +153,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `source` | `UnknownRecord` |
+| `source` | `object` |
 | `path` | `string` |
 | `fallback` | `string` |
 

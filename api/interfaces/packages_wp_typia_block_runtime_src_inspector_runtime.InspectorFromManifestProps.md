@@ -8,7 +8,7 @@
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends `UnknownRecord` |
+| `T` | extends `object` |
 
 ## Table of contents
 
