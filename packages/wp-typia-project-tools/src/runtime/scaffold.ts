@@ -385,6 +385,12 @@ export function getDefaultAnswers(
 	};
 }
 
+function normalizeTemplateSelection(templateId: string): string {
+	return templateId === WORKSPACE_TEMPLATE_ALIAS
+		? OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
+		: templateId;
+}
+
 export async function resolveTemplateId({
 	templateId,
 	yes = false,
@@ -392,16 +398,14 @@ export async function resolveTemplateId({
 	selectTemplate,
 }: ResolveTemplateOptions): Promise<string> {
 	if (templateId) {
-		if (templateId === WORKSPACE_TEMPLATE_ALIAS) {
-			return OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE;
-		}
+		const normalizedTemplateId = normalizeTemplateSelection(templateId);
 		if (isRemovedBuiltInTemplateId(templateId)) {
 			throw new Error(getRemovedBuiltInTemplateMessage(templateId));
 		}
-		if (isBuiltInTemplateId(templateId)) {
-			return getTemplateById(templateId).id;
+		if (isBuiltInTemplateId(normalizedTemplateId)) {
+			return getTemplateById(normalizedTemplateId).id;
 		}
-		return templateId;
+		return normalizedTemplateId;
 	}
 
 	if (yes) {
@@ -414,7 +418,7 @@ export async function resolveTemplateId({
 		);
 	}
 
-	return selectTemplate();
+	return normalizeTemplateSelection(await selectTemplate());
 }
 
 export async function resolvePackageManagerId({
@@ -1056,9 +1060,7 @@ export async function scaffoldProject({
 	withTestPreset = false,
 	withWpEnv = false,
 }: ScaffoldProjectOptions): Promise<ScaffoldProjectResult> {
-	const resolvedTemplateId = templateId === WORKSPACE_TEMPLATE_ALIAS
-		? OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
-		: templateId;
+	const resolvedTemplateId = normalizeTemplateSelection(templateId);
 	const resolvedPackageManager = getPackageManager(packageManager).id;
 	const isBuiltInTemplate = isBuiltInTemplateId(resolvedTemplateId);
 

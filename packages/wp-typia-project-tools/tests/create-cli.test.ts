@@ -7096,13 +7096,20 @@ export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
       resolveTemplateId({
         templateId: "workspace",
       })
-    ).resolves.toBe("@wp-typia/create-workspace-template");
+    ).resolves.toBe(workspaceTemplatePackageManifest.name);
 
     await expect(
       resolveTemplateId({
-        templateId: "@wp-typia/create-workspace-template",
+        templateId: workspaceTemplatePackageManifest.name,
       })
-    ).resolves.toBe("@wp-typia/create-workspace-template");
+    ).resolves.toBe(workspaceTemplatePackageManifest.name);
+
+    await expect(
+      resolveTemplateId({
+        isInteractive: true,
+        selectTemplate: async () => "workspace",
+      })
+    ).resolves.toBe(workspaceTemplatePackageManifest.name);
   });
 
   test("workspace alias scaffolds through the official local template resolver", async () => {
@@ -7128,10 +7135,10 @@ export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
       fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
     );
 
-    expect(result.templateId).toBe("@wp-typia/create-workspace-template");
+    expect(result.templateId).toBe(workspaceTemplatePackageManifest.name);
     expect(packageJson.wpTypia).toEqual({
       projectType: "workspace",
-      templatePackage: "@wp-typia/create-workspace-template",
+      templatePackage: workspaceTemplatePackageManifest.name,
       namespace: "demo-space",
       textDomain: "demo-space",
       phpPrefix: "demo_space",
