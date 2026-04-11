@@ -57,6 +57,11 @@ describe("typescript-runtime-policy", () => {
 				'import ts = require("typescript");',
 			),
 		).toBe(true);
+		expect(
+			sourceImportsTypeScriptAtRuntime(
+				'import type ts = require("typescript");',
+			),
+		).toBe(false);
 	});
 
 	test("ignores declaration-file variants when walking runtime roots", () => {
@@ -139,6 +144,35 @@ describe("typescript-runtime-policy", () => {
 
 		expect(result.errors).toContain(
 			"@example/runtime audit is stale: expected shipped runtime sources to import typescript from src/metadata.ts.",
+		);
+	});
+
+	test("fails when audited runtime import files grow beyond the expected set", () => {
+		const policy = {
+			packageDir: "packages/example-runtime",
+			packageName: "@example/runtime",
+			reason: "its shipped runtime uses the TypeScript compiler API",
+			requiredTypeScriptImportFiles: ["src/runtime.ts"],
+			runtimeSourceRoots: ["src"],
+			typescriptPlacement: TYPESCRIPT_DEPENDENCY_POLICY.dependency,
+		};
+
+		const result = evaluateTypeScriptRuntimePackagePolicy(policy, {
+			packedManifest: {
+				dependencies: {
+					typescript: "^5.9.2",
+				},
+			},
+			sourceManifest: {
+				dependencies: {
+					typescript: "^5.9.2",
+				},
+			},
+			typeScriptImportFiles: ["src/extra-runtime.ts", "src/runtime.ts"],
+		});
+
+		expect(result.errors).toContain(
+			"@example/runtime audit is stale: found additional shipped runtime sources importing typescript from src/extra-runtime.ts.",
 		);
 	});
 

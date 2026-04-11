@@ -200,6 +200,7 @@ export function sourceImportsTypeScriptAtRuntime(source, filePath = "source.ts")
 
 		if (
 			ts.isImportEqualsDeclaration(node) &&
+			node.isTypeOnly !== true &&
 			ts.isExternalModuleReference(node.moduleReference) &&
 			node.moduleReference.expression &&
 			ts.isStringLiteralLike(node.moduleReference.expression) &&
@@ -286,12 +287,23 @@ export function evaluateTypeScriptRuntimePackagePolicy(
 			);
 		}
 
-		const missingRequiredFiles = policy.requiredTypeScriptImportFiles.filter(
+		const expectedImportFiles = [...policy.requiredTypeScriptImportFiles].sort(
+			(left, right) => left.localeCompare(right),
+		);
+		const missingRequiredFiles = expectedImportFiles.filter(
 			(filePath) => !sortedImportFiles.includes(filePath),
+		);
+		const unexpectedImportFiles = sortedImportFiles.filter(
+			(filePath) => !expectedImportFiles.includes(filePath),
 		);
 		if (missingRequiredFiles.length > 0) {
 			errors.push(
 				`${policy.packageName} audit is stale: expected shipped runtime sources to import typescript from ${missingRequiredFiles.join(", ")}.`,
+			);
+		}
+		if (unexpectedImportFiles.length > 0) {
+			errors.push(
+				`${policy.packageName} audit is stale: found additional shipped runtime sources importing typescript from ${unexpectedImportFiles.join(", ")}.`,
 			);
 		}
 	} else {
