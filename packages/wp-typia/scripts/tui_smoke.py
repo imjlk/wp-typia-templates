@@ -467,7 +467,7 @@ def run_bunli_diagnostic_smoke(pkg_dir: Path, repo_root: Path) -> None:
     )
     try:
         session.wait_for("Bunli diagnostic fixture")
-        session.wait_for_any(["> Mode", "Mode"])
+        session.tab_until_any(["> Mode"])
         session.select_next()
         session.wait_for_any(["Target", "─Target"])
         session.wait_for_any(["Toggle advanced", "Toggle─advanced", "[a]gToggle", "Toggle"])
@@ -483,6 +483,11 @@ def run_bunli_diagnostic_smoke(pkg_dir: Path, repo_root: Path) -> None:
         )
         session.send(" ")
         session._drain_until_idle()
+        if session.process.poll() not in (None, 0):
+            raise RuntimeError(
+                f"Diagnostic smoke exited unexpectedly with code {session.process.returncode}.\n"
+                f"Last output:\n{session.text}"
+            )
     finally:
         session.close()
 
