@@ -40,6 +40,16 @@ to the canonical `create` surface in docs and review notes.
 - doctor checks
 - schema/OpenAPI project helpers
 
+## Alternate-buffer TUI exit contract
+
+- Commands that use Bunli `render` with `bufferMode: "alternate"` must have explicit
+  `runtime.exit()` ownership.
+- `packages/wp-typia/src/ui/lazy-flow.tsx` owns loader-stage failure and loading-stage quit behavior.
+- Mounted `create`, `add`, and `migrate` flows use a shared lifecycle helper for submit,
+  cancel, quit, and runtime failure handling.
+- Runtime failures are exit-on-failure: report the error, then exit instead of leaving the
+  form mounted in the alternate buffer.
+
 ## Canonical Bunli command tree
 
 - `create`
