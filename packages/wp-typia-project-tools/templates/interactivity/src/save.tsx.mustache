@@ -70,7 +70,7 @@ export default function Save({ attributes }: { attributes: {{pascalCase}}Attribu
         <div
           className={`{{cssClassName}}__animation ${attributes.animation}`}
           aria-hidden="true"
-          data-wp-class="is-active"
+          data-wp-class--is-active="state.isAnimating"
         />
 
         {attributes.maxClicks > 0 && (

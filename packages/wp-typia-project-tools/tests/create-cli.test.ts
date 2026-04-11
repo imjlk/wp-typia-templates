@@ -1068,6 +1068,10 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(generatedEdit).toContain(
       "wp-block-demo-space-demo-interactivity__content"
     );
+    expect(generatedEdit).toContain(
+      'data-wp-class--is-active="state.isAnimating"'
+    );
+    expect(generatedEdit).not.toContain('data-wp-class="is-active"');
     expect(generatedValidators).toContain('from "./validator-toolkit"');
     expect(generatedIndex).toContain("@wp-typia/block-runtime/blocks");
     expect(generatedIndex).toContain("buildScaffoldBlockRegistration");
@@ -1104,6 +1108,10 @@ describe("@wp-typia/project-tools scaffolding", () => {
     expect(generatedSave).toContain(
       "wp-block-demo-space-demo-interactivity__content"
     );
+    expect(generatedSave).toContain(
+      'data-wp-class--is-active="state.isAnimating"'
+    );
+    expect(generatedSave).not.toContain('data-wp-class="is-active"');
     expect(generatedSave).not.toContain(
       'data-wp-text="state.clicks"\n              aria-live='
     );
