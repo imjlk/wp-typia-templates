@@ -26,4 +26,4 @@
 
 #### Defined in
 
-[packages/wp-typia/src/ui/add-flow.tsx:43](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/add-flow.tsx#L43)
+[packages/wp-typia/src/ui/add-flow.tsx:41](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/add-flow.tsx#L41)

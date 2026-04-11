@@ -26,4 +26,4 @@
 
 #### Defined in
 
-[packages/wp-typia/src/ui/migrate-flow.tsx:50](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/migrate-flow.tsx#L50)
+[packages/wp-typia/src/ui/migrate-flow.tsx:48](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/migrate-flow.tsx#L48)

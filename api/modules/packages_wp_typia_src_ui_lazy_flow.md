@@ -12,7 +12,7 @@
 
 ### LazyFlow
 
-▸ **LazyFlow**\<`TProps`\>(`«destructured»`): ``null`` \| `string` \| `ReactElement`\<`any`, `string` \| `JSXElementConstructor`\<`any`\>\>
+▸ **LazyFlow**\<`TProps`\>(`«destructured»`): ``null`` \| `ReactElement`\<`any`, `string` \| `JSXElementConstructor`\<`any`\>\>
 
 #### Type parameters
 
@@ -28,8 +28,8 @@
 
 #### Returns
 
-``null`` \| `string` \| `ReactElement`\<`any`, `string` \| `JSXElementConstructor`\<`any`\>\>
+``null`` \| `ReactElement`\<`any`, `string` \| `JSXElementConstructor`\<`any`\>\>
 
 #### Defined in
 
-[packages/wp-typia/src/ui/lazy-flow.tsx:8](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/lazy-flow.tsx#L8)
+[packages/wp-typia/src/ui/lazy-flow.tsx:14](https://github.com/imjlk/wp-typia/blob/main/packages/wp-typia/src/ui/lazy-flow.tsx#L14)
