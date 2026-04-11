@@ -24,9 +24,10 @@ const diagnosticFields: SchemaField<typeof diagnosticSchema>[] = [
 		required: true,
 	},
 	{
-		kind: "text",
-		label: "Name",
-		name: "name",
+		kind: "checkbox",
+		label: "Toggle advanced",
+		name: "advanced",
+		visibleWhen: (values) => values.mode === "advanced",
 	},
 	{
 		kind: "text",
@@ -35,10 +36,9 @@ const diagnosticFields: SchemaField<typeof diagnosticSchema>[] = [
 		visibleWhen: (values) => values.mode === "advanced",
 	},
 	{
-		kind: "checkbox",
-		label: "Toggle advanced",
-		name: "advanced",
-		visibleWhen: (values) => values.mode === "advanced",
+		kind: "text",
+		label: "Name",
+		name: "name",
 	},
 ];
 

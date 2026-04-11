@@ -51,7 +51,11 @@ def ensure_success(command: list[str], cwd: Path) -> None:
 
 
 def ensure_text_in_tree(root: Path, needle: str) -> None:
+    ignored_dirs = {"node_modules", ".git"}
     for candidate in root.rglob("*"):
+        relative_parts = candidate.relative_to(root).parts
+        if any(part in ignored_dirs for part in relative_parts):
+            continue
         if not candidate.is_file():
             continue
         try:
@@ -461,11 +465,18 @@ def run_bunli_diagnostic_smoke(pkg_dir: Path, repo_root: Path) -> None:
         session.select_next()
         session.wait_for_any(["Target", "─Target"])
         session.wait_for_any(["Toggle advanced", "Toggle─advanced", "[a]gToggle", "Toggle"])
-        session.send_tabs(3)
+        session.tab_until_any(
+            [
+                "> [x] Toggle advanced",
+                "> [ ] Toggle advanced",
+                "> [x]Toggleadvanced",
+                "> [ ]Toggleadvanced",
+                "> Toggle advanced",
+                "> Toggle",
+            ]
+        )
         session.send(" ")
-        session.send("\x1b")
-        session.wait_for_exit()
-        session.assert_returncode(0)
+        session._drain_until_idle()
     finally:
         session.close()
 

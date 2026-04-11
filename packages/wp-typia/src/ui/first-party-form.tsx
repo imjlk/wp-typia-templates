@@ -237,13 +237,28 @@ export function FirstPartySelectField({
 		submitOnEnter: false,
 	});
 
-	const selectedIndex = useMemo(() => {
-		const index = options.findIndex((option) => option.value === field.value);
-		return index >= 0 ? index : 0;
-	}, [field.value, options]);
+	const matchingIndex = useMemo(
+		() => options.findIndex((option) => option.value === field.value),
+		[field.value, options],
+	);
+	const selectedIndex = matchingIndex >= 0 ? matchingIndex : 0;
 
 	const selectedOption = options[selectedIndex] ?? options[0];
 	const keyboardScopeId = `first-party-select:${name}:${reactScopeId}`;
+
+	useEffect(() => {
+		const fallbackOption = options[0];
+		if (!fallbackOption || matchingIndex >= 0) {
+			return;
+		}
+
+		const fallbackValue = String(fallbackOption.value);
+		if (field.value === fallbackValue) {
+			return;
+		}
+
+		field.setValue(fallbackValue);
+	}, [field, matchingIndex, options]);
 
 	useFirstPartyFieldNavigation({
 		focused: field.focused,
