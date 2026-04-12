@@ -1,5 +1,11 @@
 # @wp-typia/block-runtime
 
+## 0.4.5 — 2026-04-12
+
+### Patch changes
+
+- [e9901fa](https://github.com/imjlk/wp-typia/commit/e9901fa3c6b461b7b4c112cba20cc4e5e3654a99) Deduplicate schema-core behind the block-runtime implementation owner while keeping the project-tools import path stable, run project-tools regression tests on pull requests while keeping coverage uploads on main, and refresh workflow actions to reduce wall-clock time and remove Node 20 runtime warnings. — Thanks @imjlk!
+
 ## 0.4.4 — 2026-04-11
 
 ### Patch changes
