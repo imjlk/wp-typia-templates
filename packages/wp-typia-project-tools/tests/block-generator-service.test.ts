@@ -113,6 +113,28 @@ describe("BlockGeneratorService", () => {
 		expect(rendered.postRender.applyMigrationUiCapability).toBe(true);
 	});
 
+	test("plan preserves compound persistence settings from scaffold answers", async () => {
+		const service = new BlockGeneratorService();
+		const plan = await service.plan({
+			answers: {
+				...buildAnswers("compound"),
+				dataStorageMode: "post-meta",
+				persistencePolicy: "public",
+			},
+			noInstall: true,
+			packageManager: "npm",
+			projectDir: path.join(tempRoot, "plan-compound-from-answers"),
+			templateId: "compound",
+		});
+
+		expect(plan.spec.persistence.enabled).toBe(true);
+		if (plan.spec.persistence.enabled) {
+			expect(plan.spec.persistence.scope).toBe("compound-parent");
+			expect(plan.spec.persistence.dataStorageMode).toBe("post-meta");
+			expect(plan.spec.persistence.persistencePolicy).toBe("public");
+		}
+	});
+
 	test("apply writes a built-in scaffold through the service boundary", async () => {
 		const service = new BlockGeneratorService();
 		const projectDir = path.join(tempRoot, "apply-basic");

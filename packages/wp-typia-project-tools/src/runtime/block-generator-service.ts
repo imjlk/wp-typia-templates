@@ -182,6 +182,8 @@ export function createBuiltInBlockSpec({
 		slug: answers.slug,
 		textDomain: answers.textDomain,
 	});
+	const resolvedDataStorageMode = dataStorageMode ?? answers.dataStorageMode;
+	const resolvedPersistencePolicy = persistencePolicy ?? answers.persistencePolicy;
 
 	return {
 		block: identifiers,
@@ -193,8 +195,8 @@ export function createBuiltInBlockSpec({
 			title: answers.title.trim(),
 		},
 		persistence: getBuiltInPersistenceSpec({
-			dataStorageMode,
-			persistencePolicy,
+			dataStorageMode: resolvedDataStorageMode,
+			persistencePolicy: resolvedPersistencePolicy,
 			templateId,
 		}),
 		project: {
