@@ -34,6 +34,7 @@ import {
 	stringifyBuiltInBlockJsonDocument,
 	type BuiltInBlockArtifact,
 } from "./built-in-block-artifacts.js";
+import type { BuiltInCodeArtifact } from "./built-in-block-code-artifacts.js";
 import {
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	type BuiltInTemplateId,
@@ -253,6 +254,17 @@ async function writeBuiltInStructuralArtifacts(
 			stringifyBuiltInBlockJsonDocument(artifact.blockJsonDocument),
 			"utf8",
 		);
+	}
+}
+
+async function writeBuiltInCodeArtifacts(
+	targetDir: string,
+	codeArtifacts: readonly BuiltInCodeArtifact[],
+): Promise<void> {
+	for (const artifact of codeArtifacts) {
+		const destinationPath = path.join(targetDir, artifact.relativePath);
+		await fsp.mkdir(path.dirname(destinationPath), { recursive: true });
+		await fsp.writeFile(destinationPath, artifact.source, "utf8");
 	}
 }
 
@@ -510,6 +522,7 @@ export async function applyBuiltInScaffoldProjectFiles({
 	templateId,
 	variables,
 	artifacts,
+	codeArtifacts,
 	readmeContent,
 	gitignoreContent,
 	allowExistingDir = false,
@@ -525,6 +538,7 @@ export async function applyBuiltInScaffoldProjectFiles({
 	templateId: BuiltInTemplateId;
 	variables: ScaffoldTemplateVariables;
 	artifacts?: readonly BuiltInBlockArtifact[];
+	codeArtifacts?: readonly BuiltInCodeArtifact[];
 	readmeContent?: string;
 	gitignoreContent?: string;
 	allowExistingDir?: boolean;
@@ -537,6 +551,9 @@ export async function applyBuiltInScaffoldProjectFiles({
 }): Promise<void> {
 	await ensureDirectory(projectDir, allowExistingDir);
 	await copyInterpolatedDirectory(templateDir, projectDir, variables);
+	if (codeArtifacts && codeArtifacts.length > 0) {
+		await writeBuiltInCodeArtifacts(projectDir, codeArtifacts);
+	}
 	if (artifacts && artifacts.length > 0) {
 		await writeBuiltInStructuralArtifacts(projectDir, artifacts);
 	}

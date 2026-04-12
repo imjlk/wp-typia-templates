@@ -45,8 +45,8 @@ Manual orchestration or repo tooling should use:
 Those imports cover scaffold, add-block, migrate, template, doctor, package
 manager, starter manifest, schema/OpenAPI project helpers, the `BlockSpec` /
 `BlockGeneratorService` generator boundary, and the emitter-owned built-in
-`types.ts` / `block.json` path where built-in templates no longer ship
-structural Mustache files.
+structural/code path where built-in templates no longer ship structural or
+TS/TSX Mustache files.
 
 `@wp-typia/block-runtime/schema-core` is public and stable, but it is the
 implementation owner path rather than the preferred project-tooling import.

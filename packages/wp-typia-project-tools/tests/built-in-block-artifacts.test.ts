@@ -10,11 +10,13 @@ import {
 	buildBuiltInBlockArtifacts,
 	stringifyBuiltInBlockJsonDocument,
 } from "../src/runtime/built-in-block-artifacts.js";
+import { buildBuiltInCodeArtifacts } from "../src/runtime/built-in-block-code-artifacts.js";
 import {
 	buildTemplateVariablesFromBlockSpec,
 	createBuiltInBlockSpec,
 } from "../src/runtime/block-generator-service.js";
 import { scaffoldProject } from "../src/runtime/index.js";
+import { transformPackageManagerText } from "../src/runtime/package-managers.js";
 import { stringifyStarterManifest } from "../src/runtime/starter-manifests.js";
 import type { BuiltInTemplateId } from "../src/runtime/template-registry.js";
 import type { ScaffoldAnswers } from "../src/runtime/scaffold.js";
@@ -56,6 +58,10 @@ function buildArtifacts(templateId: BuiltInTemplateId) {
 			templateId,
 			variables,
 		}),
+		codeArtifacts: buildBuiltInCodeArtifacts({
+			templateId,
+			variables,
+		}),
 		answers,
 		variables,
 	};
@@ -72,16 +78,47 @@ describe("built-in block artifacts", () => {
 		for (const relativePath of [
 			"basic/src/types.ts.mustache",
 			"basic/src/block.json.mustache",
+			"basic/src/edit.tsx.mustache",
+			"basic/src/save.tsx.mustache",
+			"basic/src/index.tsx.mustache",
+			"basic/src/validators.ts.mustache",
 			"interactivity/src/types.ts.mustache",
 			"interactivity/src/block.json.mustache",
+			"interactivity/src/edit.tsx.mustache",
+			"interactivity/src/save.tsx.mustache",
+			"interactivity/src/index.tsx.mustache",
+			"interactivity/src/interactivity.ts.mustache",
+			"interactivity/src/validators.ts.mustache",
 			"persistence/src/types.ts.mustache",
 			"persistence/src/block.json.mustache",
+			"persistence/src/edit.tsx.mustache",
+			"_shared/base/src/hooks.ts.mustache",
+			"_shared/persistence/core/src/index.tsx.mustache",
+			"_shared/persistence/core/src/save.tsx.mustache",
+			"_shared/persistence/core/src/interactivity.ts.mustache",
+			"_shared/persistence/core/src/validators.ts.mustache",
 			"compound/src/blocks/{{slugKebabCase}}/types.ts.mustache",
 			"compound/src/blocks/{{slugKebabCase}}/block.json.mustache",
+			"compound/src/blocks/{{slugKebabCase}}/edit.tsx.mustache",
+			"compound/src/blocks/{{slugKebabCase}}/save.tsx.mustache",
+			"compound/src/blocks/{{slugKebabCase}}/index.tsx.mustache",
+			"compound/src/blocks/{{slugKebabCase}}/hooks.ts.mustache",
+			"compound/src/blocks/{{slugKebabCase}}/validators.ts.mustache",
+			"compound/src/blocks/{{slugKebabCase}}/children.ts.mustache",
 			"compound/src/blocks/{{slugKebabCase}}-item/types.ts.mustache",
 			"compound/src/blocks/{{slugKebabCase}}-item/block.json.mustache",
+			"compound/src/blocks/{{slugKebabCase}}-item/edit.tsx.mustache",
+			"compound/src/blocks/{{slugKebabCase}}-item/save.tsx.mustache",
+			"compound/src/blocks/{{slugKebabCase}}-item/index.tsx.mustache",
+			"compound/src/blocks/{{slugKebabCase}}-item/hooks.ts.mustache",
+			"compound/src/blocks/{{slugKebabCase}}-item/validators.ts.mustache",
 			"_shared/compound/persistence/src/blocks/{{slugKebabCase}}/types.ts.mustache",
 			"_shared/compound/persistence/src/blocks/{{slugKebabCase}}/block.json.mustache",
+			"_shared/compound/persistence/src/blocks/{{slugKebabCase}}/edit.tsx.mustache",
+			"_shared/compound/persistence/src/blocks/{{slugKebabCase}}/save.tsx.mustache",
+			"_shared/compound/persistence/src/blocks/{{slugKebabCase}}/hooks.ts.mustache",
+			"_shared/compound/persistence/src/blocks/{{slugKebabCase}}/validators.ts.mustache",
+			"_shared/compound/persistence/src/blocks/{{slugKebabCase}}/interactivity.ts.mustache",
 		]) {
 			expect(fs.existsSync(path.join(templatesRoot, relativePath))).toBe(false);
 		}
@@ -198,11 +235,77 @@ describe("built-in block artifacts", () => {
 		},
 	);
 
+	test.each([
+		[
+			"basic",
+			[
+				"src/hooks.ts",
+				"src/edit.tsx",
+				"src/save.tsx",
+				"src/index.tsx",
+				"src/validators.ts",
+			],
+		],
+		[
+			"interactivity",
+			[
+				"src/hooks.ts",
+				"src/edit.tsx",
+				"src/save.tsx",
+				"src/index.tsx",
+				"src/interactivity.ts",
+				"src/validators.ts",
+			],
+		],
+		[
+			"persistence",
+			[
+				"src/hooks.ts",
+				"src/edit.tsx",
+				"src/save.tsx",
+				"src/index.tsx",
+				"src/interactivity.ts",
+				"src/validators.ts",
+			],
+		],
+		[
+			"compound",
+			[
+				"src/hooks.ts",
+				"src/blocks/demo-compound/edit.tsx",
+				"src/blocks/demo-compound/save.tsx",
+				"src/blocks/demo-compound/index.tsx",
+				"src/blocks/demo-compound/hooks.ts",
+				"src/blocks/demo-compound/validators.ts",
+				"src/blocks/demo-compound/children.ts",
+				"src/blocks/demo-compound/interactivity.ts",
+				"src/blocks/demo-compound-item/edit.tsx",
+				"src/blocks/demo-compound-item/save.tsx",
+				"src/blocks/demo-compound-item/index.tsx",
+				"src/blocks/demo-compound-item/hooks.ts",
+				"src/blocks/demo-compound-item/validators.ts",
+			],
+		],
+	] as const)(
+		"buildBuiltInCodeArtifacts emits expected TS/TSX ownership set for %s",
+		(templateId, expectedPaths) => {
+			const { codeArtifacts } = buildArtifacts(templateId);
+			const relativePaths = codeArtifacts.map((artifact) => artifact.relativePath);
+
+			expect(relativePaths).toEqual([...expectedPaths]);
+
+			for (const artifact of codeArtifacts) {
+				expect(artifact.source.endsWith("\n")).toBe(true);
+				expect(artifact.source).not.toContain("{{");
+			}
+		},
+	);
+
 	test.each(["basic", "interactivity", "persistence", "compound"] as const)(
-		"scaffoldProject writes emitter-owned types.ts, block.json, and starter manifest for %s",
+		"scaffoldProject writes emitter-owned structural and TS/TSX artifacts for %s",
 		async (templateId) => {
 			const targetDir = path.join(tempRoot, `scaffold-${templateId}`);
-			const { artifacts, answers } = buildArtifacts(templateId);
+			const { artifacts, answers, codeArtifacts } = buildArtifacts(templateId);
 
 			await scaffoldProject({
 				answers,
@@ -230,6 +333,12 @@ describe("built-in block artifacts", () => {
 						"utf8",
 					),
 				).toBe(stringifyStarterManifest(artifact.manifestDocument));
+			}
+
+			for (const artifact of codeArtifacts) {
+				expect(
+					fs.readFileSync(path.join(targetDir, artifact.relativePath), "utf8"),
+				).toBe(transformPackageManagerText(artifact.source, "npm"));
 			}
 		},
 		{ timeout: 30_000 },

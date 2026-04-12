@@ -101,10 +101,11 @@ describe("@wp-typia/project-tools import policy", () => {
 		expect(runtimeSurfaceDoc).toContain("@wp-typia/project-tools/schema-core");
 		expect(runtimeSurfaceDoc).toContain("@wp-typia/block-runtime/schema-core");
 		expect(runtimeSurfaceDoc).toContain(
-			"no longer ship structural Mustache files",
+			"no longer ship structural or TS/TSX Mustache files",
 		);
+		expect(runtimeSurfaceDoc).toContain("TS/TSX Mustache files");
 		expect(blockGeneratorDoc).toContain(
-			"built-in templates no longer ship structural Mustache files",
+			"built-in templates no longer ship structural or TS/TSX Mustache files",
 		);
 		expect(runtimeSurfaceDoc).not.toContain("@wp-typia/project-tools/runtime/*");
 		expect(importPolicyDoc).toContain("@wp-typia/project-tools");
@@ -112,7 +113,8 @@ describe("@wp-typia/project-tools import policy", () => {
 		expect(importPolicyDoc).toContain("@wp-typia/project-tools/schema-core");
 		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/schema-core");
 		expect(importPolicyDoc).toContain("built-in templates no longer ship");
-		expect(importPolicyDoc).toContain("structural Mustache files");
+		expect(importPolicyDoc).toContain("structural or");
+		expect(importPolicyDoc).toContain("TS/TSX Mustache files");
 		expect(importPolicyDoc).not.toContain("@wp-typia/project-tools/runtime/*");
 	});
 });

@@ -13,26 +13,28 @@
   Preserves built-in scaffold invariants before rendering.
 - `BlockGeneratorService.render`
   Resolves the built-in template root and produces render/apply intent,
-  including template variables, emitter-owned structural artifacts,
+  including template variables, emitter-owned structural/code artifacts,
   README/gitignore content, and post-render hooks.
 - `BlockGeneratorService.apply`
-  Copies the built-in template, overwrites emitter-owned `types.ts` and
-  `block.json`, writes starter manifests from the same structural model, seeds
-  persistence artifacts when needed, applies migration/local-dev capabilities,
-  normalizes package-manager files, and optionally installs dependencies.
+  Copies the built-in template, overwrites emitter-owned `types.ts`,
+  `block.json`, and built-in TS/TSX scaffold bodies, writes starter manifests
+  from the same structural model, seeds persistence artifacts when needed,
+  applies migration/local-dev capabilities, normalizes package-manager files,
+  and optionally installs dependencies.
 
 ## Current render policy
 
-The current generator keeps structural artifacts on typed emitters without
-migrating the rest of the scaffold body away from Mustache.
+The current generator keeps built-in structural artifacts and built-in TS/TSX
+scaffold bodies on typed emitters without migrating styles/PHP or external
+template composition away from Mustache.
 
-- `types.ts` and `block.json` are now emitter-owned for all built-in block
-  families.
-- built-in templates no longer ship structural Mustache files for those
-  artifacts.
+- `types.ts`, `block.json`, and the built-in TS/TSX scaffold bodies are now
+  emitter-owned for all built-in block families.
+- built-in templates no longer ship structural or TS/TSX Mustache files for
+  those artifacts.
 - starter `typia.manifest.json` files reuse the same structural artifact model.
-- `edit.tsx`, `save.tsx`, `index.tsx`, and the remaining template files still
-  come from Mustache/interpolated directory copy.
+- built-in `style.scss`, `editor.scss`, `render.php`, and other non-TS assets
+  still come from Mustache/interpolated directory copy.
 
 ## Out of scope
 
