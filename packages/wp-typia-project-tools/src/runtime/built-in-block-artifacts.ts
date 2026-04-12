@@ -1378,6 +1378,14 @@ function buildCompoundChildArtifact(
 	};
 }
 
+/**
+ * Builds a starter manifest document for a generated compound child block.
+ *
+ * @param childTypeName TypeScript source type name for the child manifest.
+ * @param childTitle Default title used by the child block.
+ * @param bodyPlaceholder Optional placeholder used for the child body field.
+ * @returns Starter manifest metadata for the compound child block.
+ */
 export function buildCompoundChildStarterManifestDocument(
 	childTypeName: string,
 	childTitle: string,
@@ -1391,6 +1399,14 @@ export function buildCompoundChildStarterManifestDocument(
 	return buildManifestDocument(childTypeName, attributes);
 }
 
+/**
+ * Generates typed structural artifacts for a built-in block scaffold.
+ *
+ * @param options.templateId Built-in template family to emit.
+ * @param options.variables Resolved scaffold template variables.
+ * @returns Structural artifacts for the built-in block, including compound
+ * parent and child outputs when applicable.
+ */
 export function buildBuiltInBlockArtifacts({
 	templateId,
 	variables,
@@ -1420,6 +1436,12 @@ export function buildBuiltInBlockArtifacts({
 	return [];
 }
 
+/**
+ * Serializes a generated `block.json` document using scaffold formatting.
+ *
+ * @param document Structured `block.json` document.
+ * @returns Pretty-printed JSON with a trailing newline.
+ */
 export function stringifyBuiltInBlockJsonDocument(
 	document: Record<string, unknown>,
 ): string {
