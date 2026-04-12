@@ -31,6 +31,10 @@ import {
 	stringifyStarterManifest,
 } from "./starter-manifests.js";
 import {
+	stringifyBuiltInBlockJsonDocument,
+	type BuiltInBlockArtifact,
+} from "./built-in-block-artifacts.js";
+import {
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	type BuiltInTemplateId,
 } from "./template-registry.js";
@@ -216,13 +220,39 @@ export async function writeStarterManifestFiles(
 	targetDir: string,
 	templateId: string,
 	variables: ScaffoldTemplateVariables,
+	artifacts?: readonly BuiltInBlockArtifact[],
 ): Promise<void> {
-	const manifests = getStarterManifestFiles(templateId, variables);
+	const manifests = artifacts
+		? artifacts.map((artifact) => ({
+				document: artifact.manifestDocument,
+				relativePath: `${artifact.relativeDir}/typia.manifest.json`,
+			}))
+		: getStarterManifestFiles(templateId, variables);
 
 	for (const { document, relativePath } of manifests) {
 		const destinationPath = path.join(targetDir, relativePath);
 		await fsp.mkdir(path.dirname(destinationPath), { recursive: true });
 		await fsp.writeFile(destinationPath, stringifyStarterManifest(document), "utf8");
+	}
+}
+
+async function writeBuiltInStructuralArtifacts(
+	targetDir: string,
+	artifacts: readonly BuiltInBlockArtifact[],
+): Promise<void> {
+	for (const artifact of artifacts) {
+		const destinationDir = path.join(targetDir, artifact.relativeDir);
+		await fsp.mkdir(destinationDir, { recursive: true });
+		await fsp.writeFile(
+			path.join(destinationDir, "types.ts"),
+			artifact.typesSource,
+			"utf8",
+		);
+		await fsp.writeFile(
+			path.join(destinationDir, "block.json"),
+			stringifyBuiltInBlockJsonDocument(artifact.blockJsonDocument),
+			"utf8",
+		);
 	}
 }
 
@@ -479,6 +509,7 @@ export async function applyBuiltInScaffoldProjectFiles({
 	templateDir,
 	templateId,
 	variables,
+	artifacts,
 	readmeContent,
 	gitignoreContent,
 	allowExistingDir = false,
@@ -493,6 +524,7 @@ export async function applyBuiltInScaffoldProjectFiles({
 	templateDir: string;
 	templateId: BuiltInTemplateId;
 	variables: ScaffoldTemplateVariables;
+	artifacts?: readonly BuiltInBlockArtifact[];
 	readmeContent?: string;
 	gitignoreContent?: string;
 	allowExistingDir?: boolean;
@@ -505,7 +537,10 @@ export async function applyBuiltInScaffoldProjectFiles({
 }): Promise<void> {
 	await ensureDirectory(projectDir, allowExistingDir);
 	await copyInterpolatedDirectory(templateDir, projectDir, variables);
-	await writeStarterManifestFiles(projectDir, templateId, variables);
+	if (artifacts && artifacts.length > 0) {
+		await writeBuiltInStructuralArtifacts(projectDir, artifacts);
+	}
+	await writeStarterManifestFiles(projectDir, templateId, variables, artifacts);
 	await seedBuiltInPersistenceArtifacts(projectDir, templateId, variables);
 	await applyLocalDevPresetFiles({
 		projectDir,

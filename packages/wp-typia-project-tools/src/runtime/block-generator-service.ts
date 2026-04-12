@@ -25,6 +25,10 @@ import {
 	buildFrontendCssClassName,
 	resolveScaffoldIdentifiers,
 } from "./scaffold-identifiers.js";
+import {
+	buildBuiltInBlockArtifacts,
+	type BuiltInBlockArtifact,
+} from "./built-in-block-artifacts.js";
 import type {
 	DataStorageMode,
 	PersistencePolicy,
@@ -131,6 +135,20 @@ export interface RenderBlockResult extends ValidateBlockResult {
 export interface ApplyBlockInput {
 	rendered: RenderBlockResult;
 	installDependencies?: ((options: InstallDependenciesOptions) => Promise<void>) | undefined;
+}
+
+const renderedArtifactCache = new WeakMap<
+	RenderBlockResult,
+	{
+		artifacts: BuiltInBlockArtifact[];
+		variablesFingerprint: string;
+	}
+>();
+
+function createVariablesFingerprint(
+	variables: ScaffoldTemplateVariables,
+): string {
+	return JSON.stringify(variables);
 }
 
 function getBuiltInPersistenceSpec({
@@ -366,8 +384,7 @@ export class BlockGeneratorService {
 		);
 		const variables = buildTemplateVariablesFromBlockSpec(validated.spec);
 		const persistenceEnabled = validated.spec.persistence.enabled;
-
-		return {
+		const rendered: RenderBlockResult = {
 			...validated,
 			cleanup: templateSource.cleanup,
 			gitignoreContent: buildGitignore(),
@@ -394,15 +411,39 @@ export class BlockGeneratorService {
 			variables,
 			warnings: templateSource.warnings ?? [],
 		};
+
+		renderedArtifactCache.set(rendered, {
+			artifacts: buildBuiltInBlockArtifacts({
+				templateId: validated.spec.template.family,
+				variables,
+			}),
+			variablesFingerprint: createVariablesFingerprint(variables),
+		});
+
+		return rendered;
 	}
 
 	async apply({
 		rendered,
 		installDependencies,
 	}: ApplyBlockInput): Promise<ScaffoldProjectResult> {
+		const cachedArtifacts = renderedArtifactCache.get(rendered);
+		const currentVariablesFingerprint = createVariablesFingerprint(
+			rendered.variables,
+		);
+		const artifacts =
+			cachedArtifacts &&
+			cachedArtifacts.variablesFingerprint === currentVariablesFingerprint
+				? cachedArtifacts.artifacts
+				: buildBuiltInBlockArtifacts({
+						templateId: rendered.spec.template.family,
+						variables: rendered.variables,
+					});
+
 		try {
 			await applyBuiltInScaffoldProjectFiles({
 				allowExistingDir: rendered.target.allowExistingDir,
+				artifacts,
 				installDependencies,
 				noInstall: rendered.target.noInstall,
 				packageManager: rendered.target.packageManager,

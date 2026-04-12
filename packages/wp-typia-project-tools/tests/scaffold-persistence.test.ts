@@ -144,6 +144,7 @@ test(
     expect(blockJson.version).toBe("0.1.0");
     expect(blockJson.category).toBe("widgets");
     expect(blockJson.icon).toBe("database");
+    expect(blockJson.attributes.resourceKey.default).toBe("");
     expect(generatedManifest.manifestVersion).toBe(2);
     expect(generatedManifest.sourceType).toBe(
       "DemoPersistencePublicAttributes"
@@ -349,7 +350,7 @@ test(
     expect(generatedRender).toContain('aria-live="polite"');
     expect(generatedApiTypes).toContain("publicWriteRequestId: string");
     expect(generatedTypes).toContain(
-      "persistencePolicy: 'authenticated' | 'public';"
+      'persistencePolicy: "authenticated" | "public";'
     );
     expect(generatedSave).toContain("intentionally server-rendered");
     expect(generatedSave).toContain("return null;");
@@ -639,7 +640,7 @@ test("scaffoldProject creates a persistence template with authenticated writes b
     "'storage'     => DEMO_PERSISTENCE_AUTHENTICATED_DATA_STORAGE_MODE,"
   );
   expect(generatedTypes).toContain(
-    "persistencePolicy: 'authenticated' | 'public';"
+    'persistencePolicy: "authenticated" | "public";'
   );
   expect(generatedEdit).toContain(
     "const alignmentValue = editorFields.getStringValue("

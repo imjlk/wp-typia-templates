@@ -140,6 +140,9 @@ test(
   expect(generatedManifest.manifestVersion).toBe(2);
   expect(generatedManifest.sourceType).toBe("DemoNpmAttributes");
   expect(generatedManifest.attributes.content.typia.defaultValue).toBe("");
+  expect(generatedManifest.attributes.content.typia.constraints.minLength).toBe(
+    null
+  );
   expect(generatedManifest.attributes.alignment.wp.enum).toEqual([
     "left",
     "center",
@@ -652,9 +655,9 @@ test(
   expect(generatedInteractivity).not.toContain("lastInteraction");
   expect(generatedInteractivity).not.toContain("autoPlayTimer");
   expect(generatedInteractivity).not.toContain("context.interactiveMode");
-  expect(generatedTypes).toContain("animation: 'none' | 'bounce'");
+  expect(generatedTypes).toContain('animation: "none" | "bounce"');
   expect(generatedTypes).toContain(
-    "interactiveMode?: ('click' | 'hover') & tags.Default<\"click\">;"
+    'interactiveMode?: ("click" | "hover") & tags.Default<"click">;'
   );
   expect(generatedTypes).not.toContain("autoPlayInterval");
   expect(generatedTypes).not.toContain("uniqueId");
