@@ -19,6 +19,7 @@ import {
 } from "./migrate-flow-model";
 import {
 	FirstPartyCheckboxField,
+	FirstPartyCompletionViewport,
 	FirstPartyFormViewport,
 	FirstPartySelectField,
 	FirstPartyTextField,
@@ -186,7 +187,17 @@ function MigrateFlowFields() {
 }
 
 export function MigrateFlow({ cwd, initialValues }: MigrateFlowProps) {
-	const { handleCancel, handleSubmit } = useAlternateBufferLifecycle("wp-typia migrate failed");
+	const { completion, handleCancel, handleSubmit, status } = useAlternateBufferLifecycle(
+		"wp-typia migrate failed",
+	);
+	const { height: terminalHeight = 24 } = useTerminalDimensions();
+
+	if (status === "completed" && completion) {
+		return createElement(FirstPartyCompletionViewport, {
+			completion,
+			viewportHeight: getMigrateViewportHeight(terminalHeight),
+		});
+	}
 
 	return (
 		<Form
@@ -195,10 +206,11 @@ export function MigrateFlow({ cwd, initialValues }: MigrateFlowProps) {
 			onSubmit={async (values) =>
 				handleSubmit(async () => {
 					const flags = sanitizeMigrateSubmitValues(values);
-					await executeMigrateCommand({
+					return executeMigrateCommand({
 						command: values.command,
 						cwd,
 						flags,
+						renderLine: () => undefined,
 					});
 				})
 			}

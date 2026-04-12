@@ -21,6 +21,7 @@ import {
 } from "./create-flow-model";
 import {
 	FirstPartyCheckboxField,
+	FirstPartyCompletionViewport,
 	FirstPartyFormViewport,
 	FirstPartySelectField,
 	FirstPartyTextField,
@@ -167,7 +168,10 @@ function CreateFlowFields() {
 }
 
 export function CreateFlow({ cwd, initialValues }: CreateFlowProps) {
-	const { handleCancel, handleSubmit } = useAlternateBufferLifecycle("wp-typia create failed");
+	const { completion, handleCancel, handleSubmit, status } = useAlternateBufferLifecycle(
+		"wp-typia create failed",
+	);
+	const { height: terminalHeight = 24 } = useTerminalDimensions();
 	const defaultPrompt = {
 		close() {},
 		select<T extends string>(_message: string, options: Array<{ value: T }>, defaultValue = 1) {
@@ -179,6 +183,13 @@ export function CreateFlow({ cwd, initialValues }: CreateFlowProps) {
 		},
 	};
 
+	if (status === "completed" && completion) {
+		return createElement(FirstPartyCompletionViewport, {
+			completion,
+			viewportHeight: getCreateViewportHeight(terminalHeight),
+		});
+	}
+
 	return (
 		<Form
 			initialValues={initialValues}
@@ -186,8 +197,9 @@ export function CreateFlow({ cwd, initialValues }: CreateFlowProps) {
 			onSubmit={async (values) =>
 				handleSubmit(async () => {
 					const flags = sanitizeCreateSubmitValues(values);
-					await executeCreateCommand({
+					return executeCreateCommand({
 						cwd,
+						emitOutput: false,
 						flags,
 						interactive: true,
 						projectDir: values["project-dir"],

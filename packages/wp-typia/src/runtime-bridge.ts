@@ -12,20 +12,26 @@ import {
 import { formatRunScript } from "@wp-typia/project-tools/package-managers";
 import { tryResolveWorkspaceProject } from "@wp-typia/project-tools/workspace-project";
 import type { ReadlinePrompt } from "@wp-typia/project-tools/cli-prompt";
+import type { AlternateBufferCompletionPayload } from "./ui/alternate-buffer-lifecycle";
 
 type CreateExecutionInput = {
 	projectDir: string;
 	cwd: string;
+	emitOutput?: boolean;
 	flags: Record<string, unknown>;
 	interactive?: boolean;
+	printLine?: PrintLine;
 	prompt?: ReadlinePrompt;
+	warnLine?: PrintLine;
 };
 
 type AddExecutionInput = {
 	cwd: string;
+	emitOutput?: boolean;
 	flags: Record<string, unknown>;
 	kind?: string;
 	name?: string;
+	printLine?: PrintLine;
 };
 
 type TemplatesExecutionInput = {
@@ -68,6 +74,151 @@ const loadMigrationsRuntime = () => import("@wp-typia/project-tools/migrations")
 function printBlock(lines: string[], printLine: PrintLine): void {
 	for (const line of lines) {
 		printLine(line);
+	}
+}
+
+export function printCompletionPayload(
+	payload: AlternateBufferCompletionPayload,
+	options: {
+		printLine?: PrintLine;
+		warnLine?: PrintLine;
+	} = {},
+): void {
+	const printLine = options.printLine ?? (console.log as PrintLine);
+	const warnLine = options.warnLine ?? printLine;
+
+	for (const line of payload.preambleLines ?? []) {
+		printLine(line);
+	}
+	for (const warning of payload.warningLines ?? []) {
+		warnLine(`⚠️ ${warning}`);
+	}
+
+	const hasDetails =
+		(payload.summaryLines?.length ?? 0) > 0 ||
+		(payload.nextSteps?.length ?? 0) > 0 ||
+		(payload.optionalLines?.length ?? 0) > 0 ||
+		Boolean(payload.optionalNote);
+	const hasLeadingContext =
+		(payload.preambleLines?.length ?? 0) > 0 ||
+		(payload.warningLines?.length ?? 0) > 0;
+
+	printLine(hasLeadingContext && hasDetails ? `\n${payload.title}` : payload.title);
+	for (const line of payload.summaryLines ?? []) {
+		printLine(line);
+	}
+	if ((payload.nextSteps?.length ?? 0) > 0) {
+		printLine("Next steps:");
+		for (const step of payload.nextSteps ?? []) {
+			printLine(`  ${step}`);
+		}
+	}
+	if ((payload.optionalLines?.length ?? 0) > 0) {
+		printLine(`\n${payload.optionalTitle ?? "Optional:"}`);
+		for (const step of payload.optionalLines ?? []) {
+			printLine(`  ${step}`);
+		}
+	}
+	if (payload.optionalNote) {
+		printLine(`Note: ${payload.optionalNote}`);
+	}
+}
+
+export function buildCreateCompletionPayload(flow: {
+	nextSteps: string[];
+	optionalOnboarding: {
+		note: string;
+		steps: string[];
+	};
+	projectDir: string;
+	result: {
+		selectedVariant?: string | null;
+		variables: {
+			title: string;
+		};
+		warnings: string[];
+	};
+}): AlternateBufferCompletionPayload {
+	return {
+		nextSteps: flow.nextSteps,
+		optionalLines:
+			flow.optionalOnboarding.steps.length > 0 ? flow.optionalOnboarding.steps : undefined,
+		optionalNote:
+			flow.optionalOnboarding.steps.length > 0 ? flow.optionalOnboarding.note : undefined,
+		optionalTitle:
+			flow.optionalOnboarding.steps.length > 0 ? "Optional before first commit:" : undefined,
+		preambleLines: flow.result.selectedVariant
+			? [`Template variant: ${flow.result.selectedVariant}`]
+			: undefined,
+		summaryLines: [`Project directory: ${flow.projectDir}`],
+		title: `✅ Created ${flow.result.variables.title} in ${flow.projectDir}`,
+		warningLines: flow.result.warnings,
+	};
+}
+
+export function buildMigrationCompletionPayload(options: {
+	command: string;
+	lines: string[];
+}): AlternateBufferCompletionPayload {
+	const summaryLines = options.lines.filter((line) => line.trim().length > 0);
+
+	return {
+		summaryLines,
+		title: `✅ Completed wp-typia migrate ${options.command}`,
+	};
+}
+
+function buildAddCompletionPayload(options: {
+	kind: "binding-source" | "block" | "hooked-block" | "pattern" | "variation";
+	projectDir: string;
+	values: Record<string, string>;
+}): AlternateBufferCompletionPayload {
+	switch (options.kind) {
+		case "variation":
+			return {
+				summaryLines: [
+					`Variation: ${options.values.variationSlug}`,
+					`Target block: ${options.values.blockSlug}`,
+					`Project directory: ${options.projectDir}`,
+				],
+				title: "✅ Added workspace variation",
+			};
+		case "pattern":
+			return {
+				summaryLines: [
+					`Pattern: ${options.values.patternSlug}`,
+					`Project directory: ${options.projectDir}`,
+				],
+				title: "✅ Added workspace pattern",
+			};
+		case "binding-source":
+			return {
+				summaryLines: [
+					`Binding source: ${options.values.bindingSourceSlug}`,
+					`Project directory: ${options.projectDir}`,
+				],
+				title: "✅ Added binding source",
+			};
+		case "hooked-block":
+			return {
+				summaryLines: [
+					`Block: ${options.values.blockSlug}`,
+					`Anchor: ${options.values.anchorBlockName}`,
+					`Position: ${options.values.position}`,
+					`Project directory: ${options.projectDir}`,
+				],
+				title: "✅ Added blockHooks metadata",
+			};
+		case "block":
+		default:
+			return {
+				summaryLines: [
+					`Blocks: ${options.values.blockSlugs}`,
+					`Template family: ${options.values.templateId}`,
+					`Project directory: ${options.projectDir}`,
+				],
+				title: "✅ Added workspace block",
+			};
 	}
 }
 
@@ -261,10 +412,13 @@ const BOOLEAN_PROMPT_OPTIONS = [
 export async function executeCreateCommand({
 	projectDir,
 	cwd,
+	emitOutput = true,
 	flags,
 	interactive,
+	printLine = console.log as PrintLine,
 	prompt,
-}: CreateExecutionInput): Promise<void> {
+	warnLine = console.warn as PrintLine,
+}: CreateExecutionInput): Promise<AlternateBufferCompletionPayload> {
 	const [
 		{ createReadlinePrompt },
 		{ runScaffoldFlow },
@@ -333,25 +487,14 @@ export async function executeCreateCommand({
 			yes: Boolean(flags.yes),
 		});
 
-		if (flow.result.selectedVariant) {
-			console.log(`Template variant: ${flow.result.selectedVariant}`);
+		const payload = buildCreateCompletionPayload(flow);
+		if (emitOutput) {
+			printCompletionPayload(payload, {
+				printLine,
+				warnLine,
+			});
 		}
-		for (const warning of flow.result.warnings) {
-			console.warn(`⚠️ ${warning}`);
-		}
-
-		console.log(`\n✅ Created ${flow.result.variables.title} in ${flow.projectDir}`);
-		console.log("Next steps:");
-		for (const step of flow.nextSteps) {
-			console.log(`  ${step}`);
-		}
-		if (flow.optionalOnboarding.steps.length > 0) {
-			console.log("\nOptional before first commit:");
-			for (const step of flow.optionalOnboarding.steps) {
-				console.log(`  ${step}`);
-			}
-			console.log(`Note: ${flow.optionalOnboarding.note}`);
-		}
+		return payload;
 	} finally {
 		if (activePrompt && activePrompt !== prompt) {
 			activePrompt.close();
@@ -361,13 +504,15 @@ export async function executeCreateCommand({
 
 export async function executeAddCommand({
 	cwd,
+	emitOutput = true,
 	flags,
 	kind,
 	name,
-}: AddExecutionInput): Promise<void> {
+	printLine = console.log as PrintLine,
+}: AddExecutionInput): Promise<AlternateBufferCompletionPayload | void> {
 	if (!kind) {
 		const { formatAddHelpText } = await loadCliAddRuntime();
-		console.log(formatAddHelpText());
+		printLine(formatAddHelpText());
 		return;
 	}
 
@@ -390,8 +535,18 @@ export async function executeAddCommand({
 			cwd,
 			variationName: name,
 		});
-		console.log(`✅ Added variation ${result.variationSlug} to ${result.blockSlug} in ${result.projectDir}.`);
-		return;
+		const payload = buildAddCompletionPayload({
+			kind: "variation",
+			projectDir: result.projectDir,
+			values: {
+				blockSlug: result.blockSlug,
+				variationSlug: result.variationSlug,
+			},
+		});
+		if (emitOutput) {
+			printCompletionPayload(payload, { printLine });
+		}
+		return payload;
 	}
 
 	if (kind === "pattern") {
@@ -405,8 +560,17 @@ export async function executeAddCommand({
 			cwd,
 			patternName: name,
 		});
-		console.log(`✅ Added pattern ${result.patternSlug} in ${result.projectDir}.`);
-		return;
+		const payload = buildAddCompletionPayload({
+			kind: "pattern",
+			projectDir: result.projectDir,
+			values: {
+				patternSlug: result.patternSlug,
+			},
+		});
+		if (emitOutput) {
+			printCompletionPayload(payload, { printLine });
+		}
+		return payload;
 	}
 
 	if (kind === "binding-source") {
@@ -420,8 +584,17 @@ export async function executeAddCommand({
 			bindingSourceName: name,
 			cwd,
 		});
-		console.log(`✅ Added binding source ${result.bindingSourceSlug} in ${result.projectDir}.`);
-		return;
+		const payload = buildAddCompletionPayload({
+			kind: "binding-source",
+			projectDir: result.projectDir,
+			values: {
+				bindingSourceSlug: result.bindingSourceSlug,
+			},
+		});
+		if (emitOutput) {
+			printCompletionPayload(payload, { printLine });
+		}
+		return payload;
 	}
 
 	if (kind === "hooked-block") {
@@ -449,10 +622,19 @@ export async function executeAddCommand({
 			cwd,
 			position,
 		});
-		console.log(
-			`✅ Added blockHooks metadata for ${result.blockSlug} relative to ${result.anchorBlockName} (${result.position}) in ${result.projectDir}.`,
-		);
-		return;
+		const payload = buildAddCompletionPayload({
+			kind: "hooked-block",
+			projectDir: result.projectDir,
+			values: {
+				anchorBlockName: result.anchorBlockName,
+				blockSlug: result.blockSlug,
+				position: result.position,
+			},
+		});
+		if (emitOutput) {
+			printCompletionPayload(payload, { printLine });
+		}
+		return payload;
 	}
 
 	if (kind !== "block") {
@@ -485,9 +667,18 @@ export async function executeAddCommand({
 			| "compound",
 	});
 
-	console.log(
-		`✅ Added ${result.blockSlugs.join(", ")} to ${result.projectDir} using the ${result.templateId} family.`,
-	);
+	const payload = buildAddCompletionPayload({
+		kind: "block",
+		projectDir: result.projectDir,
+		values: {
+			blockSlugs: result.blockSlugs.join(", "),
+			templateId: result.templateId,
+		},
+	});
+	if (emitOutput) {
+		printCompletionPayload(payload, { printLine });
+	}
+	return payload;
 }
 
 export async function executeTemplatesCommand(
@@ -568,7 +759,7 @@ export async function executeMigrateCommand({
 	flags,
 	prompt,
 	renderLine,
-}: MigrateExecutionInput): Promise<void> {
+}: MigrateExecutionInput): Promise<AlternateBufferCompletionPayload | void> {
 	const { formatMigrationHelpText, parseMigrationArgs, runMigrationCommand } =
 		await loadMigrationsRuntime();
 	if (!command) {
@@ -599,10 +790,31 @@ export async function executeMigrateCommand({
 	pushFlag(argv, "seed", readOptionalLooseStringFlag(flags, "seed"));
 
 	const parsed = parseMigrationArgs(argv);
-	await runMigrationCommand(parsed, cwd, {
+	const lines: string[] | null = renderLine ? [] : null;
+	const captureLine = (line: string) => {
+		lines?.push(line);
+		if (renderLine) {
+			renderLine(line);
+			return;
+		}
+		console.log(line);
+	};
+	const result = await runMigrationCommand(parsed, cwd, {
 		prompt,
-		renderLine,
+		renderLine: captureLine,
 	});
+	if (renderLine) {
+		return result && typeof result === "object" && "cancelled" in result && result.cancelled === true
+				? undefined
+				: buildMigrationCompletionPayload({
+					command: parsed.command ?? "plan",
+					lines: lines ?? [],
+				});
+	}
+
+	if (result && typeof result === "object" && "cancelled" in result && result.cancelled === true) {
+		return;
+	}
 }
 
 export { listTemplates };

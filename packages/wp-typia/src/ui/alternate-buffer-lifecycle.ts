@@ -1,11 +1,23 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import { useRuntime } from "@bunli/runtime/app";
 import { useKeyboard } from "@bunli/tui";
 
 type AlternateBufferKeyEvent = {
 	ctrl?: boolean;
+	sequence?: string;
 	name?: string;
+};
+
+export type AlternateBufferCompletionPayload = {
+	title: string;
+	preambleLines?: string[];
+	summaryLines?: string[];
+	nextSteps?: string[];
+	optionalTitle?: string;
+	optionalLines?: string[];
+	optionalNote?: string;
+	warningLines?: string[];
 };
 
 type AlternateBufferFailureOptions = {
@@ -16,11 +28,15 @@ type AlternateBufferFailureOptions = {
 };
 
 type RunAlternateBufferActionOptions = {
-	action: () => Promise<void>;
+	action: () => Promise<unknown>;
 	context: string;
 	exit: () => void;
+	exitOnSuccess?: boolean;
 	log?: (message: string) => void;
+	onSuccess?: (result: unknown) => void;
 };
+
+type AlternateBufferLifecycleStatus = "editing" | "submitting" | "completed";
 
 export function describeAlternateBufferFailure(context: string, error: unknown): string {
 	const message = error instanceof Error ? error.message : String(error);
@@ -29,6 +45,10 @@ export function describeAlternateBufferFailure(context: string, error: unknown):
 
 export function isAlternateBufferExitKey(key: AlternateBufferKeyEvent): boolean {
 	return key.name === "q" || (key.ctrl === true && key.name === "c");
+}
+
+export function isAlternateBufferCompletionKey(key: AlternateBufferKeyEvent): boolean {
+	return key.name === "enter" || key.sequence === "\r" || key.sequence === "\n";
 }
 
 export function reportAlternateBufferFailure({
@@ -46,11 +66,16 @@ export async function runAlternateBufferAction({
 	action,
 	context,
 	exit,
+	exitOnSuccess = true,
 	log = console.error,
+	onSuccess,
 }: RunAlternateBufferActionOptions): Promise<void> {
 	try {
-		await action();
-		exit();
+		const result = await action();
+		onSuccess?.(result);
+		if (exitOnSuccess) {
+			exit();
+		}
 	} catch (error) {
 		reportAlternateBufferFailure({ context, error, exit, log });
 	}
@@ -98,32 +123,75 @@ export function useAlternateBufferExitKeys(options: {
 	});
 }
 
+export function useAlternateBufferCompletionKeys(options: {
+	enabled?: boolean;
+	exit?: () => void;
+} = {}): void {
+	const runtime = useRuntime();
+	const exit = options.exit ?? (() => runtime.exit());
+	const enabled = options.enabled ?? false;
+
+	useKeyboard((key: AlternateBufferKeyEvent) => {
+		if (!enabled) {
+			return;
+		}
+
+		if (isAlternateBufferCompletionKey(key) || isAlternateBufferExitKey(key)) {
+			exit();
+		}
+	});
+}
+
+function isAlternateBufferCompletionPayload(
+	value: unknown,
+): value is AlternateBufferCompletionPayload {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return false;
+	}
+
+	const candidate = value as { title?: unknown };
+	return typeof candidate.title === "string" && candidate.title.trim().length > 0;
+}
+
 export function useAlternateBufferLifecycle(
 	context: string,
 	options: {
 		enableExitKeys?: boolean;
 	} = {},
 ): {
+	completion: AlternateBufferCompletionPayload | null;
 	handleCancel: () => void;
 	handleFailure: (error: unknown) => void;
-	handleSubmit: (action: () => Promise<void>) => Promise<void>;
+	handleSubmit: (action: () => Promise<AlternateBufferCompletionPayload | void>) => Promise<void>;
+	status: AlternateBufferLifecycleStatus;
 } {
 	const runtime = useRuntime();
+	const [completion, setCompletion] = useState<AlternateBufferCompletionPayload | null>(null);
+	const [status, setStatus] = useState<AlternateBufferLifecycleStatus>("editing");
 	const exit = useCallback(() => {
 		runtime.exit();
 	}, [runtime]);
 
 	useAlternateBufferExitKeys({
-		enabled: options.enableExitKeys ?? true,
+		enabled: (options.enableExitKeys ?? true) && status !== "completed",
+		exit,
+	});
+
+	useAlternateBufferCompletionKeys({
+		enabled: status === "completed",
 		exit,
 	});
 
 	const handleCancel = useCallback(() => {
+		setCompletion(null);
+		setStatus("editing");
 		exit();
 	}, [exit]);
 
 	const handleFailure = useCallback(
 		(error: unknown) => {
+			setCompletion(null);
+			setStatus("editing");
 			reportAlternateBufferFailure({
 				context,
 				error,
@@ -134,19 +202,37 @@ export function useAlternateBufferLifecycle(
 	);
 
 	const handleSubmit = useCallback(
-		async (action: () => Promise<void>) => {
-			await runAlternateBufferAction({
-				action,
-				context,
-				exit,
-			});
+		async (action: () => Promise<AlternateBufferCompletionPayload | void>) => {
+			setCompletion(null);
+			setStatus("submitting");
+
+			try {
+				const result = await action();
+				if (isAlternateBufferCompletionPayload(result)) {
+					setCompletion(result);
+					setStatus("completed");
+					return;
+				}
+
+				exit();
+			} catch (error) {
+				setCompletion(null);
+				setStatus("editing");
+				reportAlternateBufferFailure({
+					context,
+					error,
+					exit,
+				});
+			}
 		},
 		[context, exit],
 	);
 
 	return {
+		completion,
 		handleCancel,
 		handleFailure,
 		handleSubmit,
+		status,
 	};
 }

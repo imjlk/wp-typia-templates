@@ -20,6 +20,7 @@ import {
 	sanitizeAddSubmitValues,
 } from "./add-flow-model";
 import {
+	FirstPartyCompletionViewport,
 	FirstPartyFormViewport,
 	FirstPartySelectField,
 	FirstPartyTextField,
@@ -263,9 +264,11 @@ function AddFlowFields({
 }
 
 export function AddFlow({ cwd, initialValues }: AddFlowProps) {
-	const { handleCancel, handleFailure, handleSubmit } = useAlternateBufferLifecycle(
+	const { completion, handleCancel, handleFailure, handleSubmit, status } =
+		useAlternateBufferLifecycle(
 		"wp-typia add failed",
-	);
+		);
+	const { height: terminalHeight = 24 } = useTerminalDimensions();
 	const [workspaceBlockOptions, setWorkspaceBlockOptions] = useState<WorkspaceBlockOption[]>([]);
 
 	useEffect(() => {
@@ -289,6 +292,13 @@ export function AddFlow({ cwd, initialValues }: AddFlowProps) {
 		};
 	}, [cwd, handleFailure]);
 
+	if (status === "completed" && completion) {
+		return createElement(FirstPartyCompletionViewport, {
+			completion,
+			viewportHeight: getAddViewportHeight(terminalHeight),
+		});
+	}
+
 	return (
 		<Form
 			initialValues={initialValues}
@@ -296,8 +306,9 @@ export function AddFlow({ cwd, initialValues }: AddFlowProps) {
 			onSubmit={async (values) =>
 				handleSubmit(async () => {
 					const flags = sanitizeAddSubmitValues(values);
-					await executeAddCommand({
+					return executeAddCommand({
 						cwd,
+						emitOutput: false,
 						flags,
 						kind: values.kind,
 						name: typeof flags.name === "string" ? flags.name : undefined,
