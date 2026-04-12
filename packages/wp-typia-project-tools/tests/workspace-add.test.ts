@@ -1757,9 +1757,22 @@ test("binding source rollback restores an existing src/bindings/index.js registr
     )
   ).toContain("Workspace inventory marker");
 
+  const rolledBackBindingSourceDir = path.join(
+    targetDir,
+    "src",
+    "bindings",
+    "news-data"
+  );
   expect(fs.existsSync(bindingsTsPath)).toBe(false);
   expect(fs.readFileSync(bindingsJsPath, "utf8")).toBe(
     originalBindingsIndexSource
   );
+  expect(fs.existsSync(rolledBackBindingSourceDir)).toBe(false);
+  expect(
+    fs.existsSync(path.join(rolledBackBindingSourceDir, "server.php"))
+  ).toBe(false);
+  expect(
+    fs.existsSync(path.join(rolledBackBindingSourceDir, "editor.ts"))
+  ).toBe(false);
 }, 15_000);
 });

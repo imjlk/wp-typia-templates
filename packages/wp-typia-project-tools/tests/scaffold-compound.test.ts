@@ -826,7 +826,7 @@ test(
       )
     ).toBe(false);
   },
-  { timeout: 15_000 }
+  { timeout: 30_000 }
 );
 
 test(
@@ -1041,7 +1041,7 @@ test(
       true
     );
   },
-  { timeout: 15_000 }
+  { timeout: 30_000 }
 );
 
 test("compound add-child reads live parent metadata from disk", async () => {

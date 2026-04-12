@@ -1,4 +1,5 @@
 import { execFile, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { once } from "node:events";
 import * as fs from "node:fs";
 import http, {
@@ -111,6 +112,57 @@ const generatedProjectTypecheckSupportPackages = [
   "@types/react-dom",
 ] as const;
 const builtWorkspacePackages = new Set<string>();
+const buildLockRoot = path.join(os.tmpdir(), "wp-typia-project-tools-build-locks");
+
+function sleepSync(milliseconds: number) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
+}
+
+function acquireWorkspaceBuildLock(packagePath: string) {
+  fs.mkdirSync(buildLockRoot, { recursive: true });
+
+  const lockPath = path.join(
+    buildLockRoot,
+    `${createHash("sha1").update(packagePath).digest("hex")}.lock`
+  );
+  const staleAfterMs = 5 * 60 * 1000;
+
+  for (;;) {
+    try {
+      const fileHandle = fs.openSync(lockPath, "wx");
+      return {
+        release() {
+          fs.closeSync(fileHandle);
+          fs.rmSync(lockPath, { force: true });
+        },
+      };
+    } catch (error) {
+      const nodeError = error as NodeJS.ErrnoException;
+      if (nodeError.code !== "EEXIST") {
+        throw error;
+      }
+
+      const distPath = path.join(packagePath, "dist");
+      if (fs.existsSync(distPath)) {
+        return {
+          release() {},
+        };
+      }
+
+      try {
+        const stats = fs.statSync(lockPath);
+        if (Date.now() - stats.mtimeMs > staleAfterMs) {
+          fs.rmSync(lockPath, { force: true });
+          continue;
+        }
+      } catch {
+        continue;
+      }
+
+      sleepSync(100);
+    }
+  }
+}
 
 export function runCli(
   command: string,
@@ -194,13 +246,21 @@ export function ensureWorkspacePackageBuilt(
     return;
   }
 
-  if (fs.existsSync(path.join(packagePath, "dist"))) {
+  const distPath = path.join(packagePath, "dist");
+  if (fs.existsSync(distPath)) {
     builtWorkspacePackages.add(packageName);
     return;
   }
 
-  runCli("bun", ["run", "build"], { cwd: packagePath });
-  builtWorkspacePackages.add(packageName);
+  const lock = acquireWorkspaceBuildLock(packagePath);
+  try {
+    if (!fs.existsSync(distPath)) {
+      runCli("bun", ["run", "build"], { cwd: packagePath });
+    }
+    builtWorkspacePackages.add(packageName);
+  } finally {
+    lock.release();
+  }
 }
 
 export function ensureWorkspaceBinaryDirectory(targetDir: string) {

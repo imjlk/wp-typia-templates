@@ -1043,8 +1043,14 @@ import { resolveTransportCallOptions } from './src/transport';
 const statePath = Object.keys(openApiDocument.paths).find((candidatePath) =>
 candidatePath.endsWith('/state')
 );
+const bootstrapPath = Object.keys(openApiDocument.paths).find((candidatePath) =>
+candidatePath.endsWith('/bootstrap')
+);
 if (typeof statePath !== 'string') {
 throw new Error('Unable to resolve the generated state route path.');
+}
+if (typeof bootstrapPath !== 'string') {
+throw new Error('Unable to resolve the generated bootstrap route path.');
 }
 
 const readOptions = resolveTransportCallOptions(
@@ -1057,6 +1063,28 @@ const readOptions = resolveTransportCallOptions(
 },
 { transportTarget: 'frontend' },
 );
+const bootstrapOptions = resolveTransportCallOptions(
+'frontend',
+'read',
+{ path: bootstrapPath },
+{
+	postId: 7,
+	resourceKey: 'demo',
+},
+{ transportTarget: 'frontend' },
+);
+const bootstrapResponse = await fetch(
+bootstrapOptions.requestOptions?.url ?? '',
+{
+	headers: bootstrapOptions.requestOptions?.headers as HeadersInit | undefined,
+},
+);
+const bootstrap = await bootstrapResponse.json();
+const publicWriteRequestId = 'adapter-request-1';
+const publicWriteToken =
+	typeof bootstrap.publicWriteToken === 'string'
+		? bootstrap.publicWriteToken
+		: '';
 const writeOptions = resolveTransportCallOptions(
 'frontend',
 'write',
@@ -1064,8 +1092,8 @@ const writeOptions = resolveTransportCallOptions(
 {
 	delta: 2,
 	postId: 7,
-	publicWriteRequestId: 'adapter-request-1',
-	publicWriteToken: 'adapter-proof-token',
+	publicWriteRequestId,
+	publicWriteToken,
 	resourceKey: 'demo',
 },
 { transportTarget: 'frontend' },
@@ -1084,8 +1112,8 @@ writeOptions.requestOptions?.url ?? '',
 	body: JSON.stringify({
 		delta: 2,
 		postId: 7,
-		publicWriteRequestId: 'adapter-request-1',
-		publicWriteToken: 'adapter-proof-token',
+		publicWriteRequestId,
+		publicWriteToken,
 		resourceKey: 'demo',
 	}),
 	headers: {
