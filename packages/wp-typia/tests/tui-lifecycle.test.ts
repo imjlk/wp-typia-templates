@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
 import { addCommand } from "../src/commands/add";
 import { createCommand } from "../src/commands/create";
@@ -10,6 +12,18 @@ import {
 	resolveLazyFlowComponent,
 	runAlternateBufferAction,
 } from "../src/ui/alternate-buffer-lifecycle";
+import { FirstPartyFormViewport } from "../src/ui/first-party-form";
+
+function renderStaticMarkupSilently(element: ReturnType<typeof createElement>): string {
+	const originalError = console.error;
+	console.error = () => {};
+
+	try {
+		return renderToStaticMarkup(element);
+	} finally {
+		console.error = originalError;
+	}
+}
 
 describe("alternate-buffer TUI lifecycle", () => {
 	test("matches the shared quit keys", () => {
@@ -166,5 +180,50 @@ describe("alternate-buffer TUI lifecycle", () => {
 		expect(typeof createCommand.render).toBe("function");
 		expect(typeof addCommand.render).toBe("function");
 		expect(typeof migrateCommand.render).toBe("function");
+	});
+
+	test("shared first-party submit surface replaces stale create fields while submitting", () => {
+		const rendered = renderStaticMarkupSilently(
+			createElement(
+				FirstPartyFormViewport,
+				{
+					isSubmitting: true,
+					scrollTop: 2,
+					submittingDescription: "Preparing your wp-typia project files...",
+					submittingTitle: "Creating project...",
+					viewportHeight: 8,
+				},
+				createElement("text", { content: "Project directory" }),
+				createElement("text", { content: "Template" }),
+				createElement("text", { content: "Package manager" }),
+			),
+		);
+
+		expect(rendered).toContain('data-form-surface="submitting"');
+		expect(rendered).toContain("Creating project...");
+		expect(rendered).toContain("Preparing your wp-typia project files...");
+		expect(rendered).not.toContain("<scrollbox");
+		expect(rendered).not.toContain("Project directory");
+		expect(rendered).not.toContain("Template");
+		expect(rendered).not.toContain("Package manager");
+	});
+
+	test("shared first-party submit surface keeps the scrollbox body when idle", () => {
+		const rendered = renderStaticMarkupSilently(
+			createElement(
+				FirstPartyFormViewport,
+				{
+					isSubmitting: false,
+					scrollTop: 4,
+					submittingTitle: "Creating project...",
+					viewportHeight: 8,
+				},
+				createElement("text", { content: "Project directory" }),
+			),
+		);
+
+		expect(rendered).toContain("<scrollbox");
+		expect(rendered).toContain("Project directory");
+		expect(rendered).not.toContain('data-form-surface="submitting"');
 	});
 });
