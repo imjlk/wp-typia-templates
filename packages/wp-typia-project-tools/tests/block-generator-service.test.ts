@@ -102,7 +102,8 @@ describe("BlockGeneratorService", () => {
 		expect(path.basename(rendered.templateDir)).toBe("compound");
 		expect(rendered.cleanup).toBeFunction();
 		expect(rendered.variables.compoundPersistenceEnabled).toBe("true");
-		expect(rendered.variables.persistencePolicy).toBe("public");
+		expect(rendered.variables.isPublicPersistencePolicy).toBe("true");
+		expect(rendered.variables.isAuthenticatedPersistencePolicy).toBe("false");
 		expect(rendered.variables.dataStorageMode).toBe("post-meta");
 		expect(rendered.variables.blockMetadataVersion).toBe("0.1.0");
 		expect(rendered.readmeContent).toContain("## Template");

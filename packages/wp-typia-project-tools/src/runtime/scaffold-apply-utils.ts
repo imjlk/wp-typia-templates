@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 import {
 	applyGeneratedProjectDxPackageJson,
@@ -62,6 +63,7 @@ interface GeneratedPackageJson {
 }
 
 const EPHEMERAL_NODE_MODULES_LINK_TYPE = process.platform === "win32" ? "junction" : "dir";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LOCKFILES: Record<PackageManagerId, string[]> = {
 	bun: ["bun.lock", "bun.lockb"],
 	npm: ["package-lock.json"],
@@ -225,7 +227,7 @@ export async function writeStarterManifestFiles(
 }
 
 function resolveScaffoldGeneratorNodeModulesPath(): string | null {
-	const projectToolsPackageRoot = path.resolve(import.meta.dir, "..", "..");
+	const projectToolsPackageRoot = path.resolve(__dirname, "..", "..");
 	const candidates = [
 		path.join(projectToolsPackageRoot, "node_modules"),
 		path.resolve(projectToolsPackageRoot, "..", ".."),
