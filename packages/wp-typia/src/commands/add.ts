@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { getAddBlockDefaults } from "../config";
 import { resolveBundledModuleHref } from "../render-loader";
-import { executeAddCommand, getAddWorkspaceBlockOptions } from "../runtime-bridge";
+import { executeAddCommand } from "../runtime-bridge";
 import type { WpTypiaRenderArgs } from "./render-types";
 import { LazyFlow } from "../ui/lazy-flow";
 
@@ -94,7 +94,6 @@ export const addCommand = defineCommand({
 								template:
 									(args.flags.template as string | undefined) ?? config.template,
 							},
-							workspaceBlockOptions: getAddWorkspaceBlockOptions(args.cwd),
 						},
 					});
 				},

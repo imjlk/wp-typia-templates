@@ -1,4 +1,4 @@
-import { createElement, useMemo } from "react";
+import { createElement, useEffect, useMemo, useState } from "react";
 
 import {
 	Form,
@@ -8,7 +8,7 @@ import {
 } from "@bunli/tui";
 import { HOOKED_BLOCK_POSITION_IDS } from "@wp-typia/project-tools/hooked-blocks";
 
-import { executeAddCommand } from "../runtime-bridge";
+import { executeAddCommand, loadAddWorkspaceBlockOptions } from "../runtime-bridge";
 import { useAlternateBufferLifecycle } from "./alternate-buffer-lifecycle";
 import {
 	type AddFlowValues,
@@ -104,11 +104,12 @@ const HOOKED_BLOCK_POSITION_DESCRIPTIONS: Record<
 type AddFlowProps = {
 	cwd: string;
 	initialValues: Partial<AddFlowValues>;
-	workspaceBlockOptions: Array<{
-		description: string;
-		name: string;
-		value: string;
-	}>;
+};
+
+type WorkspaceBlockOption = {
+	description: string;
+	name: string;
+	value: string;
 };
 
 type AddSelectFieldName = {
@@ -134,7 +135,7 @@ function getAddNameLabel(kind?: string): string {
 function AddFlowFields({
 	workspaceBlockOptions,
 }: {
-	workspaceBlockOptions: AddFlowProps["workspaceBlockOptions"];
+	workspaceBlockOptions: WorkspaceBlockOption[];
 }) {
 	const { activeFieldName, values } = useFormContext();
 	const { height: terminalHeight = 24 } = useTerminalDimensions();
@@ -255,8 +256,31 @@ function AddFlowFields({
 	);
 }
 
-export function AddFlow({ cwd, initialValues, workspaceBlockOptions }: AddFlowProps) {
-	const { handleCancel, handleSubmit } = useAlternateBufferLifecycle("wp-typia add failed");
+export function AddFlow({ cwd, initialValues }: AddFlowProps) {
+	const { handleCancel, handleFailure, handleSubmit } = useAlternateBufferLifecycle(
+		"wp-typia add failed",
+	);
+	const [workspaceBlockOptions, setWorkspaceBlockOptions] = useState<WorkspaceBlockOption[]>([]);
+
+	useEffect(() => {
+		let disposed = false;
+
+		void loadAddWorkspaceBlockOptions(cwd)
+			.then((options) => {
+				if (!disposed) {
+					setWorkspaceBlockOptions(options);
+				}
+			})
+			.catch((error) => {
+				if (!disposed) {
+					handleFailure(error);
+				}
+			});
+
+		return () => {
+			disposed = true;
+		};
+	}, [cwd, handleFailure]);
 
 	return (
 		<Form

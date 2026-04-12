@@ -533,6 +533,16 @@ export async function executeDoctorCommand(cwd: string): Promise<void> {
 	await runDoctor(cwd);
 }
 
+export async function loadAddWorkspaceBlockOptions(cwd: string) {
+	const workspace = tryResolveWorkspaceProject(cwd);
+	if (!workspace) {
+		return [];
+	}
+
+	const { getWorkspaceBlockSelectOptions } = await loadCliAddRuntime();
+	return getWorkspaceBlockSelectOptions(workspace.projectDir);
+}
+
 export async function executeSyncCommand({
 	check = false,
 	cwd,
@@ -593,35 +603,6 @@ export async function executeMigrateCommand({
 		prompt,
 		renderLine,
 	});
-}
-
-export function getAddWorkspaceBlockOptions(cwd: string) {
-	const workspace = tryResolveWorkspaceProject(cwd);
-	if (!workspace) {
-		return [];
-	}
-
-	const blocksDir = path.join(workspace.projectDir, "src", "blocks");
-	if (!fs.existsSync(blocksDir)) {
-		return [];
-	}
-
-	return fs
-		.readdirSync(blocksDir, { withFileTypes: true })
-		.filter((entry) => entry.isDirectory())
-		.map((entry) => {
-			const blockSlug = entry.name;
-			const typesFile = path.join("src", "blocks", blockSlug, "types.ts");
-			const fallbackFile = path.join("src", "blocks", blockSlug, "block.json");
-			return {
-				description: fs.existsSync(path.join(workspace.projectDir, typesFile))
-					? typesFile
-					: fallbackFile,
-				name: blockSlug,
-				value: blockSlug,
-			};
-		})
-		.sort((left, right) => left.name.localeCompare(right.name));
 }
 
 export { listTemplates };
