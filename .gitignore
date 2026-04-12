@@ -10,6 +10,7 @@ dist/
 coverage/
 .nyc_output/
 docs/api/
+.pages-site/
 *.lcov
 *.tgz
 *.zip

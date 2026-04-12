@@ -26,7 +26,11 @@ export interface {{pascalCase}}Context {
   isAnimating: boolean;
   isVisible: boolean;
   lastInteraction: string;
-  animationClass: string;
+  animation: 'none' | 'bounce' | 'pulse' | 'shake' | 'flip';
+  interactiveMode: 'click' | 'hover' | 'auto';
+  maxClicks: number;
+  autoPlayInterval: number;
+  autoPlayTimer?: ReturnType<typeof setInterval> | null;
 }
 
 export type {{pascalCase}}ValidationResult = ValidationResult<{{pascalCase}}Attributes>;
