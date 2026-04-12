@@ -31,7 +31,7 @@ export const BLOCKS = [
 					queryContract: 'state-query',
 					responseContract: 'state-response',
 					summary: 'Read the current persisted state.',
-					tags: [ '{{title}}' ],
+					tags: [ {{titleJson}} ],
 				},
 				{
 					auth: '{{restWriteAuthIntent}}',
@@ -41,7 +41,7 @@ export const BLOCKS = [
 					path: '/{{namespace}}/v1/{{slugKebabCase}}/state',
 					responseContract: 'state-response',
 					summary: 'Write the current persisted state.',
-					tags: [ '{{title}}' ],
+					tags: [ {{titleJson}} ],
 					wordpressAuth: {
 						mechanism: '{{restWriteAuthMechanism}}',
 					},
@@ -54,11 +54,11 @@ export const BLOCKS = [
 					queryContract: 'bootstrap-query',
 					responseContract: 'bootstrap-response',
 					summary: 'Read fresh session bootstrap state for the current viewer.',
-					tags: [ '{{title}}' ],
+					tags: [ {{titleJson}} ],
 				},
 			],
 			info: {
-				title: '{{title}} REST API',
+				title: {{titleJson}} + ' REST API',
 				version: '1.0.0',
 			},
 		} ),

@@ -29,7 +29,7 @@ test(
         namespace: "create-block",
         persistencePolicy: "public",
         slug: "demo-persistence-public",
-        title: "Demo Persistence Public",
+        title: `John's "Counter" Public`,
       },
       persistencePolicy: "public",
     });
@@ -265,7 +265,7 @@ test(
       "{ __( 'Storage mode:', 'demo-persistence-public' ) } post-meta"
     );
     expect(generatedEdit).toContain(
-      `placeholder={ __( ${JSON.stringify("Demo Persistence Public")} + ' persistence block', 'demo-persistence-public' ) }`
+      `placeholder={ __( ${JSON.stringify(`John's "Counter" Public`)} + ' persistence block', 'demo-persistence-public' ) }`
     );
     expect(generatedData).toContain("useDemoPersistencePublicStateQuery");
     expect(generatedData).toContain(
@@ -291,6 +291,12 @@ test(
     expect(generatedSyncRest).toContain("src/api.openapi.json");
     expect(generatedSyncRest).not.toContain(
       "openApiInfo: REST_ENDPOINT_MANIFEST.info"
+    );
+    expect(generatedSyncRest).toContain(
+      `tags: [ ${JSON.stringify(`John's "Counter" Public`)} ]`
+    );
+    expect(generatedSyncRest).toContain(
+      `title: ${JSON.stringify(`John's "Counter" Public`)} + ' REST API'`
     );
     expect(generatedSyncRest).toMatch(
       /auth:\s*'public'[\s\S]*?operationId:\s*'getDemoPersistencePublicBootstrap'/
@@ -483,7 +489,7 @@ test("scaffoldProject creates a persistence template with authenticated writes b
       namespace: "create-block",
       persistencePolicy: "authenticated",
       slug: "demo-persistence-authenticated",
-      title: "Demo Persistence Authenticated",
+      title: `John's "Counter" Authenticated`,
     },
   });
 
@@ -601,6 +607,12 @@ test("scaffoldProject creates a persistence template with authenticated writes b
   expect(generatedSyncRest).toMatch(
     /auth:\s*'public'[\s\S]*?operationId:\s*'getDemoPersistenceAuthenticatedBootstrap'/
   );
+  expect(generatedSyncRest).toContain(
+    `tags: [ ${JSON.stringify(`John's "Counter" Authenticated`)} ]`
+  );
+  expect(generatedSyncRest).toContain(
+    `title: ${JSON.stringify(`John's "Counter" Authenticated`)} + ' REST API'`
+  );
   expect(fs.existsSync(path.join(targetDir, "src", "api-client.ts"))).toBe(
     true
   );
@@ -662,7 +674,7 @@ test("scaffoldProject creates a persistence template with authenticated writes b
     "{ __( 'Storage mode:', 'demo-persistence-authenticated' ) } custom-table"
   );
   expect(generatedEdit).toContain(
-    `placeholder={ __( ${JSON.stringify("Demo Persistence Authenticated")} + ' persistence block', 'demo-persistence-authenticated' ) }`
+    `placeholder={ __( ${JSON.stringify(`John's "Counter" Authenticated`)} + ' persistence block', 'demo-persistence-authenticated' ) }`
   );
   expect(generatedEdit).toContain(
     "Stable persisted identifier used by the storage-backed counter endpoint."

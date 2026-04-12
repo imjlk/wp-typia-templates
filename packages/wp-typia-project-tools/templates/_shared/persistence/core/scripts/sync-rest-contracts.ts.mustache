@@ -76,7 +76,7 @@ const REST_ENDPOINT_MANIFEST = defineEndpointManifest( {
 			queryContract: 'state-query',
 			responseContract: 'state-response',
 			summary: 'Read the current persisted state.',
-			tags: [ '{{title}}' ],
+			tags: [ {{titleJson}} ],
 		},
 		{
 			auth: '{{restWriteAuthIntent}}',
@@ -86,7 +86,7 @@ const REST_ENDPOINT_MANIFEST = defineEndpointManifest( {
 			path: '/{{namespace}}/v1/{{slugKebabCase}}/state',
 			responseContract: 'state-response',
 			summary: 'Write the current persisted state.',
-			tags: [ '{{title}}' ],
+			tags: [ {{titleJson}} ],
 			wordpressAuth: {
 				mechanism: '{{restWriteAuthMechanism}}',
 			},
@@ -99,11 +99,11 @@ const REST_ENDPOINT_MANIFEST = defineEndpointManifest( {
 			queryContract: 'bootstrap-query',
 			responseContract: 'bootstrap-response',
 			summary: 'Read fresh session bootstrap state for the current viewer.',
-			tags: [ '{{title}}' ],
+			tags: [ {{titleJson}} ],
 		},
 	],
 	info: {
-		title: '{{title}} REST API',
+		title: {{titleJson}} + ' REST API',
 		version: '1.0.0',
 	},
 } );

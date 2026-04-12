@@ -650,6 +650,13 @@ test(
   expect(generatedInteractivity).toContain("withSyncEvent");
   expect(generatedInteractivity).toContain("reset: withSyncEvent");
   expect(generatedInteractivity).toContain("event.stopPropagation();");
+  expect(generatedInteractivity).toContain(
+    "if (context.maxClicks > 0 && context.clicks >= context.maxClicks)"
+  );
+  expect(generatedInteractivity).toContain("const previousClicks = context.clicks;");
+  expect(generatedInteractivity).toContain(
+    "const clampedClicks ="
+  );
   expect(generatedInteractivity).not.toContain("declare global");
   expect(generatedInteractivity).toContain("get clampedClicks()");
   expect(generatedInteractivity).not.toContain("animationClass");
@@ -671,7 +678,17 @@ test(
   expect(generatedSave).toContain("const interactiveMode = attributes.interactiveMode ?? 'click';");
   expect(generatedSave).not.toContain("autoPlayInterval");
   expect(generatedSave).not.toContain("lastInteraction");
-  expect(generatedSave).toContain('aria-label="Reset counter"');
+  expect(generatedSave).toContain("import { __ } from '@wordpress/i18n';");
+  expect(generatedSave).toContain("__( 'Clicks:', 'demo-interactivity' )");
+  expect(generatedSave).toContain(
+    "aria-label={ __( 'Click progress', 'demo-interactivity' ) }"
+  );
+  expect(generatedSave).toContain(
+    "aria-label={ __( 'Reset counter', 'demo-interactivity' ) }"
+  );
+  expect(generatedSave).toContain(
+    "{ __( '🎉 Complete!', 'demo-interactivity' ) }"
+  );
   expect(generatedSave).toContain('className="screen-reader-text"');
   expect(generatedSave).toContain('role="progressbar"');
   expect(generatedSave).toContain(
