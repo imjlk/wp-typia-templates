@@ -666,6 +666,7 @@ jobs:
       - test-project-tools-coverage
       - build
     if: |
+      always() &&
       github.ref == 'refs/heads/main' &&
       needs.build.result == 'success' &&
       (needs.test-project-tools-scaffold-core.result == 'success' || needs.test-project-tools-scaffold-core.result == 'skipped') &&
