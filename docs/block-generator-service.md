@@ -1,6 +1,6 @@
 # Block Generator Service
 
-`BlockGeneratorService` is the Phase 2 typed generation boundary for built-in
+`BlockGeneratorService` is the typed generation boundary for built-in
 `wp-typia` block scaffolds.
 
 ## Current responsibility split
@@ -21,18 +21,20 @@
   persistence artifacts when needed, applies migration/local-dev capabilities,
   normalizes package-manager files, and optionally installs dependencies.
 
-## Phase 2 render policy
+## Current render policy
 
-Phase 2 moves structural artifacts to typed emitters without migrating the rest
-of the scaffold body away from Mustache.
+The current generator keeps structural artifacts on typed emitters without
+migrating the rest of the scaffold body away from Mustache.
 
 - `types.ts` and `block.json` are now emitter-owned for all built-in block
   families.
+- built-in templates no longer ship structural Mustache files for those
+  artifacts.
 - starter `typia.manifest.json` files reuse the same structural artifact model.
 - `edit.tsx`, `save.tsx`, `index.tsx`, and the remaining template files still
   come from Mustache/interpolated directory copy.
 
-## Out of scope in Phase 2
+## Out of scope
 
 - external template composition
 - non-block `wp-typia add` generators such as variations, patterns,

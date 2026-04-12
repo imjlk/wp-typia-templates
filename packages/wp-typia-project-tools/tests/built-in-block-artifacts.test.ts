@@ -19,6 +19,8 @@ import { stringifyStarterManifest } from "../src/runtime/starter-manifests.js";
 import type { BuiltInTemplateId } from "../src/runtime/template-registry.js";
 import type { ScaffoldAnswers } from "../src/runtime/scaffold.js";
 
+const templatesRoot = path.resolve(import.meta.dir, "..", "templates");
+
 function buildAnswers(templateId: BuiltInTemplateId): ScaffoldAnswers {
 	return {
 		author: "Emitter Test",
@@ -64,6 +66,25 @@ describe("built-in block artifacts", () => {
 
 	afterAll(() => {
 		cleanupScaffoldTempRoot(tempRoot);
+	});
+
+	test("built-in template trees no longer ship structural Mustache files", () => {
+		for (const relativePath of [
+			"basic/src/types.ts.mustache",
+			"basic/src/block.json.mustache",
+			"interactivity/src/types.ts.mustache",
+			"interactivity/src/block.json.mustache",
+			"persistence/src/types.ts.mustache",
+			"persistence/src/block.json.mustache",
+			"compound/src/blocks/{{slugKebabCase}}/types.ts.mustache",
+			"compound/src/blocks/{{slugKebabCase}}/block.json.mustache",
+			"compound/src/blocks/{{slugKebabCase}}-item/types.ts.mustache",
+			"compound/src/blocks/{{slugKebabCase}}-item/block.json.mustache",
+			"_shared/compound/persistence/src/blocks/{{slugKebabCase}}/types.ts.mustache",
+			"_shared/compound/persistence/src/blocks/{{slugKebabCase}}/block.json.mustache",
+		]) {
+			expect(fs.existsSync(path.join(templatesRoot, relativePath))).toBe(false);
+		}
 	});
 
 	test.each([
