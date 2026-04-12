@@ -146,7 +146,12 @@ function readWorkspaceBuildLockOwner(
     return null;
   }
 
-  const parsedOwner = JSON.parse(rawOwner) as Partial<WorkspaceBuildLockOwner>;
+  let parsedOwner: Partial<WorkspaceBuildLockOwner>;
+  try {
+    parsedOwner = JSON.parse(rawOwner) as Partial<WorkspaceBuildLockOwner>;
+  } catch {
+    return null;
+  }
   if (
     typeof parsedOwner.pid !== "number" ||
     !Number.isInteger(parsedOwner.pid) ||
@@ -743,8 +748,16 @@ export async function startLocalCounterStubServer(
           typeof parsedBody === "object" && parsedBody !== null
             ? (parsedBody as Record<string, unknown>)
             : null;
-        const delta = typeof body?.delta === "number" ? body.delta : undefined;
-        const postId = typeof body?.postId === "number" ? body.postId : undefined;
+        const delta =
+          typeof body?.delta === "number" && Number.isFinite(body.delta)
+            ? body.delta
+            : undefined;
+        const postId =
+          typeof body?.postId === "number" &&
+          Number.isSafeInteger(body.postId) &&
+          body.postId > 0
+            ? body.postId
+            : undefined;
         const publicWriteRequestId =
           typeof body?.publicWriteRequestId === "string"
             ? body.publicWriteRequestId
@@ -755,8 +768,8 @@ export async function startLocalCounterStubServer(
           typeof body?.resourceKey === "string" ? body.resourceKey : undefined;
 
         if (
-          typeof delta !== "number" ||
-          typeof postId !== "number" ||
+          delta === undefined ||
+          postId === undefined ||
           typeof publicWriteRequestId !== "string" ||
           typeof publicWriteToken !== "string" ||
           publicWriteToken !== "adapter-proof-token" ||
