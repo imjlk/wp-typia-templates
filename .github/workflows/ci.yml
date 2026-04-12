@@ -108,8 +108,8 @@ jobs:
           flags: unit-core
           name: codecov-unit-core
 
-  test-project-tools-scaffolding:
-    name: Project Tools Regression (Scaffolding)
+  test-project-tools-scaffold-core:
+    name: "Project Tools: Scaffold Core"
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
@@ -132,11 +132,11 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run scaffolding regression tests
-        run: bun run test:project-tools:scaffolding
+      - name: Run scaffold core regression tests
+        run: bun run test:project-tools:scaffold-core
 
-  test-project-tools-migrations:
-    name: Project Tools Regression (Migrations)
+  test-project-tools-workspace:
+    name: "Project Tools: Workspace"
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
@@ -159,8 +159,89 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run migration regression tests
-        run: bun run test:project-tools:migrations
+      - name: Run workspace regression tests
+        run: bun run test:project-tools:workspace
+
+  test-project-tools-compound:
+    name: "Project Tools: Compound"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache Bun install cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run compound regression tests
+        run: bun run test:project-tools:compound
+
+  test-project-tools-migration-planning:
+    name: "Project Tools: Migration Planning"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache Bun install cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run migration planning tests
+        run: bun run test:project-tools:migration-planning
+
+  test-project-tools-migration-execution:
+    name: "Project Tools: Migration Execution"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache Bun install cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            bun-install-${{ runner.os }}-${{ env.BUN_VERSION }}-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run migration execution tests
+        run: bun run test:project-tools:migration-execution
 
   test-project-tools-coverage:
     name: Project Tools Coverage
@@ -197,26 +278,28 @@ jobs:
           flags: project-tools
           name: codecov-project-tools
 
-  test-project-tools:
-    name: Unit Tests (Project Tools)
-    runs-on: ubuntu-latest
-    needs:
-      - test-project-tools-scaffolding
-      - test-project-tools-migrations
-      - test-project-tools-coverage
-    if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
-    steps:
-      - name: Confirm project-tools test lane
-        run: |
-          echo "project-tools test lane completed successfully"
-          echo "scaffolding=${{ needs.test-project-tools-scaffolding.result }}"
-          echo "migrations=${{ needs.test-project-tools-migrations.result }}"
-          echo "coverage=${{ needs.test-project-tools-coverage.result }}"
-
   build:
     name: Build CLI and Example
     runs-on: ubuntu-latest
-    needs: [lint, test-core, test-project-tools]
+    needs:
+      - lint
+      - test-core
+      - test-project-tools-scaffold-core
+      - test-project-tools-workspace
+      - test-project-tools-compound
+      - test-project-tools-migration-planning
+      - test-project-tools-migration-execution
+      - test-project-tools-coverage
+    if: |
+      always() &&
+      needs.lint.result == 'success' &&
+      needs.test-core.result == 'success' &&
+      (needs.test-project-tools-scaffold-core.result == 'success' || needs.test-project-tools-scaffold-core.result == 'skipped') &&
+      (needs.test-project-tools-workspace.result == 'success' || needs.test-project-tools-workspace.result == 'skipped') &&
+      (needs.test-project-tools-compound.result == 'success' || needs.test-project-tools-compound.result == 'skipped') &&
+      (needs.test-project-tools-migration-planning.result == 'success' || needs.test-project-tools-migration-planning.result == 'skipped') &&
+      (needs.test-project-tools-migration-execution.result == 'success' || needs.test-project-tools-migration-execution.result == 'skipped') &&
+      (needs.test-project-tools-coverage.result == 'success' || needs.test-project-tools-coverage.result == 'skipped')
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -273,7 +356,25 @@ jobs:
   publish-install-smoke:
     name: Published Install Smoke
     runs-on: ubuntu-latest
-    needs: [lint, test-core, test-project-tools]
+    needs:
+      - lint
+      - test-core
+      - test-project-tools-scaffold-core
+      - test-project-tools-workspace
+      - test-project-tools-compound
+      - test-project-tools-migration-planning
+      - test-project-tools-migration-execution
+      - test-project-tools-coverage
+    if: |
+      always() &&
+      needs.lint.result == 'success' &&
+      needs.test-core.result == 'success' &&
+      (needs.test-project-tools-scaffold-core.result == 'success' || needs.test-project-tools-scaffold-core.result == 'skipped') &&
+      (needs.test-project-tools-workspace.result == 'success' || needs.test-project-tools-workspace.result == 'skipped') &&
+      (needs.test-project-tools-compound.result == 'success' || needs.test-project-tools-compound.result == 'skipped') &&
+      (needs.test-project-tools-migration-planning.result == 'success' || needs.test-project-tools-migration-planning.result == 'skipped') &&
+      (needs.test-project-tools-migration-execution.result == 'success' || needs.test-project-tools-migration-execution.result == 'skipped') &&
+      (needs.test-project-tools-coverage.result == 'success' || needs.test-project-tools-coverage.result == 'skipped')
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -554,8 +655,26 @@ jobs:
   deploy-docs:
     name: Deploy Documentation
     runs-on: ubuntu-latest
-    needs: [lint, test-core, test-project-tools, build]
-    if: github.ref == 'refs/heads/main'
+    needs:
+      - lint
+      - test-core
+      - test-project-tools-scaffold-core
+      - test-project-tools-workspace
+      - test-project-tools-compound
+      - test-project-tools-migration-planning
+      - test-project-tools-migration-execution
+      - test-project-tools-coverage
+      - build
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      needs.build.result == 'success' &&
+      (needs.test-project-tools-scaffold-core.result == 'success' || needs.test-project-tools-scaffold-core.result == 'skipped') &&
+      (needs.test-project-tools-workspace.result == 'success' || needs.test-project-tools-workspace.result == 'skipped') &&
+      (needs.test-project-tools-compound.result == 'success' || needs.test-project-tools-compound.result == 'skipped') &&
+      (needs.test-project-tools-migration-planning.result == 'success' || needs.test-project-tools-migration-planning.result == 'skipped') &&
+      (needs.test-project-tools-migration-execution.result == 'success' || needs.test-project-tools-migration-execution.result == 'skipped') &&
+      (needs.test-project-tools-coverage.result == 'success' || needs.test-project-tools-coverage.result == 'skipped')
     permissions:
       contents: read
       pages: write
