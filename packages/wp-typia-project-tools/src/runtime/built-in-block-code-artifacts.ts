@@ -252,21 +252,18 @@ export function buildBuiltInCodeArtifacts({
 	templateId: BuiltInTemplateId;
 	variables: ScaffoldTemplateVariables;
 }): BuiltInCodeArtifact[] {
-	if (templateId === "basic") {
-		return buildBasicCodeArtifacts(variables);
+	switch (templateId) {
+		case "basic":
+			return buildBasicCodeArtifacts(variables);
+		case "interactivity":
+			return buildInteractivityCodeArtifacts(variables);
+		case "persistence":
+			return buildPersistenceCodeArtifacts(variables);
+		case "compound":
+			return buildCompoundCodeArtifacts(variables);
+		default: {
+			const unhandledTemplateId: never = templateId;
+			throw new Error(`Unhandled built-in template id: ${unhandledTemplateId}`);
+		}
 	}
-
-	if (templateId === "interactivity") {
-		return buildInteractivityCodeArtifacts(variables);
-	}
-
-	if (templateId === "persistence") {
-		return buildPersistenceCodeArtifacts(variables);
-	}
-
-	if (templateId === "compound") {
-		return buildCompoundCodeArtifacts(variables);
-	}
-
-	return [];
 }
