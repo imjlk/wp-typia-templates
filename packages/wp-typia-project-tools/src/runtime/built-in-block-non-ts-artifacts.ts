@@ -580,6 +580,17 @@ $wrapper_attributes = get_block_wrapper_attributes(
 	return artifacts;
 }
 
+/**
+ * Builds non-TypeScript scaffold artifacts for built-in block templates.
+ *
+ * @param options Build options for the selected built-in template family.
+ * @param options.templateId Built-in template identifier that controls which
+ * non-TS files should be emitted.
+ * @param options.variables Scaffold template variables used to render the
+ * generated sources.
+ * @returns An array of emitter-owned SCSS and PHP artifacts for the selected
+ * built-in template family.
+ */
 export function buildBuiltInNonTsArtifacts({
 	templateId,
 	variables,

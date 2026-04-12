@@ -12,13 +12,20 @@ import {
 } from "../src/runtime/built-in-block-artifacts.js";
 import { buildBuiltInCodeArtifacts } from "../src/runtime/built-in-block-code-artifacts.js";
 import {
+	getBuiltInTemplateLayerDirs,
+	isOmittableBuiltInTemplateLayerDir,
+} from "../src/runtime/template-builtins.js";
+import {
 	buildTemplateVariablesFromBlockSpec,
 	createBuiltInBlockSpec,
 } from "../src/runtime/block-generator-service.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 import { transformPackageManagerText } from "../src/runtime/package-managers.js";
 import { stringifyStarterManifest } from "../src/runtime/starter-manifests.js";
-import type { BuiltInTemplateId } from "../src/runtime/template-registry.js";
+import {
+	getTemplateById,
+	type BuiltInTemplateId,
+} from "../src/runtime/template-registry.js";
 import type { ScaffoldAnswers } from "../src/runtime/scaffold.js";
 
 const templatesRoot = path.resolve(import.meta.dir, "..", "templates");
@@ -242,6 +249,50 @@ describe("built-in block artifacts", () => {
 				);
 				expect(parentResourceKeyBlockJson?.default).toBe("");
 			}
+		},
+	);
+
+	test("empty built-in overlay directories are omittable only for fully emitter-owned families", () => {
+		expect(
+			isOmittableBuiltInTemplateLayerDir(
+				"basic",
+				getTemplateById("basic").templateDir,
+			),
+		).toBe(true);
+		expect(
+			isOmittableBuiltInTemplateLayerDir(
+				"persistence",
+				getTemplateById("persistence").templateDir,
+			),
+		).toBe(true);
+		expect(
+			isOmittableBuiltInTemplateLayerDir(
+				"compound",
+				getTemplateById("compound").templateDir,
+			),
+		).toBe(true);
+		expect(
+			isOmittableBuiltInTemplateLayerDir(
+				"interactivity",
+				getTemplateById("interactivity").templateDir,
+			),
+		).toBe(false);
+		expect(
+			getBuiltInTemplateLayerDirs("basic")[
+				getBuiltInTemplateLayerDirs("basic").length - 1
+			],
+		).toBe(getTemplateById("basic").templateDir);
+	});
+
+	test.each(["basic", "interactivity", "persistence", "compound"] as const)(
+		"buildBuiltInCodeArtifacts emits unique relative paths for %s",
+		(templateId) => {
+			const { codeArtifacts } = buildArtifacts(templateId);
+			const uniquePaths = new Set(
+				codeArtifacts.map((artifact) => artifact.relativePath),
+			);
+
+			expect(uniquePaths.size).toBe(codeArtifacts.length);
 		},
 	);
 

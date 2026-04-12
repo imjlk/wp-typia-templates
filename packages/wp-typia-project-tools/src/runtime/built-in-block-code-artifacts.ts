@@ -103,23 +103,40 @@ function createCodeArtifact(
 	};
 }
 
+function ensureUniqueArtifactPaths(
+	artifacts: BuiltInCodeArtifact[],
+): BuiltInCodeArtifact[] {
+	const seenPaths = new Set<string>();
+
+	for (const artifact of artifacts) {
+		if (seenPaths.has(artifact.relativePath)) {
+			throw new Error(
+				`Duplicate built-in artifact path emitted: ${artifact.relativePath}`,
+			);
+		}
+		seenPaths.add(artifact.relativePath);
+	}
+
+	return artifacts;
+}
+
 function buildBasicCodeArtifacts(
 	variables: ScaffoldTemplateVariables,
 ): BuiltInCodeArtifact[] {
-	return [
+	return ensureUniqueArtifactPaths([
 		createCodeArtifact("src/hooks.ts", SHARED_HOOKS_TEMPLATE, variables),
 		createCodeArtifact("src/edit.tsx", BASIC_EDIT_TEMPLATE, variables),
 		createCodeArtifact("src/save.tsx", BASIC_SAVE_TEMPLATE, variables),
 		createCodeArtifact("src/index.tsx", BASIC_INDEX_TEMPLATE, variables),
 		createCodeArtifact("src/validators.ts", BASIC_VALIDATORS_TEMPLATE, variables),
 		...buildBuiltInNonTsArtifacts({ templateId: "basic", variables }),
-	];
+	]);
 }
 
 function buildInteractivityCodeArtifacts(
 	variables: ScaffoldTemplateVariables,
 ): BuiltInCodeArtifact[] {
-	return [
+	return ensureUniqueArtifactPaths([
 		createCodeArtifact("src/hooks.ts", SHARED_HOOKS_TEMPLATE, variables),
 		createCodeArtifact("src/edit.tsx", INTERACTIVITY_EDIT_TEMPLATE, variables),
 		createCodeArtifact("src/save.tsx", INTERACTIVITY_SAVE_TEMPLATE, variables),
@@ -135,7 +152,7 @@ function buildInteractivityCodeArtifacts(
 			variables,
 		),
 		...buildBuiltInNonTsArtifacts({ templateId: "interactivity", variables }),
-	];
+	]);
 }
 
 function buildCompoundCodeArtifacts(
@@ -146,7 +163,7 @@ function buildCompoundCodeArtifacts(
 	const compoundPersistenceEnabled =
 		variables.compoundPersistenceEnabled === "true";
 
-	return [
+	return ensureUniqueArtifactPaths([
 		createCodeArtifact("src/hooks.ts", SHARED_HOOKS_TEMPLATE, variables),
 		createCodeArtifact(
 			`${parentBasePath}/edit.tsx`,
@@ -219,13 +236,13 @@ function buildCompoundCodeArtifacts(
 			variables,
 		),
 		...buildBuiltInNonTsArtifacts({ templateId: "compound", variables }),
-	];
+	]);
 }
 
 function buildPersistenceCodeArtifacts(
 	variables: ScaffoldTemplateVariables,
 ): BuiltInCodeArtifact[] {
-	return [
+	return ensureUniqueArtifactPaths([
 		createCodeArtifact("src/hooks.ts", SHARED_HOOKS_TEMPLATE, variables),
 		createCodeArtifact("src/edit.tsx", PERSISTENCE_EDIT_TEMPLATE, variables),
 		createCodeArtifact("src/save.tsx", PERSISTENCE_SAVE_TEMPLATE, variables),
@@ -241,7 +258,7 @@ function buildPersistenceCodeArtifacts(
 			variables,
 		),
 		...buildBuiltInNonTsArtifacts({ templateId: "persistence", variables }),
-	];
+	]);
 }
 
 /**

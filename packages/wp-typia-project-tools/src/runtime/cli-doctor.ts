@@ -4,7 +4,10 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { access, constants as fsConstants, rm, writeFile } from "node:fs/promises";
 
-import { getBuiltInTemplateLayerDirs } from "./template-builtins.js";
+import {
+	getBuiltInTemplateLayerDirs,
+	isOmittableBuiltInTemplateLayerDir,
+} from "./template-builtins.js";
 import {
 	HOOKED_BLOCK_ANCHOR_PATTERN,
 	HOOKED_BLOCK_POSITION_SET,
@@ -516,16 +519,26 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 									persistencePolicy: "public",
 								}),
 							]),
-						)
+					)
 					: getBuiltInTemplateLayerDirs(builtInTemplateId);
+		const missingRequiredLayer = layerDirs.some(
+			(layerDir) =>
+				!fs.existsSync(layerDir) &&
+				!isOmittableBuiltInTemplateLayerDir(builtInTemplateId, layerDir),
+		);
+		const existingLayerDirs = layerDirs.filter((layerDir) => fs.existsSync(layerDir));
 		const hasAssets =
-			layerDirs.every((layerDir) => fs.existsSync(layerDir)) &&
-			layerDirs.some((layerDir) => fs.existsSync(path.join(layerDir, "package.json.mustache"))) &&
-			layerDirs.some((layerDir) => fs.existsSync(path.join(layerDir, "src")));
+			!missingRequiredLayer &&
+			existingLayerDirs.some((layerDir) =>
+				fs.existsSync(path.join(layerDir, "package.json.mustache")),
+			) &&
+			existingLayerDirs.some((layerDir) => fs.existsSync(path.join(layerDir, "src")));
 		checks.push({
 			status: hasAssets ? "pass" : "fail",
 			label: `Template ${template.id}`,
-			detail: hasAssets ? layerDirs.join(" + ") : "Missing core template assets",
+			detail: hasAssets
+				? existingLayerDirs.join(" + ")
+				: "Missing core template assets",
 		});
 	}
 

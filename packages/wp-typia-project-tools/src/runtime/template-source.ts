@@ -731,6 +731,9 @@ async function normalizeCreateBlockSubset(
 
 	await fsp.mkdir(templateDir, { recursive: true });
 	for (const layerDir of [SHARED_BASE_TEMPLATE_ROOT, path.join(TEMPLATE_ROOT, "basic")]) {
+		if (!fs.existsSync(layerDir)) {
+			continue;
+		}
 		await fsp.cp(layerDir, templateDir, {
 			recursive: true,
 			force: true,
