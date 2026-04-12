@@ -555,7 +555,8 @@ function parseCounterPostId(rawPostId: string | null): number | undefined {
     return undefined;
   }
 
-  return Number(normalizedValue);
+  const value = Number(normalizedValue);
+  return Number.isSafeInteger(value) && value > 0 ? value : undefined;
 }
 
 function readCounterStubBody(request: IncomingMessage): Promise<string> {
