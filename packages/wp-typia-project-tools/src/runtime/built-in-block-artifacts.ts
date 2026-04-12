@@ -282,7 +282,7 @@ function buildBasicAttributes(): EmittedAttributeDefinition[] {
 	return [
 		createAttributeDefinition({
 			blockJson: {
-				defaultValue: "",
+				defaultValue: "primary",
 				type: "string",
 			},
 			description: {
@@ -795,7 +795,7 @@ function buildCompoundParentAttributes(
 			}),
 			createAttributeDefinition({
 				blockJson: {
-					defaultValue: "",
+					defaultValue: "primary",
 					type: "string",
 				},
 				manifest: {
@@ -822,14 +822,25 @@ function buildCompoundParentAttributes(
 function buildCompoundChildAttributes(
 	bodyPlaceholder = DEFAULT_COMPOUND_CHILD_BODY_PLACEHOLDER,
 	childTitle: string,
-	childCssClassName: string,
+	childCssClassName?: string | null,
 ): EmittedAttributeDefinition[] {
+	const titleSelector = childCssClassName
+		? `.${childCssClassName}__title`
+		: null;
+	const bodySelector = childCssClassName
+		? `.${childCssClassName}__body`
+		: null;
+
 	return [
 		createAttributeDefinition({
 			blockJson: {
 				defaultValue: childTitle,
-				selector: `.${childCssClassName}__title`,
-				source: "html",
+				...(titleSelector
+					? {
+							selector: titleSelector,
+							source: "html" as const,
+						}
+					: {}),
 				type: "string",
 			},
 			manifest: {
@@ -840,8 +851,8 @@ function buildCompoundChildAttributes(
 				defaultValue: childTitle,
 				kind: "string",
 				required: true,
-				selector: `.${childCssClassName}__title`,
-				source: "html",
+				selector: titleSelector,
+				source: titleSelector ? "html" : null,
 				sourceType: "string",
 			},
 			name: "title",
@@ -852,8 +863,12 @@ function buildCompoundChildAttributes(
 		createAttributeDefinition({
 			blockJson: {
 				defaultValue: bodyPlaceholder,
-				selector: `.${childCssClassName}__body`,
-				source: "html",
+				...(bodySelector
+					? {
+							selector: bodySelector,
+							source: "html" as const,
+						}
+					: {}),
 				type: "string",
 			},
 			manifest: {
@@ -864,8 +879,8 @@ function buildCompoundChildAttributes(
 				defaultValue: bodyPlaceholder,
 				kind: "string",
 				required: true,
-				selector: `.${childCssClassName}__body`,
-				source: "html",
+				selector: bodySelector,
+				source: bodySelector ? "html" : null,
 				sourceType: "string",
 			},
 			name: "body",
@@ -1369,7 +1384,7 @@ export function buildCompoundChildStarterManifestDocument(
 	const attributes = buildCompoundChildAttributes(
 		bodyPlaceholder,
 		childTitle,
-		"compound-child",
+		null,
 	);
 	return buildManifestDocument(childTypeName, attributes);
 }
