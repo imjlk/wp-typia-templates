@@ -44,7 +44,14 @@ export interface CopyRawDirectoryOptions {
 	) => boolean | Promise<boolean>;
 }
 
-function renderMustacheTemplateString(template: string, view: TemplateRenderView): string {
+/**
+ * Render a Mustache template while keeping HTML escaping disabled only for the
+ * current render call.
+ */
+export function renderMustacheTemplateString(
+	template: string,
+	view: TemplateRenderView,
+): string {
 	const originalEscape = Mustache.escape;
 	Mustache.escape = (value: string) => value;
 

@@ -264,6 +264,9 @@ test(
     expect(generatedEdit).toContain(
       "{ __( 'Storage mode:', 'demo-persistence-public' ) } post-meta"
     );
+    expect(generatedEdit).toContain(
+      `placeholder={ __( ${JSON.stringify("Demo Persistence Public")} + ' persistence block', 'demo-persistence-public' ) }`
+    );
     expect(generatedData).toContain("useDemoPersistencePublicStateQuery");
     expect(generatedData).toContain(
       "useWriteDemoPersistencePublicStateMutation"
@@ -657,6 +660,9 @@ test("scaffoldProject creates a persistence template with authenticated writes b
   );
   expect(generatedEdit).toContain(
     "{ __( 'Storage mode:', 'demo-persistence-authenticated' ) } custom-table"
+  );
+  expect(generatedEdit).toContain(
+    `placeholder={ __( ${JSON.stringify("Demo Persistence Authenticated")} + ' persistence block', 'demo-persistence-authenticated' ) }`
   );
   expect(generatedEdit).toContain(
     "Stable persisted identifier used by the storage-backed counter endpoint."
