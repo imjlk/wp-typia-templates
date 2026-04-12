@@ -23,8 +23,6 @@ const BINARY_EXTENSIONS = new Set([
 	".woff2",
 ]);
 
-Mustache.escape = (value: string) => value;
-
 export type TemplateRenderView = Record<string, unknown>;
 /**
  * Optional controls for raw directory copies.
@@ -46,8 +44,22 @@ export interface CopyRawDirectoryOptions {
 	) => boolean | Promise<boolean>;
 }
 
-function renderMustacheTemplateString(template: string, view: TemplateRenderView): string {
-	return Mustache.render(template, view);
+/**
+ * Render a Mustache template while keeping HTML escaping disabled only for the
+ * current render call.
+ */
+export function renderMustacheTemplateString(
+	template: string,
+	view: TemplateRenderView,
+): string {
+	const originalEscape = Mustache.escape;
+	Mustache.escape = (value: string) => value;
+
+	try {
+		return Mustache.render(template, view);
+	} finally {
+		Mustache.escape = originalEscape;
+	}
 }
 
 function escapeRegExp(value: string): string {

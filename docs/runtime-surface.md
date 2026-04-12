@@ -10,7 +10,7 @@ This document is descriptive, not normative. For support guarantees, see
 - `@wp-typia/project-tools`
   Project orchestration helpers used by the CLI and programmatic tooling,
   including the additive `BlockSpec` / `BlockGeneratorService` boundary and
-  structural emitters for built-in `types.ts` / `block.json`.
+  emitter ownership for built-in structural files and TS/TSX scaffold bodies.
 - `@wp-typia/project-tools/schema-core`
   Schema and OpenAPI helpers for project-level documents.
 - `@wp-typia/block-runtime`
@@ -48,9 +48,9 @@ This document is descriptive, not normative. For support guarantees, see
 - `wp-typia` owns the CLI, help, TUI, completions, skills, MCP, and bin entry.
 - `@wp-typia/project-tools` owns scaffold, add-block, migrate, template,
   doctor, package-manager, starter-manifest, the typed generator boundary, the
-  built-in structural emitters, and the preferred schema project imports.
-  Built-in templates no longer ship structural Mustache files for `types.ts`
-  or `block.json`.
+  built-in structural/code emitters, and the preferred schema project imports.
+  Built-in templates no longer ship structural or TS/TSX Mustache files for
+  those generated artifacts.
 - `@wp-typia/block-runtime/*` owns generated-project runtime helpers directly,
   including the canonical `schema-core` implementation.
 - `@wp-typia/create` no longer owns runtime exports or CLI behavior.

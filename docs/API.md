@@ -192,8 +192,9 @@ Use these packages instead:
 - `@wp-typia/block-runtime/*` for generated-project runtime helpers
 
 For the current generator architecture boundary, including the split between
-emitter-owned structural files and Mustache-owned scaffold bodies, and the fact
-that built-in templates no longer ship structural Mustache files, see
+emitter-owned structural/TS/TSX built-in files and Mustache-owned styles/PHP,
+and the fact that built-in templates no longer ship structural or TS/TSX
+Mustache files, see
 [`docs/block-generator-service.md`](./block-generator-service.md).
 
 ## 3. `@wp-typia/block-types`

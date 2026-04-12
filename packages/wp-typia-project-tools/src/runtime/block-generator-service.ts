@@ -29,6 +29,10 @@ import {
 	buildBuiltInBlockArtifacts,
 	type BuiltInBlockArtifact,
 } from "./built-in-block-artifacts.js";
+import {
+	buildBuiltInCodeArtifacts,
+	type BuiltInCodeArtifact,
+} from "./built-in-block-code-artifacts.js";
 import type {
 	DataStorageMode,
 	PersistencePolicy,
@@ -141,6 +145,7 @@ const renderedArtifactCache = new WeakMap<
 	RenderBlockResult,
 	{
 		artifacts: BuiltInBlockArtifact[];
+		codeArtifacts: BuiltInCodeArtifact[];
 		variablesFingerprint: string;
 	}
 >();
@@ -417,6 +422,10 @@ export class BlockGeneratorService {
 				templateId: validated.spec.template.family,
 				variables,
 			}),
+			codeArtifacts: buildBuiltInCodeArtifacts({
+				templateId: validated.spec.template.family,
+				variables,
+			}),
 			variablesFingerprint: createVariablesFingerprint(variables),
 		});
 
@@ -439,11 +448,20 @@ export class BlockGeneratorService {
 						templateId: rendered.spec.template.family,
 						variables: rendered.variables,
 					});
+		const codeArtifacts =
+			cachedArtifacts &&
+			cachedArtifacts.variablesFingerprint === currentVariablesFingerprint
+				? cachedArtifacts.codeArtifacts
+				: buildBuiltInCodeArtifacts({
+						templateId: rendered.spec.template.family,
+						variables: rendered.variables,
+					});
 
 		try {
 			await applyBuiltInScaffoldProjectFiles({
 				allowExistingDir: rendered.target.allowExistingDir,
 				artifacts,
+				codeArtifacts,
 				installDependencies,
 				noInstall: rendered.target.noInstall,
 				packageManager: rendered.target.packageManager,
