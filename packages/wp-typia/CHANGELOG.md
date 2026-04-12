@@ -1,5 +1,13 @@
 # wp-typia
 
+## 0.16.3 — 2026-04-12
+
+### Patch changes
+
+- [e9901fa](https://github.com/imjlk/wp-typia/commit/e9901fa3c6b461b7b4c112cba20cc4e5e3654a99) Deduplicate schema-core behind the block-runtime implementation owner while keeping the project-tools import path stable, run project-tools regression tests on pull requests while keeping coverage uploads on main, and refresh workflow actions to reduce wall-clock time and remove Node 20 runtime warnings. — Thanks @imjlk!
+- [18b51b2](https://github.com/imjlk/wp-typia/commit/18b51b2d450c36b7943cb83ac6f33682d645d7cf) Fix the published CLI create flow so it no longer eagerly loads project-tools runtime modules that drag in TypeScript during startup, and align the CLI React dependency range with Bunli's current React peer floor to avoid duplicate-React crashes in interactive `wp-typia create`. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.16.2
+
 ## 0.16.2 — 2026-04-11
 
 ### Patch changes
