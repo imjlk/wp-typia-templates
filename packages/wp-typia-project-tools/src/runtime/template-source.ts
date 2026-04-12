@@ -15,8 +15,6 @@ import { x as extractTarball } from "tar";
 import {
 	BUILTIN_TEMPLATE_IDS,
 	PROJECT_TOOLS_PACKAGE_ROOT,
-	SHARED_BASE_TEMPLATE_ROOT,
-	TEMPLATE_ROOT,
 	isBuiltInTemplateId,
 } from "./template-registry.js";
 import { isPlainObject } from "./object-utils.js";
@@ -24,7 +22,11 @@ import {
 	getRemovedBuiltInTemplateMessage,
 	isRemovedBuiltInTemplateId,
 } from "./template-defaults.js";
-import { resolveBuiltInTemplateSource } from "./template-builtins.js";
+import {
+	getBuiltInTemplateLayerDirs,
+	isOmittableBuiltInTemplateLayerDir,
+	resolveBuiltInTemplateSource,
+} from "./template-builtins.js";
 import { getPackageVersions } from "./package-versions.js";
 import { toSegmentPascalCase } from "./string-case.js";
 import { copyRawDirectory, copyRenderedDirectory } from "./template-render.js";
@@ -730,7 +732,13 @@ async function normalizeCreateBlockSubset(
 	const sourceRoot = getSeedSourceRoot(seed.blockDir);
 
 	await fsp.mkdir(templateDir, { recursive: true });
-	for (const layerDir of [SHARED_BASE_TEMPLATE_ROOT, path.join(TEMPLATE_ROOT, "basic")]) {
+	for (const layerDir of getBuiltInTemplateLayerDirs("basic")) {
+		if (!fs.existsSync(layerDir)) {
+			if (isOmittableBuiltInTemplateLayerDir("basic", layerDir)) {
+				continue;
+			}
+			throw new Error(`Built-in template layer is missing: ${layerDir}`);
+		}
 		await fsp.cp(layerDir, templateDir, {
 			recursive: true,
 			force: true,

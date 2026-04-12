@@ -12,13 +12,20 @@ import {
 } from "../src/runtime/built-in-block-artifacts.js";
 import { buildBuiltInCodeArtifacts } from "../src/runtime/built-in-block-code-artifacts.js";
 import {
+	getBuiltInTemplateLayerDirs,
+	isOmittableBuiltInTemplateLayerDir,
+} from "../src/runtime/template-builtins.js";
+import {
 	buildTemplateVariablesFromBlockSpec,
 	createBuiltInBlockSpec,
 } from "../src/runtime/block-generator-service.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 import { transformPackageManagerText } from "../src/runtime/package-managers.js";
 import { stringifyStarterManifest } from "../src/runtime/starter-manifests.js";
-import type { BuiltInTemplateId } from "../src/runtime/template-registry.js";
+import {
+	getTemplateById,
+	type BuiltInTemplateId,
+} from "../src/runtime/template-registry.js";
 import type { ScaffoldAnswers } from "../src/runtime/scaffold.js";
 
 const templatesRoot = path.resolve(import.meta.dir, "..", "templates");
@@ -78,10 +85,14 @@ describe("built-in block artifacts", () => {
 		for (const relativePath of [
 			"basic/src/types.ts.mustache",
 			"basic/src/block.json.mustache",
+			"basic/src/hooks.ts.mustache",
 			"basic/src/edit.tsx.mustache",
 			"basic/src/save.tsx.mustache",
 			"basic/src/index.tsx.mustache",
 			"basic/src/validators.ts.mustache",
+			"basic/src/editor.scss.mustache",
+			"basic/src/style.scss.mustache",
+			"basic/src/render.php.mustache",
 			"interactivity/src/types.ts.mustache",
 			"interactivity/src/block.json.mustache",
 			"interactivity/src/edit.tsx.mustache",
@@ -89,9 +100,13 @@ describe("built-in block artifacts", () => {
 			"interactivity/src/index.tsx.mustache",
 			"interactivity/src/interactivity.ts.mustache",
 			"interactivity/src/validators.ts.mustache",
+			"interactivity/src/editor.scss.mustache",
+			"interactivity/src/style.scss.mustache",
 			"persistence/src/types.ts.mustache",
 			"persistence/src/block.json.mustache",
 			"persistence/src/edit.tsx.mustache",
+			"persistence/src/style.scss.mustache",
+			"persistence/src/render.php.mustache",
 			"_shared/base/src/hooks.ts.mustache",
 			"_shared/persistence/core/src/index.tsx.mustache",
 			"_shared/persistence/core/src/save.tsx.mustache",
@@ -119,6 +134,8 @@ describe("built-in block artifacts", () => {
 			"_shared/compound/persistence/src/blocks/{{slugKebabCase}}/hooks.ts.mustache",
 			"_shared/compound/persistence/src/blocks/{{slugKebabCase}}/validators.ts.mustache",
 			"_shared/compound/persistence/src/blocks/{{slugKebabCase}}/interactivity.ts.mustache",
+			"_shared/compound/persistence/src/blocks/{{slugKebabCase}}/render.php.mustache",
+			"compound/src/blocks/{{slugKebabCase}}/style.scss.mustache",
 		]) {
 			expect(fs.existsSync(path.join(templatesRoot, relativePath))).toBe(false);
 		}
@@ -235,6 +252,77 @@ describe("built-in block artifacts", () => {
 		},
 	);
 
+	test("empty built-in overlay directories are omittable only for fully emitter-owned families", () => {
+		expect(
+			isOmittableBuiltInTemplateLayerDir(
+				"basic",
+				getTemplateById("basic").templateDir,
+			),
+		).toBe(true);
+		expect(
+			isOmittableBuiltInTemplateLayerDir(
+				"persistence",
+				getTemplateById("persistence").templateDir,
+			),
+		).toBe(true);
+		expect(
+			isOmittableBuiltInTemplateLayerDir(
+				"compound",
+				getTemplateById("compound").templateDir,
+			),
+		).toBe(true);
+		expect(
+			isOmittableBuiltInTemplateLayerDir(
+				"interactivity",
+				getTemplateById("interactivity").templateDir,
+			),
+		).toBe(false);
+		expect(
+			getBuiltInTemplateLayerDirs("basic")[
+				getBuiltInTemplateLayerDirs("basic").length - 1
+			],
+		).toBe(getTemplateById("basic").templateDir);
+	});
+
+	test.each(["basic", "interactivity", "persistence", "compound"] as const)(
+		"buildBuiltInCodeArtifacts emits unique relative paths for %s",
+		(templateId) => {
+			const { codeArtifacts } = buildArtifacts(templateId);
+			const uniquePaths = new Set(
+				codeArtifacts.map((artifact) => artifact.relativePath),
+			);
+
+			expect(uniquePaths.size).toBe(codeArtifacts.length);
+		},
+	);
+
+	test("compound persistence render emitter quotes heading fallbacks safely", () => {
+		const answers = buildAnswers("compound");
+		answers.title = `John's "Compound"`;
+		const spec = createBuiltInBlockSpec({
+			answers,
+			dataStorageMode: answers.dataStorageMode,
+			persistencePolicy: answers.persistencePolicy,
+			templateId: "compound",
+		});
+		const variables = buildTemplateVariablesFromBlockSpec(spec);
+		const renderArtifact = buildBuiltInCodeArtifacts({
+			templateId: "compound",
+			variables,
+		}).find(
+			(artifact) =>
+				artifact.relativePath ===
+				`src/blocks/${variables.slugKebabCase}/render.php`,
+		);
+
+		expect(renderArtifact?.source).toContain(
+			"$heading            = isset( $normalized['heading'] ) ? (string) $normalized['heading'] : 'John\\'s \"Compound\"';",
+		);
+		expect(renderArtifact?.source).not.toContain(
+			"$heading            = isset( $normalized['heading'] ) ? (string) $normalized['heading'] : 'John's \"Compound\"';",
+		);
+	});
+
 	test.each([
 		[
 			"basic",
@@ -244,6 +332,9 @@ describe("built-in block artifacts", () => {
 				"src/save.tsx",
 				"src/index.tsx",
 				"src/validators.ts",
+				"src/editor.scss",
+				"src/style.scss",
+				"src/render.php",
 			],
 		],
 		[
@@ -255,6 +346,8 @@ describe("built-in block artifacts", () => {
 				"src/index.tsx",
 				"src/interactivity.ts",
 				"src/validators.ts",
+				"src/editor.scss",
+				"src/style.scss",
 			],
 		],
 		[
@@ -266,6 +359,8 @@ describe("built-in block artifacts", () => {
 				"src/index.tsx",
 				"src/interactivity.ts",
 				"src/validators.ts",
+				"src/style.scss",
+				"src/render.php",
 			],
 		],
 		[
@@ -284,10 +379,12 @@ describe("built-in block artifacts", () => {
 				"src/blocks/demo-compound-item/index.tsx",
 				"src/blocks/demo-compound-item/hooks.ts",
 				"src/blocks/demo-compound-item/validators.ts",
+				"src/blocks/demo-compound/style.scss",
+				"src/blocks/demo-compound/render.php",
 			],
 		],
 	] as const)(
-		"buildBuiltInCodeArtifacts emits expected TS/TSX ownership set for %s",
+		"buildBuiltInCodeArtifacts emits expected emitter ownership set for %s",
 		(templateId, expectedPaths) => {
 			const { codeArtifacts } = buildArtifacts(templateId);
 			const relativePaths = codeArtifacts.map((artifact) => artifact.relativePath);
@@ -303,10 +400,35 @@ describe("built-in block artifacts", () => {
 				const interactivityArtifact = codeArtifacts.find(
 					(artifact) => artifact.relativePath === "src/interactivity.ts",
 				);
+				const styleArtifact = codeArtifacts.find(
+					(artifact) => artifact.relativePath === "src/style.scss",
+				);
 
 				expect(interactivityArtifact?.source).toContain("withSyncEvent");
 				expect(interactivityArtifact?.source).toContain(
 					"event.stopPropagation();",
+				);
+				expect(styleArtifact?.source).toContain("&__progress-bar");
+			}
+
+			if (templateId === "basic") {
+				const renderArtifact = codeArtifacts.find(
+					(artifact) => artifact.relativePath === "src/render.php",
+				);
+
+				expect(renderArtifact?.source).toContain(
+					"Server render placeholder.",
+				);
+			}
+
+			if (templateId === "compound") {
+				const renderArtifact = codeArtifacts.find(
+					(artifact) =>
+						artifact.relativePath === "src/blocks/demo-compound/render.php",
+				);
+
+				expect(renderArtifact?.source).toContain(
+					"$heading            = isset( $normalized['heading'] ) ? (string) $normalized['heading'] : 'Demo Compound';",
 				);
 			}
 		},

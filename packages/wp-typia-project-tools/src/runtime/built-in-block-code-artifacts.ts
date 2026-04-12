@@ -4,14 +4,16 @@ import type {
 import type {
 	BuiltInTemplateId,
 } from "./template-registry.js";
+import { buildBuiltInNonTsArtifacts } from "./built-in-block-non-ts-artifacts.js";
 import { renderMustacheTemplateString } from "./template-render.js";
 
 /**
- * Emits built-in TS/TSX scaffold sources from typed block generation inputs.
+ * Emits built-in scaffold source files from typed block generation inputs.
  *
  * This module is intentionally internal to the runtime boundary: built-in
- * scaffold bodies are now derived from `ScaffoldTemplateVariables`, but the
- * emitter helpers themselves are not part of the public root export surface.
+ * scaffold bodies and adjacent emitted source files are now derived from
+ * `ScaffoldTemplateVariables`, but the emitter helpers themselves are not part
+ * of the public root export surface.
  */
 export interface BuiltInCodeArtifact {
 	/**
@@ -101,22 +103,40 @@ function createCodeArtifact(
 	};
 }
 
+function ensureUniqueArtifactPaths(
+	artifacts: BuiltInCodeArtifact[],
+): BuiltInCodeArtifact[] {
+	const seenPaths = new Set<string>();
+
+	for (const artifact of artifacts) {
+		if (seenPaths.has(artifact.relativePath)) {
+			throw new Error(
+				`Duplicate built-in artifact path emitted: ${artifact.relativePath}`,
+			);
+		}
+		seenPaths.add(artifact.relativePath);
+	}
+
+	return artifacts;
+}
+
 function buildBasicCodeArtifacts(
 	variables: ScaffoldTemplateVariables,
 ): BuiltInCodeArtifact[] {
-	return [
+	return ensureUniqueArtifactPaths([
 		createCodeArtifact("src/hooks.ts", SHARED_HOOKS_TEMPLATE, variables),
 		createCodeArtifact("src/edit.tsx", BASIC_EDIT_TEMPLATE, variables),
 		createCodeArtifact("src/save.tsx", BASIC_SAVE_TEMPLATE, variables),
 		createCodeArtifact("src/index.tsx", BASIC_INDEX_TEMPLATE, variables),
 		createCodeArtifact("src/validators.ts", BASIC_VALIDATORS_TEMPLATE, variables),
-	];
+		...buildBuiltInNonTsArtifacts({ templateId: "basic", variables }),
+	]);
 }
 
 function buildInteractivityCodeArtifacts(
 	variables: ScaffoldTemplateVariables,
 ): BuiltInCodeArtifact[] {
-	return [
+	return ensureUniqueArtifactPaths([
 		createCodeArtifact("src/hooks.ts", SHARED_HOOKS_TEMPLATE, variables),
 		createCodeArtifact("src/edit.tsx", INTERACTIVITY_EDIT_TEMPLATE, variables),
 		createCodeArtifact("src/save.tsx", INTERACTIVITY_SAVE_TEMPLATE, variables),
@@ -131,7 +151,8 @@ function buildInteractivityCodeArtifacts(
 			INTERACTIVITY_VALIDATORS_TEMPLATE,
 			variables,
 		),
-	];
+		...buildBuiltInNonTsArtifacts({ templateId: "interactivity", variables }),
+	]);
 }
 
 function buildCompoundCodeArtifacts(
@@ -142,7 +163,7 @@ function buildCompoundCodeArtifacts(
 	const compoundPersistenceEnabled =
 		variables.compoundPersistenceEnabled === "true";
 
-	return [
+	return ensureUniqueArtifactPaths([
 		createCodeArtifact("src/hooks.ts", SHARED_HOOKS_TEMPLATE, variables),
 		createCodeArtifact(
 			`${parentBasePath}/edit.tsx`,
@@ -214,13 +235,14 @@ function buildCompoundCodeArtifacts(
 			COMPOUND_CHILD_VALIDATORS_TEMPLATE,
 			variables,
 		),
-	];
+		...buildBuiltInNonTsArtifacts({ templateId: "compound", variables }),
+	]);
 }
 
 function buildPersistenceCodeArtifacts(
 	variables: ScaffoldTemplateVariables,
 ): BuiltInCodeArtifact[] {
-	return [
+	return ensureUniqueArtifactPaths([
 		createCodeArtifact("src/hooks.ts", SHARED_HOOKS_TEMPLATE, variables),
 		createCodeArtifact("src/edit.tsx", PERSISTENCE_EDIT_TEMPLATE, variables),
 		createCodeArtifact("src/save.tsx", PERSISTENCE_SAVE_TEMPLATE, variables),
@@ -235,15 +257,16 @@ function buildPersistenceCodeArtifacts(
 			PERSISTENCE_VALIDATORS_TEMPLATE,
 			variables,
 		),
-	];
+		...buildBuiltInNonTsArtifacts({ templateId: "persistence", variables }),
+	]);
 }
 
 /**
- * Build the emitter-owned TS/TSX scaffold files for a built-in template family.
+ * Build the emitter-owned scaffold files for a built-in template family.
  *
- * These artifacts are written after template copy so built-in structural and
- * code files always come from the typed generator boundary rather than stale
- * Mustache sources.
+ * These artifacts are written after template copy so built-in structural,
+ * source, and adjacent generated files always come from the typed generator
+ * boundary rather than stale Mustache sources.
  */
 export function buildBuiltInCodeArtifacts({
 	templateId,

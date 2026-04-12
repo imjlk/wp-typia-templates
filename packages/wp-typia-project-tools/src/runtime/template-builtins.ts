@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { promises as fsp } from "node:fs";
@@ -33,6 +34,12 @@ export interface MaterializedBuiltInTemplateSource {
 	selectedVariant?: string | null;
 	warnings?: string[];
 }
+
+const OMITTABLE_BUILT_IN_OVERLAY_TEMPLATE_IDS = new Set<BuiltInTemplateId>([
+	"basic",
+	"persistence",
+	"compound",
+]);
 
 /**
  * Returns the ordered overlay directories for a built-in template.
@@ -91,6 +98,41 @@ export function getBuiltInTemplateLayerDirs(
 }
 
 /**
+ * Returns whether a missing built-in overlay directory is expected because the
+ * template family no longer ships any Mustache assets in that layer.
+ *
+ * @param templateId Built-in template family being resolved.
+ * @param layerDir Candidate overlay directory for that family.
+ * @returns True when the missing layer can be skipped safely.
+ */
+export function isOmittableBuiltInTemplateLayerDir(
+	templateId: BuiltInTemplateId,
+	layerDir: string,
+): boolean {
+	return (
+		OMITTABLE_BUILT_IN_OVERLAY_TEMPLATE_IDS.has(templateId) &&
+		layerDir === getTemplateById(templateId).templateDir
+	);
+}
+
+function resolveMaterializedBuiltInTemplateLayerDirs(
+	templateId: BuiltInTemplateId,
+	options: BuiltInTemplateVariantOptions,
+): string[] {
+	return getBuiltInTemplateLayerDirs(templateId, options).flatMap((layerDir) => {
+		if (fs.existsSync(layerDir)) {
+			return [layerDir];
+		}
+
+		if (isOmittableBuiltInTemplateLayerDir(templateId, layerDir)) {
+			return [];
+		}
+
+		throw new Error(`Built-in template layer is missing: ${layerDir}`);
+	});
+}
+
+/**
  * Materializes a built-in template into a temporary directory by copying each
  * resolved layer in order.
  *
@@ -103,13 +145,14 @@ export async function resolveBuiltInTemplateSource(
 	options: BuiltInTemplateVariantOptions = {},
 ): Promise<MaterializedBuiltInTemplateSource> {
 	const template = getTemplateById(templateId);
+	const layerDirs = resolveMaterializedBuiltInTemplateLayerDirs(templateId, options);
 	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-template-"));
 	const templateDir = path.join(tempRoot, templateId);
 
 	try {
 		await fsp.mkdir(templateDir, { recursive: true });
 
-		for (const layerDir of getBuiltInTemplateLayerDirs(templateId, options)) {
+		for (const layerDir of layerDirs) {
 			await fsp.cp(layerDir, templateDir, {
 				recursive: true,
 				force: true,
