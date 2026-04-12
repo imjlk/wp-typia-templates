@@ -4,6 +4,87 @@ import * as path from "node:path";
 import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, runCli, runGeneratedScript, scaffoldOfficialWorkspace, typecheckGeneratedProject, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 
+const legacyValidatorToolkitSource = [
+  "import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
+  "import {",
+  "\tcreateScaffoldValidatorToolkit,",
+  "\ttype ScaffoldValidatorToolkitOptions,",
+  "} from '@wp-typia/block-runtime/validation';",
+  "",
+  "interface TemplateValidatorToolkitOptions< T extends object > {",
+  "\tfinalize?: ScaffoldValidatorToolkitOptions< T >['finalize'];",
+  "\tmanifest: unknown;",
+  "\tonValidationError?: ScaffoldValidatorToolkitOptions< T >['onValidationError'];",
+  "}",
+  "",
+  "export function createTemplateValidatorToolkit< T extends object >( {",
+  "\tfinalize,",
+  "\tmanifest,",
+  "\tonValidationError,",
+  "}: TemplateValidatorToolkitOptions< T > ) {",
+  "\treturn createScaffoldValidatorToolkit< T >( {",
+  "\t\tmanifest: manifest as ManifestDefaultsDocument,",
+  "\t\tfinalize,",
+  "\t\tonValidationError,",
+  "\t} );",
+  "}",
+  "",
+].join("\n");
+
+function writeLegacyValidatorToolkitFixture(targetDir: string) {
+  fs.writeFileSync(
+    path.join(targetDir, "src", "validator-toolkit.ts"),
+    legacyValidatorToolkitSource,
+    "utf8"
+  );
+}
+
+function writeLegacyCompoundValidatorFixture(
+  targetDir: string,
+  blockSlug: string,
+  typeName: string,
+  exportSuffix: string,
+  options?: {
+    includeTypiaImport?: boolean;
+    lineEnding?: "\n" | "\r\n";
+    quoteStyle?: "'" | '"';
+  }
+) {
+  const includeTypiaImport = options?.includeTypiaImport ?? false;
+  const lineEnding = options?.lineEnding ?? "\n";
+  const quoteStyle = options?.quoteStyle ?? "'";
+
+  fs.writeFileSync(
+    path.join(targetDir, "src", "blocks", blockSlug, "validators.ts"),
+    [
+      ...(includeTypiaImport
+        ? [`import typia from ${quoteStyle}typia${quoteStyle};`]
+        : []),
+      `import currentManifest from ${quoteStyle}./typia.manifest.json${quoteStyle};`,
+      "import type {",
+      `\t${typeName},`,
+      `} from ${quoteStyle}./types${quoteStyle};`,
+      `import { createTemplateValidatorToolkit } from ${quoteStyle}../../validator-toolkit${quoteStyle};`,
+      "",
+      `const scaffoldValidators = createTemplateValidatorToolkit< ${typeName} >( {`,
+      "\tmanifest: currentManifest,",
+      "} );",
+      "",
+      `export const validate${exportSuffix} =`,
+      "\tscaffoldValidators.validateAttributes;",
+      "",
+      "export const validators = scaffoldValidators.validators;",
+      "",
+      `export const sanitize${exportSuffix} =`,
+      "\tscaffoldValidators.sanitizeAttributes;",
+      "",
+      "export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;",
+      "",
+    ].join(lineEnding),
+    "utf8"
+  );
+}
+
 describe("@wp-typia/project-tools workspace add", () => {
   const tempRoot = createScaffoldTempRoot("wp-typia-workspace-add-");
 
@@ -747,87 +828,16 @@ test("add compound block repairs a legacy shared validator toolkit in an officia
     }
   );
 
-  fs.writeFileSync(
-    path.join(targetDir, "src", "validator-toolkit.ts"),
-    [
-      "import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
-      "import {",
-      "\tcreateScaffoldValidatorToolkit,",
-      "\ttype ScaffoldValidatorToolkitOptions,",
-      "} from '@wp-typia/block-runtime/validation';",
-      "",
-      "interface TemplateValidatorToolkitOptions< T extends object > {",
-      "\tfinalize?: ScaffoldValidatorToolkitOptions< T >['finalize'];",
-      "\tmanifest: unknown;",
-      "\tonValidationError?: ScaffoldValidatorToolkitOptions< T >['onValidationError'];",
-      "}",
-      "",
-      "export function createTemplateValidatorToolkit< T extends object >( {",
-      "\tfinalize,",
-      "\tmanifest,",
-      "\tonValidationError,",
-      "}: TemplateValidatorToolkitOptions< T > ) {",
-      "\treturn createScaffoldValidatorToolkit< T >( {",
-      "\t\tmanifest: manifest as ManifestDefaultsDocument,",
-      "\t\tfinalize,",
-      "\t\tonValidationError,",
-      "\t} );",
-      "}",
-      "",
-    ].join("\n"),
-    "utf8"
-  );
+  writeLegacyValidatorToolkitFixture(targetDir);
 
-  const writeLegacyCompoundValidator = (
-    blockSlug: string,
-    typeName: string,
-    exportSuffix: string,
-    options?: {
-      includeTypiaImport?: boolean;
-      lineEnding?: "\n" | "\r\n";
-      quoteStyle?: "'" | '"';
-    }
-  ) => {
-    const includeTypiaImport = options?.includeTypiaImport ?? false;
-    const lineEnding = options?.lineEnding ?? "\n";
-    const quoteStyle = options?.quoteStyle ?? "'";
-    fs.writeFileSync(
-      path.join(targetDir, "src", "blocks", blockSlug, "validators.ts"),
-      [
-        ...(includeTypiaImport
-          ? [`import typia from ${quoteStyle}typia${quoteStyle};`]
-          : []),
-        `import currentManifest from ${quoteStyle}./typia.manifest.json${quoteStyle};`,
-        "import type {",
-        `\t${typeName},`,
-        `} from ${quoteStyle}./types${quoteStyle};`,
-        `import { createTemplateValidatorToolkit } from ${quoteStyle}../../validator-toolkit${quoteStyle};`,
-        "",
-        `const scaffoldValidators = createTemplateValidatorToolkit< ${typeName} >( {`,
-        "\tmanifest: currentManifest,",
-        "} );",
-        "",
-        `export const validate${exportSuffix} =`,
-        "\tscaffoldValidators.validateAttributes;",
-        "",
-        "export const validators = scaffoldValidators.validators;",
-        "",
-        `export const sanitize${exportSuffix} =`,
-        "\tscaffoldValidators.sanitizeAttributes;",
-        "",
-        "export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;",
-        "",
-      ].join(lineEnding),
-      "utf8"
-    );
-  };
-
-  writeLegacyCompoundValidator(
+  writeLegacyCompoundValidatorFixture(
+    targetDir,
     "faq-stack",
     "FaqStackAttributes",
     "FaqStackAttributes"
   );
-  writeLegacyCompoundValidator(
+  writeLegacyCompoundValidatorFixture(
+    targetDir,
     "faq-stack-item",
     "FaqStackItemAttributes",
     "FaqStackItemAttributes",
@@ -919,75 +929,17 @@ test("add compound block does not duplicate an existing typia import during lega
     }
   );
 
-  fs.writeFileSync(
-    path.join(targetDir, "src", "validator-toolkit.ts"),
-    [
-      "import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
-      "import {",
-      "\tcreateScaffoldValidatorToolkit,",
-      "\ttype ScaffoldValidatorToolkitOptions,",
-      "} from '@wp-typia/block-runtime/validation';",
-      "",
-      "interface TemplateValidatorToolkitOptions< T extends object > {",
-      "\tfinalize?: ScaffoldValidatorToolkitOptions< T >['finalize'];",
-      "\tmanifest: unknown;",
-      "\tonValidationError?: ScaffoldValidatorToolkitOptions< T >['onValidationError'];",
-      "}",
-      "",
-      "export function createTemplateValidatorToolkit< T extends object >( {",
-      "\tfinalize,",
-      "\tmanifest,",
-      "\tonValidationError,",
-      "}: TemplateValidatorToolkitOptions< T > ) {",
-      "\treturn createScaffoldValidatorToolkit< T >( {",
-      "\t\tmanifest: manifest as ManifestDefaultsDocument,",
-      "\t\tfinalize,",
-      "\t\tonValidationError,",
-      "\t} );",
-      "}",
-      "",
-    ].join("\n"),
-    "utf8"
-  );
+  writeLegacyValidatorToolkitFixture(targetDir);
 
-  const writeLegacyCompoundValidator = (
-    blockSlug: string,
-    typeName: string,
-    exportSuffix: string
-  ) => {
-    fs.writeFileSync(
-      path.join(targetDir, "src", "blocks", blockSlug, "validators.ts"),
-      [
-        'import typia from "typia";',
-        'import currentManifest from "./typia.manifest.json";',
-        "import type {",
-        `\t${typeName},`,
-        '} from "./types";',
-        'import { createTemplateValidatorToolkit } from "../../validator-toolkit";',
-        "",
-        `const scaffoldValidators = createTemplateValidatorToolkit< ${typeName} >( {`,
-        "\tmanifest: currentManifest,",
-        "} );",
-        "",
-        `export const validate${exportSuffix} =`,
-        "\tscaffoldValidators.validateAttributes;",
-        "",
-        "export const validators = scaffoldValidators.validators;",
-        "",
-        `export const sanitize${exportSuffix} =`,
-        "\tscaffoldValidators.sanitizeAttributes;",
-        "",
-        "export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;",
-        "",
-      ].join("\n"),
-      "utf8"
-    );
-  };
-
-  writeLegacyCompoundValidator(
+  writeLegacyCompoundValidatorFixture(
+    targetDir,
     "faq-stack",
     "FaqStackAttributes",
-    "FaqStackAttributes"
+    "FaqStackAttributes",
+    {
+      includeTypiaImport: true,
+      quoteStyle: '"',
+    }
   );
 
   runCli(
@@ -1060,36 +1012,7 @@ test("add compound block does not duplicate a BOM-prefixed typia import during l
     }
   );
 
-  fs.writeFileSync(
-    path.join(targetDir, "src", "validator-toolkit.ts"),
-    [
-      "import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
-      "import {",
-      "\tcreateScaffoldValidatorToolkit,",
-      "\ttype ScaffoldValidatorToolkitOptions,",
-      "} from '@wp-typia/block-runtime/validation';",
-      "",
-      "interface TemplateValidatorToolkitOptions< T extends object > {",
-      "\tfinalize?: ScaffoldValidatorToolkitOptions< T >['finalize'];",
-      "\tmanifest: unknown;",
-      "\tonValidationError?: ScaffoldValidatorToolkitOptions< T >['onValidationError'];",
-      "}",
-      "",
-      "export function createTemplateValidatorToolkit< T extends object >( {",
-      "\tfinalize,",
-      "\tmanifest,",
-      "\tonValidationError,",
-      "}: TemplateValidatorToolkitOptions< T > ) {",
-      "\treturn createScaffoldValidatorToolkit< T >( {",
-      "\t\tmanifest: manifest as ManifestDefaultsDocument,",
-      "\t\tfinalize,",
-      "\t\tonValidationError,",
-      "\t} );",
-      "}",
-      "",
-    ].join("\n"),
-    "utf8"
-  );
+  writeLegacyValidatorToolkitFixture(targetDir);
 
   fs.writeFileSync(
     path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),
@@ -1191,36 +1114,7 @@ test("add compound block ignores a commented typia import during legacy validato
     }
   );
 
-  fs.writeFileSync(
-    path.join(targetDir, "src", "validator-toolkit.ts"),
-    [
-      "import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
-      "import {",
-      "\tcreateScaffoldValidatorToolkit,",
-      "\ttype ScaffoldValidatorToolkitOptions,",
-      "} from '@wp-typia/block-runtime/validation';",
-      "",
-      "interface TemplateValidatorToolkitOptions< T extends object > {",
-      "\tfinalize?: ScaffoldValidatorToolkitOptions< T >['finalize'];",
-      "\tmanifest: unknown;",
-      "\tonValidationError?: ScaffoldValidatorToolkitOptions< T >['onValidationError'];",
-      "}",
-      "",
-      "export function createTemplateValidatorToolkit< T extends object >( {",
-      "\tfinalize,",
-      "\tmanifest,",
-      "\tonValidationError,",
-      "}: TemplateValidatorToolkitOptions< T > ) {",
-      "\treturn createScaffoldValidatorToolkit< T >( {",
-      "\t\tmanifest: manifest as ManifestDefaultsDocument,",
-      "\t\tfinalize,",
-      "\t\tonValidationError,",
-      "\t} );",
-      "}",
-      "",
-    ].join("\n"),
-    "utf8"
-  );
+  writeLegacyValidatorToolkitFixture(targetDir);
 
   fs.writeFileSync(
     path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),
@@ -1325,36 +1219,7 @@ test("add compound block ignores a block-commented typia import during legacy va
     }
   );
 
-  fs.writeFileSync(
-    path.join(targetDir, "src", "validator-toolkit.ts"),
-    [
-      "import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
-      "import {",
-      "\tcreateScaffoldValidatorToolkit,",
-      "\ttype ScaffoldValidatorToolkitOptions,",
-      "} from '@wp-typia/block-runtime/validation';",
-      "",
-      "interface TemplateValidatorToolkitOptions< T extends object > {",
-      "\tfinalize?: ScaffoldValidatorToolkitOptions< T >['finalize'];",
-      "\tmanifest: unknown;",
-      "\tonValidationError?: ScaffoldValidatorToolkitOptions< T >['onValidationError'];",
-      "}",
-      "",
-      "export function createTemplateValidatorToolkit< T extends object >( {",
-      "\tfinalize,",
-      "\tmanifest,",
-      "\tonValidationError,",
-      "}: TemplateValidatorToolkitOptions< T > ) {",
-      "\treturn createScaffoldValidatorToolkit< T >( {",
-      "\t\tmanifest: manifest as ManifestDefaultsDocument,",
-      "\t\tfinalize,",
-      "\t\tonValidationError,",
-      "\t} );",
-      "}",
-      "",
-    ].join("\n"),
-    "utf8"
-  );
+  writeLegacyValidatorToolkitFixture(targetDir);
 
   fs.writeFileSync(
     path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),

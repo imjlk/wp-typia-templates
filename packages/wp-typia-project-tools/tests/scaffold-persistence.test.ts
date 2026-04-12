@@ -1,8 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { apiClientPackageVersion, cleanupScaffoldTempRoot, createScaffoldTempRoot, getCommandErrorMessage, replaceGeneratedTransportBaseUrls, restPackageVersion, runGeneratedJsonScript, runGeneratedJsonScriptAsync, runGeneratedScript, typecheckGeneratedProject } from "./helpers/scaffold-test-harness.js";
-import { startCounterAdapterServer } from "../../../examples/api-contract-adapter-poc/src/counter-adapter";
+import { apiClientPackageVersion, cleanupScaffoldTempRoot, createScaffoldTempRoot, getCommandErrorMessage, replaceGeneratedTransportBaseUrls, restPackageVersion, runGeneratedJsonScript, runGeneratedJsonScriptAsync, runGeneratedScript, startLocalCounterStubServer, typecheckGeneratedProject } from "./helpers/scaffold-test-harness.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 
 describe("@wp-typia/project-tools scaffold persistence", () => {
@@ -1001,13 +1000,13 @@ frontendRead: frontendRead.requestOptions,
 });
 
 test(
-  "generated persistence transport can point at the adapter PoC by editing only src/transport.ts",
+  "generated persistence transport can point at a local adapter stub by editing only src/transport.ts",
   async () => {
     const targetDir = path.join(
       tempRoot,
       "demo-persistence-adapter-transport"
     );
-    const adapterServer = await startCounterAdapterServer();
+    const adapterServer = await startLocalCounterStubServer();
 
     try {
       await scaffoldProject({

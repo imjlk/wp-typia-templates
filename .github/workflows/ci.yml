@@ -109,7 +109,7 @@ jobs:
           name: codecov-unit-core
 
   test-project-tools-scaffold-core:
-    name: Project Tools: Scaffold Core
+    name: "Project Tools: Scaffold Core"
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
@@ -136,7 +136,7 @@ jobs:
         run: bun run test:project-tools:scaffold-core
 
   test-project-tools-workspace:
-    name: Project Tools: Workspace
+    name: "Project Tools: Workspace"
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
@@ -163,7 +163,7 @@ jobs:
         run: bun run test:project-tools:workspace
 
   test-project-tools-compound:
-    name: Project Tools: Compound
+    name: "Project Tools: Compound"
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
@@ -190,7 +190,7 @@ jobs:
         run: bun run test:project-tools:compound
 
   test-project-tools-migration-planning:
-    name: Project Tools: Migration Planning
+    name: "Project Tools: Migration Planning"
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
@@ -217,7 +217,7 @@ jobs:
         run: bun run test:project-tools:migration-planning
 
   test-project-tools-migration-execution:
-    name: Project Tools: Migration Execution
+    name: "Project Tools: Migration Execution"
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:

@@ -28,11 +28,22 @@ export function writeJson(filePath: string, value: unknown) {
 }
 
 export function resolveRepoTsxBinary() {
+	const bunTsxCandidates = [packageRoot, path.resolve(packageRoot, "../..")].flatMap((rootPath) => {
+		const bunDirectory = path.resolve(rootPath, "node_modules", ".bun");
+		if (!fs.existsSync(bunDirectory)) {
+			return [];
+		}
+
+		const bunTsxEntry = fs.readdirSync(bunDirectory).find((entry) => entry.startsWith("tsx@"));
+		return bunTsxEntry
+			? [path.resolve(bunDirectory, bunTsxEntry, "node_modules", ".bin", "tsx")]
+			: [];
+	});
+
 	const candidates = [
 		path.resolve(packageRoot, "node_modules/.bin/tsx"),
-		path.resolve(packageRoot, "node_modules/.bun/tsx@4.21.0/node_modules/.bin/tsx"),
+		...bunTsxCandidates,
 		path.resolve(packageRoot, "../../node_modules/.bin/tsx"),
-		path.resolve(packageRoot, "../../node_modules/.bun/tsx@4.21.0/node_modules/.bin/tsx"),
 	];
 
 	const resolved = candidates.find((candidate) => fs.existsSync(candidate));
@@ -80,6 +91,43 @@ export function resolveCliEntryPath() {
 	return cliPath;
 }
 
+export interface ManifestAttribute {
+	typia: {
+		constraints: {
+			exclusiveMaximum: number | null;
+			exclusiveMinimum: number | null;
+			format: string | null;
+			maxLength: number | null;
+			maxItems: number | null;
+			maximum: number | null;
+			minLength: number | null;
+			minItems: number | null;
+			minimum: number | null;
+			multipleOf: number | null;
+			pattern: string | null;
+			typeTag: string | null;
+		};
+		defaultValue: unknown;
+		hasDefault: boolean;
+	};
+	ts: {
+		items: ManifestAttribute | null;
+		kind: "string" | "number" | "boolean" | "array" | "object" | "union";
+		properties: Record<string, ManifestAttribute> | null;
+		required: boolean;
+		union: {
+			branches: Record<string, ManifestAttribute>;
+			discriminator: string;
+		} | null;
+	};
+	wp: {
+		defaultValue: unknown;
+		enum: string[] | null;
+		hasDefault: boolean;
+		type: string;
+	};
+}
+
 export function createManifestAttribute(
 	kind: "string" | "number" | "boolean" | "array" | "object",
 	{
@@ -89,7 +137,7 @@ export function createManifestAttribute(
 		defaultValue?: unknown;
 		required?: boolean;
 	} = {},
-) {
+): ManifestAttribute {
 	return {
 		typia: {
 			constraints: {
@@ -125,9 +173,34 @@ export function createManifestAttribute(
 	};
 }
 
+export function createObjectBranchManifestAttribute(
+	discriminator: string,
+	branchKey: string,
+	properties: Record<string, ManifestAttribute>,
+	{
+		required = true,
+	}: {
+		required?: boolean;
+	} = {},
+): ManifestAttribute {
+	const branch = createManifestAttribute("object", {
+		required,
+	});
+
+	branch.ts.properties = {
+		[discriminator]: createManifestAttribute("string", {
+			defaultValue: branchKey,
+			required: true,
+		}),
+		...properties,
+	};
+
+	return branch;
+}
+
 export function createUnionManifestAttribute(
 	discriminator: string,
-	branches: Record<string, ReturnType<typeof createManifestAttribute>>,
+	branches: Record<string, ManifestAttribute>,
 ) {
 	return {
 		typia: {
@@ -1314,32 +1387,44 @@ export default migrationConfig;
 		HELPERS_SOURCE,
 	);
 
-	const currentBranches: Record<string, ReturnType<typeof createManifestAttribute>> = removeBranch
+	const currentBranches: Record<string, ManifestAttribute> = removeBranch
 		? {
-			post: createManifestAttribute("object", {
-				required: true,
+			post: createObjectBranchManifestAttribute("kind", "post", {
+				postId: createManifestAttribute("number", {
+					required: true,
+				}),
 			}),
 		}
 		: {
-			post: createManifestAttribute("object", {
-				required: true,
+			post: createObjectBranchManifestAttribute("kind", "post", {
+				postId: createManifestAttribute("number", {
+					required: true,
+				}),
 			}),
-			url: createManifestAttribute("object", {
-				required: true,
+			url: createObjectBranchManifestAttribute("kind", "url", {
+				href: createManifestAttribute("string", {
+					required: true,
+				}),
 			}),
 		};
-	const legacyBranches: Record<string, ReturnType<typeof createManifestAttribute>> = removeBranch
+	const legacyBranches: Record<string, ManifestAttribute> = removeBranch
 		? {
-			post: createManifestAttribute("object", {
-				required: true,
+			post: createObjectBranchManifestAttribute("kind", "post", {
+				postId: createManifestAttribute("number", {
+					required: true,
+				}),
 			}),
-			url: createManifestAttribute("object", {
-				required: true,
+			url: createObjectBranchManifestAttribute("kind", "url", {
+				href: createManifestAttribute("string", {
+					required: true,
+				}),
 			}),
 		}
 		: {
-			post: createManifestAttribute("object", {
-				required: true,
+			post: createObjectBranchManifestAttribute("kind", "post", {
+				postId: createManifestAttribute("number", {
+					required: true,
+				}),
 			}),
 		};
 
