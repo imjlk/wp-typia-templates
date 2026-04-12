@@ -75,11 +75,13 @@ store('{{slugKebabCase}}', {
     // Handle hover events
     handleMouseEnter: () => {
       const context = getBlockContext();
+      if (context.animation === 'none') return;
       context.isAnimating = true;
     },
 
     handleMouseLeave: () => {
       const context = getBlockContext();
+      if (context.animation === 'none') return;
       context.isAnimating = false;
     },
 
