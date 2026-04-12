@@ -647,6 +647,9 @@ test(
   expect(generatedInteractivity).toContain(
     "return getContext<DemoInteractivityContext>();"
   );
+  expect(generatedInteractivity).toContain("withSyncEvent");
+  expect(generatedInteractivity).toContain("reset: withSyncEvent");
+  expect(generatedInteractivity).toContain("event.stopPropagation();");
   expect(generatedInteractivity).not.toContain("declare global");
   expect(generatedInteractivity).toContain("get clampedClicks()");
   expect(generatedInteractivity).not.toContain("animationClass");

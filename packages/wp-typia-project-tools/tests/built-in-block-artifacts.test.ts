@@ -298,6 +298,17 @@ describe("built-in block artifacts", () => {
 				expect(artifact.source.endsWith("\n")).toBe(true);
 				expect(artifact.source).not.toContain("{{");
 			}
+
+			if (templateId === "interactivity") {
+				const interactivityArtifact = codeArtifacts.find(
+					(artifact) => artifact.relativePath === "src/interactivity.ts",
+				);
+
+				expect(interactivityArtifact?.source).toContain("withSyncEvent");
+				expect(interactivityArtifact?.source).toContain(
+					"event.stopPropagation();",
+				);
+			}
 		},
 	);
 
