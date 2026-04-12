@@ -668,7 +668,7 @@ function buildPersistenceAttributes(
 		}),
 		createAttributeDefinition({
 			blockJson: {
-				defaultValue: "primary",
+				defaultValue: "",
 				type: "string",
 			},
 			manifest: {
@@ -795,12 +795,12 @@ function buildCompoundParentAttributes(
 				typeExpression:
 					'string & tags.MinLength<1> & tags.MaxLength<40> & tags.Default<"Persist Count">',
 			}),
-			createAttributeDefinition({
-				blockJson: {
-					defaultValue: "primary",
-					type: "string",
-				},
-				manifest: {
+		createAttributeDefinition({
+			blockJson: {
+				defaultValue: "",
+				type: "string",
+			},
+			manifest: {
 					constraints: {
 						maxLength: 100,
 						minLength: 1,

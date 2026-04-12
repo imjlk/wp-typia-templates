@@ -144,6 +144,7 @@ test(
     expect(blockJson.version).toBe("0.1.0");
     expect(blockJson.category).toBe("widgets");
     expect(blockJson.icon).toBe("database");
+    expect(blockJson.attributes.resourceKey.default).toBe("");
     expect(generatedManifest.manifestVersion).toBe(2);
     expect(generatedManifest.sourceType).toBe(
       "DemoPersistencePublicAttributes"

@@ -115,6 +115,12 @@ describe("built-in block artifacts", () => {
 				const persistenceArtifact = artifacts[0]!;
 				const resourceKeyAttribute =
 					persistenceArtifact.manifestDocument.attributes?.["resourceKey"];
+				const resourceKeyBlockJson =
+					(
+						persistenceArtifact.blockJsonDocument.attributes as
+							| Record<string, Record<string, unknown>>
+							| undefined
+					)?.resourceKey;
 
 				expect(persistenceArtifact.typesSource).toContain(
 					`export interface ${variables.pascalCase}ClientState`,
@@ -126,9 +132,17 @@ describe("built-in block artifacts", () => {
 					}),
 				);
 				expect(resourceKeyAttribute?.typia.defaultValue).toBe("primary");
+				expect(resourceKeyBlockJson?.default).toBe("");
 			}
 
 			if (templateId === "compound") {
+				const parentResourceKeyBlockJson =
+					(
+						artifacts[0]?.blockJsonDocument.attributes as
+							| Record<string, Record<string, unknown>>
+							| undefined
+					)?.resourceKey;
+
 				expect(artifacts[0]?.relativeDir).toBe(
 					`src/blocks/${variables.slugKebabCase}`,
 				);
@@ -146,6 +160,7 @@ describe("built-in block artifacts", () => {
 						parent: [`${variables.namespace}/${variables.slugKebabCase}`],
 					}),
 				);
+				expect(parentResourceKeyBlockJson?.default).toBe("");
 			}
 		},
 	);

@@ -615,6 +615,7 @@ test(
     expect(pluginBootstrap).toContain("return 'wpt_pcl_' . md5(");
     expect(parentBlockJson.render).toBe("file:./render.php");
     expect(parentBlockJson.viewScriptModule).toBe("file:./interactivity.js");
+    expect(parentBlockJson.attributes.resourceKey.default).toBe("");
     expect(parentManifest.attributes.resourceKey.typia.defaultValue).toBe(
       "primary"
     );
