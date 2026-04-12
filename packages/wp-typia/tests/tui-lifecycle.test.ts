@@ -285,6 +285,8 @@ describe("alternate-buffer TUI lifecycle", () => {
 		expect(rendered).toContain("cd demo-block");
 		expect(rendered).toContain("Optional before first commit:");
 		expect(rendered).toContain("Review the generated metadata before first commit.");
+		expect(rendered).toContain("PgUp/PgDn");
+		expect(rendered).toContain("Home/End");
 		expect(rendered).toContain("Enter: close | q: exit | Ctrl+C: quit");
 	});
 });

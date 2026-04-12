@@ -84,7 +84,8 @@ export function printCompletionPayload(
 		warnLine?: PrintLine;
 	} = {},
 ): void {
-	const { printLine = console.log as PrintLine, warnLine = console.warn as PrintLine } = options;
+	const printLine = options.printLine ?? (console.log as PrintLine);
+	const warnLine = options.warnLine ?? printLine;
 
 	for (const line of payload.preambleLines ?? []) {
 		printLine(line);
@@ -98,8 +99,11 @@ export function printCompletionPayload(
 		(payload.nextSteps?.length ?? 0) > 0 ||
 		(payload.optionalLines?.length ?? 0) > 0 ||
 		Boolean(payload.optionalNote);
+	const hasLeadingContext =
+		(payload.preambleLines?.length ?? 0) > 0 ||
+		(payload.warningLines?.length ?? 0) > 0;
 
-	printLine(hasDetails ? `\n${payload.title}` : payload.title);
+	printLine(hasLeadingContext && hasDetails ? `\n${payload.title}` : payload.title);
 	for (const line of payload.summaryLines ?? []) {
 		printLine(line);
 	}
@@ -786,9 +790,9 @@ export async function executeMigrateCommand({
 	pushFlag(argv, "seed", readOptionalLooseStringFlag(flags, "seed"));
 
 	const parsed = parseMigrationArgs(argv);
-	const lines: string[] = [];
+	const lines: string[] | null = renderLine ? [] : null;
 	const captureLine = (line: string) => {
-		lines.push(line);
+		lines?.push(line);
 		if (renderLine) {
 			renderLine(line);
 			return;
@@ -801,21 +805,16 @@ export async function executeMigrateCommand({
 	});
 	if (renderLine) {
 		return result && typeof result === "object" && "cancelled" in result && result.cancelled === true
-			? undefined
-			: buildMigrationCompletionPayload({
-					command,
-					lines,
+				? undefined
+				: buildMigrationCompletionPayload({
+					command: parsed.command ?? "plan",
+					lines: lines ?? [],
 				});
 	}
 
 	if (result && typeof result === "object" && "cancelled" in result && result.cancelled === true) {
 		return;
 	}
-
-	return buildMigrationCompletionPayload({
-		command,
-		lines,
-	});
 }
 
 export { listTemplates };

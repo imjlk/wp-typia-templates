@@ -68,6 +68,46 @@ describe("alternate-buffer completion output helpers", () => {
 		]);
 	});
 
+	test("completion printer keeps warnings on the same stream by default", () => {
+		const printed: string[] = [];
+
+		printCompletionPayload(
+			{
+				summaryLines: ["Project directory: /tmp/demo-block"],
+				title: "✅ Created Demo Block in /tmp/demo-block",
+				warningLines: ["This template enables optional migration UI."],
+			},
+			{
+				printLine: (line) => printed.push(line),
+			},
+		);
+
+		expect(printed).toEqual([
+			"⚠️ This template enables optional migration UI.",
+			"\n✅ Created Demo Block in /tmp/demo-block",
+			"Project directory: /tmp/demo-block",
+		]);
+	});
+
+	test("completion printer avoids a leading blank line when no preamble or warnings were emitted", () => {
+		const printed: string[] = [];
+
+		printCompletionPayload(
+			{
+				summaryLines: ["Project directory: /tmp/demo-block"],
+				title: "✅ Created Demo Block in /tmp/demo-block",
+			},
+			{
+				printLine: (line) => printed.push(line),
+			},
+		);
+
+		expect(printed).toEqual([
+			"✅ Created Demo Block in /tmp/demo-block",
+			"Project directory: /tmp/demo-block",
+		]);
+	});
+
 	test("migration completion payload keeps rendered lines reviewable in order", () => {
 		const payload = buildMigrationCompletionPayload({
 			command: "plan",

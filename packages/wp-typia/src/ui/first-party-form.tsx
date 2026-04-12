@@ -98,6 +98,30 @@ function isCheckboxToggleKey(key: Parameters<typeof checkboxKeymap.match>[1]) {
 	);
 }
 
+function isCompletionLineDownKey(key: Parameters<typeof checkboxKeymap.match>[1]) {
+	return key.name === "down" || key.sequence === "\x1b[B";
+}
+
+function isCompletionLineUpKey(key: Parameters<typeof checkboxKeymap.match>[1]) {
+	return key.name === "up" || key.sequence === "\x1b[A";
+}
+
+function isCompletionPageDownKey(key: Parameters<typeof checkboxKeymap.match>[1]) {
+	return key.name === "pagedown" || key.sequence === "\x1b[6~" || key.sequence === " ";
+}
+
+function isCompletionPageUpKey(key: Parameters<typeof checkboxKeymap.match>[1]) {
+	return key.name === "pageup" || key.sequence === "\x1b[5~";
+}
+
+function isCompletionHomeKey(key: Parameters<typeof checkboxKeymap.match>[1]) {
+	return key.name === "home" || key.sequence === "\x1b[H" || key.sequence === "\x1bOH";
+}
+
+function isCompletionEndKey(key: Parameters<typeof checkboxKeymap.match>[1]) {
+	return key.name === "end" || key.sequence === "\x1b[F" || key.sequence === "\x1bOF";
+}
+
 function useFirstPartyFieldNavigation(options: {
 	focused: boolean;
 	keyboardScopeId: string;
@@ -536,7 +560,58 @@ export function FirstPartyCompletionViewport({
 	viewportHeight: number;
 }) {
 	const { tokens } = useTuiTheme();
+	const reactScopeId = useId();
+	const keyboardScopeId = `first-party-completion:${reactScopeId}`;
 	const bodyHeight = Math.max(4, viewportHeight - 3);
+	const bodyRef = useRef<{ scrollTop: number } | null>(null);
+
+	const setCompletionScrollTop = useCallback((nextScrollTop: number) => {
+		if (!bodyRef.current) {
+			return false;
+		}
+
+		bodyRef.current.scrollTop = Math.max(0, nextScrollTop);
+		return true;
+	}, []);
+
+	const adjustCompletionScrollTop = useCallback(
+		(delta: number) => {
+			if (!bodyRef.current) {
+				return false;
+			}
+
+			bodyRef.current.scrollTop = Math.max(0, bodyRef.current.scrollTop + delta);
+			return true;
+		},
+		[],
+	);
+
+	useScopedKeyboard(
+		keyboardScopeId,
+		(key) => {
+			if (isCompletionLineDownKey(key)) {
+				return adjustCompletionScrollTop(1);
+			}
+			if (isCompletionLineUpKey(key)) {
+				return adjustCompletionScrollTop(-1);
+			}
+			if (isCompletionPageDownKey(key)) {
+				return adjustCompletionScrollTop(Math.max(1, bodyHeight - 1));
+			}
+			if (isCompletionPageUpKey(key)) {
+				return adjustCompletionScrollTop(-Math.max(1, bodyHeight - 1));
+			}
+			if (isCompletionHomeKey(key)) {
+				return setCompletionScrollTop(0);
+			}
+			if (isCompletionEndKey(key)) {
+				return setCompletionScrollTop(Number.MAX_SAFE_INTEGER);
+			}
+
+			return false;
+		},
+		{ active: true },
+	);
 
 	return createElement(
 		"box",
@@ -553,6 +628,7 @@ export function FirstPartyCompletionViewport({
 		createElement(
 			"scrollbox",
 			{
+				ref: bodyRef,
 				height: bodyHeight,
 				scrollY: true,
 				scrollbarOptions: {
@@ -637,7 +713,7 @@ export function FirstPartyCompletionViewport({
 			),
 		),
 		createElement("text", {
-			content: "Enter: close | q: exit | Ctrl+C: quit",
+			content: "PgUp/PgDn | ↑/↓ | Home/End | Enter: close | q: exit | Ctrl+C: quit",
 			fg: tokens.textMuted,
 		}),
 	);
