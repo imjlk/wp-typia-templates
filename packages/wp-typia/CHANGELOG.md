@@ -1,5 +1,12 @@
 # wp-typia
 
+## 0.16.6 — 2026-04-12
+
+### Patch changes
+
+- [7b9a136](https://github.com/imjlk/wp-typia/commit/7b9a136394233b8f894ad4155b8d4ed4de636cc3) Make built-in scaffold styles and block-local render.php emitter-owned, remove the remaining built-in non-TS Mustache sources, and document the narrowed Mustache ownership split. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.16.5
+
 ## 0.16.5 — 2026-04-12
 
 ### Patch changes
