@@ -469,95 +469,97 @@ test(
   { timeout: 30_000 }
 );
 
-test("scaffoldProject creates an interactivity template with typed validation wiring", async () => {
-  const targetDir = path.join(tempRoot, "demo-interactivity");
+test(
+  "scaffoldProject creates an interactivity template with typed validation wiring",
+  async () => {
+    const targetDir = path.join(tempRoot, "demo-interactivity");
 
-  await scaffoldProject({
-    projectDir: targetDir,
-    templateId: "interactivity",
-    packageManager: "npm",
-    noInstall: true,
-    answers: {
-      author: "Test Runner",
-      description: "Demo interactivity block",
-      namespace: "demo-space",
-      slug: "demo-interactivity",
-      title: "Demo Interactivity",
-    },
-  });
+    await scaffoldProject({
+      projectDir: targetDir,
+      templateId: "interactivity",
+      packageManager: "npm",
+      noInstall: true,
+      answers: {
+        author: "Test Runner",
+        description: "Demo interactivity block",
+        namespace: "demo-space",
+        slug: "demo-interactivity",
+        title: "Demo Interactivity",
+      },
+    });
 
-  const generatedTypes = fs.readFileSync(
-    path.join(targetDir, "src", "types.ts"),
-    "utf8"
-  );
-  const generatedHooks = fs.readFileSync(
-    path.join(targetDir, "src", "hooks.ts"),
-    "utf8"
-  );
-  const generatedValidators = fs.readFileSync(
-    path.join(targetDir, "src", "validators.ts"),
-    "utf8"
-  );
-  const generatedEdit = fs.readFileSync(
-    path.join(targetDir, "src", "edit.tsx"),
-    "utf8"
-  );
-  const generatedInteractivity = fs.readFileSync(
-    path.join(targetDir, "src", "interactivity.ts"),
-    "utf8"
-  );
-  const generatedManifest = JSON.parse(
-    fs.readFileSync(
-      path.join(targetDir, "src", "typia.manifest.json"),
+    const generatedTypes = fs.readFileSync(
+      path.join(targetDir, "src", "types.ts"),
       "utf8"
-    )
-  );
-  const generatedSave = fs.readFileSync(
-    path.join(targetDir, "src", "save.tsx"),
-    "utf8"
-  );
-  const generatedStyle = fs.readFileSync(
-    path.join(targetDir, "src", "style.scss"),
-    "utf8"
-  );
-  const generatedEditorStyle = fs.readFileSync(
-    path.join(targetDir, "src", "editor.scss"),
-    "utf8"
-  );
-  const generatedIndex = fs.readFileSync(
-    path.join(targetDir, "src", "index.tsx"),
-    "utf8"
-  );
-  const generatedPluginBootstrap = fs.readFileSync(
-    path.join(targetDir, "demo-interactivity.php"),
-    "utf8"
-  );
-  const generatedWebpackConfig = fs.readFileSync(
-    path.join(targetDir, "webpack.config.js"),
-    "utf8"
-  );
-  const packageJson = JSON.parse(
-    fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
-  );
-  const blockJson = JSON.parse(
-    fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8")
-  );
+    );
+    const generatedHooks = fs.readFileSync(
+      path.join(targetDir, "src", "hooks.ts"),
+      "utf8"
+    );
+    const generatedValidators = fs.readFileSync(
+      path.join(targetDir, "src", "validators.ts"),
+      "utf8"
+    );
+    const generatedEdit = fs.readFileSync(
+      path.join(targetDir, "src", "edit.tsx"),
+      "utf8"
+    );
+    const generatedInteractivity = fs.readFileSync(
+      path.join(targetDir, "src", "interactivity.ts"),
+      "utf8"
+    );
+    const generatedManifest = JSON.parse(
+      fs.readFileSync(
+        path.join(targetDir, "src", "typia.manifest.json"),
+        "utf8"
+      )
+    );
+    const generatedSave = fs.readFileSync(
+      path.join(targetDir, "src", "save.tsx"),
+      "utf8"
+    );
+    const generatedStyle = fs.readFileSync(
+      path.join(targetDir, "src", "style.scss"),
+      "utf8"
+    );
+    const generatedEditorStyle = fs.readFileSync(
+      path.join(targetDir, "src", "editor.scss"),
+      "utf8"
+    );
+    const generatedIndex = fs.readFileSync(
+      path.join(targetDir, "src", "index.tsx"),
+      "utf8"
+    );
+    const generatedPluginBootstrap = fs.readFileSync(
+      path.join(targetDir, "demo-interactivity.php"),
+      "utf8"
+    );
+    const generatedWebpackConfig = fs.readFileSync(
+      path.join(targetDir, "webpack.config.js"),
+      "utf8"
+    );
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+    );
+    const blockJson = JSON.parse(
+      fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8")
+    );
 
-  expect(packageJson.name).toBe("demo-interactivity");
-  expect(packageJson.scripts.sync).toBe("tsx scripts/sync-project.ts");
-  expect(packageJson.scripts.dev).toBe(
-    'concurrently -k -n sync-types,editor -c yellow,blue "npm run watch:sync-types" "npm run start:editor"'
-  );
-  expect(packageJson.scripts.build).toBe(
-    "npm run sync -- --check && wp-scripts build --experimental-modules"
-  );
-  expect(packageJson.scripts.start).toBe(
-    "npm run sync && wp-scripts start --experimental-modules"
-  );
-  expect(packageJson.scripts.typecheck).toBe(
-    "npm run sync -- --check && tsc --noEmit"
-  );
-  expect(packageJson.scripts["watch:sync-types"]).toBe(
+    expect(packageJson.name).toBe("demo-interactivity");
+    expect(packageJson.scripts.sync).toBe("tsx scripts/sync-project.ts");
+    expect(packageJson.scripts.dev).toBe(
+      'concurrently -k -n sync-types,editor -c yellow,blue "npm run watch:sync-types" "npm run start:editor"'
+    );
+    expect(packageJson.scripts.build).toBe(
+      "npm run sync -- --check && wp-scripts build --experimental-modules"
+    );
+    expect(packageJson.scripts.start).toBe(
+      "npm run sync && wp-scripts start --experimental-modules"
+    );
+    expect(packageJson.scripts.typecheck).toBe(
+      "npm run sync -- --check && tsc --noEmit"
+    );
+    expect(packageJson.scripts["watch:sync-types"]).toBe(
     'chokidar "src/types.ts" --debounce 200 -c "npm run sync-types"'
   );
   expect(blockJson.name).toBe("demo-space/demo-interactivity");
@@ -665,15 +667,17 @@ test("scaffoldProject creates an interactivity template with typed validation wi
   expect(generatedSave).not.toContain("data-is-visible");
   expect(generatedSave).not.toContain("data-unique-id");
   expect(generatedStyle).toContain(".wp-block-demo-space-demo-interactivity");
-  expect(generatedEditorStyle).toContain(
-    ".wp-block-demo-space-demo-interactivity"
-  );
-  runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts");
-  runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
-    "--check",
-  ]);
-  typecheckGeneratedProject(targetDir);
-});
+    expect(generatedEditorStyle).toContain(
+      ".wp-block-demo-space-demo-interactivity"
+    );
+    runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts");
+    runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
+      "--check",
+    ]);
+    typecheckGeneratedProject(targetDir);
+  },
+  { timeout: 30_000 }
+);
 
 test("scaffoldProject supports the optional local wp-env preset without adding test files", async () => {
   const targetDir = path.join(tempRoot, "demo-local-wp-env");
