@@ -1,5 +1,16 @@
 # wp-typia
 
+## 0.16.5 — 2026-04-12
+
+### Patch changes
+
+- [1bcbaad](https://github.com/imjlk/wp-typia/commit/1bcbaadde08c1f9b38cf0fc0770dfd4c1c4a794f) Trim the default interactivity scaffold down to the runtime surface it actually uses by removing dead context fields, unbound actions, unused editor attributes like `uniqueId` and `autoPlayInterval`, and the unused `interactiveMode: "auto"` scaffold option. — Thanks @imjlk!
+- [d963e91](https://github.com/imjlk/wp-typia/commit/d963e91309f8a0f07192508b67271cfb98fb232e) Add a Phase 1 typed block generation boundary to `@wp-typia/project-tools` via `BlockSpec` and `BlockGeneratorService`, while keeping built-in scaffold file bodies on their current Mustache rendering path. — Thanks @imjlk!
+- [9d60ecf](https://github.com/imjlk/wp-typia/commit/9d60ecf03431b281fb804d48b753ab5b5641051f) Remove built-in scaffold `types.ts.mustache` and `block.json.mustache` files now that structural artifacts are emitter-owned, keep the generator contract documented as “template bodies from Mustache, structural files from emitters”, and add guard tests so built-in template trees cannot regress back to shipping stale structural Mustache sources. — Thanks @imjlk!
+- [f31b84b](https://github.com/imjlk/wp-typia/commit/f31b84be3bb4eea2583a610e4c96039f62fa290e) Move built-in scaffold `types.ts` and `block.json` generation onto the typed Phase 2 emitter path behind `BlockGeneratorService`, reuse the same structural artifact model for starter manifests, and document the new ownership split where structural files are emitter-owned while the remaining built-in scaffold files still come from Mustache templates. — Thanks @imjlk!
+- [4ed3170](https://github.com/imjlk/wp-typia/commit/4ed31709b87ecc0f3fb7bd1524d40700cac44c82) Make built-in scaffold TS/TSX bodies emitter-owned alongside structural files, remove stale built-in TS/TSX Mustache sources, and document the narrowed Mustache ownership split. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.16.4
+
 ## 0.16.4 — 2026-04-12
 
 ### Patch changes
