@@ -1,5 +1,11 @@
 # @wp-typia/project-tools
 
+## 0.16.3 — 2026-04-12
+
+### Patch changes
+
+- [93576a1](https://github.com/imjlk/wp-typia/commit/93576a118a3dfa355391eefea05b95e3337b153a) Fix generated interactivity scaffolds so their WordPress Interactivity context is typed through explicit `getContext<T>()` imports, and restore GitHub Pages publishing by deploying a real static docs site artifact from CI. — Thanks @imjlk!
+
 ## 0.16.2 — 2026-04-12
 
 ### Patch changes

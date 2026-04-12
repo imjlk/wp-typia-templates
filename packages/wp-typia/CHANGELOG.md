@@ -1,5 +1,14 @@
 # wp-typia
 
+## 0.16.4 — 2026-04-12
+
+### Patch changes
+
+- [93576a1](https://github.com/imjlk/wp-typia/commit/93576a118a3dfa355391eefea05b95e3337b153a) Fix generated interactivity scaffolds so their WordPress Interactivity context is typed through explicit `getContext<T>()` imports, and restore GitHub Pages publishing by deploying a real static docs site artifact from CI. — Thanks @imjlk!
+- [5ff0a04](https://github.com/imjlk/wp-typia/commit/5ff0a04584f9433e89e4fc227523105980e3ac9e) Keep successful first-party TUI workflows open long enough to review their completion output in-buffer, with shared completion surfaces for `create`, `add`, and `migrate` before exit. — Thanks @imjlk!
+- [9a9ca7c](https://github.com/imjlk/wp-typia/commit/9a9ca7cfc29dda649a7c63dcbc9d91034963d60e) Fix first-party TUI submit rendering so create/add/migrate replace stale form content with a shared submitting surface, and restore GitHub Pages deploys by pinning the documentation artifact upload action to a real `actions/upload-pages-artifact` release tag. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.16.3
+
 ## 0.16.3 — 2026-04-12
 
 ### Patch changes
