@@ -282,7 +282,7 @@ function buildBasicAttributes(): EmittedAttributeDefinition[] {
 	return [
 		createAttributeDefinition({
 			blockJson: {
-				defaultValue: "primary",
+				defaultValue: "",
 				type: "string",
 			},
 			description: {
@@ -290,6 +290,7 @@ function buildBasicAttributes(): EmittedAttributeDefinition[] {
 			},
 			manifest: {
 				constraints: {
+					minLength: 1,
 					maxLength: 1000,
 				},
 				defaultValue: "",
@@ -417,6 +418,7 @@ function buildInteractivityAttributes(
 			},
 			manifest: {
 				constraints: {
+					minLength: 1,
 					maxLength: 1000,
 				},
 				defaultValue: "",
@@ -666,7 +668,7 @@ function buildPersistenceAttributes(
 		}),
 		createAttributeDefinition({
 			blockJson: {
-				defaultValue: "",
+				defaultValue: "primary",
 				type: "string",
 			},
 			manifest: {
