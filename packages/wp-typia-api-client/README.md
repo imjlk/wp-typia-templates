@@ -96,6 +96,11 @@ const result = await callEndpoint(
 );
 ```
 
+`callEndpoint(...)` returns `EndpointValidationResult<Req, Res>`. Request-side
+validation failures are surfaced honestly with
+`validationTarget: "request"`, while post-transport response validation uses
+`validationTarget: "response"`.
+
 Use `@wp-typia/rest` when you want WordPress-specific helpers such as canonical
 REST route URL resolution and `@wordpress/api-fetch` integration. Manifest
 `authIntent` is the primary portable metadata surface, while legacy

@@ -234,6 +234,7 @@ describe("@wp-typia/api-client", () => {
 
 		expect(transportCalled).toBe(false);
 		expect(result.isValid).toBe(false);
+		expect(result.validationTarget).toBe("request");
 		expect(result.errors[0]?.path).toBe("$.title");
 	});
 
@@ -262,6 +263,7 @@ describe("@wp-typia/api-client", () => {
 
 		expect(transportCalled).toBe(true);
 		expect(result.isValid).toBe(false);
+		expect(result.validationTarget).toBe("response");
 		expect(result.errors[0]?.path).toBe("$.ok");
 	});
 

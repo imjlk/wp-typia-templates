@@ -1,4 +1,9 @@
 import type { APIFetchOptions, ApiFetch } from "@wordpress/api-fetch";
+import type {
+	EndpointRequestValidationResult,
+	EndpointResponseValidationResult,
+	EndpointValidationResult,
+} from "@wp-typia/api-client";
 import {
 	encodeGetLikeRequest,
 	joinPathWithQuery,
@@ -15,6 +20,12 @@ import {
 
 export type { ValidationError, ValidationLike, ValidationResult } from "./internal/runtime-primitives.js";
 export { isValidationResult, normalizeValidationError, toValidationResult } from "./internal/runtime-primitives.js";
+export type {
+	EndpointRequestValidationResult,
+	EndpointResponseValidationResult,
+	EndpointValidationResult,
+	EndpointValidationTarget,
+} from "@wp-typia/api-client";
 
 export interface ValidatedFetch<T> {
 	assertFetch(options: APIFetchOptions): Promise<T>;
@@ -251,14 +262,38 @@ export function createEndpoint<Req, Res>(config: ApiEndpoint<Req, Res>): ApiEndp
 	return config;
 }
 
+function isInvalidValidationResult<Req>(
+	validation: ValidationResult<Req>,
+): validation is ValidationResult<Req> & { isValid: false } {
+	return validation.isValid === false;
+}
+
+function toEndpointRequestValidationResult<Req>(
+	validation: ValidationResult<Req> & { isValid: false },
+): EndpointRequestValidationResult<Req> {
+	return {
+		...validation,
+		validationTarget: "request",
+	};
+}
+
+function toEndpointResponseValidationResult<Res>(
+	validation: ValidationResult<Res>,
+): EndpointResponseValidationResult<Res> {
+	return {
+		...validation,
+		validationTarget: "response",
+	};
+}
+
 export async function callEndpoint<Req, Res>(
 	endpoint: ApiEndpoint<Req, Res>,
 	request: Req,
 	{ fetchFn = defaultFetch as ApiFetch, requestOptions }: EndpointCallOptions = {},
-): Promise<ValidationResult<Res>> {
+): Promise<EndpointValidationResult<Req, Res>> {
 	const requestValidation = endpoint.validateRequest(request);
-	if (!requestValidation.isValid) {
-		return requestValidation as unknown as ValidationResult<Res>;
+	if (isInvalidValidationResult(requestValidation)) {
+		return toEndpointRequestValidationResult(requestValidation);
 	}
 
 	const payload = await fetchFn<unknown, true>(
@@ -267,5 +302,5 @@ export async function callEndpoint<Req, Res>(
 			requestOptions,
 		) as APIFetchOptions<true>,
 	);
-	return endpoint.validateResponse(payload);
+	return toEndpointResponseValidationResult(endpoint.validateResponse(payload));
 }
