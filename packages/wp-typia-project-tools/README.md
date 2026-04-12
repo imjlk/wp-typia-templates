@@ -8,7 +8,8 @@ Package roles:
 - `@wp-typia/project-tools` owns scaffold, add-block, migrate, template, doctor, and schema project helpers.
   It also owns the typed generator boundary via `BlockSpec` and `BlockGeneratorService`,
   plus the emitter-owned built-in structural/code path where built-in
-  templates no longer ship structural or TS/TSX Mustache files.
+  templates no longer ship structural, TS/TSX, style, or block-local `render.php`
+  Mustache files.
 - `@wp-typia/block-runtime/*` owns generated-project runtime helpers.
 - `@wp-typia/create` is the deprecated legacy package shell.
 
@@ -40,10 +41,11 @@ import { normalizeEndpointAuthDefinition } from "@wp-typia/project-tools/schema-
 ```
 
 `BlockGeneratorService` is the additive typed orchestration boundary for built-in
-block scaffolds. Built-in templates no longer ship structural or TS/TSX
-Mustache files for built-in `types.ts`, `block.json`, or generated scaffold
-bodies; those files and starter `typia.manifest.json` now come from the emitter
-path, while styles, PHP, and the remaining non-TS scaffold files still come
-from Mustache-backed template copy.
+block scaffolds. Built-in templates no longer ship structural, TS/TSX, style,
+or block-local `render.php` Mustache files for built-in `types.ts`,
+`block.json`, generated scaffold bodies, or block-local non-TS assets; those
+files and starter `typia.manifest.json` now come from the emitter path, while
+project bootstrap/package-manager files, sync scripts, shared REST helpers, and
+the remaining non-block assets still come from Mustache-backed template copy.
 
 If you need metadata sync, editor helpers, validation helpers, or other generated-project runtime utilities, import them directly from `@wp-typia/block-runtime/*`.
