@@ -28,8 +28,8 @@
         "eslint-config-prettier": "8.10.2",
         "globals": "13.24.0",
         "prettier": "2.8.8",
-        "react": "^19.2.0",
-        "react-dom": "^19.2.0",
+        "react": "^19.2.5",
+        "react-dom": "^19.2.5",
         "typedoc": "^0.25.4",
         "typedoc-plugin-markdown": "^3.16.0",
         "typescript": "^5.9.2",
@@ -140,11 +140,11 @@
     },
     "packages/create-workspace-template": {
       "name": "@wp-typia/create-workspace-template",
-      "version": "0.13.0",
+      "version": "0.14.0",
     },
     "packages/wp-typia": {
       "name": "wp-typia",
-      "version": "0.15.1",
+      "version": "0.16.2",
       "bin": {
         "wp-typia": "bin/wp-typia.js",
       },
@@ -158,11 +158,11 @@
         "@bunli/runtime": "0.3.1",
         "@bunli/tui": "0.6.0",
         "@bunli/utils": "0.6.0",
-        "@wp-typia/api-client": "^0.4.1",
-        "@wp-typia/project-tools": "0.15.1",
+        "@wp-typia/api-client": "^0.4.2",
+        "@wp-typia/project-tools": "0.16.1",
         "better-result": "^2.7.0",
-        "react": "19.2.0",
-        "react-dom": "19.2.0",
+        "react": "^19.2.5",
+        "react-dom": "^19.2.5",
         "zod": "4.3.6",
       },
       "devDependencies": {
@@ -182,7 +182,7 @@
     },
     "packages/wp-typia-api-client": {
       "name": "@wp-typia/api-client",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "dependencies": {
         "@typia/interface": "^12.0.1",
       },
@@ -192,9 +192,9 @@
     },
     "packages/wp-typia-block-runtime": {
       "name": "@wp-typia/block-runtime",
-      "version": "0.4.1",
+      "version": "0.4.4",
       "dependencies": {
-        "@wp-typia/api-client": "^0.4.1",
+        "@wp-typia/api-client": "^0.4.2",
         "typescript": "^5.9.2",
       },
       "devDependencies": {
@@ -210,7 +210,7 @@
     },
     "packages/wp-typia-block-types": {
       "name": "@wp-typia/block-types",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "devDependencies": {
         "@types/react": "^18.3.12",
         "@types/wordpress__block-editor": "^11.5.17",
@@ -219,12 +219,12 @@
     },
     "packages/wp-typia-project-tools": {
       "name": "@wp-typia/project-tools",
-      "version": "0.15.1",
+      "version": "0.16.1",
       "dependencies": {
-        "@wp-typia/api-client": "^0.4.1",
-        "@wp-typia/block-runtime": "^0.4.1",
-        "@wp-typia/block-types": "^0.2.0",
-        "@wp-typia/rest": "^0.3.4",
+        "@wp-typia/api-client": "^0.4.2",
+        "@wp-typia/block-runtime": "workspace:*",
+        "@wp-typia/block-types": "^0.2.1",
+        "@wp-typia/rest": "^0.3.5",
         "mustache": "^4.2.0",
         "npm-package-arg": "^13.0.0",
         "semver": "^7.7.3",
@@ -240,7 +240,7 @@
     },
     "packages/wp-typia-rest": {
       "name": "@wp-typia/rest",
-      "version": "0.3.4",
+      "version": "0.3.5",
       "dependencies": {
         "@typia/interface": "^12.0.1",
         "@wordpress/api-fetch": "^7.42.0",
@@ -3290,7 +3290,7 @@
 
     "re-resizable": ["re-resizable@6.11.2", "", { "peerDependencies": { "react": "^16.13.1 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react-dom": "^16.13.1 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-2xI2P3OHs5qw7K0Ud1aLILK6MQxW50TcO+DetD9eIV58j84TqYeHoZcL9H4GXFXXIh7afhH8mv5iUCXII7OW7A=="],
 
-    "react": ["react@19.2.4", "", {}, "sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ=="],
+    "react": ["react@19.2.5", "", {}, "sha512-llUJLzz1zTUBrskt2pwZgLq59AemifIftw4aB7JxOqf1HY2FDaGDxgwpAPVzHU1kdWabH7FauP4i1oEeer2WCA=="],
 
     "react-autosize-textarea": ["react-autosize-textarea@7.1.0", "", { "dependencies": { "autosize": "^4.0.2", "line-height": "^0.3.1", "prop-types": "^15.5.6" }, "peerDependencies": { "react": "^0.14.0 || ^15.0.0 || ^16.0.0", "react-dom": "^0.14.0 || ^15.0.0 || ^16.0.0" } }, "sha512-BHpjCDkuOlllZn3nLazY2F8oYO1tS2jHnWhcjTWQdcKiiMU6gHLNt/fzmqMSyerR0eTdKtfSIqtSeTtghNwS+g=="],
 
@@ -3300,7 +3300,7 @@
 
     "react-devtools-core": ["react-devtools-core@7.0.1", "", { "dependencies": { "shell-quote": "^1.6.1", "ws": "^7" } }, "sha512-C3yNvRHaizlpiASzy7b9vbnBGLrhvdhl1CbdU6EnZgxPNbai60szdLtl+VL76UNOt5bOoVTOz5rNWZxgGt+Gsw=="],
 
-    "react-dom": ["react-dom@19.2.4", "", { "dependencies": { "scheduler": "^0.27.0" }, "peerDependencies": { "react": "^19.2.4" } }, "sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ=="],
+    "react-dom": ["react-dom@19.2.5", "", { "dependencies": { "scheduler": "^0.27.0" }, "peerDependencies": { "react": "^19.2.5" } }, "sha512-J5bAZz+DXMMwW/wV3xzKke59Af6CHY7G4uYLN1OvBcKEsWOs4pQExj86BBKamxl/Ik5bx9whOrvBlSDfWzgSag=="],
 
     "react-easy-crop": ["react-easy-crop@5.5.7", "", { "dependencies": { "normalize-wheel": "^1.0.1", "tslib": "^2.0.1" }, "peerDependencies": { "react": ">=16.4.0", "react-dom": ">=16.4.0" } }, "sha512-kYo4NtMeXFQB7h1U+h5yhUkE46WQbQdq7if54uDlbMdZHdRgNehfvaFrXnFw5NR1PNoUOJIfTwLnWmEx/MaZnA=="],
 
@@ -4641,10 +4641,6 @@
     "webpack-dev-server/rimraf": ["rimraf@3.0.2", "", { "dependencies": { "glob": "^7.1.3" }, "bin": { "rimraf": "bin.js" } }, "sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA=="],
 
     "webpack-merge/clone-deep": ["clone-deep@4.0.1", "", { "dependencies": { "is-plain-object": "^2.0.4", "kind-of": "^6.0.2", "shallow-clone": "^3.0.0" } }, "sha512-neHB9xuzh/wk0dIHweyAXv2aPGZIVk3pLMe+/RNzINf17fe0OG96QroktYAUm7SM1PBnzTabaLboqqxDyMU+SQ=="],
-
-    "wp-typia/react": ["react@19.2.0", "", {}, "sha512-tmbWg6W31tQLeB5cdIBOicJDJRR2KzXsV7uSK9iNfLWQ5bIZfxuPEHp7M8wiHyHnn0DD1i7w3Zmin0FtkrwoCQ=="],
-
-    "wp-typia/react-dom": ["react-dom@19.2.0", "", { "dependencies": { "scheduler": "^0.27.0" }, "peerDependencies": { "react": "^19.2.0" } }, "sha512-UlbRu4cAiGaIewkPyiRGJk0imDN2T3JjieT6spoL2UeSf5od4n5LB/mQ4ejmxhCFT1tYe8IvaFulzynWovsEFQ=="],
 
     "@babel/helper-compilation-targets/lru-cache/yallist": ["yallist@3.1.1", "", {}, "sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g=="],
 
