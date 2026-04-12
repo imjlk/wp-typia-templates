@@ -22,7 +22,7 @@ interface StarterAttributeDefinition {
 }
 
 const ALIGNMENT_VALUES = ["left", "center", "right", "justify"] as const;
-const INTERACTIVE_MODE_VALUES = ["click", "hover", "auto"] as const;
+const INTERACTIVE_MODE_VALUES = ["click", "hover"] as const;
 const ANIMATION_VALUES = ["none", "bounce", "pulse", "shake", "flip"] as const;
 const DEFAULT_COMPOUND_CHILD_BODY_PLACEHOLDER =
 	"Add supporting details for this internal item.";
@@ -163,16 +163,6 @@ function buildInteractivityStarterManifest(
 			required: false,
 			sourceType: "string",
 		}),
-		autoPlayInterval: createAttribute({
-			constraints: {
-				minimum: 0,
-				typeTag: "uint32",
-			},
-			defaultValue: 0,
-			kind: "number",
-			required: false,
-			sourceType: "number",
-		}),
 		clickCount: createAttribute({
 			constraints: {
 				minimum: 0,
@@ -226,12 +216,6 @@ function buildInteractivityStarterManifest(
 			kind: "boolean",
 			required: false,
 			sourceType: "boolean",
-		}),
-		uniqueId: createAttribute({
-			defaultValue: "",
-			kind: "string",
-			required: false,
-			sourceType: "string",
 		}),
 	});
 }

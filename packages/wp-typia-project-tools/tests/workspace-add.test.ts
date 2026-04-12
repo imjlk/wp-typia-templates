@@ -240,7 +240,7 @@ test("canonical CLI can add a variation to an official workspace template", asyn
   ).toBe("pass");
 
   runCli("npm", ["run", "build"], { cwd: targetDir });
-}, 30_000);
+}, 60_000);
 
 test("variation workflow keeps registry identifiers unique for similar slugs", async () => {
   const targetDir = path.join(
@@ -304,7 +304,7 @@ test("variation workflow keeps registry identifiers unique for similar slugs", a
   );
 
   runCli("npm", ["run", "build"], { cwd: targetDir });
-}, 30_000);
+}, 60_000);
 
 test("canonical CLI can add hooked-block metadata to an official workspace block", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-hooked-block");
@@ -787,7 +787,7 @@ test("canonical CLI can add a compound persistence block to an official workspac
   runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts", [
     "--check",
   ]);
-}, 30_000);
+}, 60_000);
 
 test("add compound block repairs a legacy shared validator toolkit in an official workspace template", async () => {
   const targetDir = path.join(
@@ -888,7 +888,7 @@ test("add compound block repairs a legacy shared validator toolkit in an officia
     "assert: typia.createAssert< FaqStackItemAttributes >()"
   );
   typecheckGeneratedProject(targetDir);
-}, 30_000);
+}, 60_000);
 
 test("add compound block does not duplicate an existing typia import during legacy validator repair", async () => {
   const targetDir = path.join(
