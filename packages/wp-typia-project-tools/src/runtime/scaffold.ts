@@ -55,6 +55,11 @@ import {
 } from "./template-registry.js";
 import type { BuiltInTemplateId } from "./template-registry.js";
 import { resolveTemplateSource } from "./template-source.js";
+import {
+	BlockGeneratorService,
+	buildTemplateVariablesFromBlockSpec,
+	createBuiltInBlockSpec,
+} from "./block-generator-service.js";
 
 const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
 const PHP_PREFIX_PATTERN = /^[a-z_][a-z0-9_]*$/;
@@ -505,6 +510,17 @@ export function getTemplateVariables(
 	templateId: string,
 	answers: ScaffoldAnswers,
 ): ScaffoldTemplateVariables {
+	if (isBuiltInTemplateId(templateId)) {
+		return buildTemplateVariablesFromBlockSpec(
+			createBuiltInBlockSpec({
+				answers,
+				dataStorageMode: answers.dataStorageMode,
+				persistencePolicy: answers.persistencePolicy,
+				templateId,
+			}),
+		);
+	}
+
 	const {
 		apiClientPackageVersion,
 		blockRuntimePackageVersion,
@@ -1063,6 +1079,31 @@ export async function scaffoldProject({
 	const resolvedTemplateId = normalizeTemplateSelection(templateId);
 	const resolvedPackageManager = getPackageManager(packageManager).id;
 	const isBuiltInTemplate = isBuiltInTemplateId(resolvedTemplateId);
+
+	if (isBuiltInTemplate) {
+		const blockGeneratorService = new BlockGeneratorService();
+		const plan = await blockGeneratorService.plan({
+			allowExistingDir,
+			answers,
+			cwd,
+			dataStorageMode: dataStorageMode ?? answers.dataStorageMode,
+			noInstall,
+			packageManager: resolvedPackageManager,
+			persistencePolicy: persistencePolicy ?? answers.persistencePolicy,
+			projectDir,
+			templateId: resolvedTemplateId,
+			variant,
+			withMigrationUi,
+			withTestPreset,
+			withWpEnv,
+		});
+		const validated = await blockGeneratorService.validate({ plan });
+		const rendered = await blockGeneratorService.render({ validated });
+		return blockGeneratorService.apply({
+			installDependencies,
+			rendered,
+		});
+	}
 
 	const variables = getTemplateVariables(resolvedTemplateId, {
 		...answers,

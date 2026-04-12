@@ -17,6 +17,18 @@ export {
 	resolvePackageManagerId,
 	resolveTemplateId,
 } from "./scaffold.js";
+export { BlockGeneratorService } from "./block-generator-service.js";
+export type {
+	ApplyBlockInput,
+	BlockGenerationTarget,
+	BlockSpec,
+	PlanBlockInput,
+	PlanBlockResult,
+	RenderBlockInput,
+	RenderBlockResult,
+	ValidateBlockInput,
+	ValidateBlockResult,
+} from "./block-generator-service.js";
 export {
 	formatMigrationHelpText,
 	parseMigrationArgs,

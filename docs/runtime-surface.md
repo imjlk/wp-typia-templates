@@ -8,7 +8,8 @@ This document is descriptive, not normative. For support guarantees, see
 - `wp-typia`
   CLI package and Bunli command tree.
 - `@wp-typia/project-tools`
-  Project orchestration helpers used by the CLI and programmatic tooling.
+  Project orchestration helpers used by the CLI and programmatic tooling,
+  including the additive `BlockSpec` / `BlockGeneratorService` boundary.
 - `@wp-typia/project-tools/schema-core`
   Schema and OpenAPI helpers for project-level documents.
 - `@wp-typia/block-runtime`
@@ -45,8 +46,8 @@ This document is descriptive, not normative. For support guarantees, see
 
 - `wp-typia` owns the CLI, help, TUI, completions, skills, MCP, and bin entry.
 - `@wp-typia/project-tools` owns scaffold, add-block, migrate, template,
-  doctor, package-manager, starter-manifest, and the preferred schema project
-  imports.
+  doctor, package-manager, starter-manifest, the phase-1 typed generator
+  boundary, and the preferred schema project imports.
 - `@wp-typia/block-runtime/*` owns generated-project runtime helpers directly,
   including the canonical `schema-core` implementation.
 - `@wp-typia/create` no longer owns runtime exports or CLI behavior.

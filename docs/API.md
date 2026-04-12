@@ -8,7 +8,8 @@ This repository has seven public surfaces:
   Canonical CLI package.
 - `@wp-typia/project-tools`
   Project orchestration package for scaffold, add, migrate, template, doctor,
-  package-manager, and starter-manifest helpers.
+  package-manager, starter-manifest helpers, and the phase-1 typed generator
+  boundary (`BlockSpec`, `BlockGeneratorService`).
 - `@wp-typia/project-tools/schema-core`
   Project schema/OpenAPI helpers.
 - `@wp-typia/block-runtime`
@@ -189,6 +190,11 @@ Use these packages instead:
 - `wp-typia` for the canonical CLI surface
 - `@wp-typia/project-tools` for project orchestration and programmatic runtime helpers
 - `@wp-typia/block-runtime/*` for generated-project runtime helpers
+
+For the current Phase 1 generator architecture boundary, including the
+decision to keep major scaffold file bodies on Mustache while the typed
+generator surface stabilizes, see
+[`docs/block-generator-service.md`](./block-generator-service.md).
 
 ## 3. `@wp-typia/block-types`
 
