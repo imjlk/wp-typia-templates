@@ -2,29 +2,37 @@ import { useBlockProps, RichText } from '@wordpress/block-editor';
 import type { {{pascalCase}}Attributes } from './types';
 
 export default function Save({ attributes }: { attributes: {{pascalCase}}Attributes }) {
+  const autoPlayInterval = attributes.autoPlayInterval ?? 0;
+  const clickCount = attributes.clickCount ?? 0;
+  const interactiveMode = attributes.interactiveMode ?? 'click';
+  const animation = attributes.animation ?? 'none';
+  const isAnimating = attributes.isAnimating ?? false;
+  const isVisible = attributes.isVisible ?? true;
+  const maxClicks = attributes.maxClicks ?? 0;
+  const showCounter = attributes.showCounter ?? true;
   const blockProps = useBlockProps.save({
-    className: `{{cssClassName}} {{cssClassName}}--${attributes.interactiveMode}`,
+    className: `{{cssClassName}} {{cssClassName}}--${interactiveMode}`,
     'data-wp-interactive': '{{slugKebabCase}}',
     'data-wp-context': JSON.stringify({
-      clicks: attributes.clickCount,
-      isAnimating: attributes.isAnimating,
-      isVisible: attributes.isVisible,
+      clicks: clickCount,
+      isAnimating,
+      isVisible,
       lastInteraction: '',
-      animation: attributes.animation,
-      interactiveMode: attributes.interactiveMode,
-      maxClicks: attributes.maxClicks,
-      autoPlayInterval: attributes.autoPlayInterval
+      animation,
+      interactiveMode,
+      maxClicks,
+      autoPlayInterval
     })
   });
 
   return (
     <div {...blockProps}>
       <div
-        className={`{{cssClassName}}__content ${attributes.isAnimating ? 'is-animating' : ''}`}
+        className={`{{cssClassName}}__content ${isAnimating ? 'is-animating' : ''}`}
         style={{ textAlign: attributes.alignment }}
         data-wp-on--click="actions.handleClick"
-        data-wp-on--mouseenter={attributes.interactiveMode === 'hover' ? 'actions.handleMouseEnter' : undefined}
-        data-wp-on--mouseleave={attributes.interactiveMode === 'hover' ? 'actions.handleMouseLeave' : undefined}
+        data-wp-on--mouseenter={interactiveMode === 'hover' ? 'actions.handleMouseEnter' : undefined}
+        data-wp-on--mouseleave={interactiveMode === 'hover' ? 'actions.handleMouseLeave' : undefined}
         data-wp-bind--hidden="!state.isVisible"
       >
         <RichText.Content
@@ -33,7 +41,7 @@ export default function Save({ attributes }: { attributes: {{pascalCase}}Attribu
           className="{{cssClassName}}__text"
         />
 
-        {attributes.showCounter && (
+        {showCounter && (
           <div
             className="{{cssClassName}}__counter"
             role="status"
@@ -47,20 +55,20 @@ export default function Save({ attributes }: { attributes: {{pascalCase}}Attribu
               className="{{cssClassName}}__counter-value"
               data-wp-text="state.clicks"
             >
-              {attributes.clickCount}
+              {clickCount}
             </span>
           </div>
         )}
 
-        {attributes.maxClicks > 0 && (
+        {maxClicks > 0 && (
           <div className="{{cssClassName}}__progress">
             <div
               className="{{cssClassName}}__progress-bar"
               role="progressbar"
               aria-label="Click progress"
               aria-valuemin={0}
-              aria-valuemax={attributes.maxClicks}
-              aria-valuenow={Math.min(attributes.clickCount, attributes.maxClicks)}
+              aria-valuemax={maxClicks}
+              aria-valuenow={Math.min(clickCount, maxClicks)}
               data-wp-bind--aria-valuenow="state.clampedClicks"
               data-wp-style--width="state.progress + '%'"
             />
@@ -68,12 +76,12 @@ export default function Save({ attributes }: { attributes: {{pascalCase}}Attribu
         )}
 
         <div
-          className={`{{cssClassName}}__animation ${attributes.animation}`}
+          className={`{{cssClassName}}__animation ${animation}`}
           aria-hidden="true"
           data-wp-class--is-active="state.isAnimating"
         />
 
-        {attributes.maxClicks > 0 && (
+        {maxClicks > 0 && (
           <div
             className="{{cssClassName}}__completion"
             role="status"

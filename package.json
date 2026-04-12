@@ -77,6 +77,7 @@
     "changesets:validate": "bun scripts/validate-sampo-changesets.mjs",
     "docs:dev": "typedoc --watch",
     "docs:build": "typedoc",
+    "docs:build:site": "bun run docs:build && node scripts/build-docs-site.mjs",
     "wp-env:start": "bun run examples:wp-env:start",
     "wp-env:stop": "bun run examples:wp-env:stop",
     "wp-env:reset": "bun run examples:wp-env:reset"

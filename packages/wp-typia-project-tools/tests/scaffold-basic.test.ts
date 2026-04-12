@@ -623,7 +623,21 @@ test("scaffoldProject creates an interactivity template with typed validation wi
   expect(generatedInteractivity).not.toContain("onInit:");
   expect(generatedInteractivity).not.toContain("onInteraction:");
   expect(generatedInteractivity).not.toContain("onDestroy:");
+  expect(generatedInteractivity).toContain(
+    "import type { DemoInteractivityContext } from './types';"
+  );
+  expect(generatedInteractivity).toContain(
+    "return getContext<DemoInteractivityContext>();"
+  );
+  expect(generatedInteractivity).not.toContain("declare global");
   expect(generatedInteractivity).toContain("get clampedClicks()");
+  expect(generatedTypes).toContain("animation: 'none' | 'bounce'");
+  expect(generatedTypes).toContain(
+    "autoPlayTimer?: ReturnType<typeof setInterval> | null;"
+  );
+  expect(generatedSave).toContain("const clickCount = attributes.clickCount ?? 0;");
+  expect(generatedSave).toContain("const maxClicks = attributes.maxClicks ?? 0;");
+  expect(generatedSave).toContain("const interactiveMode = attributes.interactiveMode ?? 'click';");
   expect(generatedSave).toContain('aria-label="Reset counter"');
   expect(generatedSave).toContain('className="screen-reader-text"');
   expect(generatedSave).toContain('role="progressbar"');
@@ -634,7 +648,7 @@ test("scaffoldProject creates an interactivity template with typed validation wi
   expect(generatedSave).toContain('aria-live="polite"');
   expect(generatedSave).toContain('aria-hidden="true"');
   expect(generatedSave).toContain(
-    "className: `wp-block-demo-space-demo-interactivity wp-block-demo-space-demo-interactivity--${attributes.interactiveMode}`"
+    "className: `wp-block-demo-space-demo-interactivity wp-block-demo-space-demo-interactivity--${interactiveMode}`"
   );
   expect(generatedSave).toContain(
     "wp-block-demo-space-demo-interactivity__content"
@@ -654,6 +668,11 @@ test("scaffoldProject creates an interactivity template with typed validation wi
   expect(generatedEditorStyle).toContain(
     ".wp-block-demo-space-demo-interactivity"
   );
+  runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts");
+  runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
+    "--check",
+  ]);
+  typecheckGeneratedProject(targetDir);
 });
 
 test("scaffoldProject supports the optional local wp-env preset without adding test files", async () => {

@@ -702,8 +702,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build documentation
-        run: bun run docs:build
+      - name: Build documentation site
+        run: bun run docs:build:site
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
@@ -711,7 +711,7 @@ jobs:
       - name: Upload documentation artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: ./docs
+          path: ./.pages-site
 
       - name: Deploy to GitHub Pages
         id: deployment

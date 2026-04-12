@@ -2,22 +2,27 @@
  * WordPress Interactivity API implementation for {{title}} block
  */
 import { store, getContext, getElement } from '@wordpress/interactivity';
+import type { {{pascalCase}}Context } from './types';
+
+function getBlockContext() {
+  return getContext<{{pascalCase}}Context>();
+}
 
 // Store configuration
 store('{{slugKebabCase}}', {
   // State - reactive data that updates the UI
   state: {
     get clicks() {
-      return getContext().clicks;
+      return getBlockContext().clicks;
     },
     get isAnimating() {
-      return getContext().isAnimating;
+      return getBlockContext().isAnimating;
     },
     get isVisible() {
-      return getContext().isVisible;
+      return getBlockContext().isVisible;
     },
     get animationClass() {
-      const context = getContext();
+      const context = getBlockContext();
       if (!context.isAnimating) return '';
 
       switch (context.animation) {
@@ -34,17 +39,17 @@ store('{{slugKebabCase}}', {
       }
     },
     get progress() {
-      const context = getContext();
+      const context = getBlockContext();
       return context.maxClicks > 0 ? (context.clicks / context.maxClicks) * 100 : 0;
     },
     get clampedClicks() {
-      const context = getContext();
+      const context = getBlockContext();
       return context.maxClicks > 0
         ? Math.min(context.clicks, context.maxClicks)
         : context.clicks;
     },
     get isComplete() {
-      const context = getContext();
+      const context = getBlockContext();
       return context.clicks >= context.maxClicks && context.maxClicks > 0;
     }
   },
@@ -53,8 +58,12 @@ store('{{slugKebabCase}}', {
   actions: {
     // Handle block click
     handleClick: () => {
-      const context = getContext();
-      const { element } = getElement();
+      const context = getBlockContext();
+      const { ref } = getElement();
+
+      if (!ref) {
+        return;
+      }
 
       // Increment click counter
       context.clicks += 1;
@@ -69,13 +78,13 @@ store('{{slugKebabCase}}', {
       }
 
       // Emit custom event
-      element.dispatchEvent(new CustomEvent('{{slugKebabCase}}:click', {
+      ref.dispatchEvent(new CustomEvent('{{slugKebabCase}}:click', {
         detail: { clicks: context.clicks }
       }));
 
       // Check if max clicks reached
       if (context.maxClicks > 0 && context.clicks >= context.maxClicks) {
-        element.dispatchEvent(new CustomEvent('{{slugKebabCase}}:complete', {
+        ref.dispatchEvent(new CustomEvent('{{slugKebabCase}}:complete', {
           detail: { totalClicks: context.clicks }
         }));
       }
@@ -83,7 +92,7 @@ store('{{slugKebabCase}}', {
 
     // Handle hover events
     handleMouseEnter: () => {
-      const context = getContext();
+      const context = getBlockContext();
       if (context.interactiveMode === 'hover') {
         context.isAnimating = true;
         context.lastInteraction = 'hover';
@@ -91,7 +100,7 @@ store('{{slugKebabCase}}', {
     },
 
     handleMouseLeave: () => {
-      const context = getContext();
+      const context = getBlockContext();
       if (context.interactiveMode === 'hover') {
         context.isAnimating = false;
       }
@@ -99,13 +108,13 @@ store('{{slugKebabCase}}', {
 
     // Toggle visibility
     toggleVisibility: () => {
-      const context = getContext();
+      const context = getBlockContext();
       context.isVisible = !context.isVisible;
     },
 
     // Reset counter
     reset: () => {
-      const context = getContext();
+      const context = getBlockContext();
       context.clicks = 0;
       context.isAnimating = false;
       context.lastInteraction = 'reset';
@@ -113,7 +122,7 @@ store('{{slugKebabCase}}', {
 
     // Start/stop auto play
     toggleAutoPlay: () => {
-      const context = getContext();
+      const context = getBlockContext();
       if (context.autoPlayInterval > 0) {
         if (context.autoPlayTimer) {
           clearInterval(context.autoPlayTimer);
@@ -131,22 +140,3 @@ store('{{slugKebabCase}}', {
     }
   }
 });
-
-// Type definitions for TypeScript
-declare global {
-  namespace WordPress {
-    namespace Interactivity {
-      interface {{pascalCase}}Context {
-        clicks: number;
-        isAnimating: boolean;
-        isVisible: boolean;
-        lastInteraction: string;
-        animation: string;
-        interactiveMode: string;
-        maxClicks: number;
-        autoPlayInterval: number;
-        autoPlayTimer?: number;
-      }
-    }
-  }
-}
