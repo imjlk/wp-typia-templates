@@ -7,6 +7,7 @@
     "moduleResolution": "bundler",
     "paths": {
       "@wp-typia/project-tools": ["../wp-typia-project-tools/src/runtime/index.ts"],
+      "@wp-typia/project-tools/*": ["../wp-typia-project-tools/src/runtime/*.ts"],
       "@wp-typia/project-tools/schema-core": ["../wp-typia-project-tools/src/runtime/schema-core.ts"]
     },
     "resolveJsonModule": true,

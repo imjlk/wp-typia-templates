@@ -12,10 +12,55 @@
       "import": "./dist/runtime/index.js",
       "default": "./dist/runtime/index.js"
     },
+    "./cli-add": {
+      "types": "./dist/runtime/cli-add.d.ts",
+      "import": "./dist/runtime/cli-add.js",
+      "default": "./dist/runtime/cli-add.js"
+    },
+    "./cli-doctor": {
+      "types": "./dist/runtime/cli-doctor.d.ts",
+      "import": "./dist/runtime/cli-doctor.js",
+      "default": "./dist/runtime/cli-doctor.js"
+    },
+    "./cli-prompt": {
+      "types": "./dist/runtime/cli-prompt.d.ts",
+      "import": "./dist/runtime/cli-prompt.js",
+      "default": "./dist/runtime/cli-prompt.js"
+    },
+    "./cli-scaffold": {
+      "types": "./dist/runtime/cli-scaffold.d.ts",
+      "import": "./dist/runtime/cli-scaffold.js",
+      "default": "./dist/runtime/cli-scaffold.js"
+    },
+    "./cli-templates": {
+      "types": "./dist/runtime/cli-templates.d.ts",
+      "import": "./dist/runtime/cli-templates.js",
+      "default": "./dist/runtime/cli-templates.js"
+    },
+    "./hooked-blocks": {
+      "types": "./dist/runtime/hooked-blocks.d.ts",
+      "import": "./dist/runtime/hooked-blocks.js",
+      "default": "./dist/runtime/hooked-blocks.js"
+    },
+    "./migrations": {
+      "types": "./dist/runtime/migrations.d.ts",
+      "import": "./dist/runtime/migrations.js",
+      "default": "./dist/runtime/migrations.js"
+    },
+    "./package-managers": {
+      "types": "./dist/runtime/package-managers.d.ts",
+      "import": "./dist/runtime/package-managers.js",
+      "default": "./dist/runtime/package-managers.js"
+    },
     "./schema-core": {
       "types": "./dist/runtime/schema-core.d.ts",
       "import": "./dist/runtime/schema-core.js",
       "default": "./dist/runtime/schema-core.js"
+    },
+    "./workspace-project": {
+      "types": "./dist/runtime/workspace-project.d.ts",
+      "import": "./dist/runtime/workspace-project.js",
+      "default": "./dist/runtime/workspace-project.js"
     },
     "./package.json": "./package.json"
   },

@@ -3,29 +3,15 @@ import fs from "node:fs";
 import path from "node:path";
 
 import {
-	createReadlinePrompt,
-	formatRunScript,
-	formatAddHelpText,
-	formatMigrationHelpText,
 	formatTemplateDetails,
 	formatTemplateFeatures,
 	formatTemplateSummary,
-	getWorkspaceBlockSelectOptions,
 	getTemplateById,
-	getTemplateSelectOptions,
 	listTemplates,
-	parseMigrationArgs,
-	tryResolveWorkspaceProject,
-	runAddBindingSourceCommand,
-	runAddBlockCommand,
-	runAddHookedBlockCommand,
-	runAddPatternCommand,
-	runAddVariationCommand,
-	runDoctor,
-	runMigrationCommand,
-	runScaffoldFlow,
-} from "@wp-typia/project-tools";
-import type { ReadlinePrompt } from "@wp-typia/project-tools";
+} from "@wp-typia/project-tools/cli-templates";
+import { formatRunScript } from "@wp-typia/project-tools/package-managers";
+import { tryResolveWorkspaceProject } from "@wp-typia/project-tools/workspace-project";
+import type { ReadlinePrompt } from "@wp-typia/project-tools/cli-prompt";
 
 type CreateExecutionInput = {
 	projectDir: string;
@@ -71,6 +57,13 @@ type SyncProjectContext = {
 	packageManager: PackageManagerId;
 	scripts: Partial<Record<"sync" | "sync-rest" | "sync-types", string>>;
 };
+
+const loadCliAddRuntime = () => import("@wp-typia/project-tools/cli-add");
+const loadCliDoctorRuntime = () => import("@wp-typia/project-tools/cli-doctor");
+const loadCliPromptRuntime = () => import("@wp-typia/project-tools/cli-prompt");
+const loadCliScaffoldRuntime = () => import("@wp-typia/project-tools/cli-scaffold");
+const loadCliTemplatesRuntime = () => import("@wp-typia/project-tools/cli-templates");
+const loadMigrationsRuntime = () => import("@wp-typia/project-tools/migrations");
 
 function printBlock(lines: string[], printLine: PrintLine): void {
 	for (const line of lines) {
@@ -272,6 +265,15 @@ export async function executeCreateCommand({
 	interactive,
 	prompt,
 }: CreateExecutionInput): Promise<void> {
+	const [
+		{ createReadlinePrompt },
+		{ runScaffoldFlow },
+		{ getTemplateSelectOptions },
+	] = await Promise.all([
+		loadCliPromptRuntime(),
+		loadCliScaffoldRuntime(),
+		loadCliTemplatesRuntime(),
+	]);
 	const shouldPrompt =
 		interactive ?? (!Boolean(flags.yes) && Boolean(process.stdin.isTTY) && Boolean(process.stdout.isTTY));
 	const activePrompt = shouldPrompt ? (prompt ?? createReadlinePrompt()) : undefined;
@@ -364,9 +366,12 @@ export async function executeAddCommand({
 	name,
 }: AddExecutionInput): Promise<void> {
 	if (!kind) {
+		const { formatAddHelpText } = await loadCliAddRuntime();
 		console.log(formatAddHelpText());
 		return;
 	}
+
+	const addRuntime = await loadCliAddRuntime();
 
 	if (kind === "variation") {
 		if (!name) {
@@ -380,7 +385,7 @@ export async function executeAddCommand({
 			throw new Error("`wp-typia add variation` requires --block <block-slug>.");
 		}
 
-		const result = await runAddVariationCommand({
+		const result = await addRuntime.runAddVariationCommand({
 			blockName: blockSlug,
 			cwd,
 			variationName: name,
@@ -396,7 +401,7 @@ export async function executeAddCommand({
 			);
 		}
 
-		const result = await runAddPatternCommand({
+		const result = await addRuntime.runAddPatternCommand({
 			cwd,
 			patternName: name,
 		});
@@ -411,7 +416,7 @@ export async function executeAddCommand({
 			);
 		}
 
-		const result = await runAddBindingSourceCommand({
+		const result = await addRuntime.runAddBindingSourceCommand({
 			bindingSourceName: name,
 			cwd,
 		});
@@ -438,7 +443,7 @@ export async function executeAddCommand({
 			);
 		}
 
-		const result = await runAddHookedBlockCommand({
+		const result = await addRuntime.runAddHookedBlockCommand({
 			anchorBlockName,
 			blockName: name,
 			cwd,
@@ -468,7 +473,7 @@ export async function executeAddCommand({
 		);
 	}
 
-	const result = await runAddBlockCommand({
+	const result = await addRuntime.runAddBlockCommand({
 		blockName: name,
 		cwd,
 		dataStorageMode: readOptionalStringFlag(flags, "data-storage"),
@@ -524,6 +529,7 @@ export async function executeTemplatesCommand(
 }
 
 export async function executeDoctorCommand(cwd: string): Promise<void> {
+	const { runDoctor } = await loadCliDoctorRuntime();
 	await runDoctor(cwd);
 }
 
@@ -553,6 +559,8 @@ export async function executeMigrateCommand({
 	prompt,
 	renderLine,
 }: MigrateExecutionInput): Promise<void> {
+	const { formatMigrationHelpText, parseMigrationArgs, runMigrationCommand } =
+		await loadMigrationsRuntime();
 	if (!command) {
 		console.log(formatMigrationHelpText());
 		return;
@@ -593,7 +601,27 @@ export function getAddWorkspaceBlockOptions(cwd: string) {
 		return [];
 	}
 
-	return getWorkspaceBlockSelectOptions(workspace.projectDir);
+	const blocksDir = path.join(workspace.projectDir, "src", "blocks");
+	if (!fs.existsSync(blocksDir)) {
+		return [];
+	}
+
+	return fs
+		.readdirSync(blocksDir, { withFileTypes: true })
+		.filter((entry) => entry.isDirectory())
+		.map((entry) => {
+			const blockSlug = entry.name;
+			const typesFile = path.join("src", "blocks", blockSlug, "types.ts");
+			const fallbackFile = path.join("src", "blocks", blockSlug, "block.json");
+			return {
+				description: fs.existsSync(path.join(workspace.projectDir, typesFile))
+					? typesFile
+					: fallbackFile,
+				name: blockSlug,
+				value: blockSlug,
+			};
+		})
+		.sort((left, right) => left.name.localeCompare(right.name));
 }
 
-export { formatAddHelpText, formatMigrationHelpText, listTemplates };
+export { listTemplates };

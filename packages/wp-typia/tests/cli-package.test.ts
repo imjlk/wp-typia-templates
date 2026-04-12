@@ -15,6 +15,18 @@ const packageManifest = JSON.parse(
 const projectToolsPackageManifest = JSON.parse(
 	fs.readFileSync(path.resolve(packageRoot, "..", "wp-typia-project-tools", "package.json"), "utf8"),
 );
+const runtimeBridgeSource = fs.readFileSync(
+	path.join(packageRoot, "src", "runtime-bridge.ts"),
+	"utf8",
+);
+const doctorCommandSource = fs.readFileSync(
+	path.join(packageRoot, "src", "commands", "doctor.ts"),
+	"utf8",
+);
+const addFlowSource = fs.readFileSync(
+	path.join(packageRoot, "src", "ui", "add-flow.tsx"),
+	"utf8",
+);
 
 function createSyncFixture(options: {
 	packageManager?: string | null;
@@ -94,6 +106,27 @@ describe("wp-typia package", () => {
 		expect(packageManifest.dependencies["@wp-typia/project-tools"]).toBe(projectToolsPackageManifest.version);
 		expect(projectToolsPackageManifest.bin).toBeUndefined();
 		expect(projectToolsPackageManifest.exports["./cli"]).toBeUndefined();
+		expect(projectToolsPackageManifest.exports["./cli-add"]).toBeDefined();
+		expect(projectToolsPackageManifest.exports["./cli-doctor"]).toBeDefined();
+		expect(projectToolsPackageManifest.exports["./cli-prompt"]).toBeDefined();
+		expect(projectToolsPackageManifest.exports["./cli-scaffold"]).toBeDefined();
+		expect(projectToolsPackageManifest.exports["./cli-templates"]).toBeDefined();
+		expect(projectToolsPackageManifest.exports["./hooked-blocks"]).toBeDefined();
+		expect(projectToolsPackageManifest.exports["./migrations"]).toBeDefined();
+		expect(projectToolsPackageManifest.exports["./package-managers"]).toBeDefined();
+		expect(projectToolsPackageManifest.exports["./workspace-project"]).toBeDefined();
+	});
+
+	test("keeps CLI React dependencies dedupe-friendly for Bunli peers", () => {
+		expect(packageManifest.dependencies.react).toBe(packageManifest.dependencies["react-dom"]);
+		expect(packageManifest.dependencies.react).toMatch(/^\^/);
+		expect(packageManifest.dependencies["react-dom"]).toMatch(/^\^/);
+	});
+
+	test("avoids eager project-tools root imports on CLI startup paths", () => {
+		expect(runtimeBridgeSource).not.toMatch(/from ["']@wp-typia\/project-tools["']/);
+		expect(doctorCommandSource).not.toMatch(/from ["']@wp-typia\/project-tools["']/);
+		expect(addFlowSource).not.toMatch(/from ["']@wp-typia\/project-tools["']/);
 	});
 
 	test("renders help output through the canonical bin", () => {

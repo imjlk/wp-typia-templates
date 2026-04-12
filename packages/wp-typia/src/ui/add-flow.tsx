@@ -6,7 +6,7 @@ import {
 	useFormContext,
 	useTerminalDimensions,
 } from "@bunli/tui";
-import { HOOKED_BLOCK_POSITION_IDS } from "@wp-typia/project-tools";
+import { HOOKED_BLOCK_POSITION_IDS } from "@wp-typia/project-tools/hooked-blocks";
 
 import { executeAddCommand } from "../runtime-bridge";
 import { useAlternateBufferLifecycle } from "./alternate-buffer-lifecycle";

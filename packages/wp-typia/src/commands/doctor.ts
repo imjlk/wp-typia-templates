@@ -1,6 +1,5 @@
 import { defineCommand } from "@bunli/core";
-
-import { getDoctorChecks, runDoctor } from "@wp-typia/project-tools";
+import { executeDoctorCommand } from "../runtime-bridge";
 
 export const doctorCommand = defineCommand({
 	description: "Run repository and project diagnostics.",
@@ -10,6 +9,7 @@ export const doctorCommand = defineCommand({
 			args.agent ||
 			Boolean(args.context?.store?.isAIAgent);
 		if (prefersStructuredOutput) {
+			const { getDoctorChecks } = await import("@wp-typia/project-tools/cli-doctor");
 			const checks = await getDoctorChecks(args.cwd);
 			args.output({ checks });
 			if (checks.some((check) => check.status === "fail")) {
@@ -17,7 +17,7 @@ export const doctorCommand = defineCommand({
 			}
 			return;
 		}
-		await runDoctor(args.cwd);
+		await executeDoctorCommand(args.cwd);
 	},
 	name: "doctor",
 });
