@@ -21,7 +21,7 @@ import {
 } from "./create-flow-model";
 import {
 	FirstPartyCheckboxField,
-	FirstPartyScrollBox,
+	FirstPartyFormViewport,
 	FirstPartySelectField,
 	FirstPartyTextField,
 } from "./first-party-form";
@@ -70,7 +70,7 @@ type CreateSelectFieldName = {
 }[keyof CreateFlowValues];
 
 function CreateFlowFields() {
-	const { activeFieldName, values } = useFormContext();
+	const { activeFieldName, isSubmitting, values } = useFormContext();
 	const { height: terminalHeight = 24 } = useTerminalDimensions();
 	const createValues = values as Partial<CreateFlowValues>;
 	const template = createValues.template;
@@ -88,8 +88,14 @@ function CreateFlowFields() {
 	);
 
 	return createElement(
-		FirstPartyScrollBox,
-		{ scrollTop, viewportHeight },
+		FirstPartyFormViewport,
+		{
+			isSubmitting,
+			scrollTop,
+			submittingDescription: "Preparing your wp-typia project files...",
+			submittingTitle: "Creating project...",
+			viewportHeight,
+		},
 		[
 			createElement(FirstPartyTextField, {
 				...getWrappedFieldNeighbors(visibleFields, "project-dir"),

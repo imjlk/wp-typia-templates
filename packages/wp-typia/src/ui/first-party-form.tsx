@@ -10,6 +10,7 @@ import {
 
 import { useScopedKeyboard } from "@bunli/runtime/app";
 import {
+	Spinner,
 	type SelectOption,
 	createKeyMatcher,
 	useFormContext,
@@ -457,4 +458,71 @@ export function FirstPartyScrollBox({
 			children,
 		),
 	);
+}
+
+export function FirstPartySubmittingSurface({
+	description = "Please wait while wp-typia finishes this command.",
+	title = "Submitting...",
+	viewportHeight,
+}: {
+	description?: string;
+	title?: string;
+	viewportHeight: number;
+}) {
+	const { tokens } = useTuiTheme();
+
+	return createElement(
+		"box",
+		{
+			border: true,
+			height: viewportHeight,
+			width: "100%",
+			"data-form-surface": "submitting",
+			style: {
+				alignItems: "center",
+				borderColor: tokens.borderMuted,
+				flexDirection: "column",
+				gap: 1,
+				justifyContent: "center",
+			},
+		},
+		createElement(Spinner, {
+			title,
+			variant: "dot",
+		}),
+		createElement("text", {
+			content: description,
+			fg: tokens.textMuted,
+		}),
+	);
+}
+
+export function FirstPartyFormViewport({
+	children,
+	isSubmitting = false,
+	scrollTop,
+	submittingDescription,
+	submittingTitle,
+	viewportHeight,
+}: {
+	children?: ReactNode;
+	isSubmitting?: boolean;
+	scrollTop: number;
+	submittingDescription?: string;
+	submittingTitle?: string;
+	viewportHeight: number;
+}) {
+	if (isSubmitting) {
+		return createElement(FirstPartySubmittingSurface, {
+			description: submittingDescription,
+			title: submittingTitle,
+			viewportHeight,
+		});
+	}
+
+	return createElement(FirstPartyScrollBox, {
+		scrollTop,
+		viewportHeight,
+		children,
+	});
 }

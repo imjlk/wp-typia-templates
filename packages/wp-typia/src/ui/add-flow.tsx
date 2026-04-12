@@ -20,7 +20,7 @@ import {
 	sanitizeAddSubmitValues,
 } from "./add-flow-model";
 import {
-	FirstPartyScrollBox,
+	FirstPartyFormViewport,
 	FirstPartySelectField,
 	FirstPartyTextField,
 } from "./first-party-form";
@@ -137,7 +137,7 @@ function AddFlowFields({
 }: {
 	workspaceBlockOptions: WorkspaceBlockOption[];
 }) {
-	const { activeFieldName, values } = useFormContext();
+	const { activeFieldName, isSubmitting, values } = useFormContext();
 	const { height: terminalHeight = 24 } = useTerminalDimensions();
 	const addValues = values as Partial<AddFlowValues>;
 	const kind = addValues.kind ?? "block";
@@ -160,8 +160,14 @@ function AddFlowFields({
 	const variationBlockUsesSelect = kind === "variation" && workspaceBlockOptions.length > 0;
 
 	return createElement(
-		FirstPartyScrollBox,
-		{ scrollTop, viewportHeight },
+		FirstPartyFormViewport,
+		{
+			isSubmitting,
+			scrollTop,
+			submittingDescription: "Applying your workspace changes...",
+			submittingTitle: "Updating workspace...",
+			viewportHeight,
+		},
 		[
 			createElement(FirstPartySelectField, {
 				...getWrappedFieldNeighbors(orderedVisibleFields, "kind"),

@@ -19,7 +19,7 @@ import {
 } from "./migrate-flow-model";
 import {
 	FirstPartyCheckboxField,
-	FirstPartyScrollBox,
+	FirstPartyFormViewport,
 	FirstPartySelectField,
 	FirstPartyTextField,
 } from "./first-party-form";
@@ -76,7 +76,7 @@ type MigrateCheckboxFieldName = {
 }[keyof MigrateFlowValues];
 
 function MigrateFlowFields() {
-	const { activeFieldName, values } = useFormContext();
+	const { activeFieldName, isSubmitting, values } = useFormContext();
 	const { height: terminalHeight = 24 } = useTerminalDimensions();
 	const migrateValues = values as Partial<MigrateFlowValues>;
 	const command = migrateValues.command ?? "plan";
@@ -98,8 +98,14 @@ function MigrateFlowFields() {
 	);
 
 	return createElement(
-		FirstPartyScrollBox,
-		{ scrollTop, viewportHeight },
+		FirstPartyFormViewport,
+		{
+			isSubmitting,
+			scrollTop,
+			submittingDescription: "Running the selected migration workflow...",
+			submittingTitle: "Running migration...",
+			viewportHeight,
+		},
 		[
 			createElement(FirstPartySelectField, {
 				...getWrappedFieldNeighbors(orderedVisibleFields, "command"),
