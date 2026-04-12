@@ -349,7 +349,7 @@ test(
     expect(generatedRender).toContain('aria-live="polite"');
     expect(generatedApiTypes).toContain("publicWriteRequestId: string");
     expect(generatedTypes).toContain(
-      "persistencePolicy: 'authenticated' | 'public';"
+      'persistencePolicy: "authenticated" | "public";'
     );
     expect(generatedSave).toContain("intentionally server-rendered");
     expect(generatedSave).toContain("return null;");
@@ -639,7 +639,7 @@ test("scaffoldProject creates a persistence template with authenticated writes b
     "'storage'     => DEMO_PERSISTENCE_AUTHENTICATED_DATA_STORAGE_MODE,"
   );
   expect(generatedTypes).toContain(
-    "persistencePolicy: 'authenticated' | 'public';"
+    'persistencePolicy: "authenticated" | "public";'
   );
   expect(generatedEdit).toContain(
     "const alignmentValue = editorFields.getStringValue("

@@ -25,6 +25,10 @@ import {
 	buildFrontendCssClassName,
 	resolveScaffoldIdentifiers,
 } from "./scaffold-identifiers.js";
+import {
+	buildBuiltInBlockArtifacts,
+	type BuiltInBlockArtifact,
+} from "./built-in-block-artifacts.js";
 import type {
 	DataStorageMode,
 	PersistencePolicy,
@@ -132,6 +136,8 @@ export interface ApplyBlockInput {
 	rendered: RenderBlockResult;
 	installDependencies?: ((options: InstallDependenciesOptions) => Promise<void>) | undefined;
 }
+
+const renderedArtifactCache = new WeakMap<RenderBlockResult, BuiltInBlockArtifact[]>();
 
 function getBuiltInPersistenceSpec({
 	templateId,
@@ -366,8 +372,7 @@ export class BlockGeneratorService {
 		);
 		const variables = buildTemplateVariablesFromBlockSpec(validated.spec);
 		const persistenceEnabled = validated.spec.persistence.enabled;
-
-		return {
+		const rendered: RenderBlockResult = {
 			...validated,
 			cleanup: templateSource.cleanup,
 			gitignoreContent: buildGitignore(),
@@ -394,15 +399,33 @@ export class BlockGeneratorService {
 			variables,
 			warnings: templateSource.warnings ?? [],
 		};
+
+		renderedArtifactCache.set(
+			rendered,
+			buildBuiltInBlockArtifacts({
+				templateId: validated.spec.template.family,
+				variables,
+			}),
+		);
+
+		return rendered;
 	}
 
 	async apply({
 		rendered,
 		installDependencies,
 	}: ApplyBlockInput): Promise<ScaffoldProjectResult> {
+		const artifacts =
+			renderedArtifactCache.get(rendered) ??
+			buildBuiltInBlockArtifacts({
+				templateId: rendered.spec.template.family,
+				variables: rendered.variables,
+			});
+
 		try {
 			await applyBuiltInScaffoldProjectFiles({
 				allowExistingDir: rendered.target.allowExistingDir,
+				artifacts,
 				installDependencies,
 				noInstall: rendered.target.noInstall,
 				packageManager: rendered.target.packageManager,
