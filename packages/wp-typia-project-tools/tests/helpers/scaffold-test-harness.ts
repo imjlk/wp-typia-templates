@@ -118,6 +118,26 @@ function sleepSync(milliseconds: number) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
 }
 
+function waitForWorkspaceBuildLockRelease(lockPath: string, staleAfterMs: number) {
+  for (;;) {
+    try {
+      const stats = fs.statSync(lockPath);
+      if (Date.now() - stats.mtimeMs > staleAfterMs) {
+        fs.rmSync(lockPath, { force: true });
+        return;
+      }
+    } catch (error) {
+      const nodeError = error as NodeJS.ErrnoException;
+      if (nodeError.code === "ENOENT") {
+        return;
+      }
+      throw error;
+    }
+
+    sleepSync(100);
+  }
+}
+
 function acquireWorkspaceBuildLock(packagePath: string) {
   fs.mkdirSync(buildLockRoot, { recursive: true });
 
@@ -142,24 +162,7 @@ function acquireWorkspaceBuildLock(packagePath: string) {
         throw error;
       }
 
-      const distPath = path.join(packagePath, "dist");
-      if (fs.existsSync(distPath)) {
-        return {
-          release() {},
-        };
-      }
-
-      try {
-        const stats = fs.statSync(lockPath);
-        if (Date.now() - stats.mtimeMs > staleAfterMs) {
-          fs.rmSync(lockPath, { force: true });
-          continue;
-        }
-      } catch {
-        continue;
-      }
-
-      sleepSync(100);
+      waitForWorkspaceBuildLockRelease(lockPath, staleAfterMs);
     }
   }
 }
@@ -197,9 +200,13 @@ export function getCommandErrorMessage(run: () => string): string {
 }
 
 export function stripPhpFunction(source: string, functionName: string): string {
+  const escapedFunctionName = functionName.replace(
+    /[.*+?^${}()|[\]\\]/gu,
+    "\\$&"
+  );
   return source.replace(
     new RegExp(
-      `\\nfunction\\s+${functionName}\\s*\\(\\)\\s*\\{[\\s\\S]*?\\n\\}`,
+      `\\nfunction\\s+${escapedFunctionName}\\s*\\(\\)\\s*\\{[\\s\\S]*?\\n\\}`,
       "u"
     ),
     ""
@@ -247,11 +254,6 @@ export function ensureWorkspacePackageBuilt(
   }
 
   const distPath = path.join(packagePath, "dist");
-  if (fs.existsSync(distPath)) {
-    builtWorkspacePackages.add(packageName);
-    return;
-  }
-
   const lock = acquireWorkspaceBuildLock(packagePath);
   try {
     if (!fs.existsSync(distPath)) {
