@@ -1,5 +1,5 @@
 import { execFile, spawnSync } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { once } from "node:events";
 import * as fs from "node:fs";
 import http, {
@@ -113,9 +113,53 @@ const generatedProjectTypecheckSupportPackages = [
 ] as const;
 const builtWorkspacePackages = new Set<string>();
 const buildLockRoot = path.join(os.tmpdir(), "wp-typia-project-tools-build-locks");
+interface WorkspaceBuildLockOwner {
+  pid: number;
+  token: string;
+}
 
 function sleepSync(milliseconds: number) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
+}
+
+function isProcessAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    const nodeError = error as NodeJS.ErrnoException;
+    if (nodeError.code === "ESRCH") {
+      return false;
+    }
+    if (nodeError.code === "EPERM") {
+      return true;
+    }
+    throw error;
+  }
+}
+
+function readWorkspaceBuildLockOwner(
+  lockPath: string
+): WorkspaceBuildLockOwner | null {
+  const rawOwner = fs.readFileSync(lockPath, "utf8");
+  if (rawOwner.length === 0) {
+    return null;
+  }
+
+  const parsedOwner = JSON.parse(rawOwner) as Partial<WorkspaceBuildLockOwner>;
+  if (
+    typeof parsedOwner.pid !== "number" ||
+    !Number.isInteger(parsedOwner.pid) ||
+    typeof parsedOwner.token !== "string" ||
+    parsedOwner.token.length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    pid: parsedOwner.pid,
+    token: parsedOwner.token,
+  };
 }
 
 function waitForWorkspaceBuildLockRelease(lockPath: string, staleAfterMs: number) {
@@ -123,8 +167,11 @@ function waitForWorkspaceBuildLockRelease(lockPath: string, staleAfterMs: number
     try {
       const stats = fs.statSync(lockPath);
       if (Date.now() - stats.mtimeMs > staleAfterMs) {
-        fs.rmSync(lockPath, { force: true });
-        return;
+        const owner = readWorkspaceBuildLockOwner(lockPath);
+        if (owner === null || !isProcessAlive(owner.pid)) {
+          fs.rmSync(lockPath, { force: true });
+          return;
+        }
       }
     } catch (error) {
       const nodeError = error as NodeJS.ErrnoException;
@@ -140,6 +187,11 @@ function waitForWorkspaceBuildLockRelease(lockPath: string, staleAfterMs: number
 
 function acquireWorkspaceBuildLock(packagePath: string) {
   fs.mkdirSync(buildLockRoot, { recursive: true });
+  const owner: WorkspaceBuildLockOwner = {
+    pid: process.pid,
+    token: randomUUID(),
+  };
+  const serializedOwner = JSON.stringify(owner);
 
   const lockPath = path.join(
     buildLockRoot,
@@ -150,10 +202,24 @@ function acquireWorkspaceBuildLock(packagePath: string) {
   for (;;) {
     try {
       const fileHandle = fs.openSync(lockPath, "wx");
+      fs.writeFileSync(fileHandle, serializedOwner, "utf8");
       return {
         release() {
           fs.closeSync(fileHandle);
-          fs.rmSync(lockPath, { force: true });
+          try {
+            const currentOwner = readWorkspaceBuildLockOwner(lockPath);
+            if (
+              currentOwner?.pid === owner.pid &&
+              currentOwner.token === owner.token
+            ) {
+              fs.rmSync(lockPath, { force: true });
+            }
+          } catch (error) {
+            const nodeError = error as NodeJS.ErrnoException;
+            if (nodeError.code !== "ENOENT") {
+              throw error;
+            }
+          }
         },
       };
     } catch (error) {
