@@ -44,8 +44,9 @@ Manual orchestration or repo tooling should use:
 
 Those imports cover scaffold, add-block, migrate, template, doctor, package
 manager, starter manifest, schema/OpenAPI project helpers, the `BlockSpec` /
-`BlockGeneratorService` generator boundary, and the Phase 2 emitter-owned
-built-in `types.ts` / `block.json` path.
+`BlockGeneratorService` generator boundary, and the emitter-owned built-in
+`types.ts` / `block.json` path where built-in templates no longer ship
+structural Mustache files.
 
 `@wp-typia/block-runtime/schema-core` is public and stable, but it is the
 implementation owner path rather than the preferred project-tooling import.
@@ -62,5 +63,5 @@ These areas are not covered by the generated-project compatibility promise:
 - CLI implementation internals
 - Bunli command composition
 - template rendering internals
-- Mustache-vs-emitter implementation details below the Phase 2 generator boundary
+- Mustache-vs-emitter implementation details below the current generator boundary
 - project-scaffold orchestration internals

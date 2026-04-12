@@ -75,6 +75,10 @@ describe("@wp-typia/project-tools import policy", () => {
 			path.join(repoRoot, "docs", "runtime-surface.md"),
 			"utf8",
 		);
+		const blockGeneratorDoc = fs.readFileSync(
+			path.join(repoRoot, "docs", "block-generator-service.md"),
+			"utf8",
+		);
 		const importPolicyDoc = fs.readFileSync(
 			path.join(repoRoot, "docs", "runtime-import-policy.md"),
 			"utf8",
@@ -96,11 +100,19 @@ describe("@wp-typia/project-tools import policy", () => {
 		expect(runtimeSurfaceDoc).toContain("BlockGeneratorService");
 		expect(runtimeSurfaceDoc).toContain("@wp-typia/project-tools/schema-core");
 		expect(runtimeSurfaceDoc).toContain("@wp-typia/block-runtime/schema-core");
+		expect(runtimeSurfaceDoc).toContain(
+			"no longer ship structural Mustache files",
+		);
+		expect(blockGeneratorDoc).toContain(
+			"built-in templates no longer ship structural Mustache files",
+		);
 		expect(runtimeSurfaceDoc).not.toContain("@wp-typia/project-tools/runtime/*");
 		expect(importPolicyDoc).toContain("@wp-typia/project-tools");
 		expect(importPolicyDoc).toContain("BlockGeneratorService");
 		expect(importPolicyDoc).toContain("@wp-typia/project-tools/schema-core");
 		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/schema-core");
+		expect(importPolicyDoc).toContain("built-in templates no longer ship");
+		expect(importPolicyDoc).toContain("structural Mustache files");
 		expect(importPolicyDoc).not.toContain("@wp-typia/project-tools/runtime/*");
 	});
 });
