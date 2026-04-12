@@ -169,6 +169,36 @@ describe("@wp-typia/rest", () => {
 		expect(result.data).toEqual({ ok: true });
 	});
 
+	test("callEndpoint preserves request validation targets before fetch execution", async () => {
+		let fetchCalled = false;
+		const endpoint = createEndpoint<{ title: string }, { ok: boolean }>({
+			method: "POST",
+			path: "/items",
+			validateRequest: () =>
+				toValidationResult(
+					failure<{ title: string }>("{ title: string }", "$.title"),
+				),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				(input as { ok?: unknown }).ok === true
+					? toValidationResult(success(input as { ok: boolean }))
+					: toValidationResult(failure<{ ok: boolean }>("{ ok: true }", "$.ok")),
+		});
+
+		const result = await callEndpoint(endpoint, { title: "Hello" }, {
+			fetchFn: asApiFetch(async () => {
+				fetchCalled = true;
+				return { ok: true } as never;
+			}),
+		});
+
+		expect(fetchCalled).toBe(false);
+		expect(result.isValid).toBe(false);
+		expect(result.validationTarget).toBe("request");
+		expect(result.errors[0]?.path).toBe("$.title");
+	});
+
 	test("callEndpoint merges request-level headers", async () => {
 		let seenHeaders: Record<string, unknown> | undefined;
 		const endpoint = createEndpoint<{ title: string }, { ok: boolean }>({

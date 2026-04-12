@@ -37,6 +37,11 @@ const endpoint = createEndpoint<MyRequest, MyResponse>({
 const result = await callEndpoint(endpoint, { title: "Hello" });
 ```
 
+`callEndpoint(...)` returns `EndpointValidationResult<Req, Res>`. If request
+validation fails before transport execution, the result keeps
+`validationTarget: "request"`. Response validation runs after transport and uses
+`validationTarget: "response"`.
+
 If you need a canonical REST URL for a route path, use:
 
 ```ts

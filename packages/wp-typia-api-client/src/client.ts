@@ -16,8 +16,24 @@ export type EndpointAuthIntent =
 	| "authenticated"
 	| "public"
 	| "public-write-protected";
+export type EndpointValidationTarget = "request" | "response";
 
 export type { ValidationError, ValidationLike, ValidationResult } from "./runtime-primitives.js";
+
+export interface EndpointRequestValidationResult<Req>
+	extends ValidationResult<Req> {
+	isValid: false;
+	validationTarget: "request";
+}
+
+export interface EndpointResponseValidationResult<Res>
+	extends ValidationResult<Res> {
+	validationTarget: "response";
+}
+
+export type EndpointValidationResult<Req, Res> =
+	| EndpointRequestValidationResult<Req>
+	| EndpointResponseValidationResult<Res>;
 
 export interface EndpointTransportRequest {
 	body?: BodyInit | null;
@@ -283,14 +299,33 @@ export function createEndpoint<Req, Res>(config: ApiEndpoint<Req, Res>): ApiEndp
 	return config;
 }
 
+function toEndpointRequestValidationResult<Req>(
+	validation: ValidationResult<Req>,
+): EndpointRequestValidationResult<Req> {
+	return {
+		...validation,
+		isValid: false,
+		validationTarget: "request",
+	};
+}
+
+function toEndpointResponseValidationResult<Res>(
+	validation: ValidationResult<Res>,
+): EndpointResponseValidationResult<Res> {
+	return {
+		...validation,
+		validationTarget: "response",
+	};
+}
+
 export async function callEndpoint<Req, Res>(
 	endpoint: ApiEndpoint<Req, Res>,
 	request: Req,
 	{ requestOptions, transport }: EndpointCallOptions = {},
-): Promise<ValidationResult<Res>> {
+): Promise<EndpointValidationResult<Req, Res>> {
 	const requestValidation = endpoint.validateRequest(request);
 	if (!requestValidation.isValid) {
-		return requestValidation as unknown as ValidationResult<Res>;
+		return toEndpointRequestValidationResult(requestValidation);
 	}
 
 	if (!transport) {
@@ -305,5 +340,5 @@ export async function callEndpoint<Req, Res>(
 			parse: true,
 		},
 	);
-	return endpoint.validateResponse(payload);
+	return toEndpointResponseValidationResult(endpoint.validateResponse(payload));
 }

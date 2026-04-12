@@ -14,6 +14,9 @@ import {
 	callEndpoint,
 	type ApiEndpoint,
 	type EndpointCallOptions,
+	type EndpointRequestValidationResult,
+	type EndpointResponseValidationResult,
+	type EndpointValidationResult,
 	type ValidationResult,
 } from "./client";
 import { isPlainObject } from "./internal/runtime-primitives.js";
@@ -26,12 +29,12 @@ interface EndpointDataSnapshot {
 	invalidatedAt: number;
 	isFetching: boolean;
 	updatedAt: number;
-	validation: ValidationResult<unknown> | null;
+	validation: EndpointValidationResult<unknown, unknown> | null;
 }
 
 type EndpointDataListener = () => void;
 type EndpointDataUpdater<T> = T | ((current: T | undefined) => T | undefined);
-type QueryRefetcher = () => Promise<ValidationResult<unknown>>;
+type QueryRefetcher = () => Promise<EndpointValidationResult<unknown, unknown>>;
 
 interface EndpointDataCacheEntry {
 	data: unknown;
@@ -39,11 +42,11 @@ interface EndpointDataCacheEntry {
 	invalidatedAt: number;
 	isFetching: boolean;
 	listeners: Set<EndpointDataListener>;
-	promise: Promise<ValidationResult<unknown>> | null;
+	promise: Promise<EndpointValidationResult<unknown, unknown>> | null;
 	refetchers: Set<QueryRefetcher>;
 	snapshot: EndpointDataSnapshot;
 	updatedAt: number;
-	validation: ValidationResult<unknown> | null;
+	validation: EndpointValidationResult<unknown, unknown> | null;
 }
 
 export interface EndpointDataClient {
@@ -59,13 +62,16 @@ export interface EndpointDataClient {
 
 interface InternalEndpointDataClient extends EndpointDataClient {
 	__getSnapshot(cacheKey: CacheKey): EndpointDataSnapshot;
-	__publishValidation<Res>(cacheKey: CacheKey, validation: ValidationResult<Res>): void;
-	__registerRefetcher(cacheKey: CacheKey, refetcher: QueryRefetcher): () => void;
-	__runQuery<Res>(
+	__publishValidation<Req, Res>(
 		cacheKey: CacheKey,
-		execute: () => Promise<ValidationResult<Res>>,
+		validation: EndpointValidationResult<Req, Res>,
+	): void;
+	__registerRefetcher(cacheKey: CacheKey, refetcher: QueryRefetcher): () => void;
+	__runQuery<Req, Res>(
+		cacheKey: CacheKey,
+		execute: () => Promise<EndpointValidationResult<Req, Res>>,
 		options: { force?: boolean; staleTime: number },
-	): Promise<ValidationResult<Res>>;
+	): Promise<EndpointValidationResult<Req, Res>>;
 	__seedData<Res>(cacheKey: CacheKey, data: Res): void;
 	__subscribe(cacheKey: CacheKey, listener: EndpointDataListener): () => void;
 }
@@ -90,20 +96,20 @@ export interface UseEndpointQueryOptions<_Req, Res, Selected = Res> {
 	onError?: (error: unknown) => void | Promise<void>;
 	onSuccess?: (
 		data: Selected,
-		validation: ValidationResult<Res>,
+		validation: EndpointResponseValidationResult<Res>,
 	) => void | Promise<void>;
 	resolveCallOptions?: () => EndpointCallOptions | undefined;
 	select?: (data: Res) => Selected;
 	staleTime?: number;
 }
 
-export interface UseEndpointQueryResult<Res, Selected = Res> {
+export interface UseEndpointQueryResult<Req, Res, Selected = Res> {
 	data: Selected | undefined;
 	error: unknown;
 	isFetching: boolean;
 	isLoading: boolean;
-	refetch: () => Promise<ValidationResult<Res>>;
-	validation: ValidationResult<Res> | null;
+	refetch: () => Promise<EndpointValidationResult<Req, Res>>;
+	validation: EndpointValidationResult<Req, Res> | null;
 }
 
 export interface UseEndpointMutationOptions<Req, Res, Context = unknown> {
@@ -114,7 +120,7 @@ export interface UseEndpointMutationOptions<Req, Res, Context = unknown> {
 		| ((
 				data: Res | undefined,
 				variables: Req,
-				validation: ValidationResult<Res>,
+				validation: EndpointValidationResult<Req, Res>,
 			) => EndpointInvalidateTargets);
 	onError?: (
 		error: unknown,
@@ -130,7 +136,7 @@ export interface UseEndpointMutationOptions<Req, Res, Context = unknown> {
 		result: {
 			data: Res | undefined;
 			error: unknown;
-			validation: ValidationResult<Res> | null;
+			validation: EndpointValidationResult<Req, Res> | null;
 		},
 		variables: Req,
 		client: EndpointDataClient,
@@ -139,7 +145,7 @@ export interface UseEndpointMutationOptions<Req, Res, Context = unknown> {
 	onSuccess?: (
 		data: Res | undefined,
 		variables: Req,
-		validation: ValidationResult<Res>,
+		validation: EndpointResponseValidationResult<Res>,
 		client: EndpointDataClient,
 		context: Context | undefined,
 	) => void | Promise<void>;
@@ -153,9 +159,9 @@ export interface UseEndpointMutationResult<Req, Res> {
 	error: unknown;
 	isPending: boolean;
 	mutate: (variables: Req) => void;
-	mutateAsync: (variables: Req) => Promise<ValidationResult<Res>>;
+	mutateAsync: (variables: Req) => Promise<EndpointValidationResult<Req, Res>>;
 	reset: () => void;
-	validation: ValidationResult<Res> | null;
+	validation: EndpointValidationResult<Req, Res> | null;
 }
 
 export interface EndpointDataProviderProps {
@@ -304,6 +310,25 @@ function asInternalClient(client: EndpointDataClient): InternalEndpointDataClien
 	return client as InternalEndpointDataClient;
 }
 
+function toEndpointRequestValidationResult<Req>(
+	validation: ValidationResult<Req>,
+): EndpointRequestValidationResult<Req> {
+	return {
+		...validation,
+		isValid: false,
+		validationTarget: "request",
+	};
+}
+
+function toEndpointResponseValidationResult<Res>(
+	validation: ValidationResult<Res>,
+): EndpointResponseValidationResult<Res> {
+	return {
+		...validation,
+		validationTarget: "response",
+	};
+}
+
 export function createEndpointDataClient(): EndpointDataClient {
 	const entries = new Map<CacheKey, EndpointDataCacheEntry>();
 
@@ -380,11 +405,11 @@ export function createEndpointDataClient(): EndpointDataClient {
 			entry.data = resolvedNext;
 			entry.error = null;
 			entry.updatedAt = Date.now();
-				entry.validation = {
+				entry.validation = toEndpointResponseValidationResult({
 					data: resolvedNext,
 					errors: [],
 					isValid: true,
-				};
+				});
 				syncSnapshot(entry);
 				notify(cacheKey);
 			},
@@ -400,7 +425,7 @@ export function createEndpointDataClient(): EndpointDataClient {
 				const entry = getOrCreateEntry(entries, cacheKey);
 				entry.error = null;
 				entry.updatedAt = Date.now();
-			entry.validation = validation as ValidationResult<unknown>;
+				entry.validation = validation as EndpointValidationResult<unknown, unknown>;
 				if (validation.isValid) {
 					entry.data = validation.data;
 				}
@@ -418,12 +443,12 @@ export function createEndpointDataClient(): EndpointDataClient {
 			async __runQuery(cacheKey, execute, { force = false, staleTime }) {
 			const entry = getOrCreateEntry(entries, cacheKey);
 			if (entry.promise) {
-				return entry.promise as Promise<ValidationResult<any>>;
+				return entry.promise as Promise<EndpointValidationResult<any, any>>;
 			}
 
 			if (!force) {
 				if (!isEntryStale(entry, staleTime) && entry.validation) {
-					return entry.validation as ValidationResult<any>;
+					return entry.validation as EndpointValidationResult<any, any>;
 				}
 			}
 
@@ -438,7 +463,7 @@ export function createEndpointDataClient(): EndpointDataClient {
 					entry.error = null;
 					if (entry.invalidatedAt <= startedAt) {
 						entry.updatedAt = Date.now();
-						entry.validation = validation as ValidationResult<unknown>;
+						entry.validation = validation as EndpointValidationResult<unknown, unknown>;
 						if (validation.isValid) {
 							entry.data = validation.data;
 						}
@@ -461,8 +486,8 @@ export function createEndpointDataClient(): EndpointDataClient {
 					notify(cacheKey);
 				});
 
-			entry.promise = promise as Promise<ValidationResult<unknown>>;
-			return promise as Promise<ValidationResult<any>>;
+			entry.promise = promise as Promise<EndpointValidationResult<unknown, unknown>>;
+			return promise as Promise<EndpointValidationResult<any, any>>;
 		},
 		__seedData(cacheKey, data) {
 			const entry = getOrCreateEntry(entries, cacheKey);
@@ -473,11 +498,11 @@ export function createEndpointDataClient(): EndpointDataClient {
 			entry.data = data;
 			entry.error = null;
 			entry.updatedAt = Date.now();
-				entry.validation = {
+				entry.validation = toEndpointResponseValidationResult({
 					data,
 					errors: [],
 					isValid: true,
-				};
+				});
 				syncSnapshot(entry);
 				notify(cacheKey);
 			},
@@ -515,7 +540,7 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 	endpoint: ApiEndpoint<Req, Res>,
 	request: Req,
 	options: UseEndpointQueryOptions<Req, Res, Selected> = {},
-): UseEndpointQueryResult<Res, Selected> {
+): UseEndpointQueryResult<Req, Res, Selected> {
 	if (endpoint.method !== "GET") {
 		throw new Error("useEndpointQuery only supports GET endpoints in v1.");
 	}
@@ -568,9 +593,9 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 		staleTime,
 	};
 
-	const refetchRef = useRef<() => Promise<ValidationResult<Res>>>();
+	const refetchRef = useRef<() => Promise<EndpointValidationResult<Req, Res>>>();
 	const executeQueryRef = useRef<
-		(force: boolean) => Promise<ValidationResult<Res>>
+		(force: boolean) => Promise<EndpointValidationResult<Req, Res>>
 	>();
 	const hasAutoFetchedZeroStaleRef = useRef(false);
 	useEffect(() => {
@@ -582,8 +607,9 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 		executeQueryRef.current = async (force) => {
 			const latest = latestRef.current;
 			if (!latest.requestValidation.isValid) {
-				const invalidValidation =
-					latest.requestValidation as unknown as ValidationResult<Res>;
+				const invalidValidation = toEndpointRequestValidationResult(
+					latest.requestValidation,
+				);
 				latest.client.__publishValidation(latest.cacheKey, invalidValidation);
 				return invalidValidation;
 			}
@@ -623,7 +649,7 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 
 	useEffect(() => {
 		return client.__registerRefetcher(prepared.cacheKey, () =>
-			refetch() as Promise<ValidationResult<unknown>>,
+			refetch() as Promise<EndpointValidationResult<unknown, unknown>>,
 		);
 	}, [client, prepared.cacheKey, refetch]);
 
@@ -647,7 +673,7 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 
 			client.__publishValidation(
 				prepared.cacheKey,
-				prepared.requestValidation,
+				toEndpointRequestValidationResult(prepared.requestValidation),
 			);
 			return;
 		}
@@ -711,7 +737,7 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 			snapshot.isFetching &&
 			data === undefined,
 		refetch,
-		validation: snapshot.validation as ValidationResult<Res> | null,
+		validation: snapshot.validation as EndpointValidationResult<Req, Res> | null,
 	};
 }
 
@@ -733,7 +759,9 @@ export function useEndpointMutation<Req, Res, Context = unknown>(
 	const [data, setData] = useState<Res | undefined>(undefined);
 	const [error, setError] = useState<unknown>(null);
 	const [isPending, setIsPending] = useState(false);
-	const [validation, setValidation] = useState<ValidationResult<Res> | null>(null);
+	const [validation, setValidation] = useState<
+		EndpointValidationResult<Req, Res> | null
+	>(null);
 	const pendingCountRef = useRef(0);
 	const latestRef = useRef({
 		client,
@@ -758,7 +786,9 @@ export function useEndpointMutation<Req, Res, Context = unknown>(
 		resolveCallOptions,
 	};
 
-	const mutateAsyncRef = useRef<(variables: Req) => Promise<ValidationResult<Res>>>();
+	const mutateAsyncRef = useRef<
+		(variables: Req) => Promise<EndpointValidationResult<Req, Res>>
+	>();
 	if (!mutateAsyncRef.current) {
 		mutateAsyncRef.current = async (variables: Req) => {
 			const latest = latestRef.current;
