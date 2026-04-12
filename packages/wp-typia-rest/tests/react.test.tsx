@@ -778,6 +778,7 @@ describe("@wp-typia/rest/react", () => {
 					fetchCalled = true;
 					return { count: 1 };
 				}),
+				initialData: { count: 999 },
 			}),
 		);
 
@@ -786,9 +787,88 @@ describe("@wp-typia/rest/react", () => {
 
 		expect(fetchCalled).toBe(false);
 		expect(rendered.current.error).toBeNull();
+		expect(rendered.current.data).toBeUndefined();
 		expect(rendered.current.validation?.isValid).toBe(false);
 		expect(rendered.current.validation?.validationTarget).toBe("request");
 		expect(rendered.current.validation?.errors[0]?.path).toBe("$.page");
+	});
+
+	test("useEndpointQuery does not reuse cached validations across endpoint contracts", async () => {
+		let countFetches = 0;
+		let totalFetches = 0;
+		const countEndpoint = createEndpoint<{ page: number }, { count: number }>({
+			method: "GET",
+			path: "/demo/v1/shared-cache",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { page?: unknown }).page === "number"
+					? toValidationResult(success(input as { page: number }))
+					: toValidationResult(failure<{ page: number }>("{ page: number }", "$.page")),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { count?: unknown }).count === "number"
+					? toValidationResult(success(input as { count: number }))
+					: toValidationResult(failure<{ count: number }>("{ count: number }", "$.count")),
+		});
+		const totalEndpoint = createEndpoint<{ page: number }, { total: number }>({
+			method: "GET",
+			path: "/demo/v1/shared-cache",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { page?: unknown }).page === "number"
+					? toValidationResult(success(input as { page: number }))
+					: toValidationResult(failure<{ page: number }>("{ page: number }", "$.page")),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { total?: unknown }).total === "number"
+					? toValidationResult(success(input as { total: number }))
+					: toValidationResult(failure<{ total: number }>("{ total: number }", "$.total")),
+		});
+		const client = createEndpointDataClient();
+		const countRendered = await createHookRenderer(
+			() =>
+				useEndpointQuery(countEndpoint, { page: 1 }, {
+					client,
+					fetchFn: asApiFetch(async () => {
+						countFetches += 1;
+						return { count: 1 };
+					}),
+					staleTime: 30_000,
+				}),
+			client,
+		);
+
+		await waitForAssertion(() => {
+			expect(countRendered.current.data).toEqual({ count: 1 });
+		});
+		expect(countFetches).toBe(1);
+
+		const totalRendered = await createHookRenderer(
+			() =>
+				useEndpointQuery(totalEndpoint, { page: 1 }, {
+					client,
+					fetchFn: asApiFetch(async () => {
+						totalFetches += 1;
+						return { total: 2 };
+					}),
+					staleTime: 30_000,
+				}),
+			client,
+		);
+
+		await waitForAssertion(() => {
+			expect(totalRendered.current.data).toEqual({ total: 2 });
+		});
+
+		expect(totalFetches).toBe(1);
+		expect(totalRendered.current.validation?.validationTarget).toBe("response");
+
+		await countRendered.unmount();
+		await totalRendered.unmount();
 	});
 
 	test("request validation failures surface through mutation validation without executing transport", async () => {

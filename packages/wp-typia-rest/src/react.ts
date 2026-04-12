@@ -103,7 +103,7 @@ export interface UseEndpointQueryOptions<_Req, Res, Selected = Res> {
 	staleTime?: number;
 }
 
-export interface UseEndpointQueryResult<Req, Res, Selected = Res> {
+export interface UseEndpointQueryResult<Res, Selected = Res, Req = unknown> {
 	data: Selected | undefined;
 	error: unknown;
 	isFetching: boolean;
@@ -179,6 +179,20 @@ const EMPTY_SNAPSHOT: EndpointDataSnapshot = {
 };
 
 const EndpointDataClientContext = createContext<EndpointDataClient | null>(null);
+const endpointIdentityIds = new WeakMap<object, number>();
+let nextEndpointIdentityId = 0;
+
+function getStableEndpointIdentity(value: object): number {
+	const existing = endpointIdentityIds.get(value);
+	if (existing !== undefined) {
+		return existing;
+	}
+
+	const created = nextEndpointIdentityId;
+	nextEndpointIdentityId += 1;
+	endpointIdentityIds.set(value, created);
+	return created;
+}
 
 function normalizeCacheValue(value: unknown): unknown {
 	if (value === undefined) {
@@ -229,7 +243,20 @@ function normalizeCacheValue(value: unknown): unknown {
 }
 
 function createEndpointPrefix<Req, Res>(endpoint: ApiEndpoint<Req, Res>): string {
-	return `${endpoint.method} ${endpoint.path}`;
+	const requestValidatorId = getStableEndpointIdentity(endpoint.validateRequest as object);
+	const responseValidatorId = getStableEndpointIdentity(endpoint.validateResponse as object);
+	const requestBuilderId =
+		endpoint.buildRequestOptions !== undefined
+			? getStableEndpointIdentity(endpoint.buildRequestOptions as object)
+			: -1;
+
+	return [
+		endpoint.method,
+		endpoint.path,
+		`request:${requestValidatorId}`,
+		`response:${responseValidatorId}`,
+		`builder:${requestBuilderId}`,
+	].join(" ");
 }
 
 function createCacheKey<Req, Res>(
@@ -310,12 +337,17 @@ function asInternalClient(client: EndpointDataClient): InternalEndpointDataClien
 	return client as InternalEndpointDataClient;
 }
 
-function toEndpointRequestValidationResult<Req>(
+function isInvalidValidationResult<Req>(
 	validation: ValidationResult<Req>,
+): validation is ValidationResult<Req> & { isValid: false } {
+	return validation.isValid === false;
+}
+
+function toEndpointRequestValidationResult<Req>(
+	validation: ValidationResult<Req> & { isValid: false },
 ): EndpointRequestValidationResult<Req> {
 	return {
 		...validation,
-		isValid: false,
 		validationTarget: "request",
 	};
 }
@@ -428,6 +460,8 @@ export function createEndpointDataClient(): EndpointDataClient {
 				entry.validation = validation as EndpointValidationResult<unknown, unknown>;
 				if (validation.isValid) {
 					entry.data = validation.data;
+				} else if (validation.validationTarget === "request") {
+					entry.data = undefined;
 				}
 				syncSnapshot(entry);
 				notify(cacheKey);
@@ -540,7 +574,7 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 	endpoint: ApiEndpoint<Req, Res>,
 	request: Req,
 	options: UseEndpointQueryOptions<Req, Res, Selected> = {},
-): UseEndpointQueryResult<Req, Res, Selected> {
+): UseEndpointQueryResult<Res, Selected, Req> {
 	if (endpoint.method !== "GET") {
 		throw new Error("useEndpointQuery only supports GET endpoints in v1.");
 	}
@@ -606,7 +640,7 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 	if (!executeQueryRef.current) {
 		executeQueryRef.current = async (force) => {
 			const latest = latestRef.current;
-			if (!latest.requestValidation.isValid) {
+			if (isInvalidValidationResult(latest.requestValidation)) {
 				const invalidValidation = toEndpointRequestValidationResult(
 					latest.requestValidation,
 				);
@@ -666,7 +700,7 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 			return;
 		}
 
-		if (!prepared.requestValidation.isValid) {
+		if (isInvalidValidationResult(prepared.requestValidation)) {
 			if (snapshot.validation?.isValid === false) {
 				return;
 			}

@@ -299,12 +299,17 @@ export function createEndpoint<Req, Res>(config: ApiEndpoint<Req, Res>): ApiEndp
 	return config;
 }
 
-function toEndpointRequestValidationResult<Req>(
+function isInvalidValidationResult<Req>(
 	validation: ValidationResult<Req>,
+): validation is ValidationResult<Req> & { isValid: false } {
+	return validation.isValid === false;
+}
+
+function toEndpointRequestValidationResult<Req>(
+	validation: ValidationResult<Req> & { isValid: false },
 ): EndpointRequestValidationResult<Req> {
 	return {
 		...validation,
-		isValid: false,
 		validationTarget: "request",
 	};
 }
@@ -324,7 +329,7 @@ export async function callEndpoint<Req, Res>(
 	{ requestOptions, transport }: EndpointCallOptions = {},
 ): Promise<EndpointValidationResult<Req, Res>> {
 	const requestValidation = endpoint.validateRequest(request);
-	if (!requestValidation.isValid) {
+	if (isInvalidValidationResult(requestValidation)) {
 		return toEndpointRequestValidationResult(requestValidation);
 	}
 
