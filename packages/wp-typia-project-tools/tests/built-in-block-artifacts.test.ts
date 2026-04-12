@@ -90,6 +90,12 @@ describe("built-in block artifacts", () => {
 					`export interface ${variables.pascalCase}Attributes`,
 				);
 				expect(artifacts[0]?.typesSource).toContain(
+					'tags.MaxLength<1000> & tags.Default<"">',
+				);
+				expect(artifacts[0]?.typesSource).not.toContain(
+					'tags.MinLength<1> & tags.MaxLength<1000> & tags.Default<"">',
+				);
+				expect(artifacts[0]?.typesSource).toContain(
 					'import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";',
 				);
 				expect(artifacts[0]?.blockJsonDocument).toEqual(
@@ -103,6 +109,12 @@ describe("built-in block artifacts", () => {
 			if (templateId === "interactivity") {
 				expect(artifacts[0]?.typesSource).toContain(
 					`export interface ${variables.pascalCase}Context`,
+				);
+				expect(artifacts[0]?.typesSource).toContain(
+					'tags.MaxLength<1000> & tags.Default<"">',
+				);
+				expect(artifacts[0]?.typesSource).not.toContain(
+					'tags.MinLength<1> & tags.MaxLength<1000> & tags.Default<"">',
 				);
 				expect(artifacts[0]?.blockJsonDocument).toEqual(
 					expect.objectContaining({

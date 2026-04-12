@@ -140,6 +140,9 @@ test(
   expect(generatedManifest.manifestVersion).toBe(2);
   expect(generatedManifest.sourceType).toBe("DemoNpmAttributes");
   expect(generatedManifest.attributes.content.typia.defaultValue).toBe("");
+  expect(generatedManifest.attributes.content.typia.constraints.minLength).toBe(
+    null
+  );
   expect(generatedManifest.attributes.alignment.wp.enum).toEqual([
     "left",
     "center",

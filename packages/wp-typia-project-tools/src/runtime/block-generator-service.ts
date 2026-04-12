@@ -137,7 +137,19 @@ export interface ApplyBlockInput {
 	installDependencies?: ((options: InstallDependenciesOptions) => Promise<void>) | undefined;
 }
 
-const renderedArtifactCache = new WeakMap<RenderBlockResult, BuiltInBlockArtifact[]>();
+const renderedArtifactCache = new WeakMap<
+	RenderBlockResult,
+	{
+		artifacts: BuiltInBlockArtifact[];
+		variablesFingerprint: string;
+	}
+>();
+
+function createVariablesFingerprint(
+	variables: ScaffoldTemplateVariables,
+): string {
+	return JSON.stringify(variables);
+}
 
 function getBuiltInPersistenceSpec({
 	templateId,
@@ -400,13 +412,13 @@ export class BlockGeneratorService {
 			warnings: templateSource.warnings ?? [],
 		};
 
-		renderedArtifactCache.set(
-			rendered,
-			buildBuiltInBlockArtifacts({
+		renderedArtifactCache.set(rendered, {
+			artifacts: buildBuiltInBlockArtifacts({
 				templateId: validated.spec.template.family,
 				variables,
 			}),
-		);
+			variablesFingerprint: createVariablesFingerprint(variables),
+		});
 
 		return rendered;
 	}
@@ -415,12 +427,18 @@ export class BlockGeneratorService {
 		rendered,
 		installDependencies,
 	}: ApplyBlockInput): Promise<ScaffoldProjectResult> {
+		const cachedArtifacts = renderedArtifactCache.get(rendered);
+		const currentVariablesFingerprint = createVariablesFingerprint(
+			rendered.variables,
+		);
 		const artifacts =
-			renderedArtifactCache.get(rendered) ??
-			buildBuiltInBlockArtifacts({
-				templateId: rendered.spec.template.family,
-				variables: rendered.variables,
-			});
+			cachedArtifacts &&
+			cachedArtifacts.variablesFingerprint === currentVariablesFingerprint
+				? cachedArtifacts.artifacts
+				: buildBuiltInBlockArtifacts({
+						templateId: rendered.spec.template.family,
+						variables: rendered.variables,
+					});
 
 		try {
 			await applyBuiltInScaffoldProjectFiles({

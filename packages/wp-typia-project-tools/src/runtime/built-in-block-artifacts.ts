@@ -290,7 +290,6 @@ function buildBasicAttributes(): EmittedAttributeDefinition[] {
 			},
 			manifest: {
 				constraints: {
-					minLength: 1,
 					maxLength: 1000,
 				},
 				defaultValue: "",
@@ -300,8 +299,7 @@ function buildBasicAttributes(): EmittedAttributeDefinition[] {
 			},
 			name: "content",
 			optional: false,
-			typeExpression:
-				'string & tags.MinLength<1> & tags.MaxLength<1000> & tags.Default<"">',
+			typeExpression: 'string & tags.MaxLength<1000> & tags.Default<"">',
 		}),
 		createAttributeDefinition({
 			blockJson: {
@@ -418,7 +416,6 @@ function buildInteractivityAttributes(
 			},
 			manifest: {
 				constraints: {
-					minLength: 1,
 					maxLength: 1000,
 				},
 				defaultValue: "",
@@ -430,8 +427,7 @@ function buildInteractivityAttributes(
 			},
 			name: "content",
 			optional: false,
-			typeExpression:
-				'string & tags.MinLength<1> & tags.MaxLength<1000> & tags.Default<"">',
+			typeExpression: 'string & tags.MaxLength<1000> & tags.Default<"">',
 		}),
 		createAttributeDefinition({
 			blockJson: {
