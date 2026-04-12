@@ -43,7 +43,8 @@ Manual orchestration or repo tooling should use:
 - `@wp-typia/project-tools/schema-core`
 
 Those imports cover scaffold, add-block, migrate, template, doctor, package
-manager, starter manifest, and schema/OpenAPI project helpers.
+manager, starter manifest, schema/OpenAPI project helpers, and the phase-1
+typed generator boundary (`BlockSpec`, `BlockGeneratorService`).
 
 `@wp-typia/block-runtime/schema-core` is public and stable, but it is the
 implementation owner path rather than the preferred project-tooling import.
@@ -60,4 +61,5 @@ These areas are not covered by the generated-project compatibility promise:
 - CLI implementation internals
 - Bunli command composition
 - template rendering internals
+- Mustache-vs-emitter implementation details below the Phase 1 generator boundary
 - project-scaffold orchestration internals
