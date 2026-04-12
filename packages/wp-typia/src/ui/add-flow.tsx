@@ -264,6 +264,7 @@ export function AddFlow({ cwd, initialValues }: AddFlowProps) {
 
 	useEffect(() => {
 		let disposed = false;
+		setWorkspaceBlockOptions([]);
 
 		void loadAddWorkspaceBlockOptions(cwd)
 			.then((options) => {
