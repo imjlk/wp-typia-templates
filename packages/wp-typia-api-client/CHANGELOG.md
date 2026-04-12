@@ -1,5 +1,13 @@
 # `@wp-typia/api-client`
 
+## 0.4.3 — 2026-04-12
+
+### Patch changes
+
+- [e962f79](https://github.com/imjlk/wp-typia/commit/e962f7932927998191a8fcae2a41dd2f69447cff) Fix request validation failure paths so `callEndpoint()` and the React REST
+  helpers preserve an honest request-vs-response validation contract instead of
+  casting request failures to response validation results. — Thanks @imjlk!
+
 ## 0.4.2 — 2026-04-09
 
 ### Minor changes

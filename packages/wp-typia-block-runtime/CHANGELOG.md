@@ -1,5 +1,11 @@
 # @wp-typia/block-runtime
 
+## 0.4.6 — 2026-04-12
+
+### Patch changes
+
+- Updated dependencies: api-client (npm)@0.4.3
+
 ## 0.4.5 — 2026-04-12
 
 ### Patch changes

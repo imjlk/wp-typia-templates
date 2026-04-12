@@ -1,5 +1,11 @@
 # @wp-typia/project-tools
 
+## 0.16.6 — 2026-04-12
+
+### Patch changes
+
+- Updated dependencies: api-client (npm)@0.4.3, block-runtime (npm)@0.4.6, rest (npm)@0.3.6
+
 ## 0.16.5 — 2026-04-12
 
 ### Patch changes

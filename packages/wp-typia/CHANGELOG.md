@@ -1,5 +1,11 @@
 # wp-typia
 
+## 0.16.7 — 2026-04-12
+
+### Patch changes
+
+- Updated dependencies: api-client (npm)@0.4.3, project-tools (npm)@0.16.6
+
 ## 0.16.6 — 2026-04-12
 
 ### Patch changes
