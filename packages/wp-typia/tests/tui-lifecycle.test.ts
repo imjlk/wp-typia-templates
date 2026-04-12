@@ -6,13 +6,17 @@ import { addCommand } from "../src/commands/add";
 import { createCommand } from "../src/commands/create";
 import { migrateCommand } from "../src/commands/migrate";
 import {
+	isAlternateBufferCompletionKey,
 	describeAlternateBufferFailure,
 	isAlternateBufferExitKey,
 	reportAlternateBufferFailure,
 	resolveLazyFlowComponent,
 	runAlternateBufferAction,
 } from "../src/ui/alternate-buffer-lifecycle";
-import { FirstPartyFormViewport } from "../src/ui/first-party-form";
+import {
+	FirstPartyCompletionViewport,
+	FirstPartyFormViewport,
+} from "../src/ui/first-party-form";
 
 function renderStaticMarkupSilently(element: ReturnType<typeof createElement>): string {
 	const originalError = console.error;
@@ -31,6 +35,13 @@ describe("alternate-buffer TUI lifecycle", () => {
 		expect(isAlternateBufferExitKey({ ctrl: true, name: "c" })).toBe(true);
 		expect(isAlternateBufferExitKey({ name: "escape" })).toBe(false);
 		expect(isAlternateBufferExitKey({ ctrl: true, name: "x" })).toBe(false);
+	});
+
+	test("matches the completion confirmation keys", () => {
+		expect(isAlternateBufferCompletionKey({ name: "enter" })).toBe(true);
+		expect(isAlternateBufferCompletionKey({ sequence: "\r" })).toBe(true);
+		expect(isAlternateBufferCompletionKey({ sequence: "\n" })).toBe(true);
+		expect(isAlternateBufferCompletionKey({ name: "space" })).toBe(false);
 	});
 
 	test("describes failures with context", () => {
@@ -86,6 +97,30 @@ describe("alternate-buffer TUI lifecycle", () => {
 		expect(ran).toBe(true);
 		expect(messages).toEqual([]);
 		expect(exited).toBe(1);
+	});
+
+	test("run helper can defer exit while completion state takes over", async () => {
+		const completion = {
+			nextSteps: ["cd demo", "npm install"],
+			title: "✅ Created Demo Block",
+		};
+		let exited = 0;
+		let received: unknown;
+
+		await runAlternateBufferAction({
+			action: async () => completion,
+			context: "wp-typia create failed",
+			exit: () => {
+				exited += 1;
+			},
+			exitOnSuccess: false,
+			onSuccess: (result) => {
+				received = result;
+			},
+		});
+
+		expect(received).toEqual(completion);
+		expect(exited).toBe(0);
 	});
 
 	test("run helper reports failure and exits", async () => {
@@ -225,5 +260,31 @@ describe("alternate-buffer TUI lifecycle", () => {
 		expect(rendered).toContain("<scrollbox");
 		expect(rendered).toContain("Project directory");
 		expect(rendered).not.toContain('data-form-surface="submitting"');
+	});
+
+	test("shared first-party completion surface renders next steps and close hints", () => {
+		const rendered = renderStaticMarkupSilently(
+			createElement(FirstPartyCompletionViewport, {
+				completion: {
+					nextSteps: ["cd demo-block", "npm install", "npm run dev"],
+					optionalLines: ["npm run sync"],
+					optionalNote: "Review the generated metadata before first commit.",
+					optionalTitle: "Optional before first commit:",
+					preambleLines: ["Template variant: hero"],
+					summaryLines: ["Project directory: /tmp/demo-block"],
+					title: "✅ Created Demo Block in /tmp/demo-block",
+					warningLines: ["This template enables optional migration UI."],
+				},
+				viewportHeight: 10,
+			}),
+		);
+
+		expect(rendered).toContain('data-form-surface="completed"');
+		expect(rendered).toContain("✅ Created Demo Block in /tmp/demo-block");
+		expect(rendered).toContain("Next steps:");
+		expect(rendered).toContain("cd demo-block");
+		expect(rendered).toContain("Optional before first commit:");
+		expect(rendered).toContain("Review the generated metadata before first commit.");
+		expect(rendered).toContain("Enter: close | q: exit | Ctrl+C: quit");
 	});
 });

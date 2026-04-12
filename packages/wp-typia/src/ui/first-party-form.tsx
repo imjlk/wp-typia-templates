@@ -24,6 +24,7 @@ import {
 	FIRST_PARTY_SELECT_FIELD_CONTROL_HEIGHT,
 	FIRST_PARTY_SELECT_FIELD_LABEL_GAP,
 } from "./first-party-form-model";
+import type { AlternateBufferCompletionPayload } from "./alternate-buffer-lifecycle";
 
 const checkboxKeymap = createKeyMatcher({
 	toggle: ["space", "enter"],
@@ -525,4 +526,119 @@ export function FirstPartyFormViewport({
 		viewportHeight,
 		children,
 	});
+}
+
+export function FirstPartyCompletionViewport({
+	completion,
+	viewportHeight,
+}: {
+	completion: AlternateBufferCompletionPayload;
+	viewportHeight: number;
+}) {
+	const { tokens } = useTuiTheme();
+	const bodyHeight = Math.max(4, viewportHeight - 3);
+
+	return createElement(
+		"box",
+		{
+			border: true,
+			height: viewportHeight,
+			width: "100%",
+			"data-form-surface": "completed",
+			style: {
+				borderColor: tokens.borderMuted,
+				flexDirection: "column",
+			},
+		},
+		createElement(
+			"scrollbox",
+			{
+				height: bodyHeight,
+				scrollY: true,
+				scrollbarOptions: {
+					visible: true,
+					trackOptions: {
+						backgroundColor: tokens.backgroundMuted,
+						foregroundColor: tokens.borderMuted,
+					},
+				},
+				viewportOptions: { width: "100%" },
+				contentOptions: { width: "100%" },
+			},
+			createElement(
+				"box",
+				{
+					width: "100%",
+					style: {
+						flexDirection: "column",
+						gap: 1,
+					},
+				},
+				createElement("text", {
+					content: completion.title,
+					fg: tokens.accent,
+				}),
+				...(completion.preambleLines ?? []).map((line, index) =>
+					createElement("text", {
+						content: line,
+						fg: tokens.textMuted,
+						key: `preamble:${index}`,
+					}),
+				),
+				...(completion.warningLines ?? []).map((line, index) =>
+					createElement("text", {
+						content: `⚠️ ${line}`,
+						fg: tokens.textWarning,
+						key: `warning:${index}`,
+					}),
+				),
+				...(completion.summaryLines ?? []).map((line, index) =>
+					createElement("text", {
+						content: line,
+						fg: tokens.textPrimary,
+						key: `summary:${index}`,
+					}),
+				),
+				(completion.nextSteps?.length ?? 0) > 0
+					? createElement("text", {
+							content: "Next steps:",
+							fg: tokens.textPrimary,
+							key: "next-steps:title",
+						})
+					: null,
+				...(completion.nextSteps ?? []).map((line, index) =>
+					createElement("text", {
+						content: `  ${line}`,
+						fg: tokens.textPrimary,
+						key: `next-step:${index}`,
+					}),
+				),
+				(completion.optionalLines?.length ?? 0) > 0
+					? createElement("text", {
+							content: completion.optionalTitle ?? "Optional:",
+							fg: tokens.textPrimary,
+							key: "optional:title",
+						})
+					: null,
+				...(completion.optionalLines ?? []).map((line, index) =>
+					createElement("text", {
+						content: `  ${line}`,
+						fg: tokens.textMuted,
+						key: `optional:${index}`,
+					}),
+				),
+				completion.optionalNote
+					? createElement("text", {
+							content: `Note: ${completion.optionalNote}`,
+							fg: tokens.textMuted,
+							key: "optional:note",
+						})
+					: null,
+			),
+		),
+		createElement("text", {
+			content: "Enter: close | q: exit | Ctrl+C: quit",
+			fg: tokens.textMuted,
+		}),
+	);
 }
