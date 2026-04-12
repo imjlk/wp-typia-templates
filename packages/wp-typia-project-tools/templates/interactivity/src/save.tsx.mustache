@@ -2,7 +2,6 @@ import { useBlockProps, RichText } from '@wordpress/block-editor';
 import type { {{pascalCase}}Attributes } from './types';
 
 export default function Save({ attributes }: { attributes: {{pascalCase}}Attributes }) {
-  const autoPlayInterval = attributes.autoPlayInterval ?? 0;
   const clickCount = attributes.clickCount ?? 0;
   const interactiveMode = attributes.interactiveMode ?? 'click';
   const animation = attributes.animation ?? 'none';
@@ -17,11 +16,8 @@ export default function Save({ attributes }: { attributes: {{pascalCase}}Attribu
       clicks: clickCount,
       isAnimating,
       isVisible,
-      lastInteraction: '',
       animation,
-      interactiveMode,
       maxClicks,
-      autoPlayInterval
     })
   });
 

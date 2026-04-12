@@ -53,7 +53,7 @@ describe("starter manifest builders", () => {
 						interactiveMode: expect.objectContaining({
 							wp: expect.objectContaining({
 								defaultValue: "click",
-								enum: ["click", "hover", "auto"],
+								enum: ["click", "hover"],
 							}),
 						}),
 					}),

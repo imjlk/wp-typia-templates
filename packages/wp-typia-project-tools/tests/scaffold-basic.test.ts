@@ -568,13 +568,20 @@ test(
   expect(blockJson.category).toBe("widgets");
   expect(blockJson.icon).toBe("smiley");
   expect(blockJson.editorStyle).toBe("file:./index.css");
+  expect(blockJson.attributes.interactiveMode.enum).toEqual([
+    "click",
+    "hover",
+  ]);
+  expect(blockJson.attributes.autoPlayInterval).toBeUndefined();
+  expect(blockJson.attributes.uniqueId).toBeUndefined();
   expect(generatedManifest.manifestVersion).toBe(2);
   expect(generatedManifest.sourceType).toBe("DemoInteractivityAttributes");
   expect(generatedManifest.attributes.interactiveMode.wp.enum).toEqual([
     "click",
     "hover",
-    "auto",
   ]);
+  expect(generatedManifest.attributes.autoPlayInterval).toBeUndefined();
+  expect(generatedManifest.attributes.uniqueId).toBeUndefined();
   expect(
     generatedManifest.attributes.clickCount.typia.constraints.typeTag
   ).toBe("uint32");
@@ -582,10 +589,10 @@ test(
   expect(generatedHooks).toContain("useTypiaValidation");
   expect(generatedHooks).toContain("createUseTypiaValidationHook");
   expect(generatedValidators).toContain('from "./validator-toolkit"');
-  expect(generatedValidators).toContain(
+  expect(generatedValidators).not.toContain(
     "@wp-typia/block-runtime/identifiers"
   );
-  expect(generatedValidators).toContain("generateScopedClientId");
+  expect(generatedValidators).not.toContain("generateScopedClientId");
   expect(generatedValidators).not.toContain("createScaffoldValidatorToolkit");
   expect(generatedValidators).not.toContain("generateUniqueId");
   expect(generatedEdit).toContain("@wp-typia/block-runtime/inspector");
@@ -595,6 +602,12 @@ test(
   expect(generatedEdit).toContain("useTypiaValidation");
   expect(generatedEdit).toContain("useTypedAttributeUpdater");
   expect(generatedEdit).toContain("aria-pressed={isPreviewing}");
+  expect(generatedEdit).not.toContain("TextControl");
+  expect(generatedEdit).not.toContain("Unique ID");
+  expect(generatedEdit).not.toContain("Auto Play Interval");
+  expect(generatedEdit).not.toContain("autoPlayInterval");
+  expect(generatedEdit).not.toContain("lastInteraction");
+  expect(generatedEdit).not.toContain("interactiveMode === 'auto'");
   expect(generatedEdit).toContain(
     "className: `wp-block-demo-space-demo-interactivity wp-block-demo-space-demo-interactivity--${interactiveMode}`"
   );
@@ -633,13 +646,25 @@ test(
   );
   expect(generatedInteractivity).not.toContain("declare global");
   expect(generatedInteractivity).toContain("get clampedClicks()");
+  expect(generatedInteractivity).not.toContain("animationClass");
+  expect(generatedInteractivity).not.toContain("toggleVisibility");
+  expect(generatedInteractivity).not.toContain("toggleAutoPlay");
+  expect(generatedInteractivity).not.toContain("lastInteraction");
+  expect(generatedInteractivity).not.toContain("autoPlayTimer");
+  expect(generatedInteractivity).not.toContain("context.interactiveMode");
   expect(generatedTypes).toContain("animation: 'none' | 'bounce'");
   expect(generatedTypes).toContain(
-    "autoPlayTimer?: ReturnType<typeof setInterval> | null;"
+    "interactiveMode?: ('click' | 'hover') & tags.Default<\"click\">;"
   );
+  expect(generatedTypes).not.toContain("autoPlayInterval");
+  expect(generatedTypes).not.toContain("uniqueId");
+  expect(generatedTypes).not.toContain("lastInteraction");
+  expect(generatedTypes).not.toContain("autoPlayTimer");
   expect(generatedSave).toContain("const clickCount = attributes.clickCount ?? 0;");
   expect(generatedSave).toContain("const maxClicks = attributes.maxClicks ?? 0;");
   expect(generatedSave).toContain("const interactiveMode = attributes.interactiveMode ?? 'click';");
+  expect(generatedSave).not.toContain("autoPlayInterval");
+  expect(generatedSave).not.toContain("lastInteraction");
   expect(generatedSave).toContain('aria-label="Reset counter"');
   expect(generatedSave).toContain('className="screen-reader-text"');
   expect(generatedSave).toContain('role="progressbar"');

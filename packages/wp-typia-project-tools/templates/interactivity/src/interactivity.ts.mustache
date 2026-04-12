@@ -21,23 +21,6 @@ store('{{slugKebabCase}}', {
     get isVisible() {
       return getBlockContext().isVisible;
     },
-    get animationClass() {
-      const context = getBlockContext();
-      if (!context.isAnimating) return '';
-
-      switch (context.animation) {
-        case 'bounce':
-          return 'animate-bounce';
-        case 'pulse':
-          return 'animate-pulse';
-        case 'shake':
-          return 'animate-shake';
-        case 'flip':
-          return 'animate-flip';
-        default:
-          return '';
-      }
-    },
     get progress() {
       const context = getBlockContext();
       return context.maxClicks > 0 ? (context.clicks / context.maxClicks) * 100 : 0;
@@ -67,7 +50,6 @@ store('{{slugKebabCase}}', {
 
       // Increment click counter
       context.clicks += 1;
-      context.lastInteraction = 'click';
 
       // Trigger animation
       if (context.animation !== 'none') {
@@ -93,23 +75,12 @@ store('{{slugKebabCase}}', {
     // Handle hover events
     handleMouseEnter: () => {
       const context = getBlockContext();
-      if (context.interactiveMode === 'hover') {
-        context.isAnimating = true;
-        context.lastInteraction = 'hover';
-      }
+      context.isAnimating = true;
     },
 
     handleMouseLeave: () => {
       const context = getBlockContext();
-      if (context.interactiveMode === 'hover') {
-        context.isAnimating = false;
-      }
-    },
-
-    // Toggle visibility
-    toggleVisibility: () => {
-      const context = getBlockContext();
-      context.isVisible = !context.isVisible;
+      context.isAnimating = false;
     },
 
     // Reset counter
@@ -117,26 +88,6 @@ store('{{slugKebabCase}}', {
       const context = getBlockContext();
       context.clicks = 0;
       context.isAnimating = false;
-      context.lastInteraction = 'reset';
-    },
-
-    // Start/stop auto play
-    toggleAutoPlay: () => {
-      const context = getBlockContext();
-      if (context.autoPlayInterval > 0) {
-        if (context.autoPlayTimer) {
-          clearInterval(context.autoPlayTimer);
-          context.autoPlayTimer = null;
-        } else {
-          context.autoPlayTimer = setInterval(() => {
-            context.clicks += 1;
-            context.isAnimating = true;
-            setTimeout(() => {
-              context.isAnimating = false;
-            }, 500);
-          }, context.autoPlayInterval);
-        }
-      }
     }
   }
 });

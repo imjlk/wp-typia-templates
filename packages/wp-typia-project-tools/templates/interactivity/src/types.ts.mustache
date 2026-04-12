@@ -11,26 +11,20 @@ export interface {{pascalCase}}Attributes {
   content: string & tags.MinLength<1> & tags.MaxLength<1000> & tags.Default<"">;
   alignment?: TextAlignment & tags.Default<"left">;
   isVisible?: boolean & tags.Default<true>;
-  interactiveMode?: ('click' | 'hover' | 'auto') & tags.Default<"click">;
+  interactiveMode?: ('click' | 'hover') & tags.Default<"click">;
   animation?: ('none' | 'bounce' | 'pulse' | 'shake' | 'flip') & tags.Default<"none">;
   clickCount?: number & tags.Minimum<0> & tags.Type<"uint32"> & tags.Default<0>;
   isAnimating?: boolean & tags.Default<false>;
   showCounter?: boolean & tags.Default<true>;
   maxClicks?: number & tags.Minimum<0> & tags.Type<"uint32"> & tags.Default<10>;
-  autoPlayInterval?: number & tags.Minimum<0> & tags.Type<"uint32"> & tags.Default<0>;
-  uniqueId?: string & tags.Default<"">;
 }
 
 export interface {{pascalCase}}Context {
   clicks: number;
   isAnimating: boolean;
   isVisible: boolean;
-  lastInteraction: string;
   animation: 'none' | 'bounce' | 'pulse' | 'shake' | 'flip';
-  interactiveMode: 'click' | 'hover' | 'auto';
   maxClicks: number;
-  autoPlayInterval: number;
-  autoPlayTimer?: ReturnType<typeof setInterval> | null;
 }
 
 export type {{pascalCase}}ValidationResult = ValidationResult<{{pascalCase}}Attributes>;
