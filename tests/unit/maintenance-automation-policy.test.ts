@@ -137,6 +137,21 @@ describe('validateMaintenanceAutomationPolicy', () => {
     });
   });
 
+  test('fails when a documented dependabot ecosystem is configured more than once', () => {
+    const repoRoot = createMaintenancePolicyRepo();
+    writeText(
+      path.join(repoRoot, '.github/dependabot.yml'),
+      `version: 2\nupdates:\n  - package-ecosystem: 'github-actions'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: 'github-actions'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: composer\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n`
+    );
+
+    const result = validateMaintenanceAutomationPolicy(repoRoot);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      '.github/dependabot.yml must configure exactly one github-actions update lane.',
+    );
+  });
+
   test('fails when audit workflows or ci hooks drift', () => {
     const repoRoot = createMaintenancePolicyRepo();
     writeText(
@@ -162,7 +177,7 @@ describe('validateMaintenanceAutomationPolicy', () => {
       '.github/workflows/dependency-audit.yml must keep Bun Audit gated to schedule/workflow_dispatch.',
     );
     expect(result.errors).toContain(
-      '.github/workflows/dependency-audit.yml must keep Composer Audit eligible for pull_request and push runs.',
+      '.github/workflows/dependency-audit.yml must keep Composer Audit ungated so it runs on pull_request and push events.',
     );
     expect(result.errors).toContain(
       '.github/workflows/ci.yml lint job must include "run: bun run maintenance-automation:validate".',

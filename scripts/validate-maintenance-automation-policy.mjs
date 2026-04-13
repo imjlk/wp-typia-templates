@@ -95,18 +95,10 @@ function parseDependabotEcosystemLine(line) {
   return match[1] ?? match[2] ?? match[3] ?? null;
 }
 
-function extractDependabotUpdateBlock(sourceText, ecosystem) {
-  const lines = sourceText.split(/\r?\n/);
-  const startIndex = lines.findIndex(
-    (line) => parseDependabotEcosystemLine(line) === ecosystem,
-  );
-
-  if (startIndex < 0) {
-    return '';
-  }
-
+function extractDependabotBlockAtIndex(lines, startIndex) {
   const baseIndent = leadingSpaceCount(lines[startIndex]);
   const blockLines = [];
+
   for (let index = startIndex; index < lines.length; index += 1) {
     const line = lines[index];
     if (
@@ -129,6 +121,19 @@ function extractDependabotUpdateBlock(sourceText, ecosystem) {
   return blockLines.join('\n');
 }
 
+function extractDependabotUpdateBlocks(sourceText, ecosystem) {
+  const lines = sourceText.split(/\r?\n/);
+  const startIndexes = lines
+    .map((line, index) =>
+      parseDependabotEcosystemLine(line) === ecosystem ? index : -1,
+    )
+    .filter((index) => index >= 0);
+
+  return startIndexes.map((startIndex) =>
+    extractDependabotBlockAtIndex(lines, startIndex),
+  );
+}
+
 function validateDependabotConfig(sourceText, errors) {
   const configuredEcosystems = sourceText
     .split(/\r?\n/)
@@ -144,25 +149,33 @@ function validateDependabotConfig(sourceText, errors) {
   }
 
   for (const ecosystem of MAINTENANCE_AUTOMATION_POLICY.dependabotEcosystems) {
-    const block = extractDependabotUpdateBlock(sourceText, ecosystem);
+    const blocks = extractDependabotUpdateBlocks(sourceText, ecosystem);
 
-    if (!block) {
+    if (blocks.length === 0) {
       errors.push(
         `.github/dependabot.yml must configure a ${ecosystem} update lane.`,
       );
       continue;
     }
 
-    if (!block.includes("target-branch: 'main'")) {
+    if (blocks.length > 1) {
       errors.push(
-        `.github/dependabot.yml must keep the ${ecosystem} lane targeting the main branch.`,
+        `.github/dependabot.yml must configure exactly one ${ecosystem} update lane.`,
       );
     }
 
-    if (!block.includes("interval: 'weekly'")) {
-      errors.push(
-        `.github/dependabot.yml must keep the ${ecosystem} lane on a weekly update cadence.`,
-      );
+    for (const block of blocks) {
+      if (!block.includes("target-branch: 'main'")) {
+        errors.push(
+          `.github/dependabot.yml must keep the ${ecosystem} lane targeting the main branch.`,
+        );
+      }
+
+      if (!block.includes("interval: 'weekly'")) {
+        errors.push(
+          `.github/dependabot.yml must keep the ${ecosystem} lane on a weekly update cadence.`,
+        );
+      }
     }
   }
 }
@@ -201,13 +214,9 @@ function validateDependencyAuditWorkflow(sourceText, errors) {
   }
 
   const composerAuditBlock = workflowJobBlock(sourceText, 'composer-audit');
-  if (
-    composerAuditBlock.includes('if:') &&
-    (composerAuditBlock.includes("github.event_name == 'schedule'") ||
-      composerAuditBlock.includes("github.event_name == 'workflow_dispatch'"))
-  ) {
+  if (composerAuditBlock.includes('if:')) {
     errors.push(
-      '.github/workflows/dependency-audit.yml must keep Composer Audit eligible for pull_request and push runs.',
+      '.github/workflows/dependency-audit.yml must keep Composer Audit ungated so it runs on pull_request and push events.',
     );
   }
 }
