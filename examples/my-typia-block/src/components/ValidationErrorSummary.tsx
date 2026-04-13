@@ -16,7 +16,7 @@ export function ValidationErrorSummary( {
 		<>
 			<p>
 				<strong>
-					{ __( 'Validation Errors:', 'my_typia_block' ) }
+					{ __( 'Validation Errors:', 'my-typia-block' ) }
 				</strong>
 			</p>
 			<ul style={ { margin: 0, paddingLeft: '1em' } }>

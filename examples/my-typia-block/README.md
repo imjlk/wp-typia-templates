@@ -24,7 +24,7 @@ bun run start
 bun run build
 
 # Type checking
-npx tsc --noEmit
+bun run typecheck
 
 # Sync block metadata manually
 bun run sync-types
@@ -68,18 +68,24 @@ export interface MyTypiaBlockAttributes {
 ## 🎨 Styling
 
 - `src/style.scss` - Frontend and editor styles
-- Block CSS class: `.wp-block-my-typia-block`
+- Block CSS class: `.wp-block-create-block-my-typia-block`
 
 ## ⚡ Interactivity
 
 Frontend interactions are defined in `src/view.ts`:
 
 ```typescript
-const { state, actions } = store('create-block/my-typia-block', {
+const { state, actions } = store('my-typia-block', {
 	state: { isActive: false },
 	actions: { toggle() { state.isActive = !state.isActive; } }
 });
 ```
+
+## 🛡️ Validator Toolkit
+
+`src/validator-toolkit.ts` mirrors the current scaffold abstraction and keeps
+Typia manifest/default wiring in one place. `src/validators.ts` then stays
+focused on the example-specific `id` finalization and helper exports.
 
 ## 🧱 Server Boundary
 
@@ -163,4 +169,4 @@ The dashboard then shows:
 
 ---
 
-*Generated with `@wp-typia/create` and Typia validation*
+*Generated with `wp-typia` and Typia validation*

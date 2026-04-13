@@ -98,21 +98,21 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const editorFields = useEditorFields( currentManifest as ManifestDocument, {
 		hidden: [ 'id', 'version' ],
 		labels: {
-			alignment: __( 'Alignment', 'my_typia_block' ),
-			animation: __( 'Animation', 'my_typia_block' ),
-			aspectRatio: __( 'Aspect Ratio', 'my_typia_block' ),
-			backgroundColor: __( 'Background Color', 'my_typia_block' ),
-			borderRadius: __( 'Border Radius', 'my_typia_block' ),
-			className: __( 'CSS Class', 'my_typia_block' ),
-			content: __( 'Content', 'my_typia_block' ),
-			fontSize: __( 'Font Size', 'my_typia_block' ),
-			isVisible: __( 'Visible', 'my_typia_block' ),
-			linkTarget: __( 'Link Target', 'my_typia_block' ),
-			'padding.bottom': __( 'Padding Bottom', 'my_typia_block' ),
-			'padding.left': __( 'Padding Left', 'my_typia_block' ),
-			'padding.right': __( 'Padding Right', 'my_typia_block' ),
-			'padding.top': __( 'Padding Top', 'my_typia_block' ),
-			textColor: __( 'Text Color', 'my_typia_block' ),
+			alignment: __( 'Alignment', 'my-typia-block' ),
+			animation: __( 'Animation', 'my-typia-block' ),
+			aspectRatio: __( 'Aspect Ratio', 'my-typia-block' ),
+			backgroundColor: __( 'Background Color', 'my-typia-block' ),
+			borderRadius: __( 'Border Radius', 'my-typia-block' ),
+			className: __( 'CSS Class', 'my-typia-block' ),
+			content: __( 'Content', 'my-typia-block' ),
+			fontSize: __( 'Font Size', 'my-typia-block' ),
+			isVisible: __( 'Visible', 'my-typia-block' ),
+			linkTarget: __( 'Link Target', 'my-typia-block' ),
+			'padding.bottom': __( 'Padding Bottom', 'my-typia-block' ),
+			'padding.left': __( 'Padding Left', 'my-typia-block' ),
+			'padding.right': __( 'Padding Right', 'my-typia-block' ),
+			'padding.top': __( 'Padding Top', 'my-typia-block' ),
+			textColor: __( 'Text Color', 'my-typia-block' ),
 		},
 		manual: [ 'animation', 'className', 'content', 'linkTarget' ],
 		preferTextarea: [ 'content' ],
@@ -255,12 +255,12 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					fieldLookup={ editorFields }
 					onChange={ updateField }
 					paths={ inspectorPaths }
-					title={ __( 'Settings', 'my_typia_block' ) }
+					title={ __( 'Settings', 'my-typia-block' ) }
 				>
 					<RangeControl
 						label={
 							paddingTopField?.label ??
-							__( 'Padding Top', 'my_typia_block' )
+							__( 'Padding Top', 'my-typia-block' )
 						}
 						value={ padding.top }
 						min={ paddingTopField?.minimum ?? 0 }
@@ -273,7 +273,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					<RangeControl
 						label={
 							paddingRightField?.label ??
-							__( 'Padding Right', 'my_typia_block' )
+							__( 'Padding Right', 'my-typia-block' )
 						}
 						value={ padding.right }
 						min={ paddingRightField?.minimum ?? 0 }
@@ -286,7 +286,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					<RangeControl
 						label={
 							paddingBottomField?.label ??
-							__( 'Padding Bottom', 'my_typia_block' )
+							__( 'Padding Bottom', 'my-typia-block' )
 						}
 						value={ padding.bottom }
 						min={ paddingBottomField?.minimum ?? 0 }
@@ -299,7 +299,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					<RangeControl
 						label={
 							paddingLeftField?.label ??
-							__( 'Padding Left', 'my_typia_block' )
+							__( 'Padding Left', 'my-typia-block' )
 						}
 						value={ padding.left }
 						min={ paddingLeftField?.minimum ?? 0 }
@@ -317,14 +317,14 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 				</InspectorFromManifest>
 				{ editorFields.manualFields.length > 0 && (
 					<PanelBody
-						title={ __( 'Manual Typia Fields', 'my_typia_block' ) }
+						title={ __( 'Manual Typia Fields', 'my-typia-block' ) }
 						initialOpen={ false }
 					>
 						<Notice status="info" isDismissible={ false }>
 							<p>
 								{ __(
 									'These manifest fields stay manual in the reference app:',
-									'my_typia_block'
+									'my-typia-block'
 								) }
 							</p>
 							<ul style={ { margin: 0, paddingLeft: '1em' } }>
@@ -341,7 +341,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					</PanelBody>
 				) }
 				<PanelBody
-					title={ __( 'Migration Manager', 'my_typia_block' ) }
+					title={ __( 'Migration Manager', 'my-typia-block' ) }
 					initialOpen={ false }
 				>
 					<MigrationDashboard />
@@ -367,7 +367,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 						}
 						placeholder={ __(
 							'Enter your text…',
-							'my_typia_block'
+							'my-typia-block'
 						) }
 						className={ classNames(
 							'my-typia-block-content',
@@ -385,7 +385,7 @@ export default function Edit( { attributes, setAttributes }: EditProps ) {
 					<small>
 						{ __(
 							'My Typia Block – showcase of Typia validation, manifest-driven editor helpers, migrations, and interactivity.',
-							'my_typia_block'
+							'my-typia-block'
 						) }
 					</small>
 				</div>

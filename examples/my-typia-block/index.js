@@ -6,7 +6,7 @@ module.exports = {
 		namespace: 'create-block',
 		category: 'widgets',
 		dashicon: 'admin-site-alt3',
-		textdomain: '',
+		textdomain: 'my-typia-block',
 		editorScript: 'file:./index.js',
 		style: 'file:./style-index.css',
 		viewScript: 'file:./view.js',
