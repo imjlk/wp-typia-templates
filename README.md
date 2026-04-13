@@ -180,6 +180,7 @@ npx wp-typia create my-block --template @scope/create-block-template --variant h
 ## Documentation
 
 - [Architecture Guide](docs/architecture.md)
+- [Block Generator Architecture](docs/block-generator-architecture.md)
 - [API Guide](docs/API.md)
 - [Migration Guide](docs/migrations.md)
 - [Error and Export Contract Guide](docs/error-export-contracts.md)

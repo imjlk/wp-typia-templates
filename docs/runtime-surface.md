@@ -74,7 +74,9 @@ This document is descriptive, not normative. For support guarantees, see
   doctor, package-manager, starter-manifest, the typed generator boundary, the
   built-in structural/code emitters, and the preferred schema project imports.
   Built-in templates no longer ship structural, TS/TSX, style, or block-local
-  `render.php` Mustache files for those generated artifacts.
+  `render.php` Mustache files for those generated artifacts. The higher-level
+  generator architecture record lives in
+  [`docs/block-generator-architecture.md`](./block-generator-architecture.md).
 - `@wp-typia/block-runtime/*` owns generated-project runtime helpers directly,
   including the canonical `schema-core` implementation and shared
   manifest/migration contract types.

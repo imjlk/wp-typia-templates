@@ -90,6 +90,7 @@ bun run docs:build
 - [`README.md`](./README.md) is the main product/audience entry point
 - [`UPGRADE.md`](./UPGRADE.md) collects high-signal maintainer upgrade notes
 - [`SECURITY.md`](./SECURITY.md) explains private vulnerability reporting
+- [`docs/block-generator-architecture.md`](./docs/block-generator-architecture.md) records the typed generator architecture and phase map
 - [`docs/formatting-toolchain-policy.md`](./docs/formatting-toolchain-policy.md) records the formatter baseline and CI gate
 - [`docs/maintenance-automation-policy.md`](./docs/maintenance-automation-policy.md) records the dependency update and audit baseline
 

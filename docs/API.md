@@ -195,11 +195,13 @@ Use these packages instead:
 - `@wp-typia/project-tools` for project orchestration and programmatic runtime helpers
 - `@wp-typia/block-runtime/*` for generated-project runtime helpers
 
-For the current generator architecture boundary, including the split between
-emitter-owned built-in structural/source files and Mustache-owned shared
-project/bootstrap assets, and the fact that built-in templates no longer ship
-structural, TS/TSX, style, or block-local `render.php` Mustache files, see
-[`docs/block-generator-service.md`](./block-generator-service.md).
+For the current generator architecture boundary, including the staged
+`BlockSpec` / `BlockGeneratorService` contract, the current phase status, and
+the split between emitter-owned built-in artifacts and Mustache-owned shared
+project/bootstrap assets, see:
+
+- [`docs/block-generator-architecture.md`](./block-generator-architecture.md)
+- [`docs/block-generator-service.md`](./block-generator-service.md)
 
 ## 3. `@wp-typia/block-types`
 

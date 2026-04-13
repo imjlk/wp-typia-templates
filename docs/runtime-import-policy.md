@@ -66,6 +66,10 @@ manager, starter manifest, schema/OpenAPI project helpers, the `BlockSpec` /
 structural/source path where built-in templates no longer ship structural,
 TS/TSX, style, or block-local `render.php` Mustache files.
 
+For the architecture record behind that boundary, including the staged
+non-mutating tool-facing contract and current phase map, see
+[`docs/block-generator-architecture.md`](./block-generator-architecture.md).
+
 `@wp-typia/block-runtime/schema-core` is public and stable, but it is the
 implementation owner path rather than the preferred project-tooling import.
 

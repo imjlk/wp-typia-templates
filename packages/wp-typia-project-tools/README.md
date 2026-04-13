@@ -50,4 +50,9 @@ files and starter `typia.manifest.json` now come from the emitter path, while
 project bootstrap/package-manager files, sync scripts, shared REST helpers, and
 the remaining non-block assets still come from Mustache-backed template copy.
 
+The higher-level generator architecture record, including the current phase map
+and the non-mutating `plan -> validate -> render -> apply` tool-facing usage
+model, lives in
+[`docs/block-generator-architecture.md`](../../docs/block-generator-architecture.md).
+
 If you need metadata sync, editor helpers, validation helpers, or other generated-project runtime utilities, import them directly from `@wp-typia/block-runtime/*`.
