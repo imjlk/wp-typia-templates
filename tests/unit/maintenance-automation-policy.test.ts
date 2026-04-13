@@ -109,6 +109,21 @@ describe('validateMaintenanceAutomationPolicy', () => {
     );
   });
 
+  test('fails when dependabot widens automation beyond the documented ecosystems', () => {
+    const repoRoot = createMaintenancePolicyRepo();
+    writeText(
+      path.join(repoRoot, '.github/dependabot.yml'),
+      `version: 2\nupdates:\n  - package-ecosystem: 'github-actions'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: 'composer'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: 'npm'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n`
+    );
+
+    const result = validateMaintenanceAutomationPolicy(repoRoot);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      '.github/dependabot.yml must not widen automation beyond github-actions, composer; found npm.',
+    );
+  });
+
   test('fails when audit workflows or ci hooks drift', () => {
     const repoRoot = createMaintenancePolicyRepo();
     writeText(

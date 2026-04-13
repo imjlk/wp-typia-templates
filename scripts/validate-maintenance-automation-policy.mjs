@@ -105,6 +105,19 @@ function extractDependabotUpdateBlock(sourceText, ecosystem) {
 }
 
 function validateDependabotConfig(sourceText, errors) {
+  const configuredEcosystems = Array.from(
+    sourceText.matchAll(/^\s*-\s+package-ecosystem:\s+'([^']+)'/gm),
+    (match) => match[1],
+  );
+
+  for (const ecosystem of configuredEcosystems) {
+    if (!MAINTENANCE_AUTOMATION_POLICY.dependabotEcosystems.includes(ecosystem)) {
+      errors.push(
+        `.github/dependabot.yml must not widen automation beyond ${MAINTENANCE_AUTOMATION_POLICY.dependabotEcosystems.join(', ')}; found ${ecosystem}.`,
+      );
+    }
+  }
+
   for (const ecosystem of MAINTENANCE_AUTOMATION_POLICY.dependabotEcosystems) {
     const block = extractDependabotUpdateBlock(sourceText, ecosystem);
 
