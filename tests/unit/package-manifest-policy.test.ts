@@ -10,6 +10,15 @@ function writeJson(filePath: string, value: unknown) {
 	fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
+const PUBLISH_MANIFEST_WRAPPER_SOURCE = `#!/usr/bin/env node
+
+import { runPublishManifestCli } from "../../../scripts/lib/publish-manifest-workspace-protocol.mjs";
+
+process.exitCode = runPublishManifestCli({
+	packageRoot: process.cwd(),
+});
+`;
+
 function createManifestRepo() {
 	const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-manifest-policy-"));
 
@@ -128,7 +137,7 @@ function createManifestRepo() {
 	fs.mkdirSync(path.join(repoRoot, "packages/wp-typia-rest/scripts"), { recursive: true });
 	fs.writeFileSync(
 		path.join(repoRoot, "packages/wp-typia-rest/scripts/publish-manifest.mjs"),
-		"export {};\n",
+		PUBLISH_MANIFEST_WRAPPER_SOURCE,
 		"utf8",
 	);
 	fs.mkdirSync(path.join(repoRoot, "packages/wp-typia-project-tools/scripts"), {
@@ -136,7 +145,7 @@ function createManifestRepo() {
 	});
 	fs.writeFileSync(
 		path.join(repoRoot, "packages/wp-typia-project-tools/scripts/publish-manifest.mjs"),
-		"export {};\n",
+		PUBLISH_MANIFEST_WRAPPER_SOURCE,
 		"utf8",
 	);
 
@@ -196,6 +205,22 @@ describe("validatePackageManifestPolicy", () => {
 		);
 		expect(result.errors).toContain(
 			"@wp-typia/project-tools should not keep unused devDependencies.react-devtools-core.",
+		);
+	});
+
+	test("fails when a sanctioned workspace protocol wrapper is a no-op", () => {
+		const repoRoot = createManifestRepo();
+		const publishManifestPath = path.join(
+			repoRoot,
+			"packages/wp-typia-rest/scripts/publish-manifest.mjs",
+		);
+		fs.writeFileSync(publishManifestPath, "export {};\n", "utf8");
+
+		const result = validatePackageManifestPolicy(repoRoot);
+
+		expect(result.valid).toBe(false);
+		expect(result.errors).toContain(
+			"packages/wp-typia-rest/package.json depends on workspace protocol rewriting but scripts/publish-manifest.mjs does not delegate to the shared publish-manifest helper.",
 		);
 	});
 });

@@ -22,6 +22,7 @@ export const PACKAGE_MANAGER_BASELINE = "bun@1.3.11";
 export const UNUSED_DEV_DEPENDENCIES = Object.freeze({
 	"@wp-typia/project-tools": ["react-devtools-core", "ws"],
 });
+const SHARED_PUBLISH_MANIFEST_HELPER_PATTERN = /runPublishManifestCli\s*\(/;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -139,6 +140,9 @@ function validateRuntimeDependencyPolicy(repoRoot, runtimePackages, errors) {
 				"scripts",
 				"publish-manifest.mjs",
 			);
+			const publishManifestSource = fs.existsSync(publishManifestPath)
+				? fs.readFileSync(publishManifestPath, "utf8")
+				: null;
 
 			if (prepack !== "bun run build && node ./scripts/publish-manifest.mjs prepare") {
 				errors.push(
@@ -150,9 +154,13 @@ function validateRuntimeDependencyPolicy(repoRoot, runtimePackages, errors) {
 					`${relativePath} must restore its source manifest during postpack.`,
 				);
 			}
-			if (!fs.existsSync(publishManifestPath)) {
+			if (!publishManifestSource) {
 				errors.push(
 					`${relativePath} depends on workspace protocol rewriting but is missing scripts/publish-manifest.mjs.`,
+				);
+			} else if (!SHARED_PUBLISH_MANIFEST_HELPER_PATTERN.test(publishManifestSource)) {
+				errors.push(
+					`${relativePath} depends on workspace protocol rewriting but scripts/publish-manifest.mjs does not delegate to the shared publish-manifest helper.`,
 				);
 			}
 
