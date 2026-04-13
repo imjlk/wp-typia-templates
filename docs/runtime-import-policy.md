@@ -13,6 +13,8 @@ surfaces.
   Project schema and OpenAPI helpers.
 - `@wp-typia/block-runtime`
   Generated-project block helper root.
+- `@wp-typia/block-runtime/migration-types`
+  Shared manifest and migration contract implementation owner.
 - `@wp-typia/block-runtime/schema-core`
   Shared schema/OpenAPI implementation owner.
 - `@wp-typia/block-runtime/metadata-core`

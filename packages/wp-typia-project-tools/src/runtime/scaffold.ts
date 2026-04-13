@@ -48,6 +48,7 @@ import {
 } from "./template-defaults.js";
 import { copyInterpolatedDirectory } from "./template-render.js";
 import {
+	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	PROJECT_TOOLS_PACKAGE_ROOT,
 	TEMPLATE_IDS,
 	getTemplateById,
@@ -64,7 +65,6 @@ import {
 const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
 const PHP_PREFIX_PATTERN = /^[a-z_][a-z0-9_]*$/;
 const PHP_PREFIX_MAX_LENGTH = 50;
-const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
 const WORKSPACE_TEMPLATE_ALIAS = "workspace";
 const EPHEMERAL_NODE_MODULES_LINK_TYPE = process.platform === "win32" ? "junction" : "dir";
 const LOCKFILES: Record<PackageManagerId, string[]> = {

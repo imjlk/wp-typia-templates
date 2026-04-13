@@ -14,6 +14,10 @@ This repository has seven public surfaces:
   Project schema/OpenAPI helpers.
 - `@wp-typia/block-runtime`
   Generated-project runtime helper root.
+- `@wp-typia/block-runtime/migration-types`
+  Shared manifest and migration contract types.
+- `@wp-typia/block-runtime/schema-core`
+  Shared schema/OpenAPI helpers.
 - `@wp-typia/block-runtime/metadata-core`
   Metadata sync and endpoint manifest helpers.
 - `@wp-typia/create`

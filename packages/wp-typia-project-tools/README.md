@@ -23,6 +23,8 @@ Implementation note:
 - `@wp-typia/project-tools/schema-core` remains the preferred project-tooling
   import path.
 - The shared implementation now lives in `@wp-typia/block-runtime/schema-core`.
+- Shared manifest/migration contract types now live in
+  `@wp-typia/block-runtime/migration-types`.
 
 Example:
 

@@ -599,6 +599,15 @@ test(
   expect(generatedValidators).not.toContain("createScaffoldValidatorToolkit");
   expect(generatedValidators).not.toContain("generateUniqueId");
   expect(generatedEdit).toContain("@wp-typia/block-runtime/inspector");
+  expect(generatedEdit).toContain(
+    "import type { BlockEditProps } from '@wordpress/blocks';"
+  );
+  expect(generatedEdit).toContain(
+    "type EditProps = BlockEditProps<DemoInteractivityAttributes>;"
+  );
+  expect(generatedEdit).toContain(
+    "export default function Edit({ attributes, setAttributes, isSelected }: EditProps)"
+  );
   expect(generatedEdit).not.toContain("@wp-typia/project-tools/schema-core");
   expect(generatedEdit).toContain("InspectorFromManifest");
   expect(generatedEdit).toContain("useEditorFields");

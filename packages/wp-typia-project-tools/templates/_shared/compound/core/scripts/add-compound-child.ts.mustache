@@ -460,7 +460,8 @@ function renderEditFile(
 ): string {
 	const childCssClassName = buildBlockCssClassName( PARENT_BLOCK_NAMESPACE, childFolderSlug );
 
-	return `import { RichText, useBlockProps } from '@wordpress/block-editor';
+	return `import type { BlockEditProps } from '@wordpress/blocks';
+import { RichText, useBlockProps } from '@wordpress/block-editor';
 import { Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
@@ -471,13 +472,12 @@ import {
 \tvalidate${ childInterfaceName },
 } from './validators';
 
+type EditProps = BlockEditProps< ${ childTypeName } >;
+
 export default function Edit( {
 \tattributes,
 \tsetAttributes,
-}: {
-\tattributes: ${ childTypeName };
-\tsetAttributes: ( attrs: Partial< ${ childTypeName } > ) => void;
-} ) {
+}: EditProps ) {
 \tconst updateAttribute = createAttributeUpdater( attributes, setAttributes );
 \tconst { errorMessages, isValid } = useTypiaValidation(
 \t\tattributes,

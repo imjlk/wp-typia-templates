@@ -192,6 +192,42 @@ test("local official external template configs honor --variant overrides", async
   expect(generatedBlockJson.supports.multiple).toBe(true);
 });
 
+test("workspace template package identity is defined once and imported by runtime callers", () => {
+  const runtimeDir = path.join(packageRoot, "src", "runtime");
+  const templateRegistry = fs.readFileSync(
+    path.join(runtimeDir, "template-registry.ts"),
+    "utf8"
+  );
+  const templateSource = fs.readFileSync(
+    path.join(runtimeDir, "template-source.ts"),
+    "utf8"
+  );
+  const cliScaffold = fs.readFileSync(
+    path.join(runtimeDir, "cli-scaffold.ts"),
+    "utf8"
+  );
+  const scaffoldRuntime = fs.readFileSync(
+    path.join(runtimeDir, "scaffold.ts"),
+    "utf8"
+  );
+
+  expect(templateRegistry).toContain(
+    'export const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";'
+  );
+  expect(templateSource).toContain("OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE");
+  expect(cliScaffold).toContain("OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE");
+  expect(scaffoldRuntime).toContain("OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE");
+  expect(templateSource).not.toContain(
+    'const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";'
+  );
+  expect(cliScaffold).not.toContain(
+    'const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";'
+  );
+  expect(scaffoldRuntime).not.toContain(
+    'const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";'
+  );
+});
+
 test("official workspace template scaffolds through the local npm template resolver", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-template");
 

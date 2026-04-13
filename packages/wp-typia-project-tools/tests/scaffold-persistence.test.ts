@@ -255,6 +255,13 @@ test(
       /editorFields\.getStringValue\(\s*attributes,\s*['"]alignment['"]/u
     );
     expect(generatedEdit).toContain("attributes={ attributes }");
+    expect(generatedEdit).toContain(
+      "import type { BlockEditProps } from '@wordpress/blocks';"
+    );
+    expect(generatedEdit).toContain(
+      "type EditProps = BlockEditProps< DemoPersistencePublicAttributes >;"
+    );
+    expect(generatedEdit).toContain("}: EditProps )");
     expect(generatedEdit).not.toContain(
       "attributes as unknown as Record< string, unknown >"
     );
@@ -664,6 +671,13 @@ test("scaffoldProject creates a persistence template with authenticated writes b
     /editorFields\.getStringValue\(\s*attributes,\s*['"]alignment['"]/u
   );
   expect(generatedEdit).toContain("attributes={ attributes }");
+  expect(generatedEdit).toContain(
+    "import type { BlockEditProps } from '@wordpress/blocks';"
+  );
+  expect(generatedEdit).toContain(
+    "type EditProps = BlockEditProps< DemoPersistenceAuthenticatedAttributes >;"
+  );
+  expect(generatedEdit).toContain("}: EditProps )");
   expect(generatedEdit).not.toContain(
     "attributes as unknown as Record< string, unknown >"
   );

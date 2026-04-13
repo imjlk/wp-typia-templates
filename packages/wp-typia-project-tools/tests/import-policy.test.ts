@@ -7,9 +7,15 @@ const repoRoot = path.resolve(packageRoot, "..", "..");
 
 describe("@wp-typia/project-tools import policy", () => {
 	test("exports project orchestration helpers without re-exporting generated runtime helpers", async () => {
-		const [rootModule, schemaCoreModule, metadataCoreModule] = await Promise.all([
+		const [
+			rootModule,
+			schemaCoreModule,
+			migrationTypesModule,
+			metadataCoreModule,
+		] = await Promise.all([
 			import("@wp-typia/project-tools"),
 			import("@wp-typia/project-tools/schema-core"),
+			import("@wp-typia/block-runtime/migration-types"),
 			import("@wp-typia/block-runtime/metadata-core"),
 		]);
 
@@ -27,6 +33,7 @@ describe("@wp-typia/project-tools import policy", () => {
 		expect(typeof rootModule.runMigrationCommand).toBe("function");
 		expect(typeof rootModule.runScaffoldFlow).toBe("function");
 		expect(typeof schemaCoreModule.normalizeEndpointAuthDefinition).toBe("function");
+		expect(Object.keys(migrationTypesModule)).toEqual([]);
 		expect(typeof metadataCoreModule.defineEndpointManifest).toBe("function");
 
 		expect("applyTemplateDefaultsFromManifest" in rootModule).toBe(false);
@@ -88,6 +95,7 @@ describe("@wp-typia/project-tools import policy", () => {
 		expect(projectToolsReadme).toContain("@wp-typia/project-tools/schema-core");
 		expect(projectToolsReadme).toContain("BlockGeneratorService");
 		expect(projectToolsReadme).toContain("@wp-typia/block-runtime/*");
+		expect(projectToolsReadme).toContain("@wp-typia/block-runtime/migration-types");
 		expect(projectToolsReadme).toContain("@wp-typia/block-runtime/schema-core");
 		expect(createReadme).toContain("deprecated legacy package shell");
 		expect(createReadme).toContain("@wp-typia/project-tools");
@@ -99,6 +107,7 @@ describe("@wp-typia/project-tools import policy", () => {
 		expect(runtimeSurfaceDoc).toContain("@wp-typia/project-tools");
 		expect(runtimeSurfaceDoc).toContain("BlockGeneratorService");
 		expect(runtimeSurfaceDoc).toContain("@wp-typia/project-tools/schema-core");
+		expect(runtimeSurfaceDoc).toContain("@wp-typia/block-runtime/migration-types");
 		expect(runtimeSurfaceDoc).toContain("@wp-typia/block-runtime/schema-core");
 		expect(runtimeSurfaceDoc).toContain(
 			"no longer ship structural, TS/TSX, style, or block-local",
@@ -111,10 +120,57 @@ describe("@wp-typia/project-tools import policy", () => {
 		expect(importPolicyDoc).toContain("@wp-typia/project-tools");
 		expect(importPolicyDoc).toContain("BlockGeneratorService");
 		expect(importPolicyDoc).toContain("@wp-typia/project-tools/schema-core");
+		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/migration-types");
 		expect(importPolicyDoc).toContain("@wp-typia/block-runtime/schema-core");
 		expect(importPolicyDoc).toContain("built-in templates no longer ship");
 		expect(importPolicyDoc).toContain("structural,");
 		expect(importPolicyDoc).toContain("render.php` Mustache files");
 		expect(importPolicyDoc).not.toContain("@wp-typia/project-tools/runtime/*");
+	});
+
+	test("shared migration contracts and workspace template identity have a single owner", () => {
+		const blockRuntimePackageManifest = JSON.parse(
+			fs.readFileSync(
+				path.join(repoRoot, "packages", "wp-typia-block-runtime", "package.json"),
+				"utf8",
+			),
+		) as { exports?: Record<string, unknown> };
+		const migrationTypesSource = fs.readFileSync(
+			path.join(packageRoot, "src", "runtime", "migration-types.ts"),
+			"utf8",
+		);
+		const templateRegistrySource = fs.readFileSync(
+			path.join(packageRoot, "src", "runtime", "template-registry.ts"),
+			"utf8",
+		);
+		const templateSourceSource = fs.readFileSync(
+			path.join(packageRoot, "src", "runtime", "template-source.ts"),
+			"utf8",
+		);
+		const cliScaffoldSource = fs.readFileSync(
+			path.join(packageRoot, "src", "runtime", "cli-scaffold.ts"),
+			"utf8",
+		);
+		const scaffoldSource = fs.readFileSync(
+			path.join(packageRoot, "src", "runtime", "scaffold.ts"),
+			"utf8",
+		);
+
+		expect(blockRuntimePackageManifest.exports?.["./migration-types"]).toBeDefined();
+		expect(migrationTypesSource).toContain(
+			'from "@wp-typia/block-runtime/migration-types"',
+		);
+		expect(templateRegistrySource).toContain(
+			'export const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";',
+		);
+		expect(templateSourceSource).not.toContain(
+			'const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";',
+		);
+		expect(cliScaffoldSource).not.toContain(
+			'const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";',
+		);
+		expect(scaffoldSource).not.toContain(
+			'const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";',
+		);
 	});
 });

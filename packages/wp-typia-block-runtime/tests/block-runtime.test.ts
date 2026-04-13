@@ -21,6 +21,7 @@ describe("@wp-typia/block-runtime", () => {
 			rootModule,
 			blocksModule,
 			schemaCoreModule,
+			migrationTypesModule,
 			metadataCoreModule,
 			defaultsModule,
 			editorModule,
@@ -31,6 +32,7 @@ describe("@wp-typia/block-runtime", () => {
 			import("@wp-typia/block-runtime"),
 			import("@wp-typia/block-runtime/blocks"),
 			import("@wp-typia/block-runtime/schema-core"),
+			import("@wp-typia/block-runtime/migration-types"),
 			import("@wp-typia/block-runtime/metadata-core"),
 			import("@wp-typia/block-runtime/defaults"),
 			import("@wp-typia/block-runtime/editor"),
@@ -47,6 +49,7 @@ describe("@wp-typia/block-runtime", () => {
 		expect(typeof blocksModule.createTypiaWebpackConfig).toBe("function");
 		expect(typeof schemaCoreModule.manifestToJsonSchema).toBe("function");
 		expect(typeof schemaCoreModule.manifestToOpenApi).toBe("function");
+		expect(Object.keys(migrationTypesModule)).toEqual([]);
 		expect(typeof metadataCoreModule.runSyncBlockMetadata).toBe("function");
 		expect(typeof metadataCoreModule.syncRestOpenApi).toBe("function");
 		expect(typeof defaultsModule.applyTemplateDefaultsFromManifest).toBe("function");

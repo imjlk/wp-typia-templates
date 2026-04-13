@@ -14,6 +14,7 @@ import { x as extractTarball } from "tar";
 
 import {
 	BUILTIN_TEMPLATE_IDS,
+	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	PROJECT_TOOLS_PACKAGE_ROOT,
 	isBuiltInTemplateId,
 } from "./template-registry.js";
@@ -34,7 +35,6 @@ import { copyRawDirectory, copyRenderedDirectory } from "./template-render.js";
 const EXTERNAL_TEMPLATE_ENTRY_CANDIDATES = ["index.js", "index.cjs", "index.mjs"] as const;
 const TEMPLATE_WARNING_MESSAGE =
 	"wp-typia owns package/tooling/sync setup for generated projects, so this external template setting is ignored.";
-const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
 type TemplateSourceFormat = "wp-typia" | "create-block-external" | "create-block-subset";
 
 /**
