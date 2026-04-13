@@ -17,9 +17,9 @@
       "default": "./dist/index.js"
     },
     "./http": {
-      "types": "./dist/http.d.ts",
-      "import": "./dist/http.js",
-      "default": "./dist/http.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./react": {
       "types": "./dist/react.d.ts",

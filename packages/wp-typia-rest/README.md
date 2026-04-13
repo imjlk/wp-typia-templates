@@ -23,7 +23,9 @@ resolution, use `@wp-typia/api-client`.
   Backward-compatible alias of the root surface. It is not a distinct semantic
   contract and may be removed in a future major once downstream imports settle.
 - `@wp-typia/rest/http`
-  Decoder-only helper surface for query/header/parameter decoders.
+  Backward-compatible alias of the root surface. It remains publishable for
+  existing imports, but it is not a distinct decoder-only contract in the
+  current major line.
 - `@wp-typia/rest/react`
   React-only cache and hook layer.
 

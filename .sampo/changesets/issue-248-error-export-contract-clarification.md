@@ -5,6 +5,6 @@ npm/@wp-typia/rest: patch
 
 Clarify the public runtime error contract and `@wp-typia/rest` export semantics
 by documenting validation-vs-throw behavior, introducing named configuration and
-assertion errors for the runtime client packages, and making the `./http`
-subpath a distinct decoder-only export while keeping `./client` as a documented
-compatibility alias.
+assertion errors for the runtime client packages, and explicitly documenting
+that `./client` and `./http` remain compatibility aliases in the current major
+line instead of introducing a breaking export split.

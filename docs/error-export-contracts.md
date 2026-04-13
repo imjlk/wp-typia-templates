@@ -100,14 +100,17 @@ These subpaths are semantically distinct and should remain documented that way.
   Compatibility alias of the root surface. It is public, but it is not a
   distinct semantic contract.
 - `@wp-typia/rest/http`
-  Decoder-only helper surface.
+  Compatibility alias of the root surface. It remains available for historical
+  imports, but it is not yet a distinct decoder-only contract in the current
+  major line.
 - `@wp-typia/rest/react`
   React cache and hook surface.
 
 Implications:
 
 - prefer `@wp-typia/rest` for transport-oriented imports
-- prefer `@wp-typia/rest/http` when a consumer only needs decoder helpers
+- treat `@wp-typia/rest/http` as compatibility-only until a future major
+  release can safely narrow it
 - prefer `@wp-typia/rest/react` for hook imports
 - treat `@wp-typia/rest/client` as compatibility-only, not as the recommended
   canonical import

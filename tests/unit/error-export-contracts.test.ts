@@ -29,10 +29,13 @@ describe("repository error and export contracts", () => {
 		expect(contractGuide).toContain("RestRootResolutionError");
 		expect(contractGuide).toContain("@wp-typia/rest/client");
 		expect(contractGuide).toContain("@wp-typia/rest/http");
+		expect(contractGuide).toContain("compatibility alias");
 		expect(importPolicy).toContain("@wp-typia/api-client");
 		expect(importPolicy).toContain("@wp-typia/rest/http");
+		expect(importPolicy).toContain("Compatibility alias of the root");
 		expect(importPolicy).toContain("RestQueryHookUsageError");
 		expect(runtimeSurface).toContain("@wp-typia/rest/client");
+		expect(runtimeSurface).toContain("`./client` and `./http` are compatibility-only aliases");
 		expect(runtimeSurface).toContain("@wp-typia/api-client/runtime-primitives");
 	});
 });

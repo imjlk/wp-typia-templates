@@ -19,7 +19,8 @@ surfaces.
   Compatibility alias of the root `@wp-typia/rest` surface, not a distinct
   semantic contract.
 - `@wp-typia/rest/http`
-  Decoder-only helper surface.
+  Compatibility alias of the root `@wp-typia/rest` surface in the current
+  major line. It is not yet a distinct decoder-only contract.
 - `@wp-typia/rest/react`
   React cache and hook surface.
 - `@wp-typia/project-tools`

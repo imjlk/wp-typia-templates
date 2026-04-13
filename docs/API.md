@@ -234,7 +234,8 @@ Export semantics:
 - `@wp-typia/rest` is the canonical convenience surface
 - `@wp-typia/rest/client` is a backward-compatible alias, not a distinct
   semantic contract
-- `@wp-typia/rest/http` is the decoder-only helper surface
+- `@wp-typia/rest/http` is currently a backward-compatible alias of the root
+  surface, not a distinct decoder-only contract
 - `@wp-typia/rest/react` is the React cache/hook layer
 
 The root package stays transport-only. React/data helpers live under the

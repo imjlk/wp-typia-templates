@@ -67,8 +67,8 @@ This document is descriptive, not normative. For support guarantees, see
   (`WpTypiaContractError`, `WpTypiaValidationAssertionError`).
 - `@wp-typia/rest` owns WordPress-specific route discovery, `apiFetch`
   integration, decoder helpers, and the React cache/hook layer. The root
-  surface is canonical, `./client` is compatibility-only, `./http` is the
-  decoder-only surface, and `./react` owns hooks.
+  surface is canonical, `./client` and `./http` are compatibility-only aliases
+  in the current major line, and `./react` owns hooks.
 - `wp-typia` owns the CLI, help, TUI, completions, skills, MCP, and bin entry.
 - `@wp-typia/project-tools` owns scaffold, add-block, migrate, template,
   doctor, package-manager, starter-manifest, the typed generator boundary, the
