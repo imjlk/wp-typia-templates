@@ -102,10 +102,10 @@ describe('validateMaintenanceAutomationPolicy', () => {
       '.github/dependabot.yml must configure a composer update lane.',
     );
     expect(result.errors).toContain(
-      ".github/dependabot.yml must target the main branch.",
+      '.github/dependabot.yml must keep the github-actions lane targeting the main branch.',
     );
     expect(result.errors).toContain(
-      '.github/dependabot.yml must keep a weekly update cadence.',
+      '.github/dependabot.yml must keep the github-actions lane on a weekly update cadence.',
     );
   });
 
@@ -128,7 +128,7 @@ describe('validateMaintenanceAutomationPolicy', () => {
 
     expect(result.valid).toBe(false);
     expect(result.errors).toContain(
-      '.github/workflows/dependency-audit.yml must include "pull_request:".',
+      '.github/workflows/dependency-audit.yml must include "pull_request:\\n    branches: [main]".',
     );
     expect(result.errors).toContain(
       '.github/workflows/dependency-audit.yml must include "run: composer audit --locked".',

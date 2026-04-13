@@ -57,32 +57,63 @@ function lintJobBlock(workflowSource) {
   return blockLines.join('\n');
 }
 
+function extractDependabotUpdateBlock(sourceText, ecosystem) {
+  const lines = sourceText.split('\n');
+  const startIndex = lines.findIndex(
+    (line) => line.trim() === `- package-ecosystem: '${ecosystem}'`,
+  );
+
+  if (startIndex < 0) {
+    return '';
+  }
+
+  const blockLines = [];
+  for (let index = startIndex; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (index > startIndex && /^  - package-ecosystem: /.test(line)) {
+      break;
+    }
+    if (index > startIndex && line && !line.startsWith('  ')) {
+      break;
+    }
+    blockLines.push(line);
+  }
+
+  return blockLines.join('\n');
+}
+
 function validateDependabotConfig(sourceText, errors) {
   for (const ecosystem of MAINTENANCE_AUTOMATION_POLICY.dependabotEcosystems) {
-    if (!sourceText.includes(`package-ecosystem: '${ecosystem}'`)) {
+    const block = extractDependabotUpdateBlock(sourceText, ecosystem);
+
+    if (!block) {
       errors.push(
         `.github/dependabot.yml must configure a ${ecosystem} update lane.`,
       );
+      continue;
     }
-  }
 
-  if (!sourceText.includes("target-branch: 'main'")) {
-    errors.push(".github/dependabot.yml must target the main branch.");
-  }
+    if (!block.includes("target-branch: 'main'")) {
+      errors.push(
+        `.github/dependabot.yml must keep the ${ecosystem} lane targeting the main branch.`,
+      );
+    }
 
-  if (!sourceText.includes("interval: 'weekly'")) {
-    errors.push(".github/dependabot.yml must keep a weekly update cadence.");
+    if (!block.includes("interval: 'weekly'")) {
+      errors.push(
+        `.github/dependabot.yml must keep the ${ecosystem} lane on a weekly update cadence.`,
+      );
+    }
   }
 }
 
 function validateDependencyAuditWorkflow(sourceText, errors) {
   for (const requiredSnippet of [
     'name: Dependency and Security Audit',
-    'pull_request:',
-    'push:',
+    'pull_request:\n    branches: [main]',
+    'push:\n    branches: [main]',
     'schedule:',
     'workflow_dispatch:',
-    'branches: [main]',
     'name: Composer Audit',
     'run: composer audit --locked',
     "if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'",
