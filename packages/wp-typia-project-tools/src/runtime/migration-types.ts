@@ -1,3 +1,10 @@
+/**
+ * Shared migration contract facade for project-tools runtime.
+ *
+ * Re-exports canonical manifest and migration contracts from
+ * `@wp-typia/block-runtime/migration-types` and layers project-tools-specific
+ * migration workspace types on top.
+ */
 import type {
 	JsonValue,
 	ManifestAttribute,

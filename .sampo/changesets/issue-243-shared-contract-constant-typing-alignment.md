@@ -1,4 +1,5 @@
 ---
+npm/@wp-typia/block-runtime: patch
 npm/@wp-typia/project-tools: patch
 npm/wp-typia: patch
 ---
