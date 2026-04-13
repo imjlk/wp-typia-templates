@@ -16,6 +16,7 @@ This document is descriptive, not normative. For support guarantees, see
   Schema and OpenAPI helpers for project-level documents.
 - `@wp-typia/block-runtime`
   Generated-project helper root.
+- `@wp-typia/block-runtime/migration-types`
 - `@wp-typia/block-runtime/schema-core`
 - `@wp-typia/block-runtime/metadata-core`
 - `@wp-typia/block-runtime/blocks`
@@ -34,6 +35,7 @@ This document is descriptive, not normative. For support guarantees, see
 - `wp-typia`
 - `@wp-typia/project-tools`
 - `@wp-typia/project-tools/schema-core`
+- `@wp-typia/block-runtime/migration-types`
 - `@wp-typia/block-runtime/schema-core`
 - `@wp-typia/block-runtime/*`
 - `@wp-typia/block-runtime/metadata-core`
@@ -53,5 +55,6 @@ This document is descriptive, not normative. For support guarantees, see
   Built-in templates no longer ship structural, TS/TSX, style, or block-local
   `render.php` Mustache files for those generated artifacts.
 - `@wp-typia/block-runtime/*` owns generated-project runtime helpers directly,
-  including the canonical `schema-core` implementation.
+  including the canonical `schema-core` implementation and shared
+  manifest/migration contract types.
 - `@wp-typia/create` no longer owns runtime exports or CLI behavior.

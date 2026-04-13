@@ -21,6 +21,11 @@
       "import": "./dist/schema-core.js",
       "default": "./dist/schema-core.js"
     },
+    "./migration-types": {
+      "types": "./dist/migration-types.d.ts",
+      "import": "./dist/migration-types.js",
+      "default": "./dist/migration-types.js"
+    },
     "./metadata-core": {
       "types": "./dist/metadata-core.d.ts",
       "import": "./dist/metadata-core.js",

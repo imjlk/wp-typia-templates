@@ -198,6 +198,13 @@ test(
     )
   ).toBe(false);
   expect(parentEdit).toContain("createAttributeUpdater");
+  expect(parentEdit).toContain(
+    "import type { BlockEditProps } from '@wordpress/blocks';"
+  );
+  expect(parentEdit).toContain(
+    "type EditProps = BlockEditProps< DemoCompoundAttributes >;"
+  );
+  expect(parentEdit).toContain("}: EditProps )");
   expect(parentEdit).toContain("useTypiaValidation");
   expect(parentEdit).toContain("ALLOWED_CHILD_BLOCKS");
   expect(parentEdit).toContain("DEFAULT_CHILD_TEMPLATE");
@@ -223,6 +230,13 @@ test(
   expect(parentStyle).toContain(".wp-block-create-block-demo-compound");
   expect(parentStyle).toContain(".wp-block-create-block-demo-compound-item");
   expect(childEdit).toContain("createAttributeUpdater");
+  expect(childEdit).toContain(
+    "import type { BlockEditProps } from '@wordpress/blocks';"
+  );
+  expect(childEdit).toContain(
+    "type EditProps = BlockEditProps< DemoCompoundItemAttributes >;"
+  );
+  expect(childEdit).toContain("}: EditProps )");
   expect(childEdit).toContain("useTypiaValidation");
   expect(childEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
   expect(childEdit).toContain(
@@ -246,6 +260,12 @@ test(
   expect(addChildScript).toContain("createUseTypiaValidationHook");
   expect(addChildScript).toContain("createTemplateValidatorToolkit");
   expect(addChildScript).not.toContain("createScaffoldValidatorToolkit");
+  expect(addChildScript).toContain(
+    "import type { BlockEditProps } from '@wordpress/blocks';"
+  );
+  expect(addChildScript).toContain(
+    "type EditProps = BlockEditProps< ${ childTypeName } >;"
+  );
   expect(addChildScript).toContain("buildScaffoldBlockRegistration");
   expect(addChildScript).toContain("type ScaffoldBlockMetadata");
   expect(addChildScript).toContain("ALLOWED_CHILD_MARKER");
@@ -677,6 +697,13 @@ test(
       generatedBlockConfig.match(/restManifest: defineEndpointManifest/g)
     ).toHaveLength(1);
     expect(parentEdit).toContain("createAttributeUpdater");
+    expect(parentEdit).toContain(
+      "import type { BlockEditProps } from '@wordpress/blocks';"
+    );
+    expect(parentEdit).toContain(
+      "type EditProps = BlockEditProps< DemoCompoundStorageAttributes >;"
+    );
+    expect(parentEdit).toContain("}: EditProps )");
     expect(parentEdit).toContain("useTypiaValidation");
     expect(parentEdit).toContain("ALLOWED_CHILD_BLOCKS");
     expect(parentEdit).toContain("DEFAULT_CHILD_TEMPLATE");

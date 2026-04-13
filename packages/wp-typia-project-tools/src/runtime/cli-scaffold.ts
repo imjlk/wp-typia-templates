@@ -22,10 +22,11 @@ import {
 	getOptionalOnboardingNote,
 	getOptionalOnboardingSteps,
 } from "./scaffold-onboarding.js";
-import { isBuiltInTemplateId } from "./template-registry.js";
+import {
+	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
+	isBuiltInTemplateId,
+} from "./template-registry.js";
 import type { TemplateDefinition } from "./template-registry.js";
-
-const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
 
 interface GetNextStepsOptions {
 	noInstall: boolean;
