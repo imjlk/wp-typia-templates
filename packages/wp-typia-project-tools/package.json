@@ -126,8 +126,6 @@
     "typescript": "^5.9.2"
   },
   "devDependencies": {
-    "react": "^19.2.0",
-    "react-devtools-core": "^7.0.1",
-    "ws": "^8.18.0"
+    "react": "^19.2.0"
   }
 }
