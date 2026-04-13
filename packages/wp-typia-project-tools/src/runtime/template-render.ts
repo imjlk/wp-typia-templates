@@ -176,6 +176,36 @@ export async function copyInterpolatedDirectory(
 	}
 }
 
+export async function listInterpolatedDirectoryOutputs(
+	sourceDir: string,
+	view: Record<string, string>,
+): Promise<string[]> {
+	const virtualRoot = path.resolve("/wp-typia-template-preview");
+	const outputs: string[] = [];
+
+	async function visit(currentSourceDir: string, currentTargetDir: string): Promise<void> {
+		const entries = await fsp.readdir(currentSourceDir, { withFileTypes: true });
+		for (const entry of entries) {
+			const sourcePath = path.join(currentSourceDir, entry.name);
+			const destinationNameTemplate = entry.name.endsWith(".mustache")
+				? entry.name.slice(0, -".mustache".length)
+				: entry.name;
+			const destinationName = renderInterpolatedString(destinationNameTemplate, view);
+			const destinationPath = resolveRenderedPath(currentTargetDir, destinationName);
+
+			if (entry.isDirectory()) {
+				await visit(sourcePath, destinationPath);
+				continue;
+			}
+
+			outputs.push(path.relative(virtualRoot, destinationPath).replace(/\\/g, "/"));
+		}
+	}
+
+	await visit(sourceDir, virtualRoot);
+	return outputs.sort((left, right) => left.localeCompare(right));
+}
+
 export function pathExists(targetPath: string): boolean {
 	return fs.existsSync(targetPath);
 }

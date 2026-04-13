@@ -30,6 +30,22 @@ export type {
 	ValidateBlockResult,
 } from "./block-generator-service.js";
 export {
+	BLOCK_GENERATION_TOOL_CONTRACT_VERSION,
+	inspectBlockGeneration,
+} from "./block-generator-tool-contract.js";
+export type {
+	BlockGenerationEmittedFilePreview,
+	BlockGenerationRenderPreview,
+	BlockGenerationStarterManifestPreview,
+	BlockGenerationTemplateCopyPreview,
+	BlockGenerationToolStage,
+	InspectBlockGenerationInput,
+	InspectBlockGenerationPlanResult,
+	InspectBlockGenerationRenderResult,
+	InspectBlockGenerationResult,
+	InspectBlockGenerationValidateResult,
+} from "./block-generator-tool-contract.js";
+export {
 	formatMigrationHelpText,
 	parseMigrationArgs,
 	runMigrationCommand,

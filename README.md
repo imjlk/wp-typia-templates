@@ -181,6 +181,7 @@ npx wp-typia create my-block --template @scope/create-block-template --variant h
 
 - [Architecture Guide](docs/architecture.md)
 - [Block Generator Architecture](docs/block-generator-architecture.md)
+- [Block Generator Tool Contract](docs/block-generator-tool-contract.md)
 - [External Template-Layer Composition RFC](docs/external-template-layer-composition.md)
 - [API Guide](docs/API.md)
 - [Migration Guide](docs/migrations.md)

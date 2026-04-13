@@ -85,6 +85,11 @@ describe('repository DX baseline', () => {
     ).toBe(true);
     expect(
       fs.existsSync(
+        path.join(repoRoot, 'docs', 'block-generator-tool-contract.md'),
+      ),
+    ).toBe(true);
+    expect(
+      fs.existsSync(
         path.join(repoRoot, 'docs', 'external-template-layer-composition.md'),
       ),
     ).toBe(true);
@@ -158,6 +163,9 @@ describe('repository DX baseline', () => {
       '[Block Generator Architecture](docs/block-generator-architecture.md)',
     );
     expect(readme).toContain(
+      '[Block Generator Tool Contract](docs/block-generator-tool-contract.md)',
+    );
+    expect(readme).toContain(
       '[External Template-Layer Composition RFC](docs/external-template-layer-composition.md)',
     );
     expect(readme).toContain(
@@ -186,6 +194,9 @@ describe('repository DX baseline', () => {
     expect(contributing).toContain('[`SECURITY.md`](./SECURITY.md)');
     expect(contributing).toContain(
       '[`docs/block-generator-architecture.md`](./docs/block-generator-architecture.md)',
+    );
+    expect(contributing).toContain(
+      '[`docs/block-generator-tool-contract.md`](./docs/block-generator-tool-contract.md)',
     );
     expect(contributing).toContain(
       '[`docs/external-template-layer-composition.md`](./docs/external-template-layer-composition.md)',

@@ -9,7 +9,7 @@ This repository has multiple public surfaces:
 - `@wp-typia/project-tools`
   Project orchestration package for scaffold, add, migrate, template, doctor,
   package-manager, starter-manifest helpers, and the typed generator
-  boundary (`BlockSpec`, `BlockGeneratorService`).
+  boundary (`BlockSpec`, `BlockGeneratorService`, `inspectBlockGeneration`).
 - `@wp-typia/project-tools/schema-core`
   Project schema/OpenAPI helpers.
 - `@wp-typia/block-runtime`
@@ -207,6 +207,7 @@ project/bootstrap assets, see:
 
 - [`docs/block-generator-architecture.md`](./block-generator-architecture.md)
 - [`docs/block-generator-service.md`](./block-generator-service.md)
+- [`docs/block-generator-tool-contract.md`](./block-generator-tool-contract.md)
 - [`docs/external-template-layer-composition.md`](./external-template-layer-composition.md)
 
 ## 3. `@wp-typia/block-types`
