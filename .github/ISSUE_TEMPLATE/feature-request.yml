@@ -1,6 +1,6 @@
 name: Feature request
 description: Propose a user-facing capability or workflow improvement.
-title: "[Feature]: "
+title: '[Feature]: '
 labels: []
 body:
   - type: textarea

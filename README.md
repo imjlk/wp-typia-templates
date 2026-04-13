@@ -78,12 +78,12 @@ Generated outputs can include:
 Example:
 
 ```ts
-import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";
-import { tags } from "typia";
+import type { TextAlignment } from '@wp-typia/block-types/block-editor/alignment';
+import { tags } from 'typia';
 
 export interface MyBlockAttributes {
-  content: string & tags.MinLength<1> & tags.MaxLength<1000> & tags.Default<"">;
-  alignment?: TextAlignment & tags.Default<"left">;
+  content: string & tags.MinLength<1> & tags.MaxLength<1000> & tags.Default<''>;
+  alignment?: TextAlignment & tags.Default<'left'>;
   isVisible?: boolean & tags.Default<true>;
 }
 ```
@@ -183,6 +183,7 @@ npx wp-typia create my-block --template @scope/create-block-template --variant h
 - [API Guide](docs/API.md)
 - [Migration Guide](docs/migrations.md)
 - [Error and Export Contract Guide](docs/error-export-contracts.md)
+- [Formatting Toolchain Policy](docs/formatting-toolchain-policy.md)
 - [Package Manifest Policy](docs/package-manifest-policy.md)
 - [TypeScript Strictness Policy](docs/typescript-strictness-policy.md)
 - [Upgrade Guide](UPGRADE.md)
@@ -270,6 +271,12 @@ Root ESLint covers repository infrastructure code such as `scripts/**`,
 source stays under the existing `examples:lint` workflow powered by
 `@wordpress/scripts`.
 
+Repository-owned docs/config/workflow files use a shared `Prettier 3.8.2`
+baseline. `bun run format:check` and `bun run formatting-policy:validate` are
+part of both the maintainer preflight and the GitHub Actions lint gate. See the
+[Formatting Toolchain Policy](docs/formatting-toolchain-policy.md) for the
+explicit scope and rationale.
+
 Example-specific commands live under the `examples:*` namespace:
 
 ```bash
@@ -285,17 +292,18 @@ and builds, but intentionally excludes `wp-env` startup and Playwright E2E.
 
 Command map:
 
-| Command                                  | What it targets                                   |
-| ---------------------------------------- | ------------------------------------------------- |
-| `bun run lint:repo`                      | Root ESLint for repo infrastructure code          |
-| `bun run lint:all`                       | Root ESLint, example linting, and PHP checks      |
-| `bun run format:check`                   | Non-mutating Prettier check for repo-owned files  |
-| `bun run test:all`                       | Root unit and CLI test aggregation                |
-| `bun run ci:local`                       | Fast maintainer preflight without E2E/wp-env      |
-| `bun run build`                          | Product packages and the repo-local reference app |
-| `bun run examples:build`                 | Reference app only                                |
-| `bun run --filter wp-typia test`         | Canonical CLI package checks                      |
-| `bun run examples:test:e2e`              | Playwright against the reference app              |
+| Command                              | What it targets                                   |
+| ------------------------------------ | ------------------------------------------------- |
+| `bun run lint:repo`                  | Root ESLint for repo infrastructure code          |
+| `bun run lint:all`                   | Root ESLint, example linting, and PHP checks      |
+| `bun run format:check`               | Non-mutating Prettier check for repo-owned files  |
+| `bun run formatting-policy:validate` | Validates the documented formatter/toolchain gate |
+| `bun run test:all`                   | Root unit and CLI test aggregation                |
+| `bun run ci:local`                   | Fast maintainer preflight without E2E/wp-env      |
+| `bun run build`                      | Product packages and the repo-local reference app |
+| `bun run examples:build`             | Reference app only                                |
+| `bun run --filter wp-typia test`     | Canonical CLI package checks                      |
+| `bun run examples:test:e2e`          | Playwright against the reference app              |
 
 ## License
 

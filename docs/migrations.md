@@ -76,17 +76,17 @@ For example, a retrofitted multi-block config now starts like this:
 
 ```ts
 export const migrationConfig = {
-  currentMigrationVersion: "v1",
-  supportedMigrationVersions: ["v1"],
-  snapshotDir: "src/migrations/versions",
+  currentMigrationVersion: 'v1',
+  supportedMigrationVersions: ['v1'],
+  snapshotDir: 'src/migrations/versions',
   blocks: [
     {
-      key: "compound-parent",
-      blockName: "create-block/compound-parent",
-      blockJsonFile: "src/blocks/compound-parent/block.json",
-      manifestFile: "src/blocks/compound-parent/typia.manifest.json",
-      saveFile: "src/blocks/compound-parent/save.tsx",
-      typesFile: "src/blocks/compound-parent/types.ts",
+      key: 'compound-parent',
+      blockName: 'create-block/compound-parent',
+      blockJsonFile: 'src/blocks/compound-parent/block.json',
+      manifestFile: 'src/blocks/compound-parent/typia.manifest.json',
+      saveFile: 'src/blocks/compound-parent/save.tsx',
+      typesFile: 'src/blocks/compound-parent/types.ts',
     },
   ],
 } as const;

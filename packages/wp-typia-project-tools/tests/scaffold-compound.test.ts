@@ -122,6 +122,7 @@ test(
       "utf8"
     )
   );
+  expect(packageJson.devDependencies.prettier).toBe("3.8.2");
   const childBlockJson = JSON.parse(
     fs.readFileSync(
       path.join(

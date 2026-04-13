@@ -23,7 +23,7 @@ npm install
 Open `src/types.ts` and define your block attributes:
 
 ```typescript
-import { tags } from "typia";
+import { tags } from 'typia';
 
 export interface MyTypiaBlockAttributes {
   /**
@@ -32,32 +32,28 @@ export interface MyTypiaBlockAttributes {
   title: string &
     tags.MinLength<1> &
     tags.MaxLength<100> &
-    tags.Default<"Hello World">;
+    tags.Default<'Hello World'>;
 
   /**
    * Subtitle text (optional)
    */
-  subtitle?: string &
-    tags.MaxLength<200> &
-    tags.Default<"">;
+  subtitle?: string & tags.MaxLength<200> & tags.Default<''>;
 
   /**
    * Color theme
    */
-  theme: ("light" | "dark" | "colorful") &
-    tags.Default<"light">;
+  theme: ('light' | 'dark' | 'colorful') & tags.Default<'light'>;
 
   /**
    * Animation enabled
    */
-  animate: boolean &
-    tags.Default<true>;
+  animate: boolean & tags.Default<true>;
 
   /**
    * Number of items to display
    */
   itemCount: number &
-    tags.Type<"uint32"> &
+    tags.Type<'uint32'> &
     tags.Minimum<1> &
     tags.Maximum<10> &
     tags.Default<3>;
@@ -298,6 +294,7 @@ Update `src/style.scss`:
 ## Step 7: Test Your Block
 
 1. Start development:
+
    ```bash
    npm run dev
    ```

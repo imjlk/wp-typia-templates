@@ -33,22 +33,22 @@ The root `@wp-typia/rest` entry stays transport-oriented. If you want query and
 mutation hooks on top of those WordPress helpers, use the React-only subpath:
 
 ```ts
-import { useEndpointMutation, useEndpointQuery } from "@wp-typia/rest/react";
+import { useEndpointMutation, useEndpointQuery } from '@wp-typia/rest/react';
 ```
 
 Typical usage:
 
 ```ts
-import { callEndpoint, createEndpoint } from "@wp-typia/rest";
+import { callEndpoint, createEndpoint } from '@wp-typia/rest';
 
 const endpoint = createEndpoint<MyRequest, MyResponse>({
-  method: "POST",
-  path: "/my-namespace/v1/demo",
+  method: 'POST',
+  path: '/my-namespace/v1/demo',
   validateRequest: validators.request,
   validateResponse: validators.response,
 });
 
-const result = await callEndpoint(endpoint, { title: "Hello" });
+const result = await callEndpoint(endpoint, { title: 'Hello' });
 ```
 
 `callEndpoint(...)` returns `EndpointValidationResult<Req, Res>`. If request
@@ -69,19 +69,19 @@ are reserved for public runtime misconfiguration or assertion APIs:
 If you need a canonical REST URL for a route path, use:
 
 ```ts
-import { resolveRestRouteUrl } from "@wp-typia/rest";
+import { resolveRestRouteUrl } from '@wp-typia/rest';
 
-const url = resolveRestRouteUrl("/my-namespace/v1/demo");
+const url = resolveRestRouteUrl('/my-namespace/v1/demo');
 ```
 
 If you want Typia-powered HTTP decoding, compile the decoder in the consumer project and pass it in:
 
 ```ts
-import typia from "typia";
-import { createQueryDecoder } from "@wp-typia/rest";
+import typia from 'typia';
+import { createQueryDecoder } from '@wp-typia/rest';
 
 const decodeQuery = createQueryDecoder(
-  typia.http.createValidateQuery<MyQuery>()
+  typia.http.createValidateQuery<MyQuery>(),
 );
 ```
 
@@ -100,17 +100,14 @@ The `./react` subpath adds a small cache client and React hook layer on top of
 non-query calls go through `useEndpointMutation(...)`.
 
 ```tsx
-import {
-  useEndpointMutation,
-  useEndpointQuery,
-} from "@wp-typia/rest/react";
+import { useEndpointMutation, useEndpointQuery } from '@wp-typia/rest/react';
 
 const query = useEndpointQuery(stateEndpoint, request, {
   staleTime: 30_000,
   resolveCallOptions: () => ({
     requestOptions: {
       headers: {
-        "X-WP-Nonce": resolveRestNonce(),
+        'X-WP-Nonce': resolveRestNonce(),
       },
     },
   }),
@@ -121,7 +118,7 @@ const mutation = useEndpointMutation(writeStateEndpoint, {
   resolveCallOptions: () => ({
     requestOptions: {
       headers: {
-        "X-WP-Nonce": resolveRestNonce(),
+        'X-WP-Nonce': resolveRestNonce(),
       },
     },
   }),

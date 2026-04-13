@@ -30,12 +30,12 @@ npm install
 
 The persistence template accepts additional CLI flags:
 
-| Flag | Values | Description |
-|------|--------|-------------|
-| `--data-storage` | `post-meta`, `custom-table` (default) | Where to persist data |
-| `--persistence-policy` | `authenticated` (default), `public` | Who can write data |
-| `--with-wp-env` | flag | Add local `wp-env` scripts and `.wp-env.json` |
-| `--with-test-preset` | flag | Add a test-only `wp-env` config and minimal Playwright smoke test |
+| Flag                   | Values                                | Description                                                       |
+| ---------------------- | ------------------------------------- | ----------------------------------------------------------------- |
+| `--data-storage`       | `post-meta`, `custom-table` (default) | Where to persist data                                             |
+| `--persistence-policy` | `authenticated` (default), `public`   | Who can write data                                                |
+| `--with-wp-env`        | flag                                  | Add local `wp-env` scripts and `.wp-env.json`                     |
+| `--with-test-preset`   | flag                                  | Add a test-only `wp-env` config and minimal Playwright smoke test |
 
 Example with custom options:
 
@@ -199,17 +199,14 @@ Persistence scaffolds now split the runtime client layer into three files:
 The generated `src/transport.ts` is the first place to customize runtime routing:
 
 ```typescript
-import {
-  type EndpointCallOptions,
-  resolveRestRouteUrl,
-} from '@wp-typia/rest';
+import { type EndpointCallOptions, resolveRestRouteUrl } from '@wp-typia/rest';
 
 const FRONTEND_READ_BASE_URL: string | undefined = undefined;
 const FRONTEND_WRITE_BASE_URL: string | undefined = undefined;
 
 function buildCallOptions(
   endpointPath: string,
-  baseUrl?: string
+  baseUrl?: string,
 ): EndpointCallOptions {
   return {
     requestOptions: {
@@ -253,7 +250,11 @@ import { fetchBootstrap, fetchState, writeState } from './api';
 import type { MyCounterContext, MyCounterState } from './types';
 
 function hasExpiredPublicWriteToken(expiresAt?: number): boolean {
-  return typeof expiresAt === 'number' && expiresAt > 0 && Date.now() >= expiresAt * 1000;
+  return (
+    typeof expiresAt === 'number' &&
+    expiresAt > 0 &&
+    Date.now() >= expiresAt * 1000
+  );
 }
 
 const { actions, state } = store('my-counter', {
@@ -277,7 +278,7 @@ const { actions, state } = store('my-counter', {
       const context = getContext<MyCounterContext>();
       const result = await fetchState(
         { postId: context.postId, resourceKey: context.resourceKey },
-        { transportTarget: 'frontend' }
+        { transportTarget: 'frontend' },
       );
       if (result.isValid && result.data) {
         state.count = result.data.count;
@@ -288,7 +289,7 @@ const { actions, state } = store('my-counter', {
       const context = getContext<MyCounterContext>();
       const result = await fetchBootstrap(
         { postId: context.postId, resourceKey: context.resourceKey },
-        { transportTarget: 'frontend' }
+        { transportTarget: 'frontend' },
       );
 
       state.bootstrapReady = true;
@@ -318,9 +319,10 @@ const { actions, state } = store('my-counter', {
       }
 
       if (!state.canWrite) {
-        state.error = context.persistencePolicy === 'authenticated'
-          ? 'Sign in to persist this counter.'
-          : 'Public writes are temporarily unavailable.';
+        state.error =
+          context.persistencePolicy === 'authenticated'
+            ? 'Sign in to persist this counter.'
+            : 'Public writes are temporarily unavailable.';
         return;
       }
 
@@ -341,7 +343,7 @@ const { actions, state } = store('my-counter', {
         {
           restNonce: state.restNonce,
           transportTarget: 'frontend',
-        }
+        },
       );
 
       if (result.isValid && result.data) {
@@ -420,6 +422,7 @@ npm run sync-rest
 ```
 
 This creates:
+
 - `src/api.openapi.json` - endpoint-aware REST documentation for the scaffolded routes
 - `src/api-schemas/*.schema.json` - JSON Schema files
 - `src/api-schemas/*.openapi.json` - per-contract OpenAPI compatibility fragments
@@ -435,6 +438,7 @@ For actual customization work:
 - keep `src/api-types.ts` as the source of truth for contracts and regenerate `src/api-schemas/*` plus `src/api.openapi.json` instead of hand-maintaining those generated artifacts
 
 These schemas can be used for:
+
 - API documentation
 - Client SDK generation
 - Contract testing
@@ -484,6 +488,7 @@ local inline generator helpers.
 ### Post Meta (`post-meta`)
 
 Data stored in WordPress post meta:
+
 - Simple setup, no additional tables
 - Good for per-post counters
 - Limited scalability for high-volume writes
@@ -491,6 +496,7 @@ Data stored in WordPress post meta:
 ### Custom Table (`custom-table`)
 
 Data stored in a dedicated table:
+
 - Better performance at scale
 - Requires migration on plugin activation
 - Supports aggregated counters across posts

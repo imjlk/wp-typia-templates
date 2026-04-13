@@ -1,6 +1,6 @@
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig, devices } from '@playwright/test';
 
-const isMatrixRun = process.env.PLAYWRIGHT_MATRIX === "1";
+const isMatrixRun = process.env.PLAYWRIGHT_MATRIX === '1';
 
 /**
  * Read environment variables from file.
@@ -12,7 +12,7 @@ const isMatrixRun = process.env.PLAYWRIGHT_MATRIX === "1";
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: "./tests/e2e",
+  testDir: './tests/e2e',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -22,47 +22,47 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [["list"], ["html", { outputFolder: "playwright-report" }]],
+  reporter: [['list'], ['html', { outputFolder: 'playwright-report' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: "http://localhost:8889",
+    baseURL: 'http://localhost:8889',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: "on-first-retry",
+    trace: 'on-first-retry',
 
     /* Take screenshot on failure */
-    screenshot: "only-on-failure",
+    screenshot: 'only-on-failure',
 
     /* Record video on failure */
-    video: "retain-on-failure",
+    video: 'retain-on-failure',
   },
 
   /* Default to a Chromium smoke run. Opt into the full matrix explicitly. */
   projects: isMatrixRun
     ? [
         {
-          name: "chromium",
-          use: { ...devices["Desktop Chrome"] },
+          name: 'chromium',
+          use: { ...devices['Desktop Chrome'] },
         },
         {
-          name: "firefox",
-          use: { ...devices["Desktop Firefox"] },
+          name: 'firefox',
+          use: { ...devices['Desktop Firefox'] },
         },
         {
-          name: "webkit",
-          use: { ...devices["Desktop Safari"] },
+          name: 'webkit',
+          use: { ...devices['Desktop Safari'] },
         },
       ]
     : [
         {
-          name: "chromium",
-          use: { ...devices["Desktop Chrome"] },
+          name: 'chromium',
+          use: { ...devices['Desktop Chrome'] },
         },
       ],
 
   /* Global setup/teardown for WordPress */
-  globalSetup: "./tests/global-setup.ts",
+  globalSetup: './tests/global-setup.ts',
 
   /* Test timeout */
   timeout: 30000,

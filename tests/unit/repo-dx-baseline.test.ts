@@ -16,8 +16,13 @@ describe('repository DX baseline', () => {
 		expect(scripts['lint:repo']).toBeDefined();
 		expect(scripts['lint:all']).toBeDefined();
 		expect(scripts['format:check']).toBeDefined();
+		expect(scripts['formatting-policy:validate']).toBe(
+			'node scripts/validate-formatting-toolchain-policy.mjs',
+		);
 		expect(scripts['test:all']).toBeDefined();
 		expect(scripts['ci:local']).toBeDefined();
+		expect(scripts['ci:local']).toContain('bun run formatting-policy:validate');
+		expect(scripts['ci:local']).toContain('bun run format:check');
 		expect(scripts['typescript-runtime:validate']).toBe(
 			'node scripts/validate-typescript-runtime-dependency-placement.mjs',
 		);
@@ -44,6 +49,9 @@ describe('repository DX baseline', () => {
 	test('repo meta docs and GitHub templates exist', () => {
 		expect(fs.existsSync(path.join(repoRoot, 'UPGRADE.md'))).toBe(true);
 		expect(fs.existsSync(path.join(repoRoot, 'SECURITY.md'))).toBe(true);
+		expect(
+			fs.existsSync(path.join(repoRoot, 'docs', 'formatting-toolchain-policy.md')),
+		).toBe(true);
 		expect(fs.existsSync(path.join(repoRoot, '.github', 'PULL_REQUEST_TEMPLATE.md'))).toBe(true);
 		expect(fs.existsSync(path.join(repoRoot, '.github', 'ISSUE_TEMPLATE', 'bug-report.yml'))).toBe(
 			true,
@@ -80,14 +88,22 @@ describe('repository DX baseline', () => {
 
 		expect(readme).toContain('bun run ci:local');
 		expect(readme).toContain('Root ESLint covers repository infrastructure code');
+		expect(readme).toContain('[Formatting Toolchain Policy](docs/formatting-toolchain-policy.md)');
+		expect(readme).toContain('Prettier 3.8.2');
+		expect(readme).toContain('bun run formatting-policy:validate');
 		expect(readme).toContain('## Who this is for');
 		expect(readme).toContain('[Upgrade Guide](UPGRADE.md)');
 		expect(readme).toContain('[Security Policy](SECURITY.md)');
 		expect(contributing).toContain('Linting ownership is intentionally split');
+		expect(contributing).toContain('Formatting ownership is also explicit');
 		expect(contributing).toContain('bun run lint:repo');
+		expect(contributing).toContain('bun run formatting-policy:validate');
 		expect(contributing).toContain('## Project meta docs');
 		expect(contributing).toContain('[`UPGRADE.md`](./UPGRADE.md)');
 		expect(contributing).toContain('[`SECURITY.md`](./SECURITY.md)');
+		expect(contributing).toContain(
+			'[`docs/formatting-toolchain-policy.md`](./docs/formatting-toolchain-policy.md)',
+		);
 		expect(contributing).toContain('## Generated project toolchain matrix');
 		expect(contributing).toContain('## TypeScript runtime dependency audit');
 		expect(contributing).toContain('`bun run typescript-runtime:validate`');

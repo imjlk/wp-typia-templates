@@ -20,27 +20,27 @@ Typical usage:
 
 ```ts
 import {
-	callEndpoint,
-	createEndpoint,
-	createFetchTransport,
-	withBearerToken,
-} from "@wp-typia/api-client";
+  callEndpoint,
+  createEndpoint,
+  createFetchTransport,
+  withBearerToken,
+} from '@wp-typia/api-client';
 
 const transport = withBearerToken(
-	createFetchTransport({
-		baseUrl: "http://127.0.0.1:8787",
-	}),
-	() => localStorage.getItem("access_token"),
+  createFetchTransport({
+    baseUrl: 'http://127.0.0.1:8787',
+  }),
+  () => localStorage.getItem('access_token'),
 );
 
 const endpoint = createEndpoint<MyRequest, MyResponse>({
-	method: "POST",
-	path: "/my-namespace/v1/demo",
-	validateRequest: validators.request,
-	validateResponse: validators.response,
+  method: 'POST',
+  path: '/my-namespace/v1/demo',
+  validateRequest: validators.request,
+  validateResponse: validators.response,
 });
 
-const result = await callEndpoint(endpoint, { title: "Hello" }, { transport });
+const result = await callEndpoint(endpoint, { title: 'Hello' }, { transport });
 ```
 
 Adapter-level decorators can enrich requests without making auth policy part of
@@ -48,26 +48,25 @@ the endpoint contract itself:
 
 ```ts
 import {
-	createFetchTransport,
-	withComputedHeaders,
-	withHeaderValue,
-	withHeaders,
-} from "@wp-typia/api-client";
+  createFetchTransport,
+  withComputedHeaders,
+  withHeaderValue,
+  withHeaders,
+} from '@wp-typia/api-client';
 
 const transport = withComputedHeaders(
-	withHeaders(
-		createFetchTransport({ baseUrl: "https://api.example.test/" }),
-		{ "X-Client": "portable-demo" },
-	),
-	async (request) => ({
-		"X-Request-Method": String(request.method ?? "GET"),
-	}),
+  withHeaders(createFetchTransport({ baseUrl: 'https://api.example.test/' }), {
+    'X-Client': 'portable-demo',
+  }),
+  async (request) => ({
+    'X-Request-Method': String(request.method ?? 'GET'),
+  }),
 );
 
 const wpTransport = withHeaderValue(
-	transport,
-	"X-WP-Nonce",
-	() => window.wpApiSettings?.nonce,
+  transport,
+  'X-WP-Nonce',
+  () => window.wpApiSettings?.nonce,
 );
 ```
 
@@ -76,23 +75,23 @@ When an endpoint needs both query parameters and a request body, use
 
 ```ts
 const mixedEndpoint = createEndpoint<
-	{ query: { draft: boolean }; body: { title: string } },
-	{ ok: boolean }
+  { query: { draft: boolean }; body: { title: string } },
+  { ok: boolean }
 >({
-	method: "POST",
-	path: "/my-namespace/v1/demo",
-	requestLocation: "query-and-body",
-	validateRequest: validators.mixedRequest,
-	validateResponse: validators.response,
+  method: 'POST',
+  path: '/my-namespace/v1/demo',
+  requestLocation: 'query-and-body',
+  validateRequest: validators.mixedRequest,
+  validateResponse: validators.response,
 });
 
 const result = await callEndpoint(
-	mixedEndpoint,
-	{
-		query: { draft: true },
-		body: { title: "Hello" },
-	},
-	{ transport },
+  mixedEndpoint,
+  {
+    query: { draft: true },
+    body: { title: 'Hello' },
+  },
+  { transport },
 );
 ```
 

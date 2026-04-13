@@ -15,6 +15,7 @@ bun install
 ```bash
 bun run lint:repo
 bun run format:check
+bun run formatting-policy:validate
 bun run lint:all
 bun run typecheck
 bun run test:all
@@ -32,6 +33,7 @@ Quick command map:
 - `bun run lint:repo` = root ESLint for repo infrastructure code
 - `bun run lint:all` = root ESLint + example lint + PHP checks
 - `bun run format:check` = non-mutating Prettier check for repo-owned files
+- `bun run formatting-policy:validate` = verifies the documented Prettier/CI baseline
 - `bun run test:all` = root unit + CLI test aggregation
 - `bun run ci:local` = fast maintainer preflight mirroring the non-E2E CI path
 - `bun run build` = product packages + reference app
@@ -45,6 +47,15 @@ Linting ownership is intentionally split:
 - root ESLint covers repo infrastructure code such as `scripts/**`, `tests/**`, root config files, and package-side non-example sources
 - example app source continues to live under `examples:lint` and `@wordpress/scripts`
 - `@wp-typia/api-client/internal/runtime-primitives` is the single maintained home for shared client-runtime validation/object helpers consumed by `@wp-typia/rest`; avoid reintroducing local helper copies in either package
+
+Formatting ownership is also explicit:
+
+- the repo root uses `Prettier 3.8.2` for repo-owned docs, config, workflow, and policy files
+- example apps and built-in scaffold package manifests stay aligned on the same Prettier baseline when they declare a direct formatter dependency
+- package and example source formatting continues to be owned by their package-local tooling such as `@wordpress/scripts`
+- GitHub Actions now runs both `bun run formatting-policy:validate` and `bun run format:check` in the main lint job
+
+See [`docs/formatting-toolchain-policy.md`](./docs/formatting-toolchain-policy.md) for the exact scope and rationale.
 
 `bun run ci:local` is the recommended maintainer pre-PR command. It deliberately
 stops short of `wp-env` startup and Playwright E2E so everyday local checks stay
@@ -67,6 +78,7 @@ bun run docs:build
 - [`README.md`](./README.md) is the main product/audience entry point
 - [`UPGRADE.md`](./UPGRADE.md) collects high-signal maintainer upgrade notes
 - [`SECURITY.md`](./SECURITY.md) explains private vulnerability reporting
+- [`docs/formatting-toolchain-policy.md`](./docs/formatting-toolchain-policy.md) records the formatter baseline and CI gate
 
 If you change user-facing workflows, keep the relevant meta docs in sync in the
 same PR.

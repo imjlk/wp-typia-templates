@@ -123,18 +123,22 @@ The parent block now keeps its scaffold-owned child registry in `src/blocks/<par
 ```tsx
 export const DEFAULT_CHILD_BLOCK_NAME = 'create-block/compound-demo-item';
 
-export const ALLOWED_CHILD_BLOCKS = [
-  DEFAULT_CHILD_BLOCK_NAME,
-];
+export const ALLOWED_CHILD_BLOCKS = [DEFAULT_CHILD_BLOCK_NAME];
 
 export const DEFAULT_CHILD_TEMPLATE = [
   [
     DEFAULT_CHILD_BLOCK_NAME,
-    { title: 'First Item', body: 'Add supporting details for the first internal item.' },
+    {
+      title: 'First Item',
+      body: 'Add supporting details for the first internal item.',
+    },
   ],
   [
     DEFAULT_CHILD_BLOCK_NAME,
-    { title: 'Second Item', body: 'Add supporting details for the second internal item.' },
+    {
+      title: 'Second Item',
+      body: 'Add supporting details for the second internal item.',
+    },
   ],
 ];
 ```

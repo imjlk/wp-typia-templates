@@ -25,9 +25,9 @@
         "ajv": "^8.18.0",
         "bun-types": "^1.3.11",
         "eslint": "8.57.1",
-        "eslint-config-prettier": "8.10.2",
+        "eslint-config-prettier": "10.1.8",
         "globals": "13.24.0",
-        "prettier": "2.8.8",
+        "prettier": "3.8.2",
         "react": "^19.2.5",
         "react-dom": "^19.2.5",
         "typedoc": "^0.25.4",
@@ -71,7 +71,7 @@
         "@wp-typia/block-runtime": "workspace:*",
         "@wp-typia/block-types": "workspace:*",
         "ajv": "^8.18.0",
-        "prettier": "2.8.8",
+        "prettier": "3.8.2",
         "tsx": "^4.20.5",
         "typescript": "^5.9.2",
         "typia": "^12.0.1",
@@ -101,7 +101,7 @@
         "@wp-typia/block-types": "workspace:*",
         "@wp-typia/rest": "workspace:*",
         "ajv": "^8.18.0",
-        "prettier": "2.8.8",
+        "prettier": "3.8.2",
         "tsx": "^4.20.5",
         "typescript": "^5.9.2",
         "typia": "^12.0.1",
@@ -132,7 +132,7 @@
         "@wp-typia/block-types": "workspace:*",
         "@wp-typia/rest": "workspace:*",
         "ajv": "^8.18.0",
-        "prettier": "2.8.8",
+        "prettier": "3.8.2",
         "tsx": "^4.20.5",
         "typescript": "^5.9.2",
         "typia": "^12.0.1",
@@ -2180,7 +2180,7 @@
 
     "eslint": ["eslint@8.57.1", "", { "dependencies": { "@eslint-community/eslint-utils": "^4.2.0", "@eslint-community/regexpp": "^4.6.1", "@eslint/eslintrc": "^2.1.4", "@eslint/js": "8.57.1", "@humanwhocodes/config-array": "^0.13.0", "@humanwhocodes/module-importer": "^1.0.1", "@nodelib/fs.walk": "^1.2.8", "@ungap/structured-clone": "^1.2.0", "ajv": "^6.12.4", "chalk": "^4.0.0", "cross-spawn": "^7.0.2", "debug": "^4.3.2", "doctrine": "^3.0.0", "escape-string-regexp": "^4.0.0", "eslint-scope": "^7.2.2", "eslint-visitor-keys": "^3.4.3", "espree": "^9.6.1", "esquery": "^1.4.2", "esutils": "^2.0.2", "fast-deep-equal": "^3.1.3", "file-entry-cache": "^6.0.1", "find-up": "^5.0.0", "glob-parent": "^6.0.2", "globals": "^13.19.0", "graphemer": "^1.4.0", "ignore": "^5.2.0", "imurmurhash": "^0.1.4", "is-glob": "^4.0.0", "is-path-inside": "^3.0.3", "js-yaml": "^4.1.0", "json-stable-stringify-without-jsonify": "^1.0.1", "levn": "^0.4.1", "lodash.merge": "^4.6.2", "minimatch": "^3.1.2", "natural-compare": "^1.4.0", "optionator": "^0.9.3", "strip-ansi": "^6.0.1", "text-table": "^0.2.0" }, "bin": { "eslint": "bin/eslint.js" } }, "sha512-ypowyDxpVSYpkXr9WPv2PAZCtNip1Mv5KTW0SCurXv/9iOpcrH9PaqUElksqEB6pChqHGDRCFTyrZlGhnLNGiA=="],
 
-    "eslint-config-prettier": ["eslint-config-prettier@8.10.2", "", { "peerDependencies": { "eslint": ">=7.0.0" }, "bin": { "eslint-config-prettier": "bin/cli.js" } }, "sha512-/IGJ6+Dka158JnP5n5YFMOszjDWrXggGz1LaK/guZq9vZTmniaKlHcsscvkAhn9y4U+BU3JuUdYvtAMcv30y4A=="],
+    "eslint-config-prettier": ["eslint-config-prettier@10.1.8", "", { "peerDependencies": { "eslint": ">=7.0.0" }, "bin": { "eslint-config-prettier": "bin/cli.js" } }, "sha512-82GZUjRS0p/jganf6q1rEO25VSoHH0hKPCTrgillPjdI/3bgBhAE1QzHrHTizjpRvy6pGAvKjDJtk2pF9NDq8w=="],
 
     "eslint-import-context": ["eslint-import-context@0.1.9", "", { "dependencies": { "get-tsconfig": "^4.10.1", "stable-hash-x": "^0.2.0" }, "peerDependencies": { "unrs-resolver": "^1.0.0" }, "optionalPeers": ["unrs-resolver"] }, "sha512-K9Hb+yRaGAGUbwjhFNHvSmmkZs9+zbuoe3kFQ4V1wYjrepUFYM2dZAfNtjbbj3qsPfUfsA68Bx/ICWQMi+C8Eg=="],
 
@@ -3232,7 +3232,7 @@
 
     "prelude-ls": ["prelude-ls@1.2.1", "", {}, "sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g=="],
 
-    "prettier": ["prettier@2.8.8", "", { "bin": { "prettier": "bin-prettier.js" } }, "sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q=="],
+    "prettier": ["prettier@3.8.2", "", { "bin": { "prettier": "bin/prettier.cjs" } }, "sha512-8c3mgTe0ASwWAJK+78dpviD+A8EqhndQPUBpNUIPt6+xWlIigCwfN01lWr9MAede4uqXGTEKeQWTvzb3vjia0Q=="],
 
     "prettier-linter-helpers": ["prettier-linter-helpers@1.0.1", "", { "dependencies": { "fast-diff": "^1.1.2" } }, "sha512-SxToR7P8Y2lWmv/kTzVLC1t/GDI2WGjMwNhLLE9qtH8Q13C+aEmuRlzDst4Up4s0Wc8sF2M+J57iB3cMLqftfg=="],
 
@@ -4227,6 +4227,8 @@
     "@wordpress/element/react": ["react@18.3.1", "", { "dependencies": { "loose-envify": "^1.1.0" } }, "sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ=="],
 
     "@wordpress/element/react-dom": ["react-dom@18.3.1", "", { "dependencies": { "loose-envify": "^1.1.0", "scheduler": "^0.23.2" }, "peerDependencies": { "react": "^18.3.1" } }, "sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw=="],
+
+    "@wordpress/eslint-plugin/eslint-config-prettier": ["eslint-config-prettier@8.10.2", "", { "peerDependencies": { "eslint": ">=7.0.0" }, "bin": { "eslint-config-prettier": "bin/cli.js" } }, "sha512-/IGJ6+Dka158JnP5n5YFMOszjDWrXggGz1LaK/guZq9vZTmniaKlHcsscvkAhn9y4U+BU3JuUdYvtAMcv30y4A=="],
 
     "@wordpress/global-styles-engine/@wordpress/data": ["@wordpress/data@10.42.0", "", { "dependencies": { "@wordpress/compose": "^7.42.0", "@wordpress/deprecated": "^4.42.0", "@wordpress/element": "^6.42.0", "@wordpress/is-shallow-equal": "^5.42.0", "@wordpress/priority-queue": "^3.42.0", "@wordpress/private-apis": "^1.42.0", "@wordpress/redux-routine": "^5.42.0", "deepmerge": "^4.3.0", "equivalent-key-map": "^0.2.2", "is-plain-object": "^5.0.0", "is-promise": "^4.0.0", "redux": "^5.0.1", "rememo": "^4.0.2", "use-memo-one": "^1.1.1" }, "peerDependencies": { "react": "^18.0.0" } }, "sha512-YHBnNmMSclYvCS6QjwmbtdpGVbN4v0VZIq25n4a6HxG0Co6LTnvhAvgtnw+NZpEiDHibH8JcSjbCQEBtToWSFQ=="],
 

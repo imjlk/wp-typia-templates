@@ -1,6 +1,6 @@
 name: Docs or process update
 description: Request documentation, release-process, contributor-flow, or repo-meta improvements.
-title: "[Docs/Process]: "
+title: '[Docs/Process]: '
 labels: []
 body:
   - type: textarea

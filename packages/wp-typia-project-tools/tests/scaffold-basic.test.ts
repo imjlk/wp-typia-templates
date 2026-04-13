@@ -107,6 +107,7 @@ test(
   expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(
     blockTypesPackageVersion
   );
+  expect(packageJson.devDependencies.prettier).toBe("3.8.2");
   expect(
     packageJson.devDependencies["@wp-typia/project-tools"]
   ).toBeUndefined();
@@ -549,6 +550,7 @@ test(
     );
 
     expect(packageJson.name).toBe("demo-interactivity");
+    expect(packageJson.devDependencies.prettier).toBe("3.8.2");
     expect(packageJson.scripts.sync).toBe("tsx scripts/sync-project.ts");
     expect(packageJson.scripts.dev).toBe(
       'concurrently -k -n sync-types,editor -c yellow,blue "npm run watch:sync-types" "npm run start:editor"'
