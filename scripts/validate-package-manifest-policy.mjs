@@ -154,7 +154,7 @@ function validateRuntimeDependencyPolicy(repoRoot, runtimePackages, errors) {
 					`${relativePath} must restore its source manifest during postpack.`,
 				);
 			}
-			if (!publishManifestSource) {
+			if (publishManifestSource == null) {
 				errors.push(
 					`${relativePath} depends on workspace protocol rewriting but is missing scripts/publish-manifest.mjs.`,
 				);
