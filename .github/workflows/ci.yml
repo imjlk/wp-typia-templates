@@ -65,6 +65,9 @@ jobs:
       - name: Validate package manifest policy
         run: bun run manifest-policy:validate
 
+      - name: Validate TypeScript strictness policy
+        run: bun run typescript-strictness:validate
+
       - name: Validate TypeScript runtime dependency placement
         run: bun run typescript-runtime:validate
 

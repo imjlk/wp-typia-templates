@@ -15,7 +15,7 @@ interface State {
  * Error Boundary component for My Typia Block
  */
 export class ErrorBoundary extends Component< Props, State > {
-	public state: State = {
+	public override state: State = {
 		hasError: false,
 	};
 
@@ -23,11 +23,11 @@ export class ErrorBoundary extends Component< Props, State > {
 		return { hasError: true, error };
 	}
 
-	public componentDidCatch( error: Error, errorInfo: ErrorInfo ) {
+	public override componentDidCatch( error: Error, errorInfo: ErrorInfo ) {
 		console.error( 'My Typia Block Error:', error, errorInfo );
 	}
 
-	public render() {
+	public override render() {
 		if ( this.state.hasError ) {
 			return (
 				this.props.fallback || (
