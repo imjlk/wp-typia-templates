@@ -503,12 +503,14 @@ export class BlockGeneratorService {
 		const warnings = [...(templateSource.warnings ?? [])];
 
 		if (validated.target.externalLayerSource) {
-			const layerSeed = await resolveTemplateSeed(
-				parseTemplateLocator(validated.target.externalLayerSource),
-				validated.target.cwd,
-			);
-
+			let layerSeed:
+				| Awaited<ReturnType<typeof resolveTemplateSeed>>
+				| undefined;
 			try {
+				layerSeed = await resolveTemplateSeed(
+					parseTemplateLocator(validated.target.externalLayerSource),
+					validated.target.cwd,
+				);
 				const resolvedLayers = await resolveExternalTemplateLayers({
 					externalLayerId: validated.target.externalLayerId,
 					sourceRoot: layerSeed.rootDir,
@@ -548,7 +550,7 @@ export class BlockGeneratorService {
 				);
 			} catch (error) {
 				await templateSource.cleanup?.();
-				await layerSeed.cleanup?.();
+				await layerSeed?.cleanup?.();
 				throw error;
 			}
 		}

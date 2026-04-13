@@ -1,3 +1,7 @@
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+
 import { describe, expect, test } from "bun:test";
 
 import {
@@ -67,5 +71,40 @@ describe("external template layer manifests", () => {
 			sourceRoot: templateLayerConflictFixturePath,
 		});
 		expect(resolvedConflict.selectedLayerId).toBe("acme/conflict");
+	});
+
+	test("rejects manifest layers that try to shadow reserved built-in ids", async () => {
+		const tempRoot = fs.mkdtempSync(
+			path.join(os.tmpdir(), "wp-typia-layer-shadow-"),
+		);
+		const cleanup = () => fs.rmSync(tempRoot, { force: true, recursive: true });
+
+		try {
+			fs.mkdirSync(path.join(tempRoot, "layers", "shadow"), { recursive: true });
+			fs.writeFileSync(
+				path.join(tempRoot, "wp-typia.layers.json"),
+				JSON.stringify(
+					{
+						version: 1,
+						layers: {
+							"builtin:shared/base": {
+								path: "layers/shadow",
+							},
+						},
+					},
+					null,
+					2,
+				),
+				"utf8",
+			);
+
+			await expect(
+				loadExternalTemplateLayerManifest(tempRoot),
+			).rejects.toThrow(
+				"uses a reserved built-in shared layer id",
+			);
+		} finally {
+			cleanup();
+		}
 	});
 });

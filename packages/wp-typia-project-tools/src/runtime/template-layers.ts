@@ -64,6 +64,12 @@ function parseLayerDefinition(
 	layerId: string,
 	value: unknown,
 ): ExternalTemplateLayerDefinition {
+	if (isBuiltInSharedTemplateLayerId(layerId)) {
+		throw new Error(
+			`Layer "${layerId}" uses a reserved built-in shared layer id and cannot be redefined in ${TEMPLATE_LAYER_MANIFEST_FILENAME}.`,
+		);
+	}
+
 	if (!isPlainObject(value)) {
 		throw new Error(`Layer "${layerId}" in ${TEMPLATE_LAYER_MANIFEST_FILENAME} must be an object.`);
 	}
