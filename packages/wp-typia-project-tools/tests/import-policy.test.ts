@@ -95,6 +95,10 @@ describe('@wp-typia/project-tools import policy', () => {
       path.join(repoRoot, 'docs', 'block-generator-architecture.md'),
       'utf8',
     );
+    const externalTemplateLayerDoc = fs.readFileSync(
+      path.join(repoRoot, 'docs', 'external-template-layer-composition.md'),
+      'utf8',
+    );
     const importPolicyDoc = fs.readFileSync(
       path.join(repoRoot, 'docs', 'runtime-import-policy.md'),
       'utf8',
@@ -114,11 +118,15 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(apiGuide).toContain('@wp-typia/project-tools');
     expect(apiGuide).toContain('BlockGeneratorService');
     expect(apiGuide).toContain('docs/block-generator-architecture.md');
+    expect(apiGuide).toContain('docs/external-template-layer-composition.md');
     expect(apiGuide).toContain('@wp-typia/project-tools/schema-core');
     expect(apiGuide).toContain('@wp-typia/block-runtime/metadata-core');
     expect(runtimeSurfaceDoc).toContain('@wp-typia/project-tools');
     expect(runtimeSurfaceDoc).toContain('BlockGeneratorService');
     expect(runtimeSurfaceDoc).toContain('docs/block-generator-architecture.md');
+    expect(runtimeSurfaceDoc).toContain(
+      'docs/external-template-layer-composition.md',
+    );
     expect(runtimeSurfaceDoc).toContain('@wp-typia/project-tools/schema-core');
     expect(runtimeSurfaceDoc).toContain(
       '@wp-typia/block-runtime/migration-types',
@@ -132,6 +140,9 @@ describe('@wp-typia/project-tools import policy', () => {
       'built-in templates no longer ship structural, TS/TSX, style, or block-local',
     );
     expect(blockGeneratorDoc).toContain('docs/block-generator-architecture.md');
+    expect(blockGeneratorDoc).toContain(
+      'docs/external-template-layer-composition.md',
+    );
     expect(blockGeneratorArchitectureDoc).toContain('BlockSpec');
     expect(blockGeneratorArchitectureDoc).toContain('BlockGeneratorService');
     expect(blockGeneratorArchitectureDoc).toContain('Agentica');
@@ -143,12 +154,24 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(blockGeneratorArchitectureDoc).toContain('Phase 1: complete');
     expect(blockGeneratorArchitectureDoc).toContain('Phase 3: complete');
     expect(blockGeneratorArchitectureDoc).toContain('Phase 4: still open');
+    expect(externalTemplateLayerDoc).toContain('wp-typia.layers.json');
+    expect(externalTemplateLayerDoc).toContain('extends');
+    expect(externalTemplateLayerDoc).toContain('builtin:shared/base');
+    expect(externalTemplateLayerDoc).toContain('protected');
+    expect(externalTemplateLayerDoc).toContain('trusted-JS model');
+    expect(externalTemplateLayerDoc).toContain(
+      '@wp-typia/create-workspace-template',
+    );
+    expect(externalTemplateLayerDoc).toContain('#268');
     expect(runtimeSurfaceDoc).not.toContain(
       '@wp-typia/project-tools/runtime/*',
     );
     expect(importPolicyDoc).toContain('@wp-typia/project-tools');
     expect(importPolicyDoc).toContain('BlockGeneratorService');
     expect(importPolicyDoc).toContain('docs/block-generator-architecture.md');
+    expect(importPolicyDoc).toContain(
+      'docs/external-template-layer-composition.md',
+    );
     expect(importPolicyDoc).toContain('@wp-typia/project-tools/schema-core');
     expect(importPolicyDoc).toContain(
       '@wp-typia/block-runtime/migration-types',

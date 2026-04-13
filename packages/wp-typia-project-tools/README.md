@@ -55,4 +55,8 @@ and the non-mutating `plan -> validate -> render -> apply` tool-facing usage
 model, lives in
 [`docs/block-generator-architecture.md`](../../docs/block-generator-architecture.md).
 
+The separate RFC for reusable external layer packages on top of the built-in
+shared scaffold model lives in
+[`docs/external-template-layer-composition.md`](../../docs/external-template-layer-composition.md).
+
 If you need metadata sync, editor helpers, validation helpers, or other generated-project runtime utilities, import them directly from `@wp-typia/block-runtime/*`.

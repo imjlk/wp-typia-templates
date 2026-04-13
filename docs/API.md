@@ -100,6 +100,11 @@ wp-typia create my-block --template @scope/create-block-template --variant hero 
 
 Security note: external template configs are trusted JavaScript and are executed during scaffold normalization. Treat local paths, GitHub locators, and npm package templates with the same trust model as `@wordpress/create-block`.
 
+That remote-template support is still seed-oriented. The separate RFC for
+reusable external layer packages on top of built-in shared scaffold layers lives
+in
+[`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).
+
 Migration commands remain available inside migration-capable projects such as [`examples/my-typia-block`](../examples/my-typia-block):
 
 ```bash
@@ -202,6 +207,7 @@ project/bootstrap assets, see:
 
 - [`docs/block-generator-architecture.md`](./block-generator-architecture.md)
 - [`docs/block-generator-service.md`](./block-generator-service.md)
+- [`docs/external-template-layer-composition.md`](./external-template-layer-composition.md)
 
 ## 3. `@wp-typia/block-types`
 

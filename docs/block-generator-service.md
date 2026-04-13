@@ -46,6 +46,8 @@ assets away from Mustache.
 ## Out of scope
 
 - external template composition
+- the external layer package contract recorded in
+  [`docs/external-template-layer-composition.md`](./external-template-layer-composition.md)
 - non-block `wp-typia add` generators such as variations, patterns,
   binding-sources, and hooked-blocks
 - full template-engine replacement

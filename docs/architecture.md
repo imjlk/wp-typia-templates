@@ -92,6 +92,10 @@ runtime helper surface. Project orchestration lives in
 `@wp-typia/project-tools`, while `@wp-typia/create` remains only as a deprecated
 legacy package shell.
 
+Reusable third-party layer composition on top of this built-in shared model is
+tracked separately in
+[`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).
+
 ## Intended Flow
 
 1. Scaffold a block with `wp-typia create`
