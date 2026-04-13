@@ -477,6 +477,12 @@ async function detectTemplateSourceFormat(sourceDir: string): Promise<TemplateSo
 		return "wp-typia";
 	}
 
+	if (await loadExternalTemplateLayerManifest(sourceDir)) {
+		throw new Error(
+			`Template source at ${sourceDir} is an external layer package. External layers currently compose only through built-in scaffolds via the runtime API, not as standalone template ids.`,
+		);
+	}
+
 	if (getExternalTemplateEntry(sourceDir)) {
 		return "create-block-external";
 	}
@@ -499,12 +505,6 @@ async function detectTemplateSourceFormat(sourceDir: string): Promise<TemplateSo
 
 	if (hasBlockJson && hasIndexFile && hasEditFile && hasSaveFile) {
 		return "create-block-subset";
-	}
-
-	if (await loadExternalTemplateLayerManifest(sourceDir)) {
-		throw new Error(
-			`Template source at ${sourceDir} is an external layer package. External layers currently compose only through built-in scaffolds via the runtime API, not as standalone template ids.`,
-		);
 	}
 
 	throw new Error(
@@ -1003,6 +1003,13 @@ async function resolveGitHubTemplateSource(locator: GitHubTemplateLocator): Prom
 	}
 }
 
+/**
+ * Resolves a template locator into a local seed source directory.
+ *
+ * @param locator Remote template locator describing a local path, GitHub source, or npm package.
+ * @param cwd Current working directory used to resolve local template paths.
+ * @returns A local seed source containing the resolved root and block directory, plus optional cleanup.
+ */
 export async function resolveTemplateSeed(
 	locator: RemoteTemplateLocator,
 	cwd: string,

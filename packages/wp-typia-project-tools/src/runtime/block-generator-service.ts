@@ -542,8 +542,25 @@ export class BlockGeneratorService {
 				const layerSourceCleanup = layerSeed.cleanup;
 				const templateCleanup = templateSource.cleanup;
 				templateSource.cleanup = async () => {
-					await templateCleanup?.();
-					await layerSourceCleanup?.();
+					const cleanupErrors: Error[] = [];
+					try {
+						await templateCleanup?.();
+					} catch (error) {
+						cleanupErrors.push(error instanceof Error ? error : new Error(String(error)));
+					}
+					try {
+						await layerSourceCleanup?.();
+					} catch (error) {
+						cleanupErrors.push(error instanceof Error ? error : new Error(String(error)));
+					}
+					if (cleanupErrors.length > 0) {
+						throw new Error(
+							[
+								"Failed to cleanup composed template sources.",
+								...cleanupErrors.map((error) => `- ${error.message}`),
+							].join("\n"),
+						);
+					}
 				};
 				warnings.push(
 					`Applied external layer "${resolvedLayers.selectedLayerId}" from "${validated.target.externalLayerSource}".`,
