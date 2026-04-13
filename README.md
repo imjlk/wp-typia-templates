@@ -184,6 +184,7 @@ npx wp-typia create my-block --template @scope/create-block-template --variant h
 - [Migration Guide](docs/migrations.md)
 - [Error and Export Contract Guide](docs/error-export-contracts.md)
 - [Formatting Toolchain Policy](docs/formatting-toolchain-policy.md)
+- [Maintenance Automation Policy](docs/maintenance-automation-policy.md)
 - [Package Manifest Policy](docs/package-manifest-policy.md)
 - [TypeScript Strictness Policy](docs/typescript-strictness-policy.md)
 - [Upgrade Guide](UPGRADE.md)
@@ -259,6 +260,7 @@ The repository itself stays Bun-first even though generated projects can use `bu
 bun install
 bun run lint:repo
 bun run format:check
+bun run maintenance-automation:validate
 bun run typecheck
 bun run test:all
 bun run build
@@ -277,6 +279,14 @@ part of both the maintainer preflight and the GitHub Actions lint gate. See the
 [Formatting Toolchain Policy](docs/formatting-toolchain-policy.md) for the
 explicit scope and rationale.
 
+Repository maintenance automation is explicit too. Dependabot currently owns
+GitHub Actions and Composer update PRs on `main`, while Bun/npm workspace
+dependency bumps stay maintainer-led until we have release-aware bot support.
+Fast dependency audits now run in a dedicated workflow on PRs, pushes, and a
+weekly schedule. See the
+[Maintenance Automation Policy](docs/maintenance-automation-policy.md) for the
+chosen review posture and release interaction rules.
+
 Example-specific commands live under the `examples:*` namespace:
 
 ```bash
@@ -292,18 +302,19 @@ and builds, but intentionally excludes `wp-env` startup and Playwright E2E.
 
 Command map:
 
-| Command                              | What it targets                                   |
-| ------------------------------------ | ------------------------------------------------- |
-| `bun run lint:repo`                  | Root ESLint for repo infrastructure code          |
-| `bun run lint:all`                   | Root ESLint, example linting, and PHP checks      |
-| `bun run format:check`               | Non-mutating Prettier check for repo-owned files  |
-| `bun run formatting-policy:validate` | Validates the documented formatter/toolchain gate |
-| `bun run test:all`                   | Root unit and CLI test aggregation                |
-| `bun run ci:local`                   | Fast maintainer preflight without E2E/wp-env      |
-| `bun run build`                      | Product packages and the repo-local reference app |
-| `bun run examples:build`             | Reference app only                                |
-| `bun run --filter wp-typia test`     | Canonical CLI package checks                      |
-| `bun run examples:test:e2e`          | Playwright against the reference app              |
+| Command                                   | What it targets                                   |
+| ----------------------------------------- | ------------------------------------------------- |
+| `bun run lint:repo`                       | Root ESLint for repo infrastructure code          |
+| `bun run lint:all`                        | Root ESLint, example linting, and PHP checks      |
+| `bun run format:check`                    | Non-mutating Prettier check for repo-owned files  |
+| `bun run formatting-policy:validate`      | Validates the documented formatter/toolchain gate |
+| `bun run maintenance-automation:validate` | Validates Dependabot and audit workflow policy    |
+| `bun run test:all`                        | Root unit and CLI test aggregation                |
+| `bun run ci:local`                        | Fast maintainer preflight without E2E/wp-env      |
+| `bun run build`                           | Product packages and the repo-local reference app |
+| `bun run examples:build`                  | Reference app only                                |
+| `bun run --filter wp-typia test`          | Canonical CLI package checks                      |
+| `bun run examples:test:e2e`               | Playwright against the reference app              |
 
 ## License
 

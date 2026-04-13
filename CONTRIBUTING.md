@@ -15,6 +15,7 @@ bun install
 ```bash
 bun run lint:repo
 bun run format:check
+bun run maintenance-automation:validate
 bun run formatting-policy:validate
 bun run lint:all
 bun run typecheck
@@ -33,6 +34,7 @@ Quick command map:
 - `bun run lint:repo` = root ESLint for repo infrastructure code
 - `bun run lint:all` = root ESLint + example lint + PHP checks
 - `bun run format:check` = non-mutating Prettier check for repo-owned files
+- `bun run maintenance-automation:validate` = verifies Dependabot and audit workflow policy
 - `bun run formatting-policy:validate` = verifies the documented Prettier/CI baseline
 - `bun run test:all` = root unit + CLI test aggregation
 - `bun run ci:local` = fast maintainer preflight mirroring the non-E2E CI path
@@ -57,6 +59,16 @@ Formatting ownership is also explicit:
 
 See [`docs/formatting-toolchain-policy.md`](./docs/formatting-toolchain-policy.md) for the exact scope and rationale.
 
+Maintenance automation is explicit too:
+
+- Dependabot currently opens update PRs for `github-actions` and root `composer` tooling only
+- those PRs still target `main` and flow through the normal `release/sampo` release lane after merge
+- Bun/npm workspace dependency bumps remain maintainer-led until we adopt a release-aware automation strategy for publishable package coupling
+- `.github/workflows/dependency-audit.yml` owns the fast PR/main/scheduled `bun audit` and `composer audit --locked` lane
+- `.github/workflows/test-matrix.yml` keeps the slower scheduled/manual matrix and CodeQL coverage
+
+See [`docs/maintenance-automation-policy.md`](./docs/maintenance-automation-policy.md) for the exact cadence and review posture.
+
 `bun run ci:local` is the recommended maintainer pre-PR command. It deliberately
 stops short of `wp-env` startup and Playwright E2E so everyday local checks stay
 fast.
@@ -79,6 +91,7 @@ bun run docs:build
 - [`UPGRADE.md`](./UPGRADE.md) collects high-signal maintainer upgrade notes
 - [`SECURITY.md`](./SECURITY.md) explains private vulnerability reporting
 - [`docs/formatting-toolchain-policy.md`](./docs/formatting-toolchain-policy.md) records the formatter baseline and CI gate
+- [`docs/maintenance-automation-policy.md`](./docs/maintenance-automation-policy.md) records the dependency update and audit baseline
 
 If you change user-facing workflows, keep the relevant meta docs in sync in the
 same PR.
