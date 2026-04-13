@@ -55,7 +55,11 @@ const patterns = [
   'scripts/check-repo-format.mjs',
   'scripts/validate-formatting-toolchain-policy.mjs',
 ];
-execFileSync(process.execPath, [prettierBin, prettierMode, ...patterns], {
-  cwd: repoRoot,
-  stdio: 'inherit',
-});
+execFileSync(
+  process.execPath,
+  [prettierBin, prettierMode, '--no-error-on-unmatched-pattern', ...patterns],
+  {
+    cwd: repoRoot,
+    stdio: 'inherit',
+  },
+);
