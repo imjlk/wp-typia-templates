@@ -26,10 +26,10 @@ jobs:
         node: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', github.event.inputs.node_version) || '["24"]') }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
 
@@ -97,7 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run CodeQL
         uses: github/codeql-action/init@v4
