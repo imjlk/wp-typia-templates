@@ -183,6 +183,7 @@ npx wp-typia create my-block --template @scope/create-block-template --variant h
 - [API Guide](docs/API.md)
 - [Migration Guide](docs/migrations.md)
 - [Package Manifest Policy](docs/package-manifest-policy.md)
+- [TypeScript Strictness Policy](docs/typescript-strictness-policy.md)
 - [Upgrade Guide](UPGRADE.md)
 - [Security Policy](SECURITY.md)
 - [Interactivity Guide](docs/interactivity.md)
