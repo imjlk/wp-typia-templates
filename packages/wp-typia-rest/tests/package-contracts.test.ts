@@ -28,10 +28,13 @@ describe("@wp-typia/rest export contracts", () => {
 		const importRestClient = new Function(
 			'return import("@wp-typia/rest/client");',
 		) as () => Promise<Record<string, unknown>>;
+		const importRestHttp = new Function(
+			'return import("@wp-typia/rest/http");',
+		) as () => Promise<Record<string, unknown>>;
 		const [restRoot, restClient, restHttp, restReact] = await Promise.all([
 			import("@wp-typia/rest"),
 			importRestClient(),
-			import("@wp-typia/rest/http"),
+			importRestHttp(),
 			import("@wp-typia/rest/react"),
 		]);
 
