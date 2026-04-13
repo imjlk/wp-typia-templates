@@ -47,6 +47,9 @@ jobs:
       - name: Validate runtime package coupling
         run: bun run runtime-coupling:validate
 
+      - name: Validate package manifest policy
+        run: bun run manifest-policy:validate
+
       - name: Validate TypeScript runtime dependency placement
         run: bun run typescript-runtime:validate
 

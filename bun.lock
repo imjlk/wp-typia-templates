@@ -144,7 +144,7 @@
     },
     "packages/wp-typia": {
       "name": "wp-typia",
-      "version": "0.16.2",
+      "version": "0.16.7",
       "bin": {
         "wp-typia": "bin/wp-typia.js",
       },
@@ -182,7 +182,7 @@
     },
     "packages/wp-typia-api-client": {
       "name": "@wp-typia/api-client",
-      "version": "0.4.2",
+      "version": "0.4.3",
       "dependencies": {
         "@typia/interface": "^12.0.1",
       },
@@ -192,9 +192,9 @@
     },
     "packages/wp-typia-block-runtime": {
       "name": "@wp-typia/block-runtime",
-      "version": "0.4.4",
+      "version": "0.4.6",
       "dependencies": {
-        "@wp-typia/api-client": "^0.4.2",
+        "@wp-typia/api-client": "^0.4.3",
         "typescript": "^5.9.2",
       },
       "devDependencies": {
@@ -219,12 +219,12 @@
     },
     "packages/wp-typia-project-tools": {
       "name": "@wp-typia/project-tools",
-      "version": "0.16.1",
+      "version": "0.16.6",
       "dependencies": {
-        "@wp-typia/api-client": "^0.4.2",
+        "@wp-typia/api-client": "^0.4.3",
         "@wp-typia/block-runtime": "workspace:*",
         "@wp-typia/block-types": "^0.2.1",
-        "@wp-typia/rest": "^0.3.5",
+        "@wp-typia/rest": "^0.3.6",
         "mustache": "^4.2.0",
         "npm-package-arg": "^13.0.0",
         "semver": "^7.7.3",
@@ -234,13 +234,11 @@
       },
       "devDependencies": {
         "react": "^19.2.0",
-        "react-devtools-core": "^7.0.1",
-        "ws": "^8.18.0",
       },
     },
     "packages/wp-typia-rest": {
       "name": "@wp-typia/rest",
-      "version": "0.3.5",
+      "version": "0.3.6",
       "dependencies": {
         "@typia/interface": "^12.0.1",
         "@wordpress/api-fetch": "^7.42.0",
