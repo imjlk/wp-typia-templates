@@ -44,41 +44,48 @@ function readRelativeText(repoRoot, relativePath) {
   return readTextFile(path.join(repoRoot, relativePath));
 }
 
-function validatePrettierSpecInText(
+function validateGeneratedTemplateManifest(
   relativePath,
   sourceText,
   expectedVersion,
   errors,
 ) {
-  const match = sourceText.match(/"prettier"\s*:\s*"([^"]+)"/);
+  const manifest = JSON.parse(sourceText);
+  const devDependencyPrettier = manifest.devDependencies?.prettier;
 
-  if (!match) {
+  if (devDependencyPrettier === undefined) {
     errors.push(
       `${relativePath} must declare devDependencies.prettier="${expectedVersion}".`,
     );
     return;
   }
 
-  if (match[1] !== expectedVersion) {
+  if (devDependencyPrettier !== expectedVersion) {
     errors.push(
-      `${relativePath} must declare devDependencies.prettier="${expectedVersion}", found "${match[1]}".`,
+      `${relativePath} must declare devDependencies.prettier="${expectedVersion}", found ${JSON.stringify(devDependencyPrettier)}.`,
     );
   }
 }
 
 function getLintJobBlock(workflowSource) {
-  const startMarker = 'jobs:\n  lint:';
-  const endMarker = '\n  node-20-baseline:';
-  const startIndex = workflowSource.indexOf(startMarker);
+  const lines = workflowSource.split('\n');
+  const startIndex = lines.findIndex((line) => line === '  lint:');
 
-  if (startIndex === -1) {
+  if (startIndex < 0) {
     return '';
   }
 
-  const endIndex = workflowSource.indexOf(endMarker, startIndex);
-  return endIndex === -1
-    ? workflowSource.slice(startIndex)
-    : workflowSource.slice(startIndex, endIndex);
+  const lintBlockLines = [];
+
+  for (let index = startIndex; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (index > startIndex && /^ {2}[A-Za-z0-9_-]+:/.test(line)) {
+      break;
+    }
+    lintBlockLines.push(line);
+  }
+
+  return lintBlockLines.join('\n');
 }
 
 export function validateFormattingToolchainPolicy(
@@ -144,7 +151,7 @@ export function validateFormattingToolchainPolicy(
   }
 
   for (const relativePath of policy.generatedPackageManifestPaths) {
-    validatePrettierSpecInText(
+    validateGeneratedTemplateManifest(
       relativePath,
       readRelativeText(repoRoot, relativePath),
       policy.prettierVersion,

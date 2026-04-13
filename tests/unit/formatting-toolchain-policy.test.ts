@@ -145,4 +145,43 @@ describe("validateFormattingToolchainPolicy", () => {
       `packages/wp-typia-project-tools/templates/_shared/base/package.json.mustache must declare devDependencies.prettier="${FORMATTING_TOOLCHAIN_POLICY.prettierVersion}", found "2.8.8".`
     );
   });
+
+  test("fails when a generated template moves prettier out of devDependencies", () => {
+    const repoRoot = createFormattingPolicyRepo();
+    const templateManifestPath = path.join(
+      repoRoot,
+      "packages/wp-typia-project-tools/templates/_shared/base/package.json.mustache"
+    );
+
+    writeText(
+      templateManifestPath,
+      '{\n  "dependencies": {\n    "prettier": "3.8.2"\n  },\n  "devDependencies": {}\n}\n'
+    );
+
+    const result = validateFormattingToolchainPolicy(repoRoot);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      `packages/wp-typia-project-tools/templates/_shared/base/package.json.mustache must declare devDependencies.prettier="${FORMATTING_TOOLCHAIN_POLICY.prettierVersion}".`
+    );
+  });
+
+  test("fails when another workflow job satisfies the lint gate strings accidentally", () => {
+    const repoRoot = createFormattingPolicyRepo();
+
+    writeText(
+      path.join(repoRoot, ".github/workflows/ci.yml"),
+      `jobs:\n  lint:\n    steps:\n      - name: Validate pending changesets\n        run: bun run changesets:validate\n  format-check:\n    steps:\n      - name: Validate formatting toolchain policy\n        run: bun run formatting-policy:validate\n      - name: Run formatting check\n        run: bun run format:check\n`
+    );
+
+    const result = validateFormattingToolchainPolicy(repoRoot);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      '.github/workflows/ci.yml lint job must include "run: bun run formatting-policy:validate".'
+    );
+    expect(result.errors).toContain(
+      '.github/workflows/ci.yml lint job must include "run: bun run format:check".'
+    );
+  });
 });
