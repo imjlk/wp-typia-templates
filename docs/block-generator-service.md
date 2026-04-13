@@ -3,6 +3,10 @@
 `BlockGeneratorService` is the typed generation boundary for built-in
 `wp-typia` block scaffolds.
 
+For the higher-level architecture record, phase map, and AI/tool-facing staged
+usage model, see
+[`docs/block-generator-architecture.md`](./block-generator-architecture.md).
+
 ## Current responsibility split
 
 - `BlockSpec`
