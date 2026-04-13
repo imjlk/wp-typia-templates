@@ -134,7 +134,7 @@ describe('validateMaintenanceAutomationPolicy', () => {
       '.github/workflows/dependency-audit.yml must include "run: composer audit --locked".',
     );
     expect(result.errors).toContain(
-      '.github/workflows/dependency-audit.yml must include "if: github.event_name == \'schedule\' || github.event_name == \'workflow_dispatch\'".',
+      '.github/workflows/dependency-audit.yml must keep Bun Audit gated to schedule/workflow_dispatch.',
     );
     expect(result.errors).toContain(
       '.github/workflows/ci.yml lint job must include "run: bun run maintenance-automation:validate".',

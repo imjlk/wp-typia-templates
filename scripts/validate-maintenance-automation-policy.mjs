@@ -38,8 +38,8 @@ function readRelativeText(repoRoot, relativePath) {
 }
 
 function lintJobBlock(workflowSource) {
-  const lines = workflowSource.split('\n');
-  const startIndex = lines.findIndex((line) => line === '  lint:');
+  const lines = workflowSource.split(/\r?\n/);
+  const startIndex = lines.findIndex((line) => /^ {2}lint:\s*$/.test(line));
 
   if (startIndex < 0) {
     return '';
@@ -49,6 +49,28 @@ function lintJobBlock(workflowSource) {
   for (let index = startIndex; index < lines.length; index += 1) {
     const line = lines[index];
     if (index > startIndex && /^ {2}[A-Za-z0-9_-]+:/.test(line)) {
+      break;
+    }
+    blockLines.push(line);
+  }
+
+  return blockLines.join('\n');
+}
+
+function workflowJobBlock(workflowSource, jobId) {
+  const lines = workflowSource.split(/\r?\n/);
+  const startIndex = lines.findIndex(
+    (line) => new RegExp(`^ {2}${jobId}:\\s*$`).test(line),
+  );
+
+  if (startIndex < 0) {
+    return '';
+  }
+
+  const blockLines = [];
+  for (let index = startIndex; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (index > startIndex && /^ {2}[A-Za-z0-9_-]+:\s*$/.test(line)) {
       break;
     }
     blockLines.push(line);
@@ -116,7 +138,6 @@ function validateDependencyAuditWorkflow(sourceText, errors) {
     'workflow_dispatch:',
     'name: Composer Audit',
     'run: composer audit --locked',
-    "if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'",
     'name: Bun Audit',
     'run: bun audit --audit-level high',
   ]) {
@@ -124,6 +145,20 @@ function validateDependencyAuditWorkflow(sourceText, errors) {
       errors.push(
         `.github/workflows/dependency-audit.yml must include ${JSON.stringify(requiredSnippet)}.`,
       );
+    }
+  }
+
+  const bunAuditBlock = workflowJobBlock(sourceText, 'bun-audit');
+  for (const requiredSnippet of [
+    "if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'",
+    'name: Bun Audit',
+    'run: bun audit --audit-level high',
+  ]) {
+    if (!bunAuditBlock.includes(requiredSnippet)) {
+      errors.push(
+        '.github/workflows/dependency-audit.yml must keep Bun Audit gated to schedule/workflow_dispatch.',
+      );
+      break;
     }
   }
 }
