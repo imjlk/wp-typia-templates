@@ -49,6 +49,9 @@ function createStrictnessRepo() {
 			noEmit: false,
 		},
 	});
+	writeJson(path.join(repoRoot, "packages/wp-typia-api-client/config/tsconfig.json"), {
+		extends: "../tsconfig.json",
+	});
 	writeJson(path.join(repoRoot, "examples/my-typia-block/tsconfig.json"), {
 		extends: "../../tsconfig.json",
 		include: ["src/**/*"],
@@ -109,6 +112,27 @@ describe("validateTypeScriptStrictnessPolicy", () => {
 		expect(result.valid).toBe(false);
 		expect(result.errors).toContain(
 			"packages/wp-typia-api-client/tsconfig.json must inherit from tsconfig.base.json through a repo-local extends chain so the shared strictness baseline cannot be bypassed.",
+		);
+	});
+
+	test("fails when a nested package tsconfig overrides an adopted baseline flag", () => {
+		const repoRoot = createStrictnessRepo();
+		const nestedPath = path.join(
+			repoRoot,
+			"packages/wp-typia-api-client/config/tsconfig.json",
+		);
+		const nestedConfig = JSON.parse(fs.readFileSync(nestedPath, "utf8"));
+		nestedConfig.compilerOptions = {
+			...nestedConfig.compilerOptions,
+			strict: true,
+		};
+		writeJson(nestedPath, nestedConfig);
+
+		const result = validateTypeScriptStrictnessPolicy(repoRoot);
+
+		expect(result.valid).toBe(false);
+		expect(result.errors).toContain(
+			"packages/wp-typia-api-client/config/tsconfig.json should inherit compilerOptions.strict=true from tsconfig.base.json instead of overriding it locally.",
 		);
 	});
 

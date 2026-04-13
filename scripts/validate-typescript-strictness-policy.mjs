@@ -23,6 +23,34 @@ export const TYPESCRIPT_STRICTNESS_POLICY_EXCEPTIONS = Object.freeze({});
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DEFAULT_REPO_ROOT = path.resolve(__dirname, "..");
+const IGNORED_TSCONFIG_DIRECTORIES = new Set([
+	".git",
+	".next",
+	".turbo",
+	"build",
+	"coverage",
+	"dist",
+	"node_modules",
+]);
+
+function collectTsconfigPaths(directoryPath, discovered) {
+	for (const entry of fs.readdirSync(directoryPath, { withFileTypes: true })) {
+		const entryPath = path.join(directoryPath, entry.name);
+
+		if (entry.isDirectory()) {
+			if (IGNORED_TSCONFIG_DIRECTORIES.has(entry.name)) {
+				continue;
+			}
+
+			collectTsconfigPaths(entryPath, discovered);
+			continue;
+		}
+
+		if (entry.isFile() && /^tsconfig(\..+)?\.json$/.test(entry.name)) {
+			discovered.add(entryPath);
+		}
+	}
+}
 
 function listTsconfigPaths(repoRoot) {
 	const scopedRoots = [
@@ -44,14 +72,7 @@ function listTsconfigPaths(repoRoot) {
 				continue;
 			}
 
-			const childRoot = path.join(scopedRoot, entry.name);
-			for (const childEntry of fs.readdirSync(childRoot, { withFileTypes: true })) {
-				if (!childEntry.isFile() || !/^tsconfig(\..+)?\.json$/.test(childEntry.name)) {
-					continue;
-				}
-
-				discovered.add(path.join(childRoot, childEntry.name));
-			}
+			collectTsconfigPaths(path.join(scopedRoot, entry.name), discovered);
 		}
 	}
 
