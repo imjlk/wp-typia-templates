@@ -135,7 +135,9 @@ This contract intentionally does not:
 - implement an MCP server
 - implement Agentica runtime wiring
 - replace `BlockGeneratorService`
-- add external template-layer composition
+- define the final CLI UX for external template-layer composition
 
-External layer composition remains a separate concern documented in
+External layer composition is now available programmatically through the same
+inspection input shape (`externalLayerSource` and optional `externalLayerId`),
+but the end-user CLI selection flow remains the separate concern documented in
 [`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).

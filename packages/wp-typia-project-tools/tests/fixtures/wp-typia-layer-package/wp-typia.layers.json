@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "layers": {
+    "acme/internal-observability-base": {
+      "path": "layers/internal-observability-base",
+      "extends": ["builtin:shared/base"]
+    },
+    "acme/basic-observability": {
+      "path": "layers/basic-observability",
+      "extends": [
+        "acme/internal-observability-base",
+        "builtin:shared/rest-helpers/shared"
+      ],
+      "description": "Adds reusable observability helpers on top of the basic block scaffold"
+    }
+  }
+}

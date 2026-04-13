@@ -34,6 +34,30 @@ export const createBlockSubsetFixturePath = path.join(
   "fixtures",
   "create-block-subset"
 );
+export const templateLayerFixturePath = path.join(
+  packageRoot,
+  "tests",
+  "fixtures",
+  "wp-typia-layer-package"
+);
+export const templateLayerAmbiguousFixturePath = path.join(
+  packageRoot,
+  "tests",
+  "fixtures",
+  "wp-typia-layer-ambiguous"
+);
+export const templateLayerConflictFixturePath = path.join(
+  packageRoot,
+  "tests",
+  "fixtures",
+  "wp-typia-layer-conflict"
+);
+export const templateLayerCycleFixturePath = path.join(
+  packageRoot,
+  "tests",
+  "fixtures",
+  "wp-typia-layer-cycle"
+);
 const createPackageManifest = JSON.parse(
   fs.readFileSync(path.join(packageRoot, "package.json"), "utf8")
 );

@@ -42,15 +42,18 @@ assets away from Mustache.
   `render.php` Mustache files for those artifacts.
 - starter `typia.manifest.json` files reuse the same structural artifact model.
 - project bootstrap/package-manager files, sync scripts, shared REST helpers,
-  and external template composition still come from Mustache/interpolated
+  and external layer package copy still come from Mustache/interpolated
   directory copy.
 
 ## Out of scope
 
-- external template composition
-- the external layer package contract recorded in
-  [`docs/external-template-layer-composition.md`](./external-template-layer-composition.md)
+- the final CLI UX for selecting external layer packages
 - non-block `wp-typia add` generators such as variations, patterns,
   binding-sources, and hooked-blocks
 - full template-engine replacement
 - AST emitter migration
+
+Programmatic external layer composition is now implemented on top of the same
+generator boundary. Built-in families can accept `externalLayerSource` and
+optional `externalLayerId`, while the RFC and remaining UX questions still live
+in [`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).

@@ -33,6 +33,18 @@ import {
 	buildBuiltInCodeArtifacts,
 	type BuiltInCodeArtifact,
 } from "./built-in-block-code-artifacts.js";
+import { getStarterManifestFiles } from "./starter-manifests.js";
+import { resolveTemplateSeed, parseTemplateLocator } from "./template-source.js";
+import {
+	assertExternalTemplateLayersDoNotWriteProtectedOutputs,
+	resolveExternalTemplateLayers,
+	type ResolvedTemplateLayerEntry,
+} from "./template-layers.js";
+import {
+	getBuiltInTemplateOverlayDir,
+	getBuiltInTemplateSharedLayerDirs,
+	resolveBuiltInTemplateSourceFromLayerDirs,
+} from "./template-builtins.js";
 import type {
 	DataStorageMode,
 	PersistencePolicy,
@@ -83,6 +95,8 @@ export interface BlockSpec {
 export interface BlockGenerationTarget {
 	allowExistingDir: boolean;
 	cwd: string;
+	externalLayerId?: string;
+	externalLayerSource?: string;
 	noInstall: boolean;
 	packageManager: PackageManagerId;
 	projectDir: string;
@@ -94,6 +108,8 @@ export interface PlanBlockInput {
 	answers: ScaffoldAnswers;
 	cwd?: string;
 	dataStorageMode?: DataStorageMode;
+	externalLayerId?: string;
+	externalLayerSource?: string;
 	noInstall?: boolean;
 	packageManager: PackageManagerId;
 	persistencePolicy?: PersistencePolicy;
@@ -154,6 +170,82 @@ function createVariablesFingerprint(
 	variables: ScaffoldTemplateVariables,
 ): string {
 	return JSON.stringify(variables);
+}
+
+function buildProtectedTemplateOutputPaths({
+	codeArtifacts,
+	spec,
+	variables,
+	artifacts,
+}: {
+	artifacts: readonly BuiltInBlockArtifact[];
+	codeArtifacts: readonly BuiltInCodeArtifact[];
+	spec: BlockSpec;
+	variables: ScaffoldTemplateVariables;
+}): Set<string> {
+	const protectedOutputs = new Set<string>([
+		".gitignore",
+		"package.json",
+		"scripts/add-compound-child.ts",
+		"scripts/block-config.ts",
+		"scripts/sync-project.ts",
+		"scripts/sync-rest-contracts.ts",
+		"scripts/sync-types-to-block-json.ts",
+		"tsconfig.json",
+		"webpack.config.js",
+		`${variables.slugKebabCase}.php`,
+	]);
+
+	for (const artifact of codeArtifacts) {
+		protectedOutputs.add(artifact.relativePath);
+	}
+
+	for (const artifact of artifacts) {
+		protectedOutputs.add(`${artifact.relativeDir}/block.json`);
+		protectedOutputs.add(`${artifact.relativeDir}/types.ts`);
+	}
+
+	for (const manifest of getStarterManifestFiles(spec.template.family, variables)) {
+		protectedOutputs.add(manifest.relativePath);
+	}
+
+	return protectedOutputs;
+}
+
+function buildCombinedTemplateLayerDirs({
+	baseLayerDirs,
+	externalEntries,
+	templateId,
+}: {
+	baseLayerDirs: readonly string[];
+	externalEntries: readonly ResolvedTemplateLayerEntry[];
+	templateId: BuiltInTemplateId;
+}): string[] {
+	const orderedLayerDirs: string[] = [];
+	const seenLayerDirs = new Set<string>();
+
+	for (const layerDir of baseLayerDirs) {
+		if (seenLayerDirs.has(layerDir)) {
+			continue;
+		}
+		orderedLayerDirs.push(layerDir);
+		seenLayerDirs.add(layerDir);
+	}
+
+	for (const entry of externalEntries) {
+		if (seenLayerDirs.has(entry.dir)) {
+			continue;
+		}
+		orderedLayerDirs.push(entry.dir);
+		seenLayerDirs.add(entry.dir);
+	}
+
+	const overlayDir = getBuiltInTemplateOverlayDir(templateId);
+	if (!seenLayerDirs.has(overlayDir)) {
+		orderedLayerDirs.push(overlayDir);
+	}
+
+	return orderedLayerDirs;
 }
 
 function getBuiltInPersistenceSpec({
@@ -334,6 +426,8 @@ export class BlockGeneratorService {
 		answers,
 		cwd = process.cwd(),
 		dataStorageMode,
+		externalLayerId,
+		externalLayerSource,
 		noInstall = false,
 		packageManager,
 		persistencePolicy,
@@ -357,6 +451,8 @@ export class BlockGeneratorService {
 			target: {
 				allowExistingDir,
 				cwd,
+				externalLayerId,
+				externalLayerSource,
 				noInstall,
 				packageManager,
 				projectDir,
@@ -366,6 +462,12 @@ export class BlockGeneratorService {
 	}
 
 	async validate({ plan }: ValidateBlockInput): Promise<ValidateBlockResult> {
+		if (plan.target.externalLayerId && !plan.target.externalLayerSource) {
+			throw new Error(
+				"externalLayerId requires externalLayerSource when composing built-in template layers.",
+			);
+		}
+
 		if (plan.target.variant) {
 			throw new Error(
 				`--variant is only supported for official external template configs. Received variant "${plan.target.variant}" for built-in template "${plan.spec.template.family}".`,
@@ -376,19 +478,81 @@ export class BlockGeneratorService {
 	}
 
 	async render({ validated }: RenderBlockInput): Promise<RenderBlockResult> {
-		const templateSource = await resolveBuiltInTemplateSource(
-			validated.spec.template.family,
-			{
-				persistenceEnabled: validated.spec.persistence.enabled,
-				persistencePolicy:
-					validated.spec.persistence.enabled &&
-					validated.spec.persistence.persistencePolicy === "public"
-						? "public"
-						: "authenticated",
-			},
-		);
 		const variables = buildTemplateVariablesFromBlockSpec(validated.spec);
 		const persistenceEnabled = validated.spec.persistence.enabled;
+		const artifacts = buildBuiltInBlockArtifacts({
+			templateId: validated.spec.template.family,
+			variables,
+		});
+		const codeArtifacts = buildBuiltInCodeArtifacts({
+			templateId: validated.spec.template.family,
+			variables,
+		});
+		const templateVariantOptions = {
+			persistenceEnabled,
+			persistencePolicy:
+				validated.spec.persistence.enabled &&
+				validated.spec.persistence.persistencePolicy === "public"
+					? "public"
+					: "authenticated",
+		} as const;
+		let templateSource = await resolveBuiltInTemplateSource(
+			validated.spec.template.family,
+			templateVariantOptions,
+		);
+		const warnings = [...(templateSource.warnings ?? [])];
+
+		if (validated.target.externalLayerSource) {
+			const layerSeed = await resolveTemplateSeed(
+				parseTemplateLocator(validated.target.externalLayerSource),
+				validated.target.cwd,
+			);
+
+			try {
+				const resolvedLayers = await resolveExternalTemplateLayers({
+					externalLayerId: validated.target.externalLayerId,
+					sourceRoot: layerSeed.rootDir,
+				});
+				const baseLayerDirs = getBuiltInTemplateSharedLayerDirs(
+					validated.spec.template.family,
+					templateVariantOptions,
+				);
+				await assertExternalTemplateLayersDoNotWriteProtectedOutputs({
+					externalEntries: resolvedLayers.entries,
+					protectedOutputPaths: buildProtectedTemplateOutputPaths({
+						artifacts,
+						codeArtifacts,
+						spec: validated.spec,
+						variables,
+					}),
+					view: variables,
+				});
+
+				await templateSource.cleanup?.();
+				templateSource = await resolveBuiltInTemplateSourceFromLayerDirs(
+					validated.spec.template.family,
+					buildCombinedTemplateLayerDirs({
+						baseLayerDirs,
+						externalEntries: resolvedLayers.entries,
+						templateId: validated.spec.template.family,
+					}),
+				);
+				const layerSourceCleanup = layerSeed.cleanup;
+				const templateCleanup = templateSource.cleanup;
+				templateSource.cleanup = async () => {
+					await templateCleanup?.();
+					await layerSourceCleanup?.();
+				};
+				warnings.push(
+					`Applied external layer "${resolvedLayers.selectedLayerId}" from "${validated.target.externalLayerSource}".`,
+				);
+			} catch (error) {
+				await templateSource.cleanup?.();
+				await layerSeed.cleanup?.();
+				throw error;
+			}
+		}
+
 		const rendered: RenderBlockResult = {
 			...validated,
 			cleanup: templateSource.cleanup,
@@ -414,18 +578,12 @@ export class BlockGeneratorService {
 			selectedVariant: null,
 			templateDir: templateSource.templateDir,
 			variables,
-			warnings: templateSource.warnings ?? [],
+			warnings,
 		};
 
 		renderedArtifactCache.set(rendered, {
-			artifacts: buildBuiltInBlockArtifacts({
-				templateId: validated.spec.template.family,
-				variables,
-			}),
-			codeArtifacts: buildBuiltInCodeArtifacts({
-				templateId: validated.spec.template.family,
-				variables,
-			}),
+			artifacts,
+			codeArtifacts,
 			variablesFingerprint: createVariablesFingerprint(variables),
 		});
 

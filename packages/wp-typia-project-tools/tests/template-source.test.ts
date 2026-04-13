@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { blockTypesPackageVersion, cleanupScaffoldTempRoot, createBlockExternalFixturePath, createBlockSubsetFixturePath, createScaffoldTempRoot, normalizedBlockRuntimePackageVersion, packageRoot, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
+import { blockTypesPackageVersion, cleanupScaffoldTempRoot, createBlockExternalFixturePath, createBlockSubsetFixturePath, createScaffoldTempRoot, normalizedBlockRuntimePackageVersion, packageRoot, templateLayerFixturePath, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
 import { getTemplateVariables, scaffoldProject } from "../src/runtime/index.js";
 import { resolveTemplateId } from "../src/runtime/scaffold.js";
 import { copyRenderedDirectory } from "../src/runtime/template-render.js";
@@ -90,6 +90,26 @@ test("local create-block subset paths scaffold into a pnpm-ready wp-typia projec
   );
   expect(readme).not.toContain("## Local WordPress");
   expect(readme).not.toContain("## Local Test Preset");
+});
+
+test("external layer packages are rejected as standalone template ids", async () => {
+  await expect(
+    scaffoldProject({
+      projectDir: path.join(tempRoot, "demo-external-layer-standalone"),
+      templateId: templateLayerFixturePath,
+      packageManager: "npm",
+      noInstall: true,
+      answers: {
+        author: "Test Runner",
+        description: "Layer package misuse",
+        namespace: "create-block",
+        slug: "demo-external-layer-standalone",
+        title: "Demo External Layer Standalone",
+      },
+    })
+  ).rejects.toThrow(
+    "External layers currently compose only through built-in scaffolds via the runtime API"
+  );
 });
 
 test("local official external template configs scaffold with the default variant", async () => {

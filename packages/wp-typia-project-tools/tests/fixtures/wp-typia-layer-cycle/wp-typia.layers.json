@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "layers": {
+    "acme/a": {
+      "path": "layers/a",
+      "extends": ["acme/b"]
+    },
+    "acme/b": {
+      "path": "layers/b",
+      "extends": ["acme/a"]
+    }
+  }
+}

@@ -28,6 +28,7 @@ import {
 	isOmittableBuiltInTemplateLayerDir,
 	resolveBuiltInTemplateSource,
 } from "./template-builtins.js";
+import { loadExternalTemplateLayerManifest } from "./template-layers.js";
 import { getPackageVersions } from "./package-versions.js";
 import { toSegmentPascalCase } from "./string-case.js";
 import { copyRawDirectory, copyRenderedDirectory } from "./template-render.js";
@@ -498,6 +499,12 @@ async function detectTemplateSourceFormat(sourceDir: string): Promise<TemplateSo
 
 	if (hasBlockJson && hasIndexFile && hasEditFile && hasSaveFile) {
 		return "create-block-subset";
+	}
+
+	if (await loadExternalTemplateLayerManifest(sourceDir)) {
+		throw new Error(
+			`Template source at ${sourceDir} is an external layer package. External layers currently compose only through built-in scaffolds via the runtime API, not as standalone template ids.`,
+		);
 	}
 
 	throw new Error(
@@ -996,7 +1003,7 @@ async function resolveGitHubTemplateSource(locator: GitHubTemplateLocator): Prom
 	}
 }
 
-async function resolveTemplateSeed(
+export async function resolveTemplateSeed(
 	locator: RemoteTemplateLocator,
 	cwd: string,
 ): Promise<SeedSource> {
