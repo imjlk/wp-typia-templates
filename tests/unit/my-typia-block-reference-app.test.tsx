@@ -139,7 +139,7 @@ describe("my-typia-block reference app helpers", () => {
     );
 
     expect(validatorToolkitSource).toContain("createTemplateValidatorToolkit");
-    expect(validatorsSource).toContain("from './validator-toolkit'");
+    expect(validatorsSource).toMatch(/from\s+['"]\.\/validator-toolkit['"]/);
     expect(validatorsSource).toContain("createTemplateValidatorToolkit");
     expect(validatorsSource).not.toContain("applyTemplateDefaultsFromManifest");
     expect(validatorsSource).not.toContain("createScaffoldValidatorToolkit");

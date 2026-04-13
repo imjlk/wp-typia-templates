@@ -60,26 +60,24 @@ export function sanitizeMyTypiaBlockAttributes(
 export function createAttributeUpdater(
 	attributes: MyTypiaBlockAttributes,
 	setAttributes: ( attrs: Partial< MyTypiaBlockAttributes > ) => void,
-	validator = validators.validate
+	validator = validateMyTypiaBlockAttributes
 ) {
 	return scaffoldValidators.createAttributeUpdater(
 		attributes,
 		setAttributes,
-		validator as typeof validateMyTypiaBlockAttributes
+		validator
 	);
 }
 
 export function createNestedAttributeUpdater(
 	attributes: MyTypiaBlockAttributes,
 	setAttributes: ( attrs: Partial< MyTypiaBlockAttributes > ) => void,
-	validator = validators.validate
+	validator = validateMyTypiaBlockAttributes
 ) {
 	return createValidatedNestedAttributeUpdater(
 		attributes,
 		setAttributes,
-		validator as (
-			value: MyTypiaBlockAttributes
-		) => ValidationResult< MyTypiaBlockAttributes >,
+		validator,
 		( validation, path ) => {
 			console.error(
 				`Validation failed for ${ path }:`,
