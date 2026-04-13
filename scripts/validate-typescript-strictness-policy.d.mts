@@ -34,4 +34,4 @@ export declare function runCli(options?: {
 	cwd?: string;
 	stdout?: { write(chunk: string): unknown };
 	stderr?: { write(chunk: string): unknown };
-}): number;
+}): 0 | 1;

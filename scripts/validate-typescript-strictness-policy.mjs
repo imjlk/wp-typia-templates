@@ -59,11 +59,55 @@ function listTsconfigPaths(repoRoot) {
 }
 
 function readJsonFile(filePath) {
-	return JSON.parse(fs.readFileSync(filePath, "utf8"));
+	try {
+		return JSON.parse(fs.readFileSync(filePath, "utf8"));
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		throw new Error(`Failed to read/parse JSON file ${filePath}: ${message}`, {
+			cause: error instanceof Error ? error : undefined,
+		});
+	}
 }
 
 function toRelativePath(repoRoot, targetPath) {
 	return path.relative(repoRoot, targetPath).split(path.sep).join("/");
+}
+
+function resolveExtendedConfigPath(tsconfigPath, extendsValue) {
+	if (typeof extendsValue !== "string") {
+		return null;
+	}
+
+	if (!extendsValue.startsWith(".") && !path.isAbsolute(extendsValue)) {
+		return null;
+	}
+
+	const resolvedPath = path.resolve(path.dirname(tsconfigPath), extendsValue);
+	if (fs.existsSync(resolvedPath)) {
+		return resolvedPath;
+	}
+
+	const jsonResolvedPath = `${resolvedPath}.json`;
+	return fs.existsSync(jsonResolvedPath) ? jsonResolvedPath : null;
+}
+
+function inheritsFromBaseConfig(tsconfigPath, baseConfigPath, visited = new Set()) {
+	if (tsconfigPath === baseConfigPath) {
+		return true;
+	}
+
+	if (visited.has(tsconfigPath)) {
+		return false;
+	}
+	visited.add(tsconfigPath);
+
+	const extendsValue = readJsonFile(tsconfigPath).extends;
+	const extendedConfigPath = resolveExtendedConfigPath(tsconfigPath, extendsValue);
+	if (!extendedConfigPath) {
+		return false;
+	}
+
+	return inheritsFromBaseConfig(extendedConfigPath, baseConfigPath, visited);
 }
 
 export function validateTypeScriptStrictnessPolicy(
@@ -99,6 +143,12 @@ export function validateTypeScriptStrictnessPolicy(
 
 		const relativePath = toRelativePath(repoRoot, tsconfigPath);
 		const compilerOptions = readJsonFile(tsconfigPath).compilerOptions ?? {};
+		if (!inheritsFromBaseConfig(tsconfigPath, baseConfigPath)) {
+			errors.push(
+				`${relativePath} must inherit from tsconfig.base.json through a repo-local extends chain so the shared strictness baseline cannot be bypassed.`,
+			);
+			continue;
+		}
 		const exceptionConfig = exceptions[relativePath] ?? {};
 
 		for (const [flagName, expectedValue] of Object.entries(baseline)) {

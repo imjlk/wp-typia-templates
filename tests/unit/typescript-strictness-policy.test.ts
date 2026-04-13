@@ -97,6 +97,21 @@ describe("validateTypeScriptStrictnessPolicy", () => {
 		);
 	});
 
+	test("fails when a package tsconfig no longer inherits from the repo baseline", () => {
+		const repoRoot = createStrictnessRepo();
+		const packagePath = path.join(repoRoot, "packages/wp-typia-api-client/tsconfig.json");
+		const packageConfig = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+		delete packageConfig.extends;
+		writeJson(packagePath, packageConfig);
+
+		const result = validateTypeScriptStrictnessPolicy(repoRoot);
+
+		expect(result.valid).toBe(false);
+		expect(result.errors).toContain(
+			"packages/wp-typia-api-client/tsconfig.json must inherit from tsconfig.base.json through a repo-local extends chain so the shared strictness baseline cannot be bypassed.",
+		);
+	});
+
 	test("fails when a package opts into a deferred strictness flag without an explicit exception", () => {
 		const repoRoot = createStrictnessRepo();
 		const packagePath = path.join(repoRoot, "examples/my-typia-block/tsconfig.json");
@@ -142,5 +157,29 @@ describe("validateTypeScriptStrictnessPolicy", () => {
 
 		expect(result.valid).toBe(true);
 		expect(result.errors).toEqual([]);
+	});
+
+	test("fails when a strictness exception is declared but not consumed", () => {
+		const repoRoot = createStrictnessRepo();
+
+		const result = validateTypeScriptStrictnessPolicy(repoRoot, {
+			baseline: {
+				noFallthroughCasesInSwitch: true,
+				noImplicitOverride: true,
+				strict: true,
+				useUnknownInCatchVariables: true,
+			},
+			deferredFlags: ["noUncheckedIndexedAccess"],
+			exceptions: {
+				"examples/my-typia-block/tsconfig.json": {
+					noUncheckedIndexedAccess: true,
+				},
+			},
+		});
+
+		expect(result.valid).toBe(false);
+		expect(result.errors).toContain(
+			"examples/my-typia-block/tsconfig.json declares a stale strictness exception for compilerOptions.noUncheckedIndexedAccess; remove the exception or restore the override.",
+		);
 	});
 });

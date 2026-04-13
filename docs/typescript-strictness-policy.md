@@ -4,14 +4,14 @@ The repository uses a staged TypeScript strictness policy instead of letting pac
 
 ## Stage 1: repo-wide baseline
 
-`/Users/imjlk/repos/imjlk/wp-typia-boilerplate/tsconfig.base.json` is the canonical owner for the current repo-wide baseline:
+`tsconfig.base.json` is the canonical owner for the current repo-wide baseline:
 
 - `strict: true`
 - `noImplicitOverride: true`
 - `noFallthroughCasesInSwitch: true`
 - `useUnknownInCatchVariables: true`
 
-Every package and example should inherit those flags from `tsconfig.base.json`, either directly or through `/Users/imjlk/repos/imjlk/wp-typia-boilerplate/tsconfig.json`.
+Every package and example should inherit those flags from `tsconfig.base.json`, either directly or through `tsconfig.json`.
 
 Package-level `tsconfig` files should not repeat those options locally. If a config sets one of the adopted baseline flags itself, that is treated as accidental drift rather than intentional policy.
 
@@ -24,7 +24,7 @@ The following flags are intentionally deferred until the repo is ready to ratche
 - `noImplicitReturns`
 - `noPropertyAccessFromIndexSignature`
 
-Those flags should not appear in package or example `tsconfig` files without an explicit, temporary exception recorded in `/Users/imjlk/repos/imjlk/wp-typia-boilerplate/scripts/validate-typescript-strictness-policy.mjs`.
+Those flags should not appear in package or example `tsconfig` files without an explicit, temporary exception recorded in `scripts/validate-typescript-strictness-policy.mjs`.
 
 ## Temporary exceptions
 
