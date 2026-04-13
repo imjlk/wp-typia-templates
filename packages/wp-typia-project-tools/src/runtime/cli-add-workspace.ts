@@ -317,12 +317,10 @@ async function writeVariationRegistry(
 	const variationsIndexPath = path.join(variationsDir, "index.ts");
 	await fsp.mkdir(variationsDir, { recursive: true });
 
-	const existingVariationSlugs = fs.existsSync(variationsDir)
-		? fs
-				.readdirSync(variationsDir)
-				.filter((entry) => entry.endsWith(".ts") && entry !== "index.ts")
-				.map((entry) => entry.replace(/\.ts$/u, ""))
-		: [];
+	const existingVariationSlugs = fs
+		.readdirSync(variationsDir)
+		.filter((entry) => entry.endsWith(".ts") && entry !== "index.ts")
+		.map((entry) => entry.replace(/\.ts$/u, ""));
 	const nextVariationSlugs = Array.from(new Set([...existingVariationSlugs, variationSlug])).sort();
 	await fsp.writeFile(
 		variationsIndexPath,
@@ -503,12 +501,10 @@ async function writeBindingSourceRegistry(
 	const bindingsIndexPath = resolveBindingSourceRegistryPath(projectDir);
 	await fsp.mkdir(bindingsDir, { recursive: true });
 
-	const existingBindingSourceSlugs = fs.existsSync(bindingsDir)
-		? fs
-				.readdirSync(bindingsDir, { withFileTypes: true })
-				.filter((entry) => entry.isDirectory())
-				.map((entry) => entry.name)
-		: [];
+	const existingBindingSourceSlugs = fs
+		.readdirSync(bindingsDir, { withFileTypes: true })
+		.filter((entry) => entry.isDirectory())
+		.map((entry) => entry.name);
 	const nextBindingSourceSlugs = Array.from(
 		new Set([...existingBindingSourceSlugs, bindingSourceSlug]),
 	).sort();
