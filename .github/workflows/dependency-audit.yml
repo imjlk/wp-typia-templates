@@ -18,7 +18,25 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
+  composer-audit:
+    name: Composer Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+          tools: composer:v2
+
+      - name: Run Composer audit
+        run: composer audit --locked
+
   bun-audit:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     name: Bun Audit
     runs-on: ubuntu-latest
     steps:
@@ -43,20 +61,3 @@ jobs:
 
       - name: Run Bun audit
         run: bun audit --audit-level high
-
-  composer-audit:
-    name: Composer Audit
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ env.PHP_VERSION }}
-          coverage: none
-          tools: composer:v2
-
-      - name: Run Composer audit
-        run: composer audit --locked

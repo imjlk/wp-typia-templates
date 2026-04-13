@@ -19,7 +19,7 @@ The JavaScript side of the repository is a Bun-first workspace with published pa
 - exact and caret package coupling rules
 - changeset requirements for publishable package version lanes
 
-Until we adopt a release-aware dependency bot for the Bun/npm workspace, JavaScript dependency bumps stay intentionally human-led. The audit workflow below still gives PR and scheduled visibility into JS security drift.
+Until we adopt a release-aware dependency bot for the Bun/npm workspace, JavaScript dependency bumps stay intentionally human-led. The audit workflow below still gives scheduled/manual visibility into JS security drift without turning every PR into upstream toolchain triage.
 
 ## Release flow expectations
 
@@ -47,10 +47,22 @@ Audit coverage is split by cost and actionability.
 
 It currently enforces:
 
-- `bun audit --audit-level high`
 - `composer audit --locked`
 
-This is the fast dependency/security gate that should catch actionable registry advisories before or immediately after merge.
+This is the fast dependency/security gate for the maintainer-owned lockfile that should catch actionable PHP ecosystem advisories before or immediately after merge.
+
+### Scheduled/manual JavaScript coverage
+
+The same `.github/workflows/dependency-audit.yml` workflow keeps Bun audit available for:
+
+- the weekly scheduled run
+- manual `workflow_dispatch`
+
+That lane runs:
+
+- `bun audit --audit-level high`
+
+Today the Bun/npm side of the repository still pulls in known transitive advisories through upstream WordPress/example toolchains. Keeping full `bun audit` out of the PR gate avoids noisy failures while still giving maintainers a consistent scheduled/manual baseline to review and act on intentionally.
 
 ### Scheduled deeper coverage
 

@@ -47,7 +47,7 @@ function createMaintenancePolicyRepo() {
 
   writeText(
     path.join(repoRoot, '.github/workflows/dependency-audit.yml'),
-    `name: Dependency and Security Audit\non:\n  pull_request:\n    branches: [main]\n  push:\n    branches: [main]\n  schedule:\n    - cron: '30 0 * * 2'\n  workflow_dispatch:\njobs:\n  bun-audit:\n    name: Bun Audit\n    steps:\n      - run: bun audit --audit-level high\n  composer-audit:\n    name: Composer Audit\n    steps:\n      - run: composer audit --locked\n`
+    `name: Dependency and Security Audit\non:\n  pull_request:\n    branches: [main]\n  push:\n    branches: [main]\n  schedule:\n    - cron: '30 0 * * 2'\n  workflow_dispatch:\njobs:\n  composer-audit:\n    name: Composer Audit\n    steps:\n      - run: composer audit --locked\n  bun-audit:\n    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'\n    name: Bun Audit\n    steps:\n      - run: bun audit --audit-level high\n`
   );
 
   writeText(
@@ -62,7 +62,7 @@ function createMaintenancePolicyRepo() {
 
   writeText(
     path.join(repoRoot, 'docs/maintenance-automation-policy.md'),
-    `Dependabot updates\ngithub-actions\ncomposer\nrelease/sampo\nbun audit --audit-level high\ncomposer audit --locked\n.github/workflows/dependency-audit.yml\n.github/workflows/test-matrix.yml\n`
+    `Dependabot updates\ngithub-actions\ncomposer\nrelease/sampo\nbun audit --audit-level high\ncomposer audit --locked\nscheduled/manual\n.github/workflows/dependency-audit.yml\n.github/workflows/test-matrix.yml\n`
   );
 
   writeText(
@@ -132,6 +132,9 @@ describe('validateMaintenanceAutomationPolicy', () => {
     );
     expect(result.errors).toContain(
       '.github/workflows/dependency-audit.yml must include "run: composer audit --locked".',
+    );
+    expect(result.errors).toContain(
+      '.github/workflows/dependency-audit.yml must include "if: github.event_name == \'schedule\' || github.event_name == \'workflow_dispatch\'".',
     );
     expect(result.errors).toContain(
       '.github/workflows/ci.yml lint job must include "run: bun run maintenance-automation:validate".',

@@ -14,6 +14,7 @@ export const MAINTENANCE_AUTOMATION_POLICY = Object.freeze({
     'release/sampo',
     'bun audit --audit-level high',
     'composer audit --locked',
+    'scheduled/manual',
     '.github/workflows/dependency-audit.yml',
     '.github/workflows/test-matrix.yml',
   ]),
@@ -82,10 +83,11 @@ function validateDependencyAuditWorkflow(sourceText, errors) {
     'schedule:',
     'workflow_dispatch:',
     'branches: [main]',
-    'name: Bun Audit',
-    'run: bun audit --audit-level high',
     'name: Composer Audit',
     'run: composer audit --locked',
+    "if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'",
+    'name: Bun Audit',
+    'run: bun audit --audit-level high',
   ]) {
     if (!sourceText.includes(requiredSnippet)) {
       errors.push(

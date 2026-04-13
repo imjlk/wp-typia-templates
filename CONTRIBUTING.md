@@ -64,7 +64,7 @@ Maintenance automation is explicit too:
 - Dependabot currently opens update PRs for `github-actions` and root `composer` tooling only
 - those PRs still target `main` and flow through the normal `release/sampo` release lane after merge
 - Bun/npm workspace dependency bumps remain maintainer-led until we adopt a release-aware automation strategy for publishable package coupling
-- `.github/workflows/dependency-audit.yml` owns the fast PR/main/scheduled `bun audit` and `composer audit --locked` lane
+- `.github/workflows/dependency-audit.yml` owns the PR/main `composer audit --locked` gate and the scheduled/manual `bun audit --audit-level high` lane
 - `.github/workflows/test-matrix.yml` keeps the slower scheduled/manual matrix and CodeQL coverage
 
 See [`docs/maintenance-automation-policy.md`](./docs/maintenance-automation-policy.md) for the exact cadence and review posture.

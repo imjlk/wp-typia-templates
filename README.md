@@ -282,8 +282,9 @@ explicit scope and rationale.
 Repository maintenance automation is explicit too. Dependabot currently owns
 GitHub Actions and Composer update PRs on `main`, while Bun/npm workspace
 dependency bumps stay maintainer-led until we have release-aware bot support.
-Fast dependency audits now run in a dedicated workflow on PRs, pushes, and a
-weekly schedule. See the
+Composer audit now gates PRs and `main`, while the broader Bun audit stays on a
+scheduled/manual maintenance lane until the JS toolchain baseline is narrower
+and more actionable. See the
 [Maintenance Automation Policy](docs/maintenance-automation-policy.md) for the
 chosen review posture and release interaction rules.
 
