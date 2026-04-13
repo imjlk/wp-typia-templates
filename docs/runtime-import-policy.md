@@ -62,13 +62,17 @@ Manual orchestration or repo tooling should use:
 
 Those imports cover scaffold, add-block, migrate, template, doctor, package
 manager, starter manifest, schema/OpenAPI project helpers, the `BlockSpec` /
-`BlockGeneratorService` generator boundary, and the emitter-owned built-in
+`BlockGeneratorService` generator boundary, the non-mutating
+`inspectBlockGeneration(...)` tool contract, and the emitter-owned built-in
 structural/source path where built-in templates no longer ship structural,
 TS/TSX, style, or block-local `render.php` Mustache files.
 
 For the architecture record behind that boundary, including the staged
 non-mutating tool-facing contract and current phase map, see
 [`docs/block-generator-architecture.md`](./block-generator-architecture.md).
+
+For the public staged controller/tool payload contract itself, see
+[`docs/block-generator-tool-contract.md`](./block-generator-tool-contract.md).
 
 For the separate external layer package RFC on top of the built-in shared
 scaffold model, see

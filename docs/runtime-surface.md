@@ -16,9 +16,10 @@ This document is descriptive, not normative. For support guarantees, see
 - `@wp-typia/rest/react`
 - `@wp-typia/project-tools`
   Project orchestration helpers used by the CLI and programmatic tooling,
-  including the additive `BlockSpec` / `BlockGeneratorService` boundary and
-  emitter ownership for built-in structural files, TS/TSX scaffold bodies, and
-  built-in style/PHP source assets.
+  including the additive `BlockSpec` / `BlockGeneratorService` boundary, the
+  non-mutating `inspectBlockGeneration(...)` tool contract, and emitter
+  ownership for built-in structural files, TS/TSX scaffold bodies, and built-in
+  style/PHP source assets.
 - `@wp-typia/project-tools/schema-core`
   Schema and OpenAPI helpers for project-level documents.
 - `@wp-typia/block-runtime`
@@ -72,11 +73,15 @@ This document is descriptive, not normative. For support guarantees, see
 - `wp-typia` owns the CLI, help, TUI, completions, skills, MCP, and bin entry.
 - `@wp-typia/project-tools` owns scaffold, add-block, migrate, template,
   doctor, package-manager, starter-manifest, the typed generator boundary, the
-  built-in structural/code emitters, and the preferred schema project imports.
+  built-in structural/code emitters, the non-mutating
+  `inspectBlockGeneration(...)` tool contract, and the preferred schema project
+  imports.
   Built-in templates no longer ship structural, TS/TSX, style, or block-local
   `render.php` Mustache files for those generated artifacts. The higher-level
   generator architecture record lives in
   [`docs/block-generator-architecture.md`](./block-generator-architecture.md).
+  The public non-mutating controller contract lives in
+  [`docs/block-generator-tool-contract.md`](./block-generator-tool-contract.md).
   External template-layer composition is a separate RFC recorded in
   [`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).
 - `@wp-typia/block-runtime/*` owns generated-project runtime helpers directly,

@@ -99,7 +99,7 @@ template-engine replacement project.
 
 ## Tool-facing usage model
 
-The current non-mutating service surface is already suitable for future
+The current non-mutating service surface is now formalized for future
 Agentica-, MCP-, or other structured tool controllers.
 
 ```ts
@@ -126,9 +126,9 @@ const rendered = await service.render({ validated });
 await service.apply({ rendered });
 ```
 
-That means the future AI/tool contract does not need a second generator. It
-only needs to expose the same staged boundary in a more formal controller
-interface.
+That means the future AI/tool contract does not need a second generator. The
+formal controller-facing follow-through now lives in
+[`docs/block-generator-tool-contract.md`](./block-generator-tool-contract.md).
 
 ## Phase status
 
@@ -145,10 +145,10 @@ The architecture in issue `#193` was implemented incrementally.
 - Phase 3: complete
   Built-in TS/TSX scaffold bodies, built-in style assets, and block-local
   `render.php` moved to emitter ownership for all built-in block families.
-- Phase 4: still open
-  The remaining follow-through is a formal tool/controller contract for
-  non-mutating generator usage plus architecture for external layer
-  composition, which now belongs with issue `#198`.
+- Phase 4: complete
+  The non-mutating tool/controller contract is now formalized around
+  `inspectBlockGeneration(...)`, while external layer composition remains the
+  separate RFC from issue `#198`.
 
 ## What this architecture does not do
 
@@ -167,6 +167,8 @@ runtime surfaces under `@wp-typia/block-runtime/*`.
 
 - [`docs/block-generator-service.md`](./block-generator-service.md)
   describes the current concrete responsibility split inside the generator.
+- [`docs/block-generator-tool-contract.md`](./block-generator-tool-contract.md)
+  records the public non-mutating generator controller contract.
 - [`docs/API.md`](./API.md)
   maps the public package surfaces that expose the generator boundary.
 - [`docs/runtime-import-policy.md`](./runtime-import-policy.md)

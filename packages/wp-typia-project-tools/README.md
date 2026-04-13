@@ -6,7 +6,8 @@ Package roles:
 
 - `wp-typia` owns the CLI, help, TUI, completions, skills, MCP, and bin entry.
 - `@wp-typia/project-tools` owns scaffold, add-block, migrate, template, doctor, and schema project helpers.
-  It also owns the typed generator boundary via `BlockSpec` and `BlockGeneratorService`,
+  It also owns the typed generator boundary via `BlockSpec`, `BlockGeneratorService`,
+  and `inspectBlockGeneration(...)`,
   plus the emitter-owned built-in structural/code path where built-in
   templates no longer ship structural, TS/TSX, style, or block-local `render.php`
   Mustache files.
@@ -54,6 +55,8 @@ The higher-level generator architecture record, including the current phase map
 and the non-mutating `plan -> validate -> render -> apply` tool-facing usage
 model, lives in
 [`docs/block-generator-architecture.md`](../../docs/block-generator-architecture.md).
+The public non-mutating controller/tool contract now lives in
+[`docs/block-generator-tool-contract.md`](../../docs/block-generator-tool-contract.md).
 
 The separate RFC for reusable external layer packages on top of the built-in
 shared scaffold model lives in

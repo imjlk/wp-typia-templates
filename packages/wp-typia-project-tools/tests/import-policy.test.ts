@@ -20,11 +20,13 @@ describe('@wp-typia/project-tools import policy', () => {
     ]);
 
     expect(typeof rootModule.collectScaffoldAnswers).toBe('function');
+    expect(rootModule.BLOCK_GENERATION_TOOL_CONTRACT_VERSION).toBe(1);
     expect(typeof rootModule.BlockGeneratorService).toBe('function');
     expect(typeof rootModule.formatAddHelpText).toBe('function');
     expect(typeof rootModule.formatMigrationHelpText).toBe('function');
     expect(typeof rootModule.getDoctorChecks).toBe('function');
     expect(typeof rootModule.getTemplateById).toBe('function');
+    expect(typeof rootModule.inspectBlockGeneration).toBe('function');
     expect(typeof rootModule.listTemplates).toBe('function');
     expect(typeof rootModule.parseMigrationArgs).toBe('function');
     expect(typeof rootModule.projectJsonSchemaDocument).toBe('function');
@@ -107,6 +109,8 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(projectToolsReadme).toContain('@wp-typia/project-tools');
     expect(projectToolsReadme).toContain('@wp-typia/project-tools/schema-core');
     expect(projectToolsReadme).toContain('BlockGeneratorService');
+    expect(projectToolsReadme).toContain('inspectBlockGeneration');
+    expect(projectToolsReadme).toContain('docs/block-generator-tool-contract.md');
     expect(projectToolsReadme).toContain('@wp-typia/block-runtime/*');
     expect(projectToolsReadme).toContain(
       '@wp-typia/block-runtime/migration-types',
@@ -117,13 +121,17 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(createReadme).toContain('@wp-typia/project-tools/schema-core');
     expect(apiGuide).toContain('@wp-typia/project-tools');
     expect(apiGuide).toContain('BlockGeneratorService');
+    expect(apiGuide).toContain('inspectBlockGeneration');
     expect(apiGuide).toContain('docs/block-generator-architecture.md');
+    expect(apiGuide).toContain('docs/block-generator-tool-contract.md');
     expect(apiGuide).toContain('docs/external-template-layer-composition.md');
     expect(apiGuide).toContain('@wp-typia/project-tools/schema-core');
     expect(apiGuide).toContain('@wp-typia/block-runtime/metadata-core');
     expect(runtimeSurfaceDoc).toContain('@wp-typia/project-tools');
     expect(runtimeSurfaceDoc).toContain('BlockGeneratorService');
+    expect(runtimeSurfaceDoc).toContain('inspectBlockGeneration');
     expect(runtimeSurfaceDoc).toContain('docs/block-generator-architecture.md');
+    expect(runtimeSurfaceDoc).toContain('docs/block-generator-tool-contract.md');
     expect(runtimeSurfaceDoc).toContain(
       'docs/external-template-layer-composition.md',
     );
@@ -140,6 +148,7 @@ describe('@wp-typia/project-tools import policy', () => {
       'built-in templates no longer ship structural, TS/TSX, style, or block-local',
     );
     expect(blockGeneratorDoc).toContain('docs/block-generator-architecture.md');
+    expect(blockGeneratorDoc).toContain('docs/block-generator-tool-contract.md');
     expect(blockGeneratorDoc).toContain(
       'docs/external-template-layer-composition.md',
     );
@@ -153,7 +162,10 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(blockGeneratorArchitectureDoc).toContain('apply');
     expect(blockGeneratorArchitectureDoc).toContain('Phase 1: complete');
     expect(blockGeneratorArchitectureDoc).toContain('Phase 3: complete');
-    expect(blockGeneratorArchitectureDoc).toContain('Phase 4: still open');
+    expect(blockGeneratorArchitectureDoc).toContain('Phase 4: complete');
+    expect(blockGeneratorArchitectureDoc).toContain(
+      'docs/block-generator-tool-contract.md',
+    );
     expect(externalTemplateLayerDoc).toContain('wp-typia.layers.json');
     expect(externalTemplateLayerDoc).toContain('extends');
     expect(externalTemplateLayerDoc).toContain('builtin:shared/base');
@@ -168,7 +180,9 @@ describe('@wp-typia/project-tools import policy', () => {
     );
     expect(importPolicyDoc).toContain('@wp-typia/project-tools');
     expect(importPolicyDoc).toContain('BlockGeneratorService');
+    expect(importPolicyDoc).toContain('inspectBlockGeneration');
     expect(importPolicyDoc).toContain('docs/block-generator-architecture.md');
+    expect(importPolicyDoc).toContain('docs/block-generator-tool-contract.md');
     expect(importPolicyDoc).toContain(
       'docs/external-template-layer-composition.md',
     );

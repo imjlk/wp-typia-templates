@@ -6,6 +6,8 @@
 For the higher-level architecture record, phase map, and AI/tool-facing staged
 usage model, see
 [`docs/block-generator-architecture.md`](./block-generator-architecture.md).
+For the public non-mutating tool/controller contract, see
+[`docs/block-generator-tool-contract.md`](./block-generator-tool-contract.md).
 
 ## Current responsibility split
 
