@@ -56,6 +56,9 @@ jobs:
       - name: Validate pending changesets
         run: bun run changesets:validate
 
+      - name: Validate maintenance automation policy
+        run: bun run maintenance-automation:validate
+
       - name: Validate formatting toolchain policy
         run: bun run formatting-policy:validate
 
