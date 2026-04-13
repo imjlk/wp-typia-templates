@@ -1,62 +1,54 @@
 /* eslint-disable no-console */
 import typia from 'typia';
 import currentManifest from '../typia.manifest.json';
-import {
-	type ManifestDefaultsDocument,
-	applyTemplateDefaultsFromManifest,
-} from '@wp-typia/block-runtime/defaults';
 import { generateBlockId } from '@wp-typia/block-runtime/identifiers';
 import {
-	createAttributeUpdater as createValidatedAttributeUpdater,
 	createNestedAttributeUpdater as createValidatedNestedAttributeUpdater,
 	type ValidationResult,
-	toValidationResult,
 } from '@wp-typia/block-runtime/validation';
 import { MyTypiaBlockAttributes } from './types';
+import { createTemplateValidatorToolkit } from './validator-toolkit';
 
 /**
  * Typia validators for the block attributes
  */
-const validate = typia.createValidate< MyTypiaBlockAttributes >();
-const assert = typia.createAssert< MyTypiaBlockAttributes >();
-const is = typia.createIs< MyTypiaBlockAttributes >();
-const random = typia.createRandom< MyTypiaBlockAttributes >();
-const clone = typia.misc.createClone< MyTypiaBlockAttributes >();
-const prune = typia.misc.createPrune< MyTypiaBlockAttributes >();
+const scaffoldValidators =
+	createTemplateValidatorToolkit< MyTypiaBlockAttributes >( {
+		assert: typia.createAssert< MyTypiaBlockAttributes >(),
+		clone: typia.misc.createClone< MyTypiaBlockAttributes >() as (
+			value: MyTypiaBlockAttributes
+		) => MyTypiaBlockAttributes,
+		finalize: ( normalized ) => ( {
+			...normalized,
+			id:
+				normalized.id && normalized.id.length > 0
+					? normalized.id
+					: generateBlockId(),
+		} ),
+		is: typia.createIs< MyTypiaBlockAttributes >(),
+		manifest: currentManifest,
+		prune: typia.misc.createPrune< MyTypiaBlockAttributes >(),
+		random: typia.createRandom< MyTypiaBlockAttributes >() as (
+			...args: unknown[]
+		) => MyTypiaBlockAttributes,
+		validate: typia.createValidate< MyTypiaBlockAttributes >(),
+	} );
 
 export const validateMyTypiaBlockAttributes = (
 	attributes: unknown
-): ValidationResult< MyTypiaBlockAttributes > => {
-	return toValidationResult< MyTypiaBlockAttributes >(
-		validate( attributes )
-	);
-};
+): ValidationResult< MyTypiaBlockAttributes > =>
+	scaffoldValidators.validateAttributes(
+		attributes
+	) as ValidationResult< MyTypiaBlockAttributes >;
 
-export const validators = {
-	validate: validateMyTypiaBlockAttributes,
-	assert,
-	is,
-	random,
-	clone,
-	prune,
-};
+export const validators = scaffoldValidators.validators;
 
 export function sanitizeMyTypiaBlockAttributes(
 	attributes: Partial< MyTypiaBlockAttributes >
 ): MyTypiaBlockAttributes {
-	const normalized =
-		applyTemplateDefaultsFromManifest< MyTypiaBlockAttributes >(
-			currentManifest as ManifestDefaultsDocument,
-			attributes
-		);
-
-	return validators.assert( {
-		...normalized,
-		id:
-			normalized.id && normalized.id.length > 0
-				? normalized.id
-				: generateBlockId(),
-	} );
+	return scaffoldValidators.sanitizeAttributes(
+		attributes
+	) as MyTypiaBlockAttributes;
 }
 
 /**
@@ -70,18 +62,10 @@ export function createAttributeUpdater(
 	setAttributes: ( attrs: Partial< MyTypiaBlockAttributes > ) => void,
 	validator = validators.validate
 ) {
-	return createValidatedAttributeUpdater(
+	return scaffoldValidators.createAttributeUpdater(
 		attributes,
 		setAttributes,
-		validator as (
-			value: MyTypiaBlockAttributes
-		) => ValidationResult< MyTypiaBlockAttributes >,
-		( validation, key ) => {
-			console.error(
-				`Validation failed for ${ String( key ) }:`,
-				validation.errors
-			);
-		}
+		validator as typeof validateMyTypiaBlockAttributes
 	);
 }
 

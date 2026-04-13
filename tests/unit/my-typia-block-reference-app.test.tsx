@@ -7,6 +7,54 @@ import { ValidationErrorSummary } from "../../examples/my-typia-block/src/compon
 import { isNonArrayObject } from "../../examples/my-typia-block/src/migrations/plain-object";
 
 describe("my-typia-block reference app helpers", () => {
+  test("reference app package scripts and textdomain follow current CLI conventions", () => {
+    const exampleDir = path.join(import.meta.dir, "../../examples/my-typia-block");
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(exampleDir, "package.json"), "utf8")
+    ) as {
+      scripts: Record<string, string>;
+    };
+    const blockJson = JSON.parse(
+      fs.readFileSync(path.join(exampleDir, "block.json"), "utf8")
+    ) as {
+      textdomain: string;
+    };
+    const snapshotBlockJson = JSON.parse(
+      fs.readFileSync(
+        path.join(exampleDir, "src/migrations/versions/v1/block.json"),
+        "utf8"
+      )
+    ) as {
+      textdomain: string;
+    };
+    const pluginBootstrap = fs.readFileSync(
+      path.join(exampleDir, "my-typia-block.php"),
+      "utf8"
+    );
+    const wpTypiaPackage = JSON.parse(
+      fs.readFileSync(
+        path.join(import.meta.dir, "../../packages/wp-typia/package.json"),
+        "utf8"
+      )
+    ) as {
+      version: string;
+    };
+
+    expect(packageJson.scripts["migration:init"]).toBe(
+      `npx --yes wp-typia@${wpTypiaPackage.version} migrate init --current-migration-version v1`
+    );
+    expect(packageJson.scripts["migration:scaffold"]).toBe(
+      `npx --yes wp-typia@${wpTypiaPackage.version} migrate scaffold`
+    );
+    expect(packageJson.scripts["migration:verify"]).toBe(
+      `npx --yes wp-typia@${wpTypiaPackage.version} migrate verify --all`
+    );
+    expect(blockJson.textdomain).toBe("my-typia-block");
+    expect(snapshotBlockJson.textdomain).toBe("my-typia-block");
+    expect(pluginBootstrap).toContain("Text Domain:       my-typia-block");
+    expect(pluginBootstrap).toContain("'my-typia-block'");
+  });
+
   test("migration object helper preserves the example semantics", () => {
     class ExampleValue {}
 
@@ -70,5 +118,32 @@ describe("my-typia-block reference app helpers", () => {
         path.join(import.meta.dir, "../../examples/my-typia-block/src/utils/uuid.ts")
       )
     ).toBe(false);
+  });
+
+  test("reference app validator wiring uses the current validator toolkit pattern", () => {
+    const exampleDir = path.join(import.meta.dir, "../../examples/my-typia-block/src");
+    const validatorToolkitSource = fs.readFileSync(
+      path.join(exampleDir, "validator-toolkit.ts"),
+      "utf8"
+    );
+    const validatorsSource = fs.readFileSync(
+      path.join(exampleDir, "validators.ts"),
+      "utf8"
+    );
+    const fixturesReadme = fs.readFileSync(
+      path.join(
+        import.meta.dir,
+        "../../examples/my-typia-block/src/migrations/fixtures/README.md"
+      ),
+      "utf8"
+    );
+
+    expect(validatorToolkitSource).toContain("createTemplateValidatorToolkit");
+    expect(validatorsSource).toContain("from './validator-toolkit'");
+    expect(validatorsSource).toContain("createTemplateValidatorToolkit");
+    expect(validatorsSource).not.toContain("applyTemplateDefaultsFromManifest");
+    expect(validatorsSource).not.toContain("createScaffoldValidatorToolkit");
+    expect(fixturesReadme).toContain("wp-typia migrate verify");
+    expect(fixturesReadme).toContain("wp-typia migrate fuzz");
   });
 });

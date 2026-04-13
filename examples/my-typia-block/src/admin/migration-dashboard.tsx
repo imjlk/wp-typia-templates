@@ -95,7 +95,7 @@ function downloadFile( contents: string, fileName: string, type: string ) {
 
 function formatUnionSummary( result: BlockScanResult[ 'preview' ] ): string {
 	if ( result.unionBranches.length === 0 ) {
-		return __( 'No union branch changes', 'my_typia_block' );
+		return __( 'No union branch changes', 'my-typia-block' );
 	}
 
 	return result.unionBranches
@@ -173,7 +173,7 @@ export function MigrationDashboard() {
 			! window.confirm(
 				__(
 					'Migrate all detected legacy blocks now?',
-					'my_typia_block'
+					'my-typia-block'
 				)
 			)
 		) {
@@ -229,12 +229,12 @@ export function MigrationDashboard() {
 					<div style={ { display: 'grid', gap: '12px' } }>
 						<div>
 							<strong>
-								{ __( 'Migration Manager', 'my_typia_block' ) }
+								{ __( 'Migration Manager', 'my-typia-block' ) }
 							</strong>
 							<p style={ { margin: '4px 0 0' } }>
 								{ __(
 									'Scan posts for legacy attributes, preview field-level changes, and batch migrate to the current Typia contract.',
-									'my_typia_block'
+									'my-typia-block'
 								) }
 							</p>
 						</div>
@@ -252,8 +252,8 @@ export function MigrationDashboard() {
 								disabled={ isScanning }
 							>
 								{ isScanning
-									? __( 'Scanning…', 'my_typia_block' )
-									: __( 'Scan site', 'my_typia_block' ) }
+									? __( 'Scanning…', 'my-typia-block' )
+									: __( 'Scan site', 'my-typia-block' ) }
 							</Button>
 							<Button
 								variant="secondary"
@@ -264,7 +264,7 @@ export function MigrationDashboard() {
 									isMigrating
 								}
 							>
-								{ __( 'Dry run', 'my_typia_block' ) }
+								{ __( 'Dry run', 'my-typia-block' ) }
 							</Button>
 							<Button
 								variant="primary"
@@ -276,22 +276,22 @@ export function MigrationDashboard() {
 								}
 							>
 								{ isMigrating
-									? __( 'Migrating…', 'my_typia_block' )
-									: __( 'Migrate all', 'my_typia_block' ) }
+									? __( 'Migrating…', 'my-typia-block' )
+									: __( 'Migrate all', 'my-typia-block' ) }
 							</Button>
 							<Button
 								variant="tertiary"
 								onClick={ downloadReport }
 								disabled={ results.length === 0 }
 							>
-								{ __( 'Download markdown', 'my_typia_block' ) }
+								{ __( 'Download markdown', 'my-typia-block' ) }
 							</Button>
 							<Button
 								variant="tertiary"
 								onClick={ downloadJson }
 								disabled={ results.length === 0 }
 							>
-								{ __( 'Download JSON', 'my_typia_block' ) }
+								{ __( 'Download JSON', 'my-typia-block' ) }
 							</Button>
 						</div>
 
@@ -307,7 +307,7 @@ export function MigrationDashboard() {
 							<div style={ { display: 'grid', gap: '8px' } }>
 								<div>
 									<strong>
-										{ __( 'Summary', 'my_typia_block' ) }
+										{ __( 'Summary', 'my-typia-block' ) }
 									</strong>
 									<ul
 										style={ {
@@ -318,28 +318,28 @@ export function MigrationDashboard() {
 										<li>
 											{ __(
 												'Detected blocks',
-												'my_typia_block'
+												'my-typia-block'
 											) }
 											: { stats.total }
 										</li>
 										<li>
 											{ __(
 												'Need migration',
-												'my_typia_block'
+												'my-typia-block'
 											) }
 											: { stats.needsMigration }
 										</li>
 										<li>
 											{ __(
 												'Unknown shape',
-												'my_typia_block'
+												'my-typia-block'
 											) }
 											: { stats.unknown }
 										</li>
 										<li>
 											{ __(
 												'Risk summary',
-												'my_typia_block'
+												'my-typia-block'
 											) }
 											: additive{ ' ' }
 											{ stats.riskTotals.additive },
@@ -359,7 +359,7 @@ export function MigrationDashboard() {
 									<strong>
 										{ __(
 											'Version distribution',
-											'my_typia_block'
+											'my-typia-block'
 										) }
 									</strong>
 									<ul
@@ -382,7 +382,7 @@ export function MigrationDashboard() {
 									<strong>
 										{ __(
 											'Latest results',
-											'my_typia_block'
+											'my-typia-block'
 										) }
 									</strong>
 									<div
@@ -422,7 +422,7 @@ export function MigrationDashboard() {
 													}{ ' ' }
 													{ __(
 														'changed',
-														'my_typia_block'
+														'my-typia-block'
 													) }
 													{ result.preview.unresolved
 														.length > 0
@@ -445,7 +445,7 @@ export function MigrationDashboard() {
 														<strong>
 															{ __(
 																'Changed fields',
-																'my_typia_block'
+																'my-typia-block'
 															) }
 														</strong>
 														<div>
@@ -457,7 +457,7 @@ export function MigrationDashboard() {
 																  )
 																: __(
 																		'None',
-																		'my_typia_block'
+																		'my-typia-block'
 																  ) }
 														</div>
 													</div>
@@ -465,7 +465,7 @@ export function MigrationDashboard() {
 														<strong>
 															{ __(
 																'Risk summary',
-																'my_typia_block'
+																'my-typia-block'
 															) }
 														</strong>
 														<div>
@@ -478,7 +478,7 @@ export function MigrationDashboard() {
 														<strong>
 															{ __(
 																'Union branches',
-																'my_typia_block'
+																'my-typia-block'
 															) }
 														</strong>
 														<div>
@@ -493,7 +493,7 @@ export function MigrationDashboard() {
 															<strong>
 																{ __(
 																	'Manual review',
-																	'my_typia_block'
+																	'my-typia-block'
 																) }
 															</strong>
 															<div>
@@ -510,7 +510,7 @@ export function MigrationDashboard() {
 															<strong>
 																{ __(
 																	'Validation',
-																	'my_typia_block'
+																	'my-typia-block'
 																) }
 															</strong>
 															<div>
@@ -524,7 +524,7 @@ export function MigrationDashboard() {
 														<strong>
 															{ __(
 																'Before',
-																'my_typia_block'
+																'my-typia-block'
 															) }
 														</strong>
 														{ renderJsonPreview(
@@ -536,7 +536,7 @@ export function MigrationDashboard() {
 														<strong>
 															{ __(
 																'After',
-																'my_typia_block'
+																'my-typia-block'
 															) }
 														</strong>
 														{ renderJsonPreview(
@@ -556,7 +556,7 @@ export function MigrationDashboard() {
 								<strong>
 									{ __(
 										'Dry-run preview',
-										'my_typia_block'
+										'my-typia-block'
 									) }
 								</strong>
 								<div

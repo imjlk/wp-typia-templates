@@ -1,0 +1,45 @@
+import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';
+import {
+	createScaffoldValidatorToolkit,
+	type ScaffoldValidatorToolkitOptions,
+} from '@wp-typia/block-runtime/validation';
+
+interface TemplateValidatorFunctions< T extends object > {
+	assert: ScaffoldValidatorToolkitOptions< T >[ 'assert' ];
+	clone: ScaffoldValidatorToolkitOptions< T >[ 'clone' ];
+	is: ScaffoldValidatorToolkitOptions< T >[ 'is' ];
+	prune: ScaffoldValidatorToolkitOptions< T >[ 'prune' ];
+	random: ScaffoldValidatorToolkitOptions< T >[ 'random' ];
+	validate: ScaffoldValidatorToolkitOptions< T >[ 'validate' ];
+}
+
+interface TemplateValidatorToolkitOptions< T extends object >
+	extends TemplateValidatorFunctions< T > {
+	finalize?: ScaffoldValidatorToolkitOptions< T >[ 'finalize' ];
+	manifest: unknown;
+	onValidationError?: ScaffoldValidatorToolkitOptions< T >[ 'onValidationError' ];
+}
+
+export function createTemplateValidatorToolkit< T extends object >( {
+	assert,
+	clone,
+	finalize,
+	is,
+	manifest,
+	onValidationError,
+	prune,
+	random,
+	validate,
+}: TemplateValidatorToolkitOptions< T > ) {
+	return createScaffoldValidatorToolkit< T >( {
+		manifest: manifest as ManifestDefaultsDocument,
+		validate,
+		assert,
+		is,
+		random,
+		clone,
+		prune,
+		finalize,
+		onValidationError,
+	} );
+}

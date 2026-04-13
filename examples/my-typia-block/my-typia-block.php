@@ -9,7 +9,7 @@
  * Author:            imjlk
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       my_typia_block
+ * Text Domain:       my-typia-block
  * Domain Path:       /languages
  */
 
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function my_typia_block_load_textdomain() {
 	load_plugin_textdomain(
-		'my_typia_block',
+		'my-typia-block',
 		false,
 		dirname( plugin_basename( __FILE__ ) ) . '/languages'
 	);

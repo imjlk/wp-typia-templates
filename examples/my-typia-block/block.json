@@ -45,7 +45,7 @@
 			"clientNavigation": true
 		}
 	},
-	"textdomain": "my_typia_block",
+	"textdomain": "my-typia-block",
 	"editorScript": "file:./index.js",
 	"render": "file:./render.php",
 	"style": "file:./style-index.css",

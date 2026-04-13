@@ -74,7 +74,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 
 <div <?php echo $wrapper_attributes; ?>>
 	<div class="my-typia-block-frontend">
-		<?php esc_html_e( 'My Typia Block - Frontend View', 'my_typia_block' ); ?>
+		<?php esc_html_e( 'My Typia Block - Frontend View', 'my-typia-block' ); ?>
 	</div>
 	<p
 		style="<?php echo esc_attr( 'text-align: ' . $alignment . ';' ); ?>"
@@ -91,7 +91,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 		data-wp-on--click="actions.toggle"
 		type="button"
 	>
-		<?php esc_html_e( 'Toggle', 'my_typia_block' ); ?>
+		<?php esc_html_e( 'Toggle', 'my-typia-block' ); ?>
 	</button>
 
 	<div class="my-typia-block-counter">
@@ -101,7 +101,7 @@ $wrapper_attributes = get_block_wrapper_attributes(
 			data-wp-on--click="actions.incrementCounter"
 			type="button"
 		>
-			<?php esc_html_e( 'Persist Count', 'my_typia_block' ); ?>
+			<?php esc_html_e( 'Persist Count', 'my-typia-block' ); ?>
 		</button>
 		<span
 			role="status"
