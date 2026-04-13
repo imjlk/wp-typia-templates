@@ -1,5 +1,4 @@
 import { execFileSync } from 'node:child_process';
-import { globSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
@@ -56,27 +55,7 @@ const patterns = [
   'scripts/check-repo-format.mjs',
   'scripts/validate-formatting-toolchain-policy.mjs',
 ];
-
-const ignoredFiles = new Set(['docs/API.md']);
-
-function shouldIgnoreFile(filePath) {
-  return ignoredFiles.has(filePath) || filePath.startsWith('docs/api/');
-}
-
-const files = [
-  ...new Set(
-    patterns.flatMap((pattern) =>
-      globSync(pattern, { cwd: repoRoot, nodir: true }),
-    ),
-  ),
-].filter((filePath) => !shouldIgnoreFile(filePath));
-
-if (files.length === 0) {
-  console.log('No repo-format files matched.');
-  process.exit(0);
-}
-
-execFileSync(process.execPath, [prettierBin, prettierMode, ...files], {
+execFileSync(process.execPath, [prettierBin, prettierMode, ...patterns], {
   cwd: repoRoot,
   stdio: 'inherit',
 });

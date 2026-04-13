@@ -14,7 +14,7 @@
 `bun run format:check` is intentionally scoped to repo-owned documentation, configuration, workflow, and policy files such as:
 
 - root docs and meta docs
-- `docs/**/*.md` except generated `docs/API.md`
+- `docs/**/*.md` except generated Typedoc outputs under `docs/API.md` and `docs/api/**`
 - root config and workspace metadata
 - `.github` workflow and markdown files
 - repo policy/validation scripts that define the formatter baseline itself
