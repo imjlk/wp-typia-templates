@@ -1009,6 +1009,7 @@ async function resolveGitHubTemplateSource(locator: GitHubTemplateLocator): Prom
  * @param locator Remote template locator describing a local path, GitHub source, or npm package.
  * @param cwd Current working directory used to resolve local template paths.
  * @returns A local seed source containing the resolved root and block directory, plus optional cleanup.
+ * @throws When the locator is invalid, the source cannot be fetched, or filesystem validation fails.
  */
 export async function resolveTemplateSeed(
 	locator: RemoteTemplateLocator,
