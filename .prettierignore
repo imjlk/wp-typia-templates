@@ -1,5 +1,7 @@
 build
 coverage
+docs/API.md
+docs/api
 dist
 node_modules
 playwright-report

@@ -24,17 +24,17 @@ npx wp-typia my-interactive-block --template interactivity --package-manager npm
 ## Example
 
 ```ts
-import { store } from "@wordpress/interactivity";
+import { store } from '@wordpress/interactivity';
 
-const { state, actions } = store("my-plugin/my-block", {
-	state: {
-		isOpen: false,
-	},
-	actions: {
-		toggle() {
-			state.isOpen = !state.isOpen;
-		},
-	},
+const { state, actions } = store('my-plugin/my-block', {
+  state: {
+    isOpen: false,
+  },
+  actions: {
+    toggle() {
+      state.isOpen = !state.isOpen;
+    },
+  },
 });
 ```
 

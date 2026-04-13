@@ -2,19 +2,19 @@ name: Test Matrix
 
 on:
   schedule:
-    - cron: "0 9 * * 1"
+    - cron: '0 9 * * 1'
   workflow_dispatch:
     inputs:
       node_version:
-        description: "Node.js version"
+        description: 'Node.js version'
         required: false
-        default: "24"
+        default: '24'
         type: choice
         options:
-          - "24"
+          - '24'
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   test-matrix:
@@ -36,7 +36,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.3.11"
+          bun-version: '1.3.11'
 
       - name: Cache Bun install cache
         uses: actions/cache@v5
@@ -102,7 +102,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.3.11"
+          bun-version: '1.3.11'
 
       - name: Cache Bun install cache
         uses: actions/cache@v5

@@ -113,6 +113,7 @@ test(
     );
 
     expect(packageJson.name).toBe("demo-persistence-public");
+    expect(packageJson.devDependencies.prettier).toBe("3.8.2");
     expect(packageJson.devDependencies["@wp-typia/api-client"]).toBe(
       apiClientPackageVersion
     );
@@ -561,6 +562,7 @@ test(
   );
 
   expect(packageJson.name).toBe("demo-persistence-authenticated");
+  expect(packageJson.devDependencies.prettier).toBe("3.8.2");
   expect(packageJson.scripts.dev).toBe(
     'concurrently -k -n sync-types,sync-rest,editor -c yellow,magenta,blue "npm run watch:sync-types" "npm run watch:sync-rest" "npm run start:editor"'
   );

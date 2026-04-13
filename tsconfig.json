@@ -4,8 +4,12 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@wp-typia/project-tools": ["packages/wp-typia-project-tools/src/runtime/index.ts"],
-      "@wp-typia/project-tools/*": ["packages/wp-typia-project-tools/src/runtime/*.ts"],
+      "@wp-typia/project-tools": [
+        "packages/wp-typia-project-tools/src/runtime/index.ts"
+      ],
+      "@wp-typia/project-tools/*": [
+        "packages/wp-typia-project-tools/src/runtime/*.ts"
+      ],
       "@wp-typia/project-tools/schema-core": [
         "packages/wp-typia-project-tools/src/runtime/schema-core.ts"
       ],

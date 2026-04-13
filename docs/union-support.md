@@ -21,8 +21,8 @@ Example:
 
 ```ts
 type LinkTarget =
-	| { kind: "post"; postId: number }
-	| { kind: "url"; href: string };
+  | { kind: 'post'; postId: number }
+  | { kind: 'url'; href: string };
 ```
 
 The generated metadata keeps this as:

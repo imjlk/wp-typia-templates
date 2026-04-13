@@ -19,10 +19,13 @@ It does not include:
 Typical usage:
 
 ```ts
-import { createEditorModel } from "@wp-typia/block-runtime/editor";
-import { InspectorFromManifest, useEditorFields } from "@wp-typia/block-runtime/inspector";
-import { createNestedAttributeUpdater } from "@wp-typia/block-runtime/validation";
-import { runSyncBlockMetadata } from "@wp-typia/block-runtime/metadata-core";
+import { createEditorModel } from '@wp-typia/block-runtime/editor';
+import {
+  InspectorFromManifest,
+  useEditorFields,
+} from '@wp-typia/block-runtime/inspector';
+import { createNestedAttributeUpdater } from '@wp-typia/block-runtime/validation';
+import { runSyncBlockMetadata } from '@wp-typia/block-runtime/metadata-core';
 ```
 
 `wp-typia` remains the CLI package.
