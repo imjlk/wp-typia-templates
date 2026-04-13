@@ -235,7 +235,7 @@ module.exports = async () => {
 						process.cwd(),
 						'../../packages/wp-typia-api-client/src/client-utils.ts'
 					),
-					'@wp-typia/api-client': path.resolve(
+					'@wp-typia/api-client$': path.resolve(
 						process.cwd(),
 						'../../packages/wp-typia-api-client/src/index.ts'
 					),
