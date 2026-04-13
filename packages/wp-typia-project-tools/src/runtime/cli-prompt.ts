@@ -18,6 +18,25 @@ export interface ReadlinePrompt {
 }
 
 /**
+ * Adapter interface for readline-style prompt interactions.
+ *
+ * Public CLI code uses the native readline implementation, while tests can
+ * substitute lightweight doubles that expose the same `question` and `close`
+ * methods.
+ */
+export interface ReadlineQuestionAdapter {
+	/** Close the underlying prompt interface and release any open handles. */
+	close(): void;
+	/**
+	 * Render one prompt and resolve with the collected answer string.
+	 *
+	 * @param query Prompt text written to the active output stream.
+	 * @param callback Callback that receives the entered answer.
+	 */
+	question(query: string, callback: (answer: string) => void): void;
+}
+
+/**
  * Create the default readline-backed prompt implementation for the CLI.
  *
  * @returns A prompt adapter that reads from stdin and writes to stdout.
@@ -28,23 +47,37 @@ export function createReadlinePrompt(): ReadlinePrompt {
 		output: process.stdout,
 	});
 
+	return createReadlinePromptWithInterface(rl);
+}
+
+/**
+ * Build a prompt adapter around a supplied readline-style question interface.
+ *
+ * This keeps the production CLI path unchanged while letting tests validate
+ * retry behavior without stubbing global stdin/stdout.
+ */
+export function createReadlinePromptWithInterface(
+	rl: ReadlineQuestionAdapter,
+): ReadlinePrompt {
 	return {
 		async text(message: string, defaultValue: string, validate?: ValidateInput): Promise<string> {
 			const suffix = defaultValue ? ` (${defaultValue})` : "";
-			const answer = await new Promise<string>((resolve) => {
-				rl.question(`${message}${suffix}: `, resolve);
-			});
+			while (true) {
+				const answer = await new Promise<string>((resolve) => {
+					rl.question(`${message}${suffix}: `, resolve);
+				});
 
-			const value = String(answer).trim() || defaultValue;
-			if (validate) {
-				const result = validate(value);
-				if (result !== true) {
-					console.error(`❌ ${typeof result === "string" ? result : "Invalid input"}`);
-					return this.text(message, defaultValue, validate);
+				const value = String(answer).trim() || defaultValue;
+				if (validate) {
+					const result = validate(value);
+					if (result !== true) {
+						console.error(`❌ ${typeof result === "string" ? result : "Invalid input"}`);
+						continue;
+					}
 				}
-			}
 
-			return value;
+				return value;
+			}
 		},
 		async select<T extends string>(
 			message: string,
@@ -61,19 +94,20 @@ export function createReadlinePrompt(): ReadlinePrompt {
 				console.log(`  ${index + 1}. ${option.label}${hint}`);
 			});
 
-			const answer = await this.text("Choice", String(defaultValue));
-			const numericChoice = Number(answer);
-			if (!Number.isNaN(numericChoice) && options[numericChoice - 1]) {
-				return options[numericChoice - 1].value;
-			}
+			while (true) {
+				const answer = await this.text("Choice", String(defaultValue));
+				const numericChoice = Number(answer);
+				if (!Number.isNaN(numericChoice) && options[numericChoice - 1]) {
+					return options[numericChoice - 1].value;
+				}
 
-			const directChoice = options.find((option) => option.value === answer);
-			if (directChoice) {
-				return directChoice.value;
-			}
+				const directChoice = options.find((option) => option.value === answer);
+				if (directChoice) {
+					return directChoice.value;
+				}
 
-			console.error(`❌ Invalid selection: ${answer}`);
-			return this.select(message, options, defaultValue);
+				console.error(`❌ Invalid selection: ${answer}`);
+			}
 		},
 		close(): void {
 			rl.close();

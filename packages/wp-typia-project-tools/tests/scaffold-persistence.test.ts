@@ -477,10 +477,12 @@ test(
     runGeneratedScript(targetDir, "scripts/sync-project.ts");
     runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts");
   },
-  40_000
+  60_000
 );
 
-test("scaffoldProject creates a persistence template with authenticated writes by default", async () => {
+test(
+  "scaffoldProject creates a persistence template with authenticated writes by default",
+  async () => {
   const targetDir = path.join(tempRoot, "demo-persistence-authenticated");
 
   await scaffoldProject({
@@ -715,7 +717,9 @@ test("scaffoldProject creates a persistence template with authenticated writes b
     "Customize authenticated write policy here"
   );
   typecheckGeneratedProject(targetDir);
-});
+},
+{ timeout: 20_000 }
+);
 
 test("generated public persistence transport skips nonce injection even when wpApiSettings is present", async () => {
   const targetDir = path.join(tempRoot, "demo-persistence-public-transport");

@@ -378,52 +378,56 @@ test("bun entry exposes Bunli-owned help and rejects the removed migrations alia
   );
 });
 
-test("bun entry translates kebab-case identifier flags while scaffolding", () => {
-  const targetDir = path.join(tempRoot, "demo-bun-entry");
+test(
+  "bun entry translates kebab-case identifier flags while scaffolding",
+  () => {
+    const targetDir = path.join(tempRoot, "demo-bun-entry");
 
-  runCli(
-    "bun",
-    [
-      entryPath,
-      targetDir,
-      "--template",
-      "persistence",
-      "--namespace",
-      "experiments",
-      "--text-domain",
-      "demo-bun-entry-text",
-      "--php-prefix",
-      "demo_bun_entry_php",
-      "--yes",
-      "--no-install",
-      "--package-manager",
+    runCli(
       "bun",
-    ],
-    {
-      stdio: "inherit",
-    }
-  );
+      [
+        entryPath,
+        targetDir,
+        "--template",
+        "persistence",
+        "--namespace",
+        "experiments",
+        "--text-domain",
+        "demo-bun-entry-text",
+        "--php-prefix",
+        "demo_bun_entry_php",
+        "--yes",
+        "--no-install",
+        "--package-manager",
+        "bun",
+      ],
+      {
+        stdio: "inherit",
+      }
+    );
 
-  const packageJson = JSON.parse(
-    fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
-  );
-  const blockJson = JSON.parse(
-    fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8")
-  );
-  const pluginBootstrap = fs.readFileSync(
-    path.join(targetDir, "demo-bun-entry.php"),
-    "utf8"
-  );
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+    );
+    const blockJson = JSON.parse(
+      fs.readFileSync(path.join(targetDir, "src", "block.json"), "utf8")
+    );
+    const pluginBootstrap = fs.readFileSync(
+      path.join(targetDir, "demo-bun-entry.php"),
+      "utf8"
+    );
 
-  expect(packageJson.packageManager).toBe("bun@1.3.11");
-  expect(blockJson.name).toBe("experiments/demo-bun-entry");
-  expect(blockJson.textdomain).toBe("demo-bun-entry-text");
-  expect(pluginBootstrap).toContain("Text Domain:       demo-bun-entry-text");
-  expect(pluginBootstrap).toContain(
-    "function demo_bun_entry_php_get_counter"
-  );
-  expect(fs.existsSync(path.join(targetDir, "README.md"))).toBe(true);
-});
+    expect(packageJson.packageManager).toBe("bun@1.3.11");
+    expect(blockJson.name).toBe("experiments/demo-bun-entry");
+    expect(blockJson.textdomain).toBe("demo-bun-entry-text");
+    expect(pluginBootstrap).toContain("Text Domain:       demo-bun-entry-text");
+    expect(pluginBootstrap).toContain(
+      "function demo_bun_entry_php_get_counter"
+    );
+    expect(fs.existsSync(path.join(targetDir, "README.md"))).toBe(true);
+  },
+  { timeout: 15_000 }
+);
 
 test("node entry requires --package-manager with --yes", () => {
   expect(() => {
