@@ -22,10 +22,30 @@ import {
 import { listInterpolatedDirectoryOutputs } from "./template-render.js";
 import type { BuiltInTemplateId } from "./template-registry.js";
 
+/**
+ * Semantic version marker for the public block generation tool contract.
+ *
+ * Increment this number whenever the serialized inspection payload changes in a
+ * breaking way.
+ */
 export const BLOCK_GENERATION_TOOL_CONTRACT_VERSION = 1 as const;
 
+/**
+ * Staged execution points for the non-mutating inspection workflow.
+ *
+ * - `"plan"` returns the normalized `BlockSpec` and target metadata.
+ * - `"validate"` returns the validated generation stage without rendering.
+ * - `"render"` returns the full non-mutating preview, including copied and
+ *   emitted file snapshots.
+ */
 export type BlockGenerationToolStage = "plan" | "validate" | "render";
 
+/**
+ * Input for the staged, non-mutating block generation inspection entrypoint.
+ *
+ * Extends `PlanBlockInput` with an optional `stopAfter` selector so callers can
+ * stop at `plan`, `validate`, or continue through the full `render` preview.
+ */
 export interface InspectBlockGenerationInput extends PlanBlockInput {
 	stopAfter?: BlockGenerationToolStage;
 }
@@ -219,6 +239,34 @@ export function inspectBlockGeneration(
 	input: InspectBlockGenerationInput & { stopAfter?: "render" | undefined },
 	service?: BlockGeneratorService,
 ): Promise<InspectBlockGenerationRenderResult>;
+/**
+ * Inspects built-in block generation through the staged generator boundary
+ * without mutating the destination workspace.
+ *
+ * Use `stopAfter` to halt after the `plan`, `validate`, or `render` stage.
+ * The render stage includes copied template file paths, emitter-owned source
+ * previews, starter manifest previews, and post-render intent metadata. Any
+ * temporary render state is cleaned up before the promise resolves.
+ *
+ * @example
+ * ```ts
+ * const inspection = await inspectBlockGeneration({
+ * 	answers,
+ * 	noInstall: true,
+ * 	packageManager: "bun",
+ * 	projectDir: "demo-block",
+ * 	templateId: "basic",
+ * 	stopAfter: "render",
+ * });
+ * ```
+ *
+ * @param input - Planning input plus an optional `stopAfter` stage selector.
+ * @param service - Optional generator service instance. Defaults to a new
+ * `BlockGeneratorService`.
+ * @returns The serialized inspection result for the reached stage.
+ * @throws Propagates planning, validation, or render failures from
+ * `BlockGeneratorService`.
+ */
 export async function inspectBlockGeneration(
 	{
 		stopAfter = "render",

@@ -176,6 +176,20 @@ export async function copyInterpolatedDirectory(
 	}
 }
 
+/**
+ * Lists the output file paths produced by an interpolated template directory
+ * without writing any files to disk.
+ *
+ * This walks the source directory, applies the same filename interpolation and
+ * `.mustache` stripping rules as `copyInterpolatedDirectory(...)`, and returns
+ * normalized output-relative paths under a virtual root.
+ *
+ * @param sourceDir - The template directory to traverse.
+ * @param view - The interpolation map used when resolving file and directory
+ * names.
+ * @returns A sorted array of normalized output paths relative to a virtual
+ * preview root.
+ */
 export async function listInterpolatedDirectoryOutputs(
 	sourceDir: string,
 	view: Record<string, string>,

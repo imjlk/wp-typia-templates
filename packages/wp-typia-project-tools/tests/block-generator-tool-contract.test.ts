@@ -64,6 +64,8 @@ describe("inspectBlockGeneration", () => {
 		});
 
 		expect(result.stage).toBe("validate");
+		expect(result.contractVersion).toBe(BLOCK_GENERATION_TOOL_CONTRACT_VERSION);
+		expect(result.mutatesWorkspace).toBe(false);
 		expect(result.validated.spec.template.family).toBe("interactivity");
 		expect(result.validated.spec.block.slug).toBe("demo-generator-tool-contract");
 		expect(fs.existsSync(result.validated.target.projectDir)).toBe(false);
@@ -84,6 +86,8 @@ describe("inspectBlockGeneration", () => {
 		});
 
 		expect(result.stage).toBe("render");
+		expect(result.contractVersion).toBe(BLOCK_GENERATION_TOOL_CONTRACT_VERSION);
+		expect(result.mutatesWorkspace).toBe(false);
 		expect(result.rendered.template.family).toBe("compound");
 		expect(result.rendered.template.format).toBe("wp-typia");
 		expect(result.rendered.postRender.installsDependencies).toBe(false);
