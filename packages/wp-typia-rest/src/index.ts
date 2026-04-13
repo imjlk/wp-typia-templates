@@ -18,6 +18,15 @@ export {
 	type ValidationLike,
 } from "./client";
 export {
+	ApiClientConfigurationError,
+	RestConfigurationError,
+	RestQueryHookUsageError,
+	RestRootResolutionError,
+	RestValidationAssertionError,
+	WpTypiaContractError,
+	WpTypiaValidationAssertionError,
+} from "./errors";
+export {
 	createHeadersDecoder,
 	createParameterDecoder,
 	createQueryDecoder,

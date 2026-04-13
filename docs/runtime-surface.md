@@ -7,6 +7,13 @@ This document is descriptive, not normative. For support guarantees, see
 
 - `wp-typia`
   CLI package and Bunli command tree.
+- `@wp-typia/api-client`
+- `@wp-typia/api-client/client-utils`
+- `@wp-typia/api-client/runtime-primitives`
+- `@wp-typia/rest`
+- `@wp-typia/rest/client`
+- `@wp-typia/rest/http`
+- `@wp-typia/rest/react`
 - `@wp-typia/project-tools`
   Project orchestration helpers used by the CLI and programmatic tooling,
   including the additive `BlockSpec` / `BlockGeneratorService` boundary and
@@ -33,6 +40,13 @@ This document is descriptive, not normative. For support guarantees, see
 ### Stable public
 
 - `wp-typia`
+- `@wp-typia/api-client`
+- `@wp-typia/api-client/client-utils`
+- `@wp-typia/api-client/runtime-primitives`
+- `@wp-typia/rest`
+- `@wp-typia/rest/client`
+- `@wp-typia/rest/http`
+- `@wp-typia/rest/react`
 - `@wp-typia/project-tools`
 - `@wp-typia/project-tools/schema-core`
 - `@wp-typia/block-runtime/migration-types`
@@ -48,6 +62,13 @@ This document is descriptive, not normative. For support guarantees, see
 
 ## Ownership notes
 
+- `@wp-typia/api-client` owns the transport-neutral endpoint contract, runtime
+  validation primitives, and the shared public runtime error base
+  (`WpTypiaContractError`, `WpTypiaValidationAssertionError`).
+- `@wp-typia/rest` owns WordPress-specific route discovery, `apiFetch`
+  integration, decoder helpers, and the React cache/hook layer. The root
+  surface is canonical, `./client` is compatibility-only, `./http` is the
+  decoder-only surface, and `./react` owns hooks.
 - `wp-typia` owns the CLI, help, TUI, completions, skills, MCP, and bin entry.
 - `@wp-typia/project-tools` owns scaffold, add-block, migrate, template,
   doctor, package-manager, starter-manifest, the typed generator boundary, the

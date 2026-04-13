@@ -10,6 +10,7 @@ import {
 	mergeHeaderInputs,
 	parseResponsePayload,
 } from "./client-utils.js";
+import { ApiClientConfigurationError } from "./errors.js";
 
 export type EndpointMethod = "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
 export type EndpointAuthIntent =
@@ -96,7 +97,9 @@ function resolveRequestUrl(options: EndpointTransportRequest, baseUrl: string): 
 		return new URL(options.path.replace(/^\/+/, ""), baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`).toString();
 	}
 
-	throw new Error("Transport requests must include either a path or a url.");
+	throw new ApiClientConfigurationError(
+		"Transport requests must include either a path or a url.",
+	);
 }
 
 function createReadonlyTransportRequest(
@@ -156,7 +159,7 @@ function resolveCombinedRequest(
 		!Object.prototype.hasOwnProperty.call(request, "body") ||
 		!Object.prototype.hasOwnProperty.call(request, "query")
 	) {
-		throw new Error(
+		throw new ApiClientConfigurationError(
 			`Endpoints with requestLocation "query-and-body" require requests shaped like { query, body }.`,
 		);
 	}
@@ -181,7 +184,7 @@ function buildEndpointRequestOptions<Req>(
 
 	if (requestLocation === "query-and-body") {
 		if (endpoint.method === "GET") {
-			throw new Error(
+			throw new ApiClientConfigurationError(
 				'requestLocation "query-and-body" is not supported for GET endpoints.',
 			);
 		}
@@ -334,7 +337,7 @@ export async function callEndpoint<Req, Res>(
 	}
 
 	if (!transport) {
-		throw new Error(
+		throw new ApiClientConfigurationError(
 			"A transport is required. Create one with createFetchTransport({ baseUrl }) or supply a custom EndpointTransport.",
 		);
 	}

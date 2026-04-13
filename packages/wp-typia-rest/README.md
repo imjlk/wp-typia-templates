@@ -15,6 +15,18 @@ It does not include any WordPress PHP bridge logic. Generated PHP route code sta
 If you need a backend-neutral consumer instead of WordPress-specific route
 resolution, use `@wp-typia/api-client`.
 
+## Export contract
+
+- `@wp-typia/rest`
+  Canonical convenience surface for transport helpers plus HTTP decoder helpers.
+- `@wp-typia/rest/client`
+  Backward-compatible alias of the root surface. It is not a distinct semantic
+  contract and may be removed in a future major once downstream imports settle.
+- `@wp-typia/rest/http`
+  Decoder-only helper surface for query/header/parameter decoders.
+- `@wp-typia/rest/react`
+  React-only cache and hook layer.
+
 The root `@wp-typia/rest` entry stays transport-oriented. If you want query and
 mutation hooks on top of those WordPress helpers, use the React-only subpath:
 
@@ -41,6 +53,16 @@ const result = await callEndpoint(endpoint, { title: "Hello" });
 validation fails before transport execution, the result keeps
 `validationTarget: "request"`. Response validation runs after transport and uses
 `validationTarget: "response"`.
+
+Invalid request/response payloads stay in that result union. Thrown exceptions
+are reserved for public runtime misconfiguration or assertion APIs:
+
+- `RestConfigurationError`
+- `RestRootResolutionError`
+- `RestQueryHookUsageError`
+- `RestValidationAssertionError`
+- shared base classes re-exported from `@wp-typia/api-client`:
+  `WpTypiaContractError` and `WpTypiaValidationAssertionError`
 
 If you need a canonical REST URL for a route path, use:
 

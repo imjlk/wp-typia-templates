@@ -9,6 +9,7 @@ import {
 
 import {
 	createEndpoint,
+	RestQueryHookUsageError,
 	toValidationResult,
 	type ValidationLike,
 } from "../src/index";
@@ -155,6 +156,29 @@ afterEach(() => {
 });
 
 describe("@wp-typia/rest/react", () => {
+	test("useEndpointQuery throws a named usage error for non-GET endpoints", async () => {
+		const endpoint = createEndpoint<{ title: string }, { ok: boolean }>({
+			method: "POST",
+			path: "/demo/v1/items",
+			validateRequest: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				typeof (input as { title?: unknown }).title === "string"
+					? toValidationResult(success(input as { title: string }))
+					: toValidationResult(failure<{ title: string }>("{ title: string }", "$.title")),
+			validateResponse: (input: unknown) =>
+				typeof input === "object" &&
+				input !== null &&
+				(input as { ok?: unknown }).ok === true
+					? toValidationResult(success(input as { ok: boolean }))
+					: toValidationResult(failure<{ ok: boolean }>("{ ok: true }", "$.ok")),
+		});
+
+		await expect(
+			createHookRenderer(() => useEndpointQuery(endpoint, { title: "Hello" })),
+		).rejects.toBeInstanceOf(RestQueryHookUsageError);
+	});
+
 	test("useEndpointQuery performs the initial fetch and reuses cached data across consumers", async () => {
 		let fetchCount = 0;
 		const endpoint = createEndpoint<{ page: number }, { count: number }>({
@@ -261,7 +285,7 @@ describe("@wp-typia/rest/react", () => {
 		await renderer.unmount();
 	});
 
-	test("useEndpointQuery throws for non-GET endpoints", () => {
+	test("renderToString also surfaces the named usage error for non-GET endpoints", () => {
 		const endpoint = createEndpoint<{ title: string }, { ok: boolean }>({
 			method: "POST",
 			path: "/demo/v1/items",
@@ -286,7 +310,7 @@ describe("@wp-typia/rest/react", () => {
 					return null;
 				}),
 			),
-		).toThrow("useEndpointQuery only supports GET endpoints in v1.");
+		).toThrow(RestQueryHookUsageError);
 	});
 
 	test("invalidate and refetch trigger fresh query execution", async () => {

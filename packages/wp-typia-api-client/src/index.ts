@@ -20,3 +20,8 @@ export {
 	type ValidationLike,
 	type ValidationResult,
 } from "./client.js";
+export {
+	ApiClientConfigurationError,
+	WpTypiaContractError,
+	WpTypiaValidationAssertionError,
+} from "./errors.js";

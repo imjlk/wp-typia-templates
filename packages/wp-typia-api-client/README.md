@@ -101,6 +101,13 @@ validation failures are surfaced honestly with
 `validationTarget: "request"`, while post-transport response validation uses
 `validationTarget: "response"`.
 
+That result union is the canonical validation contract. Public thrown errors are
+reserved for caller/configuration faults rather than validation failure:
+
+- `WpTypiaContractError`
+- `ApiClientConfigurationError`
+- `WpTypiaValidationAssertionError`
+
 Use `@wp-typia/rest` when you want WordPress-specific helpers such as canonical
 REST route URL resolution and `@wordpress/api-fetch` integration. Manifest
 `authIntent` is the primary portable metadata surface, while legacy
