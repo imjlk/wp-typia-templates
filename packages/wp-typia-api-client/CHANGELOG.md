@@ -1,5 +1,15 @@
 # `@wp-typia/api-client`
 
+## 0.4.4 — 2026-04-13
+
+### Patch changes
+
+- [663872b](https://github.com/imjlk/wp-typia/commit/663872b51f25f5ddccec3cafb776450abfeca7f9) Clarify the public runtime error contract and `@wp-typia/rest` export semantics
+  by documenting validation-vs-throw behavior, introducing named configuration and
+  assertion errors for the runtime client packages, and explicitly documenting
+  that `./client` and `./http` remain compatibility aliases in the current major
+  line instead of introducing a breaking export split. — Thanks @imjlk!
+
 ## 0.4.3 — 2026-04-12
 
 ### Patch changes

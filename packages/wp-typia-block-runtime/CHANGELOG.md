@@ -1,5 +1,15 @@
 # @wp-typia/block-runtime
 
+## 0.4.7 — 2026-04-13
+
+### Patch changes
+
+- [6d4bee7](https://github.com/imjlk/wp-typia/commit/6d4bee76f55c1cab40d0d0b4f25a157e17aef7cb) Deduplicate the remaining shared manifest and migration contract types behind
+  `@wp-typia/block-runtime/migration-types`, centralize the official workspace
+  template package constant, and align built-in scaffold `Edit` emitters on the
+  shared `BlockEditProps` typing convention. — Thanks @imjlk!
+- Updated dependencies: api-client (npm)@0.4.4
+
 ## 0.4.6 — 2026-04-12
 
 ### Patch changes

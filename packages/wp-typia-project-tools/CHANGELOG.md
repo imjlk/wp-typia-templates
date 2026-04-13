@@ -1,5 +1,23 @@
 # @wp-typia/project-tools
 
+## 0.16.7 — 2026-04-13
+
+### Patch changes
+
+- [a9e4a8d](https://github.com/imjlk/wp-typia/commit/a9e4a8dfb9c67fdb0b53e754dfa0bcb87794ca8a) Split the `cli-add` implementation into focused runtime modules and replace the
+  readline prompt retry recursion with iterative control flow so repeated invalid
+  input stays stable during long-running interactive CLI sessions. — Thanks @imjlk!
+- [e58b434](https://github.com/imjlk/wp-typia/commit/e58b434bee5b5149aa3b1593f6884d06c38ed957) Refresh the repository formatting/toolchain baseline by adopting Prettier 3 in
+  the root policy layer, making `format:check` a first-class CI gate, and aligning
+  built-in scaffold package manifests on the same formatter version so generated
+  projects no longer carry stale Prettier 2.x pins. — Thanks @imjlk!
+- [6d4bee7](https://github.com/imjlk/wp-typia/commit/6d4bee76f55c1cab40d0d0b4f25a157e17aef7cb) Deduplicate the remaining shared manifest and migration contract types behind
+  `@wp-typia/block-runtime/migration-types`, centralize the official workspace
+  template package constant, and align built-in scaffold `Edit` emitters on the
+  shared `BlockEditProps` typing convention. — Thanks @imjlk!
+- [9be75e4](https://github.com/imjlk/wp-typia/commit/9be75e44b5c46ed17ae11e02fe57ebeff2a1db50) Document and validate the monorepo package manifest policy, align repository engine baselines, and remove stale `react-devtools-core` and `ws` devDependencies from `@wp-typia/project-tools`. — Thanks @imjlk!
+- Updated dependencies: api-client (npm)@0.4.4, block-runtime (npm)@0.4.7, rest (npm)@0.3.7
+
 ## 0.16.6 — 2026-04-12
 
 ### Patch changes
