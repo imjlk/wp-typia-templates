@@ -620,6 +620,11 @@ function assertPersistenceFlagsAllowed(
 
 /**
  * Seeds an empty official workspace migration project before any blocks are added.
+ *
+ * @param projectDir Absolute path to the workspace root that will own the
+ * migration config and generated scaffold files.
+ * @param currentMigrationVersion Initial migration label to record as the
+ * current version in the seeded workspace.
  */
 export async function seedWorkspaceMigrationProject(
 	projectDir: string,
@@ -637,6 +642,24 @@ export async function seedWorkspaceMigrationProject(
 
 /**
  * Adds one built-in block slice to an official workspace project.
+ *
+ * @param options Command options for the built-in workspace block scaffold flow.
+ * @param options.blockName Human-entered block name that will be normalized
+ * into the generated workspace block slug.
+ * @param options.cwd Working directory used to resolve the nearest official
+ * workspace. Defaults to `process.cwd()`.
+ * @param options.dataStorageMode Optional storage mode for persistence-capable
+ * templates.
+ * @param options.persistencePolicy Optional persistence policy for
+ * persistence-capable templates.
+ * @param options.templateId Built-in block family to scaffold. Defaults to
+ * `"basic"`.
+ * @returns A promise that resolves with the created block slugs, the owning
+ * project directory, and the resolved template id after workspace mutation
+ * succeeds.
+ * @throws {Error} When the template id is unknown, persistence flags are used
+ * with unsupported templates, the command runs outside an official workspace,
+ * or target block paths already exist.
  */
 export async function runAddBlockCommand({
 	blockName,

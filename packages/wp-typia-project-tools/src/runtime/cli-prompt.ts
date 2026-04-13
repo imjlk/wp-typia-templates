@@ -17,8 +17,22 @@ export interface ReadlinePrompt {
 	text(message: string, defaultValue: string, validate?: ValidateInput): Promise<string>;
 }
 
+/**
+ * Adapter interface for readline-style prompt interactions.
+ *
+ * Public CLI code uses the native readline implementation, while tests can
+ * substitute lightweight doubles that expose the same `question` and `close`
+ * methods.
+ */
 export interface ReadlineQuestionAdapter {
+	/** Close the underlying prompt interface and release any open handles. */
 	close(): void;
+	/**
+	 * Render one prompt and resolve with the collected answer string.
+	 *
+	 * @param query Prompt text written to the active output stream.
+	 * @param callback Callback that receives the entered answer.
+	 */
 	question(query: string, callback: (answer: string) => void): void;
 }
 

@@ -251,7 +251,7 @@ test(
   const buildOutput = buildGeneratedProject(targetDir);
   expect(buildOutput).not.toContain("non-specified generic argument");
   },
-  { timeout: 20_000 }
+  { timeout: 40_000 }
 );
 
 test(

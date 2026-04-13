@@ -70,11 +70,16 @@ export interface RunAddBlockCommandOptions {
 }
 
 export interface WorkspaceMutationSnapshot {
+	/** Snapshots of file contents taken before the mutation starts. */
 	fileSources: Array<{
+		/** Absolute file path recorded for rollback. */
 		filePath: string;
+		/** Previous file contents, or `null` when the file did not exist. */
 		source: string | null;
 	}>;
+	/** Snapshot directories created while seeding migration history. */
 	snapshotDirs: string[];
+	/** Files or directories created by the mutation that should be removed on rollback. */
 	targetPaths: string[];
 }
 
@@ -122,6 +127,9 @@ export function quoteTsString(value: string): string {
 	return JSON.stringify(value);
 }
 
+/**
+ * Apply a text transform to an existing file only when the contents change.
+ */
 export async function patchFile(
 	filePath: string,
 	transform: (source: string) => string,
@@ -133,6 +141,9 @@ export async function patchFile(
 	}
 }
 
+/**
+ * Read a file when it exists and otherwise return `null`.
+ */
 export async function readOptionalFile(filePath: string): Promise<string | null> {
 	if (!fs.existsSync(filePath)) {
 		return null;
@@ -141,6 +152,9 @@ export async function readOptionalFile(filePath: string): Promise<string | null>
 	return fsp.readFile(filePath, "utf8");
 }
 
+/**
+ * Restore a file to its captured source, deleting it when the snapshot was `null`.
+ */
 export async function restoreOptionalFile(filePath: string, source: string | null): Promise<void> {
 	if (source === null) {
 		await fsp.rm(filePath, { force: true });
@@ -151,6 +165,9 @@ export async function restoreOptionalFile(filePath: string, source: string | nul
 	await fsp.writeFile(filePath, source, "utf8");
 }
 
+/**
+ * Capture the current contents of a set of workspace files for rollback.
+ */
 export async function snapshotWorkspaceFiles(
 	filePaths: string[],
 ): Promise<WorkspaceMutationSnapshot["fileSources"]> {
@@ -163,6 +180,9 @@ export async function snapshotWorkspaceFiles(
 	);
 }
 
+/**
+ * Undo a partially applied workspace mutation from a captured snapshot.
+ */
 export async function rollbackWorkspaceMutation(snapshot: WorkspaceMutationSnapshot): Promise<void> {
 	for (const targetPath of snapshot.targetPaths) {
 		await fsp.rm(targetPath, { force: true, recursive: true });

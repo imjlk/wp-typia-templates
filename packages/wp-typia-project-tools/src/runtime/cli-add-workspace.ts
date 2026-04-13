@@ -45,6 +45,10 @@ const BINDING_SOURCE_SERVER_GLOB = "/src/bindings/*/server.php";
 const BINDING_SOURCE_EDITOR_SCRIPT = "build/bindings/index.js";
 const BINDING_SOURCE_EDITOR_ASSET = "build/bindings/index.asset.php";
 
+function escapeRegex(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
 function buildVariationConfigEntry(
 	blockSlug: string,
 	variationSlug: string,
@@ -446,7 +450,7 @@ function ${bindingEditorEnqueueFunctionName}() {
 			/\?>\s*$/u,
 		];
 		const hasPhpFunctionDefinition = (functionName: string): boolean =>
-			new RegExp(`function\\s+${functionName}\\s*\\(`, "u").test(nextSource);
+			new RegExp(`function\\s+${escapeRegex(functionName)}\\s*\\(`, "u").test(nextSource);
 		const insertPhpSnippet = (snippet: string): void => {
 			for (const anchor of insertionAnchors) {
 				const candidate = nextSource.replace(anchor, (match) => `${snippet}\n${match}`);
