@@ -44,4 +44,22 @@ describe("@wp-typia/rest export contracts", () => {
 		expect(typeof restReact.useEndpointQuery).toBe("function");
 		expect("callEndpoint" in restReact).toBe(false);
 	});
+
+	test("built root entry preserves ESM-safe .js re-export specifiers", () => {
+		const builtIndexJs = readFileSync(
+			new URL("../dist/index.js", import.meta.url),
+			"utf8",
+		);
+		const builtIndexDts = readFileSync(
+			new URL("../dist/index.d.ts", import.meta.url),
+			"utf8",
+		);
+
+		expect(builtIndexJs).toContain('from "./client.js"');
+		expect(builtIndexJs).toContain('from "./errors.js"');
+		expect(builtIndexJs).toContain('from "./http.js"');
+		expect(builtIndexDts).toContain('from "./client.js"');
+		expect(builtIndexDts).toContain('from "./errors.js"');
+		expect(builtIndexDts).toContain('from "./http.js"');
+	});
 });

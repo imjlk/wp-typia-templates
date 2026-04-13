@@ -25,7 +25,7 @@ export {
 	RestValidationAssertionError,
 	WpTypiaContractError,
 	WpTypiaValidationAssertionError,
-} from "./errors";
+} from "./errors.js";
 export {
 	createHeadersDecoder,
 	createParameterDecoder,
