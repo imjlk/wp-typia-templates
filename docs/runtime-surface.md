@@ -77,6 +77,8 @@ This document is descriptive, not normative. For support guarantees, see
   `render.php` Mustache files for those generated artifacts. The higher-level
   generator architecture record lives in
   [`docs/block-generator-architecture.md`](./block-generator-architecture.md).
+  External template-layer composition is a separate RFC recorded in
+  [`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).
 - `@wp-typia/block-runtime/*` owns generated-project runtime helpers directly,
   including the canonical `schema-core` implementation and shared
   manifest/migration contract types.

@@ -91,6 +91,7 @@ bun run docs:build
 - [`UPGRADE.md`](./UPGRADE.md) collects high-signal maintainer upgrade notes
 - [`SECURITY.md`](./SECURITY.md) explains private vulnerability reporting
 - [`docs/block-generator-architecture.md`](./docs/block-generator-architecture.md) records the typed generator architecture and phase map
+- [`docs/external-template-layer-composition.md`](./docs/external-template-layer-composition.md) records the external layer package RFC on top of the built-in shared scaffold model
 - [`docs/formatting-toolchain-policy.md`](./docs/formatting-toolchain-policy.md) records the formatter baseline and CI gate
 - [`docs/maintenance-automation-policy.md`](./docs/maintenance-automation-policy.md) records the dependency update and audit baseline
 

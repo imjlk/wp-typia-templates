@@ -173,4 +173,5 @@ runtime surfaces under `@wp-typia/block-runtime/*`.
   defines which imports are stable and which details stay internal.
 - Issue `#198`
   remains the separate RFC for external template-layer composition on top of the
-  built-in shared scaffold model.
+  built-in shared scaffold model. See
+  [`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).

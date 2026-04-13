@@ -70,6 +70,10 @@ For the architecture record behind that boundary, including the staged
 non-mutating tool-facing contract and current phase map, see
 [`docs/block-generator-architecture.md`](./block-generator-architecture.md).
 
+For the separate external layer package RFC on top of the built-in shared
+scaffold model, see
+[`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).
+
 `@wp-typia/block-runtime/schema-core` is public and stable, but it is the
 implementation owner path rather than the preferred project-tooling import.
 
