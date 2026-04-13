@@ -19,6 +19,7 @@ import {
 	type EndpointValidationResult,
 	type ValidationResult,
 } from "./client";
+import { RestQueryHookUsageError } from "./errors.js";
 import { isPlainObject } from "./internal/runtime-primitives.js";
 
 type CacheKey = string;
@@ -576,7 +577,9 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 	options: UseEndpointQueryOptions<Req, Res, Selected> = {},
 ): UseEndpointQueryResult<Res, Selected, Req> {
 	if (endpoint.method !== "GET") {
-		throw new Error("useEndpointQuery only supports GET endpoints in v1.");
+		throw new RestQueryHookUsageError(
+			"useEndpointQuery only supports GET endpoints in v1.",
+		);
 	}
 
 	const defaultClient = useEndpointDataClient();

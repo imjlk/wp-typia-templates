@@ -1,6 +1,6 @@
 # API Guide
 
-This repository has seven public surfaces:
+This repository has multiple public surfaces:
 
 ## Package Map
 
@@ -229,6 +229,15 @@ The package stays TypeScript-side only. WordPress/PHP route registration and sch
 Use it when the consumer should understand WordPress REST root discovery and
 nonce-aware request wiring.
 
+Export semantics:
+
+- `@wp-typia/rest` is the canonical convenience surface
+- `@wp-typia/rest/client` is a backward-compatible alias, not a distinct
+  semantic contract
+- `@wp-typia/rest/http` is currently a backward-compatible alias of the root
+  surface, not a distinct decoder-only contract
+- `@wp-typia/rest/react` is the React cache/hook layer
+
 The root package stays transport-only. React/data helpers live under the
 separate `@wp-typia/rest/react` subpath:
 
@@ -252,12 +261,26 @@ Refresh-sensitive auth remains explicit there:
 - there is no built-in automatic retry when nonce or token state is stale; the
   caller refreshes state and then invokes `refetch()` or `mutate()` again
 
+Error contract:
+
+- validation failures stay in `EndpointValidationResult<Req, Res>`
+- caller/configuration faults throw `RestConfigurationError`,
+  `RestRootResolutionError`, or `RestQueryHookUsageError`
+- assertion APIs may throw `RestValidationAssertionError`
+
 ## 5. `@wp-typia/api-client`
 
 `@wp-typia/api-client` is the transport-neutral sibling to `@wp-typia/rest`.
 
 - `createEndpoint<Req, Res>()`
 - `callEndpoint<Req, Res>()`
+- `WpTypiaContractError`
+- `ApiClientConfigurationError`
+- `WpTypiaValidationAssertionError`
+
+For the repo-level contract that explains when runtime APIs should return
+validation unions vs. throw named errors, and how `@wp-typia/rest` subpaths are
+classified, see [`docs/error-export-contracts.md`](./error-export-contracts.md).
 - `createFetchTransport({ baseUrl })`
 - `withHeaders(transport, headers)`
 - `withComputedHeaders(transport, resolveHeaders)`

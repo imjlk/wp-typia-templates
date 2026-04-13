@@ -17,6 +17,11 @@ import {
 	type ValidationLike,
 	type ValidationResult,
 } from "./internal/runtime-primitives.js";
+import {
+	RestConfigurationError,
+	RestRootResolutionError,
+	RestValidationAssertionError,
+} from "./errors.js";
 
 export type { ValidationError, ValidationLike, ValidationResult } from "./internal/runtime-primitives.js";
 export { isValidationResult, normalizeValidationError, toValidationResult } from "./internal/runtime-primitives.js";
@@ -69,7 +74,7 @@ function getDefaultRestRoot(): string {
 		}
 	}
 
-	throw new Error(
+	throw new RestRootResolutionError(
 		"Unable to resolve the WordPress REST root automatically. Provide wpApiSettings.root, an api.w.org discovery link, or an explicit url.",
 	);
 }
@@ -112,7 +117,9 @@ function resolveFetchUrl(options: APIFetchOptions): string {
 		return resolveRestRouteUrl(options.path);
 	}
 
-	throw new Error("API fetch options must include either a path or a url.");
+	throw new RestConfigurationError(
+		"API fetch options must include either a path or a url.",
+	);
 }
 
 async function defaultFetch<T = unknown, Parse extends boolean = true>(
@@ -243,7 +250,8 @@ export function createValidatedFetch<T>(
 		async assertFetch(options: APIFetchOptions) {
 			const result = await this.fetch(options);
 			if (!result.isValid) {
-				throw new Error(
+				throw new RestValidationAssertionError(
+					result,
 					result.errors[0]
 						? `${result.errors[0].path}: ${result.errors[0].expected}`
 						: "REST response validation failed.",

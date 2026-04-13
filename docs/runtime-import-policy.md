@@ -7,6 +7,22 @@ surfaces.
 
 - `wp-typia`
   CLI only.
+- `@wp-typia/api-client`
+  Transport-neutral runtime surface.
+- `@wp-typia/api-client/client-utils`
+  Distinct low-level request/response helper surface.
+- `@wp-typia/api-client/runtime-primitives`
+  Distinct validation/runtime primitive helper surface.
+- `@wp-typia/rest`
+  Canonical WordPress REST runtime surface.
+- `@wp-typia/rest/client`
+  Compatibility alias of the root `@wp-typia/rest` surface, not a distinct
+  semantic contract.
+- `@wp-typia/rest/http`
+  Compatibility alias of the root `@wp-typia/rest` surface in the current
+  major line. It is not yet a distinct decoder-only contract.
+- `@wp-typia/rest/react`
+  React cache and hook surface.
 - `@wp-typia/project-tools`
   Project orchestration and programmatic tooling.
 - `@wp-typia/project-tools/schema-core`
@@ -52,6 +68,25 @@ TS/TSX, style, or block-local `render.php` Mustache files.
 
 `@wp-typia/block-runtime/schema-core` is public and stable, but it is the
 implementation owner path rather than the preferred project-tooling import.
+
+## Error contract baseline
+
+Validation failures should stay in result unions such as `ValidationResult<T>`
+or `EndpointValidationResult<Req, Res>`.
+
+Public runtime throws should prefer named contract errors:
+
+- `WpTypiaContractError`
+- `ApiClientConfigurationError`
+- `RestConfigurationError`
+- `RestRootResolutionError`
+- `RestQueryHookUsageError`
+- `WpTypiaValidationAssertionError`
+- `RestValidationAssertionError`
+
+Internal generator, parser, migration, and build invariants may still use
+generic `Error` until there is a concrete downstream need for a typed public
+catch contract.
 
 ## Deprecated surface
 

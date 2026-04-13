@@ -7,6 +7,9 @@ import {
 } from "../../wp-typia-api-client/src/index";
 
 import {
+	RestConfigurationError,
+	RestRootResolutionError,
+	RestValidationAssertionError,
 	callEndpoint,
 	createEndpoint,
 	createHeadersDecoder,
@@ -38,6 +41,28 @@ function asApiFetch(fn: (...args: any[]) => Promise<unknown>): ApiFetch {
 }
 
 describe("@wp-typia/rest", () => {
+	test("throws named public runtime errors for configuration and assertion faults", async () => {
+		const fetcher = createValidatedFetch<{ count: number }>((input: unknown) =>
+			typeof input === "object" &&
+			input !== null &&
+			typeof (input as { count?: unknown }).count === "number"
+				? success(input as { count: number })
+				: failure<{ count: number }>("{ count: number }", "$.count"),
+		);
+		const rejectingAssertionFetcher = createValidatedFetch<{ count: number }>(
+			() => failure<{ count: number }>("{ count: number }", "$.count"),
+			asApiFetch(async () => ({ ok: false }) as never),
+		);
+
+		expect(() => resolveRestRouteUrl("/demo")).toThrow(RestRootResolutionError);
+		await expect(fetcher.fetch({} as never)).rejects.toBeInstanceOf(
+			RestConfigurationError,
+		);
+		await expect(
+			rejectingAssertionFetcher.assertFetch({ path: "/demo" }),
+		).rejects.toBeInstanceOf(RestValidationAssertionError);
+	});
+
 	test("createValidatedFetch validates parsed responses", async () => {
 		const fetcher = createValidatedFetch<{ count: number }>(
 			(input: unknown) =>
