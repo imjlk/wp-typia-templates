@@ -57,6 +57,10 @@ function lintJobBlock(workflowSource) {
   return blockLines.join('\n');
 }
 
+function leadingSpaceCount(line) {
+  return line.match(/^ */)?.[0].length ?? 0;
+}
+
 function workflowJobBlock(workflowSource, jobId) {
   const lines = workflowSource.split(/\r?\n/);
   const startIndex = lines.findIndex(
@@ -79,23 +83,44 @@ function workflowJobBlock(workflowSource, jobId) {
   return blockLines.join('\n');
 }
 
+function parseDependabotEcosystemLine(line) {
+  const match = line.match(
+    /^\s*-\s+package-ecosystem:\s*(?:"([^"]+)"|'([^']+)'|([^\s#]+))\s*$/,
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  return match[1] ?? match[2] ?? match[3] ?? null;
+}
+
 function extractDependabotUpdateBlock(sourceText, ecosystem) {
-  const lines = sourceText.split('\n');
+  const lines = sourceText.split(/\r?\n/);
   const startIndex = lines.findIndex(
-    (line) => line.trim() === `- package-ecosystem: '${ecosystem}'`,
+    (line) => parseDependabotEcosystemLine(line) === ecosystem,
   );
 
   if (startIndex < 0) {
     return '';
   }
 
+  const baseIndent = leadingSpaceCount(lines[startIndex]);
   const blockLines = [];
   for (let index = startIndex; index < lines.length; index += 1) {
     const line = lines[index];
-    if (index > startIndex && /^  - package-ecosystem: /.test(line)) {
+    if (
+      index > startIndex &&
+      parseDependabotEcosystemLine(line) !== null &&
+      leadingSpaceCount(line) === baseIndent
+    ) {
       break;
     }
-    if (index > startIndex && line && !line.startsWith('  ')) {
+    if (
+      index > startIndex &&
+      line.trim() &&
+      leadingSpaceCount(line) < baseIndent
+    ) {
       break;
     }
     blockLines.push(line);
@@ -105,10 +130,10 @@ function extractDependabotUpdateBlock(sourceText, ecosystem) {
 }
 
 function validateDependabotConfig(sourceText, errors) {
-  const configuredEcosystems = Array.from(
-    sourceText.matchAll(/^\s*-\s+package-ecosystem:\s+'([^']+)'/gm),
-    (match) => match[1],
-  );
+  const configuredEcosystems = sourceText
+    .split(/\r?\n/)
+    .map((line) => parseDependabotEcosystemLine(line))
+    .filter((value) => value !== null);
 
   for (const ecosystem of configuredEcosystems) {
     if (!MAINTENANCE_AUTOMATION_POLICY.dependabotEcosystems.includes(ecosystem)) {
@@ -173,6 +198,17 @@ function validateDependencyAuditWorkflow(sourceText, errors) {
       );
       break;
     }
+  }
+
+  const composerAuditBlock = workflowJobBlock(sourceText, 'composer-audit');
+  if (
+    composerAuditBlock.includes('if:') &&
+    (composerAuditBlock.includes("github.event_name == 'schedule'") ||
+      composerAuditBlock.includes("github.event_name == 'workflow_dispatch'"))
+  ) {
+    errors.push(
+      '.github/workflows/dependency-audit.yml must keep Composer Audit eligible for pull_request and push runs.',
+    );
   }
 }
 

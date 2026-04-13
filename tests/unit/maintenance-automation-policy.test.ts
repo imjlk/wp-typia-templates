@@ -113,7 +113,7 @@ describe('validateMaintenanceAutomationPolicy', () => {
     const repoRoot = createMaintenancePolicyRepo();
     writeText(
       path.join(repoRoot, '.github/dependabot.yml'),
-      `version: 2\nupdates:\n  - package-ecosystem: 'github-actions'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: 'composer'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: 'npm'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n`
+      `version: 2\nupdates:\n  - package-ecosystem: 'github-actions'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: composer\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: npm\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n`
     );
 
     const result = validateMaintenanceAutomationPolicy(repoRoot);
@@ -124,11 +124,24 @@ describe('validateMaintenanceAutomationPolicy', () => {
     );
   });
 
+  test('accepts equivalent YAML quoting styles for required dependabot ecosystems', () => {
+    const repoRoot = createMaintenancePolicyRepo();
+    writeText(
+      path.join(repoRoot, '.github/dependabot.yml'),
+      `version: 2\nupdates:\n  - package-ecosystem: "github-actions"\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: composer\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n`
+    );
+
+    expect(validateMaintenanceAutomationPolicy(repoRoot)).toEqual({
+      errors: [],
+      valid: true,
+    });
+  });
+
   test('fails when audit workflows or ci hooks drift', () => {
     const repoRoot = createMaintenancePolicyRepo();
     writeText(
       path.join(repoRoot, '.github/workflows/dependency-audit.yml'),
-      `name: Dependency and Security Audit\njobs:\n  bun-audit:\n    name: Bun Audit\n`
+      `name: Dependency and Security Audit\njobs:\n  composer-audit:\n    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'\n    name: Composer Audit\n    steps:\n      - run: composer audit --locked\n  bun-audit:\n    name: Bun Audit\n`
     );
     writeText(
       path.join(repoRoot, '.github/workflows/ci.yml'),
@@ -146,10 +159,10 @@ describe('validateMaintenanceAutomationPolicy', () => {
       '.github/workflows/dependency-audit.yml must include "pull_request:\\n    branches: [main]".',
     );
     expect(result.errors).toContain(
-      '.github/workflows/dependency-audit.yml must include "run: composer audit --locked".',
+      '.github/workflows/dependency-audit.yml must keep Bun Audit gated to schedule/workflow_dispatch.',
     );
     expect(result.errors).toContain(
-      '.github/workflows/dependency-audit.yml must keep Bun Audit gated to schedule/workflow_dispatch.',
+      '.github/workflows/dependency-audit.yml must keep Composer Audit eligible for pull_request and push runs.',
     );
     expect(result.errors).toContain(
       '.github/workflows/ci.yml lint job must include "run: bun run maintenance-automation:validate".',
