@@ -147,8 +147,11 @@ The architecture in issue `#193` was implemented incrementally.
   `render.php` moved to emitter ownership for all built-in block families.
 - Phase 4: complete
   The non-mutating tool/controller contract is now formalized around
-  `inspectBlockGeneration(...)`, while external layer composition remains the
-  separate RFC from issue `#198`.
+  `inspectBlockGeneration(...)`.
+- Phase 5: complete
+  External template-layer manifests and `extends` resolution now compose around
+  the built-in generator through the runtime API, while the final CLI UX
+  remains the separate RFC follow-through from issue `#198`.
 
 ## What this architecture does not do
 
@@ -156,7 +159,7 @@ This design intentionally does not promise:
 
 - a full Mustache removal across every scaffold asset
 - AST-first emission or `ts-morph` as a baseline dependency
-- external `_shared` layer composition in the current built-in generator phase
+- a finalized end-user CLI UX for external `_shared` layer composition
 - a commitment that every internal helper becomes public API
 
 The public compatibility promise is still the root

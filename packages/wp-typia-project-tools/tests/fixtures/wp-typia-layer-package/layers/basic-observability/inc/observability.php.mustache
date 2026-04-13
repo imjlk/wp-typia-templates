@@ -1,0 +1,14 @@
+<?php
+/**
+ * Shared observability hook for {{title}}.
+ *
+ * @package {{pascalCase}}
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+function {{phpPrefix}}_log_observability_event( string $event_name ): void {
+	do_action( '{{textDomain}}_observability', $event_name );
+}

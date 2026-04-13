@@ -5,6 +5,8 @@ import * as path from "node:path";
 import {
 	cleanupScaffoldTempRoot,
 	createScaffoldTempRoot,
+	templateLayerConflictFixturePath,
+	templateLayerFixturePath,
 	typecheckGeneratedProject,
 } from "./helpers/scaffold-test-harness.js";
 import { BlockGeneratorService } from "../src/runtime/index.js";
@@ -161,5 +163,59 @@ describe("BlockGeneratorService", () => {
 		);
 
 		typecheckGeneratedProject(projectDir);
+	});
+
+	test("render composes external template layers on top of built-in shared layers", async () => {
+		const service = new BlockGeneratorService();
+		const projectDir = path.join(tempRoot, "apply-basic-with-layer");
+		const plan = await service.plan({
+			answers: buildAnswers("basic"),
+			externalLayerSource: templateLayerFixturePath,
+			noInstall: true,
+			packageManager: "npm",
+			projectDir,
+			templateId: "basic",
+		});
+		const validated = await service.validate({ plan });
+		const rendered = await service.render({ validated });
+		const result = await service.apply({ rendered });
+
+		expect(result.warnings).toContain(
+			`Applied external layer "acme/basic-observability" from "${templateLayerFixturePath}".`,
+		);
+		expect(
+			fs.existsSync(path.join(projectDir, "inc", "observability.php")),
+		).toBe(true);
+		expect(
+			fs.readFileSync(
+				path.join(projectDir, "src", "observability.ts"),
+				"utf8",
+			),
+		).toContain("demo-generator-service-observability");
+		expect(
+			fs.existsSync(path.join(projectDir, "inc", "rest-shared.php")),
+		).toBe(true);
+		expect(
+			fs.readFileSync(path.join(projectDir, "src", "types.ts"), "utf8"),
+		).toContain("DemoGeneratorServiceAttributes");
+
+		typecheckGeneratedProject(projectDir);
+	});
+
+	test("render rejects protected output conflicts from external template layers", async () => {
+		const service = new BlockGeneratorService();
+		const plan = await service.plan({
+			answers: buildAnswers("basic"),
+			externalLayerSource: templateLayerConflictFixturePath,
+			noInstall: true,
+			packageManager: "npm",
+			projectDir: path.join(tempRoot, "apply-basic-with-conflict"),
+			templateId: "basic",
+		});
+		const validated = await service.validate({ plan });
+
+		await expect(service.render({ validated })).rejects.toThrow(
+			'External layer "acme/conflict" writes protected output "src/types.ts".',
+		);
 	});
 });

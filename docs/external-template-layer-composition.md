@@ -28,7 +28,7 @@ It does not:
 - change the official empty workspace template package contract
 - define the final CLI UX for selecting a composed external layer package
 
-The follow-up implementation work now lives in issue `#268`.
+The implementation follow-through was tracked in issue `#268`.
 
 ## Relationship to current template support
 
@@ -228,12 +228,30 @@ That is why issue `#193` could close independently while `#198` stayed open:
 the typed generator is implemented, while the external layer contract is a
 separate follow-through.
 
-## Follow-up implementation
+## Current implementation status
 
-Issue `#268` tracks the implementation of:
+The current implementation is available through the built-in generator runtime
+API rather than a finalized CLI flag surface.
+
+Programmatic callers can compose a built-in family with an external layer
+package through `scaffoldProject(...)`, `BlockGeneratorService`, or
+`inspectBlockGeneration(...)` using:
+
+- `templateId`
+  The built-in block family that still owns the typed generator/emitter path.
+- `externalLayerSource`
+  A local path, GitHub locator, or npm package spec that resolves to a package
+  root containing `wp-typia.layers.json`.
+- `externalLayerId`
+  Optional explicit layer id. Omit it when the package exposes a single public
+  layer. If the package exposes multiple public roots, callers must choose one
+  explicitly until a final CLI UX exists.
+
+The implemented behavior now includes:
 
 - manifest loading and validation
 - canonical built-in layer id mapping
-- `extends` resolution and precedence
-- protected-path conflict errors
-- regression coverage for composed external layers
+- `extends` resolution with depth-first, left-to-right precedence
+- protected-path conflict errors for emitter-owned outputs and built-in package
+  bootstrap files
+- regression coverage for built-in plus external layer composition

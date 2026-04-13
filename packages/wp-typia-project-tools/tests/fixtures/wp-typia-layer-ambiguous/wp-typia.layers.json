@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "layers": {
+    "acme/alpha": {
+      "path": "layers/alpha"
+    },
+    "acme/beta": {
+      "path": "layers/beta"
+    }
+  }
+}

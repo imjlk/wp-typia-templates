@@ -7,8 +7,11 @@ import {
 	getTemplateById,
 	SHARED_BASE_TEMPLATE_ROOT,
 	SHARED_COMPOUND_TEMPLATE_ROOT,
+	SHARED_MIGRATION_UI_TEMPLATE_ROOT,
 	SHARED_PERSISTENCE_TEMPLATE_ROOT,
+	SHARED_PRESET_TEMPLATE_ROOT,
 	SHARED_REST_HELPER_TEMPLATE_ROOT,
+	SHARED_WORKSPACE_TEMPLATE_ROOT,
 	type BuiltInTemplateId,
 } from "./template-registry.js";
 
@@ -35,20 +38,109 @@ export interface MaterializedBuiltInTemplateSource {
 	warnings?: string[];
 }
 
+export interface BuiltInSharedTemplateLayer {
+	dir: string;
+	id: string;
+}
+
+const BUILT_IN_SHARED_TEMPLATE_LAYERS = Object.freeze<BuiltInSharedTemplateLayer[]>([
+	{
+		dir: SHARED_BASE_TEMPLATE_ROOT,
+		id: "builtin:shared/base",
+	},
+	{
+		dir: path.join(SHARED_REST_HELPER_TEMPLATE_ROOT, "shared"),
+		id: "builtin:shared/rest-helpers/shared",
+	},
+	{
+		dir: path.join(SHARED_REST_HELPER_TEMPLATE_ROOT, "public"),
+		id: "builtin:shared/rest-helpers/public",
+	},
+	{
+		dir: path.join(SHARED_REST_HELPER_TEMPLATE_ROOT, "auth"),
+		id: "builtin:shared/rest-helpers/auth",
+	},
+	{
+		dir: path.join(SHARED_PERSISTENCE_TEMPLATE_ROOT, "core"),
+		id: "builtin:shared/persistence/core",
+	},
+	{
+		dir: path.join(SHARED_PERSISTENCE_TEMPLATE_ROOT, "public"),
+		id: "builtin:shared/persistence/public",
+	},
+	{
+		dir: path.join(SHARED_PERSISTENCE_TEMPLATE_ROOT, "auth"),
+		id: "builtin:shared/persistence/auth",
+	},
+	{
+		dir: path.join(SHARED_COMPOUND_TEMPLATE_ROOT, "core"),
+		id: "builtin:shared/compound/core",
+	},
+	{
+		dir: path.join(SHARED_COMPOUND_TEMPLATE_ROOT, "persistence"),
+		id: "builtin:shared/compound/persistence",
+	},
+	{
+		dir: path.join(SHARED_COMPOUND_TEMPLATE_ROOT, "persistence-public"),
+		id: "builtin:shared/compound/persistence-public",
+	},
+	{
+		dir: path.join(SHARED_COMPOUND_TEMPLATE_ROOT, "persistence-auth"),
+		id: "builtin:shared/compound/persistence-auth",
+	},
+	{
+		dir: path.join(SHARED_MIGRATION_UI_TEMPLATE_ROOT, "common"),
+		id: "builtin:shared/migration-ui/common",
+	},
+	{
+		dir: path.join(SHARED_PRESET_TEMPLATE_ROOT, "wp-env"),
+		id: "builtin:shared/presets/wp-env",
+	},
+	{
+		dir: path.join(SHARED_PRESET_TEMPLATE_ROOT, "test-preset"),
+		id: "builtin:shared/presets/test-preset",
+	},
+	{
+		dir: path.join(SHARED_WORKSPACE_TEMPLATE_ROOT, "persistence-public"),
+		id: "builtin:shared/workspace/persistence-public",
+	},
+	{
+		dir: path.join(SHARED_WORKSPACE_TEMPLATE_ROOT, "persistence-auth"),
+		id: "builtin:shared/workspace/persistence-auth",
+	},
+]);
+
+const BUILT_IN_SHARED_TEMPLATE_LAYER_DIRS = new Map(
+	BUILT_IN_SHARED_TEMPLATE_LAYERS.map((layer) => [layer.id, layer.dir] as const),
+);
+
 const OMITTABLE_BUILT_IN_OVERLAY_TEMPLATE_IDS = new Set<BuiltInTemplateId>([
 	"basic",
 	"persistence",
 	"compound",
 ]);
 
-/**
- * Returns the ordered overlay directories for a built-in template.
- *
- * Persistence templates include the shared base, the persistence core layer,
- * the selected policy layer, and the thin template overlay. All other built-ins
- * resolve to the shared base plus their own template directory.
- */
-export function getBuiltInTemplateLayerDirs(
+export function listBuiltInSharedTemplateLayers(): readonly BuiltInSharedTemplateLayer[] {
+	return BUILT_IN_SHARED_TEMPLATE_LAYERS;
+}
+
+export function isBuiltInSharedTemplateLayerId(layerId: string): boolean {
+	return BUILT_IN_SHARED_TEMPLATE_LAYER_DIRS.has(layerId);
+}
+
+export function getBuiltInSharedTemplateLayerDir(layerId: string): string {
+	const layerDir = BUILT_IN_SHARED_TEMPLATE_LAYER_DIRS.get(layerId);
+	if (!layerDir) {
+		throw new Error(`Unknown built-in shared template layer id: ${layerId}`);
+	}
+	return layerDir;
+}
+
+export function getBuiltInTemplateOverlayDir(templateId: BuiltInTemplateId): string {
+	return getTemplateById(templateId).templateDir;
+}
+
+export function getBuiltInTemplateSharedLayerDirs(
 	templateId: BuiltInTemplateId,
 	{
 		persistenceEnabled = false,
@@ -64,8 +156,10 @@ export function getBuiltInTemplateLayerDirs(
 				SHARED_REST_HELPER_TEMPLATE_ROOT,
 				persistencePolicy === "public" ? "public" : "auth",
 			),
-			path.join(SHARED_PERSISTENCE_TEMPLATE_ROOT, persistencePolicy === "public" ? "public" : "auth"),
-			getTemplateById(templateId).templateDir,
+			path.join(
+				SHARED_PERSISTENCE_TEMPLATE_ROOT,
+				persistencePolicy === "public" ? "public" : "auth",
+			),
 		];
 	}
 
@@ -73,7 +167,6 @@ export function getBuiltInTemplateLayerDirs(
 		const layers = [
 			SHARED_BASE_TEMPLATE_ROOT,
 			path.join(SHARED_COMPOUND_TEMPLATE_ROOT, "core"),
-			getTemplateById(templateId).templateDir,
 		];
 
 		if (persistenceEnabled) {
@@ -94,7 +187,24 @@ export function getBuiltInTemplateLayerDirs(
 		return layers;
 	}
 
-	return [SHARED_BASE_TEMPLATE_ROOT, getTemplateById(templateId).templateDir];
+	return [SHARED_BASE_TEMPLATE_ROOT];
+}
+
+/**
+ * Returns the ordered overlay directories for a built-in template.
+ *
+ * Persistence templates include the shared base, the persistence core layer,
+ * the selected policy layer, and the thin template overlay. All other built-ins
+ * resolve to the shared base plus their own template directory.
+ */
+export function getBuiltInTemplateLayerDirs(
+	templateId: BuiltInTemplateId,
+	options: BuiltInTemplateVariantOptions = {},
+): string[] {
+	return [
+		...getBuiltInTemplateSharedLayerDirs(templateId, options),
+		getBuiltInTemplateOverlayDir(templateId),
+	];
 }
 
 /**
@@ -115,11 +225,11 @@ export function isOmittableBuiltInTemplateLayerDir(
 	);
 }
 
-function resolveMaterializedBuiltInTemplateLayerDirs(
+function resolveMaterializedTemplateLayerDirs(
 	templateId: BuiltInTemplateId,
-	options: BuiltInTemplateVariantOptions,
+	layerDirs: readonly string[],
 ): string[] {
-	return getBuiltInTemplateLayerDirs(templateId, options).flatMap((layerDir) => {
+	return layerDirs.flatMap((layerDir) => {
 		if (fs.existsSync(layerDir)) {
 			return [layerDir];
 		}
@@ -132,27 +242,22 @@ function resolveMaterializedBuiltInTemplateLayerDirs(
 	});
 }
 
-/**
- * Materializes a built-in template into a temporary directory by copying each
- * resolved layer in order.
- *
- * Callers should invoke the returned `cleanup` function when they no longer
- * need the materialized directory. If copying fails, the temporary directory is
- * removed before the error is rethrown.
- */
-export async function resolveBuiltInTemplateSource(
+async function materializeBuiltInTemplateSource(
 	templateId: BuiltInTemplateId,
-	options: BuiltInTemplateVariantOptions = {},
+	layerDirs: readonly string[],
 ): Promise<MaterializedBuiltInTemplateSource> {
 	const template = getTemplateById(templateId);
-	const layerDirs = resolveMaterializedBuiltInTemplateLayerDirs(templateId, options);
+	const materializedLayerDirs = resolveMaterializedTemplateLayerDirs(
+		templateId,
+		layerDirs,
+	);
 	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-template-"));
 	const templateDir = path.join(tempRoot, templateId);
 
 	try {
 		await fsp.mkdir(templateDir, { recursive: true });
 
-		for (const layerDir of layerDirs) {
+		for (const layerDir of materializedLayerDirs) {
 			await fsp.cp(layerDir, templateDir, {
 				recursive: true,
 				force: true,
@@ -174,4 +279,29 @@ export async function resolveBuiltInTemplateSource(
 			await fsp.rm(tempRoot, { force: true, recursive: true });
 		},
 	};
+}
+
+export async function resolveBuiltInTemplateSourceFromLayerDirs(
+	templateId: BuiltInTemplateId,
+	layerDirs: readonly string[],
+): Promise<MaterializedBuiltInTemplateSource> {
+	return materializeBuiltInTemplateSource(templateId, layerDirs);
+}
+
+/**
+ * Materializes a built-in template into a temporary directory by copying each
+ * resolved layer in order.
+ *
+ * Callers should invoke the returned `cleanup` function when they no longer
+ * need the materialized directory. If copying fails, the temporary directory is
+ * removed before the error is rethrown.
+ */
+export async function resolveBuiltInTemplateSource(
+	templateId: BuiltInTemplateId,
+	options: BuiltInTemplateVariantOptions = {},
+): Promise<MaterializedBuiltInTemplateSource> {
+	return materializeBuiltInTemplateSource(
+		templateId,
+		getBuiltInTemplateLayerDirs(templateId, options),
+	);
 }

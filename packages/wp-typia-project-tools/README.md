@@ -58,8 +58,11 @@ model, lives in
 The public non-mutating controller/tool contract now lives in
 [`docs/block-generator-tool-contract.md`](../../docs/block-generator-tool-contract.md).
 
-The separate RFC for reusable external layer packages on top of the built-in
-shared scaffold model lives in
+Reusable external layer packages on top of the built-in shared scaffold model
+are now available programmatically through `scaffoldProject(...)`,
+`BlockGeneratorService`, and `inspectBlockGeneration(...)` via
+`externalLayerSource` and optional `externalLayerId`. The RFC/CLI UX record
+still lives in
 [`docs/external-template-layer-composition.md`](../../docs/external-template-layer-composition.md).
 
 If you need metadata sync, editor helpers, validation helpers, or other generated-project runtime utilities, import them directly from `@wp-typia/block-runtime/*`.

@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "layers": {
+    "acme/conflict": {
+      "path": "layers/conflict"
+    }
+  }
+}

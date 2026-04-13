@@ -74,8 +74,9 @@ non-mutating tool-facing contract and current phase map, see
 For the public staged controller/tool payload contract itself, see
 [`docs/block-generator-tool-contract.md`](./block-generator-tool-contract.md).
 
-For the separate external layer package RFC on top of the built-in shared
-scaffold model, see
+For the external layer package contract on top of the built-in shared scaffold
+model, including the current programmatic composition path and remaining CLI UX
+questions, see
 [`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).
 
 `@wp-typia/block-runtime/schema-core` is public and stable, but it is the

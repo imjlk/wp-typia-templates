@@ -28,6 +28,7 @@ import {
 	isOmittableBuiltInTemplateLayerDir,
 	resolveBuiltInTemplateSource,
 } from "./template-builtins.js";
+import { loadExternalTemplateLayerManifest } from "./template-layers.js";
 import { getPackageVersions } from "./package-versions.js";
 import { toSegmentPascalCase } from "./string-case.js";
 import { copyRawDirectory, copyRenderedDirectory } from "./template-render.js";
@@ -474,6 +475,12 @@ function getTemplateVariableContext(variables: { [key: string]: string }): Templ
 async function detectTemplateSourceFormat(sourceDir: string): Promise<TemplateSourceFormat> {
 	if (fs.existsSync(path.join(sourceDir, "package.json.mustache"))) {
 		return "wp-typia";
+	}
+
+	if (await loadExternalTemplateLayerManifest(sourceDir)) {
+		throw new Error(
+			`Template source at ${sourceDir} is an external layer package. External layers currently compose only through built-in scaffolds via the runtime API, not as standalone template ids.`,
+		);
 	}
 
 	if (getExternalTemplateEntry(sourceDir)) {
@@ -996,7 +1003,15 @@ async function resolveGitHubTemplateSource(locator: GitHubTemplateLocator): Prom
 	}
 }
 
-async function resolveTemplateSeed(
+/**
+ * Resolves a template locator into a local seed source directory.
+ *
+ * @param locator Remote template locator describing a local path, GitHub source, or npm package.
+ * @param cwd Current working directory used to resolve local template paths.
+ * @returns A local seed source containing the resolved root and block directory, plus optional cleanup.
+ * @throws When the locator is invalid, the source cannot be fetched, or filesystem validation fails.
+ */
+export async function resolveTemplateSeed(
 	locator: RemoteTemplateLocator,
 	cwd: string,
 ): Promise<SeedSource> {
