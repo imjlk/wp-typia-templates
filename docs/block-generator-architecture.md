@@ -106,6 +106,9 @@ Agentica-, MCP-, or other structured tool controllers.
 import { BlockGeneratorService } from '@wp-typia/project-tools';
 
 const service = new BlockGeneratorService();
+const answers = {
+  // minimal scaffold answers for demonstration
+};
 
 const plan = await service.plan({
   answers,

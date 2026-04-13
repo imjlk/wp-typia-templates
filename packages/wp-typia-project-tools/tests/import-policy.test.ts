@@ -196,20 +196,20 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(
       blockRuntimePackageManifest.exports?.['./migration-types'],
     ).toBeDefined();
-    expect(migrationTypesSource).toContain(
-      'from "@wp-typia/block-runtime/migration-types"',
+    expect(migrationTypesSource).toMatch(
+      /from\s+['"]@wp-typia\/block-runtime\/migration-types['"]/,
     );
-    expect(templateRegistrySource).toContain(
-      'export const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";',
+    expect(templateRegistrySource).toMatch(
+      /export\s+const\s+OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE\s*=\s*['"]@wp-typia\/create-workspace-template['"]/,
     );
-    expect(templateSourceSource).not.toContain(
-      'const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";',
+    expect(templateSourceSource).not.toMatch(
+      /\bconst\s+OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE\b/,
     );
-    expect(cliScaffoldSource).not.toContain(
-      'const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";',
+    expect(cliScaffoldSource).not.toMatch(
+      /\bconst\s+OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE\b/,
     );
-    expect(scaffoldSource).not.toContain(
-      'const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";',
+    expect(scaffoldSource).not.toMatch(
+      /\bconst\s+OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE\b/,
     );
   });
 });
