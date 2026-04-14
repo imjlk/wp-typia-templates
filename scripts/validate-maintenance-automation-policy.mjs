@@ -254,6 +254,8 @@ function validateGutenbergWatchWorkflow(sourceText, errors) {
     'Update issue #283',
     '<!-- gutenberg-upstream-watch -->',
     'WordPress/gutenberg',
+    "comment.user?.login === 'github-actions[bot]'",
+    'comment.body?.startsWith(marker)',
   ]) {
     if (!sourceText.includes(requiredSnippet)) {
       errors.push(

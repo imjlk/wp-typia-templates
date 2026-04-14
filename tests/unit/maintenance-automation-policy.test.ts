@@ -62,7 +62,7 @@ function createMaintenancePolicyRepo() {
 
   writeText(
     path.join(repoRoot, '.github/workflows/gutenberg-upstream-watch.yml'),
-    `name: Gutenberg Upstream TypeScript Watch\non:\n  schedule:\n    - cron: '0 6 * * 2'\n  workflow_dispatch:\npermissions:\n  contents: read\n  issues: write\nenv:\n  GUTENBERG_UPSTREAM_REPO: 'WordPress/gutenberg'\n  WATCH_ISSUE_NUMBER: '283'\njobs:\n  gutenberg-upstream-watch:\n    steps:\n      - run: node scripts/gutenberg-upstream-watch.mjs --report-file ./report.md\n      - uses: actions/upload-artifact@v4\n      - name: Update issue #283\n        run: echo '<!-- gutenberg-upstream-watch --> WordPress/gutenberg'\n`
+    `name: Gutenberg Upstream TypeScript Watch\non:\n  schedule:\n    - cron: '0 6 * * 2'\n  workflow_dispatch:\npermissions:\n  contents: read\n  issues: write\nenv:\n  GUTENBERG_UPSTREAM_REPO: 'WordPress/gutenberg'\n  WATCH_ISSUE_NUMBER: '283'\njobs:\n  gutenberg-upstream-watch:\n    steps:\n      - run: node scripts/gutenberg-upstream-watch.mjs --report-file ./report.md\n      - uses: actions/upload-artifact@v4\n      - name: Update issue #283\n        run: |\n          echo '<!-- gutenberg-upstream-watch --> WordPress/gutenberg'\n          echo \"comment.user?.login === 'github-actions[bot]'\"\n          echo 'comment.body?.startsWith(marker)'\n`
   );
 
   writeText(
