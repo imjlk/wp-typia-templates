@@ -20,7 +20,24 @@ interface MigrationResolution {
 	preview: MigrationPreview;
 }
 
-const currentManifestDocument = parseManifestDocument< ManifestDocument >(
+const manifestDocumentCache = new WeakMap< object, ManifestDocument >();
+
+function parseCachedManifestDocument( manifest: unknown ): ManifestDocument {
+	if ( typeof manifest !== 'object' || manifest === null ) {
+		return parseManifestDocument< ManifestDocument >( manifest );
+	}
+
+	const cached = manifestDocumentCache.get( manifest );
+	if ( cached ) {
+		return cached;
+	}
+
+	const parsed = parseManifestDocument< ManifestDocument >( manifest );
+	manifestDocumentCache.set( manifest, parsed );
+	return parsed;
+}
+
+const currentManifestDocument = parseCachedManifestDocument(
 	migrationRegistry.currentManifest
 );
 
@@ -92,7 +109,7 @@ export function resolveMigrationState(
 	for ( const entry of migrationRegistry.entries ) {
 		if (
 			manifestMatchesDocument(
-				parseManifestDocument< ManifestDocument >( entry.manifest ),
+				parseCachedManifestDocument( entry.manifest ),
 				attributes
 			)
 		) {
@@ -114,15 +131,13 @@ export function resolveMigrationState(
 					: null,
 				before: attributes,
 				currentManifest: currentManifestDocument,
-				legacyManifest: parseManifestDocument< ManifestDocument >(
-					entry.manifest
-				),
+				legacyManifest: parseCachedManifestDocument( entry.manifest ),
 				status,
 				unresolved,
 				validationErrors,
 			} );
 			const delta = summarizeVersionDelta(
-				parseManifestDocument< ManifestDocument >( entry.manifest ),
+				parseCachedManifestDocument( entry.manifest ),
 				currentManifestDocument
 			);
 			let confidence = 0.95;

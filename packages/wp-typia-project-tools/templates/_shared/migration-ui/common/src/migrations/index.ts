@@ -150,19 +150,34 @@ interface MigrationResolution {
 	preview: MigrationPreview;
 }
 
+const manifestDocumentCache = new WeakMap< object, ManifestDocument >();
+
+function parseCachedManifestDocument( manifest: unknown ): ManifestDocument {
+	if ( typeof manifest !== 'object' || manifest === null ) {
+		return parseManifestDocument< ManifestDocument >( manifest );
+	}
+
+	const cached = manifestDocumentCache.get( manifest );
+	if ( cached ) {
+		return cached;
+	}
+
+	const parsed = parseManifestDocument< ManifestDocument >( manifest );
+	manifestDocumentCache.set( manifest, parsed );
+	return parsed;
+}
+
 function getCurrentManifestDocument(
 	target: MigrationTargetRuntime
 ): ManifestDocument {
-	return parseManifestDocument< ManifestDocument >(
-		target.registry.currentManifest
-	);
+	return parseCachedManifestDocument( target.registry.currentManifest );
 }
 
 function getLegacyManifestDocument(
 	target: MigrationTargetRuntime,
 	entry: MigrationTargetRuntime[ 'registry' ][ 'entries' ][ number ]
 ): ManifestDocument {
-	return parseManifestDocument< ManifestDocument >( entry.manifest );
+	return parseCachedManifestDocument( entry.manifest );
 }
 
 const EMPTY_RISK_SUMMARY: MigrationRiskSummary = {

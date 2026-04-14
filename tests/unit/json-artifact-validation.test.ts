@@ -145,10 +145,12 @@ describe("JSON artifact validation helpers", () => {
 				content: {
 					ts: {
 						items: null,
-						kind: "tuple",
+						kind: "string",
+						properties: null,
+						required: true,
+						union: null,
 					},
 					typia: {
-						defaultValue: "",
 						hasDefault: true,
 					},
 				},

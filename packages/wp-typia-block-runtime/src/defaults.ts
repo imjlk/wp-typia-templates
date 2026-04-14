@@ -1,5 +1,6 @@
 import { cloneJsonValue } from './json-utils.js';
 import {
+  isJsonValue,
   isNullableBoolean,
   isNullableJsonValue,
   isRecordOf,
@@ -44,9 +45,14 @@ function isManifestDefaultAttribute(value: unknown): value is ManifestDefaultAtt
   const items = ts.items;
   const properties = ts.properties;
   const union = ts.union;
+  const hasDefault = typia.hasDefault;
+  const hasValidDefaultValue =
+    hasDefault === true
+      ? 'defaultValue' in typia && isJsonValue(typia.defaultValue)
+      : isNullableJsonValue(typia.defaultValue);
 
   return (
-    isNullableJsonValue(typia.defaultValue) &&
+    hasValidDefaultValue &&
     isNullableBoolean(typia.hasDefault) &&
     (items === undefined ||
       items === null ||
