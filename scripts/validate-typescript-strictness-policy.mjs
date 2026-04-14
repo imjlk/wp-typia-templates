@@ -18,7 +18,14 @@ export const TYPESCRIPT_STRICTNESS_DEFERRED_FLAGS = Object.freeze([
 	"noUncheckedIndexedAccess",
 ]);
 
-export const TYPESCRIPT_STRICTNESS_POLICY_EXCEPTIONS = Object.freeze({});
+// This allowlist covers both temporary exceptions and intentional
+// package-level ratchets that land ahead of the repo-wide baseline.
+export const TYPESCRIPT_STRICTNESS_POLICY_EXCEPTIONS = Object.freeze({
+	"packages/wp-typia-block-types/tsconfig.json": Object.freeze({
+		exactOptionalPropertyTypes: true,
+		noUncheckedIndexedAccess: true,
+	}),
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
