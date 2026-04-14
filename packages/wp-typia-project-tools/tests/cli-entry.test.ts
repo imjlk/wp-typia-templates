@@ -280,6 +280,22 @@ test("runScaffoldFlow rejects external layers for non-built-in templates", async
   );
 });
 
+test("runScaffoldFlow rejects external layer ids without a layer source", async () => {
+  await expect(
+    runScaffoldFlow({
+      cwd: tempRoot,
+      externalLayerId: "acme/basic-observability",
+      noInstall: true,
+      packageManager: "npm",
+      projectInput: "demo-layer-id-only",
+      templateId: "basic",
+      yes: true,
+    })
+  ).rejects.toThrow(
+    "externalLayerId requires externalLayerSource when composing built-in template layers."
+  );
+});
+
 test("formatHelpText keeps migration UI flags out of external template usage", () => {
   const helpText = formatHelpText();
   const usageLines = helpText

@@ -283,6 +283,16 @@ export async function runScaffoldFlow({
 	withTestPreset,
 	withWpEnv,
 }: RunScaffoldFlowOptions) {
+	const normalizedExternalLayerId =
+		typeof externalLayerId === "string" && externalLayerId.trim().length > 0
+			? externalLayerId.trim()
+			: undefined;
+	const normalizedExternalLayerSource =
+		typeof externalLayerSource === "string" &&
+		externalLayerSource.trim().length > 0
+			? externalLayerSource.trim()
+			: undefined;
+
 	if (!projectInput) {
 		throw new Error(
 			"Project directory is required. Usage: wp-typia create <project-dir> (or wp-typia <project-dir>).",
@@ -367,8 +377,8 @@ export async function runScaffoldFlow({
 		allowExistingDir,
 		cwd,
 		dataStorageMode: resolvedDataStorage,
-		externalLayerId,
-		externalLayerSource,
+		externalLayerId: normalizedExternalLayerId,
+		externalLayerSource: normalizedExternalLayerSource,
 		installDependencies,
 		noInstall,
 		packageManager: resolvedPackageManager,

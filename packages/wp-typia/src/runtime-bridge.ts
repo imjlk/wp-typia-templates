@@ -32,6 +32,7 @@ type AddExecutionInput = {
 	kind?: string;
 	name?: string;
 	printLine?: PrintLine;
+	warnLine?: PrintLine;
 };
 
 type TemplatesExecutionInput = {
@@ -513,6 +514,7 @@ export async function executeAddCommand({
 	kind,
 	name,
 	printLine = console.log as PrintLine,
+	warnLine = console.warn as PrintLine,
 }: AddExecutionInput): Promise<AlternateBufferCompletionPayload | void> {
 	if (!kind) {
 		const { formatAddHelpText } = await loadCliAddRuntime();
@@ -683,7 +685,7 @@ export async function executeAddCommand({
 		warnings: result.warnings,
 	});
 	if (emitOutput) {
-		printCompletionPayload(payload, { printLine });
+		printCompletionPayload(payload, { printLine, warnLine });
 	}
 	return payload;
 }

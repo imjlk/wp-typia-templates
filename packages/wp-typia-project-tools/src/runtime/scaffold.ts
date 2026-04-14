@@ -1084,6 +1084,12 @@ export async function scaffoldProject({
 	const resolvedPackageManager = getPackageManager(packageManager).id;
 	const isBuiltInTemplate = isBuiltInTemplateId(resolvedTemplateId);
 
+	if (externalLayerId && !externalLayerSource) {
+		throw new Error(
+			"externalLayerId requires externalLayerSource when composing built-in template layers.",
+		);
+	}
+
 	if (isBuiltInTemplate) {
 		const blockGeneratorService = new BlockGeneratorService();
 		const plan = await blockGeneratorService.plan({

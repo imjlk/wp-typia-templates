@@ -118,12 +118,14 @@ export function sanitizeAddSubmitValues(values: AddFlowValues): Record<string, u
 		}
 	}
 
-	for (const hiddenFieldName of ["external-layer-source", "external-layer-id"] as const) {
-		const value = values[hiddenFieldName];
-		if (typeof value === "string") {
-			const trimmed = value.trim();
-			if (trimmed.length > 0) {
-				sanitized[hiddenFieldName] = trimmed;
+	if ((values.kind ?? "block") === "block") {
+		for (const hiddenFieldName of ["external-layer-source", "external-layer-id"] as const) {
+			const value = values[hiddenFieldName];
+			if (typeof value === "string") {
+				const trimmed = value.trim();
+				if (trimmed.length > 0) {
+					sanitized[hiddenFieldName] = trimmed;
+				}
 			}
 		}
 	}

@@ -67,6 +67,8 @@ describe("first-party TUI interaction models", () => {
 				anchor: "",
 				block: "",
 				"data-storage": "custom-table",
+				"external-layer-id": " acme/demo ",
+				"external-layer-source": " ./layers/demo ",
 				kind: "block",
 				name: "counter-card",
 				"persistence-policy": "authenticated",
@@ -75,10 +77,31 @@ describe("first-party TUI interaction models", () => {
 			}),
 		).toEqual({
 			"data-storage": "custom-table",
+			"external-layer-id": "acme/demo",
+			"external-layer-source": "./layers/demo",
 			kind: "block",
 			name: "counter-card",
 			"persistence-policy": "authenticated",
 			template: "persistence",
+		});
+
+		expect(
+			sanitizeAddSubmitValues({
+				anchor: "",
+				block: "counter-card",
+				"data-storage": "custom-table",
+				"external-layer-id": " acme/demo ",
+				"external-layer-source": " ./layers/demo ",
+				kind: "variation",
+				name: "hero-card",
+				"persistence-policy": "authenticated",
+				position: "",
+				template: "persistence",
+			}),
+		).toEqual({
+			block: "counter-card",
+			kind: "variation",
+			name: "hero-card",
 		});
 	});
 

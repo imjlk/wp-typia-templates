@@ -21,6 +21,7 @@ import { getDefaultAnswers, scaffoldProject } from "./scaffold.js";
 import type { ScaffoldTemplateVariables } from "./scaffold.js";
 import {
 	copyInterpolatedDirectory,
+	listInterpolatedDirectoryOutputs,
 } from "./template-render.js";
 import {
 	SHARED_WORKSPACE_TEMPLATE_ROOT,
@@ -46,6 +47,13 @@ import {
 	type WorkspaceMutationSnapshot,
 	snapshotWorkspaceFiles,
 } from "./cli-add-shared.js";
+import {
+	parseTemplateLocator,
+	resolveTemplateSeed,
+} from "./template-source.js";
+import {
+	resolveExternalTemplateLayers,
+} from "./template-layers.js";
 
 const COLLECTION_IMPORT_LINE = "import '../../collection';";
 const REST_MANIFEST_IMPORT_PATTERN =
@@ -299,6 +307,30 @@ const COMPATIBLE_COMPOUND_TOOLKIT_PATTERNS = [
 	/createTemplateValidatorToolkit\s*<\s*T\s+extends\s+object\s*>\s*\(\s*\{/u,
 ] as const;
 
+function normalizeExternalLayerOption(value?: string): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function resolveExternalLayerSourceFromCaller(
+	source: string | undefined,
+	callerCwd: string,
+): string | undefined {
+	if (
+		typeof source !== "string" ||
+		source.length === 0 ||
+		!(path.isAbsolute(source) || source.startsWith("./") || source.startsWith("../"))
+	) {
+		return source;
+	}
+
+	return path.resolve(callerCwd, source);
+}
+
 function shouldRefreshCompoundValidatorToolkit(source: string | null): boolean {
 	return (
 		source === null ||
@@ -458,6 +490,81 @@ async function copyScaffoldedBlockSlice(
 
 	if (templateId === "persistence") {
 		await renderWorkspacePersistenceServerModule(projectDir, variables);
+	}
+}
+
+function isSupportedAddBlockLayerOutput(options: {
+	relativePath: string;
+	templateId: AddBlockTemplateId;
+	variables: ScaffoldTemplateVariables;
+}): boolean {
+	const { relativePath, templateId, variables } = options;
+	if (templateId === "compound") {
+		return (
+			relativePath === "src/hooks.ts" ||
+			relativePath === "src/validator-toolkit.ts" ||
+			relativePath.startsWith(`src/blocks/${variables.slugKebabCase}/`) ||
+			relativePath.startsWith(`src/blocks/${variables.slugKebabCase}-item/`)
+		);
+	}
+
+	return relativePath.startsWith("src/");
+}
+
+async function assertAddBlockSupportsExternalLayerOutputs(options: {
+	callerCwd: string;
+	externalLayerId?: string;
+	externalLayerSource?: string;
+	templateId: AddBlockTemplateId;
+	variables: ScaffoldTemplateVariables;
+}): Promise<void> {
+	const {
+		callerCwd,
+		externalLayerId,
+		externalLayerSource,
+		templateId,
+		variables,
+	} = options;
+	if (!externalLayerSource) {
+		return;
+	}
+
+	const layerSeed = await resolveTemplateSeed(
+		parseTemplateLocator(externalLayerSource),
+		callerCwd,
+	);
+	try {
+		const resolvedLayers = await resolveExternalTemplateLayers({
+			externalLayerId,
+			sourceRoot: layerSeed.rootDir,
+		});
+
+		for (const entry of resolvedLayers.entries) {
+			if (entry.kind !== "external") {
+				continue;
+			}
+
+			for (const relativePath of await listInterpolatedDirectoryOutputs(
+				entry.dir,
+				variables,
+			)) {
+				if (
+					isSupportedAddBlockLayerOutput({
+						relativePath,
+						templateId,
+						variables,
+					})
+				) {
+					continue;
+				}
+
+				throw new Error(
+					`External layer "${entry.id}" writes workspace-level output "${relativePath}", which \`wp-typia add block\` cannot merge safely. Restrict the layer to block-local files or scaffold it through \`wp-typia create\` instead.`,
+				);
+			}
+		}
+	} finally {
+		await layerSeed.cleanup?.();
 	}
 }
 
@@ -685,6 +792,11 @@ export async function runAddBlockCommand({
 	assertPersistenceFlagsAllowed(resolvedTemplateId, { dataStorageMode, persistencePolicy });
 
 	const workspace = resolveWorkspaceProject(cwd);
+	const normalizedExternalLayerId = normalizeExternalLayerOption(externalLayerId);
+	const normalizedExternalLayerSource = resolveExternalLayerSourceFromCaller(
+		normalizeExternalLayerOption(externalLayerSource),
+		cwd,
+	);
 	const normalizedSlug = normalizeBlockSlug(blockName);
 	if (!normalizedSlug) {
 		throw new Error("Block name is required. Use `wp-typia add block <name> --template <family>`.");
@@ -727,13 +839,20 @@ export async function runAddBlockCommand({
 			},
 			cwd: workspace.projectDir,
 			dataStorageMode: dataStorageMode as "custom-table" | "post-meta" | undefined,
-			externalLayerId,
-			externalLayerSource,
+			externalLayerId: normalizedExternalLayerId,
+			externalLayerSource: normalizedExternalLayerSource,
 			noInstall: true,
 			packageManager: workspace.packageManager,
 			persistencePolicy: persistencePolicy as "authenticated" | "public" | undefined,
 			projectDir: tempProjectDir,
 			templateId: resolvedTemplateId,
+		});
+		await assertAddBlockSupportsExternalLayerOutputs({
+			callerCwd: cwd,
+			externalLayerId: normalizedExternalLayerId,
+			externalLayerSource: normalizedExternalLayerSource,
+			templateId: resolvedTemplateId,
+			variables: result.variables,
 		});
 		assertBlockTargetsDoNotExist(workspace.projectDir, resolvedTemplateId, result.variables);
 		const mutationSnapshot: WorkspaceMutationSnapshot = {
