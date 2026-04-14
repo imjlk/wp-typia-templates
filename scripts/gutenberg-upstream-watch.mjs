@@ -13,6 +13,7 @@ export const GUTENBERG_UPSTREAM_WATCH_POLICY = Object.freeze({
 	defaultLookbackDays: 14,
 	defaultMaxResultsPerQuery: 5,
 	issueNumber: 283,
+	maxSearchResultsPerQuery: 100,
 	upstream: Object.freeze({
 		owner: 'WordPress',
 		repo: 'gutenberg',
@@ -97,7 +98,10 @@ export function parseArgs(argv) {
 		}
 
 		if (argument === '--max-results') {
-			options.maxResultsPerQuery = parseIntegerOption(argv[++index], '--max-results');
+			options.maxResultsPerQuery = Math.min(
+				parseIntegerOption(argv[++index], '--max-results'),
+				GUTENBERG_UPSTREAM_WATCH_POLICY.maxSearchResultsPerQuery,
+			);
 			continue;
 		}
 

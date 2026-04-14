@@ -8,6 +8,7 @@ import {
 	collectLocalDependencyPins,
 	evaluateBlocksVersionDrift,
 	extractDependencySpec,
+	parseArgs,
 	renderWatchReport,
 } from '../../scripts/gutenberg-upstream-watch.mjs';
 
@@ -87,6 +88,11 @@ describe('gutenberg-upstream-watch helpers', () => {
 		});
 
 		expect(evaluateBlocksVersionDrift('^15.2.0', '15.3.0').hasDrift).toBe(true);
+	});
+
+	test('parseArgs clamps max-results to the GitHub Search per_page ceiling', () => {
+		expect(parseArgs(['--max-results', '500']).maxResultsPerQuery).toBe(100);
+		expect(parseArgs(['--max-results', '12']).maxResultsPerQuery).toBe(12);
 	});
 
 	test('renderWatchReport includes version drift, tracked areas, and follow-up guidance', () => {
