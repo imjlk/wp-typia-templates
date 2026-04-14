@@ -32,6 +32,29 @@ test("bun entry bootstraps migrations and sanitizes snapshot metadata", () => {
 	expect(snapshotBlock.editorScript).toBeUndefined();
 });
 
+test("migrate init keeps deprecated generation compatible when current manifest sourceType is missing", () => {
+	const projectDir = path.join(tempRoot, "init-project-missing-source-type");
+	createCurrentProjectFiles(projectDir);
+
+	const manifestPath = path.join(projectDir, "typia.manifest.json");
+	const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+	delete manifest.sourceType;
+	fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, "\t")}\n`, "utf8");
+
+	runCli("bun", [entryPath, "migrate", "init", "--current-migration-version", "v1"], {
+		cwd: projectDir,
+	});
+
+	const deprecatedSource = fs.readFileSync(
+		path.join(projectDir, "src", "migrations", "generated", "deprecated.ts"),
+		"utf8",
+	);
+	expect(deprecatedSource).toContain(
+		"export const deprecated: BlockDeprecationList<Record<string, unknown>> = [];",
+	);
+	expect(deprecatedSource).not.toContain('import type { MigrationAttributes }');
+});
+
 test("migrate init auto-detects current single-block scaffold layouts", () => {
 	const projectDir = path.join(tempRoot, "init-current-single-block-project");
 	createCurrentSingleBlockScaffoldProject(projectDir);
