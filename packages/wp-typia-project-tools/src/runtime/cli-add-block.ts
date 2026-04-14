@@ -455,6 +455,35 @@ function upgradeLegacyCompoundValidatorSource(source: string): string {
 	return replacedManifest;
 }
 
+function renderLegacyManifestDefaultsWrapperSource(): string {
+	return [
+		"import rawCurrentManifest from './typia.manifest.json';",
+		"import { defineManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
+		"",
+		"const currentManifest = defineManifestDefaultsDocument( rawCurrentManifest );",
+		"",
+		"export default currentManifest;",
+		"",
+	].join("\n");
+}
+
+async function ensureLegacyCompoundValidatorManifestDefaultsWrapper(
+	validatorPath: string,
+): Promise<void> {
+	const validatorDir = path.dirname(validatorPath);
+	const wrapperPath = path.join(validatorDir, "manifest-defaults-document.ts");
+	const manifestPath = path.join(validatorDir, "typia.manifest.json");
+	if (fs.existsSync(wrapperPath) || !fs.existsSync(manifestPath)) {
+		return;
+	}
+
+	await fsp.writeFile(
+		wrapperPath,
+		renderLegacyManifestDefaultsWrapperSource(),
+		"utf8",
+	);
+}
+
 async function collectLegacyCompoundValidatorPaths(projectDir: string): Promise<string[]> {
 	const blocksDir = path.join(projectDir, "src", "blocks");
 	if (!fs.existsSync(blocksDir)) {
@@ -504,6 +533,7 @@ async function ensureCompoundWorkspaceSupportFiles(
 			continue;
 		}
 
+		await ensureLegacyCompoundValidatorManifestDefaultsWrapper(validatorPath);
 		await fsp.writeFile(
 			validatorPath,
 			upgradeLegacyCompoundValidatorSource(currentSource),

@@ -1047,6 +1047,107 @@ test("add compound block repairs a legacy shared validator toolkit in an officia
   typecheckGeneratedProject(targetDir);
 }, 60_000);
 
+test("add compound block backfills a missing manifest-defaults wrapper during legacy validator repair", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-compound-legacy-validator-wrapper-backfill"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description:
+        "Demo workspace add compound legacy validator wrapper backfill",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-compound-legacy-validator-wrapper-backfill",
+      textDomain: "demo-space",
+      title:
+        "Demo Workspace Add Compound Legacy Validator Wrapper Backfill",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "block",
+      "faq-stack",
+      "--template",
+      "compound",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  writeLegacyValidatorToolkitFixture(targetDir);
+  fs.rmSync(
+    path.join(
+      targetDir,
+      "src",
+      "blocks",
+      "faq-stack",
+      "manifest-defaults-document.ts"
+    )
+  );
+  writeLegacyCompoundValidatorFixture(
+    targetDir,
+    "faq-stack",
+    "FaqStackAttributes",
+    "FaqStackAttributes"
+  );
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "block",
+      "feature-grid",
+      "--template",
+      "compound",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const manifestDefaultsWrapperSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "blocks",
+      "faq-stack",
+      "manifest-defaults-document.ts"
+    ),
+    "utf8"
+  );
+  const repairedParentValidatorSource = fs.readFileSync(
+    path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),
+    "utf8"
+  );
+
+  expect(manifestDefaultsWrapperSource).toContain(
+    "import rawCurrentManifest from './typia.manifest.json';"
+  );
+  expect(manifestDefaultsWrapperSource).toContain(
+    "defineManifestDefaultsDocument( rawCurrentManifest )"
+  );
+  expect(repairedParentValidatorSource).toContain(
+    "import currentManifest from './manifest-defaults-document';"
+  );
+
+  typecheckGeneratedProject(targetDir);
+}, 60_000);
+
 test("add compound block does not duplicate an existing typia import during legacy validator repair", async () => {
   const targetDir = path.join(
     tempRoot,
