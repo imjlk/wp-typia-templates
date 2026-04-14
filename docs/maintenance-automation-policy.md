@@ -104,7 +104,8 @@ The workflow does not pass the repository-scoped Actions `GITHUB_TOKEN` into tho
 upstream `WordPress/gutenberg` reads. It defaults to unauthenticated public GitHub
 requests, and only uses an explicit `GUTENBERG_UPSTREAM_TOKEN` override when a
 maintainer wants higher rate limits from a token that is valid for the upstream
-repository.
+repository. When configured, that override can come from either
+`secrets.GUTENBERG_UPSTREAM_TOKEN` or `vars.GUTENBERG_UPSTREAM_TOKEN`.
 
 The expected follow-up path is:
 

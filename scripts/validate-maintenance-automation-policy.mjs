@@ -247,6 +247,7 @@ function validateGutenbergWatchWorkflow(sourceText, errors) {
     'schedule:',
     'workflow_dispatch:',
     "WATCH_ISSUE_NUMBER: '283'",
+    'GUTENBERG_UPSTREAM_TOKEN',
     'permissions:',
     'issues: write',
     'node scripts/gutenberg-upstream-watch.mjs',
