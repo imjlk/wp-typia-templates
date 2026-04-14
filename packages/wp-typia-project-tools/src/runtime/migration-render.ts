@@ -199,30 +199,32 @@ export function renderMigrationRegistryFile(
 		throw new Error(`Unknown migration block target: ${blockKey}`);
 	}
 	const generatedDir = getGeneratedDir(block, state);
-	const currentManifestWrapperFile = block.manifestFile.replace(
-		/typia\.manifest\.json$/u,
-		"manifest-document.ts",
+	const currentManifestWrapperCandidates = [
+		block.manifestFile.replace(/typia\.manifest\.json$/u, "manifest-document.ts"),
+		path.join(path.dirname(block.typesFile), "manifest-document.ts"),
+	].filter(
+		(candidate, index, allCandidates) =>
+			candidate !== block.manifestFile && allCandidates.indexOf(candidate) === index,
 	);
-	const hasCurrentManifestWrapper =
-		currentManifestWrapperFile !== block.manifestFile &&
-		fs.existsSync(path.join(state.projectDir, currentManifestWrapperFile));
-	const currentManifestSourceFile = hasCurrentManifestWrapper
-		? currentManifestWrapperFile
-		: block.manifestFile;
+	const currentManifestWrapperFile =
+		currentManifestWrapperCandidates.find((candidate) =>
+			fs.existsSync(path.join(state.projectDir, candidate)),
+		) ?? null;
+	const currentManifestSourceFile = currentManifestWrapperFile ?? block.manifestFile;
 	const currentManifestImport = normalizeImportPath(
 		path.relative(
 			generatedDir,
 			path.join(state.projectDir, currentManifestSourceFile),
 		),
-		hasCurrentManifestWrapper,
+		currentManifestWrapperFile !== null,
 	);
-	const currentManifestExpression = hasCurrentManifestWrapper
+	const currentManifestExpression = currentManifestWrapperFile !== null
 		? "rawCurrentManifest"
 		: "parseManifestDocument<ManifestDocument>(rawCurrentManifest)";
 	const imports = [
 		`import rawCurrentManifest from "${currentManifestImport}";`,
 		`import type { ManifestDocument, MigrationRiskSummary } from "${normalizeImportPath(path.relative(getGeneratedDir(block, state), path.join(state.projectDir, "src", "migrations", "helpers.ts")), true)}";`,
-		...(entries.length > 0 || !hasCurrentManifestWrapper
+		...(entries.length > 0 || currentManifestWrapperFile === null
 			? [`import { parseManifestDocument } from "@wp-typia/block-runtime/editor";`]
 			: []),
 	];
