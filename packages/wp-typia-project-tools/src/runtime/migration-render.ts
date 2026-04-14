@@ -198,10 +198,22 @@ export function renderMigrationRegistryFile(
 	if (!block) {
 		throw new Error(`Unknown migration block target: ${blockKey}`);
 	}
+	const currentManifestImport = normalizeImportPath(
+		path.relative(
+			getGeneratedDir(block, state),
+			path.join(
+				state.projectDir,
+				block.manifestFile.replace(/typia\.manifest\.json$/u, "manifest-document.ts"),
+			),
+		),
+		true,
+	);
 	const imports = [
-		`import currentManifest from "${normalizeImportPath(path.relative(getGeneratedDir(block, state), path.join(state.projectDir, block.manifestFile)))}";`,
-		`import { parseManifestDocument } from "@wp-typia/block-runtime/editor";`,
+		`import currentManifest from "${currentManifestImport}";`,
 		`import type { ManifestDocument, MigrationRiskSummary } from "${normalizeImportPath(path.relative(getGeneratedDir(block, state), path.join(state.projectDir, "src", "migrations", "helpers.ts")), true)}";`,
+		...(entries.length > 0
+			? [`import { parseManifestDocument } from "@wp-typia/block-runtime/editor";`]
+			: []),
 	];
 	const body: string[] = [];
 
@@ -235,7 +247,7 @@ export const migrationRegistry: {
 	entries: MigrationRegistryEntry[];
 } = {
 	currentMigrationVersion: "${state.config.currentMigrationVersion}",
-	currentManifest: parseManifestDocument<ManifestDocument>(currentManifest),
+	currentManifest,
 	entries: [
 ${body.join("\n")}
 	],
@@ -245,16 +257,38 @@ export default migrationRegistry;
 `;
 }
 
-export function renderGeneratedDeprecatedFile(entries: MigrationEntry[]): string {
+export function renderGeneratedDeprecatedFile(
+	state: MigrationProjectState,
+	blockKey: string,
+	entries: MigrationEntry[],
+): string {
+	const block = state.blocks.find((entry) => entry.key === blockKey);
+	if (!block) {
+		throw new Error(`Unknown migration block target: ${blockKey}`);
+	}
+	const currentTypeName = block.currentManifest.sourceType;
+	if (typeof currentTypeName !== "string" || currentTypeName.length === 0) {
+		throw new Error(`Missing current manifest sourceType for migration block ${blockKey}`);
+	}
+	const generatedDir = getGeneratedDir(block, state);
+	const typesImport = normalizeImportPath(
+		path.relative(generatedDir, path.join(state.projectDir, block.typesFile)),
+		true,
+	);
+
 	if (entries.length === 0) {
 		return `/* eslint-disable prettier/prettier */
-import type { BlockConfiguration } from "@wp-typia/block-types/blocks/registration";
+import type { BlockDeprecationList } from "@wp-typia/block-types/blocks/registration";
+import type { ${currentTypeName} } from "${typesImport}";
 
-export const deprecated: NonNullable<BlockConfiguration["deprecated"]> = [];
+export const deprecated: BlockDeprecationList<${currentTypeName}> = [];
 `;
 	}
 
-	const imports = [`import type { BlockConfiguration } from "@wp-typia/block-types/blocks/registration";`];
+	const imports = [
+		`import type { BlockConfiguration, BlockDeprecationList } from "@wp-typia/block-types/blocks/registration";`,
+		`import type { ${currentTypeName} } from "${typesImport}";`,
+	];
 	const definitions: string[] = [];
 	const arrayEntries: string[] = [];
 
@@ -262,7 +296,7 @@ export const deprecated: NonNullable<BlockConfiguration["deprecated"]> = [];
 		imports.push(`import block_${index} from "${entry.blockJsonImport}";`);
 		imports.push(`import save_${index} from "${entry.saveImport}";`);
 		imports.push(`import * as rule_${index} from "${entry.ruleImport}";`);
-		definitions.push(`const deprecated_${index}: NonNullable<BlockConfiguration["deprecated"]>[number] = {`);
+		definitions.push(`const deprecated_${index}: BlockDeprecationList<${currentTypeName}>[number] = {`);
 		definitions.push(
 			`\tattributes: (block_${index}.attributes ?? {}) as BlockConfiguration["attributes"],`,
 		);
@@ -279,7 +313,7 @@ ${imports.join("\n")}
 
 ${definitions.join("\n\n")}
 
-export const deprecated: NonNullable<BlockConfiguration["deprecated"]> = [${arrayEntries.join(", ")}];
+export const deprecated: BlockDeprecationList<${currentTypeName}> = [${arrayEntries.join(", ")}];
 `;
 }
 

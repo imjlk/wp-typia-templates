@@ -1,11 +1,11 @@
 /* eslint-disable no-console */
 import typia from 'typia';
-import currentManifest from '../typia.manifest.json';
 import { generateBlockId } from '@wp-typia/block-runtime/identifiers';
 import {
 	createNestedAttributeUpdater as createValidatedNestedAttributeUpdater,
 	type ValidationResult,
 } from '@wp-typia/block-runtime/validation';
+import currentManifest from './manifest-defaults-document';
 import { MyTypiaBlockAttributes } from './types';
 import { createTemplateValidatorToolkit } from './validator-toolkit';
 

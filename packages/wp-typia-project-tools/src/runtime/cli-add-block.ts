@@ -223,6 +223,12 @@ async function ensureCollectionImport(filePath: string): Promise<void> {
 		if (source.includes(COLLECTION_IMPORT_LINE)) {
 			return source;
 		}
+		if (source.includes("import metadata from './block-metadata';")) {
+			return source.replace(
+				"import metadata from './block-metadata';",
+				`${COLLECTION_IMPORT_LINE}\nimport metadata from './block-metadata';`,
+			);
+		}
 		if (source.includes("import metadata from './block.json';")) {
 			return source.replace(
 				"import metadata from './block.json';",
@@ -290,6 +296,8 @@ async function renderWorkspacePersistenceServerModule(
 const COMPOUND_SHARED_SUPPORT_FILES = ["hooks.ts", "validator-toolkit.ts"] as const;
 const LEGACY_ASSERT_PATTERN = /assert:\s*typia\.createAssert</u;
 const LEGACY_MANIFEST_PATTERN = /\r?\n[ \t]*manifest:\s*currentManifest,/u;
+const LEGACY_VALIDATOR_MANIFEST_IMPORT_PATTERN =
+	/import\s+currentManifest\s+from\s*["']\.\/typia\.manifest\.json["'];?/u;
 const LEGACY_TOOLKIT_CALL_PATTERN =
 	/createTemplateValidatorToolkit<\s*(?<typeName>[A-Za-z0-9_]+)\s*>\s*\(\s*\{/u;
 const LEGACY_VALIDATOR_TOOLKIT_IMPORT_PATTERN =
@@ -365,6 +373,11 @@ function upgradeLegacyCompoundValidatorSource(source: string): string {
 	if (!hasTypiaImport(nextSource)) {
 		nextSource = `import typia from 'typia';\n${nextSource}`;
 	}
+
+	nextSource = nextSource.replace(
+		LEGACY_VALIDATOR_MANIFEST_IMPORT_PATTERN,
+		"import currentManifest from './manifest-defaults-document';",
+	);
 
 	nextSource = nextSource.replace(
 		LEGACY_TOOLKIT_CALL_PATTERN,

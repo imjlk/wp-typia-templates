@@ -88,6 +88,36 @@ describe('@wp-typia/project-tools scaffold compound', () => {
           'utf8',
         ),
       );
+      const parentManifestWrapper = fs.readFileSync(
+        path.join(
+          targetDir,
+          'src',
+          'blocks',
+          'demo-compound',
+          'manifest-document.ts',
+        ),
+        'utf8',
+      );
+      const parentManifestDefaultsWrapper = fs.readFileSync(
+        path.join(
+          targetDir,
+          'src',
+          'blocks',
+          'demo-compound',
+          'manifest-defaults-document.ts',
+        ),
+        'utf8',
+      );
+      const parentBlockMetadata = fs.readFileSync(
+        path.join(
+          targetDir,
+          'src',
+          'blocks',
+          'demo-compound',
+          'block-metadata.ts',
+        ),
+        'utf8',
+      );
       const parentChildren = fs.readFileSync(
         path.join(targetDir, 'src', 'blocks', 'demo-compound', 'children.ts'),
         'utf8',
@@ -125,6 +155,36 @@ describe('@wp-typia/project-tools scaffold compound', () => {
           ),
           'utf8',
         ),
+      );
+      const childManifestWrapper = fs.readFileSync(
+        path.join(
+          targetDir,
+          'src',
+          'blocks',
+          'demo-compound-item',
+          'manifest-document.ts',
+        ),
+        'utf8',
+      );
+      const childManifestDefaultsWrapper = fs.readFileSync(
+        path.join(
+          targetDir,
+          'src',
+          'blocks',
+          'demo-compound-item',
+          'manifest-defaults-document.ts',
+        ),
+        'utf8',
+      );
+      const childBlockMetadata = fs.readFileSync(
+        path.join(
+          targetDir,
+          'src',
+          'blocks',
+          'demo-compound-item',
+          'block-metadata.ts',
+        ),
+        'utf8',
       );
       const parentBlockJson = JSON.parse(
         fs.readFileSync(
@@ -276,6 +336,24 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(childValidators).toContain(
         'scaffoldValidators.validateAttributes as (',
       );
+      expect(parentBlockMetadata).toContain(
+        'defineScaffoldBlockMetadata(rawMetadata)',
+      );
+      expect(parentManifestWrapper).toContain(
+        'defineManifestDocument(rawCurrentManifest)',
+      );
+      expect(parentManifestDefaultsWrapper).toContain(
+        'defineManifestDefaultsDocument(rawCurrentManifest)',
+      );
+      expect(childBlockMetadata).toContain(
+        'defineScaffoldBlockMetadata(rawMetadata)',
+      );
+      expect(childManifestWrapper).toContain(
+        'defineManifestDocument(rawCurrentManifest)',
+      );
+      expect(childManifestDefaultsWrapper).toContain(
+        'defineManifestDefaultsDocument(rawCurrentManifest)',
+      );
       expect(childBlockJson.attributes.title.selector).toBe(
         '.wp-block-create-block-demo-compound-item__title',
       );
@@ -292,9 +370,14 @@ describe('@wp-typia/project-tools scaffold compound', () => {
         'type EditProps = BlockEditProps< ${ childTypeName } >;',
       );
       expect(addChildScript).toContain('buildScaffoldBlockRegistration');
-      expect(addChildScript).not.toContain('type ScaffoldBlockMetadata');
       expect(addChildScript).toContain(
-        'parseScaffoldBlockMetadata<BlockConfiguration< ${ childTypeName } >>( metadata )',
+        "import metadata from './block-metadata';",
+      );
+      expect(addChildScript).toContain('renderBlockMetadataFile()');
+      expect(addChildScript).toContain('renderManifestDocumentFile()');
+      expect(addChildScript).toContain('renderManifestDefaultsDocumentFile()');
+      expect(addChildScript).toContain(
+        "import currentManifest from './manifest-defaults-document';",
       );
       expect(addChildScript).toContain('ALLOWED_CHILD_MARKER');
       expect(addChildScript).toContain('BLOCK_CONFIG_MARKER');
@@ -758,9 +841,8 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(generatedTransport).toContain('includeRestNonce: true');
       expect(generatedTransport).toContain('includeRestNonce: false');
       expect(parentIndex).toContain('buildScaffoldBlockRegistration');
-      expect(parentIndex).not.toContain('type ScaffoldBlockMetadata');
       expect(parentIndex).toContain(
-        'parseScaffoldBlockMetadata<BlockConfiguration< DemoCompoundStorageAttributes >>( metadata )',
+        "import metadata from './block-metadata';",
       );
       expect(parentValidators).toContain('@wp-typia/block-runtime/identifiers');
       expect(parentValidators).toContain('generateResourceKey');
@@ -795,9 +877,14 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(generatedValidatorToolkit).not.toContain('typia.createValidate');
       expect(generatedAddChild).toContain('ALLOWED_CHILD_MARKER');
       expect(generatedAddChild).toContain('buildScaffoldBlockRegistration');
-      expect(generatedAddChild).not.toContain('type ScaffoldBlockMetadata');
       expect(generatedAddChild).toContain(
-        'parseScaffoldBlockMetadata<BlockConfiguration< ${ childTypeName } >>( metadata )',
+        "import metadata from './block-metadata';",
+      );
+      expect(generatedAddChild).toContain('renderBlockMetadataFile()');
+      expect(generatedAddChild).toContain('renderManifestDocumentFile()');
+      expect(generatedAddChild).toContain('renderManifestDefaultsDocumentFile()');
+      expect(generatedAddChild).toContain(
+        "import currentManifest from './manifest-defaults-document';",
       );
       expect(generatedAddChild).toContain('createTemplateValidatorToolkit');
       expect(generatedAddChild).not.toContain('createScaffoldValidatorToolkit');
@@ -1073,9 +1160,11 @@ describe('@wp-typia/project-tools scaffold compound', () => {
         'scaffoldValidators.validateAttributes as (',
       );
       expect(newChildIndex).toContain('buildScaffoldBlockRegistration');
-      expect(newChildIndex).not.toContain('type ScaffoldBlockMetadata');
       expect(newChildIndex).toContain(
-        'parseScaffoldBlockMetadata<BlockConfiguration< DemoCompoundAddChildFaqItemAttributes >>( metadata )',
+        "import metadata from './block-metadata';",
+      );
+      expect(newChildValidators).toContain(
+        "import currentManifest from './manifest-defaults-document';",
       );
       expect(newChildEdit).toContain(
         'wp-block-create-block-demo-compound-add-child-faq-item',

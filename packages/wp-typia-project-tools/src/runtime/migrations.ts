@@ -977,7 +977,7 @@ export function doctorProjectMigrations(
 			);
 			expectedGeneratedFiles.set(
 				path.join(generatedDir, "deprecated.ts"),
-				renderGeneratedDeprecatedFile(entries),
+				renderGeneratedDeprecatedFile(state, block.key, entries),
 			);
 			expectedGeneratedFiles.set(
 				path.join(generatedDir, "verify.ts"),
@@ -1424,7 +1424,7 @@ function regenerateGeneratedArtifacts(projectDir: string): void {
 		);
 		fs.writeFileSync(
 			path.join(generatedDir, "deprecated.ts"),
-			renderGeneratedDeprecatedFile(entries),
+			renderGeneratedDeprecatedFile(state, block.key, entries),
 			"utf8",
 		);
 		fs.writeFileSync(

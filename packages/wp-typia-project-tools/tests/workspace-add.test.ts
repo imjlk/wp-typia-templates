@@ -1032,9 +1032,15 @@ test("add compound block repairs a legacy shared validator toolkit in an officia
   );
   expect(repairedParentValidatorSource).toContain("import typia from 'typia';");
   expect(repairedParentValidatorSource).toContain(
+    "import currentManifest from './manifest-defaults-document';"
+  );
+  expect(repairedParentValidatorSource).toContain(
     "assert: typia.createAssert< FaqStackAttributes >()"
   );
   expect(repairedChildValidatorSource).toContain("import typia from 'typia';");
+  expect(repairedChildValidatorSource).toContain(
+    "import currentManifest from './manifest-defaults-document';"
+  );
   expect(repairedChildValidatorSource).toContain(
     "assert: typia.createAssert< FaqStackItemAttributes >()"
   );

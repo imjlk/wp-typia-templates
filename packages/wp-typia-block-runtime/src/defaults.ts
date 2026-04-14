@@ -101,6 +101,21 @@ export function parseManifestDefaultsDocument<
   return assertManifestDefaultsDocument<TDocument>(value);
 }
 
+/**
+ * Wrapper helper for generated manifest-default modules.
+ *
+ * Generated projects validate the raw JSON once at import time so validator
+ * tooling can consume the stricter defaults-oriented contract without local
+ * parse calls.
+ */
+export function defineManifestDefaultsDocument<TDocument extends Record<string, unknown>>(
+	manifest: TDocument,
+): ManifestDefaultsDocument & TDocument {
+	return parseManifestDefaultsDocument<TDocument>(
+		manifest,
+	) as ManifestDefaultsDocument & TDocument;
+}
+
 function isListArray(value: unknown[]): boolean {
   return value.every((_, index) => index in value);
 }

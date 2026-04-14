@@ -1,6 +1,5 @@
 import { registerBlockType } from '@wordpress/blocks';
 import type {
-	BlockDeprecationList,
 	BlockConfiguration,
 	RegisterBlockTypeResult,
 } from '@wp-typia/block-types/blocks/registration';
@@ -8,7 +7,7 @@ import {
 	buildScaffoldBlockRegistration,
 	parseScaffoldBlockMetadata,
 } from '@wp-typia/block-runtime/blocks';
-import metadata from '../block.json';
+import metadata from './block-metadata';
 import { deprecated } from './deprecated';
 import Edit from './edit';
 import Save from './save';
@@ -24,8 +23,7 @@ const registration = buildScaffoldBlockRegistration(
 		example: {
 			attributes: validators.random(),
 		},
-		deprecated:
-			deprecated as BlockDeprecationList< MyTypiaBlockAttributes >,
+		deprecated,
 		edit: Edit,
 		save: Save,
 	}

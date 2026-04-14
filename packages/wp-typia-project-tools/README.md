@@ -51,6 +51,15 @@ files and starter `typia.manifest.json` now come from the emitter path, while
 project bootstrap/package-manager files, sync scripts, shared REST helpers, and
 the remaining non-block assets still come from Mustache-backed template copy.
 
+Generated projects now consume JSON artifacts through typed wrapper modules
+instead of local casts:
+
+- `block-metadata.ts` for `block.json`
+- `manifest-document.ts` for editor and migration consumers of
+  `typia.manifest.json`
+- `manifest-defaults-document.ts` for validator/defaults consumers of
+  `typia.manifest.json`
+
 The higher-level generator architecture record, including the current phase map
 and the non-mutating `plan -> validate -> render -> apply` tool-facing usage
 model, lives in

@@ -8,14 +8,13 @@ import {
 import { Notice, PanelBody, RangeControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { useEffect, useMemo } from '@wordpress/element';
-import currentManifest from '../typia.manifest.json';
 import {
 	InspectorFromManifest,
-	parseManifestDocument,
 	useEditorFields,
 	useTypedAttributeUpdater,
 } from '@wp-typia/block-runtime/inspector';
 import { generateBlockId } from '@wp-typia/block-runtime/identifiers';
+import currentManifest from './manifest-document';
 import { MyTypiaBlockAttributes } from './types';
 import { sanitizeMyTypiaBlockAttributes, validators } from './validators';
 import { useTypiaValidation, useAttributeLogger, useDebounce } from './hooks';
@@ -70,7 +69,6 @@ const SHOWCASE_INSPECTOR_PATHS = [
 	'aspectRatio',
 	'borderRadius',
 ] as const;
-const editorManifest = parseManifestDocument( currentManifest );
 
 function coerceStringEnum< T extends string >(
 	value: string,
@@ -96,7 +94,7 @@ function getFontSizeStyle( fontSize: FontSizeValue ): string {
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const blockProps = useBlockProps();
-	const editorFields = useEditorFields( editorManifest, {
+	const editorFields = useEditorFields( currentManifest, {
 		hidden: [ 'id', 'version' ],
 		labels: {
 			alignment: __( 'Alignment', 'my-typia-block' ),

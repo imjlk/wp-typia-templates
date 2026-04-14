@@ -135,10 +135,11 @@ describe('my-typia-block reference app helpers', () => {
       'utf8',
     );
 
-    expect(indexSource).toContain('parseScaffoldBlockMetadata');
+    expect(indexSource).toContain("import metadata from './block-metadata';");
     expect(indexSource).toContain('buildScaffoldBlockRegistration(');
     expect(indexSource).not.toContain('type ScaffoldBlockMetadata');
     expect(indexSource).not.toContain('metadata as ScaffoldBlockMetadata');
+    expect(indexSource).toContain('parseScaffoldBlockMetadata');
     expect(indexSource).toContain('BlockConfiguration');
   });
 
@@ -176,7 +177,7 @@ describe('my-typia-block reference app helpers', () => {
     expect(fixturesReadme).toContain('wp-typia migrate fuzz');
   });
 
-  test('reference app validates manifest imports before editor and migration use', () => {
+  test('reference app keeps runtime manifest validation helpers while consuming wrapper imports', () => {
     const editSource = fs.readFileSync(
       path.join(import.meta.dir, '../../examples/my-typia-block/src/edit.tsx'),
       'utf8',
@@ -196,15 +197,67 @@ describe('my-typia-block reference app helpers', () => {
       'utf8',
     );
 
-    expect(editSource).toContain('parseManifestDocument');
+    expect(editSource).toContain("import currentManifest from './manifest-document';");
+    expect(editSource).not.toContain('parseManifestDocument');
     expect(editSource).not.toContain('currentManifest as ManifestDocument');
     expect(migrationAnalysisSource).toContain('parseManifestDocument');
     expect(migrationAnalysisSource).not.toContain(
       'migrationRegistry.currentManifest as ManifestDocument',
     );
-    expect(migrationRegistrySource).toContain('parseManifestDocument');
+    expect(migrationRegistrySource).toContain(
+      "import currentManifest from '../../manifest-document';",
+    );
+    expect(migrationRegistrySource).not.toContain('parseManifestDocument');
     expect(migrationRegistrySource).not.toContain(
       'currentManifest as ManifestDocument',
+    );
+  });
+
+  test("reference app consumes typed JSON wrapper modules instead of local casts", () => {
+    const exampleDir = path.join(import.meta.dir, "../../examples/my-typia-block/src");
+    const blockMetadataSource = fs.readFileSync(
+      path.join(exampleDir, "block-metadata.ts"),
+      "utf8"
+    );
+    const manifestDocumentSource = fs.readFileSync(
+      path.join(exampleDir, "manifest-document.ts"),
+      "utf8"
+    );
+    const manifestDefaultsSource = fs.readFileSync(
+      path.join(exampleDir, "manifest-defaults-document.ts"),
+      "utf8"
+    );
+    const editSource = fs.readFileSync(path.join(exampleDir, "edit.tsx"), "utf8");
+    const indexSource = fs.readFileSync(path.join(exampleDir, "index.tsx"), "utf8");
+    const validatorsSource = fs.readFileSync(
+      path.join(exampleDir, "validators.ts"),
+      "utf8"
+    );
+    const migrationRegistrySource = fs.readFileSync(
+      path.join(exampleDir, "migrations/generated/registry.ts"),
+      "utf8"
+    );
+    const deprecatedSource = fs.readFileSync(
+      path.join(exampleDir, "migrations/generated/deprecated.ts"),
+      "utf8"
+    );
+
+    expect(blockMetadataSource).toContain("defineScaffoldBlockMetadata");
+    expect(manifestDocumentSource).toContain("defineManifestDocument");
+    expect(manifestDefaultsSource).toContain("defineManifestDefaultsDocument");
+    expect(indexSource).toContain("import metadata from './block-metadata';");
+    expect(indexSource).not.toContain("type ScaffoldBlockMetadata");
+    expect(indexSource).not.toContain("metadata as ScaffoldBlockMetadata");
+    expect(editSource).toContain("import currentManifest from './manifest-document';");
+    expect(editSource).not.toContain("as ManifestDocument");
+    expect(validatorsSource).toContain(
+      "import currentManifest from './manifest-defaults-document';"
+    );
+    expect(migrationRegistrySource).toContain(
+      "import currentManifest from '../../manifest-document';"
+    );
+    expect(deprecatedSource).toContain(
+      "import type { MyTypiaBlockAttributes } from '../../types';"
     );
   });
 });

@@ -94,8 +94,9 @@ The render-stage snapshot intentionally distinguishes three categories:
   Output paths that would come from the remaining built-in Mustache/copied
   template tree.
 - `emittedFiles`
-  Emitter-owned files such as structural artifacts and built-in generated
-  source files.
+  Emitter-owned files such as structural artifacts, generated JSON wrapper
+  modules (`block-metadata.ts`, `manifest-document.ts`,
+  `manifest-defaults-document.ts`), and built-in generated source files.
 - `starterManifestFiles`
   Starter `typia.manifest.json` documents derived from the same semantic model.
 

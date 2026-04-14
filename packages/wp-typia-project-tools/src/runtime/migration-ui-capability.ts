@@ -25,6 +25,7 @@ interface ApplyMigrationUiCapabilityOptions {
 }
 
 const INITIAL_MIGRATION_VERSION = "v1";
+const BLOCK_METADATA_IMPORT_LINE = "import metadata from './block-metadata';";
 
 async function mutatePackageJson(
 	projectDir: string,
@@ -112,12 +113,12 @@ async function applySingleBlockPatches(
 	const editPath = path.join(projectDir, "src", "edit.tsx");
 	const indexPath = path.join(projectDir, "src", "index.tsx");
 	const deprecatedImport = `import { deprecated } from './migrations/generated/${variables.slugKebabCase}/deprecated';`;
-	const deprecatedLine = `  deprecated: deprecated as NonNullable<BlockConfiguration<${variables.pascalCase}Attributes>['deprecated']>,`;
+	const deprecatedLine = "  deprecated,";
 	const dashboardImport = `import { MigrationDashboard } from './admin/migration-dashboard';`;
 	const migrationPanel = `\n        <PanelBody title={__('Migration Manager', '${variables.textDomain}')}>\n          <MigrationDashboard />\n        </PanelBody>\n      </InspectorControls>`;
 
 	await patchFile(indexPath, (source) => {
-		let nextSource = injectAfter(source, "import metadata from './block.json';", deprecatedImport);
+		let nextSource = injectAfter(source, BLOCK_METADATA_IMPORT_LINE, deprecatedImport);
 		nextSource = injectBefore(nextSource, "  edit: Edit,", deprecatedLine);
 		return nextSource;
 	});
@@ -141,13 +142,13 @@ async function applyCompoundPatches(
 	await patchFile(parentIndexPath, (source) => {
 		let nextSource = injectAfter(
 			source,
-			"import metadata from './block.json';",
+			BLOCK_METADATA_IMPORT_LINE,
 			`import { deprecated } from '../../migrations/generated/${variables.slugKebabCase}/deprecated';`,
 		);
 		nextSource = injectBefore(
 			nextSource,
 			"\tedit: Edit,",
-			`\tdeprecated: deprecated as NonNullable<BlockConfiguration< ${variables.pascalCase}Attributes >['deprecated']>,`,
+			"\tdeprecated,",
 		);
 		return nextSource;
 	});
@@ -155,13 +156,13 @@ async function applyCompoundPatches(
 	await patchFile(childIndexPath, (source) => {
 		let nextSource = injectAfter(
 			source,
-			"import metadata from './block.json';",
+			BLOCK_METADATA_IMPORT_LINE,
 			`import { deprecated } from '../../migrations/generated/${variables.slugKebabCase}-item/deprecated';`,
 		);
 		nextSource = injectBefore(
 			nextSource,
 			"\tedit: Edit,",
-			`\tdeprecated: deprecated as NonNullable<BlockConfiguration< ${variables.pascalCase}ItemAttributes >['deprecated']>,`,
+			"\tdeprecated,",
 		);
 		return nextSource;
 	});
@@ -186,12 +187,12 @@ async function applyCompoundPatches(
 			"const MIGRATION_CONFIG_FILE = path.join( PROJECT_ROOT, 'src', 'migrations', 'config.ts' );",
 		);
 		nextSource = nextSource.replace(
-			"import metadata from './block.json';\nimport '${ PARENT_STYLE_IMPORT }';",
-			"import metadata from './block.json';\nimport { deprecated } from '../../migrations/generated/${ childFolderSlug }/deprecated';\nimport '${ PARENT_STYLE_IMPORT }';",
+			"import metadata from './block-metadata';\nimport '${ PARENT_STYLE_IMPORT }';",
+			"import metadata from './block-metadata';\nimport { deprecated } from '../../migrations/generated/${ childFolderSlug }/deprecated';\nimport '${ PARENT_STYLE_IMPORT }';",
 		);
 		nextSource = nextSource.replace(
 			"\tedit: Edit,\n\tsave: Save,",
-			"\tdeprecated: deprecated as NonNullable<BlockConfiguration< ${ childTypeName } >['deprecated']>,\n\tedit: Edit,\n\tsave: Save,",
+			"\tdeprecated,\n\tedit: Edit,\n\tsave: Save,",
 		);
 		nextSource = injectAfter(
 			nextSource,

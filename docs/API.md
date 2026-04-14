@@ -427,13 +427,12 @@ The `runtime/editor` helper turns manifest metadata into editor control hints
 without taking over inspector rendering by itself.
 
 ```ts
-import currentManifest from "./typia.manifest.json";
+import currentManifest from "./manifest-document";
 import {
   createEditorModel,
-  parseManifestDocument,
 } from "@wp-typia/block-runtime/editor";
 
-const editorFields = createEditorModel(parseManifestDocument(currentManifest), {
+const editorFields = createEditorModel(currentManifest, {
   hidden: ["id", "schemaVersion"],
   manual: ["content", "linkTarget"],
   preferTextarea: ["content"],
@@ -452,15 +451,14 @@ When you want a higher-level inspector layer, use
 `@wp-typia/block-runtime/inspector` on top of those descriptors:
 
 ```tsx
-import currentManifest from "./typia.manifest.json";
+import currentManifest from "./manifest-document";
 import {
   InspectorFromManifest,
-  parseManifestDocument,
   useEditorFields,
   useTypedAttributeUpdater,
 } from "@wp-typia/block-runtime/inspector";
 
-const editorFields = useEditorFields(parseManifestDocument(currentManifest), {
+const editorFields = useEditorFields(currentManifest, {
   manual: ["content"],
 });
 const { updateField } = useTypedAttributeUpdater(attributes, setAttributes, validateAttributes);
