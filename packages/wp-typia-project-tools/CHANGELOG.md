@@ -1,5 +1,14 @@
 # @wp-typia/project-tools
 
+## 0.16.8 — 2026-04-13
+
+### Patch changes
+
+- [198021b](https://github.com/imjlk/wp-typia/commit/198021b27c78065c3c82ac3523e909eacd3f80d1) Add a public non-mutating block generator inspection contract around `BlockGeneratorService`. — Thanks @imjlk!
+- [a620f1a](https://github.com/imjlk/wp-typia/commit/a620f1a1470ffd028b5e2efe81ae85a5d01411fe) Implement external template-layer composition manifests and `extends` resolution on top of the built-in shared scaffold model.
+  
+  Programmatic built-in scaffold flows can now accept an external layer package through `externalLayerSource` and optional `externalLayerId`, while preserving built-in emitter ownership and explicit protected-path conflict errors. — Thanks @imjlk!
+
 ## 0.16.7 — 2026-04-13
 
 ### Patch changes
