@@ -188,6 +188,9 @@ test(
   expect(generatedHooks).toContain("createUseTypiaValidationHook");
   expect(generatedIndex).toContain("@wp-typia/block-runtime/blocks");
   expect(generatedIndex).toContain("buildScaffoldBlockRegistration");
+  expect(generatedIndex).toContain(
+    "@wp-typia/block-types/blocks/registration"
+  );
   expect(generatedIndex).toContain("type ScaffoldBlockMetadata");
   expect(generatedIndex).toContain("@wp-typia/block-types/blocks/supports");
   expect(generatedIndex).toContain("import './editor.scss';");
@@ -602,7 +605,7 @@ test(
   expect(generatedValidators).not.toContain("generateUniqueId");
   expect(generatedEdit).toContain("@wp-typia/block-runtime/inspector");
   expect(generatedEdit).toContain(
-    "import type { BlockEditProps } from '@wordpress/blocks';"
+    "import type { BlockEditProps } from '@wp-typia/block-types/blocks/registration';"
   );
   expect(generatedEdit).toContain(
     "type EditProps = BlockEditProps<DemoInteractivityAttributes>;"

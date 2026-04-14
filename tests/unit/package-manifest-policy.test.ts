@@ -67,6 +67,10 @@ function createManifestRepo() {
 			npm: ">=10.0.0",
 		},
 		name: "@wp-typia/block-types",
+		peerDependencies: {
+			"@types/wordpress__blocks": "^12.5.18",
+			"@wordpress/blocks": "^15.2.0",
+		},
 		version: "0.2.1",
 	});
 	writeJson(path.join(repoRoot, "packages/wp-typia-block-runtime/package.json"), {
@@ -205,6 +209,24 @@ describe("validatePackageManifestPolicy", () => {
 		);
 		expect(result.errors).toContain(
 			"@wp-typia/project-tools should not keep unused devDependencies.react-devtools-core.",
+		);
+	});
+
+	test("fails when block-types registration facade peers drift from the documented baseline", () => {
+		const repoRoot = createManifestRepo();
+		const packageJsonPath = path.join(
+			repoRoot,
+			"packages/wp-typia-block-types/package.json",
+		);
+		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+		delete packageJson.peerDependencies["@wordpress/blocks"];
+		writeJson(packageJsonPath, packageJson);
+
+		const result = validatePackageManifestPolicy(repoRoot);
+
+		expect(result.valid).toBe(false);
+		expect(result.errors).toContain(
+			'packages/wp-typia-block-types/package.json must declare peerDependencies.@wordpress/blocks="^15.2.0" to match the owned block registration facade baseline, found null.',
 		);
 	});
 

@@ -460,7 +460,7 @@ function renderEditFile(
 ): string {
 	const childCssClassName = buildBlockCssClassName( PARENT_BLOCK_NAMESPACE, childFolderSlug );
 
-	return `import type { BlockEditProps } from '@wordpress/blocks';
+	return `import type { BlockEditProps } from '@wp-typia/block-types/blocks/registration';
 import { RichText, useBlockProps } from '@wordpress/block-editor';
 import { Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
@@ -547,7 +547,7 @@ export default function Save( {
 
 function renderIndexFile( childTypeName: string, childFolderSlug: string ): string {
 	return `import { registerBlockType } from '@wordpress/blocks';
-import type { BlockConfiguration } from '@wordpress/blocks';
+import type { BlockConfiguration } from '@wp-typia/block-types/blocks/registration';
 import {
 \tbuildScaffoldBlockRegistration,
 \ttype ScaffoldBlockMetadata,

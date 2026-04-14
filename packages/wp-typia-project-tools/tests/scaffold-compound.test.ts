@@ -200,7 +200,7 @@ test(
   ).toBe(false);
   expect(parentEdit).toContain("createAttributeUpdater");
   expect(parentEdit).toContain(
-    "import type { BlockEditProps } from '@wordpress/blocks';"
+    "import type { BlockEditProps } from '@wp-typia/block-types/blocks/registration';"
   );
   expect(parentEdit).toContain(
     "type EditProps = BlockEditProps< DemoCompoundAttributes >;"
@@ -226,13 +226,17 @@ test(
   expect(generatedValidatorToolkit).not.toContain("typia.createValidate");
   expect(parentChildren).toContain("DEFAULT_CHILD_BLOCK_NAME");
   expect(parentChildren).toContain(
+    "@wp-typia/block-types/blocks/registration"
+  );
+  expect(parentChildren).toContain("BlockTemplate");
+  expect(parentChildren).toContain(
     "add-child: insert new allowed child block names here"
   );
   expect(parentStyle).toContain(".wp-block-create-block-demo-compound");
   expect(parentStyle).toContain(".wp-block-create-block-demo-compound-item");
   expect(childEdit).toContain("createAttributeUpdater");
   expect(childEdit).toContain(
-    "import type { BlockEditProps } from '@wordpress/blocks';"
+    "import type { BlockEditProps } from '@wp-typia/block-types/blocks/registration';"
   );
   expect(childEdit).toContain(
     "type EditProps = BlockEditProps< DemoCompoundItemAttributes >;"
@@ -262,7 +266,7 @@ test(
   expect(addChildScript).toContain("createTemplateValidatorToolkit");
   expect(addChildScript).not.toContain("createScaffoldValidatorToolkit");
   expect(addChildScript).toContain(
-    "import type { BlockEditProps } from '@wordpress/blocks';"
+    "import type { BlockEditProps } from '@wp-typia/block-types/blocks/registration';"
   );
   expect(addChildScript).toContain(
     "type EditProps = BlockEditProps< ${ childTypeName } >;"
@@ -699,7 +703,7 @@ test(
     ).toHaveLength(1);
     expect(parentEdit).toContain("createAttributeUpdater");
     expect(parentEdit).toContain(
-      "import type { BlockEditProps } from '@wordpress/blocks';"
+      "import type { BlockEditProps } from '@wp-typia/block-types/blocks/registration';"
     );
     expect(parentEdit).toContain(
       "type EditProps = BlockEditProps< DemoCompoundStorageAttributes >;"

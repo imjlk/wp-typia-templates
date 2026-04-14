@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { BlockEditProps } from '@wordpress/blocks';
+import type { BlockEditProps } from '@wp-typia/block-types/blocks/registration';
 import {
 	useBlockProps,
 	InspectorControls,

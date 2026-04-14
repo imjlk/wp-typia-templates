@@ -1,0 +1,73 @@
+import type {
+  Block as WordPressRegisteredBlockType,
+  BlockAttribute as WordPressBlockAttribute,
+  BlockConfiguration as WordPressBlockConfiguration,
+  BlockDeprecation as WordPressBlockDeprecation,
+  BlockEditProps as WordPressBlockEditProps,
+  BlockInstance as WordPressBlockInstance,
+  BlockSaveProps as WordPressBlockSaveProps,
+  BlockVariation as WordPressBlockVariation,
+  BlockVariationScope as WordPressBlockVariationScope,
+  InnerBlockTemplate as WordPressInnerBlockTemplate,
+} from '@wordpress/blocks';
+
+/**
+ * Local compatibility facade for the Gutenberg block registration surface.
+ *
+ * The public contract is owned by `@wp-typia/block-types`, while the current
+ * v1 implementation intentionally adapts the upstream `@wordpress/blocks`
+ * declarations behind this stable import path.
+ */
+export type BlockAttributes = Record<string, any>;
+
+export type BlockAttribute<TValue = unknown> = WordPressBlockAttribute<TValue>;
+
+export type BlockSaveProps<
+  TAttributes extends BlockAttributes = BlockAttributes,
+> = WordPressBlockSaveProps<TAttributes>;
+
+export type BlockEditProps<
+  TAttributes extends BlockAttributes = BlockAttributes,
+> = WordPressBlockEditProps<TAttributes>;
+
+export type BlockConfiguration<
+  TAttributes extends BlockAttributes = BlockAttributes,
+> = WordPressBlockConfiguration<TAttributes>;
+
+export type BlockDeprecation<
+  TNewAttributes extends BlockAttributes = BlockAttributes,
+  TOldAttributes extends BlockAttributes = BlockAttributes,
+> = WordPressBlockDeprecation<TNewAttributes, TOldAttributes>;
+
+export type BlockDeprecationList<
+  TNewAttributes extends BlockAttributes = BlockAttributes,
+  TOldAttributes extends BlockAttributes = BlockAttributes,
+> = ReadonlyArray<BlockDeprecation<TNewAttributes, TOldAttributes>>;
+
+export type BlockInstance<
+  TAttributes extends BlockAttributes = BlockAttributes,
+> = WordPressBlockInstance<TAttributes>;
+
+export type BlockInnerTemplate = WordPressInnerBlockTemplate;
+
+export type BlockTemplate = BlockInnerTemplate[];
+
+export type BlockVariationScope = WordPressBlockVariationScope;
+
+export const BLOCK_VARIATION_SCOPES = [
+  'block',
+  'inserter',
+  'transform',
+] as const satisfies readonly BlockVariationScope[];
+
+export type BlockVariation<
+  TAttributes extends BlockAttributes = BlockAttributes,
+> = WordPressBlockVariation<TAttributes>;
+
+export type RegisteredBlockType<
+  TAttributes extends BlockAttributes = BlockAttributes,
+> = WordPressRegisteredBlockType<TAttributes>;
+
+export type RegisterBlockTypeResult<
+  TAttributes extends BlockAttributes = BlockAttributes,
+> = RegisteredBlockType<TAttributes> | undefined;

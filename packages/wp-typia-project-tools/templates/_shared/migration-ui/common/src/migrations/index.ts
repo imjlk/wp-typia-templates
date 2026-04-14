@@ -1,5 +1,6 @@
 import apiFetch from '@wordpress/api-fetch';
-import { parse, serialize, type BlockInstance } from '@wordpress/blocks';
+import { parse, serialize } from '@wordpress/blocks';
+import type { BlockInstance } from '@wp-typia/block-types/blocks/registration';
 import typia from 'typia';
 
 import migrationBlocks from './generated';

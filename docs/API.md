@@ -220,9 +220,14 @@ and registration modules.
 
 ```ts
 import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";
+import type { BlockConfiguration } from "@wp-typia/block-types/blocks/registration";
 import type { BlockStyleSupportAttributes } from "@wp-typia/block-types/block-editor/style-attributes";
 import type { BlockSupports } from "@wp-typia/block-types/blocks/supports";
 ```
+
+The registration facade is locally owned and currently targets the generated
+project minimum `@wordpress/blocks@^15.2.0` / `@types/wordpress__blocks@^12.5.18`
+baseline.
 
 ## 4. `@wp-typia/rest`
 

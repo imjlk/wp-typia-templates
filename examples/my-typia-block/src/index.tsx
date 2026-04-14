@@ -1,4 +1,9 @@
-import { registerBlockType, type BlockConfiguration } from '@wordpress/blocks';
+import { registerBlockType } from '@wordpress/blocks';
+import type {
+	BlockConfiguration,
+	BlockDeprecationList,
+	RegisterBlockTypeResult,
+} from '@wp-typia/block-types/blocks/registration';
 import {
 	buildScaffoldBlockRegistration,
 	type ScaffoldBlockMetadata,
@@ -17,14 +22,15 @@ const registration = buildScaffoldBlockRegistration<
 	example: {
 		attributes: validators.random(),
 	},
-	deprecated: deprecated as unknown as NonNullable<
-		Parameters< typeof registerBlockType< MyTypiaBlockAttributes > >[ 1 ]
-	>[ 'deprecated' ],
+	deprecated: deprecated as BlockDeprecationList< MyTypiaBlockAttributes >,
 	edit: Edit,
 	save: Save,
 } );
 
-registerBlockType< MyTypiaBlockAttributes >(
-	registration.name,
-	registration.settings
-);
+const registeredBlock: RegisterBlockTypeResult< MyTypiaBlockAttributes > =
+	registerBlockType< MyTypiaBlockAttributes >(
+		registration.name,
+		registration.settings
+	);
+
+void registeredBlock;

@@ -22,6 +22,10 @@ export const PACKAGE_MANAGER_BASELINE = "bun@1.3.11";
 export const UNUSED_DEV_DEPENDENCIES = Object.freeze({
 	"@wp-typia/project-tools": ["react-devtools-core", "ws"],
 });
+export const BLOCK_TYPES_REGISTRATION_PEER_BASELINE = Object.freeze({
+	"@types/wordpress__blocks": "^12.5.18",
+	"@wordpress/blocks": "^15.2.0",
+});
 const SHARED_PUBLISH_MANIFEST_HELPER_PATTERN = /runPublishManifestCli\s*\(/;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -103,6 +107,26 @@ function validateUnusedDevDependencyPolicy(runtimePackages, errors) {
 					`${packageInfo.packageName} should not keep unused devDependencies.${dependencyName}.`,
 				);
 			}
+		}
+	}
+}
+
+function validateBlockTypesRegistrationPeerPolicy(repoRoot, runtimePackages, errors) {
+	const packageInfo = runtimePackages.get("@wp-typia/block-types");
+	if (!packageInfo) {
+		return;
+	}
+
+	const relativePath = toRelativePath(repoRoot, packageInfo.packageJsonPath);
+
+	for (const [dependencyName, expectedSpec] of Object.entries(
+		BLOCK_TYPES_REGISTRATION_PEER_BASELINE,
+	)) {
+		const actualSpec = packageInfo.manifest.peerDependencies?.[dependencyName];
+		if (actualSpec !== expectedSpec) {
+			errors.push(
+				`${relativePath} must declare peerDependencies.${dependencyName}=${JSON.stringify(expectedSpec)} to match the owned block registration facade baseline, found ${JSON.stringify(actualSpec ?? null)}.`,
+			);
 		}
 	}
 }
@@ -210,6 +234,7 @@ export function validatePackageManifestPolicy(repoRoot = DEFAULT_REPO_ROOT) {
 	validateEngineBaseline(repoRoot, manifestPaths, errors);
 	validateRuntimeDependencyPolicy(repoRoot, runtimePackages, errors);
 	validateUnusedDevDependencyPolicy(runtimePackages, errors);
+	validateBlockTypesRegistrationPeerPolicy(repoRoot, runtimePackages, errors);
 
 	return {
 		errors,

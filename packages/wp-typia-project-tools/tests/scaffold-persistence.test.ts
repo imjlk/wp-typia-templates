@@ -257,7 +257,7 @@ test(
     );
     expect(generatedEdit).toContain("attributes={ attributes }");
     expect(generatedEdit).toContain(
-      "import type { BlockEditProps } from '@wordpress/blocks';"
+      "import type { BlockEditProps } from '@wp-typia/block-types/blocks/registration';"
     );
     expect(generatedEdit).toContain(
       "type EditProps = BlockEditProps< DemoPersistencePublicAttributes >;"
@@ -676,7 +676,7 @@ test(
   );
   expect(generatedEdit).toContain("attributes={ attributes }");
   expect(generatedEdit).toContain(
-    "import type { BlockEditProps } from '@wordpress/blocks';"
+    "import type { BlockEditProps } from '@wp-typia/block-types/blocks/registration';"
   );
   expect(generatedEdit).toContain(
     "type EditProps = BlockEditProps< DemoPersistenceAuthenticatedAttributes >;"
