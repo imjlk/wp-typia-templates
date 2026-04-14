@@ -100,6 +100,12 @@ It is intentionally read-only and triage-oriented. Each run:
 - publishes a workflow summary + artifact
 - refreshes the durable tracking comment on issue `#283`
 
+The workflow does not pass the repository-scoped Actions `GITHUB_TOKEN` into those
+upstream `WordPress/gutenberg` reads. It defaults to unauthenticated public GitHub
+requests, and only uses an explicit `GUTENBERG_UPSTREAM_TOKEN` override when a
+maintainer wants higher rate limits from a token that is valid for the upstream
+repository.
+
 The expected follow-up path is:
 
 - review the refreshed issue comment and workflow artifact

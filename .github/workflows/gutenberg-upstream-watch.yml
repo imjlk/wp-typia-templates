@@ -39,8 +39,6 @@ jobs:
           node-version: '24'
 
       - name: Generate Gutenberg watch report
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node scripts/gutenberg-upstream-watch.mjs \
             --lookback-days "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.lookback_days || '14' }}" \

@@ -336,7 +336,7 @@ export async function generateGutenbergUpstreamWatchReport({
 	maxResultsPerQuery = GUTENBERG_UPSTREAM_WATCH_POLICY.defaultMaxResultsPerQuery,
 	now = new Date(),
 	repoRoot = DEFAULT_REPO_ROOT,
-	token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? null,
+	token = process.env.GUTENBERG_UPSTREAM_TOKEN ?? process.env.GH_TOKEN ?? null,
 } = {}) {
 	const sinceDate = toIsoDate(daysAgo(lookbackDays, now));
 
@@ -434,7 +434,7 @@ export async function runCli({
 			lookbackDays: options.lookbackDays,
 			maxResultsPerQuery: options.maxResultsPerQuery,
 			repoRoot: cwd,
-			token: env.GITHUB_TOKEN ?? env.GH_TOKEN ?? null,
+			token: env.GUTENBERG_UPSTREAM_TOKEN ?? env.GH_TOKEN ?? null,
 		});
 
 		if (options.reportFile) {
