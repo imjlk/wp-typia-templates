@@ -59,10 +59,11 @@ The public non-mutating controller/tool contract now lives in
 [`docs/block-generator-tool-contract.md`](../../docs/block-generator-tool-contract.md).
 
 Reusable external layer packages on top of the built-in shared scaffold model
-are now available programmatically through `scaffoldProject(...)`,
-`BlockGeneratorService`, and `inspectBlockGeneration(...)` via
-`externalLayerSource` and optional `externalLayerId`. The RFC/CLI UX record
-still lives in
+are now available through the canonical built-in CLI flags
+`wp-typia create --external-layer-source ... [--external-layer-id ...]`,
+`wp-typia add block --external-layer-source ... [--external-layer-id ...]`,
+and programmatically through `scaffoldProject(...)`, `BlockGeneratorService`,
+and `inspectBlockGeneration(...)`. The layer contract record lives in
 [`docs/external-template-layer-composition.md`](../../docs/external-template-layer-composition.md).
 
 If you need metadata sync, editor helpers, validation helpers, or other generated-project runtime utilities, import them directly from `@wp-typia/block-runtime/*`.

@@ -150,8 +150,9 @@ The architecture in issue `#193` was implemented incrementally.
   `inspectBlockGeneration(...)`.
 - Phase 5: complete
   External template-layer manifests and `extends` resolution now compose around
-  the built-in generator through the runtime API, while the final CLI UX
-  remains the separate RFC follow-through from issue `#198`.
+  the built-in generator through the runtime API and canonical CLI flags,
+  while richer interactive selection UX remains future follow-through from
+  issue `#198`.
 
 ## What this architecture does not do
 

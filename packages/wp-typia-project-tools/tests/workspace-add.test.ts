@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, runCli, runGeneratedScript, scaffoldOfficialWorkspace, typecheckGeneratedProject, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
+import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, runCli, runGeneratedScript, scaffoldOfficialWorkspace, templateLayerFixturePath, templateLayerWorkspaceFixturePath, typecheckGeneratedProject, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 
 const legacyValidatorToolkitSource = [
@@ -143,6 +143,154 @@ test("canonical CLI can add a basic block to an official workspace template", as
   runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
     "--check",
   ]);
+}, 20_000);
+
+test("canonical CLI can add a basic block with an external layer package", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-basic-layered");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add basic layered",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-basic-layered",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Basic Layered",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "block",
+      "counter-card",
+      "--template",
+      "basic",
+      "--external-layer-source",
+      templateLayerWorkspaceFixturePath,
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  expect(
+    fs.existsSync(
+      path.join(targetDir, "src", "blocks", "counter-card", "block-telemetry.ts")
+    )
+  ).toBe(true);
+  expect(
+    fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "counter-card", "block-telemetry.ts"),
+      "utf8"
+    )
+  ).toContain("counter-card-telemetry");
+  typecheckGeneratedProject(targetDir);
+}, 20_000);
+
+test("canonical CLI resolves add-block local external layer paths from the caller cwd", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-basic-layered-relative");
+  let nestedCwd = path.join(targetDir, "src");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add basic layered relative",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-basic-layered-relative",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Basic Layered Relative",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+  nestedCwd = fs.realpathSync(nestedCwd);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "block",
+      "counter-card",
+      "--template",
+      "basic",
+      "--external-layer-source",
+      path.relative(nestedCwd, fs.realpathSync(templateLayerWorkspaceFixturePath)),
+    ],
+    {
+      cwd: nestedCwd,
+    }
+  );
+
+  expect(
+    fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "counter-card", "block-telemetry.ts"),
+      "utf8"
+    )
+  ).toContain("counter-card-telemetry");
+}, 20_000);
+
+test("canonical CLI rejects add-block external layers that emit workspace-level files", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-basic-layered-root-output");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add basic layered root output",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-basic-layered-root-output",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Basic Layered Root Output",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const commandError = getCommandErrorMessage(() =>
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "counter-card",
+        "--template",
+        "basic",
+        "--external-layer-source",
+        templateLayerFixturePath,
+      ],
+      {
+        cwd: targetDir,
+      }
+    )
+  );
+
+  expect(commandError).toMatch(
+    /External layer \\\"acme\/basic-observability\\\" writes workspace-level output \\\"inc\/observability\.php\\\"/
+  );
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "blocks", "counter-card"))
+  ).toBe(false);
 }, 20_000);
 
 test("canonical CLI can add a variation to an official workspace template", async () => {

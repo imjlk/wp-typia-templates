@@ -11,6 +11,8 @@ export const addFlowSchema = z.object({
 	anchor: z.string().optional(),
 	block: z.string().optional(),
 	"data-storage": z.string().optional(),
+	"external-layer-id": z.string().optional(),
+	"external-layer-source": z.string().optional(),
 	kind: z
 		.enum(["block", "variation", "pattern", "binding-source", "hooked-block"])
 		.default("block"),
@@ -113,6 +115,18 @@ export function sanitizeAddSubmitValues(values: AddFlowValues): Record<string, u
 
 		if (value !== undefined && value !== null) {
 			sanitized[fieldName] = value;
+		}
+	}
+
+	if ((values.kind ?? "block") === "block") {
+		for (const hiddenFieldName of ["external-layer-source", "external-layer-id"] as const) {
+			const value = values[hiddenFieldName];
+			if (typeof value === "string") {
+				const trimmed = value.trim();
+				if (trimmed.length > 0) {
+					sanitized[hiddenFieldName] = trimmed;
+				}
+			}
 		}
 	}
 

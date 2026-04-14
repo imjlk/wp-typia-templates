@@ -102,9 +102,9 @@ Security note: external template configs are trusted JavaScript and are executed
 
 That remote-template support is still seed-oriented. Reusable external layer
 packages on top of the built-in shared scaffold graph are now implemented
-programmatically through the built-in generator runtime API
-(`externalLayerSource` and optional `externalLayerId`), while the CLI UX record
-still lives in
+through the canonical built-in CLI flags and the built-in generator runtime API
+(`externalLayerSource` and optional `externalLayerId`). The layer contract
+record lives in
 [`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).
 
 Migration commands remain available inside migration-capable projects such as [`examples/my-typia-block`](../examples/my-typia-block):

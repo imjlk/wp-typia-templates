@@ -92,6 +92,8 @@ describe("create flow layout model", () => {
 		expect(
 			sanitizeCreateSubmitValues({
 				"data-storage": "custom-table",
+				"external-layer-id": " acme/demo ",
+				"external-layer-source": " ./layers/demo ",
 				namespace: "demo",
 				"no-install": false,
 				"package-manager": "npm",
@@ -108,6 +110,8 @@ describe("create flow layout model", () => {
 			}),
 		).toMatchObject({
 			"data-storage": undefined,
+			"external-layer-id": "acme/demo",
+			"external-layer-source": "./layers/demo",
 			"persistence-policy": undefined,
 			template: "basic",
 			"with-wp-env": true,
@@ -132,8 +136,37 @@ describe("create flow layout model", () => {
 			}),
 		).toMatchObject({
 			"data-storage": "custom-table",
+			"external-layer-id": undefined,
+			"external-layer-source": undefined,
 			"persistence-policy": "authenticated",
 			template: "compound",
+		});
+	});
+
+	test("only preserves hidden external-layer defaults for built-in templates", () => {
+		expect(
+			sanitizeCreateSubmitValues({
+				"data-storage": undefined,
+				"external-layer-id": " acme/demo ",
+				"external-layer-source": " ./layers/demo ",
+				namespace: "demo",
+				"no-install": false,
+				"package-manager": "npm",
+				"persistence-policy": undefined,
+				"php-prefix": "DEMO",
+				"project-dir": "demo-project",
+				template: "@wp-typia/create-workspace-template",
+				"text-domain": "demo",
+				variant: undefined,
+				"with-migration-ui": false,
+				"with-test-preset": false,
+				"with-wp-env": true,
+				yes: false,
+			}),
+		).toMatchObject({
+			"external-layer-id": undefined,
+			"external-layer-source": undefined,
+			template: "@wp-typia/create-workspace-template",
 		});
 	});
 });

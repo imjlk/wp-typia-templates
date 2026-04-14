@@ -131,10 +131,16 @@ describe("wp-typia package", () => {
 
 	test("renders help output through the canonical bin", () => {
 		const helpOutput = runUtf8Command("node", [entryPath, "--help"]);
+		const createHelpOutput = runUtf8Command("node", [entryPath, "create", "--help"]);
+		const addHelpOutput = runUtf8Command("node", [entryPath, "add", "--help"]);
 
 		for (const commandName of WP_TYPIA_TOP_LEVEL_COMMAND_NAMES) {
 			expect(helpOutput).toContain(commandName);
 		}
+		expect(createHelpOutput).toContain("--external-layer-source");
+		expect(createHelpOutput).toContain("--external-layer-id");
+		expect(addHelpOutput).toContain("--external-layer-source");
+		expect(addHelpOutput).toContain("--external-layer-id");
 	});
 
 	test("returns structured version output through the canonical bin", () => {

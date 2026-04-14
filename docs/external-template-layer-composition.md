@@ -26,7 +26,7 @@ It does not:
 - replace the typed built-in generator architecture from
   [`docs/block-generator-architecture.md`](./block-generator-architecture.md)
 - change the official empty workspace template package contract
-- define the final CLI UX for selecting a composed external layer package
+- define richer interactive discovery/selection UX beyond the canonical flags
 
 The implementation follow-through was tracked in issue `#268`.
 
@@ -230,12 +230,17 @@ separate follow-through.
 
 ## Current implementation status
 
-The current implementation is available through the built-in generator runtime
-API rather than a finalized CLI flag surface.
+The current implementation is available through the canonical built-in CLI
+flags and the built-in generator runtime API.
 
-Programmatic callers can compose a built-in family with an external layer
-package through `scaffoldProject(...)`, `BlockGeneratorService`, or
-`inspectBlockGeneration(...)` using:
+CLI callers can compose a built-in family with an external layer package using:
+
+- `wp-typia create <project-dir> --template <basic|interactivity|persistence|compound> --external-layer-source <locator> [--external-layer-id <layer-id>]`
+- `wp-typia add block <name> --template <basic|interactivity|persistence|compound> --external-layer-source <locator> [--external-layer-id <layer-id>]`
+
+Programmatic callers can use the same contract through
+`scaffoldProject(...)`, `BlockGeneratorService`, or `inspectBlockGeneration(...)`
+using:
 
 - `templateId`
   The built-in block family that still owns the typed generator/emitter path.
@@ -245,7 +250,7 @@ package through `scaffoldProject(...)`, `BlockGeneratorService`, or
 - `externalLayerId`
   Optional explicit layer id. Omit it when the package exposes a single public
   layer. If the package exposes multiple public roots, callers must choose one
-  explicitly until a final CLI UX exists.
+  explicitly until an interactive selector is added.
 
 The implemented behavior now includes:
 

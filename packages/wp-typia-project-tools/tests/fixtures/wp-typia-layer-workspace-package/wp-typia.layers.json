@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "layers": {
+    "acme/workspace-block-local": {
+      "path": "layers/workspace-block-local",
+      "extends": ["builtin:shared/base"],
+      "description": "Adds block-local telemetry helpers for workspace add flows"
+    }
+  }
+}

@@ -10,6 +10,8 @@ import {
 
 export const createFlowSchema = z.object({
 	"data-storage": z.string().optional(),
+	"external-layer-id": z.string().optional(),
+	"external-layer-source": z.string().optional(),
 	namespace: z.string().optional(),
 	"no-install": z.boolean().default(false),
 	"package-manager": z.string().optional(),
@@ -82,6 +84,24 @@ export function isCreatePersistenceTemplate(template?: string): boolean {
 	return template === "persistence" || template === "compound";
 }
 
+function supportsCreateExternalLayers(template?: string): boolean {
+	return (
+		template === "basic" ||
+		template === "interactivity" ||
+		template === "persistence" ||
+		template === "compound"
+	);
+}
+
+function normalizeOptionalHiddenString(value?: string): string | undefined {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
 export function getVisibleCreateFieldNames(
 	values: Partial<CreateFlowValues>,
 ): Array<CreateFieldName> {
@@ -113,12 +133,22 @@ export function getCreateScrollTop(options: {
 }
 
 export function sanitizeCreateSubmitValues(values: CreateFlowValues): CreateFlowValues {
+	const normalizedValues: CreateFlowValues = {
+		...values,
+		"external-layer-id": supportsCreateExternalLayers(values.template)
+			? normalizeOptionalHiddenString(values["external-layer-id"])
+			: undefined,
+		"external-layer-source": supportsCreateExternalLayers(values.template)
+			? normalizeOptionalHiddenString(values["external-layer-source"])
+			: undefined,
+	};
+
 	if (isCreatePersistenceTemplate(values.template)) {
-		return values;
+		return normalizedValues;
 	}
 
 	return {
-		...values,
+		...normalizedValues,
 		"data-storage": undefined,
 		"persistence-policy": undefined,
 	};

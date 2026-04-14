@@ -47,13 +47,14 @@ assets away from Mustache.
 
 ## Out of scope
 
-- the final CLI UX for selecting external layer packages
+- richer interactive discovery/selection UX for external layer packages
 - non-block `wp-typia add` generators such as variations, patterns,
   binding-sources, and hooked-blocks
 - full template-engine replacement
 - AST emitter migration
 
-Programmatic external layer composition is now implemented on top of the same
-generator boundary. Built-in families can accept `externalLayerSource` and
-optional `externalLayerId`, while the RFC and remaining UX questions still live
-in [`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).
+External layer composition now rides the same generator boundary for both the
+canonical built-in CLI flags and programmatic callers. Built-in families can
+accept `externalLayerSource` and optional `externalLayerId`, while the
+remaining interactive selection questions live in
+[`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).

@@ -12,6 +12,8 @@ export type WpTypiaSchemaSource = {
 export type WpTypiaUserConfig = {
 	create?: {
 		"data-storage"?: string;
+		"external-layer-id"?: string;
+		"external-layer-source"?: string;
 		namespace?: string;
 		"no-install"?: boolean;
 		"package-manager"?: string;
@@ -28,6 +30,8 @@ export type WpTypiaUserConfig = {
 	add?: {
 		block?: {
 			"data-storage"?: string;
+			"external-layer-id"?: string;
+			"external-layer-source"?: string;
 			"persistence-policy"?: string;
 			template?: string;
 		};

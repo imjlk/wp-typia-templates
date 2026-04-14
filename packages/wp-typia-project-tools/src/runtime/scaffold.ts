@@ -201,6 +201,8 @@ interface ScaffoldProjectOptions {
 	answers: ScaffoldAnswers;
 	cwd?: string;
 	dataStorageMode?: DataStorageMode;
+	externalLayerId?: string;
+	externalLayerSource?: string;
 	installDependencies?: ((options: InstallDependenciesOptions) => Promise<void>) | undefined;
 	noInstall?: boolean;
 	packageManager: PackageManagerId;
@@ -1067,6 +1069,8 @@ export async function scaffoldProject({
 	dataStorageMode,
 	persistencePolicy,
 	packageManager,
+	externalLayerId,
+	externalLayerSource,
 	cwd = process.cwd(),
 	allowExistingDir = false,
 	noInstall = false,
@@ -1080,6 +1084,12 @@ export async function scaffoldProject({
 	const resolvedPackageManager = getPackageManager(packageManager).id;
 	const isBuiltInTemplate = isBuiltInTemplateId(resolvedTemplateId);
 
+	if (externalLayerId && !externalLayerSource) {
+		throw new Error(
+			"externalLayerId requires externalLayerSource when composing built-in template layers.",
+		);
+	}
+
 	if (isBuiltInTemplate) {
 		const blockGeneratorService = new BlockGeneratorService();
 		const plan = await blockGeneratorService.plan({
@@ -1087,6 +1097,8 @@ export async function scaffoldProject({
 			answers,
 			cwd,
 			dataStorageMode: dataStorageMode ?? answers.dataStorageMode,
+			externalLayerId,
+			externalLayerSource,
 			noInstall,
 			packageManager: resolvedPackageManager,
 			persistencePolicy: persistencePolicy ?? answers.persistencePolicy,
@@ -1103,6 +1115,12 @@ export async function scaffoldProject({
 			installDependencies,
 			rendered,
 		});
+	}
+
+	if (externalLayerSource || externalLayerId) {
+		throw new Error(
+			"External template layers currently compose only with built-in templates via `wp-typia create --template <basic|interactivity|persistence|compound>` or `wp-typia add block --template <family>`.",
+		);
 	}
 
 	const variables = getTemplateVariables(resolvedTemplateId, {
