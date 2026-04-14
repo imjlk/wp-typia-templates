@@ -42,8 +42,14 @@ describe("@wp-typia/block-runtime", () => {
 		]);
 
 		expect(typeof rootModule.buildScaffoldBlockRegistration).toBe("function");
+		expect(typeof rootModule.assertManifestDefaultsDocument).toBe("function");
+		expect(typeof rootModule.assertManifestDocument).toBe("function");
+		expect(typeof rootModule.assertScaffoldBlockMetadata).toBe("function");
 		expect(typeof rootModule.applyTemplateDefaultsFromManifest).toBe("function");
 		expect(typeof rootModule.createEditorModel).toBe("function");
+		expect(typeof rootModule.parseManifestDefaultsDocument).toBe("function");
+		expect(typeof rootModule.parseManifestDocument).toBe("function");
+		expect(typeof rootModule.parseScaffoldBlockMetadata).toBe("function");
 		expect(typeof rootModule.createAttributeUpdater).toBe("function");
 		expect(typeof rootModule.createNestedAttributeUpdater).toBe("function");
 		expect(typeof blocksModule.createTypiaWebpackConfig).toBe("function");
@@ -53,10 +59,13 @@ describe("@wp-typia/block-runtime", () => {
 		expect(typeof metadataCoreModule.runSyncBlockMetadata).toBe("function");
 		expect(typeof metadataCoreModule.syncRestOpenApi).toBe("function");
 		expect(typeof defaultsModule.applyTemplateDefaultsFromManifest).toBe("function");
+		expect(typeof defaultsModule.parseManifestDefaultsDocument).toBe("function");
 		expect(typeof editorModule.createEditorModel).toBe("function");
+		expect(typeof editorModule.parseManifestDocument).toBe("function");
 		expect(typeof identifiersModule.generateBlockId).toBe("function");
 		expect(typeof identifiersModule.generatePublicWriteRequestId).toBe("function");
 		expect(typeof inspectorModule.useEditorFields).toBe("function");
+		expect(typeof inspectorModule.parseManifestDocument).toBe("function");
 		expect(typeof validationModule.toValidationResult).toBe("function");
 		expect(typeof blocksModule.assertTypiaWebpackCompatibility).toBe("function");
 		expect(typeof blocksModule.loadCompatibleTypiaWebpackPlugin).toBe("function");

@@ -1,4 +1,10 @@
 import { cloneJsonValue } from './json-utils.js';
+import {
+  isJsonValue,
+  isNullableBoolean,
+  isNullableJsonValue,
+  isRecordOf,
+} from './artifact-validation.js';
 import { isPlainObject } from './object-utils.js';
 
 type JsonPrimitive = string | number | boolean | null;
@@ -23,6 +29,76 @@ export interface ManifestDefaultAttribute {
 
 export interface ManifestDefaultsDocument {
   attributes: Record<string, ManifestDefaultAttribute>;
+}
+
+function isManifestDefaultAttribute(value: unknown): value is ManifestDefaultAttribute {
+  if (!isPlainObject(value)) {
+    return false;
+  }
+
+  const typia = value.typia;
+  const ts = value.ts;
+  if (!isPlainObject(typia) || !isPlainObject(ts)) {
+    return false;
+  }
+
+  const items = ts.items;
+  const properties = ts.properties;
+  const union = ts.union;
+  const hasDefault = typia.hasDefault;
+  const hasValidDefaultValue =
+    hasDefault === true
+      ? 'defaultValue' in typia && isJsonValue(typia.defaultValue)
+      : isNullableJsonValue(typia.defaultValue);
+
+  return (
+    hasValidDefaultValue &&
+    isNullableBoolean(typia.hasDefault) &&
+    (items === undefined ||
+      items === null ||
+      isManifestDefaultAttribute(items)) &&
+    (properties === undefined ||
+      properties === null ||
+      isRecordOf(properties, isManifestDefaultAttribute)) &&
+    (ts.required === undefined || typeof ts.required === 'boolean') &&
+    (union === undefined ||
+      union === null ||
+      (isPlainObject(union) &&
+        typeof union.discriminator === 'string' &&
+        isRecordOf(union.branches, isManifestDefaultAttribute))) &&
+    (ts.kind === 'string' ||
+      ts.kind === 'number' ||
+      ts.kind === 'boolean' ||
+      ts.kind === 'array' ||
+      ts.kind === 'object' ||
+      ts.kind === 'union')
+  );
+}
+
+export function isManifestDefaultsDocument(
+  value: unknown,
+): value is ManifestDefaultsDocument {
+  return (
+    isPlainObject(value) && isRecordOf(value.attributes, isManifestDefaultAttribute)
+  );
+}
+
+export function assertManifestDefaultsDocument<
+  TDocument = ManifestDefaultsDocument,
+>(value: unknown): TDocument {
+  if (!isManifestDefaultsDocument(value)) {
+    throw new Error(
+      'Manifest defaults document must contain an attributes record with scaffold default metadata.',
+    );
+  }
+
+  return value as TDocument;
+}
+
+export function parseManifestDefaultsDocument<
+  TDocument = ManifestDefaultsDocument,
+>(value: unknown): TDocument {
+  return assertManifestDefaultsDocument<TDocument>(value);
 }
 
 function isListArray(value: unknown[]): boolean {

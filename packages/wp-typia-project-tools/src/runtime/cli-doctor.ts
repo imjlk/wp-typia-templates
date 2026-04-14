@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { access, constants as fsConstants, rm, writeFile } from "node:fs/promises";
+import { parseScaffoldBlockMetadata } from "@wp-typia/block-runtime/blocks";
 
 import {
 	getBuiltInTemplateLayerDirs,
@@ -192,12 +193,11 @@ function checkWorkspaceBlockMetadata(
 		);
 	}
 
-	let blockJson: { name?: string; textdomain?: string };
+	let blockJson: { name: string; textdomain?: string };
 	try {
-		blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8")) as {
-			name?: string;
-			textdomain?: string;
-		};
+		blockJson = parseScaffoldBlockMetadata<{ textdomain?: string }>(
+			JSON.parse(fs.readFileSync(blockJsonPath, "utf8")),
+		);
 	} catch (error) {
 		return createDoctorCheck(
 			`Block metadata ${block.slug}`,
@@ -239,9 +239,11 @@ function checkWorkspaceBlockHooks(
 		);
 	}
 
-	let blockJson: Record<string, unknown>;
+	let blockJson: Record<string, unknown> & { blockHooks?: unknown };
 	try {
-		blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8")) as Record<string, unknown>;
+		blockJson = parseScaffoldBlockMetadata<Record<string, unknown> & { blockHooks?: unknown }>(
+			JSON.parse(fs.readFileSync(blockJsonPath, "utf8")),
+		);
 	} catch (error) {
 		return createDoctorCheck(
 			`Block hooks ${blockSlug}`,

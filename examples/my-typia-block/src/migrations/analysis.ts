@@ -1,4 +1,5 @@
 import { validators } from '../validators';
+import { parseManifestDocument } from '@wp-typia/block-runtime/editor';
 import migrationRegistry from './generated/registry';
 import {
 	type ManifestAttribute,
@@ -18,6 +19,27 @@ interface MigrationResolution {
 	analysis: MigrationAnalysis;
 	preview: MigrationPreview;
 }
+
+const manifestDocumentCache = new WeakMap< object, ManifestDocument >();
+
+function parseCachedManifestDocument( manifest: unknown ): ManifestDocument {
+	if ( typeof manifest !== 'object' || manifest === null ) {
+		return parseManifestDocument< ManifestDocument >( manifest );
+	}
+
+	const cached = manifestDocumentCache.get( manifest );
+	if ( cached ) {
+		return cached;
+	}
+
+	const parsed = parseManifestDocument< ManifestDocument >( manifest );
+	manifestDocumentCache.set( manifest, parsed );
+	return parsed;
+}
+
+const currentManifestDocument = parseCachedManifestDocument(
+	migrationRegistry.currentManifest
+);
 
 /**
  * Returns the migration analysis for one block attribute payload.
@@ -75,8 +97,7 @@ export function resolveMigrationState(
 			preview: createPreview( {
 				after: attributes,
 				before: attributes,
-				currentManifest:
-					migrationRegistry.currentManifest as ManifestDocument,
+				currentManifest: currentManifestDocument,
 				legacyManifest: null,
 				status: 'current',
 				unresolved: [],
@@ -88,7 +109,7 @@ export function resolveMigrationState(
 	for ( const entry of migrationRegistry.entries ) {
 		if (
 			manifestMatchesDocument(
-				entry.manifest as ManifestDocument,
+				parseCachedManifestDocument( entry.manifest ),
 				attributes
 			)
 		) {
@@ -109,16 +130,15 @@ export function resolveMigrationState(
 					? ( migrated as Record< string, unknown > )
 					: null,
 				before: attributes,
-				currentManifest:
-					migrationRegistry.currentManifest as ManifestDocument,
-				legacyManifest: entry.manifest as ManifestDocument,
+				currentManifest: currentManifestDocument,
+				legacyManifest: parseCachedManifestDocument( entry.manifest ),
 				status,
 				unresolved,
 				validationErrors,
 			} );
 			const delta = summarizeVersionDelta(
-				entry.manifest as ManifestDocument,
-				migrationRegistry.currentManifest as ManifestDocument
+				parseCachedManifestDocument( entry.manifest ),
+				currentManifestDocument
 			);
 			let confidence = 0.95;
 			if ( ! migratedValidation.isValid ) {
@@ -174,8 +194,7 @@ export function resolveMigrationState(
 		preview: createPreview( {
 			after: null,
 			before: attributes,
-			currentManifest:
-				migrationRegistry.currentManifest as ManifestDocument,
+			currentManifest: currentManifestDocument,
 			legacyManifest: null,
 			status: 'unknown',
 			unresolved: [

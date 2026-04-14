@@ -2,6 +2,7 @@ import type {
   BlockConfiguration as WordPressBlockConfiguration,
   BlockSupports as WordPressBlockSupports,
 } from '@wordpress/blocks';
+import { isPlainObject } from './object-utils.js';
 
 type EntryMap = Record<string, string>;
 type ScaffoldLayoutType = 'flow' | 'constrained' | 'flex' | 'grid';
@@ -521,16 +522,36 @@ export function buildScaffoldBlockRegistration<
   };
 }
 
-export function parseScaffoldBlockMetadata<
-  TSettings extends object = ScaffoldBlockRegistrationSettings,
-  TMetadata extends ScaffoldBlockMetadataShape = ScaffoldBlockMetadataShape,
->(metadata: TMetadata): TMetadata & TSettings {
-  const name = metadata.name;
-  if (typeof name !== 'string' || name.length === 0) {
+export function isScaffoldBlockMetadata(
+  value: unknown,
+): value is ScaffoldBlockMetadata {
+  return (
+    isPlainObject(value) &&
+    typeof value.name === 'string' &&
+    value.name.length > 0
+  );
+}
+
+export function assertScaffoldBlockMetadata<
+  TMetadata = ScaffoldBlockMetadata,
+>(value: unknown): TMetadata & ScaffoldBlockMetadata {
+  if (!isScaffoldBlockMetadata(value)) {
     throw new Error('Scaffold block metadata must include a string name.');
   }
 
-  return metadata as TMetadata & TSettings;
+  return value as TMetadata & ScaffoldBlockMetadata;
+}
+
+export function parseScaffoldBlockMetadata<
+  TMetadata extends ScaffoldBlockMetadata,
+>(metadata: TMetadata): TMetadata;
+export function parseScaffoldBlockMetadata<
+  TMetadata = ScaffoldBlockMetadata,
+>(metadata: unknown): TMetadata & ScaffoldBlockMetadata;
+export function parseScaffoldBlockMetadata<
+  TMetadata = ScaffoldBlockMetadata,
+>(metadata: unknown): TMetadata & ScaffoldBlockMetadata {
+  return assertScaffoldBlockMetadata<TMetadata>(metadata);
 }
 
 export async function createTypiaWebpackConfig({

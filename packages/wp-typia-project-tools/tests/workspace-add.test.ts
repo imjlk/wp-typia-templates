@@ -5,7 +5,7 @@ import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandE
 import { scaffoldProject } from "../src/runtime/index.js";
 
 const legacyValidatorToolkitSource = [
-  "import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
+  "import { parseManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
   "import {",
   "\tcreateScaffoldValidatorToolkit,",
   "\ttype ScaffoldValidatorToolkitOptions,",
@@ -23,7 +23,7 @@ const legacyValidatorToolkitSource = [
   "\tonValidationError,",
   "}: TemplateValidatorToolkitOptions< T > ) {",
   "\treturn createScaffoldValidatorToolkit< T >( {",
-  "\t\tmanifest: manifest as ManifestDefaultsDocument,",
+  "\t\tmanifest: parseManifestDefaultsDocument( manifest ),",
   "\t\tfinalize,",
   "\t\tonValidationError,",
   "\t} );",
@@ -1482,7 +1482,7 @@ test("add compound block preserves a compatible shared validator toolkit with di
     validatorToolkitPath,
     [
       "// preserve-compatible-toolkit",
-      "import type { ManifestDefaultsDocument } from \"@wp-typia/block-runtime/defaults\";",
+      "import { parseManifestDefaultsDocument } from \"@wp-typia/block-runtime/defaults\";",
       "import {",
       "\tcreateScaffoldValidatorToolkit,",
       "\ttype ScaffoldValidatorToolkitOptions,",
@@ -1516,7 +1516,7 @@ test("add compound block preserves a compatible shared validator toolkit with di
       "\tvalidate ,",
       "}: TemplateValidatorToolkitOptions<T>) {",
       "\treturn createScaffoldValidatorToolkit<T>({",
-      "\t\tmanifest: manifest as ManifestDefaultsDocument,",
+      "\t\tmanifest: parseManifestDefaultsDocument( manifest ),",
       "\t\tvalidate,",
       "\t\tassert,",
       "\t\tis,",

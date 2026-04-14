@@ -1,6 +1,7 @@
 import apiFetch from '@wordpress/api-fetch';
 import { parse, serialize } from '@wordpress/blocks';
 import type { BlockInstance } from '@wp-typia/block-types/blocks/registration';
+import { parseManifestDocument } from '@wp-typia/block-runtime/editor';
 import typia from 'typia';
 
 import migrationBlocks from './generated';
@@ -147,6 +148,36 @@ interface MigrationTargetRuntime {
 interface MigrationResolution {
 	analysis: MigrationAnalysis;
 	preview: MigrationPreview;
+}
+
+const manifestDocumentCache = new WeakMap< object, ManifestDocument >();
+
+function parseCachedManifestDocument( manifest: unknown ): ManifestDocument {
+	if ( typeof manifest !== 'object' || manifest === null ) {
+		return parseManifestDocument< ManifestDocument >( manifest );
+	}
+
+	const cached = manifestDocumentCache.get( manifest );
+	if ( cached ) {
+		return cached;
+	}
+
+	const parsed = parseManifestDocument< ManifestDocument >( manifest );
+	manifestDocumentCache.set( manifest, parsed );
+	return parsed;
+}
+
+function getCurrentManifestDocument(
+	target: MigrationTargetRuntime
+): ManifestDocument {
+	return parseCachedManifestDocument( target.registry.currentManifest );
+}
+
+function getLegacyManifestDocument(
+	target: MigrationTargetRuntime,
+	entry: MigrationTargetRuntime[ 'registry' ][ 'entries' ][ number ]
+): ManifestDocument {
+	return parseCachedManifestDocument( entry.manifest );
 }
 
 const EMPTY_RISK_SUMMARY: MigrationRiskSummary = {
@@ -634,8 +665,7 @@ function resolveMigrationState(
 			preview: createPreview( {
 				after: attributes,
 				before: attributes,
-				currentManifest:
-					target.registry.currentManifest as ManifestDocument,
+				currentManifest: getCurrentManifestDocument( target ),
 				legacyManifest: null,
 				status: 'current',
 				unresolved: [],
@@ -647,7 +677,7 @@ function resolveMigrationState(
 	for ( const entry of target.registry.entries ) {
 		if (
 			manifestMatchesDocument(
-				entry.manifest as ManifestDocument,
+				getLegacyManifestDocument( target, entry ),
 				attributes
 			)
 		) {
@@ -670,16 +700,15 @@ function resolveMigrationState(
 					? ( migrated as Record< string, unknown > )
 					: null,
 				before: attributes,
-				currentManifest:
-					target.registry.currentManifest as ManifestDocument,
-				legacyManifest: entry.manifest as ManifestDocument,
+				currentManifest: getCurrentManifestDocument( target ),
+				legacyManifest: getLegacyManifestDocument( target, entry ),
 				status,
 				unresolved,
 				validationErrors,
 			} );
 			const delta = summarizeVersionDelta(
-				entry.manifest as ManifestDocument,
-				target.registry.currentManifest as ManifestDocument
+				getLegacyManifestDocument( target, entry ),
+				getCurrentManifestDocument( target )
 			);
 
 			return {
@@ -728,8 +757,7 @@ function resolveMigrationState(
 		preview: createPreview( {
 			after: null,
 			before: attributes,
-			currentManifest:
-				target.registry.currentManifest as ManifestDocument,
+			currentManifest: getCurrentManifestDocument( target ),
 			legacyManifest: null,
 			status: 'unknown',
 			unresolved: [

@@ -430,10 +430,10 @@ without taking over inspector rendering by itself.
 import currentManifest from "./typia.manifest.json";
 import {
   createEditorModel,
-  type ManifestDocument,
+  parseManifestDocument,
 } from "@wp-typia/block-runtime/editor";
 
-const editorFields = createEditorModel(currentManifest as ManifestDocument, {
+const editorFields = createEditorModel(parseManifestDocument(currentManifest), {
   hidden: ["id", "schemaVersion"],
   manual: ["content", "linkTarget"],
   preferTextarea: ["content"],
@@ -455,12 +455,12 @@ When you want a higher-level inspector layer, use
 import currentManifest from "./typia.manifest.json";
 import {
   InspectorFromManifest,
-  type ManifestDocument,
+  parseManifestDocument,
   useEditorFields,
   useTypedAttributeUpdater,
 } from "@wp-typia/block-runtime/inspector";
 
-const editorFields = useEditorFields(currentManifest as ManifestDocument, {
+const editorFields = useEditorFields(parseManifestDocument(currentManifest), {
   manual: ["content"],
 });
 const { updateField } = useTypedAttributeUpdater(attributes, setAttributes, validateAttributes);

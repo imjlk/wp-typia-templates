@@ -232,6 +232,12 @@ describe('@wp-typia/project-tools scaffold core', () => {
       expect(generatedValidatorToolkit).toContain(
         'createScaffoldValidatorToolkit',
       );
+      expect(generatedValidatorToolkit).toContain(
+        'parseManifestDefaultsDocument',
+      );
+      expect(generatedValidatorToolkit).not.toContain(
+        'manifest as ManifestDefaultsDocument',
+      );
       expect(generatedValidatorToolkit).not.toContain(
         "import typia from 'typia';",
       );
@@ -645,6 +651,10 @@ describe('@wp-typia/project-tools scaffold core', () => {
         '@wp-typia/project-tools/schema-core',
       );
       expect(generatedEdit).toContain('InspectorFromManifest');
+      expect(generatedEdit).toContain('parseManifestDocument');
+      expect(generatedEdit).not.toContain(
+        'currentManifest as ManifestDocument',
+      );
       expect(generatedEdit).toContain('useEditorFields');
       expect(generatedEdit).toContain('useTypiaValidation');
       expect(generatedEdit).toContain('useTypedAttributeUpdater');

@@ -1,4 +1,5 @@
 /* eslint-disable prettier/prettier, @typescript-eslint/method-signature-style */
+import { parseManifestDocument } from '@wp-typia/block-runtime/editor';
 import currentManifest from '../../../typia.manifest.json';
 import type { ManifestDocument, MigrationRiskSummary } from '../helpers';
 
@@ -18,7 +19,7 @@ export const migrationRegistry: {
 	entries: MigrationRegistryEntry[];
 } = {
 	currentMigrationVersion: 'v1',
-	currentManifest: currentManifest as ManifestDocument,
+	currentManifest: parseManifestDocument< ManifestDocument >( currentManifest ),
 	entries: [],
 };
 

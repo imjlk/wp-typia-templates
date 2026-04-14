@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
+import { parseScaffoldBlockMetadata } from "@wp-typia/block-runtime/blocks";
 
 import {
 	HOOKED_BLOCK_ANCHOR_PATTERN,
@@ -240,9 +241,11 @@ export function readWorkspaceBlockJson(
 		);
 	}
 
-	let blockJson: unknown;
+	let blockJson: Record<string, unknown>;
 	try {
-		blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8"));
+		blockJson = parseScaffoldBlockMetadata<Record<string, unknown>>(
+			JSON.parse(fs.readFileSync(blockJsonPath, "utf8")),
+		);
 	} catch (error) {
 		throw new Error(
 			error instanceof Error
@@ -251,14 +254,8 @@ export function readWorkspaceBlockJson(
 		);
 	}
 
-	if (!blockJson || typeof blockJson !== "object" || Array.isArray(blockJson)) {
-		throw new Error(
-			`${path.relative(projectDir, blockJsonPath)} must contain a JSON object.`,
-		);
-	}
-
 	return {
-		blockJson: blockJson as Record<string, unknown>,
+		blockJson,
 		blockJsonPath,
 	};
 }

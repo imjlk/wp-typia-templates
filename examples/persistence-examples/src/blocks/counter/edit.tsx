@@ -13,7 +13,7 @@ import {
 import currentManifest from './typia.manifest.json';
 import {
 	createEditorModel,
-	type ManifestDocument,
+	parseManifestDocument,
 } from '@wp-typia/block-runtime/editor';
 import { useTypiaValidation } from '../../shared/hooks';
 import type { PersistenceCounterAttributes } from './types';
@@ -26,8 +26,9 @@ export default function Edit( {
 	attributes: PersistenceCounterAttributes;
 	setAttributes: ( attrs: Partial< PersistenceCounterAttributes > ) => void;
 } ) {
+	const editorManifest = parseManifestDocument( currentManifest );
 	const editorFieldMap = new Map(
-		createEditorModel( currentManifest as ManifestDocument, {
+		createEditorModel( editorManifest, {
 			manual: [ 'content', 'resourceKey' ],
 			labels: {
 				buttonLabel: __( 'Button Label', 'persistence-examples' ),
