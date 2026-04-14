@@ -1,1 +1,2 @@
-export * from "./supports";
+export * from './registration';
+export * from './supports';

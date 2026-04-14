@@ -56,6 +56,11 @@
       "import": "./dist/blocks/index.js",
       "default": "./dist/blocks/index.js"
     },
+    "./blocks/registration": {
+      "types": "./dist/blocks/registration.d.ts",
+      "import": "./dist/blocks/registration.js",
+      "default": "./dist/blocks/registration.js"
+    },
     "./blocks/supports": {
       "types": "./dist/blocks/supports.d.ts",
       "import": "./dist/blocks/supports.js",
@@ -95,6 +100,7 @@
   "devDependencies": {
     "@types/react": "^18.3.12",
     "@types/wordpress__block-editor": "^11.5.17",
+    "@types/wordpress__blocks": "^12.5.18",
     "typescript": "^5.9.2"
   }
 }

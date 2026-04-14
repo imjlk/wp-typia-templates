@@ -116,7 +116,7 @@ function buildVariationSource(
 	const variationTitle = toTitleCase(variationSlug);
 	const variationConstName = buildVariationConstName(variationSlug);
 
-	return `import type { BlockVariation } from '@wordpress/blocks';
+	return `import type { BlockVariation } from '@wp-typia/block-types/blocks/registration';
 import { __ } from '@wordpress/i18n';
 
 export const ${variationConstName} = {

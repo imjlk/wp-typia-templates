@@ -364,6 +364,9 @@ test("canonical CLI can add a variation to an official workspace template", asyn
   expect(blockIndexSource).toContain("registerWorkspaceVariations();");
   expect(variationsIndexSource).toContain("workspaceVariation_hero_card");
   expect(variationSource).toContain("BlockVariation");
+  expect(variationSource).toContain(
+    "@wp-typia/block-types/blocks/registration"
+  );
   expect(variationSource).toContain("A starter variation for Hero Card.");
 
   const doctorOutput = runCli("node", [entryPath, "doctor"], {

@@ -247,13 +247,13 @@ export default migrationRegistry;
 export function renderGeneratedDeprecatedFile(entries: MigrationEntry[]): string {
 	if (entries.length === 0) {
 		return `/* eslint-disable prettier/prettier */
-import type { BlockConfiguration } from "@wordpress/blocks";
+import type { BlockConfiguration } from "@wp-typia/block-types/blocks/registration";
 
 export const deprecated: NonNullable<BlockConfiguration["deprecated"]> = [];
 `;
 	}
 
-	const imports = [`import type { BlockConfiguration } from "@wordpress/blocks";`];
+	const imports = [`import type { BlockConfiguration } from "@wp-typia/block-types/blocks/registration";`];
 	const definitions: string[] = [];
 	const arrayEntries: string[] = [];
 
@@ -262,7 +262,9 @@ export const deprecated: NonNullable<BlockConfiguration["deprecated"]> = [];
 		imports.push(`import save_${index} from "${entry.saveImport}";`);
 		imports.push(`import * as rule_${index} from "${entry.ruleImport}";`);
 		definitions.push(`const deprecated_${index}: NonNullable<BlockConfiguration["deprecated"]>[number] = {`);
-		definitions.push(`\tattributes: (block_${index}.attributes ?? {}) as Record<string, unknown>,`);
+		definitions.push(
+			`\tattributes: (block_${index}.attributes ?? {}) as BlockConfiguration["attributes"],`,
+		);
 		definitions.push(`\tsave: save_${index} as BlockConfiguration["save"],`);
 		definitions.push(`\tmigrate(attributes: Record<string, unknown>) {`);
 		definitions.push(`\t\treturn rule_${index}.migrate(attributes);`);

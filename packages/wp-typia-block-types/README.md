@@ -18,12 +18,14 @@ Shared WordPress block semantic types derived from Gutenberg source and unoffici
 - `@wp-typia/block-types/block-editor/style-attributes`
 - `@wp-typia/block-types/block-editor/typography`
 - `@wp-typia/block-types/blocks`
+- `@wp-typia/block-types/blocks/registration`
 - `@wp-typia/block-types/blocks/supports`
 
 ## Current policy
 
 - alignment types reuse `@types/wordpress__block-editor` where a narrow union already exists
 - layout, spacing, typography, and supports types are curated from Gutenberg source when no stable unofficial narrow export exists
+- registration-facing block types are exposed through a local facade that currently adapts the upstream `@wordpress/blocks` declarations behind a stable `@wp-typia/block-types/blocks/registration` boundary
 - every exported tuple has a matching exported type alias so templates can share both values and semantics
 - this package is publish-ready, but scaffolded projects will switch to semver usage in the same round
 
@@ -36,8 +38,35 @@ Shared WordPress block semantic types derived from Gutenberg source and unoffici
 - support-generated block style attribute helpers
 - typography enums used by core block supports
 - structural block support types for `block.json`
+- registration-facing block types for `registerBlockType(...)`,
+  `BlockEditProps`, `BlockSaveProps`, `BlockVariation`, deprecations, and
+  migration-facing `BlockInstance`
 - additive stable Core coverage for drop caps, spacing sizes, layout gaps,
   duotone, per-side border widths, and `js` / `locking`
+
+## Registration facade
+
+Generated scaffolds and reference apps should prefer the local registration
+facade over direct type imports from `@wordpress/blocks`:
+
+```ts
+import type {
+  BlockConfiguration,
+  BlockEditProps,
+  BlockInstance,
+  BlockVariation,
+  RegisterBlockTypeResult,
+} from '@wp-typia/block-types/blocks/registration';
+```
+
+The facade is locally owned but targets the current generated-project minimum
+WordPress blocks baseline:
+
+- `@wordpress/blocks@^15.2.0`
+- `@types/wordpress__blocks@^12.5.18`
+
+Compatibility should track that floor unless the generated project dependency
+matrix changes in the same release.
 
 ## WordPress style support helpers
 

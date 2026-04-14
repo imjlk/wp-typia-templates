@@ -1,5 +1,5 @@
 import { registerBlockType } from '@wordpress/blocks';
-import type { BlockConfiguration } from '@wordpress/blocks';
+import type { BlockConfiguration } from '@wp-typia/block-types/blocks/registration';
 import {
 	buildScaffoldBlockRegistration,
 	type ScaffoldBlockMetadata,

@@ -396,6 +396,22 @@ describe("built-in block artifacts", () => {
 				expect(artifact.source).not.toContain("{{");
 			}
 
+			const editArtifact = codeArtifacts.find((artifact) =>
+				artifact.relativePath.endsWith("/edit.tsx") ||
+				artifact.relativePath === "src/edit.tsx",
+			);
+			const indexArtifact = codeArtifacts.find((artifact) =>
+				artifact.relativePath.endsWith("/index.tsx") ||
+				artifact.relativePath === "src/index.tsx",
+			);
+
+			expect(editArtifact?.source).toContain(
+				"@wp-typia/block-types/blocks/registration",
+			);
+			expect(indexArtifact?.source).toContain(
+				"@wp-typia/block-types/blocks/registration",
+			);
+
 			if (templateId === "interactivity") {
 				const interactivityArtifact = codeArtifacts.find(
 					(artifact) => artifact.relativePath === "src/interactivity.ts",
@@ -422,11 +438,16 @@ describe("built-in block artifacts", () => {
 			}
 
 			if (templateId === "compound") {
+				const childrenArtifact = codeArtifacts.find(
+					(artifact) =>
+						artifact.relativePath === "src/blocks/demo-compound/children.ts",
+				);
 				const renderArtifact = codeArtifacts.find(
 					(artifact) =>
 						artifact.relativePath === "src/blocks/demo-compound/render.php",
 				);
 
+				expect(childrenArtifact?.source).toContain("BlockTemplate");
 				expect(renderArtifact?.source).toContain(
 					"$heading            = isset( $normalized['heading'] ) ? (string) $normalized['heading'] : 'Demo Compound';",
 				);

@@ -1,3 +1,4 @@
+import { registerBlockType } from '@wordpress/blocks';
 import type {
   BlockAlignment,
   BlockContentPosition,
@@ -24,6 +25,16 @@ import type {
   PresetDuotoneReference,
 } from '@wp-typia/block-types/block-editor/style-attributes';
 import type { TextTransform } from '@wp-typia/block-types/block-editor/typography';
+import type {
+  BlockConfiguration,
+  BlockDeprecationList,
+  BlockEditProps,
+  BlockInstance,
+  BlockSaveProps,
+  BlockTemplate,
+  BlockVariation,
+  RegisterBlockTypeResult,
+} from '@wp-typia/block-types/blocks/registration';
 import type {
   BlockSupports,
   SpacingSize,
@@ -166,18 +177,82 @@ const duotonePalette: DuotonePalette = {
   name: 'High contrast',
   slug: 'high-contrast',
 };
+interface DemoRegistrationAttributes {
+  content?: string;
+  isVisible?: boolean;
+}
+
+const DemoEdit = (_props: BlockEditProps<DemoRegistrationAttributes>) => null;
+const DemoSave = (_props: BlockSaveProps<DemoRegistrationAttributes>) => null;
+const deprecatedEntries: BlockDeprecationList<DemoRegistrationAttributes> = [];
+const blockTemplate: BlockTemplate = [
+  ['demo/smoke-item', { content: 'First item' }],
+];
+const variation = {
+  attributes: { isVisible: true },
+  description: 'Registration facade smoke variation',
+  innerBlocks: blockTemplate,
+  name: 'smoke-variation',
+  scope: ['inserter'],
+  title: 'Smoke Variation',
+} satisfies BlockVariation<DemoRegistrationAttributes>;
+const parsedBlock: BlockInstance<DemoRegistrationAttributes> = {
+  attributes: { content: 'hello', isVisible: true },
+  clientId: 'demo-client-id',
+  innerBlocks: [],
+  isValid: true,
+  name: 'demo/smoke',
+};
+const blockConfiguration = {
+  attributes: {
+    content: {
+      default: '',
+      type: 'string',
+    },
+    isVisible: {
+      default: true,
+      type: 'boolean',
+    },
+  },
+  category: 'widgets',
+  edit: DemoEdit,
+  example: {
+    attributes: {
+      content: 'Demo content',
+    },
+    innerBlocks: [
+      {
+        attributes: {
+          content: 'Nested content',
+        },
+        name: 'demo/smoke-item',
+      },
+    ],
+  },
+  save: DemoSave,
+  title: 'Demo Smoke Block',
+} satisfies BlockConfiguration<DemoRegistrationAttributes> &
+  import('@wordpress/blocks').BlockConfiguration<DemoRegistrationAttributes>;
+const registeredBlock: RegisterBlockTypeResult<DemoRegistrationAttributes> =
+  registerBlockType<DemoRegistrationAttributes>('demo/smoke', blockConfiguration);
 
 void aspectRatio;
 void blockAlignment;
+void blockConfiguration;
 void blockSupports;
 void contentPosition;
 void colorSupportAttrs;
+void deprecatedEntries;
+void DemoEdit;
+void DemoSave;
 void duotonePalette;
 void layoutType;
 void minHeightKeyword;
 void minHeight;
 void namedColor;
+void parsedBlock;
 void presetDuotone;
+void registeredBlock;
 void shadowValue;
 void spacingDimension;
 void spacingSize;
@@ -187,4 +262,5 @@ void supportKey;
 void textAlignment;
 void textColor;
 void textTransform;
+void variation;
 void blockVerticalAlignment;
