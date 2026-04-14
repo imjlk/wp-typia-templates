@@ -2,7 +2,7 @@ import { registerBlockType } from '@wordpress/blocks';
 import type { BlockConfiguration } from '@wp-typia/block-types/blocks/registration';
 import {
 	buildScaffoldBlockRegistration,
-	type ScaffoldBlockMetadata,
+	parseScaffoldBlockMetadata,
 } from '@wp-typia/block-runtime/blocks';
 
 import Edit from './edit';
@@ -12,12 +12,15 @@ import '../compound-patterns/style.scss';
 
 import type { CompoundPatternsItemAttributes } from './types';
 
-const registration = buildScaffoldBlockRegistration<
-	BlockConfiguration< CompoundPatternsItemAttributes >
->( metadata as ScaffoldBlockMetadata, {
-	edit: Edit,
-	save: Save,
-} );
+const registration = buildScaffoldBlockRegistration(
+	parseScaffoldBlockMetadata<
+		BlockConfiguration< CompoundPatternsItemAttributes >
+	>( metadata ),
+	{
+		edit: Edit,
+		save: Save,
+	}
+);
 
 registerBlockType< CompoundPatternsItemAttributes >(
 	registration.name,

@@ -550,7 +550,7 @@ function renderIndexFile( childTypeName: string, childFolderSlug: string ): stri
 import type { BlockConfiguration } from '@wp-typia/block-types/blocks/registration';
 import {
 \tbuildScaffoldBlockRegistration,
-\ttype ScaffoldBlockMetadata,
+\tparseScaffoldBlockMetadata,
 } from '@wp-typia/block-runtime/blocks';
 
 import Edit from './edit';
@@ -560,12 +560,13 @@ import '${ PARENT_STYLE_IMPORT }';
 
 import type { ${ childTypeName } } from './types';
 
-const registration = buildScaffoldBlockRegistration<
-\tBlockConfiguration< ${ childTypeName } >
->( metadata as ScaffoldBlockMetadata, {
-\tedit: Edit,
-\tsave: Save,
-} );
+const registration = buildScaffoldBlockRegistration(
+\tparseScaffoldBlockMetadata<BlockConfiguration< ${ childTypeName } >>( metadata ),
+\t{
+\t\tedit: Edit,
+\t\tsave: Save,
+\t}
+);
 
 registerBlockType< ${ childTypeName } >(
 \tregistration.name,

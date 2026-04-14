@@ -1,9 +1,9 @@
-import { isPlainObject as isSharedPlainObject } from "@wp-typia/api-client/runtime-primitives";
+import { isPlainObject as isSharedPlainObject } from '@wp-typia/api-client/runtime-primitives';
 
 /**
  * Generic record type used for JSON-like plain-object inspection.
  */
-export type UnknownRecord = Record<string, unknown>;
+export type UnknownRecord<TValue = unknown> = Record<string, TValue>;
 
 /**
  * Delegate plain-object detection to the shared runtime primitive owner.
@@ -13,5 +13,5 @@ export type UnknownRecord = Record<string, unknown>;
  * `Object.prototype` or `null` prototype.
  */
 export function isPlainObject(value: unknown): value is UnknownRecord {
-	return isSharedPlainObject(value);
+  return isSharedPlainObject(value);
 }
