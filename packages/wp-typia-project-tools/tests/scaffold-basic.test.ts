@@ -12,6 +12,7 @@ import {
   wpTypiaPackageManifest,
 } from './helpers/scaffold-test-harness.js';
 import { scaffoldProject } from '../src/runtime/index.js';
+import { applyMigrationUiCapability } from '../src/runtime/migration-ui-capability.js';
 
 describe('@wp-typia/project-tools scaffold core', () => {
   const tempRoot = createScaffoldTempRoot('wp-typia-scaffold-basic-');
@@ -531,6 +532,51 @@ describe('@wp-typia/project-tools scaffold core', () => {
     },
     { timeout: 30_000 },
   );
+
+  test('migration UI capability patches legacy block.json metadata imports', async () => {
+    const targetDir = path.join(tempRoot, 'demo-migration-ui-legacy-anchor');
+
+    await scaffoldProject({
+      projectDir: targetDir,
+      templateId: 'basic',
+      packageManager: 'npm',
+      noInstall: true,
+      answers: {
+        author: 'Test Runner',
+        description: 'Demo migration ui legacy anchor',
+        namespace: 'create-block',
+        slug: 'demo-migration-ui-legacy-anchor',
+        title: 'Demo Migration UI Legacy Anchor',
+      },
+    });
+
+    const indexPath = path.join(targetDir, 'src', 'index.tsx');
+    fs.writeFileSync(
+      indexPath,
+      fs
+        .readFileSync(indexPath, 'utf8')
+        .replace("import metadata from './block-metadata';", "import metadata from './block.json';"),
+      'utf8',
+    );
+
+    await applyMigrationUiCapability({
+      packageManager: 'npm',
+      projectDir: targetDir,
+      templateId: 'basic',
+      variables: {
+        namespace: 'create-block',
+        slugKebabCase: 'demo-migration-ui-legacy-anchor',
+        textDomain: 'create-block',
+      } as any,
+    });
+
+    const generatedIndex = fs.readFileSync(indexPath, 'utf8');
+    expect(generatedIndex).toContain("import metadata from './block.json';");
+    expect(generatedIndex).toContain(
+      "import { deprecated } from './migrations/generated/demo-migration-ui-legacy-anchor/deprecated';",
+    );
+    expect(generatedIndex).toContain('deprecated,');
+  });
 
   test(
     'scaffoldProject creates an interactivity template with typed validation wiring',

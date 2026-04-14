@@ -13,6 +13,7 @@ import {
   typecheckGeneratedProject,
 } from './helpers/scaffold-test-harness.js';
 import { scaffoldProject } from '../src/runtime/index.js';
+import { applyMigrationUiCapability } from '../src/runtime/migration-ui-capability.js';
 
 describe('@wp-typia/project-tools scaffold compound', () => {
   const tempRoot = createScaffoldTempRoot('wp-typia-scaffold-compound-');
@@ -510,6 +511,53 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       '`--with-migration-ui` is currently supported only for built-in templates and @wp-typia/create-workspace-template.',
     );
     expect(fs.existsSync(targetDir)).toBe(false);
+  });
+
+  test('compound migration UI patches legacy add-child metadata anchors', async () => {
+    const targetDir = path.join(tempRoot, 'demo-compound-migration-legacy-anchor');
+
+    await scaffoldProject({
+      projectDir: targetDir,
+      templateId: 'compound',
+      packageManager: 'npm',
+      noInstall: true,
+      answers: {
+        author: 'Test Runner',
+        description: 'Demo compound migration legacy anchor',
+        namespace: 'create-block',
+        slug: 'demo-compound-migration-legacy-anchor',
+        title: 'Demo Compound Migration Legacy Anchor',
+      },
+    });
+
+    const addChildScriptPath = path.join(targetDir, 'scripts', 'add-compound-child.ts');
+    fs.writeFileSync(
+      addChildScriptPath,
+      fs
+        .readFileSync(addChildScriptPath, 'utf8')
+        .replace("import metadata from './block-metadata';", "import metadata from './block.json';"),
+      'utf8',
+    );
+
+    await applyMigrationUiCapability({
+      packageManager: 'npm',
+      projectDir: targetDir,
+      templateId: 'compound',
+      variables: {
+        namespace: 'create-block',
+        slugKebabCase: 'demo-compound-migration-legacy-anchor',
+        textDomain: 'create-block',
+      } as any,
+    });
+
+    const addChildScript = fs.readFileSync(addChildScriptPath, 'utf8');
+    expect(addChildScript).toContain("import metadata from './block.json';");
+    expect(addChildScript).toContain(
+      "import { deprecated } from '../../migrations/generated/${ childFolderSlug }/deprecated';",
+    );
+    expect(addChildScript).toContain(
+      "\\t\\tdeprecated,\n\\t\\tedit: Edit,\n\\t\\tsave: Save,",
+    );
   });
 
   test(
