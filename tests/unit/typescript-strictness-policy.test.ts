@@ -60,11 +60,31 @@ function createStrictnessRepo() {
 	return repoRoot;
 }
 
+function createTestPolicy(
+	exceptions: Record<string, Record<string, boolean>> = {},
+) {
+	return {
+		baseline: {
+			noFallthroughCasesInSwitch: true,
+			noImplicitOverride: true,
+			strict: true,
+			useUnknownInCatchVariables: true,
+		},
+		deferredFlags: [
+			"exactOptionalPropertyTypes",
+			"noImplicitReturns",
+			"noPropertyAccessFromIndexSignature",
+			"noUncheckedIndexedAccess",
+		],
+		exceptions,
+	};
+}
+
 describe("validateTypeScriptStrictnessPolicy", () => {
 	test("passes when the repo inherits the staged baseline from tsconfig.base.json", () => {
 		const repoRoot = createStrictnessRepo();
 
-		expect(validateTypeScriptStrictnessPolicy(repoRoot)).toEqual({
+		expect(validateTypeScriptStrictnessPolicy(repoRoot, createTestPolicy())).toEqual({
 			errors: [],
 			valid: true,
 		});
@@ -77,7 +97,7 @@ describe("validateTypeScriptStrictnessPolicy", () => {
 		delete baseConfig.compilerOptions.noImplicitOverride;
 		writeJson(basePath, baseConfig);
 
-		const result = validateTypeScriptStrictnessPolicy(repoRoot);
+		const result = validateTypeScriptStrictnessPolicy(repoRoot, createTestPolicy());
 
 		expect(result.valid).toBe(false);
 		expect(result.errors).toContain(
@@ -92,7 +112,7 @@ describe("validateTypeScriptStrictnessPolicy", () => {
 		packageConfig.compilerOptions.strict = true;
 		writeJson(packagePath, packageConfig);
 
-		const result = validateTypeScriptStrictnessPolicy(repoRoot);
+		const result = validateTypeScriptStrictnessPolicy(repoRoot, createTestPolicy());
 
 		expect(result.valid).toBe(false);
 		expect(result.errors).toContain(
@@ -107,7 +127,7 @@ describe("validateTypeScriptStrictnessPolicy", () => {
 		delete packageConfig.extends;
 		writeJson(packagePath, packageConfig);
 
-		const result = validateTypeScriptStrictnessPolicy(repoRoot);
+		const result = validateTypeScriptStrictnessPolicy(repoRoot, createTestPolicy());
 
 		expect(result.valid).toBe(false);
 		expect(result.errors).toContain(
@@ -128,7 +148,7 @@ describe("validateTypeScriptStrictnessPolicy", () => {
 		};
 		writeJson(nestedPath, nestedConfig);
 
-		const result = validateTypeScriptStrictnessPolicy(repoRoot);
+		const result = validateTypeScriptStrictnessPolicy(repoRoot, createTestPolicy());
 
 		expect(result.valid).toBe(false);
 		expect(result.errors).toContain(
@@ -146,7 +166,7 @@ describe("validateTypeScriptStrictnessPolicy", () => {
 		};
 		writeJson(packagePath, packageConfig);
 
-		const result = validateTypeScriptStrictnessPolicy(repoRoot);
+		const result = validateTypeScriptStrictnessPolicy(repoRoot, createTestPolicy());
 
 		expect(result.valid).toBe(false);
 		expect(result.errors).toContain(
@@ -164,20 +184,39 @@ describe("validateTypeScriptStrictnessPolicy", () => {
 		};
 		writeJson(packagePath, packageConfig);
 
-		const result = validateTypeScriptStrictnessPolicy(repoRoot, {
-			baseline: {
-				noFallthroughCasesInSwitch: true,
-				noImplicitOverride: true,
-				strict: true,
-				useUnknownInCatchVariables: true,
-			},
-			deferredFlags: ["noUncheckedIndexedAccess"],
-			exceptions: {
+		const result = validateTypeScriptStrictnessPolicy(
+			repoRoot,
+			createTestPolicy({
 				"examples/my-typia-block/tsconfig.json": {
 					noUncheckedIndexedAccess: true,
 				},
-			},
-		});
+			}),
+		);
+
+		expect(result.valid).toBe(true);
+		expect(result.errors).toEqual([]);
+	});
+
+	test("accepts multiple deferred flags when the overrides are declared explicitly", () => {
+		const repoRoot = createStrictnessRepo();
+		const packagePath = path.join(repoRoot, "examples/my-typia-block/tsconfig.json");
+		const packageConfig = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+		packageConfig.compilerOptions = {
+			...packageConfig.compilerOptions,
+			exactOptionalPropertyTypes: true,
+			noUncheckedIndexedAccess: true,
+		};
+		writeJson(packagePath, packageConfig);
+
+		const result = validateTypeScriptStrictnessPolicy(
+			repoRoot,
+			createTestPolicy({
+				"examples/my-typia-block/tsconfig.json": {
+					exactOptionalPropertyTypes: true,
+					noUncheckedIndexedAccess: true,
+				},
+			}),
+		);
 
 		expect(result.valid).toBe(true);
 		expect(result.errors).toEqual([]);
@@ -186,20 +225,14 @@ describe("validateTypeScriptStrictnessPolicy", () => {
 	test("fails when a strictness exception is declared but not consumed", () => {
 		const repoRoot = createStrictnessRepo();
 
-		const result = validateTypeScriptStrictnessPolicy(repoRoot, {
-			baseline: {
-				noFallthroughCasesInSwitch: true,
-				noImplicitOverride: true,
-				strict: true,
-				useUnknownInCatchVariables: true,
-			},
-			deferredFlags: ["noUncheckedIndexedAccess"],
-			exceptions: {
+		const result = validateTypeScriptStrictnessPolicy(
+			repoRoot,
+			createTestPolicy({
 				"examples/my-typia-block/tsconfig.json": {
 					noUncheckedIndexedAccess: true,
 				},
-			},
-		});
+			}),
+		);
 
 		expect(result.valid).toBe(false);
 		expect(result.errors).toContain(
