@@ -14,7 +14,7 @@ import {
 import currentManifest from './typia.manifest.json';
 import {
 	createEditorModel,
-	type ManifestDocument,
+	parseManifestDocument,
 } from '@wp-typia/block-runtime/editor';
 import { useTypiaValidation } from '../../shared/hooks';
 import { resolveCurrentEditorPostId } from '../../shared/editor';
@@ -35,8 +35,9 @@ export default function Edit( {
 		attrs: Partial< PersistenceLikeButtonAttributes >
 	) => void;
 } ) {
+	const editorManifest = parseManifestDocument( currentManifest );
 	const editorFieldMap = new Map(
-		createEditorModel( currentManifest as ManifestDocument, {
+		createEditorModel( editorManifest, {
 			manual: [ 'content', 'resourceKey' ],
 			labels: {
 				likeLabel: __( 'Like Label', 'persistence-examples' ),

@@ -1,4 +1,5 @@
 import { validators } from '../validators';
+import { parseManifestDocument } from '@wp-typia/block-runtime/editor';
 import migrationRegistry from './generated/registry';
 import {
 	type ManifestAttribute,
@@ -18,6 +19,10 @@ interface MigrationResolution {
 	analysis: MigrationAnalysis;
 	preview: MigrationPreview;
 }
+
+const currentManifestDocument = parseManifestDocument< ManifestDocument >(
+	migrationRegistry.currentManifest
+);
 
 /**
  * Returns the migration analysis for one block attribute payload.
@@ -75,8 +80,7 @@ export function resolveMigrationState(
 			preview: createPreview( {
 				after: attributes,
 				before: attributes,
-				currentManifest:
-					migrationRegistry.currentManifest as ManifestDocument,
+				currentManifest: currentManifestDocument,
 				legacyManifest: null,
 				status: 'current',
 				unresolved: [],
@@ -88,7 +92,7 @@ export function resolveMigrationState(
 	for ( const entry of migrationRegistry.entries ) {
 		if (
 			manifestMatchesDocument(
-				entry.manifest as ManifestDocument,
+				parseManifestDocument< ManifestDocument >( entry.manifest ),
 				attributes
 			)
 		) {
@@ -109,16 +113,17 @@ export function resolveMigrationState(
 					? ( migrated as Record< string, unknown > )
 					: null,
 				before: attributes,
-				currentManifest:
-					migrationRegistry.currentManifest as ManifestDocument,
-				legacyManifest: entry.manifest as ManifestDocument,
+				currentManifest: currentManifestDocument,
+				legacyManifest: parseManifestDocument< ManifestDocument >(
+					entry.manifest
+				),
 				status,
 				unresolved,
 				validationErrors,
 			} );
 			const delta = summarizeVersionDelta(
-				entry.manifest as ManifestDocument,
-				migrationRegistry.currentManifest as ManifestDocument
+				parseManifestDocument< ManifestDocument >( entry.manifest ),
+				currentManifestDocument
 			);
 			let confidence = 0.95;
 			if ( ! migratedValidation.isValid ) {
@@ -174,8 +179,7 @@ export function resolveMigrationState(
 		preview: createPreview( {
 			after: null,
 			before: attributes,
-			currentManifest:
-				migrationRegistry.currentManifest as ManifestDocument,
+			currentManifest: currentManifestDocument,
 			legacyManifest: null,
 			status: 'unknown',
 			unresolved: [

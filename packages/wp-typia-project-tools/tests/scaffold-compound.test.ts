@@ -235,6 +235,12 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(generatedValidatorToolkit).toContain(
         'createScaffoldValidatorToolkit',
       );
+      expect(generatedValidatorToolkit).toContain(
+        'parseManifestDefaultsDocument',
+      );
+      expect(generatedValidatorToolkit).not.toContain(
+        'manifest as ManifestDefaultsDocument',
+      );
       expect(generatedValidatorToolkit).not.toContain('typia.createValidate');
       expect(parentChildren).toContain('DEFAULT_CHILD_BLOCK_NAME');
       expect(parentChildren).toContain(
@@ -779,6 +785,12 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       );
       expect(generatedValidatorToolkit).toContain(
         'createScaffoldValidatorToolkit',
+      );
+      expect(generatedValidatorToolkit).toContain(
+        'parseManifestDefaultsDocument',
+      );
+      expect(generatedValidatorToolkit).not.toContain(
+        'manifest as ManifestDefaultsDocument',
       );
       expect(generatedValidatorToolkit).not.toContain('typia.createValidate');
       expect(generatedAddChild).toContain('ALLOWED_CHILD_MARKER');

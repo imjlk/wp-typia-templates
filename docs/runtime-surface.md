@@ -88,5 +88,9 @@ This document is descriptive, not normative. For support guarantees, see
   [`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).
 - `@wp-typia/block-runtime/*` owns generated-project runtime helpers directly,
   including the canonical `schema-core` implementation and shared
-  manifest/migration contract types.
+  manifest/migration contract types. JSON artifact boundaries should prefer the
+  validated helpers `parseScaffoldBlockMetadata(...)`,
+  `parseManifestDocument(...)`, and `parseManifestDefaultsDocument(...)`
+  instead of raw `as` casts on imported `block.json` and
+  `typia.manifest.json`.
 - `@wp-typia/create` no longer owns runtime exports or CLI behavior.

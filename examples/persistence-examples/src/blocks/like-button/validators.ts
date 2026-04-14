@@ -2,8 +2,8 @@
 import typia from 'typia';
 import currentManifest from './typia.manifest.json';
 import {
-	type ManifestDefaultsDocument,
 	applyTemplateDefaultsFromManifest,
+	parseManifestDefaultsDocument,
 } from '@wp-typia/block-runtime/defaults';
 import { generateResourceKey } from '@wp-typia/block-runtime/identifiers';
 import {
@@ -43,7 +43,7 @@ export const sanitizePersistenceLikeButtonAttributes = (
 ): PersistenceLikeButtonAttributes => {
 	const normalized =
 		applyTemplateDefaultsFromManifest< PersistenceLikeButtonAttributes >(
-			currentManifest as ManifestDefaultsDocument,
+			parseManifestDefaultsDocument( currentManifest ),
 			attributes
 		);
 

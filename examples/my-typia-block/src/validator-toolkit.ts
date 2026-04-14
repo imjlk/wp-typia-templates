@@ -1,8 +1,8 @@
-import type { ManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';
 import {
 	createScaffoldValidatorToolkit,
 	type ScaffoldValidatorToolkitOptions,
 } from '@wp-typia/block-runtime/validation';
+import { parseManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';
 
 interface TemplateValidatorFunctions< T extends object > {
 	assert: ScaffoldValidatorToolkitOptions< T >[ 'assert' ];
@@ -32,7 +32,7 @@ export function createTemplateValidatorToolkit< T extends object >( {
 	validate,
 }: TemplateValidatorToolkitOptions< T > ) {
 	return createScaffoldValidatorToolkit< T >( {
-		manifest: manifest as ManifestDefaultsDocument,
+		manifest: parseManifestDefaultsDocument( manifest ),
 		validate,
 		assert,
 		is,

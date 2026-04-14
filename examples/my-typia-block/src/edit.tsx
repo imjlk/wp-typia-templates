@@ -11,7 +11,7 @@ import { useEffect, useMemo } from '@wordpress/element';
 import currentManifest from '../typia.manifest.json';
 import {
 	InspectorFromManifest,
-	type ManifestDocument,
+	parseManifestDocument,
 	useEditorFields,
 	useTypedAttributeUpdater,
 } from '@wp-typia/block-runtime/inspector';
@@ -70,6 +70,7 @@ const SHOWCASE_INSPECTOR_PATHS = [
 	'aspectRatio',
 	'borderRadius',
 ] as const;
+const editorManifest = parseManifestDocument( currentManifest );
 
 function coerceStringEnum< T extends string >(
 	value: string,
@@ -95,7 +96,7 @@ function getFontSizeStyle( fontSize: FontSizeValue ): string {
 
 export default function Edit( { attributes, setAttributes }: EditProps ) {
 	const blockProps = useBlockProps();
-	const editorFields = useEditorFields( currentManifest as ManifestDocument, {
+	const editorFields = useEditorFields( editorManifest, {
 		hidden: [ 'id', 'version' ],
 		labels: {
 			alignment: __( 'Alignment', 'my-typia-block' ),

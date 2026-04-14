@@ -200,6 +200,7 @@ export function renderMigrationRegistryFile(
 	}
 	const imports = [
 		`import currentManifest from "${normalizeImportPath(path.relative(getGeneratedDir(block, state), path.join(state.projectDir, block.manifestFile)))}";`,
+		`import { parseManifestDocument } from "@wp-typia/block-runtime/editor";`,
 		`import type { ManifestDocument, MigrationRiskSummary } from "${normalizeImportPath(path.relative(getGeneratedDir(block, state), path.join(state.projectDir, "src", "migrations", "helpers.ts")), true)}";`,
 	];
 	const body: string[] = [];
@@ -209,7 +210,7 @@ export function renderMigrationRegistryFile(
 		imports.push(`import * as rule_${index} from "${entry.ruleImport}";`);
 		body.push(`\t{`);
 		body.push(`\t\tfromMigrationVersion: "${entry.fromVersion}",`);
-		body.push(`\t\tmanifest: manifest_${index},`);
+		body.push(`\t\tmanifest: parseManifestDocument<ManifestDocument>(manifest_${index}),`);
 		body.push(`\t\triskSummary: ${JSON.stringify(riskSummary, null, "\t").replace(/\n/g, "\n\t\t")},`);
 		body.push(`\t\trule: rule_${index},`);
 		body.push(`\t},`);
@@ -234,7 +235,7 @@ export const migrationRegistry: {
 	entries: MigrationRegistryEntry[];
 } = {
 	currentMigrationVersion: "${state.config.currentMigrationVersion}",
-	currentManifest: currentManifest as ManifestDocument,
+	currentManifest: parseManifestDocument<ManifestDocument>(currentManifest),
 	entries: [
 ${body.join("\n")}
 	],

@@ -164,11 +164,47 @@ describe('my-typia-block reference app helpers', () => {
     );
 
     expect(validatorToolkitSource).toContain('createTemplateValidatorToolkit');
+    expect(validatorToolkitSource).toContain('parseManifestDefaultsDocument');
+    expect(validatorToolkitSource).not.toContain(
+      'manifest as ManifestDefaultsDocument',
+    );
     expect(validatorsSource).toMatch(/from\s+['"]\.\/validator-toolkit['"]/);
     expect(validatorsSource).toContain('createTemplateValidatorToolkit');
     expect(validatorsSource).not.toContain('applyTemplateDefaultsFromManifest');
     expect(validatorsSource).not.toContain('createScaffoldValidatorToolkit');
     expect(fixturesReadme).toContain('wp-typia migrate verify');
     expect(fixturesReadme).toContain('wp-typia migrate fuzz');
+  });
+
+  test('reference app validates manifest imports before editor and migration use', () => {
+    const editSource = fs.readFileSync(
+      path.join(import.meta.dir, '../../examples/my-typia-block/src/edit.tsx'),
+      'utf8',
+    );
+    const migrationAnalysisSource = fs.readFileSync(
+      path.join(
+        import.meta.dir,
+        '../../examples/my-typia-block/src/migrations/analysis.ts',
+      ),
+      'utf8',
+    );
+    const migrationRegistrySource = fs.readFileSync(
+      path.join(
+        import.meta.dir,
+        '../../examples/my-typia-block/src/migrations/generated/registry.ts',
+      ),
+      'utf8',
+    );
+
+    expect(editSource).toContain('parseManifestDocument');
+    expect(editSource).not.toContain('currentManifest as ManifestDocument');
+    expect(migrationAnalysisSource).toContain('parseManifestDocument');
+    expect(migrationAnalysisSource).not.toContain(
+      'migrationRegistry.currentManifest as ManifestDocument',
+    );
+    expect(migrationRegistrySource).toContain('parseManifestDocument');
+    expect(migrationRegistrySource).not.toContain(
+      'currentManifest as ManifestDocument',
+    );
   });
 });

@@ -27,6 +27,12 @@ export type {
 	ManifestAttribute,
 	ManifestDocument,
 } from "./editor.js";
+export {
+	assertManifestDocument,
+	isManifestAttribute,
+	isManifestDocument,
+	parseManifestDocument,
+} from "./editor.js";
 export type { ValidationResult } from "./validation.js";
 
 type UnknownRecord = Record<string, unknown>;
