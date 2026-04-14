@@ -198,20 +198,31 @@ export function renderMigrationRegistryFile(
 	if (!block) {
 		throw new Error(`Unknown migration block target: ${blockKey}`);
 	}
+	const generatedDir = getGeneratedDir(block, state);
+	const currentManifestWrapperFile = block.manifestFile.replace(
+		/typia\.manifest\.json$/u,
+		"manifest-document.ts",
+	);
+	const hasCurrentManifestWrapper =
+		currentManifestWrapperFile !== block.manifestFile &&
+		fs.existsSync(path.join(state.projectDir, currentManifestWrapperFile));
+	const currentManifestSourceFile = hasCurrentManifestWrapper
+		? currentManifestWrapperFile
+		: block.manifestFile;
 	const currentManifestImport = normalizeImportPath(
 		path.relative(
-			getGeneratedDir(block, state),
-			path.join(
-				state.projectDir,
-				block.manifestFile.replace(/typia\.manifest\.json$/u, "manifest-document.ts"),
-			),
+			generatedDir,
+			path.join(state.projectDir, currentManifestSourceFile),
 		),
-		true,
+		hasCurrentManifestWrapper,
 	);
+	const currentManifestExpression = hasCurrentManifestWrapper
+		? "rawCurrentManifest"
+		: "parseManifestDocument<ManifestDocument>(rawCurrentManifest)";
 	const imports = [
-		`import currentManifest from "${currentManifestImport}";`,
+		`import rawCurrentManifest from "${currentManifestImport}";`,
 		`import type { ManifestDocument, MigrationRiskSummary } from "${normalizeImportPath(path.relative(getGeneratedDir(block, state), path.join(state.projectDir, "src", "migrations", "helpers.ts")), true)}";`,
-		...(entries.length > 0
+		...(entries.length > 0 || !hasCurrentManifestWrapper
 			? [`import { parseManifestDocument } from "@wp-typia/block-runtime/editor";`]
 			: []),
 	];
@@ -247,7 +258,7 @@ export const migrationRegistry: {
 	entries: MigrationRegistryEntry[];
 } = {
 	currentMigrationVersion: "${state.config.currentMigrationVersion}",
-	currentManifest,
+	currentManifest: ${currentManifestExpression},
 	entries: [
 ${body.join("\n")}
 	],

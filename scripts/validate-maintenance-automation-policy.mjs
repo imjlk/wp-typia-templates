@@ -4,6 +4,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { GUTENBERG_UPSTREAM_WATCH_POLICY } from './gutenberg-upstream-watch.mjs';
+
+const GUTENBERG_UPSTREAM_REPO =
+  `${GUTENBERG_UPSTREAM_WATCH_POLICY.upstream.owner}/${GUTENBERG_UPSTREAM_WATCH_POLICY.upstream.repo}`;
+const GUTENBERG_WATCH_ISSUE_LABEL = `#${GUTENBERG_UPSTREAM_WATCH_POLICY.issueNumber}`;
+const GUTENBERG_WATCH_ISSUE_SNIPPET = `issue \`${GUTENBERG_WATCH_ISSUE_LABEL}\``;
+
 export const MAINTENANCE_AUTOMATION_POLICY = Object.freeze({
   dependabotEcosystems: Object.freeze(['github-actions', 'composer']),
   docsFile: 'docs/maintenance-automation-policy.md',
@@ -18,11 +25,11 @@ export const MAINTENANCE_AUTOMATION_POLICY = Object.freeze({
     '.github/workflows/dependency-audit.yml',
     '.github/workflows/gutenberg-upstream-watch.yml',
     '.github/workflows/test-matrix.yml',
-    'WordPress/gutenberg',
+    GUTENBERG_UPSTREAM_REPO,
     '@wordpress/blocks',
     '@wordpress/block-editor',
     '@wordpress/data',
-    'issue `#283`',
+    GUTENBERG_WATCH_ISSUE_SNIPPET,
   ]),
   ciScript: 'node scripts/validate-maintenance-automation-policy.mjs',
 });
@@ -246,15 +253,15 @@ function validateGutenbergWatchWorkflow(sourceText, errors) {
     'name: Gutenberg Upstream TypeScript Watch',
     'schedule:',
     'workflow_dispatch:',
-    "WATCH_ISSUE_NUMBER: '283'",
+    `WATCH_ISSUE_NUMBER: '${GUTENBERG_UPSTREAM_WATCH_POLICY.issueNumber}'`,
     'GUTENBERG_UPSTREAM_TOKEN',
     'permissions:',
     'issues: write',
     'node scripts/gutenberg-upstream-watch.mjs',
     'actions/upload-artifact@v4',
-    'Update issue #283',
+    `Update issue ${GUTENBERG_WATCH_ISSUE_LABEL}`,
     '<!-- gutenberg-upstream-watch -->',
-    'WordPress/gutenberg',
+    GUTENBERG_UPSTREAM_REPO,
     "comment.user?.login === 'github-actions[bot]'",
     'comment.body?.startsWith(marker)',
   ]) {

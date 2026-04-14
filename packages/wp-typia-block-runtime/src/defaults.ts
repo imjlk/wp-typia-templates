@@ -106,9 +106,13 @@ export function parseManifestDefaultsDocument<
  *
  * Generated projects validate the raw JSON once at import time so validator
  * tooling can consume the stricter defaults-oriented contract without local
- * parse calls.
+ * parse calls. JSON module inference widens nested discriminators like
+ * `ts.kind`, so the compile-time constraint stays shallow while the runtime
+ * parser enforces the full manifest-default contract.
  */
-export function defineManifestDefaultsDocument<TDocument extends Record<string, unknown>>(
+export function defineManifestDefaultsDocument<
+	TDocument extends { attributes: Record<string, unknown> },
+>(
 	manifest: TDocument,
 ): ManifestDefaultsDocument & TDocument {
 	return parseManifestDefaultsDocument<TDocument>(

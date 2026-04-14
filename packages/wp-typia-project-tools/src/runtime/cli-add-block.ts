@@ -297,7 +297,7 @@ const COMPOUND_SHARED_SUPPORT_FILES = ["hooks.ts", "validator-toolkit.ts"] as co
 const LEGACY_ASSERT_PATTERN = /assert:\s*typia\.createAssert</u;
 const LEGACY_MANIFEST_PATTERN = /\r?\n[ \t]*manifest:\s*currentManifest,/u;
 const LEGACY_VALIDATOR_MANIFEST_IMPORT_PATTERN =
-	/import\s+currentManifest\s+from\s*["']\.\/typia\.manifest\.json["'];?/u;
+	/^[\uFEFF \t]*import\s+currentManifest\s+from\s*["']\.\/typia\.manifest\.json["'];?$/u;
 const LEGACY_TOOLKIT_CALL_PATTERN =
 	/createTemplateValidatorToolkit<\s*(?<typeName>[A-Za-z0-9_]+)\s*>\s*\(\s*\{/u;
 const LEGACY_VALIDATOR_TOOLKIT_IMPORT_PATTERN =
@@ -360,6 +360,48 @@ function hasTypiaImport(source: string): boolean {
 	return TYPIA_IMPORT_PATTERN.test(source.replace(/\/\*[\s\S]*?\*\//gu, ""));
 }
 
+function replaceFirstNonCommentLine(
+	source: string,
+	pattern: RegExp,
+	replacement: string,
+): string {
+	const lineEnding = source.includes("\r\n") ? "\r\n" : "\n";
+	const lines = source.split(/\r?\n/);
+	let inBlockComment = false;
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index] ?? "";
+		const trimmed = line.trimStart();
+
+		if (inBlockComment) {
+			if (trimmed.includes("*/")) {
+				inBlockComment = false;
+			}
+			continue;
+		}
+
+		if (trimmed.startsWith("//")) {
+			continue;
+		}
+
+		if (trimmed.startsWith("/*")) {
+			if (!trimmed.includes("*/")) {
+				inBlockComment = true;
+			}
+			continue;
+		}
+
+		if (!pattern.test(line)) {
+			continue;
+		}
+
+		lines[index] = replacement;
+		return lines.join(lineEnding);
+	}
+
+	return source;
+}
+
 function upgradeLegacyCompoundValidatorSource(source: string): string {
 	const typeNameMatch = source.match(LEGACY_TOOLKIT_CALL_PATTERN);
 	const typeName = typeNameMatch?.groups?.typeName;
@@ -374,7 +416,8 @@ function upgradeLegacyCompoundValidatorSource(source: string): string {
 		nextSource = `import typia from 'typia';\n${nextSource}`;
 	}
 
-	nextSource = nextSource.replace(
+	nextSource = replaceFirstNonCommentLine(
+		nextSource,
 		LEGACY_VALIDATOR_MANIFEST_IMPORT_PATTERN,
 		"import currentManifest from './manifest-defaults-document';",
 	);

@@ -13,6 +13,42 @@ export interface GutenbergUpstreamWatchAreaActivity {
 	title: string;
 }
 
+export interface GutenbergUpstreamWatchPackageVersion {
+	name: string;
+	path: string;
+	version: string;
+}
+
+export interface GutenbergUpstreamWatchPin {
+	path: string;
+	spec: string;
+}
+
+export interface GutenbergUpstreamWatchPinsSummary {
+	allAligned: boolean;
+	uniqueSpecs: string[];
+}
+
+export interface GutenbergUpstreamWatchReport {
+	areaActivity: GutenbergUpstreamWatchAreaActivity[];
+	blocksVersionDrift: ReturnType<typeof evaluateBlocksVersionDrift>;
+	cadence: string;
+	generatedAt: string;
+	issueNumber: number;
+	localBlockEditorPins: GutenbergUpstreamWatchPin[];
+	localBlockEditorPinsSummary: GutenbergUpstreamWatchPinsSummary;
+	localBlocksBaseline: {
+		owner: string;
+		spec: string;
+	};
+	localBlocksPins: GutenbergUpstreamWatchPin[];
+	localBlocksPinsSummary: GutenbergUpstreamWatchPinsSummary;
+	lookbackDays: number;
+	reportMarker: string;
+	sinceDate: string;
+	upstreamPackageVersions: GutenbergUpstreamWatchPackageVersion[];
+}
+
 export declare const GUTENBERG_UPSTREAM_WATCH_POLICY: Readonly<{
 	cadence: 'weekly';
 	defaultLookbackDays: number;
@@ -107,7 +143,7 @@ export declare function generateGutenbergUpstreamWatchReport(options?: {
 	token?: string | null;
 }): Promise<{
 	markdown: string;
-	report: Record<string, unknown>;
+	report: GutenbergUpstreamWatchReport;
 }>;
 
 export declare function runCli(options?: {

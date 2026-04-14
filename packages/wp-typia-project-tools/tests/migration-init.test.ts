@@ -107,6 +107,26 @@ test("migrate init prefers the legacy single-block fallback when only the root m
 	expect(snapshotManifest.attributes.content.typia.defaultValue).toBe("Legacy");
 });
 
+test("migrate init keeps generated registry imports compatible with legacy-root retrofit layouts", () => {
+	const projectDir = path.join(tempRoot, "init-mixed-single-block-project-registry-import");
+	createMixedSingleBlockProject(projectDir);
+
+	runCli("bun", [entryPath, "migrate", "init", "--current-migration-version", "v1"], {
+		cwd: projectDir,
+	});
+
+	const registrySource = fs.readFileSync(
+		path.join(projectDir, "src", "migrations", "generated", "registry.ts"),
+		"utf8",
+	);
+	expect(registrySource).toContain(
+		'import rawCurrentManifest from "../../../typia.manifest.json";',
+	);
+	expect(registrySource).toContain(
+		"currentManifest: parseManifestDocument<ManifestDocument>(rawCurrentManifest),",
+	);
+});
+
 test("migrate init falls back to single-block detection when all multi-block candidates are malformed", () => {
 	const projectDir = path.join(tempRoot, "init-single-block-with-broken-multi-block-candidate");
 	createSingleBlockProjectWithBrokenMultiBlockCandidate(projectDir);
