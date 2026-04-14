@@ -189,6 +189,17 @@ export function renderMigrationRuleFile({
 	return `${lines.join("\n")}\n`;
 }
 
+/**
+ * Renders the generated migration registry module for a block target.
+ *
+ * Prefers typed manifest wrapper modules when they are available in the
+ * project, and otherwise falls back to parsing the raw manifest JSON import.
+ *
+ * @param state The resolved migration project state.
+ * @param blockKey The stable key for the block whose registry is being generated.
+ * @param entries The generated migration entries to include in the registry.
+ * @returns The generated TypeScript source code for the migration registry file.
+ */
 export function renderMigrationRegistryFile(
 	state: MigrationProjectState,
 	blockKey: string,
@@ -270,6 +281,17 @@ export default migrationRegistry;
 `;
 }
 
+/**
+ * Renders the generated deprecated module for a block target.
+ *
+ * The emitted module exposes the ordered deprecation array consumed by block
+ * registration and migration helpers.
+ *
+ * @param state The resolved migration project state.
+ * @param blockKey The stable key for the block whose deprecated entries are being generated.
+ * @param entries The migration entries that define deprecated manifest versions.
+ * @returns The generated TypeScript source code for the deprecated module.
+ */
 export function renderGeneratedDeprecatedFile(
 	state: MigrationProjectState,
 	blockKey: string,
