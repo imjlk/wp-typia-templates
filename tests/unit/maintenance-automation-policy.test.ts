@@ -61,8 +61,13 @@ function createMaintenancePolicyRepo() {
   );
 
   writeText(
+    path.join(repoRoot, '.github/workflows/gutenberg-upstream-watch.yml'),
+    `name: Gutenberg Upstream TypeScript Watch\non:\n  schedule:\n    - cron: '0 6 * * 2'\n  workflow_dispatch:\npermissions:\n  contents: read\n  issues: write\nenv:\n  GUTENBERG_UPSTREAM_REPO: 'WordPress/gutenberg'\n  WATCH_ISSUE_NUMBER: '283'\njobs:\n  gutenberg-upstream-watch:\n    steps:\n      - env:\n          GUTENBERG_UPSTREAM_TOKEN: \${{ secrets.GUTENBERG_UPSTREAM_TOKEN || vars.GUTENBERG_UPSTREAM_TOKEN || '' }}\n        run: node scripts/gutenberg-upstream-watch.mjs --report-file ./report.md\n      - uses: actions/upload-artifact@v4\n      - name: Update issue #283\n        run: |\n          echo '<!-- gutenberg-upstream-watch --> WordPress/gutenberg'\n          echo \"comment.user?.login === 'github-actions[bot]'\"\n          echo 'comment.body?.startsWith(marker)'\n`
+  );
+
+  writeText(
     path.join(repoRoot, 'docs/maintenance-automation-policy.md'),
-    `Dependabot updates\ngithub-actions\ncomposer\nrelease/sampo\nbun audit --audit-level high\ncomposer audit --locked\nscheduled/manual\n.github/workflows/dependency-audit.yml\n.github/workflows/test-matrix.yml\n`
+    `Dependabot updates\ngithub-actions\ncomposer\nrelease/sampo\nbun audit --audit-level high\ncomposer audit --locked\nscheduled/manual\n.github/workflows/dependency-audit.yml\n.github/workflows/gutenberg-upstream-watch.yml\n.github/workflows/test-matrix.yml\nWordPress/gutenberg\n@wordpress/blocks\n@wordpress/block-editor\n@wordpress/data\nissue \`#283\`\n`
   );
 
   writeText(
@@ -166,6 +171,10 @@ describe('validateMaintenanceAutomationPolicy', () => {
       path.join(repoRoot, '.github/workflows/test-matrix.yml'),
       `jobs:\n  security-scan:\n    name: CodeQL Scan\n    steps:\n      - name: Run Bun audit\n        run: bun audit --audit-level high\n`
     );
+    writeText(
+      path.join(repoRoot, '.github/workflows/gutenberg-upstream-watch.yml'),
+      `name: Gutenberg Upstream TypeScript Watch\njobs:\n  watch:\n    steps:\n      - run: node scripts/other-script.mjs\n`
+    );
 
     const result = validateMaintenanceAutomationPolicy(repoRoot);
 
@@ -184,6 +193,9 @@ describe('validateMaintenanceAutomationPolicy', () => {
     );
     expect(result.errors).toContain(
       '.github/workflows/test-matrix.yml should not duplicate the Bun audit step now that dependency-audit.yml owns the fast audit lane.',
+    );
+    expect(result.errors).toContain(
+      '.github/workflows/gutenberg-upstream-watch.yml must include "WATCH_ISSUE_NUMBER: \'283\'".',
     );
   });
 

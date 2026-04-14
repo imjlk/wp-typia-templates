@@ -16,7 +16,13 @@ export const MAINTENANCE_AUTOMATION_POLICY = Object.freeze({
     'composer audit --locked',
     'scheduled/manual',
     '.github/workflows/dependency-audit.yml',
+    '.github/workflows/gutenberg-upstream-watch.yml',
     '.github/workflows/test-matrix.yml',
+    'WordPress/gutenberg',
+    '@wordpress/blocks',
+    '@wordpress/block-editor',
+    '@wordpress/data',
+    'issue `#283`',
   ]),
   ciScript: 'node scripts/validate-maintenance-automation-policy.mjs',
 });
@@ -235,6 +241,31 @@ function validateScheduledWorkflow(sourceText, errors) {
   }
 }
 
+function validateGutenbergWatchWorkflow(sourceText, errors) {
+  for (const requiredSnippet of [
+    'name: Gutenberg Upstream TypeScript Watch',
+    'schedule:',
+    'workflow_dispatch:',
+    "WATCH_ISSUE_NUMBER: '283'",
+    'GUTENBERG_UPSTREAM_TOKEN',
+    'permissions:',
+    'issues: write',
+    'node scripts/gutenberg-upstream-watch.mjs',
+    'actions/upload-artifact@v4',
+    'Update issue #283',
+    '<!-- gutenberg-upstream-watch -->',
+    'WordPress/gutenberg',
+    "comment.user?.login === 'github-actions[bot]'",
+    'comment.body?.startsWith(marker)',
+  ]) {
+    if (!sourceText.includes(requiredSnippet)) {
+      errors.push(
+        `.github/workflows/gutenberg-upstream-watch.yml must include ${JSON.stringify(requiredSnippet)}.`,
+      );
+    }
+  }
+}
+
 export function validateMaintenanceAutomationPolicy(repoRoot = DEFAULT_REPO_ROOT) {
   const errors = [];
   const packageJson = readJson(path.join(repoRoot, 'package.json'));
@@ -267,6 +298,10 @@ export function validateMaintenanceAutomationPolicy(repoRoot = DEFAULT_REPO_ROOT
   );
   validateScheduledWorkflow(
     readRelativeText(repoRoot, '.github/workflows/test-matrix.yml'),
+    errors,
+  );
+  validateGutenbergWatchWorkflow(
+    readRelativeText(repoRoot, '.github/workflows/gutenberg-upstream-watch.yml'),
     errors,
   );
 

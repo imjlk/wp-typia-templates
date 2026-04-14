@@ -11,6 +11,12 @@ The current baseline uses GitHub-native Dependabot updates for the ecosystems th
 
 These PRs target `main` directly and should be reviewed like any other normal issue PR.
 
+The maintenance baseline also includes a read-only upstream watch for Gutenberg TypeScript changes:
+
+- `.github/workflows/gutenberg-upstream-watch.yml`
+- weekly schedule plus manual dispatch
+- current durable log stored on issue `#283`
+
 ## Why the baseline is intentionally narrow
 
 The JavaScript side of the repository is a Bun-first workspace with published package coupling, release PR automation, and changeset expectations. That means a broad monorepo-wide npm bot can create noisy or half-valid update PRs unless it also understands:
@@ -72,6 +78,40 @@ Today the Bun/npm side of the repository still pulls in known transitive advisor
 - CodeQL analysis
 
 That workflow remains the place for slower repository-health checks that are not appropriate to gate every PR.
+
+### Scheduled Gutenberg upstream TypeScript watch
+
+`.github/workflows/gutenberg-upstream-watch.yml` runs on:
+
+- a weekly schedule
+- manual `workflow_dispatch`
+
+It is intentionally read-only and triage-oriented. Each run:
+
+- queries recent `WordPress/gutenberg` PRs and issues touching
+  - block registration types (`@wordpress/blocks`)
+  - block editor component types (`@wordpress/block-editor`)
+  - data store types (`@wordpress/data`)
+- reads current upstream package versions for:
+  - `@wordpress/blocks`
+  - `@wordpress/block-editor`
+  - `@wordpress/data`
+- compares the upstream `@wordpress/blocks` version against the locally owned generated-project baseline
+- publishes a workflow summary + artifact
+- refreshes the durable tracking comment on issue `#283`
+
+The workflow does not pass the repository-scoped Actions `GITHUB_TOKEN` into those
+upstream `WordPress/gutenberg` reads. It defaults to unauthenticated public GitHub
+requests, and only uses an explicit `GUTENBERG_UPSTREAM_TOKEN` override when a
+maintainer wants higher rate limits from a token that is valid for the upstream
+repository. When configured, that override can come from either
+`secrets.GUTENBERG_UPSTREAM_TOKEN` or `vars.GUTENBERG_UPSTREAM_TOKEN`.
+
+The expected follow-up path is:
+
+- review the refreshed issue comment and workflow artifact
+- if local type facades, helper boundaries, or generated-project dependency compatibility need attention, open or refresh a normal follow-up issue/PR on `main`
+- do not patch `release/sampo` directly from the watch lane
 
 ## Review posture
 

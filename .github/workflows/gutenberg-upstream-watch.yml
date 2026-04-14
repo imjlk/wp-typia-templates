@@ -1,0 +1,102 @@
+name: Gutenberg Upstream TypeScript Watch
+
+on:
+  schedule:
+    - cron: '0 6 * * 2'
+  workflow_dispatch:
+    inputs:
+      lookback_days:
+        description: 'Lookback window in days'
+        required: false
+        default: '14'
+        type: string
+      max_results:
+        description: 'Maximum issues/PRs per tracked area and item type'
+        required: false
+        default: '5'
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  GUTENBERG_UPSTREAM_REPO: 'WordPress/gutenberg'
+  WATCH_ISSUE_NUMBER: '283'
+
+jobs:
+  gutenberg-upstream-watch:
+    name: Gutenberg TypeScript Watch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Generate Gutenberg watch report
+        env:
+          GUTENBERG_UPSTREAM_TOKEN: ${{ secrets.GUTENBERG_UPSTREAM_TOKEN || vars.GUTENBERG_UPSTREAM_TOKEN || '' }}
+        run: |
+          node scripts/gutenberg-upstream-watch.mjs \
+            --lookback-days "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.lookback_days || '14' }}" \
+            --max-results "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.max_results || '5' }}" \
+            --report-file "${RUNNER_TEMP}/gutenberg-upstream-watch.md" \
+            --json-file "${RUNNER_TEMP}/gutenberg-upstream-watch.json"
+
+      - name: Publish workflow summary
+        run: cat "${RUNNER_TEMP}/gutenberg-upstream-watch.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Gutenberg watch artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gutenberg-upstream-watch
+          path: |
+            ${{ runner.temp }}/gutenberg-upstream-watch.md
+            ${{ runner.temp }}/gutenberg-upstream-watch.json
+
+      - name: Update issue #283
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('node:fs');
+            const marker = '<!-- gutenberg-upstream-watch -->';
+            const issue_number = Number(process.env.WATCH_ISSUE_NUMBER);
+            const report = fs.readFileSync(`${process.env.RUNNER_TEMP}/gutenberg-upstream-watch.md`, 'utf8');
+            const body = `${marker}\n${report}`;
+            const { owner, repo } = context.repo;
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              {
+                owner,
+                repo,
+                issue_number,
+                per_page: 100,
+              },
+            );
+            const existing = comments.find(
+              (comment) =>
+                comment.user?.login === 'github-actions[bot]' &&
+                comment.body?.startsWith(marker),
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+              core.info(`Updated Gutenberg watch comment ${existing.id}.`);
+            } else {
+              const created = await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+              core.info(`Created Gutenberg watch comment ${created.data.id}.`);
+            }
