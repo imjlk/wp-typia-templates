@@ -65,6 +65,8 @@ export interface RunAddBlockCommandOptions {
 	blockName: string;
 	cwd?: string;
 	dataStorageMode?: string;
+	externalLayerId?: string;
+	externalLayerSource?: string;
 	persistencePolicy?: string;
 	templateId?: string;
 }
@@ -349,7 +351,7 @@ export function assertBindingSourceDoesNotExist(
  */
 export function formatAddHelpText(): string {
 	return `Usage:
-  wp-typia add block <name> --template <${ADD_BLOCK_TEMPLATE_IDS.join("|")}> [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
+  wp-typia add block <name> --template <${ADD_BLOCK_TEMPLATE_IDS.join("|")}> [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
   wp-typia add variation <name> --block <block-slug>
   wp-typia add pattern <name>
   wp-typia add binding-source <name>

@@ -665,12 +665,15 @@ export async function runAddBlockCommand({
 	blockName,
 	cwd = process.cwd(),
 	dataStorageMode,
+	externalLayerId,
+	externalLayerSource,
 	persistencePolicy,
 	templateId = "basic",
 }: RunAddBlockCommandOptions): Promise<{
 	blockSlugs: string[];
 	projectDir: string;
 	templateId: AddBlockTemplateId;
+	warnings: string[];
 }> {
 	if (!isAddBlockTemplateId(templateId)) {
 		throw new Error(
@@ -724,6 +727,8 @@ export async function runAddBlockCommand({
 			},
 			cwd: workspace.projectDir,
 			dataStorageMode: dataStorageMode as "custom-table" | "post-meta" | undefined,
+			externalLayerId,
+			externalLayerSource,
 			noInstall: true,
 			packageManager: workspace.packageManager,
 			persistencePolicy: persistencePolicy as "authenticated" | "public" | undefined,
@@ -794,6 +799,7 @@ export async function runAddBlockCommand({
 				).map((targetPath) => path.basename(targetPath)),
 				projectDir: workspace.projectDir,
 				templateId: resolvedTemplateId,
+				warnings: result.warnings,
 			};
 		} catch (error) {
 			await rollbackWorkspaceMutation(mutationSnapshot);

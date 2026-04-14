@@ -34,6 +34,14 @@ const addOptions = {
 		description: "Persistence storage mode for persistence-capable templates.",
 		schema: z.string().optional(),
 	},
+	"external-layer-id": {
+		description: "Explicit layer id when an external layer package exposes multiple selectable layers.",
+		schema: z.string().optional(),
+	},
+	"external-layer-source": {
+		description: "Local path, GitHub locator, or npm package that exposes wp-typia.layers.json for built-in block templates.",
+		schema: z.string().optional(),
+	},
 	"persistence-policy": {
 		description: "Persistence write policy for persistence-capable templates.",
 		schema: z.string().optional(),
@@ -76,6 +84,12 @@ export const addCommand = defineCommand({
 								"data-storage":
 									(args.flags["data-storage"] as string | undefined) ??
 									config["data-storage"],
+								"external-layer-id":
+									(args.flags["external-layer-id"] as string | undefined) ??
+									config["external-layer-id"],
+								"external-layer-source":
+									(args.flags["external-layer-source"] as string | undefined) ??
+									config["external-layer-source"],
 								anchor: (args.flags.anchor as string | undefined) ?? "",
 								block: (args.flags.block as string | undefined) ?? "",
 								kind:

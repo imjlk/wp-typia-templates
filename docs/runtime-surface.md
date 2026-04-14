@@ -82,9 +82,9 @@ This document is descriptive, not normative. For support guarantees, see
   [`docs/block-generator-architecture.md`](./block-generator-architecture.md).
   The public non-mutating controller contract lives in
   [`docs/block-generator-tool-contract.md`](./block-generator-tool-contract.md).
-  External template-layer composition now exists as a programmatic built-in
-  generator option (`externalLayerSource` and optional `externalLayerId`),
-  while the CLI UX record still lives in
+  External template-layer composition now exists as a built-in generator option
+  for both CLI and programmatic callers (`externalLayerSource` and optional
+  `externalLayerId`), while the layer contract record lives in
   [`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).
 - `@wp-typia/block-runtime/*` owns generated-project runtime helpers directly,
   including the canonical `schema-core` implementation and shared

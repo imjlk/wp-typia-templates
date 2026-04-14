@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { cleanupScaffoldTempRoot, createBlockSubsetFixturePath, createScaffoldTempRoot, entryPath, getCommandErrorMessage, runCli } from "./helpers/scaffold-test-harness.js";
+import { cleanupScaffoldTempRoot, createBlockSubsetFixturePath, createScaffoldTempRoot, entryPath, getCommandErrorMessage, runCli, templateLayerAmbiguousFixturePath, templateLayerFixturePath } from "./helpers/scaffold-test-harness.js";
 import { formatHelpText, getDoctorChecks, getNextSteps, getOptionalOnboarding, runScaffoldFlow } from "../src/runtime/cli-core.js";
 import { collectScaffoldAnswers } from "../src/runtime/scaffold.js";
 
@@ -169,6 +169,48 @@ test("runScaffoldFlow keeps compound next steps minimal while surfacing optional
   );
 });
 
+test("runScaffoldFlow composes a built-in scaffold with an external layer package", async () => {
+  const flow = await runScaffoldFlow({
+    cwd: tempRoot,
+    externalLayerSource: templateLayerFixturePath,
+    noInstall: true,
+    packageManager: "npm",
+    projectInput: "demo-layered-basic",
+    templateId: "basic",
+    yes: true,
+  });
+
+  expect(flow.result.warnings).toContain(
+    `Applied external layer "acme/basic-observability" from "${templateLayerFixturePath}".`
+  );
+  expect(
+    fs.existsSync(path.join(flow.projectDir, "inc", "observability.php"))
+  ).toBe(true);
+  expect(
+    fs.readFileSync(path.join(flow.projectDir, "src", "observability.ts"), "utf8")
+  ).toContain("demo-layered-basic-observability");
+});
+
+test("runScaffoldFlow honors explicit external layer ids when a package exposes multiple public roots", async () => {
+  const flow = await runScaffoldFlow({
+    cwd: tempRoot,
+    externalLayerId: "acme/beta",
+    externalLayerSource: templateLayerAmbiguousFixturePath,
+    noInstall: true,
+    packageManager: "npm",
+    projectInput: "demo-layered-beta",
+    templateId: "basic",
+    yes: true,
+  });
+
+  expect(flow.result.warnings).toContain(
+    `Applied external layer "acme/beta" from "${templateLayerAmbiguousFixturePath}".`
+  );
+  expect(fs.readFileSync(path.join(flow.projectDir, "beta.txt"), "utf8")).toContain(
+    "beta layer"
+  );
+});
+
 test("optional onboarding derives sync steps from available custom-template scripts", () => {
   const onboarding = getOptionalOnboarding({
     availableScripts: ["sync-types", "sync-rest"],
@@ -222,6 +264,22 @@ test("runScaffoldFlow rejects removed built-in template ids", async () => {
   );
 });
 
+test("runScaffoldFlow rejects external layers for non-built-in templates", async () => {
+  await expect(
+    runScaffoldFlow({
+      cwd: tempRoot,
+      externalLayerSource: templateLayerFixturePath,
+      noInstall: true,
+      packageManager: "npm",
+      projectInput: "demo-external-layer-on-custom-template",
+      templateId: createBlockSubsetFixturePath,
+      yes: true,
+    })
+  ).rejects.toThrow(
+    "External template layers currently compose only with built-in templates"
+  );
+});
+
 test("formatHelpText keeps migration UI flags out of external template usage", () => {
   const helpText = formatHelpText();
   const usageLines = helpText
@@ -236,9 +294,13 @@ test("formatHelpText keeps migration UI flags out of external template usage", (
 
   expect(externalPathLine).toBeDefined();
   expect(externalPathLine).not.toContain("--with-migration-ui");
+  expect(externalPathLine).not.toContain("--external-layer-source");
   expect(externalPackageLine).toBeDefined();
   expect(externalPackageLine).not.toContain("--with-migration-ui");
+  expect(externalPackageLine).not.toContain("--external-layer-source");
   expect(helpText).toContain("--template workspace");
+  expect(helpText).toContain("--external-layer-source");
+  expect(helpText).toContain("--external-layer-id");
   expect(helpText).toContain("@wp-typia/create-workspace-template");
 });
 
@@ -321,6 +383,29 @@ test("node entry supports the explicit create command", () => {
 
   expect(fs.existsSync(path.join(targetDir, "package.json"))).toBe(true);
   expect(fs.existsSync(path.join(targetDir, "src", "block.json"))).toBe(true);
+});
+
+test("node entry supports external layer flags for built-in create scaffolds", () => {
+  const targetDir = path.join(tempRoot, "demo-node-create-layered");
+
+  runCli("node", [
+    entryPath,
+    "create",
+    targetDir,
+    "--template",
+    "basic",
+    "--external-layer-source",
+    templateLayerFixturePath,
+    "--package-manager",
+    "npm",
+    "--yes",
+    "--no-install",
+  ]);
+
+  expect(fs.existsSync(path.join(targetDir, "inc", "observability.php"))).toBe(true);
+  expect(fs.readFileSync(path.join(targetDir, "src", "observability.ts"), "utf8")).toContain(
+    "demo-node-create-layered-observability"
+  );
 });
 
 test("node entry exposes Bunli-owned help and rejects the removed migrations alias", () => {

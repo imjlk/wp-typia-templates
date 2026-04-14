@@ -10,6 +10,8 @@ import {
 
 export const createFlowSchema = z.object({
 	"data-storage": z.string().optional(),
+	"external-layer-id": z.string().optional(),
+	"external-layer-source": z.string().optional(),
 	namespace: z.string().optional(),
 	"no-install": z.boolean().default(false),
 	"package-manager": z.string().optional(),

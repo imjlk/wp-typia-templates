@@ -172,6 +172,7 @@ function buildAddCompletionPayload(options: {
 	kind: "binding-source" | "block" | "hooked-block" | "pattern" | "variation";
 	projectDir: string;
 	values: Record<string, string>;
+	warnings?: string[];
 }): AlternateBufferCompletionPayload {
 	switch (options.kind) {
 		case "variation":
@@ -218,6 +219,7 @@ function buildAddCompletionPayload(options: {
 					`Project directory: ${options.projectDir}`,
 				],
 				title: "✅ Added workspace block",
+				warningLines: options.warnings,
 			};
 	}
 }
@@ -436,6 +438,8 @@ export async function executeCreateCommand({
 		const flow = await runScaffoldFlow({
 			cwd,
 			dataStorageMode: readOptionalLooseStringFlag(flags, "data-storage"),
+			externalLayerId: readOptionalLooseStringFlag(flags, "external-layer-id"),
+			externalLayerSource: readOptionalLooseStringFlag(flags, "external-layer-source"),
 			isInteractive: Boolean(activePrompt),
 			namespace: readOptionalLooseStringFlag(flags, "namespace"),
 			noInstall: Boolean(flags["no-install"]),
@@ -659,6 +663,8 @@ export async function executeAddCommand({
 		blockName: name,
 		cwd,
 		dataStorageMode: readOptionalStringFlag(flags, "data-storage"),
+		externalLayerId: readOptionalStringFlag(flags, "external-layer-id"),
+		externalLayerSource: readOptionalStringFlag(flags, "external-layer-source"),
 		persistencePolicy: readOptionalStringFlag(flags, "persistence-policy"),
 		templateId: readOptionalStringFlag(flags, "template") as
 			| "basic"
@@ -674,6 +680,7 @@ export async function executeAddCommand({
 			blockSlugs: result.blockSlugs.join(", "),
 			templateId: result.templateId,
 		},
+		warnings: result.warnings,
 	});
 	if (emitOutput) {
 		printCompletionPayload(payload, { printLine });

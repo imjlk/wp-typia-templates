@@ -26,6 +26,14 @@ const createOptions = {
 		description: "Persistence storage mode for persistence-capable templates.",
 		schema: z.string().optional(),
 	},
+	"external-layer-id": {
+		description: "Explicit layer id when an external layer package exposes multiple selectable layers.",
+		schema: z.string().optional(),
+	},
+	"external-layer-source": {
+		description: "Local path, GitHub locator, or npm package that exposes wp-typia.layers.json for built-in templates.",
+		schema: z.string().optional(),
+	},
 	namespace: {
 		description: "Override the default block namespace.",
 		schema: z.string().optional(),
@@ -115,6 +123,12 @@ export const createCommand = defineCommand({
 								"data-storage":
 									(args.flags["data-storage"] as string | undefined) ??
 									config["data-storage"],
+								"external-layer-id":
+									(args.flags["external-layer-id"] as string | undefined) ??
+									config["external-layer-id"],
+								"external-layer-source":
+									(args.flags["external-layer-source"] as string | undefined) ??
+									config["external-layer-source"],
 								namespace:
 									(args.flags.namespace as string | undefined) ?? config.namespace,
 								"no-install": Boolean(

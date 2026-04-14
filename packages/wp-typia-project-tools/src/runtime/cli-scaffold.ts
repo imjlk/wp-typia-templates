@@ -52,6 +52,8 @@ interface RunScaffoldFlowOptions {
 	allowExistingDir?: boolean;
 	cwd?: string;
 	dataStorageMode?: string;
+	externalLayerId?: string;
+	externalLayerSource?: string;
 	installDependencies?: Parameters<typeof scaffoldProject>[0]["installDependencies"];
 	isInteractive?: boolean;
 	namespace?: string;
@@ -256,6 +258,8 @@ export async function runScaffoldFlow({
 	cwd = process.cwd(),
 	templateId,
 	dataStorageMode,
+	externalLayerId,
+	externalLayerSource,
 	persistencePolicy,
 	packageManager,
 	namespace,
@@ -363,6 +367,8 @@ export async function runScaffoldFlow({
 		allowExistingDir,
 		cwd,
 		dataStorageMode: resolvedDataStorage,
+		externalLayerId,
+		externalLayerSource,
 		installDependencies,
 		noInstall,
 		packageManager: resolvedPackageManager,

@@ -75,8 +75,7 @@ For the public staged controller/tool payload contract itself, see
 [`docs/block-generator-tool-contract.md`](./block-generator-tool-contract.md).
 
 For the external layer package contract on top of the built-in shared scaffold
-model, including the current programmatic composition path and remaining CLI UX
-questions, see
+model, including the current CLI and programmatic composition path, see
 [`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).
 
 `@wp-typia/block-runtime/schema-core` is public and stable, but it is the
