@@ -65,6 +65,9 @@ WordPress blocks baseline:
 - `@wordpress/blocks@^15.2.0`
 - `@types/wordpress__blocks@^12.5.18`
 
+The package manifest declares the same pair as peer dependencies so downstream
+TypeScript installs surface the requirement explicitly.
+
 Compatibility should track that floor unless the generated project dependency
 matrix changes in the same release.
 
