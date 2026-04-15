@@ -78,6 +78,34 @@ describe("template render internals", () => {
 		).toBe("{{#show}}Hello A&B{{/show}}");
 	});
 
+	test("copyInterpolatedDirectory replaces placeholders in a single pass", async () => {
+		const templateRoot = fs.mkdtempSync(
+			path.join(tempRoot, "template-render-single-pass-"),
+		);
+		const targetDir = fs.mkdtempSync(
+			path.join(tempRoot, "template-render-single-pass-target-"),
+		);
+
+		fs.writeFileSync(
+			path.join(templateRoot, "single-pass.txt.mustache"),
+			"{{price}} :: {{alias}}",
+			"utf8",
+		);
+
+		await copyInterpolatedDirectory(templateRoot, targetDir, {
+			alias: "{{name}}",
+			name: "hero",
+			price: "$&",
+		});
+
+		expect(
+			fs.readFileSync(
+				path.join(targetDir, "single-pass.txt"),
+				"utf8",
+			),
+		).toBe("$& :: {{name}}");
+	});
+
 	test("listInterpolatedDirectoryOutputs matches interpolation traversal rules", async () => {
 		const templateRoot = fs.mkdtempSync(
 			path.join(tempRoot, "template-render-list-"),

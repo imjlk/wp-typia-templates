@@ -110,11 +110,17 @@ function renderInterpolatedString(
 	template: string,
 	view: Record<string, string>,
 ): string {
-	return Object.entries(view).reduce(
-		(output, [key, value]) =>
-			output.replace(new RegExp(`{{${escapeRegExp(key)}}}`, "g"), value),
-		template,
+	const keys = Object.keys(view);
+	if (keys.length === 0) {
+		return template;
+	}
+
+	const placeholderPattern = new RegExp(
+		keys.map((key) => `({{${escapeRegExp(key)}}})`).join("|"),
+		"g",
 	);
+
+	return template.replace(placeholderPattern, (match) => view[match.slice(2, -2)] ?? match);
 }
 
 function isBinaryTemplateFile(filePath: string): boolean {
