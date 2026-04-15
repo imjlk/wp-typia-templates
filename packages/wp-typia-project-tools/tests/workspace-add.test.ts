@@ -1032,12 +1032,119 @@ test("add compound block repairs a legacy shared validator toolkit in an officia
   );
   expect(repairedParentValidatorSource).toContain("import typia from 'typia';");
   expect(repairedParentValidatorSource).toContain(
+    "import currentManifest from './manifest-defaults-document';"
+  );
+  expect(repairedParentValidatorSource).toContain(
     "assert: typia.createAssert< FaqStackAttributes >()"
   );
   expect(repairedChildValidatorSource).toContain("import typia from 'typia';");
   expect(repairedChildValidatorSource).toContain(
+    "import currentManifest from './manifest-defaults-document';"
+  );
+  expect(repairedChildValidatorSource).toContain(
     "assert: typia.createAssert< FaqStackItemAttributes >()"
   );
+  typecheckGeneratedProject(targetDir);
+}, 60_000);
+
+test("add compound block backfills a missing manifest-defaults wrapper during legacy validator repair", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-compound-legacy-validator-wrapper-backfill"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description:
+        "Demo workspace add compound legacy validator wrapper backfill",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-compound-legacy-validator-wrapper-backfill",
+      textDomain: "demo-space",
+      title:
+        "Demo Workspace Add Compound Legacy Validator Wrapper Backfill",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "block",
+      "faq-stack",
+      "--template",
+      "compound",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  writeLegacyValidatorToolkitFixture(targetDir);
+  fs.rmSync(
+    path.join(
+      targetDir,
+      "src",
+      "blocks",
+      "faq-stack",
+      "manifest-defaults-document.ts"
+    )
+  );
+  writeLegacyCompoundValidatorFixture(
+    targetDir,
+    "faq-stack",
+    "FaqStackAttributes",
+    "FaqStackAttributes"
+  );
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "block",
+      "feature-grid",
+      "--template",
+      "compound",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const manifestDefaultsWrapperSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "blocks",
+      "faq-stack",
+      "manifest-defaults-document.ts"
+    ),
+    "utf8"
+  );
+  const repairedParentValidatorSource = fs.readFileSync(
+    path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),
+    "utf8"
+  );
+
+  expect(manifestDefaultsWrapperSource).toContain(
+    "import rawCurrentManifest from './typia.manifest.json';"
+  );
+  expect(manifestDefaultsWrapperSource).toContain(
+    "defineManifestDefaultsDocument( rawCurrentManifest )"
+  );
+  expect(repairedParentValidatorSource).toContain(
+    "import currentManifest from './manifest-defaults-document';"
+  );
+
   typecheckGeneratedProject(targetDir);
 }, 60_000);
 
@@ -1427,6 +1534,112 @@ test("add compound block ignores a block-commented typia import during legacy va
 
   expect(typiaImportMatches).toHaveLength(1);
   expect(repairedParentValidatorSource).toContain("/*");
+  expect(repairedParentValidatorSource).toContain(
+    "assert: typia.createAssert< FaqStackAttributes >()"
+  );
+
+  typecheckGeneratedProject(targetDir);
+}, 30_000);
+
+test("add compound block ignores a block-commented manifest import during legacy validator repair", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-compound-legacy-validator-block-commented-manifest-import"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description:
+        "Demo workspace add compound legacy validator block commented manifest import",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-compound-legacy-validator-block-commented-manifest-import",
+      textDomain: "demo-space",
+      title:
+        "Demo Workspace Add Compound Legacy Validator Block Commented Manifest Import",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "block",
+      "faq-stack",
+      "--template",
+      "compound",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  writeLegacyValidatorToolkitFixture(targetDir);
+
+  fs.writeFileSync(
+    path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),
+    [
+      "/*",
+      'import currentManifest from "./typia.manifest.json";',
+      "*/",
+      'import type {',
+      "\tFaqStackAttributes,",
+      '} from "./types";',
+      'import { createTemplateValidatorToolkit } from "../../validator-toolkit";',
+      'import currentManifest from "./typia.manifest.json";',
+      "",
+      "const scaffoldValidators = createTemplateValidatorToolkit< FaqStackAttributes >( {",
+      "\tmanifest: currentManifest,",
+      "} );",
+      "",
+      "export const validateFaqStackAttributes =",
+      "\tscaffoldValidators.validateAttributes;",
+      "",
+      "export const validators = scaffoldValidators.validators;",
+      "",
+      "export const sanitizeFaqStackAttributes =",
+      "\tscaffoldValidators.sanitizeAttributes;",
+      "",
+      "export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;",
+      "",
+    ].join("\n"),
+    "utf8"
+  );
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "block",
+      "feature-grid",
+      "--template",
+      "compound",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const repairedParentValidatorSource = fs.readFileSync(
+    path.join(targetDir, "src", "blocks", "faq-stack", "validators.ts"),
+    "utf8"
+  );
+
+  expect(repairedParentValidatorSource).toContain(
+    "import currentManifest from './manifest-defaults-document';"
+  );
+  expect(repairedParentValidatorSource).toContain(
+    'import currentManifest from "./typia.manifest.json";'
+  );
   expect(repairedParentValidatorSource).toContain(
     "assert: typia.createAssert< FaqStackAttributes >()"
   );

@@ -70,11 +70,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DEFAULT_REPO_ROOT = path.resolve(__dirname, '..');
 const REPORT_MARKER = '<!-- gutenberg-upstream-watch -->';
+const GITHUB_SEARCH_PER_PAGE_LIMIT = 100;
 
-function parseIntegerOption(value, optionName) {
+function parseIntegerOption(value, optionName, { max = null } = {}) {
 	const parsed = Number.parseInt(value, 10);
 	if (!Number.isInteger(parsed) || parsed <= 0) {
 		throw new Error(`${optionName} must be a positive integer, received ${JSON.stringify(value)}.`);
+	}
+
+	if (typeof max === 'number') {
+		return Math.min(parsed, max);
 	}
 
 	return parsed;
@@ -97,7 +102,9 @@ export function parseArgs(argv) {
 		}
 
 		if (argument === '--max-results') {
-			options.maxResultsPerQuery = parseIntegerOption(argv[++index], '--max-results');
+			options.maxResultsPerQuery = parseIntegerOption(argv[++index], '--max-results', {
+				max: GITHUB_SEARCH_PER_PAGE_LIMIT,
+			});
 			continue;
 		}
 
@@ -323,7 +330,7 @@ export function renderWatchReport(report) {
 		'',
 		'## Follow-up path',
 		'',
-		'- Review this report in issue #283 or the uploaded workflow artifact.',
+		`- Review this report in issue #${report.issueNumber} or the uploaded workflow artifact.`,
 		'- If package-version drift or an upstream TypeScript change affects local facades, generated-project compatibility, or helper assumptions, open or refresh a normal follow-up issue/PR in this repository.',
 		'- Keep release work on `main`/`release/sampo`; do not patch the release branch directly from this watch lane.',
 	);

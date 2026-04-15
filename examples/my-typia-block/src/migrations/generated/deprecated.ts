@@ -1,4 +1,6 @@
 /* eslint-disable prettier/prettier */
-import type { BlockConfiguration } from '@wp-typia/block-types/blocks/registration';
+import type { BlockDeprecationList } from '@wp-typia/block-types/blocks/registration';
 
-export const deprecated: NonNullable<BlockConfiguration['deprecated']> = [];
+import type { MyTypiaBlockAttributes } from '../../types';
+
+export const deprecated: BlockDeprecationList<MyTypiaBlockAttributes> = [];

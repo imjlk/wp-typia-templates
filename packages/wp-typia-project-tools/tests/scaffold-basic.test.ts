@@ -12,6 +12,7 @@ import {
   wpTypiaPackageManifest,
 } from './helpers/scaffold-test-harness.js';
 import { scaffoldProject } from '../src/runtime/index.js';
+import { applyMigrationUiCapability } from '../src/runtime/migration-ui-capability.js';
 
 describe('@wp-typia/project-tools scaffold core', () => {
   const tempRoot = createScaffoldTempRoot('wp-typia-scaffold-basic-');
@@ -67,6 +68,18 @@ describe('@wp-typia/project-tools scaffold core', () => {
           path.join(targetDir, 'src', 'typia.manifest.json'),
           'utf8',
         ),
+      );
+      const generatedManifestWrapper = fs.readFileSync(
+        path.join(targetDir, 'src', 'manifest-document.ts'),
+        'utf8',
+      );
+      const generatedManifestDefaultsWrapper = fs.readFileSync(
+        path.join(targetDir, 'src', 'manifest-defaults-document.ts'),
+        'utf8',
+      );
+      const generatedBlockMetadata = fs.readFileSync(
+        path.join(targetDir, 'src', 'block-metadata.ts'),
+        'utf8',
       );
       const generatedEditorStyle = fs.readFileSync(
         path.join(targetDir, 'src', 'editor.scss'),
@@ -199,22 +212,35 @@ describe('@wp-typia/project-tools scaffold core', () => {
       expect(generatedStyle).toContain('.wp-block-demo-space-demo-npm');
       expect(generatedHooks).toContain('@wp-typia/block-runtime/validation');
       expect(generatedHooks).toContain('createUseTypiaValidationHook');
+      expect(generatedBlockMetadata).toContain(
+        'defineScaffoldBlockMetadata(rawMetadata)',
+      );
+      expect(generatedManifestWrapper).toContain(
+        'defineManifestDocument(rawCurrentManifest)',
+      );
+      expect(generatedManifestDefaultsWrapper).toContain(
+        'defineManifestDefaultsDocument(rawCurrentManifest)',
+      );
       expect(generatedIndex).toContain('@wp-typia/block-runtime/blocks');
       expect(generatedIndex).toContain('buildScaffoldBlockRegistration');
       expect(generatedIndex).toContain(
         '@wp-typia/block-types/blocks/registration',
       );
       expect(generatedIndex).not.toContain('type ScaffoldBlockMetadata');
-      expect(generatedIndex).toContain(
-        'parseScaffoldBlockMetadata<BlockConfiguration<DemoNpmAttributes>>(metadata)',
-      );
+      expect(generatedIndex).toContain("import metadata from './block-metadata';");
       expect(generatedIndex).toContain('@wp-typia/block-types/blocks/supports');
       expect(generatedIndex).toContain("import './editor.scss';");
       expect(generatedIndex).toContain('} satisfies BlockSupports;');
       expect(generatedIndex).toContain('Typia-powered type-safe block');
+      expect(generatedEdit).toContain(
+        "import currentManifest from './manifest-document';",
+      );
       expect(generatedTypes).not.toMatch(/[가-힣]/u);
       expect(generatedValidators).toContain('from "./validator-toolkit"');
       expect(generatedValidators).toContain("import typia from 'typia';");
+      expect(generatedValidators).toContain(
+        'from "./manifest-defaults-document"',
+      );
       expect(generatedValidators).toContain(
         '@wp-typia/block-runtime/identifiers',
       );
@@ -339,9 +365,8 @@ describe('@wp-typia/project-tools scaffold core', () => {
       expect(generatedIndex).toContain(
         './migrations/generated/demo-migration-ui/deprecated',
       );
-      expect(generatedIndex).toContain(
-        "deprecated as NonNullable<BlockConfiguration<DemoMigrationUiAttributes>['deprecated']>",
-      );
+      expect(generatedIndex).toContain('deprecated,');
+      expect(generatedIndex).not.toContain('as NonNullable<BlockConfiguration');
       expect(migrationConfig).toContain("key: 'demo-migration-ui'");
       expect(migrationConfig).toContain("blockJsonFile: 'src/block.json'");
       expect(
@@ -508,6 +533,51 @@ describe('@wp-typia/project-tools scaffold core', () => {
     { timeout: 30_000 },
   );
 
+  test('migration UI capability patches legacy block.json metadata imports', async () => {
+    const targetDir = path.join(tempRoot, 'demo-migration-ui-legacy-anchor');
+
+    await scaffoldProject({
+      projectDir: targetDir,
+      templateId: 'basic',
+      packageManager: 'npm',
+      noInstall: true,
+      answers: {
+        author: 'Test Runner',
+        description: 'Demo migration ui legacy anchor',
+        namespace: 'create-block',
+        slug: 'demo-migration-ui-legacy-anchor',
+        title: 'Demo Migration UI Legacy Anchor',
+      },
+    });
+
+    const indexPath = path.join(targetDir, 'src', 'index.tsx');
+    fs.writeFileSync(
+      indexPath,
+      fs
+        .readFileSync(indexPath, 'utf8')
+        .replace("import metadata from './block-metadata';", "import metadata from './block.json';"),
+      'utf8',
+    );
+
+    await applyMigrationUiCapability({
+      packageManager: 'npm',
+      projectDir: targetDir,
+      templateId: 'basic',
+      variables: {
+        namespace: 'create-block',
+        slugKebabCase: 'demo-migration-ui-legacy-anchor',
+        textDomain: 'create-block',
+      } as any,
+    });
+
+    const generatedIndex = fs.readFileSync(indexPath, 'utf8');
+    expect(generatedIndex).toContain("import metadata from './block.json';");
+    expect(generatedIndex).toContain(
+      "import { deprecated } from './migrations/generated/demo-migration-ui-legacy-anchor/deprecated';",
+    );
+    expect(generatedIndex).toContain('deprecated,');
+  });
+
   test(
     'scaffoldProject creates an interactivity template with typed validation wiring',
     async () => {
@@ -552,6 +622,18 @@ describe('@wp-typia/project-tools scaffold core', () => {
           path.join(targetDir, 'src', 'typia.manifest.json'),
           'utf8',
         ),
+      );
+      const generatedManifestWrapper = fs.readFileSync(
+        path.join(targetDir, 'src', 'manifest-document.ts'),
+        'utf8',
+      );
+      const generatedManifestDefaultsWrapper = fs.readFileSync(
+        path.join(targetDir, 'src', 'manifest-defaults-document.ts'),
+        'utf8',
+      );
+      const generatedBlockMetadata = fs.readFileSync(
+        path.join(targetDir, 'src', 'block-metadata.ts'),
+        'utf8',
       );
       const generatedSave = fs.readFileSync(
         path.join(targetDir, 'src', 'save.tsx'),
@@ -651,7 +733,9 @@ describe('@wp-typia/project-tools scaffold core', () => {
         '@wp-typia/project-tools/schema-core',
       );
       expect(generatedEdit).toContain('InspectorFromManifest');
-      expect(generatedEdit).toContain('parseManifestDocument');
+      expect(generatedEdit).toContain(
+        "import currentManifest from './manifest-document';",
+      );
       expect(generatedEdit).not.toContain(
         'currentManifest as ManifestDocument',
       );
@@ -676,12 +760,19 @@ describe('@wp-typia/project-tools scaffold core', () => {
       );
       expect(generatedEdit).not.toContain('data-wp-class="is-active"');
       expect(generatedValidators).toContain('from "./validator-toolkit"');
+      expect(generatedBlockMetadata).toContain(
+        'defineScaffoldBlockMetadata(rawMetadata)',
+      );
+      expect(generatedManifestWrapper).toContain(
+        'defineManifestDocument(rawCurrentManifest)',
+      );
+      expect(generatedManifestDefaultsWrapper).toContain(
+        'defineManifestDefaultsDocument(rawCurrentManifest)',
+      );
       expect(generatedIndex).toContain('@wp-typia/block-runtime/blocks');
       expect(generatedIndex).toContain('buildScaffoldBlockRegistration');
       expect(generatedIndex).not.toContain('type ScaffoldBlockMetadata');
-      expect(generatedIndex).toContain(
-        'parseScaffoldBlockMetadata<BlockConfiguration<DemoInteractivityAttributes>>(metadata)',
-      );
+      expect(generatedIndex).toContain("import metadata from './block-metadata';");
       expect(generatedIndex).toContain('@wp-typia/block-types/blocks/supports');
       expect(generatedIndex).toContain('} satisfies BlockSupports;');
       expect(generatedPluginBootstrap).toContain(

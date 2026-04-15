@@ -35,6 +35,15 @@ Structural rules no longer live primarily in Mustache templates. Built-in
 generation now starts from a typed spec and only later renders files from that
 spec.
 
+Generated projects now consume JSON artifacts through typed wrapper modules
+instead of local casts:
+
+- `block-metadata.ts` wraps `block.json`
+- `manifest-document.ts` wraps `typia.manifest.json` for editor and migration
+  consumers
+- `manifest-defaults-document.ts` wraps `typia.manifest.json` for validator and
+  defaults-oriented consumers
+
 ### `BlockGeneratorService` is the orchestration boundary
 
 `BlockGeneratorService` is the stable internal service boundary for built-in
@@ -79,6 +88,9 @@ Emitter-owned built-in artifacts:
 
 - `types.ts`
 - `block.json`
+- `block-metadata.ts`
+- `manifest-document.ts`
+- `manifest-defaults-document.ts`
 - built-in TS/TSX scaffold bodies such as `edit.tsx`, `save.tsx`, `index.tsx`,
   `hooks.ts`, `validators.ts`, `interactivity.ts`, and `children.ts`
 - built-in style assets and block-local `render.php`

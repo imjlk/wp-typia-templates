@@ -223,6 +223,12 @@ async function ensureCollectionImport(filePath: string): Promise<void> {
 		if (source.includes(COLLECTION_IMPORT_LINE)) {
 			return source;
 		}
+		if (source.includes("import metadata from './block-metadata';")) {
+			return source.replace(
+				"import metadata from './block-metadata';",
+				`${COLLECTION_IMPORT_LINE}\nimport metadata from './block-metadata';`,
+			);
+		}
 		if (source.includes("import metadata from './block.json';")) {
 			return source.replace(
 				"import metadata from './block.json';",
@@ -290,6 +296,8 @@ async function renderWorkspacePersistenceServerModule(
 const COMPOUND_SHARED_SUPPORT_FILES = ["hooks.ts", "validator-toolkit.ts"] as const;
 const LEGACY_ASSERT_PATTERN = /assert:\s*typia\.createAssert</u;
 const LEGACY_MANIFEST_PATTERN = /\r?\n[ \t]*manifest:\s*currentManifest,/u;
+const LEGACY_VALIDATOR_MANIFEST_IMPORT_PATTERN =
+	/^[\uFEFF \t]*import\s+currentManifest\s+from\s*["']\.\/typia\.manifest\.json["'];?$/u;
 const LEGACY_TOOLKIT_CALL_PATTERN =
 	/createTemplateValidatorToolkit<\s*(?<typeName>[A-Za-z0-9_]+)\s*>\s*\(\s*\{/u;
 const LEGACY_VALIDATOR_TOOLKIT_IMPORT_PATTERN =
@@ -352,6 +360,48 @@ function hasTypiaImport(source: string): boolean {
 	return TYPIA_IMPORT_PATTERN.test(source.replace(/\/\*[\s\S]*?\*\//gu, ""));
 }
 
+function replaceFirstNonCommentLine(
+	source: string,
+	pattern: RegExp,
+	replacement: string,
+): string {
+	const lineEnding = source.includes("\r\n") ? "\r\n" : "\n";
+	const lines = source.split(/\r?\n/);
+	let inBlockComment = false;
+
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index] ?? "";
+		const trimmed = line.trimStart();
+
+		if (inBlockComment) {
+			if (trimmed.includes("*/")) {
+				inBlockComment = false;
+			}
+			continue;
+		}
+
+		if (trimmed.startsWith("//")) {
+			continue;
+		}
+
+		if (trimmed.startsWith("/*")) {
+			if (!trimmed.includes("*/")) {
+				inBlockComment = true;
+			}
+			continue;
+		}
+
+		if (!pattern.test(line)) {
+			continue;
+		}
+
+		lines[index] = replacement;
+		return lines.join(lineEnding);
+	}
+
+	return source;
+}
+
 function upgradeLegacyCompoundValidatorSource(source: string): string {
 	const typeNameMatch = source.match(LEGACY_TOOLKIT_CALL_PATTERN);
 	const typeName = typeNameMatch?.groups?.typeName;
@@ -365,6 +415,12 @@ function upgradeLegacyCompoundValidatorSource(source: string): string {
 	if (!hasTypiaImport(nextSource)) {
 		nextSource = `import typia from 'typia';\n${nextSource}`;
 	}
+
+	nextSource = replaceFirstNonCommentLine(
+		nextSource,
+		LEGACY_VALIDATOR_MANIFEST_IMPORT_PATTERN,
+		"import currentManifest from './manifest-defaults-document';",
+	);
 
 	nextSource = nextSource.replace(
 		LEGACY_TOOLKIT_CALL_PATTERN,
@@ -397,6 +453,35 @@ function upgradeLegacyCompoundValidatorSource(source: string): string {
 	}
 
 	return replacedManifest;
+}
+
+function renderLegacyManifestDefaultsWrapperSource(): string {
+	return [
+		"import rawCurrentManifest from './typia.manifest.json';",
+		"import { defineManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';",
+		"",
+		"const currentManifest = defineManifestDefaultsDocument( rawCurrentManifest );",
+		"",
+		"export default currentManifest;",
+		"",
+	].join("\n");
+}
+
+async function ensureLegacyCompoundValidatorManifestDefaultsWrapper(
+	validatorPath: string,
+): Promise<void> {
+	const validatorDir = path.dirname(validatorPath);
+	const wrapperPath = path.join(validatorDir, "manifest-defaults-document.ts");
+	const manifestPath = path.join(validatorDir, "typia.manifest.json");
+	if (fs.existsSync(wrapperPath) || !fs.existsSync(manifestPath)) {
+		return;
+	}
+
+	await fsp.writeFile(
+		wrapperPath,
+		renderLegacyManifestDefaultsWrapperSource(),
+		"utf8",
+	);
 }
 
 async function collectLegacyCompoundValidatorPaths(projectDir: string): Promise<string[]> {
@@ -448,6 +533,7 @@ async function ensureCompoundWorkspaceSupportFiles(
 			continue;
 		}
 
+		await ensureLegacyCompoundValidatorManifestDefaultsWrapper(validatorPath);
 		await fsp.writeFile(
 			validatorPath,
 			upgradeLegacyCompoundValidatorSource(currentSource),

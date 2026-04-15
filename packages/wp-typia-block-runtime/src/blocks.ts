@@ -261,6 +261,18 @@ export interface ScaffoldBlockMetadata extends ScaffoldBlockRegistrationSettings
   name: string;
 }
 
+/**
+ * Wrapper helper for generated `block.json` modules.
+ *
+ * Wrapper files validate the raw JSON once at import time so downstream
+ * scaffold code can consume typed metadata without repeating parse calls.
+ */
+export function defineScaffoldBlockMetadata<
+  TMetadata extends Record<string, unknown>,
+>(metadata: TMetadata): ScaffoldBlockMetadata & TMetadata {
+  return parseScaffoldBlockMetadata<TMetadata>(metadata);
+}
+
 export interface BuildScaffoldBlockRegistrationResult<
   TName extends string = string,
   TSettings extends object = object,

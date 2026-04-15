@@ -1,44 +1,14 @@
+import type {
+	ManifestAttribute,
+	ManifestDocument,
+} from '@wp-typia/block-runtime/migration-types';
+
 import { isNonArrayObject } from './plain-object';
 
-export interface ManifestUnion {
-	branches: Record< string, ManifestAttribute >;
-	discriminator: string;
-}
-
-export interface ManifestAttribute {
-	typia: {
-		constraints: {
-			format: string | null;
-			maxLength: number | null;
-			maximum: number | null;
-			minLength: number | null;
-			minimum: number | null;
-			pattern: string | null;
-			typeTag: string | null;
-		};
-		defaultValue: unknown;
-		hasDefault: boolean;
-	};
-	ts: {
-		items: ManifestAttribute | null;
-		kind: 'string' | 'number' | 'boolean' | 'array' | 'object' | 'union';
-		properties: Record< string, ManifestAttribute > | null;
-		required: boolean;
-		union: ManifestUnion | null;
-	};
-	wp: {
-		defaultValue: unknown;
-		enum: Array< string | number | boolean > | null;
-		hasDefault: boolean;
-		type: 'string' | 'number' | 'boolean' | 'array' | 'object';
-	};
-}
-
-export interface ManifestDocument {
-	attributes: Record< string, ManifestAttribute >;
-	manifestVersion: 2;
-	sourceType: string;
-}
+export type {
+	ManifestAttribute,
+	ManifestDocument,
+} from '@wp-typia/block-runtime/migration-types';
 
 export interface MigrationRiskBucket {
 	count: number;
@@ -284,7 +254,9 @@ export function manifestMatchesDocument(
 	manifest: ManifestDocument,
 	attributes: Record< string, unknown >
 ): boolean {
-	for ( const [ key, attribute ] of Object.entries( manifest.attributes ) ) {
+	for ( const [ key, attribute ] of Object.entries(
+		manifest.attributes ?? {}
+	) ) {
 		const value = attributes[ key ];
 		if (
 			( value === undefined || value === null ) &&
@@ -306,23 +278,23 @@ export function summarizeVersionDelta(
 	legacyManifest: ManifestDocument,
 	currentManifest: ManifestDocument
 ): { added: string[]; removed: string[]; changed: string[] } {
-	const added = Object.keys( currentManifest.attributes ).filter(
-		( key ) => ! ( key in legacyManifest.attributes )
+	const currentAttributes = currentManifest.attributes ?? {};
+	const legacyAttributes = legacyManifest.attributes ?? {};
+	const added = Object.keys( currentAttributes ).filter(
+		( key ) => ! ( key in legacyAttributes )
 	);
-	const removed = Object.keys( legacyManifest.attributes ).filter(
-		( key ) => ! ( key in currentManifest.attributes )
+	const removed = Object.keys( legacyAttributes ).filter(
+		( key ) => ! ( key in currentAttributes )
 	);
-	const changed = Object.keys( currentManifest.attributes ).filter(
-		( key ) => {
-			if ( ! ( key in legacyManifest.attributes ) ) {
-				return false;
-			}
-			return (
-				JSON.stringify( currentManifest.attributes[ key ] ) !==
-				JSON.stringify( legacyManifest.attributes[ key ] )
-			);
+	const changed = Object.keys( currentAttributes ).filter( ( key ) => {
+		if ( ! ( key in legacyAttributes ) ) {
+			return false;
 		}
-	);
+		return (
+			JSON.stringify( currentAttributes[ key ] ) !==
+			JSON.stringify( legacyAttributes[ key ] )
+		);
+	} );
 
 	return { added, changed, removed };
 }

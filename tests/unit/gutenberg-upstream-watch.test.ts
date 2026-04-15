@@ -8,6 +8,7 @@ import {
 	collectLocalDependencyPins,
 	evaluateBlocksVersionDrift,
 	extractDependencySpec,
+	parseArgs,
 	renderWatchReport,
 } from '../../scripts/gutenberg-upstream-watch.mjs';
 
@@ -89,6 +90,10 @@ describe('gutenberg-upstream-watch helpers', () => {
 		expect(evaluateBlocksVersionDrift('^15.2.0', '15.3.0').hasDrift).toBe(true);
 	});
 
+	test('parseArgs clamps max-results to the GitHub Search per_page limit', () => {
+		expect(parseArgs(['--max-results', '250']).maxResultsPerQuery).toBe(100);
+	});
+
 	test('renderWatchReport includes version drift, tracked areas, and follow-up guidance', () => {
 		const markdown = renderWatchReport({
 			areaActivity: [
@@ -149,5 +154,6 @@ describe('gutenberg-upstream-watch helpers', () => {
 		expect(markdown).toContain('Block registration types');
 		expect(markdown).toContain('Tighten Gutenberg block typing');
 		expect(markdown).toContain('Follow-up path');
+		expect(markdown).toContain('issue #283');
 	});
 });

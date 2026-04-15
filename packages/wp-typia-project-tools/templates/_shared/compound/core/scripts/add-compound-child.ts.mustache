@@ -410,12 +410,42 @@ export const useTypiaValidation = createUseTypiaValidationHook( {
 `;
 }
 
+function renderBlockMetadataFile(): string {
+	return `import rawMetadata from './block.json';
+import { defineScaffoldBlockMetadata } from '@wp-typia/block-runtime/blocks';
+
+const metadata = defineScaffoldBlockMetadata( rawMetadata );
+
+export default metadata;
+`;
+}
+
+function renderManifestDocumentFile(): string {
+	return `import rawCurrentManifest from './typia.manifest.json';
+import { defineManifestDocument } from '@wp-typia/block-runtime/editor';
+
+const currentManifest = defineManifestDocument( rawCurrentManifest );
+
+export default currentManifest;
+`;
+}
+
+function renderManifestDefaultsDocumentFile(): string {
+	return `import rawCurrentManifest from './typia.manifest.json';
+import { defineManifestDefaultsDocument } from '@wp-typia/block-runtime/defaults';
+
+const currentManifest = defineManifestDefaultsDocument( rawCurrentManifest );
+
+export default currentManifest;
+`;
+}
+
 function renderValidatorsFile(
 	childTypeName: string,
 	childInterfaceName: string
 ): string {
 	return `import typia from 'typia';
-import currentManifest from './typia.manifest.json';
+import currentManifest from './manifest-defaults-document';
 import type {
 \t${ childTypeName },
 \t${ childInterfaceName }ValidationResult,
@@ -546,7 +576,7 @@ export default function Save( {
 }
 
 function renderIndexFile( childTypeName: string, childFolderSlug: string ): string {
-	return `import { registerBlockType } from '@wordpress/blocks';
+return `import { registerBlockType } from '@wordpress/blocks';
 import type { BlockConfiguration } from '@wp-typia/block-types/blocks/registration';
 import {
 \tbuildScaffoldBlockRegistration,
@@ -555,7 +585,7 @@ import {
 
 import Edit from './edit';
 import Save from './save';
-import metadata from './block.json';
+import metadata from './block-metadata';
 import '${ PARENT_STYLE_IMPORT }';
 
 import type { ${ childTypeName } } from './types';
@@ -624,6 +654,21 @@ function main() {
 	fs.writeFileSync(
 		path.join( childDir, 'typia.manifest.json' ),
 		renderStarterManifestFile( childTypeName, childTitle ),
+		'utf8'
+	);
+	fs.writeFileSync(
+		path.join( childDir, 'block-metadata.ts' ),
+		renderBlockMetadataFile(),
+		'utf8'
+	);
+	fs.writeFileSync(
+		path.join( childDir, 'manifest-document.ts' ),
+		renderManifestDocumentFile(),
+		'utf8'
+	);
+	fs.writeFileSync(
+		path.join( childDir, 'manifest-defaults-document.ts' ),
+		renderManifestDefaultsDocumentFile(),
 		'utf8'
 	);
 	fs.writeFileSync( path.join( childDir, 'hooks.ts' ), renderHooksFile(), 'utf8' );

@@ -189,6 +189,17 @@ export function renderMigrationRuleFile({
 	return `${lines.join("\n")}\n`;
 }
 
+/**
+ * Renders the generated migration registry module for a block target.
+ *
+ * Prefers typed manifest wrapper modules when they are available in the
+ * project, and otherwise falls back to parsing the raw manifest JSON import.
+ *
+ * @param state The resolved migration project state.
+ * @param blockKey The stable key for the block whose registry is being generated.
+ * @param entries The generated migration entries to include in the registry.
+ * @returns The generated TypeScript source code for the migration registry file.
+ */
 export function renderMigrationRegistryFile(
 	state: MigrationProjectState,
 	blockKey: string,
@@ -198,10 +209,35 @@ export function renderMigrationRegistryFile(
 	if (!block) {
 		throw new Error(`Unknown migration block target: ${blockKey}`);
 	}
+	const generatedDir = getGeneratedDir(block, state);
+	const currentManifestWrapperCandidates = [
+		block.manifestFile.replace(/typia\.manifest\.json$/u, "manifest-document.ts"),
+		path.join(path.dirname(block.typesFile), "manifest-document.ts"),
+	].filter(
+		(candidate, index, allCandidates) =>
+			candidate !== block.manifestFile && allCandidates.indexOf(candidate) === index,
+	);
+	const currentManifestWrapperFile =
+		currentManifestWrapperCandidates.find((candidate) =>
+			fs.existsSync(path.join(state.projectDir, candidate)),
+		) ?? null;
+	const currentManifestSourceFile = currentManifestWrapperFile ?? block.manifestFile;
+	const currentManifestImport = normalizeImportPath(
+		path.relative(
+			generatedDir,
+			path.join(state.projectDir, currentManifestSourceFile),
+		),
+		currentManifestWrapperFile !== null,
+	);
+	const currentManifestExpression = currentManifestWrapperFile !== null
+		? "rawCurrentManifest"
+		: "parseManifestDocument<ManifestDocument>(rawCurrentManifest)";
 	const imports = [
-		`import currentManifest from "${normalizeImportPath(path.relative(getGeneratedDir(block, state), path.join(state.projectDir, block.manifestFile)))}";`,
-		`import { parseManifestDocument } from "@wp-typia/block-runtime/editor";`,
+		`import rawCurrentManifest from "${currentManifestImport}";`,
 		`import type { ManifestDocument, MigrationRiskSummary } from "${normalizeImportPath(path.relative(getGeneratedDir(block, state), path.join(state.projectDir, "src", "migrations", "helpers.ts")), true)}";`,
+		...(entries.length > 0 || currentManifestWrapperFile === null
+			? [`import { parseManifestDocument } from "@wp-typia/block-runtime/editor";`]
+			: []),
 	];
 	const body: string[] = [];
 
@@ -235,7 +271,7 @@ export const migrationRegistry: {
 	entries: MigrationRegistryEntry[];
 } = {
 	currentMigrationVersion: "${state.config.currentMigrationVersion}",
-	currentManifest: parseManifestDocument<ManifestDocument>(currentManifest),
+	currentManifest: ${currentManifestExpression},
 	entries: [
 ${body.join("\n")}
 	],
@@ -245,16 +281,53 @@ export default migrationRegistry;
 `;
 }
 
-export function renderGeneratedDeprecatedFile(entries: MigrationEntry[]): string {
+/**
+ * Renders the generated deprecated module for a block target.
+ *
+ * The emitted module exposes the ordered deprecation array consumed by block
+ * registration and migration helpers.
+ *
+ * @param state The resolved migration project state.
+ * @param blockKey The stable key for the block whose deprecated entries are being generated.
+ * @param entries The migration entries that define deprecated manifest versions.
+ * @returns The generated TypeScript source code for the deprecated module.
+ */
+export function renderGeneratedDeprecatedFile(
+	state: MigrationProjectState,
+	blockKey: string,
+	entries: MigrationEntry[],
+): string {
+	const block = state.blocks.find((entry) => entry.key === blockKey);
+	if (!block) {
+		throw new Error(`Unknown migration block target: ${blockKey}`);
+	}
+	const currentTypeName =
+		typeof block.currentManifest.sourceType === "string" &&
+		block.currentManifest.sourceType.length > 0
+			? block.currentManifest.sourceType
+			: "Record<string, unknown>";
+	const hasNamedCurrentType = currentTypeName !== "Record<string, unknown>";
+	const generatedDir = getGeneratedDir(block, state);
+	const typesImport = normalizeImportPath(
+		path.relative(generatedDir, path.join(state.projectDir, block.typesFile)),
+		true,
+	);
+
 	if (entries.length === 0) {
 		return `/* eslint-disable prettier/prettier */
-import type { BlockConfiguration } from "@wp-typia/block-types/blocks/registration";
+import type { BlockDeprecationList } from "@wp-typia/block-types/blocks/registration";
+${hasNamedCurrentType ? `import type { ${currentTypeName} } from "${typesImport}";\n` : ""}
 
-export const deprecated: NonNullable<BlockConfiguration["deprecated"]> = [];
+export const deprecated: BlockDeprecationList<${currentTypeName}> = [];
 `;
 	}
 
-	const imports = [`import type { BlockConfiguration } from "@wp-typia/block-types/blocks/registration";`];
+	const imports = [
+		`import type { BlockConfiguration, BlockDeprecationList } from "@wp-typia/block-types/blocks/registration";`,
+		...(hasNamedCurrentType
+			? [`import type { ${currentTypeName} } from "${typesImport}";`]
+			: []),
+	];
 	const definitions: string[] = [];
 	const arrayEntries: string[] = [];
 
@@ -262,7 +335,7 @@ export const deprecated: NonNullable<BlockConfiguration["deprecated"]> = [];
 		imports.push(`import block_${index} from "${entry.blockJsonImport}";`);
 		imports.push(`import save_${index} from "${entry.saveImport}";`);
 		imports.push(`import * as rule_${index} from "${entry.ruleImport}";`);
-		definitions.push(`const deprecated_${index}: NonNullable<BlockConfiguration["deprecated"]>[number] = {`);
+		definitions.push(`const deprecated_${index}: BlockDeprecationList<${currentTypeName}>[number] = {`);
 		definitions.push(
 			`\tattributes: (block_${index}.attributes ?? {}) as BlockConfiguration["attributes"],`,
 		);
@@ -279,7 +352,7 @@ ${imports.join("\n")}
 
 ${definitions.join("\n\n")}
 
-export const deprecated: NonNullable<BlockConfiguration["deprecated"]> = [${arrayEntries.join(", ")}];
+export const deprecated: BlockDeprecationList<${currentTypeName}> = [${arrayEntries.join(", ")}];
 `;
 }
 

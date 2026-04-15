@@ -141,6 +141,20 @@ export function parseManifestDocument<
 	return assertManifestDocument<TDocument>(value);
 }
 
+/**
+ * Wrapper helper for generated `typia.manifest.json` modules.
+ *
+ * Wrapper files validate the raw JSON once at import time so editor and
+ * migration consumers can rely on a typed manifest boundary without local
+ * parse calls.
+ */
+export function defineManifestDocument<
+	TDocument extends Record<string, unknown>,
+>(manifest: TDocument): ManifestDocument & TDocument {
+	return parseManifestDocument<TDocument>(manifest) as ManifestDocument &
+		TDocument;
+}
+
 export type EditorControlKind =
 	| "toggle"
 	| "select"

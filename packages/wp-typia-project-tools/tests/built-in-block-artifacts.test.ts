@@ -326,6 +326,9 @@ describe('built-in block artifacts', () => {
       'basic',
       [
         'src/hooks.ts',
+        'src/block-metadata.ts',
+        'src/manifest-document.ts',
+        'src/manifest-defaults-document.ts',
         'src/edit.tsx',
         'src/save.tsx',
         'src/index.tsx',
@@ -335,46 +338,58 @@ describe('built-in block artifacts', () => {
         'src/render.php',
       ],
     ],
-    [
-      'interactivity',
       [
-        'src/hooks.ts',
-        'src/edit.tsx',
-        'src/save.tsx',
-        'src/index.tsx',
+        'interactivity',
+        [
+          'src/hooks.ts',
+          'src/block-metadata.ts',
+          'src/manifest-document.ts',
+          'src/manifest-defaults-document.ts',
+          'src/edit.tsx',
+          'src/save.tsx',
+          'src/index.tsx',
         'src/interactivity.ts',
         'src/validators.ts',
         'src/editor.scss',
         'src/style.scss',
       ],
     ],
-    [
-      'persistence',
       [
-        'src/hooks.ts',
-        'src/edit.tsx',
-        'src/save.tsx',
-        'src/index.tsx',
+        'persistence',
+        [
+          'src/hooks.ts',
+          'src/block-metadata.ts',
+          'src/manifest-document.ts',
+          'src/manifest-defaults-document.ts',
+          'src/edit.tsx',
+          'src/save.tsx',
+          'src/index.tsx',
         'src/interactivity.ts',
         'src/validators.ts',
         'src/style.scss',
         'src/render.php',
       ],
     ],
-    [
-      'compound',
       [
-        'src/hooks.ts',
-        'src/blocks/demo-compound/edit.tsx',
-        'src/blocks/demo-compound/save.tsx',
-        'src/blocks/demo-compound/index.tsx',
+        'compound',
+        [
+          'src/hooks.ts',
+          'src/blocks/demo-compound/block-metadata.ts',
+          'src/blocks/demo-compound/manifest-document.ts',
+          'src/blocks/demo-compound/manifest-defaults-document.ts',
+          'src/blocks/demo-compound/edit.tsx',
+          'src/blocks/demo-compound/save.tsx',
+          'src/blocks/demo-compound/index.tsx',
         'src/blocks/demo-compound/hooks.ts',
         'src/blocks/demo-compound/validators.ts',
-        'src/blocks/demo-compound/children.ts',
-        'src/blocks/demo-compound/interactivity.ts',
-        'src/blocks/demo-compound-item/edit.tsx',
-        'src/blocks/demo-compound-item/save.tsx',
-        'src/blocks/demo-compound-item/index.tsx',
+          'src/blocks/demo-compound/children.ts',
+          'src/blocks/demo-compound/interactivity.ts',
+          'src/blocks/demo-compound-item/block-metadata.ts',
+          'src/blocks/demo-compound-item/manifest-document.ts',
+          'src/blocks/demo-compound-item/manifest-defaults-document.ts',
+          'src/blocks/demo-compound-item/edit.tsx',
+          'src/blocks/demo-compound-item/save.tsx',
+          'src/blocks/demo-compound-item/index.tsx',
         'src/blocks/demo-compound-item/hooks.ts',
         'src/blocks/demo-compound-item/validators.ts',
         'src/blocks/demo-compound/style.scss',
@@ -414,7 +429,19 @@ describe('built-in block artifacts', () => {
         '@wp-typia/block-types/blocks/registration',
       );
       expect(indexArtifact?.source).not.toContain('type ScaffoldBlockMetadata');
-      expect(indexArtifact?.source).toContain('parseScaffoldBlockMetadata');
+      expect(indexArtifact?.source).toContain(
+        "import metadata from './block-metadata';",
+      );
+      expect(
+        relativePaths.some((relativePath) =>
+          relativePath.endsWith('manifest-document.ts'),
+        ),
+      ).toBe(true);
+      expect(
+        relativePaths.some((relativePath) =>
+          relativePath.endsWith('manifest-defaults-document.ts'),
+        ),
+      ).toBe(true);
 
       if (templateId === 'interactivity') {
         const interactivityArtifact = codeArtifacts.find(

@@ -32,6 +32,29 @@ test("bun entry bootstraps migrations and sanitizes snapshot metadata", () => {
 	expect(snapshotBlock.editorScript).toBeUndefined();
 });
 
+test("migrate init keeps deprecated generation compatible when current manifest sourceType is missing", () => {
+	const projectDir = path.join(tempRoot, "init-project-missing-source-type");
+	createCurrentProjectFiles(projectDir);
+
+	const manifestPath = path.join(projectDir, "typia.manifest.json");
+	const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+	delete manifest.sourceType;
+	fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, "\t")}\n`, "utf8");
+
+	runCli("bun", [entryPath, "migrate", "init", "--current-migration-version", "v1"], {
+		cwd: projectDir,
+	});
+
+	const deprecatedSource = fs.readFileSync(
+		path.join(projectDir, "src", "migrations", "generated", "deprecated.ts"),
+		"utf8",
+	);
+	expect(deprecatedSource).toContain(
+		"export const deprecated: BlockDeprecationList<Record<string, unknown>> = [];",
+	);
+	expect(deprecatedSource).not.toContain('import type { MigrationAttributes }');
+});
+
 test("migrate init auto-detects current single-block scaffold layouts", () => {
 	const projectDir = path.join(tempRoot, "init-current-single-block-project");
 	createCurrentSingleBlockScaffoldProject(projectDir);
@@ -105,6 +128,54 @@ test("migrate init prefers the legacy single-block fallback when only the root m
 		fs.readFileSync(path.join(projectDir, "src", "migrations", "versions", "v1", "typia.manifest.json"), "utf8"),
 	);
 	expect(snapshotManifest.attributes.content.typia.defaultValue).toBe("Legacy");
+});
+
+test("migrate init keeps generated registry imports compatible with legacy-root retrofit layouts", () => {
+	const projectDir = path.join(tempRoot, "init-mixed-single-block-project-registry-import");
+	createMixedSingleBlockProject(projectDir);
+
+	runCli("bun", [entryPath, "migrate", "init", "--current-migration-version", "v1"], {
+		cwd: projectDir,
+	});
+
+	const registrySource = fs.readFileSync(
+		path.join(projectDir, "src", "migrations", "generated", "registry.ts"),
+		"utf8",
+	);
+	expect(registrySource).toContain(
+		'import rawCurrentManifest from "../../../typia.manifest.json";',
+	);
+	expect(registrySource).toContain(
+		"currentManifest: parseManifestDocument<ManifestDocument>(rawCurrentManifest),",
+	);
+});
+
+test("migrate init prefers src manifest wrappers for legacy-root retrofit layouts when present", () => {
+	const projectDir = path.join(tempRoot, "init-mixed-single-block-project-wrapper-import");
+	createMixedSingleBlockProject(projectDir);
+	fs.writeFileSync(
+		path.join(projectDir, "src", "manifest-document.ts"),
+		[
+			"import rawCurrentManifest from '../typia.manifest.json';",
+			"",
+			"export default rawCurrentManifest;",
+			"",
+		].join("\n"),
+		"utf8",
+	);
+
+	runCli("bun", [entryPath, "migrate", "init", "--current-migration-version", "v1"], {
+		cwd: projectDir,
+	});
+
+	const registrySource = fs.readFileSync(
+		path.join(projectDir, "src", "migrations", "generated", "registry.ts"),
+		"utf8",
+	);
+	expect(registrySource).toContain(
+		'import rawCurrentManifest from "../../manifest-document";',
+	);
+	expect(registrySource).toContain("currentManifest: rawCurrentManifest,");
 });
 
 test("migrate init falls back to single-block detection when all multi-block candidates are malformed", () => {
