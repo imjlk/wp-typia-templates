@@ -57,6 +57,7 @@ const addOptions = {
 };
 
 export const addCommand = defineCommand({
+	defaultFormat: "toon",
 	description: "Extend an official wp-typia workspace with blocks, variations, patterns, binding sources, or hooked blocks.",
 	handler: async (args) => {
 		await executeAddCommand({

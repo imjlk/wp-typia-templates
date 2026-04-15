@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import {
+	createCliCommandError,
+	formatCliDiagnosticError,
+} from "@wp-typia/project-tools/cli-diagnostics";
 
 import { addCommand } from "../src/commands/add";
 import { createCommand } from "../src/commands/create";
@@ -50,6 +54,28 @@ describe("alternate-buffer TUI lifecycle", () => {
 		);
 		expect(describeAlternateBufferFailure("wp-typia add failed", "plain")).toBe(
 			"wp-typia add failed: plain",
+		);
+	});
+
+	test("keeps alternate-buffer failures compact while non-interactive CLI failures expand into shared diagnostics", () => {
+		expect(describeAlternateBufferFailure("wp-typia create failed", new Error("boom"))).toBe(
+			"wp-typia create failed: boom",
+		);
+
+		expect(
+			formatCliDiagnosticError(
+				createCliCommandError({
+					command: "create",
+					error: new Error("boom"),
+				}),
+			),
+		).toBe(
+			[
+				"wp-typia create failed",
+				"Summary: Unable to complete the requested create workflow.",
+				"Details:",
+				"- boom",
+			].join("\n"),
 		);
 	});
 

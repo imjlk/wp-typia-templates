@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -27,6 +28,17 @@ const addFlowSource = fs.readFileSync(
 	path.join(packageRoot, "src", "ui", "add-flow.tsx"),
 	"utf8",
 );
+
+function runCapturedCommand(
+	command: string,
+	args: string[],
+	options: Parameters<typeof spawnSync>[2] = {},
+) {
+	return spawnSync(command, args, {
+		...options,
+		encoding: "utf8",
+	});
+}
 
 function createSyncFixture(options: {
 	packageManager?: string | null;
@@ -107,6 +119,7 @@ describe("wp-typia package", () => {
 		expect(projectToolsPackageManifest.bin).toBeUndefined();
 		expect(projectToolsPackageManifest.exports["./cli"]).toBeUndefined();
 		expect(projectToolsPackageManifest.exports["./cli-add"]).toBeDefined();
+		expect(projectToolsPackageManifest.exports["./cli-diagnostics"]).toBeDefined();
 		expect(projectToolsPackageManifest.exports["./cli-doctor"]).toBeDefined();
 		expect(projectToolsPackageManifest.exports["./cli-prompt"]).toBeDefined();
 		expect(projectToolsPackageManifest.exports["./cli-scaffold"]).toBeDefined();
@@ -355,6 +368,72 @@ describe("wp-typia package", () => {
 		expect(() => runUtf8Command("node", [entryPath, "create"])).toThrow(
 			"`wp-typia create` requires <project-dir>.",
 		);
+	});
+
+	test("formats create failures with a shared non-interactive diagnostic block", () => {
+		const result = runCapturedCommand("node", [entryPath, "create"]);
+
+		expect(result.status).toBe(1);
+		expect(result.stderr).toContain("Error: wp-typia create failed");
+		expect(result.stderr).toContain("Summary: Unable to complete the requested create workflow.");
+		expect(result.stderr).toContain("- `wp-typia create` requires <project-dir>.");
+	});
+
+	test("formats add failures with a shared non-interactive diagnostic block", () => {
+		const result = runCapturedCommand("node", [entryPath, "add", "variation", "promo-card"]);
+
+		expect(result.status).toBe(1);
+		expect(result.stderr).toContain("Error: wp-typia add failed");
+		expect(result.stderr).toContain("Summary: Unable to complete the requested add workflow.");
+		expect(result.stderr).toContain("- `wp-typia add variation` requires --block <block-slug>.");
+	});
+
+	test("formats migrate failures with a shared non-interactive diagnostic block", () => {
+		const result = runCapturedCommand("node", [entryPath, "migrate", "init"]);
+
+		expect(result.status).toBe(1);
+		expect(result.stderr).toContain("Error: wp-typia migrate failed");
+		expect(result.stderr).toContain(
+			"Summary: Unable to complete the requested migration command.",
+		);
+		expect(result.stderr).toContain(
+			"- `migrate init` requires --current-migration-version <label>.",
+		);
+	});
+
+	test("formats doctor failures with a summary block while keeping streamed check output", () => {
+		const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-doctor-diagnostics-"));
+
+		try {
+			fs.writeFileSync(
+				path.join(fixtureRoot, "package.json"),
+				`${JSON.stringify(
+					{
+						name: "broken-workspace",
+						private: true,
+						wpTypia: {
+							projectType: "workspace",
+						},
+					},
+					null,
+					2,
+				)}\n`,
+				"utf8",
+			);
+
+			const result = runCapturedCommand("node", [entryPath, "doctor"], {
+				cwd: fixtureRoot,
+			});
+
+			expect(result.status).toBe(1);
+			expect(result.stdout).toContain("FAIL Workspace package metadata:");
+			expect(result.stdout).toContain("FAIL wp-typia doctor summary:");
+			expect(result.stderr).toContain("Error: wp-typia doctor failed");
+			expect(result.stderr).toContain("Summary: One or more doctor checks failed.");
+			expect(result.stderr).toContain("- Workspace package metadata:");
+		} finally {
+			fs.rmSync(fixtureRoot, { force: true, recursive: true });
+		}
 	});
 
 	test("prints migrate help through the canonical verb", () => {

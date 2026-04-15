@@ -430,7 +430,7 @@ test("runScaffoldFlow does not prompt for migration UI on external templates", a
 
 test("node entry exposes templates and doctor commands", () => {
   const templatesOutput = runCli("node", [entryPath, "templates", "list"]);
-  const doctorOutput = runCli("node", [entryPath, "doctor"]);
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"]);
 
   expect(templatesOutput).toContain("basic");
   expect(templatesOutput).toContain("interactivity");
@@ -507,7 +507,7 @@ test("node entry exposes Bunli-owned help and rejects the removed migrations ali
 
 test("bun entry exposes templates and doctor commands", () => {
   const templatesOutput = runCli("bun", [entryPath, "templates", "list"]);
-  const doctorOutput = runCli("bun", [entryPath, "doctor"]);
+  const doctorOutput = runCli("bun", [entryPath, "doctor", "--format", "json"]);
 
   expect(templatesOutput).toContain("basic");
   expect(templatesOutput).toContain("interactivity");

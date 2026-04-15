@@ -12,6 +12,8 @@
  * `getWorkspaceBlockSelectOptions`, and `seedWorkspaceMigrationProject` for
  * explicit `wp-typia add` flows,
  * `getDoctorChecks`, `runDoctor`, and `DoctorCheck` for diagnostics,
+ * `createCliCommandError` and `formatCliDiagnosticError` for shared
+ * non-interactive failure rendering,
  * `formatHelpText` for top-level CLI usage output, scaffold helpers such as
  * `createReadlinePrompt`, `getNextSteps`, `getOptionalOnboarding`,
  * `runScaffoldFlow`, and `ReadlinePrompt` for interactive project creation,
@@ -21,6 +23,17 @@
  * template inspection flows.
  */
 export { getDoctorChecks, runDoctor, type DoctorCheck } from "./cli-doctor.js";
+export {
+	createCliCommandError,
+	CliDiagnosticError,
+	formatCliDiagnosticError,
+	formatDoctorCheckLine,
+	formatDoctorSummaryLine,
+	getDoctorFailureDetailLines,
+	getFailingDoctorChecks,
+	isCliDiagnosticError,
+} from "./cli-diagnostics.js";
+export type { CliDiagnosticMessage } from "./cli-diagnostics.js";
 export {
 	formatAddHelpText,
 	getWorkspaceBlockSelectOptions,

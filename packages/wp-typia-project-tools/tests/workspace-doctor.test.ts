@@ -44,7 +44,7 @@ test("doctor accepts workspaces that keep binding registries in src/bindings/ind
   const bindingsJsPath = path.join(targetDir, "src", "bindings", "index.js");
   fs.renameSync(bindingsTsPath, bindingsJsPath);
 
-  const doctorOutput = runCli("node", [entryPath, "doctor"], {
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
   const doctorChecks = JSON.parse(doctorOutput) as {
@@ -623,7 +623,7 @@ test("doctor fails on missing variation and pattern inventory files", async () =
     })
   );
 
-  expect(errorMessage).toContain("Doctor found one or more failing checks.");
+  expect(errorMessage).toContain("Summary: One or more doctor checks failed.");
   expect(errorMessage).toContain("Variation counter-card/hero-card");
   expect(errorMessage).toContain("Pattern hero-layout");
 }, 15_000);
