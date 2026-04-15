@@ -12,13 +12,13 @@ import {
 	RestQueryHookUsageError,
 	toValidationResult,
 	type ValidationLike,
-} from "../src/index";
+} from "../dist/index.js";
 import {
 	EndpointDataProvider,
 	createEndpointDataClient,
 	useEndpointMutation,
 	useEndpointQuery,
-} from "../src/react";
+} from "../dist/react.js";
 import type { ApiFetch } from "@wordpress/api-fetch";
 
 function success<T>(data: T): ValidationLike<T> {

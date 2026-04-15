@@ -1,10 +1,16 @@
 import type { IValidation } from "@typia/interface";
 
 import {
+	isValidationResult,
+	normalizeValidationError,
 	toValidationResult,
+	type ValidationError,
 	type ValidationLike,
 	type ValidationResult,
 } from "./client";
+
+export type { ValidationError, ValidationLike, ValidationResult } from "./client";
+export { isValidationResult, normalizeValidationError, toValidationResult } from "./client";
 
 function toHeadersRecord(input: unknown): Record<string, string | string[] | undefined> {
 	if (input instanceof Headers) {

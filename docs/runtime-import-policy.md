@@ -16,11 +16,11 @@ surfaces.
 - `@wp-typia/rest`
   Canonical WordPress REST runtime surface.
 - `@wp-typia/rest/client`
-  Compatibility alias of the root `@wp-typia/rest` surface, not a distinct
-  semantic contract.
+  Focused transport/runtime surface for validated fetch helpers, endpoint
+  callers, route resolution, validation helpers, and named runtime errors.
 - `@wp-typia/rest/http`
-  Compatibility alias of the root `@wp-typia/rest` surface in the current
-  major line. It is not yet a distinct decoder-only contract.
+  Focused decoder surface for query/header/parameter decoders plus shared
+  validation helper utilities.
 - `@wp-typia/rest/react`
   React cache and hook surface.
 - `@wp-typia/project-tools`

@@ -97,30 +97,26 @@ These subpaths are semantically distinct and should remain documented that way.
   Canonical convenience surface. It intentionally combines the transport helper
   layer and the HTTP decoder helpers.
 - `@wp-typia/rest/client`
-  Compatibility alias of the root surface. It is public, but it is not a
-  distinct semantic contract.
+  Focused transport/runtime surface for endpoint creation, validated fetch
+  helpers, route resolution, validation helpers, and named runtime errors.
 - `@wp-typia/rest/http`
-  Compatibility alias of the root surface. It remains available for historical
-  imports, but it is not yet a distinct decoder-only contract in the current
-  major line.
+  Focused decoder surface for query/header/parameter decoders plus the shared
+  validation helper utilities they return.
 - `@wp-typia/rest/react`
   React cache and hook surface.
 
 Implications:
 
-- prefer `@wp-typia/rest` for transport-oriented imports
-- treat `@wp-typia/rest/http` as compatibility-only until a future major
-  release can safely narrow it
+- prefer `@wp-typia/rest` when convenience matters more than import granularity
+- prefer `@wp-typia/rest/client` when you want the transport boundary to stay
+  explicit
+- prefer `@wp-typia/rest/http` for decoder-only imports
 - prefer `@wp-typia/rest/react` for hook imports
-- treat `@wp-typia/rest/client` as compatibility-only, not as the recommended
-  canonical import
 
 ## Future direction
 
 Future work may:
 
 - expand named public runtime error classes into more subsystems
-- remove compatibility aliases such as `@wp-typia/rest/client` in a major
-  release if downstream usage is low enough
 - keep tightening docs/tests so export semantics and catch-worthy error
   contracts remain explicit instead of ad hoc

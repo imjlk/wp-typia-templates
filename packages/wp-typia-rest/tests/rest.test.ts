@@ -4,7 +4,7 @@ import type { ApiFetch } from "@wordpress/api-fetch";
 import {
 	createEndpoint as createPortableEndpoint,
 	toValidationResult as toPortableValidationResult,
-} from "../../wp-typia-api-client/src/index";
+} from "../../wp-typia-api-client/dist/index.js";
 
 import {
 	RestConfigurationError,
@@ -19,7 +19,7 @@ import {
 	resolveRestRouteUrl,
 	toValidationResult,
 	type ValidationLike,
-} from "../src/index";
+} from "../dist/index.js";
 
 function success<T>(data: T): ValidationLike<T> {
 	return {
@@ -432,15 +432,15 @@ describe("@wp-typia/rest", () => {
 			"utf8",
 		);
 
-		expect(clientDist).toContain('from "@wp-typia/api-client/client-utils"');
-		expect(clientTypes).toContain('from "./internal/runtime-primitives.js"');
-		expect(reactDist).toContain('from "./client.js"');
-		expect(reactTypes).toContain('from "./client.js"');
+		expect(clientDist).toContain("@wp-typia/api-client/client-utils");
+		expect(clientTypes).toContain("./internal/runtime-primitives.js");
+		expect(reactDist).toContain("./client.js");
+		expect(reactTypes).toContain("./client.js");
 		expect(sharedRuntimePrimitivesDist).toContain(
-			'from "@wp-typia/api-client/runtime-primitives"',
+			"@wp-typia/api-client/runtime-primitives",
 		);
 		expect(sharedRuntimePrimitivesTypes).toContain(
-			'from "@wp-typia/api-client/runtime-primitives"',
+			"@wp-typia/api-client/runtime-primitives",
 		);
 	});
 

@@ -253,13 +253,13 @@ nonce-aware request wiring.
 Export semantics:
 
 - `@wp-typia/rest` is the canonical convenience surface
-- `@wp-typia/rest/client` is a backward-compatible alias, not a distinct
-  semantic contract
-- `@wp-typia/rest/http` is currently a backward-compatible alias of the root
-  surface, not a distinct decoder-only contract
+- `@wp-typia/rest/client` is the focused transport/runtime surface
+- `@wp-typia/rest/http` is the focused decoder surface
 - `@wp-typia/rest/react` is the React cache/hook layer
 
-The root package stays transport-only. React/data helpers live under the
+The root package stays the convenience entry that combines transport and
+decoder helpers. Reach for `./client` or `./http` when that narrower boundary
+helps readability, while React/data helpers continue to live under the
 separate `@wp-typia/rest/react` subpath:
 
 - `createEndpointDataClient()`

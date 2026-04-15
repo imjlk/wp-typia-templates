@@ -23,6 +23,7 @@ import { RestQueryHookUsageError } from "./errors.js";
 import { isPlainObject } from "./internal/runtime-primitives.js";
 
 type CacheKey = string;
+type AnyEndpointValidationResult = EndpointValidationResult<unknown, unknown>;
 
 interface EndpointDataSnapshot {
 	data: unknown;
@@ -30,12 +31,12 @@ interface EndpointDataSnapshot {
 	invalidatedAt: number;
 	isFetching: boolean;
 	updatedAt: number;
-	validation: EndpointValidationResult<unknown, unknown> | null;
+	validation: AnyEndpointValidationResult | null;
 }
 
 type EndpointDataListener = () => void;
 type EndpointDataUpdater<T> = T | ((current: T | undefined) => T | undefined);
-type QueryRefetcher = () => Promise<EndpointValidationResult<unknown, unknown>>;
+type QueryRefetcher = () => Promise<AnyEndpointValidationResult>;
 
 interface EndpointDataCacheEntry {
 	data: unknown;
@@ -43,11 +44,11 @@ interface EndpointDataCacheEntry {
 	invalidatedAt: number;
 	isFetching: boolean;
 	listeners: Set<EndpointDataListener>;
-	promise: Promise<EndpointValidationResult<unknown, unknown>> | null;
+	promise: Promise<AnyEndpointValidationResult> | null;
 	refetchers: Set<QueryRefetcher>;
 	snapshot: EndpointDataSnapshot;
 	updatedAt: number;
-	validation: EndpointValidationResult<unknown, unknown> | null;
+	validation: AnyEndpointValidationResult | null;
 }
 
 export interface EndpointDataClient {
@@ -166,7 +167,7 @@ export interface UseEndpointMutationResult<Req, Res> {
 }
 
 export interface EndpointDataProviderProps {
-	children?: unknown;
+	children?: Parameters<typeof createElement>[2];
 	client: EndpointDataClient;
 }
 
@@ -338,6 +339,31 @@ function asInternalClient(client: EndpointDataClient): InternalEndpointDataClien
 	return client as InternalEndpointDataClient;
 }
 
+function castEndpointValidationResult<Req, Res>(
+	validation: AnyEndpointValidationResult,
+): EndpointValidationResult<Req, Res> {
+	return validation as EndpointValidationResult<Req, Res>;
+}
+
+function castEndpointValidationPromise<Req, Res>(
+	promise: Promise<AnyEndpointValidationResult>,
+): Promise<EndpointValidationResult<Req, Res>> {
+	return promise as Promise<EndpointValidationResult<Req, Res>>;
+}
+
+function selectEndpointData<Res, Selected>(
+	data: Res | undefined,
+	select?: (data: Res) => Selected,
+): Selected {
+	if (select) {
+		return select(data as Res);
+	}
+
+	// The default selector is identity, but TypeScript cannot express that when
+	// Selected is an unconstrained generic chosen by the caller.
+	return data as unknown as Selected;
+}
+
 function isInvalidValidationResult<Req>(
 	validation: ValidationResult<Req>,
 ): validation is ValidationResult<Req> & { isValid: false } {
@@ -385,11 +411,11 @@ export function createEndpointDataClient(): EndpointDataClient {
 					return;
 				}
 
-					entry.invalidatedAt = Date.now();
-					syncSnapshot(entry);
-					notify(cacheKey);
-					return;
-				}
+				entry.invalidatedAt = Date.now();
+				syncSnapshot(entry);
+				notify(cacheKey);
+				return;
+			}
 
 			const prefix = createEndpointPrefix(endpoint);
 			for (const [cacheKey, entry] of entries.entries()) {
@@ -397,10 +423,10 @@ export function createEndpointDataClient(): EndpointDataClient {
 					continue;
 				}
 
-					entry.invalidatedAt = Date.now();
-					syncSnapshot(entry);
-					notify(cacheKey);
-				}
+				entry.invalidatedAt = Date.now();
+				syncSnapshot(entry);
+				notify(cacheKey);
+			}
 		},
 		async refetch(endpoint, request) {
 			const callbacks = new Set<QueryRefetcher>();
@@ -423,10 +449,10 @@ export function createEndpointDataClient(): EndpointDataClient {
 
 			await Promise.all([...callbacks].map((refetcher) => refetcher()));
 		},
-			getData(endpoint, request) {
-				const { cacheKey } = createCacheKey(endpoint, request);
-				return entries.get(cacheKey)?.data as any;
-			},
+		getData<Req, Res>(endpoint: ApiEndpoint<Req, Res>, request: Req) {
+			const { cacheKey } = createCacheKey(endpoint, request);
+			return entries.get(cacheKey)?.data as Res | undefined;
+		},
 		setData(endpoint, request, next) {
 			const { cacheKey } = createCacheKey(endpoint, request);
 			const entry = getOrCreateEntry(entries, cacheKey);
@@ -438,35 +464,35 @@ export function createEndpointDataClient(): EndpointDataClient {
 			entry.data = resolvedNext;
 			entry.error = null;
 			entry.updatedAt = Date.now();
-				entry.validation = toEndpointResponseValidationResult({
-					data: resolvedNext,
-					errors: [],
-					isValid: true,
-				});
-				syncSnapshot(entry);
-				notify(cacheKey);
-			},
-			__getSnapshot(cacheKey) {
-				const entry = entries.get(cacheKey);
-				if (!entry) {
-					return EMPTY_SNAPSHOT;
-				}
+			entry.validation = toEndpointResponseValidationResult({
+				data: resolvedNext,
+				errors: [],
+				isValid: true,
+			});
+			syncSnapshot(entry);
+			notify(cacheKey);
+		},
+		__getSnapshot(cacheKey) {
+			const entry = entries.get(cacheKey);
+			if (!entry) {
+				return EMPTY_SNAPSHOT;
+			}
 
-				return entry.snapshot;
-			},
-			__publishValidation(cacheKey, validation) {
-				const entry = getOrCreateEntry(entries, cacheKey);
-				entry.error = null;
-				entry.updatedAt = Date.now();
-				entry.validation = validation as EndpointValidationResult<unknown, unknown>;
-				if (validation.isValid) {
-					entry.data = validation.data;
-				} else if (validation.validationTarget === "request") {
-					entry.data = undefined;
-				}
-				syncSnapshot(entry);
-				notify(cacheKey);
-			},
+			return entry.snapshot;
+		},
+		__publishValidation(cacheKey, validation) {
+			const entry = getOrCreateEntry(entries, cacheKey);
+			entry.error = null;
+			entry.updatedAt = Date.now();
+			entry.validation = validation;
+			if (validation.isValid) {
+				entry.data = validation.data;
+			} else if (validation.validationTarget === "request") {
+				entry.data = undefined;
+			}
+			syncSnapshot(entry);
+			notify(cacheKey);
+		},
 		__registerRefetcher(cacheKey, refetcher) {
 			const entry = getOrCreateEntry(entries, cacheKey);
 			entry.refetchers.add(refetcher);
@@ -475,15 +501,19 @@ export function createEndpointDataClient(): EndpointDataClient {
 				entry.refetchers.delete(refetcher);
 			};
 		},
-			async __runQuery(cacheKey, execute, { force = false, staleTime }) {
+		async __runQuery<Req, Res>(
+			cacheKey: CacheKey,
+			execute: () => Promise<EndpointValidationResult<Req, Res>>,
+			{ force = false, staleTime }: { force?: boolean; staleTime: number },
+		) {
 			const entry = getOrCreateEntry(entries, cacheKey);
 			if (entry.promise) {
-				return entry.promise as Promise<EndpointValidationResult<any, any>>;
+				return castEndpointValidationPromise(entry.promise);
 			}
 
 			if (!force) {
 				if (!isEntryStale(entry, staleTime) && entry.validation) {
-					return entry.validation as EndpointValidationResult<any, any>;
+					return castEndpointValidationResult(entry.validation);
 				}
 			}
 
@@ -498,7 +528,7 @@ export function createEndpointDataClient(): EndpointDataClient {
 					entry.error = null;
 					if (entry.invalidatedAt <= startedAt) {
 						entry.updatedAt = Date.now();
-						entry.validation = validation as EndpointValidationResult<unknown, unknown>;
+						entry.validation = validation;
 						if (validation.isValid) {
 							entry.data = validation.data;
 						}
@@ -521,8 +551,8 @@ export function createEndpointDataClient(): EndpointDataClient {
 					notify(cacheKey);
 				});
 
-			entry.promise = promise as Promise<EndpointValidationResult<unknown, unknown>>;
-			return promise as Promise<EndpointValidationResult<any, any>>;
+			entry.promise = promise;
+			return castEndpointValidationPromise(promise);
 		},
 		__seedData(cacheKey, data) {
 			const entry = getOrCreateEntry(entries, cacheKey);
@@ -533,14 +563,14 @@ export function createEndpointDataClient(): EndpointDataClient {
 			entry.data = data;
 			entry.error = null;
 			entry.updatedAt = Date.now();
-				entry.validation = toEndpointResponseValidationResult({
-					data,
-					errors: [],
-					isValid: true,
-				});
-				syncSnapshot(entry);
-				notify(cacheKey);
-			},
+			entry.validation = toEndpointResponseValidationResult({
+				data,
+				errors: [],
+				isValid: true,
+			});
+			syncSnapshot(entry);
+			notify(cacheKey);
+		},
 		__subscribe(cacheKey, listener) {
 			const entry = getOrCreateEntry(entries, cacheKey);
 			entry.listeners.add(listener);
@@ -560,11 +590,9 @@ export function EndpointDataProvider({
 	children,
 	client,
 }: EndpointDataProviderProps): ReturnType<typeof createElement> {
-	return createElement(
-		EndpointDataClientContext.Provider,
-		{ value: client },
-		children as any,
-	);
+	return children === undefined
+		? createElement(EndpointDataClientContext.Provider, { value: client })
+		: createElement(EndpointDataClientContext.Provider, { value: client }, children);
 }
 
 export function useEndpointDataClient(): EndpointDataClient {
@@ -664,10 +692,7 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 				);
 
 				if (validation.isValid) {
-					const selected =
-						latest.select !== undefined
-							? latest.select(validation.data as Res)
-							: (validation.data as unknown as Selected);
+					const selected = selectEndpointData(validation.data, latest.select);
 					await latest.onSuccess?.(selected, validation);
 				}
 
@@ -686,7 +711,7 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 
 	useEffect(() => {
 		return client.__registerRefetcher(prepared.cacheKey, () =>
-			refetch() as Promise<EndpointValidationResult<unknown, unknown>>,
+			refetch(),
 		);
 	}, [client, prepared.cacheKey, refetch]);
 
@@ -761,9 +786,7 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 			return undefined;
 		}
 
-		return select !== undefined
-			? select(rawData)
-			: (rawData as unknown as Selected);
+		return selectEndpointData(rawData, select);
 	}, [initialData, select, snapshot.data, snapshot.validation]);
 
 	return {
@@ -774,7 +797,10 @@ export function useEndpointQuery<Req, Res, Selected = Res>(
 			snapshot.isFetching &&
 			data === undefined,
 		refetch,
-		validation: snapshot.validation as EndpointValidationResult<Req, Res> | null,
+		validation:
+			snapshot.validation === null
+				? null
+				: castEndpointValidationResult(snapshot.validation),
 	};
 }
 
