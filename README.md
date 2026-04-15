@@ -265,7 +265,7 @@ bun run lint:repo
 bun run format:check
 bun run maintenance-automation:validate
 bun run typecheck
-bun run test:all
+bun run test:repo
 bun run build
 bun run ci:local
 bun run examples:test:e2e
@@ -313,7 +313,8 @@ Command map:
 | `bun run format:check`                    | Non-mutating Prettier check for repo-owned files  |
 | `bun run formatting-policy:validate`      | Validates the documented formatter/toolchain gate |
 | `bun run maintenance-automation:validate` | Validates Dependabot and audit workflow policy    |
-| `bun run test:all`                        | Root unit and CLI test aggregation                |
+| `bun run test:repo`                       | Root unit and CLI test aggregation                |
+| `bun run test:all`                        | Legacy alias for `test:repo` (still no E2E)       |
 | `bun run ci:local`                        | Fast maintainer preflight without E2E/wp-env      |
 | `bun run build`                           | Product packages and the repo-local reference app |
 | `bun run examples:build`                  | Reference app only                                |

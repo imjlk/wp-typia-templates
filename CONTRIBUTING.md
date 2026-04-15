@@ -19,7 +19,7 @@ bun run maintenance-automation:validate
 bun run formatting-policy:validate
 bun run lint:all
 bun run typecheck
-bun run test:all
+bun run test:repo
 bun run build
 bun run ci:local
 bun run examples:lint
@@ -36,7 +36,8 @@ Quick command map:
 - `bun run format:check` = non-mutating Prettier check for repo-owned files
 - `bun run maintenance-automation:validate` = verifies Dependabot and audit workflow policy
 - `bun run formatting-policy:validate` = verifies the documented Prettier/CI baseline
-- `bun run test:all` = root unit + CLI test aggregation
+- `bun run test:repo` = root unit + CLI test aggregation
+- `bun run test:all` = legacy alias for `bun run test:repo` and still excludes E2E
 - `bun run ci:local` = fast maintainer preflight mirroring the non-E2E CI path
 - `bun run build` = product packages + reference app
 - `bun run examples:build` = reference app only
