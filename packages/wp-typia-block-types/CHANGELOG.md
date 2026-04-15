@@ -1,5 +1,11 @@
 # @wp-typia/block-types
 
+## 0.2.2 — 2026-04-15
+
+### Patch changes
+
+- [63657e2](https://github.com/imjlk/wp-typia/commit/63657e2182b5754aff7d40fc6218a247567c48a7) Own the generated block registration TypeScript surface in `@wp-typia/block-types`, and update scaffolds and reference examples to prefer the local registration facade over direct `@wordpress/blocks` type imports. — Thanks @imjlk!
+
 ## 0.2.1 — 2026-04-09
 
 ### Patch changes
