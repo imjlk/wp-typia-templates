@@ -48,6 +48,10 @@ import {
 	getPackageManager,
 	transformPackageManagerText,
 } from "./package-managers.js";
+import {
+	replaceRepositoryReferencePlaceholders,
+	resolveScaffoldRepositoryReference,
+} from "./scaffold-repository-reference.js";
 import type {
 	ScaffoldTemplateVariables,
 } from "./scaffold.js";
@@ -412,6 +416,13 @@ export async function removeUnexpectedLockfiles(
 export async function replaceTextRecursively(
 	targetDir: string,
 	packageManagerId: PackageManagerId,
+	{
+		repositoryManifestPaths,
+		repositoryReference,
+	}: {
+		repositoryManifestPaths?: readonly string[];
+		repositoryReference?: string;
+	} = {},
 ): Promise<void> {
 	const textExtensions = new Set([
 		".css",
@@ -425,6 +436,11 @@ export async function replaceTextRecursively(
 		".tsx",
 		".txt",
 	]);
+	const resolvedRepositoryReference =
+		repositoryReference ??
+		resolveScaffoldRepositoryReference({
+			manifestPaths: repositoryManifestPaths,
+		});
 
 	async function visit(currentPath: string): Promise<void> {
 		const stats = await fsp.stat(currentPath);
@@ -441,9 +457,10 @@ export async function replaceTextRecursively(
 		}
 
 		const content = await fsp.readFile(currentPath, "utf8");
-		const nextContent = transformPackageManagerText(content, packageManagerId)
-			.replace(/yourusername\/wp-typia-boilerplate/g, "imjlk/wp-typia")
-			.replace(/yourusername\/wp-typia/g, "imjlk/wp-typia");
+		const nextContent = replaceRepositoryReferencePlaceholders(
+			transformPackageManagerText(content, packageManagerId),
+			resolvedRepositoryReference,
+		);
 
 		if (nextContent !== content) {
 			await fsp.writeFile(currentPath, nextContent, "utf8");
@@ -532,6 +549,7 @@ export async function applyBuiltInScaffoldProjectFiles({
 	withWpEnv = false,
 	noInstall = false,
 	installDependencies,
+	repositoryReference,
 }: {
 	projectDir: string;
 	templateDir: string;
@@ -548,6 +566,7 @@ export async function applyBuiltInScaffoldProjectFiles({
 	withWpEnv?: boolean;
 	noInstall?: boolean;
 	installDependencies?: ((options: InstallDependenciesOptions) => Promise<void>) | undefined;
+	repositoryReference?: string;
 }): Promise<void> {
 	await ensureDirectory(projectDir, allowExistingDir);
 	await copyInterpolatedDirectory(templateDir, projectDir, variables);
@@ -607,7 +626,9 @@ export async function applyBuiltInScaffoldProjectFiles({
 	});
 	await normalizePackageManagerFiles(projectDir, packageManager);
 	await removeUnexpectedLockfiles(projectDir, packageManager);
-	await replaceTextRecursively(projectDir, packageManager);
+	await replaceTextRecursively(projectDir, packageManager, {
+		repositoryReference,
+	});
 
 	if (!noInstall) {
 		const installer = installDependencies ?? defaultInstallDependencies;
