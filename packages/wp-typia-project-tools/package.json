@@ -17,6 +17,11 @@
       "import": "./dist/runtime/cli-add.js",
       "default": "./dist/runtime/cli-add.js"
     },
+    "./cli-diagnostics": {
+      "types": "./dist/runtime/cli-diagnostics.d.ts",
+      "import": "./dist/runtime/cli-diagnostics.js",
+      "default": "./dist/runtime/cli-diagnostics.js"
+    },
     "./cli-doctor": {
       "types": "./dist/runtime/cli-doctor.d.ts",
       "import": "./dist/runtime/cli-doctor.js",

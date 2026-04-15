@@ -23,6 +23,12 @@ import {
 	type WorkspacePackageJson,
 	type WorkspaceProject,
 } from "./workspace-project.js";
+import {
+	createCliCommandError,
+	formatDoctorCheckLine,
+	formatDoctorSummaryLine,
+	getDoctorFailureDetailLines,
+} from "./cli-diagnostics.js";
 
 /**
  * One doctor check rendered by the CLI diagnostics flow.
@@ -38,6 +44,7 @@ export interface DoctorCheck {
 
 interface RunDoctorOptions {
 	renderLine?: (check: DoctorCheck) => void;
+	renderSummaryLine?: (summaryLine: string) => void;
 }
 
 const WORKSPACE_COLLECTION_IMPORT_LINE = "import '../../collection';";
@@ -701,19 +708,28 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
  */
 export async function runDoctor(
 	cwd: string,
-	{
-		renderLine = (check: DoctorCheck) =>
-			console.log(`${check.status.toUpperCase()} ${check.label}: ${check.detail}`),
-	}: RunDoctorOptions = {},
+	options: RunDoctorOptions = {},
 ): Promise<DoctorCheck[]> {
+	const renderLine =
+		options.renderLine ?? ((check: DoctorCheck) => console.log(formatDoctorCheckLine(check)));
+	const renderSummaryLine =
+		options.renderSummaryLine ??
+		(options.renderLine ? () => undefined : (summaryLine: string) => console.log(summaryLine));
 	const checks = await getDoctorChecks(cwd);
 
 	for (const check of checks) {
 		renderLine(check);
 	}
 
-	if (checks.some((check) => check.status === "fail")) {
-		throw new Error("Doctor found one or more failing checks.");
+	renderSummaryLine(formatDoctorSummaryLine(checks));
+
+	const failureDetailLines = getDoctorFailureDetailLines(checks);
+	if (failureDetailLines.length > 0) {
+		throw createCliCommandError({
+			command: "doctor",
+			detailLines: failureDetailLines,
+			summary: "One or more doctor checks failed.",
+		});
 	}
 
 	return checks;

@@ -59,6 +59,7 @@ type MigrateExecutionInput = {
 
 type PrintLine = (line: string) => void;
 type PackageManagerId = "bun" | "npm" | "pnpm" | "yarn";
+type CliCommandId = "add" | "create" | "doctor" | "migrate";
 type ExternalLayerSelectOption = {
 	description?: string;
 	extends: string[];
@@ -73,11 +74,32 @@ type SyncProjectContext = {
 };
 
 const loadCliAddRuntime = () => import("@wp-typia/project-tools/cli-add");
+const loadCliDiagnosticsRuntime = () => import("@wp-typia/project-tools/cli-diagnostics");
 const loadCliDoctorRuntime = () => import("@wp-typia/project-tools/cli-doctor");
 const loadCliPromptRuntime = () => import("@wp-typia/project-tools/cli-prompt");
 const loadCliScaffoldRuntime = () => import("@wp-typia/project-tools/cli-scaffold");
 const loadCliTemplatesRuntime = () => import("@wp-typia/project-tools/cli-templates");
 const loadMigrationsRuntime = () => import("@wp-typia/project-tools/migrations");
+
+async function wrapCliCommandError(command: CliCommandId, error: unknown) {
+	const { createCliCommandError } = await loadCliDiagnosticsRuntime();
+	return createCliCommandError({ command, error });
+}
+
+function shouldWrapCliCommandError(options: {
+	emitOutput?: boolean;
+	renderLine?: ((line: string) => void) | undefined;
+}): boolean {
+	if (options.emitOutput === false) {
+		return false;
+	}
+
+	if (options.renderLine) {
+		return false;
+	}
+
+	return true;
+}
 
 function printBlock(lines: string[], printLine: PrintLine): void {
 	for (const line of lines) {
@@ -534,6 +556,11 @@ export async function executeCreateCommand({
 			});
 		}
 		return payload;
+	} catch (error) {
+		if (!shouldWrapCliCommandError({ emitOutput })) {
+			throw error;
+		}
+		throw await wrapCliCommandError("create", error);
 	} finally {
 		if (activePrompt && activePrompt !== prompt) {
 			activePrompt.close();
@@ -559,158 +586,160 @@ export async function executeAddCommand({
 	}
 
 	const addRuntime = await loadCliAddRuntime();
-
-	if (kind === "variation") {
-		if (!name) {
-			throw new Error(
-				"`wp-typia add variation` requires <name>. Usage: wp-typia add variation <name> --block <block-slug>",
-			);
-		}
-
-		const blockSlug = readOptionalStringFlag(flags, "block");
-		if (!blockSlug) {
-			throw new Error("`wp-typia add variation` requires --block <block-slug>.");
-		}
-
-		const result = await addRuntime.runAddVariationCommand({
-			blockName: blockSlug,
-			cwd,
-			variationName: name,
-		});
-		const payload = buildAddCompletionPayload({
-			kind: "variation",
-			projectDir: result.projectDir,
-			values: {
-				blockSlug: result.blockSlug,
-				variationSlug: result.variationSlug,
-			},
-		});
-		if (emitOutput) {
-			printCompletionPayload(payload, { printLine });
-		}
-		return payload;
-	}
-
-	if (kind === "pattern") {
-		if (!name) {
-			throw new Error(
-				"`wp-typia add pattern` requires <name>. Usage: wp-typia add pattern <name>.",
-			);
-		}
-
-		const result = await addRuntime.runAddPatternCommand({
-			cwd,
-			patternName: name,
-		});
-		const payload = buildAddCompletionPayload({
-			kind: "pattern",
-			projectDir: result.projectDir,
-			values: {
-				patternSlug: result.patternSlug,
-			},
-		});
-		if (emitOutput) {
-			printCompletionPayload(payload, { printLine });
-		}
-		return payload;
-	}
-
-	if (kind === "binding-source") {
-		if (!name) {
-			throw new Error(
-				"`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name>.",
-			);
-		}
-
-		const result = await addRuntime.runAddBindingSourceCommand({
-			bindingSourceName: name,
-			cwd,
-		});
-		const payload = buildAddCompletionPayload({
-			kind: "binding-source",
-			projectDir: result.projectDir,
-			values: {
-				bindingSourceSlug: result.bindingSourceSlug,
-			},
-		});
-		if (emitOutput) {
-			printCompletionPayload(payload, { printLine });
-		}
-		return payload;
-	}
-
-	if (kind === "hooked-block") {
-		if (!name) {
-			throw new Error(
-				"`wp-typia add hooked-block` requires <block-slug>. Usage: wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>.",
-			);
-		}
-
-		const anchorBlockName = readOptionalStringFlag(flags, "anchor");
-		if (!anchorBlockName) {
-			throw new Error("`wp-typia add hooked-block` requires --anchor <anchor-block-name>.");
-		}
-
-		const position = readOptionalStringFlag(flags, "position");
-		if (!position) {
-			throw new Error(
-				"`wp-typia add hooked-block` requires --position <before|after|firstChild|lastChild>.",
-			);
-		}
-
-		const result = await addRuntime.runAddHookedBlockCommand({
-			anchorBlockName,
-			blockName: name,
-			cwd,
-			position,
-		});
-		const payload = buildAddCompletionPayload({
-			kind: "hooked-block",
-			projectDir: result.projectDir,
-			values: {
-				anchorBlockName: result.anchorBlockName,
-				blockSlug: result.blockSlug,
-				position: result.position,
-			},
-		});
-		if (emitOutput) {
-			printCompletionPayload(payload, { printLine });
-		}
-		return payload;
-	}
-
-	if (kind !== "block") {
-		throw new Error(
-			`Unknown add kind "${kind}". Expected one of: block, variation, pattern, binding-source, hooked-block.`,
-		);
-	}
-
-	if (!name) {
-		throw new Error(
-			"`wp-typia add block` requires <name>. Usage: wp-typia add block <name> --template <basic|interactivity|persistence|compound>",
-		);
-	}
-
-	if (!flags.template) {
-		throw new Error(
-			"`wp-typia add block` requires --template <basic|interactivity|persistence|compound>.",
-		);
-	}
-
-	const externalLayerId = readOptionalStringFlag(flags, "external-layer-id");
-	const externalLayerSource = readOptionalStringFlag(flags, "external-layer-source");
-	const shouldPromptForLayerSelection =
-		Boolean(externalLayerSource) &&
-		!Boolean(externalLayerId) &&
-		(interactive ?? (Boolean(process.stdin.isTTY) && Boolean(process.stdout.isTTY)));
-	const promptRuntime = shouldPromptForLayerSelection
-		? await loadCliPromptRuntime()
-		: undefined;
-	const activePrompt = shouldPromptForLayerSelection
-		? (prompt ?? promptRuntime?.createReadlinePrompt())
-		: undefined;
+	let activePrompt: ReadlinePrompt | undefined;
 
 	try {
+		if (kind === "variation") {
+			if (!name) {
+				throw new Error(
+					"`wp-typia add variation` requires <name>. Usage: wp-typia add variation <name> --block <block-slug>",
+				);
+			}
+
+			const blockSlug = readOptionalStringFlag(flags, "block");
+			if (!blockSlug) {
+				throw new Error("`wp-typia add variation` requires --block <block-slug>.");
+			}
+
+			const result = await addRuntime.runAddVariationCommand({
+				blockName: blockSlug,
+				cwd,
+				variationName: name,
+			});
+			const payload = buildAddCompletionPayload({
+				kind: "variation",
+				projectDir: result.projectDir,
+				values: {
+					blockSlug: result.blockSlug,
+					variationSlug: result.variationSlug,
+				},
+			});
+			if (emitOutput) {
+				printCompletionPayload(payload, { printLine });
+			}
+			return payload;
+		}
+
+		if (kind === "pattern") {
+			if (!name) {
+				throw new Error(
+					"`wp-typia add pattern` requires <name>. Usage: wp-typia add pattern <name>.",
+				);
+			}
+
+			const result = await addRuntime.runAddPatternCommand({
+				cwd,
+				patternName: name,
+			});
+			const payload = buildAddCompletionPayload({
+				kind: "pattern",
+				projectDir: result.projectDir,
+				values: {
+					patternSlug: result.patternSlug,
+				},
+			});
+			if (emitOutput) {
+				printCompletionPayload(payload, { printLine });
+			}
+			return payload;
+		}
+
+		if (kind === "binding-source") {
+			if (!name) {
+				throw new Error(
+					"`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name>.",
+				);
+			}
+
+			const result = await addRuntime.runAddBindingSourceCommand({
+				bindingSourceName: name,
+				cwd,
+			});
+			const payload = buildAddCompletionPayload({
+				kind: "binding-source",
+				projectDir: result.projectDir,
+				values: {
+					bindingSourceSlug: result.bindingSourceSlug,
+				},
+			});
+			if (emitOutput) {
+				printCompletionPayload(payload, { printLine });
+			}
+			return payload;
+		}
+
+		if (kind === "hooked-block") {
+			if (!name) {
+				throw new Error(
+					"`wp-typia add hooked-block` requires <block-slug>. Usage: wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>.",
+				);
+			}
+
+			const anchorBlockName = readOptionalStringFlag(flags, "anchor");
+			if (!anchorBlockName) {
+				throw new Error("`wp-typia add hooked-block` requires --anchor <anchor-block-name>.");
+			}
+
+			const position = readOptionalStringFlag(flags, "position");
+			if (!position) {
+				throw new Error(
+					"`wp-typia add hooked-block` requires --position <before|after|firstChild|lastChild>.",
+				);
+			}
+
+			const result = await addRuntime.runAddHookedBlockCommand({
+				anchorBlockName,
+				blockName: name,
+				cwd,
+				position,
+			});
+			const payload = buildAddCompletionPayload({
+				kind: "hooked-block",
+				projectDir: result.projectDir,
+				values: {
+					anchorBlockName: result.anchorBlockName,
+					blockSlug: result.blockSlug,
+					position: result.position,
+				},
+			});
+			if (emitOutput) {
+				printCompletionPayload(payload, { printLine });
+			}
+			return payload;
+		}
+
+		if (kind !== "block") {
+			throw new Error(
+				`Unknown add kind "${kind}". Expected one of: block, variation, pattern, binding-source, hooked-block.`,
+			);
+		}
+
+		if (!name) {
+			throw new Error(
+				"`wp-typia add block` requires <name>. Usage: wp-typia add block <name> --template <basic|interactivity|persistence|compound>",
+			);
+		}
+
+		if (!flags.template) {
+			throw new Error(
+				"`wp-typia add block` requires --template <basic|interactivity|persistence|compound>.",
+			);
+		}
+
+		const externalLayerId = readOptionalStringFlag(flags, "external-layer-id");
+		const externalLayerSource = readOptionalStringFlag(flags, "external-layer-source");
+		const shouldPromptForLayerSelection =
+			Boolean(externalLayerSource) &&
+			!Boolean(externalLayerId) &&
+			(interactive ?? (Boolean(process.stdin.isTTY) && Boolean(process.stdout.isTTY)));
+		const promptRuntime = shouldPromptForLayerSelection
+			? await loadCliPromptRuntime()
+			: undefined;
+		activePrompt = shouldPromptForLayerSelection
+			? (prompt ?? promptRuntime?.createReadlinePrompt())
+			: undefined;
+		const selectPrompt = activePrompt;
+
 		const result = await addRuntime.runAddBlockCommand({
 			blockName: name,
 			cwd,
@@ -718,9 +747,9 @@ export async function executeAddCommand({
 			externalLayerId,
 			externalLayerSource,
 			persistencePolicy: readOptionalStringFlag(flags, "persistence-policy"),
-			selectExternalLayerId: activePrompt
+			selectExternalLayerId: selectPrompt
 				? (options) =>
-						activePrompt.select(
+						selectPrompt.select(
 							"Select an external layer",
 							toExternalLayerPromptOptions(options),
 							1,
@@ -746,6 +775,11 @@ export async function executeAddCommand({
 			printCompletionPayload(payload, { printLine, warnLine });
 		}
 		return payload;
+	} catch (error) {
+		if (!shouldWrapCliCommandError({ emitOutput })) {
+			throw error;
+		}
+		throw await wrapCliCommandError("add", error);
 	} finally {
 		if (activePrompt && activePrompt !== prompt) {
 			activePrompt.close();
@@ -792,8 +826,12 @@ export async function executeTemplatesCommand(
 }
 
 export async function executeDoctorCommand(cwd: string): Promise<void> {
-	const { runDoctor } = await loadCliDoctorRuntime();
-	await runDoctor(cwd);
+	try {
+		const { runDoctor } = await loadCliDoctorRuntime();
+		await runDoctor(cwd);
+	} catch (error) {
+		throw await wrapCliCommandError("doctor", error);
+	}
 }
 
 export async function loadAddWorkspaceBlockOptions(cwd: string) {
@@ -839,53 +877,60 @@ export async function executeMigrateCommand({
 		return;
 	}
 
-	const argv = [command];
-	pushFlag(argv, "all", flags.all);
-	pushFlag(argv, "force", flags.force);
-	pushFlag(
-		argv,
-		"current-migration-version",
-		readOptionalLooseStringFlag(flags, "current-migration-version"),
-	);
-	pushFlag(argv, "migration-version", readOptionalLooseStringFlag(flags, "migration-version"));
-	pushFlag(
-		argv,
-		"from-migration-version",
-		readOptionalLooseStringFlag(flags, "from-migration-version"),
-	);
-	pushFlag(
-		argv,
-		"to-migration-version",
-		readOptionalLooseStringFlag(flags, "to-migration-version"),
-	);
-	pushFlag(argv, "iterations", readOptionalLooseStringFlag(flags, "iterations"));
-	pushFlag(argv, "seed", readOptionalLooseStringFlag(flags, "seed"));
+	try {
+		const argv = [command];
+		pushFlag(argv, "all", flags.all);
+		pushFlag(argv, "force", flags.force);
+		pushFlag(
+			argv,
+			"current-migration-version",
+			readOptionalLooseStringFlag(flags, "current-migration-version"),
+		);
+		pushFlag(argv, "migration-version", readOptionalLooseStringFlag(flags, "migration-version"));
+		pushFlag(
+			argv,
+			"from-migration-version",
+			readOptionalLooseStringFlag(flags, "from-migration-version"),
+		);
+		pushFlag(
+			argv,
+			"to-migration-version",
+			readOptionalLooseStringFlag(flags, "to-migration-version"),
+		);
+		pushFlag(argv, "iterations", readOptionalLooseStringFlag(flags, "iterations"));
+		pushFlag(argv, "seed", readOptionalLooseStringFlag(flags, "seed"));
 
-	const parsed = parseMigrationArgs(argv);
-	const lines: string[] | null = renderLine ? [] : null;
-	const captureLine = (line: string) => {
-		lines?.push(line);
+		const parsed = parseMigrationArgs(argv);
+		const lines: string[] | null = renderLine ? [] : null;
+		const captureLine = (line: string) => {
+			lines?.push(line);
+			if (renderLine) {
+				renderLine(line);
+				return;
+			}
+			console.log(line);
+		};
+		const result = await runMigrationCommand(parsed, cwd, {
+			prompt,
+			renderLine: captureLine,
+		});
 		if (renderLine) {
-			renderLine(line);
+			return result && typeof result === "object" && "cancelled" in result && result.cancelled === true
+					? undefined
+					: buildMigrationCompletionPayload({
+						command: parsed.command ?? "plan",
+						lines: lines ?? [],
+					});
+		}
+
+		if (result && typeof result === "object" && "cancelled" in result && result.cancelled === true) {
 			return;
 		}
-		console.log(line);
-	};
-	const result = await runMigrationCommand(parsed, cwd, {
-		prompt,
-		renderLine: captureLine,
-	});
-	if (renderLine) {
-		return result && typeof result === "object" && "cancelled" in result && result.cancelled === true
-				? undefined
-				: buildMigrationCompletionPayload({
-					command: parsed.command ?? "plan",
-					lines: lines ?? [],
-				});
-	}
-
-	if (result && typeof result === "object" && "cancelled" in result && result.cancelled === true) {
-		return;
+	} catch (error) {
+		if (!shouldWrapCliCommandError({ renderLine })) {
+			throw error;
+		}
+		throw await wrapCliCommandError("migrate", error);
 	}
 }
 

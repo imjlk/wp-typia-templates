@@ -73,6 +73,15 @@ function resolveGeneratedMetadataPath(moduleUrl: string): string {
 	return fileURLToPath(new URL("../.bunli/commands.gen.ts", moduleUrl));
 }
 
+async function formatCliError(error: unknown): Promise<string> {
+	try {
+		const { formatCliDiagnosticError } = await import("@wp-typia/project-tools/cli-diagnostics");
+		return formatCliDiagnosticError(error);
+	} catch {
+		return error instanceof Error ? error.message : String(error);
+	}
+}
+
 export async function createWpTypiaCli(options: {
 	configOverridePath?: string;
 } = {}): Promise<CLI> {
@@ -117,10 +126,14 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
 }
 
 if (import.meta.main) {
-	void main().catch((error) => {
-		console.error(error instanceof Error ? error.message : error);
-		process.exit(1);
-	});
+	void (async () => {
+		try {
+			await main();
+		} catch (error) {
+			console.error(await formatCliError(error));
+			process.exit(1);
+		}
+	})();
 }
 
 export default createWpTypiaCli;

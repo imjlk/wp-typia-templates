@@ -8,6 +8,19 @@ import { updateWorkspaceInventorySource } from "../src/runtime/workspace-invento
 
 describe("@wp-typia/project-tools workspace doctor", () => {
   const tempRoot = createScaffoldTempRoot("wp-typia-workspace-doctor-");
+  const humanCliEnv = {
+    ...process.env,
+    AGENT: "",
+    AMP_CURRENT_THREAD_ID: "",
+    CLAUDECODE: "",
+    CLAUDE_CODE: "",
+    CODEX_CI: "",
+    CODEX_SANDBOX: "",
+    CODEX_THREAD_ID: "",
+    CURSOR_AGENT: "",
+    GEMINI_CLI: "",
+    OPENCODE: "",
+  } satisfies NodeJS.ProcessEnv;
 
   afterAll(() => {
     cleanupScaffoldTempRoot(tempRoot);
@@ -44,7 +57,7 @@ test("doctor accepts workspaces that keep binding registries in src/bindings/ind
   const bindingsJsPath = path.join(targetDir, "src", "bindings", "index.js");
   fs.renameSync(bindingsTsPath, bindingsJsPath);
 
-  const doctorOutput = runCli("node", [entryPath, "doctor"], {
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
   const doctorChecks = JSON.parse(doctorOutput) as {
@@ -620,10 +633,11 @@ test("doctor fails on missing variation and pattern inventory files", async () =
   const errorMessage = getCommandErrorMessage(() =>
     runCli("node", [entryPath, "doctor"], {
       cwd: targetDir,
+      env: humanCliEnv,
     })
   );
 
-  expect(errorMessage).toContain("Doctor found one or more failing checks.");
+  expect(errorMessage).toContain("Summary: One or more doctor checks failed.");
   expect(errorMessage).toContain("Variation counter-card/hero-card");
   expect(errorMessage).toContain("Pattern hero-layout");
 }, 15_000);
@@ -666,6 +680,7 @@ test("doctor fails when workspace inventory entries are malformed", async () => 
   const errorMessage = getCommandErrorMessage(() =>
     runCli("node", [entryPath, "doctor"], {
       cwd: targetDir,
+      env: humanCliEnv,
     })
   );
 
@@ -711,6 +726,7 @@ test("doctor fails when workspace inventory exports use non-array initializers",
   const errorMessage = getCommandErrorMessage(() =>
     runCli("node", [entryPath, "doctor"], {
       cwd: targetDir,
+      env: humanCliEnv,
     })
   );
 

@@ -58,6 +58,7 @@ const migrateOptions = {
 };
 
 export const migrateCommand = defineCommand({
+	defaultFormat: "toon",
 	description: "Run migration workflows for migration-capable wp-typia projects.",
 	handler: async (args) => {
 		await executeMigrateCommand({

@@ -2,18 +2,26 @@ import { defineCommand } from "@bunli/core";
 import { executeDoctorCommand } from "../runtime-bridge";
 
 export const doctorCommand = defineCommand({
+	defaultFormat: "toon",
 	description: "Run repository and project diagnostics.",
 	handler: async (args) => {
 		const prefersStructuredOutput =
 			(args.formatExplicit && args.format !== "toon") ||
-			args.agent ||
 			Boolean(args.context?.store?.isAIAgent);
 		if (prefersStructuredOutput) {
-			const { getDoctorChecks } = await import("@wp-typia/project-tools/cli-doctor");
+			const [{ getDoctorChecks }, { createCliCommandError, getDoctorFailureDetailLines }] =
+				await Promise.all([
+					import("@wp-typia/project-tools/cli-doctor"),
+					import("@wp-typia/project-tools/cli-diagnostics"),
+				]);
 			const checks = await getDoctorChecks(args.cwd);
 			args.output({ checks });
 			if (checks.some((check) => check.status === "fail")) {
-				throw new Error("Doctor found one or more failing checks.");
+				throw createCliCommandError({
+					command: "doctor",
+					detailLines: getDoctorFailureDetailLines(checks),
+					summary: "One or more doctor checks failed.",
+				});
 			}
 			return;
 		}

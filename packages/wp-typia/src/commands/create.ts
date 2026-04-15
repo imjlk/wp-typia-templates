@@ -93,11 +93,16 @@ const createOptions = {
 };
 
 export const createCommand = defineCommand({
+	defaultFormat: "toon",
 	description: "Scaffold a new wp-typia project.",
 	handler: async (args) => {
 		const projectDir = args.positional[0];
 		if (!projectDir) {
-			throw new Error("`wp-typia create` requires <project-dir>.");
+			const { createCliCommandError } = await import("@wp-typia/project-tools/cli-diagnostics");
+			throw createCliCommandError({
+				command: "create",
+				detailLines: ["`wp-typia create` requires <project-dir>."],
+			});
 		}
 		await executeCreateCommand({
 			cwd: args.cwd,

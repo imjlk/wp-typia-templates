@@ -190,6 +190,11 @@ artifact drift. `wp-typia migrate doctor --all` is the deep migration audit for
 migration-enabled workspaces. It validates migration target alignment,
 snapshots, generated migration artifacts, and fixture coverage.
 
+In non-interactive shells, `wp-typia create`, `add`, `migrate`, and `doctor`
+now share the same summary-first failure layout. Root `doctor` still streams
+PASS/FAIL check rows plus a final summary, while the other commands render the
+shared diagnostic block only when they fail.
+
 Compatibility note: `@wp-typia/project-tools` is the canonical programmatic package, `wp-typia` is the canonical CLI package, and `@wp-typia/create` is now the deprecated legacy package shell. `create-wp-typia` is archived and no longer a supported path for new installs.
 
 ## 2. `@wp-typia/create`

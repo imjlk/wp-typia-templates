@@ -106,16 +106,24 @@ export {
 } from "./template-registry.js";
 export {
 	createReadlinePrompt,
+	createCliCommandError,
+	CliDiagnosticError,
+	formatCliDiagnosticError,
 	formatAddHelpText,
+	formatDoctorCheckLine,
+	formatDoctorSummaryLine,
 	formatHelpText,
 	formatTemplateDetails,
 	formatTemplateFeatures,
 	formatTemplateSummary,
 	getDoctorChecks,
+	getDoctorFailureDetailLines,
+	getFailingDoctorChecks,
 	getNextSteps,
 	getOptionalOnboarding,
 	getWorkspaceBlockSelectOptions,
 	HOOKED_BLOCK_POSITION_IDS,
+	isCliDiagnosticError,
 	runAddBindingSourceCommand,
 	runAddBlockCommand,
 	runAddHookedBlockCommand,
@@ -124,4 +132,9 @@ export {
 	runAddVariationCommand,
 	runScaffoldFlow,
 } from "./cli-core.js";
-export type { DoctorCheck, HookedBlockPositionId, ReadlinePrompt } from "./cli-core.js";
+export type {
+	CliDiagnosticMessage,
+	DoctorCheck,
+	HookedBlockPositionId,
+	ReadlinePrompt,
+} from "./cli-core.js";
