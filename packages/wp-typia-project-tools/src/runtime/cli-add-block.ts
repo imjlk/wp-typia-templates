@@ -894,15 +894,15 @@ export async function runAddBlockCommand({
 		externalLayerSource: normalizedExternalLayerSource,
 		selectExternalLayerId,
 	});
-	const normalizedSlug = normalizeBlockSlug(blockName);
-	if (!normalizedSlug) {
-		throw new Error("Block name is required. Use `wp-typia add block <name> --template <family>`.");
-	}
-
-	const defaults = getDefaultAnswers(normalizedSlug, resolvedTemplateId);
 	let tempRoot = "";
 
 	try {
+		const normalizedSlug = normalizeBlockSlug(blockName);
+		if (!normalizedSlug) {
+			throw new Error("Block name is required. Use `wp-typia add block <name> --template <family>`.");
+		}
+
+		const defaults = getDefaultAnswers(normalizedSlug, resolvedTemplateId);
 		tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-add-block-"));
 		const tempProjectDir = path.join(tempRoot, normalizedSlug);
 		const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
@@ -925,44 +925,40 @@ export async function runAddBlockCommand({
 				? await collectLegacyCompoundValidatorPaths(workspace.projectDir)
 				: [];
 		const result = await (async () => {
-			try {
-				const scaffoldResult = await scaffoldProject({
-					answers: {
-						...defaults,
-						author: workspace.author,
-						namespace: workspace.workspace.namespace,
-						phpPrefix: blockPhpPrefix,
-						slug: normalizedSlug,
-						textDomain: workspace.workspace.textDomain,
-						title: defaults.title,
-					},
-					cwd: workspace.projectDir,
-					dataStorageMode: dataStorageMode as "custom-table" | "post-meta" | undefined,
-					externalLayerId:
-						resolvedExternalLayerSelection.externalLayerId,
-					externalLayerSource:
-						resolvedExternalLayerSelection.externalLayerSource,
-					externalLayerSourceLabel: normalizedExternalLayerSource,
-					noInstall: true,
-					packageManager: workspace.packageManager,
-					persistencePolicy:
-						persistencePolicy as "authenticated" | "public" | undefined,
-					projectDir: tempProjectDir,
-					templateId: resolvedTemplateId,
-				});
-				await assertAddBlockSupportsExternalLayerOutputs({
-					callerCwd: cwd,
-					externalLayerId:
-						resolvedExternalLayerSelection.externalLayerId,
-					externalLayerSource:
-						resolvedExternalLayerSelection.externalLayerSource,
-					templateId: resolvedTemplateId,
-					variables: scaffoldResult.variables,
-				});
-				return scaffoldResult;
-			} finally {
-				await resolvedExternalLayerSelection.cleanup?.();
-			}
+			const scaffoldResult = await scaffoldProject({
+				answers: {
+					...defaults,
+					author: workspace.author,
+					namespace: workspace.workspace.namespace,
+					phpPrefix: blockPhpPrefix,
+					slug: normalizedSlug,
+					textDomain: workspace.workspace.textDomain,
+					title: defaults.title,
+				},
+				cwd: workspace.projectDir,
+				dataStorageMode: dataStorageMode as "custom-table" | "post-meta" | undefined,
+				externalLayerId:
+					resolvedExternalLayerSelection.externalLayerId,
+				externalLayerSource:
+					resolvedExternalLayerSelection.externalLayerSource,
+				externalLayerSourceLabel: normalizedExternalLayerSource,
+				noInstall: true,
+				packageManager: workspace.packageManager,
+				persistencePolicy:
+					persistencePolicy as "authenticated" | "public" | undefined,
+				projectDir: tempProjectDir,
+				templateId: resolvedTemplateId,
+			});
+			await assertAddBlockSupportsExternalLayerOutputs({
+				callerCwd: cwd,
+				externalLayerId:
+					resolvedExternalLayerSelection.externalLayerId,
+				externalLayerSource:
+					resolvedExternalLayerSelection.externalLayerSource,
+				templateId: resolvedTemplateId,
+				variables: scaffoldResult.variables,
+			});
+			return scaffoldResult;
 		})();
 		assertBlockTargetsDoNotExist(workspace.projectDir, resolvedTemplateId, result.variables);
 		const mutationSnapshot: WorkspaceMutationSnapshot = {
@@ -1035,6 +1031,7 @@ export async function runAddBlockCommand({
 			throw error;
 		}
 	} finally {
+		await resolvedExternalLayerSelection.cleanup?.();
 		if (tempRoot) {
 			await fsp.rm(tempRoot, { force: true, recursive: true });
 		}
