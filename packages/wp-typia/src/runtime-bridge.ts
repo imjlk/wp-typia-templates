@@ -458,6 +458,8 @@ export async function executeCreateCommand({
 	const shouldPrompt =
 		interactive ?? (!Boolean(flags.yes) && Boolean(process.stdin.isTTY) && Boolean(process.stdout.isTTY));
 	const activePrompt = shouldPrompt ? (prompt ?? createReadlinePrompt()) : undefined;
+	const shouldPromptForExternalLayerSelection =
+		Boolean(activePrompt) && activePrompt !== prompt;
 
 	try {
 		const flow = await runScaffoldFlow({
@@ -478,7 +480,7 @@ export async function executeCreateCommand({
 			selectDataStorage: activePrompt
 				? () => activePrompt.select("Select a data storage mode", [...DATA_STORAGE_PROMPT_OPTIONS], 1)
 				: undefined,
-			selectExternalLayerId: activePrompt
+			selectExternalLayerId: shouldPromptForExternalLayerSelection
 				? (options) =>
 						activePrompt.select(
 							"Select an external layer",
