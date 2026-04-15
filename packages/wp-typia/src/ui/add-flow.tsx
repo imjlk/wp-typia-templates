@@ -310,6 +310,7 @@ export function AddFlow({ cwd, initialValues }: AddFlowProps) {
 						cwd,
 						emitOutput: false,
 						flags,
+						interactive: false,
 						kind: values.kind,
 						name: typeof flags.name === "string" ? flags.name : undefined,
 					});

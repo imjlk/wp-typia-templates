@@ -1,7 +1,8 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, runCli, runGeneratedScript, scaffoldOfficialWorkspace, templateLayerFixturePath, templateLayerWorkspaceFixturePath, typecheckGeneratedProject, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
+import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, runCli, runGeneratedScript, scaffoldOfficialWorkspace, templateLayerFixturePath, templateLayerWorkspaceAmbiguousFixturePath, templateLayerWorkspaceFixturePath, typecheckGeneratedProject, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
+import { runAddBlockCommand } from "../src/runtime/cli-core.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 
 const legacyValidatorToolkitSource = [
@@ -194,6 +195,73 @@ test("canonical CLI can add a basic block with an external layer package", async
       "utf8"
     )
   ).toContain("counter-card-telemetry");
+  typecheckGeneratedProject(targetDir);
+}, 20_000);
+
+test("runAddBlockCommand can select an external layer when multiple workspace-safe roots are available", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-basic-layered-prompt");
+  let promptedOptions: Array<{
+    description?: string;
+    extends: string[];
+    id: string;
+  }> = [];
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add basic layered prompt",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-basic-layered-prompt",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Basic Layered Prompt",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const result = await runAddBlockCommand({
+    blockName: "counter-card",
+    cwd: targetDir,
+    externalLayerSource: templateLayerWorkspaceAmbiguousFixturePath,
+    selectExternalLayerId: async (options) => {
+      promptedOptions = options;
+      return "acme/beta";
+    },
+    templateId: "basic",
+  });
+
+  expect(promptedOptions).toEqual([
+    {
+      description: "Alpha block-local workspace layer",
+      extends: ["acme/internal-base"],
+      id: "acme/alpha",
+    },
+    {
+      description: "Beta block-local workspace layer",
+      extends: ["acme/internal-base"],
+      id: "acme/beta",
+    },
+  ]);
+  expect(result.warnings).toContain(
+    `Applied external layer "acme/beta" from "${templateLayerWorkspaceAmbiguousFixturePath}".`
+  );
+  expect(
+    fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "counter-card", "base.txt"),
+      "utf8"
+    )
+  ).toContain("base workspace layer for counter-card");
+  expect(
+    fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "counter-card", "beta.txt"),
+      "utf8"
+    )
+  ).toContain("beta workspace layer for counter-card");
   typecheckGeneratedProject(targetDir);
 }, 20_000);
 

@@ -11,6 +11,7 @@ import {
 	templateLayerFixturePath,
 } from "./helpers/scaffold-test-harness.js";
 import {
+	listSelectableExternalTemplateLayers,
 	loadExternalTemplateLayerManifest,
 	resolveExternalTemplateLayers,
 } from "../src/runtime/template-layers.js";
@@ -42,11 +43,26 @@ describe("external template layer manifests", () => {
 
 	test("requires an explicit externalLayerId when a package exposes multiple public layers", async () => {
 		await expect(
+			listSelectableExternalTemplateLayers(templateLayerAmbiguousFixturePath),
+		).resolves.toEqual([
+			{
+				description: "Alpha external layer",
+				extends: ["acme/internal-base"],
+				id: "acme/alpha",
+			},
+			{
+				description: "Beta external layer",
+				extends: ["acme/internal-base"],
+				id: "acme/beta",
+			},
+		]);
+
+		await expect(
 			resolveExternalTemplateLayers({
 				sourceRoot: templateLayerAmbiguousFixturePath,
 			}),
 		).rejects.toThrow(
-			"External layer package defines multiple selectable layers",
+			"Pass an explicit externalLayerId or rerun through the interactive CLI selector.",
 		);
 
 		await expect(

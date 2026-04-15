@@ -2,16 +2,16 @@
   "version": 1,
   "layers": {
     "acme/internal-base": {
-      "description": "Shared external layer base",
+      "description": "Shared workspace block helpers",
       "path": "layers/base"
     },
     "acme/alpha": {
-      "description": "Alpha external layer",
+      "description": "Alpha block-local workspace layer",
       "extends": ["acme/internal-base"],
       "path": "layers/alpha"
     },
     "acme/beta": {
-      "description": "Beta external layer",
+      "description": "Beta block-local workspace layer",
       "extends": ["acme/internal-base"],
       "path": "layers/beta"
     }

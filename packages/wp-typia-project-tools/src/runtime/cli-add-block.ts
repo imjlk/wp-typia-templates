@@ -54,6 +54,9 @@ import {
 import {
 	resolveExternalTemplateLayers,
 } from "./template-layers.js";
+import {
+	resolveOptionalInteractiveExternalLayerId,
+} from "./external-layer-selection.js";
 
 const COLLECTION_IMPORT_LINE = "import '../../collection';";
 const REST_MANIFEST_IMPORT_PATTERN =
@@ -861,6 +864,7 @@ export async function runAddBlockCommand({
 	externalLayerId,
 	externalLayerSource,
 	persistencePolicy,
+	selectExternalLayerId,
 	templateId = "basic",
 }: RunAddBlockCommandOptions): Promise<{
 	blockSlugs: string[];
@@ -883,6 +887,12 @@ export async function runAddBlockCommand({
 		normalizeExternalLayerOption(externalLayerSource),
 		cwd,
 	);
+	const resolvedExternalLayerId = await resolveOptionalInteractiveExternalLayerId({
+		callerCwd: cwd,
+		externalLayerId: normalizedExternalLayerId,
+		externalLayerSource: normalizedExternalLayerSource,
+		selectExternalLayerId,
+	});
 	const normalizedSlug = normalizeBlockSlug(blockName);
 	if (!normalizedSlug) {
 		throw new Error("Block name is required. Use `wp-typia add block <name> --template <family>`.");
@@ -925,7 +935,7 @@ export async function runAddBlockCommand({
 			},
 			cwd: workspace.projectDir,
 			dataStorageMode: dataStorageMode as "custom-table" | "post-meta" | undefined,
-			externalLayerId: normalizedExternalLayerId,
+			externalLayerId: resolvedExternalLayerId,
 			externalLayerSource: normalizedExternalLayerSource,
 			noInstall: true,
 			packageManager: workspace.packageManager,
@@ -935,7 +945,7 @@ export async function runAddBlockCommand({
 		});
 		await assertAddBlockSupportsExternalLayerOutputs({
 			callerCwd: cwd,
-			externalLayerId: normalizedExternalLayerId,
+			externalLayerId: resolvedExternalLayerId,
 			externalLayerSource: normalizedExternalLayerSource,
 			templateId: resolvedTemplateId,
 			variables: result.variables,

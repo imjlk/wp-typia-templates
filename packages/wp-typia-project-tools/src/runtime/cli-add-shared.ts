@@ -69,6 +69,13 @@ export interface RunAddBlockCommandOptions {
 	externalLayerId?: string;
 	externalLayerSource?: string;
 	persistencePolicy?: string;
+	selectExternalLayerId?: (
+		options: Array<{
+			description?: string;
+			extends: string[];
+			id: string;
+		}>,
+	) => Promise<string>;
 	templateId?: string;
 }
 

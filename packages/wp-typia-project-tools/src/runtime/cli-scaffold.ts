@@ -26,6 +26,10 @@ import {
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	isBuiltInTemplateId,
 } from "./template-registry.js";
+import {
+	resolveOptionalInteractiveExternalLayerId,
+	type ExternalLayerSelectionOption,
+} from "./external-layer-selection.js";
 import type { TemplateDefinition } from "./template-registry.js";
 
 interface GetNextStepsOptions {
@@ -63,6 +67,9 @@ interface RunScaffoldFlowOptions {
 	projectInput: string;
 	promptText?: Parameters<typeof collectScaffoldAnswers>[0]["promptText"];
 	selectDataStorage?: () => Promise<DataStorageMode>;
+	selectExternalLayerId?: (
+		options: ExternalLayerSelectionOption[],
+	) => Promise<string>;
 	selectPackageManager?: () => Promise<PackageManagerId>;
 	selectPersistencePolicy?: () => Promise<PersistencePolicy>;
 	selectTemplate?: () => Promise<TemplateDefinition["id"]>;
@@ -271,6 +278,7 @@ export async function runScaffoldFlow({
 	allowExistingDir = false,
 	selectTemplate,
 	selectDataStorage,
+	selectExternalLayerId,
 	selectPersistencePolicy,
 	selectPackageManager,
 	promptText,
@@ -305,6 +313,15 @@ export async function runScaffoldFlow({
 		isInteractive,
 		selectTemplate,
 	});
+	const resolvedExternalLayerId =
+		isBuiltInTemplateId(resolvedTemplateId) && isInteractive
+			? await resolveOptionalInteractiveExternalLayerId({
+					callerCwd: cwd,
+					externalLayerId: normalizedExternalLayerId,
+					externalLayerSource: normalizedExternalLayerSource,
+					selectExternalLayerId,
+				})
+			: normalizedExternalLayerId;
 	const shouldResolvePersistence = templateUsesPersistenceSettings(resolvedTemplateId, {
 		dataStorageMode,
 		persistencePolicy,
@@ -377,7 +394,7 @@ export async function runScaffoldFlow({
 		allowExistingDir,
 		cwd,
 		dataStorageMode: resolvedDataStorage,
-		externalLayerId: normalizedExternalLayerId,
+		externalLayerId: resolvedExternalLayerId,
 		externalLayerSource: normalizedExternalLayerSource,
 		installDependencies,
 		noInstall,
