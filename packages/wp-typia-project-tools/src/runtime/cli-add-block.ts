@@ -887,7 +887,8 @@ export async function runAddBlockCommand({
 		normalizeExternalLayerOption(externalLayerSource),
 		cwd,
 	);
-	const resolvedExternalLayerId = await resolveOptionalInteractiveExternalLayerId({
+	const resolvedExternalLayerSelection =
+		await resolveOptionalInteractiveExternalLayerId({
 		callerCwd: cwd,
 		externalLayerId: normalizedExternalLayerId,
 		externalLayerSource: normalizedExternalLayerSource,
@@ -923,33 +924,46 @@ export async function runAddBlockCommand({
 			resolvedTemplateId === "compound"
 				? await collectLegacyCompoundValidatorPaths(workspace.projectDir)
 				: [];
-		const result = await scaffoldProject({
-			answers: {
-				...defaults,
-				author: workspace.author,
-				namespace: workspace.workspace.namespace,
-				phpPrefix: blockPhpPrefix,
-				slug: normalizedSlug,
-				textDomain: workspace.workspace.textDomain,
-				title: defaults.title,
-			},
-			cwd: workspace.projectDir,
-			dataStorageMode: dataStorageMode as "custom-table" | "post-meta" | undefined,
-			externalLayerId: resolvedExternalLayerId,
-			externalLayerSource: normalizedExternalLayerSource,
-			noInstall: true,
-			packageManager: workspace.packageManager,
-			persistencePolicy: persistencePolicy as "authenticated" | "public" | undefined,
-			projectDir: tempProjectDir,
-			templateId: resolvedTemplateId,
-		});
-		await assertAddBlockSupportsExternalLayerOutputs({
-			callerCwd: cwd,
-			externalLayerId: resolvedExternalLayerId,
-			externalLayerSource: normalizedExternalLayerSource,
-			templateId: resolvedTemplateId,
-			variables: result.variables,
-		});
+		const result = await (async () => {
+			try {
+				const scaffoldResult = await scaffoldProject({
+					answers: {
+						...defaults,
+						author: workspace.author,
+						namespace: workspace.workspace.namespace,
+						phpPrefix: blockPhpPrefix,
+						slug: normalizedSlug,
+						textDomain: workspace.workspace.textDomain,
+						title: defaults.title,
+					},
+					cwd: workspace.projectDir,
+					dataStorageMode: dataStorageMode as "custom-table" | "post-meta" | undefined,
+					externalLayerId:
+						resolvedExternalLayerSelection.externalLayerId,
+					externalLayerSource:
+						resolvedExternalLayerSelection.externalLayerSource,
+					externalLayerSourceLabel: normalizedExternalLayerSource,
+					noInstall: true,
+					packageManager: workspace.packageManager,
+					persistencePolicy:
+						persistencePolicy as "authenticated" | "public" | undefined,
+					projectDir: tempProjectDir,
+					templateId: resolvedTemplateId,
+				});
+				await assertAddBlockSupportsExternalLayerOutputs({
+					callerCwd: cwd,
+					externalLayerId:
+						resolvedExternalLayerSelection.externalLayerId,
+					externalLayerSource:
+						resolvedExternalLayerSelection.externalLayerSource,
+					templateId: resolvedTemplateId,
+					variables: scaffoldResult.variables,
+				});
+				return scaffoldResult;
+			} finally {
+				await resolvedExternalLayerSelection.cleanup?.();
+			}
+		})();
 		assertBlockTargetsDoNotExist(workspace.projectDir, resolvedTemplateId, result.variables);
 		const mutationSnapshot: WorkspaceMutationSnapshot = {
 			fileSources: await snapshotWorkspaceFiles([

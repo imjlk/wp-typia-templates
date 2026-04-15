@@ -313,7 +313,7 @@ export async function runScaffoldFlow({
 		isInteractive,
 		selectTemplate,
 	});
-	const resolvedExternalLayerId =
+	const resolvedExternalLayerSelection =
 		isBuiltInTemplateId(resolvedTemplateId) && isInteractive
 			? await resolveOptionalInteractiveExternalLayerId({
 					callerCwd: cwd,
@@ -321,7 +321,10 @@ export async function runScaffoldFlow({
 					externalLayerSource: normalizedExternalLayerSource,
 					selectExternalLayerId,
 				})
-			: normalizedExternalLayerId;
+			: {
+					externalLayerId: normalizedExternalLayerId,
+					externalLayerSource: normalizedExternalLayerSource,
+				};
 	const shouldResolvePersistence = templateUsesPersistenceSettings(resolvedTemplateId, {
 		dataStorageMode,
 		persistencePolicy,
@@ -389,24 +392,31 @@ export async function runScaffoldFlow({
 		promptText,
 	});
 
-	const result = await scaffoldProject({
-		answers,
-		allowExistingDir,
-		cwd,
-		dataStorageMode: resolvedDataStorage,
-		externalLayerId: resolvedExternalLayerId,
-		externalLayerSource: normalizedExternalLayerSource,
-		installDependencies,
-		noInstall,
-		packageManager: resolvedPackageManager,
-		persistencePolicy: resolvedPersistencePolicy,
-		projectDir,
-		templateId: resolvedTemplateId,
-		variant,
-		withMigrationUi: resolvedWithMigrationUi,
-		withTestPreset: resolvedWithTestPreset,
-		withWpEnv: resolvedWithWpEnv,
-	});
+	let result;
+	try {
+		result = await scaffoldProject({
+			answers,
+			allowExistingDir,
+			cwd,
+			dataStorageMode: resolvedDataStorage,
+			externalLayerId: resolvedExternalLayerSelection.externalLayerId,
+			externalLayerSource:
+				resolvedExternalLayerSelection.externalLayerSource,
+			externalLayerSourceLabel: normalizedExternalLayerSource,
+			installDependencies,
+			noInstall,
+			packageManager: resolvedPackageManager,
+			persistencePolicy: resolvedPersistencePolicy,
+			projectDir,
+			templateId: resolvedTemplateId,
+			variant,
+			withMigrationUi: resolvedWithMigrationUi,
+			withTestPreset: resolvedWithTestPreset,
+			withWpEnv: resolvedWithWpEnv,
+		});
+	} finally {
+		await resolvedExternalLayerSelection.cleanup?.();
+	}
 	let availableScripts: string[] | undefined;
 	try {
 		const parsedPackageJson = JSON.parse(
