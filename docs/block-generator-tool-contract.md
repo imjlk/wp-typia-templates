@@ -212,10 +212,11 @@ This contract intentionally does not:
 - implement an MCP server
 - implement Agentica runtime wiring
 - replace `BlockGeneratorService`
-- add interactive discovery/selection UX for external template-layer composition
+- add richer discovery UX beyond the current interactive layer selector
 
 External layer composition is now available through the same inspection input
 shape (`externalLayerSource` and optional `externalLayerId`) and the canonical
-`wp-typia create` / `wp-typia add block` built-in flags. The remaining
-interactive selection/discovery questions are documented in
-[`docs/external-template-layer-composition.md`](./external-template-layer-composition.md).
+`wp-typia create` / `wp-typia add block` built-in flags. The canonical CLI now
+prompts for a layer when a package exposes multiple public roots and the caller
+omits `externalLayerId`, while programmatic and non-interactive callers still
+pass the layer id explicitly when ambiguity exists.

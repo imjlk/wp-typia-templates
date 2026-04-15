@@ -26,7 +26,7 @@ It does not:
 - replace the typed built-in generator architecture from
   [`docs/block-generator-architecture.md`](./block-generator-architecture.md)
 - change the official empty workspace template package contract
-- define richer interactive discovery/selection UX beyond the canonical flags
+- define discovery UX beyond the current interactive selector plus canonical flags
 
 The implementation follow-through was tracked in issue `#268`.
 
@@ -249,8 +249,9 @@ using:
   root containing `wp-typia.layers.json`.
 - `externalLayerId`
   Optional explicit layer id. Omit it when the package exposes a single public
-  layer. If the package exposes multiple public roots, callers must choose one
-  explicitly until an interactive selector is added.
+  layer. Built-in interactive CLI flows can prompt when a package exposes
+  multiple public roots. Programmatic and non-interactive callers still choose
+  one explicitly in that case.
 
 The implemented behavior now includes:
 

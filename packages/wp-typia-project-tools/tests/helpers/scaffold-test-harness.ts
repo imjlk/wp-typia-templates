@@ -46,6 +46,12 @@ export const templateLayerWorkspaceFixturePath = path.join(
   "fixtures",
   "wp-typia-layer-workspace-package"
 );
+export const templateLayerWorkspaceAmbiguousFixturePath = path.join(
+  packageRoot,
+  "tests",
+  "fixtures",
+  "wp-typia-layer-workspace-ambiguous"
+);
 export const templateLayerAmbiguousFixturePath = path.join(
   packageRoot,
   "tests",

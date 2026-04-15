@@ -34,6 +34,12 @@ export interface ResolvedExternalTemplateLayers {
 	selectedLayerId: string;
 }
 
+export interface SelectableExternalTemplateLayer {
+	description?: string;
+	extends: string[];
+	id: string;
+}
+
 function resolveLayerPath(sourceRoot: string, relativePath: string): string {
 	const targetPath = path.resolve(sourceRoot, relativePath);
 	const relativeTarget = path.relative(sourceRoot, targetPath);
@@ -147,14 +153,10 @@ export async function loadExternalTemplateLayerManifest(
 	};
 }
 
-function getDefaultExternalLayerId(
+function getSelectableExternalLayers(
 	manifest: ExternalTemplateLayerManifest,
-): string {
+): SelectableExternalTemplateLayer[] {
 	const layerIds = Object.keys(manifest.layers);
-	if (layerIds.length === 1) {
-		return layerIds[0];
-	}
-
 	const referencedExternalLayerIds = new Set<string>();
 	for (const definition of Object.values(manifest.layers)) {
 		for (const ancestorId of definition.extends ?? []) {
@@ -167,13 +169,38 @@ function getDefaultExternalLayerId(
 	const publicLayerIds = layerIds.filter(
 		(layerId) => !referencedExternalLayerIds.has(layerId),
 	);
-	if (publicLayerIds.length === 1) {
-		return publicLayerIds[0];
+	return publicLayerIds.map((layerId) => ({
+		description: manifest.layers[layerId]?.description,
+		extends: [...(manifest.layers[layerId]?.extends ?? [])],
+		id: layerId,
+	}));
+}
+
+function getDefaultExternalLayerId(
+	manifest: ExternalTemplateLayerManifest,
+): string {
+	const selectableLayers = getSelectableExternalLayers(manifest);
+	if (selectableLayers.length === 1) {
+		return selectableLayers[0].id;
 	}
+	const layerIds = Object.keys(manifest.layers);
 
 	throw new Error(
-		`External layer package defines multiple selectable layers (${layerIds.join(", ")}). Pass an explicit externalLayerId until a final CLI selection UX exists.`,
+		`External layer package defines multiple selectable layers (${layerIds.join(", ")}). Pass an explicit externalLayerId or rerun through the interactive CLI selector.`,
 	);
+}
+
+export async function listSelectableExternalTemplateLayers(
+	sourceRoot: string,
+): Promise<SelectableExternalTemplateLayer[]> {
+	const manifest = await loadExternalTemplateLayerManifest(sourceRoot);
+	if (!manifest) {
+		throw new Error(
+			`No ${TEMPLATE_LAYER_MANIFEST_FILENAME} manifest found in ${sourceRoot}.`,
+		);
+	}
+
+	return getSelectableExternalLayers(manifest);
 }
 
 export async function resolveExternalTemplateLayers({

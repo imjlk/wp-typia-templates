@@ -98,6 +98,7 @@ export interface BlockGenerationTarget {
 	cwd: string;
 	externalLayerId?: string;
 	externalLayerSource?: string;
+	externalLayerSourceLabel?: string;
 	noInstall: boolean;
 	packageManager: PackageManagerId;
 	projectDir: string;
@@ -112,6 +113,7 @@ export interface PlanBlockInput {
 	dataStorageMode?: DataStorageMode;
 	externalLayerId?: string;
 	externalLayerSource?: string;
+	externalLayerSourceLabel?: string;
 	noInstall?: boolean;
 	packageManager: PackageManagerId;
 	persistencePolicy?: PersistencePolicy;
@@ -431,6 +433,7 @@ export class BlockGeneratorService {
 		dataStorageMode,
 		externalLayerId,
 		externalLayerSource,
+		externalLayerSourceLabel,
 		noInstall = false,
 		packageManager,
 		persistencePolicy,
@@ -457,6 +460,7 @@ export class BlockGeneratorService {
 				cwd,
 				externalLayerId,
 				externalLayerSource,
+				externalLayerSourceLabel,
 				noInstall,
 				packageManager,
 				projectDir,
@@ -568,7 +572,7 @@ export class BlockGeneratorService {
 					}
 				};
 				warnings.push(
-					`Applied external layer "${resolvedLayers.selectedLayerId}" from "${validated.target.externalLayerSource}".`,
+					`Applied external layer "${resolvedLayers.selectedLayerId}" from "${validated.target.externalLayerSourceLabel ?? validated.target.externalLayerSource}".`,
 				);
 			} catch (error) {
 				await templateSource.cleanup?.();

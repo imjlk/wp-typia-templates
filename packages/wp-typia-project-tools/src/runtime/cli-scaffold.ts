@@ -26,6 +26,10 @@ import {
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	isBuiltInTemplateId,
 } from "./template-registry.js";
+import {
+	resolveOptionalInteractiveExternalLayerId,
+	type ExternalLayerSelectionOption,
+} from "./external-layer-selection.js";
 import type { TemplateDefinition } from "./template-registry.js";
 
 interface GetNextStepsOptions {
@@ -63,6 +67,9 @@ interface RunScaffoldFlowOptions {
 	projectInput: string;
 	promptText?: Parameters<typeof collectScaffoldAnswers>[0]["promptText"];
 	selectDataStorage?: () => Promise<DataStorageMode>;
+	selectExternalLayerId?: (
+		options: ExternalLayerSelectionOption[],
+	) => Promise<string>;
 	selectPackageManager?: () => Promise<PackageManagerId>;
 	selectPersistencePolicy?: () => Promise<PersistencePolicy>;
 	selectTemplate?: () => Promise<TemplateDefinition["id"]>;
@@ -271,6 +278,7 @@ export async function runScaffoldFlow({
 	allowExistingDir = false,
 	selectTemplate,
 	selectDataStorage,
+	selectExternalLayerId,
 	selectPersistencePolicy,
 	selectPackageManager,
 	promptText,
@@ -305,128 +313,146 @@ export async function runScaffoldFlow({
 		isInteractive,
 		selectTemplate,
 	});
-	const shouldResolvePersistence = templateUsesPersistenceSettings(resolvedTemplateId, {
-		dataStorageMode,
-		persistencePolicy,
-	});
-	const resolvedDataStorage = await resolveOptionalSelection({
-		allowedValues: DATA_STORAGE_MODES,
-		defaultValue: "custom-table",
-		explicitValue: dataStorageMode,
-		isInteractive,
-		isValue: isDataStorageMode,
-		label: "data storage mode",
-		select: selectDataStorage,
-		shouldResolve: shouldResolvePersistence,
-		yes,
-	});
-	const resolvedPersistencePolicy = await resolveOptionalSelection({
-		allowedValues: PERSISTENCE_POLICIES,
-		defaultValue: "authenticated",
-		explicitValue: persistencePolicy,
-		isInteractive,
-		isValue: isPersistencePolicy,
-		label: "persistence policy",
-		select: selectPersistencePolicy,
-		shouldResolve: shouldResolvePersistence,
-		yes,
-	});
-	const resolvedPackageManager = await resolvePackageManagerId({
-		packageManager,
-		yes,
-		isInteractive,
-		selectPackageManager,
-	});
-	const resolvedWithWpEnv = await resolveOptionalBooleanFlag({
-		explicitValue: withWpEnv,
-		isInteractive,
-		select: selectWithWpEnv,
-		yes,
-	});
-	const resolvedWithTestPreset = await resolveOptionalBooleanFlag({
-		explicitValue: withTestPreset,
-		isInteractive,
-		select: selectWithTestPreset,
-		yes,
-	});
-	const resolvedWithMigrationUi = await resolveOptionalBooleanFlag({
-		disabled:
-			!isBuiltInTemplateId(resolvedTemplateId) &&
-			resolvedTemplateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
-		explicitValue: withMigrationUi,
-		isInteractive,
-		select: selectWithMigrationUi,
-		yes,
-	});
-	const projectDir = path.resolve(cwd, projectInput);
-	const projectName = path.basename(projectDir);
-	const answers = await collectScaffoldAnswers({
-		dataStorageMode: resolvedDataStorage,
-		namespace,
-		persistencePolicy: resolvedPersistencePolicy,
-		phpPrefix,
-		projectName,
-		templateId: resolvedTemplateId,
-		textDomain,
-		yes,
-		promptText,
-	});
-
-	const result = await scaffoldProject({
-		answers,
-		allowExistingDir,
-		cwd,
-		dataStorageMode: resolvedDataStorage,
-		externalLayerId: normalizedExternalLayerId,
-		externalLayerSource: normalizedExternalLayerSource,
-		installDependencies,
-		noInstall,
-		packageManager: resolvedPackageManager,
-		persistencePolicy: resolvedPersistencePolicy,
-		projectDir,
-		templateId: resolvedTemplateId,
-		variant,
-		withMigrationUi: resolvedWithMigrationUi,
-		withTestPreset: resolvedWithTestPreset,
-		withWpEnv: resolvedWithWpEnv,
-	});
-	let availableScripts: string[] | undefined;
+	const resolvedExternalLayerSelection =
+		isBuiltInTemplateId(resolvedTemplateId) && isInteractive
+			? await resolveOptionalInteractiveExternalLayerId({
+					callerCwd: cwd,
+					externalLayerId: normalizedExternalLayerId,
+					externalLayerSource: normalizedExternalLayerSource,
+					selectExternalLayerId,
+				})
+			: {
+					externalLayerId: normalizedExternalLayerId,
+					externalLayerSource: normalizedExternalLayerSource,
+				};
 	try {
-		const parsedPackageJson = JSON.parse(
-			fs.readFileSync(path.join(projectDir, "package.json"), "utf8"),
-		) as {
-			scripts?: unknown;
-		};
-		const scripts =
-			parsedPackageJson.scripts &&
-			typeof parsedPackageJson.scripts === "object" &&
-			!Array.isArray(parsedPackageJson.scripts)
-				? parsedPackageJson.scripts
-				: {};
-		availableScripts = Object.entries(scripts)
-			.filter(([, value]) => typeof value === "string")
-			.map(([scriptName]) => scriptName);
-	} catch {
-		availableScripts = undefined;
-	}
+		const shouldResolvePersistence = templateUsesPersistenceSettings(resolvedTemplateId, {
+			dataStorageMode,
+			persistencePolicy,
+		});
+		const resolvedDataStorage = await resolveOptionalSelection({
+			allowedValues: DATA_STORAGE_MODES,
+			defaultValue: "custom-table",
+			explicitValue: dataStorageMode,
+			isInteractive,
+			isValue: isDataStorageMode,
+			label: "data storage mode",
+			select: selectDataStorage,
+			shouldResolve: shouldResolvePersistence,
+			yes,
+		});
+		const resolvedPersistencePolicy = await resolveOptionalSelection({
+			allowedValues: PERSISTENCE_POLICIES,
+			defaultValue: "authenticated",
+			explicitValue: persistencePolicy,
+			isInteractive,
+			isValue: isPersistencePolicy,
+			label: "persistence policy",
+			select: selectPersistencePolicy,
+			shouldResolve: shouldResolvePersistence,
+			yes,
+		});
+		const resolvedPackageManager = await resolvePackageManagerId({
+			packageManager,
+			yes,
+			isInteractive,
+			selectPackageManager,
+		});
+		const resolvedWithWpEnv = await resolveOptionalBooleanFlag({
+			explicitValue: withWpEnv,
+			isInteractive,
+			select: selectWithWpEnv,
+			yes,
+		});
+		const resolvedWithTestPreset = await resolveOptionalBooleanFlag({
+			explicitValue: withTestPreset,
+			isInteractive,
+			select: selectWithTestPreset,
+			yes,
+		});
+		const resolvedWithMigrationUi = await resolveOptionalBooleanFlag({
+			disabled:
+				!isBuiltInTemplateId(resolvedTemplateId) &&
+				resolvedTemplateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
+			explicitValue: withMigrationUi,
+			isInteractive,
+			select: selectWithMigrationUi,
+			yes,
+		});
+		const projectDir = path.resolve(cwd, projectInput);
+		const projectName = path.basename(projectDir);
+		const answers = await collectScaffoldAnswers({
+			dataStorageMode: resolvedDataStorage,
+			namespace,
+			persistencePolicy: resolvedPersistencePolicy,
+			phpPrefix,
+			projectName,
+			templateId: resolvedTemplateId,
+			textDomain,
+			yes,
+			promptText,
+		});
 
-	return {
-		optionalOnboarding: getOptionalOnboarding({
-			availableScripts,
-			packageManager: resolvedPackageManager,
-			templateId: resolvedTemplateId,
-			compoundPersistenceEnabled: result.variables.compoundPersistenceEnabled === "true",
-		}),
-		projectDir,
-		projectInput,
-		packageManager: resolvedPackageManager,
-		result,
-		nextSteps: getNextSteps({
-			projectInput,
-			projectDir,
-			packageManager: resolvedPackageManager,
+		const result = await scaffoldProject({
+			answers,
+			allowExistingDir,
+			cwd,
+			dataStorageMode: resolvedDataStorage,
+			externalLayerId: resolvedExternalLayerSelection.externalLayerId,
+			externalLayerSource:
+				resolvedExternalLayerSelection.externalLayerSource,
+			externalLayerSourceLabel: normalizedExternalLayerSource,
+			installDependencies,
 			noInstall,
+			packageManager: resolvedPackageManager,
+			persistencePolicy: resolvedPersistencePolicy,
+			projectDir,
 			templateId: resolvedTemplateId,
-		}),
-	};
+			variant,
+			withMigrationUi: resolvedWithMigrationUi,
+			withTestPreset: resolvedWithTestPreset,
+			withWpEnv: resolvedWithWpEnv,
+		});
+		let availableScripts: string[] | undefined;
+		try {
+			const parsedPackageJson = JSON.parse(
+				fs.readFileSync(path.join(projectDir, "package.json"), "utf8"),
+			) as {
+				scripts?: unknown;
+			};
+			const scripts =
+				parsedPackageJson.scripts &&
+				typeof parsedPackageJson.scripts === "object" &&
+				!Array.isArray(parsedPackageJson.scripts)
+					? parsedPackageJson.scripts
+					: {};
+			availableScripts = Object.entries(scripts)
+				.filter(([, value]) => typeof value === "string")
+				.map(([scriptName]) => scriptName);
+		} catch {
+			availableScripts = undefined;
+		}
+
+		return {
+			optionalOnboarding: getOptionalOnboarding({
+				availableScripts,
+				packageManager: resolvedPackageManager,
+				templateId: resolvedTemplateId,
+				compoundPersistenceEnabled: result.variables.compoundPersistenceEnabled === "true",
+			}),
+			projectDir,
+			projectInput,
+			packageManager: resolvedPackageManager,
+			result,
+			nextSteps: getNextSteps({
+				projectInput,
+				projectDir,
+				packageManager: resolvedPackageManager,
+				noInstall,
+				templateId: resolvedTemplateId,
+			}),
+		};
+	} finally {
+		await resolvedExternalLayerSelection.cleanup?.();
+	}
 }

@@ -29,9 +29,11 @@ type AddExecutionInput = {
 	cwd: string;
 	emitOutput?: boolean;
 	flags: Record<string, unknown>;
+	interactive?: boolean;
 	kind?: string;
 	name?: string;
 	printLine?: PrintLine;
+	prompt?: ReadlinePrompt;
 	warnLine?: PrintLine;
 };
 
@@ -57,6 +59,11 @@ type MigrateExecutionInput = {
 
 type PrintLine = (line: string) => void;
 type PackageManagerId = "bun" | "npm" | "pnpm" | "yarn";
+type ExternalLayerSelectOption = {
+	description?: string;
+	extends: string[];
+	id: string;
+};
 
 type SyncProjectContext = {
 	cwd: string;
@@ -76,6 +83,23 @@ function printBlock(lines: string[], printLine: PrintLine): void {
 	for (const line of lines) {
 		printLine(line);
 	}
+}
+
+function formatExternalLayerSelectHint(option: ExternalLayerSelectOption): string | undefined {
+	const details = [
+		option.description,
+		option.extends.length > 0 ? `extends ${option.extends.join(", ")}` : undefined,
+	].filter((value): value is string => typeof value === "string" && value.length > 0);
+
+	return details.length > 0 ? details.join(" · ") : undefined;
+}
+
+function toExternalLayerPromptOptions(options: ExternalLayerSelectOption[]) {
+	return options.map((option) => ({
+		hint: formatExternalLayerSelectHint(option),
+		label: option.id,
+		value: option.id,
+	}));
 }
 
 export function printCompletionPayload(
@@ -434,6 +458,8 @@ export async function executeCreateCommand({
 	const shouldPrompt =
 		interactive ?? (!Boolean(flags.yes) && Boolean(process.stdin.isTTY) && Boolean(process.stdout.isTTY));
 	const activePrompt = shouldPrompt ? (prompt ?? createReadlinePrompt()) : undefined;
+	const shouldPromptForExternalLayerSelection =
+		Boolean(activePrompt) && activePrompt !== prompt;
 
 	try {
 		const flow = await runScaffoldFlow({
@@ -453,6 +479,14 @@ export async function executeCreateCommand({
 				: undefined,
 			selectDataStorage: activePrompt
 				? () => activePrompt.select("Select a data storage mode", [...DATA_STORAGE_PROMPT_OPTIONS], 1)
+				: undefined,
+			selectExternalLayerId: shouldPromptForExternalLayerSelection && activePrompt
+				? (options) =>
+						activePrompt.select(
+							"Select an external layer",
+							toExternalLayerPromptOptions(options),
+							1,
+						)
 				: undefined,
 			selectPackageManager: activePrompt
 				? () => activePrompt.select("Select a package manager", [...PACKAGE_MANAGER_PROMPT_OPTIONS], 1)
@@ -511,9 +545,11 @@ export async function executeAddCommand({
 	cwd,
 	emitOutput = true,
 	flags,
+	interactive,
 	kind,
 	name,
 	printLine = console.log as PrintLine,
+	prompt,
 	warnLine = console.warn as PrintLine,
 }: AddExecutionInput): Promise<AlternateBufferCompletionPayload | void> {
 	if (!kind) {
@@ -661,33 +697,60 @@ export async function executeAddCommand({
 		);
 	}
 
-	const result = await addRuntime.runAddBlockCommand({
-		blockName: name,
-		cwd,
-		dataStorageMode: readOptionalStringFlag(flags, "data-storage"),
-		externalLayerId: readOptionalStringFlag(flags, "external-layer-id"),
-		externalLayerSource: readOptionalStringFlag(flags, "external-layer-source"),
-		persistencePolicy: readOptionalStringFlag(flags, "persistence-policy"),
-		templateId: readOptionalStringFlag(flags, "template") as
-			| "basic"
-			| "interactivity"
-			| "persistence"
-			| "compound",
-	});
+	const externalLayerId = readOptionalStringFlag(flags, "external-layer-id");
+	const externalLayerSource = readOptionalStringFlag(flags, "external-layer-source");
+	const shouldPromptForLayerSelection =
+		Boolean(externalLayerSource) &&
+		!Boolean(externalLayerId) &&
+		(interactive ?? (Boolean(process.stdin.isTTY) && Boolean(process.stdout.isTTY)));
+	const promptRuntime = shouldPromptForLayerSelection
+		? await loadCliPromptRuntime()
+		: undefined;
+	const activePrompt = shouldPromptForLayerSelection
+		? (prompt ?? promptRuntime?.createReadlinePrompt())
+		: undefined;
 
-	const payload = buildAddCompletionPayload({
-		kind: "block",
-		projectDir: result.projectDir,
-		values: {
-			blockSlugs: result.blockSlugs.join(", "),
-			templateId: result.templateId,
-		},
-		warnings: result.warnings,
-	});
-	if (emitOutput) {
-		printCompletionPayload(payload, { printLine, warnLine });
+	try {
+		const result = await addRuntime.runAddBlockCommand({
+			blockName: name,
+			cwd,
+			dataStorageMode: readOptionalStringFlag(flags, "data-storage"),
+			externalLayerId,
+			externalLayerSource,
+			persistencePolicy: readOptionalStringFlag(flags, "persistence-policy"),
+			selectExternalLayerId: activePrompt
+				? (options) =>
+						activePrompt.select(
+							"Select an external layer",
+							toExternalLayerPromptOptions(options),
+							1,
+						)
+				: undefined,
+			templateId: readOptionalStringFlag(flags, "template") as
+				| "basic"
+				| "interactivity"
+				| "persistence"
+				| "compound",
+		});
+
+		const payload = buildAddCompletionPayload({
+			kind: "block",
+			projectDir: result.projectDir,
+			values: {
+				blockSlugs: result.blockSlugs.join(", "),
+				templateId: result.templateId,
+			},
+			warnings: result.warnings,
+		});
+		if (emitOutput) {
+			printCompletionPayload(payload, { printLine, warnLine });
+		}
+		return payload;
+	} finally {
+		if (activePrompt && activePrompt !== prompt) {
+			activePrompt.close();
+		}
 	}
-	return payload;
 }
 
 export async function executeTemplatesCommand(

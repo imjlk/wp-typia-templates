@@ -211,6 +211,51 @@ test("runScaffoldFlow honors explicit external layer ids when a package exposes 
   );
 });
 
+test("runScaffoldFlow prompts for an external layer when multiple public roots are available", async () => {
+  let promptedOptions: Array<{
+    description?: string;
+    extends: string[];
+    id: string;
+  }> = [];
+
+  const flow = await runScaffoldFlow({
+    cwd: tempRoot,
+    externalLayerSource: templateLayerAmbiguousFixturePath,
+    isInteractive: true,
+    noInstall: true,
+    packageManager: "npm",
+    projectInput: "demo-layered-ambiguous-prompt",
+    promptText: async (_message, defaultValue) => defaultValue,
+    selectExternalLayerId: async (options) => {
+      promptedOptions = options;
+      return "acme/beta";
+    },
+    templateId: "basic",
+  });
+
+  expect(promptedOptions).toEqual([
+    {
+      description: "Alpha external layer",
+      extends: ["acme/internal-base"],
+      id: "acme/alpha",
+    },
+    {
+      description: "Beta external layer",
+      extends: ["acme/internal-base"],
+      id: "acme/beta",
+    },
+  ]);
+  expect(flow.result.warnings).toContain(
+    `Applied external layer "acme/beta" from "${templateLayerAmbiguousFixturePath}".`
+  );
+  expect(
+    fs.readFileSync(path.join(flow.projectDir, "base.txt"), "utf8")
+  ).toContain("base external layer");
+  expect(fs.readFileSync(path.join(flow.projectDir, "beta.txt"), "utf8")).toContain(
+    "beta layer"
+  );
+});
+
 test("optional onboarding derives sync steps from available custom-template scripts", () => {
   const onboarding = getOptionalOnboarding({
     availableScripts: ["sync-types", "sync-rest"],
@@ -293,6 +338,22 @@ test("runScaffoldFlow rejects external layer ids without a layer source", async 
     })
   ).rejects.toThrow(
     "externalLayerId requires externalLayerSource when composing built-in template layers."
+  );
+});
+
+test("runScaffoldFlow keeps multi-layer external packages fail-fast outside interactive mode", async () => {
+  await expect(
+    runScaffoldFlow({
+      cwd: tempRoot,
+      externalLayerSource: templateLayerAmbiguousFixturePath,
+      noInstall: true,
+      packageManager: "npm",
+      projectInput: "demo-layered-ambiguous-noninteractive",
+      templateId: "basic",
+      yes: true,
+    })
+  ).rejects.toThrow(
+    "External layer package defines multiple selectable layers (acme/internal-base, acme/alpha, acme/beta). Pass an explicit externalLayerId or rerun through the interactive CLI selector."
   );
 });
 

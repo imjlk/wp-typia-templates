@@ -204,6 +204,7 @@ interface ScaffoldProjectOptions {
 	dataStorageMode?: DataStorageMode;
 	externalLayerId?: string;
 	externalLayerSource?: string;
+	externalLayerSourceLabel?: string;
 	installDependencies?: ((options: InstallDependenciesOptions) => Promise<void>) | undefined;
 	noInstall?: boolean;
 	packageManager: PackageManagerId;
@@ -1029,6 +1030,7 @@ export async function scaffoldProject({
 	packageManager,
 	externalLayerId,
 	externalLayerSource,
+	externalLayerSourceLabel,
 	repositoryReference,
 	cwd = process.cwd(),
 	allowExistingDir = false,
@@ -1058,6 +1060,7 @@ export async function scaffoldProject({
 			dataStorageMode: dataStorageMode ?? answers.dataStorageMode,
 			externalLayerId,
 			externalLayerSource,
+			externalLayerSourceLabel,
 			noInstall,
 			packageManager: resolvedPackageManager,
 			persistencePolicy: persistencePolicy ?? answers.persistencePolicy,
