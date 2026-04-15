@@ -413,6 +413,10 @@ export async function removeUnexpectedLockfiles(
 	);
 }
 
+/**
+ * Recursively normalizes generated text files for the selected package manager
+ * and repository reference.
+ */
 export async function replaceTextRecursively(
 	targetDir: string,
 	packageManagerId: PackageManagerId,
@@ -533,6 +537,10 @@ export async function applyWorkspaceMigrationCapability(
 	writeInitialMigrationScaffold(projectDir, "v1", []);
 }
 
+/**
+ * Applies a built-in scaffold into the target directory, including generated
+ * code artifacts, starter manifests, preset files, and placeholder rewrites.
+ */
 export async function applyBuiltInScaffoldProjectFiles({
 	projectDir,
 	templateDir,

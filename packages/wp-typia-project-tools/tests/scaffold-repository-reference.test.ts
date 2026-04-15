@@ -58,6 +58,37 @@ test("resolveScaffoldRepositoryReference falls back to the upstream default when
 	).toBe(DEFAULT_SCAFFOLD_REPOSITORY_REFERENCE);
 });
 
+test("resolveScaffoldRepositoryReference prefers the first manifest path that yields a GitHub repository", () => {
+	const upstreamManifestPath = path.join(tempRoot, "upstream-package.json");
+	const forkManifestPath = path.join(tempRoot, "fork-priority-package.json");
+	fs.writeFileSync(
+		upstreamManifestPath,
+		JSON.stringify({
+			repository: {
+				type: "git",
+				url: "git+https://github.com/upstream/wp-typia.git",
+			},
+		}),
+		"utf8",
+	);
+	fs.writeFileSync(
+		forkManifestPath,
+		JSON.stringify({
+			repository: {
+				type: "git",
+				url: "git+https://github.com/fork-owner/fork-typia.git",
+			},
+		}),
+		"utf8",
+	);
+
+	expect(
+		resolveScaffoldRepositoryReference({
+			manifestPaths: [forkManifestPath, upstreamManifestPath],
+		}),
+	).toBe("fork-owner/fork-typia");
+});
+
 test("replaceRepositoryReferencePlaceholders rewrites both legacy scaffold repository placeholders", () => {
 	const source = [
 		"https://github.com/yourusername/wp-typia-boilerplate/issues",

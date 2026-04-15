@@ -15,6 +15,10 @@ interface RepositoryPackageManifest {
 
 const require = createRequire(import.meta.url);
 
+/**
+ * Default scaffold repository reference used when no GitHub repository metadata
+ * can be resolved from the current runtime package manifests.
+ */
 export const DEFAULT_SCAFFOLD_REPOSITORY_REFERENCE = "imjlk/wp-typia";
 
 function getErrorCode(error: unknown): string | undefined {
@@ -94,10 +98,10 @@ function parseRepositoryReference(
 function getDefaultRepositoryManifestPaths(): string[] {
 	const candidatePaths = [
 		path.resolve(PROJECT_TOOLS_PACKAGE_ROOT, "..", "..", "package.json"),
-		path.join(PROJECT_TOOLS_PACKAGE_ROOT, "package.json"),
 		path.resolve(PROJECT_TOOLS_PACKAGE_ROOT, "..", "wp-typia", "package.json"),
-		resolveInstalledPackageManifestPath("@wp-typia/project-tools"),
+		path.join(PROJECT_TOOLS_PACKAGE_ROOT, "package.json"),
 		resolveInstalledPackageManifestPath("wp-typia"),
+		resolveInstalledPackageManifestPath("@wp-typia/project-tools"),
 	].filter((candidatePath): candidatePath is string => Boolean(candidatePath));
 
 	return candidatePaths.filter(
@@ -106,6 +110,14 @@ function getDefaultRepositoryManifestPaths(): string[] {
 	);
 }
 
+/**
+ * Resolves the canonical scaffold repository reference in `owner/repo` format.
+ *
+ * The resolver checks candidate package manifests in priority order, extracts
+ * their `repository` field, and returns the first GitHub slug it can parse.
+ * When no candidate yields a GitHub repository reference, the fallback value
+ * is returned instead.
+ */
 export function resolveScaffoldRepositoryReference({
 	fallback = DEFAULT_SCAFFOLD_REPOSITORY_REFERENCE,
 	manifestPaths = getDefaultRepositoryManifestPaths(),
@@ -126,6 +138,10 @@ export function resolveScaffoldRepositoryReference({
 	return fallback;
 }
 
+/**
+ * Replaces legacy scaffold repository placeholders with a concrete
+ * `owner/repo` reference.
+ */
 export function replaceRepositoryReferencePlaceholders(
 	source: string,
 	repositoryReference: string,
