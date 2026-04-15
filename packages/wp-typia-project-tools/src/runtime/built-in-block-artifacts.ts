@@ -53,6 +53,22 @@ interface EmittedAttributeDefinition {
 	typeExpression: string;
 }
 
+interface BuiltInAttributeSpec {
+	blockJsonDefaultValue?: JsonValue;
+	constraints?: Partial<ManifestConstraints>;
+	defaultValue?: JsonValue;
+	description?: AttributeDescription;
+	enumValues?: Array<string | number | boolean> | null;
+	kind: ManifestAttribute["ts"]["kind"];
+	manifestDefaultValue?: JsonValue;
+	name: string;
+	optional: boolean;
+	selector?: string | null;
+	source?: WordPressAttributeSource | null;
+	sourceType: StarterManifestSourceType;
+	typeExpression: string;
+}
+
 interface InterfaceMemberDefinition {
 	description?: AttributeDescription;
 	name: string;
@@ -161,22 +177,85 @@ function createBlockJsonAttribute({
 	return attribute;
 }
 
-function createAttributeDefinition({
-	blockJson,
+function describe(...lines: string[]): AttributeDescription {
+	return {
+		lines,
+	};
+}
+
+function defineAttribute({
+	blockJsonDefaultValue,
+	constraints,
+	defaultValue,
 	description,
-	manifest,
+	enumValues = null,
+	kind,
+	manifestDefaultValue,
 	name,
 	optional,
+	selector = null,
+	source = null,
+	sourceType,
 	typeExpression,
-}: EmittedAttributeDefinition): EmittedAttributeDefinition {
+}: BuiltInAttributeSpec): EmittedAttributeDefinition {
+	const resolvedBlockJsonDefaultValue =
+		blockJsonDefaultValue !== undefined ? blockJsonDefaultValue : defaultValue;
+	const resolvedManifestDefaultValue =
+		manifestDefaultValue !== undefined ? manifestDefaultValue : defaultValue;
+
 	return {
-		blockJson,
+		blockJson: {
+			defaultValue: resolvedBlockJsonDefaultValue,
+			enumValues,
+			...(selector ? { selector } : {}),
+			...(source ? { source } : {}),
+			type: sourceType,
+		},
 		description,
-		manifest,
+		manifest: {
+			constraints,
+			defaultValue: resolvedManifestDefaultValue,
+			enumValues,
+			kind,
+			required: !optional,
+			selector,
+			source,
+			sourceType,
+		},
 		name,
 		optional,
 		typeExpression,
 	};
+}
+
+function defineStringAttribute(
+	spec: Omit<BuiltInAttributeSpec, "kind" | "sourceType">,
+): EmittedAttributeDefinition {
+	return defineAttribute({
+		...spec,
+		kind: "string",
+		sourceType: "string",
+	});
+}
+
+function defineBooleanAttribute(
+	spec: Omit<BuiltInAttributeSpec, "kind" | "sourceType">,
+): EmittedAttributeDefinition {
+	return defineAttribute({
+		...spec,
+		kind: "boolean",
+		sourceType: "boolean",
+	});
+}
+
+function defineNumberAttribute(
+	spec: Omit<BuiltInAttributeSpec, "kind" | "sourceType">,
+): EmittedAttributeDefinition {
+	return defineAttribute({
+		...spec,
+		kind: "number",
+		sourceType: "number",
+	});
 }
 
 function buildManifestDocument(
@@ -280,122 +359,56 @@ function stringifyBlockJsonDocument(document: Record<string, unknown>): string {
 
 function buildBasicAttributes(): EmittedAttributeDefinition[] {
 	return [
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: "",
-				type: "string",
+		defineStringAttribute({
+			constraints: {
+				maxLength: 1000,
 			},
-			description: {
-				lines: ["Main block content"],
-			},
-			manifest: {
-				constraints: {
-					maxLength: 1000,
-				},
-				defaultValue: "",
-				kind: "string",
-				required: true,
-				sourceType: "string",
-			},
+			defaultValue: "",
+			description: describe("Main block content"),
 			name: "content",
 			optional: false,
 			typeExpression: 'string & tags.MaxLength<1000> & tags.Default<"">',
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: "left",
-				enumValues: [...BASIC_ALIGNMENT_VALUES],
-				type: "string",
-			},
-			description: {
-				lines: ["Alignment"],
-			},
-			manifest: {
-				defaultValue: "left",
-				enumValues: [...BASIC_ALIGNMENT_VALUES],
-				kind: "string",
-				required: false,
-				sourceType: "string",
-			},
+		defineStringAttribute({
+			defaultValue: "left",
+			description: describe("Alignment"),
+			enumValues: [...BASIC_ALIGNMENT_VALUES],
 			name: "alignment",
 			optional: true,
 			typeExpression: 'TextAlignment & tags.Default<"left">',
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: true,
-				type: "boolean",
-			},
-			description: {
-				lines: ["Visibility toggle"],
-			},
-			manifest: {
-				defaultValue: true,
-				kind: "boolean",
-				required: false,
-				sourceType: "boolean",
-			},
+		defineBooleanAttribute({
+			defaultValue: true,
+			description: describe("Visibility toggle"),
 			name: "isVisible",
 			optional: true,
 			typeExpression: "boolean & tags.Default<true>",
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: "",
-				type: "string",
+		defineStringAttribute({
+			constraints: {
+				maxLength: 100,
 			},
-			description: {
-				lines: ["Custom CSS class"],
-			},
-			manifest: {
-				constraints: {
-					maxLength: 100,
-				},
-				defaultValue: "",
-				kind: "string",
-				required: false,
-				sourceType: "string",
-			},
+			defaultValue: "",
+			description: describe("Custom CSS class"),
 			name: "className",
 			optional: true,
 			typeExpression: 'string & tags.MaxLength<100> & tags.Default<"">',
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				type: "string",
+		defineStringAttribute({
+			constraints: {
+				format: "uuid",
 			},
-			description: {
-				lines: ["Generated runtime ID"],
-			},
-			manifest: {
-				constraints: {
-					format: "uuid",
-				},
-				kind: "string",
-				required: false,
-				sourceType: "string",
-			},
+			description: describe("Generated runtime ID"),
 			name: "id",
 			optional: true,
 			typeExpression: 'string & tags.Format<"uuid">',
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: 1,
-				type: "number",
+		defineNumberAttribute({
+			constraints: {
+				typeTag: "uint32",
 			},
-			description: {
-				lines: ["Block version for migrations"],
-			},
-			manifest: {
-				constraints: {
-					typeTag: "uint32",
-				},
-				defaultValue: 1,
-				kind: "number",
-				required: false,
-				sourceType: "number",
-			},
+			defaultValue: 1,
+			description: describe("Block version for migrations"),
 			name: "schemaVersion",
 			optional: true,
 			typeExpression: 'number & tags.Type<"uint32"> & tags.Default<1>',
@@ -407,159 +420,73 @@ function buildInteractivityAttributes(
 	variables: ScaffoldTemplateVariables,
 ): EmittedAttributeDefinition[] {
 	return [
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: "",
-				selector: `.${variables.cssClassName}__content`,
-				source: "html",
-				type: "string",
+		defineStringAttribute({
+			constraints: {
+				maxLength: 1000,
 			},
-			manifest: {
-				constraints: {
-					maxLength: 1000,
-				},
-				defaultValue: "",
-				kind: "string",
-				required: true,
-				selector: `.${variables.cssClassName}__content`,
-				source: "html",
-				sourceType: "string",
-			},
+			defaultValue: "",
 			name: "content",
 			optional: false,
+			selector: `.${variables.cssClassName}__content`,
+			source: "html",
 			typeExpression: 'string & tags.MaxLength<1000> & tags.Default<"">',
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: "left",
-				enumValues: [...ALIGNMENT_VALUES],
-				type: "string",
-			},
-			manifest: {
-				defaultValue: "left",
-				enumValues: [...ALIGNMENT_VALUES],
-				kind: "string",
-				required: false,
-				sourceType: "string",
-			},
+		defineStringAttribute({
+			defaultValue: "left",
+			enumValues: [...ALIGNMENT_VALUES],
 			name: "alignment",
 			optional: true,
 			typeExpression: 'TextAlignment & tags.Default<"left">',
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: true,
-				type: "boolean",
-			},
-			manifest: {
-				defaultValue: true,
-				kind: "boolean",
-				required: false,
-				sourceType: "boolean",
-			},
+		defineBooleanAttribute({
+			defaultValue: true,
 			name: "isVisible",
 			optional: true,
 			typeExpression: "boolean & tags.Default<true>",
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: "click",
-				enumValues: [...INTERACTIVE_MODE_VALUES],
-				type: "string",
-			},
-			manifest: {
-				defaultValue: "click",
-				enumValues: [...INTERACTIVE_MODE_VALUES],
-				kind: "string",
-				required: false,
-				sourceType: "string",
-			},
+		defineStringAttribute({
+			defaultValue: "click",
+			enumValues: [...INTERACTIVE_MODE_VALUES],
 			name: "interactiveMode",
 			optional: true,
 			typeExpression: '("click" | "hover") & tags.Default<"click">',
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: "none",
-				enumValues: [...ANIMATION_VALUES],
-				type: "string",
-			},
-			manifest: {
-				defaultValue: "none",
-				enumValues: [...ANIMATION_VALUES],
-				kind: "string",
-				required: false,
-				sourceType: "string",
-			},
+		defineStringAttribute({
+			defaultValue: "none",
+			enumValues: [...ANIMATION_VALUES],
 			name: "animation",
 			optional: true,
 			typeExpression:
 				'("none" | "bounce" | "pulse" | "shake" | "flip") & tags.Default<"none">',
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: 0,
-				type: "number",
+		defineNumberAttribute({
+			constraints: {
+				minimum: 0,
+				typeTag: "uint32",
 			},
-			manifest: {
-				constraints: {
-					minimum: 0,
-					typeTag: "uint32",
-				},
-				defaultValue: 0,
-				kind: "number",
-				required: false,
-				sourceType: "number",
-			},
+			defaultValue: 0,
 			name: "clickCount",
 			optional: true,
 			typeExpression: 'number & tags.Minimum<0> & tags.Type<"uint32"> & tags.Default<0>',
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: false,
-				type: "boolean",
-			},
-			manifest: {
-				defaultValue: false,
-				kind: "boolean",
-				required: false,
-				sourceType: "boolean",
-			},
+		defineBooleanAttribute({
+			defaultValue: false,
 			name: "isAnimating",
 			optional: true,
 			typeExpression: "boolean & tags.Default<false>",
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: true,
-				type: "boolean",
-			},
-			manifest: {
-				defaultValue: true,
-				kind: "boolean",
-				required: false,
-				sourceType: "boolean",
-			},
+		defineBooleanAttribute({
+			defaultValue: true,
 			name: "showCounter",
 			optional: true,
 			typeExpression: "boolean & tags.Default<true>",
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: 10,
-				type: "number",
+		defineNumberAttribute({
+			constraints: {
+				minimum: 0,
+				typeTag: "uint32",
 			},
-			manifest: {
-				constraints: {
-					minimum: 0,
-					typeTag: "uint32",
-				},
-				defaultValue: 10,
-				kind: "number",
-				required: false,
-				sourceType: "number",
-			},
+			defaultValue: 10,
 			name: "maxClicks",
 			optional: true,
 			typeExpression: 'number & tags.Minimum<0> & tags.Type<"uint32"> & tags.Default<10>',
@@ -571,112 +498,56 @@ function buildPersistenceAttributes(
 	variables: ScaffoldTemplateVariables,
 ): EmittedAttributeDefinition[] {
 	return [
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: `${variables.title} persistence block`,
-				selector: `.${variables.cssClassName}__content`,
-				source: "html",
-				type: "string",
+		defineStringAttribute({
+			constraints: {
+				maxLength: 250,
+				minLength: 1,
 			},
-			manifest: {
-				constraints: {
-					maxLength: 250,
-					minLength: 1,
-				},
-				defaultValue: `${variables.title} persistence block`,
-				kind: "string",
-				required: true,
-				selector: `.${variables.cssClassName}__content`,
-				source: "html",
-				sourceType: "string",
-			},
+			defaultValue: `${variables.title} persistence block`,
 			name: "content",
 			optional: false,
+			selector: `.${variables.cssClassName}__content`,
+			source: "html",
 			typeExpression:
 				`string & tags.MinLength<1> & tags.MaxLength<250> & tags.Default<${quote(`${variables.title} persistence block`)}>`,
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: "left",
-				enumValues: [...ALIGNMENT_VALUES],
-				type: "string",
-			},
-			manifest: {
-				defaultValue: "left",
-				enumValues: [...ALIGNMENT_VALUES],
-				kind: "string",
-				required: false,
-				sourceType: "string",
-			},
+		defineStringAttribute({
+			defaultValue: "left",
+			enumValues: [...ALIGNMENT_VALUES],
 			name: "alignment",
 			optional: true,
 			typeExpression: 'TextAlignment & tags.Default<"left">',
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: true,
-				type: "boolean",
-			},
-			manifest: {
-				defaultValue: true,
-				kind: "boolean",
-				required: false,
-				sourceType: "boolean",
-			},
+		defineBooleanAttribute({
+			defaultValue: true,
 			name: "isVisible",
 			optional: true,
 			typeExpression: "boolean & tags.Default<true>",
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: true,
-				type: "boolean",
-			},
-			manifest: {
-				defaultValue: true,
-				kind: "boolean",
-				required: false,
-				sourceType: "boolean",
-			},
+		defineBooleanAttribute({
+			defaultValue: true,
 			name: "showCount",
 			optional: true,
 			typeExpression: "boolean & tags.Default<true>",
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: "Persist Count",
-				type: "string",
+		defineStringAttribute({
+			constraints: {
+				maxLength: 40,
+				minLength: 1,
 			},
-			manifest: {
-				constraints: {
-					maxLength: 40,
-					minLength: 1,
-				},
-				defaultValue: "Persist Count",
-				kind: "string",
-				required: false,
-				sourceType: "string",
-			},
+			defaultValue: "Persist Count",
 			name: "buttonLabel",
 			optional: true,
 			typeExpression:
 				'string & tags.MinLength<1> & tags.MaxLength<40> & tags.Default<"Persist Count">',
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: "",
-				type: "string",
+		defineStringAttribute({
+			blockJsonDefaultValue: "",
+			constraints: {
+				maxLength: 100,
+				minLength: 1,
 			},
-			manifest: {
-				constraints: {
-					maxLength: 100,
-					minLength: 1,
-				},
-				defaultValue: "primary",
-				kind: "string",
-				required: false,
-				sourceType: "string",
-			},
+			manifestDefaultValue: "primary",
 			name: "resourceKey",
 			optional: true,
 			typeExpression:
@@ -689,65 +560,34 @@ function buildCompoundParentAttributes(
 	variables: ScaffoldTemplateVariables,
 ): EmittedAttributeDefinition[] {
 	const attributes: EmittedAttributeDefinition[] = [
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: variables.title,
-				selector: `.${variables.cssClassName}__heading`,
-				source: "html",
-				type: "string",
+		defineStringAttribute({
+			constraints: {
+				maxLength: 80,
+				minLength: 1,
 			},
-			manifest: {
-				constraints: {
-					maxLength: 80,
-					minLength: 1,
-				},
-				defaultValue: variables.title,
-				kind: "string",
-				required: true,
-				selector: `.${variables.cssClassName}__heading`,
-				source: "html",
-				sourceType: "string",
-			},
+			defaultValue: variables.title,
 			name: "heading",
 			optional: false,
+			selector: `.${variables.cssClassName}__heading`,
+			source: "html",
 			typeExpression:
 				`string & tags.MinLength<1> & tags.MaxLength<80> & tags.Default<${quote(variables.title)}>`,
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: "Add and reorder internal items inside this compound block.",
-				selector: `.${variables.cssClassName}__intro`,
-				source: "html",
-				type: "string",
+		defineStringAttribute({
+			constraints: {
+				maxLength: 180,
+				minLength: 1,
 			},
-			manifest: {
-				constraints: {
-					maxLength: 180,
-					minLength: 1,
-				},
-				defaultValue: "Add and reorder internal items inside this compound block.",
-				kind: "string",
-				required: false,
-				selector: `.${variables.cssClassName}__intro`,
-				source: "html",
-				sourceType: "string",
-			},
+			defaultValue: "Add and reorder internal items inside this compound block.",
 			name: "intro",
 			optional: true,
+			selector: `.${variables.cssClassName}__intro`,
+			source: "html",
 			typeExpression:
 				'string & tags.MinLength<1> & tags.MaxLength<180> & tags.Default<"Add and reorder internal items inside this compound block.">',
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: true,
-				type: "boolean",
-			},
-			manifest: {
-				defaultValue: true,
-				kind: "boolean",
-				required: false,
-				sourceType: "boolean",
-			},
+		defineBooleanAttribute({
+			defaultValue: true,
 			name: "showDividers",
 			optional: true,
 			typeExpression: "boolean & tags.Default<true>",
@@ -756,56 +596,30 @@ function buildCompoundParentAttributes(
 
 	if (variables.compoundPersistenceEnabled === "true") {
 		attributes.push(
-			createAttributeDefinition({
-				blockJson: {
-					defaultValue: true,
-					type: "boolean",
-				},
-				manifest: {
-					defaultValue: true,
-					kind: "boolean",
-					required: false,
-					sourceType: "boolean",
-				},
+			defineBooleanAttribute({
+				defaultValue: true,
 				name: "showCount",
 				optional: true,
 				typeExpression: "boolean & tags.Default<true>",
 			}),
-			createAttributeDefinition({
-				blockJson: {
-					defaultValue: "Persist Count",
-					type: "string",
+			defineStringAttribute({
+				constraints: {
+					maxLength: 40,
+					minLength: 1,
 				},
-				manifest: {
-					constraints: {
-						maxLength: 40,
-						minLength: 1,
-					},
-					defaultValue: "Persist Count",
-					kind: "string",
-					required: false,
-					sourceType: "string",
-				},
+				defaultValue: "Persist Count",
 				name: "buttonLabel",
 				optional: true,
 				typeExpression:
 					'string & tags.MinLength<1> & tags.MaxLength<40> & tags.Default<"Persist Count">',
 			}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: "",
-				type: "string",
-			},
-			manifest: {
-					constraints: {
-						maxLength: 100,
-						minLength: 1,
-					},
-					defaultValue: "primary",
-					kind: "string",
-					required: false,
-					sourceType: "string",
+			defineStringAttribute({
+				blockJsonDefaultValue: "",
+				constraints: {
+					maxLength: 100,
+					minLength: 1,
 				},
+				manifestDefaultValue: "primary",
 				name: "resourceKey",
 				optional: true,
 				typeExpression:
@@ -830,59 +644,29 @@ function buildCompoundChildAttributes(
 		: null;
 
 	return [
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: childTitle,
-				...(titleSelector
-					? {
-							selector: titleSelector,
-							source: "html" as const,
-						}
-					: {}),
-				type: "string",
+		defineStringAttribute({
+			constraints: {
+				maxLength: 80,
+				minLength: 1,
 			},
-			manifest: {
-				constraints: {
-					maxLength: 80,
-					minLength: 1,
-				},
-				defaultValue: childTitle,
-				kind: "string",
-				required: true,
-				selector: titleSelector,
-				source: titleSelector ? "html" : null,
-				sourceType: "string",
-			},
+			defaultValue: childTitle,
 			name: "title",
 			optional: false,
+			selector: titleSelector,
+			source: titleSelector ? "html" : null,
 			typeExpression:
 				`string & tags.MinLength<1> & tags.MaxLength<80> & tags.Default<${quote(childTitle)}>`,
 		}),
-		createAttributeDefinition({
-			blockJson: {
-				defaultValue: bodyPlaceholder,
-				...(bodySelector
-					? {
-							selector: bodySelector,
-							source: "html" as const,
-						}
-					: {}),
-				type: "string",
+		defineStringAttribute({
+			constraints: {
+				maxLength: 280,
+				minLength: 1,
 			},
-			manifest: {
-				constraints: {
-					maxLength: 280,
-					minLength: 1,
-				},
-				defaultValue: bodyPlaceholder,
-				kind: "string",
-				required: true,
-				selector: bodySelector,
-				source: bodySelector ? "html" : null,
-				sourceType: "string",
-			},
+			defaultValue: bodyPlaceholder,
 			name: "body",
 			optional: false,
+			selector: bodySelector,
+			source: bodySelector ? "html" : null,
 			typeExpression:
 				`string & tags.MinLength<1> & tags.MaxLength<280> & tags.Default<${quote(bodyPlaceholder)}>`,
 		}),
