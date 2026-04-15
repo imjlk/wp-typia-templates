@@ -1,5 +1,12 @@
 # wp-typia
 
+## 0.16.11 — 2026-04-15
+
+### Patch changes
+
+- [1c9916a](https://github.com/imjlk/wp-typia/commit/1c9916aa50c7e80590b35a7691b9f5fc0537ea60) Fixed published scaffold outputs so generated basic, persistence, and compound block registration files no longer rely on `registerBlockType<T>()` generic calls that break against the current published `@wordpress/blocks` type surface. Hardened the packed publish-install smoke to verify wrapper exports and to typecheck generated basic and compound scaffolds, including the compound `add-compound-child` path, against packed local release tarballs before publish. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.16.10
+
 ## 0.16.10 — 2026-04-15
 
 ### Patch changes
