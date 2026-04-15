@@ -77,8 +77,9 @@ function parseRepositoryReference(
 		return null;
 	}
 
-	if (/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u.test(trimmed)) {
-		return trimmed;
+	const normalizedShorthand = trimmed.replace(/^github:/u, "");
+	if (/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:#.+)?$/u.test(normalizedShorthand)) {
+		return normalizedShorthand.replace(/#.*$/u, "");
 	}
 
 	const normalizedValue = trimmed

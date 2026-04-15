@@ -89,6 +89,23 @@ test("resolveScaffoldRepositoryReference prefers the first manifest path that yi
 	).toBe("fork-owner/fork-typia");
 });
 
+test("resolveScaffoldRepositoryReference parses npm github shorthands", () => {
+	const manifestPath = path.join(tempRoot, "github-shorthand-package.json");
+	fs.writeFileSync(
+		manifestPath,
+		JSON.stringify({
+			repository: "github:fork-owner/fork-typia#main",
+		}),
+		"utf8",
+	);
+
+	expect(
+		resolveScaffoldRepositoryReference({
+			manifestPaths: [manifestPath],
+		}),
+	).toBe("fork-owner/fork-typia");
+});
+
 test("replaceRepositoryReferencePlaceholders rewrites both legacy scaffold repository placeholders", () => {
 	const source = [
 		"https://github.com/yourusername/wp-typia-boilerplate/issues",
