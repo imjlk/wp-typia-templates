@@ -69,6 +69,49 @@ interface BuiltInAttributeSpec {
 	typeExpression: string;
 }
 
+type BuiltInAttributeValueResolver<TContext, TValue> =
+	| TValue
+	| ((context: TContext) => TValue);
+
+interface BuiltInAttributeTemplateSpec<TContext> {
+	attributeType: "boolean" | "number" | "string";
+	blockJsonDefaultValue?: BuiltInAttributeValueResolver<
+		TContext,
+		JsonValue | undefined
+	>;
+	constraints?: BuiltInAttributeValueResolver<
+		TContext,
+		Partial<ManifestConstraints> | undefined
+	>;
+	defaultValue?: BuiltInAttributeValueResolver<TContext, JsonValue | undefined>;
+	description?: BuiltInAttributeValueResolver<
+		TContext,
+		AttributeDescription | undefined
+	>;
+	enumValues?: BuiltInAttributeValueResolver<
+		TContext,
+		Array<string | number | boolean> | null | undefined
+	>;
+	manifestDefaultValue?: BuiltInAttributeValueResolver<
+		TContext,
+		JsonValue | undefined
+	>;
+	name: string;
+	optional: boolean;
+	selector?: BuiltInAttributeValueResolver<TContext, string | null | undefined>;
+	source?: BuiltInAttributeValueResolver<
+		TContext,
+		WordPressAttributeSource | null | undefined
+	>;
+	typeExpression: BuiltInAttributeValueResolver<TContext, string>;
+}
+
+interface CompoundChildAttributeVariables {
+	bodyPlaceholder: string;
+	childCssClassName?: string | null;
+	childTitle: string;
+}
+
 interface InterfaceMemberDefinition {
 	description?: AttributeDescription;
 	name: string;
@@ -258,6 +301,57 @@ function defineNumberAttribute(
 	});
 }
 
+function resolveBuiltInAttributeValue<TContext, TValue>(
+	value: BuiltInAttributeValueResolver<TContext, TValue> | undefined,
+	context: TContext,
+): TValue | undefined {
+	if (typeof value === "function") {
+		return (value as (context: TContext) => TValue)(context);
+	}
+
+	return value;
+}
+
+function buildAttributesFromSpecs<TContext>(
+	specs: readonly BuiltInAttributeTemplateSpec<TContext>[],
+	context: TContext,
+): EmittedAttributeDefinition[] {
+	return specs.map((spec) => {
+		const resolvedSpec: Omit<BuiltInAttributeSpec, "kind" | "sourceType"> = {
+			blockJsonDefaultValue: resolveBuiltInAttributeValue(
+				spec.blockJsonDefaultValue,
+				context,
+			),
+			constraints: resolveBuiltInAttributeValue(spec.constraints, context),
+			defaultValue: resolveBuiltInAttributeValue(spec.defaultValue, context),
+			description: resolveBuiltInAttributeValue(spec.description, context),
+			enumValues: resolveBuiltInAttributeValue(spec.enumValues, context),
+			manifestDefaultValue: resolveBuiltInAttributeValue(
+				spec.manifestDefaultValue,
+				context,
+			),
+			name: spec.name,
+			optional: spec.optional,
+			selector: resolveBuiltInAttributeValue(spec.selector, context),
+			source: resolveBuiltInAttributeValue(spec.source, context),
+			typeExpression: resolveBuiltInAttributeValue(
+				spec.typeExpression,
+				context,
+			) ?? "unknown",
+		};
+
+		if (spec.attributeType === "boolean") {
+			return defineBooleanAttribute(resolvedSpec);
+		}
+
+		if (spec.attributeType === "number") {
+			return defineNumberAttribute(resolvedSpec);
+		}
+
+		return defineStringAttribute(resolvedSpec);
+	});
+}
+
 function buildManifestDocument(
 	sourceType: string,
 	attributes: readonly EmittedAttributeDefinition[],
@@ -357,278 +451,358 @@ function stringifyBlockJsonDocument(document: Record<string, unknown>): string {
 	return `${JSON.stringify(document, null, "\t")}\n`;
 }
 
+const BASIC_ATTRIBUTE_SPECS = [
+	{
+		attributeType: "string",
+		constraints: {
+			maxLength: 1000,
+		},
+		defaultValue: "",
+		description: describe("Main block content"),
+		name: "content",
+		optional: false,
+		typeExpression: 'string & tags.MaxLength<1000> & tags.Default<"">',
+	},
+	{
+		attributeType: "string",
+		defaultValue: "left",
+		description: describe("Alignment"),
+		enumValues: [...BASIC_ALIGNMENT_VALUES],
+		name: "alignment",
+		optional: true,
+		typeExpression: 'TextAlignment & tags.Default<"left">',
+	},
+	{
+		attributeType: "boolean",
+		defaultValue: true,
+		description: describe("Visibility toggle"),
+		name: "isVisible",
+		optional: true,
+		typeExpression: "boolean & tags.Default<true>",
+	},
+	{
+		attributeType: "string",
+		constraints: {
+			maxLength: 100,
+		},
+		defaultValue: "",
+		description: describe("Custom CSS class"),
+		name: "className",
+		optional: true,
+		typeExpression: 'string & tags.MaxLength<100> & tags.Default<"">',
+	},
+	{
+		attributeType: "string",
+		constraints: {
+			format: "uuid",
+		},
+		description: describe("Generated runtime ID"),
+		name: "id",
+		optional: true,
+		typeExpression: 'string & tags.Format<"uuid">',
+	},
+	{
+		attributeType: "number",
+		constraints: {
+			typeTag: "uint32",
+		},
+		defaultValue: 1,
+		description: describe("Block version for migrations"),
+		name: "schemaVersion",
+		optional: true,
+		typeExpression: 'number & tags.Type<"uint32"> & tags.Default<1>',
+	},
+] as const satisfies readonly BuiltInAttributeTemplateSpec<void>[];
+
+const INTERACTIVITY_ATTRIBUTE_SPECS = [
+	{
+		attributeType: "string",
+		constraints: {
+			maxLength: 1000,
+		},
+		defaultValue: "",
+		name: "content",
+		optional: false,
+		selector: (variables: ScaffoldTemplateVariables) =>
+			`.${variables.cssClassName}__content`,
+		source: "html",
+		typeExpression: 'string & tags.MaxLength<1000> & tags.Default<"">',
+	},
+	{
+		attributeType: "string",
+		defaultValue: "left",
+		enumValues: [...ALIGNMENT_VALUES],
+		name: "alignment",
+		optional: true,
+		typeExpression: 'TextAlignment & tags.Default<"left">',
+	},
+	{
+		attributeType: "boolean",
+		defaultValue: true,
+		name: "isVisible",
+		optional: true,
+		typeExpression: "boolean & tags.Default<true>",
+	},
+	{
+		attributeType: "string",
+		defaultValue: "click",
+		enumValues: [...INTERACTIVE_MODE_VALUES],
+		name: "interactiveMode",
+		optional: true,
+		typeExpression: '("click" | "hover") & tags.Default<"click">',
+	},
+	{
+		attributeType: "string",
+		defaultValue: "none",
+		enumValues: [...ANIMATION_VALUES],
+		name: "animation",
+		optional: true,
+		typeExpression:
+			'("none" | "bounce" | "pulse" | "shake" | "flip") & tags.Default<"none">',
+	},
+	{
+		attributeType: "number",
+		constraints: {
+			minimum: 0,
+			typeTag: "uint32",
+		},
+		defaultValue: 0,
+		name: "clickCount",
+		optional: true,
+		typeExpression: 'number & tags.Minimum<0> & tags.Type<"uint32"> & tags.Default<0>',
+	},
+	{
+		attributeType: "boolean",
+		defaultValue: false,
+		name: "isAnimating",
+		optional: true,
+		typeExpression: "boolean & tags.Default<false>",
+	},
+	{
+		attributeType: "boolean",
+		defaultValue: true,
+		name: "showCounter",
+		optional: true,
+		typeExpression: "boolean & tags.Default<true>",
+	},
+	{
+		attributeType: "number",
+		constraints: {
+			minimum: 0,
+			typeTag: "uint32",
+		},
+		defaultValue: 10,
+		name: "maxClicks",
+		optional: true,
+		typeExpression: 'number & tags.Minimum<0> & tags.Type<"uint32"> & tags.Default<10>',
+	},
+] as const satisfies readonly BuiltInAttributeTemplateSpec<ScaffoldTemplateVariables>[];
+
+const PERSISTENCE_ATTRIBUTE_SPECS = [
+	{
+		attributeType: "string",
+		constraints: {
+			maxLength: 250,
+			minLength: 1,
+		},
+		defaultValue: (variables: ScaffoldTemplateVariables) =>
+			`${variables.title} persistence block`,
+		name: "content",
+		optional: false,
+		selector: (variables: ScaffoldTemplateVariables) =>
+			`.${variables.cssClassName}__content`,
+		source: "html",
+		typeExpression: (variables: ScaffoldTemplateVariables) =>
+			`string & tags.MinLength<1> & tags.MaxLength<250> & tags.Default<${quote(`${variables.title} persistence block`)}>`,
+	},
+	{
+		attributeType: "string",
+		defaultValue: "left",
+		enumValues: [...ALIGNMENT_VALUES],
+		name: "alignment",
+		optional: true,
+		typeExpression: 'TextAlignment & tags.Default<"left">',
+	},
+	{
+		attributeType: "boolean",
+		defaultValue: true,
+		name: "isVisible",
+		optional: true,
+		typeExpression: "boolean & tags.Default<true>",
+	},
+	{
+		attributeType: "boolean",
+		defaultValue: true,
+		name: "showCount",
+		optional: true,
+		typeExpression: "boolean & tags.Default<true>",
+	},
+	{
+		attributeType: "string",
+		constraints: {
+			maxLength: 40,
+			minLength: 1,
+		},
+		defaultValue: "Persist Count",
+		name: "buttonLabel",
+		optional: true,
+		typeExpression:
+			'string & tags.MinLength<1> & tags.MaxLength<40> & tags.Default<"Persist Count">',
+	},
+	{
+		attributeType: "string",
+		blockJsonDefaultValue: "",
+		constraints: {
+			maxLength: 100,
+			minLength: 1,
+		},
+		manifestDefaultValue: "primary",
+		name: "resourceKey",
+		optional: true,
+		typeExpression:
+			'string & tags.MinLength<1> & tags.MaxLength<100> & tags.Default<"primary">',
+	},
+] as const satisfies readonly BuiltInAttributeTemplateSpec<ScaffoldTemplateVariables>[];
+
+const COMPOUND_PARENT_BASE_ATTRIBUTE_SPECS = [
+	{
+		attributeType: "string",
+		constraints: {
+			maxLength: 80,
+			minLength: 1,
+		},
+		defaultValue: (variables: ScaffoldTemplateVariables) => variables.title,
+		name: "heading",
+		optional: false,
+		selector: (variables: ScaffoldTemplateVariables) =>
+			`.${variables.cssClassName}__heading`,
+		source: "html",
+		typeExpression: (variables: ScaffoldTemplateVariables) =>
+			`string & tags.MinLength<1> & tags.MaxLength<80> & tags.Default<${quote(variables.title)}>`,
+	},
+	{
+		attributeType: "string",
+		constraints: {
+			maxLength: 180,
+			minLength: 1,
+		},
+		defaultValue: "Add and reorder internal items inside this compound block.",
+		name: "intro",
+		optional: true,
+		selector: (variables: ScaffoldTemplateVariables) =>
+			`.${variables.cssClassName}__intro`,
+		source: "html",
+		typeExpression:
+			'string & tags.MinLength<1> & tags.MaxLength<180> & tags.Default<"Add and reorder internal items inside this compound block.">',
+	},
+	{
+		attributeType: "boolean",
+		defaultValue: true,
+		name: "showDividers",
+		optional: true,
+		typeExpression: "boolean & tags.Default<true>",
+	},
+] as const satisfies readonly BuiltInAttributeTemplateSpec<ScaffoldTemplateVariables>[];
+
+const COMPOUND_PARENT_PERSISTENCE_ATTRIBUTE_SPECS = [
+	{
+		attributeType: "boolean",
+		defaultValue: true,
+		name: "showCount",
+		optional: true,
+		typeExpression: "boolean & tags.Default<true>",
+	},
+	{
+		attributeType: "string",
+		constraints: {
+			maxLength: 40,
+			minLength: 1,
+		},
+		defaultValue: "Persist Count",
+		name: "buttonLabel",
+		optional: true,
+		typeExpression:
+			'string & tags.MinLength<1> & tags.MaxLength<40> & tags.Default<"Persist Count">',
+	},
+	{
+		attributeType: "string",
+		blockJsonDefaultValue: "",
+		constraints: {
+			maxLength: 100,
+			minLength: 1,
+		},
+		manifestDefaultValue: "primary",
+		name: "resourceKey",
+		optional: true,
+		typeExpression:
+			'string & tags.MinLength<1> & tags.MaxLength<100> & tags.Default<"primary">',
+	},
+] as const satisfies readonly BuiltInAttributeTemplateSpec<ScaffoldTemplateVariables>[];
+
+const COMPOUND_CHILD_ATTRIBUTE_SPECS = [
+	{
+		attributeType: "string",
+		constraints: {
+			maxLength: 80,
+			minLength: 1,
+		},
+		defaultValue: ({ childTitle }: CompoundChildAttributeVariables) => childTitle,
+		name: "title",
+		optional: false,
+		selector: ({ childCssClassName }: CompoundChildAttributeVariables) =>
+			childCssClassName ? `.${childCssClassName}__title` : null,
+		source: ({ childCssClassName }: CompoundChildAttributeVariables) =>
+			childCssClassName ? "html" : null,
+		typeExpression: ({ childTitle }: CompoundChildAttributeVariables) =>
+			`string & tags.MinLength<1> & tags.MaxLength<80> & tags.Default<${quote(childTitle)}>`,
+	},
+	{
+		attributeType: "string",
+		constraints: {
+			maxLength: 280,
+			minLength: 1,
+		},
+		defaultValue: ({ bodyPlaceholder }: CompoundChildAttributeVariables) =>
+			bodyPlaceholder,
+		name: "body",
+		optional: false,
+		selector: ({ childCssClassName }: CompoundChildAttributeVariables) =>
+			childCssClassName ? `.${childCssClassName}__body` : null,
+		source: ({ childCssClassName }: CompoundChildAttributeVariables) =>
+			childCssClassName ? "html" : null,
+		typeExpression: ({ bodyPlaceholder }: CompoundChildAttributeVariables) =>
+			`string & tags.MinLength<1> & tags.MaxLength<280> & tags.Default<${quote(bodyPlaceholder)}>`,
+	},
+] as const satisfies readonly BuiltInAttributeTemplateSpec<CompoundChildAttributeVariables>[];
+
 function buildBasicAttributes(): EmittedAttributeDefinition[] {
-	return [
-		defineStringAttribute({
-			constraints: {
-				maxLength: 1000,
-			},
-			defaultValue: "",
-			description: describe("Main block content"),
-			name: "content",
-			optional: false,
-			typeExpression: 'string & tags.MaxLength<1000> & tags.Default<"">',
-		}),
-		defineStringAttribute({
-			defaultValue: "left",
-			description: describe("Alignment"),
-			enumValues: [...BASIC_ALIGNMENT_VALUES],
-			name: "alignment",
-			optional: true,
-			typeExpression: 'TextAlignment & tags.Default<"left">',
-		}),
-		defineBooleanAttribute({
-			defaultValue: true,
-			description: describe("Visibility toggle"),
-			name: "isVisible",
-			optional: true,
-			typeExpression: "boolean & tags.Default<true>",
-		}),
-		defineStringAttribute({
-			constraints: {
-				maxLength: 100,
-			},
-			defaultValue: "",
-			description: describe("Custom CSS class"),
-			name: "className",
-			optional: true,
-			typeExpression: 'string & tags.MaxLength<100> & tags.Default<"">',
-		}),
-		defineStringAttribute({
-			constraints: {
-				format: "uuid",
-			},
-			description: describe("Generated runtime ID"),
-			name: "id",
-			optional: true,
-			typeExpression: 'string & tags.Format<"uuid">',
-		}),
-		defineNumberAttribute({
-			constraints: {
-				typeTag: "uint32",
-			},
-			defaultValue: 1,
-			description: describe("Block version for migrations"),
-			name: "schemaVersion",
-			optional: true,
-			typeExpression: 'number & tags.Type<"uint32"> & tags.Default<1>',
-		}),
-	];
+	return buildAttributesFromSpecs(BASIC_ATTRIBUTE_SPECS, undefined);
 }
 
 function buildInteractivityAttributes(
 	variables: ScaffoldTemplateVariables,
 ): EmittedAttributeDefinition[] {
-	return [
-		defineStringAttribute({
-			constraints: {
-				maxLength: 1000,
-			},
-			defaultValue: "",
-			name: "content",
-			optional: false,
-			selector: `.${variables.cssClassName}__content`,
-			source: "html",
-			typeExpression: 'string & tags.MaxLength<1000> & tags.Default<"">',
-		}),
-		defineStringAttribute({
-			defaultValue: "left",
-			enumValues: [...ALIGNMENT_VALUES],
-			name: "alignment",
-			optional: true,
-			typeExpression: 'TextAlignment & tags.Default<"left">',
-		}),
-		defineBooleanAttribute({
-			defaultValue: true,
-			name: "isVisible",
-			optional: true,
-			typeExpression: "boolean & tags.Default<true>",
-		}),
-		defineStringAttribute({
-			defaultValue: "click",
-			enumValues: [...INTERACTIVE_MODE_VALUES],
-			name: "interactiveMode",
-			optional: true,
-			typeExpression: '("click" | "hover") & tags.Default<"click">',
-		}),
-		defineStringAttribute({
-			defaultValue: "none",
-			enumValues: [...ANIMATION_VALUES],
-			name: "animation",
-			optional: true,
-			typeExpression:
-				'("none" | "bounce" | "pulse" | "shake" | "flip") & tags.Default<"none">',
-		}),
-		defineNumberAttribute({
-			constraints: {
-				minimum: 0,
-				typeTag: "uint32",
-			},
-			defaultValue: 0,
-			name: "clickCount",
-			optional: true,
-			typeExpression: 'number & tags.Minimum<0> & tags.Type<"uint32"> & tags.Default<0>',
-		}),
-		defineBooleanAttribute({
-			defaultValue: false,
-			name: "isAnimating",
-			optional: true,
-			typeExpression: "boolean & tags.Default<false>",
-		}),
-		defineBooleanAttribute({
-			defaultValue: true,
-			name: "showCounter",
-			optional: true,
-			typeExpression: "boolean & tags.Default<true>",
-		}),
-		defineNumberAttribute({
-			constraints: {
-				minimum: 0,
-				typeTag: "uint32",
-			},
-			defaultValue: 10,
-			name: "maxClicks",
-			optional: true,
-			typeExpression: 'number & tags.Minimum<0> & tags.Type<"uint32"> & tags.Default<10>',
-		}),
-	];
+	return buildAttributesFromSpecs(INTERACTIVITY_ATTRIBUTE_SPECS, variables);
 }
 
 function buildPersistenceAttributes(
 	variables: ScaffoldTemplateVariables,
 ): EmittedAttributeDefinition[] {
-	return [
-		defineStringAttribute({
-			constraints: {
-				maxLength: 250,
-				minLength: 1,
-			},
-			defaultValue: `${variables.title} persistence block`,
-			name: "content",
-			optional: false,
-			selector: `.${variables.cssClassName}__content`,
-			source: "html",
-			typeExpression:
-				`string & tags.MinLength<1> & tags.MaxLength<250> & tags.Default<${quote(`${variables.title} persistence block`)}>`,
-		}),
-		defineStringAttribute({
-			defaultValue: "left",
-			enumValues: [...ALIGNMENT_VALUES],
-			name: "alignment",
-			optional: true,
-			typeExpression: 'TextAlignment & tags.Default<"left">',
-		}),
-		defineBooleanAttribute({
-			defaultValue: true,
-			name: "isVisible",
-			optional: true,
-			typeExpression: "boolean & tags.Default<true>",
-		}),
-		defineBooleanAttribute({
-			defaultValue: true,
-			name: "showCount",
-			optional: true,
-			typeExpression: "boolean & tags.Default<true>",
-		}),
-		defineStringAttribute({
-			constraints: {
-				maxLength: 40,
-				minLength: 1,
-			},
-			defaultValue: "Persist Count",
-			name: "buttonLabel",
-			optional: true,
-			typeExpression:
-				'string & tags.MinLength<1> & tags.MaxLength<40> & tags.Default<"Persist Count">',
-		}),
-		defineStringAttribute({
-			blockJsonDefaultValue: "",
-			constraints: {
-				maxLength: 100,
-				minLength: 1,
-			},
-			manifestDefaultValue: "primary",
-			name: "resourceKey",
-			optional: true,
-			typeExpression:
-				'string & tags.MinLength<1> & tags.MaxLength<100> & tags.Default<"primary">',
-		}),
-	];
+	return buildAttributesFromSpecs(PERSISTENCE_ATTRIBUTE_SPECS, variables);
 }
 
 function buildCompoundParentAttributes(
 	variables: ScaffoldTemplateVariables,
 ): EmittedAttributeDefinition[] {
-	const attributes: EmittedAttributeDefinition[] = [
-		defineStringAttribute({
-			constraints: {
-				maxLength: 80,
-				minLength: 1,
-			},
-			defaultValue: variables.title,
-			name: "heading",
-			optional: false,
-			selector: `.${variables.cssClassName}__heading`,
-			source: "html",
-			typeExpression:
-				`string & tags.MinLength<1> & tags.MaxLength<80> & tags.Default<${quote(variables.title)}>`,
-		}),
-		defineStringAttribute({
-			constraints: {
-				maxLength: 180,
-				minLength: 1,
-			},
-			defaultValue: "Add and reorder internal items inside this compound block.",
-			name: "intro",
-			optional: true,
-			selector: `.${variables.cssClassName}__intro`,
-			source: "html",
-			typeExpression:
-				'string & tags.MinLength<1> & tags.MaxLength<180> & tags.Default<"Add and reorder internal items inside this compound block.">',
-		}),
-		defineBooleanAttribute({
-			defaultValue: true,
-			name: "showDividers",
-			optional: true,
-			typeExpression: "boolean & tags.Default<true>",
-		}),
-	];
-
-	if (variables.compoundPersistenceEnabled === "true") {
-		attributes.push(
-			defineBooleanAttribute({
-				defaultValue: true,
-				name: "showCount",
-				optional: true,
-				typeExpression: "boolean & tags.Default<true>",
-			}),
-			defineStringAttribute({
-				constraints: {
-					maxLength: 40,
-					minLength: 1,
-				},
-				defaultValue: "Persist Count",
-				name: "buttonLabel",
-				optional: true,
-				typeExpression:
-					'string & tags.MinLength<1> & tags.MaxLength<40> & tags.Default<"Persist Count">',
-			}),
-			defineStringAttribute({
-				blockJsonDefaultValue: "",
-				constraints: {
-					maxLength: 100,
-					minLength: 1,
-				},
-				manifestDefaultValue: "primary",
-				name: "resourceKey",
-				optional: true,
-				typeExpression:
-					'string & tags.MinLength<1> & tags.MaxLength<100> & tags.Default<"primary">',
-			}),
-		);
-	}
-
-	return attributes;
+	return buildAttributesFromSpecs(
+		variables.compoundPersistenceEnabled === "true"
+			? [
+				...COMPOUND_PARENT_BASE_ATTRIBUTE_SPECS,
+				...COMPOUND_PARENT_PERSISTENCE_ATTRIBUTE_SPECS,
+			]
+			: COMPOUND_PARENT_BASE_ATTRIBUTE_SPECS,
+		variables,
+	);
 }
 
 function buildCompoundChildAttributes(
@@ -636,41 +810,11 @@ function buildCompoundChildAttributes(
 	childTitle: string,
 	childCssClassName?: string | null,
 ): EmittedAttributeDefinition[] {
-	const titleSelector = childCssClassName
-		? `.${childCssClassName}__title`
-		: null;
-	const bodySelector = childCssClassName
-		? `.${childCssClassName}__body`
-		: null;
-
-	return [
-		defineStringAttribute({
-			constraints: {
-				maxLength: 80,
-				minLength: 1,
-			},
-			defaultValue: childTitle,
-			name: "title",
-			optional: false,
-			selector: titleSelector,
-			source: titleSelector ? "html" : null,
-			typeExpression:
-				`string & tags.MinLength<1> & tags.MaxLength<80> & tags.Default<${quote(childTitle)}>`,
-		}),
-		defineStringAttribute({
-			constraints: {
-				maxLength: 280,
-				minLength: 1,
-			},
-			defaultValue: bodyPlaceholder,
-			name: "body",
-			optional: false,
-			selector: bodySelector,
-			source: bodySelector ? "html" : null,
-			typeExpression:
-				`string & tags.MinLength<1> & tags.MaxLength<280> & tags.Default<${quote(bodyPlaceholder)}>`,
-		}),
-	];
+	return buildAttributesFromSpecs(COMPOUND_CHILD_ATTRIBUTE_SPECS, {
+		bodyPlaceholder,
+		childCssClassName,
+		childTitle,
+	});
 }
 
 function buildBasicTypesSource(

@@ -74,6 +74,476 @@ function buildArtifacts(templateId: BuiltInTemplateId) {
   };
 }
 
+function summarizeArtifactAttributes(
+  artifact: ReturnType<typeof buildArtifacts>['artifacts'][number],
+) {
+  const blockJsonAttributes =
+    (artifact.blockJsonDocument.attributes as
+      | Record<string, Record<string, unknown>>
+      | undefined) ?? {};
+  const manifestAttributes = artifact.manifestDocument.attributes ?? {};
+
+  return {
+    attributes: Object.fromEntries(
+      Object.keys(blockJsonAttributes).map((name) => [
+        name,
+        {
+          blockJson: blockJsonAttributes[name],
+          manifest: {
+            defaultValue: manifestAttributes[name]?.typia.defaultValue ?? null,
+            required: manifestAttributes[name]?.ts.required ?? null,
+            selector: manifestAttributes[name]?.wp.selector ?? null,
+            source: manifestAttributes[name]?.wp.source ?? null,
+            type: manifestAttributes[name]?.wp.type ?? null,
+          },
+        },
+      ]),
+    ),
+    relativeDir: artifact.relativeDir,
+    sourceType: artifact.manifestDocument.sourceType,
+  };
+}
+
+type ArtifactAttributeSummary = ReturnType<typeof summarizeArtifactAttributes>;
+
+const EXPECTED_ARTIFACT_ATTRIBUTE_SUMMARIES: Record<
+  BuiltInTemplateId,
+  ArtifactAttributeSummary[]
+> = {
+  basic: [
+    {
+      attributes: {
+        alignment: {
+          blockJson: {
+            default: 'left',
+            enum: ['left', 'center', 'right', 'justify'],
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: 'left',
+            required: false,
+            selector: null,
+            source: null,
+            type: 'string',
+          },
+        },
+        className: {
+          blockJson: {
+            default: '',
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: '',
+            required: false,
+            selector: null,
+            source: null,
+            type: 'string',
+          },
+        },
+        content: {
+          blockJson: {
+            default: '',
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: '',
+            required: true,
+            selector: null,
+            source: null,
+            type: 'string',
+          },
+        },
+        id: {
+          blockJson: {
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: null,
+            required: false,
+            selector: null,
+            source: null,
+            type: 'string',
+          },
+        },
+        isVisible: {
+          blockJson: {
+            default: true,
+            type: 'boolean',
+          },
+          manifest: {
+            defaultValue: true,
+            required: false,
+            selector: null,
+            source: null,
+            type: 'boolean',
+          },
+        },
+        schemaVersion: {
+          blockJson: {
+            default: 1,
+            type: 'number',
+          },
+          manifest: {
+            defaultValue: 1,
+            required: false,
+            selector: null,
+            source: null,
+            type: 'number',
+          },
+        },
+      },
+      relativeDir: 'src',
+      sourceType: 'DemoBasicAttributes',
+    },
+  ],
+  compound: [
+    {
+      attributes: {
+        buttonLabel: {
+          blockJson: {
+            default: 'Persist Count',
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: 'Persist Count',
+            required: false,
+            selector: null,
+            source: null,
+            type: 'string',
+          },
+        },
+        heading: {
+          blockJson: {
+            default: 'Demo Compound',
+            selector: '.wp-block-demo-space-demo-compound__heading',
+            source: 'html',
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: 'Demo Compound',
+            required: true,
+            selector: '.wp-block-demo-space-demo-compound__heading',
+            source: 'html',
+            type: 'string',
+          },
+        },
+        intro: {
+          blockJson: {
+            default: 'Add and reorder internal items inside this compound block.',
+            selector: '.wp-block-demo-space-demo-compound__intro',
+            source: 'html',
+            type: 'string',
+          },
+          manifest: {
+            defaultValue:
+              'Add and reorder internal items inside this compound block.',
+            required: false,
+            selector: '.wp-block-demo-space-demo-compound__intro',
+            source: 'html',
+            type: 'string',
+          },
+        },
+        resourceKey: {
+          blockJson: {
+            default: '',
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: 'primary',
+            required: false,
+            selector: null,
+            source: null,
+            type: 'string',
+          },
+        },
+        showCount: {
+          blockJson: {
+            default: true,
+            type: 'boolean',
+          },
+          manifest: {
+            defaultValue: true,
+            required: false,
+            selector: null,
+            source: null,
+            type: 'boolean',
+          },
+        },
+        showDividers: {
+          blockJson: {
+            default: true,
+            type: 'boolean',
+          },
+          manifest: {
+            defaultValue: true,
+            required: false,
+            selector: null,
+            source: null,
+            type: 'boolean',
+          },
+        },
+      },
+      relativeDir: 'src/blocks/demo-compound',
+      sourceType: 'DemoCompoundAttributes',
+    },
+    {
+      attributes: {
+        body: {
+          blockJson: {
+            default: 'Add supporting details for this internal item.',
+            selector: '.wp-block-demo-space-demo-compound-item__body',
+            source: 'html',
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: 'Add supporting details for this internal item.',
+            required: true,
+            selector: '.wp-block-demo-space-demo-compound-item__body',
+            source: 'html',
+            type: 'string',
+          },
+        },
+        title: {
+          blockJson: {
+            default: 'Demo Compound Item',
+            selector: '.wp-block-demo-space-demo-compound-item__title',
+            source: 'html',
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: 'Demo Compound Item',
+            required: true,
+            selector: '.wp-block-demo-space-demo-compound-item__title',
+            source: 'html',
+            type: 'string',
+          },
+        },
+      },
+      relativeDir: 'src/blocks/demo-compound-item',
+      sourceType: 'DemoCompoundItemAttributes',
+    },
+  ],
+  interactivity: [
+    {
+      attributes: {
+        alignment: {
+          blockJson: {
+            default: 'left',
+            enum: ['left', 'center', 'right'],
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: 'left',
+            required: false,
+            selector: null,
+            source: null,
+            type: 'string',
+          },
+        },
+        animation: {
+          blockJson: {
+            default: 'none',
+            enum: ['none', 'bounce', 'pulse', 'shake', 'flip'],
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: 'none',
+            required: false,
+            selector: null,
+            source: null,
+            type: 'string',
+          },
+        },
+        clickCount: {
+          blockJson: {
+            default: 0,
+            type: 'number',
+          },
+          manifest: {
+            defaultValue: 0,
+            required: false,
+            selector: null,
+            source: null,
+            type: 'number',
+          },
+        },
+        content: {
+          blockJson: {
+            default: '',
+            selector: '.wp-block-demo-space-demo-interactivity__content',
+            source: 'html',
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: '',
+            required: true,
+            selector: '.wp-block-demo-space-demo-interactivity__content',
+            source: 'html',
+            type: 'string',
+          },
+        },
+        interactiveMode: {
+          blockJson: {
+            default: 'click',
+            enum: ['click', 'hover'],
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: 'click',
+            required: false,
+            selector: null,
+            source: null,
+            type: 'string',
+          },
+        },
+        isAnimating: {
+          blockJson: {
+            default: false,
+            type: 'boolean',
+          },
+          manifest: {
+            defaultValue: false,
+            required: false,
+            selector: null,
+            source: null,
+            type: 'boolean',
+          },
+        },
+        isVisible: {
+          blockJson: {
+            default: true,
+            type: 'boolean',
+          },
+          manifest: {
+            defaultValue: true,
+            required: false,
+            selector: null,
+            source: null,
+            type: 'boolean',
+          },
+        },
+        maxClicks: {
+          blockJson: {
+            default: 10,
+            type: 'number',
+          },
+          manifest: {
+            defaultValue: 10,
+            required: false,
+            selector: null,
+            source: null,
+            type: 'number',
+          },
+        },
+        showCounter: {
+          blockJson: {
+            default: true,
+            type: 'boolean',
+          },
+          manifest: {
+            defaultValue: true,
+            required: false,
+            selector: null,
+            source: null,
+            type: 'boolean',
+          },
+        },
+      },
+      relativeDir: 'src',
+      sourceType: 'DemoInteractivityAttributes',
+    },
+  ],
+  persistence: [
+    {
+      attributes: {
+        alignment: {
+          blockJson: {
+            default: 'left',
+            enum: ['left', 'center', 'right'],
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: 'left',
+            required: false,
+            selector: null,
+            source: null,
+            type: 'string',
+          },
+        },
+        buttonLabel: {
+          blockJson: {
+            default: 'Persist Count',
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: 'Persist Count',
+            required: false,
+            selector: null,
+            source: null,
+            type: 'string',
+          },
+        },
+        content: {
+          blockJson: {
+            default: 'Demo Persistence persistence block',
+            selector: '.wp-block-demo-space-demo-persistence__content',
+            source: 'html',
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: 'Demo Persistence persistence block',
+            required: true,
+            selector: '.wp-block-demo-space-demo-persistence__content',
+            source: 'html',
+            type: 'string',
+          },
+        },
+        isVisible: {
+          blockJson: {
+            default: true,
+            type: 'boolean',
+          },
+          manifest: {
+            defaultValue: true,
+            required: false,
+            selector: null,
+            source: null,
+            type: 'boolean',
+          },
+        },
+        resourceKey: {
+          blockJson: {
+            default: '',
+            type: 'string',
+          },
+          manifest: {
+            defaultValue: 'primary',
+            required: false,
+            selector: null,
+            source: null,
+            type: 'string',
+          },
+        },
+        showCount: {
+          blockJson: {
+            default: true,
+            type: 'boolean',
+          },
+          manifest: {
+            defaultValue: true,
+            required: false,
+            selector: null,
+            source: null,
+            type: 'boolean',
+          },
+        },
+      },
+      relativeDir: 'src',
+      sourceType: 'DemoPersistenceAttributes',
+    },
+  ],
+};
+
 describe('built-in block artifacts', () => {
   const tempRoot = createScaffoldTempRoot('wp-typia-built-in-artifacts-');
 
@@ -276,6 +746,17 @@ describe('built-in block artifacts', () => {
         );
         expect(parentResourceKeyBlockJson?.default).toBe('');
       }
+    },
+  );
+
+  test.each(['basic', 'interactivity', 'persistence', 'compound'] as const)(
+    'attribute emission summaries stay stable for %s',
+    (templateId) => {
+      const { artifacts } = buildArtifacts(templateId);
+
+      expect(artifacts.map(summarizeArtifactAttributes)).toEqual(
+        EXPECTED_ARTIFACT_ATTRIBUTE_SUMMARIES[templateId],
+      );
     },
   );
 
