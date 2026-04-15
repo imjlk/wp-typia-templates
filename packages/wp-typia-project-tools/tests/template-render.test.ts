@@ -148,6 +148,8 @@ describe("template render internals", () => {
 	});
 
 	test("stableJsonStringify sorts nested plain-object keys deterministically", () => {
+		const accentNfc = "\u00E9";
+		const accentNfd = "e\u0301";
 		const left = {
 			alpha: {
 				delta: 4,
@@ -170,6 +172,17 @@ describe("template render internals", () => {
 			}),
 		).toBe(
 			'{"items":[{"first":1,"second":2},{"alpha":false,"beta":true}]}',
+		);
+		expect(
+			stableJsonStringify({
+				[accentNfc]: "nfc",
+				[accentNfd]: "nfd",
+			}),
+		).toBe(
+			stableJsonStringify({
+				[accentNfd]: "nfd",
+				[accentNfc]: "nfc",
+			}),
 		);
 	});
 });
