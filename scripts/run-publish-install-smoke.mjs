@@ -75,6 +75,7 @@ function runWpTypiaCli(projectDir, cliPath, args) {
 function materializeTarballDependencies(projectDir, tarballs) {
 	const packageJsonPath = path.join(projectDir, "package.json");
 	const packageJson = readJson(packageJsonPath);
+	const directDependencies = new Set();
 
 	for (const field of ["dependencies", "devDependencies"] ) {
 		const section = packageJson[field];
@@ -88,7 +89,17 @@ function materializeTarballDependencies(projectDir, tarballs) {
 			}
 
 			section[packageName] = `file:${tarballs.get(packageName)}`;
+			directDependencies.add(packageName);
 		}
+	}
+
+	packageJson.overrides ??= {};
+	for (const packageName of GENERATED_PROJECT_OVERRIDE_PACKAGES) {
+		if (directDependencies.has(packageName)) {
+			continue;
+		}
+
+		packageJson.overrides[packageName] = `file:${tarballs.get(packageName)}`;
 	}
 
 	writeJson(packageJsonPath, packageJson);
@@ -194,11 +205,12 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 		"wrapper-export-smoke.mjs",
 		[
 			'import "@wp-typia/block-types/blocks/registration";',
-			'import { defineScaffoldBlockMetadata, parseScaffoldBlockMetadata } from "@wp-typia/block-runtime/blocks";',
+			'import { buildScaffoldBlockRegistration, defineScaffoldBlockMetadata, parseScaffoldBlockMetadata } from "@wp-typia/block-runtime/blocks";',
 			'import { defineManifestDocument } from "@wp-typia/block-runtime/editor";',
 			'import { defineManifestDefaultsDocument, parseManifestDefaultsDocument } from "@wp-typia/block-runtime/defaults";',
 			"",
 			"for (const [name, value] of Object.entries({",
+			"\tbuildScaffoldBlockRegistration,",
 			"\tdefineScaffoldBlockMetadata,",
 			"\tparseScaffoldBlockMetadata,",
 			"\tdefineManifestDocument,",
