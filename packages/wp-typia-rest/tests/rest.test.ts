@@ -4,7 +4,7 @@ import type { ApiFetch } from "@wordpress/api-fetch";
 import {
 	createEndpoint as createPortableEndpoint,
 	toValidationResult as toPortableValidationResult,
-} from "../../wp-typia-api-client/dist/index.js";
+} from "../../wp-typia-api-client/src/index";
 
 import {
 	RestConfigurationError,
@@ -19,7 +19,7 @@ import {
 	resolveRestRouteUrl,
 	toValidationResult,
 	type ValidationLike,
-} from "../dist/index.js";
+} from "../src/index";
 
 function success<T>(data: T): ValidationLike<T> {
 	return {
