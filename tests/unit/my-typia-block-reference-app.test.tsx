@@ -141,9 +141,9 @@ describe('my-typia-block reference app helpers', () => {
     expect(indexSource).not.toContain('metadata as ScaffoldBlockMetadata');
     expect(indexSource).toContain('parseScaffoldBlockMetadata');
     expect(indexSource).toContain('BlockConfiguration');
-    expect(indexSource).toContain(
-      'registerScaffoldBlockType( registration.name, registration.settings );',
-    );
+    expect(indexSource).toContain('registerScaffoldBlockType(');
+    expect(indexSource).toContain('registration.name');
+    expect(indexSource).toContain('registration.settings');
     expect(indexSource).not.toContain('registerBlockType<');
     expect(indexSource).toContain('registerScaffoldBlockType');
   });

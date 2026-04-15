@@ -29,7 +29,9 @@ const registration = buildScaffoldBlockRegistration(
 	}
 );
 
-const registeredBlock: RegisterBlockTypeResult =
-	registerScaffoldBlockType( registration.name, registration.settings );
+const registeredBlock: RegisterBlockTypeResult = registerScaffoldBlockType(
+	registration.name,
+	registration.settings
+);
 
 void registeredBlock;
