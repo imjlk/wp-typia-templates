@@ -33,6 +33,7 @@ import {
 	buildBuiltInCodeArtifacts,
 	type BuiltInCodeArtifact,
 } from "./built-in-block-code-artifacts.js";
+import { stableJsonStringify } from "./object-utils.js";
 import { getStarterManifestFiles } from "./starter-manifests.js";
 import { resolveTemplateSeed, parseTemplateLocator } from "./template-source.js";
 import {
@@ -171,7 +172,7 @@ const renderedArtifactCache = new WeakMap<
 function createVariablesFingerprint(
 	variables: ScaffoldTemplateVariables,
 ): string {
-	return JSON.stringify(variables);
+	return stableJsonStringify(variables);
 }
 
 function buildProtectedTemplateOutputPaths({

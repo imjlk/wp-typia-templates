@@ -44,31 +44,75 @@ export interface CopyRawDirectoryOptions {
 	) => boolean | Promise<boolean>;
 }
 
+type TemplateStringRenderer<TView> = (
+	template: string,
+	view: TView,
+) => string;
+
+interface TemplateTraversalOptions<TView> {
+	prepareDirectory?: (directoryPath: string) => Promise<void>;
+	renderString: TemplateStringRenderer<TView>;
+	sourceDir: string;
+	targetDir: string;
+	view: TView;
+	visitFile: (paths: {
+		destinationPath: string;
+		sourcePath: string;
+	}) => Promise<void>;
+}
+
+interface MustacheWriterWithConfig {
+	render(
+		template: string,
+		view: TemplateRenderView,
+		partials: unknown,
+		config: {
+			escape: (value: string) => string;
+		},
+	): string;
+}
+
+const IDENTITY_MUSTACHE_ESCAPE = (value: string) => value;
+
 /**
- * Render a Mustache template while keeping HTML escaping disabled only for the
- * current render call.
+ * Render a Mustache template with full Mustache semantics while leaving values
+ * unescaped for scaffold source generation.
  */
 export function renderMustacheTemplateString(
 	template: string,
 	view: TemplateRenderView,
 ): string {
-	const originalEscape = Mustache.escape;
-	Mustache.escape = (value: string) => value;
+	const mustacheModule = Mustache as unknown as {
+		Writer: {
+			new (): MustacheWriterWithConfig;
+		};
+	};
+	const writer = new (
+		mustacheModule.Writer as {
+			new (): MustacheWriterWithConfig;
+		}
+	)();
 
-	try {
-		return Mustache.render(template, view);
-	} finally {
-		Mustache.escape = originalEscape;
-	}
+	return writer.render(template, view, undefined, {
+		escape: IDENTITY_MUSTACHE_ESCAPE,
+	});
 }
 
 function escapeRegExp(value: string): string {
 	return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function renderInterpolatedString(template: string, view: Record<string, string>): string {
+/**
+ * Render direct `{{key}}` placeholders without enabling sections, partials, or
+ * any other Mustache features.
+ */
+function renderInterpolatedString(
+	template: string,
+	view: Record<string, string>,
+): string {
 	return Object.entries(view).reduce(
-		(output, [key, value]) => output.replace(new RegExp(`{{${escapeRegExp(key)}}}`, "g"), value),
+		(output, [key, value]) =>
+			output.replace(new RegExp(`{{${escapeRegExp(key)}}}`, "g"), value),
 		template,
 	);
 }
@@ -85,6 +129,96 @@ function resolveRenderedPath(targetDir: string, destinationName: string): string
 		throw new Error(`Rendered template path escapes target directory: ${destinationName}`);
 	}
 	return resolvedDestinationPath;
+}
+
+function stripTemplateExtension(entryName: string): string {
+	return entryName.endsWith(".mustache")
+		? entryName.slice(0, -".mustache".length)
+		: entryName;
+}
+
+function renderTemplateDestinationName<TView>(
+	entryName: string,
+	view: TView,
+	renderString: TemplateStringRenderer<TView>,
+): string {
+	return renderString(stripTemplateExtension(entryName), view);
+}
+
+async function traverseTemplateDirectory<TView>({
+	prepareDirectory,
+	renderString,
+	sourceDir,
+	targetDir,
+	view,
+	visitFile,
+}: TemplateTraversalOptions<TView>): Promise<void> {
+	const entries = await fsp.readdir(sourceDir, { withFileTypes: true });
+	for (const entry of entries) {
+		const sourcePath = path.join(sourceDir, entry.name);
+		const destinationName = renderTemplateDestinationName(
+			entry.name,
+			view,
+			renderString,
+		);
+		const destinationPath = resolveRenderedPath(targetDir, destinationName);
+
+		if (entry.isDirectory()) {
+			await prepareDirectory?.(destinationPath);
+			await traverseTemplateDirectory({
+				prepareDirectory,
+				renderString,
+				sourceDir: sourcePath,
+				targetDir: destinationPath,
+				view,
+				visitFile,
+			});
+			continue;
+		}
+
+		await visitFile({
+			destinationPath,
+			sourcePath,
+		});
+	}
+}
+
+async function copyTemplateDirectory<TView>({
+	renderString,
+	sourceDir,
+	targetDir,
+	view,
+}: {
+	renderString: TemplateStringRenderer<TView>;
+	sourceDir: string;
+	targetDir: string;
+	view: TView;
+}): Promise<void> {
+	await fsp.mkdir(targetDir, { recursive: true });
+	await traverseTemplateDirectory({
+		prepareDirectory: async (directoryPath) => {
+			await fsp.mkdir(directoryPath, { recursive: true });
+		},
+		renderString,
+		sourceDir,
+		targetDir,
+		view,
+		visitFile: async ({ destinationPath, sourcePath }) => {
+			await fsp.mkdir(path.dirname(destinationPath), { recursive: true });
+
+			if (isBinaryTemplateFile(sourcePath)) {
+				await fsp.copyFile(sourcePath, destinationPath);
+				return;
+			}
+
+			const content = await fsp.readFile(sourcePath, "utf8");
+			await fsp.writeFile(
+				destinationPath,
+				renderString(content, view),
+				"utf8",
+			);
+		},
+	});
 }
 
 /**
@@ -112,68 +246,41 @@ export async function copyRawDirectory(
 	}
 }
 
+/**
+ * Copy a template directory using full Mustache semantics for filenames and
+ * text-file contents while leaving rendered values unescaped.
+ */
 export async function copyRenderedDirectory(
 	sourceDir: string,
 	targetDir: string,
 	view: TemplateRenderView,
 ): Promise<void> {
-	const entries = await fsp.readdir(sourceDir, { withFileTypes: true });
-	for (const entry of entries) {
-		const sourcePath = path.join(sourceDir, entry.name);
-		const destinationNameTemplate = entry.name.endsWith(".mustache")
-			? entry.name.slice(0, -".mustache".length)
-			: entry.name;
-		const destinationName = renderMustacheTemplateString(destinationNameTemplate, view);
-		const destinationPath = resolveRenderedPath(targetDir, destinationName);
-
-		if (entry.isDirectory()) {
-			await fsp.mkdir(destinationPath, { recursive: true });
-			await copyRenderedDirectory(sourcePath, destinationPath, view);
-			continue;
-		}
-
-		if (isBinaryTemplateFile(sourcePath)) {
-			await fsp.mkdir(path.dirname(destinationPath), { recursive: true });
-			await fsp.copyFile(sourcePath, destinationPath);
-			continue;
-		}
-
-		const content = await fsp.readFile(sourcePath, "utf8");
-		await fsp.mkdir(path.dirname(destinationPath), { recursive: true });
-		await fsp.writeFile(destinationPath, renderMustacheTemplateString(content, view), "utf8");
-	}
+	await copyTemplateDirectory({
+		renderString: renderMustacheTemplateString,
+		sourceDir,
+		targetDir,
+		view,
+	});
 }
 
+/**
+ * Copy a template directory using direct `{{key}}` replacement only.
+ *
+ * This intentionally preserves literal Mustache sections, partials, and other
+ * advanced constructs so built-in scaffold copy paths keep their historical
+ * interpolation behavior.
+ */
 export async function copyInterpolatedDirectory(
 	sourceDir: string,
 	targetDir: string,
 	view: Record<string, string>,
 ): Promise<void> {
-	const entries = await fsp.readdir(sourceDir, { withFileTypes: true });
-	for (const entry of entries) {
-		const sourcePath = path.join(sourceDir, entry.name);
-		const destinationNameTemplate = entry.name.endsWith(".mustache")
-			? entry.name.slice(0, -".mustache".length)
-			: entry.name;
-		const destinationName = renderInterpolatedString(destinationNameTemplate, view);
-		const destinationPath = resolveRenderedPath(targetDir, destinationName);
-
-		if (entry.isDirectory()) {
-			await fsp.mkdir(destinationPath, { recursive: true });
-			await copyInterpolatedDirectory(sourcePath, destinationPath, view);
-			continue;
-		}
-
-		if (isBinaryTemplateFile(sourcePath)) {
-			await fsp.mkdir(path.dirname(destinationPath), { recursive: true });
-			await fsp.copyFile(sourcePath, destinationPath);
-			continue;
-		}
-
-		const content = await fsp.readFile(sourcePath, "utf8");
-		await fsp.mkdir(path.dirname(destinationPath), { recursive: true });
-		await fsp.writeFile(destinationPath, renderInterpolatedString(content, view), "utf8");
-	}
+	await copyTemplateDirectory({
+		renderString: renderInterpolatedString,
+		sourceDir,
+		targetDir,
+		view,
+	});
 }
 
 /**
@@ -197,26 +304,15 @@ export async function listInterpolatedDirectoryOutputs(
 	const virtualRoot = path.resolve("/wp-typia-template-preview");
 	const outputs: string[] = [];
 
-	async function visit(currentSourceDir: string, currentTargetDir: string): Promise<void> {
-		const entries = await fsp.readdir(currentSourceDir, { withFileTypes: true });
-		for (const entry of entries) {
-			const sourcePath = path.join(currentSourceDir, entry.name);
-			const destinationNameTemplate = entry.name.endsWith(".mustache")
-				? entry.name.slice(0, -".mustache".length)
-				: entry.name;
-			const destinationName = renderInterpolatedString(destinationNameTemplate, view);
-			const destinationPath = resolveRenderedPath(currentTargetDir, destinationName);
-
-			if (entry.isDirectory()) {
-				await visit(sourcePath, destinationPath);
-				continue;
-			}
-
+	await traverseTemplateDirectory({
+		renderString: renderInterpolatedString,
+		sourceDir,
+		targetDir: virtualRoot,
+		view,
+		visitFile: async ({ destinationPath }) => {
 			outputs.push(path.relative(virtualRoot, destinationPath).replace(/\\/g, "/"));
-		}
-	}
-
-	await visit(sourceDir, virtualRoot);
+		},
+	});
 	return outputs.sort((left, right) => left.localeCompare(right));
 }
 
