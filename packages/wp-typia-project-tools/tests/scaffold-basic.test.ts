@@ -226,6 +226,11 @@ describe('@wp-typia/project-tools scaffold core', () => {
       expect(generatedIndex).toContain(
         '@wp-typia/block-types/blocks/registration',
       );
+      expect(generatedIndex).toContain(
+        'registerScaffoldBlockType(registration.name, registration.settings);',
+      );
+      expect(generatedIndex).not.toContain('registerBlockType<');
+      expect(generatedIndex).toContain('registerScaffoldBlockType');
       expect(generatedIndex).not.toContain('type ScaffoldBlockMetadata');
       expect(generatedIndex).toContain("import metadata from './block-metadata';");
       expect(generatedIndex).toContain('@wp-typia/block-types/blocks/supports');

@@ -91,6 +91,10 @@ test(
       path.join(targetDir, "src", "edit.tsx"),
       "utf8"
     );
+    const generatedIndex = fs.readFileSync(
+      path.join(targetDir, "src", "index.tsx"),
+      "utf8"
+    );
     const generatedValidators = fs.readFileSync(
       path.join(targetDir, "src", "validators.ts"),
       "utf8"
@@ -262,6 +266,12 @@ test(
     expect(generatedEdit).toContain(
       "type EditProps = BlockEditProps< DemoPersistencePublicAttributes >;"
     );
+    expect(generatedIndex).toContain('buildScaffoldBlockRegistration');
+    expect(generatedIndex).toContain(
+      'registerScaffoldBlockType(registration.name, registration.settings);'
+    );
+    expect(generatedIndex).not.toContain('registerBlockType<');
+    expect(generatedIndex).toContain('registerScaffoldBlockType');
     expect(generatedEdit).toContain("}: EditProps )");
     expect(generatedEdit).not.toContain(
       "attributes as unknown as Record< string, unknown >"

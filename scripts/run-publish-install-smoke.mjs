@@ -6,6 +6,7 @@ import { execFileSync } from "node:child_process";
 
 import {
 	findWorkspaceProtocolLeaks,
+	getNpmCommand,
 	packWorkspacePackage,
 	readPackedPackageManifest,
 	repoRoot,
@@ -20,6 +21,13 @@ const PACKAGE_CHAIN = [
 	["packages/wp-typia-project-tools", "@wp-typia/project-tools"],
 	["packages/wp-typia", "wp-typia"],
 ];
+const GENERATED_PROJECT_OVERRIDE_PACKAGES = [
+	"@wp-typia/api-client",
+	"@wp-typia/rest",
+	"@wp-typia/block-types",
+	"@wp-typia/block-runtime",
+];
+const npmCommand = getNpmCommand();
 
 function run(command, args, options = {}) {
 	return execFileSync(command, args, {
@@ -30,10 +38,103 @@ function run(command, args, options = {}) {
 	});
 }
 
-function runNodeScript(projectDir, fileName, source, args = []) {
+function runScript(projectDir, command, fileName, source, args = []) {
 	const scriptPath = path.join(projectDir, fileName);
 	fs.writeFileSync(scriptPath, source, "utf8");
-	return run("node", [scriptPath, ...args], { cwd: projectDir });
+	return run(command, [scriptPath, ...args], { cwd: projectDir });
+}
+
+function writeJson(filePath, value) {
+	fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+function readJson(filePath) {
+	return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
+function getInstalledWpTypiaCliPath(projectDir) {
+	const installedManifest = readJson(
+		path.join(projectDir, "node_modules", "wp-typia", "package.json"),
+	);
+	const binEntry =
+		typeof installedManifest.bin === "string"
+			? installedManifest.bin
+			: installedManifest.bin?.["wp-typia"] ??
+				Object.values(installedManifest.bin ?? {})[0];
+	if (typeof binEntry !== "string" || binEntry.length === 0) {
+		throw new Error("Unable to resolve wp-typia CLI entry from the installed package manifest.");
+	}
+
+	return path.join(projectDir, "node_modules", "wp-typia", binEntry);
+}
+
+function runWpTypiaCli(projectDir, cliPath, args) {
+	return run("node", [cliPath, ...args], { cwd: projectDir });
+}
+
+function materializeTarballDependencies(projectDir, tarballs) {
+	const packageJsonPath = path.join(projectDir, "package.json");
+	const packageJson = readJson(packageJsonPath);
+	const directDependencies = new Set();
+
+	for (const field of ["dependencies", "devDependencies"] ) {
+		const section = packageJson[field];
+		if (!section || typeof section !== "object") {
+			continue;
+		}
+
+		for (const packageName of GENERATED_PROJECT_OVERRIDE_PACKAGES) {
+			if (typeof section[packageName] !== "string") {
+				continue;
+			}
+
+			section[packageName] = `file:${tarballs.get(packageName)}`;
+			directDependencies.add(packageName);
+		}
+	}
+
+	packageJson.overrides ??= {};
+	for (const packageName of GENERATED_PROJECT_OVERRIDE_PACKAGES) {
+		if (directDependencies.has(packageName)) {
+			continue;
+		}
+
+		packageJson.overrides[packageName] = `file:${tarballs.get(packageName)}`;
+	}
+
+	writeJson(packageJsonPath, packageJson);
+}
+
+function assertScaffoldDependencyRanges(projectDir, expectations) {
+	const packageJson = readJson(path.join(projectDir, "package.json"));
+
+	for (const [packageName, expectedRange] of Object.entries(expectations)) {
+		const actualRange = packageJson.devDependencies?.[packageName];
+		if (actualRange !== expectedRange) {
+			throw new Error(
+				`Generated ${path.basename(projectDir)} package.json expected ${packageName}=${expectedRange}, found ${JSON.stringify(actualRange ?? null)}.`,
+			);
+		}
+	}
+}
+
+function assertFilesExist(projectDir, relativePaths) {
+	for (const relativePath of relativePaths) {
+		if (!fs.existsSync(path.join(projectDir, relativePath))) {
+			throw new Error(
+				`Expected ${path.basename(projectDir)} to contain ${relativePath}, but it was missing.`,
+			);
+		}
+	}
+}
+
+function installGeneratedProject(projectDir, tarballs) {
+	materializeTarballDependencies(projectDir, tarballs);
+	run(npmCommand, ["install"], { cwd: projectDir });
+}
+
+function typecheckGeneratedProject(projectDir) {
+	run(npmCommand, ["exec", "--", "tsc", "--noEmit"], { cwd: projectDir });
 }
 
 execFileSync("bun", ["run", "packages:build"], {
@@ -45,14 +146,15 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 	const tarballDir = path.join(tempRoot, "tarballs");
 	const projectDir = path.join(tempRoot, "project");
 	const tarballs = new Map();
+	const packedManifests = new Map();
 
 	for (const [packageDir, packageName] of PACKAGE_CHAIN) {
 		const tarballPath = packWorkspacePackage(packageDir, tarballDir);
 		tarballs.set(packageName, tarballPath);
+		packedManifests.set(packageName, readPackedPackageManifest(tarballPath));
 
 		if (packageName === "@wp-typia/rest") {
-			const packedManifest = readPackedPackageManifest(tarballPath);
-			const leaks = findWorkspaceProtocolLeaks(packedManifest);
+			const leaks = findWorkspaceProtocolLeaks(packedManifests.get(packageName));
 			if (leaks.length > 0) {
 				throw new Error(
 					`Packed ${packageName} manifest still contains workspace protocol dependencies: ${leaks.join(", ")}`,
@@ -62,44 +164,25 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 	}
 
 	fs.mkdirSync(projectDir, { recursive: true });
-	fs.writeFileSync(
-		path.join(projectDir, "package.json"),
-		`${JSON.stringify({
-			dependencies: {
-				"wp-typia": `file:${tarballs.get("wp-typia")}`,
-			},
-			name: "wp-typia-publish-install-smoke",
-			overrides: Object.fromEntries(
-				[...tarballs.entries()].map(([packageName, tarballPath]) => [
-					packageName,
-					`file:${tarballPath}`,
-				]),
-			),
-			private: true,
-			packageManager: "bun@1.3.11",
-		}, null, 2)}\n`,
-		"utf8",
-	);
+	writeJson(path.join(projectDir, "package.json"), {
+		dependencies: {
+			"wp-typia": `file:${tarballs.get("wp-typia")}`,
+		},
+		name: "wp-typia-publish-install-smoke",
+		overrides: Object.fromEntries(
+			[...tarballs.entries()].map(([packageName, tarballPath]) => [
+				packageName,
+				`file:${tarballPath}`,
+			]),
+		),
+		private: true,
+		packageManager: "bun@1.3.11",
+	});
 
 	run("bun", ["install"], { cwd: projectDir });
 
-	const installedManifest = JSON.parse(
-		fs.readFileSync(path.join(projectDir, "node_modules", "wp-typia", "package.json"), "utf8"),
-	);
-	const binEntry =
-		typeof installedManifest.bin === "string"
-			? installedManifest.bin
-			: installedManifest.bin?.["wp-typia"] ??
-				Object.values(installedManifest.bin ?? {})[0];
-	if (typeof binEntry !== "string" || binEntry.length === 0) {
-		throw new Error("Unable to resolve wp-typia CLI entry from the installed package manifest.");
-	}
-
-	const versionOutput = run(
-		"node",
-		[path.join(projectDir, "node_modules", "wp-typia", binEntry), "--version"],
-		{ cwd: projectDir },
-	).trim();
+	const cliPath = getInstalledWpTypiaCliPath(projectDir);
+	const versionOutput = run("node", [cliPath, "--version"], { cwd: projectDir }).trim();
 	let parsed;
 	try {
 		parsed = JSON.parse(versionOutput);
@@ -115,6 +198,32 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 	) {
 		throw new Error(`Unexpected wp-typia --version output: ${versionOutput}`);
 	}
+
+	runScript(
+		projectDir,
+		"bun",
+		"wrapper-export-smoke.mjs",
+		[
+			'import "@wp-typia/block-types/blocks/registration";',
+			'import { buildScaffoldBlockRegistration, defineScaffoldBlockMetadata, parseScaffoldBlockMetadata } from "@wp-typia/block-runtime/blocks";',
+			'import { defineManifestDocument } from "@wp-typia/block-runtime/editor";',
+			'import { defineManifestDefaultsDocument, parseManifestDefaultsDocument } from "@wp-typia/block-runtime/defaults";',
+			"",
+			"for (const [name, value] of Object.entries({",
+			"\tbuildScaffoldBlockRegistration,",
+			"\tdefineScaffoldBlockMetadata,",
+			"\tparseScaffoldBlockMetadata,",
+			"\tdefineManifestDocument,",
+			"\tdefineManifestDefaultsDocument,",
+			"\tparseManifestDefaultsDocument,",
+			"})) {",
+			'\tif (typeof value !== "function") {',
+			'\t\tthrow new Error(`Expected ${name} to be a function export.`);',
+			"\t}",
+			"}",
+			"",
+		].join("\n"),
+	);
 
 	const blockRuntimeSmokeDir = path.join(projectDir, "block-runtime-smoke");
 	fs.mkdirSync(blockRuntimeSmokeDir, { recursive: true });
@@ -134,8 +243,9 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 		`${JSON.stringify({ name: "smoke/counter" }, null, 2)}\n`,
 		"utf8",
 	);
-	runNodeScript(
+	runScript(
 		projectDir,
+		"node",
 		"block-runtime-smoke.mjs",
 		[
 			'import fs from "node:fs";',
@@ -188,8 +298,9 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 		].join("\n"),
 		"utf8",
 	);
-	runNodeScript(
+	runScript(
 		projectDir,
+		"node",
 		"project-tools-smoke.mjs",
 		[
 			'import { getWorkspaceBlockSelectOptions } from "@wp-typia/project-tools";',
@@ -205,7 +316,66 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 		[projectToolsSmokeDir],
 	);
 
+	const expectedRanges = {
+		"@wp-typia/block-runtime": `^${packedManifests.get("@wp-typia/block-runtime").version}`,
+		"@wp-typia/block-types": `^${packedManifests.get("@wp-typia/block-types").version}`,
+	};
+
+	const basicDir = path.join(projectDir, "demo-basic");
+	runWpTypiaCli(projectDir, cliPath, [
+		"create",
+		"demo-basic",
+		"--template",
+		"basic",
+		"--package-manager",
+		"npm",
+		"--namespace",
+		"smoke-space",
+		"--text-domain",
+		"smoke-space",
+		"--yes",
+		"--no-install",
+	]);
+	assertScaffoldDependencyRanges(basicDir, expectedRanges);
+	assertFilesExist(basicDir, [
+		"src/block-metadata.ts",
+		"src/manifest-document.ts",
+		"src/manifest-defaults-document.ts",
+	]);
+	installGeneratedProject(basicDir, tarballs);
+	typecheckGeneratedProject(basicDir);
+
+	const compoundDir = path.join(projectDir, "demo-compound");
+	runWpTypiaCli(projectDir, cliPath, [
+		"create",
+		"demo-compound",
+		"--template",
+		"compound",
+		"--package-manager",
+		"npm",
+		"--namespace",
+		"smoke-space",
+		"--text-domain",
+		"smoke-space",
+		"--yes",
+		"--no-install",
+	]);
+	assertScaffoldDependencyRanges(compoundDir, expectedRanges);
+	installGeneratedProject(compoundDir, tarballs);
+	run(npmCommand, ["exec", "--", "tsx", "scripts/add-compound-child.ts", "--slug", "faq-item", "--title", "FAQ Item"], {
+		cwd: compoundDir,
+	});
+	assertFilesExist(compoundDir, [
+		"src/blocks/demo-compound/block-metadata.ts",
+		"src/blocks/demo-compound/manifest-document.ts",
+		"src/blocks/demo-compound/manifest-defaults-document.ts",
+		"src/blocks/demo-compound-faq-item/block-metadata.ts",
+		"src/blocks/demo-compound-faq-item/manifest-document.ts",
+		"src/blocks/demo-compound-faq-item/manifest-defaults-document.ts",
+	]);
+	typecheckGeneratedProject(compoundDir);
+
 	process.stdout.write(
-		`Verified published-install smoke for wp-typia ${parsed.data.version}, block-runtime metadata sync, and project-tools workspace inventory runtime paths.\n`,
+		`Verified published-install smoke for wp-typia ${parsed.data.version}, runtime wrapper exports, block-runtime metadata sync, project-tools runtime paths, and generated basic/compound scaffold installs.\n`,
 	);
 });

@@ -12,9 +12,31 @@ ensureExampleShowcaseSynced();
 
 describe('Type Sync Tests', () => {
 	const exampleDir = getExampleShowcaseDir();
+	const repoRoot = path.resolve(exampleDir, '..', '..');
 	const blockJsonPath = path.join(exampleDir, 'block.json');
 	const manifestPath = path.join(exampleDir, 'typia.manifest.json');
 	const phpValidatorPath = path.join(exampleDir, 'typia-validator.php');
+	let workspacePackagesPrepared = false;
+
+	const ensureExampleWorkspacePackagesBuilt = () => {
+		if (workspacePackagesPrepared) {
+			return;
+		}
+
+		for (const filter of [
+			'@wp-typia/block-types',
+			'@wp-typia/rest',
+			'@wp-typia/api-client',
+			'@wp-typia/block-runtime',
+		]) {
+			execSync(`bun run --filter ${filter} build`, {
+				cwd: repoRoot,
+				stdio: 'inherit',
+			});
+		}
+
+		workspacePackagesPrepared = true;
+	};
 
 	test('should sync types to block.json and generate typia.manifest.json', () => {
 		expect(fs.existsSync(blockJsonPath)).toBe(true);
@@ -73,6 +95,7 @@ describe('Type Sync Tests', () => {
 	test(
 		'should copy typia.manifest.json into the build output',
 		() => {
+			ensureExampleWorkspacePackagesBuilt();
 			execSync('bun run build', { cwd: exampleDir, stdio: 'inherit' });
 
 			const buildManifestPath = findExampleShowcaseBuildArtifact(

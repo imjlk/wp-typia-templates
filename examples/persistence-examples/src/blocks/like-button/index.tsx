@@ -1,5 +1,7 @@
-import { registerBlockType } from '@wordpress/blocks';
-import type { BlockConfiguration } from '@wp-typia/block-types/blocks/registration';
+import {
+	registerScaffoldBlockType,
+	type BlockConfiguration,
+} from '@wp-typia/block-types/blocks/registration';
 import {
 	buildScaffoldBlockRegistration,
 	parseScaffoldBlockMetadata,
@@ -22,7 +24,4 @@ const registration = buildScaffoldBlockRegistration(
 	}
 );
 
-registerBlockType< PersistenceLikeButtonAttributes >(
-	registration.name,
-	registration.settings
-);
+registerScaffoldBlockType( registration.name, registration.settings );

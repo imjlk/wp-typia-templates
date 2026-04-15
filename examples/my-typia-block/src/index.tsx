@@ -1,7 +1,6 @@
-import { registerBlockType } from '@wordpress/blocks';
-import type {
-	BlockConfiguration,
-	RegisterBlockTypeResult,
+import {
+	registerScaffoldBlockType,
+	type BlockConfiguration,
 } from '@wp-typia/block-types/blocks/registration';
 import {
 	buildScaffoldBlockRegistration,
@@ -29,10 +28,9 @@ const registration = buildScaffoldBlockRegistration(
 	}
 );
 
-const registeredBlock: RegisterBlockTypeResult< MyTypiaBlockAttributes > =
-	registerBlockType< MyTypiaBlockAttributes >(
-		registration.name,
-		registration.settings
-	);
+const registeredBlock = registerScaffoldBlockType(
+	registration.name,
+	registration.settings
+);
 
 void registeredBlock;

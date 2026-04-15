@@ -372,6 +372,11 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       );
       expect(addChildScript).toContain('buildScaffoldBlockRegistration');
       expect(addChildScript).toContain(
+        'registerScaffoldBlockType( registration.name, registration.settings );',
+      );
+      expect(addChildScript).not.toContain('registerBlockType<');
+      expect(addChildScript).toContain('registerScaffoldBlockType');
+      expect(addChildScript).toContain(
         "import metadata from './block-metadata';",
       );
       expect(addChildScript).toContain('renderBlockMetadataFile()');
@@ -892,6 +897,11 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(parentIndex).toContain(
         "import metadata from './block-metadata';",
       );
+      expect(parentIndex).toContain(
+        'registerScaffoldBlockType(registration.name, registration.settings);',
+      );
+      expect(parentIndex).not.toContain('registerBlockType<');
+      expect(parentIndex).toContain('registerScaffoldBlockType');
       expect(parentValidators).toContain('@wp-typia/block-runtime/identifiers');
       expect(parentValidators).toContain('generateResourceKey');
       expect(parentValidators).not.toContain('const generateResourceKey');
@@ -925,6 +935,11 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(generatedValidatorToolkit).not.toContain('typia.createValidate');
       expect(generatedAddChild).toContain('ALLOWED_CHILD_MARKER');
       expect(generatedAddChild).toContain('buildScaffoldBlockRegistration');
+      expect(generatedAddChild).toContain(
+        'registerScaffoldBlockType( registration.name, registration.settings );',
+      );
+      expect(generatedAddChild).not.toContain('registerBlockType<');
+      expect(generatedAddChild).toContain('registerScaffoldBlockType');
       expect(generatedAddChild).toContain(
         "import metadata from './block-metadata';",
       );
@@ -1211,6 +1226,11 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(newChildIndex).toContain(
         "import metadata from './block-metadata';",
       );
+      expect(newChildIndex).toContain(
+        'registerScaffoldBlockType( registration.name, registration.settings );',
+      );
+      expect(newChildIndex).not.toContain('registerBlockType<');
+      expect(newChildIndex).toContain('registerScaffoldBlockType');
       expect(newChildValidators).toContain(
         "import currentManifest from './manifest-defaults-document';",
       );

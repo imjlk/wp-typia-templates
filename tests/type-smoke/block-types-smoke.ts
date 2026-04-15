@@ -1,4 +1,3 @@
-import { registerBlockType } from '@wordpress/blocks';
 import type {
   BlockAlignment,
   BlockContentPosition,
@@ -35,6 +34,7 @@ import type {
   BlockVariation,
   RegisterBlockTypeResult,
 } from '@wp-typia/block-types/blocks/registration';
+import { registerScaffoldBlockType } from '@wp-typia/block-types/blocks/registration';
 import type {
   BlockSupports,
   SpacingSize,
@@ -234,7 +234,10 @@ const blockConfiguration = {
 } satisfies BlockConfiguration<DemoRegistrationAttributes> &
   import('@wordpress/blocks').BlockConfiguration<DemoRegistrationAttributes>;
 const registeredBlock: RegisterBlockTypeResult<DemoRegistrationAttributes> =
-  registerBlockType<DemoRegistrationAttributes>('demo/smoke', blockConfiguration);
+  registerScaffoldBlockType<DemoRegistrationAttributes>(
+    'demo/smoke',
+    blockConfiguration,
+  );
 
 void aspectRatio;
 void blockAlignment;
