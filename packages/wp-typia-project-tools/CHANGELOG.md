@@ -1,5 +1,13 @@
 # @wp-typia/project-tools
 
+## 0.16.10 — 2026-04-15
+
+### Patch changes
+
+- [1c9916a](https://github.com/imjlk/wp-typia/commit/1c9916aa50c7e80590b35a7691b9f5fc0537ea60) Fixed published scaffold outputs so generated basic, persistence, and compound block registration files no longer rely on `registerBlockType<T>()` generic calls that break against the current published `@wordpress/blocks` type surface. Hardened the packed publish-install smoke to verify wrapper exports and to typecheck generated basic and compound scaffolds, including the compound `add-compound-child` path, against packed local release tarballs before publish. — Thanks @imjlk!
+- [e943cc1](https://github.com/imjlk/wp-typia/commit/e943cc1445ab16d14ad215a1851cd94f8fc3342a) Refactored the built-in block artifact emitter so template attribute definitions are driven by shared declarative spec tables while preserving the generated `block.json`, `typia.manifest.json`, and TypeScript outputs. Added explicit artifact summary equivalence coverage to guard against refactor-only output drift across the built-in template families. — Thanks @imjlk!
+- Updated dependencies: block-types (npm)@0.2.3
+
 ## 0.16.9 — 2026-04-15
 
 ### Patch changes
