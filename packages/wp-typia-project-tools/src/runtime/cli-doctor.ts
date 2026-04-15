@@ -708,11 +708,13 @@ export async function getDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
  */
 export async function runDoctor(
 	cwd: string,
-	{
-		renderLine = (check: DoctorCheck) => console.log(formatDoctorCheckLine(check)),
-		renderSummaryLine = (summaryLine: string) => console.log(summaryLine),
-	}: RunDoctorOptions = {},
+	options: RunDoctorOptions = {},
 ): Promise<DoctorCheck[]> {
+	const renderLine =
+		options.renderLine ?? ((check: DoctorCheck) => console.log(formatDoctorCheckLine(check)));
+	const renderSummaryLine =
+		options.renderSummaryLine ??
+		(options.renderLine ? () => undefined : (summaryLine: string) => console.log(summaryLine));
 	const checks = await getDoctorChecks(cwd);
 
 	for (const check of checks) {

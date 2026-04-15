@@ -86,6 +86,21 @@ async function wrapCliCommandError(command: CliCommandId, error: unknown) {
 	return createCliCommandError({ command, error });
 }
 
+function shouldWrapCliCommandError(options: {
+	emitOutput?: boolean;
+	renderLine?: ((line: string) => void) | undefined;
+}): boolean {
+	if (options.emitOutput === false) {
+		return false;
+	}
+
+	if (options.renderLine) {
+		return false;
+	}
+
+	return true;
+}
+
 function printBlock(lines: string[], printLine: PrintLine): void {
 	for (const line of lines) {
 		printLine(line);
@@ -542,6 +557,9 @@ export async function executeCreateCommand({
 		}
 		return payload;
 	} catch (error) {
+		if (!shouldWrapCliCommandError({ emitOutput })) {
+			throw error;
+		}
 		throw await wrapCliCommandError("create", error);
 	} finally {
 		if (activePrompt && activePrompt !== prompt) {
@@ -757,6 +775,9 @@ export async function executeAddCommand({
 		}
 		return payload;
 	} catch (error) {
+		if (!shouldWrapCliCommandError({ emitOutput })) {
+			throw error;
+		}
 		throw await wrapCliCommandError("add", error);
 	} finally {
 		if (activePrompt && activePrompt !== prompt) {
@@ -905,6 +926,9 @@ export async function executeMigrateCommand({
 			return;
 		}
 	} catch (error) {
+		if (!shouldWrapCliCommandError({ renderLine })) {
+			throw error;
+		}
 		throw await wrapCliCommandError("migrate", error);
 	}
 }

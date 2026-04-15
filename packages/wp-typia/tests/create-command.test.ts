@@ -22,7 +22,7 @@ describe("wp-typia create command bridge", () => {
 		fs.rmSync(tempRoot, { force: true, recursive: true });
 	});
 
-	test("keeps ambiguous external layers fail-fast when a synthetic prompt is supplied", async () => {
+test("keeps ambiguous external layers fail-fast when a synthetic prompt is supplied", async () => {
 		const defaultPrompt = {
 			close() {},
 			select<T extends string>(
@@ -38,21 +38,22 @@ describe("wp-typia create command bridge", () => {
 			},
 		};
 
-		await expect(
-			executeCreateCommand({
-				cwd: tempRoot,
-				emitOutput: false,
-				flags: {
-					"external-layer-source": ambiguousLayerFixturePath,
-					"no-install": true,
-					"package-manager": "npm",
-					template: "basic",
-				},
-				interactive: true,
-				projectDir: "demo-tui-ambiguous-layer",
-				prompt: defaultPrompt,
-			}),
-		).rejects.toThrow(
+		const error = await executeCreateCommand({
+			cwd: tempRoot,
+			emitOutput: false,
+			flags: {
+				"external-layer-source": ambiguousLayerFixturePath,
+				"no-install": true,
+				"package-manager": "npm",
+				template: "basic",
+			},
+			interactive: true,
+			projectDir: "demo-tui-ambiguous-layer",
+			prompt: defaultPrompt,
+		}).catch((error) => error);
+
+		expect(error).toBeInstanceOf(Error);
+		expect((error as Error).message).toBe(
 			"External layer package defines multiple selectable layers (acme/internal-base, acme/alpha, acme/beta). Pass an explicit externalLayerId or rerun through the interactive CLI selector.",
 		);
 	});
