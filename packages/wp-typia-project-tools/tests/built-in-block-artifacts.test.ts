@@ -81,6 +81,35 @@ describe('built-in block artifacts', () => {
     cleanupScaffoldTempRoot(tempRoot);
   });
 
+  test('built-in code artifact assembly keeps template bodies in a dedicated module', () => {
+    const assemblySource = fs.readFileSync(
+      path.join(
+        import.meta.dir,
+        '..',
+        'src/runtime/built-in-block-code-artifacts.ts',
+      ),
+      'utf8',
+    );
+    const templateSource = fs.readFileSync(
+      path.join(
+        import.meta.dir,
+        '..',
+        'src/runtime/built-in-block-code-templates.ts',
+      ),
+      'utf8',
+    );
+
+    expect(assemblySource).toContain(
+      'from "./built-in-block-code-templates.js"',
+    );
+    expect(assemblySource).not.toContain('const BASIC_EDIT_TEMPLATE =');
+    expect(assemblySource).not.toContain('const PERSISTENCE_EDIT_TEMPLATE =');
+    expect(templateSource).toContain('export const BASIC_EDIT_TEMPLATE =');
+    expect(templateSource).toContain(
+      'export const COMPOUND_PERSISTENCE_PARENT_INTERACTIVITY_TEMPLATE =',
+    );
+  });
+
   test('built-in template trees no longer ship structural Mustache files', () => {
     for (const relativePath of [
       'basic/src/types.ts.mustache',
