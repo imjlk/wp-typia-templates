@@ -192,8 +192,8 @@ export function renderMigrationRuleFile({
 /**
  * Renders the generated migration registry module for a block target.
  *
- * Prefers typed manifest wrapper modules when they are available in the
- * project, and otherwise falls back to parsing the raw manifest JSON import.
+ * Prefers manifest wrapper modules when they are available in the project,
+ * while still validating the imported manifest before the registry consumes it.
  *
  * @param state The resolved migration project state.
  * @param blockKey The stable key for the block whose registry is being generated.
@@ -229,15 +229,10 @@ export function renderMigrationRegistryFile(
 		),
 		currentManifestWrapperFile !== null,
 	);
-	const currentManifestExpression = currentManifestWrapperFile !== null
-		? "rawCurrentManifest"
-		: "parseManifestDocument<ManifestDocument>(rawCurrentManifest)";
 	const imports = [
 		`import rawCurrentManifest from "${currentManifestImport}";`,
 		`import type { ManifestDocument, MigrationRiskSummary } from "${normalizeImportPath(path.relative(getGeneratedDir(block, state), path.join(state.projectDir, "src", "migrations", "helpers.ts")), true)}";`,
-		...(entries.length > 0 || currentManifestWrapperFile === null
-			? [`import { parseManifestDocument } from "@wp-typia/block-runtime/editor";`]
-			: []),
+		`import { parseManifestDocument } from "@wp-typia/block-runtime/editor";`,
 	];
 	const body: string[] = [];
 
@@ -271,7 +266,7 @@ export const migrationRegistry: {
 	entries: MigrationRegistryEntry[];
 } = {
 	currentMigrationVersion: "${state.config.currentMigrationVersion}",
-	currentManifest: ${currentManifestExpression},
+	currentManifest: parseManifestDocument<ManifestDocument>(rawCurrentManifest),
 	entries: [
 ${body.join("\n")}
 	],
