@@ -40,6 +40,22 @@ function runCapturedCommand(
 	});
 }
 
+function withoutAIAgentEnv(): NodeJS.ProcessEnv {
+	return {
+		...process.env,
+		AGENT: "",
+		AMP_CURRENT_THREAD_ID: "",
+		CLAUDECODE: "",
+		CLAUDE_CODE: "",
+		CODEX_CI: "",
+		CODEX_SANDBOX: "",
+		CODEX_THREAD_ID: "",
+		CURSOR_AGENT: "",
+		GEMINI_CLI: "",
+		OPENCODE: "",
+	};
+}
+
 function createSyncFixture(options: {
 	packageManager?: string | null;
 	scripts: Record<string, string>;
@@ -423,6 +439,7 @@ describe("wp-typia package", () => {
 
 			const result = runCapturedCommand("node", [entryPath, "doctor"], {
 				cwd: fixtureRoot,
+				env: withoutAIAgentEnv(),
 			});
 
 			expect(result.status).toBe(1);

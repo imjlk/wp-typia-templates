@@ -5,7 +5,9 @@ export const doctorCommand = defineCommand({
 	defaultFormat: "toon",
 	description: "Run repository and project diagnostics.",
 	handler: async (args) => {
-		const prefersStructuredOutput = args.formatExplicit && args.format !== "toon";
+		const prefersStructuredOutput =
+			(args.formatExplicit && args.format !== "toon") ||
+			Boolean(args.context?.store?.isAIAgent);
 		if (prefersStructuredOutput) {
 			const [{ getDoctorChecks }, { createCliCommandError, getDoctorFailureDetailLines }] =
 				await Promise.all([
