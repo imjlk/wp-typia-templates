@@ -12,6 +12,7 @@ import {
 	transformPackageManagerText,
 } from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
+import { replaceTextRecursively } from "./scaffold-apply-utils.js";
 import {
 	applyGeneratedProjectDxPackageJson,
 	applyLocalDevPresetFiles,
@@ -208,6 +209,7 @@ interface ScaffoldProjectOptions {
 	packageManager: PackageManagerId;
 	persistencePolicy?: PersistencePolicy;
 	projectDir: string;
+	repositoryReference?: string;
 	templateId: string;
 	variant?: string;
 	withMigrationUi?: boolean;
@@ -955,50 +957,6 @@ async function removeUnexpectedLockfiles(
 	);
 }
 
-async function replaceTextRecursively(
-	targetDir: string,
-	packageManagerId: PackageManagerId,
-): Promise<void> {
-	const textExtensions = new Set([
-		".css",
-		".js",
-		".json",
-		".jsx",
-		".md",
-		".php",
-		".scss",
-		".ts",
-		".tsx",
-		".txt",
-	]);
-
-	async function visit(currentPath: string): Promise<void> {
-		const stats = await fsp.stat(currentPath);
-		if (stats.isDirectory()) {
-			const entries = await fsp.readdir(currentPath);
-			for (const entry of entries) {
-				await visit(path.join(currentPath, entry));
-			}
-			return;
-		}
-
-		if (path.basename(currentPath) === "package.json" || !textExtensions.has(path.extname(currentPath))) {
-			return;
-		}
-
-		const content = await fsp.readFile(currentPath, "utf8");
-		const nextContent = transformPackageManagerText(content, packageManagerId)
-			.replace(/yourusername\/wp-typia-boilerplate/g, "imjlk/wp-typia")
-			.replace(/yourusername\/wp-typia/g, "imjlk/wp-typia");
-
-		if (nextContent !== content) {
-			await fsp.writeFile(currentPath, nextContent, "utf8");
-		}
-	}
-
-	await visit(targetDir);
-}
-
 async function defaultInstallDependencies({
 	projectDir,
 	packageManager,
@@ -1071,6 +1029,7 @@ export async function scaffoldProject({
 	packageManager,
 	externalLayerId,
 	externalLayerSource,
+	repositoryReference,
 	cwd = process.cwd(),
 	allowExistingDir = false,
 	noInstall = false,
@@ -1103,6 +1062,7 @@ export async function scaffoldProject({
 			packageManager: resolvedPackageManager,
 			persistencePolicy: persistencePolicy ?? answers.persistencePolicy,
 			projectDir,
+			repositoryReference,
 			templateId: resolvedTemplateId,
 			variant,
 			withMigrationUi,
@@ -1210,7 +1170,9 @@ export async function scaffoldProject({
 	}
 	await normalizePackageManagerFiles(projectDir, resolvedPackageManager);
 	await removeUnexpectedLockfiles(projectDir, resolvedPackageManager);
-	await replaceTextRecursively(projectDir, resolvedPackageManager);
+	await replaceTextRecursively(projectDir, resolvedPackageManager, {
+		repositoryReference,
+	});
 
 	if (!noInstall) {
 		const installer = installDependencies ?? defaultInstallDependencies;

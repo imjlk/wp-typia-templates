@@ -212,6 +212,43 @@ test("local official external template configs honor --variant overrides", async
   expect(generatedBlockJson.supports.multiple).toBe(true);
 });
 
+test("external template scaffolds honor explicit repository reference overrides", async () => {
+  const fixtureDir = path.join(tempRoot, "create-block-external-fork-reference");
+  const targetDir = path.join(tempRoot, "demo-external-fork-reference");
+  fs.cpSync(createBlockExternalFixturePath, fixtureDir, { recursive: true });
+  fs.appendFileSync(
+    path.join(fixtureDir, "block-templates", "edit.js.mustache"),
+    "\n// Docs: https://github.com/yourusername/wp-typia-boilerplate/issues\n// CLI package: yourusername/wp-typia\n",
+    "utf8"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: fixtureDir,
+    packageManager: "npm",
+    noInstall: true,
+    repositoryReference: "fork-owner/fork-typia",
+    answers: {
+      author: "Test Runner",
+      description: "Demo external fork reference block",
+      namespace: "create-block",
+      slug: "demo-external-fork-reference",
+      title: "Demo External Fork Reference",
+    },
+  });
+
+  const generatedEdit = fs.readFileSync(
+    path.join(targetDir, "src", "edit.js"),
+    "utf8"
+  );
+
+  expect(generatedEdit).toContain(
+    "https://github.com/fork-owner/fork-typia/issues"
+  );
+  expect(generatedEdit).toContain("CLI package: fork-owner/fork-typia");
+  expect(generatedEdit).not.toContain("yourusername/wp-typia");
+});
+
 test("workspace template package identity is defined once and imported by runtime callers", () => {
   const runtimeDir = path.join(packageRoot, "src", "runtime");
   const templateRegistry = fs.readFileSync(

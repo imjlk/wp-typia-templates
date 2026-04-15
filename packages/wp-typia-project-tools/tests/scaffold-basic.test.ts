@@ -313,6 +313,47 @@ describe('@wp-typia/project-tools scaffold core', () => {
   );
 
   test(
+    'scaffoldProject rewrites forked repository placeholders in existing files when repositoryReference is overridden',
+    async () => {
+      const targetDir = path.join(tempRoot, 'demo-npm-fork-reference');
+      const notesPath = path.join(targetDir, 'FORK_REFERENCE.md');
+
+      fs.mkdirSync(targetDir, { recursive: true });
+      fs.writeFileSync(
+        notesPath,
+        [
+          'Docs: https://github.com/yourusername/wp-typia-boilerplate/issues',
+          'CLI: yourusername/wp-typia',
+        ].join('\n'),
+        'utf8',
+      );
+
+      await scaffoldProject({
+        projectDir: targetDir,
+        templateId: 'basic',
+        packageManager: 'npm',
+        noInstall: true,
+        allowExistingDir: true,
+        repositoryReference: 'fork-owner/fork-typia',
+        answers: {
+          author: 'Test Runner',
+          description: 'Demo npm fork reference block',
+          namespace: 'demo-space',
+          slug: 'demo-npm-fork-reference',
+          title: 'Demo Npm Fork Reference',
+        },
+      });
+
+      const notes = fs.readFileSync(notesPath, 'utf8');
+      expect(notes).toContain(
+        'Docs: https://github.com/fork-owner/fork-typia/issues',
+      );
+      expect(notes).toContain('CLI: fork-owner/fork-typia');
+      expect(notes).not.toContain('yourusername/wp-typia');
+    },
+  );
+
+  test(
     'scaffoldProject can opt into migration UI for built-in single-block templates',
     async () => {
       const targetDir = path.join(tempRoot, 'demo-migration-ui');

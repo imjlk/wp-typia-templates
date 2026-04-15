@@ -100,6 +100,7 @@ export interface BlockGenerationTarget {
 	noInstall: boolean;
 	packageManager: PackageManagerId;
 	projectDir: string;
+	repositoryReference?: string;
 	variant?: string;
 }
 
@@ -114,6 +115,7 @@ export interface PlanBlockInput {
 	packageManager: PackageManagerId;
 	persistencePolicy?: PersistencePolicy;
 	projectDir: string;
+	repositoryReference?: string;
 	templateId: BuiltInTemplateId;
 	variant?: string;
 	withMigrationUi?: boolean;
@@ -432,6 +434,7 @@ export class BlockGeneratorService {
 		packageManager,
 		persistencePolicy,
 		projectDir,
+		repositoryReference,
 		templateId,
 		variant,
 		withMigrationUi = false,
@@ -456,6 +459,7 @@ export class BlockGeneratorService {
 				noInstall,
 				packageManager,
 				projectDir,
+				repositoryReference,
 				variant,
 			},
 		};
@@ -643,6 +647,7 @@ export class BlockGeneratorService {
 				noInstall: rendered.target.noInstall,
 				packageManager: rendered.target.packageManager,
 				projectDir: rendered.target.projectDir,
+				repositoryReference: rendered.target.repositoryReference,
 				gitignoreContent: rendered.gitignoreContent,
 				readmeContent: rendered.readmeContent,
 				templateDir: rendered.templateDir,
