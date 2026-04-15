@@ -738,6 +738,7 @@ export async function executeAddCommand({
 		activePrompt = shouldPromptForLayerSelection
 			? (prompt ?? promptRuntime?.createReadlinePrompt())
 			: undefined;
+		const selectPrompt = activePrompt;
 
 		const result = await addRuntime.runAddBlockCommand({
 			blockName: name,
@@ -746,9 +747,9 @@ export async function executeAddCommand({
 			externalLayerId,
 			externalLayerSource,
 			persistencePolicy: readOptionalStringFlag(flags, "persistence-policy"),
-			selectExternalLayerId: activePrompt
+			selectExternalLayerId: selectPrompt
 				? (options) =>
-						activePrompt.select(
+						selectPrompt.select(
 							"Select an external layer",
 							toExternalLayerPromptOptions(options),
 							1,

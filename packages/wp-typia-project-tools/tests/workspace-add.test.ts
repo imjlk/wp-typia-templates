@@ -354,7 +354,7 @@ test("canonical CLI rejects add-block external layers that emit workspace-level 
   );
 
   expect(commandError).toMatch(
-    /External layer \\\"acme\/basic-observability\\\" writes workspace-level output \\\"inc\/observability\.php\\\"/
+    /External layer "acme\/basic-observability" writes workspace-level output "inc\/observability\.php"/
   );
   expect(
     fs.existsSync(path.join(targetDir, "src", "blocks", "counter-card"))
@@ -437,7 +437,7 @@ test("canonical CLI can add a variation to an official workspace template", asyn
   );
   expect(variationSource).toContain("A starter variation for Hero Card.");
 
-  const doctorOutput = runCli("node", [entryPath, "doctor"], {
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
   const doctorChecks = JSON.parse(doctorOutput) as {
@@ -579,7 +579,7 @@ test("canonical CLI can add hooked-block metadata to an official workspace block
     "core/post-content": "after",
   });
 
-  const doctorOutput = runCli("node", [entryPath, "doctor"], {
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
   const doctorChecks = JSON.parse(doctorOutput) as {
@@ -1893,7 +1893,7 @@ test("add block updates migration config in a migration-enabled workspace templa
     }
   );
   expect(doctorOutput).toContain("PASS Migration config");
-  const rootDoctorOutput = runCli("node", [entryPath, "doctor"], {
+  const rootDoctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
   const rootDoctorChecks = JSON.parse(rootDoctorOutput) as {
@@ -1959,7 +1959,7 @@ test("canonical CLI can add a pattern to an official workspace template", async 
   expect(bootstrapSource).toContain("/src/patterns/*.php");
   expect(patternSource).toContain("demo-space/hero-layout");
 
-  const doctorOutput = runCli("node", [entryPath, "doctor"], {
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
   const doctorChecks = JSON.parse(doctorOutput) as {
@@ -2045,7 +2045,7 @@ test("canonical CLI can add a binding source to an official workspace template",
   expect(bindingEditorSource).toContain("resolveBindingSourceValue( field )");
   expect(bindingEditorSource).toContain("getFieldsList()");
 
-  const doctorOutput = runCli("node", [entryPath, "doctor"], {
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
   const doctorChecks = JSON.parse(doctorOutput) as {
