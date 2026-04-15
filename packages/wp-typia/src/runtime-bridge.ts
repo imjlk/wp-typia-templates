@@ -480,7 +480,7 @@ export async function executeCreateCommand({
 			selectDataStorage: activePrompt
 				? () => activePrompt.select("Select a data storage mode", [...DATA_STORAGE_PROMPT_OPTIONS], 1)
 				: undefined,
-			selectExternalLayerId: shouldPromptForExternalLayerSelection
+			selectExternalLayerId: shouldPromptForExternalLayerSelection && activePrompt
 				? (options) =>
 						activePrompt.select(
 							"Select an external layer",
