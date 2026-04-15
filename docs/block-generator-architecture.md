@@ -177,7 +177,10 @@ This design intentionally does not promise:
 
 The public compatibility promise is still the root
 `@wp-typia/project-tools` orchestration surface plus the generated-project
-runtime surfaces under `@wp-typia/block-runtime/*`.
+runtime surfaces under `@wp-typia/block-runtime/*`. For the non-mutating block
+generator controller surface specifically, compatibility is governed by the
+exact-match `BLOCK_GENERATION_TOOL_CONTRACT_VERSION` policy documented in
+[`docs/block-generator-tool-contract.md`](./block-generator-tool-contract.md).
 
 ## Relationship to the rest of the repo
 
