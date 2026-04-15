@@ -61,6 +61,8 @@ bun run build
 
 - `bun run build`
   Builds the product packages and the reference app.
+- `bun run test:repo`
+  Runs the repo-local unit and CLI aggregation without E2E.
 - `bun run examples:build`
   Builds the reference app only.
 - `bun run --filter @wp-typia/project-tools test`

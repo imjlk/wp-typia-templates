@@ -24,7 +24,8 @@ describe('repository DX baseline', () => {
     expect(scripts['formatting-policy:validate']).toBe(
       'node scripts/validate-formatting-toolchain-policy.mjs',
     );
-    expect(scripts['test:all']).toBeDefined();
+    expect(scripts['test:repo']).toBe('bun run test');
+    expect(scripts['test:all']).toBe('bun run test:repo');
     expect(scripts['ci:local']).toBeDefined();
     expect(scripts['ci:local']).toContain(
       'bun run maintenance-automation:validate',
@@ -102,6 +103,17 @@ describe('repository DX baseline', () => {
       ),
     ).toBe(true);
     expect(
+      fs.existsSync(
+        path.join(
+          repoRoot,
+          '.github',
+          'actions',
+          'setup-bun-workspace',
+          'action.yml',
+        ),
+      ),
+    ).toBe(true);
+    expect(
       fs.existsSync(path.join(repoRoot, '.github', 'PULL_REQUEST_TEMPLATE.md')),
     ).toBe(true);
     expect(
@@ -136,6 +148,28 @@ describe('repository DX baseline', () => {
     expect(guardScript).toContain(
       'Example builds modified files under examples/.',
     );
+  });
+
+  test('CI keeps project-tools verification shared and enabled on main pushes', () => {
+    const workflow = fs.readFileSync(
+      path.join(repoRoot, '.github', 'workflows', 'ci.yml'),
+      'utf8',
+    );
+
+    expect(workflow).toContain("test-project-tools:");
+    expect(workflow).toContain("Project Tools: ${{ matrix.label }}");
+    expect(workflow).toContain(
+      'uses: ./.github/actions/setup-bun-workspace',
+    );
+    expect(workflow).toContain(
+      'command: bun run test:project-tools:scaffold-core',
+    );
+    expect(workflow).toContain(
+      'command: bun run test:project-tools:migration-execution',
+    );
+    expect(workflow).not.toContain('test-project-tools-scaffold-core:');
+    expect(workflow).not.toContain('test-project-tools-workspace:');
+    expect(workflow).not.toContain('test-project-tools-compound:');
   });
 
   test('docs explain lint ownership and ci:local guidance', () => {
