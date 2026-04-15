@@ -77,23 +77,48 @@ function parseRepositoryReference(
 		return null;
 	}
 
-	const normalizedShorthand = trimmed.replace(/^github:/u, "");
-	if (/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:#.+)?$/u.test(normalizedShorthand)) {
-		return normalizedShorthand.replace(/#.*$/u, "");
+	const githubShorthandMatch = trimmed.match(
+		/^github:([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+?)(?:#.*)?$/u,
+	);
+	if (githubShorthandMatch) {
+		return `${githubShorthandMatch[1]}/${githubShorthandMatch[2]}`;
+	}
+
+	if (/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u.test(trimmed)) {
+		return trimmed;
+	}
+
+	const githubScpMatch = trimmed.match(
+		/^git@github\.com:([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?(?:#.*)?$/u,
+	);
+	if (githubScpMatch) {
+		return `${githubScpMatch[1]}/${githubScpMatch[2]}`;
 	}
 
 	const normalizedValue = trimmed
 		.replace(/^git\+/u, "")
-		.replace(/\.git$/u, "");
-	const githubMatch = normalizedValue.match(
-		/github\.com(?:[:/])([^/\s#]+)\/([^/\s#]+?)(?:\.git)?(?:[/?#]|$)/iu,
-	);
+		.replace(/#.*$/u, "");
 
-	if (!githubMatch) {
+	let parsedUrl: URL;
+	try {
+		parsedUrl = new URL(normalizedValue);
+	} catch {
 		return null;
 	}
 
-	return `${githubMatch[1]}/${githubMatch[2]}`;
+	if (parsedUrl.hostname !== "github.com") {
+		return null;
+	}
+
+	const pathSegments = parsedUrl.pathname
+		.replace(/^\/+/u, "")
+		.replace(/\.git$/u, "")
+		.split("/");
+	if (pathSegments.length < 2 || !pathSegments[0] || !pathSegments[1]) {
+		return null;
+	}
+
+	return `${pathSegments[0]}/${pathSegments[1]}`;
 }
 
 function getDefaultRepositoryManifestPaths(): string[] {

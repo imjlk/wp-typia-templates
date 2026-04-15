@@ -106,6 +106,26 @@ test("resolveScaffoldRepositoryReference parses npm github shorthands", () => {
 	).toBe("fork-owner/fork-typia");
 });
 
+test("resolveScaffoldRepositoryReference ignores non-github hosts that merely contain github.com", () => {
+	const manifestPath = path.join(tempRoot, "not-github-host-package.json");
+	fs.writeFileSync(
+		manifestPath,
+		JSON.stringify({
+			repository: {
+				type: "git",
+				url: "https://notgithub.com/fork-owner/fork-typia.git",
+			},
+		}),
+		"utf8",
+	);
+
+	expect(
+		resolveScaffoldRepositoryReference({
+			manifestPaths: [manifestPath],
+		}),
+	).toBe(DEFAULT_SCAFFOLD_REPOSITORY_REFERENCE);
+});
+
 test("replaceRepositoryReferencePlaceholders rewrites both legacy scaffold repository placeholders", () => {
 	const source = [
 		"https://github.com/yourusername/wp-typia-boilerplate/issues",
