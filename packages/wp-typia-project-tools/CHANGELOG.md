@@ -1,5 +1,23 @@
 # @wp-typia/project-tools
 
+## 0.16.9 — 2026-04-15
+
+### Patch changes
+
+- [58b9481](https://github.com/imjlk/wp-typia/commit/58b9481152c9171c47354942ef38367ea591ed84) Emit typed wrapper modules for generated `block.json` and `typia.manifest.json` artifacts so built-in scaffolds, migration UI, and reference examples consume `block-metadata.ts`, `manifest-document.ts`, and `manifest-defaults-document.ts` instead of local cast sites. — Thanks @imjlk!
+- [0eefbc4](https://github.com/imjlk/wp-typia/commit/0eefbc4fc8459c18bc34cd0cf86911703e5fc76c) Keep migration registry generation validating the current manifest even when retrofitted projects import a local `manifest-document.ts` wrapper, so malformed or stale wrappers still fail fast during migration setup. — Thanks @imjlk!
+- [a9803c7](https://github.com/imjlk/wp-typia/commit/a9803c7c7e1adb82eeb9ede485b1ccce9c8e2849) Upgrade official workspace binding-source scaffolds from placeholder-only files to a field-keyed starter contract with named PHP helpers, matching editor starter values, and clearer generated guidance. — Thanks @imjlk!
+- [eb0cbda](https://github.com/imjlk/wp-typia/commit/eb0cbdaf7980a89cac6a62bce0575a505972457e) Harden template rendering internals by removing global Mustache escape mutation, centralizing template traversal behind explicit rendering semantics, and stabilizing block-generation fingerprints with deterministic JSON serialization. — Thanks @imjlk!
+- [9952e4f](https://github.com/imjlk/wp-typia/commit/9952e4f4669dbc6e859906807ef872f9306d3367) Export validated JSON artifact helpers for scaffold `block.json` and `typia.manifest.json` boundaries, and update generated projects, examples, migration UI, and CLI tooling to prefer those runtime validators over raw `as` casts. — Thanks @imjlk!
+- [058d7ee](https://github.com/imjlk/wp-typia/commit/058d7eeff79891e1b778716b5d24ea5100d89f46) Parameterize scaffold repository placeholder rewrites so generated projects can inherit a fork-aware `owner/repo` reference from runtime package metadata or an explicit `repositoryReference` override instead of hardcoding `imjlk/wp-typia`. — Thanks @imjlk!
+- [717eb42](https://github.com/imjlk/wp-typia/commit/717eb42f0cd57549b244c3593d531edad3481f05) Unify human-readable CLI diagnostics across create, add, migrate, and doctor. — Thanks @imjlk!
+- [63657e2](https://github.com/imjlk/wp-typia/commit/63657e2182b5754aff7d40fc6218a247567c48a7) Own the generated block registration TypeScript surface in `@wp-typia/block-types`, and update scaffolds and reference examples to prefer the local registration facade over direct `@wordpress/blocks` type imports. — Thanks @imjlk!
+- [86f0808](https://github.com/imjlk/wp-typia/commit/86f08083ccb0b6a6299c62404bb2d3cd5dc71572) Expose built-in external template layer composition through the canonical `wp-typia create` and `wp-typia add block` CLI flags, including explicit layer id selection for multi-layer packages. — Thanks @imjlk!
+- [6643974](https://github.com/imjlk/wp-typia/commit/664397436a16292a1430e31d0f22969291033ef4) Move built-in TS and TSX emitter bodies into a dedicated template module with readable multi-line source, and derive block artifact metadata from a shared declarative attribute spec so scaffold definitions stay easier to review and extend without changing emitted output. — Thanks @imjlk!
+- [188bbc7](https://github.com/imjlk/wp-typia/commit/188bbc771f881046613e72eed334bd24741359da) Add interactive external layer selection for built-in create and add-block CLI flows when a package exposes multiple public layer roots, while keeping non-interactive and programmatic calls explicit. — Thanks @imjlk!
+- [6f20191](https://github.com/imjlk/wp-typia/commit/6f201910690e05b1237dcf8fdf6b2ebb93f98fed) Tighten scaffold/runtime helper generics so registration metadata, nested migration path helpers, and external template render views preserve more caller type information while removing raw scaffold metadata casts from generated and example block registration code. — Thanks @imjlk!
+- Updated dependencies: block-runtime (npm)@0.4.8, block-types (npm)@0.2.2
+
 ## 0.16.8 — 2026-04-13
 
 ### Patch changes

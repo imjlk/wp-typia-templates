@@ -1,5 +1,13 @@
 # @wp-typia/block-runtime
 
+## 0.4.8 — 2026-04-15
+
+### Patch changes
+
+- [58b9481](https://github.com/imjlk/wp-typia/commit/58b9481152c9171c47354942ef38367ea591ed84) Emit typed wrapper modules for generated `block.json` and `typia.manifest.json` artifacts so built-in scaffolds, migration UI, and reference examples consume `block-metadata.ts`, `manifest-document.ts`, and `manifest-defaults-document.ts` instead of local cast sites. — Thanks @imjlk!
+- [9952e4f](https://github.com/imjlk/wp-typia/commit/9952e4f4669dbc6e859906807ef872f9306d3367) Export validated JSON artifact helpers for scaffold `block.json` and `typia.manifest.json` boundaries, and update generated projects, examples, migration UI, and CLI tooling to prefer those runtime validators over raw `as` casts. — Thanks @imjlk!
+- [6f20191](https://github.com/imjlk/wp-typia/commit/6f201910690e05b1237dcf8fdf6b2ebb93f98fed) Tighten scaffold/runtime helper generics so registration metadata, nested migration path helpers, and external template render views preserve more caller type information while removing raw scaffold metadata casts from generated and example block registration code. — Thanks @imjlk!
+
 ## 0.4.7 — 2026-04-13
 
 ### Patch changes
