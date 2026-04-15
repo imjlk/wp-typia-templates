@@ -175,7 +175,9 @@ test("migrate init prefers src manifest wrappers for legacy-root retrofit layout
 	expect(registrySource).toContain(
 		'import rawCurrentManifest from "../../manifest-document";',
 	);
-	expect(registrySource).toContain("currentManifest: rawCurrentManifest,");
+	expect(registrySource).toContain(
+		"currentManifest: parseManifestDocument<ManifestDocument>(rawCurrentManifest),",
+	);
 });
 
 test("migrate init falls back to single-block detection when all multi-block candidates are malformed", () => {
