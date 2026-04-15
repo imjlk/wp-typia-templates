@@ -49,6 +49,10 @@ function escapeRegex(value: string): string {
 	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
 
+function quotePhpString(value: string): string {
+	return `'${value.replace(/\\/gu, "\\\\").replace(/'/gu, "\\'")}'`;
+}
+
 function buildVariationConfigEntry(
 	blockSlug: string,
 	variationSlug: string,
@@ -188,10 +192,15 @@ register_block_pattern(
 
 function buildBindingSourceServerSource(
 	bindingSourceSlug: string,
+	phpPrefix: string,
 	namespace: string,
 	textDomain: string,
 ): string {
 	const bindingSourceTitle = toTitleCase(bindingSourceSlug);
+	const bindingSourcePhpId = bindingSourceSlug.replace(/-/g, "_");
+	const bindingSourceValueFunctionName = `${phpPrefix}_${bindingSourcePhpId}_binding_source_values`;
+	const bindingSourceResolveFunctionName = `${phpPrefix}_${bindingSourcePhpId}_resolve_binding_source_value`;
+	const starterValue = `${bindingSourceTitle} starter value`;
 
 	return `<?php
 if ( ! defined( 'ABSPATH' ) ) {
@@ -202,20 +211,31 @@ if ( ! function_exists( 'register_block_bindings_source' ) ) {
 \treturn;
 }
 
-register_block_bindings_source(
-\t'${namespace}/${bindingSourceSlug}',
-\tarray(
-\t\t'label' => __( ${JSON.stringify(bindingSourceTitle)}, '${textDomain}' ),
-\t\t'get_value_callback' => static function( array $source_args ) : string {
-\t\t\t$field = isset( $source_args['field'] ) && is_string( $source_args['field'] )
-\t\t\t\t? $source_args['field']
-\t\t\t\t: '${bindingSourceSlug}';
+if ( ! function_exists( '${bindingSourceValueFunctionName}' ) ) {
+\tfunction ${bindingSourceValueFunctionName}() : array {
+\t\treturn array(
+\t\t\t${quotePhpString(bindingSourceSlug)} => ${quotePhpString(starterValue)},
+\t\t);
+\t}
+}
 
-\t\t\treturn sprintf(
-\t\t\t\t__( 'Replace %s with real binding source data.', '${textDomain}' ),
-\t\t\t\t$field
-\t\t\t);
-\t\t},
+if ( ! function_exists( '${bindingSourceResolveFunctionName}' ) ) {
+\tfunction ${bindingSourceResolveFunctionName}( array $source_args ) : string {
+\t\t$field = isset( $source_args['field'] ) && is_string( $source_args['field'] )
+\t\t\t? $source_args['field']
+\t\t\t: '${bindingSourceSlug}';
+\t\t$binding_source_values = ${bindingSourceValueFunctionName}();
+\t\t$value = $binding_source_values[ $field ] ?? '';
+
+\t\treturn is_string( $value ) ? $value : '';
+\t}
+}
+
+register_block_bindings_source(
+\t${quotePhpString(`${namespace}/${bindingSourceSlug}`)},
+\tarray(
+\t\t'label' => __( ${quotePhpString(bindingSourceTitle)}, ${quotePhpString(textDomain)} ),
+\t\t'get_value_callback' => ${quotePhpString(bindingSourceResolveFunctionName)},
 \t)
 );
 `;
@@ -227,9 +247,24 @@ function buildBindingSourceEditorSource(
 	textDomain: string,
 ): string {
 	const bindingSourceTitle = toTitleCase(bindingSourceSlug);
+	const starterValue = `${bindingSourceTitle} starter value`;
 
 	return `import { registerBlockBindingsSource } from '@wordpress/blocks';
 import { __ } from '@wordpress/i18n';
+
+interface BindingSourceRegistration {
+\targs?: {
+\t\tfield?: string;
+\t};
+}
+
+const BINDING_SOURCE_VALUES: Record<string, string> = {
+\t${quoteTsString(bindingSourceSlug)}: ${quoteTsString(starterValue)},
+};
+
+function resolveBindingSourceValue( field: string ): string {
+\treturn BINDING_SOURCE_VALUES[ field ] ?? '';
+}
 
 registerBlockBindingsSource( {
 \tname: ${quoteTsString(`${namespace}/${bindingSourceSlug}`)},
@@ -247,10 +282,14 @@ registerBlockBindingsSource( {
 \t},
 \tgetValues( { bindings } ) {
 \t\tconst values: Record<string, string> = {};
-\t\tfor ( const attributeName of Object.keys( bindings ) ) {
-\t\t\tvalues[ attributeName ] = ${quoteTsString(
-				`TODO: replace ${bindingSourceSlug} with real editor-side values.`,
-			)};
+\t\tfor ( const [ attributeName, binding ] of Object.entries(
+\t\t\tbindings as Record<string, BindingSourceRegistration>
+\t\t) ) {
+\t\t\tconst field =
+\t\t\t\ttypeof binding?.args?.field === 'string'
+\t\t\t\t\t? binding.args.field
+\t\t\t\t\t: ${quoteTsString(bindingSourceSlug)};
+\t\t\tvalues[ attributeName ] = resolveBindingSourceValue( field );
 \t\t}
 \t\treturn values;
 \t},
@@ -708,6 +747,7 @@ export async function runAddBindingSourceCommand({
 			serverFilePath,
 			buildBindingSourceServerSource(
 				bindingSourceSlug,
+				workspace.workspace.phpPrefix,
 				workspace.workspace.namespace,
 				workspace.workspace.textDomain,
 			),

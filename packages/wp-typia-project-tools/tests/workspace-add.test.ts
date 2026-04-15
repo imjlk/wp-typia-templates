@@ -1964,7 +1964,17 @@ test("canonical CLI can add a binding source to an official workspace template",
   expect(bootstrapSource).toContain("build/bindings/index.js");
   expect(bindingsIndexSource).toContain("import './hero-data/editor';");
   expect(bindingServerSource).toContain("register_block_bindings_source");
+  expect(bindingServerSource).toContain(
+    "function demo_space_hero_data_binding_source_values() : array"
+  );
+  expect(bindingServerSource).toContain(
+    "'get_value_callback' => 'demo_space_hero_data_resolve_binding_source_value'"
+  );
+  expect(bindingServerSource).toContain("'hero-data' => 'Hero Data starter value'");
   expect(bindingEditorSource).toContain("registerBlockBindingsSource");
+  expect(bindingEditorSource).toContain("const BINDING_SOURCE_VALUES");
+  expect(bindingEditorSource).toContain('"hero-data": "Hero Data starter value"');
+  expect(bindingEditorSource).toContain("resolveBindingSourceValue( field )");
   expect(bindingEditorSource).toContain("getFieldsList()");
 
   const doctorOutput = runCli("node", [entryPath, "doctor"], {
@@ -1992,6 +2002,9 @@ test("canonical CLI can add a binding source to an official workspace template",
   expect(
     fs.existsSync(path.join(targetDir, "build", "bindings", "index.js"))
   ).toBe(true);
+  expect(
+    fs.readFileSync(path.join(targetDir, "build", "bindings", "index.js"), "utf8")
+  ).toContain("Hero Data starter value");
   expect(
     fs.existsSync(
       path.join(targetDir, "build", "bindings", "index.asset.php")

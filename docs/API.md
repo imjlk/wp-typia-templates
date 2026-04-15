@@ -587,7 +587,11 @@ Variations are generated under `src/blocks/<block>/variations/*.ts` and wired
 through the target block entrypoint. Patterns are generated as namespaced PHP
 shells under `src/patterns/*.php` and loaded by the workspace bootstrap.
 Binding sources are generated under `src/bindings/*/{server.php,editor.ts}` and
-wired through the shared workspace bootstrap plus editor bundle.
+wired through the shared workspace bootstrap plus editor bundle. The generated
+starter contract keeps one field-keyed data map in each file, so the common
+follow-up is to edit `src/bindings/<name>/server.php` and
+`src/bindings/<name>/editor.ts` in parallel by replacing the default starter
+values for the fields you want to expose.
 Hooked blocks patch `src/blocks/<block>/block.json` with `blockHooks` metadata
 so the target block is inserted relative to the chosen anchor block.
 
