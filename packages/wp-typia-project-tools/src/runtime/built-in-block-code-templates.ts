@@ -218,8 +218,10 @@ export const BASIC_INDEX_TEMPLATE = `/**
  * Typia-powered type-safe block
  */
 
-import { registerBlockType } from '@wordpress/blocks';
-import type { BlockConfiguration } from '@wp-typia/block-types/blocks/registration';
+import {
+  registerScaffoldBlockType,
+  type BlockConfiguration,
+} from '@wp-typia/block-types/blocks/registration';
 import type { BlockSupports } from '@wp-typia/block-types/blocks/supports';
 import { __ } from '@wordpress/i18n';
 import {
@@ -257,7 +259,7 @@ const registration = buildScaffoldBlockRegistration(
   }
 );
 
-registerBlockType<{{pascalCase}}Attributes>(registration.name, registration.settings);
+registerScaffoldBlockType(registration.name, registration.settings);
 `;
 
 export const BASIC_VALIDATORS_TEMPLATE = `import typia from 'typia';
@@ -664,8 +666,10 @@ export default function Save({ attributes }: { attributes: {{pascalCase}}Attribu
 }
 `;
 
-export const INTERACTIVITY_INDEX_TEMPLATE = `import { registerBlockType } from '@wordpress/blocks';
-import type { BlockConfiguration } from '@wp-typia/block-types/blocks/registration';
+export const INTERACTIVITY_INDEX_TEMPLATE = `import {
+  registerScaffoldBlockType,
+  type BlockConfiguration,
+} from '@wp-typia/block-types/blocks/registration';
 import type { BlockSupports } from '@wp-typia/block-types/blocks/supports';
 import {
   buildScaffoldBlockRegistration,
@@ -697,7 +701,7 @@ const registration = buildScaffoldBlockRegistration(
   }
 );
 
-registerBlockType<{{pascalCase}}Attributes>(registration.name, registration.settings);
+registerScaffoldBlockType(registration.name, registration.settings);
 `;
 
 export const INTERACTIVITY_SCRIPT_TEMPLATE = `/**
@@ -1015,8 +1019,10 @@ export default function Edit( {
 }
 `;
 
-export const PERSISTENCE_INDEX_TEMPLATE = `import { registerBlockType } from '@wordpress/blocks';
-import type { BlockConfiguration } from '@wp-typia/block-types/blocks/registration';
+export const PERSISTENCE_INDEX_TEMPLATE = `import {
+\tregisterScaffoldBlockType,
+\ttype BlockConfiguration,
+} from '@wp-typia/block-types/blocks/registration';
 import {
 	buildScaffoldBlockRegistration,
 	parseScaffoldBlockMetadata,
@@ -1037,10 +1043,7 @@ const registration = buildScaffoldBlockRegistration(
 	}
 );
 
-registerBlockType< {{pascalCase}}Attributes >(
-	registration.name,
-	registration.settings
-);
+registerScaffoldBlockType(registration.name, registration.settings);
 `;
 
 export const PERSISTENCE_SAVE_TEMPLATE = `export default function Save() {
@@ -1534,8 +1537,10 @@ export default function Save( {
 }
 `;
 
-export const COMPOUND_PARENT_INDEX_TEMPLATE = `import { registerBlockType } from '@wordpress/blocks';
-import type { BlockConfiguration } from '@wp-typia/block-types/blocks/registration';
+export const COMPOUND_PARENT_INDEX_TEMPLATE = `import {
+\tregisterScaffoldBlockType,
+\ttype BlockConfiguration,
+} from '@wp-typia/block-types/blocks/registration';
 import {
 	buildScaffoldBlockRegistration,
 	parseScaffoldBlockMetadata,
@@ -1556,10 +1561,7 @@ const registration = buildScaffoldBlockRegistration(
 	}
 );
 
-registerBlockType< {{pascalCase}}Attributes >(
-	registration.name,
-	registration.settings
-);
+registerScaffoldBlockType(registration.name, registration.settings);
 `;
 
 export const COMPOUND_LOCAL_HOOKS_TEMPLATE = `export {
@@ -1717,8 +1719,10 @@ export default function Save( {
 }
 `;
 
-export const COMPOUND_CHILD_INDEX_TEMPLATE = `import { registerBlockType } from '@wordpress/blocks';
-import type { BlockConfiguration } from '@wp-typia/block-types/blocks/registration';
+export const COMPOUND_CHILD_INDEX_TEMPLATE = `import {
+\tregisterScaffoldBlockType,
+\ttype BlockConfiguration,
+} from '@wp-typia/block-types/blocks/registration';
 import {
 	buildScaffoldBlockRegistration,
 	parseScaffoldBlockMetadata,
@@ -1739,10 +1743,7 @@ const registration = buildScaffoldBlockRegistration(
 	}
 );
 
-registerBlockType< {{pascalCase}}ItemAttributes >(
-	registration.name,
-	registration.settings
-);
+registerScaffoldBlockType(registration.name, registration.settings);
 `;
 
 export const COMPOUND_CHILD_VALIDATORS_TEMPLATE = `import typia from 'typia';

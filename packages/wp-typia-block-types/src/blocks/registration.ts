@@ -1,3 +1,4 @@
+import { registerBlockType } from '@wordpress/blocks';
 import type {
   Block as WordPressRegisteredBlockType,
   BlockAttribute as WordPressBlockAttribute,
@@ -71,3 +72,30 @@ export type RegisteredBlockType<
 export type RegisterBlockTypeResult<
   TAttributes extends BlockAttributes = BlockAttributes,
 > = RegisteredBlockType<TAttributes> | undefined;
+
+/**
+ * Runtime shim for scaffolded registrations.
+ *
+ * Generated projects keep strong typing around scaffold metadata while
+ * centralizing the compatibility cast required by the currently published
+ * `@wordpress/blocks` registration surface.
+ */
+export function registerScaffoldBlockType<
+  TAttributes extends BlockAttributes = BlockAttributes,
+  TSettings extends object = object,
+>(
+  blockName: string,
+  settings: TSettings,
+): RegisterBlockTypeResult<TAttributes>;
+export function registerScaffoldBlockType<
+  TAttributes extends BlockAttributes = BlockAttributes,
+  TSettings extends object = object,
+>(
+  blockName: string,
+  settings: TSettings,
+): RegisterBlockTypeResult<TAttributes> {
+  return registerBlockType(
+    blockName,
+    settings as WordPressBlockConfiguration<Record<string, unknown>>,
+  ) as RegisterBlockTypeResult<TAttributes>;
+}

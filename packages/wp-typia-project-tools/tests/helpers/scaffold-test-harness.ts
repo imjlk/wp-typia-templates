@@ -436,19 +436,47 @@ export function linkWorkspaceNodeModules(targetDir: string) {
     ...generatedProjectTypecheckSupportPackages,
   ]);
 
+  const linkedWorkspacePackages = new Set<string>();
+
+  function linkWorkspacePackage(packageName: keyof typeof workspacePackagePaths) {
+    if (linkedWorkspacePackages.has(packageName)) {
+      return;
+    }
+
+    const workspacePackagePath = workspacePackagePaths[packageName];
+    ensureWorkspacePackageBuilt(packageName, workspacePackagePath);
+    ensureDirSymlink(
+      path.join(nodeModulesPath, ...packageName.split("/")),
+      workspacePackagePath
+    );
+    linkPackageBins(targetDir, packageName, workspacePackagePath);
+    linkedWorkspacePackages.add(packageName);
+
+    const workspaceManifestPath = path.join(workspacePackagePath, "package.json");
+    if (!fs.existsSync(workspaceManifestPath)) {
+      return;
+    }
+
+    const workspaceManifest = JSON.parse(
+      fs.readFileSync(workspaceManifestPath, "utf8")
+    ) as {
+      dependencies?: Record<string, string>;
+    };
+
+    for (const dependencyName of Object.keys(workspaceManifest.dependencies ?? {})) {
+      if (!(dependencyName in workspacePackagePaths)) {
+        continue;
+      }
+
+      linkWorkspacePackage(dependencyName as keyof typeof workspacePackagePaths);
+    }
+  }
+
   for (const packageName of dependencyNames) {
     const workspacePackagePath =
       workspacePackagePaths[packageName as keyof typeof workspacePackagePaths];
     if (workspacePackagePath) {
-      ensureWorkspacePackageBuilt(
-        packageName as keyof typeof workspacePackagePaths,
-        workspacePackagePath
-      );
-      ensureDirSymlink(
-        path.join(nodeModulesPath, ...packageName.split("/")),
-        workspacePackagePath
-      );
-      linkPackageBins(targetDir, packageName, workspacePackagePath);
+      linkWorkspacePackage(packageName as keyof typeof workspacePackagePaths);
       continue;
     }
 

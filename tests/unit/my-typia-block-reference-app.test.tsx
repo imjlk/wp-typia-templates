@@ -141,6 +141,11 @@ describe('my-typia-block reference app helpers', () => {
     expect(indexSource).not.toContain('metadata as ScaffoldBlockMetadata');
     expect(indexSource).toContain('parseScaffoldBlockMetadata');
     expect(indexSource).toContain('BlockConfiguration');
+    expect(indexSource).toContain(
+      'registerScaffoldBlockType( registration.name, registration.settings );',
+    );
+    expect(indexSource).not.toContain('registerBlockType<');
+    expect(indexSource).toContain('registerScaffoldBlockType');
   });
 
   test('reference app validator wiring uses the current validator toolkit pattern', () => {
