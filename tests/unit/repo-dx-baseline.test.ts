@@ -67,6 +67,17 @@ describe('repository DX baseline', () => {
   });
 
   test('repo meta docs and GitHub templates exist', () => {
+    const packageJson = readJson('package.json');
+    const licenseContents = fs.readFileSync(
+      path.join(repoRoot, 'LICENSE'),
+      'utf8',
+    );
+
+    expect(packageJson.license).toBe('GPL-2.0-or-later');
+    expect(fs.existsSync(path.join(repoRoot, 'LICENSE'))).toBe(true);
+    expect(licenseContents).toContain(
+      'SPDX-License-Identifier: GPL-2.0-or-later',
+    );
     expect(fs.existsSync(path.join(repoRoot, 'UPGRADE.md'))).toBe(true);
     expect(fs.existsSync(path.join(repoRoot, 'SECURITY.md'))).toBe(true);
     expect(
@@ -216,6 +227,7 @@ describe('repository DX baseline', () => {
     expect(readme).toContain('bun run formatting-policy:validate');
     expect(readme).toContain('## Who this is for');
     expect(readme).toContain('[Upgrade Guide](UPGRADE.md)');
+    expect(readme).toContain('[License](LICENSE)');
     expect(readme).toContain('[Security Policy](SECURITY.md)');
     expect(contributing).toContain('Linting ownership is intentionally split');
     expect(contributing).toContain('Formatting ownership is also explicit');

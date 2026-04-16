@@ -12,7 +12,8 @@ Use this package for new installs:
 - `wp-typia add hooked-block counter-card --anchor core/post-content --position after`
 
 `wp-typia <project-dir>` remains available as a backward-compatible alias to
-`wp-typia create <project-dir>`.
+`wp-typia create <project-dir>` when `<project-dir>` is the only positional
+argument.
 
 Compatibility notes:
 
@@ -26,5 +27,6 @@ for the active CLI ownership contract and the staged Bunli cutover plan.
 Project meta docs:
 
 - [Upgrade Guide](https://github.com/imjlk/wp-typia/blob/main/UPGRADE.md)
+- [License](https://github.com/imjlk/wp-typia/blob/main/LICENSE)
 - [Security Policy](https://github.com/imjlk/wp-typia/blob/main/SECURITY.md)
 - [Contributing Guide](https://github.com/imjlk/wp-typia/blob/main/CONTRIBUTING.md)

@@ -56,7 +56,7 @@ watch workflow, and can opt into local presets with `--with-wp-env` and
 `--with-test-preset`. They can also opt into the migration dashboard/runtime
 bundle with `--with-migration-ui`.
 
-The positional `wp-typia <project-dir>` form remains available as a backward-compatible alias to `create`.
+The positional `wp-typia <project-dir>` form remains available as a backward-compatible alias to `create` when `<project-dir>` is the only positional argument.
 
 Official empty workspace flow:
 

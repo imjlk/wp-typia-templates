@@ -17,7 +17,7 @@ Canonical usage remains:
 
 - `npx wp-typia create <project-dir>`
 - `bunx wp-typia create <project-dir>`
-- `wp-typia <project-dir>` as the compatibility alias
+- `wp-typia <project-dir>` as the compatibility alias when `<project-dir>` is the only positional argument
 - `wp-typia migrate <subcommand>`
 
 Shorthand references like `npx wp-typia` and `bunx wp-typia` should still map
@@ -64,7 +64,8 @@ to the canonical `create` surface in docs and review notes.
 Compatibility alias:
 
 - `wp-typia <project-dir>` remains supported as a compatibility alias to
-  `wp-typia create <project-dir>`.
+  `wp-typia create <project-dir>` when `<project-dir>` is the only positional
+  argument.
 
 Breaking change:
 
