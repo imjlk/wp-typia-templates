@@ -49,6 +49,7 @@ function parseArgs(argv) {
 		addVariationBlock: undefined,
 		addVariationName: undefined,
 		dataStorage: undefined,
+		exampleProject: undefined,
 		namespace: undefined,
 		packageManager: undefined,
 		persistencePolicy: undefined,
@@ -152,6 +153,11 @@ function parseArgs(argv) {
 		}
 		if (arg === "--data-storage") {
 			parsed.dataStorage = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--example-project") {
+			parsed.exampleProject = next;
 			index += 1;
 			continue;
 		}
@@ -324,6 +330,23 @@ function runScaffoldRefreshScripts(projectDir, packageManager, packageJson) {
 
 function runLocalMigrationDoctor(projectDir, runtime) {
 	run(runtime, [entryPath, "migrate", "doctor", "--all"], {
+		cwd: projectDir,
+	});
+}
+
+function refreshCurrentMigrationSnapshot(projectDir, runtime) {
+	const configPath = path.join(projectDir, "src", "migrations", "config.ts");
+	if (!fs.existsSync(configPath)) {
+		return;
+	}
+
+	const configSource = fs.readFileSync(configPath, "utf8");
+	const match = configSource.match(/currentMigrationVersion:\s*['"]([^'"]+)['"]/u);
+	if (!match?.[1]) {
+		return;
+	}
+
+	run(runtime, [entryPath, "migrate", "snapshot", "--migration-version", match[1]], {
 		cwd: projectDir,
 	});
 }
@@ -815,13 +838,16 @@ function assertNoRawRenderedContentEcho(filePath) {
 	}
 }
 
-function rewriteWorkspaceDependencies(projectDir) {
+function rewriteWorkspaceDependencies(projectDir, packageManager) {
 	const packageJsonPath = path.join(projectDir, "package.json");
 	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 	const localApiClientDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-api-client")}`;
 	const localBlockRuntimeDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-block-runtime")}`;
 	const localBlockTypesDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-block-types")}`;
 	const localRestDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-rest")}`;
+	const localCliDependency = `file:${path.resolve(__dirname, "../packages/wp-typia")}`;
+
+	packageJson.packageManager = getPackageManager(packageManager).packageManagerField;
 
 	if (packageJson.devDependencies?.["@wp-typia/api-client"]) {
 		packageJson.devDependencies["@wp-typia/api-client"] = localApiClientDependency;
@@ -847,6 +873,12 @@ function rewriteWorkspaceDependencies(projectDir) {
 	if (packageJson.dependencies?.["@wp-typia/rest"]) {
 		packageJson.dependencies["@wp-typia/rest"] = localRestDependency;
 	}
+	if (packageJson.devDependencies?.["wp-typia"]) {
+		packageJson.devDependencies["wp-typia"] = localCliDependency;
+	}
+	if (packageJson.dependencies?.["wp-typia"]) {
+		packageJson.dependencies["wp-typia"] = localCliDependency;
+	}
 
 	packageJson.overrides = {
 		...(packageJson.overrides ?? {}),
@@ -854,6 +886,7 @@ function rewriteWorkspaceDependencies(projectDir) {
 		"@wp-typia/api-client": localApiClientDependency,
 		"@wp-typia/block-types": localBlockTypesDependency,
 		"@wp-typia/rest": localRestDependency,
+		"wp-typia": localCliDependency,
 	};
 	packageJson.pnpm = {
 		...(packageJson.pnpm ?? {}),
@@ -863,6 +896,7 @@ function rewriteWorkspaceDependencies(projectDir) {
 			"@wp-typia/api-client": localApiClientDependency,
 			"@wp-typia/block-types": localBlockTypesDependency,
 			"@wp-typia/rest": localRestDependency,
+			"wp-typia": localCliDependency,
 		},
 	};
 	packageJson.resolutions = {
@@ -871,9 +905,168 @@ function rewriteWorkspaceDependencies(projectDir) {
 		"@wp-typia/api-client": localApiClientDependency,
 		"@wp-typia/block-types": localBlockTypesDependency,
 		"@wp-typia/rest": localRestDependency,
+		"wp-typia": localCliDependency,
 	};
 
 	fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
+}
+
+function prepareExampleWorkspaceRoot(workspaceRoot) {
+	const repoRoot = path.resolve(__dirname, "..");
+	const packagesLinkPath = path.join(workspaceRoot, "packages");
+
+	if (!fs.existsSync(packagesLinkPath)) {
+		fs.symlinkSync(path.join(repoRoot, "packages"), packagesLinkPath, "dir");
+	}
+
+	for (const configFile of ["tsconfig.json", "tsconfig.base.json"]) {
+		const sourcePath = path.join(repoRoot, configFile);
+		const targetPath = path.join(workspaceRoot, configFile);
+		if (!fs.existsSync(targetPath)) {
+			fs.copyFileSync(sourcePath, targetPath);
+		}
+	}
+}
+
+function prepareExampleProject(exampleProject, projectDir) {
+	const sourceDir = path.resolve(__dirname, "..", "examples", exampleProject);
+	if (!fs.existsSync(sourceDir)) {
+		throw new Error(`Unknown example project: ${exampleProject}`);
+	}
+
+	fs.cpSync(sourceDir, projectDir, {
+		dereference: false,
+		filter: (sourcePath) => {
+			const relativePath = path.relative(sourceDir, sourcePath);
+			return !relativePath.split(path.sep).includes("node_modules");
+		},
+		recursive: true,
+	});
+
+	rewriteCopiedExampleTsconfig(projectDir);
+	ensureCopiedExampleSupportDependencies(projectDir);
+}
+
+function rewriteCopiedExampleTsconfig(projectDir) {
+	const tsconfigPath = path.join(projectDir, "tsconfig.json");
+	if (!fs.existsSync(tsconfigPath)) {
+		return;
+	}
+
+	const tsconfig = readJsonFile(tsconfigPath);
+	if (tsconfig.extends !== "../../tsconfig.json") {
+		return;
+	}
+
+	const nextConfig = {
+		compilerOptions: {
+			jsx: "react-jsx",
+			module: "esnext",
+			moduleResolution: "bundler",
+			noEmit: true,
+			skipLibCheck: true,
+			strict: true,
+			target: "es2022",
+			types: ["bun-types", "node"],
+		},
+		exclude: ["node_modules", "build"],
+		include: ["src/**/*", "scripts/**/*"],
+	};
+
+	fs.writeFileSync(tsconfigPath, `${JSON.stringify(nextConfig, null, "\t")}\n`, "utf8");
+}
+
+function ensureCopiedExampleSupportDependencies(projectDir) {
+	const packageJsonPath = path.join(projectDir, "package.json");
+	if (!fs.existsSync(packageJsonPath)) {
+		return;
+	}
+
+	const repoPackageJson = readJsonFile(path.resolve(__dirname, "..", "package.json"));
+	const packageJson = readJsonFile(packageJsonPath);
+	const devDependencies = {
+		...(packageJson.devDependencies ?? {}),
+	};
+
+	if (!devDependencies["bun-types"]) {
+		devDependencies["bun-types"] =
+			repoPackageJson.devDependencies?.["bun-types"] ?? "^1.3.11";
+	}
+	if (!devDependencies["@types/node"]) {
+		devDependencies["@types/node"] =
+			repoPackageJson.devDependencies?.["@types/node"] ?? "^24.0.0";
+	}
+
+	packageJson.devDependencies = devDependencies;
+	fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
+}
+
+function assertExampleProjectScaffold(projectDir, exampleProject) {
+	const packageJson = readJsonFile(path.join(projectDir, "package.json"));
+	const blockJsonPath = path.join(projectDir, "block.json");
+	const pluginBootstrapPath = path.join(projectDir, `${exampleProject}.php`);
+
+	if (!fs.existsSync(blockJsonPath)) {
+		throw new Error(`Expected example project block.json at ${blockJsonPath}`);
+	}
+	if (!fs.existsSync(pluginBootstrapPath)) {
+		throw new Error(`Expected example project bootstrap at ${pluginBootstrapPath}`);
+	}
+	if (typeof packageJson.scripts?.["migration:doctor"] !== "string") {
+		throw new Error("Expected example project to expose migration:doctor");
+	}
+
+	assertPluginBootstrapExists(pluginBootstrapPath);
+	assertPluginBootstrapHardening(pluginBootstrapPath);
+	assertNoRawRenderedContentEcho(path.join(projectDir, "render.php"));
+	assertBuildArtifacts(projectDir, exampleProject);
+	assertBlockMetadataFileReferences(projectDir);
+	assertGeneratedRuntimeImports(projectDir);
+}
+
+function runExampleProjectSmoke({
+	exampleProject,
+	packageManager,
+	projectDir,
+	runtime,
+}) {
+	const workspaceRoot = path.dirname(projectDir);
+	const exampleDir = path.join(workspaceRoot, "examples", exampleProject);
+
+	prepareExampleWorkspaceRoot(workspaceRoot);
+	prepareExampleProject(exampleProject, exampleDir);
+	rewriteWorkspaceDependencies(exampleDir, packageManager);
+
+	const packageJson = readJsonFile(path.join(exampleDir, "package.json"));
+	ensureCorepackPackageManager(packageManager);
+
+	const [installCommand, installArgs] = getInstallCommand(packageManager);
+	run(installCommand, installArgs, {
+		cwd: exampleDir,
+		env: {
+			...process.env,
+			...(packageManager === "yarn"
+				? { YARN_ENABLE_IMMUTABLE_INSTALLS: "false" }
+				: {}),
+		},
+	});
+
+	runScaffoldRefreshScripts(exampleDir, packageManager, packageJson);
+	refreshCurrentMigrationSnapshot(exampleDir, runtime);
+	runLocalMigrationDoctor(exampleDir, runtime);
+
+	const [buildCommand, buildArgs] = getRunCommand(packageManager);
+	run(buildCommand, buildArgs, { cwd: exampleDir });
+
+	if (typeof packageJson.scripts?.typecheck === "string") {
+		const [typecheckCommand, typecheckArgs] = getRunScriptCommand(
+			packageManager,
+			"typecheck",
+		);
+		run(typecheckCommand, typecheckArgs, { cwd: exampleDir });
+	}
+
+	assertExampleProjectScaffold(exampleDir, exampleProject);
 }
 
 function main() {
@@ -888,6 +1081,7 @@ function main() {
 		namespace,
 		textDomain,
 		phpPrefix,
+		exampleProject,
 		addBlockName,
 		addBindingSourceName,
 		addDataStorage,
@@ -902,9 +1096,14 @@ function main() {
 		withMigrationUi,
 	} = parseArgs(process.argv.slice(2));
 
-	if (!runtime || !template || !packageManager || !projectName) {
+	if (
+		!runtime ||
+		!packageManager ||
+		!projectName ||
+		((!template && !exampleProject) || (template && exampleProject))
+	) {
 		throw new Error(
-			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> --template <id> [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--with-migration-ui] [--add-block-name <name> --add-template <basic|interactivity|persistence|compound> [--add-data-storage <post-meta|custom-table>] [--add-persistence-policy <authenticated|public>]] [--add-variation-name <name> --add-variation-block <block-slug>] [--add-pattern-name <name>] [--add-binding-source-name <name>] [--add-hooked-block-slug <block-slug> --add-hooked-block-anchor <anchor-block-name> --add-hooked-block-position <before|after|firstChild|lastChild>] --package-manager <id> --project-name <name>",
+			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> (--template <id> | --example-project <slug>) [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--with-migration-ui] [--add-block-name <name> --add-template <basic|interactivity|persistence|compound> [--add-data-storage <post-meta|custom-table>] [--add-persistence-policy <authenticated|public>]] [--add-variation-name <name> --add-variation-block <block-slug>] [--add-pattern-name <name>] [--add-binding-source-name <name>] [--add-hooked-block-slug <block-slug> --add-hooked-block-anchor <anchor-block-name> --add-hooked-block-position <before|after|firstChild|lastChild>] --package-manager <id> --project-name <name>",
 		);
 	}
 
@@ -913,6 +1112,16 @@ function main() {
 
 	try {
 	ensureCanonicalCliReady();
+
+		if (exampleProject) {
+			runExampleProjectSmoke({
+				exampleProject,
+				packageManager,
+				projectDir,
+				runtime,
+			});
+			return;
+		}
 
 		run(runtime, [
 			entryPath,
@@ -940,7 +1149,7 @@ function main() {
 			);
 		}
 
-		rewriteWorkspaceDependencies(projectDir);
+		rewriteWorkspaceDependencies(projectDir, packageManager);
 
 		ensureCorepackPackageManager(packageManager);
 

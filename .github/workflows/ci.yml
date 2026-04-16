@@ -351,6 +351,10 @@ jobs:
             add_hooked_block_slug: counter-card
             add_hooked_block_anchor: core/post-content
             add_hooked_block_position: after
+          - runtime: bun
+            example_project: my-typia-block
+            package_manager: bun
+            project_name: smoke-reference-my-typia-block-bun
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -380,6 +384,9 @@ jobs:
           )
           if [ -n "${{ matrix.variant || '' }}" ]; then
             args+=(--variant "${{ matrix.variant }}")
+          fi
+          if [ -n "${{ matrix.example_project || '' }}" ]; then
+            args+=(--example-project "${{ matrix.example_project }}")
           fi
           if [ -n "${{ matrix.data_storage || '' }}" ]; then
             args+=(--data-storage "${{ matrix.data_storage }}")
