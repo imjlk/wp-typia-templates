@@ -1,2 +1,2 @@
-export * from './registration';
-export * from './supports';
+export * from "./registration.js";
+export * from "./supports.js";

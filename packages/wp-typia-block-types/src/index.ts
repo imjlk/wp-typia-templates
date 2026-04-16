@@ -1,2 +1,2 @@
-export * from "./block-editor/index";
-export * from "./blocks/index";
+export * from "./block-editor/index.js";
+export * from "./blocks/index.js";

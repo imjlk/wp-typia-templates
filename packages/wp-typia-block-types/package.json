@@ -76,6 +76,8 @@
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "clean": "rm -rf dist",
+    "test": "bun run build && bun test tests",
+    "test:coverage": "bun run build && bun test tests --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "author": "imjlk",
