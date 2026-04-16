@@ -4,9 +4,14 @@
 
 ## Current baseline
 
+- the repository root owns `eslint` at `9.39.4`
+- the repository root owns `@eslint/js` at `9.39.4`
+- the repository root owns `@typescript-eslint/eslint-plugin` and `@typescript-eslint/parser` at `8.58.2`
 - the repository root owns `prettier` at `3.8.2`
 - the repository root owns `eslint-config-prettier` at `10.1.8`
 - `bun run format:check` is the canonical non-mutating formatter gate for repo-owned files
+- `bun run format:write` is the canonical mutating formatter command for the same repo-owned files
+- `bun run lint:fix` is the canonical autofix entrypoint for the root ESLint scope
 - `bun run formatting-policy:validate` checks that package manifests and CI wiring still match the documented formatter baseline
 
 ## Scope of `format:check`
@@ -26,6 +31,18 @@ Why the scope stays narrow:
 - package and example source already have stronger ownership through ESLint, TypeScript, `@wordpress/scripts`, and targeted runtime tests
 - generated or emitter-owned template sources should not pick up large formatting churn unless we explicitly choose that in a separate PR
 - repo-owned prose, workflow, and policy files are the places where style drift hurts maintainer velocity the fastest
+
+## Autofix commands
+
+Use the root autofix scripts when you are changing repo-owned infrastructure,
+docs, or policy files:
+
+- `bun run lint:fix` for root ESLint autofixes
+- `bun run format:write` for the repo-owned Prettier write pass
+
+Those commands intentionally match the same repo-owned scope as `lint:repo` and
+`format:check`; they are not meant to replace package-local or example-local
+tooling such as `@wordpress/scripts`.
 
 ## Example apps and built-in templates
 

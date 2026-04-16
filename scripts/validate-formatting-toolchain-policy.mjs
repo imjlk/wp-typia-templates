@@ -5,11 +5,17 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const FORMATTING_TOOLCHAIN_POLICY = Object.freeze({
+  eslintJsVersion: '9.39.4',
+  eslintVersion: '9.39.4',
   eslintConfigPrettierVersion: '10.1.8',
   prettierVersion: '3.8.2',
+  rootFormatWriteScript: 'node scripts/check-repo-format.mjs --write',
+  rootLintFixScript: 'eslint . --fix --max-warnings=0',
+  rootLintScript: 'eslint . --max-warnings=0',
   rootFormatCheckScript: 'node scripts/check-repo-format.mjs',
   rootPolicyValidateScript:
     'node scripts/validate-formatting-toolchain-policy.mjs',
+  typescriptEslintVersion: '8.58.2',
   generatedPackageManifestPaths: Object.freeze([
     'packages/wp-typia-project-tools/templates/_shared/base/package.json.mustache',
     'packages/wp-typia-project-tools/templates/_shared/persistence/core/package.json.mustache',
@@ -98,6 +104,29 @@ export function validateFormattingToolchainPolicy(
   const devDependencies = packageJson.devDependencies ?? {};
   const policy = FORMATTING_TOOLCHAIN_POLICY;
 
+  if (devDependencies['@eslint/js'] !== policy.eslintJsVersion) {
+    errors.push(
+      `package.json must declare devDependencies["@eslint/js"]="${policy.eslintJsVersion}", found ${JSON.stringify(devDependencies['@eslint/js'] ?? null)}.`,
+    );
+  }
+
+  if (devDependencies.eslint !== policy.eslintVersion) {
+    errors.push(
+      `package.json must declare devDependencies.eslint="${policy.eslintVersion}", found ${JSON.stringify(devDependencies.eslint ?? null)}.`,
+    );
+  }
+
+  for (const dependencyName of [
+    '@typescript-eslint/eslint-plugin',
+    '@typescript-eslint/parser',
+  ]) {
+    if (devDependencies[dependencyName] !== policy.typescriptEslintVersion) {
+      errors.push(
+        `package.json must declare devDependencies[${JSON.stringify(dependencyName)}]="${policy.typescriptEslintVersion}", found ${JSON.stringify(devDependencies[dependencyName] ?? null)}.`,
+      );
+    }
+  }
+
   if (devDependencies.prettier !== policy.prettierVersion) {
     errors.push(
       `package.json must declare devDependencies.prettier="${policy.prettierVersion}", found ${JSON.stringify(devDependencies.prettier ?? null)}.`,
@@ -116,6 +145,24 @@ export function validateFormattingToolchainPolicy(
   if (scripts['format:check'] !== policy.rootFormatCheckScript) {
     errors.push(
       `package.json must keep scripts["format:check"]="${policy.rootFormatCheckScript}", found ${JSON.stringify(scripts['format:check'] ?? null)}.`,
+    );
+  }
+
+  if (scripts['format:write'] !== policy.rootFormatWriteScript) {
+    errors.push(
+      `package.json must keep scripts["format:write"]="${policy.rootFormatWriteScript}", found ${JSON.stringify(scripts['format:write'] ?? null)}.`,
+    );
+  }
+
+  if (scripts['lint:repo'] !== policy.rootLintScript) {
+    errors.push(
+      `package.json must keep scripts["lint:repo"]="${policy.rootLintScript}", found ${JSON.stringify(scripts['lint:repo'] ?? null)}.`,
+    );
+  }
+
+  if (scripts['lint:fix'] !== policy.rootLintFixScript) {
+    errors.push(
+      `package.json must keep scripts["lint:fix"]="${policy.rootLintFixScript}", found ${JSON.stringify(scripts['lint:fix'] ?? null)}.`,
     );
   }
 

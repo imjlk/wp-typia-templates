@@ -12,7 +12,6 @@ import {
 } from "@wp-typia/block-types/block-editor/alignment";
 import {
 	CSS_NAMED_COLORS,
-	type CssColorValue,
 	type CssNamedColor,
 	type DuotonePalette,
 } from "@wp-typia/block-types/block-editor/color";

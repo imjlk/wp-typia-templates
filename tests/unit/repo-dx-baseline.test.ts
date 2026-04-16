@@ -16,8 +16,10 @@ describe('repository DX baseline', () => {
     const scripts = packageJson.scripts as Record<string, string>;
 
     expect(scripts['lint:repo']).toBeDefined();
+    expect(scripts['lint:fix']).toBeDefined();
     expect(scripts['lint:all']).toBeDefined();
     expect(scripts['format:check']).toBeDefined();
+    expect(scripts['format:write']).toBeDefined();
     expect(scripts['maintenance-automation:validate']).toBe(
       'node scripts/validate-maintenance-automation-policy.mjs',
     );
@@ -37,6 +39,11 @@ describe('repository DX baseline', () => {
     );
     expect(scripts['examples:build']).toBe(
       'node scripts/run-clean-examples-build.mjs',
+    );
+    expect(scripts['lint:repo']).toBe('eslint . --max-warnings=0');
+    expect(scripts['lint:fix']).toBe('eslint . --fix --max-warnings=0');
+    expect(scripts['format:write']).toBe(
+      'node scripts/check-repo-format.mjs --write',
     );
   });
 
@@ -211,6 +218,8 @@ describe('repository DX baseline', () => {
     );
 
     expect(readme).toContain('bun run ci:local');
+    expect(readme).toContain('bun run lint:fix');
+    expect(readme).toContain('bun run format:write');
     expect(readme).toContain(
       '[Block Generator Architecture](docs/block-generator-architecture.md)',
     );
@@ -238,6 +247,8 @@ describe('repository DX baseline', () => {
     expect(readme).toContain('[Security Policy](SECURITY.md)');
     expect(contributing).toContain('Linting ownership is intentionally split');
     expect(contributing).toContain('Formatting ownership is also explicit');
+    expect(contributing).toContain('bun run lint:fix');
+    expect(contributing).toContain('bun run format:write');
     expect(contributing).toContain('Maintenance automation is explicit too');
     expect(contributing).toContain('bun run lint:repo');
     expect(contributing).toContain('bun run maintenance-automation:validate');

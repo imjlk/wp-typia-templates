@@ -202,6 +202,22 @@ npx wp-typia create my-block --template @scope/create-block-template --variant h
 - [Compound Block Tutorial](docs/tutorials/compound-block-tutorial.md)
 - [Contributing Guide](CONTRIBUTING.md)
 
+## Maintainer Quick Commands
+
+```bash
+bun run lint:repo
+bun run lint:fix
+bun run format:check
+bun run format:write
+bun run ci:local
+```
+
+- `bun run lint:repo` checks the root ESLint scope for repo-owned infrastructure files
+- `bun run lint:fix` applies autofixes in that same root ESLint scope
+- `bun run format:check` runs the non-mutating Prettier gate for repo-owned docs, config, and policy files
+- `bun run format:write` applies that same repo-owned Prettier scope
+- `bun run ci:local` keeps the non-E2E maintainer preflight aligned with CI
+
 ## Reference Apps
 
 [`examples/my-typia-block`](examples/my-typia-block) is the repo-local kitchen-sink reference app. It is not a built-in template. It is the place where richer Typia, migration, and editor patterns live together:
