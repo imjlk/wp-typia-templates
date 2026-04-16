@@ -1,41 +1,39 @@
 import fs from "node:fs";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
 
 import { createReadlinePrompt } from "./cli-prompt.js";
+import {
+	CommandRenderOptions,
+	DiffLikeOptions,
+	formatMigrationHelpText,
+	parseMigrationArgs,
+	parseNonNegativeInteger,
+	parsePositiveInteger,
+	WizardOptions,
+} from "./migration-command-surface.js";
 import { formatRunScript } from "./package-managers.js";
 import {
-	ROOT_PHP_MIGRATION_REGISTRY,
 	SNAPSHOT_DIR,
 } from "./migration-constants.js";
 import { createMigrationDiff } from "./migration-diff.js";
-import { createEdgeFixtureDocument, ensureEdgeFixtureFile } from "./migration-fixtures.js";
+import { ensureEdgeFixtureFile } from "./migration-fixtures.js";
 import {
-	collectGeneratedMigrationEntries,
 	regenerateGeneratedArtifacts,
 } from "./migration-generated-artifacts.js";
 import {
 	assertDistinctMigrationEdge,
-	collectFixtureTargets,
 	createMigrationPlanNextSteps,
 	createMissingProjectSnapshotMessage,
 	formatEdgeCommand,
-	formatScaffoldCommand,
-	getSelectedEntriesByBlock,
 	hasSnapshotForVersion,
-	isLegacySingleBlockProject,
-	isSnapshotOptionalForBlockVersion,
 	listPreviewableLegacyVersions,
 	resolveLegacyVersions,
 } from "./migration-planning.js";
 import {
-	assertRuleHasNoTodos,
 	assertNoLegacySemverMigrationWorkspace,
 	discoverMigrationInitLayout,
 	ensureAdvancedMigrationProject,
 	ensureMigrationDirectories,
-	getFixtureFilePath,
-	getGeneratedDirForBlock,
 	getProjectPaths,
 	getRuleFilePath,
 	getSnapshotBlockJsonPath,
@@ -43,19 +41,12 @@ import {
 	getSnapshotRoot,
 	getSnapshotSavePath,
 	loadMigrationProject,
-	readRuleMetadata,
 	writeInitialMigrationScaffold,
 	writeMigrationConfig,
 } from "./migration-project.js";
 import {
 	formatDiffReport,
-	renderFuzzFile,
-	renderGeneratedDeprecatedFile,
-	renderGeneratedMigrationIndexFile,
-	renderMigrationRegistryFile,
 	renderMigrationRuleFile,
-	renderPhpMigrationRegistryFile,
-	renderVerifyFile,
 } from "./migration-render.js";
 import { createMigrationRiskSummary, formatMigrationRiskSummary } from "./migration-risk.js";
 import {
@@ -63,8 +54,6 @@ import {
 	compareMigrationVersionLabels,
 	copyFile,
 	detectPackageManagerId,
-	formatLegacyMigrationWorkspaceResetGuidance,
-	getLocalTsxBinary,
 	isInteractiveTerminal,
 	readJson,
 	resolveTargetMigrationVersion,
@@ -72,51 +61,18 @@ import {
 	sanitizeSaveSnapshotSource,
 	sanitizeSnapshotBlockJson,
 } from "./migration-utils.js";
-import { readWorkspaceInventory } from "./workspace-inventory.js";
-import { getInvalidWorkspaceProjectReason, tryResolveWorkspaceProject } from "./workspace-project.js";
+import {
+	doctorProjectMigrations,
+	fixturesProjectMigrations,
+	fuzzProjectMigrations,
+	verifyProjectMigrations,
+} from "./migration-maintenance.js";
 import type {
 	MigrationBlockConfig,
-	MigrationProjectState,
 	JsonObject,
 	ParsedMigrationArgs,
 	RenderLine,
 } from "./migration-types.js";
-import type { ReadlinePrompt } from "./cli-prompt.js";
-
-type CommandRenderOptions = {
-	prompt?: ReadlinePrompt;
-	renderLine?: RenderLine;
-};
-
-type DiffLikeOptions = {
-	fromMigrationVersion?: string;
-	renderLine?: RenderLine;
-	toMigrationVersion?: string;
-};
-
-type VerifyOptions = {
-	all?: boolean;
-	fromMigrationVersion?: string;
-	renderLine?: RenderLine;
-};
-
-type FixturesOptions = {
-	all?: boolean;
-	confirmOverwrite?: ((message: string) => boolean) | undefined;
-	force?: boolean;
-	fromMigrationVersion?: string;
-	isInteractive?: boolean;
-	renderLine?: RenderLine;
-	toMigrationVersion?: string;
-};
-
-type FuzzOptions = {
-	all?: boolean;
-	fromMigrationVersion?: string;
-	iterations?: number;
-	renderLine?: RenderLine;
-	seed?: number;
-};
 
 type MigrationPlanBlockSummary = {
 	blockName: string;
@@ -134,155 +90,7 @@ type MigrationPlanSummary = {
 	summaries: MigrationPlanBlockSummary[];
 	targetMigrationVersion: string;
 };
-
-type WizardOptions = CommandRenderOptions & {
-	isInteractive?: boolean;
-};
-
-/**
- * Returns the formatted help text for migration CLI commands and flags.
- *
- * @returns Multi-line usage text for the `wp-typia migrate` command surface.
- */
-export function formatMigrationHelpText(): string {
-	return `Usage:
-  wp-typia migrate init --current-migration-version <label>
-  wp-typia migrate snapshot --migration-version <label>
-  wp-typia migrate plan --from-migration-version <label> [--to-migration-version current]
-  wp-typia migrate wizard
-  wp-typia migrate diff --from-migration-version <label> [--to-migration-version current]
-  wp-typia migrate scaffold --from-migration-version <label> [--to-migration-version current]
-  wp-typia migrate verify [--from-migration-version <label>|--all]
-  wp-typia migrate doctor [--from-migration-version <label>|--all]
-  wp-typia migrate fixtures [--from-migration-version <label>|--all] [--to-migration-version current] [--force]
-  wp-typia migrate fuzz [--from-migration-version <label>|--all] [--iterations <n>] [--seed <n>]
-
-Notes:
-  \`migrate init\` auto-detects supported single-block and \`src/blocks/*\` multi-block layouts.
-  Migration versions use strict schema labels like \`v1\`, \`v2\`, and \`v3\`.
-  \`migrate wizard\` is TTY-only and helps you choose one legacy migration version to preview.
-  \`migrate plan\` and \`migrate wizard\` are read-only previews; they do not scaffold rules or fixtures.
-  --all runs across every configured legacy migration version and every configured block target.
-  Existing fixture files are preserved and reported as skipped unless you pass \`--force\`.
-  Use \`migrate fixtures --force\` as the explicit refresh path for generated fixture files.
-  In TTY usage, \`migrate fixtures --force\` asks before overwriting existing fixture files.
-  In non-interactive usage, \`migrate fixtures --force\` overwrites immediately for script compatibility.`;
-}
-
-/**
- * Parses migration CLI arguments into a structured command payload.
- *
- * @param argv Command-line arguments that follow the `migrate` subcommand.
- * @returns Parsed migration command and normalized flags for runtime dispatch.
- * @throws Error When no arguments are provided, an unknown flag is encountered, or legacy semver flags are used.
- */
-export function parseMigrationArgs(argv: string[]): ParsedMigrationArgs {
-	const parsed: ParsedMigrationArgs = {
-		command: undefined,
-		flags: {
-			all: false,
-			currentMigrationVersion: undefined,
-			force: false,
-			fromMigrationVersion: undefined,
-			iterations: undefined,
-			migrationVersion: undefined,
-			seed: undefined,
-			toMigrationVersion: "current",
-		},
-	};
-
-	if (argv.length === 0) {
-		throw new Error(formatMigrationHelpText());
-	}
-
-	parsed.command = argv[0];
-
-	for (let index = 1; index < argv.length; index += 1) {
-		const arg = argv[index];
-		const next = argv[index + 1];
-
-		if (arg === "--") continue;
-		if (arg === "--all") {
-			parsed.flags.all = true;
-			continue;
-		}
-		if (arg === "--force") {
-			parsed.flags.force = true;
-			continue;
-		}
-		if (arg === "--current-migration-version") {
-			parsed.flags.currentMigrationVersion = next;
-			index += 1;
-			continue;
-		}
-		if (arg.startsWith("--current-migration-version=")) {
-			parsed.flags.currentMigrationVersion = arg.split("=", 2)[1];
-			continue;
-		}
-		if (arg === "--from-migration-version") {
-			parsed.flags.fromMigrationVersion = next;
-			index += 1;
-			continue;
-		}
-		if (arg.startsWith("--from-migration-version=")) {
-			parsed.flags.fromMigrationVersion = arg.split("=", 2)[1];
-			continue;
-		}
-		if (arg === "--iterations") {
-			parsed.flags.iterations = next;
-			index += 1;
-			continue;
-		}
-		if (arg.startsWith("--iterations=")) {
-			parsed.flags.iterations = arg.split("=", 2)[1];
-			continue;
-		}
-		if (arg === "--seed") {
-			parsed.flags.seed = next;
-			index += 1;
-			continue;
-		}
-		if (arg.startsWith("--seed=")) {
-			parsed.flags.seed = arg.split("=", 2)[1];
-			continue;
-		}
-		if (arg === "--to-migration-version") {
-			parsed.flags.toMigrationVersion = next;
-			index += 1;
-			continue;
-		}
-		if (arg.startsWith("--to-migration-version=")) {
-			parsed.flags.toMigrationVersion = arg.split("=", 2)[1];
-			continue;
-		}
-		if (arg === "--migration-version") {
-			parsed.flags.migrationVersion = next;
-			index += 1;
-			continue;
-		}
-		if (arg.startsWith("--migration-version=")) {
-			parsed.flags.migrationVersion = arg.split("=", 2)[1];
-			continue;
-		}
-
-		if (
-			arg === "--current-version" ||
-			arg.startsWith("--current-version=") ||
-			arg === "--version" ||
-			arg.startsWith("--version=") ||
-			arg === "--from" ||
-			arg.startsWith("--from=") ||
-			arg === "--to" ||
-			arg.startsWith("--to=")
-		) {
-			throwLegacyMigrationFlagError(arg);
-		}
-
-		throw new Error(`Unknown migration flag: ${arg}`);
-	}
-
-	return parsed;
-}
+export { formatMigrationHelpText, parseMigrationArgs };
 
 export { formatDiffReport };
 
@@ -372,7 +180,7 @@ export function runMigrationCommand(
 				fromMigrationVersion: command.flags.fromMigrationVersion,
 				iterations: parsePositiveInteger(command.flags.iterations, "iterations") ?? 25,
 				renderLine,
-				seed: parseNonNegativeInteger(command.flags.seed, "seed") ?? undefined,
+				seed: parseNonNegativeInteger(command.flags.seed, "seed"),
 			});
 		default:
 			throw new Error(formatMigrationHelpText());
@@ -779,569 +587,12 @@ export function scaffoldProjectMigrations(
 
 	return scaffolded.length === 1 ? scaffolded[0] : { scaffolded };
 }
-
-/**
- * Run deterministic migration verification against generated fixtures.
- *
- * @param projectDir Absolute or relative project directory containing the migration workspace.
- * @param options Verification scope and console rendering options.
- * @returns Verified legacy versions.
- */
-export function verifyProjectMigrations(
-	projectDir: string,
-	{ all = false, fromMigrationVersion, renderLine = console.log as RenderLine }: VerifyOptions = {},
-) {
-	const state = loadMigrationProject(projectDir);
-	const targetVersions = resolveLegacyVersions(state, { all, fromMigrationVersion });
-	const blockEntries = getSelectedEntriesByBlock(state, targetVersions, "verify");
-	const legacySingleBlock = isLegacySingleBlockProject(state);
-
-	if (targetVersions.length === 0) {
-		renderLine("No legacy migration versions configured for verification.");
-		return { verifiedVersions: [] };
-	}
-
-	const tsxBinary = getLocalTsxBinary(projectDir);
-	for (const [blockKey, entries] of Object.entries(blockEntries)) {
-		const block = state.blocks.find((entry) => entry.key === blockKey);
-		if (!block || entries.length === 0) {
-			continue;
-		}
-		for (const entry of entries) {
-			assertRuleHasNoTodos(projectDir, block, entry.fromVersion, state.config.currentMigrationVersion);
-		}
-		const verifyScriptPath = path.join(getGeneratedDirForBlock(state.paths, block), "verify.ts");
-		if (!fs.existsSync(verifyScriptPath)) {
-			const selectedVersionsForBlock = entries.map((entry) => entry.fromVersion);
-			throw new Error(
-				`Generated verify script is missing for ${block.blockName} (${selectedVersionsForBlock.join(", ")}). ` +
-					`Run \`${formatScaffoldCommand(selectedVersionsForBlock)}\` first, then \`wp-typia migrate doctor --all\` if the workspace should already be scaffolded.`,
-			);
-		}
-
-		const selectedVersionsForBlock = entries.map((entry) => entry.fromVersion);
-		const filteredArgs = all
-			? ["--all"]
-			: ["--from-migration-version", selectedVersionsForBlock[0]];
-		execFileSync(tsxBinary, [verifyScriptPath, ...filteredArgs], {
-			cwd: projectDir,
-			shell: process.platform === "win32",
-			stdio: "inherit",
-		});
-		renderLine(
-			legacySingleBlock
-				? `Verified migrations for ${selectedVersionsForBlock.join(", ")}`
-				: `Verified ${block.blockName} migrations for ${selectedVersionsForBlock.join(", ")}`,
-		);
-	}
-
-	return { verifiedVersions: targetVersions };
-}
-
-function recordWorkspaceMigrationTargetAlignment(
-	projectDir: string,
-	state: MigrationProjectState,
-	recordCheck: (status: "fail" | "pass", label: string, detail: string) => void,
-): void {
-	let invalidWorkspaceReason: string | null = null;
-	let workspace;
-	try {
-		invalidWorkspaceReason = getInvalidWorkspaceProjectReason(projectDir);
-		workspace = tryResolveWorkspaceProject(projectDir);
-	} catch (error) {
-		recordCheck(
-			"fail",
-			"Workspace migration targets",
-			error instanceof Error ? error.message : String(error),
-		);
-		return;
-	}
-	if (!workspace) {
-		if (invalidWorkspaceReason) {
-			recordCheck("fail", "Workspace migration targets", invalidWorkspaceReason);
-		}
-		return;
-	}
-
-	try {
-		const inventory = readWorkspaceInventory(workspace.projectDir);
-		const expectedTargets = inventory.blocks.map(
-			(block) => `${workspace.workspace.namespace}/${block.slug}`,
-		);
-		const configuredTargets = state.blocks.map((block) => block.blockName);
-		const expectedTargetSet = new Set(expectedTargets);
-		const configuredTargetSet = new Set(configuredTargets);
-		const missingTargets = expectedTargets.filter((target) => !configuredTargetSet.has(target));
-		const staleTargets = configuredTargets.filter((target) => !expectedTargetSet.has(target));
-
-		recordCheck(
-			missingTargets.length === 0 && staleTargets.length === 0 ? "pass" : "fail",
-			"Workspace migration targets",
-			missingTargets.length === 0 && staleTargets.length === 0
-				? `${expectedTargets.length} workspace block target(s) align with migration config`
-				: [
-						missingTargets.length > 0
-							? `Missing from migration config: ${missingTargets.join(", ")}`
-							: null,
-						staleTargets.length > 0
-							? `Not present in scripts/block-config.ts: ${staleTargets.join(", ")}`
-							: null,
-					]
-						.filter((detail): detail is string => typeof detail === "string")
-						.join("; "),
-		);
-	} catch (error) {
-		recordCheck(
-			"fail",
-			"Workspace migration targets",
-			error instanceof Error ? error.message : String(error),
-		);
-	}
-}
-
-/**
- * Validate the migration workspace without mutating files.
- *
- * @param projectDir Absolute or relative project directory containing the migration workspace.
- * @param options Doctor scope and console rendering options.
- * @returns Structured doctor check results for the selected legacy versions.
- */
-export function doctorProjectMigrations(
-	projectDir: string,
-	{ all = false, fromMigrationVersion, renderLine = console.log as RenderLine }: VerifyOptions = {},
-) {
-	const checks: Array<{ detail: string; label: string; status: "fail" | "pass" }> = [];
-	const recordCheck = (status: "fail" | "pass", label: string, detail: string) => {
-		checks.push({ detail, label, status });
-		renderLine(`${status === "pass" ? "PASS" : "FAIL"} ${label}: ${detail}`);
-	};
-
-	let state;
-	try {
-		state = loadMigrationProject(projectDir);
-		const legacySingleBlock = isLegacySingleBlockProject(state);
-		recordCheck(
-			"pass",
-			"Migration config",
-			legacySingleBlock
-				? `Loaded ${state.blocks[0]?.blockName} @ ${state.config.currentMigrationVersion}`
-				: `Loaded ${state.blocks.length} block target(s) @ ${state.config.currentMigrationVersion}`,
-		);
-	} catch (error) {
-		recordCheck("fail", "Migration config", error instanceof Error ? error.message : String(error));
-		throw new Error("Migration doctor failed.");
-	}
-
-	const targetVersions = resolveLegacyVersions(state, { all, fromMigrationVersion });
-	const legacySingleBlock = isLegacySingleBlockProject(state);
-	const snapshotVersions = new Set(
-		targetVersions.length > 0
-			? [state.config.currentMigrationVersion, ...targetVersions]
-			: state.config.supportedMigrationVersions,
-	);
-
-	recordWorkspaceMigrationTargetAlignment(projectDir, state, recordCheck);
-
-	for (const version of snapshotVersions) {
-		for (const block of state.blocks) {
-			const snapshotRoot = getSnapshotRoot(projectDir, block, version);
-			const blockJsonPath = getSnapshotBlockJsonPath(projectDir, block, version);
-			const manifestPath = getSnapshotManifestPath(projectDir, block, version);
-			const savePath = getSnapshotSavePath(projectDir, block, version);
-			const hasSnapshot = fs.existsSync(snapshotRoot);
-			const snapshotIsOptional = !hasSnapshot && isSnapshotOptionalForBlockVersion(state, block, version);
-
-			recordCheck(
-				hasSnapshot || snapshotIsOptional ? "pass" : "fail",
-				legacySingleBlock ? `Snapshot ${version}` : `Snapshot ${block.blockName} @ ${version}`,
-				hasSnapshot
-					? path.relative(projectDir, snapshotRoot)
-					: `Not present for this version`,
-			);
-
-			if (!hasSnapshot) {
-				continue;
-			}
-
-			for (const targetPath of [blockJsonPath, manifestPath, savePath]) {
-				recordCheck(
-					fs.existsSync(targetPath) ? "pass" : "fail",
-					legacySingleBlock
-						? `Snapshot file ${version}`
-						: `Snapshot file ${block.blockName} @ ${version}`,
-					fs.existsSync(targetPath)
-						? path.relative(projectDir, targetPath)
-						: `Missing ${path.relative(projectDir, targetPath)}`,
-				);
-			}
-		}
-	}
-
-	try {
-		const generatedEntries = collectGeneratedMigrationEntries(state);
-		const expectedGeneratedFiles = new Map<string, string>();
-		for (const block of state.blocks) {
-			const blockGeneratedEntries = generatedEntries.filter(({ entry }) => entry.block.key === block.key);
-			const entries = blockGeneratedEntries.map(({ entry }) => entry);
-			const generatedDir = getGeneratedDirForBlock(state.paths, block);
-			expectedGeneratedFiles.set(
-				path.join(generatedDir, "registry.ts"),
-				renderMigrationRegistryFile(state, block.key, blockGeneratedEntries),
-			);
-			expectedGeneratedFiles.set(
-				path.join(generatedDir, "deprecated.ts"),
-				renderGeneratedDeprecatedFile(state, block.key, entries),
-			);
-			expectedGeneratedFiles.set(
-				path.join(generatedDir, "verify.ts"),
-				renderVerifyFile(state, block.key, entries),
-			);
-			expectedGeneratedFiles.set(
-				path.join(generatedDir, "fuzz.ts"),
-				renderFuzzFile(state, block.key, blockGeneratedEntries),
-			);
-		}
-		expectedGeneratedFiles.set(
-			path.join(state.paths.generatedDir, "index.ts"),
-			renderGeneratedMigrationIndexFile(state, generatedEntries.map(({ entry }) => entry)),
-		);
-		expectedGeneratedFiles.set(
-			path.join(projectDir, ROOT_PHP_MIGRATION_REGISTRY),
-			renderPhpMigrationRegistryFile(state, generatedEntries.map(({ entry }) => entry)),
-		);
-
-		for (const [filePath, expectedSource] of expectedGeneratedFiles) {
-			const inSync = fs.existsSync(filePath) && fs.readFileSync(filePath, "utf8") === expectedSource;
-			recordCheck(
-				inSync ? "pass" : "fail",
-				`Generated ${path.relative(projectDir, filePath)}`,
-				inSync
-					? "In sync"
-					: `Run \`wp-typia migrate scaffold --from-migration-version <label>\` or regenerate artifacts`,
-			);
-		}
-	} catch (error) {
-		recordCheck(
-			"fail",
-			"Generated artifacts",
-			error instanceof Error ? error.message : String(error),
-		);
-	}
-
-	for (const version of targetVersions) {
-		for (const block of state.blocks) {
-			if (!hasSnapshotForVersion(state, block, version)) {
-				recordCheck("pass", `Snapshot coverage ${block.blockName} @ ${version}`, "Target not present for this version");
-				continue;
-			}
-			const rulePath = getRuleFilePath(state.paths, block, version, state.config.currentMigrationVersion);
-			const fixturePath = getFixtureFilePath(state.paths, block, version, state.config.currentMigrationVersion);
-
-			recordCheck(
-				fs.existsSync(rulePath) ? "pass" : "fail",
-				legacySingleBlock ? `Rule ${version}` : `Rule ${block.blockName} @ ${version}`,
-				fs.existsSync(rulePath)
-					? path.relative(projectDir, rulePath)
-					: `Missing ${path.relative(projectDir, rulePath)}`,
-			);
-			recordCheck(
-				fs.existsSync(fixturePath) ? "pass" : "fail",
-				legacySingleBlock ? `Fixture ${version}` : `Fixture ${block.blockName} @ ${version}`,
-				fs.existsSync(fixturePath)
-					? path.relative(projectDir, fixturePath)
-					: `Missing ${path.relative(projectDir, fixturePath)}`,
-			);
-
-			if (!fs.existsSync(rulePath) || !fs.existsSync(fixturePath)) {
-				continue;
-			}
-
-			try {
-				assertRuleHasNoTodos(projectDir, block, version, state.config.currentMigrationVersion);
-				recordCheck(
-					"pass",
-					legacySingleBlock
-						? `Rule TODOs ${version}`
-						: `Rule TODOs ${block.blockName} @ ${version}`,
-					"No TODO MIGRATION markers remain",
-				);
-			} catch (error) {
-				recordCheck(
-					"fail",
-					legacySingleBlock
-						? `Rule TODOs ${version}`
-						: `Rule TODOs ${block.blockName} @ ${version}`,
-					error instanceof Error ? error.message : String(error),
-				);
-			}
-
-			try {
-				const ruleMetadata = readRuleMetadata(rulePath);
-				recordCheck(
-					ruleMetadata.unresolved.length === 0 ? "pass" : "fail",
-					legacySingleBlock
-						? `Rule unresolved ${version}`
-						: `Rule unresolved ${block.blockName} @ ${version}`,
-					ruleMetadata.unresolved.length === 0
-						? "No unresolved entries remain"
-						: ruleMetadata.unresolved.join(", "),
-				);
-			} catch (error) {
-				recordCheck(
-					"fail",
-					legacySingleBlock
-						? `Rule unresolved ${version}`
-						: `Rule unresolved ${block.blockName} @ ${version}`,
-					error instanceof Error ? error.message : String(error),
-				);
-			}
-
-			try {
-				const fixtureDocument = readJson<{ cases?: Array<{ name?: string }> }>(fixturePath);
-				recordCheck(
-					Array.isArray(fixtureDocument.cases) && fixtureDocument.cases.length > 0 ? "pass" : "fail",
-					legacySingleBlock
-						? `Fixture parse ${version}`
-						: `Fixture parse ${block.blockName} @ ${version}`,
-					Array.isArray(fixtureDocument.cases) && fixtureDocument.cases.length > 0
-						? `${fixtureDocument.cases.length} case(s)`
-						: "Fixture document has no cases",
-				);
-
-				const diff = createMigrationDiff(state, block, version, state.config.currentMigrationVersion);
-				const expectedFixture = createEdgeFixtureDocument(
-					projectDir,
-					block,
-					version,
-					state.config.currentMigrationVersion,
-					diff,
-				);
-				const actualCaseNames = new Set((fixtureDocument.cases ?? []).map((fixtureCase) => fixtureCase.name));
-				const missingCases = expectedFixture.cases
-					.map((fixtureCase) => fixtureCase.name)
-					.filter((name) => !actualCaseNames.has(name));
-				recordCheck(
-					missingCases.length === 0 ? "pass" : "fail",
-					legacySingleBlock
-						? `Fixture coverage ${version}`
-						: `Fixture coverage ${block.blockName} @ ${version}`,
-					missingCases.length === 0 ? "All expected fixture cases are present" : `Missing ${missingCases.join(", ")}`,
-				);
-
-				recordCheck(
-					"pass",
-					legacySingleBlock
-						? `Risk summary ${version}`
-						: `Risk summary ${block.blockName} @ ${version}`,
-					formatMigrationRiskSummary(createMigrationRiskSummary(diff)),
-				);
-			} catch (error) {
-				recordCheck(
-					"fail",
-					legacySingleBlock
-						? `Fixture parse ${version}`
-						: `Fixture parse ${block.blockName} @ ${version}`,
-					error instanceof Error ? error.message : String(error),
-				);
-			}
-		}
-	}
-
-	const failedChecks = checks.filter((check) => check.status === "fail");
-	renderLine(
-		`${failedChecks.length === 0 ? "PASS" : "FAIL"} Migration doctor summary: ${checks.length - failedChecks.length}/${checks.length} checks passed`,
-	);
-
-	if (failedChecks.length > 0) {
-		throw new Error("Migration doctor failed.");
-	}
-
-	return {
-		checkedVersions: targetVersions,
-		checks,
-	};
-}
-
-/**
- * Generate or refresh migration fixtures for one or more legacy edges.
- *
- * @param projectDir Absolute or relative project directory containing the migration workspace.
- * @param options Fixture generation scope and refresh options.
- * @returns Generated and skipped legacy versions.
- */
-export function fixturesProjectMigrations(
-	projectDir: string,
-	{
-		all = false,
-		confirmOverwrite,
-		force = false,
-		fromMigrationVersion,
-		isInteractive = isInteractiveTerminal(),
-		renderLine = console.log as RenderLine,
-		toMigrationVersion = "current",
-	}: FixturesOptions = {},
-) {
-	ensureMigrationDirectories(projectDir);
-	const state = loadMigrationProject(projectDir);
-	const targetMigrationVersion = resolveTargetMigrationVersion(
-		state.config.currentMigrationVersion,
-		toMigrationVersion,
-	);
-	const targetVersions = resolveLegacyVersions(state, { all, fromMigrationVersion });
-
-	if (targetVersions.length === 0) {
-		renderLine("No legacy migration versions configured for fixture generation.");
-		return { generatedVersions: [], skippedVersions: [] };
-	}
-
-	const generatedVersions: string[] = [];
-	const skippedVersions: string[] = [];
-	const fixtureTargets = collectFixtureTargets(state, targetVersions, targetMigrationVersion);
-
-	if (force) {
-		const overwriteTargets = fixtureTargets.filter(({ fixturePath }) => fs.existsSync(fixturePath));
-		if (isInteractive && overwriteTargets.length > 0) {
-			const confirmed =
-				confirmOverwrite?.(
-					`About to overwrite ${overwriteTargets.length} existing migration fixture file(s). Continue?`,
-				) ?? promptForConfirmation(
-					`About to overwrite ${overwriteTargets.length} existing migration fixture file(s). Continue?`,
-				);
-
-			if (!confirmed) {
-				renderLine(
-					`Cancelled fixture refresh. Kept ${overwriteTargets.length} existing fixture file(s).`,
-				);
-				return {
-					generatedVersions,
-					skippedVersions: overwriteTargets.map(({ scopedLabel }) => scopedLabel),
-				};
-			}
-		}
-	}
-
-	for (const { block, fixturePath, scopedLabel, version } of fixtureTargets) {
-		const existed = fs.existsSync(fixturePath);
-		const diff = createMigrationDiff(state, block, version, targetMigrationVersion);
-		const result = ensureEdgeFixtureFile(projectDir, block, version, targetMigrationVersion, diff, { force });
-		if (result.written) {
-			generatedVersions.push(scopedLabel);
-			renderLine(
-				`${existed ? "Refreshed" : "Generated"} fixture ${path.relative(projectDir, fixturePath)}`,
-			);
-		} else {
-			skippedVersions.push(scopedLabel);
-			renderLine(
-				`Preserved existing fixture ${path.relative(projectDir, fixturePath)} (use --force to refresh)`,
-			);
-		}
-	}
-
-	return {
-		generatedVersions,
-		skippedVersions,
-	};
-}
-
-/**
- * Run seeded migration fuzz verification against generated fuzz artifacts.
- *
- * @param projectDir Absolute or relative project directory containing the migration workspace.
- * @param options Fuzz scope, iteration count, seed, and console rendering options.
- * @returns Fuzzed legacy versions and the effective seed.
- */
-export function fuzzProjectMigrations(
-	projectDir: string,
-	{
-		all = false,
-		fromMigrationVersion,
-		iterations = 25,
-		renderLine = console.log as RenderLine,
-		seed,
-	}: FuzzOptions = {},
-) {
-	const state = loadMigrationProject(projectDir);
-	const targetVersions = resolveLegacyVersions(state, { all, fromMigrationVersion });
-	const blockEntries = getSelectedEntriesByBlock(state, targetVersions, "fuzz");
-	const legacySingleBlock = isLegacySingleBlockProject(state);
-	if (targetVersions.length === 0) {
-		renderLine("No legacy migration versions configured for fuzzing.");
-		return { fuzzedVersions: [] };
-	}
-
-	const tsxBinary = getLocalTsxBinary(projectDir);
-	for (const [blockKey, entries] of Object.entries(blockEntries)) {
-		const block = state.blocks.find((entry) => entry.key === blockKey);
-		if (!block || entries.length === 0) {
-			continue;
-		}
-		for (const entry of entries) {
-			assertRuleHasNoTodos(projectDir, block, entry.fromVersion, state.config.currentMigrationVersion);
-		}
-		const fuzzScriptPath = path.join(getGeneratedDirForBlock(state.paths, block), "fuzz.ts");
-		if (!fs.existsSync(fuzzScriptPath)) {
-			const selectedVersionsForBlock = entries.map((entry) => entry.fromVersion);
-			throw new Error(
-				`Generated fuzz script is missing for ${block.blockName} (${selectedVersionsForBlock.join(", ")}). ` +
-					`Run \`${formatScaffoldCommand(selectedVersionsForBlock)}\` first, then \`wp-typia migrate doctor --all\` if the workspace should already be scaffolded.`,
-			);
-		}
-		const selectedVersionsForBlock = entries.map((entry) => entry.fromVersion);
-		const args = [
-			fuzzScriptPath,
-			...(all ? ["--all"] : ["--from-migration-version", selectedVersionsForBlock[0]]),
-			"--iterations",
-			String(iterations),
-			...(seed === undefined ? [] : ["--seed", String(seed)]),
-		];
-		execFileSync(tsxBinary, args, {
-			cwd: projectDir,
-			shell: process.platform === "win32",
-			stdio: "inherit",
-		});
-		renderLine(
-			legacySingleBlock
-				? `Fuzzed migrations for ${selectedVersionsForBlock.join(", ")}`
-				: `Fuzzed ${block.blockName} migrations for ${selectedVersionsForBlock.join(", ")}`,
-		);
-	}
-
-	return { fuzzedVersions: targetVersions, seed };
-}
-
-function parsePositiveInteger(value: string | undefined, label: string): number | undefined {
-	if (!value) {
-		return undefined;
-	}
-
-	if (!/^\d+$/.test(value)) {
-		throw new Error(`Invalid ${label}: ${value}. Expected a positive integer.`);
-	}
-
-	const parsed = Number.parseInt(value, 10);
-	if (!Number.isInteger(parsed) || parsed <= 0) {
-		throw new Error(`Invalid ${label}: ${value}. Expected a positive integer.`);
-	}
-
-	return parsed;
-}
-
-function parseNonNegativeInteger(value: string | undefined, label: string): number | undefined {
-	if (!value) {
-		return undefined;
-	}
-
-	if (!/^\d+$/.test(value)) {
-		throw new Error(`Invalid ${label}: ${value}. Expected a non-negative integer.`);
-	}
-
-	const parsed = Number.parseInt(value, 10);
-	if (!Number.isInteger(parsed) || parsed < 0) {
-		throw new Error(`Invalid ${label}: ${value}. Expected a non-negative integer.`);
-	}
-
-	return parsed;
-}
+export {
+	doctorProjectMigrations,
+	fixturesProjectMigrations,
+	fuzzProjectMigrations,
+	verifyProjectMigrations,
+};
 
 /**
  * Initialize migration scaffolding for one or more block targets.
@@ -1381,43 +632,4 @@ export function seedProjectMigrations(
 		`Initialized migrations for ${blocks.map((block) => block.blockName).join(", ")} at migration version ${currentMigrationVersion}`,
 	);
 	return loadMigrationProject(projectDir);
-}
-
-function throwLegacyMigrationFlagError(flag: string): never {
-	const replacement =
-		flag.startsWith("--current-version")
-			? "--current-migration-version"
-			: flag.startsWith("--version")
-				? "--migration-version"
-				: flag.startsWith("--from")
-					? "--from-migration-version"
-					: "--to-migration-version";
-	throw new Error(
-		`Legacy migration flag \`${flag}\` is no longer supported. Use \`${replacement}\` with schema labels like \`v1\` and \`v2\` instead. ` +
-			formatLegacyMigrationWorkspaceResetGuidance(),
-	);
-}
-
-function promptForConfirmation(message: string): boolean {
-	process.stdout.write(`${message} [y/N]: `);
-
-	const buffer = Buffer.alloc(1);
-	let answer = "";
-
-	while (true) {
-		const bytesRead = fs.readSync(process.stdin.fd, buffer, 0, 1, null);
-		if (bytesRead === 0) {
-			break;
-		}
-
-		const char = buffer.toString("utf8", 0, bytesRead);
-		if (char === "\n" || char === "\r") {
-			break;
-		}
-
-		answer += char;
-	}
-
-	const normalized = answer.trim().toLowerCase();
-	return normalized === "y" || normalized === "yes";
 }
