@@ -187,6 +187,14 @@ export function parseMigrationArgs(argv: string[]): ParsedMigrationArgs {
   return parsed
 }
 
+/**
+ * Parse an optional positive integer flag value.
+ *
+ * @param value Raw CLI flag value, or `undefined` when the flag was omitted.
+ * @param label Human-readable flag label used in validation error messages.
+ * @returns The parsed integer when provided, otherwise `undefined`.
+ * @throws Error When the value is not a base-10 integer greater than zero.
+ */
 export function parsePositiveInteger(
   value: string | undefined,
   label: string,
@@ -207,6 +215,14 @@ export function parsePositiveInteger(
   return parsed
 }
 
+/**
+ * Parse an optional non-negative integer flag value.
+ *
+ * @param value Raw CLI flag value, or `undefined` when the flag was omitted.
+ * @param label Human-readable flag label used in validation error messages.
+ * @returns The parsed integer when provided, otherwise `undefined`.
+ * @throws Error When the value is not a base-10 integer greater than or equal to zero.
+ */
 export function parseNonNegativeInteger(
   value: string | undefined,
   label: string,

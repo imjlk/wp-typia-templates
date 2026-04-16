@@ -180,7 +180,7 @@ export function runMigrationCommand(
 				fromMigrationVersion: command.flags.fromMigrationVersion,
 				iterations: parsePositiveInteger(command.flags.iterations, "iterations") ?? 25,
 				renderLine,
-				seed: parseNonNegativeInteger(command.flags.seed, "seed") ?? undefined,
+				seed: parseNonNegativeInteger(command.flags.seed, "seed"),
 			});
 		default:
 			throw new Error(formatMigrationHelpText());
