@@ -7,6 +7,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 export const LINT_CONFIG_FILES = [
+  '.eslintrc.cjs',
   '.eslintrc.js',
   '.eslintrc.json',
   '.eslintrc.yaml',
