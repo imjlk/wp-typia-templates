@@ -3,37 +3,32 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+
+import {
+	ensureCorepackPackageManager,
+	getInstallCommand,
+	getPackageManager,
+	getRunCommand,
+	normalizeBlockSlug,
+	refreshCurrentMigrationSnapshot,
+	rewriteWorkspaceDependencies,
+	run,
+	runLocalDoctor,
+	runLocalMigrationDoctor,
+	runScaffoldRefreshScripts,
+} from "./lib/generated-project-smoke-core.mjs";
+import {
+	assertGeneratedProjectScaffold,
+} from "./lib/generated-project-smoke-assertions.mjs";
+import {
+	runExampleProjectSmoke,
+} from "./lib/generated-project-smoke-example.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const wpTypiaPackageRoot = path.resolve(__dirname, "../packages/wp-typia");
 const entryPath = path.resolve(wpTypiaPackageRoot, "bin/wp-typia.js");
-const PACKAGE_MANAGERS = {
-	bun: {
-		packageManagerField: "bun@1.3.11",
-	},
-	npm: {
-		packageManagerField: "npm@11.6.1",
-	},
-	pnpm: {
-		packageManagerField: "pnpm@8.3.1",
-	},
-	yarn: {
-		packageManagerField: "yarn@3.2.4",
-	},
-};
-
-function normalizeBlockSlug(input) {
-	return input
-		.trim()
-		.replace(/([a-z0-9])([A-Z])/g, "$1-$2")
-		.replace(/[^A-Za-z0-9]+/g, "-")
-		.replace(/^-+|-+$/g, "")
-		.replace(/-{2,}/g, "-")
-		.toLowerCase();
-}
 
 function parseArgs(argv) {
 	const parsed = {
@@ -187,22 +182,6 @@ function parseArgs(argv) {
 	return parsed;
 }
 
-function run(command, args, options = {}) {
-	return execFileSync(command, args, {
-		stdio: "inherit",
-		...options,
-	});
-}
-
-function getPackageManager(packageManager) {
-	const manager = PACKAGE_MANAGERS[packageManager];
-	if (!manager) {
-		throw new Error(`Unknown package manager: ${packageManager}`);
-	}
-
-	return manager;
-}
-
 function ensureCanonicalCliReady() {
 	const projectToolsRuntimeIndexPath = path.resolve(
 		__dirname,
@@ -262,896 +241,6 @@ function ensureCanonicalCliReady() {
 	});
 }
 
-function hasPhpBinary() {
-	try {
-		execFileSync("php", ["-v"], { stdio: "ignore" });
-		return true;
-	} catch {
-		return false;
-	}
-}
-
-function getRunCommand(packageManager) {
-	switch (packageManager) {
-		case "bun":
-			return ["bun", ["run", "build"]];
-		case "npm":
-			return ["npm", ["run", "build"]];
-		case "pnpm":
-			return ["corepack", ["pnpm", "run", "build"]];
-		default:
-			return ["corepack", ["yarn", "run", "build"]];
-	}
-}
-
-function getRunScriptCommand(packageManager, scriptName, extraArgs = []) {
-	const scriptArgs = extraArgs.length > 0 ? [scriptName, "--", ...extraArgs] : [scriptName];
-
-	switch (packageManager) {
-		case "bun":
-			return ["bun", ["run", ...scriptArgs]];
-		case "npm":
-			return ["npm", ["run", ...scriptArgs]];
-		case "pnpm":
-			return ["corepack", ["pnpm", "run", ...scriptArgs]];
-		default:
-			return ["corepack", ["yarn", "run", ...scriptArgs]];
-	}
-}
-
-function getInstallCommand(packageManager) {
-	switch (packageManager) {
-		case "bun":
-			return ["bun", ["install"]];
-		case "npm":
-			return ["npm", ["install"]];
-		case "pnpm":
-			return ["corepack", ["pnpm", "install"]];
-		default:
-			return ["corepack", ["yarn", "install"]];
-	}
-}
-
-function runScaffoldRefreshScripts(projectDir, packageManager, packageJson) {
-	const scriptNames =
-		typeof packageJson.scripts?.sync === "string"
-			? ["sync", "sync-wordpress-ai", "sync-typia-llm"]
-			: ["sync-types", "sync-rest", "sync-wordpress-ai", "sync-typia-llm"];
-
-	for (const scriptName of scriptNames) {
-		if (typeof packageJson.scripts?.[scriptName] !== "string") {
-			continue;
-		}
-
-		const [command, args] = getRunScriptCommand(packageManager, scriptName);
-		run(command, args, { cwd: projectDir });
-	}
-}
-
-function runLocalMigrationDoctor(projectDir, runtime) {
-	run(runtime, [entryPath, "migrate", "doctor", "--all"], {
-		cwd: projectDir,
-	});
-}
-
-function refreshCurrentMigrationSnapshot(projectDir, runtime) {
-	const configPath = path.join(projectDir, "src", "migrations", "config.ts");
-	if (!fs.existsSync(configPath)) {
-		return;
-	}
-
-	const configSource = fs.readFileSync(configPath, "utf8");
-	const match = configSource.match(/currentMigrationVersion:\s*['"]([^'"]+)['"]/u);
-	if (!match?.[1]) {
-		throw new Error(
-			`Expected ${configPath} to declare currentMigrationVersion in a supported format`,
-		);
-	}
-
-	run(runtime, [entryPath, "migrate", "snapshot", "--migration-version", match[1]], {
-		cwd: projectDir,
-	});
-}
-
-function runLocalDoctor(projectDir, runtime) {
-	run(runtime, [entryPath, "doctor"], {
-		cwd: projectDir,
-	});
-}
-
-function ensureCorepackPackageManager(packageManager) {
-	if (packageManager !== "pnpm" && packageManager !== "yarn") {
-		return;
-	}
-
-	run("corepack", ["prepare", getPackageManager(packageManager).packageManagerField, "--activate"]);
-}
-
-function listSourceBlockSlugs(projectDir) {
-	const sourceBlocksDir = path.join(projectDir, "src", "blocks");
-	if (!fs.existsSync(sourceBlocksDir)) {
-		return [];
-	}
-
-	return fs
-		.readdirSync(sourceBlocksDir, { withFileTypes: true })
-		.filter((entry) => entry.isDirectory())
-		.map((entry) => entry.name)
-		.sort();
-}
-
-function assertBuildArtifacts(projectDir, projectName) {
-	const blockSlugs = listSourceBlockSlugs(projectDir);
-	if (blockSlugs.length > 0) {
-		for (const blockSlug of blockSlugs) {
-			const buildDir = path.join(projectDir, "build", "blocks", blockSlug);
-			for (const artifact of [
-				"block.json",
-				"typia.manifest.json",
-				"typia-validator.php",
-			]) {
-				if (!fs.existsSync(path.join(buildDir, artifact))) {
-					throw new Error(
-						`Expected ${buildDir} to include ${artifact} for example-project smoke`,
-					);
-				}
-			}
-		}
-
-		return;
-	}
-
-	const candidateDirs = [
-		path.join(projectDir, "build", projectName),
-		path.join(projectDir, "build"),
-	];
-
-	for (const artifact of ["block.json", "typia.manifest.json", "typia-validator.php"]) {
-		const found = candidateDirs.some((dir) => fs.existsSync(path.join(dir, artifact)));
-		if (!found) {
-			throw new Error(
-				`Expected ${artifact} in one of: ${candidateDirs.join(", ")}`,
-			);
-		}
-	}
-}
-
-function collectProjectFilePaths(projectDir, fileName) {
-	const pending = [projectDir];
-	const matchedPaths = [];
-
-	while (pending.length > 0) {
-		const currentDir = pending.pop();
-		if (!currentDir) {
-			continue;
-		}
-
-		for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
-			if (entry.name === "node_modules") {
-				continue;
-			}
-
-			const entryPath = path.join(currentDir, entry.name);
-			if (entry.isDirectory()) {
-				pending.push(entryPath);
-				continue;
-			}
-			if (entry.isFile() && entry.name === fileName) {
-				matchedPaths.push(entryPath);
-			}
-		}
-	}
-
-	return matchedPaths.sort();
-}
-
-const blockMetadataFileFields = [
-	"editorScript",
-	"script",
-	"scriptModule",
-	"viewScript",
-	"viewScriptModule",
-	"style",
-	"editorStyle",
-	"render",
-];
-
-function collectBlockMetadataPaths(buildRoot) {
-	if (!fs.existsSync(buildRoot)) {
-		return [];
-	}
-
-	const pending = [buildRoot];
-	const blockMetadataPaths = [];
-
-	while (pending.length > 0) {
-		const currentDir = pending.pop();
-		for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
-			const entryPath = path.join(currentDir, entry.name);
-			if (entry.isDirectory()) {
-				pending.push(entryPath);
-				continue;
-			}
-			if (entry.isFile() && entry.name === "block.json") {
-				blockMetadataPaths.push(entryPath);
-			}
-		}
-	}
-
-	return blockMetadataPaths.sort();
-}
-
-function normalizeBlockMetadataFileRefs(value) {
-	if (typeof value === "string") {
-		return value.startsWith("file:./") ? [value.slice("file:./".length)] : [];
-	}
-	if (Array.isArray(value)) {
-		return value.flatMap((item) => normalizeBlockMetadataFileRefs(item));
-	}
-
-	return [];
-}
-
-function assertBlockMetadataFileReferences(projectDir) {
-	const buildRoot = path.join(projectDir, "build");
-
-	for (const blockMetadataPath of collectBlockMetadataPaths(buildRoot)) {
-		const blockMetadata = JSON.parse(fs.readFileSync(blockMetadataPath, "utf8"));
-		const blockDir = path.dirname(blockMetadataPath);
-
-		for (const field of blockMetadataFileFields) {
-			for (const relativePath of normalizeBlockMetadataFileRefs(blockMetadata[field])) {
-				const assetPath = path.join(blockDir, relativePath);
-				if (!fs.existsSync(assetPath)) {
-					throw new Error(
-						`Expected ${field} asset ${relativePath} referenced by ${blockMetadataPath} to exist at ${assetPath}`,
-					);
-				}
-			}
-		}
-	}
-}
-
-function assertGeneratedRuntimeImports(projectDir) {
-	const pending = [
-		path.join(projectDir, "src"),
-		path.join(projectDir, "scripts"),
-		path.join(projectDir, "webpack.config.js"),
-	];
-
-	while (pending.length > 0) {
-		const currentPath = pending.pop();
-		if (!currentPath || !fs.existsSync(currentPath)) {
-			continue;
-		}
-
-		const stat = fs.statSync(currentPath);
-		if (stat.isDirectory()) {
-			for (const entry of fs.readdirSync(currentPath, { withFileTypes: true })) {
-				pending.push(path.join(currentPath, entry.name));
-			}
-			continue;
-		}
-
-		if (!/\.(?:[cm]?[jt]sx?|json)$/.test(currentPath)) {
-			continue;
-		}
-
-		const contents = fs.readFileSync(currentPath, "utf8");
-		if (contents.includes("@wp-typia/project-tools/runtime/")) {
-			throw new Error(`Found deprecated generated runtime import in ${currentPath}`);
-		}
-		if (contents.includes("@wp-typia/project-tools/schema-core")) {
-			throw new Error(`Found deprecated generated schema-core import in ${currentPath}`);
-		}
-		if (contents.includes("@wp-typia/create/")) {
-			throw new Error(`Found deprecated legacy create import in ${currentPath}`);
-		}
-	}
-}
-
-function assertGeneratedPackageBoundary(projectDir) {
-	const packageJsonPath = path.join(projectDir, "package.json");
-	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-
-	if (packageJson.dependencies?.["@wp-typia/project-tools"]) {
-		throw new Error("Expected generated project dependencies to omit @wp-typia/project-tools");
-	}
-	if (packageJson.devDependencies?.["@wp-typia/project-tools"]) {
-		throw new Error("Expected generated project devDependencies to omit @wp-typia/project-tools");
-	}
-	for (const [scriptName, scriptValue] of Object.entries(packageJson.scripts ?? {})) {
-		if (typeof scriptValue !== "string") {
-			continue;
-		}
-		if (!scriptValue.includes("wp-typia")) {
-			continue;
-		}
-		if (scriptName.startsWith("migration:")) {
-			if (!/wp-typia@\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?/u.test(scriptValue)) {
-				throw new Error(
-					`Expected generated migration script "${scriptName}" to pin wp-typia`,
-				);
-			}
-			continue;
-		}
-		if (scriptValue.includes("wp-typia")) {
-			throw new Error(
-				`Expected generated project script "${scriptName}" to avoid wp-typia`,
-			);
-		}
-	}
-}
-
-function assertBasicTemplateScaffold(projectDir) {
-	const blockJsonPath = path.join(projectDir, "src", "block.json");
-	const savePath = path.join(projectDir, "src", "save.tsx");
-	const blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8"));
-	const saveSource = fs.readFileSync(savePath, "utf8");
-
-	if (blockJson.editorStyle !== "file:./index.css") {
-		throw new Error("Expected basic scaffold block.json to include editorStyle: file:./index.css");
-	}
-	if ("version" in (blockJson.attributes ?? {})) {
-		throw new Error("Expected basic scaffold attributes to use schemaVersion instead of version");
-	}
-	if (!("schemaVersion" in (blockJson.attributes ?? {}))) {
-		throw new Error("Expected basic scaffold attributes to include schemaVersion");
-	}
-	if (saveSource.includes("return null;")) {
-		throw new Error("Expected basic scaffold save.tsx to serialize stable markup instead of returning null");
-	}
-}
-
-function assertPersistenceTemplateArtifacts(projectDir, projectName) {
-	const candidateDirs = [
-		path.join(projectDir, "build", projectName),
-		path.join(projectDir, "build"),
-	];
-
-	for (const artifact of [
-		path.join("api-schemas", "bootstrap-query.schema.json"),
-		path.join("api-schemas", "bootstrap-response.schema.json"),
-		"typia.schema.json",
-		"typia.openapi.json",
-		path.join("api-schemas", "state-query.schema.json"),
-		path.join("api-schemas", "state-response.schema.json"),
-		path.join("api-schemas", "write-state-request.schema.json"),
-	]) {
-		const found = candidateDirs.some((dir) => fs.existsSync(path.join(dir, artifact)));
-		if (!found) {
-			throw new Error(`Expected ${artifact} in one of: ${candidateDirs.join(", ")}`);
-		}
-	}
-}
-
-function findFirstExistingPath(paths) {
-	return paths.find((candidatePath) => fs.existsSync(candidatePath));
-}
-
-function readJsonFile(filePath) {
-	return JSON.parse(fs.readFileSync(filePath, "utf8"));
-}
-
-function assertPersistenceRestOpenApi(projectDir, projectName, namespace, persistencePolicy) {
-	const candidatePath = findFirstExistingPath([
-		path.join(projectDir, "build", projectName, "api.openapi.json"),
-		path.join(projectDir, "build", "api.openapi.json"),
-	]);
-
-	if (!candidatePath) {
-		throw new Error("Expected aggregate REST OpenAPI document for persistence scaffold");
-	}
-
-	const openApi = readJsonFile(candidatePath);
-	const routePath = `/${namespace}/v1/${projectName}/state`;
-	const bootstrapPath = `/${namespace}/v1/${projectName}/bootstrap`;
-	const pathItem = openApi.paths?.[routePath];
-	const bootstrapPathItem = openApi.paths?.[bootstrapPath];
-	const getOperation = pathItem?.get;
-	const postOperation = pathItem?.post;
-	const bootstrapOperation = bootstrapPathItem?.get;
-
-	if (!getOperation || !postOperation) {
-		throw new Error(`Expected GET and POST operations for ${routePath} in ${candidatePath}`);
-	}
-	if (!bootstrapOperation) {
-		throw new Error(`Expected GET operation for ${bootstrapPath} in ${candidatePath}`);
-	}
-
-	if (getOperation["x-wp-typia-authPolicy"] !== "public-read") {
-		throw new Error(`Expected public-read auth policy on ${routePath} GET`);
-	}
-	if (bootstrapOperation["x-wp-typia-authPolicy"] !== "public-read") {
-		throw new Error(`Expected public-read auth policy on ${bootstrapPath} GET`);
-	}
-
-	if (persistencePolicy === "public") {
-		if (postOperation["x-wp-typia-authPolicy"] !== "public-signed-token") {
-			throw new Error(`Expected public-signed-token auth policy on ${routePath} POST`);
-		}
-		if (postOperation["x-wp-typia-publicTokenField"] !== "publicWriteToken") {
-			throw new Error(`Expected publicWriteToken metadata on ${routePath} POST`);
-		}
-	} else {
-		const securityScheme = openApi.components?.securitySchemes?.wpRestNonce;
-		if (!securityScheme) {
-			throw new Error("Expected wpRestNonce security scheme in aggregate REST OpenAPI");
-		}
-		if (postOperation["x-wp-typia-authPolicy"] !== "authenticated-rest-nonce") {
-			throw new Error(`Expected authenticated-rest-nonce auth policy on ${routePath} POST`);
-		}
-	}
-}
-
-function assertCompoundTemplateArtifacts(projectDir, projectName) {
-	const parentDir = path.join(projectDir, "build", "blocks", projectName);
-	const childDir = path.join(projectDir, "build", "blocks", `${projectName}-item`);
-
-	for (const dir of [parentDir, childDir]) {
-		for (const artifact of ["block.json", "typia.manifest.json", "typia-validator.php"]) {
-			if (!fs.existsSync(path.join(dir, artifact))) {
-				throw new Error(`Expected ${artifact} in ${dir}`);
-			}
-		}
-	}
-}
-
-function assertCompoundPersistenceArtifacts(projectDir, projectName) {
-	const parentDir = path.join(projectDir, "build", "blocks", projectName);
-
-	for (const artifact of [
-		path.join("api-schemas", "bootstrap-query.schema.json"),
-		path.join("api-schemas", "bootstrap-response.schema.json"),
-		"typia.schema.json",
-		"typia.openapi.json",
-		path.join("api-schemas", "state-query.schema.json"),
-		path.join("api-schemas", "state-response.schema.json"),
-		path.join("api-schemas", "write-state-request.schema.json"),
-	]) {
-		if (!fs.existsSync(path.join(parentDir, artifact))) {
-			throw new Error(`Expected ${artifact} in ${parentDir}`);
-		}
-	}
-}
-
-function assertCompoundRestOpenApi(projectDir, projectName, namespace, persistencePolicy) {
-	const parentDir = path.join(projectDir, "build", "blocks", projectName);
-	const openApiPath = path.join(parentDir, "api.openapi.json");
-
-	if (!fs.existsSync(openApiPath)) {
-		throw new Error(`Expected aggregate REST OpenAPI document in ${parentDir}`);
-	}
-
-	const openApi = readJsonFile(openApiPath);
-	const routePath = `/${namespace}/v1/${projectName}/state`;
-	const bootstrapPath = `/${namespace}/v1/${projectName}/bootstrap`;
-	const pathItem = openApi.paths?.[routePath];
-	const bootstrapPathItem = openApi.paths?.[bootstrapPath];
-	const getOperation = pathItem?.get;
-	const postOperation = pathItem?.post;
-	const bootstrapOperation = bootstrapPathItem?.get;
-
-	if (!getOperation || !postOperation) {
-		throw new Error(`Expected GET and POST operations for ${routePath} in ${openApiPath}`);
-	}
-	if (!bootstrapOperation) {
-		throw new Error(`Expected GET operation for ${bootstrapPath} in ${openApiPath}`);
-	}
-
-	if (getOperation["x-wp-typia-authPolicy"] !== "public-read") {
-		throw new Error(`Expected public-read auth policy on ${routePath} GET`);
-	}
-	if (bootstrapOperation["x-wp-typia-authPolicy"] !== "public-read") {
-		throw new Error(`Expected public-read auth policy on ${bootstrapPath} GET`);
-	}
-
-	if (persistencePolicy === "public") {
-		if (postOperation["x-wp-typia-authPolicy"] !== "public-signed-token") {
-			throw new Error(`Expected public-signed-token auth policy on ${routePath} POST`);
-		}
-		if (postOperation["x-wp-typia-publicTokenField"] !== "publicWriteToken") {
-			throw new Error(`Expected publicWriteToken metadata on ${routePath} POST`);
-		}
-	} else {
-		const securityScheme = openApi.components?.securitySchemes?.wpRestNonce;
-		if (!securityScheme) {
-			throw new Error(`Expected wpRestNonce security scheme in aggregate REST OpenAPI for ${routePath}`);
-		}
-		if (postOperation["x-wp-typia-authPolicy"] !== "authenticated-rest-nonce") {
-			throw new Error(`Expected authenticated-rest-nonce auth policy on ${routePath} POST`);
-		}
-	}
-}
-
-function lintPhpArtifact(filePath) {
-	if (!hasPhpBinary()) {
-		return;
-	}
-
-	run("php", ["-l", filePath], {
-		stdio: "ignore",
-	});
-}
-
-function assertPluginBootstrapHardening(filePath) {
-	const source = fs.readFileSync(filePath, "utf8");
-
-	for (const expectedSnippet of [
-		"Tested up to:",
-		"Domain Path:",
-		"load_plugin_textdomain(",
-	]) {
-		if (!source.includes(expectedSnippet)) {
-			throw new Error(`Expected ${filePath} to include "${expectedSnippet}"`);
-		}
-	}
-}
-
-function assertPluginBootstrapExists(filePath) {
-	if (!fs.existsSync(filePath)) {
-		throw new Error(`Expected generated project to include plugin bootstrap: ${filePath}`);
-	}
-}
-
-function assertWorkspaceTemplateScaffold(projectDir) {
-	const packageJson = JSON.parse(fs.readFileSync(path.join(projectDir, "package.json"), "utf8"));
-
-	if (packageJson.wpTypia?.projectType !== "workspace") {
-		throw new Error("Expected generated workspace package.json to include wpTypia.projectType = workspace");
-	}
-	if (
-		packageJson.wpTypia?.templatePackage !== "@wp-typia/create-workspace-template"
-	) {
-		throw new Error("Expected generated workspace package.json to record the official workspace template package");
-	}
-	if (!fs.existsSync(path.join(projectDir, "scripts", "build-workspace.mjs"))) {
-		throw new Error("Expected official workspace template to include scripts/build-workspace.mjs");
-	}
-}
-
-function isWorkspaceTemplateRequest(template, packageJson) {
-	return (
-		template === "workspace" ||
-		template === "@wp-typia/create-workspace-template" ||
-		packageJson.wpTypia?.projectType === "workspace"
-	);
-}
-
-function assertWorkspaceBlockArtifacts(projectDir, blockSlugs) {
-	for (const slug of blockSlugs) {
-		const blockDir = path.join(projectDir, "build", "blocks", slug);
-		if (!fs.existsSync(path.join(blockDir, "block.json"))) {
-			throw new Error(`Expected workspace build to include ${slug}/block.json`);
-		}
-		if (!fs.existsSync(path.join(blockDir, "typia.manifest.json"))) {
-			throw new Error(`Expected workspace build to include ${slug}/typia.manifest.json`);
-		}
-		if (!fs.existsSync(path.join(blockDir, "typia-validator.php"))) {
-			throw new Error(`Expected workspace build to include ${slug}/typia-validator.php`);
-		}
-	}
-
-	if (!fs.existsSync(path.join(projectDir, "build", "blocks-manifest.php"))) {
-		throw new Error("Expected workspace build to include blocks-manifest.php");
-	}
-}
-
-function assertWorkspaceVariationArtifacts(projectDir, blockSlug, variationSlug) {
-	const variationPath = path.join(
-		projectDir,
-		"src",
-		"blocks",
-		blockSlug,
-		"variations",
-		`${variationSlug}.ts`,
-	);
-	if (!fs.existsSync(variationPath)) {
-		throw new Error(`Expected workspace variation to exist at ${variationPath}`);
-	}
-}
-
-function assertWorkspacePatternArtifacts(projectDir, patternSlug) {
-	const patternPath = path.join(projectDir, "src", "patterns", `${patternSlug}.php`);
-	if (!fs.existsSync(patternPath)) {
-		throw new Error(`Expected workspace pattern to exist at ${patternPath}`);
-	}
-
-	lintPhpArtifact(patternPath);
-}
-
-function assertWorkspaceBindingSourceArtifacts(projectDir, bindingSourceSlug) {
-	const bindingSourceDir = path.join(projectDir, "src", "bindings", bindingSourceSlug);
-	const serverPath = path.join(bindingSourceDir, "server.php");
-	const editorPath = path.join(bindingSourceDir, "editor.ts");
-
-	if (!fs.existsSync(serverPath)) {
-		throw new Error(`Expected workspace binding source server file at ${serverPath}`);
-	}
-	if (!fs.existsSync(editorPath)) {
-		throw new Error(`Expected workspace binding source editor file at ${editorPath}`);
-	}
-	if (!fs.existsSync(path.join(projectDir, "build", "bindings", "index.js"))) {
-		throw new Error("Expected workspace build to include build/bindings/index.js");
-	}
-	if (!fs.existsSync(path.join(projectDir, "build", "bindings", "index.asset.php"))) {
-		throw new Error("Expected workspace build to include build/bindings/index.asset.php");
-	}
-
-	lintPhpArtifact(serverPath);
-}
-
-function assertWorkspaceHookedBlockArtifacts(projectDir, blockSlug, anchorBlockName, position) {
-	const blockJsonPath = path.join(projectDir, "src", "blocks", blockSlug, "block.json");
-	if (!fs.existsSync(blockJsonPath)) {
-		throw new Error(`Expected hooked workspace block metadata at ${blockJsonPath}`);
-	}
-
-	const blockJson = readJsonFile(blockJsonPath);
-	if (blockJson.blockHooks?.[anchorBlockName] !== position) {
-		throw new Error(
-			`Expected ${blockJsonPath} to define blockHooks.${anchorBlockName} = ${position}`,
-		);
-	}
-}
-
-function assertNoRawRenderedContentEcho(filePath) {
-	const source = fs.readFileSync(filePath, "utf8");
-	if (/echo\s*\(?\s*\$content\b/.test(source)) {
-		throw new Error(`Expected ${filePath} to avoid raw $content echoes`);
-	}
-}
-
-function rewriteWorkspaceDependencies(projectDir, packageManager) {
-	const packageJsonPath = path.join(projectDir, "package.json");
-	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-	const localApiClientDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-api-client")}`;
-	const localBlockRuntimeDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-block-runtime")}`;
-	const localBlockTypesDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-block-types")}`;
-	const localRestDependency = `file:${path.resolve(__dirname, "../packages/wp-typia-rest")}`;
-	const localCliDependency = `file:${path.resolve(__dirname, "../packages/wp-typia")}`;
-
-	packageJson.packageManager = getPackageManager(packageManager).packageManagerField;
-
-	if (packageJson.devDependencies?.["@wp-typia/api-client"]) {
-		packageJson.devDependencies["@wp-typia/api-client"] = localApiClientDependency;
-	}
-	if (packageJson.devDependencies?.["@wp-typia/block-runtime"]) {
-		packageJson.devDependencies["@wp-typia/block-runtime"] = localBlockRuntimeDependency;
-	}
-	if (packageJson.dependencies?.["@wp-typia/api-client"]) {
-		packageJson.dependencies["@wp-typia/api-client"] = localApiClientDependency;
-	}
-	if (packageJson.dependencies?.["@wp-typia/block-runtime"]) {
-		packageJson.dependencies["@wp-typia/block-runtime"] = localBlockRuntimeDependency;
-	}
-	if (packageJson.devDependencies?.["@wp-typia/block-types"]) {
-		packageJson.devDependencies["@wp-typia/block-types"] = localBlockTypesDependency;
-	}
-	if (packageJson.devDependencies?.["@wp-typia/rest"]) {
-		packageJson.devDependencies["@wp-typia/rest"] = localRestDependency;
-	}
-	if (packageJson.dependencies?.["@wp-typia/block-types"]) {
-		packageJson.dependencies["@wp-typia/block-types"] = localBlockTypesDependency;
-	}
-	if (packageJson.dependencies?.["@wp-typia/rest"]) {
-		packageJson.dependencies["@wp-typia/rest"] = localRestDependency;
-	}
-	if (packageJson.devDependencies?.["wp-typia"]) {
-		packageJson.devDependencies["wp-typia"] = localCliDependency;
-	}
-	if (packageJson.dependencies?.["wp-typia"]) {
-		packageJson.dependencies["wp-typia"] = localCliDependency;
-	}
-
-	packageJson.overrides = {
-		...(packageJson.overrides ?? {}),
-		"@wp-typia/block-runtime": localBlockRuntimeDependency,
-		"@wp-typia/api-client": localApiClientDependency,
-		"@wp-typia/block-types": localBlockTypesDependency,
-		"@wp-typia/rest": localRestDependency,
-		"wp-typia": localCliDependency,
-	};
-	packageJson.pnpm = {
-		...(packageJson.pnpm ?? {}),
-		overrides: {
-			...(packageJson.pnpm?.overrides ?? {}),
-			"@wp-typia/block-runtime": localBlockRuntimeDependency,
-			"@wp-typia/api-client": localApiClientDependency,
-			"@wp-typia/block-types": localBlockTypesDependency,
-			"@wp-typia/rest": localRestDependency,
-			"wp-typia": localCliDependency,
-		},
-	};
-	packageJson.resolutions = {
-		...(packageJson.resolutions ?? {}),
-		"@wp-typia/block-runtime": localBlockRuntimeDependency,
-		"@wp-typia/api-client": localApiClientDependency,
-		"@wp-typia/block-types": localBlockTypesDependency,
-		"@wp-typia/rest": localRestDependency,
-		"wp-typia": localCliDependency,
-	};
-
-	fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
-}
-
-function prepareExampleWorkspaceRoot(workspaceRoot) {
-	const repoRoot = path.resolve(__dirname, "..");
-	const packagesLinkPath = path.join(workspaceRoot, "packages");
-
-	if (!fs.existsSync(packagesLinkPath)) {
-		fs.symlinkSync(path.join(repoRoot, "packages"), packagesLinkPath, "dir");
-	}
-
-	for (const configFile of ["tsconfig.json", "tsconfig.base.json"]) {
-		const sourcePath = path.join(repoRoot, configFile);
-		const targetPath = path.join(workspaceRoot, configFile);
-		if (!fs.existsSync(targetPath)) {
-			fs.copyFileSync(sourcePath, targetPath);
-		}
-	}
-}
-
-function prepareExampleProject(exampleProject, projectDir) {
-	const sourceDir = path.resolve(__dirname, "..", "examples", exampleProject);
-	if (!fs.existsSync(sourceDir)) {
-		throw new Error(`Unknown example project: ${exampleProject}`);
-	}
-
-	fs.cpSync(sourceDir, projectDir, {
-		dereference: false,
-		filter: (sourcePath) => {
-			const relativePath = path.relative(sourceDir, sourcePath);
-			return !relativePath.split(path.sep).includes("node_modules");
-		},
-		recursive: true,
-	});
-
-	rewriteCopiedExampleTsconfig(projectDir);
-	ensureCopiedExampleSupportDependencies(projectDir);
-}
-
-function rewriteCopiedExampleTsconfig(projectDir) {
-	const tsconfigPath = path.join(projectDir, "tsconfig.json");
-	if (!fs.existsSync(tsconfigPath)) {
-		return;
-	}
-
-	const tsconfig = readJsonFile(tsconfigPath);
-	if (tsconfig.extends !== "../../tsconfig.json") {
-		return;
-	}
-
-	const nextConfig = {
-		compilerOptions: {
-			jsx: "react-jsx",
-			module: "esnext",
-			moduleResolution: "bundler",
-			noEmit: true,
-			skipLibCheck: true,
-			strict: true,
-			target: "es2022",
-			types: ["bun-types", "node"],
-		},
-		exclude: ["node_modules", "build"],
-		include: ["src/**/*", "scripts/**/*"],
-	};
-
-	fs.writeFileSync(tsconfigPath, `${JSON.stringify(nextConfig, null, "\t")}\n`, "utf8");
-}
-
-function ensureCopiedExampleSupportDependencies(projectDir) {
-	const packageJsonPath = path.join(projectDir, "package.json");
-	if (!fs.existsSync(packageJsonPath)) {
-		return;
-	}
-
-	const repoPackageJson = readJsonFile(path.resolve(__dirname, "..", "package.json"));
-	const packageJson = readJsonFile(packageJsonPath);
-	const devDependencies = {
-		...(packageJson.devDependencies ?? {}),
-	};
-
-	if (!devDependencies["bun-types"]) {
-		devDependencies["bun-types"] =
-			repoPackageJson.devDependencies?.["bun-types"] ?? "^1.3.11";
-	}
-	if (!devDependencies["@types/node"]) {
-		devDependencies["@types/node"] =
-			repoPackageJson.devDependencies?.["@types/node"] ?? "^24.0.0";
-	}
-
-	packageJson.devDependencies = devDependencies;
-	fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
-}
-
-function assertExampleProjectScaffold(projectDir, exampleProject) {
-	const packageJson = readJsonFile(path.join(projectDir, "package.json"));
-	const blockJsonPath = path.join(projectDir, "block.json");
-	const pluginBootstrapPath = path.join(projectDir, `${exampleProject}.php`);
-	const blockSlugs = listSourceBlockSlugs(projectDir);
-
-	if (blockSlugs.length === 0 && !fs.existsSync(blockJsonPath)) {
-		throw new Error(`Expected example project block.json at ${blockJsonPath}`);
-	}
-	if (!fs.existsSync(pluginBootstrapPath)) {
-		throw new Error(`Expected example project bootstrap at ${pluginBootstrapPath}`);
-	}
-	if (
-		exampleProject === "my-typia-block" &&
-		typeof packageJson.scripts?.["migration:doctor"] !== "string"
-	) {
-		throw new Error("Expected example project to expose migration:doctor");
-	}
-
-	assertPluginBootstrapExists(pluginBootstrapPath);
-	assertPluginBootstrapHardening(pluginBootstrapPath);
-	for (const renderPath of collectProjectFilePaths(projectDir, "render.php")) {
-		assertNoRawRenderedContentEcho(renderPath);
-	}
-	assertBuildArtifacts(projectDir, exampleProject);
-	assertBlockMetadataFileReferences(projectDir);
-	assertGeneratedRuntimeImports(projectDir);
-}
-
-function shouldRunMigrationSmoke(projectDir, packageJson) {
-	return (
-		typeof packageJson.scripts?.["migration:doctor"] === "string" ||
-		fs.existsSync(path.join(projectDir, "src", "migrations", "config.ts"))
-	);
-}
-
-function runExampleProjectSmoke({
-	exampleProject,
-	packageManager,
-	projectDir,
-	runtime,
-}) {
-	const workspaceRoot = path.dirname(projectDir);
-	const exampleDir = path.join(workspaceRoot, "examples", exampleProject);
-
-	prepareExampleWorkspaceRoot(workspaceRoot);
-	prepareExampleProject(exampleProject, exampleDir);
-	rewriteWorkspaceDependencies(exampleDir, packageManager);
-
-	const packageJson = readJsonFile(path.join(exampleDir, "package.json"));
-	ensureCorepackPackageManager(packageManager);
-
-	const [installCommand, installArgs] = getInstallCommand(packageManager);
-	run(installCommand, installArgs, {
-		cwd: exampleDir,
-		env: {
-			...process.env,
-			...(packageManager === "yarn"
-				? { YARN_ENABLE_IMMUTABLE_INSTALLS: "false" }
-				: {}),
-		},
-	});
-
-	runScaffoldRefreshScripts(exampleDir, packageManager, packageJson);
-	if (shouldRunMigrationSmoke(exampleDir, packageJson)) {
-		refreshCurrentMigrationSnapshot(exampleDir, runtime);
-		runLocalMigrationDoctor(exampleDir, runtime);
-	}
-
-	const [buildCommand, buildArgs] = getRunCommand(packageManager);
-	run(buildCommand, buildArgs, { cwd: exampleDir });
-
-	if (typeof packageJson.scripts?.typecheck !== "string") {
-		throw new Error(
-			`Missing "typecheck" script in ${path.join(exampleDir, "package.json")} for example-project smoke`,
-		);
-	}
-
-	const [typecheckCommand, typecheckArgs] = getRunScriptCommand(
-		packageManager,
-		"typecheck",
-	);
-	run(typecheckCommand, typecheckArgs, { cwd: exampleDir });
-
-	assertExampleProjectScaffold(exampleDir, exampleProject);
-}
-
 function main() {
 	const {
 		runtime,
@@ -1194,7 +283,7 @@ function main() {
 	const projectDir = path.join(tempRoot, projectName);
 
 	try {
-	ensureCanonicalCliReady();
+		ensureCanonicalCliReady();
 
 		if (exampleProject) {
 			runExampleProjectSmoke({
@@ -1224,7 +313,8 @@ function main() {
 			packageManager,
 		]);
 
-		const packageJson = JSON.parse(fs.readFileSync(path.join(projectDir, "package.json"), "utf8"));
+		const packageJsonPath = path.join(projectDir, "package.json");
+		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 		const expectedPackageManager = getPackageManager(packageManager).packageManagerField;
 		if (packageJson.packageManager !== expectedPackageManager) {
 			throw new Error(
@@ -1233,7 +323,6 @@ function main() {
 		}
 
 		rewriteWorkspaceDependencies(projectDir, packageManager);
-
 		ensureCorepackPackageManager(packageManager);
 
 		const [installCommand, installArgs] = getInstallCommand(packageManager);
@@ -1243,7 +332,7 @@ function main() {
 				...process.env,
 				...(packageManager === "yarn"
 					? { YARN_ENABLE_IMMUTABLE_INSTALLS: "false" }
-				: {}),
+					: {}),
 			},
 		});
 
@@ -1330,111 +419,40 @@ function main() {
 			);
 		}
 
-		if (isWorkspaceTemplateRequest(template, packageJson)) {
+		const isWorkspaceTemplate =
+			template === "workspace" ||
+			template === "@wp-typia/create-workspace-template" ||
+			packageJson.wpTypia?.projectType === "workspace";
+		if (isWorkspaceTemplate) {
 			runLocalDoctor(projectDir, runtime);
 		}
 
 		if (withMigrationUi && typeof packageJson.scripts?.["migration:doctor"] === "string") {
+			refreshCurrentMigrationSnapshot(projectDir, runtime);
 			runLocalMigrationDoctor(projectDir, runtime);
 		}
 
 		const [buildCommand, buildArgs] = getRunCommand(packageManager);
 		run(buildCommand, buildArgs, { cwd: projectDir });
 
-		if (isWorkspaceTemplateRequest(template, packageJson)) {
-			assertWorkspaceTemplateScaffold(projectDir);
-			assertWorkspaceBlockArtifacts(
-				projectDir,
-				addTemplate === "compound"
-					? [
-						normalizeBlockSlug(addBlockName ?? ""),
-						`${normalizeBlockSlug(addBlockName ?? "")}-item`,
-					].filter(Boolean)
-					: addBlockName
-						? [normalizeBlockSlug(addBlockName)]
-						: [],
-			);
-			if (addVariationName && addVariationBlock) {
-				assertWorkspaceVariationArtifacts(
-					projectDir,
-					normalizeBlockSlug(addVariationBlock),
-					normalizeBlockSlug(addVariationName),
-				);
-			}
-			if (addPatternName) {
-				assertWorkspacePatternArtifacts(projectDir, normalizeBlockSlug(addPatternName));
-			}
-			if (addBindingSourceName) {
-				assertWorkspaceBindingSourceArtifacts(
-					projectDir,
-					normalizeBlockSlug(addBindingSourceName),
-				);
-			}
-			if (addHookedBlockSlug && addHookedBlockAnchor && addHookedBlockPosition) {
-				assertWorkspaceHookedBlockArtifacts(
-					projectDir,
-					normalizeBlockSlug(addHookedBlockSlug),
-					addHookedBlockAnchor,
-					addHookedBlockPosition,
-				);
-			}
-		} else if (template === "compound") {
-			assertCompoundTemplateArtifacts(projectDir, projectName);
-		} else {
-			assertBuildArtifacts(projectDir, projectName);
-		}
-		assertBlockMetadataFileReferences(projectDir);
-		assertGeneratedRuntimeImports(projectDir);
-		assertGeneratedPackageBoundary(projectDir);
-		if (template === "basic") {
-			assertBasicTemplateScaffold(projectDir);
-		}
-		if (template === "persistence") {
-			assertPersistenceTemplateArtifacts(projectDir, projectName);
-			assertPersistenceRestOpenApi(
-				projectDir,
-				projectName,
-				namespace ?? normalizeBlockSlug(projectName),
-				persistencePolicy ?? "authenticated",
-			);
-		}
-		if (template === "compound" && (dataStorage || persistencePolicy)) {
-			assertCompoundPersistenceArtifacts(projectDir, projectName);
-			assertCompoundRestOpenApi(
-				projectDir,
-				projectName,
-				namespace ?? normalizeBlockSlug(projectName),
-				persistencePolicy ?? "authenticated",
-			);
-		}
-		const pluginBootstrapPath = path.join(projectDir, `${projectName}.php`);
-		assertPluginBootstrapExists(pluginBootstrapPath);
-		for (const artifact of [
-			pluginBootstrapPath,
-			path.join(projectDir, "inc", "rest-shared.php"),
-			path.join(projectDir, "inc", "rest-auth.php"),
-			path.join(projectDir, "inc", "rest-public.php"),
-			path.join(projectDir, "src", "render.php"),
-			path.join(projectDir, "src", "blocks", projectName, "render.php"),
-			path.join(projectDir, "build", projectName, "typia-validator.php"),
-			path.join(projectDir, "build", projectName, "render.php"),
-			path.join(projectDir, "build", "typia-validator.php"),
-			path.join(projectDir, "build", "render.php"),
-			path.join(projectDir, "build", "blocks", projectName, "typia-validator.php"),
-			path.join(projectDir, "build", "blocks", projectName, "render.php"),
-			path.join(projectDir, "build", "blocks", `${projectName}-item`, "typia-validator.php"),
-			path.join(projectDir, "build", "blocks", `${projectName}-item`, "render.php"),
-		]) {
-			if (fs.existsSync(artifact)) {
-				lintPhpArtifact(artifact);
-				if (artifact === path.join(projectDir, `${projectName}.php`)) {
-					assertPluginBootstrapHardening(artifact);
-				}
-				if (artifact.endsWith("render.php")) {
-					assertNoRawRenderedContentEcho(artifact);
-				}
-			}
-		}
+		assertGeneratedProjectScaffold({
+			addBindingSourceName,
+			addBlockName,
+			addHookedBlockAnchor,
+			addHookedBlockPosition,
+			addHookedBlockSlug,
+			addPatternName,
+			addTemplate,
+			addVariationBlock,
+			addVariationName,
+			dataStorage,
+			namespace,
+			packageJson,
+			persistencePolicy,
+			projectDir,
+			projectName,
+			template,
+		});
 	} finally {
 		fs.rmSync(tempRoot, { force: true, recursive: true });
 	}
