@@ -219,9 +219,13 @@ export async function syncRestOpenApiArtifacts(
 ): Promise<SyncRestOpenApiResult> {
 	const { manifest, openApiPath, projectRoot, typesFile } =
 		normalizeSyncRestOpenApiOptions(options);
-	const sourceTypeNames = Object.values(manifest.contracts).map(
-		(contract) => contract.sourceTypeName,
-	);
+	const sourceTypeNames = [
+		...new Set(
+			Object.values(manifest.contracts).map(
+				(contract) => contract.sourceTypeName,
+			),
+		),
+	];
 	const analyzedTypes = analyzeSourceTypes(
 		{
 			projectRoot,

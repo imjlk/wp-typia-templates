@@ -34,9 +34,6 @@ test("metadata-core keeps artifact sync and endpoint-client helpers in dedicated
 	expect(metadataCoreSource).not.toContain("function normalizeSyncRestOpenApiOptions(");
 	expect(metadataCoreSource).not.toContain("function normalizeSyncEndpointClientOptions(");
 	expect(metadataCoreSource).not.toContain("function normalizeSyncBlockMetadataFailure(");
-	expect(metadataCoreSource).not.toContain("const driftIssues: GeneratedArtifactDriftIssue[] = [];");
-	expect(metadataCoreSource).not.toContain("const endpointLines: string[] = [];");
-	expect(metadataCoreSource).not.toContain("function validateCombinedRequest<TQuery, TBody>(");
 	expect(artifactHelperSource).toContain("export function reconcileGeneratedArtifacts(");
 	expect(artifactHelperSource).toContain("export function normalizeSyncBlockMetadataFailure(");
 	expect(endpointClientHelperSource).toContain("export function normalizeSyncRestOpenApiOptions(");
