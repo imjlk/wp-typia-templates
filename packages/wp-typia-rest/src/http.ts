@@ -1,10 +1,24 @@
 import type { IValidation } from "@typia/interface";
 
 import {
+	isValidationResult,
+	normalizeValidationError,
 	toValidationResult,
+	type ValidationError,
 	type ValidationLike,
 	type ValidationResult,
-} from "./client";
+} from "./internal/runtime-primitives.js";
+
+export type {
+	ValidationError,
+	ValidationLike,
+	ValidationResult,
+} from "./internal/runtime-primitives.js";
+export {
+	isValidationResult,
+	normalizeValidationError,
+	toValidationResult,
+} from "./internal/runtime-primitives.js";
 
 function toHeadersRecord(input: unknown): Record<string, string | string[] | undefined> {
 	if (input instanceof Headers) {

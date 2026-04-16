@@ -25,6 +25,14 @@ import {
 
 export type { ValidationError, ValidationLike, ValidationResult } from "./internal/runtime-primitives.js";
 export { isValidationResult, normalizeValidationError, toValidationResult } from "./internal/runtime-primitives.js";
+export {
+	ApiClientConfigurationError,
+	RestConfigurationError,
+	RestRootResolutionError,
+	RestValidationAssertionError,
+	WpTypiaContractError,
+	WpTypiaValidationAssertionError,
+} from "./errors.js";
 export type {
 	EndpointRequestValidationResult,
 	EndpointResponseValidationResult,

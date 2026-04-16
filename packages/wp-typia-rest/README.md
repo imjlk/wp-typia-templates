@@ -18,19 +18,21 @@ resolution, use `@wp-typia/api-client`.
 ## Export contract
 
 - `@wp-typia/rest`
-  Canonical convenience surface for transport helpers plus HTTP decoder helpers.
+  Canonical convenience surface. It intentionally combines the transport helper
+  layer and the HTTP decoder helpers.
 - `@wp-typia/rest/client`
-  Backward-compatible alias of the root surface. It is not a distinct semantic
-  contract and may be removed in a future major once downstream imports settle.
+  Focused transport surface for endpoint creation, validated fetch helpers,
+  WordPress REST route resolution, validation utilities, and named runtime
+  errors.
 - `@wp-typia/rest/http`
-  Backward-compatible alias of the root surface. It remains publishable for
-  existing imports, but it is not a distinct decoder-only contract in the
-  current major line.
+  Focused decoder surface for query/header/parameter decoders plus the shared
+  validation helper utilities they return.
 - `@wp-typia/rest/react`
   React-only cache and hook layer.
 
-The root `@wp-typia/rest` entry stays transport-oriented. If you want query and
-mutation hooks on top of those WordPress helpers, use the React-only subpath:
+Prefer the root entry when you want the shortest import path. Reach for
+`./client` or `./http` when a narrower surface makes the consumer boundary
+clearer. Query and mutation hooks still live on the React-only subpath:
 
 ```ts
 import { useEndpointMutation, useEndpointQuery } from '@wp-typia/rest/react';
@@ -69,7 +71,7 @@ are reserved for public runtime misconfiguration or assertion APIs:
 If you need a canonical REST URL for a route path, use:
 
 ```ts
-import { resolveRestRouteUrl } from '@wp-typia/rest';
+import { resolveRestRouteUrl } from '@wp-typia/rest/client';
 
 const url = resolveRestRouteUrl('/my-namespace/v1/demo');
 ```
@@ -78,7 +80,7 @@ If you want Typia-powered HTTP decoding, compile the decoder in the consumer pro
 
 ```ts
 import typia from 'typia';
-import { createQueryDecoder } from '@wp-typia/rest';
+import { createQueryDecoder } from '@wp-typia/rest/http';
 
 const decodeQuery = createQueryDecoder(
   typia.http.createValidateQuery<MyQuery>(),
