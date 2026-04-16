@@ -23,7 +23,7 @@
     "examples:dev": "bun run --filter my-typia-block --if-present dev",
     "examples:dev:persistence": "bun run --filter persistence-examples --if-present dev",
     "examples:dev:compound": "bun run --filter compound-patterns --if-present dev",
-    "examples:lint": "(cd examples/my-typia-block && bun run lint) && (cd examples/persistence-examples && bun run lint) && (cd examples/compound-patterns && bun run lint) && bun run --filter api-contract-adapter-poc --if-present lint",
+    "examples:lint": "node scripts/run-examples-lint.mjs",
     "examples:format": "bun run --filter my-typia-block --if-present format && bun run --filter persistence-examples --if-present format && bun run --filter compound-patterns --if-present format && bun run --filter api-contract-adapter-poc --if-present format",
     "examples:typecheck": "bun run --filter my-typia-block --if-present typecheck && bun run --filter persistence-examples --if-present typecheck && bun run --filter compound-patterns --if-present typecheck && bun run --filter api-contract-adapter-poc --if-present typecheck",
     "examples:test:e2e": "bun run examples:build && bun run examples:wp-env:wait:test && playwright test",

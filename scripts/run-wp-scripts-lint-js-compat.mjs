@@ -10,7 +10,7 @@ const LINT_CONFIG_FILES = [
   '.eslintrc.json',
   '.eslintrc.yaml',
   '.eslintrc.yml',
-  'eslintrc.config.js',
+  'eslint.config.js',
   '.eslintrc',
 ];
 
@@ -61,7 +61,11 @@ const eslintBinPath = path.join(
 );
 const defaultConfigArgs = hasLintConfig
   ? []
-  : ['--no-eslintrc', '--config', path.join(wpScriptsDir, 'config', '.eslintrc.js')];
+  : [
+      '--no-eslintrc',
+      '--config',
+      path.join(wpScriptsDir, 'config', '.eslintrc.js'),
+    ];
 const defaultIgnoreArgs =
   hasArg(args, '--ignore-path') || hasProjectFile(projectDir, '.eslintignore')
     ? []

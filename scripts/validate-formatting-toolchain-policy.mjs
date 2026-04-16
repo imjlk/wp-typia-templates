@@ -210,6 +210,10 @@ export function validateFormattingToolchainPolicy(
     const examplePackageJson = readRelativeJson(repoRoot, relativePath);
     const exampleScripts = examplePackageJson.scripts ?? {};
     const exampleEslint = examplePackageJson.devDependencies?.eslint;
+    const wrapperPath = path.resolve(
+      path.join(repoRoot, path.dirname(relativePath)),
+      policy.exampleWpScriptsLintJsScript.replace(/^node\s+/, ''),
+    );
 
     if (exampleEslint !== policy.exampleWpScriptsEslintVersion) {
       errors.push(
@@ -220,6 +224,12 @@ export function validateFormattingToolchainPolicy(
     if (exampleScripts['lint:js'] !== policy.exampleWpScriptsLintJsScript) {
       errors.push(
         `${relativePath} must keep scripts["lint:js"]="${policy.exampleWpScriptsLintJsScript}", found ${JSON.stringify(exampleScripts['lint:js'] ?? null)}.`,
+      );
+    }
+
+    if (!fs.existsSync(wrapperPath)) {
+      errors.push(
+        `${relativePath} must resolve scripts["lint:js"]="${policy.exampleWpScriptsLintJsScript}" to an existing wrapper file, missing ${JSON.stringify(path.relative(repoRoot, wrapperPath))}.`,
       );
     }
   }

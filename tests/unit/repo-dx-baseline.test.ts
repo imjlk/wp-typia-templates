@@ -62,13 +62,17 @@ describe('repository DX baseline', () => {
     );
     expect(scripts).toHaveProperty('examples:lint');
     expect(scripts).toHaveProperty('examples:format');
-    expect(scripts['examples:lint']).toContain('cd examples/my-typia-block');
+    expect(scripts['examples:lint']).toBe('node scripts/run-examples-lint.mjs');
     expect(scripts['examples:lint']).toContain(
-      'bun run --filter api-contract-adapter-poc --if-present lint',
+      'scripts/run-examples-lint.mjs',
     );
     expect(scripts['examples:format']).toContain(
       'bun run --filter api-contract-adapter-poc --if-present format',
     );
+
+    expect(
+      fs.existsSync(path.join(repoRoot, 'scripts', 'run-examples-lint.mjs')),
+    ).toBe(true);
   });
 
   test('WordPress example workspaces keep the ESLint 8 compat wrapper', () => {

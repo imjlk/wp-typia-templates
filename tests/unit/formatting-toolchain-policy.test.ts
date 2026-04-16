@@ -72,6 +72,11 @@ function createFormattingPolicyRepo() {
     writeJson(examplePackagePath, examplePackageJson);
   }
 
+  writeText(
+    path.join(repoRoot, "scripts/run-wp-scripts-lint-js-compat.mjs"),
+    "export {};\n"
+  );
+
   for (const relativePath of policy.generatedPackageManifestPaths) {
     writeText(
       path.join(repoRoot, relativePath),
@@ -224,6 +229,21 @@ describe("validateFormattingToolchainPolicy", () => {
     );
     expect(result.errors).toContain(
       `examples/my-typia-block/package.json must keep scripts["lint:js"]="${FORMATTING_TOOLCHAIN_POLICY.exampleWpScriptsLintJsScript}", found "wp-scripts lint-js".`
+    );
+  });
+
+  test("fails when the WordPress example lint wrapper file is missing", () => {
+    const repoRoot = createFormattingPolicyRepo();
+    fs.rmSync(
+      path.join(repoRoot, "scripts/run-wp-scripts-lint-js-compat.mjs"),
+      { force: true }
+    );
+
+    const result = validateFormattingToolchainPolicy(repoRoot);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      'examples/my-typia-block/package.json must resolve scripts["lint:js"]="node ../../scripts/run-wp-scripts-lint-js-compat.mjs" to an existing wrapper file, missing "scripts/run-wp-scripts-lint-js-compat.mjs".'
     );
   });
 
