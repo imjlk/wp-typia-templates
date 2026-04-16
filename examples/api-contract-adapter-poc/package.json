@@ -10,7 +10,9 @@
 		"sync-typia-llm": "tsx scripts/sync-typia-llm.ts",
 		"build": "bun run typecheck",
 		"start": "tsx src/server.ts",
-		"typecheck": "bun run sync-typia-llm --check && tsc --noEmit"
+		"typecheck": "bun run sync-typia-llm --check && tsc --noEmit",
+		"lint": "bun run typecheck",
+		"format": "prettier --write \"package.json\" \"scripts/**/*.ts\" \"src/**/*.{ts,json}\" \"tsconfig*.json\""
 	},
 	"devDependencies": {
 		"@wp-typia/api-client": "workspace:*",
@@ -18,6 +20,7 @@
 		"ajv": "^8.18.0",
 		"@types/node": "^24.0.0",
 		"@wp-typia/project-tools": "workspace:*",
+		"prettier": "3.8.2",
 		"ts-patch": "^3.3.0",
 		"tsx": "^4.20.5",
 		"typescript": "^5.9.2",
