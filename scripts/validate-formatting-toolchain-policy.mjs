@@ -18,6 +18,7 @@ export const FORMATTING_TOOLCHAIN_POLICY = Object.freeze({
     'packages/wp-typia-project-tools/templates/_shared/compound/persistence/package.json.mustache',
   ]),
   workspaceExamplePackagePaths: Object.freeze([
+    'examples/api-contract-adapter-poc/package.json',
     'examples/my-typia-block/package.json',
     'examples/persistence-examples/package.json',
     'examples/compound-patterns/package.json',

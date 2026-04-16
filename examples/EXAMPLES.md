@@ -50,6 +50,20 @@ It demonstrates:
 - a hidden child block constrained by `parent`
 - template-seeded internal items that remain valid after save and reopen
 
+## `api-contract-adapter-poc`
+
+[`examples/api-contract-adapter-poc`](./api-contract-adapter-poc) is the
+non-WordPress proof of concept for serving the shared endpoint manifests outside
+PHP.
+
+It demonstrates:
+
+- a portable adapter server that mounts the same route table as the shared
+  endpoint manifest and OpenAPI document
+- repo-local `typia.llm` artifact generation for adapter-facing REST contracts
+- explicit `lint` and `format` scripts even though it does not use the
+  `wp-scripts` block toolchain
+
 ## Quick Start
 
 ```bash

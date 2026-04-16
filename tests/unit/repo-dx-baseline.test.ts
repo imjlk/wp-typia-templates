@@ -54,7 +54,14 @@ describe('repository DX baseline', () => {
       /const repoIgnores = \[[\s\S]*["']examples\/\*\*["']/,
     );
     expect(scripts).toHaveProperty('examples:lint');
+    expect(scripts).toHaveProperty('examples:format');
     expect(scripts['examples:lint']).toContain('ESLINT_USE_FLAT_CONFIG=false');
+    expect(scripts['examples:lint']).toContain(
+      'bun run --filter api-contract-adapter-poc --if-present lint',
+    );
+    expect(scripts['examples:format']).toContain(
+      'bun run --filter api-contract-adapter-poc --if-present format',
+    );
   });
 
   test('.vscode workspace baseline exists', () => {

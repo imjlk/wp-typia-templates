@@ -51,6 +51,10 @@ bun run migration:verify
 bun run migration:fuzz -- --all --iterations 25 --seed 1
 ```
 
+Migration commands use the workspace-local `wp-typia` bin, so the reference app
+tracks the checked-out CLI without needing a manual version pin update on every
+release.
+
 ## 📝 Type System
 
 Edit `src/types.ts` to define your block attributes:

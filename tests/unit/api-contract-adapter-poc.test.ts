@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'bun:test';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import type { EndpointManifestEndpointDefinition } from '../../packages/wp-typia-block-runtime/src/metadata-core';
 import counterOpenApiDocument from '../../examples/persistence-examples/src/blocks/counter/api.openapi.json';
@@ -39,6 +41,25 @@ function getOpenApiRouteSignatures(document: {
 }
 
 describe('REST contract adapter PoC', () => {
+	test('keeps explicit lint and format scripts despite not using the wp-scripts block toolchain', () => {
+		const packageJson = JSON.parse(
+			fs.readFileSync(
+				path.join(
+					import.meta.dir,
+					'../../examples/api-contract-adapter-poc/package.json',
+				),
+				'utf8',
+			),
+		) as {
+			devDependencies: Record<string, string>;
+			scripts: Record<string, string>;
+		};
+
+		expect(packageJson.scripts.lint).toBe('bun run typecheck');
+		expect(packageJson.scripts.format).toContain('prettier --write');
+		expect(packageJson.devDependencies.prettier).toBe('3.8.2');
+	});
+
 	test('mounts the same route table described by the shared endpoint manifest and OpenAPI document', () => {
 		const adapterRoutes = getCounterAdapterRouteTable()
 			.map(toRouteSignature)

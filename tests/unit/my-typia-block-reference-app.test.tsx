@@ -15,6 +15,7 @@ describe('my-typia-block reference app helpers', () => {
     const packageJson = JSON.parse(
       fs.readFileSync(path.join(exampleDir, 'package.json'), 'utf8'),
     ) as {
+      devDependencies: Record<string, string>;
       scripts: Record<string, string>;
     };
     const blockJson = JSON.parse(
@@ -34,23 +35,18 @@ describe('my-typia-block reference app helpers', () => {
       path.join(exampleDir, 'my-typia-block.php'),
       'utf8',
     );
-    const wpTypiaPackage = JSON.parse(
-      fs.readFileSync(
-        path.join(import.meta.dir, '../../packages/wp-typia/package.json'),
-        'utf8',
-      ),
-    ) as {
-      version: string;
-    };
-
+    expect(packageJson.devDependencies['wp-typia']).toBe('workspace:*');
     expect(packageJson.scripts['migration:init']).toBe(
-      `npx --yes wp-typia@${wpTypiaPackage.version} migrate init --current-migration-version v1`,
+      'wp-typia migrate init --current-migration-version v1',
     );
     expect(packageJson.scripts['migration:scaffold']).toBe(
-      `npx --yes wp-typia@${wpTypiaPackage.version} migrate scaffold`,
+      'wp-typia migrate scaffold',
     );
     expect(packageJson.scripts['migration:verify']).toBe(
-      `npx --yes wp-typia@${wpTypiaPackage.version} migrate verify --all`,
+      'wp-typia migrate verify --all',
+    );
+    expect(packageJson.scripts['migration:doctor']).toBe(
+      'wp-typia migrate doctor --all',
     );
     expect(blockJson.textdomain).toBe('my-typia-block');
     expect(snapshotBlockJson.textdomain).toBe('my-typia-block');
