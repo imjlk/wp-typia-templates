@@ -30,6 +30,17 @@ test("migration arg parser accepts plan and wizard commands", () => {
 	expect(wizard.flags.toMigrationVersion).toBe("current");
 });
 
+test("migrations runtime keeps command parsing and maintenance helpers in dedicated modules", () => {
+	const runtimeDir = path.join(import.meta.dir, "../src/runtime");
+	const migrationsSource = fs.readFileSync(
+		path.join(runtimeDir, "migrations.ts"),
+		"utf8",
+	);
+
+	expect(migrationsSource).toContain("./migration-command-surface.js");
+	expect(migrationsSource).toContain("./migration-maintenance.js");
+});
+
 test("migration arg parser rejects legacy semver-era flag names with reset guidance", () => {
 	for (const argv of [
 		["init", "--current-version", "1.0.0"],
