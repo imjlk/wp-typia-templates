@@ -17,6 +17,8 @@ export const TYPESCRIPT_RUNTIME_PACKAGE_POLICIES = [
 		requiredTypeScriptImportFiles: [
 			"src/metadata-analysis.ts",
 			"src/metadata-parser.ts",
+			"src/metadata-parser-symbols.ts",
+			"src/metadata-parser-tags.ts",
 		],
 		runtimeSourceRoots: ["src"],
 		typescriptPlacement: TYPESCRIPT_DEPENDENCY_POLICY.dependency,
