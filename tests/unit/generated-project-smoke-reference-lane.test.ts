@@ -15,6 +15,10 @@ test("generated project smoke script supports a reference example lane", () => {
 	expect(smokeScript).toContain("runExampleProjectSmoke");
 	expect(smokeScript).toContain("assertExampleProjectScaffold");
 	expect(smokeScript).toContain("ensureCopiedExampleSupportDependencies");
+	expect(smokeScript).toContain("collectProjectFilePaths");
+	expect(smokeScript).toContain("shouldRunMigrationSmoke");
+	expect(smokeScript).toContain('exampleProject === "my-typia-block"');
+	expect(smokeScript).toContain('path.join(projectDir, "build", "blocks", blockSlug)');
 	expect(smokeScript).toContain('devDependencies["bun-types"]');
 	expect(smokeScript).toContain('devDependencies["@types/node"]');
 	expect(smokeScript).toContain(
@@ -24,14 +28,18 @@ test("generated project smoke script supports a reference example lane", () => {
 	expect(smokeScript).toContain('path.resolve(__dirname, "..", "examples", exampleProject)');
 });
 
-test("CI generated smoke matrix includes the reference app lane", () => {
+test("CI generated smoke matrix includes the checked-in example lanes", () => {
 	const ciWorkflow = readFileSync(
 		join(repoRoot, ".github", "workflows", "ci.yml"),
 		"utf8",
 	);
 
 	expect(ciWorkflow).toContain("example_project: my-typia-block");
+	expect(ciWorkflow).toContain("example_project: compound-patterns");
+	expect(ciWorkflow).toContain("example_project: persistence-examples");
 	expect(ciWorkflow).toContain("smoke-reference-my-typia-block-bun");
+	expect(ciWorkflow).toContain("smoke-example-compound-patterns-bun");
+	expect(ciWorkflow).toContain("smoke-example-persistence-examples-bun");
 	expect(ciWorkflow).toContain('if [ -n "${{ matrix.template || \'\' }}" ]; then');
 	expect(ciWorkflow).toContain('args+=(--template "${{ matrix.template }}")');
 	expect(ciWorkflow).toContain('--example-project "${{ matrix.example_project }}"');
