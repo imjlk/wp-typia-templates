@@ -28,6 +28,8 @@ describe("typescript-runtime-policy", () => {
 
 		expect(importFiles).toContain("src/metadata-analysis.ts");
 		expect(importFiles).toContain("src/metadata-parser.ts");
+		expect(importFiles).toContain("src/metadata-parser-symbols.ts");
+		expect(importFiles).toContain("src/metadata-parser-tags.ts");
 	});
 
 	test("detects side-effect imports but ignores type-only TypeScript imports", () => {
