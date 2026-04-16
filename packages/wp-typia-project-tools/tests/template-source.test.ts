@@ -285,6 +285,18 @@ test("workspace template package identity is defined once and imported by runtim
   );
 });
 
+test("template-source stays as a facade over dedicated locator, seed, and normalization helpers", () => {
+  const runtimeDir = path.join(packageRoot, "src", "runtime");
+  const templateSource = fs.readFileSync(
+    path.join(runtimeDir, "template-source.ts"),
+    "utf8"
+  );
+
+  expect(templateSource).toContain("./template-source-locators.js");
+  expect(templateSource).toContain("./template-source-seeds.js");
+  expect(templateSource).toContain("./template-source-normalization.js");
+});
+
 test("official workspace template scaffolds through the local npm template resolver", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-template");
 
