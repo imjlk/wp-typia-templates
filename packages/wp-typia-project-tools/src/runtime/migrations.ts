@@ -9,17 +9,32 @@ import {
 	SNAPSHOT_DIR,
 } from "./migration-constants.js";
 import { createMigrationDiff } from "./migration-diff.js";
-import { createMigrationFuzzPlan } from "./migration-fuzz-plan.js";
 import { createEdgeFixtureDocument, ensureEdgeFixtureFile } from "./migration-fixtures.js";
+import {
+	collectGeneratedMigrationEntries,
+	regenerateGeneratedArtifacts,
+} from "./migration-generated-artifacts.js";
+import {
+	assertDistinctMigrationEdge,
+	collectFixtureTargets,
+	createMigrationPlanNextSteps,
+	createMissingProjectSnapshotMessage,
+	formatEdgeCommand,
+	formatScaffoldCommand,
+	getSelectedEntriesByBlock,
+	hasSnapshotForVersion,
+	isLegacySingleBlockProject,
+	isSnapshotOptionalForBlockVersion,
+	listPreviewableLegacyVersions,
+	resolveLegacyVersions,
+} from "./migration-planning.js";
 import {
 	assertRuleHasNoTodos,
 	assertNoLegacySemverMigrationWorkspace,
 	discoverMigrationInitLayout,
-	discoverMigrationEntries,
 	ensureAdvancedMigrationProject,
 	ensureMigrationDirectories,
 	getFixtureFilePath,
-	getAvailableSnapshotVersionsForBlock,
 	getGeneratedDirForBlock,
 	getProjectPaths,
 	getRuleFilePath,
@@ -60,12 +75,10 @@ import {
 import { readWorkspaceInventory } from "./workspace-inventory.js";
 import { getInvalidWorkspaceProjectReason, tryResolveWorkspaceProject } from "./workspace-project.js";
 import type {
-	ManifestDocument,
 	MigrationBlockConfig,
 	MigrationProjectState,
 	JsonObject,
 	ParsedMigrationArgs,
-	GeneratedMigrationEntry,
 	RenderLine,
 } from "./migration-types.js";
 import type { ReadlinePrompt } from "./cli-prompt.js";
@@ -1330,126 +1343,6 @@ function parseNonNegativeInteger(value: string | undefined, label: string): numb
 	return parsed;
 }
 
-function resolveLegacyVersions(
-	state: ReturnType<typeof loadMigrationProject>,
-	{
-		all = false,
-		availableVersions,
-		fromMigrationVersion,
-	}: { all?: boolean; availableVersions?: string[]; fromMigrationVersion?: string },
-): string[] {
-	const configuredLegacyVersions = listConfiguredLegacyVersions(state);
-	const legacyVersions = availableVersions ?? configuredLegacyVersions;
-
-	if (fromMigrationVersion) {
-		if (!legacyVersions.includes(fromMigrationVersion)) {
-			throw new Error(
-				legacyVersions.length === 0
-					? availableVersions && configuredLegacyVersions.length > 0
-						? `Unsupported migration version: ${fromMigrationVersion}. No previewable legacy migration versions are available yet because none currently have snapshot coverage. ` +
-							`Restore or recapture the missing snapshots first.`
-						: `Unsupported migration version: ${fromMigrationVersion}. No legacy migration versions are configured yet. ` +
-							`Capture an older schema release with \`wp-typia migrate snapshot --migration-version <label>\` first.`
-					: `Unsupported migration version: ${fromMigrationVersion}. Available legacy migration versions: ${legacyVersions.join(", ")}.`,
-			);
-		}
-		return [fromMigrationVersion];
-	}
-
-	if (all) {
-		return legacyVersions;
-	}
-
-	return legacyVersions.slice(0, 1);
-}
-
-function listConfiguredLegacyVersions(
-	state: ReturnType<typeof loadMigrationProject>,
-): string[] {
-	return state.config.supportedMigrationVersions
-		.filter((version) => version !== state.config.currentMigrationVersion)
-		.sort(compareMigrationVersionLabels);
-}
-
-function listPreviewableLegacyVersions(
-	state: ReturnType<typeof loadMigrationProject>,
-): string[] {
-	return [...new Set(
-		state.blocks.flatMap((block) =>
-			getAvailableSnapshotVersionsForBlock(
-				state.projectDir,
-				state.config.supportedMigrationVersions,
-				block,
-			),
-		),
-	)]
-		.filter((version) => version !== state.config.currentMigrationVersion)
-		.sort(compareMigrationVersionLabels);
-}
-
-function collectGeneratedMigrationEntries(
-	state: ReturnType<typeof loadMigrationProject>,
-): GeneratedMigrationEntry[] {
-	return discoverMigrationEntries(state).map((entry) => {
-		const block = state.blocks.find((target) => target.key === entry.block.key);
-		if (!block) {
-			throw new Error(`Unknown migration block target: ${entry.block.key}`);
-		}
-		const diff = createMigrationDiff(state, entry.block, entry.fromVersion, entry.toVersion);
-		const legacyManifest = readJson<ManifestDocument>(
-			getSnapshotManifestPath(state.projectDir, entry.block, entry.fromVersion),
-		);
-
-		return {
-			diff,
-			entry,
-			fuzzPlan: createMigrationFuzzPlan(legacyManifest, block.currentManifest, diff),
-			riskSummary: createMigrationRiskSummary(diff),
-		};
-	});
-}
-
-function regenerateGeneratedArtifacts(projectDir: string): void {
-	const state = loadMigrationProject(projectDir);
-	const generatedEntries = collectGeneratedMigrationEntries(state);
-	for (const block of state.blocks) {
-		const blockGeneratedEntries = generatedEntries.filter(({ entry }) => entry.block.key === block.key);
-		const entries = blockGeneratedEntries.map(({ entry }) => entry);
-		const generatedDir = getGeneratedDirForBlock(state.paths, block);
-		fs.mkdirSync(generatedDir, { recursive: true });
-		fs.writeFileSync(
-			path.join(generatedDir, "registry.ts"),
-			renderMigrationRegistryFile(state, block.key, blockGeneratedEntries),
-			"utf8",
-		);
-		fs.writeFileSync(
-			path.join(generatedDir, "deprecated.ts"),
-			renderGeneratedDeprecatedFile(state, block.key, entries),
-			"utf8",
-		);
-		fs.writeFileSync(
-			path.join(generatedDir, "verify.ts"),
-			renderVerifyFile(state, block.key, entries),
-			"utf8",
-		);
-		fs.writeFileSync(
-			path.join(generatedDir, "fuzz.ts"),
-			renderFuzzFile(state, block.key, blockGeneratedEntries),
-			"utf8",
-		);
-	}
-	fs.writeFileSync(
-		path.join(state.paths.generatedDir, "index.ts"),
-		renderGeneratedMigrationIndexFile(state, generatedEntries.map(({ entry }) => entry)),
-		"utf8",
-	);
-	fs.writeFileSync(
-		path.join(projectDir, ROOT_PHP_MIGRATION_REGISTRY),
-		renderPhpMigrationRegistryFile(state, generatedEntries.map(({ entry }) => entry)),
-		"utf8",
-	);
-}
-
 /**
  * Initialize migration scaffolding for one or more block targets.
  *
@@ -1490,151 +1383,6 @@ export function seedProjectMigrations(
 	return loadMigrationProject(projectDir);
 }
 
-function hasSnapshotForVersion(
-	state: ReturnType<typeof loadMigrationProject>,
-	block: ReturnType<typeof loadMigrationProject>["blocks"][number],
-	version: string,
-): boolean {
-	return fs.existsSync(getSnapshotManifestPath(state.projectDir, block, version));
-}
-
-function getSelectedEntriesByBlock(
-	state: ReturnType<typeof loadMigrationProject>,
-	targetVersions: string[],
-	command: "fuzz" | "verify",
-) {
-	const discoveredEntries = discoverMigrationEntries(state);
-	const discoveredEntryKeys = new Set(
-		discoveredEntries.map((entry) => `${entry.block.key}:${entry.fromVersion}`),
-	);
-	const missingEntries = targetVersions.flatMap((version) =>
-		state.blocks
-			.filter((block) => hasSnapshotForVersion(state, block, version))
-			.filter((block) => !discoveredEntryKeys.has(`${block.key}:${version}`))
-			.map((block) => ({ block, version })),
-	);
-
-	if (missingEntries.length > 0) {
-		const missingLabels = missingEntries
-			.map(({ block, version }) => `${block.blockName} @ ${version}`)
-			.join(", ");
-		const missingVersions = [...new Set(missingEntries.map(({ version }) => version))].sort(compareMigrationVersionLabels);
-		throw new Error(
-			`Missing migration ${command} inputs for ${missingLabels}. ` +
-				`Run \`${formatScaffoldCommand(missingVersions)}\` first, then \`wp-typia migrate doctor --all\` if the workspace should already be scaffolded.`,
-		);
-	}
-
-	return groupEntriesByBlock(
-		discoveredEntries.filter((entry) => targetVersions.includes(entry.fromVersion)),
-	);
-}
-
-function isSnapshotOptionalForBlockVersion(
-	state: ReturnType<typeof loadMigrationProject>,
-	block: ReturnType<typeof loadMigrationProject>["blocks"][number],
-	version: string,
-): boolean {
-	if (block.layout !== "multi") {
-		return false;
-	}
-
-	const introducedVersions = [...new Set(state.config.supportedMigrationVersions)]
-		.filter((candidateVersion) => hasSnapshotForVersion(state, block, candidateVersion))
-		.sort(compareMigrationVersionLabels);
-	const firstIntroducedVersion = introducedVersions[0];
-
-	if (!firstIntroducedVersion) {
-		return false;
-	}
-
-	return compareMigrationVersionLabels(version, firstIntroducedVersion) < 0;
-}
-
-function groupEntriesByBlock(entries: ReturnType<typeof discoverMigrationEntries>): Record<string, typeof entries> {
-	return entries.reduce<Record<string, typeof entries>>((accumulator, entry) => {
-		if (!accumulator[entry.block.key]) {
-			accumulator[entry.block.key] = [];
-		}
-		accumulator[entry.block.key].push(entry);
-		return accumulator;
-	}, {});
-}
-
-function isLegacySingleBlockProject(
-	state: ReturnType<typeof loadMigrationProject>,
-): boolean {
-	return state.blocks.length === 1 && state.blocks[0]?.layout === "legacy";
-}
-
-function assertDistinctMigrationEdge(
-	command: "diff" | "plan" | "scaffold",
-	fromVersion: string,
-	toVersion: string,
-): void {
-	if (fromVersion === toVersion) {
-		throw new Error(
-			`\`migrate ${command}\` requires different source and target migration versions, but both resolved to ${fromVersion}. ` +
-				`Choose an older snapshot with \`--from-migration-version <label>\` or capture a newer schema release with \`wp-typia migrate snapshot --migration-version <label>\` first.`,
-		);
-	}
-}
-
-function createMigrationPlanNextSteps(
-	fromVersion: string,
-	targetVersion: string,
-	currentVersion: string,
-): string[] {
-	if (targetVersion !== currentVersion) {
-		return [
-			formatEdgeCommand("scaffold", fromVersion, targetVersion, currentVersion),
-		];
-	}
-
-	return [
-		formatEdgeCommand("scaffold", fromVersion, targetVersion, currentVersion),
-		`wp-typia migrate doctor --from-migration-version ${fromVersion}`,
-		`wp-typia migrate verify --from-migration-version ${fromVersion}`,
-		`wp-typia migrate fuzz --from-migration-version ${fromVersion}`,
-	];
-}
-
-function formatEdgeCommand(
-	command: "fixtures" | "scaffold",
-	fromVersion: string,
-	targetVersion: string,
-	currentVersion: string,
-): string {
-	return targetVersion === currentVersion
-		? `wp-typia migrate ${command} --from-migration-version ${fromVersion}`
-		: `wp-typia migrate ${command} --from-migration-version ${fromVersion} --to-migration-version ${targetVersion}`;
-}
-
-function createMissingProjectSnapshotMessage(
-	state: ReturnType<typeof loadMigrationProject>,
-	fromVersion: string,
-): string {
-	const snapshotVersions = [...new Set(
-		state.blocks.flatMap((block) =>
-			getAvailableSnapshotVersionsForBlock(state.projectDir, state.config.supportedMigrationVersions, block),
-		),
-	)].sort(compareMigrationVersionLabels);
-
-	return snapshotVersions.length === 0
-		? `No migration block targets have a snapshot for ${fromVersion}. No snapshots exist yet in this project. ` +
-				`Run \`wp-typia migrate snapshot --migration-version ${fromVersion}\` first if you want to preserve that schema state.`
-		: `No migration block targets have a snapshot for ${fromVersion}. ` +
-				`Available snapshot versions in this project: ${snapshotVersions.join(", ")}. ` +
-				`Run \`wp-typia migrate snapshot --migration-version ${fromVersion}\` first if you want to preserve that schema state.`;
-}
-
-function formatScaffoldCommand(versions: string[]): string {
-	const uniqueVersions = [...new Set(versions)].sort(compareMigrationVersionLabels);
-	return uniqueVersions.length === 1
-		? `wp-typia migrate scaffold --from-migration-version ${uniqueVersions[0]}`
-		: "wp-typia migrate scaffold --from-migration-version <label>";
-}
-
 function throwLegacyMigrationFlagError(flag: string): never {
 	const replacement =
 		flag.startsWith("--current-version")
@@ -1672,21 +1420,4 @@ function promptForConfirmation(message: string): boolean {
 
 	const normalized = answer.trim().toLowerCase();
 	return normalized === "y" || normalized === "yes";
-}
-
-function collectFixtureTargets(
-	state: ReturnType<typeof loadMigrationProject>,
-	targetVersions: string[],
-	targetVersion: string,
-) {
-	return targetVersions.flatMap((version) =>
-		state.blocks
-			.filter((block) => hasSnapshotForVersion(state, block, version))
-			.map((block) => ({
-				block,
-				fixturePath: getFixtureFilePath(state.paths, block, version, targetVersion),
-				scopedLabel: `${block.key}@${version}`,
-				version,
-			})),
-	);
 }
