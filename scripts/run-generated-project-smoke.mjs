@@ -343,7 +343,9 @@ function refreshCurrentMigrationSnapshot(projectDir, runtime) {
 	const configSource = fs.readFileSync(configPath, "utf8");
 	const match = configSource.match(/currentMigrationVersion:\s*['"]([^'"]+)['"]/u);
 	if (!match?.[1]) {
-		return;
+		throw new Error(
+			`Expected ${configPath} to declare currentMigrationVersion in a supported format`,
+		);
 	}
 
 	run(runtime, [entryPath, "migrate", "snapshot", "--migration-version", match[1]], {
@@ -1058,13 +1060,17 @@ function runExampleProjectSmoke({
 	const [buildCommand, buildArgs] = getRunCommand(packageManager);
 	run(buildCommand, buildArgs, { cwd: exampleDir });
 
-	if (typeof packageJson.scripts?.typecheck === "string") {
-		const [typecheckCommand, typecheckArgs] = getRunScriptCommand(
-			packageManager,
-			"typecheck",
+	if (typeof packageJson.scripts?.typecheck !== "string") {
+		throw new Error(
+			`Missing "typecheck" script in ${path.join(exampleDir, "package.json")} for example-project smoke`,
 		);
-		run(typecheckCommand, typecheckArgs, { cwd: exampleDir });
 	}
+
+	const [typecheckCommand, typecheckArgs] = getRunScriptCommand(
+		packageManager,
+		"typecheck",
+	);
+	run(typecheckCommand, typecheckArgs, { cwd: exampleDir });
 
 	assertExampleProjectScaffold(exampleDir, exampleProject);
 }

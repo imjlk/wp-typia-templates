@@ -376,15 +376,17 @@ jobs:
 
       - name: Run generated project smoke
         run: |
-          args=(
-            --runtime "${{ matrix.runtime }}"
-            --template "${{ matrix.template }}"
-            --package-manager "${{ matrix.package_manager }}"
-            --project-name "${{ matrix.project_name }}"
-          )
-          if [ -n "${{ matrix.variant || '' }}" ]; then
-            args+=(--variant "${{ matrix.variant }}")
-          fi
+        args=(
+          --runtime "${{ matrix.runtime }}"
+          --package-manager "${{ matrix.package_manager }}"
+          --project-name "${{ matrix.project_name }}"
+        )
+        if [ -n "${{ matrix.template || '' }}" ]; then
+          args+=(--template "${{ matrix.template }}")
+        fi
+        if [ -n "${{ matrix.variant || '' }}" ]; then
+          args+=(--variant "${{ matrix.variant }}")
+        fi
           if [ -n "${{ matrix.example_project || '' }}" ]; then
             args+=(--example-project "${{ matrix.example_project }}")
           fi

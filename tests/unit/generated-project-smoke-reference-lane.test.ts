@@ -17,6 +17,10 @@ test("generated project smoke script supports a reference example lane", () => {
 	expect(smokeScript).toContain("ensureCopiedExampleSupportDependencies");
 	expect(smokeScript).toContain('devDependencies["bun-types"]');
 	expect(smokeScript).toContain('devDependencies["@types/node"]');
+	expect(smokeScript).toContain(
+		'Expected ${configPath} to declare currentMigrationVersion in a supported format'
+	);
+	expect(smokeScript).toContain('Missing "typecheck" script in');
 	expect(smokeScript).toContain('path.resolve(__dirname, "..", "examples", exampleProject)');
 });
 
@@ -28,5 +32,7 @@ test("CI generated smoke matrix includes the reference app lane", () => {
 
 	expect(ciWorkflow).toContain("example_project: my-typia-block");
 	expect(ciWorkflow).toContain("smoke-reference-my-typia-block-bun");
+	expect(ciWorkflow).toContain('if [ -n "${{ matrix.template || \'\' }}" ]; then');
+	expect(ciWorkflow).toContain('args+=(--template "${{ matrix.template }}")');
 	expect(ciWorkflow).toContain('--example-project "${{ matrix.example_project }}"');
 });
