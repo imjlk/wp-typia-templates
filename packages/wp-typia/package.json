@@ -65,7 +65,7 @@
     "@bunli/tui": "0.6.0",
     "@bunli/utils": "0.6.0",
     "@wp-typia/api-client": "^0.4.4",
-    "@wp-typia/project-tools": "0.16.12",
+    "@wp-typia/project-tools": "0.16.11",
     "better-result": "^2.7.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
