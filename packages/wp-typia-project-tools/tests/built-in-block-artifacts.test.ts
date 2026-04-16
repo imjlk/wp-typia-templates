@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, test } from 'bun:test';
+import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -105,6 +106,7 @@ function summarizeArtifactAttributes(
 }
 
 type ArtifactAttributeSummary = ReturnType<typeof summarizeArtifactAttributes>;
+type CodeArtifactHashSummary = Record<string, string>;
 
 const EXPECTED_ARTIFACT_ATTRIBUTE_SUMMARIES: Record<
   BuiltInTemplateId,
@@ -544,6 +546,88 @@ const EXPECTED_ARTIFACT_ATTRIBUTE_SUMMARIES: Record<
   ],
 };
 
+function summarizeCodeArtifacts(
+  codeArtifacts: ReturnType<typeof buildArtifacts>['codeArtifacts'],
+): CodeArtifactHashSummary {
+  return Object.fromEntries(
+    codeArtifacts.map((artifact) => [
+      artifact.relativePath,
+      createHash('sha256').update(artifact.source).digest('hex').slice(0, 16),
+    ]),
+  );
+}
+
+const EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES: Record<
+  BuiltInTemplateId,
+  CodeArtifactHashSummary
+> = {
+  basic: {
+    'src/block-metadata.ts': '50956333a97a824a',
+    'src/edit.tsx': 'ac2ae7eacefc1c3d',
+    'src/editor.scss': 'd0287f8349249da4',
+    'src/hooks.ts': '3c1b432bd711ee70',
+    'src/index.tsx': '0dafa14df856a6ea',
+    'src/manifest-defaults-document.ts': '16818959f3d5a7d6',
+    'src/manifest-document.ts': 'b8fffee2c728488e',
+    'src/render.php': 'cfa163e5806011fb',
+    'src/save.tsx': '7cd5f465672f0907',
+    'src/style.scss': '6e77df2f2a7aac8f',
+    'src/validators.ts': '5f1402b636e752d1',
+  },
+  interactivity: {
+    'src/block-metadata.ts': '50956333a97a824a',
+    'src/edit.tsx': '10d5fe627a60a1b5',
+    'src/editor.scss': '7da532bf2acdc7c1',
+    'src/hooks.ts': '3c1b432bd711ee70',
+    'src/index.tsx': '09971fea0bb30b8f',
+    'src/interactivity.ts': '8c1a9f2baf175d9d',
+    'src/manifest-defaults-document.ts': '16818959f3d5a7d6',
+    'src/manifest-document.ts': 'b8fffee2c728488e',
+    'src/save.tsx': 'fa086a11b472f7c0',
+    'src/style.scss': '7d77511799b41826',
+    'src/validators.ts': '1bd57292163b3488',
+  },
+  persistence: {
+    'src/block-metadata.ts': '50956333a97a824a',
+    'src/edit.tsx': 'a239c2e59d76e30c',
+    'src/hooks.ts': '3c1b432bd711ee70',
+    'src/index.tsx': 'b0a68949bcc558dc',
+    'src/interactivity.ts': '37e6d16e5df98fd4',
+    'src/manifest-defaults-document.ts': '16818959f3d5a7d6',
+    'src/manifest-document.ts': 'b8fffee2c728488e',
+    'src/render.php': '491b96676a2709ac',
+    'src/save.tsx': '1d87a20aecee4173',
+    'src/style.scss': 'a48f3de45038a032',
+    'src/validators.ts': '36295eb1f6a12ddc',
+  },
+  compound: {
+    'src/blocks/demo-compound-item/block-metadata.ts': '50956333a97a824a',
+    'src/blocks/demo-compound-item/edit.tsx': '9a4c290e05e8e8ad',
+    'src/blocks/demo-compound-item/hooks.ts': '485092aef1c4e019',
+    'src/blocks/demo-compound-item/index.tsx': '5b5805db42c0b1f6',
+    'src/blocks/demo-compound-item/manifest-defaults-document.ts':
+      '16818959f3d5a7d6',
+    'src/blocks/demo-compound-item/manifest-document.ts':
+      'b8fffee2c728488e',
+    'src/blocks/demo-compound-item/save.tsx': 'ee03c7f3e16d3a3e',
+    'src/blocks/demo-compound-item/validators.ts': '7123c8ea0e650172',
+    'src/blocks/demo-compound/block-metadata.ts': '50956333a97a824a',
+    'src/blocks/demo-compound/children.ts': '26513801ef796584',
+    'src/blocks/demo-compound/edit.tsx': 'efa27cbb540a19cb',
+    'src/blocks/demo-compound/hooks.ts': '485092aef1c4e019',
+    'src/blocks/demo-compound/index.tsx': 'c9d9139901e6e4b9',
+    'src/blocks/demo-compound/interactivity.ts': 'eddaf331fa622b91',
+    'src/blocks/demo-compound/manifest-defaults-document.ts':
+      '16818959f3d5a7d6',
+    'src/blocks/demo-compound/manifest-document.ts': 'b8fffee2c728488e',
+    'src/blocks/demo-compound/render.php': 'a4fc963cd33cebf0',
+    'src/blocks/demo-compound/save.tsx': '67a2bd4dce77cef6',
+    'src/blocks/demo-compound/style.scss': '41a7a2bbf5cd2a34',
+    'src/blocks/demo-compound/validators.ts': '71018b1d52460cf2',
+    'src/hooks.ts': '3c1b432bd711ee70',
+  },
+};
+
 describe('built-in block artifacts', () => {
   const tempRoot = createScaffoldTempRoot('wp-typia-built-in-artifacts-');
 
@@ -551,7 +635,7 @@ describe('built-in block artifacts', () => {
     cleanupScaffoldTempRoot(tempRoot);
   });
 
-  test('built-in code artifact assembly keeps template bodies in a dedicated module', () => {
+  test('built-in code artifact assembly keeps template bodies in family modules', () => {
     const assemblySource = fs.readFileSync(
       path.join(
         import.meta.dir,
@@ -560,11 +644,27 @@ describe('built-in block artifacts', () => {
       ),
       'utf8',
     );
-    const templateSource = fs.readFileSync(
+    const templateBarrelSource = fs.readFileSync(
       path.join(
         import.meta.dir,
         '..',
         'src/runtime/built-in-block-code-templates.ts',
+      ),
+      'utf8',
+    );
+    const basicTemplateSource = fs.readFileSync(
+      path.join(
+        import.meta.dir,
+        '..',
+        'src/runtime/built-in-block-code-templates/basic.ts',
+      ),
+      'utf8',
+    );
+    const compoundTemplateSource = fs.readFileSync(
+      path.join(
+        import.meta.dir,
+        '..',
+        'src/runtime/built-in-block-code-templates/compound.ts',
       ),
       'utf8',
     );
@@ -574,11 +674,28 @@ describe('built-in block artifacts', () => {
     );
     expect(assemblySource).not.toContain('const BASIC_EDIT_TEMPLATE =');
     expect(assemblySource).not.toContain('const PERSISTENCE_EDIT_TEMPLATE =');
-    expect(templateSource).toContain('export const BASIC_EDIT_TEMPLATE =');
-    expect(templateSource).toContain(
+    expect(templateBarrelSource).toContain(
+      'from "./built-in-block-code-templates/basic.js"',
+    );
+    expect(templateBarrelSource).toContain(
+      'from "./built-in-block-code-templates/compound.js"',
+    );
+    expect(basicTemplateSource).toContain('export const BASIC_EDIT_TEMPLATE =');
+    expect(compoundTemplateSource).toContain(
       'export const COMPOUND_PERSISTENCE_PARENT_INTERACTIVITY_TEMPLATE =',
     );
   });
+
+  test.each(['basic', 'interactivity', 'persistence', 'compound'] as const)(
+    'buildBuiltInCodeArtifacts preserves output hashes for %s',
+    (templateId) => {
+      const { codeArtifacts } = buildArtifacts(templateId);
+
+      expect(summarizeCodeArtifacts(codeArtifacts)).toEqual(
+        EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES[templateId],
+      );
+    },
+  );
 
   test('built-in template trees no longer ship structural Mustache files', () => {
     for (const relativePath of [
