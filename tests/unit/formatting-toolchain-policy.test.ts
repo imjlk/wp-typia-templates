@@ -34,13 +34,20 @@ function createFormattingPolicyRepo() {
 
   writeJson(path.join(repoRoot, "package.json"), {
     devDependencies: {
+      "@eslint/js": policy.eslintJsVersion,
+      "@typescript-eslint/eslint-plugin": policy.typescriptEslintVersion,
+      "@typescript-eslint/parser": policy.typescriptEslintVersion,
       "eslint-config-prettier": policy.eslintConfigPrettierVersion,
+      eslint: policy.eslintVersion,
       prettier: policy.prettierVersion,
     },
     scripts: {
       "ci:local":
         "bun run formatting-policy:validate && bun run format:check && bun run lint:all",
+      "format:write": policy.rootFormatWriteScript,
       "format:check": policy.rootFormatCheckScript,
+      "lint:fix": policy.rootLintFixScript,
+      "lint:repo": policy.rootLintScript,
       "formatting-policy:validate": policy.rootPolicyValidateScript,
     },
   });
@@ -52,6 +59,23 @@ function createFormattingPolicyRepo() {
       },
     });
   }
+
+  for (const relativePath of policy.wpScriptsExamplePackagePaths) {
+    const examplePackagePath = path.join(repoRoot, relativePath);
+    const examplePackageJson = JSON.parse(
+      fs.readFileSync(examplePackagePath, "utf8")
+    );
+    examplePackageJson.devDependencies.eslint = policy.exampleWpScriptsEslintVersion;
+    examplePackageJson.scripts = {
+      "lint:js": policy.exampleWpScriptsLintJsScript,
+    };
+    writeJson(examplePackagePath, examplePackageJson);
+  }
+
+  writeText(
+    path.join(repoRoot, "scripts/run-wp-scripts-lint-js-compat.mjs"),
+    "export {};\n"
+  );
 
   for (const relativePath of policy.generatedPackageManifestPaths) {
     writeText(
@@ -93,6 +117,25 @@ describe("validateFormattingToolchainPolicy", () => {
     );
   });
 
+  test("fails when the root ESLint stack drifts from the documented baseline", () => {
+    const repoRoot = createFormattingPolicyRepo();
+    const packageJsonPath = path.join(repoRoot, "package.json");
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+    packageJson.devDependencies.eslint = "9.0.0";
+    packageJson.devDependencies["@typescript-eslint/parser"] = "8.0.0";
+    writeJson(packageJsonPath, packageJson);
+
+    const result = validateFormattingToolchainPolicy(repoRoot);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      `package.json must declare devDependencies.eslint="${FORMATTING_TOOLCHAIN_POLICY.eslintVersion}", found "9.0.0".`
+    );
+    expect(result.errors).toContain(
+      `package.json must declare devDependencies["@typescript-eslint/parser"]="${FORMATTING_TOOLCHAIN_POLICY.typescriptEslintVersion}", found "8.0.0".`
+    );
+  });
+
   test("fails when ci:local or the lint workflow omits formatting gates", () => {
     const repoRoot = createFormattingPolicyRepo();
     const packageJsonPath = path.join(repoRoot, "package.json");
@@ -116,6 +159,25 @@ describe("validateFormattingToolchainPolicy", () => {
     );
     expect(result.errors).toContain(
       '.github/workflows/ci.yml lint job must include "run: bun run format:check".'
+    );
+  });
+
+  test("fails when root autofix commands drift from the documented baseline", () => {
+    const repoRoot = createFormattingPolicyRepo();
+    const packageJsonPath = path.join(repoRoot, "package.json");
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+    packageJson.scripts["lint:fix"] = "eslint . --fix";
+    packageJson.scripts["format:write"] = "prettier --write .";
+    writeJson(packageJsonPath, packageJson);
+
+    const result = validateFormattingToolchainPolicy(repoRoot);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      `package.json must keep scripts["lint:fix"]="${FORMATTING_TOOLCHAIN_POLICY.rootLintFixScript}", found "eslint . --fix".`
+    );
+    expect(result.errors).toContain(
+      `package.json must keep scripts["format:write"]="${FORMATTING_TOOLCHAIN_POLICY.rootFormatWriteScript}", found "prettier --write .".`
     );
   });
 
@@ -143,6 +205,45 @@ describe("validateFormattingToolchainPolicy", () => {
     );
     expect(result.errors).toContain(
       `packages/wp-typia-project-tools/templates/_shared/base/package.json.mustache must declare devDependencies.prettier="${FORMATTING_TOOLCHAIN_POLICY.prettierVersion}", found "2.8.8".`
+    );
+  });
+
+  test("fails when WordPress example lint compatibility drifts", () => {
+    const repoRoot = createFormattingPolicyRepo();
+    const exampleManifestPath = path.join(
+      repoRoot,
+      "examples/my-typia-block/package.json"
+    );
+    const examplePackageJson = JSON.parse(
+      fs.readFileSync(exampleManifestPath, "utf8")
+    );
+    examplePackageJson.devDependencies.eslint = "9.39.4";
+    examplePackageJson.scripts["lint:js"] = "wp-scripts lint-js";
+    writeJson(exampleManifestPath, examplePackageJson);
+
+    const result = validateFormattingToolchainPolicy(repoRoot);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      `examples/my-typia-block/package.json must declare devDependencies.eslint="${FORMATTING_TOOLCHAIN_POLICY.exampleWpScriptsEslintVersion}", found "9.39.4".`
+    );
+    expect(result.errors).toContain(
+      `examples/my-typia-block/package.json must keep scripts["lint:js"]="${FORMATTING_TOOLCHAIN_POLICY.exampleWpScriptsLintJsScript}", found "wp-scripts lint-js".`
+    );
+  });
+
+  test("fails when the WordPress example lint wrapper file is missing", () => {
+    const repoRoot = createFormattingPolicyRepo();
+    fs.rmSync(
+      path.join(repoRoot, "scripts/run-wp-scripts-lint-js-compat.mjs"),
+      { force: true }
+    );
+
+    const result = validateFormattingToolchainPolicy(repoRoot);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      'examples/my-typia-block/package.json must resolve scripts["lint:js"]="node ../../scripts/run-wp-scripts-lint-js-compat.mjs" to an existing wrapper file, missing "scripts/run-wp-scripts-lint-js-compat.mjs".'
     );
   });
 

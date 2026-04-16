@@ -1,10 +1,7 @@
 import type { IValidation } from "@typia/interface";
 
 import {
-	isValidationResult,
-	normalizeValidationError,
 	toValidationResult,
-	type ValidationError,
 	type ValidationLike,
 	type ValidationResult,
 } from "./internal/runtime-primitives.js";

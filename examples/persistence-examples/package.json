@@ -15,7 +15,7 @@
 		"start": "bun run sync && bun run sync-wordpress-ai && wp-scripts start --experimental-modules",
 		"dev": "bun run start",
 		"typecheck": "bun run sync --check && bun run sync-wordpress-ai --check && tsc --noEmit",
-		"lint:js": "wp-scripts lint-js",
+		"lint:js": "node ../../scripts/run-wp-scripts-lint-js-compat.mjs",
 		"lint:css": "wp-scripts lint-style",
 		"lint": "bun run lint:js && bun run lint:css",
 		"format": "wp-scripts format"
@@ -32,6 +32,7 @@
 		"@wordpress/scripts": "^30.22.0",
 		"@wp-typia/block-types": "workspace:*",
 		"@wp-typia/rest": "workspace:*",
+		"eslint": "8.57.1",
 		"ajv": "^8.18.0",
 		"prettier": "3.8.2",
 		"tsx": "^4.20.5",

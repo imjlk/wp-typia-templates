@@ -71,7 +71,7 @@ function injectBefore(source: string, needle: string, insertion: string): string
 }
 
 function injectAfterBlockMetadataImport(source: string, insertion: string): string {
-	let nextSource = injectAfter(source, BLOCK_METADATA_IMPORT_LINE, insertion);
+	const nextSource = injectAfter(source, BLOCK_METADATA_IMPORT_LINE, insertion);
 	if (nextSource !== source) {
 		return nextSource;
 	}

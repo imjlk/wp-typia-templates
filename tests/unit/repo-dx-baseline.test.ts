@@ -16,8 +16,10 @@ describe('repository DX baseline', () => {
     const scripts = packageJson.scripts as Record<string, string>;
 
     expect(scripts['lint:repo']).toBeDefined();
+    expect(scripts['lint:fix']).toBeDefined();
     expect(scripts['lint:all']).toBeDefined();
     expect(scripts['format:check']).toBeDefined();
+    expect(scripts['format:write']).toBeDefined();
     expect(scripts['maintenance-automation:validate']).toBe(
       'node scripts/validate-maintenance-automation-policy.mjs',
     );
@@ -38,6 +40,11 @@ describe('repository DX baseline', () => {
     expect(scripts['examples:build']).toBe(
       'node scripts/run-clean-examples-build.mjs',
     );
+    expect(scripts['lint:repo']).toBe('eslint . --max-warnings=0');
+    expect(scripts['lint:fix']).toBe('eslint . --fix --max-warnings=0');
+    expect(scripts['format:write']).toBe(
+      'node scripts/check-repo-format.mjs --write',
+    );
   });
 
   test('root ESLint scope stays on repo infrastructure while examples keep wp-scripts ownership', () => {
@@ -55,13 +62,43 @@ describe('repository DX baseline', () => {
     );
     expect(scripts).toHaveProperty('examples:lint');
     expect(scripts).toHaveProperty('examples:format');
-    expect(scripts['examples:lint']).toContain('ESLINT_USE_FLAT_CONFIG=false');
+    expect(scripts['examples:lint']).toBe('node scripts/run-examples-lint.mjs');
     expect(scripts['examples:lint']).toContain(
-      'bun run --filter api-contract-adapter-poc --if-present lint',
+      'scripts/run-examples-lint.mjs',
     );
     expect(scripts['examples:format']).toContain(
       'bun run --filter api-contract-adapter-poc --if-present format',
     );
+
+    expect(
+      fs.existsSync(path.join(repoRoot, 'scripts', 'run-examples-lint.mjs')),
+    ).toBe(true);
+  });
+
+  test('WordPress example workspaces keep the ESLint 8 compat wrapper', () => {
+    for (const relativePath of [
+      'examples/my-typia-block/package.json',
+      'examples/persistence-examples/package.json',
+      'examples/compound-patterns/package.json',
+    ]) {
+      const examplePackageJson = readJson(relativePath);
+      const exampleScripts = examplePackageJson.scripts as Record<string, string>;
+      const exampleDevDependencies = examplePackageJson.devDependencies as Record<
+        string,
+        string
+      >;
+
+      expect(exampleScripts['lint:js']).toBe(
+        'node ../../scripts/run-wp-scripts-lint-js-compat.mjs',
+      );
+      expect(exampleDevDependencies.eslint).toBe('8.57.1');
+    }
+
+    expect(
+      fs.existsSync(
+        path.join(repoRoot, 'scripts', 'run-wp-scripts-lint-js-compat.mjs'),
+      ),
+    ).toBe(true);
   });
 
   test('.vscode workspace baseline exists', () => {
@@ -211,6 +248,8 @@ describe('repository DX baseline', () => {
     );
 
     expect(readme).toContain('bun run ci:local');
+    expect(readme).toContain('bun run lint:fix');
+    expect(readme).toContain('bun run format:write');
     expect(readme).toContain(
       '[Block Generator Architecture](docs/block-generator-architecture.md)',
     );
@@ -238,6 +277,8 @@ describe('repository DX baseline', () => {
     expect(readme).toContain('[Security Policy](SECURITY.md)');
     expect(contributing).toContain('Linting ownership is intentionally split');
     expect(contributing).toContain('Formatting ownership is also explicit');
+    expect(contributing).toContain('bun run lint:fix');
+    expect(contributing).toContain('bun run format:write');
     expect(contributing).toContain('Maintenance automation is explicit too');
     expect(contributing).toContain('bun run lint:repo');
     expect(contributing).toContain('bun run maintenance-automation:validate');

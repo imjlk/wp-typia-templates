@@ -14,7 +14,9 @@ bun install
 
 ```bash
 bun run lint:repo
+bun run lint:fix
 bun run format:check
+bun run format:write
 bun run maintenance-automation:validate
 bun run formatting-policy:validate
 bun run lint:all
@@ -32,8 +34,10 @@ bun run test:coverage
 Quick command map:
 
 - `bun run lint:repo` = root ESLint for repo infrastructure code
+- `bun run lint:fix` = autofix pass for that same root ESLint scope
 - `bun run lint:all` = root ESLint + example lint + PHP checks
 - `bun run format:check` = non-mutating Prettier check for repo-owned files
+- `bun run format:write` = mutating Prettier write pass for that same repo-owned file set
 - `bun run maintenance-automation:validate` = verifies Dependabot and audit workflow policy
 - `bun run formatting-policy:validate` = verifies the documented Prettier/CI baseline
 - `bun run test:repo` = root unit + CLI test aggregation
@@ -53,9 +57,12 @@ Linting ownership is intentionally split:
 
 Formatting ownership is also explicit:
 
+- the repo root uses `eslint 9.39.4` together with `@eslint/js 9.39.4` and `@typescript-eslint` `8.58.2`
 - the repo root uses `Prettier 3.8.2` for repo-owned docs, config, workflow, and policy files
 - example apps and built-in scaffold package manifests stay aligned on the same Prettier baseline when they declare a direct formatter dependency
 - package and example source formatting continues to be owned by their package-local tooling such as `@wordpress/scripts`
+- the current example block workspaces keep a local `eslint` 8 pin so the `@wordpress/scripts` lint lane stays stable while the repo root uses ESLint 9 for infrastructure code
+- those example `lint:js` scripts route through `scripts/run-wp-scripts-lint-js-compat.mjs` so CI keeps the WordPress defaults while resolving the example-local ESLint 8 binary
 - GitHub Actions now runs both `bun run formatting-policy:validate` and `bun run format:check` in the main lint job
 
 See [`docs/formatting-toolchain-policy.md`](./docs/formatting-toolchain-policy.md) for the exact scope and rationale.
