@@ -9,6 +9,14 @@ test("metadata-core keeps artifact sync and endpoint-client helpers in dedicated
 		resolve(sourceRoot, "metadata-core.ts"),
 		"utf8",
 	);
+	const metadataCoreSyncRoutinesSource = readFileSync(
+		resolve(sourceRoot, "metadata-core-sync-routines.ts"),
+		"utf8",
+	);
+	const metadataCoreClientRenderSource = readFileSync(
+		resolve(sourceRoot, "metadata-core-client-render.ts"),
+		"utf8",
+	);
 	const artifactHelperSource = readFileSync(
 		resolve(sourceRoot, "metadata-core-artifacts.ts"),
 		"utf8",
@@ -19,16 +27,41 @@ test("metadata-core keeps artifact sync and endpoint-client helpers in dedicated
 	);
 
 	expect(metadataCoreSource).toContain('from \'./metadata-core-artifacts.js\'');
-	expect(metadataCoreSource).toContain('from \'./metadata-core-endpoint-client.js\'');
+	expect(metadataCoreSource).toContain('from \'./metadata-core-sync-routines.js\'');
+	expect(metadataCoreSource).toContain('from \'./metadata-core-client-render.js\'');
 	expect(metadataCoreSource).not.toContain("function reconcileGeneratedArtifacts(");
 	expect(metadataCoreSource).not.toContain("function resolveSyncBlockMetadataPaths(");
 	expect(metadataCoreSource).not.toContain("function normalizeSyncRestOpenApiOptions(");
 	expect(metadataCoreSource).not.toContain("function normalizeSyncEndpointClientOptions(");
 	expect(metadataCoreSource).not.toContain("function normalizeSyncBlockMetadataFailure(");
+	expect(metadataCoreSource).not.toContain("const driftIssues: GeneratedArtifactDriftIssue[] = [];");
+	expect(metadataCoreSource).not.toContain("const endpointLines: string[] = [];");
+	expect(metadataCoreSource).not.toContain("function validateCombinedRequest<TQuery, TBody>(");
 	expect(artifactHelperSource).toContain("export function reconcileGeneratedArtifacts(");
 	expect(artifactHelperSource).toContain("export function normalizeSyncBlockMetadataFailure(");
 	expect(endpointClientHelperSource).toContain("export function normalizeSyncRestOpenApiOptions(");
 	expect(endpointClientHelperSource).toContain("export function toValidatorAccessExpression(");
+	expect(metadataCoreSyncRoutinesSource).toContain(
+		"from './metadata-core-endpoint-client.js'",
+	);
+	expect(metadataCoreSyncRoutinesSource).toContain(
+		"export async function syncBlockMetadataArtifacts(",
+	);
+	expect(metadataCoreSyncRoutinesSource).toContain(
+		"export async function syncRestOpenApiArtifacts(",
+	);
+	expect(metadataCoreSyncRoutinesSource).toContain(
+		"export async function syncTypeSchemaArtifacts(",
+	);
+	expect(metadataCoreClientRenderSource).toContain(
+		"export async function syncEndpointClientModule(",
+	);
+	expect(metadataCoreClientRenderSource).toContain(
+		"from './metadata-core-endpoint-client.js'",
+	);
+	expect(metadataCoreClientRenderSource).toContain(
+		"function validateCombinedRequest<TQuery, TBody>(",
+	);
 });
 
 test("schema-core and metadata-parser keep helper clusters in dedicated modules", () => {
