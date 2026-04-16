@@ -355,6 +355,14 @@ jobs:
             example_project: my-typia-block
             package_manager: bun
             project_name: smoke-reference-my-typia-block-bun
+          - runtime: bun
+            example_project: compound-patterns
+            package_manager: bun
+            project_name: smoke-example-compound-patterns-bun
+          - runtime: bun
+            example_project: persistence-examples
+            package_manager: bun
+            project_name: smoke-example-persistence-examples-bun
     steps:
       - name: Checkout
         uses: actions/checkout@v6

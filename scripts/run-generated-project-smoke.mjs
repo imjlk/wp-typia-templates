@@ -367,7 +367,40 @@ function ensureCorepackPackageManager(packageManager) {
 	run("corepack", ["prepare", getPackageManager(packageManager).packageManagerField, "--activate"]);
 }
 
+function listSourceBlockSlugs(projectDir) {
+	const sourceBlocksDir = path.join(projectDir, "src", "blocks");
+	if (!fs.existsSync(sourceBlocksDir)) {
+		return [];
+	}
+
+	return fs
+		.readdirSync(sourceBlocksDir, { withFileTypes: true })
+		.filter((entry) => entry.isDirectory())
+		.map((entry) => entry.name)
+		.sort();
+}
+
 function assertBuildArtifacts(projectDir, projectName) {
+	const blockSlugs = listSourceBlockSlugs(projectDir);
+	if (blockSlugs.length > 0) {
+		for (const blockSlug of blockSlugs) {
+			const buildDir = path.join(projectDir, "build", "blocks", blockSlug);
+			for (const artifact of [
+				"block.json",
+				"typia.manifest.json",
+				"typia-validator.php",
+			]) {
+				if (!fs.existsSync(path.join(buildDir, artifact))) {
+					throw new Error(
+						`Expected ${buildDir} to include ${artifact} for example-project smoke`,
+					);
+				}
+			}
+		}
+
+		return;
+	}
+
 	const candidateDirs = [
 		path.join(projectDir, "build", projectName),
 		path.join(projectDir, "build"),
@@ -381,6 +414,35 @@ function assertBuildArtifacts(projectDir, projectName) {
 			);
 		}
 	}
+}
+
+function collectProjectFilePaths(projectDir, fileName) {
+	const pending = [projectDir];
+	const matchedPaths = [];
+
+	while (pending.length > 0) {
+		const currentDir = pending.pop();
+		if (!currentDir) {
+			continue;
+		}
+
+		for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
+			if (entry.name === "node_modules") {
+				continue;
+			}
+
+			const entryPath = path.join(currentDir, entry.name);
+			if (entry.isDirectory()) {
+				pending.push(entryPath);
+				continue;
+			}
+			if (entry.isFile() && entry.name === fileName) {
+				matchedPaths.push(entryPath);
+			}
+		}
+	}
+
+	return matchedPaths.sort();
 }
 
 const blockMetadataFileFields = [
@@ -1007,23 +1069,36 @@ function assertExampleProjectScaffold(projectDir, exampleProject) {
 	const packageJson = readJsonFile(path.join(projectDir, "package.json"));
 	const blockJsonPath = path.join(projectDir, "block.json");
 	const pluginBootstrapPath = path.join(projectDir, `${exampleProject}.php`);
+	const blockSlugs = listSourceBlockSlugs(projectDir);
 
-	if (!fs.existsSync(blockJsonPath)) {
+	if (blockSlugs.length === 0 && !fs.existsSync(blockJsonPath)) {
 		throw new Error(`Expected example project block.json at ${blockJsonPath}`);
 	}
 	if (!fs.existsSync(pluginBootstrapPath)) {
 		throw new Error(`Expected example project bootstrap at ${pluginBootstrapPath}`);
 	}
-	if (typeof packageJson.scripts?.["migration:doctor"] !== "string") {
+	if (
+		exampleProject === "my-typia-block" &&
+		typeof packageJson.scripts?.["migration:doctor"] !== "string"
+	) {
 		throw new Error("Expected example project to expose migration:doctor");
 	}
 
 	assertPluginBootstrapExists(pluginBootstrapPath);
 	assertPluginBootstrapHardening(pluginBootstrapPath);
-	assertNoRawRenderedContentEcho(path.join(projectDir, "render.php"));
+	for (const renderPath of collectProjectFilePaths(projectDir, "render.php")) {
+		assertNoRawRenderedContentEcho(renderPath);
+	}
 	assertBuildArtifacts(projectDir, exampleProject);
 	assertBlockMetadataFileReferences(projectDir);
 	assertGeneratedRuntimeImports(projectDir);
+}
+
+function shouldRunMigrationSmoke(projectDir, packageJson) {
+	return (
+		typeof packageJson.scripts?.["migration:doctor"] === "string" ||
+		fs.existsSync(path.join(projectDir, "src", "migrations", "config.ts"))
+	);
 }
 
 function runExampleProjectSmoke({
@@ -1054,8 +1129,10 @@ function runExampleProjectSmoke({
 	});
 
 	runScaffoldRefreshScripts(exampleDir, packageManager, packageJson);
-	refreshCurrentMigrationSnapshot(exampleDir, runtime);
-	runLocalMigrationDoctor(exampleDir, runtime);
+	if (shouldRunMigrationSmoke(exampleDir, packageJson)) {
+		refreshCurrentMigrationSnapshot(exampleDir, runtime);
+		runLocalMigrationDoctor(exampleDir, runtime);
+	}
 
 	const [buildCommand, buildArgs] = getRunCommand(packageManager);
 	run(buildCommand, buildArgs, { cwd: exampleDir });
