@@ -50,6 +50,14 @@ Example apps and built-in scaffold package manifests stay aligned on `prettier` 
 
 Those packages still use `wp-scripts format` as their primary formatter command. The direct Prettier pin exists so editor integrations and ad hoc local formatting do not silently drift away from the repository baseline.
 
+The repo-root ESLint 9 upgrade does not automatically move example apps onto the
+same lane. Example block workspaces still defer to `@wordpress/scripts` for
+their source linting, and they currently keep a local `eslint` 8 compatibility
+pin until the WordPress lint stack fully supports ESLint 9. Their `lint:js`
+scripts now flow through `scripts/run-wp-scripts-lint-js-compat.mjs`, which
+keeps the `@wordpress/scripts` default config/ignore behavior but resolves the
+example-local `eslint` 8 binary instead of the repo-root ESLint 9 install.
+
 ## CI posture
 
 Formatting is a first-class CI expectation.

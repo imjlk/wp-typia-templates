@@ -62,13 +62,39 @@ describe('repository DX baseline', () => {
     );
     expect(scripts).toHaveProperty('examples:lint');
     expect(scripts).toHaveProperty('examples:format');
-    expect(scripts['examples:lint']).toContain('ESLINT_USE_FLAT_CONFIG=false');
+    expect(scripts['examples:lint']).toContain('cd examples/my-typia-block');
     expect(scripts['examples:lint']).toContain(
       'bun run --filter api-contract-adapter-poc --if-present lint',
     );
     expect(scripts['examples:format']).toContain(
       'bun run --filter api-contract-adapter-poc --if-present format',
     );
+  });
+
+  test('WordPress example workspaces keep the ESLint 8 compat wrapper', () => {
+    for (const relativePath of [
+      'examples/my-typia-block/package.json',
+      'examples/persistence-examples/package.json',
+      'examples/compound-patterns/package.json',
+    ]) {
+      const examplePackageJson = readJson(relativePath);
+      const exampleScripts = examplePackageJson.scripts as Record<string, string>;
+      const exampleDevDependencies = examplePackageJson.devDependencies as Record<
+        string,
+        string
+      >;
+
+      expect(exampleScripts['lint:js']).toBe(
+        'node ../../scripts/run-wp-scripts-lint-js-compat.mjs',
+      );
+      expect(exampleDevDependencies.eslint).toBe('8.57.1');
+    }
+
+    expect(
+      fs.existsSync(
+        path.join(repoRoot, 'scripts', 'run-wp-scripts-lint-js-compat.mjs'),
+      ),
+    ).toBe(true);
   });
 
   test('.vscode workspace baseline exists', () => {

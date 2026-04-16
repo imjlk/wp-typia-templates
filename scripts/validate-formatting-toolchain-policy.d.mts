@@ -7,6 +7,8 @@ export declare const FORMATTING_TOOLCHAIN_POLICY: Readonly<{
 	eslintJsVersion: "9.39.4";
 	eslintVersion: "9.39.4";
 	eslintConfigPrettierVersion: "10.1.8";
+	exampleWpScriptsEslintVersion: "8.57.1";
+	exampleWpScriptsLintJsScript: "node ../../scripts/run-wp-scripts-lint-js-compat.mjs";
 	prettierVersion: "3.8.2";
 	rootFormatCheckScript: "node scripts/check-repo-format.mjs";
 	rootFormatWriteScript: "node scripts/check-repo-format.mjs --write";
@@ -16,6 +18,7 @@ export declare const FORMATTING_TOOLCHAIN_POLICY: Readonly<{
 	typescriptEslintVersion: "8.58.2";
 	generatedPackageManifestPaths: readonly string[];
 	workspaceExamplePackagePaths: readonly string[];
+	wpScriptsExamplePackagePaths: readonly string[];
 }>;
 
 export declare function validateFormattingToolchainPolicy(

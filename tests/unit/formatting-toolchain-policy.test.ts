@@ -60,6 +60,18 @@ function createFormattingPolicyRepo() {
     });
   }
 
+  for (const relativePath of policy.wpScriptsExamplePackagePaths) {
+    const examplePackagePath = path.join(repoRoot, relativePath);
+    const examplePackageJson = JSON.parse(
+      fs.readFileSync(examplePackagePath, "utf8")
+    );
+    examplePackageJson.devDependencies.eslint = policy.exampleWpScriptsEslintVersion;
+    examplePackageJson.scripts = {
+      "lint:js": policy.exampleWpScriptsLintJsScript,
+    };
+    writeJson(examplePackagePath, examplePackageJson);
+  }
+
   for (const relativePath of policy.generatedPackageManifestPaths) {
     writeText(
       path.join(repoRoot, relativePath),
@@ -188,6 +200,30 @@ describe("validateFormattingToolchainPolicy", () => {
     );
     expect(result.errors).toContain(
       `packages/wp-typia-project-tools/templates/_shared/base/package.json.mustache must declare devDependencies.prettier="${FORMATTING_TOOLCHAIN_POLICY.prettierVersion}", found "2.8.8".`
+    );
+  });
+
+  test("fails when WordPress example lint compatibility drifts", () => {
+    const repoRoot = createFormattingPolicyRepo();
+    const exampleManifestPath = path.join(
+      repoRoot,
+      "examples/my-typia-block/package.json"
+    );
+    const examplePackageJson = JSON.parse(
+      fs.readFileSync(exampleManifestPath, "utf8")
+    );
+    examplePackageJson.devDependencies.eslint = "9.39.4";
+    examplePackageJson.scripts["lint:js"] = "wp-scripts lint-js";
+    writeJson(exampleManifestPath, examplePackageJson);
+
+    const result = validateFormattingToolchainPolicy(repoRoot);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      `examples/my-typia-block/package.json must declare devDependencies.eslint="${FORMATTING_TOOLCHAIN_POLICY.exampleWpScriptsEslintVersion}", found "9.39.4".`
+    );
+    expect(result.errors).toContain(
+      `examples/my-typia-block/package.json must keep scripts["lint:js"]="${FORMATTING_TOOLCHAIN_POLICY.exampleWpScriptsLintJsScript}", found "wp-scripts lint-js".`
     );
   });
 

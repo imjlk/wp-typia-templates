@@ -13,7 +13,7 @@
 		"start": "bun run sync && wp-scripts start --experimental-modules",
 		"dev": "bun run start",
 		"typecheck": "bun run sync --check && tsc --noEmit",
-		"lint:js": "wp-scripts lint-js",
+		"lint:js": "node ../../scripts/run-wp-scripts-lint-js-compat.mjs",
 		"lint:css": "wp-scripts lint-style",
 		"lint": "bun run lint:js && bun run lint:css",
 		"format": "wp-scripts format"
@@ -29,6 +29,7 @@
 		"@types/wordpress__block-editor": "^11.5.17",
 		"@types/wordpress__blocks": "^12.5.18",
 		"ajv": "^8.18.0",
+		"eslint": "8.57.1",
 		"prettier": "3.8.2",
 		"tsx": "^4.20.5",
 		"typescript": "^5.9.2",

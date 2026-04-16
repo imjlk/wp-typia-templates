@@ -8,6 +8,9 @@ export const FORMATTING_TOOLCHAIN_POLICY = Object.freeze({
   eslintJsVersion: '9.39.4',
   eslintVersion: '9.39.4',
   eslintConfigPrettierVersion: '10.1.8',
+  exampleWpScriptsEslintVersion: '8.57.1',
+  exampleWpScriptsLintJsScript:
+    'node ../../scripts/run-wp-scripts-lint-js-compat.mjs',
   prettierVersion: '3.8.2',
   rootFormatWriteScript: 'node scripts/check-repo-format.mjs --write',
   rootLintFixScript: 'eslint . --fix --max-warnings=0',
@@ -25,6 +28,11 @@ export const FORMATTING_TOOLCHAIN_POLICY = Object.freeze({
   ]),
   workspaceExamplePackagePaths: Object.freeze([
     'examples/api-contract-adapter-poc/package.json',
+    'examples/my-typia-block/package.json',
+    'examples/persistence-examples/package.json',
+    'examples/compound-patterns/package.json',
+  ]),
+  wpScriptsExamplePackagePaths: Object.freeze([
     'examples/my-typia-block/package.json',
     'examples/persistence-examples/package.json',
     'examples/compound-patterns/package.json',
@@ -194,6 +202,24 @@ export function validateFormattingToolchainPolicy(
     if (examplePrettier !== policy.prettierVersion) {
       errors.push(
         `${relativePath} must declare devDependencies.prettier="${policy.prettierVersion}", found ${JSON.stringify(examplePrettier ?? null)}.`,
+      );
+    }
+  }
+
+  for (const relativePath of policy.wpScriptsExamplePackagePaths) {
+    const examplePackageJson = readRelativeJson(repoRoot, relativePath);
+    const exampleScripts = examplePackageJson.scripts ?? {};
+    const exampleEslint = examplePackageJson.devDependencies?.eslint;
+
+    if (exampleEslint !== policy.exampleWpScriptsEslintVersion) {
+      errors.push(
+        `${relativePath} must declare devDependencies.eslint="${policy.exampleWpScriptsEslintVersion}", found ${JSON.stringify(exampleEslint ?? null)}.`,
+      );
+    }
+
+    if (exampleScripts['lint:js'] !== policy.exampleWpScriptsLintJsScript) {
+      errors.push(
+        `${relativePath} must keep scripts["lint:js"]="${policy.exampleWpScriptsLintJsScript}", found ${JSON.stringify(exampleScripts['lint:js'] ?? null)}.`,
       );
     }
   }

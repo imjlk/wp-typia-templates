@@ -61,6 +61,8 @@ Formatting ownership is also explicit:
 - the repo root uses `Prettier 3.8.2` for repo-owned docs, config, workflow, and policy files
 - example apps and built-in scaffold package manifests stay aligned on the same Prettier baseline when they declare a direct formatter dependency
 - package and example source formatting continues to be owned by their package-local tooling such as `@wordpress/scripts`
+- the current example block workspaces keep a local `eslint` 8 pin so the `@wordpress/scripts` lint lane stays stable while the repo root uses ESLint 9 for infrastructure code
+- those example `lint:js` scripts route through `scripts/run-wp-scripts-lint-js-compat.mjs` so CI keeps the WordPress defaults while resolving the example-local ESLint 8 binary
 - GitHub Actions now runs both `bun run formatting-policy:validate` and `bun run format:check` in the main lint job
 
 See [`docs/formatting-toolchain-policy.md`](./docs/formatting-toolchain-policy.md) for the exact scope and rationale.
