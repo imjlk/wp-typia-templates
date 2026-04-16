@@ -7,16 +7,30 @@ import {
 	PACKAGE_MANAGER_IDS,
 	formatPackageExecCommand,
 	formatInstallCommand,
-	formatRunScript,
 	getPackageManager,
 	transformPackageManagerText,
 } from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
-import { replaceTextRecursively } from "./scaffold-apply-utils.js";
+import {
+	buildGitignore,
+	buildReadme,
+	mergeTextLines,
+	replaceTextRecursively,
+} from "./scaffold-apply-utils.js";
+import {
+	buildBlockCssClassName,
+	buildFrontendCssClassName,
+	normalizeBlockSlug,
+	resolveScaffoldIdentifiers,
+	resolveValidatedBlockSlug,
+	validateBlockSlug,
+	validateNamespace,
+	validatePhpPrefix,
+	validateTextDomain,
+} from "./scaffold-identifiers.js";
 import {
 	applyGeneratedProjectDxPackageJson,
 	applyLocalDevPresetFiles,
-	getPrimaryDevelopmentScript,
 } from "./local-dev-presets.js";
 import { applyMigrationUiCapability } from "./migration-ui-capability.js";
 import { getPackageVersions } from "./package-versions.js";
@@ -26,16 +40,8 @@ import {
 	writeMigrationConfig,
 } from "./migration-project.js";
 import { syncPersistenceRestArtifacts } from "./persistence-rest-artifacts.js";
-import {
-	getCompoundExtensionWorkflowSection,
-	getOptionalOnboardingNote,
-	getOptionalOnboardingSteps,
-	getPhpRestExtensionPointsSection,
-	getTemplateSourceOfTruthNote,
-} from "./scaffold-onboarding.js";
 import { getStarterManifestFiles, stringifyStarterManifest } from "./starter-manifests.js";
 import {
-	toKebabCase,
 	toPascalCase,
 	toSnakeCase,
 	toTitleCase,
@@ -63,9 +69,6 @@ import {
 	createBuiltInBlockSpec,
 } from "./block-generator-service.js";
 
-const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
-const PHP_PREFIX_PATTERN = /^[a-z_][a-z0-9_]*$/;
-const PHP_PREFIX_MAX_LENGTH = 50;
 const WORKSPACE_TEMPLATE_ALIAS = "workspace";
 const EPHEMERAL_NODE_MODULES_LINK_TYPE = process.platform === "win32" ? "junction" : "dir";
 const LOCKFILES: Record<PackageManagerId, string[]> = {
@@ -235,125 +238,7 @@ interface GeneratedPackageJson {
 		templatePackage?: string;
 	};
 }
-
-function validateBlockSlug(input: string): true | string {
-	return BLOCK_SLUG_PATTERN.test(input) || "Use lowercase letters, numbers, and hyphens only";
-}
-
-function validateNamespace(input: string): true | string {
-	return BLOCK_SLUG_PATTERN.test(toKebabCase(input))
-		? true
-		: "Use lowercase letters, numbers, and hyphens only";
-}
-
-function validateTextDomain(input: string): true | string {
-	return BLOCK_SLUG_PATTERN.test(toKebabCase(input))
-		? true
-		: "Use lowercase letters, numbers, and hyphens only";
-}
-
-function validatePhpPrefix(input: string): true | string {
-	const normalizedPrefix = toSnakeCase(input);
-	if (normalizedPrefix.length > PHP_PREFIX_MAX_LENGTH) {
-		return `Use ${PHP_PREFIX_MAX_LENGTH} characters or fewer to keep generated database identifiers within MySQL limits`;
-	}
-
-	return PHP_PREFIX_PATTERN.test(normalizedPrefix)
-		? true
-		: "Use letters, numbers, and underscores only, starting with a letter";
-}
-
-function assertValidIdentifier(
-	label: string,
-	value: string,
-	validate: (value: string) => true | string,
-): string {
-	const result = validate(value);
-	if (result !== true) {
-		throw new Error(typeof result === "string" ? `${label}: ${result}` : `${label} is invalid`);
-	}
-
-	return value;
-}
-
-function normalizeBlockSlug(input: string): string {
-	return toKebabCase(input);
-}
-
-function resolveValidatedBlockSlug(value: string): string {
-	return assertValidIdentifier("Block slug", normalizeBlockSlug(value), validateBlockSlug);
-}
-
-function resolveValidatedNamespace(value: string): string {
-	return assertValidIdentifier("Namespace", toKebabCase(value), validateNamespace);
-}
-
-function resolveValidatedTextDomain(value: string): string {
-	return assertValidIdentifier("Text domain", toKebabCase(value), validateTextDomain);
-}
-
-function resolveValidatedPhpPrefix(value: string): string {
-	return assertValidIdentifier("PHP prefix", toSnakeCase(value), validatePhpPrefix);
-}
-
-/**
- * Builds the generated WordPress wrapper CSS class for a scaffolded block.
- *
- * Returns `wp-block-{namespace}-{slug}` when a non-empty namespace is present,
- * or `wp-block-{slug}` when the namespace is empty or undefined. When the
- * normalized namespace equals the normalized slug, appends `-block` so the
- * generated class avoids repeated namespace segments without colliding with the
- * default core wrapper classes. Both inputs are normalized and validated with
- * the same scaffold identifier rules used for block names.
- */
-export function buildBlockCssClassName(
-	namespace: string | undefined,
-	slug: string,
-): string {
-	const normalizedSlug = resolveValidatedBlockSlug(slug);
-	const normalizedNamespace =
-		typeof namespace === "string" && namespace.trim().length > 0
-			? resolveValidatedNamespace(namespace)
-			: "";
-
-	if (normalizedNamespace === normalizedSlug) {
-		return `wp-block-${normalizedSlug}-block`;
-	}
-
-	return normalizedNamespace.length > 0
-		? `wp-block-${normalizedNamespace}-${normalizedSlug}`
-		: `wp-block-${normalizedSlug}`;
-}
-
-function buildFrontendCssClassName(blockCssClassName: string): string {
-	return `${blockCssClassName}-frontend`;
-}
-
-function resolveScaffoldIdentifiers({
-	namespace,
-	phpPrefix,
-	slug,
-	textDomain,
-}: {
-	namespace: string;
-	phpPrefix?: string;
-	slug: string;
-	textDomain?: string;
-}): {
-	namespace: string;
-	phpPrefix: string;
-	slug: string;
-	textDomain: string;
-} {
-	const normalizedSlug = resolveValidatedBlockSlug(slug);
-
-	return {
-		namespace: resolveValidatedNamespace(namespace),
-		phpPrefix: resolveValidatedPhpPrefix(phpPrefix ?? normalizedSlug),
-		slug: normalizedSlug,
-		textDomain: resolveValidatedTextDomain(textDomain ?? normalizedSlug),
-	};
-}
+export { buildBlockCssClassName } from "./scaffold-identifiers.js";
 
 export function isDataStorageMode(value: string): value is DataStorageMode {
 	return (DATA_STORAGE_MODES as readonly string[]).includes(value);
@@ -648,131 +533,6 @@ async function ensureDirectory(targetDir: string, allowExisting = false): Promis
 	if (entries.length > 0) {
 		throw new Error(`Target directory is not empty: ${targetDir}`);
 	}
-}
-
-function buildReadme(
-	templateId: string,
-	variables: ScaffoldTemplateVariables,
-	packageManager: PackageManagerId,
-	{
-		withMigrationUi = false,
-		withTestPreset = false,
-		withWpEnv = false,
-	}: {
-		withMigrationUi?: boolean;
-		withTestPreset?: boolean;
-		withWpEnv?: boolean;
-	} = {},
-): string {
-	const optionalOnboardingSteps = getOptionalOnboardingSteps(packageManager, templateId, {
-		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
-	});
-	const sourceOfTruthNote = getTemplateSourceOfTruthNote(templateId, {
-		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
-	});
-	const compoundPersistenceEnabled = variables.compoundPersistenceEnabled === "true";
-	const publicPersistencePolicyNote =
-		variables.isPublicPersistencePolicy === "true"
-			? "Public persistence writes use signed short-lived tokens, per-request ids, and coarse rate limiting by default. Add application-specific abuse controls before using the same pattern for high-value metrics or experiments."
-			: null;
-	const compoundExtensionWorkflowSection = getCompoundExtensionWorkflowSection(
-		packageManager,
-		templateId,
-	);
-	const phpRestExtensionPointsSection = getPhpRestExtensionPointsSection(templateId, {
-		compoundPersistenceEnabled,
-		slug: variables.slug,
-	});
-	const developmentScript = getPrimaryDevelopmentScript(templateId);
-	const wpEnvSection = withWpEnv
-		? `## Local WordPress\n\n\`\`\`bash\n${formatRunScript(packageManager, "wp-env:start")}\n${formatRunScript(packageManager, "wp-env:stop")}\n${formatRunScript(packageManager, "wp-env:reset")}\n\`\`\``
-		: "";
-	const testPresetSection = withTestPreset
-		? `## Local Test Preset\n\n\`\`\`bash\n${formatRunScript(packageManager, "wp-env:start:test")}\n${formatRunScript(packageManager, "wp-env:wait:test")}\n${formatRunScript(packageManager, "test:e2e")}\n\`\`\`\n\nThe generated smoke test uses \`.wp-env.test.json\` and verifies that the scaffolded block registers in the WordPress editor.`
-		: "";
-	const migrationSection = withMigrationUi
-		? `## Migration UI\n\nThis scaffold already includes an initialized migration workspace at \`v1\`, generated deprecated/runtime artifacts, and an editor-embedded migration dashboard. Migration versions are schema lineage labels and are separate from your package or plugin release version. Use the existing CLI commands to snapshot, diff, scaffold, verify, and fuzz future schema changes.\n\n\`\`\`bash\n${formatRunScript(packageManager, "migration:doctor")}\n${formatRunScript(packageManager, "migration:verify")}\n${formatRunScript(packageManager, "migration:fuzz")}\n\`\`\`\n\nRun \`migration:init\` only when retrofitting migration support into an older project that was not scaffolded with \`--with-migration-ui\`.`
-		: "";
-
-	return `# ${variables.title}
-
-${variables.description}
-
-## Template
-
-${templateId}
-
-## Development
-
-\`\`\`bash
-${formatInstallCommand(packageManager)}
-${formatRunScript(packageManager, developmentScript)}
-\`\`\`
-
-## Build
-
-\`\`\`bash
-${formatRunScript(packageManager, "build")}
-\`\`\`
-
-## Optional First Sync
-
-\`\`\`bash
-${optionalOnboardingSteps.join("\n")}
-\`\`\`
-
-${getOptionalOnboardingNote(packageManager, templateId, {
-		compoundPersistenceEnabled,
-	})}
-
-${sourceOfTruthNote}${publicPersistencePolicyNote ? `\n\n${publicPersistencePolicyNote}` : ""}${migrationSection ? `\n\n${migrationSection}` : ""}${compoundExtensionWorkflowSection ? `\n\n${compoundExtensionWorkflowSection}` : ""}${wpEnvSection ? `\n\n${wpEnvSection}` : ""}${testPresetSection ? `\n\n${testPresetSection}` : ""}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ""}
-`;
-}
-
-function buildGitignore(): string {
-	return `# Dependencies
-node_modules/
-.yarn/
-.pnp.*
-
-# Build
-build/
-dist/
-
-# Editor
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# WordPress
-*.log
-.wp-env/
-`;
-}
-
-function mergeTextLines(primaryContent: string, existingContent: string): string {
-	const normalizedPrimary = primaryContent.replace(/\r\n/g, "\n").trimEnd();
-	const normalizedExisting = existingContent.replace(/\r\n/g, "\n").trimEnd();
-	const mergedLines: string[] = [];
-	const seen = new Set<string>();
-
-	for (const line of [...normalizedPrimary.split("\n"), ...normalizedExisting.split("\n")]) {
-		if (line.length === 0 && mergedLines[mergedLines.length - 1] === "") {
-			continue;
-		}
-		if (line.length > 0 && seen.has(line)) {
-			continue;
-		}
-		if (line.length > 0) {
-			seen.add(line);
-		}
-		mergedLines.push(line);
-	}
-
-	return `${mergedLines.join("\n").replace(/\n{3,}/g, "\n\n")}\n`;
 }
 
 async function writeStarterManifestFiles(
