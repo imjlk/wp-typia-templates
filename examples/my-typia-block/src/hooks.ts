@@ -61,7 +61,9 @@ export function useUUID() {
  * Hook for logging attribute changes in development
  * @param attributes Current block attributes.
  */
-export function useAttributeLogger( attributes: Record< string, unknown > ) {
+export function useAttributeLogger< TAttributes extends object >(
+	attributes: TAttributes
+) {
 	useEffect( () => {
 		if ( process.env.NODE_ENV === 'development' ) {
 			// eslint-disable-next-line no-console
