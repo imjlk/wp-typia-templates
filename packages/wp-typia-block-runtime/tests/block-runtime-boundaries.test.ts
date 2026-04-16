@@ -30,3 +30,68 @@ test("metadata-core keeps artifact sync and endpoint-client helpers in dedicated
 	expect(endpointClientHelperSource).toContain("export function normalizeSyncRestOpenApiOptions(");
 	expect(endpointClientHelperSource).toContain("export function toValidatorAccessExpression(");
 });
+
+test("schema-core and metadata-parser keep helper clusters in dedicated modules", () => {
+	const schemaCoreSource = readFileSync(
+		resolve(sourceRoot, "schema-core.ts"),
+		"utf8",
+	);
+	const schemaProjectionHelperSource = readFileSync(
+		resolve(sourceRoot, "schema-core-projection.ts"),
+		"utf8",
+	);
+	const schemaAuthHelperSource = readFileSync(
+		resolve(sourceRoot, "schema-core-auth.ts"),
+		"utf8",
+	);
+	const metadataParserSource = readFileSync(
+		resolve(sourceRoot, "metadata-parser.ts"),
+		"utf8",
+	);
+	const metadataParserTagsHelperSource = readFileSync(
+		resolve(sourceRoot, "metadata-parser-tags.ts"),
+		"utf8",
+	);
+	const metadataParserSymbolsHelperSource = readFileSync(
+		resolve(sourceRoot, "metadata-parser-symbols.ts"),
+		"utf8",
+	);
+
+	expect(schemaCoreSource).toContain('from "./schema-core-projection.js"');
+	expect(schemaCoreSource).toContain('from "./schema-core-auth.js"');
+	expect(schemaCoreSource).not.toContain("function projectSchemaObjectForAiStructuredOutput(");
+	expect(schemaCoreSource).not.toContain("function projectSchemaObjectForRest(");
+	expect(schemaCoreSource).not.toContain("export function normalizeEndpointAuthDefinition(");
+	expect(schemaCoreSource).not.toContain("function createBootstrapResponseHeaders(");
+	expect(schemaProjectionHelperSource).toContain(
+		"export function projectSchemaObjectForAiStructuredOutput(",
+	);
+	expect(schemaProjectionHelperSource).toContain(
+		"export function projectSchemaObjectForRest(",
+	);
+	expect(schemaAuthHelperSource).toContain(
+		"export function normalizeEndpointAuthDefinition(",
+	);
+	expect(schemaAuthHelperSource).toContain(
+		"export function createBootstrapResponseHeaders(",
+	);
+
+	expect(metadataParserSource).toContain('from "./metadata-parser-tags.js"');
+	expect(metadataParserSource).toContain('from "./metadata-parser-symbols.js"');
+	expect(metadataParserSource).not.toContain("function mergePrimitiveIntersection(");
+	expect(metadataParserSource).not.toContain("function applyTag(");
+	expect(metadataParserSource).not.toContain(
+		"function resolveIndexedAccessPropertyDeclaration(",
+	);
+	expect(metadataParserSource).not.toContain("function resolveSymbol(");
+	expect(metadataParserTagsHelperSource).toContain(
+		"export function mergePrimitiveIntersection(",
+	);
+	expect(metadataParserTagsHelperSource).toContain("export function applyTag(");
+	expect(metadataParserSymbolsHelperSource).toContain(
+		"export function resolveIndexedAccessPropertyDeclaration(",
+	);
+	expect(metadataParserSymbolsHelperSource).toContain(
+		"export function getReferenceName(",
+	);
+});
