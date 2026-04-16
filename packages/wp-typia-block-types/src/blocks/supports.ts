@@ -3,9 +3,9 @@ import type {
   BlockVerticalAlignment,
   JustifyContent,
   TextAlignment,
-} from '../block-editor/alignment';
-import type { FlexWrap, LayoutType, Orientation } from '../block-editor/layout';
-import type { SpacingAxis, SpacingDimension } from '../block-editor/spacing';
+} from "../block-editor/alignment.js";
+import type { FlexWrap, LayoutType, Orientation } from "../block-editor/layout.js";
+import type { SpacingAxis, SpacingDimension } from "../block-editor/spacing.js";
 
 /**
  * Derived from Gutenberg block support keys and commonly used block.json

@@ -71,6 +71,21 @@ TypeScript installs surface the requirement explicitly.
 Compatibility should track that floor unless the generated project dependency
 matrix changes in the same release.
 
+## Validation coverage
+
+`@wp-typia/block-types` now validates itself with a mixed strategy that matches
+the package surface:
+
+- runtime/export-contract tests verify the published subpath map, ESM-safe
+  built re-exports, and the tuple/helper values that downstream packages import
+  at runtime
+- compile-time fixture tests verify the most-used public type surfaces through
+  package-style imports, including block registration facades and style/support
+  helpers
+
+This keeps the package failing fast on its own instead of relying on downstream
+breakage in scaffold or runtime packages.
+
 ## WordPress style support helpers
 
 The package now exposes two complementary surfaces:
