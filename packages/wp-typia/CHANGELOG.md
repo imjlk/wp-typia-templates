@@ -1,5 +1,22 @@
 # wp-typia
 
+## 0.16.12 — 2026-04-16
+
+### Patch changes
+
+- [bee3c9e](https://github.com/imjlk/wp-typia/commit/bee3c9e35e9d35e32513b172c228a4cc9a424b07) Upgraded the repo-owned lint stack to `eslint` 9 with `@typescript-eslint` 8,
+  added root `lint:fix` and `format:write` scripts, and documented the
+  maintainer autofix flow alongside the formatter/lint baseline validator. — Thanks @imjlk!
+- [b9b57de](https://github.com/imjlk/wp-typia/commit/b9b57de84fad43525094bea76641164fc58fa0c2) Added the missing root `LICENSE` file and tightened the positional
+  `wp-typia <project-dir>` alias so typo-like invocations with extra positional
+  arguments fail with explicit guidance instead of silently scaffolding a new
+  project. — Thanks @imjlk!
+- [850ea02](https://github.com/imjlk/wp-typia/commit/850ea02e85bc1bb1d8736964988e5d5925648c36) Reduced example maintenance drift by switching the repo-local `my-typia-block`
+  reference app to the workspace `wp-typia` CLI instead of a hardcoded published
+  version, and by giving `api-contract-adapter-poc` explicit `lint` / `format`
+  scripts that now participate in the shared examples maintenance workflow. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.16.11
+
 ## 0.16.11 — 2026-04-15
 
 ### Patch changes

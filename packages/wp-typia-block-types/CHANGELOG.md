@@ -1,5 +1,14 @@
 # @wp-typia/block-types
 
+## 0.2.4 — 2026-04-16
+
+### Patch changes
+
+- [8b661b9](https://github.com/imjlk/wp-typia/commit/8b661b9da8af050941789496064c51c25850ccd9) Added first-class validation coverage for `@wp-typia/block-types`, including
+  published export-contract checks, compile-time public type fixtures, and CI
+  coverage wiring so block type regressions fail fast before they leak to
+  downstream packages. — Thanks @imjlk!
+
 ## 0.2.3 — 2026-04-15
 
 ### Patch changes

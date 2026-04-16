@@ -1,5 +1,11 @@
 # @wp-typia/project-tools
 
+## 0.16.11 — 2026-04-16
+
+### Patch changes
+
+- Updated dependencies: block-types (npm)@0.2.4, rest (npm)@0.3.8
+
 ## 0.16.10 — 2026-04-15
 
 ### Patch changes

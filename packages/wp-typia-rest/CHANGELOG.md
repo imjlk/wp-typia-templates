@@ -1,5 +1,13 @@
 # @wp-typia/rest
 
+## 0.3.8 — 2026-04-16
+
+### Patch changes
+
+- [86c1537](https://github.com/imjlk/wp-typia/commit/86c1537ea68c32973f92e296d0518bfcd286d6cd) Clarify the focused `@wp-typia/rest/client` and `@wp-typia/rest/http`
+  subpath surfaces, route those exports to their dedicated build outputs, and
+  isolate the remaining generic fallback casts inside the React cache helpers. — Thanks @imjlk!
+
 ## 0.3.7 — 2026-04-13
 
 ### Patch changes
