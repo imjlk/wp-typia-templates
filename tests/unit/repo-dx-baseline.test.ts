@@ -67,7 +67,17 @@ describe('repository DX baseline', () => {
   });
 
   test('repo meta docs and GitHub templates exist', () => {
+    const packageJson = readJson('package.json');
+    const licenseContents = fs.readFileSync(
+      path.join(repoRoot, 'LICENSE'),
+      'utf8',
+    );
+
+    expect(packageJson.license).toBe('GPL-2.0-or-later');
     expect(fs.existsSync(path.join(repoRoot, 'LICENSE'))).toBe(true);
+    expect(licenseContents).toContain(
+      'SPDX-License-Identifier: GPL-2.0-or-later',
+    );
     expect(fs.existsSync(path.join(repoRoot, 'UPGRADE.md'))).toBe(true);
     expect(fs.existsSync(path.join(repoRoot, 'SECURITY.md'))).toBe(true);
     expect(
