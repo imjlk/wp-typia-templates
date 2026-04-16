@@ -386,6 +386,20 @@ describe("wp-typia package", () => {
 		);
 	});
 
+	test("rejects typo-like positional alias invocations with extra arguments", () => {
+		const result = runCapturedCommand("node", [entryPath, "temlates", "list"], {
+			env: withoutAIAgentEnv(),
+		});
+
+		expect(result.status).toBe(1);
+		expect(result.stderr).toContain(
+			"The positional alias only accepts a single project directory.",
+		);
+		expect(result.stderr).toContain("`wp-typia create <project-dir>`");
+		expect(result.stderr).toContain("check the command spelling");
+		expect(result.stderr).toContain("`list`");
+	});
+
 	test("formats create failures with a shared non-interactive diagnostic block", () => {
 		const result = runCapturedCommand("node", [entryPath, "create"]);
 

@@ -91,6 +91,9 @@ describe("wp-typia Bunli preparation", () => {
 			normalizeWpTypiaArgv(["-c", "./custom.json", "templates", "list"]),
 		).toEqual(["-c", "./custom.json", "templates", "list"]);
 		expect(
+			normalizeWpTypiaArgv(["demo-block", "--template", "basic"]),
+		).toEqual(["create", "demo-block", "--template", "basic"]);
+		expect(
 			normalizeWpTypiaArgv([
 				"add",
 				"hooked-block",
@@ -114,6 +117,9 @@ describe("wp-typia Bunli preparation", () => {
 		);
 		expect(() => normalizeWpTypiaArgv(["mcp", "sync", "--output-dir"])).toThrow(
 			/`--output-dir` requires a value\./,
+		);
+		expect(() => normalizeWpTypiaArgv(["temlates", "list"])).toThrow(
+			/only accepts a single project directory.*check the command spelling.*`list`/s,
 		);
 	});
 });

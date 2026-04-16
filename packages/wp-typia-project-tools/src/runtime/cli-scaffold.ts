@@ -303,7 +303,7 @@ export async function runScaffoldFlow({
 
 	if (!projectInput) {
 		throw new Error(
-			"Project directory is required. Usage: wp-typia create <project-dir> (or wp-typia <project-dir>).",
+			"Project directory is required. Usage: wp-typia create <project-dir> (or wp-typia <project-dir> when <project-dir> is the only positional argument).",
 		);
 	}
 

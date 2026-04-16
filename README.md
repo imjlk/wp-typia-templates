@@ -50,7 +50,8 @@ bunx wp-typia create my-block
 npx wp-typia create my-block
 ```
 
-`wp-typia <project-dir>` remains available as a backward-compatible alias to `create`.
+`wp-typia <project-dir>` remains available as a backward-compatible alias to
+`create` when `<project-dir>` is the only positional argument.
 
 ### Built-in templates
 
@@ -191,6 +192,7 @@ npx wp-typia create my-block --template @scope/create-block-template --variant h
 - [Package Manifest Policy](docs/package-manifest-policy.md)
 - [TypeScript Strictness Policy](docs/typescript-strictness-policy.md)
 - [Upgrade Guide](UPGRADE.md)
+- [License](LICENSE)
 - [Security Policy](SECURITY.md)
 - [Interactivity Guide](docs/interactivity.md)
 - [Examples Guide](examples/EXAMPLES.md)

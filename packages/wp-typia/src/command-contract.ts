@@ -84,13 +84,24 @@ function isLongOptionValueConsumer(optionName: string): boolean {
 }
 
 function findFirstPositionalIndex(argv: string[]): number {
+	const positionalIndexes = collectPositionalIndexes(argv);
+	return positionalIndexes[0] ?? -1;
+}
+
+function collectPositionalIndexes(argv: string[]): number[] {
+	const positionalIndexes: number[] = [];
+
 	for (let index = 0; index < argv.length; index += 1) {
 		const arg = argv[index];
 		if (arg === "--") {
-			return index + 1 < argv.length ? index + 1 : -1;
+			for (let restIndex = index + 1; restIndex < argv.length; restIndex += 1) {
+				positionalIndexes.push(restIndex);
+			}
+			break;
 		}
 		if (!arg.startsWith("-") || arg === "-") {
-			return index;
+			positionalIndexes.push(index);
+			continue;
 		}
 		if (arg.startsWith("--")) {
 			if (arg.includes("=")) {
@@ -106,7 +117,7 @@ function findFirstPositionalIndex(argv: string[]): number {
 		}
 	}
 
-	return -1;
+	return positionalIndexes;
 }
 
 export const WP_TYPIA_FUTURE_COMMAND_TREE = [
@@ -213,7 +224,8 @@ function assertStringOptionValues(argv: string[]): void {
 }
 
 export function normalizeWpTypiaArgv(argv: string[]): string[] {
-	const firstPositionalIndex = findFirstPositionalIndex(argv);
+	const positionalIndexes = collectPositionalIndexes(argv);
+	const firstPositionalIndex = positionalIndexes[0] ?? -1;
 	if (firstPositionalIndex === -1) {
 		return argv;
 	}
@@ -232,6 +244,17 @@ export function normalizeWpTypiaArgv(argv: string[]): string[] {
 	if (isReservedTopLevelCommandName(firstPositional)) {
 		assertStringOptionValues(argv);
 		return argv;
+	}
+
+	if (positionalIndexes.length > 1) {
+		const extraPositionals = positionalIndexes
+			.slice(1)
+			.map((index) => argv[index])
+			.filter((value): value is string => typeof value === "string" && value.length > 0);
+
+		throw new Error(
+			`The positional alias only accepts a single project directory. Use \`${WP_TYPIA_CANONICAL_CREATE_USAGE}\` for scaffold invocations with additional positional arguments, or check the command spelling if you meant another top-level command. Extra positional arguments: ${extraPositionals.map((value) => `\`${value}\``).join(", ")}.`,
+		);
 	}
 
 	const normalizedArgv = [
