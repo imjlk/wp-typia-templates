@@ -18,9 +18,11 @@ test("built-in block artifacts delegate type source emission to the focused help
 	expect(artifactSource).not.toContain("function emitTypesModule(");
 	expect(artifactSource).not.toContain("function buildBasicTypesSource(");
 	expect(artifactSource).not.toContain("function buildCompoundChildTypesSource(");
-	expect(typeEmitterSource).toContain("function emitTypesModule(");
-	expect(typeEmitterSource).toContain("export function buildBasicTypesSource(");
-	expect(typeEmitterSource).toContain(
-		"export function buildCompoundChildTypesSource(",
+	expect(typeEmitterSource).toMatch(/function\s+emitTypesModule\s*\(/);
+	expect(typeEmitterSource).toMatch(
+		/export\s+function\s+buildBasicTypesSource\s*\(/,
+	);
+	expect(typeEmitterSource).toMatch(
+		/export\s+function\s+buildCompoundChildTypesSource\s*\(/,
 	);
 });

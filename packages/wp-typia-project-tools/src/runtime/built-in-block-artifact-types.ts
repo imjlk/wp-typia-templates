@@ -31,6 +31,24 @@ interface TypeAliasDefinition {
 	value: string;
 }
 
+const STANDARD_PREAMBLE_LINES = [
+	'import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";',
+	"import type {",
+	"\tTypiaValidationError,",
+	"\tValidationResult,",
+	'} from "@wp-typia/block-runtime/validation";',
+	'import { tags } from "typia";',
+	"",
+	'export type { TypiaValidationError, ValidationResult } from "@wp-typia/block-runtime/validation";',
+] as const satisfies readonly string[];
+
+const VALIDATION_ONLY_PREAMBLE_LINES = [
+	'import type { ValidationResult } from "@wp-typia/block-runtime/validation";',
+	'import { tags } from "typia";',
+	"",
+	'export type { ValidationResult } from "@wp-typia/block-runtime/validation";',
+] as const satisfies readonly string[];
+
 function emitDocComment(
 	description: AttributeDescription | undefined,
 	indent = "",
@@ -95,21 +113,19 @@ function emitTypesModule({
 	return `${sections.join("\n\n")}\n`;
 }
 
+/**
+ * Builds the generated attributes and validation type source for a basic block scaffold.
+ *
+ * @param variables Resolved scaffold template variables used to name emitted types.
+ * @param attributes Emitted built-in attribute definitions that drive the interface members.
+ * @returns TypeScript source for the basic block attribute and validation types.
+ */
 export function buildBasicTypesSource(
 	variables: ScaffoldTemplateVariables,
 	attributes: readonly EmittedAttributeDefinition[],
 ): string {
 	return emitTypesModule({
-		preambleLines: [
-			'import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";',
-			"import type {",
-			"\tTypiaValidationError,",
-			"\tValidationResult,",
-			'} from "@wp-typia/block-runtime/validation";',
-			'import { tags } from "typia";',
-			"",
-			'export type { TypiaValidationError, ValidationResult } from "@wp-typia/block-runtime/validation";',
-		],
+		preambleLines: [...STANDARD_PREAMBLE_LINES],
 		interfaces: [
 			{
 				description: {
@@ -136,21 +152,19 @@ export function buildBasicTypesSource(
 	});
 }
 
+/**
+ * Builds the generated attributes, context, and validation type source for an interactivity scaffold.
+ *
+ * @param variables Resolved scaffold template variables used to name emitted types.
+ * @param attributes Emitted built-in attribute definitions that drive the interface members.
+ * @returns TypeScript source for the interactivity block attribute, context, and validation types.
+ */
 export function buildInteractivityTypesSource(
 	variables: ScaffoldTemplateVariables,
 	attributes: readonly EmittedAttributeDefinition[],
 ): string {
 	return emitTypesModule({
-		preambleLines: [
-			'import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";',
-			"import type {",
-			"\tTypiaValidationError,",
-			"\tValidationResult,",
-			'} from "@wp-typia/block-runtime/validation";',
-			'import { tags } from "typia";',
-			"",
-			'export type { TypiaValidationError, ValidationResult } from "@wp-typia/block-runtime/validation";',
-		],
+		preambleLines: [...STANDARD_PREAMBLE_LINES],
 		interfaces: [
 			{
 				members: attributes.map((attribute) => ({
@@ -183,21 +197,19 @@ export function buildInteractivityTypesSource(
 	});
 }
 
+/**
+ * Builds the generated attributes, context, state, client, and validation type source for a persistence scaffold.
+ *
+ * @param variables Resolved scaffold template variables used to name emitted types.
+ * @param attributes Emitted built-in attribute definitions that drive the interface members.
+ * @returns TypeScript source for the persistence block runtime types.
+ */
 export function buildPersistenceTypesSource(
 	variables: ScaffoldTemplateVariables,
 	attributes: readonly EmittedAttributeDefinition[],
 ): string {
 	return emitTypesModule({
-		preambleLines: [
-			'import type { TextAlignment } from "@wp-typia/block-types/block-editor/alignment";',
-			"import type {",
-			"\tTypiaValidationError,",
-			"\tValidationResult,",
-			'} from "@wp-typia/block-runtime/validation";',
-			'import { tags } from "typia";',
-			"",
-			'export type { TypiaValidationError, ValidationResult } from "@wp-typia/block-runtime/validation";',
-		],
+		preambleLines: [...STANDARD_PREAMBLE_LINES],
 		interfaces: [
 			{
 				members: attributes.map((attribute) => ({
@@ -259,6 +271,13 @@ export function buildPersistenceTypesSource(
 	});
 }
 
+/**
+ * Builds the generated attributes and optional persistence runtime type source for a compound parent scaffold.
+ *
+ * @param variables Resolved scaffold template variables used to name emitted types.
+ * @param attributes Emitted built-in attribute definitions that drive the interface members.
+ * @returns TypeScript source for the compound parent runtime types.
+ */
 export function buildCompoundTypesSource(
 	variables: ScaffoldTemplateVariables,
 	attributes: readonly EmittedAttributeDefinition[],
@@ -267,21 +286,8 @@ export function buildCompoundTypesSource(
 
 	return emitTypesModule({
 		preambleLines: persistenceEnabled
-			? [
-					"import type {",
-					"\tTypiaValidationError,",
-					"\tValidationResult,",
-					'} from "@wp-typia/block-runtime/validation";',
-					'import { tags } from "typia";',
-					"",
-					'export type { TypiaValidationError, ValidationResult } from "@wp-typia/block-runtime/validation";',
-				]
-			: [
-					'import type { ValidationResult } from "@wp-typia/block-runtime/validation";',
-					'import { tags } from "typia";',
-					"",
-					'export type { ValidationResult } from "@wp-typia/block-runtime/validation";',
-				],
+			? [...STANDARD_PREAMBLE_LINES]
+			: [...VALIDATION_ONLY_PREAMBLE_LINES],
 		interfaces: [
 			{
 				members: attributes.map((attribute) => ({
@@ -347,17 +353,19 @@ export function buildCompoundTypesSource(
 	});
 }
 
+/**
+ * Builds the generated attributes and validation type source for a compound child scaffold.
+ *
+ * @param variables Resolved scaffold template variables used to name emitted types.
+ * @param attributes Emitted built-in attribute definitions that drive the interface members.
+ * @returns TypeScript source for the compound child attribute and validation types.
+ */
 export function buildCompoundChildTypesSource(
 	variables: ScaffoldTemplateVariables,
 	attributes: readonly EmittedAttributeDefinition[],
 ): string {
 	return emitTypesModule({
-		preambleLines: [
-			'import type { ValidationResult } from "@wp-typia/block-runtime/validation";',
-			'import { tags } from "typia";',
-			"",
-			'export type { ValidationResult } from "@wp-typia/block-runtime/validation";',
-		],
+		preambleLines: [...VALIDATION_ONLY_PREAMBLE_LINES],
 		interfaces: [
 			{
 				members: attributes.map((attribute) => ({
