@@ -11,6 +11,9 @@ const BASIC_ALIGNMENT_VALUES = ["left", "center", "right", "justify"] as const;
 const INTERACTIVE_MODE_VALUES = ["click", "hover"] as const;
 const ANIMATION_VALUES = ["none", "bounce", "pulse", "shake", "flip"] as const;
 
+/**
+ * Default placeholder copy used for generated compound child body fields.
+ */
 export const DEFAULT_COMPOUND_CHILD_BODY_PLACEHOLDER =
 	"Add supporting details for this internal item.";
 
@@ -36,10 +39,13 @@ interface BlockJsonAttributeDefinition {
 	type: StarterManifestSourceType;
 }
 
-interface AttributeDescription {
+export interface AttributeDescription {
 	lines: string[];
 }
 
+/**
+ * Emitted attribute metadata shared between block.json, manifest, and type emitters.
+ */
 export interface EmittedAttributeDefinition {
 	blockJson: BlockJsonAttributeDefinition;
 	description?: AttributeDescription;
@@ -749,9 +755,9 @@ export function buildCompoundParentAttributes(
  * @returns Emitted attribute definitions for the compound child artifact.
  */
 export function buildCompoundChildAttributes(
-	bodyPlaceholder = DEFAULT_COMPOUND_CHILD_BODY_PLACEHOLDER,
 	childTitle: string,
 	childCssClassName?: string | null,
+	bodyPlaceholder = DEFAULT_COMPOUND_CHILD_BODY_PLACEHOLDER,
 ): EmittedAttributeDefinition[] {
 	return buildAttributesFromSpecs(COMPOUND_CHILD_ATTRIBUTE_SPECS, {
 		bodyPlaceholder,

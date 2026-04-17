@@ -188,9 +188,9 @@ function buildCompoundChildArtifact(
 	bodyPlaceholder = DEFAULT_COMPOUND_CHILD_BODY_PLACEHOLDER,
 ): BuiltInBlockArtifact {
 	const attributes = buildCompoundChildAttributes(
-		bodyPlaceholder,
 		variables.compoundChildTitle,
 		variables.compoundChildCssClassName,
+		bodyPlaceholder,
 	);
 	return {
 		blockJsonDocument: {
@@ -233,9 +233,9 @@ export function buildCompoundChildStarterManifestDocument(
 	bodyPlaceholder = DEFAULT_COMPOUND_CHILD_BODY_PLACEHOLDER,
 ): ManifestDocument {
 	const attributes = buildCompoundChildAttributes(
-		bodyPlaceholder,
 		childTitle,
 		null,
+		bodyPlaceholder,
 	);
 	return buildManifestDocument(childTypeName, attributes);
 }
