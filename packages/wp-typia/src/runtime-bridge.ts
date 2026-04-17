@@ -1,7 +1,3 @@
-import { spawnSync } from "node:child_process";
-import fs from "node:fs";
-import path from "node:path";
-
 import {
 	formatTemplateDetails,
 	formatTemplateFeatures,
@@ -9,10 +5,23 @@ import {
 	getTemplateById,
 	listTemplates,
 } from "@wp-typia/project-tools/cli-templates";
-import { formatRunScript } from "@wp-typia/project-tools/package-managers";
 import { tryResolveWorkspaceProject } from "@wp-typia/project-tools/workspace-project";
 import type { ReadlinePrompt } from "@wp-typia/project-tools/cli-prompt";
 import type { AlternateBufferCompletionPayload } from "./ui/alternate-buffer-lifecycle";
+import {
+	buildAddCompletionPayload,
+	buildCreateCompletionPayload,
+	buildMigrationCompletionPayload,
+	printBlock,
+	printCompletionPayload,
+	toExternalLayerPromptOptions,
+} from "./runtime-bridge-output";
+export {
+	buildCreateCompletionPayload,
+	buildMigrationCompletionPayload,
+	printCompletionPayload,
+} from "./runtime-bridge-output";
+export { executeSyncCommand } from "./runtime-bridge-sync";
 
 type CreateExecutionInput = {
 	projectDir: string;
@@ -44,11 +53,6 @@ type TemplatesExecutionInput = {
 	};
 };
 
-type SyncExecutionInput = {
-	check?: boolean;
-	cwd: string;
-};
-
 type MigrateExecutionInput = {
 	command?: string;
 	cwd: string;
@@ -58,20 +62,7 @@ type MigrateExecutionInput = {
 };
 
 type PrintLine = (line: string) => void;
-type PackageManagerId = "bun" | "npm" | "pnpm" | "yarn";
 type CliCommandId = "add" | "create" | "doctor" | "migrate";
-type ExternalLayerSelectOption = {
-	description?: string;
-	extends: string[];
-	id: string;
-};
-
-type SyncProjectContext = {
-	cwd: string;
-	packageJsonPath: string;
-	packageManager: PackageManagerId;
-	scripts: Partial<Record<"sync" | "sync-rest" | "sync-types", string>>;
-};
 
 const loadCliAddRuntime = () => import("@wp-typia/project-tools/cli-add");
 const loadCliDiagnosticsRuntime = () => import("@wp-typia/project-tools/cli-diagnostics");
@@ -99,176 +90,6 @@ function shouldWrapCliCommandError(options: {
 	}
 
 	return true;
-}
-
-function printBlock(lines: string[], printLine: PrintLine): void {
-	for (const line of lines) {
-		printLine(line);
-	}
-}
-
-function formatExternalLayerSelectHint(option: ExternalLayerSelectOption): string | undefined {
-	const details = [
-		option.description,
-		option.extends.length > 0 ? `extends ${option.extends.join(", ")}` : undefined,
-	].filter((value): value is string => typeof value === "string" && value.length > 0);
-
-	return details.length > 0 ? details.join(" · ") : undefined;
-}
-
-function toExternalLayerPromptOptions(options: ExternalLayerSelectOption[]) {
-	return options.map((option) => ({
-		hint: formatExternalLayerSelectHint(option),
-		label: option.id,
-		value: option.id,
-	}));
-}
-
-export function printCompletionPayload(
-	payload: AlternateBufferCompletionPayload,
-	options: {
-		printLine?: PrintLine;
-		warnLine?: PrintLine;
-	} = {},
-): void {
-	const printLine = options.printLine ?? (console.log as PrintLine);
-	const warnLine = options.warnLine ?? printLine;
-
-	for (const line of payload.preambleLines ?? []) {
-		printLine(line);
-	}
-	for (const warning of payload.warningLines ?? []) {
-		warnLine(`⚠️ ${warning}`);
-	}
-
-	const hasDetails =
-		(payload.summaryLines?.length ?? 0) > 0 ||
-		(payload.nextSteps?.length ?? 0) > 0 ||
-		(payload.optionalLines?.length ?? 0) > 0 ||
-		Boolean(payload.optionalNote);
-	const hasLeadingContext =
-		(payload.preambleLines?.length ?? 0) > 0 ||
-		(payload.warningLines?.length ?? 0) > 0;
-
-	printLine(hasLeadingContext && hasDetails ? `\n${payload.title}` : payload.title);
-	for (const line of payload.summaryLines ?? []) {
-		printLine(line);
-	}
-	if ((payload.nextSteps?.length ?? 0) > 0) {
-		printLine("Next steps:");
-		for (const step of payload.nextSteps ?? []) {
-			printLine(`  ${step}`);
-		}
-	}
-	if ((payload.optionalLines?.length ?? 0) > 0) {
-		printLine(`\n${payload.optionalTitle ?? "Optional:"}`);
-		for (const step of payload.optionalLines ?? []) {
-			printLine(`  ${step}`);
-		}
-	}
-	if (payload.optionalNote) {
-		printLine(`Note: ${payload.optionalNote}`);
-	}
-}
-
-export function buildCreateCompletionPayload(flow: {
-	nextSteps: string[];
-	optionalOnboarding: {
-		note: string;
-		steps: string[];
-	};
-	projectDir: string;
-	result: {
-		selectedVariant?: string | null;
-		variables: {
-			title: string;
-		};
-		warnings: string[];
-	};
-}): AlternateBufferCompletionPayload {
-	return {
-		nextSteps: flow.nextSteps,
-		optionalLines:
-			flow.optionalOnboarding.steps.length > 0 ? flow.optionalOnboarding.steps : undefined,
-		optionalNote:
-			flow.optionalOnboarding.steps.length > 0 ? flow.optionalOnboarding.note : undefined,
-		optionalTitle:
-			flow.optionalOnboarding.steps.length > 0 ? "Optional before first commit:" : undefined,
-		preambleLines: flow.result.selectedVariant
-			? [`Template variant: ${flow.result.selectedVariant}`]
-			: undefined,
-		summaryLines: [`Project directory: ${flow.projectDir}`],
-		title: `✅ Created ${flow.result.variables.title} in ${flow.projectDir}`,
-		warningLines: flow.result.warnings,
-	};
-}
-
-export function buildMigrationCompletionPayload(options: {
-	command: string;
-	lines: string[];
-}): AlternateBufferCompletionPayload {
-	const summaryLines = options.lines.filter((line) => line.trim().length > 0);
-
-	return {
-		summaryLines,
-		title: `✅ Completed wp-typia migrate ${options.command}`,
-	};
-}
-
-function buildAddCompletionPayload(options: {
-	kind: "binding-source" | "block" | "hooked-block" | "pattern" | "variation";
-	projectDir: string;
-	values: Record<string, string>;
-	warnings?: string[];
-}): AlternateBufferCompletionPayload {
-	switch (options.kind) {
-		case "variation":
-			return {
-				summaryLines: [
-					`Variation: ${options.values.variationSlug}`,
-					`Target block: ${options.values.blockSlug}`,
-					`Project directory: ${options.projectDir}`,
-				],
-				title: "✅ Added workspace variation",
-			};
-		case "pattern":
-			return {
-				summaryLines: [
-					`Pattern: ${options.values.patternSlug}`,
-					`Project directory: ${options.projectDir}`,
-				],
-				title: "✅ Added workspace pattern",
-			};
-		case "binding-source":
-			return {
-				summaryLines: [
-					`Binding source: ${options.values.bindingSourceSlug}`,
-					`Project directory: ${options.projectDir}`,
-				],
-				title: "✅ Added binding source",
-			};
-		case "hooked-block":
-			return {
-				summaryLines: [
-					`Block: ${options.values.blockSlug}`,
-					`Anchor: ${options.values.anchorBlockName}`,
-					`Position: ${options.values.position}`,
-					`Project directory: ${options.projectDir}`,
-				],
-				title: "✅ Added blockHooks metadata",
-			};
-		case "block":
-		default:
-			return {
-				summaryLines: [
-					`Blocks: ${options.values.blockSlugs}`,
-					`Template family: ${options.values.templateId}`,
-					`Project directory: ${options.projectDir}`,
-				],
-				title: "✅ Added workspace block",
-				warningLines: options.warnings,
-			};
-	}
 }
 
 function readOptionalStringFlag(
@@ -309,131 +130,6 @@ function pushFlag(argv: string[], name: string, value: unknown): void {
 		return;
 	}
 	argv.push(`--${name}`, String(value));
-}
-
-function getSyncRootError(cwd: string): Error {
-	return new Error(
-		`No generated wp-typia project root was found at ${cwd}. Run \`wp-typia sync\` from a scaffolded project or official workspace root.`,
-	);
-}
-
-function inferSyncPackageManager(cwd: string, packageManagerField?: string): PackageManagerId {
-	const field = String(packageManagerField ?? "");
-	if (field.startsWith("bun@")) return "bun";
-	if (field.startsWith("npm@")) return "npm";
-	if (field.startsWith("pnpm@")) return "pnpm";
-	if (field.startsWith("yarn@")) return "yarn";
-
-	if (
-		fs.existsSync(path.join(cwd, "bun.lock")) ||
-		fs.existsSync(path.join(cwd, "bun.lockb"))
-	) {
-		return "bun";
-	}
-	if (fs.existsSync(path.join(cwd, "pnpm-lock.yaml"))) {
-		return "pnpm";
-	}
-	if (
-		fs.existsSync(path.join(cwd, "yarn.lock")) ||
-		fs.existsSync(path.join(cwd, ".pnp.cjs")) ||
-		fs.existsSync(path.join(cwd, ".pnp.loader.mjs")) ||
-		fs.existsSync(path.join(cwd, ".yarnrc.yml"))
-	) {
-		return "yarn";
-	}
-	if (
-		fs.existsSync(path.join(cwd, "package-lock.json")) ||
-		fs.existsSync(path.join(cwd, "npm-shrinkwrap.json"))
-	) {
-		return "npm";
-	}
-
-	return "npm";
-}
-
-function resolveSyncProjectContext(cwd: string): SyncProjectContext {
-	const packageJsonPath = path.join(cwd, "package.json");
-	if (!fs.existsSync(packageJsonPath)) {
-		throw getSyncRootError(cwd);
-	}
-
-	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
-		packageManager?: string;
-		scripts?: Record<string, unknown>;
-	};
-	const scripts = packageJson.scripts ?? {};
-	const syncScripts = {
-		sync: typeof scripts.sync === "string" ? scripts.sync : undefined,
-		"sync-rest":
-			typeof scripts["sync-rest"] === "string" ? scripts["sync-rest"] : undefined,
-		"sync-types":
-			typeof scripts["sync-types"] === "string" ? scripts["sync-types"] : undefined,
-	} satisfies SyncProjectContext["scripts"];
-
-	if (!syncScripts.sync && !syncScripts["sync-types"]) {
-		throw new Error(
-			`Expected ${packageJsonPath} to define either a \`sync\` or \`sync-types\` script.`,
-		);
-	}
-
-	return {
-		cwd,
-		packageJsonPath,
-		packageManager: inferSyncPackageManager(cwd, packageJson.packageManager),
-		scripts: syncScripts,
-	};
-}
-
-function getPackageManagerRunInvocation(
-	packageManager: PackageManagerId,
-	scriptName: string,
-	extraArgs: string[],
-): { args: string[]; command: string } {
-	switch (packageManager) {
-		case "bun":
-			return { args: ["run", scriptName, ...extraArgs], command: "bun" };
-		case "npm":
-			return {
-				args: ["run", scriptName, ...(extraArgs.length > 0 ? ["--", ...extraArgs] : [])],
-				command: "npm",
-			};
-		case "pnpm":
-			return { args: ["run", scriptName, ...extraArgs], command: "pnpm" };
-		case "yarn":
-			return { args: ["run", scriptName, ...extraArgs], command: "yarn" };
-	}
-}
-
-function runProjectScript(
-	project: SyncProjectContext,
-	scriptName: "sync" | "sync-rest" | "sync-types",
-	extraArgs: string[],
-): void {
-	const script = project.scripts[scriptName];
-	if (!script) {
-		return;
-	}
-
-	const invocation = getPackageManagerRunInvocation(
-		project.packageManager,
-		scriptName,
-		extraArgs,
-	);
-
-	const result = spawnSync(invocation.command, invocation.args, {
-		cwd: project.cwd,
-		shell: process.platform === "win32",
-		stdio: "inherit",
-	});
-
-	if (result.error || result.status !== 0) {
-		throw new Error(
-			`\`${formatRunScript(project.packageManager, scriptName, extraArgs.join(" "))}\` failed.`,
-			{
-				cause: result.error,
-			},
-		);
-	}
 }
 
 const PACKAGE_MANAGER_PROMPT_OPTIONS = [
@@ -842,25 +538,6 @@ export async function loadAddWorkspaceBlockOptions(cwd: string) {
 
 	const { getWorkspaceBlockSelectOptions } = await loadCliAddRuntime();
 	return getWorkspaceBlockSelectOptions(workspace.projectDir);
-}
-
-export async function executeSyncCommand({
-	check = false,
-	cwd,
-}: SyncExecutionInput): Promise<void> {
-	const project = resolveSyncProjectContext(cwd);
-	const extraArgs = check ? ["--check"] : [];
-
-	if (project.scripts.sync) {
-		runProjectScript(project, "sync", extraArgs);
-		return;
-	}
-
-	runProjectScript(project, "sync-types", extraArgs);
-
-	if (project.scripts["sync-rest"]) {
-		runProjectScript(project, "sync-rest", extraArgs);
-	}
 }
 
 export async function executeMigrateCommand({
