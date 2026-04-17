@@ -92,6 +92,21 @@ test("local create-block subset paths scaffold into a pnpm-ready wp-typia projec
   expect(readme).not.toContain("## Local Test Preset");
 });
 
+test("template-source-remote preserves existing package.json.mustache wp-typia pins when patching remote manifests", () => {
+  const runtimeDir = path.join(packageRoot, "src", "runtime");
+  const templateSourceRemote = fs.readFileSync(
+    path.join(runtimeDir, "template-source-remote.ts"),
+    "utf8"
+  );
+
+  expect(templateSourceRemote).toMatch(
+    /packageJson\.devDependencies\s*=\s*{\s*'@wp-typia\/block-runtime': '\{\{blockRuntimePackageVersion\}\}',\s*'@wp-typia\/block-types': '\{\{blockTypesPackageVersion\}\}',\s*\.\.\.existingDevDependencies,/s
+  );
+  expect(templateSourceRemote).not.toMatch(
+    /packageJson\.devDependencies\s*=\s*{\s*\.\.\.existingDevDependencies,\s*'@wp-typia\/block-runtime': '\{\{blockRuntimePackageVersion\}\}',\s*'@wp-typia\/block-types': '\{\{blockTypesPackageVersion\}\}',/s
+  );
+});
+
 test("external layer packages are rejected as standalone template ids", async () => {
   await expect(
     scaffoldProject({

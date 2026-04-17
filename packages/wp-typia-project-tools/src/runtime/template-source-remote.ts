@@ -258,9 +258,9 @@ async function patchRemotePackageJson(
   delete existingDevDependencies['@wp-typia/project-tools']
 
   packageJson.devDependencies = {
-    ...existingDevDependencies,
     '@wp-typia/block-runtime': '{{blockRuntimePackageVersion}}',
     '@wp-typia/block-types': '{{blockTypesPackageVersion}}',
+    ...existingDevDependencies,
   }
 
   if (needsInteractivity) {
