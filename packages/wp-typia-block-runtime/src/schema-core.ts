@@ -257,10 +257,6 @@ export interface JsonSchemaProjectionOptions {
 	profile: JsonSchemaProjectionProfile;
 }
 
-const WP_TYPIA_OPENAPI_EXTENSION_KEYS = {
-	TYPE_TAG: "x-typeTag",
-} as const;
-
 /**
  * Projects one generated wp-typia JSON Schema document into a consumer-facing profile.
  *

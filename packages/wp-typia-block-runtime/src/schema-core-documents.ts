@@ -14,8 +14,10 @@ import type {
 	EndpointOpenApiContractDocument,
 	EndpointOpenApiDocumentOptions,
 	EndpointOpenApiEndpointDefinition,
+	EndpointOpenApiMethod,
 	JsonSchemaDocument,
 	JsonSchemaObject,
+	NormalizedEndpointAuthDefinition,
 	OpenApiDocument,
 	OpenApiInfo,
 	OpenApiOperation,
@@ -251,6 +253,12 @@ function projectSchemaDocumentForRest(schema: JsonSchemaDocument): JsonSchemaDoc
 	return projectSchemaObjectForRest(schema, "#") as JsonSchemaDocument;
 }
 
+function projectSchemaComponent(doc: ManifestDocument): JsonSchemaDocument {
+	const projectedSchema = projectSchemaDocumentForRest(manifestToJsonSchema(doc));
+	delete (projectedSchema as { $schema?: string }).$schema;
+	return projectedSchema;
+}
+
 /**
  * Wraps a manifest-derived JSON Schema document in a minimal OpenAPI 3.1 shell.
  *
@@ -263,12 +271,10 @@ export function manifestToOpenApi(
 	info: OpenApiInfo = {},
 ): OpenApiDocument {
 	const schemaName = doc.sourceType ?? "TypiaDocument";
-	const projectedSchema = projectSchemaDocumentForRest(manifestToJsonSchema(doc));
-	delete (projectedSchema as { $schema?: string }).$schema;
 	return {
 		components: {
 			schemas: {
-				[schemaName]: projectedSchema,
+				[schemaName]: projectSchemaComponent(doc),
 			},
 		},
 		info: {
@@ -342,8 +348,8 @@ function createSuccessResponse(
 function buildEndpointOpenApiOperation(
 	endpoint: EndpointOpenApiEndpointDefinition,
 	contracts: Readonly<Record<string, EndpointOpenApiContractDocument>>,
+	normalizedAuth: NormalizedEndpointAuthDefinition,
 ): OpenApiOperation {
-	const normalizedAuth = normalizeEndpointAuthDefinition(endpoint);
 	const isBootstrapEndpoint = endpoint.path.endsWith("/bootstrap");
 	const operation: OpenApiOperation = {
 		operationId: endpoint.operationId,
@@ -435,30 +441,32 @@ export function buildEndpointOpenApiDocument(
 ): OpenApiDocument {
 	const contractEntries = Object.entries(options.contracts);
 	const schemas = Object.fromEntries(
-		contractEntries.map(([contractKey, contract]) => {
-			const projectedSchema = projectSchemaDocumentForRest(
-				manifestToJsonSchema(contract.document),
-			);
-			delete (projectedSchema as { $schema?: string }).$schema;
-
-			return [getContractSchemaName(contractKey, contract), projectedSchema];
-		}),
+		contractEntries.map(([contractKey, contract]) => [
+			getContractSchemaName(contractKey, contract),
+			projectSchemaComponent(contract.document),
+		]),
 	);
 	const paths: Record<string, OpenApiPathItem> = {};
 	const topLevelTags = [...new Set(options.endpoints.flatMap((endpoint) => endpoint.tags))]
 		.filter((tag) => typeof tag === "string" && tag.length > 0)
 		.map((name) => ({ name }));
-	const usesWpRestNonce = options.endpoints.some(
-		(endpoint) =>
-			normalizeEndpointAuthDefinition(endpoint).wordpressAuth?.mechanism ===
+	const normalizedEndpoints = options.endpoints.map((endpoint) => ({
+		endpoint,
+		normalizedAuth: normalizeEndpointAuthDefinition(endpoint),
+	}));
+	const usesWpRestNonce = normalizedEndpoints.some(
+		({ normalizedAuth }) =>
+			normalizedAuth.wordpressAuth?.mechanism ===
 			WP_TYPIA_OPENAPI_LITERALS.WORDPRESS_REST_NONCE_MECHANISM,
 	);
 
-	for (const endpoint of options.endpoints) {
+	for (const { endpoint, normalizedAuth } of normalizedEndpoints) {
 		const pathItem = paths[endpoint.path] ?? {};
-		pathItem[endpoint.method.toLowerCase()] = buildEndpointOpenApiOperation(
+		const methodKey = endpoint.method.toLowerCase() as Lowercase<EndpointOpenApiMethod>;
+		pathItem[methodKey] = buildEndpointOpenApiOperation(
 			endpoint,
 			options.contracts,
+			normalizedAuth,
 		);
 		paths[endpoint.path] = pathItem;
 	}
