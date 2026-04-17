@@ -15,7 +15,10 @@ import type {
   TemplateVariableContext,
 } from './template-source-contracts.js'
 
-const EXTERNAL_TEMPLATE_ENTRY_CANDIDATES = [
+/**
+ * Candidate filenames for official external template config entrypoints.
+ */
+export const EXTERNAL_TEMPLATE_ENTRY_CANDIDATES = [
   'index.js',
   'index.cjs',
   'index.mjs',
@@ -38,6 +41,12 @@ function resolveSourceSubpath(sourceDir: string, relativePath: string): string {
   return targetPath
 }
 
+/**
+ * Search a source directory for the first supported external template entry.
+ *
+ * @param sourceDir Directory that may contain an external template config entry.
+ * @returns The first matching entry path, or null when no supported entry exists.
+ */
 export function getExternalTemplateEntry(sourceDir: string): string | null {
   for (const filename of EXTERNAL_TEMPLATE_ENTRY_CANDIDATES) {
     const candidate = path.join(sourceDir, filename)
@@ -183,6 +192,14 @@ async function buildExternalTemplateView(
   }
 }
 
+/**
+ * Load an official external create-block template config and render its seed.
+ *
+ * @param sourceDir Source directory that contains the external template config.
+ * @param context Template render context used for the selected variant.
+ * @param requestedVariant Optional explicit variant override.
+ * @returns A rendered temporary seed directory with optional assets and cleanup.
+ */
 export async function renderCreateBlockExternalTemplate(
   sourceDir: string,
   context: TemplateVariableContext,

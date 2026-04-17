@@ -42,6 +42,12 @@ function readRemoteBlockJson(blockDir: string): Record<string, unknown> {
   throw new Error(`Unable to locate block.json in ${blockDir}`)
 }
 
+/**
+ * Read a remote block source and return its default block category.
+ *
+ * @param sourceDir Block source directory that may contain a block.json file.
+ * @returns The declared block category, or "widgets" when detection fails.
+ */
 export function getDefaultCategory(sourceDir: string): string {
   try {
     const blockJson = readRemoteBlockJson(sourceDir)
@@ -51,6 +57,12 @@ export function getDefaultCategory(sourceDir: string): string {
   }
 }
 
+/**
+ * Copy a wp-typia seed into a normalized temporary template directory.
+ *
+ * @param seed Seed source whose files should be normalized into a temp root.
+ * @returns A cloned seed whose cleanup removes the temp root and original seed.
+ */
 export async function normalizeWpTypiaTemplateSeed(
   seed: SeedSource,
 ): Promise<SeedSource> {
@@ -246,9 +258,9 @@ async function patchRemotePackageJson(
   delete existingDevDependencies['@wp-typia/project-tools']
 
   packageJson.devDependencies = {
+    ...existingDevDependencies,
     '@wp-typia/block-runtime': '{{blockRuntimePackageVersion}}',
     '@wp-typia/block-types': '{{blockTypesPackageVersion}}',
-    ...existingDevDependencies,
   }
 
   if (needsInteractivity) {
@@ -324,6 +336,13 @@ async function removeSeedEntryConflicts(templateDir: string): Promise<void> {
   }
 }
 
+/**
+ * Convert a create-block subset seed into a normalized wp-typia template source.
+ *
+ * @param seed Seed source produced from a remote create-block subset.
+ * @param context Template variable context used for generated artifacts.
+ * @returns A normalized template source rooted in a temporary directory.
+ */
 export async function normalizeCreateBlockSubset(
   seed: SeedSource,
   context: TemplateVariableContext,
@@ -331,83 +350,89 @@ export async function normalizeCreateBlockSubset(
   const tempRoot = await fsp.mkdtemp(
     path.join(os.tmpdir(), 'wp-typia-remote-template-'),
   )
-  const templateDir = path.join(tempRoot, 'template')
-  const blockJson = readRemoteBlockJson(seed.blockDir)
-  const sourceRoot = getSeedSourceRoot(seed.blockDir)
+  try {
+    const templateDir = path.join(tempRoot, 'template')
+    const blockJson = readRemoteBlockJson(seed.blockDir)
+    const sourceRoot = getSeedSourceRoot(seed.blockDir)
 
-  await fsp.mkdir(templateDir, { recursive: true })
-  for (const layerDir of getBuiltInTemplateLayerDirs('basic')) {
-    if (!fs.existsSync(layerDir)) {
-      if (isOmittableBuiltInTemplateLayerDir('basic', layerDir)) {
-        continue
+    await fsp.mkdir(templateDir, { recursive: true })
+    for (const layerDir of getBuiltInTemplateLayerDirs('basic')) {
+      if (!fs.existsSync(layerDir)) {
+        if (isOmittableBuiltInTemplateLayerDir('basic', layerDir)) {
+          continue
+        }
+        throw new Error(`Built-in template layer is missing: ${layerDir}`)
       }
-      throw new Error(`Built-in template layer is missing: ${layerDir}`)
+      await fsp.cp(layerDir, templateDir, {
+        recursive: true,
+        force: true,
+      })
     }
-    await fsp.cp(layerDir, templateDir, {
+    await removeSeedEntryConflicts(templateDir)
+    await fsp.cp(sourceRoot, path.join(templateDir, 'src'), {
       recursive: true,
       force: true,
     })
-  }
-  await removeSeedEntryConflicts(templateDir)
-  await fsp.cp(sourceRoot, path.join(templateDir, 'src'), {
-    recursive: true,
-    force: true,
-  })
 
-  const remoteRenderPath = findSeedRenderPhp(seed)
-  if (remoteRenderPath) {
-    await fsp.copyFile(remoteRenderPath, path.join(templateDir, 'render.php'))
-  }
+    const remoteRenderPath = findSeedRenderPhp(seed)
+    if (remoteRenderPath) {
+      await fsp.copyFile(remoteRenderPath, path.join(templateDir, 'render.php'))
+    }
 
-  if (seed.assetsDir && fs.existsSync(seed.assetsDir)) {
-    await fsp.cp(seed.assetsDir, path.join(templateDir, 'assets'), {
-      recursive: true,
-      force: true,
-    })
-  }
+    if (seed.assetsDir && fs.existsSync(seed.assetsDir)) {
+      await fsp.cp(seed.assetsDir, path.join(templateDir, 'assets'), {
+        recursive: true,
+        force: true,
+      })
+    }
 
-  await fsp.writeFile(
-    path.join(templateDir, 'src', 'types.ts'),
-    buildRemoteTypesSource(blockJson, context),
-    'utf8',
-  )
-  await fsp.writeFile(
-    path.join(templateDir, 'src', 'block.json'),
-    buildRemoteBlockJsonTemplate(blockJson),
-    'utf8',
-  )
-  await rewriteBlockJsonImports(path.join(templateDir, 'src'))
+    await fsp.writeFile(
+      path.join(templateDir, 'src', 'types.ts'),
+      buildRemoteTypesSource(blockJson, context),
+      'utf8',
+    )
+    await fsp.writeFile(
+      path.join(templateDir, 'src', 'block.json'),
+      buildRemoteBlockJsonTemplate(blockJson),
+      'utf8',
+    )
+    await rewriteBlockJsonImports(path.join(templateDir, 'src'))
 
-  const needsInteractivity =
-    typeof blockJson.viewScriptModule === 'string' ||
-    typeof blockJson.viewScript === 'string' ||
-    fs.existsSync(path.join(templateDir, 'src', 'view.js')) ||
-    fs.existsSync(path.join(templateDir, 'src', 'view.ts')) ||
-    fs.existsSync(path.join(templateDir, 'src', 'view.tsx')) ||
-    fs.existsSync(path.join(templateDir, 'src', 'interactivity.js')) ||
-    fs.existsSync(path.join(templateDir, 'src', 'interactivity.ts'))
+    const needsInteractivity =
+      typeof blockJson.viewScriptModule === 'string' ||
+      typeof blockJson.viewScript === 'string' ||
+      fs.existsSync(path.join(templateDir, 'src', 'view.js')) ||
+      fs.existsSync(path.join(templateDir, 'src', 'view.ts')) ||
+      fs.existsSync(path.join(templateDir, 'src', 'view.tsx')) ||
+      fs.existsSync(path.join(templateDir, 'src', 'interactivity.js')) ||
+      fs.existsSync(path.join(templateDir, 'src', 'interactivity.ts'))
 
-  await patchRemotePackageJson(templateDir, needsInteractivity)
+    await patchRemotePackageJson(templateDir, needsInteractivity)
 
-  return {
-    id: 'remote:create-block-subset',
-    defaultCategory: getDefaultCategoryFromBlockJson(blockJson),
-    description:
-      'A wp-typia scaffold normalized from a create-block subset source',
-    features: [
-      'Remote source',
-      'create-block adapter',
-      'Typia metadata pipeline',
-    ],
-    format: 'create-block-subset',
-    selectedVariant: seed.selectedVariant ?? null,
-    templateDir,
-    warnings: seed.warnings ?? [],
-    cleanup: async () => {
-      await fsp.rm(tempRoot, { force: true, recursive: true })
-      if (seed.cleanup) {
-        await seed.cleanup()
-      }
-    },
+    return {
+      id: 'remote:create-block-subset',
+      defaultCategory: getDefaultCategoryFromBlockJson(blockJson),
+      description:
+        'A wp-typia scaffold normalized from a create-block subset source',
+      features: [
+        'Remote source',
+        'create-block adapter',
+        'Typia metadata pipeline',
+      ],
+      format: 'create-block-subset',
+      selectedVariant: seed.selectedVariant ?? null,
+      templateDir,
+      warnings: seed.warnings ?? [],
+      cleanup: async () => {
+        await fsp.rm(tempRoot, { force: true, recursive: true })
+        if (seed.cleanup) {
+          await seed.cleanup()
+        }
+      },
+    }
+  } catch (error) {
+    await fsp.rm(tempRoot, { force: true, recursive: true })
+    await seed.cleanup?.()
+    throw error
   }
 }
