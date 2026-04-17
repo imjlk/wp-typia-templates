@@ -40,9 +40,7 @@ export async function normalizePackageManagerFiles(
 		return;
 	}
 
-	if (fs.existsSync(yarnRcPath)) {
-		await fsp.rm(yarnRcPath, { force: true });
-	}
+	await fsp.rm(yarnRcPath, { force: true });
 }
 
 /**
@@ -96,10 +94,7 @@ export async function removeUnexpectedLockfiles(
 				return;
 			}
 
-			const filePath = path.join(targetDir, filename);
-			if (fs.existsSync(filePath)) {
-				await fsp.rm(filePath, { force: true });
-			}
+			await fsp.rm(path.join(targetDir, filename), { force: true });
 		}),
 	);
 }
