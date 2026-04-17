@@ -381,6 +381,18 @@ function checkMigrationWorkspaceHint(
 	);
 }
 
+/**
+ * Collect workspace-scoped doctor checks for the given working directory.
+ *
+ * When the directory is not an official workspace, the function returns an
+ * empty array or a single failing "Workspace package metadata" row describing
+ * the reason. When workspace resolution or metadata parsing throws, the
+ * corresponding failing row is returned early and the remaining checks are
+ * skipped.
+ *
+ * @param cwd Working directory expected to host an official workspace.
+ * @returns Ordered workspace check rows ready for CLI rendering.
+ */
 export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 	const checks: DoctorCheck[] = [];
 
@@ -448,9 +460,11 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 
 		for (const block of inventory.blocks) {
 			checks.push(
-				checkExistingFiles(workspace.projectDir, `Block ${block.slug}`, [
-					...getWorkspaceBlockRequiredFiles(block),
-				]),
+				checkExistingFiles(
+					workspace.projectDir,
+					`Block ${block.slug}`,
+					getWorkspaceBlockRequiredFiles(block),
+				),
 			);
 			checks.push(checkWorkspaceBlockMetadata(workspace.projectDir, workspace, block));
 			checks.push(checkWorkspaceBlockHooks(workspace.projectDir, block.slug));

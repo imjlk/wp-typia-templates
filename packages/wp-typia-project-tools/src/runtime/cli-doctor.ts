@@ -24,13 +24,13 @@ interface RunDoctorOptions {
 	renderSummaryLine?: (summaryLine: string) => void;
 }
 
-const WORKSPACE_COLLECTION_IMPORT_LINE = "import '../../collection';";
-
 /**
  * Collect all runtime doctor checks for the current environment.
  *
- * The returned array includes command availability checks, directory
- * writability checks, and built-in template asset checks in display order.
+ * The returned array concatenates environment checks (command availability,
+ * directory writability, and built-in template assets) followed by
+ * workspace checks (package metadata, inventory, blocks, variations,
+ * patterns, bindings, and optional migration hints) in display order.
  *
  * @param cwd Working directory to validate for writability.
  * @returns Ordered doctor check rows ready for CLI rendering.

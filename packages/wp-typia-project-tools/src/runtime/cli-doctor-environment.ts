@@ -125,6 +125,16 @@ function getTemplateDoctorChecks(): DoctorCheck[] {
 	return checks;
 }
 
+/**
+ * Collect environment-scoped doctor checks for the current working directory.
+ *
+ * The returned rows cover Bun/Node/git availability, writability of the
+ * current working directory and OS temp directory, and built-in or external
+ * template asset integrity in display order.
+ *
+ * @param cwd Working directory validated for writability.
+ * @returns Ordered environment check rows ready for CLI rendering.
+ */
 export async function getEnvironmentDoctorChecks(cwd: string): Promise<DoctorCheck[]> {
 	const bunVersion = readCommandVersion("bun");
 	const nodeVersion = readCommandVersion("node");
