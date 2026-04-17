@@ -92,6 +92,21 @@ test("local create-block subset paths scaffold into a pnpm-ready wp-typia projec
   expect(readme).not.toContain("## Local Test Preset");
 });
 
+test("template-source-remote preserves existing package.json.mustache wp-typia pins when patching remote manifests", () => {
+  const runtimeDir = path.join(packageRoot, "src", "runtime");
+  const templateSourceRemote = fs.readFileSync(
+    path.join(runtimeDir, "template-source-remote.ts"),
+    "utf8"
+  );
+
+  expect(templateSourceRemote).toMatch(
+    /packageJson\.devDependencies\s*=\s*{\s*'@wp-typia\/block-runtime': '\{\{blockRuntimePackageVersion\}\}',\s*'@wp-typia\/block-types': '\{\{blockTypesPackageVersion\}\}',\s*\.\.\.existingDevDependencies,/s
+  );
+  expect(templateSourceRemote).not.toMatch(
+    /packageJson\.devDependencies\s*=\s*{\s*\.\.\.existingDevDependencies,\s*'@wp-typia\/block-runtime': '\{\{blockRuntimePackageVersion\}\}',\s*'@wp-typia\/block-types': '\{\{blockTypesPackageVersion\}\}',/s
+  );
+});
+
 test("external layer packages are rejected as standalone template ids", async () => {
   await expect(
     scaffoldProject({
@@ -295,6 +310,40 @@ test("template-source stays as a facade over dedicated locator, seed, and normal
   expect(templateSource).toContain("./template-source-locators.js");
   expect(templateSource).toContain("./template-source-seeds.js");
   expect(templateSource).toContain("./template-source-normalization.js");
+});
+
+test("template-source-normalization stays as a facade over external and remote helper modules", () => {
+  const runtimeDir = path.join(packageRoot, "src", "runtime");
+  const templateSourceNormalization = fs.readFileSync(
+    path.join(runtimeDir, "template-source-normalization.ts"),
+    "utf8"
+  );
+  const templateSourceExternal = fs.readFileSync(
+    path.join(runtimeDir, "template-source-external.ts"),
+    "utf8"
+  );
+  const templateSourceRemote = fs.readFileSync(
+    path.join(runtimeDir, "template-source-remote.ts"),
+    "utf8"
+  );
+
+  expect(templateSourceNormalization).toContain("./template-source-external.js");
+  expect(templateSourceNormalization).toContain("./template-source-remote.js");
+  expect(templateSourceNormalization).not.toContain(
+    "async function loadExternalTemplateConfig"
+  );
+  expect(templateSourceNormalization).not.toContain(
+    "export async function renderCreateBlockExternalTemplate"
+  );
+  expect(templateSourceNormalization).not.toContain(
+    "export async function normalizeCreateBlockSubset"
+  );
+  expect(templateSourceExternal).toContain(
+    "export async function renderCreateBlockExternalTemplate"
+  );
+  expect(templateSourceRemote).toContain(
+    "export async function normalizeCreateBlockSubset"
+  );
 });
 
 test("official workspace template scaffolds through the local npm template resolver", async () => {
