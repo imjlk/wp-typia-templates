@@ -74,6 +74,10 @@ test("schema-core and metadata-parser keep helper clusters in dedicated modules"
 		resolve(sourceRoot, "schema-core-auth.ts"),
 		"utf8",
 	);
+	const schemaDocumentHelperSource = readFileSync(
+		resolve(sourceRoot, "schema-core-documents.ts"),
+		"utf8",
+	);
 	const metadataParserSource = readFileSync(
 		resolve(sourceRoot, "metadata-parser.ts"),
 		"utf8",
@@ -88,11 +92,14 @@ test("schema-core and metadata-parser keep helper clusters in dedicated modules"
 	);
 
 	expect(schemaCoreSource).toContain('from "./schema-core-projection.js"');
-	expect(schemaCoreSource).toContain('from "./schema-core-auth.js"');
+	expect(schemaCoreSource).toContain('from "./schema-core-documents.js"');
 	expect(schemaCoreSource).not.toContain("function projectSchemaObjectForAiStructuredOutput(");
 	expect(schemaCoreSource).not.toContain("function projectSchemaObjectForRest(");
 	expect(schemaCoreSource).not.toContain("export function normalizeEndpointAuthDefinition(");
-	expect(schemaCoreSource).not.toContain("function createBootstrapResponseHeaders(");
+	expect(schemaCoreSource).not.toContain("export function manifestAttributeToJsonSchema(");
+	expect(schemaCoreSource).not.toContain("export function manifestToJsonSchema(");
+	expect(schemaCoreSource).not.toContain("export function manifestToOpenApi(");
+	expect(schemaCoreSource).not.toContain("export function buildEndpointOpenApiDocument(");
 	expect(schemaProjectionHelperSource).toContain(
 		"export function projectSchemaObjectForAiStructuredOutput(",
 	);
@@ -104,6 +111,18 @@ test("schema-core and metadata-parser keep helper clusters in dedicated modules"
 	);
 	expect(schemaAuthHelperSource).toContain(
 		"export function createBootstrapResponseHeaders(",
+	);
+	expect(schemaDocumentHelperSource).toContain(
+		"export function manifestAttributeToJsonSchema(",
+	);
+	expect(schemaDocumentHelperSource).toContain(
+		"export function manifestToJsonSchema(",
+	);
+	expect(schemaDocumentHelperSource).toContain(
+		"export function manifestToOpenApi(",
+	);
+	expect(schemaDocumentHelperSource).toContain(
+		"export function buildEndpointOpenApiDocument(",
 	);
 
 	expect(metadataParserSource).toContain('from "./metadata-parser-tags.js"');
