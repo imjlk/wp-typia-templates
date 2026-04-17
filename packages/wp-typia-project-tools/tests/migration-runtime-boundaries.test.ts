@@ -40,7 +40,7 @@ test("migration runtime source keeps planning and generated-artifact helpers in 
 	);
 });
 
-test("migration project source keeps config parsing helpers in a dedicated module", () => {
+test("migration project barrel delegates layout, config parsing, and workspace helpers", () => {
 	const projectSource = fs.readFileSync(
 		path.join(runtimeRoot, "migration-project.ts"),
 		"utf8",
@@ -49,20 +49,29 @@ test("migration project source keeps config parsing helpers in a dedicated modul
 		path.join(runtimeRoot, "migration-project-config-source.ts"),
 		"utf8",
 	);
+	const layoutSource = fs.readFileSync(
+		path.join(runtimeRoot, "migration-project-layout.ts"),
+		"utf8",
+	);
+	const workspaceSource = fs.readFileSync(
+		path.join(runtimeRoot, "migration-project-workspace.ts"),
+		"utf8",
+	);
 
 	expect(projectSource).toContain('from "./migration-project-config-source.js"');
-	expect(projectSource).toContain(
-		'export { parseMigrationConfig } from "./migration-project-config-source.js";',
-	);
-	expect(projectSource).not.toContain("function stripCommentsAndStrings(");
-	expect(projectSource).not.toContain("function findMigrationConfigBodyRange(");
-	expect(projectSource).not.toContain("function createTopLevelConfigView(");
-	expect(projectSource).not.toContain(
-		"function findTopLevelConfigPropertyValueStart(",
-	);
+	expect(projectSource).toContain('from "./migration-project-layout.js"');
+	expect(projectSource).toContain('from "./migration-project-workspace.js"');
+	expect(projectSource).not.toContain("export function discoverMigrationInitLayout(");
+	expect(projectSource).not.toContain("export function loadMigrationProject(");
+	expect(projectSource).not.toContain("export function writeMigrationConfig(");
 	expect(configSource).toContain("export function parseMigrationConfig(");
 	expect(configSource).toContain("function stripCommentsAndStrings(");
 	expect(configSource).toContain("export function hasLegacyConfigKeys(");
+	expect(layoutSource).toContain("export function discoverMigrationInitLayout(");
+	expect(layoutSource).toContain("export function discoverMigrationEntries(");
+	expect(workspaceSource).toContain("export function loadMigrationProject(");
+	expect(workspaceSource).toContain("export function writeMigrationConfig(");
+	expect(workspaceSource).not.toContain("function discoverSingleBlockTarget(");
 });
 
 test("migration render barrel delegates renderer families to focused modules", () => {
