@@ -21,6 +21,12 @@ test("runtime bridge delegates output and sync helpers to focused modules", () =
 
 	expect(bridgeSource).toContain('from "./runtime-bridge-output"');
 	expect(bridgeSource).toContain('from "./runtime-bridge-sync"');
+	expect(bridgeSource).toMatch(
+		/export\s*\{[\s\S]*printCompletionPayload[\s\S]*\}\s*from\s*["']\.\/runtime-bridge-output["']/,
+	);
+	expect(bridgeSource).toMatch(
+		/export\s*\{[\s\S]*executeSyncCommand[\s\S]*\}\s*from\s*["']\.\/runtime-bridge-sync["']/,
+	);
 	expect(bridgeSource).not.toContain("export function printCompletionPayload(");
 	expect(bridgeSource).not.toContain("export function buildCreateCompletionPayload(");
 	expect(bridgeSource).not.toContain("function buildAddCompletionPayload(");
