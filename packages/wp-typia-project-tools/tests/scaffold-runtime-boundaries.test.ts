@@ -4,7 +4,7 @@ import path from "node:path";
 
 const runtimeRoot = path.join(import.meta.dir, "..", "src", "runtime");
 
-test("scaffold runtime delegates identifier and document helpers to focused modules", () => {
+test("scaffold runtime delegates identifier, document, bootstrap, and package helpers to focused modules", () => {
 	const scaffoldSource = fs.readFileSync(
 		path.join(runtimeRoot, "scaffold.ts"),
 		"utf8",
@@ -17,9 +17,19 @@ test("scaffold runtime delegates identifier and document helpers to focused modu
 		path.join(runtimeRoot, "scaffold-apply-utils.ts"),
 		"utf8",
 	);
+	const bootstrapSource = fs.readFileSync(
+		path.join(runtimeRoot, "scaffold-bootstrap.ts"),
+		"utf8",
+	);
+	const packageManagerFilesSource = fs.readFileSync(
+		path.join(runtimeRoot, "scaffold-package-manager-files.ts"),
+		"utf8",
+	);
 
 	expect(scaffoldSource).toContain('from "./scaffold-identifiers.js"');
 	expect(scaffoldSource).toContain('from "./scaffold-apply-utils.js"');
+	expect(scaffoldSource).toContain('from "./scaffold-bootstrap.js"');
+	expect(scaffoldSource).toContain('from "./scaffold-package-manager-files.js"');
 	expect(scaffoldSource).toContain(
 		'export { buildBlockCssClassName } from "./scaffold-identifiers.js";',
 	);
@@ -29,6 +39,8 @@ test("scaffold runtime delegates identifier and document helpers to focused modu
 	expect(scaffoldSource).not.toContain("function buildReadme(");
 	expect(scaffoldSource).not.toContain("function buildGitignore(");
 	expect(scaffoldSource).not.toContain("function mergeTextLines(");
+	expect(scaffoldSource).not.toContain("async function ensureDirectory(");
+	expect(scaffoldSource).not.toContain("async function normalizePackageJson(");
 	expect(identifiersSource).toContain("export function validateBlockSlug(");
 	expect(identifiersSource).toContain(
 		"export function resolveScaffoldIdentifiers(",
@@ -36,4 +48,8 @@ test("scaffold runtime delegates identifier and document helpers to focused modu
 	expect(applyUtilsSource).toContain("export function buildReadme(");
 	expect(applyUtilsSource).toContain("export function buildGitignore(");
 	expect(applyUtilsSource).toContain("export function mergeTextLines(");
+	expect(bootstrapSource).toContain("export async function ensureScaffoldDirectory(");
+	expect(bootstrapSource).toContain("export async function applyWorkspaceMigrationCapability(");
+	expect(packageManagerFilesSource).toContain("export async function normalizePackageJson(");
+	expect(packageManagerFilesSource).toContain("export async function defaultInstallDependencies(");
 });
