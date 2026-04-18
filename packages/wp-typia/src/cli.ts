@@ -125,15 +125,17 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
 	await cli.run(cliArgv);
 }
 
+export async function runCliEntrypoint(argv = process.argv.slice(2)): Promise<void> {
+	try {
+		await main(argv);
+	} catch (error) {
+		console.error(await formatCliError(error));
+		process.exit(1);
+	}
+}
+
 if (import.meta.main) {
-	void (async () => {
-		try {
-			await main();
-		} catch (error) {
-			console.error(await formatCliError(error));
-			process.exit(1);
-		}
-	})();
+	void runCliEntrypoint();
 }
 
 export default createWpTypiaCli;

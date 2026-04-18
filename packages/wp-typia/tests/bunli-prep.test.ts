@@ -20,12 +20,14 @@ const packageManifest = JSON.parse(
 );
 
 describe("wp-typia Bunli preparation", () => {
-	test("checks in the Bunli prep tree without replacing the active bin", () => {
+	test("checks in the Bunli prep tree while promoting a built CLI runtime", () => {
 		expect(packageManifest.bin["wp-typia"]).toBe("bin/wp-typia.js");
+		expect(packageManifest.files).toContain("dist-bunli/");
 		expect(packageManifest.files).toContain("bunli.config.ts");
 		expect(packageManifest.scripts["bunli:build"]).toBe("bun run build");
 		expect(packageManifest.scripts["bunli:dev"]).toBe("bun src/cli.ts");
 		expect(packageManifest.scripts["bunli:test"]).toBe("bun test tests/*.test.ts");
+		expect(packageManifest.scripts.prepack).toBe("bun run build");
 		expect(packageManifest.devDependencies.bunli).toBe("0.9.0");
 		expect(packageManifest.dependencies["@bunli/core"]).toBe("0.9.0");
 		expect(packageManifest.devDependencies["@bunli/test"]).toBe("0.6.0");
@@ -79,6 +81,7 @@ describe("wp-typia Bunli preparation", () => {
 		expect(migrationDoc).toContain("`@wp-typia/project-tools` must remain non-CLI");
 		expect(migrationDoc).toContain("`npx wp-typia`");
 		expect(migrationDoc).toContain("`bunx wp-typia`");
+		expect(migrationDoc).toContain("`dist-bunli/cli.js`");
 		expect(migrationDoc).toContain("`>=1.3.11`");
 		expect(migrationDoc).toContain(`\`${WP_TYPIA_CANONICAL_CREATE_USAGE}\``);
 		expect(migrationDoc).toContain(`\`${WP_TYPIA_CANONICAL_MIGRATE_USAGE}\``);

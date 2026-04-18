@@ -1,11 +1,3 @@
-import {
-	formatTemplateDetails,
-	formatTemplateFeatures,
-	formatTemplateSummary,
-	getTemplateById,
-	listTemplates,
-} from "@wp-typia/project-tools/cli-templates";
-import { tryResolveWorkspaceProject } from "@wp-typia/project-tools/workspace-project";
 import type { ReadlinePrompt } from "@wp-typia/project-tools/cli-prompt";
 import type { AlternateBufferCompletionPayload } from "./ui/alternate-buffer-lifecycle";
 import {
@@ -70,6 +62,7 @@ const loadCliDoctorRuntime = () => import("@wp-typia/project-tools/cli-doctor");
 const loadCliPromptRuntime = () => import("@wp-typia/project-tools/cli-prompt");
 const loadCliScaffoldRuntime = () => import("@wp-typia/project-tools/cli-scaffold");
 const loadCliTemplatesRuntime = () => import("@wp-typia/project-tools/cli-templates");
+const loadWorkspaceProjectRuntime = () => import("@wp-typia/project-tools/workspace-project");
 const loadMigrationsRuntime = () => import("@wp-typia/project-tools/migrations");
 
 async function wrapCliCommandError(command: CliCommandId, error: unknown) {
@@ -487,6 +480,13 @@ export async function executeTemplatesCommand(
 	{ flags }: TemplatesExecutionInput,
 	printLine: PrintLine = console.log,
 ): Promise<void> {
+	const {
+		formatTemplateDetails,
+		formatTemplateFeatures,
+		formatTemplateSummary,
+		getTemplateById,
+		listTemplates,
+	} = await loadCliTemplatesRuntime();
 	const subcommand = flags.subcommand ?? "list";
 
 	if (subcommand === "list") {
@@ -531,6 +531,7 @@ export async function executeDoctorCommand(cwd: string): Promise<void> {
 }
 
 export async function loadAddWorkspaceBlockOptions(cwd: string) {
+	const { tryResolveWorkspaceProject } = await loadWorkspaceProjectRuntime();
 	const workspace = tryResolveWorkspaceProject(cwd);
 	if (!workspace) {
 		return [];
@@ -611,4 +612,7 @@ export async function executeMigrateCommand({
 	}
 }
 
-export { listTemplates };
+export async function listTemplatesForRuntime() {
+	const { listTemplates } = await loadCliTemplatesRuntime();
+	return listTemplates();
+}

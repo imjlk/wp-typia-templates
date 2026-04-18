@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 
 import {
 	findWorkspaceProtocolLeaks,
 	getNpmCommand,
+	getTarCommand,
 	packWorkspacePackage,
 	readPackedPackageManifest,
 	repoRoot,
@@ -28,6 +30,7 @@ const GENERATED_PROJECT_OVERRIDE_PACKAGES = [
 	"@wp-typia/block-runtime",
 ];
 const npmCommand = getNpmCommand();
+const tarCommand = getTarCommand();
 
 function run(command, args, options = {}) {
 	return execFileSync(command, args, {
@@ -36,6 +39,14 @@ function run(command, args, options = {}) {
 		stdio: ["ignore", "pipe", "pipe"],
 		...options,
 	});
+}
+
+function createNodeOnlyEnv() {
+	return {
+		...process.env,
+		BUN_BIN: path.join(os.tmpdir(), "wp-typia-missing-bun"),
+		PATH: path.dirname(process.execPath),
+	};
 }
 
 function runScript(projectDir, command, fileName, source, args = []) {
@@ -161,6 +172,16 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 				);
 			}
 		}
+
+		if (packageName === "wp-typia") {
+			const tarballEntries = run(tarCommand, ["-tf", tarballPath]).trim().split("\n");
+			if (!tarballEntries.includes("package/dist-bunli/cli.js")) {
+				throw new Error("Packed wp-typia tarball is missing package/dist-bunli/cli.js.");
+			}
+			if (tarballEntries.includes("package/src/cli.ts")) {
+				throw new Error("Packed wp-typia tarball should no longer publish package/src/cli.ts.");
+			}
+		}
 	}
 
 	fs.mkdirSync(projectDir, { recursive: true });
@@ -182,7 +203,10 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 	run("bun", ["install"], { cwd: projectDir });
 
 	const cliPath = getInstalledWpTypiaCliPath(projectDir);
-	const versionOutput = run("node", [cliPath, "--version"], { cwd: projectDir }).trim();
+	const versionOutput = run(process.execPath, [cliPath, "--version"], {
+		cwd: projectDir,
+		env: createNodeOnlyEnv(),
+	}).trim();
 	let parsed;
 	try {
 		parsed = JSON.parse(versionOutput);

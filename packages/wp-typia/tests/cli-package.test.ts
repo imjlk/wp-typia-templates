@@ -56,6 +56,14 @@ function withoutAIAgentEnv(): NodeJS.ProcessEnv {
 	};
 }
 
+function withoutLocalBunEnv(): NodeJS.ProcessEnv {
+	return {
+		...withoutAIAgentEnv(),
+		BUN_BIN: path.join(os.tmpdir(), "wp-typia-missing-bun"),
+		PATH: path.dirname(process.execPath),
+	};
+}
+
 function createSyncFixture(options: {
 	packageManager?: string | null;
 	scripts: Record<string, string>;
@@ -127,6 +135,24 @@ function readSyncLog(logPath: string): Array<{ args: string[]; label: string }> 
 		.map((line) => JSON.parse(line) as { args: string[]; label: string });
 }
 
+function parseJsonObjectFromOutput<T>(output: string): T {
+	const trimmed = output.trim();
+	const jsonStart = trimmed.startsWith("{") ? 0 : trimmed.lastIndexOf("\n{");
+	const jsonSource = (
+		jsonStart >= 0 ? trimmed.slice(jsonStart === 0 ? 0 : jsonStart + 1) : trimmed
+	).trim();
+	return JSON.parse(jsonSource) as T;
+}
+
+function parseJsonArrayFromOutput<T>(output: string): T {
+	const trimmed = output.trim();
+	const jsonStart = trimmed.startsWith("[") ? 0 : trimmed.lastIndexOf("\n[");
+	const jsonSource = (
+		jsonStart >= 0 ? trimmed.slice(jsonStart === 0 ? 0 : jsonStart + 1) : trimmed
+	).trim();
+	return JSON.parse(jsonSource) as T;
+}
+
 describe("wp-typia package", () => {
 	test("owns the canonical CLI bin and keeps project-tools as a library dependency", () => {
 		expect(packageManifest.name).toBe("wp-typia");
@@ -174,16 +200,53 @@ describe("wp-typia package", () => {
 
 	test("returns structured version output through the canonical bin", () => {
 		const output = runUtf8Command("node", [entryPath, "--version"]);
-		const parsed = JSON.parse(output) as {
+		const parsed = parseJsonObjectFromOutput<{
 			data?: { name?: string; type?: string; version?: string };
 			ok?: boolean;
-		};
+		}>(output);
 
 		expect(parsed.ok).toBe(true);
 		expect(parsed.data?.type).toBe("version");
 		expect(parsed.data?.name).toBe("wp-typia");
 		expect(parsed.data?.version).toBe(packageManifest.version);
 	});
+
+	test("runs the published version path without requiring a local Bun binary", () => {
+		const result = runCapturedCommand(process.execPath, [entryPath, "--version"], {
+			env: withoutLocalBunEnv(),
+		});
+
+		expect(result.status).toBe(0);
+		expect(result.stderr).toBe("");
+		const parsed = parseJsonObjectFromOutput<{
+			data?: { name?: string; type?: string; version?: string };
+			ok?: boolean;
+		}>(result.stdout);
+		expect(parsed.ok).toBe(true);
+		expect(parsed.data?.type).toBe("version");
+		expect(parsed.data?.name).toBe("wp-typia");
+		expect(parsed.data?.version).toBe(packageManifest.version);
+	});
+
+	test("packs a built dist-bunli runtime for the published CLI entrypoint", () => {
+		const packResult = runCapturedCommand("npm", ["pack", "--json", "--pack-destination", packageRoot], {
+			cwd: packageRoot,
+		});
+
+		expect(packResult.status).toBe(0);
+		const parsed = parseJsonArrayFromOutput<Array<{
+			filename: string;
+			files: Array<{ path: string }>;
+		}>>(packResult.stdout);
+		const tarball = parsed[0];
+		expect(tarball?.files.some((entry) => entry.path === "dist-bunli/cli.js")).toBe(true);
+		expect(tarball?.files.some((entry) => entry.path === "bin/wp-typia.js")).toBe(true);
+		expect(tarball?.files.some((entry) => entry.path === "src/cli.ts")).toBe(false);
+
+		if (tarball?.filename) {
+			fs.rmSync(path.join(packageRoot, tarball.filename), { force: true });
+		}
+	}, 15000);
 
 	test("rejects sync outside a generated project root with explicit guidance", () => {
 		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-sync-outside-"));

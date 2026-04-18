@@ -9,11 +9,15 @@ and the project-tools split.
 
 - `packages/wp-typia` owns the published CLI package, top-level command
   taxonomy, help surface, Bunli runtime entrypoint, and `bin/wp-typia.js`.
-- The active runtime lives in `packages/wp-typia/src/cli.ts` and runs through
-  Bunli.
-- `packages/wp-typia/bin/wp-typia.js` is only a boot shim that invokes the
-  Bunli runtime with Bun.
-- The active Bunli runtime assumes Bun `>=1.3.11`.
+- The authored runtime lives in `packages/wp-typia/src/cli.ts` and is compiled
+  into `packages/wp-typia/dist-bunli/cli.js` for the published package.
+- `packages/wp-typia/bin/wp-typia.js` must launch built artifacts only:
+  `dist-bunli/cli.js` for the full Bunli runtime and `dist-bunli/node-cli.js`
+  for Bun-free fallback commands. It must not shell out to `src/cli.ts`.
+- Bun `>=1.3.11` remains the maintainer build toolchain for generating Bunli
+  metadata and the published runtime artifacts, but the published Node bin no
+  longer requires a locally installed Bun binary for the guaranteed fallback
+  commands.
 
 Canonical usage remains:
 
@@ -21,6 +25,20 @@ Canonical usage remains:
 - `bunx wp-typia create <project-dir>`
 - `wp-typia <project-dir>` as the compatibility alias when `<project-dir>` is the only positional argument
 - `wp-typia migrate <subcommand>`
+
+Published runtime support model:
+
+- `npx wp-typia` and direct Node execution should target the built
+  `dist-bunli` artifacts rather than source TypeScript.
+- Bun-free support is guaranteed for the non-TUI Node fallback surface:
+  `--version`, `--help`, non-interactive `create` / `add` / `migrate`,
+  `doctor`, `sync`, `templates list`, and `templates inspect`.
+- `bunx wp-typia` and local Bun installs should keep using the same published
+  full-runtime artifact (`dist-bunli/cli.js`) for Bunli-specific surfaces such
+  as `skills`, `completions`, and `mcp`, rather than a separate source
+  bootstrap.
+- A future `curl` installer, if added, should install the same built artifact
+  layout (`bin/` + `dist-bunli/`) instead of inventing a second bootstrap path.
 
 Shorthand references like `npx wp-typia` and `bunx wp-typia` should still map
 to the canonical `create` surface in docs and review notes.
