@@ -626,14 +626,14 @@ describe("wp-typia package", () => {
 			expect(result.status).toBe(0);
 			expect(result.stdout).toContain(
 				[
-					"PASS Doctor scope: No official wp-typia workspace root was detected, so",
-					"  this run only covered environment readiness. Re-run",
+					"PASS Doctor scope: No official wp-typia workspace root",
+					"  was detected, so this run only covered environment",
 				].join("\n"),
 			);
 			expect(result.stdout).toContain(
 				[
-					"  `wp-typia doctor` from a workspace root if you",
-					"  expected package metadata, inventory, or generated",
+					"  readiness. Re-run `wp-typia doctor` from a workspace",
+					"  root if you expected package metadata, inventory, or",
 				].join("\n"),
 			);
 			expect(result.stdout).toContain("PASS wp-typia doctor summary:");
