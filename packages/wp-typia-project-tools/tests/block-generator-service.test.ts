@@ -10,6 +10,17 @@ import {
 	typecheckGeneratedProject,
 } from "./helpers/scaffold-test-harness.js";
 import { BlockGeneratorService } from "../src/runtime/index.js";
+import {
+	BlockGeneratorService as BlockGeneratorServiceFromCore,
+} from "../src/runtime/block-generator-service-core.js";
+import {
+	buildTemplateVariablesFromBlockSpec,
+	createBuiltInBlockSpec,
+} from "../src/runtime/block-generator-service-spec.js";
+import {
+	buildTemplateVariablesFromBlockSpec as buildTemplateVariablesFromFacade,
+	createBuiltInBlockSpec as createBuiltInBlockSpecFromFacade,
+} from "../src/runtime/block-generator-service.js";
 import { getDefaultAnswers } from "../src/runtime/scaffold.js";
 import type { BuiltInTemplateId } from "../src/runtime/template-registry.js";
 
@@ -31,6 +42,14 @@ describe("BlockGeneratorService", () => {
 
 	afterAll(() => {
 		cleanupScaffoldTempRoot(tempRoot);
+	});
+
+	test("block generator facade re-exports focused spec helpers and service core", () => {
+		expect(BlockGeneratorService).toBe(BlockGeneratorServiceFromCore);
+		expect(createBuiltInBlockSpecFromFacade).toBe(createBuiltInBlockSpec);
+		expect(buildTemplateVariablesFromFacade).toBe(
+			buildTemplateVariablesFromBlockSpec,
+		);
 	});
 
 	test.each([

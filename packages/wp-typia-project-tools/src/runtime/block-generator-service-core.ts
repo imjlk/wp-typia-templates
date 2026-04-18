@@ -1,0 +1,384 @@
+import {
+	applyBuiltInScaffoldProjectFiles,
+	buildGitignore,
+	buildReadme,
+	type InstallDependenciesOptions,
+} from "./scaffold-apply-utils.js";
+import {
+	buildBuiltInBlockArtifacts,
+	type BuiltInBlockArtifact,
+} from "./built-in-block-artifacts.js";
+import {
+	buildBuiltInCodeArtifacts,
+	type BuiltInCodeArtifact,
+} from "./built-in-block-code-artifacts.js";
+import { stableJsonStringify } from "./object-utils.js";
+import { getStarterManifestFiles } from "./starter-manifests.js";
+import { resolveTemplateSeed, parseTemplateLocator } from "./template-source.js";
+import {
+	assertExternalTemplateLayersDoNotWriteProtectedOutputs,
+	resolveExternalTemplateLayers,
+	type ResolvedTemplateLayerEntry,
+} from "./template-layers.js";
+import {
+	getBuiltInTemplateOverlayDir,
+	getBuiltInTemplateSharedLayerDirs,
+	resolveBuiltInTemplateSource,
+	resolveBuiltInTemplateSourceFromLayerDirs,
+} from "./template-builtins.js";
+import {
+	buildTemplateVariablesFromBlockSpec,
+	createBuiltInBlockSpec,
+	type ApplyBlockInput,
+	type BlockSpec,
+	type PlanBlockInput,
+	type PlanBlockResult,
+	type RenderBlockInput,
+	type RenderBlockResult,
+	type ValidateBlockInput,
+	type ValidateBlockResult,
+} from "./block-generator-service-spec.js";
+import type { ScaffoldProjectResult } from "./scaffold.js";
+
+const renderedArtifactCache = new WeakMap<
+	RenderBlockResult,
+	{
+		artifacts: BuiltInBlockArtifact[];
+		codeArtifacts: BuiltInCodeArtifact[];
+		variablesFingerprint: string;
+	}
+>();
+
+function createVariablesFingerprint(
+	variables: RenderBlockResult["variables"],
+): string {
+	return stableJsonStringify(variables);
+}
+
+function buildProtectedTemplateOutputPaths({
+	codeArtifacts,
+	spec,
+	variables,
+	artifacts,
+}: {
+	artifacts: readonly BuiltInBlockArtifact[];
+	codeArtifacts: readonly BuiltInCodeArtifact[];
+	spec: BlockSpec;
+	variables: RenderBlockResult["variables"];
+}): Set<string> {
+	const protectedOutputs = new Set<string>([
+		".gitignore",
+		"package.json",
+		"scripts/add-compound-child.ts",
+		"scripts/block-config.ts",
+		"scripts/sync-project.ts",
+		"scripts/sync-rest-contracts.ts",
+		"scripts/sync-types-to-block-json.ts",
+		"tsconfig.json",
+		"webpack.config.js",
+		`${variables.slugKebabCase}.php`,
+	]);
+
+	for (const artifact of codeArtifacts) {
+		protectedOutputs.add(artifact.relativePath);
+	}
+
+	for (const artifact of artifacts) {
+		protectedOutputs.add(`${artifact.relativeDir}/block.json`);
+		protectedOutputs.add(`${artifact.relativeDir}/types.ts`);
+	}
+
+	for (const manifest of getStarterManifestFiles(spec.template.family, variables)) {
+		protectedOutputs.add(manifest.relativePath);
+	}
+
+	return protectedOutputs;
+}
+
+function buildCombinedTemplateLayerDirs({
+	baseLayerDirs,
+	externalEntries,
+	templateId,
+}: {
+	baseLayerDirs: readonly string[];
+	externalEntries: readonly ResolvedTemplateLayerEntry[];
+	templateId: BlockSpec["template"]["family"];
+}): string[] {
+	const orderedLayerDirs: string[] = [];
+	const seenLayerDirs = new Set<string>();
+
+	for (const layerDir of baseLayerDirs) {
+		if (seenLayerDirs.has(layerDir)) {
+			continue;
+		}
+		orderedLayerDirs.push(layerDir);
+		seenLayerDirs.add(layerDir);
+	}
+
+	for (const entry of externalEntries) {
+		if (seenLayerDirs.has(entry.dir)) {
+			continue;
+		}
+		orderedLayerDirs.push(entry.dir);
+		seenLayerDirs.add(entry.dir);
+	}
+
+	const overlayDir = getBuiltInTemplateOverlayDir(templateId);
+	if (!seenLayerDirs.has(overlayDir)) {
+		orderedLayerDirs.push(overlayDir);
+	}
+
+	return orderedLayerDirs;
+}
+
+export class BlockGeneratorService {
+	async plan({
+		allowExistingDir = false,
+		answers,
+		cwd = process.cwd(),
+		dataStorageMode,
+		externalLayerId,
+		externalLayerSource,
+		externalLayerSourceLabel,
+		noInstall = false,
+		packageManager,
+		persistencePolicy,
+		projectDir,
+		repositoryReference,
+		templateId,
+		variant,
+		withMigrationUi = false,
+		withTestPreset = false,
+		withWpEnv = false,
+	}: PlanBlockInput): Promise<PlanBlockResult> {
+		return {
+			spec: createBuiltInBlockSpec({
+				answers,
+				dataStorageMode,
+				persistencePolicy,
+				templateId,
+				withMigrationUi,
+				withTestPreset,
+				withWpEnv,
+			}),
+			target: {
+				allowExistingDir,
+				cwd,
+				externalLayerId,
+				externalLayerSource,
+				externalLayerSourceLabel,
+				noInstall,
+				packageManager,
+				projectDir,
+				repositoryReference,
+				variant,
+			},
+		};
+	}
+
+	async validate({ plan }: ValidateBlockInput): Promise<ValidateBlockResult> {
+		if (plan.target.externalLayerId && !plan.target.externalLayerSource) {
+			throw new Error(
+				"externalLayerId requires externalLayerSource when composing built-in template layers.",
+			);
+		}
+
+		if (plan.target.variant) {
+			throw new Error(
+				`--variant is only supported for official external template configs. Received variant "${plan.target.variant}" for built-in template "${plan.spec.template.family}".`,
+			);
+		}
+
+		return plan;
+	}
+
+	async render({ validated }: RenderBlockInput): Promise<RenderBlockResult> {
+		const variables = buildTemplateVariablesFromBlockSpec(validated.spec);
+		const persistenceEnabled = validated.spec.persistence.enabled;
+		const artifacts = buildBuiltInBlockArtifacts({
+			templateId: validated.spec.template.family,
+			variables,
+		});
+		const codeArtifacts = buildBuiltInCodeArtifacts({
+			templateId: validated.spec.template.family,
+			variables,
+		});
+		const templateVariantOptions = {
+			persistenceEnabled,
+			persistencePolicy:
+				validated.spec.persistence.enabled &&
+				validated.spec.persistence.persistencePolicy === "public"
+					? "public"
+					: "authenticated",
+		} as const;
+		let templateSource = await resolveBuiltInTemplateSource(
+			validated.spec.template.family,
+			templateVariantOptions,
+		);
+		const warnings = [...(templateSource.warnings ?? [])];
+
+		if (validated.target.externalLayerSource) {
+			let layerSeed:
+				| Awaited<ReturnType<typeof resolveTemplateSeed>>
+				| undefined;
+			try {
+				layerSeed = await resolveTemplateSeed(
+					parseTemplateLocator(validated.target.externalLayerSource),
+					validated.target.cwd,
+				);
+				const resolvedLayers = await resolveExternalTemplateLayers({
+					externalLayerId: validated.target.externalLayerId,
+					sourceRoot: layerSeed.rootDir,
+				});
+				const baseLayerDirs = getBuiltInTemplateSharedLayerDirs(
+					validated.spec.template.family,
+					templateVariantOptions,
+				);
+				await assertExternalTemplateLayersDoNotWriteProtectedOutputs({
+					externalEntries: resolvedLayers.entries,
+					protectedOutputPaths: buildProtectedTemplateOutputPaths({
+						artifacts,
+						codeArtifacts,
+						spec: validated.spec,
+						variables,
+					}),
+					view: variables,
+				});
+
+				await templateSource.cleanup?.();
+				templateSource = await resolveBuiltInTemplateSourceFromLayerDirs(
+					validated.spec.template.family,
+					buildCombinedTemplateLayerDirs({
+						baseLayerDirs,
+						externalEntries: resolvedLayers.entries,
+						templateId: validated.spec.template.family,
+					}),
+				);
+				const layerSourceCleanup = layerSeed.cleanup;
+				const templateCleanup = templateSource.cleanup;
+				templateSource.cleanup = async () => {
+					const cleanupErrors: Error[] = [];
+					try {
+						await templateCleanup?.();
+					} catch (error) {
+						cleanupErrors.push(error instanceof Error ? error : new Error(String(error)));
+					}
+					try {
+						await layerSourceCleanup?.();
+					} catch (error) {
+						cleanupErrors.push(error instanceof Error ? error : new Error(String(error)));
+					}
+					if (cleanupErrors.length > 0) {
+						throw new Error(
+							[
+								"Failed to cleanup composed template sources.",
+								...cleanupErrors.map((error) => `- ${error.message}`),
+							].join("\n"),
+						);
+					}
+				};
+				warnings.push(
+					`Applied external layer "${resolvedLayers.selectedLayerId}" from "${validated.target.externalLayerSourceLabel ?? validated.target.externalLayerSource}".`,
+				);
+			} catch (error) {
+				await templateSource.cleanup?.();
+				await layerSeed?.cleanup?.();
+				throw error;
+			}
+		}
+
+		const rendered: RenderBlockResult = {
+			...validated,
+			cleanup: templateSource.cleanup,
+			gitignoreContent: buildGitignore(),
+			postRender: {
+				applyLocalDevPresets: true,
+				applyMigrationUiCapability: validated.spec.runtime.withMigrationUi,
+				seedPersistenceArtifacts:
+					validated.spec.template.family === "persistence" ||
+					(validated.spec.template.family === "compound" && persistenceEnabled),
+				seedStarterManifestFiles: true,
+			},
+			readmeContent: buildReadme(
+				validated.spec.template.family,
+				variables,
+				validated.target.packageManager,
+				{
+					withMigrationUi: validated.spec.runtime.withMigrationUi,
+					withTestPreset: validated.spec.runtime.withTestPreset,
+					withWpEnv: validated.spec.runtime.withWpEnv,
+				},
+			),
+			selectedVariant: null,
+			templateDir: templateSource.templateDir,
+			variables,
+			warnings,
+		};
+
+		renderedArtifactCache.set(rendered, {
+			artifacts,
+			codeArtifacts,
+			variablesFingerprint: createVariablesFingerprint(variables),
+		});
+
+		return rendered;
+	}
+
+	async apply({
+		rendered,
+		installDependencies,
+	}: ApplyBlockInput): Promise<ScaffoldProjectResult> {
+		const cachedArtifacts = renderedArtifactCache.get(rendered);
+		const currentVariablesFingerprint = createVariablesFingerprint(
+			rendered.variables,
+		);
+		const artifacts =
+			cachedArtifacts &&
+			cachedArtifacts.variablesFingerprint === currentVariablesFingerprint
+				? cachedArtifacts.artifacts
+				: buildBuiltInBlockArtifacts({
+						templateId: rendered.spec.template.family,
+						variables: rendered.variables,
+					});
+		const codeArtifacts =
+			cachedArtifacts &&
+			cachedArtifacts.variablesFingerprint === currentVariablesFingerprint
+				? cachedArtifacts.codeArtifacts
+				: buildBuiltInCodeArtifacts({
+						templateId: rendered.spec.template.family,
+						variables: rendered.variables,
+					});
+
+		try {
+			await applyBuiltInScaffoldProjectFiles({
+				allowExistingDir: rendered.target.allowExistingDir,
+				artifacts,
+				codeArtifacts,
+				installDependencies,
+				noInstall: rendered.target.noInstall,
+				packageManager: rendered.target.packageManager,
+				projectDir: rendered.target.projectDir,
+				repositoryReference: rendered.target.repositoryReference,
+				gitignoreContent: rendered.gitignoreContent,
+				readmeContent: rendered.readmeContent,
+				templateDir: rendered.templateDir,
+				templateId: rendered.spec.template.family,
+				variables: rendered.variables,
+				withMigrationUi: rendered.spec.runtime.withMigrationUi,
+				withTestPreset: rendered.spec.runtime.withTestPreset,
+				withWpEnv: rendered.spec.runtime.withWpEnv,
+			});
+		} finally {
+			await rendered.cleanup?.();
+		}
+
+		return {
+			packageManager: rendered.target.packageManager,
+			projectDir: rendered.target.projectDir,
+			selectedVariant: rendered.selectedVariant,
+			templateId: rendered.spec.template.family,
+			variables: rendered.variables,
+			warnings: rendered.warnings,
+		};
+	}
+}
