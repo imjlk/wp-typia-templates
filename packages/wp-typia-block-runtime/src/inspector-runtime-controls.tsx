@@ -172,20 +172,28 @@ function NumberFieldControl({
 	);
 }
 
-export function FieldControl({
-	components,
-	field,
-	help,
-	label,
-	max,
-	min,
-	onChange,
-	options,
-	render,
-	renderUnsupported,
-	step,
-	value,
-}: FieldControlProps) {
+/**
+ * Render one manifest-derived editor field with pluggable inspector controls.
+ *
+ * @param props Field-control props including the descriptor, value, and optional custom renderers.
+ * @returns A React element for the resolved field control, or `null` when no supported control is available.
+ * @category React
+ */
+export function FieldControl(props: FieldControlProps) {
+	const {
+		components,
+		field,
+		help,
+		label,
+		max,
+		min,
+		onChange,
+		options,
+		render,
+		renderUnsupported,
+		step,
+		value,
+	} = props;
 	const resolvedComponents = resolveInspectorComponents(components);
 	const context = getFieldControlContext(
 		field,
@@ -325,17 +333,27 @@ export function FieldControl({
 	}
 }
 
-export function InspectorFromManifest<T extends object>({
-	attributes,
-	children,
-	components,
-	fieldLookup,
-	fieldOverrides,
-	initialOpen,
-	onChange,
-	paths,
-	title,
-}: InspectorFromManifestProps<T>) {
+/**
+ * Render a manifest-driven inspector panel for a selected set of field paths.
+ *
+ * @param props Inspector configuration including the current attributes, field lookup helpers, and change handler.
+ * @returns A panel element containing generated field controls for the requested paths.
+ * @category React
+ */
+export function InspectorFromManifest<T extends object>(
+	props: InspectorFromManifestProps<T>,
+) {
+	const {
+		attributes,
+		children,
+		components,
+		fieldLookup,
+		fieldOverrides,
+		initialOpen,
+		onChange,
+		paths,
+		title,
+	} = props;
 	const resolvedComponents = resolveInspectorComponents(components);
 	const PanelBody = resolvedComponents.PanelBody ?? FallbackPanelBody;
 	const fieldControls = paths

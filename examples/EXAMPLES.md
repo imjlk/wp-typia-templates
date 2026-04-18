@@ -98,7 +98,7 @@ examples/my-typia-block/
 
 ## Related Docs
 
-- [Migration Guide](../docs/migrations.md)
-- [Interactivity Guide](../docs/interactivity.md)
-- [API Guide](../docs/API.md)
-- [Compound Block Tutorial](../docs/tutorials/compound-block-tutorial.md)
+- [Migration Guide](https://imjlk.github.io/wp-typia/guides/migrations/)
+- [Interactivity Guide](https://imjlk.github.io/wp-typia/guides/interactivity/)
+- [API Guide](https://imjlk.github.io/wp-typia/reference/api/)
+- [Compound Block Tutorial](https://imjlk.github.io/wp-typia/tutorials/compound-block-tutorial/)

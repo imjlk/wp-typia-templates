@@ -8,19 +8,31 @@ describe('repository error and export contracts', () => {
       'utf8',
     );
     const apiGuide = readFileSync(
-      new URL('../../docs/API.md', import.meta.url),
+      new URL(
+        '../../apps/docs/src/content/docs/reference/api.md',
+        import.meta.url,
+      ),
       'utf8',
     );
     const contractGuide = readFileSync(
-      new URL('../../docs/error-export-contracts.md', import.meta.url),
+      new URL(
+        '../../apps/docs/src/content/docs/reference/error-export-contracts.md',
+        import.meta.url,
+      ),
       'utf8',
     );
     const importPolicy = readFileSync(
-      new URL('../../docs/runtime-import-policy.md', import.meta.url),
+      new URL(
+        '../../apps/docs/src/content/docs/architecture/runtime-import-policy.md',
+        import.meta.url,
+      ),
       'utf8',
     );
     const runtimeSurface = readFileSync(
-      new URL('../../docs/runtime-surface.md', import.meta.url),
+      new URL(
+        '../../apps/docs/src/content/docs/architecture/runtime-surface.md',
+        import.meta.url,
+      ),
       'utf8',
     );
 

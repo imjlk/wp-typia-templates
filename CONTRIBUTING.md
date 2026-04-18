@@ -65,7 +65,7 @@ Formatting ownership is also explicit:
 - those example `lint:js` scripts route through `scripts/run-wp-scripts-lint-js-compat.mjs` so CI keeps the WordPress defaults while resolving the example-local ESLint 8 binary
 - GitHub Actions now runs both `bun run formatting-policy:validate` and `bun run format:check` in the main lint job
 
-See [`docs/formatting-toolchain-policy.md`](./docs/formatting-toolchain-policy.md) for the exact scope and rationale.
+See [`docs/formatting-toolchain-policy.md`](https://imjlk.github.io/wp-typia/maintainers/formatting-toolchain-policy/) for the exact scope and rationale.
 
 Maintenance automation is explicit too:
 
@@ -75,7 +75,7 @@ Maintenance automation is explicit too:
 - `.github/workflows/dependency-audit.yml` owns the PR/main `composer audit --locked` gate and the scheduled/manual `bun audit --audit-level high` lane
 - `.github/workflows/test-matrix.yml` keeps the slower scheduled/manual matrix and CodeQL coverage
 
-See [`docs/maintenance-automation-policy.md`](./docs/maintenance-automation-policy.md) for the exact cadence and review posture.
+See [`docs/maintenance-automation-policy.md`](https://imjlk.github.io/wp-typia/maintainers/maintenance-automation-policy/) for the exact cadence and review posture.
 
 `bun run ci:local` is the recommended maintainer pre-PR command. It deliberately
 stops short of `wp-env` startup and Playwright E2E so everyday local checks stay
@@ -98,11 +98,11 @@ bun run docs:build
 - [`README.md`](./README.md) is the main product/audience entry point
 - [`UPGRADE.md`](./UPGRADE.md) collects high-signal maintainer upgrade notes
 - [`SECURITY.md`](./SECURITY.md) explains private vulnerability reporting
-- [`docs/block-generator-architecture.md`](./docs/block-generator-architecture.md) records the typed generator architecture and phase map
-- [`docs/block-generator-tool-contract.md`](./docs/block-generator-tool-contract.md) records the non-mutating staged controller/tool payload contract on top of the typed generator boundary
-- [`docs/external-template-layer-composition.md`](./docs/external-template-layer-composition.md) records the external layer package RFC on top of the built-in shared scaffold model
-- [`docs/formatting-toolchain-policy.md`](./docs/formatting-toolchain-policy.md) records the formatter baseline and CI gate
-- [`docs/maintenance-automation-policy.md`](./docs/maintenance-automation-policy.md) records the dependency update and audit baseline
+- [`docs/block-generator-architecture.md`](https://imjlk.github.io/wp-typia/architecture/block-generator-architecture/) records the typed generator architecture and phase map
+- [`docs/block-generator-tool-contract.md`](https://imjlk.github.io/wp-typia/architecture/block-generator-tool-contract/) records the non-mutating staged controller/tool payload contract on top of the typed generator boundary
+- [`docs/external-template-layer-composition.md`](https://imjlk.github.io/wp-typia/architecture/external-template-layer-composition/) records the external layer package RFC on top of the built-in shared scaffold model
+- [`docs/formatting-toolchain-policy.md`](https://imjlk.github.io/wp-typia/maintainers/formatting-toolchain-policy/) records the formatter baseline and CI gate
+- [`docs/maintenance-automation-policy.md`](https://imjlk.github.io/wp-typia/maintainers/maintenance-automation-policy/) records the dependency update and audit baseline
 
 If you change user-facing workflows, keep the relevant meta docs in sync in the
 same PR.

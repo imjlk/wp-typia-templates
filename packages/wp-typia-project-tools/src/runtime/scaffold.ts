@@ -19,11 +19,8 @@ import {
 	buildFrontendCssClassName,
 	normalizeBlockSlug,
 	resolveScaffoldIdentifiers,
-	resolveValidatedBlockSlug,
 	validateBlockSlug,
 	validateNamespace,
-	validatePhpPrefix,
-	validateTextDomain,
 } from "./scaffold-identifiers.js";
 import {
 	applyGeneratedProjectDxPackageJson,

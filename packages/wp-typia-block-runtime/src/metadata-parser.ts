@@ -34,6 +34,7 @@ import {
  * type name, and types file path.
  * @returns The resolved project root plus the parsed root attribute node for
  * the requested source type.
+ * @category Schema
  */
 export function analyzeSourceType(
 	options: {
@@ -66,6 +67,7 @@ export function analyzeSourceType(
  * configured types file.
  * @returns A record keyed by source type name with parsed attribute-node trees
  * for each requested type.
+ * @category Schema
  */
 export function analyzeSourceTypes(
 	options: {
@@ -124,6 +126,7 @@ function findNamedDeclaration(
  * @param pathLabel Human-readable path label for diagnostics.
  * @param required Whether the resulting node should be marked as required.
  * @returns The parsed attribute-node representation for the declaration.
+ * @category Schema
  */
 export function parseNamedDeclaration(
 	declaration: ts.InterfaceDeclaration | ts.TypeAliasDeclaration,
@@ -214,6 +217,7 @@ function parseInterfaceDeclaration(
  * @param ctx Shared analysis context used for symbol and type resolution.
  * @param pathLabel Human-readable path label used in parse errors and warnings.
  * @returns The parsed attribute-node representation of the provided type node.
+ * @category Schema
  */
 export function parseTypeNode(
 	node: ts.TypeNode,

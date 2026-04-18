@@ -20,8 +20,10 @@ Compatibility notes:
 - `@wp-typia/project-tools` is the canonical programmatic project orchestration package
 - `@wp-typia/create` is the deprecated legacy package shell
 - `create-wp-typia` is archived and should not be used for new installs
+- internal runtime-bridge helper modules are implementation details; integrations
+  should target the CLI or `@wp-typia/project-tools`, not CLI internals
 
-Maintainers: see [`docs/bunli-cli-migration.md`](../../docs/bunli-cli-migration.md)
+Maintainers: see [`docs/bunli-cli-migration.md`](https://imjlk.github.io/wp-typia/maintainers/bunli-cli-migration/)
 for the active CLI ownership contract and the staged Bunli cutover plan.
 
 Project meta docs:

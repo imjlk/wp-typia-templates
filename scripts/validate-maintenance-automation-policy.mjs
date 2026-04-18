@@ -6,14 +6,14 @@ import { fileURLToPath } from 'node:url';
 
 import { GUTENBERG_UPSTREAM_WATCH_POLICY } from './gutenberg-upstream-watch.mjs';
 
-const GUTENBERG_UPSTREAM_REPO =
-  `${GUTENBERG_UPSTREAM_WATCH_POLICY.upstream.owner}/${GUTENBERG_UPSTREAM_WATCH_POLICY.upstream.repo}`;
+const GUTENBERG_UPSTREAM_REPO = `${GUTENBERG_UPSTREAM_WATCH_POLICY.upstream.owner}/${GUTENBERG_UPSTREAM_WATCH_POLICY.upstream.repo}`;
 const GUTENBERG_WATCH_ISSUE_LABEL = `#${GUTENBERG_UPSTREAM_WATCH_POLICY.issueNumber}`;
 const GUTENBERG_WATCH_ISSUE_SNIPPET = `issue \`${GUTENBERG_WATCH_ISSUE_LABEL}\``;
 
 export const MAINTENANCE_AUTOMATION_POLICY = Object.freeze({
   dependabotEcosystems: Object.freeze(['github-actions', 'composer']),
-  docsFile: 'docs/maintenance-automation-policy.md',
+  docsFile:
+    'apps/docs/src/content/docs/maintainers/maintenance-automation-policy.md',
   docsRequiredSnippets: Object.freeze([
     'Dependabot updates',
     'github-actions',
@@ -76,8 +76,8 @@ function leadingSpaceCount(line) {
 
 function workflowJobBlock(workflowSource, jobId) {
   const lines = workflowSource.split(/\r?\n/);
-  const startIndex = lines.findIndex(
-    (line) => new RegExp(`^ {2}${jobId}:\\s*$`).test(line),
+  const startIndex = lines.findIndex((line) =>
+    new RegExp(`^ {2}${jobId}:\\s*$`).test(line),
   );
 
   if (startIndex < 0) {
@@ -154,7 +154,9 @@ function validateDependabotConfig(sourceText, errors) {
     .filter((value) => value !== null);
 
   for (const ecosystem of configuredEcosystems) {
-    if (!MAINTENANCE_AUTOMATION_POLICY.dependabotEcosystems.includes(ecosystem)) {
+    if (
+      !MAINTENANCE_AUTOMATION_POLICY.dependabotEcosystems.includes(ecosystem)
+    ) {
       errors.push(
         `.github/dependabot.yml must not widen automation beyond ${MAINTENANCE_AUTOMATION_POLICY.dependabotEcosystems.join(', ')}; found ${ecosystem}.`,
       );
@@ -235,7 +237,7 @@ function validateDependencyAuditWorkflow(sourceText, errors) {
 }
 
 function validateScheduledWorkflow(sourceText, errors) {
-  if (!sourceText.includes("name: CodeQL Scan")) {
+  if (!sourceText.includes('name: CodeQL Scan')) {
     errors.push(
       '.github/workflows/test-matrix.yml must keep the scheduled security job scoped to CodeQL.',
     );
@@ -273,7 +275,9 @@ function validateGutenbergWatchWorkflow(sourceText, errors) {
   }
 }
 
-export function validateMaintenanceAutomationPolicy(repoRoot = DEFAULT_REPO_ROOT) {
+export function validateMaintenanceAutomationPolicy(
+  repoRoot = DEFAULT_REPO_ROOT,
+) {
   const errors = [];
   const packageJson = readJson(path.join(repoRoot, 'package.json'));
   const scripts = packageJson.scripts ?? {};
@@ -308,22 +312,26 @@ export function validateMaintenanceAutomationPolicy(repoRoot = DEFAULT_REPO_ROOT
     errors,
   );
   validateGutenbergWatchWorkflow(
-    readRelativeText(repoRoot, '.github/workflows/gutenberg-upstream-watch.yml'),
+    readRelativeText(
+      repoRoot,
+      '.github/workflows/gutenberg-upstream-watch.yml',
+    ),
     errors,
   );
 
   const ciLintBlock = lintJobBlock(
     readRelativeText(repoRoot, '.github/workflows/ci.yml'),
   );
-  if (
-    !ciLintBlock.includes('run: bun run maintenance-automation:validate')
-  ) {
+  if (!ciLintBlock.includes('run: bun run maintenance-automation:validate')) {
     errors.push(
       '.github/workflows/ci.yml lint job must include "run: bun run maintenance-automation:validate".',
     );
   }
 
-  const docsText = readRelativeText(repoRoot, MAINTENANCE_AUTOMATION_POLICY.docsFile);
+  const docsText = readRelativeText(
+    repoRoot,
+    MAINTENANCE_AUTOMATION_POLICY.docsFile,
+  );
   for (const snippet of MAINTENANCE_AUTOMATION_POLICY.docsRequiredSnippets) {
     if (!docsText.includes(snippet)) {
       errors.push(
@@ -334,12 +342,12 @@ export function validateMaintenanceAutomationPolicy(repoRoot = DEFAULT_REPO_ROOT
 
   for (const [relativePath, requiredSnippets] of Object.entries({
     'README.md': [
-      '[Maintenance Automation Policy](docs/maintenance-automation-policy.md)',
+      '[Maintenance Automation Policy](https://imjlk.github.io/wp-typia/maintainers/maintenance-automation-policy/)',
       'bun run maintenance-automation:validate',
     ],
     'CONTRIBUTING.md': [
       'bun run maintenance-automation:validate',
-      '[`docs/maintenance-automation-policy.md`](./docs/maintenance-automation-policy.md)',
+      '[`docs/maintenance-automation-policy.md`](https://imjlk.github.io/wp-typia/maintainers/maintenance-automation-policy/)',
       'Dependabot',
       'release/sampo',
     ],

@@ -9,8 +9,9 @@ build/
 dist/
 coverage/
 .nyc_output/
-docs/api/
-.pages-site/
+apps/docs/dist/
+apps/docs/.astro/
+apps/docs/src/content/docs/api/
 *.lcov
 *.tgz
 *.zip

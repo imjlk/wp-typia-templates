@@ -31,7 +31,9 @@ export interface ManifestDefaultsDocument {
   attributes: Record<string, ManifestDefaultAttribute>;
 }
 
-function isManifestDefaultAttribute(value: unknown): value is ManifestDefaultAttribute {
+function isManifestDefaultAttribute(
+  value: unknown,
+): value is ManifestDefaultAttribute {
   if (!isPlainObject(value)) {
     return false;
   }
@@ -79,7 +81,8 @@ export function isManifestDefaultsDocument(
   value: unknown,
 ): value is ManifestDefaultsDocument {
   return (
-    isPlainObject(value) && isRecordOf(value.attributes, isManifestDefaultAttribute)
+    isPlainObject(value) &&
+    isRecordOf(value.attributes, isManifestDefaultAttribute)
   );
 }
 
@@ -111,13 +114,11 @@ export function parseManifestDefaultsDocument<
  * parser enforces the full manifest-default contract.
  */
 export function defineManifestDefaultsDocument<
-	TDocument extends { attributes: Record<string, unknown> },
->(
-	manifest: TDocument,
-): ManifestDefaultsDocument & TDocument {
-	return parseManifestDefaultsDocument<TDocument>(
-		manifest,
-	) as ManifestDefaultsDocument & TDocument;
+  TDocument extends { attributes: Record<string, unknown> },
+>(manifest: TDocument): ManifestDefaultsDocument & TDocument {
+  return parseManifestDefaultsDocument<TDocument>(
+    manifest,
+  ) as ManifestDefaultsDocument & TDocument;
 }
 
 function isListArray(value: unknown[]): boolean {
@@ -235,6 +236,18 @@ function applyDefaultsForNode(
   }
 }
 
+/**
+ * Apply manifest-declared defaults to a partial scaffold attribute object.
+ *
+ * @param manifest - Manifest default metadata generated from the scaffold contract.
+ * @param value - Partial attribute input to normalize.
+ * @returns The same object shape with recursive defaults applied where available.
+ * @example
+ * ```ts
+ * const normalized = applyTemplateDefaultsFromManifest(manifest, { layout: {} });
+ * ```
+ * @category Scaffolding
+ */
 export function applyTemplateDefaultsFromManifest<T extends object>(
   manifest: ManifestDefaultsDocument,
   value: Partial<T>,
