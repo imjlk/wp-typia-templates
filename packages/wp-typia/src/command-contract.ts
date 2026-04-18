@@ -14,6 +14,8 @@ export const WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES = [
   'templates',
   'doctor',
   'mcp',
+  'help',
+  'version',
   'skills',
   'completions',
   'complete',

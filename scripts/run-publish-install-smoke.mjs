@@ -422,3 +422,5 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 		`Verified published-install smoke for wp-typia ${parsed.data.version}, bundled Bunli metadata, runtime wrapper exports, block-runtime metadata sync, project-tools runtime paths, and generated basic/compound scaffold installs.\n`,
 	);
 });
+
+process.exit(0);

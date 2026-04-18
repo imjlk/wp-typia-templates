@@ -107,6 +107,8 @@ describe("wp-typia Bunli preparation", () => {
 		expect(
 			normalizeWpTypiaArgv(["-c", "./custom.json", "templates", "list"]),
 		).toEqual(["-c", "./custom.json", "templates", "list"]);
+		expect(normalizeWpTypiaArgv(["help"])).toEqual(["help"]);
+		expect(normalizeWpTypiaArgv(["version"])).toEqual(["version"]);
 		expect(
 			normalizeWpTypiaArgv(["demo-block", "--template", "basic"]),
 		).toEqual(["create", "demo-block", "--template", "basic"]);
