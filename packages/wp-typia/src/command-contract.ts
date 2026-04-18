@@ -1,3 +1,5 @@
+import path from 'node:path'
+
 export const WP_TYPIA_CANONICAL_CREATE_USAGE = 'wp-typia create <project-dir>';
 export const WP_TYPIA_POSITIONAL_ALIAS_USAGE = 'wp-typia <project-dir>';
 export const WP_TYPIA_CANONICAL_MIGRATE_USAGE = 'wp-typia migrate <subcommand>';
@@ -248,7 +250,9 @@ function looksLikeStructuredProjectInput(value: string): boolean {
 }
 
 function assertPositionalAliasProjectDir(projectDir: string): void {
-  if (projectDir === '.' || projectDir === '..') {
+  const normalizedProjectDir =
+    path.normalize(projectDir).replace(/[\\/]+$/u, '') || path.normalize(projectDir);
+  if (normalizedProjectDir === '.' || normalizedProjectDir === '..') {
     throw new Error(
       `The positional alias does not scaffold into \`${projectDir}\`. Use \`${WP_TYPIA_CANONICAL_CREATE_USAGE}\` with an explicit child directory instead.`,
     );

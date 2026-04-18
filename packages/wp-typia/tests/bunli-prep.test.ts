@@ -118,6 +118,9 @@ describe("wp-typia Bunli preparation", () => {
 		expect(() => normalizeWpTypiaArgv(["."])).toThrow(
 			/The positional alias does not scaffold into `\.`/,
 		);
+		expect(() => normalizeWpTypiaArgv(["./"])).toThrow(
+			/The positional alias does not scaffold into `\.\/`/,
+		);
 		expect(
 			normalizeWpTypiaArgv([
 				"add",

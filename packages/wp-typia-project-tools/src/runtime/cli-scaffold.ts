@@ -94,7 +94,10 @@ function validateCreateProjectInput(projectInput: string) {
 		);
 	}
 
-	if (normalizedProjectInput === "." || normalizedProjectInput === "..") {
+	const normalizedProjectPath =
+		path.normalize(normalizedProjectInput).replace(/[\\/]+$/u, "") ||
+		path.normalize(normalizedProjectInput);
+	if (normalizedProjectPath === "." || normalizedProjectPath === "..") {
 		throw new Error(
 			"`wp-typia create` requires a new project directory. Use an explicit child directory instead of `.` or `..`.",
 		);

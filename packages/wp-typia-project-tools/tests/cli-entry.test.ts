@@ -730,6 +730,18 @@ test("node entry rejects create . as an explicit project directory", () => {
   );
 });
 
+test("node entry rejects create ./ as an explicit project directory", () => {
+  const errorMessage = getCommandErrorMessage(() =>
+    runCli("node", [entryPath, "create", "./", "--template", "basic", "--yes"], {
+      stdio: "pipe",
+    })
+  );
+
+  expect(errorMessage).toContain(
+    "`wp-typia create` requires a new project directory. Use an explicit child directory instead of `.` or `..`."
+  );
+});
+
 test("node entry warns about awkward project directory names", () => {
   const targetDir = path.join(tempRoot, "node cool block!");
   const result = runCapturedCli(
