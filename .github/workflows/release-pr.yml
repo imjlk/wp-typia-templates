@@ -74,6 +74,38 @@ jobs:
 
           exit "$status"
 
+      - name: Render release package versions
+        id: release_notes
+        shell: bash
+        run: |
+          mkdir -p .cache/release
+
+          node scripts/render-release-package-versions.mjs \
+            --base-ref HEAD \
+            --output .cache/release/package-versions.md
+
+          {
+            cat <<'EOF'
+            Automated release PR generated from the latest `main` changes.
+
+            - updates package versions
+            - updates package changelogs
+            - consumes pending `.sampo/changesets/*`
+
+            EOF
+            cat .cache/release/package-versions.md
+            cat <<'EOF'
+
+            Merge this PR with **Squash and merge** to automatically create a GitHub Release and trigger npm OIDC publish from `main`.
+            EOF
+          } > .cache/release/release-pr-body.md
+
+          {
+            echo 'body<<EOF'
+            cat .cache/release/release-pr-body.md
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create or update release PR
         id: release_pr
         uses: peter-evans/create-pull-request@v8
@@ -83,14 +115,7 @@ jobs:
           base: main
           title: 'release: version packages'
           commit-message: 'release: version packages'
-          body: |
-            Automated release PR generated from the latest `main` changes.
-
-            - updates package versions
-            - updates package changelogs
-            - consumes pending `.sampo/changesets/*`
-
-            Merge this PR with **Squash and merge** to automatically create a GitHub Release and trigger npm OIDC publish from `main`.
+          body: ${{ steps.release_notes.outputs.body }}
           add-paths: |
             .sampo/**
             packages/**/package.json

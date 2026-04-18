@@ -61,12 +61,31 @@ jobs:
           echo "name=${name}" >> "$GITHUB_OUTPUT"
           echo "exists=false" >> "$GITHUB_OUTPUT"
 
+      - name: Render release notes prefix
+        id: release_notes
+        if: steps.release.outputs.exists != 'true'
+        shell: bash
+        run: |
+          mkdir -p .cache/release
+
+          node scripts/render-release-package-versions.mjs \
+            --base-ref HEAD^ \
+            --output .cache/release/package-versions.md
+
+          {
+            echo 'notes<<EOF'
+            cat .cache/release/package-versions.md
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         if: steps.release.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NOTES_PREFIX: ${{ steps.release_notes.outputs.notes }}
         run: |
           gh release create "${{ steps.release.outputs.tag }}" \
             --target "${{ github.sha }}" \
             --title "${{ steps.release.outputs.name }}" \
+            --notes "$RELEASE_NOTES_PREFIX" \
             --generate-notes
