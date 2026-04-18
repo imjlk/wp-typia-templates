@@ -79,6 +79,43 @@ describe("alternate-buffer TUI lifecycle", () => {
 		);
 	});
 
+	test("wraps shared CLI diagnostic blocks in narrow terminals", () => {
+		const originalColumns = process.env.COLUMNS;
+		process.env.COLUMNS = "48";
+
+		try {
+			expect(
+				formatCliDiagnosticError(
+					createCliCommandError({
+						command: "create",
+						detailLines: [
+							"Run `wp-typia create demo-block --template workspace` from a writable directory and retry the scaffold flow.",
+						],
+						summary:
+							"Unable to complete the requested create workflow because the target directory already exists.",
+					}),
+				),
+			).toBe(
+				[
+					"wp-typia create failed",
+					"Summary: Unable to complete the requested create",
+					"  workflow because the target directory already",
+					"  exists.",
+					"Details:",
+					"- Run `wp-typia create demo-block --template",
+					"  workspace` from a writable directory and retry",
+					"  the scaffold flow.",
+				].join("\n"),
+			);
+		} finally {
+			if (originalColumns === undefined) {
+				delete process.env.COLUMNS;
+			} else {
+				process.env.COLUMNS = originalColumns;
+			}
+		}
+	});
+
 	test("reports failures and exits immediately", () => {
 		const messages: string[] = [];
 		const events: string[] = [];

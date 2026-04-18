@@ -20,13 +20,81 @@ const DEFAULT_CLI_FAILURE_SUMMARIES: Record<string, string> = {
 	migrate: "Unable to complete the requested migration command.",
 };
 
+const MIN_CLI_WRAP_COLUMNS = 32;
+
+function parseCliColumns(value: string | undefined): number | null {
+	if (typeof value !== "string" || value.trim().length === 0) {
+		return null;
+	}
+
+	const parsed = Number.parseInt(value, 10);
+	return Number.isFinite(parsed) && parsed >= MIN_CLI_WRAP_COLUMNS ? parsed : null;
+}
+
+function resolveCliWrapColumns(streamColumns: number | undefined): number | null {
+	return parseCliColumns(process.env.COLUMNS) ??
+		(typeof streamColumns === "number" && streamColumns >= MIN_CLI_WRAP_COLUMNS
+			? streamColumns
+			: null);
+}
+
+function wrapCliText(text: string, maxWidth: number): string[] {
+	const words = text.trim().split(/\s+/u).filter((word) => word.length > 0);
+
+	if (words.length === 0) {
+		return [""];
+	}
+
+	const lines: string[] = [];
+	let currentLine = words[0] ?? "";
+
+	for (const word of words.slice(1)) {
+		const nextLine = `${currentLine} ${word}`;
+		if (nextLine.length <= maxWidth) {
+			currentLine = nextLine;
+			continue;
+		}
+
+		lines.push(currentLine);
+		currentLine = word;
+	}
+
+	lines.push(currentLine);
+	return lines;
+}
+
+function formatWrappedPrefixedLine(
+	prefix: string,
+	text: string,
+	columns: number | null,
+	continuationIndent = "  ",
+): string[] {
+	const singleLine = `${prefix}${text}`;
+	if (columns === null || singleLine.length <= columns) {
+		return [singleLine];
+	}
+
+	const availableWidth = Math.max(
+		MIN_CLI_WRAP_COLUMNS - continuationIndent.length,
+		columns - continuationIndent.length,
+	);
+	const wrappedLines = wrapCliText(text, availableWidth);
+	return wrappedLines.map((line, index) =>
+		index === 0 ? `${prefix}${line}` : `${continuationIndent}${line}`,
+	);
+}
+
 function formatCliDiagnosticBlock(message: CliDiagnosticMessage): string {
-	const lines = [`wp-typia ${message.command} failed`, `Summary: ${message.summary}`];
+	const columns = resolveCliWrapColumns(process.stderr.columns);
+	const lines = [
+		`wp-typia ${message.command} failed`,
+		...formatWrappedPrefixedLine("Summary: ", message.summary, columns),
+	];
 
 	if (message.detailLines.length > 0) {
 		lines.push("Details:");
 		for (const detailLine of message.detailLines) {
-			lines.push(`- ${detailLine}`);
+			lines.push(...formatWrappedPrefixedLine("- ", detailLine, columns));
 		}
 	}
 
@@ -123,7 +191,11 @@ export function formatCliDiagnosticError(error: unknown): string {
  * Format one human-readable doctor check row.
  */
 export function formatDoctorCheckLine(check: DoctorCheckLike): string {
-	return `${check.status === "pass" ? "PASS" : "FAIL"} ${check.label}: ${check.detail}`;
+	return formatWrappedPrefixedLine(
+		`${check.status === "pass" ? "PASS" : "FAIL"} ${check.label}: `,
+		check.detail,
+		resolveCliWrapColumns(process.stdout.columns),
+	).join("\n");
 }
 
 /**
@@ -140,7 +212,11 @@ export function getFailingDoctorChecks<TCheck extends DoctorCheckLike>(
  */
 export function formatDoctorSummaryLine(checks: readonly DoctorCheckLike[]): string {
 	const failedChecks = getFailingDoctorChecks(checks);
-	return `${failedChecks.length === 0 ? "PASS" : "FAIL"} wp-typia doctor summary: ${checks.length - failedChecks.length}/${checks.length} checks passed`;
+	return formatWrappedPrefixedLine(
+		`${failedChecks.length === 0 ? "PASS" : "FAIL"} wp-typia doctor summary: `,
+		`${checks.length - failedChecks.length}/${checks.length} checks passed`,
+		resolveCliWrapColumns(process.stdout.columns),
+	).join("\n");
 }
 
 /**
