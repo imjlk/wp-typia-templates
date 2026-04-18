@@ -7,6 +7,11 @@ import {
   createTypiaWebpackConfig,
   parseScaffoldBlockMetadata,
 } from '../../packages/wp-typia-block-runtime/src/blocks';
+import {
+  buildScaffoldBlockRegistration as buildScaffoldBlockRegistrationFromRegistrationModule,
+  parseScaffoldBlockMetadata as parseScaffoldBlockMetadataFromRegistrationModule,
+} from '../../packages/wp-typia-block-runtime/src/blocks-registration';
+import { createTypiaWebpackConfig as createTypiaWebpackConfigFromWebpackModule } from '../../packages/wp-typia-block-runtime/src/blocks-webpack';
 import { createTempDir, writeTextFile } from '../helpers/file-fixtures';
 
 class FakeRawSource {
@@ -181,6 +186,18 @@ function createFakeCompiler(
 }
 
 describe('block runtime helpers', () => {
+  test('blocks facade re-exports focused registration and webpack helpers', () => {
+    expect(buildScaffoldBlockRegistration).toBe(
+      buildScaffoldBlockRegistrationFromRegistrationModule,
+    );
+    expect(parseScaffoldBlockMetadata).toBe(
+      parseScaffoldBlockMetadataFromRegistrationModule,
+    );
+    expect(createTypiaWebpackConfig).toBe(
+      createTypiaWebpackConfigFromWebpackModule,
+    );
+  });
+
   test('buildScaffoldBlockRegistration merges metadata and preserves override inference', () => {
     const registration = buildScaffoldBlockRegistration(
       {

@@ -94,6 +94,8 @@ describe("@wp-typia/block-runtime", () => {
 		const packageRoot = resolve(import.meta.dir, "..");
 		const builtIndexJs = readFileSync(resolve(packageRoot, "dist/index.js"), "utf8");
 		const builtIndexDts = readFileSync(resolve(packageRoot, "dist/index.d.ts"), "utf8");
+		const builtBlocksJs = readFileSync(resolve(packageRoot, "dist/blocks.js"), "utf8");
+		const builtBlocksDts = readFileSync(resolve(packageRoot, "dist/blocks.d.ts"), "utf8");
 
 		expect(builtIndexJs).toContain('export * from "./blocks.js";');
 		expect(builtIndexJs).toContain('export * from "./defaults.js";');
@@ -103,6 +105,10 @@ describe("@wp-typia/block-runtime", () => {
 		expect(builtIndexDts).toContain('export * from "./defaults.js";');
 		expect(builtIndexDts).toContain('export * from "./editor.js";');
 		expect(builtIndexDts).toContain('export * from "./validation.js";');
+		expect(builtBlocksJs).toContain("export * from './blocks-registration.js';");
+		expect(builtBlocksJs).toContain("export * from './blocks-webpack.js';");
+		expect(builtBlocksDts).toContain("export * from './blocks-registration.js';");
+		expect(builtBlocksDts).toContain("export * from './blocks-webpack.js';");
 	});
 
 	test("Typia/Webpack compatibility preflight accepts the supported matrix", async () => {
