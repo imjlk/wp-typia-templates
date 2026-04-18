@@ -91,7 +91,7 @@ function printBlock(lines: string[]) {
 	}
 }
 
-function parseGlobalFlags(argv: string[]): {
+export function parseGlobalFlags(argv: string[]): {
 	argv: string[];
 	flags: GlobalFlags;
 } {
@@ -102,6 +102,11 @@ function parseGlobalFlags(argv: string[]): {
 		const arg = argv[index];
 		if (!arg) {
 			continue;
+		}
+
+		if (arg === "--") {
+			nextArgv.push(...argv.slice(index));
+			break;
 		}
 
 		if (arg === "--format" || arg === "--id") {

@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -11,8 +12,11 @@ if (!buildConfig?.entry || !buildConfig?.outdir) {
 }
 
 const fullRuntimeEntrypoint = path.resolve(packageRoot, buildConfig.entry);
+const generatedMetadataEntrypoint = path.resolve(packageRoot, ".bunli", "commands.gen.ts");
 const nodeRuntimeEntrypoint = path.resolve(packageRoot, "src", "node-cli.ts");
 const outdir = path.resolve(packageRoot, buildConfig.outdir);
+const generatedMetadataOutdir = path.join(outdir, ".bunli");
+const projectToolsPackageRoot = path.resolve(packageRoot, "..", "wp-typia-project-tools");
 const projectToolsRuntimeDir = path.resolve(
 	packageRoot,
 	"..",
@@ -68,6 +72,39 @@ const WP_TYPIA_EXTERNALS = [
 	"@wp-typia/rest/*",
 ];
 
+async function ensureRuntimeBuildDependencies() {
+	const requiredArtifacts = [...new Set(Object.values(PROJECT_TOOLS_ALIASES))];
+	const missingArtifacts: string[] = [];
+
+	for (const artifactPath of requiredArtifacts) {
+		try {
+			await fs.access(artifactPath);
+		} catch {
+			missingArtifacts.push(path.relative(packageRoot, artifactPath));
+		}
+	}
+
+	if (missingArtifacts.length === 0) {
+		return;
+	}
+
+	const buildResult = spawnSync(process.execPath, ["run", "build"], {
+		cwd: projectToolsPackageRoot,
+		env: process.env,
+		stdio: "inherit",
+	});
+
+	if (buildResult.status !== 0) {
+		throw new Error(
+			`Failed to build @wp-typia/project-tools for wp-typia runtime aliases: ${missingArtifacts.join(", ")}`,
+		);
+	}
+
+	for (const artifactPath of requiredArtifacts) {
+		await fs.access(artifactPath);
+	}
+}
+
 async function buildFullBunliRuntime() {
 	const result = await Bun.build({
 		alias: PROJECT_TOOLS_ALIASES,
@@ -77,6 +114,26 @@ async function buildFullBunliRuntime() {
 		outdir,
 		sourcemap: buildConfig.sourcemap ? "external" : "none",
 		splitting: true,
+		target: "bun",
+	});
+
+	if (!result.success) {
+		for (const log of result.logs) {
+			console.error(log);
+		}
+		process.exit(1);
+	}
+}
+
+async function buildGeneratedMetadataRuntime() {
+	const result = await Bun.build({
+		alias: PROJECT_TOOLS_ALIASES,
+		entrypoints: [generatedMetadataEntrypoint],
+		external: WP_TYPIA_EXTERNALS,
+		format: "esm",
+		outdir: generatedMetadataOutdir,
+		sourcemap: buildConfig.sourcemap ? "external" : "none",
+		splitting: false,
 		target: "bun",
 	});
 
@@ -106,11 +163,14 @@ async function buildNodeFallbackRuntime() {
 	}
 }
 
+await ensureRuntimeBuildDependencies();
 await fs.rm(outdir, { force: true, recursive: true });
 await fs.mkdir(outdir, { recursive: true });
 
 await buildFullBunliRuntime();
+await buildGeneratedMetadataRuntime();
 await buildNodeFallbackRuntime();
 
 await fs.access(path.join(outdir, "cli.js"));
+await fs.access(path.join(generatedMetadataOutdir, "commands.gen.js"));
 await fs.access(path.join(outdir, "node-cli.js"));

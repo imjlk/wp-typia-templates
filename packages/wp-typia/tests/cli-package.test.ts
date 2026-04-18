@@ -5,6 +5,7 @@ import path from "node:path";
 import os from "node:os";
 
 import { WP_TYPIA_TOP_LEVEL_COMMAND_NAMES } from "../src/command-contract";
+import { parseGlobalFlags } from "../src/node-cli";
 
 import { runUtf8Command } from "../../../tests/helpers/process-utils";
 
@@ -290,14 +291,18 @@ describe("wp-typia package", () => {
 		}>>(packResult.stdout);
 		const tarball = parsed[0];
 		expect(tarball?.files.some((entry) => entry.path === "dist-bunli/cli.js")).toBe(true);
+		expect(tarball?.files.some((entry) => entry.path === "dist-bunli/.bunli/commands.gen.js")).toBe(
+			true,
+		);
 		expect(tarball?.files.some((entry) => entry.path === "dist-bunli/node-cli.js")).toBe(true);
 		expect(tarball?.files.some((entry) => entry.path === "bin/wp-typia.js")).toBe(true);
+		expect(tarball?.files.some((entry) => entry.path === ".bunli/commands.gen.ts")).toBe(false);
 		expect(tarball?.files.some((entry) => entry.path === "src/cli.ts")).toBe(false);
 
 		if (tarball?.filename) {
 			fs.rmSync(path.join(packageRoot, tarball.filename), { force: true });
 		}
-	}, 15000);
+	}, 30000);
 
 	test("rejects sync outside a generated project root with explicit guidance", () => {
 		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-sync-outside-"));
@@ -749,6 +754,13 @@ describe("wp-typia package", () => {
 				(entry) => entry.id === "@wp-typia/create-workspace-template",
 			),
 		).toBe(true);
+	});
+
+	test("stops parsing global flags after -- in the Node fallback", () => {
+		const parsed = parseGlobalFlags(["templates", "list", "--", "--format"]);
+
+		expect(parsed.flags).toEqual({});
+		expect(parsed.argv).toEqual(["templates", "list", "--", "--format"]);
 	});
 
 	test("treats templates --id as an alias for templates inspect", () => {

@@ -8,7 +8,6 @@
     "wp-typia": "bin/wp-typia.js"
   },
   "files": [
-    ".bunli/",
     "bin/",
     "bunli.config.ts",
     "dist-bunli/",

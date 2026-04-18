@@ -178,6 +178,16 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 			if (!tarballEntries.includes("package/dist-bunli/cli.js")) {
 				throw new Error("Packed wp-typia tarball is missing package/dist-bunli/cli.js.");
 			}
+			if (!tarballEntries.includes("package/dist-bunli/.bunli/commands.gen.js")) {
+				throw new Error(
+					"Packed wp-typia tarball is missing package/dist-bunli/.bunli/commands.gen.js.",
+				);
+			}
+			if (tarballEntries.includes("package/.bunli/commands.gen.ts")) {
+				throw new Error(
+					"Packed wp-typia tarball should no longer publish package/.bunli/commands.gen.ts.",
+				);
+			}
 			if (tarballEntries.includes("package/src/cli.ts")) {
 				throw new Error("Packed wp-typia tarball should no longer publish package/src/cli.ts.");
 			}
@@ -221,6 +231,15 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 		typeof parsed.data.version !== "string"
 	) {
 		throw new Error(`Unexpected wp-typia --version output: ${versionOutput}`);
+	}
+
+	const completionsOutput = run(process.execPath, [cliPath, "completions", "bash"], {
+		cwd: projectDir,
+	});
+	if (!completionsOutput.includes("# bash completion for wp-typia")) {
+		throw new Error(
+			`wp-typia completions bash did not return the expected shell output: ${completionsOutput}`,
+		);
 	}
 
 	runScript(
@@ -400,6 +419,6 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 	typecheckGeneratedProject(compoundDir);
 
 	process.stdout.write(
-		`Verified published-install smoke for wp-typia ${parsed.data.version}, runtime wrapper exports, block-runtime metadata sync, project-tools runtime paths, and generated basic/compound scaffold installs.\n`,
+		`Verified published-install smoke for wp-typia ${parsed.data.version}, bundled Bunli metadata, runtime wrapper exports, block-runtime metadata sync, project-tools runtime paths, and generated basic/compound scaffold installs.\n`,
 	);
 });
