@@ -17,6 +17,14 @@ test("built-in block artifacts delegate type and document helpers to focused mod
 		resolve(runtimeRoot, "built-in-block-artifact-documents.ts"),
 		"utf8",
 	);
+	const documentEmitterSource = readFileSync(
+		resolve(runtimeRoot, "built-in-block-attribute-emitters.ts"),
+		"utf8",
+	);
+	const documentSpecSource = readFileSync(
+		resolve(runtimeRoot, "built-in-block-attribute-specs.ts"),
+		"utf8",
+	);
 
 	expect(artifactSource).toContain('from "./built-in-block-artifact-types.js"');
 	expect(artifactSource).toContain('from "./built-in-block-artifact-documents.js"');
@@ -33,13 +41,31 @@ test("built-in block artifacts delegate type and document helpers to focused mod
 	expect(typeEmitterSource).toMatch(
 		/export\s+function\s+buildCompoundChildTypesSource\s*\(/,
 	);
-	expect(documentSource).toMatch(
+	expect(documentSource).toContain(
+		'from "./built-in-block-attribute-emitters.js"',
+	);
+	expect(documentSource).toContain(
+		'from "./built-in-block-attribute-specs.js"',
+	);
+	expect(documentSource).not.toMatch(
 		/export\s+function\s+buildManifestDocument\s*\(/,
 	);
-	expect(documentSource).toMatch(
+	expect(documentSource).not.toMatch(
 		/export\s+function\s+buildBasicAttributes\s*\(/,
 	);
-	expect(documentSource).toMatch(
+	expect(documentSource).not.toMatch(
+		/export\s+function\s+buildCompoundChildAttributes\s*\(/,
+	);
+	expect(documentEmitterSource).toMatch(
+		/export\s+function\s+buildManifestDocument\s*\(/,
+	);
+	expect(documentEmitterSource).toMatch(
+		/export\s+function\s+buildBlockJsonAttributes\s*\(/,
+	);
+	expect(documentSpecSource).toMatch(
+		/export\s+function\s+buildBasicAttributes\s*\(/,
+	);
+	expect(documentSpecSource).toMatch(
 		/export\s+function\s+buildCompoundChildAttributes\s*\(/,
 	);
 });
