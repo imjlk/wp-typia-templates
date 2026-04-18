@@ -13,7 +13,9 @@ import {
 import {
 	getAddBlockDefaults,
 	getCreateDefaults,
+	loadWpTypiaUserConfig,
 	loadWpTypiaUserConfigFromSource,
+	mergeWpTypiaUserConfig,
 } from "./config";
 import { extractWpTypiaConfigOverride } from "./config-override";
 import {
@@ -142,11 +144,11 @@ async function applyNodeFallbackConfigDefaults(
 	configOverridePath: string | undefined,
 	cwd: string,
 ): Promise<Record<string, unknown>> {
-	if (!configOverridePath) {
-		return flags;
+	let config = await loadWpTypiaUserConfig(cwd);
+	if (configOverridePath) {
+		const overrideConfig = await loadWpTypiaUserConfigFromSource(cwd, configOverridePath);
+		config = mergeWpTypiaUserConfig(config, overrideConfig);
 	}
-
-	const config = await loadWpTypiaUserConfigFromSource(cwd, configOverridePath);
 
 	if (command === "create") {
 		return {
@@ -229,6 +231,10 @@ function parseArgv(argv: string[]): ParsedArgv {
 			flags[rawName] = next;
 			index += 1;
 			continue;
+		}
+
+		if (arg.startsWith("-")) {
+			throw new Error(`Unknown option \`${arg}\`.`);
 		}
 
 		positionals.push(arg);

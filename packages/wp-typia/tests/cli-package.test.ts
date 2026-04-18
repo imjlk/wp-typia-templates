@@ -647,6 +647,46 @@ describe("wp-typia package", () => {
 		}
 	});
 
+	test("loads baseline create defaults from package.json#wp-typia in the Node fallback", () => {
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-node-config-defaults-"));
+		const targetDir = path.join(tempRoot, "demo-config-defaults");
+
+		try {
+			fs.writeFileSync(
+				path.join(tempRoot, "package.json"),
+				`${JSON.stringify(
+					{
+						name: "node-config-defaults",
+						private: true,
+						"wp-typia": {
+							create: {
+								"package-manager": "npm",
+								template: "basic",
+								yes: true,
+								"no-install": true,
+							},
+						},
+					},
+					null,
+					2,
+				)}\n`,
+				"utf8",
+			);
+
+			const result = runCapturedCommand(process.execPath, [entryPath, "create", targetDir], {
+				cwd: tempRoot,
+				env: withoutLocalBunEnv(),
+			});
+
+			expect(result.status).toBe(0);
+			expect(result.stderr).toBe("");
+			expect(fs.existsSync(path.join(targetDir, "package.json"))).toBe(true);
+			expect(fs.existsSync(path.join(targetDir, "src", "block.json"))).toBe(true);
+		} finally {
+			fs.rmSync(tempRoot, { force: true, recursive: true });
+		}
+	});
+
 	test("honors explicit machine-readable output for mcp list", () => {
 		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-mcp-format-"));
 		const schemaPath = path.join(tempRoot, "mcp-tools.json");
@@ -744,5 +784,14 @@ describe("wp-typia package", () => {
 
 		expect(parsed.template?.id).toBe("@wp-typia/create-workspace-template");
 		expect(parsed.template?.description).toContain("official empty workspace");
+	});
+
+	test("rejects unknown short options in the Node fallback parser", () => {
+		const result = runCapturedCommand(process.execPath, [entryPath, "create", "-x", "demo-short-flag"], {
+			env: withoutLocalBunEnv(),
+		});
+
+		expect(result.status).toBe(1);
+		expect(result.stderr).toContain("Unknown option `-x`.");
 	});
 });
