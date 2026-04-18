@@ -228,6 +228,28 @@ describe("wp-typia package", () => {
 		expect(parsed.data?.version).toBe(packageManifest.version);
 	});
 
+	test("renders general and command help without requiring a local Bun binary", () => {
+		const helpResult = runCapturedCommand(process.execPath, [entryPath, "--help"], {
+			env: withoutLocalBunEnv(),
+		});
+		const createHelpResult = runCapturedCommand(
+			process.execPath,
+			[entryPath, "create", "--help"],
+			{
+				env: withoutLocalBunEnv(),
+			},
+		);
+
+		expect(helpResult.status).toBe(0);
+		expect(helpResult.stderr).toBe("");
+		expect(helpResult.stdout).toContain("Canonical CLI package for wp-typia scaffolding");
+		expect(helpResult.stdout).toContain("Supported without a local Bun binary:");
+		expect(createHelpResult.status).toBe(0);
+		expect(createHelpResult.stderr).toBe("");
+		expect(createHelpResult.stdout).toContain("--external-layer-source");
+		expect(createHelpResult.stdout).toContain("--external-layer-id");
+	});
+
 	test("packs a built dist-bunli runtime for the published CLI entrypoint", () => {
 		const packResult = runCapturedCommand("npm", ["pack", "--json", "--pack-destination", packageRoot], {
 			cwd: packageRoot,

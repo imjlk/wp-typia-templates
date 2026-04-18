@@ -76,26 +76,26 @@ function ensureBuiltRuntime() {
 
 const argv = process.argv.slice(2);
 const command = firstPositional(argv);
-const shouldUseFullRuntime =
-	Boolean(argv.includes("--help")) ||
-	command === "help" ||
-	(command ? fullRuntimeCommands.has(command) : false);
+const helpInvocation = argv.includes("--help") || command === "help";
+const shouldUseFullRuntime = command ? fullRuntimeCommands.has(command) : false;
 const hasBuiltRuntime = ensureBuiltRuntime();
+const hasWorkingBun = isWorkingBunBinary();
+
+if (hasWorkingBun && hasBuiltRuntime && (helpInvocation || shouldUseFullRuntime)) {
+	const result = spawnSync(bunBinary, [cliEntrypoint, ...argv], {
+		cwd: process.cwd(),
+		env: process.env,
+		stdio: "inherit",
+	});
+	process.exit(result.status ?? 1);
+}
 
 if (shouldUseFullRuntime) {
-	if (isWorkingBunBinary()) {
-		if (!hasBuiltRuntime) {
-			console.error(
-				"❌ wp-typia could not locate its built CLI runtime. Reinstall the published package, or run `bun run build` when using a source checkout.",
-			);
-			process.exit(1);
-		}
-		const result = spawnSync(bunBinary, [cliEntrypoint, ...argv], {
-			cwd: process.cwd(),
-			env: process.env,
-			stdio: "inherit",
-		});
-		process.exit(result.status ?? 1);
+	if (!hasBuiltRuntime) {
+		console.error(
+			"❌ wp-typia could not locate its built CLI runtime. Reinstall the published package, or run `bun run build` when using a source checkout.",
+		);
+		process.exit(1);
 	}
 
 	console.error(
