@@ -85,19 +85,17 @@ jobs:
             --output .cache/release/package-versions.md
 
           {
-            cat <<'EOF'
-            Automated release PR generated from the latest `main` changes.
-
-            - updates package versions
-            - updates package changelogs
-            - consumes pending `.sampo/changesets/*`
-
-            EOF
+            printf '%s\n' \
+              'Automated release PR generated from the latest `main` changes.' \
+              '' \
+              '- updates package versions' \
+              '- updates package changelogs' \
+              '- consumes pending `.sampo/changesets/*`' \
+              ''
             cat .cache/release/package-versions.md
-            cat <<'EOF'
-
-            Merge this PR with **Squash and merge** to automatically create a GitHub Release and trigger npm OIDC publish from `main`.
-            EOF
+            printf '%s\n' \
+              '' \
+              'Merge this PR with **Squash and merge** to automatically create a GitHub Release and trigger npm OIDC publish from `main`.'
           } > .cache/release/release-pr-body.md
 
           {
