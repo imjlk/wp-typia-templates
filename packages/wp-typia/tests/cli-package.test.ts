@@ -5,7 +5,7 @@ import path from "node:path";
 import os from "node:os";
 
 import { WP_TYPIA_TOP_LEVEL_COMMAND_NAMES } from "../src/command-contract";
-import { parseGlobalFlags } from "../src/node-cli";
+import { hasFlagBeforeTerminator, parseGlobalFlags } from "../src/node-cli";
 
 import { runUtf8Command } from "../../../tests/helpers/process-utils";
 
@@ -761,6 +761,12 @@ describe("wp-typia package", () => {
 
 		expect(parsed.flags).toEqual({});
 		expect(parsed.argv).toEqual(["templates", "list", "--", "--format"]);
+	});
+
+	test("ignores fallback help/version flags after --", () => {
+		expect(hasFlagBeforeTerminator(["create", "--help"], "--help")).toBe(true);
+		expect(hasFlagBeforeTerminator(["create", "--", "--help"], "--help")).toBe(false);
+		expect(hasFlagBeforeTerminator(["version", "--", "--version"], "--version")).toBe(false);
 	});
 
 	test("treats templates --id as an alias for templates inspect", () => {

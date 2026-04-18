@@ -91,6 +91,19 @@ function printBlock(lines: string[]) {
 	}
 }
 
+export function hasFlagBeforeTerminator(argv: string[], flag: string): boolean {
+	for (const arg of argv) {
+		if (arg === "--") {
+			return false;
+		}
+		if (arg === flag) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 export function parseGlobalFlags(argv: string[]): {
 	argv: string[];
 	flags: GlobalFlags;
@@ -459,8 +472,12 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 		...flags,
 	};
 	const [command, subcommand] = positionals;
+	const helpRequested =
+		cliArgv.length === 0 || hasFlagBeforeTerminator(cliArgv, "--help") || command === "help";
+	const versionRequested =
+		hasFlagBeforeTerminator(cliArgv, "--version") || command === "version";
 
-	if (cliArgv.length === 0 || cliArgv.includes("--help") || command === "help") {
+	if (helpRequested) {
 		if (command === "templates") {
 			renderTemplatesHelp();
 			return;
@@ -477,7 +494,7 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 		return;
 	}
 
-	if (cliArgv.includes("--version") || command === "version") {
+	if (versionRequested) {
 		renderVersion();
 		return;
 	}
