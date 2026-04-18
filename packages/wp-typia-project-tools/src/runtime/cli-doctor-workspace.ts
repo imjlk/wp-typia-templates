@@ -396,6 +396,10 @@ function checkMigrationWorkspaceHint(
  * failing workspace metadata row when a nearby candidate workspace is invalid.
  * When workspace resolution or metadata parsing throws, the corresponding
  * failing rows are returned early and the remaining checks are skipped.
+ * When an official workspace is detected, a passing "Doctor scope" row is
+ * emitted first so the remaining package metadata, inventory, source-tree
+ * drift, and optional migration hint rows are clearly framed as workspace
+ * diagnostics for that run.
  *
  * @param cwd Working directory expected to host an official workspace.
  * @returns Ordered workspace check rows ready for CLI rendering.
@@ -453,7 +457,7 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 	checks.push(
 		createDoctorScopeCheck(
 			"pass",
-			`Official workspace detected for ${workspace.workspace.namespace}; this run covered environment readiness plus workspace metadata, inventory, source-tree drift, and any configured migration hints.`,
+			`Official workspace detected for ${workspace.workspace.namespace}; environment readiness checks ran and workspace-scoped diagnostics are enabled for the package metadata, inventory, source-tree drift, and any configured migration hint rows below.`,
 		),
 	);
 

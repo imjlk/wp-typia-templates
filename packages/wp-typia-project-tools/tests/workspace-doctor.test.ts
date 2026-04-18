@@ -75,6 +75,26 @@ test("doctor reports invalid nearby workspace metadata before workspace checks",
   );
 });
 
+test("doctor reports workspace discovery failures before workspace checks", async () => {
+  const targetDir = path.join(tempRoot, "doctor-workspace-discovery-failure");
+  fs.mkdirSync(targetDir, { recursive: true });
+  fs.writeFileSync(path.join(targetDir, "package.json"), "{\n", "utf8");
+
+  const checks = await getDoctorChecks(targetDir);
+  const scopeCheck = checks.find((check) => check.label === "Doctor scope");
+  const metadataCheck = checks.find(
+    (check) => check.label === "Workspace package metadata"
+  );
+
+  expect(scopeCheck?.status).toBe("fail");
+  expect(scopeCheck?.detail).toContain("workspace discovery could not continue");
+  expect(scopeCheck?.detail).toContain("rerun `wp-typia doctor`");
+  expect(metadataCheck?.status).toBe("fail");
+  expect(metadataCheck?.detail).toContain(
+    "Failed to parse workspace package manifest"
+  );
+});
+
 test("doctor accepts workspaces that keep binding registries in src/bindings/index.js", async () => {
   const targetDir = path.join(
     tempRoot,
