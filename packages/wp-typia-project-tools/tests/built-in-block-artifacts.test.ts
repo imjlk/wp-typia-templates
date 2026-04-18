@@ -668,6 +668,30 @@ describe('built-in block artifacts', () => {
       ),
       'utf8',
     );
+    const compoundParentTemplateSource = fs.readFileSync(
+      path.join(
+        import.meta.dir,
+        '..',
+        'src/runtime/built-in-block-code-templates/compound-parent.ts',
+      ),
+      'utf8',
+    );
+    const compoundChildTemplateSource = fs.readFileSync(
+      path.join(
+        import.meta.dir,
+        '..',
+        'src/runtime/built-in-block-code-templates/compound-child.ts',
+      ),
+      'utf8',
+    );
+    const compoundPersistenceTemplateSource = fs.readFileSync(
+      path.join(
+        import.meta.dir,
+        '..',
+        'src/runtime/built-in-block-code-templates/compound-persistence.ts',
+      ),
+      'utf8',
+    );
 
     expect(assemblySource).toContain(
       'from "./built-in-block-code-templates.js"',
@@ -682,6 +706,24 @@ describe('built-in block artifacts', () => {
     );
     expect(basicTemplateSource).toContain('export const BASIC_EDIT_TEMPLATE =');
     expect(compoundTemplateSource).toContain(
+      "from './compound-parent.js'",
+    );
+    expect(compoundTemplateSource).toContain(
+      "from './compound-child.js'",
+    );
+    expect(compoundTemplateSource).toContain(
+      "from './compound-persistence.js'",
+    );
+    expect(compoundTemplateSource).not.toContain(
+      'export const COMPOUND_PERSISTENCE_PARENT_INTERACTIVITY_TEMPLATE =',
+    );
+    expect(compoundParentTemplateSource).toContain(
+      'export const COMPOUND_PARENT_EDIT_TEMPLATE =',
+    );
+    expect(compoundChildTemplateSource).toContain(
+      'export const COMPOUND_CHILD_EDIT_TEMPLATE =',
+    );
+    expect(compoundPersistenceTemplateSource).toContain(
       'export const COMPOUND_PERSISTENCE_PARENT_INTERACTIVITY_TEMPLATE =',
     );
   });
