@@ -576,11 +576,36 @@ describe("wp-typia package", () => {
 			});
 
 			expect(result.status).toBe(1);
+			expect(result.stdout).toContain("FAIL Doctor scope:");
+			expect(result.stdout).toContain(
+				"workspace diagnostics could not continue because a nearby wp-typia workspace candidate is invalid.",
+			);
 			expect(result.stdout).toContain("FAIL Workspace package metadata:");
 			expect(result.stdout).toContain("FAIL wp-typia doctor summary:");
 			expect(result.stderr).toContain("Error: wp-typia doctor failed");
 			expect(result.stderr).toContain("Summary: One or more doctor checks failed.");
+			expect(result.stderr).toContain("- Doctor scope:");
 			expect(result.stderr).toContain("- Workspace package metadata:");
+		} finally {
+			fs.rmSync(fixtureRoot, { force: true, recursive: true });
+		}
+	});
+
+	test("prints an explicit environment-only doctor scope outside workspace roots", () => {
+		const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-doctor-scope-"));
+
+		try {
+			const result = runCapturedCommand("node", [entryPath, "doctor"], {
+				cwd: fixtureRoot,
+				env: withoutAIAgentEnv(),
+			});
+
+			expect(result.status).toBe(0);
+			expect(result.stdout).toContain("PASS Doctor scope:");
+			expect(result.stdout).toContain("only covered environment readiness");
+			expect(result.stdout).toContain("workspace root");
+			expect(result.stdout).toContain("PASS wp-typia doctor summary:");
+			expect(result.stderr).toBe("");
 		} finally {
 			fs.rmSync(fixtureRoot, { force: true, recursive: true });
 		}

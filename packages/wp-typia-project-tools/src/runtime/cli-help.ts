@@ -40,7 +40,7 @@ Notes:
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
   \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.
   \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.
-  \`wp-typia doctor\` checks environment readiness plus workspace inventory and source-tree drift.
+  \`wp-typia doctor\` always checks environment readiness and reports when it only ran environment-level diagnostics; official workspace roots also get inventory and source-tree drift checks.
   \`wp-typia migrate doctor --all\` checks migration target alignment, snapshots, fixtures, and generated migration artifacts.
   \`migrate\` is the canonical migration command; \`migrations\` is no longer supported.`;
 }
