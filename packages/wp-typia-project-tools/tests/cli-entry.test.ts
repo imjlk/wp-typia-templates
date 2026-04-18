@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { cleanupScaffoldTempRoot, createBlockSubsetFixturePath, createScaffoldTempRoot, entryPath, getCommandErrorMessage, runCli, templateLayerAmbiguousFixturePath, templateLayerFixturePath } from "./helpers/scaffold-test-harness.js";
+import { cleanupScaffoldTempRoot, createBlockSubsetFixturePath, createScaffoldTempRoot, entryPath, getCommandErrorMessage, runCapturedCli, runCli, templateLayerAmbiguousFixturePath, templateLayerFixturePath } from "./helpers/scaffold-test-harness.js";
 import { formatHelpText, getDoctorChecks, getNextSteps, getOptionalOnboarding, runScaffoldFlow } from "../src/runtime/cli-core.js";
 import { collectScaffoldAnswers } from "../src/runtime/scaffold.js";
 
@@ -324,6 +324,26 @@ test("runScaffoldFlow rejects built-in variant flags before template rendering",
   ).rejects.toThrow(
     '--variant is only supported for official external template configs. Received variant "hero" for built-in template "basic".'
   );
+});
+
+test("runScaffoldFlow warns about awkward project directory names", async () => {
+  const projectInput = "my cool block!";
+  const flow = await runScaffoldFlow({
+    cwd: tempRoot,
+    noInstall: true,
+    packageManager: "npm",
+    projectInput,
+    templateId: "basic",
+    yes: true,
+  });
+
+  expect(flow.result.warnings).toContain(
+    'Project directory "my cool block!" contains spaces. The generated next-step commands will be quoted, but a simple kebab-case directory name is usually easier to use with shells and downstream tooling.'
+  );
+  expect(flow.result.warnings).toContain(
+    'Project directory "my cool block!" contains shell-sensitive characters (!). Prefer letters, numbers, ".", "_" and "-" when possible.'
+  );
+  expect(flow.nextSteps[0]).toBe(`cd 'my cool block!'`);
 });
 
 test("runScaffoldFlow rejects removed built-in template ids", async () => {
@@ -695,6 +715,35 @@ test("node entry rejects built-in variant flags before scaffolding", () => {
 
   expect(errorMessage).toContain(
     '--variant is only supported for official external template configs. Received variant "hero" for built-in template "basic".'
+  );
+});
+
+test("node entry rejects create . as an explicit project directory", () => {
+  const errorMessage = getCommandErrorMessage(() =>
+    runCli("node", [entryPath, "create", ".", "--template", "basic", "--yes"], {
+      stdio: "pipe",
+    })
+  );
+
+  expect(errorMessage).toContain(
+    "`wp-typia create` requires a new project directory. Use an explicit child directory instead of `.` or `..`."
+  );
+});
+
+test("node entry warns about awkward project directory names", () => {
+  const targetDir = path.join(tempRoot, "node cool block!");
+  const result = runCapturedCli(
+    "node",
+    [entryPath, "create", targetDir, "--template", "basic", "--yes", "--no-install"],
+    {
+      stdio: "pipe",
+    }
+  );
+
+  expect(result.status).toBe(0);
+  expect(result.stderr).toContain('Project directory "node cool block!" contains spaces.');
+  expect(result.stderr).toContain(
+    'Project directory "node cool block!" contains shell-sensitive characters (!).'
   );
 });
 

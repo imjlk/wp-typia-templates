@@ -231,6 +231,36 @@ function assertStringOptionValues(argv: string[]): void {
   }
 }
 
+function isWindowsDrivePath(value: string): boolean {
+  return /^[A-Za-z]:([\\/]|$)/.test(value);
+}
+
+function looksLikeStructuredProjectInput(value: string): boolean {
+  if (value.includes('#')) {
+    return true;
+  }
+
+  if (!isWindowsDrivePath(value) && /^[A-Za-z][A-Za-z0-9+.-]*:/u.test(value)) {
+    return true;
+  }
+
+  return value.startsWith('@') && value.includes('/');
+}
+
+function assertPositionalAliasProjectDir(projectDir: string): void {
+  if (projectDir === '.' || projectDir === '..') {
+    throw new Error(
+      `The positional alias does not scaffold into \`${projectDir}\`. Use \`${WP_TYPIA_CANONICAL_CREATE_USAGE}\` with an explicit child directory instead.`,
+    );
+  }
+
+  if (looksLikeStructuredProjectInput(projectDir)) {
+    throw new Error(
+      `The positional alias only accepts unambiguous local project directories. Use \`${WP_TYPIA_CANONICAL_CREATE_USAGE}\` for \`${projectDir}\`.`,
+    );
+  }
+}
+
 export function normalizeWpTypiaArgv(argv: string[]): string[] {
   const positionalIndexes = collectPositionalIndexes(argv);
   const firstPositionalIndex = positionalIndexes[0] ?? -1;
@@ -267,6 +297,8 @@ export function normalizeWpTypiaArgv(argv: string[]): string[] {
       `The positional alias only accepts a single project directory. Use \`${WP_TYPIA_CANONICAL_CREATE_USAGE}\` for scaffold invocations with additional positional arguments, or check the command spelling if you meant another top-level command. Extra positional arguments: ${extraPositionals.map((value) => `\`${value}\``).join(', ')}.`,
     );
   }
+
+  assertPositionalAliasProjectDir(firstPositional);
 
   const normalizedArgv = [
     ...argv.slice(0, firstPositionalIndex),
