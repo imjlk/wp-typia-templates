@@ -36,9 +36,15 @@ test("migrations runtime keeps command parsing and maintenance helpers in dedica
 		path.join(runtimeDir, "migrations.ts"),
 		"utf8",
 	);
+	const migrationMaintenanceSource = fs.readFileSync(
+		path.join(runtimeDir, "migration-maintenance.ts"),
+		"utf8",
+	);
 
 	expect(migrationsSource).toContain("./migration-command-surface.js");
 	expect(migrationsSource).toContain("./migration-maintenance.js");
+	expect(migrationMaintenanceSource).toContain("./migration-maintenance-verify.js");
+	expect(migrationMaintenanceSource).toContain("./migration-maintenance-fixtures.js");
 });
 
 test("migration arg parser rejects legacy semver-era flag names with reset guidance", () => {
