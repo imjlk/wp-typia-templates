@@ -55,6 +55,14 @@ describe("@wp-typia/rest export contracts", () => {
 			new URL("../dist/index.d.ts", import.meta.url),
 			"utf8",
 		);
+		const builtReactJs = readFileSync(
+			new URL("../dist/react.js", import.meta.url),
+			"utf8",
+		);
+		const builtReactDts = readFileSync(
+			new URL("../dist/react.d.ts", import.meta.url),
+			"utf8",
+		);
 
 		expect(builtIndexJs).toContain('from "./client.js"');
 		expect(builtIndexJs).toContain('from "./errors.js"');
@@ -62,16 +70,40 @@ describe("@wp-typia/rest export contracts", () => {
 		expect(builtIndexDts).toContain('from "./client.js"');
 		expect(builtIndexDts).toContain('from "./errors.js"');
 		expect(builtIndexDts).toContain('from "./http.js"');
+		expect(builtReactJs).toContain("export * from './react-client.js';");
+		expect(builtReactJs).toContain("export * from './react-query.js';");
+		expect(builtReactJs).toContain("export * from './react-mutation.js';");
+		expect(builtReactDts).toContain("export * from './react-client.js';");
+		expect(builtReactDts).toContain("export * from './react-query.js';");
+		expect(builtReactDts).toContain("export * from './react-mutation.js';");
 	});
 
-	test("react source isolates generic fallback casts instead of using raw as any", () => {
-		const reactSource = readFileSync(
+	test("react source keeps the facade thin and pushes hook internals into focused modules", () => {
+		const reactFacadeSource = readFileSync(
 			new URL("../src/react.ts", import.meta.url),
 			"utf8",
 		);
+		const reactQuerySource = readFileSync(
+			new URL("../src/react-query.ts", import.meta.url),
+			"utf8",
+		);
+		const reactMutationSource = readFileSync(
+			new URL("../src/react-mutation.ts", import.meta.url),
+			"utf8",
+		);
+		const reactClientSource = readFileSync(
+			new URL("../src/react-client.ts", import.meta.url),
+			"utf8",
+		);
 
-		expect(reactSource).not.toContain("as any");
-		expect(reactSource).toContain("selectEndpointData");
-		expect(reactSource).toContain("castEndpointValidationResult");
+		expect(reactFacadeSource).toContain("export * from './react-client.js';");
+		expect(reactFacadeSource).toContain("export * from './react-query.js';");
+		expect(reactFacadeSource).toContain("export * from './react-mutation.js';");
+		expect(reactQuerySource).not.toContain("as any");
+		expect(reactMutationSource).not.toContain("as any");
+		expect(reactClientSource).not.toContain("as any");
+		expect(reactQuerySource).toContain("selectEndpointData");
+		expect(reactQuerySource).toContain("castEndpointValidationResult");
+		expect(reactMutationSource).toContain("normalizeInvalidateTargets");
 	});
 });

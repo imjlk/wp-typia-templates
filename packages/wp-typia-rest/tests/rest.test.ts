@@ -434,8 +434,12 @@ describe("@wp-typia/rest", () => {
 
 		expect(clientDist).toContain("@wp-typia/api-client/client-utils");
 		expect(clientTypes).toContain("./internal/runtime-primitives.js");
-		expect(reactDist).toContain("./client.js");
-		expect(reactTypes).toContain("./client.js");
+		expect(reactDist).toContain("./react-client.js");
+		expect(reactDist).toContain("./react-query.js");
+		expect(reactDist).toContain("./react-mutation.js");
+		expect(reactTypes).toContain("./react-client.js");
+		expect(reactTypes).toContain("./react-query.js");
+		expect(reactTypes).toContain("./react-mutation.js");
 		expect(sharedRuntimePrimitivesDist).toContain(
 			"@wp-typia/api-client/runtime-primitives",
 		);
