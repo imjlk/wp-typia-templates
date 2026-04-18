@@ -1,5 +1,29 @@
 # @wp-typia/project-tools
 
+## 0.16.12 — 2026-04-18
+
+### Patch changes
+
+- [864f394](https://github.com/imjlk/wp-typia/commit/864f3948f02ee4caeaad201818de87a5313470fd) Split template source normalization external loading and remote subset helpers into focused runtime modules without changing normalized template output. — Thanks @imjlk!
+- [f7a19e3](https://github.com/imjlk/wp-typia/commit/f7a19e3c7ba3d692f40e85d797b261e8660682fc) Split migration project workspace state and config helpers into focused runtime modules without changing migration behavior. — Thanks @imjlk!
+- [391b5c6](https://github.com/imjlk/wp-typia/commit/391b5c6966c156a5515098dabc1ebc4d5e982b14) Refactor scaffold runtime internals to reuse dedicated identifier and document helper modules without changing generated project output. — Thanks @imjlk!
+- [b149033](https://github.com/imjlk/wp-typia/commit/b149033c23dbeec0cef8cc8bc513b7fca018962c) Split migration diff rename and transform helpers into focused runtime modules without changing diff output. — Thanks @imjlk!
+- [86bd02b](https://github.com/imjlk/wp-typia/commit/86bd02bc489e121a03fc8b9b31b2f3fc8375067c) Refactor the migration runtime into clearer planning, render, and generated-artifact helper modules without changing the CLI contract. — Thanks @imjlk!
+- [bbad89d](https://github.com/imjlk/wp-typia/commit/bbad89d4e810c01aed31ae413b67819be1352270) Split compound built-in code template helpers into focused parent, child, and persistence modules while preserving generated scaffold output. — Thanks @imjlk!
+- [67ea3f3](https://github.com/imjlk/wp-typia/commit/67ea3f332e5811ba8d61dcbb55c881ceb623ccb9) Split migration project layout discovery and path helpers into focused runtime modules while preserving migration behavior. — Thanks @imjlk!
+- [f0ffb00](https://github.com/imjlk/wp-typia/commit/f0ffb00680078b0585fd3fb9211b114ff7f0febb) Split doctor environment/template checks and workspace checks into focused runtime modules without changing doctor output. — Thanks @imjlk!
+- [1206a2d](https://github.com/imjlk/wp-typia/commit/1206a2de2d7c74dc3aa365a13477da68a3e6d1a0) Refactored the built-in block code template source into family-oriented modules
+  while preserving scaffolded output, and added explicit code artifact hash
+  coverage to catch refactor-only drift. — Thanks @imjlk!
+- [42b8610](https://github.com/imjlk/wp-typia/commit/42b86105affeb18e3d0dc9198d02f224bfa453ad) Split `cli-add-block` config generation and legacy validator repair into focused runtime helpers while preserving existing workspace add-block behavior. — Thanks @imjlk!
+- [03f5776](https://github.com/imjlk/wp-typia/commit/03f5776087b450cc376c7f15a2dac63017224882) Split workspace add pattern and binding-source helpers into a focused runtime module without changing the existing CLI surface. — Thanks @imjlk!
+- [223cd95](https://github.com/imjlk/wp-typia/commit/223cd950ae443d2c27692df1cd801a970bfeadbe) Split built-in block artifact document emitters and attribute spec tables into focused runtime helper modules while preserving generated output. — Thanks @imjlk!
+- [4c118ee](https://github.com/imjlk/wp-typia/commit/4c118ee9844e247c3d7f9ad5d61e645628411b49) Split scaffold bootstrap and package-manager normalization helpers into focused runtime modules without changing generated project behavior. — Thanks @imjlk!
+- [93fd61b](https://github.com/imjlk/wp-typia/commit/93fd61b0e1965b26a08d483dca4b18b1e8c0c729) Split built-in block artifact type-source emitters into a focused helper module without changing generated scaffold output. — Thanks @imjlk!
+- [2f8fca3](https://github.com/imjlk/wp-typia/commit/2f8fca365300d5e1353986dbec83aecfcbdd9b6f) Split built-in block artifact document and attribute helpers into a focused runtime module without changing generated artifact output. — Thanks @imjlk!
+- [5b71cdc](https://github.com/imjlk/wp-typia/commit/5b71cdced704a0b1f2dcb030c4cf7a8c2c74481f) Refresh the hosted docs site, expand TypeDoc and TSDoc coverage for core plus advanced public surfaces, and document the latest public facade boundaries without changing runtime behavior. — Thanks @imjlk!
+- Updated dependencies: api-client (npm)@0.4.5, block-runtime (npm)@0.4.9, rest (npm)@0.3.9
+
 ## 0.16.11 — 2026-04-16
 
 ### Patch changes

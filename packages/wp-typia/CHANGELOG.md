@@ -1,5 +1,17 @@
 # wp-typia
 
+## 0.16.13 — 2026-04-18
+
+### Patch changes
+
+- [86bd02b](https://github.com/imjlk/wp-typia/commit/86bd02bc489e121a03fc8b9b31b2f3fc8375067c) Keep the published wp-typia release lane aligned with the project-tools migration runtime refactor patch release. — Thanks @imjlk!
+- [1206a2d](https://github.com/imjlk/wp-typia/commit/1206a2de2d7c74dc3aa365a13477da68a3e6d1a0) Updated `wp-typia` to consume the next `@wp-typia/project-tools` patch release so
+  runtime package coupling stays aligned when the built-in code template refactor
+  ships. — Thanks @imjlk!
+- [7d3a039](https://github.com/imjlk/wp-typia/commit/7d3a039f36f4d65bb587ca527c90a26b0e0e492b) Split runtime bridge output and sync helpers into focused modules without changing the public bridge surface. — Thanks @imjlk!
+- [5b71cdc](https://github.com/imjlk/wp-typia/commit/5b71cdced704a0b1f2dcb030c4cf7a8c2c74481f) Refresh the hosted docs site, expand TypeDoc and TSDoc coverage for core plus advanced public surfaces, and document the latest public facade boundaries without changing runtime behavior. — Thanks @imjlk!
+- Updated dependencies: api-client (npm)@0.4.5, project-tools (npm)@0.16.12
+
 ## 0.16.12 — 2026-04-16
 
 ### Patch changes

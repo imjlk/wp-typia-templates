@@ -1,5 +1,12 @@
 # @wp-typia/rest
 
+## 0.3.9 — 2026-04-18
+
+### Patch changes
+
+- [5b71cdc](https://github.com/imjlk/wp-typia/commit/5b71cdced704a0b1f2dcb030c4cf7a8c2c74481f) Refresh the hosted docs site, expand TypeDoc and TSDoc coverage for core plus advanced public surfaces, and document the latest public facade boundaries without changing runtime behavior. — Thanks @imjlk!
+- Updated dependencies: api-client (npm)@0.4.5
+
 ## 0.3.8 — 2026-04-16
 
 ### Patch changes
