@@ -38,6 +38,31 @@ function resolveCliWrapColumns(streamColumns: number | undefined): number | null
 			: null);
 }
 
+function wrapCliText(text: string, maxWidth: number): string[] {
+	const words = text.trim().split(/\s+/u).filter((word) => word.length > 0);
+
+	if (words.length === 0) {
+		return [""];
+	}
+
+	const lines: string[] = [];
+	let currentLine = words[0] ?? "";
+
+	for (const word of words.slice(1)) {
+		const nextLine = `${currentLine} ${word}`;
+		if (nextLine.length <= maxWidth) {
+			currentLine = nextLine;
+			continue;
+		}
+
+		lines.push(currentLine);
+		currentLine = word;
+	}
+
+	lines.push(currentLine);
+	return lines;
+}
+
 function formatWrappedPrefixedLine(
 	prefix: string,
 	text: string,
@@ -54,9 +79,18 @@ function formatWrappedPrefixedLine(
 		return [prefix.trimEnd()];
 	}
 
+	const continuationWidth = Math.max(1, columns - continuationIndent.length);
+	const firstLineWidth = columns - prefix.length;
+	if (firstLineWidth <= 0 || (words[0]?.length ?? 0) > firstLineWidth) {
+		return [
+			prefix.trimEnd(),
+			...wrapCliText(text, continuationWidth).map((line) => `${continuationIndent}${line}`),
+		];
+	}
+
 	const lines: string[] = [];
 	let currentPrefix = prefix;
-	let currentWidth = Math.max(10, columns - currentPrefix.length);
+	let currentWidth = Math.max(1, columns - currentPrefix.length);
 	let currentLine = words[0] ?? "";
 
 	for (const word of words.slice(1)) {
@@ -68,7 +102,7 @@ function formatWrappedPrefixedLine(
 
 		lines.push(`${currentPrefix}${currentLine}`);
 		currentPrefix = continuationIndent;
-		currentWidth = Math.max(10, columns - currentPrefix.length);
+		currentWidth = continuationWidth;
 		currentLine = word;
 	}
 
