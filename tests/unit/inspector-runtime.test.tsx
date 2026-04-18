@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -117,6 +119,52 @@ const TEST_COMPONENTS: InspectorComponentMap = {
 };
 
 describe("runtime inspector helpers", () => {
+	test("inspector runtime facade delegates model and control helpers to focused modules", () => {
+		const runtimeRoot = resolve(
+			import.meta.dir,
+			"..",
+			"..",
+			"packages",
+			"wp-typia-block-runtime",
+			"src",
+		);
+		const inspectorRuntimeSource = readFileSync(
+			resolve(runtimeRoot, "inspector-runtime.tsx"),
+			"utf8",
+		);
+		const inspectorModelSource = readFileSync(
+			resolve(runtimeRoot, "inspector-runtime-model.tsx"),
+			"utf8",
+		);
+		const inspectorControlsSource = readFileSync(
+			resolve(runtimeRoot, "inspector-runtime-controls.tsx"),
+			"utf8",
+		);
+
+		expect(inspectorRuntimeSource).toContain(
+			'from "./inspector-runtime-types.js"',
+		);
+		expect(inspectorRuntimeSource).toContain(
+			'from "./inspector-runtime-model.js"',
+		);
+		expect(inspectorRuntimeSource).toContain(
+			'from "./inspector-runtime-controls.js"',
+		);
+		expect(inspectorRuntimeSource).not.toContain("function getPathSegments(");
+		expect(inspectorRuntimeSource).not.toContain("export function useEditorFields(");
+		expect(inspectorRuntimeSource).not.toContain("export function FieldControl(");
+		expect(inspectorModelSource).toContain("export function useEditorFields(");
+		expect(inspectorModelSource).toContain(
+			"export function useTypedAttributeUpdater<",
+		);
+		expect(inspectorControlsSource).toContain(
+			"export function FieldControl(",
+		);
+		expect(inspectorControlsSource).toContain(
+			"export function InspectorFromManifest<",
+		);
+	});
+
 	test("useEditorFields partitions manual fields and resolves defaults", () => {
 		const manifest: ManifestDocument = {
 			attributes: {
