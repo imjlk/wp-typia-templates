@@ -309,9 +309,7 @@ export async function resolvePackageManagerId({
 	}
 
 	if (yes) {
-		throw new Error(
-			`Package manager is required when using --yes. Use --package-manager <${PACKAGE_MANAGER_IDS.join("|")}>.`,
-		);
+		return "npm";
 	}
 
 	if (!isInteractive || !selectPackageManager) {

@@ -104,6 +104,33 @@ function templateUsesPersistenceSettings(
 	return Boolean(options.dataStorageMode || options.persistencePolicy);
 }
 
+function templateSupportsPersistenceFlags(templateId: string): boolean {
+	return templateId === "persistence" || templateId === "compound";
+}
+
+function validateCreateFlagContract(options: {
+	dataStorageMode?: string;
+	persistencePolicy?: string;
+	templateId: string;
+	variant?: string;
+}) {
+	const { dataStorageMode, persistencePolicy, templateId, variant } = options;
+	if (
+		(dataStorageMode || persistencePolicy) &&
+		!templateSupportsPersistenceFlags(templateId)
+	) {
+		throw new Error(
+			"`--data-storage` and `--persistence-policy` are supported only for `wp-typia create --template persistence` or `--template compound`.",
+		);
+	}
+
+	if (variant && isBuiltInTemplateId(templateId)) {
+		throw new Error(
+			`--variant is only supported for official external template configs. Received variant "${variant}" for built-in template "${templateId}".`,
+		);
+	}
+}
+
 function parseSelectableValue<T extends string>(
 	label: string,
 	value: string,
@@ -312,6 +339,12 @@ export async function runScaffoldFlow({
 		yes,
 		isInteractive,
 		selectTemplate,
+	});
+	validateCreateFlagContract({
+		dataStorageMode,
+		persistencePolicy,
+		templateId: resolvedTemplateId,
+		variant,
 	});
 	const resolvedExternalLayerSelection =
 		isBuiltInTemplateId(resolvedTemplateId) && isInteractive
