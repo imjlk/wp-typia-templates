@@ -454,13 +454,6 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 		...flags,
 	};
 	const [command, subcommand] = positionals;
-	const mergedFlags = await applyNodeFallbackConfigDefaults(
-		command,
-		subcommand,
-		rawMergedFlags,
-		configOverridePath,
-		process.cwd(),
-	);
 
 	if (cliArgv.length === 0 || cliArgv.includes("--help") || command === "help") {
 		if (command === "templates") {
@@ -483,6 +476,14 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 		renderVersion();
 		return;
 	}
+
+	const mergedFlags = await applyNodeFallbackConfigDefaults(
+		command,
+		subcommand,
+		rawMergedFlags,
+		configOverridePath,
+		process.cwd(),
+	);
 
 	if (command === "templates") {
 		const templateId =

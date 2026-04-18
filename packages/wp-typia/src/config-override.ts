@@ -11,6 +11,11 @@ export function extractWpTypiaConfigOverride(argv: string[]): {
 			continue;
 		}
 
+		if (arg === "--") {
+			nextArgv.push(...argv.slice(index));
+			break;
+		}
+
 		if (arg === "--config" || arg === "-c") {
 			const next = argv[index + 1];
 			if (!next || next.startsWith("-")) {

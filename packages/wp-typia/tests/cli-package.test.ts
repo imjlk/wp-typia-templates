@@ -290,6 +290,7 @@ describe("wp-typia package", () => {
 		}>>(packResult.stdout);
 		const tarball = parsed[0];
 		expect(tarball?.files.some((entry) => entry.path === "dist-bunli/cli.js")).toBe(true);
+		expect(tarball?.files.some((entry) => entry.path === "dist-bunli/node-cli.js")).toBe(true);
 		expect(tarball?.files.some((entry) => entry.path === "bin/wp-typia.js")).toBe(true);
 		expect(tarball?.files.some((entry) => entry.path === "src/cli.ts")).toBe(false);
 
