@@ -12,49 +12,9 @@ import { bunliConfig } from "../bunli.config";
 import { normalizeWpTypiaArgv } from "./command-contract";
 import { wpTypiaCommands } from "./command-list";
 import { WP_TYPIA_CONFIG_SOURCES } from "./config";
+import { extractWpTypiaConfigOverride } from "./config-override";
 import { createWpTypiaSkillsMetadataPlugin } from "./plugins/wp-typia-skills";
 import { wpTypiaUserConfigPlugin } from "./plugins/wp-typia-user-config";
-
-function extractWpTypiaConfigOverride(argv: string[]): {
-	argv: string[];
-	configOverridePath?: string;
-} {
-	const nextArgv: string[] = [];
-	let configOverridePath: string | undefined;
-
-	for (let index = 0; index < argv.length; index += 1) {
-		const arg = argv[index];
-		if (!arg) {
-			continue;
-		}
-
-		if (arg === "--config" || arg === "-c") {
-			const next = argv[index + 1];
-			if (!next || next.startsWith("-")) {
-				throw new Error(`\`${arg}\` requires a value.`);
-			}
-			configOverridePath = next;
-			index += 1;
-			continue;
-		}
-
-		if (arg.startsWith("--config=")) {
-			const inlineValue = arg.slice("--config=".length);
-			if (!inlineValue) {
-				throw new Error("`--config` requires a value.");
-			}
-			configOverridePath = inlineValue;
-			continue;
-		}
-
-		nextArgv.push(arg);
-	}
-
-	return {
-		argv: nextArgv,
-		configOverridePath,
-	};
-}
 
 function resolveGeneratedMetadataPath(moduleUrl: string): string {
 	const candidates = [
@@ -125,15 +85,17 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
 	await cli.run(cliArgv);
 }
 
+export async function runCliEntrypoint(argv = process.argv.slice(2)): Promise<void> {
+	try {
+		await main(argv);
+	} catch (error) {
+		console.error(`Error: ${await formatCliError(error)}`);
+		process.exit(1);
+	}
+}
+
 if (import.meta.main) {
-	void (async () => {
-		try {
-			await main();
-		} catch (error) {
-			console.error(await formatCliError(error));
-			process.exit(1);
-		}
-	})();
+	void runCliEntrypoint();
 }
 
 export default createWpTypiaCli;

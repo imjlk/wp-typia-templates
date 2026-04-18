@@ -1,38 +1,142 @@
 #!/usr/bin/env node
 
+import fs from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const cliEntrypoint = path.join(packageRoot, "src", "cli.ts");
+const cliEntrypoint = path.join(packageRoot, "dist-bunli", "cli.js");
+const nodeCliEntrypoint = path.join(packageRoot, "dist-bunli", "node-cli.js");
 const bunBinary = process.env.BUN_BIN || "bun";
+const fullRuntimeCommands = new Set(["complete", "completions", "mcp", "skills"]);
+const longValueOptions = new Set([
+	"--anchor",
+	"--block",
+	"--config",
+	"--current-migration-version",
+	"--data-storage",
+	"--external-layer-id",
+	"--external-layer-source",
+	"--format",
+	"--from-migration-version",
+	"--id",
+	"--iterations",
+	"--migration-version",
+	"--namespace",
+	"--output-dir",
+	"--package-manager",
+	"--persistence-policy",
+	"--php-prefix",
+	"--position",
+	"--seed",
+	"--template",
+	"--text-domain",
+	"--to-migration-version",
+	"--variant",
+]);
+const shortValueOptions = new Set(["-c", "-p", "-t"]);
+const buildScriptEntrypoint = path.join(packageRoot, "scripts", "build-bunli-runtime.ts");
+const sourceCliEntrypoint = path.join(packageRoot, "src", "cli.ts");
 
-const result = spawnSync(
-	bunBinary,
-	[
-		"--eval",
-		`
-			const [moduleUrl, ...argv] = process.argv.slice(1);
-			const mod = await import(moduleUrl);
-			await mod.main(argv);
-		`,
-		pathToFileURL(cliEntrypoint).href,
-		...process.argv.slice(2),
-	],
-	{
+function firstPositional(argv) {
+	for (let index = 0; index < argv.length; index += 1) {
+		const arg = argv[index];
+		if (!arg || arg === "--") {
+			break;
+		}
+		if (shortValueOptions.has(arg) || longValueOptions.has(arg)) {
+			index += 1;
+			continue;
+		}
+		if (arg.startsWith("--")) {
+			const separatorIndex = arg.indexOf("=");
+			if (
+				separatorIndex > 0 &&
+				longValueOptions.has(arg.slice(0, separatorIndex))
+			) {
+				continue;
+			}
+		}
+		if (arg.startsWith("-") && arg !== "-") {
+			continue;
+		}
+		return arg;
+	}
+	return undefined;
+}
+
+function isWorkingBunBinary() {
+	const bunCheck = spawnSync(bunBinary, ["--version"], {
+		env: process.env,
+		stdio: "ignore",
+	});
+
+	return !bunCheck.error && bunCheck.status === 0;
+}
+
+function canAutobuildSourceCheckout() {
+	return fs.existsSync(buildScriptEntrypoint) && fs.existsSync(sourceCliEntrypoint);
+}
+
+function ensureBuiltRuntime() {
+	if (fs.existsSync(cliEntrypoint) && fs.existsSync(nodeCliEntrypoint)) {
+		return true;
+	}
+
+	if (!canAutobuildSourceCheckout() || !isWorkingBunBinary()) {
+		return false;
+	}
+
+	const buildResult = spawnSync(bunBinary, ["run", "build"], {
+		cwd: packageRoot,
+		env: process.env,
+		stdio: "inherit",
+	});
+
+	if (buildResult.status !== 0) {
+		process.exit(buildResult.status ?? 1);
+	}
+
+	return fs.existsSync(cliEntrypoint) && fs.existsSync(nodeCliEntrypoint);
+}
+
+const argv = process.argv.slice(2);
+const command = firstPositional(argv);
+const helpInvocation = argv.includes("--help") || command === "help";
+const shouldUseFullRuntime = command ? fullRuntimeCommands.has(command) : false;
+const hasBuiltRuntime = ensureBuiltRuntime();
+const hasWorkingBun = isWorkingBunBinary();
+
+if (hasWorkingBun && hasBuiltRuntime && (helpInvocation || shouldUseFullRuntime)) {
+	const result = spawnSync(bunBinary, [cliEntrypoint, ...argv], {
 		cwd: process.cwd(),
 		env: process.env,
 		stdio: "inherit",
-	},
-);
+	});
+	process.exit(result.status ?? 1);
+}
 
-if (result.error) {
+if (shouldUseFullRuntime) {
+	if (!hasBuiltRuntime) {
+		console.error(
+			"❌ wp-typia could not locate its built CLI runtime. Reinstall the published package, or run `bun run build` when using a source checkout.",
+		);
+		process.exit(1);
+	}
+
 	console.error(
-		"❌ wp-typia requires Bun 1.3.11+ to run the Bunli-powered CLI. Install Bun or set BUN_BIN to a compatible runtime.",
+		`❌ wp-typia ${command} requires Bun. Install Bun locally, run with bunx, or set BUN_BIN to a working Bun executable.`,
 	);
-	console.error(result.error instanceof Error ? result.error.message : result.error);
 	process.exit(1);
 }
 
-process.exit(result.status ?? 1);
+if (!hasBuiltRuntime || !fs.existsSync(nodeCliEntrypoint)) {
+	console.error(
+		"❌ wp-typia could not locate its Node fallback runtime. Reinstall the published package, or run `bun run build` when using a source checkout.",
+	);
+	process.exit(1);
+}
+
+const cliModule = await import(pathToFileURL(nodeCliEntrypoint).href);
+await cliModule.runNodeCliEntrypoint(argv);

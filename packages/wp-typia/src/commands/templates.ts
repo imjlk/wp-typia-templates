@@ -1,7 +1,7 @@
 import { defineCommand } from "@bunli/core";
 import { z } from "zod";
 
-import { executeTemplatesCommand, listTemplates } from "../runtime-bridge";
+import { executeTemplatesCommand, listTemplatesForRuntime } from "../runtime-bridge";
 
 export const templatesCommand = defineCommand({
 	defaultFormat: "json",
@@ -19,15 +19,16 @@ export const templatesCommand = defineCommand({
 			Boolean(args.context?.store?.isAIAgent);
 
 		if (prefersStructuredOutput) {
+			const templates = await listTemplatesForRuntime();
 			if (effectiveSubcommand === "list") {
-				args.output({ templates: listTemplates() });
+				args.output({ templates });
 				return;
 			}
 			if (effectiveSubcommand === "inspect" && id) {
-				await executeTemplatesCommand({
-					flags: { id, subcommand: effectiveSubcommand },
-				}, () => {});
-				const template = listTemplates().find((entry) => entry.id === id);
+				const template = templates.find((entry) => entry.id === id);
+				if (!template) {
+					throw new Error(`Unknown template "${id}".`);
+				}
 				args.output({ template });
 				return;
 			}

@@ -5,6 +5,7 @@ import path from "node:path";
 import os from "node:os";
 
 import { WP_TYPIA_TOP_LEVEL_COMMAND_NAMES } from "../src/command-contract";
+import { hasFlagBeforeTerminator, parseGlobalFlags } from "../src/node-cli";
 
 import { runUtf8Command } from "../../../tests/helpers/process-utils";
 
@@ -53,6 +54,14 @@ function withoutAIAgentEnv(): NodeJS.ProcessEnv {
 		CURSOR_AGENT: "",
 		GEMINI_CLI: "",
 		OPENCODE: "",
+	};
+}
+
+function withoutLocalBunEnv(): NodeJS.ProcessEnv {
+	return {
+		...withoutAIAgentEnv(),
+		BUN_BIN: path.join(os.tmpdir(), "wp-typia-missing-bun"),
+		PATH: path.dirname(process.execPath),
 	};
 }
 
@@ -127,6 +136,24 @@ function readSyncLog(logPath: string): Array<{ args: string[]; label: string }> 
 		.map((line) => JSON.parse(line) as { args: string[]; label: string });
 }
 
+function parseJsonObjectFromOutput<T>(output: string): T {
+	const trimmed = output.trim();
+	const jsonStart = trimmed.startsWith("{") ? 0 : trimmed.lastIndexOf("\n{");
+	const jsonSource = (
+		jsonStart >= 0 ? trimmed.slice(jsonStart === 0 ? 0 : jsonStart + 1) : trimmed
+	).trim();
+	return JSON.parse(jsonSource) as T;
+}
+
+function parseJsonArrayFromOutput<T>(output: string): T {
+	const trimmed = output.trim();
+	const jsonStart = trimmed.startsWith("[") ? 0 : trimmed.lastIndexOf("\n[");
+	const jsonSource = (
+		jsonStart >= 0 ? trimmed.slice(jsonStart === 0 ? 0 : jsonStart + 1) : trimmed
+	).trim();
+	return JSON.parse(jsonSource) as T;
+}
+
 describe("wp-typia package", () => {
 	test("owns the canonical CLI bin and keeps project-tools as a library dependency", () => {
 		expect(packageManifest.name).toBe("wp-typia");
@@ -174,16 +201,108 @@ describe("wp-typia package", () => {
 
 	test("returns structured version output through the canonical bin", () => {
 		const output = runUtf8Command("node", [entryPath, "--version"]);
-		const parsed = JSON.parse(output) as {
+		const parsed = parseJsonObjectFromOutput<{
 			data?: { name?: string; type?: string; version?: string };
 			ok?: boolean;
-		};
+		}>(output);
 
 		expect(parsed.ok).toBe(true);
 		expect(parsed.data?.type).toBe("version");
 		expect(parsed.data?.name).toBe("wp-typia");
 		expect(parsed.data?.version).toBe(packageManifest.version);
 	});
+
+	test("runs the published version path without requiring a local Bun binary", () => {
+		const result = runCapturedCommand(process.execPath, [entryPath, "--version"], {
+			env: withoutLocalBunEnv(),
+		});
+
+		expect(result.status).toBe(0);
+		expect(result.stderr).toBe("");
+		const parsed = parseJsonObjectFromOutput<{
+			data?: { name?: string; type?: string; version?: string };
+			ok?: boolean;
+		}>(result.stdout);
+		expect(parsed.ok).toBe(true);
+		expect(parsed.data?.type).toBe("version");
+		expect(parsed.data?.name).toBe("wp-typia");
+		expect(parsed.data?.version).toBe(packageManifest.version);
+	});
+
+	test("renders general and command help without requiring a local Bun binary", () => {
+		const helpResult = runCapturedCommand(process.execPath, [entryPath, "--help"], {
+			env: withoutLocalBunEnv(),
+		});
+		const createHelpResult = runCapturedCommand(
+			process.execPath,
+			[entryPath, "create", "--help"],
+			{
+				env: withoutLocalBunEnv(),
+			},
+		);
+
+		expect(helpResult.status).toBe(0);
+		expect(helpResult.stderr).toBe("");
+		expect(helpResult.stdout).toContain("Canonical CLI package for wp-typia scaffolding");
+		expect(helpResult.stdout).toContain("Supported without a local Bun binary:");
+		expect(createHelpResult.status).toBe(0);
+		expect(createHelpResult.stderr).toBe("");
+		expect(createHelpResult.stdout).toContain("--external-layer-source");
+		expect(createHelpResult.stdout).toContain("--external-layer-id");
+	});
+
+	test("keeps value-taking options from being mistaken for Bun-only commands", () => {
+		const targetDir = path.join(os.tmpdir(), `wp-typia-mcp-namespace-${Date.now()}`);
+		const result = runCapturedCommand(
+			process.execPath,
+			[
+				entryPath,
+				"--namespace",
+				"mcp",
+				"create",
+				targetDir,
+				"--template",
+				"basic",
+				"--package-manager",
+				"npm",
+				"--yes",
+				"--no-install",
+			],
+			{
+				env: withoutLocalBunEnv(),
+			},
+		);
+
+		expect(result.status).toBe(0);
+		expect(result.stderr).not.toContain("requires Bun");
+		expect(fs.existsSync(path.join(targetDir, "package.json"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "src", "block.json"))).toBe(true);
+	});
+
+	test("packs a built dist-bunli runtime for the published CLI entrypoint", () => {
+		const packResult = runCapturedCommand("npm", ["pack", "--json", "--pack-destination", packageRoot], {
+			cwd: packageRoot,
+		});
+
+		expect(packResult.status).toBe(0);
+		const parsed = parseJsonArrayFromOutput<Array<{
+			filename: string;
+			files: Array<{ path: string }>;
+		}>>(packResult.stdout);
+		const tarball = parsed[0];
+		expect(tarball?.files.some((entry) => entry.path === "dist-bunli/cli.js")).toBe(true);
+		expect(tarball?.files.some((entry) => entry.path === "dist-bunli/.bunli/commands.gen.js")).toBe(
+			true,
+		);
+		expect(tarball?.files.some((entry) => entry.path === "dist-bunli/node-cli.js")).toBe(true);
+		expect(tarball?.files.some((entry) => entry.path === "bin/wp-typia.js")).toBe(true);
+		expect(tarball?.files.some((entry) => entry.path === ".bunli/commands.gen.ts")).toBe(false);
+		expect(tarball?.files.some((entry) => entry.path === "src/cli.ts")).toBe(false);
+
+		if (tarball?.filename) {
+			fs.rmSync(path.join(packageRoot, tarball.filename), { force: true });
+		}
+	}, 30000);
 
 	test("rejects sync outside a generated project root with explicit guidance", () => {
 		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-sync-outside-"));
@@ -534,6 +653,46 @@ describe("wp-typia package", () => {
 		}
 	});
 
+	test("loads baseline create defaults from package.json#wp-typia in the Node fallback", () => {
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-node-config-defaults-"));
+		const targetDir = path.join(tempRoot, "demo-config-defaults");
+
+		try {
+			fs.writeFileSync(
+				path.join(tempRoot, "package.json"),
+				`${JSON.stringify(
+					{
+						name: "node-config-defaults",
+						private: true,
+						"wp-typia": {
+							create: {
+								"package-manager": "npm",
+								template: "basic",
+								yes: true,
+								"no-install": true,
+							},
+						},
+					},
+					null,
+					2,
+				)}\n`,
+				"utf8",
+			);
+
+			const result = runCapturedCommand(process.execPath, [entryPath, "create", targetDir], {
+				cwd: tempRoot,
+				env: withoutLocalBunEnv(),
+			});
+
+			expect(result.status).toBe(0);
+			expect(result.stderr).toBe("");
+			expect(fs.existsSync(path.join(targetDir, "package.json"))).toBe(true);
+			expect(fs.existsSync(path.join(targetDir, "src", "block.json"))).toBe(true);
+		} finally {
+			fs.rmSync(tempRoot, { force: true, recursive: true });
+		}
+	});
+
 	test("honors explicit machine-readable output for mcp list", () => {
 		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-mcp-format-"));
 		const schemaPath = path.join(tempRoot, "mcp-tools.json");
@@ -597,6 +756,19 @@ describe("wp-typia package", () => {
 		).toBe(true);
 	});
 
+	test("stops parsing global flags after -- in the Node fallback", () => {
+		const parsed = parseGlobalFlags(["templates", "list", "--", "--format"]);
+
+		expect(parsed.flags).toEqual({});
+		expect(parsed.argv).toEqual(["templates", "list", "--", "--format"]);
+	});
+
+	test("ignores fallback help/version flags after --", () => {
+		expect(hasFlagBeforeTerminator(["create", "--help"], "--help")).toBe(true);
+		expect(hasFlagBeforeTerminator(["create", "--", "--help"], "--help")).toBe(false);
+		expect(hasFlagBeforeTerminator(["version", "--", "--version"], "--version")).toBe(false);
+	});
+
 	test("treats templates --id as an alias for templates inspect", () => {
 		const output = runUtf8Command("node", [
 			entryPath,
@@ -631,5 +803,14 @@ describe("wp-typia package", () => {
 
 		expect(parsed.template?.id).toBe("@wp-typia/create-workspace-template");
 		expect(parsed.template?.description).toContain("official empty workspace");
+	});
+
+	test("rejects unknown short options in the Node fallback parser", () => {
+		const result = runCapturedCommand(process.execPath, [entryPath, "create", "-x", "demo-short-flag"], {
+			env: withoutLocalBunEnv(),
+		});
+
+		expect(result.status).toBe(1);
+		expect(result.stderr).toContain("Unknown option `-x`.");
 	});
 });

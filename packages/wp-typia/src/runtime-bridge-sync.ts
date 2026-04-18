@@ -2,8 +2,6 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
-import { formatRunScript } from "@wp-typia/project-tools/package-managers";
-
 type PackageManagerId = "bun" | "npm" | "pnpm" | "yarn";
 
 type SyncExecutionInput = {
@@ -17,6 +15,24 @@ type SyncProjectContext = {
 	packageManager: PackageManagerId;
 	scripts: Partial<Record<"sync" | "sync-rest" | "sync-types", string>>;
 };
+
+function formatRunScript(
+	packageManagerId: PackageManagerId,
+	scriptName: string,
+	extraArgs = "",
+) {
+	const args = extraArgs.trim();
+	if (packageManagerId === "bun") {
+		return args ? `bun run ${scriptName} ${args}` : `bun run ${scriptName}`;
+	}
+	if (packageManagerId === "npm") {
+		return args ? `npm run ${scriptName} -- ${args}` : `npm run ${scriptName}`;
+	}
+	if (packageManagerId === "pnpm") {
+		return args ? `pnpm run ${scriptName} ${args}` : `pnpm run ${scriptName}`;
+	}
+	return args ? `yarn run ${scriptName} ${args}` : `yarn run ${scriptName}`;
+}
 
 function getSyncRootError(cwd: string): Error {
 	return new Error(
