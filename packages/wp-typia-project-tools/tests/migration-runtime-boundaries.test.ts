@@ -53,6 +53,14 @@ test("migration project barrel delegates layout, config parsing, and workspace h
 		path.join(runtimeRoot, "migration-project-layout.ts"),
 		"utf8",
 	);
+	const layoutDiscoverySource = fs.readFileSync(
+		path.join(runtimeRoot, "migration-project-layout-discovery.ts"),
+		"utf8",
+	);
+	const layoutPathsSource = fs.readFileSync(
+		path.join(runtimeRoot, "migration-project-layout-paths.ts"),
+		"utf8",
+	);
 	const workspaceSource = fs.readFileSync(
 		path.join(runtimeRoot, "migration-project-workspace.ts"),
 		"utf8",
@@ -67,8 +75,14 @@ test("migration project barrel delegates layout, config parsing, and workspace h
 	expect(configSource).toContain("export function parseMigrationConfig(");
 	expect(configSource).toContain("function stripCommentsAndStrings(");
 	expect(configSource).toContain("export function hasLegacyConfigKeys(");
-	expect(layoutSource).toContain("export function discoverMigrationInitLayout(");
-	expect(layoutSource).toContain("export function discoverMigrationEntries(");
+	expect(layoutSource).toContain('from "./migration-project-layout-discovery.js"');
+	expect(layoutSource).toContain('from "./migration-project-layout-paths.js"');
+	expect(layoutSource).not.toContain("function discoverSingleBlockTarget(");
+	expect(layoutSource).not.toContain("export function discoverMigrationEntries(");
+	expect(layoutDiscoverySource).toContain("export function discoverMigrationInitLayout(");
+	expect(layoutDiscoverySource).toContain("export function resolveMigrationBlocks(");
+	expect(layoutPathsSource).toContain("export function discoverMigrationEntries(");
+	expect(layoutPathsSource).toContain("export function getSnapshotRoot(");
 	expect(workspaceSource).toContain("export function loadMigrationProject(");
 	expect(workspaceSource).toContain("export function writeMigrationConfig(");
 	expect(workspaceSource).not.toContain("function discoverSingleBlockTarget(");
