@@ -20,7 +20,10 @@ export interface TypiaWebpackConfigOptions {
   moduleEntriesMode?: 'merge' | 'replace';
   nonModuleEntriesMode?: 'merge' | 'replace';
   path: {
+    isAbsolute(path: string): boolean;
     join(...paths: string[]): string;
+    relative(from: string, to: string): string;
+    resolve(...paths: string[]): string;
   };
   projectRoot?: string;
 }
@@ -71,6 +74,10 @@ function normalizeScriptModuleAssetSource(source: unknown): string {
 }
 
 function normalizeEntryMap(entry: unknown): Record<string, unknown> {
+  if (typeof entry === 'string' || Array.isArray(entry)) {
+    return { main: entry };
+  }
+
   if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
     return { ...(entry as Record<string, unknown>) };
   }
@@ -387,13 +394,21 @@ export async function createTypiaWebpackConfig(
           if (!outputPath) {
             return;
           }
+          const outputRoot = path.resolve(outputPath);
 
           for (const asset of compilation.getAssets()) {
             if (!isScriptModuleAsset(asset.name)) {
               continue;
             }
 
-            const assetPath = path.join(outputPath, asset.name);
+            const assetPath = path.resolve(outputRoot, asset.name);
+            const relativeAssetPath = path.relative(outputRoot, assetPath);
+            if (
+              relativeAssetPath.startsWith('..') ||
+              path.isAbsolute(relativeAssetPath)
+            ) {
+              continue;
+            }
             if (!fs.existsSync(assetPath)) {
               continue;
             }

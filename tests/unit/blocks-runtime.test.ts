@@ -269,15 +269,11 @@ describe('block runtime helpers', () => {
     const config = await createTypiaWebpackConfig({
       defaultConfig: async () => [
         {
-          entry: {
-            index: './index.js',
-          },
+          entry: './index.js',
           plugins: [existingPlugin],
         },
         {
-          entry: async () => ({
-            view: './view.js',
-          }),
+          entry: async () => ['./view.js'],
           output: {
             module: true,
           },
@@ -301,17 +297,17 @@ describe('block runtime helpers', () => {
     expect(Array.isArray(config)).toBe(true);
 
     const [editorConfig, moduleConfig] = config as Array<{
-      entry: () => Promise<Record<string, string>>;
+      entry: () => Promise<Record<string, unknown>>;
       plugins: unknown[];
     }>;
 
     expect(await editorConfig.entry()).toEqual({
       editor: './editor.js',
-      index: './index.js',
+      main: './index.js',
     });
     expect(await moduleConfig.entry()).toEqual({
       interactive: './interactive.js',
-      view: './view.js',
+      main: ['./view.js'],
     });
     expect(editorConfig.plugins[0]).toEqual({ name: 'typia-plugin' });
     expect(editorConfig.plugins[1]).toBe(existingPlugin);
@@ -429,5 +425,52 @@ describe('block runtime helpers', () => {
     expect(fs.readFileSync(emittedAssetPath, 'utf8')).toContain(
       "'dependencies' => array()",
     );
+  });
+
+  test('createTypiaWebpackConfig skips afterEmit writes outside the output directory', async () => {
+    const outputDir = createTempDir('wp-typia-webpack-traversal-');
+    const projectRoot = createSupportedWebpackProjectRoot();
+    const outsideAssetPath = path.resolve(outputDir, '..', 'view.asset.php');
+    const rawAssetSource =
+      "<?php return array( 'dependencies' => array( 'wp-i18n' ), 'version' => '1' );";
+
+    writeTextFile(outsideAssetPath, rawAssetSource);
+
+    const config = await createTypiaWebpackConfig({
+      defaultConfig: {
+        entry: {},
+      },
+      fs: createWebpackFsAdapter(),
+      getArtifactEntries: () => [],
+      importTypiaWebpackPlugin: async () => ({
+        default: () => ({ name: 'typia-plugin' }),
+      }),
+      isScriptModuleAsset: (assetName) => assetName.endsWith('view.asset.php'),
+      path,
+      projectRoot,
+    });
+    const plugin = (config as { plugins: unknown[] }).plugins.find(
+      (candidate) =>
+        (candidate as { constructor?: { name?: string } })?.constructor
+          ?.name === 'TypiaArtifactAssetPlugin',
+    ) as
+      | { apply(compiler: ReturnType<typeof createFakeCompiler>): void }
+      | undefined;
+    const compilation = createFakeCompilation(
+      {
+        '../view.asset.php': rawAssetSource,
+      },
+      outputDir,
+    );
+    const compiler = createFakeCompiler(compilation);
+
+    expect(plugin).toBeDefined();
+    plugin!.apply(compiler);
+    compiler.runLifecycle();
+
+    expect(assetToString(compilation.readAsset('../view.asset.php'))).toContain(
+      "'dependencies' => array()",
+    );
+    expect(fs.readFileSync(outsideAssetPath, 'utf8')).toBe(rawAssetSource);
   });
 });
