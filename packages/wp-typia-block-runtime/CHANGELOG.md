@@ -1,5 +1,16 @@
 # @wp-typia/block-runtime
 
+## 0.4.9 — 2026-04-18
+
+### Patch changes
+
+- [0e7cdac](https://github.com/imjlk/wp-typia/commit/0e7cdac97c8e0793a89aa8c8c812ef76046adab1) Split schema-core manifest and OpenAPI document builders into a focused runtime helper module without changing the public schema-core surface. — Thanks @imjlk!
+- [4a29a43](https://github.com/imjlk/wp-typia/commit/4a29a43d79a5f5536389dcb2498f2ac8a328df02) Split `metadata-core` artifact sync routines and endpoint client rendering into focused helper modules without changing the public block-runtime API. — Thanks @imjlk!
+- [2d60b6f](https://github.com/imjlk/wp-typia/commit/2d60b6f742b1aaf24cb370f6d3c41282aa3a6a55) Split schema-core and metadata-parser helper clusters into dedicated internal modules while preserving the published block-runtime API surface. — Thanks @imjlk!
+- [97997da](https://github.com/imjlk/wp-typia/commit/97997da4b027dfddf25f251fb84bdc5f8d8dcd5c) Split inspector runtime view-model and rendering helpers into focused modules while preserving the public inspector export surface. — Thanks @imjlk!
+- [5b71cdc](https://github.com/imjlk/wp-typia/commit/5b71cdced704a0b1f2dcb030c4cf7a8c2c74481f) Refresh the hosted docs site, expand TypeDoc and TSDoc coverage for core plus advanced public surfaces, and document the latest public facade boundaries without changing runtime behavior. — Thanks @imjlk!
+- Updated dependencies: api-client (npm)@0.4.5
+
 ## 0.4.8 — 2026-04-15
 
 ### Patch changes
