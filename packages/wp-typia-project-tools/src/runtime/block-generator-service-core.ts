@@ -131,6 +131,35 @@ function buildCombinedTemplateLayerDirs({
 	return orderedLayerDirs;
 }
 
+async function runCleanupGroup(
+	label: string,
+	cleanups: Array<(() => Promise<void>) | undefined>,
+): Promise<void> {
+	const cleanupErrors: Error[] = [];
+	const seen = new Set<(() => Promise<void>) | undefined>();
+
+	for (const cleanup of cleanups) {
+		if (!cleanup || seen.has(cleanup)) {
+			continue;
+		}
+		seen.add(cleanup);
+		try {
+			await cleanup();
+		} catch (error) {
+			cleanupErrors.push(error instanceof Error ? error : new Error(String(error)));
+		}
+	}
+
+	if (cleanupErrors.length > 0) {
+		throw new Error(
+			[
+				label,
+				...cleanupErrors.map((error) => `- ${error.message}`),
+			].join("\n"),
+		);
+	}
+}
+
 export class BlockGeneratorService {
 	async plan({
 		allowExistingDir = false,
@@ -221,11 +250,15 @@ export class BlockGeneratorService {
 			let layerSeed:
 				| Awaited<ReturnType<typeof resolveTemplateSeed>>
 				| undefined;
+			let pendingLayerCleanup: (() => Promise<void>) | undefined;
+			let pendingTemplateCleanup: (() => Promise<void>) | undefined;
+			let composedCleanup: (() => Promise<void>) | undefined;
 			try {
 				layerSeed = await resolveTemplateSeed(
 					parseTemplateLocator(validated.target.externalLayerSource),
 					validated.target.cwd,
 				);
+				pendingLayerCleanup = layerSeed.cleanup;
 				const resolvedLayers = await resolveExternalTemplateLayers({
 					externalLayerId: validated.target.externalLayerId,
 					sourceRoot: layerSeed.rootDir,
@@ -241,12 +274,12 @@ export class BlockGeneratorService {
 						codeArtifacts,
 						spec: validated.spec,
 						variables,
-					}),
-					view: variables,
-				});
+						}),
+						view: variables,
+					});
 
-				await templateSource.cleanup?.();
-				templateSource = await resolveBuiltInTemplateSourceFromLayerDirs(
+				const previousTemplateCleanup = templateSource.cleanup;
+				const nextTemplateSource = await resolveBuiltInTemplateSourceFromLayerDirs(
 					validated.spec.template.family,
 					buildCombinedTemplateLayerDirs({
 						baseLayerDirs,
@@ -254,35 +287,35 @@ export class BlockGeneratorService {
 						templateId: validated.spec.template.family,
 					}),
 				);
-				const layerSourceCleanup = layerSeed.cleanup;
-				const templateCleanup = templateSource.cleanup;
-				templateSource.cleanup = async () => {
-					const cleanupErrors: Error[] = [];
-					try {
-						await templateCleanup?.();
-					} catch (error) {
-						cleanupErrors.push(error instanceof Error ? error : new Error(String(error)));
-					}
-					try {
-						await layerSourceCleanup?.();
-					} catch (error) {
-						cleanupErrors.push(error instanceof Error ? error : new Error(String(error)));
-					}
-					if (cleanupErrors.length > 0) {
-						throw new Error(
-							[
-								"Failed to cleanup composed template sources.",
-								...cleanupErrors.map((error) => `- ${error.message}`),
-							].join("\n"),
-						);
-					}
-				};
+				pendingTemplateCleanup = nextTemplateSource.cleanup;
+				await previousTemplateCleanup?.();
+				templateSource = nextTemplateSource;
+				composedCleanup = async () =>
+					runCleanupGroup("Failed to cleanup composed template sources.", [
+						pendingTemplateCleanup,
+						pendingLayerCleanup,
+					]);
+				templateSource.cleanup = composedCleanup;
 				warnings.push(
 					`Applied external layer "${resolvedLayers.selectedLayerId}" from "${validated.target.externalLayerSourceLabel ?? validated.target.externalLayerSource}".`,
 				);
 			} catch (error) {
-				await templateSource.cleanup?.();
-				await layerSeed?.cleanup?.();
+				try {
+					if (composedCleanup) {
+						await composedCleanup();
+					} else {
+						await runCleanupGroup(
+							"Failed to cleanup partially composed template sources.",
+							[
+								templateSource.cleanup,
+								pendingTemplateCleanup,
+								pendingLayerCleanup,
+							],
+						);
+					}
+				} catch {
+					// Preserve the original compose failure instead of masking it with cleanup errors.
+				}
 				throw error;
 			}
 		}
