@@ -145,7 +145,7 @@ export function fuzzProjectMigrations(
   const legacySingleBlock = isLegacySingleBlockProject(state)
   if (targetVersions.length === 0) {
     renderLine('No legacy migration versions configured for fuzzing.')
-    return { fuzzedVersions: [] }
+    return { fuzzedVersions: [], seed }
   }
 
   const tsxBinary = getLocalTsxBinary(projectDir)
