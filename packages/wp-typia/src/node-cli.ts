@@ -11,6 +11,12 @@ import {
 	listTemplates,
 } from "@wp-typia/project-tools/cli-templates";
 import {
+	getAddBlockDefaults,
+	getCreateDefaults,
+	loadWpTypiaUserConfigFromSource,
+} from "./config";
+import { extractWpTypiaConfigOverride } from "./config-override";
+import {
 	executeAddCommand,
 	executeCreateCommand,
 	executeDoctorCommand,
@@ -129,6 +135,36 @@ function parseGlobalFlags(argv: string[]): {
 	};
 }
 
+async function applyNodeFallbackConfigDefaults(
+	command: string | undefined,
+	subcommand: string | undefined,
+	flags: Record<string, unknown>,
+	configOverridePath: string | undefined,
+	cwd: string,
+): Promise<Record<string, unknown>> {
+	if (!configOverridePath) {
+		return flags;
+	}
+
+	const config = await loadWpTypiaUserConfigFromSource(cwd, configOverridePath);
+
+	if (command === "create") {
+		return {
+			...getCreateDefaults(config),
+			...flags,
+		};
+	}
+
+	if (command === "add" && subcommand === "block") {
+		return {
+			...getAddBlockDefaults(config),
+			...flags,
+		};
+	}
+
+	return flags;
+}
+
 function parseArgv(argv: string[]): ParsedArgv {
 	const flags: Record<string, unknown> = {};
 	const positionals: string[] = [];
@@ -166,7 +202,12 @@ function parseArgv(argv: string[]): ParsedArgv {
 		}
 
 		if (arg.startsWith("--")) {
-			const [rawName, inlineValue] = arg.slice(2).split("=", 2);
+			const option = arg.slice(2);
+			const separatorIndex = option.indexOf("=");
+			const rawName =
+				separatorIndex === -1 ? option : option.slice(0, separatorIndex);
+			const inlineValue =
+				separatorIndex === -1 ? undefined : option.slice(separatorIndex + 1);
 			if (BOOLEAN_FLAG_NAMES.has(rawName)) {
 				flags[rawName] = true;
 				continue;
@@ -369,15 +410,51 @@ function renderUnsupportedCommand(command: string) {
 	);
 }
 
+async function renderDoctorJson(): Promise<void> {
+	const [{ getDoctorChecks }, { createCliCommandError, getDoctorFailureDetailLines }] =
+		await Promise.all([
+			import("@wp-typia/project-tools/cli-doctor"),
+			import("@wp-typia/project-tools/cli-diagnostics"),
+		]);
+	const checks = await getDoctorChecks(process.cwd());
+	printLine(
+		JSON.stringify(
+			{
+				checks,
+			},
+			null,
+			2,
+		),
+	);
+	if (checks.some((check) => check.status === "fail")) {
+		throw createCliCommandError({
+			command: "doctor",
+			detailLines: getDoctorFailureDetailLines(checks),
+			summary: "One or more doctor checks failed.",
+		});
+	}
+}
+
 export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 	const normalizedArgv = normalizeWpTypiaArgv(argv);
-	const { argv: cliArgv, flags } = parseGlobalFlags(normalizedArgv);
+	const {
+		argv: argvWithoutConfigOverride,
+		configOverridePath,
+	} = extractWpTypiaConfigOverride(normalizedArgv);
+	const { argv: cliArgv, flags } = parseGlobalFlags(argvWithoutConfigOverride);
 	const { flags: commandFlags, positionals } = parseArgv(cliArgv);
-	const mergedFlags: Record<string, unknown> = {
+	const rawMergedFlags: Record<string, unknown> = {
 		...commandFlags,
 		...flags,
 	};
 	const [command, subcommand] = positionals;
+	const mergedFlags = await applyNodeFallbackConfigDefaults(
+		command,
+		subcommand,
+		rawMergedFlags,
+		configOverridePath,
+		process.cwd(),
+	);
 
 	if (cliArgv.length === 0 || cliArgv.includes("--help") || command === "help") {
 		if (command === "templates") {
@@ -469,6 +546,10 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 	}
 
 	if (command === "doctor") {
+		if (mergedFlags.format === "json") {
+			await renderDoctorJson();
+			return;
+		}
 		await executeDoctorCommand(process.cwd());
 		return;
 	}

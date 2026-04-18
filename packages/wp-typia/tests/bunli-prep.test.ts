@@ -28,6 +28,7 @@ describe("wp-typia Bunli preparation", () => {
 		expect(packageManifest.scripts["bunli:dev"]).toBe("bun src/cli.ts");
 		expect(packageManifest.scripts["bunli:test"]).toBe("bun test tests/*.test.ts");
 		expect(packageManifest.scripts.prepack).toBe("bun run build");
+		expect(packageManifest.engines.bun).toBe(">=1.3.11");
 		expect(packageManifest.devDependencies.bunli).toBe("0.9.0");
 		expect(packageManifest.dependencies["@bunli/core"]).toBe("0.9.0");
 		expect(packageManifest.devDependencies["@bunli/test"]).toBe("0.6.0");
