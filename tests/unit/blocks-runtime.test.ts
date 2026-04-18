@@ -7,6 +7,11 @@ import {
   createTypiaWebpackConfig,
   parseScaffoldBlockMetadata,
 } from '../../packages/wp-typia-block-runtime/src/blocks';
+import {
+  buildScaffoldBlockRegistration as buildScaffoldBlockRegistrationFromRegistrationModule,
+  parseScaffoldBlockMetadata as parseScaffoldBlockMetadataFromRegistrationModule,
+} from '../../packages/wp-typia-block-runtime/src/blocks-registration';
+import { createTypiaWebpackConfig as createTypiaWebpackConfigFromWebpackModule } from '../../packages/wp-typia-block-runtime/src/blocks-webpack';
 import { createTempDir, writeTextFile } from '../helpers/file-fixtures';
 
 class FakeRawSource {
@@ -181,6 +186,18 @@ function createFakeCompiler(
 }
 
 describe('block runtime helpers', () => {
+  test('blocks facade re-exports focused registration and webpack helpers', () => {
+    expect(buildScaffoldBlockRegistration).toBe(
+      buildScaffoldBlockRegistrationFromRegistrationModule,
+    );
+    expect(parseScaffoldBlockMetadata).toBe(
+      parseScaffoldBlockMetadataFromRegistrationModule,
+    );
+    expect(createTypiaWebpackConfig).toBe(
+      createTypiaWebpackConfigFromWebpackModule,
+    );
+  });
+
   test('buildScaffoldBlockRegistration merges metadata and preserves override inference', () => {
     const registration = buildScaffoldBlockRegistration(
       {
@@ -252,15 +269,11 @@ describe('block runtime helpers', () => {
     const config = await createTypiaWebpackConfig({
       defaultConfig: async () => [
         {
-          entry: {
-            index: './index.js',
-          },
+          entry: './index.js',
           plugins: [existingPlugin],
         },
         {
-          entry: async () => ({
-            view: './view.js',
-          }),
+          entry: async () => ['./view.js'],
           output: {
             module: true,
           },
@@ -284,17 +297,17 @@ describe('block runtime helpers', () => {
     expect(Array.isArray(config)).toBe(true);
 
     const [editorConfig, moduleConfig] = config as Array<{
-      entry: () => Promise<Record<string, string>>;
+      entry: () => Promise<Record<string, unknown>>;
       plugins: unknown[];
     }>;
 
     expect(await editorConfig.entry()).toEqual({
       editor: './editor.js',
-      index: './index.js',
+      main: './index.js',
     });
     expect(await moduleConfig.entry()).toEqual({
       interactive: './interactive.js',
-      view: './view.js',
+      main: ['./view.js'],
     });
     expect(editorConfig.plugins[0]).toEqual({ name: 'typia-plugin' });
     expect(editorConfig.plugins[1]).toBe(existingPlugin);
@@ -412,5 +425,52 @@ describe('block runtime helpers', () => {
     expect(fs.readFileSync(emittedAssetPath, 'utf8')).toContain(
       "'dependencies' => array()",
     );
+  });
+
+  test('createTypiaWebpackConfig skips afterEmit writes outside the output directory', async () => {
+    const outputDir = createTempDir('wp-typia-webpack-traversal-');
+    const projectRoot = createSupportedWebpackProjectRoot();
+    const outsideAssetPath = path.resolve(outputDir, '..', 'view.asset.php');
+    const rawAssetSource =
+      "<?php return array( 'dependencies' => array( 'wp-i18n' ), 'version' => '1' );";
+
+    writeTextFile(outsideAssetPath, rawAssetSource);
+
+    const config = await createTypiaWebpackConfig({
+      defaultConfig: {
+        entry: {},
+      },
+      fs: createWebpackFsAdapter(),
+      getArtifactEntries: () => [],
+      importTypiaWebpackPlugin: async () => ({
+        default: () => ({ name: 'typia-plugin' }),
+      }),
+      isScriptModuleAsset: (assetName) => assetName.endsWith('view.asset.php'),
+      path,
+      projectRoot,
+    });
+    const plugin = (config as { plugins: unknown[] }).plugins.find(
+      (candidate) =>
+        (candidate as { constructor?: { name?: string } })?.constructor
+          ?.name === 'TypiaArtifactAssetPlugin',
+    ) as
+      | { apply(compiler: ReturnType<typeof createFakeCompiler>): void }
+      | undefined;
+    const compilation = createFakeCompilation(
+      {
+        '../view.asset.php': rawAssetSource,
+      },
+      outputDir,
+    );
+    const compiler = createFakeCompiler(compilation);
+
+    expect(plugin).toBeDefined();
+    plugin!.apply(compiler);
+    compiler.runLifecycle();
+
+    expect(assetToString(compilation.readAsset('../view.asset.php'))).toContain(
+      "'dependencies' => array()",
+    );
+    expect(fs.readFileSync(outsideAssetPath, 'utf8')).toBe(rawAssetSource);
   });
 });
