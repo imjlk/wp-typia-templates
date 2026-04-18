@@ -112,6 +112,15 @@ describe("wp-typia Bunli preparation", () => {
 		expect(
 			normalizeWpTypiaArgv(["demo-block", "--template", "basic"]),
 		).toEqual(["create", "demo-block", "--template", "basic"]);
+		expect(() => normalizeWpTypiaArgv(["github:acme/template"])).toThrow(
+			/The positional alias only accepts unambiguous local project directories/,
+		);
+		expect(() => normalizeWpTypiaArgv(["."])).toThrow(
+			/The positional alias does not scaffold into `\.`/,
+		);
+		expect(() => normalizeWpTypiaArgv(["./"])).toThrow(
+			/The positional alias does not scaffold into `\.\/`/,
+		);
 		expect(
 			normalizeWpTypiaArgv([
 				"add",

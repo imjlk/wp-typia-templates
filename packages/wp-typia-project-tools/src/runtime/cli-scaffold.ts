@@ -86,6 +86,45 @@ interface RunScaffoldFlowOptions {
 	yes?: boolean;
 }
 
+function validateCreateProjectInput(projectInput: string) {
+	const normalizedProjectInput = projectInput.trim();
+	if (normalizedProjectInput.length === 0) {
+		throw new Error(
+			"Project directory is required. Usage: wp-typia create <project-dir> (or wp-typia <project-dir> when <project-dir> is the only positional argument).",
+		);
+	}
+
+	const normalizedProjectPath =
+		path.normalize(normalizedProjectInput).replace(/[\\/]+$/u, "") ||
+		path.normalize(normalizedProjectInput);
+	if (normalizedProjectPath === "." || normalizedProjectPath === "..") {
+		throw new Error(
+			"`wp-typia create` requires a new project directory. Use an explicit child directory instead of `.` or `..`.",
+		);
+	}
+}
+
+function collectProjectDirectoryWarnings(projectDir: string): string[] {
+	const warnings: string[] = [];
+	const projectName = path.basename(projectDir);
+	if (/\s/u.test(projectName)) {
+		warnings.push(
+			`Project directory "${projectName}" contains spaces. The generated next-step commands will be quoted, but a simple kebab-case directory name is usually easier to use with shells and downstream tooling.`,
+		);
+	}
+
+	const shellSensitiveCharacters = Array.from(
+		new Set(projectName.match(/[^A-Za-z0-9._ -]/gu) ?? []),
+	);
+	if (shellSensitiveCharacters.length > 0) {
+		warnings.push(
+			`Project directory "${projectName}" contains shell-sensitive characters (${shellSensitiveCharacters.join(", ")}). Prefer letters, numbers, ".", "_" and "-" when possible.`,
+		);
+	}
+
+	return warnings;
+}
+
 function templateUsesPersistenceSettings(
 	templateId: string,
 	options: {
@@ -328,11 +367,7 @@ export async function runScaffoldFlow({
 			? externalLayerSource.trim()
 			: undefined;
 
-	if (!projectInput) {
-		throw new Error(
-			"Project directory is required. Usage: wp-typia create <project-dir> (or wp-typia <project-dir> when <project-dir> is the only positional argument).",
-		);
-	}
+	validateCreateProjectInput(projectInput);
 
 	const resolvedTemplateId = await resolveTemplateId({
 		templateId,
@@ -476,7 +511,6 @@ export async function runScaffoldFlow({
 			projectDir,
 			projectInput,
 			packageManager: resolvedPackageManager,
-			result,
 			nextSteps: getNextSteps({
 				projectInput,
 				projectDir,
@@ -484,6 +518,10 @@ export async function runScaffoldFlow({
 				noInstall,
 				templateId: resolvedTemplateId,
 			}),
+			result: {
+				...result,
+				warnings: [...result.warnings, ...collectProjectDirectoryWarnings(projectDir)],
+			},
 		};
 	} finally {
 		await resolvedExternalLayerSelection.cleanup?.();

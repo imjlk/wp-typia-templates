@@ -309,6 +309,17 @@ export function getCommandErrorMessage(run: () => string): string {
 	}
 }
 
+export function runCapturedCli(
+	command: string,
+	args: string[],
+	options: Parameters<typeof spawnSync>[2] = {},
+) {
+	return spawnSync(command, args, {
+		...options,
+		encoding: "utf8",
+	});
+}
+
 export function stripPhpFunction(source: string, functionName: string): string {
 	const escapedFunctionName = functionName.replace(
 		/[.*+?^${}()|[\]\\]/gu,
