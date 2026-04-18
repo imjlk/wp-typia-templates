@@ -4,7 +4,7 @@ import {
   callEndpoint,
   type ApiEndpoint,
   type EndpointValidationResult,
-} from './client';
+} from './client.js';
 import {
   normalizeInvalidateTargets,
   type UseEndpointMutationOptions,

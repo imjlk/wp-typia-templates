@@ -9,7 +9,7 @@ import {
   type EndpointResponseValidationResult,
   type EndpointValidationResult,
   type ValidationResult,
-} from './client';
+} from './client.js';
 import { isPlainObject } from './internal/runtime-primitives.js';
 
 type CacheKey = string;
