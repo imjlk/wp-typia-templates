@@ -54,8 +54,18 @@ describe("wp-typia Bunli preparation", () => {
 	});
 
 	test("maintainer docs keep wp-typia as the only CLI owner", () => {
+		const migrationDocSourcePath = path.join(
+			repoRoot,
+			"apps",
+			"docs",
+			"src",
+			"content",
+			"docs",
+			"maintainers",
+			"bunli-cli-migration.md",
+		);
 		const migrationDoc = fs.readFileSync(
-			path.join(repoRoot, WP_TYPIA_BUNLI_MIGRATION_DOC),
+			migrationDocSourcePath,
 			"utf8",
 		);
 		const createReadme = fs.readFileSync(
@@ -63,6 +73,9 @@ describe("wp-typia Bunli preparation", () => {
 			"utf8",
 		);
 
+		expect(WP_TYPIA_BUNLI_MIGRATION_DOC).toBe(
+			"https://imjlk.github.io/wp-typia/maintainers/bunli-cli-migration/",
+		);
 		expect(migrationDoc).toContain("`@wp-typia/project-tools` must remain non-CLI");
 		expect(migrationDoc).toContain("`npx wp-typia`");
 		expect(migrationDoc).toContain("`bunx wp-typia`");
