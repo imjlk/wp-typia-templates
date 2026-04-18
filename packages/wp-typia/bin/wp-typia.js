@@ -10,7 +10,32 @@ const cliEntrypoint = path.join(packageRoot, "dist-bunli", "cli.js");
 const nodeCliEntrypoint = path.join(packageRoot, "dist-bunli", "node-cli.js");
 const bunBinary = process.env.BUN_BIN || "bun";
 const fullRuntimeCommands = new Set(["complete", "completions", "mcp", "skills"]);
-const valueOptions = new Set(["--config", "--format", "--id", "--output-dir", "-c", "-p", "-t"]);
+const longValueOptions = new Set([
+	"--anchor",
+	"--block",
+	"--config",
+	"--current-migration-version",
+	"--data-storage",
+	"--external-layer-id",
+	"--external-layer-source",
+	"--format",
+	"--from-migration-version",
+	"--id",
+	"--iterations",
+	"--migration-version",
+	"--namespace",
+	"--output-dir",
+	"--package-manager",
+	"--persistence-policy",
+	"--php-prefix",
+	"--position",
+	"--seed",
+	"--template",
+	"--text-domain",
+	"--to-migration-version",
+	"--variant",
+]);
+const shortValueOptions = new Set(["-c", "-p", "-t"]);
 const buildScriptEntrypoint = path.join(packageRoot, "scripts", "build-bunli-runtime.ts");
 const sourceCliEntrypoint = path.join(packageRoot, "src", "cli.ts");
 
@@ -20,21 +45,23 @@ function firstPositional(argv) {
 		if (!arg || arg === "--") {
 			break;
 		}
-		if (valueOptions.has(arg)) {
+		if (shortValueOptions.has(arg) || longValueOptions.has(arg)) {
 			index += 1;
 			continue;
 		}
-		if (
-			arg.startsWith("--config=") ||
-			arg.startsWith("--format=") ||
-			arg.startsWith("--id=") ||
-			arg.startsWith("--output-dir=")
-		) {
+		if (arg.startsWith("--")) {
+			const separatorIndex = arg.indexOf("=");
+			if (
+				separatorIndex > 0 &&
+				longValueOptions.has(arg.slice(0, separatorIndex))
+			) {
+				continue;
+			}
+		}
+		if (arg.startsWith("-") && arg !== "-") {
 			continue;
 		}
-		if (!arg.startsWith("-") || arg === "-") {
-			return arg;
-		}
+		return arg;
 	}
 	return undefined;
 }

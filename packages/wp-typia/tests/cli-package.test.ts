@@ -250,6 +250,34 @@ describe("wp-typia package", () => {
 		expect(createHelpResult.stdout).toContain("--external-layer-id");
 	});
 
+	test("keeps value-taking options from being mistaken for Bun-only commands", () => {
+		const targetDir = path.join(os.tmpdir(), `wp-typia-mcp-namespace-${Date.now()}`);
+		const result = runCapturedCommand(
+			process.execPath,
+			[
+				entryPath,
+				"--namespace",
+				"mcp",
+				"create",
+				targetDir,
+				"--template",
+				"basic",
+				"--package-manager",
+				"npm",
+				"--yes",
+				"--no-install",
+			],
+			{
+				env: withoutLocalBunEnv(),
+			},
+		);
+
+		expect(result.status).toBe(0);
+		expect(result.stderr).not.toContain("requires Bun");
+		expect(fs.existsSync(path.join(targetDir, "package.json"))).toBe(true);
+		expect(fs.existsSync(path.join(targetDir, "src", "block.json"))).toBe(true);
+	});
+
 	test("packs a built dist-bunli runtime for the published CLI entrypoint", () => {
 		const packResult = runCapturedCommand("npm", ["pack", "--json", "--pack-destination", packageRoot], {
 			cwd: packageRoot,
