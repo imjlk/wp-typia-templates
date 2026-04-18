@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import {
 	createCliCommandError,
 	formatCliDiagnosticError,
+	formatDoctorSummaryLine,
 } from "@wp-typia/project-tools/cli-diagnostics";
 
 import { addCommand } from "../src/commands/add";
@@ -77,6 +78,68 @@ describe("alternate-buffer TUI lifecycle", () => {
 				"- boom",
 			].join("\n"),
 		);
+	});
+
+	test("wraps shared CLI diagnostic blocks in narrow terminals", () => {
+		const originalColumns = process.env.COLUMNS;
+		process.env.COLUMNS = "48";
+
+		try {
+			expect(
+				formatCliDiagnosticError(
+					createCliCommandError({
+						command: "create",
+						detailLines: [
+							"Run `wp-typia create demo-block --template workspace` from a writable directory and retry the scaffold flow.",
+						],
+						summary:
+							"Unable to complete the requested create workflow because the target directory already exists.",
+					}),
+				),
+			).toBe(
+				[
+					"wp-typia create failed",
+					"Summary: Unable to complete the requested create",
+					"  workflow because the target directory already",
+					"  exists.",
+					"Details:",
+					"- Run `wp-typia create demo-block --template",
+					"  workspace` from a writable directory and retry",
+					"  the scaffold flow.",
+				].join("\n"),
+			);
+		} finally {
+			if (originalColumns === undefined) {
+				delete process.env.COLUMNS;
+			} else {
+				process.env.COLUMNS = originalColumns;
+			}
+		}
+	});
+
+	test("keeps doctor summaries within very narrow terminal widths", () => {
+		const originalColumns = process.env.COLUMNS;
+		process.env.COLUMNS = "32";
+
+		try {
+			expect(
+				formatDoctorSummaryLine([
+					{ detail: "ready", label: "Doctor scope", status: "pass" as const },
+					{ detail: "ready", label: "Bun", status: "pass" as const },
+				]),
+			).toBe(
+				[
+					"PASS wp-typia doctor summary:",
+					"  2/2 checks passed",
+				].join("\n"),
+			);
+		} finally {
+			if (originalColumns === undefined) {
+				delete process.env.COLUMNS;
+			} else {
+				process.env.COLUMNS = originalColumns;
+			}
+		}
 	});
 
 	test("reports failures and exits immediately", () => {

@@ -611,6 +611,37 @@ describe("wp-typia package", () => {
 		}
 	});
 
+	test("wraps doctor scope guidance in narrow terminals", () => {
+		const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-doctor-narrow-"));
+
+		try {
+			const result = runCapturedCommand("node", [entryPath, "doctor"], {
+				cwd: fixtureRoot,
+				env: {
+					...withoutAIAgentEnv(),
+					COLUMNS: "54",
+				},
+			});
+
+			expect(result.status).toBe(0);
+			expect(result.stdout).toContain(
+				[
+					"PASS Doctor scope: No official wp-typia workspace root",
+					"  was detected, so this run only covered environment",
+				].join("\n"),
+			);
+			expect(result.stdout).toContain(
+				[
+					"  readiness. Re-run `wp-typia doctor` from a workspace",
+					"  root if you expected package metadata, inventory, or",
+				].join("\n"),
+			);
+			expect(result.stdout).toContain("PASS wp-typia doctor summary:");
+		} finally {
+			fs.rmSync(fixtureRoot, { force: true, recursive: true });
+		}
+	});
+
 	test("prints migrate help through the canonical verb", () => {
 		const helpOutput = runUtf8Command("node", [entryPath, "migrate"]);
 		expect(helpOutput).toContain("wp-typia migrate init");
