@@ -1,0 +1,22 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+  "tagDefinitions": [
+    {
+      "tagName": "@category",
+      "syntaxKind": "block"
+    },
+    {
+      "tagName": "@internal",
+      "syntaxKind": "modifier"
+    },
+    {
+      "tagName": "@since",
+      "syntaxKind": "block"
+    }
+  ],
+  "supportForTags": {
+    "@category": true,
+    "@internal": true,
+    "@since": true
+  }
+}

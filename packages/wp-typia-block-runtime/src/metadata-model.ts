@@ -1,6 +1,22 @@
+/**
+ * Represent one JSON primitive value.
+ *
+ * @category Types
+ */
 export type JsonPrimitive = string | number | boolean | null;
+
+/**
+ * Represent one JSON-compatible value tree.
+ *
+ * @category Types
+ */
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
+/**
+ * Enumerate the attribute node kinds supported by the metadata model.
+ *
+ * @category Types
+ */
 export type AttributeKind =
 	| "string"
 	| "number"
@@ -9,6 +25,11 @@ export type AttributeKind =
 	| "object"
 	| "union";
 
+/**
+ * Enumerate the `block.json` attribute kinds supported by the projection layer.
+ *
+ * @category Types
+ */
 export type WordPressAttributeKind =
 	| "string"
 	| "number"
@@ -16,8 +37,18 @@ export type WordPressAttributeKind =
 	| "array"
 	| "object";
 
+/**
+ * Enumerate supported WordPress extraction sources for string attributes.
+ *
+ * @category Types
+ */
 export type WordPressAttributeSource = "html" | "text" | "rich-text";
 
+/**
+ * Describe normalized Typia constraint data for one attribute node.
+ *
+ * @category Types
+ */
 export interface AttributeConstraints {
 	exclusiveMaximum: number | null;
 	exclusiveMinimum: number | null;
@@ -33,6 +64,11 @@ export interface AttributeConstraints {
 	typeTag: string | null;
 }
 
+/**
+ * Describe one parsed source attribute in the metadata model tree.
+ *
+ * @category Types
+ */
 export interface AttributeNode {
 	constraints: AttributeConstraints;
 	defaultValue?: JsonValue;
@@ -49,11 +85,21 @@ export interface AttributeNode {
 	};
 }
 
+/**
+ * Describe a discriminated union branch map in the parsed metadata model.
+ *
+ * @category Types
+ */
 export interface AttributeUnion {
 	branches: Record<string, AttributeNode>;
 	discriminator: string;
 }
 
+/**
+ * Describe one projected `block.json` attribute record.
+ *
+ * @category Types
+ */
 export interface BlockJsonAttribute {
 	default?: JsonValue;
 	enum?: Array<string | number | boolean>;
@@ -62,6 +108,11 @@ export interface BlockJsonAttribute {
 	type: WordPressAttributeKind;
 }
 
+/**
+ * Describe one projected manifest attribute record.
+ *
+ * @category Types
+ */
 export interface ManifestAttribute {
 	typia: {
 		constraints: AttributeConstraints;
@@ -85,17 +136,33 @@ export interface ManifestAttribute {
 	};
 }
 
+/**
+ * Describe a projected manifest union branch map.
+ *
+ * @category Types
+ */
 export interface ManifestUnion {
 	branches: Record<string, ManifestAttribute>;
 	discriminator: string;
 }
 
+/**
+ * Describe one projected manifest document.
+ *
+ * @category Types
+ */
 export interface ManifestDocument {
 	attributes: Record<string, ManifestAttribute>;
 	manifestVersion: 2;
 	sourceType: string;
 }
 
+/**
+ * Create an empty constraint record for a new attribute node.
+ *
+ * @returns A constraint object with every supported constraint initialized to `null`.
+ * @category Schema
+ */
 export function defaultAttributeConstraints(): AttributeConstraints {
 	return {
 		exclusiveMaximum: null,
@@ -113,10 +180,25 @@ export function defaultAttributeConstraints(): AttributeConstraints {
 	};
 }
 
+/**
+ * Map one parsed attribute node to its WordPress attribute kind.
+ *
+ * @param node Parsed metadata node to project into WordPress attribute metadata.
+ * @returns The closest supported WordPress attribute kind for the provided node.
+ * @category Schema
+ */
 export function getWordPressKind(node: AttributeNode): WordPressAttributeKind {
 	return node.kind === "union" ? "object" : node.kind;
 }
 
+/**
+ * Create a base attribute node with default constraint and extraction metadata.
+ *
+ * @param kind Parsed attribute kind for the new node.
+ * @param pathLabel Human-readable path label used for diagnostics and warnings.
+ * @returns A new attribute node initialized with default metadata for the requested kind.
+ * @category Schema
+ */
 export function baseNode(kind: AttributeKind, pathLabel: string): AttributeNode {
 	return {
 		constraints: defaultAttributeConstraints(),
@@ -132,6 +214,14 @@ export function baseNode(kind: AttributeKind, pathLabel: string): AttributeNode 
 	};
 }
 
+/**
+ * Clone one attribute node while overriding its required flag.
+ *
+ * @param node Attribute node to clone.
+ * @param required Required-state override to apply to the cloned node.
+ * @returns A cloned node with nested properties, arrays, and unions preserved.
+ * @category Schema
+ */
 export function withRequired(
 	node: AttributeNode,
 	required: boolean,
@@ -147,6 +237,13 @@ export function withRequired(
 	};
 }
 
+/**
+ * Clone one attribute-union descriptor and all nested branches.
+ *
+ * @param union Union descriptor to clone.
+ * @returns A deep-cloned union descriptor with cloned branch nodes.
+ * @category Schema
+ */
 export function cloneUnion(union: AttributeUnion): AttributeUnion {
 	return {
 		branches: Object.fromEntries(
@@ -159,6 +256,13 @@ export function cloneUnion(union: AttributeUnion): AttributeUnion {
 	};
 }
 
+/**
+ * Clone one object-property map of attribute nodes.
+ *
+ * @param properties Object-property map to clone.
+ * @returns A cloned property map with each attribute node copied recursively.
+ * @category Schema
+ */
 export function cloneProperties(
 	properties: Record<string, AttributeNode>,
 ): Record<string, AttributeNode> {

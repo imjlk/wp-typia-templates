@@ -82,27 +82,81 @@ describe('@wp-typia/project-tools import policy', () => {
       'utf8',
     );
     const apiGuide = fs.readFileSync(
-      path.join(repoRoot, 'docs', 'API.md'),
+      path.join(
+        repoRoot,
+        'apps',
+        'docs',
+        'src',
+        'content',
+        'docs',
+        'reference',
+        'api.md',
+      ),
       'utf8',
     );
     const runtimeSurfaceDoc = fs.readFileSync(
-      path.join(repoRoot, 'docs', 'runtime-surface.md'),
+      path.join(
+        repoRoot,
+        'apps',
+        'docs',
+        'src',
+        'content',
+        'docs',
+        'architecture',
+        'runtime-surface.md',
+      ),
       'utf8',
     );
     const blockGeneratorDoc = fs.readFileSync(
-      path.join(repoRoot, 'docs', 'block-generator-service.md'),
+      path.join(
+        repoRoot,
+        'apps',
+        'docs',
+        'src',
+        'content',
+        'docs',
+        'architecture',
+        'block-generator-service.md',
+      ),
       'utf8',
     );
     const blockGeneratorArchitectureDoc = fs.readFileSync(
-      path.join(repoRoot, 'docs', 'block-generator-architecture.md'),
+      path.join(
+        repoRoot,
+        'apps',
+        'docs',
+        'src',
+        'content',
+        'docs',
+        'architecture',
+        'block-generator-architecture.md',
+      ),
       'utf8',
     );
     const externalTemplateLayerDoc = fs.readFileSync(
-      path.join(repoRoot, 'docs', 'external-template-layer-composition.md'),
+      path.join(
+        repoRoot,
+        'apps',
+        'docs',
+        'src',
+        'content',
+        'docs',
+        'architecture',
+        'external-template-layer-composition.md',
+      ),
       'utf8',
     );
     const importPolicyDoc = fs.readFileSync(
-      path.join(repoRoot, 'docs', 'runtime-import-policy.md'),
+      path.join(
+        repoRoot,
+        'apps',
+        'docs',
+        'src',
+        'content',
+        'docs',
+        'architecture',
+        'runtime-import-policy.md',
+      ),
       'utf8',
     );
 
@@ -110,7 +164,9 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(projectToolsReadme).toContain('@wp-typia/project-tools/schema-core');
     expect(projectToolsReadme).toContain('BlockGeneratorService');
     expect(projectToolsReadme).toContain('inspectBlockGeneration');
-    expect(projectToolsReadme).toContain('docs/block-generator-tool-contract.md');
+    expect(projectToolsReadme).toContain(
+      'docs/block-generator-tool-contract.md',
+    );
     expect(projectToolsReadme).toContain('@wp-typia/block-runtime/*');
     expect(projectToolsReadme).toContain(
       '@wp-typia/block-runtime/migration-types',
@@ -131,7 +187,9 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(runtimeSurfaceDoc).toContain('BlockGeneratorService');
     expect(runtimeSurfaceDoc).toContain('inspectBlockGeneration');
     expect(runtimeSurfaceDoc).toContain('docs/block-generator-architecture.md');
-    expect(runtimeSurfaceDoc).toContain('docs/block-generator-tool-contract.md');
+    expect(runtimeSurfaceDoc).toContain(
+      'docs/block-generator-tool-contract.md',
+    );
     expect(runtimeSurfaceDoc).toContain(
       'docs/external-template-layer-composition.md',
     );
@@ -148,7 +206,9 @@ describe('@wp-typia/project-tools import policy', () => {
       'built-in templates no longer ship structural, TS/TSX, style, or block-local',
     );
     expect(blockGeneratorDoc).toContain('docs/block-generator-architecture.md');
-    expect(blockGeneratorDoc).toContain('docs/block-generator-tool-contract.md');
+    expect(blockGeneratorDoc).toContain(
+      'docs/block-generator-tool-contract.md',
+    );
     expect(blockGeneratorDoc).toContain(
       'docs/external-template-layer-composition.md',
     );

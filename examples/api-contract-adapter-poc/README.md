@@ -51,5 +51,5 @@ That sync emits these artifacts under `src/typia-llm/`:
 This is a build-time proof only. It does not add any runtime LLM dependency to
 generated WordPress plugins, and it does not replace the WordPress AI Client
 JSON Schema flow used in the separate
-[`docs/wordpress-ai-projections.md`](../../docs/wordpress-ai-projections.md)
+[`docs/wordpress-ai-projections.md`](https://imjlk.github.io/wp-typia/reference/wordpress-ai-projections/)
 evaluation.

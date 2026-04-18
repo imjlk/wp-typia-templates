@@ -507,6 +507,18 @@ function mergeEntries(
       };
 }
 
+/**
+ * Build the registration payload consumed by generated block bootstrap code.
+ *
+ * @param metadata - Parsed block metadata containing the canonical block name.
+ * @param overrides - Runtime overrides merged into the registration settings.
+ * @returns The final block name and merged registration settings.
+ * @example
+ * ```ts
+ * const registration = buildScaffoldBlockRegistration(metadata, overrides);
+ * ```
+ * @category Scaffolding
+ */
 export function buildScaffoldBlockRegistration<
   TMetadata extends ScaffoldBlockMetadataShape,
   TOverrides extends ScaffoldBlockRegistrationOverride,
@@ -544,9 +556,9 @@ export function isScaffoldBlockMetadata(
   );
 }
 
-export function assertScaffoldBlockMetadata<
-  TMetadata = ScaffoldBlockMetadata,
->(value: unknown): TMetadata & ScaffoldBlockMetadata {
+export function assertScaffoldBlockMetadata<TMetadata = ScaffoldBlockMetadata>(
+  value: unknown,
+): TMetadata & ScaffoldBlockMetadata {
   if (!isScaffoldBlockMetadata(value)) {
     throw new Error('Scaffold block metadata must include a string name.');
   }
@@ -557,29 +569,53 @@ export function assertScaffoldBlockMetadata<
 export function parseScaffoldBlockMetadata<
   TMetadata extends ScaffoldBlockMetadata,
 >(metadata: TMetadata): TMetadata;
-export function parseScaffoldBlockMetadata<
-  TMetadata = ScaffoldBlockMetadata,
->(metadata: unknown): TMetadata & ScaffoldBlockMetadata;
-export function parseScaffoldBlockMetadata<
-  TMetadata = ScaffoldBlockMetadata,
->(metadata: unknown): TMetadata & ScaffoldBlockMetadata {
+export function parseScaffoldBlockMetadata<TMetadata = ScaffoldBlockMetadata>(
+  metadata: unknown,
+): TMetadata & ScaffoldBlockMetadata;
+export function parseScaffoldBlockMetadata<TMetadata = ScaffoldBlockMetadata>(
+  metadata: unknown,
+): TMetadata & ScaffoldBlockMetadata {
   return assertScaffoldBlockMetadata<TMetadata>(metadata);
 }
 
-export async function createTypiaWebpackConfig({
-  defaultConfig,
-  fs,
-  getArtifactEntries,
-  getEditorEntries,
-  getOptionalModuleEntries,
-  importTypiaWebpackPlugin,
-  isScriptModuleAsset = (assetName: string) =>
-    /(^|\/)(interactivity|view)\.asset\.php$/.test(assetName),
-  moduleEntriesMode = 'merge',
-  nonModuleEntriesMode = 'merge',
-  path,
-  projectRoot = process.cwd(),
-}: TypiaWebpackConfigOptions) {
+/**
+ * Extend a WordPress webpack config with Typia-generated artifact handling.
+ *
+ * @remarks
+ * This helper keeps emitted validator assets and script-module manifests aligned
+ * with the generated scaffold runtime without rewriting the caller's config by hand.
+ *
+ * @param options - Default config plus artifact, module-entry, and plugin loaders.
+ * @returns A webpack config or config array augmented with Typia support.
+ * @example
+ * ```ts
+ * const config = await createTypiaWebpackConfig({
+ *   defaultConfig,
+ *   fs,
+ *   getArtifactEntries,
+ *   importTypiaWebpackPlugin,
+ *   path,
+ * });
+ * ```
+ * @category Scaffolding
+ */
+export async function createTypiaWebpackConfig(
+  options: TypiaWebpackConfigOptions,
+) {
+  const {
+    defaultConfig,
+    fs,
+    getArtifactEntries,
+    getEditorEntries,
+    getOptionalModuleEntries,
+    importTypiaWebpackPlugin,
+    isScriptModuleAsset = (assetName: string) =>
+      /(^|\/)(interactivity|view)\.asset\.php$/.test(assetName),
+    moduleEntriesMode = 'merge',
+    nonModuleEntriesMode = 'merge',
+    path,
+    projectRoot = process.cwd(),
+  } = options;
   const UnpluginTypia = await loadCompatibleTypiaWebpackPlugin({
     importTypiaWebpackPlugin,
     projectRoot,

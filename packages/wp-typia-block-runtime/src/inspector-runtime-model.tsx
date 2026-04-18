@@ -106,6 +106,14 @@ export function getFieldValue(
 	}
 }
 
+/**
+ * Build memoized editor-field helpers from one manifest document.
+ *
+ * @param manifest Manifest document that describes the editor field tree.
+ * @param options Optional field-model overrides such as labels, hidden paths, and manual controls.
+ * @returns Derived field collections plus helpers for reading typed field values from attribute objects.
+ * @category React
+ */
 export function useEditorFields(
 	manifest: ManifestDocument,
 	options: EditorModelOptions = {},
@@ -183,6 +191,15 @@ export function useEditorFields(
 	};
 }
 
+/**
+ * Create typed attribute update callbacks for manifest-driven editor UIs.
+ *
+ * @param attributes Current block attribute object.
+ * @param setAttributes Callback that applies partial attribute updates.
+ * @param validate Optional validator used before committing updates.
+ * @returns Typed helpers for key-based and path-based attribute updates.
+ * @category React
+ */
 export function useTypedAttributeUpdater<T extends object>(
 	attributes: T,
 	setAttributes: (attrs: Partial<T>) => void,

@@ -8,6 +8,14 @@ import {
 	getWordPressKind,
 } from "./metadata-model.js";
 
+/**
+ * Project one parsed attribute node into its `block.json` attribute shape.
+ *
+ * @param node Parsed attribute node to project.
+ * @param warnings Mutable warning list that receives unsupported projection features.
+ * @returns A `block.json`-compatible attribute record for the provided node.
+ * @category Schema
+ */
 export function createBlockJsonAttribute(
 	node: AttributeNode,
 	warnings: string[],
@@ -56,6 +64,13 @@ export function createBlockJsonAttribute(
 	return attribute;
 }
 
+/**
+ * Project one parsed attribute node into its manifest attribute shape.
+ *
+ * @param node Parsed attribute node to project into manifest metadata.
+ * @returns A manifest attribute record with Typia, TypeScript, and WordPress metadata.
+ * @category Schema
+ */
 export function createManifestAttribute(node: AttributeNode): ManifestAttribute {
 	return {
 		typia: {
@@ -100,6 +115,14 @@ export function createManifestAttribute(node: AttributeNode): ManifestAttribute 
 	};
 }
 
+/**
+ * Create one manifest document from parsed attribute nodes.
+ *
+ * @param sourceTypeName Source type name that produced the parsed attribute tree.
+ * @param attributes Parsed top-level attribute nodes keyed by attribute name.
+ * @returns A manifest document ready for JSON serialization or downstream rendering.
+ * @category Schema
+ */
 export function createManifestDocument(
 	sourceTypeName: string,
 	attributes: Record<string, AttributeNode>,
@@ -116,6 +139,13 @@ export function createManifestDocument(
 	};
 }
 
+/**
+ * Validate that top-level attributes use supported WordPress extraction tags.
+ *
+ * @param attributes Parsed top-level attribute nodes to validate.
+ * @returns Nothing. Throws when an unsupported extraction shape is detected.
+ * @category Schema
+ */
 export function validateWordPressExtractionAttributes(
 	attributes: Record<string, AttributeNode>,
 ): void {
@@ -124,6 +154,14 @@ export function validateWordPressExtractionAttributes(
 	}
 }
 
+/**
+ * Validate one attribute node for WordPress extraction compatibility.
+ *
+ * @param node Parsed attribute node to inspect.
+ * @param isTopLevel Whether the current node is a top-level block attribute.
+ * @returns Nothing. Throws when the attribute uses unsupported extraction metadata.
+ * @category Schema
+ */
 export function validateWordPressExtractionAttribute(
 	node: AttributeNode,
 	isTopLevel = false,
@@ -164,6 +202,14 @@ export function validateWordPressExtractionAttribute(
 	}
 }
 
+/**
+ * Create a sample JSON value for one parsed attribute node.
+ *
+ * @param node Parsed attribute node to sample from.
+ * @param key Attribute key used when deriving fallback example strings.
+ * @returns A JSON-compatible example value for docs, previews, or generated artifacts.
+ * @category Schema
+ */
 export function createExampleValue(node: AttributeNode, key: string): JsonValue {
 	if (node.defaultValue !== undefined) {
 		return cloneJsonValue(node.defaultValue);

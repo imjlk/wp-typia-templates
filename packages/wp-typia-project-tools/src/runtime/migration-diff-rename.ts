@@ -1,4 +1,3 @@
-import { isNumber } from "./migration-utils.js";
 import type {
 	FlattenedAttributeDescriptor,
 	ManifestAttribute,

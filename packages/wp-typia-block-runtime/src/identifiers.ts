@@ -7,6 +7,9 @@ const SCOPED_SUFFIX_LENGTH = 9;
 
 /**
  * Generate a UUID v4-style id for block attributes.
+ *
+ * @returns A runtime-safe UUID-like identifier for generated block data.
+ * @category Utilities
  */
 export function generateBlockId(): string {
 	return generateUuidV4();
@@ -14,7 +17,10 @@ export function generateBlockId(): string {
 
 /**
  * Generate a prefixed runtime id for client-side attributes such as uniqueId.
+ *
  * @param prefix Prefix chosen by the scaffold/template.
+ * @returns A prefix-scoped identifier suitable for client-only attribute values.
+ * @category Utilities
  */
 export function generateScopedClientId( prefix: string ): string {
 	return generatePrefixedScopedId( prefix );
@@ -22,7 +28,10 @@ export function generateScopedClientId( prefix: string ): string {
 
 /**
  * Generate a prefixed persistence resource key.
+ *
  * @param prefix Prefix chosen by the scaffold/template.
+ * @returns A prefix-scoped identifier for persistence resource keys.
+ * @category Utilities
  */
 export function generateResourceKey( prefix: string ): string {
 	return generatePrefixedScopedId( prefix );
@@ -30,6 +39,9 @@ export function generateResourceKey( prefix: string ): string {
 
 /**
  * Generate an opaque id for one public write attempt.
+ *
+ * @returns A UUID-like request identifier that can be attached to one write operation.
+ * @category Utilities
  */
 export function generatePublicWriteRequestId(): string {
 	return generateUuidV4();

@@ -180,26 +180,26 @@ npx wp-typia create my-block --template @scope/create-block-template --variant h
 
 ## Documentation
 
-- [Architecture Guide](docs/architecture.md)
-- [Block Generator Architecture](docs/block-generator-architecture.md)
-- [Block Generator Tool Contract](docs/block-generator-tool-contract.md)
-- [External Template-Layer Composition RFC](docs/external-template-layer-composition.md)
-- [API Guide](docs/API.md)
-- [Migration Guide](docs/migrations.md)
-- [Error and Export Contract Guide](docs/error-export-contracts.md)
-- [Formatting Toolchain Policy](docs/formatting-toolchain-policy.md)
-- [Maintenance Automation Policy](docs/maintenance-automation-policy.md)
-- [Package Manifest Policy](docs/package-manifest-policy.md)
-- [TypeScript Strictness Policy](docs/typescript-strictness-policy.md)
+- [Architecture Guide](https://imjlk.github.io/wp-typia/guides/architecture/)
+- [Block Generator Architecture](https://imjlk.github.io/wp-typia/architecture/block-generator-architecture/)
+- [Block Generator Tool Contract](https://imjlk.github.io/wp-typia/architecture/block-generator-tool-contract/)
+- [External Template-Layer Composition RFC](https://imjlk.github.io/wp-typia/architecture/external-template-layer-composition/)
+- [API Guide](https://imjlk.github.io/wp-typia/reference/api/)
+- [Migration Guide](https://imjlk.github.io/wp-typia/guides/migrations/)
+- [Error and Export Contract Guide](https://imjlk.github.io/wp-typia/reference/error-export-contracts/)
+- [Formatting Toolchain Policy](https://imjlk.github.io/wp-typia/maintainers/formatting-toolchain-policy/)
+- [Maintenance Automation Policy](https://imjlk.github.io/wp-typia/maintainers/maintenance-automation-policy/)
+- [Package Manifest Policy](https://imjlk.github.io/wp-typia/maintainers/package-manifest-policy/)
+- [TypeScript Strictness Policy](https://imjlk.github.io/wp-typia/maintainers/typescript-strictness-policy/)
 - [Upgrade Guide](UPGRADE.md)
 - [License](LICENSE)
 - [Security Policy](SECURITY.md)
-- [Interactivity Guide](docs/interactivity.md)
+- [Interactivity Guide](https://imjlk.github.io/wp-typia/guides/interactivity/)
 - [Examples Guide](examples/EXAMPLES.md)
-- [Package Graduation](docs/package-graduation.md)
-- [Union Support Guide](docs/union-support.md)
-- [Basic Block Tutorial](docs/tutorials/basic-block-tutorial.md)
-- [Compound Block Tutorial](docs/tutorials/compound-block-tutorial.md)
+- [Package Graduation](https://imjlk.github.io/wp-typia/maintainers/package-graduation/)
+- [Union Support Guide](https://imjlk.github.io/wp-typia/guides/union-support/)
+- [Basic Block Tutorial](https://imjlk.github.io/wp-typia/tutorials/basic-block-tutorial/)
+- [Compound Block Tutorial](https://imjlk.github.io/wp-typia/tutorials/compound-block-tutorial/)
 - [Contributing Guide](CONTRIBUTING.md)
 
 ## Maintainer Quick Commands
@@ -269,7 +269,7 @@ wp-typia/
 │   ├── persistence-examples/   # Persistence policy reference plugin
 │   └── compound-patterns/      # Compound parent/child reference plugin
 ├── tests/
-├── docs/
+├── apps/docs/
 └── .github/
 ```
 
@@ -297,7 +297,7 @@ source stays under the existing `examples:lint` workflow powered by
 Repository-owned docs/config/workflow files use a shared `Prettier 3.8.2`
 baseline. `bun run format:check` and `bun run formatting-policy:validate` are
 part of both the maintainer preflight and the GitHub Actions lint gate. See the
-[Formatting Toolchain Policy](docs/formatting-toolchain-policy.md) for the
+[Formatting Toolchain Policy](https://imjlk.github.io/wp-typia/maintainers/formatting-toolchain-policy/) for the
 explicit scope and rationale.
 
 Repository maintenance automation is explicit too. Dependabot currently owns
@@ -306,7 +306,7 @@ dependency bumps stay maintainer-led until we have release-aware bot support.
 Composer audit now gates PRs and `main`, while the broader Bun audit stays on a
 scheduled/manual maintenance lane until the JS toolchain baseline is narrower
 and more actionable. See the
-[Maintenance Automation Policy](docs/maintenance-automation-policy.md) for the
+[Maintenance Automation Policy](https://imjlk.github.io/wp-typia/maintainers/maintenance-automation-policy/) for the
 chosen review posture and release interaction rules.
 
 Example-specific commands live under the `examples:*` namespace:

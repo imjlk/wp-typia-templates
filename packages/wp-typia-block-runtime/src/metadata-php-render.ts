@@ -28,6 +28,7 @@ const SUPPORTED_PHP_TYPE_TAGS = new Set([
  * Typia metadata to enforce in PHP.
  * @returns Generated PHP source plus any warn-only coverage gaps discovered
  * while traversing the manifest.
+ * @category Schema
  */
 export function renderPhpValidator(manifest: ManifestDocument): {
 	source: string;
@@ -506,6 +507,8 @@ return new class {
  * @param attribute Manifest attribute metadata to inspect.
  * @param pathLabel Human-readable path used in emitted warning messages.
  * @param warnings Mutable accumulator that receives any discovered warnings.
+ * @returns Nothing. Mutates the `warnings` array with any discovered gaps.
+ * @category Schema
  */
 export function collectPhpGenerationWarnings(
 	attribute: ManifestAttribute,
@@ -549,6 +552,7 @@ export function collectPhpGenerationWarnings(
  * @param value JSON-like value to encode for the generated validator manifest.
  * @param indentLevel Current indentation depth, expressed in tab levels.
  * @returns PHP source code representing the provided value.
+ * @category Schema
  */
 export function renderPhpValue(value: unknown, indentLevel: number): string {
 	const indent = "\t".repeat(indentLevel);

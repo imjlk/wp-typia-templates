@@ -28,13 +28,14 @@ function writeText(filePath: string, value: string) {
 }
 
 function createMaintenancePolicyRepo() {
-  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'wp-typia-maintenance-policy-'));
+  const repoRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'wp-typia-maintenance-policy-'),
+  );
   tempDirs.push(repoRoot);
 
   writeJson(path.join(repoRoot, 'package.json'), {
     scripts: {
-      'maintenance-automation:validate':
-        MAINTENANCE_AUTOMATION_POLICY.ciScript,
+      'maintenance-automation:validate': MAINTENANCE_AUTOMATION_POLICY.ciScript,
       'ci:local':
         'bun run changesets:validate && bun run maintenance-automation:validate && bun run lint:all',
     },
@@ -42,42 +43,45 @@ function createMaintenancePolicyRepo() {
 
   writeText(
     path.join(repoRoot, '.github/dependabot.yml'),
-    `version: 2\nupdates:\n  - package-ecosystem: 'github-actions'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: 'composer'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n`
+    `version: 2\nupdates:\n  - package-ecosystem: 'github-actions'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: 'composer'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n`,
   );
 
   writeText(
     path.join(repoRoot, '.github/workflows/dependency-audit.yml'),
-    `name: Dependency and Security Audit\non:\n  pull_request:\n    branches: [main]\n  push:\n    branches: [main]\n  schedule:\n    - cron: '30 0 * * 2'\n  workflow_dispatch:\njobs:\n  composer-audit:\n    name: Composer Audit\n    steps:\n      - run: composer audit --locked\n  bun-audit:\n    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'\n    name: Bun Audit\n    steps:\n      - run: bun audit --audit-level high\n`
+    `name: Dependency and Security Audit\non:\n  pull_request:\n    branches: [main]\n  push:\n    branches: [main]\n  schedule:\n    - cron: '30 0 * * 2'\n  workflow_dispatch:\njobs:\n  composer-audit:\n    name: Composer Audit\n    steps:\n      - run: composer audit --locked\n  bun-audit:\n    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'\n    name: Bun Audit\n    steps:\n      - run: bun audit --audit-level high\n`,
   );
 
   writeText(
     path.join(repoRoot, '.github/workflows/ci.yml'),
-    `jobs:\n  lint:\n    steps:\n      - name: Validate maintenance automation policy\n        run: bun run maintenance-automation:validate\n  test:\n    steps: []\n`
+    `jobs:\n  lint:\n    steps:\n      - name: Validate maintenance automation policy\n        run: bun run maintenance-automation:validate\n  test:\n    steps: []\n`,
   );
 
   writeText(
     path.join(repoRoot, '.github/workflows/test-matrix.yml'),
-    `jobs:\n  security-scan:\n    name: CodeQL Scan\n    steps:\n      - name: Run CodeQL\n        uses: github/codeql-action/init@v4\n`
+    `jobs:\n  security-scan:\n    name: CodeQL Scan\n    steps:\n      - name: Run CodeQL\n        uses: github/codeql-action/init@v4\n`,
   );
 
   writeText(
     path.join(repoRoot, '.github/workflows/gutenberg-upstream-watch.yml'),
-    `name: Gutenberg Upstream TypeScript Watch\non:\n  schedule:\n    - cron: '0 6 * * 2'\n  workflow_dispatch:\npermissions:\n  contents: read\n  issues: write\nenv:\n  GUTENBERG_UPSTREAM_REPO: 'WordPress/gutenberg'\n  WATCH_ISSUE_NUMBER: '283'\njobs:\n  gutenberg-upstream-watch:\n    steps:\n      - env:\n          GUTENBERG_UPSTREAM_TOKEN: \${{ secrets.GUTENBERG_UPSTREAM_TOKEN || vars.GUTENBERG_UPSTREAM_TOKEN || '' }}\n        run: node scripts/gutenberg-upstream-watch.mjs --report-file ./report.md\n      - uses: actions/upload-artifact@v4\n      - name: Update issue #283\n        run: |\n          echo '<!-- gutenberg-upstream-watch --> WordPress/gutenberg'\n          echo \"comment.user?.login === 'github-actions[bot]'\"\n          echo 'comment.body?.startsWith(marker)'\n`
+    `name: Gutenberg Upstream TypeScript Watch\non:\n  schedule:\n    - cron: '0 6 * * 2'\n  workflow_dispatch:\npermissions:\n  contents: read\n  issues: write\nenv:\n  GUTENBERG_UPSTREAM_REPO: 'WordPress/gutenberg'\n  WATCH_ISSUE_NUMBER: '283'\njobs:\n  gutenberg-upstream-watch:\n    steps:\n      - env:\n          GUTENBERG_UPSTREAM_TOKEN: \${{ secrets.GUTENBERG_UPSTREAM_TOKEN || vars.GUTENBERG_UPSTREAM_TOKEN || '' }}\n        run: node scripts/gutenberg-upstream-watch.mjs --report-file ./report.md\n      - uses: actions/upload-artifact@v4\n      - name: Update issue #283\n        run: |\n          echo '<!-- gutenberg-upstream-watch --> WordPress/gutenberg'\n          echo \"comment.user?.login === 'github-actions[bot]'\"\n          echo 'comment.body?.startsWith(marker)'\n`,
   );
 
   writeText(
-    path.join(repoRoot, 'docs/maintenance-automation-policy.md'),
-    `Dependabot updates\ngithub-actions\ncomposer\nrelease/sampo\nbun audit --audit-level high\ncomposer audit --locked\nscheduled/manual\n.github/workflows/dependency-audit.yml\n.github/workflows/gutenberg-upstream-watch.yml\n.github/workflows/test-matrix.yml\nWordPress/gutenberg\n@wordpress/blocks\n@wordpress/block-editor\n@wordpress/data\nissue \`#283\`\n`
+    path.join(
+      repoRoot,
+      'apps/docs/src/content/docs/maintainers/maintenance-automation-policy.md',
+    ),
+    `Dependabot updates\ngithub-actions\ncomposer\nrelease/sampo\nbun audit --audit-level high\ncomposer audit --locked\nscheduled/manual\n.github/workflows/dependency-audit.yml\n.github/workflows/gutenberg-upstream-watch.yml\n.github/workflows/test-matrix.yml\nWordPress/gutenberg\n@wordpress/blocks\n@wordpress/block-editor\n@wordpress/data\nissue \`#283\`\n`,
   );
 
   writeText(
     path.join(repoRoot, 'README.md'),
-    `[Maintenance Automation Policy](docs/maintenance-automation-policy.md)\nbun run maintenance-automation:validate\n`
+    `[Maintenance Automation Policy](https://imjlk.github.io/wp-typia/maintainers/maintenance-automation-policy/)\nbun run maintenance-automation:validate\n`,
   );
 
   writeText(
     path.join(repoRoot, 'CONTRIBUTING.md'),
-    `bun run maintenance-automation:validate\n[\`docs/maintenance-automation-policy.md\`](./docs/maintenance-automation-policy.md)\nDependabot\nrelease/sampo\n`
+    `bun run maintenance-automation:validate\n[\`docs/maintenance-automation-policy.md\`](https://imjlk.github.io/wp-typia/maintainers/maintenance-automation-policy/)\nDependabot\nrelease/sampo\n`,
   );
 
   return repoRoot;
@@ -97,7 +101,7 @@ describe('validateMaintenanceAutomationPolicy', () => {
     const repoRoot = createMaintenancePolicyRepo();
     writeText(
       path.join(repoRoot, '.github/dependabot.yml'),
-      `version: 2\nupdates:\n  - package-ecosystem: 'github-actions'\n    directory: '/'\n`
+      `version: 2\nupdates:\n  - package-ecosystem: 'github-actions'\n    directory: '/'\n`,
     );
 
     const result = validateMaintenanceAutomationPolicy(repoRoot);
@@ -118,7 +122,7 @@ describe('validateMaintenanceAutomationPolicy', () => {
     const repoRoot = createMaintenancePolicyRepo();
     writeText(
       path.join(repoRoot, '.github/dependabot.yml'),
-      `version: 2\nupdates:\n  - package-ecosystem: 'github-actions'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: composer\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: npm\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n`
+      `version: 2\nupdates:\n  - package-ecosystem: 'github-actions'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: composer\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: npm\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n`,
     );
 
     const result = validateMaintenanceAutomationPolicy(repoRoot);
@@ -133,7 +137,7 @@ describe('validateMaintenanceAutomationPolicy', () => {
     const repoRoot = createMaintenancePolicyRepo();
     writeText(
       path.join(repoRoot, '.github/dependabot.yml'),
-      `version: 2\nupdates:\n  - package-ecosystem: "github-actions"\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: composer\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n`
+      `version: 2\nupdates:\n  - package-ecosystem: "github-actions"\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: composer\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n`,
     );
 
     expect(validateMaintenanceAutomationPolicy(repoRoot)).toEqual({
@@ -146,7 +150,7 @@ describe('validateMaintenanceAutomationPolicy', () => {
     const repoRoot = createMaintenancePolicyRepo();
     writeText(
       path.join(repoRoot, '.github/dependabot.yml'),
-      `version: 2\nupdates:\n  - package-ecosystem: 'github-actions'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: 'github-actions'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: composer\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n`
+      `version: 2\nupdates:\n  - package-ecosystem: 'github-actions'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: 'github-actions'\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n  - package-ecosystem: composer\n    directory: '/'\n    target-branch: 'main'\n    schedule:\n      interval: 'weekly'\n`,
     );
 
     const result = validateMaintenanceAutomationPolicy(repoRoot);
@@ -161,19 +165,19 @@ describe('validateMaintenanceAutomationPolicy', () => {
     const repoRoot = createMaintenancePolicyRepo();
     writeText(
       path.join(repoRoot, '.github/workflows/dependency-audit.yml'),
-      `name: Dependency and Security Audit\njobs:\n  composer-audit:\n    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'\n    name: Composer Audit\n    steps:\n      - run: composer audit --locked\n  bun-audit:\n    name: Bun Audit\n`
+      `name: Dependency and Security Audit\njobs:\n  composer-audit:\n    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'\n    name: Composer Audit\n    steps:\n      - run: composer audit --locked\n  bun-audit:\n    name: Bun Audit\n`,
     );
     writeText(
       path.join(repoRoot, '.github/workflows/ci.yml'),
-      `jobs:\n  lint:\n    steps:\n      - run: bun run lint:repo\n`
+      `jobs:\n  lint:\n    steps:\n      - run: bun run lint:repo\n`,
     );
     writeText(
       path.join(repoRoot, '.github/workflows/test-matrix.yml'),
-      `jobs:\n  security-scan:\n    name: CodeQL Scan\n    steps:\n      - name: Run Bun audit\n        run: bun audit --audit-level high\n`
+      `jobs:\n  security-scan:\n    name: CodeQL Scan\n    steps:\n      - name: Run Bun audit\n        run: bun audit --audit-level high\n`,
     );
     writeText(
       path.join(repoRoot, '.github/workflows/gutenberg-upstream-watch.yml'),
-      `name: Gutenberg Upstream TypeScript Watch\njobs:\n  watch:\n    steps:\n      - run: node scripts/other-script.mjs\n`
+      `name: Gutenberg Upstream TypeScript Watch\njobs:\n  watch:\n    steps:\n      - run: node scripts/other-script.mjs\n`,
     );
 
     const result = validateMaintenanceAutomationPolicy(repoRoot);
@@ -214,7 +218,7 @@ describe('validateMaintenanceAutomationPolicy', () => {
       'package.json must include "bun run maintenance-automation:validate" in scripts["ci:local"].',
     );
     expect(result.errors).toContain(
-      'README.md must mention "[Maintenance Automation Policy](docs/maintenance-automation-policy.md)".',
+      'README.md must mention "[Maintenance Automation Policy](https://imjlk.github.io/wp-typia/maintainers/maintenance-automation-policy/)".',
     );
   });
 });

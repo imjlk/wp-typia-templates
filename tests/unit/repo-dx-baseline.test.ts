@@ -63,9 +63,7 @@ describe('repository DX baseline', () => {
     expect(scripts).toHaveProperty('examples:lint');
     expect(scripts).toHaveProperty('examples:format');
     expect(scripts['examples:lint']).toBe('node scripts/run-examples-lint.mjs');
-    expect(scripts['examples:lint']).toContain(
-      'scripts/run-examples-lint.mjs',
-    );
+    expect(scripts['examples:lint']).toContain('scripts/run-examples-lint.mjs');
     expect(scripts['examples:format']).toContain(
       'bun run --filter api-contract-adapter-poc --if-present format',
     );
@@ -82,11 +80,12 @@ describe('repository DX baseline', () => {
       'examples/compound-patterns/package.json',
     ]) {
       const examplePackageJson = readJson(relativePath);
-      const exampleScripts = examplePackageJson.scripts as Record<string, string>;
-      const exampleDevDependencies = examplePackageJson.devDependencies as Record<
+      const exampleScripts = examplePackageJson.scripts as Record<
         string,
         string
       >;
+      const exampleDevDependencies =
+        examplePackageJson.devDependencies as Record<string, string>;
 
       expect(exampleScripts['lint:js']).toBe(
         'node ../../scripts/run-wp-scripts-lint-js-compat.mjs',
@@ -126,27 +125,72 @@ describe('repository DX baseline', () => {
     expect(fs.existsSync(path.join(repoRoot, 'SECURITY.md'))).toBe(true);
     expect(
       fs.existsSync(
-        path.join(repoRoot, 'docs', 'formatting-toolchain-policy.md'),
+        path.join(
+          repoRoot,
+          'apps',
+          'docs',
+          'src',
+          'content',
+          'docs',
+          'maintainers',
+          'formatting-toolchain-policy.md',
+        ),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(repoRoot, 'docs', 'maintenance-automation-policy.md'),
+        path.join(
+          repoRoot,
+          'apps',
+          'docs',
+          'src',
+          'content',
+          'docs',
+          'maintainers',
+          'maintenance-automation-policy.md',
+        ),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(repoRoot, 'docs', 'block-generator-architecture.md'),
+        path.join(
+          repoRoot,
+          'apps',
+          'docs',
+          'src',
+          'content',
+          'docs',
+          'architecture',
+          'block-generator-architecture.md',
+        ),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(repoRoot, 'docs', 'block-generator-tool-contract.md'),
+        path.join(
+          repoRoot,
+          'apps',
+          'docs',
+          'src',
+          'content',
+          'docs',
+          'architecture',
+          'block-generator-tool-contract.md',
+        ),
       ),
     ).toBe(true);
     expect(
       fs.existsSync(
-        path.join(repoRoot, 'docs', 'external-template-layer-composition.md'),
+        path.join(
+          repoRoot,
+          'apps',
+          'docs',
+          'src',
+          'content',
+          'docs',
+          'architecture',
+          'external-template-layer-composition.md',
+        ),
       ),
     ).toBe(true);
     expect(
@@ -211,11 +255,9 @@ describe('repository DX baseline', () => {
       'utf8',
     );
 
-    expect(workflow).toContain("test-project-tools:");
-    expect(workflow).toContain("Project Tools: ${{ matrix.label }}");
-    expect(workflow).toContain(
-      'uses: ./.github/actions/setup-bun-workspace',
-    );
+    expect(workflow).toContain('test-project-tools:');
+    expect(workflow).toContain('Project Tools: ${{ matrix.label }}');
+    expect(workflow).toContain('uses: ./.github/actions/setup-bun-workspace');
     expect(workflow).toContain(
       'command: bun run test:project-tools:scaffold-core',
     );
@@ -251,22 +293,22 @@ describe('repository DX baseline', () => {
     expect(readme).toContain('bun run lint:fix');
     expect(readme).toContain('bun run format:write');
     expect(readme).toContain(
-      '[Block Generator Architecture](docs/block-generator-architecture.md)',
+      '[Block Generator Architecture](https://imjlk.github.io/wp-typia/architecture/block-generator-architecture/)',
     );
     expect(readme).toContain(
-      '[Block Generator Tool Contract](docs/block-generator-tool-contract.md)',
+      '[Block Generator Tool Contract](https://imjlk.github.io/wp-typia/architecture/block-generator-tool-contract/)',
     );
     expect(readme).toContain(
-      '[External Template-Layer Composition RFC](docs/external-template-layer-composition.md)',
+      '[External Template-Layer Composition RFC](https://imjlk.github.io/wp-typia/architecture/external-template-layer-composition/)',
     );
     expect(readme).toContain(
       'Root ESLint covers repository infrastructure code',
     );
     expect(readme).toContain(
-      '[Formatting Toolchain Policy](docs/formatting-toolchain-policy.md)',
+      '[Formatting Toolchain Policy](https://imjlk.github.io/wp-typia/maintainers/formatting-toolchain-policy/)',
     );
     expect(readme).toContain(
-      '[Maintenance Automation Policy](docs/maintenance-automation-policy.md)',
+      '[Maintenance Automation Policy](https://imjlk.github.io/wp-typia/maintainers/maintenance-automation-policy/)',
     );
     expect(readme).toContain('Prettier 3.8.2');
     expect(readme).toContain('bun run maintenance-automation:validate');
@@ -287,19 +329,19 @@ describe('repository DX baseline', () => {
     expect(contributing).toContain('[`UPGRADE.md`](./UPGRADE.md)');
     expect(contributing).toContain('[`SECURITY.md`](./SECURITY.md)');
     expect(contributing).toContain(
-      '[`docs/block-generator-architecture.md`](./docs/block-generator-architecture.md)',
+      '[`docs/block-generator-architecture.md`](https://imjlk.github.io/wp-typia/architecture/block-generator-architecture/)',
     );
     expect(contributing).toContain(
-      '[`docs/block-generator-tool-contract.md`](./docs/block-generator-tool-contract.md)',
+      '[`docs/block-generator-tool-contract.md`](https://imjlk.github.io/wp-typia/architecture/block-generator-tool-contract/)',
     );
     expect(contributing).toContain(
-      '[`docs/external-template-layer-composition.md`](./docs/external-template-layer-composition.md)',
+      '[`docs/external-template-layer-composition.md`](https://imjlk.github.io/wp-typia/architecture/external-template-layer-composition/)',
     );
     expect(contributing).toContain(
-      '[`docs/formatting-toolchain-policy.md`](./docs/formatting-toolchain-policy.md)',
+      '[`docs/formatting-toolchain-policy.md`](https://imjlk.github.io/wp-typia/maintainers/formatting-toolchain-policy/)',
     );
     expect(contributing).toContain(
-      '[`docs/maintenance-automation-policy.md`](./docs/maintenance-automation-policy.md)',
+      '[`docs/maintenance-automation-policy.md`](https://imjlk.github.io/wp-typia/maintainers/maintenance-automation-policy/)',
     );
     expect(contributing).toContain('Dependabot');
     expect(contributing).toContain('release/sampo');

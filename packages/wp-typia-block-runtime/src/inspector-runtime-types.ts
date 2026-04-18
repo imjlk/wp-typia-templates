@@ -5,21 +5,34 @@ import type {
 
 import type {
 	EditorFieldDescriptor,
-	EditorFieldOption,
-	EditorModelOptions,
 } from "./editor.js";
 
+/**
+ * Describe one string-valued option for an inspector select control.
+ *
+ * @category React
+ */
 export interface InspectorSelectOption {
 	label: string;
 	value: string;
 }
 
+/**
+ * Describe the minimum props supported by a collapsible inspector panel shell.
+ *
+ * @category React
+ */
 export interface PanelBodyLikeProps {
 	children?: ReactNode;
 	initialOpen?: boolean;
 	title?: ReactNode;
 }
 
+/**
+ * Describe the minimum props supported by a boolean inspector control.
+ *
+ * @category React
+ */
 export interface ToggleControlLikeProps {
 	checked?: boolean;
 	help?: ReactNode;
@@ -27,6 +40,11 @@ export interface ToggleControlLikeProps {
 	onChange?: (value: boolean) => void;
 }
 
+/**
+ * Describe the minimum props supported by a select-style inspector control.
+ *
+ * @category React
+ */
 export interface SelectControlLikeProps {
 	help?: ReactNode;
 	label?: ReactNode;
@@ -35,6 +53,11 @@ export interface SelectControlLikeProps {
 	value?: string;
 }
 
+/**
+ * Describe the minimum props supported by a numeric range inspector control.
+ *
+ * @category React
+ */
 export interface RangeControlLikeProps {
 	help?: ReactNode;
 	label?: ReactNode;
@@ -45,6 +68,11 @@ export interface RangeControlLikeProps {
 	value?: number;
 }
 
+/**
+ * Describe the minimum props supported by a single-line text inspector control.
+ *
+ * @category React
+ */
 export interface TextControlLikeProps {
 	help?: ReactNode;
 	label?: ReactNode;
@@ -57,6 +85,11 @@ export interface TextControlLikeProps {
 	value?: string;
 }
 
+/**
+ * Describe the minimum props supported by a multiline text inspector control.
+ *
+ * @category React
+ */
 export interface TextareaControlLikeProps {
 	help?: ReactNode;
 	label?: ReactNode;
@@ -64,6 +97,11 @@ export interface TextareaControlLikeProps {
 	value?: string;
 }
 
+/**
+ * Map optional WordPress component implementations used by inspector helpers.
+ *
+ * @category React
+ */
 export interface InspectorComponentMap {
 	PanelBody?: ElementType<PanelBodyLikeProps>;
 	RangeControl?: ElementType<RangeControlLikeProps>;
@@ -73,6 +111,11 @@ export interface InspectorComponentMap {
 	ToggleControl?: ElementType<ToggleControlLikeProps>;
 }
 
+/**
+ * Describe the derived field helpers returned from `useEditorFields()`.
+ *
+ * @category React
+ */
 export interface UseEditorFieldsResult {
 	fields: EditorFieldDescriptor[];
 	fieldMap: Map<string, EditorFieldDescriptor>;
@@ -100,12 +143,22 @@ export interface UseEditorFieldsResult {
 	supportedFields: EditorFieldDescriptor[];
 }
 
+/**
+ * Describe typed update helpers for manifest-backed block attributes.
+ *
+ * @category React
+ */
 export interface TypedAttributeUpdater<T extends object> {
 	updateAttribute: <K extends keyof T>(key: K, value: T[K]) => boolean;
 	updateField: <K extends keyof T>(path: K | string, value: unknown) => boolean;
 	updatePath: (path: string, value: unknown) => boolean;
 }
 
+/**
+ * Describe the resolved render context passed to custom field-control renderers.
+ *
+ * @category React
+ */
 export interface FieldControlRenderContext {
 	components: InspectorComponentMap;
 	field: EditorFieldDescriptor;
@@ -119,6 +172,11 @@ export interface FieldControlRenderContext {
 	value: unknown;
 }
 
+/**
+ * Describe the props accepted by the generic `FieldControl` renderer.
+ *
+ * @category React
+ */
 export interface FieldControlProps {
 	components?: InspectorComponentMap;
 	field: EditorFieldDescriptor;
@@ -134,6 +192,11 @@ export interface FieldControlProps {
 	value: unknown;
 }
 
+/**
+ * Describe optional per-field overrides for manifest-driven inspector rendering.
+ *
+ * @category React
+ */
 export interface InspectorFieldOverride {
 	help?: ReactNode;
 	label?: ReactNode;
@@ -145,6 +208,11 @@ export interface InspectorFieldOverride {
 	step?: number;
 }
 
+/**
+ * Describe the props accepted by `InspectorFromManifest()`.
+ *
+ * @category React
+ */
 export interface InspectorFromManifestProps<T extends object> {
 	attributes: T;
 	children?: ReactNode;

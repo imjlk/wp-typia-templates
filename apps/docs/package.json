@@ -1,0 +1,15 @@
+{
+  "name": "@wp-typia/docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "0.38.3",
+    "astro": "6.1.7",
+    "starlight-typedoc": "0.21.5"
+  }
+}

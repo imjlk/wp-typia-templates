@@ -26,6 +26,12 @@ Implementation note:
 - The shared implementation now lives in `@wp-typia/block-runtime/schema-core`.
 - Shared manifest/migration contract types now live in
   `@wp-typia/block-runtime/migration-types`.
+- The public `doctor` surface still lives on `@wp-typia/project-tools`, while
+  environment and workspace checks now sit behind focused helper modules.
+- These splits are maintainability refactors behind stable public facades. Keep
+  importing the documented `@wp-typia/project-tools` and
+  `@wp-typia/project-tools/schema-core` surfaces rather than the focused helper
+  files directly.
 
 Example:
 
@@ -63,9 +69,9 @@ instead of local casts:
 The higher-level generator architecture record, including the current phase map
 and the non-mutating `plan -> validate -> render -> apply` tool-facing usage
 model, lives in
-[`docs/block-generator-architecture.md`](../../docs/block-generator-architecture.md).
+[`docs/block-generator-architecture.md`](https://imjlk.github.io/wp-typia/architecture/block-generator-architecture/).
 The public non-mutating controller/tool contract now lives in
-[`docs/block-generator-tool-contract.md`](../../docs/block-generator-tool-contract.md).
+[`docs/block-generator-tool-contract.md`](https://imjlk.github.io/wp-typia/architecture/block-generator-tool-contract/).
 
 Reusable external layer packages on top of the built-in shared scaffold model
 are now available through the canonical built-in CLI flags
@@ -73,6 +79,6 @@ are now available through the canonical built-in CLI flags
 `wp-typia add block --external-layer-source ... [--external-layer-id ...]`,
 and programmatically through `scaffoldProject(...)`, `BlockGeneratorService`,
 and `inspectBlockGeneration(...)`. The layer contract record lives in
-[`docs/external-template-layer-composition.md`](../../docs/external-template-layer-composition.md).
+[`docs/external-template-layer-composition.md`](https://imjlk.github.io/wp-typia/architecture/external-template-layer-composition/).
 
 If you need metadata sync, editor helpers, validation helpers, or other generated-project runtime utilities, import them directly from `@wp-typia/block-runtime/*`.

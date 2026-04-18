@@ -4,6 +4,11 @@ import { fileURLToPath } from "node:url";
 
 import ts from "typescript";
 
+/**
+ * Hold shared compiler state for metadata parsing and symbol resolution.
+ *
+ * @category Types
+ */
 export interface AnalysisContext {
 	allowedExternalPackages: Set<string>;
 	checker: ts.TypeChecker;
@@ -84,6 +89,13 @@ function tagMetadataDiagnosticError(error: Error): Error {
 	return error;
 }
 
+/**
+ * Read the failure code attached to one tagged metadata analysis error.
+ *
+ * @param error Error returned from metadata analysis or TypeScript diagnostics.
+ * @returns The tagged failure code when the error originated from TypeScript diagnostics.
+ * @category Schema
+ */
 export function getTaggedSyncBlockMetadataFailureCode(
 	error: Error,
 ): "typescript-diagnostic" | undefined {
@@ -363,6 +375,14 @@ function resolveAnalysisProgramInputs(
 	};
 }
 
+/**
+ * Create or reuse the compiler analysis context for one metadata source file.
+ *
+ * @param projectRoot Project root used for module resolution and dependency tracking.
+ * @param typesFilePath Absolute path to the source types file being analyzed.
+ * @returns An analysis context containing the TypeScript program, checker, and recursion guards.
+ * @category Schema
+ */
 export function createAnalysisContext(
 	projectRoot: string,
 	typesFilePath: string,
