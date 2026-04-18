@@ -26,6 +26,75 @@ describe("@wp-typia/project-tools workspace doctor", () => {
     cleanupScaffoldTempRoot(tempRoot);
   });
 
+test("doctor reports environment-only scope outside official workspace roots", async () => {
+  const targetDir = path.join(tempRoot, "doctor-environment-only");
+  fs.mkdirSync(targetDir, { recursive: true });
+
+  const checks = await getDoctorChecks(targetDir);
+  const scopeCheck = checks.find((check) => check.label === "Doctor scope");
+
+  expect(scopeCheck?.status).toBe("pass");
+  expect(scopeCheck?.detail).toContain("only covered environment readiness");
+  expect(scopeCheck?.detail).toContain("workspace root");
+  expect(
+    checks.some((check) => check.label === "Workspace package metadata")
+  ).toBe(false);
+});
+
+test("doctor reports invalid nearby workspace metadata before workspace checks", async () => {
+  const targetDir = path.join(tempRoot, "doctor-invalid-workspace-metadata");
+  fs.mkdirSync(targetDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(targetDir, "package.json"),
+    `${JSON.stringify(
+      {
+        name: "invalid-workspace-metadata",
+        private: true,
+        wpTypia: {
+          projectType: "workspace",
+        },
+      },
+      null,
+      2
+    )}\n`,
+    "utf8"
+  );
+
+  const checks = await getDoctorChecks(targetDir);
+  const scopeCheck = checks.find((check) => check.label === "Doctor scope");
+  const metadataCheck = checks.find(
+    (check) => check.label === "Workspace package metadata"
+  );
+
+  expect(scopeCheck?.status).toBe("fail");
+  expect(scopeCheck?.detail).toContain("workspace diagnostics could not continue");
+  expect(scopeCheck?.detail).toContain("rerun `wp-typia doctor`");
+  expect(metadataCheck?.status).toBe("fail");
+  expect(metadataCheck?.detail).toContain(
+    "Invalid wp-typia workspace metadata"
+  );
+});
+
+test("doctor reports workspace discovery failures before workspace checks", async () => {
+  const targetDir = path.join(tempRoot, "doctor-workspace-discovery-failure");
+  fs.mkdirSync(targetDir, { recursive: true });
+  fs.writeFileSync(path.join(targetDir, "package.json"), "{\n", "utf8");
+
+  const checks = await getDoctorChecks(targetDir);
+  const scopeCheck = checks.find((check) => check.label === "Doctor scope");
+  const metadataCheck = checks.find(
+    (check) => check.label === "Workspace package metadata"
+  );
+
+  expect(scopeCheck?.status).toBe("fail");
+  expect(scopeCheck?.detail).toContain("workspace discovery could not continue");
+  expect(scopeCheck?.detail).toContain("rerun `wp-typia doctor`");
+  expect(metadataCheck?.status).toBe("fail");
+  expect(metadataCheck?.detail).toContain(
+    "Failed to parse workspace package manifest"
+  );
+});
+
 test("doctor accepts workspaces that keep binding registries in src/bindings/index.js", async () => {
   const targetDir = path.join(
     tempRoot,
