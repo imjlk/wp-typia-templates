@@ -294,6 +294,38 @@ test("runScaffoldFlow rejects unsupported persistence policies", async () => {
   );
 });
 
+test("runScaffoldFlow rejects persistence-only create flags for non-persistence templates", async () => {
+  await expect(
+    runScaffoldFlow({
+      cwd: tempRoot,
+      dataStorageMode: "custom-table",
+      noInstall: true,
+      packageManager: "npm",
+      projectInput: "demo-basic-invalid-persistence-flags",
+      templateId: "basic",
+      yes: true,
+    })
+  ).rejects.toThrow(
+    "`--data-storage` and `--persistence-policy` are supported only for `wp-typia create --template persistence` or `--template compound`."
+  );
+});
+
+test("runScaffoldFlow rejects built-in variant flags before template rendering", async () => {
+  await expect(
+    runScaffoldFlow({
+      cwd: tempRoot,
+      noInstall: true,
+      packageManager: "npm",
+      projectInput: "demo-basic-invalid-variant",
+      templateId: "basic",
+      variant: "hero",
+      yes: true,
+    })
+  ).rejects.toThrow(
+    '--variant is only supported for official external template configs. Received variant "hero" for built-in template "basic".'
+  );
+});
+
 test("runScaffoldFlow rejects removed built-in template ids", async () => {
   await expect(
     runScaffoldFlow({
@@ -591,23 +623,79 @@ test(
   { timeout: 15_000 }
 );
 
-test("node entry requires --package-manager with --yes", () => {
-  expect(() => {
+test("node entry defaults --yes scaffolds to npm when package manager is omitted", () => {
+  const targetDir = path.join(tempRoot, "demo-default-pm");
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      targetDir,
+      "--template",
+      "basic",
+      "--yes",
+      "--no-install",
+    ],
+    {
+      stdio: "pipe",
+    }
+  );
+
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+  );
+
+  expect(packageJson.packageManager).toBe("npm@11.6.1");
+});
+
+test("node entry rejects persistence-only flags for basic create scaffolds", () => {
+  const errorMessage = getCommandErrorMessage(() =>
     runCli(
       "node",
       [
         entryPath,
-        "demo-missing-pm",
+        "demo-basic-invalid-persistence",
         "--template",
         "basic",
+        "--data-storage",
+        "custom-table",
         "--yes",
         "--no-install",
       ],
       {
         stdio: "pipe",
       }
-    );
-  }).toThrow();
+    )
+  );
+
+  expect(errorMessage).toContain(
+    "`--data-storage` and `--persistence-policy` are supported only for `wp-typia create --template persistence` or `--template compound`."
+  );
+});
+
+test("node entry rejects built-in variant flags before scaffolding", () => {
+  const errorMessage = getCommandErrorMessage(() =>
+    runCli(
+      "node",
+      [
+        entryPath,
+        "demo-basic-invalid-variant",
+        "--template",
+        "basic",
+        "--variant",
+        "hero",
+        "--yes",
+        "--no-install",
+      ],
+      {
+        stdio: "pipe",
+      }
+    )
+  );
+
+  expect(errorMessage).toContain(
+    '--variant is only supported for official external template configs. Received variant "hero" for built-in template "basic".'
+  );
 });
 
 test("node entry rejects missing values for identifier override flags", () => {
