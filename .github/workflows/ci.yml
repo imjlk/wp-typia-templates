@@ -188,6 +188,7 @@ jobs:
         uses: ./.github/actions/setup-bun-workspace
         with:
           bun-version: ${{ env.BUN_VERSION }}
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Build documentation site
         run: bun run docs:build:site
@@ -545,6 +546,7 @@ jobs:
         uses: ./.github/actions/setup-bun-workspace
         with:
           bun-version: ${{ env.BUN_VERSION }}
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Build documentation site
         run: bun run docs:build:site
