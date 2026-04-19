@@ -32,6 +32,8 @@ const BINDING_SOURCE_EDITOR_SCRIPT = "build/bindings/index.js";
 const BINDING_SOURCE_EDITOR_ASSET = "build/bindings/index.asset.php";
 const EDITOR_PLUGIN_EDITOR_SCRIPT = "build/editor-plugins/index.js";
 const EDITOR_PLUGIN_EDITOR_ASSET = "build/editor-plugins/index.asset.php";
+const EDITOR_PLUGIN_EDITOR_STYLE = "build/editor-plugins/style-index.css";
+const EDITOR_PLUGIN_EDITOR_STYLE_RTL = "build/editor-plugins/style-index-rtl.css";
 
 function escapeRegex(value: string): string {
 	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
@@ -536,6 +538,8 @@ async function ensureEditorPluginBootstrapAnchors(workspace: WorkspaceProject): 
 function ${enqueueFunctionName}() {
 \t$script_path = __DIR__ . '/${EDITOR_PLUGIN_EDITOR_SCRIPT}';
 \t$asset_path  = __DIR__ . '/${EDITOR_PLUGIN_EDITOR_ASSET}';
+\t$style_path  = __DIR__ . '/${EDITOR_PLUGIN_EDITOR_STYLE}';
+\t$style_rtl_path = __DIR__ . '/${EDITOR_PLUGIN_EDITOR_STYLE_RTL}';
 
 \tif ( ! file_exists( $script_path ) || ! file_exists( $asset_path ) ) {
 \t\treturn;
@@ -553,6 +557,18 @@ function ${enqueueFunctionName}() {
 \t\tisset( $asset['version'] ) ? $asset['version'] : filemtime( $script_path ),
 \t\ttrue
 \t);
+
+\tif ( file_exists( $style_path ) ) {
+\t\twp_enqueue_style(
+\t\t\t'${workspaceBaseName}-editor-plugins',
+\t\t\tplugins_url( '${EDITOR_PLUGIN_EDITOR_STYLE}', __FILE__ ),
+\t\t\tarray(),
+\t\t\tisset( $asset['version'] ) ? $asset['version'] : filemtime( $style_path )
+\t\t);
+\t\tif ( file_exists( $style_rtl_path ) ) {
+\t\t\twp_style_add_data( '${workspaceBaseName}-editor-plugins', 'rtl', 'replace' );
+\t\t}
+\t}
 }
 `;
 

@@ -27,6 +27,7 @@ const WORKSPACE_BINDING_EDITOR_SCRIPT = "build/bindings/index.js";
 const WORKSPACE_BINDING_EDITOR_ASSET = "build/bindings/index.asset.php";
 const WORKSPACE_EDITOR_PLUGIN_EDITOR_SCRIPT = "build/editor-plugins/index.js";
 const WORKSPACE_EDITOR_PLUGIN_EDITOR_ASSET = "build/editor-plugins/index.asset.php";
+const WORKSPACE_EDITOR_PLUGIN_EDITOR_STYLE = "build/editor-plugins/style-index.css";
 const WORKSPACE_GENERATED_BLOCK_ARTIFACTS = [
 	"block.json",
 	"typia.manifest.json",
@@ -403,13 +404,14 @@ function checkWorkspaceEditorPluginBootstrap(
 	const hasEditorEnqueueHook = source.includes(enqueueHook);
 	const hasEditorScript = source.includes(WORKSPACE_EDITOR_PLUGIN_EDITOR_SCRIPT);
 	const hasEditorAsset = source.includes(WORKSPACE_EDITOR_PLUGIN_EDITOR_ASSET);
+	const hasEditorStyle = source.includes(WORKSPACE_EDITOR_PLUGIN_EDITOR_STYLE);
 
 	return createDoctorCheck(
 		"Editor plugin bootstrap",
-		hasEditorEnqueueHook && hasEditorScript && hasEditorAsset ? "pass" : "fail",
-		hasEditorEnqueueHook && hasEditorScript && hasEditorAsset
+		hasEditorEnqueueHook && hasEditorScript && hasEditorAsset && hasEditorStyle ? "pass" : "fail",
+		hasEditorEnqueueHook && hasEditorScript && hasEditorAsset && hasEditorStyle
 			? "Editor plugin enqueue hook is present"
-			: "Missing editor plugin enqueue hook or build/editor-plugins asset references",
+			: "Missing editor plugin enqueue hook or build/editor-plugins script/style asset references",
 	);
 }
 

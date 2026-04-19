@@ -140,6 +140,13 @@ export function assertWorkspaceEditorPluginArtifacts(
 			"Expected workspace build to include build/editor-plugins/index.asset.php",
 		);
 	}
+	if (
+		!fs.existsSync(path.join(projectDir, "build", "editor-plugins", "style-index.css"))
+	) {
+		throw new Error(
+			"Expected workspace build to include build/editor-plugins/style-index.css",
+		);
+	}
 
 	const dataSource = fs.readFileSync(dataPath, "utf8");
 	if (!dataSource.includes(`EDITOR_PLUGIN_SLOT = "${slot}"`)) {

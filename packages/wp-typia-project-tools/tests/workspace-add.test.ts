@@ -2281,6 +2281,7 @@ test("canonical CLI can add an editor plugin to an official workspace template",
     'file: "src/editor-plugins/document-tools/index.tsx"'
   );
   expect(bootstrapSource).toContain("build/editor-plugins/index.js");
+  expect(bootstrapSource).toContain("build/editor-plugins/style-index.css");
   expect(bootstrapSource).toContain(
     "demo_space_enqueue_editor_plugins_editor"
   );
@@ -2326,6 +2327,11 @@ test("canonical CLI can add an editor plugin to an official workspace template",
   expect(
     fs.existsSync(
       path.join(targetDir, "build", "editor-plugins", "index.asset.php")
+    )
+  ).toBe(true);
+  expect(
+    fs.existsSync(
+      path.join(targetDir, "build", "editor-plugins", "style-index.css")
     )
   ).toBe(true);
   expect(
