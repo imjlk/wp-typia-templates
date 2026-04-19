@@ -43,6 +43,22 @@ Published runtime support model:
 Shorthand references like `npx wp-typia` and `bunx wp-typia` should still map
 to the canonical `create` surface in docs and review notes.
 
+## Node fallback prompt model
+
+- Bun/OpenTUI remains the canonical rich interactive surface for `create`,
+  `add`, and `migrate`.
+- The Node fallback should stay readline-based and intentionally lighter, but
+  it must no longer feel like a bare escape hatch.
+- The fallback prompt contract is:
+  - render numbered options with explicit defaults
+  - accept option numbers, labels, and raw values
+  - support `?`, `help`, and `list` to redraw the current option set
+  - retry validation inline with direct guidance instead of dropping the user
+    back into an opaque loop
+- Business logic, defaults, and validation rules should stay shared with the
+  Bun/TUI path through `@wp-typia/project-tools`; only the prompt presentation
+  should differ.
+
 ## Non-negotiable ownership boundary
 
 - `wp-typia` must remain the only CLI-owning package.
