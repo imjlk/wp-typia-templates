@@ -48,6 +48,7 @@ function isSubmitShortcutKey(key: KeyboardKey) {
   );
 }
 
+/** Used only by `FirstPartySelectField` selection handling. */
 export function isSelectNextKey(key: KeyboardKey) {
   return (
     selectKeymap.match('next', key) ||
@@ -59,6 +60,7 @@ export function isSelectNextKey(key: KeyboardKey) {
   );
 }
 
+/** Used only by `FirstPartySelectField` reverse selection handling. */
 export function isSelectPreviousKey(key: KeyboardKey) {
   return (
     selectKeymap.match('previous', key) ||
@@ -69,6 +71,7 @@ export function isSelectPreviousKey(key: KeyboardKey) {
   );
 }
 
+/** Used only by `FirstPartyCheckboxField` toggle handling. */
 export function isCheckboxToggleKey(key: KeyboardKey) {
   return (
     checkboxKeymap.match('toggle', key) ||
@@ -78,26 +81,32 @@ export function isCheckboxToggleKey(key: KeyboardKey) {
   );
 }
 
+/** Used only by completion viewport line-down scrolling. */
 export function isCompletionLineDownKey(key: KeyboardKey) {
   return key.name === 'down' || key.sequence === '\x1b[B';
 }
 
+/** Used only by completion viewport line-up scrolling. */
 export function isCompletionLineUpKey(key: KeyboardKey) {
   return key.name === 'up' || key.sequence === '\x1b[A';
 }
 
+/** Used only by completion viewport page-down scrolling. */
 export function isCompletionPageDownKey(key: KeyboardKey) {
   return key.name === 'pagedown' || key.sequence === '\x1b[6~' || key.sequence === ' ';
 }
 
+/** Used only by completion viewport page-up scrolling. */
 export function isCompletionPageUpKey(key: KeyboardKey) {
   return key.name === 'pageup' || key.sequence === '\x1b[5~';
 }
 
+/** Used only by completion viewport jump-to-top handling. */
 export function isCompletionHomeKey(key: KeyboardKey) {
   return key.name === 'home' || key.sequence === '\x1b[H' || key.sequence === '\x1bOH';
 }
 
+/** Used only by completion viewport jump-to-bottom handling. */
 export function isCompletionEndKey(key: KeyboardKey) {
   return key.name === 'end' || key.sequence === '\x1b[F' || key.sequence === '\x1bOF';
 }

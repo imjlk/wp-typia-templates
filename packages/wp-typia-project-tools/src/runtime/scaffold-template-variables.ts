@@ -26,6 +26,13 @@ import {
   toSnakeCase,
 } from './string-case.js';
 
+/**
+ * Build the normalized template variables used by scaffold rendering.
+ *
+ * @param templateId Selected scaffold template identifier.
+ * @param answers Normalized scaffold answers collected from defaults, flags, and prompts.
+ * @returns Template variables ready for file interpolation and generated artifacts.
+ */
 export function getTemplateVariables(
   templateId: string,
   answers: ScaffoldAnswers,

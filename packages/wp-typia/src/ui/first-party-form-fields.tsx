@@ -137,7 +137,8 @@ export function FirstPartySelectField({
   const selectedIndex = matchingIndex >= 0 ? matchingIndex : 0;
 
   const selectedOption = options[selectedIndex] ?? options[0];
-  const keyboardScopeId = `first-party-select:${name}:${reactScopeId}`;
+  const navigationScopeId = `first-party-select:${name}:${reactScopeId}:nav`;
+  const selectionScopeId = `first-party-select:${name}:${reactScopeId}:select`;
 
   useEffect(() => {
     const fallbackOption = options[0];
@@ -151,11 +152,11 @@ export function FirstPartySelectField({
     }
 
     field.setValue(fallbackValue);
-  }, [field, matchingIndex, options]);
+  }, [field.setValue, field.value, matchingIndex, options]);
 
   useFirstPartyFieldNavigation({
     focused: field.focused,
-    keyboardScopeId,
+    keyboardScopeId: navigationScopeId,
     nextFieldName,
     previousFieldName,
   });
@@ -178,7 +179,7 @@ export function FirstPartySelectField({
   );
 
   useScopedKeyboard(
-    keyboardScopeId,
+    selectionScopeId,
     (key) => {
       if (!field.focused) {
         return false;
@@ -259,11 +260,12 @@ export function FirstPartyCheckboxField({
     defaultValue: false,
     submitOnEnter: false,
   });
-  const keyboardScopeId = `first-party-checkbox:${name}:${reactScopeId}`;
+  const navigationScopeId = `first-party-checkbox:${name}:${reactScopeId}:nav`;
+  const toggleScopeId = `first-party-checkbox:${name}:${reactScopeId}:toggle`;
 
   useFirstPartyFieldNavigation({
     focused: field.focused,
-    keyboardScopeId,
+    keyboardScopeId: navigationScopeId,
     nextFieldName,
     previousFieldName,
   });
@@ -273,7 +275,7 @@ export function FirstPartyCheckboxField({
   }, [field]);
 
   useScopedKeyboard(
-    keyboardScopeId,
+    toggleScopeId,
     (key) => {
       if (!field.focused) {
         return false;

@@ -118,6 +118,11 @@ ${sourceOfTruthNote}${publicPersistencePolicyNote ? `\n\n${publicPersistencePoli
 `;
 }
 
+/**
+ * Build the default `.gitignore` contents for a scaffolded project.
+ *
+ * @returns A newline-terminated `.gitignore` string covering dependency, build, editor, OS, and WordPress artifacts.
+ */
 export function buildGitignore(): string {
   return `# Dependencies
 node_modules/
@@ -142,6 +147,17 @@ Thumbs.db
 `;
 }
 
+/**
+ * Merge generated and existing text files while keeping line order stable.
+ *
+ * Existing unique lines are appended after the primary content, duplicate
+ * non-empty lines are removed, and runs of more than two blank lines collapse
+ * to a single empty separator.
+ *
+ * @param primaryContent Newly generated text that should appear first.
+ * @param existingContent Existing file contents preserved after unique generated lines.
+ * @returns The merged text block with a trailing newline.
+ */
 export function mergeTextLines(primaryContent: string, existingContent: string): string {
   const normalizedPrimary = primaryContent.replace(/\r\n/g, '\n').trimEnd();
   const normalizedExisting = existingContent.replace(/\r\n/g, '\n').trimEnd();

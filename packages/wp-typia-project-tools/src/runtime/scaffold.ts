@@ -140,6 +140,9 @@ export interface ResolveTemplateOptions {
 	yes?: boolean;
 }
 
+/**
+ * Options for resolving the package manager in CLI and interactive scaffold flows.
+ */
 export interface ResolvePackageManagerOptions {
 	isInteractive?: boolean;
 	packageManager?: string;
@@ -147,6 +150,9 @@ export interface ResolvePackageManagerOptions {
 	yes?: boolean;
 }
 
+/**
+ * Options for collecting scaffold answers from defaults, overrides, and prompts.
+ */
 export interface CollectScaffoldAnswersOptions {
 	dataStorageMode?: DataStorageMode;
 	namespace?: string;

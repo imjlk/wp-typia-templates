@@ -187,6 +187,7 @@ export function FirstPartyCompletionViewport({
         return setCompletionScrollTop(0);
       }
       if (isCompletionEndKey(key)) {
+        // We rely on the scrollbox to clamp this sentinel to the real max scroll extent.
         return setCompletionScrollTop(Number.MAX_SAFE_INTEGER);
       }
 

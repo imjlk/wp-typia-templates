@@ -138,6 +138,10 @@ function collectBlockMetadataPaths(buildRoot) {
 	return blockMetadataPaths.sort();
 }
 
+function readJsonFile(filePath) {
+	return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
 function normalizeBlockMetadataFileRefs(value) {
 	if (typeof value === "string") {
 		return value.startsWith("file:./") ? [value.slice("file:./".length)] : [];

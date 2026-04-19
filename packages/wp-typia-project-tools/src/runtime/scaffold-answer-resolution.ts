@@ -32,6 +32,11 @@ import type {
 
 const WORKSPACE_TEMPLATE_ALIAS = 'workspace';
 
+/**
+ * Detect the current author name from local Git config.
+ *
+ * @returns The configured Git author name, or `"Your Name"` when unavailable.
+ */
 export function detectAuthor(): string {
   try {
     return (
@@ -45,6 +50,13 @@ export function detectAuthor(): string {
   }
 }
 
+/**
+ * Compute the default scaffold answers for one project and template pair.
+ *
+ * @param projectName User-supplied project directory or block name seed.
+ * @param templateId Selected scaffold template identifier.
+ * @returns Normalized default answers for scaffold prompts and non-interactive flows.
+ */
 export function getDefaultAnswers(
   projectName: string,
   templateId: string,
@@ -70,6 +82,12 @@ function normalizeTemplateSelection(templateId: string): string {
     : templateId;
 }
 
+/**
+ * Resolve the scaffold template id from flags, defaults, and interactive selection.
+ *
+ * @param options Template resolution options for interactive and non-interactive flows.
+ * @returns The normalized template identifier to scaffold.
+ */
 export async function resolveTemplateId({
   templateId,
   yes = false,
@@ -100,6 +118,12 @@ export async function resolveTemplateId({
   return normalizeTemplateSelection(await selectTemplate());
 }
 
+/**
+ * Resolve the package manager id from flags, defaults, and interactive selection.
+ *
+ * @param options Package manager resolution options for interactive and non-interactive flows.
+ * @returns The normalized package manager id.
+ */
 export async function resolvePackageManagerId({
   packageManager,
   yes = false,
@@ -123,6 +147,12 @@ export async function resolvePackageManagerId({
   return selectPackageManager();
 }
 
+/**
+ * Collect scaffold answers from defaults, CLI overrides, and optional prompts.
+ *
+ * @param options Answer collection inputs including prompt callbacks and explicit overrides.
+ * @returns The normalized scaffold answers used for rendering and file generation.
+ */
 export async function collectScaffoldAnswers({
   projectName,
   templateId,
