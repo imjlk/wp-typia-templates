@@ -99,7 +99,7 @@ describe("@wp-typia/project-tools cli prompt", () => {
 	});
 
 	test("select accepts help tokens and case-insensitive labels", async () => {
-		const stub = createStubInterface(["?", "storage persistence"]);
+		const stub = createStubInterface(["?", "help", "list", "storage persistence"]);
 		const logs: string[] = [];
 		const originalLog = console.log;
 		console.log = (...args: unknown[]) => {
@@ -116,6 +116,18 @@ describe("@wp-typia/project-tools cli prompt", () => {
 
 			expect(value).toBe("persistence");
 			expect(logs).toEqual([
+				"Template",
+				"  Enter a number, option label, or option value. Press Enter to keep the default, or type ? to list choices again.",
+				"  1. Basic (default)",
+				"     Starter block",
+				"  2. Storage Persistence [persistence]",
+				"     Storage helpers",
+				"Template",
+				"  Enter a number, option label, or option value. Press Enter to keep the default, or type ? to list choices again.",
+				"  1. Basic (default)",
+				"     Starter block",
+				"  2. Storage Persistence [persistence]",
+				"     Storage helpers",
 				"Template",
 				"  Enter a number, option label, or option value. Press Enter to keep the default, or type ? to list choices again.",
 				"  1. Basic (default)",

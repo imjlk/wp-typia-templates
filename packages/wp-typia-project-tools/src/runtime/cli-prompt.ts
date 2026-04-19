@@ -103,14 +103,14 @@ export function createReadlinePromptWithInterface(
 					return options[resolvedDefaultIndex].value;
 				}
 
-				if (isPromptHelpToken(answer)) {
-					renderSelectPrompt(message, options, resolvedDefaultIndex);
-					continue;
-				}
-
 				const selection = resolvePromptSelection(options, answer);
 				if (selection) {
 					return selection.value;
+				}
+
+				if (isPromptHelpToken(answer)) {
+					renderSelectPrompt(message, options, resolvedDefaultIndex);
+					continue;
 				}
 
 				console.error(formatInvalidSelectionError(answer, options, resolvedDefaultIndex));
