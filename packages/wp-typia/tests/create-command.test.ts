@@ -89,4 +89,26 @@ test("keeps ambiguous external layers fail-fast when a synthetic prompt is suppl
 		);
 		expect(progress.some((line) => line.startsWith("Installing dependencies:"))).toBe(false);
 	});
+
+	test("dry-run create previews scaffold output without writing the target directory", async () => {
+		const targetDir = path.join(tempRoot, "demo-dry-run-preview");
+
+		const payload = await executeCreateCommand({
+			cwd: tempRoot,
+			emitOutput: false,
+			flags: {
+				"dry-run": true,
+				"package-manager": "npm",
+				template: "basic",
+				yes: true,
+			},
+			interactive: false,
+			projectDir: "demo-dry-run-preview",
+		});
+
+		expect(payload.title).toContain("Dry run");
+		expect(payload.summaryLines).toContain(`Project directory: ${targetDir}`);
+		expect(payload.optionalLines?.some((line) => line === "write package.json")).toBe(true);
+		expect(fs.existsSync(targetDir)).toBe(false);
+	});
 });

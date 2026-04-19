@@ -1,4 +1,6 @@
 import fs from "node:fs";
+import { promises as fsp } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 import {
@@ -26,6 +28,7 @@ import {
 	getOptionalOnboardingNote,
 	getOptionalOnboardingSteps,
 } from "./scaffold-onboarding.js";
+import { formatNonEmptyTargetDirectoryError } from "./scaffold-bootstrap.js";
 import {
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	isBuiltInTemplateId,
@@ -56,10 +59,16 @@ interface OptionalOnboardingGuidance {
 	steps: string[];
 }
 
+export interface ScaffoldDryRunPlan {
+	dependencyInstall: "skipped-by-flag" | "would-install";
+	files: string[];
+}
+
 interface RunScaffoldFlowOptions {
 	allowExistingDir?: boolean;
 	cwd?: string;
 	dataStorageMode?: string;
+	dryRun?: boolean;
 	externalLayerId?: string;
 	externalLayerSource?: string;
 	installDependencies?: Parameters<typeof scaffoldProject>[0]["installDependencies"];
@@ -90,6 +99,125 @@ interface RunScaffoldFlowOptions {
 	withTestPreset?: boolean;
 	withWpEnv?: boolean;
 	yes?: boolean;
+}
+
+async function listRelativeProjectFiles(rootDir: string): Promise<string[]> {
+	const relativeFiles: string[] = [];
+
+	async function visit(currentDir: string): Promise<void> {
+		const entries = await fsp.readdir(currentDir, { withFileTypes: true });
+		for (const entry of entries) {
+			const absolutePath = path.join(currentDir, entry.name);
+			if (entry.isDirectory()) {
+				await visit(absolutePath);
+				continue;
+			}
+
+			relativeFiles.push(
+				path
+					.relative(rootDir, absolutePath)
+					.replace(path.sep === "\\" ? /\\/gu : /\//gu, "/"),
+			);
+		}
+	}
+
+	await visit(rootDir);
+	return relativeFiles.sort((left, right) => left.localeCompare(right));
+}
+
+async function assertDryRunTargetDirectoryReady(
+	projectDir: string,
+	allowExistingDir: boolean,
+): Promise<void> {
+	if (!fs.existsSync(projectDir) || allowExistingDir) {
+		return;
+	}
+
+	const entries = await fsp.readdir(projectDir);
+	if (entries.length > 0) {
+		throw new Error(formatNonEmptyTargetDirectoryError(projectDir));
+	}
+}
+
+async function buildScaffoldDryRunPlan({
+	allowExistingDir,
+	answers,
+	cwd,
+	dataStorageMode,
+	externalLayerId,
+	externalLayerSource,
+	externalLayerSourceLabel,
+	installDependencies,
+	noInstall,
+	onProgress,
+	packageManager,
+	persistencePolicy,
+	projectDir,
+	templateId,
+	variant,
+	withMigrationUi,
+	withTestPreset,
+	withWpEnv,
+}: {
+	allowExistingDir: boolean;
+	answers: Parameters<typeof scaffoldProject>[0]["answers"];
+	cwd: string;
+	dataStorageMode?: Parameters<typeof scaffoldProject>[0]["dataStorageMode"];
+	externalLayerId?: string;
+	externalLayerSource?: string;
+	externalLayerSourceLabel?: string;
+	installDependencies?: Parameters<typeof scaffoldProject>[0]["installDependencies"];
+	noInstall: boolean;
+	onProgress?: RunScaffoldFlowOptions["onProgress"];
+	packageManager: PackageManagerId;
+	persistencePolicy?: Parameters<typeof scaffoldProject>[0]["persistencePolicy"];
+	projectDir: string;
+	templateId: string;
+	variant?: string;
+	withMigrationUi: boolean;
+	withTestPreset: boolean;
+	withWpEnv: boolean;
+}): Promise<{
+	plan: ScaffoldDryRunPlan;
+	result: Awaited<ReturnType<typeof scaffoldProject>>;
+}> {
+	await assertDryRunTargetDirectoryReady(projectDir, allowExistingDir);
+	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-scaffold-plan-"));
+	const previewProjectDir = path.join(tempRoot, "preview-project");
+
+	try {
+		const result = await scaffoldProject({
+			allowExistingDir: false,
+			answers,
+			cwd,
+			dataStorageMode,
+			externalLayerId,
+			externalLayerSource,
+			externalLayerSourceLabel,
+			installDependencies,
+			noInstall: true,
+			onProgress,
+			packageManager,
+			persistencePolicy,
+			projectDir: previewProjectDir,
+			templateId,
+			variant,
+			withMigrationUi,
+			withTestPreset,
+			withWpEnv,
+		});
+		const files = await listRelativeProjectFiles(previewProjectDir);
+
+		return {
+			plan: {
+				dependencyInstall: noInstall ? "skipped-by-flag" : "would-install",
+				files,
+			},
+			result,
+		};
+	} finally {
+		await fsp.rm(tempRoot, { force: true, recursive: true });
+	}
 }
 
 function validateCreateProjectInput(projectInput: string) {
@@ -337,6 +465,7 @@ export async function runScaffoldFlow({
 	cwd = process.cwd(),
 	templateId,
 	dataStorageMode,
+	dryRun = false,
 	externalLayerId,
 	externalLayerSource,
 	persistencePolicy,
@@ -470,54 +599,84 @@ export async function runScaffoldFlow({
 			promptText,
 		});
 
-		const result = await scaffoldProject({
-			answers,
-			allowExistingDir,
-			cwd,
-			dataStorageMode: resolvedDataStorage,
-			externalLayerId: resolvedExternalLayerSelection.externalLayerId,
-			externalLayerSource:
-				resolvedExternalLayerSelection.externalLayerSource,
-			externalLayerSourceLabel: normalizedExternalLayerSource,
-			installDependencies,
-			noInstall,
-			onProgress,
-			packageManager: resolvedPackageManager,
-			persistencePolicy: resolvedPersistencePolicy,
-			projectDir,
-			templateId: resolvedTemplateId,
-			variant,
-			withMigrationUi: resolvedWithMigrationUi,
-			withTestPreset: resolvedWithTestPreset,
-			withWpEnv: resolvedWithWpEnv,
-		});
+		const resolvedResult = dryRun
+			? await buildScaffoldDryRunPlan({
+					allowExistingDir,
+					answers,
+					cwd,
+					dataStorageMode: resolvedDataStorage,
+					externalLayerId: resolvedExternalLayerSelection.externalLayerId,
+					externalLayerSource:
+						resolvedExternalLayerSelection.externalLayerSource,
+					externalLayerSourceLabel: normalizedExternalLayerSource,
+					installDependencies,
+					noInstall,
+					onProgress,
+					packageManager: resolvedPackageManager,
+					persistencePolicy: resolvedPersistencePolicy,
+					projectDir,
+					templateId: resolvedTemplateId,
+					variant,
+					withMigrationUi: resolvedWithMigrationUi,
+					withTestPreset: resolvedWithTestPreset,
+					withWpEnv: resolvedWithWpEnv,
+				})
+			: {
+					plan: undefined,
+					result: await scaffoldProject({
+						answers,
+						allowExistingDir,
+						cwd,
+						dataStorageMode: resolvedDataStorage,
+						externalLayerId: resolvedExternalLayerSelection.externalLayerId,
+						externalLayerSource:
+							resolvedExternalLayerSelection.externalLayerSource,
+						externalLayerSourceLabel: normalizedExternalLayerSource,
+						installDependencies,
+						noInstall,
+						onProgress,
+						packageManager: resolvedPackageManager,
+						persistencePolicy: resolvedPersistencePolicy,
+						projectDir,
+						templateId: resolvedTemplateId,
+						variant,
+						withMigrationUi: resolvedWithMigrationUi,
+						withTestPreset: resolvedWithTestPreset,
+						withWpEnv: resolvedWithWpEnv,
+					}),
+				};
 		let availableScripts: string[] | undefined;
-		try {
-			const parsedPackageJson = JSON.parse(
-				fs.readFileSync(path.join(projectDir, "package.json"), "utf8"),
-			) as {
-				scripts?: unknown;
-			};
-			const scripts =
-				parsedPackageJson.scripts &&
-				typeof parsedPackageJson.scripts === "object" &&
-				!Array.isArray(parsedPackageJson.scripts)
-					? parsedPackageJson.scripts
-					: {};
-			availableScripts = Object.entries(scripts)
-				.filter(([, value]) => typeof value === "string")
-				.map(([scriptName]) => scriptName);
-		} catch {
-			availableScripts = undefined;
+		if (!dryRun) {
+			try {
+				const parsedPackageJson = JSON.parse(
+					fs.readFileSync(path.join(projectDir, "package.json"), "utf8"),
+				) as {
+					scripts?: unknown;
+				};
+				const scripts =
+					parsedPackageJson.scripts &&
+					typeof parsedPackageJson.scripts === "object" &&
+					!Array.isArray(parsedPackageJson.scripts)
+						? parsedPackageJson.scripts
+						: {};
+				availableScripts = Object.entries(scripts)
+					.filter(([, value]) => typeof value === "string")
+					.map(([scriptName]) => scriptName);
+			} catch {
+				availableScripts = undefined;
+			}
 		}
 
 		return {
+			dryRun,
 			optionalOnboarding: getOptionalOnboarding({
 				availableScripts,
 				packageManager: resolvedPackageManager,
 				templateId: resolvedTemplateId,
-				compoundPersistenceEnabled: result.variables.compoundPersistenceEnabled === "true",
+				compoundPersistenceEnabled:
+					resolvedResult.result.variables.compoundPersistenceEnabled === "true",
 			}),
+			plan: resolvedResult.plan,
 			projectDir,
 			projectInput,
 			packageManager: resolvedPackageManager,
@@ -529,8 +688,11 @@ export async function runScaffoldFlow({
 				templateId: resolvedTemplateId,
 			}),
 			result: {
-				...result,
-				warnings: [...result.warnings, ...collectProjectDirectoryWarnings(projectDir)],
+				...resolvedResult.result,
+				warnings: [
+					...resolvedResult.result.warnings,
+					...collectProjectDirectoryWarnings(projectDir),
+				],
 			},
 		};
 	} finally {

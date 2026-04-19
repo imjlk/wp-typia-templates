@@ -101,6 +101,7 @@ describe("create flow layout model", () => {
 		expect(
 			sanitizeCreateSubmitValues({
 				"data-storage": "custom-table",
+				"dry-run": false,
 				"external-layer-id": " acme/demo ",
 				"external-layer-source": " ./layers/demo ",
 				namespace: "demo",
@@ -131,6 +132,7 @@ describe("create flow layout model", () => {
 		expect(
 			sanitizeCreateSubmitValues({
 				"data-storage": "custom-table",
+				"dry-run": false,
 				namespace: "demo",
 				"no-install": false,
 				"package-manager": "npm",
@@ -159,6 +161,7 @@ describe("create flow layout model", () => {
 		expect(
 			sanitizeCreateSubmitValues({
 				"data-storage": undefined,
+				"dry-run": false,
 				"external-layer-id": undefined,
 				"external-layer-source": undefined,
 				namespace: "demo",
@@ -186,6 +189,7 @@ describe("create flow layout model", () => {
 		expect(
 			sanitizeCreateSubmitValues({
 				"data-storage": undefined,
+				"dry-run": false,
 				"external-layer-id": " acme/demo ",
 				"external-layer-source": " ./layers/demo ",
 				namespace: "demo",

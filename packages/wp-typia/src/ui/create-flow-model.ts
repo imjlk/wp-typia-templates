@@ -10,6 +10,7 @@ import {
 
 export const createFlowSchema = z.object({
 	"data-storage": z.string().optional(),
+	"dry-run": z.boolean().default(false),
 	"external-layer-id": z.string().optional(),
 	"external-layer-source": z.string().optional(),
 	namespace: z.string().optional(),
@@ -40,6 +41,7 @@ export type CreateFieldName =
 	| "query-post-type"
 	| "data-storage"
 	| "persistence-policy"
+	| "dry-run"
 	| "no-install"
 	| "yes"
 	| "with-wp-env"
@@ -47,6 +49,7 @@ export type CreateFieldName =
 	| "with-migration-ui";
 
 export const CREATE_CHECKBOX_FIELD_NAMES = [
+	"dry-run",
 	"no-install",
 	"yes",
 	"with-wp-env",
@@ -69,6 +72,7 @@ export const CREATE_FIELD_ORDER = [
 
 const CREATE_FIELD_HEIGHTS: Record<CreateFieldName, number> = {
 	"data-storage": FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+	"dry-run": FIRST_PARTY_CHECKBOX_FIELD_BODY_HEIGHT,
 	namespace: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	"no-install": FIRST_PARTY_CHECKBOX_FIELD_BODY_HEIGHT,
 	"package-manager": FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,

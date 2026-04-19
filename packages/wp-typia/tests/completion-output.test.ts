@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import {
 	buildCreateCompletionPayload,
+	buildCreateDryRunPayload,
 	formatCreateProgressLine,
 	buildMigrationCompletionPayload,
 	printCompletionPayload,
@@ -137,6 +138,64 @@ describe("alternate-buffer completion output helpers", () => {
 			}),
 		).toBe(
 			"⏳ Generating project files: Copying scaffold files into the target project directory.",
+		);
+	});
+
+	test("dry-run create payload summarizes the planned scaffold without next steps", () => {
+		const payload = buildCreateDryRunPayload({
+			packageManager: "npm",
+			plan: {
+				dependencyInstall: "would-install",
+				files: ["README.md", "package.json", "src/index.tsx"],
+			},
+			projectDir: "/tmp/demo-block",
+			result: {
+				selectedVariant: null,
+				templateId: "basic",
+				variables: {
+					title: "Demo Block",
+				},
+				warnings: [],
+			},
+		});
+
+		expect(payload.title).toBe("🧪 Dry run for Demo Block at /tmp/demo-block");
+		expect(payload.summaryLines).toEqual([
+			"Project directory: /tmp/demo-block",
+			"Template: basic",
+			"Package manager: npm",
+			"Dependency install: would run during a real scaffold",
+		]);
+		expect(payload.optionalTitle).toBe("Planned files (3):");
+		expect(payload.optionalLines).toEqual([
+			"write README.md",
+			"write package.json",
+			"write src/index.tsx",
+		]);
+		expect(payload.nextSteps).toBeUndefined();
+		expect(payload.optionalNote).toContain("--dry-run");
+	});
+
+	test("dry-run create payload preserves the skipped-by-flag dependency wording", () => {
+		const payload = buildCreateDryRunPayload({
+			packageManager: "npm",
+			plan: {
+				dependencyInstall: "skipped-by-flag",
+				files: ["package.json"],
+			},
+			projectDir: "/tmp/demo-block",
+			result: {
+				selectedVariant: null,
+				templateId: "basic",
+				variables: {
+					title: "Demo Block",
+				},
+				warnings: [],
+			},
+		});
+
+		expect(payload.summaryLines).toContain(
+			"Dependency install: already skipped via --no-install",
 		);
 	});
 });

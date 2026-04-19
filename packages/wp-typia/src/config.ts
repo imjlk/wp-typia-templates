@@ -12,6 +12,7 @@ export type WpTypiaSchemaSource = {
 export type WpTypiaUserConfig = {
 	create?: {
 		"data-storage"?: string;
+		"dry-run"?: boolean;
 		"external-layer-id"?: string;
 		"external-layer-source"?: string;
 		namespace?: string;

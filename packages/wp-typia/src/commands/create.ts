@@ -26,6 +26,11 @@ const createOptions = {
 		description: "Persistence storage mode for persistence-capable templates.",
 		schema: z.string().optional(),
 	},
+	"dry-run": {
+		argumentKind: "flag" as const,
+		description: "Preview scaffold output without writing files to the target directory.",
+		schema: z.boolean().default(false),
+	},
 	"external-layer-id": {
 		description: "Explicit layer id when an external layer package exposes multiple selectable layers.",
 		schema: z.string().optional(),
@@ -132,6 +137,9 @@ export const createCommand = defineCommand({
 								"data-storage":
 									(args.flags["data-storage"] as string | undefined) ??
 									config["data-storage"],
+								"dry-run": Boolean(
+									args.flags["dry-run"] ?? config["dry-run"] ?? false,
+								),
 								"external-layer-id":
 									(args.flags["external-layer-id"] as string | undefined) ??
 									config["external-layer-id"],

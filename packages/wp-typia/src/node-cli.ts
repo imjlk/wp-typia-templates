@@ -70,6 +70,7 @@ const STRING_FLAG_NAMES = new Set([
 const BOOLEAN_FLAG_NAMES = new Set([
 	"all",
 	"check",
+	"dry-run",
 	"force",
 	"help",
 	"no-install",
@@ -327,6 +328,7 @@ function renderCreateHelp() {
 		"--with-test-preset",
 		"--with-wp-env",
 		"--no-install",
+		"--dry-run",
 		"--yes",
 	]);
 }
