@@ -34,8 +34,14 @@ export function renderArchivedNpmDeprecationMessage(entry) {
 	return `${entry.packageName} is archived. Use \`${primaryCommand}\` or \`${secondaryCommand}\` instead.`;
 }
 
+function shellQuote(value) {
+	return `'${String(value).replaceAll("'", `'\\''`)}'`;
+}
+
 export function renderArchivedNpmDeprecationCommand(entry) {
-	return `npm deprecate ${entry.packageName}@${JSON.stringify(entry.deprecationRange)} ${JSON.stringify(renderArchivedNpmDeprecationMessage(entry))}`;
+	const packageSpec = `${entry.packageName}@${entry.deprecationRange}`;
+
+	return `npm deprecate ${shellQuote(packageSpec)} ${shellQuote(renderArchivedNpmDeprecationMessage(entry))}`;
 }
 
 export function renderArchivedNpmDeprecationPlan(

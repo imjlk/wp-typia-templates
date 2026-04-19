@@ -16,7 +16,7 @@ describe("archived-package-policy", () => {
 
 	test("renders copy-pastable npm deprecate commands for archived entrypoints", () => {
 		expect(renderArchivedNpmDeprecationCommand(ARCHIVED_NPM_ENTRYPOINTS[0])).toBe(
-			'npm deprecate create-wp-typia@"*" "create-wp-typia is archived. Use `npx wp-typia create <project-dir>` or `bunx wp-typia create <project-dir>` instead."',
+			"npm deprecate 'create-wp-typia@*' 'create-wp-typia is archived. Use `npx wp-typia create <project-dir>` or `bunx wp-typia create <project-dir>` instead.'",
 		);
 	});
 
@@ -25,7 +25,7 @@ describe("archived-package-policy", () => {
 			"Archived npm entrypoint deprecation plan:",
 		);
 		expect(renderArchivedNpmDeprecationPlan()).toContain(
-			'npm deprecate create-wp-typia@"*" "create-wp-typia is archived. Use `npx wp-typia create <project-dir>` or `bunx wp-typia create <project-dir>` instead."',
+			"npm deprecate 'create-wp-typia@*' 'create-wp-typia is archived. Use `npx wp-typia create <project-dir>` or `bunx wp-typia create <project-dir>` instead.'",
 		);
 	});
 });

@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
 	ARCHIVED_NPM_ENTRYPOINTS,
@@ -23,7 +25,11 @@ function parseArgs(argv) {
 		}
 
 		if (argument === "--package") {
-			packageName = argv[index + 1] ?? null;
+			const nextArgument = argv[index + 1];
+			if (!nextArgument || nextArgument.startsWith("-")) {
+				throw new Error("--package requires an archived npm entrypoint name.");
+			}
+			packageName = nextArgument;
 			index += 1;
 			continue;
 		}
@@ -91,4 +97,9 @@ export function runCli({
 	}
 }
 
-process.exitCode = runCli();
+const currentFilePath = fileURLToPath(import.meta.url);
+const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : "";
+
+if (invokedPath === currentFilePath) {
+	process.exitCode = runCli();
+}
