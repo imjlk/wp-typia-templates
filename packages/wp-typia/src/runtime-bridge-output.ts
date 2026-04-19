@@ -116,6 +116,52 @@ export function buildCreateCompletionPayload(flow: {
 }
 
 /**
+ * Builds the completion payload shown after a dry-run create flow succeeds.
+ *
+ * @param flow Resolved create-flow data including the non-mutating scaffold plan.
+ * @returns A structured alternate-buffer completion payload.
+ */
+export function buildCreateDryRunPayload(flow: {
+	packageManager: string;
+	plan: {
+		dependencyInstall: "skipped-because-dry-run" | "skipped-by-flag" | "would-install";
+		files: string[];
+	};
+	projectDir: string;
+	result: {
+		selectedVariant?: string | null;
+		templateId: string;
+		variables: {
+			title: string;
+		};
+		warnings: string[];
+	};
+}): AlternateBufferCompletionPayload {
+	const dependencyInstallLine =
+		flow.plan.dependencyInstall === "skipped-by-flag"
+			? "Dependency install: already skipped via --no-install"
+			: "Dependency install: would run during a real scaffold";
+
+	return {
+		optionalLines: flow.plan.files.map((relativePath) => `write ${relativePath}`),
+		optionalNote:
+			"No files were written because --dry-run was enabled. Re-run without --dry-run to materialize this scaffold.",
+		optionalTitle: `Planned files (${flow.plan.files.length}):`,
+		preambleLines: flow.result.selectedVariant
+			? [`Template variant: ${flow.result.selectedVariant}`]
+			: undefined,
+		summaryLines: [
+			`Project directory: ${flow.projectDir}`,
+			`Template: ${flow.result.templateId}`,
+			`Package manager: ${flow.packageManager}`,
+			dependencyInstallLine,
+		],
+		title: `🧪 Dry run for ${flow.result.variables.title} at ${flow.projectDir}`,
+		warningLines: flow.result.warnings,
+	};
+}
+
+/**
  * Builds the completion payload shown after a migrate command succeeds.
  *
  * @param options Completed migrate command metadata plus rendered lines.

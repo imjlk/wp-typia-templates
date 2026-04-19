@@ -399,6 +399,26 @@ test("runScaffoldFlow carries query-loop post type overrides into the generated 
   );
 });
 
+test("runScaffoldFlow dry-run previews scaffold output without writing the target directory", async () => {
+  const projectInput = "demo-dry-run-plan";
+  const targetDir = path.join(tempRoot, projectInput);
+  const flow = await runScaffoldFlow({
+    cwd: tempRoot,
+    dryRun: true,
+    packageManager: "npm",
+    projectInput,
+    templateId: "basic",
+    yes: true,
+  });
+
+  expect(flow.dryRun).toBe(true);
+  expect(flow.plan?.files).toContain("package.json");
+  expect(flow.plan?.files).toContain("src/block.json");
+  expect(flow.plan?.dependencyInstall).toBe("would-install");
+  expect(flow.result.templateId).toBe("basic");
+  expect(fs.existsSync(targetDir)).toBe(false);
+});
+
 test("runScaffoldFlow rejects removed built-in template ids", async () => {
   await expect(
     runScaffoldFlow({
@@ -585,6 +605,27 @@ test("node entry supports the explicit create command", () => {
 
   expect(fs.existsSync(path.join(targetDir, "package.json"))).toBe(true);
   expect(fs.existsSync(path.join(targetDir, "src", "block.json"))).toBe(true);
+});
+
+test("node entry supports dry-run create previews without writing files", () => {
+  const targetDir = path.join(tempRoot, "demo-node-create-dry-run");
+  const output = runCli("node", [
+    entryPath,
+    "create",
+    targetDir,
+    "--template",
+    "basic",
+    "--package-manager",
+    "npm",
+    "--yes",
+    "--dry-run",
+  ]);
+
+  expect(output).toContain("Dry run");
+  expect(output).toContain(`Project directory: ${targetDir}`);
+  expect(output).toContain("Planned files");
+  expect(output).toContain("write package.json");
+  expect(fs.existsSync(targetDir)).toBe(false);
 });
 
 test("node entry supports external layer flags for built-in create scaffolds", () => {

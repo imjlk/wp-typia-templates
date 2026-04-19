@@ -56,6 +56,7 @@ const persistencePolicyOptions: SelectOption[] = [
 ];
 
 const checkboxLabels: Record<(typeof CREATE_CHECKBOX_FIELD_NAMES)[number], string> = {
+	"dry-run": "Preview only (dry run)",
 	"no-install": "Skip dependency install",
 	yes: "Use defaults without prompts",
 	"with-wp-env": "Add wp-env preset",

@@ -3,6 +3,7 @@ import type { AlternateBufferCompletionPayload } from "./ui/alternate-buffer-lif
 import {
 	buildAddCompletionPayload,
 	buildCreateCompletionPayload,
+	buildCreateDryRunPayload,
 	buildMigrationCompletionPayload,
 	formatCreateProgressLine,
 	printBlock,
@@ -11,6 +12,7 @@ import {
 } from "./runtime-bridge-output";
 export {
 	buildCreateCompletionPayload,
+	buildCreateDryRunPayload,
 	buildMigrationCompletionPayload,
 	formatCreateProgressLine,
 	printCompletionPayload,
@@ -185,6 +187,7 @@ export async function executeCreateCommand({
 		const flow = await runScaffoldFlow({
 			cwd,
 			dataStorageMode: readOptionalLooseStringFlag(flags, "data-storage"),
+			dryRun: Boolean(flags["dry-run"]),
 			externalLayerId: readOptionalLooseStringFlag(flags, "external-layer-id"),
 			externalLayerSource: readOptionalLooseStringFlag(flags, "external-layer-source"),
 			isInteractive: Boolean(activePrompt),
@@ -257,7 +260,14 @@ export async function executeCreateCommand({
 			yes: Boolean(flags.yes),
 		});
 
-		const payload = buildCreateCompletionPayload(flow);
+		const payload = flow.dryRun && flow.plan
+			? buildCreateDryRunPayload({
+					packageManager: flow.packageManager,
+					plan: flow.plan,
+					projectDir: flow.projectDir,
+					result: flow.result,
+				})
+			: buildCreateCompletionPayload(flow);
 		if (emitOutput) {
 			printCompletionPayload(payload, {
 				printLine,
