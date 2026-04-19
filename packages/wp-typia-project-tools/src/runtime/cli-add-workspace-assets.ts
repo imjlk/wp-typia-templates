@@ -706,9 +706,10 @@ async function ensureEditorPluginBuildScriptAnchors(workspace: WorkspaceProject)
 			return source;
 		}
 
-		const legacySharedEntriesSnippet = "[ 'src/bindings/index.ts', 'src/bindings/index.js' ]";
+		const legacySharedEntriesPattern =
+			/\[\s*['"]src\/bindings\/index\.ts['"]\s*,\s*['"]src\/bindings\/index\.js['"]\s*(?:,\s*)?\]/u;
 		const nextSource = source.replace(
-			legacySharedEntriesSnippet,
+			legacySharedEntriesPattern,
 			`[
 \t\t'src/bindings/index.ts',
 \t\t'src/bindings/index.js',
@@ -735,9 +736,13 @@ async function ensureEditorPluginWebpackAnchors(workspace: WorkspaceProject): Pr
 			return source;
 		}
 
-		const legacySharedEntriesBlock = `\tfor ( const relativePath of [ 'src/bindings/index.ts', 'src/bindings/index.js' ] ) {\n\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\tcontinue;\n\t\t}\n\n\t\tentries.push( [ 'bindings/index', entryPath ] );\n\t\tbreak;\n\t}`;
+		const legacySharedEntriesBlockPattern =
+			/for\s*\(\s*const\s+relativePath\s+of\s+\[\s*['"]src\/bindings\/index\.ts['"]\s*,\s*['"]src\/bindings\/index\.js['"]\s*(?:,\s*)?\]\s*\)\s*\{[\s\S]*?entries\.push\(\s*\[\s*['"]bindings\/index['"]\s*,\s*entryPath\s*\]\s*\);\s*break;\s*\}/u;
 		const nextSharedEntriesBlock = `\tfor ( const [ entryName, candidates ] of [\n\t\t[\n\t\t\t'bindings/index',\n\t\t\t[ 'src/bindings/index.ts', 'src/bindings/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'editor-plugins/index',\n\t\t\t[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],\n\t\t],\n\t] ) {\n\t\tfor ( const relativePath of candidates ) {\n\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\t\tcontinue;\n\t\t\t}\n\n\t\t\tentries.push( [ entryName, entryPath ] );\n\t\t\tbreak;\n\t\t}\n\t}`;
-		const nextSource = source.replace(legacySharedEntriesBlock, nextSharedEntriesBlock);
+		const nextSource = source.replace(
+			legacySharedEntriesBlockPattern,
+			nextSharedEntriesBlock,
+		);
 
 		if (nextSource === source) {
 			throw new Error(

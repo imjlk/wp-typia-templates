@@ -2407,6 +2407,69 @@ test("editor plugin workflow repairs legacy workspace build config hooks", async
   ).toBe(true);
 }, 30_000);
 
+test("editor plugin workflow repairs formatted legacy workspace build config hooks", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-editor-plugin-formatted-legacy-build"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add editor plugin formatted legacy build",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-editor-plugin-formatted-legacy-build",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Editor Plugin Formatted Legacy Build",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const buildScriptPath = path.join(targetDir, "scripts", "build-workspace.mjs");
+  const webpackConfigPath = path.join(targetDir, "webpack.config.js");
+  fs.writeFileSync(
+    buildScriptPath,
+    fs
+      .readFileSync(buildScriptPath, "utf8")
+      .replace(
+        `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t]`,
+        `[\n      \"src/bindings/index.ts\",\n      \"src/bindings/index.js\",\n    ]`
+      ),
+    "utf8"
+  );
+  fs.writeFileSync(
+    webpackConfigPath,
+    fs
+      .readFileSync(webpackConfigPath, "utf8")
+      .replace(
+        `\tfor ( const [ entryName, candidates ] of [\n\t\t[\n\t\t\t'bindings/index',\n\t\t\t[ 'src/bindings/index.ts', 'src/bindings/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'editor-plugins/index',\n\t\t\t[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],\n\t\t],\n\t] ) {\n\t\tfor ( const relativePath of candidates ) {\n\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\t\tcontinue;\n\t\t\t}\n\n\t\t\tentries.push( [ entryName, entryPath ] );\n\t\t\tbreak;\n\t\t}\n\t}`,
+        `\tfor ( const relativePath of [\n\t\t\"src/bindings/index.ts\",\n\t\t\"src/bindings/index.js\",\n\t] ) {\n\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\tcontinue;\n\t\t}\n\n\t\tentries.push( [ \"bindings/index\", entryPath ] );\n\t\tbreak;\n\t}`
+      ),
+    "utf8"
+  );
+
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "document-tools"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  expect(fs.readFileSync(buildScriptPath, "utf8")).toContain(
+    "'src/editor-plugins/index.ts'"
+  );
+  expect(fs.readFileSync(webpackConfigPath, "utf8")).toContain(
+    "'editor-plugins/index'"
+  );
+}, 30_000);
+
 test("editor plugin workflow preserves legacy registry imports outside inventory", async () => {
   const targetDir = path.join(
     tempRoot,
