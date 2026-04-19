@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { ARCHIVED_NPM_ENTRYPOINTS } from "./lib/archived-package-policy.mjs";
 import { findPublishablePackages } from "./lib/sampo-changesets.mjs";
 import {
 	RUNTIME_PACKAGE_NAMES,
@@ -131,6 +132,38 @@ function validateBlockTypesRegistrationPeerPolicy(repoRoot, runtimePackages, err
 	}
 }
 
+function validateArchivedEntrypointManifestPolicy(repoRoot, errors) {
+	for (const entry of ARCHIVED_NPM_ENTRYPOINTS) {
+		const manifestPath = path.join(repoRoot, entry.packageDir, "package.json");
+		if (!fs.existsSync(manifestPath)) {
+			errors.push(`${entry.packageDir}/package.json is missing.`);
+			continue;
+		}
+
+		const manifest = readJson(manifestPath);
+		const relativePath = toRelativePath(repoRoot, manifestPath);
+
+		if (manifest.private !== entry.private) {
+			errors.push(
+				`${relativePath} must declare private=${JSON.stringify(entry.private)} for archived npm entrypoints, found ${JSON.stringify(manifest.private ?? null)}.`,
+			);
+		}
+
+		if (manifest.description !== entry.description) {
+			errors.push(
+				`${relativePath} must declare description=${JSON.stringify(entry.description)} for archived npm entrypoints, found ${JSON.stringify(manifest.description ?? null)}.`,
+			);
+		}
+
+		const actualKeywords = Array.isArray(manifest.keywords) ? manifest.keywords : [];
+		if (JSON.stringify(actualKeywords) !== JSON.stringify(entry.keywords)) {
+			errors.push(
+				`${relativePath} must declare keywords=${JSON.stringify(entry.keywords)} for archived npm entrypoints, found ${JSON.stringify(actualKeywords)}.`,
+			);
+		}
+	}
+}
+
 function validateRuntimeDependencyPolicy(repoRoot, runtimePackages, errors) {
 	const exceptionSet = new Set(
 		WORKSPACE_PROTOCOL_POLICY_EXCEPTIONS.map(
@@ -235,6 +268,7 @@ export function validatePackageManifestPolicy(repoRoot = DEFAULT_REPO_ROOT) {
 	validateRuntimeDependencyPolicy(repoRoot, runtimePackages, errors);
 	validateUnusedDevDependencyPolicy(runtimePackages, errors);
 	validateBlockTypesRegistrationPeerPolicy(repoRoot, runtimePackages, errors);
+	validateArchivedEntrypointManifestPolicy(repoRoot, errors);
 
 	return {
 		errors,

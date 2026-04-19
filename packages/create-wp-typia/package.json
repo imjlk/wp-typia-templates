@@ -1,7 +1,7 @@
 {
   "name": "create-wp-typia",
   "version": "1.3.9",
-  "description": "Archived wp-typia initializer package kept only for repository history",
+  "description": "Archived npm entrypoint for wp-typia. Use npx wp-typia create <project-dir> or bunx wp-typia create <project-dir> instead.",
   "packageManager": "bun@1.3.11",
   "private": true,
   "type": "module",
@@ -12,6 +12,15 @@
     "bin/",
     "README.md",
     "package.json"
+  ],
+  "keywords": [
+    "wordpress",
+    "gutenberg",
+    "typia",
+    "archived",
+    "deprecated",
+    "legacy",
+    "initializer"
   ],
   "author": "imjlk",
   "license": "GPL-2.0-or-later",
