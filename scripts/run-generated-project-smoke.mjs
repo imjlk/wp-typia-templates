@@ -4,14 +4,13 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-
+import { assertGeneratedProjectScaffold } from "./lib/generated-project-smoke-assertions.mjs";
 import {
 	cleanupTemporaryProjectRoot,
 	ensureCorepackPackageManager,
 	getInstallCommand,
 	getPackageManager,
 	getRunCommand,
-	normalizeBlockSlug,
 	refreshCurrentMigrationSnapshot,
 	rewriteWorkspaceDependencies,
 	run,
@@ -19,12 +18,7 @@ import {
 	runLocalMigrationDoctor,
 	runScaffoldRefreshScripts,
 } from "./lib/generated-project-smoke-core.mjs";
-import {
-	assertGeneratedProjectScaffold,
-} from "./lib/generated-project-smoke-assertions.mjs";
-import {
-	runExampleProjectSmoke,
-} from "./lib/generated-project-smoke-example.mjs";
+import { runExampleProjectSmoke } from "./lib/generated-project-smoke-example.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -273,14 +267,17 @@ function main() {
 		!runtime ||
 		!packageManager ||
 		!projectName ||
-		((!template && !exampleProject) || (template && exampleProject))
+		(!template && !exampleProject) ||
+		(template && exampleProject)
 	) {
 		throw new Error(
 			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> (--template <id> | --example-project <slug>) [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--with-migration-ui] [--add-block-name <name> --add-template <basic|interactivity|persistence|compound> [--add-data-storage <post-meta|custom-table>] [--add-persistence-policy <authenticated|public>]] [--add-variation-name <name> --add-variation-block <block-slug>] [--add-pattern-name <name>] [--add-binding-source-name <name>] [--add-hooked-block-slug <block-slug> --add-hooked-block-anchor <anchor-block-name> --add-hooked-block-position <before|after|firstChild|lastChild>] --package-manager <id> --project-name <name>",
 		);
 	}
 
-	const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-generated-smoke-"));
+	const tempRoot = fs.mkdtempSync(
+		path.join(os.tmpdir(), "wp-typia-generated-smoke-"),
+	);
 	const projectDir = path.join(tempRoot, projectName);
 	let primaryError = null;
 
@@ -317,7 +314,8 @@ function main() {
 
 		const packageJsonPath = path.join(projectDir, "package.json");
 		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-		const expectedPackageManager = getPackageManager(packageManager).packageManagerField;
+		const expectedPackageManager =
+			getPackageManager(packageManager).packageManagerField;
 		if (packageJson.packageManager !== expectedPackageManager) {
 			throw new Error(
 				`Expected packageManager ${expectedPackageManager}, received ${packageJson.packageManager}`,
@@ -342,30 +340,38 @@ function main() {
 
 		if (addBlockName) {
 			if (!addTemplate) {
-				throw new Error("--add-template is required when --add-block-name is provided.");
+				throw new Error(
+					"--add-template is required when --add-block-name is provided.",
+				);
 			}
 
-			run(runtime, [
-				entryPath,
-				"add",
-				"block",
-				addBlockName,
-				"--template",
-				addTemplate,
-				...(addDataStorage ? ["--data-storage", addDataStorage] : []),
-				...(addPersistencePolicy
-					? ["--persistence-policy", addPersistencePolicy]
-					: []),
-			], {
-				cwd: projectDir,
-			});
+			run(
+				runtime,
+				[
+					entryPath,
+					"add",
+					"block",
+					addBlockName,
+					"--template",
+					addTemplate,
+					...(addDataStorage ? ["--data-storage", addDataStorage] : []),
+					...(addPersistencePolicy
+						? ["--persistence-policy", addPersistencePolicy]
+						: []),
+				],
+				{
+					cwd: projectDir,
+				},
+			);
 
 			runScaffoldRefreshScripts(projectDir, packageManager, packageJson);
 		}
 
 		if (addVariationName) {
 			if (!addVariationBlock) {
-				throw new Error("--add-variation-block is required when --add-variation-name is provided.");
+				throw new Error(
+					"--add-variation-block is required when --add-variation-name is provided.",
+				);
 			}
 
 			run(
@@ -397,7 +403,11 @@ function main() {
 		}
 
 		if (addHookedBlockSlug || addHookedBlockAnchor || addHookedBlockPosition) {
-			if (!addHookedBlockSlug || !addHookedBlockAnchor || !addHookedBlockPosition) {
+			if (
+				!addHookedBlockSlug ||
+				!addHookedBlockAnchor ||
+				!addHookedBlockPosition
+			) {
 				throw new Error(
 					"--add-hooked-block-slug, --add-hooked-block-anchor, and --add-hooked-block-position must be provided together.",
 				);
@@ -429,7 +439,10 @@ function main() {
 			runLocalDoctor(projectDir, runtime);
 		}
 
-		if (withMigrationUi && typeof packageJson.scripts?.["migration:doctor"] === "string") {
+		if (
+			withMigrationUi &&
+			typeof packageJson.scripts?.["migration:doctor"] === "string"
+		) {
 			refreshCurrentMigrationSnapshot(projectDir, runtime);
 			runLocalMigrationDoctor(projectDir, runtime);
 		}
@@ -467,7 +480,10 @@ function main() {
 					`Warning: failed to remove temporary smoke directory ${tempRoot}: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`,
 				);
 			} else {
-				throw cleanupError;
+				console.error(
+					`Failed to remove temporary smoke directory ${tempRoot}: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`,
+				);
+				process.exitCode = 1;
 			}
 		}
 	}
