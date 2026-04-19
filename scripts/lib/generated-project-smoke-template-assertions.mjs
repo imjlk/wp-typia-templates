@@ -26,8 +26,7 @@ export function assertPersistenceTemplateArtifacts(projectDir, projectName) {
     path.join(projectDir, "build", projectName),
     path.join(projectDir, "build"),
   ];
-
-  for (const artifact of [
+  const artifacts = [
     path.join("api-schemas", "bootstrap-query.schema.json"),
     path.join("api-schemas", "bootstrap-response.schema.json"),
     "typia.schema.json",
@@ -35,11 +34,14 @@ export function assertPersistenceTemplateArtifacts(projectDir, projectName) {
     path.join("api-schemas", "state-query.schema.json"),
     path.join("api-schemas", "state-response.schema.json"),
     path.join("api-schemas", "write-state-request.schema.json"),
-  ]) {
-    const found = candidateDirs.some((dir) => fs.existsSync(path.join(dir, artifact)));
-    if (!found) {
-      throw new Error(`Expected ${artifact} in one of: ${candidateDirs.join(", ")}`);
-    }
+  ];
+
+  const matchingDir = candidateDirs.find((dir) =>
+    artifacts.every((artifact) => fs.existsSync(path.join(dir, artifact))),
+  );
+
+  if (!matchingDir) {
+    throw new Error(`Expected ${artifacts.join(", ")} in one of: ${candidateDirs.join(", ")}`);
   }
 }
 
@@ -49,6 +51,16 @@ function findFirstExistingPath(paths) {
 
 function readJsonFile(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
+function operationRequiresWpRestNonce(openApi, operation) {
+  const securityRequirements = operation.security ?? openApi.security ?? [];
+  return securityRequirements.some(
+    (requirement) =>
+      requirement &&
+      typeof requirement === "object" &&
+      Object.prototype.hasOwnProperty.call(requirement, "wpRestNonce"),
+  );
 }
 
 export function assertPersistenceRestOpenApi(projectDir, projectName, namespace, persistencePolicy) {
@@ -98,6 +110,9 @@ export function assertPersistenceRestOpenApi(projectDir, projectName, namespace,
     }
     if (postOperation["x-wp-typia-authPolicy"] !== "authenticated-rest-nonce") {
       throw new Error(`Expected authenticated-rest-nonce auth policy on ${routePath} POST`);
+    }
+    if (!operationRequiresWpRestNonce(openApi, postOperation)) {
+      throw new Error(`Expected wpRestNonce security requirement on ${routePath} POST`);
     }
   }
 }
@@ -178,6 +193,9 @@ export function assertCompoundRestOpenApi(projectDir, projectName, namespace, pe
     }
     if (postOperation["x-wp-typia-authPolicy"] !== "authenticated-rest-nonce") {
       throw new Error(`Expected authenticated-rest-nonce auth policy on ${routePath} POST`);
+    }
+    if (!operationRequiresWpRestNonce(openApi, postOperation)) {
+      throw new Error(`Expected wpRestNonce security requirement on ${routePath} POST`);
     }
   }
 }
