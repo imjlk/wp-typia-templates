@@ -6,6 +6,7 @@ import {
 	useFormContext,
 	useTerminalDimensions,
 } from "@bunli/tui";
+import { EDITOR_PLUGIN_SLOT_IDS } from "@wp-typia/project-tools/cli-add";
 import { HOOKED_BLOCK_POSITION_IDS } from "@wp-typia/project-tools/hooked-blocks";
 
 import { executeAddCommand, loadAddWorkspaceBlockOptions } from "../runtime-bridge";
@@ -43,6 +44,11 @@ const kindOptions: SelectOption[] = [
 		name: "binding-source",
 		description: "Add a shared block bindings source",
 		value: "binding-source",
+	},
+	{
+		name: "editor-plugin",
+		description: "Add a document-level editor extension shell",
+		value: "editor-plugin",
 	},
 	{
 		name: "hooked-block",
@@ -92,6 +98,17 @@ const persistencePolicyOptions: SelectOption[] = [
 	{ name: "public", description: "Public token policy", value: "public" },
 ];
 
+const EDITOR_PLUGIN_SLOT_DESCRIPTIONS: Record<string, string> = {
+	PluginSidebar: "Register a document sidebar and more-menu entry",
+};
+
+const editorPluginSlotOptions: SelectOption[] = EDITOR_PLUGIN_SLOT_IDS.map((slot) => ({
+	description:
+		EDITOR_PLUGIN_SLOT_DESCRIPTIONS[slot] ?? "Editor plugin shell slot",
+	name: slot,
+	value: slot,
+}));
+
 const HOOKED_BLOCK_POSITION_DESCRIPTIONS: Record<
 	(typeof HOOKED_BLOCK_POSITION_IDS)[number],
 	string
@@ -125,6 +142,8 @@ function getAddNameLabel(kind?: string): string {
 			return "Pattern name";
 		case "binding-source":
 			return "Binding source name";
+		case "editor-plugin":
+			return "Editor plugin name";
 		case "hooked-block":
 			return "Target block";
 		case "block":
@@ -239,6 +258,15 @@ function AddFlowFields({
 							name: position,
 							value: position,
 						})),
+					})
+				: null,
+			visibleFields.has("slot")
+				? createElement(FirstPartySelectField, {
+						...getWrappedFieldNeighbors(orderedVisibleFields, "slot"),
+						key: "slot",
+						label: "Editor shell slot",
+						name: "slot" satisfies AddSelectFieldName,
+						options: editorPluginSlotOptions,
 					})
 				: null,
 			visibleFields.has("data-storage") && isAddPersistenceTemplate(template)

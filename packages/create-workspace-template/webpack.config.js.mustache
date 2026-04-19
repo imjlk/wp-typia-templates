@@ -189,14 +189,25 @@ function getEditorEntries() {
 function getSharedEditorEntries() {
 	const entries = [];
 
-	for ( const relativePath of [ 'src/bindings/index.ts', 'src/bindings/index.js' ] ) {
-		const entryPath = path.resolve( process.cwd(), relativePath );
-		if ( ! fs.existsSync( entryPath ) ) {
-			continue;
-		}
+	for ( const [ entryName, candidates ] of [
+		[
+			'bindings/index',
+			[ 'src/bindings/index.ts', 'src/bindings/index.js' ],
+		],
+		[
+			'editor-plugins/index',
+			[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],
+		],
+	] ) {
+		for ( const relativePath of candidates ) {
+			const entryPath = path.resolve( process.cwd(), relativePath );
+			if ( ! fs.existsSync( entryPath ) ) {
+				continue;
+			}
 
-		entries.push( [ 'bindings/index', entryPath ] );
-		break;
+			entries.push( [ entryName, entryPath ] );
+			break;
+		}
 	}
 
 	return Object.fromEntries( entries );

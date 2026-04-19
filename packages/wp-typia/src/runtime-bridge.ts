@@ -358,6 +358,32 @@ export async function executeAddCommand({
 			return payload;
 		}
 
+		if (kind === "editor-plugin") {
+			if (!name) {
+				throw new Error(
+					"`wp-typia add editor-plugin` requires <name>. Usage: wp-typia add editor-plugin <name> [--slot <PluginSidebar>].",
+				);
+			}
+
+			const result = await addRuntime.runAddEditorPluginCommand({
+				cwd,
+				editorPluginName: name,
+				slot: readOptionalStringFlag(flags, "slot"),
+			});
+			const payload = buildAddCompletionPayload({
+				kind: "editor-plugin",
+				projectDir: result.projectDir,
+				values: {
+					editorPluginSlug: result.editorPluginSlug,
+					slot: result.slot,
+				},
+			});
+			if (emitOutput) {
+				printCompletionPayload(payload, { printLine });
+			}
+			return payload;
+		}
+
 		if (kind === "hooked-block") {
 			if (!name) {
 				throw new Error(
@@ -400,7 +426,7 @@ export async function executeAddCommand({
 
 		if (kind !== "block") {
 			throw new Error(
-				`Unknown add kind "${kind}". Expected one of: block, variation, pattern, binding-source, hooked-block.`,
+				`Unknown add kind "${kind}". Expected one of: block, variation, pattern, binding-source, editor-plugin, hooked-block.`,
 			);
 		}
 

@@ -30,6 +30,8 @@ function parseArgs(argv) {
 		addBindingSourceName: undefined,
 		addBlockName: undefined,
 		addDataStorage: undefined,
+		addEditorPluginName: undefined,
+		addEditorPluginSlot: undefined,
 		addHookedBlockAnchor: undefined,
 		addHookedBlockPosition: undefined,
 		addHookedBlockSlug: undefined,
@@ -68,6 +70,16 @@ function parseArgs(argv) {
 		}
 		if (arg === "--add-binding-source-name") {
 			parsed.addBindingSourceName = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--add-editor-plugin-name") {
+			parsed.addEditorPluginName = next;
+			index += 1;
+			continue;
+		}
+		if (arg === "--add-editor-plugin-slot") {
+			parsed.addEditorPluginSlot = next;
 			index += 1;
 			continue;
 		}
@@ -252,6 +264,8 @@ function main() {
 		addBlockName,
 		addBindingSourceName,
 		addDataStorage,
+		addEditorPluginName,
+		addEditorPluginSlot,
 		addHookedBlockAnchor,
 		addHookedBlockPosition,
 		addHookedBlockSlug,
@@ -271,7 +285,7 @@ function main() {
 		(template && exampleProject)
 	) {
 		throw new Error(
-			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> (--template <id> | --example-project <slug>) [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--with-migration-ui] [--add-block-name <name> --add-template <basic|interactivity|persistence|compound> [--add-data-storage <post-meta|custom-table>] [--add-persistence-policy <authenticated|public>]] [--add-variation-name <name> --add-variation-block <block-slug>] [--add-pattern-name <name>] [--add-binding-source-name <name>] [--add-hooked-block-slug <block-slug> --add-hooked-block-anchor <anchor-block-name> --add-hooked-block-position <before|after|firstChild|lastChild>] --package-manager <id> --project-name <name>",
+			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> (--template <id> | --example-project <slug>) [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--with-migration-ui] [--add-block-name <name> --add-template <basic|interactivity|persistence|compound> [--add-data-storage <post-meta|custom-table>] [--add-persistence-policy <authenticated|public>]] [--add-variation-name <name> --add-variation-block <block-slug>] [--add-pattern-name <name>] [--add-binding-source-name <name>] [--add-editor-plugin-name <name> [--add-editor-plugin-slot <PluginSidebar>]] [--add-hooked-block-slug <block-slug> --add-hooked-block-anchor <anchor-block-name> --add-hooked-block-position <before|after|firstChild|lastChild>] --package-manager <id> --project-name <name>",
 		);
 	}
 
@@ -402,6 +416,24 @@ function main() {
 			});
 		}
 
+		if (addEditorPluginName) {
+			const slotForArgs = addEditorPluginSlot ?? "PluginSidebar";
+			run(
+				runtime,
+				[
+					entryPath,
+					"add",
+					"editor-plugin",
+					addEditorPluginName,
+					"--slot",
+					slotForArgs,
+				],
+				{
+					cwd: projectDir,
+				},
+			);
+		}
+
 		if (addHookedBlockSlug || addHookedBlockAnchor || addHookedBlockPosition) {
 			if (
 				!addHookedBlockSlug ||
@@ -453,6 +485,10 @@ function main() {
 		assertGeneratedProjectScaffold({
 			addBindingSourceName,
 			addBlockName,
+			addEditorPluginName,
+			addEditorPluginSlot: addEditorPluginName
+				? (addEditorPluginSlot ?? "PluginSidebar")
+				: undefined,
 			addHookedBlockAnchor,
 			addHookedBlockPosition,
 			addHookedBlockSlug,

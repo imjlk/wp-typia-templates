@@ -18,6 +18,7 @@ import {
 import {
 	assertWorkspaceBindingSourceArtifacts,
 	assertWorkspaceBlockArtifacts,
+	assertWorkspaceEditorPluginArtifacts,
 	assertWorkspaceHookedBlockArtifacts,
 	assertWorkspacePatternArtifacts,
 	assertWorkspaceTemplateScaffold,
@@ -334,6 +335,8 @@ export function shouldRunMigrationSmoke(projectDir, packageJson) {
 export function assertGeneratedProjectScaffold({
 	addBindingSourceName,
 	addBlockName,
+	addEditorPluginName,
+	addEditorPluginSlot,
 	addHookedBlockAnchor,
 	addHookedBlockPosition,
 	addHookedBlockSlug,
@@ -376,6 +379,13 @@ export function assertGeneratedProjectScaffold({
 			assertWorkspaceBindingSourceArtifacts(
 				projectDir,
 				normalizeBlockSlug(addBindingSourceName),
+			);
+		}
+		if (addEditorPluginName) {
+			assertWorkspaceEditorPluginArtifacts(
+				projectDir,
+				normalizeBlockSlug(addEditorPluginName),
+				addEditorPluginSlot ?? "PluginSidebar",
 			);
 		}
 		if (addHookedBlockSlug && addHookedBlockAnchor && addHookedBlockPosition) {

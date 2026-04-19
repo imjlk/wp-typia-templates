@@ -42,6 +42,7 @@ const STRING_OPTION_NAMES_BY_COMMAND = {
     'external-layer-source',
     'persistence-policy',
     'position',
+    'slot',
     'template',
   ]),
   create: new Set([
@@ -140,6 +141,7 @@ export const WP_TYPIA_FUTURE_COMMAND_TREE = [
       'variation',
       'pattern',
       'binding-source',
+      'editor-plugin',
       'hooked-block',
     ],
   },

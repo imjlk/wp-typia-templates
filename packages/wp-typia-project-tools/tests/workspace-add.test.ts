@@ -2220,4 +2220,488 @@ test("binding source rollback restores an existing src/bindings/index.js registr
     fs.existsSync(path.join(rolledBackBindingSourceDir, "editor.ts"))
   ).toBe(false);
 }, 15_000);
+
+test("canonical CLI can add an editor plugin to an official workspace template", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-editor-plugin");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add editor plugin",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-editor-plugin",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Editor Plugin",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "document-tools", "--slot", "PluginSidebar"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const bootstrapSource = fs.readFileSync(
+    path.join(targetDir, "demo-workspace-add-editor-plugin.php"),
+    "utf8"
+  );
+  const editorPluginsIndexSource = fs.readFileSync(
+    path.join(targetDir, "src", "editor-plugins", "index.ts"),
+    "utf8"
+  );
+  const entrySource = fs.readFileSync(
+    path.join(targetDir, "src", "editor-plugins", "document-tools", "index.tsx"),
+    "utf8"
+  );
+  const sidebarSource = fs.readFileSync(
+    path.join(targetDir, "src", "editor-plugins", "document-tools", "Sidebar.tsx"),
+    "utf8"
+  );
+  const dataSource = fs.readFileSync(
+    path.join(targetDir, "src", "editor-plugins", "document-tools", "data.ts"),
+    "utf8"
+  );
+
+  expect(blockConfigSource).toContain('slug: "document-tools"');
+  expect(blockConfigSource).toContain('slot: "PluginSidebar"');
+  expect(blockConfigSource).toContain(
+    'file: "src/editor-plugins/document-tools/index.tsx"'
+  );
+  expect(bootstrapSource).toContain("build/editor-plugins/index.js");
+  expect(bootstrapSource).toContain("build/editor-plugins/style-index.css");
+  expect(bootstrapSource).toContain(
+    "demo_space_enqueue_editor_plugins_editor"
+  );
+  expect(editorPluginsIndexSource).toContain("import './document-tools';");
+  expect(entrySource).toContain("registerPlugin");
+  expect(entrySource).toContain("demo-space-document-tools");
+  expect(sidebarSource).toContain("PluginSidebar");
+  expect(sidebarSource).toContain("PluginSidebarMoreMenuItem");
+  expect(dataSource).toContain('EDITOR_PLUGIN_SLOT = "PluginSidebar"');
+  expect(dataSource).toContain("isDocumentToolsEnabled");
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = JSON.parse(doctorOutput) as {
+    checks: Array<{ detail: string; label: string; status: string }>;
+  };
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Editor plugin bootstrap"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Editor plugins index"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Editor plugin document-tools"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Editor plugin config document-tools"
+    )?.status
+  ).toBe("pass");
+
+  runCli("npm", ["run", "build"], { cwd: targetDir });
+  expect(
+    fs.existsSync(path.join(targetDir, "build", "editor-plugins", "index.js"))
+  ).toBe(true);
+  expect(
+    fs.existsSync(
+      path.join(targetDir, "build", "editor-plugins", "index.asset.php")
+    )
+  ).toBe(true);
+  expect(
+    fs.existsSync(
+      path.join(targetDir, "build", "editor-plugins", "style-index.css")
+    )
+  ).toBe(true);
+  expect(
+    fs.existsSync(path.join(targetDir, "build", "blocks-manifest.php"))
+  ).toBe(true);
+}, 30_000);
+
+test("editor plugin workflow repairs legacy workspace build config hooks", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-editor-plugin-legacy-build"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add editor plugin legacy build",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-editor-plugin-legacy-build",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Editor Plugin Legacy Build",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const buildScriptPath = path.join(targetDir, "scripts", "build-workspace.mjs");
+  const webpackConfigPath = path.join(targetDir, "webpack.config.js");
+  fs.writeFileSync(
+    buildScriptPath,
+    fs
+      .readFileSync(buildScriptPath, "utf8")
+      .replace(
+        `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t]`,
+        "[ 'src/bindings/index.ts', 'src/bindings/index.js' ]"
+      ),
+    "utf8"
+  );
+  fs.writeFileSync(
+    webpackConfigPath,
+    fs
+      .readFileSync(webpackConfigPath, "utf8")
+      .replace(
+        `\tfor ( const [ entryName, candidates ] of [\n\t\t[\n\t\t\t'bindings/index',\n\t\t\t[ 'src/bindings/index.ts', 'src/bindings/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'editor-plugins/index',\n\t\t\t[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],\n\t\t],\n\t] ) {\n\t\tfor ( const relativePath of candidates ) {\n\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\t\tcontinue;\n\t\t\t}\n\n\t\t\tentries.push( [ entryName, entryPath ] );\n\t\t\tbreak;\n\t\t}\n\t}`,
+        `\tfor ( const relativePath of [ 'src/bindings/index.ts', 'src/bindings/index.js' ] ) {\n\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\tcontinue;\n\t\t}\n\n\t\tentries.push( [ 'bindings/index', entryPath ] );\n\t\tbreak;\n\t}`
+      ),
+    "utf8"
+  );
+
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "document-tools"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  expect(fs.readFileSync(buildScriptPath, "utf8")).toContain(
+    "'src/editor-plugins/index.ts'"
+  );
+  expect(fs.readFileSync(webpackConfigPath, "utf8")).toContain(
+    "'editor-plugins/index'"
+  );
+
+  runCli("npm", ["run", "build"], { cwd: targetDir });
+  expect(
+    fs.existsSync(path.join(targetDir, "build", "editor-plugins", "index.js"))
+  ).toBe(true);
+}, 30_000);
+
+test("editor plugin workflow repairs formatted legacy workspace build config hooks", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-editor-plugin-formatted-legacy-build"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add editor plugin formatted legacy build",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-editor-plugin-formatted-legacy-build",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Editor Plugin Formatted Legacy Build",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const buildScriptPath = path.join(targetDir, "scripts", "build-workspace.mjs");
+  const webpackConfigPath = path.join(targetDir, "webpack.config.js");
+  fs.writeFileSync(
+    buildScriptPath,
+    fs
+      .readFileSync(buildScriptPath, "utf8")
+      .replace(
+        `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t]`,
+        `[\n      \"src/bindings/index.ts\",\n      \"src/bindings/index.js\",\n    ]`
+      ),
+    "utf8"
+  );
+  fs.writeFileSync(
+    webpackConfigPath,
+    fs
+      .readFileSync(webpackConfigPath, "utf8")
+      .replace(
+        `\tfor ( const [ entryName, candidates ] of [\n\t\t[\n\t\t\t'bindings/index',\n\t\t\t[ 'src/bindings/index.ts', 'src/bindings/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'editor-plugins/index',\n\t\t\t[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],\n\t\t],\n\t] ) {\n\t\tfor ( const relativePath of candidates ) {\n\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\t\tcontinue;\n\t\t\t}\n\n\t\t\tentries.push( [ entryName, entryPath ] );\n\t\t\tbreak;\n\t\t}\n\t}`,
+        `\tfor ( const relativePath of [\n\t\t\"src/bindings/index.ts\",\n\t\t\"src/bindings/index.js\",\n\t] ) {\n\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\tcontinue;\n\t\t}\n\n\t\tentries.push( [ \"bindings/index\", entryPath ] );\n\t\tbreak;\n\t}`
+      ),
+    "utf8"
+  );
+
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "document-tools"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  expect(fs.readFileSync(buildScriptPath, "utf8")).toContain(
+    "'src/editor-plugins/index.ts'"
+  );
+  expect(fs.readFileSync(webpackConfigPath, "utf8")).toContain(
+    "'editor-plugins/index'"
+  );
+}, 30_000);
+
+test("editor plugin workflow accepts double-quoted shared entry hooks", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-editor-plugin-double-quoted-shared-entries"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add editor plugin double quoted shared entries",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-editor-plugin-double-quoted-shared-entries",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Editor Plugin Double Quoted Shared Entries",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const buildScriptPath = path.join(targetDir, "scripts", "build-workspace.mjs");
+  const webpackConfigPath = path.join(targetDir, "webpack.config.js");
+  fs.writeFileSync(
+    buildScriptPath,
+    fs
+      .readFileSync(buildScriptPath, "utf8")
+      .replace(/'src\/editor-plugins\/index\.ts'/g, "\"src/editor-plugins/index.ts\"")
+      .replace(/'src\/editor-plugins\/index\.js'/g, "\"src/editor-plugins/index.js\""),
+    "utf8"
+  );
+  fs.writeFileSync(
+    webpackConfigPath,
+    fs
+      .readFileSync(webpackConfigPath, "utf8")
+      .replace(/'editor-plugins\/index'/g, "\"editor-plugins/index\"")
+      .replace(/'src\/editor-plugins\/index\.ts'/g, "\"src/editor-plugins/index.ts\"")
+      .replace(/'src\/editor-plugins\/index\.js'/g, "\"src/editor-plugins/index.js\""),
+    "utf8"
+  );
+
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "document-tools"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  expect(fs.readFileSync(buildScriptPath, "utf8")).toContain(
+    "\"src/editor-plugins/index.ts\""
+  );
+  expect(fs.readFileSync(webpackConfigPath, "utf8")).toContain(
+    "\"editor-plugins/index\""
+  );
+}, 30_000);
+
+test("editor plugin workflow preserves legacy registry imports outside inventory", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-editor-plugin-legacy-registry"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add editor plugin legacy registry",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-editor-plugin-legacy-registry",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Editor Plugin Legacy Registry",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const editorPluginsDir = path.join(targetDir, "src", "editor-plugins");
+  const legacyPluginDir = path.join(editorPluginsDir, "legacy-tools");
+  fs.mkdirSync(legacyPluginDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(editorPluginsDir, "index.js"),
+    "import './legacy-tools/index.js';\n",
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(legacyPluginDir, "index.js"),
+    "export {};\n",
+    "utf8"
+  );
+
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "document-tools"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const registrySource = fs.readFileSync(
+    path.join(editorPluginsDir, "index.js"),
+    "utf8"
+  );
+  expect(registrySource).toContain("import './legacy-tools';");
+  expect(registrySource).toContain("import './document-tools';");
+}, 30_000);
+
+test("editor plugin workflow accepts existing js shared entry hooks", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-editor-plugin-js-entry"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add editor plugin js entry",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-editor-plugin-js-entry",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Editor Plugin JS Entry",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const buildScriptPath = path.join(targetDir, "scripts", "build-workspace.mjs");
+  const editorPluginsDir = path.join(targetDir, "src", "editor-plugins");
+  fs.mkdirSync(editorPluginsDir, { recursive: true });
+  fs.writeFileSync(path.join(editorPluginsDir, "index.js"), "", "utf8");
+  fs.writeFileSync(
+    buildScriptPath,
+    fs
+      .readFileSync(buildScriptPath, "utf8")
+      .replace(
+        `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t]`,
+        `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.js',\n\t]`
+      ),
+    "utf8"
+  );
+
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "document-tools"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  expect(fs.readFileSync(buildScriptPath, "utf8")).toContain(
+    "'src/editor-plugins/index.js'"
+  );
+  expect(fs.readFileSync(path.join(editorPluginsDir, "index.js"), "utf8")).toContain(
+    "import './document-tools';"
+  );
+}, 30_000);
+
+test("editor plugin workflow repairs stale legacy bootstrap functions", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-editor-plugin-legacy-bootstrap"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add editor plugin legacy bootstrap",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-editor-plugin-legacy-bootstrap",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Editor Plugin Legacy Bootstrap",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "document-tools"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const bootstrapPath = path.join(
+    targetDir,
+    "demo-workspace-add-editor-plugin-legacy-bootstrap.php"
+  );
+  fs.writeFileSync(
+    bootstrapPath,
+    fs
+      .readFileSync(bootstrapPath, "utf8")
+      .replace(
+        /\n\t\$style_path\s+= __DIR__ \. '\/build\/editor-plugins\/style-index\.css';[\s\S]+?\n\t\}\n/u,
+        "\n"
+      ),
+    "utf8"
+  );
+  fs.appendFileSync(
+    bootstrapPath,
+    "\n// build/editor-plugins/style-index.css\n// build/editor-plugins/style-index-rtl.css\n// wp_style_add_data\n",
+    "utf8"
+  );
+
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "review-panel"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const bootstrapSource = fs.readFileSync(bootstrapPath, "utf8");
+  expect(bootstrapSource).toContain("build/editor-plugins/style-index.css");
+  expect(bootstrapSource).toContain("build/editor-plugins/style-index-rtl.css");
+  expect(bootstrapSource).toContain("wp_style_add_data");
+}, 30_000);
 });

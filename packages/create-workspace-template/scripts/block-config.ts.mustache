@@ -26,6 +26,12 @@ export interface WorkspaceBindingSourceConfig {
 	slug: string;
 }
 
+export interface WorkspaceEditorPluginConfig {
+	file: string;
+	slug: string;
+	slot: string;
+}
+
 export const BLOCKS: WorkspaceBlockConfig[] = [
 	// wp-typia add block entries
 ];
@@ -40,4 +46,8 @@ export const PATTERNS: WorkspacePatternConfig[] = [
 
 export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
 	// wp-typia add binding-source entries
+];
+
+export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
+	// wp-typia add editor-plugin entries
 ];

@@ -35,16 +35,19 @@ export {
 } from "./cli-diagnostics.js";
 export type { CliDiagnosticMessage } from "./cli-diagnostics.js";
 export {
+	EDITOR_PLUGIN_SLOT_IDS,
 	formatAddHelpText,
 	getWorkspaceBlockSelectOptions,
 	runAddBindingSourceCommand,
 	runAddBlockCommand,
+	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,
 	runAddPatternCommand,
 	runAddVariationCommand,
 	seedWorkspaceMigrationProject,
 } from "./cli-add.js";
 export { HOOKED_BLOCK_POSITION_IDS } from "./hooked-blocks.js";
+export type { EditorPluginSlotId } from "./cli-add.js";
 export type { HookedBlockPositionId } from "./hooked-blocks.js";
 export { formatHelpText } from "./cli-help.js";
 export {

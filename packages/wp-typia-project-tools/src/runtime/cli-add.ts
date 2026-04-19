@@ -10,11 +10,13 @@
 export {
 	ADD_BLOCK_TEMPLATE_IDS,
 	ADD_KIND_IDS,
+	EDITOR_PLUGIN_SLOT_IDS,
 	formatAddHelpText,
 } from "./cli-add-shared.js";
 export type {
 	AddBlockTemplateId,
 	AddKindId,
+	EditorPluginSlotId,
 } from "./cli-add-shared.js";
 export {
 	runAddBlockCommand,
@@ -22,6 +24,7 @@ export {
 } from "./cli-add-block.js";
 export {
 	runAddBindingSourceCommand,
+	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,
 	runAddPatternCommand,
 	runAddVariationCommand,

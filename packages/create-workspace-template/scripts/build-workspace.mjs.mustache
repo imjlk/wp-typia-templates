@@ -22,7 +22,12 @@ function getBlockSlugs() {
 }
 
 function hasSharedEditorEntries() {
-	for ( const relativePath of [ 'src/bindings/index.ts', 'src/bindings/index.js' ] ) {
+	for ( const relativePath of [
+		'src/bindings/index.ts',
+		'src/bindings/index.js',
+		'src/editor-plugins/index.ts',
+		'src/editor-plugins/index.js',
+	] ) {
 		if ( fs.existsSync( path.join( process.cwd(), relativePath ) ) ) {
 			return true;
 		}

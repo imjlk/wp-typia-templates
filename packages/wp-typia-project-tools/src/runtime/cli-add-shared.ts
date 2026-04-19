@@ -23,8 +23,21 @@ import {
 /**
  * Supported top-level `wp-typia add` kinds exposed by the canonical CLI.
  */
-export const ADD_KIND_IDS = ["block", "variation", "pattern", "binding-source", "hooked-block"] as const;
+export const ADD_KIND_IDS = [
+	"block",
+	"variation",
+	"pattern",
+	"binding-source",
+	"hooked-block",
+	"editor-plugin",
+] as const;
 export type AddKindId = (typeof ADD_KIND_IDS)[number];
+
+/**
+ * Supported editor-plugin shell slots accepted by `wp-typia add editor-plugin --slot`.
+ */
+export const EDITOR_PLUGIN_SLOT_IDS = ["PluginSidebar"] as const;
+export type EditorPluginSlotId = (typeof EDITOR_PLUGIN_SLOT_IDS)[number];
 
 /**
  * Supported built-in block families accepted by `wp-typia add block --template`.
@@ -60,6 +73,21 @@ export interface RunAddHookedBlockCommandOptions {
 	blockName: string;
 	cwd?: string;
 	position: string;
+}
+
+/**
+ * Options for `wp-typia add editor-plugin`.
+ *
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @property editorPluginName Human-entered editor plugin name that will be
+ * normalized into the generated slug.
+ * @property slot Optional editor shell slot. Defaults to `PluginSidebar`.
+ */
+export interface RunAddEditorPluginCommandOptions {
+	cwd?: string;
+	editorPluginName: string;
+	slot?: string;
 }
 
 export interface RunAddBlockCommandOptions {
@@ -234,6 +262,23 @@ export function assertValidHookAnchor(anchorBlockName: string): string {
 	return trimmed;
 }
 
+/**
+ * Validate and normalize the editor plugin shell slot.
+ *
+ * @param slot Optional shell slot. Defaults to `PluginSidebar`.
+ * @returns The canonical editor plugin slot id.
+ * @throws {Error} When the slot is not supported by the workspace scaffold.
+ */
+export function assertValidEditorPluginSlot(slot = "PluginSidebar"): EditorPluginSlotId {
+	if ((EDITOR_PLUGIN_SLOT_IDS as readonly string[]).includes(slot)) {
+		return slot as EditorPluginSlotId;
+	}
+
+	throw new Error(
+		`Editor plugin slot must be one of: ${EDITOR_PLUGIN_SLOT_IDS.join(", ")}.`,
+	);
+}
+
 export function readWorkspaceBlockJson(
 	projectDir: string,
 	blockSlug: string,
@@ -351,6 +396,29 @@ export function assertBindingSourceDoesNotExist(
 }
 
 /**
+ * Ensure an editor plugin scaffold does not already exist on disk or in the
+ * workspace inventory.
+ *
+ * @param projectDir Workspace root directory.
+ * @param editorPluginSlug Normalized editor plugin slug.
+ * @param inventory Parsed workspace inventory.
+ * @throws {Error} When the directory or inventory entry already exists.
+ */
+export function assertEditorPluginDoesNotExist(projectDir: string, editorPluginSlug: string, inventory: WorkspaceInventory): void {
+	const editorPluginDir = path.join(projectDir, "src", "editor-plugins", editorPluginSlug);
+	if (fs.existsSync(editorPluginDir)) {
+		throw new Error(
+			`An editor plugin already exists at ${path.relative(projectDir, editorPluginDir)}. Choose a different name.`,
+		);
+	}
+	if (inventory.editorPlugins.some((entry) => entry.slug === editorPluginSlug)) {
+		throw new Error(
+			`An editor plugin inventory entry already exists for ${editorPluginSlug}. Choose a different name.`,
+		);
+	}
+}
+
+/**
  * Returns help text for the canonical `wp-typia add` subcommands.
  */
 export function formatAddHelpText(): string {
@@ -360,11 +428,13 @@ export function formatAddHelpText(): string {
   wp-typia add pattern <name>
   wp-typia add binding-source <name>
   wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <${HOOKED_BLOCK_POSITION_IDS.join("|")}>
+  wp-typia add editor-plugin <name> [--slot <${EDITOR_PLUGIN_SLOT_IDS.join("|")}>]
 
 Notes:
   \`wp-typia add\` runs only inside official ${WORKSPACE_TEMPLATE_PACKAGE} workspaces.
   \`add variation\` targets an existing block slug from \`scripts/block-config.ts\`.
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
   \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.
-  \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.`;
+  \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.
+  \`add editor-plugin\` scaffolds a document-level editor extension under \`src/editor-plugins/\`.`;
 }

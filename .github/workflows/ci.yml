@@ -346,6 +346,12 @@ jobs:
           - runtime: node
             template: '@wp-typia/create-workspace-template'
             package_manager: npm
+            project_name: smoke-workspace-add-editor-plugin-npm
+            add_editor_plugin_name: document-tools
+            add_editor_plugin_slot: PluginSidebar
+          - runtime: node
+            template: '@wp-typia/create-workspace-template'
+            package_manager: npm
             project_name: smoke-workspace-add-hooked-block-npm
             add_block_name: counter-card
             add_template: basic
@@ -431,6 +437,12 @@ jobs:
           fi
           if [ -n "${{ matrix.add_binding_source_name || '' }}" ]; then
             args+=(--add-binding-source-name "${{ matrix.add_binding_source_name }}")
+          fi
+          if [ -n "${{ matrix.add_editor_plugin_name || '' }}" ]; then
+            args+=(--add-editor-plugin-name "${{ matrix.add_editor_plugin_name }}")
+          fi
+          if [ -n "${{ matrix.add_editor_plugin_slot || '' }}" ]; then
+            args+=(--add-editor-plugin-slot "${{ matrix.add_editor_plugin_slot }}")
           fi
           if [ -n "${{ matrix.add_hooked_block_slug || '' }}" ]; then
             args+=(--add-hooked-block-slug "${{ matrix.add_hooked_block_slug }}")

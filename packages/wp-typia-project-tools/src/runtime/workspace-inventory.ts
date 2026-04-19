@@ -29,13 +29,28 @@ export interface WorkspaceBindingSourceInventoryEntry {
 	slug: string;
 }
 
+/**
+ * Editor-plugin entry parsed from `scripts/block-config.ts`.
+ *
+ * @property file Relative path to the generated editor plugin entry file.
+ * @property slug Normalized editor plugin slug.
+ * @property slot Canonical editor shell slot for the plugin scaffold.
+ */
+export interface WorkspaceEditorPluginInventoryEntry {
+	file: string;
+	slug: string;
+	slot: string;
+}
+
 export interface WorkspaceInventory {
 	bindingSources: WorkspaceBindingSourceInventoryEntry[];
 	blockConfigPath: string;
 	blocks: WorkspaceBlockInventoryEntry[];
 	hasBindingSourcesSection: boolean;
+	hasEditorPluginsSection: boolean;
 	hasPatternsSection: boolean;
 	hasVariationsSection: boolean;
+	editorPlugins: WorkspaceEditorPluginInventoryEntry[];
 	patterns: WorkspacePatternInventoryEntry[];
 	source: string;
 	variations: WorkspaceVariationInventoryEntry[];
@@ -45,6 +60,10 @@ export const BLOCK_CONFIG_ENTRY_MARKER = "\t// wp-typia add block entries";
 export const VARIATION_CONFIG_ENTRY_MARKER = "\t// wp-typia add variation entries";
 export const PATTERN_CONFIG_ENTRY_MARKER = "\t// wp-typia add pattern entries";
 export const BINDING_SOURCE_CONFIG_ENTRY_MARKER = "\t// wp-typia add binding-source entries";
+/**
+ * Marker used to append generated editor-plugin entries into `EDITOR_PLUGINS`.
+ */
+export const EDITOR_PLUGIN_CONFIG_ENTRY_MARKER = "\t// wp-typia add editor-plugin entries";
 
 const VARIATIONS_INTERFACE_SECTION = `
 
@@ -90,6 +109,22 @@ const BINDING_SOURCES_CONST_SECTION = `
 
 export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
 \t// wp-typia add binding-source entries
+];
+`;
+
+const EDITOR_PLUGINS_INTERFACE_SECTION = `
+
+export interface WorkspaceEditorPluginConfig {
+\tfile: string;
+\tslug: string;
+\tslot: string;
+}
+`;
+
+const EDITOR_PLUGINS_CONST_SECTION = `
+
+export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
+\t// wp-typia add editor-plugin entries
 ];
 `;
 
@@ -255,6 +290,24 @@ function parseBindingSourceEntries(
 	});
 }
 
+function parseEditorPluginEntries(
+	arrayLiteral: ts.ArrayLiteralExpression,
+): WorkspaceEditorPluginInventoryEntry[] {
+	return arrayLiteral.elements.map((element, elementIndex) => {
+		if (!ts.isObjectLiteralExpression(element)) {
+			throw new Error(
+				`EDITOR_PLUGINS[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
+			);
+		}
+
+		return {
+			file: getRequiredStringProperty("EDITOR_PLUGINS", elementIndex, element, "file"),
+			slug: getRequiredStringProperty("EDITOR_PLUGINS", elementIndex, element, "slug"),
+			slot: getRequiredStringProperty("EDITOR_PLUGINS", elementIndex, element, "slot"),
+		};
+	});
+}
+
 /**
  * Parse workspace inventory entries from the source of `scripts/block-config.ts`.
  *
@@ -277,6 +330,7 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 	const variationArray = findExportedArrayLiteral(sourceFile, "VARIATIONS");
 	const patternArray = findExportedArrayLiteral(sourceFile, "PATTERNS");
 	const bindingSourceArray = findExportedArrayLiteral(sourceFile, "BINDING_SOURCES");
+	const editorPluginArray = findExportedArrayLiteral(sourceFile, "EDITOR_PLUGINS");
 	if (variationArray.found && !variationArray.array) {
 		throw new Error("scripts/block-config.ts must export VARIATIONS as an array literal.");
 	}
@@ -286,6 +340,9 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 	if (bindingSourceArray.found && !bindingSourceArray.array) {
 		throw new Error("scripts/block-config.ts must export BINDING_SOURCES as an array literal.");
 	}
+	if (editorPluginArray.found && !editorPluginArray.array) {
+		throw new Error("scripts/block-config.ts must export EDITOR_PLUGINS as an array literal.");
+	}
 
 	return {
 		bindingSources: bindingSourceArray.array
@@ -293,8 +350,12 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 			: [],
 		blocks: parseBlockEntries(blockArray.array),
 		hasBindingSourcesSection: bindingSourceArray.found,
+		hasEditorPluginsSection: editorPluginArray.found,
 		hasPatternsSection: patternArray.found,
 		hasVariationsSection: variationArray.found,
+		editorPlugins: editorPluginArray.array
+			? parseEditorPluginEntries(editorPluginArray.array)
+			: [],
 		patterns: patternArray.array ? parsePatternEntries(patternArray.array) : [],
 		source,
 		variations: variationArray.array ? parseVariationEntries(variationArray.array) : [],
@@ -377,6 +438,12 @@ function ensureWorkspaceInventorySections(source: string): string {
 	if (!/export\s+const\s+BINDING_SOURCES\b/u.test(nextSource)) {
 		nextSource += BINDING_SOURCES_CONST_SECTION;
 	}
+	if (!/export\s+interface\s+WorkspaceEditorPluginConfig\b/u.test(nextSource)) {
+		nextSource += EDITOR_PLUGINS_INTERFACE_SECTION;
+	}
+	if (!/export\s+const\s+EDITOR_PLUGINS\b/u.test(nextSource)) {
+		nextSource += EDITOR_PLUGINS_CONST_SECTION;
+	}
 
 	return `${nextSource}\n`;
 }
@@ -408,12 +475,14 @@ export function updateWorkspaceInventorySource(
 	{
 		blockEntries = [],
 		bindingSourceEntries = [],
+		editorPluginEntries = [],
 		patternEntries = [],
 		variationEntries = [],
 		transformSource,
 	}: {
 		blockEntries?: string[];
 		bindingSourceEntries?: string[];
+		editorPluginEntries?: string[];
 		patternEntries?: string[];
 		transformSource?: (source: string) => string;
 		variationEntries?: string[];
@@ -430,6 +499,11 @@ export function updateWorkspaceInventorySource(
 		nextSource,
 		BINDING_SOURCE_CONFIG_ENTRY_MARKER,
 		bindingSourceEntries,
+	);
+	nextSource = appendEntriesAtMarker(
+		nextSource,
+		EDITOR_PLUGIN_CONFIG_ENTRY_MARKER,
+		editorPluginEntries,
 	);
 	return nextSource;
 }
