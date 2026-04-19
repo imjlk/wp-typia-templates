@@ -55,12 +55,12 @@ npx wp-typia create my-block
 
 ### Built-in templates
 
-| Template        | What it optimizes for                                                              |
-| --------------- | ---------------------------------------------------------------------------------- |
-| `basic`         | Minimal block scaffold with type sync and runtime validation                       |
-| `interactivity` | The same foundation plus WordPress Interactivity API wiring                        |
-| `persistence`   | Typed REST contracts, storage policy options, and data-backed block patterns       |
-| `compound`      | Parent/child multi-block scaffolding with optional persistence on the parent layer |
+| Template        | What it optimizes for                                                                |
+| --------------- | ------------------------------------------------------------------------------------ |
+| `basic`         | Minimal block scaffold with type sync and runtime validation                         |
+| `interactivity` | The same foundation plus WordPress Interactivity API wiring                          |
+| `persistence`   | Typed REST contracts, storage policy options, and data-backed block patterns         |
+| `compound`      | Parent/child multi-block scaffolding with optional persistence on the parent layer   |
 | `query-loop`    | `core/query` variation scaffolding with stable namespace identity and starter layout |
 
 ## What makes it different
