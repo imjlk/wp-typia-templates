@@ -2470,6 +2470,66 @@ test("editor plugin workflow repairs formatted legacy workspace build config hoo
   );
 }, 30_000);
 
+test("editor plugin workflow accepts double-quoted shared entry hooks", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-editor-plugin-double-quoted-shared-entries"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add editor plugin double quoted shared entries",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-editor-plugin-double-quoted-shared-entries",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Editor Plugin Double Quoted Shared Entries",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const buildScriptPath = path.join(targetDir, "scripts", "build-workspace.mjs");
+  const webpackConfigPath = path.join(targetDir, "webpack.config.js");
+  fs.writeFileSync(
+    buildScriptPath,
+    fs
+      .readFileSync(buildScriptPath, "utf8")
+      .replace(/'src\/editor-plugins\/index\.ts'/g, "\"src/editor-plugins/index.ts\"")
+      .replace(/'src\/editor-plugins\/index\.js'/g, "\"src/editor-plugins/index.js\""),
+    "utf8"
+  );
+  fs.writeFileSync(
+    webpackConfigPath,
+    fs
+      .readFileSync(webpackConfigPath, "utf8")
+      .replace(/'editor-plugins\/index'/g, "\"editor-plugins/index\"")
+      .replace(/'src\/editor-plugins\/index\.ts'/g, "\"src/editor-plugins/index.ts\"")
+      .replace(/'src\/editor-plugins\/index\.js'/g, "\"src/editor-plugins/index.js\""),
+    "utf8"
+  );
+
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "document-tools"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  expect(fs.readFileSync(buildScriptPath, "utf8")).toContain(
+    "\"src/editor-plugins/index.ts\""
+  );
+  expect(fs.readFileSync(webpackConfigPath, "utf8")).toContain(
+    "\"editor-plugins/index\""
+  );
+}, 30_000);
+
 test("editor plugin workflow preserves legacy registry imports outside inventory", async () => {
   const targetDir = path.join(
     tempRoot,

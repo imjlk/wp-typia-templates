@@ -699,10 +699,7 @@ async function ensureEditorPluginBuildScriptAnchors(workspace: WorkspaceProject)
 	const buildScriptPath = path.join(workspace.projectDir, "scripts", "build-workspace.mjs");
 
 	await patchFile(buildScriptPath, (source) => {
-		if (
-			source.includes("'src/editor-plugins/index.ts'") ||
-			source.includes("'src/editor-plugins/index.js'")
-		) {
+		if (/['"]src\/editor-plugins\/index\.(?:ts|js)['"]/u.test(source)) {
 			return source;
 		}
 
@@ -732,7 +729,7 @@ async function ensureEditorPluginWebpackAnchors(workspace: WorkspaceProject): Pr
 	const webpackConfigPath = path.join(workspace.projectDir, "webpack.config.js");
 
 	await patchFile(webpackConfigPath, (source) => {
-		if (source.includes("'editor-plugins/index'")) {
+		if (/['"]editor-plugins\/index['"]/u.test(source)) {
 			return source;
 		}
 
