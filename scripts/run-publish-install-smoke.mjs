@@ -217,11 +217,23 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 		cwd: projectDir,
 		env: createNodeOnlyEnv(),
 	}).trim();
+	if (!versionOutput.startsWith("wp-typia ")) {
+		throw new Error(`Unexpected human-readable wp-typia --version output: ${versionOutput}`);
+	}
+
+	const versionJsonOutput = run(
+		process.execPath,
+		[cliPath, "--version", "--format", "json"],
+		{
+			cwd: projectDir,
+			env: createNodeOnlyEnv(),
+		},
+	).trim();
 	let parsed;
 	try {
-		parsed = JSON.parse(versionOutput);
+		parsed = JSON.parse(versionJsonOutput);
 	} catch {
-		throw new Error(`wp-typia --version did not return JSON: ${versionOutput}`);
+		throw new Error(`wp-typia --version --format json did not return JSON: ${versionJsonOutput}`);
 	}
 
 	if (
@@ -230,7 +242,7 @@ withTempDir("wp-typia-publish-install-smoke-", (tempRoot) => {
 		parsed.data?.type !== "version" ||
 		typeof parsed.data.version !== "string"
 	) {
-		throw new Error(`Unexpected wp-typia --version output: ${versionOutput}`);
+		throw new Error(`Unexpected wp-typia --version --format json output: ${versionJsonOutput}`);
 	}
 
 	const completionsOutput = run(process.execPath, [cliPath, "completions", "bash"], {

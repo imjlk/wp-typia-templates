@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { cleanupScaffoldTempRoot, createBlockSubsetFixturePath, createScaffoldTempRoot, entryPath, getCommandErrorMessage, runCapturedCli, runCli, templateLayerAmbiguousFixturePath, templateLayerFixturePath } from "./helpers/scaffold-test-harness.js";
+import { cleanupScaffoldTempRoot, createBlockSubsetFixturePath, createScaffoldTempRoot, entryPath, getCommandErrorMessage, runCapturedCli, runCli, scaffoldOfficialWorkspace, templateLayerAmbiguousFixturePath, templateLayerFixturePath } from "./helpers/scaffold-test-harness.js";
 import { formatHelpText, getDoctorChecks, getNextSteps, getOptionalOnboarding, runScaffoldFlow } from "../src/runtime/cli-core.js";
 import { collectScaffoldAnswers } from "../src/runtime/scaffold.js";
 import { getQuickStartWorkflowNote } from "../src/runtime/scaffold-onboarding.js";
@@ -414,6 +414,21 @@ test("runScaffoldFlow rejects removed built-in template ids", async () => {
   );
 });
 
+test("runScaffoldFlow rejects mistyped built-in template ids before external lookup noise", async () => {
+  await expect(
+    runScaffoldFlow({
+      cwd: tempRoot,
+      noInstall: true,
+      packageManager: "npm",
+      projectInput: "demo-mistyped-template",
+      templateId: "basicc",
+      yes: true,
+    })
+  ).rejects.toThrow(
+    'Unknown template "basicc". Did you mean "basic"? Use `--template basic` for the built-in scaffold'
+  );
+});
+
 test("runScaffoldFlow rejects external layers for non-built-in templates", async () => {
   await expect(
     runScaffoldFlow({
@@ -815,6 +830,43 @@ test("node entry warns about awkward project directory names", () => {
   expect(result.stderr).toContain(
     'Project directory "node cool block!" contains shell-sensitive characters (!).'
   );
+});
+
+test("node entry rejects non-empty target directories with actionable guidance", () => {
+  const targetDir = path.join(tempRoot, "node-non-empty-target");
+  fs.mkdirSync(targetDir, { recursive: true });
+  fs.writeFileSync(path.join(targetDir, "existing.txt"), "already here\n", "utf8");
+
+  const errorMessage = getCommandErrorMessage(() =>
+    runCli("node", [entryPath, "create", targetDir, "--template", "basic", "--yes"], {
+      stdio: "pipe",
+    })
+  );
+
+  expect(errorMessage).toContain(`Target directory is not empty: ${targetDir}.`);
+  expect(errorMessage).toContain("Choose a new project directory");
+  expect(errorMessage).toContain("empty this directory before rerunning the scaffold");
+});
+
+test("node entry rejects add block before workspace dependencies are installed", async () => {
+  const targetDir = path.join(tempRoot, "node-workspace-add-without-install");
+
+  await scaffoldOfficialWorkspace(targetDir);
+
+  const errorMessage = getCommandErrorMessage(() =>
+    runCli(
+      "node",
+      [entryPath, "add", "block", "counter-card", "--template", "basic"],
+      {
+        cwd: targetDir,
+        stdio: "pipe",
+      }
+    )
+  );
+
+  expect(errorMessage).toContain("Workspace dependencies have not been installed yet.");
+  expect(errorMessage).toContain("Run `npm install` from the workspace root");
+  expect(errorMessage).toContain("`wp-typia add block ...`");
 });
 
 test("node entry rejects missing values for identifier override flags", () => {

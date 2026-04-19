@@ -348,21 +348,28 @@ function renderAddHelp() {
 	]);
 }
 
-function renderVersion() {
-	printLine(
-		JSON.stringify(
-			{
-				ok: true,
-				data: {
-					type: "version",
-					name: packageJson.name,
-					version: packageJson.version,
+function renderVersion(options: {
+	format?: string;
+} = {}) {
+	if (options.format === "json") {
+		printLine(
+			JSON.stringify(
+				{
+					ok: true,
+					data: {
+						type: "version",
+						name: packageJson.name,
+						version: packageJson.version,
+					},
 				},
-			},
-			null,
-			2,
-		),
-	);
+				null,
+				2,
+			),
+		);
+		return;
+	}
+
+	printLine(`wp-typia ${packageJson.version}`);
 }
 
 function renderTemplatesJson(flags: GlobalFlags, subcommand: string) {
@@ -469,7 +476,9 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 	}
 
 	if (versionRequested) {
-		renderVersion();
+		renderVersion({
+			format: typeof rawMergedFlags.format === "string" ? rawMergedFlags.format : undefined,
+		});
 		return;
 	}
 

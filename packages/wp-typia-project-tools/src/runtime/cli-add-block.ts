@@ -62,10 +62,14 @@ import {
 	resolveExternalTemplateLayers,
 } from "./template-layers.js";
 import {
+	formatInstallCommand,
+} from "./package-managers.js";
+import {
 	resolveOptionalInteractiveExternalLayerId,
 } from "./external-layer-selection.js";
 
 const COLLECTION_IMPORT_LINE = "import '../../collection';";
+const WORKSPACE_INSTALL_MARKERS = ["node_modules", ".pnp.cjs", ".pnp.loader.mjs"] as const;
 
 async function ensureCollectionImport(filePath: string): Promise<void> {
 	await patchFile(filePath, (source) => {
@@ -155,6 +159,25 @@ function resolveExternalLayerSourceFromCaller(
 	}
 
 	return path.resolve(callerCwd, source);
+}
+
+function hasInstalledWorkspaceDependencies(projectDir: string): boolean {
+	return WORKSPACE_INSTALL_MARKERS.some((marker) =>
+		fs.existsSync(path.join(projectDir, marker)),
+	);
+}
+
+function assertWorkspaceDependenciesInstalled(workspace: {
+	packageManager: "bun" | "npm" | "pnpm" | "yarn";
+	projectDir: string;
+}): void {
+	if (hasInstalledWorkspaceDependencies(workspace.projectDir)) {
+		return;
+	}
+
+	throw new Error(
+		`Workspace dependencies have not been installed yet. Run \`${formatInstallCommand(workspace.packageManager)}\` from the workspace root before using \`wp-typia add block ...\`.`,
+	);
 }
 
 
@@ -495,6 +518,7 @@ export async function runAddBlockCommand({
 	assertPersistenceFlagsAllowed(resolvedTemplateId, { dataStorageMode, persistencePolicy });
 
 	const workspace = resolveWorkspaceProject(cwd);
+	assertWorkspaceDependenciesInstalled(workspace);
 	const normalizedExternalLayerId = normalizeExternalLayerOption(externalLayerId);
 	const normalizedExternalLayerSource = resolveExternalLayerSourceFromCaller(
 		normalizeExternalLayerOption(externalLayerSource),

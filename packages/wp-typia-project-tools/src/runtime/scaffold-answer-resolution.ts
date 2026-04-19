@@ -1,3 +1,5 @@
+import { execSync } from 'node:child_process';
+
 import {
   PACKAGE_MANAGER_IDS,
   getPackageManager,
@@ -31,6 +33,11 @@ import type {
 } from './scaffold.js';
 
 const WORKSPACE_TEMPLATE_ALIAS = 'workspace';
+const TEMPLATE_SELECTION_HINT = `--template <${[
+  ...TEMPLATE_IDS,
+  WORKSPACE_TEMPLATE_ALIAS,
+].join('|')}|./path|github:owner/repo/path[#ref]|npm-package>`;
+const TEMPLATE_SUGGESTION_IDS = [...TEMPLATE_IDS, WORKSPACE_TEMPLATE_ALIAS] as const;
 
 /**
  * Detect the current author name from local Git config.
@@ -109,6 +116,84 @@ function normalizeTemplateSelection(templateId: string): string {
     : templateId;
 }
 
+function looksLikeExplicitExternalTemplateLocator(templateId: string): boolean {
+  return (
+    templateId.startsWith('./') ||
+    templateId.startsWith('../') ||
+    templateId.startsWith('/') ||
+    templateId.startsWith('@') ||
+    templateId.startsWith('github:') ||
+    templateId.includes('/')
+  );
+}
+
+function getEditDistance(left: string, right: string): number {
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  const current = new Array<number>(right.length + 1);
+
+  for (let leftIndex = 0; leftIndex < left.length; leftIndex += 1) {
+    current[0] = leftIndex + 1;
+
+    for (let rightIndex = 0; rightIndex < right.length; rightIndex += 1) {
+      const substitutionCost = left[leftIndex] === right[rightIndex] ? 0 : 1;
+      current[rightIndex + 1] = Math.min(
+        current[rightIndex] + 1,
+        previous[rightIndex + 1] + 1,
+        previous[rightIndex] + substitutionCost,
+      );
+    }
+
+    for (let index = 0; index < current.length; index += 1) {
+      previous[index] = current[index] as number;
+    }
+  }
+
+  return previous[right.length] as number;
+}
+
+function findMistypedBuiltInTemplateSuggestion(templateId: string): string | null {
+  const normalizedTemplateId = templateId.trim().toLowerCase();
+  if (
+    normalizedTemplateId.length === 0 ||
+    looksLikeExplicitExternalTemplateLocator(normalizedTemplateId)
+  ) {
+    return null;
+  }
+
+  let bestCandidate: { distance: number; id: string } | null = null;
+
+  for (const candidateId of TEMPLATE_SUGGESTION_IDS) {
+    const distance = getEditDistance(normalizedTemplateId, candidateId);
+    if (
+      bestCandidate === null ||
+      distance < bestCandidate.distance
+    ) {
+      bestCandidate = {
+        distance,
+        id: candidateId,
+      };
+    }
+  }
+
+  return bestCandidate && bestCandidate.distance <= 2
+    ? bestCandidate.id
+    : null;
+}
+
+function getMistypedBuiltInTemplateMessage(templateId: string): string | null {
+  const suggestion = findMistypedBuiltInTemplateSuggestion(templateId);
+  if (!suggestion) {
+    return null;
+  }
+
+  const suggestionDescription =
+    suggestion === WORKSPACE_TEMPLATE_ALIAS
+      ? 'official workspace scaffold'
+      : 'built-in scaffold';
+
+  return `Unknown template "${templateId}". Did you mean "${suggestion}"? Use \`--template ${suggestion}\` for the ${suggestionDescription}, or pass a local path, \`github:owner/repo/path[#ref]\`, or an npm package spec for an external template.`;
+}
+
 /**
  * Resolve the scaffold template id from flags, defaults, and interactive selection.
  *
@@ -126,8 +211,15 @@ export async function resolveTemplateId({
     if (isRemovedBuiltInTemplateId(templateId)) {
       throw new Error(getRemovedBuiltInTemplateMessage(templateId));
     }
+    if (normalizedTemplateId === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE) {
+      return normalizedTemplateId;
+    }
     if (isBuiltInTemplateId(normalizedTemplateId)) {
       return getTemplateById(normalizedTemplateId).id;
+    }
+    const mistypedBuiltInTemplateMessage = getMistypedBuiltInTemplateMessage(templateId);
+    if (mistypedBuiltInTemplateMessage) {
+      throw new Error(mistypedBuiltInTemplateMessage);
     }
     return normalizedTemplateId;
   }
@@ -138,7 +230,7 @@ export async function resolveTemplateId({
 
   if (!isInteractive || !selectTemplate) {
     throw new Error(
-      `Template is required in non-interactive mode. Use --template <${TEMPLATE_IDS.join('|')}|./path|github:owner/repo/path[#ref]|npm-package>.`,
+      `Template is required in non-interactive mode. Use ${TEMPLATE_SELECTION_HINT}.`,
     );
   }
 
@@ -246,4 +338,3 @@ export async function collectScaffoldAnswers({
     title: await promptText('Block title', toTitleCase(identifiers.slug)),
   };
 }
-import { execSync } from 'node:child_process';

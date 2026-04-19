@@ -51,8 +51,12 @@ export async function ensureScaffoldDirectory(
 
 	const entries = await fsp.readdir(targetDir);
 	if (entries.length > 0) {
-		throw new Error(`Target directory is not empty: ${targetDir}`);
+		throw new Error(formatNonEmptyTargetDirectoryError(targetDir));
 	}
+}
+
+export function formatNonEmptyTargetDirectoryError(targetDir: string): string {
+	return `Target directory is not empty: ${targetDir}. Choose a new project directory, or empty this directory before rerunning the scaffold.`;
 }
 
 /**

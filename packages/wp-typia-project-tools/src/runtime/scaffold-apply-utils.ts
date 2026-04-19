@@ -28,6 +28,9 @@ import {
 	stringifyStarterManifest,
 } from "./starter-manifests.js";
 import {
+	formatNonEmptyTargetDirectoryError,
+} from "./scaffold-bootstrap.js";
+import {
 	stringifyBuiltInBlockJsonDocument,
 	type BuiltInBlockArtifact,
 } from "./built-in-block-artifacts.js";
@@ -94,7 +97,7 @@ export async function ensureDirectory(targetDir: string, allowExisting = false):
 
 	const entries = await fsp.readdir(targetDir);
 	if (entries.length > 0) {
-		throw new Error(`Target directory is not empty: ${targetDir}`);
+		throw new Error(formatNonEmptyTargetDirectoryError(targetDir));
 	}
 }
 
