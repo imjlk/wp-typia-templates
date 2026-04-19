@@ -42,8 +42,6 @@ This document is descriptive, not normative. For support guarantees, see
 - `@wp-typia/block-runtime/inspector`
 - `@wp-typia/block-runtime/json-utils`
 - `@wp-typia/block-runtime/validation`
-- `@wp-typia/create`
-  Deprecated legacy package shell only.
 
 ## Classification
 
@@ -78,12 +76,6 @@ This document is descriptive, not normative. For support guarantees, see
 - `@wp-typia/block-runtime/metadata-parser`
 - `@wp-typia/block-runtime/metadata-php-render`
 - `@wp-typia/block-runtime/metadata-projection`
-
-### Deprecated public
-
-- `@wp-typia/create`
-  Publishable for migration messaging, but no longer the maintained runtime
-  implementation.
 
 ## Ownership notes
 
@@ -127,4 +119,3 @@ This document is descriptive, not normative. For support guarantees, see
   types/model/controls, metadata-core artifact/client-render/sync-routines, and
   schema-core auth/document/projection helpers into focused internal modules for
   maintainability.
-- `@wp-typia/create` no longer owns runtime exports or CLI behavior.

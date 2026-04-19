@@ -49,7 +49,6 @@ to the canonical `create` surface in docs and review notes.
 - `@wp-typia/project-tools` must remain non-CLI.
 - `@wp-typia/project-tools` must not gain a `bin` entry.
 - `@wp-typia/project-tools` must not expose a second top-level CLI parser.
-- `@wp-typia/create` must remain a deprecated legacy package shell.
 
 `@wp-typia/project-tools` is the runtime library behind:
 

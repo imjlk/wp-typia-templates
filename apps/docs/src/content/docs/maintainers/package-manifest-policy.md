@@ -52,17 +52,6 @@ No other publishable runtime package should use `workspace:` protocol dependenci
 
 Private manifests, including the repo root, may still use `workspace:*` where that improves monorepo ergonomics. The publish-time coupling rules above apply only to publishable workspace packages.
 
-## Archived npm entrypoint manifests
-
-Archived npm-facing redirect packages use a stricter source-manifest policy:
-
-- keep the source manifest `private` to block accidental republishes
-- keep the manifest description explicit about the supported
-  `wp-typia create <project-dir>` path
-- keep the registry deprecation message sourced from the shared archived
-  entrypoint policy helper so README, package metadata, and npm guidance stay
-  aligned
-
 ## When Touching Package Metadata
 
 When a PR edits package manifests:

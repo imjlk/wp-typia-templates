@@ -12,7 +12,6 @@ Package roles:
   templates no longer ship structural, TS/TSX, style, or block-local `render.php`
   Mustache files.
 - `@wp-typia/block-runtime/*` owns generated-project runtime helpers.
-- `@wp-typia/create` is the deprecated legacy package shell.
 
 Supported public imports:
 

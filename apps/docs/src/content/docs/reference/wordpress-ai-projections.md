@@ -52,11 +52,11 @@ projection layer for execution semantics and capability metadata.
 ## What this does not change
 
 - No scaffold imports or templates change
-- No new public `@wp-typia/create` APIs are introduced
+- No new public `@wp-typia/project-tools` APIs are introduced
 - No MCP integration is included here
 - No frontend or default AI behavior is added to generated projects
 - The current build-time projection flow is still backed by an internal
-  `@wp-typia/create` helper rather than a supported public package surface
+  generator helper rather than a supported public package surface
 
 The main distinction to keep in mind is:
 

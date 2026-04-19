@@ -12,8 +12,6 @@ This document records the current package-boundary recommendation.
   Programmatic project orchestration package.
 - `@wp-typia/block-runtime`
   Normative generated-project runtime helper package.
-- `@wp-typia/create`
-  Deprecated legacy package shell.
 
 ## Why this split
 
@@ -46,20 +44,9 @@ Kept in `@wp-typia/block-runtime`:
 - `validation`
 - `identifiers`
 
-## Legacy package stance
+## Historical package shells
 
-`@wp-typia/create` remains publishable so npm deprecation and migration
-messaging can point somewhere stable, but it is no longer the supported home
-for runtime imports or orchestration code.
-
-## Archived npm entrypoints
-
-`create-wp-typia` remains in-repo only as an archived npm-facing redirect.
-
-- keep its source manifest private so future releases do not accidentally
-  republish it
-- keep its README and manifest description aligned with the canonical
-  `wp-typia create` install path
-- after a release, use `bun run archived-entrypoints:plan` to print the
-  expected npm deprecation command, or `bun run archived-entrypoints:deprecate`
-  from an npm-authenticated shell to apply it
+The old `@wp-typia/create` and `create-wp-typia` package shells are no longer
+kept in-repo. Current package-boundary docs should point directly at
+`wp-typia`, `@wp-typia/project-tools`, `@wp-typia/block-runtime`, and
+`@wp-typia/create-workspace-template`.

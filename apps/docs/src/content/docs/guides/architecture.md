@@ -12,8 +12,6 @@ title: 'Architecture'
   The canonical CLI package.
 - `packages/wp-typia-project-tools`
   The canonical project orchestration package.
-- `packages/create`
-  The deprecated legacy package shell.
 - `packages/create-workspace-template`
   The official empty workspace template package used by `wp-typia add block`.
 - `packages/wp-typia-block-types`
@@ -91,8 +89,7 @@ The `compound` template extends the same base with:
 
 Generated projects now treat `@wp-typia/block-runtime/*` as the maintained
 runtime helper surface. Project orchestration lives in
-`@wp-typia/project-tools`, while `@wp-typia/create` remains only as a deprecated
-legacy package shell.
+`@wp-typia/project-tools`.
 
 The repo increasingly keeps those public package roots and subpaths stable while
 splitting implementation into focused internal modules. Recent examples include

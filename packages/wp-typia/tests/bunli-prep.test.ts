@@ -71,10 +71,6 @@ describe("wp-typia Bunli preparation", () => {
 			migrationDocSourcePath,
 			"utf8",
 		);
-		const createReadme = fs.readFileSync(
-			path.join(repoRoot, "packages", "create", "README.md"),
-			"utf8",
-		);
 
 		expect(WP_TYPIA_BUNLI_MIGRATION_DOC).toBe(
 			"https://imjlk.github.io/wp-typia/maintainers/bunli-cli-migration/",
@@ -87,8 +83,8 @@ describe("wp-typia Bunli preparation", () => {
 		expect(migrationDoc).toContain(`\`${WP_TYPIA_CANONICAL_CREATE_USAGE}\``);
 		expect(migrationDoc).toContain(`\`${WP_TYPIA_CANONICAL_MIGRATE_USAGE}\``);
 		expect(migrationDoc).toContain(`\`${WP_TYPIA_POSITIONAL_ALIAS_USAGE}\``);
-		expect(createReadme).toContain("deprecated legacy package shell");
-		expect(createReadme).toContain("use `wp-typia` for CLI");
+		expect(migrationDoc).not.toContain("`@wp-typia/create`");
+		expect(fs.existsSync(path.join(repoRoot, "packages", "create"))).toBe(false);
 	});
 
 	test("alias normalization ignores option values before the first command positional", () => {

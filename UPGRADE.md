@@ -53,14 +53,15 @@ Generated projects and examples should import runtime helpers from
 `@wp-typia/block-runtime/*`, not local copied helpers or deprecated compatibility
 paths.
 
-### Deprecated package shells should not be used for new installs
+### Removed package shells should not be used for new installs
 
-These packages are retained only for compatibility or history:
+These historical package names are no longer kept in-repo and should not be
+used for new installs:
 
 - `@wp-typia/create`
 - `create-wp-typia`
 
-For new installs, use:
+Use these packages instead:
 
 - `wp-typia`
 - `@wp-typia/create-workspace-template` for empty workspaces
@@ -72,5 +73,5 @@ When upgrading maintainers or generated project docs, verify:
 1. CLI examples use `wp-typia create`, `add`, and `migrate`.
 2. Multi-block plugin guidance points to the workspace template package.
 3. Runtime helper imports use `@wp-typia/block-runtime/*`.
-4. Deprecated package shells are not suggested for new installs.
+4. Removed package shells are not suggested for new installs.
 5. Release/process changes still match [`CONTRIBUTING.md`](./CONTRIBUTING.md).
