@@ -793,7 +793,9 @@ function readEditorPluginRegistrySlugs(registryPath: string): string[] {
 
 	const source = fs.readFileSync(registryPath, "utf8");
 	return Array.from(
-		source.matchAll(/^\s*import\s+['"]\.\/([^/'"]+)(?:\/index)?['"];?\s*$/gmu),
+		source.matchAll(
+			/^\s*import\s+['"]\.\/([^/'"]+)(?:\/index(?:\.[cm]?[jt]sx?)?)?['"];?\s*$/gmu,
+		),
 	).map((match) => match[1]);
 }
 
