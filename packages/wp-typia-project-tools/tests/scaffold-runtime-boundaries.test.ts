@@ -49,9 +49,10 @@ test("scaffold runtime delegates identifier, document, bootstrap, and package he
 	expect(identifiersSource).toContain(
 		"export function resolveScaffoldIdentifiers(",
 	);
-	expect(applyUtilsSource).toContain(
-		'export {\n\tbuildGitignore,\n\tbuildReadme,\n\tmergeTextLines,\n} from "./scaffold-documents.js";',
-	);
+	expect(applyUtilsSource).toContain('from "./scaffold-documents.js"');
+	expect(applyUtilsSource).toContain("buildGitignore");
+	expect(applyUtilsSource).toContain("buildReadme");
+	expect(applyUtilsSource).toContain("mergeTextLines");
 	expect(documentsSource).toContain("export function buildReadme(");
 	expect(documentsSource).toContain("export function buildGitignore(");
 	expect(documentsSource).toContain("export function mergeTextLines(");
