@@ -1,5 +1,11 @@
 # @wp-typia/block-runtime
 
+## 0.4.10 — 2026-04-19
+
+### Patch changes
+
+- [460d86d](https://github.com/imjlk/wp-typia/commit/460d86d92fc0af94bbcb0542feb400236e9004ae) Remove the deprecated `@wp-typia/create` and `create-wp-typia` package shells from the repository, and update current docs plus publish automation to point directly at `wp-typia`, `@wp-typia/project-tools`, and `@wp-typia/block-runtime`. — Thanks @imjlk!
+
 ## 0.4.9 — 2026-04-18
 
 ### Patch changes
