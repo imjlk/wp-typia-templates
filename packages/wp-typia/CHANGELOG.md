@@ -1,5 +1,14 @@
 # wp-typia
 
+## 0.16.15 — 2026-04-19
+
+### Patch changes
+
+- [86f9e0a](https://github.com/imjlk/wp-typia/commit/86f9e0abbfa0a84c7122e35781bb30d7e3d86122) Improve the Node-side fallback prompt UX for `wp-typia` by making numbered selections easier to reuse, redrawing choices on demand, and documenting the lighter readline prompt model relative to the Bun/OpenTUI path. — Thanks @imjlk!
+- [460d86d](https://github.com/imjlk/wp-typia/commit/460d86d92fc0af94bbcb0542feb400236e9004ae) Remove the deprecated `@wp-typia/create` and `create-wp-typia` package shells from the repository, and update current docs plus publish automation to point directly at `wp-typia`, `@wp-typia/project-tools`, and `@wp-typia/block-runtime`. — Thanks @imjlk!
+- [64e52b7](https://github.com/imjlk/wp-typia/commit/64e52b7e2d2b456cfd0816716b0807f93832dbaf) Split generated project smoke assertions, scaffold runtime helpers, and first-party form helpers into focused modules while keeping the existing CLI and TUI behavior stable. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.16.14
+
 ## 0.16.14 — 2026-04-19
 
 ### Patch changes

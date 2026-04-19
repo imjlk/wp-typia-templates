@@ -1,5 +1,12 @@
 # @wp-typia/rest
 
+## 0.3.10 — 2026-04-19
+
+### Patch changes
+
+- [460d86d](https://github.com/imjlk/wp-typia/commit/460d86d92fc0af94bbcb0542feb400236e9004ae) Remove the deprecated `@wp-typia/create` and `create-wp-typia` package shells from the repository, and update current docs plus publish automation to point directly at `wp-typia`, `@wp-typia/project-tools`, and `@wp-typia/block-runtime`. — Thanks @imjlk!
+- [cb60cfc](https://github.com/imjlk/wp-typia/commit/cb60cfc6c4fb742ceb4c5235a0c9a0a59e153d02) Split the `@wp-typia/rest` React client cache-key, cache-state, and utility helpers into focused modules while keeping the public `react-client` surface stable. — Thanks @imjlk!
+
 ## 0.3.9 — 2026-04-18
 
 ### Patch changes
