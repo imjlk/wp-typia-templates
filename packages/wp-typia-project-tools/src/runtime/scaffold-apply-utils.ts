@@ -259,7 +259,11 @@ export async function normalizePackageJson(
 
 	const packageManager = getPackageManager(packageManagerId);
 	const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, "utf8")) as GeneratedPackageJson;
-	packageJson.packageManager = packageManager.packageManagerField;
+	if (packageManagerId === "npm") {
+		delete packageJson.packageManager;
+	} else {
+		packageJson.packageManager = packageManager.packageManagerField;
+	}
 
 	if (packageJson.scripts) {
 		for (const [key, value] of Object.entries(packageJson.scripts)) {
@@ -512,6 +516,11 @@ export async function applyBuiltInScaffoldProjectFiles({
 		withTestPreset,
 		withWpEnv,
 	});
+	if (templateId === "query-loop") {
+		await fsp.rm(path.join(projectDir, "src", "validator-toolkit.ts"), {
+			force: true,
+		});
+	}
 	await normalizePackageManagerFiles(projectDir, packageManager);
 	await removeUnexpectedLockfiles(projectDir, packageManager);
 	await replaceTextRecursively(projectDir, packageManager, {

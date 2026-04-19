@@ -79,8 +79,12 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 			expect(packageJson.scripts.start).toBe("wp-scripts start --experimental-modules");
 			expect(packageJson.scripts.dev).toBe("wp-scripts start --experimental-modules");
 			expect(packageJson.scripts.typecheck).toBe("tsc --noEmit");
+			expect(packageJson.packageManager).toBeUndefined();
 			expect(fs.existsSync(path.join(targetDir, "src", "block.json"))).toBe(false);
 			expect(fs.existsSync(path.join(targetDir, "src", "typia.manifest.json"))).toBe(false);
+			expect(
+				fs.existsSync(path.join(targetDir, "src", "validator-toolkit.ts")),
+			).toBe(false);
 			expect(variationSource).toMatch(
 				/registerBlockVariation\('core\/query', queryLoopVariation\);/,
 			);
@@ -125,9 +129,9 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 			expect(listPatternSource).toContain("demo-space/demo-query-loop-list");
 			expect(listPatternSource).toContain('"namespace":"demo-space/demo-query-loop"');
 			expect(listPatternSource).toContain('"wpTypiaVariation":"demo-space/demo-query-loop"');
-			expect(readme).toContain("## Artifact Refresh");
+			expect(readme).toContain("## Variation Workflow");
 			expect(readme).toContain(
-				"This scaffold does not generate `block.json` or Typia manifests.",
+				"This scaffold does not generate a `sync` script, `block.json`, or Typia manifests.",
 			);
 			expect(readme).toContain(
 				"`src/index.ts` remains the source of truth for the Query Loop variation name",
@@ -135,6 +139,7 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 			expect(readme).toContain("Use `src/patterns/*.php` for richer connected layout presets");
 			expect(readme).toContain("use `src/query-extension.ts` for custom query seed values");
 			expect(readme).toContain("use `inc/query-runtime.php` to keep frontend and editor preview query mapping aligned");
+			expect(readme).toContain("npm run dev");
 			execFileSync("php", ["-l", path.join(targetDir, "demo-query-loop.php")], {
 				stdio: "ignore",
 			});

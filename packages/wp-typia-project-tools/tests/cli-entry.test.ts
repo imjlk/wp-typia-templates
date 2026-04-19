@@ -390,7 +390,7 @@ test("runScaffoldFlow carries query-loop post type overrides into the generated 
   expect(flow.nextSteps).toEqual([
     `cd ${projectInput}`,
     "npm install",
-    "npm run start",
+    "npm run dev",
   ]);
   expect(flow.optionalOnboarding.steps).toEqual([]);
   expect(variationSource).toMatch(/postType:\s*["']book["']/);
@@ -738,7 +738,7 @@ test("node entry defaults --yes scaffolds to npm when package manager is omitted
     fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
   );
 
-  expect(packageJson.packageManager).toBe("npm@11.6.1");
+  expect(packageJson.packageManager).toBeUndefined();
 });
 
 test("node entry rejects persistence-only flags for basic create scaffolds", () => {

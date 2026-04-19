@@ -74,7 +74,7 @@ export function buildReadme(
       ? `## Advanced Sync\n\n\`\`\`bash\n${optionalOnboardingSteps.join('\n')}\n\`\`\`\n\n${getOptionalOnboardingNote(packageManager, templateId, {
           compoundPersistenceEnabled,
         })}`
-      : `## Artifact Refresh\n\n${getOptionalOnboardingNote(packageManager, templateId, {
+      : `## ${templateId === 'query-loop' ? 'Variation Workflow' : 'Artifact Refresh'}\n\n${getOptionalOnboardingNote(packageManager, templateId, {
           compoundPersistenceEnabled,
         })}`;
 

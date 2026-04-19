@@ -91,7 +91,7 @@ export function getQuickStartWorkflowNote(
 	options: SyncOnboardingOptions = {},
 ): string {
 	if (templateId === "query-loop") {
-		return `${formatRunScript(packageManager, "start")} runs the editor build/watch loop that registers your Query Loop variation in the block editor. This scaffold is editor-facing by design: update \`src/index.ts\` when you want to change the variation namespace, default query, allowed controls, or the minimal inline starter layout, update \`src/patterns/*.php\` when you want richer connected layout presets in the inserter, use \`src/query-extension.ts\` when the variation needs custom query params or optional editor-side hooks, and mirror frontend/editor preview query mapping in \`inc/query-runtime.php\`.`;
+		return `${formatRunScript(packageManager, "dev")} runs the editor build/watch loop that registers your Query Loop variation in the block editor. This scaffold is editor-facing by design: update \`src/index.ts\` when you want to change the variation namespace, default query, allowed controls, or the minimal inline starter layout, update \`src/patterns/*.php\` when you want richer connected layout presets in the inserter, use \`src/query-extension.ts\` when the variation needs custom query params or optional editor-side hooks, and mirror frontend/editor preview query mapping in \`inc/query-runtime.php\`.`;
 	}
 
 	const developmentScript = getPrimaryDevelopmentScript(templateId);
@@ -122,7 +122,7 @@ export function getOptionalOnboardingNote(
 	options: SyncOnboardingOptions = {},
 ): string {
 	if (templateId === "query-loop") {
-		return `This scaffold does not generate \`block.json\` or Typia manifests. Edit \`src/index.ts\` to change the variation contract, edit \`src/patterns/*.php\` when you want richer connected layouts beyond the inline fallback, edit \`src/query-extension.ts\` when you need variation-specific query params or custom editor hooks, and edit \`inc/query-runtime.php\` when those params need frontend or editor preview parity. Then rerun ${formatRunScript(packageManager, "build")}, ${formatRunScript(packageManager, "start")}, or ${formatRunScript(packageManager, "typecheck")} as needed.`;
+		return `This scaffold does not generate a \`sync\` script, \`block.json\`, or Typia manifests. Edit \`src/index.ts\` to change the variation contract, edit \`src/patterns/*.php\` when you want richer connected layouts beyond the inline fallback, edit \`src/query-extension.ts\` when you need variation-specific query params or custom editor hooks, and edit \`inc/query-runtime.php\` when those params need frontend or editor preview parity. Then rerun ${formatRunScript(packageManager, "build")}, ${formatRunScript(packageManager, "dev")}, or ${formatRunScript(packageManager, "typecheck")} as needed.`;
 	}
 
 	const optionalSyncScripts = getOptionalSyncScriptNames(templateId, options);

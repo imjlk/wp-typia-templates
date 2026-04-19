@@ -13,6 +13,7 @@ import {
 	type PackageManagerId,
 } from "./package-managers.js";
 import {
+	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	SHARED_TEST_PRESET_TEMPLATE_ROOT,
 	SHARED_WP_ENV_PRESET_TEMPLATE_ROOT,
 } from "./template-registry.js";
@@ -47,6 +48,14 @@ function templateSupportsGeneratedSyncWatchers(templateId: string): boolean {
 		templateId === "interactivity" ||
 		templateId === "persistence" ||
 		templateId === "compound"
+	);
+}
+
+function templateUsesDevAsPrimaryEntrypoint(templateId: string): boolean {
+	return (
+		templateSupportsGeneratedSyncWatchers(templateId) ||
+		templateId === "query-loop" ||
+		templateId === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
 	);
 }
 
@@ -234,5 +243,5 @@ export async function applyGeneratedProjectDxPackageJson({
 export function getPrimaryDevelopmentScript(
 	templateId: string,
 ): "dev" | "start" {
-	return templateSupportsGeneratedSyncWatchers(templateId) ? "dev" : "start";
+	return templateUsesDevAsPrimaryEntrypoint(templateId) ? "dev" : "start";
 }

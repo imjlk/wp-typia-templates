@@ -119,7 +119,7 @@ describe('@wp-typia/project-tools scaffold core', () => {
       );
 
       expect(packageJson.name).toBe('demo-npm');
-      expect(packageJson.packageManager).toBe('npm@11.6.1');
+      expect(packageJson.packageManager).toBeUndefined();
       expect(packageJson.devDependencies['@wp-typia/block-runtime']).toBe(
         normalizedBlockRuntimePackageVersion,
       );

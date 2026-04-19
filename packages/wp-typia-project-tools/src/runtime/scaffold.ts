@@ -346,6 +346,11 @@ export async function scaffoldProject({
 				variables,
 			});
 		}
+		if (resolvedTemplateId === "query-loop") {
+			await fsp.rm(path.join(projectDir, "src", "validator-toolkit.ts"), {
+				force: true,
+			});
+		}
 	} else if (withMigrationUi && isOfficialWorkspace) {
 		await applyWorkspaceMigrationCapability(projectDir, resolvedPackageManager);
 	}

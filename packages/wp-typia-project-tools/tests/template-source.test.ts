@@ -402,6 +402,8 @@ test("official workspace template scaffolds through the local npm template resol
   expect(packageJson.scripts.start).toBe(
     "npm run sync && node scripts/build-workspace.mjs start"
   );
+  expect(packageJson.scripts.dev).toBe("npm run start");
+  expect(packageJson.packageManager).toBeUndefined();
   expect(packageJson.scripts.typecheck).toBe(
     "npm run sync -- --check && tsc --noEmit"
   );

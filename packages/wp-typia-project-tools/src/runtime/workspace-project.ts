@@ -118,7 +118,7 @@ export function getInvalidWorkspaceProjectReason(startDir: string): string | nul
  * Parse a package-manager identifier from a `packageManager` field.
  *
  * @param packageManagerField Raw package-manager field such as `bun@1.3.11`.
- * @returns A normalized `PackageManagerId`, defaulting to `"bun"` when the
+ * @returns A normalized `PackageManagerId`, defaulting to `"npm"` when the
  * field is missing or unsupported.
  */
 export function parseWorkspacePackageManagerId(
@@ -132,7 +132,7 @@ export function parseWorkspacePackageManagerId(
 		case "yarn":
 			return packageManagerId;
 		default:
-			return "bun";
+			return "npm";
 	}
 }
 
