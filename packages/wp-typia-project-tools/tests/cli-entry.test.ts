@@ -4,6 +4,7 @@ import * as path from "node:path";
 import { cleanupScaffoldTempRoot, createBlockSubsetFixturePath, createScaffoldTempRoot, entryPath, getCommandErrorMessage, runCapturedCli, runCli, templateLayerAmbiguousFixturePath, templateLayerFixturePath } from "./helpers/scaffold-test-harness.js";
 import { formatHelpText, getDoctorChecks, getNextSteps, getOptionalOnboarding, runScaffoldFlow } from "../src/runtime/cli-core.js";
 import { collectScaffoldAnswers } from "../src/runtime/scaffold.js";
+import { getQuickStartWorkflowNote } from "../src/runtime/scaffold-onboarding.js";
 
 describe("@wp-typia/project-tools scaffold CLI flow", () => {
   const tempRoot = createScaffoldTempRoot("wp-typia-scaffold-cli-");
@@ -274,6 +275,28 @@ test("optional onboarding derives sync steps from available custom-template scri
     "npm run sync-types -- --check verifies the current type-derived artifacts without rewriting them."
   );
   expect(onboarding.note).not.toContain("npm run sync -- --check");
+});
+
+test("optional onboarding avoids synthesized sync commands for custom templates without sync scripts", () => {
+  const onboarding = getOptionalOnboarding({
+    availableScripts: [],
+    packageManager: "npm",
+    templateId: "/tmp/custom-template",
+  });
+
+  expect(onboarding.steps).toEqual([]);
+  expect(onboarding.note).toContain(
+    "No optional sync command was detected for this custom template."
+  );
+  expect(onboarding.note).not.toContain("npm run sync");
+  expect(onboarding.note).not.toContain("npm run sync-types");
+});
+
+test("quick-start guidance handles start-only templates without repeating the same command", () => {
+  const note = getQuickStartWorkflowNote("npm", "/tmp/custom-template");
+
+  expect(note).toContain("npm run start is the primary local entry point");
+  expect(note).not.toContain("Use npm run start");
 });
 
 test("runScaffoldFlow rejects unsupported persistence policies", async () => {

@@ -99,6 +99,15 @@ export async function ensureDirectory(targetDir: string, allowExisting = false):
 	}
 }
 
+/**
+ * Builds the generated README markdown for one scaffolded project.
+ *
+ * @param templateId Scaffold template family or template identifier.
+ * @param variables Interpolated scaffold variables used in generated content.
+ * @param packageManager Package manager used to format install and script commands.
+ * @param options Optional README sections enabled by scaffold presets.
+ * @returns Markdown README content for the generated project root.
+ */
 export function buildReadme(
 	templateId: string,
 	variables: ScaffoldTemplateVariables,
@@ -157,7 +166,6 @@ ${templateId}
 \`\`\`bash
 ${formatInstallCommand(packageManager)}
 ${formatRunScript(packageManager, developmentScript)}
-${formatRunScript(packageManager, "start")}
 \`\`\`
 
 ${getQuickStartWorkflowNote(packageManager, templateId, {

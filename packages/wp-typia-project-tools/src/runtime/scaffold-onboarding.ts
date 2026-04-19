@@ -90,6 +90,10 @@ export function getQuickStartWorkflowNote(
 	const devCommand = formatRunScript(packageManager, developmentScript);
 	const startCommand = formatRunScript(packageManager, "start");
 
+	if (developmentScript === "start") {
+		return `${startCommand} is the primary local entry point for this template. If the template also exposes a dedicated watch mode or alternate editor workflow, follow that template-specific documentation alongside the generated project scripts.`;
+	}
+
 	if (developmentScript !== "dev") {
 		return `${devCommand} is the primary local entry point for this template. Use ${startCommand} when you want the scaffold's one-shot startup flow instead of the watch-oriented workflow.`;
 	}
@@ -140,16 +144,22 @@ export function getOptionalOnboardingNote(
 	const advancedPersistenceNote = templateHasPersistenceSync(templateId, options)
 		? ` ${syncRestCommand} remains available for advanced REST-only refreshes, but it now fails fast when type-derived artifacts are stale; run \`${syncCommand}\` or \`${syncTypesCommand}\` first.`
 		: "";
+	const isCustomTemplate =
+		!isBuiltInTemplateId(templateId) &&
+		templateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE;
 	const fallbackCustomTemplateNote =
 		!hasUnifiedSync &&
 		syncSteps.length > 0 &&
-		!isBuiltInTemplateId(templateId) &&
-		templateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
+		isCustomTemplate
 			? `Run ${syncSteps.join(" then ")} manually before build, typecheck, or commit. ${syncCheckCommand} verifies the current type-derived artifacts without rewriting them.${optionalSyncScripts.includes("sync-rest") ? ` ${syncRestCommand} remains available for REST-only refreshes after ${syncTypesCommand}.` : ""}`
 			: null;
 
 	if (fallbackCustomTemplateNote) {
 		return fallbackCustomTemplateNote;
+	}
+
+	if (isCustomTemplate && syncSteps.length === 0) {
+		return "No optional sync command was detected for this custom template. Follow the template's own artifact-refresh guidance before build, typecheck, or your first commit.";
 	}
 
 	return `You usually do not need to run ${syncCommand} during a normal ${formatRunScript(packageManager, developmentScript)} session. Run ${syncCommand} manually when you want a reviewable artifact refresh before ${formatRunScript(packageManager, "build")}, ${typecheckCommand}, or your first commit. ${syncTypesCommand} stays warn-only by default; use \`${failOnLossySyncCommand}\` to fail only on lossy WordPress projections, or \`${strictSyncCommand}\` for the stricter CI-oriented report.${advancedPersistenceNote} They do not create migration history. If this directory is new, create your first Git commit after that refresh.`;
