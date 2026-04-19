@@ -15,7 +15,11 @@ import {
 	formatInstallCommand,
 	formatRunScript,
 } from "./package-managers.js";
-import type { DataStorageMode, PersistencePolicy } from "./scaffold.js";
+import type {
+	DataStorageMode,
+	PersistencePolicy,
+	ScaffoldProgressEvent,
+} from "./scaffold.js";
 import type { PackageManagerId } from "./package-managers.js";
 import { getPrimaryDevelopmentScript } from "./local-dev-presets.js";
 import {
@@ -62,6 +66,7 @@ interface RunScaffoldFlowOptions {
 	isInteractive?: boolean;
 	namespace?: string;
 	noInstall?: boolean;
+	onProgress?: ((event: ScaffoldProgressEvent) => void | Promise<void>) | undefined;
 	packageManager?: string;
 	phpPrefix?: string;
 	projectInput: string;
@@ -342,6 +347,7 @@ export async function runScaffoldFlow({
 	queryPostType,
 	yes = false,
 	noInstall = false,
+	onProgress,
 	isInteractive = false,
 	allowExistingDir = false,
 	selectTemplate,
@@ -475,6 +481,7 @@ export async function runScaffoldFlow({
 			externalLayerSourceLabel: normalizedExternalLayerSource,
 			installDependencies,
 			noInstall,
+			onProgress,
 			packageManager: resolvedPackageManager,
 			persistencePolicy: resolvedPersistencePolicy,
 			projectDir,

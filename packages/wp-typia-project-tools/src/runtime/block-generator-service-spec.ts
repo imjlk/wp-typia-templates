@@ -23,6 +23,7 @@ import type {
 	DataStorageMode,
 	PersistencePolicy,
 	ScaffoldAnswers,
+	ScaffoldProgressEvent,
 	ScaffoldTemplateVariables,
 } from "./scaffold.js";
 
@@ -138,6 +139,7 @@ export interface RenderBlockResult extends ValidateBlockResult {
 export interface ApplyBlockInput {
 	rendered: RenderBlockResult;
 	installDependencies?: ((options: InstallDependenciesOptions) => Promise<void>) | undefined;
+	onProgress?: ((event: ScaffoldProgressEvent) => void | Promise<void>) | undefined;
 }
 
 function getBuiltInPersistenceSpec({

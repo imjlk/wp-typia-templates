@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import {
 	buildCreateCompletionPayload,
+	formatCreateProgressLine,
 	buildMigrationCompletionPayload,
 	printCompletionPayload,
 } from "../src/runtime-bridge";
@@ -126,5 +127,16 @@ describe("alternate-buffer completion output helpers", () => {
 			"Next steps:",
 			"  wp-typia migrate scaffold --from-migration-version v1",
 		]);
+	});
+
+	test("create progress formatter keeps fallback status lines readable", () => {
+		expect(
+			formatCreateProgressLine({
+				detail: "Copying scaffold files into the target project directory.",
+				title: "Generating project files",
+			}),
+		).toBe(
+			"⏳ Generating project files: Copying scaffold files into the target project directory.",
+		);
 	});
 });

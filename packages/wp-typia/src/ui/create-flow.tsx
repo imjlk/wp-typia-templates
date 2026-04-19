@@ -72,7 +72,13 @@ type CreateSelectFieldName = {
 	[K in keyof CreateFlowValues]-?: CreateFlowValues[K] extends string | undefined ? K : never;
 }[keyof CreateFlowValues];
 
-function CreateFlowFields() {
+function CreateFlowFields({
+	progressDescription,
+	progressTitle,
+}: {
+	progressDescription?: string;
+	progressTitle?: string;
+}) {
 	const { activeFieldName, isSubmitting, values } = useFormContext();
 	const { height: terminalHeight = 24 } = useTerminalDimensions();
 	const createValues = values as Partial<CreateFlowValues>;
@@ -95,8 +101,9 @@ function CreateFlowFields() {
 		{
 			isSubmitting,
 			scrollTop,
-			submittingDescription: "Preparing your wp-typia project files...",
-			submittingTitle: "Creating project...",
+			submittingDescription:
+				progressDescription ?? "Preparing your wp-typia project files...",
+			submittingTitle: progressTitle ?? "Creating project...",
 			viewportHeight,
 		},
 		[
@@ -178,7 +185,8 @@ function CreateFlowFields() {
 }
 
 export function CreateFlow({ cwd, initialValues }: CreateFlowProps) {
-	const { completion, handleCancel, handleSubmit, status } = useAlternateBufferLifecycle(
+	const { completion, handleCancel, handleSubmit, progress, reportProgress, status } =
+		useAlternateBufferLifecycle(
 		"wp-typia create failed",
 	);
 	const { height: terminalHeight = 24 } = useTerminalDimensions();
@@ -212,6 +220,11 @@ export function CreateFlow({ cwd, initialValues }: CreateFlowProps) {
 						emitOutput: false,
 						flags,
 						interactive: true,
+						onProgress: ({ detail, title }) =>
+							reportProgress({
+								description: detail,
+								title,
+							}),
 						projectDir: values["project-dir"],
 						prompt: defaultPrompt,
 					});
@@ -220,7 +233,10 @@ export function CreateFlow({ cwd, initialValues }: CreateFlowProps) {
 			schema={createFlowSchema}
 			title="Create a wp-typia project"
 		>
-			<CreateFlowFields />
+			<CreateFlowFields
+				progressDescription={progress?.description}
+				progressTitle={progress?.title}
+			/>
 		</Form>
 	);
 }

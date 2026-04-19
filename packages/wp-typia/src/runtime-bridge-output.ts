@@ -2,6 +2,11 @@ import type { AlternateBufferCompletionPayload } from "./ui/alternate-buffer-lif
 
 type PrintLine = (line: string) => void;
 
+export type CreateProgressPayload = {
+	detail: string;
+	title: string;
+};
+
 type ExternalLayerSelectOption = {
 	description?: string;
 	extends: string[];
@@ -60,6 +65,16 @@ export function printCompletionPayload(
 	if (payload.optionalNote) {
 		printLine(`Note: ${payload.optionalNote}`);
 	}
+}
+
+/**
+ * Formats a lightweight create-progress line for fallback CLI output.
+ *
+ * @param payload User-facing scaffold progress payload.
+ * @returns A single readable status line.
+ */
+export function formatCreateProgressLine(payload: CreateProgressPayload): string {
+	return `⏳ ${payload.title}: ${payload.detail}`;
 }
 
 /**

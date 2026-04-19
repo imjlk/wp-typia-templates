@@ -359,6 +359,7 @@ export class BlockGeneratorService {
 	async apply({
 		rendered,
 		installDependencies,
+		onProgress,
 	}: ApplyBlockInput): Promise<ScaffoldProjectResult> {
 		const cachedArtifacts = renderedArtifactCache.get(rendered);
 		const currentVariablesFingerprint = createVariablesFingerprint(
@@ -388,6 +389,7 @@ export class BlockGeneratorService {
 				codeArtifacts,
 				installDependencies,
 				noInstall: rendered.target.noInstall,
+				onProgress,
 				packageManager: rendered.target.packageManager,
 				projectDir: rendered.target.projectDir,
 				repositoryReference: rendered.target.repositoryReference,
