@@ -1,0 +1,49 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+$content = sprintf(
+	<<<'HTML'
+<!-- wp:query {"namespace":"{{namespace}}/{{slug}}","query":{"inherit":false,"postType":"{{queryPostType}}","perPage":6,"order":"desc","orderBy":"date"},"displayLayout":{"type":"grid","columns":3}} -->
+<div class="wp-block-query">
+	<!-- wp:post-template -->
+	<!-- wp:group {"style":{"spacing":{"blockGap":"0.75rem","padding":{"top":"1rem","right":"1rem","bottom":"1rem","left":"1rem"}}},"layout":{"type":"constrained"}} -->
+	<div class="wp-block-group" style="padding-top:1rem;padding-right:1rem;padding-bottom:1rem;padding-left:1rem">
+		<!-- wp:post-featured-image /-->
+		<!-- wp:post-title {"isLink":true} /-->
+		<!-- wp:post-excerpt /-->
+	</div>
+	<!-- /wp:group -->
+	<!-- /wp:post-template -->
+
+	<!-- wp:query-pagination -->
+	<!-- wp:query-pagination-previous /-->
+	<!-- wp:query-pagination-numbers /-->
+	<!-- wp:query-pagination-next /-->
+	<!-- /wp:query-pagination -->
+
+	<!-- wp:query-no-results -->
+	<!-- wp:paragraph -->
+	<p>%s</p>
+	<!-- /wp:paragraph -->
+	<!-- /wp:query-no-results -->
+</div>
+<!-- /wp:query -->
+HTML,
+	esc_html__( 'No items matched this preset yet.', '{{textDomain}}' )
+);
+
+register_block_pattern(
+	'{{namespace}}/{{slug}}-grid',
+	array(
+		'title'         => __( '{{title}} Grid', '{{textDomain}}' ),
+		'description'   => __( 'A connected grid layout preset for the {{title}} Query Loop variation.', '{{textDomain}}' ),
+		'categories'    => array( '{{slug}}-query-loop' ),
+		'blockTypes'    => array( 'core/query' ),
+		'postTypes'     => array( '{{queryPostType}}' ),
+		'inserter'      => true,
+		'viewportWidth' => 1280,
+		'content'       => $content,
+	)
+);

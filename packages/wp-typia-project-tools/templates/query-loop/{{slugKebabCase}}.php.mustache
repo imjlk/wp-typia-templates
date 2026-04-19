@@ -25,6 +25,29 @@ function {{phpPrefix}}_load_textdomain() {
 	);
 }
 
+function {{phpPrefix}}_register_query_loop_pattern_category() {
+	if ( ! function_exists( 'register_block_pattern_category' ) ) {
+		return;
+	}
+
+	register_block_pattern_category(
+		'{{slug}}-query-loop',
+		array(
+			'label' => __( '{{title}} Query Loop', '{{textDomain}}' ),
+		)
+	);
+}
+
+function {{phpPrefix}}_register_query_loop_patterns() {
+	if ( ! function_exists( 'register_block_pattern' ) ) {
+		return;
+	}
+
+	foreach ( glob( __DIR__ . '/src/patterns/*.php' ) ?: array() as $pattern_module ) {
+		require $pattern_module;
+	}
+}
+
 function {{phpPrefix}}_register_query_loop_variation_script() {
 	$script_path      = __DIR__ . '/build/index.js';
 	$script_asset_path = __DIR__ . '/build/index.asset.php';
@@ -52,4 +75,6 @@ function {{phpPrefix}}_enqueue_query_loop_variation_script() {
 }
 
 add_action( 'init', '{{phpPrefix}}_load_textdomain' );
+add_action( 'init', '{{phpPrefix}}_register_query_loop_pattern_category' );
+add_action( 'init', '{{phpPrefix}}_register_query_loop_patterns', 20 );
 add_action( 'enqueue_block_editor_assets', '{{phpPrefix}}_enqueue_query_loop_variation_script' );

@@ -1,0 +1,48 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+$content = sprintf(
+	<<<'HTML'
+<!-- wp:query {"namespace":"{{namespace}}/{{slug}}","query":{"inherit":false,"postType":"{{queryPostType}}","perPage":4,"order":"desc","orderBy":"date"}} -->
+<div class="wp-block-query">
+	<!-- wp:post-template -->
+	<!-- wp:group {"style":{"spacing":{"blockGap":"1rem","padding":{"top":"1.25rem","bottom":"1.25rem"}}},"layout":{"type":"constrained"}} -->
+	<div class="wp-block-group" style="padding-top:1.25rem;padding-bottom:1.25rem">
+		<!-- wp:post-title {"isLink":true} /-->
+		<!-- wp:post-date /-->
+		<!-- wp:post-excerpt {"moreText":"Continue reading"} /-->
+	</div>
+	<!-- /wp:group -->
+	<!-- /wp:post-template -->
+
+	<!-- wp:query-pagination -->
+	<!-- wp:query-pagination-previous /-->
+	<!-- wp:query-pagination-next /-->
+	<!-- /wp:query-pagination -->
+
+	<!-- wp:query-no-results -->
+	<!-- wp:paragraph -->
+	<p>%s</p>
+	<!-- /wp:paragraph -->
+	<!-- /wp:query-no-results -->
+</div>
+<!-- /wp:query -->
+HTML,
+	esc_html__( 'No items matched this preset yet.', '{{textDomain}}' )
+);
+
+register_block_pattern(
+	'{{namespace}}/{{slug}}-list',
+	array(
+		'title'         => __( '{{title}} List', '{{textDomain}}' ),
+		'description'   => __( 'A connected list layout preset for the {{title}} Query Loop variation.', '{{textDomain}}' ),
+		'categories'    => array( '{{slug}}-query-loop' ),
+		'blockTypes'    => array( 'core/query' ),
+		'postTypes'     => array( '{{queryPostType}}' ),
+		'inserter'      => true,
+		'viewportWidth' => 1280,
+		'content'       => $content,
+	)
+);
