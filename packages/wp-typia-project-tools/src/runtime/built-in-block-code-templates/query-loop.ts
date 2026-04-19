@@ -15,6 +15,7 @@ type QueryLoopVariationAttributes = {
     orderBy?: string;
     perPage?: number;
     postType?: string;
+    wpTypiaVariation?: string;
     [key: string]: unknown;
   };
 };
@@ -44,6 +45,7 @@ const queryLoopVariation = {
       orderBy: 'date',
       perPage: 6,
       postType: {{queryPostTypeJson}},
+      wpTypiaVariation: VARIATION_NAME,
       ...customQuerySeed,
     },
   },

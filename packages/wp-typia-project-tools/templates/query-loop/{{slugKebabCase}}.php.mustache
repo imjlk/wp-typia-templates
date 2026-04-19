@@ -17,6 +17,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/inc/query-runtime.php';
+
 function {{phpPrefix}}_load_textdomain() {
 	load_plugin_textdomain(
 		'{{textDomain}}',
@@ -78,3 +80,5 @@ add_action( 'init', '{{phpPrefix}}_load_textdomain' );
 add_action( 'init', '{{phpPrefix}}_register_query_loop_pattern_category' );
 add_action( 'init', '{{phpPrefix}}_register_query_loop_patterns', 20 );
 add_action( 'enqueue_block_editor_assets', '{{phpPrefix}}_enqueue_query_loop_variation_script' );
+add_filter( 'query_loop_block_query_vars', '{{phpPrefix}}_filter_query_loop_block_query_vars', 10, 3 );
+add_filter( 'rest_{{queryPostType}}_query', '{{phpPrefix}}_filter_query_loop_editor_preview_query_vars', 10, 2 );
