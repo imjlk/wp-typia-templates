@@ -1,6 +1,7 @@
 import readline from "node:readline";
 
 type ValidateInput = (value: string) => boolean | string;
+type PromptQuestion = (query: string) => Promise<string>;
 
 interface PromptOption<T extends string> {
 	hint?: string;
@@ -59,19 +60,21 @@ export function createReadlinePrompt(): ReadlinePrompt {
 export function createReadlinePromptWithInterface(
 	rl: ReadlineQuestionAdapter,
 ): ReadlinePrompt {
+	const askQuestion: PromptQuestion = (query) =>
+		new Promise<string>((resolve) => {
+			rl.question(query, resolve);
+		});
+
 	return {
 		async text(message: string, defaultValue: string, validate?: ValidateInput): Promise<string> {
-			const suffix = defaultValue ? ` (${defaultValue})` : "";
 			while (true) {
-				const answer = await new Promise<string>((resolve) => {
-					rl.question(`${message}${suffix}: `, resolve);
-				});
-
-				const value = String(answer).trim() || defaultValue;
+				const value = normalizePromptAnswer(
+					await askQuestion(formatTextPrompt(message, defaultValue)),
+				) || defaultValue;
 				if (validate) {
 					const result = validate(value);
 					if (result !== true) {
-						console.error(`❌ ${typeof result === "string" ? result : "Invalid input"}`);
+						console.error(formatValidationError(message, result, defaultValue));
 						continue;
 					}
 				}
@@ -88,29 +91,126 @@ export function createReadlinePromptWithInterface(
 				throw new Error(`select() requires at least one option for prompt: ${message}`);
 			}
 
-			console.log(message);
-			options.forEach((option, index) => {
-				const hint = option.hint ? ` - ${option.hint}` : "";
-				console.log(`  ${index + 1}. ${option.label}${hint}`);
-			});
+			const resolvedDefaultIndex = getResolvedDefaultIndex(options, defaultValue);
+			renderSelectPrompt(message, options, resolvedDefaultIndex);
 
 			while (true) {
-				const answer = await this.text("Choice", String(defaultValue));
-				const numericChoice = Number(answer);
-				if (!Number.isNaN(numericChoice) && options[numericChoice - 1]) {
-					return options[numericChoice - 1].value;
+				const answer = normalizePromptAnswer(
+					await askQuestion(formatChoicePrompt(resolvedDefaultIndex)),
+				);
+
+				if (answer.length === 0) {
+					return options[resolvedDefaultIndex].value;
 				}
 
-				const directChoice = options.find((option) => option.value === answer);
-				if (directChoice) {
-					return directChoice.value;
+				if (isPromptHelpToken(answer)) {
+					renderSelectPrompt(message, options, resolvedDefaultIndex);
+					continue;
 				}
 
-				console.error(`❌ Invalid selection: ${answer}`);
+				const selection = resolvePromptSelection(options, answer);
+				if (selection) {
+					return selection.value;
+				}
+
+				console.error(formatInvalidSelectionError(answer, options, resolvedDefaultIndex));
 			}
 		},
 		close(): void {
 			rl.close();
 		},
 	};
+}
+
+function normalizePromptAnswer(value: string): string {
+	return String(value).trim();
+}
+
+function normalizePromptToken(value: string): string {
+	return value.trim().toLowerCase();
+}
+
+function getResolvedDefaultIndex<T extends string>(
+	options: PromptOption<T>[],
+	defaultValue: number,
+): number {
+	const candidateIndex = Number.isInteger(defaultValue) ? defaultValue - 1 : -1;
+	return options[candidateIndex] ? candidateIndex : 0;
+}
+
+function formatTextPrompt(message: string, defaultValue: string): string {
+	const suffix = defaultValue.length > 0 ? ` [default: ${defaultValue}]` : "";
+	return `${message}${suffix}: `;
+}
+
+function formatValidationError(
+	message: string,
+	result: boolean | string,
+	defaultValue: string,
+): string {
+	const detail = typeof result === "string" ? result : "Invalid input";
+	const retryHint =
+		defaultValue.length > 0 ? ` Press Enter to keep "${defaultValue}".` : "";
+	return `❌ ${message}: ${detail}.${retryHint}`;
+}
+
+function formatChoicePrompt(defaultIndex: number): string {
+	return `Choice [default: ${defaultIndex + 1}, ? for options]: `;
+}
+
+function renderSelectPrompt<T extends string>(
+	message: string,
+	options: PromptOption<T>[],
+	defaultIndex: number,
+): void {
+	console.log(message);
+	console.log(
+		"  Enter a number, option label, or option value. Press Enter to keep the default, or type ? to list choices again.",
+	);
+	options.forEach((option, index) => {
+		const defaultMarker = index === defaultIndex ? " (default)" : "";
+		const valueHint =
+			normalizePromptToken(option.label) === normalizePromptToken(option.value)
+				? ""
+				: ` [${option.value}]`;
+		console.log(`  ${index + 1}. ${option.label}${valueHint}${defaultMarker}`);
+		if (option.hint) {
+			console.log(`     ${option.hint}`);
+		}
+	});
+}
+
+function isPromptHelpToken(answer: string): boolean {
+	const normalized = normalizePromptToken(answer);
+	return normalized === "?" || normalized === "help" || normalized === "list";
+}
+
+function resolvePromptSelection<T extends string>(
+	options: PromptOption<T>[],
+	answer: string,
+): PromptOption<T> | undefined {
+	const numericChoice = Number(answer);
+	if (!Number.isNaN(numericChoice) && options[numericChoice - 1]) {
+		return options[numericChoice - 1];
+	}
+
+	const normalizedAnswer = normalizePromptToken(answer);
+	return options.find((option) => {
+		const normalizedLabel = normalizePromptToken(option.label);
+		const normalizedValue = normalizePromptToken(option.value);
+		return normalizedAnswer === normalizedLabel || normalizedAnswer === normalizedValue;
+	});
+}
+
+function formatInvalidSelectionError<T extends string>(
+	answer: string,
+	options: PromptOption<T>[],
+	defaultIndex: number,
+): string {
+	const optionValues = options.map((option) => option.value).join(", ");
+	return [
+		`❌ Invalid selection: ${answer}.`,
+		`Enter 1-${options.length}, one of: ${optionValues},`,
+		`or press Enter for "${options[defaultIndex].label}".`,
+	].join(" ");
 }
