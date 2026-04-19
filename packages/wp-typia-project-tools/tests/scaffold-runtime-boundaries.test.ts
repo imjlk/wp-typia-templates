@@ -17,6 +17,10 @@ test("scaffold runtime delegates identifier, document, bootstrap, and package he
 		path.join(runtimeRoot, "scaffold-apply-utils.ts"),
 		"utf8",
 	);
+	const documentsSource = fs.readFileSync(
+		path.join(runtimeRoot, "scaffold-documents.ts"),
+		"utf8",
+	);
 	const bootstrapSource = fs.readFileSync(
 		path.join(runtimeRoot, "scaffold-bootstrap.ts"),
 		"utf8",
@@ -45,9 +49,12 @@ test("scaffold runtime delegates identifier, document, bootstrap, and package he
 	expect(identifiersSource).toContain(
 		"export function resolveScaffoldIdentifiers(",
 	);
-	expect(applyUtilsSource).toContain("export function buildReadme(");
-	expect(applyUtilsSource).toContain("export function buildGitignore(");
-	expect(applyUtilsSource).toContain("export function mergeTextLines(");
+	expect(applyUtilsSource).toContain(
+		'export {\n\tbuildGitignore,\n\tbuildReadme,\n\tmergeTextLines,\n} from "./scaffold-documents.js";',
+	);
+	expect(documentsSource).toContain("export function buildReadme(");
+	expect(documentsSource).toContain("export function buildGitignore(");
+	expect(documentsSource).toContain("export function mergeTextLines(");
 	expect(bootstrapSource).toContain("export async function ensureScaffoldDirectory(");
 	expect(bootstrapSource).toContain("export async function applyWorkspaceMigrationCapability(");
 	expect(packageManagerFilesSource).toContain("export async function normalizePackageJson(");
