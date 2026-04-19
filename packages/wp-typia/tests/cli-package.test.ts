@@ -812,6 +812,39 @@ describe("wp-typia package", () => {
 		).toBe(true);
 	});
 
+	test("renders human-readable template discovery hints for flags and workspace aliasing", () => {
+		const output = runUtf8Command("node", [entryPath, "templates", "list"]);
+
+		expect(output).toContain(
+			"Supports: --data-storage • --persistence-policy • external layers",
+		);
+		expect(output).toContain("Supports: --query-post-type • external layers");
+		expect(output).toContain("Alias: workspace (`--template workspace`)");
+	});
+
+	test("keeps human-readable template inspect output focused on logical layers", () => {
+		const basicOutput = runUtf8Command("node", [entryPath, "templates", "inspect", "basic"]);
+		const workspaceOutput = runUtf8Command("node", [
+			entryPath,
+			"templates",
+			"inspect",
+			"@wp-typia/create-workspace-template",
+		]);
+
+		expect(basicOutput).toContain("Identity:");
+		expect(basicOutput).toContain("Built-in template id: basic");
+		expect(basicOutput).toContain("Logical layers:");
+		expect(basicOutput).toContain("shared/base -> basic overlay");
+		expect(basicOutput).not.toContain("Overlay path:");
+		expect(basicOutput).not.toContain("/templates/basic");
+
+		expect(workspaceOutput).toContain(
+			"Official package: @wp-typia/create-workspace-template",
+		);
+		expect(workspaceOutput).toContain("Alias: workspace (`--template workspace`)");
+		expect(workspaceOutput).not.toContain("Overlay path:");
+	});
+
 	test("stops parsing global flags after -- in the Node fallback", () => {
 		const parsed = parseGlobalFlags(["templates", "list", "--", "--format"]);
 
