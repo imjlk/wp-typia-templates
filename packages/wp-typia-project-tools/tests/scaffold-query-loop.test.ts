@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
+import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -52,6 +53,14 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 				path.join(targetDir, "demo-query-loop.php"),
 				"utf8",
 			);
+			const gridPatternSource = fs.readFileSync(
+				path.join(targetDir, "src", "patterns", "grid.php"),
+				"utf8",
+			);
+			const listPatternSource = fs.readFileSync(
+				path.join(targetDir, "src", "patterns", "list.php"),
+				"utf8",
+			);
 
 			expect(packageJson.devDependencies["@wp-typia/block-types"]).toBe(
 				blockTypesPackageVersion,
@@ -77,7 +86,14 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 			expect(variationSource).toMatch(/['"]core\/post-template['"]/);
 			expect(pluginBootstrap).toMatch(/enqueue_block_editor_assets/);
 			expect(pluginBootstrap).toMatch(/wp_register_script\s*\(/);
+			expect(pluginBootstrap).toContain("register_block_pattern_category");
+			expect(pluginBootstrap).toContain("/src/patterns/*.php");
 			expect(pluginBootstrap).not.toContain("register_block_type");
+			expect(gridPatternSource).toContain("demo-space/demo-query-loop-grid");
+			expect(gridPatternSource).toContain('"namespace":"demo-space/demo-query-loop"');
+			expect(gridPatternSource).toContain('"postType":"book"');
+			expect(listPatternSource).toContain("demo-space/demo-query-loop-list");
+			expect(listPatternSource).toContain('"namespace":"demo-space/demo-query-loop"');
 			expect(readme).toContain("## Artifact Refresh");
 			expect(readme).toContain(
 				"This scaffold does not generate `block.json` or Typia manifests.",
@@ -85,6 +101,16 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 			expect(readme).toContain(
 				"`src/index.ts` remains the source of truth for the Query Loop variation name",
 			);
+			expect(readme).toContain("Use `src/patterns/*.php` for richer connected layout presets");
+			execFileSync("php", ["-l", path.join(targetDir, "demo-query-loop.php")], {
+				stdio: "ignore",
+			});
+			execFileSync("php", ["-l", path.join(targetDir, "src", "patterns", "grid.php")], {
+				stdio: "ignore",
+			});
+			execFileSync("php", ["-l", path.join(targetDir, "src", "patterns", "list.php")], {
+				stdio: "ignore",
+			});
 
 			typecheckGeneratedProject(targetDir);
 			buildGeneratedProject(targetDir);

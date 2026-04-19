@@ -120,7 +120,7 @@ The `compound` template creates a parent/child block structure with hidden imple
 
 ### 5. Query Loop variations get a first-class scaffold
 
-The `query-loop` template scaffolds an editor-facing `core/query` variation plugin instead of a standalone block, so you can ship a branded inserter entry with stable namespace identity, default query settings, allowed inspector controls, and inline starter `innerBlocks` without rebuilding the full Query Loop setup flow by hand.
+The `query-loop` template scaffolds an editor-facing `core/query` variation plugin instead of a standalone block, so you can ship a branded inserter entry with stable namespace identity, default query settings, allowed inspector controls, and inline starter `innerBlocks` without rebuilding the full Query Loop setup flow by hand. It also includes connected `src/patterns/*.php` presets so richer editorial layouts can live in pattern files while `src/index.ts` stays focused on variation identity and query defaults.
 
 ## Example flows
 

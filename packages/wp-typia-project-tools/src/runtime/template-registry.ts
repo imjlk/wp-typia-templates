@@ -95,9 +95,9 @@ export const TEMPLATE_REGISTRY = Object.freeze<TemplateDefinition[]>([
 	},
 	{
 		id: "query-loop",
-		description: "A Query Loop block variation scaffold with stable namespace-based identity and inline starter layout",
+		description: "A Query Loop block variation scaffold with stable namespace-based identity, inline starter layout, and connected pattern presets",
 		defaultCategory: getBuiltInTemplateMetadataDefaults("query-loop").category,
-		features: ["core/query variation", "Default innerBlocks", "Allowed controls"],
+		features: ["core/query variation", "Default innerBlocks", "Connected patterns", "Allowed controls"],
 		templateDir: path.join(TEMPLATE_ROOT, "query-loop"),
 	},
 	{

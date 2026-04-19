@@ -86,7 +86,7 @@ describe("template registry runtime helpers", () => {
 				value: "compound",
 			},
 			{
-				hint: "core/query variation, Default innerBlocks, Allowed controls",
+				hint: "core/query variation, Default innerBlocks, Connected patterns, Allowed controls",
 				label: "query-loop",
 				value: "query-loop",
 			},
