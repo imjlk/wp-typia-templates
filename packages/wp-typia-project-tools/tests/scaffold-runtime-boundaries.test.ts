@@ -52,6 +52,8 @@ test("scaffold runtime delegates identifier, document, bootstrap, and package he
 		"export function resolveScaffoldIdentifiers(",
 	);
 	expect(documentsReExportPattern.test(applyUtilsSource)).toBe(true);
+	expect(applyUtilsSource).toContain('from "./scaffold-package-manager-files.js"');
+	expect(applyUtilsSource).not.toContain("async function normalizePackageJson(");
 	expect(documentsSource).toContain("export function buildReadme(");
 	expect(documentsSource).toContain("export function buildGitignore(");
 	expect(documentsSource).toContain("export function mergeTextLines(");

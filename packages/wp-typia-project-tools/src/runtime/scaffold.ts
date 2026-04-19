@@ -8,6 +8,7 @@ import {
 	buildGitignore,
 	buildReadme,
 	mergeTextLines,
+	removeQueryLoopPlaceholderFiles,
 	replaceTextRecursively,
 } from "./scaffold-apply-utils.js";
 import {
@@ -346,11 +347,7 @@ export async function scaffoldProject({
 				variables,
 			});
 		}
-		if (resolvedTemplateId === "query-loop") {
-			await fsp.rm(path.join(projectDir, "src", "validator-toolkit.ts"), {
-				force: true,
-			});
-		}
+		await removeQueryLoopPlaceholderFiles(projectDir, resolvedTemplateId);
 	} else if (withMigrationUi && isOfficialWorkspace) {
 		await applyWorkspaceMigrationCapability(projectDir, resolvedPackageManager);
 	}

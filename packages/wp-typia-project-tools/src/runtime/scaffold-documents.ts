@@ -60,6 +60,8 @@ export function buildReadme(
     slug: variables.slug,
   });
   const developmentScript = getPrimaryDevelopmentScript(templateId);
+  const noStepsHeading =
+    templateId === 'query-loop' ? 'Variation Workflow' : 'Artifact Refresh';
   const wpEnvSection = withWpEnv
     ? `## Local WordPress\n\n\`\`\`bash\n${formatRunScript(packageManager, 'wp-env:start')}\n${formatRunScript(packageManager, 'wp-env:stop')}\n${formatRunScript(packageManager, 'wp-env:reset')}\n\`\`\``
     : '';
@@ -74,7 +76,7 @@ export function buildReadme(
       ? `## Advanced Sync\n\n\`\`\`bash\n${optionalOnboardingSteps.join('\n')}\n\`\`\`\n\n${getOptionalOnboardingNote(packageManager, templateId, {
           compoundPersistenceEnabled,
         })}`
-      : `## ${templateId === 'query-loop' ? 'Variation Workflow' : 'Artifact Refresh'}\n\n${getOptionalOnboardingNote(packageManager, templateId, {
+      : `## ${noStepsHeading}\n\n${getOptionalOnboardingNote(packageManager, templateId, {
           compoundPersistenceEnabled,
         })}`;
 

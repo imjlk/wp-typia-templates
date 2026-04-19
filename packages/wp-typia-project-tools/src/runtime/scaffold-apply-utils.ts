@@ -44,9 +44,9 @@ import type { PackageManagerId } from "./package-managers.js";
 import {
 	formatInstallCommand,
 	formatPackageExecCommand,
-	getPackageManager,
 	transformPackageManagerText,
 } from "./package-managers.js";
+import { normalizePackageJson } from "./scaffold-package-manager-files.js";
 import {
 	replaceRepositoryReferencePlaceholders,
 	resolveScaffoldRepositoryReference,
@@ -248,32 +248,17 @@ export async function normalizePackageManagerFiles(
 	}
 }
 
-export async function normalizePackageJson(
-	targetDir: string,
-	packageManagerId: PackageManagerId,
+export async function removeQueryLoopPlaceholderFiles(
+	projectDir: string,
+	templateId: string,
 ): Promise<void> {
-	const packageJsonPath = path.join(targetDir, "package.json");
-	if (!fs.existsSync(packageJsonPath)) {
+	if (templateId !== "query-loop") {
 		return;
 	}
 
-	const packageManager = getPackageManager(packageManagerId);
-	const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, "utf8")) as GeneratedPackageJson;
-	if (packageManagerId === "npm") {
-		delete packageJson.packageManager;
-	} else {
-		packageJson.packageManager = packageManager.packageManagerField;
-	}
-
-	if (packageJson.scripts) {
-		for (const [key, value] of Object.entries(packageJson.scripts)) {
-			if (typeof value === "string") {
-				packageJson.scripts[key] = transformPackageManagerText(value, packageManagerId);
-			}
-		}
-	}
-
-	await fsp.writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, "\t")}\n`, "utf8");
+	await fsp.rm(path.join(projectDir, "src", "validator-toolkit.ts"), {
+		force: true,
+	});
 }
 
 export async function removeUnexpectedLockfiles(
@@ -516,11 +501,7 @@ export async function applyBuiltInScaffoldProjectFiles({
 		withTestPreset,
 		withWpEnv,
 	});
-	if (templateId === "query-loop") {
-		await fsp.rm(path.join(projectDir, "src", "validator-toolkit.ts"), {
-			force: true,
-		});
-	}
+	await removeQueryLoopPlaceholderFiles(projectDir, templateId);
 	await normalizePackageManagerFiles(projectDir, packageManager);
 	await removeUnexpectedLockfiles(projectDir, packageManager);
 	await replaceTextRecursively(projectDir, packageManager, {
