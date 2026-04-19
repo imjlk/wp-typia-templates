@@ -1,6 +1,11 @@
 export const QUERY_LOOP_INDEX_TEMPLATE = `import { registerBlockVariation } from '@wordpress/blocks';
 import type { BlockVariation } from '@wp-typia/block-types/blocks/registration';
 import { __ } from '@wordpress/i18n';
+import {
+  getQueryLoopCustomAllowedControls,
+  getQueryLoopCustomQuerySeed,
+  registerQueryLoopEditorExtensions,
+} from './query-extension';
 
 type QueryLoopVariationAttributes = {
   namespace?: string;
@@ -10,6 +15,7 @@ type QueryLoopVariationAttributes = {
     orderBy?: string;
     perPage?: number;
     postType?: string;
+    [key: string]: unknown;
   };
 };
 
@@ -18,6 +24,11 @@ type QueryLoopVariation = BlockVariation<QueryLoopVariationAttributes> & {
 };
 
 const VARIATION_NAME = {{queryVariationNamespaceJson}};
+const DEFAULT_ALLOWED_CONTROLS = {{queryAllowedControlsJson}};
+const customQuerySeed = getQueryLoopCustomQuerySeed();
+const allowedControls = Array.from(
+  new Set([...DEFAULT_ALLOWED_CONTROLS, ...getQueryLoopCustomAllowedControls()]),
+);
 
 const queryLoopVariation = {
   name: VARIATION_NAME,
@@ -33,9 +44,10 @@ const queryLoopVariation = {
       orderBy: 'date',
       perPage: 6,
       postType: {{queryPostTypeJson}},
+      ...customQuerySeed,
     },
   },
-  allowedControls: {{queryAllowedControlsJson}},
+  allowedControls,
   innerBlocks: [
     [
       'core/post-template',
@@ -52,4 +64,5 @@ const queryLoopVariation = {
 } satisfies QueryLoopVariation;
 
 registerBlockVariation('core/query', queryLoopVariation);
+registerQueryLoopEditorExtensions({ variationName: VARIATION_NAME });
 `;

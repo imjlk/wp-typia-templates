@@ -1,0 +1,38 @@
+export type QueryLoopEditorExtensionContext = {
+  variationName: string;
+};
+
+export type QueryLoopCustomQuerySeed = Record<string, unknown>;
+
+/**
+ * Extend the generated Query Loop variation with variation-specific query params.
+ *
+ * Add custom keys here only when the variation should always seed them. Runtime
+ * parity hooks can read the same keys later from the Query Loop `query` object.
+ */
+export function getQueryLoopCustomQuerySeed(): QueryLoopCustomQuerySeed {
+  return {};
+}
+
+/**
+ * Add extra inspector controls by key when your custom query seed needs them.
+ *
+ * Keep the generated defaults in `src/index.ts` and return only the additional
+ * control ids that your variation-specific query params rely on.
+ */
+export function getQueryLoopCustomAllowedControls(): string[] {
+  return [];
+}
+
+/**
+ * Register optional editor-only extension hooks for custom Query Loop params.
+ *
+ * This stays a no-op by default. When you need custom inspector UI, add your
+ * `editor.BlockEdit` filters or other editor hooks here so `src/index.ts` can
+ * keep variation registration focused on identity and default query values.
+ */
+export function registerQueryLoopEditorExtensions(
+  _context: QueryLoopEditorExtensionContext,
+): void {
+  // Add optional editor hooks here when this variation introduces custom query UI.
+}
