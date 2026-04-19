@@ -1,0 +1,55 @@
+<?php
+/**
+ * Plugin Name:       {{title}}
+ * Description:       {{description}}
+ * Version:           0.1.0
+ * Requires at least: 6.7
+ * Tested up to:      6.9
+ * Requires PHP:      8.0
+ * Author:            {{author}}
+ * License:           GPL-2.0-or-later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:       {{textDomain}}
+ * Domain Path:       /languages
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+function {{phpPrefix}}_load_textdomain() {
+	load_plugin_textdomain(
+		'{{textDomain}}',
+		false,
+		dirname( plugin_basename( __FILE__ ) ) . '/languages'
+	);
+}
+
+function {{phpPrefix}}_register_query_loop_variation_script() {
+	$script_path      = __DIR__ . '/build/index.js';
+	$script_asset_path = __DIR__ . '/build/index.asset.php';
+
+	if ( ! file_exists( $script_path ) || ! file_exists( $script_asset_path ) ) {
+		return;
+	}
+
+	$asset = require $script_asset_path;
+	$handle = '{{phpPrefix}}_query_loop_variation';
+
+	wp_register_script(
+		$handle,
+		plugins_url( 'build/index.js', __FILE__ ),
+		is_array( $asset ) && isset( $asset['dependencies'] ) ? $asset['dependencies'] : array(),
+		is_array( $asset ) && isset( $asset['version'] ) ? $asset['version'] : filemtime( $script_path ),
+		true
+	);
+	wp_set_script_translations( $handle, '{{textDomain}}', __DIR__ . '/languages' );
+}
+
+function {{phpPrefix}}_enqueue_query_loop_variation_script() {
+	{{phpPrefix}}_register_query_loop_variation_script();
+	wp_enqueue_script( '{{phpPrefix}}_query_loop_variation' );
+}
+
+add_action( 'init', '{{phpPrefix}}_load_textdomain' );
+add_action( 'enqueue_block_editor_assets', '{{phpPrefix}}_enqueue_query_loop_variation_script' );

@@ -108,10 +108,10 @@ function summarizeArtifactAttributes(
 type ArtifactAttributeSummary = ReturnType<typeof summarizeArtifactAttributes>;
 type CodeArtifactHashSummary = Record<string, string>;
 
-const EXPECTED_ARTIFACT_ATTRIBUTE_SUMMARIES: Record<
+const EXPECTED_ARTIFACT_ATTRIBUTE_SUMMARIES: Partial<Record<
   BuiltInTemplateId,
   ArtifactAttributeSummary[]
-> = {
+>> = {
   basic: [
     {
       attributes: {
@@ -557,10 +557,10 @@ function summarizeCodeArtifacts(
   );
 }
 
-const EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES: Record<
+const EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES: Partial<Record<
   BuiltInTemplateId,
   CodeArtifactHashSummary
-> = {
+>> = {
   basic: {
     'src/block-metadata.ts': '50956333a97a824a',
     'src/edit.tsx': 'ac2ae7eacefc1c3d',
@@ -734,7 +734,7 @@ describe('built-in block artifacts', () => {
       const { codeArtifacts } = buildArtifacts(templateId);
 
       expect(summarizeCodeArtifacts(codeArtifacts)).toEqual(
-        EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES[templateId],
+        EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES[templateId]!,
       );
     },
   );
@@ -914,7 +914,7 @@ describe('built-in block artifacts', () => {
       const { artifacts } = buildArtifacts(templateId);
 
       expect(artifacts.map(summarizeArtifactAttributes)).toEqual(
-        EXPECTED_ARTIFACT_ATTRIBUTE_SUMMARIES[templateId],
+        EXPECTED_ARTIFACT_ATTRIBUTE_SUMMARIES[templateId]!,
       );
     },
   );

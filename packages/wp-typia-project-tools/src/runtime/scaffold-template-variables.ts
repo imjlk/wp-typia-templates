@@ -112,6 +112,9 @@ export function getTemplateVariables(
     dashCase: slug,
     description,
     frontendCssClassName: buildFrontendCssClassName(cssClassName),
+    queryAllowedControlsJson: JSON.stringify([], null, 2),
+    queryPostType: answers.queryPostType?.trim() || 'post',
+    queryVariationNamespace: `${namespace}/${slug}`,
     isAuthenticatedPersistencePolicy:
       persistencePolicy === 'authenticated' ? 'true' : 'false',
     isPublicPersistencePolicy: persistencePolicy === 'public' ? 'true' : 'false',

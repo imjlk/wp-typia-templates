@@ -66,6 +66,7 @@ interface RunScaffoldFlowOptions {
 	phpPrefix?: string;
 	projectInput: string;
 	promptText?: Parameters<typeof collectScaffoldAnswers>[0]["promptText"];
+	queryPostType?: string;
 	selectDataStorage?: () => Promise<DataStorageMode>;
 	selectExternalLayerId?: (
 		options: ExternalLayerSelectionOption[],
@@ -338,6 +339,7 @@ export async function runScaffoldFlow({
 	namespace,
 	textDomain,
 	phpPrefix,
+	queryPostType,
 	yes = false,
 	noInstall = false,
 	isInteractive = false,
@@ -455,6 +457,7 @@ export async function runScaffoldFlow({
 			persistencePolicy: resolvedPersistencePolicy,
 			phpPrefix,
 			projectName,
+			queryPostType,
 			templateId: resolvedTemplateId,
 			textDomain,
 			yes,

@@ -369,6 +369,34 @@ test("runScaffoldFlow warns about awkward project directory names", async () => 
   expect(flow.nextSteps[0]).toBe(`cd 'my cool block!'`);
 });
 
+test("runScaffoldFlow carries query-loop post type overrides into the generated variation scaffold", async () => {
+  const projectInput = "demo-query-loop";
+  const flow = await runScaffoldFlow({
+    cwd: tempRoot,
+    noInstall: true,
+    packageManager: "npm",
+    projectInput,
+    queryPostType: "book",
+    templateId: "query-loop",
+    yes: true,
+  });
+
+  const variationSource = fs.readFileSync(
+    path.join(flow.projectDir, "src", "index.ts"),
+    "utf8",
+  );
+
+  expect(flow.result.variables.queryPostType).toBe("book");
+  expect(flow.nextSteps).toEqual([
+    `cd ${projectInput}`,
+    "npm install",
+    "npm run start",
+  ]);
+  expect(flow.optionalOnboarding.steps).toEqual([]);
+  expect(variationSource).toContain("postType: 'book'");
+  expect(variationSource).toContain("registerBlockVariation('core/query', queryLoopVariation);");
+});
+
 test("runScaffoldFlow rejects removed built-in template ids", async () => {
   await expect(
     runScaffoldFlow({

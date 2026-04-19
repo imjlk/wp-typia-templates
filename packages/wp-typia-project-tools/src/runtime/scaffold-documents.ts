@@ -69,6 +69,14 @@ export function buildReadme(
   const migrationSection = withMigrationUi
     ? `## Migration UI\n\nThis scaffold already includes an initialized migration workspace at \`v1\`, generated deprecated/runtime artifacts, and an editor-embedded migration dashboard. Migration versions are schema lineage labels and are separate from your package or plugin release version. Use the existing CLI commands to snapshot, diff, scaffold, verify, and fuzz future schema changes.\n\n\`\`\`bash\n${formatRunScript(packageManager, 'migration:doctor')}\n${formatRunScript(packageManager, 'migration:verify')}\n${formatRunScript(packageManager, 'migration:fuzz')}\n\`\`\`\n\nRun \`migration:init\` only when retrofitting migration support into an older project that was not scaffolded with \`--with-migration-ui\`.`
     : '';
+  const advancedSyncSection =
+    optionalOnboardingSteps.length > 0
+      ? `## Advanced Sync\n\n\`\`\`bash\n${optionalOnboardingSteps.join('\n')}\n\`\`\`\n\n${getOptionalOnboardingNote(packageManager, templateId, {
+          compoundPersistenceEnabled,
+        })}`
+      : `## Artifact Refresh\n\n${getOptionalOnboardingNote(packageManager, templateId, {
+          compoundPersistenceEnabled,
+        })}`;
 
   return `# ${variables.title}
 
@@ -96,15 +104,7 @@ ${formatRunScript(packageManager, 'build')}
 ${formatRunScript(packageManager, 'typecheck')}
 \`\`\`
 
-## Advanced Sync
-
-\`\`\`bash
-${optionalOnboardingSteps.join('\n')}
-\`\`\`
-
-${getOptionalOnboardingNote(packageManager, templateId, {
-    compoundPersistenceEnabled,
-  })}
+${advancedSyncSection}
 
 ## Before First Commit
 

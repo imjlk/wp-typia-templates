@@ -54,6 +54,17 @@ export interface BlockSpec {
 	project: {
 		author: string;
 	};
+	queryLoop:
+		| {
+				allowedControls: readonly string[];
+				enabled: false;
+				postType: string;
+		  }
+		| {
+				allowedControls: readonly string[];
+				enabled: true;
+				postType: string;
+		  };
 	runtime: {
 		withMigrationUi: boolean;
 		withTestPreset: boolean;
@@ -95,6 +106,7 @@ export interface PlanBlockInput {
 	templateId: BuiltInTemplateId;
 	variant?: string;
 	withMigrationUi?: boolean;
+	queryPostType?: string;
 	withTestPreset?: boolean;
 	withWpEnv?: boolean;
 }
@@ -167,6 +179,16 @@ function getBuiltInPersistenceSpec({
 	};
 }
 
+const DEFAULT_QUERY_LOOP_ALLOWED_CONTROLS = [
+	"inherit",
+	"postType",
+	"order",
+	"sticky",
+	"taxQuery",
+	"author",
+	"search",
+] as const;
+
 export function createBuiltInBlockSpec({
 	answers,
 	dataStorageMode,
@@ -204,6 +226,18 @@ export function createBuiltInBlockSpec({
 		project: {
 			author: answers.author.trim(),
 		},
+		queryLoop:
+			templateId === "query-loop"
+				? {
+						allowedControls: DEFAULT_QUERY_LOOP_ALLOWED_CONTROLS,
+						enabled: true,
+						postType: (answers.queryPostType ?? "post").trim() || "post",
+				  }
+				: {
+						allowedControls: [],
+						enabled: false,
+						postType: "post",
+				  },
 		runtime: {
 			withMigrationUi,
 			withTestPreset,
@@ -241,6 +275,7 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 	const persistencePolicy = persistenceEnabled
 		? spec.persistence.persistencePolicy
 		: "authenticated";
+	const queryVariationNamespace = `${namespace}/${slug}`;
 
 	return {
 		apiClientPackageVersion,
@@ -263,6 +298,13 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 		dataStorageMode,
 		description: spec.metadata.description,
 		frontendCssClassName: buildFrontendCssClassName(cssClassName),
+		queryAllowedControlsJson: JSON.stringify(
+			spec.queryLoop.enabled ? spec.queryLoop.allowedControls : [],
+			null,
+			2,
+		),
+		queryPostType: spec.queryLoop.enabled ? spec.queryLoop.postType : "post",
+		queryVariationNamespace,
 		isAuthenticatedPersistencePolicy:
 			persistencePolicy === "authenticated" ? "true" : "false",
 		isPublicPersistencePolicy: persistencePolicy === "public" ? "true" : "false",

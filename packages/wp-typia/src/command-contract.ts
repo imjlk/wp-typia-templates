@@ -52,6 +52,7 @@ const STRING_OPTION_NAMES_BY_COMMAND = {
     'package-manager',
     'persistence-policy',
     'php-prefix',
+    'query-post-type',
     'template',
     'text-domain',
     'variant',

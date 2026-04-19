@@ -45,7 +45,13 @@ export const SHARED_MIGRATION_UI_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT,
 export const SHARED_WORKSPACE_TEMPLATE_ROOT = path.join(SHARED_TEMPLATE_ROOT, "workspace");
 export const SHARED_TEST_PRESET_TEMPLATE_ROOT = path.join(SHARED_PRESET_TEMPLATE_ROOT, "test-preset");
 export const SHARED_WP_ENV_PRESET_TEMPLATE_ROOT = path.join(SHARED_PRESET_TEMPLATE_ROOT, "wp-env");
-export const BUILTIN_TEMPLATE_IDS = ["basic", "interactivity", "persistence", "compound"] as const;
+export const BUILTIN_TEMPLATE_IDS = [
+	"basic",
+	"interactivity",
+	"persistence",
+	"compound",
+	"query-loop",
+] as const;
 export const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
 export type BuiltInTemplateId = (typeof BUILTIN_TEMPLATE_IDS)[number];
 export type PersistencePolicy = "authenticated" | "public";
@@ -86,6 +92,13 @@ export const TEMPLATE_REGISTRY = Object.freeze<TemplateDefinition[]>([
 		defaultCategory: getBuiltInTemplateMetadataDefaults("compound").category,
 		features: ["InnerBlocks", "Hidden child blocks", "Optional persistence layer"],
 		templateDir: path.join(TEMPLATE_ROOT, "compound"),
+	},
+	{
+		id: "query-loop",
+		description: "A Query Loop block variation scaffold with stable namespace-based identity and inline starter layout",
+		defaultCategory: getBuiltInTemplateMetadataDefaults("query-loop").category,
+		features: ["core/query variation", "Default innerBlocks", "Allowed controls"],
+		templateDir: path.join(TEMPLATE_ROOT, "query-loop"),
 	},
 	{
 		id: OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,

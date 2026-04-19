@@ -607,6 +607,8 @@ export function buildBuiltInNonTsArtifacts({
 			return buildPersistenceArtifacts(variables);
 		case "compound":
 			return buildCompoundArtifacts(variables);
+		case "query-loop":
+			return [];
 		default: {
 			const unhandledTemplateId: never = templateId;
 			throw new Error(`Unhandled built-in template id: ${unhandledTemplateId}`);

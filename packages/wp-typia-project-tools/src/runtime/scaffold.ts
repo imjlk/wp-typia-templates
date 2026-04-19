@@ -64,6 +64,7 @@ export interface ScaffoldAnswers {
 	persistencePolicy?: PersistencePolicy;
 	/** Snake_case PHP symbol prefix used for generated functions, constants, and keys. */
 	phpPrefix?: string;
+	queryPostType?: string;
 	slug: string;
 	/** Kebab-case WordPress text domain used in block metadata and i18n strings. */
 	textDomain?: string;
@@ -104,6 +105,9 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	pascalCase: string;
 	phpPrefix: string;
 	phpPrefixUpper: string;
+	queryAllowedControlsJson: string;
+	queryPostType: string;
+	queryVariationNamespace: string;
 	isAuthenticatedPersistencePolicy: "false" | "true";
 	isPublicPersistencePolicy: "false" | "true";
 	bootstrapCredentialDeclarations: string;
@@ -164,6 +168,7 @@ export interface CollectScaffoldAnswersOptions {
 		validate?: (value: string) => true | string,
 	) => Promise<string>;
 	persistencePolicy?: PersistencePolicy;
+	queryPostType?: string;
 	textDomain?: string;
 	templateId: string;
 	withTestPreset?: boolean;

@@ -70,10 +70,24 @@ export function getDefaultAnswers(
     namespace: slugDefault,
     persistencePolicy: templateId === 'persistence' ? 'authenticated' : undefined,
     phpPrefix: toSnakeCase(slugDefault),
+    queryPostType: templateId === 'query-loop' ? 'post' : undefined,
     slug: slugDefault,
     textDomain: slugDefault,
     title: toTitleCase(slugDefault),
   };
+}
+
+function validateQueryPostType(value: string): true | string {
+  const normalizedValue = value.trim();
+  if (normalizedValue.length === 0) {
+    return 'Query post type is required.';
+  }
+
+  if (!/^[A-Za-z0-9_-]+$/u.test(normalizedValue)) {
+    return 'Query post type should use letters, numbers, "_" or "-".';
+  }
+
+  return true;
 }
 
 function normalizeTemplateSelection(templateId: string): string {
@@ -162,6 +176,7 @@ export async function collectScaffoldAnswers({
   persistencePolicy,
   phpPrefix,
   promptText,
+  queryPostType,
   textDomain,
 }: CollectScaffoldAnswersOptions): Promise<ScaffoldAnswers> {
   const defaults = getDefaultAnswers(projectName, templateId);
@@ -179,6 +194,7 @@ export async function collectScaffoldAnswers({
       namespace: identifiers.namespace,
       persistencePolicy: persistencePolicy ?? defaults.persistencePolicy,
       phpPrefix: identifiers.phpPrefix,
+      queryPostType: queryPostType ?? defaults.queryPostType,
       textDomain: identifiers.textDomain,
     };
   }
@@ -202,6 +218,14 @@ export async function collectScaffoldAnswers({
     namespace: identifiers.namespace,
     persistencePolicy: persistencePolicy ?? defaults.persistencePolicy,
     phpPrefix: identifiers.phpPrefix,
+    queryPostType:
+      templateId === 'query-loop'
+        ? await promptText(
+            'Query post type',
+            queryPostType ?? defaults.queryPostType ?? 'post',
+            validateQueryPostType,
+          )
+        : queryPostType ?? defaults.queryPostType,
     slug: identifiers.slug,
     textDomain: identifiers.textDomain,
     title: await promptText('Block title', toTitleCase(identifiers.slug)),

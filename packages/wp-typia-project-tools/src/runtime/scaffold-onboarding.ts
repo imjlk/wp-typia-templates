@@ -43,6 +43,10 @@ export function getOptionalSyncScriptNames(
 	templateId: string,
 	options: SyncOnboardingOptions = {},
 ): string[] {
+	if (templateId === "query-loop") {
+		return [];
+	}
+
 	const availableScripts = new Set(options.availableScripts ?? []);
 	if (availableScripts.has("sync")) {
 		return ["sync"];
@@ -86,6 +90,10 @@ export function getQuickStartWorkflowNote(
 	templateId = "basic",
 	options: SyncOnboardingOptions = {},
 ): string {
+	if (templateId === "query-loop") {
+		return `${formatRunScript(packageManager, "start")} runs the editor build/watch loop that registers your Query Loop variation in the block editor. This scaffold is editor-facing by design: update \`src/index.ts\` when you want to change the variation namespace, default query, allowed controls, or starter layout.`;
+	}
+
 	const developmentScript = getPrimaryDevelopmentScript(templateId);
 	const devCommand = formatRunScript(packageManager, developmentScript);
 	const startCommand = formatRunScript(packageManager, "start");
@@ -113,6 +121,10 @@ export function getOptionalOnboardingNote(
 	templateId = "basic",
 	options: SyncOnboardingOptions = {},
 ): string {
+	if (templateId === "query-loop") {
+		return `This scaffold does not generate \`block.json\` or Typia manifests. Edit \`src/index.ts\` to change the variation contract, then rerun ${formatRunScript(packageManager, "build")}, ${formatRunScript(packageManager, "start")}, or ${formatRunScript(packageManager, "typecheck")} as needed.`;
+	}
+
 	const optionalSyncScripts = getOptionalSyncScriptNames(templateId, options);
 	const hasUnifiedSync = optionalSyncScripts.includes("sync");
 	const syncSteps = optionalSyncScripts.map((scriptName) =>
@@ -186,6 +198,10 @@ export function getTemplateSourceOfTruthNote(
 	templateId: string,
 	{ compoundPersistenceEnabled = false }: SyncOnboardingOptions = {},
 ): string {
+	if (templateId === "query-loop") {
+		return "`src/index.ts` remains the source of truth for the Query Loop variation name, default query attributes, `allowedControls`, and inline starter `innerBlocks`. The generated plugin bootstrap only enqueues the built editor asset and should stay focused on script registration unless you intentionally add frontend/runtime glue in later follow-ups.";
+	}
+
 	if (templateId === "compound") {
 		const compoundBase =
 			"`src/blocks/*/types.ts` files remain the source of truth for each block's `block.json`, `typia.manifest.json`, and `typia-validator.php`. Fresh scaffolds include starter `typia.manifest.json` files so editor imports resolve before the first sync.";

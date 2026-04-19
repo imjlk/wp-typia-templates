@@ -23,6 +23,10 @@ export const BUILTIN_TEMPLATE_METADATA_DEFAULTS = Object.freeze({
 		category: "widgets",
 		icon: "screenoptions",
 	}),
+	"query-loop": Object.freeze({
+		category: "widgets",
+		icon: "query-pagination",
+	}),
 });
 
 /**

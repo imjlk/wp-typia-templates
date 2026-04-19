@@ -17,6 +17,7 @@ import {
 	getCreateViewportHeight,
 	getVisibleCreateFieldNames,
 	isCreatePersistenceTemplate,
+	isCreateQueryLoopTemplate,
 	sanitizeCreateSubmitValues,
 } from "./create-flow-model";
 import {
@@ -33,6 +34,7 @@ const templateOptions: SelectOption[] = [
 	{ description: "Interactivity API block scaffold", name: "interactivity", value: "interactivity" },
 	{ description: "Persistence-enabled block scaffold", name: "persistence", value: "persistence" },
 	{ description: "Compound parent + child scaffold", name: "compound", value: "compound" },
+	{ description: "core/query variation scaffold", name: "query-loop", value: "query-loop" },
 	{ description: "Official empty workspace template", name: "workspace", value: "workspace" },
 ];
 
@@ -137,6 +139,14 @@ function CreateFlowFields() {
 				label: "PHP prefix",
 				name: "php-prefix",
 			}),
+			isCreateQueryLoopTemplate(template)
+				? createElement(FirstPartyTextField, {
+						...getWrappedFieldNeighbors(visibleFields, "query-post-type"),
+						key: "query-post-type",
+						label: "Query post type",
+						name: "query-post-type",
+					})
+				: null,
 			isCreatePersistenceTemplate(template)
 				? createElement(FirstPartySelectField, {
 						...getWrappedFieldNeighbors(visibleFields, "data-storage"),

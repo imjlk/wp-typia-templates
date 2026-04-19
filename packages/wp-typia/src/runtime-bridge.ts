@@ -188,6 +188,7 @@ export async function executeCreateCommand({
 			promptText: activePrompt
 				? (message, defaultValue, validate) => activePrompt.text(message, defaultValue, validate)
 				: undefined,
+			queryPostType: readOptionalLooseStringFlag(flags, "query-post-type"),
 			selectDataStorage: activePrompt
 				? () => activePrompt.select("Select a data storage mode", [...DATA_STORAGE_PROMPT_OPTIONS], 1)
 				: undefined,

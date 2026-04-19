@@ -34,6 +34,10 @@ export {
 } from "./built-in-block-code-templates/persistence.js";
 
 export {
+	QUERY_LOOP_INDEX_TEMPLATE,
+} from "./built-in-block-code-templates/query-loop.js";
+
+export {
 	COMPOUND_CHILD_EDIT_TEMPLATE,
 	COMPOUND_CHILD_INDEX_TEMPLATE,
 	COMPOUND_CHILDREN_TEMPLATE,

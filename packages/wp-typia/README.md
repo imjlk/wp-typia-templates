@@ -5,6 +5,7 @@ Canonical CLI package for `wp-typia`.
 Use this package for new installs:
 
 - `npx wp-typia create my-block`
+- `npx wp-typia create my-books --template query-loop --query-post-type book`
 - `bunx wp-typia create my-block`
 - `npx wp-typia create my-plugin --template @wp-typia/create-workspace-template`
 - `wp-typia add block counter-card --template basic`

@@ -805,6 +805,7 @@ describe("wp-typia package", () => {
 
 		expect(parsed.templates.length).toBeGreaterThan(0);
 		expect(parsed.templates.some((entry) => entry.id === "basic")).toBe(true);
+		expect(parsed.templates.some((entry) => entry.id === "query-loop")).toBe(true);
 		expect(
 			parsed.templates.some(
 				(entry) => entry.id === "@wp-typia/create-workspace-template",
