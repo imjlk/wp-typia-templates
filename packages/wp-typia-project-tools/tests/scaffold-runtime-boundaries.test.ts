@@ -29,6 +29,8 @@ test("scaffold runtime delegates identifier, document, bootstrap, and package he
 		path.join(runtimeRoot, "scaffold-package-manager-files.ts"),
 		"utf8",
 	);
+	const documentsReExportPattern =
+		/export\s*\{(?=[^}]*\bbuildGitignore\b)(?=[^}]*\bbuildReadme\b)(?=[^}]*\bmergeTextLines\b)[^}]*\}\s*from\s*"\.\/scaffold-documents\.js";/u;
 
 	expect(scaffoldSource).toContain('from "./scaffold-identifiers.js"');
 	expect(scaffoldSource).toContain('from "./scaffold-apply-utils.js"');
@@ -49,10 +51,7 @@ test("scaffold runtime delegates identifier, document, bootstrap, and package he
 	expect(identifiersSource).toContain(
 		"export function resolveScaffoldIdentifiers(",
 	);
-	expect(applyUtilsSource).toContain('from "./scaffold-documents.js"');
-	expect(applyUtilsSource).toContain("buildGitignore");
-	expect(applyUtilsSource).toContain("buildReadme");
-	expect(applyUtilsSource).toContain("mergeTextLines");
+	expect(documentsReExportPattern.test(applyUtilsSource)).toBe(true);
 	expect(documentsSource).toContain("export function buildReadme(");
 	expect(documentsSource).toContain("export function buildGitignore(");
 	expect(documentsSource).toContain("export function mergeTextLines(");
