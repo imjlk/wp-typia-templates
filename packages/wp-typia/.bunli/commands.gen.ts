@@ -29,7 +29,7 @@ const modules: Record<GeneratedNames, Command<any>> = {
 const metadata: Record<GeneratedNames, GeneratedCommandMeta> = {
   'add': {
       name: 'add',
-      description: 'Extend an official wp-typia workspace with blocks, variations, patterns, binding sources, or hooked blocks.',
+      description: 'Extend an official wp-typia workspace with blocks, variations, patterns, binding sources, editor plugins, or hooked blocks.',
       path: './src/commands/add'
     },
   'create': {

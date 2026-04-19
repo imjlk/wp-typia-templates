@@ -45,6 +45,11 @@ const kindOptions: SelectOption[] = [
 		value: "binding-source",
 	},
 	{
+		name: "editor-plugin",
+		description: "Add a document-level editor extension shell",
+		value: "editor-plugin",
+	},
+	{
 		name: "hooked-block",
 		description: "Add block.json hook metadata to an existing block",
 		value: "hooked-block",
@@ -92,6 +97,14 @@ const persistencePolicyOptions: SelectOption[] = [
 	{ name: "public", description: "Public token policy", value: "public" },
 ];
 
+const editorPluginSlotOptions: SelectOption[] = [
+	{
+		name: "PluginSidebar",
+		description: "Register a document sidebar and more-menu entry",
+		value: "PluginSidebar",
+	},
+];
+
 const HOOKED_BLOCK_POSITION_DESCRIPTIONS: Record<
 	(typeof HOOKED_BLOCK_POSITION_IDS)[number],
 	string
@@ -125,6 +138,8 @@ function getAddNameLabel(kind?: string): string {
 			return "Pattern name";
 		case "binding-source":
 			return "Binding source name";
+		case "editor-plugin":
+			return "Editor plugin name";
 		case "hooked-block":
 			return "Target block";
 		case "block":
@@ -239,6 +254,15 @@ function AddFlowFields({
 							name: position,
 							value: position,
 						})),
+					})
+				: null,
+			visibleFields.has("slot")
+				? createElement(FirstPartySelectField, {
+						...getWrappedFieldNeighbors(orderedVisibleFields, "slot"),
+						key: "slot",
+						label: "Editor shell slot",
+						name: "slot" satisfies AddSelectFieldName,
+						options: editorPluginSlotOptions,
 					})
 				: null,
 			visibleFields.has("data-storage") && isAddPersistenceTemplate(template)

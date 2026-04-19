@@ -125,7 +125,13 @@ export function buildMigrationCompletionPayload(options: {
  * @returns A structured alternate-buffer completion payload.
  */
 export function buildAddCompletionPayload(options: {
-	kind: "binding-source" | "block" | "hooked-block" | "pattern" | "variation";
+	kind:
+		| "binding-source"
+		| "block"
+		| "editor-plugin"
+		| "hooked-block"
+		| "pattern"
+		| "variation";
 	projectDir: string;
 	values: Record<string, string>;
 	warnings?: string[];
@@ -155,6 +161,15 @@ export function buildAddCompletionPayload(options: {
 					`Project directory: ${options.projectDir}`,
 				],
 				title: "✅ Added binding source",
+			};
+		case "editor-plugin":
+			return {
+				summaryLines: [
+					`Editor plugin: ${options.values.editorPluginSlug}`,
+					`Slot: ${options.values.slot}`,
+					`Project directory: ${options.projectDir}`,
+				],
+				title: "✅ Added editor plugin",
 			};
 		case "hooked-block":
 			return {

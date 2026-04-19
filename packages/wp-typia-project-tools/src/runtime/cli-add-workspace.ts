@@ -177,6 +177,7 @@ async function writeVariationRegistry(
 }
 
 export {
+	runAddEditorPluginCommand,
 	runAddBindingSourceCommand,
 	runAddPatternCommand,
 } from "./cli-add-workspace-assets.js";

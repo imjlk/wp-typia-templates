@@ -23,8 +23,21 @@ import {
 /**
  * Supported top-level `wp-typia add` kinds exposed by the canonical CLI.
  */
-export const ADD_KIND_IDS = ["block", "variation", "pattern", "binding-source", "hooked-block"] as const;
+export const ADD_KIND_IDS = [
+	"block",
+	"variation",
+	"pattern",
+	"binding-source",
+	"hooked-block",
+	"editor-plugin",
+] as const;
 export type AddKindId = (typeof ADD_KIND_IDS)[number];
+
+/**
+ * Supported editor-plugin shell slots accepted by `wp-typia add editor-plugin --slot`.
+ */
+export const EDITOR_PLUGIN_SLOT_IDS = ["PluginSidebar"] as const;
+export type EditorPluginSlotId = (typeof EDITOR_PLUGIN_SLOT_IDS)[number];
 
 /**
  * Supported built-in block families accepted by `wp-typia add block --template`.
@@ -60,6 +73,12 @@ export interface RunAddHookedBlockCommandOptions {
 	blockName: string;
 	cwd?: string;
 	position: string;
+}
+
+export interface RunAddEditorPluginCommandOptions {
+	cwd?: string;
+	editorPluginName: string;
+	slot?: string;
 }
 
 export interface RunAddBlockCommandOptions {
@@ -234,6 +253,18 @@ export function assertValidHookAnchor(anchorBlockName: string): string {
 	return trimmed;
 }
 
+export function assertValidEditorPluginSlot(
+	slot = "PluginSidebar",
+): EditorPluginSlotId {
+	if ((EDITOR_PLUGIN_SLOT_IDS as readonly string[]).includes(slot)) {
+		return slot as EditorPluginSlotId;
+	}
+
+	throw new Error(
+		`Editor plugin slot must be one of: ${EDITOR_PLUGIN_SLOT_IDS.join(", ")}.`,
+	);
+}
+
 export function readWorkspaceBlockJson(
 	projectDir: string,
 	blockSlug: string,
@@ -350,6 +381,24 @@ export function assertBindingSourceDoesNotExist(
 	}
 }
 
+export function assertEditorPluginDoesNotExist(
+	projectDir: string,
+	editorPluginSlug: string,
+	inventory: WorkspaceInventory,
+): void {
+	const editorPluginDir = path.join(projectDir, "src", "editor-plugins", editorPluginSlug);
+	if (fs.existsSync(editorPluginDir)) {
+		throw new Error(
+			`An editor plugin already exists at ${path.relative(projectDir, editorPluginDir)}. Choose a different name.`,
+		);
+	}
+	if (inventory.editorPlugins.some((entry) => entry.slug === editorPluginSlug)) {
+		throw new Error(
+			`An editor plugin inventory entry already exists for ${editorPluginSlug}. Choose a different name.`,
+		);
+	}
+}
+
 /**
  * Returns help text for the canonical `wp-typia add` subcommands.
  */
@@ -360,11 +409,13 @@ export function formatAddHelpText(): string {
   wp-typia add pattern <name>
   wp-typia add binding-source <name>
   wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <${HOOKED_BLOCK_POSITION_IDS.join("|")}>
+  wp-typia add editor-plugin <name> [--slot <${EDITOR_PLUGIN_SLOT_IDS.join("|")}>]
 
 Notes:
   \`wp-typia add\` runs only inside official ${WORKSPACE_TEMPLATE_PACKAGE} workspaces.
   \`add variation\` targets an existing block slug from \`scripts/block-config.ts\`.
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
   \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.
-  \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.`;
+  \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.
+  \`add editor-plugin\` scaffolds a document-level editor extension under \`src/editor-plugins/\`.`;
 }

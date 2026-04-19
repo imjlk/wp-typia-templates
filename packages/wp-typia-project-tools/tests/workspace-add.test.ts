@@ -2220,4 +2220,116 @@ test("binding source rollback restores an existing src/bindings/index.js registr
     fs.existsSync(path.join(rolledBackBindingSourceDir, "editor.ts"))
   ).toBe(false);
 }, 15_000);
+
+test("canonical CLI can add an editor plugin to an official workspace template", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-editor-plugin");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add editor plugin",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-editor-plugin",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Editor Plugin",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "document-tools", "--slot", "PluginSidebar"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const bootstrapSource = fs.readFileSync(
+    path.join(targetDir, "demo-workspace-add-editor-plugin.php"),
+    "utf8"
+  );
+  const editorPluginsIndexSource = fs.readFileSync(
+    path.join(targetDir, "src", "editor-plugins", "index.ts"),
+    "utf8"
+  );
+  const entrySource = fs.readFileSync(
+    path.join(targetDir, "src", "editor-plugins", "document-tools", "index.tsx"),
+    "utf8"
+  );
+  const sidebarSource = fs.readFileSync(
+    path.join(targetDir, "src", "editor-plugins", "document-tools", "Sidebar.tsx"),
+    "utf8"
+  );
+  const dataSource = fs.readFileSync(
+    path.join(targetDir, "src", "editor-plugins", "document-tools", "data.ts"),
+    "utf8"
+  );
+
+  expect(blockConfigSource).toContain('slug: "document-tools"');
+  expect(blockConfigSource).toContain('slot: "PluginSidebar"');
+  expect(blockConfigSource).toContain(
+    'file: "src/editor-plugins/document-tools/index.tsx"'
+  );
+  expect(bootstrapSource).toContain("build/editor-plugins/index.js");
+  expect(bootstrapSource).toContain(
+    "demo_space_enqueue_editor_plugins_editor"
+  );
+  expect(editorPluginsIndexSource).toContain("import './document-tools';");
+  expect(entrySource).toContain("registerPlugin");
+  expect(entrySource).toContain("demo-space-document-tools");
+  expect(sidebarSource).toContain("PluginSidebar");
+  expect(sidebarSource).toContain("PluginSidebarMoreMenuItem");
+  expect(dataSource).toContain('EDITOR_PLUGIN_SLOT = "PluginSidebar"');
+  expect(dataSource).toContain("isDocumentToolsEnabled");
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = JSON.parse(doctorOutput) as {
+    checks: Array<{ detail: string; label: string; status: string }>;
+  };
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Editor plugin bootstrap"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Editor plugins index"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Editor plugin document-tools"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Editor plugin config document-tools"
+    )?.status
+  ).toBe("pass");
+
+  runCli("npm", ["run", "build"], { cwd: targetDir });
+  expect(
+    fs.existsSync(path.join(targetDir, "build", "editor-plugins", "index.js"))
+  ).toBe(true);
+  expect(
+    fs.existsSync(
+      path.join(targetDir, "build", "editor-plugins", "index.asset.php")
+    )
+  ).toBe(true);
+  expect(
+    fs.existsSync(path.join(targetDir, "build", "blocks-manifest.php"))
+  ).toBe(true);
+}, 30_000);
 });

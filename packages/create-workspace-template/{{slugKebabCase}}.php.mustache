@@ -117,6 +117,28 @@ function {{phpPrefix}}_enqueue_binding_sources_editor() {
 	);
 }
 
+function {{phpPrefix}}_enqueue_editor_plugins_editor() {
+	$script_path = __DIR__ . '/build/editor-plugins/index.js';
+	$asset_path  = __DIR__ . '/build/editor-plugins/index.asset.php';
+
+	if ( ! file_exists( $script_path ) || ! file_exists( $asset_path ) ) {
+		return;
+	}
+
+	$asset = require $asset_path;
+	if ( ! is_array( $asset ) ) {
+		$asset = array();
+	}
+
+	wp_enqueue_script(
+		'{{slugKebabCase}}-editor-plugins',
+		plugins_url( 'build/editor-plugins/index.js', __FILE__ ),
+		isset( $asset['dependencies'] ) && is_array( $asset['dependencies'] ) ? $asset['dependencies'] : array(),
+		isset( $asset['version'] ) ? $asset['version'] : filemtime( $script_path ),
+		true
+	);
+}
+
 function {{phpPrefix}}_register_pattern_category() {
 	if ( function_exists( 'register_block_pattern_category' ) ) {
 		register_block_pattern_category(
@@ -143,3 +165,4 @@ add_action( 'init', '{{phpPrefix}}_register_binding_sources', 20 );
 add_action( 'init', '{{phpPrefix}}_register_pattern_category' );
 add_action( 'init', '{{phpPrefix}}_register_patterns', 20 );
 add_action( 'enqueue_block_editor_assets', '{{phpPrefix}}_enqueue_binding_sources_editor' );
+add_action( 'enqueue_block_editor_assets', '{{phpPrefix}}_enqueue_editor_plugins_editor' );

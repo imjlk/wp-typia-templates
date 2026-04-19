@@ -100,7 +100,53 @@ export function assertWorkspaceBindingSourceArtifacts(projectDir, bindingSourceS
     throw new Error("Expected workspace build to include build/bindings/index.asset.php");
   }
 
-  lintPhpArtifact(serverPath);
+	lintPhpArtifact(serverPath);
+}
+
+export function assertWorkspaceEditorPluginArtifacts(
+	projectDir,
+	editorPluginSlug,
+	slot,
+) {
+	const editorPluginDir = path.join(
+		projectDir,
+		"src",
+		"editor-plugins",
+		editorPluginSlug,
+	);
+	const entryPath = path.join(editorPluginDir, "index.tsx");
+	const sidebarPath = path.join(editorPluginDir, "Sidebar.tsx");
+	const dataPath = path.join(editorPluginDir, "data.ts");
+	const typesPath = path.join(editorPluginDir, "types.ts");
+	const stylePath = path.join(editorPluginDir, "style.scss");
+
+	for (const filePath of [entryPath, sidebarPath, dataPath, typesPath, stylePath]) {
+		if (!fs.existsSync(filePath)) {
+			throw new Error(`Expected workspace editor plugin file at ${filePath}`);
+		}
+	}
+
+	if (
+		!fs.existsSync(path.join(projectDir, "build", "editor-plugins", "index.js"))
+	) {
+		throw new Error(
+			"Expected workspace build to include build/editor-plugins/index.js",
+		);
+	}
+	if (
+		!fs.existsSync(path.join(projectDir, "build", "editor-plugins", "index.asset.php"))
+	) {
+		throw new Error(
+			"Expected workspace build to include build/editor-plugins/index.asset.php",
+		);
+	}
+
+	const dataSource = fs.readFileSync(dataPath, "utf8");
+	if (!dataSource.includes(`EDITOR_PLUGIN_SLOT = "${slot}"`)) {
+		throw new Error(
+			`Expected ${dataPath} to pin the ${slot} editor plugin slot.`,
+		);
+	}
 }
 
 export function assertWorkspaceHookedBlockArtifacts(projectDir, blockSlug, anchorBlockName, position) {

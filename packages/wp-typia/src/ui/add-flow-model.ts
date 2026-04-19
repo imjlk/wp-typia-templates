@@ -14,11 +14,19 @@ export const addFlowSchema = z.object({
 	"external-layer-id": z.string().optional(),
 	"external-layer-source": z.string().optional(),
 	kind: z
-		.enum(["block", "variation", "pattern", "binding-source", "hooked-block"])
+		.enum([
+			"block",
+			"variation",
+			"pattern",
+			"binding-source",
+			"editor-plugin",
+			"hooked-block",
+		])
 		.default("block"),
 	name: z.string().optional(),
 	"persistence-policy": z.string().optional(),
 	position: z.string().optional(),
+	slot: z.string().optional(),
 	template: z.string().optional(),
 });
 
@@ -31,6 +39,7 @@ export type AddFieldName =
 	| "block"
 	| "anchor"
 	| "position"
+	| "slot"
 	| "data-storage"
 	| "persistence-policy";
 
@@ -41,6 +50,7 @@ const ADD_FIELD_ORDER = [
 	"block",
 	"anchor",
 	"position",
+	"slot",
 	"data-storage",
 	"persistence-policy",
 ] as const satisfies ReadonlyArray<AddFieldName>;
@@ -53,6 +63,7 @@ const ADD_FIELD_HEIGHTS: Record<AddFieldName, number> = {
 	name: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	"persistence-policy": FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 	position: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+	slot: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 	template: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 };
 
@@ -68,6 +79,8 @@ export function getVisibleAddFieldNames(values: Partial<AddFlowValues>): Array<A
 			return ["kind", "name"];
 		case "binding-source":
 			return ["kind", "name"];
+		case "editor-plugin":
+			return ["kind", "name", "slot"];
 		case "hooked-block":
 			return ["kind", "name", "anchor", "position"];
 		case "block":

@@ -10,7 +10,9 @@ import { readWorkspaceInventory, appendWorkspaceInventoryEntries } from "./works
 import { toTitleCase } from "./string-case.js";
 import {
 	assertBindingSourceDoesNotExist,
+	assertEditorPluginDoesNotExist,
 	assertPatternDoesNotExist,
+	assertValidEditorPluginSlot,
 	assertValidGeneratedSlug,
 	getWorkspaceBootstrapPath,
 	normalizeBlockSlug,
@@ -18,6 +20,7 @@ import {
 	quoteTsString,
 	rollbackWorkspaceMutation,
 	type RunAddBindingSourceCommandOptions,
+	type RunAddEditorPluginCommandOptions,
 	type RunAddPatternCommandOptions,
 	type WorkspaceMutationSnapshot,
 	snapshotWorkspaceFiles,
@@ -27,6 +30,8 @@ const PATTERN_BOOTSTRAP_CATEGORY = "register_block_pattern_category";
 const BINDING_SOURCE_SERVER_GLOB = "/src/bindings/*/server.php";
 const BINDING_SOURCE_EDITOR_SCRIPT = "build/bindings/index.js";
 const BINDING_SOURCE_EDITOR_ASSET = "build/bindings/index.asset.php";
+const EDITOR_PLUGIN_EDITOR_SCRIPT = "build/editor-plugins/index.js";
+const EDITOR_PLUGIN_EDITOR_ASSET = "build/editor-plugins/index.asset.php";
 
 function escapeRegex(value: string): string {
 	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
@@ -53,6 +58,27 @@ function buildBindingSourceConfigEntry(bindingSourceSlug: string): string {
 		`\t\tslug: ${quoteTsString(bindingSourceSlug)},`,
 		"\t},",
 	].join("\n");
+}
+
+function buildEditorPluginConfigEntry(
+	editorPluginSlug: string,
+	slot: string,
+): string {
+	return [
+		"\t{",
+		`\t\tfile: ${quoteTsString(`src/editor-plugins/${editorPluginSlug}/index.tsx`)},`,
+		`\t\tslug: ${quoteTsString(editorPluginSlug)},`,
+		`\t\tslot: ${quoteTsString(slot)},`,
+		"\t},",
+	].join("\n");
+}
+
+function toPascalCaseFromSlug(slug: string): string {
+	return normalizeBlockSlug(slug)
+		.split("-")
+		.filter(Boolean)
+		.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+		.join("");
 }
 
 function buildPatternSource(
@@ -186,12 +212,158 @@ registerBlockBindingsSource( {
 `;
 }
 
+function buildEditorPluginTypesSource(editorPluginSlug: string): string {
+	const typeName = `${toPascalCaseFromSlug(editorPluginSlug)}SidebarModel`;
+
+	return `export interface ${typeName} {
+\tprimaryActionLabel: string;
+\tsummary: string;
+}
+`;
+}
+
+function buildEditorPluginDataSource(
+	editorPluginSlug: string,
+	slot: string,
+): string {
+	const typeName = `${toPascalCaseFromSlug(editorPluginSlug)}SidebarModel`;
+	const pluginTitle = toTitleCase(editorPluginSlug);
+	const modelFactoryName = `get${toPascalCaseFromSlug(editorPluginSlug)}SidebarModel`;
+	const enabledFactoryName = `is${toPascalCaseFromSlug(editorPluginSlug)}Enabled`;
+
+	return `import type { ${typeName} } from './types';
+
+export const EDITOR_PLUGIN_SLOT = ${quoteTsString(slot)} as const;
+export const REQUIRED_CAPABILITY = 'edit_posts' as const;
+
+const DEFAULT_SIDEBAR_MODEL: ${typeName} = {
+\tprimaryActionLabel: ${quoteTsString(`Review ${pluginTitle}`)},
+\tsummary: ${quoteTsString(`Replace this summary with your ${pluginTitle} workflow state.`)},
+};
+
+export function ${modelFactoryName}(): ${typeName} {
+\treturn DEFAULT_SIDEBAR_MODEL;
+}
+
+export function ${enabledFactoryName}(): boolean {
+\treturn true;
+}
+`;
+}
+
+function buildEditorPluginSidebarSource(
+	editorPluginSlug: string,
+	textDomain: string,
+): string {
+	const pascalName = toPascalCaseFromSlug(editorPluginSlug);
+	const modelFactoryName = `get${pascalName}SidebarModel`;
+	const enabledFactoryName = `is${pascalName}Enabled`;
+	const componentName = `${pascalName}Sidebar`;
+
+	return `import { Button, PanelBody } from '@wordpress/components';
+import { PluginSidebar, PluginSidebarMoreMenuItem } from '@wordpress/editor';
+import { __ } from '@wordpress/i18n';
+
+import { ${modelFactoryName}, ${enabledFactoryName} } from './data';
+import './style.scss';
+
+export interface ${componentName}Props {
+\tpluginName: string;
+\ttitle: string;
+}
+
+export function ${componentName}( {
+\tpluginName,
+\ttitle,
+}: ${componentName}Props ) {
+\tif ( ! ${enabledFactoryName}() ) {
+\t\treturn null;
+\t}
+
+\tconst sidebarModel = ${modelFactoryName}();
+
+\treturn (
+\t\t<>
+\t\t\t<PluginSidebarMoreMenuItem target={ pluginName }>
+\t\t\t\t{ title }
+\t\t\t</PluginSidebarMoreMenuItem>
+\t\t\t<PluginSidebar name={ pluginName } title={ title }>
+\t\t\t\t<div className="wp-typia-editor-plugin-shell">
+\t\t\t\t\t<PanelBody
+\t\t\t\t\t\tinitialOpen
+\t\t\t\t\t\ttitle={ __( 'Document workflow', ${quoteTsString(textDomain)} ) }
+\t\t\t\t\t>
+\t\t\t\t\t\t<p>{ sidebarModel.summary }</p>
+\t\t\t\t\t\t<Button variant="secondary">
+\t\t\t\t\t\t\t{ sidebarModel.primaryActionLabel }
+\t\t\t\t\t\t</Button>
+\t\t\t\t\t</PanelBody>
+\t\t\t\t</div>
+\t\t\t</PluginSidebar>
+\t\t</>
+\t);
+}
+`;
+}
+
+function buildEditorPluginEntrySource(
+	editorPluginSlug: string,
+	namespace: string,
+	textDomain: string,
+): string {
+	const pascalName = toPascalCaseFromSlug(editorPluginSlug);
+	const componentName = `${pascalName}Sidebar`;
+	const pluginName = `${namespace}-${editorPluginSlug}`;
+	const pluginTitle = toTitleCase(editorPluginSlug);
+
+	return `import { registerPlugin } from '@wordpress/plugins';
+import { __ } from '@wordpress/i18n';
+
+import { REQUIRED_CAPABILITY } from './data';
+import { ${componentName} } from './Sidebar';
+
+const EDITOR_PLUGIN_NAME = ${quoteTsString(pluginName)};
+const EDITOR_PLUGIN_TITLE = __( ${quoteTsString(pluginTitle)}, ${quoteTsString(textDomain)} );
+
+registerPlugin( EDITOR_PLUGIN_NAME, {
+\ticon: 'admin-generic',
+\trender: () => (
+\t\t<${componentName}
+\t\t\tpluginName={ EDITOR_PLUGIN_NAME }
+\t\t\ttitle={ EDITOR_PLUGIN_TITLE }
+\t\t/>
+\t),
+} );
+
+export { REQUIRED_CAPABILITY };
+`;
+}
+
+function buildEditorPluginStyleSource(): string {
+	return `.wp-typia-editor-plugin-shell {
+\tpadding: 16px;
+}
+
+.wp-typia-editor-plugin-shell p {
+\tmargin: 0 0 12px;
+}
+`;
+}
+
 function buildBindingSourceIndexSource(bindingSourceSlugs: string[]): string {
 	const importLines = bindingSourceSlugs
 		.map((bindingSourceSlug) => `import './${bindingSourceSlug}/editor';`)
 		.join("\n");
 
 	return `${importLines}${importLines ? "\n\n" : ""}// wp-typia add binding-source entries\n`;
+}
+
+function buildEditorPluginRegistrySource(editorPluginSlugs: string[]): string {
+	const importLines = editorPluginSlugs
+		.map((editorPluginSlug) => `import './${editorPluginSlug}';`)
+		.join("\n");
+
+	return `${importLines}${importLines ? "\n\n" : ""}// wp-typia add editor-plugin entries\n`;
 }
 
 async function ensurePatternBootstrapAnchors(workspace: WorkspaceProject): Promise<void> {
@@ -351,6 +523,76 @@ function ${bindingEditorEnqueueFunctionName}() {
 	});
 }
 
+async function ensureEditorPluginBootstrapAnchors(workspace: WorkspaceProject): Promise<void> {
+	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
+
+	await patchFile(bootstrapPath, (source) => {
+		let nextSource = source;
+		const workspaceBaseName = workspace.packageName.split("/").pop() ?? workspace.packageName;
+		const enqueueFunctionName = `${workspace.workspace.phpPrefix}_enqueue_editor_plugins_editor`;
+		const enqueueHook = `add_action( 'enqueue_block_editor_assets', '${enqueueFunctionName}' );`;
+		const enqueueFunction = `
+
+function ${enqueueFunctionName}() {
+\t$script_path = __DIR__ . '/${EDITOR_PLUGIN_EDITOR_SCRIPT}';
+\t$asset_path  = __DIR__ . '/${EDITOR_PLUGIN_EDITOR_ASSET}';
+
+\tif ( ! file_exists( $script_path ) || ! file_exists( $asset_path ) ) {
+\t\treturn;
+\t}
+
+\t$asset = require $asset_path;
+\tif ( ! is_array( $asset ) ) {
+\t\t$asset = array();
+\t}
+
+\twp_enqueue_script(
+\t\t'${workspaceBaseName}-editor-plugins',
+\t\tplugins_url( '${EDITOR_PLUGIN_EDITOR_SCRIPT}', __FILE__ ),
+\t\tisset( $asset['dependencies'] ) && is_array( $asset['dependencies'] ) ? $asset['dependencies'] : array(),
+\t\tisset( $asset['version'] ) ? $asset['version'] : filemtime( $script_path ),
+\t\ttrue
+\t);
+}
+`;
+
+		const insertionAnchors = [
+			/add_action\(\s*["']init["']\s*,\s*["'][^"']+_load_textdomain["']\s*\);\s*\n/u,
+			/\?>\s*$/u,
+		];
+		const hasPhpFunctionDefinition = (functionName: string): boolean =>
+			new RegExp(`function\\s+${escapeRegex(functionName)}\\s*\\(`, "u").test(nextSource);
+		const insertPhpSnippet = (snippet: string): void => {
+			for (const anchor of insertionAnchors) {
+				const candidate = nextSource.replace(anchor, (match) => `${snippet}\n${match}`);
+				if (candidate !== nextSource) {
+					nextSource = candidate;
+					return;
+				}
+			}
+			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
+		};
+		const appendPhpSnippet = (snippet: string): void => {
+			const closingTagPattern = /\?>\s*$/u;
+			if (closingTagPattern.test(nextSource)) {
+				nextSource = nextSource.replace(closingTagPattern, `${snippet}\n?>`);
+				return;
+			}
+			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
+		};
+
+		if (!hasPhpFunctionDefinition(enqueueFunctionName)) {
+			insertPhpSnippet(enqueueFunction);
+		}
+
+		if (!nextSource.includes(enqueueHook)) {
+			appendPhpSnippet(enqueueHook);
+		}
+
+		return nextSource;
+	});
+}
+
 function resolveBindingSourceRegistryPath(projectDir: string): string {
 	const bindingsDir = path.join(projectDir, "src", "bindings");
 	return [path.join(bindingsDir, "index.ts"), path.join(bindingsDir, "index.js")].find(
@@ -378,6 +620,144 @@ async function writeBindingSourceRegistry(
 		buildBindingSourceIndexSource(nextBindingSourceSlugs),
 		"utf8",
 	);
+}
+
+function resolveEditorPluginRegistryPath(projectDir: string): string {
+	const editorPluginsDir = path.join(projectDir, "src", "editor-plugins");
+	return [
+		path.join(editorPluginsDir, "index.ts"),
+		path.join(editorPluginsDir, "index.js"),
+	].find((candidatePath) => fs.existsSync(candidatePath)) ?? path.join(editorPluginsDir, "index.ts");
+}
+
+async function writeEditorPluginRegistry(
+	projectDir: string,
+	editorPluginSlug: string,
+): Promise<void> {
+	const editorPluginsDir = path.join(projectDir, "src", "editor-plugins");
+	const registryPath = resolveEditorPluginRegistryPath(projectDir);
+	await fsp.mkdir(editorPluginsDir, { recursive: true });
+
+	const existingEditorPluginSlugs = fs
+		.readdirSync(editorPluginsDir, { withFileTypes: true })
+		.filter((entry) => entry.isDirectory())
+		.map((entry) => entry.name);
+	const nextEditorPluginSlugs = Array.from(
+		new Set([...existingEditorPluginSlugs, editorPluginSlug]),
+	).sort();
+	await fsp.writeFile(
+		registryPath,
+		buildEditorPluginRegistrySource(nextEditorPluginSlugs),
+		"utf8",
+	);
+}
+
+/**
+ * Add one document-level editor plugin scaffold to an official workspace project.
+ *
+ * @param options Command options for the editor-plugin scaffold workflow.
+ * @param options.cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @param options.editorPluginName Human-entered editor-plugin name that will be
+ * normalized and validated before files are written.
+ * @param options.slot Optional editor plugin shell slot. Defaults to `PluginSidebar`.
+ * @returns A promise that resolves with the normalized `editorPluginSlug`, chosen
+ * `slot`, and owning `projectDir` after the scaffold files and inventory entry
+ * are written successfully.
+ * @throws {Error} When the command is run outside an official workspace, when the
+ * slug or slot is invalid, or when a conflicting file or inventory entry exists.
+ */
+export async function runAddEditorPluginCommand({
+	cwd = process.cwd(),
+	editorPluginName,
+	slot,
+}: RunAddEditorPluginCommandOptions): Promise<{
+	editorPluginSlug: string;
+	projectDir: string;
+	slot: string;
+}> {
+	const workspace = resolveWorkspaceProject(cwd);
+	const editorPluginSlug = assertValidGeneratedSlug(
+		"Editor plugin name",
+		normalizeBlockSlug(editorPluginName),
+		"wp-typia add editor-plugin <name> [--slot <PluginSidebar>]",
+	);
+	const resolvedSlot = assertValidEditorPluginSlot(slot);
+
+	const inventory = readWorkspaceInventory(workspace.projectDir);
+	assertEditorPluginDoesNotExist(workspace.projectDir, editorPluginSlug, inventory);
+
+	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
+	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
+	const editorPluginsIndexPath = resolveEditorPluginRegistryPath(workspace.projectDir);
+	const editorPluginDir = path.join(
+		workspace.projectDir,
+		"src",
+		"editor-plugins",
+		editorPluginSlug,
+	);
+	const entryFilePath = path.join(editorPluginDir, "index.tsx");
+	const sidebarFilePath = path.join(editorPluginDir, "Sidebar.tsx");
+	const dataFilePath = path.join(editorPluginDir, "data.ts");
+	const typesFilePath = path.join(editorPluginDir, "types.ts");
+	const styleFilePath = path.join(editorPluginDir, "style.scss");
+	const mutationSnapshot: WorkspaceMutationSnapshot = {
+		fileSources: await snapshotWorkspaceFiles([
+			blockConfigPath,
+			bootstrapPath,
+			editorPluginsIndexPath,
+		]),
+		snapshotDirs: [],
+		targetPaths: [editorPluginDir],
+	};
+
+	try {
+		await fsp.mkdir(editorPluginDir, { recursive: true });
+		await ensureEditorPluginBootstrapAnchors(workspace);
+		await fsp.writeFile(
+			entryFilePath,
+			buildEditorPluginEntrySource(
+				editorPluginSlug,
+				workspace.workspace.namespace,
+				workspace.workspace.textDomain,
+			),
+			"utf8",
+		);
+		await fsp.writeFile(
+			sidebarFilePath,
+			buildEditorPluginSidebarSource(
+				editorPluginSlug,
+				workspace.workspace.textDomain,
+			),
+			"utf8",
+		);
+		await fsp.writeFile(
+			dataFilePath,
+			buildEditorPluginDataSource(editorPluginSlug, resolvedSlot),
+			"utf8",
+		);
+		await fsp.writeFile(
+			typesFilePath,
+			buildEditorPluginTypesSource(editorPluginSlug),
+			"utf8",
+		);
+		await fsp.writeFile(styleFilePath, buildEditorPluginStyleSource(), "utf8");
+		await writeEditorPluginRegistry(workspace.projectDir, editorPluginSlug);
+		await appendWorkspaceInventoryEntries(workspace.projectDir, {
+			editorPluginEntries: [
+				buildEditorPluginConfigEntry(editorPluginSlug, resolvedSlot),
+			],
+		});
+
+		return {
+			editorPluginSlug,
+			projectDir: workspace.projectDir,
+			slot: resolvedSlot,
+		};
+	} catch (error) {
+		await rollbackWorkspaceMutation(mutationSnapshot);
+		throw error;
+	}
 }
 
 /**

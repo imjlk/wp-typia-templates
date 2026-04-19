@@ -484,6 +484,8 @@ test("formatHelpText keeps migration UI flags out of external template usage", (
   expect(helpText).toContain("--external-layer-source");
   expect(helpText).toContain("--external-layer-id");
   expect(helpText).toContain("@wp-typia/create-workspace-template");
+  expect(helpText).toContain("wp-typia add editor-plugin <name>");
+  expect(helpText).toContain("src/editor-plugins/");
 });
 
 test("cli-core barrel preserves doctor helper exports", () => {

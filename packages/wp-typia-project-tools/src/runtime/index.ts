@@ -6,7 +6,8 @@
  * Consumers should prefer these exports for scaffold, add, migrate, doctor,
  * and workspace-aware helpers such as `getWorkspaceBlockSelectOptions`,
  * `runAddBlockCommand`, `runAddVariationCommand`, `runAddPatternCommand`,
- * `runAddBindingSourceCommand`, `runAddHookedBlockCommand`,
+ * `runAddBindingSourceCommand`, `runAddEditorPluginCommand`,
+ * `runAddHookedBlockCommand`,
  * `HOOKED_BLOCK_POSITION_IDS`, and `runDoctor`.
  */
 export {
@@ -123,9 +124,11 @@ export {
 	getOptionalOnboarding,
 	getWorkspaceBlockSelectOptions,
 	HOOKED_BLOCK_POSITION_IDS,
+	EDITOR_PLUGIN_SLOT_IDS,
 	isCliDiagnosticError,
 	runAddBindingSourceCommand,
 	runAddBlockCommand,
+	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,
 	runAddPatternCommand,
 	runDoctor,
@@ -135,6 +138,7 @@ export {
 export type {
 	CliDiagnosticMessage,
 	DoctorCheck,
+	EditorPluginSlotId,
 	HookedBlockPositionId,
 	ReadlinePrompt,
 } from "./cli-core.js";

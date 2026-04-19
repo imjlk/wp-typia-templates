@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { parseScaffoldBlockMetadata } from "@wp-typia/block-runtime/blocks";
 
+import { EDITOR_PLUGIN_SLOT_IDS } from "./cli-add-shared.js";
 import {
 	HOOKED_BLOCK_ANCHOR_PATTERN,
 	HOOKED_BLOCK_POSITION_SET,
@@ -24,6 +25,8 @@ const WORKSPACE_COLLECTION_IMPORT_PATTERN = /^\s*import\s+["']\.\.\/\.\.\/collec
 const WORKSPACE_BINDING_SERVER_GLOB = "/src/bindings/*/server.php";
 const WORKSPACE_BINDING_EDITOR_SCRIPT = "build/bindings/index.js";
 const WORKSPACE_BINDING_EDITOR_ASSET = "build/bindings/index.asset.php";
+const WORKSPACE_EDITOR_PLUGIN_EDITOR_SCRIPT = "build/editor-plugins/index.js";
+const WORKSPACE_EDITOR_PLUGIN_EDITOR_ASSET = "build/editor-plugins/index.asset.php";
 const WORKSPACE_GENERATED_BLOCK_ARTIFACTS = [
 	"block.json",
 	"typia.manifest.json",
@@ -344,6 +347,99 @@ function checkWorkspaceBindingSourcesIndex(
 	);
 }
 
+function getWorkspaceEditorPluginRequiredFiles(
+	editorPlugin: WorkspaceInventory["editorPlugins"][number],
+): string[] {
+	const editorPluginDir = path.join("src", "editor-plugins", editorPlugin.slug);
+
+	return Array.from(
+		new Set([
+			editorPlugin.file,
+			path.join(editorPluginDir, "Sidebar.tsx"),
+			path.join(editorPluginDir, "data.ts"),
+			path.join(editorPluginDir, "types.ts"),
+			path.join(editorPluginDir, "style.scss"),
+		]),
+	);
+}
+
+function checkWorkspaceEditorPluginConfig(
+	editorPlugin: WorkspaceInventory["editorPlugins"][number],
+): DoctorCheck {
+	const validSlots = new Set<string>(EDITOR_PLUGIN_SLOT_IDS);
+	const isValidSlot = validSlots.has(editorPlugin.slot);
+
+	return createDoctorCheck(
+		`Editor plugin config ${editorPlugin.slug}`,
+		isValidSlot ? "pass" : "fail",
+		isValidSlot
+			? `Editor plugin slot ${editorPlugin.slot} is supported`
+			: `Unsupported editor plugin slot "${editorPlugin.slot}". Expected one of: ${EDITOR_PLUGIN_SLOT_IDS.join(", ")}`,
+	);
+}
+
+function checkWorkspaceEditorPluginBootstrap(
+	projectDir: string,
+	packageName: string,
+): DoctorCheck {
+	const packageBaseName = packageName.split("/").pop() ?? packageName;
+	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
+	if (!fs.existsSync(bootstrapPath)) {
+		return createDoctorCheck(
+			"Editor plugin bootstrap",
+			"fail",
+			`Missing ${path.basename(bootstrapPath)}`,
+		);
+	}
+
+	const source = fs.readFileSync(bootstrapPath, "utf8");
+	const hasEditorEnqueueHook = source.includes("enqueue_block_editor_assets");
+	const hasEditorScript = source.includes(WORKSPACE_EDITOR_PLUGIN_EDITOR_SCRIPT);
+	const hasEditorAsset = source.includes(WORKSPACE_EDITOR_PLUGIN_EDITOR_ASSET);
+
+	return createDoctorCheck(
+		"Editor plugin bootstrap",
+		hasEditorEnqueueHook && hasEditorScript && hasEditorAsset ? "pass" : "fail",
+		hasEditorEnqueueHook && hasEditorScript && hasEditorAsset
+			? "Editor plugin enqueue hook is present"
+			: "Missing editor plugin enqueue hook or build/editor-plugins asset references",
+	);
+}
+
+function checkWorkspaceEditorPluginIndex(
+	projectDir: string,
+	editorPlugins: WorkspaceInventory["editorPlugins"],
+): DoctorCheck {
+	const indexRelativePath = [
+		path.join("src", "editor-plugins", "index.ts"),
+		path.join("src", "editor-plugins", "index.js"),
+	].find((relativePath) => fs.existsSync(path.join(projectDir, relativePath)));
+
+	if (!indexRelativePath) {
+		return createDoctorCheck(
+			"Editor plugins index",
+			"fail",
+			"Missing src/editor-plugins/index.ts or src/editor-plugins/index.js",
+		);
+	}
+
+	const indexPath = path.join(projectDir, indexRelativePath);
+	const source = fs.readFileSync(indexPath, "utf8");
+	const missingImports = editorPlugins.filter(
+		(editorPlugin) => !source.includes(`./${editorPlugin.slug}`),
+	);
+
+	return createDoctorCheck(
+		"Editor plugins index",
+		missingImports.length === 0 ? "pass" : "fail",
+		missingImports.length === 0
+			? "Editor plugin registrations are aggregated"
+			: `Missing editor plugin imports for: ${missingImports
+					.map((entry) => entry.slug)
+					.join(", ")}`,
+	);
+}
+
 function checkVariationEntrypoint(projectDir: string, blockSlug: string): DoctorCheck {
 	const entryPath = path.join(projectDir, "src", "blocks", blockSlug, "index.tsx");
 	if (!fs.existsSync(entryPath)) {
@@ -483,7 +579,7 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 			createDoctorCheck(
 				"Workspace inventory",
 				"pass",
-				`${inventory.blocks.length} block(s), ${inventory.variations.length} variation(s), ${inventory.patterns.length} pattern(s), ${inventory.bindingSources.length} binding source(s)`,
+				`${inventory.blocks.length} block(s), ${inventory.variations.length} variation(s), ${inventory.patterns.length} pattern(s), ${inventory.bindingSources.length} binding source(s), ${inventory.editorPlugins.length} editor plugin(s)`,
 			),
 		);
 
@@ -552,6 +648,25 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 					bindingSource.editorFile,
 				]),
 			);
+		}
+
+		if (inventory.editorPlugins.length > 0) {
+			checks.push(
+				checkWorkspaceEditorPluginBootstrap(workspace.projectDir, workspace.packageName),
+			);
+			checks.push(
+				checkWorkspaceEditorPluginIndex(workspace.projectDir, inventory.editorPlugins),
+			);
+		}
+		for (const editorPlugin of inventory.editorPlugins) {
+			checks.push(
+				checkExistingFiles(
+					workspace.projectDir,
+					`Editor plugin ${editorPlugin.slug}`,
+					getWorkspaceEditorPluginRequiredFiles(editorPlugin),
+				),
+			);
+			checks.push(checkWorkspaceEditorPluginConfig(editorPlugin));
 		}
 
 		const migrationWorkspaceCheck = checkMigrationWorkspaceHint(

@@ -182,6 +182,65 @@ test("binding source workflow preserves an existing src/bindings/index.js regist
   expect(bindingsIndexSource).toContain("import './news-data/editor';");
 }, 15_000);
 
+test("doctor accepts workspaces that keep editor plugin registries in src/editor-plugins/index.js", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-editor-plugin-index-js"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace editor plugin index js",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-editor-plugin-index-js",
+      textDomain: "demo-space",
+      title: "Demo Workspace Editor Plugin Index Js",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "document-tools"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const editorPluginsTsPath = path.join(
+    targetDir,
+    "src",
+    "editor-plugins",
+    "index.ts"
+  );
+  const editorPluginsJsPath = path.join(
+    targetDir,
+    "src",
+    "editor-plugins",
+    "index.js"
+  );
+  fs.renameSync(editorPluginsTsPath, editorPluginsJsPath);
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = JSON.parse(doctorOutput) as {
+    checks: Array<{ detail: string; label: string; status: string }>;
+  };
+
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Editor plugins index"
+    )?.status
+  ).toBe("pass");
+}, 15_000);
+
 test("binding source workflow repairs missing bootstrap functions even when hooks remain", async () => {
   const targetDir = path.join(
     tempRoot,
@@ -269,6 +328,16 @@ export interface WorkspacePatternConfig {
 export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
 \t// wp-typia add binding-source entries
 ];
+
+export interface WorkspaceEditorPluginConfig {
+\tfile: string;
+\tslug: string;
+\tslot: string;
+}
+
+export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
+\t// wp-typia add editor-plugin entries
+];
 `,
     {
       patternEntries: ['\t{ file: "src/patterns/hero.php", slug: "hero" },'],
@@ -278,6 +347,9 @@ export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
       bindingSourceEntries: [
         '\t{ editorFile: "src/bindings/hero/editor.ts", serverFile: "src/bindings/hero/server.php", slug: "hero" },',
       ],
+      editorPluginEntries: [
+        '\t{ file: "src/editor-plugins/document-tools/index.tsx", slug: "document-tools", slot: "PluginSidebar" },',
+      ],
     }
   );
 
@@ -286,6 +358,9 @@ export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
   expect(
     repairedSource.match(/export const BINDING_SOURCES\b/gu)?.length
   ).toBe(1);
+  expect(
+    repairedSource.match(/export const EDITOR_PLUGINS\b/gu)?.length
+  ).toBe(1);
   expect(repairedSource).toContain(
     "export interface WorkspaceVariationConfig"
   );
@@ -293,7 +368,11 @@ export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
   expect(repairedSource).toContain(
     "export interface WorkspaceBindingSourceConfig"
   );
+  expect(repairedSource).toContain(
+    "export interface WorkspaceEditorPluginConfig"
+  );
   expect(repairedSource).toContain('slug: "hero"');
+  expect(repairedSource).toContain('slug: "document-tools"');
 });
 
 test("doctor passes on a healthy multi-block workspace", async () => {

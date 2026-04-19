@@ -59,6 +59,7 @@ const STRING_FLAG_NAMES = new Set([
 	"position",
 	"query-post-type",
 	"seed",
+	"slot",
 	"template",
 	"text-domain",
 	"to-migration-version",
@@ -343,6 +344,7 @@ function renderAddHelp() {
 		"--block",
 		"--anchor",
 		"--position",
+		"--slot",
 	]);
 }
 

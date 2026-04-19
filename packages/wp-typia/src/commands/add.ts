@@ -50,6 +50,10 @@ const addOptions = {
 		description: "Hook position for hooked-block workflows.",
 		schema: z.string().optional(),
 	},
+	slot: {
+		description: "Document editor shell slot for editor-plugin workflows.",
+		schema: z.string().optional(),
+	},
 	template: {
 		description: "Built-in block family for the new block.",
 		schema: z.string().optional(),
@@ -58,7 +62,7 @@ const addOptions = {
 
 export const addCommand = defineCommand({
 	defaultFormat: "toon",
-	description: "Extend an official wp-typia workspace with blocks, variations, patterns, binding sources, or hooked blocks.",
+	description: "Extend an official wp-typia workspace with blocks, variations, patterns, binding sources, editor plugins, or hooked blocks.",
 	handler: async (args) => {
 		await executeAddCommand({
 			cwd: args.cwd,
@@ -99,6 +103,7 @@ export const addCommand = defineCommand({
 										| "variation"
 										| "pattern"
 										| "binding-source"
+										| "editor-plugin"
 										| "hooked-block"
 										| undefined) ?? "block",
 								name: args.positional[1] ?? "",
@@ -106,6 +111,7 @@ export const addCommand = defineCommand({
 									(args.flags["persistence-policy"] as string | undefined) ??
 									config["persistence-policy"],
 								position: (args.flags.position as string | undefined) ?? "after",
+								slot: (args.flags.slot as string | undefined) ?? "PluginSidebar",
 								template:
 									(args.flags.template as string | undefined) ?? config.template,
 							},
