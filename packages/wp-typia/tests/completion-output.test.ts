@@ -175,4 +175,27 @@ describe("alternate-buffer completion output helpers", () => {
 		expect(payload.nextSteps).toBeUndefined();
 		expect(payload.optionalNote).toContain("--dry-run");
 	});
+
+	test("dry-run create payload preserves the skipped-by-flag dependency wording", () => {
+		const payload = buildCreateDryRunPayload({
+			packageManager: "npm",
+			plan: {
+				dependencyInstall: "skipped-by-flag",
+				files: ["package.json"],
+			},
+			projectDir: "/tmp/demo-block",
+			result: {
+				selectedVariant: null,
+				templateId: "basic",
+				variables: {
+					title: "Demo Block",
+				},
+				warnings: [],
+			},
+		});
+
+		expect(payload.summaryLines).toContain(
+			"Dependency install: already skipped via --no-install",
+		);
+	});
 });

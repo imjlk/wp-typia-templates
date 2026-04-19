@@ -124,7 +124,7 @@ export function buildCreateCompletionPayload(flow: {
 export function buildCreateDryRunPayload(flow: {
 	packageManager: string;
 	plan: {
-		dependencyInstall: "skipped-because-dry-run" | "skipped-by-flag" | "would-install";
+		dependencyInstall: "skipped-by-flag" | "would-install";
 		files: string[];
 	};
 	projectDir: string;
@@ -137,10 +137,15 @@ export function buildCreateDryRunPayload(flow: {
 		warnings: string[];
 	};
 }): AlternateBufferCompletionPayload {
-	const dependencyInstallLine =
-		flow.plan.dependencyInstall === "skipped-by-flag"
-			? "Dependency install: already skipped via --no-install"
-			: "Dependency install: would run during a real scaffold";
+	let dependencyInstallLine: string;
+	switch (flow.plan.dependencyInstall) {
+		case "skipped-by-flag":
+			dependencyInstallLine = "Dependency install: already skipped via --no-install";
+			break;
+		case "would-install":
+			dependencyInstallLine = "Dependency install: would run during a real scaffold";
+			break;
+	}
 
 	return {
 		optionalLines: flow.plan.files.map((relativePath) => `write ${relativePath}`),

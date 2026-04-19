@@ -328,6 +328,7 @@ function renderCreateHelp() {
 		"--with-test-preset",
 		"--with-wp-env",
 		"--no-install",
+		"--dry-run",
 		"--yes",
 	]);
 }

@@ -60,10 +60,7 @@ interface OptionalOnboardingGuidance {
 }
 
 export interface ScaffoldDryRunPlan {
-	dependencyInstall:
-		| "skipped-because-dry-run"
-		| "skipped-by-flag"
-		| "would-install";
+	dependencyInstall: "skipped-by-flag" | "would-install";
 	files: string[];
 }
 
@@ -116,7 +113,11 @@ async function listRelativeProjectFiles(rootDir: string): Promise<string[]> {
 				continue;
 			}
 
-			relativeFiles.push(path.relative(rootDir, absolutePath));
+			relativeFiles.push(
+				path
+					.relative(rootDir, absolutePath)
+					.replace(path.sep === "\\" ? /\\/gu : /\//gu, "/"),
+			);
 		}
 	}
 
