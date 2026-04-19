@@ -49,6 +49,10 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 				path.join(targetDir, "src", "index.ts"),
 				"utf8",
 			);
+			const queryExtensionSource = fs.readFileSync(
+				path.join(targetDir, "src", "query-extension.ts"),
+				"utf8",
+			);
 			const pluginBootstrap = fs.readFileSync(
 				path.join(targetDir, "demo-query-loop.php"),
 				"utf8",
@@ -76,14 +80,24 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 			expect(variationSource).toMatch(
 				/registerBlockVariation\('core\/query', queryLoopVariation\);/,
 			);
+			expect(variationSource).toContain("from './query-extension'");
 			expect(variationSource).toMatch(
 				/const VARIATION_NAME = ["']demo-space\/demo-query-loop["'];/,
 			);
 			expect(variationSource).toMatch(/namespace:\s*VARIATION_NAME/);
 			expect(variationSource).toMatch(/postType:\s*["']book["']/);
+			expect(variationSource).toContain(
+				"const customQuerySeed = getQueryLoopCustomQuerySeed();",
+			);
+			expect(variationSource).toContain("...customQuerySeed");
+			expect(variationSource).toContain("registerQueryLoopEditorExtensions({ variationName: VARIATION_NAME })");
 			expect(variationSource).toContain("allowedControls:");
 			expect(variationSource).toMatch(/isActive:\s*\[\s*['"]namespace['"]\s*\]/);
 			expect(variationSource).toMatch(/['"]core\/post-template['"]/);
+			expect(queryExtensionSource).toContain("export function getQueryLoopCustomQuerySeed()");
+			expect(queryExtensionSource).toContain(
+				"export function registerQueryLoopEditorExtensions",
+			);
 			expect(pluginBootstrap).toMatch(/enqueue_block_editor_assets/);
 			expect(pluginBootstrap).toMatch(/wp_register_script\s*\(/);
 			expect(pluginBootstrap).toContain("register_block_pattern_category");
@@ -102,6 +116,7 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 				"`src/index.ts` remains the source of truth for the Query Loop variation name",
 			);
 			expect(readme).toContain("Use `src/patterns/*.php` for richer connected layout presets");
+			expect(readme).toContain("use `src/query-extension.ts` for custom query seed values");
 			execFileSync("php", ["-l", path.join(targetDir, "demo-query-loop.php")], {
 				stdio: "ignore",
 			});
