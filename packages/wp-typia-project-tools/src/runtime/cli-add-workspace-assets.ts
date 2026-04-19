@@ -669,8 +669,12 @@ function ${enqueueFunctionName}() {
 				EDITOR_PLUGIN_EDITOR_STYLE_RTL,
 				"wp_style_add_data",
 			];
+			const functionRange = findPhpFunctionRange(nextSource, enqueueFunctionName);
+			const functionSource = functionRange
+				? nextSource.slice(functionRange.start, functionRange.end)
+				: "";
 			const missingReferences = requiredReferences.filter(
-				(reference) => !nextSource.includes(reference),
+				(reference) => !functionSource.includes(reference),
 			);
 			if (missingReferences.length > 0) {
 				const replacedSource = replacePhpFunctionDefinition(

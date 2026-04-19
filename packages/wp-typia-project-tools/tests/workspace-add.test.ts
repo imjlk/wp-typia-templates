@@ -2685,6 +2685,11 @@ test("editor plugin workflow repairs stale legacy bootstrap functions", async ()
       ),
     "utf8"
   );
+  fs.appendFileSync(
+    bootstrapPath,
+    "\n// build/editor-plugins/style-index.css\n// build/editor-plugins/style-index-rtl.css\n// wp_style_add_data\n",
+    "utf8"
+  );
 
   runCli(
     "node",
