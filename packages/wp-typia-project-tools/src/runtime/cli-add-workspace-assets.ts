@@ -43,6 +43,68 @@ function quotePhpString(value: string): string {
 	return `'${value.replace(/\\/gu, "\\\\").replace(/'/gu, "\\'")}'`;
 }
 
+function findPhpFunctionRange(
+	source: string,
+	functionName: string,
+): {
+	end: number;
+	start: number;
+} | null {
+	const signaturePattern = new RegExp(`function\\s+${escapeRegex(functionName)}\\s*\\(`, "u");
+	const signatureMatch = signaturePattern.exec(source);
+	if (!signatureMatch || signatureMatch.index === undefined) {
+		return null;
+	}
+
+	const functionStart = signatureMatch.index;
+	const openBraceIndex = source.indexOf("{", functionStart);
+	if (openBraceIndex === -1) {
+		return null;
+	}
+
+	let depth = 0;
+	for (let index = openBraceIndex; index < source.length; index += 1) {
+		const character = source[index];
+		if (character === "{") {
+			depth += 1;
+			continue;
+		}
+		if (character !== "}") {
+			continue;
+		}
+		depth -= 1;
+		if (depth === 0) {
+			let functionEnd = index + 1;
+			while (functionEnd < source.length && /[\r\n]/u.test(source[functionEnd] ?? "")) {
+				functionEnd += 1;
+			}
+			return {
+				end: functionEnd,
+				start: functionStart,
+			};
+		}
+	}
+
+	return null;
+}
+
+function replacePhpFunctionDefinition(
+	source: string,
+	functionName: string,
+	replacement: string,
+): string | null {
+	const functionRange = findPhpFunctionRange(source, functionName);
+	if (!functionRange) {
+		return null;
+	}
+
+	return [
+		source.slice(0, functionRange.start),
+		replacement,
+		source.slice(functionRange.end),
+	].join("");
+}
+
 function buildPatternConfigEntry(patternSlug: string): string {
 	return [
 		"\t{",
@@ -599,6 +661,30 @@ function ${enqueueFunctionName}() {
 
 		if (!hasPhpFunctionDefinition(enqueueFunctionName)) {
 			insertPhpSnippet(enqueueFunction);
+		} else {
+			const requiredReferences = [
+				EDITOR_PLUGIN_EDITOR_SCRIPT,
+				EDITOR_PLUGIN_EDITOR_ASSET,
+				EDITOR_PLUGIN_EDITOR_STYLE,
+				EDITOR_PLUGIN_EDITOR_STYLE_RTL,
+				"wp_style_add_data",
+			];
+			const missingReferences = requiredReferences.filter(
+				(reference) => !nextSource.includes(reference),
+			);
+			if (missingReferences.length > 0) {
+				const replacedSource = replacePhpFunctionDefinition(
+					nextSource,
+					enqueueFunctionName,
+					enqueueFunction,
+				);
+				if (!replacedSource) {
+					throw new Error(
+						`Unable to repair ${path.basename(bootstrapPath)} for ${enqueueFunctionName}.`,
+					);
+				}
+				nextSource = replacedSource;
+			}
 		}
 
 		if (!nextSource.includes(enqueueHook)) {
@@ -613,7 +699,10 @@ async function ensureEditorPluginBuildScriptAnchors(workspace: WorkspaceProject)
 	const buildScriptPath = path.join(workspace.projectDir, "scripts", "build-workspace.mjs");
 
 	await patchFile(buildScriptPath, (source) => {
-		if (source.includes("'src/editor-plugins/index.ts'")) {
+		if (
+			source.includes("'src/editor-plugins/index.ts'") ||
+			source.includes("'src/editor-plugins/index.js'")
+		) {
 			return source;
 		}
 
@@ -697,6 +786,17 @@ function resolveEditorPluginRegistryPath(projectDir: string): string {
 	].find((candidatePath) => fs.existsSync(candidatePath)) ?? path.join(editorPluginsDir, "index.ts");
 }
 
+function readEditorPluginRegistrySlugs(registryPath: string): string[] {
+	if (!fs.existsSync(registryPath)) {
+		return [];
+	}
+
+	const source = fs.readFileSync(registryPath, "utf8");
+	return Array.from(source.matchAll(/^\s*import\s+['"]\.\/([^/'"]+)['"];?\s*$/gmu)).map(
+		(match) => match[1],
+	);
+}
+
 async function writeEditorPluginRegistry(
 	projectDir: string,
 	editorPluginSlug: string,
@@ -705,11 +805,12 @@ async function writeEditorPluginRegistry(
 	const registryPath = resolveEditorPluginRegistryPath(projectDir);
 	await fsp.mkdir(editorPluginsDir, { recursive: true });
 
-	const existingEditorPluginSlugs = readWorkspaceInventory(projectDir).editorPlugins.map(
-		(entry) => entry.slug,
+	const existingEditorPluginSlugs = readWorkspaceInventory(projectDir).editorPlugins.map((entry) =>
+		entry.slug,
 	);
+	const existingRegistrySlugs = readEditorPluginRegistrySlugs(registryPath);
 	const nextEditorPluginSlugs = Array.from(
-		new Set([...existingEditorPluginSlugs, editorPluginSlug]),
+		new Set([...existingEditorPluginSlugs, ...existingRegistrySlugs, editorPluginSlug]),
 	).sort();
 	await fsp.writeFile(
 		registryPath,

@@ -2406,4 +2406,174 @@ test("editor plugin workflow repairs legacy workspace build config hooks", async
     fs.existsSync(path.join(targetDir, "build", "editor-plugins", "index.js"))
   ).toBe(true);
 }, 30_000);
+
+test("editor plugin workflow preserves legacy registry imports outside inventory", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-editor-plugin-legacy-registry"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add editor plugin legacy registry",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-editor-plugin-legacy-registry",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Editor Plugin Legacy Registry",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const editorPluginsDir = path.join(targetDir, "src", "editor-plugins");
+  const legacyPluginDir = path.join(editorPluginsDir, "legacy-tools");
+  fs.mkdirSync(legacyPluginDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(editorPluginsDir, "index.js"),
+    "import './legacy-tools';\n",
+    "utf8"
+  );
+  fs.writeFileSync(
+    path.join(legacyPluginDir, "index.js"),
+    "export {};\n",
+    "utf8"
+  );
+
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "document-tools"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const registrySource = fs.readFileSync(
+    path.join(editorPluginsDir, "index.js"),
+    "utf8"
+  );
+  expect(registrySource).toContain("import './legacy-tools';");
+  expect(registrySource).toContain("import './document-tools';");
+}, 30_000);
+
+test("editor plugin workflow accepts existing js shared entry hooks", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-editor-plugin-js-entry"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add editor plugin js entry",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-editor-plugin-js-entry",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Editor Plugin JS Entry",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const buildScriptPath = path.join(targetDir, "scripts", "build-workspace.mjs");
+  const editorPluginsDir = path.join(targetDir, "src", "editor-plugins");
+  fs.mkdirSync(editorPluginsDir, { recursive: true });
+  fs.writeFileSync(path.join(editorPluginsDir, "index.js"), "", "utf8");
+  fs.writeFileSync(
+    buildScriptPath,
+    fs
+      .readFileSync(buildScriptPath, "utf8")
+      .replace(
+        `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t]`,
+        `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.js',\n\t]`
+      ),
+    "utf8"
+  );
+
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "document-tools"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  expect(fs.readFileSync(buildScriptPath, "utf8")).toContain(
+    "'src/editor-plugins/index.js'"
+  );
+  expect(fs.readFileSync(path.join(editorPluginsDir, "index.js"), "utf8")).toContain(
+    "import './document-tools';"
+  );
+}, 30_000);
+
+test("editor plugin workflow repairs stale legacy bootstrap functions", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-editor-plugin-legacy-bootstrap"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add editor plugin legacy bootstrap",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-editor-plugin-legacy-bootstrap",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Editor Plugin Legacy Bootstrap",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "document-tools"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const bootstrapPath = path.join(
+    targetDir,
+    "demo-workspace-add-editor-plugin-legacy-bootstrap.php"
+  );
+  fs.writeFileSync(
+    bootstrapPath,
+    fs
+      .readFileSync(bootstrapPath, "utf8")
+      .replace(
+        /\n\t\$style_path\s+= __DIR__ \. '\/build\/editor-plugins\/style-index\.css';[\s\S]+?\n\t\}\n/u,
+        "\n"
+      ),
+    "utf8"
+  );
+
+  runCli(
+    "node",
+    [entryPath, "add", "editor-plugin", "review-panel"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const bootstrapSource = fs.readFileSync(bootstrapPath, "utf8");
+  expect(bootstrapSource).toContain("build/editor-plugins/style-index.css");
+  expect(bootstrapSource).toContain("build/editor-plugins/style-index-rtl.css");
+  expect(bootstrapSource).toContain("wp_style_add_data");
+}, 30_000);
 });
