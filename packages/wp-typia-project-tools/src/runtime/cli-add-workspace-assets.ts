@@ -638,10 +638,9 @@ async function writeEditorPluginRegistry(
 	const registryPath = resolveEditorPluginRegistryPath(projectDir);
 	await fsp.mkdir(editorPluginsDir, { recursive: true });
 
-	const existingEditorPluginSlugs = fs
-		.readdirSync(editorPluginsDir, { withFileTypes: true })
-		.filter((entry) => entry.isDirectory())
-		.map((entry) => entry.name);
+	const existingEditorPluginSlugs = readWorkspaceInventory(projectDir).editorPlugins.map(
+		(entry) => entry.slug,
+	);
 	const nextEditorPluginSlugs = Array.from(
 		new Set([...existingEditorPluginSlugs, editorPluginSlug]),
 	).sort();

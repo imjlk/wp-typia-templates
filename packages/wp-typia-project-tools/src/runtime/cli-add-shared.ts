@@ -75,6 +75,15 @@ export interface RunAddHookedBlockCommandOptions {
 	position: string;
 }
 
+/**
+ * Options for `wp-typia add editor-plugin`.
+ *
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @property editorPluginName Human-entered editor plugin name that will be
+ * normalized into the generated slug.
+ * @property slot Optional editor shell slot. Defaults to `PluginSidebar`.
+ */
 export interface RunAddEditorPluginCommandOptions {
 	cwd?: string;
 	editorPluginName: string;
@@ -253,9 +262,14 @@ export function assertValidHookAnchor(anchorBlockName: string): string {
 	return trimmed;
 }
 
-export function assertValidEditorPluginSlot(
-	slot = "PluginSidebar",
-): EditorPluginSlotId {
+/**
+ * Validate and normalize the editor plugin shell slot.
+ *
+ * @param slot Optional shell slot. Defaults to `PluginSidebar`.
+ * @returns The canonical editor plugin slot id.
+ * @throws {Error} When the slot is not supported by the workspace scaffold.
+ */
+export function assertValidEditorPluginSlot(slot = "PluginSidebar"): EditorPluginSlotId {
 	if ((EDITOR_PLUGIN_SLOT_IDS as readonly string[]).includes(slot)) {
 		return slot as EditorPluginSlotId;
 	}
@@ -381,11 +395,16 @@ export function assertBindingSourceDoesNotExist(
 	}
 }
 
-export function assertEditorPluginDoesNotExist(
-	projectDir: string,
-	editorPluginSlug: string,
-	inventory: WorkspaceInventory,
-): void {
+/**
+ * Ensure an editor plugin scaffold does not already exist on disk or in the
+ * workspace inventory.
+ *
+ * @param projectDir Workspace root directory.
+ * @param editorPluginSlug Normalized editor plugin slug.
+ * @param inventory Parsed workspace inventory.
+ * @throws {Error} When the directory or inventory entry already exists.
+ */
+export function assertEditorPluginDoesNotExist(projectDir: string, editorPluginSlug: string, inventory: WorkspaceInventory): void {
 	const editorPluginDir = path.join(projectDir, "src", "editor-plugins", editorPluginSlug);
 	if (fs.existsSync(editorPluginDir)) {
 		throw new Error(

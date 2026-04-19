@@ -29,6 +29,13 @@ export interface WorkspaceBindingSourceInventoryEntry {
 	slug: string;
 }
 
+/**
+ * Editor-plugin entry parsed from `scripts/block-config.ts`.
+ *
+ * @property file Relative path to the generated editor plugin entry file.
+ * @property slug Normalized editor plugin slug.
+ * @property slot Canonical editor shell slot for the plugin scaffold.
+ */
 export interface WorkspaceEditorPluginInventoryEntry {
 	file: string;
 	slug: string;
@@ -53,6 +60,9 @@ export const BLOCK_CONFIG_ENTRY_MARKER = "\t// wp-typia add block entries";
 export const VARIATION_CONFIG_ENTRY_MARKER = "\t// wp-typia add variation entries";
 export const PATTERN_CONFIG_ENTRY_MARKER = "\t// wp-typia add pattern entries";
 export const BINDING_SOURCE_CONFIG_ENTRY_MARKER = "\t// wp-typia add binding-source entries";
+/**
+ * Marker used to append generated editor-plugin entries into `EDITOR_PLUGINS`.
+ */
 export const EDITOR_PLUGIN_CONFIG_ENTRY_MARKER = "\t// wp-typia add editor-plugin entries";
 
 const VARIATIONS_INTERFACE_SECTION = `

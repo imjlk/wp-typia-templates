@@ -6,6 +6,7 @@ import {
 	useFormContext,
 	useTerminalDimensions,
 } from "@bunli/tui";
+import { EDITOR_PLUGIN_SLOT_IDS } from "@wp-typia/project-tools/cli-add";
 import { HOOKED_BLOCK_POSITION_IDS } from "@wp-typia/project-tools/hooked-blocks";
 
 import { executeAddCommand, loadAddWorkspaceBlockOptions } from "../runtime-bridge";
@@ -97,13 +98,16 @@ const persistencePolicyOptions: SelectOption[] = [
 	{ name: "public", description: "Public token policy", value: "public" },
 ];
 
-const editorPluginSlotOptions: SelectOption[] = [
-	{
-		name: "PluginSidebar",
-		description: "Register a document sidebar and more-menu entry",
-		value: "PluginSidebar",
-	},
-];
+const EDITOR_PLUGIN_SLOT_DESCRIPTIONS: Record<string, string> = {
+	PluginSidebar: "Register a document sidebar and more-menu entry",
+};
+
+const editorPluginSlotOptions: SelectOption[] = EDITOR_PLUGIN_SLOT_IDS.map((slot) => ({
+	description:
+		EDITOR_PLUGIN_SLOT_DESCRIPTIONS[slot] ?? "Editor plugin shell slot",
+	name: slot,
+	value: slot,
+}));
 
 const HOOKED_BLOCK_POSITION_DESCRIPTIONS: Record<
 	(typeof HOOKED_BLOCK_POSITION_IDS)[number],

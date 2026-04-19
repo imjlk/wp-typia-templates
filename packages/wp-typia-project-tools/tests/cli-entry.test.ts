@@ -485,6 +485,9 @@ test("formatHelpText keeps migration UI flags out of external template usage", (
   expect(helpText).toContain("--external-layer-id");
   expect(helpText).toContain("@wp-typia/create-workspace-template");
   expect(helpText).toContain("wp-typia add editor-plugin <name>");
+  expect(helpText).toContain(
+    "wp-typia add editor-plugin <name> [--slot <PluginSidebar>]"
+  );
   expect(helpText).toContain("src/editor-plugins/");
 });
 

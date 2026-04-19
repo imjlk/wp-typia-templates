@@ -50,6 +50,10 @@ function createDoctorScopeCheck(
 	return createDoctorCheck("Doctor scope", status, detail);
 }
 
+function escapeRegex(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
 function getWorkspaceBootstrapRelativePath(packageName: string): string {
 	const packageBaseName = packageName.split("/").pop() ?? packageName;
 	return `${packageBaseName}.php`;
@@ -381,6 +385,7 @@ function checkWorkspaceEditorPluginConfig(
 function checkWorkspaceEditorPluginBootstrap(
 	projectDir: string,
 	packageName: string,
+	phpPrefix: string,
 ): DoctorCheck {
 	const packageBaseName = packageName.split("/").pop() ?? packageName;
 	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
@@ -393,7 +398,9 @@ function checkWorkspaceEditorPluginBootstrap(
 	}
 
 	const source = fs.readFileSync(bootstrapPath, "utf8");
-	const hasEditorEnqueueHook = source.includes("enqueue_block_editor_assets");
+	const enqueueFunctionName = `${phpPrefix}_enqueue_editor_plugins_editor`;
+	const enqueueHook = `add_action( 'enqueue_block_editor_assets', '${enqueueFunctionName}' );`;
+	const hasEditorEnqueueHook = source.includes(enqueueHook);
 	const hasEditorScript = source.includes(WORKSPACE_EDITOR_PLUGIN_EDITOR_SCRIPT);
 	const hasEditorAsset = source.includes(WORKSPACE_EDITOR_PLUGIN_EDITOR_ASSET);
 
@@ -425,9 +432,13 @@ function checkWorkspaceEditorPluginIndex(
 
 	const indexPath = path.join(projectDir, indexRelativePath);
 	const source = fs.readFileSync(indexPath, "utf8");
-	const missingImports = editorPlugins.filter(
-		(editorPlugin) => !source.includes(`./${editorPlugin.slug}`),
-	);
+	const missingImports = editorPlugins.filter((editorPlugin) => {
+		const importPattern = new RegExp(
+			`['"\`]\\./${escapeRegex(editorPlugin.slug)}(?:/[^'"\`]*)?['"\`]`,
+			"u",
+		);
+		return !importPattern.test(source);
+	});
 
 	return createDoctorCheck(
 		"Editor plugins index",
@@ -652,7 +663,11 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 
 		if (inventory.editorPlugins.length > 0) {
 			checks.push(
-				checkWorkspaceEditorPluginBootstrap(workspace.projectDir, workspace.packageName),
+				checkWorkspaceEditorPluginBootstrap(
+					workspace.projectDir,
+					workspace.packageName,
+					workspace.workspace.phpPrefix,
+				),
 			);
 			checks.push(
 				checkWorkspaceEditorPluginIndex(workspace.projectDir, inventory.editorPlugins),

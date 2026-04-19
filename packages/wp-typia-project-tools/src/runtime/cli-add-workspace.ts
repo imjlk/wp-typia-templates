@@ -176,6 +176,10 @@ async function writeVariationRegistry(
 	);
 }
 
+/**
+ * Re-export focused workspace asset scaffold commands from the companion
+ * `cli-add-workspace-assets` module.
+ */
 export {
 	runAddEditorPluginCommand,
 	runAddBindingSourceCommand,

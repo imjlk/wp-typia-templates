@@ -417,6 +417,7 @@ function main() {
 		}
 
 		if (addEditorPluginName) {
+			const slotForArgs = addEditorPluginSlot ?? "PluginSidebar";
 			run(
 				runtime,
 				[
@@ -424,9 +425,8 @@ function main() {
 					"add",
 					"editor-plugin",
 					addEditorPluginName,
-					...(addEditorPluginSlot
-						? ["--slot", addEditorPluginSlot]
-						: []),
+					"--slot",
+					slotForArgs,
 				],
 				{
 					cwd: projectDir,
@@ -486,7 +486,9 @@ function main() {
 			addBindingSourceName,
 			addBlockName,
 			addEditorPluginName,
-			addEditorPluginSlot,
+			addEditorPluginSlot: addEditorPluginName
+				? (addEditorPluginSlot ?? "PluginSidebar")
+				: undefined,
 			addHookedBlockAnchor,
 			addHookedBlockPosition,
 			addHookedBlockSlug,
