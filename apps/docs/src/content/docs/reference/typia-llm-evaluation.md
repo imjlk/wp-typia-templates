@@ -69,6 +69,6 @@ By contrast, the `typia.llm` proof is strongest when the consumer wants:
 ## What this does not change
 
 - No scaffold templates change
-- No new public `@wp-typia/create` API is introduced
+- No new public `@wp-typia/project-tools` API is introduced
 - No generated plugin runtime dependency on `typia.llm` is added
 - This is still an evaluation, not a supported generated-project feature

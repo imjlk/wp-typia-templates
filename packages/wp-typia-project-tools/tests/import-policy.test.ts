@@ -77,10 +77,6 @@ describe('@wp-typia/project-tools import policy', () => {
       path.join(packageRoot, 'README.md'),
       'utf8',
     );
-    const createReadme = fs.readFileSync(
-      path.join(repoRoot, 'packages', 'create', 'README.md'),
-      'utf8',
-    );
     const apiGuide = fs.readFileSync(
       path.join(
         repoRoot,
@@ -172,9 +168,7 @@ describe('@wp-typia/project-tools import policy', () => {
       '@wp-typia/block-runtime/migration-types',
     );
     expect(projectToolsReadme).toContain('@wp-typia/block-runtime/schema-core');
-    expect(createReadme).toContain('deprecated legacy package shell');
-    expect(createReadme).toContain('@wp-typia/project-tools');
-    expect(createReadme).toContain('@wp-typia/project-tools/schema-core');
+    expect(projectToolsReadme).not.toContain('@wp-typia/create');
     expect(apiGuide).toContain('@wp-typia/project-tools');
     expect(apiGuide).toContain('BlockGeneratorService');
     expect(apiGuide).toContain('inspectBlockGeneration');
@@ -198,6 +192,7 @@ describe('@wp-typia/project-tools import policy', () => {
       '@wp-typia/block-runtime/migration-types',
     );
     expect(runtimeSurfaceDoc).toContain('@wp-typia/block-runtime/schema-core');
+    expect(runtimeSurfaceDoc).not.toContain('@wp-typia/create');
     expect(runtimeSurfaceDoc).toContain(
       'no longer ship structural, TS/TSX, style, or block-local',
     );
@@ -255,6 +250,7 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(importPolicyDoc).toContain('structural,');
     expect(importPolicyDoc).toContain('render.php` Mustache files');
     expect(importPolicyDoc).not.toContain('@wp-typia/project-tools/runtime/*');
+    expect(fs.existsSync(path.join(repoRoot, 'packages', 'create'))).toBe(false);
   });
 
   test('shared migration contracts and workspace template identity have a single owner', () => {

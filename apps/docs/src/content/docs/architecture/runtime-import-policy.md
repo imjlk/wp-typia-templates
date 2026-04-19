@@ -129,11 +129,6 @@ Internal generator, parser, migration, and build invariants may still use
 generic `Error` until there is a concrete downstream need for a typed public
 catch contract.
 
-## Deprecated surface
-
-`@wp-typia/create` remains publishable only as a deprecated legacy package
-shell. It is not a supported runtime import target anymore.
-
 ## Out of scope
 
 These areas are not covered by the generated-project compatibility promise:

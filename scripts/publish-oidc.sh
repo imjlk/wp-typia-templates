@@ -12,7 +12,6 @@ PACKAGES=(
   "packages/wp-typia-block-runtime"
   "packages/wp-typia-project-tools"
   "packages/wp-typia"
-  "packages/create"
   "packages/create-workspace-template"
 )
 

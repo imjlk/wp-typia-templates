@@ -79,8 +79,6 @@
     "publish:dry-run": "bun run packages:build && DRY_RUN=1 bun run publish:oidc",
     "publish:oidc": "bash scripts/publish-oidc.sh",
     "publish:validate": "node scripts/validate-publish-oidc-packages.mjs",
-    "archived-entrypoints:plan": "node scripts/deprecate-archived-npm-entrypoints.mjs",
-    "archived-entrypoints:deprecate": "node scripts/deprecate-archived-npm-entrypoints.mjs --apply",
     "manifest-policy:validate": "node scripts/validate-package-manifest-policy.mjs",
     "runtime-coupling:validate": "node scripts/validate-runtime-package-coupling.mjs",
     "sampo:add": "sampo add",

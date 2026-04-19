@@ -36,30 +36,6 @@ function createManifestRepo() {
 		private: true,
 		version: "1.0.0",
 	});
-
-	writeJson(path.join(repoRoot, "packages/create-wp-typia/package.json"), {
-		description:
-			"Archived npm entrypoint for wp-typia. Use npx wp-typia create <project-dir> or bunx wp-typia create <project-dir> instead.",
-		dependencies: {},
-		engines: {
-			bun: ">=1.3.11",
-			node: ">=20.0.0",
-			npm: ">=10.0.0",
-		},
-		keywords: [
-			"wordpress",
-			"gutenberg",
-			"typia",
-			"archived",
-			"deprecated",
-			"legacy",
-			"initializer",
-		],
-		name: "create-wp-typia",
-		packageManager: "bun@1.3.11",
-		private: true,
-		version: "1.0.0",
-	});
 	writeJson(path.join(repoRoot, "packages/wp-typia-api-client/package.json"), {
 		dependencies: {},
 		engines: {
@@ -254,29 +230,6 @@ describe("validatePackageManifestPolicy", () => {
 		expect(result.valid).toBe(false);
 		expect(result.errors).toContain(
 			"packages/wp-typia-rest/package.json depends on workspace protocol rewriting but scripts/publish-manifest.mjs does not delegate to the shared publish-manifest helper.",
-		);
-	});
-
-	test("fails when the archived npm entrypoint manifest drifts from the supported redirect policy", () => {
-		const repoRoot = createManifestRepo();
-		const packageJsonPath = path.join(repoRoot, "packages/create-wp-typia/package.json");
-		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-		packageJson.description = "Archived package with stale guidance";
-		packageJson.keywords = ["wordpress"];
-		packageJson.private = false;
-		writeJson(packageJsonPath, packageJson);
-
-		const result = validatePackageManifestPolicy(repoRoot);
-
-		expect(result.valid).toBe(false);
-		expect(result.errors).toContain(
-			'packages/create-wp-typia/package.json must declare private=true for archived npm entrypoints, found false.',
-		);
-		expect(result.errors).toContain(
-			'packages/create-wp-typia/package.json must declare description="Archived npm entrypoint for wp-typia. Use npx wp-typia create <project-dir> or bunx wp-typia create <project-dir> instead." for archived npm entrypoints, found "Archived package with stale guidance".',
-		);
-		expect(result.errors).toContain(
-			'packages/create-wp-typia/package.json must declare keywords=["wordpress","gutenberg","typia","archived","deprecated","legacy","initializer"] for archived npm entrypoints, found ["wordpress"].',
 		);
 	});
 });

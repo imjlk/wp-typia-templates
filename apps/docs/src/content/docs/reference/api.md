@@ -64,8 +64,6 @@ This repository has multiple public surfaces:
 - `@wp-typia/api-client/internal/runtime-primitives`
   Advanced/internal validation normalization helpers shared by transport
   adapters.
-- `@wp-typia/create`
-  Deprecated legacy package shell only.
 
 ## 1. `wp-typia`
 
@@ -239,17 +237,7 @@ now share the same summary-first failure layout. Root `doctor` still streams
 PASS/FAIL check rows plus a final summary, while the other commands render the
 shared diagnostic block only when they fail.
 
-Compatibility note: `@wp-typia/project-tools` is the canonical programmatic package, `wp-typia` is the canonical CLI package, and `@wp-typia/create` is now the deprecated legacy package shell. `create-wp-typia` is archived and no longer a supported path for new installs.
-
-## 2. `@wp-typia/create`
-
-`@wp-typia/create` is now the deprecated legacy package shell.
-
-Use these packages instead:
-
-- `wp-typia` for the canonical CLI surface
-- `@wp-typia/project-tools` for project orchestration and programmatic runtime helpers
-- `@wp-typia/block-runtime/*` for generated-project runtime helpers
+Compatibility note: `@wp-typia/project-tools` is the canonical programmatic package, `wp-typia` is the canonical CLI package, and `@wp-typia/block-runtime/*` is the maintained generated-project runtime helper surface.
 
 For the current generator architecture boundary, including the staged
 `BlockSpec` / `BlockGeneratorService` contract, the current phase status, and
@@ -261,7 +249,7 @@ project/bootstrap assets, see:
 - [`docs/block-generator-tool-contract.md`](../architecture/block-generator-tool-contract.md)
 - [`docs/external-template-layer-composition.md`](../architecture/external-template-layer-composition.md)
 
-## 3. `@wp-typia/block-types`
+## 2. `@wp-typia/block-types`
 
 Generated projects can import shared semantic unions, block support metadata
 types, and support-generated style attribute helpers directly in `src/types.ts`
@@ -278,7 +266,7 @@ The registration facade is locally owned and currently targets the generated
 project minimum `@wordpress/blocks@^15.2.0` / `@types/wordpress__blocks@^12.5.18`
 baseline.
 
-## 4. `@wp-typia/rest`
+## 3. `@wp-typia/rest`
 
 `@wp-typia/rest` provides typed client-side helpers for WordPress REST usage:
 
@@ -473,9 +461,6 @@ Generated projects can also import shared runtime helpers from `@wp-typia/block-
 
 Use `@wp-typia/block-runtime/metadata-core` for metadata sync and
 `@wp-typia/block-runtime/*` for generated-project runtime helpers.
-`@wp-typia/create` remains publishable only as the deprecated legacy package
-shell, and its old compatibility subpaths are no longer the preferred import
-path for either orchestration or generated-project helpers.
 
 `runtime/blocks` is the shared generated-project surface for scaffold-owned
 block registration helpers and webpack artifact/config adapters.

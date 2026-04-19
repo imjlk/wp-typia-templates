@@ -246,7 +246,6 @@ If you want to see the “everything included” shape of `wp-typia`, start with
 - [`wp-typia`](https://www.npmjs.com/package/wp-typia) as the canonical CLI package
 - [`@wp-typia/create-workspace-template`](https://www.npmjs.com/package/@wp-typia/create-workspace-template) as the official empty workspace template package
 - [`@wp-typia/project-tools`](https://www.npmjs.com/package/@wp-typia/project-tools) as the canonical programmatic project orchestration package
-- [`@wp-typia/create`](https://www.npmjs.com/package/@wp-typia/create) as the deprecated legacy package shell
 - [`@wp-typia/block-types`](https://www.npmjs.com/package/@wp-typia/block-types)
 - [`@wp-typia/rest`](https://www.npmjs.com/package/@wp-typia/rest)
 - [`@wp-typia/api-client`](https://www.npmjs.com/package/@wp-typia/api-client)
@@ -258,7 +257,6 @@ If you want to see the “everything included” shape of `wp-typia`, start with
 wp-typia/
 ├── packages/
 │   ├── wp-typia/               # Canonical CLI package
-│   ├── create/                 # Compatibility/programmatic scaffold runtime
 │   ├── create-workspace-template/ # Official empty workspace template package
 │   ├── wp-typia-api-client/    # Backend-neutral generated API client runtime
 │   ├── wp-typia-block-runtime/ # Prototype block runtime facade package
