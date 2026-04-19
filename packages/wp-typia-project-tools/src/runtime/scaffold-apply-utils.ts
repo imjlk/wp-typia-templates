@@ -7,7 +7,6 @@ import { fileURLToPath } from "node:url";
 import {
 	applyGeneratedProjectDxPackageJson,
 	applyLocalDevPresetFiles,
-	getPrimaryDevelopmentScript,
 } from "./local-dev-presets.js";
 import { applyMigrationUiCapability } from "./migration-ui-capability.js";
 import { getPackageVersions } from "./package-versions.js";
@@ -20,15 +19,10 @@ import {
 	syncPersistenceRestArtifacts,
 } from "./persistence-rest-artifacts.js";
 import {
-	getCompoundExtensionWorkflowSection,
-	getInitialCommitCommands,
-	getInitialCommitNote,
-	getOptionalOnboardingNote,
-	getOptionalOnboardingSteps,
-	getQuickStartWorkflowNote,
-	getPhpRestExtensionPointsSection,
-	getTemplateSourceOfTruthNote,
-} from "./scaffold-onboarding.js";
+	buildGitignore,
+	buildReadme,
+	mergeTextLines,
+} from "./scaffold-documents.js";
 import {
 	getStarterManifestFiles,
 	stringifyStarterManifest,
@@ -58,6 +52,12 @@ import {
 import type {
 	ScaffoldTemplateVariables,
 } from "./scaffold.js";
+
+export {
+	buildGitignore,
+	buildReadme,
+	mergeTextLines,
+} from "./scaffold-documents.js";
 
 export interface InstallDependenciesOptions {
 	packageManager: PackageManagerId;
@@ -97,154 +97,6 @@ export async function ensureDirectory(targetDir: string, allowExisting = false):
 	if (entries.length > 0) {
 		throw new Error(`Target directory is not empty: ${targetDir}`);
 	}
-}
-
-/**
- * Builds the generated README markdown for one scaffolded project.
- *
- * @param templateId Scaffold template family or template identifier.
- * @param variables Interpolated scaffold variables used in generated content.
- * @param packageManager Package manager used to format install and script commands.
- * @param options Optional README sections enabled by scaffold presets.
- * @returns Markdown README content for the generated project root.
- */
-export function buildReadme(
-	templateId: string,
-	variables: ScaffoldTemplateVariables,
-	packageManager: PackageManagerId,
-	{
-		withMigrationUi = false,
-		withTestPreset = false,
-		withWpEnv = false,
-	}: {
-		withMigrationUi?: boolean;
-		withTestPreset?: boolean;
-		withWpEnv?: boolean;
-	} = {},
-): string {
-	const optionalOnboardingSteps = getOptionalOnboardingSteps(packageManager, templateId, {
-		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
-	});
-	const initialCommitCommands = getInitialCommitCommands();
-	const sourceOfTruthNote = getTemplateSourceOfTruthNote(templateId, {
-		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
-	});
-	const compoundPersistenceEnabled = variables.compoundPersistenceEnabled === "true";
-	const publicPersistencePolicyNote =
-		variables.isPublicPersistencePolicy === "true"
-			? "Public persistence writes use signed short-lived tokens, per-request ids, and coarse rate limiting by default. Add application-specific abuse controls before using the same pattern for high-value metrics or experiments."
-			: null;
-	const compoundExtensionWorkflowSection = getCompoundExtensionWorkflowSection(
-		packageManager,
-		templateId,
-	);
-	const phpRestExtensionPointsSection = getPhpRestExtensionPointsSection(templateId, {
-		compoundPersistenceEnabled,
-		slug: variables.slug,
-	});
-	const developmentScript = getPrimaryDevelopmentScript(templateId);
-	const wpEnvSection = withWpEnv
-		? `## Local WordPress\n\n\`\`\`bash\n${formatRunScript(packageManager, "wp-env:start")}\n${formatRunScript(packageManager, "wp-env:stop")}\n${formatRunScript(packageManager, "wp-env:reset")}\n\`\`\``
-		: "";
-	const testPresetSection = withTestPreset
-		? `## Local Test Preset\n\n\`\`\`bash\n${formatRunScript(packageManager, "wp-env:start:test")}\n${formatRunScript(packageManager, "wp-env:wait:test")}\n${formatRunScript(packageManager, "test:e2e")}\n\`\`\`\n\nThe generated smoke test uses \`.wp-env.test.json\` and verifies that the scaffolded block registers in the WordPress editor.`
-		: "";
-	const migrationSection = withMigrationUi
-		? `## Migration UI\n\nThis scaffold already includes an initialized migration workspace at \`v1\`, generated deprecated/runtime artifacts, and an editor-embedded migration dashboard. Migration versions are schema lineage labels and are separate from your package or plugin release version. Use the existing CLI commands to snapshot, diff, scaffold, verify, and fuzz future schema changes.\n\n\`\`\`bash\n${formatRunScript(packageManager, "migration:doctor")}\n${formatRunScript(packageManager, "migration:verify")}\n${formatRunScript(packageManager, "migration:fuzz")}\n\`\`\`\n\nRun \`migration:init\` only when retrofitting migration support into an older project that was not scaffolded with \`--with-migration-ui\`.`
-		: "";
-
-	return `# ${variables.title}
-
-${variables.description}
-
-## Template
-
-${templateId}
-
-## Quick Start
-
-\`\`\`bash
-${formatInstallCommand(packageManager)}
-${formatRunScript(packageManager, developmentScript)}
-\`\`\`
-
-${getQuickStartWorkflowNote(packageManager, templateId, {
-		compoundPersistenceEnabled,
-	})}
-
-## Build and Verify
-
-\`\`\`bash
-${formatRunScript(packageManager, "build")}
-${formatRunScript(packageManager, "typecheck")}
-\`\`\`
-
-## Advanced Sync
-
-\`\`\`bash
-${optionalOnboardingSteps.join("\n")}
-\`\`\`
-
-${getOptionalOnboardingNote(packageManager, templateId, {
-		compoundPersistenceEnabled,
-	})}
-
-## Before First Commit
-
-\`\`\`bash
-${initialCommitCommands.join("\n")}
-\`\`\`
-
-${getInitialCommitNote()}
-
-${sourceOfTruthNote}${publicPersistencePolicyNote ? `\n\n${publicPersistencePolicyNote}` : ""}${migrationSection ? `\n\n${migrationSection}` : ""}${compoundExtensionWorkflowSection ? `\n\n${compoundExtensionWorkflowSection}` : ""}${wpEnvSection ? `\n\n${wpEnvSection}` : ""}${testPresetSection ? `\n\n${testPresetSection}` : ""}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ""}
-`;
-}
-
-export function buildGitignore(): string {
-	return `# Dependencies
-node_modules/
-.yarn/
-.pnp.*
-
-# Build
-build/
-dist/
-
-# Editor
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# WordPress
-*.log
-.wp-env/
-`;
-}
-
-export function mergeTextLines(primaryContent: string, existingContent: string): string {
-	const normalizedPrimary = primaryContent.replace(/\r\n/g, "\n").trimEnd();
-	const normalizedExisting = existingContent.replace(/\r\n/g, "\n").trimEnd();
-	const mergedLines: string[] = [];
-	const seen = new Set<string>();
-
-	for (const line of [...normalizedPrimary.split("\n"), ...normalizedExisting.split("\n")]) {
-		if (line.length === 0 && mergedLines[mergedLines.length - 1] === "") {
-			continue;
-		}
-		if (line.length > 0 && seen.has(line)) {
-			continue;
-		}
-		if (line.length > 0) {
-			seen.add(line);
-		}
-		mergedLines.push(line);
-	}
-
-	return `${mergedLines.join("\n").replace(/\n{3,}/g, "\n\n")}\n`;
 }
 
 export async function writeStarterManifestFiles(

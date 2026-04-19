@@ -6,6 +6,23 @@ import {
 	normalizeBlockSlug,
 	run,
 } from "./generated-project-smoke-core.mjs";
+import {
+	assertBasicTemplateScaffold,
+	assertCompoundPersistenceArtifacts,
+	assertCompoundRestOpenApi,
+	assertCompoundTemplateArtifacts,
+	assertPersistenceRestOpenApi,
+	assertPersistenceTemplateArtifacts,
+} from "./generated-project-smoke-template-assertions.mjs";
+import {
+	assertWorkspaceBindingSourceArtifacts,
+	assertWorkspaceBlockArtifacts,
+	assertWorkspaceHookedBlockArtifacts,
+	assertWorkspacePatternArtifacts,
+	assertWorkspaceTemplateScaffold,
+	assertWorkspaceVariationArtifacts,
+	isWorkspaceTemplateRequest,
+} from "./generated-project-smoke-workspace-assertions.mjs";
 
 function listSourceBlockSlugs(projectDir) {
 	const sourceBlocksDir = path.join(projectDir, "src", "blocks");
@@ -121,6 +138,10 @@ function collectBlockMetadataPaths(buildRoot) {
 	return blockMetadataPaths.sort();
 }
 
+function readJsonFile(filePath) {
+	return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
 function normalizeBlockMetadataFileRefs(value) {
 	if (typeof value === "string") {
 		return value.startsWith("file:./") ? [value.slice("file:./".length)] : [];
@@ -223,187 +244,6 @@ function assertGeneratedPackageBoundary(projectDir) {
 	}
 }
 
-function assertBasicTemplateScaffold(projectDir) {
-	const blockJsonPath = path.join(projectDir, "src", "block.json");
-	const savePath = path.join(projectDir, "src", "save.tsx");
-	const blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8"));
-	const saveSource = fs.readFileSync(savePath, "utf8");
-
-	if (blockJson.editorStyle !== "file:./index.css") {
-		throw new Error("Expected basic scaffold block.json to include editorStyle: file:./index.css");
-	}
-	if ("version" in (blockJson.attributes ?? {})) {
-		throw new Error("Expected basic scaffold attributes to use schemaVersion instead of version");
-	}
-	if (!("schemaVersion" in (blockJson.attributes ?? {}))) {
-		throw new Error("Expected basic scaffold attributes to include schemaVersion");
-	}
-	if (saveSource.includes("return null;")) {
-		throw new Error("Expected basic scaffold save.tsx to serialize stable markup instead of returning null");
-	}
-}
-
-function assertPersistenceTemplateArtifacts(projectDir, projectName) {
-	const candidateDirs = [
-		path.join(projectDir, "build", projectName),
-		path.join(projectDir, "build"),
-	];
-
-	for (const artifact of [
-		path.join("api-schemas", "bootstrap-query.schema.json"),
-		path.join("api-schemas", "bootstrap-response.schema.json"),
-		"typia.schema.json",
-		"typia.openapi.json",
-		path.join("api-schemas", "state-query.schema.json"),
-		path.join("api-schemas", "state-response.schema.json"),
-		path.join("api-schemas", "write-state-request.schema.json"),
-	]) {
-		const found = candidateDirs.some((dir) => fs.existsSync(path.join(dir, artifact)));
-		if (!found) {
-			throw new Error(`Expected ${artifact} in one of: ${candidateDirs.join(", ")}`);
-		}
-	}
-}
-
-function findFirstExistingPath(paths) {
-	return paths.find((candidatePath) => fs.existsSync(candidatePath));
-}
-
-function readJsonFile(filePath) {
-	return JSON.parse(fs.readFileSync(filePath, "utf8"));
-}
-
-function assertPersistenceRestOpenApi(projectDir, projectName, namespace, persistencePolicy) {
-	const candidatePath = findFirstExistingPath([
-		path.join(projectDir, "build", projectName, "api.openapi.json"),
-		path.join(projectDir, "build", "api.openapi.json"),
-	]);
-
-	if (!candidatePath) {
-		throw new Error("Expected aggregate REST OpenAPI document for persistence scaffold");
-	}
-
-	const openApi = readJsonFile(candidatePath);
-	const routePath = `/${namespace}/v1/${projectName}/state`;
-	const bootstrapPath = `/${namespace}/v1/${projectName}/bootstrap`;
-	const pathItem = openApi.paths?.[routePath];
-	const bootstrapPathItem = openApi.paths?.[bootstrapPath];
-	const getOperation = pathItem?.get;
-	const postOperation = pathItem?.post;
-	const bootstrapOperation = bootstrapPathItem?.get;
-
-	if (!getOperation || !postOperation) {
-		throw new Error(`Expected GET and POST operations for ${routePath} in ${candidatePath}`);
-	}
-	if (!bootstrapOperation) {
-		throw new Error(`Expected GET operation for ${bootstrapPath} in ${candidatePath}`);
-	}
-
-	if (getOperation["x-wp-typia-authPolicy"] !== "public-read") {
-		throw new Error(`Expected public-read auth policy on ${routePath} GET`);
-	}
-	if (bootstrapOperation["x-wp-typia-authPolicy"] !== "public-read") {
-		throw new Error(`Expected public-read auth policy on ${bootstrapPath} GET`);
-	}
-
-	if (persistencePolicy === "public") {
-		if (postOperation["x-wp-typia-authPolicy"] !== "public-signed-token") {
-			throw new Error(`Expected public-signed-token auth policy on ${routePath} POST`);
-		}
-		if (postOperation["x-wp-typia-publicTokenField"] !== "publicWriteToken") {
-			throw new Error(`Expected publicWriteToken metadata on ${routePath} POST`);
-		}
-	} else {
-		const securityScheme = openApi.components?.securitySchemes?.wpRestNonce;
-		if (!securityScheme) {
-			throw new Error("Expected wpRestNonce security scheme in aggregate REST OpenAPI");
-		}
-		if (postOperation["x-wp-typia-authPolicy"] !== "authenticated-rest-nonce") {
-			throw new Error(`Expected authenticated-rest-nonce auth policy on ${routePath} POST`);
-		}
-	}
-}
-
-function assertCompoundTemplateArtifacts(projectDir, projectName) {
-	const parentDir = path.join(projectDir, "build", "blocks", projectName);
-	const childDir = path.join(projectDir, "build", "blocks", `${projectName}-item`);
-
-	for (const dir of [parentDir, childDir]) {
-		for (const artifact of ["block.json", "typia.manifest.json", "typia-validator.php"]) {
-			if (!fs.existsSync(path.join(dir, artifact))) {
-				throw new Error(`Expected ${artifact} in ${dir}`);
-			}
-		}
-	}
-}
-
-function assertCompoundPersistenceArtifacts(projectDir, projectName) {
-	const parentDir = path.join(projectDir, "build", "blocks", projectName);
-
-	for (const artifact of [
-		path.join("api-schemas", "bootstrap-query.schema.json"),
-		path.join("api-schemas", "bootstrap-response.schema.json"),
-		"typia.schema.json",
-		"typia.openapi.json",
-		path.join("api-schemas", "state-query.schema.json"),
-		path.join("api-schemas", "state-response.schema.json"),
-		path.join("api-schemas", "write-state-request.schema.json"),
-	]) {
-		if (!fs.existsSync(path.join(parentDir, artifact))) {
-			throw new Error(`Expected ${artifact} in ${parentDir}`);
-		}
-	}
-}
-
-function assertCompoundRestOpenApi(projectDir, projectName, namespace, persistencePolicy) {
-	const parentDir = path.join(projectDir, "build", "blocks", projectName);
-	const openApiPath = path.join(parentDir, "api.openapi.json");
-
-	if (!fs.existsSync(openApiPath)) {
-		throw new Error(`Expected aggregate REST OpenAPI document in ${parentDir}`);
-	}
-
-	const openApi = readJsonFile(openApiPath);
-	const routePath = `/${namespace}/v1/${projectName}/state`;
-	const bootstrapPath = `/${namespace}/v1/${projectName}/bootstrap`;
-	const pathItem = openApi.paths?.[routePath];
-	const bootstrapPathItem = openApi.paths?.[bootstrapPath];
-	const getOperation = pathItem?.get;
-	const postOperation = pathItem?.post;
-	const bootstrapOperation = bootstrapPathItem?.get;
-
-	if (!getOperation || !postOperation) {
-		throw new Error(`Expected GET and POST operations for ${routePath} in ${openApiPath}`);
-	}
-	if (!bootstrapOperation) {
-		throw new Error(`Expected GET operation for ${bootstrapPath} in ${openApiPath}`);
-	}
-
-	if (getOperation["x-wp-typia-authPolicy"] !== "public-read") {
-		throw new Error(`Expected public-read auth policy on ${routePath} GET`);
-	}
-	if (bootstrapOperation["x-wp-typia-authPolicy"] !== "public-read") {
-		throw new Error(`Expected public-read auth policy on ${bootstrapPath} GET`);
-	}
-
-	if (persistencePolicy === "public") {
-		if (postOperation["x-wp-typia-authPolicy"] !== "public-signed-token") {
-			throw new Error(`Expected public-signed-token auth policy on ${routePath} POST`);
-		}
-		if (postOperation["x-wp-typia-publicTokenField"] !== "publicWriteToken") {
-			throw new Error(`Expected publicWriteToken metadata on ${routePath} POST`);
-		}
-	} else {
-		const securityScheme = openApi.components?.securitySchemes?.wpRestNonce;
-		if (!securityScheme) {
-			throw new Error(`Expected wpRestNonce security scheme in aggregate REST OpenAPI for ${routePath}`);
-		}
-		if (postOperation["x-wp-typia-authPolicy"] !== "authenticated-rest-nonce") {
-			throw new Error(`Expected authenticated-rest-nonce auth policy on ${routePath} POST`);
-		}
-	}
-}
-
 function lintPhpArtifact(filePath) {
 	if (!hasPhpBinary()) {
 		return;
@@ -431,107 +271,6 @@ function assertPluginBootstrapHardening(filePath) {
 function assertPluginBootstrapExists(filePath) {
 	if (!fs.existsSync(filePath)) {
 		throw new Error(`Expected generated project to include plugin bootstrap: ${filePath}`);
-	}
-}
-
-function assertWorkspaceTemplateScaffold(projectDir) {
-	const packageJson = JSON.parse(fs.readFileSync(path.join(projectDir, "package.json"), "utf8"));
-
-	if (packageJson.wpTypia?.projectType !== "workspace") {
-		throw new Error("Expected generated workspace package.json to include wpTypia.projectType = workspace");
-	}
-	if (
-		packageJson.wpTypia?.templatePackage !== "@wp-typia/create-workspace-template"
-	) {
-		throw new Error("Expected generated workspace package.json to record the official workspace template package");
-	}
-	if (!fs.existsSync(path.join(projectDir, "scripts", "build-workspace.mjs"))) {
-		throw new Error("Expected official workspace template to include scripts/build-workspace.mjs");
-	}
-}
-
-function isWorkspaceTemplateRequest(template, packageJson) {
-	return (
-		template === "workspace" ||
-		template === "@wp-typia/create-workspace-template" ||
-		packageJson.wpTypia?.projectType === "workspace"
-	);
-}
-
-function assertWorkspaceBlockArtifacts(projectDir, blockSlugs) {
-	for (const slug of blockSlugs) {
-		const blockDir = path.join(projectDir, "build", "blocks", slug);
-		if (!fs.existsSync(path.join(blockDir, "block.json"))) {
-			throw new Error(`Expected workspace build to include ${slug}/block.json`);
-		}
-		if (!fs.existsSync(path.join(blockDir, "typia.manifest.json"))) {
-			throw new Error(`Expected workspace build to include ${slug}/typia.manifest.json`);
-		}
-		if (!fs.existsSync(path.join(blockDir, "typia-validator.php"))) {
-			throw new Error(`Expected workspace build to include ${slug}/typia-validator.php`);
-		}
-	}
-
-	if (!fs.existsSync(path.join(projectDir, "build", "blocks-manifest.php"))) {
-		throw new Error("Expected workspace build to include blocks-manifest.php");
-	}
-}
-
-function assertWorkspaceVariationArtifacts(projectDir, blockSlug, variationSlug) {
-	const variationPath = path.join(
-		projectDir,
-		"src",
-		"blocks",
-		blockSlug,
-		"variations",
-		`${variationSlug}.ts`,
-	);
-	if (!fs.existsSync(variationPath)) {
-		throw new Error(`Expected workspace variation to exist at ${variationPath}`);
-	}
-}
-
-function assertWorkspacePatternArtifacts(projectDir, patternSlug) {
-	const patternPath = path.join(projectDir, "src", "patterns", `${patternSlug}.php`);
-	if (!fs.existsSync(patternPath)) {
-		throw new Error(`Expected workspace pattern to exist at ${patternPath}`);
-	}
-
-	lintPhpArtifact(patternPath);
-}
-
-function assertWorkspaceBindingSourceArtifacts(projectDir, bindingSourceSlug) {
-	const bindingSourceDir = path.join(projectDir, "src", "bindings", bindingSourceSlug);
-	const serverPath = path.join(bindingSourceDir, "server.php");
-	const editorPath = path.join(bindingSourceDir, "editor.ts");
-
-	if (!fs.existsSync(serverPath)) {
-		throw new Error(`Expected workspace binding source server file at ${serverPath}`);
-	}
-	if (!fs.existsSync(editorPath)) {
-		throw new Error(`Expected workspace binding source editor file at ${editorPath}`);
-	}
-	if (!fs.existsSync(path.join(projectDir, "build", "bindings", "index.js"))) {
-		throw new Error("Expected workspace build to include build/bindings/index.js");
-	}
-	if (!fs.existsSync(path.join(projectDir, "build", "bindings", "index.asset.php"))) {
-		throw new Error("Expected workspace build to include build/bindings/index.asset.php");
-	}
-
-	lintPhpArtifact(serverPath);
-}
-
-function assertWorkspaceHookedBlockArtifacts(projectDir, blockSlug, anchorBlockName, position) {
-	const blockJsonPath = path.join(projectDir, "src", "blocks", blockSlug, "block.json");
-	if (!fs.existsSync(blockJsonPath)) {
-		throw new Error(`Expected hooked workspace block metadata at ${blockJsonPath}`);
-	}
-
-	const blockJson = readJsonFile(blockJsonPath);
-	if (blockJson.blockHooks?.[anchorBlockName] !== position) {
-		throw new Error(
-			`Expected ${blockJsonPath} to define blockHooks.${anchorBlockName} = ${position}`,
-		);
 	}
 }
 
