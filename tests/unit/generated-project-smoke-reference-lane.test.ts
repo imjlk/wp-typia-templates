@@ -36,12 +36,17 @@ test("generated project smoke script supports a reference example lane", () => {
 	expect(assertionHelper).toContain("assertExampleProjectScaffold");
 	expect(assertionHelper).toContain("collectProjectFilePaths");
 	expect(assertionHelper).toContain("PHP lint failed for");
+	expect(assertionHelper).toContain("${filePath}");
+	expect(assertionHelper).toContain("error?.stderr");
+	expect(assertionHelper).toContain("error?.stdout");
 	expect(assertionHelper).toContain('exampleProject === "my-typia-block"');
 	expect(assertionHelper).toContain('path.join(projectDir, "build", "blocks", blockSlug)');
 	expect(coreHelper).toContain(
 		'Expected ${configPath} to declare currentMigrationVersion in a supported format'
 	);
 	expect(coreHelper).toContain("cleanupTemporaryProjectRoot");
+	expect(coreHelper).toContain("maxRetries: 5");
+	expect(coreHelper).toContain("retryDelay: 100");
 	expect(exampleHelper).toContain('Missing "typecheck" script in');
 	expect(exampleHelper).toContain('path.resolve(repoRoot, "examples", exampleProject)');
 });
