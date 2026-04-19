@@ -28,7 +28,7 @@ describe("alternate-buffer completion output helpers", () => {
 		expect(payload.preambleLines).toEqual(["Template variant: hero"]);
 		expect(payload.warningLines).toEqual(["This template enables optional migration UI."]);
 		expect(payload.nextSteps).toEqual(["cd demo-block", "npm install", "npm run dev"]);
-		expect(payload.optionalTitle).toBe("Optional before first commit:");
+		expect(payload.optionalTitle).toBe("Advanced sync (optional):");
 		expect(payload.optionalLines).toEqual(["npm run sync"]);
 		expect(payload.optionalNote).toContain("npm run sync");
 	});
@@ -42,7 +42,7 @@ describe("alternate-buffer completion output helpers", () => {
 				nextSteps: ["cd demo-block", "npm install"],
 				optionalLines: ["npm run sync"],
 				optionalNote: "Review the generated metadata before first commit.",
-				optionalTitle: "Optional before first commit:",
+				optionalTitle: "Advanced sync (optional):",
 				preambleLines: ["Template variant: hero"],
 				summaryLines: ["Project directory: /tmp/demo-block"],
 				title: "✅ Created Demo Block in /tmp/demo-block",
@@ -62,7 +62,7 @@ describe("alternate-buffer completion output helpers", () => {
 			"Next steps:",
 			"  cd demo-block",
 			"  npm install",
-			"\nOptional before first commit:",
+			"\nAdvanced sync (optional):",
 			"  npm run sync",
 			"Note: Review the generated metadata before first commit.",
 		]);

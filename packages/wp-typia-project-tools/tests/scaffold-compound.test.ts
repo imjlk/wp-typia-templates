@@ -393,10 +393,14 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(readme).toContain('npm run sync-types');
       expect(readme).not.toContain('npm run sync-rest');
       expect(readme).toContain('npm run dev');
+      expect(readme).toContain('## Quick Start');
+      expect(readme).toContain('## Advanced Sync');
+      expect(readme).toContain('## Before First Commit');
       expect(readme).toContain('src/blocks/*/types.ts');
       expect(readme).toContain(
         'npm run add-child -- --slug faq-item --title "FAQ Item"',
       );
+      expect(readme).toContain('git init');
       expect(readme).not.toContain('## PHP REST Extension Points');
       expect(blockConfig).not.toContain('restManifest');
 
@@ -971,11 +975,15 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(readme).toContain('npm run dev');
       expect(readme).toContain('npm run sync');
       expect(readme).toContain('npm run sync-rest');
+      expect(readme).toContain('## Quick Start');
+      expect(readme).toContain('## Advanced Sync');
+      expect(readme).toContain('## Before First Commit');
       expect(readme).toContain('src/blocks/*/api-types.ts');
       expect(readme).toContain('src/blocks/*/transport.ts');
       expect(readme).toContain(
         'npm run add-child -- --slug faq-item --title "FAQ Item"',
       );
+      expect(readme).toContain('git commit -m "Initial scaffold"');
       expect(readme).toContain('## PHP REST Extension Points');
       expect(readme).toContain(
         'Edit `src/blocks/demo-compound-storage/transport.ts` when you need to switch between direct WordPress REST and a contract-compatible proxy or BFF',

@@ -294,7 +294,10 @@ describe('@wp-typia/project-tools scaffold core', () => {
       expect(readme).toContain('npm install');
       expect(readme).toContain('npm run dev');
       expect(readme).toContain('npm run start');
-      expect(readme).toContain('## Optional First Sync');
+      expect(readme).toContain('## Quick Start');
+      expect(readme).toContain('## Build and Verify');
+      expect(readme).toContain('## Advanced Sync');
+      expect(readme).toContain('## Before First Commit');
       expect(readme).toContain('npm run sync');
       expect(readme).toContain('npm run sync-types');
       expect(readme).toContain('-- --fail-on-lossy');
@@ -304,9 +307,12 @@ describe('@wp-typia/project-tools scaffold core', () => {
         '`src/render.php` is only an opt-in server placeholder',
       );
       expect(readme).toContain(
-        'watches the relevant sync scripts during local development',
+        'keeps the editor and type-derived artifacts moving together during local development',
       );
       expect(readme).toContain('do not create migration history');
+      expect(readme).toContain('git init');
+      expect(readme).toContain('git add .');
+      expect(readme).toContain('Initial scaffold');
       expect(readme).not.toContain('## PHP REST Extension Points');
 
       typecheckGeneratedProject(targetDir);

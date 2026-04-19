@@ -23,6 +23,12 @@ interface PhpRestSectionOptions {
 	transportPath: string;
 }
 
+const INITIAL_COMMIT_COMMANDS = [
+	"git init",
+	"git add .",
+	'git commit -m "Initial scaffold"',
+] as const;
+
 function templateHasPersistenceSync(
 	templateId: string,
 	{ compoundPersistenceEnabled = false }: SyncOnboardingOptions = {},
@@ -70,6 +76,29 @@ export function getOptionalOnboardingSteps(
 	return getOptionalSyncScriptNames(templateId, options).map((scriptName) =>
 		formatRunScript(packageManager, scriptName),
 	);
+}
+
+/**
+ * Returns the quick-start note explaining the scaffold's primary local loop.
+ */
+export function getQuickStartWorkflowNote(
+	packageManager: PackageManagerId,
+	templateId = "basic",
+	options: SyncOnboardingOptions = {},
+): string {
+	const developmentScript = getPrimaryDevelopmentScript(templateId);
+	const devCommand = formatRunScript(packageManager, developmentScript);
+	const startCommand = formatRunScript(packageManager, "start");
+
+	if (developmentScript !== "dev") {
+		return `${devCommand} is the primary local entry point for this template. Use ${startCommand} when you want the scaffold's one-shot startup flow instead of the watch-oriented workflow.`;
+	}
+
+	if (templateHasPersistenceSync(templateId, options)) {
+		return `${devCommand} keeps the editor, type-derived artifacts, and REST-derived artifacts moving together during local development. Use ${startCommand} when you want a one-shot sync plus editor startup without the long-running watch loop.`;
+	}
+
+	return `${devCommand} keeps the editor and type-derived artifacts moving together during local development. Use ${startCommand} when you want a one-shot sync plus editor startup without the long-running watch loop.`;
 }
 
 /**
@@ -123,11 +152,21 @@ export function getOptionalOnboardingNote(
 		return fallbackCustomTemplateNote;
 	}
 
-	return `${formatRunScript(packageManager, developmentScript)} ${
-		developmentScript === "dev"
-			? "watches the relevant sync scripts during local development."
-			: "remains the primary local entry point."
-	} ${formatRunScript(packageManager, "start")} still runs one-shot syncs before starting, while ${formatRunScript(packageManager, "build")} and ${typecheckCommand} verify that generated metadata/schema artifacts are already current through ${syncCheckCommand}. Run ${syncCommand} manually when you want to refresh generated artifacts before build, typecheck, or commit. ${syncTypesCommand} stays warn-only by default; use \`${failOnLossySyncCommand}\` to fail only on lossy WordPress projections, or \`${strictSyncCommand}\` for a CI-friendly JSON report that fails on all warnings.${advancedPersistenceNote} They do not create migration history.`;
+	return `You usually do not need to run ${syncCommand} during a normal ${formatRunScript(packageManager, developmentScript)} session. Run ${syncCommand} manually when you want a reviewable artifact refresh before ${formatRunScript(packageManager, "build")}, ${typecheckCommand}, or your first commit. ${syncTypesCommand} stays warn-only by default; use \`${failOnLossySyncCommand}\` to fail only on lossy WordPress projections, or \`${strictSyncCommand}\` for the stricter CI-oriented report.${advancedPersistenceNote} They do not create migration history. If this directory is new, create your first Git commit after that refresh.`;
+}
+
+/**
+ * Returns the recommended version-control commands for a fresh scaffold.
+ */
+export function getInitialCommitCommands(): string[] {
+	return [...INITIAL_COMMIT_COMMANDS];
+}
+
+/**
+ * Returns the version-control note shown after the initial scaffold.
+ */
+export function getInitialCommitNote(): string {
+	return "Skip `git init` if this directory already lives inside an existing repository. If you want generated artifacts refreshed before the first checkpoint, run your manual sync step first and then create the commit.";
 }
 
 /**
