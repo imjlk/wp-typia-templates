@@ -199,8 +199,14 @@ describe("wp-typia package", () => {
 		expect(addHelpOutput).toContain("--external-layer-id");
 	});
 
-	test("returns structured version output through the canonical bin", () => {
+	test("renders a human-readable version line through the canonical bin", () => {
 		const output = runUtf8Command("node", [entryPath, "--version"]);
+
+		expect(output.trim()).toBe(`wp-typia ${packageManifest.version}`);
+	});
+
+	test("keeps structured version output opt-in through --format json", () => {
+		const output = runUtf8Command("node", [entryPath, "--version", "--format", "json"]);
 		const parsed = parseJsonObjectFromOutput<{
 			data?: { name?: string; type?: string; version?: string };
 			ok?: boolean;
@@ -212,21 +218,14 @@ describe("wp-typia package", () => {
 		expect(parsed.data?.version).toBe(packageManifest.version);
 	});
 
-	test("runs the published version path without requiring a local Bun binary", () => {
+	test("runs the published human-readable version path without requiring a local Bun binary", () => {
 		const result = runCapturedCommand(process.execPath, [entryPath, "--version"], {
 			env: withoutLocalBunEnv(),
 		});
 
 		expect(result.status).toBe(0);
 		expect(result.stderr).toBe("");
-		const parsed = parseJsonObjectFromOutput<{
-			data?: { name?: string; type?: string; version?: string };
-			ok?: boolean;
-		}>(result.stdout);
-		expect(parsed.ok).toBe(true);
-		expect(parsed.data?.type).toBe("version");
-		expect(parsed.data?.name).toBe("wp-typia");
-		expect(parsed.data?.version).toBe(packageManifest.version);
+		expect(result.stdout.trim()).toBe(`wp-typia ${packageManifest.version}`);
 	});
 
 	test("renders general and command help without requiring a local Bun binary", () => {
