@@ -51,3 +51,15 @@ Kept in `@wp-typia/block-runtime`:
 `@wp-typia/create` remains publishable so npm deprecation and migration
 messaging can point somewhere stable, but it is no longer the supported home
 for runtime imports or orchestration code.
+
+## Archived npm entrypoints
+
+`create-wp-typia` remains in-repo only as an archived npm-facing redirect.
+
+- keep its source manifest private so future releases do not accidentally
+  republish it
+- keep its README and manifest description aligned with the canonical
+  `wp-typia create` install path
+- after a release, use `bun run archived-entrypoints:plan` to print the
+  expected npm deprecation command, or `bun run archived-entrypoints:deprecate`
+  from an npm-authenticated shell to apply it
