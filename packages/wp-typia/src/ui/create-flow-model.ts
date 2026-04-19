@@ -159,9 +159,7 @@ export function sanitizeCreateSubmitValues(values: CreateFlowValues): CreateFlow
 	if (isCreatePersistenceTemplate(values.template)) {
 		return {
 			...normalizedValues,
-			"query-post-type": isCreateQueryLoopTemplate(values.template)
-				? normalizeOptionalHiddenString(values["query-post-type"])
-				: undefined,
+			"query-post-type": undefined,
 		};
 	}
 

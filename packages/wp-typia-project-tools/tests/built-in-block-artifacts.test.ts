@@ -107,11 +107,17 @@ function summarizeArtifactAttributes(
 
 type ArtifactAttributeSummary = ReturnType<typeof summarizeArtifactAttributes>;
 type CodeArtifactHashSummary = Record<string, string>;
+const SNAPSHOT_TEMPLATE_IDS = [
+	"basic",
+	"interactivity",
+	"persistence",
+	"compound",
+] as const satisfies ReadonlyArray<BuiltInTemplateId>;
 
-const EXPECTED_ARTIFACT_ATTRIBUTE_SUMMARIES: Partial<Record<
-  BuiltInTemplateId,
+const EXPECTED_ARTIFACT_ATTRIBUTE_SUMMARIES: Record<
+  (typeof SNAPSHOT_TEMPLATE_IDS)[number],
   ArtifactAttributeSummary[]
->> = {
+> = {
   basic: [
     {
       attributes: {
@@ -557,10 +563,10 @@ function summarizeCodeArtifacts(
   );
 }
 
-const EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES: Partial<Record<
-  BuiltInTemplateId,
+const EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES: Record<
+  (typeof SNAPSHOT_TEMPLATE_IDS)[number],
   CodeArtifactHashSummary
->> = {
+> = {
   basic: {
     'src/block-metadata.ts': '50956333a97a824a',
     'src/edit.tsx': 'ac2ae7eacefc1c3d',
@@ -728,13 +734,13 @@ describe('built-in block artifacts', () => {
     );
   });
 
-  test.each(['basic', 'interactivity', 'persistence', 'compound'] as const)(
+  test.each([...SNAPSHOT_TEMPLATE_IDS])(
     'buildBuiltInCodeArtifacts preserves output hashes for %s',
     (templateId) => {
       const { codeArtifacts } = buildArtifacts(templateId);
 
       expect(summarizeCodeArtifacts(codeArtifacts)).toEqual(
-        EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES[templateId]!,
+        EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES[templateId],
       );
     },
   );
@@ -908,13 +914,13 @@ describe('built-in block artifacts', () => {
     },
   );
 
-  test.each(['basic', 'interactivity', 'persistence', 'compound'] as const)(
+  test.each([...SNAPSHOT_TEMPLATE_IDS])(
     'attribute emission summaries stay stable for %s',
     (templateId) => {
       const { artifacts } = buildArtifacts(templateId);
 
       expect(artifacts.map(summarizeArtifactAttributes)).toEqual(
-        EXPECTED_ARTIFACT_ATTRIBUTE_SUMMARIES[templateId]!,
+        EXPECTED_ARTIFACT_ATTRIBUTE_SUMMARIES[templateId],
       );
     },
   );

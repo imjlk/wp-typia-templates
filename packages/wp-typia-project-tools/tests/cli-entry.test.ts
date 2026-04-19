@@ -393,8 +393,10 @@ test("runScaffoldFlow carries query-loop post type overrides into the generated 
     "npm run start",
   ]);
   expect(flow.optionalOnboarding.steps).toEqual([]);
-  expect(variationSource).toContain("postType: 'book'");
-  expect(variationSource).toContain("registerBlockVariation('core/query', queryLoopVariation);");
+  expect(variationSource).toMatch(/postType:\s*["']book["']/);
+  expect(variationSource).toMatch(
+    /registerBlockVariation\('core\/query', queryLoopVariation\);/,
+  );
 });
 
 test("runScaffoldFlow rejects removed built-in template ids", async () => {

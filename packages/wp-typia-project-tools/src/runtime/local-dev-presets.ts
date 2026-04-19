@@ -234,10 +234,5 @@ export async function applyGeneratedProjectDxPackageJson({
 export function getPrimaryDevelopmentScript(
 	templateId: string,
 ): "dev" | "start" {
-	return templateId === "basic" ||
-		templateId === "interactivity" ||
-		templateId === "persistence" ||
-		templateId === "compound"
-		? "dev"
-		: "start";
+	return templateSupportsGeneratedSyncWatchers(templateId) ? "dev" : "start";
 }

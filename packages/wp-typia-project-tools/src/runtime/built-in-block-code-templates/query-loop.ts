@@ -17,12 +17,12 @@ type QueryLoopVariation = BlockVariation<QueryLoopVariationAttributes> & {
   allowedControls: string[];
 };
 
-const VARIATION_NAME = '{{queryVariationNamespace}}';
+const VARIATION_NAME = {{queryVariationNamespaceJson}};
 
 const queryLoopVariation = {
   name: VARIATION_NAME,
-  title: __('{{title}}', '{{textDomain}}'),
-  description: __('{{description}}', '{{textDomain}}'),
+  title: __({{titleJson}}, '{{textDomain}}'),
+  description: __({{descriptionJson}}, '{{textDomain}}'),
   scope: ['inserter'],
   isActive: ['namespace'],
   attributes: {
@@ -32,7 +32,7 @@ const queryLoopVariation = {
       order: 'desc',
       orderBy: 'date',
       perPage: 6,
-      postType: '{{queryPostType}}',
+      postType: {{queryPostTypeJson}},
     },
   },
   allowedControls: {{queryAllowedControlsJson}},

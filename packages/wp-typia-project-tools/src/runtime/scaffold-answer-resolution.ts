@@ -78,16 +78,29 @@ export function getDefaultAnswers(
 }
 
 function validateQueryPostType(value: string): true | string {
-  const normalizedValue = value.trim();
+  const normalizedValue = value.trim().toLowerCase();
   if (normalizedValue.length === 0) {
     return 'Query post type is required.';
   }
 
-  if (!/^[A-Za-z0-9_-]+$/u.test(normalizedValue)) {
-    return 'Query post type should use letters, numbers, "_" or "-".';
+  if (!/^[a-z0-9_-]{1,20}$/u.test(normalizedValue)) {
+    return 'Query post type must be lowercase, 1-20 chars, and only a-z, 0-9, "_" or "-".';
   }
 
   return true;
+}
+
+function normalizeQueryPostType(value: string | undefined): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const normalizedValue = value.trim().toLowerCase();
+  if (validateQueryPostType(normalizedValue) !== true) {
+    throw new Error('Query post type must be lowercase, 1-20 chars, and only a-z, 0-9, "_" or "-".');
+  }
+
+  return normalizedValue;
 }
 
 function normalizeTemplateSelection(templateId: string): string {
@@ -194,7 +207,7 @@ export async function collectScaffoldAnswers({
       namespace: identifiers.namespace,
       persistencePolicy: persistencePolicy ?? defaults.persistencePolicy,
       phpPrefix: identifiers.phpPrefix,
-      queryPostType: queryPostType ?? defaults.queryPostType,
+      queryPostType: normalizeQueryPostType(queryPostType ?? defaults.queryPostType),
       textDomain: identifiers.textDomain,
     };
   }
@@ -220,12 +233,14 @@ export async function collectScaffoldAnswers({
     phpPrefix: identifiers.phpPrefix,
     queryPostType:
       templateId === 'query-loop'
-        ? await promptText(
-            'Query post type',
-            queryPostType ?? defaults.queryPostType ?? 'post',
-            validateQueryPostType,
+        ? normalizeQueryPostType(
+            await promptText(
+              'Query post type',
+              queryPostType ?? defaults.queryPostType ?? 'post',
+              validateQueryPostType,
+            ),
           )
-        : queryPostType ?? defaults.queryPostType,
+        : normalizeQueryPostType(queryPostType ?? defaults.queryPostType),
     slug: identifiers.slug,
     textDomain: identifiers.textDomain,
     title: await promptText('Block title', toTitleCase(identifiers.slug)),

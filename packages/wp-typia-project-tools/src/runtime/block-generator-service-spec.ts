@@ -53,17 +53,11 @@ export interface BlockSpec {
 	project: {
 		author: string;
 	};
-	queryLoop:
-		| {
-				allowedControls: readonly string[];
-				enabled: false;
-				postType: string;
-		  }
-		| {
-				allowedControls: readonly string[];
-				enabled: true;
-				postType: string;
-		  };
+	queryLoop: {
+		allowedControls: readonly string[];
+		enabled: boolean;
+		postType: string;
+	};
 	runtime: {
 		withMigrationUi: boolean;
 		withTestPreset: boolean;
@@ -296,6 +290,7 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 		dashCase: slug,
 		dataStorageMode,
 		description: spec.metadata.description,
+		descriptionJson: JSON.stringify(spec.metadata.description),
 		frontendCssClassName: buildFrontendCssClassName(cssClassName),
 		queryAllowedControlsJson: JSON.stringify(
 			spec.queryLoop.enabled ? spec.queryLoop.allowedControls : [],
@@ -303,7 +298,11 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 			2,
 		),
 		queryPostType: spec.queryLoop.enabled ? spec.queryLoop.postType : "post",
+		queryPostTypeJson: JSON.stringify(
+			spec.queryLoop.enabled ? spec.queryLoop.postType : "post",
+		),
 		queryVariationNamespace,
+		queryVariationNamespaceJson: JSON.stringify(queryVariationNamespace),
 		isAuthenticatedPersistencePolicy:
 			persistencePolicy === "authenticated" ? "true" : "false",
 		isPublicPersistencePolicy: persistencePolicy === "public" ? "true" : "false",

@@ -358,6 +358,7 @@ function buildQueryLoopCodeArtifacts(
 			],
 			variables,
 		),
+		...buildBuiltInNonTsArtifacts({ templateId: "query-loop", variables }),
 	]);
 }
 

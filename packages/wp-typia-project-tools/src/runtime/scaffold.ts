@@ -93,6 +93,7 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	dashCase: string;
 	dataStorageMode: DataStorageMode;
 	description: string;
+	descriptionJson: string;
 	frontendCssClassName: string;
 	keyword: string;
 	namespace: string;
@@ -101,8 +102,10 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	phpPrefix: string;
 	phpPrefixUpper: string;
 	queryAllowedControlsJson: string;
+	queryPostTypeJson: string;
 	queryPostType: string;
 	queryVariationNamespace: string;
+	queryVariationNamespaceJson: string;
 	isAuthenticatedPersistencePolicy: "false" | "true";
 	isPublicPersistencePolicy: "false" | "true";
 	bootstrapCredentialDeclarations: string;

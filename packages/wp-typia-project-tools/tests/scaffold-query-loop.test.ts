@@ -64,17 +64,19 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 			expect(packageJson.scripts.typecheck).toBe("tsc --noEmit");
 			expect(fs.existsSync(path.join(targetDir, "src", "block.json"))).toBe(false);
 			expect(fs.existsSync(path.join(targetDir, "src", "typia.manifest.json"))).toBe(false);
-			expect(variationSource).toContain(
-				"registerBlockVariation('core/query', queryLoopVariation);",
+			expect(variationSource).toMatch(
+				/registerBlockVariation\('core\/query', queryLoopVariation\);/,
 			);
-			expect(variationSource).toContain("const VARIATION_NAME = 'demo-space/demo-query-loop';");
-			expect(variationSource).toContain("namespace: VARIATION_NAME");
-			expect(variationSource).toContain("postType: 'book'");
+			expect(variationSource).toMatch(
+				/const VARIATION_NAME = ["']demo-space\/demo-query-loop["'];/,
+			);
+			expect(variationSource).toMatch(/namespace:\s*VARIATION_NAME/);
+			expect(variationSource).toMatch(/postType:\s*["']book["']/);
 			expect(variationSource).toContain("allowedControls:");
-			expect(variationSource).toContain("isActive: ['namespace']");
-			expect(variationSource).toContain("'core/post-template'");
-			expect(pluginBootstrap).toContain("enqueue_block_editor_assets");
-			expect(pluginBootstrap).toContain("wp_register_script(");
+			expect(variationSource).toMatch(/isActive:\s*\[\s*['"]namespace['"]\s*\]/);
+			expect(variationSource).toMatch(/['"]core\/post-template['"]/);
+			expect(pluginBootstrap).toMatch(/enqueue_block_editor_assets/);
+			expect(pluginBootstrap).toMatch(/wp_register_script\s*\(/);
 			expect(pluginBootstrap).not.toContain("register_block_type");
 			expect(readme).toContain("## Artifact Refresh");
 			expect(readme).toContain(
