@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+	cleanupTemporaryProjectRoot,
 	ensureCorepackPackageManager,
 	getInstallCommand,
 	getPackageManager,
@@ -281,6 +282,7 @@ function main() {
 
 	const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-generated-smoke-"));
 	const projectDir = path.join(tempRoot, projectName);
+	let primaryError = null;
 
 	try {
 		ensureCanonicalCliReady();
@@ -453,8 +455,21 @@ function main() {
 			projectName,
 			template,
 		});
+	} catch (error) {
+		primaryError = error;
+		throw error;
 	} finally {
-		fs.rmSync(tempRoot, { force: true, recursive: true });
+		try {
+			cleanupTemporaryProjectRoot(tempRoot);
+		} catch (cleanupError) {
+			if (primaryError) {
+				console.warn(
+					`Warning: failed to remove temporary smoke directory ${tempRoot}: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`,
+				);
+			} else {
+				throw cleanupError;
+			}
+		}
 	}
 }
 

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 
 import {
 	hasPhpBinary,
@@ -249,9 +250,22 @@ function lintPhpArtifact(filePath) {
 		return;
 	}
 
-	run("php", ["-l", filePath], {
-		stdio: "ignore",
-	});
+	try {
+		execFileSync("php", ["-l", filePath], {
+			encoding: "utf8",
+			stdio: ["ignore", "pipe", "pipe"],
+		});
+	} catch (error) {
+		const detail =
+			typeof error?.stderr === "string" && error.stderr.trim().length > 0
+				? error.stderr.trim()
+				: typeof error?.stdout === "string" && error.stdout.trim().length > 0
+					? error.stdout.trim()
+					: error instanceof Error
+						? error.message
+						: String(error);
+		throw new Error(`PHP lint failed for ${filePath}:\n${detail}`);
+	}
 }
 
 function assertPluginBootstrapHardening(filePath) {

@@ -41,6 +41,15 @@ export function run(command, args, options = {}) {
 	});
 }
 
+export function cleanupTemporaryProjectRoot(tempRoot) {
+	fs.rmSync(tempRoot, {
+		force: true,
+		maxRetries: 5,
+		recursive: true,
+		retryDelay: 100,
+	});
+}
+
 export function getPackageManager(packageManager) {
 	const manager = PACKAGE_MANAGERS[packageManager];
 	if (!manager) {
