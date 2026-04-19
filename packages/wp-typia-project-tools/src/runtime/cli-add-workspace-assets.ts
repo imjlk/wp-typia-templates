@@ -609,6 +609,57 @@ function ${enqueueFunctionName}() {
 	});
 }
 
+async function ensureEditorPluginBuildScriptAnchors(workspace: WorkspaceProject): Promise<void> {
+	const buildScriptPath = path.join(workspace.projectDir, "scripts", "build-workspace.mjs");
+
+	await patchFile(buildScriptPath, (source) => {
+		if (source.includes("'src/editor-plugins/index.ts'")) {
+			return source;
+		}
+
+		const legacySharedEntriesSnippet = "[ 'src/bindings/index.ts', 'src/bindings/index.js' ]";
+		const nextSource = source.replace(
+			legacySharedEntriesSnippet,
+			`[
+\t\t'src/bindings/index.ts',
+\t\t'src/bindings/index.js',
+\t\t'src/editor-plugins/index.ts',
+\t\t'src/editor-plugins/index.js',
+\t]`,
+		);
+
+		if (nextSource === source) {
+			throw new Error(
+				`Unable to update ${path.relative(workspace.projectDir, buildScriptPath)} for editor plugin shared entries.`,
+			);
+		}
+
+		return nextSource;
+	});
+}
+
+async function ensureEditorPluginWebpackAnchors(workspace: WorkspaceProject): Promise<void> {
+	const webpackConfigPath = path.join(workspace.projectDir, "webpack.config.js");
+
+	await patchFile(webpackConfigPath, (source) => {
+		if (source.includes("'editor-plugins/index'")) {
+			return source;
+		}
+
+		const legacySharedEntriesBlock = `\tfor ( const relativePath of [ 'src/bindings/index.ts', 'src/bindings/index.js' ] ) {\n\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\tcontinue;\n\t\t}\n\n\t\tentries.push( [ 'bindings/index', entryPath ] );\n\t\tbreak;\n\t}`;
+		const nextSharedEntriesBlock = `\tfor ( const [ entryName, candidates ] of [\n\t\t[\n\t\t\t'bindings/index',\n\t\t\t[ 'src/bindings/index.ts', 'src/bindings/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'editor-plugins/index',\n\t\t\t[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],\n\t\t],\n\t] ) {\n\t\tfor ( const relativePath of candidates ) {\n\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\t\tcontinue;\n\t\t\t}\n\n\t\t\tentries.push( [ entryName, entryPath ] );\n\t\t\tbreak;\n\t\t}\n\t}`;
+		const nextSource = source.replace(legacySharedEntriesBlock, nextSharedEntriesBlock);
+
+		if (nextSource === source) {
+			throw new Error(
+				`Unable to update ${path.relative(workspace.projectDir, webpackConfigPath)} for editor plugin shared entries.`,
+			);
+		}
+
+		return nextSource;
+	});
+}
+
 function resolveBindingSourceRegistryPath(projectDir: string): string {
 	const bindingsDir = path.join(projectDir, "src", "bindings");
 	return [path.join(bindingsDir, "index.ts"), path.join(bindingsDir, "index.js")].find(
@@ -704,7 +755,9 @@ export async function runAddEditorPluginCommand({
 
 	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
 	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
+	const buildScriptPath = path.join(workspace.projectDir, "scripts", "build-workspace.mjs");
 	const editorPluginsIndexPath = resolveEditorPluginRegistryPath(workspace.projectDir);
+	const webpackConfigPath = path.join(workspace.projectDir, "webpack.config.js");
 	const editorPluginDir = path.join(
 		workspace.projectDir,
 		"src",
@@ -720,7 +773,9 @@ export async function runAddEditorPluginCommand({
 		fileSources: await snapshotWorkspaceFiles([
 			blockConfigPath,
 			bootstrapPath,
+			buildScriptPath,
 			editorPluginsIndexPath,
+			webpackConfigPath,
 		]),
 		snapshotDirs: [],
 		targetPaths: [editorPluginDir],
@@ -729,6 +784,8 @@ export async function runAddEditorPluginCommand({
 	try {
 		await fsp.mkdir(editorPluginDir, { recursive: true });
 		await ensureEditorPluginBootstrapAnchors(workspace);
+		await ensureEditorPluginBuildScriptAnchors(workspace);
+		await ensureEditorPluginWebpackAnchors(workspace);
 		await fsp.writeFile(
 			entryFilePath,
 			buildEditorPluginEntrySource(
