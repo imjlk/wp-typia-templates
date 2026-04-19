@@ -2436,7 +2436,7 @@ test("editor plugin workflow preserves legacy registry imports outside inventory
   fs.mkdirSync(legacyPluginDir, { recursive: true });
   fs.writeFileSync(
     path.join(editorPluginsDir, "index.js"),
-    "import './legacy-tools';\n",
+    "import './legacy-tools/index';\n",
     "utf8"
   );
   fs.writeFileSync(
