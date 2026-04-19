@@ -52,6 +52,7 @@ import {
 	resolveScaffoldRepositoryReference,
 } from "./scaffold-repository-reference.js";
 import type {
+	ScaffoldProgressEvent,
 	ScaffoldTemplateVariables,
 } from "./scaffold.js";
 
@@ -64,6 +65,15 @@ export {
 export interface InstallDependenciesOptions {
 	packageManager: PackageManagerId;
 	projectDir: string;
+}
+
+async function reportScaffoldProgress(
+	onProgress:
+		| ((event: ScaffoldProgressEvent) => void | Promise<void>)
+		| undefined,
+	event: ScaffoldProgressEvent,
+): Promise<void> {
+	await onProgress?.(event);
 }
 
 interface GeneratedPackageJson {
@@ -427,6 +437,7 @@ export async function applyBuiltInScaffoldProjectFiles({
 	noInstall = false,
 	installDependencies,
 	repositoryReference,
+	onProgress,
 }: {
 	projectDir: string;
 	templateDir: string;
@@ -444,8 +455,14 @@ export async function applyBuiltInScaffoldProjectFiles({
 	noInstall?: boolean;
 	installDependencies?: ((options: InstallDependenciesOptions) => Promise<void>) | undefined;
 	repositoryReference?: string;
+	onProgress?: ((event: ScaffoldProgressEvent) => void | Promise<void>) | undefined;
 }): Promise<void> {
 	await ensureDirectory(projectDir, allowExistingDir);
+	await reportScaffoldProgress(onProgress, {
+		detail: "Copying built-in template files and writing generated source modules.",
+		phase: "generate-files",
+		title: "Generating project files",
+	});
 	await copyInterpolatedDirectory(templateDir, projectDir, variables);
 	if (codeArtifacts && codeArtifacts.length > 0) {
 		await writeBuiltInCodeArtifacts(projectDir, codeArtifacts);
@@ -453,6 +470,11 @@ export async function applyBuiltInScaffoldProjectFiles({
 	if (artifacts && artifacts.length > 0) {
 		await writeBuiltInStructuralArtifacts(projectDir, artifacts);
 	}
+	await reportScaffoldProgress(onProgress, {
+		detail: "Writing starter manifests, local presets, and seeded template artifacts.",
+		phase: "seed-artifacts",
+		title: "Seeding scaffold artifacts",
+	});
 	await writeStarterManifestFiles(projectDir, templateId, variables, artifacts);
 	await seedBuiltInPersistenceArtifacts(projectDir, templateId, variables);
 	await applyLocalDevPresetFiles({
@@ -470,6 +492,11 @@ export async function applyBuiltInScaffoldProjectFiles({
 		});
 	}
 
+	await reportScaffoldProgress(onProgress, {
+		detail: "Writing README, normalizing package metadata, and aligning package-manager files.",
+		phase: "finalize-project",
+		title: "Finalizing scaffold output",
+	});
 	const readmePath = path.join(projectDir, "README.md");
 	if (!fs.existsSync(readmePath)) {
 		await fsp.writeFile(
@@ -509,6 +536,11 @@ export async function applyBuiltInScaffoldProjectFiles({
 	});
 
 	if (!noInstall) {
+		await reportScaffoldProgress(onProgress, {
+			detail: "Installing project dependencies with the selected package manager.",
+			phase: "install-dependencies",
+			title: "Installing dependencies",
+		});
 		const installer = installDependencies ?? defaultInstallDependencies;
 		await installer({
 			projectDir,

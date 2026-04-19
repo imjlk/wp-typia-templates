@@ -57,4 +57,36 @@ test("keeps ambiguous external layers fail-fast when a synthetic prompt is suppl
 			"External layer package defines multiple selectable layers (acme/internal-base, acme/alpha, acme/beta). Pass an explicit externalLayerId or rerun through the interactive CLI selector.",
 		);
 	});
+
+	test("reports scaffold progress during create flows", async () => {
+		const progress: string[] = [];
+
+		await executeCreateCommand({
+			cwd: tempRoot,
+			emitOutput: false,
+			flags: {
+				"no-install": true,
+				"package-manager": "npm",
+				template: "basic",
+				yes: true,
+			},
+			interactive: false,
+			onProgress: ({ detail, title }) => {
+				progress.push(`${title}: ${detail}`);
+			},
+			projectDir: "demo-progress-reporting",
+		});
+
+		expect(progress[0]).toContain("Resolving scaffold template");
+		expect(progress).toContain(
+			"Generating project files: Copying built-in template files and writing generated source modules.",
+		);
+		expect(progress).toContain(
+			"Seeding scaffold artifacts: Writing starter manifests, local presets, and seeded template artifacts.",
+		);
+		expect(progress).toContain(
+			"Finalizing scaffold output: Writing README, normalizing package metadata, and aligning package-manager files.",
+		);
+		expect(progress.some((line) => line.startsWith("Installing dependencies:"))).toBe(false);
+	});
 });

@@ -20,6 +20,11 @@ export type AlternateBufferCompletionPayload = {
 	warningLines?: string[];
 };
 
+export type AlternateBufferProgressPayload = {
+	description?: string;
+	title: string;
+};
+
 type AlternateBufferFailureOptions = {
 	context: string;
 	error: unknown;
@@ -163,10 +168,13 @@ export function useAlternateBufferLifecycle(
 	handleCancel: () => void;
 	handleFailure: (error: unknown) => void;
 	handleSubmit: (action: () => Promise<AlternateBufferCompletionPayload | void>) => Promise<void>;
+	progress: AlternateBufferProgressPayload | null;
+	reportProgress: (payload: AlternateBufferProgressPayload) => void;
 	status: AlternateBufferLifecycleStatus;
 } {
 	const runtime = useRuntime();
 	const [completion, setCompletion] = useState<AlternateBufferCompletionPayload | null>(null);
+	const [progress, setProgress] = useState<AlternateBufferProgressPayload | null>(null);
 	const [status, setStatus] = useState<AlternateBufferLifecycleStatus>("editing");
 	const exit = useCallback(() => {
 		runtime.exit();
@@ -184,6 +192,7 @@ export function useAlternateBufferLifecycle(
 
 	const handleCancel = useCallback(() => {
 		setCompletion(null);
+		setProgress(null);
 		setStatus("editing");
 		exit();
 	}, [exit]);
@@ -191,6 +200,7 @@ export function useAlternateBufferLifecycle(
 	const handleFailure = useCallback(
 		(error: unknown) => {
 			setCompletion(null);
+			setProgress(null);
 			setStatus("editing");
 			reportAlternateBufferFailure({
 				context,
@@ -204,12 +214,14 @@ export function useAlternateBufferLifecycle(
 	const handleSubmit = useCallback(
 		async (action: () => Promise<AlternateBufferCompletionPayload | void>) => {
 			setCompletion(null);
+			setProgress(null);
 			setStatus("submitting");
 
 			try {
 				const result = await action();
 				if (isAlternateBufferCompletionPayload(result)) {
 					setCompletion(result);
+					setProgress(null);
 					setStatus("completed");
 					return;
 				}
@@ -217,6 +229,7 @@ export function useAlternateBufferLifecycle(
 				exit();
 			} catch (error) {
 				setCompletion(null);
+				setProgress(null);
 				setStatus("editing");
 				reportAlternateBufferFailure({
 					context,
@@ -228,11 +241,17 @@ export function useAlternateBufferLifecycle(
 		[context, exit],
 	);
 
+	const reportProgress = useCallback((payload: AlternateBufferProgressPayload) => {
+		setProgress(payload);
+	}, []);
+
 	return {
 		completion,
 		handleCancel,
 		handleFailure,
 		handleSubmit,
+		progress,
+		reportProgress,
 		status,
 	};
 }

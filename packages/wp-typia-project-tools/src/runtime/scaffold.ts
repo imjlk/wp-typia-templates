@@ -180,6 +180,17 @@ interface InstallDependenciesOptions {
 	projectDir: string;
 }
 
+export interface ScaffoldProgressEvent {
+	detail: string;
+	phase:
+		| "finalize-project"
+		| "generate-files"
+		| "install-dependencies"
+		| "resolve-template"
+		| "seed-artifacts";
+	title: string;
+}
+
 interface ScaffoldProjectOptions {
 	allowExistingDir?: boolean;
 	answers: ScaffoldAnswers;
@@ -190,6 +201,7 @@ interface ScaffoldProjectOptions {
 	externalLayerSourceLabel?: string;
 	installDependencies?: ((options: InstallDependenciesOptions) => Promise<void>) | undefined;
 	noInstall?: boolean;
+	onProgress?: ((event: ScaffoldProgressEvent) => void | Promise<void>) | undefined;
 	packageManager: PackageManagerId;
 	persistencePolicy?: PersistencePolicy;
 	projectDir: string;
@@ -233,6 +245,13 @@ function normalizeTemplateSelection(templateId: string): string {
 		: templateId;
 }
 
+async function reportScaffoldProgress(
+	onProgress: ScaffoldProjectOptions["onProgress"],
+	event: ScaffoldProgressEvent,
+): Promise<void> {
+	await onProgress?.(event);
+}
+
 export async function scaffoldProject({
 	projectDir,
 	templateId,
@@ -248,6 +267,7 @@ export async function scaffoldProject({
 	allowExistingDir = false,
 	noInstall = false,
 	installDependencies = undefined,
+	onProgress = undefined,
 	variant,
 	withMigrationUi = false,
 	withTestPreset = false,
@@ -265,6 +285,11 @@ export async function scaffoldProject({
 
 	if (isBuiltInTemplate) {
 		const blockGeneratorService = new BlockGeneratorService();
+		await reportScaffoldProgress(onProgress, {
+			detail: "Preparing template layers, variants, and generated artifact plans.",
+			phase: "resolve-template",
+			title: "Resolving scaffold template",
+		});
 		const plan = await blockGeneratorService.plan({
 			allowExistingDir,
 			answers,
@@ -288,6 +313,7 @@ export async function scaffoldProject({
 		const rendered = await blockGeneratorService.render({ validated });
 		return blockGeneratorService.apply({
 			installDependencies,
+			onProgress,
 			rendered,
 		});
 	}
@@ -302,6 +328,11 @@ export async function scaffoldProject({
 		...answers,
 		dataStorageMode: dataStorageMode ?? answers.dataStorageMode,
 		persistencePolicy: persistencePolicy ?? answers.persistencePolicy,
+	});
+	await reportScaffoldProgress(onProgress, {
+		detail: "Loading template files, variants, and external package metadata when needed.",
+		phase: "resolve-template",
+		title: "Resolving scaffold template",
 	});
 	const templateSource = await resolveTemplateSource(
 		resolvedTemplateId,
@@ -318,6 +349,11 @@ export async function scaffoldProject({
 	}
 
 	try {
+		await reportScaffoldProgress(onProgress, {
+			detail: "Copying scaffold files into the target project directory.",
+			phase: "generate-files",
+			title: "Generating project files",
+		});
 		await ensureScaffoldDirectory(projectDir, allowExistingDir);
 		await copyInterpolatedDirectory(
 			templateSource.templateDir,
@@ -331,6 +367,11 @@ export async function scaffoldProject({
 	}
 	const isOfficialWorkspace = isOfficialWorkspaceProject(projectDir);
 	if (isBuiltInTemplate) {
+		await reportScaffoldProgress(onProgress, {
+			detail: "Writing starter manifests, local presets, and template-specific generated artifacts.",
+			phase: "seed-artifacts",
+			title: "Seeding scaffold artifacts",
+		});
 		await writeStarterManifestFiles(projectDir, resolvedTemplateId, variables);
 		await seedBuiltInPersistenceArtifacts(projectDir, resolvedTemplateId, variables);
 		await applyLocalDevPresetFiles({
@@ -349,8 +390,18 @@ export async function scaffoldProject({
 		}
 		await removeQueryLoopPlaceholderFiles(projectDir, resolvedTemplateId);
 	} else if (withMigrationUi && isOfficialWorkspace) {
+		await reportScaffoldProgress(onProgress, {
+			detail: "Initializing workspace migration scripts and starter migration files.",
+			phase: "seed-artifacts",
+			title: "Seeding scaffold artifacts",
+		});
 		await applyWorkspaceMigrationCapability(projectDir, resolvedPackageManager);
 	}
+	await reportScaffoldProgress(onProgress, {
+		detail: "Writing README, normalizing package metadata, and aligning package-manager files.",
+		phase: "finalize-project",
+		title: "Finalizing scaffold output",
+	});
 	const readmePath = path.join(projectDir, "README.md");
 	if (!fs.existsSync(readmePath)) {
 		await fsp.writeFile(
@@ -391,6 +442,11 @@ export async function scaffoldProject({
 	});
 
 	if (!noInstall) {
+		await reportScaffoldProgress(onProgress, {
+			detail: "Installing project dependencies with the selected package manager.",
+			phase: "install-dependencies",
+			title: "Installing dependencies",
+		});
 		const installer = installDependencies ?? defaultInstallDependencies;
 		await installer({
 			projectDir,

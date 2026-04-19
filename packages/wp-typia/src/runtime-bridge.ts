@@ -4,6 +4,7 @@ import {
 	buildAddCompletionPayload,
 	buildCreateCompletionPayload,
 	buildMigrationCompletionPayload,
+	formatCreateProgressLine,
 	printBlock,
 	printCompletionPayload,
 	toExternalLayerPromptOptions,
@@ -11,9 +12,15 @@ import {
 export {
 	buildCreateCompletionPayload,
 	buildMigrationCompletionPayload,
+	formatCreateProgressLine,
 	printCompletionPayload,
 } from "./runtime-bridge-output";
 export { executeSyncCommand } from "./runtime-bridge-sync";
+
+type CreateProgressPayload = {
+	detail: string;
+	title: string;
+};
 
 type CreateExecutionInput = {
 	projectDir: string;
@@ -21,6 +28,7 @@ type CreateExecutionInput = {
 	emitOutput?: boolean;
 	flags: Record<string, unknown>;
 	interactive?: boolean;
+	onProgress?: (payload: CreateProgressPayload) => void;
 	printLine?: PrintLine;
 	prompt?: ReadlinePrompt;
 	warnLine?: PrintLine;
@@ -153,6 +161,7 @@ export async function executeCreateCommand({
 	emitOutput = true,
 	flags,
 	interactive,
+	onProgress,
 	printLine = console.log as PrintLine,
 	prompt,
 	warnLine = console.warn as PrintLine,
@@ -185,6 +194,16 @@ export async function executeCreateCommand({
 			persistencePolicy: readOptionalLooseStringFlag(flags, "persistence-policy"),
 			phpPrefix: readOptionalLooseStringFlag(flags, "php-prefix"),
 			projectInput: projectDir,
+			onProgress: async (progress) => {
+				const payload = {
+					detail: progress.detail,
+					title: progress.title,
+				};
+				onProgress?.(payload);
+				if (emitOutput) {
+					printLine(formatCreateProgressLine(payload));
+				}
+			},
 			promptText: activePrompt
 				? (message, defaultValue, validate) => activePrompt.text(message, defaultValue, validate)
 				: undefined,
