@@ -1,12 +1,8 @@
 import fs from "node:fs";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
 
-import {
-	PACKAGE_MANAGER_IDS,
-	getPackageManager,
-} from "./package-managers.js";
+import { getPackageManager } from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
 import {
 	buildGitignore,
@@ -15,19 +11,10 @@ import {
 	replaceTextRecursively,
 } from "./scaffold-apply-utils.js";
 import {
-	buildBlockCssClassName,
-	buildFrontendCssClassName,
-	normalizeBlockSlug,
-	resolveScaffoldIdentifiers,
-	validateBlockSlug,
-	validateNamespace,
-} from "./scaffold-identifiers.js";
-import {
 	applyGeneratedProjectDxPackageJson,
 	applyLocalDevPresetFiles,
 } from "./local-dev-presets.js";
 import { applyMigrationUiCapability } from "./migration-ui-capability.js";
-import { getPackageVersions } from "./package-versions.js";
 import {
 	applyWorkspaceMigrationCapability,
 	ensureScaffoldDirectory,
@@ -41,31 +28,23 @@ import {
 	normalizePackageManagerFiles,
 	removeUnexpectedLockfiles,
 } from "./scaffold-package-manager-files.js";
-import {
-	toPascalCase,
-	toSnakeCase,
-	toTitleCase,
-} from "./string-case.js";
-import {
-	BUILTIN_BLOCK_METADATA_VERSION,
-	COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS,
-	getBuiltInTemplateMetadataDefaults,
-	getRemovedBuiltInTemplateMessage,
-	isRemovedBuiltInTemplateId,
-} from "./template-defaults.js";
 import { copyInterpolatedDirectory } from "./template-render.js";
 import {
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
-	TEMPLATE_IDS,
-	getTemplateById,
 	isBuiltInTemplateId,
 } from "./template-registry.js";
 import { resolveTemplateSource } from "./template-source.js";
 import {
 	BlockGeneratorService,
-	buildTemplateVariablesFromBlockSpec,
-	createBuiltInBlockSpec,
 } from "./block-generator-service.js";
+import {
+	collectScaffoldAnswers,
+	detectAuthor,
+	getDefaultAnswers,
+	resolvePackageManagerId,
+	resolveTemplateId,
+} from "./scaffold-answer-resolution.js";
+import { getTemplateVariables } from "./scaffold-template-variables.js";
 
 const WORKSPACE_TEMPLATE_ALIAS = "workspace";
 
@@ -154,21 +133,21 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
  * can surface custom ids. Downstream code uses `isBuiltInTemplateId()` to
  * distinguish built-in templates from custom sources.
  */
-interface ResolveTemplateOptions {
+export interface ResolveTemplateOptions {
 	isInteractive?: boolean;
 	selectTemplate?: () => Promise<string>;
 	templateId?: string;
 	yes?: boolean;
 }
 
-interface ResolvePackageManagerOptions {
+export interface ResolvePackageManagerOptions {
 	isInteractive?: boolean;
 	packageManager?: string;
 	selectPackageManager?: () => Promise<PackageManagerId>;
 	yes?: boolean;
 }
 
-interface CollectScaffoldAnswersOptions {
+export interface CollectScaffoldAnswersOptions {
 	dataStorageMode?: DataStorageMode;
 	namespace?: string;
 	phpPrefix?: string;
@@ -221,6 +200,14 @@ export interface ScaffoldProjectResult {
 	warnings: string[];
 }
 export { buildBlockCssClassName } from "./scaffold-identifiers.js";
+export {
+	collectScaffoldAnswers,
+	detectAuthor,
+	getDefaultAnswers,
+	resolvePackageManagerId,
+	resolveTemplateId,
+} from "./scaffold-answer-resolution.js";
+export { getTemplateVariables } from "./scaffold-template-variables.js";
 
 export function isDataStorageMode(value: string): value is DataStorageMode {
 	return (DATA_STORAGE_MODES as readonly string[]).includes(value);
@@ -230,273 +217,10 @@ export function isPersistencePolicy(value: string): value is PersistencePolicy {
 	return (PERSISTENCE_POLICIES as readonly string[]).includes(value);
 }
 
-export function detectAuthor(): string {
-	try {
-		return (
-			execSync("git config user.name", {
-				encoding: "utf8",
-				stdio: ["ignore", "pipe", "ignore"],
-			}).trim() || "Your Name"
-		);
-	} catch {
-		return "Your Name";
-	}
-}
-
-export function getDefaultAnswers(
-	projectName: string,
-	templateId: string,
-): ScaffoldAnswers {
-	const template = isBuiltInTemplateId(templateId) ? getTemplateById(templateId) : null;
-	const slugDefault = normalizeBlockSlug(projectName) || "my-wp-typia-block";
-	return {
-		author: detectAuthor(),
-		dataStorageMode: templateId === "persistence" ? "custom-table" : undefined,
-		description: template?.description ?? "A WordPress block scaffolded from a remote template",
-		namespace: slugDefault,
-		persistencePolicy: templateId === "persistence" ? "authenticated" : undefined,
-		phpPrefix: toSnakeCase(slugDefault),
-		slug: slugDefault,
-		textDomain: slugDefault,
-		title: toTitleCase(slugDefault),
-	};
-}
-
 function normalizeTemplateSelection(templateId: string): string {
 	return templateId === WORKSPACE_TEMPLATE_ALIAS
 		? OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
 		: templateId;
-}
-
-export async function resolveTemplateId({
-	templateId,
-	yes = false,
-	isInteractive = false,
-	selectTemplate,
-}: ResolveTemplateOptions): Promise<string> {
-	if (templateId) {
-		const normalizedTemplateId = normalizeTemplateSelection(templateId);
-		if (isRemovedBuiltInTemplateId(templateId)) {
-			throw new Error(getRemovedBuiltInTemplateMessage(templateId));
-		}
-		if (isBuiltInTemplateId(normalizedTemplateId)) {
-			return getTemplateById(normalizedTemplateId).id;
-		}
-		return normalizedTemplateId;
-	}
-
-	if (yes) {
-		return "basic";
-	}
-
-	if (!isInteractive || !selectTemplate) {
-		throw new Error(
-			`Template is required in non-interactive mode. Use --template <${TEMPLATE_IDS.join("|")}|./path|github:owner/repo/path[#ref]|npm-package>.`,
-		);
-	}
-
-	return normalizeTemplateSelection(await selectTemplate());
-}
-
-export async function resolvePackageManagerId({
-	packageManager,
-	yes = false,
-	isInteractive = false,
-	selectPackageManager,
-}: ResolvePackageManagerOptions): Promise<PackageManagerId> {
-	if (packageManager) {
-		return getPackageManager(packageManager).id;
-	}
-
-	if (yes) {
-		return "npm";
-	}
-
-	if (!isInteractive || !selectPackageManager) {
-		throw new Error(
-			`Package manager is required in non-interactive mode. Use --package-manager <${PACKAGE_MANAGER_IDS.join("|")}>.`,
-		);
-	}
-
-	return selectPackageManager();
-}
-
-export async function collectScaffoldAnswers({
-	projectName,
-	templateId,
-	yes = false,
-	dataStorageMode,
-	namespace,
-	persistencePolicy,
-	phpPrefix,
-	promptText,
-	textDomain,
-}: CollectScaffoldAnswersOptions): Promise<ScaffoldAnswers> {
-	const defaults = getDefaultAnswers(projectName, templateId);
-
-	if (yes) {
-		const identifiers = resolveScaffoldIdentifiers({
-			namespace: namespace ?? defaults.namespace,
-			phpPrefix,
-			slug: defaults.slug,
-			textDomain,
-		});
-		return {
-			...defaults,
-			dataStorageMode: dataStorageMode ?? defaults.dataStorageMode,
-			namespace: identifiers.namespace,
-			persistencePolicy: persistencePolicy ?? defaults.persistencePolicy,
-			phpPrefix: identifiers.phpPrefix,
-			textDomain: identifiers.textDomain,
-		};
-	}
-
-	if (!promptText) {
-		throw new Error("Interactive answers require a promptText callback.");
-	}
-
-	const identifiers = resolveScaffoldIdentifiers({
-		namespace:
-			namespace ?? (await promptText("Namespace", defaults.namespace, validateNamespace)),
-		phpPrefix,
-		slug: await promptText("Block slug", defaults.slug, validateBlockSlug),
-		textDomain,
-	});
-
-	return {
-		author: await promptText("Author", defaults.author),
-		dataStorageMode: dataStorageMode ?? defaults.dataStorageMode,
-		description: await promptText("Description", defaults.description),
-		namespace: identifiers.namespace,
-		persistencePolicy: persistencePolicy ?? defaults.persistencePolicy,
-		phpPrefix: identifiers.phpPrefix,
-		slug: identifiers.slug,
-		textDomain: identifiers.textDomain,
-		title: await promptText("Block title", toTitleCase(identifiers.slug)),
-	};
-}
-
-export function getTemplateVariables(
-	templateId: string,
-	answers: ScaffoldAnswers,
-): ScaffoldTemplateVariables {
-	if (isBuiltInTemplateId(templateId)) {
-		return buildTemplateVariablesFromBlockSpec(
-			createBuiltInBlockSpec({
-				answers,
-				dataStorageMode: answers.dataStorageMode,
-				persistencePolicy: answers.persistencePolicy,
-				templateId,
-			}),
-		);
-	}
-
-	const {
-		apiClientPackageVersion,
-		blockRuntimePackageVersion,
-		blockTypesPackageVersion,
-		projectToolsPackageVersion,
-		restPackageVersion,
-	} = getPackageVersions();
-	const template = isBuiltInTemplateId(templateId) ? getTemplateById(templateId) : null;
-	const metadataDefaults = isBuiltInTemplateId(templateId)
-		? getBuiltInTemplateMetadataDefaults(templateId)
-		: null;
-	const identifiers = resolveScaffoldIdentifiers({
-		namespace: answers.namespace,
-		phpPrefix: answers.phpPrefix,
-		slug: answers.slug,
-		textDomain: answers.textDomain,
-	});
-	const slug = identifiers.slug;
-	const slugSnakeCase = toSnakeCase(slug);
-	const pascalCase = toPascalCase(slug);
-	const title = answers.title.trim();
-	const namespace = identifiers.namespace;
-	const description = answers.description.trim();
-	const textDomain = identifiers.textDomain;
-	const phpPrefix = identifiers.phpPrefix;
-	const phpPrefixUpper = phpPrefix.toUpperCase();
-	const compoundChildTitle = `${title} Item`;
-	const cssClassName = buildBlockCssClassName(namespace, slug);
-	const compoundChildCssClassName = buildBlockCssClassName(namespace, `${slug}-item`);
-	const compoundPersistenceEnabled =
-		templateId === "persistence"
-			? true
-			: templateId === "compound"
-				? Boolean(answers.dataStorageMode || answers.persistencePolicy)
-				: false;
-	const dataStorageMode =
-		templateId === "persistence" || compoundPersistenceEnabled
-			? answers.dataStorageMode ?? "custom-table"
-			: "custom-table";
-	const persistencePolicy =
-		templateId === "persistence" || compoundPersistenceEnabled
-			? answers.persistencePolicy ?? "authenticated"
-			: "authenticated";
-
-	return {
-		apiClientPackageVersion,
-		author: answers.author.trim(),
-		blockRuntimePackageVersion,
-		blockMetadataVersion: BUILTIN_BLOCK_METADATA_VERSION,
-		blockTypesPackageVersion,
-		category: metadataDefaults?.category ?? template?.defaultCategory ?? "widgets",
-		icon: metadataDefaults?.icon ?? "smiley",
-		compoundChildTitle,
-		compoundChildCategory: COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS.category,
-		compoundChildCssClassName,
-		compoundChildIcon: COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS.icon,
-		compoundChildTitleJson: JSON.stringify(compoundChildTitle),
-		compoundPersistenceEnabled: compoundPersistenceEnabled ? "true" : "false",
-		projectToolsPackageVersion,
-		cssClassName,
-		dataStorageMode,
-		dashCase: slug,
-		description,
-		frontendCssClassName: buildFrontendCssClassName(cssClassName),
-		isAuthenticatedPersistencePolicy:
-			persistencePolicy === "authenticated" ? "true" : "false",
-		isPublicPersistencePolicy: persistencePolicy === "public" ? "true" : "false",
-		bootstrapCredentialDeclarations:
-			persistencePolicy === "public"
-				? "publicWriteExpiresAt?: number & tags.Type< 'uint32' >;\n\tpublicWriteToken?: string & tags.MinLength< 1 > & tags.MaxLength< 512 >;"
-				: "restNonce?: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;",
-		persistencePolicyDescriptionJson: JSON.stringify(
-			persistencePolicy === "authenticated"
-				? "Writes require a logged-in user and a valid REST nonce."
-				: "Anonymous writes use signed short-lived public tokens, per-request ids, and coarse rate limiting.",
-		),
-		keyword: slug.replace(/-/g, " "),
-		namespace,
-		needsMigration: "{{needsMigration}}",
-		pascalCase,
-		phpPrefix,
-		phpPrefixUpper,
-		restPackageVersion,
-		publicWriteRequestIdDeclaration:
-			persistencePolicy === "public"
-				? "publicWriteRequestId: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;"
-				: "publicWriteRequestId?: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;",
-		restWriteAuthIntent:
-			persistencePolicy === "public"
-				? "public-write-protected"
-				: "authenticated",
-		restWriteAuthMechanism:
-			persistencePolicy === "public" ? "public-signed-token" : "rest-nonce",
-		restWriteAuthMode:
-			persistencePolicy === "public" ? "public-signed-token" : "authenticated-rest-nonce",
-		slug,
-		slugCamelCase: pascalCase.charAt(0).toLowerCase() + pascalCase.slice(1),
-		slugKebabCase: slug,
-		slugSnakeCase,
-		textDomain,
-		textdomain: textDomain,
-		title,
-		titleJson: JSON.stringify(title),
-		titleCase: pascalCase,
-		persistencePolicy,
-	};
 }
 
 export async function scaffoldProject({

@@ -1,0 +1,150 @@
+import {
+  buildTemplateVariablesFromBlockSpec,
+  createBuiltInBlockSpec,
+} from './block-generator-service.js';
+import { getPackageVersions } from './package-versions.js';
+import {
+  buildBlockCssClassName,
+  buildFrontendCssClassName,
+  resolveScaffoldIdentifiers,
+} from './scaffold-identifiers.js';
+import type {
+  ScaffoldAnswers,
+  ScaffoldTemplateVariables,
+} from './scaffold.js';
+import {
+  BUILTIN_BLOCK_METADATA_VERSION,
+  COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS,
+  getBuiltInTemplateMetadataDefaults,
+} from './template-defaults.js';
+import {
+  getTemplateById,
+  isBuiltInTemplateId,
+} from './template-registry.js';
+import {
+  toPascalCase,
+  toSnakeCase,
+} from './string-case.js';
+
+export function getTemplateVariables(
+  templateId: string,
+  answers: ScaffoldAnswers,
+): ScaffoldTemplateVariables {
+  if (isBuiltInTemplateId(templateId)) {
+    return buildTemplateVariablesFromBlockSpec(
+      createBuiltInBlockSpec({
+        answers,
+        dataStorageMode: answers.dataStorageMode,
+        persistencePolicy: answers.persistencePolicy,
+        templateId,
+      }),
+    );
+  }
+
+  const {
+    apiClientPackageVersion,
+    blockRuntimePackageVersion,
+    blockTypesPackageVersion,
+    projectToolsPackageVersion,
+    restPackageVersion,
+  } = getPackageVersions();
+  const template = isBuiltInTemplateId(templateId) ? getTemplateById(templateId) : null;
+  const metadataDefaults = isBuiltInTemplateId(templateId)
+    ? getBuiltInTemplateMetadataDefaults(templateId)
+    : null;
+  const identifiers = resolveScaffoldIdentifiers({
+    namespace: answers.namespace,
+    phpPrefix: answers.phpPrefix,
+    slug: answers.slug,
+    textDomain: answers.textDomain,
+  });
+  const slug = identifiers.slug;
+  const slugSnakeCase = toSnakeCase(slug);
+  const pascalCase = toPascalCase(slug);
+  const title = answers.title.trim();
+  const namespace = identifiers.namespace;
+  const description = answers.description.trim();
+  const textDomain = identifiers.textDomain;
+  const phpPrefix = identifiers.phpPrefix;
+  const phpPrefixUpper = phpPrefix.toUpperCase();
+  const compoundChildTitle = `${title} Item`;
+  const cssClassName = buildBlockCssClassName(namespace, slug);
+  const compoundChildCssClassName = buildBlockCssClassName(namespace, `${slug}-item`);
+  const compoundPersistenceEnabled =
+    templateId === 'persistence'
+      ? true
+      : templateId === 'compound'
+        ? Boolean(answers.dataStorageMode || answers.persistencePolicy)
+        : false;
+  const dataStorageMode =
+    templateId === 'persistence' || compoundPersistenceEnabled
+      ? answers.dataStorageMode ?? 'custom-table'
+      : 'custom-table';
+  const persistencePolicy =
+    templateId === 'persistence' || compoundPersistenceEnabled
+      ? answers.persistencePolicy ?? 'authenticated'
+      : 'authenticated';
+
+  return {
+    apiClientPackageVersion,
+    author: answers.author.trim(),
+    blockRuntimePackageVersion,
+    blockMetadataVersion: BUILTIN_BLOCK_METADATA_VERSION,
+    blockTypesPackageVersion,
+    category: metadataDefaults?.category ?? template?.defaultCategory ?? 'widgets',
+    icon: metadataDefaults?.icon ?? 'smiley',
+    compoundChildTitle,
+    compoundChildCategory: COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS.category,
+    compoundChildCssClassName,
+    compoundChildIcon: COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS.icon,
+    compoundChildTitleJson: JSON.stringify(compoundChildTitle),
+    compoundPersistenceEnabled: compoundPersistenceEnabled ? 'true' : 'false',
+    projectToolsPackageVersion,
+    cssClassName,
+    dataStorageMode,
+    dashCase: slug,
+    description,
+    frontendCssClassName: buildFrontendCssClassName(cssClassName),
+    isAuthenticatedPersistencePolicy:
+      persistencePolicy === 'authenticated' ? 'true' : 'false',
+    isPublicPersistencePolicy: persistencePolicy === 'public' ? 'true' : 'false',
+    bootstrapCredentialDeclarations:
+      persistencePolicy === 'public'
+        ? "publicWriteExpiresAt?: number & tags.Type< 'uint32' >;\n\tpublicWriteToken?: string & tags.MinLength< 1 > & tags.MaxLength< 512 >;"
+        : "restNonce?: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;",
+    persistencePolicyDescriptionJson: JSON.stringify(
+      persistencePolicy === 'authenticated'
+        ? 'Writes require a logged-in user and a valid REST nonce.'
+        : 'Anonymous writes use signed short-lived public tokens, per-request ids, and coarse rate limiting.',
+    ),
+    keyword: slug.replace(/-/g, ' '),
+    namespace,
+    needsMigration: '{{needsMigration}}',
+    pascalCase,
+    phpPrefix,
+    phpPrefixUpper,
+    restPackageVersion,
+    publicWriteRequestIdDeclaration:
+      persistencePolicy === 'public'
+        ? "publicWriteRequestId: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;"
+        : "publicWriteRequestId?: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;",
+    restWriteAuthIntent:
+      persistencePolicy === 'public'
+        ? 'public-write-protected'
+        : 'authenticated',
+    restWriteAuthMechanism:
+      persistencePolicy === 'public' ? 'public-signed-token' : 'rest-nonce',
+    restWriteAuthMode:
+      persistencePolicy === 'public' ? 'public-signed-token' : 'authenticated-rest-nonce',
+    slug,
+    slugCamelCase: pascalCase.charAt(0).toLowerCase() + pascalCase.slice(1),
+    slugKebabCase: slug,
+    slugSnakeCase,
+    textDomain,
+    textdomain: textDomain,
+    title,
+    titleJson: JSON.stringify(title),
+    titleCase: pascalCase,
+    persistencePolicy,
+  };
+}
