@@ -53,6 +53,10 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 				path.join(targetDir, "src", "query-extension.ts"),
 				"utf8",
 			);
+			const queryRuntimeSource = fs.readFileSync(
+				path.join(targetDir, "inc", "query-runtime.php"),
+				"utf8",
+			);
 			const pluginBootstrap = fs.readFileSync(
 				path.join(targetDir, "demo-query-loop.php"),
 				"utf8",
@@ -90,6 +94,7 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 				"const customQuerySeed = getQueryLoopCustomQuerySeed();",
 			);
 			expect(variationSource).toContain("...customQuerySeed");
+			expect(variationSource).toContain("wpTypiaVariation: VARIATION_NAME");
 			expect(variationSource).toContain("registerQueryLoopEditorExtensions({ variationName: VARIATION_NAME })");
 			expect(variationSource).toContain("allowedControls:");
 			expect(variationSource).toMatch(/isActive:\s*\[\s*['"]namespace['"]\s*\]/);
@@ -98,16 +103,28 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 			expect(queryExtensionSource).toContain(
 				"export function registerQueryLoopEditorExtensions",
 			);
+			expect(queryRuntimeSource).toContain("function demo_space_filter_query_loop_block_query_vars");
+			expect(queryRuntimeSource).toContain("function demo_space_filter_query_loop_editor_preview_query_vars");
+			expect(queryRuntimeSource).toContain("wpTypiaVariation");
 			expect(pluginBootstrap).toMatch(/enqueue_block_editor_assets/);
 			expect(pluginBootstrap).toMatch(/wp_register_script\s*\(/);
 			expect(pluginBootstrap).toContain("register_block_pattern_category");
 			expect(pluginBootstrap).toContain("/src/patterns/*.php");
+			expect(pluginBootstrap).toMatch(/require_once\s+__DIR__\s*\.\s*['"]\/inc\/query-runtime\.php['"]/);
+			expect(pluginBootstrap).toMatch(
+				/add_filter\(\s*'query_loop_block_query_vars',\s*'demo_space_filter_query_loop_block_query_vars',\s*10,\s*3\s*\);/,
+			);
+			expect(pluginBootstrap).toMatch(
+				/add_filter\(\s*'rest_book_query',\s*'demo_space_filter_query_loop_editor_preview_query_vars',\s*10,\s*2\s*\);/,
+			);
 			expect(pluginBootstrap).not.toContain("register_block_type");
 			expect(gridPatternSource).toContain("demo-space/demo-query-loop-grid");
 			expect(gridPatternSource).toContain('"namespace":"demo-space/demo-query-loop"');
 			expect(gridPatternSource).toContain('"postType":"book"');
+			expect(gridPatternSource).toContain('"wpTypiaVariation":"demo-space/demo-query-loop"');
 			expect(listPatternSource).toContain("demo-space/demo-query-loop-list");
 			expect(listPatternSource).toContain('"namespace":"demo-space/demo-query-loop"');
+			expect(listPatternSource).toContain('"wpTypiaVariation":"demo-space/demo-query-loop"');
 			expect(readme).toContain("## Artifact Refresh");
 			expect(readme).toContain(
 				"This scaffold does not generate `block.json` or Typia manifests.",
@@ -117,6 +134,7 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 			);
 			expect(readme).toContain("Use `src/patterns/*.php` for richer connected layout presets");
 			expect(readme).toContain("use `src/query-extension.ts` for custom query seed values");
+			expect(readme).toContain("use `inc/query-runtime.php` to keep frontend and editor preview query mapping aligned");
 			execFileSync("php", ["-l", path.join(targetDir, "demo-query-loop.php")], {
 				stdio: "ignore",
 			});
@@ -124,6 +142,9 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 				stdio: "ignore",
 			});
 			execFileSync("php", ["-l", path.join(targetDir, "src", "patterns", "list.php")], {
+				stdio: "ignore",
+			});
+			execFileSync("php", ["-l", path.join(targetDir, "inc", "query-runtime.php")], {
 				stdio: "ignore",
 			});
 

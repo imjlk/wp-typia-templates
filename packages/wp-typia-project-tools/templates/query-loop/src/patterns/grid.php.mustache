@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $content = sprintf(
 	<<<'HTML'
-<!-- wp:query {"namespace":"{{namespace}}/{{slug}}","query":{"inherit":false,"postType":"{{queryPostType}}","perPage":6,"order":"desc","orderBy":"date"},"displayLayout":{"type":"grid","columns":3}} -->
+<!-- wp:query {"namespace":"{{namespace}}/{{slug}}","query":{"inherit":false,"postType":"{{queryPostType}}","perPage":6,"order":"desc","orderBy":"date","wpTypiaVariation":"{{namespace}}/{{slug}}"},"displayLayout":{"type":"grid","columns":3}} -->
 <div class="wp-block-query">
 	<!-- wp:post-template -->
 	<!-- wp:group {"style":{"spacing":{"blockGap":"0.75rem","padding":{"top":"1rem","right":"1rem","bottom":"1rem","left":"1rem"}}},"layout":{"type":"constrained"}} -->

@@ -1,0 +1,85 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+function {{phpPrefix}}_get_query_loop_variation_name() {
+	return '{{namespace}}/{{slug}}';
+}
+
+function {{phpPrefix}}_get_query_loop_variation_marker_key() {
+	return 'wpTypiaVariation';
+}
+
+function {{phpPrefix}}_extract_query_loop_request_query( WP_REST_Request $request ) {
+	$params = $request->get_params();
+
+	if ( isset( $params['query'] ) && is_array( $params['query'] ) ) {
+		return $params['query'];
+	}
+
+	return is_array( $params ) ? $params : array();
+}
+
+function {{phpPrefix}}_map_query_loop_custom_query_vars( array $query_vars, array $source_query ) {
+	unset( $query_vars[ {{phpPrefix}}_get_query_loop_variation_marker_key() ] );
+
+	$allowed_custom_query_values = array(
+		// 'featuredOnly' => isset( $source_query['featuredOnly'] ) ? (bool) $source_query['featuredOnly'] : null,
+		// 'eventStatus' => isset( $source_query['eventStatus'] ) ? sanitize_text_field( $source_query['eventStatus'] ) : null,
+	);
+
+	// Mirror only known custom query keys from `src/query-extension.ts` here when
+	// they should affect frontend rendering or editor preview requests. Sanitize
+	// and cast values before copying them into WP_Query vars; do not merge the
+	// raw source query wholesale.
+	foreach ( $allowed_custom_query_values as $key => $value ) {
+		if ( null === $value ) {
+			continue;
+		}
+
+		$query_vars[ $key ] = $value;
+	}
+
+	return $query_vars;
+}
+
+function {{phpPrefix}}_filter_query_loop_block_query_vars( $query_vars, $block, $page ) {
+	if ( ! is_array( $query_vars ) ) {
+		return $query_vars;
+	}
+
+	$attrs = is_array( $block ) && isset( $block['attrs'] ) && is_array( $block['attrs'] )
+		? $block['attrs']
+		: array();
+	$namespace = isset( $attrs['namespace'] ) && is_string( $attrs['namespace'] )
+		? $attrs['namespace']
+		: null;
+	$source_query = isset( $attrs['query'] ) && is_array( $attrs['query'] )
+		? $attrs['query']
+		: array();
+
+	if ( {{phpPrefix}}_get_query_loop_variation_name() !== $namespace ) {
+		return $query_vars;
+	}
+
+	return {{phpPrefix}}_map_query_loop_custom_query_vars( $query_vars, $source_query );
+}
+
+function {{phpPrefix}}_filter_query_loop_editor_preview_query_vars( $query_vars, $request ) {
+	if ( ! is_array( $query_vars ) || ! $request instanceof WP_REST_Request ) {
+		return $query_vars;
+	}
+
+	$source_query = {{phpPrefix}}_extract_query_loop_request_query( $request );
+	$marker_key = {{phpPrefix}}_get_query_loop_variation_marker_key();
+	$variation_name = isset( $source_query[ $marker_key ] ) && is_string( $source_query[ $marker_key ] )
+		? $source_query[ $marker_key ]
+		: null;
+
+	if ( {{phpPrefix}}_get_query_loop_variation_name() !== $variation_name ) {
+		return $query_vars;
+	}
+
+	return {{phpPrefix}}_map_query_loop_custom_query_vars( $query_vars, $source_query );
+}
