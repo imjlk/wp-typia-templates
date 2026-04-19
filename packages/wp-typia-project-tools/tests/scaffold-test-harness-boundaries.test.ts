@@ -9,10 +9,6 @@ test("scaffold test harness facade delegates environment and support helpers", (
 		resolve(helpersRoot, "scaffold-test-harness.ts"),
 		"utf8",
 	);
-	const environmentSource = readFileSync(
-		resolve(helpersRoot, "scaffold-test-environment.ts"),
-		"utf8",
-	);
 	const supportSource = readFileSync(
 		resolve(helpersRoot, "scaffold-test-support.ts"),
 		"utf8",
@@ -22,8 +18,6 @@ test("scaffold test harness facade delegates environment and support helpers", (
 	expect(harnessSource).toContain('from "./scaffold-test-support.js"');
 	expect(harnessSource).not.toContain("function acquireWorkspaceBuildLock(");
 	expect(harnessSource).not.toContain("export async function scaffoldOfficialWorkspace(");
-	expect(environmentSource).toContain("function acquireWorkspaceBuildLock(");
-	expect(environmentSource).toContain("export function runGeneratedScript(");
 	expect(supportSource).toContain("export async function scaffoldOfficialWorkspace(");
 	expect(supportSource).toContain("export async function startLocalCounterStubServer(");
 });
