@@ -1,5 +1,25 @@
 # wp-typia
 
+## 0.17.0 — 2026-04-19
+
+### Minor changes
+
+- [51d5fb2](https://github.com/imjlk/wp-typia/commit/51d5fb26ef18ead7f60d37a4f8189a57d4a15134) Add the built-in `query-loop` scaffold family so `wp-typia create --template query-loop`
+  can generate a usable `core/query` variation with namespace-based identity,
+  default query attributes, allowed controls, and inline starter layout. — Thanks @imjlk!
+- [3e79eff](https://github.com/imjlk/wp-typia/commit/3e79eff8bd9ae3b2d5cc6785cdb00c4dc2ea6d33) Add Query Loop custom query extension seams so `wp-typia create --template query-loop`
+  now seeds a dedicated `src/query-extension.ts` authoring surface for variation-
+  specific query params and optional editor hook registration. — Thanks @imjlk!
+- [7a2df54](https://github.com/imjlk/wp-typia/commit/7a2df54455e4e485983a02fd726f210e3bbfb965) Add Query Loop runtime parity scaffolds so `wp-typia create --template query-loop`
+  now seeds `inc/query-runtime.php` hooks for frontend query mapping and editor
+  preview parity alongside the variation's custom query marker. — Thanks @imjlk!
+- [4a9a930](https://github.com/imjlk/wp-typia/commit/4a9a9300eef404ff03e726635bdb4a1963c0c690) Add connected Query Loop layout preset scaffolds so `wp-typia create --template query-loop`
+  now seeds pattern-backed grid and list layouts alongside the inline variation fallback. — Thanks @imjlk!
+
+### Patch changes
+
+- Updated dependencies: project-tools (npm)@0.17.0
+
 ## 0.16.15 — 2026-04-19
 
 ### Patch changes
