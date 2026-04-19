@@ -838,9 +838,13 @@ test("node entry rejects non-empty target directories with actionable guidance",
   fs.writeFileSync(path.join(targetDir, "existing.txt"), "already here\n", "utf8");
 
   const errorMessage = getCommandErrorMessage(() =>
-    runCli("node", [entryPath, "create", targetDir, "--template", "basic", "--yes"], {
-      stdio: "pipe",
-    })
+    runCli(
+      "node",
+      [entryPath, "create", targetDir, "--template", "basic", "--yes", "--no-install"],
+      {
+        stdio: "pipe",
+      }
+    )
   );
 
   expect(errorMessage).toContain(`Target directory is not empty: ${targetDir}.`);

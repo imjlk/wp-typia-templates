@@ -69,6 +69,11 @@ import {
 } from "./external-layer-selection.js";
 
 const COLLECTION_IMPORT_LINE = "import '../../collection';";
+// This is a lightweight preflight heuristic for the common install layouts:
+// node_modules for npm/pnpm/bun/yarn-classic and Yarn PnP marker files.
+// It intentionally favors fast user guidance over exhaustive detection, so
+// stale node_modules or hoisted installs outside the workspace root can still
+// fall through to deeper resolver errors.
 const WORKSPACE_INSTALL_MARKERS = ["node_modules", ".pnp.cjs", ".pnp.loader.mjs"] as const;
 
 async function ensureCollectionImport(filePath: string): Promise<void> {
@@ -491,7 +496,8 @@ export async function seedWorkspaceMigrationProject(
  * succeeds.
  * @throws {Error} When the template id is unknown, persistence flags are used
  * with unsupported templates, the command runs outside an official workspace,
- * or target block paths already exist.
+ * workspace dependencies have not been installed yet, or target block paths
+ * already exist.
  */
 export async function runAddBlockCommand({
 	blockName,

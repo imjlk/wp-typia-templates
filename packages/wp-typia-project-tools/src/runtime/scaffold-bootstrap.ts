@@ -55,6 +55,13 @@ export async function ensureScaffoldDirectory(
 	}
 }
 
+/**
+ * Format the actionable error message used when a scaffold target directory
+ * already exists and is not empty.
+ *
+ * @param targetDir Absolute path to the target directory being evaluated.
+ * @returns A human-readable error string with next-step guidance.
+ */
 export function formatNonEmptyTargetDirectoryError(targetDir: string): string {
 	return `Target directory is not empty: ${targetDir}. Choose a new project directory, or empty this directory before rerunning the scaffold.`;
 }
