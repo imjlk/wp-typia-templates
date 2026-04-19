@@ -4,9 +4,6 @@ import {
 	formatCliDiagnosticError,
 } from "@wp-typia/project-tools/cli-diagnostics";
 import {
-	formatTemplateDetails,
-	formatTemplateFeatures,
-	formatTemplateSummary,
 	getTemplateById,
 	listTemplates,
 } from "@wp-typia/project-tools/cli-templates";
@@ -397,33 +394,6 @@ function renderTemplatesJson(flags: GlobalFlags, subcommand: string) {
 			2,
 		),
 	);
-}
-
-function renderTemplatesText(flags: GlobalFlags, subcommand: string) {
-	if (subcommand === "list") {
-		for (const template of listTemplates()) {
-			printBlock([
-				formatTemplateSummary(template),
-				formatTemplateFeatures(template),
-				"",
-			]);
-		}
-		return;
-	}
-
-	const templateId = flags.id;
-	if (!templateId) {
-		throw new Error("`wp-typia templates inspect` requires <template-id>.");
-	}
-	const template = getTemplateById(templateId);
-	if (!template) {
-		throw new Error(`Unknown template "${templateId}".`);
-	}
-	printBlock([
-		formatTemplateSummary(template),
-		formatTemplateFeatures(template),
-		formatTemplateDetails(template),
-	]);
 }
 
 function renderUnsupportedCommand(command: string) {

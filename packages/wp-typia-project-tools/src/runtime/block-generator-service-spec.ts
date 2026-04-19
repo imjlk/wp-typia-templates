@@ -23,7 +23,6 @@ import type {
 	DataStorageMode,
 	PersistencePolicy,
 	ScaffoldAnswers,
-	ScaffoldProjectResult,
 	ScaffoldTemplateVariables,
 } from "./scaffold.js";
 

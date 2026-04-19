@@ -41,7 +41,6 @@ import type { PackageManagerId } from "./package-managers.js";
 import {
 	formatInstallCommand,
 	formatPackageExecCommand,
-	formatRunScript,
 	getPackageManager,
 	transformPackageManagerText,
 } from "./package-managers.js";

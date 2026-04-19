@@ -38,11 +38,6 @@ import {
 	BlockGeneratorService,
 } from "./block-generator-service.js";
 import {
-	collectScaffoldAnswers,
-	detectAuthor,
-	getDefaultAnswers,
-	resolvePackageManagerId,
-	resolveTemplateId,
 } from "./scaffold-answer-resolution.js";
 import { getTemplateVariables } from "./scaffold-template-variables.js";
 
