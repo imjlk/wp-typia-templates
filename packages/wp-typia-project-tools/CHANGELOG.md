@@ -1,5 +1,15 @@
 # @wp-typia/project-tools
 
+## 0.16.13 — 2026-04-19
+
+### Patch changes
+
+- [0653d2e](https://github.com/imjlk/wp-typia/commit/0653d2e2ce7828e289df1910ffb2818e0a61c4c0) Split scaffold onboarding into clearer quick-start, advanced sync, and first-commit guidance across the CLI completion output and generated README content. — Thanks @imjlk!
+- [78a342f](https://github.com/imjlk/wp-typia/commit/78a342f00a0545d07274681f5f13be976153f986) Clarify `wp-typia doctor` output outside official workspace roots by surfacing an explicit doctor scope row, environment-only rerun guidance, and earlier invalid-workspace messaging. — Thanks @imjlk!
+- [911e98b](https://github.com/imjlk/wp-typia/commit/911e98b47dfc3406940f4e000f806cb28d9d7b77) Tighten `wp-typia create` flag handling by defaulting `--yes` scaffolds to npm, rejecting persistence-only flags on non-persistence built-in templates, and surfacing built-in `--variant` misuse earlier. — Thanks @imjlk!
+- [e80744c](https://github.com/imjlk/wp-typia/commit/e80744c5c193390986fec44d2061600aeb48c1a8) Wrap human-readable `wp-typia` CLI diagnostic and doctor output more readably in narrow terminals without changing structured output. — Thanks @imjlk!
+- [26c9ab7](https://github.com/imjlk/wp-typia/commit/26c9ab77d6b97754998c6f9d8f524d08abf4d24d) Harden `wp-typia create` project-directory handling by warning on awkward names, rejecting `.` and `..`, and limiting the positional shortcut to unambiguous local paths. — Thanks @imjlk!
+
 ## 0.16.12 — 2026-04-18
 
 ### Patch changes
