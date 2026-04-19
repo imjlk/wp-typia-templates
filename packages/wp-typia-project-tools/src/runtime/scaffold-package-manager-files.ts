@@ -61,7 +61,11 @@ export async function normalizePackageJson(
 
 	const packageManager = getPackageManager(packageManagerId);
 	const packageJson = JSON.parse(await fsp.readFile(packageJsonPath, "utf8")) as GeneratedPackageJson;
-	packageJson.packageManager = packageManager.packageManagerField;
+	if (packageManagerId === "npm") {
+		delete packageJson.packageManager;
+	} else {
+		packageJson.packageManager = packageManager.packageManagerField;
+	}
 
 	if (packageJson.scripts) {
 		for (const [key, value] of Object.entries(packageJson.scripts)) {

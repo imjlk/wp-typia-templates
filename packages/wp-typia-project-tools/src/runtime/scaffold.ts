@@ -8,6 +8,7 @@ import {
 	buildGitignore,
 	buildReadme,
 	mergeTextLines,
+	removeQueryLoopPlaceholderFiles,
 	replaceTextRecursively,
 } from "./scaffold-apply-utils.js";
 import {
@@ -346,6 +347,7 @@ export async function scaffoldProject({
 				variables,
 			});
 		}
+		await removeQueryLoopPlaceholderFiles(projectDir, resolvedTemplateId);
 	} else if (withMigrationUi && isOfficialWorkspace) {
 		await applyWorkspaceMigrationCapability(projectDir, resolvedPackageManager);
 	}
