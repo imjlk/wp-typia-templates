@@ -70,10 +70,37 @@ export function getDefaultAnswers(
     namespace: slugDefault,
     persistencePolicy: templateId === 'persistence' ? 'authenticated' : undefined,
     phpPrefix: toSnakeCase(slugDefault),
+    queryPostType: templateId === 'query-loop' ? 'post' : undefined,
     slug: slugDefault,
     textDomain: slugDefault,
     title: toTitleCase(slugDefault),
   };
+}
+
+function validateQueryPostType(value: string): true | string {
+  const normalizedValue = value.trim().toLowerCase();
+  if (normalizedValue.length === 0) {
+    return 'Query post type is required.';
+  }
+
+  if (!/^[a-z0-9_-]{1,20}$/u.test(normalizedValue)) {
+    return 'Query post type must be lowercase, 1-20 chars, and only a-z, 0-9, "_" or "-".';
+  }
+
+  return true;
+}
+
+function normalizeQueryPostType(value: string | undefined): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const normalizedValue = value.trim().toLowerCase();
+  if (validateQueryPostType(normalizedValue) !== true) {
+    throw new Error('Query post type must be lowercase, 1-20 chars, and only a-z, 0-9, "_" or "-".');
+  }
+
+  return normalizedValue;
 }
 
 function normalizeTemplateSelection(templateId: string): string {
@@ -162,6 +189,7 @@ export async function collectScaffoldAnswers({
   persistencePolicy,
   phpPrefix,
   promptText,
+  queryPostType,
   textDomain,
 }: CollectScaffoldAnswersOptions): Promise<ScaffoldAnswers> {
   const defaults = getDefaultAnswers(projectName, templateId);
@@ -179,6 +207,7 @@ export async function collectScaffoldAnswers({
       namespace: identifiers.namespace,
       persistencePolicy: persistencePolicy ?? defaults.persistencePolicy,
       phpPrefix: identifiers.phpPrefix,
+      queryPostType: normalizeQueryPostType(queryPostType ?? defaults.queryPostType),
       textDomain: identifiers.textDomain,
     };
   }
@@ -202,6 +231,16 @@ export async function collectScaffoldAnswers({
     namespace: identifiers.namespace,
     persistencePolicy: persistencePolicy ?? defaults.persistencePolicy,
     phpPrefix: identifiers.phpPrefix,
+    queryPostType:
+      templateId === 'query-loop'
+        ? normalizeQueryPostType(
+            await promptText(
+              'Query post type',
+              queryPostType ?? defaults.queryPostType ?? 'post',
+              validateQueryPostType,
+            ),
+          )
+        : normalizeQueryPostType(queryPostType ?? defaults.queryPostType),
     slug: identifiers.slug,
     textDomain: identifiers.textDomain,
     title: await promptText('Block title', toTitleCase(identifiers.slug)),

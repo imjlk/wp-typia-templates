@@ -18,6 +18,7 @@ export const createFlowSchema = z.object({
 	"persistence-policy": z.string().optional(),
 	"php-prefix": z.string().optional(),
 	"project-dir": z.string().min(1),
+	"query-post-type": z.string().optional(),
 	template: z.string().optional(),
 	"text-domain": z.string().optional(),
 	variant: z.string().optional(),
@@ -36,6 +37,7 @@ export type CreateFieldName =
 	| "namespace"
 	| "text-domain"
 	| "php-prefix"
+	| "query-post-type"
 	| "data-storage"
 	| "persistence-policy"
 	| "no-install"
@@ -59,6 +61,7 @@ export const CREATE_FIELD_ORDER = [
 	"namespace",
 	"text-domain",
 	"php-prefix",
+	"query-post-type",
 	"data-storage",
 	"persistence-policy",
 	...CREATE_CHECKBOX_FIELD_NAMES,
@@ -72,6 +75,7 @@ const CREATE_FIELD_HEIGHTS: Record<CreateFieldName, number> = {
 	"persistence-policy": FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 	"php-prefix": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	"project-dir": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+	"query-post-type": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	template: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 	"text-domain": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	yes: FIRST_PARTY_CHECKBOX_FIELD_BODY_HEIGHT,
@@ -84,12 +88,17 @@ export function isCreatePersistenceTemplate(template?: string): boolean {
 	return template === "persistence" || template === "compound";
 }
 
+export function isCreateQueryLoopTemplate(template?: string): boolean {
+	return template === "query-loop";
+}
+
 function supportsCreateExternalLayers(template?: string): boolean {
 	return (
 		template === "basic" ||
 		template === "interactivity" ||
 		template === "persistence" ||
-		template === "compound"
+		template === "compound" ||
+		template === "query-loop"
 	);
 }
 
@@ -106,6 +115,10 @@ export function getVisibleCreateFieldNames(
 	values: Partial<CreateFlowValues>,
 ): Array<CreateFieldName> {
 	return CREATE_FIELD_ORDER.filter((name) => {
+		if (name === "query-post-type") {
+			return isCreateQueryLoopTemplate(values.template);
+		}
+
 		if (name === "data-storage" || name === "persistence-policy") {
 			return isCreatePersistenceTemplate(values.template);
 		}
@@ -144,12 +157,18 @@ export function sanitizeCreateSubmitValues(values: CreateFlowValues): CreateFlow
 	};
 
 	if (isCreatePersistenceTemplate(values.template)) {
-		return normalizedValues;
+		return {
+			...normalizedValues,
+			"query-post-type": undefined,
+		};
 	}
 
 	return {
 		...normalizedValues,
 		"data-storage": undefined,
 		"persistence-policy": undefined,
+		"query-post-type": isCreateQueryLoopTemplate(values.template)
+			? normalizeOptionalHiddenString(values["query-post-type"])
+			: undefined,
 	};
 }

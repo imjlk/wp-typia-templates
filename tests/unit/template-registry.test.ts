@@ -43,7 +43,13 @@ describe("template registry runtime helpers", () => {
 	});
 
 	test("reports built-in template metadata and select options", () => {
-		expect([...BUILTIN_TEMPLATE_IDS]).toEqual(["basic", "interactivity", "persistence", "compound"]);
+		expect([...BUILTIN_TEMPLATE_IDS]).toEqual([
+			"basic",
+			"interactivity",
+			"persistence",
+			"compound",
+			"query-loop",
+		]);
 		expect([...TEMPLATE_IDS]).toEqual([...BUILTIN_TEMPLATE_IDS]);
 		expect(listTemplates().map((template) => template.id)).toEqual([
 			...BUILTIN_TEMPLATE_IDS,
@@ -80,6 +86,11 @@ describe("template registry runtime helpers", () => {
 				value: "compound",
 			},
 			{
+				hint: "core/query variation, Default innerBlocks, Allowed controls",
+				label: "query-loop",
+				value: "query-loop",
+			},
+			{
 				hint: "Workspace inventory, Add block workflows, Workspace doctor and migrate",
 				label: OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 				value: OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
@@ -105,6 +116,10 @@ describe("template registry runtime helpers", () => {
 			category: "widgets",
 			icon: "screenoptions",
 		});
+		expect(BUILTIN_TEMPLATE_METADATA_DEFAULTS["query-loop"]).toEqual({
+			category: "widgets",
+			icon: "query-pagination",
+		});
 		expect(COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS).toEqual({
 			category: "widgets",
 			icon: "excerpt-view",
@@ -119,7 +134,7 @@ describe("template registry runtime helpers", () => {
 
 	test("throws a helpful error for unknown template ids", () => {
 		expect(() => getTemplateById("workspace")).toThrow(
-			`Unknown template "workspace". Expected one of: basic, interactivity, persistence, compound, ${OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE}`,
+			`Unknown template "workspace". Expected one of: basic, interactivity, persistence, compound, query-loop, ${OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE}`,
 		);
 	});
 });

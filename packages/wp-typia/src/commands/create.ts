@@ -56,6 +56,10 @@ const createOptions = {
 		description: "Custom PHP symbol prefix.",
 		schema: z.string().optional(),
 	},
+	"query-post-type": {
+		description: "Default post type assigned to Query Loop variation scaffolds.",
+		schema: z.string().optional(),
+	},
 	template: {
 		description: "Template id or external template package.",
 		schema: z.string().optional(),
@@ -148,6 +152,9 @@ export const createCommand = defineCommand({
 								"php-prefix":
 									(args.flags["php-prefix"] as string | undefined) ??
 									config["php-prefix"],
+								"query-post-type":
+									(args.flags["query-post-type"] as string | undefined) ??
+									config["query-post-type"],
 								"project-dir": args.positional[0] ?? "",
 								template:
 									(args.flags.template as string | undefined) ?? config.template,

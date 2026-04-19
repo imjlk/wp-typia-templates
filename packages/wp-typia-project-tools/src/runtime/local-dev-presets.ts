@@ -41,6 +41,15 @@ function templateHasPersistenceSync(
 	return templateId === "persistence" || (templateId === "compound" && compoundPersistenceEnabled);
 }
 
+function templateSupportsGeneratedSyncWatchers(templateId: string): boolean {
+	return (
+		templateId === "basic" ||
+		templateId === "interactivity" ||
+		templateId === "persistence" ||
+		templateId === "compound"
+	);
+}
+
 function getWatchSyncTypesScript(
 	packageManager: PackageManagerId,
 	templateId: string,
@@ -158,12 +167,17 @@ export async function applyGeneratedProjectDxPackageJson({
 	withWpEnv = false,
 }: Omit<LocalDevPresetOptions, "variables">): Promise<void> {
 	const hasPersistenceSync = templateHasPersistenceSync(templateId, compoundPersistenceEnabled);
+	const supportsGeneratedSyncWatchers = templateSupportsGeneratedSyncWatchers(templateId);
 
 	await mutatePackageJson(projectDir, (packageJson) => {
 		packageJson.devDependencies = {
 			...(packageJson.devDependencies ?? {}),
-			"chokidar-cli": "^3.0.0",
-			concurrently: "^9.0.1",
+			...(supportsGeneratedSyncWatchers
+				? {
+						"chokidar-cli": "^3.0.0",
+						concurrently: "^9.0.1",
+				  }
+				: {}),
 		};
 
 		if (withWpEnv || withTestPreset) {
@@ -177,17 +191,21 @@ export async function applyGeneratedProjectDxPackageJson({
 		const scripts = {
 			...(packageJson.scripts ?? {}),
 		};
-		scripts["start:editor"] = "wp-scripts start --experimental-modules";
+		if (supportsGeneratedSyncWatchers) {
+			scripts["start:editor"] = "wp-scripts start --experimental-modules";
 			scripts["watch:sync-types"] = getWatchSyncTypesScript(
 				packageManager,
 				templateId,
 			);
+		}
 
 		if (hasPersistenceSync) {
 			scripts["watch:sync-rest"] = getWatchSyncRestScript(packageManager, templateId);
 		}
 
-		scripts.dev = getDevScript(packageManager, compoundPersistenceEnabled, templateId);
+		if (supportsGeneratedSyncWatchers) {
+			scripts.dev = getDevScript(packageManager, compoundPersistenceEnabled, templateId);
+		}
 
 		if (withWpEnv) {
 			scripts["wp-env:start"] = "wp-env start";
@@ -216,10 +234,5 @@ export async function applyGeneratedProjectDxPackageJson({
 export function getPrimaryDevelopmentScript(
 	templateId: string,
 ): "dev" | "start" {
-	return templateId === "basic" ||
-		templateId === "interactivity" ||
-		templateId === "persistence" ||
-		templateId === "compound"
-		? "dev"
-		: "start";
+	return templateSupportsGeneratedSyncWatchers(templateId) ? "dev" : "start";
 }

@@ -2,7 +2,6 @@ import {
 	applyBuiltInScaffoldProjectFiles,
 	buildGitignore,
 	buildReadme,
-	type InstallDependenciesOptions,
 } from "./scaffold-apply-utils.js";
 import {
 	buildBuiltInBlockArtifacts,

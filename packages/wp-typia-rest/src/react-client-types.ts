@@ -3,7 +3,6 @@ import type { ApiFetch } from '@wordpress/api-fetch';
 import type {
   ApiEndpoint,
   EndpointCallOptions,
-  EndpointRequestValidationResult,
   EndpointResponseValidationResult,
   EndpointValidationResult,
   ValidationResult,

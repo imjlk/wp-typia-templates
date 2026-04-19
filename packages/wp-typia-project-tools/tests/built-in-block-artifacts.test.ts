@@ -107,9 +107,15 @@ function summarizeArtifactAttributes(
 
 type ArtifactAttributeSummary = ReturnType<typeof summarizeArtifactAttributes>;
 type CodeArtifactHashSummary = Record<string, string>;
+const SNAPSHOT_TEMPLATE_IDS = [
+	"basic",
+	"interactivity",
+	"persistence",
+	"compound",
+] as const satisfies ReadonlyArray<BuiltInTemplateId>;
 
 const EXPECTED_ARTIFACT_ATTRIBUTE_SUMMARIES: Record<
-  BuiltInTemplateId,
+  (typeof SNAPSHOT_TEMPLATE_IDS)[number],
   ArtifactAttributeSummary[]
 > = {
   basic: [
@@ -558,7 +564,7 @@ function summarizeCodeArtifacts(
 }
 
 const EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES: Record<
-  BuiltInTemplateId,
+  (typeof SNAPSHOT_TEMPLATE_IDS)[number],
   CodeArtifactHashSummary
 > = {
   basic: {
@@ -728,7 +734,7 @@ describe('built-in block artifacts', () => {
     );
   });
 
-  test.each(['basic', 'interactivity', 'persistence', 'compound'] as const)(
+  test.each([...SNAPSHOT_TEMPLATE_IDS])(
     'buildBuiltInCodeArtifacts preserves output hashes for %s',
     (templateId) => {
       const { codeArtifacts } = buildArtifacts(templateId);
@@ -908,7 +914,7 @@ describe('built-in block artifacts', () => {
     },
   );
 
-  test.each(['basic', 'interactivity', 'persistence', 'compound'] as const)(
+  test.each([...SNAPSHOT_TEMPLATE_IDS])(
     'attribute emission summaries stay stable for %s',
     (templateId) => {
       const { artifacts } = buildArtifacts(templateId);

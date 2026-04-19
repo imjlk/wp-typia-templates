@@ -19,6 +19,7 @@ export type WpTypiaUserConfig = {
 		"package-manager"?: string;
 		"persistence-policy"?: string;
 		"php-prefix"?: string;
+		"query-post-type"?: string;
 		template?: string;
 		"text-domain"?: string;
 		variant?: string;

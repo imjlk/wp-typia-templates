@@ -6,6 +6,7 @@ import {
 	getCreateViewportHeight,
 	getVisibleCreateFieldNames,
 	isCreatePersistenceTemplate,
+	isCreateQueryLoopTemplate,
 	sanitizeCreateSubmitValues,
 } from "../src/ui/create-flow-model";
 
@@ -21,15 +22,23 @@ describe("create flow layout model", () => {
 		expect(isCreatePersistenceTemplate("persistence")).toBe(true);
 		expect(isCreatePersistenceTemplate("compound")).toBe(true);
 		expect(isCreatePersistenceTemplate("basic")).toBe(false);
+		expect(isCreateQueryLoopTemplate("query-loop")).toBe(true);
+		expect(isCreateQueryLoopTemplate("basic")).toBe(false);
 
 		expect(getVisibleCreateFieldNames({ template: "basic" })).not.toContain("data-storage");
 		expect(getVisibleCreateFieldNames({ template: "basic" })).not.toContain(
 			"persistence-policy",
 		);
+		expect(getVisibleCreateFieldNames({ template: "basic" })).not.toContain(
+			"query-post-type",
+		);
 
 		expect(getVisibleCreateFieldNames({ template: "persistence" })).toContain("data-storage");
 		expect(getVisibleCreateFieldNames({ template: "compound" })).toContain(
 			"persistence-policy",
+		);
+		expect(getVisibleCreateFieldNames({ template: "query-loop" })).toContain(
+			"query-post-type",
 		);
 	});
 
@@ -100,6 +109,7 @@ describe("create flow layout model", () => {
 				"persistence-policy": "authenticated",
 				"php-prefix": "DEMO",
 				"project-dir": "demo-project",
+				"query-post-type": " book ",
 				template: "basic",
 				"text-domain": "demo",
 				variant: undefined,
@@ -113,6 +123,7 @@ describe("create flow layout model", () => {
 			"external-layer-id": "acme/demo",
 			"external-layer-source": "./layers/demo",
 			"persistence-policy": undefined,
+			"query-post-type": undefined,
 			template: "basic",
 			"with-wp-env": true,
 		});
@@ -126,6 +137,7 @@ describe("create flow layout model", () => {
 				"persistence-policy": "authenticated",
 				"php-prefix": "DEMO",
 				"project-dir": "demo-project",
+				"query-post-type": undefined,
 				template: "compound",
 				"text-domain": "demo",
 				variant: undefined,
@@ -140,6 +152,33 @@ describe("create flow layout model", () => {
 			"external-layer-source": undefined,
 			"persistence-policy": "authenticated",
 			template: "compound",
+		});
+	});
+
+	test("preserves query-loop post type only for query-loop templates", () => {
+		expect(
+			sanitizeCreateSubmitValues({
+				"data-storage": undefined,
+				"external-layer-id": undefined,
+				"external-layer-source": undefined,
+				namespace: "demo",
+				"no-install": false,
+				"package-manager": "npm",
+				"persistence-policy": undefined,
+				"php-prefix": "DEMO",
+				"project-dir": "demo-project",
+				"query-post-type": " book ",
+				template: "query-loop",
+				"text-domain": "demo",
+				variant: undefined,
+				"with-migration-ui": false,
+				"with-test-preset": false,
+				"with-wp-env": false,
+				yes: false,
+			}),
+		).toMatchObject({
+			"query-post-type": "book",
+			template: "query-loop",
 		});
 	});
 

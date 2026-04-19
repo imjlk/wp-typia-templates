@@ -37,6 +37,7 @@ import {
 	PERSISTENCE_INTERACTIVITY_TEMPLATE,
 	PERSISTENCE_SAVE_TEMPLATE,
 	PERSISTENCE_VALIDATORS_TEMPLATE,
+	QUERY_LOOP_INDEX_TEMPLATE,
 	SHARED_HOOKS_TEMPLATE,
 } from "./built-in-block-code-templates.js";
 import { renderMustacheTemplateString } from "./template-render.js";
@@ -344,6 +345,23 @@ function buildPersistenceCodeArtifacts(
 	]);
 }
 
+function buildQueryLoopCodeArtifacts(
+	variables: ScaffoldTemplateVariables,
+): BuiltInCodeArtifact[] {
+	return ensureUniqueArtifactPaths([
+		...createCodeArtifacts(
+			[
+				{
+					relativePath: "src/index.ts",
+					template: QUERY_LOOP_INDEX_TEMPLATE,
+				},
+			],
+			variables,
+		),
+		...buildBuiltInNonTsArtifacts({ templateId: "query-loop", variables }),
+	]);
+}
+
 /**
  * Build the emitter-owned scaffold files for a built-in template family.
  *
@@ -367,6 +385,8 @@ export function buildBuiltInCodeArtifacts({
 			return buildPersistenceCodeArtifacts(variables);
 		case "compound":
 			return buildCompoundCodeArtifacts(variables);
+		case "query-loop":
+			return buildQueryLoopCodeArtifacts(variables);
 		default: {
 			const unhandledTemplateId: never = templateId;
 			throw new Error(`Unhandled built-in template id: ${unhandledTemplateId}`);

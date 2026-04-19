@@ -26,7 +26,7 @@ If you only need the smallest possible starter for a single block, `@wordpress/c
 - Type-driven block metadata from `src/types.ts`
 - Runtime validation close to the block code
 - Opt-in migration workflows for versioned block evolution
-- Built-in templates for `basic`, `interactivity`, `persistence`, and `compound`
+- Built-in templates for `basic`, `interactivity`, `persistence`, `compound`, and `query-loop`
 - Typed REST and persistence contracts when blocks need data
 - Remote template seeding from local paths, GitHub locators, npm packages, and create-block-style configs
 
@@ -55,12 +55,13 @@ npx wp-typia create my-block
 
 ### Built-in templates
 
-| Template        | What it optimizes for                                                              |
-| --------------- | ---------------------------------------------------------------------------------- |
-| `basic`         | Minimal block scaffold with type sync and runtime validation                       |
-| `interactivity` | The same foundation plus WordPress Interactivity API wiring                        |
-| `persistence`   | Typed REST contracts, storage policy options, and data-backed block patterns       |
-| `compound`      | Parent/child multi-block scaffolding with optional persistence on the parent layer |
+| Template        | What it optimizes for                                                                |
+| --------------- | ------------------------------------------------------------------------------------ |
+| `basic`         | Minimal block scaffold with type sync and runtime validation                         |
+| `interactivity` | The same foundation plus WordPress Interactivity API wiring                          |
+| `persistence`   | Typed REST contracts, storage policy options, and data-backed block patterns         |
+| `compound`      | Parent/child multi-block scaffolding with optional persistence on the parent layer   |
+| `query-loop`    | `core/query` variation scaffolding with stable namespace identity and starter layout |
 
 ## What makes it different
 
@@ -117,6 +118,10 @@ Use it for:
 
 The `compound` template creates a parent/child block structure with hidden implementation children, so complex `InnerBlocks` patterns start from a maintainable project shape rather than a one-off setup.
 
+### 5. Query Loop variations get a first-class scaffold
+
+The `query-loop` template scaffolds an editor-facing `core/query` variation plugin instead of a standalone block, so you can ship a branded inserter entry with stable namespace identity, default query settings, allowed inspector controls, and inline starter `innerBlocks` without rebuilding the full Query Loop setup flow by hand.
+
 ## Example flows
 
 ```bash
@@ -126,6 +131,7 @@ npx wp-typia create my-block --template persistence --data-storage custom-table 
 npx wp-typia create my-block --template persistence --data-storage custom-table --persistence-policy public --package-manager npm --yes --no-install
 npx wp-typia create my-block --template compound --package-manager bun --yes --no-install
 npx wp-typia create my-block --template compound --persistence-policy public --package-manager npm --yes --no-install
+npx wp-typia create my-books --template query-loop --query-post-type book --package-manager npm --yes --no-install
 npx wp-typia create my-block --template basic --with-migration-ui --package-manager bun --yes --no-install
 ```
 
@@ -146,6 +152,7 @@ wp-typia add hooked-block counter-card --anchor core/post-content --position aft
 - Need lightweight frontend behavior? Start with `interactivity`.
 - Need data, REST, or persistence policies? Start with `persistence`.
 - Need a parent/child block system? Start with `compound`.
+- Need a branded Query Loop inserter variation? Start with `query-loop`.
 - Need schema evolution for a long-lived block? Enable `--with-migration-ui`.
 
 ## Remote templates

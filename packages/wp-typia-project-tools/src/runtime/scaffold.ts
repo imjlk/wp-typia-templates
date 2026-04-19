@@ -38,11 +38,6 @@ import {
 	BlockGeneratorService,
 } from "./block-generator-service.js";
 import {
-	collectScaffoldAnswers,
-	detectAuthor,
-	getDefaultAnswers,
-	resolvePackageManagerId,
-	resolveTemplateId,
 } from "./scaffold-answer-resolution.js";
 import { getTemplateVariables } from "./scaffold-template-variables.js";
 
@@ -64,6 +59,7 @@ export interface ScaffoldAnswers {
 	persistencePolicy?: PersistencePolicy;
 	/** Snake_case PHP symbol prefix used for generated functions, constants, and keys. */
 	phpPrefix?: string;
+	queryPostType?: string;
 	slug: string;
 	/** Kebab-case WordPress text domain used in block metadata and i18n strings. */
 	textDomain?: string;
@@ -97,6 +93,7 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	dashCase: string;
 	dataStorageMode: DataStorageMode;
 	description: string;
+	descriptionJson: string;
 	frontendCssClassName: string;
 	keyword: string;
 	namespace: string;
@@ -104,6 +101,11 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	pascalCase: string;
 	phpPrefix: string;
 	phpPrefixUpper: string;
+	queryAllowedControlsJson: string;
+	queryPostTypeJson: string;
+	queryPostType: string;
+	queryVariationNamespace: string;
+	queryVariationNamespaceJson: string;
 	isAuthenticatedPersistencePolicy: "false" | "true";
 	isPublicPersistencePolicy: "false" | "true";
 	bootstrapCredentialDeclarations: string;
@@ -164,6 +166,7 @@ export interface CollectScaffoldAnswersOptions {
 		validate?: (value: string) => true | string,
 	) => Promise<string>;
 	persistencePolicy?: PersistencePolicy;
+	queryPostType?: string;
 	textDomain?: string;
 	templateId: string;
 	withTestPreset?: boolean;
