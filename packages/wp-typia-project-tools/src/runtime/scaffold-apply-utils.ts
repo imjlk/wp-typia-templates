@@ -21,8 +21,11 @@ import {
 } from "./persistence-rest-artifacts.js";
 import {
 	getCompoundExtensionWorkflowSection,
+	getInitialCommitCommands,
+	getInitialCommitNote,
 	getOptionalOnboardingNote,
 	getOptionalOnboardingSteps,
+	getQuickStartWorkflowNote,
 	getPhpRestExtensionPointsSection,
 	getTemplateSourceOfTruthNote,
 } from "./scaffold-onboarding.js";
@@ -96,6 +99,15 @@ export async function ensureDirectory(targetDir: string, allowExisting = false):
 	}
 }
 
+/**
+ * Builds the generated README markdown for one scaffolded project.
+ *
+ * @param templateId Scaffold template family or template identifier.
+ * @param variables Interpolated scaffold variables used in generated content.
+ * @param packageManager Package manager used to format install and script commands.
+ * @param options Optional README sections enabled by scaffold presets.
+ * @returns Markdown README content for the generated project root.
+ */
 export function buildReadme(
 	templateId: string,
 	variables: ScaffoldTemplateVariables,
@@ -113,6 +125,7 @@ export function buildReadme(
 	const optionalOnboardingSteps = getOptionalOnboardingSteps(packageManager, templateId, {
 		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
 	});
+	const initialCommitCommands = getInitialCommitCommands();
 	const sourceOfTruthNote = getTemplateSourceOfTruthNote(templateId, {
 		compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
 	});
@@ -148,20 +161,25 @@ ${variables.description}
 
 ${templateId}
 
-## Development
+## Quick Start
 
 \`\`\`bash
 ${formatInstallCommand(packageManager)}
 ${formatRunScript(packageManager, developmentScript)}
 \`\`\`
 
-## Build
+${getQuickStartWorkflowNote(packageManager, templateId, {
+		compoundPersistenceEnabled,
+	})}
+
+## Build and Verify
 
 \`\`\`bash
 ${formatRunScript(packageManager, "build")}
+${formatRunScript(packageManager, "typecheck")}
 \`\`\`
 
-## Optional First Sync
+## Advanced Sync
 
 \`\`\`bash
 ${optionalOnboardingSteps.join("\n")}
@@ -170,6 +188,14 @@ ${optionalOnboardingSteps.join("\n")}
 ${getOptionalOnboardingNote(packageManager, templateId, {
 		compoundPersistenceEnabled,
 	})}
+
+## Before First Commit
+
+\`\`\`bash
+${initialCommitCommands.join("\n")}
+\`\`\`
+
+${getInitialCommitNote()}
 
 ${sourceOfTruthNote}${publicPersistencePolicyNote ? `\n\n${publicPersistencePolicyNote}` : ""}${migrationSection ? `\n\n${migrationSection}` : ""}${compoundExtensionWorkflowSection ? `\n\n${compoundExtensionWorkflowSection}` : ""}${wpEnvSection ? `\n\n${wpEnvSection}` : ""}${testPresetSection ? `\n\n${testPresetSection}` : ""}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ""}
 `;

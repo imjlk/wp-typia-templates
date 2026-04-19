@@ -90,7 +90,7 @@ export function buildCreateCompletionPayload(flow: {
 		optionalNote:
 			flow.optionalOnboarding.steps.length > 0 ? flow.optionalOnboarding.note : undefined,
 		optionalTitle:
-			flow.optionalOnboarding.steps.length > 0 ? "Optional before first commit:" : undefined,
+			flow.optionalOnboarding.steps.length > 0 ? "Advanced sync (optional):" : undefined,
 		preambleLines: flow.result.selectedVariant
 			? [`Template variant: ${flow.result.selectedVariant}`]
 			: undefined,

@@ -385,6 +385,9 @@ test(
     expect(readme).toContain("npm run sync");
     expect(readme).toContain("npm run sync-types");
     expect(readme).toContain("npm run sync-rest");
+    expect(readme).toContain("## Quick Start");
+    expect(readme).toContain("## Advanced Sync");
+    expect(readme).toContain("## Before First Commit");
     expect(readme).toContain("src/api-types.ts");
     expect(readme).toContain(
       "`src/render.php` is the canonical frontend entry"
@@ -397,6 +400,7 @@ test(
       "per-request ids, and coarse rate limiting by default"
     );
     expect(readme).toContain("## PHP REST Extension Points");
+    expect(readme).toContain('git commit -m "Initial scaffold"');
     expect(readme).toContain("Edit `demo-persistence-public.php`");
     expect(readme).toContain(
       "Edit `src/transport.ts` when you need to switch between direct WordPress REST and a contract-compatible proxy or BFF"
@@ -713,6 +717,9 @@ test(
   expect(generatedSave).toContain("intentionally server-rendered");
   expect(generatedSave).toContain("return null;");
   expect(readme).toContain("npm run dev");
+  expect(readme).toContain("## Quick Start");
+  expect(readme).toContain("## Advanced Sync");
+  expect(readme).toContain("## Before First Commit");
   expect(readme).toContain("## PHP REST Extension Points");
   expect(readme).toContain("Edit `demo-persistence-authenticated.php`");
   expect(readme).toContain(

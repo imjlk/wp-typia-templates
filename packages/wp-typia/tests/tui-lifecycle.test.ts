@@ -358,7 +358,7 @@ describe("alternate-buffer TUI lifecycle", () => {
 					nextSteps: ["cd demo-block", "npm install", "npm run dev"],
 					optionalLines: ["npm run sync"],
 					optionalNote: "Review the generated metadata before first commit.",
-					optionalTitle: "Optional before first commit:",
+					optionalTitle: "Advanced sync (optional):",
 					preambleLines: ["Template variant: hero"],
 					summaryLines: ["Project directory: /tmp/demo-block"],
 					title: "✅ Created Demo Block in /tmp/demo-block",
@@ -372,7 +372,7 @@ describe("alternate-buffer TUI lifecycle", () => {
 		expect(rendered).toContain("✅ Created Demo Block in /tmp/demo-block");
 		expect(rendered).toContain("Next steps:");
 		expect(rendered).toContain("cd demo-block");
-		expect(rendered).toContain("Optional before first commit:");
+		expect(rendered).toContain("Advanced sync (optional):");
 		expect(rendered).toContain("Review the generated metadata before first commit.");
 		expect(rendered).toContain("PgUp/PgDn");
 		expect(rendered).toContain("Home/End");
