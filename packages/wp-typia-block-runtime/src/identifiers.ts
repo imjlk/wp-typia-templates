@@ -4,6 +4,7 @@ type CryptoLike = Partial<
 
 const UUID_HEX_RADIX = 16;
 const SCOPED_SUFFIX_LENGTH = 9;
+const MAX_PERSISTENT_BLOCK_ID_ATTEMPTS = 32;
 
 export type PersistentBlockIdentityRepairReason = 'missing' | 'duplicate';
 
@@ -318,18 +319,33 @@ function generateUniquePersistentBlockIdentity(
 	generateId: ( ( prefix: string ) => string ) | undefined
 ): string {
 	const generateScopedId = generateId ?? generateScopedClientId;
-	let nextValue = generateScopedId( prefix );
 
-	while ( reservedIds.has( nextValue ) ) {
-		nextValue = generateScopedId( prefix );
+	for (
+		let attempt = 1;
+		attempt <= MAX_PERSISTENT_BLOCK_ID_ATTEMPTS;
+		attempt++
+	) {
+		const nextValue = toPersistentBlockIdentityValue(
+			generateScopedId( prefix )
+		);
+		if ( nextValue && ! reservedIds.has( nextValue ) ) {
+			reservedIds.add( nextValue );
+			return nextValue;
+		}
 	}
 
-	reservedIds.add( nextValue );
-	return nextValue;
+	throw new Error(
+		`Unable to generate a unique persistent block identity for prefix "${ prefix }" after ${ MAX_PERSISTENT_BLOCK_ID_ATTEMPTS } attempts.`
+	);
 }
 
 function toPersistentBlockIdentityValue( value: unknown ): string | null {
-	return typeof value === 'string' && value.trim().length > 0 ? value : null;
+	if ( typeof value !== 'string' ) {
+		return null;
+	}
+
+	const trimmedValue = value.trim();
+	return trimmedValue.length > 0 ? trimmedValue : null;
 }
 
 function generateScopedSuffix(): string {

@@ -25,6 +25,8 @@ import {
 import type {
 	EditorFieldDescriptor,
 	InspectorSelectOption,
+	PersistentBlockIdentityNode,
+	PersistentBlockIdentityRepair,
 	UsePersistentBlockIdentityOptions,
 	UsePersistentBlockIdentityResult,
 	StableEditorModelOptions,
@@ -33,6 +35,10 @@ import type {
 } from "./inspector-runtime-types.js";
 
 type UnknownRecord = Record<string, unknown>;
+const persistentBlockIdentityRepairCache = new WeakMap<
+	readonly PersistentBlockIdentityNode[],
+	Map<string, Map<string, PersistentBlockIdentityRepair>>
+>();
 
 function getPathSegments(path: string): string[] {
 	return path.split(".").filter(Boolean);
@@ -92,7 +98,12 @@ function createValidationResult<T extends object>(value: T): ValidationResult<T>
 function getPersistentBlockIdentityValue(
 	value: unknown,
 ): string | null {
-	return typeof value === "string" && value.trim().length > 0 ? value : null;
+	if (typeof value !== "string") {
+		return null;
+	}
+
+	const trimmedValue = value.trim();
+	return trimmedValue.length > 0 ? trimmedValue : null;
 }
 
 function createPersistentIdAttributePatch<T extends object>(
@@ -102,6 +113,37 @@ function createPersistentIdAttributePatch<T extends object>(
 	return {
 		[attributeName]: value,
 	} as Partial<T>;
+}
+
+function getPersistentBlockIdentityRepairMap(
+	blocks: readonly PersistentBlockIdentityNode[],
+	options: {
+		attributeName: string;
+		duplicateDetection?: boolean;
+		prefix: string;
+	},
+): Map<string, PersistentBlockIdentityRepair> {
+	const duplicateMode = options.duplicateDetection === false ? "off" : "on";
+	const cacheKey = `${options.attributeName}:${options.prefix}:${duplicateMode}`;
+	let repairMapsByKey = persistentBlockIdentityRepairCache.get(blocks);
+	if (!repairMapsByKey) {
+		repairMapsByKey = new Map();
+		persistentBlockIdentityRepairCache.set(blocks, repairMapsByKey);
+	}
+
+	const cachedRepairMap = repairMapsByKey.get(cacheKey);
+	if (cachedRepairMap) {
+		return cachedRepairMap;
+	}
+
+	const nextRepairMap = new Map(
+		collectPersistentBlockIdentityRepairs(blocks, options).map((repair) => [
+			repair.clientId,
+			repair,
+		]),
+	);
+	repairMapsByKey.set(cacheKey, nextRepairMap);
+	return nextRepairMap;
 }
 
 export function getFieldValue(
@@ -264,8 +306,12 @@ export function useTypedAttributeUpdater<T extends object>(
  * Keep one block attribute populated with a stable document-level id that
  * survives normal edits and repairs duplicates inside the current block tree.
  *
+ * `autoRepair` defaults to enabled when omitted. Callers should pass a stable
+ * or memoized `blocks` reference so equivalent renders can reuse cached repair
+ * analysis instead of re-walking the full document tree.
+ *
  * @param options Current block identity inputs including the attribute key, editor tree snapshot, and `setAttributes` callback.
- * @returns The current/pending persistent id plus a helper that can force the attribute repair immediately.
+ * @returns The current/pending persistent id plus a helper that can force the attribute repair immediately. `nextPersistentId` can stay `null` when no repair is pending yet, while `ensurePersistentId()` always returns a non-null string.
  * @category React
  */
 export function usePersistentBlockIdentity<T extends object>(
@@ -283,11 +329,11 @@ export function usePersistentBlockIdentity<T extends object>(
 	} = options;
 	const pendingRepair = useMemo(
 		() =>
-			collectPersistentBlockIdentityRepairs(blocks, {
+			getPersistentBlockIdentityRepairMap(blocks, {
 				attributeName,
 				duplicateDetection,
 				prefix,
-			}).find((repair) => repair.clientId === clientId) ?? null,
+			}).get(clientId) ?? null,
 		[
 			attributeName,
 			blocks,
@@ -331,7 +377,9 @@ export function usePersistentBlockIdentity<T extends object>(
 			return;
 		}
 
-		const repairKey = `${clientId}:${pendingRepair.nextValue}`;
+		const repairKey = `${clientId}:${pendingRepair.reason}:${
+			currentPersistentId ?? ""
+		}`;
 		if (lastAppliedRepairRef.current === repairKey) {
 			return;
 		}
@@ -347,6 +395,7 @@ export function usePersistentBlockIdentity<T extends object>(
 		attributeName,
 		autoRepair,
 		clientId,
+		currentPersistentId,
 		pendingRepair,
 		setAttributes,
 	]);

@@ -158,13 +158,22 @@ export interface TypedAttributeUpdater<T extends object> {
 	updatePath: (path: string, value: unknown) => boolean;
 }
 
+export type AttributeNameFor<T extends object> =
+	[Extract<keyof T, string>] extends [never]
+		? string
+		: Extract<keyof T, string>;
+
 /**
  * Describe the options accepted by `usePersistentBlockIdentity()`.
+ *
+ * `autoRepair` defaults to enabled when omitted. Pass a stable or memoized
+ * `blocks` reference so equivalent renders can reuse the same duplicate-repair
+ * analysis instead of recomputing it.
  *
  * @category React
  */
 export interface UsePersistentBlockIdentityOptions<T extends object> {
-	attributeName: string;
+	attributeName: AttributeNameFor<T>;
 	attributes: T;
 	autoRepair?: boolean;
 	blocks: readonly PersistentBlockIdentityNode[];
@@ -177,6 +186,10 @@ export interface UsePersistentBlockIdentityOptions<T extends object> {
 /**
  * Describe the duplicate-safe id lifecycle helpers returned from
  * `usePersistentBlockIdentity()`.
+ *
+ * `nextPersistentId` mirrors the current pending repair target and can be
+ * `null` when no repair is pending yet. Use `ensurePersistentId()` when you
+ * need a guaranteed non-null id for immediate writes or orchestration.
  *
  * @category React
  */
