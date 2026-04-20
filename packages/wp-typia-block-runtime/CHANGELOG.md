@@ -1,5 +1,13 @@
 # @wp-typia/block-runtime
 
+## 0.5.0 — 2026-04-20
+
+### Minor changes
+
+- [931c781](https://github.com/imjlk/wp-typia/commit/931c781816bed64d00eed424ba2778b563dab9bd) Add duplicate-safe persistent block identity helpers so structured document
+  blocks can preserve stable logical ids across normal edits while repairing
+  missing or duplicated ids inside the same document tree. — Thanks @imjlk!
+
 ## 0.4.10 — 2026-04-19
 
 ### Patch changes

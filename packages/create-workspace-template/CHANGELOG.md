@@ -1,5 +1,17 @@
 # @wp-typia/create-workspace-template
 
+## 0.15.0 — 2026-04-20
+
+### Minor changes
+
+- [79e43bd](https://github.com/imjlk/wp-typia/commit/79e43bd23a146e2aef4fdf2ebcb995ad3dad5a79) Add first-class `wp-typia add editor-plugin <name> [--slot <PluginSidebar>]` workspace scaffolding, including workspace inventory support, editor build/bootstrap wiring, doctor coverage, and generated-project smoke validation. — Thanks @imjlk!
+
+### Patch changes
+
+- [65b8eb2](https://github.com/imjlk/wp-typia/commit/65b8eb2cf876eb73c8200da4fbcfd9fc30d2b5e0) Add the first-class `wp-typia add rest-resource <name>` workspace workflow so official workspace plugins can scaffold plugin-level typed REST resources with generated TypeScript contracts, validators, endpoint clients, React data hooks, PHP route starters, `sync-rest` inventory support, and matching add/doctor/help surfaces.
+  
+  Teach `@wp-typia/rest` endpoint execution to honor `requestLocation: "query-and-body"` so generated update clients can split query parameters and JSON bodies correctly. — Thanks @imjlk!
+
 ## 0.14.0 — 2026-04-10
 
 ### Minor changes

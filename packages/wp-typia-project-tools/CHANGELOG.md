@@ -1,5 +1,25 @@
 # @wp-typia/project-tools
 
+## 0.18.0 — 2026-04-20
+
+### Minor changes
+
+- [677c81d](https://github.com/imjlk/wp-typia/commit/677c81d9c59e870c7ae47de01d357b6f6158e362) Expand official external template config support so variants can render richer `wp-typia` plugin and workspace scaffolds through `pluginTemplatesPath`, including workspace migration capability for rendered templates that declare `wpTypia.projectType: "workspace"`. — Thanks @imjlk!
+- [79e43bd](https://github.com/imjlk/wp-typia/commit/79e43bd23a146e2aef4fdf2ebcb995ad3dad5a79) Add first-class `wp-typia add editor-plugin <name> [--slot <PluginSidebar>]` workspace scaffolding, including workspace inventory support, editor build/bootstrap wiring, doctor coverage, and generated-project smoke validation. — Thanks @imjlk!
+- [7f8da16](https://github.com/imjlk/wp-typia/commit/7f8da165cc38b253e4852921c36362554861066e) Support multi-child and nested compound scaffold growth through the generated `add-compound-child` workflow. — Thanks @imjlk!
+
+### Patch changes
+
+- [b356b7a](https://github.com/imjlk/wp-typia/commit/b356b7abaabb995a86467fa6299edb796720a196) Add a non-mutating `wp-typia create --dry-run` plan mode that previews resolved scaffold settings and planned file output without writing to the requested target directory, with matching fallback CLI and alternate-buffer create flow support. — Thanks @imjlk!
+- [aaa235e](https://github.com/imjlk/wp-typia/commit/aaa235e1e6b80001145f2332730fc86f57503735) Align scaffolded project conventions by treating `dev` as the primary generated entrypoint across first-party templates, clarifying that Query Loop scaffolds intentionally skip manual sync scripts, omitting the generated `packageManager` field for npm-based scaffolds, and removing the unused Query Loop `validator-toolkit.ts` placeholder. — Thanks @imjlk!
+- [3730b51](https://github.com/imjlk/wp-typia/commit/3730b516083defed2a07d4d72307a4d3f8e1a60a) Make the Node fallback CLI print a normal human-readable `--version` line by default, add earlier create/add preflight diagnostics for mistyped built-in templates and non-empty target directories, and fail `wp-typia add block` with install guidance before workspace dependency resolution errors. — Thanks @imjlk!
+- [938b9b0](https://github.com/imjlk/wp-typia/commit/938b9b08560640f76fd78e5966c9b6982c6a7fed) Add user-visible progress reporting for longer `wp-typia create` scaffold phases so fallback CLI runs and alternate-buffer create flows more clearly show template resolution, file generation, artifact seeding, finalization, and dependency installation work while scaffolding is in progress. — Thanks @imjlk!
+- [fcec7f1](https://github.com/imjlk/wp-typia/commit/fcec7f1fd2dbb5716af706fb624621f73bfc9dfa) Improve human-readable `templates list` and `templates inspect` output with clearer flag capability hints, workspace alias discoverability, and logical layer summaries that do not expose raw internal template paths by default. — Thanks @imjlk!
+- [65b8eb2](https://github.com/imjlk/wp-typia/commit/65b8eb2cf876eb73c8200da4fbcfd9fc30d2b5e0) Add the first-class `wp-typia add rest-resource <name>` workspace workflow so official workspace plugins can scaffold plugin-level typed REST resources with generated TypeScript contracts, validators, endpoint clients, React data hooks, PHP route starters, `sync-rest` inventory support, and matching add/doctor/help surfaces.
+  
+  Teach `@wp-typia/rest` endpoint execution to honor `requestLocation: "query-and-body"` so generated update clients can split query parameters and JSON bodies correctly. — Thanks @imjlk!
+- Updated dependencies: block-runtime (npm)@0.5.0, rest (npm)@0.3.11
+
 ## 0.17.0 — 2026-04-19
 
 ### Minor changes
