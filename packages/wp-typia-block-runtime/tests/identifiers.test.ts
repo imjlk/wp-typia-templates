@@ -185,6 +185,30 @@ describe( '@wp-typia/block-runtime/identifiers', () => {
 			},
 		] );
 	} );
+
+	test( 'ensurePersistentBlockIdentity handles one-shot seenId iterables safely', () => {
+		function* createSeenIds() {
+			yield 'sec-existing';
+		}
+
+		expect(
+			ensurePersistentBlockIdentity( {
+				existingIds: [ 'sec-existing' ],
+				generateId: ( ( values ) => {
+					let index = 0;
+					return () => values[ index++ ] ?? `sec-fallback-${ index }`;
+				} )( [ 'sec-existing', 'sec-fixed' ] ),
+				prefix: 'sec',
+				seenIds: createSeenIds(),
+				value: 'sec-existing',
+			} )
+		).toEqual( {
+			changed: true,
+			previousValue: 'sec-existing',
+			reason: 'duplicate',
+			value: 'sec-fixed',
+		} );
+	} );
 } );
 
 function mockCrypto(

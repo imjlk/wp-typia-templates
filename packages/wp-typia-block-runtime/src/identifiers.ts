@@ -101,11 +101,12 @@ export function generatePublicWriteRequestId(): string {
 export function ensurePersistentBlockIdentity(
 	options: EnsurePersistentBlockIdentityOptions
 ): EnsurePersistentBlockIdentityResult {
+	const seenIds = createPersistentIdentitySet( options.seenIds );
 	const currentValue = toPersistentBlockIdentityValue( options.value );
 	if (
 		currentValue &&
 		( options.duplicateDetection === false ||
-			! createPersistentIdentitySet( options.seenIds ).has( currentValue ) )
+			! seenIds.has( currentValue ) )
 	) {
 		return {
 			changed: false,
@@ -116,7 +117,7 @@ export function ensurePersistentBlockIdentity(
 	}
 
 	const reservedIds = createPersistentIdentitySet( options.existingIds );
-	for ( const seenId of createPersistentIdentitySet( options.seenIds ) ) {
+	for ( const seenId of seenIds ) {
 		reservedIds.add( seenId );
 	}
 
