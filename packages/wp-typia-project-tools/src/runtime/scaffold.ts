@@ -19,7 +19,7 @@ import { applyMigrationUiCapability } from "./migration-ui-capability.js";
 import {
 	applyWorkspaceMigrationCapability,
 	ensureScaffoldDirectory,
-	isOfficialWorkspaceProject,
+	isWorkspaceProject,
 	seedBuiltInPersistenceArtifacts,
 	writeStarterManifestFiles,
 } from "./scaffold-bootstrap.js";
@@ -340,11 +340,14 @@ export async function scaffoldProject({
 		variables,
 		variant,
 	);
-	const supportsMigrationUi = isBuiltInTemplate || templateSource.isOfficialWorkspaceTemplate === true;
+	const supportsMigrationUi =
+		isBuiltInTemplate ||
+		templateSource.isOfficialWorkspaceTemplate === true ||
+		templateSource.supportsMigrationUi === true;
 	if (withMigrationUi && !supportsMigrationUi) {
 		await templateSource.cleanup?.();
 		throw new Error(
-			"`--with-migration-ui` is currently supported only for built-in templates and @wp-typia/create-workspace-template.",
+			"`--with-migration-ui` is currently supported only for built-in templates and workspace-capable wp-typia templates.",
 		);
 	}
 
@@ -365,7 +368,7 @@ export async function scaffoldProject({
 			await templateSource.cleanup();
 		}
 	}
-	const isOfficialWorkspace = isOfficialWorkspaceProject(projectDir);
+	const isWorkspace = isWorkspaceProject(projectDir);
 	if (isBuiltInTemplate) {
 		await reportScaffoldProgress(onProgress, {
 			detail: "Writing starter manifests, local presets, and template-specific generated artifacts.",
@@ -389,7 +392,7 @@ export async function scaffoldProject({
 			});
 		}
 		await removeQueryLoopPlaceholderFiles(projectDir, resolvedTemplateId);
-	} else if (withMigrationUi && isOfficialWorkspace) {
+	} else if (withMigrationUi && isWorkspace) {
 		await reportScaffoldProgress(onProgress, {
 			detail: "Initializing workspace migration scripts and starter migration files.",
 			phase: "seed-artifacts",
@@ -408,7 +411,7 @@ export async function scaffoldProject({
 			readmePath,
 			buildReadme(resolvedTemplateId, variables, resolvedPackageManager, {
 				withMigrationUi:
-					isBuiltInTemplate || isOfficialWorkspace ? withMigrationUi : false,
+					isBuiltInTemplate || isWorkspace ? withMigrationUi : false,
 				withTestPreset: isBuiltInTemplate ? withTestPreset : false,
 				withWpEnv: isBuiltInTemplate ? withWpEnv : false,
 			}),

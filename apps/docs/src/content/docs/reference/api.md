@@ -138,7 +138,13 @@ wp-typia create my-block --template github:owner/repo/path#main --package-manage
 wp-typia create my-block --template @scope/create-block-template --variant hero --package-manager npm --yes --no-install
 ```
 
-`--variant` only applies to official create-block external template configs. If a config defines variants and `--variant` is omitted, the first variant becomes the default.
+`--variant` only applies to official external template configs. If a config defines variants and `--variant` is omitted, the first variant becomes the default.
+
+External configs can render either a create-block subset through
+`blockTemplatesPath` or a richer `wp-typia` template root through
+`pluginTemplatesPath`. Workspace-shaped richer templates can participate in the
+same migration capability flow when they render `wpTypia.projectType:
+"workspace"` in their `package.json.mustache`.
 
 Security note: external template configs are trusted JavaScript and are executed during scaffold normalization. Treat local paths, GitHub locators, and npm package templates with the same trust model as `@wordpress/create-block`.
 

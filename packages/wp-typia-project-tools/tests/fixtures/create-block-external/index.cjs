@@ -14,11 +14,15 @@ module.exports = {
 			supportsMultiple: true,
 			variantLabel: "hero",
 		},
+		workspace: {
+			folderName: ".",
+			pluginTemplatesPath: "plugin-templates",
+			variantLabel: "workspace",
+		},
 	},
 	transformer(view) {
 		return {
 			transformedLabel: `${view.variantLabel}-transformed`,
 		};
 	},
-	pluginTemplatesPath: "plugin-templates",
 };

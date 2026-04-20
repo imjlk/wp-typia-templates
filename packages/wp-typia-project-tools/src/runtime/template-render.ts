@@ -37,11 +37,7 @@ export interface CopyRawDirectoryOptions {
 	 *
 	 * Throwing or rejecting aborts the copy and bubbles to the caller.
 	 */
-	filter?: (
-		sourcePath: string,
-		targetPath: string,
-		entry: fs.Dirent,
-	) => boolean | Promise<boolean>;
+	filter?: CopyDirectoryFilter;
 }
 
 type TemplateStringRenderer<TView> = (
@@ -49,7 +45,14 @@ type TemplateStringRenderer<TView> = (
 	view: TView,
 ) => string;
 
+export type CopyDirectoryFilter = (
+	sourcePath: string,
+	destinationPath: string,
+	entry: fs.Dirent,
+) => boolean | Promise<boolean>;
+
 interface TemplateTraversalOptions<TView> {
+	filter?: CopyDirectoryFilter;
 	prepareDirectory?: (directoryPath: string) => Promise<void>;
 	renderString: TemplateStringRenderer<TView>;
 	sourceDir: string;
@@ -152,6 +155,7 @@ function renderTemplateDestinationName<TView>(
 }
 
 async function traverseTemplateDirectory<TView>({
+	filter,
 	prepareDirectory,
 	renderString,
 	sourceDir,
@@ -168,10 +172,14 @@ async function traverseTemplateDirectory<TView>({
 			renderString,
 		);
 		const destinationPath = resolveRenderedPath(targetDir, destinationName);
+		if (filter && !(await filter(sourcePath, destinationPath, entry))) {
+			continue;
+		}
 
 		if (entry.isDirectory()) {
 			await prepareDirectory?.(destinationPath);
 			await traverseTemplateDirectory({
+				filter,
 				prepareDirectory,
 				renderString,
 				sourceDir: sourcePath,
@@ -190,11 +198,13 @@ async function traverseTemplateDirectory<TView>({
 }
 
 async function copyTemplateDirectory<TView>({
+	filter,
 	renderString,
 	sourceDir,
 	targetDir,
 	view,
 }: {
+	filter?: CopyDirectoryFilter;
 	renderString: TemplateStringRenderer<TView>;
 	sourceDir: string;
 	targetDir: string;
@@ -202,6 +212,7 @@ async function copyTemplateDirectory<TView>({
 }): Promise<void> {
 	await fsp.mkdir(targetDir, { recursive: true });
 	await traverseTemplateDirectory({
+		filter,
 		prepareDirectory: async (directoryPath) => {
 			await fsp.mkdir(directoryPath, { recursive: true });
 		},
@@ -260,8 +271,12 @@ export async function copyRenderedDirectory(
 	sourceDir: string,
 	targetDir: string,
 	view: TemplateRenderView,
+	options: {
+		filter?: CopyDirectoryFilter;
+	} = {},
 ): Promise<void> {
 	await copyTemplateDirectory({
+		filter: options.filter,
 		renderString: renderMustacheTemplateString,
 		sourceDir,
 		targetDir,

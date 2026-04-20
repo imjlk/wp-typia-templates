@@ -6,8 +6,10 @@ import path from 'node:path'
 import { loadExternalTemplateLayerManifest } from './template-layers.js'
 import { getPackageVersions } from './package-versions.js'
 import { getExternalTemplateEntry } from './template-source-external.js'
+import { getTemplateProjectType } from './template-source-remote.js'
 export { renderCreateBlockExternalTemplate } from './template-source-external.js'
 export {
+  getTemplateProjectType,
   getDefaultCategory,
   normalizeCreateBlockSubset,
   normalizeWpTypiaTemplateSeed,
@@ -64,6 +66,10 @@ export async function detectTemplateSourceFormat(
 
   if (getExternalTemplateEntry(sourceDir)) {
     return 'create-block-external'
+  }
+
+  if (getTemplateProjectType(sourceDir) !== null) {
+    return 'wp-typia'
   }
 
   const sourceRoot = fs.existsSync(path.join(sourceDir, 'src'))

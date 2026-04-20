@@ -41,6 +41,11 @@ export interface ResolvedTemplateSource {
   features: string[]
   format: TemplateSourceFormat
   isOfficialWorkspaceTemplate?: boolean
+  /**
+   * True when the resolved template can participate in scaffold migration UI
+   * seeding, such as rendered wp-typia workspace templates.
+   */
+  supportsMigrationUi?: boolean
   templateDir: string
   cleanup?: () => Promise<void>
   selectedVariant?: string | null
@@ -69,6 +74,11 @@ export interface ExternalTemplateConfig<
   blockTemplatesPath?: string
   defaultValues?: Partial<TView>
   folderName?: string
+  /**
+   * Relative template root that renders a fuller wp-typia plugin/workspace
+   * scaffold instead of a create-block subset.
+   */
+  pluginTemplatesPath?: string
   transformer?: (view: TView) => UnknownRecord | Promise<UnknownRecord>
   variants?: Record<string, Partial<TView>>
 }
@@ -77,6 +87,7 @@ export interface SeedSource {
   assetsDir?: string
   blockDir: string
   cleanup?: () => Promise<void>
+  formatHint?: 'create-block-subset' | 'wp-typia'
   rootDir: string
   selectedVariant?: string | null
   warnings?: string[]

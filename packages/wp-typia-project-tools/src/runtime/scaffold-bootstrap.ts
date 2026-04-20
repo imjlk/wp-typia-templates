@@ -55,6 +55,15 @@ export async function ensureScaffoldDirectory(
 	}
 }
 
+function readGeneratedPackageJson(projectDir: string): GeneratedPackageJson | null {
+	const packageJsonPath = path.join(projectDir, "package.json");
+	if (!fs.existsSync(packageJsonPath)) {
+		return null;
+	}
+
+	return JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as GeneratedPackageJson;
+}
+
 /**
  * Format the actionable error message used when a scaffold target directory
  * already exists and is not empty.
@@ -131,20 +140,25 @@ export async function seedBuiltInPersistenceArtifacts(
 }
 
 /**
+ * Detects whether a scaffolded project declares the workspace project model.
+ *
+ * @param projectDir Absolute scaffold target directory.
+ * @returns `true` when the project metadata identifies a workspace scaffold.
+ */
+export function isWorkspaceProject(projectDir: string): boolean {
+	return readGeneratedPackageJson(projectDir)?.wpTypia?.projectType === "workspace";
+}
+
+/**
  * Detects whether a scaffolded project is the official workspace template.
  *
  * @param projectDir Absolute scaffold target directory.
  * @returns `true` when the project metadata identifies the official workspace template.
  */
 export function isOfficialWorkspaceProject(projectDir: string): boolean {
-	const packageJsonPath = path.join(projectDir, "package.json");
-	if (!fs.existsSync(packageJsonPath)) {
-		return false;
-	}
-
-	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as GeneratedPackageJson;
+	const packageJson = readGeneratedPackageJson(projectDir);
 	return (
-		packageJson.wpTypia?.projectType === "workspace" &&
+		packageJson?.wpTypia?.projectType === "workspace" &&
 		packageJson.wpTypia?.templatePackage === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
 	);
 }

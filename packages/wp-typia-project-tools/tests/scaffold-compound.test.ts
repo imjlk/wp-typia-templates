@@ -515,9 +515,9 @@ describe('@wp-typia/project-tools scaffold compound', () => {
           slug: 'demo-migration-ui-remote',
           title: 'Demo Migration UI Remote',
         },
-      }),
+    }),
     ).rejects.toThrow(
-      '`--with-migration-ui` is currently supported only for built-in templates and @wp-typia/create-workspace-template.',
+      '`--with-migration-ui` is currently supported only for built-in templates and workspace-capable wp-typia templates.',
     );
     expect(fs.existsSync(targetDir)).toBe(false);
   });

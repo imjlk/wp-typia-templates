@@ -1,0 +1,46 @@
+{
+  "name": "@wp-typia/create-workspace-template",
+  "version": "0.14.0",
+  "description": "Official empty wp-typia workspace template package",
+  "packageManager": "bun@1.3.11",
+  "type": "module",
+  "files": [
+    "package.json.mustache",
+    "tsconfig.json.mustache",
+    "webpack.config.js.mustache",
+    "scripts/",
+    "src/",
+    "languages/",
+    "*.php.mustache",
+    "README.md.mustache",
+    "README.md",
+    "package.json"
+  ],
+  "keywords": [
+    "wordpress",
+    "gutenberg",
+    "typia",
+    "workspace",
+    "template",
+    "scaffold"
+  ],
+  "author": "imjlk",
+  "license": "GPL-2.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imjlk/wp-typia.git",
+    "directory": "packages/create-workspace-template"
+  },
+  "bugs": {
+    "url": "https://github.com/imjlk/wp-typia/issues"
+  },
+  "homepage": "https://github.com/imjlk/wp-typia/tree/main/packages/create-workspace-template#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0",
+    "bun": ">=1.3.11"
+  }
+}

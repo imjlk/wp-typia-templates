@@ -57,6 +57,40 @@ export function getDefaultCategory(sourceDir: string): string {
   }
 }
 
+function readTemplatePackageJson(
+  sourceDir: string,
+): { wpTypia?: { projectType?: string } } | null {
+  for (const candidate of [
+    path.join(sourceDir, 'package.json.mustache'),
+    path.join(sourceDir, 'package.json'),
+  ]) {
+    if (!fs.existsSync(candidate)) {
+      continue
+    }
+
+    try {
+      return JSON.parse(fs.readFileSync(candidate, 'utf8')) as {
+        wpTypia?: { projectType?: string }
+      }
+    } catch {
+      continue
+    }
+  }
+
+  return null
+}
+
+/**
+ * Read `wpTypia.projectType` from a rendered or source template package
+ * manifest and return it when present.
+ */
+export function getTemplateProjectType(sourceDir: string): string | null {
+  const packageJson = readTemplatePackageJson(sourceDir)
+  return typeof packageJson?.wpTypia?.projectType === 'string'
+    ? packageJson.wpTypia.projectType
+    : null
+}
+
 /**
  * Copy a wp-typia seed into a normalized temporary template directory.
  *
@@ -84,6 +118,12 @@ export async function normalizeWpTypiaTemplateSeed(
         )
       },
     })
+    if (seed.assetsDir && fs.existsSync(seed.assetsDir)) {
+      await fsp.cp(seed.assetsDir, path.join(normalizedDir, 'assets'), {
+        recursive: true,
+        force: true,
+      })
+    }
   } catch (error) {
     await fsp.rm(tempRoot, { force: true, recursive: true })
     throw error
