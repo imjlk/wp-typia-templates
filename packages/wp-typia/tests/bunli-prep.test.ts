@@ -44,17 +44,28 @@ describe("wp-typia Bunli preparation", () => {
 		expect(fs.existsSync(path.join(packageRoot, ".bunli", "commands.gen.ts"))).toBe(true);
 	});
 
-	test("runtime rebuild fallback targets linked workspace packages from the repo root", () => {
+	test("runtime rebuild fallback targets sibling linked packages directly", () => {
 		const runtimeBuildScript = fs.readFileSync(
 			path.join(packageRoot, "scripts", "build-bunli-runtime.ts"),
 			"utf8",
 		);
 
-		expect(runtimeBuildScript).toContain('const repoRoot = path.resolve(packageRoot, "..", "..");');
+		expect(runtimeBuildScript).toContain(
+			'const apiClientPackageRoot = path.resolve(packageRoot, "..", "wp-typia-api-client");',
+		);
+		expect(runtimeBuildScript).toContain(
+			'const blockRuntimePackageRoot = path.resolve(packageRoot, "..", "wp-typia-block-runtime");',
+		);
+		expect(runtimeBuildScript).toContain(
+			'const projectToolsPackageRoot = path.resolve(packageRoot, "..", "wp-typia-project-tools");',
+		);
 		expect(runtimeBuildScript).toContain('Bun.which("bun") ?? process.execPath');
 		expect(runtimeBuildScript).toContain('@wp-typia/api-client');
 		expect(runtimeBuildScript).toContain('@wp-typia/block-runtime');
 		expect(runtimeBuildScript).toContain('@wp-typia/project-tools');
+		expect(runtimeBuildScript).toContain(
+			"Unable to locate linked wp-typia sibling packages while recovering runtime aliases",
+		);
 		expect(runtimeBuildScript).toContain('Failed to build ${buildStep.label}');
 	});
 
