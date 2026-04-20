@@ -111,12 +111,20 @@ describe('wp-typia Bunli preparation', () => {
     expect(runtimeBuildScript).toContain(
       'const buildRoot = path.parse(packageRoot).root;',
     );
+    expect(runtimeBuildScript).toContain(
+      'const isLinkedInstalledWpTypiaRuntime = packageRoot.includes(',
+    );
+    expect(runtimeBuildScript).toContain(
+      "`${path.sep}node_modules${path.sep}.bun${path.sep}`",
+    );
     expect(fullRuntimeSection).toContain("naming: {");
     expect(fullRuntimeSection).toContain("asset: '[dir]/[name]-[hash].[ext]'");
-    expect(fullRuntimeSection).toContain("chunk: '[dir]/[name]-[hash].[ext]'");
+    expect(fullRuntimeSection).toContain("chunk: '[name]-[hash].[ext]'");
     expect(fullRuntimeSection).toContain("entry: '[name].[ext]'");
     expect(fullRuntimeSection).toContain('root: buildRoot');
-    expect(fullRuntimeSection).toContain('splitting: true');
+    expect(fullRuntimeSection).toContain(
+      'splitting: !isLinkedInstalledWpTypiaRuntime',
+    );
   });
 
   test('future Bunli command tree preserves the reserved top-level taxonomy', async () => {
