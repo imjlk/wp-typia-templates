@@ -357,11 +357,9 @@ export function readResource( request: ${pascalCase}ReadQuery ) {
 \tbuildRequestOptions: () => {
 \t\tconst nonce = resolveRestNonce();
 \t\treturn {
-\t\t\trequestOptions: nonce
+\t\t\theaders: nonce
 \t\t\t\t? {
-\t\t\t\t\theaders: {
-\t\t\t\t\t\t'X-WP-Nonce': nonce,
-\t\t\t\t\t},
+\t\t\t\t\t'X-WP-Nonce': nonce,
 \t\t\t\t}
 \t\t\t\t: undefined,
 \t\t\turl: resolveRestRouteUrl( create${pascalCase}ResourceEndpoint.path ),
@@ -383,11 +381,9 @@ export function createResource( request: ${pascalCase}CreateRequest ) {
 \tbuildRequestOptions: () => {
 \t\tconst nonce = resolveRestNonce();
 \t\treturn {
-\t\t\trequestOptions: nonce
+\t\t\theaders: nonce
 \t\t\t\t? {
-\t\t\t\t\theaders: {
-\t\t\t\t\t\t'X-WP-Nonce': nonce,
-\t\t\t\t\t},
+\t\t\t\t\t'X-WP-Nonce': nonce,
 \t\t\t\t}
 \t\t\t\t: undefined,
 \t\t\turl: resolveRestRouteUrl( update${pascalCase}ResourceEndpoint.path ),
@@ -411,11 +407,9 @@ export function updateResource( request: {
 \tbuildRequestOptions: () => {
 \t\tconst nonce = resolveRestNonce();
 \t\treturn {
-\t\t\trequestOptions: nonce
+\t\t\theaders: nonce
 \t\t\t\t? {
-\t\t\t\t\theaders: {
-\t\t\t\t\t\t'X-WP-Nonce': nonce,
-\t\t\t\t\t},
+\t\t\t\t\t'X-WP-Nonce': nonce,
 \t\t\t\t}
 \t\t\t\t: undefined,
 \t\t\turl: resolveRestRouteUrl( delete${pascalCase}ResourceEndpoint.path ),

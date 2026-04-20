@@ -2308,6 +2308,8 @@ test("canonical CLI can add a plugin-level REST resource to an official workspac
   expect(validatorsSource).toContain("deleteResponse");
   expect(apiSource).toContain("restResourceCreateEndpoint");
   expect(apiSource).toContain("resolveRestNonce");
+  expect(apiSource).toContain("headers: nonce");
+  expect(apiSource).not.toContain("requestOptions: nonce");
   expect(dataSource).toContain("useSnapshotsListQuery");
   expect(dataSource).toContain("useDeleteSnapshotsResourceMutation");
   expect(phpSource).toContain("register_rest_route");
