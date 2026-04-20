@@ -225,6 +225,55 @@ test("local official external template configs honor --variant overrides", async
   expect(generatedBlockJson.supports.multiple).toBe(true);
 });
 
+test("external template configs still honor variants when the package root declares a workspace project type", async () => {
+  const fixtureDir = path.join(tempRoot, "create-block-external-workspace-root");
+  const targetDir = path.join(tempRoot, "demo-external-workspace-root");
+  fs.cpSync(createBlockExternalFixturePath, fixtureDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(fixtureDir, "package.json"),
+    JSON.stringify(
+      {
+        name: "@scope/external-template-config",
+        version: "0.0.0",
+        wpTypia: {
+          projectType: "workspace",
+        },
+      },
+      null,
+      2
+    ),
+    "utf8"
+  );
+
+  const result = await scaffoldProject({
+    projectDir: targetDir,
+    templateId: fixtureDir,
+    variant: "workspace",
+    packageManager: "npm",
+    noInstall: true,
+    withMigrationUi: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo external workspace root",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-external-workspace-root",
+      textDomain: "demo-space",
+      title: "Demo External Workspace Root",
+    },
+  });
+
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+  );
+
+  expect(result.selectedVariant).toBe("workspace");
+  expect(packageJson.wpTypia?.templatePackage).toBe(
+    "@scope/external-workspace-template"
+  );
+  expect(packageJson.scripts["migration:doctor"]).toContain("wp-typia");
+});
+
 test("external template workspace variants scaffold richer wp-typia workspaces with migration UI", async () => {
   const targetDir = path.join(tempRoot, "demo-external-workspace");
 

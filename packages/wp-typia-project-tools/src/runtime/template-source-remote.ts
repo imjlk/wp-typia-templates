@@ -73,7 +73,7 @@ function readTemplatePackageJson(
         wpTypia?: { projectType?: string }
       }
     } catch {
-      return null
+      continue
     }
   }
 
