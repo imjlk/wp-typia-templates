@@ -1,225 +1,264 @@
-import { spawnSync } from "node:child_process";
-import fs from "node:fs/promises";
-import path from "node:path";
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import path from 'node:path';
 
-import { bunliConfig } from "../bunli.config";
+import { bunliConfig } from '../bunli.config';
 
-const packageRoot = path.resolve(import.meta.dir, "..");
+const packageRoot = path.resolve(import.meta.dir, '..');
 const buildConfig = bunliConfig.build;
 
 if (!buildConfig?.entry || !buildConfig?.outdir) {
-	throw new Error("wp-typia bunli.config.ts is missing build.entry or build.outdir.");
+  throw new Error(
+    'wp-typia bunli.config.ts is missing build.entry or build.outdir.',
+  );
 }
 
 const fullRuntimeEntrypoint = path.resolve(packageRoot, buildConfig.entry);
-const generatedMetadataEntrypoint = path.resolve(packageRoot, ".bunli", "commands.gen.ts");
-const nodeRuntimeEntrypoint = path.resolve(packageRoot, "src", "node-cli.ts");
-const outdir = path.resolve(packageRoot, buildConfig.outdir);
-const generatedMetadataOutdir = path.join(outdir, ".bunli");
-const apiClientPackageRoot = path.resolve(packageRoot, "..", "wp-typia-api-client");
-const blockRuntimePackageRoot = path.resolve(packageRoot, "..", "wp-typia-block-runtime");
-const projectToolsPackageRoot = path.resolve(packageRoot, "..", "wp-typia-project-tools");
-const projectToolsRuntimeDir = path.resolve(
-	packageRoot,
-	"..",
-	"wp-typia-project-tools",
-	"dist",
-	"runtime",
+const generatedMetadataEntrypoint = path.resolve(
+  packageRoot,
+  '.bunli',
+  'commands.gen.ts',
 );
-const apiClientDistDir = path.resolve(packageRoot, "..", "wp-typia-api-client", "dist");
+const nodeRuntimeEntrypoint = path.resolve(packageRoot, 'src', 'node-cli.ts');
+const outdir = path.resolve(packageRoot, buildConfig.outdir);
+const generatedMetadataOutdir = path.join(outdir, '.bunli');
+const requireFromWpTypia = createRequire(
+  path.join(packageRoot, 'package.json'),
+);
+const projectToolsPackageRoot = path.dirname(
+  requireFromWpTypia.resolve('@wp-typia/project-tools/package.json'),
+);
+const apiClientPackageRoot = path.dirname(
+  requireFromWpTypia.resolve('@wp-typia/api-client/package.json'),
+);
+const requireFromProjectTools = createRequire(
+  path.join(projectToolsPackageRoot, 'package.json'),
+);
+const blockRuntimePackageRoot = path.dirname(
+  requireFromProjectTools.resolve('@wp-typia/block-runtime/package.json'),
+);
+const projectToolsRuntimeDir = path.resolve(
+  projectToolsPackageRoot,
+  'dist',
+  'runtime',
+);
+const apiClientDistDir = path.resolve(apiClientPackageRoot, 'dist');
 const bunExecutable =
-	typeof Bun !== "undefined" ? (Bun.which("bun") ?? process.execPath) : process.execPath;
+  typeof Bun !== 'undefined'
+    ? (Bun.which('bun') ?? process.execPath)
+    : process.execPath;
 const PROJECT_TOOLS_ALIASES = {
-	"@wp-typia/api-client/runtime-primitives": path.join(
-		apiClientDistDir,
-		"runtime-primitives.js",
-	),
-	"@wp-typia/api-client/internal/runtime-primitives": path.join(
-		apiClientDistDir,
-		"internal",
-		"runtime-primitives.js",
-	),
-	"@wp-typia/project-tools/cli-add": path.join(projectToolsRuntimeDir, "cli-add.js"),
-	"@wp-typia/project-tools/cli-diagnostics": path.join(
-		projectToolsRuntimeDir,
-		"cli-diagnostics.js",
-	),
-	"@wp-typia/project-tools/cli-doctor": path.join(projectToolsRuntimeDir, "cli-doctor.js"),
-	"@wp-typia/project-tools/cli-prompt": path.join(projectToolsRuntimeDir, "cli-prompt.js"),
-	"@wp-typia/project-tools/cli-scaffold": path.join(projectToolsRuntimeDir, "cli-scaffold.js"),
-	"@wp-typia/project-tools/cli-templates": path.join(
-		projectToolsRuntimeDir,
-		"cli-templates.js",
-	),
-	"@wp-typia/project-tools/hooked-blocks": path.join(
-		projectToolsRuntimeDir,
-		"hooked-blocks.js",
-	),
-	"@wp-typia/project-tools/migrations": path.join(projectToolsRuntimeDir, "migrations.js"),
-	"@wp-typia/project-tools/package-managers": path.join(
-		projectToolsRuntimeDir,
-		"package-managers.js",
-	),
-	"@wp-typia/project-tools/workspace-project": path.join(
-		projectToolsRuntimeDir,
-		"workspace-project.js",
-	),
+  '@wp-typia/api-client/runtime-primitives': path.join(
+    apiClientDistDir,
+    'runtime-primitives.js',
+  ),
+  '@wp-typia/api-client/internal/runtime-primitives': path.join(
+    apiClientDistDir,
+    'internal',
+    'runtime-primitives.js',
+  ),
+  '@wp-typia/project-tools/cli-add': path.join(
+    projectToolsRuntimeDir,
+    'cli-add.js',
+  ),
+  '@wp-typia/project-tools/cli-diagnostics': path.join(
+    projectToolsRuntimeDir,
+    'cli-diagnostics.js',
+  ),
+  '@wp-typia/project-tools/cli-doctor': path.join(
+    projectToolsRuntimeDir,
+    'cli-doctor.js',
+  ),
+  '@wp-typia/project-tools/cli-prompt': path.join(
+    projectToolsRuntimeDir,
+    'cli-prompt.js',
+  ),
+  '@wp-typia/project-tools/cli-scaffold': path.join(
+    projectToolsRuntimeDir,
+    'cli-scaffold.js',
+  ),
+  '@wp-typia/project-tools/cli-templates': path.join(
+    projectToolsRuntimeDir,
+    'cli-templates.js',
+  ),
+  '@wp-typia/project-tools/hooked-blocks': path.join(
+    projectToolsRuntimeDir,
+    'hooked-blocks.js',
+  ),
+  '@wp-typia/project-tools/migrations': path.join(
+    projectToolsRuntimeDir,
+    'migrations.js',
+  ),
+  '@wp-typia/project-tools/package-managers': path.join(
+    projectToolsRuntimeDir,
+    'package-managers.js',
+  ),
+  '@wp-typia/project-tools/workspace-project': path.join(
+    projectToolsRuntimeDir,
+    'workspace-project.js',
+  ),
 };
 const WP_TYPIA_EXTERNALS = [
-	"@wp-typia/api-client",
-	"@wp-typia/api-client/*",
-	"@wp-typia/block-runtime",
-	"@wp-typia/block-runtime/*",
-	"@wp-typia/block-types",
-	"@wp-typia/block-types/*",
-	"@wp-typia/rest",
-	"@wp-typia/rest/*",
+  '@wp-typia/api-client',
+  '@wp-typia/api-client/*',
+  '@wp-typia/block-runtime',
+  '@wp-typia/block-runtime/*',
+  '@wp-typia/block-types',
+  '@wp-typia/block-types/*',
+  '@wp-typia/rest',
+  '@wp-typia/rest/*',
 ];
 
 interface RuntimeDependencyBuildStep {
-	args: string[];
-	cwd: string;
-	label: string;
+  cwd: string;
+  label: string;
+  outdir: string;
+  tsconfig: string;
 }
 
 async function fileExists(filePath: string): Promise<boolean> {
-	try {
-		await fs.access(filePath);
-		return true;
-	} catch {
-		return false;
-	}
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function getRuntimeDependencyBuildSteps(): RuntimeDependencyBuildStep[] {
-	return [
-		{
-			args: ["run", "build"],
-			cwd: apiClientPackageRoot,
-			label: "@wp-typia/api-client",
-		},
-		{
-			args: ["run", "build"],
-			cwd: blockRuntimePackageRoot,
-			label: "@wp-typia/block-runtime",
-		},
-		{
-			args: ["run", "build"],
-			cwd: projectToolsPackageRoot,
-			label: "@wp-typia/project-tools",
-		},
-	];
+  return [
+    {
+      cwd: apiClientPackageRoot,
+      label: '@wp-typia/api-client',
+      outdir: path.join(apiClientPackageRoot, 'dist'),
+      tsconfig: 'tsconfig.build.json',
+    },
+    {
+      cwd: blockRuntimePackageRoot,
+      label: '@wp-typia/block-runtime',
+      outdir: path.join(blockRuntimePackageRoot, 'dist'),
+      tsconfig: 'tsconfig.build.json',
+    },
+    {
+      cwd: projectToolsPackageRoot,
+      label: '@wp-typia/project-tools',
+      outdir: path.join(projectToolsPackageRoot, 'dist'),
+      tsconfig: 'tsconfig.runtime.json',
+    },
+  ];
 }
 
 async function ensureRuntimeBuildDependencies() {
-	const requiredArtifacts = [...new Set(Object.values(PROJECT_TOOLS_ALIASES))];
-	const missingArtifacts: string[] = [];
+  const requiredArtifacts = [...new Set(Object.values(PROJECT_TOOLS_ALIASES))];
+  const missingArtifacts: string[] = [];
 
-	for (const artifactPath of requiredArtifacts) {
-		try {
-			await fs.access(artifactPath);
-		} catch {
-			missingArtifacts.push(path.relative(packageRoot, artifactPath));
-		}
-	}
+  for (const artifactPath of requiredArtifacts) {
+    try {
+      await fs.access(artifactPath);
+    } catch {
+      missingArtifacts.push(path.relative(packageRoot, artifactPath));
+    }
+  }
 
-	if (missingArtifacts.length === 0) {
-		return;
-	}
+  if (missingArtifacts.length === 0) {
+    return;
+  }
 
-	const siblingRoots = [
-		apiClientPackageRoot,
-		blockRuntimePackageRoot,
-		projectToolsPackageRoot,
-	];
-	const siblingRootsExist = await Promise.all(siblingRoots.map((rootPath) => fileExists(rootPath)));
-	const buildSteps = siblingRootsExist.every(Boolean) ? getRuntimeDependencyBuildSteps() : [];
+  const buildSteps = getRuntimeDependencyBuildSteps();
+  const siblingRootsExist = await Promise.all(
+    buildSteps.map((step) => fileExists(step.cwd)),
+  );
+  if (!siblingRootsExist.every(Boolean)) {
+    throw new Error(
+      `Unable to locate linked wp-typia sibling packages while recovering runtime aliases: ${missingArtifacts.join(', ')}`,
+    );
+  }
 
-	if (buildSteps.length === 0) {
-		throw new Error(
-			`Unable to locate linked wp-typia sibling packages while recovering runtime aliases: ${missingArtifacts.join(", ")}`,
-		);
-	}
+  for (const buildStep of buildSteps) {
+    await fs.rm(buildStep.outdir, { force: true, recursive: true });
+    const buildResult = spawnSync(
+      bunExecutable,
+      ['x', 'tsc', '-p', buildStep.tsconfig],
+      {
+        cwd: buildStep.cwd,
+        env: process.env,
+        stdio: 'inherit',
+      },
+    );
 
-	for (const buildStep of buildSteps) {
-		const buildResult = spawnSync(bunExecutable, buildStep.args, {
-			cwd: buildStep.cwd,
-			env: process.env,
-			stdio: "inherit",
-		});
+    if (buildResult.status === 0) {
+      continue;
+    }
 
-		if (buildResult.status === 0) {
-			continue;
-		}
+    throw new Error(
+      `Failed to build ${buildStep.label} while recovering wp-typia runtime aliases: ${missingArtifacts.join(', ')}${
+        buildResult.error ? ` (${buildResult.error.message})` : ''
+      }`,
+    );
+  }
 
-		throw new Error(
-			`Failed to build ${buildStep.label} while recovering wp-typia runtime aliases: ${missingArtifacts.join(", ")}${
-				buildResult.error ? ` (${buildResult.error.message})` : ""
-			}`,
-		);
-	}
-
-	for (const artifactPath of requiredArtifacts) {
-		await fs.access(artifactPath);
-	}
+  for (const artifactPath of requiredArtifacts) {
+    await fs.access(artifactPath);
+  }
 }
 
 async function buildFullBunliRuntime() {
-	const result = await Bun.build({
-		alias: PROJECT_TOOLS_ALIASES,
-		entrypoints: [fullRuntimeEntrypoint],
-		external: WP_TYPIA_EXTERNALS,
-		format: "esm",
-		outdir,
-		sourcemap: buildConfig.sourcemap ? "external" : "none",
-		splitting: true,
-		target: "bun",
-	});
+  const result = await Bun.build({
+    alias: PROJECT_TOOLS_ALIASES,
+    entrypoints: [fullRuntimeEntrypoint],
+    external: WP_TYPIA_EXTERNALS,
+    format: 'esm',
+    outdir,
+    sourcemap: buildConfig.sourcemap ? 'external' : 'none',
+    splitting: true,
+    target: 'bun',
+  });
 
-	if (!result.success) {
-		for (const log of result.logs) {
-			console.error(log);
-		}
-		process.exit(1);
-	}
+  if (!result.success) {
+    for (const log of result.logs) {
+      console.error(log);
+    }
+    process.exit(1);
+  }
 }
 
 async function buildGeneratedMetadataRuntime() {
-	const result = await Bun.build({
-		alias: PROJECT_TOOLS_ALIASES,
-		entrypoints: [generatedMetadataEntrypoint],
-		external: WP_TYPIA_EXTERNALS,
-		format: "esm",
-		outdir: generatedMetadataOutdir,
-		sourcemap: buildConfig.sourcemap ? "external" : "none",
-		splitting: false,
-		target: "bun",
-	});
+  const result = await Bun.build({
+    alias: PROJECT_TOOLS_ALIASES,
+    entrypoints: [generatedMetadataEntrypoint],
+    external: WP_TYPIA_EXTERNALS,
+    format: 'esm',
+    outdir: generatedMetadataOutdir,
+    sourcemap: buildConfig.sourcemap ? 'external' : 'none',
+    splitting: false,
+    target: 'bun',
+  });
 
-	if (!result.success) {
-		for (const log of result.logs) {
-			console.error(log);
-		}
-		process.exit(1);
-	}
+  if (!result.success) {
+    for (const log of result.logs) {
+      console.error(log);
+    }
+    process.exit(1);
+  }
 }
 
 async function buildNodeFallbackRuntime() {
-	const result = await Bun.build({
-		entrypoints: [nodeRuntimeEntrypoint],
-		format: "esm",
-		outdir,
-		packages: "external",
-		sourcemap: buildConfig.sourcemap ? "external" : "none",
-		target: "node",
-	});
+  const result = await Bun.build({
+    entrypoints: [nodeRuntimeEntrypoint],
+    format: 'esm',
+    outdir,
+    packages: 'external',
+    sourcemap: buildConfig.sourcemap ? 'external' : 'none',
+    target: 'node',
+  });
 
-	if (!result.success) {
-		for (const log of result.logs) {
-			console.error(log);
-		}
-		process.exit(1);
-	}
+  if (!result.success) {
+    for (const log of result.logs) {
+      console.error(log);
+    }
+    process.exit(1);
+  }
 }
 
 await ensureRuntimeBuildDependencies();
@@ -230,6 +269,6 @@ await buildFullBunliRuntime();
 await buildGeneratedMetadataRuntime();
 await buildNodeFallbackRuntime();
 
-await fs.access(path.join(outdir, "cli.js"));
-await fs.access(path.join(generatedMetadataOutdir, "commands.gen.js"));
-await fs.access(path.join(outdir, "node-cli.js"));
+await fs.access(path.join(outdir, 'cli.js'));
+await fs.access(path.join(generatedMetadataOutdir, 'commands.gen.js'));
+await fs.access(path.join(outdir, 'node-cli.js'));
