@@ -28,6 +28,9 @@ test("generated project smoke script supports a reference example lane", () => {
 	expect(smokeScript).toContain('./lib/generated-project-smoke-assertions.mjs');
 	expect(smokeScript).toContain("runExampleProjectSmoke");
 	expect(smokeScript).toContain("assertGeneratedProjectScaffold");
+	expect(smokeScript).toContain("assertScaffoldPackageManagerField");
+	expect(smokeScript).toContain('packageManager === "npm"');
+	expect(smokeScript).toContain("Expected npm scaffolds to omit packageManager");
 	expect(exampleHelper).toContain("ensureCopiedExampleSupportDependencies");
 	expect(exampleHelper).toContain("runExampleProjectSmoke");
 	expect(exampleHelper).toContain("shouldRunMigrationSmoke");

@@ -248,6 +248,25 @@ function ensureCanonicalCliReady() {
 	});
 }
 
+function assertScaffoldPackageManagerField(packageJson, packageManager) {
+	if (packageManager === "npm") {
+		if (packageJson.packageManager !== undefined) {
+			throw new Error(
+				`Expected npm scaffolds to omit packageManager, received ${packageJson.packageManager}`,
+			);
+		}
+		return;
+	}
+
+	const expectedPackageManager =
+		getPackageManager(packageManager).packageManagerField;
+	if (packageJson.packageManager !== expectedPackageManager) {
+		throw new Error(
+			`Expected packageManager ${expectedPackageManager}, received ${packageJson.packageManager}`,
+		);
+	}
+}
+
 function main() {
 	const {
 		runtime,
@@ -328,13 +347,7 @@ function main() {
 
 		const packageJsonPath = path.join(projectDir, "package.json");
 		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-		const expectedPackageManager =
-			getPackageManager(packageManager).packageManagerField;
-		if (packageJson.packageManager !== expectedPackageManager) {
-			throw new Error(
-				`Expected packageManager ${expectedPackageManager}, received ${packageJson.packageManager}`,
-			);
-		}
+		assertScaffoldPackageManagerField(packageJson, packageManager);
 
 		rewriteWorkspaceDependencies(projectDir, packageManager);
 		ensureCorepackPackageManager(packageManager);
