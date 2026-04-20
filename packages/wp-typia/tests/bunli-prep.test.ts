@@ -104,6 +104,13 @@ describe('wp-typia Bunli preparation', () => {
     expect(runtimeBuildScript).toContain(
       'wp-typia runtime alias artifacts still missing after rebuild',
     );
+    expect(runtimeBuildScript).toContain("naming: {");
+    expect(runtimeBuildScript).toContain(
+      "chunk: '[dir]/[name]-[hash].[ext]'",
+    );
+    expect(runtimeBuildScript).toContain(
+      "asset: '[dir]/[name]-[hash].[ext]'",
+    );
   });
 
   test('future Bunli command tree preserves the reserved top-level taxonomy', async () => {
