@@ -12,6 +12,7 @@ import {
 } from './template-source-locators.js'
 import {
   detectTemplateSourceFormat,
+  getTemplateProjectType,
   getDefaultCategory,
   getTemplateVariableContext,
   normalizeCreateBlockSubset,
@@ -102,6 +103,37 @@ export async function resolveTemplateSource(
           : seed
 
     if (format === 'create-block-external') {
+      const renderedFormat = await detectTemplateSourceFormat(
+        normalizedSeed.blockDir,
+      )
+      if (renderedFormat === 'wp-typia') {
+        const normalized = await normalizeWpTypiaTemplateSeed(normalizedSeed)
+        const supportsMigrationUi =
+          getTemplateProjectType(normalizedSeed.blockDir) === 'workspace'
+        return {
+          cleanup: async () => {
+            await normalized.cleanup?.()
+            await seed.cleanup?.()
+          },
+          defaultCategory: getDefaultCategory(normalizedSeed.blockDir),
+          description:
+            'A wp-typia scaffold normalized from an official external template config',
+          features: [
+            'Remote source',
+            'official external template',
+            'wp-typia format',
+            ...(supportsMigrationUi ? ['workspace-capable scaffold'] : []),
+          ],
+          format,
+          id: 'remote:create-block-external',
+          isOfficialWorkspaceTemplate,
+          selectedVariant: normalizedSeed.selectedVariant ?? null,
+          supportsMigrationUi,
+          templateDir: normalized.blockDir,
+          warnings: normalizedSeed.warnings ?? [],
+        }
+      }
+
       const normalized = await normalizeCreateBlockSubset(
         normalizedSeed,
         context,

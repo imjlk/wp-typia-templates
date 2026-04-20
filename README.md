@@ -165,14 +165,21 @@ wp-typia add hooked-block counter-card --anchor core/post-content --position aft
 - GitHub locators in the form `github:owner/repo/path[#ref]`
 - npm package specs such as `@scope/create-block-template@latest`
 
-When the source is an official create-block external template config, `--variant <name>` is supported. If the config defines variants and no variant is passed, the first variant is selected automatically.
+When the source is an official external template config, `--variant <name>` is supported. If the config defines variants and no variant is passed, the first variant is selected automatically.
 
-The current remote adapter supports a create-block-style subset:
+External configs can render either:
+
+- a create-block-style subset via `blockTemplatesPath`
+- a richer `wp-typia` template root via `pluginTemplatesPath`
+
+The create-block subset adapter supports:
 
 - `block.json`
 - `src/index.*`, `src/edit.*`, `src/save.*`
 - optional `render.php`
 - style/editor/view assets
+
+The richer `pluginTemplatesPath` route can seed broader plugin/workspace shapes such as editor plugins, REST resources, shared support files, and workspace migration participation when the rendered template declares `wpTypia.projectType: "workspace"`.
 
 The remote source is treated as a seed. `wp-typia` still regenerates its own package setup, Typia sync flow, and runtime helpers around it.
 

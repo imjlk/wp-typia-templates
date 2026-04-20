@@ -1,0 +1,73 @@
+export interface WorkspaceBlockConfig {
+	slug: string;
+	attributeTypeName: string;
+	typesFile: string;
+	apiTypesFile?: string;
+	openApiFile?: string;
+	restManifest?: ReturnType<
+		typeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest
+	>;
+}
+
+export interface WorkspaceVariationConfig {
+	block: string;
+	file: string;
+	slug: string;
+}
+
+export interface WorkspacePatternConfig {
+	file: string;
+	slug: string;
+}
+
+export interface WorkspaceBindingSourceConfig {
+	editorFile: string;
+	serverFile: string;
+	slug: string;
+}
+
+export interface WorkspaceRestResourceConfig {
+	apiFile: string;
+	clientFile: string;
+	dataFile: string;
+	methods: Array< 'list' | 'read' | 'create' | 'update' | 'delete' >;
+	namespace: string;
+	openApiFile: string;
+	phpFile: string;
+	restManifest?: ReturnType<
+		typeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest
+	>;
+	slug: string;
+	typesFile: string;
+	validatorsFile: string;
+}
+
+export interface WorkspaceEditorPluginConfig {
+	file: string;
+	slug: string;
+	slot: string;
+}
+
+export const BLOCKS: WorkspaceBlockConfig[] = [
+	// wp-typia add block entries
+];
+
+export const VARIATIONS: WorkspaceVariationConfig[] = [
+	// wp-typia add variation entries
+];
+
+export const PATTERNS: WorkspacePatternConfig[] = [
+	// wp-typia add pattern entries
+];
+
+export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
+	// wp-typia add binding-source entries
+];
+
+export const REST_RESOURCES: WorkspaceRestResourceConfig[] = [
+	// wp-typia add rest-resource entries
+];
+
+export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
+	// wp-typia add editor-plugin entries
+];

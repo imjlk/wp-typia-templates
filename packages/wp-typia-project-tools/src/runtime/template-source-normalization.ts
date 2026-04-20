@@ -6,8 +6,10 @@ import path from 'node:path'
 import { loadExternalTemplateLayerManifest } from './template-layers.js'
 import { getPackageVersions } from './package-versions.js'
 import { getExternalTemplateEntry } from './template-source-external.js'
+import { getTemplateProjectType } from './template-source-remote.js'
 export { renderCreateBlockExternalTemplate } from './template-source-external.js'
 export {
+  getTemplateProjectType,
   getDefaultCategory,
   normalizeCreateBlockSubset,
   normalizeWpTypiaTemplateSeed,
@@ -52,7 +54,10 @@ export function getTemplateVariableContext(variables: {
 export async function detectTemplateSourceFormat(
   sourceDir: string,
 ): Promise<TemplateSourceFormat> {
-  if (fs.existsSync(path.join(sourceDir, 'package.json.mustache'))) {
+  if (
+    fs.existsSync(path.join(sourceDir, 'package.json.mustache')) ||
+    getTemplateProjectType(sourceDir) !== null
+  ) {
     return 'wp-typia'
   }
 

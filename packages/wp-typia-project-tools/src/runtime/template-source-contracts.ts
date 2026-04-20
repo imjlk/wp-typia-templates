@@ -41,6 +41,7 @@ export interface ResolvedTemplateSource {
   features: string[]
   format: TemplateSourceFormat
   isOfficialWorkspaceTemplate?: boolean
+  supportsMigrationUi?: boolean
   templateDir: string
   cleanup?: () => Promise<void>
   selectedVariant?: string | null
@@ -69,6 +70,7 @@ export interface ExternalTemplateConfig<
   blockTemplatesPath?: string
   defaultValues?: Partial<TView>
   folderName?: string
+  pluginTemplatesPath?: string
   transformer?: (view: TView) => UnknownRecord | Promise<UnknownRecord>
   variants?: Record<string, Partial<TView>>
 }

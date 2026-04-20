@@ -50,6 +50,11 @@ type TemplateStringRenderer<TView> = (
 ) => string;
 
 interface TemplateTraversalOptions<TView> {
+	filter?: (
+		sourcePath: string,
+		destinationPath: string,
+		entry: fs.Dirent,
+	) => boolean | Promise<boolean>;
 	prepareDirectory?: (directoryPath: string) => Promise<void>;
 	renderString: TemplateStringRenderer<TView>;
 	sourceDir: string;
@@ -152,6 +157,7 @@ function renderTemplateDestinationName<TView>(
 }
 
 async function traverseTemplateDirectory<TView>({
+	filter,
 	prepareDirectory,
 	renderString,
 	sourceDir,
@@ -168,10 +174,14 @@ async function traverseTemplateDirectory<TView>({
 			renderString,
 		);
 		const destinationPath = resolveRenderedPath(targetDir, destinationName);
+		if (filter && !(await filter(sourcePath, destinationPath, entry))) {
+			continue;
+		}
 
 		if (entry.isDirectory()) {
 			await prepareDirectory?.(destinationPath);
 			await traverseTemplateDirectory({
+				filter,
 				prepareDirectory,
 				renderString,
 				sourceDir: sourcePath,
@@ -190,11 +200,17 @@ async function traverseTemplateDirectory<TView>({
 }
 
 async function copyTemplateDirectory<TView>({
+	filter,
 	renderString,
 	sourceDir,
 	targetDir,
 	view,
 }: {
+	filter?: (
+		sourcePath: string,
+		destinationPath: string,
+		entry: fs.Dirent,
+	) => boolean | Promise<boolean>;
 	renderString: TemplateStringRenderer<TView>;
 	sourceDir: string;
 	targetDir: string;
@@ -202,6 +218,7 @@ async function copyTemplateDirectory<TView>({
 }): Promise<void> {
 	await fsp.mkdir(targetDir, { recursive: true });
 	await traverseTemplateDirectory({
+		filter,
 		prepareDirectory: async (directoryPath) => {
 			await fsp.mkdir(directoryPath, { recursive: true });
 		},
@@ -260,8 +277,16 @@ export async function copyRenderedDirectory(
 	sourceDir: string,
 	targetDir: string,
 	view: TemplateRenderView,
+	options: {
+		filter?: (
+			sourcePath: string,
+			destinationPath: string,
+			entry: fs.Dirent,
+		) => boolean | Promise<boolean>;
+	} = {},
 ): Promise<void> {
 	await copyTemplateDirectory({
+		filter: options.filter,
 		renderString: renderMustacheTemplateString,
 		sourceDir,
 		targetDir,

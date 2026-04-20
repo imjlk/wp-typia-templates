@@ -1,0 +1,12 @@
+import { registerPlugin } from "@wordpress/plugins";
+import { __ } from "@wordpress/i18n";
+
+registerPlugin("{{slugKebabCase}}-inspector-tools", {
+	render() {
+		return (
+			<div className="{{slugKebabCase}}-inspector-tools">
+				{__("{{title}} editor tools", "{{textDomain}}")}
+			</div>
+		);
+	},
+});

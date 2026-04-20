@@ -82,7 +82,6 @@ async function loadExternalTemplateConfig<
 
   const warnings: string[] = []
   for (const ignoredKey of [
-    'pluginTemplatesPath',
     'wpScripts',
     'wpEnv',
     'customScripts',
@@ -154,8 +153,55 @@ function extractVariantRenderValues<TView extends UnknownRecord>(
   delete values.assetsPath
   delete values.blockTemplatesPath
   delete values.folderName
+  delete values.pluginTemplatesPath
   delete values.transformer
   return values
+}
+
+function resolveConfiguredTemplatePath<TView extends UnknownRecord>(
+  config: ExternalTemplateConfig<TView>,
+  variantConfig: Partial<TView>,
+): {
+  folderName: string
+  templatePath: string
+} {
+  const variantPluginTemplatesPath =
+    typeof variantConfig.pluginTemplatesPath === 'string'
+      ? variantConfig.pluginTemplatesPath
+      : null
+  const variantBlockTemplatesPath =
+    typeof variantConfig.blockTemplatesPath === 'string'
+      ? variantConfig.blockTemplatesPath
+      : null
+  const configBlockTemplatesPath =
+    typeof config.blockTemplatesPath === 'string'
+      ? config.blockTemplatesPath
+      : null
+  const configPluginTemplatesPath =
+    typeof config.pluginTemplatesPath === 'string'
+      ? config.pluginTemplatesPath
+      : null
+
+  const templatePath =
+    variantPluginTemplatesPath ??
+    variantBlockTemplatesPath ??
+    configBlockTemplatesPath ??
+    configPluginTemplatesPath
+  if (!templatePath) {
+    throw new Error(
+      'External template config must define blockTemplatesPath or pluginTemplatesPath.',
+    )
+  }
+
+  const configuredFolderName =
+    (typeof variantConfig.folderName === 'string'
+      ? variantConfig.folderName
+      : config.folderName) ?? null
+
+  return {
+    folderName: configuredFolderName || '.',
+    templatePath,
+  }
 }
 
 async function buildExternalTemplateView(
@@ -193,7 +239,7 @@ async function buildExternalTemplateView(
 }
 
 /**
- * Load an official external create-block template config and render its seed.
+ * Load an official external template config and render its seed.
  *
  * @param sourceDir Source directory that contains the external template config.
  * @param context Template render context used for the selected variant.
@@ -211,13 +257,10 @@ export async function renderCreateBlockExternalTemplate(
     requestedVariant,
   )
 
-  const blockTemplatesPath =
-    (typeof variantConfig.blockTemplatesPath === 'string'
-      ? variantConfig.blockTemplatesPath
-      : config.blockTemplatesPath) ?? null
-  if (!blockTemplatesPath) {
-    throw new Error('External template config must define blockTemplatesPath.')
-  }
+  const { folderName, templatePath } = resolveConfiguredTemplatePath(
+    config,
+    variantConfig,
+  )
 
   const tempRoot = await fsp.mkdtemp(
     path.join(os.tmpdir(), 'wp-typia-create-block-external-'),
@@ -228,10 +271,6 @@ export async function renderCreateBlockExternalTemplate(
 
   try {
     const renderedRoot = path.join(tempRoot, 'rendered')
-    const folderName =
-      (typeof variantConfig.folderName === 'string'
-        ? variantConfig.folderName
-        : config.folderName) || '.'
     const blockDir = resolveSourceSubpath(renderedRoot, folderName)
     const view = await buildExternalTemplateView(
       context,
@@ -239,11 +278,20 @@ export async function renderCreateBlockExternalTemplate(
       selectedVariant,
       variantConfig,
     )
-    const blockTemplateDir = resolveSourceSubpath(
-      sourceDir,
-      blockTemplatesPath,
-    )
-    await copyRenderedDirectory(blockTemplateDir, blockDir, view)
+    const blockTemplateDir = resolveSourceSubpath(sourceDir, templatePath)
+    await copyRenderedDirectory(blockTemplateDir, blockDir, view, {
+      filter: (sourcePath, _destinationPath, entry) => {
+        const mustacheVariantPath = path.join(
+          path.dirname(sourcePath),
+          `${entry.name}.mustache`,
+        )
+        return !(
+          entry.isFile() &&
+          (entry.name === 'package.json' || entry.name === 'README.md') &&
+          fs.existsSync(mustacheVariantPath)
+        )
+      },
+    })
 
     const assetsPath =
       typeof variantConfig.assetsPath === 'string'
