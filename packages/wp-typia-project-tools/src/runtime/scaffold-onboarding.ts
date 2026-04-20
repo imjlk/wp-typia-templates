@@ -231,7 +231,7 @@ export function getCompoundExtensionWorkflowSection(
 		return null;
 	}
 
-	return `## Compound Extension Workflow
+return `## Compound Extension Workflow
 
 \`\`\`bash
 ${ formatRunScript(
@@ -239,9 +239,21 @@ ${ formatRunScript(
 		"add-child",
 		'--slug faq-item --title "FAQ Item"'
 	) }
+
+${ formatRunScript(
+		packageManager,
+		"add-child",
+		'--slug section --title "Section" --container --inserter visible'
+	) }
+
+${ formatRunScript(
+		packageManager,
+		"add-child",
+		'--slug clause --title "Clause" --ancestor section'
+	) }
 \`\`\`
 
-This scaffolds a new hidden child block type, updates \`scripts/block-config.ts\` and \`src/blocks/*/children.ts\`, and leaves the default seeded child template unchanged.`;
+This scaffolds additional compound child block types, updates \`scripts/block-config.ts\` and \`src/blocks/*/children.ts\`, and now supports root-level hidden children, visible container children, and nested ancestor chains for richer document-style block hierarchies.`;
 }
 
 function formatPhpRestExtensionPointsSection({

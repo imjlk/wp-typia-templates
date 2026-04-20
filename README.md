@@ -116,7 +116,7 @@ Use it for:
 
 ### 4. Compound blocks are scaffolded as a system
 
-The `compound` template creates a parent/child block structure with hidden implementation children, so complex `InnerBlocks` patterns start from a maintainable project shape rather than a one-off setup.
+The `compound` template creates a parent/child block structure with hidden implementation children, and the generated `add-child` workflow can now grow that into visible container children plus nested ancestor chains for richer document-style `InnerBlocks` hierarchies.
 
 ### 5. Query Loop variations get a first-class scaffold
 

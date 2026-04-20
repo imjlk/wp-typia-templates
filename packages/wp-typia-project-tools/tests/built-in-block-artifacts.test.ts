@@ -608,17 +608,17 @@ const EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES: Record<
   },
   compound: {
     'src/blocks/demo-compound-item/block-metadata.ts': '50956333a97a824a',
-    'src/blocks/demo-compound-item/edit.tsx': '9a4c290e05e8e8ad',
+    'src/blocks/demo-compound-item/edit.tsx': 'f3beaa7687e573e0',
     'src/blocks/demo-compound-item/hooks.ts': '485092aef1c4e019',
     'src/blocks/demo-compound-item/index.tsx': '5b5805db42c0b1f6',
     'src/blocks/demo-compound-item/manifest-defaults-document.ts':
       '16818959f3d5a7d6',
     'src/blocks/demo-compound-item/manifest-document.ts':
       'b8fffee2c728488e',
-    'src/blocks/demo-compound-item/save.tsx': 'ee03c7f3e16d3a3e',
+    'src/blocks/demo-compound-item/save.tsx': 'e2a9d7c5df3e615f',
     'src/blocks/demo-compound-item/validators.ts': '7123c8ea0e650172',
     'src/blocks/demo-compound/block-metadata.ts': '50956333a97a824a',
-    'src/blocks/demo-compound/children.ts': '26513801ef796584',
+    'src/blocks/demo-compound/children.ts': '0d245ef27cf66a90',
     'src/blocks/demo-compound/edit.tsx': 'efa27cbb540a19cb',
     'src/blocks/demo-compound/hooks.ts': '485092aef1c4e019',
     'src/blocks/demo-compound/index.tsx': 'c9d9139901e6e4b9',

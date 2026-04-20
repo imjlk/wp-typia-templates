@@ -154,6 +154,7 @@ function buildCompoundParentArtifact(
 			icon: variables.icon,
 			description: variables.description,
 			example: {},
+			allowedBlocks: [`${variables.namespace}/${variables.slugKebabCase}-item`],
 			supports: persistenceEnabled
 				? {
 					html: false,

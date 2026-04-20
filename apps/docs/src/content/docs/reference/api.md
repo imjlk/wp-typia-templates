@@ -643,10 +643,14 @@ be scaffolded on demand:
 
 ```bash
 npm run add-child -- --slug faq-item --title "FAQ Item"
+npm run add-child -- --slug section --title "Section" --container --inserter visible
+npm run add-child -- --slug clause --title "Clause" --ancestor section
 ```
 
 That command updates `scripts/block-config.ts` plus `src/blocks/<parent>/children.ts`
-without changing the parent block's default seeded template.
+without changing the parent block's default seeded template for hidden child
+extensions, and it also supports visible container children plus nested ancestor
+chains for richer document-style layouts.
 
 Official workspaces also support first-class variation, pattern, binding-source, and hooked-block expansion:
 
