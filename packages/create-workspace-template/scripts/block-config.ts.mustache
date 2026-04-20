@@ -30,7 +30,7 @@ export interface WorkspaceRestResourceConfig {
 	apiFile: string;
 	clientFile: string;
 	dataFile: string;
-	methods: string[];
+	methods: Array< 'list' | 'read' | 'create' | 'update' | 'delete' >;
 	namespace: string;
 	openApiFile: string;
 	phpFile: string;

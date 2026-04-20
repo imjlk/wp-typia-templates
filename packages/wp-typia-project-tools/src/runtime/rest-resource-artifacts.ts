@@ -30,6 +30,13 @@ type RestResourceEndpointDefinition = Parameters<
 	typeof defineEndpointManifest
 >[0]["endpoints"][number];
 
+/**
+ * Build the endpoint manifest for a workspace-level REST resource scaffold.
+ *
+ * @param variables Template naming data used for contract names, routes, and OpenAPI info.
+ * @param methods Enabled REST methods for the generated resource.
+ * @returns Endpoint manifest consumed by schema, OpenAPI, and client generators.
+ */
 export function buildRestResourceEndpointManifest(
 	variables: RestResourceTemplateVariablesLike,
 	methods: RestResourceMethodId[],
@@ -157,6 +164,13 @@ export function buildRestResourceEndpointManifest(
 	});
 }
 
+/**
+ * Synchronize generated schemas, OpenAPI output, and endpoint client code for
+ * a workspace-level REST resource scaffold.
+ *
+ * @param options Resource file paths, enabled methods, and naming variables.
+ * @returns A promise that resolves after every generated REST artifact has been refreshed.
+ */
 export async function syncRestResourceArtifacts({
 	clientFile,
 	methods,

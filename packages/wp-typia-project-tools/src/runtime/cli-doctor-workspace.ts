@@ -3,7 +3,11 @@ import path from "node:path";
 
 import { parseScaffoldBlockMetadata } from "@wp-typia/block-runtime/blocks";
 
-import { EDITOR_PLUGIN_SLOT_IDS } from "./cli-add-shared.js";
+import {
+	EDITOR_PLUGIN_SLOT_IDS,
+	REST_RESOURCE_METHOD_IDS,
+	REST_RESOURCE_NAMESPACE_PATTERN,
+} from "./cli-add-shared.js";
 import {
 	HOOKED_BLOCK_ANCHOR_PATTERN,
 	HOOKED_BLOCK_POSITION_SET,
@@ -372,8 +376,12 @@ function getWorkspaceRestResourceRequiredFiles(
 function checkWorkspaceRestResourceConfig(
 	restResource: WorkspaceInventory["restResources"][number],
 ): DoctorCheck {
-	const hasNamespace = /^[a-z][a-z0-9-]*(?:\/[a-z0-9-]+)+$/u.test(restResource.namespace);
-	const hasMethods = restResource.methods.length > 0;
+	const hasNamespace = REST_RESOURCE_NAMESPACE_PATTERN.test(restResource.namespace);
+	const hasMethods =
+		restResource.methods.length > 0 &&
+		restResource.methods.every((method) =>
+			(REST_RESOURCE_METHOD_IDS as readonly string[]).includes(method),
+		);
 
 	return createDoctorCheck(
 		`REST resource config ${restResource.slug}`,

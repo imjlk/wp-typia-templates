@@ -446,6 +446,10 @@ function resolveRestNonce( fallback?: string ): string | undefined {
 \t\treturn fallback;
 \t}
 
+\tif ( typeof window === 'undefined' ) {
+\t\treturn undefined;
+\t}
+
 \tconst wpApiSettings = (
 \t\twindow as typeof window & {
 \t\t\twpApiSettings?: { nonce?: string };
@@ -822,12 +826,23 @@ if ( ! function_exists( '${canWriteFunctionName}' ) ) {
 
 if ( ! function_exists( '${listHandlerName}' ) ) {
 \tfunction ${listHandlerName}( WP_REST_Request $request ) {
+\t\t$payload_input = array();
+\t\t$page          = $request->get_param( 'page' );
+\t\t$per_page      = $request->get_param( 'perPage' );
+\t\t$search        = $request->get_param( 'search' );
+
+\t\tif ( null !== $page ) {
+\t\t\t$payload_input['page'] = $page;
+\t\t}
+\t\tif ( null !== $per_page ) {
+\t\t\t$payload_input['perPage'] = $per_page;
+\t\t}
+\t\tif ( null !== $search ) {
+\t\t\t$payload_input['search'] = $search;
+\t\t}
+
 \t\t$payload = ${validatePayloadFunctionName}(
-\t\t\tarray(
-\t\t\t\t'page'    => $request->get_param( 'page' ),
-\t\t\t\t'perPage' => $request->get_param( 'perPage' ),
-\t\t\t\t'search'  => $request->get_param( 'search' ),
-\t\t\t),
+\t\t\t$payload_input,
 \t\t\t'list-query',
 \t\t\t'query'
 \t\t);
@@ -1084,6 +1099,174 @@ function ${registerFunctionName}() {
 	});
 }
 
+async function ensureRestResourceSyncScriptAnchors(workspace: WorkspaceProject): Promise<void> {
+	const syncRestScriptPath = path.join(workspace.projectDir, "scripts", "sync-rest-contracts.ts");
+
+	await patchFile(syncRestScriptPath, (source) => {
+		let nextSource = source;
+
+		if (
+			!nextSource.includes("REST_RESOURCES") &&
+			nextSource.includes("import { BLOCKS, type WorkspaceBlockConfig } from './block-config';")
+		) {
+			nextSource = nextSource.replace(
+				"import { BLOCKS, type WorkspaceBlockConfig } from './block-config';",
+				[
+					"import {",
+					"\tBLOCKS,",
+					"\tREST_RESOURCES,",
+					"\ttype WorkspaceBlockConfig,",
+					"\ttype WorkspaceRestResourceConfig,",
+					"} from './block-config';",
+				].join("\n"),
+			);
+		}
+
+		if (
+			!nextSource.includes("function isWorkspaceRestResource(") &&
+			nextSource.includes("function isRestEnabledBlock(")
+		) {
+			nextSource = nextSource.replace(
+				"async function assertTypeArtifactsCurrent",
+				[
+					"function isWorkspaceRestResource(",
+					"\tresource: WorkspaceRestResourceConfig",
+					"): resource is WorkspaceRestResourceConfig & {",
+					"\tclientFile: string;",
+					"\topenApiFile: string;",
+					"\trestManifest: NonNullable< WorkspaceRestResourceConfig[ 'restManifest' ] >;",
+					"\ttypesFile: string;",
+					"\tvalidatorsFile: string;",
+					"} {",
+					"\treturn (",
+					"\t\ttypeof resource.clientFile === 'string' &&",
+					"\t\ttypeof resource.openApiFile === 'string' &&",
+					"\t\ttypeof resource.typesFile === 'string' &&",
+					"\t\ttypeof resource.validatorsFile === 'string' &&",
+					"\t\ttypeof resource.restManifest === 'object' &&",
+					"\t\tresource.restManifest !== null",
+					"\t);",
+					"}",
+					"",
+					"async function assertTypeArtifactsCurrent",
+				].join("\n"),
+			);
+		}
+
+		if (
+			!nextSource.includes("const restResources = REST_RESOURCES.filter( isWorkspaceRestResource );")
+		) {
+			nextSource = nextSource.replace(
+				"const restBlocks = BLOCKS.filter( isRestEnabledBlock );",
+				[
+					"const restBlocks = BLOCKS.filter( isRestEnabledBlock );",
+					"const restResources = REST_RESOURCES.filter( isWorkspaceRestResource );",
+				].join("\n"),
+			);
+		}
+
+		if (
+			!nextSource.includes("restBlocks.length === 0 && restResources.length === 0") &&
+			nextSource.includes("if ( restBlocks.length === 0 ) {")
+		) {
+			nextSource = nextSource.replace(
+				/if \( restBlocks.length === 0 \) \{[\s\S]*?\n\t\treturn;\n\t\}/u,
+				[
+					"if ( restBlocks.length === 0 && restResources.length === 0 ) {",
+					"\t\tconsole.log(",
+					"\t\t\toptions.check",
+					"\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'",
+					"\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet.'",
+					"\t\t);",
+					"\t\treturn;",
+					"\t}",
+				].join("\n"),
+			);
+		}
+
+		if (
+			!nextSource.includes("for ( const resource of restResources ) {") &&
+			nextSource.includes("\n\tconsole.log(")
+		) {
+			nextSource = nextSource.replace(
+				/\n\tconsole\.log\(\n\t\toptions\.check/u,
+				[
+					"",
+					"\tfor ( const resource of restResources ) {",
+					"\t\tconst contracts = resource.restManifest.contracts;",
+					"",
+					"\t\tfor ( const [ baseName, contract ] of Object.entries( contracts ) ) {",
+					"\t\t\tawait syncTypeSchemas(",
+					"\t\t\t\t{",
+					"\t\t\t\t\tjsonSchemaFile: path.join(",
+					"\t\t\t\t\t\tpath.dirname( resource.typesFile ),",
+					"\t\t\t\t\t\t'api-schemas',",
+					"\t\t\t\t\t\t`${ baseName }.schema.json`",
+					"\t\t\t\t\t),",
+					"\t\t\t\t\topenApiFile: path.join(",
+					"\t\t\t\t\t\tpath.dirname( resource.typesFile ),",
+					"\t\t\t\t\t\t'api-schemas',",
+					"\t\t\t\t\t\t`${ baseName }.openapi.json`",
+					"\t\t\t\t\t),",
+					"\t\t\t\t\tsourceTypeName: contract.sourceTypeName,",
+					"\t\t\t\t\ttypesFile: resource.typesFile,",
+					"\t\t\t\t},",
+					"\t\t\t\t{",
+					"\t\t\t\t\tcheck: options.check,",
+					"\t\t\t\t}",
+					"\t\t\t);",
+					"\t\t}",
+					"",
+					"\t\tawait syncRestOpenApi(",
+					"\t\t\t{",
+					"\t\t\t\tmanifest: resource.restManifest,",
+					"\t\t\t\topenApiFile: resource.openApiFile,",
+					"\t\t\t\ttypesFile: resource.typesFile,",
+					"\t\t\t},",
+					"\t\t\t{",
+					"\t\t\t\tcheck: options.check,",
+					"\t\t\t}",
+					"\t\t);",
+					"",
+					"\t\tawait syncEndpointClient(",
+					"\t\t\t{",
+					"\t\t\t\tclientFile: resource.clientFile,",
+					"\t\t\t\tmanifest: resource.restManifest,",
+					"\t\t\t\ttypesFile: resource.typesFile,",
+					"\t\t\t\tvalidatorsFile: resource.validatorsFile,",
+					"\t\t\t},",
+					"\t\t\t{",
+					"\t\t\t\tcheck: options.check,",
+					"\t\t\t}",
+					"\t\t);",
+					"\t}",
+					"",
+					"\tconsole.log(",
+					"\t\toptions.check",
+				].join("\n"),
+			);
+		}
+
+		nextSource = nextSource.replace(
+			"✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date with the TypeScript types!",
+			"✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date for workspace blocks and plugin-level resources!",
+		);
+		nextSource = nextSource.replace(
+			"✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated from TypeScript types!",
+			"✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated for workspace blocks and plugin-level resources!",
+		);
+
+		return nextSource;
+	});
+}
+
+/**
+ * Scaffold a workspace-level REST resource and synchronize its generated
+ * TypeScript and PHP artifacts.
+ *
+ * @param options Command options for the REST resource scaffold workflow.
+ * @returns Resolved scaffold metadata for the created REST resource.
+ */
 export async function runAddRestResourceCommand({
 	cwd = process.cwd(),
 	methods,
@@ -1112,6 +1295,7 @@ export async function runAddRestResourceCommand({
 
 	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
 	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
+	const syncRestScriptPath = path.join(workspace.projectDir, "scripts", "sync-rest-contracts.ts");
 	const restResourceDir = path.join(workspace.projectDir, "src", "rest", restResourceSlug);
 	const typesFilePath = path.join(restResourceDir, "api-types.ts");
 	const validatorsFilePath = path.join(restResourceDir, "api-validators.ts");
@@ -1120,7 +1304,11 @@ export async function runAddRestResourceCommand({
 	const clientFilePath = path.join(restResourceDir, "api-client.ts");
 	const phpFilePath = path.join(workspace.projectDir, "inc", "rest", `${restResourceSlug}.php`);
 	const mutationSnapshot: WorkspaceMutationSnapshot = {
-		fileSources: await snapshotWorkspaceFiles([blockConfigPath, bootstrapPath]),
+		fileSources: await snapshotWorkspaceFiles([
+			blockConfigPath,
+			bootstrapPath,
+			syncRestScriptPath,
+		]),
 		snapshotDirs: [],
 		targetPaths: [restResourceDir, phpFilePath],
 	};
@@ -1129,6 +1317,7 @@ export async function runAddRestResourceCommand({
 		await fsp.mkdir(restResourceDir, { recursive: true });
 		await fsp.mkdir(path.dirname(phpFilePath), { recursive: true });
 		await ensureRestResourceBootstrapAnchors(workspace);
+		await ensureRestResourceSyncScriptAnchors(workspace);
 		await fsp.writeFile(
 			typesFilePath,
 			buildRestResourceTypesSource(restResourceSlug, resolvedMethods),

@@ -65,7 +65,7 @@ export const ADD_BLOCK_TEMPLATE_IDS = [
 export type AddBlockTemplateId = (typeof ADD_BLOCK_TEMPLATE_IDS)[number];
 
 const WORKSPACE_GENERATED_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
-const REST_RESOURCE_NAMESPACE_PATTERN = /^[a-z][a-z0-9-]*(?:\/[a-z0-9-]+)+$/u;
+export const REST_RESOURCE_NAMESPACE_PATTERN = /^[a-z][a-z0-9-]*(?:\/[a-z0-9-]+)+$/u;
 
 export interface RunAddVariationCommandOptions {
 	blockName: string;
@@ -523,7 +523,7 @@ export function formatAddHelpText(): string {
   wp-typia add variation <name> --block <block-slug>
   wp-typia add pattern <name>
   wp-typia add binding-source <name>
-  wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <${REST_RESOURCE_METHOD_IDS.join("|")}>]
+  wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>]
   wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <${HOOKED_BLOCK_POSITION_IDS.join("|")}>
   wp-typia add editor-plugin <name> [--slot <${EDITOR_PLUGIN_SLOT_IDS.join("|")}>]
 

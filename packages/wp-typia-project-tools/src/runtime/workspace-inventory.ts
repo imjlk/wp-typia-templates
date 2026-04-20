@@ -4,6 +4,8 @@ import { readFile, writeFile } from "node:fs/promises";
 
 import ts from "typescript";
 
+import { REST_RESOURCE_METHOD_IDS } from "./cli-add-shared.js";
+
 export interface WorkspaceBlockInventoryEntry {
 	apiTypesFile?: string;
 	attributeTypeName?: string;
@@ -29,6 +31,13 @@ export interface WorkspaceBindingSourceInventoryEntry {
 	slug: string;
 }
 
+/**
+ * REST-resource entry parsed from `scripts/block-config.ts`.
+ *
+ * Each file path is stored relative to the workspace root so doctor checks and
+ * workspace mutation helpers can resolve the generated TypeScript, OpenAPI, and
+ * PHP route artifacts without guessing their locations.
+ */
 export interface WorkspaceRestResourceInventoryEntry {
 	apiFile: string;
 	clientFile: string;
@@ -134,7 +143,7 @@ export interface WorkspaceRestResourceConfig {
 \tapiFile: string;
 \tclientFile: string;
 \tdataFile: string;
-\tmethods: string[];
+\tmethods: Array< 'list' | 'read' | 'create' | 'update' | 'delete' >;
 \tnamespace: string;
 \topenApiFile: string;
 \tphpFile: string;
@@ -377,6 +386,21 @@ function parseRestResourceEntries(
 			);
 		}
 
+		const methods = getRequiredStringArrayProperty(
+			"REST_RESOURCES",
+			elementIndex,
+			element,
+			"methods",
+		);
+		const invalidMethods = methods.filter(
+			(method) => !(REST_RESOURCE_METHOD_IDS as readonly string[]).includes(method),
+		);
+		if (invalidMethods.length > 0) {
+			throw new Error(
+				`REST_RESOURCES[${elementIndex}].methods includes unsupported values: ${invalidMethods.join(", ")}.`,
+			);
+		}
+
 		return {
 			apiFile: getRequiredStringProperty("REST_RESOURCES", elementIndex, element, "apiFile"),
 			clientFile: getRequiredStringProperty(
@@ -386,12 +410,7 @@ function parseRestResourceEntries(
 				"clientFile",
 			),
 			dataFile: getRequiredStringProperty("REST_RESOURCES", elementIndex, element, "dataFile"),
-			methods: getRequiredStringArrayProperty(
-				"REST_RESOURCES",
-				elementIndex,
-				element,
-				"methods",
-			),
+			methods,
 			namespace: getRequiredStringProperty(
 				"REST_RESOURCES",
 				elementIndex,

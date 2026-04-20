@@ -185,6 +185,10 @@ export {
 	runAddBindingSourceCommand,
 	runAddPatternCommand,
 } from "./cli-add-workspace-assets.js";
+/**
+ * Re-export the plugin-level REST resource scaffold workflow from the focused
+ * rest-resource runtime helper module.
+ */
 export { runAddRestResourceCommand } from "./cli-add-workspace-rest.js";
 
 /**

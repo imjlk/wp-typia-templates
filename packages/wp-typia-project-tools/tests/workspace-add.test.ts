@@ -2290,7 +2290,12 @@ test("canonical CLI can add a plugin-level REST resource to an official workspac
 
   expect(blockConfigSource).toContain('slug: "snapshots"');
   expect(blockConfigSource).toContain('namespace: "demo-space/v1"');
-  expect(blockConfigSource).toContain('methods: [ "list", "read", "create", "update", "delete" ]');
+  expect(blockConfigSource).toContain("methods: [");
+  expect(blockConfigSource).toContain('"list"');
+  expect(blockConfigSource).toContain('"read"');
+  expect(blockConfigSource).toContain('"create"');
+  expect(blockConfigSource).toContain('"update"');
+  expect(blockConfigSource).toContain('"delete"');
   expect(blockConfigSource).toContain('apiFile: "src/rest/snapshots/api.ts"');
   expect(blockConfigSource).toContain('phpFile: "inc/rest/snapshots.php"');
   expect(blockConfigSource).toContain("defineEndpointManifest");
@@ -2351,6 +2356,91 @@ test("canonical CLI can add a plugin-level REST resource to an official workspac
   runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
   typecheckGeneratedProject(targetDir);
 }, 30_000);
+
+test("rest resource workflow repairs legacy sync-rest scripts before writing workspace resources", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-rest-resource-legacy-sync-rest"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace rest resource legacy sync-rest",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-rest-resource-legacy-sync-rest",
+      textDomain: "demo-space",
+      title: "Demo Workspace Rest Resource Legacy Sync Rest",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const syncRestScriptPath = path.join(
+    targetDir,
+    "scripts",
+    "sync-rest-contracts.ts"
+  );
+  const legacySyncRestSource = fs
+    .readFileSync(syncRestScriptPath, "utf8")
+    .replace(
+      /import \{\n\tBLOCKS,\n\tREST_RESOURCES,\n\ttype WorkspaceBlockConfig,\n\ttype WorkspaceRestResourceConfig,\n\} from '\.\/block-config';/u,
+      "import { BLOCKS, type WorkspaceBlockConfig } from './block-config';"
+    )
+    .replace(/\nfunction isWorkspaceRestResource\([\s\S]*?\n\}\n/u, "\n")
+    .replace(
+      "\n\tconst restResources = REST_RESOURCES.filter( isWorkspaceRestResource );",
+      ""
+    )
+    .replace(
+      /if \( restBlocks.length === 0 && restResources.length === 0 \) \{[\s\S]*?\n\t\}/u,
+      [
+        "if ( restBlocks.length === 0 ) {",
+        "\t\tconsole.log(",
+        "\t\t\toptions.check",
+        "\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks are registered yet. `sync-rest --check` is already clean.'",
+        "\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks are registered yet.'",
+        "\t\t);",
+        "\t\treturn;",
+        "\t}",
+      ].join("\n")
+    )
+    .replace(
+      /\n\tfor \( const resource of restResources \) \{[\s\S]*?\n\t\}\n\n\tconsole\.log\(/u,
+      "\n\tconsole.log("
+    )
+    .replace(
+      "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date for workspace blocks and plugin-level resources!",
+      "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date with the TypeScript types!"
+    )
+    .replace(
+      "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated for workspace blocks and plugin-level resources!",
+      "✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated from TypeScript types!"
+    );
+  fs.writeFileSync(syncRestScriptPath, legacySyncRestSource, "utf8");
+
+  runCli("node", [entryPath, "add", "rest-resource", "snapshots"], {
+    cwd: targetDir,
+  });
+
+  const repairedSyncRestSource = fs.readFileSync(syncRestScriptPath, "utf8");
+  expect(repairedSyncRestSource).toContain("REST_RESOURCES");
+  expect(repairedSyncRestSource).toContain("function isWorkspaceRestResource(");
+  expect(repairedSyncRestSource).toContain(
+    "const restResources = REST_RESOURCES.filter( isWorkspaceRestResource );"
+  );
+  expect(repairedSyncRestSource).toContain(
+    "plugin-level REST resources are registered yet"
+  );
+  expect(repairedSyncRestSource).toContain("for ( const resource of restResources )");
+
+  runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
+}, 20_000);
 
 test("rest resource workflow rejects invalid namespace and methods and preserves existing files on duplicate failure", async () => {
   const targetDir = path.join(

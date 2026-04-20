@@ -258,7 +258,7 @@ function AddFlowFields({
 				? createElement(FirstPartyTextField, {
 						...getWrappedFieldNeighbors(orderedVisibleFields, "methods"),
 						key: "methods",
-						label: "Methods (comma-separated)",
+						label: "Methods (comma-separated: list, read, create, update, delete)",
 						name: "methods",
 					})
 				: null,
