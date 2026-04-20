@@ -185,8 +185,8 @@ function resolveConfiguredTemplatePath<TView extends UnknownRecord>(
   const templatePath =
     variantPluginTemplatesPath ??
     variantBlockTemplatesPath ??
-    configBlockTemplatesPath ??
-    configPluginTemplatesPath
+    configPluginTemplatesPath ??
+    configBlockTemplatesPath
   if (!templatePath) {
     throw new Error(
       'External template config must define blockTemplatesPath or pluginTemplatesPath.',

@@ -19,7 +19,6 @@ import { applyMigrationUiCapability } from "./migration-ui-capability.js";
 import {
 	applyWorkspaceMigrationCapability,
 	ensureScaffoldDirectory,
-	isOfficialWorkspaceProject,
 	isWorkspaceProject,
 	seedBuiltInPersistenceArtifacts,
 	writeStarterManifestFiles,
@@ -370,7 +369,6 @@ export async function scaffoldProject({
 		}
 	}
 	const isWorkspace = isWorkspaceProject(projectDir);
-	const isOfficialWorkspace = isOfficialWorkspaceProject(projectDir);
 	if (isBuiltInTemplate) {
 		await reportScaffoldProgress(onProgress, {
 			detail: "Writing starter manifests, local presets, and template-specific generated artifacts.",

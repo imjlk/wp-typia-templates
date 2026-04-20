@@ -1,10 +1,10 @@
 import { registerPlugin } from "@wordpress/plugins";
 import { __ } from "@wordpress/i18n";
 
-registerPlugin("{{slugKebabCase}}-inspector-tools", {
+registerPlugin("{{slug}}-inspector-tools", {
 	render() {
 		return (
-			<div className="{{slugKebabCase}}-inspector-tools">
+			<div className="{{slug}}-inspector-tools">
 				{__("{{title}} editor tools", "{{textDomain}}")}
 			</div>
 		);

@@ -49,6 +49,12 @@ async function main() {
 				check: options.check,
 			}
 		);
+		for ( const warning of result.lossyProjectionWarnings ) {
+			console.warn( `⚠️ ${ block.slug }: ${ warning }` );
+		}
+		for ( const warning of result.phpGenerationWarnings ) {
+			console.warn( `⚠️ ${ block.slug }: ${ warning }` );
+		}
 
 		console.log(
 			options.check

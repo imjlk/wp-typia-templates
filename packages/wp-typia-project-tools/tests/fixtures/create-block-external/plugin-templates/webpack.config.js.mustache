@@ -53,7 +53,7 @@ function getMetadataEntries() {
 					'blocks',
 					blockDir.slug,
 					path.relative( blockDir.dir, inputPath )
-				),
+				).replaceAll( '\\', '/' ),
 			} );
 		}
 	}
@@ -83,7 +83,9 @@ function findMetadataFiles( directory ) {
 }
 
 function isScriptModuleAsset( assetName ) {
-	return /(^|\/)(interactivity|view)\.asset\.php$/.test( assetName );
+	return /(^|\/)(interactivity|view)\.asset\.php$/.test(
+		assetName.replaceAll( '\\', '/' )
+	);
 }
 
 function normalizeScriptModuleAssetsInDirectory( directory ) {
@@ -196,7 +198,11 @@ function getSharedEditorEntries() {
 		],
 		[
 			'editor-plugins/index',
-			[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],
+			[
+				'src/editor-plugins/index.tsx',
+				'src/editor-plugins/index.ts',
+				'src/editor-plugins/index.js',
+			],
 		],
 	] ) {
 		for ( const relativePath of candidates ) {

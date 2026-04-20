@@ -266,7 +266,7 @@ test("external template workspace variants scaffold richer wp-typia workspaces w
     fs.existsSync(path.join(targetDir, "assets", "remote-note.txt"))
   ).toBe(true);
   expect(
-    fs.existsSync(path.join(targetDir, "src", "editor-plugins", "index.ts"))
+    fs.existsSync(path.join(targetDir, "src", "editor-plugins", "index.tsx"))
   ).toBe(true);
   expect(
     fs.existsSync(

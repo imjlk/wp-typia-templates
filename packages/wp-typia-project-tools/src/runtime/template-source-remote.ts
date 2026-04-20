@@ -80,6 +80,10 @@ function readTemplatePackageJson(
   return null
 }
 
+/**
+ * Read `wpTypia.projectType` from a rendered or source template package
+ * manifest and return it when present.
+ */
 export function getTemplateProjectType(sourceDir: string): string | null {
   const packageJson = readTemplatePackageJson(sourceDir)
   return typeof packageJson?.wpTypia?.projectType === 'string'

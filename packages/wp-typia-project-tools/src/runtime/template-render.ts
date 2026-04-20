@@ -37,11 +37,7 @@ export interface CopyRawDirectoryOptions {
 	 *
 	 * Throwing or rejecting aborts the copy and bubbles to the caller.
 	 */
-	filter?: (
-		sourcePath: string,
-		targetPath: string,
-		entry: fs.Dirent,
-	) => boolean | Promise<boolean>;
+	filter?: CopyDirectoryFilter;
 }
 
 type TemplateStringRenderer<TView> = (
@@ -49,12 +45,14 @@ type TemplateStringRenderer<TView> = (
 	view: TView,
 ) => string;
 
+export type CopyDirectoryFilter = (
+	sourcePath: string,
+	destinationPath: string,
+	entry: fs.Dirent,
+) => boolean | Promise<boolean>;
+
 interface TemplateTraversalOptions<TView> {
-	filter?: (
-		sourcePath: string,
-		destinationPath: string,
-		entry: fs.Dirent,
-	) => boolean | Promise<boolean>;
+	filter?: CopyDirectoryFilter;
 	prepareDirectory?: (directoryPath: string) => Promise<void>;
 	renderString: TemplateStringRenderer<TView>;
 	sourceDir: string;
@@ -206,11 +204,7 @@ async function copyTemplateDirectory<TView>({
 	targetDir,
 	view,
 }: {
-	filter?: (
-		sourcePath: string,
-		destinationPath: string,
-		entry: fs.Dirent,
-	) => boolean | Promise<boolean>;
+	filter?: CopyDirectoryFilter;
 	renderString: TemplateStringRenderer<TView>;
 	sourceDir: string;
 	targetDir: string;
@@ -278,11 +272,7 @@ export async function copyRenderedDirectory(
 	targetDir: string,
 	view: TemplateRenderView,
 	options: {
-		filter?: (
-			sourcePath: string,
-			destinationPath: string,
-			entry: fs.Dirent,
-		) => boolean | Promise<boolean>;
+		filter?: CopyDirectoryFilter;
 	} = {},
 ): Promise<void> {
 	await copyTemplateDirectory({
