@@ -44,10 +44,22 @@ const projectToolsRuntimeDir = path.resolve(
   'runtime',
 );
 const apiClientDistDir = path.resolve(apiClientPackageRoot, 'dist');
-const bunExecutable =
-  typeof Bun !== 'undefined'
-    ? (Bun.which('bun') ?? process.execPath)
-    : process.execPath;
+const bunExecutable = (() => {
+  if (typeof Bun === 'undefined') {
+    throw new Error(
+      'wp-typia Bun runtime recovery requires Bun to be available.',
+    );
+  }
+
+  const resolvedBunExecutable = Bun.which('bun');
+  if (!resolvedBunExecutable) {
+    throw new Error(
+      'wp-typia Bun runtime recovery could not locate the `bun` executable.',
+    );
+  }
+
+  return resolvedBunExecutable;
+})();
 const PROJECT_TOOLS_ALIASES = {
   '@wp-typia/api-client/runtime-primitives': path.join(
     apiClientDistDir,
@@ -112,6 +124,7 @@ const WP_TYPIA_EXTERNALS = [
 
 interface RuntimeDependencyBuildStep {
   cwd: string;
+  dependencies: string[];
   label: string;
   outdir: string;
   tsconfig: string;
@@ -130,18 +143,21 @@ function getRuntimeDependencyBuildSteps(): RuntimeDependencyBuildStep[] {
   return [
     {
       cwd: apiClientPackageRoot,
+      dependencies: [],
       label: '@wp-typia/api-client',
       outdir: path.join(apiClientPackageRoot, 'dist'),
       tsconfig: 'tsconfig.build.json',
     },
     {
       cwd: blockRuntimePackageRoot,
+      dependencies: ['@wp-typia/api-client'],
       label: '@wp-typia/block-runtime',
       outdir: path.join(blockRuntimePackageRoot, 'dist'),
       tsconfig: 'tsconfig.build.json',
     },
     {
       cwd: projectToolsPackageRoot,
+      dependencies: ['@wp-typia/api-client', '@wp-typia/block-runtime'],
       label: '@wp-typia/project-tools',
       outdir: path.join(projectToolsPackageRoot, 'dist'),
       tsconfig: 'tsconfig.runtime.json',
@@ -151,13 +167,17 @@ function getRuntimeDependencyBuildSteps(): RuntimeDependencyBuildStep[] {
 
 async function ensureRuntimeBuildDependencies() {
   const requiredArtifacts = [...new Set(Object.values(PROJECT_TOOLS_ALIASES))];
-  const missingArtifacts: string[] = [];
+  const missingArtifacts: Array<{
+    absolutePath: string;
+    relativePath: string;
+  }> = [];
 
   for (const artifactPath of requiredArtifacts) {
-    try {
-      await fs.access(artifactPath);
-    } catch {
-      missingArtifacts.push(path.relative(packageRoot, artifactPath));
+    if (!(await fileExists(artifactPath))) {
+      missingArtifacts.push({
+        absolutePath: artifactPath,
+        relativePath: path.relative(packageRoot, artifactPath),
+      });
     }
   }
 
@@ -166,16 +186,67 @@ async function ensureRuntimeBuildDependencies() {
   }
 
   const buildSteps = getRuntimeDependencyBuildSteps();
-  const siblingRootsExist = await Promise.all(
-    buildSteps.map((step) => fileExists(step.cwd)),
+  const buildStepByLabel = new Map(
+    buildSteps.map((buildStep) => [buildStep.label, buildStep]),
   );
-  if (!siblingRootsExist.every(Boolean)) {
+  const selectedBuildStepLabels = new Set(
+    buildSteps
+      .filter((buildStep) =>
+        missingArtifacts.some(({ absolutePath }) => {
+          const relativeToOutdir = path.relative(
+            buildStep.outdir,
+            absolutePath,
+          );
+          return (
+            relativeToOutdir.length > 0 &&
+            !relativeToOutdir.startsWith('..') &&
+            !path.isAbsolute(relativeToOutdir)
+          );
+        }),
+      )
+      .map((buildStep) => buildStep.label),
+  );
+
+  const queue = [...selectedBuildStepLabels];
+  while (queue.length > 0) {
+    const nextLabel = queue.shift();
+    if (!nextLabel) {
+      continue;
+    }
+
+    const buildStep = buildStepByLabel.get(nextLabel);
+    if (!buildStep) {
+      continue;
+    }
+
+    for (const dependencyLabel of buildStep.dependencies) {
+      if (selectedBuildStepLabels.has(dependencyLabel)) {
+        continue;
+      }
+      selectedBuildStepLabels.add(dependencyLabel);
+      queue.push(dependencyLabel);
+    }
+  }
+
+  const stepsToRebuild = buildSteps.filter((buildStep) =>
+    selectedBuildStepLabels.has(buildStep.label),
+  );
+  if (stepsToRebuild.length === 0) {
     throw new Error(
-      `Unable to locate linked wp-typia sibling packages while recovering runtime aliases: ${missingArtifacts.join(', ')}`,
+      `Unable to match missing wp-typia runtime alias artifacts to rebuild steps: ${missingArtifacts
+        .map(({ relativePath }) => relativePath)
+        .join(', ')}`,
     );
   }
 
-  for (const buildStep of buildSteps) {
+  for (const buildStep of stepsToRebuild) {
+    const tsconfigPath = path.join(buildStep.cwd, buildStep.tsconfig);
+    if (!(await fileExists(tsconfigPath))) {
+      throw new Error(
+        `Missing ${buildStep.tsconfig} for ${buildStep.label} while recovering wp-typia runtime aliases.`,
+      );
+    }
+
     await fs.rm(buildStep.outdir, { force: true, recursive: true });
     const buildResult = spawnSync(
       bunExecutable,
@@ -192,14 +263,24 @@ async function ensureRuntimeBuildDependencies() {
     }
 
     throw new Error(
-      `Failed to build ${buildStep.label} while recovering wp-typia runtime aliases: ${missingArtifacts.join(', ')}${
+      `Failed to build ${buildStep.label} while recovering wp-typia runtime aliases: ${missingArtifacts
+        .map(({ relativePath }) => relativePath)
+        .join(', ')}${
         buildResult.error ? ` (${buildResult.error.message})` : ''
       }`,
     );
   }
 
+  const stillMissing: string[] = [];
   for (const artifactPath of requiredArtifacts) {
-    await fs.access(artifactPath);
+    if (!(await fileExists(artifactPath))) {
+      stillMissing.push(path.relative(packageRoot, artifactPath));
+    }
+  }
+  if (stillMissing.length > 0) {
+    throw new Error(
+      `wp-typia runtime alias artifacts still missing after rebuild: ${stillMissing.join(', ')}`,
+    );
   }
 }
 

@@ -84,14 +84,26 @@ describe('wp-typia Bunli preparation', () => {
       "requireFromProjectTools.resolve('@wp-typia/block-runtime/package.json')",
     );
     expect(runtimeBuildScript).toContain(
+      'wp-typia Bun runtime recovery requires Bun to be available.',
+    );
+    expect(runtimeBuildScript).toContain(
       "['x', 'tsc', '-p', buildStep.tsconfig]",
+    );
+    expect(runtimeBuildScript).toContain(
+      "dependencies: ['@wp-typia/api-client'",
+    );
+    expect(runtimeBuildScript).toContain(
+      "dependencies: ['@wp-typia/api-client', '@wp-typia/block-runtime']",
     );
     expect(runtimeBuildScript).toContain('tsconfig.runtime.json');
     expect(runtimeBuildScript).toContain('tsconfig.build.json');
     expect(runtimeBuildScript).toContain(
-      'Unable to locate linked wp-typia sibling packages while recovering runtime aliases',
+      'Unable to match missing wp-typia runtime alias artifacts to rebuild steps',
     );
     expect(runtimeBuildScript).toContain('Failed to build ${buildStep.label}');
+    expect(runtimeBuildScript).toContain(
+      'wp-typia runtime alias artifacts still missing after rebuild',
+    );
   });
 
   test('future Bunli command tree preserves the reserved top-level taxonomy', async () => {
