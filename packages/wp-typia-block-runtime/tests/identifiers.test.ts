@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import {
+	collectPersistentBlockIdentityRepairs,
+	ensurePersistentBlockIdentity,
 	generateBlockId,
 	generatePublicWriteRequestId,
 	generateResourceKey,
@@ -82,6 +84,130 @@ describe( '@wp-typia/block-runtime/identifiers', () => {
 
 		expect( generateScopedClientId( 'demo' ) ).toMatch( /^demo-[a-z0-9]{9}$/ );
 		expect( generateResourceKey( 'demo' ) ).toMatch( /^demo-[a-z0-9]{9}$/ );
+	} );
+
+	test( 'ensurePersistentBlockIdentity preserves unique ids and regenerates missing or duplicate values', () => {
+		expect(
+			ensurePersistentBlockIdentity( {
+				existingIds: [ 'sec-existing' ],
+				prefix: 'sec',
+				seenIds: [ 'sec-existing' ],
+				value: 'sec-current',
+			} )
+		).toEqual( {
+			changed: false,
+			previousValue: 'sec-current',
+			reason: null,
+			value: 'sec-current',
+		} );
+
+		expect(
+			ensurePersistentBlockIdentity( {
+				existingIds: [ 'sec-existing' ],
+				generateId: () => 'sec-generated',
+				prefix: 'sec',
+				seenIds: [ 'sec-existing' ],
+				value: undefined,
+			} )
+		).toEqual( {
+			changed: true,
+			previousValue: null,
+			reason: 'missing',
+			value: 'sec-generated',
+		} );
+
+		expect(
+			ensurePersistentBlockIdentity( {
+				existingIds: [ 'sec-existing' ],
+				generateId: () => 'sec-duplicate-fix',
+				prefix: 'sec',
+				seenIds: [ 'sec-existing' ],
+				value: 'sec-existing',
+			} )
+		).toEqual( {
+			changed: true,
+			previousValue: 'sec-existing',
+			reason: 'duplicate',
+			value: 'sec-duplicate-fix',
+		} );
+	} );
+
+	test( 'collectPersistentBlockIdentityRepairs only patches missing ids and later duplicates in one tree', () => {
+		const repairs = collectPersistentBlockIdentityRepairs(
+			[
+				{
+					attributes: {
+						sectionId: 'sec-keep',
+					},
+					clientId: 'parent',
+					innerBlocks: [
+						{
+							attributes: {},
+							clientId: 'child-missing',
+						},
+						{
+							attributes: {
+								sectionId: 'sec-keep',
+							},
+							clientId: 'child-duplicate',
+						},
+						{
+							attributes: {
+								sectionId: 'custom-stable',
+							},
+							clientId: 'child-custom',
+						},
+					],
+				},
+			],
+			{
+				attributeName: 'sectionId',
+				generateId: ( ( values ) => {
+					let index = 0;
+					return () => values[ index++ ] ?? `sec-fallback-${ index }`;
+				} )( [ 'sec-generated', 'sec-regenerated' ] ),
+				prefix: 'sec',
+			}
+		);
+
+		expect( repairs ).toEqual( [
+			{
+				clientId: 'child-missing',
+				nextValue: 'sec-generated',
+				previousValue: null,
+				reason: 'missing',
+			},
+			{
+				clientId: 'child-duplicate',
+				nextValue: 'sec-regenerated',
+				previousValue: 'sec-keep',
+				reason: 'duplicate',
+			},
+		] );
+	} );
+
+	test( 'ensurePersistentBlockIdentity handles one-shot seenId iterables safely', () => {
+		function* createSeenIds() {
+			yield 'sec-existing';
+		}
+
+		expect(
+			ensurePersistentBlockIdentity( {
+				existingIds: [ 'sec-existing' ],
+				generateId: ( ( values ) => {
+					let index = 0;
+					return () => values[ index++ ] ?? `sec-fallback-${ index }`;
+				} )( [ 'sec-existing', 'sec-fixed' ] ),
+				prefix: 'sec',
+				seenIds: createSeenIds(),
+				value: 'sec-existing',
+			} )
+		).toEqual( {
+			changed: true,
+			previousValue: 'sec-existing',
+			reason: 'duplicate',
+			value: 'sec-fixed',
+		} );
 	} );
 } );
 

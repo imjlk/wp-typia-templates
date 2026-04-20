@@ -6,6 +6,10 @@ import type {
 import type {
 	EditorFieldDescriptor,
 } from "./editor.js";
+import type {
+	PersistentBlockIdentityNode,
+	PersistentBlockIdentityRepairReason,
+} from "./identifiers.js";
 
 /**
  * Describe one string-valued option for an inspector select control.
@@ -154,6 +158,49 @@ export interface TypedAttributeUpdater<T extends object> {
 	updatePath: (path: string, value: unknown) => boolean;
 }
 
+export type AttributeNameFor<T extends object> =
+	[Extract<keyof T, string>] extends [never]
+		? string
+		: Extract<keyof T, string>;
+
+/**
+ * Describe the options accepted by `usePersistentBlockIdentity()`.
+ *
+ * `autoRepair` defaults to enabled when omitted. Pass a stable or memoized
+ * `blocks` reference so equivalent renders can reuse the same duplicate-repair
+ * analysis instead of recomputing it.
+ *
+ * @category React
+ */
+export interface UsePersistentBlockIdentityOptions<T extends object> {
+	attributeName: AttributeNameFor<T>;
+	attributes: T;
+	autoRepair?: boolean;
+	blocks: readonly PersistentBlockIdentityNode[];
+	clientId: string;
+	duplicateDetection?: boolean;
+	prefix: string;
+	setAttributes: (attrs: Partial<T>) => void;
+}
+
+/**
+ * Describe the duplicate-safe id lifecycle helpers returned from
+ * `usePersistentBlockIdentity()`.
+ *
+ * `nextPersistentId` mirrors the current pending repair target and can be
+ * `null` when no repair is pending yet. Use `ensurePersistentId()` when you
+ * need a guaranteed non-null id for immediate writes or orchestration.
+ *
+ * @category React
+ */
+export interface UsePersistentBlockIdentityResult {
+	currentPersistentId: string | null;
+	ensurePersistentId: () => string;
+	nextPersistentId: string | null;
+	repairReason: PersistentBlockIdentityRepairReason | null;
+	shouldRepairPersistentId: boolean;
+}
+
 /**
  * Describe the resolved render context passed to custom field-control renderers.
  *
@@ -237,3 +284,8 @@ export type {
 	EditorFieldOption,
 	EditorModelOptions,
 } from "./editor.js";
+export type {
+	PersistentBlockIdentityNode,
+	PersistentBlockIdentityRepair,
+	PersistentBlockIdentityRepairReason,
+} from "./identifiers.js";

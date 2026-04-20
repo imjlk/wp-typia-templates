@@ -4,6 +4,45 @@ type CryptoLike = Partial<
 
 const UUID_HEX_RADIX = 16;
 const SCOPED_SUFFIX_LENGTH = 9;
+const MAX_PERSISTENT_BLOCK_ID_ATTEMPTS = 32;
+
+export type PersistentBlockIdentityRepairReason = 'missing' | 'duplicate';
+
+export interface PersistentBlockIdentityNode {
+	attributes?: Record< string, unknown > | null;
+	clientId: string;
+	innerBlocks?: readonly PersistentBlockIdentityNode[];
+}
+
+export interface PersistentBlockIdentityRepair {
+	clientId: string;
+	nextValue: string;
+	previousValue: string | null;
+	reason: PersistentBlockIdentityRepairReason;
+}
+
+export interface EnsurePersistentBlockIdentityOptions {
+	duplicateDetection?: boolean;
+	existingIds?: Iterable< string >;
+	generateId?: ( prefix: string ) => string;
+	prefix: string;
+	seenIds?: Iterable< string >;
+	value: unknown;
+}
+
+export interface EnsurePersistentBlockIdentityResult {
+	changed: boolean;
+	previousValue: string | null;
+	reason: PersistentBlockIdentityRepairReason | null;
+	value: string;
+}
+
+export interface CollectPersistentBlockIdentityRepairsOptions {
+	attributeName: string;
+	duplicateDetection?: boolean;
+	generateId?: ( prefix: string ) => string;
+	prefix: string;
+}
 
 /**
  * Generate a UUID v4-style id for block attributes.
@@ -47,6 +86,98 @@ export function generatePublicWriteRequestId(): string {
 	return generateUuidV4();
 }
 
+/**
+ * Resolve one persistent block id against the ids already used in the current
+ * document tree.
+ *
+ * Missing ids always get generated. Duplicate repair only happens when
+ * `duplicateDetection` is enabled and the current value is already present in
+ * `seenIds`.
+ *
+ * @param options Current id plus scope metadata used to preserve valid values and generate safe replacements.
+ * @returns The preserved or regenerated persistent id and whether it changed.
+ * @category Utilities
+ */
+export function ensurePersistentBlockIdentity(
+	options: EnsurePersistentBlockIdentityOptions
+): EnsurePersistentBlockIdentityResult {
+	const seenIds = createPersistentIdentitySet( options.seenIds );
+	const currentValue = toPersistentBlockIdentityValue( options.value );
+	if (
+		currentValue &&
+		( options.duplicateDetection === false ||
+			! seenIds.has( currentValue ) )
+	) {
+		return {
+			changed: false,
+			previousValue: currentValue,
+			reason: null,
+			value: currentValue,
+		};
+	}
+
+	const reservedIds = createPersistentIdentitySet( options.existingIds );
+	for ( const seenId of seenIds ) {
+		reservedIds.add( seenId );
+	}
+
+	const nextValue = generateUniquePersistentBlockIdentity(
+		options.prefix,
+		reservedIds,
+		options.generateId
+	);
+
+	return {
+		changed: true,
+		previousValue: currentValue,
+		reason: currentValue ? 'duplicate' : 'missing',
+		value: nextValue,
+	};
+}
+
+/**
+ * Collect the persistent-id repairs required to make one document tree safe for
+ * duplicate-aware structured block workflows.
+ *
+ * Existing non-empty ids are preserved when they are unique. Missing ids are
+ * generated, and only the later duplicates in one depth-first traversal are
+ * repaired when duplicate detection is enabled.
+ *
+ * @param blocks Current document tree rooted at the relevant editor scope.
+ * @param options Attribute key plus prefix/generator settings.
+ * @returns One repair patch per block that should regenerate or seed its persistent id.
+ * @category Utilities
+ */
+export function collectPersistentBlockIdentityRepairs(
+	blocks: readonly PersistentBlockIdentityNode[],
+	options: CollectPersistentBlockIdentityRepairsOptions
+): PersistentBlockIdentityRepair[] {
+	const duplicateCounts = new Map< string, number >();
+	const reservedIds = new Set< string >();
+	collectPersistentIdentityCounts(
+		blocks,
+		options.attributeName,
+		duplicateCounts,
+		reservedIds
+	);
+
+	const preservedDuplicates = new Set< string >();
+	const repairs: PersistentBlockIdentityRepair[] = [];
+
+	for ( const block of blocks ) {
+		collectPersistentIdentityRepairsForNode(
+			block,
+			options,
+			duplicateCounts,
+			preservedDuplicates,
+			reservedIds,
+			repairs
+		);
+	}
+
+	return repairs;
+}
+
 function generateUuidV4(): string {
 	const cryptoObject = getCryptoObject();
 
@@ -76,6 +207,146 @@ function generateUuidV4(): string {
 
 function generatePrefixedScopedId( prefix: string ): string {
 	return `${ prefix }-${ generateScopedSuffix() }`;
+}
+
+function collectPersistentIdentityCounts(
+	blocks: readonly PersistentBlockIdentityNode[],
+	attributeName: string,
+	duplicateCounts: Map< string, number >,
+	reservedIds: Set< string >
+): void {
+	for ( const block of blocks ) {
+		const currentValue = toPersistentBlockIdentityValue(
+			block.attributes?.[ attributeName ]
+		);
+		if ( currentValue ) {
+			duplicateCounts.set(
+				currentValue,
+				( duplicateCounts.get( currentValue ) ?? 0 ) + 1
+			);
+			reservedIds.add( currentValue );
+		}
+
+		if ( block.innerBlocks?.length ) {
+			collectPersistentIdentityCounts(
+				block.innerBlocks,
+				attributeName,
+				duplicateCounts,
+				reservedIds
+			);
+		}
+	}
+}
+
+function collectPersistentIdentityRepairsForNode(
+	block: PersistentBlockIdentityNode,
+	options: CollectPersistentBlockIdentityRepairsOptions,
+	duplicateCounts: Map< string, number >,
+	preservedDuplicates: Set< string >,
+	reservedIds: Set< string >,
+	repairs: PersistentBlockIdentityRepair[]
+): void {
+	const currentValue = toPersistentBlockIdentityValue(
+		block.attributes?.[ options.attributeName ]
+	);
+
+	if ( ! currentValue ) {
+		repairs.push( {
+			clientId: block.clientId,
+			nextValue: generateUniquePersistentBlockIdentity(
+				options.prefix,
+				reservedIds,
+				options.generateId
+			),
+			previousValue: null,
+			reason: 'missing',
+		} );
+	} else if (
+		options.duplicateDetection !== false &&
+		( duplicateCounts.get( currentValue ) ?? 0 ) > 1
+	) {
+		if ( ! preservedDuplicates.has( currentValue ) ) {
+			preservedDuplicates.add( currentValue );
+		} else {
+			repairs.push( {
+				clientId: block.clientId,
+				nextValue: generateUniquePersistentBlockIdentity(
+					options.prefix,
+					reservedIds,
+					options.generateId
+				),
+				previousValue: currentValue,
+				reason: 'duplicate',
+			} );
+		}
+	}
+
+	if ( block.innerBlocks?.length ) {
+		for ( const innerBlock of block.innerBlocks ) {
+			collectPersistentIdentityRepairsForNode(
+				innerBlock,
+				options,
+				duplicateCounts,
+				preservedDuplicates,
+				reservedIds,
+				repairs
+			);
+		}
+	}
+}
+
+function createPersistentIdentitySet(
+	values: Iterable< string > | undefined
+): Set< string > {
+	const ids = new Set< string >();
+
+	if ( ! values ) {
+		return ids;
+	}
+
+	for ( const value of values ) {
+		const persistentValue = toPersistentBlockIdentityValue( value );
+		if ( persistentValue ) {
+			ids.add( persistentValue );
+		}
+	}
+
+	return ids;
+}
+
+function generateUniquePersistentBlockIdentity(
+	prefix: string,
+	reservedIds: Set< string >,
+	generateId: ( ( prefix: string ) => string ) | undefined
+): string {
+	const generateScopedId = generateId ?? generateScopedClientId;
+
+	for (
+		let attempt = 1;
+		attempt <= MAX_PERSISTENT_BLOCK_ID_ATTEMPTS;
+		attempt++
+	) {
+		const nextValue = toPersistentBlockIdentityValue(
+			generateScopedId( prefix )
+		);
+		if ( nextValue && ! reservedIds.has( nextValue ) ) {
+			reservedIds.add( nextValue );
+			return nextValue;
+		}
+	}
+
+	throw new Error(
+		`Unable to generate a unique persistent block identity for prefix "${ prefix }" after ${ MAX_PERSISTENT_BLOCK_ID_ATTEMPTS } attempts.`
+	);
+}
+
+function toPersistentBlockIdentityValue( value: unknown ): string | null {
+	if ( typeof value !== 'string' ) {
+		return null;
+	}
+
+	const trimmedValue = value.trim();
+	return trimmedValue.length > 0 ? trimmedValue : null;
 }
 
 function generateScopedSuffix(): string {

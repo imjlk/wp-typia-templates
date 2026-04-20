@@ -1,6 +1,8 @@
 import {
 	useCallback,
+	useEffect,
 	useMemo,
+	useRef,
 } from "react";
 
 import {
@@ -9,6 +11,10 @@ import {
 	type EditorModelOptions,
 	type ManifestDocument,
 } from "./editor.js";
+import {
+	collectPersistentBlockIdentityRepairs,
+	generateScopedClientId,
+} from "./identifiers.js";
 import { isPlainObject as isRecord } from "./object-utils.js";
 import {
 	type ValidationResult,
@@ -19,12 +25,20 @@ import {
 import type {
 	EditorFieldDescriptor,
 	InspectorSelectOption,
+	PersistentBlockIdentityNode,
+	PersistentBlockIdentityRepair,
+	UsePersistentBlockIdentityOptions,
+	UsePersistentBlockIdentityResult,
 	StableEditorModelOptions,
 	TypedAttributeUpdater,
 	UseEditorFieldsResult,
 } from "./inspector-runtime-types.js";
 
 type UnknownRecord = Record<string, unknown>;
+const persistentBlockIdentityRepairCache = new WeakMap<
+	readonly PersistentBlockIdentityNode[],
+	Map<string, Map<string, PersistentBlockIdentityRepair>>
+>();
 
 function getPathSegments(path: string): string[] {
 	return path.split(".").filter(Boolean);
@@ -79,6 +93,57 @@ function createValidationResult<T extends object>(value: T): ValidationResult<T>
 		errors: [],
 		isValid: true,
 	};
+}
+
+function getPersistentBlockIdentityValue(
+	value: unknown,
+): string | null {
+	if (typeof value !== "string") {
+		return null;
+	}
+
+	const trimmedValue = value.trim();
+	return trimmedValue.length > 0 ? trimmedValue : null;
+}
+
+function createPersistentIdAttributePatch<T extends object>(
+	attributeName: string,
+	value: string,
+): Partial<T> {
+	return {
+		[attributeName]: value,
+	} as Partial<T>;
+}
+
+function getPersistentBlockIdentityRepairMap(
+	blocks: readonly PersistentBlockIdentityNode[],
+	options: {
+		attributeName: string;
+		duplicateDetection?: boolean;
+		prefix: string;
+	},
+): Map<string, PersistentBlockIdentityRepair> {
+	const duplicateMode = options.duplicateDetection === false ? "off" : "on";
+	const cacheKey = `${options.attributeName}:${options.prefix}:${duplicateMode}`;
+	let repairMapsByKey = persistentBlockIdentityRepairCache.get(blocks);
+	if (!repairMapsByKey) {
+		repairMapsByKey = new Map();
+		persistentBlockIdentityRepairCache.set(blocks, repairMapsByKey);
+	}
+
+	const cachedRepairMap = repairMapsByKey.get(cacheKey);
+	if (cachedRepairMap) {
+		return cachedRepairMap;
+	}
+
+	const nextRepairMap = new Map(
+		collectPersistentBlockIdentityRepairs(blocks, options).map((repair) => [
+			repair.clientId,
+			repair,
+		]),
+	);
+	repairMapsByKey.set(cacheKey, nextRepairMap);
+	return nextRepairMap;
 }
 
 export function getFieldValue(
@@ -234,5 +299,112 @@ export function useTypedAttributeUpdater<T extends object>(
 		updateAttribute,
 		updateField,
 		updatePath,
+	};
+}
+
+/**
+ * Keep one block attribute populated with a stable document-level id that
+ * survives normal edits and repairs duplicates inside the current block tree.
+ *
+ * `autoRepair` defaults to enabled when omitted. Callers should pass a stable
+ * or memoized `blocks` reference so equivalent renders can reuse cached repair
+ * analysis instead of re-walking the full document tree.
+ *
+ * @param options Current block identity inputs including the attribute key, editor tree snapshot, and `setAttributes` callback.
+ * @returns The current/pending persistent id plus a helper that can force the attribute repair immediately. `nextPersistentId` can stay `null` when no repair is pending yet, while `ensurePersistentId()` always returns a non-null string.
+ * @category React
+ */
+export function usePersistentBlockIdentity<T extends object>(
+	options: UsePersistentBlockIdentityOptions<T>,
+): UsePersistentBlockIdentityResult {
+	const {
+		attributeName,
+		attributes,
+		autoRepair,
+		blocks,
+		clientId,
+		duplicateDetection,
+		prefix,
+		setAttributes,
+	} = options;
+	const pendingRepair = useMemo(
+		() =>
+			getPersistentBlockIdentityRepairMap(blocks, {
+				attributeName,
+				duplicateDetection,
+				prefix,
+			}).get(clientId) ?? null,
+		[
+			attributeName,
+			blocks,
+			clientId,
+			duplicateDetection,
+			prefix,
+		],
+	);
+	const currentPersistentId = getPersistentBlockIdentityValue(
+		(attributes as Record<string, unknown>)[attributeName],
+	);
+	const lastAppliedRepairRef = useRef<string | null>(null);
+
+	const ensurePersistentId = useCallback(() => {
+		const nextValue =
+			pendingRepair?.nextValue ??
+			currentPersistentId ??
+			generateScopedClientId(prefix);
+
+		if (nextValue !== currentPersistentId) {
+			setAttributes(
+				createPersistentIdAttributePatch<T>(
+					attributeName,
+					nextValue,
+				),
+			);
+		}
+
+		return nextValue;
+	}, [
+		attributeName,
+		currentPersistentId,
+		pendingRepair,
+		prefix,
+		setAttributes,
+	]);
+
+	useEffect(() => {
+		if (autoRepair === false || !pendingRepair) {
+			lastAppliedRepairRef.current = null;
+			return;
+		}
+
+		const repairKey = `${clientId}:${pendingRepair.reason}:${
+			currentPersistentId ?? ""
+		}`;
+		if (lastAppliedRepairRef.current === repairKey) {
+			return;
+		}
+
+		lastAppliedRepairRef.current = repairKey;
+		setAttributes(
+			createPersistentIdAttributePatch<T>(
+				attributeName,
+				pendingRepair.nextValue,
+			),
+		);
+	}, [
+		attributeName,
+		autoRepair,
+		clientId,
+		currentPersistentId,
+		pendingRepair,
+		setAttributes,
+	]);
+
+	return {
+		currentPersistentId,
+		ensurePersistentId,
+		nextPersistentId: pendingRepair?.nextValue ?? currentPersistentId,
+		repairReason: pendingRepair?.reason ?? null,
+		shouldRepairPersistentId: pendingRepair !== null,
 	};
 }

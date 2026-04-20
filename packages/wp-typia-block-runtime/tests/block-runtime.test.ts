@@ -73,9 +73,16 @@ describe("@wp-typia/block-runtime", () => {
 		expect(typeof editorModule.defineManifestDocument).toBe("function");
 		expect(typeof editorModule.assertManifestDocument).toBe("function");
 		expect(typeof editorModule.parseManifestDocument).toBe("function");
+		expect(typeof identifiersModule.collectPersistentBlockIdentityRepairs).toBe(
+			"function",
+		);
+		expect(typeof identifiersModule.ensurePersistentBlockIdentity).toBe(
+			"function",
+		);
 		expect(typeof identifiersModule.generateBlockId).toBe("function");
 		expect(typeof identifiersModule.generatePublicWriteRequestId).toBe("function");
 		expect(typeof inspectorModule.useEditorFields).toBe("function");
+		expect(typeof inspectorModule.usePersistentBlockIdentity).toBe("function");
 		expect(typeof inspectorModule.parseManifestDocument).toBe("function");
 		expect(typeof validationModule.toValidationResult).toBe("function");
 		expect(typeof blocksModule.assertTypiaWebpackCompatibility).toBe("function");

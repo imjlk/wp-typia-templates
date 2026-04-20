@@ -19,6 +19,9 @@ export type {
 	InspectorFieldOverride,
 	InspectorFromManifestProps,
 	InspectorSelectOption,
+	PersistentBlockIdentityNode,
+	PersistentBlockIdentityRepair,
+	PersistentBlockIdentityRepairReason,
 	PanelBodyLikeProps,
 	RangeControlLikeProps,
 	SelectControlLikeProps,
@@ -26,9 +29,12 @@ export type {
 	TextareaControlLikeProps,
 	ToggleControlLikeProps,
 	TypedAttributeUpdater,
+	UsePersistentBlockIdentityOptions,
+	UsePersistentBlockIdentityResult,
 	UseEditorFieldsResult,
 } from "./inspector-runtime-types.js";
 export {
+	usePersistentBlockIdentity,
 	useEditorFields,
 	useTypedAttributeUpdater,
 } from "./inspector-runtime-model.js";
