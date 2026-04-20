@@ -451,6 +451,29 @@ function ensureUniqueAncestorChain(
 	} );
 }
 
+function validateAncestorChain(
+	ancestorChain: ExistingCompoundChild[]
+) {
+	for ( let index = 0; index < ancestorChain.length - 1; index += 1 ) {
+		const currentAncestor = ancestorChain[ index ];
+		const nextAncestor = ancestorChain[ index + 1 ];
+		const blockJson = readBlockJsonDocument( currentAncestor.blockJsonPath );
+		const allowedBlocks = Array.isArray( blockJson.allowedBlocks )
+			? blockJson.allowedBlocks.filter(
+				( value ): value is string => typeof value === 'string'
+			)
+			: [];
+
+		if ( allowedBlocks.includes( nextAncestor.blockName ) ) {
+			continue;
+		}
+
+		throw new Error(
+			`Invalid ancestor chain: ${ currentAncestor.blockName } does not currently allow ${ nextAncestor.blockName } as a direct child.`
+		);
+	}
+}
+
 function updateAllowedBlocks(
 	filePath: string,
 	blockName: string
@@ -875,6 +898,7 @@ function main() {
 			resolveExistingCompoundChild( value, existingChildren )
 		)
 	);
+	validateAncestorChain( ancestorChain );
 	const childTitle = title?.trim().length ? title.trim() : toTitleCase( normalizedSlug );
 	const childFolderSlug = `${ PARENT_BLOCK_SLUG }-${ normalizedSlug }`;
 	const childBlockName = `${ PARENT_BLOCK_NAME }-${ normalizedSlug }`;

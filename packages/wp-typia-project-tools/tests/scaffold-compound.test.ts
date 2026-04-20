@@ -1227,11 +1227,9 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(newChildBlockJson.icon).toBe('excerpt-view');
       expect(blockConfig).toContain('demo-compound-add-child-faq-item');
       expect(blockConfig).toContain('DemoCompoundAddChildFaqItemAttributes');
-      expect(childrenRegistry).toContain(
-        'create-block/demo-compound-add-child-faq-item',
+      expect(childrenRegistry).toMatch(
+        /blockName:\s*["']create-block\/demo-compound-add-child-faq-item["'][\s\S]*?placement:\s*["']root["'][\s\S]*?templateInstances:\s*\[\]/u,
       );
-      expect(childrenRegistry).toContain("placement: 'root'");
-      expect(childrenRegistry).toContain('templateInstances: []');
       expect(newChildHooks).toContain('createUseTypiaValidationHook');
       expect(newChildValidators).toContain('createTemplateValidatorToolkit');
       expect(newChildValidators).not.toContain(
