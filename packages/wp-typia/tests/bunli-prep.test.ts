@@ -44,6 +44,20 @@ describe("wp-typia Bunli preparation", () => {
 		expect(fs.existsSync(path.join(packageRoot, ".bunli", "commands.gen.ts"))).toBe(true);
 	});
 
+	test("runtime rebuild fallback targets linked workspace packages from the repo root", () => {
+		const runtimeBuildScript = fs.readFileSync(
+			path.join(packageRoot, "scripts", "build-bunli-runtime.ts"),
+			"utf8",
+		);
+
+		expect(runtimeBuildScript).toContain('const repoRoot = path.resolve(packageRoot, "..", "..");');
+		expect(runtimeBuildScript).toContain('Bun.which("bun") ?? process.execPath');
+		expect(runtimeBuildScript).toContain('@wp-typia/api-client');
+		expect(runtimeBuildScript).toContain('@wp-typia/block-runtime');
+		expect(runtimeBuildScript).toContain('@wp-typia/project-tools');
+		expect(runtimeBuildScript).toContain('Failed to build ${buildStep.label}');
+	});
+
 	test("future Bunli command tree preserves the reserved top-level taxonomy", async () => {
 		expect(WP_TYPIA_FUTURE_COMMAND_TREE.map((command) => command.name)).toEqual(
 			Array.from(WP_TYPIA_TOP_LEVEL_COMMAND_NAMES),
