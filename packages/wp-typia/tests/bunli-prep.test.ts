@@ -112,7 +112,7 @@ describe('wp-typia Bunli preparation', () => {
     expect(runtimeBuildScript).toContain("chunk: '[name]-[hash].[ext]'");
     expect(runtimeBuildScript).toContain("entry: '[name].[ext]'");
     expect(runtimeBuildScript).toContain('root: buildRoot');
-    expect(runtimeBuildScript).toContain('splitting: true');
+    expect(runtimeBuildScript).toContain('splitting: false');
   });
 
   test('future Bunli command tree preserves the reserved top-level taxonomy', async () => {

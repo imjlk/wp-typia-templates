@@ -299,7 +299,11 @@ async function buildFullBunliRuntime() {
     outdir,
     root: buildRoot,
     sourcemap: buildConfig.sourcemap ? 'external' : 'none',
-    splitting: true,
+    // Keep the published full Bunli runtime as one stable entry bundle.
+    // Linked example/workspace installs can resolve Bun dependencies through
+    // different absolute store paths, which makes code-split chunk filenames
+    // collide even when the main cli entry remains stable.
+    splitting: false,
     target: 'bun',
   });
 
