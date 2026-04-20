@@ -158,7 +158,10 @@ describe("wp-typia package", () => {
 	test("owns the canonical CLI bin and keeps project-tools as a library dependency", () => {
 		expect(packageManifest.name).toBe("wp-typia");
 		expect(packageManifest.bin["wp-typia"]).toBe("bin/wp-typia.js");
+		expect(packageManifest.dependencies["@wp-typia/block-runtime"]).toBeDefined();
+		expect(packageManifest.dependencies["@wp-typia/block-types"]).toBeDefined();
 		expect(packageManifest.dependencies["@wp-typia/project-tools"]).toBe(projectToolsPackageManifest.version);
+		expect(packageManifest.dependencies["@wp-typia/rest"]).toBeDefined();
 		expect(projectToolsPackageManifest.bin).toBeUndefined();
 		expect(projectToolsPackageManifest.exports["./cli"]).toBeUndefined();
 		expect(projectToolsPackageManifest.exports["./cli-add"]).toBeDefined();

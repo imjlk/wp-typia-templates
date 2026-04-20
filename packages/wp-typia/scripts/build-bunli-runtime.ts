@@ -290,14 +290,9 @@ async function buildFullBunliRuntime() {
     entrypoints: [fullRuntimeEntrypoint],
     external: WP_TYPIA_EXTERNALS,
     format: 'esm',
-    naming: {
-      asset: '[dir]/[name]-[hash].[ext]',
-      chunk: '[dir]/[name]-[hash].[ext]',
-      entry: '[dir]/[name].[ext]',
-    },
     outdir,
     sourcemap: buildConfig.sourcemap ? 'external' : 'none',
-    splitting: true,
+    splitting: false,
     target: 'bun',
   });
 
