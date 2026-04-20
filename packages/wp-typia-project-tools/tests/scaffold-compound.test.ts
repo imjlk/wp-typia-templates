@@ -238,6 +238,9 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(parentBlockJson.version).toBe('0.1.0');
       expect(parentBlockJson.category).toBe('widgets');
       expect(parentBlockJson.icon).toBe('screenoptions');
+      expect(parentBlockJson.allowedBlocks).toEqual([
+        'create-block/demo-compound-item',
+      ]);
       expect(parentManifest.sourceType).toBe('DemoCompoundAttributes');
       expect(parentManifest.attributes.heading.typia.defaultValue).toBe(
         'Demo Compound',
@@ -304,12 +307,15 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       );
       expect(generatedValidatorToolkit).not.toContain('typia.createValidate');
       expect(parentChildren).toContain('DEFAULT_CHILD_BLOCK_NAME');
+      expect(parentChildren).toContain('COMPOUND_CHILD_SPECS');
+      expect(parentChildren).toContain('getChildAllowedBlocks');
+      expect(parentChildren).toContain('hasNestedChildBlocks');
       expect(parentChildren).toContain(
         '@wp-typia/block-types/blocks/registration',
       );
       expect(parentChildren).toContain('BlockTemplate');
       expect(parentChildren).toContain(
-        'add-child: insert new allowed child block names here',
+        'add-child: insert new child specs here',
       );
       expect(parentStyle).toContain('.wp-block-create-block-demo-compound');
       expect(parentStyle).toContain(
@@ -325,6 +331,8 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(childEdit).toContain('}: EditProps )');
       expect(childEdit).toContain('useTypiaValidation');
       expect(childEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
+      expect(childEdit).toContain('hasNestedChildBlocks( metadata.name )');
+      expect(childEdit).toContain("from '../demo-compound/children'");
       expect(childEdit).toContain(
         'wp-block-create-block-demo-compound-item__title',
       );
@@ -385,9 +393,12 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(addChildScript).toContain(
         "import currentManifest from './manifest-defaults-document';",
       );
-      expect(addChildScript).toContain('ALLOWED_CHILD_MARKER');
+      expect(addChildScript).toContain('CHILD_SPEC_MARKER');
       expect(addChildScript).toContain('BLOCK_CONFIG_MARKER');
       expect(addChildScript).toContain('buildBlockCssClassName');
+      expect(addChildScript).toContain('--ancestor');
+      expect(addChildScript).toContain('--container');
+      expect(addChildScript).toContain('--inserter');
       expect(generatedWebpackConfig).toContain('createTypiaWebpackConfig');
       expect(readme).toContain('npm run sync');
       expect(readme).toContain('npm run sync-types');
@@ -937,7 +948,7 @@ describe('@wp-typia/project-tools scaffold compound', () => {
         'manifest as ManifestDefaultsDocument',
       );
       expect(generatedValidatorToolkit).not.toContain('typia.createValidate');
-      expect(generatedAddChild).toContain('ALLOWED_CHILD_MARKER');
+      expect(generatedAddChild).toContain('CHILD_SPEC_MARKER');
       expect(generatedAddChild).toContain('buildScaffoldBlockRegistration');
       expect(generatedAddChild).toContain(
         'registerScaffoldBlockType( registration.name, registration.settings );',
@@ -1156,8 +1167,8 @@ describe('@wp-typia/project-tools scaffold compound', () => {
         fs
           .readFileSync(childrenRegistryPath, 'utf8')
           .replace(
-            /\t\/\/ add-child: insert new allowed child block names here/u,
-            '  // add-child: insert new allowed child block names here',
+            /\t\/\/ add-child: insert new child specs here/u,
+            '  // add-child: insert new child specs here',
           ),
         'utf8',
       );
@@ -1217,8 +1228,10 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(blockConfig).toContain('demo-compound-add-child-faq-item');
       expect(blockConfig).toContain('DemoCompoundAddChildFaqItemAttributes');
       expect(childrenRegistry).toContain(
-        "'create-block/demo-compound-add-child-faq-item'",
+        'create-block/demo-compound-add-child-faq-item',
       );
+      expect(childrenRegistry).toContain("placement: 'root'");
+      expect(childrenRegistry).toContain('templateInstances: []');
       expect(newChildHooks).toContain('createUseTypiaValidationHook');
       expect(newChildValidators).toContain('createTemplateValidatorToolkit');
       expect(newChildValidators).not.toContain(
@@ -1261,6 +1274,7 @@ describe('@wp-typia/project-tools scaffold compound', () => {
           ) ?? []
         ).length,
       ).toBe(1);
+      expect(childrenRegistry).toContain('add-child: insert new child specs here');
 
       runGeneratedScript(targetDir, 'scripts/sync-types-to-block-json.ts');
 
@@ -1275,6 +1289,108 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       );
       expect(fs.existsSync(path.join(newChildDir, 'typia-validator.php'))).toBe(
         true,
+      );
+    },
+    { timeout: 30_000 },
+  );
+
+  test(
+    'compound add-child scaffolds visible container children and nested ancestor children',
+    async () => {
+      const targetDir = path.join(tempRoot, 'demo-compound-nested');
+
+      await scaffoldProject({
+        projectDir: targetDir,
+        templateId: 'compound',
+        packageManager: 'npm',
+        noInstall: true,
+        answers: {
+          author: 'Test Runner',
+          description: 'Demo compound nested workflow',
+          namespace: 'create-block',
+          slug: 'demo-compound-nested',
+          title: 'Demo Compound Nested',
+        },
+      });
+
+      runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
+        '--slug',
+        'section',
+        '--title',
+        'Section',
+        '--container',
+        '--inserter',
+        'visible',
+      ]);
+
+      runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
+        '--slug',
+        'clause',
+        '--title',
+        'Clause',
+        '--ancestor',
+        'section',
+      ]);
+
+      const parentBlockJson = JSON.parse(
+        fs.readFileSync(
+          path.join(targetDir, 'src', 'blocks', 'demo-compound-nested', 'block.json'),
+          'utf8',
+        ),
+      );
+      const sectionDir = path.join(
+        targetDir,
+        'src',
+        'blocks',
+        'demo-compound-nested-section',
+      );
+      const clauseDir = path.join(
+        targetDir,
+        'src',
+        'blocks',
+        'demo-compound-nested-clause',
+      );
+      const sectionBlockJson = JSON.parse(
+        fs.readFileSync(path.join(sectionDir, 'block.json'), 'utf8'),
+      );
+      const clauseBlockJson = JSON.parse(
+        fs.readFileSync(path.join(clauseDir, 'block.json'), 'utf8'),
+      );
+      const sectionEdit = fs.readFileSync(path.join(sectionDir, 'edit.tsx'), 'utf8');
+      const sectionSave = fs.readFileSync(path.join(sectionDir, 'save.tsx'), 'utf8');
+      const childrenRegistry = fs.readFileSync(
+        path.join(
+          targetDir,
+          'src',
+          'blocks',
+          'demo-compound-nested',
+          'children.ts',
+        ),
+        'utf8',
+      );
+
+      expect(parentBlockJson.allowedBlocks).toEqual([
+        'create-block/demo-compound-nested-item',
+        'create-block/demo-compound-nested-section',
+      ]);
+      expect(sectionBlockJson.parent).toEqual(['create-block/demo-compound-nested']);
+      expect(sectionBlockJson.allowedBlocks).toEqual([
+        'create-block/demo-compound-nested-clause',
+      ]);
+      expect(sectionBlockJson.supports.inserter).toBe(true);
+      expect(clauseBlockJson.ancestor).toEqual([
+        'create-block/demo-compound-nested-section',
+      ]);
+      expect(clauseBlockJson.supports.inserter).toBe(true);
+      expect(sectionEdit).toContain('InnerBlocks');
+      expect(sectionEdit).toContain('hasNestedChildBlocks( metadata.name )');
+      expect(sectionSave).toContain('InnerBlocks.Content');
+      expect(childrenRegistry).toContain('key: "section"');
+      expect(childrenRegistry).toContain('key: "clause"');
+      expect(childrenRegistry).toContain('ancestorKeys: [ "section" ]');
+      expect(childrenRegistry).toContain('placement: "nested"');
+      expect(childrenRegistry).toContain(
+        'create-block/demo-compound-nested-clause',
       );
     },
     { timeout: 30_000 },
@@ -1347,9 +1463,9 @@ describe('@wp-typia/project-tools scaffold compound', () => {
     expect(childBlockJson.name).toBe('renamed-space/renamed-parent-faq-item');
     expect(childBlockJson.parent).toEqual(['renamed-space/renamed-parent']);
     expect(childBlockJson.textdomain).toBe('renamed-parent');
-    expect(childrenRegistry).toContain(
-      "'renamed-space/renamed-parent-faq-item'",
-    );
+      expect(childrenRegistry).toContain(
+        'renamed-space/renamed-parent-faq-item',
+      );
     expect(childEdit).toContain("'renamed-parent'");
   });
 

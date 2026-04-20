@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const PROJECT_ROOT = process.cwd();
 
-const ALLOWED_CHILD_MARKER = '// add-child: insert new allowed child block names here';
+const CHILD_SPEC_MARKER = '// add-child: insert new child specs here';
 const BLOCK_CONFIG_MARKER = '// add-child: insert new block config entries here';
 const CHILD_PLACEHOLDER = 'Add supporting details for this internal item.';
 const BLOCK_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
@@ -16,8 +16,10 @@ type StarterManifestDocument = {
 };
 
 type CompoundParentConfig = {
+	blockJsonPath: string;
 	blockName: string;
 	namespace: string;
+	blocksRoot: string;
 	slug: string;
 	styleImport: string;
 	textDomain: string;
@@ -25,12 +27,27 @@ type CompoundParentConfig = {
 	typeName: string;
 };
 
+type ExistingCompoundChild = {
+	blockJsonPath: string;
+	blockName: string;
+	folderSlug: string;
+	key: string;
+};
+
+type ParsedArgs = {
+	ancestorValues: string[];
+	container: boolean;
+	inserter?: 'hidden' | 'visible';
+	slug?: string;
+	title?: string;
+};
+
 function parseArgs() {
 	const args = process.argv.slice( 2 );
-	const parsed: {
-		slug?: string;
-		title?: string;
-	} = {};
+	const parsed: ParsedArgs = {
+		ancestorValues: [],
+		container: false,
+	};
 
 	for ( let index = 0; index < args.length; index += 1 ) {
 		const arg = args[ index ];
@@ -50,6 +67,31 @@ function parseArgs() {
 				throw new Error( '--title requires a value.' );
 			}
 			parsed.title = value;
+			index += 1;
+			continue;
+		}
+
+		if ( arg === '--ancestor' ) {
+			const value = args[ index + 1 ];
+			if ( ! value || value.startsWith( '--' ) ) {
+				throw new Error( '--ancestor requires a value.' );
+			}
+			parsed.ancestorValues.push( value );
+			index += 1;
+			continue;
+		}
+
+		if ( arg === '--container' ) {
+			parsed.container = true;
+			continue;
+		}
+
+		if ( arg === '--inserter' ) {
+			const value = args[ index + 1 ];
+			if ( value !== 'hidden' && value !== 'visible' ) {
+				throw new Error( "--inserter must be either 'hidden' or 'visible'." );
+			}
+			parsed.inserter = value;
 			index += 1;
 			continue;
 		}
@@ -177,8 +219,10 @@ function resolveCompoundParentConfig(): CompoundParentConfig {
 			: parentSlug;
 
 	return {
+		blockJsonPath,
 		blockName,
 		namespace,
+		blocksRoot,
 		slug: parentSlug,
 		styleImport: `../${ parentSlug }/style.scss`,
 		textDomain,
@@ -188,8 +232,10 @@ function resolveCompoundParentConfig(): CompoundParentConfig {
 }
 
 const {
+	blockJsonPath: PARENT_BLOCK_JSON_PATH,
 	blockName: PARENT_BLOCK_NAME,
 	namespace: PARENT_BLOCK_NAMESPACE,
+	blocksRoot: BLOCKS_ROOT,
 	slug: PARENT_BLOCK_SLUG,
 	styleImport: PARENT_STYLE_IMPORT,
 	textDomain: TEXT_DOMAIN,
@@ -300,50 +346,186 @@ function insertBeforeMarker( filePath: string, marker: string, insertionLines: s
 	);
 }
 
+function readBlockJsonDocument(
+	filePath: string
+): Record< string, unknown > {
+	return readJsonFile( filePath );
+}
+
+function writeBlockJsonDocument(
+	filePath: string,
+	document: Record< string, unknown >
+) {
+	fs.writeFileSync(
+		filePath,
+		`${ JSON.stringify( document, null, '\t' ) }\n`,
+		'utf8'
+	);
+}
+
+function deriveChildKey( folderSlug: string ): string {
+	if ( folderSlug.startsWith( `${ PARENT_BLOCK_SLUG }-` ) ) {
+		return folderSlug.slice( PARENT_BLOCK_SLUG.length + 1 );
+	}
+
+	return resolveValidatedBlockSlug( folderSlug );
+}
+
+function listExistingCompoundChildren(): ExistingCompoundChild[] {
+	if ( ! fs.existsSync( BLOCKS_ROOT ) ) {
+		return [];
+	}
+
+	return fs
+		.readdirSync( BLOCKS_ROOT, { withFileTypes: true } )
+		.filter( ( entry ) => entry.isDirectory() )
+		.map( ( entry ) => entry.name )
+		.filter( ( folderSlug ) => folderSlug !== PARENT_BLOCK_SLUG )
+		.filter( ( folderSlug ) => folderSlug.startsWith( `${ PARENT_BLOCK_SLUG }-` ) )
+		.map( ( folderSlug ) => {
+			const blockJsonPath = path.join( BLOCKS_ROOT, folderSlug, 'block.json' );
+			if ( ! fs.existsSync( blockJsonPath ) ) {
+				return null;
+			}
+
+			const blockJson = readBlockJsonDocument( blockJsonPath );
+			const blockName =
+				typeof blockJson.name === 'string' ? blockJson.name.trim() : '';
+			if ( blockName.length === 0 ) {
+				return null;
+			}
+
+			return {
+				blockJsonPath,
+				blockName,
+				folderSlug,
+				key: deriveChildKey( folderSlug ),
+			} satisfies ExistingCompoundChild;
+		} )
+		.filter( ( child ): child is ExistingCompoundChild => child !== null );
+}
+
+function resolveExistingCompoundChild(
+	value: string,
+	existingChildren: ExistingCompoundChild[]
+): ExistingCompoundChild {
+	const trimmedValue = value.trim();
+	if ( trimmedValue.length === 0 ) {
+		throw new Error( 'Ancestor references must not be empty.' );
+	}
+
+	const normalizedCandidate = resolveValidatedBlockSlug(
+		trimmedValue.includes( '/' )
+			? trimmedValue.slice( trimmedValue.lastIndexOf( '/' ) + 1 )
+			: trimmedValue
+	);
+	const resolved = existingChildren.find(
+		( child ) =>
+			child.blockName === trimmedValue ||
+			child.folderSlug === trimmedValue ||
+			child.key === normalizedCandidate ||
+			child.folderSlug === `${ PARENT_BLOCK_SLUG }-${ normalizedCandidate }`
+	);
+
+	if ( ! resolved ) {
+		throw new Error(
+			`Unable to resolve compound child ancestor "${ value }". Use an existing child key, folder slug, or block name.`
+		);
+	}
+
+	return resolved;
+}
+
+function ensureUniqueAncestorChain(
+	ancestors: ExistingCompoundChild[]
+): ExistingCompoundChild[] {
+	const seenKeys = new Set< string >();
+
+	return ancestors.filter( ( ancestor ) => {
+		if ( seenKeys.has( ancestor.key ) ) {
+			return false;
+		}
+
+		seenKeys.add( ancestor.key );
+		return true;
+	} );
+}
+
+function updateAllowedBlocks(
+	filePath: string,
+	blockName: string
+) {
+	const blockJson = readBlockJsonDocument( filePath );
+	const existingAllowedBlocks = Array.isArray( blockJson.allowedBlocks )
+		? blockJson.allowedBlocks.filter(
+			( value ): value is string => typeof value === 'string'
+		)
+		: [];
+
+	if ( existingAllowedBlocks.includes( blockName ) ) {
+		return;
+	}
+
+	blockJson.allowedBlocks = [ ...existingAllowedBlocks, blockName ];
+	writeBlockJsonDocument( filePath, blockJson );
+}
+
 function renderBlockJson(
 	childBlockName: string,
 	childFolderSlug: string,
-	childTitle: string
+	childTitle: string,
+	options: {
+		allowedBlocks?: string[];
+		ancestorBlockNames: string[];
+		container: boolean;
+		supportsInserter: boolean;
+	}
 ): string {
 	const childCssClassName = buildBlockCssClassName( PARENT_BLOCK_NAMESPACE, childFolderSlug );
-
-	return `${ JSON.stringify(
-		{
-			$schema: 'https://schemas.wp.org/trunk/block.json',
-			apiVersion: 3,
-			name: childBlockName,
-			version: '{{blockMetadataVersion}}',
-			title: childTitle,
-			category: '{{compoundChildCategory}}',
-			icon: '{{compoundChildIcon}}',
-			description: `Internal item block used by ${ PARENT_BLOCK_TITLE }.`,
-			parent: [ PARENT_BLOCK_NAME ],
-			example: {},
-			supports: {
-				html: false,
-				inserter: false,
-				reusable: false,
-			},
-			attributes: {
-				title: {
-					type: 'string',
-					source: 'html',
-					selector: `.${ childCssClassName }__title`,
-					default: childTitle,
-				},
-				body: {
-					type: 'string',
-					source: 'html',
-					selector: `.${ childCssClassName }__body`,
-					default: CHILD_PLACEHOLDER,
-				},
-			},
-			textdomain: TEXT_DOMAIN,
-			editorScript: 'file:./index.js',
+	const document: Record< string, unknown > = {
+		$schema: 'https://schemas.wp.org/trunk/block.json',
+		apiVersion: 3,
+		name: childBlockName,
+		version: '{{blockMetadataVersion}}',
+		title: childTitle,
+		category: '{{compoundChildCategory}}',
+		icon: '{{compoundChildIcon}}',
+		description: `Internal item block used by ${ PARENT_BLOCK_TITLE }.`,
+		example: {},
+		supports: {
+			html: false,
+			inserter: options.supportsInserter,
+			reusable: false,
 		},
-		null,
-		'\t'
-	) }\n`;
+		attributes: {
+			title: {
+				type: 'string',
+				source: 'html',
+				selector: `.${ childCssClassName }__title`,
+				default: childTitle,
+			},
+			body: {
+				type: 'string',
+				source: 'html',
+				selector: `.${ childCssClassName }__body`,
+				default: CHILD_PLACEHOLDER,
+			},
+		},
+		textdomain: TEXT_DOMAIN,
+		editorScript: 'file:./index.js',
+	};
+
+	if ( options.ancestorBlockNames.length > 0 ) {
+		document.ancestor = options.ancestorBlockNames;
+	} else {
+		document.parent = [ PARENT_BLOCK_NAME ];
+	}
+
+	if ( options.container || ( options.allowedBlocks && options.allowedBlocks.length > 0 ) ) {
+		document.allowedBlocks = options.allowedBlocks ?? [];
+	}
+
+	return `${ JSON.stringify( document, null, '\t' ) }\n`;
 }
 
 function renderTypesFile(
@@ -491,10 +673,16 @@ function renderEditFile(
 	const childCssClassName = buildBlockCssClassName( PARENT_BLOCK_NAMESPACE, childFolderSlug );
 
 	return `import type { BlockEditProps } from '@wp-typia/block-types/blocks/registration';
-import { RichText, useBlockProps } from '@wordpress/block-editor';
+import { InnerBlocks, RichText, useBlockProps } from '@wordpress/block-editor';
 import { Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
+import metadata from './block-metadata';
+import {
+\tgetChildAllowedBlocks,
+\tgetChildTemplate,
+\thasNestedChildBlocks,
+} from '../${ PARENT_BLOCK_SLUG }/children';
 import { useTypiaValidation } from './hooks';
 import type { ${ childTypeName } } from './types';
 import {
@@ -513,6 +701,9 @@ export default function Edit( {
 \t\tattributes,
 \t\tvalidate${ childInterfaceName }
 \t);
+\tconst nestedAllowedBlocks = getChildAllowedBlocks( metadata.name );
+\tconst nestedTemplate = getChildTemplate( metadata.name );
+\tconst showsNestedChildren = hasNestedChildBlocks( metadata.name );
 
 \treturn (
 \t\t<div { ...useBlockProps( { className: '${ childCssClassName }' } ) }>
@@ -539,6 +730,16 @@ export default function Edit( {
 \t\t\t\t\t</ul>
 \t\t\t\t</Notice>
 \t\t\t) }
+\t\t\t{ showsNestedChildren && (
+\t\t\t\t<div className="${ childCssClassName }__children">
+\t\t\t\t\t<InnerBlocks
+\t\t\t\t\t\tallowedBlocks={ nestedAllowedBlocks }
+\t\t\t\t\t\trenderAppender={ InnerBlocks.ButtonBlockAppender }
+\t\t\t\t\t\ttemplate={ nestedTemplate }
+\t\t\t\t\t\ttemplateLock={ false }
+\t\t\t\t\t/>
+\t\t\t\t</div>
+\t\t\t) }
 \t\t</div>
 \t);
 }
@@ -548,8 +749,10 @@ export default function Edit( {
 function renderSaveFile( childFolderSlug: string, childTypeName: string ): string {
 	const childCssClassName = buildBlockCssClassName( PARENT_BLOCK_NAMESPACE, childFolderSlug );
 
-	return `import { RichText, useBlockProps } from '@wordpress/block-editor';
+	return `import { InnerBlocks, RichText, useBlockProps } from '@wordpress/block-editor';
 
+import metadata from './block-metadata';
+import { hasNestedChildBlocks } from '../${ PARENT_BLOCK_SLUG }/children';
 import type { ${ childTypeName } } from './types';
 
 export default function Save( {
@@ -557,6 +760,8 @@ export default function Save( {
 }: {
 \tattributes: ${ childTypeName };
 } ) {
+\tconst showsNestedChildren = hasNestedChildBlocks( metadata.name );
+
 \treturn (
 \t\t<div { ...useBlockProps.save( { className: '${ childCssClassName }' } ) }>
 \t\t\t<RichText.Content
@@ -569,13 +774,18 @@ export default function Save( {
 \t\t\t\tclassName="${ childCssClassName }__body"
 \t\t\t\tvalue={ attributes.body }
 \t\t\t/>
+\t\t\t{ showsNestedChildren && (
+\t\t\t\t<div className="${ childCssClassName }__children">
+\t\t\t\t\t<InnerBlocks.Content />
+\t\t\t\t</div>
+\t\t\t) }
 \t\t</div>
 \t);
 }
 `;
 }
 
-function renderIndexFile( childTypeName: string, childFolderSlug: string ): string {
+function renderIndexFile( childTypeName: string ): string {
 return `import {
 \tregisterScaffoldBlockType,
 \ttype BlockConfiguration,
@@ -604,14 +814,67 @@ registerScaffoldBlockType( registration.name, registration.settings );
 `;
 }
 
+function renderChildSpecLines(
+	options: {
+		ancestorKeys: string[];
+		blockName: string;
+		container: boolean;
+		folderSlug: string;
+		key: string;
+		placement: 'nested' | 'root';
+		seedTemplate: boolean;
+		supportsInserter: boolean;
+		title: string;
+	}
+): string[] {
+	const templateLines =
+		options.seedTemplate
+			? [
+				'\ttemplateInstances: [',
+				'\t\t{',
+				`\t\t\tbody: ${ JSON.stringify( CHILD_PLACEHOLDER ) },`,
+				`\t\t\ttitle: ${ JSON.stringify( options.title ) },`,
+				'\t\t},',
+				'\t],',
+			]
+			: [ '\ttemplateInstances: [],' ];
+
+	return [
+		'{',
+		`\tancestorKeys: [ ${ options.ancestorKeys.map( ( value ) => JSON.stringify( value ) ).join( ', ' ) } ],`,
+		`\tblockName: ${ JSON.stringify( options.blockName ) },`,
+		`\tbodyPlaceholder: ${ JSON.stringify( CHILD_PLACEHOLDER ) },`,
+		`\tcontainer: ${ options.container ? 'true' : 'false' },`,
+		`\tfolderSlug: ${ JSON.stringify( options.folderSlug ) },`,
+		`\tkey: ${ JSON.stringify( options.key ) },`,
+		`\tplacement: ${ JSON.stringify( options.placement ) },`,
+		`\tsupportsInserter: ${ options.supportsInserter ? 'true' : 'false' },`,
+		...templateLines,
+		`\ttitle: ${ JSON.stringify( options.title ) },`,
+		'},',
+	];
+}
+
 function main() {
-	const { slug, title } = parseArgs();
+	const {
+		ancestorValues,
+		container,
+		inserter,
+		slug,
+		title,
+	} = parseArgs();
 	const normalizedSlug = slug ? resolveValidatedBlockSlug( slug ) : '';
 
 	if ( normalizedSlug.length === 0 ) {
 		throw new Error( 'Use a child slug with lowercase letters, numbers, and hyphens only.' );
 	}
 
+	const existingChildren = listExistingCompoundChildren();
+	const ancestorChain = ensureUniqueAncestorChain(
+		ancestorValues.map( ( value ) =>
+			resolveExistingCompoundChild( value, existingChildren )
+		)
+	);
 	const childTitle = title?.trim().length ? title.trim() : toTitleCase( normalizedSlug );
 	const childFolderSlug = `${ PARENT_BLOCK_SLUG }-${ normalizedSlug }`;
 	const childBlockName = `${ PARENT_BLOCK_NAME }-${ normalizedSlug }`;
@@ -628,6 +891,10 @@ function main() {
 	);
 	const blockConfigFile = path.join( PROJECT_ROOT, 'scripts', 'block-config.ts' );
 
+	if ( ancestorChain.some( ( ancestor ) => ancestor.key === normalizedSlug ) ) {
+		throw new Error( 'A child block cannot list itself as an ancestor.' );
+	}
+
 	if ( fs.existsSync( childDir ) ) {
 		throw new Error( `Child block already exists: ${ childFolderSlug }` );
 	}
@@ -638,11 +905,26 @@ function main() {
 		);
 	}
 
+	const supportsInserter =
+		inserter === 'visible'
+			? true
+			: inserter === 'hidden'
+				? false
+				: container || ancestorChain.length > 0;
+	const placement = ancestorChain.length > 0 ? 'nested' : 'root';
+	const seedTemplate = supportsInserter || container || ancestorChain.length > 0;
+	const directAllowedBlocks: string[] = [];
+
 	fs.mkdirSync( childDir, { recursive: true } );
 
 	fs.writeFileSync(
 		path.join( childDir, 'block.json' ),
-		renderBlockJson( childBlockName, childFolderSlug, childTitle ),
+		renderBlockJson( childBlockName, childFolderSlug, childTitle, {
+			allowedBlocks: directAllowedBlocks,
+			ancestorBlockNames: ancestorChain.map( ( ancestor ) => ancestor.blockName ),
+			container,
+			supportsInserter,
+		} ),
 		'utf8'
 	);
 	fs.writeFileSync(
@@ -688,14 +970,24 @@ function main() {
 	);
 	fs.writeFileSync(
 		path.join( childDir, 'index.tsx' ),
-		renderIndexFile( childTypeName, childFolderSlug ),
+		renderIndexFile( childTypeName ),
 		'utf8'
 	);
 
 	insertBeforeMarker(
 		childrenFile,
-		ALLOWED_CHILD_MARKER,
-		[ `'${ childBlockName }',` ]
+		CHILD_SPEC_MARKER,
+		renderChildSpecLines( {
+			ancestorKeys: ancestorChain.map( ( ancestor ) => ancestor.key ),
+			blockName: childBlockName,
+			container,
+			folderSlug: childFolderSlug,
+			key: normalizedSlug,
+			placement,
+			seedTemplate,
+			supportsInserter,
+			title: childTitle,
+		} )
 	);
 	insertBeforeMarker(
 		blockConfigFile,
@@ -708,6 +1000,13 @@ function main() {
 			'},',
 		]
 	);
+
+	if ( placement === 'root' ) {
+		updateAllowedBlocks( PARENT_BLOCK_JSON_PATH, childBlockName );
+	} else {
+		const directAncestor = ancestorChain[ ancestorChain.length - 1 ];
+		updateAllowedBlocks( directAncestor.blockJsonPath, childBlockName );
+	}
 
 	console.log( `✅ Added compound child block ${ childBlockName }` );
 	console.log(

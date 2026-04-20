@@ -1,8 +1,14 @@
 export const COMPOUND_CHILD_EDIT_TEMPLATE = `import type { BlockEditProps } from '@wp-typia/block-types/blocks/registration';
-import { RichText, useBlockProps } from '@wordpress/block-editor';
+import { InnerBlocks, RichText, useBlockProps } from '@wordpress/block-editor';
 import { Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
+import metadata from './block-metadata';
+import {
+\tgetChildAllowedBlocks,
+\tgetChildTemplate,
+\thasNestedChildBlocks,
+} from '../{{slugKebabCase}}/children';
 import { useTypiaValidation } from './hooks';
 import type { {{pascalCase}}ItemAttributes } from './types';
 import {
@@ -21,6 +27,9 @@ export default function Edit( {
 \t\tattributes,
 \t\tvalidate{{pascalCase}}ItemAttributes
 \t);
+\tconst nestedAllowedBlocks = getChildAllowedBlocks( metadata.name );
+\tconst nestedTemplate = getChildTemplate( metadata.name );
+\tconst showsNestedChildren = hasNestedChildBlocks( metadata.name );
 
 \treturn (
 \t\t<div { ...useBlockProps( { className: '{{compoundChildCssClassName}}' } ) }>
@@ -45,13 +54,25 @@ export default function Edit( {
 \t\t\t\t\t</ul>
 \t\t\t\t</Notice>
 \t\t\t) }
+\t\t\t{ showsNestedChildren && (
+\t\t\t\t<div className="{{compoundChildCssClassName}}__children">
+\t\t\t\t\t<InnerBlocks
+\t\t\t\t\t\tallowedBlocks={ nestedAllowedBlocks }
+\t\t\t\t\t\trenderAppender={ InnerBlocks.ButtonBlockAppender }
+\t\t\t\t\t\ttemplate={ nestedTemplate }
+\t\t\t\t\t\ttemplateLock={ false }
+\t\t\t\t\t/>
+\t\t\t\t</div>
+\t\t\t) }
 \t\t</div>
 \t);
 }
 `;
 
-export const COMPOUND_CHILD_SAVE_TEMPLATE = `import { RichText, useBlockProps } from '@wordpress/block-editor';
+export const COMPOUND_CHILD_SAVE_TEMPLATE = `import { InnerBlocks, RichText, useBlockProps } from '@wordpress/block-editor';
 
+import metadata from './block-metadata';
+import { hasNestedChildBlocks } from '../{{slugKebabCase}}/children';
 import type { {{pascalCase}}ItemAttributes } from './types';
 
 export default function Save( {
@@ -59,6 +80,8 @@ export default function Save( {
 }: {
 \tattributes: {{pascalCase}}ItemAttributes;
 } ) {
+\tconst showsNestedChildren = hasNestedChildBlocks( metadata.name );
+
 \treturn (
 \t\t<div { ...useBlockProps.save( { className: '{{compoundChildCssClassName}}' } ) }>
 \t\t\t<RichText.Content
@@ -71,6 +94,11 @@ export default function Save( {
 \t\t\t\tclassName="{{compoundChildCssClassName}}__body"
 \t\t\t\tvalue={ attributes.body }
 \t\t\t/>
+\t\t\t{ showsNestedChildren && (
+\t\t\t\t<div className="{{compoundChildCssClassName}}__children">
+\t\t\t\t\t<InnerBlocks.Content />
+\t\t\t\t</div>
+\t\t\t) }
 \t\t</div>
 \t);
 }

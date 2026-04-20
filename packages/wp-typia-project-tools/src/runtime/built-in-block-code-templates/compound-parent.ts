@@ -208,25 +208,145 @@ export const COMPOUND_CHILDREN_TEMPLATE = `import type { BlockTemplate } from '@
 
 export const DEFAULT_CHILD_BLOCK_NAME = '{{namespace}}/{{slugKebabCase}}-item';
 
-export const ALLOWED_CHILD_BLOCKS = [
-\tDEFAULT_CHILD_BLOCK_NAME,
-\t// add-child: insert new allowed child block names here
+export interface CompoundChildSpec {
+\tancestorKeys: string[];
+\tblockName: string;
+\tbodyPlaceholder: string;
+\tcontainer: boolean;
+\tfolderSlug: string;
+\tkey: string;
+\tplacement: 'nested' | 'root';
+\tsupportsInserter: boolean;
+\ttemplateInstances: Array< Record< string, unknown > >;
+\ttitle: string;
+}
+
+const ROOT_BLOCK_NAME = '{{namespace}}/{{slugKebabCase}}';
+
+export const COMPOUND_CHILD_SPECS: CompoundChildSpec[] = [
+\t{
+\t\tancestorKeys: [],
+\t\tblockName: DEFAULT_CHILD_BLOCK_NAME,
+\t\tbodyPlaceholder: 'Add supporting details for this internal item.',
+\t\tcontainer: false,
+\t\tfolderSlug: '{{slugKebabCase}}-item',
+\t\tkey: 'item',
+\t\tplacement: 'root',
+\t\tsupportsInserter: false,
+\t\ttemplateInstances: [
+\t\t\t{
+\t\t\t\tbody: 'Add supporting details for the first internal item.',
+\t\t\t\ttitle: 'First Item',
+\t\t\t},
+\t\t\t{
+\t\t\t\tbody: 'Add supporting details for the second internal item.',
+\t\t\t\ttitle: 'Second Item',
+\t\t\t},
+\t\t],
+\t\ttitle: '{{compoundChildTitle}}',
+\t},
+\t// add-child: insert new child specs here
 ];
 
-export const DEFAULT_CHILD_TEMPLATE: BlockTemplate = [
-\t[
-\t\tDEFAULT_CHILD_BLOCK_NAME,
-\t\t{
-\t\t\tbody: 'Add supporting details for the first internal item.',
-\t\t\ttitle: 'First Item',
-\t\t},
-\t],
-\t[
-\t\tDEFAULT_CHILD_BLOCK_NAME,
-\t\t{
-\t\t\tbody: 'Add supporting details for the second internal item.',
-\t\t\ttitle: 'Second Item',
-\t\t},
-\t],
-];
+function getChildSpecByKey( key: string ): CompoundChildSpec | undefined {
+\treturn COMPOUND_CHILD_SPECS.find( ( spec ) => spec.key === key );
+}
+
+function buildTemplateEntriesForSpec( spec: CompoundChildSpec ): BlockTemplate {
+\tconst nestedTemplate = buildNestedTemplateForKey( spec.key );
+
+\treturn spec.templateInstances.map( ( attributes ) =>
+\t\tnestedTemplate.length > 0
+\t\t\t? [ spec.blockName, attributes, nestedTemplate ]
+\t\t\t: [ spec.blockName, attributes ]
+\t);
+}
+
+function buildNestedTemplateForKey( key: string ): BlockTemplate {
+\treturn COMPOUND_CHILD_SPECS.filter(
+\t\t( spec ) =>
+\t\t\tspec.placement === 'nested' &&
+\t\t\tspec.ancestorKeys[ spec.ancestorKeys.length - 1 ] === key
+\t).flatMap( ( spec ) => buildTemplateEntriesForSpec( spec ) );
+}
+
+export const ALLOWED_CHILD_BLOCKS = COMPOUND_CHILD_SPECS.filter(
+\t( spec ) => spec.placement === 'root'
+).map( ( spec ) => spec.blockName );
+
+export const DEFAULT_CHILD_TEMPLATE: BlockTemplate =
+\tCOMPOUND_CHILD_SPECS.filter( ( spec ) => spec.placement === 'root' ).flatMap(
+\t\t( spec ) => buildTemplateEntriesForSpec( spec )
+\t);
+
+export function getChildSpec( blockName: string ): CompoundChildSpec | undefined {
+\treturn COMPOUND_CHILD_SPECS.find( ( spec ) => spec.blockName === blockName );
+}
+
+export function getChildAllowedBlocks(
+\tblockName: string
+): string[] | undefined {
+\tconst childSpec = getChildSpec( blockName );
+\tif ( ! childSpec ) {
+\t\treturn undefined;
+\t}
+
+\tconst directDescendants = COMPOUND_CHILD_SPECS.filter(
+\t\t( spec ) =>
+\t\t\tspec.placement === 'nested' &&
+\t\t\tspec.ancestorKeys[ spec.ancestorKeys.length - 1 ] === childSpec.key
+\t).map( ( spec ) => spec.blockName );
+
+\tif ( directDescendants.length > 0 ) {
+\t\treturn directDescendants;
+\t}
+
+\treturn childSpec.container ? [] : undefined;
+}
+
+export function getChildAncestorBlockNames(
+\tblockName: string
+): string[] | undefined {
+\tconst childSpec = getChildSpec( blockName );
+\tif ( ! childSpec || childSpec.ancestorKeys.length === 0 ) {
+\t\treturn undefined;
+\t}
+
+\treturn childSpec.ancestorKeys.flatMap( ( key ) => {
+\t\tconst ancestorSpec = getChildSpecByKey( key );
+\t\treturn ancestorSpec ? [ ancestorSpec.blockName ] : [];
+\t} );
+}
+
+export function getChildTemplate(
+\tblockName: string
+): BlockTemplate | undefined {
+\tconst childSpec = getChildSpec( blockName );
+\tif ( ! childSpec ) {
+\t\treturn undefined;
+\t}
+
+\tconst nestedTemplate = buildNestedTemplateForKey( childSpec.key );
+\tif ( nestedTemplate.length > 0 ) {
+\t\treturn nestedTemplate;
+\t}
+
+\treturn childSpec.container ? [] : undefined;
+}
+
+export function hasNestedChildBlocks( blockName: string ): boolean {
+\tconst childSpec = getChildSpec( blockName );
+\tif ( ! childSpec ) {
+\t\treturn false;
+\t}
+
+\treturn childSpec.container || buildNestedTemplateForKey( childSpec.key ).length > 0;
+}
+
+export function isRootCompoundChildBlock( blockName: string ): boolean {
+\tconst childSpec = getChildSpec( blockName );
+\treturn childSpec?.placement === 'root';
+}
+
+export { ROOT_BLOCK_NAME };
 `;
