@@ -104,9 +104,14 @@ describe('wp-typia Bunli preparation', () => {
     expect(runtimeBuildScript).toContain(
       'wp-typia runtime alias artifacts still missing after rebuild',
     );
+    expect(runtimeBuildScript).toContain(
+      'const buildRoot = path.parse(packageRoot).root;',
+    );
     expect(runtimeBuildScript).toContain("naming: {");
     expect(runtimeBuildScript).toContain("asset: '[dir]/[name]-[hash].[ext]'");
     expect(runtimeBuildScript).toContain("chunk: '[name]-[hash].[ext]'");
+    expect(runtimeBuildScript).toContain("entry: '[name].[ext]'");
+    expect(runtimeBuildScript).toContain('root: buildRoot');
     expect(runtimeBuildScript).toContain('splitting: true');
   });
 

@@ -21,6 +21,7 @@ const generatedMetadataEntrypoint = path.resolve(
   'commands.gen.ts',
 );
 const nodeRuntimeEntrypoint = path.resolve(packageRoot, 'src', 'node-cli.ts');
+const buildRoot = path.parse(packageRoot).root;
 const outdir = path.resolve(packageRoot, buildConfig.outdir);
 const generatedMetadataOutdir = path.join(outdir, '.bunli');
 const requireFromWpTypia = createRequire(
@@ -293,8 +294,10 @@ async function buildFullBunliRuntime() {
     naming: {
       asset: '[dir]/[name]-[hash].[ext]',
       chunk: '[name]-[hash].[ext]',
+      entry: '[name].[ext]',
     },
     outdir,
+    root: buildRoot,
     sourcemap: buildConfig.sourcemap ? 'external' : 'none',
     splitting: true,
     target: 'bun',
