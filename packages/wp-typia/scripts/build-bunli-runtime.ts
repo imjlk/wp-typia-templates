@@ -127,10 +127,13 @@ async function ensureRuntimeBuildDependencies() {
 		return;
 	}
 
-	const buildSteps =
-		(await fileExists(projectToolsPackageRoot))
-			? getRuntimeDependencyBuildSteps()
-			: [];
+	const siblingRoots = [
+		apiClientPackageRoot,
+		blockRuntimePackageRoot,
+		projectToolsPackageRoot,
+	];
+	const siblingRootsExist = await Promise.all(siblingRoots.map((rootPath) => fileExists(rootPath)));
+	const buildSteps = siblingRootsExist.every(Boolean) ? getRuntimeDependencyBuildSteps() : [];
 
 	if (buildSteps.length === 0) {
 		throw new Error(
@@ -150,7 +153,9 @@ async function ensureRuntimeBuildDependencies() {
 		}
 
 		throw new Error(
-			`Failed to build ${buildStep.label} while recovering wp-typia runtime aliases: ${missingArtifacts.join(", ")}`,
+			`Failed to build ${buildStep.label} while recovering wp-typia runtime aliases: ${missingArtifacts.join(", ")}${
+				buildResult.error ? ` (${buildResult.error.message})` : ""
+			}`,
 		);
 	}
 
