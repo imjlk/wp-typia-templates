@@ -54,10 +54,7 @@ export function getTemplateVariableContext(variables: {
 export async function detectTemplateSourceFormat(
   sourceDir: string,
 ): Promise<TemplateSourceFormat> {
-  if (
-    fs.existsSync(path.join(sourceDir, 'package.json.mustache')) ||
-    getTemplateProjectType(sourceDir) !== null
-  ) {
+  if (fs.existsSync(path.join(sourceDir, 'package.json.mustache'))) {
     return 'wp-typia'
   }
 
@@ -69,6 +66,10 @@ export async function detectTemplateSourceFormat(
 
   if (getExternalTemplateEntry(sourceDir)) {
     return 'create-block-external'
+  }
+
+  if (getTemplateProjectType(sourceDir) !== null) {
+    return 'wp-typia'
   }
 
   const sourceRoot = fs.existsSync(path.join(sourceDir, 'src'))

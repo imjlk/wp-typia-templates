@@ -536,6 +536,36 @@ test("official workspace templates accept local path references with migration U
   expect(packageJson.scripts["migration:doctor"]).toContain("wp-typia");
 });
 
+test("workspace-shaped direct wp-typia templates accept local path references with migration UI", async () => {
+  const targetDir = path.join(tempRoot, "demo-external-workspace-template-local-path");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: path.join(createBlockExternalFixturePath, "plugin-templates"),
+    packageManager: "npm",
+    noInstall: true,
+    withMigrationUi: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo external workspace local path",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-external-workspace-template-local-path",
+      textDomain: "demo-space",
+      title: "Demo External Workspace Template Local Path",
+    },
+  });
+
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+  );
+
+  expect(packageJson.wpTypia?.templatePackage).toBe(
+    "@scope/external-workspace-template"
+  );
+  expect(packageJson.scripts["migration:doctor"]).toContain("wp-typia");
+});
+
 test("official workspace template escapes apostrophes in pattern category labels", async () => {
   const targetDir = path.join(tempRoot, "johns-workspace-template");
 

@@ -75,6 +75,8 @@ export async function resolveTemplateSource(
         )
       }
       normalizedSeed = await normalizeWpTypiaTemplateSeed(seed)
+      const supportsMigrationUi =
+        getTemplateProjectType(seed.blockDir) === 'workspace'
       return {
         id: templateId,
         defaultCategory: getDefaultCategory(seed.blockDir),
@@ -82,6 +84,7 @@ export async function resolveTemplateSource(
         features: ['Remote source', 'wp-typia format'],
         format,
         isOfficialWorkspaceTemplate,
+        supportsMigrationUi,
         templateDir: normalizedSeed.blockDir,
         cleanup: normalizedSeed.cleanup,
       }
