@@ -22,6 +22,9 @@ const generatedMetadataEntrypoint = path.resolve(
 );
 const nodeRuntimeEntrypoint = path.resolve(packageRoot, 'src', 'node-cli.ts');
 const buildRoot = path.parse(packageRoot).root;
+const isLinkedInstalledWpTypiaRuntime = packageRoot.includes(
+  `${path.sep}node_modules${path.sep}.bun${path.sep}`,
+);
 const outdir = path.resolve(packageRoot, buildConfig.outdir);
 const generatedMetadataOutdir = path.join(outdir, '.bunli');
 const requireFromWpTypia = createRequire(
@@ -293,16 +296,17 @@ async function buildFullBunliRuntime() {
     format: 'esm',
     naming: {
       asset: '[dir]/[name]-[hash].[ext]',
-      // Preserve directory context for split chunks so linked generated-project
-      // rebuilds do not collapse distinct Bun dependency graphs onto the same
-      // output path when absolute store roots differ across environments.
-      chunk: '[dir]/[name]-[hash].[ext]',
+      chunk: '[name]-[hash].[ext]',
       entry: '[name].[ext]',
     },
     outdir,
     root: buildRoot,
     sourcemap: buildConfig.sourcemap ? 'external' : 'none',
-    splitting: true,
+    // Keep the repo-owned runtime split so canonical help/completion flows
+    // avoid eagerly resolving heavy external runtime packages, but collapse
+    // linked installed-package rebuilds into a single file to avoid Bun asset
+    // path collisions inside `.bun` store copies used by generated smoke.
+    splitting: !isLinkedInstalledWpTypiaRuntime,
     target: 'bun',
   });
 
