@@ -1394,6 +1394,48 @@ describe('@wp-typia/project-tools scaffold compound', () => {
     { timeout: 30_000 },
   );
 
+  test(
+    'compound add-child rejects nesting under hidden unseeded ancestor children',
+    async () => {
+      const targetDir = path.join(tempRoot, 'demo-compound-unreachable-nested');
+
+      await scaffoldProject({
+        projectDir: targetDir,
+        templateId: 'compound',
+        packageManager: 'npm',
+        noInstall: true,
+        answers: {
+          author: 'Test Runner',
+          description: 'Demo compound unreachable nested workflow',
+          namespace: 'create-block',
+          slug: 'demo-compound-unreachable-nested',
+          title: 'Demo Compound Unreachable Nested',
+        },
+      });
+
+      runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
+        '--slug',
+        'faq-item',
+        '--title',
+        'FAQ Item',
+      ]);
+
+      expect(() =>
+        runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
+          '--slug',
+          'follow-up',
+          '--title',
+          'Follow Up',
+          '--ancestor',
+          'faq-item',
+        ]),
+      ).toThrow(
+        'Cannot nest descendants under create-block/demo-compound-unreachable-nested-faq-item because it is hidden and has no seeded template instances.',
+      );
+    },
+    { timeout: 30_000 },
+  );
+
   test('compound add-child reads live parent metadata from disk', async () => {
     const targetDir = path.join(tempRoot, 'demo-compound-live-parent');
 

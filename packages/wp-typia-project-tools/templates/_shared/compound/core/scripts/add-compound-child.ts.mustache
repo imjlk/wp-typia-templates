@@ -474,6 +474,60 @@ function validateAncestorChain(
 	}
 }
 
+function findCompoundChildSpecSource(
+	childrenRegistrySource: string,
+	childKey: string
+): string | null {
+	const childSpecPattern = /\{[\s\S]*?key:\s*["'][^"']+["'][\s\S]*?\n\s*\},/g;
+
+	for ( const match of childrenRegistrySource.matchAll( childSpecPattern ) ) {
+		const candidate = match[ 0 ];
+		if (
+			candidate.includes( `key: "${ childKey }"` ) ||
+			candidate.includes( `key: '${ childKey }'` )
+		) {
+			return candidate;
+		}
+	}
+
+	return null;
+}
+
+function validateAncestorInstantiability(
+	childrenFile: string,
+	ancestorChain: ExistingCompoundChild[]
+) {
+	if ( ancestorChain.length === 0 ) {
+		return;
+	}
+
+	const childrenRegistrySource = fs.readFileSync( childrenFile, 'utf8' );
+
+	for ( const ancestor of ancestorChain ) {
+		const childSpecSource = findCompoundChildSpecSource(
+			childrenRegistrySource,
+			ancestor.key
+		);
+		if ( ! childSpecSource ) {
+			continue;
+		}
+
+		const supportsInserterMatch = childSpecSource.match(
+			/supportsInserter:\s*(true|false)/
+		);
+		const supportsInserter = supportsInserterMatch?.[ 1 ] === 'true';
+		const hasTemplateInstances = ! /templateInstances:\s*\[\s*\]/.test( childSpecSource );
+
+		if ( supportsInserter || hasTemplateInstances ) {
+			continue;
+		}
+
+		throw new Error(
+			`Cannot nest descendants under ${ ancestor.blockName } because it is hidden and has no seeded template instances. Re-add or promote that child with a visible inserter or a seeded template first.`
+		);
+	}
+}
+
 function updateAllowedBlocks(
 	filePath: string,
 	blockName: string
@@ -928,6 +982,8 @@ function main() {
 			'This command expects a compound scaffold with src/blocks/<parent>/children.ts and scripts/block-config.ts.'
 		);
 	}
+
+	validateAncestorInstantiability( childrenFile, ancestorChain );
 
 	const supportsInserter =
 		inserter === 'visible'
