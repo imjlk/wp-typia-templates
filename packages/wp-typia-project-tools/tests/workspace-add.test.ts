@@ -2221,6 +2221,228 @@ test("binding source rollback restores an existing src/bindings/index.js registr
   ).toBe(false);
 }, 15_000);
 
+test("canonical CLI can add a plugin-level REST resource to an official workspace template", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-rest-resource");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add rest resource",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-rest-resource",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Rest Resource",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "rest-resource",
+      "snapshots",
+      "--namespace",
+      "demo-space/v1",
+      "--methods",
+      "list,read,create,update,delete",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const bootstrapSource = fs.readFileSync(
+    path.join(targetDir, "demo-workspace-add-rest-resource.php"),
+    "utf8"
+  );
+  const typesSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "snapshots", "api-types.ts"),
+    "utf8"
+  );
+  const validatorsSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "snapshots", "api-validators.ts"),
+    "utf8"
+  );
+  const apiSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "snapshots", "api.ts"),
+    "utf8"
+  );
+  const dataSource = fs.readFileSync(
+    path.join(targetDir, "src", "rest", "snapshots", "data.ts"),
+    "utf8"
+  );
+  const phpSource = fs.readFileSync(
+    path.join(targetDir, "inc", "rest", "snapshots.php"),
+    "utf8"
+  );
+
+  expect(blockConfigSource).toContain('slug: "snapshots"');
+  expect(blockConfigSource).toContain('namespace: "demo-space/v1"');
+  expect(blockConfigSource).toContain('methods: [ "list", "read", "create", "update", "delete" ]');
+  expect(blockConfigSource).toContain('apiFile: "src/rest/snapshots/api.ts"');
+  expect(blockConfigSource).toContain('phpFile: "inc/rest/snapshots.php"');
+  expect(blockConfigSource).toContain("defineEndpointManifest");
+  expect(bootstrapSource).toContain("function demo_space_register_rest_resources()");
+  expect(bootstrapSource).toContain("inc/rest/*.php");
+  expect(typesSource).toContain("export interface SnapshotsListQuery");
+  expect(typesSource).toContain("export interface SnapshotsDeleteResponse");
+  expect(validatorsSource).toContain("apiValidators");
+  expect(validatorsSource).toContain("listQuery");
+  expect(validatorsSource).toContain("deleteResponse");
+  expect(apiSource).toContain("restResourceCreateEndpoint");
+  expect(apiSource).toContain("resolveRestNonce");
+  expect(dataSource).toContain("useSnapshotsListQuery");
+  expect(dataSource).toContain("useDeleteSnapshotsResourceMutation");
+  expect(phpSource).toContain("register_rest_route");
+  expect(phpSource).toContain("'demo-space/v1'");
+  expect(phpSource).toContain("current_user_can( 'edit_posts' )");
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "rest", "snapshots", "api-client.ts"))
+  ).toBe(true);
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "rest", "snapshots", "api.openapi.json"))
+  ).toBe(true);
+  expect(
+    fs.existsSync(
+      path.join(
+        targetDir,
+        "src",
+        "rest",
+        "snapshots",
+        "api-schemas",
+        "list-query.schema.json"
+      )
+    )
+  ).toBe(true);
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = JSON.parse(doctorOutput) as {
+    checks: Array<{ detail: string; label: string; status: string }>;
+  };
+  expect(
+    doctorChecks.checks.find((check) => check.label === "REST resource bootstrap")
+      ?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "REST resource config snapshots"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "REST resource snapshots"
+    )?.status
+  ).toBe("pass");
+
+  runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
+  typecheckGeneratedProject(targetDir);
+}, 30_000);
+
+test("rest resource workflow rejects invalid namespace and methods and preserves existing files on duplicate failure", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-rest-resource-duplicate"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace rest resource duplicate",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-rest-resource-duplicate",
+      textDomain: "demo-space",
+      title: "Demo Workspace Rest Resource Duplicate",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "rest-resource",
+          "snapshots",
+          "--namespace",
+          "DemoSpace/v1",
+        ],
+        {
+          cwd: targetDir,
+        }
+      )
+    )
+  ).toContain("REST resource namespace must use lowercase");
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "rest-resource",
+          "snapshots",
+          "--methods",
+          "list,archive",
+        ],
+        {
+          cwd: targetDir,
+        }
+      )
+    )
+  ).toContain("REST resource methods must be a comma-separated list");
+
+  runCli("node", [entryPath, "add", "rest-resource", "snapshots"], {
+    cwd: targetDir,
+  });
+
+  const originalConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const originalPhpSource = fs.readFileSync(
+    path.join(targetDir, "inc", "rest", "snapshots.php"),
+    "utf8"
+  );
+
+  expect(
+    getCommandErrorMessage(() =>
+      runCli("node", [entryPath, "add", "rest-resource", "snapshots"], {
+        cwd: targetDir,
+      })
+    )
+  ).toContain("A REST resource already exists");
+
+  expect(
+    fs.readFileSync(path.join(targetDir, "scripts", "block-config.ts"), "utf8")
+  ).toBe(originalConfigSource);
+  expect(
+    fs.readFileSync(path.join(targetDir, "inc", "rest", "snapshots.php"), "utf8")
+  ).toBe(originalPhpSource);
+}, 20_000);
+
 test("canonical CLI can add an editor plugin to an official workspace template", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-editor-plugin");
 

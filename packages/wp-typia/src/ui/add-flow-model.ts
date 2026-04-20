@@ -19,11 +19,14 @@ export const addFlowSchema = z.object({
 			"variation",
 			"pattern",
 			"binding-source",
+			"rest-resource",
 			"editor-plugin",
 			"hooked-block",
 		])
 		.default("block"),
+	methods: z.string().optional(),
 	name: z.string().optional(),
+	namespace: z.string().optional(),
 	"persistence-policy": z.string().optional(),
 	position: z.string().optional(),
 	slot: z.string().optional(),
@@ -38,6 +41,8 @@ export type AddFieldName =
 	| "template"
 	| "block"
 	| "anchor"
+	| "methods"
+	| "namespace"
 	| "position"
 	| "slot"
 	| "data-storage"
@@ -60,7 +65,9 @@ const ADD_FIELD_HEIGHTS: Record<AddFieldName, number> = {
 	block: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 	"data-storage": FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 	kind: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+	methods: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	name: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+	namespace: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	"persistence-policy": FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 	position: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 	slot: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
@@ -79,6 +86,8 @@ export function getVisibleAddFieldNames(values: Partial<AddFlowValues>): Array<A
 			return ["kind", "name"];
 		case "binding-source":
 			return ["kind", "name"];
+		case "rest-resource":
+			return ["kind", "name", "namespace", "methods"];
 		case "editor-plugin":
 			return ["kind", "name", "slot"];
 		case "hooked-block":

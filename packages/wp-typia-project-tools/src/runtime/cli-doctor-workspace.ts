@@ -25,6 +25,7 @@ const WORKSPACE_COLLECTION_IMPORT_PATTERN = /^\s*import\s+["']\.\.\/\.\.\/collec
 const WORKSPACE_BINDING_SERVER_GLOB = "/src/bindings/*/server.php";
 const WORKSPACE_BINDING_EDITOR_SCRIPT = "build/bindings/index.js";
 const WORKSPACE_BINDING_EDITOR_ASSET = "build/bindings/index.asset.php";
+const WORKSPACE_REST_RESOURCE_GLOB = "/inc/rest/*.php";
 const WORKSPACE_EDITOR_PLUGIN_EDITOR_SCRIPT = "build/editor-plugins/index.js";
 const WORKSPACE_EDITOR_PLUGIN_EDITOR_ASSET = "build/editor-plugins/index.asset.php";
 const WORKSPACE_EDITOR_PLUGIN_EDITOR_STYLE = "build/editor-plugins/style-index.css";
@@ -352,6 +353,67 @@ function checkWorkspaceBindingSourcesIndex(
 	);
 }
 
+function getWorkspaceRestResourceRequiredFiles(
+	restResource: WorkspaceInventory["restResources"][number],
+): string[] {
+	return Array.from(
+		new Set([
+			restResource.apiFile,
+			restResource.clientFile,
+			restResource.dataFile,
+			restResource.openApiFile,
+			restResource.phpFile,
+			restResource.typesFile,
+			restResource.validatorsFile,
+		]),
+	);
+}
+
+function checkWorkspaceRestResourceConfig(
+	restResource: WorkspaceInventory["restResources"][number],
+): DoctorCheck {
+	const hasNamespace = /^[a-z][a-z0-9-]*(?:\/[a-z0-9-]+)+$/u.test(restResource.namespace);
+	const hasMethods = restResource.methods.length > 0;
+
+	return createDoctorCheck(
+		`REST resource config ${restResource.slug}`,
+		hasNamespace && hasMethods ? "pass" : "fail",
+		hasNamespace && hasMethods
+			? `REST resource namespace ${restResource.namespace} with methods ${restResource.methods.join(", ")}`
+			: "REST resource namespace or methods are invalid",
+	);
+}
+
+function checkWorkspaceRestResourceBootstrap(
+	projectDir: string,
+	packageName: string,
+	phpPrefix: string,
+): DoctorCheck {
+	const packageBaseName = packageName.split("/").pop() ?? packageName;
+	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
+	if (!fs.existsSync(bootstrapPath)) {
+		return createDoctorCheck(
+			"REST resource bootstrap",
+			"fail",
+			`Missing ${path.basename(bootstrapPath)}`,
+		);
+	}
+
+	const source = fs.readFileSync(bootstrapPath, "utf8");
+	const registerFunctionName = `${phpPrefix}_register_rest_resources`;
+	const registerHook = `add_action( 'init', '${registerFunctionName}', 20 );`;
+	const hasServerGlob = source.includes(WORKSPACE_REST_RESOURCE_GLOB);
+	const hasRegisterHook = source.includes(registerHook);
+
+	return createDoctorCheck(
+		"REST resource bootstrap",
+		hasServerGlob && hasRegisterHook ? "pass" : "fail",
+		hasServerGlob && hasRegisterHook
+			? "REST resource PHP loader hook is present"
+			: "Missing REST resource PHP require glob or init hook",
+	);
+}
+
 function getWorkspaceEditorPluginRequiredFiles(
 	editorPlugin: WorkspaceInventory["editorPlugins"][number],
 ): string[] {
@@ -592,7 +654,7 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 			createDoctorCheck(
 				"Workspace inventory",
 				"pass",
-				`${inventory.blocks.length} block(s), ${inventory.variations.length} variation(s), ${inventory.patterns.length} pattern(s), ${inventory.bindingSources.length} binding source(s), ${inventory.editorPlugins.length} editor plugin(s)`,
+				`${inventory.blocks.length} block(s), ${inventory.variations.length} variation(s), ${inventory.patterns.length} pattern(s), ${inventory.bindingSources.length} binding source(s), ${inventory.restResources.length} REST resource(s), ${inventory.editorPlugins.length} editor plugin(s)`,
 			),
 		);
 
@@ -660,6 +722,26 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 					bindingSource.serverFile,
 					bindingSource.editorFile,
 				]),
+			);
+		}
+
+		if (inventory.restResources.length > 0) {
+			checks.push(
+				checkWorkspaceRestResourceBootstrap(
+					workspace.projectDir,
+					workspace.packageName,
+					workspace.workspace.phpPrefix,
+				),
+			);
+		}
+		for (const restResource of inventory.restResources) {
+			checks.push(checkWorkspaceRestResourceConfig(restResource));
+			checks.push(
+				checkExistingFiles(
+					workspace.projectDir,
+					`REST resource ${restResource.slug}`,
+					getWorkspaceRestResourceRequiredFiles(restResource),
+				),
 			);
 		}
 

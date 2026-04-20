@@ -329,6 +329,23 @@ export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
 \t// wp-typia add binding-source entries
 ];
 
+export interface WorkspaceRestResourceConfig {
+\tapiFile: string;
+\tclientFile: string;
+\tdataFile: string;
+\tmethods: string[];
+\tnamespace: string;
+\topenApiFile: string;
+\tphpFile: string;
+\tslug: string;
+\ttypesFile: string;
+\tvalidatorsFile: string;
+}
+
+export const REST_RESOURCES: WorkspaceRestResourceConfig[] = [
+\t// wp-typia add rest-resource entries
+];
+
 export interface WorkspaceEditorPluginConfig {
 \tfile: string;
 \tslug: string;
@@ -347,6 +364,9 @@ export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
       bindingSourceEntries: [
         '\t{ editorFile: "src/bindings/hero/editor.ts", serverFile: "src/bindings/hero/server.php", slug: "hero" },',
       ],
+      restResourceEntries: [
+        '\t{ apiFile: "src/rest/hero/api.ts", clientFile: "src/rest/hero/api-client.ts", dataFile: "src/rest/hero/data.ts", methods: [ "list", "read" ], namespace: "demo-space/v1", openApiFile: "src/rest/hero/api.openapi.json", phpFile: "inc/rest/hero.php", slug: "hero", typesFile: "src/rest/hero/api-types.ts", validatorsFile: "src/rest/hero/api-validators.ts" },',
+      ],
       editorPluginEntries: [
         '\t{ file: "src/editor-plugins/document-tools/index.tsx", slug: "document-tools", slot: "PluginSidebar" },',
       ],
@@ -359,6 +379,9 @@ export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
     repairedSource.match(/export const BINDING_SOURCES\b/gu)?.length
   ).toBe(1);
   expect(
+    repairedSource.match(/export const REST_RESOURCES\b/gu)?.length
+  ).toBe(1);
+  expect(
     repairedSource.match(/export const EDITOR_PLUGINS\b/gu)?.length
   ).toBe(1);
   expect(repairedSource).toContain(
@@ -367,6 +390,9 @@ export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
   expect(repairedSource).toContain("export interface WorkspacePatternConfig");
   expect(repairedSource).toContain(
     "export interface WorkspaceBindingSourceConfig"
+  );
+  expect(repairedSource).toContain(
+    "export interface WorkspaceRestResourceConfig"
   );
   expect(repairedSource).toContain(
     "export interface WorkspaceEditorPluginConfig"

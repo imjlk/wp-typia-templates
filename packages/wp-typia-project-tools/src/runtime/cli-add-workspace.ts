@@ -185,6 +185,7 @@ export {
 	runAddBindingSourceCommand,
 	runAddPatternCommand,
 } from "./cli-add-workspace-assets.js";
+export { runAddRestResourceCommand } from "./cli-add-workspace-rest.js";
 
 /**
  * Add one variation entry to an existing workspace block.

@@ -387,6 +387,34 @@ export async function executeAddCommand({
 			return payload;
 		}
 
+		if (kind === "rest-resource") {
+			if (!name) {
+				throw new Error(
+					"`wp-typia add rest-resource` requires <name>. Usage: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create>].",
+				);
+			}
+
+			const result = await addRuntime.runAddRestResourceCommand({
+				cwd,
+				methods: readOptionalStringFlag(flags, "methods"),
+				namespace: readOptionalStringFlag(flags, "namespace"),
+				restResourceName: name,
+			});
+			const payload = buildAddCompletionPayload({
+				kind: "rest-resource",
+				projectDir: result.projectDir,
+				values: {
+					methods: result.methods.join(", "),
+					namespace: result.namespace,
+					restResourceSlug: result.restResourceSlug,
+				},
+			});
+			if (emitOutput) {
+				printCompletionPayload(payload, { printLine });
+			}
+			return payload;
+		}
+
 		if (kind === "editor-plugin") {
 			if (!name) {
 				throw new Error(
@@ -455,7 +483,7 @@ export async function executeAddCommand({
 
 		if (kind !== "block") {
 			throw new Error(
-				`Unknown add kind "${kind}". Expected one of: block, variation, pattern, binding-source, editor-plugin, hooked-block.`,
+				`Unknown add kind "${kind}". Expected one of: block, variation, pattern, binding-source, rest-resource, editor-plugin, hooked-block.`,
 			);
 		}
 

@@ -34,6 +34,12 @@ describe("first-party TUI interaction models", () => {
 			"name",
 			"block",
 		]);
+		expect(getVisibleAddFieldNames({ kind: "rest-resource" })).toEqual([
+			"kind",
+			"name",
+			"namespace",
+			"methods",
+		]);
 		expect(getVisibleAddFieldNames({ kind: "hooked-block" })).toEqual([
 			"kind",
 			"name",
@@ -102,6 +108,24 @@ describe("first-party TUI interaction models", () => {
 			block: "counter-card",
 			kind: "variation",
 			name: "hero-card",
+		});
+
+		expect(
+			sanitizeAddSubmitValues({
+				anchor: "",
+				block: "",
+				kind: "rest-resource",
+				methods: " list,read,create ",
+				name: "snapshots",
+				namespace: " demo-space/v1 ",
+				position: "",
+				template: "persistence",
+			}),
+		).toEqual({
+			kind: "rest-resource",
+			methods: "list,read,create",
+			name: "snapshots",
+			namespace: "demo-space/v1",
 		});
 	});
 

@@ -27,6 +27,7 @@ export {
 	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,
 	runAddPatternCommand,
+	runAddRestResourceCommand,
 	runAddVariationCommand,
 } from "./cli-add-workspace.js";
 export { getWorkspaceBlockSelectOptions } from "./workspace-inventory.js";

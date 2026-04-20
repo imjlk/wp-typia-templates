@@ -22,6 +22,7 @@ export function formatHelpText(): string {
   wp-typia add variation <name> --block <block-slug>
   wp-typia add pattern <name>
   wp-typia add binding-source <name>
+  wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list|read|create|update|delete>]
   wp-typia add editor-plugin <name> [--slot <PluginSidebar>]
   wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>
   wp-typia migrate <init|snapshot|diff|scaffold|verify|doctor|fixtures|fuzz> [...]
@@ -41,6 +42,7 @@ Notes:
   \`add variation\` uses an existing workspace block from \`scripts/block-config.ts\`.
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
   \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.
+  \`add rest-resource\` scaffolds plugin-level TypeScript REST contracts under \`src/rest/\` and PHP route glue under \`inc/rest/\`.
   \`add editor-plugin\` scaffolds a document-level editor extension under \`src/editor-plugins/\`.
   \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.
   \`wp-typia doctor\` always checks environment readiness and reports when it only ran environment-level diagnostics; official workspace roots also get inventory and source-tree drift checks.

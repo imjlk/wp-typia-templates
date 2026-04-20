@@ -26,6 +26,22 @@ export interface WorkspaceBindingSourceConfig {
 	slug: string;
 }
 
+export interface WorkspaceRestResourceConfig {
+	apiFile: string;
+	clientFile: string;
+	dataFile: string;
+	methods: string[];
+	namespace: string;
+	openApiFile: string;
+	phpFile: string;
+	restManifest?: ReturnType<
+		typeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest
+	>;
+	slug: string;
+	typesFile: string;
+	validatorsFile: string;
+}
+
 export interface WorkspaceEditorPluginConfig {
 	file: string;
 	slug: string;
@@ -46,6 +62,10 @@ export const PATTERNS: WorkspacePatternConfig[] = [
 
 export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
 	// wp-typia add binding-source entries
+];
+
+export const REST_RESOURCES: WorkspaceRestResourceConfig[] = [
+	// wp-typia add rest-resource entries
 ];
 
 export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [

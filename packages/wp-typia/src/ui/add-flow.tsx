@@ -46,6 +46,11 @@ const kindOptions: SelectOption[] = [
 		value: "binding-source",
 	},
 	{
+		name: "rest-resource",
+		description: "Add a plugin-level typed REST resource",
+		value: "rest-resource",
+	},
+	{
 		name: "editor-plugin",
 		description: "Add a document-level editor extension shell",
 		value: "editor-plugin",
@@ -142,6 +147,8 @@ function getAddNameLabel(kind?: string): string {
 			return "Pattern name";
 		case "binding-source":
 			return "Binding source name";
+		case "rest-resource":
+			return "REST resource name";
 		case "editor-plugin":
 			return "Editor plugin name";
 		case "hooked-block":
@@ -237,6 +244,22 @@ function AddFlowFields({
 						label: "Target block",
 						name: "block" satisfies AddSelectFieldName,
 						options: workspaceBlockOptions,
+					})
+				: null,
+			visibleFields.has("namespace")
+				? createElement(FirstPartyTextField, {
+						...getWrappedFieldNeighbors(orderedVisibleFields, "namespace"),
+						key: "namespace",
+						label: "REST namespace",
+						name: "namespace",
+					})
+				: null,
+			visibleFields.has("methods")
+				? createElement(FirstPartyTextField, {
+						...getWrappedFieldNeighbors(orderedVisibleFields, "methods"),
+						key: "methods",
+						label: "Methods (comma-separated)",
+						name: "methods",
 					})
 				: null,
 			visibleFields.has("anchor")

@@ -42,6 +42,14 @@ const addOptions = {
 		description: "Local path, GitHub locator, or npm package that exposes wp-typia.layers.json for built-in block templates.",
 		schema: z.string().optional(),
 	},
+	methods: {
+		description: "Comma-separated REST resource methods for rest-resource workflows.",
+		schema: z.string().optional(),
+	},
+	namespace: {
+		description: "REST namespace for rest-resource workflows.",
+		schema: z.string().optional(),
+	},
 	"persistence-policy": {
 		description: "Persistence write policy for persistence-capable templates.",
 		schema: z.string().optional(),
@@ -62,7 +70,7 @@ const addOptions = {
 
 export const addCommand = defineCommand({
 	defaultFormat: "toon",
-	description: "Extend an official wp-typia workspace with blocks, variations, patterns, binding sources, editor plugins, or hooked blocks.",
+	description: "Extend an official wp-typia workspace with blocks, variations, patterns, binding sources, plugin-level REST resources, editor plugins, or hooked blocks.",
 	handler: async (args) => {
 		await executeAddCommand({
 			cwd: args.cwd,
@@ -103,10 +111,13 @@ export const addCommand = defineCommand({
 										| "variation"
 										| "pattern"
 										| "binding-source"
+										| "rest-resource"
 										| "editor-plugin"
 										| "hooked-block"
 										| undefined) ?? "block",
+								methods: (args.flags.methods as string | undefined) ?? "",
 								name: args.positional[1] ?? "",
+								namespace: (args.flags.namespace as string | undefined) ?? "",
 								"persistence-policy":
 									(args.flags["persistence-policy"] as string | undefined) ??
 									config["persistence-policy"],

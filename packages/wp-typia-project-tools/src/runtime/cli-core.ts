@@ -11,6 +11,7 @@
  * and `HOOKED_BLOCK_POSITION_IDS`,
  * `getWorkspaceBlockSelectOptions`, and `seedWorkspaceMigrationProject` for
  * explicit `wp-typia add` flows,
+ * `runAddRestResourceCommand` for plugin-level REST resource scaffolds,
  * `getDoctorChecks`, `runDoctor`, and `DoctorCheck` for diagnostics,
  * `createCliCommandError` and `formatCliDiagnosticError` for shared
  * non-interactive failure rendering,
@@ -43,6 +44,7 @@ export {
 	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,
 	runAddPatternCommand,
+	runAddRestResourceCommand,
 	runAddVariationCommand,
 	seedWorkspaceMigrationProject,
 } from "./cli-add.js";
