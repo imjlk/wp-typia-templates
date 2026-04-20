@@ -28,10 +28,24 @@ export const ADD_KIND_IDS = [
 	"variation",
 	"pattern",
 	"binding-source",
+	"rest-resource",
 	"hooked-block",
 	"editor-plugin",
 ] as const;
 export type AddKindId = (typeof ADD_KIND_IDS)[number];
+
+/**
+ * Supported plugin-level REST resource methods accepted by
+ * `wp-typia add rest-resource --methods`.
+ */
+export const REST_RESOURCE_METHOD_IDS = [
+	"list",
+	"read",
+	"create",
+	"update",
+	"delete",
+] as const;
+export type RestResourceMethodId = (typeof REST_RESOURCE_METHOD_IDS)[number];
 
 /**
  * Supported editor-plugin shell slots accepted by `wp-typia add editor-plugin --slot`.
@@ -51,6 +65,7 @@ export const ADD_BLOCK_TEMPLATE_IDS = [
 export type AddBlockTemplateId = (typeof ADD_BLOCK_TEMPLATE_IDS)[number];
 
 const WORKSPACE_GENERATED_SLUG_PATTERN = /^[a-z][a-z0-9-]*$/;
+export const REST_RESOURCE_NAMESPACE_PATTERN = /^[a-z][a-z0-9-]*(?:\/[a-z0-9-]+)+$/u;
 
 export interface RunAddVariationCommandOptions {
 	blockName: string;
@@ -66,6 +81,13 @@ export interface RunAddPatternCommandOptions {
 export interface RunAddBindingSourceCommandOptions {
 	bindingSourceName: string;
 	cwd?: string;
+}
+
+export interface RunAddRestResourceCommandOptions {
+	cwd?: string;
+	methods?: string;
+	namespace?: string;
+	restResourceName: string;
 }
 
 export interface RunAddHookedBlockCommandOptions {
@@ -136,6 +158,56 @@ export function assertValidGeneratedSlug(label: string, slug: string, usage: str
 	}
 
 	return slug;
+}
+
+export function assertValidRestResourceNamespace(namespace: string): string {
+	const trimmed = namespace.trim();
+	if (!trimmed) {
+		throw new Error(
+			"REST resource namespace is required. Use `--namespace <vendor/v1>` or let the workspace default apply.",
+		);
+	}
+	if (!REST_RESOURCE_NAMESPACE_PATTERN.test(trimmed)) {
+		throw new Error(
+			"REST resource namespace must use lowercase slash-separated segments like `demo-space/v1`.",
+		);
+	}
+
+	return trimmed;
+}
+
+export function resolveRestResourceNamespace(
+	workspaceNamespace: string,
+	namespace?: string,
+): string {
+	return assertValidRestResourceNamespace(namespace ?? `${workspaceNamespace}/v1`);
+}
+
+export function assertValidRestResourceMethods(
+	methods?: string,
+): RestResourceMethodId[] {
+	const rawMethods =
+		typeof methods === "string" && methods.trim().length > 0
+			? methods.split(",").map((value) => value.trim()).filter(Boolean)
+			: ["list", "read", "create"];
+	const normalizedMethods = Array.from(new Set(rawMethods));
+	const invalidMethods = normalizedMethods.filter(
+		(method) => !(REST_RESOURCE_METHOD_IDS as readonly string[]).includes(method),
+	);
+
+	if (invalidMethods.length > 0) {
+		throw new Error(
+			`REST resource methods must be a comma-separated list of: ${REST_RESOURCE_METHOD_IDS.join(", ")}.`,
+		);
+	}
+
+	if (normalizedMethods.length === 0) {
+		throw new Error(
+			"REST resource methods must include at least one of: list, read, create, update, delete.",
+		);
+	}
+
+	return normalizedMethods as RestResourceMethodId[];
 }
 
 export function assertValidHookedBlockPosition(position: string): HookedBlockPositionId {
@@ -395,6 +467,30 @@ export function assertBindingSourceDoesNotExist(
 	}
 }
 
+export function assertRestResourceDoesNotExist(
+	projectDir: string,
+	restResourceSlug: string,
+	inventory: WorkspaceInventory,
+): void {
+	const restResourceDir = path.join(projectDir, "src", "rest", restResourceSlug);
+	const restResourcePhpPath = path.join(projectDir, "inc", "rest", `${restResourceSlug}.php`);
+	if (fs.existsSync(restResourceDir)) {
+		throw new Error(
+			`A REST resource already exists at ${path.relative(projectDir, restResourceDir)}. Choose a different name.`,
+		);
+	}
+	if (fs.existsSync(restResourcePhpPath)) {
+		throw new Error(
+			`A REST resource bootstrap already exists at ${path.relative(projectDir, restResourcePhpPath)}. Choose a different name.`,
+		);
+	}
+	if (inventory.restResources.some((entry) => entry.slug === restResourceSlug)) {
+		throw new Error(
+			`A REST resource inventory entry already exists for ${restResourceSlug}. Choose a different name.`,
+		);
+	}
+}
+
 /**
  * Ensure an editor plugin scaffold does not already exist on disk or in the
  * workspace inventory.
@@ -427,6 +523,7 @@ export function formatAddHelpText(): string {
   wp-typia add variation <name> --block <block-slug>
   wp-typia add pattern <name>
   wp-typia add binding-source <name>
+  wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>]
   wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <${HOOKED_BLOCK_POSITION_IDS.join("|")}>
   wp-typia add editor-plugin <name> [--slot <${EDITOR_PLUGIN_SLOT_IDS.join("|")}>]
 
@@ -435,6 +532,7 @@ Notes:
   \`add variation\` targets an existing block slug from \`scripts/block-config.ts\`.
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
   \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.
+  \`add rest-resource\` scaffolds plugin-level TypeScript REST contracts under \`src/rest/\` and PHP route glue under \`inc/rest/\`.
   \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.
   \`add editor-plugin\` scaffolds a document-level editor extension under \`src/editor-plugins/\`.`;
 }

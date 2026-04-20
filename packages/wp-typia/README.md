@@ -10,6 +10,7 @@ Use this package for new installs:
 - `npx wp-typia create my-plugin --template @wp-typia/create-workspace-template`
 - `wp-typia add block counter-card --template basic`
 - `wp-typia add binding-source hero-data`
+- `wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create`
 - `wp-typia add hooked-block counter-card --anchor core/post-content --position after`
 
 `wp-typia <project-dir>` remains available as a backward-compatible alias to

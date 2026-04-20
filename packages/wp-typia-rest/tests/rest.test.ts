@@ -7,6 +7,7 @@ import {
 } from "../../wp-typia-api-client/src/index";
 
 import {
+	ApiClientConfigurationError,
 	RestConfigurationError,
 	RestRootResolutionError,
 	RestValidationAssertionError,
@@ -404,6 +405,133 @@ describe("@wp-typia/rest", () => {
 		expect(seenUrl).toBe("http://localhost:8889/wp-json/demo/v1/items/?page=3");
 		expect(result.isValid).toBe(true);
 		expect(result.data).toEqual({ items: [3] });
+	});
+
+	test("callEndpoint preserves query-and-body request locations for portable endpoints", async () => {
+		let seenBody = "";
+		let seenMethod = "";
+		let seenUrl = "";
+		const endpoint = {
+			...createPortableEndpoint<
+				{ body: { title: string }; query: { id: number } },
+				{ ok: boolean }
+			>({
+				method: "PATCH",
+				operationId: "updatePortableItem",
+				path: "/demo/v1/items",
+				requestLocation: "query-and-body",
+				validateRequest: (input: unknown) =>
+					typeof input === "object" &&
+					input !== null &&
+					typeof (input as { query?: { id?: unknown } }).query?.id === "number" &&
+					typeof (input as { body?: { title?: unknown } }).body?.title === "string"
+						? toPortableValidationResult<{
+								body: { title: string };
+								query: { id: number };
+							}>({
+								data: input as { body: { title: string }; query: { id: number } },
+								errors: [],
+								success: true,
+							})
+						: toPortableValidationResult<{
+								body: { title: string };
+								query: { id: number };
+							}>({
+								errors: [
+									{
+										expected: "{ query: { id: number }, body: { title: string } }",
+										path: "$",
+										value: input,
+									},
+								],
+								success: false,
+							}),
+				validateResponse: (input: unknown) =>
+					typeof input === "object" &&
+					input !== null &&
+					(input as { ok?: unknown }).ok === true
+						? toPortableValidationResult<{ ok: boolean }>({
+								data: input as { ok: boolean },
+								errors: [],
+								success: true,
+							})
+						: toPortableValidationResult<{ ok: boolean }>({
+								errors: [{ expected: "{ ok: true }", path: "$.ok", value: undefined }],
+								success: false,
+							}),
+			}),
+			buildRequestOptions: () => ({
+				url: resolveRestRouteUrl("/demo/v1/items", "http://localhost:8889/wp-json/"),
+			}),
+		};
+
+		const result = await callEndpoint(
+			endpoint,
+			{
+				body: { title: "Updated" },
+				query: { id: 7 },
+			},
+			{
+				fetchFn: asApiFetch(async (options: Record<string, unknown>) => {
+					seenBody = String(options.body);
+					seenMethod = String(options.method);
+					seenUrl = String(options.url);
+					return { ok: true } as never;
+				}),
+			},
+		);
+
+		expect(seenMethod).toBe("PATCH");
+		expect(seenUrl).toBe("http://localhost:8889/wp-json/demo/v1/items/?id=7");
+		expect(seenBody).toBe(JSON.stringify({ title: "Updated" }));
+		expect(result.isValid).toBe(true);
+		expect(result.data).toEqual({ ok: true });
+	});
+
+	test("callEndpoint rejects GET endpoints configured with requestLocation body", async () => {
+		const endpoint = {
+			...createPortableEndpoint<{ slug: string }, { ok: boolean }>({
+				method: "GET",
+				operationId: "getPortableItemBody",
+				path: "/demo/v1/items",
+				requestLocation: "body",
+				validateRequest: (input: unknown) =>
+					typeof input === "object" &&
+					input !== null &&
+					typeof (input as { slug?: unknown }).slug === "string"
+						? toPortableValidationResult<{ slug: string }>({
+								data: input as { slug: string },
+								errors: [],
+								success: true,
+							})
+						: toPortableValidationResult<{ slug: string }>({
+								errors: [{ expected: "{ slug: string }", path: "$.slug", value: undefined }],
+								success: false,
+							}),
+				validateResponse: (input: unknown) =>
+					typeof input === "object" &&
+					input !== null &&
+					(input as { ok?: unknown }).ok === true
+						? toPortableValidationResult<{ ok: boolean }>({
+								data: input as { ok: boolean },
+								errors: [],
+								success: true,
+							})
+						: toPortableValidationResult<{ ok: boolean }>({
+								errors: [{ expected: "{ ok: true }", path: "$.ok", value: undefined }],
+								success: false,
+							}),
+			}),
+			buildRequestOptions: () => ({
+				url: resolveRestRouteUrl("/demo/v1/items", "http://localhost:8889/wp-json/"),
+			}),
+		};
+
+		await expect(
+			callEndpoint(endpoint, { slug: "hero-card" }, {
+				fetchFn: asApiFetch(async () => ({ ok: true }) as never),
+			}),
+		).rejects.toBeInstanceOf(ApiClientConfigurationError);
 	});
 
 	test("build rewrites dist imports for node esm consumers", () => {

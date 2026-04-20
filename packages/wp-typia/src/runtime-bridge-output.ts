@@ -197,6 +197,7 @@ export function buildAddCompletionPayload(options: {
 		| "editor-plugin"
 		| "hooked-block"
 		| "pattern"
+		| "rest-resource"
 		| "variation";
 	projectDir: string;
 	values: Record<string, string>;
@@ -227,6 +228,16 @@ export function buildAddCompletionPayload(options: {
 					`Project directory: ${options.projectDir}`,
 				],
 				title: "✅ Added binding source",
+			};
+		case "rest-resource":
+			return {
+				summaryLines: [
+					`REST resource: ${options.values.restResourceSlug}`,
+					`Namespace: ${options.values.namespace}`,
+					`Methods: ${options.values.methods}`,
+					`Project directory: ${options.projectDir}`,
+				],
+				title: "✅ Added plugin-level REST resource",
 			};
 		case "editor-plugin":
 			return {

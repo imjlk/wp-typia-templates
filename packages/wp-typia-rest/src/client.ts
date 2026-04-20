@@ -12,12 +12,14 @@ import {
   parseResponsePayload,
 } from '@wp-typia/api-client/client-utils';
 import {
+  isPlainObject,
   isFormDataLike,
   toValidationResult,
   type ValidationLike,
   type ValidationResult,
 } from './internal/runtime-primitives.js';
 import {
+  ApiClientConfigurationError,
   RestConfigurationError,
   RestRootResolutionError,
   RestValidationAssertionError,
@@ -79,6 +81,7 @@ export interface ApiEndpoint<Req, Res> {
   buildRequestOptions?: (request: Req) => Partial<APIFetchOptions>;
   method: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
   path: string;
+  requestLocation?: 'body' | 'query' | 'query-and-body';
   validateRequest: (input: unknown) => ValidationResult<Req>;
   validateResponse: (input: unknown) => ValidationResult<Res>;
 }
@@ -220,41 +223,37 @@ async function defaultFetch<T = unknown, Parse extends boolean = true>(
   }
 }
 
-function buildEndpointFetchOptions<Req>(
+function buildQueryRequestOptions<Req>(
   endpoint: ApiEndpoint<Req, unknown>,
-  request: Req,
+  baseOptions: Partial<APIFetchOptions>,
+  request: unknown,
 ): APIFetchOptions {
-  const baseOptions = endpoint.buildRequestOptions?.(request) ?? {};
+  const query = encodeGetLikeRequest(request);
+  const resolvedUrl = baseOptions.url
+    ? joinUrlWithQuery(baseOptions.url, query)
+    : undefined;
+  return {
+    ...baseOptions,
+    method: endpoint.method,
+    ...(resolvedUrl
+      ? { path: undefined, url: resolvedUrl }
+      : { path: joinPathWithQuery(baseOptions.path ?? endpoint.path, query) }),
+  };
+}
 
-  if (endpoint.method === 'GET' || endpoint.method === 'DELETE') {
-    const query = encodeGetLikeRequest(request);
-    const resolvedUrl = baseOptions.url
-      ? joinUrlWithQuery(baseOptions.url, query)
-      : undefined;
-    return {
-      ...baseOptions,
-      method: endpoint.method,
-      ...(resolvedUrl
-        ? { url: resolvedUrl, path: undefined }
-        : {
-            path: joinPathWithQuery(baseOptions.path ?? endpoint.path, query),
-          }),
-    };
-  }
-
+function buildBodyRequestOptions<Req>(
+  endpoint: ApiEndpoint<Req, unknown>,
+  baseOptions: Partial<APIFetchOptions>,
+  request: unknown,
+): APIFetchOptions {
   if (isFormDataLike(request)) {
     return {
       ...baseOptions,
       body: request as FormData,
       method: endpoint.method,
       ...(baseOptions.url
-        ? {
-            url: baseOptions.url,
-            path: undefined,
-          }
-        : {
-            path: baseOptions.path ?? endpoint.path,
-          }),
+        ? { path: undefined, url: baseOptions.url }
+        : { path: baseOptions.path ?? endpoint.path }),
     };
   }
 
@@ -267,14 +266,75 @@ function buildEndpointFetchOptions<Req>(
     ),
     method: endpoint.method,
     ...(baseOptions.url
-      ? {
-          url: baseOptions.url,
-          path: undefined,
-        }
-      : {
-          path: baseOptions.path ?? endpoint.path,
-        }),
+      ? { path: undefined, url: baseOptions.url }
+      : { path: baseOptions.path ?? endpoint.path }),
   };
+}
+
+function resolveCombinedRequest(request: unknown): {
+  body: unknown;
+  query: unknown;
+} {
+  if (
+    !isPlainObject(request) ||
+    !Object.prototype.hasOwnProperty.call(request, 'body') ||
+    !Object.prototype.hasOwnProperty.call(request, 'query')
+  ) {
+    throw new ApiClientConfigurationError(
+      'Endpoints with requestLocation "query-and-body" require requests shaped like { query, body }.',
+    );
+  }
+
+  return {
+    body: request.body,
+    query: request.query,
+  };
+}
+
+function buildEndpointFetchOptions<Req>(
+  endpoint: ApiEndpoint<Req, unknown>,
+  request: Req,
+): APIFetchOptions {
+  const requestLocation =
+    endpoint.requestLocation ??
+    (endpoint.method === 'GET' || endpoint.method === 'DELETE'
+      ? 'query'
+      : 'body');
+
+  if (requestLocation === 'query') {
+    const baseOptions = endpoint.buildRequestOptions?.(request) ?? {};
+    return buildQueryRequestOptions(endpoint, baseOptions, request);
+  }
+
+  if (requestLocation === 'query-and-body') {
+    if (endpoint.method === 'GET') {
+      throw new ApiClientConfigurationError(
+        'requestLocation "query-and-body" is not supported for GET endpoints.',
+      );
+    }
+
+    const combinedRequest = resolveCombinedRequest(request);
+    const baseOptions = endpoint.buildRequestOptions?.(request) ?? {};
+    const bodyOptions = buildBodyRequestOptions(
+      endpoint,
+      baseOptions,
+      combinedRequest.body,
+    );
+    return buildQueryRequestOptions(
+      endpoint,
+      bodyOptions,
+      combinedRequest.query,
+    );
+  }
+
+  if (requestLocation === 'body' && endpoint.method === 'GET') {
+    throw new ApiClientConfigurationError(
+      'requestLocation "body" is not supported for GET endpoints.',
+    );
+  }
+
+  const baseOptions = endpoint.buildRequestOptions?.(request) ?? {};
+  return buildBodyRequestOptions(endpoint, baseOptions, request);
 }
 
 function mergeFetchOptions(

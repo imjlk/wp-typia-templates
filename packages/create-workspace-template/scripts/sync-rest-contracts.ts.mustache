@@ -8,7 +8,12 @@ import {
 	syncTypeSchemas,
 } from '@wp-typia/block-runtime/metadata-core';
 
-import { BLOCKS, type WorkspaceBlockConfig } from './block-config';
+import {
+	BLOCKS,
+	REST_RESOURCES,
+	type WorkspaceBlockConfig,
+	type WorkspaceRestResourceConfig,
+} from './block-config';
 
 function parseCliOptions( argv: string[] ) {
 	const options = {
@@ -39,6 +44,25 @@ function isRestEnabledBlock(
 		typeof block.openApiFile === 'string' &&
 		typeof block.restManifest === 'object' &&
 		block.restManifest !== null
+	);
+}
+
+function isWorkspaceRestResource(
+	resource: WorkspaceRestResourceConfig
+): resource is WorkspaceRestResourceConfig & {
+	clientFile: string;
+	openApiFile: string;
+	restManifest: NonNullable< WorkspaceRestResourceConfig[ 'restManifest' ] >;
+	typesFile: string;
+	validatorsFile: string;
+} {
+	return (
+		typeof resource.clientFile === 'string' &&
+		typeof resource.openApiFile === 'string' &&
+		typeof resource.typesFile === 'string' &&
+		typeof resource.validatorsFile === 'string' &&
+		typeof resource.restManifest === 'object' &&
+		resource.restManifest !== null
 	);
 }
 
@@ -73,12 +97,13 @@ async function assertTypeArtifactsCurrent( block: WorkspaceBlockConfig ) {
 async function main() {
 	const options = parseCliOptions( process.argv.slice( 2 ) );
 	const restBlocks = BLOCKS.filter( isRestEnabledBlock );
+	const restResources = REST_RESOURCES.filter( isWorkspaceRestResource );
 
-	if ( restBlocks.length === 0 ) {
+	if ( restBlocks.length === 0 && restResources.length === 0 ) {
 		console.log(
 			options.check
-				? 'ℹ️ No REST-enabled workspace blocks are registered yet. `sync-rest --check` is already clean.'
-				: 'ℹ️ No REST-enabled workspace blocks are registered yet.'
+				? 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'
+				: 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet.'
 		);
 		return;
 	}
@@ -142,10 +167,59 @@ async function main() {
 		);
 	}
 
+	for ( const resource of restResources ) {
+		const contracts = resource.restManifest.contracts;
+
+		for ( const [ baseName, contract ] of Object.entries( contracts ) ) {
+			await syncTypeSchemas(
+				{
+					jsonSchemaFile: path.join(
+						path.dirname( resource.typesFile ),
+						'api-schemas',
+						`${ baseName }.schema.json`
+					),
+					openApiFile: path.join(
+						path.dirname( resource.typesFile ),
+						'api-schemas',
+						`${ baseName }.openapi.json`
+					),
+					sourceTypeName: contract.sourceTypeName,
+					typesFile: resource.typesFile,
+				},
+				{
+					check: options.check,
+				}
+			);
+		}
+
+		await syncRestOpenApi(
+			{
+				manifest: resource.restManifest,
+				openApiFile: resource.openApiFile,
+				typesFile: resource.typesFile,
+			},
+			{
+				check: options.check,
+			}
+		);
+
+		await syncEndpointClient(
+			{
+				clientFile: resource.clientFile,
+				manifest: resource.restManifest,
+				typesFile: resource.typesFile,
+				validatorsFile: resource.validatorsFile,
+			},
+			{
+				check: options.check,
+			}
+		);
+	}
+
 	console.log(
 		options.check
-			? '✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date with the TypeScript types!'
-			: '✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated from TypeScript types!'
+			? '✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date for workspace blocks and plugin-level resources!'
+			: '✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents generated for workspace blocks and plugin-level resources!'
 	);
 }
 

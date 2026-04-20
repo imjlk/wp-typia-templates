@@ -4,6 +4,8 @@ import { readFile, writeFile } from "node:fs/promises";
 
 import ts from "typescript";
 
+import { REST_RESOURCE_METHOD_IDS } from "./cli-add-shared.js";
+
 export interface WorkspaceBlockInventoryEntry {
 	apiTypesFile?: string;
 	attributeTypeName?: string;
@@ -30,6 +32,26 @@ export interface WorkspaceBindingSourceInventoryEntry {
 }
 
 /**
+ * REST-resource entry parsed from `scripts/block-config.ts`.
+ *
+ * Each file path is stored relative to the workspace root so doctor checks and
+ * workspace mutation helpers can resolve the generated TypeScript, OpenAPI, and
+ * PHP route artifacts without guessing their locations.
+ */
+export interface WorkspaceRestResourceInventoryEntry {
+	apiFile: string;
+	clientFile: string;
+	dataFile: string;
+	methods: string[];
+	namespace: string;
+	openApiFile: string;
+	phpFile: string;
+	slug: string;
+	typesFile: string;
+	validatorsFile: string;
+}
+
+/**
  * Editor-plugin entry parsed from `scripts/block-config.ts`.
  *
  * @property file Relative path to the generated editor plugin entry file.
@@ -49,9 +71,11 @@ export interface WorkspaceInventory {
 	hasBindingSourcesSection: boolean;
 	hasEditorPluginsSection: boolean;
 	hasPatternsSection: boolean;
+	hasRestResourcesSection: boolean;
 	hasVariationsSection: boolean;
 	editorPlugins: WorkspaceEditorPluginInventoryEntry[];
 	patterns: WorkspacePatternInventoryEntry[];
+	restResources: WorkspaceRestResourceInventoryEntry[];
 	source: string;
 	variations: WorkspaceVariationInventoryEntry[];
 }
@@ -60,6 +84,7 @@ export const BLOCK_CONFIG_ENTRY_MARKER = "\t// wp-typia add block entries";
 export const VARIATION_CONFIG_ENTRY_MARKER = "\t// wp-typia add variation entries";
 export const PATTERN_CONFIG_ENTRY_MARKER = "\t// wp-typia add pattern entries";
 export const BINDING_SOURCE_CONFIG_ENTRY_MARKER = "\t// wp-typia add binding-source entries";
+export const REST_RESOURCE_CONFIG_ENTRY_MARKER = "\t// wp-typia add rest-resource entries";
 /**
  * Marker used to append generated editor-plugin entries into `EDITOR_PLUGINS`.
  */
@@ -109,6 +134,32 @@ const BINDING_SOURCES_CONST_SECTION = `
 
 export const BINDING_SOURCES: WorkspaceBindingSourceConfig[] = [
 \t// wp-typia add binding-source entries
+];
+`;
+
+const REST_RESOURCES_INTERFACE_SECTION = `
+
+export interface WorkspaceRestResourceConfig {
+\tapiFile: string;
+\tclientFile: string;
+\tdataFile: string;
+\tmethods: Array< 'list' | 'read' | 'create' | 'update' | 'delete' >;
+\tnamespace: string;
+\topenApiFile: string;
+\tphpFile: string;
+\trestManifest?: ReturnType<
+\t\ttypeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest
+\t>;
+\tslug: string;
+\ttypesFile: string;
+\tvalidatorsFile: string;
+}
+`;
+
+const REST_RESOURCES_CONST_SECTION = `
+
+export const REST_RESOURCES: WorkspaceRestResourceConfig[] = [
+\t// wp-typia add rest-resource entries
 ];
 `;
 
@@ -216,6 +267,41 @@ function getRequiredStringProperty(
 	return value;
 }
 
+function getRequiredStringArrayProperty(
+	entryName: string,
+	elementIndex: number,
+	objectLiteral: ts.ObjectLiteralExpression,
+	key: string,
+): string[] {
+	for (const property of objectLiteral.properties) {
+		if (!ts.isPropertyAssignment(property)) {
+			continue;
+		}
+		const propertyName = getPropertyNameText(property.name);
+		if (propertyName !== key) {
+			continue;
+		}
+		if (!ts.isArrayLiteralExpression(property.initializer)) {
+			throw new Error(
+				`${entryName}[${elementIndex}] must use an array literal for "${key}" in scripts/block-config.ts.`,
+			);
+		}
+
+		return property.initializer.elements.map((element, itemIndex) => {
+			if (!ts.isStringLiteralLike(element)) {
+				throw new Error(
+					`${entryName}[${elementIndex}].${key}[${itemIndex}] must use a string literal in scripts/block-config.ts.`,
+				);
+			}
+			return element.text;
+		});
+	}
+
+	throw new Error(
+		`${entryName}[${elementIndex}] is missing required "${key}" in scripts/block-config.ts.`,
+	);
+}
+
 function parseBlockEntries(arrayLiteral: ts.ArrayLiteralExpression): WorkspaceBlockInventoryEntry[] {
 	return arrayLiteral.elements.map((element, elementIndex) => {
 		if (!ts.isObjectLiteralExpression(element)) {
@@ -290,6 +376,71 @@ function parseBindingSourceEntries(
 	});
 }
 
+function parseRestResourceEntries(
+	arrayLiteral: ts.ArrayLiteralExpression,
+): WorkspaceRestResourceInventoryEntry[] {
+	return arrayLiteral.elements.map((element, elementIndex) => {
+		if (!ts.isObjectLiteralExpression(element)) {
+			throw new Error(
+				`REST_RESOURCES[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
+			);
+		}
+
+		const methods = getRequiredStringArrayProperty(
+			"REST_RESOURCES",
+			elementIndex,
+			element,
+			"methods",
+		);
+		const invalidMethods = methods.filter(
+			(method) => !(REST_RESOURCE_METHOD_IDS as readonly string[]).includes(method),
+		);
+		if (invalidMethods.length > 0) {
+			throw new Error(
+				`REST_RESOURCES[${elementIndex}].methods includes unsupported values: ${invalidMethods.join(", ")}.`,
+			);
+		}
+
+		return {
+			apiFile: getRequiredStringProperty("REST_RESOURCES", elementIndex, element, "apiFile"),
+			clientFile: getRequiredStringProperty(
+				"REST_RESOURCES",
+				elementIndex,
+				element,
+				"clientFile",
+			),
+			dataFile: getRequiredStringProperty("REST_RESOURCES", elementIndex, element, "dataFile"),
+			methods,
+			namespace: getRequiredStringProperty(
+				"REST_RESOURCES",
+				elementIndex,
+				element,
+				"namespace",
+			),
+			openApiFile: getRequiredStringProperty(
+				"REST_RESOURCES",
+				elementIndex,
+				element,
+				"openApiFile",
+			),
+			phpFile: getRequiredStringProperty("REST_RESOURCES", elementIndex, element, "phpFile"),
+			slug: getRequiredStringProperty("REST_RESOURCES", elementIndex, element, "slug"),
+			typesFile: getRequiredStringProperty(
+				"REST_RESOURCES",
+				elementIndex,
+				element,
+				"typesFile",
+			),
+			validatorsFile: getRequiredStringProperty(
+				"REST_RESOURCES",
+				elementIndex,
+				element,
+				"validatorsFile",
+			),
+		};
+	});
+}
+
 function parseEditorPluginEntries(
 	arrayLiteral: ts.ArrayLiteralExpression,
 ): WorkspaceEditorPluginInventoryEntry[] {
@@ -330,6 +481,7 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 	const variationArray = findExportedArrayLiteral(sourceFile, "VARIATIONS");
 	const patternArray = findExportedArrayLiteral(sourceFile, "PATTERNS");
 	const bindingSourceArray = findExportedArrayLiteral(sourceFile, "BINDING_SOURCES");
+	const restResourceArray = findExportedArrayLiteral(sourceFile, "REST_RESOURCES");
 	const editorPluginArray = findExportedArrayLiteral(sourceFile, "EDITOR_PLUGINS");
 	if (variationArray.found && !variationArray.array) {
 		throw new Error("scripts/block-config.ts must export VARIATIONS as an array literal.");
@@ -339,6 +491,9 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 	}
 	if (bindingSourceArray.found && !bindingSourceArray.array) {
 		throw new Error("scripts/block-config.ts must export BINDING_SOURCES as an array literal.");
+	}
+	if (restResourceArray.found && !restResourceArray.array) {
+		throw new Error("scripts/block-config.ts must export REST_RESOURCES as an array literal.");
 	}
 	if (editorPluginArray.found && !editorPluginArray.array) {
 		throw new Error("scripts/block-config.ts must export EDITOR_PLUGINS as an array literal.");
@@ -352,11 +507,15 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 		hasBindingSourcesSection: bindingSourceArray.found,
 		hasEditorPluginsSection: editorPluginArray.found,
 		hasPatternsSection: patternArray.found,
+		hasRestResourcesSection: restResourceArray.found,
 		hasVariationsSection: variationArray.found,
 		editorPlugins: editorPluginArray.array
 			? parseEditorPluginEntries(editorPluginArray.array)
 			: [],
 		patterns: patternArray.array ? parsePatternEntries(patternArray.array) : [],
+		restResources: restResourceArray.array
+			? parseRestResourceEntries(restResourceArray.array)
+			: [],
 		source,
 		variations: variationArray.array ? parseVariationEntries(variationArray.array) : [],
 	};
@@ -438,6 +597,12 @@ function ensureWorkspaceInventorySections(source: string): string {
 	if (!/export\s+const\s+BINDING_SOURCES\b/u.test(nextSource)) {
 		nextSource += BINDING_SOURCES_CONST_SECTION;
 	}
+	if (!/export\s+interface\s+WorkspaceRestResourceConfig\b/u.test(nextSource)) {
+		nextSource += REST_RESOURCES_INTERFACE_SECTION;
+	}
+	if (!/export\s+const\s+REST_RESOURCES\b/u.test(nextSource)) {
+		nextSource += REST_RESOURCES_CONST_SECTION;
+	}
 	if (!/export\s+interface\s+WorkspaceEditorPluginConfig\b/u.test(nextSource)) {
 		nextSource += EDITOR_PLUGINS_INTERFACE_SECTION;
 	}
@@ -477,6 +642,7 @@ export function updateWorkspaceInventorySource(
 		bindingSourceEntries = [],
 		editorPluginEntries = [],
 		patternEntries = [],
+		restResourceEntries = [],
 		variationEntries = [],
 		transformSource,
 	}: {
@@ -484,6 +650,7 @@ export function updateWorkspaceInventorySource(
 		bindingSourceEntries?: string[];
 		editorPluginEntries?: string[];
 		patternEntries?: string[];
+		restResourceEntries?: string[];
 		transformSource?: (source: string) => string;
 		variationEntries?: string[];
 	} = {},
@@ -499,6 +666,11 @@ export function updateWorkspaceInventorySource(
 		nextSource,
 		BINDING_SOURCE_CONFIG_ENTRY_MARKER,
 		bindingSourceEntries,
+	);
+	nextSource = appendEntriesAtMarker(
+		nextSource,
+		REST_RESOURCE_CONFIG_ENTRY_MARKER,
+		restResourceEntries,
 	);
 	nextSource = appendEntriesAtMarker(
 		nextSource,
