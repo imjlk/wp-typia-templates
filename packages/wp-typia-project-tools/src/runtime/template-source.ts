@@ -1,6 +1,3 @@
-import fs from 'node:fs'
-import path from 'node:path'
-
 import {
   OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
   isBuiltInTemplateId,
@@ -110,11 +107,8 @@ export async function resolveTemplateSource(
 
     if (format === 'create-block-external') {
       const renderedFormat =
-        fs.existsSync(
-          path.join(normalizedSeed.blockDir, 'package.json.mustache'),
-        ) || getTemplateProjectType(normalizedSeed.blockDir) !== null
-          ? 'wp-typia'
-          : await detectTemplateSourceFormat(normalizedSeed.blockDir)
+        normalizedSeed.formatHint ??
+        (await detectTemplateSourceFormat(normalizedSeed.blockDir))
       if (renderedFormat === 'wp-typia') {
         const normalized = await normalizeWpTypiaTemplateSeed(normalizedSeed)
         const supportsMigrationUi =

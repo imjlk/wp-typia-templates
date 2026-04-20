@@ -87,6 +87,7 @@ export interface SeedSource {
   assetsDir?: string
   blockDir: string
   cleanup?: () => Promise<void>
+  formatHint?: 'create-block-subset' | 'wp-typia'
   rootDir: string
   selectedVariant?: string | null
   warnings?: string[]

@@ -163,6 +163,7 @@ function resolveConfiguredTemplatePath<TView extends UnknownRecord>(
   variantConfig: Partial<TView>,
 ): {
   folderName: string
+  formatHint: 'create-block-subset' | 'wp-typia'
   templatePath: string
 } {
   const variantPluginTemplatesPath =
@@ -200,6 +201,11 @@ function resolveConfiguredTemplatePath<TView extends UnknownRecord>(
 
   return {
     folderName: configuredFolderName || '.',
+    formatHint:
+      templatePath === variantPluginTemplatesPath ||
+      templatePath === configPluginTemplatesPath
+        ? 'wp-typia'
+        : 'create-block-subset',
     templatePath,
   }
 }
@@ -257,7 +263,7 @@ export async function renderCreateBlockExternalTemplate(
     requestedVariant,
   )
 
-  const { folderName, templatePath } = resolveConfiguredTemplatePath(
+  const { folderName, formatHint, templatePath } = resolveConfiguredTemplatePath(
     config,
     variantConfig,
   )
@@ -310,6 +316,7 @@ export async function renderCreateBlockExternalTemplate(
         : undefined,
       blockDir,
       cleanup,
+      formatHint,
       rootDir: tempRoot,
       selectedVariant,
       warnings,

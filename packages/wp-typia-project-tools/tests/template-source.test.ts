@@ -274,6 +274,63 @@ test("external template configs still honor variants when the package root decla
   expect(packageJson.scripts["migration:doctor"]).toContain("wp-typia");
 });
 
+test("plugin template variants do not require wpTypia.projectType to resolve as full wp-typia templates", async () => {
+  const fixtureDir = path.join(tempRoot, "create-block-external-plugin-root");
+  const targetDir = path.join(tempRoot, "demo-external-plugin-root");
+  fs.cpSync(createBlockExternalFixturePath, fixtureDir, { recursive: true });
+
+  const pluginPackageJsonPath = path.join(
+    fixtureDir,
+    "plugin-templates",
+    "package.json.mustache"
+  );
+  const pluginPackageJson = JSON.parse(
+    fs.readFileSync(pluginPackageJsonPath, "utf8")
+  );
+  delete pluginPackageJson.wpTypia;
+  fs.writeFileSync(
+    pluginPackageJsonPath,
+    `${JSON.stringify(pluginPackageJson, null, 2)}\n`,
+    "utf8"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: fixtureDir,
+    variant: "workspace",
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo external plugin root",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-external-plugin-root",
+      textDomain: "demo-space",
+      title: "Demo External Plugin Root",
+    },
+  });
+
+  expect(
+    fs.existsSync(path.join(targetDir, "scripts", "build-workspace.mjs"))
+  ).toBe(true);
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "editor-plugins", "index.tsx"))
+  ).toBe(true);
+  expect(
+    fs.existsSync(
+      path.join(
+        targetDir,
+        "src",
+        "rest",
+        "resources",
+        "external-feed",
+        "contract.ts"
+      )
+    )
+  ).toBe(true);
+});
+
 test("external template workspace variants scaffold richer wp-typia workspaces with migration UI", async () => {
   const targetDir = path.join(tempRoot, "demo-external-workspace");
 
