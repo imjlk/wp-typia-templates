@@ -2444,6 +2444,138 @@ test("rest resource workflow repairs legacy sync-rest scripts before writing wor
   runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
 }, 20_000);
 
+test("rest resource workflow fails fast when sync-rest anchors drift past automatic repair", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-rest-resource-sync-rest-drift"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace rest resource sync-rest drift",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-rest-resource-sync-rest-drift",
+      textDomain: "demo-space",
+      title: "Demo Workspace Rest Resource Sync Rest Drift",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const syncRestScriptPath = path.join(
+    targetDir,
+    "scripts",
+    "sync-rest-contracts.ts"
+  );
+  fs.writeFileSync(
+    syncRestScriptPath,
+    [
+      "import { WORKSPACE_BLOCKS, type WorkspaceBlockConfig } from './block-config';",
+      "",
+      "function isRestEnabledBlock(",
+      "\tblock: WorkspaceBlockConfig",
+      "): block is WorkspaceBlockConfig & {",
+      "\trestManifest: NonNullable< WorkspaceBlockConfig[ 'restManifest' ] >;",
+      "\ttypesFile: string;",
+      "} {",
+      "\treturn (",
+      "\t\ttypeof block.typesFile === 'string' &&",
+      "\t\ttypeof block.restManifest === 'object' &&",
+      "\t\tblock.restManifest !== null",
+      "\t);",
+      "}",
+      "",
+      "async function assertTypeArtifactsCurrent() {",
+      "\tconst restBlocks = WORKSPACE_BLOCKS.filter( isRestEnabledBlock );",
+      "\tif ( restBlocks.length === 0 ) {",
+      "\t\tconsole.log( 'legacy drift' );",
+      "\t\treturn;",
+      "\t}",
+      "\tconsole.log( 'legacy drift' );",
+      "}",
+    ].join("\n"),
+    "utf8"
+  );
+
+  expect(() =>
+    runCli("node", [entryPath, "add", "rest-resource", "snapshots"], {
+      cwd: targetDir,
+    })
+  ).toThrow(
+    "ensureRestResourceSyncScriptAnchors could not patch sync-rest-contracts.ts"
+  );
+}, 20_000);
+
+test("workspace doctor fails when required REST resource schemas are missing", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-rest-resource-missing-schema"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace rest resource missing schema",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-rest-resource-missing-schema",
+      textDomain: "demo-space",
+      title: "Demo Workspace Rest Resource Missing Schema",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "rest-resource",
+      "snapshots",
+      "--namespace",
+      "demo-space/v1",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  fs.rmSync(
+    path.join(
+      targetDir,
+      "src",
+      "rest",
+      "snapshots",
+      "api-schemas",
+      "list-query.schema.json"
+    )
+  );
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = JSON.parse(doctorOutput) as {
+    checks: Array<{ detail: string; label: string; status: string }>;
+  };
+
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "REST resource snapshots"
+    )?.status
+  ).toBe("fail");
+}, 20_000);
+
 test("rest resource workflow rejects invalid namespace and methods and preserves existing files on duplicate failure", async () => {
   const targetDir = path.join(
     tempRoot,

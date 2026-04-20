@@ -39,68 +39,6 @@ function quotePhpString(value: string): string {
 	return `'${value.replace(/\\/gu, "\\\\").replace(/'/gu, "\\'")}'`;
 }
 
-function findPhpFunctionRange(
-	source: string,
-	functionName: string,
-): {
-	end: number;
-	start: number;
-} | null {
-	const signaturePattern = new RegExp(`function\\s+${escapeRegex(functionName)}\\s*\\(`, "u");
-	const signatureMatch = signaturePattern.exec(source);
-	if (!signatureMatch || signatureMatch.index === undefined) {
-		return null;
-	}
-
-	const functionStart = signatureMatch.index;
-	const openBraceIndex = source.indexOf("{", functionStart);
-	if (openBraceIndex === -1) {
-		return null;
-	}
-
-	let depth = 0;
-	for (let index = openBraceIndex; index < source.length; index += 1) {
-		const character = source[index];
-		if (character === "{") {
-			depth += 1;
-			continue;
-		}
-		if (character !== "}") {
-			continue;
-		}
-		depth -= 1;
-		if (depth === 0) {
-			let functionEnd = index + 1;
-			while (functionEnd < source.length && /[\r\n]/u.test(source[functionEnd] ?? "")) {
-				functionEnd += 1;
-			}
-			return {
-				end: functionEnd,
-				start: functionStart,
-			};
-		}
-	}
-
-	return null;
-}
-
-function replacePhpFunctionDefinition(
-	source: string,
-	functionName: string,
-	replacement: string,
-): string | null {
-	const functionRange = findPhpFunctionRange(source, functionName);
-	if (!functionRange) {
-		return null;
-	}
-
-	return [
-		source.slice(0, functionRange.start),
-		replacement,
-		source.slice(functionRange.end),
-	].join("");
-}
-
 function toPascalCaseFromSlug(slug: string): string {
 	return normalizeBlockSlug(slug)
 		.split("-")
@@ -1065,24 +1003,14 @@ function ${registerFunctionName}() {
 
 		if (!hasPhpFunctionDefinition(registerFunctionName)) {
 			insertPhpSnippet(registerFunction);
-		} else {
-			const functionRange = findPhpFunctionRange(nextSource, registerFunctionName);
-			const functionSource = functionRange
-				? nextSource.slice(functionRange.start, functionRange.end)
-				: "";
-			if (!functionSource.includes(REST_RESOURCE_SERVER_GLOB)) {
-				const replacedSource = replacePhpFunctionDefinition(
-					nextSource,
-					registerFunctionName,
-					registerFunction,
-				);
-				if (!replacedSource) {
-					throw new Error(
-						`Unable to repair ${path.basename(bootstrapPath)} for ${registerFunctionName}.`,
-					);
-				}
-				nextSource = replacedSource;
-			}
+		} else if (!nextSource.includes(REST_RESOURCE_SERVER_GLOB)) {
+			throw new Error(
+				[
+					`Unable to patch ${path.basename(bootstrapPath)} in ensureRestResourceBootstrapAnchors.`,
+					`The existing ${registerFunctionName}() definition does not include ${REST_RESOURCE_SERVER_GLOB}.`,
+					"Restore the generated bootstrap shape or wire the REST resource loader manually before retrying.",
+				].join(" "),
+			);
 		}
 
 		if (!nextSource.includes(registerHook)) {
@@ -1093,153 +1021,197 @@ function ${registerFunctionName}() {
 	});
 }
 
+function assertSyncRestAnchor(
+	nextSource: string,
+	target: string,
+	anchorDescription: string,
+	hasAnchor: boolean,
+	syncRestScriptPath: string,
+): void {
+	if (!nextSource.includes(target) && !hasAnchor) {
+		throw new Error(
+			[
+				`ensureRestResourceSyncScriptAnchors could not patch ${path.basename(syncRestScriptPath)}.`,
+				`Missing expected ${anchorDescription} anchor in scripts/sync-rest-contracts.ts.`,
+				"Restore the generated template or add the REST_RESOURCES wiring manually before retrying.",
+			].join(" "),
+		);
+	}
+}
+
+function replaceRequiredSyncRestSource(
+	nextSource: string,
+	target: string,
+	anchor: string | RegExp,
+	replacement: string,
+	anchorDescription: string,
+	syncRestScriptPath: string,
+): string {
+	if (nextSource.includes(target)) {
+		return nextSource;
+	}
+
+	const hasAnchor =
+		typeof anchor === "string" ? nextSource.includes(anchor) : anchor.test(nextSource);
+	assertSyncRestAnchor(
+		nextSource,
+		target,
+		anchorDescription,
+		hasAnchor,
+		syncRestScriptPath,
+	);
+
+	return nextSource.replace(anchor, replacement);
+}
+
 async function ensureRestResourceSyncScriptAnchors(workspace: WorkspaceProject): Promise<void> {
 	const syncRestScriptPath = path.join(workspace.projectDir, "scripts", "sync-rest-contracts.ts");
 
 	await patchFile(syncRestScriptPath, (source) => {
 		let nextSource = source;
+		const importAnchor = "import { BLOCKS, type WorkspaceBlockConfig } from './block-config';";
+		const helperInsertionAnchor = "async function assertTypeArtifactsCurrent";
+		const restBlocksAnchor = "const restBlocks = BLOCKS.filter( isRestEnabledBlock );";
+		const noResourcesPattern = /if \( restBlocks.length === 0 \) \{[\s\S]*?\n\t\treturn;\n\t\}/u;
+		const consoleLogPattern = /\n\tconsole\.log\(\n\t\toptions\.check/u;
 
-		if (
-			!nextSource.includes("REST_RESOURCES") &&
-			nextSource.includes("import { BLOCKS, type WorkspaceBlockConfig } from './block-config';")
-		) {
-			nextSource = nextSource.replace(
-				"import { BLOCKS, type WorkspaceBlockConfig } from './block-config';",
-				[
-					"import {",
-					"\tBLOCKS,",
-					"\tREST_RESOURCES,",
-					"\ttype WorkspaceBlockConfig,",
-					"\ttype WorkspaceRestResourceConfig,",
-					"} from './block-config';",
-				].join("\n"),
-			);
-		}
+		nextSource = replaceRequiredSyncRestSource(
+			nextSource,
+			"REST_RESOURCES",
+			importAnchor,
+			[
+				"import {",
+				"\tBLOCKS,",
+				"\tREST_RESOURCES,",
+				"\ttype WorkspaceBlockConfig,",
+				"\ttype WorkspaceRestResourceConfig,",
+				"} from './block-config';",
+			].join("\n"),
+			"BLOCKS import",
+			syncRestScriptPath,
+		);
 
-		if (
-			!nextSource.includes("function isWorkspaceRestResource(") &&
-			nextSource.includes("function isRestEnabledBlock(")
-		) {
-			nextSource = nextSource.replace(
+		nextSource = replaceRequiredSyncRestSource(
+			nextSource,
+			"function isWorkspaceRestResource(",
+			helperInsertionAnchor,
+			[
+				"function isWorkspaceRestResource(",
+				"\tresource: WorkspaceRestResourceConfig",
+				"): resource is WorkspaceRestResourceConfig & {",
+				"\tclientFile: string;",
+				"\topenApiFile: string;",
+				"\trestManifest: NonNullable< WorkspaceRestResourceConfig[ 'restManifest' ] >;",
+				"\ttypesFile: string;",
+				"\tvalidatorsFile: string;",
+				"} {",
+				"\treturn (",
+				"\t\ttypeof resource.clientFile === 'string' &&",
+				"\t\ttypeof resource.openApiFile === 'string' &&",
+				"\t\ttypeof resource.typesFile === 'string' &&",
+				"\t\ttypeof resource.validatorsFile === 'string' &&",
+				"\t\ttypeof resource.restManifest === 'object' &&",
+				"\t\tresource.restManifest !== null",
+				"\t);",
+				"}",
+				"",
 				"async function assertTypeArtifactsCurrent",
-				[
-					"function isWorkspaceRestResource(",
-					"\tresource: WorkspaceRestResourceConfig",
-					"): resource is WorkspaceRestResourceConfig & {",
-					"\tclientFile: string;",
-					"\topenApiFile: string;",
-					"\trestManifest: NonNullable< WorkspaceRestResourceConfig[ 'restManifest' ] >;",
-					"\ttypesFile: string;",
-					"\tvalidatorsFile: string;",
-					"} {",
-					"\treturn (",
-					"\t\ttypeof resource.clientFile === 'string' &&",
-					"\t\ttypeof resource.openApiFile === 'string' &&",
-					"\t\ttypeof resource.typesFile === 'string' &&",
-					"\t\ttypeof resource.validatorsFile === 'string' &&",
-					"\t\ttypeof resource.restManifest === 'object' &&",
-					"\t\tresource.restManifest !== null",
-					"\t);",
-					"}",
-					"",
-					"async function assertTypeArtifactsCurrent",
-				].join("\n"),
-			);
-		}
+			].join("\n"),
+			"type artifact assertion helper",
+			syncRestScriptPath,
+		);
 
-		if (
-			!nextSource.includes("const restResources = REST_RESOURCES.filter( isWorkspaceRestResource );")
-		) {
-			nextSource = nextSource.replace(
+		nextSource = replaceRequiredSyncRestSource(
+			nextSource,
+			"const restResources = REST_RESOURCES.filter( isWorkspaceRestResource );",
+			restBlocksAnchor,
+			[
 				"const restBlocks = BLOCKS.filter( isRestEnabledBlock );",
-				[
-					"const restBlocks = BLOCKS.filter( isRestEnabledBlock );",
-					"const restResources = REST_RESOURCES.filter( isWorkspaceRestResource );",
-				].join("\n"),
-			);
-		}
+				"const restResources = REST_RESOURCES.filter( isWorkspaceRestResource );",
+			].join("\n"),
+			"restBlocks filter",
+			syncRestScriptPath,
+		);
 
-		if (
-			!nextSource.includes("restBlocks.length === 0 && restResources.length === 0") &&
-			nextSource.includes("if ( restBlocks.length === 0 ) {")
-		) {
-			nextSource = nextSource.replace(
-				/if \( restBlocks.length === 0 \) \{[\s\S]*?\n\t\treturn;\n\t\}/u,
-				[
-					"if ( restBlocks.length === 0 && restResources.length === 0 ) {",
-					"\t\tconsole.log(",
-					"\t\t\toptions.check",
-					"\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'",
-					"\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet.'",
-					"\t\t);",
-					"\t\treturn;",
-					"\t}",
-				].join("\n"),
-			);
-		}
+		nextSource = replaceRequiredSyncRestSource(
+			nextSource,
+			"restBlocks.length === 0 && restResources.length === 0",
+			noResourcesPattern,
+			[
+				"if ( restBlocks.length === 0 && restResources.length === 0 ) {",
+				"\t\tconsole.log(",
+				"\t\t\toptions.check",
+				"\t\t\t\t? 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet. `sync-rest --check` is already clean.'",
+				"\t\t\t\t: 'ℹ️ No REST-enabled workspace blocks or plugin-level REST resources are registered yet.'",
+				"\t\t);",
+				"\t\treturn;",
+				"\t}",
+			].join("\n"),
+			"no-resources guard",
+			syncRestScriptPath,
+		);
 
-		if (
-			!nextSource.includes("for ( const resource of restResources ) {") &&
-			nextSource.includes("\n\tconsole.log(")
-		) {
-			nextSource = nextSource.replace(
-				/\n\tconsole\.log\(\n\t\toptions\.check/u,
-				[
-					"",
-					"\tfor ( const resource of restResources ) {",
-					"\t\tconst contracts = resource.restManifest.contracts;",
-					"",
-					"\t\tfor ( const [ baseName, contract ] of Object.entries( contracts ) ) {",
-					"\t\t\tawait syncTypeSchemas(",
-					"\t\t\t\t{",
-					"\t\t\t\t\tjsonSchemaFile: path.join(",
-					"\t\t\t\t\t\tpath.dirname( resource.typesFile ),",
-					"\t\t\t\t\t\t'api-schemas',",
-					"\t\t\t\t\t\t`${ baseName }.schema.json`",
-					"\t\t\t\t\t),",
-					"\t\t\t\t\topenApiFile: path.join(",
-					"\t\t\t\t\t\tpath.dirname( resource.typesFile ),",
-					"\t\t\t\t\t\t'api-schemas',",
-					"\t\t\t\t\t\t`${ baseName }.openapi.json`",
-					"\t\t\t\t\t),",
-					"\t\t\t\t\tsourceTypeName: contract.sourceTypeName,",
-					"\t\t\t\t\ttypesFile: resource.typesFile,",
-					"\t\t\t\t},",
-					"\t\t\t\t{",
-					"\t\t\t\t\tcheck: options.check,",
-					"\t\t\t\t}",
-					"\t\t\t);",
-					"\t\t}",
-					"",
-					"\t\tawait syncRestOpenApi(",
-					"\t\t\t{",
-					"\t\t\t\tmanifest: resource.restManifest,",
-					"\t\t\t\topenApiFile: resource.openApiFile,",
-					"\t\t\t\ttypesFile: resource.typesFile,",
-					"\t\t\t},",
-					"\t\t\t{",
-					"\t\t\t\tcheck: options.check,",
-					"\t\t\t}",
-					"\t\t);",
-					"",
-					"\t\tawait syncEndpointClient(",
-					"\t\t\t{",
-					"\t\t\t\tclientFile: resource.clientFile,",
-					"\t\t\t\tmanifest: resource.restManifest,",
-					"\t\t\t\ttypesFile: resource.typesFile,",
-					"\t\t\t\tvalidatorsFile: resource.validatorsFile,",
-					"\t\t\t},",
-					"\t\t\t{",
-					"\t\t\t\tcheck: options.check,",
-					"\t\t\t}",
-					"\t\t);",
-					"\t}",
-					"",
-					"\tconsole.log(",
-					"\t\toptions.check",
-				].join("\n"),
-			);
-		}
+		nextSource = replaceRequiredSyncRestSource(
+			nextSource,
+			"for ( const resource of restResources ) {",
+			consoleLogPattern,
+			[
+				"",
+				"\tfor ( const resource of restResources ) {",
+				"\t\tconst contracts = resource.restManifest.contracts;",
+				"",
+				"\t\tfor ( const [ baseName, contract ] of Object.entries( contracts ) ) {",
+				"\t\t\tawait syncTypeSchemas(",
+				"\t\t\t\t{",
+				"\t\t\t\t\tjsonSchemaFile: path.join(",
+				"\t\t\t\t\t\tpath.dirname( resource.typesFile ),",
+				"\t\t\t\t\t\t'api-schemas',",
+				"\t\t\t\t\t\t`${ baseName }.schema.json`",
+				"\t\t\t\t\t),",
+				"\t\t\t\t\topenApiFile: path.join(",
+				"\t\t\t\t\t\tpath.dirname( resource.typesFile ),",
+				"\t\t\t\t\t\t'api-schemas',",
+				"\t\t\t\t\t\t`${ baseName }.openapi.json`",
+				"\t\t\t\t\t),",
+				"\t\t\t\t\tsourceTypeName: contract.sourceTypeName,",
+				"\t\t\t\t\ttypesFile: resource.typesFile,",
+				"\t\t\t\t},",
+				"\t\t\t\t{",
+				"\t\t\t\t\tcheck: options.check,",
+				"\t\t\t\t}",
+				"\t\t\t);",
+				"\t\t}",
+				"",
+				"\t\tawait syncRestOpenApi(",
+				"\t\t\t{",
+				"\t\t\t\tmanifest: resource.restManifest,",
+				"\t\t\t\topenApiFile: resource.openApiFile,",
+				"\t\t\t\ttypesFile: resource.typesFile,",
+				"\t\t\t},",
+				"\t\t\t{",
+				"\t\t\t\tcheck: options.check,",
+				"\t\t\t}",
+				"\t\t);",
+				"",
+				"\t\tawait syncEndpointClient(",
+				"\t\t\t{",
+				"\t\t\t\tclientFile: resource.clientFile,",
+				"\t\t\t\tmanifest: resource.restManifest,",
+				"\t\t\t\ttypesFile: resource.typesFile,",
+				"\t\t\t\tvalidatorsFile: resource.validatorsFile,",
+				"\t\t\t},",
+				"\t\t\t{",
+				"\t\t\t\tcheck: options.check,",
+				"\t\t\t}",
+				"\t\t);",
+				"\t}",
+				"",
+				"\tconsole.log(",
+				"\t\toptions.check",
+			].join("\n"),
+			"success log insertion point",
+			syncRestScriptPath,
+		);
 
 		nextSource = nextSource.replace(
 			"✅ REST contract schemas, portable API clients, and endpoint-aware OpenAPI documents are already up to date with the TypeScript types!",

@@ -360,9 +360,34 @@ function checkWorkspaceBindingSourcesIndex(
 function getWorkspaceRestResourceRequiredFiles(
 	restResource: WorkspaceInventory["restResources"][number],
 ): string[] {
+	const schemaNames = new Set<string>();
+	if (restResource.methods.includes("list")) {
+		schemaNames.add("list-query");
+	}
+	if (restResource.methods.includes("read")) {
+		schemaNames.add("read-query");
+	}
+	if (restResource.methods.includes("create")) {
+		schemaNames.add("create-request");
+	}
+	if (restResource.methods.includes("update")) {
+		schemaNames.add("update-query");
+		schemaNames.add("update-request");
+	}
+	if (restResource.methods.includes("delete")) {
+		schemaNames.add("delete-query");
+	}
+
 	return Array.from(
 		new Set([
 			restResource.apiFile,
+			...Array.from(schemaNames, (schemaName) =>
+				path.join(
+					path.dirname(restResource.typesFile),
+					"api-schemas",
+					`${schemaName}.schema.json`,
+				),
+			),
 			restResource.clientFile,
 			restResource.dataFile,
 			restResource.openApiFile,

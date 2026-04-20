@@ -7,6 +7,7 @@ import {
 } from "../../wp-typia-api-client/src/index";
 
 import {
+	ApiClientConfigurationError,
 	RestConfigurationError,
 	RestRootResolutionError,
 	RestValidationAssertionError,
@@ -485,6 +486,52 @@ describe("@wp-typia/rest", () => {
 		expect(seenBody).toBe(JSON.stringify({ title: "Updated" }));
 		expect(result.isValid).toBe(true);
 		expect(result.data).toEqual({ ok: true });
+	});
+
+	test("callEndpoint rejects GET endpoints configured with requestLocation body", async () => {
+		const endpoint = {
+			...createPortableEndpoint<{ slug: string }, { ok: boolean }>({
+				method: "GET",
+				operationId: "getPortableItemBody",
+				path: "/demo/v1/items",
+				requestLocation: "body",
+				validateRequest: (input: unknown) =>
+					typeof input === "object" &&
+					input !== null &&
+					typeof (input as { slug?: unknown }).slug === "string"
+						? toPortableValidationResult<{ slug: string }>({
+								data: input as { slug: string },
+								errors: [],
+								success: true,
+							})
+						: toPortableValidationResult<{ slug: string }>({
+								errors: [{ expected: "{ slug: string }", path: "$.slug", value: undefined }],
+								success: false,
+							}),
+				validateResponse: (input: unknown) =>
+					typeof input === "object" &&
+					input !== null &&
+					(input as { ok?: unknown }).ok === true
+						? toPortableValidationResult<{ ok: boolean }>({
+								data: input as { ok: boolean },
+								errors: [],
+								success: true,
+							})
+						: toPortableValidationResult<{ ok: boolean }>({
+								errors: [{ expected: "{ ok: true }", path: "$.ok", value: undefined }],
+								success: false,
+							}),
+			}),
+			buildRequestOptions: () => ({
+				url: resolveRestRouteUrl("/demo/v1/items", "http://localhost:8889/wp-json/"),
+			}),
+		};
+
+		await expect(
+			callEndpoint(endpoint, { slug: "hero-card" }, {
+				fetchFn: asApiFetch(async () => ({ ok: true }) as never),
+			}),
+		).rejects.toBeInstanceOf(ApiClientConfigurationError);
 	});
 
 	test("build rewrites dist imports for node esm consumers", () => {

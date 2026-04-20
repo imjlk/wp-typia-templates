@@ -327,6 +327,12 @@ function buildEndpointFetchOptions<Req>(
     );
   }
 
+  if (requestLocation === 'body' && endpoint.method === 'GET') {
+    throw new ApiClientConfigurationError(
+      'requestLocation "body" is not supported for GET endpoints.',
+    );
+  }
+
   const baseOptions = endpoint.buildRequestOptions?.(request) ?? {};
   return buildBodyRequestOptions(endpoint, baseOptions, request);
 }
