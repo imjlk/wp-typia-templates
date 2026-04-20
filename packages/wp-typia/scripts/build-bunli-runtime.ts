@@ -16,6 +16,7 @@ const generatedMetadataEntrypoint = path.resolve(packageRoot, ".bunli", "command
 const nodeRuntimeEntrypoint = path.resolve(packageRoot, "src", "node-cli.ts");
 const outdir = path.resolve(packageRoot, buildConfig.outdir);
 const generatedMetadataOutdir = path.join(outdir, ".bunli");
+const repoRoot = path.resolve(packageRoot, "..", "..");
 const projectToolsPackageRoot = path.resolve(packageRoot, "..", "wp-typia-project-tools");
 const projectToolsRuntimeDir = path.resolve(
 	packageRoot,
@@ -25,6 +26,8 @@ const projectToolsRuntimeDir = path.resolve(
 	"runtime",
 );
 const apiClientDistDir = path.resolve(packageRoot, "..", "wp-typia-api-client", "dist");
+const bunExecutable =
+	typeof Bun !== "undefined" ? (Bun.which("bun") ?? process.execPath) : process.execPath;
 const PROJECT_TOOLS_ALIASES = {
 	"@wp-typia/api-client/runtime-primitives": path.join(
 		apiClientDistDir,
@@ -72,6 +75,41 @@ const WP_TYPIA_EXTERNALS = [
 	"@wp-typia/rest/*",
 ];
 
+interface RuntimeDependencyBuildStep {
+	args: string[];
+	cwd: string;
+	label: string;
+}
+
+async function fileExists(filePath: string): Promise<boolean> {
+	try {
+		await fs.access(filePath);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+function getRuntimeDependencyBuildSteps(): RuntimeDependencyBuildStep[] {
+	return [
+		{
+			args: ["run", "--filter", "@wp-typia/api-client", "build"],
+			cwd: repoRoot,
+			label: "@wp-typia/api-client",
+		},
+		{
+			args: ["run", "--filter", "@wp-typia/block-runtime", "build"],
+			cwd: repoRoot,
+			label: "@wp-typia/block-runtime",
+		},
+		{
+			args: ["run", "--filter", "@wp-typia/project-tools", "build"],
+			cwd: repoRoot,
+			label: "@wp-typia/project-tools",
+		},
+	];
+}
+
 async function ensureRuntimeBuildDependencies() {
 	const requiredArtifacts = [...new Set(Object.values(PROJECT_TOOLS_ALIASES))];
 	const missingArtifacts: string[] = [];
@@ -88,15 +126,30 @@ async function ensureRuntimeBuildDependencies() {
 		return;
 	}
 
-	const buildResult = spawnSync(process.execPath, ["run", "build"], {
-		cwd: projectToolsPackageRoot,
-		env: process.env,
-		stdio: "inherit",
-	});
+	const buildSteps =
+		(await fileExists(path.join(repoRoot, "package.json")))
+			? getRuntimeDependencyBuildSteps()
+			: [
+					{
+						args: ["run", "build"],
+						cwd: projectToolsPackageRoot,
+						label: "@wp-typia/project-tools",
+					},
+				];
 
-	if (buildResult.status !== 0) {
+	for (const buildStep of buildSteps) {
+		const buildResult = spawnSync(bunExecutable, buildStep.args, {
+			cwd: buildStep.cwd,
+			env: process.env,
+			stdio: "inherit",
+		});
+
+		if (buildResult.status === 0) {
+			continue;
+		}
+
 		throw new Error(
-			`Failed to build @wp-typia/project-tools for wp-typia runtime aliases: ${missingArtifacts.join(", ")}`,
+			`Failed to build ${buildStep.label} while recovering wp-typia runtime aliases: ${missingArtifacts.join(", ")}`,
 		);
 	}
 
