@@ -363,19 +363,24 @@ function getWorkspaceRestResourceRequiredFiles(
 	const schemaNames = new Set<string>();
 	if (restResource.methods.includes("list")) {
 		schemaNames.add("list-query");
+		schemaNames.add("list-response");
 	}
 	if (restResource.methods.includes("read")) {
 		schemaNames.add("read-query");
+		schemaNames.add("read-response");
 	}
 	if (restResource.methods.includes("create")) {
 		schemaNames.add("create-request");
+		schemaNames.add("create-response");
 	}
 	if (restResource.methods.includes("update")) {
 		schemaNames.add("update-query");
 		schemaNames.add("update-request");
+		schemaNames.add("update-response");
 	}
 	if (restResource.methods.includes("delete")) {
 		schemaNames.add("delete-query");
+		schemaNames.add("delete-response");
 	}
 
 	return Array.from(

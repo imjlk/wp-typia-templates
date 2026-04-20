@@ -2558,22 +2558,18 @@ test("workspace doctor fails when required REST resource schemas are missing", a
       "rest",
       "snapshots",
       "api-schemas",
-      "list-query.schema.json"
+      "list-response.schema.json"
     )
   );
 
-  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
-    cwd: targetDir,
-  });
-  const doctorChecks = JSON.parse(doctorOutput) as {
-    checks: Array<{ detail: string; label: string; status: string }>;
-  };
+  const doctorError = getCommandErrorMessage(() =>
+    runCli("node", [entryPath, "doctor", "--format", "json"], {
+      cwd: targetDir,
+    })
+  );
 
-  expect(
-    doctorChecks.checks.find(
-      (check) => check.label === "REST resource snapshots"
-    )?.status
-  ).toBe("fail");
+  expect(doctorError).toContain("REST resource snapshots");
+  expect(doctorError).toContain("list-response.schema.json");
 }, 20_000);
 
 test("rest resource workflow rejects invalid namespace and methods and preserves existing files on duplicate failure", async () => {
