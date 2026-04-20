@@ -260,7 +260,7 @@ function validateGutenbergWatchWorkflow(sourceText, errors) {
     'permissions:',
     'issues: write',
     'node scripts/gutenberg-upstream-watch.mjs',
-    'actions/upload-artifact@v4',
+    'actions/upload-artifact@v7',
     `Update issue ${GUTENBERG_WATCH_ISSUE_LABEL}`,
     '<!-- gutenberg-upstream-watch -->',
     GUTENBERG_UPSTREAM_REPO,

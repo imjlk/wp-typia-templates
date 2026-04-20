@@ -52,7 +52,7 @@ jobs:
         run: cat "${RUNNER_TEMP}/gutenberg-upstream-watch.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Gutenberg watch artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gutenberg-upstream-watch
           path: |
@@ -60,7 +60,7 @@ jobs:
             ${{ runner.temp }}/gutenberg-upstream-watch.json
 
       - name: Update issue #283
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('node:fs');
