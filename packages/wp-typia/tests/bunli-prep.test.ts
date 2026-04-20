@@ -67,6 +67,10 @@ describe('wp-typia Bunli preparation', () => {
       path.join(packageRoot, 'scripts', 'build-bunli-runtime.ts'),
       'utf8',
     );
+    const fullRuntimeSection = runtimeBuildScript.slice(
+      runtimeBuildScript.indexOf('async function buildFullBunliRuntime()'),
+      runtimeBuildScript.indexOf('async function buildGeneratedMetadataRuntime()'),
+    );
 
     expect(runtimeBuildScript).toContain(
       'const requireFromWpTypia = createRequire(',
@@ -107,12 +111,12 @@ describe('wp-typia Bunli preparation', () => {
     expect(runtimeBuildScript).toContain(
       'const buildRoot = path.parse(packageRoot).root;',
     );
-    expect(runtimeBuildScript).toContain("naming: {");
-    expect(runtimeBuildScript).toContain("asset: '[dir]/[name]-[hash].[ext]'");
-    expect(runtimeBuildScript).toContain("chunk: '[name]-[hash].[ext]'");
-    expect(runtimeBuildScript).toContain("entry: '[name].[ext]'");
-    expect(runtimeBuildScript).toContain('root: buildRoot');
-    expect(runtimeBuildScript).toContain('splitting: true');
+    expect(fullRuntimeSection).toContain("naming: {");
+    expect(fullRuntimeSection).toContain("asset: '[dir]/[name]-[hash].[ext]'");
+    expect(fullRuntimeSection).toContain("chunk: '[dir]/[name]-[hash].[ext]'");
+    expect(fullRuntimeSection).toContain("entry: '[name].[ext]'");
+    expect(fullRuntimeSection).toContain('root: buildRoot');
+    expect(fullRuntimeSection).toContain('splitting: true');
   });
 
   test('future Bunli command tree preserves the reserved top-level taxonomy', async () => {
