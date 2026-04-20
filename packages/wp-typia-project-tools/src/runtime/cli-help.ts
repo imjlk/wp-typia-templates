@@ -22,7 +22,7 @@ export function formatHelpText(): string {
   wp-typia add variation <name> --block <block-slug>
   wp-typia add pattern <name>
   wp-typia add binding-source <name>
-  wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list|read|create|update|delete>]
+  wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <method[,method...]>]
   wp-typia add editor-plugin <name> [--slot <PluginSidebar>]
   wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>
   wp-typia migrate <init|snapshot|diff|scaffold|verify|doctor|fixtures|fuzz> [...]
