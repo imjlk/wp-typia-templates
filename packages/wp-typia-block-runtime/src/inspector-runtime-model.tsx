@@ -1,6 +1,8 @@
 import {
 	useCallback,
+	useEffect,
 	useMemo,
+	useRef,
 } from "react";
 
 import {
@@ -9,6 +11,10 @@ import {
 	type EditorModelOptions,
 	type ManifestDocument,
 } from "./editor.js";
+import {
+	collectPersistentBlockIdentityRepairs,
+	generateScopedClientId,
+} from "./identifiers.js";
 import { isPlainObject as isRecord } from "./object-utils.js";
 import {
 	type ValidationResult,
@@ -19,6 +25,8 @@ import {
 import type {
 	EditorFieldDescriptor,
 	InspectorSelectOption,
+	UsePersistentBlockIdentityOptions,
+	UsePersistentBlockIdentityResult,
 	StableEditorModelOptions,
 	TypedAttributeUpdater,
 	UseEditorFieldsResult,
@@ -79,6 +87,21 @@ function createValidationResult<T extends object>(value: T): ValidationResult<T>
 		errors: [],
 		isValid: true,
 	};
+}
+
+function getPersistentBlockIdentityValue(
+	value: unknown,
+): string | null {
+	return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
+function createPersistentIdAttributePatch<T extends object>(
+	attributeName: string,
+	value: string,
+): Partial<T> {
+	return {
+		[attributeName]: value,
+	} as Partial<T>;
 }
 
 export function getFieldValue(
@@ -234,5 +257,105 @@ export function useTypedAttributeUpdater<T extends object>(
 		updateAttribute,
 		updateField,
 		updatePath,
+	};
+}
+
+/**
+ * Keep one block attribute populated with a stable document-level id that
+ * survives normal edits and repairs duplicates inside the current block tree.
+ *
+ * @param options Current block identity inputs including the attribute key, editor tree snapshot, and `setAttributes` callback.
+ * @returns The current/pending persistent id plus a helper that can force the attribute repair immediately.
+ * @category React
+ */
+export function usePersistentBlockIdentity<T extends object>(
+	options: UsePersistentBlockIdentityOptions<T>,
+): UsePersistentBlockIdentityResult {
+	const {
+		attributeName,
+		attributes,
+		autoRepair,
+		blocks,
+		clientId,
+		duplicateDetection,
+		prefix,
+		setAttributes,
+	} = options;
+	const pendingRepair = useMemo(
+		() =>
+			collectPersistentBlockIdentityRepairs(blocks, {
+				attributeName,
+				duplicateDetection,
+				prefix,
+			}).find((repair) => repair.clientId === clientId) ?? null,
+		[
+			attributeName,
+			blocks,
+			clientId,
+			duplicateDetection,
+			prefix,
+		],
+	);
+	const currentPersistentId = getPersistentBlockIdentityValue(
+		(attributes as Record<string, unknown>)[attributeName],
+	);
+	const lastAppliedRepairRef = useRef<string | null>(null);
+
+	const ensurePersistentId = useCallback(() => {
+		const nextValue =
+			pendingRepair?.nextValue ??
+			currentPersistentId ??
+			generateScopedClientId(prefix);
+
+		if (nextValue !== currentPersistentId) {
+			setAttributes(
+				createPersistentIdAttributePatch<T>(
+					attributeName,
+					nextValue,
+				),
+			);
+		}
+
+		return nextValue;
+	}, [
+		attributeName,
+		currentPersistentId,
+		pendingRepair,
+		prefix,
+		setAttributes,
+	]);
+
+	useEffect(() => {
+		if (autoRepair === false || !pendingRepair) {
+			lastAppliedRepairRef.current = null;
+			return;
+		}
+
+		const repairKey = `${clientId}:${pendingRepair.nextValue}`;
+		if (lastAppliedRepairRef.current === repairKey) {
+			return;
+		}
+
+		lastAppliedRepairRef.current = repairKey;
+		setAttributes(
+			createPersistentIdAttributePatch<T>(
+				attributeName,
+				pendingRepair.nextValue,
+			),
+		);
+	}, [
+		attributeName,
+		autoRepair,
+		clientId,
+		pendingRepair,
+		setAttributes,
+	]);
+
+	return {
+		currentPersistentId,
+		ensurePersistentId,
+		nextPersistentId: pendingRepair?.nextValue ?? currentPersistentId,
+		repairReason: pendingRepair?.reason ?? null,
+		shouldRepairPersistentId: pendingRepair !== null,
 	};
 }

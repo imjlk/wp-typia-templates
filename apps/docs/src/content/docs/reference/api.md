@@ -468,6 +468,11 @@ Generated projects can also import shared runtime helpers from `@wp-typia/block-
 Use `@wp-typia/block-runtime/metadata-core` for metadata sync and
 `@wp-typia/block-runtime/*` for generated-project runtime helpers.
 
+`runtime/identifiers` now also includes duplicate-safe persistent-id lifecycle
+helpers for structured document blocks. Use
+`collectPersistentBlockIdentityRepairs(...)` when you already have a plain block
+tree and need deterministic repair patches without React.
+
 `runtime/blocks` is the shared generated-project surface for scaffold-owned
 block registration helpers and webpack artifact/config adapters.
 
@@ -520,6 +525,7 @@ When you want a higher-level inspector layer, use
 import currentManifest from './manifest-document';
 import {
   InspectorFromManifest,
+  usePersistentBlockIdentity,
   useEditorFields,
   useTypedAttributeUpdater,
 } from '@wp-typia/block-runtime/inspector';
@@ -542,11 +548,27 @@ const { updateField } = useTypedAttributeUpdater(
 />;
 ```
 
+When the same block family also needs a stable logical id that survives save,
+reopen, and duplicate repair, the inspector facade now exposes
+`usePersistentBlockIdentity(...)`:
+
+```tsx
+const persistentId = usePersistentBlockIdentity({
+  attributeName: 'sectionId',
+  attributes,
+  blocks,
+  clientId,
+  prefix: 'sec',
+  setAttributes,
+});
+```
+
 `runtime/inspector` keeps `runtime/editor` as the descriptor/model layer and
 adds:
 
 - `useEditorFields()` for memoized field lookup, defaults, and select options
 - `useTypedAttributeUpdater()` for top-level and dotted-path updates from one hook
+- `usePersistentBlockIdentity()` for duplicate-safe block ids in one document tree
 - `FieldControl` for one manifest-backed WordPress control
 - `InspectorFromManifest` for ordered manifest-driven `PanelBody` rendering
 

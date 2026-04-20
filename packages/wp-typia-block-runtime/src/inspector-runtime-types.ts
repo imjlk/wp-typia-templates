@@ -6,6 +6,10 @@ import type {
 import type {
 	EditorFieldDescriptor,
 } from "./editor.js";
+import type {
+	PersistentBlockIdentityNode,
+	PersistentBlockIdentityRepairReason,
+} from "./identifiers.js";
 
 /**
  * Describe one string-valued option for an inspector select control.
@@ -155,6 +159,36 @@ export interface TypedAttributeUpdater<T extends object> {
 }
 
 /**
+ * Describe the options accepted by `usePersistentBlockIdentity()`.
+ *
+ * @category React
+ */
+export interface UsePersistentBlockIdentityOptions<T extends object> {
+	attributeName: string;
+	attributes: T;
+	autoRepair?: boolean;
+	blocks: readonly PersistentBlockIdentityNode[];
+	clientId: string;
+	duplicateDetection?: boolean;
+	prefix: string;
+	setAttributes: (attrs: Partial<T>) => void;
+}
+
+/**
+ * Describe the duplicate-safe id lifecycle helpers returned from
+ * `usePersistentBlockIdentity()`.
+ *
+ * @category React
+ */
+export interface UsePersistentBlockIdentityResult {
+	currentPersistentId: string | null;
+	ensurePersistentId: () => string;
+	nextPersistentId: string | null;
+	repairReason: PersistentBlockIdentityRepairReason | null;
+	shouldRepairPersistentId: boolean;
+}
+
+/**
  * Describe the resolved render context passed to custom field-control renderers.
  *
  * @category React
@@ -237,3 +271,8 @@ export type {
 	EditorFieldOption,
 	EditorModelOptions,
 } from "./editor.js";
+export type {
+	PersistentBlockIdentityNode,
+	PersistentBlockIdentityRepair,
+	PersistentBlockIdentityRepairReason,
+} from "./identifiers.js";

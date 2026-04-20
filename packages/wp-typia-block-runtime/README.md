@@ -22,8 +22,10 @@ Typical usage:
 import { createEditorModel } from '@wp-typia/block-runtime/editor';
 import {
   InspectorFromManifest,
+  usePersistentBlockIdentity,
   useEditorFields,
 } from '@wp-typia/block-runtime/inspector';
+import { collectPersistentBlockIdentityRepairs } from '@wp-typia/block-runtime/identifiers';
 import { createNestedAttributeUpdater } from '@wp-typia/block-runtime/validation';
 import { runSyncBlockMetadata } from '@wp-typia/block-runtime/metadata-core';
 ```
@@ -47,3 +49,13 @@ and `json-utils` are also published and documented, but they are secondary to
 the main generated-project runtime roots. The canonical hosted reference now
 splits these into Core API, Advanced Helpers, and Internal APIs sections under
 `https://imjlk.github.io/wp-typia/`.
+
+For structured document blocks that need stable logical ids separate from the
+editor `clientId`, use:
+
+- `collectPersistentBlockIdentityRepairs(...)` from
+  `@wp-typia/block-runtime/identifiers` when you already have a plain block
+  tree and want deterministic duplicate-safe repairs without React.
+- `usePersistentBlockIdentity(...)` from `@wp-typia/block-runtime/inspector`
+  when you are inside a block edit component and want the same repair logic
+  wired to `setAttributes(...)`.

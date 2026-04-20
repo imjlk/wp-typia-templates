@@ -8,11 +8,13 @@ import {
 	FieldControl,
 	InspectorFromManifest,
 	useEditorFields,
+	usePersistentBlockIdentity,
 	useTypedAttributeUpdater,
 	type EditorFieldDescriptor,
 	type InspectorComponentMap,
 	type ManifestAttribute,
 	type ManifestDocument,
+	type PersistentBlockIdentityNode,
 	type ValidationResult,
 } from "../../packages/wp-typia-block-runtime/src/inspector";
 
@@ -152,10 +154,16 @@ describe("runtime inspector helpers", () => {
 		);
 		expect(inspectorRuntimeSource).not.toContain("function getPathSegments(");
 		expect(inspectorRuntimeSource).not.toContain("export function useEditorFields(");
+		expect(inspectorRuntimeSource).not.toContain(
+			"export function usePersistentBlockIdentity(",
+		);
 		expect(inspectorRuntimeSource).not.toContain("export function FieldControl(");
 		expect(inspectorModelSource).toContain("export function useEditorFields(");
 		expect(inspectorModelSource).toContain(
 			"export function useTypedAttributeUpdater<",
+		);
+		expect(inspectorModelSource).toContain(
+			"export function usePersistentBlockIdentity<",
 		);
 		expect(inspectorControlsSource).toContain(
 			"export function FieldControl(",
@@ -347,6 +355,124 @@ describe("runtime inspector helpers", () => {
 
 		expect(updater.updateField("content", "")).toBe(false);
 		expect(patches).toHaveLength(2);
+	});
+
+	test("usePersistentBlockIdentity reports pending repairs for missing and duplicate ids", () => {
+		const blocks: PersistentBlockIdentityNode[] = [
+			{
+				attributes: {
+					sectionId: "sec-keep",
+				},
+				clientId: "parent",
+				innerBlocks: [
+					{
+						attributes: {},
+						clientId: "child-missing",
+					},
+					{
+						attributes: {
+							sectionId: "sec-keep",
+						},
+						clientId: "child-duplicate",
+					},
+				],
+			},
+		];
+		const patches: Array<Record<string, unknown>> = [];
+
+		const missingIdentity = renderHook(() =>
+			usePersistentBlockIdentity({
+				attributeName: "sectionId",
+				attributes: {},
+				autoRepair: false,
+				blocks,
+				clientId: "child-missing",
+				prefix: "sec",
+				setAttributes: (patch) => {
+					patches.push(patch);
+				},
+			}),
+		);
+		const duplicateIdentity = renderHook(() =>
+			usePersistentBlockIdentity({
+				attributeName: "sectionId",
+				attributes: {
+					sectionId: "sec-keep",
+				},
+				autoRepair: false,
+				blocks,
+				clientId: "child-duplicate",
+				prefix: "sec",
+				setAttributes: (patch) => {
+					patches.push(patch);
+				},
+			}),
+		);
+
+		expect(missingIdentity.currentPersistentId).toBeNull();
+		expect(missingIdentity.nextPersistentId).toMatch(/^sec-[a-z0-9]{9}$/);
+		expect(missingIdentity.repairReason).toBe("missing");
+		expect(missingIdentity.shouldRepairPersistentId).toBe(true);
+
+		expect(duplicateIdentity.currentPersistentId).toBe("sec-keep");
+		expect(duplicateIdentity.nextPersistentId).toMatch(/^sec-[a-z0-9]{9}$/);
+		expect(duplicateIdentity.nextPersistentId).not.toBe("sec-keep");
+		expect(duplicateIdentity.repairReason).toBe("duplicate");
+		expect(duplicateIdentity.shouldRepairPersistentId).toBe(true);
+
+		const expectedMissingId = missingIdentity.nextPersistentId;
+		const expectedDuplicateId = duplicateIdentity.nextPersistentId;
+		const ensuredMissingId = missingIdentity.ensurePersistentId();
+		const ensuredDuplicateId = duplicateIdentity.ensurePersistentId();
+
+		expect(expectedMissingId).not.toBeNull();
+		expect(expectedDuplicateId).not.toBeNull();
+		if (expectedMissingId === null || expectedDuplicateId === null) {
+			throw new Error("identity helper should precompute repair ids");
+		}
+		expect(ensuredMissingId).toBe(expectedMissingId);
+		expect(ensuredDuplicateId).toBe(expectedDuplicateId);
+		expect(patches).toEqual([
+			{
+				sectionId: ensuredMissingId,
+			},
+			{
+				sectionId: ensuredDuplicateId,
+			},
+		]);
+	});
+
+	test("usePersistentBlockIdentity preserves stable ids during normal edits", () => {
+		const patches: Array<Record<string, unknown>> = [];
+		const identity = renderHook(() =>
+			usePersistentBlockIdentity({
+				attributeName: "sectionId",
+				attributes: {
+					sectionId: "custom-stable",
+				},
+				autoRepair: false,
+				blocks: [
+					{
+						attributes: {
+							sectionId: "custom-stable",
+						},
+						clientId: "solo",
+					},
+				],
+				clientId: "solo",
+				prefix: "sec",
+				setAttributes: (patch) => {
+					patches.push(patch);
+				},
+			}),
+		);
+
+		expect(identity.currentPersistentId).toBe("custom-stable");
+		expect(identity.nextPersistentId).toBe("custom-stable");
+		expect(identity.repairReason).toBeNull();
+		expect(identity.shouldRepairPersistentId).toBe(false);
+		expect(identity.ensurePersistentId()).toBe("custom-stable");
+		expect(patches).toEqual([]);
 	});
 
 	test("FieldControl maps supported field kinds and skips unsupported fields by default", () => {
