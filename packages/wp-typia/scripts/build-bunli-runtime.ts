@@ -16,7 +16,8 @@ const generatedMetadataEntrypoint = path.resolve(packageRoot, ".bunli", "command
 const nodeRuntimeEntrypoint = path.resolve(packageRoot, "src", "node-cli.ts");
 const outdir = path.resolve(packageRoot, buildConfig.outdir);
 const generatedMetadataOutdir = path.join(outdir, ".bunli");
-const repoRoot = path.resolve(packageRoot, "..", "..");
+const apiClientPackageRoot = path.resolve(packageRoot, "..", "wp-typia-api-client");
+const blockRuntimePackageRoot = path.resolve(packageRoot, "..", "wp-typia-block-runtime");
 const projectToolsPackageRoot = path.resolve(packageRoot, "..", "wp-typia-project-tools");
 const projectToolsRuntimeDir = path.resolve(
 	packageRoot,
@@ -93,18 +94,18 @@ async function fileExists(filePath: string): Promise<boolean> {
 function getRuntimeDependencyBuildSteps(): RuntimeDependencyBuildStep[] {
 	return [
 		{
-			args: ["run", "--filter", "@wp-typia/api-client", "build"],
-			cwd: repoRoot,
+			args: ["run", "build"],
+			cwd: apiClientPackageRoot,
 			label: "@wp-typia/api-client",
 		},
 		{
-			args: ["run", "--filter", "@wp-typia/block-runtime", "build"],
-			cwd: repoRoot,
+			args: ["run", "build"],
+			cwd: blockRuntimePackageRoot,
 			label: "@wp-typia/block-runtime",
 		},
 		{
-			args: ["run", "--filter", "@wp-typia/project-tools", "build"],
-			cwd: repoRoot,
+			args: ["run", "build"],
+			cwd: projectToolsPackageRoot,
 			label: "@wp-typia/project-tools",
 		},
 	];
@@ -126,16 +127,19 @@ async function ensureRuntimeBuildDependencies() {
 		return;
 	}
 
-	const buildSteps =
-		(await fileExists(path.join(repoRoot, "package.json")))
-			? getRuntimeDependencyBuildSteps()
-			: [
-					{
-						args: ["run", "build"],
-						cwd: projectToolsPackageRoot,
-						label: "@wp-typia/project-tools",
-					},
-				];
+	const siblingRoots = [
+		apiClientPackageRoot,
+		blockRuntimePackageRoot,
+		projectToolsPackageRoot,
+	];
+	const siblingRootsExist = await Promise.all(siblingRoots.map((rootPath) => fileExists(rootPath)));
+	const buildSteps = siblingRootsExist.every(Boolean) ? getRuntimeDependencyBuildSteps() : [];
+
+	if (buildSteps.length === 0) {
+		throw new Error(
+			`Unable to locate linked wp-typia sibling packages while recovering runtime aliases: ${missingArtifacts.join(", ")}`,
+		);
+	}
 
 	for (const buildStep of buildSteps) {
 		const buildResult = spawnSync(bunExecutable, buildStep.args, {
@@ -149,7 +153,9 @@ async function ensureRuntimeBuildDependencies() {
 		}
 
 		throw new Error(
-			`Failed to build ${buildStep.label} while recovering wp-typia runtime aliases: ${missingArtifacts.join(", ")}`,
+			`Failed to build ${buildStep.label} while recovering wp-typia runtime aliases: ${missingArtifacts.join(", ")}${
+				buildResult.error ? ` (${buildResult.error.message})` : ""
+			}`,
 		);
 	}
 
