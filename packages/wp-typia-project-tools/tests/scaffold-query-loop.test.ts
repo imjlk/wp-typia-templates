@@ -131,7 +131,7 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 			expect(listPatternSource).toContain('"wpTypiaVariation":"demo-space/demo-query-loop"');
 			expect(readme).toContain("## Variation Workflow");
 			expect(readme).toContain(
-				"This scaffold does not generate a `sync` script, `block.json`, or Typia manifests.",
+				"This scaffold does not generate `src/types.ts`, a `sync` script, `block.json`, or Typia manifests because it owns a `core/query` variation rather than a standalone block.",
 			);
 			expect(readme).toContain(
 				"`src/index.ts` remains the source of truth for the Query Loop variation name",
