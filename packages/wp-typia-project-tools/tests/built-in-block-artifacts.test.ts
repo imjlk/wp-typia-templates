@@ -608,7 +608,7 @@ const EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES: Record<
   },
   compound: {
     'src/blocks/demo-compound-item/block-metadata.ts': '50956333a97a824a',
-    'src/blocks/demo-compound-item/edit.tsx': 'b66725c7b00db080',
+    'src/blocks/demo-compound-item/edit.tsx': '7f80c9b38b36f2ac',
     'src/blocks/demo-compound-item/hooks.ts': '485092aef1c4e019',
     'src/blocks/demo-compound-item/index.tsx': '5b5805db42c0b1f6',
     'src/blocks/demo-compound-item/manifest-defaults-document.ts':
@@ -618,8 +618,8 @@ const EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES: Record<
     'src/blocks/demo-compound-item/save.tsx': 'e2a9d7c5df3e615f',
     'src/blocks/demo-compound-item/validators.ts': '7123c8ea0e650172',
     'src/blocks/demo-compound/block-metadata.ts': '50956333a97a824a',
-    'src/blocks/demo-compound/children.ts': '3b026ddaecc8b9c8',
-    'src/blocks/demo-compound/edit.tsx': '28fe042914bf6070',
+    'src/blocks/demo-compound/children.ts': '3a34a4faac6cfbeb',
+    'src/blocks/demo-compound/edit.tsx': '57121378ed96c555',
     'src/blocks/demo-compound/hooks.ts': '485092aef1c4e019',
     'src/blocks/demo-compound/index.tsx': 'c9d9139901e6e4b9',
     'src/blocks/demo-compound/interactivity.ts': 'eddaf331fa622b91',

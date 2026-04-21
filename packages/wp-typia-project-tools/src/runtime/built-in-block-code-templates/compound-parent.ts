@@ -9,7 +9,7 @@ import {
 import { Notice, PanelBody, ToggleControl } from '@wordpress/components';
 
 import {
-	getRootInnerBlocksConfig,
+	getRootInnerBlocksPropsOptions,
 } from './children';
 import { useTypiaValidation } from './hooks';
 import type { {{pascalCase}}Attributes } from './types';
@@ -40,7 +40,7 @@ export default function Edit( {
 	const blockProps = useBlockProps( {
 		className: '{{cssClassName}}',
 	} );
-	const rootInnerBlocksConfig = getRootInnerBlocksConfig();
+	const rootInnerBlocksPropsOptions = getRootInnerBlocksPropsOptions();
 
 	return (
 		<>
@@ -88,18 +88,7 @@ export default function Edit( {
 					</Notice>
 				) }
 				<div className="{{cssClassName}}__items">
-					<TypedInnerBlocks
-						defaultBlock={ rootInnerBlocksConfig.defaultBlock }
-						directInsert={ rootInnerBlocksConfig.directInsert }
-						orientation={ rootInnerBlocksConfig.orientation }
-						renderAppender={
-							rootInnerBlocksConfig.templateLock === 'all'
-								? undefined
-								: InnerBlocks.ButtonBlockAppender
-						}
-						template={ rootInnerBlocksConfig.template }
-						templateLock={ rootInnerBlocksConfig.templateLock }
-					/>
+					<TypedInnerBlocks { ...rootInnerBlocksPropsOptions } />
 				</div>
 			</div>
 		</>
@@ -219,6 +208,7 @@ export const createAttributeUpdater = scaffoldValidators.createAttributeUpdater;
 `;
 
 export const COMPOUND_CHILDREN_TEMPLATE = `import type { BlockTemplate } from '@wp-typia/block-types/blocks/registration';
+import { InnerBlocks } from '@wordpress/block-editor';
 
 export const DEFAULT_CHILD_BLOCK_NAME = '{{namespace}}/{{slugKebabCase}}-item';
 
@@ -242,6 +232,10 @@ export interface CompoundInnerBlocksConfig {
 \ttemplate?: BlockTemplate;
 \ttemplateLock: false | 'insert' | 'all';
 }
+
+export type CompoundInnerBlocksPropsOptions = CompoundInnerBlocksConfig & {
+\trenderAppender?: typeof InnerBlocks.ButtonBlockAppender;
+};
 
 export const ROOT_INNER_BLOCKS_PRESET_ID = '{{compoundInnerBlocksPreset}}';
 export const ROOT_INNER_BLOCKS_PRESET_DESCRIPTION =
@@ -321,12 +315,32 @@ function buildDefaultBlockEntry(
 \treturn [ template[ 0 ][ 0 ], {} ];
 }
 
+function buildInnerBlocksPropsOptions(
+\tconfig?: CompoundInnerBlocksConfig
+): CompoundInnerBlocksPropsOptions | undefined {
+\tif ( ! config ) {
+\t\treturn undefined;
+\t}
+
+\treturn {
+\t\t...config,
+\t\trenderAppender:
+\t\t\tconfig.templateLock === 'all'
+\t\t\t\t? undefined
+\t\t\t\t: InnerBlocks.ButtonBlockAppender,
+\t};
+}
+
 export function getRootInnerBlocksConfig(): CompoundInnerBlocksConfig {
 \treturn {
 \t\t...BASE_INNER_BLOCKS_CONFIG,
 \t\tdefaultBlock: buildDefaultBlockEntry( DEFAULT_CHILD_TEMPLATE ),
 \t\ttemplate: DEFAULT_CHILD_TEMPLATE,
 \t};
+}
+
+export function getRootInnerBlocksPropsOptions(): CompoundInnerBlocksPropsOptions {
+\treturn buildInnerBlocksPropsOptions( getRootInnerBlocksConfig() )!;
 }
 
 export function getChildSpec( blockName: string ): CompoundChildSpec | undefined {
@@ -368,6 +382,12 @@ export function getChildInnerBlocksConfig(
 \t\tdefaultBlock: buildDefaultBlockEntry( template ),
 \t\ttemplate,
 \t};
+}
+
+export function getChildInnerBlocksPropsOptions(
+\tblockName: string
+): CompoundInnerBlocksPropsOptions | undefined {
+\treturn buildInnerBlocksPropsOptions( getChildInnerBlocksConfig( blockName ) );
 }
 
 export function hasNestedChildBlocks( blockName: string ): boolean {
