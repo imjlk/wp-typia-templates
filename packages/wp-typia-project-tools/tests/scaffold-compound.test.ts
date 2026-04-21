@@ -1664,6 +1664,107 @@ describe('@wp-typia/project-tools scaffold compound', () => {
   );
 
   test(
+    'compound add-child rejects ancestor routes that do not connect through the current graph',
+    async () => {
+      const targetDir = path.join(tempRoot, 'demo-compound-orphaned-route');
+
+      await scaffoldProject({
+        projectDir: targetDir,
+        templateId: 'compound',
+        packageManager: 'npm',
+        noInstall: true,
+        answers: {
+          author: 'Test Runner',
+          description: 'Demo compound orphaned route workflow',
+          namespace: 'create-block',
+          slug: 'demo-compound-orphaned-route',
+          title: 'Demo Compound Orphaned Route',
+        },
+      });
+
+      runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
+        '--slug',
+        'section',
+        '--title',
+        'Section',
+        '--container',
+        '--inserter',
+        'visible',
+      ]);
+
+      runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
+        '--slug',
+        'part',
+        '--title',
+        'Part',
+        '--container',
+        '--inserter',
+        'visible',
+      ]);
+
+      runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
+        '--slug',
+        'clause',
+        '--title',
+        'Clause',
+        '--ancestor',
+        'section',
+      ]);
+
+      const partBlockJsonPath = path.join(
+        targetDir,
+        'src',
+        'blocks',
+        'demo-compound-orphaned-route-part',
+        'block.json',
+      );
+      const partBlockJson = JSON.parse(
+        fs.readFileSync(partBlockJsonPath, 'utf8'),
+      );
+      partBlockJson.allowedBlocks = [
+        'create-block/demo-compound-orphaned-route-section',
+      ];
+      fs.writeFileSync(
+        partBlockJsonPath,
+        `${JSON.stringify(partBlockJson, null, '\t')}\n`,
+        'utf8',
+      );
+
+      const clauseBlockJsonPath = path.join(
+        targetDir,
+        'src',
+        'blocks',
+        'demo-compound-orphaned-route-clause',
+        'block.json',
+      );
+      const clauseBlockJson = JSON.parse(
+        fs.readFileSync(clauseBlockJsonPath, 'utf8'),
+      );
+      clauseBlockJson.ancestor = [
+        'create-block/demo-compound-orphaned-route-part',
+        'create-block/demo-compound-orphaned-route-section',
+      ];
+      fs.writeFileSync(
+        clauseBlockJsonPath,
+        `${JSON.stringify(clauseBlockJson, null, '\t')}\n`,
+        'utf8',
+      );
+
+      expect(() =>
+        runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
+          '--slug',
+          'appendix',
+          '--title',
+          'Appendix',
+        ]),
+      ).toThrow(
+        'Existing compound child graph is invalid: create-block/demo-compound-orphaned-route-section is not on the declared ancestor route for create-block/demo-compound-orphaned-route-clause.',
+      );
+    },
+    { timeout: 30_000 },
+  );
+
+  test(
     'compound add-child rejects unknown CLI flags before writing files',
     async () => {
       const targetDir = path.join(tempRoot, 'demo-compound-unknown-option');

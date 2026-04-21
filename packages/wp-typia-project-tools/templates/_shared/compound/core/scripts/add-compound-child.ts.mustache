@@ -548,7 +548,7 @@ function validateExistingCompoundChildGraph(
 						expectedAncestorBlockName
 				);
 
-			if ( ancestorChild.ancestorBlockNames.length > 0 && ! ancestorRouteMatches ) {
+			if ( ! ancestorRouteMatches ) {
 				throw new Error(
 					`Existing compound child graph is invalid: ${ ancestorChild.blockName } is not on the declared ancestor route for ${ child.blockName }.`
 				);
