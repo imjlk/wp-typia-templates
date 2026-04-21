@@ -283,10 +283,6 @@ export const COMPOUND_CHILD_SPECS: CompoundChildSpec[] = [
 \t// add-child: insert new child specs here
 ];
 
-function getChildSpecByKey( key: string ): CompoundChildSpec | undefined {
-\treturn COMPOUND_CHILD_SPECS.find( ( spec ) => spec.key === key );
-}
-
 function buildTemplateEntriesForSpec( spec: CompoundChildSpec ): BlockTemplate {
 \tconst nestedTemplate = buildNestedTemplateForKey( spec.key );
 
@@ -335,20 +331,6 @@ export function getRootInnerBlocksConfig(): CompoundInnerBlocksConfig {
 
 export function getChildSpec( blockName: string ): CompoundChildSpec | undefined {
 \treturn COMPOUND_CHILD_SPECS.find( ( spec ) => spec.blockName === blockName );
-}
-
-export function getChildAncestorBlockNames(
-\tblockName: string
-): string[] | undefined {
-\tconst childSpec = getChildSpec( blockName );
-\tif ( ! childSpec || childSpec.ancestorKeys.length === 0 ) {
-\t\treturn undefined;
-\t}
-
-\treturn childSpec.ancestorKeys.flatMap( ( key ) => {
-\t\tconst ancestorSpec = getChildSpecByKey( key );
-\t\treturn ancestorSpec ? [ ancestorSpec.blockName ] : [];
-\t} );
 }
 
 export function getChildTemplate(
