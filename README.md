@@ -156,6 +156,22 @@ wp-typia add hooked-block counter-card --anchor core/post-content --position aft
 - Need a branded Query Loop inserter variation? Start with `query-loop`.
 - Need schema evolution for a long-lived block? Enable `--with-migration-ui`.
 
+## Retrofitting Existing Projects
+
+Today there is still no general-purpose `wp-typia init` command for arbitrary
+existing plugins or block repos.
+
+The currently supported retrofit path is narrower:
+
+- `wp-typia migrate init` bootstraps **migration support only**
+- it expects an existing project that already matches supported first-party
+  `wp-typia` block layouts
+- it does not try to convert an arbitrary project into a full scaffolded
+  `wp-typia` workspace
+
+The broader project-level adoption path is tracked in
+[Retrofit and Init Direction](RETROFIT_INIT_DIRECTION.md).
+
 ## Remote templates
 
 `wp-typia` can scaffold from:
@@ -201,6 +217,7 @@ npx wp-typia create my-block --template @scope/create-block-template --variant h
 - [External Template-Layer Composition RFC](https://imjlk.github.io/wp-typia/architecture/external-template-layer-composition/)
 - [API Guide](https://imjlk.github.io/wp-typia/reference/api/)
 - [Migration Guide](https://imjlk.github.io/wp-typia/guides/migrations/)
+- [Retrofit and Init Direction](RETROFIT_INIT_DIRECTION.md)
 - [Error and Export Contract Guide](https://imjlk.github.io/wp-typia/reference/error-export-contracts/)
 - [Formatting Toolchain Policy](https://imjlk.github.io/wp-typia/maintainers/formatting-toolchain-policy/)
 - [Maintenance Automation Policy](https://imjlk.github.io/wp-typia/maintainers/maintenance-automation-policy/)

@@ -2,6 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { cleanupMigrationTempRoot, createBrokenOnlyMultiBlockProject, createCurrentProjectFiles, createCurrentSingleBlockScaffoldProject, createLegacyConfiguredCurrentPreferredSameNameMixedSingleBlockProject, createLegacyConfiguredMixedSingleBlockProject, createLegacyConfiguredSameNameMixedSingleBlockProject, createMalformedFallbackSingleBlockProject, createMalformedPreferredSingleBlockProject, createMigrationTempRoot, createMixedSingleBlockProject, createRetrofitMultiBlockProject, createRetrofitMultiBlockProjectWithBrokenCandidate, createSameNameMixedSingleBlockProject, createSingleBlockProjectWithBrokenMultiBlockCandidate, entryPath, runCli, writeJson } from "./helpers/migration-test-harness.js";
+import { formatMigrationHelpText } from "../src/runtime/migration-command-surface.js";
 import { loadMigrationProject } from "../src/runtime/migration-project.js";
 
 describe("wp-typia migrate init", () => {
@@ -300,8 +301,8 @@ test("migrate init fails with actionable guidance when no supported retrofit lay
 });
 
 test("migrate help text explains retrofit auto-detection, read-only planning, and --all workspace scope", () => {
-	expect(runCli("node", [entryPath, "migrate"])).toMatch(
-		/`migrate init` auto-detects supported single-block and `src\/blocks\/\*` multi-block layouts[\s\S]*Migration versions use strict schema labels like `v1`, `v2`, and `v3`[\s\S]*`migrate wizard` is TTY-only[\s\S]*`migrate plan` and `migrate wizard` are read-only previews[\s\S]*--all runs across every configured legacy migration version and every configured block target\.[\s\S]*Existing fixture files are preserved and reported as skipped unless you pass `--force`\.[\s\S]*Use `migrate fixtures --force` as the explicit refresh path/,
+	expect(formatMigrationHelpText()).toMatch(
+		/`migrate init` auto-detects supported single-block and `src\/blocks\/\*` multi-block layouts[\s\S]*`migrate init` only retrofits migration support into projects that already match those layouts\.[\s\S]*A broader project-level `wp-typia init` path remains future work\.[\s\S]*Migration versions use strict schema labels like `v1`, `v2`, and `v3`[\s\S]*`migrate wizard` is TTY-only[\s\S]*`migrate plan` and `migrate wizard` are read-only previews[\s\S]*--all runs across every configured legacy migration version and every configured block target\.[\s\S]*Existing fixture files are preserved and reported as skipped unless you pass `--force`\.[\s\S]*Use `migrate fixtures --force` as the explicit refresh path/,
 	);
 });
 });
