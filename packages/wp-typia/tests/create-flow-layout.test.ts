@@ -27,6 +27,9 @@ describe("create flow layout model", () => {
 
 		expect(getVisibleCreateFieldNames({ template: "basic" })).not.toContain("data-storage");
 		expect(getVisibleCreateFieldNames({ template: "basic" })).not.toContain(
+			"alternate-render-targets",
+		);
+		expect(getVisibleCreateFieldNames({ template: "basic" })).not.toContain(
 			"persistence-policy",
 		);
 		expect(getVisibleCreateFieldNames({ template: "basic" })).not.toContain(
@@ -34,6 +37,9 @@ describe("create flow layout model", () => {
 		);
 
 		expect(getVisibleCreateFieldNames({ template: "persistence" })).toContain("data-storage");
+		expect(getVisibleCreateFieldNames({ template: "persistence" })).toContain(
+			"alternate-render-targets",
+		);
 		expect(getVisibleCreateFieldNames({ template: "compound" })).toContain(
 			"persistence-policy",
 		);
@@ -51,6 +57,7 @@ describe("create flow layout model", () => {
 			"namespace",
 			"text-domain",
 			"php-prefix",
+			"alternate-render-targets",
 			"data-storage",
 			"persistence-policy",
 			...CREATE_CHECKBOX_FIELD_NAMES,
@@ -102,6 +109,7 @@ describe("create flow layout model", () => {
 			sanitizeCreateSubmitValues({
 				"data-storage": "custom-table",
 				"dry-run": false,
+				"alternate-render-targets": " email,mjml ",
 				"external-layer-id": " acme/demo ",
 				"external-layer-source": " ./layers/demo ",
 				namespace: "demo",
@@ -120,6 +128,7 @@ describe("create flow layout model", () => {
 				yes: false,
 			}),
 		).toMatchObject({
+			"alternate-render-targets": undefined,
 			"data-storage": undefined,
 			"external-layer-id": "acme/demo",
 			"external-layer-source": "./layers/demo",
@@ -133,6 +142,7 @@ describe("create flow layout model", () => {
 			sanitizeCreateSubmitValues({
 				"data-storage": "custom-table",
 				"dry-run": false,
+				"alternate-render-targets": " email,mjml ",
 				namespace: "demo",
 				"no-install": false,
 				"package-manager": "npm",
@@ -149,6 +159,7 @@ describe("create flow layout model", () => {
 				yes: false,
 			}),
 		).toMatchObject({
+			"alternate-render-targets": "email,mjml",
 			"data-storage": "custom-table",
 			"external-layer-id": undefined,
 			"external-layer-source": undefined,
@@ -162,6 +173,7 @@ describe("create flow layout model", () => {
 			sanitizeCreateSubmitValues({
 				"data-storage": undefined,
 				"dry-run": false,
+				"alternate-render-targets": " plain-text ",
 				"external-layer-id": undefined,
 				"external-layer-source": undefined,
 				namespace: "demo",
@@ -180,6 +192,7 @@ describe("create flow layout model", () => {
 				yes: false,
 			}),
 		).toMatchObject({
+			"alternate-render-targets": undefined,
 			"query-post-type": "book",
 			template: "query-loop",
 		});

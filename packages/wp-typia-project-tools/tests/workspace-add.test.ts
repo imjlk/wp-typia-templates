@@ -1008,6 +1008,80 @@ test("canonical CLI can add a compound persistence block to an official workspac
   ]);
 }, 60_000);
 
+test("canonical CLI can add a persistence block with alternate render targets", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-persistence-alternate-render-targets"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add persistence alternate render targets",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-persistence-alternate-render-targets",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Persistence Alternate Render Targets",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "block",
+      "mailing-card",
+      "--template",
+      "persistence",
+      "--alternate-render-targets",
+      "email,plain-text",
+      "--data-storage",
+      "custom-table",
+      "--persistence-policy",
+      "authenticated",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const renderTargetsSource = fs.readFileSync(
+    path.join(targetDir, "src", "blocks", "mailing-card", "render-targets.php"),
+    "utf8"
+  );
+  const emailRenderSource = fs.readFileSync(
+    path.join(targetDir, "src", "blocks", "mailing-card", "render-email.php"),
+    "utf8"
+  );
+  const textRenderSource = fs.readFileSync(
+    path.join(targetDir, "src", "blocks", "mailing-card", "render-text.php"),
+    "utf8"
+  );
+
+  expect(renderTargetsSource).toMatch(/function\s+.+_render_target\(/);
+  expect(emailRenderSource).toContain("render_target( 'email'");
+  expect(textRenderSource).toContain("render_target( 'plain-text'");
+  expect(
+    fs.existsSync(
+      path.join(targetDir, "src", "blocks", "mailing-card", "render-mjml.php")
+    )
+  ).toBe(false);
+  runGeneratedScript(targetDir, "scripts/sync-types-to-block-json.ts", [
+    "--check",
+  ]);
+  runGeneratedScript(targetDir, "scripts/sync-rest-contracts.ts", [
+    "--check",
+  ]);
+}, 60_000);
+
 test("add compound block repairs a legacy shared validator toolkit in an official workspace template", async () => {
   const targetDir = path.join(
     tempRoot,

@@ -51,6 +51,22 @@ export function buildReadme(
     variables.isPublicPersistencePolicy === 'true'
       ? 'Public persistence writes use signed short-lived tokens, per-request ids, and coarse rate limiting by default. Add application-specific abuse controls before using the same pattern for high-value metrics or experiments.'
       : null;
+  const alternateRenderTargetSection =
+    variables.hasAlternateRenderTargets === 'true'
+      ? `## Alternate Render Targets\n\nThis scaffold keeps \`${templateId === 'compound' ? `src/blocks/${variables.slugKebabCase}/render.php` : 'src/render.php'}\` as the default web render boundary and also generates ${[
+          variables.hasAlternateEmailRenderTarget === 'true'
+            ? `\`${templateId === 'compound' ? `src/blocks/${variables.slugKebabCase}/render-email.php` : 'src/render-email.php'}\``
+            : null,
+          variables.hasAlternateMjmlRenderTarget === 'true'
+            ? `\`${templateId === 'compound' ? `src/blocks/${variables.slugKebabCase}/render-mjml.php` : 'src/render-mjml.php'}\``
+            : null,
+          variables.hasAlternatePlainTextRenderTarget === 'true'
+            ? `\`${templateId === 'compound' ? `src/blocks/${variables.slugKebabCase}/render-text.php` : 'src/render-text.php'}\``
+            : null,
+        ]
+          .filter((value): value is string => Boolean(value))
+          .join(', ')}. All of those entries delegate through \`${templateId === 'compound' ? `src/blocks/${variables.slugKebabCase}/render-targets.php` : 'src/render-targets.php'}\`, so attribute normalization, validation, and render-target adapter hooks stay aligned across web, email, MJML, and plain-text integrations.`
+      : '';
   const compoundExtensionWorkflowSection = getCompoundExtensionWorkflowSection(
     packageManager,
     templateId,
@@ -116,7 +132,7 @@ ${initialCommitCommands.join('\n')}
 
 ${getInitialCommitNote()}
 
-${sourceOfTruthNote}${publicPersistencePolicyNote ? `\n\n${publicPersistencePolicyNote}` : ''}${migrationSection ? `\n\n${migrationSection}` : ''}${compoundExtensionWorkflowSection ? `\n\n${compoundExtensionWorkflowSection}` : ''}${wpEnvSection ? `\n\n${wpEnvSection}` : ''}${testPresetSection ? `\n\n${testPresetSection}` : ''}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ''}
+${sourceOfTruthNote}${publicPersistencePolicyNote ? `\n\n${publicPersistencePolicyNote}` : ''}${alternateRenderTargetSection ? `\n\n${alternateRenderTargetSection}` : ''}${migrationSection ? `\n\n${migrationSection}` : ''}${compoundExtensionWorkflowSection ? `\n\n${compoundExtensionWorkflowSection}` : ''}${wpEnvSection ? `\n\n${wpEnvSection}` : ''}${testPresetSection ? `\n\n${testPresetSection}` : ''}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ''}
 `;
 }
 

@@ -93,6 +93,8 @@ export function getTemplateVariables(
       : 'authenticated';
 
   return {
+    alternateRenderTargetsCsv: '',
+    alternateRenderTargetsJson: '[]',
     apiClientPackageVersion,
     author: answers.author.trim(),
     blockRuntimePackageVersion,
@@ -106,6 +108,10 @@ export function getTemplateVariables(
     compoundChildIcon: COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS.icon,
     compoundChildTitleJson: JSON.stringify(compoundChildTitle),
     compoundPersistenceEnabled: compoundPersistenceEnabled ? 'true' : 'false',
+    hasAlternateEmailRenderTarget: 'false',
+    hasAlternateMjmlRenderTarget: 'false',
+    hasAlternatePlainTextRenderTarget: 'false',
+    hasAlternateRenderTargets: 'false',
     projectToolsPackageVersion,
     cssClassName,
     dataStorageMode,

@@ -8,6 +8,7 @@ import {
 } from "./first-party-form-model";
 
 export const addFlowSchema = z.object({
+	"alternate-render-targets": z.string().optional(),
 	anchor: z.string().optional(),
 	block: z.string().optional(),
 	"data-storage": z.string().optional(),
@@ -45,6 +46,7 @@ export type AddFieldName =
 	| "namespace"
 	| "position"
 	| "slot"
+	| "alternate-render-targets"
 	| "data-storage"
 	| "persistence-policy";
 
@@ -52,6 +54,7 @@ const ADD_FIELD_ORDER = [
 	"kind",
 	"name",
 	"template",
+	"alternate-render-targets",
 	"block",
 	"anchor",
 	"position",
@@ -64,6 +67,7 @@ const ADD_FIELD_HEIGHTS: Record<AddFieldName, number> = {
 	anchor: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	block: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 	"data-storage": FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+	"alternate-render-targets": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	kind: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 	methods: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	name: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
@@ -95,6 +99,9 @@ export function getVisibleAddFieldNames(values: Partial<AddFlowValues>): Array<A
 		case "block":
 		default:
 			return ADD_FIELD_ORDER.filter((name) => {
+				if (name === "alternate-render-targets") {
+					return isAddPersistenceTemplate(values.template);
+				}
 				if (name === "data-storage" || name === "persistence-policy") {
 					return isAddPersistenceTemplate(values.template);
 				}

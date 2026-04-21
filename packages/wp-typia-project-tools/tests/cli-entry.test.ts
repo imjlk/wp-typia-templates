@@ -333,6 +333,38 @@ test("runScaffoldFlow rejects persistence-only create flags for non-persistence 
   );
 });
 
+test("runScaffoldFlow rejects alternate render targets for non-persistence templates", async () => {
+  await expect(
+    runScaffoldFlow({
+      alternateRenderTargets: "email,mjml",
+      cwd: tempRoot,
+      noInstall: true,
+      packageManager: "npm",
+      projectInput: "demo-basic-invalid-alternate-render-targets",
+      templateId: "basic",
+      yes: true,
+    })
+  ).rejects.toThrow(
+    "`--alternate-render-targets` is supported only for `wp-typia create --template persistence` or persistence-enabled `--template compound` scaffolds."
+  );
+});
+
+test("runScaffoldFlow rejects compound alternate render targets without persistence flags", async () => {
+  await expect(
+    runScaffoldFlow({
+      alternateRenderTargets: "plain-text",
+      cwd: tempRoot,
+      noInstall: true,
+      packageManager: "npm",
+      projectInput: "demo-compound-invalid-alternate-render-targets",
+      templateId: "compound",
+      yes: true,
+    })
+  ).rejects.toThrow(
+    "`--alternate-render-targets` on `wp-typia create --template compound` requires the persistence-enabled server render path. Add `--data-storage <post-meta|custom-table>` or `--persistence-policy <authenticated|public>` first."
+  );
+});
+
 test("runScaffoldFlow rejects built-in variant flags before template rendering", async () => {
   await expect(
     runScaffoldFlow({
@@ -515,6 +547,7 @@ test("formatHelpText keeps migration UI flags out of external template usage", (
   expect(externalPackageLine).toBeDefined();
   expect(externalPackageLine).not.toContain("--with-migration-ui");
   expect(externalPackageLine).not.toContain("--external-layer-source");
+  expect(helpText).toContain("--alternate-render-targets");
   expect(helpText).toContain("--template workspace");
   expect(helpText).toContain("--external-layer-source");
   expect(helpText).toContain("--external-layer-id");

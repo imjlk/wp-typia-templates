@@ -42,6 +42,7 @@ type ParsedArgv = {
 };
 
 const STRING_FLAG_NAMES = new Set([
+	"alternate-render-targets",
 	"anchor",
 	"block",
 	"current-migration-version",
@@ -320,6 +321,7 @@ function renderCreateHelp() {
 		"--php-prefix",
 		"--text-domain",
 		"--package-manager",
+		"--alternate-render-targets",
 		"--data-storage",
 		"--persistence-policy",
 		"--query-post-type",
@@ -340,6 +342,7 @@ function renderAddHelp() {
 		"",
 		"Supported non-interactive flags:",
 		"--template",
+		"--alternate-render-targets",
 		"--data-storage",
 		"--persistence-policy",
 		"--external-layer-source",

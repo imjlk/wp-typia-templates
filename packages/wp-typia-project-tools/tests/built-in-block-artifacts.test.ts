@@ -996,6 +996,69 @@ describe('built-in block artifacts', () => {
     );
   });
 
+  test('persistence artifacts emit alternate render target entries when requested', () => {
+    const answers = buildAnswers('persistence');
+    const spec = createBuiltInBlockSpec({
+      alternateRenderTargets: 'email,mjml,plain-text',
+      answers,
+      dataStorageMode: answers.dataStorageMode,
+      persistencePolicy: answers.persistencePolicy,
+      templateId: 'persistence',
+    });
+    const variables = buildTemplateVariablesFromBlockSpec(spec);
+    const codeArtifacts = buildBuiltInCodeArtifacts({
+      templateId: 'persistence',
+      variables,
+    });
+    const relativePaths = codeArtifacts.map((artifact) => artifact.relativePath);
+
+    expect(relativePaths).toContain('src/render-targets.php');
+    expect(relativePaths).toContain('src/render.php');
+    expect(relativePaths).toContain('src/render-email.php');
+    expect(relativePaths).toContain('src/render-mjml.php');
+    expect(relativePaths).toContain('src/render-text.php');
+    expect(
+      codeArtifacts.find((artifact) => artifact.relativePath === 'src/render.php')?.source,
+    ).toContain("render_target( 'web'");
+    expect(
+      codeArtifacts.find((artifact) => artifact.relativePath === 'src/render-targets.php')
+        ?.source,
+    ).toContain("function demo_space_demo_persistence_render_target");
+  });
+
+  test('compound persistence artifacts emit alternate render target entries when requested', () => {
+    const answers = buildAnswers('compound');
+    const spec = createBuiltInBlockSpec({
+      alternateRenderTargets: 'email,plain-text',
+      answers,
+      dataStorageMode: answers.dataStorageMode,
+      persistencePolicy: answers.persistencePolicy,
+      templateId: 'compound',
+    });
+    const variables = buildTemplateVariablesFromBlockSpec(spec);
+    const codeArtifacts = buildBuiltInCodeArtifacts({
+      templateId: 'compound',
+      variables,
+    });
+    const relativePaths = codeArtifacts.map((artifact) => artifact.relativePath);
+    const parentDir = `src/blocks/${variables.slugKebabCase}`;
+
+    expect(relativePaths).toContain(`${parentDir}/render-targets.php`);
+    expect(relativePaths).toContain(`${parentDir}/render.php`);
+    expect(relativePaths).toContain(`${parentDir}/render-email.php`);
+    expect(relativePaths).toContain(`${parentDir}/render-text.php`);
+    expect(relativePaths).not.toContain(`${parentDir}/render-mjml.php`);
+    expect(
+      codeArtifacts.find((artifact) => artifact.relativePath === `${parentDir}/render.php`)
+        ?.source,
+    ).toContain("render_target( 'web'");
+    expect(
+      codeArtifacts.find(
+        (artifact) => artifact.relativePath === `${parentDir}/render-targets.php`,
+      )?.source,
+    ).toContain("function demo_space_demo_compound_render_target");
+  });
+
   test.each([
     [
       'basic',
