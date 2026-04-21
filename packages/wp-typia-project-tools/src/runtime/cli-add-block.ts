@@ -35,7 +35,6 @@ import {
 	type AddBlockTemplateId,
 	buildWorkspacePhpPrefix,
 	isAddBlockTemplateId,
-	normalizeBlockSlug,
 	patchFile,
 	readOptionalFile,
 	type RunAddBlockCommandOptions,
@@ -43,6 +42,9 @@ import {
 	type WorkspaceMutationSnapshot,
 	snapshotWorkspaceFiles,
 } from "./cli-add-shared.js";
+import {
+	resolveNonEmptyNormalizedBlockSlug,
+} from "./scaffold-identifiers.js";
 import {
 	buildConfigEntries,
 	buildMigrationBlocks,
@@ -68,6 +70,10 @@ import {
 	resolveOptionalInteractiveExternalLayerId,
 } from "./external-layer-selection.js";
 import { parseAlternateRenderTargets } from "./alternate-render-targets.js";
+import {
+	normalizeOptionalCliString,
+	resolveLocalCliPathOption,
+} from "./cli-validation.js";
 
 const COLLECTION_IMPORT_LINE = "import '../../collection';";
 // This is a lightweight preflight heuristic for the common install layouts:
@@ -141,30 +147,6 @@ async function renderWorkspacePersistenceServerModule(
 	const targetDir = path.join(projectDir, "src", "blocks", variables.slugKebabCase);
 	const templateDir = buildServerTemplateRoot(variables.persistencePolicy);
 	await copyInterpolatedDirectory(templateDir, targetDir, variables);
-}
-
-function normalizeExternalLayerOption(value?: string): string | undefined {
-	if (typeof value !== "string") {
-		return undefined;
-	}
-
-	const trimmed = value.trim();
-	return trimmed.length > 0 ? trimmed : undefined;
-}
-
-function resolveExternalLayerSourceFromCaller(
-	source: string | undefined,
-	callerCwd: string,
-): string | undefined {
-	if (
-		typeof source !== "string" ||
-		source.length === 0 ||
-		!(path.isAbsolute(source) || source.startsWith("./") || source.startsWith("../"))
-	) {
-		return source;
-	}
-
-	return path.resolve(callerCwd, source);
 }
 
 function hasInstalledWorkspaceDependencies(projectDir: string): boolean {
@@ -551,11 +533,12 @@ export async function runAddBlockCommand({
 
 	const workspace = resolveWorkspaceProject(cwd);
 	assertWorkspaceDependenciesInstalled(workspace);
-	const normalizedExternalLayerId = normalizeExternalLayerOption(externalLayerId);
-	const normalizedExternalLayerSource = resolveExternalLayerSourceFromCaller(
-		normalizeExternalLayerOption(externalLayerSource),
+	const normalizedExternalLayerId = normalizeOptionalCliString(externalLayerId);
+	const normalizedExternalLayerSource = resolveLocalCliPathOption({
 		cwd,
-	);
+		label: "--external-layer-source",
+		value: externalLayerSource,
+	});
 	const resolvedExternalLayerSelection =
 		await resolveOptionalInteractiveExternalLayerId({
 		callerCwd: cwd,
@@ -566,10 +549,11 @@ export async function runAddBlockCommand({
 	let tempRoot = "";
 
 	try {
-		const normalizedSlug = normalizeBlockSlug(blockName);
-		if (!normalizedSlug) {
-			throw new Error("Block name is required. Use `wp-typia add block <name> --template <family>`.");
-		}
+		const normalizedSlug = resolveNonEmptyNormalizedBlockSlug({
+			input: blockName,
+			label: "Block name",
+			usage: "wp-typia add block <name> --template <family>",
+		});
 
 		const defaults = getDefaultAnswers(normalizedSlug, resolvedTemplateId);
 		tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-add-block-"));

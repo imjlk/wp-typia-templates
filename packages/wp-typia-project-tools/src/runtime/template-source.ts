@@ -23,6 +23,9 @@ import {
   isOfficialWorkspaceTemplateSeed,
   resolveTemplateSeed,
 } from './template-source-seeds.js'
+import {
+  assertBuiltInTemplateVariantAllowed,
+} from './cli-validation.js'
 
 export type {
   GitHubTemplateLocator,
@@ -46,11 +49,10 @@ export async function resolveTemplateSource(
   variant?: string,
 ): Promise<ResolvedTemplateSource> {
   if (isBuiltInTemplateId(templateId)) {
-    if (variant) {
-      throw new Error(
-        `--variant is only supported for official external template configs. Received variant "${variant}" for built-in template "${templateId}".`,
-      )
-    }
+    assertBuiltInTemplateVariantAllowed({
+      templateId,
+      variant,
+    })
     return resolveBuiltInTemplateSource(templateId, {
       persistenceEnabled: variables.compoundPersistenceEnabled === 'true',
       persistencePolicy:

@@ -41,6 +41,9 @@ import {
 import {
 } from "./scaffold-answer-resolution.js";
 import { getTemplateVariables } from "./scaffold-template-variables.js";
+import {
+	assertExternalLayerCompositionOptions,
+} from "./cli-validation.js";
 
 const WORKSPACE_TEMPLATE_ALIAS = "workspace";
 
@@ -285,11 +288,10 @@ export async function scaffoldProject({
 	const resolvedPackageManager = getPackageManager(packageManager).id;
 	const isBuiltInTemplate = isBuiltInTemplateId(resolvedTemplateId);
 
-	if (externalLayerId && !externalLayerSource) {
-		throw new Error(
-			"externalLayerId requires externalLayerSource when composing built-in template layers.",
-		);
-	}
+	assertExternalLayerCompositionOptions({
+		externalLayerId,
+		externalLayerSource,
+	});
 
 	if (isBuiltInTemplate) {
 		const blockGeneratorService = new BlockGeneratorService();

@@ -58,6 +58,25 @@ export function normalizeBlockSlug(input: string): string {
 	return toKebabCase(input);
 }
 
+export function resolveNonEmptyNormalizedBlockSlug(options: {
+	input: string;
+	label: string;
+	usage: string;
+}): string {
+	const normalizedSlug = normalizeBlockSlug(options.input);
+	if (normalizedSlug.length > 0) {
+		return normalizedSlug;
+	}
+
+	if (options.input.trim().length === 0) {
+		throw new Error(`${options.label} is required. Use \`${options.usage}\`.`);
+	}
+
+	throw new Error(
+		`${options.label} "${options.input.trim()}" normalizes to an empty slug. Use letters or numbers so wp-typia can generate a block slug.`,
+	);
+}
+
 export function resolveValidatedBlockSlug(value: string): string {
 	return assertValidIdentifier("Block slug", normalizeBlockSlug(value), validateBlockSlug);
 }
