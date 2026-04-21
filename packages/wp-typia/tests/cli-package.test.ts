@@ -318,6 +318,7 @@ describe("wp-typia package", () => {
 	});
 
 	test("packs a built dist-bunli runtime for the published CLI entrypoint", () => {
+		const rootSegment = path.basename(os.homedir());
 		const packResult = runCapturedCommand("npm", ["pack", "--json", "--pack-destination", packageRoot], {
 			cwd: packageRoot,
 		});
@@ -332,8 +333,19 @@ describe("wp-typia package", () => {
 		expect(tarball?.files.some((entry) => entry.path === "dist-bunli/.bunli/commands.gen.js")).toBe(
 			true,
 		);
+		expect(
+			tarball?.files.some((entry) =>
+				entry.path.startsWith("dist-bunli/.bunli/tree-sitter-"),
+			),
+		).toBe(true);
 		expect(tarball?.files.some((entry) => entry.path === "dist-bunli/node-cli.js")).toBe(true);
 		expect(tarball?.files.some((entry) => entry.path === "bin/wp-typia.js")).toBe(true);
+		expect(tarball?.files.some((entry) => entry.path === "bunli.config.ts")).toBe(false);
+		expect(
+			tarball?.files.some((entry) =>
+				entry.path.startsWith(`dist-bunli/${rootSegment}/`),
+			),
+		).toBe(false);
 		expect(tarball?.files.some((entry) => entry.path === ".bunli/commands.gen.ts")).toBe(false);
 		expect(tarball?.files.some((entry) => entry.path === "src/cli.ts")).toBe(false);
 

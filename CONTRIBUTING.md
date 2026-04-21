@@ -199,6 +199,16 @@ This is enforced by `bun run typescript-runtime:validate` in local CI and GitHub
 
 If you want to move `typescript` out of `dependencies` for `@wp-typia/block-runtime` or `@wp-typia/project-tools`, first remove the runtime compiler-API usage itself. A dependency-only manifest edit without that refactor is not safe.
 
+## Published package footprint
+
+Published package size is intentional, but it still needs regular review.
+
+- `wp-typia` should publish only the runtime assets needed by the CLI (for example `bin/wp-typia.js` and `dist-bunli/`) plus standard npm metadata such as `package.json`, `README.md`, and `LICENSE`. Repo-only inputs such as `bunli.config.ts` should stay out of the published file list.
+- Bunli/OpenTUI runtime assets should resolve from `dist-bunli/.bunli/` in the packed CLI tarball. Avoid publishing repo-specific absolute-path asset trees under `dist-bunli/<home-root>/...`.
+- `@wp-typia/project-tools` still ships `templates/` and keeps `typescript` in `dependencies` intentionally, because published scaffolding and workspace inventory paths rely on those runtime inputs today.
+
+When you change package metadata or build output layout, verify the packed surface directly with `npm pack --dry-run --json ./packages/<name>` before opening the PR.
+
 ## Pull requests
 
 - Keep changes scoped and intentional.

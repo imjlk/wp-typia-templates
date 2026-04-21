@@ -9,7 +9,6 @@
   },
   "files": [
     "bin/",
-    "bunli.config.ts",
     "dist-bunli/",
     "README.md",
     "package.json"

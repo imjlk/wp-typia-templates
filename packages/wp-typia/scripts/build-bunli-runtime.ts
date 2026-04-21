@@ -21,7 +21,6 @@ const generatedMetadataEntrypoint = path.resolve(
   'commands.gen.ts',
 );
 const nodeRuntimeEntrypoint = path.resolve(packageRoot, 'src', 'node-cli.ts');
-const buildRoot = path.parse(packageRoot).root;
 const isLinkedInstalledWpTypiaRuntime = packageRoot.includes(
   `${path.sep}node_modules${path.sep}.bun${path.sep}`,
 );
@@ -295,12 +294,12 @@ async function buildFullBunliRuntime() {
     external: WP_TYPIA_EXTERNALS,
     format: 'esm',
     naming: {
-      asset: '[dir]/[name]-[hash].[ext]',
+      asset: '.bunli/[name]-[hash].[ext]',
       chunk: '[name]-[hash].[ext]',
       entry: '[name].[ext]',
     },
     outdir,
-    root: buildRoot,
+    root: packageRoot,
     sourcemap: buildConfig.sourcemap ? 'external' : 'none',
     // Keep the repo-owned runtime split so canonical help/completion flows
     // avoid eagerly resolving heavy external runtime packages, but collapse
