@@ -11,6 +11,7 @@ const nodeCliEntrypoint = path.join(packageRoot, "dist-bunli", "node-cli.js");
 const bunBinary = process.env.BUN_BIN || "bun";
 const fullRuntimeCommands = new Set(["complete", "completions", "mcp", "skills"]);
 const longValueOptions = new Set([
+	"--alternate-render-targets",
 	"--anchor",
 	"--block",
 	"--config",
@@ -22,6 +23,7 @@ const longValueOptions = new Set([
 	"--from-migration-version",
 	"--id",
 	"--iterations",
+	"--methods",
 	"--migration-version",
 	"--namespace",
 	"--output-dir",
@@ -29,7 +31,9 @@ const longValueOptions = new Set([
 	"--persistence-policy",
 	"--php-prefix",
 	"--position",
+	"--query-post-type",
 	"--seed",
+	"--slot",
 	"--template",
 	"--text-domain",
 	"--to-migration-version",
@@ -103,12 +107,12 @@ function ensureBuiltRuntime() {
 
 const argv = process.argv.slice(2);
 const command = firstPositional(argv);
-const helpInvocation = argv.includes("--help") || command === "help";
 const shouldUseFullRuntime = command ? fullRuntimeCommands.has(command) : false;
 const hasBuiltRuntime = ensureBuiltRuntime();
 const hasWorkingBun = isWorkingBunBinary();
 
-if (hasWorkingBun && hasBuiltRuntime && (helpInvocation || shouldUseFullRuntime)) {
+// Keep common help on the human-readable Node fallback even when Bun is present.
+if (hasWorkingBun && hasBuiltRuntime && shouldUseFullRuntime) {
 	const result = spawnSync(bunBinary, [cliEntrypoint, ...argv], {
 		cwd: process.cwd(),
 		env: process.env,

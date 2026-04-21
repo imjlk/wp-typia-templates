@@ -1,4 +1,12 @@
 import path from 'node:path'
+import {
+  ADD_OPTION_METADATA,
+  collectOptionNamesByType,
+  CREATE_OPTION_METADATA,
+  GLOBAL_OPTION_METADATA,
+  MIGRATE_OPTION_METADATA,
+  TEMPLATES_OPTION_METADATA,
+} from './command-option-metadata'
 
 export const WP_TYPIA_CANONICAL_CREATE_USAGE = 'wp-typia create <project-dir>';
 export const WP_TYPIA_POSITIONAL_ALIAS_USAGE = 'wp-typia <project-dir>';
@@ -34,52 +42,29 @@ export const WP_TYPIA_TOP_LEVEL_COMMAND_NAMES = [
 ] as const;
 
 const STRING_OPTION_NAMES_BY_COMMAND = {
-  add: new Set([
-    'alternate-render-targets',
-    'anchor',
-    'block',
-    'data-storage',
-    'external-layer-id',
-    'external-layer-source',
-    'methods',
-    'namespace',
-    'persistence-policy',
-    'position',
-    'slot',
-    'template',
-  ]),
-  create: new Set([
-    'alternate-render-targets',
-    'data-storage',
-    'external-layer-id',
-    'external-layer-source',
-    'namespace',
-    'package-manager',
-    'persistence-policy',
-    'php-prefix',
-    'query-post-type',
-    'template',
-    'text-domain',
-    'variant',
-  ]),
-  migrate: new Set([
-    'current-migration-version',
-    'from-migration-version',
-    'iterations',
-    'migration-version',
-    'seed',
-    'to-migration-version',
-  ]),
+  add: new Set(collectOptionNamesByType(ADD_OPTION_METADATA, 'string')),
+  create: new Set(collectOptionNamesByType(CREATE_OPTION_METADATA, 'string')),
+  migrate: new Set(collectOptionNamesByType(MIGRATE_OPTION_METADATA, 'string')),
+  templates: new Set(collectOptionNamesByType(TEMPLATES_OPTION_METADATA, 'string')),
 } as const;
 
-const GLOBAL_STRING_OPTION_NAMES = new Set([
-  'config',
-  'format',
-  'id',
-  'output-dir',
-]);
+const GLOBAL_STRING_OPTION_NAMES = new Set(
+  collectOptionNamesByType(GLOBAL_OPTION_METADATA, 'string'),
+);
 
-const SHORT_OPTION_NAMES_WITH_VALUES = new Set(['c', 'p', 't']);
+const SHORT_OPTION_NAMES_WITH_VALUES = new Set<string>(
+  Object.values({
+    ...ADD_OPTION_METADATA,
+    ...GLOBAL_OPTION_METADATA,
+    ...CREATE_OPTION_METADATA,
+    ...MIGRATE_OPTION_METADATA,
+    ...TEMPLATES_OPTION_METADATA,
+  })
+    .filter((option) => option.type === 'string')
+    .flatMap((option) =>
+      'short' in option && typeof option.short === 'string' ? [option.short] : [],
+    ),
+);
 
 function isLongOptionValueConsumer(optionName: string): boolean {
   if (GLOBAL_STRING_OPTION_NAMES.has(optionName)) {

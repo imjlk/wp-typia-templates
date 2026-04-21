@@ -768,21 +768,18 @@ test("node entry supports external layer flags for built-in create scaffolds", (
   );
 });
 
-test("node entry exposes Bunli-owned help and rejects the removed migrations alias", () => {
+test("node entry exposes fallback help and rejects the removed migrations alias", () => {
   const helpOutput = runCli("node", [entryPath, "--help"]);
   const errorMessage = getCommandErrorMessage(() =>
     runCli("node", [entryPath, "migrations", "init"], { stdio: "pipe" })
   );
 
+  expect(helpOutput).toContain("Runtime: Node fallback");
   expect(helpOutput).toContain("Scaffold a new wp-typia project.");
+  expect(helpOutput).toContain("Run migration workflows.");
   expect(helpOutput).toContain(
-    "Run migration workflows for migration-capable wp-typia projects."
+    "Inspect or sync schema-driven MCP metadata."
   );
-  expect(helpOutput).toContain(
-    "Inspect or sync schema-driven MCP metadata for wp-typia."
-  );
-  expect(helpOutput).toContain("Manage agent skill files");
-  expect(helpOutput).toContain("Generate shell completion scripts");
   expect(errorMessage).toContain(
     "`wp-typia migrations` was removed in favor of `wp-typia migrate`."
   );
@@ -803,21 +800,18 @@ test("bun entry exposes templates and doctor commands", () => {
   expect(doctorOutput).toContain('"label": "Template basic"');
 });
 
-test("bun entry exposes Bunli-owned help and rejects the removed migrations alias", () => {
+test("bun entry exposes fallback help and rejects the removed migrations alias", () => {
   const helpOutput = runCli("bun", [entryPath, "--help"]);
   const errorMessage = getCommandErrorMessage(() =>
     runCli("bun", [entryPath, "migrations", "init"], { stdio: "pipe" })
   );
 
+  expect(helpOutput).toContain("Runtime: Node fallback");
   expect(helpOutput).toContain("Scaffold a new wp-typia project.");
+  expect(helpOutput).toContain("Run migration workflows.");
   expect(helpOutput).toContain(
-    "Run migration workflows for migration-capable wp-typia projects."
+    "Inspect or sync schema-driven MCP metadata."
   );
-  expect(helpOutput).toContain(
-    "Inspect or sync schema-driven MCP metadata for wp-typia."
-  );
-  expect(helpOutput).toContain("Manage agent skill files");
-  expect(helpOutput).toContain("Generate shell completion scripts");
   expect(errorMessage).toContain(
     "`wp-typia migrations` was removed in favor of `wp-typia migrate`."
   );

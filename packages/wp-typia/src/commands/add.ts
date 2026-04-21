@@ -1,8 +1,11 @@
 import { createElement } from "react";
 
 import { defineCommand } from "@bunli/core";
-import { z } from "zod";
 
+import {
+	ADD_OPTION_METADATA,
+	buildCommandOptions,
+} from "../command-option-metadata";
 import { getAddBlockDefaults } from "../config";
 import { resolveBundledModuleHref } from "../render-loader";
 import { executeAddCommand } from "../runtime-bridge";
@@ -21,62 +24,7 @@ function loadAddFlow() {
 	).then((module) => ({ default: module.AddFlow }));
 }
 
-const addOptions = {
-	"alternate-render-targets": {
-		description:
-			"Comma-separated alternate render targets for dynamic block scaffolds (email,mjml,plain-text).",
-		schema: z.string().optional(),
-	},
-	anchor: {
-		description: "Anchor block name for hooked-block workflows.",
-		schema: z.string().optional(),
-	},
-	block: {
-		description: "Target block slug for variation workflows.",
-		schema: z.string().optional(),
-	},
-	"data-storage": {
-		description: "Persistence storage mode for persistence-capable templates.",
-		schema: z.string().optional(),
-	},
-	"dry-run": {
-		argumentKind: "flag" as const,
-		description: "Preview workspace file updates without writing them.",
-		schema: z.boolean().default(false),
-	},
-	"external-layer-id": {
-		description: "Explicit layer id when an external layer package exposes multiple selectable layers.",
-		schema: z.string().optional(),
-	},
-	"external-layer-source": {
-		description: "Local path, GitHub locator, or npm package that exposes wp-typia.layers.json for built-in block templates.",
-		schema: z.string().optional(),
-	},
-	methods: {
-		description: "Comma-separated REST resource methods for rest-resource workflows.",
-		schema: z.string().optional(),
-	},
-	namespace: {
-		description: "REST namespace for rest-resource workflows.",
-		schema: z.string().optional(),
-	},
-	"persistence-policy": {
-		description: "Persistence write policy for persistence-capable templates.",
-		schema: z.string().optional(),
-	},
-	position: {
-		description: "Hook position for hooked-block workflows.",
-		schema: z.string().optional(),
-	},
-	slot: {
-		description: "Document editor shell slot for editor-plugin workflows.",
-		schema: z.string().optional(),
-	},
-	template: {
-		description: "Built-in block family for the new block.",
-		schema: z.string().optional(),
-	},
-};
+const addOptions = buildCommandOptions(ADD_OPTION_METADATA);
 
 export const addCommand = defineCommand({
 	defaultFormat: "toon",

@@ -1,6 +1,9 @@
 import { defineCommand } from "@bunli/core";
-import { z } from "zod";
 
+import {
+	buildCommandOptions,
+	TEMPLATES_OPTION_METADATA,
+} from "../command-option-metadata";
 import { executeTemplatesCommand, listTemplatesForRuntime } from "../runtime-bridge";
 
 export const templatesCommand = defineCommand({
@@ -39,12 +42,7 @@ export const templatesCommand = defineCommand({
 		});
 	},
 	name: "templates",
-	options: {
-		id: {
-			description: "Template id for `templates inspect`.",
-			schema: z.string().optional(),
-		},
-	},
+	options: buildCommandOptions(TEMPLATES_OPTION_METADATA),
 });
 
 export default templatesCommand;
