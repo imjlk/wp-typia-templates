@@ -1,5 +1,33 @@
 # wp-typia
 
+## 0.19.0 — 2026-04-21
+
+### Minor changes
+
+- [bd575b8](https://github.com/imjlk/wp-typia/commit/bd575b866ac7f7860ef2e25ab3a7663fc0e4a9d0) Add alternate render target scaffold support for persistence-capable dynamic blocks. `wp-typia create` and `wp-typia add block` now accept `--alternate-render-targets <email,mjml,plain-text>` for persistence scaffolds and persistence-enabled compound scaffolds, emitting shared `render-targets.php` helpers plus per-target render entry files alongside the default web render boundary. — Thanks @imjlk!
+
+### Patch changes
+
+- [0938059](https://github.com/imjlk/wp-typia/commit/0938059eba177cb446bd05554ba5cd0ed1a1b5b8) Unify high-frequency create/add validation paths around shared helpers so built-in `--variant` errors, `externalLayerId` composition rules, and local `--external-layer-source` path failures surface the same messages across CLI entry points. Query Loop post-type validation now mentions the original offending input, and `wp-typia add block` explains when a provided name normalizes to an empty slug instead of falling back to a generic required-field error. — Thanks @imjlk!
+- [0559810](https://github.com/imjlk/wp-typia/commit/055981091f996d6693dcce323e191e1f879ae127) Improve create/add/sync CLI ergonomics for preview-first and no-install workflows. `wp-typia create --dry-run` now defaults non-interactive answers without requiring an extra `--yes`, `wp-typia sync` fails early with install guidance when local dependencies like `tsx` are missing, and `wp-typia add ... --dry-run` can preview planned workspace file updates without mutating the real workspace. — Thanks @imjlk!
+- [6bcd154](https://github.com/imjlk/wp-typia/commit/6bcd1540a2e18f51e9b63f7c57f71fe2c4f33471) Trim the published `wp-typia` CLI tarball so Bunli/OpenTUI runtime assets stay under `dist-bunli/.bunli/` and repo-only build inputs like `bunli.config.ts` no longer ship to npm. — Thanks @imjlk!
+- [d2d0cd6](https://github.com/imjlk/wp-typia/commit/d2d0cd61b22cf4f6086609d342d9cd9beec189f4) Polish scaffold onboarding so create-time output and generated READMEs make `wp-typia doctor` easier to discover, keep sync notes shorter, and favor the default workspace quick-start path over more specialized first-run examples. — Thanks @imjlk!
+- [849c750](https://github.com/imjlk/wp-typia/commit/849c7502911954796dc1e8ae13c6369de658313b) Expose hook-friendly InnerBlocks option helpers for generated compound containers.
+  
+  Generated compound parents and container children now export reusable `get*InnerBlocksPropsOptions()` helpers so projects can move to `useInnerBlocksProps` without manually reconstructing preset-driven `template`, `defaultBlock`, `templateLock`, `orientation`, `directInsert`, or `renderAppender` settings. — Thanks @imjlk!
+- [da4ea2c](https://github.com/imjlk/wp-typia/commit/da4ea2c40e34548c8931a48b47cf886fb76d014e) Clarify compound nested block ownership so static child constraints stay metadata-owned.
+  
+  Generated compound parent and nested child editors now rely on `block.json` for static `allowedBlocks`, `parent`, and `ancestor` relationships, while `children.ts` stays focused on editor-only preset behavior such as `template`, `defaultBlock`, `orientation`, `templateLock`, and `directInsert`. — Thanks @imjlk!
+- [a22b87f](https://github.com/imjlk/wp-typia/commit/a22b87fc13bd4d882502b04dc591cc61d2146c58) Align Bunli command metadata with the Node fallback help and parser surfaces so `wp-typia --help`, command-specific fallback help, and end-user runtime guidance stay consistent as CLI flags evolve. — Thanks @imjlk!
+- [b94f058](https://github.com/imjlk/wp-typia/commit/b94f058f79a967a31052d2c33a45b201a340d28e) Clarify template capability boundaries across create/add/help/onboarding flows. Query Loop discovery now explains that it is a create-time `core/query` variation scaffold rather than an `add block` family, explicit but inapplicable flags like `--with-migration-ui` and `--query-post-type` now surface visible warnings, and workspace guidance more consistently points users at the short `--template workspace` alias. — Thanks @imjlk!
+- [b177c6b](https://github.com/imjlk/wp-typia/commit/b177c6b429753e7c05714efcdc0d66be980cb1f0) Validate compound child graphs before generated nested child scaffolds write files.
+  
+  Generated compound child add-flow scripts can now preview the resulting nested hierarchy with `--dry-run`, emit planned writes before mutating files, and fail early when existing or requested ancestor graphs are structurally invalid. — Thanks @imjlk!
+- [4eb3ad0](https://github.com/imjlk/wp-typia/commit/4eb3ad064d6fa18839b7692bcb8ff6ac04e49091) Add compound scaffold InnerBlocks presets for richer nested authoring flows.
+  
+  Compound create and workspace add flows now accept `--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>`, generated compound container code exposes preset-backed `orientation`, `templateLock`, `defaultBlock`, and `directInsert` behavior, and scaffolded READMEs explain which nested constraints stay metadata-owned versus runtime-owned. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.19.0
+
 ## 0.18.0 — 2026-04-20
 
 ### Minor changes
