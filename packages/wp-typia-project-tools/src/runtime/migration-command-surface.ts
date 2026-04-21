@@ -62,6 +62,8 @@ export function formatMigrationHelpText(): string {
 
 Notes:
   \`migrate init\` auto-detects supported single-block and \`src/blocks/*\` multi-block layouts.
+  \`migrate init\` only retrofits migration support into projects that already match those layouts.
+  A broader project-level \`wp-typia init\` path remains future work.
   Migration versions use strict schema labels like \`v1\`, \`v2\`, and \`v3\`.
   \`migrate wizard\` is TTY-only and helps you choose one legacy migration version to preview.
   \`migrate plan\` and \`migrate wizard\` are read-only previews; they do not scaffold rules or fixtures.
