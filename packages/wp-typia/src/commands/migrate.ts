@@ -1,8 +1,11 @@
 import { createElement } from "react";
 
 import { defineCommand } from "@bunli/core";
-import { z } from "zod";
 
+import {
+	buildCommandOptions,
+	MIGRATE_OPTION_METADATA,
+} from "../command-option-metadata";
 import { resolveBundledModuleHref } from "../render-loader";
 import { executeMigrateCommand } from "../runtime-bridge";
 import type { WpTypiaRenderArgs } from "./render-types";
@@ -20,42 +23,7 @@ function loadMigrateFlow() {
 	).then((module) => ({ default: module.MigrateFlow }));
 }
 
-const migrateOptions = {
-	all: {
-		argumentKind: "flag" as const,
-		description: "Run across every configured migration version and block target.",
-		schema: z.boolean().default(false),
-	},
-	"current-migration-version": {
-		description: "Current migration version label for `migrate init`.",
-		schema: z.string().optional(),
-	},
-	force: {
-		argumentKind: "flag" as const,
-		description: "Force overwrite behavior where supported.",
-		schema: z.boolean().default(false),
-	},
-	"from-migration-version": {
-		description: "Source migration version label.",
-		schema: z.string().optional(),
-	},
-	iterations: {
-		description: "Iteration count for `migrate fuzz`.",
-		schema: z.string().optional(),
-	},
-	"migration-version": {
-		description: "Version label to capture with `migrate snapshot`.",
-		schema: z.string().optional(),
-	},
-	seed: {
-		description: "Deterministic fuzz seed.",
-		schema: z.string().optional(),
-	},
-	"to-migration-version": {
-		description: "Target migration version label.",
-		schema: z.string().optional(),
-	},
-};
+const migrateOptions = buildCommandOptions(MIGRATE_OPTION_METADATA);
 
 export const migrateCommand = defineCommand({
 	defaultFormat: "toon",

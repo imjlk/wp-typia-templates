@@ -103,12 +103,12 @@ function ensureBuiltRuntime() {
 
 const argv = process.argv.slice(2);
 const command = firstPositional(argv);
-const helpInvocation = argv.includes("--help") || command === "help";
 const shouldUseFullRuntime = command ? fullRuntimeCommands.has(command) : false;
 const hasBuiltRuntime = ensureBuiltRuntime();
 const hasWorkingBun = isWorkingBunBinary();
 
-if (hasWorkingBun && hasBuiltRuntime && (helpInvocation || shouldUseFullRuntime)) {
+// Keep common help on the human-readable Node fallback even when Bun is present.
+if (hasWorkingBun && hasBuiltRuntime && shouldUseFullRuntime) {
 	const result = spawnSync(bunBinary, [cliEntrypoint, ...argv], {
 		cwd: process.cwd(),
 		env: process.env,

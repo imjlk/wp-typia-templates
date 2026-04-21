@@ -4,6 +4,15 @@ import {
 	formatCliDiagnosticError,
 } from "@wp-typia/project-tools/cli-diagnostics";
 import {
+	ADD_OPTION_METADATA,
+	collectOptionNamesByType,
+	CREATE_OPTION_METADATA,
+	formatNodeFallbackOptionHelp,
+	GLOBAL_OPTION_METADATA,
+	MIGRATE_OPTION_METADATA,
+	TEMPLATES_OPTION_METADATA,
+} from "./command-option-metadata";
+import {
 	getTemplateById,
 	listTemplates,
 } from "@wp-typia/project-tools/cli-templates";
@@ -26,6 +35,7 @@ import {
 import {
 	WP_TYPIA_CANONICAL_CREATE_USAGE,
 	WP_TYPIA_CANONICAL_MIGRATE_USAGE,
+	WP_TYPIA_FUTURE_COMMAND_TREE,
 	WP_TYPIA_POSITIONAL_ALIAS_USAGE,
 	WP_TYPIA_TOP_LEVEL_COMMAND_NAMES,
 	normalizeWpTypiaArgv,
@@ -42,46 +52,27 @@ type ParsedArgv = {
 };
 
 const STRING_FLAG_NAMES = new Set([
-	"alternate-render-targets",
-	"anchor",
-	"block",
-	"current-migration-version",
-	"data-storage",
-	"external-layer-id",
-	"external-layer-source",
-	"format",
-	"id",
-	"iterations",
-	"methods",
-	"migration-version",
-	"namespace",
-	"package-manager",
-	"persistence-policy",
-	"php-prefix",
-	"position",
-	"query-post-type",
-	"seed",
-	"slot",
-	"template",
-	"text-domain",
-	"to-migration-version",
-	"from-migration-version",
-	"variant",
+	...collectOptionNamesByType(GLOBAL_OPTION_METADATA, "string"),
+	...collectOptionNamesByType(CREATE_OPTION_METADATA, "string"),
+	...collectOptionNamesByType(ADD_OPTION_METADATA, "string"),
+	...collectOptionNamesByType(MIGRATE_OPTION_METADATA, "string"),
+	...collectOptionNamesByType(TEMPLATES_OPTION_METADATA, "string"),
 ]);
 
 const BOOLEAN_FLAG_NAMES = new Set([
-	"all",
+	...collectOptionNamesByType(CREATE_OPTION_METADATA, "boolean"),
+	...collectOptionNamesByType(ADD_OPTION_METADATA, "boolean"),
+	...collectOptionNamesByType(MIGRATE_OPTION_METADATA, "boolean"),
 	"check",
-	"dry-run",
-	"force",
 	"help",
-	"no-install",
 	"version",
-	"with-migration-ui",
-	"with-test-preset",
-	"with-wp-env",
-	"yes",
 ]);
+
+const NODE_FALLBACK_RUNTIME_SUMMARY_LINES = [
+	"Runtime: Node fallback",
+	"Human-readable fallback for common non-interactive create/add/migrate flows, doctor, sync, templates, --help, and --version when Bun is unavailable.",
+	"Install Bun 1.3.11+ or use `bunx wp-typia ...` for the full Bunli/OpenTUI runtime and Bun-only command surfaces such as `skills`, `completions`, and `mcp`.",
+];
 
 function printLine(line = "") {
 	console.log(line);
@@ -272,26 +263,17 @@ function renderGeneralHelp() {
 		"",
 		"Canonical CLI package for wp-typia scaffolding and project workflows.",
 		"",
-		"Supported without a local Bun binary:",
-		"- `wp-typia --version`",
-		"- `wp-typia --help`",
-		`- ${WP_TYPIA_CANONICAL_CREATE_USAGE} (non-interactive)`,
-		"- `wp-typia add <kind> ...` (non-interactive)",
-		`- ${WP_TYPIA_CANONICAL_MIGRATE_USAGE} (non-interactive)`,
-		"- `wp-typia doctor`",
-		"- `wp-typia sync`",
-		"- `wp-typia templates list`",
-		"- `wp-typia templates inspect --id <template-id>`",
+		...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
 		"",
 		"Commands:",
-		...WP_TYPIA_TOP_LEVEL_COMMAND_NAMES.map((command) => `- ${command}`),
+		...WP_TYPIA_FUTURE_COMMAND_TREE.map(
+			(command) => `- ${command.name}: ${command.description}`,
+		),
 		"",
 		"Canonical usage:",
 		`- ${WP_TYPIA_CANONICAL_CREATE_USAGE}`,
 		`- ${WP_TYPIA_CANONICAL_MIGRATE_USAGE}`,
 		`- ${WP_TYPIA_POSITIONAL_ALIAS_USAGE}`,
-		"",
-		"Install Bun 1.3.11+ or use `bunx wp-typia ...` for the full Bunli-powered interactive runtime.",
 	]);
 }
 
@@ -299,14 +281,10 @@ function renderTemplatesHelp() {
 	printBlock([
 		"wp-typia templates <list|inspect>",
 		"",
-		"Node fallback support:",
-		`- ${WP_TYPIA_CANONICAL_CREATE_USAGE} (non-interactive)`,
-		"- `wp-typia add <kind> ...` (non-interactive)",
-		`- ${WP_TYPIA_CANONICAL_MIGRATE_USAGE} (non-interactive)`,
-		"- `wp-typia doctor`",
-		"- `wp-typia sync`",
-		"- `wp-typia templates list`",
-		"- `wp-typia templates inspect --id <template-id>`",
+		...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
+		"",
+		"Supported flags:",
+		...formatNodeFallbackOptionHelp(TEMPLATES_OPTION_METADATA),
 	]);
 }
 
@@ -314,25 +292,10 @@ function renderCreateHelp() {
 	printBlock([
 		`Usage: ${WP_TYPIA_CANONICAL_CREATE_USAGE}`,
 		"",
-		"Supported non-interactive flags:",
-		"--template",
-		"--variant",
-		"--namespace",
-		"--php-prefix",
-		"--text-domain",
-		"--package-manager",
-		"--alternate-render-targets",
-		"--data-storage",
-		"--persistence-policy",
-		"--query-post-type",
-		"--external-layer-source",
-		"--external-layer-id",
-		"--with-migration-ui",
-		"--with-test-preset",
-		"--with-wp-env",
-		"--no-install",
-		"--dry-run",
-		"--yes",
+		...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
+		"",
+		"Supported flags:",
+		...formatNodeFallbackOptionHelp(CREATE_OPTION_METADATA),
 	]);
 }
 
@@ -340,20 +303,21 @@ function renderAddHelp() {
 	printBlock([
 		"Usage: wp-typia add <kind> <name>",
 		"",
-		"Supported non-interactive flags:",
-		"--dry-run",
-		"--template",
-		"--alternate-render-targets",
-		"--data-storage",
-		"--persistence-policy",
-		"--external-layer-source",
-		"--external-layer-id",
-		"--block",
-		"--methods",
-		"--namespace",
-		"--anchor",
-		"--position",
-		"--slot",
+		...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
+		"",
+		"Supported flags:",
+		...formatNodeFallbackOptionHelp(ADD_OPTION_METADATA),
+	]);
+}
+
+function renderMigrateHelp() {
+	printBlock([
+		`Usage: ${WP_TYPIA_CANONICAL_MIGRATE_USAGE}`,
+		"",
+		...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
+		"",
+		"Supported flags:",
+		...formatNodeFallbackOptionHelp(MIGRATE_OPTION_METADATA),
 	]);
 }
 
@@ -478,6 +442,10 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 		}
 		if (command === "add") {
 			renderAddHelp();
+			return;
+		}
+		if (command === "migrate") {
+			renderMigrateHelp();
 			return;
 		}
 		renderGeneralHelp();

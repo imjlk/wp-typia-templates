@@ -25,6 +25,26 @@ const doctorCommandSource = fs.readFileSync(
 	path.join(packageRoot, "src", "commands", "doctor.ts"),
 	"utf8",
 );
+const createCommandSource = fs.readFileSync(
+	path.join(packageRoot, "src", "commands", "create.ts"),
+	"utf8",
+);
+const addCommandSource = fs.readFileSync(
+	path.join(packageRoot, "src", "commands", "add.ts"),
+	"utf8",
+);
+const migrateCommandSource = fs.readFileSync(
+	path.join(packageRoot, "src", "commands", "migrate.ts"),
+	"utf8",
+);
+const templatesCommandSource = fs.readFileSync(
+	path.join(packageRoot, "src", "commands", "templates.ts"),
+	"utf8",
+);
+const nodeCliSource = fs.readFileSync(
+	path.join(packageRoot, "src", "node-cli.ts"),
+	"utf8",
+);
 const addFlowSource = fs.readFileSync(
 	path.join(packageRoot, "src", "ui", "add-flow.tsx"),
 	"utf8",
@@ -193,12 +213,20 @@ describe("wp-typia package", () => {
 		for (const commandName of WP_TYPIA_TOP_LEVEL_COMMAND_NAMES) {
 			expect(helpOutput).toContain(commandName);
 		}
+		expect(helpOutput).toContain("Runtime: Node fallback");
+		expect(helpOutput).toContain("create: Scaffold a new wp-typia project.");
 		expect(createHelpOutput).toContain("--external-layer-source");
 		expect(createHelpOutput).toContain("--external-layer-id");
 		expect(createHelpOutput).toContain("--alternate-render-targets");
+		expect(createHelpOutput).toContain(
+			"Default post type assigned to Query Loop variation scaffolds.",
+		);
 		expect(addHelpOutput).toContain("--external-layer-source");
 		expect(addHelpOutput).toContain("--external-layer-id");
 		expect(addHelpOutput).toContain("--alternate-render-targets");
+		expect(addHelpOutput).toContain(
+			"Document editor shell slot for editor-plugin workflows.",
+		);
 	});
 
 	test("renders a human-readable version line through the canonical bin", () => {
@@ -245,7 +273,7 @@ describe("wp-typia package", () => {
 		expect(helpResult.status).toBe(0);
 		expect(helpResult.stderr).toBe("");
 		expect(helpResult.stdout).toContain("Canonical CLI package for wp-typia scaffolding");
-		expect(helpResult.stdout).toContain("Supported without a local Bun binary:");
+		expect(helpResult.stdout).toContain("Runtime: Node fallback");
 		expect(createHelpResult.status).toBe(0);
 		expect(createHelpResult.stderr).toBe("");
 		expect(createHelpResult.stdout).toContain("--external-layer-source");
@@ -279,6 +307,16 @@ describe("wp-typia package", () => {
 		expect(result.stderr).not.toContain("requires Bun");
 		expect(fs.existsSync(path.join(targetDir, "package.json"))).toBe(true);
 		expect(fs.existsSync(path.join(targetDir, "src", "block.json"))).toBe(true);
+	});
+
+	test("derives Bunli and Node fallback option metadata from the same source", () => {
+		expect(createCommandSource).toContain("buildCommandOptions(CREATE_OPTION_METADATA)");
+		expect(addCommandSource).toContain("buildCommandOptions(ADD_OPTION_METADATA)");
+		expect(migrateCommandSource).toContain("buildCommandOptions(MIGRATE_OPTION_METADATA)");
+		expect(templatesCommandSource).toContain("buildCommandOptions(TEMPLATES_OPTION_METADATA)");
+		expect(nodeCliSource).toContain('from "./command-option-metadata"');
+		expect(nodeCliSource).toContain("formatNodeFallbackOptionHelp(CREATE_OPTION_METADATA)");
+		expect(nodeCliSource).toContain("formatNodeFallbackOptionHelp(ADD_OPTION_METADATA)");
 	});
 
 	test("packs a built dist-bunli runtime for the published CLI entrypoint", () => {
