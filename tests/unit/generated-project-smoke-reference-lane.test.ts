@@ -1,23 +1,32 @@
-import { expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { afterEach, expect, test } from "bun:test";
+import fs from "node:fs";
+import os from "node:os";
 import { join } from "node:path";
 
 const repoRoot = join(import.meta.dir, "..", "..");
+const tempDirs: string[] = [];
+
+afterEach(() => {
+	for (const tempDir of tempDirs) {
+		fs.rmSync(tempDir, { force: true, recursive: true });
+	}
+	tempDirs.length = 0;
+});
 
 test("generated project smoke script supports a reference example lane", () => {
-	const smokeScript = readFileSync(
+	const smokeScript = fs.readFileSync(
 		join(repoRoot, "scripts", "run-generated-project-smoke.mjs"),
 		"utf8",
 	);
-	const exampleHelper = readFileSync(
+	const exampleHelper = fs.readFileSync(
 		join(repoRoot, "scripts", "lib", "generated-project-smoke-example.mjs"),
 		"utf8",
 	);
-	const assertionHelper = readFileSync(
+	const assertionHelper = fs.readFileSync(
 		join(repoRoot, "scripts", "lib", "generated-project-smoke-assertions.mjs"),
 		"utf8",
 	);
-	const coreHelper = readFileSync(
+	const coreHelper = fs.readFileSync(
 		join(repoRoot, "scripts", "lib", "generated-project-smoke-core.mjs"),
 		"utf8",
 	);
@@ -55,7 +64,7 @@ test("generated project smoke script supports a reference example lane", () => {
 });
 
 test("CI generated smoke matrix includes the checked-in example lanes", () => {
-	const ciWorkflow = readFileSync(
+	const ciWorkflow = fs.readFileSync(
 		join(repoRoot, ".github", "workflows", "ci.yml"),
 		"utf8",
 	);
@@ -72,4 +81,58 @@ test("CI generated smoke matrix includes the checked-in example lanes", () => {
 	expect(ciWorkflow).toContain('if [ -n "${{ matrix.template || \'\' }}" ]; then');
 	expect(ciWorkflow).toContain('args+=(--template "${{ matrix.template }}")');
 	expect(ciWorkflow).toContain('--example-project "${{ matrix.example_project }}"');
+});
+
+test("workspace dependency rewrite seeds api-client for linked Bun reference examples", async () => {
+	const projectDir = fs.mkdtempSync(
+		join(os.tmpdir(), "wp-typia-generated-smoke-reference-"),
+	);
+	tempDirs.push(projectDir);
+
+	const packageJsonPath = join(projectDir, "package.json");
+	fs.writeFileSync(
+		packageJsonPath,
+		`${JSON.stringify(
+			{
+				name: "my-typia-block",
+				private: true,
+				devDependencies: {
+					"@wp-typia/block-runtime": "workspace:*",
+					"@wp-typia/block-types": "workspace:*",
+					"@wp-typia/rest": "workspace:*",
+					"wp-typia": "workspace:*",
+				},
+			},
+			null,
+			2,
+		)}\n`,
+		"utf8",
+	);
+
+	const { rewriteWorkspaceDependencies } = (await import(
+		new URL("../../scripts/lib/generated-project-smoke-core.mjs", import.meta.url).href
+	)) as {
+		rewriteWorkspaceDependencies: (
+			projectDir: string,
+			packageManager: "bun" | "npm" | "pnpm" | "yarn",
+		) => void;
+	};
+
+	rewriteWorkspaceDependencies(projectDir, "bun");
+
+	const rewrittenPackageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+
+	expect(rewrittenPackageJson.packageManager).toBe("bun@1.3.11");
+	expect(rewrittenPackageJson.devDependencies["@wp-typia/api-client"]).toContain(
+		"packages/wp-typia-api-client",
+	);
+	expect(rewrittenPackageJson.devDependencies["@wp-typia/block-runtime"]).toContain(
+		"packages/wp-typia-block-runtime",
+	);
+	expect(rewrittenPackageJson.devDependencies["@wp-typia/rest"]).toContain(
+		"packages/wp-typia-rest",
+	);
+	expect(rewrittenPackageJson.devDependencies["wp-typia"]).toContain(
+		"packages/wp-typia",
+	);
 });
