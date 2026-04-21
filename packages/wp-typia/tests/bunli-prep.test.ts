@@ -23,7 +23,7 @@ describe('wp-typia Bunli preparation', () => {
   test('checks in the Bunli prep tree while promoting a built CLI runtime', () => {
     expect(packageManifest.bin['wp-typia']).toBe('bin/wp-typia.js');
     expect(packageManifest.files).toContain('dist-bunli/');
-    expect(packageManifest.files).toContain('bunli.config.ts');
+    expect(packageManifest.files).not.toContain('bunli.config.ts');
     expect(packageManifest.scripts['bunli:build']).toBe('bun run build');
     expect(packageManifest.scripts['bunli:dev']).toBe('bun src/cli.ts');
     expect(packageManifest.scripts['bunli:test']).toBe(
@@ -109,19 +109,16 @@ describe('wp-typia Bunli preparation', () => {
       'wp-typia runtime alias artifacts still missing after rebuild',
     );
     expect(runtimeBuildScript).toContain(
-      'const buildRoot = path.parse(packageRoot).root;',
-    );
-    expect(runtimeBuildScript).toContain(
       'const isLinkedInstalledWpTypiaRuntime = packageRoot.includes(',
     );
     expect(runtimeBuildScript).toContain(
       "`${path.sep}node_modules${path.sep}.bun${path.sep}`",
     );
     expect(fullRuntimeSection).toContain("naming: {");
-    expect(fullRuntimeSection).toContain("asset: '[dir]/[name]-[hash].[ext]'");
+    expect(fullRuntimeSection).toContain("asset: '.bunli/[name]-[hash].[ext]'");
     expect(fullRuntimeSection).toContain("chunk: '[name]-[hash].[ext]'");
     expect(fullRuntimeSection).toContain("entry: '[name].[ext]'");
-    expect(fullRuntimeSection).toContain('root: buildRoot');
+    expect(fullRuntimeSection).toContain('root: packageRoot');
     expect(fullRuntimeSection).toContain(
       'splitting: !isLinkedInstalledWpTypiaRuntime',
     );
