@@ -16,6 +16,9 @@ type SyncProjectContext = {
 	scripts: Partial<Record<"sync" | "sync-rest" | "sync-types", string>>;
 };
 
+const SYNC_INSTALL_MARKERS = ["node_modules", ".pnp.cjs", ".pnp.loader.mjs"] as const;
+const LOCAL_SYNC_TOOL_PATTERN = /(^|[\s;&|()])(?:tsx|wp-scripts)(?=($|[\s;&|()]))/u;
+
 function formatRunScript(
 	packageManagerId: PackageManagerId,
 	scriptName: string,
@@ -32,6 +35,19 @@ function formatRunScript(
 		return args ? `pnpm run ${scriptName} ${args}` : `pnpm run ${scriptName}`;
 	}
 	return args ? `yarn run ${scriptName} ${args}` : `yarn run ${scriptName}`;
+}
+
+function formatInstallCommand(packageManagerId: PackageManagerId): string {
+	switch (packageManagerId) {
+		case "bun":
+			return "bun install";
+		case "pnpm":
+			return "pnpm install";
+		case "yarn":
+			return "yarn install";
+		default:
+			return "npm install";
+	}
 }
 
 function getSyncRootError(cwd: string): Error {
@@ -107,6 +123,51 @@ function resolveSyncProjectContext(cwd: string): SyncProjectContext {
 	};
 }
 
+function findInstalledDependencyMarkerDir(projectDir: string): string | null {
+	let currentDir = path.resolve(projectDir);
+
+	while (true) {
+		if (
+			SYNC_INSTALL_MARKERS.some((marker) =>
+				fs.existsSync(path.join(currentDir, marker)),
+			)
+		) {
+			return currentDir;
+		}
+
+		const parentDir = path.dirname(currentDir);
+		if (parentDir === currentDir) {
+			return null;
+		}
+		currentDir = parentDir;
+	}
+}
+
+function scriptsLikelyNeedInstalledDependencies(project: SyncProjectContext): boolean {
+	const candidateScripts = project.scripts.sync
+		? [project.scripts.sync]
+		: [project.scripts["sync-types"], project.scripts["sync-rest"]];
+
+	return candidateScripts.some(
+		(script): script is string =>
+			typeof script === "string" && LOCAL_SYNC_TOOL_PATTERN.test(script),
+	);
+}
+
+function assertSyncDependenciesInstalled(project: SyncProjectContext): void {
+	if (!scriptsLikelyNeedInstalledDependencies(project)) {
+		return;
+	}
+	const markerDir = findInstalledDependencyMarkerDir(project.cwd);
+	if (markerDir) {
+		return;
+	}
+
+	throw new Error(
+		`Project dependencies have not been installed yet. Run \`${formatInstallCommand(project.packageManager)}\` from the project root before \`wp-typia sync\`. The generated sync scripts rely on local tools such as \`tsx\`.`,
+	);
+}
+
 function getPackageManagerRunInvocation(
 	packageManager: PackageManagerId,
 	scriptName: string,
@@ -170,6 +231,7 @@ export async function executeSyncCommand({
 	cwd,
 }: SyncExecutionInput): Promise<void> {
 	const project = resolveSyncProjectContext(cwd);
+	assertSyncDependenciesInstalled(project);
 	const extraArgs = check ? ["--check"] : [];
 
 	if (project.scripts.sync) {

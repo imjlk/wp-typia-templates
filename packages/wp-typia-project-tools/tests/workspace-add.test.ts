@@ -592,6 +592,87 @@ test("canonical CLI can add hooked-block metadata to an official workspace block
   ).toBe("pass");
 }, 20_000);
 
+test("canonical CLI can dry-run an add block scaffold without mutating the workspace", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-block-dry-run");
+
+  await scaffoldOfficialWorkspace(targetDir, {
+    description: "Demo workspace add block dry run",
+    slug: "demo-workspace-add-block-dry-run",
+    title: "Demo Workspace Add Block Dry Run",
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+  const output = runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "block",
+      "counter-card",
+      "--template",
+      "basic",
+      "--dry-run",
+    ],
+    { cwd: targetDir }
+  );
+
+  expect(output).toContain("Dry run");
+  expect(output).toContain("Blocks: counter-card");
+  expect(output).toContain("write src/blocks/counter-card/index.tsx");
+  expect(
+    fs.existsSync(path.join(targetDir, "src", "blocks", "counter-card"))
+  ).toBe(false);
+});
+
+test("canonical CLI can dry-run hooked-block metadata updates without rewriting block.json", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-hooked-block-dry-run");
+
+  await scaffoldOfficialWorkspace(targetDir, {
+    description: "Demo workspace add hooked block dry run",
+    slug: "demo-workspace-add-hooked-block-dry-run",
+    title: "Demo Workspace Add Hooked Block Dry Run",
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+  runCli(
+    "node",
+    [entryPath, "add", "block", "counter-card", "--template", "basic"],
+    {
+      cwd: targetDir,
+    }
+  );
+  const originalBlockJsonSource = fs.readFileSync(
+    path.join(targetDir, "src", "blocks", "counter-card", "block.json"),
+    "utf8"
+  );
+
+  const output = runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "hooked-block",
+      "counter-card",
+      "--anchor",
+      "core/post-content",
+      "--position",
+      "after",
+      "--dry-run",
+    ],
+    { cwd: targetDir }
+  );
+
+  expect(output).toContain("Dry run");
+  expect(output).toContain("Block: counter-card");
+  expect(output).toContain("update src/blocks/counter-card/block.json");
+  expect(
+    fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "counter-card", "block.json"),
+      "utf8"
+    )
+  ).toBe(originalBlockJsonSource);
+});
+
 test("duplicate add block failures preserve existing workspace blocks", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-duplicate");
 

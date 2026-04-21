@@ -39,6 +39,11 @@ const addOptions = {
 		description: "Persistence storage mode for persistence-capable templates.",
 		schema: z.string().optional(),
 	},
+	"dry-run": {
+		argumentKind: "flag" as const,
+		description: "Preview workspace file updates without writing them.",
+		schema: z.boolean().default(false),
+	},
 	"external-layer-id": {
 		description: "Explicit layer id when an external layer package exposes multiple selectable layers.",
 		schema: z.string().optional(),

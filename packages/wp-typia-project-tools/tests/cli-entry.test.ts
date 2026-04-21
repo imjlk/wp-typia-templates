@@ -654,7 +654,6 @@ test("node entry supports dry-run create previews without writing files", () => 
     "basic",
     "--package-manager",
     "npm",
-    "--yes",
     "--dry-run",
   ]);
 
@@ -663,6 +662,33 @@ test("node entry supports dry-run create previews without writing files", () => 
   expect(output).toContain("Planned files");
   expect(output).toContain("write package.json");
   expect(fs.existsSync(targetDir)).toBe(false);
+});
+
+test("node entry fails early for sync when scaffold dependencies are missing", () => {
+  const targetDir = path.join(tempRoot, "demo-node-sync-no-install");
+
+  runCli("node", [
+    entryPath,
+    "create",
+    targetDir,
+    "--template",
+    "basic",
+    "--package-manager",
+    "npm",
+    "--yes",
+    "--no-install",
+  ]);
+
+  const errorMessage = getCommandErrorMessage(() =>
+    runCli("node", [entryPath, "sync"], {
+      cwd: targetDir,
+      stdio: "pipe",
+    })
+  );
+
+  expect(errorMessage).toContain("npm install");
+  expect(errorMessage).toContain("wp-typia sync");
+  expect(errorMessage).toContain("tsx");
 });
 
 test("node entry supports external layer flags for built-in create scaffolds", () => {
