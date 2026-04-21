@@ -2183,6 +2183,36 @@ test("canonical CLI can add a pattern to an official workspace template", async 
   ).toBe("pass");
 }, 15_000);
 
+test("runAddBlockCommand carries compound InnerBlocks presets into workspace scaffolds", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-compound-horizontal");
+
+  await scaffoldOfficialWorkspace(targetDir, {
+    description: "Demo workspace add compound horizontal",
+    slug: "demo-workspace-add-compound-horizontal",
+    title: "Demo Workspace Add Compound Horizontal",
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  const result = await runAddBlockCommand({
+    blockName: "feature-grid",
+    cwd: targetDir,
+    innerBlocksPreset: "horizontal",
+    templateId: "compound",
+  });
+
+  const parentChildren = fs.readFileSync(
+    path.join(targetDir, "src", "blocks", "feature-grid", "children.ts"),
+    "utf8",
+  );
+
+  expect(result.blockSlugs).toEqual(["feature-grid", "feature-grid-item"]);
+  expect(parentChildren).toContain("ROOT_INNER_BLOCKS_PRESET_ID = 'horizontal'");
+  expect(parentChildren).toContain("directInsert: true");
+  expect(parentChildren).toContain("orientation: 'horizontal'");
+  typecheckGeneratedProject(targetDir);
+}, 20_000);
+
 test("canonical CLI can add a binding source to an official workspace template", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-binding-source");
 

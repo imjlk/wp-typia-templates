@@ -48,6 +48,11 @@ export {
 	runAddVariationCommand,
 	seedWorkspaceMigrationProject,
 } from "./cli-add.js";
+export {
+	COMPOUND_INNER_BLOCKS_PRESET_IDS,
+	getCompoundInnerBlocksPresetDefinition,
+} from "./compound-inner-blocks.js";
+export type { CompoundInnerBlocksPresetId } from "./compound-inner-blocks.js";
 export { HOOKED_BLOCK_POSITION_IDS } from "./hooked-blocks.js";
 export type { EditorPluginSlotId } from "./cli-add.js";
 export type { HookedBlockPositionId } from "./hooked-blocks.js";

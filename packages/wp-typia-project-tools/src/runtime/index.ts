@@ -11,6 +11,19 @@
  * `HOOKED_BLOCK_POSITION_IDS`, and `runDoctor`.
  */
 export {
+	COMPOUND_INNER_BLOCKS_PRESET_IDS,
+	DEFAULT_COMPOUND_INNER_BLOCKS_PRESET_ID,
+	getCompoundInnerBlocksPresetDefinition,
+	isCompoundInnerBlocksPresetId,
+	parseCompoundInnerBlocksPreset,
+	resolveCompoundInnerBlocksPreset,
+} from "./compound-inner-blocks.js";
+export type {
+	CompoundInnerBlocksPresetDefinition,
+	CompoundInnerBlocksPresetId,
+	CompoundInnerBlocksTemplateLock,
+} from "./compound-inner-blocks.js";
+export {
 	scaffoldProject,
 	collectScaffoldAnswers,
 	getDefaultAnswers,

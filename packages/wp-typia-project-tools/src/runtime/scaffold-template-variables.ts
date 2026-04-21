@@ -18,6 +18,10 @@ import {
   getBuiltInTemplateMetadataDefaults,
 } from './template-defaults.js';
 import {
+  DEFAULT_COMPOUND_INNER_BLOCKS_PRESET_ID,
+  getCompoundInnerBlocksPresetDefinition,
+} from './compound-inner-blocks.js';
+import {
   getTemplateById,
   isBuiltInTemplateId,
 } from './template-registry.js';
@@ -77,6 +81,10 @@ export function getTemplateVariables(
   const compoundChildTitle = `${title} Item`;
   const cssClassName = buildBlockCssClassName(namespace, slug);
   const compoundChildCssClassName = buildBlockCssClassName(namespace, `${slug}-item`);
+  const compoundInnerBlocksPreset =
+    answers.compoundInnerBlocksPreset ?? DEFAULT_COMPOUND_INNER_BLOCKS_PRESET_ID;
+  const compoundInnerBlocksPresetDefinition =
+    getCompoundInnerBlocksPresetDefinition(compoundInnerBlocksPreset);
   const compoundPersistenceEnabled =
     templateId === 'persistence'
       ? true
@@ -108,6 +116,23 @@ export function getTemplateVariables(
     compoundChildIcon: COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS.icon,
     compoundChildTitleJson: JSON.stringify(compoundChildTitle),
     compoundPersistenceEnabled: compoundPersistenceEnabled ? 'true' : 'false',
+    compoundInnerBlocksDirectInsert: compoundInnerBlocksPresetDefinition.directInsert
+      ? 'true'
+      : 'false',
+    compoundInnerBlocksOrientation:
+      compoundInnerBlocksPresetDefinition.orientation ?? '',
+    compoundInnerBlocksOrientationExpression:
+      compoundInnerBlocksPresetDefinition.orientation
+        ? `'${compoundInnerBlocksPresetDefinition.orientation}'`
+        : 'undefined',
+    compoundInnerBlocksPreset,
+    compoundInnerBlocksPresetDescription:
+      compoundInnerBlocksPresetDefinition.description,
+    compoundInnerBlocksPresetLabel: compoundInnerBlocksPresetDefinition.label,
+    compoundInnerBlocksTemplateLockExpression:
+      compoundInnerBlocksPresetDefinition.templateLock === false
+        ? 'false'
+        : `'${compoundInnerBlocksPresetDefinition.templateLock}'`,
     hasAlternateEmailRenderTarget: 'false',
     hasAlternateMjmlRenderTarget: 'false',
     hasAlternatePlainTextRenderTarget: 'false',

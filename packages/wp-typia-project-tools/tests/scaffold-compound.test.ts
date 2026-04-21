@@ -284,8 +284,8 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       );
       expect(parentEdit).toContain('}: EditProps )');
       expect(parentEdit).toContain('useTypiaValidation');
-      expect(parentEdit).toContain('ALLOWED_CHILD_BLOCKS');
-      expect(parentEdit).toContain('DEFAULT_CHILD_TEMPLATE');
+      expect(parentEdit).toContain('getRootInnerBlocksConfig');
+      expect(parentEdit).toContain('rootInnerBlocksConfig.templateLock');
       expect(parentEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
       expect(generatedRootHooks).toContain('useTypiaValidation');
       expect(parentHooks).toContain('useTypiaValidation');
@@ -309,7 +309,10 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(generatedValidatorToolkit).not.toContain('typia.createValidate');
       expect(parentChildren).toContain('DEFAULT_CHILD_BLOCK_NAME');
       expect(parentChildren).toContain('COMPOUND_CHILD_SPECS');
+      expect(parentChildren).toContain('ROOT_INNER_BLOCKS_PRESET_ID');
       expect(parentChildren).toContain('getChildAllowedBlocks');
+      expect(parentChildren).toContain('getChildInnerBlocksConfig');
+      expect(parentChildren).toContain('getRootInnerBlocksConfig');
       expect(parentChildren).toContain('hasNestedChildBlocks');
       expect(parentChildren).toContain(
         '@wp-typia/block-types/blocks/registration',
@@ -332,6 +335,7 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(childEdit).toContain('}: EditProps )');
       expect(childEdit).toContain('useTypiaValidation');
       expect(childEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
+      expect(childEdit).toContain('getChildInnerBlocksConfig');
       expect(childEdit).toContain('hasNestedChildBlocks( metadata.name )');
       expect(childEdit).toContain("from '../demo-compound/children'");
       expect(childEdit).toContain(
@@ -391,6 +395,7 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(addChildScript).toContain('renderBlockMetadataFile()');
       expect(addChildScript).toContain('renderManifestDocumentFile()');
       expect(addChildScript).toContain('renderManifestDefaultsDocumentFile()');
+      expect(addChildScript).toContain('getChildInnerBlocksConfig');
       expect(addChildScript).toContain(
         "import currentManifest from './manifest-defaults-document';",
       );
@@ -406,6 +411,8 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(readme).not.toContain('npm run sync-rest');
       expect(readme).toContain('npm run dev');
       expect(readme).toContain('## Quick Start');
+      expect(readme).toContain('## Compound InnerBlocks Presets');
+      expect(readme).toContain('`freeform`');
       expect(readme).toContain(
         `npx --yes wp-typia@${wpTypiaPackageManifest.version} doctor`,
       );
@@ -888,8 +895,8 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       );
       expect(parentEdit).toContain('}: EditProps )');
       expect(parentEdit).toContain('useTypiaValidation');
-      expect(parentEdit).toContain('ALLOWED_CHILD_BLOCKS');
-      expect(parentEdit).toContain('DEFAULT_CHILD_TEMPLATE');
+      expect(parentEdit).toContain('getRootInnerBlocksConfig');
+      expect(parentEdit).toContain('rootInnerBlocksConfig.templateLock');
       expect(parentEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
       expect(parentInteractivity).toContain(
         '@wp-typia/block-runtime/identifiers',

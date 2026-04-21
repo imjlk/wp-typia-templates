@@ -6,6 +6,10 @@ import {
 	useFormContext,
 	useTerminalDimensions,
 } from "@bunli/tui";
+import {
+	COMPOUND_INNER_BLOCKS_PRESET_IDS,
+	getCompoundInnerBlocksPresetDefinition,
+} from "@wp-typia/project-tools";
 
 import { executeCreateCommand } from "../runtime-bridge";
 import { useAlternateBufferLifecycle } from "./alternate-buffer-lifecycle";
@@ -54,6 +58,13 @@ const persistencePolicyOptions: SelectOption[] = [
 	{ description: "Authenticated write policy", name: "authenticated", value: "authenticated" },
 	{ description: "Public token policy", name: "public", value: "public" },
 ];
+
+const compoundInnerBlocksPresetOptions: SelectOption[] =
+	COMPOUND_INNER_BLOCKS_PRESET_IDS.map((value) => ({
+		description: getCompoundInnerBlocksPresetDefinition(value).description,
+		name: value,
+		value,
+	}));
 
 const checkboxLabels: Record<(typeof CREATE_CHECKBOX_FIELD_NAMES)[number], string> = {
 	"dry-run": "Preview only (dry run)",
@@ -164,6 +175,15 @@ function CreateFlowFields({
 						key: "alternate-render-targets",
 						label: "Alternate render targets",
 						name: "alternate-render-targets",
+					})
+				: null,
+			template === "compound"
+				? createElement(FirstPartySelectField, {
+						...getWrappedFieldNeighbors(visibleFields, "inner-blocks-preset"),
+						key: "inner-blocks-preset",
+						label: "InnerBlocks preset",
+						name: "inner-blocks-preset" satisfies CreateSelectFieldName,
+						options: compoundInnerBlocksPresetOptions,
 					})
 				: null,
 			isCreatePersistenceTemplate(template)

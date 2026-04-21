@@ -215,6 +215,7 @@ export async function executeCreateCommand({
 			dryRun: Boolean(flags["dry-run"]),
 			externalLayerId: readOptionalLooseStringFlag(flags, "external-layer-id"),
 			externalLayerSource: readOptionalLooseStringFlag(flags, "external-layer-source"),
+			innerBlocksPreset: readOptionalLooseStringFlag(flags, "inner-blocks-preset"),
 			isInteractive: Boolean(activePrompt),
 			namespace: readOptionalLooseStringFlag(flags, "namespace"),
 			noInstall: Boolean(flags["no-install"]),
@@ -661,6 +662,7 @@ export async function executeAddCommand({
 			"alternate-render-targets",
 		);
 		const dataStorageMode = readOptionalStringFlag(flags, "data-storage");
+		const innerBlocksPreset = readOptionalStringFlag(flags, "inner-blocks-preset");
 		const persistencePolicy = readOptionalStringFlag(flags, "persistence-policy");
 		const resolvedTemplateId = readOptionalStringFlag(flags, "template") as
 			| "basic"
@@ -679,6 +681,7 @@ export async function executeAddCommand({
 							dataStorageMode,
 							externalLayerId,
 							externalLayerSource,
+							innerBlocksPreset,
 							persistencePolicy,
 							selectExternalLayerId: selectPrompt
 								? (options) =>
@@ -701,6 +704,7 @@ export async function executeAddCommand({
 				dataStorageMode,
 				externalLayerId,
 				externalLayerSource,
+				innerBlocksPreset,
 				persistencePolicy,
 				selectExternalLayerId: selectPrompt
 					? (options) =>

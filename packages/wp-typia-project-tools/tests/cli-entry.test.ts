@@ -353,6 +353,45 @@ test("runScaffoldFlow rejects alternate render targets for non-persistence templ
   );
 });
 
+test("runScaffoldFlow accepts compound InnerBlocks presets for compound scaffolds", async () => {
+  const projectInput = "demo-compound-horizontal";
+  const flow = await runScaffoldFlow({
+    cwd: tempRoot,
+    innerBlocksPreset: "horizontal",
+    noInstall: true,
+    packageManager: "npm",
+    projectInput,
+    templateId: "compound",
+    yes: true,
+  });
+
+  const parentChildren = fs.readFileSync(
+    path.join(flow.projectDir, "src", "blocks", projectInput, "children.ts"),
+    "utf8",
+  );
+
+  expect(flow.result.variables.compoundInnerBlocksPreset).toBe("horizontal");
+  expect(parentChildren).toContain("ROOT_INNER_BLOCKS_PRESET_ID = 'horizontal'");
+  expect(parentChildren).toContain("directInsert: true");
+  expect(parentChildren).toContain("orientation: 'horizontal'");
+});
+
+test("runScaffoldFlow rejects InnerBlocks presets for non-compound templates", async () => {
+  await expect(
+    runScaffoldFlow({
+      cwd: tempRoot,
+      innerBlocksPreset: "horizontal",
+      noInstall: true,
+      packageManager: "npm",
+      projectInput: "demo-basic-invalid-inner-blocks-preset",
+      templateId: "basic",
+      yes: true,
+    }),
+  ).rejects.toThrow(
+    "`--inner-blocks-preset` is supported only for `wp-typia create --template compound`.",
+  );
+});
+
 test("runScaffoldFlow rejects compound alternate render targets without persistence flags", async () => {
   await expect(
     runScaffoldFlow({
@@ -602,6 +641,7 @@ test("formatHelpText keeps migration UI flags out of external template usage", (
   expect(externalPackageLine).not.toContain("--with-migration-ui");
   expect(externalPackageLine).not.toContain("--external-layer-source");
   expect(helpText).toContain("--alternate-render-targets");
+  expect(helpText).toContain("--inner-blocks-preset");
   expect(helpText).toContain("--template workspace");
   expect(helpText).toContain("--external-layer-source");
   expect(helpText).toContain("--external-layer-id");

@@ -14,8 +14,7 @@ import {
 } from '@wordpress/components';
 
 import {
-\tALLOWED_CHILD_BLOCKS,
-\tDEFAULT_CHILD_TEMPLATE,
+\tgetRootInnerBlocksConfig,
 } from './children';
 import { useTypiaValidation } from './hooks';
 import type { {{pascalCase}}Attributes } from './types';
@@ -25,6 +24,14 @@ import {
 } from './validators';
 
 type EditProps = BlockEditProps< {{pascalCase}}Attributes >;
+type CompoundInnerBlocksProps = Parameters< typeof InnerBlocks >[ 0 ] & {
+\tdefaultBlock?: [ string, Record< string, unknown > ];
+\tdirectInsert?: boolean;
+};
+
+const TypedInnerBlocks = InnerBlocks as unknown as (
+\tprops: CompoundInnerBlocksProps
+) => ReturnType< typeof InnerBlocks >;
 
 export default function Edit( {
 \tattributes,
@@ -38,6 +45,7 @@ export default function Edit( {
 \tconst blockProps = useBlockProps( {
 \t\tclassName: '{{cssClassName}}',
 \t} );
+\tconst rootInnerBlocksConfig = getRootInnerBlocksConfig();
 
 \treturn (
 \t\t<>
@@ -110,11 +118,18 @@ export default function Edit( {
 \t\t\t\t\t{ __( 'Resource key:', '{{textDomain}}' ) } { attributes.resourceKey || '—' }
 \t\t\t\t</p>
 \t\t\t\t<div className="{{cssClassName}}__items">
-\t\t\t\t\t<InnerBlocks
-\t\t\t\t\t\tallowedBlocks={ ALLOWED_CHILD_BLOCKS }
-\t\t\t\t\t\trenderAppender={ InnerBlocks.ButtonBlockAppender }
-\t\t\t\t\t\ttemplate={ DEFAULT_CHILD_TEMPLATE }
-\t\t\t\t\t\ttemplateLock={ false }
+\t\t\t\t\t<TypedInnerBlocks
+\t\t\t\t\t\tallowedBlocks={ rootInnerBlocksConfig.allowedBlocks }
+\t\t\t\t\t\tdefaultBlock={ rootInnerBlocksConfig.defaultBlock }
+\t\t\t\t\t\tdirectInsert={ rootInnerBlocksConfig.directInsert }
+\t\t\t\t\t\torientation={ rootInnerBlocksConfig.orientation }
+\t\t\t\t\t\trenderAppender={
+\t\t\t\t\t\t\trootInnerBlocksConfig.templateLock === 'all'
+\t\t\t\t\t\t\t\t? undefined
+\t\t\t\t\t\t\t\t: InnerBlocks.ButtonBlockAppender
+\t\t\t\t\t\t}
+\t\t\t\t\t\ttemplate={ rootInnerBlocksConfig.template }
+\t\t\t\t\t\ttemplateLock={ rootInnerBlocksConfig.templateLock }
 \t\t\t\t\t/>
 \t\t\t\t</div>
 \t\t\t</div>
