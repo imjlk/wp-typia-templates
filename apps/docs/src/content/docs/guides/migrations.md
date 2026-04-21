@@ -22,6 +22,19 @@ The `migration:*` and `sync-types` commands shown below are run inside `examples
 - `typia.manifest.json` v2 keeps richer Typia constraints, explicit default markers, and supported discriminated union metadata.
 - Migration version labels like `v1`, `v2`, and `v3` track schema lineage only. They do not replace your package version, plugin version, OpenAPI `info.version`, or block attribute `schemaVersion`.
 
+## Terminology note
+
+In this guide, a migration snapshot always means a schema-lineage artifact under
+`src/migrations/versions/`. It captures an older block contract so deprecated
+entries, migration rules, fixtures, and verification can stay aligned with a
+previous release.
+
+That is separate from any application-level snapshot your product may use for
+content review, export history, notification workflows, or other domain state.
+Those app-level snapshots are not migration artifacts by default and should not
+be stored under `src/migrations/` unless you are intentionally extending the
+migration system for that purpose.
+
 ## Breaking reset for old workspaces
 
 Older semver-based migration workspaces are no longer supported in place. If
@@ -48,7 +61,9 @@ New `--with-migration-ui` scaffolds use the multi-block-aware layout instead:
 - `src/migrations/versions/<label>/<blockKey>/typia.manifest.json`
 - `src/migrations/versions/<label>/<blockKey>/save.tsx`
 
-Those snapshots are committed so the project can keep deprecated Gutenberg entries and migration rules aligned with old releases.
+Those snapshots are committed so the project can keep deprecated Gutenberg
+entries and migration rules aligned with old releases of the block schema. They
+are not a generic content-version archive for application data.
 
 ## First release
 
