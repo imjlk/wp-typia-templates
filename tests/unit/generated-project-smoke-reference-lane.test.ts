@@ -3,8 +3,6 @@ import fs from "node:fs";
 import os from "node:os";
 import { join } from "node:path";
 
-import { rewriteWorkspaceDependencies } from "../../scripts/lib/generated-project-smoke-core.mjs";
-
 const repoRoot = join(import.meta.dir, "..", "..");
 const tempDirs: string[] = [];
 
@@ -85,7 +83,7 @@ test("CI generated smoke matrix includes the checked-in example lanes", () => {
 	expect(ciWorkflow).toContain('--example-project "${{ matrix.example_project }}"');
 });
 
-test("workspace dependency rewrite seeds api-client for linked Bun reference examples", () => {
+test("workspace dependency rewrite seeds api-client for linked Bun reference examples", async () => {
 	const projectDir = fs.mkdtempSync(
 		join(os.tmpdir(), "wp-typia-generated-smoke-reference-"),
 	);
@@ -110,6 +108,15 @@ test("workspace dependency rewrite seeds api-client for linked Bun reference exa
 		)}\n`,
 		"utf8",
 	);
+
+	const { rewriteWorkspaceDependencies } = (await import(
+		new URL("../../scripts/lib/generated-project-smoke-core.mjs", import.meta.url).href
+	)) as {
+		rewriteWorkspaceDependencies: (
+			projectDir: string,
+			packageManager: "bun" | "npm" | "pnpm" | "yarn",
+		) => void;
+	};
 
 	rewriteWorkspaceDependencies(projectDir, "bun");
 
