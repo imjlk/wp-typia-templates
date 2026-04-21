@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import packageJson from "../package.json";
 
 import {
 	buildCreateCompletionPayload,
@@ -16,6 +17,7 @@ describe("alternate-buffer completion output helpers", () => {
 				note: "Run npm run sync before your first commit if you edited types.",
 				steps: ["npm run sync"],
 			},
+			packageManager: "npm",
 			projectDir: "/tmp/demo-block",
 			result: {
 				selectedVariant: "hero",
@@ -30,8 +32,11 @@ describe("alternate-buffer completion output helpers", () => {
 		expect(payload.preambleLines).toEqual(["Template variant: hero"]);
 		expect(payload.warningLines).toEqual(["This template enables optional migration UI."]);
 		expect(payload.nextSteps).toEqual(["cd demo-block", "npm install", "npm run dev"]);
-		expect(payload.optionalTitle).toBe("Advanced sync (optional):");
-		expect(payload.optionalLines).toEqual(["npm run sync"]);
+		expect(payload.optionalTitle).toBe("Verify and sync (optional):");
+		expect(payload.optionalLines).toEqual([
+			`npx --yes wp-typia@${packageJson.version} doctor`,
+			"npm run sync",
+		]);
 		expect(payload.optionalNote).toContain("npm run sync");
 	});
 
@@ -42,9 +47,12 @@ describe("alternate-buffer completion output helpers", () => {
 		printCompletionPayload(
 			{
 				nextSteps: ["cd demo-block", "npm install"],
-				optionalLines: ["npm run sync"],
+				optionalLines: [
+					`npx --yes wp-typia@${packageJson.version} doctor`,
+					"npm run sync",
+				],
 				optionalNote: "Review the generated metadata before first commit.",
-				optionalTitle: "Advanced sync (optional):",
+				optionalTitle: "Verify and sync (optional):",
 				preambleLines: ["Template variant: hero"],
 				summaryLines: ["Project directory: /tmp/demo-block"],
 				title: "✅ Created Demo Block in /tmp/demo-block",
@@ -64,7 +72,8 @@ describe("alternate-buffer completion output helpers", () => {
 			"Next steps:",
 			"  cd demo-block",
 			"  npm install",
-			"\nAdvanced sync (optional):",
+			"\nVerify and sync (optional):",
+			`  npx --yes wp-typia@${packageJson.version} doctor`,
 			"  npm run sync",
 			"Note: Review the generated metadata before first commit.",
 		]);

@@ -11,6 +11,7 @@ import {
   restPackageVersion,
   runGeneratedScript,
   typecheckGeneratedProject,
+  wpTypiaPackageManifest,
 } from './helpers/scaffold-test-harness.js';
 import { scaffoldProject } from '../src/runtime/index.js';
 import { applyMigrationUiCapability } from '../src/runtime/migration-ui-capability.js';
@@ -405,6 +406,9 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(readme).not.toContain('npm run sync-rest');
       expect(readme).toContain('npm run dev');
       expect(readme).toContain('## Quick Start');
+      expect(readme).toContain(
+        `npx --yes wp-typia@${wpTypiaPackageManifest.version} doctor`,
+      );
       expect(readme).toContain('## Advanced Sync');
       expect(readme).toContain('## Before First Commit');
       expect(readme).toContain('src/blocks/*/types.ts');
@@ -987,6 +991,9 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(readme).toContain('npm run sync');
       expect(readme).toContain('npm run sync-rest');
       expect(readme).toContain('## Quick Start');
+      expect(readme).toContain(
+        `npx --yes wp-typia@${wpTypiaPackageManifest.version} doctor`,
+      );
       expect(readme).toContain('## Advanced Sync');
       expect(readme).toContain('## Before First Commit');
       expect(readme).toContain('src/blocks/*/api-types.ts');

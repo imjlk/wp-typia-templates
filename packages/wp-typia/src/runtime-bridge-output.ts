@@ -1,3 +1,5 @@
+import packageJson from "../package.json";
+import { formatPackageExecCommand } from "@wp-typia/project-tools/package-managers";
 import type { AlternateBufferCompletionPayload } from "./ui/alternate-buffer-lifecycle";
 
 type PrintLine = (line: string) => void;
@@ -89,6 +91,7 @@ export function buildCreateCompletionPayload(flow: {
 		note: string;
 		steps: string[];
 	};
+	packageManager: string;
 	projectDir: string;
 	result: {
 		selectedVariant?: string | null;
@@ -98,14 +101,20 @@ export function buildCreateCompletionPayload(flow: {
 		warnings: string[];
 	};
 }): AlternateBufferCompletionPayload {
+	const verificationSteps = [
+		formatPackageExecCommand(
+			flow.packageManager as "bun" | "npm" | "pnpm" | "yarn",
+			`wp-typia@${packageJson.version}`,
+			"doctor",
+		),
+		...flow.optionalOnboarding.steps,
+	];
+
 	return {
 		nextSteps: flow.nextSteps,
-		optionalLines:
-			flow.optionalOnboarding.steps.length > 0 ? flow.optionalOnboarding.steps : undefined,
-		optionalNote:
-			flow.optionalOnboarding.steps.length > 0 ? flow.optionalOnboarding.note : undefined,
-		optionalTitle:
-			flow.optionalOnboarding.steps.length > 0 ? "Advanced sync (optional):" : undefined,
+		optionalLines: verificationSteps,
+		optionalNote: flow.optionalOnboarding.note,
+		optionalTitle: "Verify and sync (optional):",
 		preambleLines: flow.result.selectedVariant
 			? [`Template variant: ${flow.result.selectedVariant}`]
 			: undefined,
