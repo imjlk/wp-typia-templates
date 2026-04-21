@@ -63,7 +63,6 @@ export default function Edit( {
 \t\t\t{ showsNestedChildren && (
 \t\t\t\t<div className="{{compoundChildCssClassName}}__children">
 \t\t\t\t\t<TypedInnerBlocks
-\t\t\t\t\t\tallowedBlocks={ nestedInnerBlocksConfig?.allowedBlocks }
 \t\t\t\t\t\tdefaultBlock={ nestedInnerBlocksConfig?.defaultBlock }
 \t\t\t\t\t\tdirectInsert={ nestedInnerBlocksConfig?.directInsert }
 \t\t\t\t\t\torientation={ nestedInnerBlocksConfig?.orientation }
