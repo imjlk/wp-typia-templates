@@ -27,6 +27,7 @@ async function importPackageVersionsModule(options: {
 		blockTypesPackageVersion: string;
 		projectToolsPackageVersion: string;
 		restPackageVersion: string;
+		wpTypiaPackageExactVersion: string;
 		wpTypiaPackageVersion: string;
 	};
 }> {
@@ -89,6 +90,7 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^2.3.4",
 			projectToolsPackageVersion: "^4.5.6",
 			restPackageVersion: "^3.4.5",
+			wpTypiaPackageExactVersion: "0.0.0",
 			wpTypiaPackageVersion: "^0.0.0",
 		});
 	});
@@ -119,6 +121,7 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^2.3.4",
 			projectToolsPackageVersion: "^4.5.6",
 			restPackageVersion: "^3.4.5",
+			wpTypiaPackageExactVersion: "0.0.0",
 			wpTypiaPackageVersion: "^0.0.0",
 		});
 	});
@@ -153,6 +156,7 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^0.3.0",
 			projectToolsPackageVersion: "^0.8.0",
 			restPackageVersion: "~0.4.0",
+			wpTypiaPackageExactVersion: "0.8.0",
 			wpTypiaPackageVersion: "^0.8.0",
 		});
 	});
@@ -179,6 +183,7 @@ describe("package version helpers", () => {
 		});
 
 		expect(module.getPackageVersions().wpTypiaPackageVersion).toBe("^0.12.0");
+		expect(module.getPackageVersions().wpTypiaPackageExactVersion).toBe("0.12.0");
 		expect(module.getPackageVersions().projectToolsPackageVersion).toBe("^1.0.0");
 	});
 
@@ -205,6 +210,7 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^0.2.0",
 			projectToolsPackageVersion: "^0.11.0",
 			restPackageVersion: "^0.3.1",
+			wpTypiaPackageExactVersion: "0.0.0",
 			wpTypiaPackageVersion: "^0.0.0",
 		});
 	});
@@ -227,6 +233,7 @@ describe("package version helpers", () => {
 			blockTypesPackageVersion: "^0.0.0",
 			projectToolsPackageVersion: "^0.0.0",
 			restPackageVersion: "^0.0.0",
+			wpTypiaPackageExactVersion: "0.0.0",
 			wpTypiaPackageVersion: "^0.0.0",
 		});
 		expect(secondResult).toBe(firstResult);
