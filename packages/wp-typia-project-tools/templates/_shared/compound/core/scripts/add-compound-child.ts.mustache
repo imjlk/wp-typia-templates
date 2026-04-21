@@ -28,18 +28,37 @@ type CompoundParentConfig = {
 };
 
 type ExistingCompoundChild = {
+	ancestorBlockNames: string[];
 	blockJsonPath: string;
 	blockName: string;
+	container: boolean;
+	directAllowedBlocks: string[];
 	folderSlug: string;
 	key: string;
+	parentBlockNames: string[];
+	placement: 'nested' | 'root';
+	supportsInserter: boolean;
+	title: string;
 };
 
 type ParsedArgs = {
 	ancestorValues: string[];
 	container: boolean;
+	dryRun: boolean;
 	inserter?: 'hidden' | 'visible';
 	slug?: string;
 	title?: string;
+};
+
+type CompoundChildGraphNode = {
+	blockName: string;
+	container: boolean;
+	directParentBlockName: string;
+	isProspective: boolean;
+	key: string;
+	placement: 'nested' | 'root';
+	supportsInserter: boolean;
+	title: string;
 };
 
 function parseArgs() {
@@ -47,6 +66,7 @@ function parseArgs() {
 	const parsed: ParsedArgs = {
 		ancestorValues: [],
 		container: false,
+		dryRun: false,
 	};
 
 	for ( let index = 0; index < args.length; index += 1 ) {
@@ -86,6 +106,11 @@ function parseArgs() {
 			continue;
 		}
 
+		if ( arg === '--dry-run' ) {
+			parsed.dryRun = true;
+			continue;
+		}
+
 		if ( arg === '--inserter' ) {
 			const value = args[ index + 1 ];
 			if ( value !== 'hidden' && value !== 'visible' ) {
@@ -94,6 +119,10 @@ function parseArgs() {
 			parsed.inserter = value;
 			index += 1;
 			continue;
+		}
+
+		if ( arg.startsWith( '--' ) ) {
+			throw new Error( `Unknown option: ${ arg }.` );
 		}
 	}
 
@@ -395,14 +424,147 @@ function listExistingCompoundChildren(): ExistingCompoundChild[] {
 				return null;
 			}
 
+			const ancestorBlockNames = Array.isArray( blockJson.ancestor )
+				? blockJson.ancestor.filter(
+					( value ): value is string => typeof value === 'string'
+				)
+				: [];
+			const parentBlockNames = Array.isArray( blockJson.parent )
+				? blockJson.parent.filter(
+					( value ): value is string => typeof value === 'string'
+				)
+				: [];
+			const directAllowedBlocks = Array.isArray( blockJson.allowedBlocks )
+				? blockJson.allowedBlocks.filter(
+					( value ): value is string => typeof value === 'string'
+				)
+				: [];
+			const supports =
+				typeof blockJson.supports === 'object' &&
+				blockJson.supports &&
+				! Array.isArray( blockJson.supports )
+					? blockJson.supports
+					: null;
+			const supportsInserter =
+				supports && typeof supports.inserter === 'boolean'
+					? supports.inserter
+					: true;
+			const title =
+				typeof blockJson.title === 'string' &&
+				blockJson.title.trim().length > 0
+					? blockJson.title.trim()
+					: toTitleCase( deriveChildKey( folderSlug ) );
+
 			return {
+				ancestorBlockNames,
 				blockJsonPath,
 				blockName,
+				container: Object.prototype.hasOwnProperty.call(
+					blockJson,
+					'allowedBlocks'
+				),
+				directAllowedBlocks,
 				folderSlug,
 				key: deriveChildKey( folderSlug ),
+				parentBlockNames,
+				placement: ancestorBlockNames.length > 0 ? 'nested' : 'root',
+				supportsInserter,
+				title,
 			} satisfies ExistingCompoundChild;
 		} )
 		.filter( ( child ): child is ExistingCompoundChild => child !== null );
+}
+
+function buildCompoundChildGraphMap(
+	existingChildren: ExistingCompoundChild[]
+): Map< string, ExistingCompoundChild > {
+	return new Map(
+		existingChildren.map( ( child ) => [ child.blockName, child ] )
+	);
+}
+
+function resolveDirectParentBlockName( child: ExistingCompoundChild ): string {
+	return (
+		child.ancestorBlockNames[ child.ancestorBlockNames.length - 1 ] ??
+		child.parentBlockNames[ 0 ] ??
+		PARENT_BLOCK_NAME
+	);
+}
+
+function validateExistingCompoundChildGraph(
+	existingChildren: ExistingCompoundChild[]
+) {
+	const seenKeys = new Set< string >();
+	const seenBlockNames = new Set< string >();
+	const childByBlockName = buildCompoundChildGraphMap( existingChildren );
+
+	for ( const child of existingChildren ) {
+		if ( seenKeys.has( child.key ) ) {
+			throw new Error(
+				`Existing compound child graph is invalid: child key "${ child.key }" is declared more than once.`
+			);
+		}
+
+		if ( seenBlockNames.has( child.blockName ) ) {
+			throw new Error(
+				`Existing compound child graph is invalid: ${ child.blockName } is declared more than once.`
+			);
+		}
+
+		seenKeys.add( child.key );
+		seenBlockNames.add( child.blockName );
+
+		if ( child.ancestorBlockNames.length === 0 ) {
+			if ( child.parentBlockNames.length === 0 ) {
+				throw new Error(
+					`Existing compound child graph is invalid: ${ child.blockName } must declare a parent block.`
+				);
+			}
+			continue;
+		}
+
+		for ( let index = 0; index < child.ancestorBlockNames.length; index += 1 ) {
+			const ancestorBlockName = child.ancestorBlockNames[ index ];
+			const ancestorChild = childByBlockName.get( ancestorBlockName );
+
+			if ( ! ancestorChild ) {
+				throw new Error(
+					`Existing compound child graph is invalid: ${ child.blockName } references missing ancestor ${ ancestorBlockName }.`
+				);
+			}
+
+			if ( ! ancestorChild.container ) {
+				throw new Error(
+					`Existing compound child graph is invalid: ${ ancestorChild.blockName } is not declared as a container child but has nested descendants.`
+				);
+			}
+
+			const expectedAncestorRoute = child.ancestorBlockNames.slice( 0, index );
+			const ancestorRouteMatches =
+				ancestorChild.ancestorBlockNames.length === expectedAncestorRoute.length &&
+				expectedAncestorRoute.every(
+					( expectedAncestorBlockName, expectedIndex ) =>
+						ancestorChild.ancestorBlockNames[ expectedIndex ] ===
+						expectedAncestorBlockName
+				);
+
+			if ( ! ancestorRouteMatches ) {
+				throw new Error(
+					`Existing compound child graph is invalid: ${ ancestorChild.blockName } is not on the declared ancestor route for ${ child.blockName }.`
+				);
+			}
+
+			const nextBlockName =
+				child.ancestorBlockNames[ index + 1 ] ?? child.blockName;
+			if ( ancestorChild.directAllowedBlocks.includes( nextBlockName ) ) {
+				continue;
+			}
+
+			throw new Error(
+				`Existing compound child graph is invalid: ${ ancestorChild.blockName } does not currently allow ${ nextBlockName } as a direct child.`
+			);
+		}
+	}
 }
 
 function resolveExistingCompoundChild(
@@ -457,14 +619,8 @@ function validateAncestorChain(
 	for ( let index = 0; index < ancestorChain.length - 1; index += 1 ) {
 		const currentAncestor = ancestorChain[ index ];
 		const nextAncestor = ancestorChain[ index + 1 ];
-		const blockJson = readBlockJsonDocument( currentAncestor.blockJsonPath );
-		const allowedBlocks = Array.isArray( blockJson.allowedBlocks )
-			? blockJson.allowedBlocks.filter(
-				( value ): value is string => typeof value === 'string'
-			)
-			: [];
 
-		if ( allowedBlocks.includes( nextAncestor.blockName ) ) {
+		if ( currentAncestor.directAllowedBlocks.includes( nextAncestor.blockName ) ) {
 			continue;
 		}
 
@@ -472,6 +628,22 @@ function validateAncestorChain(
 			`Invalid ancestor chain: ${ currentAncestor.blockName } does not currently allow ${ nextAncestor.blockName } as a direct child.`
 		);
 	}
+}
+
+function validateNestedAncestorTarget( ancestorChain: ExistingCompoundChild[] ) {
+	const directAncestor = ancestorChain[ ancestorChain.length - 1 ];
+
+	if ( ! directAncestor ) {
+		return;
+	}
+
+	if ( directAncestor.container ) {
+		return;
+	}
+
+	throw new Error(
+		`Cannot nest descendants under ${ directAncestor.blockName } because it is not declared as a container child. Re-add that child with --container or target an existing container child.`
+	);
 }
 
 function findCompoundChildSpecSource(
@@ -526,6 +698,86 @@ function validateAncestorInstantiability(
 			`Cannot nest descendants under ${ ancestor.blockName } because it is hidden and has no seeded template instances. Re-add or promote that child with a visible inserter or a seeded template first.`
 		);
 	}
+}
+
+function formatProjectRelativePath( filePath: string ): string {
+	return path.relative( PROJECT_ROOT, filePath ) || '.';
+}
+
+function buildCompoundChildGraphNodes(
+	existingChildren: ExistingCompoundChild[],
+	prospectiveChild: CompoundChildGraphNode
+): CompoundChildGraphNode[] {
+	return [
+		...existingChildren.map( ( child ) => ( {
+			blockName: child.blockName,
+			container: child.container,
+			directParentBlockName: resolveDirectParentBlockName( child ),
+			isProspective: false,
+			key: child.key,
+			placement: child.placement,
+			supportsInserter: child.supportsInserter,
+			title: child.title,
+		} ) ),
+		prospectiveChild,
+	];
+}
+
+function renderCompoundChildGraphPreview(
+	graphNodes: CompoundChildGraphNode[],
+	plannedWritePaths: string[],
+	options: {
+		dryRun: boolean;
+	}
+): string {
+	const childrenByParent = new Map< string, CompoundChildGraphNode[] >();
+
+	for ( const graphNode of graphNodes ) {
+		const existingChildren = childrenByParent.get( graphNode.directParentBlockName ) ?? [];
+		existingChildren.push( graphNode );
+		childrenByParent.set( graphNode.directParentBlockName, existingChildren );
+	}
+
+	const renderChildLines = (
+		parentBlockName: string,
+		indent: string
+	): string[] => {
+		const directChildren = [ ...( childrenByParent.get( parentBlockName ) ?? [] ) ].sort(
+			( left, right ) => left.key.localeCompare( right.key )
+		);
+
+		return directChildren.flatMap( ( child ) => {
+			const labels = [
+				child.isProspective ? 'new' : 'existing',
+				child.placement === 'root' ? 'root' : 'nested',
+				child.container ? 'container' : 'leaf',
+				child.supportsInserter ? 'visible' : 'hidden',
+			];
+			const line = `${ indent }- ${ child.key } -> ${ child.blockName } [${ labels.join( ', ' ) }]`;
+			return [ line, ...renderChildLines( child.blockName, `${ indent }  ` ) ];
+		} );
+	};
+
+	return [
+		'Compound child graph preview',
+		`Parent block: ${ PARENT_BLOCK_NAME }`,
+		...renderChildLines( PARENT_BLOCK_NAME, '' ),
+		'',
+		'Planned writes',
+		...plannedWritePaths.map( ( plannedWritePath ) => `- ${ plannedWritePath }` ),
+		options.dryRun ? '' : '',
+		options.dryRun
+			? 'Dry run only; no files were written.'
+			: 'Applying these updates now.',
+	]
+		.filter( ( line, index, lines ) => {
+			if ( line.length > 0 ) {
+				return true;
+			}
+
+			return index > 0 && lines[ index - 1 ].length > 0;
+		} )
+		.join( '\n' );
 }
 
 function updateAllowedBlocks(
@@ -948,6 +1200,7 @@ function main() {
 	const {
 		ancestorValues,
 		container,
+		dryRun,
 		inserter,
 		slug,
 		title,
@@ -959,6 +1212,7 @@ function main() {
 	}
 
 	const existingChildren = listExistingCompoundChildren();
+	validateExistingCompoundChildGraph( existingChildren );
 	const ancestorChain = ensureUniqueAncestorChain(
 		ancestorValues.map( ( value ) =>
 			resolveExistingCompoundChild( value, existingChildren )
@@ -996,7 +1250,7 @@ function main() {
 	}
 
 	validateAncestorInstantiability( childrenFile, ancestorChain );
-
+	validateNestedAncestorTarget( ancestorChain );
 	const supportsInserter =
 		inserter === 'visible'
 			? true
@@ -1006,6 +1260,47 @@ function main() {
 	const placement = ancestorChain.length > 0 ? 'nested' : 'root';
 	const seedTemplate = supportsInserter || container || ancestorChain.length > 0;
 	const directAllowedBlocks: string[] = [];
+	const directAncestor = ancestorChain[ ancestorChain.length - 1 ];
+	const plannedWritePaths = [
+		formatProjectRelativePath( path.join( childDir, 'block.json' ) ),
+		formatProjectRelativePath( path.join( childDir, 'types.ts' ) ),
+		formatProjectRelativePath( path.join( childDir, 'typia.manifest.json' ) ),
+		formatProjectRelativePath( path.join( childDir, 'block-metadata.ts' ) ),
+		formatProjectRelativePath( path.join( childDir, 'manifest-document.ts' ) ),
+		formatProjectRelativePath( path.join( childDir, 'manifest-defaults-document.ts' ) ),
+		formatProjectRelativePath( path.join( childDir, 'hooks.ts' ) ),
+		formatProjectRelativePath( path.join( childDir, 'validators.ts' ) ),
+		formatProjectRelativePath( path.join( childDir, 'edit.tsx' ) ),
+		formatProjectRelativePath( path.join( childDir, 'save.tsx' ) ),
+		formatProjectRelativePath( path.join( childDir, 'index.tsx' ) ),
+		formatProjectRelativePath( childrenFile ),
+		formatProjectRelativePath( blockConfigFile ),
+		formatProjectRelativePath(
+			placement === 'root' ? PARENT_BLOCK_JSON_PATH : directAncestor.blockJsonPath
+		),
+	];
+
+	console.log(
+		renderCompoundChildGraphPreview(
+			buildCompoundChildGraphNodes( existingChildren, {
+				blockName: childBlockName,
+				container,
+				directParentBlockName:
+					directAncestor?.blockName ?? PARENT_BLOCK_NAME,
+				isProspective: true,
+				key: normalizedSlug,
+				placement,
+				supportsInserter,
+				title: childTitle,
+			} ),
+			plannedWritePaths,
+			{ dryRun }
+		)
+	);
+
+	if ( dryRun ) {
+		return;
+	}
 
 	fs.mkdirSync( childDir, { recursive: true } );
 
