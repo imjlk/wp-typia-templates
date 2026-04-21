@@ -504,6 +504,9 @@ export async function seedWorkspaceMigrationProject(
  * workspace. Defaults to `process.cwd()`.
  * @param options.dataStorageMode Optional storage mode for persistence-capable
  * templates.
+ * @param options.innerBlocksPreset Optional compound-only InnerBlocks preset
+ * (`freeform`, `ordered`, `horizontal`, or `locked-structure`) that controls
+ * the generated authoring defaults for nested compound containers.
  * @param options.persistencePolicy Optional persistence policy for
  * persistence-capable templates.
  * @param options.templateId Built-in block family to scaffold. Defaults to

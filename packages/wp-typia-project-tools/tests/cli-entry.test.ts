@@ -376,6 +376,29 @@ test("runScaffoldFlow accepts compound InnerBlocks presets for compound scaffold
   expect(parentChildren).toContain("orientation: 'horizontal'");
 });
 
+test("runScaffoldFlow applies locked-structure presets to compound scaffolds", async () => {
+  const projectInput = "demo-compound-locked-structure";
+  const flow = await runScaffoldFlow({
+    cwd: tempRoot,
+    innerBlocksPreset: "locked-structure",
+    noInstall: true,
+    packageManager: "npm",
+    projectInput,
+    templateId: "compound",
+    yes: true,
+  });
+
+  const parentChildren = fs.readFileSync(
+    path.join(flow.projectDir, "src", "blocks", projectInput, "children.ts"),
+    "utf8",
+  );
+
+  expect(flow.result.variables.compoundInnerBlocksPreset).toBe("locked-structure");
+  expect(parentChildren).toContain("ROOT_INNER_BLOCKS_PRESET_ID = 'locked-structure'");
+  expect(parentChildren).toContain("templateLock: 'all'");
+  expect(parentChildren).toContain("directInsert: false");
+});
+
 test("runScaffoldFlow rejects InnerBlocks presets for non-compound templates", async () => {
   await expect(
     runScaffoldFlow({

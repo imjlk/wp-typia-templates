@@ -1,3 +1,7 @@
+/**
+ * Stable preset ids exposed to scaffold and UI consumers for compound
+ * InnerBlocks authoring behavior.
+ */
 export const COMPOUND_INNER_BLOCKS_PRESET_IDS = [
 	"freeform",
 	"ordered",
@@ -8,12 +12,19 @@ export const COMPOUND_INNER_BLOCKS_PRESET_IDS = [
 export type CompoundInnerBlocksPresetId =
 	(typeof COMPOUND_INNER_BLOCKS_PRESET_IDS)[number];
 
+/**
+ * Default preset applied when callers do not provide an explicit compound
+ * InnerBlocks mode.
+ */
 export const DEFAULT_COMPOUND_INNER_BLOCKS_PRESET_ID: CompoundInnerBlocksPresetId =
 	"freeform";
 
 export type CompoundInnerBlocksOrientation = "horizontal" | "vertical";
 export type CompoundInnerBlocksTemplateLock = false | "insert" | "all";
 
+/**
+ * Runtime-facing description of one compound InnerBlocks preset.
+ */
 export interface CompoundInnerBlocksPresetDefinition {
 	description: string;
 	directInsert: boolean;
@@ -22,6 +33,10 @@ export interface CompoundInnerBlocksPresetDefinition {
 	templateLock: CompoundInnerBlocksTemplateLock;
 }
 
+/**
+ * Canonical preset registry used by the CLI, generated scaffolds, and TUI
+ * forms.
+ */
 export const COMPOUND_INNER_BLOCKS_PRESET_REGISTRY = {
 	freeform: {
 		description:
@@ -60,6 +75,9 @@ export const COMPOUND_INNER_BLOCKS_PRESET_REGISTRY = {
 	CompoundInnerBlocksPresetDefinition
 >;
 
+/**
+ * Returns whether a string matches one of the supported compound preset ids.
+ */
 export function isCompoundInnerBlocksPresetId(
 	value: string,
 ): value is CompoundInnerBlocksPresetId {
@@ -68,6 +86,12 @@ export function isCompoundInnerBlocksPresetId(
 	).includes(value);
 }
 
+/**
+ * Parses a raw CLI or config value into a supported preset id.
+ *
+ * Returns `undefined` for non-string or empty input, and throws when the input
+ * is a non-empty unsupported preset id.
+ */
 export function parseCompoundInnerBlocksPreset(
 	value?: string,
 ): CompoundInnerBlocksPresetId | undefined {
@@ -89,12 +113,20 @@ export function parseCompoundInnerBlocksPreset(
 	return normalizedValue;
 }
 
+/**
+ * Resolves an optional preset id to a concrete preset, defaulting to
+ * `DEFAULT_COMPOUND_INNER_BLOCKS_PRESET_ID`.
+ */
 export function resolveCompoundInnerBlocksPreset(
 	value?: CompoundInnerBlocksPresetId,
 ): CompoundInnerBlocksPresetId {
 	return value ?? DEFAULT_COMPOUND_INNER_BLOCKS_PRESET_ID;
 }
 
+/**
+ * Looks up the preset definition for the provided preset id, applying the
+ * default preset when the input is omitted.
+ */
 export function getCompoundInnerBlocksPresetDefinition(
 	value?: CompoundInnerBlocksPresetId,
 ): CompoundInnerBlocksPresetDefinition {

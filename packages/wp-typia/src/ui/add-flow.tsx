@@ -9,7 +9,7 @@ import {
 import {
 	COMPOUND_INNER_BLOCKS_PRESET_IDS,
 	getCompoundInnerBlocksPresetDefinition,
-} from "@wp-typia/project-tools";
+} from "@wp-typia/project-tools/compound-inner-blocks";
 import { EDITOR_PLUGIN_SLOT_IDS } from "@wp-typia/project-tools/cli-add";
 import { HOOKED_BLOCK_POSITION_IDS } from "@wp-typia/project-tools/hooked-blocks";
 
@@ -251,7 +251,7 @@ function AddFlowFields({
 						name: "alternate-render-targets",
 					})
 				: null,
-			visibleFields.has("inner-blocks-preset") && template === "compound"
+			visibleFields.has("inner-blocks-preset")
 				? createElement(FirstPartySelectField, {
 						...getWrappedFieldNeighbors(
 							orderedVisibleFields,

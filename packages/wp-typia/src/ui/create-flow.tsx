@@ -9,7 +9,7 @@ import {
 import {
 	COMPOUND_INNER_BLOCKS_PRESET_IDS,
 	getCompoundInnerBlocksPresetDefinition,
-} from "@wp-typia/project-tools";
+} from "@wp-typia/project-tools/compound-inner-blocks";
 
 import { executeCreateCommand } from "../runtime-bridge";
 import { useAlternateBufferLifecycle } from "./alternate-buffer-lifecycle";
