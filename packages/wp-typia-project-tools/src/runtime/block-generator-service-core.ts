@@ -38,6 +38,10 @@ import {
 	type ValidateBlockResult,
 } from "./block-generator-service-spec.js";
 import type { ScaffoldProjectResult } from "./scaffold.js";
+import {
+	assertBuiltInTemplateVariantAllowed,
+	assertExternalLayerCompositionOptions,
+} from "./cli-validation.js";
 
 const renderedArtifactCache = new WeakMap<
 	RenderBlockResult,
@@ -207,17 +211,14 @@ export class BlockGeneratorService {
 	}
 
 	async validate({ plan }: ValidateBlockInput): Promise<ValidateBlockResult> {
-		if (plan.target.externalLayerId && !plan.target.externalLayerSource) {
-			throw new Error(
-				"externalLayerId requires externalLayerSource when composing built-in template layers.",
-			);
-		}
-
-		if (plan.target.variant) {
-			throw new Error(
-				`--variant is only supported for official external template configs. Received variant "${plan.target.variant}" for built-in template "${plan.spec.template.family}".`,
-			);
-		}
+		assertExternalLayerCompositionOptions({
+			externalLayerId: plan.target.externalLayerId,
+			externalLayerSource: plan.target.externalLayerSource,
+		});
+		assertBuiltInTemplateVariantAllowed({
+			templateId: plan.spec.template.family,
+			variant: plan.target.variant,
+		});
 
 		return plan;
 	}

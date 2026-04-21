@@ -313,6 +313,38 @@ test("canonical CLI resolves add-block local external layer paths from the calle
   ).toContain("counter-card-telemetry");
 }, 20_000);
 
+test("runAddBlockCommand explains when a block name normalizes to an empty slug", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-invalid-block-name");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add invalid block name",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-invalid-block-name",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Invalid Block Name",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  await expect(
+    runAddBlockCommand({
+      blockName: "!!!",
+      cwd: targetDir,
+      templateId: "basic",
+    })
+  ).rejects.toThrow(
+    'Block name "!!!" normalizes to an empty slug. Use letters or numbers so wp-typia can generate a block slug.'
+  );
+}, 20_000);
+
 test("canonical CLI rejects add-block external layers that emit workspace-level files", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-basic-layered-root-output");
 

@@ -103,6 +103,22 @@ describe("BlockGeneratorService", () => {
 		);
 	});
 
+	test("validate rejects external layer ids without a layer source through the shared contract", async () => {
+		const service = new BlockGeneratorService();
+		const plan = await service.plan({
+			answers: buildAnswers("basic"),
+			externalLayerId: "acme/observability",
+			noInstall: true,
+			packageManager: "npm",
+			projectDir: path.join(tempRoot, "external-layer-id-only"),
+			templateId: "basic",
+		});
+
+		await expect(service.validate({ plan })).rejects.toThrow(
+			"externalLayerId requires externalLayerSource when composing built-in template layers.",
+		);
+	});
+
 	test("render exposes explicit stage intent for compound persistence scaffolds", async () => {
 		const service = new BlockGeneratorService();
 		const plan = await service.plan({

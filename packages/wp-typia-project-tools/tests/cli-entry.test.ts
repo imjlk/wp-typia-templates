@@ -447,6 +447,22 @@ test("runScaffoldFlow warns when query-loop-only flags are passed to other templ
   );
 });
 
+test("runScaffoldFlow explains invalid query post type input with the original value", async () => {
+  await expect(
+    runScaffoldFlow({
+      cwd: tempRoot,
+      noInstall: true,
+      packageManager: "npm",
+      projectInput: "demo-invalid-query-post-type",
+      queryPostType: "Books!",
+      templateId: "query-loop",
+      yes: true,
+    })
+  ).rejects.toThrow(
+    'Query post type "Books!" normalizes to "books!", which is invalid. Use lowercase, 1-20 chars, and only a-z, 0-9, "_" or "-".'
+  );
+});
+
 test("runScaffoldFlow dry-run previews scaffold output without writing the target directory", async () => {
   const projectInput = "demo-dry-run-plan";
   const targetDir = path.join(tempRoot, projectInput);
@@ -526,6 +542,24 @@ test("runScaffoldFlow rejects external layer ids without a layer source", async 
     })
   ).rejects.toThrow(
     "externalLayerId requires externalLayerSource when composing built-in template layers."
+  );
+});
+
+test("runScaffoldFlow rejects missing local external layer paths before template resolution", async () => {
+  const missingLayerPath = "./missing-template-layer";
+
+  await expect(
+    runScaffoldFlow({
+      cwd: tempRoot,
+      externalLayerSource: missingLayerPath,
+      noInstall: true,
+      packageManager: "npm",
+      projectInput: "demo-missing-local-external-layer",
+      templateId: "basic",
+      yes: true,
+    })
+  ).rejects.toThrow(
+    `\`--external-layer-source\` path does not exist: ${path.resolve(tempRoot, missingLayerPath)}.`
   );
 });
 

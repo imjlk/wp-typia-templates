@@ -39,6 +39,11 @@ import {
 	type ExternalLayerSelectionOption,
 } from "./external-layer-selection.js";
 import type { TemplateDefinition } from "./template-registry.js";
+import {
+	assertBuiltInTemplateVariantAllowed,
+	resolveLocalCliPathOption,
+	normalizeOptionalCliString,
+} from "./cli-validation.js";
 
 interface GetNextStepsOptions {
 	noInstall: boolean;
@@ -390,10 +395,11 @@ function validateCreateFlagContract(options: {
 	}
 	parseAlternateRenderTargets(alternateRenderTargets);
 
-	if (variant && isBuiltInTemplateId(templateId)) {
-		throw new Error(
-			`--variant is only supported for official external template configs. Received variant "${variant}" for built-in template "${templateId}".`,
-		);
+	if (isBuiltInTemplateId(templateId)) {
+		assertBuiltInTemplateVariantAllowed({
+			templateId,
+			variant,
+		});
 	}
 }
 
@@ -589,14 +595,12 @@ export async function runScaffoldFlow({
 	withWpEnv,
 }: RunScaffoldFlowOptions) {
 	const normalizedExternalLayerId =
-		typeof externalLayerId === "string" && externalLayerId.trim().length > 0
-			? externalLayerId.trim()
-			: undefined;
-	const normalizedExternalLayerSource =
-		typeof externalLayerSource === "string" &&
-		externalLayerSource.trim().length > 0
-			? externalLayerSource.trim()
-			: undefined;
+		normalizeOptionalCliString(externalLayerId);
+	const normalizedExternalLayerSource = resolveLocalCliPathOption({
+		cwd,
+		label: "--external-layer-source",
+		value: externalLayerSource,
+	});
 
 	validateCreateProjectInput(projectInput);
 

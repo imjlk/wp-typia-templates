@@ -9,7 +9,6 @@ import {
 	type HookedBlockPositionId,
 } from "./hooked-blocks.js";
 import {
-	toKebabCase,
 	toSnakeCase,
 } from "./string-case.js";
 import {
@@ -19,6 +18,9 @@ import {
 	WORKSPACE_TEMPLATE_PACKAGE,
 	type WorkspaceProject,
 } from "./workspace-project.js";
+export {
+	normalizeBlockSlug,
+} from "./scaffold-identifiers.js";
 
 /**
  * Supported top-level `wp-typia add` kinds exposed by the canonical CLI.
@@ -142,10 +144,6 @@ export interface WorkspaceMutationSnapshot {
 	snapshotDirs: string[];
 	/** Files or directories created by the mutation that should be removed on rollback. */
 	targetPaths: string[];
-}
-
-export function normalizeBlockSlug(input: string): string {
-	return toKebabCase(input);
 }
 
 export function assertValidGeneratedSlug(label: string, slug: string, usage: string): string {

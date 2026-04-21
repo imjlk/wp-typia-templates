@@ -38,6 +38,8 @@ const TEMPLATE_SELECTION_HINT = `--template <${[
   WORKSPACE_TEMPLATE_ALIAS,
 ].join('|')}|./path|github:owner/repo/path[#ref]|npm-package>`;
 const TEMPLATE_SUGGESTION_IDS = [...TEMPLATE_IDS, WORKSPACE_TEMPLATE_ALIAS] as const;
+const QUERY_POST_TYPE_RULE =
+  'Use lowercase, 1-20 chars, and only a-z, 0-9, "_" or "-".';
 
 /**
  * Detect the current author name from local Git config.
@@ -85,13 +87,16 @@ export function getDefaultAnswers(
 }
 
 function validateQueryPostType(value: string): true | string {
-  const normalizedValue = value.trim().toLowerCase();
+  const rawValue = value.trim();
+  const normalizedValue = rawValue.toLowerCase();
   if (normalizedValue.length === 0) {
     return 'Query post type is required.';
   }
 
   if (!/^[a-z0-9_-]{1,20}$/u.test(normalizedValue)) {
-    return 'Query post type must be lowercase, 1-20 chars, and only a-z, 0-9, "_" or "-".';
+    return rawValue === normalizedValue
+      ? `Query post type "${rawValue}" is invalid. ${QUERY_POST_TYPE_RULE}`
+      : `Query post type "${rawValue}" normalizes to "${normalizedValue}", which is invalid. ${QUERY_POST_TYPE_RULE}`;
   }
 
   return true;
@@ -102,12 +107,12 @@ function normalizeQueryPostType(value: string | undefined): string | undefined {
     return undefined;
   }
 
-  const normalizedValue = value.trim().toLowerCase();
-  if (validateQueryPostType(normalizedValue) !== true) {
-    throw new Error('Query post type must be lowercase, 1-20 chars, and only a-z, 0-9, "_" or "-".');
+  const validationResult = validateQueryPostType(value);
+  if (validationResult !== true) {
+    throw new Error(validationResult);
   }
 
-  return normalizedValue;
+  return value.trim().toLowerCase();
 }
 
 function normalizeTemplateSelection(templateId: string): string {

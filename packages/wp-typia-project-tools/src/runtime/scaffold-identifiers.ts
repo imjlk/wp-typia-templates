@@ -58,6 +58,37 @@ export function normalizeBlockSlug(input: string): string {
 	return toKebabCase(input);
 }
 
+/**
+ * Normalize one human-entered block slug and reject values that collapse to an
+ * empty generated slug.
+ *
+ * @param options Normalization context for one block-like name.
+ * @param options.input Raw user input before kebab-case normalization.
+ * @param options.label Human-readable field label used in thrown errors.
+ * @param options.usage Example CLI usage shown when the input is blank.
+ * @returns A non-empty normalized slug.
+ * @throws When the input is blank after trimming.
+ * @throws When normalization removes every character from the original input.
+ */
+export function resolveNonEmptyNormalizedBlockSlug(options: {
+	input: string;
+	label: string;
+	usage: string;
+}): string {
+	const normalizedSlug = normalizeBlockSlug(options.input);
+	if (normalizedSlug.length > 0) {
+		return normalizedSlug;
+	}
+
+	if (options.input.trim().length === 0) {
+		throw new Error(`${options.label} is required. Use \`${options.usage}\`.`);
+	}
+
+	throw new Error(
+		`${options.label} "${options.input.trim()}" normalizes to an empty slug. Use letters or numbers so wp-typia can generate a block slug.`,
+	);
+}
+
 export function resolveValidatedBlockSlug(value: string): string {
 	return assertValidIdentifier("Block slug", normalizeBlockSlug(value), validateBlockSlug);
 }
