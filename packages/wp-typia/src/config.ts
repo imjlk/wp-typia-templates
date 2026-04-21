@@ -12,6 +12,7 @@ export type WpTypiaSchemaSource = {
 export type WpTypiaUserConfig = {
 	create?: {
 		"alternate-render-targets"?: string;
+		"inner-blocks-preset"?: string;
 		"data-storage"?: string;
 		"dry-run"?: boolean;
 		"external-layer-id"?: string;
@@ -36,6 +37,7 @@ export type WpTypiaUserConfig = {
 			"data-storage"?: string;
 			"external-layer-id"?: string;
 			"external-layer-source"?: string;
+			"inner-blocks-preset"?: string;
 			"persistence-policy"?: string;
 			template?: string;
 		};

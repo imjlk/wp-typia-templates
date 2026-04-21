@@ -6,6 +6,10 @@ import {
 	useFormContext,
 	useTerminalDimensions,
 } from "@bunli/tui";
+import {
+	COMPOUND_INNER_BLOCKS_PRESET_IDS,
+	getCompoundInnerBlocksPresetDefinition,
+} from "@wp-typia/project-tools/compound-inner-blocks";
 import { EDITOR_PLUGIN_SLOT_IDS } from "@wp-typia/project-tools/cli-add";
 import { HOOKED_BLOCK_POSITION_IDS } from "@wp-typia/project-tools/hooked-blocks";
 
@@ -102,6 +106,13 @@ const persistencePolicyOptions: SelectOption[] = [
 	},
 	{ name: "public", description: "Public token policy", value: "public" },
 ];
+
+const compoundInnerBlocksPresetOptions: SelectOption[] =
+	COMPOUND_INNER_BLOCKS_PRESET_IDS.map((value) => ({
+		description: getCompoundInnerBlocksPresetDefinition(value).description,
+		name: value,
+		value,
+	}));
 
 const EDITOR_PLUGIN_SLOT_DESCRIPTIONS: Record<string, string> = {
 	PluginSidebar: "Register a document sidebar and more-menu entry",
@@ -238,6 +249,18 @@ function AddFlowFields({
 						key: "alternate-render-targets",
 						label: "Alternate render targets",
 						name: "alternate-render-targets",
+					})
+				: null,
+			visibleFields.has("inner-blocks-preset")
+				? createElement(FirstPartySelectField, {
+						...getWrappedFieldNeighbors(
+							orderedVisibleFields,
+							"inner-blocks-preset",
+						),
+						key: "inner-blocks-preset",
+						label: "InnerBlocks preset",
+						name: "inner-blocks-preset" satisfies AddSelectFieldName,
+						options: compoundInnerBlocksPresetOptions,
 					})
 				: null,
 			visibleFields.has("block") && !variationBlockUsesSelect

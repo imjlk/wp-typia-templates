@@ -73,6 +73,10 @@ export function buildReadme(
     packageManager,
     templateId,
   );
+  const compoundInnerBlocksSection =
+    templateId === 'compound'
+      ? `## Compound InnerBlocks Presets\n\nThis scaffold starts with the \`${variables.compoundInnerBlocksPreset}\` preset for compound container authoring. Static nested relationships still belong in each generated \`block.json\` via \`allowedBlocks\`, \`parent\`, and \`ancestor\`, while \`src/blocks/${variables.slugKebabCase}/children.ts\` owns editor-only \`InnerBlocks\` behavior such as \`orientation\`, \`templateLock\`, \`defaultBlock\`, and \`directInsert\`.\n\n- \`freeform\`: unlocked inserter flow with the starter child template.\n- \`ordered\`: vertical ordered flow with \`templateLock="insert"\` and direct inserts.\n- \`horizontal\`: row-like nested authoring with direct inserts.\n- \`locked-structure\`: fully locked starter structure.\n\nWhen you need to change that authoring behavior later, update the preset helpers in \`src/blocks/${variables.slugKebabCase}/children.ts\` and keep fixed child constraints metadata-owned instead of duplicating them in editor props.`
+      : '';
   const phpRestExtensionPointsSection = getPhpRestExtensionPointsSection(templateId, {
     compoundPersistenceEnabled,
     slug: variables.slug,
@@ -139,7 +143,7 @@ ${initialCommitCommands.join('\n')}
 
 ${getInitialCommitNote()}
 
-${sourceOfTruthNote}${publicPersistencePolicyNote ? `\n\n${publicPersistencePolicyNote}` : ''}${alternateRenderTargetSection ? `\n\n${alternateRenderTargetSection}` : ''}${migrationSection ? `\n\n${migrationSection}` : ''}${compoundExtensionWorkflowSection ? `\n\n${compoundExtensionWorkflowSection}` : ''}${wpEnvSection ? `\n\n${wpEnvSection}` : ''}${testPresetSection ? `\n\n${testPresetSection}` : ''}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ''}
+${sourceOfTruthNote}${publicPersistencePolicyNote ? `\n\n${publicPersistencePolicyNote}` : ''}${alternateRenderTargetSection ? `\n\n${alternateRenderTargetSection}` : ''}${compoundInnerBlocksSection ? `\n\n${compoundInnerBlocksSection}` : ''}${migrationSection ? `\n\n${migrationSection}` : ''}${compoundExtensionWorkflowSection ? `\n\n${compoundExtensionWorkflowSection}` : ''}${wpEnvSection ? `\n\n${wpEnvSection}` : ''}${testPresetSection ? `\n\n${testPresetSection}` : ''}${phpRestExtensionPointsSection ? `\n\n${phpRestExtensionPointsSection}` : ''}
 `;
 }
 

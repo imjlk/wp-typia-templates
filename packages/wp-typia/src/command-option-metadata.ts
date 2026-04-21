@@ -36,6 +36,11 @@ export const CREATE_OPTION_METADATA = {
 		description: "Local path, GitHub locator, or npm package that exposes wp-typia.layers.json for built-in templates.",
 		type: "string",
 	},
+	"inner-blocks-preset": {
+		description:
+			"Compound-only InnerBlocks preset (freeform, ordered, horizontal, locked-structure).",
+		type: "string",
+	},
 	namespace: {
 		description: "Override the default block namespace.",
 		type: "string",
@@ -130,6 +135,11 @@ export const ADD_OPTION_METADATA = {
 	},
 	"external-layer-source": {
 		description: "Local path, GitHub locator, or npm package that exposes wp-typia.layers.json for built-in block templates.",
+		type: "string",
+	},
+	"inner-blocks-preset": {
+		description:
+			"Compound-only InnerBlocks preset (freeform, ordered, horizontal, locked-structure).",
 		type: "string",
 	},
 	methods: {

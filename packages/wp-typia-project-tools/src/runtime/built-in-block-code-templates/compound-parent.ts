@@ -9,8 +9,7 @@ import {
 import { Notice, PanelBody, ToggleControl } from '@wordpress/components';
 
 import {
-	ALLOWED_CHILD_BLOCKS,
-	DEFAULT_CHILD_TEMPLATE,
+	getRootInnerBlocksConfig,
 } from './children';
 import { useTypiaValidation } from './hooks';
 import type { {{pascalCase}}Attributes } from './types';
@@ -20,6 +19,14 @@ import {
 } from './validators';
 
 type EditProps = BlockEditProps< {{pascalCase}}Attributes >;
+type CompoundInnerBlocksProps = Parameters< typeof InnerBlocks >[ 0 ] & {
+	defaultBlock?: [ string, Record< string, unknown > ];
+	directInsert?: boolean;
+};
+
+const TypedInnerBlocks = InnerBlocks as unknown as (
+	props: CompoundInnerBlocksProps
+) => ReturnType< typeof InnerBlocks >;
 
 export default function Edit( {
 	attributes,
@@ -33,6 +40,7 @@ export default function Edit( {
 	const blockProps = useBlockProps( {
 		className: '{{cssClassName}}',
 	} );
+	const rootInnerBlocksConfig = getRootInnerBlocksConfig();
 
 	return (
 		<>
@@ -80,11 +88,18 @@ export default function Edit( {
 					</Notice>
 				) }
 				<div className="{{cssClassName}}__items">
-					<InnerBlocks
-						allowedBlocks={ ALLOWED_CHILD_BLOCKS }
-						renderAppender={ InnerBlocks.ButtonBlockAppender }
-						template={ DEFAULT_CHILD_TEMPLATE }
-						templateLock={ false }
+					<TypedInnerBlocks
+						allowedBlocks={ rootInnerBlocksConfig.allowedBlocks }
+						defaultBlock={ rootInnerBlocksConfig.defaultBlock }
+						directInsert={ rootInnerBlocksConfig.directInsert }
+						orientation={ rootInnerBlocksConfig.orientation }
+						renderAppender={
+							rootInnerBlocksConfig.templateLock === 'all'
+								? undefined
+								: InnerBlocks.ButtonBlockAppender
+						}
+						template={ rootInnerBlocksConfig.template }
+						templateLock={ rootInnerBlocksConfig.templateLock }
 					/>
 				</div>
 			</div>
@@ -221,6 +236,28 @@ export interface CompoundChildSpec {
 \ttitle: string;
 }
 
+export interface CompoundInnerBlocksConfig {
+\tallowedBlocks?: string[];
+\tdefaultBlock?: [ string, Record< string, unknown > ];
+\tdirectInsert: boolean;
+\torientation?: 'horizontal' | 'vertical';
+\ttemplate?: BlockTemplate;
+\ttemplateLock: false | 'insert' | 'all';
+}
+
+export const ROOT_INNER_BLOCKS_PRESET_ID = '{{compoundInnerBlocksPreset}}';
+export const ROOT_INNER_BLOCKS_PRESET_DESCRIPTION =
+\t'{{compoundInnerBlocksPresetDescription}}';
+
+const BASE_INNER_BLOCKS_CONFIG: Omit<
+\tCompoundInnerBlocksConfig,
+\t'allowedBlocks' | 'defaultBlock' | 'template'
+> = {
+\tdirectInsert: {{compoundInnerBlocksDirectInsert}},
+\torientation: {{compoundInnerBlocksOrientationExpression}},
+\ttemplateLock: {{compoundInnerBlocksTemplateLockExpression}},
+};
+
 const ROOT_BLOCK_NAME = '{{namespace}}/{{slugKebabCase}}';
 
 export const COMPOUND_CHILD_SPECS: CompoundChildSpec[] = [
@@ -279,6 +316,29 @@ export const DEFAULT_CHILD_TEMPLATE: BlockTemplate =
 \t\t( spec ) => buildTemplateEntriesForSpec( spec )
 \t);
 
+function buildDefaultBlockEntry(
+\tallowedBlocks?: string[]
+): [ string, Record< string, unknown > ] | undefined {
+\tif (
+\t\t! BASE_INNER_BLOCKS_CONFIG.directInsert ||
+\t\t! Array.isArray( allowedBlocks ) ||
+\t\tallowedBlocks.length === 0
+\t) {
+\t\treturn undefined;
+\t}
+
+\treturn [ allowedBlocks[ 0 ], {} ];
+}
+
+export function getRootInnerBlocksConfig(): CompoundInnerBlocksConfig {
+\treturn {
+\t\t...BASE_INNER_BLOCKS_CONFIG,
+\t\tallowedBlocks: ALLOWED_CHILD_BLOCKS,
+\t\tdefaultBlock: buildDefaultBlockEntry( ALLOWED_CHILD_BLOCKS ),
+\t\ttemplate: DEFAULT_CHILD_TEMPLATE,
+\t};
+}
+
 export function getChildSpec( blockName: string ): CompoundChildSpec | undefined {
 \treturn COMPOUND_CHILD_SPECS.find( ( spec ) => spec.blockName === blockName );
 }
@@ -332,6 +392,29 @@ export function getChildTemplate(
 \t}
 
 \treturn childSpec.container ? [] : undefined;
+}
+
+export function getChildInnerBlocksConfig(
+\tblockName: string
+): CompoundInnerBlocksConfig | undefined {
+\tconst childSpec = getChildSpec( blockName );
+\tif ( ! childSpec ) {
+\t\treturn undefined;
+\t}
+
+\tconst allowedBlocks = getChildAllowedBlocks( blockName );
+\tconst template = getChildTemplate( blockName );
+
+\tif ( ! childSpec.container && ! allowedBlocks && ! template ) {
+\t\treturn undefined;
+\t}
+
+\treturn {
+\t\t...BASE_INNER_BLOCKS_CONFIG,
+\t\tallowedBlocks,
+\t\tdefaultBlock: buildDefaultBlockEntry( allowedBlocks ),
+\t\ttemplate,
+\t};
 }
 
 export function hasNestedChildBlocks( blockName: string ): boolean {

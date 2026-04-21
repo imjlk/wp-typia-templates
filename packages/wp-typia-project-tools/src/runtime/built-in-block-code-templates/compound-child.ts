@@ -5,8 +5,7 @@ import { __ } from '@wordpress/i18n';
 
 import metadata from './block-metadata';
 import {
-\tgetChildAllowedBlocks,
-\tgetChildTemplate,
+\tgetChildInnerBlocksConfig,
 \thasNestedChildBlocks,
 } from '../{{slugKebabCase}}/children';
 import { useTypiaValidation } from './hooks';
@@ -17,6 +16,14 @@ import {
 } from './validators';
 
 type EditProps = BlockEditProps< {{pascalCase}}ItemAttributes >;
+type CompoundInnerBlocksProps = Parameters< typeof InnerBlocks >[ 0 ] & {
+\tdefaultBlock?: [ string, Record< string, unknown > ];
+\tdirectInsert?: boolean;
+};
+
+const TypedInnerBlocks = InnerBlocks as unknown as (
+\tprops: CompoundInnerBlocksProps
+) => ReturnType< typeof InnerBlocks >;
 
 export default function Edit( {
 \tattributes,
@@ -27,8 +34,7 @@ export default function Edit( {
 \t\tattributes,
 \t\tvalidate{{pascalCase}}ItemAttributes
 \t);
-\tconst nestedAllowedBlocks = getChildAllowedBlocks( metadata.name );
-\tconst nestedTemplate = getChildTemplate( metadata.name );
+\tconst nestedInnerBlocksConfig = getChildInnerBlocksConfig( metadata.name );
 \tconst showsNestedChildren = hasNestedChildBlocks( metadata.name );
 
 \treturn (
@@ -56,11 +62,18 @@ export default function Edit( {
 \t\t\t) }
 \t\t\t{ showsNestedChildren && (
 \t\t\t\t<div className="{{compoundChildCssClassName}}__children">
-\t\t\t\t\t<InnerBlocks
-\t\t\t\t\t\tallowedBlocks={ nestedAllowedBlocks }
-\t\t\t\t\t\trenderAppender={ InnerBlocks.ButtonBlockAppender }
-\t\t\t\t\t\ttemplate={ nestedTemplate }
-\t\t\t\t\t\ttemplateLock={ false }
+\t\t\t\t\t<TypedInnerBlocks
+\t\t\t\t\t\tallowedBlocks={ nestedInnerBlocksConfig?.allowedBlocks }
+\t\t\t\t\t\tdefaultBlock={ nestedInnerBlocksConfig?.defaultBlock }
+\t\t\t\t\t\tdirectInsert={ nestedInnerBlocksConfig?.directInsert }
+\t\t\t\t\t\torientation={ nestedInnerBlocksConfig?.orientation }
+\t\t\t\t\t\trenderAppender={
+\t\t\t\t\t\t\tnestedInnerBlocksConfig?.templateLock === 'all'
+\t\t\t\t\t\t\t\t? undefined
+\t\t\t\t\t\t\t\t: InnerBlocks.ButtonBlockAppender
+\t\t\t\t\t\t}
+\t\t\t\t\t\ttemplate={ nestedInnerBlocksConfig?.template }
+\t\t\t\t\t\ttemplateLock={ nestedInnerBlocksConfig?.templateLock ?? false }
 \t\t\t\t\t/>
 \t\t\t\t</div>
 \t\t\t) }

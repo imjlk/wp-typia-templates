@@ -66,6 +66,7 @@ import {
 import {
 	formatInstallCommand,
 } from "./package-managers.js";
+import { parseCompoundInnerBlocksPreset } from "./compound-inner-blocks.js";
 import {
 	resolveOptionalInteractiveExternalLayerId,
 } from "./external-layer-selection.js";
@@ -454,6 +455,23 @@ function assertPersistenceFlagsAllowed(
 	);
 }
 
+function assertCompoundInnerBlocksPresetAllowed(
+	templateId: AddBlockTemplateId,
+	innerBlocksPreset?: string,
+): void {
+	if (!innerBlocksPreset) {
+		return;
+	}
+
+	if (templateId !== "compound") {
+		throw new Error(
+			"`--inner-blocks-preset` is supported only for `wp-typia add block --template compound`.",
+		);
+	}
+
+	parseCompoundInnerBlocksPreset(innerBlocksPreset);
+}
+
 /**
  * Seeds an empty official workspace migration project before any blocks are added.
  *
@@ -486,6 +504,9 @@ export async function seedWorkspaceMigrationProject(
  * workspace. Defaults to `process.cwd()`.
  * @param options.dataStorageMode Optional storage mode for persistence-capable
  * templates.
+ * @param options.innerBlocksPreset Optional compound-only InnerBlocks preset
+ * (`freeform`, `ordered`, `horizontal`, or `locked-structure`) that controls
+ * the generated authoring defaults for nested compound containers.
  * @param options.persistencePolicy Optional persistence policy for
  * persistence-capable templates.
  * @param options.templateId Built-in block family to scaffold. Defaults to
@@ -505,6 +526,7 @@ export async function runAddBlockCommand({
 	dataStorageMode,
 	externalLayerId,
 	externalLayerSource,
+	innerBlocksPreset,
 	persistencePolicy,
 	selectExternalLayerId,
 	templateId = "basic",
@@ -531,6 +553,12 @@ export async function runAddBlockCommand({
 		dataStorageMode,
 		persistencePolicy,
 	});
+	assertCompoundInnerBlocksPresetAllowed(
+		resolvedTemplateId,
+		innerBlocksPreset,
+	);
+	const resolvedInnerBlocksPreset =
+		parseCompoundInnerBlocksPreset(innerBlocksPreset);
 
 	const workspace = resolveWorkspaceProject(cwd);
 	assertWorkspaceDependenciesInstalled(workspace);
@@ -588,6 +616,7 @@ export async function runAddBlockCommand({
 				answers: {
 					...defaults,
 					author: workspace.author,
+					compoundInnerBlocksPreset: resolvedInnerBlocksPreset,
 					namespace: workspace.workspace.namespace,
 					phpPrefix: blockPhpPrefix,
 					slug: normalizedSlug,

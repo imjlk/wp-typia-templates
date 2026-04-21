@@ -14,6 +14,7 @@ export const createFlowSchema = z.object({
 	"dry-run": z.boolean().default(false),
 	"external-layer-id": z.string().optional(),
 	"external-layer-source": z.string().optional(),
+	"inner-blocks-preset": z.string().optional(),
 	namespace: z.string().optional(),
 	"no-install": z.boolean().default(false),
 	"package-manager": z.string().optional(),
@@ -41,6 +42,7 @@ export type CreateFieldName =
 	| "php-prefix"
 	| "query-post-type"
 	| "alternate-render-targets"
+	| "inner-blocks-preset"
 	| "data-storage"
 	| "persistence-policy"
 	| "dry-run"
@@ -68,6 +70,7 @@ export const CREATE_FIELD_ORDER = [
 	"php-prefix",
 	"query-post-type",
 	"alternate-render-targets",
+	"inner-blocks-preset",
 	"data-storage",
 	"persistence-policy",
 	...CREATE_CHECKBOX_FIELD_NAMES,
@@ -84,6 +87,7 @@ const CREATE_FIELD_HEIGHTS: Record<CreateFieldName, number> = {
 	"project-dir": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	"query-post-type": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	"alternate-render-targets": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+	"inner-blocks-preset": FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 	template: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 	"text-domain": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	yes: FIRST_PARTY_CHECKBOX_FIELD_BODY_HEIGHT,
@@ -129,10 +133,13 @@ export function getVisibleCreateFieldNames(
 
 		if (
 			name === "alternate-render-targets" ||
+			name === "inner-blocks-preset" ||
 			name === "data-storage" ||
 			name === "persistence-policy"
 		) {
-			return isCreatePersistenceTemplate(values.template);
+			return name === "inner-blocks-preset"
+				? values.template === "compound"
+				: isCreatePersistenceTemplate(values.template);
 		}
 
 		return true;
@@ -169,6 +176,10 @@ export function sanitizeCreateSubmitValues(values: CreateFlowValues): CreateFlow
 		"alternate-render-targets": isCreatePersistenceTemplate(values.template)
 			? normalizeOptionalHiddenString(values["alternate-render-targets"])
 			: undefined,
+		"inner-blocks-preset":
+			values.template === "compound"
+				? normalizeOptionalHiddenString(values["inner-blocks-preset"])
+				: undefined,
 	};
 
 	if (isCreatePersistenceTemplate(values.template)) {

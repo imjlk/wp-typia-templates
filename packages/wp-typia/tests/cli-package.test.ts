@@ -49,6 +49,10 @@ const addFlowSource = fs.readFileSync(
 	path.join(packageRoot, "src", "ui", "add-flow.tsx"),
 	"utf8",
 );
+const createFlowSource = fs.readFileSync(
+	path.join(packageRoot, "src", "ui", "create-flow.tsx"),
+	"utf8",
+);
 
 function runCapturedCommand(
 	command: string,
@@ -187,6 +191,7 @@ describe("wp-typia package", () => {
 		expect(projectToolsPackageManifest.exports["./cli-prompt"]).toBeDefined();
 		expect(projectToolsPackageManifest.exports["./cli-scaffold"]).toBeDefined();
 		expect(projectToolsPackageManifest.exports["./cli-templates"]).toBeDefined();
+		expect(projectToolsPackageManifest.exports["./compound-inner-blocks"]).toBeDefined();
 		expect(projectToolsPackageManifest.exports["./hooked-blocks"]).toBeDefined();
 		expect(projectToolsPackageManifest.exports["./migrations"]).toBeDefined();
 		expect(projectToolsPackageManifest.exports["./package-managers"]).toBeDefined();
@@ -203,6 +208,7 @@ describe("wp-typia package", () => {
 		expect(runtimeBridgeSource).not.toMatch(/from ["']@wp-typia\/project-tools["']/);
 		expect(doctorCommandSource).not.toMatch(/from ["']@wp-typia\/project-tools["']/);
 		expect(addFlowSource).not.toMatch(/from ["']@wp-typia\/project-tools["']/);
+		expect(createFlowSource).not.toMatch(/from ["']@wp-typia\/project-tools["']/);
 	});
 
 	test("renders help output through the canonical bin", () => {

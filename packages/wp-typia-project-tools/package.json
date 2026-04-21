@@ -37,6 +37,11 @@
       "import": "./dist/runtime/cli-scaffold.js",
       "default": "./dist/runtime/cli-scaffold.js"
     },
+    "./compound-inner-blocks": {
+      "types": "./dist/runtime/compound-inner-blocks.d.ts",
+      "import": "./dist/runtime/compound-inner-blocks.js",
+      "default": "./dist/runtime/compound-inner-blocks.js"
+    },
     "./cli-templates": {
       "types": "./dist/runtime/cli-templates.d.ts",
       "import": "./dist/runtime/cli-templates.js",

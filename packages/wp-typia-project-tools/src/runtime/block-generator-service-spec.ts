@@ -11,6 +11,11 @@ import {
 	type AlternateRenderTargetId,
 } from "./alternate-render-targets.js";
 import {
+	DEFAULT_COMPOUND_INNER_BLOCKS_PRESET_ID,
+	getCompoundInnerBlocksPresetDefinition,
+	type CompoundInnerBlocksPresetId,
+} from "./compound-inner-blocks.js";
+import {
 	getTemplateById,
 	type BuiltInTemplateId,
 } from "./template-registry.js";
@@ -39,6 +44,9 @@ export interface BlockSpec {
 		phpPrefix: string;
 		slug: string;
 		textDomain: string;
+	};
+	compound: {
+		innerBlocksPreset: CompoundInnerBlocksPresetId;
 	};
 	metadata: {
 		category: string;
@@ -213,10 +221,18 @@ export function createBuiltInBlockSpec({
 	const resolvedPersistencePolicy = persistencePolicy ?? answers.persistencePolicy;
 	const parsedAlternateRenderTargets =
 		parseAlternateRenderTargets(alternateRenderTargets);
+	const innerBlocksPreset =
+		templateId === "compound"
+			? (answers.compoundInnerBlocksPreset ??
+				DEFAULT_COMPOUND_INNER_BLOCKS_PRESET_ID)
+			: DEFAULT_COMPOUND_INNER_BLOCKS_PRESET_ID;
 
 	return {
 		alternateRenderTargets: parsedAlternateRenderTargets,
 		block: identifiers,
+		compound: {
+			innerBlocksPreset,
+		},
 		metadata: {
 			category: metadataDefaults.category,
 			description: answers.description.trim(),
@@ -281,6 +297,9 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 	const compoundChildTitle = `${title} Item`;
 	const cssClassName = buildBlockCssClassName(namespace, slug);
 	const compoundChildCssClassName = buildBlockCssClassName(namespace, `${slug}-item`);
+	const compoundInnerBlocksPreset = spec.compound.innerBlocksPreset;
+	const compoundInnerBlocksPresetDefinition =
+		getCompoundInnerBlocksPresetDefinition(compoundInnerBlocksPreset);
 	const persistenceEnabled = spec.persistence.enabled;
 	const dataStorageMode = persistenceEnabled ? spec.persistence.dataStorageMode : "custom-table";
 	const persistencePolicy = persistenceEnabled
@@ -307,6 +326,23 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 		compoundChildTitleJson: JSON.stringify(compoundChildTitle),
 		compoundPersistenceEnabled:
 			spec.template.family === "compound" && persistenceEnabled ? "true" : "false",
+		compoundInnerBlocksDirectInsert:
+			compoundInnerBlocksPresetDefinition.directInsert ? "true" : "false",
+		compoundInnerBlocksOrientation:
+			compoundInnerBlocksPresetDefinition.orientation ?? "",
+		compoundInnerBlocksOrientationExpression:
+			compoundInnerBlocksPresetDefinition.orientation
+				? `'${compoundInnerBlocksPresetDefinition.orientation}'`
+				: "undefined",
+		compoundInnerBlocksPreset,
+		compoundInnerBlocksPresetDescription:
+			compoundInnerBlocksPresetDefinition.description,
+		compoundInnerBlocksPresetLabel:
+			compoundInnerBlocksPresetDefinition.label,
+		compoundInnerBlocksTemplateLockExpression:
+			compoundInnerBlocksPresetDefinition.templateLock === false
+				? "false"
+				: `'${compoundInnerBlocksPresetDefinition.templateLock}'`,
 		hasAlternateEmailRenderTarget: hasAlternateEmailRenderTarget
 			? "true"
 			: "false",

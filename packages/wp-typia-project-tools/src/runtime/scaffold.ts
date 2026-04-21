@@ -56,6 +56,7 @@ const WORKSPACE_TEMPLATE_ALIAS = "workspace";
  */
 export interface ScaffoldAnswers {
 	author: string;
+	compoundInnerBlocksPreset?: import("./compound-inner-blocks.js").CompoundInnerBlocksPresetId;
 	dataStorageMode?: DataStorageMode;
 	description: string;
 	/** Block namespace used in generated block names such as `namespace/slug`. */
@@ -94,6 +95,13 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	compoundChildIcon: string;
 	compoundChildTitleJson: string;
 	compoundPersistenceEnabled: "false" | "true";
+	compoundInnerBlocksDirectInsert: "false" | "true";
+	compoundInnerBlocksOrientation: "" | "horizontal" | "vertical";
+	compoundInnerBlocksOrientationExpression: string;
+	compoundInnerBlocksPreset: string;
+	compoundInnerBlocksPresetDescription: string;
+	compoundInnerBlocksPresetLabel: string;
+	compoundInnerBlocksTemplateLockExpression: string;
 	hasAlternateEmailRenderTarget: "false" | "true";
 	hasAlternateMjmlRenderTarget: "false" | "true";
 	hasAlternatePlainTextRenderTarget: "false" | "true";

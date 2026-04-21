@@ -14,6 +14,7 @@ import {
 	scaffoldProject,
 } from "./scaffold.js";
 import { parseAlternateRenderTargets } from "./alternate-render-targets.js";
+import { parseCompoundInnerBlocksPreset } from "./compound-inner-blocks.js";
 import {
 	formatInstallCommand,
 	formatRunScript,
@@ -79,6 +80,7 @@ interface RunScaffoldFlowOptions {
 	externalLayerId?: string;
 	externalLayerSource?: string;
 	installDependencies?: Parameters<typeof scaffoldProject>[0]["installDependencies"];
+	innerBlocksPreset?: string;
 	isInteractive?: boolean;
 	namespace?: string;
 	noInstall?: boolean;
@@ -291,6 +293,10 @@ function templateSupportsPersistenceFlags(templateId: string): boolean {
 	return templateId === "persistence" || templateId === "compound";
 }
 
+function templateSupportsCompoundInnerBlocksPreset(templateId: string): boolean {
+	return templateId === "compound";
+}
+
 function createTemplateLabel(templateId: string): string {
 	return templateId === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
 		? "`--template workspace`"
@@ -356,6 +362,7 @@ function templateSupportsAlternateRenderTargets(options: {
 function validateCreateFlagContract(options: {
 	alternateRenderTargets?: string;
 	dataStorageMode?: string;
+	innerBlocksPreset?: string;
 	persistencePolicy?: string;
 	templateId: string;
 	variant?: string;
@@ -363,6 +370,7 @@ function validateCreateFlagContract(options: {
 	const {
 		alternateRenderTargets,
 		dataStorageMode,
+		innerBlocksPreset,
 		persistencePolicy,
 		templateId,
 		variant,
@@ -394,6 +402,15 @@ function validateCreateFlagContract(options: {
 		);
 	}
 	parseAlternateRenderTargets(alternateRenderTargets);
+	if (
+		innerBlocksPreset &&
+		!templateSupportsCompoundInnerBlocksPreset(templateId)
+	) {
+		throw new Error(
+			"`--inner-blocks-preset` is supported only for `wp-typia create --template compound`.",
+		);
+	}
+	parseCompoundInnerBlocksPreset(innerBlocksPreset);
 
 	if (isBuiltInTemplateId(templateId)) {
 		assertBuiltInTemplateVariantAllowed({
@@ -568,6 +585,7 @@ export async function runScaffoldFlow({
 	dryRun = false,
 	externalLayerId,
 	externalLayerSource,
+	innerBlocksPreset,
 	persistencePolicy,
 	packageManager,
 	namespace,
@@ -613,10 +631,13 @@ export async function runScaffoldFlow({
 	validateCreateFlagContract({
 		alternateRenderTargets,
 		dataStorageMode,
+		innerBlocksPreset,
 		persistencePolicy,
 		templateId: resolvedTemplateId,
 		variant,
 	});
+	const resolvedInnerBlocksPreset =
+		parseCompoundInnerBlocksPreset(innerBlocksPreset);
 	const resolvedExternalLayerSelection =
 		isBuiltInTemplateId(resolvedTemplateId) && isInteractive
 			? await resolveOptionalInteractiveExternalLayerId({
@@ -697,6 +718,9 @@ export async function runScaffoldFlow({
 			yes,
 			promptText,
 		});
+		if (resolvedTemplateId === "compound" && resolvedInnerBlocksPreset) {
+			answers.compoundInnerBlocksPreset = resolvedInnerBlocksPreset;
+		}
 
 		const resolvedResult = dryRun
 			? await buildScaffoldDryRunPlan({
