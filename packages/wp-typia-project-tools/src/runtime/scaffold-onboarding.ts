@@ -267,9 +267,15 @@ ${ formatRunScript(
 		"add-child",
 		'--slug clause --title "Clause" --ancestor section'
 	) }
+
+${ formatRunScript(
+		packageManager,
+		"add-child",
+		'--slug clause --title "Clause" --ancestor section --dry-run'
+	) }
 \`\`\`
 
-This scaffolds additional compound child block types, updates \`scripts/block-config.ts\` and \`src/blocks/*/children.ts\`, and now supports root-level hidden children, visible container children, and nested ancestor chains for richer document-style block hierarchies.`;
+This scaffolds additional compound child block types, updates \`scripts/block-config.ts\` and \`src/blocks/*/children.ts\`, and now supports root-level hidden children, visible container children, and nested ancestor chains for richer document-style block hierarchies. Pass \`--dry-run\` when you want a validated child-graph preview and planned write list before the script mutates files.`;
 }
 
 function formatPhpRestExtensionPointsSection({

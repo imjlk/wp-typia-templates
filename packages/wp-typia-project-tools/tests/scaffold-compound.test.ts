@@ -322,6 +322,7 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(parentChildren).toContain(
         'add-child: insert new child specs here',
       );
+      expect(addChildScript).toContain('--dry-run');
       expect(parentStyle).toContain('.wp-block-create-block-demo-compound');
       expect(parentStyle).toContain(
         '.wp-block-create-block-demo-compound-item',
@@ -1309,6 +1310,95 @@ describe('@wp-typia/project-tools scaffold compound', () => {
   );
 
   test(
+    'compound add-child dry-run previews the nested child graph without writing files',
+    async () => {
+      const targetDir = path.join(tempRoot, 'demo-compound-dry-run-preview');
+
+      await scaffoldProject({
+        projectDir: targetDir,
+        templateId: 'compound',
+        packageManager: 'npm',
+        noInstall: true,
+        answers: {
+          author: 'Test Runner',
+          description: 'Demo compound dry-run preview workflow',
+          namespace: 'create-block',
+          slug: 'demo-compound-dry-run-preview',
+          title: 'Demo Compound Dry Run Preview',
+        },
+      });
+
+      runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
+        '--slug',
+        'section',
+        '--title',
+        'Section',
+        '--container',
+        '--inserter',
+        'visible',
+      ]);
+
+      const childrenFilePath = path.join(
+        targetDir,
+        'src',
+        'blocks',
+        'demo-compound-dry-run-preview',
+        'children.ts',
+      );
+      const blockConfigPath = path.join(targetDir, 'scripts', 'block-config.ts');
+      const sectionBlockJsonPath = path.join(
+        targetDir,
+        'src',
+        'blocks',
+        'demo-compound-dry-run-preview-section',
+        'block.json',
+      );
+      const clauseDir = path.join(
+        targetDir,
+        'src',
+        'blocks',
+        'demo-compound-dry-run-preview-clause',
+      );
+      const childrenBefore = fs.readFileSync(childrenFilePath, 'utf8');
+      const blockConfigBefore = fs.readFileSync(blockConfigPath, 'utf8');
+      const sectionBlockJsonBefore = fs.readFileSync(sectionBlockJsonPath, 'utf8');
+
+      const dryRunOutput = runGeneratedScript(
+        targetDir,
+        'scripts/add-compound-child.ts',
+        [
+          '--slug',
+          'clause',
+          '--title',
+          'Clause',
+          '--ancestor',
+          'section',
+          '--dry-run',
+        ],
+      );
+
+      expect(dryRunOutput).toContain('Compound child graph preview');
+      expect(dryRunOutput).toContain(
+        '- item -> create-block/demo-compound-dry-run-preview-item [existing, root, leaf, hidden]',
+      );
+      expect(dryRunOutput).toContain(
+        '- section -> create-block/demo-compound-dry-run-preview-section [existing, root, container, visible]',
+      );
+      expect(dryRunOutput).toContain(
+        '  - clause -> create-block/demo-compound-dry-run-preview-clause [new, nested, leaf, visible]',
+      );
+      expect(dryRunOutput).toContain('Dry run only; no files were written.');
+      expect(fs.existsSync(clauseDir)).toBe(false);
+      expect(fs.readFileSync(childrenFilePath, 'utf8')).toBe(childrenBefore);
+      expect(fs.readFileSync(blockConfigPath, 'utf8')).toBe(blockConfigBefore);
+      expect(fs.readFileSync(sectionBlockJsonPath, 'utf8')).toBe(
+        sectionBlockJsonBefore,
+      );
+    },
+    { timeout: 30_000 },
+  );
+
+  test(
     'compound add-child scaffolds visible container children and nested ancestor children',
     async () => {
       const targetDir = path.join(tempRoot, 'demo-compound-nested');
@@ -1327,24 +1417,32 @@ describe('@wp-typia/project-tools scaffold compound', () => {
         },
       });
 
-      runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
-        '--slug',
-        'section',
-        '--title',
-        'Section',
-        '--container',
-        '--inserter',
-        'visible',
-      ]);
+      const sectionOutput = runGeneratedScript(
+        targetDir,
+        'scripts/add-compound-child.ts',
+        [
+          '--slug',
+          'section',
+          '--title',
+          'Section',
+          '--container',
+          '--inserter',
+          'visible',
+        ],
+      );
 
-      runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
-        '--slug',
-        'clause',
-        '--title',
-        'Clause',
-        '--ancestor',
-        'section',
-      ]);
+      const clauseOutput = runGeneratedScript(
+        targetDir,
+        'scripts/add-compound-child.ts',
+        [
+          '--slug',
+          'clause',
+          '--title',
+          'Clause',
+          '--ancestor',
+          'section',
+        ],
+      );
 
       const parentBlockJson = JSON.parse(
         fs.readFileSync(
@@ -1396,6 +1494,11 @@ describe('@wp-typia/project-tools scaffold compound', () => {
         'create-block/demo-compound-nested-section',
       ]);
       expect(clauseBlockJson.supports.inserter).toBe(true);
+      expect(sectionOutput).toContain('Compound child graph preview');
+      expect(sectionOutput).toContain('Applying these updates now.');
+      expect(clauseOutput).toContain(
+        '  - clause -> create-block/demo-compound-nested-clause [new, nested, leaf, visible]',
+      );
       expect(sectionEdit).toContain('InnerBlocks');
       expect(sectionEdit).toContain('hasNestedChildBlocks( metadata.name )');
       expect(sectionEdit).not.toContain('allowedBlocks={');
@@ -1406,6 +1509,50 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(childrenRegistry).toContain('placement: "nested"');
       expect(childrenRegistry).toContain(
         'create-block/demo-compound-nested-clause',
+      );
+    },
+    { timeout: 30_000 },
+  );
+
+  test(
+    'compound add-child rejects nesting under visible non-container ancestor children',
+    async () => {
+      const targetDir = path.join(tempRoot, 'demo-compound-visible-leaf');
+
+      await scaffoldProject({
+        projectDir: targetDir,
+        templateId: 'compound',
+        packageManager: 'npm',
+        noInstall: true,
+        answers: {
+          author: 'Test Runner',
+          description: 'Demo compound visible leaf workflow',
+          namespace: 'create-block',
+          slug: 'demo-compound-visible-leaf',
+          title: 'Demo Compound Visible Leaf',
+        },
+      });
+
+      runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
+        '--slug',
+        'faq-item',
+        '--title',
+        'FAQ Item',
+        '--inserter',
+        'visible',
+      ]);
+
+      expect(() =>
+        runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
+          '--slug',
+          'follow-up',
+          '--title',
+          'Follow Up',
+          '--ancestor',
+          'faq-item',
+        ]),
+      ).toThrow(
+        'Cannot nest descendants under create-block/demo-compound-visible-leaf-faq-item because it is not declared as a container child. Re-add that child with --container or target an existing container child.',
       );
     },
     { timeout: 30_000 },
@@ -1448,6 +1595,69 @@ describe('@wp-typia/project-tools scaffold compound', () => {
         ]),
       ).toThrow(
         'Cannot nest descendants under create-block/demo-compound-unreachable-nested-faq-item because it is hidden and has no seeded template instances.',
+      );
+    },
+    { timeout: 30_000 },
+  );
+
+  test(
+    'compound add-child rejects structurally invalid existing child graphs before writing',
+    async () => {
+      const targetDir = path.join(tempRoot, 'demo-compound-invalid-graph');
+
+      await scaffoldProject({
+        projectDir: targetDir,
+        templateId: 'compound',
+        packageManager: 'npm',
+        noInstall: true,
+        answers: {
+          author: 'Test Runner',
+          description: 'Demo compound invalid graph workflow',
+          namespace: 'create-block',
+          slug: 'demo-compound-invalid-graph',
+          title: 'Demo Compound Invalid Graph',
+        },
+      });
+
+      runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
+        '--slug',
+        'section',
+        '--title',
+        'Section',
+        '--container',
+        '--inserter',
+        'visible',
+      ]);
+
+      const sectionBlockJsonPath = path.join(
+        targetDir,
+        'src',
+        'blocks',
+        'demo-compound-invalid-graph-section',
+        'block.json',
+      );
+      const sectionBlockJson = JSON.parse(
+        fs.readFileSync(sectionBlockJsonPath, 'utf8'),
+      );
+      delete sectionBlockJson.parent;
+      sectionBlockJson.ancestor = [
+        'create-block/demo-compound-invalid-graph-missing',
+      ];
+      fs.writeFileSync(
+        sectionBlockJsonPath,
+        `${JSON.stringify(sectionBlockJson, null, '\t')}\n`,
+        'utf8',
+      );
+
+      expect(() =>
+        runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
+          '--slug',
+          'clause',
+          '--title',
+          'Clause',
+        ]),
+      ).toThrow(
+        'Existing compound child graph is invalid: create-block/demo-compound-invalid-graph-section references missing ancestor create-block/demo-compound-invalid-graph-missing.',
       );
     },
     { timeout: 30_000 },
