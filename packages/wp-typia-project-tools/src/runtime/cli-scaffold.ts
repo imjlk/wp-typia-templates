@@ -13,6 +13,7 @@ import {
 	resolveTemplateId,
 	scaffoldProject,
 } from "./scaffold.js";
+import { parseAlternateRenderTargets } from "./alternate-render-targets.js";
 import {
 	formatInstallCommand,
 	formatRunScript,
@@ -66,6 +67,7 @@ export interface ScaffoldDryRunPlan {
 
 interface RunScaffoldFlowOptions {
 	allowExistingDir?: boolean;
+	alternateRenderTargets?: string;
 	cwd?: string;
 	dataStorageMode?: string;
 	dryRun?: boolean;
@@ -141,6 +143,7 @@ async function assertDryRunTargetDirectoryReady(
 
 async function buildScaffoldDryRunPlan({
 	allowExistingDir,
+	alternateRenderTargets,
 	answers,
 	cwd,
 	dataStorageMode,
@@ -160,6 +163,7 @@ async function buildScaffoldDryRunPlan({
 	withWpEnv,
 }: {
 	allowExistingDir: boolean;
+	alternateRenderTargets?: Parameters<typeof scaffoldProject>[0]["alternateRenderTargets"];
 	answers: Parameters<typeof scaffoldProject>[0]["answers"];
 	cwd: string;
 	dataStorageMode?: Parameters<typeof scaffoldProject>[0]["dataStorageMode"];
@@ -188,6 +192,7 @@ async function buildScaffoldDryRunPlan({
 	try {
 		const result = await scaffoldProject({
 			allowExistingDir: false,
+			alternateRenderTargets,
 			answers,
 			cwd,
 			dataStorageMode,
@@ -281,13 +286,44 @@ function templateSupportsPersistenceFlags(templateId: string): boolean {
 	return templateId === "persistence" || templateId === "compound";
 }
 
+function templateSupportsAlternateRenderTargets(options: {
+	alternateRenderTargets?: string;
+	dataStorageMode?: string;
+	persistencePolicy?: string;
+	templateId: string;
+}): boolean {
+	if (!options.alternateRenderTargets) {
+		return false;
+	}
+
+	if (options.templateId === "persistence") {
+		return true;
+	}
+
+	if (options.templateId !== "compound") {
+		return false;
+	}
+
+	return templateUsesPersistenceSettings(options.templateId, {
+		dataStorageMode: options.dataStorageMode,
+		persistencePolicy: options.persistencePolicy,
+	});
+}
+
 function validateCreateFlagContract(options: {
+	alternateRenderTargets?: string;
 	dataStorageMode?: string;
 	persistencePolicy?: string;
 	templateId: string;
 	variant?: string;
 }) {
-	const { dataStorageMode, persistencePolicy, templateId, variant } = options;
+	const {
+		alternateRenderTargets,
+		dataStorageMode,
+		persistencePolicy,
+		templateId,
+		variant,
+	} = options;
 	if (
 		(dataStorageMode || persistencePolicy) &&
 		!templateSupportsPersistenceFlags(templateId)
@@ -296,6 +332,25 @@ function validateCreateFlagContract(options: {
 			"`--data-storage` and `--persistence-policy` are supported only for `wp-typia create --template persistence` or `--template compound`.",
 		);
 	}
+	if (
+		alternateRenderTargets &&
+		!templateSupportsAlternateRenderTargets({
+			alternateRenderTargets,
+			dataStorageMode,
+			persistencePolicy,
+			templateId,
+		})
+	) {
+		if (templateId === "compound") {
+			throw new Error(
+				"`--alternate-render-targets` on `wp-typia create --template compound` requires the persistence-enabled server render path. Add `--data-storage <post-meta|custom-table>` or `--persistence-policy <authenticated|public>` first.",
+			);
+		}
+		throw new Error(
+			"`--alternate-render-targets` is supported only for `wp-typia create --template persistence` or persistence-enabled `--template compound` scaffolds.",
+		);
+	}
+	parseAlternateRenderTargets(alternateRenderTargets);
 
 	if (variant && isBuiltInTemplateId(templateId)) {
 		throw new Error(
@@ -464,6 +519,7 @@ export async function runScaffoldFlow({
 	projectInput,
 	cwd = process.cwd(),
 	templateId,
+	alternateRenderTargets,
 	dataStorageMode,
 	dryRun = false,
 	externalLayerId,
@@ -513,6 +569,7 @@ export async function runScaffoldFlow({
 		selectTemplate,
 	});
 	validateCreateFlagContract({
+		alternateRenderTargets,
 		dataStorageMode,
 		persistencePolicy,
 		templateId: resolvedTemplateId,
@@ -602,6 +659,7 @@ export async function runScaffoldFlow({
 		const resolvedResult = dryRun
 			? await buildScaffoldDryRunPlan({
 					allowExistingDir,
+					alternateRenderTargets,
 					answers,
 					cwd,
 					dataStorageMode: resolvedDataStorage,
@@ -624,6 +682,7 @@ export async function runScaffoldFlow({
 			: {
 					plan: undefined,
 					result: await scaffoldProject({
+						alternateRenderTargets,
 						answers,
 						allowExistingDir,
 						cwd,

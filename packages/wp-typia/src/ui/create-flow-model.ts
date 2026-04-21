@@ -9,6 +9,7 @@ import {
 } from "./first-party-form-model";
 
 export const createFlowSchema = z.object({
+	"alternate-render-targets": z.string().optional(),
 	"data-storage": z.string().optional(),
 	"dry-run": z.boolean().default(false),
 	"external-layer-id": z.string().optional(),
@@ -39,6 +40,7 @@ export type CreateFieldName =
 	| "text-domain"
 	| "php-prefix"
 	| "query-post-type"
+	| "alternate-render-targets"
 	| "data-storage"
 	| "persistence-policy"
 	| "dry-run"
@@ -65,6 +67,7 @@ export const CREATE_FIELD_ORDER = [
 	"text-domain",
 	"php-prefix",
 	"query-post-type",
+	"alternate-render-targets",
 	"data-storage",
 	"persistence-policy",
 	...CREATE_CHECKBOX_FIELD_NAMES,
@@ -80,6 +83,7 @@ const CREATE_FIELD_HEIGHTS: Record<CreateFieldName, number> = {
 	"php-prefix": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	"project-dir": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	"query-post-type": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+	"alternate-render-targets": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	template: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 	"text-domain": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 	yes: FIRST_PARTY_CHECKBOX_FIELD_BODY_HEIGHT,
@@ -123,7 +127,11 @@ export function getVisibleCreateFieldNames(
 			return isCreateQueryLoopTemplate(values.template);
 		}
 
-		if (name === "data-storage" || name === "persistence-policy") {
+		if (
+			name === "alternate-render-targets" ||
+			name === "data-storage" ||
+			name === "persistence-policy"
+		) {
 			return isCreatePersistenceTemplate(values.template);
 		}
 
@@ -157,6 +165,9 @@ export function sanitizeCreateSubmitValues(values: CreateFlowValues): CreateFlow
 			: undefined,
 		"external-layer-source": supportsCreateExternalLayers(values.template)
 			? normalizeOptionalHiddenString(values["external-layer-source"])
+			: undefined,
+		"alternate-render-targets": isCreatePersistenceTemplate(values.template)
+			? normalizeOptionalHiddenString(values["alternate-render-targets"])
 			: undefined,
 	};
 

@@ -195,8 +195,10 @@ describe("wp-typia package", () => {
 		}
 		expect(createHelpOutput).toContain("--external-layer-source");
 		expect(createHelpOutput).toContain("--external-layer-id");
+		expect(createHelpOutput).toContain("--alternate-render-targets");
 		expect(addHelpOutput).toContain("--external-layer-source");
 		expect(addHelpOutput).toContain("--external-layer-id");
+		expect(addHelpOutput).toContain("--alternate-render-targets");
 	});
 
 	test("renders a human-readable version line through the canonical bin", () => {
@@ -248,6 +250,7 @@ describe("wp-typia package", () => {
 		expect(createHelpResult.stderr).toBe("");
 		expect(createHelpResult.stdout).toContain("--external-layer-source");
 		expect(createHelpResult.stdout).toContain("--external-layer-id");
+		expect(createHelpResult.stdout).toContain("--alternate-render-targets");
 	});
 
 	test("keeps value-taking options from being mistaken for Bun-only commands", () => {
@@ -816,7 +819,7 @@ describe("wp-typia package", () => {
 		const output = runUtf8Command("node", [entryPath, "templates", "list"]);
 
 		expect(output).toContain(
-			"Supports: --data-storage • --persistence-policy • external layers",
+			"Supports: --alternate-render-targets • --data-storage • --persistence-policy • external layers",
 		);
 		expect(output).toContain("Supports: --query-post-type • external layers");
 		expect(output).toContain("Alias: workspace (`--template workspace`)");

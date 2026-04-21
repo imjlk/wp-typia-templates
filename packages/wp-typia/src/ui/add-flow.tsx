@@ -229,6 +229,17 @@ function AddFlowFields({
 						options: templateOptions,
 					})
 				: null,
+			visibleFields.has("alternate-render-targets")
+				? createElement(FirstPartyTextField, {
+						...getWrappedFieldNeighbors(
+							orderedVisibleFields,
+							"alternate-render-targets",
+						),
+						key: "alternate-render-targets",
+						label: "Alternate render targets",
+						name: "alternate-render-targets",
+					})
+				: null,
 			visibleFields.has("block") && !variationBlockUsesSelect
 				? createElement(FirstPartyTextField, {
 						...getWrappedFieldNeighbors(orderedVisibleFields, "block"),

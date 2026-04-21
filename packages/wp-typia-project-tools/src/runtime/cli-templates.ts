@@ -75,7 +75,12 @@ export function formatTemplateDetails(template: TemplateDefinition): string {
 
 function getTemplateCapabilityHints(template: TemplateDefinition): string[] {
 	if (template.id === "persistence" || template.id === "compound") {
-		return ["--data-storage", "--persistence-policy", "external layers"];
+		return [
+			"--alternate-render-targets",
+			"--data-storage",
+			"--persistence-policy",
+			"external layers",
+		];
 	}
 	if (template.id === "query-loop") {
 		return ["--query-post-type", "external layers"];

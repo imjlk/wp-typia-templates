@@ -162,6 +162,7 @@ async function runCleanupGroup(
 export class BlockGeneratorService {
 	async plan({
 		allowExistingDir = false,
+		alternateRenderTargets,
 		answers,
 		cwd = process.cwd(),
 		dataStorageMode,
@@ -181,6 +182,7 @@ export class BlockGeneratorService {
 	}: PlanBlockInput): Promise<PlanBlockResult> {
 		return {
 			spec: createBuiltInBlockSpec({
+				alternateRenderTargets,
 				answers,
 				dataStorageMode,
 				persistencePolicy,

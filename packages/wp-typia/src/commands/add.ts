@@ -22,6 +22,11 @@ function loadAddFlow() {
 }
 
 const addOptions = {
+	"alternate-render-targets": {
+		description:
+			"Comma-separated alternate render targets for dynamic block scaffolds (email,mjml,plain-text).",
+		schema: z.string().optional(),
+	},
 	anchor: {
 		description: "Anchor block name for hooked-block workflows.",
 		schema: z.string().optional(),
@@ -94,6 +99,9 @@ export const addCommand = defineCommand({
 						props: {
 							cwd: args.cwd,
 							initialValues: {
+								"alternate-render-targets":
+									(args.flags["alternate-render-targets"] as string | undefined) ??
+									config["alternate-render-targets"],
 								"data-storage":
 									(args.flags["data-storage"] as string | undefined) ??
 									config["data-storage"],

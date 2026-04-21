@@ -67,6 +67,7 @@ import {
 import {
 	resolveOptionalInteractiveExternalLayerId,
 } from "./external-layer-selection.js";
+import { parseAlternateRenderTargets } from "./alternate-render-targets.js";
 
 const COLLECTION_IMPORT_LINE = "import '../../collection';";
 // This is a lightweight preflight heuristic for the common install layouts:
@@ -418,9 +419,13 @@ async function syncWorkspaceAddedBlockArtifacts(
 
 function assertPersistenceFlagsAllowed(
 	templateId: AddBlockTemplateId,
-	options: Pick<RunAddBlockCommandOptions, "dataStorageMode" | "persistencePolicy">,
+	options: Pick<
+		RunAddBlockCommandOptions,
+		"alternateRenderTargets" | "dataStorageMode" | "persistencePolicy"
+	>,
 ): void {
 	const hasPersistenceFlags =
+		typeof options.alternateRenderTargets === "string" ||
 		typeof options.dataStorageMode === "string" ||
 		typeof options.persistencePolicy === "string";
 
@@ -429,6 +434,7 @@ function assertPersistenceFlagsAllowed(
 	}
 
 	if (templateId === "persistence" || templateId === "compound") {
+		parseAlternateRenderTargets(options.alternateRenderTargets);
 		if (
 			typeof options.dataStorageMode === "string" &&
 			options.dataStorageMode !== "custom-table" &&
@@ -447,11 +453,21 @@ function assertPersistenceFlagsAllowed(
 				`Unsupported persistence policy "${options.persistencePolicy}". Expected one of: authenticated, public.`,
 			);
 		}
+		if (
+			templateId === "compound" &&
+			typeof options.alternateRenderTargets === "string" &&
+			!options.dataStorageMode &&
+			!options.persistencePolicy
+		) {
+			throw new Error(
+				"`--alternate-render-targets` on `wp-typia add block --template compound` requires the persistence-enabled server render path. Add `--data-storage <post-meta|custom-table>` or `--persistence-policy <authenticated|public>` first.",
+			);
+		}
 		return;
 	}
 
 	throw new Error(
-		`--data-storage and --persistence-policy are supported only for \`wp-typia add block --template persistence\` or \`--template compound\`.`,
+		`--data-storage, --persistence-policy, and --alternate-render-targets are supported only for \`wp-typia add block --template persistence\` or persistence-enabled \`--template compound\`.`,
 	);
 }
 
@@ -500,6 +516,7 @@ export async function seedWorkspaceMigrationProject(
  * already exist.
  */
 export async function runAddBlockCommand({
+	alternateRenderTargets,
 	blockName,
 	cwd = process.cwd(),
 	dataStorageMode,
@@ -521,7 +538,11 @@ export async function runAddBlockCommand({
 	}
 	const resolvedTemplateId = templateId;
 
-	assertPersistenceFlagsAllowed(resolvedTemplateId, { dataStorageMode, persistencePolicy });
+	assertPersistenceFlagsAllowed(resolvedTemplateId, {
+		alternateRenderTargets,
+		dataStorageMode,
+		persistencePolicy,
+	});
 
 	const workspace = resolveWorkspaceProject(cwd);
 	assertWorkspaceDependenciesInstalled(workspace);
@@ -569,6 +590,7 @@ export async function runAddBlockCommand({
 				: [];
 		const result = await (async () => {
 			const scaffoldResult = await scaffoldProject({
+				alternateRenderTargets,
 				answers: {
 					...defaults,
 					author: workspace.author,

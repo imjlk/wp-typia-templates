@@ -35,6 +35,7 @@ export const WP_TYPIA_TOP_LEVEL_COMMAND_NAMES = [
 
 const STRING_OPTION_NAMES_BY_COMMAND = {
   add: new Set([
+    'alternate-render-targets',
     'anchor',
     'block',
     'data-storage',
@@ -48,6 +49,7 @@ const STRING_OPTION_NAMES_BY_COMMAND = {
     'template',
   ]),
   create: new Set([
+    'alternate-render-targets',
     'data-storage',
     'external-layer-id',
     'external-layer-source',

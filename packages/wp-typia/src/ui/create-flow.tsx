@@ -156,6 +156,17 @@ function CreateFlowFields({
 					})
 				: null,
 			isCreatePersistenceTemplate(template)
+				? createElement(FirstPartyTextField, {
+						...getWrappedFieldNeighbors(
+							visibleFields,
+							"alternate-render-targets",
+						),
+						key: "alternate-render-targets",
+						label: "Alternate render targets",
+						name: "alternate-render-targets",
+					})
+				: null,
+			isCreatePersistenceTemplate(template)
 				? createElement(FirstPartySelectField, {
 						...getWrappedFieldNeighbors(visibleFields, "data-storage"),
 						key: "data-storage",

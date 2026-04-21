@@ -185,6 +185,10 @@ export async function executeCreateCommand({
 
 	try {
 		const flow = await runScaffoldFlow({
+			alternateRenderTargets: readOptionalLooseStringFlag(
+				flags,
+				"alternate-render-targets",
+			),
 			cwd,
 			dataStorageMode: readOptionalLooseStringFlag(flags, "data-storage"),
 			dryRun: Boolean(flags["dry-run"]),
@@ -514,6 +518,10 @@ export async function executeAddCommand({
 		const selectPrompt = activePrompt;
 
 		const result = await addRuntime.runAddBlockCommand({
+			alternateRenderTargets: readOptionalStringFlag(
+				flags,
+				"alternate-render-targets",
+			),
 			blockName: name,
 			cwd,
 			dataStorageMode: readOptionalStringFlag(flags, "data-storage"),

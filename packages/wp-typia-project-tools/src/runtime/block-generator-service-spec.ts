@@ -6,6 +6,11 @@ import {
 	getBuiltInTemplateMetadataDefaults,
 } from "./template-defaults.js";
 import {
+	formatAlternateRenderTargets,
+	parseAlternateRenderTargets,
+	type AlternateRenderTargetId,
+} from "./alternate-render-targets.js";
+import {
 	getTemplateById,
 	type BuiltInTemplateId,
 } from "./template-registry.js";
@@ -28,6 +33,7 @@ import type {
 } from "./scaffold.js";
 
 export interface BlockSpec {
+	alternateRenderTargets: readonly AlternateRenderTargetId[];
 	block: {
 		namespace: string;
 		phpPrefix: string;
@@ -86,6 +92,7 @@ export interface BlockGenerationTarget {
 
 export interface PlanBlockInput {
 	allowExistingDir?: boolean;
+	alternateRenderTargets?: string;
 	answers: ScaffoldAnswers;
 	cwd?: string;
 	dataStorageMode?: DataStorageMode;
@@ -185,6 +192,7 @@ const DEFAULT_QUERY_LOOP_ALLOWED_CONTROLS = [
 ] as const;
 
 export function createBuiltInBlockSpec({
+	alternateRenderTargets,
 	answers,
 	dataStorageMode,
 	persistencePolicy,
@@ -203,8 +211,11 @@ export function createBuiltInBlockSpec({
 	});
 	const resolvedDataStorageMode = dataStorageMode ?? answers.dataStorageMode;
 	const resolvedPersistencePolicy = persistencePolicy ?? answers.persistencePolicy;
+	const parsedAlternateRenderTargets =
+		parseAlternateRenderTargets(alternateRenderTargets);
 
 	return {
+		alternateRenderTargets: parsedAlternateRenderTargets,
 		block: identifiers,
 		metadata: {
 			category: metadataDefaults.category,
@@ -262,6 +273,11 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 	const textDomain = spec.block.textDomain;
 	const phpPrefix = spec.block.phpPrefix;
 	const phpPrefixUpper = phpPrefix.toUpperCase();
+	const alternateRenderTargets = [...spec.alternateRenderTargets];
+	const hasAlternateEmailRenderTarget = alternateRenderTargets.includes("email");
+	const hasAlternateMjmlRenderTarget = alternateRenderTargets.includes("mjml");
+	const hasAlternatePlainTextRenderTarget =
+		alternateRenderTargets.includes("plain-text");
 	const compoundChildTitle = `${title} Item`;
 	const cssClassName = buildBlockCssClassName(namespace, slug);
 	const compoundChildCssClassName = buildBlockCssClassName(namespace, `${slug}-item`);
@@ -273,6 +289,10 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 	const queryVariationNamespace = `${namespace}/${slug}`;
 
 	return {
+		alternateRenderTargetsCsv: formatAlternateRenderTargets(
+			alternateRenderTargets,
+		),
+		alternateRenderTargetsJson: JSON.stringify(alternateRenderTargets),
 		apiClientPackageVersion,
 		author: spec.project.author,
 		blockRuntimePackageVersion,
@@ -287,6 +307,18 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 		compoundChildTitleJson: JSON.stringify(compoundChildTitle),
 		compoundPersistenceEnabled:
 			spec.template.family === "compound" && persistenceEnabled ? "true" : "false",
+		hasAlternateEmailRenderTarget: hasAlternateEmailRenderTarget
+			? "true"
+			: "false",
+		hasAlternateMjmlRenderTarget: hasAlternateMjmlRenderTarget
+			? "true"
+			: "false",
+		hasAlternatePlainTextRenderTarget: hasAlternatePlainTextRenderTarget
+			? "true"
+			: "false",
+		hasAlternateRenderTargets: alternateRenderTargets.length > 0
+			? "true"
+			: "false",
 		projectToolsPackageVersion,
 		cssClassName,
 		dashCase: slug,

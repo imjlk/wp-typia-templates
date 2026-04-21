@@ -4,6 +4,8 @@ export function createTestScaffoldTemplateVariables(
 	overrides: Partial<ScaffoldTemplateVariables> = {},
 ): ScaffoldTemplateVariables {
 	const base: ScaffoldTemplateVariables = {
+		alternateRenderTargetsCsv: "",
+		alternateRenderTargetsJson: "[]",
 		apiClientPackageVersion: "^0.2.0",
 		author: "Test Author",
 		blockMetadataVersion: "0.1.0",
@@ -16,6 +18,10 @@ export function createTestScaffoldTemplateVariables(
 		compoundChildTitle: "Demo Item",
 		compoundChildTitleJson: JSON.stringify("Demo Item"),
 		compoundPersistenceEnabled: "false",
+		hasAlternateEmailRenderTarget: "false",
+		hasAlternateMjmlRenderTarget: "false",
+		hasAlternatePlainTextRenderTarget: "false",
+		hasAlternateRenderTargets: "false",
 		projectToolsPackageVersion: "^0.8.0",
 		cssClassName: "wp-block-demo-demo-block",
 		dashCase: "demo-block",

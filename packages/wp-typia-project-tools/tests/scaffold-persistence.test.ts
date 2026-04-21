@@ -740,6 +740,59 @@ test(
 { timeout: 20_000 }
 );
 
+test("scaffoldProject emits alternate render target entries for persistence scaffolds", async () => {
+  const targetDir = path.join(tempRoot, "demo-persistence-alternate-render-targets");
+
+  await scaffoldProject({
+    alternateRenderTargets: "email,plain-text",
+    projectDir: targetDir,
+    templateId: "persistence",
+    dataStorageMode: "custom-table",
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      dataStorageMode: "custom-table",
+      description: "Demo persistence alternate render targets",
+      namespace: "create-block",
+      persistencePolicy: "authenticated",
+      slug: "demo-persistence-alternate-render-targets",
+      title: "Demo Persistence Alternate Render Targets",
+    },
+    persistencePolicy: "authenticated",
+  });
+
+  const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
+  const renderTargetsSource = fs.readFileSync(
+    path.join(targetDir, "src", "render-targets.php"),
+    "utf8"
+  );
+  const webRenderSource = fs.readFileSync(
+    path.join(targetDir, "src", "render.php"),
+    "utf8"
+  );
+  const emailRenderSource = fs.readFileSync(
+    path.join(targetDir, "src", "render-email.php"),
+    "utf8"
+  );
+  const textRenderSource = fs.readFileSync(
+    path.join(targetDir, "src", "render-text.php"),
+    "utf8"
+  );
+
+  expect(readme).toContain("## Alternate Render Targets");
+  expect(readme).toContain("src/render-email.php");
+  expect(readme).toContain("src/render-text.php");
+  expect(readme).toContain("src/render-targets.php");
+  expect(renderTargetsSource).toMatch(/function\s+.+_render_target\(/);
+  expect(webRenderSource).toContain("render_target( 'web'");
+  expect(emailRenderSource).toContain("render_target( 'email'");
+  expect(textRenderSource).toContain("render_target( 'plain-text'");
+  expect(fs.existsSync(path.join(targetDir, "src", "render-mjml.php"))).toBe(
+    false
+  );
+});
+
 test("generated public persistence transport skips nonce injection even when wpApiSettings is present", async () => {
   const targetDir = path.join(tempRoot, "demo-persistence-public-transport");
 

@@ -76,6 +76,8 @@ export type PersistencePolicy = (typeof PERSISTENCE_POLICIES)[number];
  * Normalized template variables shared by built-in and remote scaffold flows.
  */
 export interface ScaffoldTemplateVariables extends Record<string, string> {
+	alternateRenderTargetsCsv: string;
+	alternateRenderTargetsJson: string;
 	apiClientPackageVersion: string;
 	author: string;
 	blockRuntimePackageVersion: string;
@@ -89,6 +91,10 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	compoundChildIcon: string;
 	compoundChildTitleJson: string;
 	compoundPersistenceEnabled: "false" | "true";
+	hasAlternateEmailRenderTarget: "false" | "true";
+	hasAlternateMjmlRenderTarget: "false" | "true";
+	hasAlternatePlainTextRenderTarget: "false" | "true";
+	hasAlternateRenderTargets: "false" | "true";
 	projectToolsPackageVersion: string;
 	cssClassName: string;
 	dashCase: string;
@@ -193,6 +199,7 @@ export interface ScaffoldProgressEvent {
 
 interface ScaffoldProjectOptions {
 	allowExistingDir?: boolean;
+	alternateRenderTargets?: string;
 	answers: ScaffoldAnswers;
 	cwd?: string;
 	dataStorageMode?: DataStorageMode;
@@ -256,6 +263,7 @@ export async function scaffoldProject({
 	projectDir,
 	templateId,
 	answers,
+	alternateRenderTargets,
 	dataStorageMode,
 	persistencePolicy,
 	packageManager,
@@ -292,6 +300,7 @@ export async function scaffoldProject({
 		});
 		const plan = await blockGeneratorService.plan({
 			allowExistingDir,
+			alternateRenderTargets,
 			answers,
 			cwd,
 			dataStorageMode: dataStorageMode ?? answers.dataStorageMode,

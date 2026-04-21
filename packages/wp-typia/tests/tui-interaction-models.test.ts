@@ -28,7 +28,14 @@ describe("first-party TUI interaction models", () => {
 		]);
 		expect(
 			getVisibleAddFieldNames({ kind: "block", template: "persistence" }),
-		).toEqual(["kind", "name", "template", "data-storage", "persistence-policy"]);
+		).toEqual([
+			"kind",
+			"name",
+			"template",
+			"alternate-render-targets",
+			"data-storage",
+			"persistence-policy",
+		]);
 		expect(getVisibleAddFieldNames({ kind: "variation" })).toEqual([
 			"kind",
 			"name",
@@ -72,6 +79,7 @@ describe("first-party TUI interaction models", () => {
 			sanitizeAddSubmitValues({
 				anchor: "",
 				block: "",
+				"alternate-render-targets": " email,mjml ",
 				"data-storage": "custom-table",
 				"external-layer-id": " acme/demo ",
 				"external-layer-source": " ./layers/demo ",
@@ -82,6 +90,7 @@ describe("first-party TUI interaction models", () => {
 				template: "persistence",
 			}),
 		).toEqual({
+			"alternate-render-targets": "email,mjml",
 			"data-storage": "custom-table",
 			"external-layer-id": "acme/demo",
 			"external-layer-source": "./layers/demo",
@@ -95,6 +104,7 @@ describe("first-party TUI interaction models", () => {
 			sanitizeAddSubmitValues({
 				anchor: "",
 				block: "counter-card",
+				"alternate-render-targets": " email,mjml ",
 				"data-storage": "custom-table",
 				"external-layer-id": " acme/demo ",
 				"external-layer-source": " ./layers/demo ",

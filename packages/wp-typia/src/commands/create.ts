@@ -22,6 +22,11 @@ function loadCreateFlow() {
 }
 
 const createOptions = {
+	"alternate-render-targets": {
+		description:
+			"Comma-separated alternate render targets for dynamic block scaffolds (email,mjml,plain-text).",
+		schema: z.string().optional(),
+	},
 	"data-storage": {
 		description: "Persistence storage mode for persistence-capable templates.",
 		schema: z.string().optional(),
@@ -134,6 +139,9 @@ export const createCommand = defineCommand({
 						props: {
 							cwd: args.cwd,
 							initialValues: {
+								"alternate-render-targets":
+									(args.flags["alternate-render-targets"] as string | undefined) ??
+									config["alternate-render-targets"],
 								"data-storage":
 									(args.flags["data-storage"] as string | undefined) ??
 									config["data-storage"],
