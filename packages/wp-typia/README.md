@@ -2,12 +2,15 @@
 
 Canonical CLI package for `wp-typia`.
 
-Use this package for new installs:
+Use this package for new projects:
 
 - `npx wp-typia create my-block`
-- `npx wp-typia create my-books --template query-loop --query-post-type book`
 - `bunx wp-typia create my-block`
-- `npx wp-typia create my-plugin --template @wp-typia/create-workspace-template`
+- `npx wp-typia create my-plugin --template workspace`
+- `npx wp-typia create my-books --template query-loop --query-post-type book`
+
+Extend an existing workspace with:
+
 - `wp-typia add block counter-card --template basic`
 - `wp-typia add binding-source hero-data`
 - `wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create`

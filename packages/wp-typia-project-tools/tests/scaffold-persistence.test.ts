@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { apiClientPackageVersion, cleanupScaffoldTempRoot, createScaffoldTempRoot, getCommandErrorMessage, replaceGeneratedTransportBaseUrls, restPackageVersion, runGeneratedJsonScript, runGeneratedJsonScriptAsync, runGeneratedScript, startLocalCounterStubServer, typecheckGeneratedProject } from "./helpers/scaffold-test-harness.js";
+import { apiClientPackageVersion, cleanupScaffoldTempRoot, createScaffoldTempRoot, getCommandErrorMessage, replaceGeneratedTransportBaseUrls, restPackageVersion, runGeneratedJsonScript, runGeneratedJsonScriptAsync, runGeneratedScript, startLocalCounterStubServer, typecheckGeneratedProject, wpTypiaPackageManifest } from "./helpers/scaffold-test-harness.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 
 describe("@wp-typia/project-tools scaffold persistence", () => {
@@ -720,6 +720,9 @@ test(
   expect(readme).toContain("## Quick Start");
   expect(readme).toContain("## Advanced Sync");
   expect(readme).toContain("## Before First Commit");
+  expect(readme).toContain(
+    `npx --yes wp-typia@${wpTypiaPackageManifest.version} doctor`
+  );
   expect(readme).toContain("## PHP REST Extension Points");
   expect(readme).toContain("Edit `demo-persistence-authenticated.php`");
   expect(readme).toContain(

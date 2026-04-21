@@ -269,11 +269,13 @@ test("optional onboarding derives sync steps from available custom-template scri
     "npm run sync-rest",
   ]);
   expect(onboarding.note).toContain(
-    "Run npm run sync-types then npm run sync-rest manually before build, typecheck, or commit."
+    "Run npm run sync-types then npm run sync-rest manually before build, typecheck"
   );
   expect(onboarding.note).toContain(
     "npm run sync-types -- --check verifies the current type-derived artifacts without rewriting them."
   );
+  expect(onboarding.note).toContain("npx --yes wp-typia@");
+  expect(onboarding.note).toContain("doctor");
   expect(onboarding.note).not.toContain("npm run sync -- --check");
 });
 
@@ -288,6 +290,8 @@ test("optional onboarding avoids synthesized sync commands for custom templates 
   expect(onboarding.note).toContain(
     "No optional sync command was detected for this custom template."
   );
+  expect(onboarding.note).toContain("npx --yes wp-typia@");
+  expect(onboarding.note).toContain("doctor");
   expect(onboarding.note).not.toContain("npm run sync");
   expect(onboarding.note).not.toContain("npm run sync-types");
 });
@@ -682,7 +686,7 @@ test("node entry exposes templates and doctor commands", () => {
 test("node entry supports the explicit create command", () => {
   const targetDir = path.join(tempRoot, "demo-node-create-command");
 
-  runCli("node", [
+  const output = runCli("node", [
     entryPath,
     "create",
     targetDir,
@@ -696,6 +700,9 @@ test("node entry supports the explicit create command", () => {
 
   expect(fs.existsSync(path.join(targetDir, "package.json"))).toBe(true);
   expect(fs.existsSync(path.join(targetDir, "src", "block.json"))).toBe(true);
+  expect(output).toContain("Verify and sync (optional):");
+  expect(output).toContain("npx --yes wp-typia@");
+  expect(output).toContain("doctor");
 });
 
 test("node entry supports dry-run create previews without writing files", () => {

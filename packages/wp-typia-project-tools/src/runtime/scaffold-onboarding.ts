@@ -1,5 +1,9 @@
-import { formatRunScript } from "./package-managers.js";
+import {
+	formatPackageExecCommand,
+	formatRunScript,
+} from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
+import { getPackageVersions } from "./package-versions.js";
 import { getPrimaryDevelopmentScript } from "./local-dev-presets.js";
 import {
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
@@ -28,6 +32,14 @@ const INITIAL_COMMIT_COMMANDS = [
 	"git add .",
 	'git commit -m "Initial scaffold"',
 ] as const;
+
+function getDoctorVerificationCommand(packageManager: PackageManagerId): string {
+	return formatPackageExecCommand(
+		packageManager,
+		`wp-typia@${getPackageVersions().wpTypiaPackageExactVersion}`,
+		"doctor",
+	);
+}
 
 function templateHasPersistenceSync(
 	templateId: string,
@@ -90,8 +102,10 @@ export function getQuickStartWorkflowNote(
 	templateId = "basic",
 	options: SyncOnboardingOptions = {},
 ): string {
+	const doctorCommand = getDoctorVerificationCommand(packageManager);
+
 	if (templateId === "query-loop") {
-		return `${formatRunScript(packageManager, "dev")} runs the editor build/watch loop that registers your Query Loop variation in the block editor. This scaffold is editor-facing by design and intentionally skips \`src/types.ts\`, \`block.json\`, and Typia manifest generation because the source of truth lives in the variation registration flow instead of a standalone block contract. Update \`src/index.ts\` when you want to change the variation namespace, default query, allowed controls, or the minimal inline starter layout, update \`src/patterns/*.php\` when you want richer connected layout presets in the inserter, use \`src/query-extension.ts\` when the variation needs custom query params or optional editor-side hooks, and mirror frontend/editor preview query mapping in \`inc/query-runtime.php\`.`;
+		return `${formatRunScript(packageManager, "dev")} runs the editor build/watch loop that registers your Query Loop variation in the block editor. This scaffold intentionally skips \`src/types.ts\`, \`block.json\`, and Typia manifests because the source of truth lives in the variation registration flow. Update \`src/index.ts\` for variation defaults, \`src/patterns/*.php\` for richer connected layouts, \`src/query-extension.ts\` for custom query params, and \`inc/query-runtime.php\` for frontend/editor preview parity. Use ${doctorCommand} when you want a quick environment and workspace sanity check.`;
 	}
 
 	const developmentScript = getPrimaryDevelopmentScript(templateId);
@@ -99,18 +113,18 @@ export function getQuickStartWorkflowNote(
 	const startCommand = formatRunScript(packageManager, "start");
 
 	if (developmentScript === "start") {
-		return `${startCommand} is the primary local entry point for this template. If the template also exposes a dedicated watch mode or alternate editor workflow, follow that template-specific documentation alongside the generated project scripts.`;
+		return `${startCommand} is the primary local entry point for this template. Use ${doctorCommand} when you want a quick environment and workspace sanity check before build or commit.`;
 	}
 
 	if (developmentScript !== "dev") {
-		return `${devCommand} is the primary local entry point for this template. Use ${startCommand} when you want the scaffold's one-shot startup flow instead of the watch-oriented workflow.`;
+		return `${devCommand} is the primary local entry point for this template. Use ${startCommand} for the one-shot startup flow, and ${doctorCommand} when you want a quick verification pass before build or commit.`;
 	}
 
 	if (templateHasPersistenceSync(templateId, options)) {
-		return `${devCommand} keeps the editor, type-derived artifacts, and REST-derived artifacts moving together during local development. Use ${startCommand} when you want a one-shot sync plus editor startup without the long-running watch loop.`;
+		return `${devCommand} keeps the editor, type-derived artifacts, and REST-derived artifacts moving together during local development. Use ${startCommand} for a one-shot sync plus editor startup, and ${doctorCommand} when you want an explicit verification pass before build or commit.`;
 	}
 
-	return `${devCommand} keeps the editor and type-derived artifacts moving together during local development. Use ${startCommand} when you want a one-shot sync plus editor startup without the long-running watch loop.`;
+	return `${devCommand} keeps the editor and type-derived artifacts moving together during local development. Use ${startCommand} for a one-shot sync plus editor startup, and ${doctorCommand} when you want an explicit verification pass before build or commit.`;
 }
 
 /**
@@ -121,8 +135,10 @@ export function getOptionalOnboardingNote(
 	templateId = "basic",
 	options: SyncOnboardingOptions = {},
 ): string {
+	const doctorCommand = getDoctorVerificationCommand(packageManager);
+
 	if (templateId === "query-loop") {
-		return `This scaffold does not generate \`src/types.ts\`, a \`sync\` script, \`block.json\`, or Typia manifests because it owns a \`core/query\` variation rather than a standalone block. Edit \`src/index.ts\` to change the variation contract, edit \`src/patterns/*.php\` when you want richer connected layouts beyond the inline fallback, edit \`src/query-extension.ts\` when you need variation-specific query params or custom editor hooks, and edit \`inc/query-runtime.php\` when those params need frontend or editor preview parity. Then rerun ${formatRunScript(packageManager, "build")}, ${formatRunScript(packageManager, "dev")}, or ${formatRunScript(packageManager, "typecheck")} as needed.`;
+		return `This scaffold owns a \`core/query\` variation, so it does not generate a \`sync\` script, \`src/types.ts\`, \`block.json\`, or Typia manifests. Edit \`src/index.ts\`, \`src/patterns/*.php\`, \`src/query-extension.ts\`, and \`inc/query-runtime.php\` as needed, then rerun ${formatRunScript(packageManager, "build")}, ${formatRunScript(packageManager, "typecheck")}, or ${doctorCommand}.`;
 	}
 
 	const optionalSyncScripts = getOptionalSyncScriptNames(templateId, options);
@@ -154,7 +170,7 @@ export function getOptionalOnboardingNote(
 		"--strict --report json",
 	);
 	const advancedPersistenceNote = templateHasPersistenceSync(templateId, options)
-		? ` ${syncRestCommand} remains available for advanced REST-only refreshes, but it now fails fast when type-derived artifacts are stale; run \`${syncCommand}\` or \`${syncTypesCommand}\` first.`
+		? ` ${syncRestCommand} remains available for REST-only refreshes after ${syncTypesCommand}.`
 		: "";
 	const isCustomTemplate =
 		!isBuiltInTemplateId(templateId) &&
@@ -167,14 +183,14 @@ export function getOptionalOnboardingNote(
 			: null;
 
 	if (fallbackCustomTemplateNote) {
-		return fallbackCustomTemplateNote;
+		return `${fallbackCustomTemplateNote} Use ${doctorCommand} when you want a quick environment and workspace sanity check.`;
 	}
 
 	if (isCustomTemplate && syncSteps.length === 0) {
-		return "No optional sync command was detected for this custom template. Follow the template's own artifact-refresh guidance before build, typecheck, or your first commit.";
+		return `No optional sync command was detected for this custom template. Use ${doctorCommand} for a quick environment and workspace sanity check, then follow the template's own artifact-refresh guidance before build, typecheck, or your first commit.`;
 	}
 
-	return `You usually do not need to run ${syncCommand} during a normal ${formatRunScript(packageManager, developmentScript)} session. Run ${syncCommand} manually when you want a reviewable artifact refresh before ${formatRunScript(packageManager, "build")}, ${typecheckCommand}, or your first commit. ${syncTypesCommand} stays warn-only by default; use \`${failOnLossySyncCommand}\` to fail only on lossy WordPress projections, or \`${strictSyncCommand}\` for the stricter CI-oriented report.${advancedPersistenceNote} They do not create migration history. If this directory is new, create your first Git commit after that refresh.`;
+	return `You usually do not need to run ${syncCommand} during a normal ${formatRunScript(packageManager, developmentScript)} session. Run ${syncCommand} before ${formatRunScript(packageManager, "build")}, ${typecheckCommand}, or ${doctorCommand} when you want a reviewable refresh. ${syncTypesCommand} stays warn-only by default; use \`${failOnLossySyncCommand}\` or \`${strictSyncCommand}\` for stricter CI checks.${advancedPersistenceNote} Generated syncs do not create migration history, so refresh before your first commit if this directory is new.`;
 }
 
 /**

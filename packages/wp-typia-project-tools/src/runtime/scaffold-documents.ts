@@ -11,9 +11,11 @@ import {
 } from './scaffold-onboarding.js';
 import type { PackageManagerId } from './package-managers.js';
 import {
+  formatPackageExecCommand,
   formatInstallCommand,
   formatRunScript,
 } from './package-managers.js';
+import { getPackageVersions } from './package-versions.js';
 import type { ScaffoldTemplateVariables } from './scaffold.js';
 
 /**
@@ -120,6 +122,11 @@ ${getQuickStartWorkflowNote(packageManager, templateId, {
 \`\`\`bash
 ${formatRunScript(packageManager, 'build')}
 ${formatRunScript(packageManager, 'typecheck')}
+${formatPackageExecCommand(
+    packageManager,
+    `wp-typia@${getPackageVersions().wpTypiaPackageExactVersion}`,
+    'doctor',
+  )}
 \`\`\`
 
 ${advancedSyncSection}

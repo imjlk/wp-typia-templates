@@ -15,11 +15,13 @@ interface PackageVersions {
 	blockTypesPackageVersion: string;
 	projectToolsPackageVersion: string;
 	restPackageVersion: string;
+	wpTypiaPackageExactVersion: string;
 	wpTypiaPackageVersion: string;
 }
 
 const require = createRequire(import.meta.url);
 const DEFAULT_VERSION_RANGE = "^0.0.0";
+const DEFAULT_EXACT_VERSION = "0.0.0";
 
 let cachedPackageVersions: PackageVersions | null = null;
 
@@ -39,6 +41,17 @@ function normalizeVersionRange(value: string | undefined): string {
 	}
 
 	return /^[~^<>=]/.test(trimmed) ? trimmed : `^${trimmed}`;
+}
+
+function normalizeExactVersion(value: string | undefined): string {
+	const trimmed = value?.trim();
+	if (!trimmed) {
+		return DEFAULT_EXACT_VERSION;
+	}
+	if (trimmed.startsWith("workspace:")) {
+		return DEFAULT_EXACT_VERSION;
+	}
+	return trimmed.replace(/^[~^<>=]+/, "");
 }
 
 function readPackageManifest(packageJsonPath: string): PackageManifest | null {
@@ -104,6 +117,7 @@ export function getPackageVersions(): PackageVersions {
 			createManifest.dependencies?.["@wp-typia/rest"] ??
 				resolveInstalledPackageManifest("@wp-typia/rest")?.version,
 		),
+		wpTypiaPackageExactVersion: normalizeExactVersion(wpTypiaManifest.version),
 		wpTypiaPackageVersion: normalizeVersionRange(wpTypiaManifest.version),
 	};
 
