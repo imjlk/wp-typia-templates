@@ -11,6 +11,7 @@ const nodeCliEntrypoint = path.join(packageRoot, "dist-bunli", "node-cli.js");
 const bunBinary = process.env.BUN_BIN || "bun";
 const fullRuntimeCommands = new Set(["complete", "completions", "mcp", "skills"]);
 const longValueOptions = new Set([
+	"--alternate-render-targets",
 	"--anchor",
 	"--block",
 	"--config",
@@ -22,6 +23,7 @@ const longValueOptions = new Set([
 	"--from-migration-version",
 	"--id",
 	"--iterations",
+	"--methods",
 	"--migration-version",
 	"--namespace",
 	"--output-dir",
@@ -29,7 +31,9 @@ const longValueOptions = new Set([
 	"--persistence-policy",
 	"--php-prefix",
 	"--position",
+	"--query-post-type",
 	"--seed",
+	"--slot",
 	"--template",
 	"--text-domain",
 	"--to-migration-version",

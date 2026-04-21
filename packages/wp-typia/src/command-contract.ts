@@ -54,8 +54,11 @@ const GLOBAL_STRING_OPTION_NAMES = new Set(
 
 const SHORT_OPTION_NAMES_WITH_VALUES = new Set<string>(
   Object.values({
+    ...ADD_OPTION_METADATA,
     ...GLOBAL_OPTION_METADATA,
     ...CREATE_OPTION_METADATA,
+    ...MIGRATE_OPTION_METADATA,
+    ...TEMPLATES_OPTION_METADATA,
   })
     .filter((option) => option.type === 'string')
     .flatMap((option) =>

@@ -68,6 +68,26 @@ const BOOLEAN_FLAG_NAMES = new Set([
 	"version",
 ]);
 
+const SHORT_FLAG_MAP = new Map<
+	string,
+	{
+		name: string;
+		type: "boolean" | "string";
+	}
+>(
+	Object.entries({
+		...GLOBAL_OPTION_METADATA,
+		...CREATE_OPTION_METADATA,
+		...ADD_OPTION_METADATA,
+		...MIGRATE_OPTION_METADATA,
+		...TEMPLATES_OPTION_METADATA,
+	}).flatMap(([name, option]) =>
+		"short" in option && typeof option.short === "string"
+			? [[option.short, { name, type: option.type }] as const]
+			: [],
+	),
+);
+
 const NODE_FALLBACK_RUNTIME_SUMMARY_LINES = [
 	"Runtime: Node fallback",
 	"Human-readable fallback for common non-interactive create/add/migrate flows, doctor, sync, templates, --help, and --version when Bun is unavailable.",
@@ -193,23 +213,20 @@ function parseArgv(argv: string[]): ParsedArgv {
 			break;
 		}
 
-		if (arg === "-y") {
-			flags.yes = true;
-			continue;
-		}
-
-		if (arg === "-t" || arg === "-p" || arg === "-c") {
+		if (arg.length === 2 && arg.startsWith("-")) {
+			const shortFlag = SHORT_FLAG_MAP.get(arg.slice(1));
+			if (!shortFlag) {
+				throw new Error(`Unknown option \`${arg}\`.`);
+			}
+			if (shortFlag.type === "boolean") {
+				flags[shortFlag.name] = true;
+				continue;
+			}
 			const next = argv[index + 1];
 			if (!next || next.startsWith("-")) {
 				throw new Error(`\`${arg}\` requires a value.`);
 			}
-			if (arg === "-t") {
-				flags.template = next;
-			} else if (arg === "-p") {
-				flags["package-manager"] = next;
-			} else {
-				flags.config = next;
-			}
+			flags[shortFlag.name] = next;
 			index += 1;
 			continue;
 		}

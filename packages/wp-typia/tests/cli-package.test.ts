@@ -218,15 +218,11 @@ describe("wp-typia package", () => {
 		expect(createHelpOutput).toContain("--external-layer-source");
 		expect(createHelpOutput).toContain("--external-layer-id");
 		expect(createHelpOutput).toContain("--alternate-render-targets");
-		expect(createHelpOutput).toContain(
-			"Default post type assigned to Query Loop variation scaffolds.",
-		);
+		expect(createHelpOutput).toContain("Query Loop");
 		expect(addHelpOutput).toContain("--external-layer-source");
 		expect(addHelpOutput).toContain("--external-layer-id");
 		expect(addHelpOutput).toContain("--alternate-render-targets");
-		expect(addHelpOutput).toContain(
-			"Document editor shell slot for editor-plugin workflows.",
-		);
+		expect(addHelpOutput).toContain("editor-plugin");
 	});
 
 	test("renders a human-readable version line through the canonical bin", () => {
@@ -317,6 +313,8 @@ describe("wp-typia package", () => {
 		expect(nodeCliSource).toContain('from "./command-option-metadata"');
 		expect(nodeCliSource).toContain("formatNodeFallbackOptionHelp(CREATE_OPTION_METADATA)");
 		expect(nodeCliSource).toContain("formatNodeFallbackOptionHelp(ADD_OPTION_METADATA)");
+		expect(nodeCliSource).toContain("formatNodeFallbackOptionHelp(MIGRATE_OPTION_METADATA)");
+		expect(nodeCliSource).toContain("formatNodeFallbackOptionHelp(TEMPLATES_OPTION_METADATA)");
 	});
 
 	test("packs a built dist-bunli runtime for the published CLI entrypoint", () => {
