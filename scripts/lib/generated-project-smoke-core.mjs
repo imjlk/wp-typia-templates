@@ -206,6 +206,35 @@ export function rewriteWorkspaceDependencies(projectDir, packageManager) {
 		packageJson.dependencies["wp-typia"] = localCliDependency;
 	}
 
+	const linkedRuntimePackages = [
+		"@wp-typia/block-runtime",
+		"@wp-typia/rest",
+		"wp-typia",
+	];
+	const hasApiClientDependency =
+		packageJson.devDependencies?.["@wp-typia/api-client"] ||
+		packageJson.dependencies?.["@wp-typia/api-client"];
+	const shouldSeedApiClientInDevDependencies = linkedRuntimePackages.some(
+		(packageName) => packageJson.devDependencies?.[packageName],
+	);
+	const shouldSeedApiClientInDependencies = linkedRuntimePackages.some(
+		(packageName) => packageJson.dependencies?.[packageName],
+	);
+
+	if (!hasApiClientDependency) {
+		if (shouldSeedApiClientInDevDependencies) {
+			packageJson.devDependencies = {
+				...(packageJson.devDependencies ?? {}),
+				"@wp-typia/api-client": localApiClientDependency,
+			};
+		} else if (shouldSeedApiClientInDependencies) {
+			packageJson.dependencies = {
+				...(packageJson.dependencies ?? {}),
+				"@wp-typia/api-client": localApiClientDependency,
+			};
+		}
+	}
+
 	packageJson.overrides = {
 		...(packageJson.overrides ?? {}),
 		"@wp-typia/block-runtime": localBlockRuntimeDependency,
