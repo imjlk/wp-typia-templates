@@ -316,12 +316,8 @@ function buildDefaultBlockEntry(
 }
 
 function buildInnerBlocksPropsOptions(
-\tconfig?: CompoundInnerBlocksConfig
-): CompoundInnerBlocksPropsOptions | undefined {
-\tif ( ! config ) {
-\t\treturn undefined;
-\t}
-
+\tconfig: CompoundInnerBlocksConfig
+): CompoundInnerBlocksPropsOptions {
 \treturn {
 \t\t...config,
 \t\trenderAppender:
@@ -340,7 +336,7 @@ export function getRootInnerBlocksConfig(): CompoundInnerBlocksConfig {
 }
 
 export function getRootInnerBlocksPropsOptions(): CompoundInnerBlocksPropsOptions {
-\treturn buildInnerBlocksPropsOptions( getRootInnerBlocksConfig() )!;
+\treturn buildInnerBlocksPropsOptions( getRootInnerBlocksConfig() );
 }
 
 export function getChildSpec( blockName: string ): CompoundChildSpec | undefined {
@@ -387,7 +383,12 @@ export function getChildInnerBlocksConfig(
 export function getChildInnerBlocksPropsOptions(
 \tblockName: string
 ): CompoundInnerBlocksPropsOptions | undefined {
-\treturn buildInnerBlocksPropsOptions( getChildInnerBlocksConfig( blockName ) );
+\tconst config = getChildInnerBlocksConfig( blockName );
+\tif ( ! config ) {
+\t\treturn undefined;
+\t}
+
+\treturn buildInnerBlocksPropsOptions( config );
 }
 
 export function hasNestedChildBlocks( blockName: string ): boolean {
