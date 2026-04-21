@@ -86,7 +86,7 @@
     "test:migration-planning": "bun run build && bun test tests/migration-init.test.ts tests/migration-config.test.ts tests/migration-plan-wizard.test.ts",
     "test:migration-execution": "bun run build && bun test tests/migration-scaffold-diff.test.ts tests/migration-doctor.test.ts tests/migration-fixtures-fuzz.test.ts",
     "test:project-tools": "bun run test:scaffold-core && bun run test:workspace && bun run test:compound && bun run test:migration-planning && bun run test:migration-execution",
-    "test:coverage": "bun run build && bun test tests/*.test.ts --coverage --coverage-reporter=lcov --coverage-dir=coverage",
+    "test:coverage": "bun run build && bun run --filter wp-typia build && bun test tests/*.test.ts --coverage --coverage-reporter=lcov --coverage-dir=coverage",
     "clean": "rm -rf dist",
     "prepublishOnly": "bun run build"
   },
