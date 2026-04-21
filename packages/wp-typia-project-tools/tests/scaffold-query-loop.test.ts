@@ -9,6 +9,7 @@ import {
 	cleanupScaffoldTempRoot,
 	createScaffoldTempRoot,
 	typecheckGeneratedProject,
+	wpTypiaPackageManifest,
 } from "./helpers/scaffold-test-harness.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 
@@ -129,12 +130,19 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 			expect(listPatternSource).toContain("demo-space/demo-query-loop-list");
 			expect(listPatternSource).toContain('"namespace":"demo-space/demo-query-loop"');
 			expect(listPatternSource).toContain('"wpTypiaVariation":"demo-space/demo-query-loop"');
+			expect(readme).toContain("## Build and Verify");
+			expect(readme).toContain(
+				`npx --yes wp-typia@${wpTypiaPackageManifest.version} doctor`,
+			);
 			expect(readme).toContain("## Variation Workflow");
 			expect(readme).toContain(
-				"This scaffold does not generate `src/types.ts`, a `sync` script, `block.json`, or Typia manifests because it owns a `core/query` variation rather than a standalone block.",
+				"This scaffold owns a `core/query` variation, so it does not generate a `sync` script, `src/types.ts`, `block.json`, or Typia manifests.",
 			);
 			expect(readme).toContain(
 				"`src/index.ts` remains the source of truth for the Query Loop variation name",
+			);
+			expect(readme).toContain(
+				"Edit `src/index.ts`, `src/patterns/*.php`, `src/query-extension.ts`, and `inc/query-runtime.php` as needed",
 			);
 			expect(readme).toContain("Use `src/patterns/*.php` for richer connected layout presets");
 			expect(readme).toContain("use `src/query-extension.ts` for custom query seed values");
