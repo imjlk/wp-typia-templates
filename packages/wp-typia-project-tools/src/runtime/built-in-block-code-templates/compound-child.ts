@@ -5,7 +5,7 @@ import { __ } from '@wordpress/i18n';
 
 import metadata from './block-metadata';
 import {
-\tgetChildInnerBlocksConfig,
+\tgetChildInnerBlocksPropsOptions,
 \thasNestedChildBlocks,
 } from '../{{slugKebabCase}}/children';
 import { useTypiaValidation } from './hooks';
@@ -34,7 +34,9 @@ export default function Edit( {
 \t\tattributes,
 \t\tvalidate{{pascalCase}}ItemAttributes
 \t);
-\tconst nestedInnerBlocksConfig = getChildInnerBlocksConfig( metadata.name );
+\tconst nestedInnerBlocksPropsOptions = getChildInnerBlocksPropsOptions(
+\t\tmetadata.name
+\t);
 \tconst showsNestedChildren = hasNestedChildBlocks( metadata.name );
 
 \treturn (
@@ -63,16 +65,7 @@ export default function Edit( {
 \t\t\t{ showsNestedChildren && (
 \t\t\t\t<div className="{{compoundChildCssClassName}}__children">
 \t\t\t\t\t<TypedInnerBlocks
-\t\t\t\t\t\tdefaultBlock={ nestedInnerBlocksConfig?.defaultBlock }
-\t\t\t\t\t\tdirectInsert={ nestedInnerBlocksConfig?.directInsert }
-\t\t\t\t\t\torientation={ nestedInnerBlocksConfig?.orientation }
-\t\t\t\t\t\trenderAppender={
-\t\t\t\t\t\t\tnestedInnerBlocksConfig?.templateLock === 'all'
-\t\t\t\t\t\t\t\t? undefined
-\t\t\t\t\t\t\t\t: InnerBlocks.ButtonBlockAppender
-\t\t\t\t\t\t}
-\t\t\t\t\t\ttemplate={ nestedInnerBlocksConfig?.template }
-\t\t\t\t\t\ttemplateLock={ nestedInnerBlocksConfig?.templateLock ?? false }
+\t\t\t\t\t\t{ ...( nestedInnerBlocksPropsOptions ?? {} ) }
 \t\t\t\t\t/>
 \t\t\t\t</div>
 \t\t\t) }
