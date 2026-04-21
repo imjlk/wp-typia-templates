@@ -431,6 +431,22 @@ test("runScaffoldFlow carries query-loop post type overrides into the generated 
   );
 });
 
+test("runScaffoldFlow warns when query-loop-only flags are passed to other templates", async () => {
+  const flow = await runScaffoldFlow({
+    cwd: tempRoot,
+    noInstall: true,
+    packageManager: "npm",
+    projectInput: "demo-basic-ignored-query-post-type",
+    queryPostType: "book",
+    templateId: "basic",
+    yes: true,
+  });
+
+  expect(flow.result.warnings).toContain(
+    '`--query-post-type` only applies to `wp-typia create --template query-loop`, which scaffolds a create-time `core/query` variation instead of a standalone block. "basic" will ignore "book".'
+  );
+});
+
 test("runScaffoldFlow dry-run previews scaffold output without writing the target directory", async () => {
   const projectInput = "demo-dry-run-plan";
   const targetDir = path.join(tempRoot, projectInput);
@@ -552,6 +568,7 @@ test("formatHelpText keeps migration UI flags out of external template usage", (
   expect(helpText).toContain("--external-layer-source");
   expect(helpText).toContain("--external-layer-id");
   expect(helpText).toContain("@wp-typia/create-workspace-template");
+  expect(helpText).toContain("`query-loop` is create-only.");
   expect(helpText).toContain("wp-typia add editor-plugin <name>");
   expect(helpText).toContain(
     "wp-typia add editor-plugin <name> [--slot <PluginSidebar>]"
@@ -608,6 +625,9 @@ test("runScaffoldFlow does not prompt for migration UI on external templates", a
 
   expect(promptedForMigrationUi).toBe(false);
   expect(flow.result.variables.needsMigration).toBe("{{needsMigration}}");
+  expect(flow.result.warnings).toContain(
+    `\`--with-migration-ui\` was ignored for "${createBlockSubsetFixturePath}". Migration UI currently scaffolds built-in templates and the official \`--template workspace\` flow; external templates still need to opt into that surface explicitly.`
+  );
 });
 
 test("node entry exposes templates and doctor commands", () => {

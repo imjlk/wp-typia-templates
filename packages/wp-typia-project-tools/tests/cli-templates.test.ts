@@ -14,6 +14,9 @@ describe("@wp-typia/project-tools template discovery formatting", () => {
 		expect(formatTemplateFeatures(getTemplateById("query-loop"))).toContain(
 			"Supports: --query-post-type • external layers",
 		);
+		expect(formatTemplateFeatures(getTemplateById("query-loop"))).toContain(
+			"Notes: Create-time variation scaffold only; use `wp-typia create <project-dir> --template query-loop` instead of `wp-typia add block`. • Owns a `core/query` variation, so it does not generate `src/types.ts`, `block.json`, or Typia manifests.",
+		);
 	});
 
 	test("workspace template discovery surfaces the workspace alias", () => {
@@ -24,6 +27,7 @@ describe("@wp-typia/project-tools template discovery formatting", () => {
 
 	test("inspect output prefers logical layer summaries over raw overlay paths", () => {
 		const basicDetails = formatTemplateDetails(getTemplateById("basic"));
+		const queryLoopDetails = formatTemplateDetails(getTemplateById("query-loop"));
 		const workspaceDetails = formatTemplateDetails(
 			getTemplateById("@wp-typia/create-workspace-template"),
 		);
@@ -34,6 +38,13 @@ describe("@wp-typia/project-tools template discovery formatting", () => {
 		expect(basicDetails).toContain("shared/base -> basic overlay");
 		expect(basicDetails).not.toContain("Overlay path:");
 		expect(basicDetails).not.toContain("/templates/basic");
+		expect(queryLoopDetails).toContain("Notes:");
+		expect(queryLoopDetails).toContain(
+			"Create-time variation scaffold only; use `wp-typia create <project-dir> --template query-loop` instead of `wp-typia add block`.",
+		);
+		expect(queryLoopDetails).toContain(
+			"Owns a `core/query` variation, so it does not generate `src/types.ts`, `block.json`, or Typia manifests.",
+		);
 
 		expect(workspaceDetails).toContain("Official package: @wp-typia/create-workspace-template");
 		expect(workspaceDetails).toContain("Alias: workspace (`--template workspace`)");

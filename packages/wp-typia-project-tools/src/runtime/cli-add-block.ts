@@ -531,6 +531,11 @@ export async function runAddBlockCommand({
 	templateId: AddBlockTemplateId;
 	warnings: string[];
 }> {
+	if (templateId === "query-loop") {
+		throw new Error(
+			"`wp-typia add block --template query-loop` is not supported. Query Loop is a create-time `core/query` variation scaffold, so use `wp-typia create <project-dir> --template query-loop` instead.",
+		);
+	}
 	if (!isAddBlockTemplateId(templateId)) {
 		throw new Error(
 			`Unknown add-block template "${templateId}". Expected one of: ${ADD_BLOCK_TEMPLATE_IDS.join(", ")}`,

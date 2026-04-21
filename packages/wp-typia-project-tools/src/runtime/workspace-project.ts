@@ -202,6 +202,6 @@ export function resolveWorkspaceProject(startDir: string): WorkspaceProject {
 	}
 
 	throw new Error(
-		`This command must run inside a ${WORKSPACE_TEMPLATE_PACKAGE} project. Create one with \`wp-typia create my-plugin --template ${WORKSPACE_TEMPLATE_PACKAGE}\` first.`,
+		`This command must run inside an official wp-typia workspace. Create one with \`wp-typia create my-plugin --template workspace\` first (the short alias for \`${WORKSPACE_TEMPLATE_PACKAGE}\`).`,
 	);
 }

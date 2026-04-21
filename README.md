@@ -120,7 +120,7 @@ The `compound` template creates a parent/child block structure with hidden imple
 
 ### 5. Query Loop variations get a first-class scaffold
 
-The `query-loop` template scaffolds an editor-facing `core/query` variation plugin instead of a standalone block, so you can ship a branded inserter entry with stable namespace identity, default query settings, allowed inspector controls, and inline starter `innerBlocks` without rebuilding the full Query Loop setup flow by hand. It also includes connected `src/patterns/*.php` presets so richer editorial layouts can live in pattern files while `src/index.ts` stays focused on variation identity and query defaults, a dedicated `src/query-extension.ts` seam for custom query params and optional editor-side hook registration, and `inc/query-runtime.php` hooks that keep frontend query mapping and editor preview requests aligned for the same variation.
+The `query-loop` template scaffolds an editor-facing `core/query` variation plugin instead of a standalone block, so you can ship a branded inserter entry with stable namespace identity, default query settings, allowed inspector controls, and inline starter `innerBlocks` without rebuilding the full Query Loop setup flow by hand. Because it owns a variation rather than a standalone custom block, it intentionally does not generate `src/types.ts`, `block.json`, or Typia manifests. It also includes connected `src/patterns/*.php` presets so richer editorial layouts can live in pattern files while `src/index.ts` stays focused on variation identity and query defaults, a dedicated `src/query-extension.ts` seam for custom query params and optional editor-side hook registration, and `inc/query-runtime.php` hooks that keep frontend query mapping and editor preview requests aligned for the same variation.
 
 ## Example flows
 
@@ -138,8 +138,9 @@ npx wp-typia create my-block --template basic --with-migration-ui --package-mana
 Empty workspace flow:
 
 ```bash
-npx wp-typia create my-plugin --template @wp-typia/create-workspace-template --package-manager bun --yes --no-install
+npx wp-typia create my-plugin --template workspace --package-manager bun --yes --no-install
 cd my-plugin
+bun install
 wp-typia add block counter-card --template basic
 wp-typia add block faq-stack --template compound --persistence-policy public --data-storage custom-table
 wp-typia add binding-source hero-data
@@ -154,6 +155,7 @@ wp-typia add hooked-block counter-card --anchor core/post-content --position aft
 - Need data, REST, or persistence policies? Start with `persistence`.
 - Need a parent/child block system? Start with `compound`.
 - Need a branded Query Loop inserter variation? Start with `query-loop`.
+- Need an empty workspace that will grow through `wp-typia add ...` workflows? Start with `--template workspace`.
 - Need schema evolution for a long-lived block? Enable `--with-migration-ui`.
 
 ## Retrofitting Existing Projects

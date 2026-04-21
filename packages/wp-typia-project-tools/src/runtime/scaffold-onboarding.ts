@@ -91,7 +91,7 @@ export function getQuickStartWorkflowNote(
 	options: SyncOnboardingOptions = {},
 ): string {
 	if (templateId === "query-loop") {
-		return `${formatRunScript(packageManager, "dev")} runs the editor build/watch loop that registers your Query Loop variation in the block editor. This scaffold is editor-facing by design: update \`src/index.ts\` when you want to change the variation namespace, default query, allowed controls, or the minimal inline starter layout, update \`src/patterns/*.php\` when you want richer connected layout presets in the inserter, use \`src/query-extension.ts\` when the variation needs custom query params or optional editor-side hooks, and mirror frontend/editor preview query mapping in \`inc/query-runtime.php\`.`;
+		return `${formatRunScript(packageManager, "dev")} runs the editor build/watch loop that registers your Query Loop variation in the block editor. This scaffold is editor-facing by design and intentionally skips \`src/types.ts\`, \`block.json\`, and Typia manifest generation because the source of truth lives in the variation registration flow instead of a standalone block contract. Update \`src/index.ts\` when you want to change the variation namespace, default query, allowed controls, or the minimal inline starter layout, update \`src/patterns/*.php\` when you want richer connected layout presets in the inserter, use \`src/query-extension.ts\` when the variation needs custom query params or optional editor-side hooks, and mirror frontend/editor preview query mapping in \`inc/query-runtime.php\`.`;
 	}
 
 	const developmentScript = getPrimaryDevelopmentScript(templateId);
@@ -122,7 +122,7 @@ export function getOptionalOnboardingNote(
 	options: SyncOnboardingOptions = {},
 ): string {
 	if (templateId === "query-loop") {
-		return `This scaffold does not generate a \`sync\` script, \`block.json\`, or Typia manifests. Edit \`src/index.ts\` to change the variation contract, edit \`src/patterns/*.php\` when you want richer connected layouts beyond the inline fallback, edit \`src/query-extension.ts\` when you need variation-specific query params or custom editor hooks, and edit \`inc/query-runtime.php\` when those params need frontend or editor preview parity. Then rerun ${formatRunScript(packageManager, "build")}, ${formatRunScript(packageManager, "dev")}, or ${formatRunScript(packageManager, "typecheck")} as needed.`;
+		return `This scaffold does not generate \`src/types.ts\`, a \`sync\` script, \`block.json\`, or Typia manifests because it owns a \`core/query\` variation rather than a standalone block. Edit \`src/index.ts\` to change the variation contract, edit \`src/patterns/*.php\` when you want richer connected layouts beyond the inline fallback, edit \`src/query-extension.ts\` when you need variation-specific query params or custom editor hooks, and edit \`inc/query-runtime.php\` when those params need frontend or editor preview parity. Then rerun ${formatRunScript(packageManager, "build")}, ${formatRunScript(packageManager, "dev")}, or ${formatRunScript(packageManager, "typecheck")} as needed.`;
 	}
 
 	const optionalSyncScripts = getOptionalSyncScriptNames(templateId, options);
@@ -199,7 +199,7 @@ export function getTemplateSourceOfTruthNote(
 	{ compoundPersistenceEnabled = false }: SyncOnboardingOptions = {},
 ): string {
 	if (templateId === "query-loop") {
-		return "`src/index.ts` remains the source of truth for the Query Loop variation name, default query attributes, `allowedControls`, and the minimal inline starter `innerBlocks`. Use `src/patterns/*.php` for richer connected layout presets that stay tied to the same variation namespace, use `src/query-extension.ts` for custom query seed values or optional editor-only hook registration, and use `inc/query-runtime.php` to keep frontend and editor preview query mapping aligned for those custom keys. The generated plugin bootstrap should stay focused on script registration, pattern loading, and explicit runtime glue for the variation.";
+		return "`src/index.ts` remains the source of truth for the Query Loop variation name, default query attributes, `allowedControls`, and the minimal inline starter `innerBlocks`. This scaffold intentionally does not generate `src/types.ts`, `block.json`, or Typia manifests because those artifacts belong to standalone block families, not `core/query` variation ownership. Use `src/patterns/*.php` for richer connected layout presets that stay tied to the same variation namespace, use `src/query-extension.ts` for custom query seed values or optional editor-only hook registration, and use `inc/query-runtime.php` to keep frontend and editor preview query mapping aligned for those custom keys. The generated plugin bootstrap should stay focused on script registration, pattern loading, and explicit runtime glue for the variation.";
 	}
 
 	if (templateId === "compound") {
