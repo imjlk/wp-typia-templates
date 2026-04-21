@@ -520,16 +520,17 @@ export function assertEditorPluginDoesNotExist(projectDir: string, editorPluginS
  */
 export function formatAddHelpText(): string {
 	return `Usage:
-  wp-typia add block <name> --template <${ADD_BLOCK_TEMPLATE_IDS.join("|")}> [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
-  wp-typia add variation <name> --block <block-slug>
-  wp-typia add pattern <name>
-  wp-typia add binding-source <name>
-  wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>]
-  wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <${HOOKED_BLOCK_POSITION_IDS.join("|")}>
-  wp-typia add editor-plugin <name> [--slot <${EDITOR_PLUGIN_SLOT_IDS.join("|")}>]
+  wp-typia add block <name> --template <${ADD_BLOCK_TEMPLATE_IDS.join("|")}> [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--dry-run]
+  wp-typia add variation <name> --block <block-slug> [--dry-run]
+  wp-typia add pattern <name> [--dry-run]
+  wp-typia add binding-source <name> [--dry-run]
+  wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--dry-run]
+  wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <${HOOKED_BLOCK_POSITION_IDS.join("|")}> [--dry-run]
+  wp-typia add editor-plugin <name> [--slot <${EDITOR_PLUGIN_SLOT_IDS.join("|")}>] [--dry-run]
 
 Notes:
   \`wp-typia add\` runs only inside official ${WORKSPACE_TEMPLATE_PACKAGE} workspaces.
+  Pass \`--dry-run\` to preview the workspace files that would change without writing them.
   \`add variation\` targets an existing block slug from \`scripts/block-config.ts\`.
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
   \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.

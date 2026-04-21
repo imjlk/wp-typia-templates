@@ -111,4 +111,25 @@ test("keeps ambiguous external layers fail-fast when a synthetic prompt is suppl
 		expect(payload.optionalLines?.some((line) => line === "write package.json")).toBe(true);
 		expect(fs.existsSync(targetDir)).toBe(false);
 	});
+
+	test("dry-run create defaults non-interactive answers without requiring --yes", async () => {
+		const targetDir = path.join(tempRoot, "demo-dry-run-preview-no-yes");
+
+		const payload = await executeCreateCommand({
+			cwd: tempRoot,
+			emitOutput: false,
+			flags: {
+				"dry-run": true,
+				"package-manager": "npm",
+				template: "basic",
+			},
+			interactive: false,
+			projectDir: "demo-dry-run-preview-no-yes",
+		});
+
+		expect(payload.title).toContain("Dry run");
+		expect(payload.summaryLines).toContain(`Project directory: ${targetDir}`);
+		expect(payload.optionalLines?.some((line) => line === "write package.json")).toBe(true);
+		expect(fs.existsSync(targetDir)).toBe(false);
+	});
 });

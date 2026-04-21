@@ -272,6 +272,30 @@ export function buildAddCompletionPayload(options: {
 }
 
 /**
+ * Builds the completion payload shown after a dry-run add flow succeeds.
+ *
+ * @param options Existing add completion metadata plus the planned file updates.
+ * @returns A structured alternate-buffer completion payload.
+ */
+export function buildAddDryRunPayload(options: {
+	completion: AlternateBufferCompletionPayload;
+	fileOperations: string[];
+}): AlternateBufferCompletionPayload {
+	const normalizedTitle = options.completion.title.replace(/^✅\s*Added\s*/u, "");
+
+	return {
+		optionalLines: options.fileOperations,
+		optionalNote:
+			"No workspace files were changed because --dry-run was enabled. Re-run without --dry-run to apply this add command.",
+		optionalTitle: `Planned workspace updates (${options.fileOperations.length}):`,
+		preambleLines: options.completion.preambleLines,
+		summaryLines: options.completion.summaryLines,
+		title: `🧪 Dry run for ${normalizedTitle || "workspace add command"}`,
+		warningLines: options.completion.warningLines,
+	};
+}
+
+/**
  * Prints a block of text lines using a shared line printer.
  *
  * @param lines Lines to print in order.

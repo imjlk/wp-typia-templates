@@ -16,6 +16,8 @@ type SyncProjectContext = {
 	scripts: Partial<Record<"sync" | "sync-rest" | "sync-types", string>>;
 };
 
+const SYNC_INSTALL_MARKERS = ["node_modules", ".pnp.cjs", ".pnp.loader.mjs"] as const;
+
 function formatRunScript(
 	packageManagerId: PackageManagerId,
 	scriptName: string,
@@ -32,6 +34,19 @@ function formatRunScript(
 		return args ? `pnpm run ${scriptName} ${args}` : `pnpm run ${scriptName}`;
 	}
 	return args ? `yarn run ${scriptName} ${args}` : `yarn run ${scriptName}`;
+}
+
+function formatInstallCommand(packageManagerId: PackageManagerId): string {
+	switch (packageManagerId) {
+		case "bun":
+			return "bun install";
+		case "pnpm":
+			return "pnpm install";
+		case "yarn":
+			return "yarn install";
+		default:
+			return "npm install";
+	}
 }
 
 function getSyncRootError(cwd: string): Error {
@@ -107,6 +122,22 @@ function resolveSyncProjectContext(cwd: string): SyncProjectContext {
 	};
 }
 
+function hasInstalledProjectDependencies(projectDir: string): boolean {
+	return SYNC_INSTALL_MARKERS.some((marker) =>
+		fs.existsSync(path.join(projectDir, marker)),
+	);
+}
+
+function assertSyncDependenciesInstalled(project: SyncProjectContext): void {
+	if (hasInstalledProjectDependencies(project.cwd)) {
+		return;
+	}
+
+	throw new Error(
+		`Project dependencies have not been installed yet. Run \`${formatInstallCommand(project.packageManager)}\` from ${project.cwd} before \`wp-typia sync\`. The generated sync scripts rely on local tools such as \`tsx\`.`,
+	);
+}
+
 function getPackageManagerRunInvocation(
 	packageManager: PackageManagerId,
 	scriptName: string,
@@ -170,6 +201,7 @@ export async function executeSyncCommand({
 	cwd,
 }: SyncExecutionInput): Promise<void> {
 	const project = resolveSyncProjectContext(cwd);
+	assertSyncDependenciesInstalled(project);
 	const extraArgs = check ? ["--check"] : [];
 
 	if (project.scripts.sync) {

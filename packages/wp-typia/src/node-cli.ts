@@ -341,6 +341,7 @@ function renderAddHelp() {
 		"Usage: wp-typia add <kind> <name>",
 		"",
 		"Supported non-interactive flags:",
+		"--dry-run",
 		"--template",
 		"--alternate-render-targets",
 		"--data-storage",
