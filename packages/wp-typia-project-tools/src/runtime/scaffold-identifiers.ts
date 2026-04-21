@@ -58,6 +58,18 @@ export function normalizeBlockSlug(input: string): string {
 	return toKebabCase(input);
 }
 
+/**
+ * Normalize one human-entered block slug and reject values that collapse to an
+ * empty generated slug.
+ *
+ * @param options Normalization context for one block-like name.
+ * @param options.input Raw user input before kebab-case normalization.
+ * @param options.label Human-readable field label used in thrown errors.
+ * @param options.usage Example CLI usage shown when the input is blank.
+ * @returns A non-empty normalized slug.
+ * @throws When the input is blank after trimming.
+ * @throws When normalization removes every character from the original input.
+ */
 export function resolveNonEmptyNormalizedBlockSlug(options: {
 	input: string;
 	label: string;

@@ -71,6 +71,7 @@ import {
 } from "./external-layer-selection.js";
 import { parseAlternateRenderTargets } from "./alternate-render-targets.js";
 import {
+	assertExternalLayerCompositionOptions,
 	normalizeOptionalCliString,
 	resolveLocalCliPathOption,
 } from "./cli-validation.js";
@@ -538,6 +539,10 @@ export async function runAddBlockCommand({
 		cwd,
 		label: "--external-layer-source",
 		value: externalLayerSource,
+	});
+	assertExternalLayerCompositionOptions({
+		externalLayerId: normalizedExternalLayerId,
+		externalLayerSource: normalizedExternalLayerSource,
 	});
 	const resolvedExternalLayerSelection =
 		await resolveOptionalInteractiveExternalLayerId({
