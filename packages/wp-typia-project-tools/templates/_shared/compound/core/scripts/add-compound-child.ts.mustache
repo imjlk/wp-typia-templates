@@ -120,6 +120,10 @@ function parseArgs() {
 			index += 1;
 			continue;
 		}
+
+		if ( arg.startsWith( '--' ) ) {
+			throw new Error( `Unknown option: ${ arg }.` );
+		}
 	}
 
 	return parsed;
@@ -480,7 +484,11 @@ function buildCompoundChildGraphMap(
 }
 
 function resolveDirectParentBlockName( child: ExistingCompoundChild ): string {
-	return child.ancestorBlockNames[ child.ancestorBlockNames.length - 1 ] ?? PARENT_BLOCK_NAME;
+	return (
+		child.ancestorBlockNames[ child.ancestorBlockNames.length - 1 ] ??
+		child.parentBlockNames[ 0 ] ??
+		PARENT_BLOCK_NAME
+	);
 }
 
 function validateExistingCompoundChildGraph(
@@ -528,6 +536,21 @@ function validateExistingCompoundChildGraph(
 			if ( ! ancestorChild.container ) {
 				throw new Error(
 					`Existing compound child graph is invalid: ${ ancestorChild.blockName } is not declared as a container child but has nested descendants.`
+				);
+			}
+
+			const expectedAncestorRoute = child.ancestorBlockNames.slice( 0, index );
+			const ancestorRouteMatches =
+				ancestorChild.ancestorBlockNames.length === expectedAncestorRoute.length &&
+				expectedAncestorRoute.every(
+					( expectedAncestorBlockName, expectedIndex ) =>
+						ancestorChild.ancestorBlockNames[ expectedIndex ] ===
+						expectedAncestorBlockName
+				);
+
+			if ( ancestorChild.ancestorBlockNames.length > 0 && ! ancestorRouteMatches ) {
+				throw new Error(
+					`Existing compound child graph is invalid: ${ ancestorChild.blockName } is not on the declared ancestor route for ${ child.blockName }.`
 				);
 			}
 

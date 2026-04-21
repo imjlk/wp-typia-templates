@@ -265,13 +265,13 @@ ${ formatRunScript(
 ${ formatRunScript(
 		packageManager,
 		"add-child",
-		'--slug clause --title "Clause" --ancestor section'
+		'--slug clause --title "Clause" --ancestor section --dry-run'
 	) }
 
 ${ formatRunScript(
 		packageManager,
 		"add-child",
-		'--slug clause --title "Clause" --ancestor section --dry-run'
+		'--slug clause --title "Clause" --ancestor section'
 	) }
 \`\`\`
 

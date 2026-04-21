@@ -1663,6 +1663,38 @@ describe('@wp-typia/project-tools scaffold compound', () => {
     { timeout: 30_000 },
   );
 
+  test(
+    'compound add-child rejects unknown CLI flags before writing files',
+    async () => {
+      const targetDir = path.join(tempRoot, 'demo-compound-unknown-option');
+
+      await scaffoldProject({
+        projectDir: targetDir,
+        templateId: 'compound',
+        packageManager: 'npm',
+        noInstall: true,
+        answers: {
+          author: 'Test Runner',
+          description: 'Demo compound unknown option workflow',
+          namespace: 'create-block',
+          slug: 'demo-compound-unknown-option',
+          title: 'Demo Compound Unknown Option',
+        },
+      });
+
+      expect(() =>
+        runGeneratedScript(targetDir, 'scripts/add-compound-child.ts', [
+          '--slug',
+          'faq-item',
+          '--title',
+          'FAQ Item',
+          '--dryrun',
+        ]),
+      ).toThrow('Unknown option: --dryrun.');
+    },
+    { timeout: 30_000 },
+  );
+
   test('compound add-child reads live parent metadata from disk', async () => {
     const targetDir = path.join(tempRoot, 'demo-compound-live-parent');
 
