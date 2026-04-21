@@ -300,7 +300,12 @@ function collectTemplateCapabilityWarnings(options: {
 	const warnings: string[] = [];
 	const trimmedQueryPostType = options.queryPostType?.trim();
 
-	if (trimmedQueryPostType && options.templateId !== "query-loop") {
+	if (
+		trimmedQueryPostType &&
+		options.templateId !== "query-loop" &&
+		(isBuiltInTemplateId(options.templateId) ||
+			options.templateId === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE)
+	) {
 		warnings.push(
 			`\`--query-post-type\` only applies to \`wp-typia create --template query-loop\`, which scaffolds a create-time \`core/query\` variation instead of a standalone block. ${createTemplateLabel(options.templateId)} will ignore "${trimmedQueryPostType}".`,
 		);

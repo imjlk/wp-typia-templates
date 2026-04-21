@@ -140,6 +140,7 @@ Empty workspace flow:
 ```bash
 npx wp-typia create my-plugin --template workspace --package-manager bun --yes --no-install
 cd my-plugin
+bun install
 wp-typia add block counter-card --template basic
 wp-typia add block faq-stack --template compound --persistence-policy public --data-storage custom-table
 wp-typia add binding-source hero-data

@@ -106,7 +106,7 @@ function getTemplateCapabilityHints(template: TemplateDefinition): string[] {
 function getTemplateSpecialNotes(template: TemplateDefinition): string[] {
 	if (template.id === "query-loop") {
 		return [
-			"Create-time variation scaffold only; use `wp-typia create --template query-loop` instead of `wp-typia add block`.",
+			"Create-time variation scaffold only; use `wp-typia create <project-dir> --template query-loop` instead of `wp-typia add block`.",
 			"Owns a `core/query` variation, so it does not generate `src/types.ts`, `block.json`, or Typia manifests.",
 		];
 	}

@@ -15,7 +15,7 @@ describe("@wp-typia/project-tools template discovery formatting", () => {
 			"Supports: --query-post-type • external layers",
 		);
 		expect(formatTemplateFeatures(getTemplateById("query-loop"))).toContain(
-			"Notes: Create-time variation scaffold only; use `wp-typia create --template query-loop` instead of `wp-typia add block`. • Owns a `core/query` variation, so it does not generate `src/types.ts`, `block.json`, or Typia manifests.",
+			"Notes: Create-time variation scaffold only; use `wp-typia create <project-dir> --template query-loop` instead of `wp-typia add block`. • Owns a `core/query` variation, so it does not generate `src/types.ts`, `block.json`, or Typia manifests.",
 		);
 	});
 
@@ -40,7 +40,7 @@ describe("@wp-typia/project-tools template discovery formatting", () => {
 		expect(basicDetails).not.toContain("/templates/basic");
 		expect(queryLoopDetails).toContain("Notes:");
 		expect(queryLoopDetails).toContain(
-			"Create-time variation scaffold only; use `wp-typia create --template query-loop` instead of `wp-typia add block`.",
+			"Create-time variation scaffold only; use `wp-typia create <project-dir> --template query-loop` instead of `wp-typia add block`.",
 		);
 		expect(queryLoopDetails).toContain(
 			"Owns a `core/query` variation, so it does not generate `src/types.ts`, `block.json`, or Typia manifests.",
