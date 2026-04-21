@@ -361,6 +361,27 @@ test("canonical CLI rejects add-block external layers that emit workspace-level 
   ).toBe(false);
 }, 20_000);
 
+test("runAddBlockCommand explains that query-loop is a create-time scaffold family", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-query-loop-unsupported",
+  );
+
+  await scaffoldOfficialWorkspace(targetDir);
+
+  linkWorkspaceNodeModules(targetDir);
+
+  await expect(
+    runAddBlockCommand({
+      blockName: "query-listing",
+      cwd: targetDir,
+      templateId: "query-loop",
+    })
+  ).rejects.toThrow(
+    "`wp-typia add block --template query-loop` is not supported. Query Loop is a create-time `core/query` variation scaffold, so use `wp-typia create <project-dir> --template query-loop` instead."
+  );
+});
+
 test("canonical CLI can add a variation to an official workspace template", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-variation");
 

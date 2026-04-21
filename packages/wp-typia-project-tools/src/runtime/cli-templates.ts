@@ -31,6 +31,10 @@ export function formatTemplateFeatures(template: TemplateDefinition): string {
 	if (capabilityHints.length > 0) {
 		lines.push(`  Supports: ${capabilityHints.join(" • ")}`);
 	}
+	const specialNotes = getTemplateSpecialNotes(template);
+	if (specialNotes.length > 0) {
+		lines.push(`  Notes: ${specialNotes.join(" • ")}`);
+	}
 	if (template.id === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE) {
 		lines.push(
 			`  Alias: ${WORKSPACE_TEMPLATE_ALIAS} (\`--template ${WORKSPACE_TEMPLATE_ALIAS}\`)`,
@@ -64,6 +68,13 @@ export function formatTemplateDetails(template: TemplateDefinition): string {
 			detailLines.push(`  - ${capabilityHint}`);
 		}
 	}
+	const specialNotes = getTemplateSpecialNotes(template);
+	if (specialNotes.length > 0) {
+		detailLines.push("Notes:");
+		for (const specialNote of specialNotes) {
+			detailLines.push(`  - ${specialNote}`);
+		}
+	}
 	detailLines.push("Logical layers:");
 	for (const logicalLayer of getTemplateLogicalLayerSummaries(template)) {
 		detailLines.push(`  - ${logicalLayer}`);
@@ -87,6 +98,17 @@ function getTemplateCapabilityHints(template: TemplateDefinition): string[] {
 	}
 	if (isBuiltInTemplateId(template.id)) {
 		return ["external layers"];
+	}
+
+	return [];
+}
+
+function getTemplateSpecialNotes(template: TemplateDefinition): string[] {
+	if (template.id === "query-loop") {
+		return [
+			"Create-time variation scaffold only; use `wp-typia create --template query-loop` instead of `wp-typia add block`.",
+			"Owns a `core/query` variation, so it does not generate `src/types.ts`, `block.json`, or Typia manifests.",
+		];
 	}
 
 	return [];

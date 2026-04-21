@@ -286,6 +286,39 @@ function templateSupportsPersistenceFlags(templateId: string): boolean {
 	return templateId === "persistence" || templateId === "compound";
 }
 
+function createTemplateLabel(templateId: string): string {
+	return templateId === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
+		? "`--template workspace`"
+		: `"${templateId}"`;
+}
+
+function collectTemplateCapabilityWarnings(options: {
+	queryPostType?: string;
+	templateId: string;
+	withMigrationUi?: boolean;
+}): string[] {
+	const warnings: string[] = [];
+	const trimmedQueryPostType = options.queryPostType?.trim();
+
+	if (trimmedQueryPostType && options.templateId !== "query-loop") {
+		warnings.push(
+			`\`--query-post-type\` only applies to \`wp-typia create --template query-loop\`, which scaffolds a create-time \`core/query\` variation instead of a standalone block. ${createTemplateLabel(options.templateId)} will ignore "${trimmedQueryPostType}".`,
+		);
+	}
+
+	if (
+		options.withMigrationUi === true &&
+		!isBuiltInTemplateId(options.templateId) &&
+		options.templateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
+	) {
+		warnings.push(
+			`\`--with-migration-ui\` was ignored for ${createTemplateLabel(options.templateId)}. Migration UI currently scaffolds built-in templates and the official \`--template workspace\` flow; external templates still need to opt into that surface explicitly.`,
+		);
+	}
+
+	return warnings;
+}
+
 function templateSupportsAlternateRenderTargets(options: {
 	alternateRenderTargets?: string;
 	dataStorageMode?: string;
@@ -750,6 +783,11 @@ export async function runScaffoldFlow({
 				...resolvedResult.result,
 				warnings: [
 					...resolvedResult.result.warnings,
+					...collectTemplateCapabilityWarnings({
+						queryPostType,
+						templateId: resolvedTemplateId,
+						withMigrationUi,
+					}),
 					...collectProjectDirectoryWarnings(projectDir),
 				],
 			},
