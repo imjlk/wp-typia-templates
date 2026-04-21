@@ -17,6 +17,7 @@ type SyncProjectContext = {
 };
 
 const SYNC_INSTALL_MARKERS = ["node_modules", ".pnp.cjs", ".pnp.loader.mjs"] as const;
+const LOCAL_SYNC_TOOL_PATTERN = /(^|[\s;&|()])(?:tsx|wp-scripts)(?=($|[\s;&|()]))/u;
 
 function formatRunScript(
 	packageManagerId: PackageManagerId,
@@ -122,19 +123,48 @@ function resolveSyncProjectContext(cwd: string): SyncProjectContext {
 	};
 }
 
-function hasInstalledProjectDependencies(projectDir: string): boolean {
-	return SYNC_INSTALL_MARKERS.some((marker) =>
-		fs.existsSync(path.join(projectDir, marker)),
+function findInstalledDependencyMarkerDir(projectDir: string): string | null {
+	let currentDir = path.resolve(projectDir);
+
+	while (true) {
+		if (
+			SYNC_INSTALL_MARKERS.some((marker) =>
+				fs.existsSync(path.join(currentDir, marker)),
+			)
+		) {
+			return currentDir;
+		}
+
+		const parentDir = path.dirname(currentDir);
+		if (parentDir === currentDir) {
+			return null;
+		}
+		currentDir = parentDir;
+	}
+}
+
+function scriptsLikelyNeedInstalledDependencies(project: SyncProjectContext): boolean {
+	const candidateScripts = project.scripts.sync
+		? [project.scripts.sync]
+		: [project.scripts["sync-types"], project.scripts["sync-rest"]];
+
+	return candidateScripts.some(
+		(script): script is string =>
+			typeof script === "string" && LOCAL_SYNC_TOOL_PATTERN.test(script),
 	);
 }
 
 function assertSyncDependenciesInstalled(project: SyncProjectContext): void {
-	if (hasInstalledProjectDependencies(project.cwd)) {
+	if (!scriptsLikelyNeedInstalledDependencies(project)) {
+		return;
+	}
+	const markerDir = findInstalledDependencyMarkerDir(project.cwd);
+	if (markerDir) {
 		return;
 	}
 
 	throw new Error(
-		`Project dependencies have not been installed yet. Run \`${formatInstallCommand(project.packageManager)}\` from ${project.cwd} before \`wp-typia sync\`. The generated sync scripts rely on local tools such as \`tsx\`.`,
+		`Project dependencies have not been installed yet. Run \`${formatInstallCommand(project.packageManager)}\` from the project root before \`wp-typia sync\`. The generated sync scripts rely on local tools such as \`tsx\`.`,
 	);
 }
 

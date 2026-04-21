@@ -1,9 +1,9 @@
-import { promises as fsp } from "node:fs";
 import fs from "node:fs";
+import { promises as fsp } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-type WorkspaceFileOperation = `update ${string}` | `write ${string}`;
+type WorkspaceFileOperation = `delete ${string}` | `update ${string}` | `write ${string}`;
 
 const SKIPPED_COPY_ROOT_ENTRIES = new Set([".git", "node_modules"]);
 const SKIPPED_COMPARE_ROOT_ENTRIES = new Set([
@@ -40,12 +40,21 @@ function ensureWorkspaceInstallMarkers(sourceDir: string, targetDir: string): vo
 			continue;
 		}
 
-		fs.symlinkSync(sourceMarker, path.join(targetDir, marker));
+		const targetMarker = path.join(targetDir, marker);
+		try {
+			fs.symlinkSync(sourceMarker, targetMarker);
+		} catch {
+			try {
+				fs.linkSync(sourceMarker, targetMarker);
+			} catch {
+				fs.copyFileSync(sourceMarker, targetMarker);
+			}
+		}
 	}
 }
 
-async function listWorkspaceFiles(rootDir: string): Promise<Map<string, string>> {
-	const files = new Map<string, string>();
+async function listWorkspaceFiles(rootDir: string): Promise<Map<string, Buffer>> {
+	const files = new Map<string, Buffer>();
 
 	async function visit(currentDir: string): Promise<void> {
 		const entries = await fsp.readdir(currentDir, { withFileTypes: true });
@@ -68,13 +77,23 @@ async function listWorkspaceFiles(rootDir: string): Promise<Map<string, string>>
 
 			files.set(
 				relativePath.replace(path.sep === "\\" ? /\\/gu : /\//gu, "/"),
-				await fsp.readFile(absolutePath, "utf8"),
+				await fsp.readFile(absolutePath),
 			);
 		}
 	}
 
 	await visit(rootDir);
 	return files;
+}
+
+function compareStrings(left: string, right: string): number {
+	if (left < right) {
+		return -1;
+	}
+	if (left > right) {
+		return 1;
+	}
+	return 0;
 }
 
 async function collectWorkspaceFileOperations(
@@ -94,12 +113,18 @@ async function collectWorkspaceFileOperations(
 			continue;
 		}
 
-		if (originalSource !== simulatedSource) {
+		if (!originalSource.equals(simulatedSource)) {
 			operations.push(`update ${relativePath}`);
 		}
 	}
 
-	return operations.sort((left, right) => left.localeCompare(right));
+	for (const relativePath of sourceFiles.keys()) {
+		if (!simulatedFiles.has(relativePath)) {
+			operations.push(`delete ${relativePath}`);
+		}
+	}
+
+	return operations.sort(compareStrings);
 }
 
 /**

@@ -22,11 +22,6 @@ function loadAddFlow() {
 }
 
 const addOptions = {
-	"dry-run": {
-		argumentKind: "flag" as const,
-		description: "Preview workspace file updates without writing them.",
-		schema: z.boolean().default(false),
-	},
 	"alternate-render-targets": {
 		description:
 			"Comma-separated alternate render targets for dynamic block scaffolds (email,mjml,plain-text).",
@@ -43,6 +38,11 @@ const addOptions = {
 	"data-storage": {
 		description: "Persistence storage mode for persistence-capable templates.",
 		schema: z.string().optional(),
+	},
+	"dry-run": {
+		argumentKind: "flag" as const,
+		description: "Preview workspace file updates without writing them.",
+		schema: z.boolean().default(false),
 	},
 	"external-layer-id": {
 		description: "Explicit layer id when an external layer package exposes multiple selectable layers.",
