@@ -9,7 +9,7 @@ import {
 describe("@wp-typia/project-tools template discovery formatting", () => {
 	test("list output surfaces flag hints for persistence and query-loop templates", () => {
 		expect(formatTemplateFeatures(getTemplateById("persistence"))).toContain(
-			"Supports: --data-storage • --persistence-policy • external layers",
+			"Supports: --alternate-render-targets • --data-storage • --persistence-policy • external layers",
 		);
 		expect(formatTemplateFeatures(getTemplateById("query-loop"))).toContain(
 			"Supports: --query-post-type • external layers",
