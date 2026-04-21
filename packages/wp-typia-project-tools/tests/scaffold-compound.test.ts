@@ -310,10 +310,11 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(parentChildren).toContain('DEFAULT_CHILD_BLOCK_NAME');
       expect(parentChildren).toContain('COMPOUND_CHILD_SPECS');
       expect(parentChildren).toContain('ROOT_INNER_BLOCKS_PRESET_ID');
-      expect(parentChildren).toContain('getChildAllowedBlocks');
       expect(parentChildren).toContain('getChildInnerBlocksConfig');
       expect(parentChildren).toContain('getRootInnerBlocksConfig');
       expect(parentChildren).toContain('hasNestedChildBlocks');
+      expect(parentChildren).not.toContain('ALLOWED_CHILD_BLOCKS');
+      expect(parentChildren).not.toContain('getChildAllowedBlocks');
       expect(parentChildren).toContain(
         '@wp-typia/block-types/blocks/registration',
       );
@@ -337,6 +338,7 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(childEdit).not.toMatch(/setAttributes\s*\(\s*\{/);
       expect(childEdit).toContain('getChildInnerBlocksConfig');
       expect(childEdit).toContain('hasNestedChildBlocks( metadata.name )');
+      expect(childEdit).not.toContain('allowedBlocks={');
       expect(childEdit).toContain("from '../demo-compound/children'");
       expect(childEdit).toContain(
         'wp-block-create-block-demo-compound-item__title',
@@ -1396,6 +1398,7 @@ describe('@wp-typia/project-tools scaffold compound', () => {
       expect(clauseBlockJson.supports.inserter).toBe(true);
       expect(sectionEdit).toContain('InnerBlocks');
       expect(sectionEdit).toContain('hasNestedChildBlocks( metadata.name )');
+      expect(sectionEdit).not.toContain('allowedBlocks={');
       expect(sectionSave).toContain('InnerBlocks.Content');
       expect(childrenRegistry).toContain('key: "section"');
       expect(childrenRegistry).toContain('key: "clause"');

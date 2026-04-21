@@ -119,7 +119,6 @@ export default function Edit( {
 \t\t\t\t</p>
 \t\t\t\t<div className="{{cssClassName}}__items">
 \t\t\t\t\t<TypedInnerBlocks
-\t\t\t\t\t\tallowedBlocks={ rootInnerBlocksConfig.allowedBlocks }
 \t\t\t\t\t\tdefaultBlock={ rootInnerBlocksConfig.defaultBlock }
 \t\t\t\t\t\tdirectInsert={ rootInnerBlocksConfig.directInsert }
 \t\t\t\t\t\torientation={ rootInnerBlocksConfig.orientation }

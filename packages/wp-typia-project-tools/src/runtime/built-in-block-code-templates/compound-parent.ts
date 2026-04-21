@@ -89,7 +89,6 @@ export default function Edit( {
 				) }
 				<div className="{{cssClassName}}__items">
 					<TypedInnerBlocks
-						allowedBlocks={ rootInnerBlocksConfig.allowedBlocks }
 						defaultBlock={ rootInnerBlocksConfig.defaultBlock }
 						directInsert={ rootInnerBlocksConfig.directInsert }
 						orientation={ rootInnerBlocksConfig.orientation }
@@ -237,7 +236,6 @@ export interface CompoundChildSpec {
 }
 
 export interface CompoundInnerBlocksConfig {
-\tallowedBlocks?: string[];
 \tdefaultBlock?: [ string, Record< string, unknown > ];
 \tdirectInsert: boolean;
 \torientation?: 'horizontal' | 'vertical';
@@ -251,7 +249,7 @@ export const ROOT_INNER_BLOCKS_PRESET_DESCRIPTION =
 
 const BASE_INNER_BLOCKS_CONFIG: Omit<
 \tCompoundInnerBlocksConfig,
-\t'allowedBlocks' | 'defaultBlock' | 'template'
+\t'defaultBlock' | 'template'
 > = {
 \tdirectInsert: {{compoundInnerBlocksDirectInsert}},
 \torientation: {{compoundInnerBlocksOrientationExpression}},
@@ -307,61 +305,36 @@ function buildNestedTemplateForKey( key: string ): BlockTemplate {
 \t).flatMap( ( spec ) => buildTemplateEntriesForSpec( spec ) );
 }
 
-export const ALLOWED_CHILD_BLOCKS = COMPOUND_CHILD_SPECS.filter(
-\t( spec ) => spec.placement === 'root'
-).map( ( spec ) => spec.blockName );
-
 export const DEFAULT_CHILD_TEMPLATE: BlockTemplate =
 \tCOMPOUND_CHILD_SPECS.filter( ( spec ) => spec.placement === 'root' ).flatMap(
 \t\t( spec ) => buildTemplateEntriesForSpec( spec )
 \t);
 
 function buildDefaultBlockEntry(
-\tallowedBlocks?: string[]
+\ttemplate?: BlockTemplate
 ): [ string, Record< string, unknown > ] | undefined {
 \tif (
 \t\t! BASE_INNER_BLOCKS_CONFIG.directInsert ||
-\t\t! Array.isArray( allowedBlocks ) ||
-\t\tallowedBlocks.length === 0
+\t\t! Array.isArray( template ) ||
+\t\ttemplate.length === 0 ||
+\t\ttypeof template[ 0 ]?.[ 0 ] !== 'string'
 \t) {
 \t\treturn undefined;
 \t}
 
-\treturn [ allowedBlocks[ 0 ], {} ];
+\treturn [ template[ 0 ][ 0 ], {} ];
 }
 
 export function getRootInnerBlocksConfig(): CompoundInnerBlocksConfig {
 \treturn {
 \t\t...BASE_INNER_BLOCKS_CONFIG,
-\t\tallowedBlocks: ALLOWED_CHILD_BLOCKS,
-\t\tdefaultBlock: buildDefaultBlockEntry( ALLOWED_CHILD_BLOCKS ),
+\t\tdefaultBlock: buildDefaultBlockEntry( DEFAULT_CHILD_TEMPLATE ),
 \t\ttemplate: DEFAULT_CHILD_TEMPLATE,
 \t};
 }
 
 export function getChildSpec( blockName: string ): CompoundChildSpec | undefined {
 \treturn COMPOUND_CHILD_SPECS.find( ( spec ) => spec.blockName === blockName );
-}
-
-export function getChildAllowedBlocks(
-\tblockName: string
-): string[] | undefined {
-\tconst childSpec = getChildSpec( blockName );
-\tif ( ! childSpec ) {
-\t\treturn undefined;
-\t}
-
-\tconst directDescendants = COMPOUND_CHILD_SPECS.filter(
-\t\t( spec ) =>
-\t\t\tspec.placement === 'nested' &&
-\t\t\tspec.ancestorKeys[ spec.ancestorKeys.length - 1 ] === childSpec.key
-\t).map( ( spec ) => spec.blockName );
-
-\tif ( directDescendants.length > 0 ) {
-\t\treturn directDescendants;
-\t}
-
-\treturn childSpec.container ? [] : undefined;
 }
 
 export function getChildAncestorBlockNames(
@@ -402,17 +375,15 @@ export function getChildInnerBlocksConfig(
 \t\treturn undefined;
 \t}
 
-\tconst allowedBlocks = getChildAllowedBlocks( blockName );
 \tconst template = getChildTemplate( blockName );
 
-\tif ( ! childSpec.container && ! allowedBlocks && ! template ) {
+\tif ( ! childSpec.container && ! template ) {
 \t\treturn undefined;
 \t}
 
 \treturn {
 \t\t...BASE_INNER_BLOCKS_CONFIG,
-\t\tallowedBlocks,
-\t\tdefaultBlock: buildDefaultBlockEntry( allowedBlocks ),
+\t\tdefaultBlock: buildDefaultBlockEntry( template ),
 \t\ttemplate,
 \t};
 }
