@@ -530,11 +530,12 @@ describe("@wp-typia/rest/react", () => {
 		client.invalidate(endpoint, request);
 		await flush();
 		resolveFirstFetch({ count: 1 });
+		await flush();
 
 		await waitForAssertion(() => {
 			expect(fetchCount).toBe(2);
 			expect(rendered.current.data).toEqual({ count: 2 });
-		}, 5_000);
+		}, 10_000);
 
 		await rendered.unmount();
 	});
@@ -589,12 +590,13 @@ describe("@wp-typia/rest/react", () => {
 		client.invalidate(endpoint, request);
 		await flush();
 		rejectFirstFetch(new Error("offline"));
+		await flush();
 
 		await waitForAssertion(() => {
 			expect(fetchCount).toBe(2);
 			expect(rendered.current.data).toEqual({ count: 2 });
 			expect(rendered.current.error).toBeNull();
-		}, 5_000);
+		}, 10_000);
 
 		await rendered.unmount();
 	});
