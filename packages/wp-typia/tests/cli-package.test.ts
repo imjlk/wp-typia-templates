@@ -593,6 +593,20 @@ describe("wp-typia package", () => {
 		expect(result.stderr).toContain("- `wp-typia add variation` requires --block <block-slug>.");
 	});
 
+	test("treats missing add kinds as an error while still printing help text", () => {
+		const result = runCapturedCommand("node", [entryPath, "add"], {
+			env: withoutAIAgentEnv(),
+		});
+
+		expect(result.status).toBe(1);
+		expect(result.stdout).toContain("Usage:");
+		expect(result.stdout).toContain("wp-typia add block <name>");
+		expect(result.stderr).toContain("Error: wp-typia add failed");
+		expect(result.stderr).toContain(
+			"- `wp-typia add` requires <kind>. Usage: wp-typia add <block|variation|pattern|binding-source|rest-resource|editor-plugin|hooked-block> ...",
+		);
+	});
+
 	test("formats migrate failures with a shared non-interactive diagnostic block", () => {
 		const result = runCapturedCommand("node", [entryPath, "migrate", "init"]);
 
