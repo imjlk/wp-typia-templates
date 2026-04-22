@@ -12,6 +12,7 @@ import {
 	printCompletionPayload,
 	toExternalLayerPromptOptions,
 } from "./runtime-bridge-output";
+import { isInteractiveTerminal } from "./runtime-capabilities";
 export {
 	buildCreateCompletionPayload,
 	buildCreateDryRunPayload,
@@ -198,7 +199,7 @@ export async function executeCreateCommand({
 		loadCliTemplatesRuntime(),
 	]);
 	const shouldPrompt =
-		interactive ?? (!Boolean(flags.yes) && Boolean(process.stdin.isTTY) && Boolean(process.stdout.isTTY));
+		interactive ?? (!Boolean(flags.yes) && isInteractiveTerminal());
 	const activePrompt = shouldPrompt ? (prompt ?? createReadlinePrompt()) : undefined;
 	const shouldPromptForExternalLayerSelection =
 		Boolean(activePrompt) && activePrompt !== prompt;
@@ -650,7 +651,7 @@ export async function executeAddCommand({
 		const shouldPromptForLayerSelection =
 			Boolean(externalLayerSource) &&
 			!Boolean(externalLayerId) &&
-			(interactive ?? (Boolean(process.stdin.isTTY) && Boolean(process.stdout.isTTY)));
+			(interactive ?? isInteractiveTerminal());
 		const promptRuntime = shouldPromptForLayerSelection
 			? await loadCliPromptRuntime()
 			: undefined;

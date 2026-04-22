@@ -8,10 +8,9 @@ import {
 } from "../command-option-metadata";
 import { resolveBundledModuleHref } from "../render-loader";
 import { executeMigrateCommand } from "../runtime-bridge";
+import { supportsInteractiveTui } from "../runtime-capabilities";
 import type { WpTypiaRenderArgs } from "./render-types";
 import { LazyFlow } from "../ui/lazy-flow";
-
-const supportsInteractiveTui = typeof Bun !== "undefined";
 
 function loadMigrateFlow() {
 	return import(
@@ -37,7 +36,7 @@ export const migrateCommand = defineCommand({
 	},
 	name: "migrate",
 	options: migrateOptions,
-	...(supportsInteractiveTui
+	...(supportsInteractiveTui()
 		? {
 				render: (args: WpTypiaRenderArgs) =>
 					createElement(LazyFlow, {

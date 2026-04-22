@@ -10,6 +10,7 @@ import {
 import { addCommand } from "../src/commands/add";
 import { createCommand } from "../src/commands/create";
 import { migrateCommand } from "../src/commands/migrate";
+import { supportsInteractiveTui } from "../src/runtime-capabilities";
 import {
 	isAlternateBufferCompletionKey,
 	describeAlternateBufferFailure,
@@ -298,12 +299,19 @@ describe("alternate-buffer TUI lifecycle", () => {
 	});
 
 	test("interactive commands keep alternate-buffer rendering enabled", () => {
-		expect(createCommand.tui?.renderer?.bufferMode).toBe("alternate");
-		expect(addCommand.tui?.renderer?.bufferMode).toBe("alternate");
-		expect(migrateCommand.tui?.renderer?.bufferMode).toBe("alternate");
-		expect(typeof createCommand.render).toBe("function");
-		expect(typeof addCommand.render).toBe("function");
-		expect(typeof migrateCommand.render).toBe("function");
+		const expectedBufferMode = supportsInteractiveTui()
+			? "alternate"
+			: undefined;
+		const expectedRenderType = supportsInteractiveTui()
+			? "function"
+			: "undefined";
+
+		expect(createCommand.tui?.renderer?.bufferMode).toBe(expectedBufferMode);
+		expect(addCommand.tui?.renderer?.bufferMode).toBe(expectedBufferMode);
+		expect(migrateCommand.tui?.renderer?.bufferMode).toBe(expectedBufferMode);
+		expect(typeof createCommand.render).toBe(expectedRenderType);
+		expect(typeof addCommand.render).toBe(expectedRenderType);
+		expect(typeof migrateCommand.render).toBe(expectedRenderType);
 	});
 
 	test("shared first-party submit surface replaces stale create fields while submitting", () => {

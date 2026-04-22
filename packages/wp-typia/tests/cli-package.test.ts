@@ -45,6 +45,10 @@ const nodeCliSource = fs.readFileSync(
 	path.join(packageRoot, "src", "node-cli.ts"),
 	"utf8",
 );
+const cliSource = fs.readFileSync(
+	path.join(packageRoot, "src", "cli.ts"),
+	"utf8",
+);
 const addFlowSource = fs.readFileSync(
 	path.join(packageRoot, "src", "ui", "add-flow.tsx"),
 	"utf8",
@@ -195,6 +199,7 @@ describe("wp-typia package", () => {
 		expect(projectToolsPackageManifest.exports["./hooked-blocks"]).toBeDefined();
 		expect(projectToolsPackageManifest.exports["./migrations"]).toBeDefined();
 		expect(projectToolsPackageManifest.exports["./package-managers"]).toBeDefined();
+		expect(projectToolsPackageManifest.exports["./temp-roots"]).toBeDefined();
 		expect(projectToolsPackageManifest.exports["./workspace-project"]).toBeDefined();
 	});
 
@@ -209,6 +214,19 @@ describe("wp-typia package", () => {
 		expect(doctorCommandSource).not.toMatch(/from ["']@wp-typia\/project-tools["']/);
 		expect(addFlowSource).not.toMatch(/from ["']@wp-typia\/project-tools["']/);
 		expect(createFlowSource).not.toMatch(/from ["']@wp-typia\/project-tools["']/);
+	});
+
+	test("gates interactive TUI rendering on real terminal capability and avoids hard exit short-circuits", () => {
+		expect(createCommandSource).toContain('supportsInteractiveTui');
+		expect(addCommandSource).toContain('supportsInteractiveTui');
+		expect(migrateCommandSource).toContain('supportsInteractiveTui');
+		expect(createCommandSource).not.toMatch(/typeof\s+Bun\s*!==\s*["']undefined["']/);
+		expect(addCommandSource).not.toMatch(/typeof\s+Bun\s*!==\s*["']undefined["']/);
+		expect(migrateCommandSource).not.toMatch(/typeof\s+Bun\s*!==\s*["']undefined["']/);
+		expect(nodeCliSource).toContain("process.exitCode = 1");
+		expect(nodeCliSource).not.toMatch(/process\.exit\s*\(\s*1\s*\)/);
+		expect(cliSource).toContain("process.exitCode = 1");
+		expect(cliSource).not.toMatch(/process\.exit\s*\(\s*1\s*\)/);
 	});
 
 	test("renders help output through the canonical bin", () => {

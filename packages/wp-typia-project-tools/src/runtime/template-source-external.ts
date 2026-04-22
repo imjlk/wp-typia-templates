@@ -2,12 +2,12 @@
 
 import fs from 'node:fs'
 import { promises as fsp } from 'node:fs'
-import os from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 import { isPlainObject, type UnknownRecord } from './object-utils.js'
 import { toSegmentPascalCase } from './string-case.js'
+import { createManagedTempRoot } from './temp-roots.js'
 import { copyRawDirectory, copyRenderedDirectory } from './template-render.js'
 import type {
   ExternalTemplateConfig,
@@ -268,12 +268,9 @@ export async function renderCreateBlockExternalTemplate(
     variantConfig,
   )
 
-  const tempRoot = await fsp.mkdtemp(
-    path.join(os.tmpdir(), 'wp-typia-create-block-external-'),
+  const { path: tempRoot, cleanup } = await createManagedTempRoot(
+    'wp-typia-create-block-external-',
   )
-  const cleanup = async () => {
-    await fsp.rm(tempRoot, { force: true, recursive: true })
-  }
 
   try {
     const renderedRoot = path.join(tempRoot, 'rendered')

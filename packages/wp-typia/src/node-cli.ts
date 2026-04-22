@@ -586,6 +586,6 @@ export async function runNodeCliEntrypoint(argv = process.argv.slice(2)): Promis
 		await runNodeCli(argv);
 	} catch (error) {
 		console.error(`Error: ${await formatCliDiagnosticError(error)}`);
-		process.exit(1);
+		process.exitCode = 1;
 	}
 }

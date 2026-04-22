@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import { promises as fsp } from "node:fs";
-import os from "node:os";
 import path from "node:path";
 
 import {
@@ -26,6 +25,7 @@ import type {
 } from "./scaffold.js";
 import type { PackageManagerId } from "./package-managers.js";
 import { getPrimaryDevelopmentScript } from "./local-dev-presets.js";
+import { createManagedTempRoot } from "./temp-roots.js";
 import {
 	getOptionalOnboardingNote,
 	getOptionalOnboardingSteps,
@@ -193,7 +193,9 @@ async function buildScaffoldDryRunPlan({
 	result: Awaited<ReturnType<typeof scaffoldProject>>;
 }> {
 	await assertDryRunTargetDirectoryReady(projectDir, allowExistingDir);
-	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-scaffold-plan-"));
+	const { path: tempRoot, cleanup } = await createManagedTempRoot(
+		"wp-typia-scaffold-plan-",
+	);
 	const previewProjectDir = path.join(tempRoot, "preview-project");
 
 	try {
@@ -228,7 +230,7 @@ async function buildScaffoldDryRunPlan({
 			result,
 		};
 	} finally {
-		await fsp.rm(tempRoot, { force: true, recursive: true });
+		await cleanup();
 	}
 }
 

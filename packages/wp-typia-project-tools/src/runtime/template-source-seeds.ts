@@ -1,7 +1,6 @@
 import fs from 'node:fs'
 import { promises as fsp } from 'node:fs'
 import { createRequire } from 'node:module'
-import os from 'node:os'
 import path from 'node:path'
 import { execFileSync } from 'node:child_process'
 
@@ -13,6 +12,7 @@ import {
   PROJECT_TOOLS_PACKAGE_ROOT,
 } from './template-registry.js'
 import { isPlainObject } from './object-utils.js'
+import { createManagedTempRoot } from './temp-roots.js'
 import type {
   GitHubTemplateLocator,
   NpmTemplateLocator,
@@ -99,12 +99,9 @@ async function fetchNpmTemplateSource(
     )
   }
 
-  const tempRoot = await fsp.mkdtemp(
-    path.join(os.tmpdir(), 'wp-typia-template-source-'),
+  const { path: tempRoot, cleanup } = await createManagedTempRoot(
+    'wp-typia-template-source-',
   )
-  const cleanup = async () => {
-    await fsp.rm(tempRoot, { force: true, recursive: true })
-  }
 
   try {
     const tarballResponse = await fetch(tarballUrl)
@@ -259,12 +256,9 @@ export async function assertNoSymlinks(sourceDir: string): Promise<void> {
 async function resolveGitHubTemplateSource(
   locator: GitHubTemplateLocator,
 ): Promise<SeedSource> {
-  const remoteRoot = await fsp.mkdtemp(
-    path.join(os.tmpdir(), 'wp-typia-template-source-'),
+  const { path: remoteRoot, cleanup } = await createManagedTempRoot(
+    'wp-typia-template-source-',
   )
-  const cleanup = async () => {
-    await fsp.rm(remoteRoot, { force: true, recursive: true })
-  }
   const checkoutDir = path.join(remoteRoot, 'source')
 
   try {

@@ -1,8 +1,8 @@
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { promises as fsp } from "node:fs";
 
+import { createManagedTempRoot } from "./temp-roots.js";
 import {
 	getTemplateById,
 	SHARED_BASE_TEMPLATE_ROOT,
@@ -251,7 +251,9 @@ async function materializeBuiltInTemplateSource(
 		templateId,
 		layerDirs,
 	);
-	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-template-"));
+	const { path: tempRoot, cleanup } = await createManagedTempRoot(
+		"wp-typia-template-",
+	);
 	const templateDir = path.join(tempRoot, templateId);
 
 	try {
@@ -264,7 +266,7 @@ async function materializeBuiltInTemplateSource(
 			});
 		}
 	} catch (error) {
-		await fsp.rm(tempRoot, { force: true, recursive: true });
+		await cleanup();
 		throw error;
 	}
 
@@ -275,9 +277,7 @@ async function materializeBuiltInTemplateSource(
 		features: template.features,
 		format: "wp-typia",
 		templateDir,
-		cleanup: async () => {
-			await fsp.rm(tempRoot, { force: true, recursive: true });
-		},
+		cleanup,
 	};
 }
 

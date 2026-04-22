@@ -118,7 +118,7 @@ export async function runCliEntrypoint(argv = process.argv.slice(2)): Promise<vo
 		await main(argv);
 	} catch (error) {
 		console.error(`Error: ${await formatCliError(error)}`);
-		process.exit(1);
+		process.exitCode = 1;
 	}
 }
 

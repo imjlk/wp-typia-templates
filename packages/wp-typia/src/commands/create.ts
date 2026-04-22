@@ -9,10 +9,9 @@ import {
 import { getCreateDefaults } from "../config";
 import { resolveBundledModuleHref } from "../render-loader";
 import { executeCreateCommand } from "../runtime-bridge";
+import { supportsInteractiveTui } from "../runtime-capabilities";
 import type { WpTypiaRenderArgs } from "./render-types";
 import { LazyFlow } from "../ui/lazy-flow";
-
-const supportsInteractiveTui = typeof Bun !== "undefined";
 
 function loadCreateFlow() {
 	return import(
@@ -46,7 +45,7 @@ export const createCommand = defineCommand({
 	},
 	name: "create",
 	options: createOptions,
-	...(supportsInteractiveTui
+	...(supportsInteractiveTui()
 		? {
 				render: (args: WpTypiaRenderArgs) => {
 					const config =
