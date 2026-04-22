@@ -26,6 +26,8 @@ import {
 import {
   assertBuiltInTemplateVariantAllowed,
 } from './cli-validation.js'
+import type { ScaffoldTemplateVariables } from './scaffold.js'
+import { getScaffoldTemplateVariableGroups } from './scaffold-template-variable-groups.js'
 
 export type {
   GitHubTemplateLocator,
@@ -45,18 +47,24 @@ export { resolveTemplateSeed } from './template-source-seeds.js'
 export async function resolveTemplateSource(
   templateId: string,
   cwd: string,
-  variables: { [key: string]: string },
+  variables: ScaffoldTemplateVariables,
   variant?: string,
 ): Promise<ResolvedTemplateSource> {
   if (isBuiltInTemplateId(templateId)) {
+    const variableGroups = getScaffoldTemplateVariableGroups(variables)
     assertBuiltInTemplateVariantAllowed({
       templateId,
       variant,
     })
     return resolveBuiltInTemplateSource(templateId, {
-      persistenceEnabled: variables.compoundPersistenceEnabled === 'true',
+      persistenceEnabled:
+        variableGroups.compound.enabled &&
+        variableGroups.compound.persistenceEnabled,
       persistencePolicy:
-        variables.persistencePolicy === 'public' ? 'public' : 'authenticated',
+        variableGroups.persistence.enabled &&
+        variableGroups.persistence.policy === 'public'
+          ? 'public'
+          : 'authenticated',
     })
   }
 

@@ -29,8 +29,10 @@ import {
 	buildFrontendCssClassName,
 	resolveScaffoldIdentifiers,
 } from "./scaffold-identifiers.js";
+import { attachScaffoldTemplateVariableGroups } from "./scaffold-template-variable-groups.js";
 import type {
 	DataStorageMode,
+	FlatScaffoldTemplateVariables,
 	PersistencePolicy,
 	ScaffoldAnswers,
 	ScaffoldProgressEvent,
@@ -300,6 +302,8 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 	const compoundInnerBlocksPreset = spec.compound.innerBlocksPreset;
 	const compoundInnerBlocksPresetDefinition =
 		getCompoundInnerBlocksPresetDefinition(compoundInnerBlocksPreset);
+	const compoundInnerBlocksOrientation: "" | "horizontal" | "vertical" =
+		compoundInnerBlocksPresetDefinition.orientation ?? "";
 	const persistenceEnabled = spec.persistence.enabled;
 	const dataStorageMode = persistenceEnabled ? spec.persistence.dataStorageMode : "custom-table";
 	const persistencePolicy = persistenceEnabled
@@ -307,7 +311,7 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 		: "authenticated";
 	const queryVariationNamespace = `${namespace}/${slug}`;
 
-	return {
+	const flatVariables: FlatScaffoldTemplateVariables = {
 		alternateRenderTargetsCsv: formatAlternateRenderTargets(
 			alternateRenderTargets,
 		),
@@ -328,8 +332,7 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 			spec.template.family === "compound" && persistenceEnabled ? "true" : "false",
 		compoundInnerBlocksDirectInsert:
 			compoundInnerBlocksPresetDefinition.directInsert ? "true" : "false",
-		compoundInnerBlocksOrientation:
-			compoundInnerBlocksPresetDefinition.orientation ?? "",
+		compoundInnerBlocksOrientation: compoundInnerBlocksOrientation,
 		compoundInnerBlocksOrientationExpression:
 			compoundInnerBlocksPresetDefinition.orientation
 				? `'${compoundInnerBlocksPresetDefinition.orientation}'`
@@ -415,4 +418,217 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 		titleCase: pascalCase,
 		persistencePolicy,
 	};
+
+	const shared = {
+		author: spec.project.author,
+		blockMetadataVersion: BUILTIN_BLOCK_METADATA_VERSION,
+		category: spec.metadata.category,
+		cssClassName,
+		description: spec.metadata.description,
+		descriptionJson: flatVariables.descriptionJson,
+		frontendCssClassName: flatVariables.frontendCssClassName,
+		icon: spec.metadata.icon,
+		keyword: spec.metadata.keyword,
+		namespace,
+		pascalCase,
+		phpPrefix,
+		phpPrefixUpper,
+		slug,
+		slugCamelCase: flatVariables.slugCamelCase,
+		slugKebabCase: slug,
+		slugSnakeCase,
+		textDomain,
+		title,
+		titleCase: pascalCase,
+		titleJson: flatVariables.titleJson,
+		versions: {
+			apiClient: apiClientPackageVersion,
+			blockRuntime: blockRuntimePackageVersion,
+			blockTypes: blockTypesPackageVersion,
+			projectTools: projectToolsPackageVersion,
+			rest: restPackageVersion,
+		},
+	};
+	const alternateRenderTargetsGroup = {
+		csv: flatVariables.alternateRenderTargetsCsv,
+		enabled: alternateRenderTargets.length > 0,
+		hasEmail: hasAlternateEmailRenderTarget,
+		hasMjml: hasAlternateMjmlRenderTarget,
+		hasPlainText: hasAlternatePlainTextRenderTarget,
+		json: flatVariables.alternateRenderTargetsJson,
+		targets: alternateRenderTargets,
+	};
+	const compoundGroup = {
+		child: {
+			category: COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS.category,
+			cssClassName: compoundChildCssClassName,
+			icon: COMPOUND_CHILD_BLOCK_METADATA_DEFAULTS.icon,
+			title: compoundChildTitle,
+			titleJson: JSON.stringify(compoundChildTitle),
+		},
+		enabled: true as const,
+		innerBlocks: {
+			description: compoundInnerBlocksPresetDefinition.description,
+			directInsert: compoundInnerBlocksPresetDefinition.directInsert,
+			label: compoundInnerBlocksPresetDefinition.label,
+			orientation: compoundInnerBlocksOrientation,
+			orientationExpression:
+				compoundInnerBlocksPresetDefinition.orientation
+					? `'${compoundInnerBlocksPresetDefinition.orientation}'`
+					: "undefined",
+			preset: compoundInnerBlocksPreset,
+			templateLockExpression:
+				compoundInnerBlocksPresetDefinition.templateLock === false
+					? "false"
+					: `'${compoundInnerBlocksPresetDefinition.templateLock}'`,
+		},
+		persistenceEnabled: persistenceEnabled,
+	};
+	const persistenceGroup = persistenceEnabled
+		? {
+				auth: {
+					bootstrapCredentialDeclarations:
+						flatVariables.bootstrapCredentialDeclarations,
+					descriptionJson: flatVariables.persistencePolicyDescriptionJson,
+					intent: flatVariables.restWriteAuthIntent,
+					isAuthenticated: persistencePolicy === "authenticated",
+					isPublic: persistencePolicy === "public",
+					mechanism: flatVariables.restWriteAuthMechanism,
+					mode: flatVariables.restWriteAuthMode,
+					publicWriteRequestIdDeclaration:
+						flatVariables.publicWriteRequestIdDeclaration,
+				},
+				dataStorageMode,
+				enabled: true as const,
+				policy: persistencePolicy,
+				scope: spec.persistence.scope,
+		  }
+		: null;
+	const queryLoopGroup = {
+		allowedControls: spec.queryLoop.allowedControls,
+		allowedControlsJson: flatVariables.queryAllowedControlsJson,
+		enabled: true as const,
+		postType: spec.queryLoop.postType,
+		postTypeJson: flatVariables.queryPostTypeJson,
+		variationNamespace: queryVariationNamespace,
+		variationNamespaceJson: flatVariables.queryVariationNamespaceJson,
+	};
+
+	switch (spec.template.family) {
+		case "basic":
+			return attachScaffoldTemplateVariableGroups(flatVariables, {
+				alternateRenderTargets: alternateRenderTargetsGroup,
+				compound: {
+					enabled: false,
+					persistenceEnabled: false,
+				},
+				persistence: {
+					enabled: false,
+					scope: "none",
+				},
+				queryLoop: {
+					enabled: false,
+				},
+				shared,
+				template: {
+					description: spec.template.description,
+				},
+				templateFamily: "basic",
+			});
+		case "interactivity":
+			return attachScaffoldTemplateVariableGroups(flatVariables, {
+				alternateRenderTargets: alternateRenderTargetsGroup,
+				compound: {
+					enabled: false,
+					persistenceEnabled: false,
+				},
+				persistence: {
+					enabled: false,
+					scope: "none",
+				},
+				queryLoop: {
+					enabled: false,
+				},
+				shared,
+				template: {
+					description: spec.template.description,
+				},
+				templateFamily: "interactivity",
+			});
+		case "persistence": {
+			if (persistenceGroup === null) {
+				throw new Error(
+					"Persistence scaffolds must provide persistence template variables.",
+				);
+			}
+			return attachScaffoldTemplateVariableGroups(flatVariables, {
+				alternateRenderTargets: alternateRenderTargetsGroup,
+				compound: {
+					enabled: false,
+					persistenceEnabled: false,
+				},
+				persistence: {
+					...persistenceGroup,
+					scope: "single",
+				},
+				queryLoop: {
+					enabled: false,
+				},
+				shared,
+				template: {
+					description: spec.template.description,
+				},
+				templateFamily: "persistence",
+			});
+		}
+		case "compound": {
+			const compoundPersistenceGroup =
+				persistenceGroup === null
+					? {
+							enabled: false as const,
+							scope: "none" as const,
+					  }
+					: {
+							...persistenceGroup,
+							scope: "compound-parent" as const,
+					  };
+			return attachScaffoldTemplateVariableGroups(flatVariables, {
+				alternateRenderTargets: alternateRenderTargetsGroup,
+				compound: compoundGroup,
+				persistence: compoundPersistenceGroup,
+				queryLoop: {
+					enabled: false,
+				},
+				shared,
+				template: {
+					description: spec.template.description,
+				},
+				templateFamily: "compound",
+			});
+		}
+		case "query-loop":
+			return attachScaffoldTemplateVariableGroups(flatVariables, {
+				alternateRenderTargets: alternateRenderTargetsGroup,
+				compound: {
+					enabled: false,
+					persistenceEnabled: false,
+				},
+				persistence: {
+					enabled: false,
+					scope: "none",
+				},
+				queryLoop: queryLoopGroup,
+				shared,
+				template: {
+					description: spec.template.description,
+				},
+				templateFamily: "query-loop",
+			});
+		default: {
+			const unreachableTemplateFamily: never = spec.template.family;
+			throw new Error(
+				`Unhandled scaffold template family: ${unreachableTemplateFamily}`,
+			);
+		}
+	}
 }

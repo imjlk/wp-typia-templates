@@ -18,6 +18,7 @@ import {
 	buildInteractivityTypesSource,
 	buildPersistenceTypesSource,
 } from "./built-in-block-artifact-types.js";
+import { getScaffoldTemplateVariableGroups } from "./scaffold-template-variable-groups.js";
 
 export interface BuiltInBlockArtifact {
 	blockJsonDocument: Record<string, unknown>;
@@ -141,7 +142,9 @@ function buildCompoundParentArtifact(
 	variables: ScaffoldTemplateVariables,
 ): BuiltInBlockArtifact {
 	const attributes = buildCompoundParentAttributes(variables);
-	const persistenceEnabled = variables.compoundPersistenceEnabled === "true";
+	const compoundGroup = getScaffoldTemplateVariableGroups(variables).compound;
+	const persistenceEnabled =
+		compoundGroup.enabled && compoundGroup.persistenceEnabled;
 
 	return {
 		blockJsonDocument: {
