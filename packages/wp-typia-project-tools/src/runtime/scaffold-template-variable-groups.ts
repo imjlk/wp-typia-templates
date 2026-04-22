@@ -133,21 +133,20 @@ interface ScaffoldTemplateVariableGroupsBase {
 	};
 }
 
-export interface BasicScaffoldTemplateVariableGroups
-	extends ScaffoldTemplateVariableGroupsBase {
+type DisabledTemplateFamilyGroups<
+	TFamily extends "basic" | "interactivity" | "external",
+> = ScaffoldTemplateVariableGroupsBase & {
 	compound: DisabledScaffoldCompoundVariableGroup;
 	persistence: DisabledScaffoldPersistenceVariableGroup;
 	queryLoop: DisabledScaffoldQueryLoopVariableGroup;
-	templateFamily: "basic";
-}
+	templateFamily: TFamily;
+};
 
-export interface InteractivityScaffoldTemplateVariableGroups
-	extends ScaffoldTemplateVariableGroupsBase {
-	compound: DisabledScaffoldCompoundVariableGroup;
-	persistence: DisabledScaffoldPersistenceVariableGroup;
-	queryLoop: DisabledScaffoldQueryLoopVariableGroup;
-	templateFamily: "interactivity";
-}
+export type BasicScaffoldTemplateVariableGroups =
+	DisabledTemplateFamilyGroups<"basic">;
+
+export type InteractivityScaffoldTemplateVariableGroups =
+	DisabledTemplateFamilyGroups<"interactivity">;
 
 export interface PersistenceScaffoldTemplateVariableGroups
 	extends ScaffoldTemplateVariableGroupsBase {
@@ -179,13 +178,8 @@ export interface QueryLoopScaffoldTemplateVariableGroups
 	templateFamily: "query-loop";
 }
 
-export interface ExternalScaffoldTemplateVariableGroups
-	extends ScaffoldTemplateVariableGroupsBase {
-	compound: DisabledScaffoldCompoundVariableGroup;
-	persistence: DisabledScaffoldPersistenceVariableGroup;
-	queryLoop: DisabledScaffoldQueryLoopVariableGroup;
-	templateFamily: "external";
-}
+export type ExternalScaffoldTemplateVariableGroups =
+	DisabledTemplateFamilyGroups<"external">;
 
 export type ScaffoldTemplateVariableGroups =
 	| BasicScaffoldTemplateVariableGroups

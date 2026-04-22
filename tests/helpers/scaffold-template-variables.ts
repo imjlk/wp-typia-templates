@@ -6,8 +6,14 @@ import type {
 import { attachScaffoldTemplateVariableGroups } from "../../packages/wp-typia-project-tools/src/runtime/scaffold-template-variable-groups";
 
 export function createTestScaffoldTemplateVariables(
-	overrides: Partial<FlatScaffoldTemplateVariables> = {},
+	overrides: Partial<FlatScaffoldTemplateVariables> & {
+		templateFamily?: ScaffoldTemplateFamily;
+	} = {},
 ): ScaffoldTemplateVariables {
+	const {
+		templateFamily,
+		...flatOverrides
+	} = overrides;
 	const base: FlatScaffoldTemplateVariables = {
 		alternateRenderTargetsCsv: "",
 		alternateRenderTargetsJson: "[]",
@@ -82,13 +88,13 @@ export function createTestScaffoldTemplateVariables(
 		...base,
 	};
 
-	for (const [key, value] of Object.entries(overrides)) {
+	for (const [key, value] of Object.entries(flatOverrides)) {
 		if (value !== undefined) {
 			variables[key] = value;
 		}
 	}
 
-	const family = inferTemplateFamily(overrides);
+	const family = templateFamily ?? inferTemplateFamily(flatOverrides);
 	const compoundPersistenceEnabled =
 		family === "compound" && variables.compoundPersistenceEnabled === "true";
 	const persistenceEnabled =

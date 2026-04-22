@@ -64,10 +64,11 @@ describe("scaffold template variable groups", () => {
 		}
 		expect(groups.compound.persistenceEnabled).toBe(true);
 		expect(groups.compound.innerBlocks.preset).toBe("horizontal");
-		expect(groups.alternateRenderTargets.enabled).toBe(true);
-		expect(groups.alternateRenderTargets.targets).toEqual(["email", "mjml"]);
-		expect(groups.alternateRenderTargets.hasEmail).toBe(true);
-		expect(groups.alternateRenderTargets.hasPlainText).toBe(false);
+			expect(groups.alternateRenderTargets.enabled).toBe(true);
+			expect(groups.alternateRenderTargets.targets).toEqual(["email", "mjml"]);
+			expect(groups.alternateRenderTargets.hasEmail).toBe(true);
+			expect(groups.alternateRenderTargets.hasMjml).toBe(true);
+			expect(groups.alternateRenderTargets.hasPlainText).toBe(false);
 		expect(groups.persistence.enabled).toBe(true);
 		if (!groups.persistence.enabled) {
 			throw new Error("Expected persistence group to be enabled");
