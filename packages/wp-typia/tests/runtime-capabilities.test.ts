@@ -63,4 +63,22 @@ describe("wp-typia runtime capability detection", () => {
 			}),
 		).toBe(false);
 	});
+
+	test("default runtime capability arguments mirror the current process streams", () => {
+		expect(isInteractiveTerminal()).toBe(
+			isInteractiveTerminal({
+				stdin: process.stdin,
+				stdout: process.stdout,
+				term: process.env.TERM,
+			}),
+		);
+		expect(supportsInteractiveTui()).toBe(
+			supportsInteractiveTui({
+				hasBunRuntime: typeof Bun !== "undefined",
+				stdin: process.stdin,
+				stdout: process.stdout,
+				term: process.env.TERM,
+			}),
+		);
+	});
 });

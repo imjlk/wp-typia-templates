@@ -14,6 +14,29 @@ import type {
   TemplateVariableContext,
 } from './template-source-contracts.js'
 
+async function cleanupSeedRootPair(
+  cleanup: () => Promise<void>,
+  seedCleanup?: (() => Promise<void>) | undefined,
+): Promise<void> {
+  let cleanupError: unknown
+
+  try {
+    await cleanup()
+  } catch (error) {
+    cleanupError = error
+  }
+
+  try {
+    await seedCleanup?.()
+  } catch (error) {
+    cleanupError ??= error
+  }
+
+  if (cleanupError !== undefined) {
+    throw cleanupError
+  }
+}
+
 function getDefaultCategoryFromBlockJson(
   blockJson: Record<string, unknown>,
 ): string {
@@ -125,16 +148,13 @@ export async function normalizeWpTypiaTemplateSeed(
       })
     }
   } catch (error) {
-    await cleanup()
+    await Promise.allSettled([cleanup(), seed.cleanup?.()])
     throw error
   }
 
   return {
     blockDir: normalizedDir,
-    cleanup: async () => {
-      await cleanup()
-      await seed.cleanup?.()
-    },
+    cleanup: async () => cleanupSeedRootPair(cleanup, seed.cleanup),
     rootDir: normalizedDir,
     selectedVariant: seed.selectedVariant,
     warnings: seed.warnings,
@@ -463,16 +483,10 @@ export async function normalizeCreateBlockSubset(
       selectedVariant: seed.selectedVariant ?? null,
       templateDir,
       warnings: seed.warnings ?? [],
-      cleanup: async () => {
-        await cleanup()
-        if (seed.cleanup) {
-          await seed.cleanup()
-        }
-      },
+      cleanup: async () => cleanupSeedRootPair(cleanup, seed.cleanup),
     }
   } catch (error) {
-    await cleanup()
-    await seed.cleanup?.()
+    await Promise.allSettled([cleanup(), seed.cleanup?.()])
     throw error
   }
 }

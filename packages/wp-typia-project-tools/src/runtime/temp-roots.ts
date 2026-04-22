@@ -3,7 +3,14 @@ import * as fsp from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
+/**
+ * Required prefix for managed wp-typia temporary directories.
+ */
 export const WP_TYPIA_TEMP_ROOT_PREFIX = "wp-typia-";
+
+/**
+ * Default age threshold for pruning stale wp-typia temp roots.
+ */
 export const STALE_TEMP_ROOT_MAX_AGE_MS = 1000 * 60 * 60 * 24;
 
 const trackedTempRoots = new Set<string>();
@@ -57,11 +64,22 @@ function installCleanupHandlers(): void {
 	}
 }
 
+/**
+ * Remove a managed temp root and stop tracking it for process-level cleanup.
+ *
+ * @param tempRoot Absolute temporary directory path to remove.
+ */
 export async function cleanupManagedTempRoot(tempRoot: string): Promise<void> {
 	trackedTempRoots.delete(tempRoot);
 	await fsp.rm(tempRoot, { force: true, recursive: true });
 }
 
+/**
+ * Remove stale `wp-typia-*` temp directories from the target temp root.
+ *
+ * @param options Optional temp directory, age threshold, and clock override.
+ * @returns Absolute temp-root paths removed during the cleanup pass.
+ */
 export async function cleanupStaleTempRoots({
 	maxAgeMs = STALE_TEMP_ROOT_MAX_AGE_MS,
 	now = Date.now(),
@@ -95,13 +113,24 @@ export async function cleanupStaleTempRoots({
 			continue;
 		}
 
-		await fsp.rm(tempRoot, { force: true, recursive: true });
-		removedRoots.push(tempRoot);
+		try {
+			await fsp.rm(tempRoot, { force: true, recursive: true });
+			removedRoots.push(tempRoot);
+		} catch {
+			continue;
+		}
 	}
 
 	return removedRoots;
 }
 
+/**
+ * Create a managed wp-typia temp root and install process cleanup handlers.
+ *
+ * @param prefix Temp directory prefix. Must start with `wp-typia-`.
+ * @param options Optional temp directory override.
+ * @returns The created temp-root path plus an async cleanup helper.
+ */
 export async function createManagedTempRoot(
 	prefix: string,
 	options: Pick<TempRootOptions, "tmpDir"> = {},
@@ -132,6 +161,11 @@ export async function createManagedTempRoot(
 	};
 }
 
+/**
+ * Snapshot the currently tracked temp roots for diagnostics and tests.
+ *
+ * @returns Absolute paths for temp roots currently registered for cleanup.
+ */
 export function getTrackedTempRoots(): string[] {
 	return [...trackedTempRoots];
 }

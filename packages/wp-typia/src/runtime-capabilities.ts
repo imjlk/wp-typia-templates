@@ -9,6 +9,9 @@ type RuntimeCapabilityOptions = {
 	term?: string | undefined;
 };
 
+/**
+ * Detect whether the current runtime can safely prompt on an interactive terminal.
+ */
 export function isInteractiveTerminal({
 	stdin = process.stdin,
 	stdout = process.stdout,
@@ -17,6 +20,9 @@ export function isInteractiveTerminal({
 	return Boolean(stdin?.isTTY) && Boolean(stdout?.isTTY) && term !== "dumb";
 }
 
+/**
+ * Detect whether the Bun-powered TUI runtime should be enabled for this process.
+ */
 export function supportsInteractiveTui(
 	options: RuntimeCapabilityOptions = {},
 ): boolean {

@@ -277,9 +277,7 @@ async function materializeBuiltInTemplateSource(
 		features: template.features,
 		format: "wp-typia",
 		templateDir,
-		cleanup: async () => {
-			await cleanup();
-		},
+		cleanup,
 	};
 }
 

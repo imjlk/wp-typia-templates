@@ -220,13 +220,13 @@ describe("wp-typia package", () => {
 		expect(createCommandSource).toContain('supportsInteractiveTui');
 		expect(addCommandSource).toContain('supportsInteractiveTui');
 		expect(migrateCommandSource).toContain('supportsInteractiveTui');
-		expect(createCommandSource).not.toContain('typeof Bun !== "undefined"');
-		expect(addCommandSource).not.toContain('typeof Bun !== "undefined"');
-		expect(migrateCommandSource).not.toContain('typeof Bun !== "undefined"');
+		expect(createCommandSource).not.toMatch(/typeof\s+Bun\s*!==\s*["']undefined["']/);
+		expect(addCommandSource).not.toMatch(/typeof\s+Bun\s*!==\s*["']undefined["']/);
+		expect(migrateCommandSource).not.toMatch(/typeof\s+Bun\s*!==\s*["']undefined["']/);
 		expect(nodeCliSource).toContain("process.exitCode = 1");
-		expect(nodeCliSource).not.toContain("process.exit(1)");
+		expect(nodeCliSource).not.toMatch(/process\.exit\s*\(\s*1\s*\)/);
 		expect(cliSource).toContain("process.exitCode = 1");
-		expect(cliSource).not.toContain("process.exit(1)");
+		expect(cliSource).not.toMatch(/process\.exit\s*\(\s*1\s*\)/);
 	});
 
 	test("renders help output through the canonical bin", () => {

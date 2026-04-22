@@ -723,9 +723,10 @@ export async function runAddBlockCommand({
 			throw error;
 		}
 	} finally {
-		await resolvedExternalLayerSelection.cleanup?.();
-		if (cleanupTempRoot) {
-			await cleanupTempRoot();
+		try {
+			await resolvedExternalLayerSelection.cleanup?.();
+		} finally {
+			await cleanupTempRoot?.();
 		}
 	}
 }
