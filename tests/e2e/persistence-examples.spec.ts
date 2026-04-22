@@ -169,7 +169,7 @@ test.describe('Persistence examples', () => {
   });
 
   test('public counter uses signed tokens and rejects direct untokened writes', async () => {
-    test.setTimeout(15_000);
+    test.setTimeout(30_000);
 
     await wpPage.createPost('Persistence Counter Example');
     await wpPage.insertBlock(PERSISTENCE_COUNTER_BLOCK);

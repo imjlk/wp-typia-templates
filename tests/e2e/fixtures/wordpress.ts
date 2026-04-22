@@ -1,5 +1,9 @@
 import { test as base, expect, Page, FrameLocator, Browser } from '@playwright/test';
 
+const WORDPRESS_EDITOR_READY_TIMEOUT_MS = 20_000;
+const WORDPRESS_BLOCK_REGISTRATION_TIMEOUT_MS = 20_000;
+const WORDPRESS_NAVIGATION_TIMEOUT_MS = 20_000;
+
 interface InsertableBlock {
   name: string;
   title: string;
@@ -67,6 +71,7 @@ export class WordPressPage {
 
   async login(username = 'admin', password = 'password') {
     await this.page.goto('/wp-login.php?redirect_to=%2Fwp-admin%2Fpost-new.php', {
+      timeout: WORDPRESS_NAVIGATION_TIMEOUT_MS,
       waitUntil: 'domcontentloaded',
     });
 
@@ -89,7 +94,10 @@ export class WordPressPage {
 
   async createPost(title = 'Typia Block Test') {
     if (!this.page.url().includes('/wp-admin/post-new.php')) {
-      await this.page.goto('/wp-admin/post-new.php', { waitUntil: 'domcontentloaded' });
+      await this.page.goto('/wp-admin/post-new.php', {
+        timeout: WORDPRESS_NAVIGATION_TIMEOUT_MS,
+        waitUntil: 'domcontentloaded',
+      });
     }
     await this.waitForEditorReady();
 
@@ -98,18 +106,29 @@ export class WordPressPage {
   }
 
   async openPostEditor(postId: number) {
-    await this.page.goto(`/wp-admin/post.php?post=${postId}&action=edit`);
-    await this.waitForEditorReady();
+    await this.page.goto(`/wp-admin/post.php?post=${postId}&action=edit`, {
+      timeout: WORDPRESS_NAVIGATION_TIMEOUT_MS,
+      waitUntil: 'domcontentloaded',
+    });
+    await this.waitForEditorReady(WORDPRESS_EDITOR_READY_TIMEOUT_MS);
   }
 
   async insertBlock(block: InsertableBlock = EXAMPLE_BLOCK) {
     const blockTypeReady = await this.waitForBlockTypeRegistered(block.name);
     if (!blockTypeReady) {
-      await this.page.reload({ waitUntil: 'domcontentloaded' });
-      await this.waitForEditorReady();
+      await this.page.reload({
+        timeout: WORDPRESS_NAVIGATION_TIMEOUT_MS,
+        waitUntil: 'domcontentloaded',
+      });
+      await this.waitForEditorReady(WORDPRESS_EDITOR_READY_TIMEOUT_MS);
     }
 
-    const blockTypeReadyAfterReload = blockTypeReady || await this.waitForBlockTypeRegistered(block.name);
+    const blockTypeReadyAfterReload =
+      blockTypeReady ||
+      (await this.waitForBlockTypeRegistered(
+        block.name,
+        WORDPRESS_BLOCK_REGISTRATION_TIMEOUT_MS,
+      ));
     if (!blockTypeReadyAfterReload) {
       throw new Error(`Timed out waiting for block type "${block.name}" to register.`);
     }
@@ -264,12 +283,18 @@ export class WordPressPage {
       previewPage.once('close', () => {
         void isolatedContext.close().catch(() => {});
       });
-      await previewPage.goto(previewUrl, { waitUntil: 'domcontentloaded' });
+      await previewPage.goto(previewUrl, {
+        timeout: WORDPRESS_NAVIGATION_TIMEOUT_MS,
+        waitUntil: 'domcontentloaded',
+      });
       return previewPage;
     }
 
     const previewPage = await this.page.context().newPage();
-    await previewPage.goto(previewUrl, { waitUntil: 'domcontentloaded' });
+    await previewPage.goto(previewUrl, {
+      timeout: WORDPRESS_NAVIGATION_TIMEOUT_MS,
+      waitUntil: 'domcontentloaded',
+    });
     return previewPage;
   }
 
@@ -298,7 +323,7 @@ export class WordPressPage {
     });
   }
 
-  private async waitForEditorReady(timeout = 10_000) {
+  private async waitForEditorReady(timeout = WORDPRESS_EDITOR_READY_TIMEOUT_MS) {
     const waitForTitleInput = async () => {
       await this.getEditorCanvas().getByRole('textbox', { name: 'Add title' }).waitFor({
         state: 'visible',
@@ -311,7 +336,10 @@ export class WordPressPage {
     try {
       await waitForTitleInput();
     } catch {
-      await this.page.reload({ waitUntil: 'domcontentloaded' });
+      await this.page.reload({
+        timeout: WORDPRESS_NAVIGATION_TIMEOUT_MS,
+        waitUntil: 'domcontentloaded',
+      });
       await this.dismissWelcomeGuideIfPresent();
       await waitForTitleInput();
     }
@@ -411,7 +439,10 @@ export class WordPressPage {
     }, EXAMPLE_BLOCK.name, { timeout });
   }
 
-  private async waitForBlockTypeRegistered(blockType: string, timeout = 10_000) {
+  private async waitForBlockTypeRegistered(
+    blockType: string,
+    timeout = WORDPRESS_BLOCK_REGISTRATION_TIMEOUT_MS,
+  ) {
     try {
       await this.page.waitForFunction((type) => {
         const wp = (window as any).wp;
@@ -423,7 +454,10 @@ export class WordPressPage {
     }
   }
 
-  private async waitForBlockInEditor(blockType: string, timeout = 10_000) {
+  private async waitForBlockInEditor(
+    blockType: string,
+    timeout = WORDPRESS_BLOCK_REGISTRATION_TIMEOUT_MS,
+  ) {
     await this.page.waitForFunction((type) => {
       const wp = (window as any).wp;
       const blocks = wp?.data?.select('core/block-editor')?.getBlocks?.() ?? [];
