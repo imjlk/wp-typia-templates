@@ -145,3 +145,77 @@ test("workspace dependency rewrite seeds local runtime packages for linked Bun r
 		"packages/wp-typia-project-tools",
 	);
 });
+
+test("generated project smoke assertions accept local project-tools smoke rewrites", async () => {
+	const projectDir = fs.mkdtempSync(
+		join(os.tmpdir(), "wp-typia-generated-smoke-boundary-"),
+	);
+	tempDirs.push(projectDir);
+
+	fs.writeFileSync(
+		join(projectDir, "package.json"),
+		`${JSON.stringify(
+			{
+				name: "demo-smoke-boundary",
+				private: true,
+				devDependencies: {
+					"@wp-typia/project-tools": `file:${join(
+						repoRoot,
+						"packages",
+						"wp-typia-project-tools",
+					)}`,
+				},
+				scripts: {
+					build: "wp-scripts build",
+				},
+			},
+			null,
+			2,
+		)}\n`,
+		"utf8",
+	);
+
+	const { assertGeneratedPackageBoundary } = (await import(
+		new URL("../../scripts/lib/generated-project-smoke-assertions.mjs", import.meta.url).href
+	)) as {
+		assertGeneratedPackageBoundary: (projectDir: string) => void;
+	};
+
+	expect(() => assertGeneratedPackageBoundary(projectDir)).not.toThrow();
+});
+
+test("generated project smoke assertions still reject published project-tools dependencies", async () => {
+	const projectDir = fs.mkdtempSync(
+		join(os.tmpdir(), "wp-typia-generated-smoke-boundary-reject-"),
+	);
+	tempDirs.push(projectDir);
+
+	fs.writeFileSync(
+		join(projectDir, "package.json"),
+		`${JSON.stringify(
+			{
+				name: "demo-smoke-boundary-reject",
+				private: true,
+				devDependencies: {
+					"@wp-typia/project-tools": "^0.19.0",
+				},
+				scripts: {
+					build: "wp-scripts build",
+				},
+			},
+			null,
+			2,
+		)}\n`,
+		"utf8",
+	);
+
+	const { assertGeneratedPackageBoundary } = (await import(
+		new URL("../../scripts/lib/generated-project-smoke-assertions.mjs", import.meta.url).href
+	)) as {
+		assertGeneratedPackageBoundary: (projectDir: string) => void;
+	};
+
+	expect(() => assertGeneratedPackageBoundary(projectDir)).toThrow(
+		/omit @wp-typia\/project-tools unless smoke rewrites pinned it to the local workspace package/,
+	);
+});
