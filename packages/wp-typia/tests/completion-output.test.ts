@@ -215,6 +215,7 @@ describe("alternate-buffer completion output helpers", () => {
 	test("add completion payload now includes reviewable next steps and doctor guidance", () => {
 		const payload = buildAddCompletionPayload({
 			kind: "binding-source",
+			packageManager: "npm",
 			projectDir: "/tmp/demo-workspace",
 			values: {
 				bindingSourceSlug: "hero-data",
@@ -231,7 +232,9 @@ describe("alternate-buffer completion output helpers", () => {
 			"Run your workspace build or dev command to verify the binding source hooks and editor registration.",
 		]);
 		expect(payload.optionalTitle).toBe("Verify workspace health (optional):");
-		expect(payload.optionalLines).toEqual(["wp-typia doctor"]);
+		expect(payload.optionalLines).toEqual([
+			`npx --yes wp-typia@${packageJson.version} doctor`,
+		]);
 		expect(payload.optionalNote).toContain("inventory and generated-artifact check");
 	});
 
@@ -239,6 +242,7 @@ describe("alternate-buffer completion output helpers", () => {
 		const payload = buildAddDryRunPayload({
 			completion: buildAddCompletionPayload({
 				kind: "block",
+				packageManager: "npm",
 				projectDir: "/tmp/demo-workspace",
 				values: {
 					blockSlugs: "faq, faq-item",

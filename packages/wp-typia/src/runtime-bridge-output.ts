@@ -1,8 +1,12 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import packageJson from "../package.json";
 import { formatPackageExecCommand } from "@wp-typia/project-tools/package-managers";
 import type { AlternateBufferCompletionPayload } from "./ui/alternate-buffer-lifecycle";
 
 type PrintLine = (line: string) => void;
+type PackageManagerId = "bun" | "npm" | "pnpm" | "yarn";
 
 export type CreateProgressPayload = {
 	detail: string;
@@ -175,6 +179,39 @@ export function buildCreateDryRunPayload(flow: {
 	};
 }
 
+function inferProjectPackageManager(projectDir: string): PackageManagerId {
+	try {
+		const packageJsonPath = path.join(projectDir, "package.json");
+		if (fs.existsSync(packageJsonPath)) {
+			const manifest = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+				packageManager?: string;
+			};
+			if (manifest.packageManager?.startsWith("bun@")) return "bun";
+			if (manifest.packageManager?.startsWith("pnpm@")) return "pnpm";
+			if (manifest.packageManager?.startsWith("yarn@")) return "yarn";
+			if (manifest.packageManager?.startsWith("npm@")) return "npm";
+		}
+	} catch {}
+
+	if (
+		fs.existsSync(path.join(projectDir, "bun.lock")) ||
+		fs.existsSync(path.join(projectDir, "bun.lockb"))
+	) {
+		return "bun";
+	}
+	if (fs.existsSync(path.join(projectDir, "pnpm-lock.yaml"))) {
+		return "pnpm";
+	}
+	if (
+		fs.existsSync(path.join(projectDir, "yarn.lock")) ||
+		fs.existsSync(path.join(projectDir, ".yarnrc.yml"))
+	) {
+		return "yarn";
+	}
+
+	return "npm";
+}
+
 /**
  * Builds the completion payload shown after a migrate command succeeds.
  *
@@ -208,13 +245,20 @@ export function buildAddCompletionPayload(options: {
 		| "pattern"
 		| "rest-resource"
 		| "variation";
+	packageManager?: PackageManagerId;
 	projectDir: string;
 	values: Record<string, string>;
 	warnings?: string[];
 }): AlternateBufferCompletionPayload {
-	const verificationLines = ["wp-typia doctor"];
+	const verificationLines = [
+		formatPackageExecCommand(
+			options.packageManager ?? inferProjectPackageManager(options.projectDir),
+			`wp-typia@${packageJson.version}`,
+			"doctor",
+		),
+	];
 	const verificationNote =
-		"Run doctor for a quick inventory and generated-artifact check after the add workflow.";
+		"Run doctor via your package manager for a quick inventory and generated-artifact check after the add workflow.";
 
 	switch (options.kind) {
 		case "variation":

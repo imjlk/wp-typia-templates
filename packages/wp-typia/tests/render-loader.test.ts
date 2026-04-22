@@ -34,18 +34,18 @@ test("resolveBundledModuleHref reports missing bundled artifacts directly", () =
 	fs.mkdirSync(baseDir, { recursive: true });
 	fs.writeFileSync(path.join(baseDir, "entry.mjs"), "", "utf8");
 
-	expect(() =>
+	let error: Error | undefined;
+	try {
 		resolveBundledModuleHref(
 			pathToFileURL(path.join(baseDir, "entry.mjs")).href,
 			["./ui/add-flow.js", "./ui/add-flow.tsx"],
 			{ moduleLabel: "the add-flow UI" },
-		),
-	).toThrow(/Missing bundled build artifacts for the add-flow UI/);
-	expect(() =>
-		resolveBundledModuleHref(
-			pathToFileURL(path.join(baseDir, "entry.mjs")).href,
-			["./ui/add-flow.js", "./ui/add-flow.tsx"],
-			{ moduleLabel: "the add-flow UI" },
-		),
-	).toThrow(/bun run --filter wp-typia build/);
+		);
+	} catch (caught) {
+		error = caught as Error;
+	}
+
+	expect(error).toBeInstanceOf(Error);
+	expect(error?.message).toMatch(/Missing bundled build artifacts for the add-flow UI/);
+	expect(error?.message).toMatch(/bun run --filter wp-typia build/);
 });
