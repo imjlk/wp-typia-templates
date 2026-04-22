@@ -1,16 +1,24 @@
 import { defineCommand } from "@bunli/core";
 import { z } from "zod";
 
+import { createCliCommandError } from "@wp-typia/project-tools/cli-diagnostics";
 import { executeSyncCommand } from "../runtime-bridge";
 
 export const syncCommand = defineCommand({
 	description:
 		"Run the generated-project sync workflow from a scaffolded project or official workspace root.",
 	handler: async (args) => {
-		await executeSyncCommand({
-			check: Boolean(args.flags.check),
-			cwd: args.cwd,
-		});
+		try {
+			await executeSyncCommand({
+				check: Boolean(args.flags.check),
+				cwd: args.cwd,
+			});
+		} catch (error) {
+			throw createCliCommandError({
+				command: "sync",
+				error,
+			});
+		}
 	},
 	name: "sync",
 	options: {

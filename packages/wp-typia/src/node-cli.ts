@@ -1,7 +1,9 @@
 import packageJson from "../package.json";
 import {
+	CLI_DIAGNOSTIC_CODES,
 	createCliCommandError,
 	formatCliDiagnosticError,
+	serializeCliDiagnosticError,
 } from "@wp-typia/project-tools/cli-diagnostics";
 import {
 	ADD_OPTION_METADATA,
@@ -378,11 +380,19 @@ function renderTemplatesJson(flags: GlobalFlags, subcommand: string) {
 
 	const templateId = flags.id;
 	if (!templateId) {
-		throw new Error("`wp-typia templates inspect` requires <template-id>.");
+		throw createCliCommandError({
+			code: CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+			command: "templates",
+			detailLines: ["`wp-typia templates inspect` requires <template-id>."],
+		});
 	}
 	const template = getTemplateById(templateId);
 	if (!template) {
-		throw new Error(`Unknown template "${templateId}".`);
+		throw createCliCommandError({
+			code: CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+			command: "templates",
+			detailLines: [`Unknown template "${templateId}".`],
+		});
 	}
 	printLine(
 		JSON.stringify(
@@ -396,13 +406,18 @@ function renderTemplatesJson(flags: GlobalFlags, subcommand: string) {
 }
 
 function renderUnsupportedCommand(command: string) {
-	throw new Error(
-		[
-			`The Bun-free fallback runtime does not support \`${command}\` yet.`,
-			"Supported without Bun: `--version`, `--help`, non-interactive `create`/`add`/`migrate`, `doctor`, `sync`, `templates list`, and `templates inspect`.",
-			"Install Bun 1.3.11+ or use `bunx wp-typia ...` for the full Bunli-powered runtime.",
-		].join(" "),
-	);
+	throw createCliCommandError({
+		code: CLI_DIAGNOSTIC_CODES.UNSUPPORTED_COMMAND,
+		command: command,
+		detailLines: [
+			[
+				`The Bun-free fallback runtime does not support \`${command}\` yet.`,
+				"Supported without Bun: `--version`, `--help`, non-interactive `create`/`add`/`migrate`, `doctor`, `sync`, `templates list`, and `templates inspect`.",
+				"Install Bun 1.3.11+ or use `bunx wp-typia ...` for the full Bunli-powered runtime.",
+			].join(" "),
+		],
+		summary: "This command requires the Bun-powered runtime.",
+	});
 }
 
 async function renderDoctorJson(): Promise<void> {
@@ -574,10 +589,17 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 	}
 
 	if (command === "sync") {
-		await executeSyncCommand({
-			check: Boolean(mergedFlags.check),
-			cwd: process.cwd(),
-		});
+		try {
+			await executeSyncCommand({
+				check: Boolean(mergedFlags.check),
+				cwd: process.cwd(),
+			});
+		} catch (error) {
+			throw createCliCommandError({
+				command: "sync",
+				error,
+			});
+		}
 		return;
 	}
 
@@ -588,6 +610,29 @@ export async function runNodeCliEntrypoint(argv = process.argv.slice(2)): Promis
 	try {
 		await runNodeCli(argv);
 	} catch (error) {
+		let prefersStructuredErrorOutput = false;
+		try {
+			const normalizedArgv = normalizeWpTypiaArgv(argv);
+			const { argv: argvWithoutConfigOverride } =
+				extractWpTypiaConfigOverride(normalizedArgv);
+			const { flags } = parseGlobalFlags(argvWithoutConfigOverride);
+			prefersStructuredErrorOutput = flags.format === "json";
+		} catch {}
+
+		if (prefersStructuredErrorOutput) {
+			console.error(
+				JSON.stringify(
+					{
+						ok: false,
+						error: serializeCliDiagnosticError(error),
+					},
+					null,
+					2,
+				),
+			);
+			process.exitCode = 1;
+			return;
+		}
 		console.error(`Error: ${await formatCliDiagnosticError(error)}`);
 		process.exitCode = 1;
 	}
