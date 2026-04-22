@@ -386,7 +386,9 @@ describe("wp-typia package", () => {
 				runUtf8Command("node", [entryPath, "sync"], {
 					cwd: tempRoot,
 				}),
-			).toThrow(/Run `wp-typia sync` from a scaffolded project or official workspace root/);
+			).toThrow(
+				/run `wp-typia sync` from a scaffolded project or official workspace root that already contains generated sync scripts/i,
+			);
 		} finally {
 			fs.rmSync(tempRoot, { force: true, recursive: true });
 		}
@@ -577,6 +579,9 @@ describe("wp-typia package", () => {
 		expect(() => runUtf8Command("node", [entryPath, "create"])).toThrow(
 			"`wp-typia create` requires <project-dir>.",
 		);
+		expect(() => runUtf8Command("node", [entryPath, "create", "--dry-run"])).toThrow(
+			/`--dry-run` still needs a logical project directory name/,
+		);
 	});
 
 	test("rejects typo-like positional alias invocations with extra arguments", () => {
@@ -600,6 +605,9 @@ describe("wp-typia package", () => {
 		expect(result.stderr).toContain("Error: wp-typia create failed");
 		expect(result.stderr).toContain("Summary: Unable to complete the requested create workflow.");
 		expect(result.stderr).toContain("- `wp-typia create` requires <project-dir>.");
+		expect(result.stderr).toContain(
+			"`--dry-run` still needs a logical project directory name",
+		);
 	});
 
 	test("formats add failures with a shared non-interactive diagnostic block", () => {
@@ -708,6 +716,7 @@ describe("wp-typia package", () => {
 
 			expect(result.status).toBe(0);
 			expect(result.stdout).toContain("PASS Doctor scope:");
+			expect(result.stdout).toContain("Scope: environment-only.");
 			expect(result.stdout).toContain("only covered environment readiness");
 			expect(result.stdout).toContain("workspace root");
 			expect(result.stdout).toContain("PASS wp-typia doctor summary:");
@@ -732,14 +741,14 @@ describe("wp-typia package", () => {
 			expect(result.status).toBe(0);
 			expect(result.stdout).toContain(
 				[
-					"PASS Doctor scope: No official wp-typia workspace root",
-					"  was detected, so this run only covered environment",
+					"PASS Doctor scope: Scope: environment-only. No",
+					"  official wp-typia workspace root was detected, so",
 				].join("\n"),
 			);
 			expect(result.stdout).toContain(
 				[
-					"  readiness. Re-run `wp-typia doctor` from a workspace",
-					"  root if you expected package metadata, inventory, or",
+					"  this run only covered environment readiness. Re-run",
+					"  `wp-typia doctor` from a workspace root if you",
 				].join("\n"),
 			);
 			expect(result.stdout).toContain("PASS wp-typia doctor summary:");

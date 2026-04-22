@@ -4,7 +4,8 @@ import { z } from "zod";
 import { executeSyncCommand } from "../runtime-bridge";
 
 export const syncCommand = defineCommand({
-	description: "Run the common generated-project sync workflow.",
+	description:
+		"Run the generated-project sync workflow from a scaffolded project or official workspace root.",
 	handler: async (args) => {
 		await executeSyncCommand({
 			check: Boolean(args.flags.check),

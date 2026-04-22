@@ -625,7 +625,7 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 		checks.push(
 			createDoctorScopeCheck(
 				"fail",
-				"Environment checks ran, but workspace discovery could not continue. Fix the nearby workspace package metadata and rerun `wp-typia doctor`.",
+				"Scope: blocked before workspace checks. Environment checks ran, but workspace discovery could not continue. Fix the nearby workspace package metadata and rerun `wp-typia doctor`.",
 			),
 		);
 		checks.push(
@@ -642,7 +642,7 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 			checks.push(
 				createDoctorScopeCheck(
 					"fail",
-					"Environment checks ran, but workspace diagnostics could not continue because a nearby wp-typia workspace candidate is invalid. Fix the workspace package metadata and rerun `wp-typia doctor`.",
+					"Scope: blocked before workspace checks. Environment checks ran, but workspace diagnostics could not continue because a nearby wp-typia workspace candidate is invalid. Fix the workspace package metadata and rerun `wp-typia doctor`.",
 				),
 			);
 			checks.push(
@@ -656,7 +656,7 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 			checks.push(
 				createDoctorScopeCheck(
 					"pass",
-					"No official wp-typia workspace root was detected, so this run only covered environment readiness. Re-run `wp-typia doctor` from a workspace root if you expected package metadata, inventory, or generated artifact checks.",
+					"Scope: environment-only. No official wp-typia workspace root was detected, so this run only covered environment readiness. Re-run `wp-typia doctor` from a workspace root if you expected package metadata, inventory, or generated artifact checks.",
 				),
 			);
 		}
@@ -666,7 +666,7 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 	checks.push(
 		createDoctorScopeCheck(
 			"pass",
-			`Official workspace detected for ${workspace.workspace.namespace}; environment readiness checks ran and workspace-scoped diagnostics are enabled for the package metadata, inventory, source-tree drift, and any configured migration hint rows below.`,
+			`Scope: full workspace diagnostics for ${workspace.workspace.namespace}. Environment readiness checks ran and workspace-scoped diagnostics are enabled for the package metadata, inventory, source-tree drift, and any configured migration hint rows below.`,
 		),
 	);
 

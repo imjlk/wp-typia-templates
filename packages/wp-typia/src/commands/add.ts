@@ -19,7 +19,9 @@ function loadAddFlow() {
 			"./ui/add-flow.js",
 			"../ui/add-flow.js",
 			"../ui/add-flow.tsx",
-		]),
+		], {
+			moduleLabel: "the add-flow UI",
+		}),
 	).then((module) => ({ default: module.AddFlow }));
 }
 

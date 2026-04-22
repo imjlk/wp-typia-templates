@@ -18,7 +18,9 @@ function loadMigrateFlow() {
 			"./ui/migrate-flow.js",
 			"../ui/migrate-flow.js",
 			"../ui/migrate-flow.tsx",
-		]),
+		], {
+			moduleLabel: "the migrate-flow UI",
+		}),
 	).then((module) => ({ default: module.MigrateFlow }));
 }
 

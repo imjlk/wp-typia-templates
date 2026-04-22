@@ -54,7 +54,7 @@ const metadata: Record<GeneratedNames, GeneratedCommandMeta> = {
     },
   'sync': {
       name: 'sync',
-      description: 'Run the common generated-project sync workflow.',
+      description: 'Run the generated-project sync workflow from a scaffolded project or official workspace root.',
       path: './src/commands/sync'
     },
   'templates': {

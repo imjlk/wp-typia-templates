@@ -1,8 +1,12 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import packageJson from "../package.json";
 import { formatPackageExecCommand } from "@wp-typia/project-tools/package-managers";
 import type { AlternateBufferCompletionPayload } from "./ui/alternate-buffer-lifecycle";
 
 type PrintLine = (line: string) => void;
+type PackageManagerId = "bun" | "npm" | "pnpm" | "yarn";
 
 export type CreateProgressPayload = {
 	detail: string;
@@ -175,6 +179,39 @@ export function buildCreateDryRunPayload(flow: {
 	};
 }
 
+function inferProjectPackageManager(projectDir: string): PackageManagerId {
+	try {
+		const packageJsonPath = path.join(projectDir, "package.json");
+		if (fs.existsSync(packageJsonPath)) {
+			const manifest = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+				packageManager?: string;
+			};
+			if (manifest.packageManager?.startsWith("bun@")) return "bun";
+			if (manifest.packageManager?.startsWith("pnpm@")) return "pnpm";
+			if (manifest.packageManager?.startsWith("yarn@")) return "yarn";
+			if (manifest.packageManager?.startsWith("npm@")) return "npm";
+		}
+	} catch {}
+
+	if (
+		fs.existsSync(path.join(projectDir, "bun.lock")) ||
+		fs.existsSync(path.join(projectDir, "bun.lockb"))
+	) {
+		return "bun";
+	}
+	if (fs.existsSync(path.join(projectDir, "pnpm-lock.yaml"))) {
+		return "pnpm";
+	}
+	if (
+		fs.existsSync(path.join(projectDir, "yarn.lock")) ||
+		fs.existsSync(path.join(projectDir, ".yarnrc.yml"))
+	) {
+		return "yarn";
+	}
+
+	return "npm";
+}
+
 /**
  * Builds the completion payload shown after a migrate command succeeds.
  *
@@ -208,13 +245,31 @@ export function buildAddCompletionPayload(options: {
 		| "pattern"
 		| "rest-resource"
 		| "variation";
+	packageManager?: PackageManagerId;
 	projectDir: string;
 	values: Record<string, string>;
 	warnings?: string[];
 }): AlternateBufferCompletionPayload {
+	const verificationLines = [
+		formatPackageExecCommand(
+			options.packageManager ?? inferProjectPackageManager(options.projectDir),
+			`wp-typia@${packageJson.version}`,
+			"doctor",
+		),
+	];
+	const verificationNote =
+		"Run doctor via your package manager for a quick inventory and generated-artifact check after the add workflow.";
+
 	switch (options.kind) {
 		case "variation":
 			return {
+				nextSteps: [
+					`Review src/blocks/${options.values.blockSlug}/variations/${options.values.variationSlug}.ts.`,
+					"Run your workspace build or dev command to pick up the new variation.",
+				],
+				optionalLines: verificationLines,
+				optionalNote: verificationNote,
+				optionalTitle: "Verify workspace health (optional):",
 				summaryLines: [
 					`Variation: ${options.values.variationSlug}`,
 					`Target block: ${options.values.blockSlug}`,
@@ -224,6 +279,13 @@ export function buildAddCompletionPayload(options: {
 			};
 		case "pattern":
 			return {
+				nextSteps: [
+					`Review src/patterns/${options.values.patternSlug}.php.`,
+					"Run your workspace build or dev command to verify the new pattern registration.",
+				],
+				optionalLines: verificationLines,
+				optionalNote: verificationNote,
+				optionalTitle: "Verify workspace health (optional):",
 				summaryLines: [
 					`Pattern: ${options.values.patternSlug}`,
 					`Project directory: ${options.projectDir}`,
@@ -232,6 +294,13 @@ export function buildAddCompletionPayload(options: {
 			};
 		case "binding-source":
 			return {
+				nextSteps: [
+					`Review src/bindings/${options.values.bindingSourceSlug}/server.php and src/bindings/${options.values.bindingSourceSlug}/editor.ts.`,
+					"Run your workspace build or dev command to verify the binding source hooks and editor registration.",
+				],
+				optionalLines: verificationLines,
+				optionalNote: verificationNote,
+				optionalTitle: "Verify workspace health (optional):",
 				summaryLines: [
 					`Binding source: ${options.values.bindingSourceSlug}`,
 					`Project directory: ${options.projectDir}`,
@@ -240,6 +309,13 @@ export function buildAddCompletionPayload(options: {
 			};
 		case "rest-resource":
 			return {
+				nextSteps: [
+					`Review src/rest/${options.values.restResourceSlug}/ and inc/rest/${options.values.restResourceSlug}.php.`,
+					"Run your workspace build or dev command to verify the generated REST resource contract.",
+				],
+				optionalLines: verificationLines,
+				optionalNote: verificationNote,
+				optionalTitle: "Verify workspace health (optional):",
 				summaryLines: [
 					`REST resource: ${options.values.restResourceSlug}`,
 					`Namespace: ${options.values.namespace}`,
@@ -250,6 +326,13 @@ export function buildAddCompletionPayload(options: {
 			};
 		case "editor-plugin":
 			return {
+				nextSteps: [
+					`Review src/editor-plugins/${options.values.editorPluginSlug}/.`,
+					"Run your workspace build or dev command to verify the new editor plugin registration.",
+				],
+				optionalLines: verificationLines,
+				optionalNote: verificationNote,
+				optionalTitle: "Verify workspace health (optional):",
 				summaryLines: [
 					`Editor plugin: ${options.values.editorPluginSlug}`,
 					`Slot: ${options.values.slot}`,
@@ -259,6 +342,13 @@ export function buildAddCompletionPayload(options: {
 			};
 		case "hooked-block":
 			return {
+				nextSteps: [
+					`Review src/blocks/${options.values.blockSlug}/block.json for the new blockHooks entry.`,
+					"Run your workspace build or dev command to verify the updated hooked-block metadata.",
+				],
+				optionalLines: verificationLines,
+				optionalNote: verificationNote,
+				optionalTitle: "Verify workspace health (optional):",
 				summaryLines: [
 					`Block: ${options.values.blockSlug}`,
 					`Anchor: ${options.values.anchorBlockName}`,
@@ -269,6 +359,13 @@ export function buildAddCompletionPayload(options: {
 			};
 		default:
 			return {
+				nextSteps: [
+					"Review the generated sources under src/blocks/ and the updated scripts/block-config.ts entry.",
+					"Run your workspace build or dev command to verify the new scaffolded block family.",
+				],
+				optionalLines: verificationLines,
+				optionalNote: verificationNote,
+				optionalTitle: "Verify workspace health (optional):",
 				summaryLines: [
 					`Blocks: ${options.values.blockSlugs}`,
 					`Template family: ${options.values.templateId}`,
