@@ -49,6 +49,7 @@ const cliSource = fs.readFileSync(
 	path.join(packageRoot, "src", "cli.ts"),
 	"utf8",
 );
+const fullRuntimeEntrypoint = path.join(packageRoot, "dist-bunli", "cli.js");
 const addFlowSource = fs.readFileSync(
 	path.join(packageRoot, "src", "ui", "add-flow.tsx"),
 	"utf8",
@@ -610,6 +611,27 @@ describe("wp-typia package", () => {
 		);
 	});
 
+	test("emits a machine-readable missing-argument error code for create in Node fallback JSON mode", () => {
+		const result = runCapturedCommand(
+			process.execPath,
+			[entryPath, "create", "--format", "json"],
+			{
+				env: withoutLocalBunEnv(),
+			},
+		);
+		const parsed = parseJsonObjectFromOutput<{
+			error?: { code?: string; command?: string; kind?: string };
+			ok?: boolean;
+		}>(result.stderr);
+
+		expect(result.status).toBe(1);
+		expect(result.stdout).toBe("");
+		expect(parsed.ok).toBe(false);
+		expect(parsed.error?.kind).toBe("command-execution");
+		expect(parsed.error?.command).toBe("create");
+		expect(parsed.error?.code).toBe("missing-argument");
+	});
+
 	test("formats add failures with a shared non-interactive diagnostic block", () => {
 		const result = runCapturedCommand("node", [entryPath, "add", "variation", "promo-card"]);
 
@@ -617,6 +639,34 @@ describe("wp-typia package", () => {
 		expect(result.stderr).toContain("Error: wp-typia add failed");
 		expect(result.stderr).toContain("Summary: Unable to complete the requested add workflow.");
 		expect(result.stderr).toContain("- `wp-typia add variation` requires --block <block-slug>.");
+	});
+
+	test("emits a machine-readable outside-project-root error code for sync in Node fallback JSON mode", () => {
+		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-sync-json-"));
+
+		try {
+			const result = runCapturedCommand(
+				process.execPath,
+				[entryPath, "sync", "--format", "json"],
+				{
+					cwd: tempRoot,
+					env: withoutLocalBunEnv(),
+				},
+			);
+			const parsed = parseJsonObjectFromOutput<{
+				error?: { code?: string; command?: string; kind?: string };
+				ok?: boolean;
+			}>(result.stderr);
+
+			expect(result.status).toBe(1);
+			expect(result.stdout).toBe("");
+			expect(parsed.ok).toBe(false);
+			expect(parsed.error?.kind).toBe("command-execution");
+			expect(parsed.error?.command).toBe("sync");
+			expect(parsed.error?.code).toBe("outside-project-root");
+		} finally {
+			fs.rmSync(tempRoot, { force: true, recursive: true });
+		}
 	});
 
 	test("treats missing add kinds as an error while still printing help text", () => {
@@ -777,9 +827,29 @@ describe("wp-typia package", () => {
 	});
 
 	test("fails mcp list with actionable config guidance when no schema sources are configured", () => {
-		expect(() => runUtf8Command("node", [entryPath, "mcp", "list"])).toThrow(
+		const result = runCapturedCommand("bun", [fullRuntimeEntrypoint, "mcp", "list"], {
+			env: withoutAIAgentEnv(),
+		});
+
+		expect(result.status).toBe(1);
+		expect(`${result.stdout}${result.stderr}`).toContain(
 			"No MCP schema sources are configured.",
 		);
+	});
+
+	test("emits a machine-readable configuration-missing error code for mcp list", () => {
+		const result = runCapturedCommand("node", [entryPath, "mcp", "list", "--format", "json"]);
+		const parsed = parseJsonObjectFromOutput<{
+			error?: { code?: string; command?: string; kind?: string };
+			ok?: boolean;
+		}>(result.stdout);
+
+		expect(result.status).toBe(1);
+		expect(result.stderr).toBe("");
+		expect(parsed.ok).toBe(false);
+		expect(parsed.error?.kind).toBe("command-execution");
+		expect(parsed.error?.command).toBe("mcp");
+		expect(parsed.error?.code).toBe("configuration-missing");
 	});
 
 	test("loads MCP schema sources from an explicit --config override", () => {

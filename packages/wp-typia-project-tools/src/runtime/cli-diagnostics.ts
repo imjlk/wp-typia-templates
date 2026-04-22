@@ -2,10 +2,27 @@
  * Shared human-readable diagnostics for non-interactive `wp-typia` CLI flows.
  */
 export interface CliDiagnosticMessage {
+	code: CliDiagnosticCode;
 	command: string;
 	detailLines: string[];
 	summary: string;
 }
+
+export const CLI_DIAGNOSTIC_CODES = {
+	COMMAND_EXECUTION: "command-execution",
+	CONFIGURATION_MISSING: "configuration-missing",
+	DEPENDENCIES_NOT_INSTALLED: "dependencies-not-installed",
+	DOCTOR_CHECK_FAILED: "doctor-check-failed",
+	INVALID_ARGUMENT: "invalid-argument",
+	INVALID_COMMAND: "invalid-command",
+	MISSING_ARGUMENT: "missing-argument",
+	MISSING_BUILD_ARTIFACT: "missing-build-artifact",
+	OUTSIDE_PROJECT_ROOT: "outside-project-root",
+	UNSUPPORTED_COMMAND: "unsupported-command",
+} as const;
+
+export type CliDiagnosticCode =
+	(typeof CLI_DIAGNOSTIC_CODES)[keyof typeof CLI_DIAGNOSTIC_CODES];
 
 type DoctorCheckLike = {
 	detail: string;
@@ -17,7 +34,10 @@ const DEFAULT_CLI_FAILURE_SUMMARIES: Record<string, string> = {
 	add: "Unable to complete the requested add workflow.",
 	create: "Unable to complete the requested create workflow.",
 	doctor: "One or more doctor checks failed.",
+	mcp: "Unable to inspect or sync MCP metadata.",
 	migrate: "Unable to complete the requested migration command.",
+	sync: "Unable to complete the requested sync workflow.",
+	templates: "Unable to inspect scaffold templates.",
 };
 
 const MIN_CLI_WRAP_COLUMNS = 32;
@@ -148,12 +168,14 @@ function normalizeDetailLines(detailLines: Array<string | null | undefined>): st
  * Structured CLI failure carrying a stable summary/detail layout.
  */
 export class CliDiagnosticError extends Error {
+	readonly code: CliDiagnosticCode;
 	readonly command: string;
 	readonly detailLines: string[];
 	readonly summary: string;
 
 	constructor(message: CliDiagnosticMessage, options?: ErrorOptions) {
 		super(formatCliDiagnosticBlock(message), options);
+		this.code = message.code;
 		this.command = message.command;
 		this.detailLines = [...message.detailLines];
 		this.name = "CliDiagnosticError";
@@ -168,11 +190,85 @@ export function isCliDiagnosticError(error: unknown): error is CliDiagnosticErro
 	return error instanceof CliDiagnosticError;
 }
 
+function isCliDiagnosticCode(value: unknown): value is CliDiagnosticCode {
+	return Object.values(CLI_DIAGNOSTIC_CODES).includes(value as CliDiagnosticCode);
+}
+
+function readCliDiagnosticCode(error: unknown): CliDiagnosticCode | null {
+	if (isCliDiagnosticError(error)) {
+		return error.code;
+	}
+
+	if (typeof error === "object" && error !== null && "code" in error) {
+		const { code } = error as { code?: unknown };
+		if (isCliDiagnosticCode(code)) {
+			return code;
+		}
+	}
+
+	return null;
+}
+
+function inferCliDiagnosticCode(options: {
+	command: string;
+	detailLines: string[];
+	error?: unknown;
+}): CliDiagnosticCode {
+	const inheritedCode = readCliDiagnosticCode(options.error);
+	if (inheritedCode) {
+		return inheritedCode;
+	}
+
+	const haystack = normalizeDetailLines([
+		...options.detailLines,
+		options.error === undefined ? undefined : getErrorMessage(options.error),
+	]).join("\n");
+
+	if (/No MCP schema sources are configured\./u.test(haystack)) {
+		return CLI_DIAGNOSTIC_CODES.CONFIGURATION_MISSING;
+	}
+	if (/Missing bundled build artifacts/u.test(haystack)) {
+		return CLI_DIAGNOSTIC_CODES.MISSING_BUILD_ARTIFACT;
+	}
+	if (/No generated wp-typia project root was found/u.test(haystack)) {
+		return CLI_DIAGNOSTIC_CODES.OUTSIDE_PROJECT_ROOT;
+	}
+	if (/dependencies have not been installed yet/u.test(haystack)) {
+		return CLI_DIAGNOSTIC_CODES.DEPENDENCIES_NOT_INSTALLED;
+	}
+	if (options.command === "doctor") {
+		return CLI_DIAGNOSTIC_CODES.DOCTOR_CHECK_FAILED;
+	}
+	if (/requires <|requires --/u.test(haystack)) {
+		return CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT;
+	}
+	if (
+		/Unknown .*subcommand|Unknown add kind|Unknown template|removed in favor|does not support|The Bun-free fallback runtime does not support|The positional alias only accepts/u.test(
+			haystack,
+		)
+	) {
+		return haystack.includes("does not support") ||
+			haystack.includes("The Bun-free fallback runtime does not support")
+			? CLI_DIAGNOSTIC_CODES.UNSUPPORTED_COMMAND
+			: CLI_DIAGNOSTIC_CODES.INVALID_COMMAND;
+	}
+	if (
+		/Invalid |must start with|cannot hook|cannot nest|cannot use|cannot be|already defines|already exists|Expected one of/u.test(
+			haystack,
+		)
+	) {
+		return CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT;
+	}
+
+	return CLI_DIAGNOSTIC_CODES.COMMAND_EXECUTION;
+}
+
 /**
  * Build a shared diagnostic error for one CLI command failure.
  */
 export function createCliCommandError(options: {
 	command: string;
+	code?: CliDiagnosticCode;
 	detailLines?: string[];
 	error?: unknown;
 	summary?: string;
@@ -186,9 +282,17 @@ export function createCliCommandError(options: {
 	const detailLines = normalizeDetailLines(
 		options.detailLines ?? [options.error === undefined ? undefined : getErrorMessage(options.error)],
 	);
+	const code =
+		options.code ??
+		inferCliDiagnosticCode({
+			command: options.command,
+			detailLines,
+			error: options.error,
+		});
 
 	return new CliDiagnosticError(
 		{
+			code,
 			command: options.command,
 			detailLines,
 			summary,
@@ -207,10 +311,52 @@ export function formatCliDiagnosticError(error: unknown): string {
 	}
 
 	return formatCliDiagnosticBlock({
+		code: error.code,
 		command: error.command,
 		detailLines: error.detailLines,
 		summary: error.summary,
 	});
+}
+
+export function serializeCliDiagnosticError(error: unknown): {
+	code: CliDiagnosticCode;
+	command?: string;
+	detailLines?: string[];
+	kind: "command-execution";
+	message: string;
+	name: string;
+	summary?: string;
+	tag: "CommandExecutionError";
+} {
+	if (isCliDiagnosticError(error)) {
+		return {
+			code: error.code,
+			command: error.command,
+			detailLines: [...error.detailLines],
+			kind: "command-execution",
+			message: formatCliDiagnosticBlock({
+				code: error.code,
+				command: error.command,
+				detailLines: error.detailLines,
+				summary: error.summary,
+			}),
+			name: error.name,
+			summary: error.summary,
+			tag: "CommandExecutionError",
+		};
+	}
+
+	return {
+		code: inferCliDiagnosticCode({
+			command: "unknown",
+			detailLines: [],
+			error,
+		}),
+		kind: "command-execution",
+		message: getErrorMessage(error),
+		name: error instanceof Error ? error.name : "Error",
+		tag: "CommandExecutionError",
+	};
 }
 
 /**

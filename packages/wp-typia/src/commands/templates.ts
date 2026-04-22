@@ -1,6 +1,10 @@
 import { defineCommand } from "@bunli/core";
 
 import {
+	CLI_DIAGNOSTIC_CODES,
+	createCliCommandError,
+} from "@wp-typia/project-tools/cli-diagnostics";
+import {
 	buildCommandOptions,
 	TEMPLATES_OPTION_METADATA,
 } from "../command-option-metadata";
@@ -30,7 +34,11 @@ export const templatesCommand = defineCommand({
 			if (effectiveSubcommand === "inspect" && id) {
 				const template = templates.find((entry) => entry.id === id);
 				if (!template) {
-					throw new Error(`Unknown template "${id}".`);
+					throw createCliCommandError({
+						code: CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+						command: "templates",
+						detailLines: [`Unknown template "${id}".`],
+					});
 				}
 				args.output({ template });
 				return;
