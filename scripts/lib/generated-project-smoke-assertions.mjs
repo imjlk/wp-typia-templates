@@ -213,15 +213,33 @@ function assertGeneratedRuntimeImports(projectDir) {
 	}
 }
 
-function assertGeneratedPackageBoundary(projectDir) {
+function isLocalProjectToolsRewrite(value) {
+	return (
+		typeof value === "string" &&
+		value.startsWith("file:") &&
+		/[\\/]packages[\\/]wp-typia-project-tools(?:$|[\\/])/u.test(value)
+	);
+}
+
+export function assertGeneratedPackageBoundary(projectDir) {
 	const packageJsonPath = path.join(projectDir, "package.json");
 	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
-	if (packageJson.dependencies?.["@wp-typia/project-tools"]) {
-		throw new Error("Expected generated project dependencies to omit @wp-typia/project-tools");
+	if (
+		packageJson.dependencies?.["@wp-typia/project-tools"] &&
+		!isLocalProjectToolsRewrite(packageJson.dependencies["@wp-typia/project-tools"])
+	) {
+		throw new Error(
+			"Expected generated project dependencies to omit @wp-typia/project-tools unless smoke rewrites pinned it to the local workspace package",
+		);
 	}
-	if (packageJson.devDependencies?.["@wp-typia/project-tools"]) {
-		throw new Error("Expected generated project devDependencies to omit @wp-typia/project-tools");
+	if (
+		packageJson.devDependencies?.["@wp-typia/project-tools"] &&
+		!isLocalProjectToolsRewrite(packageJson.devDependencies["@wp-typia/project-tools"])
+	) {
+		throw new Error(
+			"Expected generated project devDependencies to omit @wp-typia/project-tools unless smoke rewrites pinned it to the local workspace package",
+		);
 	}
 	for (const [scriptName, scriptValue] of Object.entries(packageJson.scripts ?? {})) {
 		if (typeof scriptValue !== "string") {
