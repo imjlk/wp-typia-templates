@@ -1,5 +1,16 @@
 # @wp-typia/project-tools
 
+## 0.19.1 — 2026-04-22
+
+### Patch changes
+
+- [b3f5346](https://github.com/imjlk/wp-typia/commit/b3f5346c22b0b1b9380db4498b51e8692880204b) Added stable machine-readable CLI error codes for structured `--format json` failures across the Node fallback and Bun runtime command surfaces. — Thanks @imjlk!
+- [d5c5362](https://github.com/imjlk/wp-typia/commit/d5c536289cd391310bf7089a58de384948baf643) Add standalone `wp-typia` release assets and installers. GitHub Releases can now publish platform-specific standalone archives together with `install-wp-typia.sh` / `install-wp-typia.ps1`, and the installed CLI can resolve packaged scaffold/template support assets without requiring Bun to be preinstalled on the target machine. — Thanks @imjlk!
+- [cccdd76](https://github.com/imjlk/wp-typia/commit/cccdd760553bcbb96c87b350d6814ef8778e91c1) Improved doctor scope messaging, add completion guidance, sync and dry-run help text, and missing bundled-artifact diagnostics across standalone CLI flows. — Thanks @imjlk!
+- [1d1dd6e](https://github.com/imjlk/wp-typia/commit/1d1dd6ea664ec5ff7c6da65d8699ab76b8359317) Hardened interactive runtime detection, fallback cleanup behavior, and temporary wp-typia workspace lifecycle handling. — Thanks @imjlk!
+- [cc55b61](https://github.com/imjlk/wp-typia/commit/cc55b61a42a02ee02020b337e10dd70d80c5caa0) Made external-template trust more explicit during scaffolding and surfaced clearer diagnostics when remote template package metadata is malformed. — Thanks @imjlk!
+- [1445631](https://github.com/imjlk/wp-typia/commit/1445631721f0ebb237b8bd60f9f8cbdab5ca8e8a) Attached template-family-aware grouped scaffold variable metadata while preserving the flat string view used by rendering and external template flows. — Thanks @imjlk!
+
 ## 0.19.0 — 2026-04-21
 
 ### Minor changes

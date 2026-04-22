@@ -1,5 +1,21 @@
 # wp-typia
 
+## 0.20.0 — 2026-04-22
+
+### Minor changes
+
+- [d5c5362](https://github.com/imjlk/wp-typia/commit/d5c536289cd391310bf7089a58de384948baf643) Add standalone `wp-typia` release assets and installers. GitHub Releases can now publish platform-specific standalone archives together with `install-wp-typia.sh` / `install-wp-typia.ps1`, and the installed CLI can resolve packaged scaffold/template support assets without requiring Bun to be preinstalled on the target machine. — Thanks @imjlk!
+
+### Patch changes
+
+- [b3f5346](https://github.com/imjlk/wp-typia/commit/b3f5346c22b0b1b9380db4498b51e8692880204b) Added stable machine-readable CLI error codes for structured `--format json` failures across the Node fallback and Bun runtime command surfaces. — Thanks @imjlk!
+- [df4669e](https://github.com/imjlk/wp-typia/commit/df4669ea52c2641e6244eaeff7595665a269af44) Refactored the `wp-typia` CLI to derive more parser behavior, create/add/migrate initial values, and add-subcommand execution flow from shared command metadata primitives so new command-surface changes require fewer parallel edits. — Thanks @imjlk!
+- [cccdd76](https://github.com/imjlk/wp-typia/commit/cccdd760553bcbb96c87b350d6814ef8778e91c1) Improved doctor scope messaging, add completion guidance, sync and dry-run help text, and missing bundled-artifact diagnostics across standalone CLI flows. — Thanks @imjlk!
+- [1d1dd6e](https://github.com/imjlk/wp-typia/commit/1d1dd6ea664ec5ff7c6da65d8699ab76b8359317) Hardened interactive runtime detection, fallback cleanup behavior, and temporary wp-typia workspace lifecycle handling. — Thanks @imjlk!
+- [cc55b61](https://github.com/imjlk/wp-typia/commit/cc55b61a42a02ee02020b337e10dd70d80c5caa0) Made external-template trust more explicit during scaffolding and surfaced clearer diagnostics when remote template package metadata is malformed. — Thanks @imjlk!
+- [9866ae9](https://github.com/imjlk/wp-typia/commit/9866ae9fbfcea874ef948917ab4d8677521b7e0b) Treat `wp-typia add` without a subcommand kind as a real CLI error. The command now still prints add help text for interactive users, but exits non-zero so shells, CI, and wrappers can distinguish malformed invocations from successful add workflows. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.19.1
+
 ## 0.19.0 — 2026-04-21
 
 ### Minor changes
