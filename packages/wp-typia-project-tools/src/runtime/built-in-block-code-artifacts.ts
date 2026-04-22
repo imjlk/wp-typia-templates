@@ -40,6 +40,7 @@ import {
 	QUERY_LOOP_INDEX_TEMPLATE,
 	SHARED_HOOKS_TEMPLATE,
 } from "./built-in-block-code-templates.js";
+import { getScaffoldTemplateVariableGroups } from "./scaffold-template-variable-groups.js";
 import { renderMustacheTemplateString } from "./template-render.js";
 
 /**
@@ -221,8 +222,9 @@ function buildCompoundCodeArtifacts(
 ): BuiltInCodeArtifact[] {
 	const parentBasePath = `src/blocks/${variables.slugKebabCase}`;
 	const childBasePath = `src/blocks/${variables.slugKebabCase}-item`;
+	const compoundGroup = getScaffoldTemplateVariableGroups(variables).compound;
 	const compoundPersistenceEnabled =
-		variables.compoundPersistenceEnabled === "true";
+		compoundGroup.enabled && compoundGroup.persistenceEnabled;
 
 	return ensureUniqueArtifactPaths([
 		createCodeArtifact("src/hooks.ts", SHARED_HOOKS_TEMPLATE, variables),

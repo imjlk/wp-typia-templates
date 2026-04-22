@@ -26,12 +26,24 @@ export type {
 export {
 	scaffoldProject,
 	collectScaffoldAnswers,
+	getScaffoldTemplateVariableGroups,
 	getDefaultAnswers,
 	getTemplateVariables,
 	resolvePackageManagerId,
 	resolveTemplateId,
 } from "./scaffold.js";
 export { BlockGeneratorService } from "./block-generator-service.js";
+export type {
+	BasicScaffoldTemplateVariableGroups,
+	CompoundScaffoldTemplateVariableGroups,
+	ExternalScaffoldTemplateVariableGroups,
+	FlatScaffoldTemplateVariables,
+	InteractivityScaffoldTemplateVariableGroups,
+	PersistenceScaffoldTemplateVariableGroups,
+	QueryLoopScaffoldTemplateVariableGroups,
+	ScaffoldTemplateFamily,
+	ScaffoldTemplateVariableGroups,
+} from "./scaffold.js";
 export type {
 	ApplyBlockInput,
 	BlockGenerationTarget,

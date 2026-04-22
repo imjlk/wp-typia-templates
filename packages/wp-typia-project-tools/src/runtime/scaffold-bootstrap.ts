@@ -18,6 +18,7 @@ import {
 	PROJECT_TOOLS_PACKAGE_ROOT,
 } from "./template-registry.js";
 import type { BuiltInTemplateId } from "./template-registry.js";
+import { getScaffoldTemplateVariableGroups } from "./scaffold-template-variable-groups.js";
 
 const EPHEMERAL_NODE_MODULES_LINK_TYPE = process.platform === "win32" ? "junction" : "dir";
 
@@ -111,9 +112,12 @@ export async function seedBuiltInPersistenceArtifacts(
 	templateId: BuiltInTemplateId,
 	variables: ScaffoldTemplateVariables,
 ): Promise<void> {
+	const compoundGroup = getScaffoldTemplateVariableGroups(variables).compound;
 	const needsPersistenceArtifacts =
 		templateId === "persistence" ||
-		(templateId === "compound" && variables.compoundPersistenceEnabled === "true");
+		(templateId === "compound" &&
+			compoundGroup.enabled &&
+			compoundGroup.persistenceEnabled);
 
 	if (!needsPersistenceArtifacts) {
 		return;

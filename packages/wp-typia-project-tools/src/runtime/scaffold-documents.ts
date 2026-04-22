@@ -17,6 +17,7 @@ import {
 } from './package-managers.js';
 import { getPackageVersions } from './package-versions.js';
 import type { ScaffoldTemplateVariables } from './scaffold.js';
+import { getScaffoldTemplateVariableGroups } from './scaffold-template-variable-groups.js';
 
 /**
  * Builds the generated README markdown for one scaffolded project.
@@ -41,28 +42,31 @@ export function buildReadme(
     withWpEnv?: boolean;
   } = {},
 ): string {
+  const variableGroups = getScaffoldTemplateVariableGroups(variables);
+  const compoundPersistenceEnabled =
+    variableGroups.compound.enabled &&
+    variableGroups.compound.persistenceEnabled;
   const optionalOnboardingSteps = getOptionalOnboardingSteps(packageManager, templateId, {
-    compoundPersistenceEnabled: variables.compoundPersistenceEnabled === 'true',
+    compoundPersistenceEnabled,
   });
   const initialCommitCommands = getInitialCommitCommands();
   const sourceOfTruthNote = getTemplateSourceOfTruthNote(templateId, {
-    compoundPersistenceEnabled: variables.compoundPersistenceEnabled === 'true',
+    compoundPersistenceEnabled,
   });
-  const compoundPersistenceEnabled = variables.compoundPersistenceEnabled === 'true';
   const publicPersistencePolicyNote =
-    variables.isPublicPersistencePolicy === 'true'
+    variableGroups.persistence.enabled && variableGroups.persistence.auth.isPublic
       ? 'Public persistence writes use signed short-lived tokens, per-request ids, and coarse rate limiting by default. Add application-specific abuse controls before using the same pattern for high-value metrics or experiments.'
       : null;
   const alternateRenderTargetSection =
-    variables.hasAlternateRenderTargets === 'true'
+    variableGroups.alternateRenderTargets.enabled
       ? `## Alternate Render Targets\n\nThis scaffold keeps \`${templateId === 'compound' ? `src/blocks/${variables.slugKebabCase}/render.php` : 'src/render.php'}\` as the default web render boundary and also generates ${[
-          variables.hasAlternateEmailRenderTarget === 'true'
+          variableGroups.alternateRenderTargets.hasEmail
             ? `\`${templateId === 'compound' ? `src/blocks/${variables.slugKebabCase}/render-email.php` : 'src/render-email.php'}\``
             : null,
-          variables.hasAlternateMjmlRenderTarget === 'true'
+          variableGroups.alternateRenderTargets.hasMjml
             ? `\`${templateId === 'compound' ? `src/blocks/${variables.slugKebabCase}/render-mjml.php` : 'src/render-mjml.php'}\``
             : null,
-          variables.hasAlternatePlainTextRenderTarget === 'true'
+          variableGroups.alternateRenderTargets.hasPlainText
             ? `\`${templateId === 'compound' ? `src/blocks/${variables.slugKebabCase}/render-text.php` : 'src/render-text.php'}\``
             : null,
         ]

@@ -9,6 +9,7 @@ import {
   resolveScaffoldIdentifiers,
 } from './scaffold-identifiers.js';
 import type {
+  FlatScaffoldTemplateVariables,
   ScaffoldAnswers,
   ScaffoldTemplateVariables,
 } from './scaffold.js';
@@ -29,6 +30,7 @@ import {
   toPascalCase,
   toSnakeCase,
 } from './string-case.js';
+import { attachScaffoldTemplateVariableGroups } from "./scaffold-template-variable-groups.js";
 
 /**
  * Build the normalized template variables used by scaffold rendering.
@@ -100,7 +102,7 @@ export function getTemplateVariables(
       ? answers.persistencePolicy ?? 'authenticated'
       : 'authenticated';
 
-  return {
+  const flatVariables: FlatScaffoldTemplateVariables = {
     alternateRenderTargetsCsv: '',
     alternateRenderTargetsJson: '[]',
     apiClientPackageVersion,
@@ -191,4 +193,61 @@ export function getTemplateVariables(
     titleCase: pascalCase,
     persistencePolicy,
   };
+
+  return attachScaffoldTemplateVariableGroups(flatVariables, {
+    alternateRenderTargets: {
+      csv: '',
+      enabled: false,
+      hasEmail: false,
+      hasMjml: false,
+      hasPlainText: false,
+      json: '[]',
+      targets: [],
+    },
+    compound: {
+      enabled: false,
+      persistenceEnabled: false,
+    },
+    persistence: {
+      enabled: false,
+      scope: 'none',
+    },
+    queryLoop: {
+      enabled: false,
+    },
+    shared: {
+      author: answers.author.trim(),
+      blockMetadataVersion: BUILTIN_BLOCK_METADATA_VERSION,
+      category: metadataDefaults?.category ?? template?.defaultCategory ?? 'widgets',
+      cssClassName,
+      description,
+      descriptionJson: JSON.stringify(description),
+      frontendCssClassName: buildFrontendCssClassName(cssClassName),
+      icon: metadataDefaults?.icon ?? 'smiley',
+      keyword: slug.replace(/-/g, ' '),
+      namespace,
+      pascalCase,
+      phpPrefix,
+      phpPrefixUpper,
+      slug,
+      slugCamelCase: pascalCase.charAt(0).toLowerCase() + pascalCase.slice(1),
+      slugKebabCase: slug,
+      slugSnakeCase,
+      textDomain,
+      title,
+      titleCase: pascalCase,
+      titleJson: JSON.stringify(title),
+      versions: {
+        apiClient: apiClientPackageVersion,
+        blockRuntime: blockRuntimePackageVersion,
+        blockTypes: blockTypesPackageVersion,
+        projectTools: projectToolsPackageVersion,
+        rest: restPackageVersion,
+      },
+    },
+    template: {
+      description: template?.description ?? 'External scaffold template variables',
+    },
+    templateFamily: 'external',
+  });
 }

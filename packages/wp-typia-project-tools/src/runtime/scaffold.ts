@@ -41,6 +41,10 @@ import {
 import {
 } from "./scaffold-answer-resolution.js";
 import { getTemplateVariables } from "./scaffold-template-variables.js";
+import { getScaffoldTemplateVariableGroups } from "./scaffold-template-variable-groups.js";
+import type {
+	ScaffoldTemplateVariableGroupsCarrier,
+} from "./scaffold-template-variable-groups.js";
 import {
 	assertExternalLayerCompositionOptions,
 } from "./cli-validation.js";
@@ -79,7 +83,7 @@ export type PersistencePolicy = (typeof PERSISTENCE_POLICIES)[number];
 /**
  * Normalized template variables shared by built-in and remote scaffold flows.
  */
-export interface ScaffoldTemplateVariables extends Record<string, string> {
+export interface FlatScaffoldTemplateVariables extends Record<string, string> {
 	alternateRenderTargetsCsv: string;
 	alternateRenderTargetsJson: string;
 	apiClientPackageVersion: string;
@@ -144,6 +148,10 @@ export interface ScaffoldTemplateVariables extends Record<string, string> {
 	titleCase: string;
 	persistencePolicy: PersistencePolicy;
 }
+
+export interface ScaffoldTemplateVariables
+	extends FlatScaffoldTemplateVariables,
+		ScaffoldTemplateVariableGroupsCarrier {}
 
 /**
  * Resolve scaffold template input from either built-in template ids or custom
@@ -248,6 +256,18 @@ export {
 	resolveTemplateId,
 } from "./scaffold-answer-resolution.js";
 export { getTemplateVariables } from "./scaffold-template-variables.js";
+export {
+	getScaffoldTemplateVariableGroups,
+	type BasicScaffoldTemplateVariableGroups,
+	type CompoundScaffoldTemplateVariableGroups,
+	type ExternalScaffoldTemplateVariableGroups,
+	type InteractivityScaffoldTemplateVariableGroups,
+	type PersistenceScaffoldTemplateVariableGroups,
+	type QueryLoopScaffoldTemplateVariableGroups,
+	type ScaffoldTemplateFamily,
+	type ScaffoldTemplateVariableGroups,
+	type ScaffoldTemplateVariableGroupsCarrier,
+} from "./scaffold-template-variable-groups.js";
 
 export function isDataStorageMode(value: string): value is DataStorageMode {
 	return (DATA_STORAGE_MODES as readonly string[]).includes(value);
@@ -448,8 +468,11 @@ export async function scaffoldProject({
 	);
 	await normalizePackageJson(projectDir, resolvedPackageManager);
 	if (isBuiltInTemplate) {
+		const variableGroups = getScaffoldTemplateVariableGroups(variables);
 		await applyGeneratedProjectDxPackageJson({
-			compoundPersistenceEnabled: variables.compoundPersistenceEnabled === "true",
+			compoundPersistenceEnabled:
+				variableGroups.compound.enabled &&
+				variableGroups.compound.persistenceEnabled,
 			packageManager: resolvedPackageManager,
 			projectDir,
 			templateId: resolvedTemplateId,
