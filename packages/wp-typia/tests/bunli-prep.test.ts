@@ -18,6 +18,10 @@ const repoRoot = path.resolve(packageRoot, '../..');
 const packageManifest = JSON.parse(
   fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8'),
 );
+const runtimeDependencyHelperSource = fs.readFileSync(
+  path.join(packageRoot, 'scripts', 'runtime-build-dependencies.ts'),
+  'utf8',
+);
 
 describe('wp-typia Bunli preparation', () => {
   test('checks in the Bunli prep tree while promoting a built CLI runtime', () => {
@@ -29,7 +33,15 @@ describe('wp-typia Bunli preparation', () => {
     expect(packageManifest.scripts['bunli:test']).toBe(
       'bun test tests/*.test.ts',
     );
+    expect(packageManifest.scripts['build:standalone']).toBe(
+      'bun scripts/build-standalone-runtime.ts --targets native --outdir ./dist-standalone',
+    );
+    expect(packageManifest.scripts['build:standalone:release']).toBe(
+      'bun scripts/build-standalone-runtime.ts --targets darwin-arm64,darwin-x64,linux-arm64,linux-x64,windows-x64 --outdir ./.cache/standalone/raw',
+    );
     expect(packageManifest.scripts.prepack).toBe('bun run build');
+    expect(packageManifest.scripts.clean).toContain('dist-standalone');
+    expect(packageManifest.scripts.clean).toContain('.cache/standalone');
     expect(packageManifest.engines.bun).toBe('>=1.3.11');
     expect(packageManifest.devDependencies.bunli).toBe('0.9.0');
     expect(packageManifest.dependencies['@bunli/core']).toBe('0.9.0');
@@ -72,40 +84,42 @@ describe('wp-typia Bunli preparation', () => {
       runtimeBuildScript.indexOf('async function buildGeneratedMetadataRuntime()'),
     );
 
-    expect(runtimeBuildScript).toContain(
+    expect(runtimeDependencyHelperSource).toContain(
       'const requireFromWpTypia = createRequire(',
     );
-    expect(runtimeBuildScript).toContain(
-      "path.join(packageRoot, 'package.json')",
+    expect(runtimeDependencyHelperSource).toContain(
+      'path.join(packageRoot, "package.json")',
     );
-    expect(runtimeBuildScript).toContain(
-      "requireFromWpTypia.resolve('@wp-typia/project-tools/package.json')",
+    expect(runtimeDependencyHelperSource).toContain(
+      'requireFromWpTypia.resolve("@wp-typia/project-tools/package.json")',
     );
-    expect(runtimeBuildScript).toContain(
-      "requireFromWpTypia.resolve('@wp-typia/api-client/package.json')",
+    expect(runtimeDependencyHelperSource).toContain(
+      'requireFromWpTypia.resolve("@wp-typia/api-client/package.json")',
     );
-    expect(runtimeBuildScript).toContain(
-      "requireFromProjectTools.resolve('@wp-typia/block-runtime/package.json')",
+    expect(runtimeDependencyHelperSource).toContain(
+      'requireFromProjectTools.resolve("@wp-typia/block-runtime/package.json")',
     );
-    expect(runtimeBuildScript).toContain(
+    expect(runtimeDependencyHelperSource).toContain(
       'wp-typia Bun runtime recovery requires Bun to be available.',
     );
-    expect(runtimeBuildScript).toContain(
-      "['x', 'tsc', '-p', buildStep.tsconfig]",
+    expect(runtimeDependencyHelperSource).toContain(
+      '["x", "tsc", "-p", buildStep.tsconfig]',
     );
-    expect(runtimeBuildScript).toContain(
-      "dependencies: ['@wp-typia/api-client'",
+    expect(runtimeDependencyHelperSource).toContain(
+      'dependencies: ["@wp-typia/api-client"]',
     );
-    expect(runtimeBuildScript).toContain(
-      "dependencies: ['@wp-typia/api-client', '@wp-typia/block-runtime']",
+    expect(runtimeDependencyHelperSource).toContain(
+      'dependencies: ["@wp-typia/api-client", "@wp-typia/block-runtime"]',
     );
-    expect(runtimeBuildScript).toContain('tsconfig.runtime.json');
-    expect(runtimeBuildScript).toContain('tsconfig.build.json');
-    expect(runtimeBuildScript).toContain(
+    expect(runtimeDependencyHelperSource).toContain('tsconfig.runtime.json');
+    expect(runtimeDependencyHelperSource).toContain('tsconfig.build.json');
+    expect(runtimeDependencyHelperSource).toContain(
       'Unable to match missing wp-typia runtime alias artifacts to rebuild steps',
     );
-    expect(runtimeBuildScript).toContain('Failed to build ${buildStep.label}');
-    expect(runtimeBuildScript).toContain(
+    expect(runtimeDependencyHelperSource).toContain(
+      'Failed to build ${buildStep.label}',
+    );
+    expect(runtimeDependencyHelperSource).toContain(
       'wp-typia runtime alias artifacts still missing after rebuild',
     );
     expect(runtimeBuildScript).toContain(
@@ -158,6 +172,8 @@ describe('wp-typia Bunli preparation', () => {
     expect(migrationDoc).toContain('`npx wp-typia`');
     expect(migrationDoc).toContain('`bunx wp-typia`');
     expect(migrationDoc).toContain('`dist-bunli/cli.js`');
+    expect(migrationDoc).toContain('`install-wp-typia.sh`');
+    expect(migrationDoc).toContain('`install-wp-typia.ps1`');
     expect(migrationDoc).toContain('`>=1.3.11`');
     expect(migrationDoc).toContain(`\`${WP_TYPIA_CANONICAL_CREATE_USAGE}\``);
     expect(migrationDoc).toContain(`\`${WP_TYPIA_CANONICAL_MIGRATE_USAGE}\``);

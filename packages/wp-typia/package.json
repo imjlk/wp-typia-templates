@@ -16,14 +16,17 @@
   "scripts": {
     "generate": "bun scripts/generate-bunli-metadata.ts",
     "build": "bun run generate && bun scripts/build-bunli-runtime.ts",
+    "build:standalone": "bun scripts/build-standalone-runtime.ts --targets native --outdir ./dist-standalone",
+    "build:standalone:release": "bun scripts/build-standalone-runtime.ts --targets darwin-arm64,darwin-x64,linux-arm64,linux-x64,windows-x64 --outdir ./.cache/standalone/raw",
     "bunli:generate": "bun run generate",
     "bunli:build": "bun run build",
     "bunli:dev": "bun src/cli.ts",
     "bunli:test": "bun test tests/*.test.ts",
     "dev": "bun run build && node bin/wp-typia.js",
+    "standalone:prepare-release-assets": "bun scripts/prepare-standalone-release-assets.ts --input-dir ./.cache/standalone/raw --outdir ./.cache/standalone/release-assets",
     "test": "cd ../wp-typia-project-tools && bun run build && cd ../wp-typia && bun run build && bun test tests/*.test.ts",
     "test:coverage": "cd ../wp-typia-project-tools && bun run build && cd ../wp-typia && bun run build && bun test tests/*.test.ts --coverage --coverage-reporter=lcov --coverage-dir=coverage",
-    "clean": "rm -rf .bunli dist-bunli",
+    "clean": "rm -rf .bunli .cache/standalone dist-bunli dist-standalone",
     "prepack": "bun run build"
   },
   "keywords": [

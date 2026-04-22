@@ -5,8 +5,17 @@ import { fileURLToPath } from "node:url";
 import { getBuiltInTemplateMetadataDefaults } from "./template-defaults.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PROJECT_TOOLS_PACKAGE_ROOT_ENV = "WP_TYPIA_PROJECT_TOOLS_PACKAGE_ROOT";
 
 export function resolvePackageRoot(startDir: string): string {
+	const overriddenPackageRoot = process.env[PROJECT_TOOLS_PACKAGE_ROOT_ENV]?.trim();
+	if (overriddenPackageRoot) {
+		const resolvedOverride = path.resolve(overriddenPackageRoot);
+		if (fs.existsSync(path.join(resolvedOverride, "package.json"))) {
+			return resolvedOverride;
+		}
+	}
+
 	let currentDir = startDir;
 
 	while (true) {

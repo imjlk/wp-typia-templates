@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { createCLI, type CLI } from "@bunli/core";
@@ -15,6 +16,31 @@ import { WP_TYPIA_CONFIG_SOURCES } from "./config";
 import { extractWpTypiaConfigOverride } from "./config-override";
 import { createWpTypiaSkillsMetadataPlugin } from "./plugins/wp-typia-skills";
 import { wpTypiaUserConfigPlugin } from "./plugins/wp-typia-user-config";
+
+function applyStandaloneSupportLayoutEnv(): void {
+	if (process.env.WP_TYPIA_PROJECT_TOOLS_PACKAGE_ROOT) {
+		return;
+	}
+
+	const executableDir = path.dirname(process.execPath);
+	const candidateRoots = [
+		path.join(executableDir, ".wp-typia", "share", "wp-typia-project-tools"),
+		path.resolve(
+			executableDir,
+			"..",
+			".wp-typia",
+			"share",
+			"wp-typia-project-tools",
+		),
+	];
+
+	for (const candidateRoot of candidateRoots) {
+		if (fs.existsSync(path.join(candidateRoot, "package.json"))) {
+			process.env.WP_TYPIA_PROJECT_TOOLS_PACKAGE_ROOT = candidateRoot;
+			return;
+		}
+	}
+}
 
 function resolveGeneratedMetadataPath(moduleUrl: string): string {
 	const candidates = [
@@ -45,6 +71,8 @@ async function formatCliError(error: unknown): Promise<string> {
 export async function createWpTypiaCli(options: {
 	configOverridePath?: string;
 } = {}): Promise<CLI> {
+	applyStandaloneSupportLayoutEnv();
+
 	const cli = await createCLI({
 		...bunliConfig,
 		description: packageJson.description,
