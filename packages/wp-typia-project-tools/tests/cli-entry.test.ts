@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { cleanupScaffoldTempRoot, createBlockSubsetFixturePath, createScaffoldTempRoot, entryPath, getCommandErrorMessage, runCapturedCli, runCli, scaffoldOfficialWorkspace, templateLayerAmbiguousFixturePath, templateLayerFixturePath } from "./helpers/scaffold-test-harness.js";
+import { cleanupScaffoldTempRoot, createBlockExternalFixturePath, createBlockSubsetFixturePath, createScaffoldTempRoot, entryPath, getCommandErrorMessage, runCapturedCli, runCli, scaffoldOfficialWorkspace, templateLayerAmbiguousFixturePath, templateLayerFixturePath } from "./helpers/scaffold-test-harness.js";
 import { formatHelpText, getDoctorChecks, getNextSteps, getOptionalOnboarding, runScaffoldFlow } from "../src/runtime/cli-core.js";
 import { collectScaffoldAnswers } from "../src/runtime/scaffold.js";
 import { getQuickStartWorkflowNote } from "../src/runtime/scaffold-onboarding.js";
@@ -255,6 +255,25 @@ test("runScaffoldFlow prompts for an external layer when multiple public roots a
   expect(fs.readFileSync(path.join(flow.projectDir, "beta.txt"), "utf8")).toContain(
     "beta layer"
   );
+});
+
+test("runScaffoldFlow surfaces explicit trust warnings for executable external templates", async () => {
+  const flow = await runScaffoldFlow({
+    cwd: tempRoot,
+    noInstall: true,
+    packageManager: "npm",
+    projectInput: "demo-external-template-warning",
+    templateId: createBlockExternalFixturePath,
+    yes: true,
+  });
+
+  expect(
+    flow.result.warnings.some((warning) =>
+      warning.includes(
+        "External template configs execute trusted JavaScript during scaffolding."
+      )
+    )
+  ).toBe(true);
 });
 
 test("optional onboarding derives sync steps from available custom-template scripts", () => {

@@ -23,6 +23,8 @@ export const EXTERNAL_TEMPLATE_ENTRY_CANDIDATES = [
   'index.cjs',
   'index.mjs',
 ] as const
+export const EXTERNAL_TEMPLATE_TRUST_WARNING =
+  'External template configs execute trusted JavaScript during scaffolding. Review the template source before using local paths, GitHub repos, or npm packages you do not already trust.'
 const TEMPLATE_WARNING_MESSAGE =
   'wp-typia owns package/tooling/sync setup for generated projects, so this external template setting is ignored.'
 
@@ -80,7 +82,7 @@ async function loadExternalTemplateConfig<
     )
   }
 
-  const warnings: string[] = []
+  const warnings: string[] = [EXTERNAL_TEMPLATE_TRUST_WARNING]
   for (const ignoredKey of [
     'wpScripts',
     'wpEnv',

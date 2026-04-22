@@ -82,7 +82,10 @@ export function getDefaultCategory(sourceDir: string): string {
 
 function readTemplatePackageJson(
   sourceDir: string,
-): { wpTypia?: { projectType?: string } } | null {
+): {
+  packageJson: { wpTypia?: { projectType?: unknown } }
+  sourcePath: string
+} | null {
   for (const candidate of [
     path.join(sourceDir, 'package.json.mustache'),
     path.join(sourceDir, 'package.json'),
@@ -92,11 +95,18 @@ function readTemplatePackageJson(
     }
 
     try {
-      return JSON.parse(fs.readFileSync(candidate, 'utf8')) as {
-        wpTypia?: { projectType?: string }
+      return {
+        packageJson: JSON.parse(fs.readFileSync(candidate, 'utf8')) as {
+          wpTypia?: { projectType?: unknown }
+        },
+        sourcePath: candidate,
       }
-    } catch {
-      continue
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown parse failure'
+      throw new Error(
+        `Failed to parse template metadata file "${candidate}": ${message}`,
+      )
     }
   }
 
@@ -108,10 +118,22 @@ function readTemplatePackageJson(
  * manifest and return it when present.
  */
 export function getTemplateProjectType(sourceDir: string): string | null {
-  const packageJson = readTemplatePackageJson(sourceDir)
-  return typeof packageJson?.wpTypia?.projectType === 'string'
-    ? packageJson.wpTypia.projectType
-    : null
+  const packageJsonEntry = readTemplatePackageJson(sourceDir)
+  if (!packageJsonEntry) {
+    return null
+  }
+
+  const projectType = packageJsonEntry.packageJson.wpTypia?.projectType
+  if (projectType === undefined) {
+    return null
+  }
+  if (typeof projectType !== 'string' || projectType.trim().length === 0) {
+    throw new Error(
+      `Template metadata file "${packageJsonEntry.sourcePath}" defines wpTypia.projectType, but it must be a non-empty string.`,
+    )
+  }
+
+  return projectType
 }
 
 /**
