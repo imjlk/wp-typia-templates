@@ -1,0 +1,79 @@
+---
+title: 'Scaffold Toolchain Policy'
+---
+
+`wp-typia` treats scaffolded project toolchain defaults as an explicit maintainer
+policy rather than a collection of historical template decisions.
+
+## Package-manager fields
+
+Scaffolded projects follow two different rules depending on the selected
+package manager:
+
+- `bun`, `pnpm`, and `yarn` scaffolds emit an exact `packageManager` field from
+  `packages/wp-typia-project-tools/src/runtime/package-managers.ts`
+- `npm` scaffolds intentionally omit the `packageManager` field
+
+Why the split exists:
+
+- non-npm managers depend more heavily on an explicit package-manager selector
+  and lockfile semantics, so the scaffold records the exact tool that its
+  generated scripts expect
+- npm remains the broadest compatibility path because it ships with Node by
+  default, so npm scaffolds avoid pinning a specific npm patch line into the
+  generated project manifest
+- when the repository updates one of those exact package-manager strings, the
+  same PR should update the runtime definition, any scaffold assertions, and
+  this document together
+
+## Node runtime signaling
+
+First-party scaffolds intentionally do **not** emit `.nvmrc`, `.node-version`,
+or a package-level `engines.node` field today.
+
+That is an explicit choice, not an omission:
+
+- `.nvmrc` and `.node-version` are shell-manager-specific hints rather than
+  universal package metadata
+- the scaffold already owns generated README guidance plus CLI `doctor` and
+  sync diagnostics for runtime expectations
+- adding helper files later is still allowed, but it should happen as a
+  deliberate repository-wide policy change rather than template-by-template
+  drift
+
+If we decide to add Node version helper files later, the change should update
+this document, scaffold tests, and generated README guidance in the same PR.
+
+## `@wp-typia/*` dependency strategy
+
+Generated package manifests use the versions resolved by
+`packages/wp-typia-project-tools/src/runtime/package-versions.ts`.
+
+The current policy is:
+
+- scaffolded `@wp-typia/*` package dependencies use caret ranges
+- those ranges are sourced from the canonical package manifests that ship with
+  the current CLI release
+- exact pins are reserved for places where the generated output must name a
+  specific CLI release, such as `npx wp-typia@<version>` guidance in generated
+  documentation
+
+Why caret ranges are still the default for scaffolded package manifests:
+
+- the `@wp-typia/*` family is still on `0.x`, so caret ranges stay inside the
+  current minor line and avoid silent cross-minor upgrades
+- patch-level updates within that minor line are usually the right maintenance
+  default for scaffolded projects
+- the CLI and generated tests already validate the current package surface
+  against that ranged dependency strategy before release
+
+## Practical summary
+
+When touching scaffolded package metadata:
+
+- keep `packageManager` exact for `bun`, `pnpm`, and `yarn`
+- keep `packageManager` omitted for `npm`
+- do not add `.nvmrc`, `.node-version`, or `engines.node` to first-party
+  scaffolds unless this policy changes explicitly
+- keep generated `@wp-typia/*` dependencies on caret ranges sourced from
+  `package-versions.ts`

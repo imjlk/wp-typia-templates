@@ -233,6 +233,7 @@ npx wp-typia create my-block --template @scope/create-block-template --variant h
 - [Formatting Toolchain Policy](https://imjlk.github.io/wp-typia/maintainers/formatting-toolchain-policy/)
 - [Maintenance Automation Policy](https://imjlk.github.io/wp-typia/maintainers/maintenance-automation-policy/)
 - [Package Manifest Policy](https://imjlk.github.io/wp-typia/maintainers/package-manifest-policy/)
+- [Scaffold Toolchain Policy](https://imjlk.github.io/wp-typia/maintainers/scaffold-toolchain-policy/)
 - [TypeScript Strictness Policy](https://imjlk.github.io/wp-typia/maintainers/typescript-strictness-policy/)
 - [Upgrade Guide](UPGRADE.md)
 - [License](LICENSE)
