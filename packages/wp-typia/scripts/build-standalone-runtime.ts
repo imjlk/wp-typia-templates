@@ -19,11 +19,19 @@ function readFlagValue(argv: string[], flagName: string): string | undefined {
 	for (let index = 0; index < argv.length; index += 1) {
 		const value = argv[index];
 		if (value === flagName) {
-			return argv[index + 1];
+			const nextValue = argv[index + 1];
+			if (!nextValue || nextValue.startsWith("-")) {
+				throw new Error(`Missing value for ${flagName}.`);
+			}
+			return nextValue;
 		}
 
 		if (value?.startsWith(`${flagName}=`)) {
-			return value.slice(flagName.length + 1);
+			const inlineValue = value.slice(flagName.length + 1);
+			if (!inlineValue) {
+				throw new Error(`Missing value for ${flagName}.`);
+			}
+			return inlineValue;
 		}
 	}
 

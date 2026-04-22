@@ -7,6 +7,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+if ($Update.IsPresent) {
+	Write-Verbose "Parameter -Update is accepted for compatibility; install always replaces the target binary."
+}
+
+if ($Force.IsPresent) {
+	Write-Verbose "Parameter -Force is accepted for compatibility; install always replaces the target binary."
+}
+
 $Repo = if ($env:WP_TYPIA_RELEASE_REPO) {
 	$env:WP_TYPIA_RELEASE_REPO
 } else {

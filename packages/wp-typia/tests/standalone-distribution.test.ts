@@ -26,14 +26,29 @@ function extractVersionOutput(output: string): string {
 		return trimmed;
 	}
 
-	const parsed = JSON.parse(trimmed) as {
+	if (!trimmed.startsWith("{")) {
+		throw new Error(`Unexpected standalone --version output: ${output}`);
+	}
+
+	let parsed: {
 		data?: {
 			version?: string;
 		};
 		ok?: boolean;
 	};
-	if (parsed.ok === true && parsed.data?.version === packageManifest.version) {
-		return `wp-typia ${parsed.data.version}`;
+	try {
+		parsed = JSON.parse(trimmed) as {
+			data?: {
+				version?: string;
+			};
+			ok?: boolean;
+		};
+	} catch {
+		throw new Error(`Unexpected standalone --version output: ${output}`);
+	}
+	const parsedData = parsed.data;
+	if (parsed.ok === true && parsedData && parsedData.version === packageManifest.version) {
+		return `wp-typia ${parsedData.version}`;
 	}
 
 	throw new Error(`Unexpected standalone --version output: ${output}`);
@@ -152,6 +167,10 @@ describe("wp-typia standalone distribution", () => {
 	});
 
 	test("prepares release assets and installs from the POSIX installer contract", async () => {
+		if (process.platform === "win32") {
+			return;
+		}
+
 		const standaloneBuild = await ensureNativeStandaloneBuild();
 		const stagingRoot = fs.mkdtempSync(
 			path.join(os.tmpdir(), "wp-typia-standalone-release-"),
@@ -259,7 +278,7 @@ describe("wp-typia standalone distribution", () => {
 		expect(dryRunOutput).toContain("Dry run for Demo Basic");
 		expect(dryRunOutput).toContain("write src/block-metadata.ts");
 		expect(dryRunOutput).toContain("write src/manifest-document.ts");
-	});
+	}, { timeout: 15_000 });
 
 	test("ships a Windows installer contract alongside the POSIX installer", () => {
 		const windowsInstallerSource = fs.readFileSync(

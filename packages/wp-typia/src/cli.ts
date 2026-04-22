@@ -11,7 +11,6 @@ import { skillsPlugin } from "@bunli/plugin-skills";
 import packageJson from "../package.json";
 import { bunliConfig } from "../bunli.config";
 import { normalizeWpTypiaArgv } from "./command-contract";
-import { wpTypiaCommands } from "./command-list";
 import { WP_TYPIA_CONFIG_SOURCES } from "./config";
 import { extractWpTypiaConfigOverride } from "./config-override";
 import { createWpTypiaSkillsMetadataPlugin } from "./plugins/wp-typia-skills";
@@ -72,6 +71,7 @@ export async function createWpTypiaCli(options: {
 	configOverridePath?: string;
 } = {}): Promise<CLI> {
 	applyStandaloneSupportLayoutEnv();
+	const { wpTypiaCommands } = await import("./command-list");
 
 	const cli = await createCLI({
 		...bunliConfig,

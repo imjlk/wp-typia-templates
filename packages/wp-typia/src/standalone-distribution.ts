@@ -54,8 +54,8 @@ export function detectNativeStandaloneTarget(
 export function parseStandaloneTargets(
 	input?: string,
 	options: {
-		arch?: string;
-		platform?: string;
+		arch?: NodeJS.Architecture;
+		platform?: NodeJS.Platform;
 	} = {},
 ): StandaloneTarget[] {
 	const trimmed = input?.trim();

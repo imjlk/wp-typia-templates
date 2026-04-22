@@ -108,6 +108,28 @@ ensure_command() {
 	exit 1
 }
 
+strip_manifest_quotes() {
+	printf '%s' "$1" | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//"
+}
+
+read_manifest_value() {
+	key="$1"
+	file_path="$2"
+	value="$(
+		awk -F= -v key="$key" '$1 == key { print substr($0, length($1) + 2); exit }' "$file_path"
+	)"
+	if [ -z "${value:-}" ]; then
+		return 1
+	fi
+	strip_manifest_quotes "$value"
+}
+
+lookup_checksum() {
+	file_name="$1"
+	checksums_path="$2"
+	awk -v file_name="$file_name" '$2 == file_name { print $1; exit }' "$checksums_path"
+}
+
 ensure_command curl
 ensure_command tar
 
@@ -134,14 +156,10 @@ CHECKSUMS_PATH="$TMPDIR_PATH/$CHECKSUMS_NAME"
 curl -fsSL "${RELEASE_DOWNLOAD_BASE_URL}/${RELEASE_TAG}/${MANIFEST_NAME}" -o "$MANIFEST_PATH"
 curl -fsSL "${RELEASE_DOWNLOAD_BASE_URL}/${RELEASE_TAG}/${CHECKSUMS_NAME}" -o "$CHECKSUMS_PATH"
 
-# shellcheck source=/dev/null
-. "$MANIFEST_PATH"
-
 ASSET_VAR="ASSET_${TARGET_KEY}"
 BINARY_VAR="BINARY_${TARGET_KEY}"
-
-eval "ASSET_NAME=\${${ASSET_VAR}:-}"
-eval "BINARY_NAME=\${${BINARY_VAR}:-}"
+ASSET_NAME="$(read_manifest_value "$ASSET_VAR" "$MANIFEST_PATH" || true)"
+BINARY_NAME="$(read_manifest_value "$BINARY_VAR" "$MANIFEST_PATH" || true)"
 
 if [ -z "${ASSET_NAME:-}" ] || [ -z "${BINARY_NAME:-}" ]; then
 	echo "No standalone asset was published for target ${TARGET} in release ${RELEASE_TAG}." >&2
@@ -151,7 +169,7 @@ fi
 ARCHIVE_PATH="$TMPDIR_PATH/$ASSET_NAME"
 curl -fsSL "${RELEASE_DOWNLOAD_BASE_URL}/${RELEASE_TAG}/${ASSET_NAME}" -o "$ARCHIVE_PATH"
 
-EXPECTED_CHECKSUM="$(grep "  ${ASSET_NAME}\$" "$CHECKSUMS_PATH" | awk '{print $1}')"
+EXPECTED_CHECKSUM="$(lookup_checksum "$ASSET_NAME" "$CHECKSUMS_PATH")"
 if [ -z "$EXPECTED_CHECKSUM" ]; then
 	echo "Unable to resolve checksum for ${ASSET_NAME}." >&2
 	exit 1
