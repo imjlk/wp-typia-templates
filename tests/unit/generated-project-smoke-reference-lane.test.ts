@@ -159,8 +159,11 @@ test("generated project smoke assertions accept local project-tools smoke rewrit
 				name: "demo-smoke-boundary",
 				private: true,
 				devDependencies: {
-					"@wp-typia/project-tools":
-						"file:/Users/imjlk/repos/imjlk/wp-typia-boilerplate/packages/wp-typia-project-tools",
+					"@wp-typia/project-tools": `file:${join(
+						repoRoot,
+						"packages",
+						"wp-typia-project-tools",
+					)}`,
 				},
 				scripts: {
 					build: "wp-scripts build",
