@@ -7,6 +7,7 @@ import { getTemplateVariables, scaffoldProject } from "../src/runtime/index.js";
 import { resolveTemplateId } from "../src/runtime/scaffold.js";
 import { copyRenderedDirectory } from "../src/runtime/template-render.js";
 import { parseGitHubTemplateLocator, parseNpmTemplateLocator, parseTemplateLocator } from "../src/runtime/template-source.js";
+import { EXTERNAL_TEMPLATE_TRUST_WARNING } from "../src/runtime/template-source-external.js";
 
 describe("@wp-typia/project-tools template sources", () => {
   const tempRoot = createScaffoldTempRoot("wp-typia-template-source-");
@@ -160,7 +161,7 @@ test("local official external template configs scaffold with the default variant
   );
 
   expect(result.selectedVariant).toBe("standard");
-  expect(result.warnings ?? []).toEqual([]);
+  expect(result.warnings ?? []).toContain(EXTERNAL_TEMPLATE_TRUST_WARNING);
   expect(
     fs.existsSync(path.join(targetDir, "assets", "remote-note.txt"))
   ).toBe(true);
@@ -358,7 +359,7 @@ test("external template workspace variants scaffold richer wp-typia workspaces w
   const readme = fs.readFileSync(path.join(targetDir, "README.md"), "utf8");
 
   expect(result.selectedVariant).toBe("workspace");
-  expect(result.warnings ?? []).toEqual([]);
+  expect(result.warnings ?? []).toContain(EXTERNAL_TEMPLATE_TRUST_WARNING);
   expect(packageJson.wpTypia).toEqual({
     projectType: "workspace",
     templatePackage: "@scope/external-workspace-template",
@@ -433,6 +434,68 @@ test("external template scaffolds honor explicit repository reference overrides"
   );
   expect(generatedEdit).toContain("CLI package: fork-owner/fork-typia");
   expect(generatedEdit).not.toContain("yourusername/wp-typia");
+});
+
+test("malformed remote package metadata surfaces a direct parse diagnostic", async () => {
+  const fixtureDir = path.join(tempRoot, "create-block-subset-invalid-package-json");
+  fs.cpSync(createBlockSubsetFixturePath, fixtureDir, { recursive: true });
+  fs.writeFileSync(path.join(fixtureDir, "package.json"), "{\n", "utf8");
+
+  await expect(
+    scaffoldProject({
+      projectDir: path.join(tempRoot, "demo-invalid-remote-package-json"),
+      templateId: fixtureDir,
+      packageManager: "npm",
+      noInstall: true,
+      answers: {
+        author: "Test Runner",
+        description: "Invalid remote package metadata",
+        namespace: "create-block",
+        slug: "demo-invalid-remote-package-json",
+        title: "Invalid Remote Package Json",
+      },
+    })
+  ).rejects.toThrow(
+    /Failed to parse template metadata file ".*package\.json":/
+  );
+});
+
+test("malformed remote projectType metadata surfaces a direct validation diagnostic", async () => {
+  const fixtureDir = path.join(tempRoot, "create-block-subset-invalid-project-type");
+  fs.cpSync(createBlockSubsetFixturePath, fixtureDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(fixtureDir, "package.json"),
+    JSON.stringify(
+      {
+        name: "@scope/remote-template",
+        version: "0.0.0",
+        wpTypia: {
+          projectType: 42,
+        },
+      },
+      null,
+      2
+    ),
+    "utf8"
+  );
+
+  await expect(
+    scaffoldProject({
+      projectDir: path.join(tempRoot, "demo-invalid-remote-project-type"),
+      templateId: fixtureDir,
+      packageManager: "npm",
+      noInstall: true,
+      answers: {
+        author: "Test Runner",
+        description: "Invalid remote project type",
+        namespace: "create-block",
+        slug: "demo-invalid-remote-project-type",
+        title: "Invalid Remote Project Type",
+      },
+    })
+  ).rejects.toThrow(
+    /defines wpTypia\.projectType, but it must be a non-empty string\./
+  );
 });
 
 test("workspace template package identity is defined once and imported by runtime callers", () => {
