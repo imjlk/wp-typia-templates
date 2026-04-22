@@ -83,7 +83,7 @@ test("CI generated smoke matrix includes the checked-in example lanes", () => {
 	expect(ciWorkflow).toContain('--example-project "${{ matrix.example_project }}"');
 });
 
-test("workspace dependency rewrite seeds api-client for linked Bun reference examples", async () => {
+test("workspace dependency rewrite seeds local runtime packages for linked Bun reference examples", async () => {
 	const projectDir = fs.mkdtempSync(
 		join(os.tmpdir(), "wp-typia-generated-smoke-reference-"),
 	);
@@ -129,10 +129,19 @@ test("workspace dependency rewrite seeds api-client for linked Bun reference exa
 	expect(rewrittenPackageJson.devDependencies["@wp-typia/block-runtime"]).toContain(
 		"packages/wp-typia-block-runtime",
 	);
+	expect(rewrittenPackageJson.devDependencies["@wp-typia/project-tools"]).toContain(
+		"packages/wp-typia-project-tools",
+	);
 	expect(rewrittenPackageJson.devDependencies["@wp-typia/rest"]).toContain(
 		"packages/wp-typia-rest",
 	);
 	expect(rewrittenPackageJson.devDependencies["wp-typia"]).toContain(
 		"packages/wp-typia",
+	);
+	expect(rewrittenPackageJson.overrides["@wp-typia/project-tools"]).toContain(
+		"packages/wp-typia-project-tools",
+	);
+	expect(rewrittenPackageJson.resolutions["@wp-typia/project-tools"]).toContain(
+		"packages/wp-typia-project-tools",
 	);
 });

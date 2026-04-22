@@ -170,6 +170,7 @@ export function rewriteWorkspaceDependencies(projectDir, packageManager) {
 	const localApiClientDependency = `file:${path.resolve(repoRoot, "packages/wp-typia-api-client")}`;
 	const localBlockRuntimeDependency = `file:${path.resolve(repoRoot, "packages/wp-typia-block-runtime")}`;
 	const localBlockTypesDependency = `file:${path.resolve(repoRoot, "packages/wp-typia-block-types")}`;
+	const localProjectToolsDependency = `file:${path.resolve(repoRoot, "packages/wp-typia-project-tools")}`;
 	const localRestDependency = `file:${path.resolve(repoRoot, "packages/wp-typia-rest")}`;
 	const localCliDependency = `file:${path.resolve(repoRoot, "packages/wp-typia")}`;
 
@@ -211,9 +212,18 @@ export function rewriteWorkspaceDependencies(projectDir, packageManager) {
 		"@wp-typia/rest",
 		"wp-typia",
 	];
+	const hasProjectToolsDependency =
+		packageJson.devDependencies?.["@wp-typia/project-tools"] ||
+		packageJson.dependencies?.["@wp-typia/project-tools"];
 	const hasApiClientDependency =
 		packageJson.devDependencies?.["@wp-typia/api-client"] ||
 		packageJson.dependencies?.["@wp-typia/api-client"];
+	const shouldSeedProjectToolsInDevDependencies = linkedRuntimePackages.some(
+		(packageName) => packageJson.devDependencies?.[packageName],
+	);
+	const shouldSeedProjectToolsInDependencies = linkedRuntimePackages.some(
+		(packageName) => packageJson.dependencies?.[packageName],
+	);
 	const shouldSeedApiClientInDevDependencies = linkedRuntimePackages.some(
 		(packageName) => packageJson.devDependencies?.[packageName],
 	);
@@ -235,11 +245,26 @@ export function rewriteWorkspaceDependencies(projectDir, packageManager) {
 		}
 	}
 
+	if (!hasProjectToolsDependency) {
+		if (shouldSeedProjectToolsInDevDependencies) {
+			packageJson.devDependencies = {
+				...(packageJson.devDependencies ?? {}),
+				"@wp-typia/project-tools": localProjectToolsDependency,
+			};
+		} else if (shouldSeedProjectToolsInDependencies) {
+			packageJson.dependencies = {
+				...(packageJson.dependencies ?? {}),
+				"@wp-typia/project-tools": localProjectToolsDependency,
+			};
+		}
+	}
+
 	packageJson.overrides = {
 		...(packageJson.overrides ?? {}),
 		"@wp-typia/block-runtime": localBlockRuntimeDependency,
 		"@wp-typia/api-client": localApiClientDependency,
 		"@wp-typia/block-types": localBlockTypesDependency,
+		"@wp-typia/project-tools": localProjectToolsDependency,
 		"@wp-typia/rest": localRestDependency,
 		"wp-typia": localCliDependency,
 	};
@@ -250,6 +275,7 @@ export function rewriteWorkspaceDependencies(projectDir, packageManager) {
 			"@wp-typia/block-runtime": localBlockRuntimeDependency,
 			"@wp-typia/api-client": localApiClientDependency,
 			"@wp-typia/block-types": localBlockTypesDependency,
+			"@wp-typia/project-tools": localProjectToolsDependency,
 			"@wp-typia/rest": localRestDependency,
 			"wp-typia": localCliDependency,
 		},
@@ -259,6 +285,7 @@ export function rewriteWorkspaceDependencies(projectDir, packageManager) {
 		"@wp-typia/block-runtime": localBlockRuntimeDependency,
 		"@wp-typia/api-client": localApiClientDependency,
 		"@wp-typia/block-types": localBlockTypesDependency,
+		"@wp-typia/project-tools": localProjectToolsDependency,
 		"@wp-typia/rest": localRestDependency,
 		"wp-typia": localCliDependency,
 	};
