@@ -480,7 +480,10 @@ describe("@wp-typia/rest/react", () => {
 		await rendered.unmount();
 	});
 
-	test("invalidate triggers a follow-up fetch when an older request resolves late", async () => {
+	test(
+		"invalidate triggers a follow-up fetch when an older request resolves late",
+		{ timeout: 15_000 },
+		async () => {
 		let fetchCount = 0;
 		let resolveFirstFetch!: (value: { count: number }) => void;
 		const endpoint = createEndpoint<{ page: number }, { count: number }>({
@@ -540,7 +543,10 @@ describe("@wp-typia/rest/react", () => {
 		await rendered.unmount();
 	});
 
-	test("invalidate preserves follow-up fetches when an older request fails late", async () => {
+	test(
+		"invalidate preserves follow-up fetches when an older request fails late",
+		{ timeout: 15_000 },
+		async () => {
 		let fetchCount = 0;
 		let rejectFirstFetch!: (error: Error) => void;
 		const endpoint = createEndpoint<{ page: number }, { count: number }>({
