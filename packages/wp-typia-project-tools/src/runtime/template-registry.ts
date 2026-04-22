@@ -5,8 +5,47 @@ import { fileURLToPath } from "node:url";
 import { getBuiltInTemplateMetadataDefaults } from "./template-defaults.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PROJECT_TOOLS_PACKAGE_ROOT_ENV = "WP_TYPIA_PROJECT_TOOLS_PACKAGE_ROOT";
+const PROJECT_TOOLS_PACKAGE_NAME = "@wp-typia/project-tools";
 
+function resolveValidProjectToolsPackageRoot(
+	candidateRoot: string,
+): string | undefined {
+	const packageJsonPath = path.join(candidateRoot, "package.json");
+	if (!fs.existsSync(packageJsonPath)) {
+		return undefined;
+	}
+
+	try {
+		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+			name?: string;
+		};
+		return packageJson.name === PROJECT_TOOLS_PACKAGE_NAME
+			? candidateRoot
+			: undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+/**
+ * Resolve the canonical `@wp-typia/project-tools` package root.
+ *
+ * When `WP_TYPIA_PROJECT_TOOLS_PACKAGE_ROOT` is set, the override is only
+ * accepted if it points at a readable package manifest whose `name` matches
+ * `@wp-typia/project-tools`. Invalid or stale overrides are ignored and normal
+ * upward package-root discovery continues.
+ */
 export function resolvePackageRoot(startDir: string): string {
+	const overriddenPackageRoot = process.env[PROJECT_TOOLS_PACKAGE_ROOT_ENV]?.trim();
+	if (overriddenPackageRoot) {
+		const resolvedOverride = path.resolve(overriddenPackageRoot);
+		const validOverride = resolveValidProjectToolsPackageRoot(resolvedOverride);
+		if (validOverride) {
+			return validOverride;
+		}
+	}
+
 	let currentDir = startDir;
 
 	while (true) {
@@ -14,7 +53,7 @@ export function resolvePackageRoot(startDir: string): string {
 		if (fs.existsSync(packageJsonPath)) {
 			try {
 				const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as { name?: string };
-				if (packageJson.name === "@wp-typia/project-tools") {
+				if (packageJson.name === PROJECT_TOOLS_PACKAGE_NAME) {
 					return currentDir;
 				}
 			} catch {

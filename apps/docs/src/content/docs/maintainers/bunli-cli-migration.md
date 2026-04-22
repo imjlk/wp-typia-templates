@@ -18,6 +18,9 @@ and the project-tools split.
   metadata and the published runtime artifacts, but the published Node bin no
   longer requires a locally installed Bun binary for the guaranteed fallback
   commands.
+- Standalone GitHub Release assets are now a separate distribution lane:
+  platform binaries, checksum manifests, and install scripts are published for
+  users who want the full Bunli/OpenTUI runtime without relying on `bunx`.
 
 Canonical usage remains:
 
@@ -37,8 +40,17 @@ Published runtime support model:
   full-runtime artifact (`dist-bunli/cli.js`) for Bunli-specific surfaces such
   as `skills`, `completions`, and `mcp`, rather than a separate source
   bootstrap.
-- A future `curl` installer, if added, should install the same built artifact
-  layout (`bin/` + `dist-bunli/`) instead of inventing a second bootstrap path.
+- Standalone release assets should compile from the same authored CLI entry
+  (`src/cli.ts`) and the same generated Bunli command metadata, but they are a
+  distinct build lane from the npm package runtime and are published through a
+  dedicated release-asset workflow, not npm tarballs.
+- The repo currently drives that standalone compile lane through a small
+  repo-owned build script instead of calling `bunli build` directly, because
+  the current Bunli CLI path still collides on duplicated OpenTUI environment
+  registration in this dependency graph. Revisit that wrapper if upstream
+  Bunli resolves the conflict.
+- Install scripts should target those standalone release assets directly:
+  `install-wp-typia.sh` for macOS/Linux and `install-wp-typia.ps1` for Windows.
 
 Shorthand references like `npx wp-typia` and `bunx wp-typia` should still map
 to the canonical `create` surface in docs and review notes.
