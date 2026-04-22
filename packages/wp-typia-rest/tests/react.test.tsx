@@ -482,7 +482,6 @@ describe("@wp-typia/rest/react", () => {
 
 	test(
 		"invalidate triggers a follow-up fetch when an older request resolves late",
-		{ timeout: 15_000 },
 		async () => {
 		let fetchCount = 0;
 		let resolveFirstFetch!: (value: { count: number }) => void;
@@ -541,11 +540,12 @@ describe("@wp-typia/rest/react", () => {
 		}, 10_000);
 
 		await rendered.unmount();
-	});
+		},
+		{ timeout: 15_000 },
+	);
 
 	test(
 		"invalidate preserves follow-up fetches when an older request fails late",
-		{ timeout: 15_000 },
 		async () => {
 		let fetchCount = 0;
 		let rejectFirstFetch!: (error: Error) => void;
@@ -605,7 +605,9 @@ describe("@wp-typia/rest/react", () => {
 		}, 10_000);
 
 		await rendered.unmount();
-	});
+		},
+		{ timeout: 15_000 },
+	);
 
 	test("useEndpointMutation invalidates matching queries after a successful mutation", async () => {
 		let serverCount = 0;
