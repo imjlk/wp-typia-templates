@@ -34,6 +34,7 @@ test("doctor reports environment-only scope outside official workspace roots", a
   const scopeCheck = checks.find((check) => check.label === "Doctor scope");
 
   expect(scopeCheck?.status).toBe("pass");
+  expect(scopeCheck?.detail).toContain("Scope: environment-only");
   expect(scopeCheck?.detail).toContain("only covered environment readiness");
   expect(scopeCheck?.detail).toContain("workspace root");
   expect(
@@ -67,6 +68,7 @@ test("doctor reports invalid nearby workspace metadata before workspace checks",
   );
 
   expect(scopeCheck?.status).toBe("fail");
+  expect(scopeCheck?.detail).toContain("Scope: blocked before workspace checks");
   expect(scopeCheck?.detail).toContain("workspace diagnostics could not continue");
   expect(scopeCheck?.detail).toContain("rerun `wp-typia doctor`");
   expect(metadataCheck?.status).toBe("fail");
@@ -87,6 +89,7 @@ test("doctor reports workspace discovery failures before workspace checks", asyn
   );
 
   expect(scopeCheck?.status).toBe("fail");
+  expect(scopeCheck?.detail).toContain("Scope: blocked before workspace checks");
   expect(scopeCheck?.detail).toContain("workspace discovery could not continue");
   expect(scopeCheck?.detail).toContain("rerun `wp-typia doctor`");
   expect(metadataCheck?.status).toBe("fail");

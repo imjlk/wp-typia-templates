@@ -25,7 +25,8 @@ export const CREATE_OPTION_METADATA = {
 	},
 	"dry-run": {
 		argumentKind: "flag",
-		description: "Preview scaffold output without writing files to the target directory.",
+		description:
+			"Preview scaffold output for a logical <project-dir> without writing files to the target directory.",
 		type: "boolean",
 	},
 	"external-layer-id": {
@@ -126,7 +127,8 @@ export const ADD_OPTION_METADATA = {
 	},
 	"dry-run": {
 		argumentKind: "flag",
-		description: "Preview workspace file updates without writing them.",
+		description:
+			"Preview workspace file updates and completion guidance without writing them.",
 		type: "boolean",
 	},
 	"external-layer-id": {

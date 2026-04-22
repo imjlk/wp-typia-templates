@@ -19,7 +19,9 @@ function loadCreateFlow() {
 			"./ui/create-flow.js",
 			"../ui/create-flow.js",
 			"../ui/create-flow.tsx",
-		]),
+		], {
+			moduleLabel: "the create-flow UI",
+		}),
 	).then((module) => ({ default: module.CreateFlow }));
 }
 
@@ -34,7 +36,10 @@ export const createCommand = defineCommand({
 			const { createCliCommandError } = await import("@wp-typia/project-tools/cli-diagnostics");
 			throw createCliCommandError({
 				command: "create",
-				detailLines: ["`wp-typia create` requires <project-dir>."],
+				detailLines: [
+					"`wp-typia create` requires <project-dir>.",
+					"`--dry-run` still needs a logical project directory name because wp-typia derives slugs, package names, and planned file paths from it.",
+				],
 			});
 		}
 		await executeCreateCommand({

@@ -52,7 +52,7 @@ function formatInstallCommand(packageManagerId: PackageManagerId): string {
 
 function getSyncRootError(cwd: string): Error {
 	return new Error(
-		`No generated wp-typia project root was found at ${cwd}. Run \`wp-typia sync\` from a scaffolded project or official workspace root.`,
+		`No generated wp-typia project root was found at ${cwd}. Run \`wp-typia sync\` from a scaffolded project or official workspace root that already contains generated sync scripts. If you expected this directory to work, cd into the scaffold root first or rerun the scaffold before syncing.`,
 	);
 }
 

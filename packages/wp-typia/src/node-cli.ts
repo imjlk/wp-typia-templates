@@ -519,7 +519,10 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 		if (!projectDir) {
 			throw createCliCommandError({
 				command: "create",
-				detailLines: ["`wp-typia create` requires <project-dir>."],
+				detailLines: [
+					"`wp-typia create` requires <project-dir>.",
+					"`--dry-run` still needs a logical project directory name because wp-typia derives slugs, package names, and planned file paths from it.",
+				],
 			});
 		}
 		await executeCreateCommand({

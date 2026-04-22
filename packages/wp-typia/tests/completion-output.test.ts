@@ -8,6 +8,10 @@ import {
 	buildMigrationCompletionPayload,
 	printCompletionPayload,
 } from "../src/runtime-bridge";
+import {
+	buildAddCompletionPayload,
+	buildAddDryRunPayload,
+} from "../src/runtime-bridge-output";
 
 describe("alternate-buffer completion output helpers", () => {
 	test("create completion payload preserves reviewable next steps and optional onboarding", () => {
@@ -206,5 +210,52 @@ describe("alternate-buffer completion output helpers", () => {
 		expect(payload.summaryLines).toContain(
 			"Dependency install: already skipped via --no-install",
 		);
+	});
+
+	test("add completion payload now includes reviewable next steps and doctor guidance", () => {
+		const payload = buildAddCompletionPayload({
+			kind: "binding-source",
+			projectDir: "/tmp/demo-workspace",
+			values: {
+				bindingSourceSlug: "hero-data",
+			},
+		});
+
+		expect(payload.title).toBe("✅ Added binding source");
+		expect(payload.summaryLines).toEqual([
+			"Binding source: hero-data",
+			"Project directory: /tmp/demo-workspace",
+		]);
+		expect(payload.nextSteps).toEqual([
+			"Review src/bindings/hero-data/server.php and src/bindings/hero-data/editor.ts.",
+			"Run your workspace build or dev command to verify the binding source hooks and editor registration.",
+		]);
+		expect(payload.optionalTitle).toBe("Verify workspace health (optional):");
+		expect(payload.optionalLines).toEqual(["wp-typia doctor"]);
+		expect(payload.optionalNote).toContain("inventory and generated-artifact check");
+	});
+
+	test("dry-run add payload preserves the richer add completion guidance", () => {
+		const payload = buildAddDryRunPayload({
+			completion: buildAddCompletionPayload({
+				kind: "block",
+				projectDir: "/tmp/demo-workspace",
+				values: {
+					blockSlugs: "faq, faq-item",
+					templateId: "compound",
+				},
+			}),
+			fileOperations: ["write src/blocks/faq/block.json"],
+		});
+
+		expect(payload.title).toBe("🧪 Dry run for workspace block");
+		expect(payload.summaryLines).toEqual([
+			"Blocks: faq, faq-item",
+			"Template family: compound",
+			"Project directory: /tmp/demo-workspace",
+		]);
+		expect(payload.warningLines).toBeUndefined();
+		expect(payload.optionalTitle).toBe("Planned workspace updates (1):");
+		expect(payload.optionalLines).toEqual(["write src/blocks/faq/block.json"]);
 	});
 });
