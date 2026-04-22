@@ -5,6 +5,7 @@ import { defineCommand } from "@bunli/core";
 import {
 	buildCommandOptions,
 	MIGRATE_OPTION_METADATA,
+	resolveCommandOptionValues,
 } from "../command-option-metadata";
 import { resolveBundledModuleHref } from "../render-loader";
 import { executeMigrateCommand } from "../runtime-bridge";
@@ -40,13 +41,17 @@ export const migrateCommand = defineCommand({
 	options: migrateOptions,
 	...(supportsInteractiveTui()
 		? {
-				render: (args: WpTypiaRenderArgs) =>
-					createElement(LazyFlow, {
+				render: (args: WpTypiaRenderArgs) => {
+					const initialValues = resolveCommandOptionValues(MIGRATE_OPTION_METADATA, {
+						flags: args.flags as Record<string, unknown>,
+					});
+
+					return createElement(LazyFlow, {
 						loader: loadMigrateFlow,
 						props: {
 							cwd: args.cwd,
 							initialValues: {
-								all: Boolean(args.flags.all ?? false),
+								...initialValues,
 								command:
 									(args.positional[0] as
 										| "init"
@@ -60,24 +65,13 @@ export const migrateCommand = defineCommand({
 										| "fixtures"
 										| "fuzz"
 										| undefined) ?? "plan",
-								"current-migration-version": args.flags[
-									"current-migration-version"
-								] as string | undefined,
-								force: Boolean(args.flags.force ?? false),
-								"from-migration-version": args.flags[
-									"from-migration-version"
-								] as string | undefined,
-								iterations: args.flags.iterations as string | undefined,
-								"migration-version": args.flags[
-									"migration-version"
-								] as string | undefined,
-								seed: args.flags.seed as string | undefined,
 								"to-migration-version":
-									(args.flags["to-migration-version"] as string | undefined) ??
+									(initialValues["to-migration-version"] as string | undefined) ??
 									"current",
 							},
 						},
-					}),
+					});
+				},
 				tui: {
 					renderer: {
 						bufferMode: "alternate" as const,

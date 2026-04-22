@@ -7,11 +7,13 @@ import {
 } from "@wp-typia/project-tools/cli-diagnostics";
 import {
 	ADD_OPTION_METADATA,
-	collectOptionNamesByType,
+	buildCommandOptionParser,
 	CREATE_OPTION_METADATA,
 	formatNodeFallbackOptionHelp,
 	GLOBAL_OPTION_METADATA,
 	MIGRATE_OPTION_METADATA,
+	parseCommandArgvWithMetadata,
+	resolveCommandOptionValues,
 	TEMPLATES_OPTION_METADATA,
 } from "./command-option-metadata";
 import {
@@ -48,47 +50,14 @@ type GlobalFlags = {
 	id?: string;
 };
 
-type ParsedArgv = {
-	flags: Record<string, unknown>;
-	positionals: string[];
-};
-
-const STRING_FLAG_NAMES = new Set([
-	...collectOptionNamesByType(GLOBAL_OPTION_METADATA, "string"),
-	...collectOptionNamesByType(CREATE_OPTION_METADATA, "string"),
-	...collectOptionNamesByType(ADD_OPTION_METADATA, "string"),
-	...collectOptionNamesByType(MIGRATE_OPTION_METADATA, "string"),
-	...collectOptionNamesByType(TEMPLATES_OPTION_METADATA, "string"),
-]);
-
-const BOOLEAN_FLAG_NAMES = new Set([
-	...collectOptionNamesByType(CREATE_OPTION_METADATA, "boolean"),
-	...collectOptionNamesByType(ADD_OPTION_METADATA, "boolean"),
-	...collectOptionNamesByType(MIGRATE_OPTION_METADATA, "boolean"),
-	"check",
-	"help",
-	"version",
-]);
-
-const SHORT_FLAG_MAP = new Map<
-	string,
-	{
-		name: string;
-		type: "boolean" | "string";
-	}
->(
-	Object.entries({
-		...GLOBAL_OPTION_METADATA,
-		...CREATE_OPTION_METADATA,
-		...ADD_OPTION_METADATA,
-		...MIGRATE_OPTION_METADATA,
-		...TEMPLATES_OPTION_METADATA,
-	}).flatMap(([name, option]) =>
-		"short" in option && typeof option.short === "string"
-			? [[option.short, { name, type: option.type }] as const]
-			: [],
-	),
+const NODE_FALLBACK_OPTION_PARSER = buildCommandOptionParser(
+	GLOBAL_OPTION_METADATA,
+	CREATE_OPTION_METADATA,
+	ADD_OPTION_METADATA,
+	MIGRATE_OPTION_METADATA,
+	TEMPLATES_OPTION_METADATA,
 );
+const NODE_FALLBACK_BOOLEAN_OPTION_NAMES = ["check", "help", "version"] as const;
 
 const NODE_FALLBACK_RUNTIME_SUMMARY_LINES = [
 	"Runtime: Node fallback",
@@ -184,96 +153,27 @@ async function applyNodeFallbackConfigDefaults(
 	}
 
 	if (command === "create") {
-		return {
-			...getCreateDefaults(config),
-			...flags,
-		};
+		return resolveCommandOptionValues(CREATE_OPTION_METADATA, {
+			defaults: getCreateDefaults(config),
+			flags,
+		});
 	}
 
 	if (command === "add" && subcommand === "block") {
-		return {
-			...getAddBlockDefaults(config),
-			...flags,
-		};
+		return resolveCommandOptionValues(ADD_OPTION_METADATA, {
+			defaults: getAddBlockDefaults(config),
+			flags,
+		});
 	}
 
 	return flags;
 }
 
-function parseArgv(argv: string[]): ParsedArgv {
-	const flags: Record<string, unknown> = {};
-	const positionals: string[] = [];
-
-	for (let index = 0; index < argv.length; index += 1) {
-		const arg = argv[index];
-		if (!arg) {
-			continue;
-		}
-
-		if (arg === "--") {
-			positionals.push(...argv.slice(index + 1));
-			break;
-		}
-
-		if (arg.length === 2 && arg.startsWith("-")) {
-			const shortFlag = SHORT_FLAG_MAP.get(arg.slice(1));
-			if (!shortFlag) {
-				throw new Error(`Unknown option \`${arg}\`.`);
-			}
-			if (shortFlag.type === "boolean") {
-				flags[shortFlag.name] = true;
-				continue;
-			}
-			const next = argv[index + 1];
-			if (!next || next.startsWith("-")) {
-				throw new Error(`\`${arg}\` requires a value.`);
-			}
-			flags[shortFlag.name] = next;
-			index += 1;
-			continue;
-		}
-
-		if (arg.startsWith("--")) {
-			const option = arg.slice(2);
-			const separatorIndex = option.indexOf("=");
-			const rawName =
-				separatorIndex === -1 ? option : option.slice(0, separatorIndex);
-			const inlineValue =
-				separatorIndex === -1 ? undefined : option.slice(separatorIndex + 1);
-			if (BOOLEAN_FLAG_NAMES.has(rawName)) {
-				flags[rawName] = true;
-				continue;
-			}
-			if (!STRING_FLAG_NAMES.has(rawName)) {
-				throw new Error(`Unknown option \`--${rawName}\`.`);
-			}
-			if (inlineValue !== undefined) {
-				if (!inlineValue) {
-					throw new Error(`\`--${rawName}\` requires a value.`);
-				}
-				flags[rawName] = inlineValue;
-				continue;
-			}
-			const next = argv[index + 1];
-			if (!next || next.startsWith("-")) {
-				throw new Error(`\`--${rawName}\` requires a value.`);
-			}
-			flags[rawName] = next;
-			index += 1;
-			continue;
-		}
-
-		if (arg.startsWith("-")) {
-			throw new Error(`Unknown option \`${arg}\`.`);
-		}
-
-		positionals.push(arg);
-	}
-
-	return {
-		flags,
-		positionals,
-	};
+function parseArgv(argv: string[]) {
+	return parseCommandArgvWithMetadata(argv, {
+		extraBooleanOptionNames: NODE_FALLBACK_BOOLEAN_OPTION_NAMES,
+		parser: NODE_FALLBACK_OPTION_PARSER,
+	});
 }
 
 function renderGeneralHelp() {

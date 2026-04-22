@@ -1,6 +1,7 @@
 import path from 'node:path'
 import {
   ADD_OPTION_METADATA,
+  buildCommandOptionParser,
   collectOptionNamesByType,
   CREATE_OPTION_METADATA,
   GLOBAL_OPTION_METADATA,
@@ -41,6 +42,14 @@ export const WP_TYPIA_TOP_LEVEL_COMMAND_NAMES = [
   'mcp',
 ] as const;
 
+const SHARED_OPTION_PARSER = buildCommandOptionParser(
+  ADD_OPTION_METADATA,
+  GLOBAL_OPTION_METADATA,
+  CREATE_OPTION_METADATA,
+  MIGRATE_OPTION_METADATA,
+  TEMPLATES_OPTION_METADATA,
+);
+
 const STRING_OPTION_NAMES_BY_COMMAND = {
   add: new Set(collectOptionNamesByType(ADD_OPTION_METADATA, 'string')),
   create: new Set(collectOptionNamesByType(CREATE_OPTION_METADATA, 'string')),
@@ -53,17 +62,9 @@ const GLOBAL_STRING_OPTION_NAMES = new Set(
 );
 
 const SHORT_OPTION_NAMES_WITH_VALUES = new Set<string>(
-  Object.values({
-    ...ADD_OPTION_METADATA,
-    ...GLOBAL_OPTION_METADATA,
-    ...CREATE_OPTION_METADATA,
-    ...MIGRATE_OPTION_METADATA,
-    ...TEMPLATES_OPTION_METADATA,
-  })
-    .filter((option) => option.type === 'string')
-    .flatMap((option) =>
-      'short' in option && typeof option.short === 'string' ? [option.short] : [],
-    ),
+  [...SHARED_OPTION_PARSER.shortFlagMap.entries()]
+    .filter(([, option]) => option.type === 'string')
+    .map(([short]) => short),
 );
 
 function isLongOptionValueConsumer(optionName: string): boolean {

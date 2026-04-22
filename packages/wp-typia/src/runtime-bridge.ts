@@ -138,6 +138,47 @@ function pushFlag(argv: string[], name: string, value: unknown): void {
 	argv.push(`--${name}`, String(value));
 }
 
+async function executeWorkspaceAddWithOptionalDryRun<TResult>(options: {
+	buildCompletion: (
+		result: TResult,
+	) => ReturnType<typeof buildAddCompletionPayload>;
+	cwd: string;
+	dryRun: boolean;
+	emitOutput: boolean | undefined;
+	execute: (cwd: string) => Promise<TResult>;
+	printLine: PrintLine;
+	warnLine?: PrintLine;
+}): Promise<AlternateBufferCompletionPayload | void> {
+	const simulated = options.dryRun
+		? await simulateWorkspaceAddDryRun({
+				cwd: options.cwd,
+				execute: options.execute,
+			})
+		: null;
+	const result = simulated?.result ?? (await options.execute(options.cwd));
+	const completion = options.buildCompletion(result);
+
+	if (!options.dryRun) {
+		return emitCompletion(completion, {
+			emitOutput: options.emitOutput ?? true,
+			printLine: options.printLine,
+			warnLine: options.warnLine,
+		});
+	}
+
+	return emitCompletion(
+		buildAddDryRunPayload({
+			completion,
+			fileOperations: simulated!.fileOperations,
+		}),
+		{
+			emitOutput: options.emitOutput ?? true,
+			printLine: options.printLine,
+			warnLine: options.warnLine,
+		},
+	);
+}
+
 const PACKAGE_MANAGER_PROMPT_OPTIONS = [
 	{ label: "npm", value: "npm", hint: "Use npm" },
 	{ label: "pnpm", value: "pnpm", hint: "Use pnpm" },
@@ -344,43 +385,29 @@ export async function executeAddCommand({
 				throw new Error("`wp-typia add variation` requires --block <block-slug>.");
 			}
 
-			const simulated = dryRun
-				? await simulateWorkspaceAddDryRun({
-						cwd,
-						execute: (simulatedCwd) =>
-							addRuntime.runAddVariationCommand({
-								blockName: blockSlug,
-								cwd: simulatedCwd,
-								variationName: name,
-							}),
-					})
-				: null;
-			const result =
-				simulated?.result ??
-				(await addRuntime.runAddVariationCommand({
-					blockName: blockSlug,
-					cwd,
-					variationName: name,
-				}));
-			const completion = buildAddCompletionPayload({
-				kind: "variation",
-				projectDir: result.projectDir,
-				values: {
-					blockSlug: result.blockSlug,
-					variationSlug: result.variationSlug,
-				},
+			return executeWorkspaceAddWithOptionalDryRun<
+				Awaited<ReturnType<typeof addRuntime.runAddVariationCommand>>
+			>({
+				buildCompletion: (result) =>
+					buildAddCompletionPayload({
+						kind: "variation",
+						projectDir: result.projectDir,
+						values: {
+							blockSlug: result.blockSlug,
+							variationSlug: result.variationSlug,
+						},
+					}),
+				cwd,
+				dryRun,
+				emitOutput,
+				execute: (targetCwd) =>
+					addRuntime.runAddVariationCommand({
+						blockName: blockSlug,
+						cwd: targetCwd,
+						variationName: name,
+					}),
+				printLine,
 			});
-			if (!dryRun) {
-				return emitCompletion(completion, { emitOutput, printLine });
-			}
-
-			return emitCompletion(
-				buildAddDryRunPayload({
-					completion,
-					fileOperations: simulated!.fileOperations,
-				}),
-				{ emitOutput, printLine },
-			);
 		}
 
 		if (kind === "pattern") {
@@ -390,40 +417,27 @@ export async function executeAddCommand({
 				);
 			}
 
-			const simulated = dryRun
-				? await simulateWorkspaceAddDryRun({
-						cwd,
-						execute: (simulatedCwd) =>
-							addRuntime.runAddPatternCommand({
-								cwd: simulatedCwd,
-								patternName: name,
-							}),
-					})
-				: null;
-			const result =
-				simulated?.result ??
-				(await addRuntime.runAddPatternCommand({
-					cwd,
-					patternName: name,
-				}));
-			const completion = buildAddCompletionPayload({
-				kind: "pattern",
-				projectDir: result.projectDir,
-				values: {
-					patternSlug: result.patternSlug,
-				},
+			return executeWorkspaceAddWithOptionalDryRun<
+				Awaited<ReturnType<typeof addRuntime.runAddPatternCommand>>
+			>({
+				buildCompletion: (result) =>
+					buildAddCompletionPayload({
+						kind: "pattern",
+						projectDir: result.projectDir,
+						values: {
+							patternSlug: result.patternSlug,
+						},
+					}),
+				cwd,
+				dryRun,
+				emitOutput,
+				execute: (targetCwd) =>
+					addRuntime.runAddPatternCommand({
+						cwd: targetCwd,
+						patternName: name,
+					}),
+				printLine,
 			});
-			if (!dryRun) {
-				return emitCompletion(completion, { emitOutput, printLine });
-			}
-
-			return emitCompletion(
-				buildAddDryRunPayload({
-					completion,
-					fileOperations: simulated!.fileOperations,
-				}),
-				{ emitOutput, printLine },
-			);
 		}
 
 		if (kind === "binding-source") {
@@ -433,40 +447,27 @@ export async function executeAddCommand({
 				);
 			}
 
-			const simulated = dryRun
-				? await simulateWorkspaceAddDryRun({
-						cwd,
-						execute: (simulatedCwd) =>
-							addRuntime.runAddBindingSourceCommand({
-								bindingSourceName: name,
-								cwd: simulatedCwd,
-							}),
-					})
-				: null;
-			const result =
-				simulated?.result ??
-				(await addRuntime.runAddBindingSourceCommand({
-					bindingSourceName: name,
-					cwd,
-				}));
-			const completion = buildAddCompletionPayload({
-				kind: "binding-source",
-				projectDir: result.projectDir,
-				values: {
-					bindingSourceSlug: result.bindingSourceSlug,
-				},
+			return executeWorkspaceAddWithOptionalDryRun<
+				Awaited<ReturnType<typeof addRuntime.runAddBindingSourceCommand>>
+			>({
+				buildCompletion: (result) =>
+					buildAddCompletionPayload({
+						kind: "binding-source",
+						projectDir: result.projectDir,
+						values: {
+							bindingSourceSlug: result.bindingSourceSlug,
+						},
+					}),
+				cwd,
+				dryRun,
+				emitOutput,
+				execute: (targetCwd) =>
+					addRuntime.runAddBindingSourceCommand({
+						bindingSourceName: name,
+						cwd: targetCwd,
+					}),
+				printLine,
 			});
-			if (!dryRun) {
-				return emitCompletion(completion, { emitOutput, printLine });
-			}
-
-			return emitCompletion(
-				buildAddDryRunPayload({
-					completion,
-					fileOperations: simulated!.fileOperations,
-				}),
-				{ emitOutput, printLine },
-			);
 		}
 
 		if (kind === "rest-resource") {
@@ -478,46 +479,31 @@ export async function executeAddCommand({
 
 			const methods = readOptionalStringFlag(flags, "methods");
 			const namespace = readOptionalStringFlag(flags, "namespace");
-			const simulated = dryRun
-				? await simulateWorkspaceAddDryRun({
-						cwd,
-						execute: (simulatedCwd) =>
-							addRuntime.runAddRestResourceCommand({
-								cwd: simulatedCwd,
-								methods,
-								namespace,
-								restResourceName: name,
-							}),
-					})
-				: null;
-			const result =
-				simulated?.result ??
-				(await addRuntime.runAddRestResourceCommand({
-					cwd,
-					methods,
-					namespace,
-					restResourceName: name,
-				}));
-			const completion = buildAddCompletionPayload({
-				kind: "rest-resource",
-				projectDir: result.projectDir,
-				values: {
-					methods: result.methods.join(", "),
-					namespace: result.namespace,
-					restResourceSlug: result.restResourceSlug,
-				},
+			return executeWorkspaceAddWithOptionalDryRun<
+				Awaited<ReturnType<typeof addRuntime.runAddRestResourceCommand>>
+			>({
+				buildCompletion: (result) =>
+					buildAddCompletionPayload({
+						kind: "rest-resource",
+						projectDir: result.projectDir,
+						values: {
+							methods: result.methods.join(", "),
+							namespace: result.namespace,
+							restResourceSlug: result.restResourceSlug,
+						},
+					}),
+				cwd,
+				dryRun,
+				emitOutput,
+				execute: (targetCwd) =>
+					addRuntime.runAddRestResourceCommand({
+						cwd: targetCwd,
+						methods,
+						namespace,
+						restResourceName: name,
+					}),
+				printLine,
 			});
-			if (!dryRun) {
-				return emitCompletion(completion, { emitOutput, printLine });
-			}
-
-			return emitCompletion(
-				buildAddDryRunPayload({
-					completion,
-					fileOperations: simulated!.fileOperations,
-				}),
-				{ emitOutput, printLine },
-			);
 		}
 
 		if (kind === "editor-plugin") {
@@ -528,43 +514,29 @@ export async function executeAddCommand({
 			}
 
 			const slot = readOptionalStringFlag(flags, "slot");
-			const simulated = dryRun
-				? await simulateWorkspaceAddDryRun({
-						cwd,
-						execute: (simulatedCwd) =>
-							addRuntime.runAddEditorPluginCommand({
-								cwd: simulatedCwd,
-								editorPluginName: name,
-								slot,
-							}),
-					})
-				: null;
-			const result =
-				simulated?.result ??
-				(await addRuntime.runAddEditorPluginCommand({
-					cwd,
-					editorPluginName: name,
-					slot,
-				}));
-			const completion = buildAddCompletionPayload({
-				kind: "editor-plugin",
-				projectDir: result.projectDir,
-				values: {
-					editorPluginSlug: result.editorPluginSlug,
-					slot: result.slot,
-				},
+			return executeWorkspaceAddWithOptionalDryRun<
+				Awaited<ReturnType<typeof addRuntime.runAddEditorPluginCommand>>
+			>({
+				buildCompletion: (result) =>
+					buildAddCompletionPayload({
+						kind: "editor-plugin",
+						projectDir: result.projectDir,
+						values: {
+							editorPluginSlug: result.editorPluginSlug,
+							slot: result.slot,
+						},
+					}),
+				cwd,
+				dryRun,
+				emitOutput,
+				execute: (targetCwd) =>
+					addRuntime.runAddEditorPluginCommand({
+						cwd: targetCwd,
+						editorPluginName: name,
+						slot,
+					}),
+				printLine,
 			});
-			if (!dryRun) {
-				return emitCompletion(completion, { emitOutput, printLine });
-			}
-
-			return emitCompletion(
-				buildAddDryRunPayload({
-					completion,
-					fileOperations: simulated!.fileOperations,
-				}),
-				{ emitOutput, printLine },
-			);
 		}
 
 		if (kind === "hooked-block") {
@@ -586,46 +558,31 @@ export async function executeAddCommand({
 				);
 			}
 
-			const simulated = dryRun
-				? await simulateWorkspaceAddDryRun({
-						cwd,
-						execute: (simulatedCwd) =>
-							addRuntime.runAddHookedBlockCommand({
-								anchorBlockName,
-								blockName: name,
-								cwd: simulatedCwd,
-								position,
-							}),
-					})
-				: null;
-			const result =
-				simulated?.result ??
-				(await addRuntime.runAddHookedBlockCommand({
-					anchorBlockName,
-					blockName: name,
-					cwd,
-					position,
-				}));
-			const completion = buildAddCompletionPayload({
-				kind: "hooked-block",
-				projectDir: result.projectDir,
-				values: {
-					anchorBlockName: result.anchorBlockName,
-					blockSlug: result.blockSlug,
-					position: result.position,
-				},
+			return executeWorkspaceAddWithOptionalDryRun<
+				Awaited<ReturnType<typeof addRuntime.runAddHookedBlockCommand>>
+			>({
+				buildCompletion: (result) =>
+					buildAddCompletionPayload({
+						kind: "hooked-block",
+						projectDir: result.projectDir,
+						values: {
+							anchorBlockName: result.anchorBlockName,
+							blockSlug: result.blockSlug,
+							position: result.position,
+						},
+					}),
+				cwd,
+				dryRun,
+				emitOutput,
+				execute: (targetCwd) =>
+					addRuntime.runAddHookedBlockCommand({
+						anchorBlockName,
+						blockName: name,
+						cwd: targetCwd,
+						position,
+					}),
+				printLine,
 			});
-			if (!dryRun) {
-				return emitCompletion(completion, { emitOutput, printLine });
-			}
-
-			return emitCompletion(
-				buildAddDryRunPayload({
-					completion,
-					fileOperations: simulated!.fileOperations,
-				}),
-				{ emitOutput, printLine },
-			);
 		}
 
 		if (kind !== "block") {
@@ -673,73 +630,45 @@ export async function executeAddCommand({
 			| "persistence"
 			| "compound";
 
-		const simulated = dryRun
-			? await simulateWorkspaceAddDryRun({
-					cwd,
-					execute: (simulatedCwd) =>
-						addRuntime.runAddBlockCommand({
-							alternateRenderTargets,
-							blockName: name,
-							cwd: simulatedCwd,
-							dataStorageMode,
-							externalLayerId,
-							externalLayerSource,
-							innerBlocksPreset,
-							persistencePolicy,
-							selectExternalLayerId: selectPrompt
-								? (options) =>
-										selectPrompt.select(
-											"Select an external layer",
-											toExternalLayerPromptOptions(options),
-											1,
-										)
-								: undefined,
-							templateId: resolvedTemplateId,
-						}),
-				})
-			: null;
-		const result =
-			simulated?.result ??
-			(await addRuntime.runAddBlockCommand({
-				alternateRenderTargets,
-				blockName: name,
-				cwd,
-				dataStorageMode,
-				externalLayerId,
-				externalLayerSource,
-				innerBlocksPreset,
-				persistencePolicy,
-				selectExternalLayerId: selectPrompt
-					? (options) =>
-							selectPrompt.select(
-								"Select an external layer",
-								toExternalLayerPromptOptions(options),
-								1,
-							)
-					: undefined,
-				templateId: resolvedTemplateId,
-			}));
-
-		const completion = buildAddCompletionPayload({
-			kind: "block",
-			projectDir: result.projectDir,
-			values: {
-				blockSlugs: result.blockSlugs.join(", "),
-				templateId: result.templateId,
-			},
-			warnings: result.warnings,
+		return executeWorkspaceAddWithOptionalDryRun<
+			Awaited<ReturnType<typeof addRuntime.runAddBlockCommand>>
+		>({
+			buildCompletion: (result) =>
+				buildAddCompletionPayload({
+					kind: "block",
+					projectDir: result.projectDir,
+					values: {
+						blockSlugs: result.blockSlugs.join(", "),
+						templateId: result.templateId,
+					},
+					warnings: result.warnings,
+				}),
+			cwd,
+			dryRun,
+			emitOutput,
+			execute: (targetCwd) =>
+				addRuntime.runAddBlockCommand({
+					alternateRenderTargets,
+					blockName: name,
+					cwd: targetCwd,
+					dataStorageMode,
+					externalLayerId,
+					externalLayerSource,
+					innerBlocksPreset,
+					persistencePolicy,
+					selectExternalLayerId: selectPrompt
+						? (options) =>
+								selectPrompt.select(
+									"Select an external layer",
+									toExternalLayerPromptOptions(options),
+									1,
+								)
+						: undefined,
+					templateId: resolvedTemplateId,
+				}),
+			printLine,
+			warnLine,
 		});
-		if (!dryRun) {
-			return emitCompletion(completion, { emitOutput, printLine, warnLine });
-		}
-
-		return emitCompletion(
-			buildAddDryRunPayload({
-				completion,
-				fileOperations: simulated!.fileOperations,
-			}),
-			{ emitOutput, printLine, warnLine },
-		);
 	} catch (error) {
 		if (!shouldWrapCliCommandError({ emitOutput })) {
 			throw error;

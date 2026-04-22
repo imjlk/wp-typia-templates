@@ -217,6 +217,17 @@ describe("wp-typia package", () => {
 		expect(createFlowSource).not.toMatch(/from ["']@wp-typia\/project-tools["']/);
 	});
 
+	test("derives fallback parsing and first-party initial values from shared metadata helpers", () => {
+		expect(nodeCliSource).toContain("parseCommandArgvWithMetadata");
+		expect(nodeCliSource).toContain("resolveCommandOptionValues");
+		expect(nodeCliSource).not.toContain("const STRING_FLAG_NAMES = new Set([");
+		expect(nodeCliSource).not.toContain("const BOOLEAN_FLAG_NAMES = new Set([");
+		expect(nodeCliSource).not.toContain("const SHORT_FLAG_MAP = new Map<");
+		expect(createCommandSource).toContain("resolveCommandOptionValues");
+		expect(addCommandSource).toContain("resolveCommandOptionValues");
+		expect(migrateCommandSource).toContain("resolveCommandOptionValues");
+	});
+
 	test("gates interactive TUI rendering on real terminal capability and avoids hard exit short-circuits", () => {
 		expect(createCommandSource).toContain('supportsInteractiveTui');
 		expect(addCommandSource).toContain('supportsInteractiveTui');

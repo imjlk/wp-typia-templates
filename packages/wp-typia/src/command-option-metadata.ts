@@ -8,6 +8,19 @@ export type CommandOptionMetadata = {
 };
 
 type CommandOptionMetadataMap = Record<string, CommandOptionMetadata>;
+type ParsedCommandArgv = {
+	flags: Record<string, unknown>;
+	positionals: string[];
+};
+type ShortOptionDescriptor = {
+	name: string;
+	type: CommandOptionMetadata["type"];
+};
+type CommandOptionParser = {
+	booleanOptionNames: Set<string>;
+	shortFlagMap: Map<string, ShortOptionDescriptor>;
+	stringOptionNames: Set<string>;
+};
 
 /**
  * Shared `wp-typia create` option metadata used by both the Bunli command
@@ -283,4 +296,142 @@ export function formatNodeFallbackOptionHelp(
 		const short = option.short ? `, -${option.short}` : "";
 		return `- --${name}${short}: ${option.description}`;
 	});
+}
+
+export function buildCommandOptionParser(
+	...metadataMaps: CommandOptionMetadataMap[]
+): CommandOptionParser {
+	const metadata: CommandOptionMetadataMap = Object.assign({}, ...metadataMaps);
+
+	return {
+		booleanOptionNames: new Set(collectOptionNamesByType(metadata, "boolean")),
+		shortFlagMap: new Map<string, ShortOptionDescriptor>(
+			Object.entries(metadata).flatMap(([name, option]) =>
+				option.short
+					? [[option.short, { name, type: option.type }] as const]
+					: [],
+			),
+		),
+		stringOptionNames: new Set(collectOptionNamesByType(metadata, "string")),
+	};
+}
+
+export function parseCommandArgvWithMetadata(
+	argv: string[],
+	options: {
+		extraBooleanOptionNames?: Iterable<string>;
+		parser: CommandOptionParser;
+	},
+): ParsedCommandArgv {
+	const flags: Record<string, unknown> = {};
+	const positionals: string[] = [];
+	const booleanOptionNames = new Set(options.parser.booleanOptionNames);
+
+	for (const optionName of options.extraBooleanOptionNames ?? []) {
+		booleanOptionNames.add(optionName);
+	}
+
+	for (let index = 0; index < argv.length; index += 1) {
+		const arg = argv[index];
+		if (!arg) {
+			continue;
+		}
+
+		if (arg === "--") {
+			positionals.push(...argv.slice(index + 1));
+			break;
+		}
+
+		if (arg.length === 2 && arg.startsWith("-")) {
+			const shortFlag = options.parser.shortFlagMap.get(arg.slice(1));
+			if (!shortFlag) {
+				throw new Error(`Unknown option \`${arg}\`.`);
+			}
+			if (shortFlag.type === "boolean") {
+				flags[shortFlag.name] = true;
+				continue;
+			}
+			const next = argv[index + 1];
+			if (!next || next.startsWith("-")) {
+				throw new Error(`\`${arg}\` requires a value.`);
+			}
+			flags[shortFlag.name] = next;
+			index += 1;
+			continue;
+		}
+
+		if (arg.startsWith("--")) {
+			const option = arg.slice(2);
+			const separatorIndex = option.indexOf("=");
+			const rawName =
+				separatorIndex === -1 ? option : option.slice(0, separatorIndex);
+			const inlineValue =
+				separatorIndex === -1 ? undefined : option.slice(separatorIndex + 1);
+			if (booleanOptionNames.has(rawName)) {
+				flags[rawName] = true;
+				continue;
+			}
+			if (!options.parser.stringOptionNames.has(rawName)) {
+				throw new Error(`Unknown option \`--${rawName}\`.`);
+			}
+			if (inlineValue !== undefined) {
+				if (!inlineValue) {
+					throw new Error(`\`--${rawName}\` requires a value.`);
+				}
+				flags[rawName] = inlineValue;
+				continue;
+			}
+			const next = argv[index + 1];
+			if (!next || next.startsWith("-")) {
+				throw new Error(`\`--${rawName}\` requires a value.`);
+			}
+			flags[rawName] = next;
+			index += 1;
+			continue;
+		}
+
+		if (arg.startsWith("-")) {
+			throw new Error(`Unknown option \`${arg}\`.`);
+		}
+
+		positionals.push(arg);
+	}
+
+	return {
+		flags,
+		positionals,
+	};
+}
+
+export function resolveCommandOptionValues<
+	TMetadata extends CommandOptionMetadataMap,
+>(
+	metadata: TMetadata,
+	options: {
+		defaults?: Record<string, unknown>;
+		flags?: Record<string, unknown>;
+		optionNames?: Iterable<keyof TMetadata | string>;
+	},
+): Record<string, string | boolean | undefined> {
+	const resolved: Record<string, string | boolean | undefined> = {};
+	const optionNames =
+		options.optionNames ?? (Object.keys(metadata) as Array<keyof TMetadata>);
+
+	for (const optionName of optionNames) {
+		const name = String(optionName);
+		const descriptor = metadata[name];
+		if (!descriptor) {
+			continue;
+		}
+
+		const value = options.flags?.[name] ?? options.defaults?.[name];
+		if (descriptor.type === "boolean") {
+			resolved[name] = Boolean(value ?? false);
+			continue;
+		}
+
+		resolved[name] = typeof value === "string" ? value : undefined;
+	}
+
+	return resolved;
 }
