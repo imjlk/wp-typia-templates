@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import { promises as fsp } from "node:fs";
-import os from "node:os";
 import path from "node:path";
+
+import { createManagedTempRoot } from "@wp-typia/project-tools/temp-roots";
 
 type WorkspaceFileOperation = `delete ${string}` | `update ${string}` | `write ${string}`;
 
@@ -147,7 +148,9 @@ export async function simulateWorkspaceAddDryRun<T>({
 	const { resolveWorkspaceProject } = await import("@wp-typia/project-tools/workspace-project");
 	const workspace = resolveWorkspaceProject(cwd);
 	const relativeCwd = path.relative(workspace.projectDir, path.resolve(cwd));
-	const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-add-plan-"));
+	const { path: tempRoot, cleanup } = await createManagedTempRoot(
+		"wp-typia-add-plan-",
+	);
 	const simulatedProjectDir = path.join(tempRoot, "workspace");
 
 	try {
@@ -167,6 +170,6 @@ export async function simulateWorkspaceAddDryRun<T>({
 			result,
 		};
 	} finally {
-		await fsp.rm(tempRoot, { force: true, recursive: true });
+		await cleanup();
 	}
 }

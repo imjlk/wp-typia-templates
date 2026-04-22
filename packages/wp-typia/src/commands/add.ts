@@ -9,10 +9,9 @@ import {
 import { getAddBlockDefaults } from "../config";
 import { resolveBundledModuleHref } from "../render-loader";
 import { executeAddCommand } from "../runtime-bridge";
+import { supportsInteractiveTui } from "../runtime-capabilities";
 import type { WpTypiaRenderArgs } from "./render-types";
 import { LazyFlow } from "../ui/lazy-flow";
-
-const supportsInteractiveTui = typeof Bun !== "undefined";
 
 function loadAddFlow() {
 	return import(
@@ -39,7 +38,7 @@ export const addCommand = defineCommand({
 	},
 	name: "add",
 	options: addOptions,
-	...(supportsInteractiveTui
+	...(supportsInteractiveTui()
 		? {
 				render: (args: WpTypiaRenderArgs) => {
 					const config =

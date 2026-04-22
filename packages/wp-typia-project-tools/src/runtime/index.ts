@@ -119,6 +119,14 @@ export {
 	listTemplates,
 } from "./template-registry.js";
 export {
+	STALE_TEMP_ROOT_MAX_AGE_MS,
+	WP_TYPIA_TEMP_ROOT_PREFIX,
+	cleanupManagedTempRoot,
+	cleanupStaleTempRoots,
+	createManagedTempRoot,
+	getTrackedTempRoots,
+} from "./temp-roots.js";
+export {
 	createReadlinePrompt,
 	createCliCommandError,
 	CliDiagnosticError,

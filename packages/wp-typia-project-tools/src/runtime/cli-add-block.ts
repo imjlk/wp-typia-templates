@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import { promises as fsp } from "node:fs";
-import os from "node:os";
 import path from "node:path";
 
 import {
@@ -27,6 +26,7 @@ import type { MigrationBlockConfig } from "./migration-types.js";
 import {
 	appendWorkspaceInventoryEntries,
 } from "./workspace-inventory.js";
+import { createManagedTempRoot } from "./temp-roots.js";
 import {
 	resolveWorkspaceProject,
 } from "./workspace-project.js";
@@ -580,6 +580,7 @@ export async function runAddBlockCommand({
 		selectExternalLayerId,
 	});
 	let tempRoot = "";
+	let cleanupTempRoot: (() => Promise<void>) | undefined;
 
 	try {
 		const normalizedSlug = resolveNonEmptyNormalizedBlockSlug({
@@ -589,7 +590,10 @@ export async function runAddBlockCommand({
 		});
 
 		const defaults = getDefaultAnswers(normalizedSlug, resolvedTemplateId);
-		tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "wp-typia-add-block-"));
+		({
+			path: tempRoot,
+			cleanup: cleanupTempRoot,
+		} = await createManagedTempRoot("wp-typia-add-block-"));
 		const tempProjectDir = path.join(tempRoot, normalizedSlug);
 		const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
 		const migrationConfigPath = path.join(workspace.projectDir, "src", "migrations", "config.ts");
@@ -720,8 +724,8 @@ export async function runAddBlockCommand({
 		}
 	} finally {
 		await resolvedExternalLayerSelection.cleanup?.();
-		if (tempRoot) {
-			await fsp.rm(tempRoot, { force: true, recursive: true });
+		if (cleanupTempRoot) {
+			await cleanupTempRoot();
 		}
 	}
 }

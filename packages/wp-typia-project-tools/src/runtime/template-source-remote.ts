@@ -1,6 +1,5 @@
 import fs from 'node:fs'
 import { promises as fsp } from 'node:fs'
-import os from 'node:os'
 import path from 'node:path'
 
 import {
@@ -8,6 +7,7 @@ import {
   isOmittableBuiltInTemplateLayerDir,
 } from './template-builtins.js'
 import { copyRawDirectory } from './template-render.js'
+import { createManagedTempRoot } from './temp-roots.js'
 import type {
   ResolvedTemplateSource,
   SeedSource,
@@ -100,8 +100,8 @@ export function getTemplateProjectType(sourceDir: string): string | null {
 export async function normalizeWpTypiaTemplateSeed(
   seed: SeedSource,
 ): Promise<SeedSource> {
-  const tempRoot = await fsp.mkdtemp(
-    path.join(os.tmpdir(), 'wp-typia-template-source-'),
+  const { path: tempRoot, cleanup } = await createManagedTempRoot(
+    'wp-typia-template-source-',
   )
   const normalizedDir = path.join(tempRoot, 'template')
   try {
@@ -125,14 +125,14 @@ export async function normalizeWpTypiaTemplateSeed(
       })
     }
   } catch (error) {
-    await fsp.rm(tempRoot, { force: true, recursive: true })
+    await cleanup()
     throw error
   }
 
   return {
     blockDir: normalizedDir,
     cleanup: async () => {
-      await fsp.rm(tempRoot, { force: true, recursive: true })
+      await cleanup()
       await seed.cleanup?.()
     },
     rootDir: normalizedDir,
@@ -387,8 +387,8 @@ export async function normalizeCreateBlockSubset(
   seed: SeedSource,
   context: TemplateVariableContext,
 ): Promise<ResolvedTemplateSource> {
-  const tempRoot = await fsp.mkdtemp(
-    path.join(os.tmpdir(), 'wp-typia-remote-template-'),
+  const { path: tempRoot, cleanup } = await createManagedTempRoot(
+    'wp-typia-remote-template-',
   )
   try {
     const templateDir = path.join(tempRoot, 'template')
@@ -464,14 +464,14 @@ export async function normalizeCreateBlockSubset(
       templateDir,
       warnings: seed.warnings ?? [],
       cleanup: async () => {
-        await fsp.rm(tempRoot, { force: true, recursive: true })
+        await cleanup()
         if (seed.cleanup) {
           await seed.cleanup()
         }
       },
     }
   } catch (error) {
-    await fsp.rm(tempRoot, { force: true, recursive: true })
+    await cleanup()
     await seed.cleanup?.()
     throw error
   }

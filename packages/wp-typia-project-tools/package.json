@@ -67,6 +67,11 @@
       "import": "./dist/runtime/schema-core.js",
       "default": "./dist/runtime/schema-core.js"
     },
+    "./temp-roots": {
+      "types": "./dist/runtime/temp-roots.d.ts",
+      "import": "./dist/runtime/temp-roots.js",
+      "default": "./dist/runtime/temp-roots.js"
+    },
     "./workspace-project": {
       "types": "./dist/runtime/workspace-project.d.ts",
       "import": "./dist/runtime/workspace-project.js",
