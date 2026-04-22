@@ -5,6 +5,7 @@ import { defineCommand } from "@bunli/core";
 import {
 	ADD_OPTION_METADATA,
 	buildCommandOptions,
+	resolveCommandOptionValues,
 } from "../command-option-metadata";
 import { getAddBlockDefaults } from "../config";
 import { resolveBundledModuleHref } from "../render-loader";
@@ -48,25 +49,19 @@ export const addCommand = defineCommand({
 						typeof args.context.store.wpTypiaUserConfig === "object"
 							? getAddBlockDefaults(args.context.store.wpTypiaUserConfig)
 							: {};
+					const initialValues = resolveCommandOptionValues(ADD_OPTION_METADATA, {
+						defaults: config,
+						flags: args.flags as Record<string, unknown>,
+						optionNames: Object.keys(ADD_OPTION_METADATA).filter(
+							(optionName) => optionName !== "dry-run",
+						),
+					});
 					return createElement(LazyFlow, {
 						loader: loadAddFlow,
 						props: {
 							cwd: args.cwd,
 							initialValues: {
-								"alternate-render-targets":
-									(args.flags["alternate-render-targets"] as string | undefined) ??
-									config["alternate-render-targets"],
-								"data-storage":
-									(args.flags["data-storage"] as string | undefined) ??
-									config["data-storage"],
-								"external-layer-id":
-									(args.flags["external-layer-id"] as string | undefined) ??
-									config["external-layer-id"],
-								"external-layer-source":
-									(args.flags["external-layer-source"] as string | undefined) ??
-									config["external-layer-source"],
-								anchor: (args.flags.anchor as string | undefined) ?? "",
-								block: (args.flags.block as string | undefined) ?? "",
+								...initialValues,
 								kind:
 									(args.positional[0] as
 										| "block"
@@ -77,16 +72,9 @@ export const addCommand = defineCommand({
 										| "editor-plugin"
 										| "hooked-block"
 										| undefined) ?? "block",
-								methods: (args.flags.methods as string | undefined) ?? "",
 								name: args.positional[1] ?? "",
-								namespace: (args.flags.namespace as string | undefined) ?? "",
-								"persistence-policy":
-									(args.flags["persistence-policy"] as string | undefined) ??
-									config["persistence-policy"],
-								position: (args.flags.position as string | undefined) ?? "after",
-								slot: (args.flags.slot as string | undefined) ?? "PluginSidebar",
-								template:
-									(args.flags.template as string | undefined) ?? config.template,
+								position: initialValues.position ?? "after",
+								slot: initialValues.slot ?? "PluginSidebar",
 							},
 						},
 					});
