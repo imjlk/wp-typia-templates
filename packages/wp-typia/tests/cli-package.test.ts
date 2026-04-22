@@ -5,7 +5,7 @@ import path from "node:path";
 import os from "node:os";
 
 import { WP_TYPIA_TOP_LEVEL_COMMAND_NAMES } from "../src/command-contract";
-import { hasFlagBeforeTerminator, parseGlobalFlags } from "../src/node-cli";
+import { hasFlagBeforeTerminator, parseGlobalFlags, runNodeCli } from "../src/node-cli";
 
 import { runUtf8Command } from "../../../tests/helpers/process-utils";
 
@@ -591,6 +591,38 @@ describe("wp-typia package", () => {
 		expect(result.stderr).toContain("Error: wp-typia add failed");
 		expect(result.stderr).toContain("Summary: Unable to complete the requested add workflow.");
 		expect(result.stderr).toContain("- `wp-typia add variation` requires --block <block-slug>.");
+	});
+
+	test("treats missing add kinds as an error while still printing help text", () => {
+		const result = runCapturedCommand("node", [entryPath, "add"], {
+			env: withoutAIAgentEnv(),
+		});
+
+		expect(result.status).toBe(1);
+		expect(result.stdout).toContain("Usage:");
+		expect(result.stdout).toContain("wp-typia add block <name>");
+		expect(result.stderr).toContain(
+			"`wp-typia add` requires <kind>. Usage: wp-typia add <block|variation|pattern|binding-source|rest-resource|editor-plugin|hooked-block> ...",
+		);
+	});
+
+	test("node fallback source entry treats missing add kinds as an error while printing add help", async () => {
+		const originalLog = console.log;
+		const capturedStdout: string[] = [];
+		console.log = (line = "") => {
+			capturedStdout.push(String(line));
+		};
+
+		try {
+			await expect(runNodeCli(["add"])).rejects.toThrow(
+				"wp-typia add failed",
+			);
+			expect(capturedStdout.join("\n")).toContain("Usage:");
+			expect(capturedStdout.join("\n")).toContain("wp-typia add block <name>");
+			expect(capturedStdout.join("\n")).toContain("wp-typia add editor-plugin <name>");
+		} finally {
+			console.log = originalLog;
+		}
 	});
 
 	test("formats migrate failures with a shared non-interactive diagnostic block", () => {

@@ -532,6 +532,16 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 	}
 
 	if (command === "add") {
+		if (!positionals[1]) {
+			const { formatAddHelpText } = await import("@wp-typia/project-tools/cli-add");
+			printLine(formatAddHelpText());
+			throw createCliCommandError({
+				command: "add",
+				detailLines: [
+					"`wp-typia add` requires <kind>. Usage: wp-typia add <block|variation|pattern|binding-source|rest-resource|editor-plugin|hooked-block> ...",
+				],
+			});
+		}
 		await executeAddCommand({
 			cwd: process.cwd(),
 			flags: mergedFlags,

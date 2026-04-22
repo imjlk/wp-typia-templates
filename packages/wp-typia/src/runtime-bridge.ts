@@ -318,17 +318,19 @@ export async function executeAddCommand({
 	prompt,
 	warnLine = console.warn as PrintLine,
 }: AddExecutionInput): Promise<AlternateBufferCompletionPayload | void> {
-	if (!kind) {
-		const { formatAddHelpText } = await loadCliAddRuntime();
-		printLine(formatAddHelpText());
-		return;
-	}
-
-	const addRuntime = await loadCliAddRuntime();
 	let activePrompt: ReadlinePrompt | undefined;
 	const dryRun = Boolean(flags["dry-run"]);
 
 	try {
+		const addRuntime = await loadCliAddRuntime();
+
+		if (!kind) {
+			printLine(addRuntime.formatAddHelpText());
+			throw new Error(
+				"`wp-typia add` requires <kind>. Usage: wp-typia add <block|variation|pattern|binding-source|rest-resource|editor-plugin|hooked-block> ...",
+			);
+		}
+
 		if (kind === "variation") {
 			if (!name) {
 				throw new Error(
