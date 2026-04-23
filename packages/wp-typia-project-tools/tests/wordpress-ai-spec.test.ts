@@ -151,20 +151,24 @@ describe('WordPress AI AbilitySpec foundation', () => {
       executeCallback: 'demo_execute_get_counter',
       label: 'Get Counter',
       meta: {
-        idempotent: true,
+        annotations: {
+          idempotent: true,
+          readonly: true,
+        },
         mcp: {
           public: true,
         },
-        readonly: true,
         show_in_rest: true,
       },
       operationId: 'getCounter',
       permissionCallback: 'demo_can_get_counter',
     });
     expect(document.abilities[1]?.meta).toEqual({
-      destructive: true,
-      idempotent: false,
-      readonly: false,
+      annotations: {
+        destructive: true,
+        idempotent: false,
+        readonly: false,
+      },
       show_in_rest: false,
     });
   });
@@ -242,5 +246,40 @@ describe('WordPress AI AbilitySpec foundation', () => {
     expect(plan.optionalFeatures.map((feature) => feature.id)).toEqual([
       AI_FEATURE_DEFINITIONS.wordpressAiClient.id,
     ]);
+  });
+
+  test('rejects invalid version floor segments instead of silently comparing them', () => {
+    expect(() =>
+      resolveAiFeatureCapabilityPlan(
+        [
+          {
+            featureId: 'valid-feature',
+            mode: 'required',
+          },
+          {
+            featureId: 'invalid-feature',
+            mode: 'required',
+          },
+        ],
+        {
+          'invalid-feature': {
+            description: 'Invalid floor',
+            id: 'invalid-feature',
+            label: 'Invalid floor',
+            minimumVersions: {
+              wordpress: '7.x',
+            },
+          },
+          'valid-feature': {
+            description: 'Valid floor',
+            id: 'valid-feature',
+            label: 'Valid floor',
+            minimumVersions: {
+              wordpress: '7.0',
+            },
+          },
+        },
+      ),
+    ).toThrow(/compareVersionFloors received an invalid version floor "7\.x"/);
   });
 });

@@ -118,6 +118,27 @@ export function projectWordPressAiSchema(
   }) as JsonSchemaDocument & Record<string, unknown>;
 }
 
+function assertAbilityMetaKeys(
+  abilitySpec: AbilitySpec,
+  operationId: string,
+): void {
+  if (!abilitySpec.meta) {
+    return;
+  }
+
+  if ('annotations' in abilitySpec.meta) {
+    throw new Error(
+      `Operation "${operationId}" cannot set AbilitySpec.meta.annotations directly; use AbilitySpec.annotations instead.`,
+    );
+  }
+
+  if ('show_in_rest' in abilitySpec.meta) {
+    throw new Error(
+      `Operation "${operationId}" cannot set AbilitySpec.meta.show_in_rest directly; use AbilitySpec.showInRest instead.`,
+    );
+  }
+}
+
 export async function buildWordPressAbilitiesDocument({
   abilityCatalog,
   buildAbilityId,
@@ -127,29 +148,45 @@ export async function buildWordPressAbilitiesDocument({
   outputSchema,
   transformInputSchema,
 }: BuildWordPressAbilitiesDocumentOptions): Promise<ProjectedWordPressAbilitiesDocument> {
-  let documentCategory: AbilityCategorySpec | null = null;
-  const abilities = await Promise.all(
-    manifest.endpoints.map(async (endpoint) => {
-      const abilitySpec = abilityCatalog.abilities[endpoint.operationId];
-      if (!abilitySpec) {
-        throw new Error(
-          `Missing AbilitySpec for operationId "${endpoint.operationId}".`,
-        );
-      }
+  const resolvedEndpoints = manifest.endpoints.map((endpoint) => {
+    const abilitySpec = abilityCatalog.abilities[endpoint.operationId];
+    if (!abilitySpec) {
+      throw new Error(
+        `Missing AbilitySpec for operationId "${endpoint.operationId}".`,
+      );
+    }
 
-      const category = resolveAbilityCategorySpec(
+    assertAbilityMetaKeys(abilitySpec, endpoint.operationId);
+
+    return {
+      abilitySpec,
+      category: resolveAbilityCategorySpec(
         abilitySpec,
         abilityCatalog.categories,
         endpoint.operationId,
-      );
-      if (!documentCategory) {
-        documentCategory = category;
-      } else if (documentCategory.id !== category.id) {
-        throw new Error(
-          `Operation "${endpoint.operationId}" uses AbilitySpec category "${category.id}" but WordPress AI projections currently support one shared category per document.`,
-        );
-      }
+      ),
+      endpoint,
+    };
+  });
 
+  const documentCategory: AbilityCategorySpec | null =
+    resolvedEndpoints[0]?.category ?? null;
+  if (!documentCategory) {
+    throw new Error(
+      'WordPress AI projection requires at least one endpoint before it can resolve an AbilitySpec category.',
+    );
+  }
+
+  for (const resolvedEndpoint of resolvedEndpoints) {
+    if (resolvedEndpoint.category.id !== documentCategory.id) {
+      throw new Error(
+        `Operation "${resolvedEndpoint.endpoint.operationId}" uses AbilitySpec category "${resolvedEndpoint.category.id}" but WordPress AI projections currently support one shared category per document.`,
+      );
+    }
+  }
+
+  const abilities = await Promise.all(
+    resolvedEndpoints.map(async ({ abilitySpec, category, endpoint }) => {
       const inputContractName = getEndpointInputContractName(endpoint);
       let inputSchema: (JsonSchemaDocument & Record<string, unknown>) | null =
         null;
@@ -194,8 +231,12 @@ export async function buildWordPressAbilitiesDocument({
         inputSchema,
         label: abilitySpec.label,
         meta: {
-          ...(abilitySpec.annotations ?? {}),
           ...(abilitySpec.meta ?? {}),
+          ...(abilitySpec.annotations
+            ? {
+                annotations: abilitySpec.annotations,
+              }
+            : {}),
           show_in_rest: abilitySpec.showInRest ?? true,
         },
         method: endpoint.method,
@@ -209,12 +250,6 @@ export async function buildWordPressAbilitiesDocument({
       } satisfies ProjectedWordPressAbilityDefinition;
     }),
   );
-
-  if (!documentCategory) {
-    throw new Error(
-      'WordPress AI projection requires at least one endpoint before it can resolve an AbilitySpec category.',
-    );
-  }
 
   return {
     abilities,

@@ -101,11 +101,32 @@ export const AI_FEATURE_DEFINITIONS = {
   },
 } as const satisfies Record<string, AiFeatureDefinition>;
 
+const DEFAULT_AI_FEATURE_REGISTRY: Readonly<
+  Record<string, AiFeatureDefinition>
+> = Object.values(AI_FEATURE_DEFINITIONS).reduce<
+  Record<string, AiFeatureDefinition>
+>((accumulator, definition) => {
+  accumulator[definition.id] = definition;
+  return accumulator;
+}, {});
+
+function parseVersionFloorParts(value: string): number[] {
+  const parts = value.split('.').map((part) => Number.parseInt(part, 10));
+
+  for (const [index, part] of parts.entries()) {
+    if (!Number.isFinite(part)) {
+      throw new Error(
+        `compareVersionFloors received an invalid version floor "${value}" at segment ${index + 1}.`,
+      );
+    }
+  }
+
+  return parts;
+}
+
 function compareVersionFloors(left: string, right: string): number {
-  const leftParts = left.split('.').map((value) => Number.parseInt(value, 10));
-  const rightParts = right
-    .split('.')
-    .map((value) => Number.parseInt(value, 10));
+  const leftParts = parseVersionFloorParts(left);
+  const rightParts = parseVersionFloorParts(right);
   const length = Math.max(leftParts.length, rightParts.length);
 
   for (let index = 0; index < length; index += 1) {
@@ -153,12 +174,9 @@ function normalizeSelections(
 
 export function resolveAiFeatureCapabilityPlan(
   selections: readonly AiFeatureCapabilitySelection[],
-  registry: Readonly<Record<string, AiFeatureDefinition>> = Object.values(
-    AI_FEATURE_DEFINITIONS,
-  ).reduce<Record<string, AiFeatureDefinition>>((accumulator, definition) => {
-    accumulator[definition.id] = definition;
-    return accumulator;
-  }, {}),
+  registry: Readonly<
+    Record<string, AiFeatureDefinition>
+  > = DEFAULT_AI_FEATURE_REGISTRY,
 ): ResolvedAiFeatureCapabilityPlan {
   const requiredFeatures: ResolvedAiFeatureCapability[] = [];
   const optionalFeatures: ResolvedAiFeatureCapability[] = [];

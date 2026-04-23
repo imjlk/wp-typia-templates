@@ -32,8 +32,10 @@
       },
       "label": "Get Counter State",
       "meta": {
-        "idempotent": true,
-        "readonly": true,
+        "annotations": {
+          "idempotent": true,
+          "readonly": true
+        },
         "show_in_rest": true
       },
       "method": "GET",
@@ -129,9 +131,11 @@
       },
       "label": "Increment Counter State",
       "meta": {
-        "destructive": false,
-        "idempotent": false,
-        "readonly": false,
+        "annotations": {
+          "destructive": false,
+          "idempotent": false,
+          "readonly": false
+        },
         "show_in_rest": true
       },
       "method": "POST",
