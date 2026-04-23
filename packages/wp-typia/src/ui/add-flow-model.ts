@@ -1,170 +1,130 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 import {
-	FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
-	FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
-	getFirstPartyScrollTop,
-	getFirstPartyViewportHeight,
-} from "./first-party-form-model";
+  ADD_KIND_IDS,
+  getAddHiddenStringSubmitFieldNames,
+  getAddVisibleFieldNames as getRegisteredAddVisibleFieldNames,
+  isAddPersistenceTemplate as isRegisteredAddPersistenceTemplate,
+} from '../add-kind-registry';
+import {
+  appendNormalizedOptionalStringFields,
+  sanitizeVisibleSubmitValues,
+} from './submit-value-sanitizers';
+
+import {
+  FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+  FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+  getFirstPartyScrollTop,
+  getFirstPartyViewportHeight,
+} from './first-party-form-model';
 
 export const addFlowSchema = z.object({
-	"alternate-render-targets": z.string().optional(),
-	anchor: z.string().optional(),
-	block: z.string().optional(),
-	"data-storage": z.string().optional(),
-	"external-layer-id": z.string().optional(),
-	"external-layer-source": z.string().optional(),
-	"inner-blocks-preset": z.string().optional(),
-	kind: z
-		.enum([
-			"block",
-			"variation",
-			"pattern",
-			"binding-source",
-			"rest-resource",
-			"editor-plugin",
-			"hooked-block",
-		])
-		.default("block"),
-	methods: z.string().optional(),
-	name: z.string().optional(),
-	namespace: z.string().optional(),
-	"persistence-policy": z.string().optional(),
-	position: z.string().optional(),
-	slot: z.string().optional(),
-	template: z.string().optional(),
+  'alternate-render-targets': z.string().optional(),
+  anchor: z.string().optional(),
+  block: z.string().optional(),
+  'data-storage': z.string().optional(),
+  'external-layer-id': z.string().optional(),
+  'external-layer-source': z.string().optional(),
+  'inner-blocks-preset': z.string().optional(),
+  kind: z.enum(ADD_KIND_IDS).default('block'),
+  methods: z.string().optional(),
+  name: z.string().optional(),
+  namespace: z.string().optional(),
+  'persistence-policy': z.string().optional(),
+  position: z.string().optional(),
+  slot: z.string().optional(),
+  template: z.string().optional(),
 });
 
 export type AddFlowValues = z.infer<typeof addFlowSchema>;
 
 export type AddFieldName =
-	| "kind"
-	| "name"
-	| "template"
-	| "block"
-	| "anchor"
-	| "methods"
-	| "namespace"
-	| "position"
-	| "slot"
-	| "alternate-render-targets"
-	| "inner-blocks-preset"
-	| "data-storage"
-	| "persistence-policy";
+  | 'kind'
+  | 'name'
+  | 'template'
+  | 'block'
+  | 'anchor'
+  | 'methods'
+  | 'namespace'
+  | 'position'
+  | 'slot'
+  | 'alternate-render-targets'
+  | 'inner-blocks-preset'
+  | 'data-storage'
+  | 'persistence-policy';
 
 const ADD_FIELD_ORDER = [
-	"kind",
-	"name",
-	"template",
-	"alternate-render-targets",
-	"inner-blocks-preset",
-	"block",
-	"anchor",
-	"position",
-	"slot",
-	"data-storage",
-	"persistence-policy",
+  'kind',
+  'name',
+  'template',
+  'alternate-render-targets',
+  'inner-blocks-preset',
+  'block',
+  'anchor',
+  'position',
+  'slot',
+  'data-storage',
+  'persistence-policy',
 ] as const satisfies ReadonlyArray<AddFieldName>;
 
 const ADD_FIELD_HEIGHTS: Record<AddFieldName, number> = {
-	anchor: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
-	block: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
-	"data-storage": FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
-	"alternate-render-targets": FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
-	"inner-blocks-preset": FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
-	kind: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
-	methods: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
-	name: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
-	namespace: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
-	"persistence-policy": FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
-	position: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
-	slot: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
-	template: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+  anchor: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+  block: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+  'data-storage': FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+  'alternate-render-targets': FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+  'inner-blocks-preset': FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+  kind: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+  methods: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+  name: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+  namespace: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+  'persistence-policy': FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+  position: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+  slot: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+  template: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 };
 
 export function isAddPersistenceTemplate(template?: string): boolean {
-	return template === "persistence" || template === "compound";
+  return isRegisteredAddPersistenceTemplate(template);
 }
 
-export function getVisibleAddFieldNames(values: Partial<AddFlowValues>): Array<AddFieldName> {
-	switch (values.kind ?? "block") {
-		case "variation":
-			return ["kind", "name", "block"];
-		case "pattern":
-			return ["kind", "name"];
-		case "binding-source":
-			return ["kind", "name"];
-		case "rest-resource":
-			return ["kind", "name", "namespace", "methods"];
-		case "editor-plugin":
-			return ["kind", "name", "slot"];
-		case "hooked-block":
-			return ["kind", "name", "anchor", "position"];
-		case "block":
-		default:
-			return ADD_FIELD_ORDER.filter((name) => {
-				if (name === "alternate-render-targets") {
-					return isAddPersistenceTemplate(values.template);
-				}
-				if (name === "inner-blocks-preset") {
-					return values.template === "compound";
-				}
-				if (name === "data-storage" || name === "persistence-policy") {
-					return isAddPersistenceTemplate(values.template);
-				}
-				return name === "kind" || name === "name" || name === "template";
-			});
-	}
+export function getVisibleAddFieldNames(
+  values: Partial<AddFlowValues>,
+): Array<AddFieldName> {
+  return getRegisteredAddVisibleFieldNames({
+    kind: values.kind,
+    template: values.template,
+  }) as Array<AddFieldName>;
 }
 
 export function getAddViewportHeight(terminalHeight = 24): number {
-	return getFirstPartyViewportHeight(terminalHeight);
+  return getFirstPartyViewportHeight(terminalHeight);
 }
 
 export function getAddScrollTop(options: {
-	activeFieldName: string | null;
-	values: Partial<AddFlowValues>;
-	viewportHeight: number;
+  activeFieldName: string | null;
+  values: Partial<AddFlowValues>;
+  viewportHeight: number;
 }): number {
-	const { activeFieldName, values, viewportHeight } = options;
-	return getFirstPartyScrollTop({
-		activeFieldName,
-		fieldHeights: ADD_FIELD_HEIGHTS,
-		visibleFieldNames: getVisibleAddFieldNames(values),
-		viewportHeight,
-	});
+  const { activeFieldName, values, viewportHeight } = options;
+  return getFirstPartyScrollTop({
+    activeFieldName,
+    fieldHeights: ADD_FIELD_HEIGHTS,
+    visibleFieldNames: getVisibleAddFieldNames(values),
+    viewportHeight,
+  });
 }
 
-export function sanitizeAddSubmitValues(values: AddFlowValues): Record<string, unknown> {
-	const visibleFields = new Set(getVisibleAddFieldNames(values));
-	const sanitized: Record<string, unknown> = {};
+export function sanitizeAddSubmitValues(
+  values: AddFlowValues,
+): Record<string, unknown> {
+  const sanitized = sanitizeVisibleSubmitValues(
+    values,
+    getVisibleAddFieldNames(values),
+  );
 
-	for (const fieldName of visibleFields) {
-		const value = values[fieldName];
-		if (typeof value === "string") {
-			const trimmed = value.trim();
-			if (trimmed.length > 0) {
-				sanitized[fieldName] = trimmed;
-			}
-			continue;
-		}
-
-		if (value !== undefined && value !== null) {
-			sanitized[fieldName] = value;
-		}
-	}
-
-	if ((values.kind ?? "block") === "block") {
-		for (const hiddenFieldName of ["external-layer-source", "external-layer-id"] as const) {
-			const value = values[hiddenFieldName];
-			if (typeof value === "string") {
-				const trimmed = value.trim();
-				if (trimmed.length > 0) {
-					sanitized[hiddenFieldName] = trimmed;
-				}
-			}
-		}
-	}
-
-	return sanitized;
+  return appendNormalizedOptionalStringFields(
+    sanitized,
+    values,
+    getAddHiddenStringSubmitFieldNames(values.kind),
+  );
 }
