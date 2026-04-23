@@ -365,9 +365,12 @@ export async function executeAddCommand({
 
 	try {
 		const addRuntime = await loadCliAddRuntime();
+		const isInteractiveSession = interactive ?? isInteractiveTerminal();
 
 		if (!kind) {
-			printLine(addRuntime.formatAddHelpText());
+			if (emitOutput) {
+				printLine(addRuntime.formatAddHelpText());
+			}
 			throw new Error(
 				"`wp-typia add` requires <kind>. Usage: wp-typia add <block|variation|pattern|binding-source|rest-resource|editor-plugin|hooked-block> ...",
 			);
@@ -593,13 +596,13 @@ export async function executeAddCommand({
 
 		if (!name) {
 			throw new Error(
-				"`wp-typia add block` requires <name>. Usage: wp-typia add block <name> --template <basic|interactivity|persistence|compound>",
+				"`wp-typia add block` requires <name>. Usage: wp-typia add block <name> [--template <basic|interactivity|persistence|compound>]",
 			);
 		}
 
-		if (!flags.template) {
+		if (!flags.template && isInteractiveSession) {
 			throw new Error(
-				"`wp-typia add block` requires --template <basic|interactivity|persistence|compound>.",
+				"`wp-typia add block` requires --template <basic|interactivity|persistence|compound> in interactive terminals. Non-interactive runs default to --template basic.",
 			);
 		}
 
@@ -608,7 +611,7 @@ export async function executeAddCommand({
 		const shouldPromptForLayerSelection =
 			Boolean(externalLayerSource) &&
 			!Boolean(externalLayerId) &&
-			(interactive ?? isInteractiveTerminal());
+			isInteractiveSession;
 		const promptRuntime = shouldPromptForLayerSelection
 			? await loadCliPromptRuntime()
 			: undefined;
@@ -624,11 +627,13 @@ export async function executeAddCommand({
 		const dataStorageMode = readOptionalStringFlag(flags, "data-storage");
 		const innerBlocksPreset = readOptionalStringFlag(flags, "inner-blocks-preset");
 		const persistencePolicy = readOptionalStringFlag(flags, "persistence-policy");
-		const resolvedTemplateId = readOptionalStringFlag(flags, "template") as
-			| "basic"
-			| "interactivity"
-			| "persistence"
-			| "compound";
+		const resolvedTemplateId =
+			(readOptionalStringFlag(flags, "template") as
+				| "basic"
+				| "interactivity"
+				| "persistence"
+				| "compound"
+				| undefined) ?? "basic";
 
 		return executeWorkspaceAddWithOptionalDryRun<
 			Awaited<ReturnType<typeof addRuntime.runAddBlockCommand>>

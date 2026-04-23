@@ -439,13 +439,14 @@ metadata for top-level string attributes via `tags.Source<"html" | "text" |
 
 Generated projects now expose `sync` as the common-case metadata refresh
 entrypoint, with `sync-types` still available for advanced/manual runs. `sync`
-supports `--check` only and simply orchestrates the same generated sync steps
-that `build`, `start`, and `typecheck` expect. `sync-types` stays warn-only by
-default, supports `-- --fail-on-lossy` when CI should fail only on lossy
-WordPress projections, and supports `-- --strict --report json` when CI should
-fail on all warnings while reading a machine-friendly JSON report from stdout.
-Hard source-analysis and unsupported type failures still exit non-zero
-regardless of mode.
+supports `--check` for verification runs and `--dry-run` for command previews
+without executing the generated sync scripts, while still orchestrating the
+same generated sync steps that `build`, `start`, and `typecheck` expect when it
+does run. `sync-types` stays warn-only by default, supports `-- --fail-on-lossy`
+when CI should fail only on lossy WordPress projections, and supports
+`-- --strict --report json` when CI should fail on all warnings while reading a
+machine-friendly JSON report from stdout. Hard source-analysis and unsupported
+type failures still exit non-zero regardless of mode.
 
 If you need the same behavior programmatically, `@wp-typia/block-runtime/metadata-core`
 also exposes `runSyncBlockMetadata(...)` alongside the lower-level

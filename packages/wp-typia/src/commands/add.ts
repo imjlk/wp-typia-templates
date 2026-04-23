@@ -32,6 +32,23 @@ export const addCommand = defineCommand({
 	defaultFormat: "toon",
 	description: "Extend an official wp-typia workspace with blocks, variations, patterns, binding sources, plugin-level REST resources, editor plugins, or hooked blocks.",
 	handler: async (args) => {
+		const prefersStructuredOutput =
+			(args.formatExplicit && args.format !== "toon") ||
+			args.agent ||
+			Boolean(args.context?.store?.isAIAgent);
+		if (prefersStructuredOutput) {
+			const completion = await executeAddCommand({
+				cwd: args.cwd,
+				emitOutput: false,
+				flags: args.flags as Record<string, unknown>,
+				interactive: false,
+				kind: args.positional[0],
+				name: args.positional[1],
+			});
+			args.output({ completion });
+			return;
+		}
+
 		await executeAddCommand({
 			cwd: args.cwd,
 			flags: args.flags as Record<string, unknown>,

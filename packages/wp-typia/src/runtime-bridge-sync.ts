@@ -3,21 +3,48 @@ import fs from "node:fs";
 import path from "node:path";
 
 type PackageManagerId = "bun" | "npm" | "pnpm" | "yarn";
+type SyncScriptName = "sync" | "sync-rest" | "sync-types";
 
 type SyncExecutionInput = {
+	captureOutput?: boolean;
 	check?: boolean;
 	cwd: string;
+	dryRun?: boolean;
 };
 
 type SyncProjectContext = {
 	cwd: string;
 	packageJsonPath: string;
 	packageManager: PackageManagerId;
-	scripts: Partial<Record<"sync" | "sync-rest" | "sync-types", string>>;
+	scripts: Partial<Record<SyncScriptName, string>>;
+};
+
+export type SyncPlannedCommand = {
+	args: string[];
+	command: string;
+	displayCommand: string;
+	scriptName: SyncScriptName;
+};
+
+export type SyncExecutedCommand = SyncPlannedCommand & {
+	exitCode: number;
+	stderr?: string;
+	stdout?: string;
+};
+
+export type SyncExecutionResult = {
+	check: boolean;
+	dryRun: boolean;
+	executedCommands?: SyncExecutedCommand[];
+	packageJsonPath: string;
+	packageManager: PackageManagerId;
+	plannedCommands: SyncPlannedCommand[];
+	projectDir: string;
 };
 
 const SYNC_INSTALL_MARKERS = ["node_modules", ".pnp.cjs", ".pnp.loader.mjs"] as const;
 const LOCAL_SYNC_TOOL_PATTERN = /(^|[\s;&|()])(?:tsx|wp-scripts)(?=($|[\s;&|()]))/u;
+const CAPTURED_SYNC_OUTPUT_MAX_BUFFER = 16 * 1024 * 1024;
 
 function formatRunScript(
 	packageManagerId: PackageManagerId,
@@ -188,14 +215,14 @@ function getPackageManagerRunInvocation(
 	}
 }
 
-function runProjectScript(
+function createSyncPlannedCommand(
 	project: SyncProjectContext,
-	scriptName: "sync" | "sync-rest" | "sync-types",
+	scriptName: SyncScriptName,
 	extraArgs: string[],
-): void {
+): SyncPlannedCommand | null {
 	const script = project.scripts[scriptName];
 	if (!script) {
-		return;
+		return null;
 	}
 
 	const invocation = getPackageManagerRunInvocation(
@@ -204,44 +231,110 @@ function runProjectScript(
 		extraArgs,
 	);
 
-	const result = spawnSync(invocation.command, invocation.args, {
+	return {
+		args: invocation.args,
+		command: invocation.command,
+		displayCommand: formatRunScript(
+			project.packageManager,
+			scriptName,
+			extraArgs.join(" "),
+		),
+		scriptName,
+	};
+}
+
+function buildSyncPlannedCommands(
+	project: SyncProjectContext,
+	extraArgs: string[],
+): SyncPlannedCommand[] {
+	if (project.scripts.sync) {
+		return [createSyncPlannedCommand(project, "sync", extraArgs)!];
+	}
+
+	const plannedCommands = [createSyncPlannedCommand(project, "sync-types", extraArgs)!];
+	const syncRestCommand = createSyncPlannedCommand(project, "sync-rest", extraArgs);
+	if (syncRestCommand) {
+		plannedCommands.push(syncRestCommand);
+	}
+
+	return plannedCommands;
+}
+
+function runProjectScript(
+	project: SyncProjectContext,
+	plannedCommand: SyncPlannedCommand,
+	options: {
+		captureOutput: boolean;
+	},
+): SyncExecutedCommand {
+	const result = spawnSync(plannedCommand.command, plannedCommand.args, {
 		cwd: project.cwd,
+		encoding: options.captureOutput ? "utf8" : undefined,
+		...(options.captureOutput ? { maxBuffer: CAPTURED_SYNC_OUTPUT_MAX_BUFFER } : {}),
 		shell: process.platform === "win32",
-		stdio: "inherit",
+		stdio: options.captureOutput ? "pipe" : "inherit",
 	});
+	const stderr =
+		options.captureOutput && typeof result.stderr === "string"
+			? result.stderr
+			: undefined;
+	const stdout =
+		options.captureOutput && typeof result.stdout === "string"
+			? result.stdout
+			: undefined;
 
 	if (result.error || result.status !== 0) {
 		throw new Error(
-			`\`${formatRunScript(project.packageManager, scriptName, extraArgs.join(" "))}\` failed.`,
+			`\`${plannedCommand.displayCommand}\` failed.`,
 			{
-				cause: result.error,
+				cause: result.error ?? (stderr ? new Error(stderr.trim()) : undefined),
 			},
 		);
 	}
+
+	return {
+		...plannedCommand,
+		exitCode: result.status ?? 0,
+		...(stderr !== undefined ? { stderr } : {}),
+		...(stdout !== undefined ? { stdout } : {}),
+	};
 }
 
 /**
  * Executes the generated-project sync flow through the local project scripts.
  *
- * @param options Sync execution options including cwd and optional `--check`.
- * @returns A promise that resolves after the relevant sync scripts complete.
+ * @param options Sync execution options including cwd, optional `--check`, and
+ * optional `--dry-run` preview mode.
+ * @returns A promise that resolves with the planned sync commands and any
+ * executed command output metadata.
  */
 export async function executeSyncCommand({
+	captureOutput = false,
 	check = false,
 	cwd,
-}: SyncExecutionInput): Promise<void> {
+	dryRun = false,
+}: SyncExecutionInput): Promise<SyncExecutionResult> {
 	const project = resolveSyncProjectContext(cwd);
-	assertSyncDependenciesInstalled(project);
 	const extraArgs = check ? ["--check"] : [];
+	const plannedCommands = buildSyncPlannedCommands(project, extraArgs);
+	const result: SyncExecutionResult = {
+		check,
+		dryRun,
+		packageJsonPath: project.packageJsonPath,
+		packageManager: project.packageManager,
+		plannedCommands,
+		projectDir: project.cwd,
+	};
 
-	if (project.scripts.sync) {
-		runProjectScript(project, "sync", extraArgs);
-		return;
+	if (dryRun) {
+		return result;
 	}
 
-	runProjectScript(project, "sync-types", extraArgs);
-
-	if (project.scripts["sync-rest"]) {
-		runProjectScript(project, "sync-rest", extraArgs);
-	}
+	assertSyncDependenciesInstalled(project);
+	result.executedCommands = plannedCommands.map((plannedCommand) =>
+		runProjectScript(project, plannedCommand, {
+			captureOutput,
+		}),
+	);
+	return result;
 }

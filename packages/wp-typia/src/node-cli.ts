@@ -14,6 +14,7 @@ import {
 	MIGRATE_OPTION_METADATA,
 	parseCommandArgvWithMetadata,
 	resolveCommandOptionValues,
+	SYNC_OPTION_METADATA,
 	TEMPLATES_OPTION_METADATA,
 } from "./command-option-metadata";
 import {
@@ -37,6 +38,10 @@ import {
 	executeTemplatesCommand,
 } from "./runtime-bridge";
 import {
+	buildSyncDryRunPayload,
+	printCompletionPayload,
+} from "./runtime-bridge-output";
+import {
 	WP_TYPIA_CANONICAL_CREATE_USAGE,
 	WP_TYPIA_CANONICAL_MIGRATE_USAGE,
 	WP_TYPIA_FUTURE_COMMAND_TREE,
@@ -55,9 +60,10 @@ const NODE_FALLBACK_OPTION_PARSER = buildCommandOptionParser(
 	CREATE_OPTION_METADATA,
 	ADD_OPTION_METADATA,
 	MIGRATE_OPTION_METADATA,
+	SYNC_OPTION_METADATA,
 	TEMPLATES_OPTION_METADATA,
 );
-const NODE_FALLBACK_BOOLEAN_OPTION_NAMES = ["check", "help", "version"] as const;
+const NODE_FALLBACK_BOOLEAN_OPTION_NAMES = ["help", "version"] as const;
 const STANDALONE_GUIDANCE_LINE =
 	"Prefer not to install Bun? Use the standalone wp-typia binary from the GitHub release assets.";
 
@@ -155,17 +161,23 @@ async function applyNodeFallbackConfigDefaults(
 	}
 
 	if (command === "create") {
-		return resolveCommandOptionValues(CREATE_OPTION_METADATA, {
-			defaults: getCreateDefaults(config),
-			flags,
-		});
+		return {
+			...flags,
+			...resolveCommandOptionValues(CREATE_OPTION_METADATA, {
+				defaults: getCreateDefaults(config),
+				flags,
+			}),
+		};
 	}
 
 	if (command === "add" && subcommand === "block") {
-		return resolveCommandOptionValues(ADD_OPTION_METADATA, {
-			defaults: getAddBlockDefaults(config),
-			flags,
-		});
+		return {
+			...flags,
+			...resolveCommandOptionValues(ADD_OPTION_METADATA, {
+				defaults: getAddBlockDefaults(config),
+				flags,
+			}),
+		};
 	}
 
 	return flags;
@@ -239,6 +251,17 @@ function renderMigrateHelp() {
 		"",
 		"Supported flags:",
 		...formatNodeFallbackOptionHelp(MIGRATE_OPTION_METADATA),
+	]);
+}
+
+function renderSyncHelp() {
+	printBlock([
+		"Usage: wp-typia sync",
+		"",
+		...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
+		"",
+		"Supported flags:",
+		...formatNodeFallbackOptionHelp(SYNC_OPTION_METADATA),
 	]);
 }
 
@@ -382,6 +405,10 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 			renderMigrateHelp();
 			return;
 		}
+		if (command === "sync") {
+			renderSyncHelp();
+			return;
+		}
 		renderGeneralHelp();
 		return;
 	}
@@ -462,6 +489,34 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 				],
 			});
 		}
+		if (mergedFlags.format === "json") {
+			let completion;
+			try {
+				completion = await executeAddCommand({
+					cwd: process.cwd(),
+					emitOutput: false,
+					flags: mergedFlags,
+					interactive: false,
+					kind: positionals[1],
+					name: positionals[2],
+				});
+			} catch (error) {
+				throw createCliCommandError({
+					command: "add",
+					error,
+				});
+			}
+			printLine(
+				JSON.stringify(
+					{
+						completion,
+					},
+					null,
+					2,
+				),
+			);
+			return;
+		}
 		await executeAddCommand({
 			cwd: process.cwd(),
 			flags: mergedFlags,
@@ -492,10 +547,34 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 
 	if (command === "sync") {
 		try {
-			await executeSyncCommand({
+			const sync = await executeSyncCommand({
+				captureOutput: mergedFlags.format === "json" && !Boolean(mergedFlags["dry-run"]),
 				check: Boolean(mergedFlags.check),
 				cwd: process.cwd(),
+				dryRun: Boolean(mergedFlags["dry-run"]),
 			});
+			if (mergedFlags.format === "json") {
+				printLine(
+					JSON.stringify(
+						{
+							sync,
+						},
+						null,
+						2,
+					),
+				);
+				return;
+			}
+			if (sync.dryRun) {
+				printCompletionPayload(
+					buildSyncDryRunPayload({
+						check: sync.check,
+						packageManager: sync.packageManager,
+						plannedCommands: sync.plannedCommands,
+						projectDir: sync.projectDir,
+					}),
+				);
+			}
 		} catch (error) {
 			throw createCliCommandError({
 				command: "sync",
