@@ -28,6 +28,7 @@ import { getPrimaryDevelopmentScript } from "./local-dev-presets.js";
 import { createManagedTempRoot } from "./temp-roots.js";
 import {
 	getOptionalOnboardingNote,
+	getOptionalOnboardingShortNote,
 	getOptionalOnboardingSteps,
 } from "./scaffold-onboarding.js";
 import { formatNonEmptyTargetDirectoryError } from "./scaffold-bootstrap.js";
@@ -63,6 +64,7 @@ interface GetOptionalOnboardingOptions {
 
 interface OptionalOnboardingGuidance {
 	note: string;
+	shortNote: string;
 	steps: string[];
 }
 
@@ -561,6 +563,10 @@ export function getOptionalOnboarding({
 }: GetOptionalOnboardingOptions): OptionalOnboardingGuidance {
 	return {
 		note: getOptionalOnboardingNote(packageManager, templateId, {
+			availableScripts,
+			compoundPersistenceEnabled,
+		}),
+		shortNote: getOptionalOnboardingShortNote(packageManager, templateId, {
 			availableScripts,
 			compoundPersistenceEnabled,
 		}),

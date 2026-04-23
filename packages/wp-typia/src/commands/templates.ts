@@ -33,8 +33,16 @@ export const templatesCommand = defineCommand({
 					return;
 				}
 				if (effectiveSubcommand === "inspect" && id) {
-					const template = templates.find((entry) => entry.id === id);
-					if (!template) {
+					const { getTemplateById } = await import("@wp-typia/project-tools/cli-templates");
+					let template;
+					try {
+						template = getTemplateById(id);
+					} catch (lookupError) {
+						const message =
+							lookupError instanceof Error ? lookupError.message : String(lookupError);
+						if (!message.startsWith("Unknown template")) {
+							throw lookupError;
+						}
 						emitCliDiagnosticFailure(args, {
 							code: CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
 							command: "templates",

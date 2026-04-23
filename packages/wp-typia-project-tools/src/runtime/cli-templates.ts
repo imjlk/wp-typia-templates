@@ -1,13 +1,13 @@
 import {
+	OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
+	getUserFacingTemplateId,
 	getTemplateById,
 	getTemplateSelectOptions,
 	isBuiltInTemplateId,
 	listTemplates,
 } from "./template-registry.js";
 import type { TemplateDefinition } from "./template-registry.js";
-
-const WORKSPACE_TEMPLATE_ALIAS = "workspace";
 
 /**
  * Format one line of template list output for a built-in template.
@@ -16,7 +16,7 @@ const WORKSPACE_TEMPLATE_ALIAS = "workspace";
  * @returns One-line summary text for `templates list`.
  */
 export function formatTemplateSummary(template: TemplateDefinition): string {
-	return `${template.id.padEnd(14)} ${template.description}`;
+	return `${getUserFacingTemplateId(template.id).padEnd(14)} ${template.description}`;
 }
 
 /**
@@ -27,6 +27,10 @@ export function formatTemplateSummary(template: TemplateDefinition): string {
  */
 export function formatTemplateFeatures(template: TemplateDefinition): string {
 	const lines = [`  Features: ${template.features.join(" • ")}`];
+	const bestForHint = getTemplateBestForHint(template);
+	if (bestForHint) {
+		lines.push(`  Best for: ${bestForHint}`);
+	}
 	const capabilityHints = getTemplateCapabilityHints(template);
 	if (capabilityHints.length > 0) {
 		lines.push(`  Supports: ${capabilityHints.join(" • ")}`);
@@ -37,7 +41,7 @@ export function formatTemplateFeatures(template: TemplateDefinition): string {
 	}
 	if (template.id === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE) {
 		lines.push(
-			`  Alias: ${WORKSPACE_TEMPLATE_ALIAS} (\`--template ${WORKSPACE_TEMPLATE_ALIAS}\`)`,
+			`  Alias: ${OFFICIAL_WORKSPACE_TEMPLATE_ALIAS} (\`--template ${OFFICIAL_WORKSPACE_TEMPLATE_ALIAS}\`)`,
 		);
 	}
 	return lines.join("\n");
@@ -56,8 +60,9 @@ export function formatTemplateFeatures(template: TemplateDefinition): string {
  */
 export function formatTemplateDetails(template: TemplateDefinition): string {
 	const detailLines = [
-		template.id,
+		getUserFacingTemplateId(template.id),
 		`Summary: ${template.description}`,
+		`Best for: ${getTemplateBestForHint(template)}`,
 		...getTemplateIdentityLines(template),
 		`Category: ${template.defaultCategory}`,
 	];
@@ -82,6 +87,26 @@ export function formatTemplateDetails(template: TemplateDefinition): string {
 	detailLines.push(`Features: ${template.features.join(", ")}`);
 
 	return detailLines.join("\n");
+}
+
+function getTemplateBestForHint(template: TemplateDefinition): string {
+	if (template.id === "basic") {
+		return "minimal static-first block scaffolds with Typia validation and the lightest default surface";
+	}
+	if (template.id === "interactivity") {
+		return "interactive single-block experiences that keep client-side state and actions inside one scaffold";
+	}
+	if (template.id === "persistence") {
+		return "typed REST-backed blocks that need persistence-aware reads, writes, and schema refresh workflows";
+	}
+	if (template.id === "compound") {
+		return "parent-and-child block families that own nested authoring conventions and optional persistence wiring";
+	}
+	if (template.id === "query-loop") {
+		return "create-time `core/query` variations with connected starter patterns instead of `add block` families";
+	}
+
+	return "official multi-block workspaces that extend through `wp-typia add ...` and workspace doctor flows";
 }
 
 function getTemplateCapabilityHints(template: TemplateDefinition): string[] {
@@ -118,9 +143,18 @@ function getTemplateIdentityLines(template: TemplateDefinition): string[] {
 	if (template.id === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE) {
 		return [
 			"Identity:",
+			`  - User-facing alias: ${OFFICIAL_WORKSPACE_TEMPLATE_ALIAS} (\`--template ${OFFICIAL_WORKSPACE_TEMPLATE_ALIAS}\`)`,
 			`  - Official package: ${OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE}`,
-			`  - Alias: ${WORKSPACE_TEMPLATE_ALIAS} (\`--template ${WORKSPACE_TEMPLATE_ALIAS}\`)`,
 			"Type: official workspace scaffold",
+		];
+	}
+
+	if (template.id === "query-loop") {
+		return [
+			"Identity:",
+			"  - Built-in template id: query-loop",
+			"Type: create-time core/query variation scaffold",
+			"Output model: variation-only scaffold; does not generate block.json or Typia manifests",
 		];
 	}
 

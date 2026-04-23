@@ -29,15 +29,24 @@ describe("@wp-typia/project-tools template discovery formatting", () => {
 		const basicDetails = formatTemplateDetails(getTemplateById("basic"));
 		const queryLoopDetails = formatTemplateDetails(getTemplateById("query-loop"));
 		const workspaceDetails = formatTemplateDetails(
-			getTemplateById("@wp-typia/create-workspace-template"),
+			getTemplateById("workspace"),
 		);
 
+		expect(basicDetails).toStartWith("basic\n");
+		expect(basicDetails).toContain("Best for:");
 		expect(basicDetails).toContain("Identity:");
 		expect(basicDetails).toContain("Built-in template id: basic");
 		expect(basicDetails).toContain("Logical layers:");
 		expect(basicDetails).toContain("shared/base -> basic overlay");
 		expect(basicDetails).not.toContain("Overlay path:");
 		expect(basicDetails).not.toContain("/templates/basic");
+		expect(queryLoopDetails).toContain(
+			"Best for: create-time `core/query` variations with connected starter patterns instead of `add block` families",
+		);
+		expect(queryLoopDetails).toContain("Type: create-time core/query variation scaffold");
+		expect(queryLoopDetails).toContain(
+			"Output model: variation-only scaffold; does not generate block.json or Typia manifests",
+		);
 		expect(queryLoopDetails).toContain("Notes:");
 		expect(queryLoopDetails).toContain(
 			"Create-time variation scaffold only; use `wp-typia create <project-dir> --template query-loop` instead of `wp-typia add block`.",
@@ -46,8 +55,9 @@ describe("@wp-typia/project-tools template discovery formatting", () => {
 			"Owns a `core/query` variation, so it does not generate `src/types.ts`, `block.json`, or Typia manifests.",
 		);
 
+		expect(workspaceDetails).toStartWith("workspace\n");
+		expect(workspaceDetails).toContain("User-facing alias: workspace (`--template workspace`)");
 		expect(workspaceDetails).toContain("Official package: @wp-typia/create-workspace-template");
-		expect(workspaceDetails).toContain("Alias: workspace (`--template workspace`)");
 		expect(workspaceDetails).toContain("workspace package scaffold");
 		expect(workspaceDetails).not.toContain("Overlay path:");
 	});

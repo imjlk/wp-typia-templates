@@ -131,6 +131,8 @@ describe("@wp-typia/project-tools scaffold query-loop", () => {
 			expect(listPatternSource).toContain('"namespace":"demo-space/demo-query-loop"');
 			expect(listPatternSource).toContain('"wpTypiaVariation":"demo-space/demo-query-loop"');
 			expect(readme).toContain("## Build and Verify");
+			expect(readme).toContain("- Family: query-loop");
+			expect(readme).toContain("- Type: create-time core/query variation scaffold");
 			expect(readme).toContain(
 				`npx --yes wp-typia@${wpTypiaPackageManifest.version} doctor`,
 			);

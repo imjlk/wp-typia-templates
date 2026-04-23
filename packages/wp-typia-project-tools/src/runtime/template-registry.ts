@@ -92,6 +92,7 @@ export const BUILTIN_TEMPLATE_IDS = [
 	"query-loop",
 ] as const;
 export const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
+export const OFFICIAL_WORKSPACE_TEMPLATE_ALIAS = "workspace";
 export type BuiltInTemplateId = (typeof BUILTIN_TEMPLATE_IDS)[number];
 export type PersistencePolicy = "authenticated" | "public";
 
@@ -154,16 +155,52 @@ export function isBuiltInTemplateId(templateId: string): templateId is BuiltInTe
 	return (BUILTIN_TEMPLATE_IDS as readonly string[]).includes(templateId);
 }
 
+/**
+ * Returns whether a template id matches the user-facing official workspace alias.
+ *
+ * @param templateId Template id or alias supplied by a caller.
+ * @returns `true` when the id is the `workspace` alias.
+ */
+export function isOfficialWorkspaceTemplateAlias(templateId: string): boolean {
+	return templateId === OFFICIAL_WORKSPACE_TEMPLATE_ALIAS;
+}
+
+/**
+ * Converts user-facing template aliases into the registry lookup id.
+ *
+ * @param templateId Template id or alias supplied by a caller.
+ * @returns The registry id used for template resolution.
+ */
+export function normalizeTemplateLookupId(templateId: string): string {
+	return isOfficialWorkspaceTemplateAlias(templateId)
+		? OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
+		: templateId;
+}
+
+/**
+ * Converts internal template ids into the id shown in human-facing output.
+ *
+ * @param templateId Template id stored in the registry.
+ * @returns The user-facing template id or alias for display.
+ */
+export function getUserFacingTemplateId(templateId: string): string {
+	return templateId === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
+		? OFFICIAL_WORKSPACE_TEMPLATE_ALIAS
+		: templateId;
+}
+
 export function listTemplates(): readonly TemplateDefinition[] {
 	return TEMPLATE_REGISTRY;
 }
 
 export function getTemplateById(templateId: string): TemplateDefinition {
-	const template = TEMPLATE_REGISTRY.find((entry) => entry.id === templateId);
+	const normalizedTemplateId = normalizeTemplateLookupId(templateId);
+	const template = TEMPLATE_REGISTRY.find((entry) => entry.id === normalizedTemplateId);
 	if (!template) {
 		throw new Error(
 			`Unknown template "${templateId}". Expected one of: ${[
 				...TEMPLATE_IDS,
+				OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
 				OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 			].join(", ")}`,
 		);
@@ -173,12 +210,12 @@ export function getTemplateById(templateId: string): TemplateDefinition {
 
 export function getTemplateSelectOptions(): Array<{
 	label: string;
-	value: TemplateDefinition["id"];
+	value: string;
 	hint: string;
 }> {
 	return TEMPLATE_REGISTRY.map((template) => ({
-		label: template.id,
-		value: template.id,
+		label: getUserFacingTemplateId(template.id),
+		value: getUserFacingTemplateId(template.id),
 		hint: template.features.join(", "),
 	}));
 }

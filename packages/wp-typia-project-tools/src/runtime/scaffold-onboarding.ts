@@ -8,6 +8,7 @@ import { getPrimaryDevelopmentScript } from "./local-dev-presets.js";
 import {
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	isBuiltInTemplateId,
+	normalizeTemplateLookupId,
 } from "./template-registry.js";
 
 interface SyncOnboardingOptions {
@@ -191,6 +192,47 @@ export function getOptionalOnboardingNote(
 	}
 
 	return `You usually do not need to run ${syncCommand} during a normal ${formatRunScript(packageManager, developmentScript)} session. Run ${syncCommand} before ${formatRunScript(packageManager, "build")}, ${typecheckCommand}, or ${doctorCommand} when you want a reviewable refresh. ${syncTypesCommand} stays warn-only by default; use \`${failOnLossySyncCommand}\` or \`${strictSyncCommand}\` for stricter CI checks.${advancedPersistenceNote} Generated syncs do not create migration history, so refresh before your first commit if this directory is new.`;
+}
+
+/**
+ * Returns a shorter optional onboarding note suitable for create completion output.
+ */
+export function getOptionalOnboardingShortNote(
+	packageManager: PackageManagerId,
+	templateId = "basic",
+	options: SyncOnboardingOptions = {},
+): string {
+	const normalizedTemplateId = normalizeTemplateLookupId(templateId);
+	const doctorCommand = getDoctorVerificationCommand(packageManager);
+
+	if (normalizedTemplateId === "query-loop") {
+		return `No sync step is generated for this Query Loop scaffold. Edit the variation files directly, then rerun ${formatRunScript(packageManager, "build")}, ${formatRunScript(packageManager, "typecheck")}, or ${doctorCommand} when you want a review pass.`;
+	}
+
+	const optionalSyncScripts = getOptionalSyncScriptNames(normalizedTemplateId, options);
+	const developmentScript = getPrimaryDevelopmentScript(normalizedTemplateId);
+	const devCommand = formatRunScript(packageManager, developmentScript);
+	const isCustomTemplate =
+		!isBuiltInTemplateId(normalizedTemplateId) &&
+		normalizedTemplateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE;
+
+	if (isCustomTemplate && optionalSyncScripts.length === 0) {
+		return `Follow the template's own artifact-refresh guidance, then use ${doctorCommand} for a quick environment and workspace sanity check.`;
+	}
+
+	if (isCustomTemplate && optionalSyncScripts.length > 0) {
+		const syncSteps = optionalSyncScripts.map((scriptName) =>
+			formatRunScript(packageManager, scriptName),
+		);
+		return `Run ${syncSteps.join(" then ")} before build, typecheck, or ${doctorCommand} when you want a reviewable refresh.`;
+	}
+
+	const syncCommand = formatRunScript(
+		packageManager,
+		optionalSyncScripts.includes("sync") ? "sync" : "sync-types",
+	);
+
+	return `Skip ${syncCommand} during normal ${devCommand} work. Re-run it before build, typecheck, or ${doctorCommand} when you want a reviewable refresh.`;
 }
 
 /**

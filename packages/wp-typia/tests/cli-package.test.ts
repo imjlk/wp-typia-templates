@@ -1474,9 +1474,14 @@ describe('wp-typia package', () => {
       entryPath,
       'templates',
       'inspect',
-      '@wp-typia/create-workspace-template',
+      'workspace',
     ]);
 
+    expect(basicOutput).toStartWith('basic\n');
+    expect(basicOutput).not.toContain(
+      'basic          A lightweight WordPress block with Typia validation',
+    );
+    expect(basicOutput).toContain('Best for:');
     expect(basicOutput).toContain('Identity:');
     expect(basicOutput).toContain('Built-in template id: basic');
     expect(basicOutput).toContain('Logical layers:');
@@ -1488,7 +1493,7 @@ describe('wp-typia package', () => {
       'Official package: @wp-typia/create-workspace-template',
     );
     expect(workspaceOutput).toContain(
-      'Alias: workspace (`--template workspace`)',
+      'User-facing alias: workspace (`--template workspace`)',
     );
     expect(workspaceOutput).not.toContain('Overlay path:');
   });
@@ -1534,7 +1539,7 @@ describe('wp-typia package', () => {
       entryPath,
       'templates',
       'inspect',
-      '@wp-typia/create-workspace-template',
+      'workspace',
       '--format',
       'json',
     ]);
