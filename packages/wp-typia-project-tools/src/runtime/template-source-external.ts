@@ -85,7 +85,7 @@ async function loadExternalTemplateConfig<
   const moduleUrl = `${pathToFileURL(entryPath).href}?mtime=${fs.statSync(entryPath).mtimeMs}`
   const loadedModule = (await withExternalTemplateTimeout(
     `loading external template config "${entryPath}"`,
-    import(moduleUrl),
+    () => import(moduleUrl),
   )) as Record<string, unknown>
   const loadedConfig = loadedModule.default ?? loadedModule
   if (!isPlainObject(loadedConfig)) {
@@ -241,13 +241,14 @@ async function buildExternalTemplateView(
     mergedView[getVariantFlagName(selectedVariant)] = true
   }
 
-  if (!config.transformer) {
+  const transformer = config.transformer
+  if (!transformer) {
     return mergedView
   }
 
   const transformed = await withExternalTemplateTimeout(
     `running external template transformer for "${context.slug}"`,
-    Promise.resolve(config.transformer(mergedView)),
+    () => Promise.resolve(transformer(mergedView)),
   )
   if (!isPlainObject(transformed)) {
     throw new Error(

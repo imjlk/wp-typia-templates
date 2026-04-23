@@ -104,7 +104,7 @@ export function assertExternalTemplateFileSize(
 
 export async function withExternalTemplateTimeout<T>(
 	label: string,
-	task: Promise<T>,
+	task: Promise<T> | (() => Promise<T>),
 	timeoutMs = getExternalTemplateTimeoutMs(),
 ): Promise<T> {
 	let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
@@ -115,7 +115,8 @@ export async function withExternalTemplateTimeout<T>(
 	});
 
 	try {
-		return await Promise.race([task, timeoutPromise]);
+		const pendingTask = typeof task === "function" ? task() : task;
+		return await Promise.race([pendingTask, timeoutPromise]);
 	} finally {
 		if (timeoutHandle) {
 			clearTimeout(timeoutHandle);
