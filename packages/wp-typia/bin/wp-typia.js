@@ -20,6 +20,8 @@ const longValueOptionSet = new Set(longValueOptions);
 const shortValueOptionSet = new Set(shortValueOptions);
 const buildScriptEntrypoint = path.join(packageRoot, "scripts", "build-bunli-runtime.ts");
 const sourceCliEntrypoint = path.join(packageRoot, "src", "cli.ts");
+const standaloneGuidance =
+	"Prefer not to install Bun? Use the standalone wp-typia binary from the GitHub release assets.";
 
 function firstPositional(argv) {
 	for (let index = 0; index < argv.length; index += 1) {
@@ -102,20 +104,20 @@ if (hasWorkingBun && hasBuiltRuntime && shouldUseFullRuntime) {
 if (shouldUseFullRuntime) {
 	if (!hasBuiltRuntime) {
 		console.error(
-			"❌ wp-typia could not locate its built CLI runtime. Reinstall the published package, or run `bun run build` when using a source checkout.",
+			"Error: wp-typia could not locate its built CLI runtime. Reinstall the published package, or run `bun run build` when using a source checkout.",
 		);
 		process.exit(1);
 	}
 
 	console.error(
-		`❌ wp-typia ${command} requires Bun. Install Bun locally, run with bunx, or set BUN_BIN to a working Bun executable.`,
+		`Error: wp-typia ${command} requires Bun. Install Bun locally, run with bunx, or set BUN_BIN to a working Bun executable. ${standaloneGuidance}`,
 	);
 	process.exit(1);
 }
 
 if (!hasBuiltRuntime || !fs.existsSync(nodeCliEntrypoint)) {
 	console.error(
-		"❌ wp-typia could not locate its Node fallback runtime. Reinstall the published package, or run `bun run build` when using a source checkout.",
+		"Error: wp-typia could not locate its Node fallback runtime. Reinstall the published package, or run `bun run build` when using a source checkout.",
 	);
 	process.exit(1);
 }

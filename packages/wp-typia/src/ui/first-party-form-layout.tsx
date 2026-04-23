@@ -13,6 +13,7 @@ import {
   useTuiTheme,
 } from '@bunli/tui';
 
+import { formatOutputMarker } from '../output-markers';
 import type { AlternateBufferCompletionPayload } from './alternate-buffer-lifecycle';
 import {
   isCompletionEndKey,
@@ -246,7 +247,7 @@ export function FirstPartyCompletionViewport({
         ),
         ...(completion.warningLines ?? []).map((line, index) =>
           createElement('text', {
-            content: `⚠️ ${line}`,
+            content: formatOutputMarker('warning', line),
             fg: tokens.textWarning,
             key: `warning:${index}`,
           }),

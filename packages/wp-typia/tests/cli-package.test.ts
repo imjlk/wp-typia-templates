@@ -306,11 +306,24 @@ describe("wp-typia package", () => {
 		expect(helpResult.stderr).toBe("");
 		expect(helpResult.stdout).toContain("Canonical CLI package for wp-typia scaffolding");
 		expect(helpResult.stdout).toContain("Runtime: Node fallback");
+		expect(helpResult.stdout).toContain("standalone wp-typia binary");
 		expect(createHelpResult.status).toBe(0);
 		expect(createHelpResult.stderr).toBe("");
 		expect(createHelpResult.stdout).toContain("--external-layer-source");
 		expect(createHelpResult.stdout).toContain("--external-layer-id");
 		expect(createHelpResult.stdout).toContain("--alternate-render-targets");
+	});
+
+	test("guides Bun-only commands toward standalone binaries when Bun is unavailable", () => {
+		const result = runCapturedCommand(process.execPath, [entryPath, "skills", "list"], {
+			env: withoutLocalBunEnv(),
+		});
+
+		expect(result.status).toBe(1);
+		expect(result.stdout).toBe("");
+		expect(result.stderr).toContain("requires Bun");
+		expect(result.stderr).toContain("standalone wp-typia binary");
+		expect(result.stderr).toContain("GitHub release assets");
 	});
 
 	test("keeps value-taking options from being mistaken for Bun-only commands", () => {
