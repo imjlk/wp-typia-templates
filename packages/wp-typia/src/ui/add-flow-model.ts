@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import {
   ADD_KIND_IDS,
+  type AddFieldName,
   getAddHiddenStringSubmitFieldNames,
   getAddVisibleFieldNames as getRegisteredAddVisibleFieldNames,
   isAddPersistenceTemplate as isRegisteredAddPersistenceTemplate,
@@ -37,21 +38,6 @@ export const addFlowSchema = z.object({
 });
 
 export type AddFlowValues = z.infer<typeof addFlowSchema>;
-
-export type AddFieldName =
-  | 'kind'
-  | 'name'
-  | 'template'
-  | 'block'
-  | 'anchor'
-  | 'methods'
-  | 'namespace'
-  | 'position'
-  | 'slot'
-  | 'alternate-render-targets'
-  | 'inner-blocks-preset'
-  | 'data-storage'
-  | 'persistence-policy';
 
 const ADD_FIELD_ORDER = [
   'kind',
@@ -93,7 +79,7 @@ export function getVisibleAddFieldNames(
   return getRegisteredAddVisibleFieldNames({
     kind: values.kind,
     template: values.template,
-  }) as Array<AddFieldName>;
+  });
 }
 
 export function getAddViewportHeight(terminalHeight = 24): number {

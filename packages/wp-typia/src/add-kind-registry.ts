@@ -8,6 +8,20 @@ export const ADD_KIND_IDS = [
   'hooked-block',
 ] as const;
 export type AddKindId = (typeof ADD_KIND_IDS)[number];
+export type AddFieldName =
+  | 'kind'
+  | 'name'
+  | 'template'
+  | 'block'
+  | 'anchor'
+  | 'methods'
+  | 'namespace'
+  | 'position'
+  | 'slot'
+  | 'alternate-render-targets'
+  | 'inner-blocks-preset'
+  | 'data-storage'
+  | 'persistence-policy';
 
 type AddKindRegistryEntry = {
   completion: {
@@ -21,7 +35,9 @@ type AddKindRegistryEntry = {
   description: string;
   hiddenStringSubmitFields?: readonly string[];
   nameLabel: string;
-  visibleFieldNames: (options: { template?: string }) => readonly string[];
+  visibleFieldNames: (options: {
+    template?: string;
+  }) => readonly AddFieldName[];
 };
 
 const BLOCK_VISIBLE_FIELD_ORDER = [
@@ -32,7 +48,7 @@ const BLOCK_VISIBLE_FIELD_ORDER = [
   'inner-blocks-preset',
   'data-storage',
   'persistence-policy',
-] as const;
+] as const satisfies ReadonlyArray<AddFieldName>;
 
 export function isAddKindId(value?: string): value is AddKindId {
   return (
@@ -209,7 +225,8 @@ export function formatAddKindUsagePlaceholder(): string {
 
 export function getAddHiddenStringSubmitFieldNames(kind?: string): string[] {
   const resolvedKind = isAddKindId(kind) ? kind : 'block';
-  return [...(ADD_KIND_REGISTRY[resolvedKind].hiddenStringSubmitFields ?? [])];
+  const entry: AddKindRegistryEntry = ADD_KIND_REGISTRY[resolvedKind];
+  return [...(entry.hiddenStringSubmitFields ?? [])];
 }
 
 export function getAddKindOptions() {
@@ -228,7 +245,7 @@ export function getAddNameLabel(kind?: string): string {
 export function getAddVisibleFieldNames(options: {
   kind?: string;
   template?: string;
-}): string[] {
+}): AddFieldName[] {
   const resolvedKind = isAddKindId(options.kind) ? options.kind : 'block';
   return [
     ...ADD_KIND_REGISTRY[resolvedKind].visibleFieldNames({

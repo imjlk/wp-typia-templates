@@ -90,6 +90,23 @@ const loadMigrationsRuntime = () =>
   import('@wp-typia/project-tools/migrations');
 
 type AddRuntime = Awaited<ReturnType<typeof loadCliAddRuntime>>;
+type AddBindingSourceResult = Awaited<
+  ReturnType<AddRuntime['runAddBindingSourceCommand']>
+>;
+type AddBlockResult = Awaited<ReturnType<AddRuntime['runAddBlockCommand']>>;
+type AddEditorPluginResult = Awaited<
+  ReturnType<AddRuntime['runAddEditorPluginCommand']>
+>;
+type AddHookedBlockResult = Awaited<
+  ReturnType<AddRuntime['runAddHookedBlockCommand']>
+>;
+type AddPatternResult = Awaited<ReturnType<AddRuntime['runAddPatternCommand']>>;
+type AddRestResourceResult = Awaited<
+  ReturnType<AddRuntime['runAddRestResourceCommand']>
+>;
+type AddVariationResult = Awaited<
+  ReturnType<AddRuntime['runAddVariationCommand']>
+>;
 type RegisteredAddKindPlan<TResult> = {
   buildCompletion: (
     result: TResult,
@@ -208,7 +225,7 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
       '`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name>.',
     );
 
-    return runRegisteredAddKind(context, {
+    return runRegisteredAddKind<AddBindingSourceResult>(context, {
       buildCompletion: (result) =>
         buildAddCompletionPayload({
           kind: 'binding-source',
@@ -275,7 +292,7 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
         | 'compound'
         | undefined) ?? 'basic';
 
-    return runRegisteredAddKind(context, {
+    return runRegisteredAddKind<AddBlockResult>(context, {
       buildCompletion: (result) =>
         buildAddCompletionPayload({
           kind: 'block',
@@ -316,7 +333,7 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
     );
     const slot = readOptionalStringFlag(context.flags, 'slot');
 
-    return runRegisteredAddKind(context, {
+    return runRegisteredAddKind<AddEditorPluginResult>(context, {
       buildCompletion: (result) =>
         buildAddCompletionPayload({
           kind: 'editor-plugin',
@@ -352,7 +369,7 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
       );
     }
 
-    return runRegisteredAddKind(context, {
+    return runRegisteredAddKind<AddHookedBlockResult>(context, {
       buildCompletion: (result) =>
         buildAddCompletionPayload({
           kind: 'hooked-block',
@@ -378,7 +395,7 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
       '`wp-typia add pattern` requires <name>. Usage: wp-typia add pattern <name>.',
     );
 
-    return runRegisteredAddKind(context, {
+    return runRegisteredAddKind<AddPatternResult>(context, {
       buildCompletion: (result) =>
         buildAddCompletionPayload({
           kind: 'pattern',
@@ -402,7 +419,7 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
     const methods = readOptionalStringFlag(context.flags, 'methods');
     const namespace = readOptionalStringFlag(context.flags, 'namespace');
 
-    return runRegisteredAddKind(context, {
+    return runRegisteredAddKind<AddRestResourceResult>(context, {
       buildCompletion: (result) =>
         buildAddCompletionPayload({
           kind: 'rest-resource',
@@ -434,7 +451,7 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
       );
     }
 
-    return runRegisteredAddKind(context, {
+    return runRegisteredAddKind<AddVariationResult>(context, {
       buildCompletion: (result) =>
         buildAddCompletionPayload({
           kind: 'variation',
