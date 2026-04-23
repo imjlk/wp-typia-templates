@@ -5,41 +5,19 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+import {
+	fullRuntimeCommands,
+	longValueOptions,
+	shortValueOptions,
+} from "./routing-metadata.generated.js";
+
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cliEntrypoint = path.join(packageRoot, "dist-bunli", "cli.js");
 const nodeCliEntrypoint = path.join(packageRoot, "dist-bunli", "node-cli.js");
 const bunBinary = process.env.BUN_BIN || "bun";
-const fullRuntimeCommands = new Set(["complete", "completions", "mcp", "skills"]);
-const longValueOptions = new Set([
-	"--alternate-render-targets",
-	"--anchor",
-	"--block",
-	"--config",
-	"--current-migration-version",
-	"--data-storage",
-	"--external-layer-id",
-	"--external-layer-source",
-	"--format",
-	"--from-migration-version",
-	"--id",
-	"--iterations",
-	"--methods",
-	"--migration-version",
-	"--namespace",
-	"--output-dir",
-	"--package-manager",
-	"--persistence-policy",
-	"--php-prefix",
-	"--position",
-	"--query-post-type",
-	"--seed",
-	"--slot",
-	"--template",
-	"--text-domain",
-	"--to-migration-version",
-	"--variant",
-]);
-const shortValueOptions = new Set(["-c", "-p", "-t"]);
+const fullRuntimeCommandSet = new Set(fullRuntimeCommands);
+const longValueOptionSet = new Set(longValueOptions);
+const shortValueOptionSet = new Set(shortValueOptions);
 const buildScriptEntrypoint = path.join(packageRoot, "scripts", "build-bunli-runtime.ts");
 const sourceCliEntrypoint = path.join(packageRoot, "src", "cli.ts");
 
@@ -49,7 +27,7 @@ function firstPositional(argv) {
 		if (!arg || arg === "--") {
 			break;
 		}
-		if (shortValueOptions.has(arg) || longValueOptions.has(arg)) {
+		if (shortValueOptionSet.has(arg) || longValueOptionSet.has(arg)) {
 			index += 1;
 			continue;
 		}
@@ -57,7 +35,7 @@ function firstPositional(argv) {
 			const separatorIndex = arg.indexOf("=");
 			if (
 				separatorIndex > 0 &&
-				longValueOptions.has(arg.slice(0, separatorIndex))
+				longValueOptionSet.has(arg.slice(0, separatorIndex))
 			) {
 				continue;
 			}
@@ -107,7 +85,7 @@ function ensureBuiltRuntime() {
 
 const argv = process.argv.slice(2);
 const command = firstPositional(argv);
-const shouldUseFullRuntime = command ? fullRuntimeCommands.has(command) : false;
+const shouldUseFullRuntime = command ? fullRuntimeCommandSet.has(command) : false;
 const hasBuiltRuntime = ensureBuiltRuntime();
 const hasWorkingBun = isWorkingBunBinary();
 

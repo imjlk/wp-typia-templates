@@ -1,4 +1,4 @@
-import path from 'node:path'
+import path from 'node:path';
 import {
   ADD_OPTION_METADATA,
   buildCommandOptionParser,
@@ -7,7 +7,7 @@ import {
   GLOBAL_OPTION_METADATA,
   MIGRATE_OPTION_METADATA,
   TEMPLATES_OPTION_METADATA,
-} from './command-option-metadata'
+} from './command-option-metadata';
 
 export const WP_TYPIA_CANONICAL_CREATE_USAGE = 'wp-typia create <project-dir>';
 export const WP_TYPIA_POSITIONAL_ALIAS_USAGE = 'wp-typia <project-dir>';
@@ -32,6 +32,17 @@ export const WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES = [
   'complete',
 ] as const;
 
+export const WP_TYPIA_NODE_FALLBACK_TOP_LEVEL_COMMAND_NAMES = [
+  'create',
+  'sync',
+  'add',
+  'migrate',
+  'templates',
+  'doctor',
+  'help',
+  'version',
+] as const;
+
 export const WP_TYPIA_TOP_LEVEL_COMMAND_NAMES = [
   'create',
   'sync',
@@ -41,6 +52,15 @@ export const WP_TYPIA_TOP_LEVEL_COMMAND_NAMES = [
   'doctor',
   'mcp',
 ] as const;
+
+const NODE_FALLBACK_TOP_LEVEL_COMMAND_NAME_SET = new Set<string>(
+  WP_TYPIA_NODE_FALLBACK_TOP_LEVEL_COMMAND_NAMES,
+);
+
+export const WP_TYPIA_BUN_REQUIRED_TOP_LEVEL_COMMAND_NAMES =
+  WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES.filter(
+    (name) => !NODE_FALLBACK_TOP_LEVEL_COMMAND_NAME_SET.has(name),
+  );
 
 const SHARED_OPTION_PARSER = buildCommandOptionParser(
   ADD_OPTION_METADATA,
@@ -54,7 +74,9 @@ const STRING_OPTION_NAMES_BY_COMMAND = {
   add: new Set(collectOptionNamesByType(ADD_OPTION_METADATA, 'string')),
   create: new Set(collectOptionNamesByType(CREATE_OPTION_METADATA, 'string')),
   migrate: new Set(collectOptionNamesByType(MIGRATE_OPTION_METADATA, 'string')),
-  templates: new Set(collectOptionNamesByType(TEMPLATES_OPTION_METADATA, 'string')),
+  templates: new Set(
+    collectOptionNamesByType(TEMPLATES_OPTION_METADATA, 'string'),
+  ),
 } as const;
 
 const GLOBAL_STRING_OPTION_NAMES = new Set(
@@ -245,7 +267,8 @@ function looksLikeStructuredProjectInput(value: string): boolean {
 
 function assertPositionalAliasProjectDir(projectDir: string): void {
   const normalizedProjectDir =
-    path.normalize(projectDir).replace(/[\\/]+$/u, '') || path.normalize(projectDir);
+    path.normalize(projectDir).replace(/[\\/]+$/u, '') ||
+    path.normalize(projectDir);
   if (normalizedProjectDir === '.' || normalizedProjectDir === '..') {
     throw new Error(
       `The positional alias does not scaffold into \`${projectDir}\`. Use \`${WP_TYPIA_CANONICAL_CREATE_USAGE}\` with an explicit child directory instead.`,
