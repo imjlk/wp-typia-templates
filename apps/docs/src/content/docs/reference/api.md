@@ -36,6 +36,9 @@ This repository has multiple public surfaces:
   boundary (`BlockSpec`, `BlockGeneratorService`, `inspectBlockGeneration`).
 - `@wp-typia/project-tools/schema-core`
   Project schema/OpenAPI helpers.
+- `@wp-typia/project-tools/ai-artifacts`
+  Opt-in WordPress AI artifact sync helpers (`*.ai.schema.json`,
+  `*.abilities.json`).
 - `@wp-typia/block-runtime`
   Generated-project runtime helper root.
 - `@wp-typia/block-runtime/migration-types`

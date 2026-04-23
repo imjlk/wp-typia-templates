@@ -197,3 +197,41 @@ test('sync ai targets the dedicated sync-ai script only', async () => {
   });
   expect(result.executedCommands?.[0]?.stdout).toContain('ran:sync-ai\n');
 });
+
+test('sync ai preserves the legacy sync-wordpress-ai script key when needed', async () => {
+  const projectDir = writeSyncFixture({
+    name: 'demo-sync-ai-legacy-only',
+    scripts: {
+      'sync-wordpress-ai': 'node scripts/record.mjs sync-wordpress-ai',
+    },
+    withInstallMarker: true,
+  });
+  const scriptsDir = path.join(projectDir, 'scripts');
+  fs.mkdirSync(scriptsDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(scriptsDir, 'record.mjs'),
+    ['const [, , label] = process.argv;', 'console.log(`ran:${label}`);'].join(
+      '\n',
+    ),
+    'utf8',
+  );
+
+  const result = await executeSyncCommand({
+    captureOutput: true,
+    check: true,
+    cwd: projectDir,
+    target: 'ai',
+  });
+
+  expect(result.target).toBe('ai');
+  expect(result.executedCommands).toHaveLength(1);
+  expect(result.executedCommands?.[0]).toMatchObject({
+    args: ['run', 'sync-wordpress-ai', '--', '--check'],
+    command: 'npm',
+    displayCommand: 'npm run sync-wordpress-ai -- --check',
+    scriptName: 'sync-wordpress-ai',
+  });
+  expect(result.executedCommands?.[0]?.stdout).toContain(
+    'ran:sync-wordpress-ai\n',
+  );
+});

@@ -32,17 +32,32 @@ type BuildWordPressAiArtifactsParameters = Parameters<
   typeof buildWordPressAiArtifacts
 >[0];
 
+/**
+ * Configures where the generated WordPress AI artifacts should be written or
+ * verified on disk.
+ */
 export interface SyncWordPressAiArtifactsOptions
   extends ArtifactSyncExecutionOptions, BuildWordPressAiArtifactsParameters {
+  /** Destination path for the generated `*.abilities.json` document. */
   abilitiesDocumentFile: string;
+  /** Destination path for the generated `*.ai.schema.json` document. */
   aiSchemaFile: string;
 }
 
+/**
+ * Describes the generated artifact payloads and the file paths they were
+ * written to or verified against.
+ */
 export interface SyncWordPressAiArtifactsResult {
+  /** Generated abilities document content. */
   abilitiesDocument: ProjectedWordPressAbilitiesDocument;
+  /** Destination path for the generated abilities document. */
   abilitiesDocumentPath: string;
+  /** Generated AI response schema content. */
   aiResponseSchema: Record<string, unknown>;
+  /** Destination path for the generated AI response schema. */
   aiSchemaPath: string;
+  /** True when files were only verified, false when they were written. */
   check: boolean;
 }
 
@@ -82,17 +97,19 @@ async function reconcileGeneratedAiArtifacts(
         issues.push(`- ${artifact.filePath} (stale)`);
       }
     } catch (error) {
-      if (
-        error &&
-        typeof error === 'object' &&
-        'code' in error &&
-        error.code === 'ENOENT'
-      ) {
+      const code =
+        error && typeof error === 'object' && 'code' in error
+          ? (error as { code?: string }).code
+          : undefined;
+
+      if (code === 'ENOENT') {
         issues.push(`- ${artifact.filePath} (missing)`);
         continue;
       }
 
-      throw error;
+      issues.push(
+        `- ${artifact.filePath} (unreadable: ${error instanceof Error ? error.message : code ?? 'unknown'})`,
+      );
     }
   }
 

@@ -469,7 +469,9 @@ export function buildSyncDryRunPayload(
   const targetSummary =
     options.target === 'ai'
       ? 'Sync target: AI artifacts only.'
-      : 'Sync target: generated project defaults.';
+      : options.target === 'default'
+        ? 'Sync target: generated project defaults.'
+        : undefined;
 
   return {
     optionalLines: options.plannedCommands.map(
@@ -482,7 +484,7 @@ export function buildSyncDryRunPayload(
     summaryLines: [
       `Project directory: ${options.projectDir}`,
       `Package manager: ${options.packageManager}`,
-      targetSummary,
+      ...(targetSummary ? [targetSummary] : []),
       options.check
         ? 'Execution mode: would run generated sync scripts in verification mode.'
         : 'Execution mode: would run generated sync scripts in apply mode.',

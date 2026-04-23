@@ -1,42 +1,65 @@
+/** Declares whether a generated feature is optional or required at runtime. */
 export type AiFeatureCapabilityMode = 'optional' | 'required';
 
+/** Describes the minimum compatible platform versions for a feature. */
 export interface AiFeatureCompatibilityFloor {
+  /** Minimum supported PHP version, when a feature depends on PHP behavior. */
   php?: string;
+  /** Minimum supported WordPress version, when a feature depends on core APIs. */
   wordpress?: string;
 }
 
+/** Identifies a concrete runtime signal that a feature depends on. */
 export interface AiFeatureRuntimeGate {
+  /** The kind of runtime dependency or capability being checked. */
   kind:
     | 'adapter'
     | 'php-function'
     | 'script-package'
     | 'wordpress-core-feature';
+  /** The concrete symbol, package, or adapter name required at runtime. */
   value: string;
 }
 
+/** Defines a single AI-related feature that scaffold compatibility can target. */
 export interface AiFeatureDefinition {
+  /** Human-readable summary for docs, onboarding, and generated notices. */
   description: string;
+  /** Stable machine-readable identifier used in capability selections. */
   id: string;
+  /** Display label presented to maintainers and downstream tooling. */
   label: string;
+  /** Optional minimum platform versions required by the feature. */
   minimumVersions?: AiFeatureCompatibilityFloor;
+  /** Optional runtime gates that explain what the feature depends on. */
   runtimeGates?: readonly AiFeatureRuntimeGate[];
 }
 
+/** Selects a feature and whether it is required or merely optional. */
 export interface AiFeatureCapabilitySelection {
+  /** Feature identifier that must exist in the active registry. */
   featureId: string;
+  /** Required selections take precedence over optional duplicates. */
   mode: AiFeatureCapabilityMode;
 }
 
+/** Feature definition resolved together with its selected mode. */
 export interface ResolvedAiFeatureCapability extends AiFeatureDefinition {
+  /** Final selected mode after duplicate feature ids are normalized. */
   mode: AiFeatureCapabilityMode;
 }
 
+/** Groups the normalized feature plan used by scaffold compatibility logic. */
 export interface ResolvedAiFeatureCapabilityPlan {
+  /** Highest required PHP and WordPress version floors across required features. */
   hardMinimums: AiFeatureCompatibilityFloor;
+  /** Optional features that do not raise the minimum platform floor. */
   optionalFeatures: ResolvedAiFeatureCapability[];
+  /** Required features that downstream projects must treat as mandatory. */
   requiredFeatures: ResolvedAiFeatureCapability[];
 }
 
+/** Canonical registry of AI-related features supported by wp-typia today. */
 export const AI_FEATURE_DEFINITIONS = {
   wordpressAiClient: {
     description:
@@ -111,17 +134,14 @@ const DEFAULT_AI_FEATURE_REGISTRY: Readonly<
 }, {});
 
 function parseVersionFloorParts(value: string): number[] {
-  const parts = value.split('.').map((part) => Number.parseInt(part, 10));
-
-  for (const [index, part] of parts.entries()) {
-    if (!Number.isFinite(part)) {
+  return value.split('.').map((part, index) => {
+    if (!/^\d+$/.test(part)) {
       throw new Error(
-        `compareVersionFloors received an invalid version floor "${value}" at segment ${index + 1}.`,
+        `parseVersionFloorParts received an invalid version floor "${value}" at segment ${index + 1}.`,
       );
     }
-  }
-
-  return parts;
+    return Number.parseInt(part, 10);
+  });
 }
 
 function compareVersionFloors(left: string, right: string): number {
@@ -172,6 +192,18 @@ function normalizeSelections(
   return [...normalized.values()];
 }
 
+/**
+ * Resolves a normalized AI feature capability plan from a list of selections.
+ *
+ * Required selections win when the same feature id appears multiple times, and
+ * the resulting hard minimum platform floor is computed from required features
+ * only.
+ *
+ * @param selections Desired feature selections for a scaffold or projection.
+ * @param registry Feature registry to resolve against. Defaults to the built-in registry.
+ * @returns The normalized capability plan plus required version floors.
+ * @throws When a selection references an unknown feature id.
+ */
 export function resolveAiFeatureCapabilityPlan(
   selections: readonly AiFeatureCapabilitySelection[],
   registry: Readonly<

@@ -4,7 +4,13 @@ import path from 'node:path';
 
 type PackageManagerId = 'bun' | 'npm' | 'pnpm' | 'yarn';
 type SyncScriptName = 'sync' | 'sync-ai' | 'sync-rest' | 'sync-types';
+type SyncScriptKey = SyncScriptName | 'sync-wordpress-ai';
 export type SyncExecutionTarget = 'ai' | 'default';
+
+type SyncScriptDefinition = {
+  command: string;
+  scriptName: SyncScriptKey;
+};
 
 type SyncExecutionInput = {
   captureOutput?: boolean;
@@ -18,14 +24,14 @@ type SyncProjectContext = {
   cwd: string;
   packageJsonPath: string;
   packageManager: PackageManagerId;
-  scripts: Partial<Record<SyncScriptName, string>>;
+  scripts: Partial<Record<SyncScriptName, SyncScriptDefinition>>;
 };
 
 export type SyncPlannedCommand = {
   args: string[];
   command: string;
   displayCommand: string;
-  scriptName: SyncScriptName;
+  scriptName: SyncScriptKey;
 };
 
 export type SyncExecutedCommand = SyncPlannedCommand & {
@@ -64,7 +70,9 @@ export function resolveSyncExecutionTarget(
     return 'ai';
   }
 
-  throw new Error(`Unknown sync subcommand "${subcommand}". Expected ai.`);
+  throw new Error(
+    `Unknown sync subcommand "${subcommand}". Expected one of: "ai".`,
+  );
 }
 
 function formatRunScript(
@@ -153,20 +161,38 @@ function resolveSyncProjectContext(cwd: string): SyncProjectContext {
   };
   const scripts = packageJson.scripts ?? {};
   const syncScripts = {
-    sync: typeof scripts.sync === 'string' ? scripts.sync : undefined,
+    sync:
+      typeof scripts.sync === 'string'
+        ? {
+            command: scripts.sync,
+            scriptName: 'sync',
+          }
+        : undefined,
     'sync-ai':
       typeof scripts['sync-ai'] === 'string'
-        ? scripts['sync-ai']
+        ? {
+            command: scripts['sync-ai'],
+            scriptName: 'sync-ai',
+          }
         : typeof scripts['sync-wordpress-ai'] === 'string'
-          ? (scripts['sync-wordpress-ai'] as string)
+          ? {
+              command: scripts['sync-wordpress-ai'] as string,
+              scriptName: 'sync-wordpress-ai',
+            }
           : undefined,
     'sync-rest':
       typeof scripts['sync-rest'] === 'string'
-        ? scripts['sync-rest']
+        ? {
+            command: scripts['sync-rest'],
+            scriptName: 'sync-rest',
+          }
         : undefined,
     'sync-types':
       typeof scripts['sync-types'] === 'string'
-        ? scripts['sync-types']
+        ? {
+            command: scripts['sync-types'],
+            scriptName: 'sync-types',
+          }
         : undefined,
   } satisfies SyncProjectContext['scripts'];
 
@@ -214,8 +240,8 @@ function scriptsLikelyNeedInstalledDependencies(
           ];
 
   return candidateScripts.some(
-    (script): script is string =>
-      typeof script === 'string' && LOCAL_SYNC_TOOL_PATTERN.test(script),
+    (script): script is SyncScriptDefinition =>
+      Boolean(script) && LOCAL_SYNC_TOOL_PATTERN.test(script.command),
   );
 }
 
@@ -272,7 +298,7 @@ function createSyncPlannedCommand(
 
   const invocation = getPackageManagerRunInvocation(
     project.packageManager,
-    scriptName,
+    script.scriptName,
     extraArgs,
   );
 
@@ -281,10 +307,10 @@ function createSyncPlannedCommand(
     command: invocation.command,
     displayCommand: formatRunScript(
       project.packageManager,
-      scriptName,
+      script.scriptName,
       extraArgs.join(' '),
     ),
-    scriptName,
+    scriptName: script.scriptName,
   };
 }
 

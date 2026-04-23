@@ -19,14 +19,14 @@ export const syncCommand = defineCommand({
   description:
     'Run the generated-project sync workflow from a scaffolded project or official workspace root.',
   handler: async (args) => {
-    const target = resolveSyncExecutionTarget(
-      args.positional[0] as string | undefined,
-    );
     const check = Boolean(args.flags.check);
     const dryRun = Boolean(args.flags['dry-run']);
     const prefersStructuredOutput = prefersStructuredCliOutput(args);
 
     try {
+      const target = resolveSyncExecutionTarget(
+        args.positional[0] as string | undefined,
+      );
       const sync = await executeSyncCommand({
         captureOutput: prefersStructuredOutput && !dryRun,
         check,
