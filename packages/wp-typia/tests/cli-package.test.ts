@@ -8,6 +8,10 @@ import { WP_TYPIA_TOP_LEVEL_COMMAND_NAMES } from "../src/command-contract";
 import { hasFlagBeforeTerminator, parseGlobalFlags, runNodeCli } from "../src/node-cli";
 
 import { runUtf8Command } from "../../../tests/helpers/process-utils";
+import {
+	linkWorkspaceNodeModules,
+	scaffoldOfficialWorkspace,
+} from "../../wp-typia-project-tools/tests/helpers/scaffold-test-harness.js";
 
 const packageRoot = path.resolve(import.meta.dir, "..");
 const entryPath = path.join(packageRoot, "bin", "wp-typia.js");
@@ -31,6 +35,10 @@ const createCommandSource = fs.readFileSync(
 );
 const addCommandSource = fs.readFileSync(
 	path.join(packageRoot, "src", "commands", "add.ts"),
+	"utf8",
+);
+const syncCommandSource = fs.readFileSync(
+	path.join(packageRoot, "src", "commands", "sync.ts"),
 	"utf8",
 );
 const migrateCommandSource = fs.readFileSync(
@@ -360,11 +368,13 @@ describe("wp-typia package", () => {
 	test("derives Bunli and Node fallback option metadata from the same source", () => {
 		expect(createCommandSource).toContain("buildCommandOptions(CREATE_OPTION_METADATA)");
 		expect(addCommandSource).toContain("buildCommandOptions(ADD_OPTION_METADATA)");
+		expect(syncCommandSource).toContain("buildCommandOptions(SYNC_OPTION_METADATA)");
 		expect(migrateCommandSource).toContain("buildCommandOptions(MIGRATE_OPTION_METADATA)");
 		expect(templatesCommandSource).toContain("buildCommandOptions(TEMPLATES_OPTION_METADATA)");
 		expect(nodeCliSource).toContain('from "./command-option-metadata"');
 		expect(nodeCliSource).toContain("formatNodeFallbackOptionHelp(CREATE_OPTION_METADATA)");
 		expect(nodeCliSource).toContain("formatNodeFallbackOptionHelp(ADD_OPTION_METADATA)");
+		expect(nodeCliSource).toContain("formatNodeFallbackOptionHelp(SYNC_OPTION_METADATA)");
 		expect(nodeCliSource).toContain("formatNodeFallbackOptionHelp(MIGRATE_OPTION_METADATA)");
 		expect(nodeCliSource).toContain("formatNodeFallbackOptionHelp(TEMPLATES_OPTION_METADATA)");
 	});
@@ -583,6 +593,60 @@ describe("wp-typia package", () => {
 		}
 	});
 
+	test("previews sync commands without running scripts in Node fallback dry-run JSON mode", () => {
+		const { fixtureRoot, logPath } = createSyncFixture({
+			scripts: {
+				"sync-rest": "node scripts/record.mjs sync-rest",
+				"sync-types": "node scripts/record.mjs sync-types",
+			},
+			withSyncRestMarker: true,
+		});
+
+		try {
+			const result = runCapturedCommand(
+				process.execPath,
+				[entryPath, "sync", "--dry-run", "--format", "json"],
+				{
+					cwd: fixtureRoot,
+					env: withoutLocalBunEnv(),
+				},
+			);
+			const parsed = parseJsonObjectFromOutput<{
+				sync?: {
+					dryRun?: boolean;
+					executedCommands?: unknown[];
+					plannedCommands?: Array<{ displayCommand?: string }>;
+				};
+			}>(result.stdout);
+
+			expect(result.status).toBe(0);
+			expect(parsed.sync?.dryRun).toBe(true);
+			expect(parsed.sync?.executedCommands).toBeUndefined();
+			expect(parsed.sync?.plannedCommands).toMatchObject([
+				{
+					displayCommand: "npm run sync-types",
+				},
+				{
+					displayCommand: "npm run sync-rest",
+				},
+			]);
+			expect(readSyncLog(logPath)).toEqual([]);
+		} finally {
+			fs.rmSync(fixtureRoot, { force: true, recursive: true });
+		}
+	});
+
+	test("renders sync help with preview-oriented dry-run guidance in Node fallback", () => {
+		const result = runCapturedCommand(process.execPath, [entryPath, "sync", "--help"], {
+			env: withoutLocalBunEnv(),
+		});
+
+		expect(result.status).toBe(0);
+		expect(result.stdout).toContain("Usage: wp-typia sync");
+		expect(result.stdout).toContain("--check");
+		expect(result.stdout).toContain("--dry-run");
+	});
+
 	test("rejects the removed migrations alias with actionable guidance", () => {
 		expect(() => runUtf8Command("node", [entryPath, "migrations", "plan"])).toThrow(
 			/removed in favor of `wp-typia migrate`/,
@@ -676,6 +740,40 @@ describe("wp-typia package", () => {
 		expect(result.stderr).toContain("Error: wp-typia add failed");
 		expect(result.stderr).toContain("Summary: Unable to complete the requested add workflow.");
 		expect(result.stderr).toContain("- `wp-typia add variation` requires --block <block-slug>.");
+	});
+
+	test("emits structured add completion output in Node fallback JSON mode", async () => {
+		const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-add-json-"));
+
+		try {
+			await scaffoldOfficialWorkspace(projectDir);
+			linkWorkspaceNodeModules(projectDir);
+
+			const result = runCapturedCommand(
+				process.execPath,
+				[entryPath, "add", "block", "promo-card", "--format", "json"],
+				{
+					cwd: projectDir,
+					env: withoutLocalBunEnv(),
+				},
+			);
+			const parsed = parseJsonObjectFromOutput<{
+				completion?: {
+					summaryLines?: string[];
+					title?: string;
+				};
+			}>(result.stdout);
+
+			expect(result.status).toBe(0);
+			expect(result.stderr).toBe("");
+			expect(parsed.completion?.title).toContain("Added workspace block");
+			expect(parsed.completion?.summaryLines).toContain("Template family: basic");
+			expect(
+				fs.existsSync(path.join(projectDir, "src", "blocks", "promo-card", "block.json")),
+			).toBe(true);
+		} finally {
+			fs.rmSync(projectDir, { force: true, recursive: true });
+		}
 	});
 
 	test("emits a machine-readable outside-project-root error code for sync in Node fallback JSON mode", () => {

@@ -472,6 +472,43 @@ markerOptions?: OutputMarkerOptions,
 }
 
 /**
+ * Builds the completion payload shown after a dry-run sync preview.
+ *
+ * @param options Planned sync execution metadata plus the preview command list.
+ * @returns A structured alternate-buffer completion payload.
+ */
+export function buildSyncDryRunPayload(options: {
+	check: boolean;
+	packageManager: PackageManagerId;
+	plannedCommands: Array<{
+		displayCommand: string;
+	}>;
+	projectDir: string;
+},
+markerOptions?: OutputMarkerOptions,
+): AlternateBufferCompletionPayload {
+	return {
+		optionalLines: options.plannedCommands.map((command) => command.displayCommand),
+		optionalNote: options.check
+			? "No sync scripts were executed because --dry-run was enabled. Re-run `wp-typia sync --check` to verify generated artifacts without rewriting them."
+			: "No sync scripts were executed because --dry-run was enabled. Re-run without --dry-run to apply generated-file updates, or add --check to verify without rewriting.",
+		optionalTitle: `Planned sync commands (${options.plannedCommands.length}):`,
+		summaryLines: [
+			`Project directory: ${options.projectDir}`,
+			`Package manager: ${options.packageManager}`,
+			options.check
+				? "Execution mode: would run generated sync scripts in verification mode."
+				: "Execution mode: would run generated sync scripts in apply mode.",
+		],
+		title: formatOutputMarker(
+			"dryRun",
+			"Dry run for wp-typia sync",
+			markerOptions,
+		),
+	};
+}
+
+/**
  * Prints a block of text lines using a shared line printer.
  *
  * @param lines Lines to print in order.

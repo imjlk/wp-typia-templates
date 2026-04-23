@@ -7,6 +7,7 @@ import {
 	GLOBAL_OPTION_METADATA,
 	parseCommandArgvWithMetadata,
 	resolveCommandOptionValues,
+	SYNC_OPTION_METADATA,
 } from "../src/command-option-metadata";
 
 describe("command option metadata helpers", () => {
@@ -67,5 +68,21 @@ describe("command option metadata helpers", () => {
 		expect(resolved["external-layer-source"]).toBe("./layers");
 		expect(resolved.template).toBe("persistence");
 		expect("dry-run" in resolved).toBe(false);
+	});
+
+	test("parses sync preview flags from shared metadata", () => {
+		const parsed = parseCommandArgvWithMetadata(["--dry-run", "--check"], {
+			extraBooleanOptionNames: ["help", "version"],
+			parser: buildCommandOptionParser(
+				GLOBAL_OPTION_METADATA,
+				SYNC_OPTION_METADATA,
+			),
+		});
+
+		expect(parsed.flags).toEqual({
+			check: true,
+			"dry-run": true,
+		});
+		expect(parsed.positionals).toEqual([]);
 	});
 });

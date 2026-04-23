@@ -11,6 +11,7 @@ import {
 import {
 	buildAddCompletionPayload,
 	buildAddDryRunPayload,
+	buildSyncDryRunPayload,
 } from "../src/runtime-bridge-output";
 
 const UNICODE_MARKER_OPTIONS = {
@@ -290,6 +291,33 @@ describe("alternate-buffer completion output helpers", () => {
 		expect(payload.warningLines).toBeUndefined();
 		expect(payload.optionalTitle).toBe("Planned workspace updates (1):");
 		expect(payload.optionalLines).toEqual(["write src/blocks/faq/block.json"]);
+	});
+
+	test("dry-run sync payload previews the generated sync commands", () => {
+		const payload = buildSyncDryRunPayload(
+			{
+				check: true,
+				packageManager: "npm",
+				plannedCommands: [
+					{
+						displayCommand: "npm run sync -- --check",
+					},
+				],
+				projectDir: "/tmp/demo-workspace",
+			},
+			UNICODE_MARKER_OPTIONS,
+		);
+
+		expect(payload.title).toBe("🧪 Dry run for wp-typia sync");
+		expect(payload.summaryLines).toEqual([
+			"Project directory: /tmp/demo-workspace",
+			"Package manager: npm",
+			"Execution mode: would run generated sync scripts in verification mode.",
+		]);
+		expect(payload.optionalTitle).toBe("Planned sync commands (1):");
+		expect(payload.optionalLines).toEqual(["npm run sync -- --check"]);
+		expect(payload.optionalNote).toContain("--dry-run");
+		expect(payload.optionalNote).toContain("--check");
 	});
 
 	test("completion helpers expose ASCII-friendly markers when requested", () => {
