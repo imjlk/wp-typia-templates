@@ -22,6 +22,7 @@ interface PackageVersions {
 interface PackageManifestLocation {
 	cacheKey: string;
 	packageJsonPath: string | null;
+	source: string | null;
 }
 
 const require = createRequire(import.meta.url);
@@ -64,18 +65,31 @@ function normalizeExactVersion(value: string | undefined): string {
 	return trimmed.replace(/^[~^<>=]+/, "");
 }
 
+function createContentFingerprint(source: string): string {
+	let hash = 2166136261;
+	for (let index = 0; index < source.length; index += 1) {
+		hash ^= source.charCodeAt(index);
+		hash = Math.imul(hash, 16777619);
+	}
+
+	return (hash >>> 0).toString(16);
+}
+
 function resolvePackageManifestLocation(packageJsonPath: string): PackageManifestLocation {
 	try {
 		const stats = fs.statSync(packageJsonPath);
+		const source = fs.readFileSync(packageJsonPath, "utf8");
 		return {
-			cacheKey: `file:${packageJsonPath}:${stats.mtimeMs}:${stats.size}`,
+			cacheKey: `file:${packageJsonPath}:${stats.ino}:${stats.mtimeMs}:${stats.ctimeMs}:${stats.size}:${createContentFingerprint(source)}`,
 			packageJsonPath,
+			source,
 		};
 	} catch (error) {
 		if (getErrorCode(error) === "ENOENT") {
 			return {
 				cacheKey: `missing-file:${packageJsonPath}`,
 				packageJsonPath: null,
+				source: null,
 			};
 		}
 		throw error;
@@ -83,13 +97,11 @@ function resolvePackageManifestLocation(packageJsonPath: string): PackageManifes
 }
 
 function readPackageManifest(location: PackageManifestLocation): PackageManifest | null {
-	if (!location.packageJsonPath) {
+	if (!location.packageJsonPath || location.source === null) {
 		return null;
 	}
 
-	return JSON.parse(
-		fs.readFileSync(location.packageJsonPath, "utf8"),
-	) as PackageManifest;
+	return JSON.parse(location.source) as PackageManifest;
 }
 
 function resolveInstalledPackageManifestLocation(packageName: string): PackageManifestLocation {
@@ -100,6 +112,7 @@ function resolveInstalledPackageManifestLocation(packageName: string): PackageMa
 			return {
 				cacheKey: `missing-module:${packageName}`,
 				packageJsonPath: null,
+				source: null,
 			};
 		}
 		throw error;
@@ -112,6 +125,13 @@ function composePackageVersionsCacheKey(
 	return locations.map((location) => location.cacheKey).join("|");
 }
 
+/**
+ * Clears the in-memory cache used by `getPackageVersions()`.
+ *
+ * Long-lived processes can call this after regenerating or updating package
+ * manifests when they want the next lookup to recompute version metadata
+ * synchronously from disk.
+ */
 export function invalidatePackageVersionsCache(): void {
 	cachedPackageVersions = null;
 }

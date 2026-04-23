@@ -475,6 +475,10 @@ describe('wp-typia package', () => {
       ['pack', '--json', '--pack-destination', packageRoot],
       {
         cwd: packageRoot,
+        env: {
+          ...process.env,
+          WP_TYPIA_SKIP_POSTPACK_RESTORE: '',
+        },
       },
     );
 

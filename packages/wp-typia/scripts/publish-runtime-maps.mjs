@@ -2,7 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const DEFAULT_PACKAGE_ROOT = path.resolve(import.meta.dirname, "..");
+const DEFAULT_PACKAGE_ROOT = path.resolve(
+	path.dirname(fileURLToPath(import.meta.url)),
+	"..",
+);
 
 function getPublishRuntimeMapPaths(packageRoot) {
 	const backupRoot = path.join(packageRoot, ".pack-backup", "runtime-maps");
@@ -38,13 +41,16 @@ function collectSourceMapRelativePaths(rootDir, currentDir = rootDir) {
 
 export function preparePublishedRuntimeMaps(packageRoot = DEFAULT_PACKAGE_ROOT) {
 	const { backupRoot, distRoot, manifestPath } = getPublishRuntimeMapPaths(packageRoot);
-	const relativePaths = collectSourceMapRelativePaths(distRoot);
+	if (!fs.existsSync(distRoot) || !fs.statSync(distRoot).isDirectory()) {
+		throw new Error(`Cannot prepare runtime source maps: missing ${distRoot}`);
+	}
 
-	fs.rmSync(backupRoot, { force: true, recursive: true });
+	const relativePaths = collectSourceMapRelativePaths(distRoot);
 	if (relativePaths.length === 0) {
 		return;
 	}
 
+	fs.rmSync(backupRoot, { force: true, recursive: true });
 	for (const relativePath of relativePaths) {
 		const sourcePath = path.join(distRoot, relativePath);
 		const backupPath = path.join(backupRoot, relativePath);
@@ -76,11 +82,14 @@ export function restorePublishedRuntimeMaps(packageRoot = DEFAULT_PACKAGE_ROOT) 
 
 	for (const relativePath of relativePaths) {
 		const backupPath = path.join(backupRoot, relativePath);
+		const destinationPath = path.join(distRoot, relativePath);
 		if (!fs.existsSync(backupPath)) {
-			continue;
+			if (fs.existsSync(destinationPath)) {
+				continue;
+			}
+			throw new Error(`Missing runtime source map backup: ${relativePath}`);
 		}
 
-		const destinationPath = path.join(distRoot, relativePath);
 		fs.mkdirSync(path.dirname(destinationPath), { recursive: true });
 		fs.renameSync(backupPath, destinationPath);
 	}
