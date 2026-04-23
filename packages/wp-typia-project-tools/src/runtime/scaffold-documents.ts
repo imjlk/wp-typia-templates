@@ -22,10 +22,13 @@ import {
 	OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	isBuiltInTemplateId,
+	normalizeTemplateLookupId,
 } from './template-registry.js';
 
 function formatReadmeTemplateIdentity(templateId: string): string {
-	if (templateId === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE) {
+	const normalizedTemplateId = normalizeTemplateLookupId(templateId);
+
+	if (normalizedTemplateId === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE) {
 		return [
 			`- Alias: ${OFFICIAL_WORKSPACE_TEMPLATE_ALIAS}`,
 			`- Package: ${OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE}`,
@@ -33,14 +36,14 @@ function formatReadmeTemplateIdentity(templateId: string): string {
 		].join('\n');
 	}
 
-	if (templateId === 'query-loop') {
+	if (normalizedTemplateId === 'query-loop') {
 		return ['- Family: query-loop', '- Type: create-time core/query variation scaffold'].join(
 			'\n',
 		);
 	}
 
-	if (isBuiltInTemplateId(templateId)) {
-		return [`- Family: ${templateId}`, '- Type: built-in block scaffold'].join('\n');
+	if (isBuiltInTemplateId(normalizedTemplateId)) {
+		return [`- Family: ${normalizedTemplateId}`, '- Type: built-in block scaffold'].join('\n');
 	}
 
 	return [`- Template id: ${templateId}`, '- Type: custom or external scaffold'].join('\n');

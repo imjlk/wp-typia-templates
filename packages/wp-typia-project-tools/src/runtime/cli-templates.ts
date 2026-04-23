@@ -149,6 +149,15 @@ function getTemplateIdentityLines(template: TemplateDefinition): string[] {
 		];
 	}
 
+	if (template.id === "query-loop") {
+		return [
+			"Identity:",
+			"  - Built-in template id: query-loop",
+			"Type: create-time core/query variation scaffold",
+			"Output model: variation-only scaffold; does not generate block.json or Typia manifests",
+		];
+	}
+
 	return [
 		"Identity:",
 		`  - Built-in template id: ${template.id}`,

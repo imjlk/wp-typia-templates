@@ -31,9 +31,8 @@ import {
 } from "./scaffold-package-manager-files.js";
 import { copyInterpolatedDirectory } from "./template-render.js";
 import {
-	OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
-	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	isBuiltInTemplateId,
+	normalizeTemplateLookupId,
 } from "./template-registry.js";
 import { resolveTemplateSource } from "./template-source.js";
 import {
@@ -277,9 +276,7 @@ export function isPersistencePolicy(value: string): value is PersistencePolicy {
 }
 
 function normalizeTemplateSelection(templateId: string): string {
-	return templateId === OFFICIAL_WORKSPACE_TEMPLATE_ALIAS
-		? OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
-		: templateId;
+	return normalizeTemplateLookupId(templateId);
 }
 
 async function reportScaffoldProgress(

@@ -155,16 +155,34 @@ export function isBuiltInTemplateId(templateId: string): templateId is BuiltInTe
 	return (BUILTIN_TEMPLATE_IDS as readonly string[]).includes(templateId);
 }
 
+/**
+ * Returns whether a template id matches the user-facing official workspace alias.
+ *
+ * @param templateId Template id or alias supplied by a caller.
+ * @returns `true` when the id is the `workspace` alias.
+ */
 export function isOfficialWorkspaceTemplateAlias(templateId: string): boolean {
 	return templateId === OFFICIAL_WORKSPACE_TEMPLATE_ALIAS;
 }
 
+/**
+ * Converts user-facing template aliases into the registry lookup id.
+ *
+ * @param templateId Template id or alias supplied by a caller.
+ * @returns The registry id used for template resolution.
+ */
 export function normalizeTemplateLookupId(templateId: string): string {
 	return isOfficialWorkspaceTemplateAlias(templateId)
 		? OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
 		: templateId;
 }
 
+/**
+ * Converts internal template ids into the id shown in human-facing output.
+ *
+ * @param templateId Template id stored in the registry.
+ * @returns The user-facing template id or alias for display.
+ */
 export function getUserFacingTemplateId(templateId: string): string {
 	return templateId === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
 		? OFFICIAL_WORKSPACE_TEMPLATE_ALIAS

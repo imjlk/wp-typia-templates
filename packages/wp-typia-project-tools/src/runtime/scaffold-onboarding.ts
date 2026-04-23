@@ -8,6 +8,7 @@ import { getPrimaryDevelopmentScript } from "./local-dev-presets.js";
 import {
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	isBuiltInTemplateId,
+	normalizeTemplateLookupId,
 } from "./template-registry.js";
 
 interface SyncOnboardingOptions {
@@ -201,18 +202,19 @@ export function getOptionalOnboardingShortNote(
 	templateId = "basic",
 	options: SyncOnboardingOptions = {},
 ): string {
+	const normalizedTemplateId = normalizeTemplateLookupId(templateId);
 	const doctorCommand = getDoctorVerificationCommand(packageManager);
 
-	if (templateId === "query-loop") {
+	if (normalizedTemplateId === "query-loop") {
 		return `No sync step is generated for this Query Loop scaffold. Edit the variation files directly, then rerun ${formatRunScript(packageManager, "build")}, ${formatRunScript(packageManager, "typecheck")}, or ${doctorCommand} when you want a review pass.`;
 	}
 
-	const optionalSyncScripts = getOptionalSyncScriptNames(templateId, options);
-	const developmentScript = getPrimaryDevelopmentScript(templateId);
+	const optionalSyncScripts = getOptionalSyncScriptNames(normalizedTemplateId, options);
+	const developmentScript = getPrimaryDevelopmentScript(normalizedTemplateId);
 	const devCommand = formatRunScript(packageManager, developmentScript);
 	const isCustomTemplate =
-		!isBuiltInTemplateId(templateId) &&
-		templateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE;
+		!isBuiltInTemplateId(normalizedTemplateId) &&
+		normalizedTemplateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE;
 
 	if (isCustomTemplate && optionalSyncScripts.length === 0) {
 		return `Follow the template's own artifact-refresh guidance, then use ${doctorCommand} for a quick environment and workspace sanity check.`;

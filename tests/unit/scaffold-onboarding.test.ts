@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { getPhpRestExtensionPointsSection } from "../../packages/wp-typia-project-tools/src/runtime/scaffold-onboarding";
+import {
+	getOptionalOnboardingShortNote,
+	getPhpRestExtensionPointsSection,
+} from "../../packages/wp-typia-project-tools/src/runtime/scaffold-onboarding";
 
 describe("scaffold-onboarding", () => {
 	test("persistence and compound persistence sections share the common rest guidance", () => {
@@ -35,5 +38,14 @@ describe("scaffold-onboarding", () => {
 				slug: "demo-block",
 			}),
 		).toBeNull();
+	});
+
+	test("workspace alias reuses official workspace short onboarding guidance", () => {
+		expect(getOptionalOnboardingShortNote("npm", "workspace")).toContain(
+			"Skip npm run sync during normal npm run dev work.",
+		);
+		expect(getOptionalOnboardingShortNote("npm", "workspace")).not.toContain(
+			"Follow the template's own artifact-refresh guidance",
+		);
 	});
 });

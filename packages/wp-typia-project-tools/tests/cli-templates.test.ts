@@ -43,6 +43,10 @@ describe("@wp-typia/project-tools template discovery formatting", () => {
 		expect(queryLoopDetails).toContain(
 			"Best for: create-time `core/query` variations with connected starter patterns instead of `add block` families",
 		);
+		expect(queryLoopDetails).toContain("Type: create-time core/query variation scaffold");
+		expect(queryLoopDetails).toContain(
+			"Output model: variation-only scaffold; does not generate block.json or Typia manifests",
+		);
 		expect(queryLoopDetails).toContain("Notes:");
 		expect(queryLoopDetails).toContain(
 			"Create-time variation scaffold only; use `wp-typia create <project-dir> --template query-loop` instead of `wp-typia add block`.",
