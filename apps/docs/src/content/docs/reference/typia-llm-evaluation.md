@@ -49,16 +49,17 @@ For this evaluation, OpenAPI-first means:
 That distinction matters because `typia.llm` currently operates on TypeScript
 types, not on imported OpenAPI documents.
 
-## Result compared with the WordPress AI proof
+## Result compared with the supported WordPress AI path
 
-The existing WordPress AI proof in
+The existing WordPress AI path in
 [`docs/wordpress-ai-projections.md`](./wordpress-ai-projections.md) still maps
 most naturally to:
 
 - `projectJsonSchemaDocument( ..., { profile: "ai-structured-output" } )`
 
-That flow produces provider-friendly JSON Schema for WordPress AI Client
-structured responses.
+That flow now has a supported sync surface through
+`@wp-typia/project-tools/ai-artifacts` and `wp-typia sync ai`, and it produces
+provider-friendly JSON Schema for WordPress AI Client structured responses.
 
 By contrast, the `typia.llm` proof is strongest when the consumer wants:
 
@@ -69,6 +70,5 @@ By contrast, the `typia.llm` proof is strongest when the consumer wants:
 ## What this does not change
 
 - No scaffold templates change
-- No new public `@wp-typia/project-tools` API is introduced
 - No generated plugin runtime dependency on `typia.llm` is added
 - This is still an evaluation, not a supported generated-project feature

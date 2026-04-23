@@ -456,6 +456,12 @@ when CI should fail only on lossy WordPress projections, and supports
 machine-friendly JSON report from stdout. Hard source-analysis and unsupported
 type failures still exit non-zero regardless of mode.
 
+Opt-in AI artifact flows can now also expose `sync-ai` and be driven through
+`wp-typia sync ai` without introducing new default runtime dependencies. The
+supported project-tooling facade for those helpers is
+`@wp-typia/project-tools/ai-artifacts`, which currently covers manifest-driven
+`*.ai.schema.json` and `*.abilities.json` generation for the WordPress AI path.
+
 If you need the same behavior programmatically, `@wp-typia/block-runtime/metadata-core`
 also exposes `runSyncBlockMetadata(...)` alongside the lower-level
 `syncBlockMetadata(...)`, plus `syncEndpointClient(...)` for portable endpoint
@@ -496,8 +502,9 @@ import {
 ```
 
 When you manually import schema helpers, prefer
-`@wp-typia/project-tools/schema-core` or the root `@wp-typia/project-tools`
-exports such as `projectJsonSchemaDocument()`.
+`@wp-typia/project-tools/schema-core`, `@wp-typia/project-tools/ai-artifacts`,
+or the root `@wp-typia/project-tools` exports such as
+`projectJsonSchemaDocument()`.
 
 For the normative generated-project runtime import policy, see
 [`docs/runtime-import-policy.md`](../architecture/runtime-import-policy.md). For the broader

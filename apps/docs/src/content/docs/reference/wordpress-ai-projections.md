@@ -5,6 +5,10 @@ title: 'WordPress AI Projections'
 This repo-local proof of concept combines `#47` and `#48` on top of the
 existing persistence counter example.
 
+The projection path is no longer internal-only: the supported helper surface now
+lives on `@wp-typia/project-tools/ai-artifacts`, and generated projects can opt
+into a dedicated `sync-ai` script that `wp-typia sync ai` understands.
+
 ## Outcome
 
 - WordPress AI Client: the generated counter response schema can be reused after
@@ -89,11 +93,10 @@ Scaffolds do not apply those rules yet. The current state is still:
 ## What this does not change
 
 - No scaffold imports or templates change
-- No new public `@wp-typia/project-tools` APIs are introduced
 - No MCP integration is included here
 - No frontend or default AI behavior is added to generated projects
-- The current build-time projection flow is still backed by an internal
-  generator helper rather than a supported public package surface
+- `typia.llm` remains a separate evaluation path rather than part of the
+  supported WordPress AI sync surface
 
 The main distinction to keep in mind is:
 

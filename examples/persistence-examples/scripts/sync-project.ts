@@ -86,9 +86,13 @@ runSyncScript(
 	path.join( projectDir, 'scripts', 'sync-rest-contracts.ts' ),
 	options
 );
+runSyncScript(
+	path.join( projectDir, 'scripts', 'sync-wordpress-ai-projections.ts' ),
+	options
+);
 
 console.log(
 	options.check
-		? 'Verified metadata and REST artifacts through sync --check.'
-		: 'Refreshed metadata and REST artifacts through sync.'
+		? 'Verified metadata, REST, and AI artifacts through sync --check.'
+		: 'Refreshed metadata, REST, and AI artifacts through sync.'
 );

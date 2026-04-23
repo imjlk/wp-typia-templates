@@ -341,7 +341,11 @@ describe('wp-typia package', () => {
       'create',
       '--help',
     ]);
-    const initHelpOutput = runUtf8Command('node', [entryPath, 'init', '--help']);
+    const initHelpOutput = runUtf8Command('node', [
+      entryPath,
+      'init',
+      '--help',
+    ]);
     const addHelpOutput = runUtf8Command('node', [entryPath, 'add', '--help']);
 
     for (const commandName of WP_TYPIA_TOP_LEVEL_COMMAND_NAMES) {
@@ -387,8 +391,9 @@ describe('wp-typia package', () => {
       expect(parsed.init?.detectedLayout?.blockNames).toEqual([
         'create-block/retrofit-init',
       ]);
-      expect(parsed.init?.packageChanges?.scripts?.map((script) => script.name))
-        .toEqual(['sync', 'sync-types', 'typecheck']);
+      expect(
+        parsed.init?.packageChanges?.scripts?.map((script) => script.name),
+      ).toEqual(['sync', 'sync-types', 'typecheck']);
       expect(parsed.init?.nextSteps).toContain(
         `npx --yes wp-typia@${packageManifest.version} doctor`,
       );
@@ -587,9 +592,9 @@ describe('wp-typia package', () => {
     expect(
       tarball?.files.some((entry) => entry.path === 'dist-bunli/node-cli.js'),
     ).toBe(true);
-    expect(
-      tarball?.files.some((entry) => entry.path.endsWith('.map')),
-    ).toBe(false);
+    expect(tarball?.files.some((entry) => entry.path.endsWith('.map'))).toBe(
+      false,
+    );
     expect(
       tarball?.files.some((entry) => entry.path === 'bin/wp-typia.js'),
     ).toBe(true);
@@ -617,9 +622,9 @@ describe('wp-typia package', () => {
     expect(tarball?.files.some((entry) => entry.path === 'src/cli.ts')).toBe(
       false,
     );
-    expect(fs.existsSync(path.join(packageRoot, 'dist-bunli', 'cli.js.map'))).toBe(
-      true,
-    );
+    expect(
+      fs.existsSync(path.join(packageRoot, 'dist-bunli', 'cli.js.map')),
+    ).toBe(true);
     expect(
       fs.existsSync(
         path.join(packageRoot, 'dist-bunli', '.bunli', 'commands.gen.js.map'),
@@ -800,6 +805,65 @@ describe('wp-typia package', () => {
     }
   });
 
+  test('includes sync-ai in the planned split sync workflow when a project opts in', () => {
+    const { fixtureRoot, logPath } = createSyncFixture({
+      scripts: {
+        'sync-ai': 'node scripts/record.mjs sync-ai',
+        'sync-rest': 'node scripts/record.mjs sync-rest',
+        'sync-types': 'node scripts/record.mjs sync-types',
+      },
+      withSyncRestMarker: true,
+    });
+
+    try {
+      runUtf8Command('node', [entryPath, 'sync', '--check'], {
+        cwd: fixtureRoot,
+      });
+
+      expect(readSyncLog(logPath)).toEqual([
+        {
+          args: ['--check'],
+          label: 'sync-types',
+        },
+        {
+          args: ['--check'],
+          label: 'sync-rest',
+        },
+        {
+          args: ['--check'],
+          label: 'sync-ai',
+        },
+      ]);
+    } finally {
+      fs.rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
+  test('runs sync ai through the dedicated sync-ai script in Node fallback', () => {
+    const { fixtureRoot, logPath } = createSyncFixture({
+      scripts: {
+        sync: 'node scripts/record.mjs sync',
+        'sync-ai': 'node scripts/record.mjs sync-ai',
+      },
+      withSyncTypesMarker: false,
+    });
+
+    try {
+      runUtf8Command('node', [entryPath, 'sync', 'ai', '--check'], {
+        cwd: fixtureRoot,
+      });
+
+      expect(readSyncLog(logPath)).toEqual([
+        {
+          args: ['--check'],
+          label: 'sync-ai',
+        },
+      ]);
+    } finally {
+      fs.rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
   test('previews sync commands without running scripts in Node fallback dry-run JSON mode', () => {
     const { fixtureRoot, logPath } = createSyncFixture({
       scripts: {
@@ -843,6 +907,53 @@ describe('wp-typia package', () => {
     }
   });
 
+  test('previews sync ai commands without running scripts in Node fallback dry-run JSON mode', () => {
+    const { fixtureRoot, logPath } = createSyncFixture({
+      scripts: {
+        'sync-ai': 'node scripts/record.mjs sync-ai',
+      },
+      withSyncTypesMarker: false,
+    });
+
+    try {
+      const result = runCapturedCommand(
+        process.execPath,
+        [entryPath, 'sync', 'ai', '--dry-run', '--format', 'json'],
+        {
+          cwd: fixtureRoot,
+          env: withoutLocalBunEnv(),
+        },
+      );
+      const parsed = parseJsonObjectFromOutput<{
+        sync?: {
+          dryRun?: boolean;
+          plannedCommands?: Array<{
+            args?: string[];
+            command?: string;
+            displayCommand?: string;
+            scriptName?: string;
+          }>;
+          target?: string;
+        };
+      }>(result.stdout);
+
+      expect(result.status).toBe(0);
+      expect(parsed.sync?.dryRun).toBe(true);
+      expect(parsed.sync?.target).toBe('ai');
+      expect(parsed.sync?.plannedCommands).toEqual([
+        {
+          args: ['run', 'sync-ai'],
+          command: 'npm',
+          displayCommand: 'npm run sync-ai',
+          scriptName: 'sync-ai',
+        },
+      ]);
+      expect(readSyncLog(logPath)).toEqual([]);
+    } finally {
+      fs.rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
   test('renders sync help with preview-oriented dry-run guidance in Node fallback', () => {
     const result = runCapturedCommand(
       process.execPath,
@@ -853,7 +964,7 @@ describe('wp-typia package', () => {
     );
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain('Usage: wp-typia sync');
+    expect(result.stdout).toContain('Usage: wp-typia sync [ai]');
     expect(result.stdout).toContain('--check');
     expect(result.stdout).toContain('--dry-run');
   });
@@ -912,12 +1023,12 @@ describe('wp-typia package', () => {
     fs.writeFileSync(
       path.join(fixtureRoot, 'index.mjs'),
       [
-        "await new Promise((resolve) => setTimeout(resolve, 200));",
-        "export default {",
+        'await new Promise((resolve) => setTimeout(resolve, 200));',
+        'export default {',
         '  blockTemplatesPath: "block-templates",',
         '  assetsPath: "assets",',
-        "};",
-        "",
+        '};',
+        '',
       ].join('\n'),
       'utf8',
     );

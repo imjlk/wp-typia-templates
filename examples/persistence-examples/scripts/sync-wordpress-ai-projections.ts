@@ -12,7 +12,7 @@ function parseCliOptions( argv: string[] ) {
 			continue;
 		}
 
-		throw new Error( `Unknown sync-wordpress-ai flag: ${ argument }` );
+		throw new Error( `Unknown sync-ai flag: ${ argument }` );
 	}
 
 	return options;

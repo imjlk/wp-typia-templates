@@ -42,6 +42,11 @@
       "import": "./dist/runtime/cli-scaffold.js",
       "default": "./dist/runtime/cli-scaffold.js"
     },
+    "./ai-artifacts": {
+      "types": "./dist/runtime/ai-artifacts.d.ts",
+      "import": "./dist/runtime/ai-artifacts.js",
+      "default": "./dist/runtime/ai-artifacts.js"
+    },
     "./compound-inner-blocks": {
       "types": "./dist/runtime/compound-inner-blocks.d.ts",
       "import": "./dist/runtime/compound-inner-blocks.js",

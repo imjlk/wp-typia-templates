@@ -43,6 +43,7 @@ import {
   buildSyncDryRunPayload,
   printCompletionPayload,
 } from './runtime-bridge-output';
+import { resolveSyncExecutionTarget } from './runtime-bridge-sync';
 import {
   WP_TYPIA_CANONICAL_CREATE_USAGE,
   WP_TYPIA_CANONICAL_MIGRATE_USAGE,
@@ -272,7 +273,7 @@ function renderMigrateHelp() {
 
 function renderSyncHelp() {
   printBlock([
-    'Usage: wp-typia sync',
+    'Usage: wp-typia sync [ai]',
     '',
     ...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
     '',
@@ -599,12 +600,14 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 
   if (command === 'sync') {
     try {
+      const syncTarget = resolveSyncExecutionTarget(positionals[1]);
       const sync = await executeSyncCommand({
         captureOutput:
           mergedFlags.format === 'json' && !Boolean(mergedFlags['dry-run']),
         check: Boolean(mergedFlags.check),
         cwd: process.cwd(),
         dryRun: Boolean(mergedFlags['dry-run']),
+        target: syncTarget,
       });
       if (mergedFlags.format === 'json') {
         printLine(
@@ -625,6 +628,7 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
             packageManager: sync.packageManager,
             plannedCommands: sync.plannedCommands,
             projectDir: sync.projectDir,
+            target: sync.target,
           }),
         );
       }
