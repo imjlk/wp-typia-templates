@@ -522,7 +522,7 @@ test("workspace template package identity is defined once and imported by runtim
   );
   expect(templateSource).toContain("OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE");
   expect(cliScaffold).toContain("OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE");
-  expect(scaffoldRuntime).toContain("OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE");
+  expect(scaffoldRuntime).toContain("normalizeTemplateLookupId");
   expect(templateSource).not.toContain(
     'const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";'
   );
