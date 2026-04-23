@@ -1151,10 +1151,10 @@ describe('wp-typia package', () => {
       '--format',
       'json',
     ]);
-    const parsed = parseJsonObjectFromOutput<{
+    const parsed = JSON.parse(result.stdout.trim()) as {
       error?: { code?: string; command?: string; kind?: string };
       ok?: boolean;
-    }>(result.stdout);
+    };
 
     expect(result.status).toBe(1);
     expect(result.stderr).toBe('');
@@ -1172,10 +1172,10 @@ describe('wp-typia package', () => {
         env: withoutAIAgentEnv(),
       },
     );
-    const parsed = parseJsonObjectFromOutput<{
+    const parsed = JSON.parse(result.stdout.trim()) as {
       error?: { code?: string; command?: string; kind?: string };
       ok?: boolean;
-    }>(result.stdout);
+    };
 
     expect(result.status).toBe(1);
     expect(result.stderr).toBe('');
@@ -1199,10 +1199,10 @@ describe('wp-typia package', () => {
           env: withoutAIAgentEnv(),
         },
       );
-      const parsed = parseJsonObjectFromOutput<{
+      const parsed = JSON.parse(result.stdout.trim()) as {
         error?: { code?: string; command?: string; kind?: string };
         ok?: boolean;
-      }>(result.stdout);
+      };
 
       expect(result.status).toBe(1);
       expect(result.stderr).toBe('');
@@ -1223,10 +1223,10 @@ describe('wp-typia package', () => {
         env: withoutAIAgentEnv(),
       },
     );
-    const parsed = parseJsonObjectFromOutput<{
+    const parsed = JSON.parse(result.stdout.trim()) as {
       error?: { code?: string; command?: string; kind?: string };
       ok?: boolean;
-    }>(result.stdout);
+    };
 
     expect(result.status).toBe(1);
     expect(result.stderr).toBe('');
@@ -1236,18 +1236,26 @@ describe('wp-typia package', () => {
     expect(parsed.error?.code).toBe('missing-argument');
   });
 
-  test('emits a machine-readable invalid-command error code for positional-alias typos in Bun runtime JSON mode', () => {
+  test('emits a machine-readable invalid-command error code for positional-alias typos after value options in Bun runtime JSON mode', () => {
     const result = runCapturedCommand(
       'bun',
-      [fullRuntimeEntrypoint, 'temlates', 'list', '--format', 'json'],
+      [
+        fullRuntimeEntrypoint,
+        '--template',
+        'basic',
+        'temlates',
+        'list',
+        '--format',
+        'json',
+      ],
       {
         env: withoutAIAgentEnv(),
       },
     );
-    const parsed = parseJsonObjectFromOutput<{
+    const parsed = JSON.parse(result.stdout.trim()) as {
       error?: { code?: string; command?: string; kind?: string };
       ok?: boolean;
-    }>(result.stdout);
+    };
 
     expect(result.status).toBe(1);
     expect(result.stderr).toBe('');

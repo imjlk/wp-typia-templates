@@ -1,4 +1,5 @@
 import { defineCommand } from "@bunli/core";
+import { CLI_DIAGNOSTIC_CODES } from "@wp-typia/project-tools/cli-diagnostics";
 import {
 	emitCliDiagnosticFailure,
 	prefersStructuredCliOutput,
@@ -19,6 +20,7 @@ export const doctorCommand = defineCommand({
 			const checks = await getDoctorChecks(args.cwd);
 			if (checks.some((check) => check.status === "fail")) {
 				emitCliDiagnosticFailure(args, {
+					code: CLI_DIAGNOSTIC_CODES.DOCTOR_CHECK_FAILED,
 					command: "doctor",
 					detailLines: getDoctorFailureDetailLines(checks),
 					extraOutput: { checks },

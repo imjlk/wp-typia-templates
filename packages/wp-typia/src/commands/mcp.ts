@@ -60,6 +60,10 @@ export const mcpCommand = defineCommand({
 				const outputDir =
 					(args.flags["output-dir"] as string | undefined) ?? `${args.cwd}/.bunli/mcp`;
 				const result = await syncMcpSchemas(args.cwd, schemaSources, outputDir);
+				if (prefersStructuredOutput) {
+					args.output({ sync: result });
+					return;
+				}
 				console.log(
 					`Synced ${result.commandCount} MCP tools across ${result.groups.length} namespaces into ${result.outputDir}.`,
 				);

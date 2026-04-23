@@ -3,6 +3,14 @@ import {
 	serializeCliDiagnosticError,
 	type CliDiagnosticCode,
 } from "@wp-typia/project-tools/cli-diagnostics";
+import {
+	ADD_OPTION_METADATA,
+	CREATE_OPTION_METADATA,
+	GLOBAL_OPTION_METADATA,
+	MIGRATE_OPTION_METADATA,
+	SYNC_OPTION_METADATA,
+	TEMPLATES_OPTION_METADATA,
+} from "./command-option-metadata";
 
 type CliStructuredOutputArgs = {
 	agent?: unknown;
@@ -25,7 +33,25 @@ type EmitCliDiagnosticFailureOptions = {
 	summary?: string;
 };
 
-const CLI_STRING_OPTION_NAMES = new Set(["--config", "-c", "--format", "--id", "--output-dir"]);
+const ALL_OPTION_METADATA = {
+	...GLOBAL_OPTION_METADATA,
+	...CREATE_OPTION_METADATA,
+	...ADD_OPTION_METADATA,
+	...MIGRATE_OPTION_METADATA,
+	...SYNC_OPTION_METADATA,
+	...TEMPLATES_OPTION_METADATA,
+} as const;
+
+const CLI_STRING_OPTION_NAMES = new Set(
+	Object.entries(ALL_OPTION_METADATA).flatMap(([name, option]) =>
+			option.type === "string"
+				? [
+						`--${name}`,
+						...("short" in option && option.short ? [`-${option.short}`] : []),
+					]
+				: [],
+		),
+);
 
 function resolveEntrypointCliCommand(argv: string[]): string {
 	for (let index = 0; index < argv.length; index += 1) {
@@ -46,8 +72,11 @@ function resolveEntrypointCliCommand(argv: string[]): string {
 			continue;
 		}
 
-		if (/^--(?:config|format|id|output-dir)=/u.test(arg)) {
-			continue;
+		if (arg.startsWith("--")) {
+			const [inlineName] = arg.split("=", 1);
+			if (inlineName && CLI_STRING_OPTION_NAMES.has(inlineName)) {
+				continue;
+			}
 		}
 
 		if (arg.startsWith("-")) {
