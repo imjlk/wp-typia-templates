@@ -1,5 +1,12 @@
 # wp-typia
 
+## 0.20.2 — 2026-04-23
+
+### Patch changes
+
+- [fbf4476](https://github.com/imjlk/wp-typia/commit/fbf4476011ebd95b21ca29af0cf964adc26da611) Added: retrofit init planning and external template safety guards — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.19.3
+
 ## 0.20.1 — 2026-04-23
 
 ### Patch changes
