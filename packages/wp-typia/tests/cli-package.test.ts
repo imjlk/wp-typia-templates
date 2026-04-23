@@ -381,6 +381,11 @@ describe("wp-typia package", () => {
 				(entry) => entry.path === "bin/routing-metadata.generated.js",
 			),
 		).toBe(true);
+		expect(
+			tarball?.files.some(
+				(entry) => entry.path === "bin/routing-metadata.generated.d.ts",
+			),
+		).toBe(true);
 		expect(tarball?.files.some((entry) => entry.path === "bunli.config.ts")).toBe(false);
 		expect(
 			tarball?.files.some((entry) =>

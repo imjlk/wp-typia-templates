@@ -91,6 +91,11 @@ describe('wp-typia Bunli preparation', () => {
         path.join(packageRoot, 'bin', 'routing-metadata.generated.js'),
       ),
     ).toBe(true);
+    expect(
+      fs.existsSync(
+        path.join(packageRoot, 'bin', 'routing-metadata.generated.d.ts'),
+      ),
+    ).toBe(true);
   });
 
   test('generates bin routing metadata from shared command and option metadata', () => {
@@ -118,8 +123,8 @@ describe('wp-typia Bunli preparation', () => {
     );
     expect(longValueOptions).toEqual(expectedLongValueOptions);
     expect(shortValueOptions).toEqual(expectedShortValueOptions);
-    expect(binEntrypointSource).toContain(
-      'from "./routing-metadata.generated.js"',
+    expect(binEntrypointSource).toMatch(
+      /from ['"]\.\/routing-metadata\.generated\.js['"]/,
     );
     expect(binEntrypointSource).not.toContain(
       'const fullRuntimeCommands = new Set([',
