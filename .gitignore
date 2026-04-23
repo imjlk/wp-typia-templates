@@ -10,9 +10,12 @@ dist/
 dist-standalone/
 coverage/
 .nyc_output/
+.pages-site/
+/docs/
 apps/docs/dist/
 apps/docs/.astro/
 apps/docs/src/content/docs/api/
+/packages/wp-typia/dist-bunli/
 *.lcov
 *.tgz
 *.zip

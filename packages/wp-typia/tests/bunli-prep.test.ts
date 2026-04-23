@@ -3,6 +3,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import {
+  ADD_OPTION_METADATA,
+  buildCommandOptionParser,
+  CREATE_OPTION_METADATA,
+  GLOBAL_OPTION_METADATA,
+  MIGRATE_OPTION_METADATA,
+  TEMPLATES_OPTION_METADATA,
+} from '../src/command-option-metadata';
+import {
+  WP_TYPIA_BUN_REQUIRED_TOP_LEVEL_COMMAND_NAMES,
   WP_TYPIA_BUNLI_MIGRATION_DOC,
   WP_TYPIA_CANONICAL_CREATE_USAGE,
   WP_TYPIA_CANONICAL_MIGRATE_USAGE,
@@ -12,6 +21,11 @@ import {
   normalizeWpTypiaArgv,
 } from '../src/command-contract';
 import { wpTypiaCommands } from '../src/command-list';
+import {
+  fullRuntimeCommands,
+  longValueOptions,
+  shortValueOptions,
+} from '../bin/routing-metadata.generated.js';
 
 const packageRoot = path.resolve(import.meta.dir, '..');
 const repoRoot = path.resolve(packageRoot, '../..');
@@ -72,6 +86,50 @@ describe('wp-typia Bunli preparation', () => {
     expect(
       fs.existsSync(path.join(packageRoot, '.bunli', 'commands.gen.ts')),
     ).toBe(true);
+    expect(
+      fs.existsSync(
+        path.join(packageRoot, 'bin', 'routing-metadata.generated.js'),
+      ),
+    ).toBe(true);
+  });
+
+  test('generates bin routing metadata from shared command and option metadata', () => {
+    const parser = buildCommandOptionParser(
+      ADD_OPTION_METADATA,
+      GLOBAL_OPTION_METADATA,
+      CREATE_OPTION_METADATA,
+      MIGRATE_OPTION_METADATA,
+      TEMPLATES_OPTION_METADATA,
+    );
+    const expectedLongValueOptions = Array.from(parser.stringOptionNames)
+      .map((optionName) => `--${optionName}`)
+      .sort((left, right) => left.localeCompare(right));
+    const expectedShortValueOptions = Array.from(parser.shortFlagMap.entries())
+      .filter(([, option]) => option.type === 'string')
+      .map(([short]) => `-${short}`)
+      .sort((left, right) => left.localeCompare(right));
+    const binEntrypointSource = fs.readFileSync(
+      path.join(packageRoot, 'bin', 'wp-typia.js'),
+      'utf8',
+    );
+
+    expect(fullRuntimeCommands).toEqual(
+      Array.from(WP_TYPIA_BUN_REQUIRED_TOP_LEVEL_COMMAND_NAMES),
+    );
+    expect(longValueOptions).toEqual(expectedLongValueOptions);
+    expect(shortValueOptions).toEqual(expectedShortValueOptions);
+    expect(binEntrypointSource).toContain(
+      'from "./routing-metadata.generated.js"',
+    );
+    expect(binEntrypointSource).not.toContain(
+      'const fullRuntimeCommands = new Set([',
+    );
+    expect(binEntrypointSource).not.toContain(
+      'const longValueOptions = new Set([',
+    );
+    expect(binEntrypointSource).not.toContain(
+      'const shortValueOptions = new Set([',
+    );
   });
 
   test('runtime rebuild fallback targets sibling linked packages directly', () => {
@@ -81,7 +139,9 @@ describe('wp-typia Bunli preparation', () => {
     );
     const fullRuntimeSection = runtimeBuildScript.slice(
       runtimeBuildScript.indexOf('async function buildFullBunliRuntime()'),
-      runtimeBuildScript.indexOf('async function buildGeneratedMetadataRuntime()'),
+      runtimeBuildScript.indexOf(
+        'async function buildGeneratedMetadataRuntime()',
+      ),
     );
 
     expect(runtimeDependencyHelperSource).toContain(
@@ -126,9 +186,9 @@ describe('wp-typia Bunli preparation', () => {
       'const isLinkedInstalledWpTypiaRuntime = packageRoot.includes(',
     );
     expect(runtimeBuildScript).toContain(
-      "`${path.sep}node_modules${path.sep}.bun${path.sep}`",
+      '`${path.sep}node_modules${path.sep}.bun${path.sep}`',
     );
-    expect(fullRuntimeSection).toContain("naming: {");
+    expect(fullRuntimeSection).toContain('naming: {');
     expect(fullRuntimeSection).toContain("asset: '.bunli/[name]-[hash].[ext]'");
     expect(fullRuntimeSection).toContain("chunk: '[name]-[hash].[ext]'");
     expect(fullRuntimeSection).toContain("entry: '[name].[ext]'");
