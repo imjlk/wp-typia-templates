@@ -12,6 +12,7 @@ import {
   buildAddDryRunPayload,
   buildCreateCompletionPayload,
   buildCreateDryRunPayload,
+  buildInitCompletionPayload,
   buildMigrationCompletionPayload,
   formatCreateProgressLine,
   printBlock,
@@ -22,6 +23,7 @@ import { isInteractiveTerminal } from './runtime-capabilities';
 export {
   buildCreateCompletionPayload,
   buildCreateDryRunPayload,
+  buildInitCompletionPayload,
   buildMigrationCompletionPayload,
   formatCreateProgressLine,
   printCompletionPayload,
@@ -64,6 +66,11 @@ type TemplatesExecutionInput = {
   };
 };
 
+type InitExecutionInput = {
+  cwd: string;
+  projectDir?: string;
+};
+
 type MigrateExecutionInput = {
   command?: string;
   cwd: string;
@@ -73,12 +80,13 @@ type MigrateExecutionInput = {
 };
 
 type PrintLine = (line: string) => void;
-type CliCommandId = 'add' | 'create' | 'doctor' | 'migrate';
+type CliCommandId = 'add' | 'create' | 'doctor' | 'init' | 'migrate';
 
 const loadCliAddRuntime = () => import('@wp-typia/project-tools/cli-add');
 const loadCliDiagnosticsRuntime = () =>
   import('@wp-typia/project-tools/cli-diagnostics');
 const loadCliDoctorRuntime = () => import('@wp-typia/project-tools/cli-doctor');
+const loadCliInitRuntime = () => import('@wp-typia/project-tools/cli-init');
 const loadCliPromptRuntime = () => import('@wp-typia/project-tools/cli-prompt');
 const loadCliScaffoldRuntime = () =>
   import('@wp-typia/project-tools/cli-scaffold');
@@ -831,6 +839,35 @@ export async function executeTemplatesCommand(
   throw new Error(
     `Unknown templates subcommand "${subcommand}". Expected list or inspect.`,
   );
+}
+
+export async function executeInitCommand(
+  { cwd, projectDir }: InitExecutionInput,
+  options: {
+    emitOutput?: boolean;
+    printLine?: PrintLine;
+    warnLine?: PrintLine;
+  } = {},
+) {
+  try {
+    const { getInitPlan } = await loadCliInitRuntime();
+    const resolvedProjectDir = projectDir
+      ? (await import('node:path')).resolve(cwd, projectDir)
+      : cwd;
+    const plan = getInitPlan(resolvedProjectDir);
+    const completion = buildInitCompletionPayload(plan);
+
+    if (options.emitOutput ?? true) {
+      printCompletionPayload(completion, {
+        printLine: options.printLine,
+        warnLine: options.warnLine,
+      });
+    }
+
+    return plan;
+  } catch (error) {
+    throw await wrapCliCommandError('init', error);
+  }
 }
 
 export async function executeDoctorCommand(cwd: string): Promise<void> {

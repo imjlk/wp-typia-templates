@@ -13,6 +13,7 @@ import {
 
 import { runUtf8Command } from '../../../tests/helpers/process-utils';
 import {
+  createBlockExternalFixturePath,
   linkWorkspaceNodeModules,
   scaffoldOfficialWorkspace,
 } from '../../wp-typia-project-tools/tests/helpers/scaffold-test-harness.js';
@@ -169,6 +170,47 @@ fs.appendFileSync(logPath, \`\${JSON.stringify({ args, label })}\n\`);
   return { fixtureRoot, logPath };
 }
 
+function createRetrofitInitFixture(): string {
+  const fixtureRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'wp-typia-init-fixture-'),
+  );
+  fs.mkdirSync(path.join(fixtureRoot, 'src'), { recursive: true });
+  fs.writeFileSync(
+    path.join(fixtureRoot, 'package.json'),
+    `${JSON.stringify(
+      {
+        name: path.basename(fixtureRoot),
+        private: true,
+      },
+      null,
+      2,
+    )}\n`,
+    'utf8',
+  );
+  fs.writeFileSync(
+    path.join(fixtureRoot, 'src', 'block.json'),
+    `${JSON.stringify(
+      {
+        name: 'create-block/retrofit-init',
+      },
+      null,
+      2,
+    )}\n`,
+    'utf8',
+  );
+  fs.writeFileSync(
+    path.join(fixtureRoot, 'src', 'types.ts'),
+    'export interface RetrofitInitAttributes {}\n',
+    'utf8',
+  );
+  fs.writeFileSync(
+    path.join(fixtureRoot, 'src', 'save.tsx'),
+    'export default function Save() { return null; }\n',
+    'utf8',
+  );
+  return fixtureRoot;
+}
+
 function readSyncLog(
   logPath: string,
 ): Array<{ args: string[]; label: string }> {
@@ -299,6 +341,7 @@ describe('wp-typia package', () => {
       'create',
       '--help',
     ]);
+    const initHelpOutput = runUtf8Command('node', [entryPath, 'init', '--help']);
     const addHelpOutput = runUtf8Command('node', [entryPath, 'add', '--help']);
 
     for (const commandName of WP_TYPIA_TOP_LEVEL_COMMAND_NAMES) {
@@ -310,10 +353,48 @@ describe('wp-typia package', () => {
     expect(createHelpOutput).toContain('--external-layer-id');
     expect(createHelpOutput).toContain('--alternate-render-targets');
     expect(createHelpOutput).toContain('Query Loop');
+    expect(initHelpOutput).toContain('Preview-only retrofit planner');
     expect(addHelpOutput).toContain('--external-layer-source');
     expect(addHelpOutput).toContain('--external-layer-id');
     expect(addHelpOutput).toContain('--alternate-render-targets');
     expect(addHelpOutput).toContain('editor-plugin');
+  });
+
+  test('prints structured init plans through the canonical bin', () => {
+    const fixtureRoot = createRetrofitInitFixture();
+
+    try {
+      const output = runUtf8Command(
+        'node',
+        [entryPath, 'init', '--format', 'json'],
+        {
+          cwd: fixtureRoot,
+        },
+      );
+      const parsed = parseJsonObjectFromOutput<{
+        init?: {
+          detectedLayout?: { kind?: string; blockNames?: string[] };
+          nextSteps?: string[];
+          packageChanges?: {
+            scripts?: Array<{ name?: string }>;
+          };
+          status?: string;
+        };
+      }>(output);
+
+      expect(parsed.init?.status).toBe('preview');
+      expect(parsed.init?.detectedLayout?.kind).toBe('single-block');
+      expect(parsed.init?.detectedLayout?.blockNames).toEqual([
+        'create-block/retrofit-init',
+      ]);
+      expect(parsed.init?.packageChanges?.scripts?.map((script) => script.name))
+        .toEqual(['sync', 'sync-types', 'typecheck']);
+      expect(parsed.init?.nextSteps).toContain(
+        `npx --yes wp-typia@${packageManifest.version} doctor`,
+      );
+    } finally {
+      fs.rmSync(fixtureRoot, { force: true, recursive: true });
+    }
   });
 
   test('renders a human-readable version line through the canonical bin', () => {
@@ -816,6 +897,80 @@ describe('wp-typia package', () => {
     expect(() =>
       runUtf8Command('node', [entryPath, 'create', '--dry-run']),
     ).toThrow(/`--dry-run` still needs a logical project directory name/);
+  });
+
+  test('surfaces external template timeout codes in structured create failures', () => {
+    const fixtureRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-create-timeout-template-'),
+    );
+    const targetDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-create-timeout-output-'),
+    );
+    fs.rmSync(targetDir, { force: true, recursive: true });
+    fs.cpSync(createBlockExternalFixturePath, fixtureRoot, { recursive: true });
+    fs.rmSync(path.join(fixtureRoot, 'index.cjs'));
+    fs.writeFileSync(
+      path.join(fixtureRoot, 'index.mjs'),
+      [
+        "await new Promise((resolve) => setTimeout(resolve, 200));",
+        "export default {",
+        '  blockTemplatesPath: "block-templates",',
+        '  assetsPath: "assets",',
+        "};",
+        "",
+      ].join('\n'),
+      'utf8',
+    );
+
+    const previousTimeout = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TIMEOUT_MS;
+    process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TIMEOUT_MS = '25';
+
+    try {
+      const result = runCapturedCommand(
+        process.execPath,
+        [
+          entryPath,
+          'create',
+          targetDir,
+          '--template',
+          fixtureRoot,
+          '--package-manager',
+          'npm',
+          '--yes',
+          '--no-install',
+          '--format',
+          'json',
+        ],
+        {
+          env: {
+            ...withoutLocalBunEnv(),
+            WP_TYPIA_EXTERNAL_TEMPLATE_TIMEOUT_MS: '25',
+          },
+        },
+      );
+      const diagnosticOutput = result.stderr.includes('{')
+        ? result.stderr
+        : result.stdout;
+      const parsed = parseJsonObjectFromOutput<{
+        error?: { code?: string; message?: string };
+        ok?: boolean;
+      }>(diagnosticOutput);
+
+      expect(result.status).toBe(1);
+      expect(parsed.ok).toBe(false);
+      expect(parsed.error?.code).toBe('template-source-timeout');
+      expect(parsed.error?.message).toContain(
+        'Timed out while loading external template config',
+      );
+    } finally {
+      if (previousTimeout === undefined) {
+        delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TIMEOUT_MS;
+      } else {
+        process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TIMEOUT_MS = previousTimeout;
+      }
+      fs.rmSync(fixtureRoot, { force: true, recursive: true });
+      fs.rmSync(targetDir, { force: true, recursive: true });
+    }
   });
 
   test('rejects typo-like positional alias invocations with extra arguments', () => {

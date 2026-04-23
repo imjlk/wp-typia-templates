@@ -147,6 +147,9 @@ same migration capability flow when they render `wpTypia.projectType:
 "workspace"` in their `package.json.mustache`.
 
 Security note: external template configs are trusted JavaScript and are executed during scaffold normalization. Treat local paths, GitHub locators, and npm package templates with the same trust model as `@wordpress/create-block`.
+Remote metadata fetches, tarball downloads, and executable config loading now
+run behind bounded timeout and size guards so malformed or hostile sources fail
+directly instead of hanging the CLI indefinitely.
 
 That remote-template support is still seed-oriented. Reusable external layer
 packages on top of the built-in shared scaffold graph are now implemented
@@ -169,6 +172,11 @@ wp-typia migrate fixtures --all --force
 wp-typia migrate verify --all
 wp-typia migrate fuzz --all --iterations 25 --seed 1
 ```
+
+For broader existing-project adoption, `wp-typia init [project-dir]` now acts as
+a preview-only retrofit planner. It detects supported single-block and
+multi-block layouts, then prints the minimum dependency, script, generated
+artifact, and follow-up command surface that a future write mode will apply.
 
 For older projects, `wp-typia migrate init --current-migration-version <label>` now
 auto-detects supported retrofit layouts:

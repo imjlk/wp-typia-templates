@@ -98,6 +98,24 @@ export function formatInstallCommand(packageManagerId: PackageManagerId): string
 }
 
 /**
+ * Format a package-manager-specific devDependency install command.
+ *
+ * @param packageManagerId Package manager identifier.
+ * @param packages Package specifiers to add as devDependencies.
+ * @returns Command string suitable for shell execution.
+ */
+export function formatAddDevDependenciesCommand(
+	packageManagerId: PackageManagerId,
+	packages: string[],
+): string {
+	if (packages.length === 0) {
+		return formatInstallCommand(packageManagerId);
+	}
+
+	return `${packageManagerId} ${DEV_INSTALL_FLAGS[packageManagerId]} ${packages.join(" ")}`;
+}
+
+/**
  * Format a package-manager-specific one-off package execution command.
  *
  * @param packageManagerId Package manager identifier.

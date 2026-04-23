@@ -3,6 +3,10 @@ import { promises as fsp } from 'node:fs'
 import path from 'node:path'
 
 import {
+  assertExternalTemplateFileSize,
+  getExternalTemplatePackageJsonMaxBytes,
+} from './external-template-guards.js'
+import {
   getBuiltInTemplateLayerDirs,
   isOmittableBuiltInTemplateLayerDir,
 } from './template-builtins.js'
@@ -95,6 +99,10 @@ function readTemplatePackageJson(
     }
 
     try {
+      assertExternalTemplateFileSize(candidate, {
+        label: `Template metadata file "${candidate}"`,
+        maxBytes: getExternalTemplatePackageJsonMaxBytes(),
+      })
       return {
         packageJson: JSON.parse(fs.readFileSync(candidate, 'utf8')) as {
           wpTypia?: { projectType?: unknown }

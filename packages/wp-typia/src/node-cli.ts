@@ -34,6 +34,7 @@ import {
   executeAddCommand,
   executeCreateCommand,
   executeDoctorCommand,
+  executeInitCommand,
   executeMigrateCommand,
   executeSyncCommand,
   executeTemplatesCommand,
@@ -70,7 +71,7 @@ const STANDALONE_GUIDANCE_LINE =
 
 const NODE_FALLBACK_RUNTIME_SUMMARY_LINES = [
   'Runtime: Node fallback',
-  'Human-readable fallback for common non-interactive create/add/migrate flows, doctor, sync, templates, --help, and --version when Bun is unavailable.',
+  'Human-readable fallback for common non-interactive create/init/add/migrate flows, doctor, sync, templates, --help, and --version when Bun is unavailable.',
   `Install Bun 1.3.11+ or use \`bunx wp-typia ...\` for the full Bunli/OpenTUI runtime and Bun-only command surfaces such as \`skills\`, \`completions\`, and \`mcp\`. ${STANDALONE_GUIDANCE_LINE}`,
 ];
 
@@ -209,6 +210,7 @@ function renderGeneralHelp() {
     '',
     'Canonical usage:',
     `- ${WP_TYPIA_CANONICAL_CREATE_USAGE}`,
+    '- wp-typia init [project-dir]',
     `- ${WP_TYPIA_CANONICAL_MIGRATE_USAGE}`,
     `- ${WP_TYPIA_POSITIONAL_ALIAS_USAGE}`,
   ]);
@@ -233,6 +235,16 @@ function renderCreateHelp() {
     '',
     'Supported flags:',
     ...formatNodeFallbackOptionHelp(CREATE_OPTION_METADATA),
+  ]);
+}
+
+function renderInitHelp() {
+  printBlock([
+    'Usage: wp-typia init [project-dir]',
+    '',
+    ...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
+    '',
+    'Preview-only retrofit planner for existing WordPress block or plugin projects. No files are written yet.',
   ]);
 }
 
@@ -343,7 +355,7 @@ function renderUnsupportedCommand(command: string) {
     detailLines: [
       [
         `The Bun-free fallback runtime does not support \`${command}\` yet.`,
-        'Supported without Bun: `--version`, `--help`, non-interactive `create`/`add`/`migrate`, `doctor`, `sync`, `templates list`, and `templates inspect`.',
+        'Supported without Bun: `--version`, `--help`, non-interactive `create`/`init`/`add`/`migrate`, `doctor`, `sync`, `templates list`, and `templates inspect`.',
         `Install Bun 1.3.11+ or use \`bunx wp-typia ...\` for the full Bunli-powered runtime. ${STANDALONE_GUIDANCE_LINE}`,
       ].join(' '),
     ],
@@ -403,6 +415,10 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
     }
     if (command === 'create') {
       renderCreateHelp();
+      return;
+    }
+    if (command === 'init') {
+      renderInitHelp();
       return;
     }
     if (command === 'add') {
@@ -486,6 +502,30 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
       interactive: false,
       projectDir,
     });
+    return;
+  }
+
+  if (command === 'init') {
+    const plan = await executeInitCommand(
+      {
+        cwd: process.cwd(),
+        projectDir: positionals[1],
+      },
+      {
+        emitOutput: mergedFlags.format !== 'json',
+      },
+    );
+    if (mergedFlags.format === 'json') {
+      printLine(
+        JSON.stringify(
+          {
+            init: plan,
+          },
+          null,
+          2,
+        ),
+      );
+    }
     return;
   }
 

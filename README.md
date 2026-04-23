@@ -169,8 +169,17 @@ wp-typia add hooked-block counter-card --anchor core/post-content --position aft
 
 ## Retrofitting Existing Projects
 
-Today there is still no general-purpose `wp-typia init` command for arbitrary
-existing plugins or block repos.
+`wp-typia init` now exists as a **preview-only** retrofit planner for existing
+plugins or block repos:
+
+```bash
+npx wp-typia init
+```
+
+Today that command does not write files yet. Instead it inspects the current
+directory, reports the detected retrofit layout, and previews the minimum
+dependency/script/file layer needed to adopt the typed `sync` / `doctor`
+workflow incrementally.
 
 The currently supported retrofit path is narrower:
 
@@ -211,6 +220,9 @@ The richer `pluginTemplatesPath` route can seed broader plugin/workspace shapes 
 The remote source is treated as a seed. `wp-typia` still regenerates its own package setup, Typia sync flow, and runtime helpers around it.
 
 External template configs execute trusted JavaScript (`index.js` / `index.cjs` / `index.mjs`) and can run a `transformer(view)` hook before normalization. Only use template sources you trust.
+Remote template metadata, tarball downloads, and executable config loading now
+run behind bounded timeout and size guards so malformed or hostile template
+sources fail more directly instead of blocking the CLI indefinitely.
 
 Remote template examples:
 

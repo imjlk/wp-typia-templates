@@ -18,6 +18,7 @@ export function formatHelpText(): string {
   wp-typia create <project-dir> [--template persistence] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--dry-run] [--no-install] [--package-manager <id>]
   wp-typia create <project-dir> [--template compound] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--with-migration-ui] [--with-wp-env] [--with-test-preset] [--yes] [--dry-run] [--no-install] [--package-manager <id>]
   wp-typia <project-dir> [create flags...]
+  wp-typia init [project-dir]
   wp-typia add block <name> --template <basic|interactivity|persistence|compound> [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
   wp-typia add variation <name> --block <block-slug>
   wp-typia add pattern <name>
@@ -38,6 +39,7 @@ Package managers: ${PACKAGE_MANAGER_IDS.join(", ")}
 Notes:
   \`wp-typia create\` is the canonical scaffold command.
   \`wp-typia <project-dir>\` remains a backward-compatible alias to \`create\` when \`<project-dir>\` is the only positional argument.
+  \`wp-typia init\` is a preview-only retrofit planner for existing projects. It does not write files yet.
   Use \`--template workspace\` as shorthand for \`@wp-typia/create-workspace-template\`, the official empty workspace scaffold behind \`wp-typia add ...\`.
   \`query-loop\` is create-only. Use \`wp-typia create <project-dir> --template query-loop\`; \`wp-typia add block\` accepts only basic, interactivity, persistence, and compound families.
   \`add variation\` uses an existing workspace block from \`scripts/block-config.ts\`.
@@ -47,6 +49,7 @@ Notes:
   \`add editor-plugin\` scaffolds a document-level editor extension under \`src/editor-plugins/\`.
   \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.
   \`wp-typia doctor\` always checks environment readiness and reports when it only ran environment-level diagnostics; official workspace roots also get inventory and source-tree drift checks.
+  \`wp-typia init\` previews the minimum sync/doctor/migration adoption layer for supported existing layouts before a future write mode exists.
   \`wp-typia migrate doctor --all\` checks migration target alignment, snapshots, fixtures, and generated migration artifacts.
   \`migrate\` is the canonical migration command; \`migrations\` is no longer supported.`;
 }

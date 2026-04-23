@@ -71,6 +71,9 @@ describe('wp-typia Bunli preparation', () => {
       fs.existsSync(path.join(packageRoot, 'src', 'commands', 'create.ts')),
     ).toBe(true);
     expect(
+      fs.existsSync(path.join(packageRoot, 'src', 'commands', 'init.ts')),
+    ).toBe(true);
+    expect(
       fs.existsSync(path.join(packageRoot, 'src', 'commands', 'sync.ts')),
     ).toBe(true);
     expect(

@@ -19,6 +19,7 @@ export const WP_TYPIA_BUNLI_MIGRATION_DOC =
 
 export const WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES = [
   'create',
+  'init',
   'sync',
   'add',
   'migrate',
@@ -34,6 +35,7 @@ export const WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES = [
 
 export const WP_TYPIA_NODE_FALLBACK_TOP_LEVEL_COMMAND_NAMES = [
   'create',
+  'init',
   'sync',
   'add',
   'migrate',
@@ -45,6 +47,7 @@ export const WP_TYPIA_NODE_FALLBACK_TOP_LEVEL_COMMAND_NAMES = [
 
 export const WP_TYPIA_TOP_LEVEL_COMMAND_NAMES = [
   'create',
+  'init',
   'sync',
   'add',
   'migrate',
@@ -140,6 +143,10 @@ export const WP_TYPIA_FUTURE_COMMAND_TREE = [
   {
     description: 'Scaffold a new wp-typia project.',
     name: 'create',
+  },
+  {
+    description: 'Preview the minimum retrofit plan for an existing project.',
+    name: 'init',
   },
   {
     description: 'Run the common generated-project sync workflow.',
