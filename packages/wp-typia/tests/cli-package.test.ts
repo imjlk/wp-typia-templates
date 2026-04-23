@@ -1151,10 +1151,10 @@ describe('wp-typia package', () => {
       '--format',
       'json',
     ]);
-    const parsed = parseJsonObjectFromOutput<{
+    const parsed = JSON.parse(result.stdout.trim()) as {
       error?: { code?: string; command?: string; kind?: string };
       ok?: boolean;
-    }>(result.stdout);
+    };
 
     expect(result.status).toBe(1);
     expect(result.stderr).toBe('');
@@ -1162,6 +1162,107 @@ describe('wp-typia package', () => {
     expect(parsed.error?.kind).toBe('command-execution');
     expect(parsed.error?.command).toBe('mcp');
     expect(parsed.error?.code).toBe('configuration-missing');
+  });
+
+  test('emits a machine-readable missing-argument error code for create in Bun runtime JSON mode', () => {
+    const result = runCapturedCommand(
+      'bun',
+      [fullRuntimeEntrypoint, 'create', '--format', 'json'],
+      {
+        env: withoutAIAgentEnv(),
+      },
+    );
+    const parsed = JSON.parse(result.stdout.trim()) as {
+      error?: { code?: string; command?: string; kind?: string };
+      ok?: boolean;
+    };
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe('');
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error?.kind).toBe('command-execution');
+    expect(parsed.error?.command).toBe('create');
+    expect(parsed.error?.code).toBe('missing-argument');
+  });
+
+  test('emits a machine-readable outside-project-root error code for sync in Bun runtime JSON mode', () => {
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-bun-sync-json-'),
+    );
+
+    try {
+      const result = runCapturedCommand(
+        'bun',
+        [fullRuntimeEntrypoint, 'sync', '--format', 'json'],
+        {
+          cwd: tempRoot,
+          env: withoutAIAgentEnv(),
+        },
+      );
+      const parsed = JSON.parse(result.stdout.trim()) as {
+        error?: { code?: string; command?: string; kind?: string };
+        ok?: boolean;
+      };
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toBe('');
+      expect(parsed.ok).toBe(false);
+      expect(parsed.error?.kind).toBe('command-execution');
+      expect(parsed.error?.command).toBe('sync');
+      expect(parsed.error?.code).toBe('outside-project-root');
+    } finally {
+      fs.rmSync(tempRoot, { force: true, recursive: true });
+    }
+  });
+
+  test('emits a machine-readable missing-argument error code for top-level config parsing in Bun runtime JSON mode', () => {
+    const result = runCapturedCommand(
+      'bun',
+      [fullRuntimeEntrypoint, '--config', '--format', 'json'],
+      {
+        env: withoutAIAgentEnv(),
+      },
+    );
+    const parsed = JSON.parse(result.stdout.trim()) as {
+      error?: { code?: string; command?: string; kind?: string };
+      ok?: boolean;
+    };
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe('');
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error?.kind).toBe('command-execution');
+    expect(parsed.error?.command).toBe('wp-typia');
+    expect(parsed.error?.code).toBe('missing-argument');
+  });
+
+  test('emits a machine-readable invalid-command error code for positional-alias typos after value options in Bun runtime JSON mode', () => {
+    const result = runCapturedCommand(
+      'bun',
+      [
+        fullRuntimeEntrypoint,
+        '--template',
+        'basic',
+        'temlates',
+        'list',
+        '--format',
+        'json',
+      ],
+      {
+        env: withoutAIAgentEnv(),
+      },
+    );
+    const parsed = JSON.parse(result.stdout.trim()) as {
+      error?: { code?: string; command?: string; kind?: string };
+      ok?: boolean;
+    };
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe('');
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error?.kind).toBe('command-execution');
+    expect(parsed.error?.command).toBe('temlates');
+    expect(parsed.error?.code).toBe('invalid-command');
   });
 
   test('loads MCP schema sources from an explicit --config override', () => {

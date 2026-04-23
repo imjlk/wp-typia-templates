@@ -239,7 +239,7 @@ function inferCliDiagnosticCode(options: {
 	if (options.command === "doctor") {
 		return CLI_DIAGNOSTIC_CODES.DOCTOR_CHECK_FAILED;
 	}
-	if (/requires <|requires --/u.test(haystack)) {
+	if (/requires <|requires --|requires a value/u.test(haystack)) {
 		return CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT;
 	}
 	if (

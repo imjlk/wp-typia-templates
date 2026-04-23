@@ -7,6 +7,7 @@ import {
 	MIGRATE_OPTION_METADATA,
 	resolveCommandOptionValues,
 } from "../command-option-metadata";
+import { emitCliDiagnosticFailure } from "../cli-diagnostic-output";
 import { resolveBundledModuleHref } from "../render-loader";
 import { executeMigrateCommand } from "../runtime-bridge";
 import { supportsInteractiveTui } from "../runtime-capabilities";
@@ -31,11 +32,18 @@ export const migrateCommand = defineCommand({
 	defaultFormat: "toon",
 	description: "Run migration workflows for migration-capable wp-typia projects.",
 	handler: async (args) => {
-		await executeMigrateCommand({
-			command: args.positional[0],
-			cwd: args.cwd,
-			flags: args.flags as Record<string, unknown>,
-		});
+		try {
+			await executeMigrateCommand({
+				command: args.positional[0],
+				cwd: args.cwd,
+				flags: args.flags as Record<string, unknown>,
+			});
+		} catch (error) {
+			emitCliDiagnosticFailure(args, {
+				command: "migrate",
+				error,
+			});
+		}
 	},
 	name: "migrate",
 	options: migrateOptions,

@@ -1,10 +1,13 @@
 import { defineCommand } from "@bunli/core";
 
-import { createCliCommandError } from "@wp-typia/project-tools/cli-diagnostics";
 import {
 	buildCommandOptions,
 	SYNC_OPTION_METADATA,
 } from "../command-option-metadata";
+import {
+	emitCliDiagnosticFailure,
+	prefersStructuredCliOutput,
+} from "../cli-diagnostic-output";
 import { executeSyncCommand } from "../runtime-bridge";
 import {
 	buildSyncDryRunPayload,
@@ -17,10 +20,7 @@ export const syncCommand = defineCommand({
 	handler: async (args) => {
 		const check = Boolean(args.flags.check);
 		const dryRun = Boolean(args.flags["dry-run"]);
-		const prefersStructuredOutput =
-			(args.formatExplicit && args.format !== "toon") ||
-			args.agent ||
-			Boolean(args.context?.store?.isAIAgent);
+		const prefersStructuredOutput = prefersStructuredCliOutput(args);
 
 		try {
 			const sync = await executeSyncCommand({
@@ -44,7 +44,7 @@ export const syncCommand = defineCommand({
 				);
 			}
 		} catch (error) {
-			throw createCliCommandError({
+			emitCliDiagnosticFailure(args, {
 				command: "sync",
 				error,
 			});

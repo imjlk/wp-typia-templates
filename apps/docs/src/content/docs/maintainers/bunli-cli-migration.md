@@ -56,6 +56,44 @@ Published runtime support model:
 - Install scripts should target those standalone release assets directly:
   `install-wp-typia.sh` for macOS/Linux and `install-wp-typia.ps1` for Windows.
 
+## Structured CLI diagnostic contract
+
+When `wp-typia` runs with `--format json`, failure payloads should treat
+`error.code` as the stable machine-readable branching key.
+
+Structured context that automation may also inspect:
+
+- `error.command`
+- `error.kind`
+- `error.tag`
+
+The human-facing fields are intentionally not the compatibility surface:
+
+- `error.message`
+- `error.summary`
+- `error.detailLines`
+
+Those text fields should stay readable and actionable for humans, but
+automation should branch on the structured identifiers above instead of parsing
+English prose.
+
+Current stable `error.code` vocabulary:
+
+- `command-execution`
+- `configuration-missing`
+- `dependencies-not-installed`
+- `doctor-check-failed`
+- `invalid-argument`
+- `invalid-command`
+- `missing-argument`
+- `missing-build-artifact`
+- `outside-project-root`
+- `unsupported-command`
+
+That same JSON contract should apply both to command-handler failures and to
+top-level parse/normalization failures that happen before Bunli dispatches a
+command, as long as the caller explicitly requested `--format json`.
+
 Shorthand references like `npx wp-typia` and `bunx wp-typia` should still map
 to the canonical `create` surface in docs and review notes.
 

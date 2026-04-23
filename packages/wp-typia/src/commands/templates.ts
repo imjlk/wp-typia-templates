@@ -2,12 +2,15 @@ import { defineCommand } from "@bunli/core";
 
 import {
 	CLI_DIAGNOSTIC_CODES,
-	createCliCommandError,
 } from "@wp-typia/project-tools/cli-diagnostics";
 import {
 	buildCommandOptions,
 	TEMPLATES_OPTION_METADATA,
 } from "../command-option-metadata";
+import {
+	emitCliDiagnosticFailure,
+	prefersStructuredCliOutput,
+} from "../cli-diagnostic-output";
 import { executeTemplatesCommand, listTemplatesForRuntime } from "../runtime-bridge";
 
 export const templatesCommand = defineCommand({
@@ -20,34 +23,39 @@ export const templatesCommand = defineCommand({
 			subcommand === "list" && typeof id === "string" && id.length > 0
 				? "inspect"
 				: subcommand;
-		const prefersStructuredOutput =
-			(args.formatExplicit && args.format !== "toon") ||
-			args.agent ||
-			Boolean(args.context?.store?.isAIAgent);
+		const prefersStructuredOutput = prefersStructuredCliOutput(args);
 
-		if (prefersStructuredOutput) {
-			const templates = await listTemplatesForRuntime();
-			if (effectiveSubcommand === "list") {
-				args.output({ templates });
-				return;
-			}
-			if (effectiveSubcommand === "inspect" && id) {
-				const template = templates.find((entry) => entry.id === id);
-				if (!template) {
-					throw createCliCommandError({
-						code: CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
-						command: "templates",
-						detailLines: [`Unknown template "${id}".`],
-					});
+		try {
+			if (prefersStructuredOutput) {
+				const templates = await listTemplatesForRuntime();
+				if (effectiveSubcommand === "list") {
+					args.output({ templates });
+					return;
 				}
-				args.output({ template });
-				return;
+				if (effectiveSubcommand === "inspect" && id) {
+					const template = templates.find((entry) => entry.id === id);
+					if (!template) {
+						emitCliDiagnosticFailure(args, {
+							code: CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+							command: "templates",
+							detailLines: [`Unknown template "${id}".`],
+						});
+						return;
+					}
+					args.output({ template });
+					return;
+				}
 			}
-		}
 
-		await executeTemplatesCommand({
-			flags: { id, subcommand: effectiveSubcommand },
-		});
+			await executeTemplatesCommand({
+				flags: { id, subcommand: effectiveSubcommand },
+			});
+		} catch (error) {
+			emitCliDiagnosticFailure(args, {
+				command: "templates",
+				error,
+			});
+		}
 	},
 	name: "templates",
 	options: buildCommandOptions(TEMPLATES_OPTION_METADATA),
