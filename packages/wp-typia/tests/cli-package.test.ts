@@ -322,6 +322,9 @@ describe("wp-typia package", () => {
 		expect(result.status).toBe(1);
 		expect(result.stdout).toBe("");
 		expect(result.stderr).toContain("requires Bun");
+		expect(result.stderr).toContain(
+			"Install Bun locally, run with bunx, or set BUN_BIN",
+		);
 		expect(result.stderr).toContain("standalone wp-typia binary");
 		expect(result.stderr).toContain("GitHub release assets");
 	});

@@ -19,7 +19,7 @@ describe('output marker helpers', () => {
 
   test('keeps Unicode markers for UTF-8 locales and modern default Windows', () => {
     expect(prefersAsciiOutput({ env: { LANG: 'en_US.UTF-8' } })).toBe(false);
-    expect(prefersAsciiOutput({ env: {}, platform: 'win32' })).toBe(false);
+    expect(prefersAsciiOutput({ env: { WP_TYPIA_ASCII: '0' } })).toBe(false);
     expect(getOutputMarker('success', { forceAscii: true })).toBe('[ok]');
     expect(getOutputMarker('success', { env: { LANG: 'en_US.UTF-8' } })).toBe(
       '✅',

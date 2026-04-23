@@ -13,7 +13,10 @@ import {
   useTuiTheme,
 } from '@bunli/tui';
 
-import { formatOutputMarker } from '../output-markers';
+import {
+  formatOutputMarker,
+  type OutputMarkerOptions,
+} from '../output-markers';
 import type { AlternateBufferCompletionPayload } from './alternate-buffer-lifecycle';
 import {
   isCompletionEndKey,
@@ -137,9 +140,11 @@ export function FirstPartyFormViewport({
 
 export function FirstPartyCompletionViewport({
   completion,
+  markerOptions,
   viewportHeight,
 }: {
   completion: AlternateBufferCompletionPayload;
+  markerOptions?: OutputMarkerOptions;
   viewportHeight: number;
 }) {
   const { tokens } = useTuiTheme();
@@ -247,7 +252,7 @@ export function FirstPartyCompletionViewport({
         ),
         ...(completion.warningLines ?? []).map((line, index) =>
           createElement('text', {
-            content: formatOutputMarker('warning', line),
+            content: formatOutputMarker('warning', line, markerOptions),
             fg: tokens.textWarning,
             key: `warning:${index}`,
           }),

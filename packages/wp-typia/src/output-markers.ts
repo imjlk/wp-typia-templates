@@ -3,7 +3,6 @@ export type OutputMarkerKind = 'dryRun' | 'progress' | 'success' | 'warning';
 export type OutputMarkerOptions = {
   env?: NodeJS.ProcessEnv;
   forceAscii?: boolean;
-  platform?: NodeJS.Platform;
   term?: string | undefined;
 };
 
