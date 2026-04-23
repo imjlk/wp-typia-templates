@@ -3,6 +3,7 @@ import path from "node:path";
 
 import {
 	BUILTIN_TEMPLATE_IDS,
+	OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
 	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	TEMPLATE_IDS,
 	getTemplateById,
@@ -64,6 +65,11 @@ describe("template registry runtime helpers", () => {
 				id: "persistence",
 			}),
 		);
+		expect(getTemplateById(OFFICIAL_WORKSPACE_TEMPLATE_ALIAS)).toEqual(
+			expect.objectContaining({
+				id: OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
+			}),
+		);
 		expect(getTemplateSelectOptions()).toEqual([
 			{
 				hint: "Type-safe attributes, Runtime validation, Minimal setup",
@@ -92,8 +98,8 @@ describe("template registry runtime helpers", () => {
 			},
 			{
 				hint: "Workspace inventory, Add block workflows, Workspace doctor and migrate",
-				label: OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
-				value: OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
+				label: OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
+				value: OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
 			},
 		]);
 	});
@@ -133,8 +139,8 @@ describe("template registry runtime helpers", () => {
 	});
 
 	test("throws a helpful error for unknown template ids", () => {
-		expect(() => getTemplateById("workspace")).toThrow(
-			`Unknown template "workspace". Expected one of: basic, interactivity, persistence, compound, query-loop, ${OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE}`,
+		expect(() => getTemplateById("unknown-template")).toThrow(
+			`Unknown template "unknown-template". Expected one of: basic, interactivity, persistence, compound, query-loop, ${OFFICIAL_WORKSPACE_TEMPLATE_ALIAS}, ${OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE}`,
 		);
 	});
 });
