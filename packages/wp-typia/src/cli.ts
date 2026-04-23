@@ -10,6 +10,7 @@ import { skillsPlugin } from "@bunli/plugin-skills";
 
 import packageJson from "../package.json";
 import { bunliConfig } from "../bunli.config";
+import { writeStructuredCliDiagnosticError } from "./cli-diagnostic-output";
 import { normalizeWpTypiaArgv } from "./command-contract";
 import { WP_TYPIA_CONFIG_SOURCES } from "./config";
 import { extractWpTypiaConfigOverride } from "./config-override";
@@ -117,6 +118,9 @@ export async function runCliEntrypoint(argv = process.argv.slice(2)): Promise<vo
 	try {
 		await main(argv);
 	} catch (error) {
+		if (writeStructuredCliDiagnosticError(argv, error)) {
+			return;
+		}
 		console.error(`Error: ${await formatCliError(error)}`);
 		process.exitCode = 1;
 	}

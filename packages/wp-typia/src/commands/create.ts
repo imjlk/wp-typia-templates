@@ -7,6 +7,7 @@ import {
 	CREATE_OPTION_METADATA,
 	resolveCommandOptionValues,
 } from "../command-option-metadata";
+import { emitCliDiagnosticFailure } from "../cli-diagnostic-output";
 import { getCreateDefaults } from "../config";
 import { resolveBundledModuleHref } from "../render-loader";
 import { executeCreateCommand } from "../runtime-bridge";
@@ -34,20 +35,27 @@ export const createCommand = defineCommand({
 	handler: async (args) => {
 		const projectDir = args.positional[0];
 		if (!projectDir) {
-			const { createCliCommandError } = await import("@wp-typia/project-tools/cli-diagnostics");
-			throw createCliCommandError({
+			emitCliDiagnosticFailure(args, {
 				command: "create",
 				detailLines: [
 					"`wp-typia create` requires <project-dir>.",
 					"`--dry-run` still needs a logical project directory name because wp-typia derives slugs, package names, and planned file paths from it.",
 				],
 			});
+			return;
 		}
-		await executeCreateCommand({
-			cwd: args.cwd,
-			flags: args.flags as Record<string, unknown>,
-			projectDir,
-		});
+		try {
+			await executeCreateCommand({
+				cwd: args.cwd,
+				flags: args.flags as Record<string, unknown>,
+				projectDir,
+			});
+		} catch (error) {
+			emitCliDiagnosticFailure(args, {
+				command: "create",
+				error,
+			});
+		}
 	},
 	name: "create",
 	options: createOptions,

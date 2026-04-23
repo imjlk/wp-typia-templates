@@ -8,6 +8,10 @@ import {
   buildCommandOptions,
   resolveCommandOptionValues,
 } from '../command-option-metadata';
+import {
+  emitCliDiagnosticFailure,
+  prefersStructuredCliOutput,
+} from '../cli-diagnostic-output';
 import { getAddBlockDefaults } from '../config';
 import { resolveBundledModuleHref } from '../render-loader';
 import { executeAddCommand } from '../runtime-bridge';
@@ -34,29 +38,34 @@ export const addCommand = defineCommand({
   description:
     'Extend an official wp-typia workspace with blocks, variations, patterns, binding sources, plugin-level REST resources, editor plugins, or hooked blocks.',
   handler: async (args) => {
-    const prefersStructuredOutput =
-      (args.formatExplicit && args.format !== 'toon') ||
-      args.agent ||
-      Boolean(args.context?.store?.isAIAgent);
-    if (prefersStructuredOutput) {
-      const completion = await executeAddCommand({
+    const prefersStructuredOutput = prefersStructuredCliOutput(args);
+
+    try {
+      if (prefersStructuredOutput) {
+        const completion = await executeAddCommand({
+          cwd: args.cwd,
+          emitOutput: false,
+          flags: args.flags as Record<string, unknown>,
+          interactive: false,
+          kind: args.positional[0],
+          name: args.positional[1],
+        });
+        args.output({ completion });
+        return;
+      }
+
+      await executeAddCommand({
         cwd: args.cwd,
-        emitOutput: false,
         flags: args.flags as Record<string, unknown>,
-        interactive: false,
         kind: args.positional[0],
         name: args.positional[1],
       });
-      args.output({ completion });
-      return;
+    } catch (error) {
+      emitCliDiagnosticFailure(args, {
+        command: 'add',
+        error,
+      });
     }
-
-    await executeAddCommand({
-      cwd: args.cwd,
-      flags: args.flags as Record<string, unknown>,
-      kind: args.positional[0],
-      name: args.positional[1],
-    });
   },
   name: 'add',
   options: addOptions,
