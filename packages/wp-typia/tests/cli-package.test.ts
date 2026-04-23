@@ -503,6 +503,9 @@ describe('wp-typia package', () => {
       tarball?.files.some((entry) => entry.path === 'dist-bunli/node-cli.js'),
     ).toBe(true);
     expect(
+      tarball?.files.some((entry) => entry.path.endsWith('.map')),
+    ).toBe(false);
+    expect(
       tarball?.files.some((entry) => entry.path === 'bin/wp-typia.js'),
     ).toBe(true);
     expect(
@@ -529,6 +532,14 @@ describe('wp-typia package', () => {
     expect(tarball?.files.some((entry) => entry.path === 'src/cli.ts')).toBe(
       false,
     );
+    expect(fs.existsSync(path.join(packageRoot, 'dist-bunli', 'cli.js.map'))).toBe(
+      true,
+    );
+    expect(
+      fs.existsSync(
+        path.join(packageRoot, 'dist-bunli', '.bunli', 'commands.gen.js.map'),
+      ),
+    ).toBe(true);
 
     if (tarball?.filename) {
       fs.rmSync(path.join(packageRoot, tarball.filename), { force: true });

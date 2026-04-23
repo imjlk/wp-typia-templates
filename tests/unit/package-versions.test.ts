@@ -21,6 +21,7 @@ async function importPackageVersionsModule(options: {
 	createPackageRoot: string;
 	installedPackageManifests?: Record<string, unknown>;
 }): Promise<{
+	invalidatePackageVersionsCache(): void;
 	getPackageVersions(): {
 		apiClientPackageVersion: string;
 		blockRuntimePackageVersion: string;
@@ -237,5 +238,73 @@ describe("package version helpers", () => {
 			wpTypiaPackageVersion: "^0.0.0",
 		});
 		expect(secondResult).toBe(firstResult);
+	});
+
+	test("recomputes cached versions when the workspace manifest changes", async () => {
+		const createPackageRoot = createTempDir("wp-typia-refreshable-create-root-");
+
+		writeJsonFile(path.join(createPackageRoot, "package.json"), {
+			dependencies: {
+				"@wp-typia/api-client": "~1.2.3",
+				"@wp-typia/block-types": "2.3.4",
+				"@wp-typia/rest": "^3.4.5",
+			},
+			version: "4.5.6",
+		});
+		writeJsonFile(path.join(createPackageRoot, "..", "wp-typia-block-runtime", "package.json"), {
+			version: "7.8.9",
+		});
+
+		const module = await importPackageVersionsModule({
+			createPackageRoot,
+		});
+
+		const firstResult = module.getPackageVersions();
+		writeJsonFile(path.join(createPackageRoot, "package.json"), {
+			dependencies: {
+				"@wp-typia/api-client": "^12.34.56",
+				"@wp-typia/block-types": "2.3.4",
+				"@wp-typia/rest": "^30.40.50",
+			},
+			version: "11.22.33",
+		});
+
+		const secondResult = module.getPackageVersions();
+
+		expect(firstResult).not.toBe(secondResult);
+		expect(secondResult).toEqual({
+			apiClientPackageVersion: "^12.34.56",
+			blockRuntimePackageVersion: "^7.8.9",
+			blockTypesPackageVersion: "^2.3.4",
+			projectToolsPackageVersion: "^11.22.33",
+			restPackageVersion: "^30.40.50",
+			wpTypiaPackageExactVersion: "0.0.0",
+			wpTypiaPackageVersion: "^0.0.0",
+		});
+	});
+
+	test("manual invalidation drops the cached object identity even when manifests stay the same", async () => {
+		const createPackageRoot = createTempDir("wp-typia-manual-cache-reset-");
+
+		writeJsonFile(path.join(createPackageRoot, "package.json"), {
+			dependencies: {
+				"@wp-typia/api-client": "^0.4.0",
+				"@wp-typia/block-runtime": "^0.3.0",
+				"@wp-typia/block-types": "^0.2.0",
+				"@wp-typia/rest": "^0.3.1",
+			},
+			version: "0.11.0",
+		});
+
+		const module = await importPackageVersionsModule({
+			createPackageRoot,
+		});
+
+		const firstResult = module.getPackageVersions();
+		module.invalidatePackageVersionsCache();
+		const secondResult = module.getPackageVersions();
+
+		expect(secondResult).toEqual(firstResult);
+		expect(secondResult).not.toBe(firstResult);
 	});
 });

@@ -26,8 +26,9 @@
     "standalone:prepare-release-assets": "bun scripts/prepare-standalone-release-assets.ts --input-dir ./.cache/standalone/raw --outdir ./.cache/standalone/release-assets",
     "test": "cd ../wp-typia-project-tools && bun run build && cd ../wp-typia && bun run build && bun test tests/*.test.ts",
     "test:coverage": "cd ../wp-typia-project-tools && bun run build && cd ../wp-typia && bun run build && bun test tests/*.test.ts --coverage --coverage-reporter=lcov --coverage-dir=coverage",
-    "clean": "rm -rf .bunli .cache/standalone dist-bunli dist-standalone",
-    "prepack": "bun run build"
+    "clean": "rm -rf .bunli .cache/standalone .pack-backup dist-bunli dist-standalone",
+    "prepack": "bun run build && node ./scripts/publish-runtime-maps.mjs prepare",
+    "postpack": "node ./scripts/publish-runtime-maps.mjs restore"
   },
   "keywords": [
     "wordpress",
