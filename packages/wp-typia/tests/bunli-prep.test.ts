@@ -53,7 +53,12 @@ describe('wp-typia Bunli preparation', () => {
     expect(packageManifest.scripts['build:standalone:release']).toBe(
       'bun scripts/build-standalone-runtime.ts --targets darwin-arm64,darwin-x64,linux-arm64,linux-x64,windows-x64 --outdir ./.cache/standalone/raw',
     );
-    expect(packageManifest.scripts.prepack).toBe('bun run build');
+    expect(packageManifest.scripts.prepack).toBe(
+      'bun run build && node ./scripts/publish-runtime-maps.mjs prepare',
+    );
+    expect(packageManifest.scripts.postpack).toBe(
+      'node ./scripts/publish-runtime-maps.mjs restore',
+    );
     expect(packageManifest.scripts.clean).toContain('dist-standalone');
     expect(packageManifest.scripts.clean).toContain('.cache/standalone');
     expect(packageManifest.engines.bun).toBe('>=1.3.11');
@@ -94,6 +99,11 @@ describe('wp-typia Bunli preparation', () => {
     expect(
       fs.existsSync(
         path.join(packageRoot, 'bin', 'routing-metadata.generated.d.ts'),
+      ),
+    ).toBe(true);
+    expect(
+      fs.existsSync(
+        path.join(packageRoot, 'scripts', 'publish-runtime-maps.mjs'),
       ),
     ).toBe(true);
   });

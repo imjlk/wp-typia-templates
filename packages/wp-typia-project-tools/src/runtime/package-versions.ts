@@ -19,11 +19,22 @@ interface PackageVersions {
 	wpTypiaPackageVersion: string;
 }
 
+interface PackageManifestLocation {
+	cacheKey: string;
+	packageJsonPath: string | null;
+	source: string | null;
+}
+
 const require = createRequire(import.meta.url);
 const DEFAULT_VERSION_RANGE = "^0.0.0";
 const DEFAULT_EXACT_VERSION = "0.0.0";
 
-let cachedPackageVersions: PackageVersions | null = null;
+let cachedPackageVersions:
+	| {
+			cacheKey: string;
+			versions: PackageVersions;
+	  }
+	| null = null;
 
 function getErrorCode(error: unknown): string | undefined {
 	return typeof error === "object" && error !== null && "code" in error
@@ -54,55 +65,134 @@ function normalizeExactVersion(value: string | undefined): string {
 	return trimmed.replace(/^[~^<>=]+/, "");
 }
 
-function readPackageManifest(packageJsonPath: string): PackageManifest | null {
+function createContentFingerprint(source: string): string {
+	let hash = 2166136261;
+	for (let index = 0; index < source.length; index += 1) {
+		hash ^= source.charCodeAt(index);
+		hash = Math.imul(hash, 16777619);
+	}
+
+	return (hash >>> 0).toString(16);
+}
+
+function resolvePackageManifestLocation(packageJsonPath: string): PackageManifestLocation {
 	try {
-		return JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as PackageManifest;
+		const stats = fs.statSync(packageJsonPath);
+		const source = fs.readFileSync(packageJsonPath, "utf8");
+		return {
+			cacheKey: `file:${packageJsonPath}:${stats.ino}:${stats.mtimeMs}:${stats.ctimeMs}:${stats.size}:${createContentFingerprint(source)}`,
+			packageJsonPath,
+			source,
+		};
 	} catch (error) {
 		if (getErrorCode(error) === "ENOENT") {
-			return null;
+			return {
+				cacheKey: `missing-file:${packageJsonPath}`,
+				packageJsonPath: null,
+				source: null,
+			};
 		}
 		throw error;
 	}
 }
 
-function resolveInstalledPackageManifest(packageName: string): PackageManifest | null {
+function readPackageManifest(location: PackageManifestLocation): PackageManifest | null {
+	if (!location.packageJsonPath || location.source === null) {
+		return null;
+	}
+
+	return JSON.parse(location.source) as PackageManifest;
+}
+
+function resolveInstalledPackageManifestLocation(packageName: string): PackageManifestLocation {
 	try {
-		return readPackageManifest(require.resolve(`${packageName}/package.json`));
+		return resolvePackageManifestLocation(require.resolve(`${packageName}/package.json`));
 	} catch (error) {
 		if (getErrorCode(error) === "MODULE_NOT_FOUND") {
-			return null;
+			return {
+				cacheKey: `missing-module:${packageName}`,
+				packageJsonPath: null,
+				source: null,
+			};
 		}
 		throw error;
 	}
+}
+
+function composePackageVersionsCacheKey(
+	locations: readonly PackageManifestLocation[],
+): string {
+	return locations.map((location) => location.cacheKey).join("|");
+}
+
+/**
+ * Clears the in-memory cache used by `getPackageVersions()`.
+ *
+ * Long-lived processes can call this after regenerating or updating package
+ * manifests when they want the next lookup to recompute version metadata
+ * synchronously from disk.
+ */
+export function invalidatePackageVersionsCache(): void {
+	cachedPackageVersions = null;
 }
 
 export function getPackageVersions(): PackageVersions {
-	if (cachedPackageVersions) {
-		return cachedPackageVersions;
+	const createManifestLocation = resolvePackageManifestLocation(
+		path.join(PROJECT_TOOLS_PACKAGE_ROOT, "package.json"),
+	);
+	const blockRuntimeManifestLocation = resolvePackageManifestLocation(
+		path.join(PROJECT_TOOLS_PACKAGE_ROOT, "..", "wp-typia-block-runtime", "package.json"),
+	);
+	const wpTypiaManifestLocation = resolvePackageManifestLocation(
+		path.join(PROJECT_TOOLS_PACKAGE_ROOT, "..", "wp-typia", "package.json"),
+	);
+	const installedProjectToolsManifestLocation =
+		resolveInstalledPackageManifestLocation("@wp-typia/project-tools");
+	const installedApiClientManifestLocation =
+		resolveInstalledPackageManifestLocation("@wp-typia/api-client");
+	const installedBlockRuntimeManifestLocation =
+		resolveInstalledPackageManifestLocation("@wp-typia/block-runtime");
+	const installedBlockTypesManifestLocation =
+		resolveInstalledPackageManifestLocation("@wp-typia/block-types");
+	const installedRestManifestLocation =
+		resolveInstalledPackageManifestLocation("@wp-typia/rest");
+	const installedWpTypiaManifestLocation =
+		resolveInstalledPackageManifestLocation("wp-typia");
+	const cacheKey = composePackageVersionsCacheKey([
+		createManifestLocation,
+		blockRuntimeManifestLocation,
+		wpTypiaManifestLocation,
+		installedProjectToolsManifestLocation,
+		installedApiClientManifestLocation,
+		installedBlockRuntimeManifestLocation,
+		installedBlockTypesManifestLocation,
+		installedRestManifestLocation,
+		installedWpTypiaManifestLocation,
+	]);
+
+	if (cachedPackageVersions?.cacheKey === cacheKey) {
+		return cachedPackageVersions.versions;
 	}
 
 	const createManifest =
-		readPackageManifest(path.join(PROJECT_TOOLS_PACKAGE_ROOT, "package.json")) ??
-		resolveInstalledPackageManifest("@wp-typia/project-tools") ??
+		readPackageManifest(createManifestLocation) ??
+		readPackageManifest(installedProjectToolsManifestLocation) ??
 		{};
 	const blockRuntimeManifest =
-		readPackageManifest(
-			path.join(PROJECT_TOOLS_PACKAGE_ROOT, "..", "wp-typia-block-runtime", "package.json"),
-		) ??
-		resolveInstalledPackageManifest("@wp-typia/block-runtime") ??
+		readPackageManifest(blockRuntimeManifestLocation) ??
+		readPackageManifest(installedBlockRuntimeManifestLocation) ??
 		{};
 	const wpTypiaManifest =
-		readPackageManifest(path.join(PROJECT_TOOLS_PACKAGE_ROOT, "..", "wp-typia", "package.json")) ??
-		resolveInstalledPackageManifest("wp-typia") ??
+		readPackageManifest(wpTypiaManifestLocation) ??
+		readPackageManifest(installedWpTypiaManifestLocation) ??
 		{};
 	const blockRuntimeDependencyVersion = normalizeVersionRange(
 		createManifest.dependencies?.["@wp-typia/block-runtime"],
 	);
-
-	cachedPackageVersions = {
+	const versions = {
 		apiClientPackageVersion: normalizeVersionRange(
 			createManifest.dependencies?.["@wp-typia/api-client"] ??
-				resolveInstalledPackageManifest("@wp-typia/api-client")?.version,
+				readPackageManifest(installedApiClientManifestLocation)?.version,
 		),
 		blockRuntimePackageVersion:
 			blockRuntimeDependencyVersion !== DEFAULT_VERSION_RANGE
@@ -110,16 +200,21 @@ export function getPackageVersions(): PackageVersions {
 				: normalizeVersionRange(blockRuntimeManifest.version),
 		blockTypesPackageVersion: normalizeVersionRange(
 			createManifest.dependencies?.["@wp-typia/block-types"] ??
-				resolveInstalledPackageManifest("@wp-typia/block-types")?.version,
+				readPackageManifest(installedBlockTypesManifestLocation)?.version,
 		),
 		projectToolsPackageVersion: normalizeVersionRange(createManifest.version),
 		restPackageVersion: normalizeVersionRange(
 			createManifest.dependencies?.["@wp-typia/rest"] ??
-				resolveInstalledPackageManifest("@wp-typia/rest")?.version,
+				readPackageManifest(installedRestManifestLocation)?.version,
 		),
 		wpTypiaPackageExactVersion: normalizeExactVersion(wpTypiaManifest.version),
 		wpTypiaPackageVersion: normalizeVersionRange(wpTypiaManifest.version),
 	};
 
-	return cachedPackageVersions;
+	cachedPackageVersions = {
+		cacheKey,
+		versions,
+	};
+
+	return versions;
 }
