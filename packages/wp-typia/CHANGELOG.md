@@ -1,5 +1,12 @@
 # wp-typia
 
+## 0.20.1 — 2026-04-23
+
+### Patch changes
+
+- [f215f32](https://github.com/imjlk/wp-typia/commit/f215f3266fb781178cd0203bb380b6669de8550e) Keep wp-typia's runtime coupling lane aligned with the @wp-typia/project-tools REST helper refactor release. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.19.2
+
 ## 0.20.0 — 2026-04-22
 
 ### Minor changes

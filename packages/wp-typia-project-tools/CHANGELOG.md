@@ -1,5 +1,12 @@
 # @wp-typia/project-tools
 
+## 0.19.2 — 2026-04-23
+
+### Patch changes
+
+- [f215f32](https://github.com/imjlk/wp-typia/commit/f215f3266fb781178cd0203bb380b6669de8550e) Split workspace REST resource scaffolding into focused source-emitter and anchor-repair helpers while preserving the public add command surface. — Thanks @imjlk!
+- [ea377bc](https://github.com/imjlk/wp-typia/commit/ea377bc86876e0d4eb8afbe21583a58186095015) Split built-in non-TypeScript artifact emitters into focused family and render helper modules while preserving the public scaffold artifact facade. — Thanks @imjlk!
+
 ## 0.19.1 — 2026-04-22
 
 ### Patch changes
