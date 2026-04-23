@@ -10,15 +10,19 @@ import type { JsonSchemaDocument } from '../../../packages/wp-typia-block-runtim
 import {
 	buildWordPressAiArtifacts,
 	type ProjectedWordPressAbilitiesDocument,
-	type WordPressAbilityProjectionConfig,
+	type AbilityCategorySpec,
+	type AbilitySpec,
+	type AbilitySpecCatalog,
 	type WordPressAiInputSchemaTransformContext,
 } from '../../../packages/wp-typia-project-tools/src/internal/wordpress-ai';
 
 import { BLOCKS } from './block-config';
 export type {
+	AbilityCategorySpec,
+	AbilitySpec,
+	AbilitySpecCatalog,
 	ProjectedWordPressAbilitiesDocument,
 	ProjectedWordPressAbilityDefinition,
-	WordPressAbilityProjectionConfig,
 } from '../../../packages/wp-typia-project-tools/src/internal/wordpress-ai';
 
 const WORDPRESS_AI_ROOT = 'wordpress-ai';
@@ -36,12 +40,9 @@ export const COUNTER_ABILITIES_RELATIVE_PATH = path.join(
 export const COUNTER_ABILITY_CATEGORY = {
 	id: 'persistence-examples',
 	label: 'Persistence Examples',
-} as const;
+} as const satisfies AbilityCategorySpec;
 
-export const COUNTER_WORDPRESS_ABILITY_CONFIG: Record<
-	string,
-	WordPressAbilityProjectionConfig
-> = {
+export const COUNTER_WORDPRESS_ABILITY_SPECS = {
 	getPersistenceCounterState: {
 		annotations: {
 			idempotent: true,
@@ -67,7 +68,14 @@ export const COUNTER_WORDPRESS_ABILITY_CONFIG: Record<
 			'persistence_examples_can_execute_increment_counter_ability',
 		showInRest: true,
 	},
-} as const satisfies Record< string, WordPressAbilityProjectionConfig >;
+} as const satisfies Record< string, AbilitySpec >;
+
+export const COUNTER_WORDPRESS_ABILITY_CATALOG = {
+	abilities: COUNTER_WORDPRESS_ABILITY_SPECS,
+	categories: {
+		[ COUNTER_ABILITY_CATEGORY.id ]: COUNTER_ABILITY_CATEGORY,
+	},
+} as const satisfies AbilitySpecCatalog;
 
 const SCRIPT_DIR = path.dirname( fileURLToPath( import.meta.url ) );
 const EXAMPLE_ROOT = path.resolve( SCRIPT_DIR, '..' );
@@ -81,14 +89,6 @@ const COUNTER_BLOCK = ( () => {
 
 	return block;
 } )();
-
-const COUNTER_WORDPRESS_AI_MANIFEST: EndpointManifestDefinition = {
-	...COUNTER_BLOCK.restManifest,
-	endpoints: COUNTER_BLOCK.restManifest.endpoints.filter(
-		( endpoint ) =>
-			endpoint.operationId !== 'getPersistenceCounterBootstrap'
-	),
-};
 
 function filterCounterWordPressAiManifest(
 	manifest: EndpointManifestDefinition
@@ -264,25 +264,17 @@ function applyCounterAbilityInputSchemaPolicy( {
 }
 
 export async function buildCounterWordPressAiArtifacts( options?: {
-	abilityConfig?: Record< string, WordPressAbilityProjectionConfig >;
-	category?: {
-		id: string;
-		label: string;
-	};
+	abilityCatalog?: AbilitySpecCatalog;
 	manifest?: EndpointManifestDefinition;
 } ): Promise< {
 	abilitiesDocument: ProjectedWordPressAbilitiesDocument;
 	aiResponseSchema: Record< string, unknown >;
 } > {
 	const manifest = filterCounterWordPressAiManifest(
-		options?.manifest ?? COUNTER_WORDPRESS_AI_MANIFEST
+		options?.manifest ?? COUNTER_BLOCK.restManifest
 	);
-	const abilityConfig = ( options?.abilityConfig ??
-		COUNTER_WORDPRESS_ABILITY_CONFIG ) as Record<
-		string,
-		WordPressAbilityProjectionConfig
-	>;
-	const category = options?.category ?? COUNTER_ABILITY_CATEGORY;
+	const abilityCatalog =
+		options?.abilityCatalog ?? COUNTER_WORDPRESS_ABILITY_CATALOG;
 
 	const responseContractName = manifest.endpoints[ 0 ]?.responseContract;
 	if ( ! responseContractName ) {
@@ -297,9 +289,8 @@ export async function buildCounterWordPressAiArtifacts( options?: {
 	);
 
 	return buildWordPressAiArtifacts( {
-		abilityConfig,
+		abilityCatalog,
 		buildAbilityId: toAbilityId,
-		category,
 		generatedFrom: {
 			blockSlug: COUNTER_BLOCK.slug,
 			responseSchemaPath: COUNTER_AI_RESPONSE_SCHEMA_RELATIVE_PATH,

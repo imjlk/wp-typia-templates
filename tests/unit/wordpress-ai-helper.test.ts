@@ -1,30 +1,30 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from 'bun:test';
 
-import type { JsonSchemaDocument } from "@wp-typia/project-tools";
+import type { JsonSchemaDocument } from '@wp-typia/project-tools';
 
-import counterQuerySchema from "../../examples/persistence-examples/src/blocks/counter/api-schemas/counter-query.schema.json";
-import counterResponseSchema from "../../examples/persistence-examples/src/blocks/counter/api-schemas/counter-response.schema.json";
-import incrementRequestSchema from "../../examples/persistence-examples/src/blocks/counter/api-schemas/increment-request.schema.json";
-import counterResponseAiSchema from "../../examples/persistence-examples/src/blocks/counter/wordpress-ai/counter-response.ai.schema.json";
-import { BLOCKS } from "../../examples/persistence-examples/scripts/block-config";
+import counterQuerySchema from '../../examples/persistence-examples/src/blocks/counter/api-schemas/counter-query.schema.json';
+import counterResponseSchema from '../../examples/persistence-examples/src/blocks/counter/api-schemas/counter-response.schema.json';
+import incrementRequestSchema from '../../examples/persistence-examples/src/blocks/counter/api-schemas/increment-request.schema.json';
+import counterResponseAiSchema from '../../examples/persistence-examples/src/blocks/counter/wordpress-ai/counter-response.ai.schema.json';
+import { BLOCKS } from '../../examples/persistence-examples/scripts/block-config';
 import {
   COUNTER_ABILITY_CATEGORY,
-  COUNTER_WORDPRESS_ABILITY_CONFIG,
-} from "../../examples/persistence-examples/scripts/wordpress-ai-projections";
+  COUNTER_WORDPRESS_ABILITY_CATALOG,
+} from '../../examples/persistence-examples/scripts/wordpress-ai-projections';
 import {
   buildWordPressAiArtifacts,
   buildWordPressAbilitiesDocument,
   projectWordPressAiSchema,
-} from "../../packages/wp-typia-project-tools/src/internal/wordpress-ai";
+} from '../../packages/wp-typia-project-tools/src/internal/wordpress-ai';
 
 const counterManifest = BLOCKS.find(
-  (block) => block.slug === "counter"
+  (block) => block.slug === 'counter',
 )?.restManifest;
 const counterWordPressAiManifest = counterManifest
   ? {
       ...counterManifest,
       endpoints: counterManifest.endpoints.filter(
-        (endpoint) => endpoint.operationId !== "getPersistenceCounterBootstrap"
+        (endpoint) => endpoint.operationId !== 'getPersistenceCounterBootstrap',
       ),
     }
   : undefined;
@@ -39,28 +39,27 @@ const incrementRequestSchemaDocument =
 const counterResponseAiSchemaDocument =
   counterResponseAiSchema as ProjectableSchemaDocument;
 const inputSchemas = {
-  "counter-query": counterQuerySchemaDocument,
-  "increment-request": incrementRequestSchemaDocument,
+  'counter-query': counterQuerySchemaDocument,
+  'increment-request': incrementRequestSchemaDocument,
 } as const;
 
-describe("WordPress AI internal helper", () => {
-  test("projects canonical JSON Schema documents with the ai-structured-output profile", () => {
+describe('WordPress AI internal helper', () => {
+  test('projects canonical JSON Schema documents with the ai-structured-output profile', () => {
     expect(projectWordPressAiSchema(counterResponseSchemaDocument)).toEqual(
-      counterResponseAiSchemaDocument
+      counterResponseAiSchemaDocument,
     );
   });
 
-  test("builds abilities documents from endpoint manifests with projected input and output schemas", async () => {
+  test('builds abilities documents from endpoint manifests with projected input and output schemas', async () => {
     expect(counterManifest).toBeDefined();
     expect(counterWordPressAiManifest).toBeDefined();
 
     const abilitiesDocument = await buildWordPressAbilitiesDocument({
-      abilityConfig: COUNTER_WORDPRESS_ABILITY_CONFIG,
-      category: COUNTER_ABILITY_CATEGORY,
+      abilityCatalog: COUNTER_WORDPRESS_ABILITY_CATALOG,
       generatedFrom: {
-        blockSlug: "counter",
-        responseSchemaPath: "wordpress-ai/counter-response.ai.schema.json",
-        schemaProfile: "ai-structured-output",
+        blockSlug: 'counter',
+        responseSchemaPath: 'wordpress-ai/counter-response.ai.schema.json',
+        schemaProfile: 'ai-structured-output',
       },
       loadInputSchema: async (_endpoint, contractName) => {
         const schema = inputSchemas[contractName as keyof typeof inputSchemas];
@@ -79,25 +78,25 @@ describe("WordPress AI internal helper", () => {
 
     expect(abilitiesDocument.abilities).toEqual([
       expect.objectContaining({
-        authIntent: "public",
-        authMode: "public-read",
+        authIntent: 'public',
+        authMode: 'public-read',
         category: COUNTER_ABILITY_CATEGORY.id,
-        method: "GET",
-        operationId: "getPersistenceCounterState",
+        method: 'GET',
+        operationId: 'getPersistenceCounterState',
         outputSchema: counterResponseAiSchemaDocument,
-        path: "/persistence-examples/v1/counter",
+        path: '/persistence-examples/v1/counter',
       }),
       expect.objectContaining({
-        authIntent: "public-write-protected",
-        authMode: "public-signed-token",
+        authIntent: 'public-write-protected',
+        authMode: 'public-signed-token',
         category: COUNTER_ABILITY_CATEGORY.id,
-        method: "POST",
-        operationId: "incrementPersistenceCounterState",
+        method: 'POST',
+        operationId: 'incrementPersistenceCounterState',
         outputSchema: counterResponseAiSchemaDocument,
-        path: "/persistence-examples/v1/counter",
+        path: '/persistence-examples/v1/counter',
         wordpressAuth: {
-          mechanism: "public-signed-token",
-          publicTokenField: "publicWriteToken",
+          mechanism: 'public-signed-token',
+          publicTokenField: 'publicWriteToken',
         },
       }),
     ]);
@@ -106,67 +105,34 @@ describe("WordPress AI internal helper", () => {
     const postAbility = abilitiesDocument.abilities[1];
 
     expect(getAbility?.inputSchema).toEqual(
-      projectWordPressAiSchema(counterQuerySchemaDocument)
+      projectWordPressAiSchema(counterQuerySchemaDocument),
     );
     expect(postAbility?.inputSchema).toEqual(
-      projectWordPressAiSchema(incrementRequestSchemaDocument)
+      projectWordPressAiSchema(incrementRequestSchemaDocument),
     );
     expect(
-      (postAbility?.inputSchema as { required?: string[] } | null)?.required
-    ).not.toContain("publicWriteToken");
+      (postAbility?.inputSchema as { required?: string[] } | null)?.required,
+    ).not.toContain('publicWriteToken');
   });
 
-  test("fails clearly when an endpoint is missing WordPress-only ability metadata", async () => {
+  test('fails clearly when an endpoint is missing WordPress-only ability metadata', async () => {
     expect(counterManifest).toBeDefined();
     expect(counterWordPressAiManifest).toBeDefined();
 
     await expect(
       buildWordPressAbilitiesDocument({
-        abilityConfig: {
-          getPersistenceCounterState:
-            COUNTER_WORDPRESS_ABILITY_CONFIG.getPersistenceCounterState,
-        },
-        category: COUNTER_ABILITY_CATEGORY,
-        generatedFrom: {
-          blockSlug: "counter",
-          responseSchemaPath: "wordpress-ai/counter-response.ai.schema.json",
-          schemaProfile: "ai-structured-output",
-        },
-        loadInputSchema: async (_endpoint, contractName) => {
-          const schema =
-            inputSchemas[contractName as keyof typeof inputSchemas];
-          if (!schema) {
-            throw new Error(`Unexpected contract "${contractName}".`);
-          }
-
-          return schema;
-        },
-        manifest: counterWordPressAiManifest!,
-        outputSchema: counterResponseAiSchemaDocument,
-      })
-    ).rejects.toThrow(
-      'Missing WordPress ability projection config for operationId "incrementPersistenceCounterState".'
-    );
-  });
-
-  test("fails clearly when ability config category ids drift from the document category", async () => {
-    expect(counterManifest).toBeDefined();
-    expect(counterWordPressAiManifest).toBeDefined();
-
-    await expect(
-      buildWordPressAbilitiesDocument({
-        abilityConfig: {
-          ...COUNTER_WORDPRESS_ABILITY_CONFIG,
-          getPersistenceCounterState: {
-            ...COUNTER_WORDPRESS_ABILITY_CONFIG.getPersistenceCounterState,
-            categoryId: "mismatched-category",
+        abilityCatalog: {
+          ...COUNTER_WORDPRESS_ABILITY_CATALOG,
+          abilities: {
+            getPersistenceCounterState:
+              COUNTER_WORDPRESS_ABILITY_CATALOG.abilities
+                .getPersistenceCounterState,
           },
         },
-        category: COUNTER_ABILITY_CATEGORY,
         generatedFrom: {
-          blockSlug: "counter",
-          responseSchemaPath: "wordpress-ai/counter-response.ai.schema.json",
-          schemaProfile: "ai-structured-output",
+          blockSlug: 'counter',
+          responseSchemaPath: 'wordpress-ai/counter-response.ai.schema.json',
+          schemaProfile: 'ai-structured-output',
         },
         loadInputSchema: async (_endpoint, contractName) => {
           const schema =
@@ -179,23 +145,61 @@ describe("WordPress AI internal helper", () => {
         },
         manifest: counterWordPressAiManifest!,
         outputSchema: counterResponseAiSchemaDocument,
-      })
+      }),
     ).rejects.toThrow(
-      'Operation "getPersistenceCounterState" uses categoryId "mismatched-category" but document category is "persistence-examples".'
+      'Missing AbilitySpec for operationId "incrementPersistenceCounterState".',
     );
   });
 
-  test("fails clearly when endpoints do not share the same response contract", async () => {
+  test('fails clearly when an AbilitySpec category is missing from the catalog', async () => {
+    expect(counterManifest).toBeDefined();
+    expect(counterWordPressAiManifest).toBeDefined();
+
+    await expect(
+      buildWordPressAbilitiesDocument({
+        abilityCatalog: {
+          ...COUNTER_WORDPRESS_ABILITY_CATALOG,
+          abilities: {
+            ...COUNTER_WORDPRESS_ABILITY_CATALOG.abilities,
+            getPersistenceCounterState: {
+              ...COUNTER_WORDPRESS_ABILITY_CATALOG.abilities
+                .getPersistenceCounterState,
+              categoryId: 'mismatched-category',
+            },
+          },
+        },
+        generatedFrom: {
+          blockSlug: 'counter',
+          responseSchemaPath: 'wordpress-ai/counter-response.ai.schema.json',
+          schemaProfile: 'ai-structured-output',
+        },
+        loadInputSchema: async (_endpoint, contractName) => {
+          const schema =
+            inputSchemas[contractName as keyof typeof inputSchemas];
+          if (!schema) {
+            throw new Error(`Unexpected contract "${contractName}".`);
+          }
+
+          return schema;
+        },
+        manifest: counterWordPressAiManifest!,
+        outputSchema: counterResponseAiSchemaDocument,
+      }),
+    ).rejects.toThrow(
+      'Operation "getPersistenceCounterState" references unknown AbilitySpec category "mismatched-category".',
+    );
+  });
+
+  test('fails clearly when endpoints do not share the same response contract', async () => {
     expect(counterManifest).toBeDefined();
 
     await expect(
       buildWordPressAiArtifacts({
-        abilityConfig: COUNTER_WORDPRESS_ABILITY_CONFIG,
-        category: COUNTER_ABILITY_CATEGORY,
+        abilityCatalog: COUNTER_WORDPRESS_ABILITY_CATALOG,
         generatedFrom: {
-          blockSlug: "counter",
-          responseSchemaPath: "wordpress-ai/counter-response.ai.schema.json",
-          schemaProfile: "ai-structured-output",
+          blockSlug: 'counter',
+          responseSchemaPath: 'wordpress-ai/counter-response.ai.schema.json',
+          schemaProfile: 'ai-structured-output',
         },
         loadInputSchema: async (_endpoint, contractName) => {
           const schema =
@@ -210,8 +214,8 @@ describe("WordPress AI internal helper", () => {
           ...counterWordPressAiManifest!,
           contracts: {
             ...counterWordPressAiManifest!.contracts,
-            "alt-counter-response": {
-              sourceTypeName: "PersistenceCounterResponse",
+            'alt-counter-response': {
+              sourceTypeName: 'PersistenceCounterResponse',
             },
           },
           endpoints: counterWordPressAiManifest!.endpoints.map(
@@ -220,14 +224,14 @@ describe("WordPress AI internal helper", () => {
                 ? endpoint
                 : {
                     ...endpoint,
-                    responseContract: "alt-counter-response",
-                  }
+                    responseContract: 'alt-counter-response',
+                  },
           ),
         },
         responseSchema: counterResponseSchemaDocument,
-      })
+      }),
     ).rejects.toThrow(
-      'Endpoint "incrementPersistenceCounterState" uses response contract "alt-counter-response" but expected shared response contract "counter-response".'
+      'Endpoint "incrementPersistenceCounterState" uses response contract "alt-counter-response" but expected shared response contract "counter-response".',
     );
   });
 });

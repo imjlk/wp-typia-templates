@@ -11,6 +11,8 @@ existing persistence counter example.
   `projectJsonSchemaDocument( ..., { profile: "ai-structured-output" } )`
 - Abilities API: the endpoint manifest is a strong typed source, but it is not
   sufficient on its own
+- the repo now names that additive WordPress-only layer `AbilitySpec` instead
+  of treating it as ad hoc per-example projection wiring
 - typia.llm: see [`docs/typia-llm-evaluation.md`](./typia-llm-evaluation.md)
   for the separate build-time tool/function consumer evaluation
 
@@ -44,10 +46,45 @@ The Abilities API proof still needed a WordPress-only extension layer for:
 - execute callback name
 - permission callback name
 - semantic annotations such as `readonly`, `destructive`, and `idempotent`
+- optional MCP exposure metadata such as `meta.mcp.public`
 
 That result is the key design takeaway from `#48`: the manifest is a strong
 typed source, but WordPress-native ability registration still needs a small
-projection layer for execution semantics and capability metadata.
+additive `AbilitySpec` layer for execution semantics and capability metadata.
+
+## Current merge boundary
+
+The current internal split is:
+
+- endpoint manifest owns `operationId`, method/path, summary, request and
+  response contract selection, and auth intent / `wordpressAuth`
+- `AbilitySpec` owns category metadata, WordPress callback names, semantic
+  annotations, optional `meta.mcp.public`, and `showInRest`
+
+That keeps WordPress-only execution semantics out of the backend-neutral REST
+manifest while still letting the two sources compose at build time.
+
+## Compatibility draft for future scaffolds
+
+The repo also now carries a draft AI feature capability model that lets future
+scaffolds describe feature surfaces as either:
+
+- `required`
+- `optional`
+
+That draft is intentionally only a foundation for now. It records the minimum
+WordPress floor and runtime gate expectations for surfaces such as:
+
+- server-side Abilities registration
+- `@wordpress/core-abilities`
+- the WordPress AI Client
+- optional MCP public metadata
+
+Scaffolds do not apply those rules yet. The current state is still:
+
+- no plugin header changes
+- no generated runtime guards
+- no AI-capable scaffold rollout in the supported templates yet
 
 ## What this does not change
 
