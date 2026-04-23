@@ -23,7 +23,6 @@ export type SyncPlannedCommand = {
 	args: string[];
 	command: string;
 	displayCommand: string;
-	script: string;
 	scriptName: SyncScriptName;
 };
 
@@ -240,7 +239,6 @@ function createSyncPlannedCommand(
 			scriptName,
 			extraArgs.join(" "),
 		),
-		script,
 		scriptName,
 	};
 }

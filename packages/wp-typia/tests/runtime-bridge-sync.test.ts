@@ -76,7 +76,6 @@ test("dry-run sync previews commands without requiring installed dependencies", 
 			args: ["run", "sync", "--", "--check"],
 			command: "npm",
 			displayCommand: "npm run sync -- --check",
-			script: "tsx scripts/sync-project.ts",
 			scriptName: "sync",
 		},
 	]);
@@ -113,7 +112,6 @@ test("sync can capture executed script output for structured callers", async () 
 		command: "npm",
 		displayCommand: "npm run sync",
 		exitCode: 0,
-		script: "node scripts/record.mjs sync",
 		scriptName: "sync",
 		stderr: "stderr:sync\n",
 	});
