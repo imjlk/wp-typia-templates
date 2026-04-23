@@ -824,14 +824,7 @@ export async function executeTemplatesCommand(
     if (!template) {
       throw new Error(`Unknown template "${flags.id}".`);
     }
-    printBlock(
-      [
-        formatTemplateSummary(template),
-        formatTemplateFeatures(template),
-        formatTemplateDetails(template),
-      ],
-      printLine,
-    );
+    printBlock([formatTemplateDetails(template)], printLine);
     return;
   }
 

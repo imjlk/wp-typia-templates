@@ -1,8 +1,8 @@
 import { getPrimaryDevelopmentScript } from './local-dev-presets.js';
 import {
-  getCompoundExtensionWorkflowSection,
-  getInitialCommitCommands,
-  getInitialCommitNote,
+	getCompoundExtensionWorkflowSection,
+	getInitialCommitCommands,
+	getInitialCommitNote,
   getOptionalOnboardingNote,
   getOptionalOnboardingSteps,
   getQuickStartWorkflowNote,
@@ -18,6 +18,33 @@ import {
 import { getPackageVersions } from './package-versions.js';
 import type { ScaffoldTemplateVariables } from './scaffold.js';
 import { getScaffoldTemplateVariableGroups } from './scaffold-template-variable-groups.js';
+import {
+	OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
+	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
+	isBuiltInTemplateId,
+} from './template-registry.js';
+
+function formatReadmeTemplateIdentity(templateId: string): string {
+	if (templateId === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE) {
+		return [
+			`- Alias: ${OFFICIAL_WORKSPACE_TEMPLATE_ALIAS}`,
+			`- Package: ${OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE}`,
+			'- Type: official workspace scaffold',
+		].join('\n');
+	}
+
+	if (templateId === 'query-loop') {
+		return ['- Family: query-loop', '- Type: create-time core/query variation scaffold'].join(
+			'\n',
+		);
+	}
+
+	if (isBuiltInTemplateId(templateId)) {
+		return [`- Family: ${templateId}`, '- Type: built-in block scaffold'].join('\n');
+	}
+
+	return [`- Template id: ${templateId}`, '- Type: custom or external scaffold'].join('\n');
+}
 
 /**
  * Builds the generated README markdown for one scaffolded project.
@@ -112,7 +139,7 @@ ${variables.description}
 
 ## Template
 
-${templateId}
+${formatReadmeTemplateIdentity(templateId)}
 
 ## Quick Start
 

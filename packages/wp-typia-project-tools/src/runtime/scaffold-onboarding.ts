@@ -194,6 +194,46 @@ export function getOptionalOnboardingNote(
 }
 
 /**
+ * Returns a shorter optional onboarding note suitable for create completion output.
+ */
+export function getOptionalOnboardingShortNote(
+	packageManager: PackageManagerId,
+	templateId = "basic",
+	options: SyncOnboardingOptions = {},
+): string {
+	const doctorCommand = getDoctorVerificationCommand(packageManager);
+
+	if (templateId === "query-loop") {
+		return `No sync step is generated for this Query Loop scaffold. Edit the variation files directly, then rerun ${formatRunScript(packageManager, "build")}, ${formatRunScript(packageManager, "typecheck")}, or ${doctorCommand} when you want a review pass.`;
+	}
+
+	const optionalSyncScripts = getOptionalSyncScriptNames(templateId, options);
+	const developmentScript = getPrimaryDevelopmentScript(templateId);
+	const devCommand = formatRunScript(packageManager, developmentScript);
+	const isCustomTemplate =
+		!isBuiltInTemplateId(templateId) &&
+		templateId !== OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE;
+
+	if (isCustomTemplate && optionalSyncScripts.length === 0) {
+		return `Follow the template's own artifact-refresh guidance, then use ${doctorCommand} for a quick environment and workspace sanity check.`;
+	}
+
+	if (isCustomTemplate && optionalSyncScripts.length > 0) {
+		const syncSteps = optionalSyncScripts.map((scriptName) =>
+			formatRunScript(packageManager, scriptName),
+		);
+		return `Run ${syncSteps.join(" then ")} before build, typecheck, or ${doctorCommand} when you want a reviewable refresh.`;
+	}
+
+	const syncCommand = formatRunScript(
+		packageManager,
+		optionalSyncScripts.includes("sync") ? "sync" : "sync-types",
+	);
+
+	return `Skip ${syncCommand} during normal ${devCommand} work. Re-run it before build, typecheck, or ${doctorCommand} when you want a reviewable refresh.`;
+}
+
+/**
  * Returns the recommended version-control commands for a fresh scaffold.
  */
 export function getInitialCommitCommands(): string[] {

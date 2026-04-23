@@ -92,6 +92,7 @@ export const BUILTIN_TEMPLATE_IDS = [
 	"query-loop",
 ] as const;
 export const OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE = "@wp-typia/create-workspace-template";
+export const OFFICIAL_WORKSPACE_TEMPLATE_ALIAS = "workspace";
 export type BuiltInTemplateId = (typeof BUILTIN_TEMPLATE_IDS)[number];
 export type PersistencePolicy = "authenticated" | "public";
 
@@ -154,16 +155,34 @@ export function isBuiltInTemplateId(templateId: string): templateId is BuiltInTe
 	return (BUILTIN_TEMPLATE_IDS as readonly string[]).includes(templateId);
 }
 
+export function isOfficialWorkspaceTemplateAlias(templateId: string): boolean {
+	return templateId === OFFICIAL_WORKSPACE_TEMPLATE_ALIAS;
+}
+
+export function normalizeTemplateLookupId(templateId: string): string {
+	return isOfficialWorkspaceTemplateAlias(templateId)
+		? OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
+		: templateId;
+}
+
+export function getUserFacingTemplateId(templateId: string): string {
+	return templateId === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
+		? OFFICIAL_WORKSPACE_TEMPLATE_ALIAS
+		: templateId;
+}
+
 export function listTemplates(): readonly TemplateDefinition[] {
 	return TEMPLATE_REGISTRY;
 }
 
 export function getTemplateById(templateId: string): TemplateDefinition {
-	const template = TEMPLATE_REGISTRY.find((entry) => entry.id === templateId);
+	const normalizedTemplateId = normalizeTemplateLookupId(templateId);
+	const template = TEMPLATE_REGISTRY.find((entry) => entry.id === normalizedTemplateId);
 	if (!template) {
 		throw new Error(
 			`Unknown template "${templateId}". Expected one of: ${[
 				...TEMPLATE_IDS,
+				OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
 				OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 			].join(", ")}`,
 		);
@@ -173,12 +192,12 @@ export function getTemplateById(templateId: string): TemplateDefinition {
 
 export function getTemplateSelectOptions(): Array<{
 	label: string;
-	value: TemplateDefinition["id"];
+	value: string;
 	hint: string;
 }> {
 	return TEMPLATE_REGISTRY.map((template) => ({
-		label: template.id,
-		value: template.id,
+		label: getUserFacingTemplateId(template.id),
+		value: getUserFacingTemplateId(template.id),
 		hint: template.features.join(", "),
 	}));
 }

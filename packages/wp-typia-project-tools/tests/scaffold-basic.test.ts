@@ -295,6 +295,8 @@ describe('@wp-typia/project-tools scaffold core', () => {
       expect(readme).toContain('npm run dev');
       expect(readme).toContain('npm run start');
       expect(readme).toContain('## Quick Start');
+      expect(readme).toContain('- Family: basic');
+      expect(readme).toContain('- Type: built-in block scaffold');
       expect(readme).toContain('## Build and Verify');
       expect(readme).toContain(
         `npx --yes wp-typia@${wpTypiaPackageManifest.version} doctor`,

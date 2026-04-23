@@ -27,6 +27,8 @@ describe("alternate-buffer completion output helpers", () => {
 				nextSteps: ["cd demo-block", "npm install", "npm run dev"],
 				optionalOnboarding: {
 					note: "Run npm run sync before your first commit if you edited types.",
+					shortNote:
+						"Skip npm run sync during normal npm run dev work. Re-run it before build, typecheck, or doctor when you want a reviewable refresh.",
 					steps: ["npm run sync"],
 				},
 				packageManager: "npm",
@@ -51,7 +53,7 @@ describe("alternate-buffer completion output helpers", () => {
 			`npx --yes wp-typia@${packageJson.version} doctor`,
 			"npm run sync",
 		]);
-		expect(payload.optionalNote).toContain("npm run sync");
+		expect(payload.optionalNote).toContain("Skip npm run sync during normal npm run dev work.");
 	});
 
 	test("completion printer keeps warning and next-step ordering stable", () => {
@@ -65,7 +67,8 @@ describe("alternate-buffer completion output helpers", () => {
 					`npx --yes wp-typia@${packageJson.version} doctor`,
 					"npm run sync",
 				],
-				optionalNote: "Review the generated metadata before first commit.",
+				optionalNote:
+					"Skip npm run sync during normal npm run dev work. Re-run it before build, typecheck, or doctor when you want a reviewable refresh.",
 				optionalTitle: "Verify and sync (optional):",
 				preambleLines: ["Template variant: hero"],
 				summaryLines: ["Project directory: /tmp/demo-block"],
@@ -90,7 +93,7 @@ describe("alternate-buffer completion output helpers", () => {
 			"\nVerify and sync (optional):",
 			`  npx --yes wp-typia@${packageJson.version} doctor`,
 			"  npm run sync",
-			"Note: Review the generated metadata before first commit.",
+			"Note: Skip npm run sync during normal npm run dev work. Re-run it before build, typecheck, or doctor when you want a reviewable refresh.",
 		]);
 	});
 
@@ -326,6 +329,8 @@ describe("alternate-buffer completion output helpers", () => {
 				nextSteps: ["cd demo-block"],
 				optionalOnboarding: {
 					note: "Run npm run sync before your first commit if you edited types.",
+					shortNote:
+						"Skip npm run sync during normal npm run dev work. Re-run it before build, typecheck, or doctor when you want a reviewable refresh.",
 					steps: ["npm run sync"],
 				},
 				packageManager: "npm",

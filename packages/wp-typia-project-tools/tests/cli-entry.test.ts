@@ -758,7 +758,8 @@ test("node entry exposes templates and doctor commands", () => {
   expect(templatesOutput).toContain("interactivity");
   expect(templatesOutput).toContain("persistence");
   expect(templatesOutput).toContain("compound");
-  expect(templatesOutput).toContain("@wp-typia/create-workspace-template");
+  expect(templatesOutput).toContain("workspace");
+  expect(templatesOutput).not.toContain("@wp-typia/create-workspace-template");
   expect(templatesOutput).not.toContain("advanced");
   expect(templatesOutput).not.toContain("full");
   expect(doctorOutput).toContain('"label": "Bun"');
@@ -882,7 +883,8 @@ test("bun entry exposes templates and doctor commands", () => {
   expect(templatesOutput).toContain("interactivity");
   expect(templatesOutput).toContain("persistence");
   expect(templatesOutput).toContain("compound");
-  expect(templatesOutput).toContain("@wp-typia/create-workspace-template");
+  expect(templatesOutput).toContain("workspace");
+  expect(templatesOutput).not.toContain("@wp-typia/create-workspace-template");
   expect(templatesOutput).not.toContain("advanced");
   expect(templatesOutput).not.toContain("full");
   expect(doctorOutput).toContain('"label": "Bun"');

@@ -113,6 +113,7 @@ export function buildCreateCompletionPayload(
     nextSteps: string[];
     optionalOnboarding: {
       note: string;
+      shortNote?: string;
       steps: string[];
     };
     packageManager: string;
@@ -139,7 +140,7 @@ export function buildCreateCompletionPayload(
   return {
     nextSteps: flow.nextSteps,
     optionalLines: verificationSteps,
-    optionalNote: flow.optionalOnboarding.note,
+    optionalNote: flow.optionalOnboarding.shortNote ?? flow.optionalOnboarding.note,
     optionalTitle: 'Verify and sync (optional):',
     preambleLines: flow.result.selectedVariant
       ? [`Template variant: ${flow.result.selectedVariant}`]
