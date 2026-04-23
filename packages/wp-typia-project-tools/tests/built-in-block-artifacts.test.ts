@@ -626,7 +626,7 @@ const EXPECTED_CODE_ARTIFACT_HASH_SUMMARIES: Record<
     'src/blocks/demo-compound/manifest-defaults-document.ts':
       '16818959f3d5a7d6',
     'src/blocks/demo-compound/manifest-document.ts': 'b8fffee2c728488e',
-    'src/blocks/demo-compound/render.php': 'a4fc963cd33cebf0',
+    'src/blocks/demo-compound/render.php': '39468e876fcba0b0',
     'src/blocks/demo-compound/save.tsx': '67a2bd4dce77cef6',
     'src/blocks/demo-compound/style.scss': '41a7a2bbf5cd2a34',
     'src/blocks/demo-compound/validators.ts': '71018b1d52460cf2',

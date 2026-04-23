@@ -566,12 +566,6 @@ if ( ! function_exists( '{{phpPrefix}}_{{slugSnakeCase}}_build_render_context' )
 		$storage_mode       = '{{dataStorageMode}}';
 		$persistence_policy = '{{persistencePolicy}}';
 
-		{{phpPrefix}}_record_rendered_block_instance(
-			(int) $post_id,
-			'{{namespace}}/{{slugKebabCase}}',
-			$resource_key
-		);
-
 		$notice_message = 'authenticated' === $persistence_policy
 			? __( 'Sign in to persist this counter.', '{{textDomain}}' )
 			: __( 'Public writes are temporarily unavailable.', '{{textDomain}}' );
@@ -579,6 +573,12 @@ if ( ! function_exists( '{{phpPrefix}}_{{slugSnakeCase}}_build_render_context' )
 		if ( empty( $validation['valid'] ) || '' === $resource_key ) {
 			return null;
 		}
+
+		{{phpPrefix}}_record_rendered_block_instance(
+			(int) $post_id,
+			'{{namespace}}/{{slugKebabCase}}',
+			$resource_key
+		);
 
 		$web_context = array(
 			'bootstrapReady'       => false,
@@ -811,6 +811,12 @@ const COMPOUND_STYLE_TEMPLATE = `.{{cssClassName}} {
 }
 `;
 
+/**
+ * Builds the basic family non-TypeScript scaffold artifacts.
+ *
+ * @param variables Scaffold template variables used to render the artifact set.
+ * @returns The SCSS and PHP artifacts owned by the basic template family.
+ */
 export function buildBasicArtifacts(
 	variables: ScaffoldTemplateVariables,
 ): BuiltInCodeArtifact[] {
@@ -821,6 +827,12 @@ export function buildBasicArtifacts(
 	];
 }
 
+/**
+ * Builds the interactivity family non-TypeScript scaffold artifacts.
+ *
+ * @param variables Scaffold template variables used to render the artifact set.
+ * @returns The SCSS artifacts owned by the interactivity template family.
+ */
 export function buildInteractivityArtifacts(
 	variables: ScaffoldTemplateVariables,
 ): BuiltInCodeArtifact[] {
@@ -834,6 +846,12 @@ export function buildInteractivityArtifacts(
 	];
 }
 
+/**
+ * Builds the persistence family non-TypeScript scaffold artifacts.
+ *
+ * @param variables Scaffold template variables used to render the artifact set.
+ * @returns The persistence SCSS and PHP artifacts for the selected render targets.
+ */
 export function buildPersistenceArtifacts(
 	variables: ScaffoldTemplateVariables,
 ): BuiltInCodeArtifact[] {
@@ -877,6 +895,12 @@ export function buildPersistenceArtifacts(
 	return artifacts;
 }
 
+/**
+ * Builds the compound family non-TypeScript scaffold artifacts.
+ *
+ * @param variables Scaffold template variables used to render the artifact set.
+ * @returns The compound SCSS and PHP artifacts, including persistence variants when enabled.
+ */
 export function buildCompoundArtifacts(
 	variables: ScaffoldTemplateVariables,
 ): BuiltInCodeArtifact[] {
@@ -970,12 +994,6 @@ $post_id            = is_object( $block ) && isset( $block->context['postId'] )
 $storage_mode       = '{{dataStorageMode}}';
 $persistence_policy = '{{persistencePolicy}}';
 
-{{phpPrefix}}_record_rendered_block_instance(
-	(int) $post_id,
-	'{{namespace}}/{{slugKebabCase}}',
-	$resource_key
-);
-
 $notice_message    = 'authenticated' === $persistence_policy
 	? __( 'Sign in to persist this counter.', '{{textDomain}}' )
 	: __( 'Public writes are temporarily unavailable.', '{{textDomain}}' );
@@ -983,6 +1001,12 @@ $notice_message    = 'authenticated' === $persistence_policy
 if ( empty( $validation['valid'] ) || '' === $resource_key ) {
 	return '';
 }
+
+{{phpPrefix}}_record_rendered_block_instance(
+	(int) $post_id,
+	'{{namespace}}/{{slugKebabCase}}',
+	$resource_key
+);
 
 $context = array(
 	'bootstrapReady'       => false,
