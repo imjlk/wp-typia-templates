@@ -327,20 +327,9 @@ export function deleteResource( request: ${pascalCase}DeleteQuery ) {
 }`);
 	}
 
-	return `import {
-\tcallEndpoint,
-\tresolveRestRouteUrl,
-} from '@wp-typia/rest';
-
-import type {
-\t${Array.from(typeImports).sort().join(",\n\t")},
-} from './api-types';
-import {
-\t${clientEndpointImports.sort().join(",\n\t")},
-} from './api-client';
-${writeMethods.length > 0
-	? `
-function resolveRestNonce( fallback?: string ): string | undefined {
+	const resolveRestNonceSource =
+		writeMethods.length > 0
+			? `function resolveRestNonce( fallback?: string ): string | undefined {
 \tif ( typeof fallback === 'string' && fallback.length > 0 ) {
 \t\treturn fallback;
 \t}
@@ -360,8 +349,22 @@ function resolveRestNonce( fallback?: string ): string | undefined {
 \t\t? wpApiSettings.nonce
 \t\t: undefined;
 }
+
 `
-	: ""}
+			: "";
+
+	return `import {
+\tcallEndpoint,
+\tresolveRestRouteUrl,
+} from '@wp-typia/rest';
+
+import type {
+\t${Array.from(typeImports).sort().join(",\n\t")},
+} from './api-types';
+import {
+\t${clientEndpointImports.sort().join(",\n\t")},
+} from './api-client';
+${resolveRestNonceSource}
 ${exportedBindings.join("\n\n")}
 `;
 }
