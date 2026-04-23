@@ -18,6 +18,8 @@ export const CLI_DIAGNOSTIC_CODES = {
 	MISSING_ARGUMENT: "missing-argument",
 	MISSING_BUILD_ARTIFACT: "missing-build-artifact",
 	OUTSIDE_PROJECT_ROOT: "outside-project-root",
+	TEMPLATE_SOURCE_TIMEOUT: "template-source-timeout",
+	TEMPLATE_SOURCE_TOO_LARGE: "template-source-too-large",
 	UNSUPPORTED_COMMAND: "unsupported-command",
 } as const;
 
@@ -34,6 +36,7 @@ const DEFAULT_CLI_FAILURE_SUMMARIES: Record<string, string> = {
 	add: "Unable to complete the requested add workflow.",
 	create: "Unable to complete the requested create workflow.",
 	doctor: "One or more doctor checks failed.",
+	init: "Unable to preview the requested retrofit init plan.",
 	mcp: "Unable to inspect or sync MCP metadata.",
 	migrate: "Unable to complete the requested migration command.",
 	sync: "Unable to complete the requested sync workflow.",
@@ -235,6 +238,12 @@ function inferCliDiagnosticCode(options: {
 	}
 	if (/dependencies have not been installed yet/u.test(haystack)) {
 		return CLI_DIAGNOSTIC_CODES.DEPENDENCIES_NOT_INSTALLED;
+	}
+	if (/Timed out while .*external template|Timed out while .*npm template|Timed out while .*GitHub template/u.test(haystack)) {
+		return CLI_DIAGNOSTIC_CODES.TEMPLATE_SOURCE_TIMEOUT;
+	}
+	if (/external template size limit/u.test(haystack)) {
+		return CLI_DIAGNOSTIC_CODES.TEMPLATE_SOURCE_TOO_LARGE;
 	}
 	if (options.command === "doctor") {
 		return CLI_DIAGNOSTIC_CODES.DOCTOR_CHECK_FAILED;

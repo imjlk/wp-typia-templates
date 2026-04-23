@@ -88,6 +88,8 @@ Current stable `error.code` vocabulary:
 - `missing-argument`
 - `missing-build-artifact`
 - `outside-project-root`
+- `template-source-timeout`
+- `template-source-too-large`
 - `unsupported-command`
 
 That same JSON contract should apply both to command-handler failures and to

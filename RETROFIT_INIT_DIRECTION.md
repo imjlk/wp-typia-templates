@@ -11,6 +11,8 @@ This note is the stable place to accumulate that direction before a full
 Today the supported entrypoints are intentionally split:
 
 - `wp-typia create` scaffolds a new project or workspace from a known template.
+- `wp-typia init` now previews the minimum retrofit adoption layer for the
+  current project directory, but it still stops short of writing files.
 - `wp-typia add ...` extends an official `wp-typia` workspace after it already
   exists.
 - `wp-typia migrate init` retrofits **migration support only** into projects that
@@ -18,7 +20,8 @@ Today the supported entrypoints are intentionally split:
 
 That means there is still no general-purpose command that takes an arbitrary
 existing WordPress project and adopts the minimum `wp-typia` infrastructure in a
-single supported flow.
+single supported write flow. The current `init` command is the read-only
+planning entrypoint for that future direction.
 
 ## Direction
 
@@ -73,6 +76,8 @@ To keep retrofit predictable, the workflow should prefer:
 ## Relationship To Existing Commands
 
 - `wp-typia create` remains the recommended path for new projects.
+- `wp-typia init` is the current preview-only retrofit planner. A future write
+  mode should grow out of that surface instead of bypassing it.
 - `wp-typia migrate init` remains the migration-only retrofit command for
   supported `wp-typia`-style layouts.
 - a future `wp-typia init` should cover broader typed-artifact adoption, not

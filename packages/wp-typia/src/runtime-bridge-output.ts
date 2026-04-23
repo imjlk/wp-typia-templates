@@ -217,6 +217,102 @@ export function buildCreateDryRunPayload(
   };
 }
 
+/**
+ * Builds the completion payload shown after an init preview succeeds.
+ *
+ * @param plan Preview-only retrofit init plan for one project directory.
+ * @returns A structured alternate-buffer completion payload.
+ */
+export function buildInitCompletionPayload(
+  plan: {
+    detectedLayout: {
+      blockNames: string[];
+      description: string;
+      kind: string;
+    };
+    generatedArtifacts: string[];
+    nextSteps: string[];
+    notes: string[];
+    packageChanges: {
+      addDevDependencies: Array<{
+        action: 'add' | 'update';
+        name: string;
+        requiredValue: string;
+      }>;
+      packageManagerField?: {
+        action: 'add' | 'update';
+        requiredValue: string;
+      };
+      scripts: Array<{
+        action: 'add' | 'update';
+        name: string;
+        requiredValue: string;
+      }>;
+    };
+    plannedFiles: Array<{
+      path: string;
+      purpose: string;
+    }>;
+    packageManager: PackageManagerId;
+    projectDir: string;
+    projectName: string;
+    status: 'already-initialized' | 'preview';
+    summary: string;
+  },
+  markerOptions?: OutputMarkerOptions,
+): AlternateBufferCompletionPayload {
+  const plannedChanges = [
+    ...plan.packageChanges.addDevDependencies.map(
+      (dependency) =>
+        `devDependency ${dependency.action} ${dependency.name} -> ${dependency.requiredValue}`,
+    ),
+    ...(plan.packageChanges.packageManagerField
+      ? [
+          `packageManager ${plan.packageChanges.packageManagerField.action} -> ${plan.packageChanges.packageManagerField.requiredValue}`,
+        ]
+      : []),
+    ...plan.packageChanges.scripts.map(
+      (script) =>
+        `script ${script.action} ${script.name} -> ${script.requiredValue}`,
+    ),
+    ...plan.plannedFiles.map(
+      (filePlan) => `file add ${filePlan.path} (${filePlan.purpose})`,
+    ),
+    ...plan.generatedArtifacts.map(
+      (artifactPath) => `generated artifact ${artifactPath}`,
+    ),
+  ];
+
+  return {
+    nextSteps: plan.nextSteps,
+    optionalLines: plannedChanges,
+    optionalNote: plan.summary,
+    optionalTitle: `Planned adoption changes (${plannedChanges.length}):`,
+    summaryLines: [
+      `Project directory: ${plan.projectDir}`,
+      `Detected layout: ${plan.detectedLayout.description}`,
+      ...(plan.detectedLayout.blockNames.length > 0
+        ? [`Block targets: ${plan.detectedLayout.blockNames.join(', ')}`]
+        : []),
+      `Package manager: ${plan.packageManager}`,
+      'Mode: preview only; no files were written.',
+    ],
+    title:
+      plan.status === 'already-initialized'
+        ? formatOutputMarker(
+            'success',
+            `wp-typia init: ${plan.projectName} is already initialized`,
+            markerOptions,
+          )
+        : formatOutputMarker(
+            'dryRun',
+            `Retrofit init plan for ${plan.projectName}`,
+            markerOptions,
+          ),
+    warningLines: plan.notes,
+  };
+}
+
 function inferProjectPackageManager(projectDir: string): PackageManagerId {
   try {
     const packageJsonPath = path.join(projectDir, 'package.json');

@@ -5,6 +5,11 @@ import { promises as fsp } from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
+import {
+  assertExternalTemplateFileSize,
+  getExternalTemplateConfigMaxBytes,
+  withExternalTemplateTimeout,
+} from './external-template-guards.js'
 import { isPlainObject, type UnknownRecord } from './object-utils.js'
 import { toSegmentPascalCase } from './string-case.js'
 import { createManagedTempRoot } from './temp-roots.js'
@@ -73,8 +78,15 @@ async function loadExternalTemplateConfig<
     throw new Error(`No external template config entry found in ${sourceDir}.`)
   }
 
+  assertExternalTemplateFileSize(entryPath, {
+    label: `External template config "${entryPath}"`,
+    maxBytes: getExternalTemplateConfigMaxBytes(),
+  })
   const moduleUrl = `${pathToFileURL(entryPath).href}?mtime=${fs.statSync(entryPath).mtimeMs}`
-  const loadedModule = (await import(moduleUrl)) as Record<string, unknown>
+  const loadedModule = (await withExternalTemplateTimeout(
+    `loading external template config "${entryPath}"`,
+    () => import(moduleUrl),
+  )) as Record<string, unknown>
   const loadedConfig = loadedModule.default ?? loadedModule
   if (!isPlainObject(loadedConfig)) {
     throw new Error(
@@ -229,11 +241,15 @@ async function buildExternalTemplateView(
     mergedView[getVariantFlagName(selectedVariant)] = true
   }
 
-  if (!config.transformer) {
+  const transformer = config.transformer
+  if (!transformer) {
     return mergedView
   }
 
-  const transformed = await config.transformer(mergedView)
+  const transformed = await withExternalTemplateTimeout(
+    `running external template transformer for "${context.slug}"`,
+    () => Promise.resolve(transformer(mergedView)),
+  )
   if (!isPlainObject(transformed)) {
     throw new Error(
       'External template transformer(view) must return an object.',

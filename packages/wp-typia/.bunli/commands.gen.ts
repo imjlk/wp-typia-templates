@@ -7,19 +7,21 @@ import { createGeneratedHelpers, registerGeneratedStore } from '@bunli/core'
 import Add from '../src/commands/add.js'
 import Create from '../src/commands/create.js'
 import Doctor from '../src/commands/doctor.js'
+import Init from '../src/commands/init.js'
 import Mcp from '../src/commands/mcp.js'
 import Migrate from '../src/commands/migrate.js'
 import Sync from '../src/commands/sync.js'
 import Templates from '../src/commands/templates.js'
 
 // Narrow list of command names to avoid typeof-cycles in types
-const names = ['add', 'create', 'doctor', 'mcp', 'migrate', 'sync', 'templates'] as const
+const names = ['add', 'create', 'doctor', 'init', 'mcp', 'migrate', 'sync', 'templates'] as const
 type GeneratedNames = typeof names[number]
 
 const modules: Record<GeneratedNames, Command<any>> = {
   'add': Add,
   'create': Create,
   'doctor': Doctor,
+  'init': Init,
   'mcp': Mcp,
   'migrate': Migrate,
   'sync': Sync,
@@ -41,6 +43,11 @@ const metadata: Record<GeneratedNames, GeneratedCommandMeta> = {
       name: 'doctor',
       description: 'Run repository and project diagnostics.',
       path: './src/commands/doctor'
+    },
+  'init': {
+      name: 'init',
+      description: 'Preview the minimum wp-typia retrofit plan for an existing project.',
+      path: './src/commands/init'
     },
   'mcp': {
       name: 'mcp',

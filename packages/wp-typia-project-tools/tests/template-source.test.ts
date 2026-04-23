@@ -1,12 +1,13 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
+import * as http from "node:http";
 import * as path from "node:path";
 import { blockTypesPackageVersion, cleanupScaffoldTempRoot, createBlockExternalFixturePath, createBlockSubsetFixturePath, createScaffoldTempRoot, normalizedBlockRuntimePackageVersion, packageRoot, templateLayerFixturePath, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
 import { getTemplateVariables, scaffoldProject } from "../src/runtime/index.js";
 import { resolveTemplateId } from "../src/runtime/scaffold.js";
 import { copyRenderedDirectory } from "../src/runtime/template-render.js";
-import { parseGitHubTemplateLocator, parseNpmTemplateLocator, parseTemplateLocator } from "../src/runtime/template-source.js";
+import { parseGitHubTemplateLocator, parseNpmTemplateLocator, parseTemplateLocator, resolveTemplateSeed } from "../src/runtime/template-source.js";
 import { EXTERNAL_TEMPLATE_TRUST_WARNING } from "../src/runtime/template-source-external.js";
 
 describe("@wp-typia/project-tools template sources", () => {
@@ -15,6 +16,36 @@ describe("@wp-typia/project-tools template sources", () => {
   afterAll(() => {
     cleanupScaffoldTempRoot(tempRoot);
   });
+
+  async function startStubServer(
+    handler: (
+      request: http.IncomingMessage,
+      response: http.ServerResponse<http.IncomingMessage>
+    ) => void
+  ): Promise<{ close: () => Promise<void>; url: string }> {
+    const server = http.createServer(handler);
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", () => resolve());
+    });
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Expected an ephemeral stub server port.");
+    }
+
+    return {
+      close: () =>
+        new Promise<void>((resolve, reject) => {
+          server.close((error) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+            resolve();
+          });
+        }),
+      url: `http://127.0.0.1:${address.port}`,
+    };
+  }
 
 test("getTemplateVariables rejects slugs that normalize to an empty identifier", () => {
   expect(() =>
@@ -182,6 +213,117 @@ test("local official external template configs scaffold with the default variant
   expect(generatedEdit).toContain("standard-transformed");
   expect(generatedBlockJson.editorStyle).toBeUndefined();
   expect(generatedBlockJson.supports.multiple).toBe(false);
+});
+
+test("external template config imports time out with a direct diagnostic", async () => {
+  const fixtureDir = path.join(tempRoot, "create-block-external-timeout");
+  const targetDir = path.join(tempRoot, "demo-external-timeout");
+  fs.cpSync(createBlockExternalFixturePath, fixtureDir, { recursive: true });
+  fs.rmSync(path.join(fixtureDir, "index.cjs"));
+  fs.writeFileSync(
+    path.join(fixtureDir, "index.mjs"),
+    [
+      "await new Promise((resolve) => setTimeout(resolve, 200));",
+      "export default {",
+      '  blockTemplatesPath: "block-templates",',
+      '  assetsPath: "assets",',
+      "};",
+      "",
+    ].join("\n"),
+    "utf8"
+  );
+
+  const previousTimeout = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TIMEOUT_MS;
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TIMEOUT_MS = "25";
+
+  try {
+    await expect(
+      scaffoldProject({
+        projectDir: targetDir,
+        templateId: fixtureDir,
+        packageManager: "npm",
+        noInstall: true,
+        answers: {
+          author: "Test Runner",
+          description: "Timed out external block",
+          namespace: "create-block",
+          slug: "demo-external-timeout",
+          title: "Demo External Timeout",
+        },
+      })
+    ).rejects.toThrow(/Timed out while loading external template config/);
+  } finally {
+    if (previousTimeout === undefined) {
+      delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TIMEOUT_MS;
+    } else {
+      process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TIMEOUT_MS = previousTimeout;
+    }
+  }
+});
+
+test("npm template tarballs that exceed the configured size limit fail early", async () => {
+  let serverUrl = "";
+  const server = await startStubServer((request, response) => {
+    if ((request.url ?? "") === "/%40scope%2Ftemplate") {
+      response.writeHead(200, {
+        "content-type": "application/json; charset=utf-8",
+      });
+      response.end(
+        JSON.stringify({
+          "dist-tags": {
+            latest: "1.0.0",
+          },
+          versions: {
+            "1.0.0": {
+              dist: {
+                tarball: `${serverUrl}/template.tgz`,
+              },
+            },
+          },
+        })
+      );
+      return;
+    }
+
+    if ((request.url ?? "") === "/template.tgz") {
+      const payload = Buffer.alloc(128, 65);
+      response.writeHead(200, {
+        "content-length": String(payload.length),
+        "content-type": "application/octet-stream",
+      });
+      response.end(payload);
+      return;
+    }
+
+    response.writeHead(404);
+    response.end("not found");
+  });
+  serverUrl = server.url;
+
+  const previousRegistry = process.env.NPM_CONFIG_REGISTRY;
+  const previousTarballLimit =
+    process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TARBALL_MAX_BYTES;
+  process.env.NPM_CONFIG_REGISTRY = server.url;
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TARBALL_MAX_BYTES = "64";
+
+  try {
+    await expect(
+      resolveTemplateSeed(parseTemplateLocator("@scope/template"), tempRoot)
+    ).rejects.toThrow(/external template size limit/);
+  } finally {
+    if (previousRegistry === undefined) {
+      delete process.env.NPM_CONFIG_REGISTRY;
+    } else {
+      process.env.NPM_CONFIG_REGISTRY = previousRegistry;
+    }
+    if (previousTarballLimit === undefined) {
+      delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TARBALL_MAX_BYTES;
+    } else {
+      process.env.WP_TYPIA_EXTERNAL_TEMPLATE_TARBALL_MAX_BYTES =
+        previousTarballLimit;
+    }
+    await server.close();
+  }
 });
 
 test("local official external template configs honor --variant overrides", async () => {

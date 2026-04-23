@@ -2,11 +2,20 @@ import fs from 'node:fs'
 import { promises as fsp } from 'node:fs'
 import { createRequire } from 'node:module'
 import path from 'node:path'
-import { execFileSync } from 'node:child_process'
+import { spawnSync } from 'node:child_process'
 
 import semver from 'semver'
 import { x as extractTarball } from 'tar'
 
+import {
+  createExternalTemplateTimeoutError,
+  fetchWithExternalTemplateTimeout,
+  getExternalTemplateMetadataMaxBytes,
+  getExternalTemplateTarballMaxBytes,
+  getExternalTemplateTimeoutMs,
+  readBufferResponseWithLimit,
+  readJsonResponseWithLimit,
+} from './external-template-guards.js'
 import {
   OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
   PROJECT_TOOLS_PACKAGE_ROOT,
@@ -73,8 +82,12 @@ async function fetchNpmTemplateSource(
   const registryBase = (
     process.env.NPM_CONFIG_REGISTRY ?? 'https://registry.npmjs.org'
   ).replace(/\/$/, '')
-  const metadataResponse = await fetch(
+  const metadataLabel = `fetching npm template metadata for ${locator.raw}`
+  const metadataResponse = await fetchWithExternalTemplateTimeout(
     `${registryBase}/${encodeURIComponent(locator.name)}`,
+    {
+      label: metadataLabel,
+    },
   )
   if (!metadataResponse.ok) {
     throw new Error(
@@ -82,7 +95,10 @@ async function fetchNpmTemplateSource(
     )
   }
 
-  const metadata = (await metadataResponse.json()) as Record<string, unknown>
+  const metadata = await readJsonResponseWithLimit(metadataResponse, {
+    label: `npm template metadata for ${locator.raw}`,
+    maxBytes: getExternalTemplateMetadataMaxBytes(),
+  })
   const resolvedVersion = selectRegistryVersion(metadata, locator)
   const versions = isPlainObject(metadata.versions) ? metadata.versions : {}
   const versionMetadata = versions[resolvedVersion]
@@ -104,7 +120,9 @@ async function fetchNpmTemplateSource(
   )
 
   try {
-    const tarballResponse = await fetch(tarballUrl)
+    const tarballResponse = await fetchWithExternalTemplateTimeout(tarballUrl, {
+      label: `downloading npm template tarball for ${locator.raw}@${resolvedVersion}`,
+    })
     if (!tarballResponse.ok) {
       throw new Error(
         `Failed to download npm template tarball for ${locator.raw}: ${tarballResponse.status}`,
@@ -116,7 +134,10 @@ async function fetchNpmTemplateSource(
     await fsp.mkdir(unpackDir, { recursive: true })
     await fsp.writeFile(
       tarballPath,
-      Buffer.from(await tarballResponse.arrayBuffer()),
+      await readBufferResponseWithLimit(tarballResponse, {
+        label: `npm template tarball for ${locator.raw}@${resolvedVersion}`,
+        maxBytes: getExternalTemplateTarballMaxBytes(),
+      }),
     )
     await extractTarball({
       cwd: unpackDir,
@@ -270,7 +291,40 @@ async function resolveGitHubTemplateSource(
       `https://github.com/${locator.owner}/${locator.repo}.git`,
       checkoutDir,
     )
-    execFileSync('git', args, { stdio: 'ignore' })
+    const cloneTimeoutMs = getExternalTemplateTimeoutMs()
+    const cloneResult = spawnSync('git', args, {
+      stdio: 'ignore',
+      timeout: cloneTimeoutMs,
+    })
+    if (cloneResult.error) {
+      const errorCode =
+        typeof cloneResult.error === 'object' &&
+        cloneResult.error !== null &&
+        'code' in cloneResult.error
+          ? String((cloneResult.error as { code: unknown }).code)
+          : ''
+      if (errorCode === 'ETIMEDOUT') {
+        throw createExternalTemplateTimeoutError(
+          `cloning GitHub template ${locator.owner}/${locator.repo}`,
+          cloneTimeoutMs,
+        )
+      }
+      throw cloneResult.error
+    }
+    if (
+      cloneResult.signal === 'SIGTERM' ||
+      cloneResult.signal === 'SIGKILL'
+    ) {
+      throw createExternalTemplateTimeoutError(
+        `cloning GitHub template ${locator.owner}/${locator.repo}`,
+        cloneTimeoutMs,
+      )
+    }
+    if (cloneResult.status !== 0) {
+      throw new Error(
+        `Failed to clone GitHub template source ${locator.owner}/${locator.repo}.`,
+      )
+    }
 
     const sourceDir = path.resolve(checkoutDir, locator.sourcePath)
     const relativeSourceDir = path.relative(checkoutDir, sourceDir)
