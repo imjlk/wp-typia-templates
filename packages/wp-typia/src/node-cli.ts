@@ -490,14 +490,22 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
 			});
 		}
 		if (mergedFlags.format === "json") {
-			const completion = await executeAddCommand({
-				cwd: process.cwd(),
-				emitOutput: false,
-				flags: mergedFlags,
-				interactive: false,
-				kind: positionals[1],
-				name: positionals[2],
-			});
+			let completion;
+			try {
+				completion = await executeAddCommand({
+					cwd: process.cwd(),
+					emitOutput: false,
+					flags: mergedFlags,
+					interactive: false,
+					kind: positionals[1],
+					name: positionals[2],
+				});
+			} catch (error) {
+				throw createCliCommandError({
+					command: "add",
+					error,
+				});
+			}
 			printLine(
 				JSON.stringify(
 					{

@@ -45,6 +45,7 @@ export type SyncExecutionResult = {
 
 const SYNC_INSTALL_MARKERS = ["node_modules", ".pnp.cjs", ".pnp.loader.mjs"] as const;
 const LOCAL_SYNC_TOOL_PATTERN = /(^|[\s;&|()])(?:tsx|wp-scripts)(?=($|[\s;&|()]))/u;
+const CAPTURED_SYNC_OUTPUT_MAX_BUFFER = 16 * 1024 * 1024;
 
 function formatRunScript(
 	packageManagerId: PackageManagerId,
@@ -271,6 +272,7 @@ function runProjectScript(
 	const result = spawnSync(plannedCommand.command, plannedCommand.args, {
 		cwd: project.cwd,
 		encoding: options.captureOutput ? "utf8" : undefined,
+		...(options.captureOutput ? { maxBuffer: CAPTURED_SYNC_OUTPUT_MAX_BUFFER } : {}),
 		shell: process.platform === "win32",
 		stdio: options.captureOutput ? "pipe" : "inherit",
 	});

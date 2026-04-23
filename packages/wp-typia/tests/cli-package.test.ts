@@ -776,6 +776,27 @@ describe("wp-typia package", () => {
 		}
 	});
 
+	test("preserves add diagnostic metadata in Node fallback JSON mode on failure", () => {
+		const result = runCapturedCommand(
+			process.execPath,
+			[entryPath, "add", "variation", "promo-card", "--format", "json"],
+			{
+				env: withoutLocalBunEnv(),
+			},
+		);
+		const parsed = parseJsonObjectFromOutput<{
+			error?: { code?: string; command?: string; kind?: string };
+			ok?: boolean;
+		}>(result.stderr);
+
+		expect(result.status).toBe(1);
+		expect(result.stdout).toBe("");
+		expect(parsed.ok).toBe(false);
+		expect(parsed.error?.kind).toBe("command-execution");
+		expect(parsed.error?.command).toBe("add");
+		expect(parsed.error?.code).toBe("missing-argument");
+	});
+
 	test("emits a machine-readable outside-project-root error code for sync in Node fallback JSON mode", () => {
 		const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-sync-json-"));
 
