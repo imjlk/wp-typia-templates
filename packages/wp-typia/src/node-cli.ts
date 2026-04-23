@@ -58,11 +58,13 @@ const NODE_FALLBACK_OPTION_PARSER = buildCommandOptionParser(
 	TEMPLATES_OPTION_METADATA,
 );
 const NODE_FALLBACK_BOOLEAN_OPTION_NAMES = ["check", "help", "version"] as const;
+const STANDALONE_GUIDANCE_LINE =
+	"Prefer not to install Bun? Use the standalone wp-typia binary from the GitHub release assets.";
 
 const NODE_FALLBACK_RUNTIME_SUMMARY_LINES = [
 	"Runtime: Node fallback",
 	"Human-readable fallback for common non-interactive create/add/migrate flows, doctor, sync, templates, --help, and --version when Bun is unavailable.",
-	"Install Bun 1.3.11+ or use `bunx wp-typia ...` for the full Bunli/OpenTUI runtime and Bun-only command surfaces such as `skills`, `completions`, and `mcp`.",
+	`Install Bun 1.3.11+ or use \`bunx wp-typia ...\` for the full Bunli/OpenTUI runtime and Bun-only command surfaces such as \`skills\`, \`completions\`, and \`mcp\`. ${STANDALONE_GUIDANCE_LINE}`,
 ];
 
 function printLine(line = "") {
@@ -313,7 +315,7 @@ function renderUnsupportedCommand(command: string) {
 			[
 				`The Bun-free fallback runtime does not support \`${command}\` yet.`,
 				"Supported without Bun: `--version`, `--help`, non-interactive `create`/`add`/`migrate`, `doctor`, `sync`, `templates list`, and `templates inspect`.",
-				"Install Bun 1.3.11+ or use `bunx wp-typia ...` for the full Bunli-powered runtime.",
+				`Install Bun 1.3.11+ or use \`bunx wp-typia ...\` for the full Bunli-powered runtime. ${STANDALONE_GUIDANCE_LINE}`,
 			].join(" "),
 		],
 		summary: "This command requires the Bun-powered runtime.",

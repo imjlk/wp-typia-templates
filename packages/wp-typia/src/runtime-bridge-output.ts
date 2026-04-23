@@ -4,6 +4,11 @@ import path from "node:path";
 import packageJson from "../package.json";
 import { formatPackageExecCommand } from "@wp-typia/project-tools/package-managers";
 import type { AlternateBufferCompletionPayload } from "./ui/alternate-buffer-lifecycle";
+import {
+	formatOutputMarker,
+	type OutputMarkerOptions,
+	stripLeadingOutputMarker,
+} from "./output-markers";
 
 type PrintLine = (line: string) => void;
 type PackageManagerId = "bun" | "npm" | "pnpm" | "yarn";
@@ -29,6 +34,7 @@ type ExternalLayerSelectOption = {
 export function printCompletionPayload(
 	payload: AlternateBufferCompletionPayload,
 	options: {
+		markerOptions?: OutputMarkerOptions;
 		printLine?: PrintLine;
 		warnLine?: PrintLine;
 	} = {},
@@ -40,7 +46,7 @@ export function printCompletionPayload(
 		printLine(line);
 	}
 	for (const warning of payload.warningLines ?? []) {
-		warnLine(`⚠️ ${warning}`);
+		warnLine(formatOutputMarker("warning", warning, options.markerOptions));
 	}
 
 	const hasDetails =
@@ -79,8 +85,15 @@ export function printCompletionPayload(
  * @param payload User-facing scaffold progress payload.
  * @returns A single readable status line.
  */
-export function formatCreateProgressLine(payload: CreateProgressPayload): string {
-	return `⏳ ${payload.title}: ${payload.detail}`;
+export function formatCreateProgressLine(
+	payload: CreateProgressPayload,
+	markerOptions?: OutputMarkerOptions,
+): string {
+	return formatOutputMarker(
+		"progress",
+		`${payload.title}: ${payload.detail}`,
+		markerOptions,
+	);
 }
 
 /**
@@ -104,7 +117,9 @@ export function buildCreateCompletionPayload(flow: {
 		};
 		warnings: string[];
 	};
-}): AlternateBufferCompletionPayload {
+},
+markerOptions?: OutputMarkerOptions,
+): AlternateBufferCompletionPayload {
 	const verificationSteps = [
 		formatPackageExecCommand(
 			flow.packageManager as "bun" | "npm" | "pnpm" | "yarn",
@@ -123,7 +138,11 @@ export function buildCreateCompletionPayload(flow: {
 			? [`Template variant: ${flow.result.selectedVariant}`]
 			: undefined,
 		summaryLines: [`Project directory: ${flow.projectDir}`],
-		title: `✅ Created ${flow.result.variables.title} in ${flow.projectDir}`,
+		title: formatOutputMarker(
+			"success",
+			`Created ${flow.result.variables.title} in ${flow.projectDir}`,
+			markerOptions,
+		),
 		warningLines: flow.result.warnings,
 	};
 }
@@ -149,7 +168,9 @@ export function buildCreateDryRunPayload(flow: {
 		};
 		warnings: string[];
 	};
-}): AlternateBufferCompletionPayload {
+},
+markerOptions?: OutputMarkerOptions,
+): AlternateBufferCompletionPayload {
 	let dependencyInstallLine: string;
 	switch (flow.plan.dependencyInstall) {
 		case "skipped-by-flag":
@@ -174,7 +195,11 @@ export function buildCreateDryRunPayload(flow: {
 			`Package manager: ${flow.packageManager}`,
 			dependencyInstallLine,
 		],
-		title: `🧪 Dry run for ${flow.result.variables.title} at ${flow.projectDir}`,
+		title: formatOutputMarker(
+			"dryRun",
+			`Dry run for ${flow.result.variables.title} at ${flow.projectDir}`,
+			markerOptions,
+		),
 		warningLines: flow.result.warnings,
 	};
 }
@@ -221,12 +246,18 @@ function inferProjectPackageManager(projectDir: string): PackageManagerId {
 export function buildMigrationCompletionPayload(options: {
 	command: string;
 	lines: string[];
-}): AlternateBufferCompletionPayload {
+},
+markerOptions?: OutputMarkerOptions,
+): AlternateBufferCompletionPayload {
 	const summaryLines = options.lines.filter((line) => line.trim().length > 0);
 
 	return {
 		summaryLines,
-		title: `✅ Completed wp-typia migrate ${options.command}`,
+		title: formatOutputMarker(
+			"success",
+			`Completed wp-typia migrate ${options.command}`,
+			markerOptions,
+		),
 	};
 }
 
@@ -249,7 +280,9 @@ export function buildAddCompletionPayload(options: {
 	projectDir: string;
 	values: Record<string, string>;
 	warnings?: string[];
-}): AlternateBufferCompletionPayload {
+},
+markerOptions?: OutputMarkerOptions,
+): AlternateBufferCompletionPayload {
 	const verificationLines = [
 		formatPackageExecCommand(
 			options.packageManager ?? inferProjectPackageManager(options.projectDir),
@@ -275,7 +308,11 @@ export function buildAddCompletionPayload(options: {
 					`Target block: ${options.values.blockSlug}`,
 					`Project directory: ${options.projectDir}`,
 				],
-				title: "✅ Added workspace variation",
+				title: formatOutputMarker(
+					"success",
+					"Added workspace variation",
+					markerOptions,
+				),
 			};
 		case "pattern":
 			return {
@@ -290,7 +327,11 @@ export function buildAddCompletionPayload(options: {
 					`Pattern: ${options.values.patternSlug}`,
 					`Project directory: ${options.projectDir}`,
 				],
-				title: "✅ Added workspace pattern",
+				title: formatOutputMarker(
+					"success",
+					"Added workspace pattern",
+					markerOptions,
+				),
 			};
 		case "binding-source":
 			return {
@@ -305,7 +346,11 @@ export function buildAddCompletionPayload(options: {
 					`Binding source: ${options.values.bindingSourceSlug}`,
 					`Project directory: ${options.projectDir}`,
 				],
-				title: "✅ Added binding source",
+				title: formatOutputMarker(
+					"success",
+					"Added binding source",
+					markerOptions,
+				),
 			};
 		case "rest-resource":
 			return {
@@ -322,7 +367,11 @@ export function buildAddCompletionPayload(options: {
 					`Methods: ${options.values.methods}`,
 					`Project directory: ${options.projectDir}`,
 				],
-				title: "✅ Added plugin-level REST resource",
+				title: formatOutputMarker(
+					"success",
+					"Added plugin-level REST resource",
+					markerOptions,
+				),
 			};
 		case "editor-plugin":
 			return {
@@ -338,7 +387,11 @@ export function buildAddCompletionPayload(options: {
 					`Slot: ${options.values.slot}`,
 					`Project directory: ${options.projectDir}`,
 				],
-				title: "✅ Added editor plugin",
+				title: formatOutputMarker(
+					"success",
+					"Added editor plugin",
+					markerOptions,
+				),
 			};
 		case "hooked-block":
 			return {
@@ -355,7 +408,11 @@ export function buildAddCompletionPayload(options: {
 					`Position: ${options.values.position}`,
 					`Project directory: ${options.projectDir}`,
 				],
-				title: "✅ Added blockHooks metadata",
+				title: formatOutputMarker(
+					"success",
+					"Added blockHooks metadata",
+					markerOptions,
+				),
 			};
 		default:
 			return {
@@ -371,7 +428,11 @@ export function buildAddCompletionPayload(options: {
 					`Template family: ${options.values.templateId}`,
 					`Project directory: ${options.projectDir}`,
 				],
-				title: "✅ Added workspace block",
+				title: formatOutputMarker(
+					"success",
+					"Added workspace block",
+					markerOptions,
+				),
 				warningLines: options.warnings,
 			};
 	}
@@ -386,8 +447,13 @@ export function buildAddCompletionPayload(options: {
 export function buildAddDryRunPayload(options: {
 	completion: AlternateBufferCompletionPayload;
 	fileOperations: string[];
-}): AlternateBufferCompletionPayload {
-	const normalizedTitle = options.completion.title.replace(/^✅\s*Added\s*/u, "");
+},
+markerOptions?: OutputMarkerOptions,
+): AlternateBufferCompletionPayload {
+	const normalizedTitle = stripLeadingOutputMarker(
+		options.completion.title,
+		"success",
+	).replace(/^Added\s*/u, "");
 
 	return {
 		optionalLines: options.fileOperations,
@@ -396,7 +462,11 @@ export function buildAddDryRunPayload(options: {
 		optionalTitle: `Planned workspace updates (${options.fileOperations.length}):`,
 		preambleLines: options.completion.preambleLines,
 		summaryLines: options.completion.summaryLines,
-		title: `🧪 Dry run for ${normalizedTitle || "workspace add command"}`,
+		title: formatOutputMarker(
+			"dryRun",
+			`Dry run for ${normalizedTitle || "workspace add command"}`,
+			markerOptions,
+		),
 		warningLines: options.completion.warningLines,
 	};
 }
