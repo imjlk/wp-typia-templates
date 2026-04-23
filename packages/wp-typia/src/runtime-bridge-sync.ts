@@ -241,7 +241,7 @@ function scriptsLikelyNeedInstalledDependencies(
 
   return candidateScripts.some(
     (script): script is SyncScriptDefinition =>
-      Boolean(script) && LOCAL_SYNC_TOOL_PATTERN.test(script.command),
+      script !== undefined && LOCAL_SYNC_TOOL_PATTERN.test(script.command),
   );
 }
 
