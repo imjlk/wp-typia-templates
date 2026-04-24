@@ -10,12 +10,14 @@ describe('@wp-typia/project-tools import policy', () => {
     const [
       rootModule,
       aiArtifactsModule,
+      typiaLlmModule,
       schemaCoreModule,
       migrationTypesModule,
       metadataCoreModule,
     ] = await Promise.all([
       import('@wp-typia/project-tools'),
       import('@wp-typia/project-tools/ai-artifacts'),
+      import('@wp-typia/project-tools/typia-llm'),
       import('@wp-typia/project-tools/schema-core'),
       import('@wp-typia/block-runtime/migration-types'),
       import('@wp-typia/block-runtime/metadata-core'),
@@ -38,6 +40,20 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(typeof rootModule.runScaffoldFlow).toBe('function');
     expect(typeof aiArtifactsModule.syncWordPressAiArtifacts).toBe('function');
     expect(typeof aiArtifactsModule.projectWordPressAiSchema).toBe('function');
+    expect(
+      typeof typiaLlmModule.buildTypiaLlmEndpointMethodDescriptors,
+    ).toBe('function');
+    expect(
+      typeof typiaLlmModule.projectTypiaLlmApplicationArtifact,
+    ).toBe('function');
+    expect(
+      typeof typiaLlmModule.projectTypiaLlmApplicationFunction,
+    ).toBe('function');
+    expect(
+      typeof typiaLlmModule.projectTypiaLlmStructuredOutputArtifact,
+    ).toBe('function');
+    expect(typeof typiaLlmModule.syncTypiaLlmAdapterModule).toBe('function');
+    expect(typeof typiaLlmModule.renderTypiaLlmModule).toBe('function');
     expect(typeof schemaCoreModule.normalizeEndpointAuthDefinition).toBe(
       'function',
     );
@@ -164,6 +180,9 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(projectToolsReadme).toContain(
       '@wp-typia/project-tools/ai-artifacts',
     );
+    expect(projectToolsReadme).toContain(
+      '@wp-typia/project-tools/typia-llm',
+    );
     expect(projectToolsReadme).toContain('@wp-typia/project-tools/schema-core');
     expect(projectToolsReadme).toContain('BlockGeneratorService');
     expect(projectToolsReadme).toContain('inspectBlockGeneration');
@@ -178,6 +197,7 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(projectToolsReadme).not.toContain('@wp-typia/create');
     expect(apiGuide).toContain('@wp-typia/project-tools');
     expect(apiGuide).toContain('@wp-typia/project-tools/ai-artifacts');
+    expect(apiGuide).toContain('@wp-typia/project-tools/typia-llm');
     expect(apiGuide).toContain('BlockGeneratorService');
     expect(apiGuide).toContain('inspectBlockGeneration');
     expect(apiGuide).toContain('docs/block-generator-architecture.md');
@@ -242,6 +262,7 @@ describe('@wp-typia/project-tools import policy', () => {
       '@wp-typia/project-tools/runtime/*',
     );
     expect(importPolicyDoc).toContain('@wp-typia/project-tools');
+    expect(importPolicyDoc).toContain('@wp-typia/project-tools/typia-llm');
     expect(importPolicyDoc).toContain('BlockGeneratorService');
     expect(importPolicyDoc).toContain('inspectBlockGeneration');
     expect(importPolicyDoc).toContain('docs/block-generator-architecture.md');

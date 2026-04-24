@@ -25,6 +25,11 @@ This document is descriptive, not normative. For support guarantees, see
   style/PHP source assets.
 - `@wp-typia/project-tools/schema-core`
   Schema and OpenAPI helpers for project-level documents.
+- `@wp-typia/project-tools/ai-artifacts`
+  Opt-in WordPress AI artifact sync helpers.
+- `@wp-typia/project-tools/typia-llm`
+  Opt-in build-time `typia.llm` adapter emitter for downstream tool/function
+  consumers.
 - `@wp-typia/block-runtime`
   Generated-project helper root.
 - `@wp-typia/block-runtime/migration-types`
@@ -57,6 +62,8 @@ This document is descriptive, not normative. For support guarantees, see
 - `@wp-typia/rest/react`
 - `@wp-typia/project-tools`
 - `@wp-typia/project-tools/schema-core`
+- `@wp-typia/project-tools/ai-artifacts`
+- `@wp-typia/project-tools/typia-llm`
 - `@wp-typia/block-runtime/migration-types`
 - `@wp-typia/block-runtime/schema-core`
 - `@wp-typia/block-runtime/metadata-core`
@@ -93,7 +100,8 @@ This document is descriptive, not normative. For support guarantees, see
   an implementation detail, not a new CLI surface area.
 - `@wp-typia/project-tools` owns scaffold, add-block, migrate, template,
   doctor, package-manager, starter-manifest, the typed generator boundary, the
-  built-in structural/code emitters, the non-mutating
+  opt-in WordPress AI and `typia.llm` adapter emitters, the built-in
+  structural/code emitters, the non-mutating
   `inspectBlockGeneration(...)` tool contract, and the preferred schema project
   imports.
   Built-in templates no longer ship structural, TS/TSX, style, or block-local

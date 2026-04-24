@@ -6,8 +6,8 @@ This example proves that a `wp-typia` endpoint manifest can drive a small non-PH
 - It serves the same `GET` and `POST` routes from a minimal Node/TypeScript HTTP server.
 - It keeps state in memory and validates requests/responses with generated JSON Schemas derived from the same TypeScript contracts used by the WordPress example.
 - It consumes the generated portable `src/api-client.ts` counter client from the persistence example through `@wp-typia/api-client`.
-- It now also evaluates `typia.llm` as a build-time downstream consumer of the
-  same counter contracts.
+- It now also uses the opt-in `@wp-typia/project-tools/typia-llm` adapter target
+  as a build-time downstream consumer of the same counter contracts.
 
 This is still an architecture proof, but it is now the reference example for
 the generated `src/transport.ts` seam used by persistence scaffolds.
@@ -34,9 +34,9 @@ This first-pass harness checks manifest route parity, response contract parity,
 raw invalid-request behavior, and manifest-level auth metadata parity. It does
 not require runtime-specific WordPress nonce or signed-token enforcement.
 
-## typia.llm evaluation
+## typia.llm adapter target
 
-Run the repo-local evaluation flow with:
+Run the opt-in adapter sync flow with:
 
 ```bash
 bun run sync-typia-llm
@@ -48,8 +48,8 @@ That sync emits these artifacts under `src/typia-llm/`:
 - `counter.llm.application.json`
 - `counter-response.structured-output.json`
 
-This is a build-time proof only. It does not add any runtime LLM dependency to
-generated WordPress plugins, and it does not replace the WordPress AI Client
+This is a build-time adapter target. It does not add any runtime LLM dependency
+to generated WordPress plugins, and it does not replace the WordPress AI Client
 JSON Schema flow used in the separate
 [`docs/wordpress-ai-projections.md`](https://imjlk.github.io/wp-typia/reference/wordpress-ai-projections/)
-evaluation.
+path.

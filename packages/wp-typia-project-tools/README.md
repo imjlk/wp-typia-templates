@@ -16,8 +16,9 @@ Package roles:
 Supported public imports:
 
 - `@wp-typia/project-tools`
-- `@wp-typia/project-tools/ai-artifacts`
 - `@wp-typia/project-tools/schema-core`
+- `@wp-typia/project-tools/ai-artifacts`
+- `@wp-typia/project-tools/typia-llm`
 
 Implementation note:
 
@@ -56,6 +57,13 @@ import {
 } from '@wp-typia/project-tools/ai-artifacts';
 ```
 
+```ts
+import {
+  syncTypiaLlmAdapterModule,
+  projectTypiaLlmApplicationArtifact,
+} from '@wp-typia/project-tools/typia-llm';
+```
+
 `BlockGeneratorService` is the additive typed orchestration boundary for built-in
 block scaffolds. Built-in templates no longer ship structural, TS/TSX, style,
 or block-local `render.php` Mustache files for built-in `types.ts`,
@@ -89,3 +97,10 @@ and `inspectBlockGeneration(...)`. The layer contract record lives in
 [`docs/external-template-layer-composition.md`](https://imjlk.github.io/wp-typia/architecture/external-template-layer-composition/).
 
 If you need metadata sync, editor helpers, validation helpers, or other generated-project runtime utilities, import them directly from `@wp-typia/block-runtime/*`.
+
+`@wp-typia/project-tools/typia-llm` is an opt-in build-time adapter target for
+downstream TypeScript-first tool/function consumers. It renders the generated
+`typia.llm` TypeScript module from endpoint manifests and canonical contract
+types, and exposes JSON-friendly projection helpers for compiled
+`typia.llm.application(...)` and `typia.llm.structuredOutput(...)` results. It
+does not add a generated-project runtime dependency on `typia.llm`.

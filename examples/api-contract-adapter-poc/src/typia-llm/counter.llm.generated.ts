@@ -31,4 +31,3 @@ export const counterLlmApplication =
 
 export const counterResponseStructuredOutput =
 	typia.llm.structuredOutput<PersistenceCounterResponse>();
-

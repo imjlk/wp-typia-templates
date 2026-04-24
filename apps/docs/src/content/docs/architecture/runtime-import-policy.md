@@ -31,6 +31,11 @@ surfaces.
   Project orchestration and programmatic tooling.
 - `@wp-typia/project-tools/schema-core`
   Project schema and OpenAPI helpers.
+- `@wp-typia/project-tools/ai-artifacts`
+  Opt-in WordPress AI artifact sync helpers.
+- `@wp-typia/project-tools/typia-llm`
+  Opt-in build-time `typia.llm` adapter emitter for downstream tool/function
+  consumers.
 - `@wp-typia/block-runtime`
   Generated-project block helper root.
 - `@wp-typia/block-runtime/migration-types`
@@ -86,11 +91,14 @@ Manual orchestration or repo tooling should use:
 
 - `@wp-typia/project-tools`
 - `@wp-typia/project-tools/schema-core`
+- `@wp-typia/project-tools/ai-artifacts`
+- `@wp-typia/project-tools/typia-llm`
 
 Those imports cover scaffold, add-block, migrate, template, doctor, package
 manager, starter manifest, schema/OpenAPI project helpers, the `BlockSpec` /
 `BlockGeneratorService` generator boundary, the non-mutating
-`inspectBlockGeneration(...)` tool contract, and the emitter-owned built-in
+`inspectBlockGeneration(...)` tool contract, opt-in WordPress AI artifacts,
+the build-time `typia.llm` adapter target, and the emitter-owned built-in
 structural/source path where built-in templates no longer ship structural,
 TS/TSX, style, or block-local `render.php` Mustache files.
 

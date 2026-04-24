@@ -23,7 +23,7 @@ AI-safe response schema under `src/ai-features/<slug>/ai-schemas/`.
 - the repo now names that additive WordPress-only layer `AbilitySpec` instead
   of treating it as ad hoc per-example projection wiring
 - typia.llm: see [`docs/typia-llm-evaluation.md`](./typia-llm-evaluation.md)
-  for the separate build-time tool/function consumer evaluation
+  for the separate build-time tool/function adapter target
 
 ## What the PoC emits
 
@@ -101,12 +101,13 @@ Scaffolds do not apply the compatibility policy yet. The current state is:
 - No typed Abilities scaffold is included here yet
 - No MCP integration is included here
 - No frontend or default AI behavior is added to generated projects
-- `typia.llm` remains a separate evaluation path rather than part of the
+- `typia.llm` remains a separate adapter path rather than part of the
   supported WordPress AI sync surface
 
 The main distinction to keep in mind is:
 
 - WordPress AI Client structured outputs still map most naturally to the
   `ai-structured-output` JSON Schema projection
-- `typia.llm` is being evaluated separately as a tool/function-calling
-  downstream consumer of the same TypeScript contracts
+- `typia.llm` is available separately through
+  `@wp-typia/project-tools/typia-llm` as a tool/function-calling downstream
+  consumer of the same TypeScript contracts

@@ -60,7 +60,7 @@ It demonstrates:
 
 - a portable adapter server that mounts the same route table as the shared
   endpoint manifest and OpenAPI document
-- repo-local `typia.llm` artifact generation for adapter-facing REST contracts
+- opt-in `typia.llm` artifact generation for adapter-facing REST contracts
 - explicit `lint` and `format` scripts even though it does not use the
   `wp-scripts` block toolchain
 
