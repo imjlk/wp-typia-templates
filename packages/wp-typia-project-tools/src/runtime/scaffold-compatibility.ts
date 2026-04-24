@@ -212,8 +212,23 @@ export function renderScaffoldCompatibilityConfig(
 		.join("\n");
 }
 
+function replacePluginHeaderVersionFloor(
+	source: string,
+	pattern: RegExp,
+	policyValue: string,
+): string {
+	return source.replace(
+		pattern,
+		(_match, prefix: string, currentValue: string, lineEnding: string) =>
+			`${prefix}${pickHigherHeaderVersionFloor(policyValue, currentValue)}${lineEnding}`,
+	);
+}
+
 /**
  * Patch a generated plugin bootstrap header without lowering custom floors.
+ *
+ * Preserves the original header line endings while replacing empty or invalid
+ * version strings with the policy values.
  */
 export function updatePluginHeaderCompatibility(
 	source: string,
@@ -221,29 +236,19 @@ export function updatePluginHeaderCompatibility(
 ): string {
 	const { pluginHeader } = policy;
 
-	return source
-		.replace(
-			/(\* Requires at least:\s*)([^\n]+)/u,
-			(_match, prefix: string, currentValue: string) =>
-				`${prefix}${pickHigherHeaderVersionFloor(
-					pluginHeader.requiresAtLeast,
-					currentValue,
-				)}`,
-		)
-		.replace(
-			/(\* Tested up to:\s*)([^\n]+)/u,
-			(_match, prefix: string, currentValue: string) =>
-				`${prefix}${pickHigherHeaderVersionFloor(
-					pluginHeader.testedUpTo,
-					currentValue,
-				)}`,
-		)
-		.replace(
-			/(\* Requires PHP:\s*)([^\n]+)/u,
-			(_match, prefix: string, currentValue: string) =>
-				`${prefix}${pickHigherHeaderVersionFloor(
-					pluginHeader.requiresPhp,
-					currentValue,
-				)}`,
-		);
+	const nextSource = replacePluginHeaderVersionFloor(
+		source,
+		/(\* Requires at least:\s*)([^\r\n]*)(\r?)/u,
+		pluginHeader.requiresAtLeast,
+	);
+	const nextSourceWithTestedUpTo = replacePluginHeaderVersionFloor(
+		nextSource,
+		/(\* Tested up to:\s*)([^\r\n]*)(\r?)/u,
+		pluginHeader.testedUpTo,
+	);
+	return replacePluginHeaderVersionFloor(
+		nextSourceWithTestedUpTo,
+		/(\* Requires PHP:\s*)([^\r\n]*)(\r?)/u,
+		pluginHeader.requiresPhp,
+	);
 }

@@ -352,6 +352,33 @@ describe('WordPress AI AbilitySpec foundation', () => {
     expect(nextSource).toContain(' * Requires PHP:      8.1');
   });
 
+  test('preserves CRLF plugin header line endings when updating compatibility floors', () => {
+    const source = [
+      '<?php',
+      '/**',
+      ' * Plugin Name: Demo',
+      ' * Requires at least: 6.7',
+      ' * Tested up to:      6.9',
+      ' * Requires PHP:      8.0',
+      ' */',
+      '',
+    ].join('\r\n');
+    const nextSource = updatePluginHeaderCompatibility(
+      source,
+      resolveScaffoldCompatibilityPolicy(
+        REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
+      ),
+    );
+
+    expect(nextSource).toContain(' * Requires at least: 7.0\r\n');
+    expect(nextSource).toContain(' * Tested up to:      7.0\r\n');
+    expect(nextSource).toContain(' * Requires PHP:      8.0\r\n');
+    const linesBeforeTerminalNewline = nextSource.split('\n').slice(0, -1);
+    expect(
+      linesBeforeTerminalNewline.every((line) => line.endsWith('\r')),
+    ).toBe(true);
+  });
+
   test('rejects invalid version floor segments instead of silently comparing them', () => {
     expect(() =>
       resolveAiFeatureCapabilityPlan(
