@@ -699,6 +699,7 @@ Official workspaces also support first-class variation, pattern, binding-source,
 wp-typia add variation hero-card --block counter-card
 wp-typia add pattern hero-layout
 wp-typia add binding-source hero-data
+wp-typia add ability review-workflow
 wp-typia add ai-feature brief-suggestions --namespace my-plugin/v1
 wp-typia add hooked-block counter-card --anchor core/post-content --position after
 ```
@@ -712,6 +713,10 @@ starter contract keeps one field-keyed data map in each file, so the common
 follow-up is to edit `src/bindings/<name>/server.php` and
 `src/bindings/<name>/editor.ts` in parallel by replacing the default starter
 values for the fields you want to expose.
+Workflow abilities are generated under `src/abilities/*/` plus
+`inc/abilities/*.php` and scaffold typed input/output contracts, JSON Schema
+sync, server-side Abilities API registration, and a lightweight admin/editor
+client helper that expects the WordPress abilities client to be available.
 AI features are generated under `src/ai-features/*/` plus `inc/ai-features/*.php`
 and scaffold a server-owned REST endpoint, AI-safe response schema projection,
 typed endpoint client wrapper, and WordPress AI Client feature-detection seam.

@@ -30,6 +30,9 @@ const WORKSPACE_BINDING_SERVER_GLOB = "/src/bindings/*/server.php";
 const WORKSPACE_BINDING_EDITOR_SCRIPT = "build/bindings/index.js";
 const WORKSPACE_BINDING_EDITOR_ASSET = "build/bindings/index.asset.php";
 const WORKSPACE_REST_RESOURCE_GLOB = "/inc/rest/*.php";
+const WORKSPACE_ABILITY_GLOB = "/inc/abilities/*.php";
+const WORKSPACE_ABILITY_EDITOR_SCRIPT = "build/abilities/index.js";
+const WORKSPACE_ABILITY_EDITOR_ASSET = "build/abilities/index.asset.php";
 const WORKSPACE_AI_FEATURE_GLOB = "/inc/ai-features/*.php";
 const WORKSPACE_EDITOR_PLUGIN_EDITOR_SCRIPT = "build/editor-plugins/index.js";
 const WORKSPACE_EDITOR_PLUGIN_EDITOR_ASSET = "build/editor-plugins/index.asset.php";
@@ -453,6 +456,152 @@ function checkWorkspaceRestResourceBootstrap(
 	);
 }
 
+function getWorkspaceAbilityRequiredFiles(
+	ability: WorkspaceInventory["abilities"][number],
+): string[] {
+	return Array.from(
+		new Set([
+			ability.clientFile,
+			ability.configFile,
+			ability.dataFile,
+			ability.inputSchemaFile,
+			ability.outputSchemaFile,
+			ability.phpFile,
+			ability.typesFile,
+		]),
+	);
+}
+
+function checkWorkspaceAbilityConfig(
+	projectDir: string,
+	ability: WorkspaceInventory["abilities"][number],
+): DoctorCheck {
+	const configPath = path.join(projectDir, ability.configFile);
+	if (!fs.existsSync(configPath)) {
+		return createDoctorCheck(
+			`Ability config ${ability.slug}`,
+			"fail",
+			`Missing ${ability.configFile}`,
+		);
+	}
+
+	try {
+		const config = JSON.parse(fs.readFileSync(configPath, "utf8")) as {
+			abilityId?: unknown;
+			category?: { slug?: unknown };
+		};
+		const abilityId =
+			typeof config.abilityId === "string" ? config.abilityId.trim() : "";
+		const categorySlug =
+			typeof config.category?.slug === "string"
+				? config.category.slug.trim()
+				: "";
+		const hasValidAbilityId = /^[a-z0-9-]+\/[a-z0-9-]+$/u.test(abilityId);
+		const hasValidCategorySlug = /^[a-z0-9-]+$/u.test(categorySlug);
+
+		return createDoctorCheck(
+			`Ability config ${ability.slug}`,
+			hasValidAbilityId && hasValidCategorySlug ? "pass" : "fail",
+			hasValidAbilityId && hasValidCategorySlug
+				? `Ability id ${abilityId} in category ${categorySlug} is valid`
+				: "Ability config must define a valid abilityId (`namespace/ability-name`) and category.slug.",
+		);
+	} catch (error) {
+		return createDoctorCheck(
+			`Ability config ${ability.slug}`,
+			"fail",
+			error instanceof Error ? error.message : String(error),
+		);
+	}
+}
+
+function checkWorkspaceAbilityBootstrap(
+	projectDir: string,
+	packageName: string,
+	phpPrefix: string,
+): DoctorCheck {
+	const packageBaseName = packageName.split("/").pop() ?? packageName;
+	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
+	if (!fs.existsSync(bootstrapPath)) {
+		return createDoctorCheck(
+			"Ability bootstrap",
+			"fail",
+			`Missing ${path.basename(bootstrapPath)}`,
+		);
+	}
+
+	const source = fs.readFileSync(bootstrapPath, "utf8");
+	const loadFunctionName = `${phpPrefix}_load_workflow_abilities`;
+	const enqueueFunctionName = `${phpPrefix}_enqueue_workflow_abilities`;
+	const loadHook = `add_action( 'plugins_loaded', '${loadFunctionName}' );`;
+	const adminEnqueueHook = `add_action( 'admin_enqueue_scripts', '${enqueueFunctionName}' );`;
+	const editorEnqueueHook = `add_action( 'enqueue_block_editor_assets', '${enqueueFunctionName}' );`;
+	const hasLoaderHook = source.includes(loadHook);
+	const hasAdminEnqueueHook = source.includes(adminEnqueueHook);
+	const hasEditorEnqueueHook = source.includes(editorEnqueueHook);
+	const hasServerGlob = source.includes(WORKSPACE_ABILITY_GLOB);
+	const hasEditorScript = source.includes(WORKSPACE_ABILITY_EDITOR_SCRIPT);
+	const hasEditorAsset = source.includes(WORKSPACE_ABILITY_EDITOR_ASSET);
+
+	return createDoctorCheck(
+		"Ability bootstrap",
+		hasLoaderHook &&
+			hasAdminEnqueueHook &&
+			hasEditorEnqueueHook &&
+			hasServerGlob &&
+			hasEditorScript &&
+			hasEditorAsset
+			? "pass"
+			: "fail",
+		hasLoaderHook &&
+			hasAdminEnqueueHook &&
+			hasEditorEnqueueHook &&
+			hasServerGlob &&
+			hasEditorScript &&
+			hasEditorAsset
+			? "Ability loader and admin/editor client bootstrap hooks are present"
+			: "Missing ability loader hook or build/abilities script asset references",
+	);
+}
+
+function checkWorkspaceAbilityIndex(
+	projectDir: string,
+	abilities: WorkspaceInventory["abilities"],
+): DoctorCheck {
+	const indexRelativePath = [
+		path.join("src", "abilities", "index.ts"),
+		path.join("src", "abilities", "index.js"),
+	].find((relativePath) => fs.existsSync(path.join(projectDir, relativePath)));
+
+	if (!indexRelativePath) {
+		return createDoctorCheck(
+			"Abilities index",
+			"fail",
+			"Missing src/abilities/index.ts or src/abilities/index.js",
+		);
+	}
+
+	const indexPath = path.join(projectDir, indexRelativePath);
+	const source = fs.readFileSync(indexPath, "utf8");
+	const missingExports = abilities.filter((ability) => {
+		const exportPattern = new RegExp(
+			`^\\s*export\\s+(?:\\*\\s+from|\\{[^}]+\\}\\s+from)\\s+['"\`]\\./${escapeRegex(
+				ability.slug,
+			)}\\/client['"\`]`,
+			"mu",
+		);
+		return !exportPattern.test(source);
+	});
+
+	return createDoctorCheck(
+		"Abilities index",
+		missingExports.length === 0 ? "pass" : "fail",
+		missingExports.length === 0
+			? "Ability client helpers are aggregated"
+			: `Missing ability exports for: ${missingExports.map((entry) => entry.slug).join(", ")}`,
+	);
+}
+
 function getWorkspaceAiFeatureRequiredFiles(
 	aiFeature: WorkspaceInventory["aiFeatures"][number],
 ): string[] {
@@ -769,7 +918,7 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 			createDoctorCheck(
 				"Workspace inventory",
 				"pass",
-				`${inventory.blocks.length} block(s), ${inventory.variations.length} variation(s), ${inventory.patterns.length} pattern(s), ${inventory.bindingSources.length} binding source(s), ${inventory.restResources.length} REST resource(s), ${inventory.aiFeatures.length} AI feature(s), ${inventory.editorPlugins.length} editor plugin(s)`,
+				`${inventory.blocks.length} block(s), ${inventory.variations.length} variation(s), ${inventory.patterns.length} pattern(s), ${inventory.bindingSources.length} binding source(s), ${inventory.restResources.length} REST resource(s), ${inventory.abilities.length} ability scaffold(s), ${inventory.aiFeatures.length} AI feature(s), ${inventory.editorPlugins.length} editor plugin(s)`,
 			),
 		);
 
@@ -856,6 +1005,29 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 					workspace.projectDir,
 					`REST resource ${restResource.slug}`,
 					getWorkspaceRestResourceRequiredFiles(restResource),
+				),
+			);
+		}
+
+		if (inventory.abilities.length > 0) {
+			checks.push(
+				checkWorkspaceAbilityBootstrap(
+					workspace.projectDir,
+					workspace.packageName,
+					workspace.workspace.phpPrefix,
+				),
+			);
+			checks.push(
+				checkWorkspaceAbilityIndex(workspace.projectDir, inventory.abilities),
+			);
+		}
+		for (const ability of inventory.abilities) {
+			checks.push(checkWorkspaceAbilityConfig(workspace.projectDir, ability));
+			checks.push(
+				checkExistingFiles(
+					workspace.projectDir,
+					`Ability ${ability.slug}`,
+					getWorkspaceAbilityRequiredFiles(ability),
 				),
 			);
 		}

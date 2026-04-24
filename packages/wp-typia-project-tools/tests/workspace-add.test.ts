@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, runCli, runGeneratedScript, scaffoldOfficialWorkspace, templateLayerFixturePath, templateLayerWorkspaceAmbiguousFixturePath, templateLayerWorkspaceFixturePath, typecheckGeneratedProject, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
+import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, parseJsonObjectFromOutput, runCli, runGeneratedScript, scaffoldOfficialWorkspace, templateLayerFixturePath, templateLayerWorkspaceAmbiguousFixturePath, templateLayerWorkspaceFixturePath, typecheckGeneratedProject, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
 import { runAddBlockCommand } from "../src/runtime/cli-core.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 
@@ -493,9 +493,9 @@ test("canonical CLI can add a variation to an official workspace template", asyn
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
-  const doctorChecks = JSON.parse(doctorOutput) as {
+  const doctorChecks = parseJsonObjectFromOutput<{
     checks: Array<{ detail: string; label: string; status: string }>;
-  };
+  }>(doctorOutput);
   expect(
     doctorChecks.checks.find((check) => check.label === "Workspace inventory")
       ?.status
@@ -635,9 +635,9 @@ test("canonical CLI can add hooked-block metadata to an official workspace block
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
-  const doctorChecks = JSON.parse(doctorOutput) as {
+  const doctorChecks = parseJsonObjectFromOutput<{
     checks: Array<{ detail: string; label: string; status: string }>;
-  };
+  }>(doctorOutput);
   expect(
     doctorChecks.checks.find(
       (check) => check.label === "Block hooks counter-card"
@@ -2170,9 +2170,9 @@ test("canonical CLI can add a pattern to an official workspace template", async 
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
-  const doctorChecks = JSON.parse(doctorOutput) as {
+  const doctorChecks = parseJsonObjectFromOutput<{
     checks: Array<{ detail: string; label: string; status: string }>;
-  };
+  }>(doctorOutput);
   expect(
     doctorChecks.checks.find((check) => check.label === "Pattern bootstrap")
       ?.status
@@ -2286,9 +2286,9 @@ test("canonical CLI can add a binding source to an official workspace template",
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
-  const doctorChecks = JSON.parse(doctorOutput) as {
+  const doctorChecks = parseJsonObjectFromOutput<{
     checks: Array<{ detail: string; label: string; status: string }>;
-  };
+  }>(doctorOutput);
   expect(
     doctorChecks.checks.find((check) => check.label === "Binding bootstrap")
       ?.status
@@ -2575,9 +2575,9 @@ test("canonical CLI can add a plugin-level REST resource to an official workspac
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
-  const doctorChecks = JSON.parse(doctorOutput) as {
+  const doctorChecks = parseJsonObjectFromOutput<{
     checks: Array<{ detail: string; label: string; status: string }>;
-  };
+  }>(doctorOutput);
   expect(
     doctorChecks.checks.find((check) => check.label === "REST resource bootstrap")
       ?.status
@@ -3081,9 +3081,9 @@ test("canonical CLI can add a server-only AI feature to an official workspace te
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
-  const doctorChecks = JSON.parse(doctorOutput) as {
+  const doctorChecks = parseJsonObjectFromOutput<{
     checks: Array<{ detail: string; label: string; status: string }>;
-  };
+  }>(doctorOutput);
   expect(
     doctorChecks.checks.find((check) => check.label === "AI feature bootstrap")
       ?.status
@@ -3101,6 +3101,179 @@ test("canonical CLI can add a server-only AI feature to an official workspace te
 
   runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
   runCli("npm", ["run", "sync-ai", "--", "--check"], { cwd: targetDir });
+  typecheckGeneratedProject(targetDir);
+}, 30_000);
+
+test("canonical CLI can add a typed workflow ability to an official workspace template", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-ability");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add ability",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-ability",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Ability",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli("node", [entryPath, "add", "ability", "review-workflow"], {
+    cwd: targetDir,
+  });
+
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const bootstrapSource = fs.readFileSync(
+    path.join(targetDir, "demo-workspace-add-ability.php"),
+    "utf8"
+  );
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+  ) as {
+    scripts?: Record<string, string>;
+  };
+  const syncProjectSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "sync-project.ts"),
+    "utf8"
+  );
+  const syncAbilitiesSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "sync-abilities.ts"),
+    "utf8"
+  );
+  const buildWorkspaceSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "build-workspace.mjs"),
+    "utf8"
+  );
+  const webpackSource = fs.readFileSync(
+    path.join(targetDir, "webpack.config.js"),
+    "utf8"
+  );
+  const abilitiesIndexSource = fs.readFileSync(
+    path.join(targetDir, "src", "abilities", "index.ts"),
+    "utf8"
+  );
+  const typesSource = fs.readFileSync(
+    path.join(targetDir, "src", "abilities", "review-workflow", "types.ts"),
+    "utf8"
+  );
+  const dataSource = fs.readFileSync(
+    path.join(targetDir, "src", "abilities", "review-workflow", "data.ts"),
+    "utf8"
+  );
+  const abilityConfig = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        targetDir,
+        "src",
+        "abilities",
+        "review-workflow",
+        "ability.config.json"
+      ),
+      "utf8"
+    )
+  ) as {
+    abilityId?: string;
+    category?: { slug?: string };
+  };
+  const phpSource = fs.readFileSync(
+    path.join(targetDir, "inc", "abilities", "review-workflow.php"),
+    "utf8"
+  );
+
+  expect(blockConfigSource).toContain('slug: "review-workflow"');
+  expect(blockConfigSource).toContain(
+    'configFile: "src/abilities/review-workflow/ability.config.json"'
+  );
+  expect(blockConfigSource).toContain(
+    'inputTypeName: "ReviewWorkflowAbilityInput"'
+  );
+  expect(blockConfigSource).toContain(
+    'outputTypeName: "ReviewWorkflowAbilityOutput"'
+  );
+  expect(bootstrapSource).toContain("inc/abilities/*.php");
+  expect(bootstrapSource).toContain("build/abilities/index.js");
+  expect(bootstrapSource).toContain("plugins_loaded");
+  expect(bootstrapSource).toContain("admin_enqueue_scripts");
+  expect(packageJson.scripts?.["sync-abilities"]).toBe(
+    "tsx scripts/sync-abilities.ts"
+  );
+  expect(syncProjectSource).toContain("const syncAbilitiesScriptPath");
+  expect(syncProjectSource).toContain(
+    "runSyncScript( syncAbilitiesScriptPath, options );"
+  );
+  expect(syncAbilitiesSource).toContain("ABILITIES");
+  expect(syncAbilitiesSource).toContain("syncTypeSchemas");
+  expect(buildWorkspaceSource).toContain("'src/abilities/index.ts'");
+  expect(webpackSource).toContain("'abilities/index'");
+  expect(abilitiesIndexSource).toContain("./review-workflow/client");
+  expect(typesSource).toContain("export interface ReviewWorkflowAbilityInput");
+  expect(typesSource).toContain("export interface ReviewWorkflowAbilityOutput");
+  expect(dataSource).toContain("@wordpress/core-abilities");
+  expect(abilityConfig.abilityId).toBe("demo-space/review-workflow");
+  expect(abilityConfig.category?.slug).toBe("demo-space-workflows");
+  expect(phpSource).toContain("wp_register_ability_category");
+  expect(phpSource).toContain("wp_register_ability(");
+  expect(phpSource).toContain("input.schema.json");
+  expect(phpSource).toContain("output.schema.json");
+
+  expect(
+    fs.existsSync(
+      path.join(
+        targetDir,
+        "src",
+        "abilities",
+        "review-workflow",
+        "input.schema.json"
+      )
+    )
+  ).toBe(true);
+  expect(
+    fs.existsSync(
+      path.join(
+        targetDir,
+        "src",
+        "abilities",
+        "review-workflow",
+        "output.schema.json"
+      )
+    )
+  ).toBe(true);
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ detail: string; label: string; status: string }>;
+  }>(doctorOutput);
+  expect(
+    doctorChecks.checks.find((check) => check.label === "Ability bootstrap")
+      ?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find((check) => check.label === "Abilities index")
+      ?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Ability config review-workflow"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find((check) => check.label === "Ability review-workflow")
+      ?.status
+  ).toBe("pass");
+
+  runCli("npm", ["run", "sync-abilities", "--", "--check"], { cwd: targetDir });
   typecheckGeneratedProject(targetDir);
 }, 30_000);
 
@@ -3179,9 +3352,9 @@ test("canonical CLI can add an editor plugin to an official workspace template",
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
-  const doctorChecks = JSON.parse(doctorOutput) as {
+  const doctorChecks = parseJsonObjectFromOutput<{
     checks: Array<{ detail: string; label: string; status: string }>;
-  };
+  }>(doctorOutput);
   expect(
     doctorChecks.checks.find(
       (check) => check.label === "Editor plugin bootstrap"

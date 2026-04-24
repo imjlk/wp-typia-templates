@@ -21,7 +21,10 @@ import {
   getTemplateById,
   listTemplates,
 } from '@wp-typia/project-tools/cli-templates';
-import { formatAddKindUsagePlaceholder } from './add-kind-registry';
+import {
+  formatAddKindList,
+  formatAddKindUsagePlaceholder,
+} from './add-kind-registry';
 import {
   getAddBlockDefaults,
   getCreateDefaults,
@@ -254,6 +257,8 @@ function renderAddHelp() {
     'Usage: wp-typia add <kind> <name>',
     '',
     ...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
+    '',
+    `Supported kinds: ${formatAddKindList()}`,
     '',
     'Supported flags:',
     ...formatNodeFallbackOptionHelp(ADD_OPTION_METADATA),

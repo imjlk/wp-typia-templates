@@ -100,6 +100,7 @@ async function buildNodeFallbackRuntime() {
 await ensureRuntimeBuildDependencies();
 await fs.rm(outdir, { force: true, recursive: true });
 await fs.mkdir(outdir, { recursive: true });
+await fs.mkdir(generatedMetadataOutdir, { recursive: true });
 
 await buildFullBunliRuntime();
 await buildGeneratedMetadataRuntime();

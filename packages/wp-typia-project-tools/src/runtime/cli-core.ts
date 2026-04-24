@@ -8,6 +8,7 @@
  * Import `formatAddHelpText`, `runAddBlockCommand`,
  * `runAddVariationCommand`, `runAddPatternCommand`,
  * `runAddBindingSourceCommand`, `runAddHookedBlockCommand`,
+ * `runAddAbilityCommand` for typed workflow ability scaffolds,
  * and `HOOKED_BLOCK_POSITION_IDS`,
  * `getWorkspaceBlockSelectOptions`, and `seedWorkspaceMigrationProject` for
  * explicit `wp-typia add` flows,
@@ -40,6 +41,7 @@ export {
 	EDITOR_PLUGIN_SLOT_IDS,
 	formatAddHelpText,
 	getWorkspaceBlockSelectOptions,
+	runAddAbilityCommand,
 	runAddBindingSourceCommand,
 	runAddAiFeatureCommand,
 	runAddBlockCommand,

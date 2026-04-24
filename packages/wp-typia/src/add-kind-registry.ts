@@ -4,6 +4,7 @@ export const ADD_KIND_IDS = [
   'pattern',
   'binding-source',
   'rest-resource',
+  'ability',
   'ai-feature',
   'editor-plugin',
   'hooked-block',
@@ -111,6 +112,22 @@ export const ADD_KIND_REGISTRY = {
         }
         return true;
       }),
+  },
+  ability: {
+    completion: {
+      nextSteps: (values) => [
+        `Review src/abilities/${values.abilitySlug}/ and inc/abilities/${values.abilitySlug}.php.`,
+        'Run `wp-typia sync` or `npm run sync-abilities -- --check` and then your workspace build/dev command to verify the generated workflow ability.',
+      ],
+      summaryLines: (values, projectDir) => [
+        `Ability: ${values.abilitySlug}`,
+        `Project directory: ${projectDir}`,
+      ],
+      title: 'Added workflow ability',
+    },
+    description: 'Add a typed server/client workflow ability scaffold',
+    nameLabel: 'Ability name',
+    visibleFieldNames: () => ['kind', 'name'],
   },
   'editor-plugin': {
     completion: {

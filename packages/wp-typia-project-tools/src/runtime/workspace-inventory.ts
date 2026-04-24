@@ -52,6 +52,26 @@ export interface WorkspaceRestResourceInventoryEntry {
 }
 
 /**
+ * Ability entry parsed from `scripts/block-config.ts`.
+ *
+ * Each file path stays relative to the workspace root so doctor checks, schema
+ * sync scripts, and generated admin/editor helpers can resolve typed workflow
+ * artifacts without guessing their locations.
+ */
+export interface WorkspaceAbilityInventoryEntry {
+	clientFile: string;
+	configFile: string;
+	dataFile: string;
+	inputSchemaFile: string;
+	inputTypeName: string;
+	outputSchemaFile: string;
+	outputTypeName: string;
+	phpFile: string;
+	slug: string;
+	typesFile: string;
+}
+
+/**
  * AI-feature entry parsed from `scripts/block-config.ts`.
  *
  * Each file path stays relative to the workspace root so doctor checks, add
@@ -88,7 +108,9 @@ export interface WorkspaceInventory {
 	bindingSources: WorkspaceBindingSourceInventoryEntry[];
 	blockConfigPath: string;
 	blocks: WorkspaceBlockInventoryEntry[];
+	abilities: WorkspaceAbilityInventoryEntry[];
 	aiFeatures: WorkspaceAiFeatureInventoryEntry[];
+	hasAbilitiesSection: boolean;
 	hasBindingSourcesSection: boolean;
 	hasAiFeaturesSection: boolean;
 	hasEditorPluginsSection: boolean;
@@ -107,6 +129,7 @@ export const VARIATION_CONFIG_ENTRY_MARKER = "\t// wp-typia add variation entrie
 export const PATTERN_CONFIG_ENTRY_MARKER = "\t// wp-typia add pattern entries";
 export const BINDING_SOURCE_CONFIG_ENTRY_MARKER = "\t// wp-typia add binding-source entries";
 export const REST_RESOURCE_CONFIG_ENTRY_MARKER = "\t// wp-typia add rest-resource entries";
+export const ABILITY_CONFIG_ENTRY_MARKER = "\t// wp-typia add ability entries";
 export const AI_FEATURE_CONFIG_ENTRY_MARKER = "\t// wp-typia add ai-feature entries";
 /**
  * Marker used to append generated editor-plugin entries into `EDITOR_PLUGINS`.
@@ -183,6 +206,29 @@ const REST_RESOURCES_CONST_SECTION = `
 
 export const REST_RESOURCES: WorkspaceRestResourceConfig[] = [
 \t// wp-typia add rest-resource entries
+];
+`;
+
+const ABILITIES_INTERFACE_SECTION = `
+
+export interface WorkspaceAbilityConfig {
+\tclientFile: string;
+\tconfigFile: string;
+\tdataFile: string;
+\tinputSchemaFile: string;
+\tinputTypeName: string;
+\toutputSchemaFile: string;
+\toutputTypeName: string;
+\tphpFile: string;
+\tslug: string;
+\ttypesFile: string;
+}
+`;
+
+const ABILITIES_CONST_SECTION = `
+
+export const ABILITIES: WorkspaceAbilityConfig[] = [
+\t// wp-typia add ability entries
 ];
 `;
 
@@ -540,6 +586,51 @@ function parseAiFeatureEntries(
 	});
 }
 
+function parseAbilityEntries(
+	arrayLiteral: ts.ArrayLiteralExpression,
+): WorkspaceAbilityInventoryEntry[] {
+	return arrayLiteral.elements.map((element, elementIndex) => {
+		if (!ts.isObjectLiteralExpression(element)) {
+			throw new Error(
+				`ABILITIES[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
+			);
+		}
+
+		return {
+			clientFile: getRequiredStringProperty("ABILITIES", elementIndex, element, "clientFile"),
+			configFile: getRequiredStringProperty("ABILITIES", elementIndex, element, "configFile"),
+			dataFile: getRequiredStringProperty("ABILITIES", elementIndex, element, "dataFile"),
+			inputSchemaFile: getRequiredStringProperty(
+				"ABILITIES",
+				elementIndex,
+				element,
+				"inputSchemaFile",
+			),
+			inputTypeName: getRequiredStringProperty(
+				"ABILITIES",
+				elementIndex,
+				element,
+				"inputTypeName",
+			),
+			outputSchemaFile: getRequiredStringProperty(
+				"ABILITIES",
+				elementIndex,
+				element,
+				"outputSchemaFile",
+			),
+			outputTypeName: getRequiredStringProperty(
+				"ABILITIES",
+				elementIndex,
+				element,
+				"outputTypeName",
+			),
+			phpFile: getRequiredStringProperty("ABILITIES", elementIndex, element, "phpFile"),
+			slug: getRequiredStringProperty("ABILITIES", elementIndex, element, "slug"),
+			typesFile: getRequiredStringProperty("ABILITIES", elementIndex, element, "typesFile"),
+		};
+	});
+}
+
 function parseEditorPluginEntries(
 	arrayLiteral: ts.ArrayLiteralExpression,
 ): WorkspaceEditorPluginInventoryEntry[] {
@@ -581,6 +672,7 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 	const patternArray = findExportedArrayLiteral(sourceFile, "PATTERNS");
 	const bindingSourceArray = findExportedArrayLiteral(sourceFile, "BINDING_SOURCES");
 	const restResourceArray = findExportedArrayLiteral(sourceFile, "REST_RESOURCES");
+	const abilityArray = findExportedArrayLiteral(sourceFile, "ABILITIES");
 	const aiFeatureArray = findExportedArrayLiteral(sourceFile, "AI_FEATURES");
 	const editorPluginArray = findExportedArrayLiteral(sourceFile, "EDITOR_PLUGINS");
 	if (variationArray.found && !variationArray.array) {
@@ -595,6 +687,9 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 	if (restResourceArray.found && !restResourceArray.array) {
 		throw new Error("scripts/block-config.ts must export REST_RESOURCES as an array literal.");
 	}
+	if (abilityArray.found && !abilityArray.array) {
+		throw new Error("scripts/block-config.ts must export ABILITIES as an array literal.");
+	}
 	if (aiFeatureArray.found && !aiFeatureArray.array) {
 		throw new Error("scripts/block-config.ts must export AI_FEATURES as an array literal.");
 	}
@@ -603,11 +698,13 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 	}
 
 	return {
+		abilities: abilityArray.array ? parseAbilityEntries(abilityArray.array) : [],
 		aiFeatures: aiFeatureArray.array ? parseAiFeatureEntries(aiFeatureArray.array) : [],
 		bindingSources: bindingSourceArray.array
 			? parseBindingSourceEntries(bindingSourceArray.array)
 			: [],
 		blocks: parseBlockEntries(blockArray.array),
+		hasAbilitiesSection: abilityArray.found,
 		hasAiFeaturesSection: aiFeatureArray.found,
 		hasBindingSourcesSection: bindingSourceArray.found,
 		hasEditorPluginsSection: editorPluginArray.found,
@@ -708,6 +805,12 @@ function ensureWorkspaceInventorySections(source: string): string {
 	if (!/export\s+const\s+REST_RESOURCES\b/u.test(nextSource)) {
 		nextSource += REST_RESOURCES_CONST_SECTION;
 	}
+	if (!/export\s+interface\s+WorkspaceAbilityConfig\b/u.test(nextSource)) {
+		nextSource += ABILITIES_INTERFACE_SECTION;
+	}
+	if (!/export\s+const\s+ABILITIES\b/u.test(nextSource)) {
+		nextSource += ABILITIES_CONST_SECTION;
+	}
 	if (!/export\s+interface\s+WorkspaceAiFeatureConfig\b/u.test(nextSource)) {
 		nextSource += AI_FEATURES_INTERFACE_SECTION;
 	}
@@ -739,9 +842,9 @@ function appendEntriesAtMarker(source: string, marker: string, entries: string[]
  * Update `scripts/block-config.ts` source text with additional inventory entries.
  *
  * Missing inventory sections for variations, patterns, binding sources, REST
- * resources, AI features, and editor plugins are created automatically before
- * new entries are appended at their marker comments. When provided,
- * `transformSource` runs before any entries are inserted.
+ * resources, workflow abilities, AI features, and editor plugins are created
+ * automatically before new entries are appended at their marker comments.
+ * When provided, `transformSource` runs before any entries are inserted.
  *
  * @param source Existing `scripts/block-config.ts` source.
  * @param options Entry lists plus an optional source transformer.
@@ -752,6 +855,7 @@ export function updateWorkspaceInventorySource(
 	{
 		blockEntries = [],
 		bindingSourceEntries = [],
+		abilityEntries = [],
 		aiFeatureEntries = [],
 		editorPluginEntries = [],
 		patternEntries = [],
@@ -759,6 +863,7 @@ export function updateWorkspaceInventorySource(
 		variationEntries = [],
 		transformSource,
 	}: {
+		abilityEntries?: string[];
 		aiFeatureEntries?: string[];
 		blockEntries?: string[];
 		bindingSourceEntries?: string[];
@@ -785,6 +890,11 @@ export function updateWorkspaceInventorySource(
 		nextSource,
 		REST_RESOURCE_CONFIG_ENTRY_MARKER,
 		restResourceEntries,
+	);
+	nextSource = appendEntriesAtMarker(
+		nextSource,
+		ABILITY_CONFIG_ENTRY_MARKER,
+		abilityEntries,
 	);
 	nextSource = appendEntriesAtMarker(
 		nextSource,

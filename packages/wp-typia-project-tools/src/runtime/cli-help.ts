@@ -24,6 +24,7 @@ export function formatHelpText(): string {
   wp-typia add pattern <name>
   wp-typia add binding-source <name>
   wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <method[,method...]>]
+  wp-typia add ability <name>
   wp-typia add ai-feature <name> [--namespace <vendor/v1>]
   wp-typia add editor-plugin <name> [--slot <PluginSidebar>]
   wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>
@@ -47,6 +48,7 @@ Notes:
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
   \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.
   \`add rest-resource\` scaffolds plugin-level TypeScript REST contracts under \`src/rest/\` and PHP route glue under \`inc/rest/\`.
+  \`add ability\` scaffolds typed workflow abilities under \`src/abilities/\` and server registration under \`inc/abilities/\`.
   \`add ai-feature\` scaffolds server-owned AI feature endpoints under \`src/ai-features/\` and PHP route glue under \`inc/ai-features/\`.
   \`add editor-plugin\` scaffolds a document-level editor extension under \`src/editor-plugins/\`.
   \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.

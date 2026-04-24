@@ -98,6 +98,7 @@ const loadMigrationsRuntime = () =>
   import('@wp-typia/project-tools/migrations');
 
 type AddRuntime = Awaited<ReturnType<typeof loadCliAddRuntime>>;
+type AddAbilityResult = Awaited<ReturnType<AddRuntime['runAddAbilityCommand']>>;
 type AddBindingSourceResult = Awaited<
   ReturnType<AddRuntime['runAddBindingSourceCommand']>
 >;
@@ -230,6 +231,28 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
     context: AddKindHandlerContext,
   ) => Promise<AlternateBufferCompletionPayload | void>
 > = {
+  ability: async (context) => {
+    const name = requireAddKindName(
+      context,
+      '`wp-typia add ability` requires <name>. Usage: wp-typia add ability <name>.',
+    );
+
+    return runRegisteredAddKind<AddAbilityResult>(context, {
+      buildCompletion: (result) =>
+        buildAddCompletionPayload({
+          kind: 'ability',
+          projectDir: result.projectDir,
+          values: {
+            abilitySlug: result.abilitySlug,
+          },
+        }),
+      execute: (targetCwd) =>
+        context.addRuntime.runAddAbilityCommand({
+          abilityName: name,
+          cwd: targetCwd,
+        }),
+    });
+  },
   'binding-source': async (context) => {
     const name = requireAddKindName(
       context,
