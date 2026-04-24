@@ -22,6 +22,13 @@ import {
 	type WorkspaceMutationSnapshot,
 	snapshotWorkspaceFiles,
 } from "./cli-add-shared.js";
+import {
+	REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
+	renderScaffoldCompatibilityConfig,
+	resolveScaffoldCompatibilityPolicy,
+	type ScaffoldCompatibilityPolicy,
+	updatePluginHeaderCompatibility,
+} from "./scaffold-compatibility.js";
 
 const ABILITY_SERVER_GLOB = "/inc/abilities/*.php";
 const ABILITY_EDITOR_SCRIPT = "build/abilities/index.js";
@@ -56,12 +63,18 @@ function toAbilityCategorySlug(workspaceNamespace: string): string {
 	return `${normalizedNamespace || "workspace"}-workflows`;
 }
 
-function buildAbilityConfigEntry(abilitySlug: string): string {
+function buildAbilityConfigEntry(
+	abilitySlug: string,
+	compatibilityPolicy: ScaffoldCompatibilityPolicy,
+): string {
 	const pascalCase = toPascalCaseFromAbilitySlug(abilitySlug);
 
 	return [
 		"\t{",
 		`\t\tclientFile: ${quoteTsString(`src/abilities/${abilitySlug}/client.ts`)},`,
+		`\t\tcompatibility: ${renderScaffoldCompatibilityConfig(
+			compatibilityPolicy,
+		)},`,
 		`\t\tconfigFile: ${quoteTsString(`src/abilities/${abilitySlug}/ability.config.json`)},`,
 		`\t\tdataFile: ${quoteTsString(`src/abilities/${abilitySlug}/data.ts`)},`,
 		`\t\tinputSchemaFile: ${quoteTsString(`src/abilities/${abilitySlug}/input.schema.json`)},`,
@@ -900,6 +913,9 @@ export async function runAddAbilityCommand({
 
 	const inventory = readWorkspaceInventory(workspace.projectDir);
 	assertAbilityDoesNotExist(workspace.projectDir, abilitySlug, inventory);
+	const compatibilityPolicy = resolveScaffoldCompatibilityPolicy(
+		REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
+	);
 
 	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
 	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
@@ -947,6 +963,9 @@ export async function runAddAbilityCommand({
 		await fsp.mkdir(abilityDir, { recursive: true });
 		await fsp.mkdir(path.dirname(phpFilePath), { recursive: true });
 		await ensureAbilityBootstrapAnchors(workspace);
+		await patchFile(bootstrapPath, (source) =>
+			updatePluginHeaderCompatibility(source, compatibilityPolicy),
+		);
 		await ensureAbilityPackageScripts(workspace);
 		await ensureAbilitySyncProjectAnchors(workspace);
 		await ensureAbilityBuildScriptAnchors(workspace);
@@ -993,7 +1012,7 @@ export async function runAddAbilityCommand({
 		});
 		await writeAbilityRegistry(workspace.projectDir, abilitySlug);
 		await appendWorkspaceInventoryEntries(workspace.projectDir, {
-			abilityEntries: [buildAbilityConfigEntry(abilitySlug)],
+			abilityEntries: [buildAbilityConfigEntry(abilitySlug, compatibilityPolicy)],
 		});
 
 		return {

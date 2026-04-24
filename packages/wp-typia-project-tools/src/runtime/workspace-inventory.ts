@@ -209,11 +209,23 @@ export const REST_RESOURCES: WorkspaceRestResourceConfig[] = [
 ];
 `;
 
+const WORKSPACE_COMPATIBILITY_CONFIG_FIELD = `\tcompatibility?: {
+\t\thardMinimums: {
+\t\t\tphp?: string;
+\t\t\twordpress?: string;
+\t\t};
+\t\tmode: 'baseline' | 'optional' | 'required';
+\t\toptionalFeatures: string[];
+\t\trequiredFeatures: string[];
+\t\truntimeGates: string[];
+\t};
+`;
+
 const ABILITIES_INTERFACE_SECTION = `
 
 export interface WorkspaceAbilityConfig {
 \tclientFile: string;
-\tconfigFile: string;
+${WORKSPACE_COMPATIBILITY_CONFIG_FIELD}\tconfigFile: string;
 \tdataFile: string;
 \tinputSchemaFile: string;
 \tinputTypeName: string;
@@ -238,7 +250,7 @@ export interface WorkspaceAiFeatureConfig {
 \taiSchemaFile: string;
 \tapiFile: string;
 \tclientFile: string;
-\tdataFile: string;
+${WORKSPACE_COMPATIBILITY_CONFIG_FIELD}\tdataFile: string;
 \tnamespace: string;
 \topenApiFile: string;
 \tphpFile: string;
@@ -838,6 +850,58 @@ function appendEntriesAtMarker(source: string, marker: string, entries: string[]
 	return source.replace(marker, `${entries.join("\n")}\n${marker}`);
 }
 
+function escapeRegex(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
+function ensureInterfaceField(
+	source: string,
+	interfaceName: string,
+	fieldName: string,
+	fieldSource: string,
+): string {
+	const interfacePattern = new RegExp(
+		`(export\\s+interface\\s+${escapeRegex(
+			interfaceName,
+		)}\\s*\\{\\r?\\n)([\\s\\S]*?)(\\r?\\n\\})`,
+		"u",
+	);
+
+	return source.replace(
+		interfacePattern,
+		(match, start: string, body: string, end: string) => {
+			if (new RegExp(`^[ \t]*${escapeRegex(fieldName)}\\??:`, "mu").test(body)) {
+				return match;
+			}
+
+			const lineEnding = start.endsWith("\r\n") ? "\r\n" : "\n";
+			const formattedFieldSource = `${fieldSource
+				.replace(/\r?\n$/u, "")
+				.split("\n")
+				.join(lineEnding)}${lineEnding}`;
+			const memberPattern = /^[ \t]*([A-Za-z_$][\w$]*)\??:/gmu;
+
+			for (const member of body.matchAll(memberPattern)) {
+				const memberIndex = member.index;
+				const memberName = member[1];
+				if (memberIndex === undefined || !memberName) {
+					continue;
+				}
+				if (memberName.localeCompare(fieldName) > 0) {
+					return `${start}${body.slice(
+						0,
+						memberIndex,
+					)}${formattedFieldSource}${body.slice(memberIndex)}${end}`;
+				}
+			}
+
+			return `${start}${body}${
+				body.length > 0 && !body.endsWith(lineEnding) ? lineEnding : ""
+			}${formattedFieldSource}${end}`;
+		},
+	);
+}
+
 /**
  * Update `scripts/block-config.ts` source text with additional inventory entries.
  *
@@ -900,6 +964,18 @@ export function updateWorkspaceInventorySource(
 		nextSource,
 		AI_FEATURE_CONFIG_ENTRY_MARKER,
 		aiFeatureEntries,
+	);
+	nextSource = ensureInterfaceField(
+		nextSource,
+		"WorkspaceAbilityConfig",
+		"compatibility",
+		WORKSPACE_COMPATIBILITY_CONFIG_FIELD,
+	);
+	nextSource = ensureInterfaceField(
+		nextSource,
+		"WorkspaceAiFeatureConfig",
+		"compatibility",
+		WORKSPACE_COMPATIBILITY_CONFIG_FIELD,
 	);
 	nextSource = appendEntriesAtMarker(
 		nextSource,

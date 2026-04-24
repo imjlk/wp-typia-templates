@@ -3001,7 +3001,14 @@ test("canonical CLI can add a server-only AI feature to an official workspace te
   expect(blockConfigSource).toContain(
     'phpFile: "inc/ai-features/brief-suggestions.php"'
   );
+  expect(blockConfigSource).toContain('"mode": "optional"');
+  expect(blockConfigSource).toContain("WordPress AI Client");
+  expect(blockConfigSource).toContain(
+    "WordPress AI Client: wordpress-core-feature WordPress AI Client"
+  );
   expect(blockConfigSource).toContain("defineEndpointManifest");
+  expect(bootstrapSource).toContain("Requires at least: 6.7");
+  expect(bootstrapSource).toContain("Tested up to:      6.9");
   expect(bootstrapSource).toContain("function demo_space_register_ai_features()");
   expect(bootstrapSource).toContain("inc/ai-features/*.php");
   expect(packageJson.scripts?.["sync-ai"]).toBe("tsx scripts/sync-ai-features.ts");
@@ -3026,8 +3033,23 @@ test("canonical CLI can add a server-only AI feature to an official workspace te
   expect(apiSource).toContain("resolveRestNonce");
   expect(dataSource).toContain("useRunBriefSuggestionsAiFeatureMutation");
   expect(phpSource).toContain("wp_ai_client_prompt");
+  expect(phpSource).toContain("static $is_supported = null;");
   expect(phpSource).toContain("is_supported_for_text_generation");
   expect(phpSource).toContain("generate_text_result");
+  expect(phpSource).toContain("admin_notices");
+  expect(phpSource).toContain("sprintf(");
+  expect(phpSource).toContain("The %s AI feature is optional");
+  expect(phpSource).toContain("optional and remains disabled");
+  const adminNoticeSource = phpSource.slice(
+    phpSource.indexOf("function demo_space_brief_suggestions_ai_feature_admin_notice")
+  );
+  expect(
+    adminNoticeSource.indexOf("! current_user_can( 'manage_options' )")
+  ).toBeLessThan(
+    adminNoticeSource.indexOf(
+      "demo_space_brief_suggestions_is_ai_feature_supported()"
+    )
+  );
   expect(phpSource).toContain("register_rest_route");
   expect(phpSource).toContain("'demo-space/v1'");
 
@@ -3200,6 +3222,11 @@ test("canonical CLI can add a typed workflow ability to an official workspace te
   expect(blockConfigSource).toContain(
     'outputTypeName: "ReviewWorkflowAbilityOutput"'
   );
+  expect(blockConfigSource).toContain('"mode": "required"');
+  expect(blockConfigSource).toContain("WordPress Abilities API");
+  expect(blockConfigSource).toContain("@wordpress/core-abilities");
+  expect(bootstrapSource).toContain("Requires at least: 7.0");
+  expect(bootstrapSource).toContain("Tested up to:      7.0");
   expect(bootstrapSource).toContain("inc/abilities/*.php");
   expect(bootstrapSource).toContain("build/abilities/index.js");
   expect(bootstrapSource).toContain("plugins_loaded");

@@ -14,7 +14,7 @@ export function createTestScaffoldTemplateVariables(
 		templateFamily,
 		...flatOverrides
 	} = overrides;
-	const base: FlatScaffoldTemplateVariables = {
+		const base: FlatScaffoldTemplateVariables = {
 		alternateRenderTargetsCsv: "",
 		alternateRenderTargetsJson: "[]",
 		apiClientPackageVersion: "^0.2.0",
@@ -65,11 +65,13 @@ export function createTestScaffoldTemplateVariables(
 		phpPrefixUpper: "DEMO_BLOCK",
 		queryAllowedControlsJson: JSON.stringify([]),
 		queryPostType: "post",
-		queryPostTypeJson: JSON.stringify("post"),
-		queryVariationNamespace: "demo/demo-block",
-		queryVariationNamespaceJson: JSON.stringify("demo/demo-block"),
-		publicWriteRequestIdDeclaration: "publicWriteRequestId?: string;",
-		restPackageVersion: "^0.2.0",
+			queryPostTypeJson: JSON.stringify("post"),
+			queryVariationNamespace: "demo/demo-block",
+			queryVariationNamespaceJson: JSON.stringify("demo/demo-block"),
+			publicWriteRequestIdDeclaration: "publicWriteRequestId?: string;",
+			requiresAtLeast: "6.7",
+			requiresPhp: "8.0",
+			restPackageVersion: "^0.2.0",
 		restWriteAuthIntent: "authenticated",
 		restWriteAuthMechanism: "rest-nonce",
 		restWriteAuthMode: "authenticated-rest-nonce",
@@ -79,10 +81,11 @@ export function createTestScaffoldTemplateVariables(
 		slugSnakeCase: "demo_block",
 		textDomain: "demo-block",
 		textdomain: "demo-block",
-		title: "Demo Block",
-		titleCase: "Demo Block",
-		titleJson: JSON.stringify("Demo Block"),
-	};
+			title: "Demo Block",
+			titleCase: "Demo Block",
+			titleJson: JSON.stringify("Demo Block"),
+			testedUpTo: "6.9",
+		};
 
 	const variables: FlatScaffoldTemplateVariables = {
 		...base,
@@ -97,8 +100,6 @@ export function createTestScaffoldTemplateVariables(
 	const family = templateFamily ?? inferTemplateFamily(flatOverrides);
 	const compoundPersistenceEnabled =
 		family === "compound" && variables.compoundPersistenceEnabled === "true";
-	const persistenceEnabled =
-		family === "persistence" || compoundPersistenceEnabled;
 	const alternateRenderTargets = {
 		csv: variables.alternateRenderTargetsCsv,
 		enabled: variables.hasAlternateRenderTargets === "true",
@@ -109,10 +110,15 @@ export function createTestScaffoldTemplateVariables(
 		targets: JSON.parse(variables.alternateRenderTargetsJson) as string[],
 	};
 	const shared = {
-		author: variables.author,
-		blockMetadataVersion: variables.blockMetadataVersion,
-		category: variables.category,
-		cssClassName: variables.cssClassName,
+			author: variables.author,
+			blockMetadataVersion: variables.blockMetadataVersion,
+			category: variables.category,
+			compatibility: {
+				requiresAtLeast: variables.requiresAtLeast,
+				requiresPhp: variables.requiresPhp,
+				testedUpTo: variables.testedUpTo,
+			},
+			cssClassName: variables.cssClassName,
 		description: variables.description,
 		descriptionJson: variables.descriptionJson,
 		frontendCssClassName: variables.frontendCssClassName,

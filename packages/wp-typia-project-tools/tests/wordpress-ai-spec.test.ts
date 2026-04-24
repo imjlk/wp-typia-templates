@@ -9,6 +9,14 @@ import {
   AI_FEATURE_DEFINITIONS,
   resolveAiFeatureCapabilityPlan,
 } from '../src/internal/ai-feature-capability.js';
+import {
+  DEFAULT_SCAFFOLD_COMPATIBILITY,
+  OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
+  REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
+  createScaffoldCompatibilityConfig,
+  resolveScaffoldCompatibilityPolicy,
+  updatePluginHeaderCompatibility,
+} from '../src/internal/scaffold-compatibility.js';
 import { buildWordPressAbilitiesDocument } from '../src/internal/wordpress-ai.js';
 
 const RESPONSE_SCHEMA = {
@@ -246,6 +254,153 @@ describe('WordPress AI AbilitySpec foundation', () => {
     expect(plan.optionalFeatures.map((feature) => feature.id)).toEqual([
       AI_FEATURE_DEFINITIONS.wordpressAiClient.id,
     ]);
+  });
+
+  test('maps optional and required AI scaffold compatibility into headers and generated config', () => {
+    const optionalPolicy = resolveScaffoldCompatibilityPolicy(
+      OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
+    );
+    expect(optionalPolicy.pluginHeader).toEqual(
+      DEFAULT_SCAFFOLD_COMPATIBILITY,
+    );
+    expect(createScaffoldCompatibilityConfig(optionalPolicy)).toMatchObject({
+      mode: 'optional',
+      optionalFeatures: ['WordPress AI Client'],
+      requiredFeatures: [],
+      runtimeGates: ['WordPress AI Client: wordpress-core-feature WordPress AI Client'],
+    });
+
+    const requiredPolicy = resolveScaffoldCompatibilityPolicy(
+      REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
+    );
+    expect(requiredPolicy.pluginHeader).toEqual({
+      requiresAtLeast: '7.0',
+      requiresPhp: '8.0',
+      testedUpTo: '7.0',
+    });
+    expect(createScaffoldCompatibilityConfig(requiredPolicy)).toMatchObject({
+      hardMinimums: {
+        wordpress: '7.0',
+      },
+      mode: 'required',
+      optionalFeatures: [],
+      requiredFeatures: [
+        'WordPress Abilities API',
+        '@wordpress/core-abilities',
+      ],
+    });
+  });
+
+  test('updates generated plugin headers from scaffold compatibility policy', () => {
+    const source = [
+      '<?php',
+      '/**',
+      ' * Plugin Name: Demo',
+      ' * Requires at least: 6.7',
+      ' * Tested up to:      6.9',
+      ' * Requires PHP:      8.0',
+      ' */',
+      '',
+    ].join('\n');
+
+    expect(
+      updatePluginHeaderCompatibility(
+        source,
+        resolveScaffoldCompatibilityPolicy(
+          OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
+        ),
+      ),
+    ).toContain(' * Requires at least: 6.7');
+    expect(
+      updatePluginHeaderCompatibility(
+        source,
+        resolveScaffoldCompatibilityPolicy(
+          REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
+        ),
+      ),
+    ).toContain(' * Requires at least: 7.0');
+    expect(
+      updatePluginHeaderCompatibility(
+        source,
+        resolveScaffoldCompatibilityPolicy(
+          REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
+        ),
+      ),
+    ).toContain(' * Tested up to:      7.0');
+  });
+
+  test('does not lower custom plugin headers that already exceed the policy floor', () => {
+    const source = [
+      '<?php',
+      '/**',
+      ' * Plugin Name: Demo',
+      ' * Requires at least: 7.1',
+      ' * Tested up to:      7.2',
+      ' * Requires PHP:      8.1',
+      ' */',
+      '',
+    ].join('\n');
+    const nextSource = updatePluginHeaderCompatibility(
+      source,
+      resolveScaffoldCompatibilityPolicy(
+        REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
+      ),
+    );
+
+    expect(nextSource).toContain(' * Requires at least: 7.1');
+    expect(nextSource).toContain(' * Tested up to:      7.2');
+    expect(nextSource).toContain(' * Requires PHP:      8.1');
+  });
+
+  test('preserves CRLF plugin header line endings when updating compatibility floors', () => {
+    const source = [
+      '<?php',
+      '/**',
+      ' * Plugin Name: Demo',
+      ' * Requires at least: 6.7',
+      ' * Tested up to:      6.9',
+      ' * Requires PHP:      8.0',
+      ' */',
+      '',
+    ].join('\r\n');
+    const nextSource = updatePluginHeaderCompatibility(
+      source,
+      resolveScaffoldCompatibilityPolicy(
+        REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
+      ),
+    );
+
+    expect(nextSource).toContain(' * Requires at least: 7.0\r\n');
+    expect(nextSource).toContain(' * Tested up to:      7.0\r\n');
+    expect(nextSource).toContain(' * Requires PHP:      8.0\r\n');
+    const linesBeforeTerminalNewline = nextSource.split('\n').slice(0, -1);
+    expect(
+      linesBeforeTerminalNewline.every((line) => line.endsWith('\r')),
+    ).toBe(true);
+  });
+
+  test('updates empty plugin header values without consuming following header lines', () => {
+    const source = [
+      '<?php',
+      '/**',
+      ' * Plugin Name: Demo',
+      ' * Requires at least:',
+      ' * Tested up to:',
+      ' * Requires PHP:',
+      ' */',
+      '',
+    ].join('\n');
+    const nextSource = updatePluginHeaderCompatibility(
+      source,
+      resolveScaffoldCompatibilityPolicy(
+        REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
+      ),
+    );
+
+    expect(nextSource).toContain(' * Requires at least: 7.0\n');
+    expect(nextSource).toContain(' * Tested up to: 7.0\n');
+    expect(nextSource).toContain(' * Requires PHP: 8.0\n');
+    expect(nextSource).toContain(' */');
   });
 
   test('rejects invalid version floor segments instead of silently comparing them', () => {

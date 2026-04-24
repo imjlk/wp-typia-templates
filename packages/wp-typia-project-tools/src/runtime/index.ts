@@ -32,6 +32,20 @@ export {
 	resolvePackageManagerId,
 	resolveTemplateId,
 } from "./scaffold.js";
+export {
+	DEFAULT_SCAFFOLD_COMPATIBILITY,
+	OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
+	REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
+	createScaffoldCompatibilityConfig,
+	renderScaffoldCompatibilityConfig,
+	resolveScaffoldCompatibilityPolicy,
+	updatePluginHeaderCompatibility,
+} from "./scaffold-compatibility.js";
+export type {
+	ScaffoldCompatibilityConfig,
+	ScaffoldCompatibilityPolicy,
+	ScaffoldPluginHeaderCompatibility,
+} from "./scaffold-compatibility.js";
 export { BlockGeneratorService } from "./block-generator-service.js";
 export type {
 	BasicScaffoldTemplateVariableGroups,

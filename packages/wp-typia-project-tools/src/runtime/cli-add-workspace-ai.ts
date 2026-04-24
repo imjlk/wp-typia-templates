@@ -6,6 +6,7 @@ import {
 	assertValidGeneratedSlug,
 	getWorkspaceBootstrapPath,
 	normalizeBlockSlug,
+	patchFile,
 	resolveRestResourceNamespace,
 	rollbackWorkspaceMutation,
 	snapshotWorkspaceFiles,
@@ -34,6 +35,11 @@ import {
 } from "./ai-feature-artifacts.js";
 import { appendWorkspaceInventoryEntries, readWorkspaceInventory } from "./workspace-inventory.js";
 import { resolveWorkspaceProject } from "./workspace-project.js";
+import {
+	OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
+	resolveScaffoldCompatibilityPolicy,
+	updatePluginHeaderCompatibility,
+} from "./scaffold-compatibility.js";
 import { toTitleCase } from "./string-case.js";
 
 function quotePhpString(value: string): string {
@@ -44,6 +50,7 @@ function buildAiFeaturePhpSource(
 	aiFeatureSlug: string,
 	namespace: string,
 	phpPrefix: string,
+	textDomain: string,
 ): string {
 	const aiFeatureTitle = toTitleCase(aiFeatureSlug);
 	const aiFeaturePhpId = aiFeatureSlug.replace(/-/g, "_");
@@ -56,6 +63,7 @@ function buildAiFeaturePhpSource(
 	const normalizeProviderTypeFunctionName = `${phpPrefix}_${aiFeaturePhpId}_normalize_provider_type`;
 	const buildTelemetryFunctionName = `${phpPrefix}_${aiFeaturePhpId}_build_ai_feature_telemetry`;
 	const isSupportedFunctionName = `${phpPrefix}_${aiFeaturePhpId}_is_ai_feature_supported`;
+	const adminNoticeFunctionName = `${phpPrefix}_${aiFeaturePhpId}_ai_feature_admin_notice`;
 	const handlerFunctionName = `${phpPrefix}_${aiFeaturePhpId}_handle_run_ai_feature`;
 	const registerRoutesFunctionName = `${phpPrefix}_${aiFeaturePhpId}_register_ai_feature_routes`;
 
@@ -222,30 +230,56 @@ if ( ! function_exists( '${buildTelemetryFunctionName}' ) ) {
 
 if ( ! function_exists( '${isSupportedFunctionName}' ) ) {
 \tfunction ${isSupportedFunctionName}() {
+\t\tstatic $is_supported = null;
+\t\tif ( null !== $is_supported ) {
+\t\t\treturn $is_supported;
+\t\t}
+
 \t\tif ( ! function_exists( 'wp_ai_client_prompt' ) ) {
-\t\t\treturn false;
+\t\t\t$is_supported = false;
+\t\t\treturn $is_supported;
 \t\t}
 
 \t\t$schema = ${loadAiSchemaFunctionName}();
 \t\tif ( ! is_array( $schema ) ) {
-\t\t\treturn false;
+\t\t\t$is_supported = false;
+\t\t\treturn $is_supported;
 \t\t}
 
 \t\t$prompt = wp_ai_client_prompt( 'AI feature support probe.' );
 \t\tif ( ! is_object( $prompt ) || ! method_exists( $prompt, 'as_json_response' ) ) {
-\t\t\treturn false;
+\t\t\t$is_supported = false;
+\t\t\treturn $is_supported;
 \t\t}
 
 \t\t$structured_prompt = $prompt->as_json_response( $schema );
 \t\tif ( ! is_object( $structured_prompt ) ) {
-\t\t\treturn false;
+\t\t\t$is_supported = false;
+\t\t\treturn $is_supported;
 \t\t}
 
 \t\tif ( method_exists( $structured_prompt, 'is_supported_for_text_generation' ) ) {
-\t\t\treturn (bool) $structured_prompt->is_supported_for_text_generation();
+\t\t\t$is_supported = (bool) $structured_prompt->is_supported_for_text_generation();
+\t\t\treturn $is_supported;
 \t\t}
 
-\t\treturn method_exists( $structured_prompt, 'generate_text_result' );
+\t\t$is_supported = method_exists( $structured_prompt, 'generate_text_result' );
+\t\treturn $is_supported;
+\t}
+}
+
+if ( ! function_exists( '${adminNoticeFunctionName}' ) ) {
+\tfunction ${adminNoticeFunctionName}() {
+\t\tif ( ! current_user_can( 'manage_options' ) || ${isSupportedFunctionName}() ) {
+\t\t\treturn;
+\t\t}
+
+\t\t$message = sprintf(
+\t\t\t/* translators: %s: AI feature name. */
+\t\t\t__( 'The %s AI feature is optional and remains disabled until the WordPress AI Client is available with structured text generation support for the generated schema.', ${quotePhpString(textDomain)} ),
+\t\t\t${quotePhpString(aiFeatureTitle)}
+\t\t);
+\t\tprintf( '<div class="notice notice-warning"><p>%s</p></div>', esc_html( $message ) );
 \t}
 }
 
@@ -391,6 +425,7 @@ if ( ! function_exists( '${registerRoutesFunctionName}' ) ) {
 \t}
 }
 
+add_action( 'admin_notices', '${adminNoticeFunctionName}' );
 add_action( 'rest_api_init', '${registerRoutesFunctionName}' );
 `;
 }
@@ -422,6 +457,9 @@ export async function runAddAiFeatureCommand({
 		workspace.workspace.namespace,
 		namespace,
 	);
+	const compatibilityPolicy = resolveScaffoldCompatibilityPolicy(
+		OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
+	);
 
 	const inventory = readWorkspaceInventory(workspace.projectDir);
 	assertAiFeatureDoesNotExist(workspace.projectDir, aiFeatureSlug, inventory);
@@ -442,7 +480,6 @@ export async function runAddAiFeatureCommand({
 	const validatorsFilePath = path.join(aiFeatureDir, "api-validators.ts");
 	const apiFilePath = path.join(aiFeatureDir, "api.ts");
 	const dataFilePath = path.join(aiFeatureDir, "data.ts");
-	const clientFilePath = path.join(aiFeatureDir, "api-client.ts");
 	const phpFilePath = path.join(
 		workspace.projectDir,
 		"inc",
@@ -466,6 +503,9 @@ export async function runAddAiFeatureCommand({
 		await fsp.mkdir(aiFeatureDir, { recursive: true });
 		await fsp.mkdir(path.dirname(phpFilePath), { recursive: true });
 		await ensureAiFeatureBootstrapAnchors(workspace);
+		await patchFile(bootstrapPath, (source) =>
+			updatePluginHeaderCompatibility(source, compatibilityPolicy),
+		);
 		const packageScriptChanges = await ensureAiFeaturePackageScripts(workspace);
 		await ensureAiFeatureSyncProjectAnchors(workspace);
 		await ensureAiFeatureSyncRestAnchors(workspace);
@@ -500,6 +540,7 @@ export async function runAddAiFeatureCommand({
 				aiFeatureSlug,
 				resolvedNamespace,
 				workspace.workspace.phpPrefix,
+				workspace.workspace.textDomain,
 			),
 			"utf8",
 		);

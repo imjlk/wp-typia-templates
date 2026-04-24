@@ -73,28 +73,31 @@ The current internal split is:
 That keeps WordPress-only execution semantics out of the backend-neutral REST
 manifest while still letting the two sources compose at build time.
 
-## Compatibility draft for future scaffolds
+## Scaffold compatibility policy
 
-The repo also now carries a draft AI feature capability model that lets future
-scaffolds describe feature surfaces as either:
+AI-capable scaffolds now apply a concrete feature capability model that lets
+generated projects describe feature surfaces as either:
 
 - `required`
 - `optional`
 
-That draft is intentionally only a foundation for now. It records the minimum
-WordPress floor and runtime gate expectations for surfaces such as:
+The policy records the minimum WordPress floor and runtime gate expectations for
+surfaces such as:
 
 - server-side Abilities registration
 - `@wordpress/core-abilities`
 - the WordPress AI Client
 - optional MCP public metadata
 
-Scaffolds do not apply the compatibility policy yet. The current state is:
+See [`docs/ai-scaffold-compatibility.md`](./ai-scaffold-compatibility.md) for
+the current baseline, optional-feature, and required-feature rules. The current
+state is:
 
-- no plugin header changes
-- no generated runtime guards
-- a server-only `add ai-feature` workflow for WordPress AI Client endpoints
-- no typed Abilities scaffold rollout yet
+- non-AI scaffolds keep the WordPress 6.7 / PHP 8.0 baseline
+- server-only `add ai-feature` keeps WordPress AI Client support optional and
+  runtime-gated
+- typed `add ability` raises generated plugin headers to WordPress 7.0 because
+  the generated admin/editor discovery path requires `@wordpress/core-abilities`
 
 ## What this does not change
 
