@@ -14,6 +14,9 @@ function escapeRegex(value: string): string {
 	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
 
+/**
+ * Patch the workspace bootstrap file so it loads generated AI feature PHP modules.
+ */
 export async function ensureAiFeatureBootstrapAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {
@@ -76,10 +79,15 @@ function ${registerFunctionName}() {
 	});
 }
 
+/**
+ * Patch `package.json` with `sync-ai` plus the project-tools dependency used by generated AI sync scripts.
+ */
 export async function ensureAiFeaturePackageScripts(
 	workspace: WorkspaceProject,
 ): Promise<{
+	/** True when `@wp-typia/project-tools` was newly added to `devDependencies`. */
 	addedProjectToolsDependency: boolean;
+	/** True when the workspace did not already define a `sync-ai` script. */
 	addedSyncAiScript: boolean;
 }> {
 	const packageJsonPath = path.join(workspace.projectDir, "package.json");
@@ -130,6 +138,9 @@ export async function ensureAiFeaturePackageScripts(
 	};
 }
 
+/**
+ * Patch `scripts/sync-project.ts` after package scripts so generated workspaces invoke `sync-ai` when present.
+ */
 export async function ensureAiFeatureSyncProjectAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {
@@ -163,7 +174,7 @@ export async function ensureAiFeatureSyncProjectAnchors(
 			}
 			nextSource = nextSource.replace(
 				syncRestConst,
-				`${syncRestConst}\nconst syncAiScriptPath = path.join( 'scripts', 'sync-ai-features.ts' );`,
+				`${syncRestConst}\n${syncAiConst}`,
 			);
 		}
 
@@ -231,6 +242,9 @@ function replaceRequiredSyncRestSource(
 	return nextSource.replace(anchor, replacement);
 }
 
+/**
+ * Patch `scripts/sync-rest-contracts.ts` after sync-project wiring so AI feature REST artifacts join the split sync flow.
+ */
 export async function ensureAiFeatureSyncRestAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {

@@ -738,7 +738,8 @@ function appendEntriesAtMarker(source: string, marker: string, entries: string[]
 /**
  * Update `scripts/block-config.ts` source text with additional inventory entries.
  *
- * Missing `VARIATIONS` and `PATTERNS` sections are created automatically before
+ * Missing inventory sections for variations, patterns, binding sources, REST
+ * resources, AI features, and editor plugins are created automatically before
  * new entries are appended at their marker comments. When provided,
  * `transformSource` runs before any entries are inserted.
  *

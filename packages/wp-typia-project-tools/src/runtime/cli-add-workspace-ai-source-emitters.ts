@@ -5,6 +5,9 @@ import {
 import { buildAiFeatureEndpointManifest } from "./ai-feature-artifacts.js";
 import { toTitleCase } from "./string-case.js";
 
+/**
+ * Convert an AI feature slug into the PascalCase identifier used by generated types.
+ */
 export function toPascalCaseFromAiFeatureSlug(slug: string): string {
 	return normalizeBlockSlug(slug)
 		.split("-")
@@ -17,9 +20,12 @@ function indentMultiline(source: string, prefix: string): string {
 	return source
 		.split("\n")
 		.map((line) => `${prefix}${line}`)
-		.join("\n");
+	.join("\n");
 }
 
+/**
+ * Build the workspace inventory entry written into `scripts/block-config.ts` for one AI feature.
+ */
 export function buildAiFeatureConfigEntry(
 	aiFeatureSlug: string,
 	namespace: string,
@@ -62,6 +68,9 @@ export function buildAiFeatureConfigEntry(
 	].join("\n");
 }
 
+/**
+ * Generate TypeScript request, response, and telemetry contracts for an AI feature scaffold.
+ */
 export function buildAiFeatureTypesSource(aiFeatureSlug: string): string {
 	const pascalCase = toPascalCaseFromAiFeatureSlug(aiFeatureSlug);
 
@@ -102,6 +111,9 @@ export interface ${pascalCase}AiFeatureResponse {
 `;
 }
 
+/**
+ * Generate runtime validators for the AI feature request/result/response contracts.
+ */
 export function buildAiFeatureValidatorsSource(
 	aiFeatureSlug: string,
 ): string {
@@ -137,6 +149,9 @@ export const apiValidators = {
 `;
 }
 
+/**
+ * Generate the typed client wrapper that calls the scaffolded AI feature endpoint.
+ */
 export function buildAiFeatureApiSource(aiFeatureSlug: string): string {
 	const pascalCase = toPascalCaseFromAiFeatureSlug(aiFeatureSlug);
 
@@ -194,6 +209,9 @@ export function runAiFeature( request: ${pascalCase}AiFeatureRequest ) {
 `;
 }
 
+/**
+ * Generate React endpoint-mutation hooks for the scaffolded AI feature client wrapper.
+ */
 export function buildAiFeatureDataSource(aiFeatureSlug: string): string {
 	const pascalCase = toPascalCaseFromAiFeatureSlug(aiFeatureSlug);
 
@@ -225,6 +243,9 @@ export function useRun${pascalCase}AiFeatureMutation(
 `;
 }
 
+/**
+ * Generate the `scripts/sync-ai-features.ts` source that projects AI-safe schemas for workspace features.
+ */
 export function buildAiFeatureSyncScriptSource(): string {
 	return `/* eslint-disable no-console */
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -307,6 +328,11 @@ async function loadJsonDocument( filePath: string ) {
 async function main() {
 \tconst options = parseCliOptions( process.argv.slice( 2 ) );
 \tconst aiFeatures = AI_FEATURES.filter( isWorkspaceAiFeature );
+\tif ( AI_FEATURES.length > 0 && aiFeatures.length === 0 ) {
+\t\tconsole.warn(
+\t\t\t'⚠️ AI_FEATURES entries exist, but none satisfied the generated sync-ai guard. Check for missing aiSchemaFile/typesFile fields in scripts/block-config.ts.'
+\t\t);
+\t}
 
 \tif ( aiFeatures.length === 0 ) {
 \t\tconsole.log(

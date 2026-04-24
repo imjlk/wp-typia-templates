@@ -21,6 +21,7 @@ interface AiFeatureTemplateVariablesLike {
 
 interface SyncAiFeatureRestArtifactsOptions {
 	clientFile: string;
+	executionOptions?: ArtifactSyncExecutionOptions;
 	outputDir: string;
 	projectDir: string;
 	typesFile: string;
@@ -158,6 +159,7 @@ export function buildAiFeatureEndpointManifest(
  */
 export async function syncAiFeatureRestArtifacts({
 	clientFile,
+	executionOptions,
 	outputDir,
 	projectDir,
 	typesFile,
@@ -169,29 +171,38 @@ export async function syncAiFeatureRestArtifacts({
 	for (const [baseName, contract] of Object.entries(manifest.contracts) as Array<
 		[string, { sourceTypeName: string }]
 	>) {
-		await syncTypeSchemas({
-			jsonSchemaFile: path.join(outputDir, "api-schemas", `${baseName}.schema.json`),
-			openApiFile: path.join(outputDir, "api-schemas", `${baseName}.openapi.json`),
-			projectRoot: projectDir,
-			sourceTypeName: contract.sourceTypeName,
-			typesFile,
-		});
+		await syncTypeSchemas(
+			{
+				jsonSchemaFile: path.join(outputDir, "api-schemas", `${baseName}.schema.json`),
+				openApiFile: path.join(outputDir, "api-schemas", `${baseName}.openapi.json`),
+				projectRoot: projectDir,
+				sourceTypeName: contract.sourceTypeName,
+				typesFile,
+			},
+			executionOptions,
+		);
 	}
 
-	await syncRestOpenApi({
-		manifest,
-		openApiFile: path.join(outputDir, "api.openapi.json"),
-		projectRoot: projectDir,
-		typesFile,
-	});
+	await syncRestOpenApi(
+		{
+			manifest,
+			openApiFile: path.join(outputDir, "api.openapi.json"),
+			projectRoot: projectDir,
+			typesFile,
+		},
+		executionOptions,
+	);
 
-	await syncEndpointClient({
-		clientFile,
-		manifest,
-		projectRoot: projectDir,
-		typesFile,
-		validatorsFile,
-	});
+	await syncEndpointClient(
+		{
+			clientFile,
+			manifest,
+			projectRoot: projectDir,
+			typesFile,
+			validatorsFile,
+		},
+		executionOptions,
+	);
 }
 
 /**

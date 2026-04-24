@@ -11,6 +11,7 @@
  * and `HOOKED_BLOCK_POSITION_IDS`,
  * `getWorkspaceBlockSelectOptions`, and `seedWorkspaceMigrationProject` for
  * explicit `wp-typia add` flows,
+ * `runAddAiFeatureCommand` for server-owned WordPress AI feature scaffolds,
  * `runAddRestResourceCommand` for plugin-level REST resource scaffolds,
  * `getDoctorChecks`, `runDoctor`, and `DoctorCheck` for diagnostics,
  * `createCliCommandError` and `formatCliDiagnosticError` for shared

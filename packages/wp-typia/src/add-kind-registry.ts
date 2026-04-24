@@ -185,7 +185,7 @@ export const ADD_KIND_REGISTRY = {
     completion: {
       nextSteps: (values) => [
         `Review src/ai-features/${values.aiFeatureSlug}/ and inc/ai-features/${values.aiFeatureSlug}.php.`,
-        'Run `wp-typia sync ai` or your workspace build/dev command to verify the generated AI schema and endpoint client.',
+        'Run `wp-typia sync-rest` and `wp-typia sync ai` or your workspace build/dev command to verify the generated REST artifacts and AI schema.',
       ],
       summaryLines: (values, projectDir) => [
         `AI feature: ${values.aiFeatureSlug}`,
