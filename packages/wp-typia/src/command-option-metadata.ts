@@ -162,7 +162,7 @@ export const ADD_OPTION_METADATA = {
 		type: "string",
 	},
 	namespace: {
-		description: "REST namespace for rest-resource workflows.",
+		description: "REST namespace for rest-resource and ai-feature workflows.",
 		type: "string",
 	},
 	"persistence-policy": {

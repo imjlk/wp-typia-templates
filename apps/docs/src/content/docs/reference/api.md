@@ -693,12 +693,13 @@ without changing the parent block's default seeded template for hidden child
 extensions, and it also supports visible container children plus nested ancestor
 chains for richer document-style layouts.
 
-Official workspaces also support first-class variation, pattern, binding-source, and hooked-block expansion:
+Official workspaces also support first-class variation, pattern, binding-source, AI-feature, and hooked-block expansion:
 
 ```bash
 wp-typia add variation hero-card --block counter-card
 wp-typia add pattern hero-layout
 wp-typia add binding-source hero-data
+wp-typia add ai-feature brief-suggestions --namespace my-plugin/v1
 wp-typia add hooked-block counter-card --anchor core/post-content --position after
 ```
 
@@ -711,6 +712,9 @@ starter contract keeps one field-keyed data map in each file, so the common
 follow-up is to edit `src/bindings/<name>/server.php` and
 `src/bindings/<name>/editor.ts` in parallel by replacing the default starter
 values for the fields you want to expose.
+AI features are generated under `src/ai-features/*/` plus `inc/ai-features/*.php`
+and scaffold a server-owned REST endpoint, AI-safe response schema projection,
+typed endpoint client wrapper, and WordPress AI Client feature-detection seam.
 Hooked blocks patch `src/blocks/<block>/block.json` with `blockHooks` metadata
 so the target block is inserted relative to the chosen anchor block.
 

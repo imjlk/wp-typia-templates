@@ -31,6 +31,7 @@ export const ADD_KIND_IDS = [
 	"pattern",
 	"binding-source",
 	"rest-resource",
+	"ai-feature",
 	"hooked-block",
 	"editor-plugin",
 ] as const;
@@ -90,6 +91,12 @@ export interface RunAddRestResourceCommandOptions {
 	methods?: string;
 	namespace?: string;
 	restResourceName: string;
+}
+
+export interface RunAddAiFeatureCommandOptions {
+	aiFeatureName: string;
+	cwd?: string;
+	namespace?: string;
 }
 
 export interface RunAddHookedBlockCommandOptions {
@@ -491,6 +498,35 @@ export function assertRestResourceDoesNotExist(
 	}
 }
 
+export function assertAiFeatureDoesNotExist(
+	projectDir: string,
+	aiFeatureSlug: string,
+	inventory: WorkspaceInventory,
+): void {
+	const aiFeatureDir = path.join(projectDir, "src", "ai-features", aiFeatureSlug);
+	const aiFeaturePhpPath = path.join(
+		projectDir,
+		"inc",
+		"ai-features",
+		`${aiFeatureSlug}.php`,
+	);
+	if (fs.existsSync(aiFeatureDir)) {
+		throw new Error(
+			`An AI feature already exists at ${path.relative(projectDir, aiFeatureDir)}. Choose a different name.`,
+		);
+	}
+	if (fs.existsSync(aiFeaturePhpPath)) {
+		throw new Error(
+			`An AI feature bootstrap already exists at ${path.relative(projectDir, aiFeaturePhpPath)}. Choose a different name.`,
+		);
+	}
+	if (inventory.aiFeatures.some((entry) => entry.slug === aiFeatureSlug)) {
+		throw new Error(
+			`An AI feature inventory entry already exists for ${aiFeatureSlug}. Choose a different name.`,
+		);
+	}
+}
+
 /**
  * Ensure an editor plugin scaffold does not already exist on disk or in the
  * workspace inventory.
@@ -524,6 +560,7 @@ export function formatAddHelpText(): string {
   wp-typia add pattern <name> [--dry-run]
   wp-typia add binding-source <name> [--dry-run]
   wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--dry-run]
+  wp-typia add ai-feature <name> [--namespace <vendor/v1>] [--dry-run]
   wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <${HOOKED_BLOCK_POSITION_IDS.join("|")}> [--dry-run]
   wp-typia add editor-plugin <name> [--slot <${EDITOR_PLUGIN_SLOT_IDS.join("|")}>] [--dry-run]
 
@@ -535,6 +572,7 @@ Notes:
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
   \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.
   \`add rest-resource\` scaffolds plugin-level TypeScript REST contracts under \`src/rest/\` and PHP route glue under \`inc/rest/\`.
+  \`add ai-feature\` scaffolds server-owned AI feature endpoints under \`src/ai-features/\` and PHP route glue under \`inc/ai-features/\`.
   \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.
   \`add editor-plugin\` scaffolds a document-level editor extension under \`src/editor-plugins/\`.`;
 }

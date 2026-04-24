@@ -30,6 +30,7 @@ const WORKSPACE_BINDING_SERVER_GLOB = "/src/bindings/*/server.php";
 const WORKSPACE_BINDING_EDITOR_SCRIPT = "build/bindings/index.js";
 const WORKSPACE_BINDING_EDITOR_ASSET = "build/bindings/index.asset.php";
 const WORKSPACE_REST_RESOURCE_GLOB = "/inc/rest/*.php";
+const WORKSPACE_AI_FEATURE_GLOB = "/inc/ai-features/*.php";
 const WORKSPACE_EDITOR_PLUGIN_EDITOR_SCRIPT = "build/editor-plugins/index.js";
 const WORKSPACE_EDITOR_PLUGIN_EDITOR_ASSET = "build/editor-plugins/index.asset.php";
 const WORKSPACE_EDITOR_PLUGIN_EDITOR_STYLE = "build/editor-plugins/style-index.css";
@@ -452,6 +453,82 @@ function checkWorkspaceRestResourceBootstrap(
 	);
 }
 
+function getWorkspaceAiFeatureRequiredFiles(
+	aiFeature: WorkspaceInventory["aiFeatures"][number],
+): string[] {
+	return Array.from(
+		new Set([
+			aiFeature.aiSchemaFile,
+			aiFeature.apiFile,
+			path.join(
+				path.dirname(aiFeature.typesFile),
+				"api-schemas",
+				"feature-request.schema.json",
+			),
+			path.join(
+				path.dirname(aiFeature.typesFile),
+				"api-schemas",
+				"feature-response.schema.json",
+			),
+			path.join(
+				path.dirname(aiFeature.typesFile),
+				"api-schemas",
+				"feature-result.schema.json",
+			),
+			aiFeature.clientFile,
+			aiFeature.dataFile,
+			aiFeature.openApiFile,
+			aiFeature.phpFile,
+			aiFeature.typesFile,
+			aiFeature.validatorsFile,
+		]),
+	);
+}
+
+function checkWorkspaceAiFeatureConfig(
+	aiFeature: WorkspaceInventory["aiFeatures"][number],
+): DoctorCheck {
+	const hasNamespace = REST_RESOURCE_NAMESPACE_PATTERN.test(aiFeature.namespace);
+
+	return createDoctorCheck(
+		`AI feature config ${aiFeature.slug}`,
+		hasNamespace ? "pass" : "fail",
+		hasNamespace
+			? `AI feature namespace ${aiFeature.namespace} is valid`
+			: "AI feature namespace is invalid",
+	);
+}
+
+function checkWorkspaceAiFeatureBootstrap(
+	projectDir: string,
+	packageName: string,
+	phpPrefix: string,
+): DoctorCheck {
+	const packageBaseName = packageName.split("/").pop() ?? packageName;
+	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
+	if (!fs.existsSync(bootstrapPath)) {
+		return createDoctorCheck(
+			"AI feature bootstrap",
+			"fail",
+			`Missing ${path.basename(bootstrapPath)}`,
+		);
+	}
+
+	const source = fs.readFileSync(bootstrapPath, "utf8");
+	const registerFunctionName = `${phpPrefix}_register_ai_features`;
+	const registerHook = `add_action( 'init', '${registerFunctionName}', 20 );`;
+	const hasServerGlob = source.includes(WORKSPACE_AI_FEATURE_GLOB);
+	const hasRegisterHook = source.includes(registerHook);
+
+	return createDoctorCheck(
+		"AI feature bootstrap",
+		hasServerGlob && hasRegisterHook ? "pass" : "fail",
+		hasServerGlob && hasRegisterHook
+			? "AI feature PHP loader hook is present"
+			: "Missing AI feature PHP require glob or init hook",
+	);
+}
+
 function getWorkspaceEditorPluginRequiredFiles(
 	editorPlugin: WorkspaceInventory["editorPlugins"][number],
 ): string[] {
@@ -692,7 +769,7 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 			createDoctorCheck(
 				"Workspace inventory",
 				"pass",
-				`${inventory.blocks.length} block(s), ${inventory.variations.length} variation(s), ${inventory.patterns.length} pattern(s), ${inventory.bindingSources.length} binding source(s), ${inventory.restResources.length} REST resource(s), ${inventory.editorPlugins.length} editor plugin(s)`,
+				`${inventory.blocks.length} block(s), ${inventory.variations.length} variation(s), ${inventory.patterns.length} pattern(s), ${inventory.bindingSources.length} binding source(s), ${inventory.restResources.length} REST resource(s), ${inventory.aiFeatures.length} AI feature(s), ${inventory.editorPlugins.length} editor plugin(s)`,
 			),
 		);
 
@@ -779,6 +856,26 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 					workspace.projectDir,
 					`REST resource ${restResource.slug}`,
 					getWorkspaceRestResourceRequiredFiles(restResource),
+				),
+			);
+		}
+
+		if (inventory.aiFeatures.length > 0) {
+			checks.push(
+				checkWorkspaceAiFeatureBootstrap(
+					workspace.projectDir,
+					workspace.packageName,
+					workspace.workspace.phpPrefix,
+				),
+			);
+		}
+		for (const aiFeature of inventory.aiFeatures) {
+			checks.push(checkWorkspaceAiFeatureConfig(aiFeature));
+			checks.push(
+				checkExistingFiles(
+					workspace.projectDir,
+					`AI feature ${aiFeature.slug}`,
+					getWorkspaceAiFeatureRequiredFiles(aiFeature),
 				),
 			);
 		}

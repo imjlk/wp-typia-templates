@@ -4,6 +4,7 @@ export const ADD_KIND_IDS = [
   'pattern',
   'binding-source',
   'rest-resource',
+  'ai-feature',
   'editor-plugin',
   'hooked-block',
 ] as const;
@@ -179,6 +180,23 @@ export const ADD_KIND_REGISTRY = {
     description: 'Add a plugin-level typed REST resource',
     nameLabel: 'REST resource name',
     visibleFieldNames: () => ['kind', 'name', 'namespace', 'methods'],
+  },
+  'ai-feature': {
+    completion: {
+      nextSteps: (values) => [
+        `Review src/ai-features/${values.aiFeatureSlug}/ and inc/ai-features/${values.aiFeatureSlug}.php.`,
+        'Run `wp-typia sync-rest` and `wp-typia sync ai` or your workspace build/dev command to verify the generated REST artifacts and AI schema.',
+      ],
+      summaryLines: (values, projectDir) => [
+        `AI feature: ${values.aiFeatureSlug}`,
+        `Namespace: ${values.namespace}`,
+        `Project directory: ${projectDir}`,
+      ],
+      title: 'Added server-only AI feature',
+    },
+    description: 'Add a server-owned WordPress AI feature endpoint',
+    nameLabel: 'AI feature name',
+    visibleFieldNames: () => ['kind', 'name', 'namespace'],
   },
   variation: {
     completion: {

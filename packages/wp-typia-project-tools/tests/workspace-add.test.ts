@@ -2901,6 +2901,209 @@ test("rest resource workflow rejects invalid namespace and methods and preserves
   ).toBe(originalPhpSource);
 }, 20_000);
 
+test("canonical CLI can add a server-only AI feature to an official workspace template", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-ai-feature");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add ai feature",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-ai-feature",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add AI Feature",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "ai-feature",
+      "brief-suggestions",
+      "--namespace",
+      "demo-space/v1",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const bootstrapSource = fs.readFileSync(
+    path.join(targetDir, "demo-workspace-add-ai-feature.php"),
+    "utf8"
+  );
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+  ) as {
+    devDependencies?: Record<string, string>;
+    scripts?: Record<string, string>;
+  };
+  const syncProjectSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "sync-project.ts"),
+    "utf8"
+  );
+  const syncRestSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "sync-rest-contracts.ts"),
+    "utf8"
+  );
+  const syncAiSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "sync-ai-features.ts"),
+    "utf8"
+  );
+  const typesSource = fs.readFileSync(
+    path.join(targetDir, "src", "ai-features", "brief-suggestions", "api-types.ts"),
+    "utf8"
+  );
+  const validatorsSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "ai-features",
+      "brief-suggestions",
+      "api-validators.ts"
+    ),
+    "utf8"
+  );
+  const apiSource = fs.readFileSync(
+    path.join(targetDir, "src", "ai-features", "brief-suggestions", "api.ts"),
+    "utf8"
+  );
+  const dataSource = fs.readFileSync(
+    path.join(targetDir, "src", "ai-features", "brief-suggestions", "data.ts"),
+    "utf8"
+  );
+  const phpSource = fs.readFileSync(
+    path.join(targetDir, "inc", "ai-features", "brief-suggestions.php"),
+    "utf8"
+  );
+
+  expect(blockConfigSource).toContain('slug: "brief-suggestions"');
+  expect(blockConfigSource).toContain('namespace: "demo-space/v1"');
+  expect(blockConfigSource).toContain(
+    'aiSchemaFile: "src/ai-features/brief-suggestions/ai-schemas/feature-result.ai.schema.json"'
+  );
+  expect(blockConfigSource).toContain(
+    'apiFile: "src/ai-features/brief-suggestions/api.ts"'
+  );
+  expect(blockConfigSource).toContain(
+    'phpFile: "inc/ai-features/brief-suggestions.php"'
+  );
+  expect(blockConfigSource).toContain("defineEndpointManifest");
+  expect(bootstrapSource).toContain("function demo_space_register_ai_features()");
+  expect(bootstrapSource).toContain("inc/ai-features/*.php");
+  expect(packageJson.scripts?.["sync-ai"]).toBe("tsx scripts/sync-ai-features.ts");
+  expect(packageJson.devDependencies?.["@wp-typia/project-tools"]).toBeDefined();
+  expect(syncProjectSource).toContain("const syncAiScriptPath");
+  expect(syncProjectSource).toContain("runSyncScript( syncAiScriptPath, options );");
+  expect(syncRestSource).toContain("AI_FEATURES");
+  expect(syncRestSource).toContain("isWorkspaceAiFeature");
+  expect(syncRestSource).toContain("const aiFeatures = AI_FEATURES.filter");
+  expect(syncAiSource).toContain("@wp-typia/project-tools/ai-artifacts");
+  expect(syncAiSource).toContain("projectWordPressAiSchema");
+  expect(typesSource).toContain(
+    "export interface BriefSuggestionsAiFeatureRequest"
+  );
+  expect(typesSource).toContain(
+    "export interface BriefSuggestionsAiFeatureResponse"
+  );
+  expect(typesSource).toContain("providerType: 'client' | 'cloud' | 'server'");
+  expect(validatorsSource).toContain("featureRequest");
+  expect(validatorsSource).toContain("featureResponse");
+  expect(apiSource).toContain("aiFeatureRunEndpoint");
+  expect(apiSource).toContain("resolveRestNonce");
+  expect(dataSource).toContain("useRunBriefSuggestionsAiFeatureMutation");
+  expect(phpSource).toContain("wp_ai_client_prompt");
+  expect(phpSource).toContain("is_supported_for_text_generation");
+  expect(phpSource).toContain("generate_text_result");
+  expect(phpSource).toContain("register_rest_route");
+  expect(phpSource).toContain("'demo-space/v1'");
+
+  expect(
+    fs.existsSync(
+      path.join(
+        targetDir,
+        "src",
+        "ai-features",
+        "brief-suggestions",
+        "api-client.ts"
+      )
+    )
+  ).toBe(true);
+  expect(
+    fs.existsSync(
+      path.join(
+        targetDir,
+        "src",
+        "ai-features",
+        "brief-suggestions",
+        "api.openapi.json"
+      )
+    )
+  ).toBe(true);
+  expect(
+    fs.existsSync(
+      path.join(
+        targetDir,
+        "src",
+        "ai-features",
+        "brief-suggestions",
+        "api-schemas",
+        "feature-request.schema.json"
+      )
+    )
+  ).toBe(true);
+  expect(
+    fs.existsSync(
+      path.join(
+        targetDir,
+        "src",
+        "ai-features",
+        "brief-suggestions",
+        "ai-schemas",
+        "feature-result.ai.schema.json"
+      )
+    )
+  ).toBe(true);
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = JSON.parse(doctorOutput) as {
+    checks: Array<{ detail: string; label: string; status: string }>;
+  };
+  expect(
+    doctorChecks.checks.find((check) => check.label === "AI feature bootstrap")
+      ?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "AI feature config brief-suggestions"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "AI feature brief-suggestions"
+    )?.status
+  ).toBe("pass");
+
+  runCli("npm", ["run", "sync-rest", "--", "--check"], { cwd: targetDir });
+  runCli("npm", ["run", "sync-ai", "--", "--check"], { cwd: targetDir });
+  typecheckGeneratedProject(targetDir);
+}, 30_000);
+
 test("canonical CLI can add an editor plugin to an official workspace template", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-editor-plugin");
 
