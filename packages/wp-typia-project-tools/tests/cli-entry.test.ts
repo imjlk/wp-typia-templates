@@ -689,12 +689,18 @@ test("formatHelpText keeps migration UI flags out of external template usage", (
   expect(helpText).toContain("--external-layer-id");
   expect(helpText).toContain("@wp-typia/create-workspace-template");
   expect(helpText).toContain("`query-loop` is create-only.");
+  expect(helpText).toContain("wp-typia add ai-feature <name>");
+  expect(helpText).toContain(
+    "wp-typia add ai-feature <name> [--namespace <vendor/v1>]"
+  );
   expect(helpText).toContain("wp-typia add editor-plugin <name>");
   expect(helpText).toContain(
     "wp-typia add editor-plugin <name> [--slot <PluginSidebar>]"
   );
   expect(helpText).toContain("wp-typia add rest-resource <name>");
   expect(helpText).toContain("--methods <method[,method...]>");
+  expect(helpText).toContain("src/ai-features/");
+  expect(helpText).toContain("inc/ai-features/");
   expect(helpText).toContain("src/rest/");
   expect(helpText).toContain("inc/rest/");
   expect(helpText).toContain("src/editor-plugins/");

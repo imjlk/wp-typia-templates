@@ -9,6 +9,11 @@ The projection path is no longer internal-only: the supported helper surface now
 lives on `@wp-typia/project-tools/ai-artifacts`, and generated projects can opt
 into a dedicated `sync-ai` script that `wp-typia sync ai` understands.
 
+That supported sync path now also underpins scaffolded server-only AI feature
+endpoints. Official workspaces can generate a starter feature with
+`wp-typia add ai-feature <name>`, which wires a typed REST endpoint plus an
+AI-safe response schema under `src/ai-features/<slug>/ai-schemas/`.
+
 ## Outcome
 
 - WordPress AI Client: the generated counter response schema can be reused after
@@ -84,15 +89,16 @@ WordPress floor and runtime gate expectations for surfaces such as:
 - the WordPress AI Client
 - optional MCP public metadata
 
-Scaffolds do not apply those rules yet. The current state is still:
+Scaffolds do not apply the compatibility policy yet. The current state is:
 
 - no plugin header changes
 - no generated runtime guards
-- no AI-capable scaffold rollout in the supported templates yet
+- a server-only `add ai-feature` workflow for WordPress AI Client endpoints
+- no typed Abilities scaffold rollout yet
 
 ## What this does not change
 
-- No scaffold imports or templates change
+- No typed Abilities scaffold is included here yet
 - No MCP integration is included here
 - No frontend or default AI behavior is added to generated projects
 - `typia.llm` remains a separate evaluation path rather than part of the

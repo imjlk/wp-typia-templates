@@ -190,6 +190,11 @@ export {
  * rest-resource runtime helper module.
  */
 export { runAddRestResourceCommand } from "./cli-add-workspace-rest.js";
+/**
+ * Re-export the server-only AI feature scaffold workflow from the focused
+ * AI-feature runtime helper module.
+ */
+export { runAddAiFeatureCommand } from "./cli-add-workspace-ai.js";
 
 /**
  * Add one variation entry to an existing workspace block.

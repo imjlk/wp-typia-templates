@@ -349,6 +349,23 @@ export const REST_RESOURCES: WorkspaceRestResourceConfig[] = [
 \t// wp-typia add rest-resource entries
 ];
 
+export interface WorkspaceAiFeatureConfig {
+\taiSchemaFile: string;
+\tapiFile: string;
+\tclientFile: string;
+\tdataFile: string;
+\tnamespace: string;
+\topenApiFile: string;
+\tphpFile: string;
+\tslug: string;
+\ttypesFile: string;
+\tvalidatorsFile: string;
+}
+
+export const AI_FEATURES: WorkspaceAiFeatureConfig[] = [
+\t// wp-typia add ai-feature entries
+];
+
 export interface WorkspaceEditorPluginConfig {
 \tfile: string;
 \tslug: string;
@@ -370,6 +387,9 @@ export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
       restResourceEntries: [
         '\t{ apiFile: "src/rest/hero/api.ts", clientFile: "src/rest/hero/api-client.ts", dataFile: "src/rest/hero/data.ts", methods: [ "list", "read" ], namespace: "demo-space/v1", openApiFile: "src/rest/hero/api.openapi.json", phpFile: "inc/rest/hero.php", slug: "hero", typesFile: "src/rest/hero/api-types.ts", validatorsFile: "src/rest/hero/api-validators.ts" },',
       ],
+      aiFeatureEntries: [
+        '\t{ aiSchemaFile: "src/ai-features/hero/ai-schemas/feature-result.ai.schema.json", apiFile: "src/ai-features/hero/api.ts", clientFile: "src/ai-features/hero/api-client.ts", dataFile: "src/ai-features/hero/data.ts", namespace: "demo-space/v1", openApiFile: "src/ai-features/hero/api.openapi.json", phpFile: "inc/ai-features/hero.php", slug: "hero", typesFile: "src/ai-features/hero/api-types.ts", validatorsFile: "src/ai-features/hero/api-validators.ts" },',
+      ],
       editorPluginEntries: [
         '\t{ file: "src/editor-plugins/document-tools/index.tsx", slug: "document-tools", slot: "PluginSidebar" },',
       ],
@@ -384,6 +404,7 @@ export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
   expect(
     repairedSource.match(/export const REST_RESOURCES\b/gu)?.length
   ).toBe(1);
+  expect(repairedSource.match(/export const AI_FEATURES\b/gu)?.length).toBe(1);
   expect(
     repairedSource.match(/export const EDITOR_PLUGINS\b/gu)?.length
   ).toBe(1);
@@ -396,6 +417,9 @@ export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
   );
   expect(repairedSource).toContain(
     "export interface WorkspaceRestResourceConfig"
+  );
+  expect(repairedSource).toContain(
+    "export interface WorkspaceAiFeatureConfig"
   );
   expect(repairedSource).toContain(
     "export interface WorkspaceEditorPluginConfig"

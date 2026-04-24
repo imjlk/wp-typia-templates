@@ -52,6 +52,26 @@ export interface WorkspaceRestResourceInventoryEntry {
 }
 
 /**
+ * AI-feature entry parsed from `scripts/block-config.ts`.
+ *
+ * Each file path stays relative to the workspace root so doctor checks, add
+ * workflows, and split sync scripts can reason about the REST and AI-safe
+ * artifacts without guessing their locations.
+ */
+export interface WorkspaceAiFeatureInventoryEntry {
+	aiSchemaFile: string;
+	apiFile: string;
+	clientFile: string;
+	dataFile: string;
+	namespace: string;
+	openApiFile: string;
+	phpFile: string;
+	slug: string;
+	typesFile: string;
+	validatorsFile: string;
+}
+
+/**
  * Editor-plugin entry parsed from `scripts/block-config.ts`.
  *
  * @property file Relative path to the generated editor plugin entry file.
@@ -68,7 +88,9 @@ export interface WorkspaceInventory {
 	bindingSources: WorkspaceBindingSourceInventoryEntry[];
 	blockConfigPath: string;
 	blocks: WorkspaceBlockInventoryEntry[];
+	aiFeatures: WorkspaceAiFeatureInventoryEntry[];
 	hasBindingSourcesSection: boolean;
+	hasAiFeaturesSection: boolean;
 	hasEditorPluginsSection: boolean;
 	hasPatternsSection: boolean;
 	hasRestResourcesSection: boolean;
@@ -85,6 +107,7 @@ export const VARIATION_CONFIG_ENTRY_MARKER = "\t// wp-typia add variation entrie
 export const PATTERN_CONFIG_ENTRY_MARKER = "\t// wp-typia add pattern entries";
 export const BINDING_SOURCE_CONFIG_ENTRY_MARKER = "\t// wp-typia add binding-source entries";
 export const REST_RESOURCE_CONFIG_ENTRY_MARKER = "\t// wp-typia add rest-resource entries";
+export const AI_FEATURE_CONFIG_ENTRY_MARKER = "\t// wp-typia add ai-feature entries";
 /**
  * Marker used to append generated editor-plugin entries into `EDITOR_PLUGINS`.
  */
@@ -160,6 +183,32 @@ const REST_RESOURCES_CONST_SECTION = `
 
 export const REST_RESOURCES: WorkspaceRestResourceConfig[] = [
 \t// wp-typia add rest-resource entries
+];
+`;
+
+const AI_FEATURES_INTERFACE_SECTION = `
+
+export interface WorkspaceAiFeatureConfig {
+\taiSchemaFile: string;
+\tapiFile: string;
+\tclientFile: string;
+\tdataFile: string;
+\tnamespace: string;
+\topenApiFile: string;
+\tphpFile: string;
+\trestManifest?: ReturnType<
+\t\ttypeof import( '@wp-typia/block-runtime/metadata-core' ).defineEndpointManifest
+\t>;
+\tslug: string;
+\ttypesFile: string;
+\tvalidatorsFile: string;
+}
+`;
+
+const AI_FEATURES_CONST_SECTION = `
+
+export const AI_FEATURES: WorkspaceAiFeatureConfig[] = [
+\t// wp-typia add ai-feature entries
 ];
 `;
 
@@ -441,6 +490,56 @@ function parseRestResourceEntries(
 	});
 }
 
+function parseAiFeatureEntries(
+	arrayLiteral: ts.ArrayLiteralExpression,
+): WorkspaceAiFeatureInventoryEntry[] {
+	return arrayLiteral.elements.map((element, elementIndex) => {
+		if (!ts.isObjectLiteralExpression(element)) {
+			throw new Error(
+				`AI_FEATURES[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
+			);
+		}
+
+		return {
+			aiSchemaFile: getRequiredStringProperty(
+				"AI_FEATURES",
+				elementIndex,
+				element,
+				"aiSchemaFile",
+			),
+			apiFile: getRequiredStringProperty("AI_FEATURES", elementIndex, element, "apiFile"),
+			clientFile: getRequiredStringProperty(
+				"AI_FEATURES",
+				elementIndex,
+				element,
+				"clientFile",
+			),
+			dataFile: getRequiredStringProperty("AI_FEATURES", elementIndex, element, "dataFile"),
+			namespace: getRequiredStringProperty(
+				"AI_FEATURES",
+				elementIndex,
+				element,
+				"namespace",
+			),
+			openApiFile: getRequiredStringProperty(
+				"AI_FEATURES",
+				elementIndex,
+				element,
+				"openApiFile",
+			),
+			phpFile: getRequiredStringProperty("AI_FEATURES", elementIndex, element, "phpFile"),
+			slug: getRequiredStringProperty("AI_FEATURES", elementIndex, element, "slug"),
+			typesFile: getRequiredStringProperty("AI_FEATURES", elementIndex, element, "typesFile"),
+			validatorsFile: getRequiredStringProperty(
+				"AI_FEATURES",
+				elementIndex,
+				element,
+				"validatorsFile",
+			),
+		};
+	});
+}
+
 function parseEditorPluginEntries(
 	arrayLiteral: ts.ArrayLiteralExpression,
 ): WorkspaceEditorPluginInventoryEntry[] {
@@ -482,6 +581,7 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 	const patternArray = findExportedArrayLiteral(sourceFile, "PATTERNS");
 	const bindingSourceArray = findExportedArrayLiteral(sourceFile, "BINDING_SOURCES");
 	const restResourceArray = findExportedArrayLiteral(sourceFile, "REST_RESOURCES");
+	const aiFeatureArray = findExportedArrayLiteral(sourceFile, "AI_FEATURES");
 	const editorPluginArray = findExportedArrayLiteral(sourceFile, "EDITOR_PLUGINS");
 	if (variationArray.found && !variationArray.array) {
 		throw new Error("scripts/block-config.ts must export VARIATIONS as an array literal.");
@@ -495,15 +595,20 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 	if (restResourceArray.found && !restResourceArray.array) {
 		throw new Error("scripts/block-config.ts must export REST_RESOURCES as an array literal.");
 	}
+	if (aiFeatureArray.found && !aiFeatureArray.array) {
+		throw new Error("scripts/block-config.ts must export AI_FEATURES as an array literal.");
+	}
 	if (editorPluginArray.found && !editorPluginArray.array) {
 		throw new Error("scripts/block-config.ts must export EDITOR_PLUGINS as an array literal.");
 	}
 
 	return {
+		aiFeatures: aiFeatureArray.array ? parseAiFeatureEntries(aiFeatureArray.array) : [],
 		bindingSources: bindingSourceArray.array
 			? parseBindingSourceEntries(bindingSourceArray.array)
 			: [],
 		blocks: parseBlockEntries(blockArray.array),
+		hasAiFeaturesSection: aiFeatureArray.found,
 		hasBindingSourcesSection: bindingSourceArray.found,
 		hasEditorPluginsSection: editorPluginArray.found,
 		hasPatternsSection: patternArray.found,
@@ -603,6 +708,12 @@ function ensureWorkspaceInventorySections(source: string): string {
 	if (!/export\s+const\s+REST_RESOURCES\b/u.test(nextSource)) {
 		nextSource += REST_RESOURCES_CONST_SECTION;
 	}
+	if (!/export\s+interface\s+WorkspaceAiFeatureConfig\b/u.test(nextSource)) {
+		nextSource += AI_FEATURES_INTERFACE_SECTION;
+	}
+	if (!/export\s+const\s+AI_FEATURES\b/u.test(nextSource)) {
+		nextSource += AI_FEATURES_CONST_SECTION;
+	}
 	if (!/export\s+interface\s+WorkspaceEditorPluginConfig\b/u.test(nextSource)) {
 		nextSource += EDITOR_PLUGINS_INTERFACE_SECTION;
 	}
@@ -640,12 +751,14 @@ export function updateWorkspaceInventorySource(
 	{
 		blockEntries = [],
 		bindingSourceEntries = [],
+		aiFeatureEntries = [],
 		editorPluginEntries = [],
 		patternEntries = [],
 		restResourceEntries = [],
 		variationEntries = [],
 		transformSource,
 	}: {
+		aiFeatureEntries?: string[];
 		blockEntries?: string[];
 		bindingSourceEntries?: string[];
 		editorPluginEntries?: string[];
@@ -671,6 +784,11 @@ export function updateWorkspaceInventorySource(
 		nextSource,
 		REST_RESOURCE_CONFIG_ENTRY_MARKER,
 		restResourceEntries,
+	);
+	nextSource = appendEntriesAtMarker(
+		nextSource,
+		AI_FEATURE_CONFIG_ENTRY_MARKER,
+		aiFeatureEntries,
 	);
 	nextSource = appendEntriesAtMarker(
 		nextSource,

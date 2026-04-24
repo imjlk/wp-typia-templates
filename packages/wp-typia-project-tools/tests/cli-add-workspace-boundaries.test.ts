@@ -4,7 +4,7 @@ import path from "node:path";
 
 const runtimeRoot = path.join(import.meta.dir, "..", "src", "runtime");
 
-test("cli-add-workspace delegates asset and rest-resource workflows to focused helpers", () => {
+test("cli-add-workspace delegates asset, rest-resource, and ai-feature workflows to focused helpers", () => {
 	const addWorkspaceSource = fs.readFileSync(
 		path.join(runtimeRoot, "cli-add-workspace.ts"),
 		"utf8",
@@ -25,19 +25,36 @@ test("cli-add-workspace delegates asset and rest-resource workflows to focused h
 		path.join(runtimeRoot, "cli-add-workspace-rest-source-emitters.ts"),
 		"utf8",
 	);
+	const aiSource = fs.readFileSync(
+		path.join(runtimeRoot, "cli-add-workspace-ai.ts"),
+		"utf8",
+	);
+	const aiAnchorsSource = fs.readFileSync(
+		path.join(runtimeRoot, "cli-add-workspace-ai-anchors.ts"),
+		"utf8",
+	);
+	const aiSourceEmittersSource = fs.readFileSync(
+		path.join(runtimeRoot, "cli-add-workspace-ai-source-emitters.ts"),
+		"utf8",
+	);
 
 	expect(addWorkspaceSource).toContain('from "./cli-add-workspace-assets.js"');
 	expect(addWorkspaceSource).toContain('from "./cli-add-workspace-rest.js"');
+	expect(addWorkspaceSource).toContain('from "./cli-add-workspace-ai.js"');
+	expect(addWorkspaceSource).toContain("runAddAiFeatureCommand");
 	expect(addWorkspaceSource).toContain("runAddBindingSourceCommand");
 	expect(addWorkspaceSource).toContain("runAddEditorPluginCommand");
 	expect(addWorkspaceSource).toContain("runAddPatternCommand");
 	expect(addWorkspaceSource).toContain("runAddRestResourceCommand");
 	expect(addWorkspaceSource).not.toContain("function buildPatternSource(");
+	expect(addWorkspaceSource).not.toContain("function buildAiFeatureTypesSource(");
 	expect(addWorkspaceSource).not.toContain("function buildBindingSourceServerSource(");
+	expect(addWorkspaceSource).not.toContain("async function ensureAiFeatureBootstrapAnchors(");
 	expect(addWorkspaceSource).not.toContain("async function ensureBindingSourceBootstrapAnchors(");
 	expect(addWorkspaceSource).not.toContain("async function ensureEditorPluginBootstrapAnchors(");
 	expect(addWorkspaceSource).not.toContain("function buildRestResourceTypesSource(");
 	expect(addWorkspaceSource).not.toContain("async function ensureRestResourceBootstrapAnchors(");
+	expect(addWorkspaceSource).not.toContain("export async function runAddAiFeatureCommand(");
 	expect(addWorkspaceSource).not.toContain("export async function runAddPatternCommand(");
 	expect(addWorkspaceSource).not.toContain("export async function runAddBindingSourceCommand(");
 	expect(addWorkspaceSource).not.toContain("export async function runAddEditorPluginCommand(");
@@ -59,4 +76,15 @@ test("cli-add-workspace delegates asset and rest-resource workflows to focused h
 	expect(restSourceEmittersSource).toContain("function buildRestResourceDataSource(");
 	expect(restAnchorsSource).toContain("async function ensureRestResourceBootstrapAnchors(");
 	expect(restAnchorsSource).toContain("async function ensureRestResourceSyncScriptAnchors(");
+	expect(aiSource).toContain('from "./cli-add-workspace-ai-anchors.js"');
+	expect(aiSource).toContain('from "./cli-add-workspace-ai-source-emitters.js"');
+	expect(aiSource).not.toContain("function buildAiFeatureTypesSource(");
+	expect(aiSource).not.toContain("async function ensureAiFeatureBootstrapAnchors(");
+	expect(aiSource).toContain("function buildAiFeaturePhpSource(");
+	expect(aiSource).toContain("export async function runAddAiFeatureCommand(");
+	expect(aiSourceEmittersSource).toContain("function buildAiFeatureTypesSource(");
+	expect(aiSourceEmittersSource).toContain("function buildAiFeatureApiSource(");
+	expect(aiSourceEmittersSource).toContain("function buildAiFeatureDataSource(");
+	expect(aiAnchorsSource).toContain("async function ensureAiFeatureBootstrapAnchors(");
+	expect(aiAnchorsSource).toContain("async function ensureAiFeatureSyncRestAnchors(");
 });

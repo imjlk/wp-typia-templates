@@ -105,6 +105,9 @@ type AddBlockResult = Awaited<ReturnType<AddRuntime['runAddBlockCommand']>>;
 type AddEditorPluginResult = Awaited<
   ReturnType<AddRuntime['runAddEditorPluginCommand']>
 >;
+type AddAiFeatureResult = Awaited<
+  ReturnType<AddRuntime['runAddAiFeatureCommand']>
+>;
 type AddHookedBlockResult = Awaited<
   ReturnType<AddRuntime['runAddHookedBlockCommand']>
 >;
@@ -356,6 +359,32 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
           cwd: targetCwd,
           editorPluginName: name,
           slot,
+        }),
+    });
+  },
+  'ai-feature': async (context) => {
+    const name = requireAddKindName(
+      context,
+      '`wp-typia add ai-feature` requires <name>. Usage: wp-typia add ai-feature <name> [--namespace <vendor/v1>].',
+    );
+    const namespace = readOptionalStringFlag(context.flags, 'namespace');
+
+    return runRegisteredAddKind<AddAiFeatureResult>(context, {
+      buildCompletion: (result) =>
+        buildAddCompletionPayload({
+          kind: 'ai-feature',
+          projectDir: result.projectDir,
+          values: {
+            aiFeatureSlug: result.aiFeatureSlug,
+            namespace: result.namespace,
+          },
+          warnings: result.warnings,
+        }),
+      execute: (targetCwd) =>
+        context.addRuntime.runAddAiFeatureCommand({
+          aiFeatureName: name,
+          cwd: targetCwd,
+          namespace,
         }),
     });
   },

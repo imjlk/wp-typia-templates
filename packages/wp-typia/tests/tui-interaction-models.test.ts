@@ -47,6 +47,11 @@ describe("first-party TUI interaction models", () => {
 			"namespace",
 			"methods",
 		]);
+		expect(getVisibleAddFieldNames({ kind: "ai-feature" })).toEqual([
+			"kind",
+			"name",
+			"namespace",
+		]);
 		expect(getVisibleAddFieldNames({ kind: "hooked-block" })).toEqual([
 			"kind",
 			"name",
@@ -118,6 +123,22 @@ describe("first-party TUI interaction models", () => {
 			block: "counter-card",
 			kind: "variation",
 			name: "hero-card",
+		});
+
+		expect(
+			sanitizeAddSubmitValues({
+				anchor: "",
+				block: "",
+				kind: "ai-feature",
+				name: "brief-suggestions",
+				namespace: " demo-space/v1 ",
+				position: "",
+				template: "persistence",
+			}),
+		).toEqual({
+			kind: "ai-feature",
+			name: "brief-suggestions",
+			namespace: "demo-space/v1",
 		});
 
 		expect(

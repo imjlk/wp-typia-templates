@@ -15,6 +15,7 @@ Extend an existing workspace with:
 - `wp-typia add block counter-card --template basic`
 - `wp-typia add binding-source hero-data`
 - `wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create`
+- `wp-typia add ai-feature brief-suggestions --namespace my-plugin/v1`
 - `wp-typia add hooked-block counter-card --anchor core/post-content --position after`
 
 `wp-typia <project-dir>` remains available as a backward-compatible alias to

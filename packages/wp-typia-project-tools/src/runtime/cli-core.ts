@@ -40,6 +40,7 @@ export {
 	formatAddHelpText,
 	getWorkspaceBlockSelectOptions,
 	runAddBindingSourceCommand,
+	runAddAiFeatureCommand,
 	runAddBlockCommand,
 	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,
