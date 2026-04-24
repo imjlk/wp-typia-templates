@@ -26,7 +26,8 @@ import {
 const ABILITY_SERVER_GLOB = "/inc/abilities/*.php";
 const ABILITY_EDITOR_SCRIPT = "build/abilities/index.js";
 const ABILITY_EDITOR_ASSET = "build/abilities/index.asset.php";
-const ABILITY_REGISTRY_MARKER = "// wp-typia add ability entries";
+const ABILITY_REGISTRY_END_MARKER = "// wp-typia add ability entries end";
+const ABILITY_REGISTRY_START_MARKER = "// wp-typia add ability entries start";
 const WP_ABILITIES_SCRIPT_HANDLE = "wp-abilities";
 const WP_CORE_ABILITIES_SCRIPT_HANDLE = "wp-core-abilities";
 
@@ -423,10 +424,8 @@ if ( ! function_exists( '${executeFunctionName}' ) ) {
 \t\t$note = isset( $payload['note'] ) && is_string( $payload['note'] )
 \t\t\t? trim( $payload['note'] )
 \t\t\t: '';
-
-\t\treturn array(
+\t\t$result = array(
 \t\t\t'processedContextId' => $context_id,
-\t\t\t'receivedNote'       => '' !== $note ? $note : null,
 \t\t\t'status'             => 'ready',
 \t\t\t'summary'            => sprintf(
 \t\t\t\t/* translators: 1: workflow title, 2: context id */
@@ -437,6 +436,12 @@ if ( ! function_exists( '${executeFunctionName}' ) ) {
 \t\t\t\t$context_id
 \t\t\t),
 \t\t);
+
+\t\tif ( '' !== $note ) {
+\t\t\t$result['receivedNote'] = $note;
+\t\t}
+
+\t\treturn $result;
 \t}
 }
 
@@ -521,7 +526,14 @@ function buildAbilityRegistrySource(abilitySlugs: string[]): string {
 		.map((abilitySlug) => `export * from './${abilitySlug}/client';`)
 		.join("\n");
 
-	return `${exportLines}${exportLines ? "\n\n" : ""}${ABILITY_REGISTRY_MARKER}\n`;
+	return [
+		ABILITY_REGISTRY_START_MARKER,
+		exportLines,
+		ABILITY_REGISTRY_END_MARKER,
+	]
+		.filter((line) => line.length > 0)
+		.join("\n")
+		.concat("\n");
 }
 
 function resolveAbilityRegistryPath(projectDir: string): string {
@@ -557,9 +569,22 @@ async function writeAbilityRegistry(
 	const nextAbilitySlugs = Array.from(
 		new Set([...existingAbilitySlugs, ...existingRegistrySlugs, abilitySlug]),
 	).sort();
+	const generatedSection = buildAbilityRegistrySource(nextAbilitySlugs);
+	const existingSource = fs.existsSync(registryPath)
+		? fs.readFileSync(registryPath, "utf8")
+		: "";
+	const generatedSectionPattern = new RegExp(
+		`${escapeRegex(ABILITY_REGISTRY_START_MARKER)}[\\s\\S]*?${escapeRegex(ABILITY_REGISTRY_END_MARKER)}\\n?`,
+		"u",
+	);
+	const nextSource = existingSource
+		? generatedSectionPattern.test(existingSource)
+			? existingSource.replace(generatedSectionPattern, generatedSection)
+			: `${existingSource.trimEnd()}\n\n${generatedSection}`
+		: generatedSection;
 	await fsp.writeFile(
 		registryPath,
-		buildAbilityRegistrySource(nextAbilitySlugs),
+		nextSource,
 		"utf8",
 	);
 }
@@ -765,22 +790,6 @@ async function ensureAbilitySyncProjectAnchors(
 	});
 }
 
-function replaceOrThrow(
-	source: string,
-	patterns: RegExp[],
-	replacement: string,
-	errorMessage: string,
-): string {
-	for (const pattern of patterns) {
-		if (!pattern.test(source)) {
-			continue;
-		}
-		return source.replace(pattern, replacement);
-	}
-
-	throw new Error(errorMessage);
-}
-
 async function ensureAbilityBuildScriptAnchors(
 	workspace: WorkspaceProject,
 ): Promise<void> {
@@ -792,25 +801,33 @@ async function ensureAbilityBuildScriptAnchors(
 			return nextSource;
 		}
 
-		nextSource = replaceOrThrow(
-			nextSource,
-			[
-				/\[\n\t\t'src\/bindings\/index\.ts',\n\t\t'src\/bindings\/index\.js',\n\t\t'src\/editor-plugins\/index\.ts',\n\t\t'src\/editor-plugins\/index\.js',\n\t\]/u,
-				/\[\n\t\t'src\/bindings\/index\.ts',\n\t\t'src\/bindings\/index\.js',\n\t\]/u,
-			],
-			`[
+		const sharedEntriesPattern =
+			/(for\s*\(\s*const\s+relativePath\s+of\s+\[)([\s\S]*?)(\]\s*\)\s*\{)/u;
+		const match = nextSource.match(sharedEntriesPattern);
+		if (
+			!match ||
+			!match[2].includes("src/bindings/index.ts") ||
+			!match[2].includes("src/editor-plugins/index.ts")
+		) {
+			throw new Error(
+				[
+					`ensureAbilityBuildScriptAnchors could not patch ${path.basename(buildScriptPath)}.`,
+					"Missing the expected shared editor entries array in scripts/build-workspace.mjs.",
+					"Restore the generated template or wire abilities/index manually before retrying.",
+				].join(" "),
+			);
+		}
+
+		nextSource = nextSource.replace(
+			sharedEntriesPattern,
+			`$1
 \t\t'src/bindings/index.ts',
 \t\t'src/bindings/index.js',
 \t\t'src/editor-plugins/index.ts',
 \t\t'src/editor-plugins/index.js',
 \t\t'src/abilities/index.ts',
 \t\t'src/abilities/index.js',
-\t]`,
-			[
-				`ensureAbilityBuildScriptAnchors could not patch ${path.basename(buildScriptPath)}.`,
-				"Missing the expected shared editor entries array in scripts/build-workspace.mjs.",
-				"Restore the generated template or wire abilities/index manually before retrying.",
-			].join(" "),
+\t$3`,
 		);
 
 		return nextSource;
@@ -827,12 +844,25 @@ async function ensureAbilityWebpackAnchors(
 			return source;
 		}
 
-		return replaceOrThrow(
-			source,
-			[
-				/for\s*\(\s*const\s+\[\s*entryName\s*,\s*candidates\s*\]\s+of\s+\[\n\t\t\[\n\t\t\t'bindings\/index',\n\t\t\t\[\s*'src\/bindings\/index\.ts',\s*'src\/bindings\/index\.js'\s*\],\n\t\t\],\n\t\t\[\n\t\t\t'editor-plugins\/index',\n\t\t\t\[\s*'src\/editor-plugins\/index\.ts',\s*'src\/editor-plugins\/index\.js'\s*\],\n\t\t\],\n\t\]\s*\)\s*\{/u,
-				/for\s*\(\s*const\s+\[\s*entryName\s*,\s*candidates\s*\]\s+of\s+\[\n\t\t\[\n\t\t\t'bindings\/index',\n\t\t\t\[\s*'src\/bindings\/index\.ts',\s*'src\/bindings\/index\.js'\s*\],\n\t\t\],\n\t\]\s*\)\s*\{/u,
-			],
+		const sharedEntriesPattern =
+			/for\s*\(\s*const\s+\[\s*entryName\s*,\s*candidates\s*\]\s+of\s+\[([\s\S]*?)\]\s*\)\s*\{/u;
+		const match = source.match(sharedEntriesPattern);
+		if (
+			!match ||
+			!match[1].includes("bindings/index") ||
+			!match[1].includes("editor-plugins/index")
+		) {
+			throw new Error(
+				[
+					`ensureAbilityWebpackAnchors could not patch ${path.basename(webpackConfigPath)}.`,
+					"Missing the expected shared editor entries block in webpack.config.js.",
+					"Restore the generated template or wire abilities/index manually before retrying.",
+				].join(" "),
+			);
+		}
+
+		return source.replace(
+			sharedEntriesPattern,
 			`for ( const [ entryName, candidates ] of [
 \t\t[
 \t\t\t'bindings/index',
@@ -847,11 +877,6 @@ async function ensureAbilityWebpackAnchors(
 \t\t\t[ 'src/abilities/index.ts', 'src/abilities/index.js' ],
 \t\t],
 \t] ) {`,
-			[
-				`ensureAbilityWebpackAnchors could not patch ${path.basename(webpackConfigPath)}.`,
-				"Missing the expected shared editor entries block in webpack.config.js.",
-				"Restore the generated template or wire abilities/index manually before retrying.",
-			].join(" "),
 		);
 	});
 }

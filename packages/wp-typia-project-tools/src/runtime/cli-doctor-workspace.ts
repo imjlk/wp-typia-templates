@@ -585,8 +585,10 @@ function checkWorkspaceAbilityIndex(
 	const source = fs.readFileSync(indexPath, "utf8");
 	const missingExports = abilities.filter((ability) => {
 		const exportPattern = new RegExp(
-			`['"\`]\\./${escapeRegex(ability.slug)}\\/client['"\`]`,
-			"u",
+			`^\\s*export\\s+(?:\\*\\s+from|\\{[^}]+\\}\\s+from)\\s+['"\`]\\./${escapeRegex(
+				ability.slug,
+			)}\\/client['"\`]`,
+			"mu",
 		);
 		return !exportPattern.test(source);
 	});

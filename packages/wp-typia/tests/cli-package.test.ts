@@ -361,7 +361,7 @@ describe('wp-typia package', () => {
     expect(addHelpOutput).toContain('--external-layer-source');
     expect(addHelpOutput).toContain('--external-layer-id');
     expect(addHelpOutput).toContain('--alternate-render-targets');
-    expect(addHelpOutput).toContain('ability');
+    expect(addHelpOutput).toContain('ability, ai-feature');
     expect(addHelpOutput).toContain('editor-plugin');
   });
 

@@ -94,6 +94,14 @@ export interface RunAddRestResourceCommandOptions {
 	restResourceName: string;
 }
 
+/**
+ * Options for `wp-typia add ability`.
+ *
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @property abilityName Human-entered workflow ability name that will be
+ * normalized into the generated slug.
+ */
 export interface RunAddAbilityCommandOptions {
 	abilityName: string;
 	cwd?: string;
@@ -504,6 +512,18 @@ export function assertRestResourceDoesNotExist(
 	}
 }
 
+/**
+ * Ensure a workflow ability scaffold does not already exist on disk or in the
+ * workspace inventory.
+ *
+ * The check covers the generated `src/abilities/<slug>` directory,
+ * `inc/abilities/<slug>.php`, and any matching `inventory.abilities` entry.
+ *
+ * @param projectDir Workspace root directory.
+ * @param abilitySlug Normalized workflow ability slug.
+ * @param inventory Parsed workspace inventory.
+ * @throws {Error} When the ability directory, PHP bootstrap, or inventory entry already exists.
+ */
 export function assertAbilityDoesNotExist(
 	projectDir: string,
 	abilitySlug: string,
