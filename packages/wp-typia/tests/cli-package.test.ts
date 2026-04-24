@@ -361,6 +361,7 @@ describe('wp-typia package', () => {
     expect(addHelpOutput).toContain('--external-layer-source');
     expect(addHelpOutput).toContain('--external-layer-id');
     expect(addHelpOutput).toContain('--alternate-render-targets');
+    expect(addHelpOutput).toContain('ability');
     expect(addHelpOutput).toContain('editor-plugin');
   });
 
@@ -1253,7 +1254,7 @@ describe('wp-typia package', () => {
     expect(result.stdout).toContain('Usage:');
     expect(result.stdout).toContain('wp-typia add block <name>');
     expect(result.stderr).toContain(
-      '`wp-typia add` requires <kind>. Usage: wp-typia add <block|variation|pattern|binding-source|rest-resource|ai-feature|editor-plugin|hooked-block> ...',
+      '`wp-typia add` requires <kind>. Usage: wp-typia add <block|variation|pattern|binding-source|rest-resource|ability|ai-feature|editor-plugin|hooked-block> ...',
     );
   });
 
@@ -1268,6 +1269,9 @@ describe('wp-typia package', () => {
       await expect(runNodeCli(['add'])).rejects.toThrow('wp-typia add failed');
       expect(capturedStdout.join('\n')).toContain('Usage:');
       expect(capturedStdout.join('\n')).toContain('wp-typia add block <name>');
+      expect(capturedStdout.join('\n')).toContain(
+        'wp-typia add ability <name>',
+      );
       expect(capturedStdout.join('\n')).toContain(
         'wp-typia add ai-feature <name>',
       );

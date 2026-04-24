@@ -24,6 +24,7 @@ export {
 } from "./cli-add-block.js";
 export {
 	runAddBindingSourceCommand,
+	runAddAbilityCommand,
 	runAddAiFeatureCommand,
 	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,

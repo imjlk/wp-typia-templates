@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, runCli, scaffoldOfficialWorkspace, stripPhpFunction, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
+import { cleanupScaffoldTempRoot, createScaffoldTempRoot, entryPath, getCommandErrorMessage, linkWorkspaceNodeModules, parseJsonObjectFromOutput, runCli, scaffoldOfficialWorkspace, stripPhpFunction, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
 import { scaffoldProject } from "../src/runtime/index.js";
 import { getDoctorChecks } from "../src/runtime/cli-core.js";
 import { updateWorkspaceInventorySource } from "../src/runtime/workspace-inventory.js";
@@ -132,9 +132,9 @@ test("doctor accepts workspaces that keep binding registries in src/bindings/ind
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
-  const doctorChecks = JSON.parse(doctorOutput) as {
+  const doctorChecks = parseJsonObjectFromOutput<{
     checks: Array<{ detail: string; label: string; status: string }>;
-  };
+  }>(doctorOutput);
 
   expect(
     doctorChecks.checks.find(
@@ -233,9 +233,9 @@ test("doctor accepts workspaces that keep editor plugin registries in src/editor
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
   });
-  const doctorChecks = JSON.parse(doctorOutput) as {
+  const doctorChecks = parseJsonObjectFromOutput<{
     checks: Array<{ detail: string; label: string; status: string }>;
-  };
+  }>(doctorOutput);
 
   expect(
     doctorChecks.checks.find(
@@ -349,6 +349,23 @@ export const REST_RESOURCES: WorkspaceRestResourceConfig[] = [
 \t// wp-typia add rest-resource entries
 ];
 
+export interface WorkspaceAbilityConfig {
+\tclientFile: string;
+\tconfigFile: string;
+\tdataFile: string;
+\tinputSchemaFile: string;
+\tinputTypeName: string;
+\toutputSchemaFile: string;
+\toutputTypeName: string;
+\tphpFile: string;
+\tslug: string;
+\ttypesFile: string;
+}
+
+export const ABILITIES: WorkspaceAbilityConfig[] = [
+\t// wp-typia add ability entries
+];
+
 export interface WorkspaceAiFeatureConfig {
 \taiSchemaFile: string;
 \tapiFile: string;
@@ -387,6 +404,9 @@ export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
       restResourceEntries: [
         '\t{ apiFile: "src/rest/hero/api.ts", clientFile: "src/rest/hero/api-client.ts", dataFile: "src/rest/hero/data.ts", methods: [ "list", "read" ], namespace: "demo-space/v1", openApiFile: "src/rest/hero/api.openapi.json", phpFile: "inc/rest/hero.php", slug: "hero", typesFile: "src/rest/hero/api-types.ts", validatorsFile: "src/rest/hero/api-validators.ts" },',
       ],
+      abilityEntries: [
+        '\t{ clientFile: "src/abilities/review-workflow/client.ts", configFile: "src/abilities/review-workflow/ability.config.json", dataFile: "src/abilities/review-workflow/data.ts", inputSchemaFile: "src/abilities/review-workflow/input.schema.json", inputTypeName: "ReviewWorkflowAbilityInput", outputSchemaFile: "src/abilities/review-workflow/output.schema.json", outputTypeName: "ReviewWorkflowAbilityOutput", phpFile: "inc/abilities/review-workflow.php", slug: "review-workflow", typesFile: "src/abilities/review-workflow/types.ts" },',
+      ],
       aiFeatureEntries: [
         '\t{ aiSchemaFile: "src/ai-features/hero/ai-schemas/feature-result.ai.schema.json", apiFile: "src/ai-features/hero/api.ts", clientFile: "src/ai-features/hero/api-client.ts", dataFile: "src/ai-features/hero/data.ts", namespace: "demo-space/v1", openApiFile: "src/ai-features/hero/api.openapi.json", phpFile: "inc/ai-features/hero.php", slug: "hero", typesFile: "src/ai-features/hero/api-types.ts", validatorsFile: "src/ai-features/hero/api-validators.ts" },',
       ],
@@ -404,6 +424,7 @@ export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
   expect(
     repairedSource.match(/export const REST_RESOURCES\b/gu)?.length
   ).toBe(1);
+  expect(repairedSource.match(/export const ABILITIES\b/gu)?.length).toBe(1);
   expect(repairedSource.match(/export const AI_FEATURES\b/gu)?.length).toBe(1);
   expect(
     repairedSource.match(/export const EDITOR_PLUGINS\b/gu)?.length
@@ -418,6 +439,7 @@ export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
   expect(repairedSource).toContain(
     "export interface WorkspaceRestResourceConfig"
   );
+  expect(repairedSource).toContain("export interface WorkspaceAbilityConfig");
   expect(repairedSource).toContain(
     "export interface WorkspaceAiFeatureConfig"
   );

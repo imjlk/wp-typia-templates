@@ -47,6 +47,10 @@ describe("first-party TUI interaction models", () => {
 			"namespace",
 			"methods",
 		]);
+		expect(getVisibleAddFieldNames({ kind: "ability" })).toEqual([
+			"kind",
+			"name",
+		]);
 		expect(getVisibleAddFieldNames({ kind: "ai-feature" })).toEqual([
 			"kind",
 			"name",
@@ -123,6 +127,21 @@ describe("first-party TUI interaction models", () => {
 			block: "counter-card",
 			kind: "variation",
 			name: "hero-card",
+		});
+
+		expect(
+			sanitizeAddSubmitValues({
+				anchor: "",
+				block: "",
+				kind: "ability",
+				name: "review-workflow",
+				namespace: " demo-space/v1 ",
+				position: "",
+				template: "persistence",
+			}),
+		).toEqual({
+			kind: "ability",
+			name: "review-workflow",
 		});
 
 		expect(

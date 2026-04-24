@@ -58,6 +58,28 @@ export function cleanupScaffoldTempRoot(tempRoot: string) {
 	fs.rmSync(tempRoot, { recursive: true, force: true });
 }
 
+export function parseJsonObjectFromOutput<T>(output: string): T {
+	const trimmed = output.trim();
+	if (trimmed.length === 0) {
+		throw new Error("Expected JSON output but received an empty string.");
+	}
+
+	const objectStart = trimmed.indexOf("{");
+	const arrayStart = trimmed.indexOf("[");
+	const startIndex =
+		objectStart === -1
+			? arrayStart
+			: arrayStart === -1
+				? objectStart
+				: Math.min(objectStart, arrayStart);
+
+	if (startIndex === -1) {
+		throw new Error(`Expected JSON output but received: ${trimmed}`);
+	}
+
+	return JSON.parse(trimmed.slice(startIndex)) as T;
+}
+
 export interface LocalCounterStubServer {
 	close: () => Promise<void>;
 	port: number;

@@ -191,6 +191,11 @@ export {
  */
 export { runAddRestResourceCommand } from "./cli-add-workspace-rest.js";
 /**
+ * Re-export the typed workflow ability scaffold workflow from the focused
+ * ability runtime helper module.
+ */
+export { runAddAbilityCommand } from "./cli-add-workspace-ability.js";
+/**
  * Re-export the server-only AI feature scaffold workflow from the focused
  * AI-feature runtime helper module.
  */

@@ -31,6 +31,7 @@ export const ADD_KIND_IDS = [
 	"pattern",
 	"binding-source",
 	"rest-resource",
+	"ability",
 	"ai-feature",
 	"hooked-block",
 	"editor-plugin",
@@ -91,6 +92,11 @@ export interface RunAddRestResourceCommandOptions {
 	methods?: string;
 	namespace?: string;
 	restResourceName: string;
+}
+
+export interface RunAddAbilityCommandOptions {
+	abilityName: string;
+	cwd?: string;
 }
 
 export interface RunAddAiFeatureCommandOptions {
@@ -498,6 +504,30 @@ export function assertRestResourceDoesNotExist(
 	}
 }
 
+export function assertAbilityDoesNotExist(
+	projectDir: string,
+	abilitySlug: string,
+	inventory: WorkspaceInventory,
+): void {
+	const abilityDir = path.join(projectDir, "src", "abilities", abilitySlug);
+	const abilityPhpPath = path.join(projectDir, "inc", "abilities", `${abilitySlug}.php`);
+	if (fs.existsSync(abilityDir)) {
+		throw new Error(
+			`An ability scaffold already exists at ${path.relative(projectDir, abilityDir)}. Choose a different name.`,
+		);
+	}
+	if (fs.existsSync(abilityPhpPath)) {
+		throw new Error(
+			`An ability bootstrap already exists at ${path.relative(projectDir, abilityPhpPath)}. Choose a different name.`,
+		);
+	}
+	if (inventory.abilities.some((entry) => entry.slug === abilitySlug)) {
+		throw new Error(
+			`An ability inventory entry already exists for ${abilitySlug}. Choose a different name.`,
+		);
+	}
+}
+
 export function assertAiFeatureDoesNotExist(
 	projectDir: string,
 	aiFeatureSlug: string,
@@ -560,6 +590,7 @@ export function formatAddHelpText(): string {
   wp-typia add pattern <name> [--dry-run]
   wp-typia add binding-source <name> [--dry-run]
   wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--dry-run]
+  wp-typia add ability <name> [--dry-run]
   wp-typia add ai-feature <name> [--namespace <vendor/v1>] [--dry-run]
   wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <${HOOKED_BLOCK_POSITION_IDS.join("|")}> [--dry-run]
   wp-typia add editor-plugin <name> [--slot <${EDITOR_PLUGIN_SLOT_IDS.join("|")}>] [--dry-run]
@@ -572,6 +603,7 @@ Notes:
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
   \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.
   \`add rest-resource\` scaffolds plugin-level TypeScript REST contracts under \`src/rest/\` and PHP route glue under \`inc/rest/\`.
+  \`add ability\` scaffolds typed workflow abilities under \`src/abilities/\` and server registration under \`inc/abilities/\`.
   \`add ai-feature\` scaffolds server-owned AI feature endpoints under \`src/ai-features/\` and PHP route glue under \`inc/ai-features/\`.
   \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.
   \`add editor-plugin\` scaffolds a document-level editor extension under \`src/editor-plugins/\`.`;
