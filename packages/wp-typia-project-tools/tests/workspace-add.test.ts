@@ -3033,9 +3033,12 @@ test("canonical CLI can add a server-only AI feature to an official workspace te
   expect(apiSource).toContain("resolveRestNonce");
   expect(dataSource).toContain("useRunBriefSuggestionsAiFeatureMutation");
   expect(phpSource).toContain("wp_ai_client_prompt");
+  expect(phpSource).toContain("static $is_supported = null;");
   expect(phpSource).toContain("is_supported_for_text_generation");
   expect(phpSource).toContain("generate_text_result");
   expect(phpSource).toContain("admin_notices");
+  expect(phpSource).toContain("sprintf(");
+  expect(phpSource).toContain("The %s AI feature is optional");
   expect(phpSource).toContain("optional and remains disabled");
   expect(phpSource).toContain("register_rest_route");
   expect(phpSource).toContain("'demo-space/v1'");

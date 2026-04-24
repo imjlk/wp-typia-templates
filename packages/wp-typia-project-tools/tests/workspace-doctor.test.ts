@@ -450,6 +450,32 @@ export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
   expect(repairedSource).toContain('slug: "document-tools"');
 });
 
+test("workspace inventory repair inserts compatibility fields in CRLF inventory interfaces", () => {
+  const source = `export interface WorkspaceAbilityConfig {
+\tclientFile: string;
+\tconfigFile: string;
+\tdataFile: string;
+\tslug: string;
+}
+
+export interface WorkspaceAiFeatureConfig {
+\taiSchemaFile: string;
+\tapiFile: string;
+\tclientFile: string;
+\tdataFile: string;
+\tslug: string;
+}
+`.replace(/\n/gu, "\r\n");
+
+  const repairedSource = updateWorkspaceInventorySource(source);
+
+  expect(repairedSource).toContain(
+    "\tclientFile: string;\r\n\tcompatibility?: {\r\n\t\thardMinimums:"
+  );
+  expect(repairedSource).toContain("\t};\r\n\tconfigFile: string;");
+  expect(repairedSource).toContain("\t};\r\n\tdataFile: string;");
+});
+
 test("doctor passes on a healthy multi-block workspace", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-doctor-multi-block");
 

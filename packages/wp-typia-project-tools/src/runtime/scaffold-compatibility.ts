@@ -1,3 +1,9 @@
+/**
+ * Compatibility policy helpers for generated scaffold outputs.
+ *
+ * The policy keeps plugin headers, runtime gates, and workspace inventory
+ * metadata aligned when optional or required AI-capable features are added.
+ */
 import {
 	AI_FEATURE_DEFINITIONS,
 	type AiFeatureCapabilitySelection,
@@ -7,17 +13,26 @@ import {
 	resolveAiFeatureCapabilityPlan,
 } from "./ai-feature-capability.js";
 
+/**
+ * WordPress plugin header version floors emitted by scaffold templates.
+ */
 export interface ScaffoldPluginHeaderCompatibility {
 	requiresAtLeast: string;
 	requiresPhp: string;
 	testedUpTo: string;
 }
 
+/**
+ * Resolved compatibility policy for a set of scaffold feature capabilities.
+ */
 export interface ScaffoldCompatibilityPolicy {
 	capabilityPlan: ResolvedAiFeatureCapabilityPlan;
 	pluginHeader: ScaffoldPluginHeaderCompatibility;
 }
 
+/**
+ * Serializable compatibility metadata stored in generated workspace inventory.
+ */
 export interface ScaffoldCompatibilityConfig {
 	hardMinimums: AiFeatureCompatibilityFloor;
 	mode: "baseline" | "optional" | "required";
@@ -26,12 +41,18 @@ export interface ScaffoldCompatibilityConfig {
 	runtimeGates: string[];
 }
 
+/**
+ * Baseline headers used by scaffold output before optional features are added.
+ */
 export const DEFAULT_SCAFFOLD_COMPATIBILITY: ScaffoldPluginHeaderCompatibility = {
 	requiresAtLeast: "6.7",
 	requiresPhp: "8.0",
 	testedUpTo: "6.9",
 };
 
+/**
+ * Optional WordPress AI Client surface used by server-only AI feature scaffold.
+ */
 export const OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY: readonly AiFeatureCapabilitySelection[] =
 	[
 		{
@@ -40,6 +61,9 @@ export const OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY: readonly AiFeatureCapab
 		},
 	];
 
+/**
+ * Required Abilities API surface used by typed workflow ability scaffold.
+ */
 export const REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY: readonly AiFeatureCapabilitySelection[] =
 	[
 		{
@@ -121,6 +145,9 @@ function getPolicyMode(
 	return "baseline";
 }
 
+/**
+ * Resolve plugin header floors and capability gates for scaffold selections.
+ */
 export function resolveScaffoldCompatibilityPolicy(
 	selections: readonly AiFeatureCapabilitySelection[],
 	{
@@ -150,6 +177,9 @@ export function resolveScaffoldCompatibilityPolicy(
 	};
 }
 
+/**
+ * Convert a resolved policy into workspace-inventory-safe JSON metadata.
+ */
 export function createScaffoldCompatibilityConfig(
 	policy: ScaffoldCompatibilityPolicy,
 ): ScaffoldCompatibilityConfig {
@@ -167,6 +197,9 @@ export function createScaffoldCompatibilityConfig(
 	};
 }
 
+/**
+ * Render compatibility metadata as formatted TypeScript object literal JSON.
+ */
 export function renderScaffoldCompatibilityConfig(
 	policy: ScaffoldCompatibilityPolicy,
 	indent = "\t\t",
@@ -179,6 +212,9 @@ export function renderScaffoldCompatibilityConfig(
 		.join("\n");
 }
 
+/**
+ * Patch a generated plugin bootstrap header without lowering custom floors.
+ */
 export function updatePluginHeaderCompatibility(
 	source: string,
 	policy: ScaffoldCompatibilityPolicy,

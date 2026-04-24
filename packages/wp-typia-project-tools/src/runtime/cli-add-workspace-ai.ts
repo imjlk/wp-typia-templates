@@ -230,30 +230,41 @@ if ( ! function_exists( '${buildTelemetryFunctionName}' ) ) {
 
 if ( ! function_exists( '${isSupportedFunctionName}' ) ) {
 \tfunction ${isSupportedFunctionName}() {
+\t\tstatic $is_supported = null;
+\t\tif ( null !== $is_supported ) {
+\t\t\treturn $is_supported;
+\t\t}
+
 \t\tif ( ! function_exists( 'wp_ai_client_prompt' ) ) {
-\t\t\treturn false;
+\t\t\t$is_supported = false;
+\t\t\treturn $is_supported;
 \t\t}
 
 \t\t$schema = ${loadAiSchemaFunctionName}();
 \t\tif ( ! is_array( $schema ) ) {
-\t\t\treturn false;
+\t\t\t$is_supported = false;
+\t\t\treturn $is_supported;
 \t\t}
 
 \t\t$prompt = wp_ai_client_prompt( 'AI feature support probe.' );
 \t\tif ( ! is_object( $prompt ) || ! method_exists( $prompt, 'as_json_response' ) ) {
-\t\t\treturn false;
+\t\t\t$is_supported = false;
+\t\t\treturn $is_supported;
 \t\t}
 
 \t\t$structured_prompt = $prompt->as_json_response( $schema );
 \t\tif ( ! is_object( $structured_prompt ) ) {
-\t\t\treturn false;
+\t\t\t$is_supported = false;
+\t\t\treturn $is_supported;
 \t\t}
 
 \t\tif ( method_exists( $structured_prompt, 'is_supported_for_text_generation' ) ) {
-\t\t\treturn (bool) $structured_prompt->is_supported_for_text_generation();
+\t\t\t$is_supported = (bool) $structured_prompt->is_supported_for_text_generation();
+\t\t\treturn $is_supported;
 \t\t}
 
-\t\treturn method_exists( $structured_prompt, 'generate_text_result' );
+\t\t$is_supported = method_exists( $structured_prompt, 'generate_text_result' );
+\t\treturn $is_supported;
 \t}
 }
 
@@ -263,9 +274,11 @@ if ( ! function_exists( '${adminNoticeFunctionName}' ) ) {
 \t\t\treturn;
 \t\t}
 
-\t\t$message = __( 'The ${aiFeatureTitle} AI feature is optional and remains disabled until the WordPress AI Client is available with structured text generation support for the generated schema.', ${quotePhpString(
-			textDomain,
-		)} );
+\t\t$message = sprintf(
+\t\t\t/* translators: %s: AI feature name. */
+\t\t\t__( 'The %s AI feature is optional and remains disabled until the WordPress AI Client is available with structured text generation support for the generated schema.', ${quotePhpString(textDomain)} ),
+\t\t\t${quotePhpString(aiFeatureTitle)}
+\t\t);
 \t\tprintf( '<div class="notice notice-warning"><p>%s</p></div>', esc_html( $message ) );
 \t}
 }

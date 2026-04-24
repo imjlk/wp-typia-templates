@@ -1,3 +1,5 @@
+import type { ScaffoldPluginHeaderCompatibility } from "./scaffold-compatibility.js";
+
 export const SCAFFOLD_TEMPLATE_VARIABLE_GROUPS = Symbol(
 	"wp-typia.scaffold-template-variable-groups",
 );
@@ -14,11 +16,7 @@ export interface ScaffoldSharedTemplateVariableGroup {
 	author: string;
 	blockMetadataVersion: string;
 	category: string;
-	compatibility: {
-		requiresAtLeast: string;
-		requiresPhp: string;
-		testedUpTo: string;
-	};
+	compatibility: ScaffoldPluginHeaderCompatibility;
 	cssClassName: string;
 	description: string;
 	descriptionJson: string;

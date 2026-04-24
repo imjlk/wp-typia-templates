@@ -850,6 +850,10 @@ function appendEntriesAtMarker(source: string, marker: string, entries: string[]
 	return source.replace(marker, `${entries.join("\n")}\n${marker}`);
 }
 
+function escapeRegex(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
 function ensureInterfaceField(
 	source: string,
 	interfaceName: string,
@@ -857,17 +861,45 @@ function ensureInterfaceField(
 	fieldSource: string,
 ): string {
 	const interfacePattern = new RegExp(
-		`(export\\s+interface\\s+${interfaceName}\\s*\\{\\n)([\\s\\S]*?\\n\\})`,
+		`(export\\s+interface\\s+${escapeRegex(
+			interfaceName,
+		)}\\s*\\{\\r?\\n)([\\s\\S]*?)(\\r?\\n\\})`,
 		"u",
 	);
 
-	return source.replace(interfacePattern, (match, start: string, body: string) => {
-		if (body.includes(`\t${fieldName}?:`)) {
-			return match;
-		}
+	return source.replace(
+		interfacePattern,
+		(match, start: string, body: string, end: string) => {
+			if (new RegExp(`\\t${escapeRegex(fieldName)}\\?:`, "u").test(body)) {
+				return match;
+			}
 
-		return `${start}${fieldSource}${body}`;
-	});
+			const lineEnding = start.endsWith("\r\n") ? "\r\n" : "\n";
+			const formattedFieldSource = `${fieldSource
+				.replace(/\r?\n$/u, "")
+				.split("\n")
+				.join(lineEnding)}${lineEnding}`;
+			const memberPattern = /^(\t)([A-Za-z_$][\w$]*)\??:/gmu;
+
+			for (const member of body.matchAll(memberPattern)) {
+				const memberIndex = member.index;
+				const memberName = member[2];
+				if (memberIndex === undefined || !memberName) {
+					continue;
+				}
+				if (memberName.localeCompare(fieldName) > 0) {
+					return `${start}${body.slice(
+						0,
+						memberIndex,
+					)}${formattedFieldSource}${body.slice(memberIndex)}${end}`;
+				}
+			}
+
+			return `${start}${body}${
+				body.length > 0 && !body.endsWith(lineEnding) ? lineEnding : ""
+			}${formattedFieldSource}${end}`;
+		},
+	);
 }
 
 /**

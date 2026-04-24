@@ -109,6 +109,8 @@ export interface FlatScaffoldTemplateVariables extends Record<string, string> {
 	hasAlternatePlainTextRenderTarget: "false" | "true";
 	hasAlternateRenderTargets: "false" | "true";
 	projectToolsPackageVersion: string;
+	requiresAtLeast: string;
+	requiresPhp: string;
 	cssClassName: string;
 	dashCase: string;
 	dataStorageMode: DataStorageMode;
@@ -141,6 +143,7 @@ export interface FlatScaffoldTemplateVariables extends Record<string, string> {
 	slugSnakeCase: string;
 	textDomain: string;
 	textdomain: string;
+	testedUpTo: string;
 	title: string;
 	titleJson: string;
 	titleCase: string;

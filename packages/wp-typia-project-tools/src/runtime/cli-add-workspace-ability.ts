@@ -26,6 +26,7 @@ import {
 	REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
 	renderScaffoldCompatibilityConfig,
 	resolveScaffoldCompatibilityPolicy,
+	type ScaffoldCompatibilityPolicy,
 	updatePluginHeaderCompatibility,
 } from "./scaffold-compatibility.js";
 
@@ -62,11 +63,11 @@ function toAbilityCategorySlug(workspaceNamespace: string): string {
 	return `${normalizedNamespace || "workspace"}-workflows`;
 }
 
-function buildAbilityConfigEntry(abilitySlug: string): string {
+function buildAbilityConfigEntry(
+	abilitySlug: string,
+	compatibilityPolicy: ScaffoldCompatibilityPolicy,
+): string {
 	const pascalCase = toPascalCaseFromAbilitySlug(abilitySlug);
-	const compatibilityPolicy = resolveScaffoldCompatibilityPolicy(
-		REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
-	);
 
 	return [
 		"\t{",
@@ -1011,7 +1012,7 @@ export async function runAddAbilityCommand({
 		});
 		await writeAbilityRegistry(workspace.projectDir, abilitySlug);
 		await appendWorkspaceInventoryEntries(workspace.projectDir, {
-			abilityEntries: [buildAbilityConfigEntry(abilitySlug)],
+			abilityEntries: [buildAbilityConfigEntry(abilitySlug, compatibilityPolicy)],
 		});
 
 		return {
