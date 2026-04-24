@@ -870,7 +870,7 @@ function ensureInterfaceField(
 	return source.replace(
 		interfacePattern,
 		(match, start: string, body: string, end: string) => {
-			if (new RegExp(`\\t${escapeRegex(fieldName)}\\?:`, "u").test(body)) {
+			if (new RegExp(`^[ \t]*${escapeRegex(fieldName)}\\??:`, "mu").test(body)) {
 				return match;
 			}
 
@@ -879,11 +879,11 @@ function ensureInterfaceField(
 				.replace(/\r?\n$/u, "")
 				.split("\n")
 				.join(lineEnding)}${lineEnding}`;
-			const memberPattern = /^(\t)([A-Za-z_$][\w$]*)\??:/gmu;
+			const memberPattern = /^[ \t]*([A-Za-z_$][\w$]*)\??:/gmu;
 
 			for (const member of body.matchAll(memberPattern)) {
 				const memberIndex = member.index;
-				const memberName = member[2];
+				const memberName = member[1];
 				if (memberIndex === undefined || !memberName) {
 					continue;
 				}

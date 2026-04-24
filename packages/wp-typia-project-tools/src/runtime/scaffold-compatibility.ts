@@ -219,8 +219,13 @@ function replacePluginHeaderVersionFloor(
 ): string {
 	return source.replace(
 		pattern,
-		(_match, prefix: string, currentValue: string, lineEnding: string) =>
-			`${prefix}${pickHigherHeaderVersionFloor(policyValue, currentValue)}${lineEnding}`,
+		(_match, prefix: string, currentValue: string, lineEnding: string) => {
+			const versionPrefix = prefix.endsWith(":") ? `${prefix} ` : prefix;
+			return `${versionPrefix}${pickHigherHeaderVersionFloor(
+				policyValue,
+				currentValue,
+			)}${lineEnding}`;
+		},
 	);
 }
 
@@ -238,17 +243,17 @@ export function updatePluginHeaderCompatibility(
 
 	const nextSource = replacePluginHeaderVersionFloor(
 		source,
-		/(\* Requires at least:\s*)([^\r\n]*)(\r?)/u,
+		/(\* Requires at least:[^\S\r\n]*)([^\r\n]*)(\r?)/u,
 		pluginHeader.requiresAtLeast,
 	);
 	const nextSourceWithTestedUpTo = replacePluginHeaderVersionFloor(
 		nextSource,
-		/(\* Tested up to:\s*)([^\r\n]*)(\r?)/u,
+		/(\* Tested up to:[^\S\r\n]*)([^\r\n]*)(\r?)/u,
 		pluginHeader.testedUpTo,
 	);
 	return replacePluginHeaderVersionFloor(
 		nextSourceWithTestedUpTo,
-		/(\* Requires PHP:\s*)([^\r\n]*)(\r?)/u,
+		/(\* Requires PHP:[^\S\r\n]*)([^\r\n]*)(\r?)/u,
 		pluginHeader.requiresPhp,
 	);
 }

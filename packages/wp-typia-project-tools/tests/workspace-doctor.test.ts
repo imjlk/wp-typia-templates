@@ -476,6 +476,45 @@ export interface WorkspaceAiFeatureConfig {
   expect(repairedSource).toContain("\t};\r\n\tdataFile: string;");
 });
 
+test("workspace inventory repair does not duplicate spaced compatibility fields", () => {
+  const repairedSource = updateWorkspaceInventorySource(`
+export interface WorkspaceAbilityConfig {
+  clientFile: string;
+  compatibility: {
+    hardMinimums: {
+      php?: string;
+      wordpress?: string;
+    };
+    mode: 'baseline' | 'optional' | 'required';
+    optionalFeatures: string[];
+    requiredFeatures: string[];
+    runtimeGates: string[];
+  };
+  configFile: string;
+  slug: string;
+}
+
+export interface WorkspaceAiFeatureConfig {
+  aiSchemaFile: string;
+  clientFile: string;
+  compatibility?: {
+    hardMinimums: {
+      php?: string;
+      wordpress?: string;
+    };
+    mode: 'baseline' | 'optional' | 'required';
+    optionalFeatures: string[];
+    requiredFeatures: string[];
+    runtimeGates: string[];
+  };
+  dataFile: string;
+  slug: string;
+}
+`);
+
+  expect(repairedSource.match(/^[ \t]*compatibility\??:/gmu)?.length).toBe(2);
+});
+
 test("doctor passes on a healthy multi-block workspace", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-doctor-multi-block");
 

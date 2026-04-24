@@ -379,6 +379,30 @@ describe('WordPress AI AbilitySpec foundation', () => {
     ).toBe(true);
   });
 
+  test('updates empty plugin header values without consuming following header lines', () => {
+    const source = [
+      '<?php',
+      '/**',
+      ' * Plugin Name: Demo',
+      ' * Requires at least:',
+      ' * Tested up to:',
+      ' * Requires PHP:',
+      ' */',
+      '',
+    ].join('\n');
+    const nextSource = updatePluginHeaderCompatibility(
+      source,
+      resolveScaffoldCompatibilityPolicy(
+        REQUIRED_WORKSPACE_ABILITY_COMPATIBILITY,
+      ),
+    );
+
+    expect(nextSource).toContain(' * Requires at least: 7.0\n');
+    expect(nextSource).toContain(' * Tested up to: 7.0\n');
+    expect(nextSource).toContain(' * Requires PHP: 8.0\n');
+    expect(nextSource).toContain(' */');
+  });
+
   test('rejects invalid version floor segments instead of silently comparing them', () => {
     expect(() =>
       resolveAiFeatureCapabilityPlan(
