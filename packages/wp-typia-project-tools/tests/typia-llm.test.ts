@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -119,6 +119,34 @@ describe('typia.llm adapter emitter', () => {
     expect(source).toContain('typia.llm.structuredOutput<CounterResponse>();');
   });
 
+  test('renders multiline endpoint summaries as valid JSDoc lines', () => {
+    const source = renderTypiaLlmModule({
+      applicationExportName: 'counterLlmApplication',
+      interfaceName: 'CounterRestToolController',
+      manifest: {
+        ...COUNTER_MANIFEST,
+        endpoints: [
+          {
+            ...COUNTER_MANIFEST.endpoints[0],
+            summary: 'Read the counter.\nIncludes generated adapter context.',
+          },
+        ],
+      },
+      structuredOutputExportName: 'counterStructuredOutput',
+      structuredOutputTypeName: 'CounterResponse',
+      typesImportPath: '../counter/api-types',
+    });
+
+    expect(source).toContain(
+      [
+        '\t/**',
+        '\t * Read the counter.',
+        '\t * Includes generated adapter context.',
+        '\t *',
+      ].join('\n'),
+    );
+  });
+
   test('writes and checks the generated adapter module', async () => {
     const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'wp-typia-llm-'));
     const sourceFile = path.join(tempRoot, 'counter.llm.generated.ts');
@@ -163,6 +191,7 @@ describe('typia.llm adapter emitter', () => {
           typesImportPath: '../counter/api-types',
         }),
       ).rejects.toThrow(/typia\.llm artifacts are missing or stale/);
+      expect(await readFile(sourceFile, 'utf8')).toBe('// stale\n');
     } finally {
       await rm(tempRoot, { force: true, recursive: true });
     }

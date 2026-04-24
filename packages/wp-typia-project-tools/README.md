@@ -16,9 +16,9 @@ Package roles:
 Supported public imports:
 
 - `@wp-typia/project-tools`
+- `@wp-typia/project-tools/schema-core`
 - `@wp-typia/project-tools/ai-artifacts`
 - `@wp-typia/project-tools/typia-llm`
-- `@wp-typia/project-tools/schema-core`
 
 Implementation note:
 

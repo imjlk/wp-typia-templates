@@ -251,10 +251,29 @@ function normalizeGeneratedArtifactContent(content: string): string {
   return content.replace(/\r\n?/g, '\n');
 }
 
+function renderDescriptionJsDocLines(
+  method: TypiaLlmEndpointMethodDescriptor,
+): string[] {
+  const description =
+    method.description && method.description.trim().length > 0
+      ? method.description
+      : method.operationId;
+  const descriptionLines = description
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .map((line) => line.trim().replace(/\s+/g, ' '))
+    .filter(Boolean);
+
+  return (descriptionLines.length > 0
+    ? descriptionLines
+    : [method.operationId]
+  ).map((line) => ` * ${escapeJsDocLine(line)}`);
+}
+
 function renderMethodJsDoc(method: TypiaLlmEndpointMethodDescriptor): string {
   const lines = [
     '/**',
-    ` * ${escapeJsDocLine(method.description ?? method.operationId)}`,
+    ...renderDescriptionJsDocLines(method),
     ' *',
     ` * REST path: ${method.method} ${method.path}`,
     ` * Auth intent: ${method.authIntent}`,
@@ -282,6 +301,54 @@ function renderMethodSignature(method: TypiaLlmEndpointMethodDescriptor): string
     : JSON.stringify(method.operationId);
 
   return `${methodName}(${inputSignature}): ${method.outputTypeName};`;
+}
+
+function renderTypiaLlmModuleFromMethodDescriptors(
+  {
+    applicationExportName,
+    interfaceName,
+    structuredOutputExportName,
+    structuredOutputTypeName,
+    typesImportPath,
+  }: Omit<RenderTypiaLlmModuleOptions, 'manifest'>,
+  methods: readonly TypiaLlmEndpointMethodDescriptor[],
+): string {
+  const importedTypeNames = new Set<string>([structuredOutputTypeName]);
+
+  for (const method of methods) {
+    importedTypeNames.add(method.outputTypeName);
+    if (method.inputTypeName) {
+      importedTypeNames.add(method.inputTypeName);
+    }
+  }
+
+  const imports = Array.from(importedTypeNames).sort().join(',\n\t');
+  const methodBlocks = methods
+    .map((method) => {
+      const jsDoc = renderMethodJsDoc(method)
+        .split('\n')
+        .map((line) => `\t${line}`)
+        .join('\n');
+
+      return `${jsDoc}\n\t${renderMethodSignature(method)}`;
+    })
+    .join('\n\n');
+
+  return `import typia from "typia";
+import type {
+\t${imports},
+} from "${typesImportPath}";
+
+export interface ${interfaceName} {
+${methodBlocks}
+}
+
+export const ${applicationExportName} =
+\ttypia.llm.application<${interfaceName}>();
+
+export const ${structuredOutputExportName} =
+\ttypia.llm.structuredOutput<${structuredOutputTypeName}>();
+`;
 }
 
 async function reconcileGeneratedTypiaLlmArtifacts(
@@ -381,43 +448,16 @@ export function renderTypiaLlmModule({
   structuredOutputTypeName,
   typesImportPath,
 }: RenderTypiaLlmModuleOptions): string {
-  const methods = buildTypiaLlmEndpointMethodDescriptors(manifest);
-  const importedTypeNames = new Set<string>([structuredOutputTypeName]);
-
-  for (const method of methods) {
-    importedTypeNames.add(method.outputTypeName);
-    if (method.inputTypeName) {
-      importedTypeNames.add(method.inputTypeName);
-    }
-  }
-
-  const imports = Array.from(importedTypeNames).sort().join(',\n\t');
-  const methodBlocks = methods
-    .map((method) => {
-      const jsDoc = renderMethodJsDoc(method)
-        .split('\n')
-        .map((line) => `\t${line}`)
-        .join('\n');
-
-      return `${jsDoc}\n\t${renderMethodSignature(method)}`;
-    })
-    .join('\n\n');
-
-  return `import typia from "typia";
-import type {
-\t${imports},
-} from "${typesImportPath}";
-
-export interface ${interfaceName} {
-${methodBlocks}
-}
-
-export const ${applicationExportName} =
-\ttypia.llm.application<${interfaceName}>();
-
-export const ${structuredOutputExportName} =
-\ttypia.llm.structuredOutput<${structuredOutputTypeName}>();
-`;
+  return renderTypiaLlmModuleFromMethodDescriptors(
+    {
+      applicationExportName,
+      interfaceName,
+      structuredOutputExportName,
+      structuredOutputTypeName,
+      typesImportPath,
+    },
+    buildTypiaLlmEndpointMethodDescriptors(manifest),
+  );
 }
 
 /**
@@ -433,9 +473,12 @@ export async function syncTypiaLlmAdapterModule({
   generatedSourceFile,
   ...renderOptions
 }: SyncTypiaLlmAdapterModuleOptions): Promise<SyncTypiaLlmAdapterModuleResult> {
-  const source = renderTypiaLlmModule(renderOptions);
   const methodDescriptors = buildTypiaLlmEndpointMethodDescriptors(
     renderOptions.manifest,
+  );
+  const source = renderTypiaLlmModuleFromMethodDescriptors(
+    renderOptions,
+    methodDescriptors,
   );
 
   await reconcileGeneratedTypiaLlmArtifacts(

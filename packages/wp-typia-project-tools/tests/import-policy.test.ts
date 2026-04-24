@@ -40,6 +40,18 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(typeof rootModule.runScaffoldFlow).toBe('function');
     expect(typeof aiArtifactsModule.syncWordPressAiArtifacts).toBe('function');
     expect(typeof aiArtifactsModule.projectWordPressAiSchema).toBe('function');
+    expect(
+      typeof typiaLlmModule.buildTypiaLlmEndpointMethodDescriptors,
+    ).toBe('function');
+    expect(
+      typeof typiaLlmModule.projectTypiaLlmApplicationArtifact,
+    ).toBe('function');
+    expect(
+      typeof typiaLlmModule.projectTypiaLlmApplicationFunction,
+    ).toBe('function');
+    expect(
+      typeof typiaLlmModule.projectTypiaLlmStructuredOutputArtifact,
+    ).toBe('function');
     expect(typeof typiaLlmModule.syncTypiaLlmAdapterModule).toBe('function');
     expect(typeof typiaLlmModule.renderTypiaLlmModule).toBe('function');
     expect(typeof schemaCoreModule.normalizeEndpointAuthDefinition).toBe(

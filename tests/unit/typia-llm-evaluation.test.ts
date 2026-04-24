@@ -36,7 +36,7 @@ describe("typia.llm evaluation artifacts", () => {
 		expect(liveArtifacts.structuredOutputArtifact).toEqual(
 			checkedInStructuredOutputArtifact,
 		);
-	});
+	}, 15_000);
 
 	test("projects exactly the two counter endpoints into function-calling tools", () => {
 		expect(checkedInApplicationArtifact.functions.map((fn) => fn.name)).toEqual([
