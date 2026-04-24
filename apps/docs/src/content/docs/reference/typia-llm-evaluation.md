@@ -1,8 +1,9 @@
 ---
-title: 'typia.llm Evaluation'
+title: 'typia.llm Adapter Target'
 ---
 
-This repo-local proof of concept records the outcome of `#35`.
+This page records the `typia.llm` evaluation outcome from `#35` and the
+supported opt-in adapter target added later.
 
 ## Outcome
 
@@ -10,21 +11,41 @@ This repo-local proof of concept records the outcome of `#35`.
   endpoint-manifest and OpenAPI flow
 - it does that through generated TypeScript tool/controller types, not by
   ingesting `api.openapi.json` directly
-- its clearest value in this repo is as a downstream
-  tool/function-calling contract consumer
+- its supported role in this repo is as a downstream tool/function-calling
+  adapter target
 
-## What the PoC emits
+## Supported adapter surface
 
-The adapter example now generates these typia.llm-facing artifacts under
+The public build-time surface is
+`@wp-typia/project-tools/typia-llm`.
+
+It provides:
+
+- `syncTypiaLlmAdapterModule(...)` for writing or checking the generated
+  TypeScript adapter module
+- `renderTypiaLlmModule(...)` and
+  `buildTypiaLlmEndpointMethodDescriptors(...)` for lower-level generation
+- `projectTypiaLlmApplicationArtifact(...)` and
+  `projectTypiaLlmStructuredOutputArtifact(...)` for JSON-friendly projection
+  of compiled `typia.llm` outputs
+
+The adapter target stays build-time only. The consuming project is responsible
+for compiling the generated module with the Typia transformer before reading
+the generated `typia.llm.application(...)` and
+`typia.llm.structuredOutput(...)` values.
+
+## What the example emits
+
+The adapter example generates these typia.llm-facing artifacts under
 `examples/api-contract-adapter-poc/src/typia-llm/`:
 
 - `counter.llm.generated.ts`
 - `counter.llm.application.json`
 - `counter-response.structured-output.json`
 
-`counter.llm.generated.ts` is a manifest-driven generated module that turns the
-counter endpoint manifest into a TypeScript controller interface and then asks
-`typia.llm` to derive:
+`counter.llm.generated.ts` is generated through
+`@wp-typia/project-tools/typia-llm`. It turns the counter endpoint manifest into
+a TypeScript controller interface and then asks `typia.llm` to derive:
 
 - function-calling schemas for the `GET` and `POST` counter endpoints
 - a structured-output schema for `PersistenceCounterResponse`
@@ -51,7 +72,7 @@ types, not on imported OpenAPI documents.
 
 ## Result compared with the supported WordPress AI path
 
-The existing WordPress AI path in
+The WordPress AI path in
 [`docs/wordpress-ai-projections.md`](./wordpress-ai-projections.md) still maps
 most naturally to:
 
@@ -61,7 +82,8 @@ That flow now has a supported sync surface through
 `@wp-typia/project-tools/ai-artifacts` and `wp-typia sync ai`, and it produces
 provider-friendly JSON Schema for WordPress AI Client structured responses.
 
-By contrast, the `typia.llm` proof is strongest when the consumer wants:
+By contrast, the `typia.llm` adapter target is strongest when the consumer
+wants:
 
 - tool/function-calling schemas
 - parse/coerce/validate helpers attached to those schemas
@@ -71,4 +93,5 @@ By contrast, the `typia.llm` proof is strongest when the consumer wants:
 
 - No scaffold templates change
 - No generated plugin runtime dependency on `typia.llm` is added
-- This is still an evaluation, not a supported generated-project feature
+- This is a supported opt-in downstream adapter target, not a generated-project
+  runtime feature

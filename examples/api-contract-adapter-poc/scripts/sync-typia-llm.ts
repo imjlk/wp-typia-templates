@@ -11,37 +11,22 @@ import { BLOCKS } from "../../persistence-examples/scripts/block-config";
 import type { EndpointManifestDefinition } from "../../../packages/wp-typia-block-runtime/src/metadata-core";
 import {
   buildTypiaLlmEndpointMethodDescriptors,
+  projectTypiaLlmApplicationArtifact,
+  projectTypiaLlmStructuredOutputArtifact,
   renderTypiaLlmModule,
+  syncTypiaLlmAdapterModule,
+  type ProjectedTypiaLlmApplicationArtifact,
+  type ProjectedTypiaLlmStructuredOutputArtifact,
   type TypiaLlmEndpointMethodDescriptor,
-} from "../../../packages/wp-typia-project-tools/src/internal/typia-llm";
+} from "@wp-typia/project-tools/typia-llm";
+
+export type {
+  ProjectedTypiaLlmApplicationArtifact,
+  ProjectedTypiaLlmStructuredOutputArtifact,
+  ProjectedTypiaLlmStructuredOutputArtifact as ProjectedTypiaStructuredOutputArtifact,
+} from "@wp-typia/project-tools/typia-llm";
 
 const execFileAsync = promisify(execFile);
-
-export interface ProjectedTypiaLlmFunctionArtifact {
-  description?: string;
-  name: string;
-  output?: ILlmSchema.IParameters;
-  parameters: ILlmSchema.IParameters;
-  tags?: string[];
-}
-
-export interface ProjectedTypiaLlmApplicationArtifact {
-  functions: ProjectedTypiaLlmFunctionArtifact[];
-  generatedFrom: {
-    baselineOpenApiPath: string;
-    blockSlug: string;
-    manifestSource: "endpoint-manifest+typescript";
-  };
-}
-
-export interface ProjectedTypiaStructuredOutputArtifact {
-  generatedFrom: {
-    aiSchemaPath: string;
-    blockSlug: string;
-    outputTypeName: string;
-  };
-  parameters: ILlmStructuredOutput["parameters"];
-}
 
 type JsonObject = Record<string, unknown>;
 type OpenApiDocument = {
@@ -222,18 +207,6 @@ async function reconcileGeneratedArtifacts(
       `Generated artifacts are missing or stale:\n${issues.join("\n")}`
     );
   }
-}
-
-function projectApplicationFunction(
-  functionSchema: ILlmFunction
-): ProjectedTypiaLlmFunctionArtifact {
-  return {
-    description: functionSchema.description,
-    name: functionSchema.name,
-    output: functionSchema.output,
-    parameters: functionSchema.parameters,
-    tags: functionSchema.tags,
-  };
 }
 
 function cloneJson<T>(value: T): T {
@@ -485,7 +458,7 @@ export function renderCounterTypiaLlmGeneratedSource(
 
 export async function buildCounterTypiaLlmArtifacts(): Promise<{
   applicationArtifact: ProjectedTypiaLlmApplicationArtifact;
-  structuredOutputArtifact: ProjectedTypiaStructuredOutputArtifact;
+  structuredOutputArtifact: ProjectedTypiaLlmStructuredOutputArtifact;
 }> {
   try {
     await compileGeneratedModule();
@@ -494,17 +467,8 @@ export async function buildCounterTypiaLlmArtifacts(): Promise<{
     const openApiDocument = await readCounterOpenApiDocument();
 
     return {
-      applicationArtifact: {
-        functions: compiledModule.counterLlmApplication.functions.map(
-          (functionSchema) => ({
-            ...projectApplicationFunction(functionSchema),
-            parameters: applyOpenApiConstraintsToFunctionParameters(
-              functionSchema.parameters,
-              findOperationById(openApiDocument, functionSchema.name),
-              openApiDocument
-            ),
-          })
-        ),
+      applicationArtifact: projectTypiaLlmApplicationArtifact({
+        application: compiledModule.counterLlmApplication,
         generatedFrom: {
           baselineOpenApiPath: path.relative(
             EXAMPLE_ROOT,
@@ -513,15 +477,23 @@ export async function buildCounterTypiaLlmArtifacts(): Promise<{
           blockSlug: COUNTER_BLOCK.slug,
           manifestSource: "endpoint-manifest+typescript",
         },
-      },
-      structuredOutputArtifact: {
+        transformFunction: (functionArtifact, functionSchema) => ({
+          ...functionArtifact,
+          parameters: applyOpenApiConstraintsToFunctionParameters(
+            functionSchema.parameters as ILlmSchema.IParameters,
+            findOperationById(openApiDocument, functionSchema.name),
+            openApiDocument
+          ),
+        }),
+      }),
+      structuredOutputArtifact: projectTypiaLlmStructuredOutputArtifact({
         generatedFrom: {
           aiSchemaPath: path.relative(EXAMPLE_ROOT, getCounterAiSchemaFile()),
           blockSlug: COUNTER_BLOCK.slug,
           outputTypeName: "PersistenceCounterResponse",
         },
-        parameters: compiledModule.counterResponseStructuredOutput.parameters,
-      },
+        structuredOutput: compiledModule.counterResponseStructuredOutput,
+      }),
     };
   } finally {
     await rm(COMPILED_OUTPUT_DIR, { force: true, recursive: true });
@@ -531,17 +503,19 @@ export async function buildCounterTypiaLlmArtifacts(): Promise<{
 export async function syncCounterTypiaLlmArtifacts(
   options: SyncTypiaLlmCliOptions = { check: false }
 ) {
-  const generatedSource = renderCounterTypiaLlmGeneratedSource() + "\n";
-
-  await reconcileGeneratedArtifacts(
-    [
-      {
-        content: generatedSource,
-        path: GENERATED_SOURCE_FILE,
-      },
-    ],
-    options
-  );
+  await syncTypiaLlmAdapterModule({
+    applicationExportName: "counterLlmApplication",
+    check: options.check,
+    generatedSourceFile: GENERATED_SOURCE_FILE,
+    interfaceName: "CounterRestToolController",
+    manifest: COUNTER_LLM_MANIFEST,
+    structuredOutputExportName: "counterResponseStructuredOutput",
+    structuredOutputTypeName: "PersistenceCounterResponse",
+    typesImportPath: toPosixRelativePath(
+      GENERATED_SOURCE_FILE,
+      getCounterApiTypesFile()
+    ),
+  });
 
   const { applicationArtifact, structuredOutputArtifact } =
     await buildCounterTypiaLlmArtifacts();

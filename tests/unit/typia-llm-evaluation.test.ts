@@ -26,7 +26,7 @@ describe("typia.llm evaluation artifacts", () => {
 			"utf8",
 		);
 
-		expect(generatedSource).toBe(renderCounterTypiaLlmGeneratedSource() + "\n");
+		expect(generatedSource).toBe(renderCounterTypiaLlmGeneratedSource());
 	});
 
 	test("emits the expected checked-in typia.llm artifacts for the counter contracts", async () => {

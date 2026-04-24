@@ -39,6 +39,9 @@ This repository has multiple public surfaces:
 - `@wp-typia/project-tools/ai-artifacts`
   Opt-in WordPress AI artifact sync helpers (`*.ai.schema.json`,
   `*.abilities.json`).
+- `@wp-typia/project-tools/typia-llm`
+  Opt-in build-time `typia.llm` adapter emitter for downstream TypeScript-first
+  tool/function consumers.
 - `@wp-typia/block-runtime`
   Generated-project runtime helper root.
 - `@wp-typia/block-runtime/migration-types`
@@ -465,6 +468,14 @@ supported project-tooling facade for those helpers is
 `@wp-typia/project-tools/ai-artifacts`, which currently covers manifest-driven
 `*.ai.schema.json` and `*.abilities.json` generation for the WordPress AI path.
 
+The separate `@wp-typia/project-tools/typia-llm` facade is the supported
+build-time adapter target for downstream `typia.llm` consumers. It renders the
+generated TypeScript module from endpoint manifests and canonical contract
+types, then lets the consuming project compile that module with Typia and
+project JSON-friendly application or structured-output artifacts. This path is
+explicitly separate from `wp-typia sync ai` and does not add `typia.llm` to
+generated WordPress plugin runtime code.
+
 If you need the same behavior programmatically, `@wp-typia/block-runtime/metadata-core`
 also exposes `runSyncBlockMetadata(...)` alongside the lower-level
 `syncBlockMetadata(...)`, plus `syncEndpointClient(...)` for portable endpoint
@@ -506,8 +517,8 @@ import {
 
 When you manually import schema helpers, prefer
 `@wp-typia/project-tools/schema-core`, `@wp-typia/project-tools/ai-artifacts`,
-or the root `@wp-typia/project-tools` exports such as
-`projectJsonSchemaDocument()`.
+`@wp-typia/project-tools/typia-llm`, or the root `@wp-typia/project-tools`
+exports such as `projectJsonSchemaDocument()`.
 
 For the normative generated-project runtime import policy, see
 [`docs/runtime-import-policy.md`](../architecture/runtime-import-policy.md). For the broader
@@ -742,7 +753,7 @@ The repository keeps two reference apps:
 - [`examples/my-typia-block`](https://github.com/imjlk/wp-typia/tree/main/examples/my-typia-block) for the kitchen-sink editor/migration reference
 - [`examples/persistence-examples`](https://github.com/imjlk/wp-typia/tree/main/examples/persistence-examples) for persistence-policy behavior and the repo-local WordPress AI projection proof described in [`docs/wordpress-ai-projections.md`](./wordpress-ai-projections.md)
 - [`examples/compound-patterns`](https://github.com/imjlk/wp-typia/tree/main/examples/compound-patterns) for compound parent/child patterns
-- [`examples/api-contract-adapter-poc`](https://github.com/imjlk/wp-typia/tree/main/examples/api-contract-adapter-poc) for a minimal non-PHP proof that endpoint manifests can be served outside WordPress/PHP, plus the repo-local `typia.llm` evaluation described in [`docs/typia-llm-evaluation.md`](./typia-llm-evaluation.md)
+- [`examples/api-contract-adapter-poc`](https://github.com/imjlk/wp-typia/tree/main/examples/api-contract-adapter-poc) for a minimal non-PHP proof that endpoint manifests can be served outside WordPress/PHP, plus the opt-in `typia.llm` adapter target described in [`docs/typia-llm-evaluation.md`](./typia-llm-evaluation.md)
 
 The repo-owned adapter conformance harness lives at
 [`tests/helpers/rest-adapter-conformance.ts`](https://github.com/imjlk/wp-typia/blob/main/tests/helpers/rest-adapter-conformance.ts).
