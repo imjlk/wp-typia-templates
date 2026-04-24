@@ -15,7 +15,7 @@ import {
   buildWordPressAiArtifacts,
   buildWordPressAbilitiesDocument,
   projectWordPressAiSchema,
-} from '../../packages/wp-typia-project-tools/src/internal/wordpress-ai';
+} from '@wp-typia/project-tools/ai-artifacts';
 
 const counterManifest = BLOCKS.find(
   (block) => block.slug === 'counter',

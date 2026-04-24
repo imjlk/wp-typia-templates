@@ -151,6 +151,7 @@ export const WP_TYPIA_FUTURE_COMMAND_TREE = [
   {
     description: 'Run the common generated-project sync workflow.',
     name: 'sync',
+    subcommands: ['ai'],
   },
   {
     description: 'Extend an official wp-typia workspace.',

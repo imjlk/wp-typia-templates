@@ -280,6 +280,8 @@ describe('WordPress AI AbilitySpec foundation', () => {
           },
         },
       ),
-    ).toThrow(/compareVersionFloors received an invalid version floor "7\.x"/);
+    ).toThrow(
+      /parseVersionFloorParts received an invalid version floor "7\.x"/,
+    );
   });
 });

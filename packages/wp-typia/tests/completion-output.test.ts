@@ -1,414 +1,458 @@
-import { describe, expect, test } from "bun:test";
-import packageJson from "../package.json";
+import { describe, expect, test } from 'bun:test';
+import packageJson from '../package.json';
 
 import {
-	buildCreateCompletionPayload,
-	buildCreateDryRunPayload,
-	formatCreateProgressLine,
-	buildMigrationCompletionPayload,
-	printCompletionPayload,
-} from "../src/runtime-bridge";
+  buildCreateCompletionPayload,
+  buildCreateDryRunPayload,
+  formatCreateProgressLine,
+  buildMigrationCompletionPayload,
+  printCompletionPayload,
+} from '../src/runtime-bridge';
 import {
-	buildAddCompletionPayload,
-	buildAddDryRunPayload,
-	buildSyncDryRunPayload,
-} from "../src/runtime-bridge-output";
+  buildAddCompletionPayload,
+  buildAddDryRunPayload,
+  buildSyncDryRunPayload,
+} from '../src/runtime-bridge-output';
 
 const UNICODE_MARKER_OPTIONS = {
-	env: {
-		LANG: "en_US.UTF-8",
-	},
+  env: {
+    LANG: 'en_US.UTF-8',
+  },
 } as const;
 
-describe("alternate-buffer completion output helpers", () => {
-	test("create completion payload preserves reviewable next steps and optional onboarding", () => {
-		const payload = buildCreateCompletionPayload(
-			{
-				nextSteps: ["cd demo-block", "npm install", "npm run dev"],
-				optionalOnboarding: {
-					note: "Run npm run sync before your first commit if you edited types.",
-					shortNote:
-						"Skip npm run sync during normal npm run dev work. Re-run it before build, typecheck, or doctor when you want a reviewable refresh.",
-					steps: ["npm run sync"],
-				},
-				packageManager: "npm",
-				projectDir: "/tmp/demo-block",
-				result: {
-					selectedVariant: "hero",
-					variables: {
-						title: "Demo Block",
-					},
-					warnings: ["This template enables optional migration UI."],
-				},
-			},
-			UNICODE_MARKER_OPTIONS,
-		);
+describe('alternate-buffer completion output helpers', () => {
+  test('create completion payload preserves reviewable next steps and optional onboarding', () => {
+    const payload = buildCreateCompletionPayload(
+      {
+        nextSteps: ['cd demo-block', 'npm install', 'npm run dev'],
+        optionalOnboarding: {
+          note: 'Run npm run sync before your first commit if you edited types.',
+          shortNote:
+            'Skip npm run sync during normal npm run dev work. Re-run it before build, typecheck, or doctor when you want a reviewable refresh.',
+          steps: ['npm run sync'],
+        },
+        packageManager: 'npm',
+        projectDir: '/tmp/demo-block',
+        result: {
+          selectedVariant: 'hero',
+          variables: {
+            title: 'Demo Block',
+          },
+          warnings: ['This template enables optional migration UI.'],
+        },
+      },
+      UNICODE_MARKER_OPTIONS,
+    );
 
-		expect(payload.title).toBe("✅ Created Demo Block in /tmp/demo-block");
-		expect(payload.preambleLines).toEqual(["Template variant: hero"]);
-		expect(payload.warningLines).toEqual(["This template enables optional migration UI."]);
-		expect(payload.nextSteps).toEqual(["cd demo-block", "npm install", "npm run dev"]);
-		expect(payload.optionalTitle).toBe("Verify and sync (optional):");
-		expect(payload.optionalLines).toEqual([
-			`npx --yes wp-typia@${packageJson.version} doctor`,
-			"npm run sync",
-		]);
-		expect(payload.optionalNote).toContain("Skip npm run sync during normal npm run dev work.");
-	});
+    expect(payload.title).toBe('✅ Created Demo Block in /tmp/demo-block');
+    expect(payload.preambleLines).toEqual(['Template variant: hero']);
+    expect(payload.warningLines).toEqual([
+      'This template enables optional migration UI.',
+    ]);
+    expect(payload.nextSteps).toEqual([
+      'cd demo-block',
+      'npm install',
+      'npm run dev',
+    ]);
+    expect(payload.optionalTitle).toBe('Verify and sync (optional):');
+    expect(payload.optionalLines).toEqual([
+      `npx --yes wp-typia@${packageJson.version} doctor`,
+      'npm run sync',
+    ]);
+    expect(payload.optionalNote).toContain(
+      'Skip npm run sync during normal npm run dev work.',
+    );
+  });
 
-	test("completion printer keeps warning and next-step ordering stable", () => {
-		const printed: string[] = [];
-		const warned: string[] = [];
+  test('completion printer keeps warning and next-step ordering stable', () => {
+    const printed: string[] = [];
+    const warned: string[] = [];
 
-		printCompletionPayload(
-			{
-				nextSteps: ["cd demo-block", "npm install"],
-				optionalLines: [
-					`npx --yes wp-typia@${packageJson.version} doctor`,
-					"npm run sync",
-				],
-				optionalNote:
-					"Skip npm run sync during normal npm run dev work. Re-run it before build, typecheck, or doctor when you want a reviewable refresh.",
-				optionalTitle: "Verify and sync (optional):",
-				preambleLines: ["Template variant: hero"],
-				summaryLines: ["Project directory: /tmp/demo-block"],
-				title: "✅ Created Demo Block in /tmp/demo-block",
-				warningLines: ["This template enables optional migration UI."],
-			},
-			{
-				markerOptions: UNICODE_MARKER_OPTIONS,
-				printLine: (line) => printed.push(line),
-				warnLine: (line) => warned.push(line),
-			},
-		);
+    printCompletionPayload(
+      {
+        nextSteps: ['cd demo-block', 'npm install'],
+        optionalLines: [
+          `npx --yes wp-typia@${packageJson.version} doctor`,
+          'npm run sync',
+        ],
+        optionalNote:
+          'Skip npm run sync during normal npm run dev work. Re-run it before build, typecheck, or doctor when you want a reviewable refresh.',
+        optionalTitle: 'Verify and sync (optional):',
+        preambleLines: ['Template variant: hero'],
+        summaryLines: ['Project directory: /tmp/demo-block'],
+        title: '✅ Created Demo Block in /tmp/demo-block',
+        warningLines: ['This template enables optional migration UI.'],
+      },
+      {
+        markerOptions: UNICODE_MARKER_OPTIONS,
+        printLine: (line) => printed.push(line),
+        warnLine: (line) => warned.push(line),
+      },
+    );
 
-		expect(warned).toEqual(["⚠️ This template enables optional migration UI."]);
-		expect(printed).toEqual([
-			"Template variant: hero",
-			"\n✅ Created Demo Block in /tmp/demo-block",
-			"Project directory: /tmp/demo-block",
-			"Next steps:",
-			"  cd demo-block",
-			"  npm install",
-			"\nVerify and sync (optional):",
-			`  npx --yes wp-typia@${packageJson.version} doctor`,
-			"  npm run sync",
-			"Note: Skip npm run sync during normal npm run dev work. Re-run it before build, typecheck, or doctor when you want a reviewable refresh.",
-		]);
-	});
+    expect(warned).toEqual(['⚠️ This template enables optional migration UI.']);
+    expect(printed).toEqual([
+      'Template variant: hero',
+      '\n✅ Created Demo Block in /tmp/demo-block',
+      'Project directory: /tmp/demo-block',
+      'Next steps:',
+      '  cd demo-block',
+      '  npm install',
+      '\nVerify and sync (optional):',
+      `  npx --yes wp-typia@${packageJson.version} doctor`,
+      '  npm run sync',
+      'Note: Skip npm run sync during normal npm run dev work. Re-run it before build, typecheck, or doctor when you want a reviewable refresh.',
+    ]);
+  });
 
-	test("completion printer keeps warnings on the same stream by default", () => {
-		const printed: string[] = [];
+  test('completion printer keeps warnings on the same stream by default', () => {
+    const printed: string[] = [];
 
-		printCompletionPayload(
-			{
-				summaryLines: ["Project directory: /tmp/demo-block"],
-				title: "✅ Created Demo Block in /tmp/demo-block",
-				warningLines: ["This template enables optional migration UI."],
-			},
-			{
-				markerOptions: UNICODE_MARKER_OPTIONS,
-				printLine: (line) => printed.push(line),
-			},
-		);
+    printCompletionPayload(
+      {
+        summaryLines: ['Project directory: /tmp/demo-block'],
+        title: '✅ Created Demo Block in /tmp/demo-block',
+        warningLines: ['This template enables optional migration UI.'],
+      },
+      {
+        markerOptions: UNICODE_MARKER_OPTIONS,
+        printLine: (line) => printed.push(line),
+      },
+    );
 
-		expect(printed).toEqual([
-			"⚠️ This template enables optional migration UI.",
-			"\n✅ Created Demo Block in /tmp/demo-block",
-			"Project directory: /tmp/demo-block",
-		]);
-	});
+    expect(printed).toEqual([
+      '⚠️ This template enables optional migration UI.',
+      '\n✅ Created Demo Block in /tmp/demo-block',
+      'Project directory: /tmp/demo-block',
+    ]);
+  });
 
-	test("completion printer avoids a leading blank line when no preamble or warnings were emitted", () => {
-		const printed: string[] = [];
+  test('completion printer avoids a leading blank line when no preamble or warnings were emitted', () => {
+    const printed: string[] = [];
 
-		printCompletionPayload(
-			{
-				summaryLines: ["Project directory: /tmp/demo-block"],
-				title: "✅ Created Demo Block in /tmp/demo-block",
-			},
-			{
-				printLine: (line) => printed.push(line),
-			},
-		);
+    printCompletionPayload(
+      {
+        summaryLines: ['Project directory: /tmp/demo-block'],
+        title: '✅ Created Demo Block in /tmp/demo-block',
+      },
+      {
+        printLine: (line) => printed.push(line),
+      },
+    );
 
-		expect(printed).toEqual([
-			"✅ Created Demo Block in /tmp/demo-block",
-			"Project directory: /tmp/demo-block",
-		]);
-	});
+    expect(printed).toEqual([
+      '✅ Created Demo Block in /tmp/demo-block',
+      'Project directory: /tmp/demo-block',
+    ]);
+  });
 
-	test("migration completion payload keeps rendered lines reviewable in order", () => {
-		const payload = buildMigrationCompletionPayload(
-			{
-				command: "plan",
-				lines: [
-					"Current migration version: v3",
-					"Selected migration edge: v1 -> v3",
-					"Next steps:",
-					"  wp-typia migrate scaffold --from-migration-version v1",
-				],
-			},
-			UNICODE_MARKER_OPTIONS,
-		);
+  test('migration completion payload keeps rendered lines reviewable in order', () => {
+    const payload = buildMigrationCompletionPayload(
+      {
+        command: 'plan',
+        lines: [
+          'Current migration version: v3',
+          'Selected migration edge: v1 -> v3',
+          'Next steps:',
+          '  wp-typia migrate scaffold --from-migration-version v1',
+        ],
+      },
+      UNICODE_MARKER_OPTIONS,
+    );
 
-		expect(payload.title).toBe("✅ Completed wp-typia migrate plan");
-		expect(payload.summaryLines).toEqual([
-			"Current migration version: v3",
-			"Selected migration edge: v1 -> v3",
-			"Next steps:",
-			"  wp-typia migrate scaffold --from-migration-version v1",
-		]);
-	});
+    expect(payload.title).toBe('✅ Completed wp-typia migrate plan');
+    expect(payload.summaryLines).toEqual([
+      'Current migration version: v3',
+      'Selected migration edge: v1 -> v3',
+      'Next steps:',
+      '  wp-typia migrate scaffold --from-migration-version v1',
+    ]);
+  });
 
-	test("create progress formatter keeps fallback status lines readable", () => {
-		expect(
-			formatCreateProgressLine({
-				detail: "Copying scaffold files into the target project directory.",
-				title: "Generating project files",
-			}, UNICODE_MARKER_OPTIONS),
-		).toBe(
-			"⏳ Generating project files: Copying scaffold files into the target project directory.",
-		);
-	});
+  test('create progress formatter keeps fallback status lines readable', () => {
+    expect(
+      formatCreateProgressLine(
+        {
+          detail: 'Copying scaffold files into the target project directory.',
+          title: 'Generating project files',
+        },
+        UNICODE_MARKER_OPTIONS,
+      ),
+    ).toBe(
+      '⏳ Generating project files: Copying scaffold files into the target project directory.',
+    );
+  });
 
-	test("dry-run create payload summarizes the planned scaffold without next steps", () => {
-		const payload = buildCreateDryRunPayload(
-			{
-				packageManager: "npm",
-				plan: {
-					dependencyInstall: "would-install",
-					files: ["README.md", "package.json", "src/index.tsx"],
-				},
-				projectDir: "/tmp/demo-block",
-				result: {
-					selectedVariant: null,
-					templateId: "basic",
-					variables: {
-						title: "Demo Block",
-					},
-					warnings: [],
-				},
-			},
-			UNICODE_MARKER_OPTIONS,
-		);
+  test('dry-run create payload summarizes the planned scaffold without next steps', () => {
+    const payload = buildCreateDryRunPayload(
+      {
+        packageManager: 'npm',
+        plan: {
+          dependencyInstall: 'would-install',
+          files: ['README.md', 'package.json', 'src/index.tsx'],
+        },
+        projectDir: '/tmp/demo-block',
+        result: {
+          selectedVariant: null,
+          templateId: 'basic',
+          variables: {
+            title: 'Demo Block',
+          },
+          warnings: [],
+        },
+      },
+      UNICODE_MARKER_OPTIONS,
+    );
 
-		expect(payload.title).toBe("🧪 Dry run for Demo Block at /tmp/demo-block");
-		expect(payload.summaryLines).toEqual([
-			"Project directory: /tmp/demo-block",
-			"Template: basic",
-			"Package manager: npm",
-			"Dependency install: would run during a real scaffold",
-		]);
-		expect(payload.optionalTitle).toBe("Planned files (3):");
-		expect(payload.optionalLines).toEqual([
-			"write README.md",
-			"write package.json",
-			"write src/index.tsx",
-		]);
-		expect(payload.nextSteps).toBeUndefined();
-		expect(payload.optionalNote).toContain("--dry-run");
-	});
+    expect(payload.title).toBe('🧪 Dry run for Demo Block at /tmp/demo-block');
+    expect(payload.summaryLines).toEqual([
+      'Project directory: /tmp/demo-block',
+      'Template: basic',
+      'Package manager: npm',
+      'Dependency install: would run during a real scaffold',
+    ]);
+    expect(payload.optionalTitle).toBe('Planned files (3):');
+    expect(payload.optionalLines).toEqual([
+      'write README.md',
+      'write package.json',
+      'write src/index.tsx',
+    ]);
+    expect(payload.nextSteps).toBeUndefined();
+    expect(payload.optionalNote).toContain('--dry-run');
+  });
 
-	test("dry-run create payload preserves the skipped-by-flag dependency wording", () => {
-		const payload = buildCreateDryRunPayload(
-			{
-				packageManager: "npm",
-				plan: {
-					dependencyInstall: "skipped-by-flag",
-					files: ["package.json"],
-				},
-				projectDir: "/tmp/demo-block",
-				result: {
-					selectedVariant: null,
-					templateId: "basic",
-					variables: {
-						title: "Demo Block",
-					},
-					warnings: [],
-				},
-			},
-			UNICODE_MARKER_OPTIONS,
-		);
+  test('dry-run create payload preserves the skipped-by-flag dependency wording', () => {
+    const payload = buildCreateDryRunPayload(
+      {
+        packageManager: 'npm',
+        plan: {
+          dependencyInstall: 'skipped-by-flag',
+          files: ['package.json'],
+        },
+        projectDir: '/tmp/demo-block',
+        result: {
+          selectedVariant: null,
+          templateId: 'basic',
+          variables: {
+            title: 'Demo Block',
+          },
+          warnings: [],
+        },
+      },
+      UNICODE_MARKER_OPTIONS,
+    );
 
-		expect(payload.summaryLines).toContain(
-			"Dependency install: already skipped via --no-install",
-		);
-	});
+    expect(payload.summaryLines).toContain(
+      'Dependency install: already skipped via --no-install',
+    );
+  });
 
-	test("add completion payload now includes reviewable next steps and doctor guidance", () => {
-		const payload = buildAddCompletionPayload(
-			{
-				kind: "binding-source",
-				packageManager: "npm",
-				projectDir: "/tmp/demo-workspace",
-				values: {
-					bindingSourceSlug: "hero-data",
-				},
-			},
-			UNICODE_MARKER_OPTIONS,
-		);
+  test('add completion payload now includes reviewable next steps and doctor guidance', () => {
+    const payload = buildAddCompletionPayload(
+      {
+        kind: 'binding-source',
+        packageManager: 'npm',
+        projectDir: '/tmp/demo-workspace',
+        values: {
+          bindingSourceSlug: 'hero-data',
+        },
+      },
+      UNICODE_MARKER_OPTIONS,
+    );
 
-		expect(payload.title).toBe("✅ Added binding source");
-		expect(payload.summaryLines).toEqual([
-			"Binding source: hero-data",
-			"Project directory: /tmp/demo-workspace",
-		]);
-		expect(payload.nextSteps).toEqual([
-			"Review src/bindings/hero-data/server.php and src/bindings/hero-data/editor.ts.",
-			"Run your workspace build or dev command to verify the binding source hooks and editor registration.",
-		]);
-		expect(payload.optionalTitle).toBe("Verify workspace health (optional):");
-		expect(payload.optionalLines).toEqual([
-			`npx --yes wp-typia@${packageJson.version} doctor`,
-		]);
-		expect(payload.optionalNote).toContain("inventory and generated-artifact check");
-	});
+    expect(payload.title).toBe('✅ Added binding source');
+    expect(payload.summaryLines).toEqual([
+      'Binding source: hero-data',
+      'Project directory: /tmp/demo-workspace',
+    ]);
+    expect(payload.nextSteps).toEqual([
+      'Review src/bindings/hero-data/server.php and src/bindings/hero-data/editor.ts.',
+      'Run your workspace build or dev command to verify the binding source hooks and editor registration.',
+    ]);
+    expect(payload.optionalTitle).toBe('Verify workspace health (optional):');
+    expect(payload.optionalLines).toEqual([
+      `npx --yes wp-typia@${packageJson.version} doctor`,
+    ]);
+    expect(payload.optionalNote).toContain(
+      'inventory and generated-artifact check',
+    );
+  });
 
-	test("dry-run add payload preserves the richer add completion guidance", () => {
-		const payload = buildAddDryRunPayload(
-			{
-				completion: buildAddCompletionPayload(
-					{
-						kind: "block",
-						packageManager: "npm",
-						projectDir: "/tmp/demo-workspace",
-						values: {
-							blockSlugs: "faq, faq-item",
-							templateId: "compound",
-						},
-					},
-					UNICODE_MARKER_OPTIONS,
-				),
-				fileOperations: ["write src/blocks/faq/block.json"],
-			},
-			UNICODE_MARKER_OPTIONS,
-		);
+  test('dry-run add payload preserves the richer add completion guidance', () => {
+    const payload = buildAddDryRunPayload(
+      {
+        completion: buildAddCompletionPayload(
+          {
+            kind: 'block',
+            packageManager: 'npm',
+            projectDir: '/tmp/demo-workspace',
+            values: {
+              blockSlugs: 'faq, faq-item',
+              templateId: 'compound',
+            },
+          },
+          UNICODE_MARKER_OPTIONS,
+        ),
+        fileOperations: ['write src/blocks/faq/block.json'],
+      },
+      UNICODE_MARKER_OPTIONS,
+    );
 
-		expect(payload.title).toBe("🧪 Dry run for workspace block");
-		expect(payload.summaryLines).toEqual([
-			"Blocks: faq, faq-item",
-			"Template family: compound",
-			"Project directory: /tmp/demo-workspace",
-		]);
-		expect(payload.warningLines).toBeUndefined();
-		expect(payload.optionalTitle).toBe("Planned workspace updates (1):");
-		expect(payload.optionalLines).toEqual(["write src/blocks/faq/block.json"]);
-	});
+    expect(payload.title).toBe('🧪 Dry run for workspace block');
+    expect(payload.summaryLines).toEqual([
+      'Blocks: faq, faq-item',
+      'Template family: compound',
+      'Project directory: /tmp/demo-workspace',
+    ]);
+    expect(payload.warningLines).toBeUndefined();
+    expect(payload.optionalTitle).toBe('Planned workspace updates (1):');
+    expect(payload.optionalLines).toEqual(['write src/blocks/faq/block.json']);
+  });
 
-	test("dry-run sync payload previews the generated sync commands", () => {
-		const payload = buildSyncDryRunPayload(
-			{
-				check: true,
-				packageManager: "npm",
-				plannedCommands: [
-					{
-						displayCommand: "npm run sync -- --check",
-					},
-				],
-				projectDir: "/tmp/demo-workspace",
-			},
-			UNICODE_MARKER_OPTIONS,
-		);
+  test('dry-run sync payload previews the generated sync commands', () => {
+    const payload = buildSyncDryRunPayload(
+      {
+        check: true,
+        packageManager: 'npm',
+        plannedCommands: [
+          {
+            displayCommand: 'npm run sync -- --check',
+          },
+        ],
+        projectDir: '/tmp/demo-workspace',
+        target: 'default',
+      },
+      UNICODE_MARKER_OPTIONS,
+    );
 
-		expect(payload.title).toBe("🧪 Dry run for wp-typia sync");
-		expect(payload.summaryLines).toEqual([
-			"Project directory: /tmp/demo-workspace",
-			"Package manager: npm",
-			"Execution mode: would run generated sync scripts in verification mode.",
-		]);
-		expect(payload.optionalTitle).toBe("Planned sync commands (1):");
-		expect(payload.optionalLines).toEqual(["npm run sync -- --check"]);
-		expect(payload.optionalNote).toContain("--dry-run");
-		expect(payload.optionalNote).toContain("--check");
-	});
+    expect(payload.title).toBe('🧪 Dry run for wp-typia sync');
+    expect(payload.summaryLines).toEqual([
+      'Project directory: /tmp/demo-workspace',
+      'Package manager: npm',
+      'Sync target: generated project defaults.',
+      'Execution mode: would run generated sync scripts in verification mode.',
+    ]);
+    expect(payload.optionalTitle).toBe('Planned sync commands (1):');
+    expect(payload.optionalLines).toEqual(['npm run sync -- --check']);
+    expect(payload.optionalNote).toContain('--dry-run');
+    expect(payload.optionalNote).toContain('--check');
+  });
 
-	test("completion helpers expose ASCII-friendly markers when requested", () => {
-		const payload = buildCreateCompletionPayload(
-			{
-				nextSteps: ["cd demo-block"],
-				optionalOnboarding: {
-					note: "Run npm run sync before your first commit if you edited types.",
-					shortNote:
-						"Skip npm run sync during normal npm run dev work. Re-run it before build, typecheck, or doctor when you want a reviewable refresh.",
-					steps: ["npm run sync"],
-				},
-				packageManager: "npm",
-				projectDir: "/tmp/demo-block",
-				result: {
-					variables: {
-						title: "Demo Block",
-					},
-					warnings: ["This template enables optional migration UI."],
-				},
-			},
-			{ forceAscii: true },
-		);
-		const printed: string[] = [];
+  test('dry-run sync payload can describe the AI-only target', () => {
+    const payload = buildSyncDryRunPayload(
+      {
+        check: false,
+        packageManager: 'npm',
+        plannedCommands: [
+          {
+            displayCommand: 'npm run sync-ai',
+          },
+        ],
+        projectDir: '/tmp/demo-workspace',
+        target: 'ai',
+      },
+      UNICODE_MARKER_OPTIONS,
+    );
 
-		printCompletionPayload(payload, {
-			markerOptions: { forceAscii: true },
-			printLine: (line) => printed.push(line),
-		});
+    expect(payload.title).toBe('🧪 Dry run for wp-typia sync ai');
+    expect(payload.summaryLines).toEqual([
+      'Project directory: /tmp/demo-workspace',
+      'Package manager: npm',
+      'Sync target: AI artifacts only.',
+      'Execution mode: would run generated sync scripts in apply mode.',
+    ]);
+    expect(payload.optionalLines).toEqual(['npm run sync-ai']);
+    expect(payload.optionalNote).toContain('wp-typia sync ai');
+  });
 
-		expect(payload.title).toBe("[ok] Created Demo Block in /tmp/demo-block");
-		expect(printed).toContain("[!] This template enables optional migration UI.");
-		expect(printed).toContain("\n[ok] Created Demo Block in /tmp/demo-block");
-		expect(
-			formatCreateProgressLine(
-				{
-					detail: "Copying scaffold files into the target project directory.",
-					title: "Generating project files",
-				},
-				{ forceAscii: true },
-			),
-		).toBe(
-			"[...] Generating project files: Copying scaffold files into the target project directory.",
-		);
-	});
+  test('completion helpers expose ASCII-friendly markers when requested', () => {
+    const payload = buildCreateCompletionPayload(
+      {
+        nextSteps: ['cd demo-block'],
+        optionalOnboarding: {
+          note: 'Run npm run sync before your first commit if you edited types.',
+          shortNote:
+            'Skip npm run sync during normal npm run dev work. Re-run it before build, typecheck, or doctor when you want a reviewable refresh.',
+          steps: ['npm run sync'],
+        },
+        packageManager: 'npm',
+        projectDir: '/tmp/demo-block',
+        result: {
+          variables: {
+            title: 'Demo Block',
+          },
+          warnings: ['This template enables optional migration UI.'],
+        },
+      },
+      { forceAscii: true },
+    );
+    const printed: string[] = [];
 
-	test("dry-run payloads can render ASCII-friendly titles", () => {
-		const createPayload = buildCreateDryRunPayload(
-			{
-				packageManager: "npm",
-				plan: {
-					dependencyInstall: "would-install",
-					files: ["README.md"],
-				},
-				projectDir: "/tmp/demo-block",
-				result: {
-					selectedVariant: null,
-					templateId: "basic",
-					variables: {
-						title: "Demo Block",
-					},
-					warnings: [],
-				},
-			},
-			{ forceAscii: true },
-		);
-		const addPayload = buildAddDryRunPayload(
-			{
-				completion: buildAddCompletionPayload(
-					{
-						kind: "block",
-						packageManager: "npm",
-						projectDir: "/tmp/demo-workspace",
-						values: {
-							blockSlugs: "faq, faq-item",
-							templateId: "compound",
-						},
-					},
-					{ forceAscii: true },
-				),
-				fileOperations: ["write src/blocks/faq/block.json"],
-			},
-			{ forceAscii: true },
-		);
+    printCompletionPayload(payload, {
+      markerOptions: { forceAscii: true },
+      printLine: (line) => printed.push(line),
+    });
 
-		expect(createPayload.title).toBe(
-			"[dry-run] Dry run for Demo Block at /tmp/demo-block",
-		);
-		expect(addPayload.title).toBe("[dry-run] Dry run for workspace block");
-	});
+    expect(payload.title).toBe('[ok] Created Demo Block in /tmp/demo-block');
+    expect(printed).toContain(
+      '[!] This template enables optional migration UI.',
+    );
+    expect(printed).toContain('\n[ok] Created Demo Block in /tmp/demo-block');
+    expect(
+      formatCreateProgressLine(
+        {
+          detail: 'Copying scaffold files into the target project directory.',
+          title: 'Generating project files',
+        },
+        { forceAscii: true },
+      ),
+    ).toBe(
+      '[...] Generating project files: Copying scaffold files into the target project directory.',
+    );
+  });
+
+  test('dry-run payloads can render ASCII-friendly titles', () => {
+    const createPayload = buildCreateDryRunPayload(
+      {
+        packageManager: 'npm',
+        plan: {
+          dependencyInstall: 'would-install',
+          files: ['README.md'],
+        },
+        projectDir: '/tmp/demo-block',
+        result: {
+          selectedVariant: null,
+          templateId: 'basic',
+          variables: {
+            title: 'Demo Block',
+          },
+          warnings: [],
+        },
+      },
+      { forceAscii: true },
+    );
+    const addPayload = buildAddDryRunPayload(
+      {
+        completion: buildAddCompletionPayload(
+          {
+            kind: 'block',
+            packageManager: 'npm',
+            projectDir: '/tmp/demo-workspace',
+            values: {
+              blockSlugs: 'faq, faq-item',
+              templateId: 'compound',
+            },
+          },
+          { forceAscii: true },
+        ),
+        fileOperations: ['write src/blocks/faq/block.json'],
+      },
+      { forceAscii: true },
+    );
+
+    expect(createPayload.title).toBe(
+      '[dry-run] Dry run for Demo Block at /tmp/demo-block',
+    );
+    expect(addPayload.title).toBe('[dry-run] Dry run for workspace block');
+  });
 });

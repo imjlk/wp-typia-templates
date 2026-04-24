@@ -140,7 +140,8 @@ export function buildCreateCompletionPayload(
   return {
     nextSteps: flow.nextSteps,
     optionalLines: verificationSteps,
-    optionalNote: flow.optionalOnboarding.shortNote ?? flow.optionalOnboarding.note,
+    optionalNote:
+      flow.optionalOnboarding.shortNote ?? flow.optionalOnboarding.note,
     optionalTitle: 'Verify and sync (optional):',
     preambleLines: flow.result.selectedVariant
       ? [`Template variant: ${flow.result.selectedVariant}`]
@@ -460,27 +461,37 @@ export function buildSyncDryRunPayload(
       displayCommand: string;
     }>;
     projectDir: string;
+    target?: 'ai' | 'default';
   },
   markerOptions?: OutputMarkerOptions,
 ): AlternateBufferCompletionPayload {
+  const targetSuffix = options.target === 'ai' ? ' ai' : '';
+  const targetSummary =
+    options.target === 'ai'
+      ? 'Sync target: AI artifacts only.'
+      : options.target === 'default'
+        ? 'Sync target: generated project defaults.'
+        : undefined;
+
   return {
     optionalLines: options.plannedCommands.map(
       (command) => command.displayCommand,
     ),
     optionalNote: options.check
-      ? 'No sync scripts were executed because --dry-run was enabled. Re-run `wp-typia sync --check` to verify generated artifacts without rewriting them.'
-      : 'No sync scripts were executed because --dry-run was enabled. Re-run without --dry-run to apply generated-file updates, or add --check to verify without rewriting.',
+      ? `No sync scripts were executed because --dry-run was enabled. Re-run \`wp-typia sync${targetSuffix} --check\` to verify generated artifacts without rewriting them.`
+      : `No sync scripts were executed because --dry-run was enabled. Re-run \`wp-typia sync${targetSuffix}\` without --dry-run to apply generated-file updates, or add --check to verify without rewriting.`,
     optionalTitle: `Planned sync commands (${options.plannedCommands.length}):`,
     summaryLines: [
       `Project directory: ${options.projectDir}`,
       `Package manager: ${options.packageManager}`,
+      ...(targetSummary ? [targetSummary] : []),
       options.check
         ? 'Execution mode: would run generated sync scripts in verification mode.'
         : 'Execution mode: would run generated sync scripts in apply mode.',
     ],
     title: formatOutputMarker(
       'dryRun',
-      'Dry run for wp-typia sync',
+      `Dry run for wp-typia sync${targetSuffix}`,
       markerOptions,
     ),
   };

@@ -1,119 +1,237 @@
-import { afterAll, expect, test } from "bun:test";
-import * as fs from "node:fs";
-import * as os from "node:os";
-import * as path from "node:path";
+import { afterAll, expect, test } from 'bun:test';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 
-import { executeSyncCommand } from "../src/runtime-bridge-sync";
+import { executeSyncCommand } from '../src/runtime-bridge-sync';
 
-const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "wp-typia-sync-bridge-"));
+const tempRoot = fs.mkdtempSync(
+  path.join(os.tmpdir(), 'wp-typia-sync-bridge-'),
+);
 
 function writeSyncFixture(options: {
-	name: string;
-	scripts: Record<string, string>;
-	withInstallMarker?: boolean;
+  name: string;
+  scripts: Record<string, string>;
+  withInstallMarker?: boolean;
 }) {
-	const projectDir = path.join(tempRoot, options.name);
-	fs.mkdirSync(projectDir, { recursive: true });
-	fs.writeFileSync(
-		path.join(projectDir, "package.json"),
-		JSON.stringify(
-			{
-				name: options.name,
-				packageManager: "npm@10.9.0",
-				scripts: options.scripts,
-			},
-			null,
-			2,
-		),
-		"utf8",
-	);
-	if (options.withInstallMarker) {
-		fs.mkdirSync(path.join(projectDir, "node_modules"), {
-			recursive: true,
-		});
-	}
-	return projectDir;
+  const projectDir = path.join(tempRoot, options.name);
+  fs.mkdirSync(projectDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(projectDir, 'package.json'),
+    JSON.stringify(
+      {
+        name: options.name,
+        packageManager: 'npm@10.9.0',
+        scripts: options.scripts,
+      },
+      null,
+      2,
+    ),
+    'utf8',
+  );
+  if (options.withInstallMarker) {
+    fs.mkdirSync(path.join(projectDir, 'node_modules'), {
+      recursive: true,
+    });
+  }
+  return projectDir;
 }
 
 afterAll(() => {
-	fs.rmSync(tempRoot, { force: true, recursive: true });
+  fs.rmSync(tempRoot, { force: true, recursive: true });
 });
 
-test("sync fails early with install guidance when local dependencies are missing", async () => {
-	const projectDir = writeSyncFixture({
-		name: "demo-sync-no-install",
-		scripts: {
-			sync: "tsx scripts/sync-project.ts",
-		},
-	});
+test('sync fails early with install guidance when local dependencies are missing', async () => {
+  const projectDir = writeSyncFixture({
+    name: 'demo-sync-no-install',
+    scripts: {
+      sync: 'tsx scripts/sync-project.ts',
+    },
+  });
 
-	const error = await executeSyncCommand({ cwd: projectDir }).catch((thrown) => thrown);
+  const error = await executeSyncCommand({ cwd: projectDir }).catch(
+    (thrown) => thrown,
+  );
 
-	expect(error).toBeInstanceOf(Error);
-	expect((error as Error).message).toContain("npm install");
-	expect((error as Error).message).toContain("wp-typia sync");
-	expect((error as Error).message).toContain("tsx");
+  expect(error).toBeInstanceOf(Error);
+  expect((error as Error).message).toContain('npm install');
+  expect((error as Error).message).toContain('wp-typia sync');
+  expect((error as Error).message).toContain('tsx');
 });
 
-test("dry-run sync previews commands without requiring installed dependencies", async () => {
-	const projectDir = writeSyncFixture({
-		name: "demo-sync-dry-run-preview",
-		scripts: {
-			sync: "tsx scripts/sync-project.ts",
-		},
-	});
+test('dry-run sync previews commands without requiring installed dependencies', async () => {
+  const projectDir = writeSyncFixture({
+    name: 'demo-sync-dry-run-preview',
+    scripts: {
+      sync: 'tsx scripts/sync-project.ts',
+    },
+  });
 
-	const result = await executeSyncCommand({
-		check: true,
-		cwd: projectDir,
-		dryRun: true,
-	});
+  const result = await executeSyncCommand({
+    check: true,
+    cwd: projectDir,
+    dryRun: true,
+  });
 
-	expect(result.dryRun).toBe(true);
-	expect(result.executedCommands).toBeUndefined();
-	expect(result.plannedCommands).toEqual([
-		{
-			args: ["run", "sync", "--", "--check"],
-			command: "npm",
-			displayCommand: "npm run sync -- --check",
-			scriptName: "sync",
-		},
-	]);
+  expect(result.dryRun).toBe(true);
+  expect(result.executedCommands).toBeUndefined();
+  expect(result.plannedCommands).toEqual([
+    {
+      args: ['run', 'sync', '--', '--check'],
+      command: 'npm',
+      displayCommand: 'npm run sync -- --check',
+      scriptName: 'sync',
+    },
+  ]);
 });
 
-test("sync can capture executed script output for structured callers", async () => {
-	const projectDir = writeSyncFixture({
-		name: "demo-sync-capture-output",
-		scripts: {
-			sync: "node scripts/record.mjs sync",
-		},
-		withInstallMarker: true,
-	});
-	const scriptsDir = path.join(projectDir, "scripts");
-	fs.mkdirSync(scriptsDir, { recursive: true });
-	fs.writeFileSync(
-		path.join(scriptsDir, "record.mjs"),
-		[
-			"const [, , label] = process.argv;",
-			"console.log(`ran:${label}`);",
-			"console.error(`stderr:${label}`);",
-		].join("\n"),
-		"utf8",
-	);
+test('sync can capture executed script output for structured callers', async () => {
+  const projectDir = writeSyncFixture({
+    name: 'demo-sync-capture-output',
+    scripts: {
+      sync: 'node scripts/record.mjs sync',
+    },
+    withInstallMarker: true,
+  });
+  const scriptsDir = path.join(projectDir, 'scripts');
+  fs.mkdirSync(scriptsDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(scriptsDir, 'record.mjs'),
+    [
+      'const [, , label] = process.argv;',
+      'console.log(`ran:${label}`);',
+      'console.error(`stderr:${label}`);',
+    ].join('\n'),
+    'utf8',
+  );
 
-	const result = await executeSyncCommand({
-		captureOutput: true,
-		cwd: projectDir,
-	});
+  const result = await executeSyncCommand({
+    captureOutput: true,
+    cwd: projectDir,
+  });
 
-	expect(result.executedCommands).toHaveLength(1);
-	expect(result.executedCommands?.[0]).toMatchObject({
-		args: ["run", "sync"],
-		command: "npm",
-		displayCommand: "npm run sync",
-		exitCode: 0,
-		scriptName: "sync",
-		stderr: "stderr:sync\n",
-	});
-	expect(result.executedCommands?.[0]?.stdout).toContain("ran:sync\n");
+  expect(result.executedCommands).toHaveLength(1);
+  expect(result.executedCommands?.[0]).toMatchObject({
+    args: ['run', 'sync'],
+    command: 'npm',
+    displayCommand: 'npm run sync',
+    exitCode: 0,
+    scriptName: 'sync',
+    stderr: 'stderr:sync\n',
+  });
+  expect(result.executedCommands?.[0]?.stdout).toContain('ran:sync\n');
+});
+
+test('legacy split sync plans include sync-ai after sync-rest when the project opts in', async () => {
+  const projectDir = writeSyncFixture({
+    name: 'demo-sync-with-ai',
+    scripts: {
+      'sync-ai': 'node scripts/record.mjs sync-ai',
+      'sync-rest': 'node scripts/record.mjs sync-rest',
+      'sync-types': 'node scripts/record.mjs sync-types',
+    },
+  });
+
+  const result = await executeSyncCommand({
+    check: true,
+    cwd: projectDir,
+    dryRun: true,
+  });
+
+  expect(result.target).toBe('default');
+  expect(result.plannedCommands).toEqual([
+    {
+      args: ['run', 'sync-types', '--', '--check'],
+      command: 'npm',
+      displayCommand: 'npm run sync-types -- --check',
+      scriptName: 'sync-types',
+    },
+    {
+      args: ['run', 'sync-rest', '--', '--check'],
+      command: 'npm',
+      displayCommand: 'npm run sync-rest -- --check',
+      scriptName: 'sync-rest',
+    },
+    {
+      args: ['run', 'sync-ai', '--', '--check'],
+      command: 'npm',
+      displayCommand: 'npm run sync-ai -- --check',
+      scriptName: 'sync-ai',
+    },
+  ]);
+});
+
+test('sync ai targets the dedicated sync-ai script only', async () => {
+  const projectDir = writeSyncFixture({
+    name: 'demo-sync-ai-only',
+    scripts: {
+      sync: 'node scripts/record.mjs sync',
+      'sync-ai': 'node scripts/record.mjs sync-ai',
+    },
+    withInstallMarker: true,
+  });
+  const scriptsDir = path.join(projectDir, 'scripts');
+  fs.mkdirSync(scriptsDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(scriptsDir, 'record.mjs'),
+    ['const [, , label] = process.argv;', 'console.log(`ran:${label}`);'].join(
+      '\n',
+    ),
+    'utf8',
+  );
+
+  const result = await executeSyncCommand({
+    captureOutput: true,
+    check: true,
+    cwd: projectDir,
+    target: 'ai',
+  });
+
+  expect(result.target).toBe('ai');
+  expect(result.executedCommands).toHaveLength(1);
+  expect(result.executedCommands?.[0]).toMatchObject({
+    args: ['run', 'sync-ai', '--', '--check'],
+    command: 'npm',
+    displayCommand: 'npm run sync-ai -- --check',
+    scriptName: 'sync-ai',
+  });
+  expect(result.executedCommands?.[0]?.stdout).toContain('ran:sync-ai\n');
+});
+
+test('sync ai preserves the legacy sync-wordpress-ai script key when needed', async () => {
+  const projectDir = writeSyncFixture({
+    name: 'demo-sync-ai-legacy-only',
+    scripts: {
+      'sync-wordpress-ai': 'node scripts/record.mjs sync-wordpress-ai',
+    },
+    withInstallMarker: true,
+  });
+  const scriptsDir = path.join(projectDir, 'scripts');
+  fs.mkdirSync(scriptsDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(scriptsDir, 'record.mjs'),
+    ['const [, , label] = process.argv;', 'console.log(`ran:${label}`);'].join(
+      '\n',
+    ),
+    'utf8',
+  );
+
+  const result = await executeSyncCommand({
+    captureOutput: true,
+    check: true,
+    cwd: projectDir,
+    target: 'ai',
+  });
+
+  expect(result.target).toBe('ai');
+  expect(result.executedCommands).toHaveLength(1);
+  expect(result.executedCommands?.[0]).toMatchObject({
+    args: ['run', 'sync-wordpress-ai', '--', '--check'],
+    command: 'npm',
+    displayCommand: 'npm run sync-wordpress-ai -- --check',
+    scriptName: 'sync-wordpress-ai',
+  });
+  expect(result.executedCommands?.[0]?.stdout).toContain(
+    'ran:sync-wordpress-ai\n',
+  );
 });
