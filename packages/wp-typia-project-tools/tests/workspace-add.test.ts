@@ -3040,6 +3040,16 @@ test("canonical CLI can add a server-only AI feature to an official workspace te
   expect(phpSource).toContain("sprintf(");
   expect(phpSource).toContain("The %s AI feature is optional");
   expect(phpSource).toContain("optional and remains disabled");
+  const adminNoticeSource = phpSource.slice(
+    phpSource.indexOf("function demo_space_brief_suggestions_ai_feature_admin_notice")
+  );
+  expect(
+    adminNoticeSource.indexOf("! current_user_can( 'manage_options' )")
+  ).toBeLessThan(
+    adminNoticeSource.indexOf(
+      "demo_space_brief_suggestions_is_ai_feature_supported()"
+    )
+  );
   expect(phpSource).toContain("register_rest_route");
   expect(phpSource).toContain("'demo-space/v1'");
 

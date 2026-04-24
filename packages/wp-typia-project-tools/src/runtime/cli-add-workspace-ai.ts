@@ -270,7 +270,7 @@ if ( ! function_exists( '${isSupportedFunctionName}' ) ) {
 
 if ( ! function_exists( '${adminNoticeFunctionName}' ) ) {
 \tfunction ${adminNoticeFunctionName}() {
-\t\tif ( ${isSupportedFunctionName}() || ! current_user_can( 'manage_options' ) ) {
+\t\tif ( ! current_user_can( 'manage_options' ) || ${isSupportedFunctionName}() ) {
 \t\t\treturn;
 \t\t}
 
