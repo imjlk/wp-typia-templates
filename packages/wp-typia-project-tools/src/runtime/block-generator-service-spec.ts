@@ -29,6 +29,7 @@ import {
 	buildFrontendCssClassName,
 	resolveScaffoldIdentifiers,
 } from "./scaffold-identifiers.js";
+import { resolveScaffoldCompatibilityPolicy } from "./scaffold-compatibility.js";
 import { attachScaffoldTemplateVariableGroups } from "./scaffold-template-variable-groups.js";
 import type {
 	DataStorageMode,
@@ -310,6 +311,7 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 		? spec.persistence.persistencePolicy
 		: "authenticated";
 	const queryVariationNamespace = `${namespace}/${slug}`;
+	const compatibility = resolveScaffoldCompatibilityPolicy([]);
 
 	const flatVariables: FlatScaffoldTemplateVariables = {
 		alternateRenderTargetsCsv: formatAlternateRenderTargets(
@@ -358,6 +360,9 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 		hasAlternateRenderTargets: alternateRenderTargets.length > 0
 			? "true"
 			: "false",
+		requiresAtLeast: compatibility.pluginHeader.requiresAtLeast,
+		requiresPhp: compatibility.pluginHeader.requiresPhp,
+		testedUpTo: compatibility.pluginHeader.testedUpTo,
 		projectToolsPackageVersion,
 		cssClassName,
 		dashCase: slug,
@@ -423,6 +428,7 @@ export function buildTemplateVariablesFromBlockSpec(spec: BlockSpec): ScaffoldTe
 		author: spec.project.author,
 		blockMetadataVersion: BUILTIN_BLOCK_METADATA_VERSION,
 		category: spec.metadata.category,
+		compatibility: compatibility.pluginHeader,
 		cssClassName,
 		description: spec.metadata.description,
 		descriptionJson: flatVariables.descriptionJson,

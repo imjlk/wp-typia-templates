@@ -3,6 +3,11 @@ import {
 	quoteTsString,
 } from "./cli-add-shared.js";
 import { buildAiFeatureEndpointManifest } from "./ai-feature-artifacts.js";
+import {
+	OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
+	renderScaffoldCompatibilityConfig,
+	resolveScaffoldCompatibilityPolicy,
+} from "./scaffold-compatibility.js";
 import { toTitleCase } from "./string-case.js";
 
 /**
@@ -32,6 +37,9 @@ export function buildAiFeatureConfigEntry(
 ): string {
 	const pascalCase = toPascalCaseFromAiFeatureSlug(aiFeatureSlug);
 	const title = toTitleCase(aiFeatureSlug);
+	const compatibilityPolicy = resolveScaffoldCompatibilityPolicy(
+		OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
+	);
 	const manifest = buildAiFeatureEndpointManifest({
 		namespace,
 		pascalCase,
@@ -47,6 +55,9 @@ export function buildAiFeatureConfigEntry(
 		`\t\tapiFile: ${quoteTsString(`src/ai-features/${aiFeatureSlug}/api.ts`)},`,
 		`\t\tclientFile: ${quoteTsString(
 			`src/ai-features/${aiFeatureSlug}/api-client.ts`,
+		)},`,
+		`\t\tcompatibility: ${renderScaffoldCompatibilityConfig(
+			compatibilityPolicy,
 		)},`,
 		`\t\tdataFile: ${quoteTsString(`src/ai-features/${aiFeatureSlug}/data.ts`)},`,
 		`\t\tnamespace: ${quoteTsString(namespace)},`,

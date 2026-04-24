@@ -209,11 +209,23 @@ export const REST_RESOURCES: WorkspaceRestResourceConfig[] = [
 ];
 `;
 
+const WORKSPACE_COMPATIBILITY_CONFIG_FIELD = `\tcompatibility?: {
+\t\thardMinimums: {
+\t\t\tphp?: string;
+\t\t\twordpress?: string;
+\t\t};
+\t\tmode: 'baseline' | 'optional' | 'required';
+\t\toptionalFeatures: string[];
+\t\trequiredFeatures: string[];
+\t\truntimeGates: string[];
+\t};
+`;
+
 const ABILITIES_INTERFACE_SECTION = `
 
 export interface WorkspaceAbilityConfig {
 \tclientFile: string;
-\tconfigFile: string;
+${WORKSPACE_COMPATIBILITY_CONFIG_FIELD}\tconfigFile: string;
 \tdataFile: string;
 \tinputSchemaFile: string;
 \tinputTypeName: string;
@@ -238,7 +250,7 @@ export interface WorkspaceAiFeatureConfig {
 \taiSchemaFile: string;
 \tapiFile: string;
 \tclientFile: string;
-\tdataFile: string;
+${WORKSPACE_COMPATIBILITY_CONFIG_FIELD}\tdataFile: string;
 \tnamespace: string;
 \topenApiFile: string;
 \tphpFile: string;
@@ -838,6 +850,26 @@ function appendEntriesAtMarker(source: string, marker: string, entries: string[]
 	return source.replace(marker, `${entries.join("\n")}\n${marker}`);
 }
 
+function ensureInterfaceField(
+	source: string,
+	interfaceName: string,
+	fieldName: string,
+	fieldSource: string,
+): string {
+	const interfacePattern = new RegExp(
+		`(export\\s+interface\\s+${interfaceName}\\s*\\{\\n)([\\s\\S]*?\\n\\})`,
+		"u",
+	);
+
+	return source.replace(interfacePattern, (match, start: string, body: string) => {
+		if (body.includes(`\t${fieldName}?:`)) {
+			return match;
+		}
+
+		return `${start}${fieldSource}${body}`;
+	});
+}
+
 /**
  * Update `scripts/block-config.ts` source text with additional inventory entries.
  *
@@ -900,6 +932,18 @@ export function updateWorkspaceInventorySource(
 		nextSource,
 		AI_FEATURE_CONFIG_ENTRY_MARKER,
 		aiFeatureEntries,
+	);
+	nextSource = ensureInterfaceField(
+		nextSource,
+		"WorkspaceAbilityConfig",
+		"compatibility",
+		WORKSPACE_COMPATIBILITY_CONFIG_FIELD,
+	);
+	nextSource = ensureInterfaceField(
+		nextSource,
+		"WorkspaceAiFeatureConfig",
+		"compatibility",
+		WORKSPACE_COMPATIBILITY_CONFIG_FIELD,
 	);
 	nextSource = appendEntriesAtMarker(
 		nextSource,

@@ -6,6 +6,7 @@ import {
 	assertValidGeneratedSlug,
 	getWorkspaceBootstrapPath,
 	normalizeBlockSlug,
+	patchFile,
 	resolveRestResourceNamespace,
 	rollbackWorkspaceMutation,
 	snapshotWorkspaceFiles,
@@ -34,6 +35,11 @@ import {
 } from "./ai-feature-artifacts.js";
 import { appendWorkspaceInventoryEntries, readWorkspaceInventory } from "./workspace-inventory.js";
 import { resolveWorkspaceProject } from "./workspace-project.js";
+import {
+	OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
+	resolveScaffoldCompatibilityPolicy,
+	updatePluginHeaderCompatibility,
+} from "./scaffold-compatibility.js";
 import { toTitleCase } from "./string-case.js";
 
 function quotePhpString(value: string): string {
@@ -44,6 +50,7 @@ function buildAiFeaturePhpSource(
 	aiFeatureSlug: string,
 	namespace: string,
 	phpPrefix: string,
+	textDomain: string,
 ): string {
 	const aiFeatureTitle = toTitleCase(aiFeatureSlug);
 	const aiFeaturePhpId = aiFeatureSlug.replace(/-/g, "_");
@@ -56,6 +63,7 @@ function buildAiFeaturePhpSource(
 	const normalizeProviderTypeFunctionName = `${phpPrefix}_${aiFeaturePhpId}_normalize_provider_type`;
 	const buildTelemetryFunctionName = `${phpPrefix}_${aiFeaturePhpId}_build_ai_feature_telemetry`;
 	const isSupportedFunctionName = `${phpPrefix}_${aiFeaturePhpId}_is_ai_feature_supported`;
+	const adminNoticeFunctionName = `${phpPrefix}_${aiFeaturePhpId}_ai_feature_admin_notice`;
 	const handlerFunctionName = `${phpPrefix}_${aiFeaturePhpId}_handle_run_ai_feature`;
 	const registerRoutesFunctionName = `${phpPrefix}_${aiFeaturePhpId}_register_ai_feature_routes`;
 
@@ -249,6 +257,19 @@ if ( ! function_exists( '${isSupportedFunctionName}' ) ) {
 \t}
 }
 
+if ( ! function_exists( '${adminNoticeFunctionName}' ) ) {
+\tfunction ${adminNoticeFunctionName}() {
+\t\tif ( ${isSupportedFunctionName}() || ! current_user_can( 'manage_options' ) ) {
+\t\t\treturn;
+\t\t}
+
+\t\t$message = __( 'The ${aiFeatureTitle} AI feature is optional and remains disabled until the WordPress AI Client is available with structured text generation support for the generated schema.', ${quotePhpString(
+			textDomain,
+		)} );
+\t\tprintf( '<div class="notice notice-warning"><p>%s</p></div>', esc_html( $message ) );
+\t}
+}
+
 if ( ! function_exists( '${handlerFunctionName}' ) ) {
 \tfunction ${handlerFunctionName}( WP_REST_Request $request ) {
 \t\t$payload = ${validatePayloadFunctionName}( $request->get_json_params(), 'feature-request', 'body' );
@@ -391,6 +412,7 @@ if ( ! function_exists( '${registerRoutesFunctionName}' ) ) {
 \t}
 }
 
+add_action( 'admin_notices', '${adminNoticeFunctionName}' );
 add_action( 'rest_api_init', '${registerRoutesFunctionName}' );
 `;
 }
@@ -422,6 +444,9 @@ export async function runAddAiFeatureCommand({
 		workspace.workspace.namespace,
 		namespace,
 	);
+	const compatibilityPolicy = resolveScaffoldCompatibilityPolicy(
+		OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
+	);
 
 	const inventory = readWorkspaceInventory(workspace.projectDir);
 	assertAiFeatureDoesNotExist(workspace.projectDir, aiFeatureSlug, inventory);
@@ -442,7 +467,6 @@ export async function runAddAiFeatureCommand({
 	const validatorsFilePath = path.join(aiFeatureDir, "api-validators.ts");
 	const apiFilePath = path.join(aiFeatureDir, "api.ts");
 	const dataFilePath = path.join(aiFeatureDir, "data.ts");
-	const clientFilePath = path.join(aiFeatureDir, "api-client.ts");
 	const phpFilePath = path.join(
 		workspace.projectDir,
 		"inc",
@@ -466,6 +490,9 @@ export async function runAddAiFeatureCommand({
 		await fsp.mkdir(aiFeatureDir, { recursive: true });
 		await fsp.mkdir(path.dirname(phpFilePath), { recursive: true });
 		await ensureAiFeatureBootstrapAnchors(workspace);
+		await patchFile(bootstrapPath, (source) =>
+			updatePluginHeaderCompatibility(source, compatibilityPolicy),
+		);
 		const packageScriptChanges = await ensureAiFeaturePackageScripts(workspace);
 		await ensureAiFeatureSyncProjectAnchors(workspace);
 		await ensureAiFeatureSyncRestAnchors(workspace);
@@ -500,6 +527,7 @@ export async function runAddAiFeatureCommand({
 				aiFeatureSlug,
 				resolvedNamespace,
 				workspace.workspace.phpPrefix,
+				workspace.workspace.textDomain,
 			),
 			"utf8",
 		);

@@ -39,6 +39,10 @@ This repository has multiple public surfaces:
 - `@wp-typia/project-tools/ai-artifacts`
   Opt-in WordPress AI artifact sync helpers (`*.ai.schema.json`,
   `*.abilities.json`).
+- `@wp-typia/project-tools` AI scaffold compatibility policy
+  Generated AI-capable scaffold headers, runtime gates, and workspace inventory
+  metadata are described in
+  [`docs/ai-scaffold-compatibility.md`](./ai-scaffold-compatibility.md).
 - `@wp-typia/project-tools/typia-llm`
   Opt-in build-time `typia.llm` adapter emitter for downstream TypeScript-first
   tool/function consumers.

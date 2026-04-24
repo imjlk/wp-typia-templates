@@ -31,6 +31,7 @@ import {
   toSnakeCase,
 } from './string-case.js';
 import { attachScaffoldTemplateVariableGroups } from "./scaffold-template-variable-groups.js";
+import { resolveScaffoldCompatibilityPolicy } from "./scaffold-compatibility.js";
 
 /**
  * Build the normalized template variables used by scaffold rendering.
@@ -101,6 +102,7 @@ export function getTemplateVariables(
     templateId === 'persistence' || compoundPersistenceEnabled
       ? answers.persistencePolicy ?? 'authenticated'
       : 'authenticated';
+  const compatibility = resolveScaffoldCompatibilityPolicy([]);
 
   const flatVariables: FlatScaffoldTemplateVariables = {
     alternateRenderTargetsCsv: '',
@@ -140,6 +142,8 @@ export function getTemplateVariables(
     hasAlternatePlainTextRenderTarget: 'false',
     hasAlternateRenderTargets: 'false',
     projectToolsPackageVersion,
+    requiresAtLeast: compatibility.pluginHeader.requiresAtLeast,
+    requiresPhp: compatibility.pluginHeader.requiresPhp,
     cssClassName,
     dataStorageMode,
     dashCase: slug,
@@ -170,6 +174,7 @@ export function getTemplateVariables(
     phpPrefix,
     phpPrefixUpper,
     restPackageVersion,
+    testedUpTo: compatibility.pluginHeader.testedUpTo,
     publicWriteRequestIdDeclaration:
       persistencePolicy === 'public'
         ? "publicWriteRequestId: string & tags.MinLength< 1 > & tags.MaxLength< 128 >;"
@@ -219,6 +224,7 @@ export function getTemplateVariables(
       author: answers.author.trim(),
       blockMetadataVersion: BUILTIN_BLOCK_METADATA_VERSION,
       category: metadataDefaults?.category ?? template?.defaultCategory ?? 'widgets',
+      compatibility: compatibility.pluginHeader,
       cssClassName,
       description,
       descriptionJson: JSON.stringify(description),

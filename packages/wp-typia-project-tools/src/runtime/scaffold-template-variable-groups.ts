@@ -14,6 +14,11 @@ export interface ScaffoldSharedTemplateVariableGroup {
 	author: string;
 	blockMetadataVersion: string;
 	category: string;
+	compatibility: {
+		requiresAtLeast: string;
+		requiresPhp: string;
+		testedUpTo: string;
+	};
 	cssClassName: string;
 	description: string;
 	descriptionJson: string;
