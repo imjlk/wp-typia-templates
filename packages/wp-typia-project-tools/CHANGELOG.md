@@ -1,5 +1,12 @@
 # @wp-typia/project-tools
 
+## 0.20.0 — 2026-04-24
+
+### Minor changes
+
+- [8776df7](https://github.com/imjlk/wp-typia/commit/8776df7269b1f363afcde1040d10a2c5b716b4ec) Added explicit AI scaffold compatibility policy wiring for generated plugin headers, runtime gates, workspace inventory metadata, and docs. — Thanks @imjlk!
+- [eb4d44f](https://github.com/imjlk/wp-typia/commit/eb4d44ff6e7d10233d18c95e0f5816e9c9bcaa88) Added the opt-in `@wp-typia/project-tools/typia-llm` build-time adapter emitter for downstream `typia.llm` artifacts. — Thanks @imjlk!
+
 ## 0.19.3 — 2026-04-23
 
 ### Patch changes
