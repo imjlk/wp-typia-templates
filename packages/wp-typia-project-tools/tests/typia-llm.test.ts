@@ -5,6 +5,10 @@ import path from 'node:path';
 
 import type { EndpointManifestDefinition } from '@wp-typia/block-runtime/metadata-core';
 import type { ILlmSchema } from 'typia';
+import type {
+  ProjectedTypiaLlmApplicationArtifact,
+  ProjectedTypiaLlmStructuredOutputArtifact,
+} from '@wp-typia/project-tools/typia-llm';
 import {
   buildTypiaLlmEndpointMethodDescriptors,
   projectTypiaLlmApplicationArtifact,
@@ -60,6 +64,21 @@ const EMPTY_LLM_PARAMETERS: ILlmSchema.IParameters = {
   required: [],
   type: 'object',
 };
+
+function createLlmParameters(description: string): ILlmSchema.IParameters {
+  return {
+    $defs: {},
+    additionalProperties: false,
+    properties: {
+      count: {
+        description,
+        type: 'number',
+      },
+    },
+    required: ['count'],
+    type: 'object',
+  } as ILlmSchema.IParameters;
+}
 
 describe('typia.llm adapter emitter', () => {
   test('projects endpoint manifests into controller method descriptors', () => {
@@ -117,6 +136,29 @@ describe('typia.llm adapter emitter', () => {
       'typia.llm.application<CounterRestToolController>();',
     );
     expect(source).toContain('typia.llm.structuredOutput<CounterResponse>();');
+  });
+
+  test('quotes reserved operation ids in generated controller methods', () => {
+    const source = renderTypiaLlmModule({
+      applicationExportName: 'counterLlmApplication',
+      interfaceName: 'CounterRestToolController',
+      manifest: {
+        ...COUNTER_MANIFEST,
+        endpoints: [
+          {
+            ...COUNTER_MANIFEST.endpoints[1],
+            operationId: 'delete',
+          },
+        ],
+      },
+      structuredOutputExportName: 'counterStructuredOutput',
+      structuredOutputTypeName: 'CounterResponse',
+      typesImportPath: '../counter/api-types',
+    });
+
+    expect(source).toContain(
+      '"delete"(input: CounterUpdateRequest): CounterResponse;',
+    );
   });
 
   test('renders multiline endpoint summaries as valid JSDoc lines', () => {
@@ -255,35 +297,125 @@ describe('typia.llm adapter emitter', () => {
     });
   });
 
-  test('rejects mixed query/body endpoint inputs until adapter mapping is designed', () => {
-    const mixedInputManifest = {
-      contracts: {
-        CounterQuery: {
-          sourceTypeName: 'CounterQuery',
-        },
-        CounterResponse: {
-          sourceTypeName: 'CounterResponse',
-        },
-        CounterUpdateRequest: {
-          sourceTypeName: 'CounterUpdateRequest',
-        },
+  test('projects typia.llm outputs without retaining source references', () => {
+    const generatedFrom: ProjectedTypiaLlmApplicationArtifact['generatedFrom'] =
+      {
+        baselineOpenApiPath: 'src/blocks/counter/api.openapi.json',
+        blockSlug: 'counter',
+        manifestSource: 'endpoint-manifest+typescript',
+      };
+    const output = createLlmParameters('Original output schema.');
+    const parameters = createLlmParameters('Original input schema.');
+    const tags = ['Counter'];
+
+    const applicationArtifact = projectTypiaLlmApplicationArtifact({
+      application: {
+        functions: [
+          {
+            description: 'Read the counter.',
+            name: 'getCounter',
+            output,
+            parameters,
+            tags,
+          },
+        ],
       },
-      endpoints: [
+      generatedFrom,
+    });
+
+    (output.properties as Record<string, unknown>).count = {
+      type: 'string',
+    };
+    (parameters.properties as Record<string, unknown>).count = {
+      type: 'string',
+    };
+    generatedFrom.blockSlug = 'mutated-counter';
+    tags.push('Mutated');
+
+    expect(applicationArtifact).toEqual({
+      functions: [
         {
-          auth: 'authenticated',
-          bodyContract: 'CounterUpdateRequest',
-          method: 'POST',
-          operationId: 'updateCounter',
-          path: '/demo/v1/counter',
-          queryContract: 'CounterQuery',
-          responseContract: 'CounterResponse',
+          description: 'Read the counter.',
+          name: 'getCounter',
+          output: createLlmParameters('Original output schema.'),
+          parameters: createLlmParameters('Original input schema.'),
           tags: ['Counter'],
         },
       ],
-    } as const satisfies EndpointManifestDefinition;
+      generatedFrom: {
+        baselineOpenApiPath: 'src/blocks/counter/api.openapi.json',
+        blockSlug: 'counter',
+        manifestSource: 'endpoint-manifest+typescript',
+      },
+    });
+    expect(applicationArtifact.functions[0]?.output).not.toBe(output);
+    expect(applicationArtifact.functions[0]?.parameters).not.toBe(parameters);
+    expect(applicationArtifact.generatedFrom).not.toBe(generatedFrom);
 
-    expect(() =>
-      buildTypiaLlmEndpointMethodDescriptors(mixedInputManifest),
-    ).toThrow(/typia\.llm input mapping is ambiguous/);
+    const structuredGeneratedFrom: ProjectedTypiaLlmStructuredOutputArtifact['generatedFrom'] =
+      {
+        aiSchemaPath: 'src/blocks/counter/wordpress-ai/counter.ai.schema.json',
+        blockSlug: 'counter',
+        outputTypeName: 'CounterResponse',
+      };
+    const structuredParameters = createLlmParameters(
+      'Original structured output schema.',
+    );
+    const structuredArtifact = projectTypiaLlmStructuredOutputArtifact({
+      generatedFrom: structuredGeneratedFrom,
+      structuredOutput: {
+        parameters: structuredParameters,
+      },
+    });
+
+    (structuredParameters.properties as Record<string, unknown>).count = {
+      type: 'string',
+    };
+    structuredGeneratedFrom.blockSlug = 'mutated-counter';
+
+    expect(structuredArtifact).toEqual({
+      generatedFrom: {
+        aiSchemaPath: 'src/blocks/counter/wordpress-ai/counter.ai.schema.json',
+        blockSlug: 'counter',
+        outputTypeName: 'CounterResponse',
+      },
+      parameters: createLlmParameters('Original structured output schema.'),
+    });
+    expect(structuredArtifact.parameters).not.toBe(structuredParameters);
+    expect(structuredArtifact.generatedFrom).not.toBe(structuredGeneratedFrom);
+  });
+
+  test('rejects mixed query/body endpoint inputs until adapter mapping is designed', () => {
+    for (const method of ['GET', 'POST'] as const) {
+      const mixedInputManifest = {
+        contracts: {
+          CounterQuery: {
+            sourceTypeName: 'CounterQuery',
+          },
+          CounterResponse: {
+            sourceTypeName: 'CounterResponse',
+          },
+          CounterUpdateRequest: {
+            sourceTypeName: 'CounterUpdateRequest',
+          },
+        },
+        endpoints: [
+          {
+            auth: 'authenticated',
+            bodyContract: 'CounterUpdateRequest',
+            method,
+            operationId: `${method.toLowerCase()}Counter`,
+            path: '/demo/v1/counter',
+            queryContract: 'CounterQuery',
+            responseContract: 'CounterResponse',
+            tags: ['Counter'],
+          },
+        ],
+      } as const satisfies EndpointManifestDefinition;
+
+      expect(() =>
+        buildTypiaLlmEndpointMethodDescriptors(mixedInputManifest),
+      ).toThrow(/typia\.llm input mapping is ambiguous/);
+    }
   });
 });

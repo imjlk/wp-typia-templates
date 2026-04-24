@@ -7,6 +7,7 @@ import type {
   EndpointManifestEndpointDefinition,
 } from '@wp-typia/block-runtime/metadata-core';
 import type { ILlmFunction, ILlmSchema, ILlmStructuredOutput } from 'typia';
+import { cloneJsonValue } from './json-utils.js';
 import {
   normalizeEndpointAuthDefinition,
   type EndpointAuthIntent,
@@ -196,15 +197,95 @@ type GeneratedTypiaLlmArtifactFile = {
   filePath: string;
 };
 
+const TYPESCRIPT_RESERVED_WORDS = new Set([
+  'abstract',
+  'any',
+  'as',
+  'asserts',
+  'async',
+  'await',
+  'bigint',
+  'boolean',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'constructor',
+  'continue',
+  'debugger',
+  'declare',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'enum',
+  'export',
+  'extends',
+  'false',
+  'finally',
+  'for',
+  'from',
+  'function',
+  'get',
+  'global',
+  'if',
+  'implements',
+  'import',
+  'in',
+  'infer',
+  'instanceof',
+  'interface',
+  'is',
+  'keyof',
+  'let',
+  'module',
+  'namespace',
+  'never',
+  'new',
+  'null',
+  'number',
+  'object',
+  'of',
+  'package',
+  'private',
+  'protected',
+  'public',
+  'readonly',
+  'require',
+  'return',
+  'satisfies',
+  'set',
+  'static',
+  'string',
+  'super',
+  'switch',
+  'symbol',
+  'this',
+  'throw',
+  'true',
+  'try',
+  'type',
+  'typeof',
+  'undefined',
+  'unique',
+  'unknown',
+  'var',
+  'void',
+  'while',
+  'with',
+  'yield',
+]);
+
+function cloneJsonValueIfDefined<T>(value: T | undefined): T | undefined {
+  return value === undefined ? undefined : cloneJsonValue(value);
+}
+
 function getEndpointInputTypeName(
   manifest: EndpointManifestDefinition,
   endpoint: EndpointManifestEndpointDefinition,
 ): string | null {
-  if (
-    endpoint.method !== 'GET' &&
-    endpoint.bodyContract &&
-    endpoint.queryContract
-  ) {
+  if (endpoint.bodyContract && endpoint.queryContract) {
     throw new Error(
       `Endpoint "${endpoint.operationId}" defines both bodyContract and queryContract; typia.llm input mapping is ambiguous.`,
     );
@@ -296,7 +377,9 @@ function renderMethodJsDoc(method: TypiaLlmEndpointMethodDescriptor): string {
 function renderMethodSignature(method: TypiaLlmEndpointMethodDescriptor): string {
   const inputSignature =
     method.inputTypeName === null ? '' : `input: ${method.inputTypeName}`;
-  const methodName = /^[$A-Z_][$0-9A-Z_]*$/i.test(method.operationId)
+  const methodName =
+    /^[$A-Z_][$0-9A-Z_]*$/i.test(method.operationId) &&
+    !TYPESCRIPT_RESERVED_WORDS.has(method.operationId)
     ? method.operationId
     : JSON.stringify(method.operationId);
 
@@ -512,9 +595,21 @@ export function projectTypiaLlmApplicationFunction(
   return {
     description: functionSchema.description,
     name: functionSchema.name,
-    output: functionSchema.output,
-    parameters: functionSchema.parameters,
+    output: cloneJsonValueIfDefined(functionSchema.output),
+    parameters: cloneJsonValue(functionSchema.parameters),
     ...(functionSchema.tags ? { tags: [...functionSchema.tags] } : {}),
+  };
+}
+
+function cloneProjectedTypiaLlmFunctionArtifact(
+  functionArtifact: ProjectedTypiaLlmFunctionArtifact,
+): ProjectedTypiaLlmFunctionArtifact {
+  return {
+    description: functionArtifact.description,
+    name: functionArtifact.name,
+    output: cloneJsonValueIfDefined(functionArtifact.output),
+    parameters: cloneJsonValue(functionArtifact.parameters),
+    ...(functionArtifact.tags ? { tags: [...functionArtifact.tags] } : {}),
   };
 }
 
@@ -534,12 +629,13 @@ export function projectTypiaLlmApplicationArtifact({
     functions: application.functions.map((functionSchema) => {
       const functionArtifact =
         projectTypiaLlmApplicationFunction(functionSchema);
-
-      return transformFunction
+      const transformedArtifact = transformFunction
         ? transformFunction(functionArtifact, functionSchema)
         : functionArtifact;
+
+      return cloneProjectedTypiaLlmFunctionArtifact(transformedArtifact);
     }),
-    generatedFrom,
+    generatedFrom: cloneJsonValue(generatedFrom),
   };
 }
 
@@ -555,7 +651,7 @@ export function projectTypiaLlmStructuredOutputArtifact({
   structuredOutput,
 }: ProjectTypiaLlmStructuredOutputArtifactOptions): ProjectedTypiaLlmStructuredOutputArtifact {
   return {
-    generatedFrom,
-    parameters: structuredOutput.parameters,
+    generatedFrom: cloneJsonValue(generatedFrom),
+    parameters: cloneJsonValue(structuredOutput.parameters),
   };
 }
