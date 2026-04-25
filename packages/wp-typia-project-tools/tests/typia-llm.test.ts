@@ -385,37 +385,68 @@ describe('typia.llm adapter emitter', () => {
     expect(structuredArtifact.generatedFrom).not.toBe(structuredGeneratedFrom);
   });
 
-  test('rejects mixed query/body endpoint inputs until adapter mapping is designed', () => {
-    for (const method of ['GET', 'POST'] as const) {
-      const mixedInputManifest = {
-        contracts: {
-          CounterQuery: {
-            sourceTypeName: 'CounterQuery',
-          },
-          CounterResponse: {
-            sourceTypeName: 'CounterResponse',
-          },
-          CounterUpdateRequest: {
-            sourceTypeName: 'CounterUpdateRequest',
+  test('projects mixed query/body endpoint inputs as composite tool input', () => {
+    const mixedInputManifest = {
+      contracts: {
+        CounterQuery: {
+          sourceTypeName: 'CounterQuery',
+        },
+        CounterResponse: {
+          sourceTypeName: 'CounterResponse',
+        },
+        CounterUpdateRequest: {
+          sourceTypeName: 'CounterUpdateRequest',
+        },
+      },
+      endpoints: [
+        {
+          auth: 'authenticated',
+          bodyContract: 'CounterUpdateRequest',
+          method: 'POST',
+          operationId: 'updateCounter',
+          path: '/demo/v1/counter/(?P<id>\\d+)',
+          queryContract: 'CounterQuery',
+          responseContract: 'CounterResponse',
+          summary: 'Update the counter.',
+          tags: ['Counter'],
+          wordpressAuth: {
+            mechanism: 'rest-nonce',
           },
         },
-        endpoints: [
-          {
-            auth: 'authenticated',
-            bodyContract: 'CounterUpdateRequest',
-            method,
-            operationId: `${method.toLowerCase()}Counter`,
-            path: '/demo/v1/counter',
-            queryContract: 'CounterQuery',
-            responseContract: 'CounterResponse',
-            tags: ['Counter'],
-          },
-        ],
-      } as const satisfies EndpointManifestDefinition;
+      ],
+    } as const satisfies EndpointManifestDefinition;
 
-      expect(() =>
-        buildTypiaLlmEndpointMethodDescriptors(mixedInputManifest),
-      ).toThrow(/typia\.llm input mapping is ambiguous/);
-    }
+    expect(buildTypiaLlmEndpointMethodDescriptors(mixedInputManifest)).toEqual([
+      {
+        authIntent: 'authenticated',
+        authMode: 'authenticated-rest-nonce',
+        description: 'Update the counter.',
+        inputTypeImportNames: ['CounterUpdateRequest', 'CounterQuery'],
+        inputTypeName: '{ body: CounterUpdateRequest; query: CounterQuery }',
+        method: 'POST',
+        operationId: 'updateCounter',
+        outputTypeName: 'CounterResponse',
+        path: '/demo/v1/counter/(?P<id>\\d+)',
+        tags: ['Counter'],
+        wordpressAuth: {
+          mechanism: 'rest-nonce',
+        },
+      },
+    ]);
+
+    const source = renderTypiaLlmModule({
+      applicationExportName: 'counterLlmApplication',
+      interfaceName: 'CounterRestToolController',
+      manifest: mixedInputManifest,
+      structuredOutputExportName: 'counterStructuredOutput',
+      structuredOutputTypeName: 'CounterResponse',
+      typesImportPath: '../counter/api-types',
+    });
+
+    expect(source).toContain(
+      'updateCounter(input: { body: CounterUpdateRequest; query: CounterQuery }): CounterResponse;',
+    );
+    expect(source).toContain('CounterQuery,');
+    expect(source).toContain('CounterUpdateRequest,');
   });
 });

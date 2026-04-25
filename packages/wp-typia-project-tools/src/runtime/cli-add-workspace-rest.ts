@@ -516,7 +516,6 @@ export async function runAddRestResourceCommand({
 	const validatorsFilePath = path.join(restResourceDir, "api-validators.ts");
 	const apiFilePath = path.join(restResourceDir, "api.ts");
 	const dataFilePath = path.join(restResourceDir, "data.ts");
-	const clientFilePath = path.join(restResourceDir, "api-client.ts");
 	const phpFilePath = path.join(workspace.projectDir, "inc", "rest", `${restResourceSlug}.php`);
 	const mutationSnapshot: WorkspaceMutationSnapshot = {
 		fileSources: await snapshotWorkspaceFiles([

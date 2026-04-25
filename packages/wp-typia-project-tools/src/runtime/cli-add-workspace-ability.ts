@@ -35,8 +35,10 @@ const ABILITY_EDITOR_SCRIPT = "build/abilities/index.js";
 const ABILITY_EDITOR_ASSET = "build/abilities/index.asset.php";
 const ABILITY_REGISTRY_END_MARKER = "// wp-typia add ability entries end";
 const ABILITY_REGISTRY_START_MARKER = "// wp-typia add ability entries start";
-const WP_ABILITIES_SCRIPT_HANDLE = "wp-abilities";
-const WP_CORE_ABILITIES_SCRIPT_HANDLE = "wp-core-abilities";
+const WP_ABILITIES_PACKAGE_VERSION = "^0.10.0";
+const WP_CORE_ABILITIES_PACKAGE_VERSION = "^0.9.0";
+const WP_ABILITIES_SCRIPT_MODULE_ID = "@wordpress/abilities";
+const WP_CORE_ABILITIES_SCRIPT_MODULE_ID = "@wordpress/core-abilities";
 
 function escapeRegex(value: string): string {
 	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
@@ -146,7 +148,14 @@ function buildAbilityDataSource(abilitySlug: string): string {
 		.replace(/_{2,}/gu, "_")
 		.replace(/^_|_$/gu, "");
 
-	return `import abilityConfig from './ability.config.json';
+	return `import {
+\texecuteAbility,
+\tgetAbilities,
+\tgetAbility as getRegisteredAbility,
+} from '@wordpress/abilities';
+import '@wordpress/core-abilities';
+
+import abilityConfig from './ability.config.json';
 
 import type { ${pascalCase}AbilityInput, ${pascalCase}AbilityOutput } from './types';
 
@@ -158,55 +167,56 @@ interface WordPressAbilityDefinition {
 \tname?: string;
 }
 
-interface WordPressAbilitiesClient {
-\texecuteAbility( name: string, input?: unknown ): Promise< unknown >;
-\tgetAbilities( args?: { category?: string } ): WordPressAbilityDefinition[];
-\tgetAbility( name: string ): WordPressAbilityDefinition | undefined;
-}
-
-const ABILITY_CLIENT_UNAVAILABLE_MESSAGE =
-\t'The WordPress abilities client is unavailable on this screen. Ensure the Abilities API and @wordpress/core-abilities integration are loaded before using this scaffold.';
-
 export const ${abilityConstBase}_ABILITY = abilityConfig;
 export const ${abilityConstBase}_ABILITY_CATEGORY = abilityConfig.category;
 export const ${abilityConstBase}_ABILITY_ID = abilityConfig.abilityId;
 export const ${abilityConstBase}_ABILITY_META = abilityConfig.meta;
+const ABILITY_DISCOVERY_POLL_INTERVAL_MS = 50;
+const ABILITY_DISCOVERY_TIMEOUT_MS = 5000;
 
 export type {
 \t${pascalCase}AbilityInput,
 \t${pascalCase}AbilityOutput,
 };
 
-function resolveAbilitiesClient(): WordPressAbilitiesClient {
-\tconst runtime = globalThis as typeof globalThis & {
-\t\twindow?: {
-\t\t\twp?: {
-\t\t\t\tabilities?: WordPressAbilitiesClient;
-\t\t\t};
-\t\t};
-\t};
-\tconst client = runtime.window?.wp?.abilities;
-\tif ( ! client ) {
-\t\tthrow new Error( ABILITY_CLIENT_UNAVAILABLE_MESSAGE );
-\t}
-
-\treturn client;
-}
-
-export function list${pascalCase}CategoryAbilities(): WordPressAbilityDefinition[] {
-\treturn resolveAbilitiesClient().getAbilities( {
-\t\tcategory: ${abilityConstBase}_ABILITY_CATEGORY.slug,
+function sleep( milliseconds: number ): Promise< void > {
+\treturn new Promise( ( resolve ) => {
+\t\tsetTimeout( resolve, milliseconds );
 \t} );
 }
 
-export function get${pascalCase}Ability():
-\t| WordPressAbilityDefinition
-\t| undefined {
-\treturn resolveAbilitiesClient().getAbility( ${abilityConstBase}_ABILITY_ID );
+async function waitFor${pascalCase}AbilityRegistration(): Promise< void > {
+\tconst deadline = Date.now() + ABILITY_DISCOVERY_TIMEOUT_MS;
+\twhile ( ! getRegisteredAbility( ${abilityConstBase}_ABILITY_ID ) ) {
+\t\tif ( Date.now() >= deadline ) {
+\t\t\treturn;
+\t\t}
+
+\t\tawait sleep( ABILITY_DISCOVERY_POLL_INTERVAL_MS );
+\t}
 }
 
-export function require${pascalCase}Ability(): WordPressAbilityDefinition {
-\tconst ability = get${pascalCase}Ability();
+export async function list${pascalCase}CategoryAbilities(): Promise< WordPressAbilityDefinition[] > {
+\tawait waitFor${pascalCase}AbilityRegistration();
+
+\treturn getAbilities( {
+\t\tcategory: ${abilityConstBase}_ABILITY_CATEGORY.slug,
+\t} ) as WordPressAbilityDefinition[];
+}
+
+export async function get${pascalCase}Ability(): Promise<
+\t| WordPressAbilityDefinition
+\t| undefined
+> {
+\tawait waitFor${pascalCase}AbilityRegistration();
+
+\treturn getRegisteredAbility( ${abilityConstBase}_ABILITY_ID ) as
+\t\t| WordPressAbilityDefinition
+\t\t| undefined;
+}
+
+export async function require${pascalCase}Ability(): Promise< WordPressAbilityDefinition > {
+\tconst ability = await get${pascalCase}Ability();
 \tif ( ability ) {
 \t\treturn ability;
 \t}
@@ -222,7 +232,9 @@ export function require${pascalCase}Ability(): WordPressAbilityDefinition {
 export async function run${pascalCase}Ability(
 \tinput: ${pascalCase}AbilityInput
 ): Promise< ${pascalCase}AbilityOutput > {
-\treturn ( await resolveAbilitiesClient().executeAbility(
+\tawait waitFor${pascalCase}AbilityRegistration();
+
+\treturn ( await executeAbility(
 \t\t${abilityConstBase}_ABILITY_ID,
 \t\tinput
 \t) ) as ${pascalCase}AbilityOutput;
@@ -236,8 +248,8 @@ function buildAbilityClientSource(abilitySlug: string): string {
 	return `/**
  * Re-export the typed ${pascalCase} ability client helpers.
  *
- * The underlying WordPress abilities client is expected to have been hydrated
- * by the site's admin/editor bootstrap before these helpers execute.
+ * The helper methods load the WordPress core abilities integration and wait for
+ * this server-registered ability before reading or executing it.
  */
 export * from './data';
 `;
@@ -648,22 +660,31 @@ function ${enqueueFunctionName}() {
 \t\t? $asset['dependencies']
 \t\t: array();
 
-\tforeach ( array( '${WP_CORE_ABILITIES_SCRIPT_HANDLE}', '${WP_ABILITIES_SCRIPT_HANDLE}' ) as $ability_dependency ) {
-\t\tif (
-\t\t\tfunction_exists( 'wp_script_is' ) &&
-\t\t\twp_script_is( $ability_dependency, 'registered' ) &&
-\t\t\t! in_array( $ability_dependency, $dependencies, true )
-\t\t) {
+\tforeach ( array( '${WP_CORE_ABILITIES_SCRIPT_MODULE_ID}', '${WP_ABILITIES_SCRIPT_MODULE_ID}' ) as $ability_dependency ) {
+\t\t$has_dependency = false;
+\t\tforeach ( $dependencies as $dependency ) {
+\t\t\t$dependency_id = is_array( $dependency ) && isset( $dependency['id'] )
+\t\t\t\t? $dependency['id']
+\t\t\t\t: $dependency;
+\t\t\tif ( $dependency_id === $ability_dependency ) {
+\t\t\t\t$has_dependency = true;
+\t\t\t\tbreak;
+\t\t\t}
+\t\t}
+\t\tif ( ! $has_dependency ) {
 \t\t\t$dependencies[] = $ability_dependency;
 \t\t}
 \t}
 
-\twp_enqueue_script(
+\tif ( ! function_exists( 'wp_enqueue_script_module' ) ) {
+\t\treturn;
+\t}
+
+\twp_enqueue_script_module(
 \t\t'${workspaceBaseName}-abilities',
 \t\tplugins_url( '${ABILITY_EDITOR_SCRIPT}', __FILE__ ),
 \t\t$dependencies,
-\t\tisset( $asset['version'] ) ? $asset['version'] : filemtime( $script_path ),
-\t\ttrue
+\t\tisset( $asset['version'] ) ? $asset['version'] : filemtime( $script_path )
 \t);
 }
 `;
@@ -722,6 +743,7 @@ async function ensureAbilityPackageScripts(
 	const packageJson = JSON.parse(
 		await fsp.readFile(packageJsonPath, "utf8"),
 	) as {
+		dependencies?: Record<string, string>;
 		scripts?: Record<string, string>;
 	};
 
@@ -730,12 +752,25 @@ async function ensureAbilityPackageScripts(
 		"sync-abilities":
 			packageJson.scripts?.["sync-abilities"] ?? "tsx scripts/sync-abilities.ts",
 	};
+	const nextDependencies = {
+		...(packageJson.dependencies ?? {}),
+		[WP_ABILITIES_SCRIPT_MODULE_ID]:
+			packageJson.dependencies?.[WP_ABILITIES_SCRIPT_MODULE_ID] ??
+			WP_ABILITIES_PACKAGE_VERSION,
+		[WP_CORE_ABILITIES_SCRIPT_MODULE_ID]:
+			packageJson.dependencies?.[WP_CORE_ABILITIES_SCRIPT_MODULE_ID] ??
+			WP_CORE_ABILITIES_PACKAGE_VERSION,
+	};
 
-	if (JSON.stringify(nextScripts) === JSON.stringify(packageJson.scripts ?? {})) {
+	if (
+		JSON.stringify(nextScripts) === JSON.stringify(packageJson.scripts ?? {}) &&
+		JSON.stringify(nextDependencies) === JSON.stringify(packageJson.dependencies ?? {})
+	) {
 		return;
 	}
 
 	packageJson.scripts = nextScripts;
+	packageJson.dependencies = nextDependencies;
 	await fsp.writeFile(
 		packageJsonPath,
 		`${JSON.stringify(packageJson, null, "\t")}\n`,
@@ -855,6 +890,33 @@ async function ensureAbilityWebpackAnchors(
 	await patchFile(webpackConfigPath, (source) => {
 		if (/['"]abilities\/index['"]/u.test(source)) {
 			return source;
+		}
+
+		const optionalModuleReturnPattern =
+			/(function\s+getOptionalModuleEntries\s*\(\)\s*\{[\s\S]*?)(\n\treturn Object\.fromEntries\(\s*entries\s*\);\n\})/u;
+		if (optionalModuleReturnPattern.test(source)) {
+			return source.replace(
+				optionalModuleReturnPattern,
+				`$1
+
+\tfor ( const [ entryName, candidates ] of [
+\t\t[
+\t\t\t'abilities/index',
+\t\t\t[ 'src/abilities/index.ts', 'src/abilities/index.js' ],
+\t\t],
+\t] ) {
+\t\tfor ( const relativePath of candidates ) {
+\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );
+\t\t\tif ( ! fs.existsSync( entryPath ) ) {
+\t\t\t\tcontinue;
+\t\t\t}
+
+\t\t\tentries.push( [ entryName, entryPath ] );
+\t\t\tbreak;
+\t\t}
+\t}
+$2`,
+			);
 		}
 
 		const sharedEntriesPattern =

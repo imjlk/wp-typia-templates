@@ -5,10 +5,7 @@ import type { ArtifactSyncExecutionOptions } from '@wp-typia/block-runtime/metad
 
 import {
   buildWordPressAiArtifacts,
-  buildWordPressAbilitiesDocument,
-  projectWordPressAiSchema,
   type ProjectedWordPressAbilitiesDocument,
-  type WordPressAiInputSchemaTransformContext,
 } from './wordpress-ai.js';
 
 export {

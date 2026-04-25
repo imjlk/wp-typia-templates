@@ -542,6 +542,7 @@ function checkWorkspaceAbilityBootstrap(
 	const hasServerGlob = source.includes(WORKSPACE_ABILITY_GLOB);
 	const hasEditorScript = source.includes(WORKSPACE_ABILITY_EDITOR_SCRIPT);
 	const hasEditorAsset = source.includes(WORKSPACE_ABILITY_EDITOR_ASSET);
+	const hasScriptModuleEnqueue = source.includes("wp_enqueue_script_module");
 
 	return createDoctorCheck(
 		"Ability bootstrap",
@@ -550,7 +551,8 @@ function checkWorkspaceAbilityBootstrap(
 			hasEditorEnqueueHook &&
 			hasServerGlob &&
 			hasEditorScript &&
-			hasEditorAsset
+			hasEditorAsset &&
+			hasScriptModuleEnqueue
 			? "pass"
 			: "fail",
 		hasLoaderHook &&
@@ -558,9 +560,10 @@ function checkWorkspaceAbilityBootstrap(
 			hasEditorEnqueueHook &&
 			hasServerGlob &&
 			hasEditorScript &&
-			hasEditorAsset
-			? "Ability loader and admin/editor client bootstrap hooks are present"
-			: "Missing ability loader hook or build/abilities script asset references",
+			hasEditorAsset &&
+			hasScriptModuleEnqueue
+			? "Ability loader and admin/editor script-module bootstrap hooks are present"
+			: "Missing ability loader hook, script-module enqueue, or build/abilities asset references",
 	);
 }
 

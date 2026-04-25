@@ -3162,6 +3162,7 @@ test("canonical CLI can add a typed workflow ability to an official workspace te
   const packageJson = JSON.parse(
     fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
   ) as {
+    dependencies?: Record<string, string>;
     scripts?: Record<string, string>;
   };
   const syncProjectSource = fs.readFileSync(
@@ -3229,8 +3230,13 @@ test("canonical CLI can add a typed workflow ability to an official workspace te
   expect(bootstrapSource).toContain("Tested up to:      7.0");
   expect(bootstrapSource).toContain("inc/abilities/*.php");
   expect(bootstrapSource).toContain("build/abilities/index.js");
+  expect(bootstrapSource).toContain("wp_enqueue_script_module");
+  expect(bootstrapSource).toContain("@wordpress/core-abilities");
+  expect(bootstrapSource).toContain("@wordpress/abilities");
   expect(bootstrapSource).toContain("plugins_loaded");
   expect(bootstrapSource).toContain("admin_enqueue_scripts");
+  expect(packageJson.dependencies?.["@wordpress/abilities"]).toBe("^0.10.0");
+  expect(packageJson.dependencies?.["@wordpress/core-abilities"]).toBe("^0.9.0");
   expect(packageJson.scripts?.["sync-abilities"]).toBe(
     "tsx scripts/sync-abilities.ts"
   );
@@ -3245,7 +3251,11 @@ test("canonical CLI can add a typed workflow ability to an official workspace te
   expect(abilitiesIndexSource).toContain("./review-workflow/client");
   expect(typesSource).toContain("export interface ReviewWorkflowAbilityInput");
   expect(typesSource).toContain("export interface ReviewWorkflowAbilityOutput");
+  expect(dataSource).toContain("from '@wordpress/abilities'");
   expect(dataSource).toContain("@wordpress/core-abilities");
+  expect(dataSource).toContain("waitForReviewWorkflowAbilityRegistration");
+  expect(dataSource).toContain("getRegisteredAbility");
+  expect(dataSource).not.toContain("globalThis");
   expect(abilityConfig.abilityId).toBe("demo-space/review-workflow");
   expect(abilityConfig.category?.slug).toBe("demo-space-workflows");
   expect(phpSource).toContain("wp_register_ability_category");
