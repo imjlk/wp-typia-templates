@@ -23,8 +23,14 @@ declare module "npm-package-arg" {
 }
 
 declare module "semver" {
+	interface SemVer {
+		version: string;
+	}
+
 	interface SemVerModule {
+		gte(version: string | SemVer, other: string | SemVer): boolean;
 		maxSatisfying(versions: readonly string[], range: string): string | null;
+		minVersion(range: string): SemVer | null;
 	}
 
 	const semver: SemVerModule;

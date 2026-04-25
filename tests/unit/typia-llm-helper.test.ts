@@ -136,7 +136,7 @@ describe("typia.llm internal helper", () => {
     ]);
   });
 
-  test("throws when a non-GET endpoint defines both body and query contracts", () => {
+  test("projects non-GET endpoints that define both body and query contracts", () => {
     const manifest = {
       contracts: {
         body: { sourceTypeName: "BodyInput" },
@@ -157,9 +157,13 @@ describe("typia.llm internal helper", () => {
       ],
     } satisfies EndpointManifestDefinition;
 
-    expect(() => buildTypiaLlmEndpointMethodDescriptors(manifest)).toThrow(
-      'Endpoint "ambiguousInput" defines both bodyContract and queryContract; typia.llm input mapping is ambiguous.'
-    );
+    expect(buildTypiaLlmEndpointMethodDescriptors(manifest)).toEqual([
+      expect.objectContaining({
+        inputTypeImportNames: ["BodyInput", "QueryInput"],
+        inputTypeName: "{ body: BodyInput; query: QueryInput }",
+        operationId: "ambiguousInput",
+      }),
+    ]);
   });
 
   test("quotes invalid operation ids when rendering generated TypeScript", () => {

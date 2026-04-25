@@ -3,6 +3,7 @@ import { promises as fsp } from "node:fs";
 import path from "node:path";
 
 import { syncTypeSchemas } from "@wp-typia/block-runtime/metadata-core";
+import semver from "semver";
 
 import {
 	appendWorkspaceInventoryEntries,
@@ -46,6 +47,73 @@ function escapeRegex(value: string): string {
 
 function quotePhpString(value: string): string {
 	return `'${value.replace(/\\/gu, "\\\\").replace(/'/gu, "\\'")}'`;
+}
+
+function findPhpFunctionRange(
+	source: string,
+	functionName: string,
+): { end: number; source: string; start: number } | null {
+	const functionPattern = new RegExp(
+		`function\\s+${escapeRegex(functionName)}\\s*\\([^)]*\\)\\s*\\{`,
+		"u",
+	);
+	const match = functionPattern.exec(source);
+	if (!match) {
+		return null;
+	}
+
+	const openingBraceIndex = match.index + match[0].length - 1;
+	let depth = 0;
+	for (let index = openingBraceIndex; index < source.length; index += 1) {
+		const character = source[index];
+		if (character === "{") {
+			depth += 1;
+		} else if (character === "}") {
+			depth -= 1;
+			if (depth === 0) {
+				const end = index + 1;
+				return {
+					end,
+					source: source.slice(match.index, end),
+					start: match.index,
+				};
+			}
+		}
+	}
+
+	return null;
+}
+
+function replacePhpFunctionDefinition(
+	source: string,
+	functionName: string,
+	replacement: string,
+): string {
+	const functionRange = findPhpFunctionRange(source, functionName);
+	if (!functionRange) {
+		return source;
+	}
+
+	return `${source.slice(0, functionRange.start)}${replacement.trimStart()}${source.slice(functionRange.end)}`;
+}
+
+function resolveManagedDependencyVersion(
+	existingVersion: string | undefined,
+	requiredVersion: string,
+): string {
+	if (!existingVersion) {
+		return requiredVersion;
+	}
+
+	const existingMinimum = semver.minVersion(existingVersion);
+	const requiredMinimum = semver.minVersion(requiredVersion);
+	if (!existingMinimum || !requiredMinimum) {
+		return requiredVersion;
+	}
+
+	return semver.gte(existingMinimum, requiredMinimum)
+		? existingVersion
+		: requiredVersion;
 }
 
 function toPascalCaseFromAbilitySlug(abilitySlug: string): string {
@@ -720,6 +788,16 @@ function ${enqueueFunctionName}() {
 		}
 		if (!hasPhpFunctionDefinition(enqueueFunctionName)) {
 			insertPhpSnippet(enqueueFunction);
+		} else if (
+			!findPhpFunctionRange(nextSource, enqueueFunctionName)?.source.includes(
+				"wp_enqueue_script_module",
+			)
+		) {
+			nextSource = replacePhpFunctionDefinition(
+				nextSource,
+				enqueueFunctionName,
+				enqueueFunction,
+			);
 		}
 
 		if (!nextSource.includes(loadHook)) {
@@ -754,12 +832,14 @@ async function ensureAbilityPackageScripts(
 	};
 	const nextDependencies = {
 		...(packageJson.dependencies ?? {}),
-		[WP_ABILITIES_SCRIPT_MODULE_ID]:
-			packageJson.dependencies?.[WP_ABILITIES_SCRIPT_MODULE_ID] ??
+		[WP_ABILITIES_SCRIPT_MODULE_ID]: resolveManagedDependencyVersion(
+			packageJson.dependencies?.[WP_ABILITIES_SCRIPT_MODULE_ID],
 			WP_ABILITIES_PACKAGE_VERSION,
-		[WP_CORE_ABILITIES_SCRIPT_MODULE_ID]:
-			packageJson.dependencies?.[WP_CORE_ABILITIES_SCRIPT_MODULE_ID] ??
+		),
+		[WP_CORE_ABILITIES_SCRIPT_MODULE_ID]: resolveManagedDependencyVersion(
+			packageJson.dependencies?.[WP_CORE_ABILITIES_SCRIPT_MODULE_ID],
 			WP_CORE_ABILITIES_PACKAGE_VERSION,
+		),
 	};
 
 	if (
