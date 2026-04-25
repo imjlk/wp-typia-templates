@@ -206,6 +206,14 @@ export function rewriteWorkspaceDependencies(projectDir, packageManager) {
 	if (packageJson.dependencies?.["wp-typia"]) {
 		packageJson.dependencies["wp-typia"] = localCliDependency;
 	}
+	if (packageJson.devDependencies?.["@wp-typia/project-tools"]) {
+		packageJson.devDependencies["@wp-typia/project-tools"] =
+			localProjectToolsDependency;
+	}
+	if (packageJson.dependencies?.["@wp-typia/project-tools"]) {
+		packageJson.dependencies["@wp-typia/project-tools"] =
+			localProjectToolsDependency;
+	}
 
 	const linkedRuntimePackages = [
 		"@wp-typia/block-runtime",
