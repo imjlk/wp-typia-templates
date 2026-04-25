@@ -39,20 +39,6 @@ export const addFlowSchema = z.object({
 
 export type AddFlowValues = z.infer<typeof addFlowSchema>;
 
-const ADD_FIELD_ORDER = [
-  'kind',
-  'name',
-  'template',
-  'alternate-render-targets',
-  'inner-blocks-preset',
-  'block',
-  'anchor',
-  'position',
-  'slot',
-  'data-storage',
-  'persistence-policy',
-] as const satisfies ReadonlyArray<AddFieldName>;
-
 const ADD_FIELD_HEIGHTS: Record<AddFieldName, number> = {
   anchor: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
   block: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,

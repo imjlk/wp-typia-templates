@@ -27,6 +27,8 @@ export interface TypiaLlmEndpointMethodDescriptor {
   description?: string;
   /** Input type used by the generated controller method, or null for no input. */
   inputTypeName: string | null;
+  /** Type names that must be imported when inputTypeName is an inline composite. */
+  inputTypeImportNames?: readonly string[];
   /** HTTP method from the source endpoint manifest. */
   method: EndpointManifestEndpointDefinition['method'];
   /** Stable operation identifier used as the generated method name. */
@@ -281,25 +283,16 @@ function cloneJsonValueIfDefined<T>(value: T | undefined): T | undefined {
   return value === undefined ? undefined : cloneJsonValue(value);
 }
 
-function getEndpointInputTypeName(
+interface EndpointInputTypeDescriptor {
+  importTypeNames: string[];
+  signatureTypeName: string | null;
+}
+
+function getContractSourceTypeName(
   manifest: EndpointManifestDefinition,
   endpoint: EndpointManifestEndpointDefinition,
-): string | null {
-  if (endpoint.bodyContract && endpoint.queryContract) {
-    throw new Error(
-      `Endpoint "${endpoint.operationId}" defines both bodyContract and queryContract; typia.llm input mapping is ambiguous.`,
-    );
-  }
-
-  const contractName =
-    endpoint.method === 'GET'
-      ? endpoint.queryContract ?? null
-      : endpoint.bodyContract ?? endpoint.queryContract ?? null;
-
-  if (!contractName) {
-    return null;
-  }
-
+  contractName: string,
+): string {
   const contract = manifest.contracts[contractName];
   if (!contract) {
     throw new Error(
@@ -308,6 +301,52 @@ function getEndpointInputTypeName(
   }
 
   return contract.sourceTypeName;
+}
+
+function getEndpointInputTypeDescriptor(
+  manifest: EndpointManifestDefinition,
+  endpoint: EndpointManifestEndpointDefinition,
+): EndpointInputTypeDescriptor {
+  if (endpoint.bodyContract && endpoint.queryContract) {
+    const bodyTypeName = getContractSourceTypeName(
+      manifest,
+      endpoint,
+      endpoint.bodyContract,
+    );
+    const queryTypeName = getContractSourceTypeName(
+      manifest,
+      endpoint,
+      endpoint.queryContract,
+    );
+
+    return {
+      importTypeNames: [bodyTypeName, queryTypeName],
+      signatureTypeName: `{ body: ${bodyTypeName}; query: ${queryTypeName} }`,
+    };
+  }
+
+  const contractName =
+    endpoint.method === 'GET'
+      ? endpoint.queryContract ?? null
+      : endpoint.bodyContract ?? endpoint.queryContract ?? null;
+
+  if (!contractName) {
+    return {
+      importTypeNames: [],
+      signatureTypeName: null,
+    };
+  }
+
+  const sourceTypeName = getContractSourceTypeName(
+    manifest,
+    endpoint,
+    contractName,
+  );
+
+  return {
+    importTypeNames: [sourceTypeName],
+    signatureTypeName: sourceTypeName,
+  };
 }
 
 function getEndpointOutputTypeName(
@@ -400,7 +439,11 @@ function renderTypiaLlmModuleFromMethodDescriptors(
 
   for (const method of methods) {
     importedTypeNames.add(method.outputTypeName);
-    if (method.inputTypeName) {
+    if (method.inputTypeImportNames) {
+      for (const inputTypeImportName of method.inputTypeImportNames) {
+        importedTypeNames.add(inputTypeImportName);
+      }
+    } else if (method.inputTypeName) {
       importedTypeNames.add(method.inputTypeName);
     }
   }
@@ -498,12 +541,21 @@ export function buildTypiaLlmEndpointMethodDescriptors(
 ): TypiaLlmEndpointMethodDescriptor[] {
   return manifest.endpoints.map((endpoint) => {
     const normalizedAuth = normalizeEndpointAuthDefinition(endpoint);
+    const inputTypeDescriptor = getEndpointInputTypeDescriptor(manifest, endpoint);
+    const inputTypeName = inputTypeDescriptor.signatureTypeName;
+    const shouldUseInlineInputImports =
+      inputTypeName !== null &&
+      inputTypeDescriptor.importTypeNames.length > 0 &&
+      inputTypeDescriptor.importTypeNames[0] !== inputTypeName;
 
     return {
       authIntent: normalizedAuth.auth,
       ...(normalizedAuth.authMode ? { authMode: normalizedAuth.authMode } : {}),
       description: endpoint.summary,
-      inputTypeName: getEndpointInputTypeName(manifest, endpoint),
+      inputTypeName,
+      ...(shouldUseInlineInputImports
+        ? { inputTypeImportNames: inputTypeDescriptor.importTypeNames }
+        : {}),
       method: endpoint.method,
       operationId: endpoint.operationId,
       outputTypeName: getEndpointOutputTypeName(manifest, endpoint),

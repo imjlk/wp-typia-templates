@@ -3147,6 +3147,43 @@ test("canonical CLI can add a typed workflow ability to an official workspace te
 
   linkWorkspaceNodeModules(targetDir);
 
+  const packageJsonPath = path.join(targetDir, "package.json");
+  const seededPackageJson = JSON.parse(
+    fs.readFileSync(packageJsonPath, "utf8")
+  ) as {
+    dependencies?: Record<string, string>;
+  };
+  seededPackageJson.dependencies = {
+    ...(seededPackageJson.dependencies ?? {}),
+    "@wordpress/abilities": "^0.9.0",
+    "@wordpress/core-abilities": "^0.8.0",
+  };
+  fs.writeFileSync(
+    packageJsonPath,
+    `${JSON.stringify(seededPackageJson, null, "\t")}\n`
+  );
+
+  const bootstrapPath = path.join(
+    targetDir,
+    "demo-workspace-add-ability.php"
+  );
+  fs.writeFileSync(
+    bootstrapPath,
+    `${fs.readFileSync(bootstrapPath, "utf8").trimEnd()}
+
+function demo_space_enqueue_workflow_abilities() {
+\t// Legacy ability enqueue marker.
+\twp_enqueue_script(
+\t\t'demo-space-legacy-abilities',
+\t\tplugins_url( 'build/abilities/index.js', __FILE__ ),
+\t\tarray(),
+\t\t'1.0.0',
+\t\ttrue
+\t);
+}
+`
+  );
+
   runCli("node", [entryPath, "add", "ability", "review-workflow"], {
     cwd: targetDir,
   });
@@ -3162,6 +3199,7 @@ test("canonical CLI can add a typed workflow ability to an official workspace te
   const packageJson = JSON.parse(
     fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
   ) as {
+    dependencies?: Record<string, string>;
     scripts?: Record<string, string>;
   };
   const syncProjectSource = fs.readFileSync(
@@ -3229,8 +3267,18 @@ test("canonical CLI can add a typed workflow ability to an official workspace te
   expect(bootstrapSource).toContain("Tested up to:      7.0");
   expect(bootstrapSource).toContain("inc/abilities/*.php");
   expect(bootstrapSource).toContain("build/abilities/index.js");
+  expect(bootstrapSource).toContain("wp_enqueue_script_module");
+  expect(bootstrapSource).toContain("@wordpress/core-abilities");
+  expect(bootstrapSource).toContain("@wordpress/abilities");
+  expect(bootstrapSource).not.toContain("Legacy ability enqueue marker");
+  expect(
+    bootstrapSource.match(/function demo_space_enqueue_workflow_abilities/g)
+      ?.length
+  ).toBe(1);
   expect(bootstrapSource).toContain("plugins_loaded");
   expect(bootstrapSource).toContain("admin_enqueue_scripts");
+  expect(packageJson.dependencies?.["@wordpress/abilities"]).toBe("^0.10.0");
+  expect(packageJson.dependencies?.["@wordpress/core-abilities"]).toBe("^0.9.0");
   expect(packageJson.scripts?.["sync-abilities"]).toBe(
     "tsx scripts/sync-abilities.ts"
   );
@@ -3245,7 +3293,11 @@ test("canonical CLI can add a typed workflow ability to an official workspace te
   expect(abilitiesIndexSource).toContain("./review-workflow/client");
   expect(typesSource).toContain("export interface ReviewWorkflowAbilityInput");
   expect(typesSource).toContain("export interface ReviewWorkflowAbilityOutput");
+  expect(dataSource).toContain("from '@wordpress/abilities'");
   expect(dataSource).toContain("@wordpress/core-abilities");
+  expect(dataSource).toContain("waitForReviewWorkflowAbilityRegistration");
+  expect(dataSource).toContain("getRegisteredAbility");
+  expect(dataSource).not.toContain("globalThis");
   expect(abilityConfig.abilityId).toBe("demo-space/review-workflow");
   expect(abilityConfig.category?.slug).toBe("demo-space-workflows");
   expect(phpSource).toContain("wp_register_ability_category");

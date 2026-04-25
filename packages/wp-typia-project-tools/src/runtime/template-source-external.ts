@@ -1,7 +1,6 @@
 /// <reference path="./external-template-modules.d.ts" />
 
 import fs from 'node:fs'
-import { promises as fsp } from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
