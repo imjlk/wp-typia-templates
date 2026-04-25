@@ -193,6 +193,12 @@ test("workspace dependency rewrite keeps npm project-tools overrides compatible 
 	expect(rewrittenPackageJson.overrides["@wp-typia/project-tools"]).toBe(
 		rewrittenPackageJson.devDependencies["@wp-typia/project-tools"],
 	);
+	expect(rewrittenPackageJson.pnpm.overrides["@wp-typia/project-tools"]).toBe(
+		rewrittenPackageJson.devDependencies["@wp-typia/project-tools"],
+	);
+	expect(rewrittenPackageJson.resolutions["@wp-typia/project-tools"]).toBe(
+		rewrittenPackageJson.devDependencies["@wp-typia/project-tools"],
+	);
 });
 
 test("generated project smoke assertions accept local project-tools smoke rewrites", async () => {
