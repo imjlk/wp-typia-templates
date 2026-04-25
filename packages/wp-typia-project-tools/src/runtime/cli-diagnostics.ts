@@ -20,6 +20,7 @@ export const CLI_DIAGNOSTIC_CODES = {
 	OUTSIDE_PROJECT_ROOT: "outside-project-root",
 	TEMPLATE_SOURCE_TIMEOUT: "template-source-timeout",
 	TEMPLATE_SOURCE_TOO_LARGE: "template-source-too-large",
+	UNKNOWN_TEMPLATE: "unknown-template",
 	UNSUPPORTED_COMMAND: "unsupported-command",
 } as const;
 
@@ -250,6 +251,9 @@ function inferCliDiagnosticCode(options: {
 	}
 	if (/requires <|requires --|requires a value/u.test(haystack)) {
 		return CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT;
+	}
+	if (/Unknown (?:add-block )?template/u.test(haystack)) {
+		return CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE;
 	}
 	if (
 		/Unknown .*subcommand|Unknown add kind|Unknown template|removed in favor|does not support|The Bun-free fallback runtime does not support|The positional alias only accepts/u.test(

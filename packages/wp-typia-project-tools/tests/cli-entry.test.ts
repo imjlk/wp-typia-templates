@@ -814,6 +814,35 @@ test("node entry supports dry-run create previews without writing files", () => 
   expect(fs.existsSync(targetDir)).toBe(false);
 });
 
+test("node entry rejects unknown create templates before prompt fallback", () => {
+  const targetDir = path.join(tempRoot, "demo-node-create-unknown-template");
+  const errorMessage = getCommandErrorMessage(() =>
+    runCli(
+      "node",
+      [
+        entryPath,
+        "create",
+        targetDir,
+        "--template",
+        "nonexistent",
+        "--package-manager",
+        "npm",
+        "--no-install",
+        "--format",
+        "json",
+      ],
+      {
+        stdio: "pipe",
+      }
+    )
+  );
+
+  expect(errorMessage).toContain('"code": "unknown-template"');
+  expect(errorMessage).toContain('Unknown template \\"nonexistent\\". Expected one of:');
+  expect(errorMessage).toContain("Run `wp-typia templates list`");
+  expect(errorMessage).not.toContain("Interactive answers require a promptText callback");
+});
+
 test("node entry fails early for sync when scaffold dependencies are missing", () => {
   const targetDir = path.join(tempRoot, "demo-node-sync-no-install");
 
@@ -1120,6 +1149,39 @@ test("node entry rejects add block before workspace dependencies are installed",
   expect(errorMessage).toContain("Workspace dependencies have not been installed yet.");
   expect(errorMessage).toContain("Run `npm install` from the workspace root");
   expect(errorMessage).toContain("`wp-typia add block ...`");
+});
+
+test("node entry rejects unknown add-block templates before workspace dependency checks", async () => {
+  const targetDir = path.join(tempRoot, "node-workspace-add-unknown-template");
+
+  await scaffoldOfficialWorkspace(targetDir);
+
+  const errorMessage = getCommandErrorMessage(() =>
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "block",
+        "counter-card",
+        "--template",
+        "nonexistent",
+        "--format",
+        "json",
+      ],
+      {
+        cwd: targetDir,
+        stdio: "pipe",
+      }
+    )
+  );
+
+  expect(errorMessage).toContain('"code": "unknown-template"');
+  expect(errorMessage).toContain('Unknown add-block template \\"nonexistent\\".');
+  expect(errorMessage).toContain("Expected one of: basic, interactivity, persistence, compound");
+  expect(errorMessage).toContain("Run `wp-typia templates list`");
+  expect(errorMessage).not.toContain("Workspace dependencies have not been installed yet.");
+  expect(errorMessage).not.toContain("Interactive answers require a promptText callback");
 });
 
 test("node entry rejects missing values for identifier override flags", () => {

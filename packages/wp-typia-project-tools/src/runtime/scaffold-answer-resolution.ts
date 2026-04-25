@@ -36,10 +36,16 @@ const WORKSPACE_TEMPLATE_ALIAS = 'workspace';
 const TEMPLATE_SELECTION_HINT = `--template <${[
   ...TEMPLATE_IDS,
   WORKSPACE_TEMPLATE_ALIAS,
+  OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 ].join('|')}|./path|github:owner/repo/path[#ref]|npm-package>`;
 const TEMPLATE_SUGGESTION_IDS = [...TEMPLATE_IDS, WORKSPACE_TEMPLATE_ALIAS] as const;
 const QUERY_POST_TYPE_RULE =
   'Use lowercase, 1-20 chars, and only a-z, 0-9, "_" or "-".';
+const USER_FACING_TEMPLATE_IDS = [
+  ...TEMPLATE_IDS,
+  WORKSPACE_TEMPLATE_ALIAS,
+  OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
+] as const;
 
 /**
  * Detect the current author name from local Git config.
@@ -199,6 +205,14 @@ function getMistypedBuiltInTemplateMessage(templateId: string): string | null {
   return `Unknown template "${templateId}". Did you mean "${suggestion}"? Use \`--template ${suggestion}\` for the ${suggestionDescription}, or pass a local path, \`github:owner/repo/path[#ref]\`, or an npm package spec for an external template.`;
 }
 
+function getUnknownTemplateMessage(templateId: string): string {
+  return [
+    `Unknown template "${templateId}". Expected one of: ${USER_FACING_TEMPLATE_IDS.join(', ')}.`,
+    'Run `wp-typia templates list` to inspect available templates.',
+    'Pass an explicit external template locator such as `./path`, `github:owner/repo/path[#ref]`, or `@scope/template` for custom templates.',
+  ].join(' ');
+}
+
 /**
  * Resolve the scaffold template id from flags, defaults, and interactive selection.
  *
@@ -225,6 +239,9 @@ export async function resolveTemplateId({
     const mistypedBuiltInTemplateMessage = getMistypedBuiltInTemplateMessage(templateId);
     if (mistypedBuiltInTemplateMessage) {
       throw new Error(mistypedBuiltInTemplateMessage);
+    }
+    if (!looksLikeExplicitExternalTemplateLocator(normalizedTemplateId)) {
+      throw new Error(getUnknownTemplateMessage(templateId));
     }
     return normalizedTemplateId;
   }
