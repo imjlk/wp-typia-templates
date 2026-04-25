@@ -1,5 +1,12 @@
 # wp-typia
 
+## 0.20.4 — 2026-04-25
+
+### Patch changes
+
+- [17f7000](https://github.com/imjlk/wp-typia/commit/17f7000ef89f826949924812c73ddb40d3a20f53) Updated the bundled CLI dependency on `@wp-typia/project-tools` to the planned 0.20.1 patch release. — Thanks @imjlk!
+- Updated dependencies: project-tools (npm)@0.20.1
+
 ## 0.20.3 — 2026-04-24
 
 ### Patch changes

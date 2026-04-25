@@ -1,5 +1,11 @@
 # @wp-typia/project-tools
 
+## 0.20.1 — 2026-04-25
+
+### Patch changes
+
+- [7d1416b](https://github.com/imjlk/wp-typia/commit/7d1416b506c490f1c8775e6f8d985ae69846fd3c) Fixed generated AI ability scaffold clients to use WordPress script modules and supported combined query/body inputs in the opt-in typia.llm adapter. — Thanks @imjlk!
+
 ## 0.20.0 — 2026-04-24
 
 ### Minor changes
