@@ -146,6 +146,61 @@ test("workspace dependency rewrite seeds local runtime packages for linked Bun r
 	);
 });
 
+test("workspace dependency rewrite keeps npm project-tools overrides compatible with direct dependencies", async () => {
+	const projectDir = fs.mkdtempSync(
+		join(os.tmpdir(), "wp-typia-generated-smoke-npm-overrides-"),
+	);
+	tempDirs.push(projectDir);
+
+	const packageJsonPath = join(projectDir, "package.json");
+	fs.writeFileSync(
+		packageJsonPath,
+		`${JSON.stringify(
+			{
+				name: "my-typia-block",
+				private: true,
+				devDependencies: {
+					"@wp-typia/project-tools": "^0.20.0",
+					"wp-typia": "^0.20.3",
+				},
+			},
+			null,
+			2,
+		)}\n`,
+		"utf8",
+	);
+
+	const { rewriteWorkspaceDependencies } = (await import(
+		new URL("../../scripts/lib/generated-project-smoke-core.mjs", import.meta.url).href
+	)) as {
+		rewriteWorkspaceDependencies: (
+			projectDir: string,
+			packageManager: "bun" | "npm" | "pnpm" | "yarn",
+		) => void;
+	};
+
+	rewriteWorkspaceDependencies(projectDir, "npm");
+
+	const rewrittenPackageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+
+	expect(rewrittenPackageJson.packageManager).toBe("npm@11.6.1");
+	expect(rewrittenPackageJson.devDependencies["@wp-typia/project-tools"]).toContain(
+		"packages/wp-typia-project-tools",
+	);
+	expect(rewrittenPackageJson.devDependencies["wp-typia"]).toContain(
+		"packages/wp-typia",
+	);
+	expect(rewrittenPackageJson.overrides["@wp-typia/project-tools"]).toBe(
+		rewrittenPackageJson.devDependencies["@wp-typia/project-tools"],
+	);
+	expect(rewrittenPackageJson.pnpm.overrides["@wp-typia/project-tools"]).toBe(
+		rewrittenPackageJson.devDependencies["@wp-typia/project-tools"],
+	);
+	expect(rewrittenPackageJson.resolutions["@wp-typia/project-tools"]).toBe(
+		rewrittenPackageJson.devDependencies["@wp-typia/project-tools"],
+	);
+});
+
 test("generated project smoke assertions accept local project-tools smoke rewrites", async () => {
 	const projectDir = fs.mkdtempSync(
 		join(os.tmpdir(), "wp-typia-generated-smoke-boundary-"),
