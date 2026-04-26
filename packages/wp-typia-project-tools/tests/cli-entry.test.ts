@@ -1,5 +1,6 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
+import * as http from "node:http";
 import * as path from "node:path";
 import { cleanupScaffoldTempRoot, createBlockExternalFixturePath, createBlockSubsetFixturePath, createScaffoldTempRoot, entryPath, getCommandErrorMessage, runCapturedCli, runCli, scaffoldOfficialWorkspace, templateLayerAmbiguousFixturePath, templateLayerFixturePath } from "./helpers/scaffold-test-harness.js";
 import { formatHelpText, getDoctorChecks, getNextSteps, getOptionalOnboarding, runScaffoldFlow } from "../src/runtime/cli-core.js";
@@ -12,6 +13,37 @@ describe("@wp-typia/project-tools scaffold CLI flow", () => {
   afterAll(() => {
     cleanupScaffoldTempRoot(tempRoot);
   });
+
+  async function startNotFoundRegistry(): Promise<{
+    close: () => Promise<void>;
+    url: string;
+  }> {
+    const server = http.createServer((_request, response) => {
+      response.writeHead(404, { "content-type": "application/json" });
+      response.end(JSON.stringify({ error: "not_found" }));
+    });
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", () => resolve());
+    });
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      throw new Error("Expected test npm registry to listen on a numeric port.");
+    }
+
+    return {
+      close: () =>
+        new Promise<void>((resolve, reject) => {
+          server.close((error) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+            resolve();
+          });
+        }),
+      url: `http://127.0.0.1:${address.port}`,
+    };
+  }
 
 test("runScaffoldFlow defaults persistence scaffolds to custom-table and authenticated in non-interactive mode", async () => {
   const projectInput = "demo-persistence-default";
@@ -598,6 +630,33 @@ test("runScaffoldFlow rejects mistyped built-in template ids before external loo
   );
 });
 
+test("runScaffoldFlow reports missing npm templates before prompt fallback", async () => {
+  const registry = await startNotFoundRegistry();
+  const originalRegistry = process.env.NPM_CONFIG_REGISTRY;
+
+  try {
+    process.env.NPM_CONFIG_REGISTRY = registry.url;
+    await expect(
+      runScaffoldFlow({
+        cwd: tempRoot,
+        noInstall: true,
+        packageManager: "npm",
+        projectInput: "demo-missing-npm-template",
+        templateId: "nonexistent",
+      })
+    ).rejects.toThrow(
+      'Unknown template "nonexistent". Expected one of: basic, interactivity, persistence, compound, query-loop, workspace.'
+    );
+  } finally {
+    if (originalRegistry === undefined) {
+      delete process.env.NPM_CONFIG_REGISTRY;
+    } else {
+      process.env.NPM_CONFIG_REGISTRY = originalRegistry;
+    }
+    await registry.close();
+  }
+});
+
 test("runScaffoldFlow rejects external layers for non-built-in templates", async () => {
   await expect(
     runScaffoldFlow({
@@ -814,9 +873,11 @@ test("node entry supports dry-run create previews without writing files", () => 
   expect(fs.existsSync(targetDir)).toBe(false);
 });
 
-test("node entry rejects unknown create templates before prompt fallback", () => {
+test("node entry rejects unknown create templates before prompt fallback", async () => {
   const targetDir = path.join(tempRoot, "demo-node-create-unknown-template");
-  const errorMessage = getCommandErrorMessage(() =>
+  let errorMessage = "";
+
+  errorMessage = getCommandErrorMessage(() =>
     runCli(
       "node",
       [
@@ -824,7 +885,7 @@ test("node entry rejects unknown create templates before prompt fallback", () =>
         "create",
         targetDir,
         "--template",
-        "nonexistent",
+        "bad template",
         "--package-manager",
         "npm",
         "--no-install",
@@ -838,8 +899,9 @@ test("node entry rejects unknown create templates before prompt fallback", () =>
   );
 
   expect(errorMessage).toContain('"code": "unknown-template"');
-  expect(errorMessage).toContain('Unknown template \\"nonexistent\\". Expected one of:');
+  expect(errorMessage).toContain('Unknown template \\"bad template\\". Expected one of:');
   expect(errorMessage).toContain("Run `wp-typia templates list`");
+  expect(errorMessage).not.toContain("Failed to fetch npm template metadata");
   expect(errorMessage).not.toContain("Interactive answers require a promptText callback");
 });
 

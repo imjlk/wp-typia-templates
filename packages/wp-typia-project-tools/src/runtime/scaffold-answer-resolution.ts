@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process';
+import path from 'node:path';
 
 import {
   PACKAGE_MANAGER_IDS,
@@ -21,6 +22,7 @@ import {
   getRemovedBuiltInTemplateMessage,
   isRemovedBuiltInTemplateId,
 } from './template-defaults.js';
+import { parseNpmTemplateLocator } from './template-source-locators.js';
 import {
   toSnakeCase,
   toTitleCase,
@@ -125,34 +127,26 @@ function normalizeTemplateSelection(templateId: string): string {
     : templateId;
 }
 
-function looksLikeUnscopedNpmTemplateLocator(templateId: string): boolean {
-  const versionSeparatorIndex = templateId.indexOf('@', 1);
-  const packageName =
-    versionSeparatorIndex === -1
-      ? templateId
-      : templateId.slice(0, versionSeparatorIndex);
+function looksLikeWindowsAbsoluteTemplatePath(templateId: string): boolean {
+  return /^[a-z]:[\\/]/iu.test(templateId) || /^\\\\[^\\]+\\[^\\]+/u.test(templateId);
+}
 
-  if (!/^[a-z0-9][a-z0-9._-]*$/u.test(packageName)) {
-    return false;
-  }
-
+function looksLikeExplicitNonNpmExternalTemplateLocator(templateId: string): boolean {
   return (
-    versionSeparatorIndex > 0 ||
-    packageName.includes('-') ||
-    packageName.includes('.') ||
-    packageName.includes('_')
+    path.isAbsolute(templateId) ||
+    looksLikeWindowsAbsoluteTemplatePath(templateId) ||
+    templateId.startsWith('./') ||
+    templateId.startsWith('../') ||
+    templateId.startsWith('@') ||
+    templateId.startsWith('github:') ||
+    templateId.includes('/')
   );
 }
 
 function looksLikeExplicitExternalTemplateLocator(templateId: string): boolean {
   return (
-    templateId.startsWith('./') ||
-    templateId.startsWith('../') ||
-    templateId.startsWith('/') ||
-    templateId.startsWith('@') ||
-    templateId.startsWith('github:') ||
-    templateId.includes('/') ||
-    looksLikeUnscopedNpmTemplateLocator(templateId)
+    looksLikeExplicitNonNpmExternalTemplateLocator(templateId) ||
+    parseNpmTemplateLocator(templateId) !== null
   );
 }
 
@@ -184,7 +178,7 @@ function findMistypedBuiltInTemplateSuggestion(templateId: string): string | nul
   const normalizedTemplateId = templateId.trim().toLowerCase();
   if (
     normalizedTemplateId.length === 0 ||
-    looksLikeExplicitExternalTemplateLocator(normalizedTemplateId)
+    looksLikeExplicitNonNpmExternalTemplateLocator(normalizedTemplateId)
   ) {
     return null;
   }
@@ -326,7 +320,7 @@ export async function collectScaffoldAnswers({
 }: CollectScaffoldAnswersOptions): Promise<ScaffoldAnswers> {
   const defaults = getDefaultAnswers(projectName, templateId);
 
-  if (yes) {
+  if (yes || (!isBuiltInTemplateId(templateId) && !promptText)) {
     const identifiers = resolveScaffoldIdentifiers({
       namespace: namespace ?? defaults.namespace,
       phpPrefix,

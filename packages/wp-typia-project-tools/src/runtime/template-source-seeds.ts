@@ -18,7 +18,9 @@ import {
 } from './external-template-guards.js'
 import {
   OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
+  OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
   PROJECT_TOOLS_PACKAGE_ROOT,
+  TEMPLATE_IDS,
 } from './template-registry.js'
 import { isPlainObject } from './object-utils.js'
 import { createManagedTempRoot } from './temp-roots.js'
@@ -28,6 +30,19 @@ import type {
   RemoteTemplateLocator,
   SeedSource,
 } from './template-source-contracts.js'
+
+const USER_FACING_TEMPLATE_IDS = [
+  ...TEMPLATE_IDS,
+  OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
+] as const
+
+function getUnknownNpmTemplateMessage(templateId: string): string {
+  return [
+    `Unknown template "${templateId}". Expected one of: ${USER_FACING_TEMPLATE_IDS.join(', ')}.`,
+    'Run `wp-typia templates list` to inspect available templates.',
+    'If you meant an npm template package, verify the package name and configured npm registry.',
+  ].join(' ')
+}
 
 function selectRegistryVersion(
   metadata: Record<string, unknown>,
@@ -90,6 +105,9 @@ async function fetchNpmTemplateSource(
     },
   )
   if (!metadataResponse.ok) {
+    if (metadataResponse.status === 404) {
+      throw new Error(getUnknownNpmTemplateMessage(locator.raw))
+    }
     throw new Error(
       `Failed to fetch npm template metadata for ${locator.raw}: ${metadataResponse.status}`,
     )
