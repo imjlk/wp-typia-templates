@@ -81,6 +81,30 @@ export type DataViewsFieldId<TItem extends object = DataViewsRecord> = Extract<
 
 export type DataViewsScalar = boolean | number | string;
 
+export type DataViewsItemIdValue = number | string;
+
+export type DataViewsItemIdField<TItem extends object = DataViewsRecord> = {
+  readonly [TKey in DataViewsFieldId<TItem>]-?: TItem[TKey] extends DataViewsItemIdValue
+    ? TKey
+    : never;
+}[DataViewsFieldId<TItem>];
+
+export type DataViewsFieldElementValue<TValue> =
+  Extract<NonNullable<TValue>, DataViewsScalar> extends never
+    ? DataViewsScalar
+    : Extract<NonNullable<TValue>, DataViewsScalar>;
+
+export type DataViewsWeekStart = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+export interface DataViewsFieldFormat {
+  readonly date?: string;
+  readonly datetime?: string;
+  readonly decimals?: number;
+  readonly separatorDecimal?: string;
+  readonly separatorThousand?: string;
+  readonly weekStartsOn?: DataViewsWeekStart;
+}
+
 export interface DataViewsFieldElement<TValue = DataViewsScalar> {
   readonly label: string;
   readonly value: TValue;
@@ -117,11 +141,12 @@ export interface DataViewsField<
   TValue = unknown,
 > {
   readonly description?: string;
-  readonly elements?: readonly DataViewsFieldElement<TValue>[];
+  readonly elements?: readonly DataViewsFieldElement<DataViewsFieldElementValue<TValue>>[];
   readonly enableGlobalSearch?: boolean;
   readonly enableHiding?: boolean;
   readonly enableSorting?: boolean;
   readonly filterBy?: DataViewsFieldFilter;
+  readonly format?: DataViewsFieldFormat;
   readonly getValue?: (context: DataViewsFieldContext<TItem, TValue>) => TValue;
   readonly getValueFormatted?: (context: DataViewsFieldContext<TItem, TValue>) => string;
   readonly header?: string;
@@ -215,11 +240,19 @@ export interface DataViewsAction<TItem extends object = DataViewsRecord> {
   readonly supportsBulk?: boolean;
 }
 
+export type DataViewsResolvedField<TItem extends object = DataViewsRecord> = {
+  readonly [TKey in DataViewsFieldId<TItem>]: DataViewsField<TItem, TItem[TKey]>;
+}[DataViewsFieldId<TItem>];
+
+export type DataViewsConfigField<TItem extends object = DataViewsRecord> =
+  | DataViewsField<TItem>
+  | DataViewsResolvedField<TItem>;
+
 export interface DataViewsConfig<TItem extends object = DataViewsRecord> {
   readonly actions?: readonly DataViewsAction<TItem>[];
   readonly data: readonly TItem[];
   readonly defaultLayouts?: DataViewsDefaultLayouts;
-  readonly fields: readonly DataViewsField<TItem>[];
+  readonly fields: readonly DataViewsConfigField<TItem>[];
   readonly getItemId?: (item: TItem) => string;
   readonly getItemLevel?: (item: TItem) => number;
   readonly isLoading?: boolean;
@@ -246,13 +279,335 @@ export interface DataFormConfig<TItem extends object = DataViewsRecord> {
 }
 
 export interface QueryAdapterContext<TItem extends object = DataViewsRecord> {
-  readonly fields: readonly DataViewsField<TItem>[];
+  readonly fields: readonly DataViewsConfigField<TItem>[];
 }
 
 export type QueryAdapter<
   TItem extends object = DataViewsRecord,
   TQuery = Record<string, unknown>,
 > = (view: DataViewsView<TItem>, context: QueryAdapterContext<TItem>) => TQuery;
+
+export type DataViewsCompatibleFieldType<TValue> =
+  NonNullable<TValue> extends boolean
+    ? "boolean"
+    : NonNullable<TValue> extends number
+      ? "integer" | "number"
+      : NonNullable<TValue> extends string
+        ? "date" | "datetime" | "email" | "text" | "url"
+        : NonNullable<TValue> extends readonly unknown[]
+          ? "array"
+          : NonNullable<TValue> extends object
+            ? "media" | "object"
+            : DataViewsFieldType;
+
+export type DataViewsFieldSchemaType =
+  | "array"
+  | "boolean"
+  | "integer"
+  | "number"
+  | "object"
+  | "string";
+
+export type DataViewsFieldSchemaFormat =
+  | "date"
+  | "date-time"
+  | "datetime"
+  | "email"
+  | "uri"
+  | "url"
+  | (string & {});
+
+export interface DataViewsFieldSchemaMetadata<TValue = DataViewsScalar> {
+  readonly const?: DataViewsFieldElementValue<TValue>;
+  readonly description?: string;
+  readonly enum?: readonly DataViewsFieldElementValue<TValue>[];
+  readonly enumLabels?: Readonly<Record<string, string>>;
+  readonly format?: DataViewsFieldSchemaFormat;
+  readonly type?: DataViewsFieldSchemaType | readonly DataViewsFieldSchemaType[];
+}
+
+export interface DefineDataViewsFieldDefinition<
+  TItem extends object,
+  TKey extends DataViewsFieldId<TItem>,
+> extends Omit<DataViewsField<TItem, TItem[TKey]>, "elements" | "id" | "label" | "type"> {
+  readonly elements?: readonly DataViewsFieldElement<DataViewsFieldElementValue<TItem[TKey]>>[];
+  readonly label?: string;
+  readonly schema?: DataViewsFieldSchemaMetadata<TItem[TKey]>;
+  readonly type?: DataViewsCompatibleFieldType<TItem[TKey]>;
+}
+
+export type DefineDataViewsFields<TItem extends object> = {
+  readonly [TKey in DataViewsFieldId<TItem>]?: DefineDataViewsFieldDefinition<TItem, TKey>;
+};
+
+export interface DefineDataViewsInput<TItem extends object> {
+  readonly actions?: readonly DataViewsAction<TItem>[];
+  readonly defaultLayouts?: DataViewsDefaultLayouts;
+  readonly defaultView: DataViewsView<TItem>;
+  readonly fields: DefineDataViewsFields<TItem>;
+  readonly getItemId?: (item: TItem) => string;
+  readonly getItemLevel?: (item: TItem) => number;
+  readonly idField?: DataViewsItemIdField<TItem>;
+  readonly search?: boolean;
+  readonly searchLabel?: string;
+  readonly titleField?: DataViewsFieldId<TItem>;
+}
+
+export interface DefineDataViewsConfigOptions<TItem extends object> {
+  readonly actions?: readonly DataViewsAction<TItem>[];
+  readonly data: readonly TItem[];
+  readonly getItemId?: (item: TItem) => string;
+  readonly getItemLevel?: (item: TItem) => number;
+  readonly isLoading?: boolean;
+  readonly onChangeSelection?: (selection: readonly string[]) => void;
+  readonly onChangeView?: (view: DataViewsView<TItem>) => void;
+  readonly paginationInfo?: DataViewsPaginationInfo;
+  readonly search?: boolean;
+  readonly searchLabel?: string;
+  readonly selection?: readonly string[];
+  readonly view?: DataViewsView<TItem>;
+}
+
+export type DefinedDataViewsFieldMap<TItem extends object> = Readonly<
+  Partial<Record<DataViewsFieldId<TItem>, DataViewsResolvedField<TItem>>>
+>;
+
+export interface DefinedDataViews<TItem extends object> {
+  readonly actions?: readonly DataViewsAction<TItem>[];
+  readonly defaultLayouts?: DataViewsDefaultLayouts;
+  readonly defaultView: DataViewsView<TItem>;
+  readonly fieldMap: DefinedDataViewsFieldMap<TItem>;
+  readonly fields: readonly DataViewsResolvedField<TItem>[];
+  readonly getItemId?: (item: TItem) => string;
+  readonly getItemLevel?: (item: TItem) => number;
+  readonly idField?: DataViewsItemIdField<TItem>;
+  readonly search?: boolean;
+  readonly searchLabel?: string;
+  readonly titleField?: DataViewsFieldId<TItem>;
+  readonly createConfig: (options: DefineDataViewsConfigOptions<TItem>) => DataViewsConfig<TItem>;
+}
+
+export function defineDataViews<TItem extends object>(
+  definition: DefineDataViewsInput<TItem>,
+): DefinedDataViews<TItem> {
+  const fields = normalizeDefineDataViewsFields(definition.fields);
+  const fieldMap = Object.fromEntries(
+    fields.map((field) => [field.id, field]),
+  ) as DefinedDataViewsFieldMap<TItem>;
+  const defaultView = normalizeDefineDataViewsDefaultView(definition, fields);
+  const defaultGetItemId = definition.getItemId ?? createGetItemId(definition.idField);
+
+  return {
+    actions: definition.actions,
+    createConfig: (options) => ({
+      actions: options.actions ?? definition.actions,
+      data: options.data,
+      defaultLayouts: definition.defaultLayouts,
+      fields,
+      getItemId: options.getItemId ?? defaultGetItemId,
+      getItemLevel: options.getItemLevel ?? definition.getItemLevel,
+      isLoading: options.isLoading,
+      onChangeSelection: options.onChangeSelection,
+      onChangeView: options.onChangeView,
+      paginationInfo: options.paginationInfo,
+      search: options.search ?? definition.search,
+      searchLabel: options.searchLabel ?? definition.searchLabel,
+      selection: options.selection,
+      view: options.view ?? defaultView,
+    }),
+    defaultLayouts: definition.defaultLayouts,
+    defaultView,
+    fieldMap,
+    fields,
+    getItemId: defaultGetItemId,
+    getItemLevel: definition.getItemLevel,
+    idField: definition.idField,
+    search: definition.search,
+    searchLabel: definition.searchLabel,
+    titleField: definition.titleField,
+  };
+}
+
+function normalizeDefineDataViewsFields<TItem extends object>(
+  fields: DefineDataViewsFields<TItem>,
+): readonly DataViewsResolvedField<TItem>[] {
+  return (
+    Object.entries(fields) as Array<
+      [
+        DataViewsFieldId<TItem>,
+        DefineDataViewsFieldDefinition<TItem, DataViewsFieldId<TItem>> | undefined,
+      ]
+    >
+  )
+    .filter(
+      (entry): entry is [
+        DataViewsFieldId<TItem>,
+        DefineDataViewsFieldDefinition<TItem, DataViewsFieldId<TItem>>,
+      ] => entry[1] !== undefined,
+    )
+    .map(([id, field]) => normalizeDefineDataViewsField(id, field));
+}
+
+function normalizeDefineDataViewsField<
+  TItem extends object,
+  TKey extends DataViewsFieldId<TItem>,
+>(
+  id: TKey,
+  field: DefineDataViewsFieldDefinition<TItem, TKey>,
+): DataViewsField<TItem, TItem[TKey]> {
+  const { schema, ...fieldDefinition } = field;
+  const label = fieldDefinition.label ?? formatDataViewsFieldLabel(id);
+  const description = fieldDefinition.description ?? schema?.description;
+  const type = normalizeDataViewsFieldType(fieldDefinition.type, schema);
+  const elements = fieldDefinition.elements ?? normalizeDataViewsFieldElements(schema);
+
+  return {
+    ...fieldDefinition,
+    description,
+    elements,
+    id,
+    label,
+    type,
+  };
+}
+
+function normalizeDefineDataViewsDefaultView<TItem extends object>(
+  definition: DefineDataViewsInput<TItem>,
+  fields: readonly DataViewsResolvedField<TItem>[],
+): DataViewsView<TItem> {
+  const defaults =
+    definition.titleField === undefined
+      ? { fields: fields.map((field) => field.id) }
+      : { fields: fields.map((field) => field.id), titleField: definition.titleField };
+
+  return {
+    ...defaults,
+    ...definition.defaultView,
+  };
+}
+
+function normalizeDataViewsFieldType<TValue>(
+  type: DataViewsCompatibleFieldType<TValue> | undefined,
+  schema: DataViewsFieldSchemaMetadata<TValue> | undefined,
+): DataViewsFieldType | undefined {
+  if (type !== undefined) {
+    return type;
+  }
+
+  if (schema?.format === "date-time" || schema?.format === "datetime") {
+    return "datetime";
+  }
+
+  if (schema?.format === "date") {
+    return "date";
+  }
+
+  if (schema?.format === "email") {
+    return "email";
+  }
+
+  if (schema?.format === "uri" || schema?.format === "url") {
+    return "url";
+  }
+
+  const schemaType = getFirstDataViewsSchemaType(schema?.type);
+
+  return schemaType;
+}
+
+function normalizeDataViewsFieldElements<TValue>(
+  schema: DataViewsFieldSchemaMetadata<TValue> | undefined,
+): readonly DataViewsFieldElement<DataViewsFieldElementValue<TValue>>[] | undefined {
+  const values = getDataViewsSchemaElementValues(schema);
+
+  if (values.length === 0) {
+    return undefined;
+  }
+
+  return values.map((value) => ({
+    label: schema?.enumLabels?.[String(value)] ?? formatDataViewsElementLabel(value),
+    value,
+  }));
+}
+
+function getDataViewsSchemaElementValues<TValue>(
+  schema: DataViewsFieldSchemaMetadata<TValue> | undefined,
+): readonly DataViewsFieldElementValue<TValue>[] {
+  if (schema?.enum !== undefined) {
+    return schema.enum;
+  }
+
+  if (schema?.const !== undefined) {
+    return [schema.const];
+  }
+
+  return [];
+}
+
+function getFirstDataViewsSchemaType(
+  type: DataViewsFieldSchemaMetadata["type"] | undefined,
+): DataViewsFieldType | undefined {
+  const schemaType = Array.isArray(type)
+    ? (type.find((candidate) => candidate !== "object") ?? type[0])
+    : type;
+
+  if (schemaType === "string") {
+    return "text";
+  }
+
+  if (
+    schemaType === "array" ||
+    schemaType === "boolean" ||
+    schemaType === "integer" ||
+    schemaType === "number" ||
+    schemaType === "object"
+  ) {
+    return schemaType;
+  }
+
+  return undefined;
+}
+
+function createGetItemId<TItem extends object>(
+  idField: DataViewsItemIdField<TItem> | undefined,
+): ((item: TItem) => string) | undefined {
+  if (idField === undefined) {
+    return undefined;
+  }
+
+  return (item) => {
+    const idValue = item[idField];
+
+    if (typeof idValue === "string") {
+      return idValue;
+    }
+
+    if (typeof idValue === "number" && Number.isFinite(idValue)) {
+      return String(idValue);
+    }
+
+    throw new TypeError(
+      `defineDataViews idField "${idField}" must resolve to a string or finite number. Provide getItemId for custom item identity values.`,
+    );
+  };
+}
+
+function formatDataViewsFieldLabel(id: string): string {
+  return id
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatDataViewsElementLabel(value: DataViewsScalar): string {
+  if (typeof value === "boolean") {
+    return value ? "True" : "False";
+  }
+
+  return formatDataViewsFieldLabel(String(value));
+}
 
 /**
  * WordPress-script import path for actual DataViews/DataForm components.
