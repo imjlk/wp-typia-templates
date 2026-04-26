@@ -136,7 +136,7 @@ describe("DataForm helpers", () => {
       defaultView: { type: "table" },
       fields: {
         price: {
-          schema: { maximum: 999, minimum: 0, type: "number" },
+          schema: { max: 750, maximum: 999, min: 5, minimum: 0, type: "number" },
         },
         sku: {
           schema: { maxLength: 32, pattern: "^[A-Z0-9-]+$", required: true, type: "string" },
@@ -151,7 +151,7 @@ describe("DataForm helpers", () => {
       },
     });
 
-    expect(views.fieldMap.price?.isValid).toEqual({ max: 999, min: 0 });
+    expect(views.fieldMap.price?.isValid).toEqual({ max: 750, min: 5 });
     expect(views.fieldMap.sku?.isValid).toEqual({
       maxLength: 32,
       pattern: "^[A-Z0-9-]+$",

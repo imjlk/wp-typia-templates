@@ -121,8 +121,10 @@ export interface DataViewsFieldValidationRules<
 > {
   readonly custom?: DataViewsFieldValidationCustom<TItem, TValue>;
   readonly elements?: boolean;
+  /** Resolved numeric maximum validation hint. */
   readonly max?: number;
   readonly maxLength?: number;
+  /** Resolved numeric minimum validation hint. */
   readonly min?: number;
   readonly minLength?: number;
   readonly pattern?: string;
@@ -539,11 +541,15 @@ export interface DataViewsFieldSchemaMetadata<TValue = DataViewsScalar> {
   readonly enum?: readonly DataViewsFieldElementValue<TValue>[];
   readonly enumLabels?: Readonly<Record<string, string>>;
   readonly format?: DataViewsFieldSchemaFormat;
+  /** Preferred numeric maximum; takes precedence over `maximum` when both are present. */
   readonly max?: number;
   readonly maxLength?: number;
+  /** JSON Schema numeric maximum used when `max` is not present. */
   readonly maximum?: number;
+  /** Preferred numeric minimum; takes precedence over `minimum` when both are present. */
   readonly min?: number;
   readonly minLength?: number;
+  /** JSON Schema numeric minimum used when `min` is not present. */
   readonly minimum?: number;
   readonly pattern?: string;
   readonly required?: boolean;
@@ -762,7 +768,7 @@ function normalizeDefineDataViewsField<
     description,
     elements,
     id,
-    isValid: validation,
+    ...(validation === undefined ? {} : { isValid: validation }),
     label,
     type,
   };
@@ -815,6 +821,7 @@ function normalizeDataFormFieldObject<TItem extends object>(
   const sourceField = fieldMap.get(field.id);
   const resolvedLayout = field.layout ?? layout;
 
+  // DataForm supports group-only fields whose ids are not DataViews fields.
   if (sourceField?.readOnly === true && !includeReadOnly) {
     return undefined;
   }
