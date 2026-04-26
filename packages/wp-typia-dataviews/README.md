@@ -106,6 +106,8 @@ Pagination and search use WordPress REST-style names by default: `page`,
 `per_page`, and `search`. Sorts and filters are emitted only when `mapSort` or
 `mapFilter` handles them, so unsupported filters stay explicit no-ops instead of
 being guessed.
+If multiple filters return the same query key, the last returned value wins; use
+array values from `mapFilter` when your data source needs combined semantics.
 
 Use WordPress' package for the actual components in WordPress-built scripts:
 

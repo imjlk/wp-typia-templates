@@ -107,6 +107,20 @@ describe("DataViews query adapters", () => {
     });
   });
 
+  test("treats orderByParam false as static sort map suppression", () => {
+    const query = toDataViewsQueryArgs<Product, WordPressProductQuery>(productView, {
+      mapSort: {
+        createdAt: "date",
+      },
+      orderByParam: false,
+      pageParam: false,
+      perPageParam: false,
+      searchParam: false,
+    });
+
+    expect(query).toEqual({});
+  });
+
   test("creates reusable QueryAdapter functions with field context", () => {
     const adapter = createDataViewsQueryAdapter<Product, WordPressProductQuery>({
       mapFilter: (filter, context) => {

@@ -309,8 +309,7 @@ export interface DataViewsQueryAdapterMapContext<
 export type DataViewsQueryMapperResult<TQuery extends object = DataViewsQueryArgs> =
   | Partial<TQuery>
   | null
-  | undefined
-  | void;
+  | undefined;
 
 export type DataViewsQuerySortMapper<
   TItem extends object = DataViewsRecord,
@@ -714,6 +713,10 @@ function mergeDataViewsSortQuery<TItem extends object, TQuery extends object>(
   const orderBy = options.mapSort[view.sort.field];
 
   if (orderBy === undefined) {
+    return;
+  }
+
+  if (options.orderByParam === false) {
     return;
   }
 

@@ -121,6 +121,7 @@ Generated and hand-authored integrations should map view state into project
 queries explicitly:
 
 ```ts
+import type { DataViewsView } from '@wp-typia/dataviews';
 import { toDataViewsQueryArgs } from '@wp-typia/dataviews';
 
 interface Book {
@@ -138,6 +139,17 @@ interface BookRestQuery {
   search?: string;
   status?: readonly Book['status'][];
 }
+
+const view: DataViewsView<Book> = {
+  filters: [
+    { field: 'status', operator: 'isAny', value: ['draft', 'publish'] },
+  ],
+  page: 1,
+  perPage: 20,
+  search: 'patterns',
+  sort: { direction: 'desc', field: 'createdAt' },
+  type: 'table',
+};
 
 const queryArgs = toDataViewsQueryArgs<Book, BookRestQuery>(view, {
   mapSort: {
@@ -159,6 +171,10 @@ default. Sorts are only emitted when `mapSort` maps the DataViews field to a
 query value such as a WordPress REST `orderby` value. Filters are only emitted
 when `mapFilter` returns query args, so unknown filters remain explicit no-ops
 instead of being guessed.
+
+When multiple filters return the same query key, the adapter uses the last
+returned value. Return an array value from `mapFilter` when a data source needs
+combined filter semantics.
 
 Use `createDataViewsQueryAdapter(options)` when a reusable `QueryAdapter` is
 more convenient, or call `definedViews.toQueryArgs(view, options)` from a
