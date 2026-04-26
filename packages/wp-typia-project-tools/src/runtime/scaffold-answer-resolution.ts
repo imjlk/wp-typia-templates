@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process';
+import path from 'node:path';
 
 import {
   PACKAGE_MANAGER_IDS,
@@ -21,6 +22,7 @@ import {
   getRemovedBuiltInTemplateMessage,
   isRemovedBuiltInTemplateId,
 } from './template-defaults.js';
+import { parseNpmTemplateLocator } from './template-source-locators.js';
 import {
   toSnakeCase,
   toTitleCase,
@@ -40,6 +42,10 @@ const TEMPLATE_SELECTION_HINT = `--template <${[
 const TEMPLATE_SUGGESTION_IDS = [...TEMPLATE_IDS, WORKSPACE_TEMPLATE_ALIAS] as const;
 const QUERY_POST_TYPE_RULE =
   'Use lowercase, 1-20 chars, and only a-z, 0-9, "_" or "-".';
+const USER_FACING_TEMPLATE_IDS = [
+  ...TEMPLATE_IDS,
+  WORKSPACE_TEMPLATE_ALIAS,
+] as const;
 
 /**
  * Detect the current author name from local Git config.
@@ -121,14 +127,26 @@ function normalizeTemplateSelection(templateId: string): string {
     : templateId;
 }
 
-function looksLikeExplicitExternalTemplateLocator(templateId: string): boolean {
+function looksLikeWindowsAbsoluteTemplatePath(templateId: string): boolean {
+  return /^[a-z]:[\\/]/iu.test(templateId) || /^\\\\[^\\]+\\[^\\]+/u.test(templateId);
+}
+
+function looksLikeExplicitNonNpmExternalTemplateLocator(templateId: string): boolean {
   return (
+    path.isAbsolute(templateId) ||
+    looksLikeWindowsAbsoluteTemplatePath(templateId) ||
     templateId.startsWith('./') ||
     templateId.startsWith('../') ||
-    templateId.startsWith('/') ||
     templateId.startsWith('@') ||
     templateId.startsWith('github:') ||
     templateId.includes('/')
+  );
+}
+
+function looksLikeExplicitExternalTemplateLocator(templateId: string): boolean {
+  return (
+    looksLikeExplicitNonNpmExternalTemplateLocator(templateId) ||
+    parseNpmTemplateLocator(templateId) !== null
   );
 }
 
@@ -160,7 +178,7 @@ function findMistypedBuiltInTemplateSuggestion(templateId: string): string | nul
   const normalizedTemplateId = templateId.trim().toLowerCase();
   if (
     normalizedTemplateId.length === 0 ||
-    looksLikeExplicitExternalTemplateLocator(normalizedTemplateId)
+    looksLikeExplicitNonNpmExternalTemplateLocator(normalizedTemplateId)
   ) {
     return null;
   }
@@ -199,6 +217,14 @@ function getMistypedBuiltInTemplateMessage(templateId: string): string | null {
   return `Unknown template "${templateId}". Did you mean "${suggestion}"? Use \`--template ${suggestion}\` for the ${suggestionDescription}, or pass a local path, \`github:owner/repo/path[#ref]\`, or an npm package spec for an external template.`;
 }
 
+function getUnknownTemplateMessage(templateId: string): string {
+  return [
+    `Unknown template "${templateId}". Expected one of: ${USER_FACING_TEMPLATE_IDS.join(', ')}.`,
+    'Run `wp-typia templates list` to inspect available templates.',
+    'Pass an explicit external template locator such as `./path`, `github:owner/repo/path[#ref]`, or `@scope/template` for custom templates.',
+  ].join(' ');
+}
+
 /**
  * Resolve the scaffold template id from flags, defaults, and interactive selection.
  *
@@ -225,6 +251,9 @@ export async function resolveTemplateId({
     const mistypedBuiltInTemplateMessage = getMistypedBuiltInTemplateMessage(templateId);
     if (mistypedBuiltInTemplateMessage) {
       throw new Error(mistypedBuiltInTemplateMessage);
+    }
+    if (!looksLikeExplicitExternalTemplateLocator(normalizedTemplateId)) {
+      throw new Error(getUnknownTemplateMessage(templateId));
     }
     return normalizedTemplateId;
   }
@@ -291,7 +320,7 @@ export async function collectScaffoldAnswers({
 }: CollectScaffoldAnswersOptions): Promise<ScaffoldAnswers> {
   const defaults = getDefaultAnswers(projectName, templateId);
 
-  if (yes) {
+  if (yes || (!isBuiltInTemplateId(templateId) && !promptText)) {
     const identifiers = resolveScaffoldIdentifiers({
       namespace: namespace ?? defaults.namespace,
       phpPrefix,

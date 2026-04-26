@@ -543,7 +543,7 @@ export async function runAddBlockCommand({
 	}
 	if (!isAddBlockTemplateId(templateId)) {
 		throw new Error(
-			`Unknown add-block template "${templateId}". Expected one of: ${ADD_BLOCK_TEMPLATE_IDS.join(", ")}`,
+			`Unknown add-block template "${templateId}". Expected one of: ${ADD_BLOCK_TEMPLATE_IDS.join(", ")}. Run \`wp-typia templates list\` to inspect available templates.`,
 		);
 	}
 	const resolvedTemplateId = templateId;

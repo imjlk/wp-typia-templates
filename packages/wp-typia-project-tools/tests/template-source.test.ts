@@ -996,6 +996,34 @@ test("parses npm template locators for package specs", () => {
   });
 });
 
+test("template id resolution preserves explicit unscoped npm template specs", async () => {
+  await expect(
+    resolveTemplateId({
+      templateId: "react",
+    })
+  ).resolves.toBe("react");
+
+  await expect(
+    resolveTemplateId({
+      templateId: "my-template",
+    })
+  ).resolves.toBe("my-template");
+
+  await expect(
+    resolveTemplateId({
+      templateId: "my-template@latest",
+    })
+  ).resolves.toBe("my-template@latest");
+});
+
+test("template id resolution preserves Windows absolute template paths", async () => {
+  await expect(
+    resolveTemplateId({
+      templateId: String.raw`C:\templates\my-template`,
+    })
+  ).resolves.toBe(String.raw`C:\templates\my-template`);
+});
+
 test("normalizes the workspace template alias to the official package id", async () => {
   await expect(
     resolveTemplateId({
