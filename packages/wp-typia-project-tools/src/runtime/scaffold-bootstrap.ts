@@ -19,16 +19,9 @@ import {
 } from "./template-registry.js";
 import type { BuiltInTemplateId } from "./template-registry.js";
 import { getScaffoldTemplateVariableGroups } from "./scaffold-template-variable-groups.js";
+import type { GeneratedPackageJson } from "./package-json-types.js";
 
 const EPHEMERAL_NODE_MODULES_LINK_TYPE = process.platform === "win32" ? "junction" : "dir";
-
-interface GeneratedPackageJson {
-	scripts?: Record<string, string>;
-	wpTypia?: {
-		projectType?: string;
-		templatePackage?: string;
-	};
-}
 
 /**
  * Ensures the scaffold target directory exists and is empty unless explicitly allowed.

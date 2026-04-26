@@ -9,12 +9,6 @@ import {
 	applyLocalDevPresetFiles,
 } from "./local-dev-presets.js";
 import { applyMigrationUiCapability } from "./migration-ui-capability.js";
-import { getPackageVersions } from "./package-versions.js";
-import {
-	ensureMigrationDirectories,
-	writeInitialMigrationScaffold,
-	writeMigrationConfig,
-} from "./migration-project.js";
 import {
 	syncPersistenceRestArtifacts,
 } from "./persistence-rest-artifacts.js";
@@ -36,17 +30,19 @@ import {
 } from "./built-in-block-artifacts.js";
 import type { BuiltInCodeArtifact } from "./built-in-block-code-artifacts.js";
 import {
-	OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 	type BuiltInTemplateId,
 } from "./template-registry.js";
 import { copyInterpolatedDirectory } from "./template-render.js";
 import type { PackageManagerId } from "./package-managers.js";
 import {
 	formatInstallCommand,
-	formatPackageExecCommand,
 	transformPackageManagerText,
 } from "./package-managers.js";
 import { normalizePackageJson } from "./scaffold-package-manager-files.js";
+export {
+	applyWorkspaceMigrationCapability,
+	isOfficialWorkspaceProject,
+} from "./scaffold-bootstrap.js";
 import {
 	replaceRepositoryReferencePlaceholders,
 	resolveScaffoldRepositoryReference,
@@ -55,12 +51,7 @@ import type {
 	ScaffoldProgressEvent,
 	ScaffoldTemplateVariables,
 } from "./scaffold.js";
-
-export {
-	buildGitignore,
-	buildReadme,
-	mergeTextLines,
-} from "./scaffold-documents.js";
+export { buildGitignore, buildReadme, mergeTextLines } from "./scaffold-documents.js";
 
 export interface InstallDependenciesOptions {
 	packageManager: PackageManagerId;
@@ -74,16 +65,6 @@ async function reportScaffoldProgress(
 	event: ScaffoldProgressEvent,
 ): Promise<void> {
 	await onProgress?.(event);
-}
-
-interface GeneratedPackageJson {
-	dependencies?: Record<string, string>;
-	scripts?: Record<string, string>;
-	wpTypia?: {
-		projectType?: string;
-		templatePackage?: string;
-	};
-	packageManager?: string;
 }
 
 const EPHEMERAL_NODE_MODULES_LINK_TYPE = process.platform === "win32" ? "junction" : "dir";
@@ -361,59 +342,6 @@ export async function defaultInstallDependencies({
 		cwd: projectDir,
 		stdio: "inherit",
 	});
-}
-
-export function isOfficialWorkspaceProject(projectDir: string): boolean {
-	const packageJsonPath = path.join(projectDir, "package.json");
-	if (!fs.existsSync(packageJsonPath)) {
-		return false;
-	}
-
-	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as GeneratedPackageJson;
-	return (
-		packageJson.wpTypia?.projectType === "workspace" &&
-		packageJson.wpTypia?.templatePackage === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE
-	);
-}
-
-export async function applyWorkspaceMigrationCapability(
-	projectDir: string,
-	packageManager: PackageManagerId,
-): Promise<void> {
-	const packageJsonPath = path.join(projectDir, "package.json");
-	const packageJson = JSON.parse(
-		await fsp.readFile(packageJsonPath, "utf8"),
-	) as GeneratedPackageJson;
-	const wpTypiaPackageVersion = getPackageVersions().wpTypiaPackageVersion;
-	const canonicalCliSpecifier =
-		wpTypiaPackageVersion === "^0.0.0"
-			? "wp-typia"
-			: `wp-typia@${wpTypiaPackageVersion.replace(/^[~^]/u, "")}`;
-	const migrationCli = (args: string) =>
-		formatPackageExecCommand(packageManager, canonicalCliSpecifier, `migrate ${args}`);
-
-	packageJson.scripts = {
-		...(packageJson.scripts ?? {}),
-		"migration:init": migrationCli("init --current-migration-version v1"),
-		"migration:snapshot": migrationCli("snapshot"),
-		"migration:diff": migrationCli("diff"),
-		"migration:scaffold": migrationCli("scaffold"),
-		"migration:doctor": migrationCli("doctor --all"),
-		"migration:fixtures": migrationCli("fixtures --all"),
-		"migration:verify": migrationCli("verify --all"),
-		"migration:fuzz": migrationCli("fuzz --all"),
-	};
-
-	await fsp.writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, "\t")}\n`, "utf8");
-
-	writeMigrationConfig(projectDir, {
-		blocks: [],
-		currentMigrationVersion: "v1",
-		snapshotDir: "src/migrations/versions",
-		supportedMigrationVersions: ["v1"],
-	});
-	ensureMigrationDirectories(projectDir, []);
-	writeInitialMigrationScaffold(projectDir, "v1", []);
 }
 
 /**

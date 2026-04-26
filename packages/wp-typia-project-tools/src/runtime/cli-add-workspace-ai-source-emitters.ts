@@ -1,25 +1,11 @@
-import {
-	normalizeBlockSlug,
-	quoteTsString,
-} from "./cli-add-shared.js";
+import { quoteTsString } from "./cli-add-shared.js";
 import { buildAiFeatureEndpointManifest } from "./ai-feature-artifacts.js";
 import {
 	OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
 	renderScaffoldCompatibilityConfig,
 	resolveScaffoldCompatibilityPolicy,
 } from "./scaffold-compatibility.js";
-import { toTitleCase } from "./string-case.js";
-
-/**
- * Convert an AI feature slug into the PascalCase identifier used by generated types.
- */
-export function toPascalCaseFromAiFeatureSlug(slug: string): string {
-	return normalizeBlockSlug(slug)
-		.split("-")
-		.filter(Boolean)
-		.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-		.join("");
-}
+import { toPascalCase, toTitleCase } from "./string-case.js";
 
 function indentMultiline(source: string, prefix: string): string {
 	return source
@@ -35,7 +21,7 @@ export function buildAiFeatureConfigEntry(
 	aiFeatureSlug: string,
 	namespace: string,
 ): string {
-	const pascalCase = toPascalCaseFromAiFeatureSlug(aiFeatureSlug);
+	const pascalCase = toPascalCase(aiFeatureSlug);
 	const title = toTitleCase(aiFeatureSlug);
 	const compatibilityPolicy = resolveScaffoldCompatibilityPolicy(
 		OPTIONAL_WORDPRESS_AI_CLIENT_COMPATIBILITY,
@@ -83,7 +69,7 @@ export function buildAiFeatureConfigEntry(
  * Generate TypeScript request, response, and telemetry contracts for an AI feature scaffold.
  */
 export function buildAiFeatureTypesSource(aiFeatureSlug: string): string {
-	const pascalCase = toPascalCaseFromAiFeatureSlug(aiFeatureSlug);
+	const pascalCase = toPascalCase(aiFeatureSlug);
 
 	return `import { tags } from 'typia';
 
@@ -128,7 +114,7 @@ export interface ${pascalCase}AiFeatureResponse {
 export function buildAiFeatureValidatorsSource(
 	aiFeatureSlug: string,
 ): string {
-	const pascalCase = toPascalCaseFromAiFeatureSlug(aiFeatureSlug);
+	const pascalCase = toPascalCase(aiFeatureSlug);
 
 	return `import typia from 'typia';
 
@@ -164,7 +150,7 @@ export const apiValidators = {
  * Generate the typed client wrapper that calls the scaffolded AI feature endpoint.
  */
 export function buildAiFeatureApiSource(aiFeatureSlug: string): string {
-	const pascalCase = toPascalCaseFromAiFeatureSlug(aiFeatureSlug);
+	const pascalCase = toPascalCase(aiFeatureSlug);
 
 	return `import {
 \tcallEndpoint,
@@ -224,7 +210,7 @@ export function runAiFeature( request: ${pascalCase}AiFeatureRequest ) {
  * Generate React endpoint-mutation hooks for the scaffolded AI feature client wrapper.
  */
 export function buildAiFeatureDataSource(aiFeatureSlug: string): string {
-	const pascalCase = toPascalCaseFromAiFeatureSlug(aiFeatureSlug);
+	const pascalCase = toPascalCase(aiFeatureSlug);
 
 	return `import {
 \tuseEndpointMutation,

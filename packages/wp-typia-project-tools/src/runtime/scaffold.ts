@@ -38,8 +38,6 @@ import { resolveTemplateSource } from "./template-source.js";
 import {
 	BlockGeneratorService,
 } from "./block-generator-service.js";
-import {
-} from "./scaffold-answer-resolution.js";
 import { getTemplateVariables } from "./scaffold-template-variables.js";
 import { getScaffoldTemplateVariableGroups } from "./scaffold-template-variable-groups.js";
 import type {

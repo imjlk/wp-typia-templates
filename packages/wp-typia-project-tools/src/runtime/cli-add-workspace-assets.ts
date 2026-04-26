@@ -7,7 +7,13 @@ import {
 	type WorkspaceProject,
 } from "./workspace-project.js";
 import { readWorkspaceInventory, appendWorkspaceInventoryEntries } from "./workspace-inventory.js";
-import { toTitleCase } from "./string-case.js";
+import { toPascalCase, toTitleCase } from "./string-case.js";
+import {
+	findPhpFunctionRange,
+	hasPhpFunctionDefinition,
+	quotePhpString,
+	replacePhpFunctionDefinition,
+} from "./php-utils.js";
 import {
 	assertBindingSourceDoesNotExist,
 	assertEditorPluginDoesNotExist,
@@ -34,76 +40,6 @@ const EDITOR_PLUGIN_EDITOR_SCRIPT = "build/editor-plugins/index.js";
 const EDITOR_PLUGIN_EDITOR_ASSET = "build/editor-plugins/index.asset.php";
 const EDITOR_PLUGIN_EDITOR_STYLE = "build/editor-plugins/style-index.css";
 const EDITOR_PLUGIN_EDITOR_STYLE_RTL = "build/editor-plugins/style-index-rtl.css";
-
-function escapeRegex(value: string): string {
-	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
-}
-
-function quotePhpString(value: string): string {
-	return `'${value.replace(/\\/gu, "\\\\").replace(/'/gu, "\\'")}'`;
-}
-
-function findPhpFunctionRange(
-	source: string,
-	functionName: string,
-): {
-	end: number;
-	start: number;
-} | null {
-	const signaturePattern = new RegExp(`function\\s+${escapeRegex(functionName)}\\s*\\(`, "u");
-	const signatureMatch = signaturePattern.exec(source);
-	if (!signatureMatch || signatureMatch.index === undefined) {
-		return null;
-	}
-
-	const functionStart = signatureMatch.index;
-	const openBraceIndex = source.indexOf("{", functionStart);
-	if (openBraceIndex === -1) {
-		return null;
-	}
-
-	let depth = 0;
-	for (let index = openBraceIndex; index < source.length; index += 1) {
-		const character = source[index];
-		if (character === "{") {
-			depth += 1;
-			continue;
-		}
-		if (character !== "}") {
-			continue;
-		}
-		depth -= 1;
-		if (depth === 0) {
-			let functionEnd = index + 1;
-			while (functionEnd < source.length && /[\r\n]/u.test(source[functionEnd] ?? "")) {
-				functionEnd += 1;
-			}
-			return {
-				end: functionEnd,
-				start: functionStart,
-			};
-		}
-	}
-
-	return null;
-}
-
-function replacePhpFunctionDefinition(
-	source: string,
-	functionName: string,
-	replacement: string,
-): string | null {
-	const functionRange = findPhpFunctionRange(source, functionName);
-	if (!functionRange) {
-		return null;
-	}
-
-	return [
-		source.slice(0, functionRange.start),
-		replacement,
-		source.slice(functionRange.end),
-	].join("");
-}
 
 function buildPatternConfigEntry(patternSlug: string): string {
 	return [
@@ -135,14 +71,6 @@ function buildEditorPluginConfigEntry(
 		`\t\tslot: ${quoteTsString(slot)},`,
 		"\t},",
 	].join("\n");
-}
-
-function toPascalCaseFromSlug(slug: string): string {
-	return normalizeBlockSlug(slug)
-		.split("-")
-		.filter(Boolean)
-		.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-		.join("");
 }
 
 function buildPatternSource(
@@ -277,7 +205,7 @@ registerBlockBindingsSource( {
 }
 
 function buildEditorPluginTypesSource(editorPluginSlug: string): string {
-	const typeName = `${toPascalCaseFromSlug(editorPluginSlug)}SidebarModel`;
+	const typeName = `${toPascalCase(editorPluginSlug)}SidebarModel`;
 
 	return `export interface ${typeName} {
 \tprimaryActionLabel: string;
@@ -290,10 +218,10 @@ function buildEditorPluginDataSource(
 	editorPluginSlug: string,
 	slot: string,
 ): string {
-	const typeName = `${toPascalCaseFromSlug(editorPluginSlug)}SidebarModel`;
+	const typeName = `${toPascalCase(editorPluginSlug)}SidebarModel`;
 	const pluginTitle = toTitleCase(editorPluginSlug);
-	const modelFactoryName = `get${toPascalCaseFromSlug(editorPluginSlug)}SidebarModel`;
-	const enabledFactoryName = `is${toPascalCaseFromSlug(editorPluginSlug)}Enabled`;
+	const modelFactoryName = `get${toPascalCase(editorPluginSlug)}SidebarModel`;
+	const enabledFactoryName = `is${toPascalCase(editorPluginSlug)}Enabled`;
 
 	return `import type { ${typeName} } from './types';
 
@@ -319,7 +247,7 @@ function buildEditorPluginSidebarSource(
 	editorPluginSlug: string,
 	textDomain: string,
 ): string {
-	const pascalName = toPascalCaseFromSlug(editorPluginSlug);
+	const pascalName = toPascalCase(editorPluginSlug);
 	const modelFactoryName = `get${pascalName}SidebarModel`;
 	const enabledFactoryName = `is${pascalName}Enabled`;
 	const componentName = `${pascalName}Sidebar`;
@@ -375,7 +303,7 @@ function buildEditorPluginEntrySource(
 	namespace: string,
 	textDomain: string,
 ): string {
-	const pascalName = toPascalCaseFromSlug(editorPluginSlug);
+	const pascalName = toPascalCase(editorPluginSlug);
 	const componentName = `${pascalName}Sidebar`;
 	const pluginName = `${namespace}-${editorPluginSlug}`;
 	const pluginTitle = toTitleCase(editorPluginSlug);
@@ -548,8 +476,6 @@ function ${bindingEditorEnqueueFunctionName}() {
 			/add_action\(\s*["']init["']\s*,\s*["'][^"']+_load_textdomain["']\s*\);\s*\n/u,
 			/\?>\s*$/u,
 		];
-		const hasPhpFunctionDefinition = (functionName: string): boolean =>
-			new RegExp(`function\\s+${escapeRegex(functionName)}\\s*\\(`, "u").test(nextSource);
 		const insertPhpSnippet = (snippet: string): void => {
 			for (const anchor of insertionAnchors) {
 				const candidate = nextSource.replace(anchor, (match) => `${snippet}\n${match}`);
@@ -569,10 +495,10 @@ function ${bindingEditorEnqueueFunctionName}() {
 			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
 		};
 
-		if (!hasPhpFunctionDefinition(bindingRegistrationFunctionName)) {
+		if (!hasPhpFunctionDefinition(nextSource, bindingRegistrationFunctionName)) {
 			insertPhpSnippet(bindingRegistrationFunction);
 		}
-		if (!hasPhpFunctionDefinition(bindingEditorEnqueueFunctionName)) {
+		if (!hasPhpFunctionDefinition(nextSource, bindingEditorEnqueueFunctionName)) {
 			insertPhpSnippet(bindingEditorEnqueueFunction);
 		}
 
@@ -638,8 +564,6 @@ function ${enqueueFunctionName}() {
 			/add_action\(\s*["']init["']\s*,\s*["'][^"']+_load_textdomain["']\s*\);\s*\n/u,
 			/\?>\s*$/u,
 		];
-		const hasPhpFunctionDefinition = (functionName: string): boolean =>
-			new RegExp(`function\\s+${escapeRegex(functionName)}\\s*\\(`, "u").test(nextSource);
 		const insertPhpSnippet = (snippet: string): void => {
 			for (const anchor of insertionAnchors) {
 				const candidate = nextSource.replace(anchor, (match) => `${snippet}\n${match}`);
@@ -659,7 +583,7 @@ function ${enqueueFunctionName}() {
 			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
 		};
 
-		if (!hasPhpFunctionDefinition(enqueueFunctionName)) {
+		if (!hasPhpFunctionDefinition(nextSource, enqueueFunctionName)) {
 			insertPhpSnippet(enqueueFunction);
 		} else {
 			const requiredReferences = [

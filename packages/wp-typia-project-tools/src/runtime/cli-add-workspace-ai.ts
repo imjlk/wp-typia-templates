@@ -21,7 +21,6 @@ import {
 	buildAiFeatureTypesSource,
 	buildAiFeatureValidatorsSource,
 	buildAiFeatureApiSource,
-	toPascalCaseFromAiFeatureSlug,
 } from "./cli-add-workspace-ai-source-emitters.js";
 import {
 	ensureAiFeatureBootstrapAnchors,
@@ -40,11 +39,8 @@ import {
 	resolveScaffoldCompatibilityPolicy,
 	updatePluginHeaderCompatibility,
 } from "./scaffold-compatibility.js";
-import { toTitleCase } from "./string-case.js";
-
-function quotePhpString(value: string): string {
-	return `'${value.replace(/\\/gu, "\\\\").replace(/'/gu, "\\'")}'`;
-}
+import { quotePhpString } from "./php-utils.js";
+import { toPascalCase, toTitleCase } from "./string-case.js";
 
 function buildAiFeaturePhpSource(
 	aiFeatureSlug: string,
@@ -545,7 +541,7 @@ export async function runAddAiFeatureCommand({
 			"utf8",
 		);
 
-		const pascalCase = toPascalCaseFromAiFeatureSlug(aiFeatureSlug);
+		const pascalCase = toPascalCase(aiFeatureSlug);
 		await syncAiFeatureRestArtifacts({
 			clientFile: `src/ai-features/${aiFeatureSlug}/api-client.ts`,
 			outputDir: path.join("src", "ai-features", aiFeatureSlug),
