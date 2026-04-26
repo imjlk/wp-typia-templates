@@ -13,6 +13,7 @@ import { defineDataViews } from "@wp-typia/dataviews";
 interface Book {
   readonly createdAt: string;
   readonly id: number;
+  readonly metadata: { readonly isbn: string };
   readonly published: boolean;
   readonly status: "draft" | "publish";
   readonly title: string;
@@ -151,6 +152,13 @@ defineDataViews<Book>({
   fields: {},
   // @ts-expect-error idField must be a key of Book.
   idField: "missing",
+});
+
+defineDataViews<Book>({
+  defaultView: { type: "table" },
+  fields: {},
+  // @ts-expect-error idField must reference a string or number field.
+  idField: "metadata",
 });
 
 defineDataViews<Book>({

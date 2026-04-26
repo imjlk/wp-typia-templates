@@ -82,12 +82,15 @@ const productViews = defineDataViews<Product>({
 const config = productViews.createConfig({ data: [] });
 ```
 
-The field map rejects ids outside `keyof T`, and sort/filter fields in
-`defaultView` stay tied to the same model. Runtime metadata maps common schema
-types into DataViews fields: `string` to `text`, `number`/`integer` to numeric
-fields, `boolean` to `boolean`, `date`/`date-time` formats to `date`/`datetime`,
-and `email`/`uri`/`url` formats to `email`/`url`. Literal and enum metadata can
-generate `elements` without hand-writing the repetitive value/label objects.
+The field map rejects ids outside `keyof T`, `idField` only accepts string or
+number model keys for automatic DataViews row identity, and sort/filter fields
+in `defaultView` stay tied to the same model. Use `getItemId` for custom,
+nullable, or object-backed identity values. Runtime metadata maps common schema
+types through `normalizeDataViewsFieldType`: `string` to `text`,
+`number`/`integer` to numeric fields, `boolean` to `boolean`, `date`/`date-time`
+formats to `date`/`datetime`, and `email`/`uri`/`url` formats to `email`/`url`.
+Literal and enum metadata can generate `elements` without hand-writing the
+repetitive value/label objects.
 
 ## Styles
 

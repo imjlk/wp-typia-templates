@@ -81,6 +81,14 @@ export type DataViewsFieldId<TItem extends object = DataViewsRecord> = Extract<
 
 export type DataViewsScalar = boolean | number | string;
 
+export type DataViewsItemIdValue = number | string;
+
+export type DataViewsItemIdField<TItem extends object = DataViewsRecord> = {
+  readonly [TKey in DataViewsFieldId<TItem>]-?: TItem[TKey] extends DataViewsItemIdValue
+    ? TKey
+    : never;
+}[DataViewsFieldId<TItem>];
+
 export type DataViewsFieldElementValue<TValue> =
   Extract<NonNullable<TValue>, DataViewsScalar> extends never
     ? DataViewsScalar
@@ -339,7 +347,7 @@ export interface DefineDataViewsInput<TItem extends object> {
   readonly fields: DefineDataViewsFields<TItem>;
   readonly getItemId?: (item: TItem) => string;
   readonly getItemLevel?: (item: TItem) => number;
-  readonly idField?: DataViewsFieldId<TItem>;
+  readonly idField?: DataViewsItemIdField<TItem>;
   readonly search?: boolean;
   readonly searchLabel?: string;
   readonly titleField?: DataViewsFieldId<TItem>;
@@ -372,7 +380,7 @@ export interface DefinedDataViews<TItem extends object> {
   readonly fields: readonly DataViewsResolvedField<TItem>[];
   readonly getItemId?: (item: TItem) => string;
   readonly getItemLevel?: (item: TItem) => number;
-  readonly idField?: DataViewsFieldId<TItem>;
+  readonly idField?: DataViewsItemIdField<TItem>;
   readonly search?: boolean;
   readonly searchLabel?: string;
   readonly titleField?: DataViewsFieldId<TItem>;
@@ -561,13 +569,27 @@ function getFirstDataViewsSchemaType(
 }
 
 function createGetItemId<TItem extends object>(
-  idField: DataViewsFieldId<TItem> | undefined,
+  idField: DataViewsItemIdField<TItem> | undefined,
 ): ((item: TItem) => string) | undefined {
   if (idField === undefined) {
     return undefined;
   }
 
-  return (item) => String(item[idField]);
+  return (item) => {
+    const idValue = item[idField];
+
+    if (typeof idValue === "string") {
+      return idValue;
+    }
+
+    if (typeof idValue === "number" && Number.isFinite(idValue)) {
+      return String(idValue);
+    }
+
+    throw new TypeError(
+      `defineDataViews idField "${idField}" must resolve to a string or finite number. Provide getItemId for custom item identity values.`,
+    );
+  };
 }
 
 function formatDataViewsFieldLabel(id: string): string {

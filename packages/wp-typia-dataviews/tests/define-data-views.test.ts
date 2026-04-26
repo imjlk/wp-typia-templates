@@ -171,4 +171,18 @@ describe("defineDataViews", () => {
     expect(config.getItemId?.(sampleProduct)).toBe("product:1");
     expect(config.getItemLevel?.(sampleProduct)).toBe(2);
   });
+
+  test("guards unsafe idField values when runtime input bypasses the type contract", () => {
+    const views = defineDataViews<Product>({
+      defaultView: { type: "table" },
+      fields: {
+        title: { schema: { type: "string" } },
+      },
+      idField: "metadata" as never,
+    });
+
+    expect(() => views.createConfig({ data: [sampleProduct] }).getItemId?.(sampleProduct)).toThrow(
+      'idField "metadata" must resolve to a string or finite number',
+    );
+  });
 });

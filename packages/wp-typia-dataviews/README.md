@@ -56,6 +56,9 @@ const config = productViews.createConfig({ data: [] });
 Common schema metadata is normalized for DataViews defaults, including
 `string` to `text`, numeric schemas to numeric fields, date formats to
 `date`/`datetime`, and `email`/`uri`/`url` formats to `email`/`url`.
+`idField` is limited to string or number model keys for automatic row identity;
+use `getItemId` when identity comes from a nullable, object-backed, or custom
+value.
 
 Use WordPress' package for the actual components in WordPress-built scripts:
 
