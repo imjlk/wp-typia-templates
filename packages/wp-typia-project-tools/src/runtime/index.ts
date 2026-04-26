@@ -155,7 +155,9 @@ export {
 export {
 	createReadlinePrompt,
 	createCliCommandError,
+	createCliDiagnosticCodeError,
 	CliDiagnosticError,
+	CLI_DIAGNOSTIC_CODES,
 	formatCliDiagnosticError,
 	formatAddHelpText,
 	formatDoctorCheckLine,
@@ -185,6 +187,8 @@ export {
 	runScaffoldFlow,
 } from "./cli-core.js";
 export type {
+	CliDiagnosticCode,
+	CliDiagnosticCodeError,
 	CliDiagnosticMessage,
 	DoctorCheck,
 	EditorPluginSlotId,

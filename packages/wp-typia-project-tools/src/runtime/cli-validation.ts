@@ -1,5 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
+import {
+	CLI_DIAGNOSTIC_CODES,
+	createCliDiagnosticCodeError,
+} from "./cli-diagnostics.js";
 
 /**
  * Normalize one optional CLI string flag by trimming whitespace and collapsing
@@ -55,7 +59,8 @@ export function resolveLocalCliPathOption(options: {
 
 	const resolvedPath = path.resolve(options.cwd, normalizedValue);
 	if (!fs.existsSync(resolvedPath)) {
-		throw new Error(
+		throw createCliDiagnosticCodeError(
+			CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
 			`\`${options.label}\` path does not exist: ${resolvedPath}. Check the path relative to ${options.cwd}.`,
 		);
 	}
@@ -76,7 +81,8 @@ export function assertExternalLayerCompositionOptions(options: {
 	externalLayerSource?: string;
 }): void {
 	if (options.externalLayerId && !options.externalLayerSource) {
-		throw new Error(
+		throw createCliDiagnosticCodeError(
+			CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
 			"externalLayerId requires externalLayerSource when composing built-in template layers.",
 		);
 	}
@@ -114,7 +120,8 @@ export function assertBuiltInTemplateVariantAllowed(options: {
 		return;
 	}
 
-	throw new Error(
+	throw createCliDiagnosticCodeError(
+		CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
 		createBuiltInVariantErrorMessage({
 			templateId: options.templateId,
 			variant: options.variant,

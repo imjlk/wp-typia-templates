@@ -28,7 +28,9 @@
 export { getDoctorChecks, runDoctor, type DoctorCheck } from "./cli-doctor.js";
 export {
 	createCliCommandError,
+	createCliDiagnosticCodeError,
 	CliDiagnosticError,
+	CLI_DIAGNOSTIC_CODES,
 	formatCliDiagnosticError,
 	formatDoctorCheckLine,
 	formatDoctorSummaryLine,
@@ -36,7 +38,11 @@ export {
 	getFailingDoctorChecks,
 	isCliDiagnosticError,
 } from "./cli-diagnostics.js";
-export type { CliDiagnosticMessage } from "./cli-diagnostics.js";
+export type {
+	CliDiagnosticCode,
+	CliDiagnosticCodeError,
+	CliDiagnosticMessage,
+} from "./cli-diagnostics.js";
 export {
 	EDITOR_PLUGIN_SLOT_IDS,
 	formatAddHelpText,
