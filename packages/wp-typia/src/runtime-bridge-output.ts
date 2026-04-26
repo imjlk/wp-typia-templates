@@ -156,7 +156,7 @@ export function serializeCompletionPayload(
  */
 export function buildStructuredCompletionSuccessPayload(
   command: string,
-  completion: AlternateBufferCompletionPayload | undefined | void,
+  completion: AlternateBufferCompletionPayload | void,
   metadata: Record<string, unknown> = {},
 ): StructuredCompletionSuccessPayload {
   const serializedCompletion = completion
@@ -166,8 +166,8 @@ export function buildStructuredCompletionSuccessPayload(
   return {
     ok: true,
     data: {
-      command,
       ...metadata,
+      command,
       ...(serializedCompletion
         ? {
             completion: serializedCompletion,
