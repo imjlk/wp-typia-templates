@@ -138,6 +138,12 @@ export {
 	transformPackageManagerText,
 } from "./package-managers.js";
 export {
+	clearPackageVersionsCache,
+	getPackageVersions,
+	invalidatePackageVersionsCache,
+} from "./package-versions.js";
+export type { PackageVersions } from "./package-versions.js";
+export {
 	TEMPLATE_IDS,
 	TEMPLATE_REGISTRY,
 	getTemplateById,

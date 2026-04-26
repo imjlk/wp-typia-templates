@@ -29,6 +29,7 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(typeof rootModule.formatAddHelpText).toBe('function');
     expect(typeof rootModule.formatMigrationHelpText).toBe('function');
     expect(typeof rootModule.getDoctorChecks).toBe('function');
+    expect(typeof rootModule.getPackageVersions).toBe('function');
     expect(typeof rootModule.getTemplateById).toBe('function');
     expect(typeof rootModule.inspectBlockGeneration).toBe('function');
     expect(typeof rootModule.listTemplates).toBe('function');
@@ -38,6 +39,8 @@ describe('@wp-typia/project-tools import policy', () => {
     expect(typeof rootModule.runAddBlockCommand).toBe('function');
     expect(typeof rootModule.runMigrationCommand).toBe('function');
     expect(typeof rootModule.runScaffoldFlow).toBe('function');
+    expect(typeof rootModule.clearPackageVersionsCache).toBe('function');
+    expect(typeof rootModule.invalidatePackageVersionsCache).toBe('function');
     expect(typeof aiArtifactsModule.syncWordPressAiArtifacts).toBe('function');
     expect(typeof aiArtifactsModule.projectWordPressAiSchema).toBe('function');
     expect(

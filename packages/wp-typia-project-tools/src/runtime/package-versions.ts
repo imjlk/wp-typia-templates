@@ -9,7 +9,7 @@ interface PackageManifest {
 	version?: string;
 }
 
-interface PackageVersions {
+export interface PackageVersions {
 	apiClientPackageVersion: string;
 	blockRuntimePackageVersion: string;
 	blockTypesPackageVersion: string;
@@ -132,10 +132,25 @@ function composePackageVersionsCacheKey(
  * manifests when they want the next lookup to recompute version metadata
  * synchronously from disk.
  */
-export function invalidatePackageVersionsCache(): void {
+export function clearPackageVersionsCache(): void {
 	cachedPackageVersions = null;
 }
 
+/**
+ * Backwards-compatible alias for integrations that adopted the original
+ * internal invalidation name before the public cache policy was documented.
+ */
+export function invalidatePackageVersionsCache(): void {
+	clearPackageVersionsCache();
+}
+
+/**
+ * Resolve package versions used in generated manifests and onboarding text.
+ *
+ * The lookup keeps a process-local cached result while recomputing manifest
+ * fingerprints on each call. When the relevant package metadata changes on
+ * disk, the cache key changes and the returned version object is refreshed.
+ */
 export function getPackageVersions(): PackageVersions {
 	const createManifestLocation = resolvePackageManifestLocation(
 		path.join(PROJECT_TOOLS_PACKAGE_ROOT, "package.json"),
