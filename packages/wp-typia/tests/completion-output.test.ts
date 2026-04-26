@@ -11,6 +11,7 @@ import {
 import {
   buildAddCompletionPayload,
   buildAddDryRunPayload,
+  buildStructuredCompletionSuccessPayload,
   buildSyncDryRunPayload,
 } from '../src/runtime-bridge-output';
 
@@ -307,6 +308,24 @@ describe('alternate-buffer completion output helpers', () => {
     expect(payload.warningLines).toBeUndefined();
     expect(payload.optionalTitle).toBe('Planned workspace updates (1):');
     expect(payload.optionalLines).toEqual(['write src/blocks/faq/block.json']);
+  });
+
+  test('structured completion files include all dry-run file operations', () => {
+    const payload = buildStructuredCompletionSuccessPayload('add', {
+      optionalLines: [
+        'write src/blocks/promo-card/block.json',
+        'update scripts/block-config.ts',
+        'delete src/blocks/old-card/block.json',
+        `npx --yes wp-typia@${packageJson.version} doctor`,
+      ],
+      title: 'Dry run for workspace add command',
+    });
+
+    expect(payload.data.files).toEqual([
+      'src/blocks/promo-card/block.json',
+      'scripts/block-config.ts',
+      'src/blocks/old-card/block.json',
+    ]);
   });
 
   test('dry-run sync payload previews the generated sync commands', () => {

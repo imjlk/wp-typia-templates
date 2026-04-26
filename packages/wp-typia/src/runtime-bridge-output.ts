@@ -119,7 +119,7 @@ function toNonEmptyArray(values: string[] | undefined): string[] | undefined {
 
 function extractPlannedFiles(payload: SerializableCompletionPayload): string[] | undefined {
   const files = payload.optionalLines
-    ?.map((line) => line.match(/^write\s+(.+)$/u)?.[1])
+    ?.map((line) => line.match(/^(?:delete|update|write)\s+(.+)$/u)?.[1])
     .filter((value): value is string => typeof value === 'string' && value.length > 0);
 
   return toNonEmptyArray(files);
