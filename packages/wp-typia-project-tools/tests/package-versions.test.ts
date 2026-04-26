@@ -101,7 +101,11 @@ describe("package version cache invalidation", () => {
 			assert.equal(refreshedByAlias.projectToolsPackageVersion, "^1.2.4");
 		`;
 
-		const result = spawnSync(process.execPath, ["--eval", script], {
+		// The inline script imports TypeScript source, so keep the child process on Bun
+		// even if this test is ever launched through a Node-based wrapper.
+		const bunBinary =
+			process.env.BUN_BINARY ?? ("Bun" in globalThis ? process.execPath : "bun");
+		const result = spawnSync(bunBinary, ["--eval", script], {
 			cwd: linkedProjectToolsRoot,
 			encoding: "utf8",
 			env: {
@@ -110,8 +114,15 @@ describe("package version cache invalidation", () => {
 			},
 		});
 
-		expect(result.stderr).toBe("");
-		expect(result.stdout).toBe("");
+		if (result.status !== 0) {
+			throw new Error(
+				`package-versions cache script failed (status=${result.status}, error=${
+					result.error?.message ?? "none"
+				}):\n${result.stderr}`,
+			);
+		}
 		expect(result.status).toBe(0);
+		expect(result.stdout).toBe("");
+		expect(result.stderr).toBe("");
 	});
 });
