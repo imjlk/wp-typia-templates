@@ -53,6 +53,10 @@ const productViews = defineDataViews<Product>({
 const config = productViews.createConfig({ data: [] });
 ```
 
+Common schema metadata is normalized for DataViews defaults, including
+`string` to `text`, numeric schemas to numeric fields, date formats to
+`date`/`datetime`, and `email`/`uri`/`url` formats to `email`/`url`.
+
 Use WordPress' package for the actual components in WordPress-built scripts:
 
 ```ts

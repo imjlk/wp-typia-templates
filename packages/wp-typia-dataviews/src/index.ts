@@ -348,6 +348,8 @@ export interface DefineDataViewsInput<TItem extends object> {
 export interface DefineDataViewsConfigOptions<TItem extends object> {
   readonly actions?: readonly DataViewsAction<TItem>[];
   readonly data: readonly TItem[];
+  readonly getItemId?: (item: TItem) => string;
+  readonly getItemLevel?: (item: TItem) => number;
   readonly isLoading?: boolean;
   readonly onChangeSelection?: (selection: readonly string[]) => void;
   readonly onChangeView?: (view: DataViewsView<TItem>) => void;
@@ -394,8 +396,8 @@ export function defineDataViews<TItem extends object>(
       data: options.data,
       defaultLayouts: definition.defaultLayouts,
       fields,
-      getItemId: defaultGetItemId,
-      getItemLevel: definition.getItemLevel,
+      getItemId: options.getItemId ?? defaultGetItemId,
+      getItemLevel: options.getItemLevel ?? definition.getItemLevel,
       isLoading: options.isLoading,
       onChangeSelection: options.onChangeSelection,
       onChangeView: options.onChangeView,
@@ -423,9 +425,19 @@ function normalizeDefineDataViewsFields<TItem extends object>(
 ): readonly DataViewsResolvedField<TItem>[] {
   return (
     Object.entries(fields) as Array<
-      [DataViewsFieldId<TItem>, DefineDataViewsFieldDefinition<TItem, DataViewsFieldId<TItem>>]
+      [
+        DataViewsFieldId<TItem>,
+        DefineDataViewsFieldDefinition<TItem, DataViewsFieldId<TItem>> | undefined,
+      ]
     >
-  ).map(([id, field]) => normalizeDefineDataViewsField(id, field));
+  )
+    .filter(
+      (entry): entry is [
+        DataViewsFieldId<TItem>,
+        DefineDataViewsFieldDefinition<TItem, DataViewsFieldId<TItem>>,
+      ] => entry[1] !== undefined,
+    )
+    .map(([id, field]) => normalizeDefineDataViewsField(id, field));
 }
 
 function normalizeDefineDataViewsField<
@@ -527,7 +539,9 @@ function getDataViewsSchemaElementValues<TValue>(
 function getFirstDataViewsSchemaType(
   type: DataViewsFieldSchemaMetadata["type"] | undefined,
 ): DataViewsFieldType | undefined {
-  const schemaType = Array.isArray(type) ? type.find((candidate) => candidate !== "object") : type;
+  const schemaType = Array.isArray(type)
+    ? (type.find((candidate) => candidate !== "object") ?? type[0])
+    : type;
 
   if (schemaType === "string") {
     return "text";

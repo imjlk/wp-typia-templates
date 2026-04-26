@@ -7,12 +7,26 @@ interface Product {
   readonly featured: boolean;
   readonly homepage: string;
   readonly id: number;
+  readonly metadata: { readonly sku: string };
   readonly price: number;
   readonly publishedOn: string;
   readonly status: "draft" | "publish";
   readonly title: string;
   readonly views: number;
 }
+
+const sampleProduct: Product = {
+  createdAt: "2026-04-26T00:00:00Z",
+  featured: true,
+  homepage: "https://example.com",
+  id: 1,
+  metadata: { sku: "WP-TYPIA-1" },
+  price: 19.99,
+  publishedOn: "2026-04-26",
+  status: "publish",
+  title: "Typed block patterns",
+  views: 42,
+};
 
 describe("defineDataViews", () => {
   test("normalizes primitive schema metadata into DataViews field types", () => {
@@ -39,9 +53,7 @@ describe("defineDataViews", () => {
       titleField: "title",
       type: "table",
     });
-    expect(views.createConfig({ data: [{ ...sampleProduct, id: 7 }] }).getItemId?.(sampleProduct)).toBe(
-      "1",
-    );
+    expect(views.createConfig({ data: [sampleProduct] }).getItemId?.(sampleProduct)).toBe("1");
   });
 
   test("normalizes enum metadata into typed field elements", () => {
@@ -112,16 +124,51 @@ describe("defineDataViews", () => {
       type: "date",
     });
   });
-});
 
-const sampleProduct: Product = {
-  createdAt: "2026-04-26T00:00:00Z",
-  featured: true,
-  homepage: "https://example.com",
-  id: 1,
-  price: 19.99,
-  publishedOn: "2026-04-26",
-  status: "publish",
-  title: "Typed block patterns",
-  views: 42,
-};
+  test("skips optional field entries explicitly set to undefined", () => {
+    const views = defineDataViews<Product>({
+      defaultView: { type: "table" },
+      fields: {
+        title: undefined,
+        views: { schema: { type: "integer" } },
+      },
+    });
+
+    expect(views.fields).toEqual([{ id: "views", label: "Views", type: "integer" }]);
+    expect(views.defaultView.fields).toEqual(["views"]);
+  });
+
+  test("preserves object schema metadata when object is the only array type", () => {
+    const views = defineDataViews<Product>({
+      defaultView: { type: "table" },
+      fields: {
+        metadata: { schema: { type: ["object"] } },
+      },
+    });
+
+    expect(views.fieldMap.metadata).toMatchObject({
+      id: "metadata",
+      label: "Metadata",
+      type: "object",
+    });
+  });
+
+  test("allows createConfig callers to override item identity callbacks", () => {
+    const views = defineDataViews<Product>({
+      defaultView: { type: "table" },
+      fields: {
+        title: { schema: { type: "string" } },
+      },
+      getItemLevel: (product) => product.views,
+      idField: "id",
+    });
+    const config = views.createConfig({
+      data: [sampleProduct],
+      getItemId: (product) => `product:${product.id}`,
+      getItemLevel: () => 2,
+    });
+
+    expect(config.getItemId?.(sampleProduct)).toBe("product:1");
+    expect(config.getItemLevel?.(sampleProduct)).toBe(2);
+  });
+});
