@@ -1,8 +1,12 @@
 import type {
   DataFormConfig,
+  DataFormConfigOptions,
+  DataFormFieldInput,
+  DataFormFieldLayout,
   DataViewsAction,
   DataViewsConfig,
   DataViewsField,
+  DataViewsFieldValidationRules,
   DataViewsQueryAdapterOptions,
   DataViewsView,
   DefinedDataViews,
@@ -10,6 +14,7 @@ import type {
   QueryAdapter,
 } from "@wp-typia/dataviews";
 import {
+  createDataFormConfig,
   createDataViewsQueryAdapter,
   defineDataViews,
   toDataViewsQueryArgs,
@@ -93,6 +98,33 @@ const form = {
   fields: [{ id: "title", label: "Title" }],
 } satisfies DataFormConfig<Book>;
 
+const formOptions = {
+  fields: [
+    {
+      children: [{ id: "title" }],
+      id: "metadata",
+      layout: { isOpened: false, summary: "title", type: "card" },
+      label: "Metadata",
+    },
+    "views",
+  ],
+  includeReadOnly: true,
+} satisfies DataFormConfigOptions<Book>;
+
+const titleValidation = {
+  maxLength: 120,
+  minLength: 3,
+  pattern: "^[A-Z]",
+  required: true,
+} satisfies DataViewsFieldValidationRules<Book, string>;
+
+const regularLayout = {
+  labelPosition: "top",
+  type: "regular",
+} satisfies DataFormFieldLayout<Book>;
+
+const formFieldInputs = ["title", { id: "views", layout: regularLayout }] satisfies readonly DataFormFieldInput<Book>[];
+
 const bookViews = defineDataViews<Book>({
   defaultView: {
     filters: [{ field: "status", operator: "isAny", value: ["draft", "publish"] }],
@@ -117,12 +149,13 @@ const bookViews = defineDataViews<Book>({
       description: "Book title",
       enableGlobalSearch: true,
       enableHiding: false,
+      isValid: titleValidation,
       label: "Title",
-      schema: { type: "string" },
+      schema: { maxLength: 160, minLength: 1, required: true, type: "string" },
     },
     views: {
       enableSorting: true,
-      schema: { type: "integer" },
+      schema: { maximum: 100_000, minimum: 0, type: "integer" },
     },
   },
   idField: "id",
@@ -172,6 +205,11 @@ const queryOptions = {
 const reusableQueryAdapter = createDataViewsQueryAdapter<Book, BookQuery>(queryOptions);
 const queryArgs = toDataViewsQueryArgs<Book, BookQuery>(view, queryOptions);
 const definedQueryArgs = bookViews.toQueryArgs<BookQuery>(view, queryOptions);
+const standaloneFormConfig = createDataFormConfig<Book>(fields, {
+  fields: formFieldInputs,
+  layout: regularLayout,
+});
+const definedFormConfig = bookViews.toFormConfig(formOptions);
 
 const compactQueryOptions = {
   pageParam: false,
@@ -270,7 +308,11 @@ void configInput;
 void compactQueryArgs;
 void compactReusableQueryAdapter(view, { fields });
 void definedCompactQueryArgs;
+void definedFormConfig;
+void standaloneFormConfig;
 void form;
+void formOptions;
+void regularLayout;
 void invalidCompactSortQueryOptions;
 void adapter(view, { fields });
 void bookViews.createConfig({ data: [] });

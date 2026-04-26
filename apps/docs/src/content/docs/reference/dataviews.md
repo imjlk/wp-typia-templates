@@ -15,9 +15,12 @@ admin screens:
 - `DataViewsView`
 - `DataViewsAction`
 - `DataFormConfig`
+- `DataFormConfigOptions`
+- `DataViewsFieldValidationRules`
 - `QueryAdapter`
 - `DataViewsQueryAdapterOptions`
 - `defineDataViews`
+- `createDataFormConfig`
 - `createDataViewsQueryAdapter`
 - `toDataViewsQueryArgs`
 
@@ -33,12 +36,15 @@ actual components:
 ```ts
 import type {
   DataFormConfig,
+  DataFormConfigOptions,
   DataViewsField,
+  DataViewsFieldValidationRules,
   DataViewsQueryAdapterOptions,
   DataViewsView,
   QueryAdapter,
 } from '@wp-typia/dataviews';
 import {
+  createDataFormConfig,
   createDataViewsQueryAdapter,
   defineDataViews,
   toDataViewsQueryArgs,
@@ -99,6 +105,38 @@ types through `normalizeDataViewsFieldType`: `string` to `text`,
 formats to `date`/`datetime`, and `email`/`uri`/`url` formats to `email`/`url`.
 Literal and enum metadata can generate `elements` without hand-writing the
 repetitive value/label objects.
+
+## DataForm Config
+
+Use `definedViews.toFormConfig(options)` to generate a basic DataForm
+configuration for single-record editing from the same normalized fields:
+
+```ts
+const form = productViews.toFormConfig({
+  fields: [
+    'title',
+    {
+      id: 'status',
+      layout: { labelPosition: 'side', type: 'regular' },
+    },
+    'views',
+  ],
+});
+```
+
+The helper fills DataForm field labels and descriptions from the normalized
+DataViews fields, supports nested `children`, and supports the basic
+`regular`, `panel`, and `card` layouts owned by the wp-typia facade. Read-only
+fields are skipped by default; pass `includeReadOnly: true` when a read-only
+field should still be shown in the generated form. For standalone field arrays,
+call `createDataFormConfig(fields, options)`.
+
+Schema metadata is mapped into DataForm field validation hints on
+`field.isValid`: `required`, `minimum`/`min`, `maximum`/`max`, `pattern`,
+`minLength`, and `maxLength`. Enum and const schemas opt into element
+validation. These hints are intentionally best-effort UI metadata. They do not
+execute typia validation and should not replace runtime validation for REST
+writes, persistence, or server-side authorization.
 
 ## Styles
 
