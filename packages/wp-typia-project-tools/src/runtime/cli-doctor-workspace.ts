@@ -21,6 +21,7 @@ import {
 	type WorkspacePackageJson,
 	type WorkspaceProject,
 } from "./workspace-project.js";
+import { escapeRegex } from "./php-utils.js";
 
 import type { DoctorCheck } from "./cli-doctor.js";
 
@@ -58,10 +59,6 @@ function createDoctorScopeCheck(
 	detail: string,
 ): DoctorCheck {
 	return createDoctorCheck("Doctor scope", status, detail);
-}
-
-function escapeRegex(value: string): string {
-	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
 
 function getWorkspaceBootstrapRelativePath(packageName: string): string {

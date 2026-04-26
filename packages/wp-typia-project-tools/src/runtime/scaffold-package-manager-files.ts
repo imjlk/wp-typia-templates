@@ -9,6 +9,7 @@ import {
 	transformPackageManagerText,
 } from "./package-managers.js";
 import type { PackageManagerId } from "./package-managers.js";
+import type { GeneratedPackageJson } from "./package-json-types.js";
 
 const LOCKFILES: Record<PackageManagerId, string[]> = {
 	bun: ["bun.lock", "bun.lockb"],
@@ -16,11 +17,6 @@ const LOCKFILES: Record<PackageManagerId, string[]> = {
 	pnpm: ["pnpm-lock.yaml"],
 	yarn: ["yarn.lock"],
 };
-
-interface GeneratedPackageJson {
-	packageManager?: string;
-	scripts?: Record<string, string>;
-}
 
 /**
  * Normalizes scaffolded package-manager specific files for the selected toolchain.

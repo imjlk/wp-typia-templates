@@ -1,18 +1,9 @@
 import {
-	normalizeBlockSlug,
 	quoteTsString,
 	type RestResourceMethodId,
 } from "./cli-add-shared.js";
 import { buildRestResourceEndpointManifest } from "./rest-resource-artifacts.js";
-import { toTitleCase } from "./string-case.js";
-
-export function toPascalCaseFromSlug(slug: string): string {
-	return normalizeBlockSlug(slug)
-		.split("-")
-		.filter(Boolean)
-		.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-		.join("");
-}
+import { toPascalCase, toTitleCase } from "./string-case.js";
 
 function indentMultiline(source: string, prefix: string): string {
 	return source
@@ -26,7 +17,7 @@ export function buildRestResourceConfigEntry(
 	namespace: string,
 	methods: RestResourceMethodId[],
 ): string {
-	const pascalCase = toPascalCaseFromSlug(restResourceSlug);
+	const pascalCase = toPascalCase(restResourceSlug);
 	const title = toTitleCase(restResourceSlug);
 	const manifest = buildRestResourceEndpointManifest(
 		{
@@ -61,7 +52,7 @@ export function buildRestResourceTypesSource(
 	restResourceSlug: string,
 	methods: RestResourceMethodId[],
 ): string {
-	const pascalCase = toPascalCaseFromSlug(restResourceSlug);
+	const pascalCase = toPascalCase(restResourceSlug);
 	const lines = [
 		"import { tags } from 'typia';",
 		"",
@@ -156,7 +147,7 @@ export function buildRestResourceValidatorsSource(
 	restResourceSlug: string,
 	methods: RestResourceMethodId[],
 ): string {
-	const pascalCase = toPascalCaseFromSlug(restResourceSlug);
+	const pascalCase = toPascalCase(restResourceSlug);
 	const importedTypes = new Set<string>();
 	const validatorDeclarations: string[] = [];
 	const validatorEntries: string[] = [];
@@ -216,7 +207,7 @@ export function buildRestResourceApiSource(
 	restResourceSlug: string,
 	methods: RestResourceMethodId[],
 ): string {
-	const pascalCase = toPascalCaseFromSlug(restResourceSlug);
+	const pascalCase = toPascalCase(restResourceSlug);
 	const typeImports = new Set<string>();
 	const clientEndpointImports: string[] = [];
 	const exportedBindings: string[] = [];
@@ -373,7 +364,7 @@ export function buildRestResourceDataSource(
 	restResourceSlug: string,
 	methods: RestResourceMethodId[],
 ): string {
-	const pascalCase = toPascalCaseFromSlug(restResourceSlug);
+	const pascalCase = toPascalCase(restResourceSlug);
 	const typeImports = new Set<string>();
 	const endpointImports: string[] = [];
 	const exportedBindings: string[] = [];

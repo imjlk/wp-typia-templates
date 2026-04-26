@@ -5,6 +5,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import ts from "typescript";
 
 import { REST_RESOURCE_METHOD_IDS } from "./cli-add-shared.js";
+import { escapeRegex } from "./php-utils.js";
 
 export interface WorkspaceBlockInventoryEntry {
 	apiTypesFile?: string;
@@ -848,10 +849,6 @@ function appendEntriesAtMarker(source: string, marker: string, entries: string[]
 	}
 
 	return source.replace(marker, `${entries.join("\n")}\n${marker}`);
-}
-
-function escapeRegex(value: string): string {
-	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
 
 function ensureInterfaceField(

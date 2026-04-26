@@ -25,19 +25,15 @@ import {
 	buildRestResourceDataSource,
 	buildRestResourceTypesSource,
 	buildRestResourceValidatorsSource,
-	toPascalCaseFromSlug,
 } from "./cli-add-workspace-rest-source-emitters.js";
+import { quotePhpString } from "./php-utils.js";
 import { syncRestResourceArtifacts } from "./rest-resource-artifacts.js";
-import { toTitleCase } from "./string-case.js";
+import { toPascalCase, toTitleCase } from "./string-case.js";
 import {
 	appendWorkspaceInventoryEntries,
 	readWorkspaceInventory,
 } from "./workspace-inventory.js";
 import { resolveWorkspaceProject } from "./workspace-project.js";
-
-function quotePhpString(value: string): string {
-	return `'${value.replace(/\\/gu, "\\\\").replace(/'/gu, "\\'")}'`;
-}
 
 function buildRestResourceRouteRegistrations(
 	restResourceSlug: string,
@@ -572,7 +568,7 @@ export async function runAddRestResourceCommand({
 			validatorsFile: `src/rest/${restResourceSlug}/api-validators.ts`,
 			variables: {
 				namespace: resolvedNamespace,
-				pascalCase: toPascalCaseFromSlug(restResourceSlug),
+				pascalCase: toPascalCase(restResourceSlug),
 				slugKebabCase: restResourceSlug,
 				title: toTitleCase(restResourceSlug),
 			},

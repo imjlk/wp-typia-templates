@@ -36,6 +36,9 @@ test("scaffold runtime delegates identifier, document, bootstrap, and package he
 	expect(scaffoldSource).toContain('from "./scaffold-apply-utils.js"');
 	expect(scaffoldSource).toContain('from "./scaffold-bootstrap.js"');
 	expect(scaffoldSource).toContain('from "./scaffold-package-manager-files.js"');
+	expect(scaffoldSource).not.toContain(
+		'import {\n} from "./scaffold-answer-resolution.js";',
+	);
 	expect(scaffoldSource).toContain(
 		'export { buildBlockCssClassName } from "./scaffold-identifiers.js";',
 	);
@@ -53,12 +56,18 @@ test("scaffold runtime delegates identifier, document, bootstrap, and package he
 	);
 	expect(documentsReExportPattern.test(applyUtilsSource)).toBe(true);
 	expect(applyUtilsSource).toContain('from "./scaffold-package-manager-files.js"');
+	expect(applyUtilsSource).toContain('from "./scaffold-bootstrap.js"');
+	expect(applyUtilsSource).not.toContain(
+		"export async function applyWorkspaceMigrationCapability(",
+	);
 	expect(applyUtilsSource).not.toContain("async function normalizePackageJson(");
 	expect(documentsSource).toContain("export function buildReadme(");
 	expect(documentsSource).toContain("export function buildGitignore(");
 	expect(documentsSource).toContain("export function mergeTextLines(");
 	expect(bootstrapSource).toContain("export async function ensureScaffoldDirectory(");
 	expect(bootstrapSource).toContain("export async function applyWorkspaceMigrationCapability(");
+	expect(bootstrapSource).toContain('from "./package-json-types.js"');
+	expect(packageManagerFilesSource).toContain('from "./package-json-types.js"');
 	expect(packageManagerFilesSource).toContain("export async function normalizePackageJson(");
 	expect(packageManagerFilesSource).toContain("export async function defaultInstallDependencies(");
 });

@@ -10,7 +10,14 @@ import {
 	readWorkspaceInventory,
 } from "./workspace-inventory.js";
 import { resolveWorkspaceProject, type WorkspaceProject } from "./workspace-project.js";
-import { toTitleCase } from "./string-case.js";
+import { toPascalCase, toTitleCase } from "./string-case.js";
+import {
+	escapeRegex,
+	findPhpFunctionRange,
+	hasPhpFunctionDefinition,
+	quotePhpString,
+	replacePhpFunctionDefinition,
+} from "./php-utils.js";
 import {
 	assertAbilityDoesNotExist,
 	assertValidGeneratedSlug,
@@ -41,62 +48,6 @@ const WP_CORE_ABILITIES_PACKAGE_VERSION = "^0.9.0";
 const WP_ABILITIES_SCRIPT_MODULE_ID = "@wordpress/abilities";
 const WP_CORE_ABILITIES_SCRIPT_MODULE_ID = "@wordpress/core-abilities";
 
-function escapeRegex(value: string): string {
-	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
-}
-
-function quotePhpString(value: string): string {
-	return `'${value.replace(/\\/gu, "\\\\").replace(/'/gu, "\\'")}'`;
-}
-
-function findPhpFunctionRange(
-	source: string,
-	functionName: string,
-): { end: number; source: string; start: number } | null {
-	const functionPattern = new RegExp(
-		`function\\s+${escapeRegex(functionName)}\\s*\\([^)]*\\)\\s*\\{`,
-		"u",
-	);
-	const match = functionPattern.exec(source);
-	if (!match) {
-		return null;
-	}
-
-	const openingBraceIndex = match.index + match[0].length - 1;
-	let depth = 0;
-	for (let index = openingBraceIndex; index < source.length; index += 1) {
-		const character = source[index];
-		if (character === "{") {
-			depth += 1;
-		} else if (character === "}") {
-			depth -= 1;
-			if (depth === 0) {
-				const end = index + 1;
-				return {
-					end,
-					source: source.slice(match.index, end),
-					start: match.index,
-				};
-			}
-		}
-	}
-
-	return null;
-}
-
-function replacePhpFunctionDefinition(
-	source: string,
-	functionName: string,
-	replacement: string,
-): string {
-	const functionRange = findPhpFunctionRange(source, functionName);
-	if (!functionRange) {
-		return source;
-	}
-
-	return `${source.slice(0, functionRange.start)}${replacement.trimStart()}${source.slice(functionRange.end)}`;
-}
-
 function resolveManagedDependencyVersion(
 	existingVersion: string | undefined,
 	requiredVersion: string,
@@ -116,14 +67,6 @@ function resolveManagedDependencyVersion(
 		: requiredVersion;
 }
 
-function toPascalCaseFromAbilitySlug(abilitySlug: string): string {
-	return normalizeBlockSlug(abilitySlug)
-		.split("-")
-		.filter(Boolean)
-		.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-		.join("");
-}
-
 function toAbilityCategorySlug(workspaceNamespace: string): string {
 	const normalizedNamespace = workspaceNamespace
 		.replace(/[^a-z0-9-]+/gu, "-")
@@ -137,7 +80,7 @@ function buildAbilityConfigEntry(
 	abilitySlug: string,
 	compatibilityPolicy: ScaffoldCompatibilityPolicy,
 ): string {
-	const pascalCase = toPascalCaseFromAbilitySlug(abilitySlug);
+	const pascalCase = toPascalCase(abilitySlug);
 
 	return [
 		"\t{",
@@ -192,7 +135,7 @@ function buildAbilityConfigSource(
 }
 
 function buildAbilityTypesSource(abilitySlug: string): string {
-	const pascalCase = toPascalCaseFromAbilitySlug(abilitySlug);
+	const pascalCase = toPascalCase(abilitySlug);
 
 	return `export interface ${pascalCase}AbilityInput {
 \tcontextId: number;
@@ -209,7 +152,7 @@ export interface ${pascalCase}AbilityOutput {
 }
 
 function buildAbilityDataSource(abilitySlug: string): string {
-	const pascalCase = toPascalCaseFromAbilitySlug(abilitySlug);
+	const pascalCase = toPascalCase(abilitySlug);
 	const abilityConstBase = abilitySlug
 		.toUpperCase()
 		.replace(/[^A-Z0-9]+/gu, "_")
@@ -311,7 +254,7 @@ export async function run${pascalCase}Ability(
 }
 
 function buildAbilityClientSource(abilitySlug: string): string {
-	const pascalCase = toPascalCaseFromAbilitySlug(abilitySlug);
+	const pascalCase = toPascalCase(abilitySlug);
 
 	return `/**
  * Re-export the typed ${pascalCase} ability client helpers.
@@ -760,10 +703,6 @@ function ${enqueueFunctionName}() {
 			/add_action\(\s*["']init["']\s*,\s*["'][^"']+_load_textdomain["']\s*\);\s*\n/u,
 			/\?>\s*$/u,
 		];
-		const hasPhpFunctionDefinition = (functionName: string): boolean =>
-			new RegExp(`function\\s+${escapeRegex(functionName)}\\s*\\(`, "u").test(
-				nextSource,
-			);
 		const insertPhpSnippet = (snippet: string): void => {
 			for (const anchor of insertionAnchors) {
 				const candidate = nextSource.replace(anchor, (match) => `${snippet}\n${match}`);
@@ -783,21 +722,23 @@ function ${enqueueFunctionName}() {
 			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
 		};
 
-		if (!hasPhpFunctionDefinition(loadFunctionName)) {
+		if (!hasPhpFunctionDefinition(nextSource, loadFunctionName)) {
 			insertPhpSnippet(loadFunction);
 		}
-		if (!hasPhpFunctionDefinition(enqueueFunctionName)) {
+		if (!hasPhpFunctionDefinition(nextSource, enqueueFunctionName)) {
 			insertPhpSnippet(enqueueFunction);
 		} else if (
 			!findPhpFunctionRange(nextSource, enqueueFunctionName)?.source.includes(
 				"wp_enqueue_script_module",
 			)
 		) {
-			nextSource = replacePhpFunctionDefinition(
-				nextSource,
-				enqueueFunctionName,
-				enqueueFunction,
-			);
+			nextSource =
+				replacePhpFunctionDefinition(
+					nextSource,
+					enqueueFunctionName,
+					enqueueFunction,
+					{ trimReplacementStart: true },
+				) ?? nextSource;
 		}
 
 		if (!nextSource.includes(loadHook)) {
@@ -1139,7 +1080,7 @@ export async function runAddAbilityCommand({
 			"utf8",
 		);
 
-		const pascalCase = toPascalCaseFromAbilitySlug(abilitySlug);
+		const pascalCase = toPascalCase(abilitySlug);
 		await syncTypeSchemas({
 			jsonSchemaFile: `src/abilities/${abilitySlug}/input.schema.json`,
 			projectRoot: workspace.projectDir,

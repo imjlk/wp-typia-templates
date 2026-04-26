@@ -6,13 +6,10 @@ import {
 	getWorkspaceBootstrapPath,
 	patchFile,
 } from "./cli-add-shared.js";
+import { hasPhpFunctionDefinition } from "./php-utils.js";
 import type { WorkspaceProject } from "./workspace-project.js";
 
 const AI_FEATURE_SERVER_GLOB = "/inc/ai-features/*.php";
-
-function escapeRegex(value: string): string {
-	return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
-}
 
 /**
  * Patch the workspace bootstrap file so it loads generated AI feature PHP modules.
@@ -38,8 +35,6 @@ function ${registerFunctionName}() {
 			/add_action\(\s*["']init["']\s*,\s*["'][^"']+_load_textdomain["']\s*\);\s*\n/u,
 			/\?>\s*$/u,
 		];
-		const hasPhpFunctionDefinition = (functionName: string): boolean =>
-			new RegExp(`function\\s+${escapeRegex(functionName)}\\s*\\(`, "u").test(nextSource);
 		const insertPhpSnippet = (snippet: string): void => {
 			for (const anchor of insertionAnchors) {
 				const candidate = nextSource.replace(anchor, (match) => `${snippet}\n${match}`);
@@ -59,7 +54,7 @@ function ${registerFunctionName}() {
 			nextSource = `${nextSource.trimEnd()}\n${snippet}\n`;
 		};
 
-		if (!hasPhpFunctionDefinition(registerFunctionName)) {
+		if (!hasPhpFunctionDefinition(nextSource, registerFunctionName)) {
 			insertPhpSnippet(registerFunction);
 		} else if (!nextSource.includes(AI_FEATURE_SERVER_GLOB)) {
 			throw new Error(
