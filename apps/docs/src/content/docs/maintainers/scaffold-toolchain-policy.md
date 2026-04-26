@@ -67,6 +67,28 @@ Why caret ranges are still the default for scaffolded package manifests:
 - the CLI and generated tests already validate the current package surface
   against that ranged dependency strategy before release
 
+## Package version cache policy
+
+`getPackageVersions()` uses a process-local cache to avoid reparsing package
+metadata when repeated scaffold operations run inside one CLI or integration
+process. The cache key includes the resolved project-tools manifest, sibling
+workspace package manifests, installed dependency manifests, file metadata, and
+a content fingerprint. When any of those manifests changes on disk, the next
+lookup recomputes versions and replaces the cached object.
+
+Long-lived integrations such as MCP servers, watch processes, and linked
+development shells should call `clearPackageVersionsCache()` from
+`@wp-typia/project-tools` after running `bun install`, changing package
+manifests, or relinking local packages. The next `getPackageVersions()` call
+then re-resolves the same manifest set synchronously. The older
+`invalidatePackageVersionsCache()` name remains available as a compatibility
+alias, but new integrations should prefer `clearPackageVersionsCache()`.
+
+`WP_TYPIA_PROJECT_TOOLS_PACKAGE_ROOT` is still an import-time package-root
+override. Set it before loading `@wp-typia/project-tools`; clearing the version
+cache refreshes package metadata under the already resolved root, not the module
+root itself.
+
 ## Practical summary
 
 When touching scaffolded package metadata:
@@ -77,3 +99,5 @@ When touching scaffolded package metadata:
   scaffolds unless this policy changes explicitly
 - keep generated `@wp-typia/*` dependencies on caret ranges sourced from
   `package-versions.ts`
+- use `clearPackageVersionsCache()` in long-lived integrations after package
+  metadata or linked package installs change
