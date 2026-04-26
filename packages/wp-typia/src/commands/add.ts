@@ -15,6 +15,10 @@ import {
 import { getAddBlockDefaults } from '../config';
 import { resolveBundledModuleHref } from '../render-loader';
 import { executeAddCommand } from '../runtime-bridge';
+import {
+  buildStructuredCompletionSuccessPayload,
+  extractCompletionProjectDir,
+} from '../runtime-bridge-output';
 import { supportsInteractiveTui } from '../runtime-capabilities';
 import type { WpTypiaRenderArgs } from './render-types';
 import { LazyFlow } from '../ui/lazy-flow';
@@ -50,7 +54,14 @@ export const addCommand = defineCommand({
           kind: args.positional[0],
           name: args.positional[1],
         });
-        args.output({ completion });
+        args.output(
+          buildStructuredCompletionSuccessPayload('add', completion, {
+            dryRun: Boolean(args.flags['dry-run']),
+            kind: args.positional[0],
+            name: args.positional[1],
+            projectDir: extractCompletionProjectDir(completion) ?? args.cwd,
+          }),
+        );
         return;
       }
 

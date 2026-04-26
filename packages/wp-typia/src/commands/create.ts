@@ -7,10 +7,17 @@ import {
 	CREATE_OPTION_METADATA,
 	resolveCommandOptionValues,
 } from "../command-option-metadata";
-import { emitCliDiagnosticFailure } from "../cli-diagnostic-output";
+import {
+	emitCliDiagnosticFailure,
+	prefersStructuredCliOutput,
+} from "../cli-diagnostic-output";
 import { getCreateDefaults } from "../config";
 import { resolveBundledModuleHref } from "../render-loader";
 import { executeCreateCommand } from "../runtime-bridge";
+import {
+	buildStructuredCompletionSuccessPayload,
+	extractCompletionProjectDir,
+} from "../runtime-bridge-output";
 import { supportsInteractiveTui } from "../runtime-capabilities";
 import type { WpTypiaRenderArgs } from "./render-types";
 import { LazyFlow } from "../ui/lazy-flow";
@@ -33,6 +40,7 @@ export const createCommand = defineCommand({
 	defaultFormat: "toon",
 	description: "Scaffold a new wp-typia project.",
 	handler: async (args) => {
+		const prefersStructuredOutput = prefersStructuredCliOutput(args);
 		const projectDir = args.positional[0];
 		if (!projectDir) {
 			emitCliDiagnosticFailure(args, {
@@ -45,11 +53,25 @@ export const createCommand = defineCommand({
 			return;
 		}
 		try {
-			await executeCreateCommand({
+			const completion = await executeCreateCommand({
 				cwd: args.cwd,
+				emitOutput: !prefersStructuredOutput,
 				flags: args.flags as Record<string, unknown>,
+				interactive: prefersStructuredOutput ? false : undefined,
 				projectDir,
 			});
+			if (prefersStructuredOutput) {
+				args.output(
+					buildStructuredCompletionSuccessPayload("create", completion, {
+						dryRun: Boolean(args.flags["dry-run"]),
+						projectDir: extractCompletionProjectDir(completion) ?? projectDir,
+						template:
+							typeof args.flags.template === "string"
+								? args.flags.template
+								: undefined,
+					}),
+				);
+			}
 		} catch (error) {
 			emitCliDiagnosticFailure(args, {
 				command: "create",

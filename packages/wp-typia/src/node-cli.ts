@@ -44,7 +44,9 @@ import {
   executeTemplatesCommand,
 } from './runtime-bridge';
 import {
+  buildStructuredCompletionSuccessPayload,
   buildSyncDryRunPayload,
+  extractCompletionProjectDir,
   printCompletionPayload,
 } from './runtime-bridge-output';
 import { resolveSyncExecutionTarget } from './runtime-bridge-sync';
@@ -511,12 +513,37 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
         ],
       });
     }
-    await executeCreateCommand({
-      cwd: process.cwd(),
-      flags: mergedFlags,
-      interactive: false,
-      projectDir,
-    });
+    let completion;
+    try {
+      completion = await executeCreateCommand({
+        cwd: process.cwd(),
+        emitOutput: mergedFlags.format !== 'json',
+        flags: mergedFlags,
+        interactive: false,
+        projectDir,
+      });
+    } catch (error) {
+      throw createCliCommandError({
+        command: 'create',
+        error,
+      });
+    }
+    if (mergedFlags.format === 'json') {
+      printLine(
+        JSON.stringify(
+          buildStructuredCompletionSuccessPayload('create', completion, {
+            dryRun: Boolean(mergedFlags['dry-run']),
+            projectDir: extractCompletionProjectDir(completion) ?? projectDir,
+            template:
+              typeof mergedFlags.template === 'string'
+                ? mergedFlags.template
+                : undefined,
+          }),
+          null,
+          2,
+        ),
+      );
+    }
     return;
   }
 
@@ -576,9 +603,12 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
       }
       printLine(
         JSON.stringify(
-          {
-            completion,
-          },
+          buildStructuredCompletionSuccessPayload('add', completion, {
+            dryRun: Boolean(mergedFlags['dry-run']),
+            kind: positionals[1],
+            name: positionals[2],
+            projectDir: extractCompletionProjectDir(completion) ?? process.cwd(),
+          }),
           null,
           2,
         ),

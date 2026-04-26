@@ -404,6 +404,68 @@ describe('wp-typia package', () => {
     }
   });
 
+  test('emits structured create completion output in Node fallback JSON mode', () => {
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-create-json-'),
+    );
+
+    try {
+      const result = runCapturedCommand(
+        process.execPath,
+        [
+          entryPath,
+          'create',
+          'demo-json',
+          '--template',
+          'basic',
+          '--package-manager',
+          'npm',
+          '--yes',
+          '--dry-run',
+          '--no-install',
+          '--format',
+          'json',
+        ],
+        {
+          cwd: tempRoot,
+          env: withoutLocalBunEnv(),
+        },
+      );
+      const parsed = parseJsonObjectFromOutput<{
+        data?: {
+          command?: string;
+          completion?: {
+            title?: string;
+          };
+          dryRun?: boolean;
+          files?: string[];
+          projectDir?: string;
+          template?: string;
+          title?: string;
+        };
+        ok?: boolean;
+      }>(result.stdout);
+      const serialized = JSON.stringify(parsed);
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe('');
+      expect(parsed.ok).toBe(true);
+      expect(parsed.data?.command).toBe('create');
+      expect(parsed.data?.dryRun).toBe(true);
+      expect(parsed.data?.projectDir).toBe(
+        path.join(fs.realpathSync(tempRoot), 'demo-json'),
+      );
+      expect(parsed.data?.template).toBe('basic');
+      expect(parsed.data?.title).toContain('Dry run for Demo Json');
+      expect(parsed.data?.completion?.title).toBe(parsed.data?.title);
+      expect(parsed.data?.files).toContain('package.json');
+      expect(parsed.data?.files).toContain('src/index.tsx');
+      expect(serialized).not.toMatch(/[✅🧪⏳⚠]/u);
+    } finally {
+      fs.rmSync(tempRoot, { force: true, recursive: true });
+    }
+  });
+
   test('renders a human-readable version line through the canonical bin', () => {
     const output = runUtf8Command('node', [entryPath, '--version']);
 
@@ -1317,28 +1379,45 @@ describe('wp-typia package', () => {
     try {
       await scaffoldOfficialWorkspace(projectDir);
       linkWorkspaceNodeModules(projectDir);
+      const nestedCwd = path.join(projectDir, 'src', 'nested-cwd');
+      fs.mkdirSync(nestedCwd, { recursive: true });
 
       const result = runCapturedCommand(
         process.execPath,
         [entryPath, 'add', 'block', 'promo-card', '--format', 'json'],
         {
-          cwd: projectDir,
+          cwd: nestedCwd,
           env: withoutLocalBunEnv(),
         },
       );
       const parsed = parseJsonObjectFromOutput<{
-        completion?: {
+        data?: {
+          command?: string;
+          completion?: {
+            summaryLines?: string[];
+            title?: string;
+          };
+          kind?: string;
+          name?: string;
+          projectDir?: string;
           summaryLines?: string[];
           title?: string;
         };
+        ok?: boolean;
       }>(result.stdout);
+      const serialized = JSON.stringify(parsed);
 
       expect(result.status).toBe(0);
       expect(result.stderr).toBe('');
-      expect(parsed.completion?.title).toContain('Added workspace block');
-      expect(parsed.completion?.summaryLines).toContain(
-        'Template family: basic',
-      );
+      expect(parsed.ok).toBe(true);
+      expect(parsed.data?.command).toBe('add');
+      expect(parsed.data?.kind).toBe('block');
+      expect(parsed.data?.name).toBe('promo-card');
+      expect(parsed.data?.projectDir).toBe(fs.realpathSync(projectDir));
+      expect(parsed.data?.title).toContain('Added workspace block');
+      expect(parsed.data?.completion?.title).toBe(parsed.data?.title);
+      expect(parsed.data?.summaryLines).toContain('Template family: basic');
+      expect(serialized).not.toMatch(/[✅🧪⏳⚠]/u);
       expect(
         fs.existsSync(
           path.join(projectDir, 'src', 'blocks', 'promo-card', 'block.json'),

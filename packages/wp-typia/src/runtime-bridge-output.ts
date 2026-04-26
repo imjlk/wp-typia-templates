@@ -22,6 +22,34 @@ export type CreateProgressPayload = {
   title: string;
 };
 
+export type StructuredCompletionSuccessPayload = {
+  ok: true;
+  data: {
+    command: string;
+    completion?: SerializableCompletionPayload;
+    files?: string[];
+    nextSteps?: string[];
+    optionalLines?: string[];
+    optionalNote?: string;
+    optionalTitle?: string;
+    preambleLines?: string[];
+    summaryLines?: string[];
+    title?: string;
+    warnings?: string[];
+  } & Record<string, unknown>;
+};
+
+export type SerializableCompletionPayload = {
+  nextSteps?: string[];
+  optionalLines?: string[];
+  optionalNote?: string;
+  optionalTitle?: string;
+  preambleLines?: string[];
+  summaryLines?: string[];
+  title: string;
+  warningLines?: string[];
+};
+
 type ExternalLayerSelectOption = {
   description?: string;
   extends: string[];
@@ -83,6 +111,98 @@ export function printCompletionPayload(
   if (payload.optionalNote) {
     printLine(`Note: ${payload.optionalNote}`);
   }
+}
+
+function toNonEmptyArray(values: string[] | undefined): string[] | undefined {
+  return values && values.length > 0 ? values : undefined;
+}
+
+function extractPlannedFiles(payload: SerializableCompletionPayload): string[] | undefined {
+  const files = payload.optionalLines
+    ?.map((line) => line.match(/^(?:delete|update|write)\s+(.+)$/u)?.[1])
+    .filter((value): value is string => typeof value === 'string' && value.length > 0);
+
+  return toNonEmptyArray(files);
+}
+
+const PROJECT_DIRECTORY_SUMMARY_PREFIX = 'Project directory: ';
+
+/**
+ * Reads the normalized workspace path from a completion summary when present.
+ *
+ * @param completion Completion payload returned by an add/create runtime.
+ * @returns The runtime-resolved project directory, or undefined when absent.
+ */
+export function extractCompletionProjectDir(
+  completion: AlternateBufferCompletionPayload | void,
+): string | undefined {
+  const projectDir = completion?.summaryLines
+    ?.find((line) => line.startsWith(PROJECT_DIRECTORY_SUMMARY_PREFIX))
+    ?.slice(PROJECT_DIRECTORY_SUMMARY_PREFIX.length)
+    .trim();
+
+  return projectDir && projectDir.length > 0 ? projectDir : undefined;
+}
+
+/**
+ * Converts a completion payload into a JSON-safe shape without terminal markers.
+ *
+ * @param payload Human-readable completion payload.
+ * @returns A marker-free payload suitable for structured CLI success output.
+ */
+export function serializeCompletionPayload(
+  payload: AlternateBufferCompletionPayload,
+): SerializableCompletionPayload {
+  return {
+    nextSteps: toNonEmptyArray(payload.nextSteps),
+    optionalLines: toNonEmptyArray(payload.optionalLines),
+    optionalNote: payload.optionalNote,
+    optionalTitle: payload.optionalTitle,
+    preambleLines: toNonEmptyArray(payload.preambleLines),
+    summaryLines: toNonEmptyArray(payload.summaryLines),
+    title: stripLeadingOutputMarker(payload.title),
+    warningLines: toNonEmptyArray(payload.warningLines),
+  };
+}
+
+/**
+ * Wraps structured completion data in the same success envelope used by JSON CLI output.
+ *
+ * @param command Command name that produced the completion payload.
+ * @param completion Completion payload returned by the runtime bridge.
+ * @param metadata Additional command-specific fields for automation.
+ * @returns JSON-serializable success payload.
+ */
+export function buildStructuredCompletionSuccessPayload(
+  command: string,
+  completion: AlternateBufferCompletionPayload | void,
+  metadata: Record<string, unknown> = {},
+): StructuredCompletionSuccessPayload {
+  const serializedCompletion = completion
+    ? serializeCompletionPayload(completion)
+    : undefined;
+
+  return {
+    ok: true,
+    data: {
+      ...metadata,
+      command,
+      ...(serializedCompletion
+        ? {
+            completion: serializedCompletion,
+            files: extractPlannedFiles(serializedCompletion),
+            nextSteps: serializedCompletion.nextSteps,
+            optionalLines: serializedCompletion.optionalLines,
+            optionalNote: serializedCompletion.optionalNote,
+            optionalTitle: serializedCompletion.optionalTitle,
+            preambleLines: serializedCompletion.preambleLines,
+            summaryLines: serializedCompletion.summaryLines,
+            title: serializedCompletion.title,
+            warnings: serializedCompletion.warningLines,
+          }
+        : {}),
+    },
+  };
 }
 
 /**
