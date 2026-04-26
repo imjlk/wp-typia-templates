@@ -19,6 +19,8 @@
       "@wp-typia/api-client/*": ["packages/wp-typia-api-client/src/*"],
       "@wp-typia/block-types": ["packages/wp-typia-block-types/src/index.ts"],
       "@wp-typia/block-types/*": ["packages/wp-typia-block-types/src/*"],
+      "@wp-typia/dataviews": ["packages/wp-typia-dataviews/src/index.ts"],
+      "@wp-typia/dataviews/*": ["packages/wp-typia-dataviews/src/*"],
       "@wp-typia/block-runtime": [
         "packages/wp-typia-block-runtime/src/index.ts"
       ],

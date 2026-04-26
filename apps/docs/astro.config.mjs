@@ -146,6 +146,10 @@ export default defineConfig({
               link: '/reference/cli/',
             },
             {
+              label: 'DataViews Compatibility',
+              link: '/reference/dataviews/',
+            },
+            {
               label: 'Error Export Contracts',
               link: '/reference/error-export-contracts/',
             },
