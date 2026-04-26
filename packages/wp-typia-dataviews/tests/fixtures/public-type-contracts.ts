@@ -3,6 +3,7 @@ import type {
   DataFormConfigOptions,
   DataFormFieldInput,
   DataFormFieldLayout,
+  DataFormPanelFieldSummary,
   DataViewsAction,
   DataViewsConfig,
   DataViewsField,
@@ -124,6 +125,11 @@ const regularLayout = {
   labelPosition: "top",
   type: "regular",
 } satisfies DataFormFieldLayout<Book>;
+
+const panelSummary = "title" satisfies DataFormPanelFieldSummary<Book>;
+
+// @ts-expect-error panel summaries do not support card-only visibility items.
+const invalidPanelSummary = [{ id: "title", visibility: "always" }] satisfies DataFormPanelFieldSummary<Book>;
 
 const formFieldInputs = ["title", { id: "views", layout: regularLayout }] satisfies readonly DataFormFieldInput<Book>[];
 
@@ -314,8 +320,10 @@ void definedFormConfig;
 void standaloneFormConfig;
 void form;
 void formOptions;
+void panelSummary;
 void regularLayout;
 void invalidCompactSortQueryOptions;
+void invalidPanelSummary;
 void adapter(view, { fields });
 void bookViews.createConfig({ data: [] });
 void definedQueryArgs;

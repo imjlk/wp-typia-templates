@@ -313,6 +313,10 @@ export type DataFormFieldSummary<TItem extends object = DataViewsRecord> =
   | readonly DataViewsFieldId<TItem>[]
   | readonly DataFormFieldSummaryItem<TItem>[];
 
+export type DataFormPanelFieldSummary<TItem extends object = DataViewsRecord> =
+  | DataViewsFieldId<TItem>
+  | readonly DataViewsFieldId<TItem>[];
+
 export interface DataFormRegularFieldLayout {
   readonly labelPosition?: DataFormFieldLabelPosition;
   readonly type: "regular";
@@ -322,7 +326,7 @@ export interface DataFormPanelFieldLayout<TItem extends object = DataViewsRecord
   readonly editVisibility?: "always" | "on-hover";
   readonly labelPosition?: DataFormFieldLabelPosition;
   readonly openAs?: "dropdown" | "modal";
-  readonly summary?: DataFormFieldSummary<TItem>;
+  readonly summary?: DataFormPanelFieldSummary<TItem>;
   readonly type: "panel";
 }
 
