@@ -24,8 +24,6 @@ The advanced and internal sections are documented so maintainers and power users
 can understand the published surface area, but they should be treated as
 secondary imports compared with the core package roots and primary subpaths.
 
-This repository has multiple public surfaces:
-
 ## Package Map
 
 - `wp-typia`
@@ -82,6 +80,9 @@ The CLI is the primary entrypoint for new users.
 bunx wp-typia create my-block
 npx wp-typia create my-block
 ```
+
+For command-by-command usage and flags, see the
+[CLI Reference](./cli.md).
 
 Common commands:
 
@@ -344,7 +345,7 @@ Error contract:
   `RestRootResolutionError`, or `RestQueryHookUsageError`
 - assertion APIs may throw `RestValidationAssertionError`
 
-## 5. `@wp-typia/api-client`
+## 4. `@wp-typia/api-client`
 
 `@wp-typia/api-client` is the transport-neutral sibling to `@wp-typia/rest`.
 
@@ -403,7 +404,7 @@ as `{ mechanism: "rest-nonce" }` or
 Legacy `authMode` is still accepted for compatibility, but it is now adapter
 metadata rather than the primary authored meaning.
 
-## 6. `@wp-typia/block-runtime`
+## 5. `@wp-typia/block-runtime`
 
 `@wp-typia/block-runtime` is the normative generated-project runtime package for
 shared block helpers, while `@wp-typia/block-runtime/metadata-core` owns the
@@ -439,7 +440,7 @@ Those splits improve ownership and maintainability without changing the
 supported import paths. For lower-level helper entrypoints that sit adjacent to
 these facades, use the hosted Advanced Helpers section under `/api/advanced/`.
 
-## 7. Generated project runtime
+## 6. Generated project runtime
 
 Each scaffolded project exposes a few predictable files:
 
@@ -749,7 +750,7 @@ When you opt `compound` into persistence with `--data-storage` or `--persistence
 
 For persistence-enabled `compound`, the parent block follows the same REST extension pattern as `persistence`, including the dedicated `/bootstrap` endpoint for fresh session-only write data. The hidden child block does not own REST routes or storage behavior.
 
-## 8. Repo-local example app
+## 7. Repo-local example app
 
 The repository keeps two reference apps:
 
@@ -780,7 +781,7 @@ bun run examples:test:e2e
 
 Legacy root shortcuts such as `bun run dev` and `bun run test:e2e` remain available as compatibility aliases.
 
-## 9. Generated reference docs
+## 8. Generated reference docs
 
 Contributor note:
 

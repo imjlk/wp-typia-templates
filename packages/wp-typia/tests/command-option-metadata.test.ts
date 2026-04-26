@@ -4,6 +4,7 @@ import {
 	ADD_OPTION_METADATA,
 	buildCommandOptionParser,
 	CREATE_OPTION_METADATA,
+	DOCTOR_OPTION_METADATA,
 	GLOBAL_OPTION_METADATA,
 	parseCommandArgvWithMetadata,
 	resolveCommandOptionValues,
@@ -84,5 +85,20 @@ describe("command option metadata helpers", () => {
 			"dry-run": true,
 		});
 		expect(parsed.positionals).toEqual([]);
+	});
+
+	test("parses doctor structured output flags from shared metadata", () => {
+		const parsed = parseCommandArgvWithMetadata(["doctor", "--format", "json"], {
+			extraBooleanOptionNames: ["help", "version"],
+			parser: buildCommandOptionParser(
+				GLOBAL_OPTION_METADATA,
+				DOCTOR_OPTION_METADATA,
+			),
+		});
+
+		expect(parsed.flags).toEqual({
+			format: "json",
+		});
+		expect(parsed.positionals).toEqual(["doctor"]);
 	});
 });

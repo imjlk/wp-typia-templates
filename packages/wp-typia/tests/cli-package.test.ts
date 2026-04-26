@@ -662,6 +662,9 @@ describe('wp-typia package', () => {
     expect(syncCommandSource).toContain(
       'buildCommandOptions(SYNC_OPTION_METADATA)',
     );
+    expect(doctorCommandSource).toContain(
+      'buildCommandOptions(DOCTOR_OPTION_METADATA)',
+    );
     expect(migrateCommandSource).toContain(
       'buildCommandOptions(MIGRATE_OPTION_METADATA)',
     );
@@ -677,6 +680,9 @@ describe('wp-typia package', () => {
     );
     expect(nodeCliSource).toContain(
       'formatNodeFallbackOptionHelp(SYNC_OPTION_METADATA)',
+    );
+    expect(nodeCliSource).toContain(
+      'formatNodeFallbackOptionHelp(DOCTOR_OPTION_METADATA)',
     );
     expect(nodeCliSource).toContain(
       'formatNodeFallbackOptionHelp(MIGRATE_OPTION_METADATA)',

@@ -242,6 +242,16 @@ export const SYNC_OPTION_METADATA = {
 } as const satisfies CommandOptionMetadataMap;
 
 /**
+ * Shared `wp-typia doctor` option metadata.
+ */
+export const DOCTOR_OPTION_METADATA = {
+	format: {
+		description: "Use `json` for machine-readable doctor check output.",
+		type: "string",
+	},
+} as const satisfies CommandOptionMetadataMap;
+
+/**
  * Shared `wp-typia templates` option metadata.
  */
 export const TEMPLATES_OPTION_METADATA = {
