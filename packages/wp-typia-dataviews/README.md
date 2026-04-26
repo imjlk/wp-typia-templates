@@ -19,6 +19,38 @@ import type {
   DataViewsView,
   QueryAdapter,
 } from '@wp-typia/dataviews';
+import { defineDataViews } from '@wp-typia/dataviews';
+```
+
+`defineDataViews<T>()` adds the typed convenience layer for field maps,
+defaults, and common schema metadata:
+
+```ts
+interface Product {
+  id: number;
+  status: 'draft' | 'publish';
+  title: string;
+  views: number;
+}
+
+const productViews = defineDataViews<Product>({
+  idField: 'id',
+  titleField: 'title',
+  defaultView: { type: 'table', page: 1, perPage: 20 },
+  fields: {
+    title: { schema: { type: 'string' } },
+    status: {
+      schema: {
+        type: 'string',
+        enum: ['draft', 'publish'],
+        enumLabels: { publish: 'Published' },
+      },
+    },
+    views: { enableSorting: true, schema: { type: 'integer' } },
+  },
+});
+
+const config = productViews.createConfig({ data: [] });
 ```
 
 Use WordPress' package for the actual components in WordPress-built scripts:

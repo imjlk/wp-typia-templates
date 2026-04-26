@@ -16,6 +16,7 @@ admin screens:
 - `DataViewsAction`
 - `DataFormConfig`
 - `QueryAdapter`
+- `defineDataViews`
 
 The facade intentionally does not re-export upstream Gutenberg types. This keeps
 generated projects insulated from DataViews/DataForm API churn while wp-typia
@@ -33,12 +34,60 @@ import type {
   DataViewsView,
   QueryAdapter,
 } from '@wp-typia/dataviews';
+import { defineDataViews } from '@wp-typia/dataviews';
 import { DataForm, DataViews } from '@wordpress/dataviews/wp';
 ```
 
 WordPress' package docs require the `/wp` import path when plugins or themes are
 built with `@wordpress/scripts`. Do not import components from
 `@wordpress/dataviews` directly in generated WordPress scripts.
+
+## Typed Config
+
+Use `defineDataViews<T>()` when field ids, defaults, and metadata should be tied
+to a TypeScript model:
+
+```ts
+interface Product {
+  id: number;
+  status: 'draft' | 'publish';
+  title: string;
+  views: number;
+}
+
+const productViews = defineDataViews<Product>({
+  idField: 'id',
+  titleField: 'title',
+  defaultView: {
+    sort: { direction: 'desc', field: 'views' },
+    type: 'table',
+  },
+  fields: {
+    title: { schema: { type: 'string' } },
+    status: {
+      filterBy: { operators: ['isAny', 'isNone'] },
+      schema: {
+        enum: ['draft', 'publish'],
+        enumLabels: { publish: 'Published' },
+        type: 'string',
+      },
+    },
+    views: {
+      enableSorting: true,
+      schema: { type: 'integer' },
+    },
+  },
+});
+
+const config = productViews.createConfig({ data: [] });
+```
+
+The field map rejects ids outside `keyof T`, and sort/filter fields in
+`defaultView` stay tied to the same model. Runtime metadata maps common schema
+types into DataViews fields: `string` to `text`, `number`/`integer` to numeric
+fields, `boolean` to `boolean`, and `date`/`date-time` formats to
+`date`/`datetime`. Literal and enum metadata can generate `elements` without
+hand-writing the repetitive value/label objects.
 
 ## Styles
 

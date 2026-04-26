@@ -37,9 +37,12 @@ describe("@wp-typia/dataviews type contracts", () => {
     const fixtureSource = readFileSync(fixtureSourcePath, "utf8");
 
     expect(fixtureSource).toContain("@wp-typia/dataviews");
+    expect(fixtureSource).toContain("defineDataViews");
     expect(fixtureSource).toContain("DataViewsField");
     expect(fixtureSource).toContain("DataViewsView");
     expect(fixtureSource).toContain("DataFormConfig");
+    expect(fixtureSource).toContain("DefinedDataViews");
+    expect(fixtureSource).toContain("DefineDataViewsInput");
     expect(fixtureSource).toContain("QueryAdapter");
     expect(fixtureSource).toContain("@ts-expect-error");
   });
