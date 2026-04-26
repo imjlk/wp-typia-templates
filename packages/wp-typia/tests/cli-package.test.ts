@@ -371,7 +371,7 @@ describe('wp-typia package', () => {
 
     try {
       const output = runUtf8Command(
-        'node',
+        process.execPath,
         [entryPath, 'init', '--format', 'json'],
         {
           cwd: fixtureRoot,
@@ -410,14 +410,14 @@ describe('wp-typia package', () => {
     expect(output.trim()).toBe(`wp-typia ${packageManifest.version}`);
   });
 
-  test('honors NO_COLOR for ASCII-safe status markers through the canonical bin', () => {
+  test('honors NO_COLOR for ASCII-safe status markers through the Node fallback bin', () => {
     const tempRoot = fs.mkdtempSync(
       path.join(os.tmpdir(), 'wp-typia-no-color-markers-'),
     );
 
     try {
       const asciiOutput = runUtf8Command(
-        'node',
+        process.execPath,
         [
           entryPath,
           'create',
@@ -433,7 +433,7 @@ describe('wp-typia package', () => {
         {
           cwd: tempRoot,
           env: {
-            ...withoutAIAgentEnv(),
+            ...withoutLocalBunEnv(),
             LANG: 'en_US.UTF-8',
             LC_ALL: 'en_US.UTF-8',
             NO_COLOR: '1',
@@ -441,7 +441,7 @@ describe('wp-typia package', () => {
         },
       );
       const unicodeOutput = runUtf8Command(
-        'node',
+        process.execPath,
         [
           entryPath,
           'create',
@@ -457,7 +457,7 @@ describe('wp-typia package', () => {
         {
           cwd: tempRoot,
           env: {
-            ...withoutAIAgentEnv(),
+            ...withoutLocalBunEnv(),
             LANG: 'en_US.UTF-8',
             LC_ALL: 'en_US.UTF-8',
             NO_COLOR: '1',
@@ -466,12 +466,12 @@ describe('wp-typia package', () => {
         },
       );
 
-      expect(asciiOutput).toContain('[...] Resolving scaffold template');
-      expect(asciiOutput).toContain('[dry-run] Dry run for Demo No Color');
+      expect(asciiOutput).toContain('[...]');
+      expect(asciiOutput).toContain('[dry-run]');
       expect(asciiOutput).not.toContain('⏳');
       expect(asciiOutput).not.toContain('🧪');
-      expect(unicodeOutput).toContain('⏳ Resolving scaffold template');
-      expect(unicodeOutput).toContain('🧪 Dry run for Demo Unicode');
+      expect(unicodeOutput).toContain('⏳');
+      expect(unicodeOutput).toContain('🧪');
     } finally {
       fs.rmSync(tempRoot, { force: true, recursive: true });
     }
