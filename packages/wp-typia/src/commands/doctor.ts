@@ -4,6 +4,10 @@ import {
 	emitCliDiagnosticFailure,
 	prefersStructuredCliOutput,
 } from "../cli-diagnostic-output";
+import {
+	buildCommandOptions,
+	DOCTOR_OPTION_METADATA,
+} from "../command-option-metadata";
 import { executeDoctorCommand } from "../runtime-bridge";
 
 export const doctorCommand = defineCommand({
@@ -41,6 +45,7 @@ export const doctorCommand = defineCommand({
 		}
 	},
 	name: "doctor",
+	options: buildCommandOptions(DOCTOR_OPTION_METADATA),
 });
 
 export default doctorCommand;

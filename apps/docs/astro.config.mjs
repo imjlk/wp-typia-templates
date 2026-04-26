@@ -142,6 +142,10 @@ export default defineConfig({
           label: 'Reference',
           items: [
             {
+              label: 'CLI Reference',
+              link: '/reference/cli/',
+            },
+            {
               label: 'Error Export Contracts',
               link: '/reference/error-export-contracts/',
             },

@@ -10,6 +10,7 @@ import {
   ADD_OPTION_METADATA,
   buildCommandOptionParser,
   CREATE_OPTION_METADATA,
+  DOCTOR_OPTION_METADATA,
   formatNodeFallbackOptionHelp,
   GLOBAL_OPTION_METADATA,
   MIGRATE_OPTION_METADATA,
@@ -68,6 +69,7 @@ const NODE_FALLBACK_OPTION_PARSER = buildCommandOptionParser(
   CREATE_OPTION_METADATA,
   ADD_OPTION_METADATA,
   MIGRATE_OPTION_METADATA,
+  DOCTOR_OPTION_METADATA,
   SYNC_OPTION_METADATA,
   TEMPLATES_OPTION_METADATA,
 );
@@ -293,6 +295,19 @@ function renderSyncHelp() {
   ]);
 }
 
+function renderDoctorHelp() {
+  printBlock([
+    'Usage: wp-typia doctor [--format json]',
+    '',
+    ...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
+    '',
+    'Runs read-only environment readiness checks. Official wp-typia workspace roots also get inventory, source-tree drift, and shared convention checks.',
+    '',
+    'Supported flags:',
+    ...formatNodeFallbackOptionHelp(DOCTOR_OPTION_METADATA),
+  ]);
+}
+
 function renderVersion(
   options: {
     format?: string;
@@ -417,32 +432,37 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
     cliArgv.length === 0 ||
     hasFlagBeforeTerminator(cliArgv, '--help') ||
     command === 'help';
+  const helpTarget = command === 'help' ? subcommand : command;
   const versionRequested =
     hasFlagBeforeTerminator(cliArgv, '--version') || command === 'version';
 
   if (helpRequested) {
-    if (command === 'templates') {
+    if (helpTarget === 'templates') {
       renderTemplatesHelp();
       return;
     }
-    if (command === 'create') {
+    if (helpTarget === 'create') {
       renderCreateHelp();
       return;
     }
-    if (command === 'init') {
+    if (helpTarget === 'init') {
       renderInitHelp();
       return;
     }
-    if (command === 'add') {
+    if (helpTarget === 'add') {
       renderAddHelp();
       return;
     }
-    if (command === 'migrate') {
+    if (helpTarget === 'migrate') {
       renderMigrateHelp();
       return;
     }
-    if (command === 'sync') {
+    if (helpTarget === 'sync') {
       renderSyncHelp();
+      return;
+    }
+    if (helpTarget === 'doctor') {
+      renderDoctorHelp();
       return;
     }
     renderGeneralHelp();

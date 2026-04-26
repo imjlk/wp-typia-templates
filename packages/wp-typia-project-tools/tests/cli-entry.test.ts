@@ -986,6 +986,8 @@ test("node entry supports external layer flags for built-in create scaffolds", (
 
 test("node entry exposes fallback help and rejects the removed migrations alias", () => {
   const helpOutput = runCli("node", [entryPath, "--help"]);
+  const doctorHelpOutput = runCli("node", [entryPath, "doctor", "--help"]);
+  const doctorHelpAliasOutput = runCli("node", [entryPath, "help", "doctor"]);
   const errorMessage = getCommandErrorMessage(() =>
     runCli("node", [entryPath, "migrations", "init"], { stdio: "pipe" })
   );
@@ -995,6 +997,13 @@ test("node entry exposes fallback help and rejects the removed migrations alias"
   expect(helpOutput).toContain("Run migration workflows.");
   expect(helpOutput).toContain(
     "Inspect or sync schema-driven MCP metadata."
+  );
+  expect(doctorHelpOutput).toContain("Usage: wp-typia doctor [--format json]");
+  expect(doctorHelpOutput).toContain("Supported flags:");
+  expect(doctorHelpOutput).toContain("--format");
+  expect(doctorHelpOutput).toContain("machine-readable doctor check output");
+  expect(doctorHelpAliasOutput).toContain(
+    "Usage: wp-typia doctor [--format json]"
   );
   expect(errorMessage).toContain(
     "`wp-typia migrations` was removed in favor of `wp-typia migrate`."
@@ -1019,6 +1028,7 @@ test("bun entry exposes templates and doctor commands", () => {
 
 test("bun entry exposes fallback help and rejects the removed migrations alias", () => {
   const helpOutput = runCli("bun", [entryPath, "--help"]);
+  const doctorHelpOutput = runCli("bun", [entryPath, "doctor", "--help"]);
   const errorMessage = getCommandErrorMessage(() =>
     runCli("bun", [entryPath, "migrations", "init"], { stdio: "pipe" })
   );
@@ -1029,6 +1039,10 @@ test("bun entry exposes fallback help and rejects the removed migrations alias",
   expect(helpOutput).toContain(
     "Inspect or sync schema-driven MCP metadata."
   );
+  expect(doctorHelpOutput).toContain("Usage: wp-typia doctor [--format json]");
+  expect(doctorHelpOutput).toContain("Supported flags:");
+  expect(doctorHelpOutput).toContain("--format");
+  expect(doctorHelpOutput).toContain("machine-readable doctor check output");
   expect(errorMessage).toContain(
     "`wp-typia migrations` was removed in favor of `wp-typia migrate`."
   );
