@@ -57,17 +57,20 @@ describe("DataForm helpers", () => {
         title: { schema: { type: "string" } },
       },
     });
+    const defaultLayout = { isOpened: true, summary: ["title", "sku"], type: "card" } as const;
+    const identityLayout = { summary: "title", type: "panel" } as const;
     const identityCard = {
       children: [{ id: "title" }, { id: "sku", label: "Stock keeping unit" }],
       id: "id",
       label: "Identity",
+      layout: identityLayout,
     } satisfies DataFormField<Product>;
 
     expect(
       views.toFormConfig({
         fields: [identityCard, "price"],
         includeReadOnly: true,
-        layout: { isOpened: true, summary: ["title", "sku"], type: "card" },
+        layout: defaultLayout,
       }),
     ).toEqual({
       fields: [
@@ -78,30 +81,49 @@ describe("DataForm helpers", () => {
               description: undefined,
               id: "title",
               label: "Title",
-              layout: { isOpened: true, summary: ["title", "sku"], type: "card" },
+              layout: identityLayout,
             },
             {
               children: undefined,
               description: undefined,
               id: "sku",
               label: "Stock keeping unit",
-              layout: { isOpened: true, summary: ["title", "sku"], type: "card" },
+              layout: identityLayout,
             },
           ],
           description: undefined,
           id: "id",
           label: "Identity",
-          layout: { isOpened: true, summary: ["title", "sku"], type: "card" },
+          layout: identityLayout,
         },
         {
           children: undefined,
           description: undefined,
           id: "price",
           label: "Price",
-          layout: { isOpened: true, summary: ["title", "sku"], type: "card" },
+          layout: defaultLayout,
         },
       ],
     });
+    expect(views.toFormConfig({ fields: ["id", "price"] }).fields.map((field) => field.id)).toEqual([
+      "price",
+    ]);
+    expect(views.toFormConfig({ includeReadOnly: false }).fields.map((field) => field.id)).toEqual([
+      "price",
+      "sku",
+      "title",
+    ]);
+    expect(views.toFormConfig({ includeReadOnly: true }).fields.map((field) => field.id)).toEqual([
+      "id",
+      "price",
+      "sku",
+      "title",
+    ]);
+
+    const nestedFilteredForm = views.toFormConfig({
+      fields: [{ children: [{ id: "id" }, { id: "sku" }], id: "title" }],
+    });
+    expect(nestedFilteredForm.fields[0]?.children?.map((field) => field.id)).toEqual(["sku"]);
   });
 
   test("maps schema metadata into DataForm validation hints", () => {
