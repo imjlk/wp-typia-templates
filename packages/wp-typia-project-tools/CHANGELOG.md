@@ -1,5 +1,11 @@
 # @wp-typia/project-tools
 
+## 0.20.2 — 2026-04-26
+
+### Patch changes
+
+- [4fe96e4](https://github.com/imjlk/wp-typia/commit/4fe96e440da1bde7772d382b667834c53f2a657c) Fixed invalid create/add template ids to return user-facing unknown-template diagnostics instead of leaking internal prompt callback errors. — Thanks @imjlk!
+
 ## 0.20.1 — 2026-04-25
 
 ### Patch changes
