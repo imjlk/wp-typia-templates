@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import * as http from "node:http";
 import * as path from "node:path";
 import { cleanupScaffoldTempRoot, createBlockExternalFixturePath, createBlockSubsetFixturePath, createScaffoldTempRoot, entryPath, getCommandErrorMessage, runCapturedCli, runCli, scaffoldOfficialWorkspace, templateLayerAmbiguousFixturePath, templateLayerFixturePath } from "./helpers/scaffold-test-harness.js";
+import { createCliCommandError, serializeCliDiagnosticError } from "../src/runtime/cli-diagnostics.js";
 import { formatHelpText, getDoctorChecks, getNextSteps, getOptionalOnboarding, runScaffoldFlow } from "../src/runtime/cli-core.js";
 import { collectScaffoldAnswers } from "../src/runtime/scaffold.js";
 import { getQuickStartWorkflowNote } from "../src/runtime/scaffold-onboarding.js";
@@ -44,6 +45,17 @@ describe("@wp-typia/project-tools scaffold CLI flow", () => {
       url: `http://127.0.0.1:${address.port}`,
     };
   }
+
+test("CLI diagnostics do not classify unknown template variants as missing templates", () => {
+  const diagnostic = serializeCliDiagnosticError(
+    createCliCommandError({
+      command: "create",
+      error: new Error('Unknown template variant "hero". Expected one of: standard'),
+    }),
+  );
+
+  expect(diagnostic.code).toBe("invalid-argument");
+});
 
 test("runScaffoldFlow defaults persistence scaffolds to custom-table and authenticated in non-interactive mode", async () => {
   const projectInput = "demo-persistence-default";

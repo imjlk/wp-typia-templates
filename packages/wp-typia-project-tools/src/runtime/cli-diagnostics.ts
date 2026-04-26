@@ -252,7 +252,7 @@ function inferCliDiagnosticCode(options: {
 	if (/requires <|requires --|requires a value/u.test(haystack)) {
 		return CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT;
 	}
-	if (/Unknown (?:add-block )?template/u.test(haystack)) {
+	if (/Unknown (?:add-block )?template\s+(?:"|\\")/u.test(haystack)) {
 		return CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE;
 	}
 	if (
