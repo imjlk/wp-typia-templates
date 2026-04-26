@@ -48,6 +48,7 @@ describe("defineDataViews", () => {
       { id: "title", label: "Title", type: "text" },
       { id: "views", label: "Views", type: "integer" },
     ]);
+    expect("isValid" in (views.fieldMap.featured ?? {})).toBe(false);
     expect(views.defaultView).toEqual({
       fields: ["featured", "price", "title", "views"],
       titleField: "title",

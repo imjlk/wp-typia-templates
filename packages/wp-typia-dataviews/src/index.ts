@@ -105,6 +105,39 @@ export interface DataViewsFieldFormat {
   readonly weekStartsOn?: DataViewsWeekStart;
 }
 
+export type DataViewsFieldValidationCustomResult = null | string | Promise<null | string>;
+
+export type DataViewsFieldValidationCustom<
+  TItem extends object = DataViewsRecord,
+  TValue = unknown,
+> = (
+  item: TItem,
+  field: DataViewsField<TItem, TValue>,
+) => DataViewsFieldValidationCustomResult;
+
+export interface DataViewsFieldValidationRules<
+  TItem extends object = DataViewsRecord,
+  TValue = unknown,
+> {
+  readonly custom?: DataViewsFieldValidationCustom<TItem, TValue>;
+  readonly elements?: boolean;
+  /** Resolved numeric maximum validation hint. */
+  readonly max?: number;
+  readonly maxLength?: number;
+  /** Resolved numeric minimum validation hint. */
+  readonly min?: number;
+  readonly minLength?: number;
+  readonly pattern?: string;
+  readonly required?: boolean;
+}
+
+type MutableDataViewsFieldValidationRules<TItem extends object, TValue> = {
+  -readonly [TKey in keyof DataViewsFieldValidationRules<TItem, TValue>]?: DataViewsFieldValidationRules<
+    TItem,
+    TValue
+  >[TKey];
+};
+
 export interface DataViewsFieldElement<TValue = DataViewsScalar> {
   readonly label: string;
   readonly value: TValue;
@@ -151,6 +184,7 @@ export interface DataViewsField<
   readonly getValueFormatted?: (context: DataViewsFieldContext<TItem, TValue>) => string;
   readonly header?: string;
   readonly id: DataViewsFieldId<TItem>;
+  readonly isValid?: DataViewsFieldValidationRules<TItem, TValue>;
   readonly label: string;
   readonly placeholder?: string;
   readonly readOnly?: boolean;
@@ -265,17 +299,73 @@ export interface DataViewsConfig<TItem extends object = DataViewsRecord> {
   readonly view: DataViewsView<TItem>;
 }
 
+export type DataFormFieldLayoutType = "regular" | "panel" | "card";
+
+export type DataFormFieldLabelPosition = "none" | "side" | "top";
+
+export interface DataFormFieldSummaryItem<
+  TItem extends object = DataViewsRecord,
+> {
+  readonly id: DataViewsFieldId<TItem>;
+  readonly visibility?: "always" | "when-collapsed";
+}
+
+export type DataFormFieldSummary<TItem extends object = DataViewsRecord> =
+  | DataViewsFieldId<TItem>
+  | readonly DataViewsFieldId<TItem>[]
+  | readonly DataFormFieldSummaryItem<TItem>[];
+
+export type DataFormPanelFieldSummary<TItem extends object = DataViewsRecord> =
+  | DataViewsFieldId<TItem>
+  | readonly DataViewsFieldId<TItem>[];
+
+export interface DataFormRegularFieldLayout {
+  readonly labelPosition?: DataFormFieldLabelPosition;
+  readonly type: "regular";
+}
+
+export interface DataFormPanelFieldLayout<TItem extends object = DataViewsRecord> {
+  readonly editVisibility?: "always" | "on-hover";
+  readonly labelPosition?: DataFormFieldLabelPosition;
+  readonly openAs?: "dropdown" | "modal";
+  readonly summary?: DataFormPanelFieldSummary<TItem>;
+  readonly type: "panel";
+}
+
+export interface DataFormCardFieldLayout<TItem extends object = DataViewsRecord> {
+  readonly isOpened?: boolean;
+  readonly summary?: DataFormFieldSummary<TItem>;
+  readonly type: "card";
+  readonly withHeader?: boolean;
+}
+
+export type DataFormFieldLayout<TItem extends object = DataViewsRecord> =
+  | DataFormFieldLayoutType
+  | DataFormRegularFieldLayout
+  | DataFormPanelFieldLayout<TItem>
+  | DataFormCardFieldLayout<TItem>;
+
 export interface DataFormField<TItem extends object = DataViewsRecord> {
   readonly children?: readonly DataFormField<TItem>[];
   readonly description?: string;
   readonly id: DataViewsFieldId<TItem>;
   readonly label?: string;
-  readonly layout?: "regular" | "panel" | "card";
+  readonly layout?: DataFormFieldLayout<TItem>;
 }
 
 export interface DataFormConfig<TItem extends object = DataViewsRecord> {
   readonly fields: readonly DataFormField<TItem>[];
   readonly validation?: Partial<Record<DataViewsFieldId<TItem>, string>>;
+}
+
+export type DataFormFieldInput<TItem extends object = DataViewsRecord> =
+  | DataViewsFieldId<TItem>
+  | DataFormField<TItem>;
+
+export interface DataFormConfigOptions<TItem extends object = DataViewsRecord> {
+  readonly fields?: readonly DataFormFieldInput<TItem>[];
+  readonly includeReadOnly?: boolean;
+  readonly layout?: DataFormFieldLayout<TItem>;
 }
 
 export interface QueryAdapterContext<TItem extends object = DataViewsRecord> {
@@ -451,6 +541,18 @@ export interface DataViewsFieldSchemaMetadata<TValue = DataViewsScalar> {
   readonly enum?: readonly DataViewsFieldElementValue<TValue>[];
   readonly enumLabels?: Readonly<Record<string, string>>;
   readonly format?: DataViewsFieldSchemaFormat;
+  /** Preferred numeric maximum; takes precedence over `maximum` when both are present. */
+  readonly max?: number;
+  readonly maxLength?: number;
+  /** JSON Schema numeric maximum used when `max` is not present. */
+  readonly maximum?: number;
+  /** Preferred numeric minimum; takes precedence over `minimum` when both are present. */
+  readonly min?: number;
+  readonly minLength?: number;
+  /** JSON Schema numeric minimum used when `min` is not present. */
+  readonly minimum?: number;
+  readonly pattern?: string;
+  readonly required?: boolean;
   readonly type?: DataViewsFieldSchemaType | readonly DataViewsFieldSchemaType[];
 }
 
@@ -513,6 +615,7 @@ export interface DefinedDataViews<TItem extends object> {
   readonly searchLabel?: string;
   readonly titleField?: DataViewsFieldId<TItem>;
   readonly createConfig: (options: DefineDataViewsConfigOptions<TItem>) => DataViewsConfig<TItem>;
+  readonly toFormConfig: (options?: DataFormConfigOptions<TItem>) => DataFormConfig<TItem>;
   readonly toQueryArgs: <TQuery extends object = DataViewsQueryArgs>(
     view: DataViewsView<TItem>,
     ...args: DefinedDataViewsQueryAdapterArguments<TItem, TQuery>
@@ -536,6 +639,8 @@ export function defineDataViews<TItem extends object>(
       view,
       ...([args[0], { fields }] as DataViewsQueryAdapterArguments<TItem, TQuery>),
     );
+  const toFormConfig = (options?: DataFormConfigOptions<TItem>): DataFormConfig<TItem> =>
+    createDataFormConfig(fields, options);
 
   return {
     actions: definition.actions,
@@ -566,6 +671,24 @@ export function defineDataViews<TItem extends object>(
     search: definition.search,
     searchLabel: definition.searchLabel,
     titleField: definition.titleField,
+    toFormConfig,
+  };
+}
+
+export function createDataFormConfig<TItem extends object = DataViewsRecord>(
+  fields: readonly DataViewsConfigField<TItem>[],
+  options: DataFormConfigOptions<TItem> = {},
+): DataFormConfig<TItem> {
+  const fieldMap = createDataViewsConfigFieldMap(fields);
+  const formFields = normalizeDataFormFields(
+    options.fields ?? fields,
+    fieldMap,
+    options.layout,
+    options.includeReadOnly === true,
+  );
+
+  return {
+    fields: formFields,
   };
 }
 
@@ -633,19 +756,85 @@ function normalizeDefineDataViewsField<
   id: TKey,
   field: DefineDataViewsFieldDefinition<TItem, TKey>,
 ): DataViewsField<TItem, TItem[TKey]> {
-  const { schema, ...fieldDefinition } = field;
+  const { isValid, schema, ...fieldDefinition } = field;
   const label = fieldDefinition.label ?? formatDataViewsFieldLabel(id);
   const description = fieldDefinition.description ?? schema?.description;
   const type = normalizeDataViewsFieldType(fieldDefinition.type, schema);
   const elements = fieldDefinition.elements ?? normalizeDataViewsFieldElements(schema);
+  const validation = normalizeDataViewsFieldValidation(isValid, schema);
 
   return {
     ...fieldDefinition,
     description,
     elements,
     id,
+    ...(validation === undefined ? {} : { isValid: validation }),
     label,
     type,
+  };
+}
+
+function createDataViewsConfigFieldMap<TItem extends object>(
+  fields: readonly DataViewsConfigField<TItem>[],
+): ReadonlyMap<DataViewsFieldId<TItem>, DataViewsConfigField<TItem>> {
+  return new Map(fields.map((field) => [field.id, field]));
+}
+
+function normalizeDataFormFields<TItem extends object>(
+  fields: readonly (DataFormFieldInput<TItem> | DataViewsConfigField<TItem>)[],
+  fieldMap: ReadonlyMap<DataViewsFieldId<TItem>, DataViewsConfigField<TItem>>,
+  layout: DataFormFieldLayout<TItem> | undefined,
+  includeReadOnly: boolean,
+): readonly DataFormField<TItem>[] {
+  const normalizedFields: DataFormField<TItem>[] = [];
+
+  for (const field of fields) {
+    const normalizedField = normalizeDataFormField(field, fieldMap, layout, includeReadOnly);
+
+    if (normalizedField !== undefined) {
+      normalizedFields.push(normalizedField);
+    }
+  }
+
+  return normalizedFields;
+}
+
+function normalizeDataFormField<TItem extends object>(
+  field: DataFormFieldInput<TItem> | DataViewsConfigField<TItem>,
+  fieldMap: ReadonlyMap<DataViewsFieldId<TItem>, DataViewsConfigField<TItem>>,
+  layout: DataFormFieldLayout<TItem> | undefined,
+  includeReadOnly: boolean,
+): DataFormField<TItem> | undefined {
+  if (typeof field === "string") {
+    return normalizeDataFormFieldObject({ id: field }, fieldMap, layout, includeReadOnly);
+  }
+
+  return normalizeDataFormFieldObject(field, fieldMap, layout, includeReadOnly);
+}
+
+function normalizeDataFormFieldObject<TItem extends object>(
+  field: Partial<DataFormField<TItem>> & Pick<DataFormField<TItem>, "id">,
+  fieldMap: ReadonlyMap<DataViewsFieldId<TItem>, DataViewsConfigField<TItem>>,
+  layout: DataFormFieldLayout<TItem> | undefined,
+  includeReadOnly: boolean,
+): DataFormField<TItem> | undefined {
+  const sourceField = fieldMap.get(field.id);
+  const resolvedLayout = field.layout ?? layout;
+
+  // DataForm supports group-only fields whose ids are not DataViews fields.
+  if (sourceField?.readOnly === true && !includeReadOnly) {
+    return undefined;
+  }
+
+  return {
+    children:
+      field.children === undefined
+        ? undefined
+        : normalizeDataFormFields(field.children, fieldMap, layout, includeReadOnly),
+    description: field.description ?? sourceField?.description,
+    id: field.id,
+    label: field.label ?? sourceField?.label,
+    layout: resolvedLayout,
   };
 }
 
@@ -720,6 +909,47 @@ function getDataViewsSchemaElementValues<TValue>(
   }
 
   return [];
+}
+
+function normalizeDataViewsFieldValidation<
+  TItem extends object,
+  TValue,
+>(
+  fieldValidation: DataViewsFieldValidationRules<TItem, TValue> | undefined,
+  schema: DataViewsFieldSchemaMetadata<TValue> | undefined,
+): DataViewsFieldValidationRules<TItem, TValue> | undefined {
+  const schemaValidation: MutableDataViewsFieldValidationRules<TItem, TValue> = {};
+
+  if (schema?.enum !== undefined || schema?.const !== undefined) {
+    schemaValidation.elements = true;
+  }
+  if (schema?.max !== undefined || schema?.maximum !== undefined) {
+    schemaValidation.max = schema.max ?? schema.maximum;
+  }
+  if (schema?.maxLength !== undefined) {
+    schemaValidation.maxLength = schema.maxLength;
+  }
+  if (schema?.min !== undefined || schema?.minimum !== undefined) {
+    schemaValidation.min = schema.min ?? schema.minimum;
+  }
+  if (schema?.minLength !== undefined) {
+    schemaValidation.minLength = schema.minLength;
+  }
+  if (schema?.pattern !== undefined) {
+    schemaValidation.pattern = schema.pattern;
+  }
+  if (schema?.required !== undefined) {
+    schemaValidation.required = schema.required;
+  }
+
+  const validation = {
+    ...schemaValidation,
+    ...fieldValidation,
+  };
+
+  return Object.values(validation).some((value) => value !== undefined)
+    ? validation
+    : undefined;
 }
 
 function getFirstDataViewsSchemaType(

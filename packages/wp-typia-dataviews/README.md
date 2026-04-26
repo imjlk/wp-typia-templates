@@ -14,13 +14,16 @@ Use this package for types and adapter contracts:
 ```ts
 import type {
   DataFormConfig,
+  DataFormConfigOptions,
   DataViewsAction,
   DataViewsField,
+  DataViewsFieldValidationRules,
   DataViewsQueryAdapterOptions,
   DataViewsView,
   QueryAdapter,
 } from '@wp-typia/dataviews';
 import {
+  createDataFormConfig,
   createDataViewsQueryAdapter,
   defineDataViews,
   toDataViewsQueryArgs,
@@ -64,6 +67,35 @@ Common schema metadata is normalized for DataViews defaults, including
 `idField` is limited to string or number model keys for automatic row identity;
 use `getItemId` when identity comes from a nullable, object-backed, or custom
 value.
+
+Generate DataForm configuration for single-record editing workflows from the
+same field contract:
+
+```ts
+const form = productViews.toFormConfig({
+  fields: [
+    'title',
+    {
+      id: 'status',
+      layout: { labelPosition: 'side', type: 'regular' },
+    },
+    'views',
+  ],
+});
+```
+
+By default, read-only fields are skipped. Pass `includeReadOnly: true` when a
+read-only field should still appear in the generated form, or call
+`createDataFormConfig(fields, options)` when you have a standalone field list.
+The helper fills DataForm labels and descriptions from normalized DataViews
+fields while keeping the actual `DataForm` component import in the WordPress
+package.
+
+Validation metadata is mapped as UI hints on `field.isValid`: `required`,
+`minimum`/`min`, `maximum`/`max`, `pattern`, `minLength`, and `maxLength`.
+Enum and const schemas also opt into DataForm element validation. These hints do
+not replace typia/schema runtime validation; keep runtime validation as the
+source of truth for persistence and REST writes.
 
 Map DataViews state into REST or custom data-provider args explicitly:
 

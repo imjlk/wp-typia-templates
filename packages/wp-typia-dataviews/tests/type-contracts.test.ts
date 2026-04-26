@@ -39,12 +39,18 @@ describe("@wp-typia/dataviews type contracts", () => {
     expect(fixtureSource).toContain("@wp-typia/dataviews");
     expect(fixtureSource).toContain("defineDataViews");
     expect(fixtureSource).toContain("DataViewsField");
+    expect(fixtureSource).toContain("DataViewsFieldValidationRules");
     expect(fixtureSource).toContain("DataViewsQueryAdapterOptions");
     expect(fixtureSource).toContain("DataViewsView");
     expect(fixtureSource).toContain("DataFormConfig");
+    expect(fixtureSource).toContain("DataFormConfigOptions");
+    expect(fixtureSource).toContain("DataFormFieldInput");
+    expect(fixtureSource).toContain("DataFormFieldLayout");
+    expect(fixtureSource).toContain("DataFormPanelFieldSummary");
     expect(fixtureSource).toContain("DefinedDataViews");
     expect(fixtureSource).toContain("DefineDataViewsInput");
     expect(fixtureSource).toContain("QueryAdapter");
+    expect(fixtureSource).toContain("createDataFormConfig");
     expect(fixtureSource).toContain("createDataViewsQueryAdapter");
     expect(fixtureSource).toContain("toDataViewsQueryArgs");
     expect(fixtureSource).toContain("@ts-expect-error");
