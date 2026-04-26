@@ -352,7 +352,7 @@ describe('wp-typia package', () => {
       expect(helpOutput).toContain(commandName);
     }
     expect(helpOutput).toContain('Runtime: Node fallback');
-    expect(helpOutput).toContain('NO_COLOR requests ASCII markers');
+    expect(helpOutput).toContain('non-empty NO_COLOR requests ASCII markers');
     expect(helpOutput).toContain('create: Scaffold a new wp-typia project.');
     expect(createHelpOutput).toContain('--external-layer-source');
     expect(createHelpOutput).toContain('--external-layer-id');

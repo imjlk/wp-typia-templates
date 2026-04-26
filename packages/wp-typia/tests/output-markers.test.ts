@@ -37,7 +37,7 @@ describe('output marker helpers', () => {
       prefersAsciiOutput({
         env: { LANG: 'en_US.UTF-8', NO_COLOR: '' },
       }),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       prefersAsciiOutput({
         env: { LANG: 'en_US.UTF-8', NO_COLOR: undefined },
