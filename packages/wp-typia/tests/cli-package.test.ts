@@ -1375,12 +1375,14 @@ describe('wp-typia package', () => {
     try {
       await scaffoldOfficialWorkspace(projectDir);
       linkWorkspaceNodeModules(projectDir);
+      const nestedCwd = path.join(projectDir, 'src', 'nested-cwd');
+      fs.mkdirSync(nestedCwd, { recursive: true });
 
       const result = runCapturedCommand(
         process.execPath,
         [entryPath, 'add', 'block', 'promo-card', '--format', 'json'],
         {
-          cwd: projectDir,
+          cwd: nestedCwd,
           env: withoutLocalBunEnv(),
         },
       );
@@ -1393,6 +1395,7 @@ describe('wp-typia package', () => {
           };
           kind?: string;
           name?: string;
+          projectDir?: string;
           summaryLines?: string[];
           title?: string;
         };
@@ -1406,6 +1409,7 @@ describe('wp-typia package', () => {
       expect(parsed.data?.command).toBe('add');
       expect(parsed.data?.kind).toBe('block');
       expect(parsed.data?.name).toBe('promo-card');
+      expect(parsed.data?.projectDir).toBe(fs.realpathSync(projectDir));
       expect(parsed.data?.title).toContain('Added workspace block');
       expect(parsed.data?.completion?.title).toBe(parsed.data?.title);
       expect(parsed.data?.summaryLines).toContain('Template family: basic');

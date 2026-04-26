@@ -125,6 +125,25 @@ function extractPlannedFiles(payload: SerializableCompletionPayload): string[] |
   return toNonEmptyArray(files);
 }
 
+const PROJECT_DIRECTORY_SUMMARY_PREFIX = 'Project directory: ';
+
+/**
+ * Reads the normalized workspace path from a completion summary when present.
+ *
+ * @param completion Completion payload returned by an add/create runtime.
+ * @returns The runtime-resolved project directory, or undefined when absent.
+ */
+export function extractCompletionProjectDir(
+  completion: AlternateBufferCompletionPayload | void,
+): string | undefined {
+  const projectDir = completion?.summaryLines
+    ?.find((line) => line.startsWith(PROJECT_DIRECTORY_SUMMARY_PREFIX))
+    ?.slice(PROJECT_DIRECTORY_SUMMARY_PREFIX.length)
+    .trim();
+
+  return projectDir && projectDir.length > 0 ? projectDir : undefined;
+}
+
 /**
  * Converts a completion payload into a JSON-safe shape without terminal markers.
  *

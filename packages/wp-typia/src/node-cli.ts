@@ -46,6 +46,7 @@ import {
 import {
   buildStructuredCompletionSuccessPayload,
   buildSyncDryRunPayload,
+  extractCompletionProjectDir,
   printCompletionPayload,
 } from './runtime-bridge-output';
 import { resolveSyncExecutionTarget } from './runtime-bridge-sync';
@@ -606,7 +607,7 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
             dryRun: Boolean(mergedFlags['dry-run']),
             kind: positionals[1],
             name: positionals[2],
-            projectDir: process.cwd(),
+            projectDir: extractCompletionProjectDir(completion) ?? process.cwd(),
           }),
           null,
           2,
