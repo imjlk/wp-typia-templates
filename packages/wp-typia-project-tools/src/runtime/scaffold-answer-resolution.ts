@@ -36,7 +36,6 @@ const WORKSPACE_TEMPLATE_ALIAS = 'workspace';
 const TEMPLATE_SELECTION_HINT = `--template <${[
   ...TEMPLATE_IDS,
   WORKSPACE_TEMPLATE_ALIAS,
-  OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 ].join('|')}|./path|github:owner/repo/path[#ref]|npm-package>`;
 const TEMPLATE_SUGGESTION_IDS = [...TEMPLATE_IDS, WORKSPACE_TEMPLATE_ALIAS] as const;
 const QUERY_POST_TYPE_RULE =
@@ -44,7 +43,6 @@ const QUERY_POST_TYPE_RULE =
 const USER_FACING_TEMPLATE_IDS = [
   ...TEMPLATE_IDS,
   WORKSPACE_TEMPLATE_ALIAS,
-  OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
 ] as const;
 
 /**
@@ -127,6 +125,25 @@ function normalizeTemplateSelection(templateId: string): string {
     : templateId;
 }
 
+function looksLikeUnscopedNpmTemplateLocator(templateId: string): boolean {
+  const versionSeparatorIndex = templateId.indexOf('@', 1);
+  const packageName =
+    versionSeparatorIndex === -1
+      ? templateId
+      : templateId.slice(0, versionSeparatorIndex);
+
+  if (!/^[a-z0-9][a-z0-9._-]*$/u.test(packageName)) {
+    return false;
+  }
+
+  return (
+    versionSeparatorIndex > 0 ||
+    packageName.includes('-') ||
+    packageName.includes('.') ||
+    packageName.includes('_')
+  );
+}
+
 function looksLikeExplicitExternalTemplateLocator(templateId: string): boolean {
   return (
     templateId.startsWith('./') ||
@@ -134,7 +151,8 @@ function looksLikeExplicitExternalTemplateLocator(templateId: string): boolean {
     templateId.startsWith('/') ||
     templateId.startsWith('@') ||
     templateId.startsWith('github:') ||
-    templateId.includes('/')
+    templateId.includes('/') ||
+    looksLikeUnscopedNpmTemplateLocator(templateId)
   );
 }
 
