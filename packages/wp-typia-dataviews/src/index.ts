@@ -823,7 +823,7 @@ function normalizeDataFormFieldObject<TItem extends object>(
     children:
       field.children === undefined
         ? undefined
-        : normalizeDataFormFields(field.children, fieldMap, resolvedLayout, includeReadOnly),
+        : normalizeDataFormFields(field.children, fieldMap, layout, includeReadOnly),
     description: field.description ?? sourceField?.description,
     id: field.id,
     label: field.label ?? sourceField?.label,
