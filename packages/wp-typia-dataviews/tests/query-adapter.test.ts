@@ -27,6 +27,11 @@ interface WordPressProductQuery {
   readonly status?: readonly Product["status"][];
 }
 
+interface CompactProductQuery {
+  readonly pageNo?: number;
+  readonly q?: string;
+}
+
 const productView = {
   filters: [
     { field: "status", operator: "isAny", value: ["draft", "publish"] },
@@ -163,6 +168,19 @@ describe("DataViews query adapters", () => {
       per_page: 20,
       search: "typed blocks",
       status: ["draft", "publish"],
+    });
+  });
+
+  test("requires explicit default param remapping for compact query shapes", () => {
+    const query = toDataViewsQueryArgs<Product, CompactProductQuery>(productView, {
+      pageParam: "pageNo",
+      perPageParam: false,
+      searchParam: "q",
+    });
+
+    expect(query).toEqual({
+      pageNo: 2,
+      q: "typed blocks",
     });
   });
 

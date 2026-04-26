@@ -106,6 +106,9 @@ Pagination and search use WordPress REST-style names by default: `page`,
 `per_page`, and `search`. Sorts and filters are emitted only when `mapSort` or
 `mapFilter` handles them, so unsupported filters stay explicit no-ops instead of
 being guessed.
+If your query type does not declare those default keys, explicitly remap them
+with `pageParam`, `perPageParam`, and `searchParam`, or set the unused params to
+`false`.
 If multiple filters return the same query key, the last returned value wins; use
 array values from `mapFilter` when your data source needs combined semantics.
 

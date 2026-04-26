@@ -172,6 +172,10 @@ query value such as a WordPress REST `orderby` value. Filters are only emitted
 when `mapFilter` returns query args, so unknown filters remain explicit no-ops
 instead of being guessed.
 
+When your query type omits any default pagination or search key, explicitly
+remap it with `pageParam`, `perPageParam`, or `searchParam`, or set that param to
+`false`.
+
 When multiple filters return the same query key, the adapter uses the last
 returned value. Return an array value from `mapFilter` when a data source needs
 combined filter semantics.

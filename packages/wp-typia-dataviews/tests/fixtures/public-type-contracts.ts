@@ -34,6 +34,10 @@ interface BookQuery {
   readonly status?: readonly Book["status"][];
 }
 
+interface CompactBookQuery {
+  readonly q?: string;
+}
+
 const fields = [
   {
     id: "title",
@@ -169,6 +173,43 @@ const reusableQueryAdapter = createDataViewsQueryAdapter<Book, BookQuery>(queryO
 const queryArgs = toDataViewsQueryArgs<Book, BookQuery>(view, queryOptions);
 const definedQueryArgs = bookViews.toQueryArgs<BookQuery>(view, queryOptions);
 
+const compactQueryOptions = {
+  pageParam: false,
+  perPageParam: false,
+  searchParam: "q",
+} satisfies DataViewsQueryAdapterOptions<Book, CompactBookQuery>;
+
+const compactReusableQueryAdapter = createDataViewsQueryAdapter<Book, CompactBookQuery>(
+  compactQueryOptions,
+);
+const compactQueryArgs = toDataViewsQueryArgs<Book, CompactBookQuery>(
+  view,
+  compactQueryOptions,
+);
+const definedCompactQueryArgs = bookViews.toQueryArgs<CompactBookQuery>(
+  view,
+  compactQueryOptions,
+);
+
+// @ts-expect-error strict query types must disable or remap default query params.
+toDataViewsQueryArgs<Book, CompactBookQuery>(view);
+
+// @ts-expect-error strict query adapter factories must disable or remap default query params.
+createDataViewsQueryAdapter<Book, CompactBookQuery>();
+
+// @ts-expect-error defined helpers must disable or remap default query params.
+bookViews.toQueryArgs<CompactBookQuery>(view);
+
+const invalidCompactSortQueryOptions = {
+  mapSort: {
+    views: "views",
+  },
+  pageParam: false,
+  perPageParam: false,
+  searchParam: "q",
+  // @ts-expect-error static sort maps must disable or remap default sort params.
+} satisfies DataViewsQueryAdapterOptions<Book, CompactBookQuery>;
+
 const invalidQueryOptions = {
   mapSort: {
     // @ts-expect-error mapSort fields must be keys of Book.
@@ -226,7 +267,11 @@ const invalidSortView = {
 
 void config;
 void configInput;
+void compactQueryArgs;
+void compactReusableQueryAdapter(view, { fields });
+void definedCompactQueryArgs;
 void form;
+void invalidCompactSortQueryOptions;
 void adapter(view, { fields });
 void bookViews.createConfig({ data: [] });
 void definedQueryArgs;
