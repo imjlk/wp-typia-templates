@@ -14,7 +14,10 @@ import {
 import { getCreateDefaults } from "../config";
 import { resolveBundledModuleHref } from "../render-loader";
 import { executeCreateCommand } from "../runtime-bridge";
-import { buildStructuredCompletionSuccessPayload } from "../runtime-bridge-output";
+import {
+	buildStructuredCompletionSuccessPayload,
+	extractCompletionProjectDir,
+} from "../runtime-bridge-output";
 import { supportsInteractiveTui } from "../runtime-capabilities";
 import type { WpTypiaRenderArgs } from "./render-types";
 import { LazyFlow } from "../ui/lazy-flow";
@@ -61,7 +64,7 @@ export const createCommand = defineCommand({
 				args.output(
 					buildStructuredCompletionSuccessPayload("create", completion, {
 						dryRun: Boolean(args.flags["dry-run"]),
-						projectDir,
+						projectDir: extractCompletionProjectDir(completion) ?? projectDir,
 						template:
 							typeof args.flags.template === "string"
 								? args.flags.template

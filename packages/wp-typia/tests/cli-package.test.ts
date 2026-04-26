@@ -439,6 +439,7 @@ describe('wp-typia package', () => {
           };
           dryRun?: boolean;
           files?: string[];
+          projectDir?: string;
           template?: string;
           title?: string;
         };
@@ -451,6 +452,9 @@ describe('wp-typia package', () => {
       expect(parsed.ok).toBe(true);
       expect(parsed.data?.command).toBe('create');
       expect(parsed.data?.dryRun).toBe(true);
+      expect(parsed.data?.projectDir).toBe(
+        path.join(fs.realpathSync(tempRoot), 'demo-json'),
+      );
       expect(parsed.data?.template).toBe('basic');
       expect(parsed.data?.title).toContain('Dry run for Demo Json');
       expect(parsed.data?.completion?.title).toBe(parsed.data?.title);

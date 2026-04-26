@@ -533,7 +533,7 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
         JSON.stringify(
           buildStructuredCompletionSuccessPayload('create', completion, {
             dryRun: Boolean(mergedFlags['dry-run']),
-            projectDir,
+            projectDir: extractCompletionProjectDir(completion) ?? projectDir,
             template:
               typeof mergedFlags.template === 'string'
                 ? mergedFlags.template
