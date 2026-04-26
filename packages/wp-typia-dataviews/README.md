@@ -16,10 +16,15 @@ import type {
   DataFormConfig,
   DataViewsAction,
   DataViewsField,
+  DataViewsQueryAdapterOptions,
   DataViewsView,
   QueryAdapter,
 } from '@wp-typia/dataviews';
-import { defineDataViews } from '@wp-typia/dataviews';
+import {
+  createDataViewsQueryAdapter,
+  defineDataViews,
+  toDataViewsQueryArgs,
+} from '@wp-typia/dataviews';
 ```
 
 `defineDataViews<T>()` adds the typed convenience layer for field maps,
@@ -59,6 +64,53 @@ Common schema metadata is normalized for DataViews defaults, including
 `idField` is limited to string or number model keys for automatic row identity;
 use `getItemId` when identity comes from a nullable, object-backed, or custom
 value.
+
+Map DataViews state into REST or custom data-provider args explicitly:
+
+```ts
+interface ProductRestQuery {
+  order?: 'asc' | 'desc';
+  orderby?: 'date' | 'title';
+  page?: number;
+  per_page?: number;
+  search?: string;
+  status?: readonly Product['status'][];
+}
+
+const queryArgs = productViews.toQueryArgs<ProductRestQuery>(config.view, {
+  mapSort: {
+    title: 'title',
+  },
+  mapFilter(filter) {
+    if (filter.field === 'status' && filter.operator === 'isAny') {
+      return { status: filter.value as readonly Product['status'][] };
+    }
+
+    return undefined;
+  },
+});
+
+const reusableAdapter = createDataViewsQueryAdapter<Product, ProductRestQuery>({
+  mapSort: { title: 'title' },
+});
+
+const standaloneArgs = toDataViewsQueryArgs<Product, ProductRestQuery>(
+  config.view,
+  {
+    mapSort: { title: 'title' },
+  },
+);
+```
+
+Pagination and search use WordPress REST-style names by default: `page`,
+`per_page`, and `search`. Sorts and filters are emitted only when `mapSort` or
+`mapFilter` handles them, so unsupported filters stay explicit no-ops instead of
+being guessed.
+If your query type does not declare those default keys, explicitly remap them
+with `pageParam`, `perPageParam`, and `searchParam`, or set the unused params to
+`false`.
+If multiple filters return the same query key, the last returned value wins; use
+array values from `mapFilter` when your data source needs combined semantics.
 
 Use WordPress' package for the actual components in WordPress-built scripts:
 

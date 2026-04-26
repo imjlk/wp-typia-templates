@@ -3,12 +3,17 @@ import type {
   DataViewsAction,
   DataViewsConfig,
   DataViewsField,
+  DataViewsQueryAdapterOptions,
   DataViewsView,
   DefinedDataViews,
   DefineDataViewsInput,
   QueryAdapter,
 } from "@wp-typia/dataviews";
-import { defineDataViews } from "@wp-typia/dataviews";
+import {
+  createDataViewsQueryAdapter,
+  defineDataViews,
+  toDataViewsQueryArgs,
+} from "@wp-typia/dataviews";
 
 interface Book {
   readonly createdAt: string;
@@ -18,6 +23,19 @@ interface Book {
   readonly status: "draft" | "publish";
   readonly title: string;
   readonly views: number;
+}
+
+interface BookQuery {
+  readonly order?: "asc" | "desc";
+  readonly orderby?: "date" | "title" | "views";
+  readonly page?: number;
+  readonly per_page?: number;
+  readonly search?: string;
+  readonly status?: readonly Book["status"][];
+}
+
+interface CompactBookQuery {
+  readonly q?: string;
 }
 
 const fields = [
@@ -136,6 +154,74 @@ const adapter: QueryAdapter<Book, { page?: number; per_page?: number; search?: s
   return query;
 };
 
+const queryOptions = {
+  mapFilter: (filter) => {
+    if (filter.field === "status" && filter.operator === "isAny") {
+      return { status: filter.value as readonly Book["status"][] };
+    }
+
+    return undefined;
+  },
+  mapSort: {
+    createdAt: "date",
+    title: "title",
+    views: "views",
+  },
+} satisfies DataViewsQueryAdapterOptions<Book, BookQuery>;
+
+const reusableQueryAdapter = createDataViewsQueryAdapter<Book, BookQuery>(queryOptions);
+const queryArgs = toDataViewsQueryArgs<Book, BookQuery>(view, queryOptions);
+const definedQueryArgs = bookViews.toQueryArgs<BookQuery>(view, queryOptions);
+
+const compactQueryOptions = {
+  pageParam: false,
+  perPageParam: false,
+  searchParam: "q",
+} satisfies DataViewsQueryAdapterOptions<Book, CompactBookQuery>;
+
+const compactReusableQueryAdapter = createDataViewsQueryAdapter<Book, CompactBookQuery>(
+  compactQueryOptions,
+);
+const compactQueryArgs = toDataViewsQueryArgs<Book, CompactBookQuery>(
+  view,
+  compactQueryOptions,
+);
+const definedCompactQueryArgs = bookViews.toQueryArgs<CompactBookQuery>(
+  view,
+  compactQueryOptions,
+);
+
+// @ts-expect-error strict query types must disable or remap default query params.
+toDataViewsQueryArgs<Book, CompactBookQuery>(view);
+
+// @ts-expect-error strict query adapter factories must disable or remap default query params.
+createDataViewsQueryAdapter<Book, CompactBookQuery>();
+
+// @ts-expect-error defined helpers must disable or remap default query params.
+bookViews.toQueryArgs<CompactBookQuery>(view);
+
+const invalidCompactSortQueryOptions = {
+  mapSort: {
+    views: "views",
+  },
+  pageParam: false,
+  perPageParam: false,
+  searchParam: "q",
+  // @ts-expect-error static sort maps must disable or remap default sort params.
+} satisfies DataViewsQueryAdapterOptions<Book, CompactBookQuery>;
+
+const invalidQueryOptions = {
+  mapSort: {
+    // @ts-expect-error mapSort fields must be keys of Book.
+    missing: "missing",
+  },
+} satisfies DataViewsQueryAdapterOptions<Book, BookQuery>;
+
+const invalidQueryParamOptions = {
+  // @ts-expect-error pageParam must be a BookQuery key or false.
+  pageParam: "paged",
+} satisfies DataViewsQueryAdapterOptions<Book, BookQuery>;
+
 // @ts-expect-error wp-typia owns the initial supported layout union.
 const unsupportedView = { type: "calendar" } satisfies DataViewsView<Book>;
 
@@ -181,8 +267,17 @@ const invalidSortView = {
 
 void config;
 void configInput;
+void compactQueryArgs;
+void compactReusableQueryAdapter(view, { fields });
+void definedCompactQueryArgs;
 void form;
+void invalidCompactSortQueryOptions;
 void adapter(view, { fields });
 void bookViews.createConfig({ data: [] });
+void definedQueryArgs;
+void invalidQueryOptions;
+void invalidQueryParamOptions;
 void invalidSortView;
+void queryArgs;
+void reusableQueryAdapter(view, { fields });
 void unsupportedView;

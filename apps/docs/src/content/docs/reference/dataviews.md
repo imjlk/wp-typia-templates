@@ -16,7 +16,10 @@ admin screens:
 - `DataViewsAction`
 - `DataFormConfig`
 - `QueryAdapter`
+- `DataViewsQueryAdapterOptions`
 - `defineDataViews`
+- `createDataViewsQueryAdapter`
+- `toDataViewsQueryArgs`
 
 The facade intentionally does not re-export upstream Gutenberg types. This keeps
 generated projects insulated from DataViews/DataForm API churn while wp-typia
@@ -31,10 +34,15 @@ actual components:
 import type {
   DataFormConfig,
   DataViewsField,
+  DataViewsQueryAdapterOptions,
   DataViewsView,
   QueryAdapter,
 } from '@wp-typia/dataviews';
-import { defineDataViews } from '@wp-typia/dataviews';
+import {
+  createDataViewsQueryAdapter,
+  defineDataViews,
+  toDataViewsQueryArgs,
+} from '@wp-typia/dataviews';
 import { DataForm, DataViews } from '@wordpress/dataviews/wp';
 ```
 
@@ -113,21 +121,68 @@ Generated and hand-authored integrations should map view state into project
 queries explicitly:
 
 ```ts
-import type { QueryAdapter } from '@wp-typia/dataviews';
+import type { DataViewsView } from '@wp-typia/dataviews';
+import { toDataViewsQueryArgs } from '@wp-typia/dataviews';
 
 interface Book {
   id: number;
+  createdAt: string;
   status: 'draft' | 'publish';
   title: string;
 }
 
-const toQueryArgs: QueryAdapter<Book, Record<string, unknown>> = (view) => ({
-  page: view.page,
-  per_page: view.perPage,
-  search: view.search,
-  status: view.filters?.find((filter) => filter.field === 'status')?.value,
+interface BookRestQuery {
+  order?: 'asc' | 'desc';
+  orderby?: 'date' | 'title';
+  page?: number;
+  per_page?: number;
+  search?: string;
+  status?: readonly Book['status'][];
+}
+
+const view: DataViewsView<Book> = {
+  filters: [
+    { field: 'status', operator: 'isAny', value: ['draft', 'publish'] },
+  ],
+  page: 1,
+  perPage: 20,
+  search: 'patterns',
+  sort: { direction: 'desc', field: 'createdAt' },
+  type: 'table',
+};
+
+const queryArgs = toDataViewsQueryArgs<Book, BookRestQuery>(view, {
+  mapSort: {
+    createdAt: 'date',
+    title: 'title',
+  },
+  mapFilter(filter) {
+    if (filter.field === 'status' && filter.operator === 'isAny') {
+      return { status: filter.value as readonly Book['status'][] };
+    }
+
+    return undefined;
+  },
 });
 ```
+
+`page`, `perPage`, and `search` map to `page`, `per_page`, and `search` by
+default. Sorts are only emitted when `mapSort` maps the DataViews field to a
+query value such as a WordPress REST `orderby` value. Filters are only emitted
+when `mapFilter` returns query args, so unknown filters remain explicit no-ops
+instead of being guessed.
+
+When your query type omits any default pagination or search key, explicitly
+remap it with `pageParam`, `perPageParam`, or `searchParam`, or set that param to
+`false`.
+
+When multiple filters return the same query key, the adapter uses the last
+returned value. Return an array value from `mapFilter` when a data source needs
+combined filter semantics.
+
+Use `createDataViewsQueryAdapter(options)` when a reusable `QueryAdapter` is
+more convenient, or call `definedViews.toQueryArgs(view, options)` from a
+`defineDataViews<T>()` result to reuse the normalized field context.
 
 This boundary lets future scaffold support generate typed fields, actions,
 forms, and query adapters without hiding application-specific data fetching.
