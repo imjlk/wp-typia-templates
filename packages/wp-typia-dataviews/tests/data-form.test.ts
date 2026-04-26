@@ -4,6 +4,7 @@ import {
   createDataFormConfig,
   defineDataViews,
   type DataFormField,
+  type DataViewsField,
 } from "../src/index.js";
 
 interface Product {
@@ -127,7 +128,10 @@ describe("DataForm helpers", () => {
   });
 
   test("maps schema metadata into DataForm validation hints", () => {
-    const customSummaryValidation = () => null;
+    const customSummaryValidation = (
+      item: Product,
+      field: DataViewsField<Product, string>,
+    ) => (item.summary.length > 0 && field.id === "summary" ? null : "Summary is required.");
     const views = defineDataViews<Product>({
       defaultView: { type: "table" },
       fields: {

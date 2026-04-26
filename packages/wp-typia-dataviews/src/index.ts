@@ -105,22 +105,14 @@ export interface DataViewsFieldFormat {
   readonly weekStartsOn?: DataViewsWeekStart;
 }
 
-export interface DataViewsFieldValidationContext<
-  TItem extends object = DataViewsRecord,
-  TValue = unknown,
-> {
-  readonly field: DataViewsField<TItem, TValue>;
-  readonly item: TItem;
-  readonly value: TValue;
-}
-
 export type DataViewsFieldValidationCustomResult = null | string | Promise<null | string>;
 
 export type DataViewsFieldValidationCustom<
   TItem extends object = DataViewsRecord,
   TValue = unknown,
 > = (
-  context: DataViewsFieldValidationContext<TItem, TValue>,
+  item: TItem,
+  field: DataViewsField<TItem, TValue>,
 ) => DataViewsFieldValidationCustomResult;
 
 export interface DataViewsFieldValidationRules<

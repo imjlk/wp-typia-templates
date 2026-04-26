@@ -112,6 +112,8 @@ const formOptions = {
 } satisfies DataFormConfigOptions<Book>;
 
 const titleValidation = {
+  custom: (item, field) =>
+    field.id === "title" && item.title.length >= 3 ? null : "Title is too short.",
   maxLength: 120,
   minLength: 3,
   pattern: "^[A-Z]",
