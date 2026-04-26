@@ -1,5 +1,9 @@
 import type { ReadlinePrompt } from '@wp-typia/project-tools/cli-prompt';
 import {
+  CLI_DIAGNOSTIC_CODES,
+  createCliDiagnosticCodeError,
+} from '@wp-typia/project-tools/cli-diagnostics';
+import {
   type AddKindId,
   formatAddKindList,
   formatAddKindUsagePlaceholder,
@@ -168,7 +172,10 @@ function readOptionalStringFlag(
     return undefined;
   }
   if (typeof value !== 'string' || value.trim().length === 0) {
-    throw new Error(`\`--${name}\` requires a value.`);
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+      `\`--${name}\` requires a value.`,
+    );
   }
   return value;
 }
@@ -182,7 +189,10 @@ function readOptionalLooseStringFlag(
     return undefined;
   }
   if (typeof value !== 'string') {
-    throw new Error(`\`--${name}\` requires a value.`);
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+      `\`--${name}\` requires a value.`,
+    );
   }
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
@@ -204,7 +214,10 @@ function requireAddKindName(
   message: string,
 ): string {
   if (!context.name) {
-    throw new Error(message);
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+      message,
+    );
   }
 
   return context.name;
@@ -282,7 +295,8 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
     );
 
     if (!context.flags.template && context.isInteractiveSession) {
-      throw new Error(
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
         '`wp-typia add block` requires --template <basic|interactivity|persistence|compound> in interactive terminals. Non-interactive runs default to --template basic.',
       );
     }
@@ -418,13 +432,15 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
     );
     const anchorBlockName = readOptionalStringFlag(context.flags, 'anchor');
     if (!anchorBlockName) {
-      throw new Error(
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
         '`wp-typia add hooked-block` requires --anchor <anchor-block-name>.',
       );
     }
     const position = readOptionalStringFlag(context.flags, 'position');
     if (!position) {
-      throw new Error(
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
         '`wp-typia add hooked-block` requires --position <before|after|firstChild|lastChild>.',
       );
     }
@@ -506,7 +522,8 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
     );
     const blockSlug = readOptionalStringFlag(context.flags, 'block');
     if (!blockSlug) {
-      throw new Error(
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
         '`wp-typia add variation` requires --block <block-slug>.',
       );
     }
@@ -811,12 +828,14 @@ export async function executeAddCommand({
       if (emitOutput) {
         printLine(addRuntime.formatAddHelpText());
       }
-      throw new Error(
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
         `\`wp-typia add\` requires <kind>. Usage: wp-typia add ${formatAddKindUsagePlaceholder()} ...`,
       );
     }
     if (!isAddKindId(kind)) {
-      throw new Error(
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.INVALID_COMMAND,
         `Unknown add kind "${kind}". Expected one of: ${formatAddKindList()}.`,
       );
     }
@@ -878,17 +897,24 @@ export async function executeTemplatesCommand(
 
   if (subcommand === 'inspect') {
     if (!flags.id) {
-      throw new Error('`wp-typia templates inspect` requires <template-id>.');
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+        '`wp-typia templates inspect` requires <template-id>.',
+      );
     }
     const template = getTemplateById(flags.id);
     if (!template) {
-      throw new Error(`Unknown template "${flags.id}".`);
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+        `Unknown template "${flags.id}".`,
+      );
     }
     printBlock([formatTemplateDetails(template)], printLine);
     return;
   }
 
-  throw new Error(
+  throw createCliDiagnosticCodeError(
+    CLI_DIAGNOSTIC_CODES.INVALID_COMMAND,
     `Unknown templates subcommand "${subcommand}". Expected list or inspect.`,
   );
 }

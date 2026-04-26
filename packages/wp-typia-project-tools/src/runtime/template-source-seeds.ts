@@ -17,6 +17,10 @@ import {
   readJsonResponseWithLimit,
 } from './external-template-guards.js'
 import {
+  CLI_DIAGNOSTIC_CODES,
+  createCliDiagnosticCodeError,
+} from './cli-diagnostics.js'
+import {
   OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
   OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
   PROJECT_TOOLS_PACKAGE_ROOT,
@@ -106,7 +110,10 @@ async function fetchNpmTemplateSource(
   )
   if (!metadataResponse.ok) {
     if (metadataResponse.status === 404) {
-      throw new Error(getUnknownNpmTemplateMessage(locator.raw))
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE,
+        getUnknownNpmTemplateMessage(locator.raw),
+      )
     }
     throw new Error(
       `Failed to fetch npm template metadata for ${locator.raw}: ${metadataResponse.status}`,

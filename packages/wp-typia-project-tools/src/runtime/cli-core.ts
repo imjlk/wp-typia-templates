@@ -15,8 +15,9 @@
  * `runAddAiFeatureCommand` for server-owned WordPress AI feature scaffolds,
  * `runAddRestResourceCommand` for plugin-level REST resource scaffolds,
  * `getDoctorChecks`, `runDoctor`, and `DoctorCheck` for diagnostics,
- * `createCliCommandError` and `formatCliDiagnosticError` for shared
- * non-interactive failure rendering,
+ * `createCliCommandError`, `createCliDiagnosticCodeError`,
+ * `CLI_DIAGNOSTIC_CODES`, and `formatCliDiagnosticError` for shared
+ * non-interactive failure rendering and explicit diagnostic-code ownership,
  * `formatHelpText` for top-level CLI usage output, scaffold helpers such as
  * `createReadlinePrompt`, `getNextSteps`, `getOptionalOnboarding`,
  * `runScaffoldFlow`, and `ReadlinePrompt` for interactive project creation,
@@ -28,7 +29,9 @@
 export { getDoctorChecks, runDoctor, type DoctorCheck } from "./cli-doctor.js";
 export {
 	createCliCommandError,
+	createCliDiagnosticCodeError,
 	CliDiagnosticError,
+	CLI_DIAGNOSTIC_CODES,
 	formatCliDiagnosticError,
 	formatDoctorCheckLine,
 	formatDoctorSummaryLine,
@@ -36,7 +39,11 @@ export {
 	getFailingDoctorChecks,
 	isCliDiagnosticError,
 } from "./cli-diagnostics.js";
-export type { CliDiagnosticMessage } from "./cli-diagnostics.js";
+export type {
+	CliDiagnosticCode,
+	CliDiagnosticCodeError,
+	CliDiagnosticMessage,
+} from "./cli-diagnostics.js";
 export {
 	EDITOR_PLUGIN_SLOT_IDS,
 	formatAddHelpText,

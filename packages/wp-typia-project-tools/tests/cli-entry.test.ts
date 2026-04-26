@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as http from "node:http";
 import * as path from "node:path";
 import { cleanupScaffoldTempRoot, createBlockExternalFixturePath, createBlockSubsetFixturePath, createScaffoldTempRoot, entryPath, getCommandErrorMessage, runCapturedCli, runCli, scaffoldOfficialWorkspace, templateLayerAmbiguousFixturePath, templateLayerFixturePath } from "./helpers/scaffold-test-harness.js";
-import { createCliCommandError, serializeCliDiagnosticError } from "../src/runtime/cli-diagnostics.js";
+import { CLI_DIAGNOSTIC_CODES, createCliCommandError, createCliDiagnosticCodeError, serializeCliDiagnosticError } from "../src/runtime/cli-diagnostics.js";
 import { formatHelpText, getDoctorChecks, getNextSteps, getOptionalOnboarding, runScaffoldFlow } from "../src/runtime/cli-core.js";
 import { collectScaffoldAnswers } from "../src/runtime/scaffold.js";
 import { getQuickStartWorkflowNote } from "../src/runtime/scaffold-onboarding.js";
@@ -55,6 +55,21 @@ test("CLI diagnostics do not classify unknown template variants as missing templ
   );
 
   expect(diagnostic.code).toBe("invalid-argument");
+});
+
+test("CLI diagnostics preserve explicit throw-site codes without message inference", () => {
+  const diagnostic = serializeCliDiagnosticError(
+    createCliCommandError({
+      command: "create",
+      error: createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+        "Opaque scaffold preflight failure.",
+      ),
+    }),
+  );
+
+  expect(diagnostic.code).toBe("missing-argument");
+  expect(diagnostic.message).toContain("Opaque scaffold preflight failure.");
 });
 
 test("runScaffoldFlow defaults persistence scaffolds to custom-table and authenticated in non-interactive mode", async () => {

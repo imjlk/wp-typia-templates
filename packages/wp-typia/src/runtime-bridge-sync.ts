@@ -1,6 +1,10 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  CLI_DIAGNOSTIC_CODES,
+  createCliDiagnosticCodeError,
+} from '@wp-typia/project-tools/cli-diagnostics';
 
 type PackageManagerId = 'bun' | 'npm' | 'pnpm' | 'yarn';
 type SyncScriptName = 'sync' | 'sync-ai' | 'sync-rest' | 'sync-types';
@@ -70,7 +74,8 @@ export function resolveSyncExecutionTarget(
     return 'ai';
   }
 
-  throw new Error(
+  throw createCliDiagnosticCodeError(
+    CLI_DIAGNOSTIC_CODES.INVALID_COMMAND,
     `Unknown sync subcommand "${subcommand}". Expected one of: "ai".`,
   );
 }
@@ -107,7 +112,8 @@ function formatInstallCommand(packageManagerId: PackageManagerId): string {
 }
 
 function getSyncRootError(cwd: string): Error {
-  return new Error(
+  return createCliDiagnosticCodeError(
+    CLI_DIAGNOSTIC_CODES.OUTSIDE_PROJECT_ROOT,
     `No generated wp-typia project root was found at ${cwd}. Run \`wp-typia sync\` from a scaffolded project or official workspace root that already contains generated sync scripts. If you expected this directory to work, cd into the scaffold root first or rerun the scaffold before syncing.`,
   );
 }
@@ -257,7 +263,8 @@ function assertSyncDependenciesInstalled(
     return;
   }
 
-  throw new Error(
+  throw createCliDiagnosticCodeError(
+    CLI_DIAGNOSTIC_CODES.DEPENDENCIES_NOT_INSTALLED,
     `Project dependencies have not been installed yet. Run \`${formatInstallCommand(project.packageManager)}\` from the project root before \`wp-typia sync\`. The generated sync scripts rely on local tools such as \`tsx\`.`,
   );
 }
@@ -326,7 +333,8 @@ function buildSyncPlannedCommands(
       extraArgs,
     );
     if (!syncAiCommand) {
-      throw new Error(
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.CONFIGURATION_MISSING,
         `Expected ${project.packageJsonPath} to define a \`sync-ai\` script for \`wp-typia sync ai\`.`,
       );
     }
@@ -344,7 +352,8 @@ function buildSyncPlannedCommands(
     extraArgs,
   );
   if (!syncTypesCommand) {
-    throw new Error(
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.CONFIGURATION_MISSING,
       `Expected ${project.packageJsonPath} to define either a \`sync\` or \`sync-types\` script.`,
     );
   }

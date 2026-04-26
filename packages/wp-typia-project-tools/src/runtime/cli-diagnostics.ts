@@ -27,6 +27,9 @@ export const CLI_DIAGNOSTIC_CODES = {
 export type CliDiagnosticCode =
 	(typeof CLI_DIAGNOSTIC_CODES)[keyof typeof CLI_DIAGNOSTIC_CODES];
 
+export type CliDiagnosticCodeError<TCode extends CliDiagnosticCode = CliDiagnosticCode> =
+	Error & { code: TCode };
+
 type DoctorCheckLike = {
 	detail: string;
 	label: string;
@@ -211,6 +214,23 @@ function readCliDiagnosticCode(error: unknown): CliDiagnosticCode | null {
 	}
 
 	return null;
+}
+
+/**
+ * Tag a user-facing CLI throw site with a stable diagnostic code.
+ *
+ * Prefer this helper, or `createCliCommandError({ code })`, for new known CLI
+ * failures. `inferCliDiagnosticCode()` remains only a compatibility fallback
+ * for legacy or untyped errors.
+ */
+export function createCliDiagnosticCodeError<TCode extends CliDiagnosticCode>(
+	code: TCode,
+	message: string,
+	options?: ErrorOptions,
+): CliDiagnosticCodeError<TCode> {
+	const error = new Error(message, options) as CliDiagnosticCodeError<TCode>;
+	error.code = code;
+	return error;
 }
 
 function inferCliDiagnosticCode(options: {

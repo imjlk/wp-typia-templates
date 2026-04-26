@@ -90,11 +90,18 @@ Current stable `error.code` vocabulary:
 - `outside-project-root`
 - `template-source-timeout`
 - `template-source-too-large`
+- `unknown-template`
 - `unsupported-command`
 
 That same JSON contract should apply both to command-handler failures and to
 top-level parse/normalization failures that happen before Bunli dispatches a
 command, as long as the caller explicitly requested `--format json`.
+
+New user-facing CLI failures should own their diagnostic code at the throw site
+by using `createCliDiagnosticCodeError(code, message)` in shared runtime code or
+`createCliCommandError({ code, ... })` at command boundaries. Regex-based
+`inferCliDiagnosticCode()` classification is retained only as a compatibility
+fallback for legacy or third-party errors.
 
 Shorthand references like `npx wp-typia` and `bunx wp-typia` should still map
 to the canonical `create` surface in docs and review notes.

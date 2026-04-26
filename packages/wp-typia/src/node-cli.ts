@@ -2,6 +2,7 @@ import packageJson from '../package.json';
 import {
   CLI_DIAGNOSTIC_CODES,
   createCliCommandError,
+  createCliDiagnosticCodeError,
   formatCliDiagnosticError,
   serializeCliDiagnosticError,
 } from '@wp-typia/project-tools/cli-diagnostics';
@@ -122,7 +123,10 @@ export function parseGlobalFlags(argv: string[]): {
     if (arg === '--format' || arg === '--id') {
       const next = argv[index + 1];
       if (!next || next.startsWith('-')) {
-        throw new Error(`\`${arg}\` requires a value.`);
+        throw createCliDiagnosticCodeError(
+          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+          `\`${arg}\` requires a value.`,
+        );
       }
       if (arg === '--format') {
         flags.format = next;
@@ -467,9 +471,13 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
         : (positionals[2] as string | undefined);
     const resolvedSubcommand = templateId ? 'inspect' : (subcommand ?? 'list');
     if (resolvedSubcommand !== 'list' && resolvedSubcommand !== 'inspect') {
-      throw new Error(
-        `Unknown templates subcommand "${resolvedSubcommand}". Expected list or inspect.`,
-      );
+      throw createCliCommandError({
+        code: CLI_DIAGNOSTIC_CODES.INVALID_COMMAND,
+        command: 'templates',
+        detailLines: [
+          `Unknown templates subcommand "${resolvedSubcommand}". Expected list or inspect.`,
+        ],
+      });
     }
     if (mergedFlags.format === 'json') {
       renderTemplatesJson(
@@ -494,6 +502,7 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
     const projectDir = positionals[1];
     if (!projectDir) {
       throw createCliCommandError({
+        code: CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
         command: 'create',
         detailLines: [
           '`wp-typia create` requires <project-dir>.',
@@ -540,6 +549,7 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
         await import('@wp-typia/project-tools/cli-add');
       printLine(formatAddHelpText());
       throw createCliCommandError({
+        code: CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
         command: 'add',
         detailLines: [
           `\`wp-typia add\` requires <kind>. Usage: wp-typia add ${formatAddKindUsagePlaceholder()} ...`,

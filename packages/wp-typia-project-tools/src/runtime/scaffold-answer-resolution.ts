@@ -13,6 +13,10 @@ import {
   validateNamespace,
 } from './scaffold-identifiers.js';
 import {
+  CLI_DIAGNOSTIC_CODES,
+  createCliDiagnosticCodeError,
+} from './cli-diagnostics.js';
+import {
   OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE,
   TEMPLATE_IDS,
   getTemplateById,
@@ -115,7 +119,10 @@ function normalizeQueryPostType(value: string | undefined): string | undefined {
 
   const validationResult = validateQueryPostType(value);
   if (validationResult !== true) {
-    throw new Error(validationResult);
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+      validationResult,
+    );
   }
 
   return value.trim().toLowerCase();
@@ -240,7 +247,10 @@ export async function resolveTemplateId({
   if (templateId) {
     const normalizedTemplateId = normalizeTemplateSelection(templateId);
     if (isRemovedBuiltInTemplateId(templateId)) {
-      throw new Error(getRemovedBuiltInTemplateMessage(templateId));
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE,
+        getRemovedBuiltInTemplateMessage(templateId),
+      );
     }
     if (normalizedTemplateId === OFFICIAL_WORKSPACE_TEMPLATE_PACKAGE) {
       return normalizedTemplateId;
@@ -250,10 +260,16 @@ export async function resolveTemplateId({
     }
     const mistypedBuiltInTemplateMessage = getMistypedBuiltInTemplateMessage(templateId);
     if (mistypedBuiltInTemplateMessage) {
-      throw new Error(mistypedBuiltInTemplateMessage);
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE,
+        mistypedBuiltInTemplateMessage,
+      );
     }
     if (!looksLikeExplicitExternalTemplateLocator(normalizedTemplateId)) {
-      throw new Error(getUnknownTemplateMessage(templateId));
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE,
+        getUnknownTemplateMessage(templateId),
+      );
     }
     return normalizedTemplateId;
   }
@@ -263,7 +279,8 @@ export async function resolveTemplateId({
   }
 
   if (!isInteractive || !selectTemplate) {
-    throw new Error(
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
       `Template is required in non-interactive mode. Use ${TEMPLATE_SELECTION_HINT}.`,
     );
   }
@@ -292,7 +309,8 @@ export async function resolvePackageManagerId({
   }
 
   if (!isInteractive || !selectPackageManager) {
-    throw new Error(
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
       `Package manager is required in non-interactive mode. Use --package-manager <${PACKAGE_MANAGER_IDS.join('|')}>.`,
     );
   }
