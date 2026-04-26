@@ -248,7 +248,7 @@ export async function resolveTemplateId({
     const normalizedTemplateId = normalizeTemplateSelection(templateId);
     if (isRemovedBuiltInTemplateId(templateId)) {
       throw createCliDiagnosticCodeError(
-        CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+        CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE,
         getRemovedBuiltInTemplateMessage(templateId),
       );
     }

@@ -1180,6 +1180,48 @@ describe('wp-typia package', () => {
     }
   });
 
+  test('emits a machine-readable unknown-template error code for removed built-in template ids', () => {
+    const targetDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-create-removed-template-'),
+    );
+    fs.rmSync(targetDir, { force: true, recursive: true });
+
+    try {
+      const result = runCapturedCommand(
+        process.execPath,
+        [
+          entryPath,
+          'create',
+          targetDir,
+          '--template',
+          'data',
+          '--yes',
+          '--no-install',
+          '--format',
+          'json',
+        ],
+        {
+          env: withoutLocalBunEnv(),
+        },
+      );
+      const parsed = parseJsonObjectFromOutput<{
+        error?: { code?: string; command?: string; message?: string };
+        ok?: boolean;
+      }>(result.stderr);
+
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(parsed.ok).toBe(false);
+      expect(parsed.error?.command).toBe('create');
+      expect(parsed.error?.code).toBe('unknown-template');
+      expect(parsed.error?.message).toContain(
+        'Built-in template "data" was removed.',
+      );
+    } finally {
+      fs.rmSync(targetDir, { force: true, recursive: true });
+    }
+  });
+
   test('formats add failures with a shared non-interactive diagnostic block', () => {
     const result = runCapturedCommand('node', [
       entryPath,
@@ -1308,6 +1350,15 @@ describe('wp-typia package', () => {
     expect(parsed.error?.kind).toBe('command-execution');
     expect(parsed.error?.command).toBe('sync');
     expect(parsed.error?.code).toBe('invalid-command');
+  });
+
+  test('preserves command metadata for invalid templates subcommands in Node fallback JSON mode', async () => {
+    await expect(
+      runNodeCli(['templates', 'unknown', '--format', 'json']),
+    ).rejects.toMatchObject({
+      code: 'invalid-command',
+      command: 'templates',
+    });
   });
 
   test('treats missing add kinds as an error while still printing help text', () => {

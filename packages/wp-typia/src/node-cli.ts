@@ -471,10 +471,13 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
         : (positionals[2] as string | undefined);
     const resolvedSubcommand = templateId ? 'inspect' : (subcommand ?? 'list');
     if (resolvedSubcommand !== 'list' && resolvedSubcommand !== 'inspect') {
-      throw createCliDiagnosticCodeError(
-        CLI_DIAGNOSTIC_CODES.INVALID_COMMAND,
-        `Unknown templates subcommand "${resolvedSubcommand}". Expected list or inspect.`,
-      );
+      throw createCliCommandError({
+        code: CLI_DIAGNOSTIC_CODES.INVALID_COMMAND,
+        command: 'templates',
+        detailLines: [
+          `Unknown templates subcommand "${resolvedSubcommand}". Expected list or inspect.`,
+        ],
+      });
     }
     if (mergedFlags.format === 'json') {
       renderTemplatesJson(
