@@ -32,7 +32,11 @@ const fields = [
 
 const view = {
   fields: ["title", "status"],
-  filters: [{ field: "status", operator: "isAny", value: ["draft", "publish"] }],
+  filters: [
+    { field: "status", operator: "isAny", value: ["draft", "publish"] },
+    { field: "status", operator: "isAll", value: ["publish"] },
+    { field: "views", operator: "lessThanOrEqual", value: 500 },
+  ],
   page: 1,
   perPage: 10,
   search: "plugin",
@@ -54,6 +58,10 @@ const config = {
   actions: [action],
   data: [],
   fields,
+  onChangeSelection: (selection) => {
+    selection.map((id) => id.toUpperCase());
+  },
+  selection: ["1"],
   view,
 } satisfies DataViewsConfig<Book>;
 

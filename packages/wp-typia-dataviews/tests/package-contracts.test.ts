@@ -4,11 +4,12 @@ import { describe, expect, test } from "bun:test";
 
 import {
   DATAVIEWS_FIELD_TYPES,
+  DATAVIEWS_FILTER_OPERATORS,
   DATAVIEWS_LAYOUT_TYPES,
   DATAVIEWS_STANDALONE_STYLE_IMPORTS,
   DATAVIEWS_WORDPRESS_COMPONENT_IMPORT,
   DATAVIEWS_WORDPRESS_STYLE_DEPENDENCIES,
-} from "../dist/index.js";
+} from "../src/index.js";
 
 const packageRoot = resolve(import.meta.dir, "..");
 
@@ -35,6 +36,9 @@ describe("@wp-typia/dataviews package contracts", () => {
       "pickerGrid",
     ]);
     expect(DATAVIEWS_FIELD_TYPES).toContain("text");
+    expect(DATAVIEWS_FILTER_OPERATORS).toContain("isAll");
+    expect(DATAVIEWS_FILTER_OPERATORS).toContain("lessThanOrEqual");
+    expect(DATAVIEWS_FILTER_OPERATORS).toContain("beforeInc");
     expect(DATAVIEWS_WORDPRESS_COMPONENT_IMPORT).toBe("@wordpress/dataviews/wp");
     expect(DATAVIEWS_WORDPRESS_STYLE_DEPENDENCIES).toEqual(["wp-components"]);
     expect(DATAVIEWS_STANDALONE_STYLE_IMPORTS).toContain(

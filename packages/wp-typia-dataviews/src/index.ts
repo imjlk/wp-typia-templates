@@ -51,11 +51,23 @@ export const DATAVIEWS_FILTER_OPERATORS = [
   "isNot",
   "isAny",
   "isNone",
+  "isAll",
   "contains",
   "notContains",
+  "startsWith",
   "lessThan",
+  "lessThanOrEqual",
   "greaterThan",
+  "greaterThanOrEqual",
   "between",
+  "on",
+  "notOn",
+  "before",
+  "beforeInc",
+  "after",
+  "afterInc",
+  "inThePast",
+  "over",
 ] as const;
 
 export type DataViewsFilterOperator = (typeof DATAVIEWS_FILTER_OPERATORS)[number];
@@ -215,6 +227,7 @@ export interface DataViewsConfig<TItem extends object = DataViewsRecord> {
   readonly paginationInfo?: DataViewsPaginationInfo;
   readonly search?: boolean;
   readonly searchLabel?: string;
+  readonly onChangeSelection?: (selection: readonly string[]) => void;
   readonly selection?: readonly string[];
   readonly view: DataViewsView<TItem>;
 }
