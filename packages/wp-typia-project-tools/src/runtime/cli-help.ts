@@ -38,6 +38,9 @@ export function formatHelpText(): string {
 
 Built-in templates: ${TEMPLATE_IDS.join(", ")}
 Package managers: ${PACKAGE_MANAGER_IDS.join(", ")}
+Output environment:
+  WP_TYPIA_ASCII=1 forces ASCII status markers; WP_TYPIA_ASCII=0 opts back into Unicode markers even when NO_COLOR is set.
+  NO_COLOR requests ASCII-safe markers such as [ok], [dry-run], [!], and [...] when WP_TYPIA_ASCII is not set.
 Notes:
   \`wp-typia create\` is the canonical scaffold command.
   \`wp-typia <project-dir>\` remains a backward-compatible alias to \`create\` when \`<project-dir>\` is the only positional argument.

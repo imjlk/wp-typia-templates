@@ -352,6 +352,7 @@ describe('wp-typia package', () => {
       expect(helpOutput).toContain(commandName);
     }
     expect(helpOutput).toContain('Runtime: Node fallback');
+    expect(helpOutput).toContain('NO_COLOR requests ASCII markers');
     expect(helpOutput).toContain('create: Scaffold a new wp-typia project.');
     expect(createHelpOutput).toContain('--external-layer-source');
     expect(createHelpOutput).toContain('--external-layer-id');
@@ -409,6 +410,73 @@ describe('wp-typia package', () => {
     expect(output.trim()).toBe(`wp-typia ${packageManifest.version}`);
   });
 
+  test('honors NO_COLOR for ASCII-safe status markers through the canonical bin', () => {
+    const tempRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'wp-typia-no-color-markers-'),
+    );
+
+    try {
+      const asciiOutput = runUtf8Command(
+        'node',
+        [
+          entryPath,
+          'create',
+          'demo-no-color',
+          '--template',
+          'basic',
+          '--package-manager',
+          'npm',
+          '--yes',
+          '--dry-run',
+          '--no-install',
+        ],
+        {
+          cwd: tempRoot,
+          env: {
+            ...withoutAIAgentEnv(),
+            LANG: 'en_US.UTF-8',
+            LC_ALL: 'en_US.UTF-8',
+            NO_COLOR: '1',
+          },
+        },
+      );
+      const unicodeOutput = runUtf8Command(
+        'node',
+        [
+          entryPath,
+          'create',
+          'demo-unicode',
+          '--template',
+          'basic',
+          '--package-manager',
+          'npm',
+          '--yes',
+          '--dry-run',
+          '--no-install',
+        ],
+        {
+          cwd: tempRoot,
+          env: {
+            ...withoutAIAgentEnv(),
+            LANG: 'en_US.UTF-8',
+            LC_ALL: 'en_US.UTF-8',
+            NO_COLOR: '1',
+            WP_TYPIA_ASCII: '0',
+          },
+        },
+      );
+
+      expect(asciiOutput).toContain('[...] Resolving scaffold template');
+      expect(asciiOutput).toContain('[dry-run] Dry run for Demo No Color');
+      expect(asciiOutput).not.toContain('⏳');
+      expect(asciiOutput).not.toContain('🧪');
+      expect(unicodeOutput).toContain('⏳ Resolving scaffold template');
+      expect(unicodeOutput).toContain('🧪 Dry run for Demo Unicode');
+    } finally {
+      fs.rmSync(tempRoot, { force: true, recursive: true });
+    }
+  });
+
   test('keeps structured version output opt-in through --format json', () => {
     const output = runUtf8Command('node', [
       entryPath,
@@ -464,6 +532,7 @@ describe('wp-typia package', () => {
     );
     expect(helpResult.stdout).toContain('Runtime: Node fallback');
     expect(helpResult.stdout).toContain('standalone wp-typia binary');
+    expect(helpResult.stdout).toContain('WP_TYPIA_ASCII=1 forces ASCII markers');
     expect(createHelpResult.status).toBe(0);
     expect(createHelpResult.stderr).toBe('');
     expect(createHelpResult.stdout).toContain('--external-layer-source');

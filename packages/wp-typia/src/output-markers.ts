@@ -46,6 +46,10 @@ function readAsciiPreferenceFromEnv(
   return undefined;
 }
 
+function hasNoColorPreference(env: NodeJS.ProcessEnv): boolean {
+  return typeof env.NO_COLOR === 'string';
+}
+
 export function prefersAsciiOutput(options: OutputMarkerOptions = {}): boolean {
   if (options.forceAscii) {
     return true;
@@ -55,6 +59,9 @@ export function prefersAsciiOutput(options: OutputMarkerOptions = {}): boolean {
   const envPreference = readAsciiPreferenceFromEnv(env);
   if (envPreference !== undefined) {
     return envPreference;
+  }
+  if (hasNoColorPreference(env)) {
+    return true;
   }
 
   const term = options.term ?? env.TERM;
