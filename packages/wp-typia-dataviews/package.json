@@ -1,0 +1,48 @@
+{
+  "name": "@wp-typia/dataviews",
+  "version": "0.1.0",
+  "description": "Opt-in typed compatibility facade for WordPress DataViews and DataForm integrations",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "test": "bun run build && bun test tests",
+    "test:coverage": "bun run build && bun test tests --coverage --coverage-reporter=text --coverage-reporter=lcov --coverage-dir=coverage",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "author": "imjlk",
+  "license": "GPL-2.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imjlk/wp-typia.git",
+    "directory": "packages/wp-typia-dataviews"
+  },
+  "bugs": {
+    "url": "https://github.com/imjlk/wp-typia/issues"
+  },
+  "homepage": "https://github.com/imjlk/wp-typia/tree/main/packages/wp-typia-dataviews#readme",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0",
+    "bun": ">=1.3.11"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

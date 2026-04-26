@@ -7,6 +7,7 @@
     "packages/wp-typia-api-client/src/client-utils.ts",
     "packages/wp-typia-api-client/src/runtime-primitives.ts",
     "packages/wp-typia-api-client/src/internal/runtime-primitives.ts",
+    "packages/wp-typia-dataviews/src/index.ts",
     "packages/wp-typia-project-tools/src/runtime/index.ts",
     "packages/wp-typia-block-runtime/src/index.ts",
     "packages/wp-typia-block-runtime/src/schema-core.ts",

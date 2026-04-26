@@ -158,7 +158,7 @@
     },
     "packages/wp-typia": {
       "name": "wp-typia",
-      "version": "0.20.3",
+      "version": "0.20.5",
       "bin": {
         "wp-typia": "bin/wp-typia.js",
       },
@@ -236,9 +236,16 @@
         "@wordpress/blocks": "^15.2.0",
       },
     },
+    "packages/wp-typia-dataviews": {
+      "name": "@wp-typia/dataviews",
+      "version": "0.1.0",
+      "devDependencies": {
+        "typescript": "^5.9.2",
+      },
+    },
     "packages/wp-typia-project-tools": {
       "name": "@wp-typia/project-tools",
-      "version": "0.20.0",
+      "version": "0.20.2",
       "dependencies": {
         "@wp-typia/api-client": "^0.4.5",
         "@wp-typia/block-runtime": "workspace:*",
@@ -1862,6 +1869,8 @@
     "@wp-typia/block-types": ["@wp-typia/block-types@workspace:packages/wp-typia-block-types"],
 
     "@wp-typia/create-workspace-template": ["@wp-typia/create-workspace-template@workspace:packages/create-workspace-template"],
+
+    "@wp-typia/dataviews": ["@wp-typia/dataviews@workspace:packages/wp-typia-dataviews"],
 
     "@wp-typia/docs": ["@wp-typia/docs@workspace:apps/docs"],
 
