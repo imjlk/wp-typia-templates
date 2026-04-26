@@ -4,6 +4,7 @@ import {
   createDataViewsQueryAdapter,
   defineDataViews,
   toDataViewsQueryArgs,
+  type DataViewsRecord,
   type DataViewsView,
 } from "../src/index.js";
 
@@ -117,6 +118,22 @@ describe("DataViews query adapters", () => {
       perPageParam: false,
       searchParam: false,
     });
+
+    expect(query).toEqual({});
+  });
+
+  test("ignores inherited keys when static sort maps do not own the field", () => {
+    const query = toDataViewsQueryArgs<DataViewsRecord, WordPressProductQuery>(
+      {
+        sort: { direction: "asc", field: "toString" },
+        type: "table",
+      },
+      {
+        mapSort: {
+          createdAt: "date",
+        },
+      },
+    );
 
     expect(query).toEqual({});
   });

@@ -710,7 +710,7 @@ function mergeDataViewsSortQuery<TItem extends object, TQuery extends object>(
     return;
   }
 
-  const orderBy = options.mapSort[view.sort.field];
+  const orderBy = getDataViewsQuerySortMapValue(options.mapSort, view.sort.field);
 
   if (orderBy === undefined) {
     return;
@@ -722,6 +722,17 @@ function mergeDataViewsSortQuery<TItem extends object, TQuery extends object>(
 
   assignDataViewsQueryParam(query, options.orderByParam, "orderby", orderBy);
   assignDataViewsQueryParam(query, options.orderParam, "order", view.sort.direction);
+}
+
+function getDataViewsQuerySortMapValue<TItem extends object>(
+  mapSort: DataViewsQuerySortMap<TItem>,
+  field: DataViewsFieldId<TItem>,
+): DataViewsQuerySortValue | undefined {
+  if (!Object.prototype.hasOwnProperty.call(mapSort, field)) {
+    return undefined;
+  }
+
+  return mapSort[field];
 }
 
 function mergeDataViewsFilterQueries<TItem extends object, TQuery extends object>(
