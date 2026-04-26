@@ -287,6 +287,60 @@ export type QueryAdapter<
   TQuery = Record<string, unknown>,
 > = (view: DataViewsView<TItem>, context: QueryAdapterContext<TItem>) => TQuery;
 
+export type DataViewsQueryArgs = Record<string, unknown>;
+
+export type DataViewsQueryParamName<TQuery extends object = DataViewsQueryArgs> = Extract<
+  keyof TQuery,
+  string
+>;
+
+export type DataViewsQuerySortValue = boolean | number | string;
+
+export type DataViewsQuerySortMap<TItem extends object = DataViewsRecord> = Readonly<
+  Partial<Record<DataViewsFieldId<TItem>, DataViewsQuerySortValue>>
+>;
+
+export interface DataViewsQueryAdapterMapContext<
+  TItem extends object = DataViewsRecord,
+> extends QueryAdapterContext<TItem> {
+  readonly view: DataViewsView<TItem>;
+}
+
+export type DataViewsQueryMapperResult<TQuery extends object = DataViewsQueryArgs> =
+  | Partial<TQuery>
+  | null
+  | undefined
+  | void;
+
+export type DataViewsQuerySortMapper<
+  TItem extends object = DataViewsRecord,
+  TQuery extends object = DataViewsQueryArgs,
+> = (
+  sort: DataViewsSort<TItem>,
+  context: DataViewsQueryAdapterMapContext<TItem>,
+) => DataViewsQueryMapperResult<TQuery>;
+
+export type DataViewsQueryFilterMapper<
+  TItem extends object = DataViewsRecord,
+  TQuery extends object = DataViewsQueryArgs,
+> = (
+  filter: DataViewsFilter<TItem>,
+  context: DataViewsQueryAdapterMapContext<TItem>,
+) => DataViewsQueryMapperResult<TQuery>;
+
+export interface DataViewsQueryAdapterOptions<
+  TItem extends object = DataViewsRecord,
+  TQuery extends object = DataViewsQueryArgs,
+> {
+  readonly mapFilter?: DataViewsQueryFilterMapper<TItem, TQuery>;
+  readonly mapSort?: DataViewsQuerySortMap<TItem> | DataViewsQuerySortMapper<TItem, TQuery>;
+  readonly orderByParam?: DataViewsQueryParamName<TQuery> | false;
+  readonly orderParam?: DataViewsQueryParamName<TQuery> | false;
+  readonly pageParam?: DataViewsQueryParamName<TQuery> | false;
+  readonly perPageParam?: DataViewsQueryParamName<TQuery> | false;
+  readonly searchParam?: DataViewsQueryParamName<TQuery> | false;
+}
+
 export type DataViewsCompatibleFieldType<TValue> =
   NonNullable<TValue> extends boolean
     ? "boolean"
@@ -385,6 +439,10 @@ export interface DefinedDataViews<TItem extends object> {
   readonly searchLabel?: string;
   readonly titleField?: DataViewsFieldId<TItem>;
   readonly createConfig: (options: DefineDataViewsConfigOptions<TItem>) => DataViewsConfig<TItem>;
+  readonly toQueryArgs: <TQuery extends object = DataViewsQueryArgs>(
+    view: DataViewsView<TItem>,
+    options?: DataViewsQueryAdapterOptions<TItem, TQuery>,
+  ) => Partial<TQuery>;
 }
 
 export function defineDataViews<TItem extends object>(
@@ -415,6 +473,7 @@ export function defineDataViews<TItem extends object>(
       selection: options.selection,
       view: options.view ?? defaultView,
     }),
+    toQueryArgs: (view, options) => toDataViewsQueryArgs(view, options, { fields }),
     defaultLayouts: definition.defaultLayouts,
     defaultView,
     fieldMap,
@@ -426,6 +485,38 @@ export function defineDataViews<TItem extends object>(
     searchLabel: definition.searchLabel,
     titleField: definition.titleField,
   };
+}
+
+export function createDataViewsQueryAdapter<
+  TItem extends object = DataViewsRecord,
+  TQuery extends object = DataViewsQueryArgs,
+>(
+  options: DataViewsQueryAdapterOptions<TItem, TQuery> = {},
+): QueryAdapter<TItem, Partial<TQuery>> {
+  return (view, context) => toDataViewsQueryArgs(view, options, context);
+}
+
+export function toDataViewsQueryArgs<
+  TItem extends object = DataViewsRecord,
+  TQuery extends object = DataViewsQueryArgs,
+>(
+  view: DataViewsView<TItem>,
+  options: DataViewsQueryAdapterOptions<TItem, TQuery> = {},
+  context: QueryAdapterContext<TItem> = { fields: [] },
+): Partial<TQuery> {
+  const query: Record<string, unknown> = {};
+  const mapContext: DataViewsQueryAdapterMapContext<TItem> = {
+    ...context,
+    view,
+  };
+
+  assignDataViewsQueryParam(query, options.pageParam, "page", view.page);
+  assignDataViewsQueryParam(query, options.perPageParam, "per_page", view.perPage);
+  assignDataViewsQueryParam(query, options.searchParam, "search", view.search);
+  mergeDataViewsSortQuery(query, view, options, mapContext);
+  mergeDataViewsFilterQueries(query, view, options, mapContext);
+
+  return query as Partial<TQuery>;
 }
 
 function normalizeDefineDataViewsFields<TItem extends object>(
@@ -590,6 +681,70 @@ function createGetItemId<TItem extends object>(
       `defineDataViews idField "${idField}" must resolve to a string or finite number. Provide getItemId for custom item identity values.`,
     );
   };
+}
+
+function assignDataViewsQueryParam<TQuery extends object>(
+  query: Record<string, unknown>,
+  param: DataViewsQueryParamName<TQuery> | false | undefined,
+  defaultParam: string,
+  value: unknown,
+): void {
+  if (param === false || value === undefined) {
+    return;
+  }
+
+  query[param ?? defaultParam] = value;
+}
+
+function mergeDataViewsSortQuery<TItem extends object, TQuery extends object>(
+  query: Record<string, unknown>,
+  view: DataViewsView<TItem>,
+  options: DataViewsQueryAdapterOptions<TItem, TQuery>,
+  context: DataViewsQueryAdapterMapContext<TItem>,
+): void {
+  if (view.sort === undefined || options.mapSort === undefined) {
+    return;
+  }
+
+  if (typeof options.mapSort === "function") {
+    mergeDataViewsQueryResult(query, options.mapSort(view.sort, context));
+    return;
+  }
+
+  const orderBy = options.mapSort[view.sort.field];
+
+  if (orderBy === undefined) {
+    return;
+  }
+
+  assignDataViewsQueryParam(query, options.orderByParam, "orderby", orderBy);
+  assignDataViewsQueryParam(query, options.orderParam, "order", view.sort.direction);
+}
+
+function mergeDataViewsFilterQueries<TItem extends object, TQuery extends object>(
+  query: Record<string, unknown>,
+  view: DataViewsView<TItem>,
+  options: DataViewsQueryAdapterOptions<TItem, TQuery>,
+  context: DataViewsQueryAdapterMapContext<TItem>,
+): void {
+  if (options.mapFilter === undefined) {
+    return;
+  }
+
+  for (const filter of view.filters ?? []) {
+    mergeDataViewsQueryResult(query, options.mapFilter(filter, context));
+  }
+}
+
+function mergeDataViewsQueryResult<TQuery extends object>(
+  query: Record<string, unknown>,
+  result: DataViewsQueryMapperResult<TQuery>,
+): void {
+  if (result === undefined || result === null) {
+    return;
+  }
+
+  Object.assign(query, result);
 }
 
 function formatDataViewsFieldLabel(id: string): string {
