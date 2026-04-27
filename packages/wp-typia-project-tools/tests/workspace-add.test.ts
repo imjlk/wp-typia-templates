@@ -2398,6 +2398,28 @@ test("canonical CLI can add an end-to-end binding source target to an existing b
       cwd: targetDir,
     }
   );
+  for (const invalidBlockName of ["/counter-card", "counter-card/"]) {
+    expect(
+      getCommandErrorMessage(() =>
+        runCli(
+          "node",
+          [
+            entryPath,
+            "add",
+            "binding-source",
+            "hero-data",
+            "--block",
+            invalidBlockName,
+            "--attribute",
+            "headline",
+          ],
+          {
+            cwd: targetDir,
+          }
+        )
+      )
+    ).toContain("must use <block-slug> or <namespace/block-slug> format");
+  }
   runCli(
     "node",
     [

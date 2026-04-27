@@ -114,6 +114,11 @@ function resolveBindingTargetBlockSlug(
 			`Binding target block "${trimmed}" must use <block-slug> or <namespace/block-slug> format.`,
 		);
 	}
+	if (blockNameSegments.some((segment) => segment.trim() === "")) {
+		throw new Error(
+			`Binding target block "${trimmed}" must use <block-slug> or <namespace/block-slug> format without empty path segments.`,
+		);
+	}
 
 	const [maybeNamespace, maybeSlug] =
 		blockNameSegments.length === 2
