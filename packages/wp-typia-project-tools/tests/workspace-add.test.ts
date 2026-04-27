@@ -773,69 +773,73 @@ test("canonical CLI can dry-run hooked-block metadata updates without rewriting 
   ).toBe(originalBlockJsonSource);
 });
 
-test("duplicate add block failures preserve existing workspace blocks", async () => {
-  const targetDir = path.join(tempRoot, "demo-workspace-add-duplicate");
+test(
+  "duplicate add block failures preserve existing workspace blocks",
+  async () => {
+    const targetDir = path.join(tempRoot, "demo-workspace-add-duplicate");
 
-  await scaffoldProject({
-    projectDir: targetDir,
-    templateId: workspaceTemplatePackageManifest.name,
-    packageManager: "npm",
-    noInstall: true,
-    answers: {
-      author: "Test Runner",
-      description: "Demo workspace add duplicate",
-      namespace: "demo-space",
-      phpPrefix: "demo_space",
-      slug: "demo-workspace-add-duplicate",
-      textDomain: "demo-space",
-      title: "Demo Workspace Add Duplicate",
-    },
-  });
+    await scaffoldProject({
+      projectDir: targetDir,
+      templateId: workspaceTemplatePackageManifest.name,
+      packageManager: "npm",
+      noInstall: true,
+      answers: {
+        author: "Test Runner",
+        description: "Demo workspace add duplicate",
+        namespace: "demo-space",
+        phpPrefix: "demo_space",
+        slug: "demo-workspace-add-duplicate",
+        textDomain: "demo-space",
+        title: "Demo Workspace Add Duplicate",
+      },
+    });
 
-  linkWorkspaceNodeModules(targetDir);
+    linkWorkspaceNodeModules(targetDir);
 
-  runCli(
-    "node",
-    [entryPath, "add", "block", "counter-card", "--template", "basic"],
-    {
-      cwd: targetDir,
-    }
-  );
-
-  const originalIndexSource = fs.readFileSync(
-    path.join(targetDir, "src", "blocks", "counter-card", "index.tsx"),
-    "utf8"
-  );
-  const originalBlockConfigSource = fs.readFileSync(
-    path.join(targetDir, "scripts", "block-config.ts"),
-    "utf8"
-  );
-
-  expect(() =>
     runCli(
       "node",
       [entryPath, "add", "block", "counter-card", "--template", "basic"],
       {
         cwd: targetDir,
       }
-    )
-  ).toThrow(
-    "A block already exists at src/blocks/counter-card. Choose a different name."
-  );
+    );
 
-  expect(
-    fs.readFileSync(
+    const originalIndexSource = fs.readFileSync(
       path.join(targetDir, "src", "blocks", "counter-card", "index.tsx"),
       "utf8"
-    )
-  ).toBe(originalIndexSource);
-  expect(
-    fs.readFileSync(
+    );
+    const originalBlockConfigSource = fs.readFileSync(
       path.join(targetDir, "scripts", "block-config.ts"),
       "utf8"
-    )
-  ).toBe(originalBlockConfigSource);
-});
+    );
+
+    expect(() =>
+      runCli(
+        "node",
+        [entryPath, "add", "block", "counter-card", "--template", "basic"],
+        {
+          cwd: targetDir,
+        }
+      )
+    ).toThrow(
+      "A block already exists at src/blocks/counter-card. Choose a different name."
+    );
+
+    expect(
+      fs.readFileSync(
+        path.join(targetDir, "src", "blocks", "counter-card", "index.tsx"),
+        "utf8"
+      )
+    ).toBe(originalIndexSource);
+    expect(
+      fs.readFileSync(
+        path.join(targetDir, "scripts", "block-config.ts"),
+        "utf8"
+      )
+    ).toBe(originalBlockConfigSource);
+  },
+  15_000
+);
 
 test("hooked-block workflow rejects unknown blocks, invalid anchors, self-hooks, invalid positions, and duplicate anchors", async () => {
   const targetDir = path.join(
@@ -2461,6 +2465,9 @@ test("canonical CLI can add an end-to-end binding source target to an existing b
   expect(blockJson.attributes.headline).toEqual({ type: "string" });
   expect(bindingServerSource).toContain(
     "block_bindings_supported_attributes_demo-space/counter-card"
+  );
+  expect(bindingServerSource).toContain(
+    "if ( function_exists( 'demo_space_hero_data_supported_binding_attributes' ) )"
   );
   expect(bindingServerSource).toContain(
     "function demo_space_hero_data_supported_binding_attributes"

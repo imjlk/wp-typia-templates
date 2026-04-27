@@ -198,10 +198,12 @@ if ( ! function_exists( '${bindingSourceSupportedAttributesFunctionName}' ) ) {
 		: "";
 	const supportedAttributesHook = target
 		? `
-add_filter(
-\t${quotePhpString(`block_bindings_supported_attributes_${namespace}/${target.blockSlug}`)},
-\t${quotePhpString(bindingSourceSupportedAttributesFunctionName)}
-);
+if ( function_exists( '${bindingSourceSupportedAttributesFunctionName}' ) ) {
+\tadd_filter(
+\t\t${quotePhpString(`block_bindings_supported_attributes_${namespace}/${target.blockSlug}`)},
+\t\t${quotePhpString(bindingSourceSupportedAttributesFunctionName)}
+\t);
+}
 `
 		: "";
 
@@ -364,12 +366,12 @@ function getInterfaceDeclaration(
 	);
 	let declaration: ts.InterfaceDeclaration | undefined;
 
-	const visit = (node: ts.Node): void => {
+	const visit = (node: ts.Node): boolean => {
 		if (ts.isInterfaceDeclaration(node) && node.name.text === interfaceName) {
 			declaration = node;
-			return;
+			return true;
 		}
-		ts.forEachChild(node, visit);
+		return ts.forEachChild(node, (child) => (visit(child) ? true : undefined)) ?? false;
 	};
 	visit(sourceFile);
 
