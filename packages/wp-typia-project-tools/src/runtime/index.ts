@@ -5,8 +5,10 @@
  * CLI while keeping reusable project logic out of the CLI package itself.
  * Consumers should prefer these exports for scaffold, add, migrate, doctor,
  * and workspace-aware helpers such as `getWorkspaceBlockSelectOptions`,
- * `runAddBlockCommand`, `runAddVariationCommand`, `runAddPatternCommand`,
- * `runAddBindingSourceCommand`, `runAddEditorPluginCommand`,
+ * `runAddBlockCommand`, `runAddBlockStyleCommand`,
+ * `runAddBlockTransformCommand`, `runAddVariationCommand`,
+ * `runAddPatternCommand`, `runAddBindingSourceCommand`,
+ * `runAddEditorPluginCommand`,
  * `runAddAdminViewCommand`,
  * `runAddHookedBlockCommand`,
  * `HOOKED_BLOCK_POSITION_IDS`, and `runDoctor`.

@@ -389,6 +389,14 @@ async function ensureBlockTransformRegistrationHook(blockIndexPath: string): Pro
 	await patchFile(blockIndexPath, (source) => {
 		let nextSource = source;
 
+		if (!nextSource.includes("registration.settings")) {
+			throw new Error(
+				`Unable to inject ${BLOCK_TRANSFORMS_CALL_LINE} into ${path.basename(
+					blockIndexPath,
+				)} because it does not expose a scaffold registration settings object.`,
+			);
+		}
+
 		if (!nextSource.includes(BLOCK_TRANSFORMS_IMPORT_LINE)) {
 			nextSource = `${BLOCK_TRANSFORMS_IMPORT_LINE}\n${nextSource}`;
 		}
@@ -396,8 +404,6 @@ async function ensureBlockTransformRegistrationHook(blockIndexPath: string): Pro
 		if (!nextSource.includes(BLOCK_TRANSFORMS_CALL_LINE)) {
 			const callInsertionPatterns = [
 				/(registerScaffoldBlockType\([\s\S]*?\);\s*)/u,
-				/(registerBlockType<[\s\S]*?\);\s*)/u,
-				/(registerBlockType\([\s\S]*?\);\s*)/u,
 			];
 			let inserted = false;
 

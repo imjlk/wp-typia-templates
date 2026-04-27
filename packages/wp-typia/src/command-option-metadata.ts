@@ -162,7 +162,7 @@ export const ADD_OPTION_METADATA = {
 		type: "string",
 	},
 	from: {
-		description: "Source block name for transform workflows.",
+		description: "Source full block name (namespace/block) for transform workflows.",
 		type: "string",
 	},
 	methods: {

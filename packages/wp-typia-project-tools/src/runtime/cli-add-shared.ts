@@ -102,12 +102,33 @@ export interface RunAddVariationCommandOptions {
 	variationName: string;
 }
 
+/**
+ * Options for `wp-typia add style`.
+ *
+ * @property blockName Existing workspace block slug that owns the style.
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @property styleName Human-entered style name that will be normalized into the
+ * generated style slug.
+ */
 export interface RunAddBlockStyleCommandOptions {
 	blockName: string;
 	cwd?: string;
 	styleName: string;
 }
 
+/**
+ * Options for `wp-typia add transform`.
+ *
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @property fromBlockName Full `namespace/block` source block name accepted by
+ * WordPress block transform definitions.
+ * @property toBlockName Existing workspace block slug or full block name that
+ * owns the generated transform.
+ * @property transformName Human-entered transform name that will be normalized
+ * into the generated transform slug.
+ */
 export interface RunAddBlockTransformCommandOptions {
 	cwd?: string;
 	fromBlockName: string;

@@ -742,6 +742,85 @@ test("canonical CLI can add block styles and transforms to an official workspace
   runCli("npm", ["run", "build"], { cwd: targetDir });
 }, 60_000);
 
+test("transform workflow rejects direct registerBlockType entrypoints without writing partial files", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-transform-direct-entry");
+
+  await scaffoldOfficialWorkspace(targetDir, {
+    description: "Demo workspace transform direct entry",
+    slug: "demo-workspace-transform-direct-entry",
+    title: "Demo Workspace Transform Direct Entry",
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+  runCli(
+    "node",
+    [entryPath, "add", "block", "counter-card", "--template", "basic"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const blockIndexPath = path.join(
+    targetDir,
+    "src",
+    "blocks",
+    "counter-card",
+    "index.tsx"
+  );
+  fs.writeFileSync(
+    blockIndexPath,
+    [
+      "import { registerBlockType } from '@wordpress/blocks';",
+      "import metadata from './block.json';",
+      "",
+      "registerBlockType(metadata.name, {",
+      "\tedit: () => null,",
+      "\tsave: () => null,",
+      "});",
+      "",
+    ].join("\n"),
+    "utf8"
+  );
+
+  const commandError = getCommandErrorMessage(() =>
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "transform",
+        "quote-to-counter",
+        "--from",
+        "core/quote",
+        "--to",
+        "counter-card",
+      ],
+      { cwd: targetDir }
+    )
+  );
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+
+  expect(commandError).toContain(
+    "does not expose a scaffold registration settings object"
+  );
+  expect(blockConfigSource).not.toContain("quote-to-counter");
+  expect(
+    fs.existsSync(
+      path.join(
+        targetDir,
+        "src",
+        "blocks",
+        "counter-card",
+        "transforms",
+        "quote-to-counter.ts"
+      )
+    )
+  ).toBe(false);
+}, 20_000);
+
 test("canonical CLI can add hooked-block metadata to an official workspace block", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-hooked-block");
 

@@ -24,15 +24,15 @@ export {
 } from "./cli-add-block.js";
 export {
 	runAddAdminViewCommand,
-	runAddBindingSourceCommand,
 	runAddAbilityCommand,
 	runAddAiFeatureCommand,
+	runAddBindingSourceCommand,
+	runAddBlockStyleCommand,
+	runAddBlockTransformCommand,
 	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,
 	runAddPatternCommand,
 	runAddRestResourceCommand,
-	runAddBlockStyleCommand,
-	runAddBlockTransformCommand,
 	runAddVariationCommand,
 } from "./cli-add-workspace.js";
 export { getWorkspaceBlockSelectOptions } from "./workspace-inventory.js";
