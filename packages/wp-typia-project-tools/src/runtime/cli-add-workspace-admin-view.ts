@@ -876,13 +876,11 @@ async function ensureAdminViewWebpackAnchors(workspace: WorkspaceProject): Promi
 			return source;
 		}
 
-		const editorPluginEntry = `\t\t[
-\t\t\t'editor-plugins/index',
-\t\t\t[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],
-\t\t],`;
+		const editorPluginEntryPattern =
+			/(\n\s*\[\s*['"]editor-plugins\/index['"][\s\S]*?['"]src\/editor-plugins\/index\.js['"][\s\S]*?\]\s*\])\s*,?/u;
 		let nextSource = source.replace(
-			editorPluginEntry,
-			`${editorPluginEntry}
+			editorPluginEntryPattern,
+			`$1,
 \t\t[
 \t\t\t'admin-views/index',
 \t\t\t[ 'src/admin-views/index.ts', 'src/admin-views/index.js' ],

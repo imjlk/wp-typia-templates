@@ -2763,6 +2763,63 @@ test("canonical CLI can add a DataViews admin screen with a REST resource source
   ).toBe(true);
 }, 40_000);
 
+test("admin view workflow accepts formatted shared webpack entries", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-view-formatted-webpack"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add admin view formatted webpack",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-view-formatted-webpack",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Admin View Formatted Webpack",
+    },
+  });
+
+  const buildScriptPath = path.join(targetDir, "scripts", "build-workspace.mjs");
+  const webpackConfigPath = path.join(targetDir, "webpack.config.js");
+  fs.writeFileSync(
+    buildScriptPath,
+    fs
+      .readFileSync(buildScriptPath, "utf8")
+      .replace(
+        `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t\t'src/admin-views/index.ts',\n\t\t'src/admin-views/index.js',\n\t]`,
+        `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t]`
+      ),
+    "utf8"
+  );
+  fs.writeFileSync(
+    webpackConfigPath,
+    fs
+      .readFileSync(webpackConfigPath, "utf8")
+      .replace(
+        `\tfor ( const [ entryName, candidates ] of [\n\t\t[\n\t\t\t'bindings/index',\n\t\t\t[ 'src/bindings/index.ts', 'src/bindings/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'editor-plugins/index',\n\t\t\t[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'admin-views/index',\n\t\t\t[ 'src/admin-views/index.ts', 'src/admin-views/index.js' ],\n\t\t],\n\t] ) {\n\t\tfor ( const relativePath of candidates ) {\n\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\t\tcontinue;\n\t\t\t}\n\n\t\t\tentries.push( [ entryName, entryPath ] );\n\t\t\tbreak;\n\t\t}\n\t}`,
+        `\tfor ( const [ entryName, candidates ] of [\n\t\t[\n\t\t\t\"bindings/index\",\n\t\t\t[\n\t\t\t\t\"src/bindings/index.ts\",\n\t\t\t\t\"src/bindings/index.js\",\n\t\t\t],\n\t\t],\n\t\t[ \"editor-plugins/index\", [\n\t\t\t\"src/editor-plugins/index.ts\",\n\t\t\t\"src/editor-plugins/index.js\",\n\t\t] ],\n\t] ) {\n\t\tfor ( const relativePath of candidates ) {\n\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\t\tcontinue;\n\t\t\t}\n\n\t\t\tentries.push( [ entryName, entryPath ] );\n\t\t\tbreak;\n\t\t}\n\t}`
+      ),
+    "utf8"
+  );
+
+  runCli("node", [entryPath, "add", "admin-view", "reports"], {
+    cwd: targetDir,
+  });
+
+  expect(fs.readFileSync(buildScriptPath, "utf8")).toContain(
+    "'src/admin-views/index.ts'"
+  );
+  expect(fs.readFileSync(webpackConfigPath, "utf8")).toContain(
+    "'admin-views/index'"
+  );
+}, 30_000);
+
 test("rest resource workflow repairs legacy sync-rest scripts before writing workspace resources", async () => {
   const targetDir = path.join(
     tempRoot,
