@@ -5,6 +5,7 @@ import path from "node:path";
 import {
 	syncBlockMetadata,
 } from "@wp-typia/block-runtime/metadata-core";
+import ts from "typescript";
 
 import {
 	resolveWorkspaceProject,
@@ -18,7 +19,6 @@ import {
 import { toPascalCase, toTitleCase } from "./string-case.js";
 import {
 	findPhpFunctionRange,
-	escapeRegex,
 	hasPhpFunctionDefinition,
 	quotePhpString,
 	replacePhpFunctionDefinition,
@@ -108,9 +108,17 @@ function resolveBindingTargetBlockSlug(
 		);
 	}
 
-	const [maybeNamespace, maybeSlug] = trimmed.includes("/")
-		? trimmed.split("/", 2)
-		: [undefined, trimmed];
+	const blockNameSegments = trimmed.split("/");
+	if (blockNameSegments.length > 2) {
+		throw new Error(
+			`Binding target block "${trimmed}" must use <block-slug> or <namespace/block-slug> format.`,
+		);
+	}
+
+	const [maybeNamespace, maybeSlug] =
+		blockNameSegments.length === 2
+			? blockNameSegments
+			: [undefined, blockNameSegments[0]];
 	if (maybeNamespace && maybeNamespace !== namespace) {
 		throw new Error(
 			`Binding target block "${trimmed}" uses namespace "${maybeNamespace}". Expected "${namespace}".`,
@@ -335,6 +343,78 @@ function formatBindingAttributeTypeMember(attributeName: string): string {
 	].join("\n");
 }
 
+function getInterfaceDeclaration(
+	source: string,
+	interfaceName: string,
+): {
+	declaration: ts.InterfaceDeclaration;
+	sourceFile: ts.SourceFile;
+} | undefined {
+	const sourceFile = ts.createSourceFile(
+		"types.ts",
+		source,
+		ts.ScriptTarget.Latest,
+		true,
+		ts.ScriptKind.TS,
+	);
+	let declaration: ts.InterfaceDeclaration | undefined;
+
+	const visit = (node: ts.Node): void => {
+		if (ts.isInterfaceDeclaration(node) && node.name.text === interfaceName) {
+			declaration = node;
+			return;
+		}
+		ts.forEachChild(node, visit);
+	};
+	visit(sourceFile);
+
+	return declaration ? { declaration, sourceFile } : undefined;
+}
+
+function getPropertyNameText(name: ts.PropertyName): string | undefined {
+	if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name)) {
+		return name.text;
+	}
+
+	return undefined;
+}
+
+function interfaceHasAttributeMember(
+	declaration: ts.InterfaceDeclaration,
+	attributeName: string,
+): boolean {
+	return declaration.members.some(
+		(member) =>
+			ts.isPropertySignature(member) &&
+			member.name !== undefined &&
+			getPropertyNameText(member.name) === attributeName,
+	);
+}
+
+function insertBindingAttributeTypeMember(
+	source: string,
+	declaration: ts.InterfaceDeclaration,
+	attributeName: string,
+): string {
+	let closeBracePosition = declaration.end - 1;
+	while (closeBracePosition > declaration.pos && source[closeBracePosition] !== "}") {
+		closeBracePosition -= 1;
+	}
+	if (source[closeBracePosition] !== "}") {
+		throw new Error("Unable to locate the target interface closing brace.");
+	}
+
+	const lineEnding = source.includes("\r\n") ? "\r\n" : "\n";
+	const beforeCloseBrace = source.slice(0, closeBracePosition);
+	const afterCloseBrace = source.slice(closeBracePosition);
+	const memberSource = formatBindingAttributeTypeMember(attributeName)
+		.split("\n")
+		.join(lineEnding);
+	const prefix = beforeCloseBrace.endsWith(lineEnding) ? "" : lineEnding;
+
+	return `${beforeCloseBrace}${prefix}${memberSource}${lineEnding}${afterCloseBrace}`;
+}
+
 async function ensureBindingTargetBlockAttributeType(
 	projectDir: string,
 	block: WorkspaceInventory["blocks"][number],
@@ -348,30 +428,20 @@ async function ensureBindingTargetBlockAttributeType(
 
 	const typesPath = path.join(projectDir, block.typesFile);
 	const source = await fsp.readFile(typesPath, "utf8");
-	const propertyNamePattern = new RegExp(
-		`^[\\t ]*(?:${escapeRegex(target.attributeName)}|${escapeRegex(
-			JSON.stringify(target.attributeName),
-		)})\\??:`,
-		"mu",
-	);
-	let nextSource = source;
-	if (!propertyNamePattern.test(source)) {
-		const interfacePattern = new RegExp(
-			`(export\\s+interface\\s+${escapeRegex(block.attributeTypeName)}\\s*\\{\\r?\\n)([\\s\\S]*?)(\\r?\\n\\})`,
-			"u",
+	const targetInterface = getInterfaceDeclaration(source, block.attributeTypeName);
+	if (!targetInterface) {
+		throw new Error(
+			`Unable to locate interface ${block.attributeTypeName} in ${block.typesFile}.`,
 		);
-		nextSource = source.replace(interfacePattern, (match, start: string, body: string, end: string) => {
-			const lineEnding = start.endsWith("\r\n") ? "\r\n" : "\n";
-			const memberSource = formatBindingAttributeTypeMember(target.attributeName)
-				.split("\n")
-				.join(lineEnding);
-			return `${start}${body}${body.endsWith(lineEnding) ? "" : lineEnding}${memberSource}${end}`;
-		});
-		if (nextSource === source) {
-			throw new Error(
-				`Unable to locate interface ${block.attributeTypeName} in ${block.typesFile}.`,
-			);
-		}
+	}
+
+	let nextSource = source;
+	if (!interfaceHasAttributeMember(targetInterface.declaration, target.attributeName)) {
+		nextSource = insertBindingAttributeTypeMember(
+			source,
+			targetInterface.declaration,
+			target.attributeName,
+		);
 		await fsp.writeFile(typesPath, nextSource, "utf8");
 	}
 

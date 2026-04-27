@@ -610,6 +610,38 @@ test("canonical CLI can add hooked-block metadata to an official workspace block
       cwd: targetDir,
     }
   );
+  const typesPath = path.join(
+    targetDir,
+    "src",
+    "blocks",
+    "counter-card",
+    "types.ts"
+  );
+  fs.writeFileSync(
+    typesPath,
+    `interface UnrelatedBindingFixture {\n\theadline?: string;\n}\n\n${fs.readFileSync(typesPath, "utf8")}`,
+    "utf8"
+  );
+  expect(
+    getCommandErrorMessage(() =>
+      runCli(
+        "node",
+        [
+          entryPath,
+          "add",
+          "binding-source",
+          "broken-target",
+          "--block",
+          "demo-space/counter-card/extra",
+          "--attribute",
+          "headline",
+        ],
+        {
+          cwd: targetDir,
+        }
+      )
+    )
+  ).toContain("must use <block-slug> or <namespace/block-slug> format");
   runCli(
     "node",
     [

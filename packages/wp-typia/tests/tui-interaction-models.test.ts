@@ -158,6 +158,18 @@ describe("first-party TUI interaction models", () => {
 
 		expect(
 			sanitizeAddSubmitValues({
+				attribute: "",
+				block: "",
+				kind: "binding-source",
+				name: "hero-data",
+			}),
+		).toEqual({
+			kind: "binding-source",
+			name: "hero-data",
+		});
+
+		expect(
+			sanitizeAddSubmitValues({
 				anchor: "",
 				block: "",
 				kind: "admin-view",

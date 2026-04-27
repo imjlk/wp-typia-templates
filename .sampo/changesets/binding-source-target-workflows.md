@@ -1,6 +1,6 @@
 ---
 npm/@wp-typia/project-tools: minor
-npm/@wp-typia/create-workspace-template: patch
+npm/@wp-typia/create-workspace-template: minor
 npm/wp-typia: minor
 ---
 

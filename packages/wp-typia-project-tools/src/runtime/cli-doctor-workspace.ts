@@ -433,7 +433,7 @@ function checkWorkspaceBindingTarget(
 				`${bindingSource.serverFile} must register ${supportedAttributesFilter}`,
 			);
 		}
-		if (!serverSource.includes(bindingSource.attribute)) {
+		if (!new RegExp(`'${escapeRegex(bindingSource.attribute)}'`, "u").test(serverSource)) {
 			issues.push(
 				`${bindingSource.serverFile} must expose attribute "${bindingSource.attribute}"`,
 			);
@@ -446,16 +446,29 @@ function checkWorkspaceBindingTarget(
 	if (fs.existsSync(editorPath)) {
 		const editorSource = fs.readFileSync(editorPath, "utf8");
 		const blockName = `${workspace.workspace.namespace}/${bindingSource.block}`;
-		if (!editorSource.includes("BINDING_SOURCE_TARGET")) {
+		const bindingSourceTargetMatch = editorSource.match(
+			/export\s+const\s+BINDING_SOURCE_TARGET\s*=\s*\{([\s\S]*?)\}\s+as\s+const\s*;/u,
+		);
+		if (!bindingSourceTargetMatch) {
 			issues.push(`${bindingSource.editorFile} must export BINDING_SOURCE_TARGET`);
-		}
-		if (!editorSource.includes(`attribute: ${JSON.stringify(bindingSource.attribute)}`)) {
-			issues.push(
-				`${bindingSource.editorFile} must document target attribute "${bindingSource.attribute}"`,
+		} else {
+			const targetSource = bindingSourceTargetMatch[1] ?? "";
+			const attributePattern = new RegExp(
+				`\\battribute\\s*:\\s*["']${escapeRegex(bindingSource.attribute)}["']`,
+				"u",
 			);
-		}
-		if (!editorSource.includes(`block: ${JSON.stringify(blockName)}`)) {
-			issues.push(`${bindingSource.editorFile} must document target block "${blockName}"`);
+			const blockPattern = new RegExp(
+				`\\bblock\\s*:\\s*["']${escapeRegex(blockName)}["']`,
+				"u",
+			);
+			if (!attributePattern.test(targetSource)) {
+				issues.push(
+					`${bindingSource.editorFile} must document target attribute "${bindingSource.attribute}"`,
+				);
+			}
+			if (!blockPattern.test(targetSource)) {
+				issues.push(`${bindingSource.editorFile} must document target block "${blockName}"`);
+			}
 		}
 	} else {
 		issues.push(`Missing ${bindingSource.editorFile}`);

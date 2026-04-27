@@ -301,6 +301,12 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
     );
     const blockName = readOptionalStringFlag(context.flags, 'block');
     const attributeName = readOptionalStringFlag(context.flags, 'attribute');
+    if (Boolean(blockName) !== Boolean(attributeName)) {
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+        '`wp-typia add binding-source` requires --block and --attribute to be provided together.',
+      );
+    }
 
     return runRegisteredAddKind<AddBindingSourceResult>(context, {
       buildCompletion: (result) =>

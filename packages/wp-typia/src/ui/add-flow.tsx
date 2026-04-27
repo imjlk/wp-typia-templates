@@ -157,8 +157,7 @@ function AddFlowFields({
   const hookedBlockNameUsesSelect =
     kind === 'hooked-block' && workspaceBlockOptions.length > 0;
   const variationBlockUsesSelect =
-    (kind === 'variation' || kind === 'binding-source') &&
-    workspaceBlockOptions.length > 0;
+    kind === 'variation' && workspaceBlockOptions.length > 0;
 
   return createElement(
     FirstPartyFormViewport,

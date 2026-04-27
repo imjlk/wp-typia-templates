@@ -43,6 +43,20 @@ describe("wp-typia add command bridge", () => {
 
 		await scaffoldOfficialWorkspace(projectDir);
 		linkWorkspaceNodeModules(projectDir);
+		await expect(
+			executeAddCommand({
+				cwd: projectDir,
+				emitOutput: false,
+				flags: {
+					block: "counter-card",
+				},
+				interactive: false,
+				kind: "binding-source",
+				name: "hero-data",
+			}),
+		).rejects.toThrow(
+			"`wp-typia add binding-source` requires --block and --attribute to be provided together.",
+		);
 		await executeAddCommand({
 			cwd: projectDir,
 			emitOutput: false,
