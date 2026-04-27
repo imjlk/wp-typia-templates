@@ -181,6 +181,7 @@ export {
 	HOOKED_BLOCK_POSITION_IDS,
 	EDITOR_PLUGIN_SLOT_IDS,
 	isCliDiagnosticError,
+	runAddAdminViewCommand,
 	runAddAbilityCommand,
 	runAddAiFeatureCommand,
 	runAddBindingSourceCommand,

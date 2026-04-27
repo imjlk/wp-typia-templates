@@ -48,6 +48,7 @@ export {
 	EDITOR_PLUGIN_SLOT_IDS,
 	formatAddHelpText,
 	getWorkspaceBlockSelectOptions,
+	runAddAdminViewCommand,
 	runAddAbilityCommand,
 	runAddBindingSourceCommand,
 	runAddAiFeatureCommand,

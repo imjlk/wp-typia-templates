@@ -177,6 +177,13 @@ async function writeVariationRegistry(
 }
 
 /**
+ * Re-export the DataViews admin screen scaffold workflow from the focused
+ * admin-view runtime helper module.
+ */
+export {
+	runAddAdminViewCommand,
+} from "./cli-add-workspace-admin-view.js";
+/**
  * Re-export focused workspace asset scaffold commands from the companion
  * `cli-add-workspace-assets` module.
  */

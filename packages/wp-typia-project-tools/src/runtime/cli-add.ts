@@ -23,6 +23,7 @@ export {
 	seedWorkspaceMigrationProject,
 } from "./cli-add-block.js";
 export {
+	runAddAdminViewCommand,
 	runAddBindingSourceCommand,
 	runAddAbilityCommand,
 	runAddAiFeatureCommand,

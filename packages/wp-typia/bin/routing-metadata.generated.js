@@ -32,6 +32,7 @@ export const longValueOptions = Object.freeze([
   "--query-post-type",
   "--seed",
   "--slot",
+  "--source",
   "--template",
   "--text-domain",
   "--to-migration-version",

@@ -27,6 +27,8 @@ function hasSharedEditorEntries() {
 		'src/bindings/index.js',
 		'src/editor-plugins/index.ts',
 		'src/editor-plugins/index.js',
+		'src/admin-views/index.ts',
+		'src/admin-views/index.js',
 	] ) {
 		if ( fs.existsSync( path.join( process.cwd(), relativePath ) ) ) {
 			return true;

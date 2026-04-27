@@ -48,6 +48,13 @@ export interface WorkspaceEditorPluginConfig {
 	slot: string;
 }
 
+export interface WorkspaceAdminViewConfig {
+	file: string;
+	phpFile: string;
+	slug: string;
+	source?: string;
+}
+
 export const BLOCKS: WorkspaceBlockConfig[] = [
 	// wp-typia add block entries
 ];
@@ -70,4 +77,8 @@ export const REST_RESOURCES: WorkspaceRestResourceConfig[] = [
 
 export const EDITOR_PLUGINS: WorkspaceEditorPluginConfig[] = [
 	// wp-typia add editor-plugin entries
+];
+
+export const ADMIN_VIEWS: WorkspaceAdminViewConfig[] = [
+	// wp-typia add admin-view entries
 ];

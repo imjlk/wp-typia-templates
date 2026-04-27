@@ -1,4 +1,5 @@
 export const ADD_KIND_IDS = [
+  'admin-view',
   'block',
   'variation',
   'pattern',
@@ -13,6 +14,7 @@ export type AddKindId = (typeof ADD_KIND_IDS)[number];
 export type AddFieldName =
   | 'kind'
   | 'name'
+  | 'source'
   | 'template'
   | 'block'
   | 'anchor'
@@ -64,6 +66,23 @@ export function isAddPersistenceTemplate(template?: string): boolean {
 }
 
 export const ADD_KIND_REGISTRY = {
+  'admin-view': {
+    completion: {
+      nextSteps: (values) => [
+        `Review src/admin-views/${values.adminViewSlug}/ and inc/admin-views/${values.adminViewSlug}.php.`,
+        'Run your workspace build or dev command to verify the generated DataViews admin screen.',
+      ],
+      summaryLines: (values, projectDir) => [
+        `Admin view: ${values.adminViewSlug}`,
+        ...(values.source ? [`Source: ${values.source}`] : []),
+        `Project directory: ${projectDir}`,
+      ],
+      title: 'Added DataViews admin screen',
+    },
+    description: 'Add an opt-in DataViews-powered admin screen',
+    nameLabel: 'Admin view name',
+    visibleFieldNames: () => ['kind', 'name', 'source'],
+  },
   'binding-source': {
     completion: {
       nextSteps: (values) => [

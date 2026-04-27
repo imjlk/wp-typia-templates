@@ -152,6 +152,31 @@ import '@wordpress/components/build-style/style.css';
 import '@wordpress/dataviews/build-style/style.css';
 ```
 
+## Admin Screen Scaffold
+
+Use `wp-typia add admin-view <name>` when you want an opt-in WordPress admin
+screen that demonstrates typed DataViews config, explicit fetching, loading
+state, and pagination without changing default block scaffolds:
+
+```sh
+wp-typia add admin-view products
+wp-typia add admin-view products --source rest-resource:products
+```
+
+The scaffold writes `src/admin-views/<name>/` plus
+`inc/admin-views/<name>.php`, adds `@wp-typia/dataviews` and
+`@wordpress/dataviews` only to that workspace, and wires the screen under the
+WordPress Tools menu. The generated `data.ts` file is intentionally small and
+replaceable. Without `--source` it uses a local fetcher; with
+`--source rest-resource:<slug>` it calls the list endpoint from an existing
+list-capable `wp-typia add rest-resource` scaffold.
+
+Prefer custom UI instead of DataViews when the interaction is primarily a
+guided flow, a canvas/editor experience, a dense dashboard with unrelated
+widgets, or a purpose-built form where table/list/grid view state is incidental.
+DataViews works best for browse, filter, search, sort, select, and paginate
+screens over one coherent collection.
+
 ## Query Ownership
 
 DataViews is a UI layer. It does not own REST or entity fetching for wp-typia.

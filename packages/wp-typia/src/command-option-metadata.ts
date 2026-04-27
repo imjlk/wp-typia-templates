@@ -177,6 +177,10 @@ export const ADD_OPTION_METADATA = {
 		description: "Document editor shell slot for editor-plugin workflows.",
 		type: "string",
 	},
+	source: {
+		description: "Optional data source locator for admin-view workflows, such as rest-resource:products.",
+		type: "string",
+	},
 	template: {
 		description: "Built-in block family for the new block.",
 		type: "string",

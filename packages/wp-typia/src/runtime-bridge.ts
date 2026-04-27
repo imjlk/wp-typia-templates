@@ -102,6 +102,9 @@ const loadMigrationsRuntime = () =>
   import('@wp-typia/project-tools/migrations');
 
 type AddRuntime = Awaited<ReturnType<typeof loadCliAddRuntime>>;
+type AddAdminViewResult = Awaited<
+  ReturnType<AddRuntime['runAddAdminViewCommand']>
+>;
 type AddAbilityResult = Awaited<ReturnType<AddRuntime['runAddAbilityCommand']>>;
 type AddBindingSourceResult = Awaited<
   ReturnType<AddRuntime['runAddBindingSourceCommand']>
@@ -244,6 +247,31 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
     context: AddKindHandlerContext,
   ) => Promise<AlternateBufferCompletionPayload | void>
 > = {
+  'admin-view': async (context) => {
+    const name = requireAddKindName(
+      context,
+      '`wp-typia add admin-view` requires <name>. Usage: wp-typia add admin-view <name> [--source <rest-resource:slug>].',
+    );
+    const source = readOptionalStringFlag(context.flags, 'source');
+
+    return runRegisteredAddKind<AddAdminViewResult>(context, {
+      buildCompletion: (result) =>
+        buildAddCompletionPayload({
+          kind: 'admin-view',
+          projectDir: result.projectDir,
+          values: {
+            adminViewSlug: result.adminViewSlug,
+            ...(result.source ? { source: result.source } : {}),
+          },
+        }),
+      execute: (targetCwd) =>
+        context.addRuntime.runAddAdminViewCommand({
+          adminViewName: name,
+          cwd: targetCwd,
+          source,
+        }),
+    });
+  },
   ability: async (context) => {
     const name = requireAddKindName(
       context,
