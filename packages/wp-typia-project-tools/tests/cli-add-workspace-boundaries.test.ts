@@ -61,6 +61,9 @@ test("cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-vi
 	expect(addWorkspaceSource).not.toContain("function buildRestResourceTypesSource(");
 	expect(addWorkspaceSource).not.toContain("async function ensureRestResourceBootstrapAnchors(");
 	expect(addWorkspaceSource).not.toContain("async function ensureAdminViewBootstrapAnchors(");
+	expect(addWorkspaceSource).not.toMatch(
+		/export\s*\{[^}]*ensureAdminViewBootstrapAnchors[^}]*\}/u,
+	);
 	expect(addWorkspaceSource).not.toContain("export async function runAddAdminViewCommand(");
 	expect(addWorkspaceSource).not.toContain("export async function runAddAiFeatureCommand(");
 	expect(addWorkspaceSource).not.toContain("export async function runAddPatternCommand(");

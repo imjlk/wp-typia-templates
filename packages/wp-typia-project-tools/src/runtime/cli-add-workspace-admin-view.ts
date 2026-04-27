@@ -74,6 +74,11 @@ function readPackageManifestVersion(packageJsonPath: string): string | undefined
 	}
 }
 
+function detectJsonIndent(source: string): string | number {
+	const indentMatch = /\n([ \t]+)"/u.exec(source);
+	return indentMatch?.[1] ?? 2;
+}
+
 function resolvePackageVersionRange(
 	packageName: string,
 	fallback: string,
@@ -224,7 +229,10 @@ function buildAdminViewConfigSource(
 	const camelName = toCamelCase(adminViewSlug);
 	const itemTypeName = `${pascalName}AdminViewItem`;
 	const dataViewsName = `${camelName}AdminDataViews`;
-	const secondaryFieldSource = restResource
+	const defaultViewFields = restResource
+		? "['title', 'content', 'updatedAt']"
+		: "['title', 'status', 'updatedAt']";
+	const contextualFieldSource = restResource
 		? `\t\tcontent: {
 \t\t\tlabel: __( 'Content', ${quoteTsString(textDomain)} ),
 \t\t\tschema: { type: 'string' },
@@ -232,6 +240,18 @@ function buildAdminViewConfigSource(
 		: `\t\towner: {
 \t\t\tlabel: __( 'Owner', ${quoteTsString(textDomain)} ),
 \t\t\tschema: { type: 'string' },
+\t\t},
+\t\tstatus: {
+\t\t\tfilterBy: { operators: ['isAny', 'isNone'] },
+\t\t\tlabel: __( 'Status', ${quoteTsString(textDomain)} ),
+\t\t\tschema: {
+\t\t\t\tenum: ['draft', 'published'],
+\t\t\t\tenumLabels: {
+\t\t\t\t\tdraft: __( 'Draft', ${quoteTsString(textDomain)} ),
+\t\t\t\t\tpublished: __( 'Published', ${quoteTsString(textDomain)} ),
+\t\t\t\t},
+\t\t\t\ttype: 'string',
+\t\t\t},
 \t\t},`;
 
 	return `import { defineDataViews } from '@wp-typia/dataviews';
@@ -245,7 +265,7 @@ export const ${dataViewsName} = defineDataViews<${itemTypeName}>({
 \tsearchLabel: __( 'Search records', ${quoteTsString(textDomain)} ),
 \ttitleField: 'title',
 \tdefaultView: {
-\t\tfields: ['title', 'status', 'updatedAt'],
+\t\tfields: ${defaultViewFields},
 \t\tpage: 1,
 \t\tperPage: 10,
 \t\tsort: {
@@ -262,19 +282,7 @@ export const ${dataViewsName} = defineDataViews<${itemTypeName}>({
 \t\t\treadOnly: true,
 \t\t\tschema: { type: 'integer' },
 \t\t},
-${secondaryFieldSource}
-\t\tstatus: {
-\t\t\tfilterBy: { operators: ['isAny', 'isNone'] },
-\t\t\tlabel: __( 'Status', ${quoteTsString(textDomain)} ),
-\t\t\tschema: {
-\t\t\t\tenum: ['draft', 'published'],
-\t\t\t\tenumLabels: {
-\t\t\t\t\tdraft: __( 'Draft', ${quoteTsString(textDomain)} ),
-\t\t\t\t\tpublished: __( 'Published', ${quoteTsString(textDomain)} ),
-\t\t\t\t},
-\t\t\t\ttype: 'string',
-\t\t\t},
-\t\t},
+${contextualFieldSource}
 \t\ttitle: {
 \t\t\tenableGlobalSearch: true,
 \t\t\tenableSorting: true,
@@ -354,8 +362,10 @@ export async function ${fetchName}(
 \tconst query = ${dataViewsName}.toQueryArgs<${queryTypeName}>(view, {
 \t\tperPageParam: 'perPage',
 \t});
-\tconst page = query.page ?? 1;
-\tconst perPage = query.perPage ?? view.perPage ?? 10;
+\tconst requestedPage = query.page ?? 1;
+\tconst page = requestedPage > 0 ? requestedPage : 1;
+\tconst requestedPerPage = query.perPage ?? view.perPage ?? 10;
+\tconst perPage = requestedPerPage > 0 ? requestedPerPage : 10;
 \tconst filteredItems = STARTER_ITEMS.filter((item) =>
 \t\tmatchesSearch(item, query.search),
 \t);
@@ -753,7 +763,7 @@ async function ensureAdminViewPackageDependencies(workspace: WorkspaceProject): 
 
 		packageJson.dependencies = nextDependencies;
 		packageJson.devDependencies = nextDevDependencies;
-		return `${JSON.stringify(packageJson, null, 2)}\n`;
+		return `${JSON.stringify(packageJson, null, detectJsonIndent(source))}\n`;
 	});
 }
 

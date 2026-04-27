@@ -805,7 +805,7 @@ function checkWorkspaceAdminViewConfig(
 	adminView: WorkspaceInventory["adminViews"][number],
 	inventory: WorkspaceInventory,
 ): DoctorCheck {
-	if (!adminView.source) {
+	if (adminView.source === undefined) {
 		return createDoctorCheck(
 			`Admin view config ${adminView.slug}`,
 			"pass",
@@ -813,7 +813,8 @@ function checkWorkspaceAdminViewConfig(
 		);
 	}
 
-	const sourceMatch = /^rest-resource:([a-z][a-z0-9-]*)$/u.exec(adminView.source);
+	const source = adminView.source.trim();
+	const sourceMatch = /^rest-resource:([a-z][a-z0-9-]*)$/u.exec(source);
 	const restResourceSlug = sourceMatch?.[1];
 	const restResource = restResourceSlug
 		? inventory.restResources.find((entry) => entry.slug === restResourceSlug)
@@ -824,7 +825,7 @@ function checkWorkspaceAdminViewConfig(
 		`Admin view config ${adminView.slug}`,
 		isValid ? "pass" : "fail",
 		isValid
-			? `Admin view source ${adminView.source} is list-capable`
+			? `Admin view source ${source} is list-capable`
 			: "Admin view source must use rest-resource:<slug> and reference a list-capable REST resource",
 	);
 }

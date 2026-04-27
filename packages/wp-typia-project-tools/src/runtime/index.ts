@@ -7,6 +7,7 @@
  * and workspace-aware helpers such as `getWorkspaceBlockSelectOptions`,
  * `runAddBlockCommand`, `runAddVariationCommand`, `runAddPatternCommand`,
  * `runAddBindingSourceCommand`, `runAddEditorPluginCommand`,
+ * `runAddAdminViewCommand`,
  * `runAddHookedBlockCommand`,
  * `HOOKED_BLOCK_POSITION_IDS`, and `runDoctor`.
  */
