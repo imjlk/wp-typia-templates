@@ -405,7 +405,7 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
   'editor-plugin': async (context) => {
     const name = requireAddKindName(
       context,
-      '`wp-typia add editor-plugin` requires <name>. Usage: wp-typia add editor-plugin <name> [--slot <PluginSidebar>].',
+      '`wp-typia add editor-plugin` requires <name>. Usage: wp-typia add editor-plugin <name> [--slot <sidebar|document-setting-panel>].',
     );
     const slot = readOptionalStringFlag(context.flags, 'slot');
 

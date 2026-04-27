@@ -107,7 +107,7 @@ export const addCommand = defineCommand({
                 kind: (args.positional[0] as AddKindId | undefined) ?? 'block',
                 name: args.positional[1] ?? '',
                 position: initialValues.position ?? 'after',
-                slot: initialValues.slot ?? 'PluginSidebar',
+                slot: initialValues.slot ?? 'sidebar',
               },
             },
           });

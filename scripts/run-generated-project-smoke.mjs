@@ -304,7 +304,7 @@ function main() {
 		(template && exampleProject)
 	) {
 		throw new Error(
-			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> (--template <id> | --example-project <slug>) [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--with-migration-ui] [--add-block-name <name> --add-template <basic|interactivity|persistence|compound> [--add-data-storage <post-meta|custom-table>] [--add-persistence-policy <authenticated|public>]] [--add-variation-name <name> --add-variation-block <block-slug>] [--add-pattern-name <name>] [--add-binding-source-name <name>] [--add-editor-plugin-name <name> [--add-editor-plugin-slot <PluginSidebar>]] [--add-hooked-block-slug <block-slug> --add-hooked-block-anchor <anchor-block-name> --add-hooked-block-position <before|after|firstChild|lastChild>] --package-manager <id> --project-name <name>",
+			"Usage: node scripts/run-generated-project-smoke.mjs --runtime <node|bun> (--template <id> | --example-project <slug>) [--variant <name>] [--namespace <value>] [--text-domain <value>] [--php-prefix <value>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--with-migration-ui] [--add-block-name <name> --add-template <basic|interactivity|persistence|compound> [--add-data-storage <post-meta|custom-table>] [--add-persistence-policy <authenticated|public>]] [--add-variation-name <name> --add-variation-block <block-slug>] [--add-pattern-name <name>] [--add-binding-source-name <name>] [--add-editor-plugin-name <name> [--add-editor-plugin-slot <sidebar|document-setting-panel>]] [--add-hooked-block-slug <block-slug> --add-hooked-block-anchor <anchor-block-name> --add-hooked-block-position <before|after|firstChild|lastChild>] --package-manager <id> --project-name <name>",
 		);
 	}
 
@@ -430,7 +430,7 @@ function main() {
 		}
 
 		if (addEditorPluginName) {
-			const slotForArgs = addEditorPluginSlot ?? "PluginSidebar";
+			const slotForArgs = addEditorPluginSlot ?? "sidebar";
 			run(
 				runtime,
 				[
@@ -500,7 +500,7 @@ function main() {
 			addBlockName,
 			addEditorPluginName,
 			addEditorPluginSlot: addEditorPluginName
-				? (addEditorPluginSlot ?? "PluginSidebar")
+				? (addEditorPluginSlot ?? "sidebar")
 				: undefined,
 			addHookedBlockAnchor,
 			addHookedBlockPosition,

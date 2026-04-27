@@ -53,10 +53,32 @@ export const REST_RESOURCE_METHOD_IDS = [
 export type RestResourceMethodId = (typeof REST_RESOURCE_METHOD_IDS)[number];
 
 /**
- * Supported editor-plugin shell slots accepted by `wp-typia add editor-plugin --slot`.
+ * Supported editor-plugin shell surfaces accepted by
+ * `wp-typia add editor-plugin --slot`.
  */
-export const EDITOR_PLUGIN_SLOT_IDS = ["PluginSidebar"] as const;
+export const EDITOR_PLUGIN_SLOT_IDS = ["sidebar", "document-setting-panel"] as const;
 export type EditorPluginSlotId = (typeof EDITOR_PLUGIN_SLOT_IDS)[number];
+export const EDITOR_PLUGIN_SLOT_ALIASES = {
+	PluginDocumentSettingPanel: "document-setting-panel",
+	PluginSidebar: "sidebar",
+	"document-setting-panel": "document-setting-panel",
+	sidebar: "sidebar",
+} as const satisfies Record<string, EditorPluginSlotId>;
+
+export function resolveEditorPluginSlotAlias(
+	slot: string,
+): EditorPluginSlotId | undefined {
+	const trimmed = slot.trim();
+	if (
+		!Object.prototype.hasOwnProperty.call(EDITOR_PLUGIN_SLOT_ALIASES, trimmed)
+	) {
+		return undefined;
+	}
+
+	return EDITOR_PLUGIN_SLOT_ALIASES[
+		trimmed as keyof typeof EDITOR_PLUGIN_SLOT_ALIASES
+	];
+}
 
 /**
  * Supported built-in block families accepted by `wp-typia add block --template`.
@@ -145,7 +167,7 @@ export interface RunAddHookedBlockCommandOptions {
  * Defaults to `process.cwd()`.
  * @property editorPluginName Human-entered editor plugin name that will be
  * normalized into the generated slug.
- * @property slot Optional editor shell slot. Defaults to `PluginSidebar`.
+ * @property slot Optional editor shell slot. Defaults to `sidebar`.
  */
 export interface RunAddEditorPluginCommandOptions {
 	cwd?: string;
@@ -376,17 +398,18 @@ export function assertValidHookAnchor(anchorBlockName: string): string {
 /**
  * Validate and normalize the editor plugin shell slot.
  *
- * @param slot Optional shell slot. Defaults to `PluginSidebar`.
+ * @param slot Optional shell slot. Defaults to `sidebar`.
  * @returns The canonical editor plugin slot id.
  * @throws {Error} When the slot is not supported by the workspace scaffold.
  */
-export function assertValidEditorPluginSlot(slot = "PluginSidebar"): EditorPluginSlotId {
-	if ((EDITOR_PLUGIN_SLOT_IDS as readonly string[]).includes(slot)) {
-		return slot as EditorPluginSlotId;
+export function assertValidEditorPluginSlot(slot = "sidebar"): EditorPluginSlotId {
+	const alias = resolveEditorPluginSlotAlias(slot);
+	if (alias) {
+		return alias;
 	}
 
 	throw new Error(
-		`Editor plugin slot must be one of: ${EDITOR_PLUGIN_SLOT_IDS.join(", ")}.`,
+		`Editor plugin slot must be one of: ${EDITOR_PLUGIN_SLOT_IDS.join(", ")}. Legacy aliases: PluginSidebar, PluginDocumentSettingPanel.`,
 	);
 }
 
@@ -679,5 +702,5 @@ Notes:
   \`add ability\` scaffolds typed workflow abilities under \`src/abilities/\` and server registration under \`inc/abilities/\`.
   \`add ai-feature\` scaffolds server-owned AI feature endpoints under \`src/ai-features/\` and PHP route glue under \`inc/ai-features/\`.
   \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.
-  \`add editor-plugin\` scaffolds a document-level editor extension under \`src/editor-plugins/\`.`;
+  \`add editor-plugin\` scaffolds a document-level editor extension under \`src/editor-plugins/\`; legacy aliases \`PluginSidebar\` and \`PluginDocumentSettingPanel\` resolve to \`sidebar\` and \`document-setting-panel\`.`;
 }

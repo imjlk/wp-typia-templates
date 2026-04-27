@@ -174,7 +174,8 @@ export const ADD_OPTION_METADATA = {
 		type: "string",
 	},
 	slot: {
-		description: "Document editor shell slot for editor-plugin workflows.",
+		description:
+			"Document editor shell slot for editor-plugin workflows (sidebar or document-setting-panel).",
 		type: "string",
 	},
 	source: {

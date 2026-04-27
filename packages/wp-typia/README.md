@@ -17,6 +17,8 @@ Extend an existing workspace with:
 - `wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create`
 - `wp-typia add ability review-workflow`
 - `wp-typia add ai-feature brief-suggestions --namespace my-plugin/v1`
+- `wp-typia add editor-plugin review-workflow --slot sidebar`
+- `wp-typia add editor-plugin seo-notes --slot document-setting-panel`
 - `wp-typia add hooked-block counter-card --anchor core/post-content --position after`
 
 `wp-typia <project-dir>` remains available as a backward-compatible alias to

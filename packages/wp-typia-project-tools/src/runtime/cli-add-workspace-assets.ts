@@ -205,7 +205,7 @@ registerBlockBindingsSource( {
 }
 
 function buildEditorPluginTypesSource(editorPluginSlug: string): string {
-	const typeName = `${toPascalCase(editorPluginSlug)}SidebarModel`;
+	const typeName = `${toPascalCase(editorPluginSlug)}EditorPluginModel`;
 
 	return `export interface ${typeName} {
 \tprimaryActionLabel: string;
@@ -218,9 +218,9 @@ function buildEditorPluginDataSource(
 	editorPluginSlug: string,
 	slot: string,
 ): string {
-	const typeName = `${toPascalCase(editorPluginSlug)}SidebarModel`;
+	const typeName = `${toPascalCase(editorPluginSlug)}EditorPluginModel`;
 	const pluginTitle = toTitleCase(editorPluginSlug);
-	const modelFactoryName = `get${toPascalCase(editorPluginSlug)}SidebarModel`;
+	const modelFactoryName = `get${toPascalCase(editorPluginSlug)}EditorPluginModel`;
 	const enabledFactoryName = `is${toPascalCase(editorPluginSlug)}Enabled`;
 
 	return `import type { ${typeName} } from './types';
@@ -228,13 +228,13 @@ function buildEditorPluginDataSource(
 export const EDITOR_PLUGIN_SLOT = ${quoteTsString(slot)} as const;
 export const REQUIRED_CAPABILITY = 'edit_posts' as const;
 
-const DEFAULT_SIDEBAR_MODEL: ${typeName} = {
+const DEFAULT_EDITOR_PLUGIN_MODEL: ${typeName} = {
 \tprimaryActionLabel: ${quoteTsString(`Review ${pluginTitle}`)},
 \tsummary: ${quoteTsString(`Replace this summary with your ${pluginTitle} workflow state.`)},
 };
 
 export function ${modelFactoryName}(): ${typeName} {
-\treturn DEFAULT_SIDEBAR_MODEL;
+\treturn DEFAULT_EDITOR_PLUGIN_MODEL;
 }
 
 export function ${enabledFactoryName}(): boolean {
@@ -243,14 +243,57 @@ export function ${enabledFactoryName}(): boolean {
 `;
 }
 
-function buildEditorPluginSidebarSource(
+function buildEditorPluginSurfaceSource(
 	editorPluginSlug: string,
+	slot: string,
 	textDomain: string,
 ): string {
 	const pascalName = toPascalCase(editorPluginSlug);
-	const modelFactoryName = `get${pascalName}SidebarModel`;
+	const modelFactoryName = `get${pascalName}EditorPluginModel`;
 	const enabledFactoryName = `is${pascalName}Enabled`;
-	const componentName = `${pascalName}Sidebar`;
+	const componentName = `${pascalName}Surface`;
+
+	if (slot === "document-setting-panel") {
+		return `import { Button } from '@wordpress/components';
+import { PluginDocumentSettingPanel } from '@wordpress/editor';
+import { __ } from '@wordpress/i18n';
+
+import { ${modelFactoryName}, ${enabledFactoryName} } from './data';
+import './style.scss';
+
+export interface ${componentName}Props {
+\tsurfaceName: string;
+\ttitle: string;
+}
+
+export function ${componentName}( {
+\tsurfaceName,
+\ttitle,
+}: ${componentName}Props ) {
+\tif ( ! ${enabledFactoryName}() ) {
+\t\treturn null;
+\t}
+
+\tconst editorPluginModel = ${modelFactoryName}();
+
+\treturn (
+\t\t<PluginDocumentSettingPanel
+\t\t\tclassName="wp-typia-editor-plugin-shell"
+\t\t\tname={ surfaceName }
+\t\t\ttitle={ title }
+\t\t>
+\t\t\t<p>{ editorPluginModel.summary }</p>
+\t\t\t<Button variant="secondary">
+\t\t\t\t{ editorPluginModel.primaryActionLabel }
+\t\t\t</Button>
+\t\t\t<p className="wp-typia-editor-plugin-shell__hint">
+\t\t\t\t{ __( 'Use data.ts to add post type, capability, or editor context guards before showing this panel.', ${quoteTsString(textDomain)} ) }
+\t\t\t</p>
+\t\t</PluginDocumentSettingPanel>
+\t);
+}
+`;
+	}
 
 	return `import { Button, PanelBody } from '@wordpress/components';
 import { PluginSidebar, PluginSidebarMoreMenuItem } from '@wordpress/editor';
@@ -260,34 +303,34 @@ import { ${modelFactoryName}, ${enabledFactoryName} } from './data';
 import './style.scss';
 
 export interface ${componentName}Props {
-\tpluginName: string;
+\tsurfaceName: string;
 \ttitle: string;
 }
 
 export function ${componentName}( {
-\tpluginName,
+\tsurfaceName,
 \ttitle,
 }: ${componentName}Props ) {
 \tif ( ! ${enabledFactoryName}() ) {
 \t\treturn null;
 \t}
 
-\tconst sidebarModel = ${modelFactoryName}();
+\tconst editorPluginModel = ${modelFactoryName}();
 
 \treturn (
 \t\t<>
-\t\t\t<PluginSidebarMoreMenuItem target={ pluginName }>
+\t\t\t<PluginSidebarMoreMenuItem target={ surfaceName }>
 \t\t\t\t{ title }
 \t\t\t</PluginSidebarMoreMenuItem>
-\t\t\t<PluginSidebar name={ pluginName } title={ title }>
+\t\t\t<PluginSidebar name={ surfaceName } title={ title }>
 \t\t\t\t<div className="wp-typia-editor-plugin-shell">
 \t\t\t\t\t<PanelBody
 \t\t\t\t\t\tinitialOpen
 \t\t\t\t\t\ttitle={ __( 'Document workflow', ${quoteTsString(textDomain)} ) }
 \t\t\t\t\t>
-\t\t\t\t\t\t<p>{ sidebarModel.summary }</p>
+\t\t\t\t\t\t<p>{ editorPluginModel.summary }</p>
 \t\t\t\t\t\t<Button variant="secondary">
-\t\t\t\t\t\t\t{ sidebarModel.primaryActionLabel }
+\t\t\t\t\t\t\t{ editorPluginModel.primaryActionLabel }
 \t\t\t\t\t\t</Button>
 \t\t\t\t\t</PanelBody>
 \t\t\t\t</div>
@@ -304,24 +347,26 @@ function buildEditorPluginEntrySource(
 	textDomain: string,
 ): string {
 	const pascalName = toPascalCase(editorPluginSlug);
-	const componentName = `${pascalName}Sidebar`;
+	const componentName = `${pascalName}Surface`;
 	const pluginName = `${namespace}-${editorPluginSlug}`;
+	const surfaceName = `${pluginName}-surface`;
 	const pluginTitle = toTitleCase(editorPluginSlug);
 
 	return `import { registerPlugin } from '@wordpress/plugins';
 import { __ } from '@wordpress/i18n';
 
 import { REQUIRED_CAPABILITY } from './data';
-import { ${componentName} } from './Sidebar';
+import { ${componentName} } from './Surface';
 
 const EDITOR_PLUGIN_NAME = ${quoteTsString(pluginName)};
+const EDITOR_PLUGIN_SURFACE_NAME = ${quoteTsString(surfaceName)};
 const EDITOR_PLUGIN_TITLE = __( ${quoteTsString(pluginTitle)}, ${quoteTsString(textDomain)} );
 
 registerPlugin( EDITOR_PLUGIN_NAME, {
 \ticon: 'admin-generic',
 \trender: () => (
 \t\t<${componentName}
-\t\t\tpluginName={ EDITOR_PLUGIN_NAME }
+\t\t\tsurfaceName={ EDITOR_PLUGIN_SURFACE_NAME }
 \t\t\ttitle={ EDITOR_PLUGIN_TITLE }
 \t\t/>
 \t),
@@ -338,6 +383,11 @@ function buildEditorPluginStyleSource(): string {
 
 .wp-typia-editor-plugin-shell p {
 \tmargin: 0 0 12px;
+}
+
+.wp-typia-editor-plugin-shell__hint {
+\tcolor: #757575;
+\tfont-size: 12px;
 }
 `;
 }
@@ -759,7 +809,7 @@ async function writeEditorPluginRegistry(
  * Defaults to `process.cwd()`.
  * @param options.editorPluginName Human-entered editor-plugin name that will be
  * normalized and validated before files are written.
- * @param options.slot Optional editor plugin shell slot. Defaults to `PluginSidebar`.
+ * @param options.slot Optional editor plugin shell slot. Defaults to `sidebar`.
  * @returns A promise that resolves with the normalized `editorPluginSlug`, chosen
  * `slot`, and owning `projectDir` after the scaffold files and inventory entry
  * are written successfully.
@@ -779,7 +829,7 @@ export async function runAddEditorPluginCommand({
 	const editorPluginSlug = assertValidGeneratedSlug(
 		"Editor plugin name",
 		normalizeBlockSlug(editorPluginName),
-		"wp-typia add editor-plugin <name> [--slot <PluginSidebar>]",
+		"wp-typia add editor-plugin <name> [--slot <sidebar|document-setting-panel>]",
 	);
 	const resolvedSlot = assertValidEditorPluginSlot(slot);
 
@@ -798,7 +848,7 @@ export async function runAddEditorPluginCommand({
 		editorPluginSlug,
 	);
 	const entryFilePath = path.join(editorPluginDir, "index.tsx");
-	const sidebarFilePath = path.join(editorPluginDir, "Sidebar.tsx");
+	const surfaceFilePath = path.join(editorPluginDir, "Surface.tsx");
 	const dataFilePath = path.join(editorPluginDir, "data.ts");
 	const typesFilePath = path.join(editorPluginDir, "types.ts");
 	const styleFilePath = path.join(editorPluginDir, "style.scss");
@@ -829,9 +879,10 @@ export async function runAddEditorPluginCommand({
 			"utf8",
 		);
 		await fsp.writeFile(
-			sidebarFilePath,
-			buildEditorPluginSidebarSource(
+			surfaceFilePath,
+			buildEditorPluginSurfaceSource(
 				editorPluginSlug,
+				resolvedSlot,
 				workspace.workspace.textDomain,
 			),
 			"utf8",

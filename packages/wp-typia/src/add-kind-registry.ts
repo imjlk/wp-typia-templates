@@ -161,7 +161,7 @@ export const ADD_KIND_REGISTRY = {
       ],
       title: 'Added editor plugin',
     },
-    description: 'Add a document-level editor extension shell',
+    description: 'Add a slot-aware document editor extension shell',
     nameLabel: 'Editor plugin name',
     visibleFieldNames: () => ['kind', 'name', 'slot'],
   },

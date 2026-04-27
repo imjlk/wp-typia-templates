@@ -87,7 +87,8 @@ const compoundInnerBlocksPresetOptions: SelectOption[] =
   }));
 
 const EDITOR_PLUGIN_SLOT_DESCRIPTIONS: Record<string, string> = {
-  PluginSidebar: 'Register a document sidebar and more-menu entry',
+  'document-setting-panel': 'Register a document settings sidebar panel',
+  sidebar: 'Register a document sidebar and more-menu entry',
 };
 
 const editorPluginSlotOptions: SelectOption[] = EDITOR_PLUGIN_SLOT_IDS.map(

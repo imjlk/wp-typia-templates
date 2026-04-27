@@ -7,6 +7,7 @@ import {
 	EDITOR_PLUGIN_SLOT_IDS,
 	REST_RESOURCE_METHOD_IDS,
 	REST_RESOURCE_NAMESPACE_PATTERN,
+	resolveEditorPluginSlotAlias,
 } from "./cli-add-shared.js";
 import {
 	HOOKED_BLOCK_ANCHOR_PATTERN,
@@ -686,11 +687,15 @@ function getWorkspaceEditorPluginRequiredFiles(
 	editorPlugin: WorkspaceInventory["editorPlugins"][number],
 ): string[] {
 	const editorPluginDir = path.join("src", "editor-plugins", editorPlugin.slug);
+	const surfaceFile =
+		editorPlugin.slot === "PluginSidebar"
+			? path.join(editorPluginDir, "Sidebar.tsx")
+			: path.join(editorPluginDir, "Surface.tsx");
 
 	return Array.from(
 		new Set([
 			editorPlugin.file,
-			path.join(editorPluginDir, "Sidebar.tsx"),
+			surfaceFile,
 			path.join(editorPluginDir, "data.ts"),
 			path.join(editorPluginDir, "types.ts"),
 			path.join(editorPluginDir, "style.scss"),
@@ -701,15 +706,15 @@ function getWorkspaceEditorPluginRequiredFiles(
 function checkWorkspaceEditorPluginConfig(
 	editorPlugin: WorkspaceInventory["editorPlugins"][number],
 ): DoctorCheck {
-	const validSlots = new Set<string>(EDITOR_PLUGIN_SLOT_IDS);
-	const isValidSlot = validSlots.has(editorPlugin.slot);
+	const normalizedSlot = resolveEditorPluginSlotAlias(editorPlugin.slot);
+	const isValidSlot = Boolean(normalizedSlot);
 
 	return createDoctorCheck(
 		`Editor plugin config ${editorPlugin.slug}`,
 		isValidSlot ? "pass" : "fail",
 		isValidSlot
-			? `Editor plugin slot ${editorPlugin.slot} is supported`
-			: `Unsupported editor plugin slot "${editorPlugin.slot}". Expected one of: ${EDITOR_PLUGIN_SLOT_IDS.join(", ")}`,
+			? `Editor plugin slot ${editorPlugin.slot} is supported as ${normalizedSlot}`
+			: `Unsupported editor plugin slot "${editorPlugin.slot}". Expected one of: ${EDITOR_PLUGIN_SLOT_IDS.join(", ")} or legacy aliases PluginSidebar, PluginDocumentSettingPanel.`,
 	);
 }
 
