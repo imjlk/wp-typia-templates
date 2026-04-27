@@ -154,6 +154,8 @@ wp-typia add block counter-card --template basic
 wp-typia add block faq-stack --template compound --persistence-policy public --data-storage custom-table
 wp-typia add binding-source hero-data
 wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create
+wp-typia add editor-plugin review-workflow --slot sidebar
+wp-typia add editor-plugin seo-notes --slot document-setting-panel
 wp-typia add hooked-block counter-card --anchor core/post-content --position after
 ```
 

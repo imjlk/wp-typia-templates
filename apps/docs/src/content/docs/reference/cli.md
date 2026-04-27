@@ -76,28 +76,35 @@ wp-typia add binding-source <name>
 wp-typia add rest-resource <name> --namespace <vendor/v1> --methods GET,POST
 wp-typia add ability <name>
 wp-typia add ai-feature <name> --namespace <vendor/v1>
-wp-typia add editor-plugin <name> --slot PluginSidebar
+wp-typia add editor-plugin <name> --slot sidebar
+wp-typia add editor-plugin seo-notes --slot document-setting-panel
 wp-typia add hooked-block <block-slug> --anchor core/post-content --position after
 ```
 
 Common flags:
 
-| Flag                                                             | Description                                                             |
-| ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `--template <basic \| interactivity \| persistence \| compound>` | Built-in block family for `add block`.                                  |
-| `--dry-run`                                                      | Preview workspace file updates and completion guidance.                 |
-| `--block <block-slug>`                                           | Target block for variation workflows.                                   |
-| `--anchor <block-name>`                                          | Anchor block for hooked-block workflows.                                |
-| `--position <before \| after \| firstChild \| lastChild>`        | Hook position for hooked blocks.                                        |
-| `--slot <PluginSidebar>`                                         | Editor shell slot for editor-plugin scaffolds.                          |
-| `--namespace <vendor/v1>`                                        | REST namespace for REST resource and AI feature workflows.              |
-| `--methods <method[,method...]>`                                 | REST methods for REST resource workflows.                               |
-| `--external-layer-source <source>`                               | Compose an external layer package on top of a built-in block template.  |
-| `--external-layer-id <id>`                                       | Select a specific external layer.                                       |
-| `--inner-blocks-preset <id>`                                     | Select a compound `InnerBlocks` preset.                                 |
-| `--alternate-render-targets <list>`                              | Add alternate render targets for persistence-capable dynamic scaffolds. |
-| `--data-storage <post-meta \| custom-table>`                     | Select persistence storage.                                             |
-| `--persistence-policy <authenticated \| public>`                 | Select persistence write policy.                                        |
+| Flag                                                             | Description                                                                                        |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `--template <basic \| interactivity \| persistence \| compound>` | Built-in block family for `add block`.                                                             |
+| `--dry-run`                                                      | Preview workspace file updates and completion guidance.                                            |
+| `--block <block-slug>`                                           | Target block for variation workflows.                                                              |
+| `--anchor <block-name>`                                          | Anchor block for hooked-block workflows.                                                           |
+| `--position <before \| after \| firstChild \| lastChild>`        | Hook position for hooked blocks.                                                                   |
+| `--slot <sidebar \| document-setting-panel>`                     | Editor shell slot for editor-plugin scaffolds; `PluginSidebar` remains accepted as a legacy alias. |
+| `--namespace <vendor/v1>`                                        | REST namespace for REST resource and AI feature workflows.                                         |
+| `--methods <method[,method...]>`                                 | REST methods for REST resource workflows.                                                          |
+| `--external-layer-source <source>`                               | Compose an external layer package on top of a built-in block template.                             |
+| `--external-layer-id <id>`                                       | Select a specific external layer.                                                                  |
+| `--inner-blocks-preset <id>`                                     | Select a compound `InnerBlocks` preset.                                                            |
+| `--alternate-render-targets <list>`                              | Add alternate render targets for persistence-capable dynamic scaffolds.                            |
+| `--data-storage <post-meta \| custom-table>`                     | Select persistence storage.                                                                        |
+| `--persistence-policy <authenticated \| public>`                 | Select persistence write policy.                                                                   |
+
+Editor plugin scaffolds are slot-aware. The default `sidebar` slot generates a
+`PluginSidebar` shell with a matching more-menu entry, while
+`document-setting-panel` generates a `PluginDocumentSettingPanel` surface inside
+the document settings sidebar. Existing automation that still passes
+`PluginSidebar` continues to resolve to `sidebar`.
 
 ## `init`
 

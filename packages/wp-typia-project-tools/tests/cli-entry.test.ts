@@ -785,7 +785,7 @@ test("formatHelpText keeps migration UI flags out of external template usage", (
   );
   expect(helpText).toContain("wp-typia add editor-plugin <name>");
   expect(helpText).toContain(
-    "wp-typia add editor-plugin <name> [--slot <PluginSidebar>]"
+    "wp-typia add editor-plugin <name> [--slot <sidebar|document-setting-panel>]"
   );
   expect(helpText).toContain("wp-typia add rest-resource <name>");
   expect(helpText).toContain("--methods <method[,method...]>");
