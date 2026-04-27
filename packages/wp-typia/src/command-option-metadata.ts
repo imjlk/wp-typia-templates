@@ -130,8 +130,12 @@ export const ADD_OPTION_METADATA = {
 		description: "Anchor block name for hooked-block workflows.",
 		type: "string",
 	},
+	attribute: {
+		description: "Target block attribute for end-to-end binding-source workflows.",
+		type: "string",
+	},
 	block: {
-		description: "Target block slug for variation workflows.",
+		description: "Target block slug for variation and end-to-end binding-source workflows.",
 		type: "string",
 	},
 	"data-storage": {

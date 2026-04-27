@@ -46,6 +46,12 @@ describe("first-party TUI interaction models", () => {
 			"name",
 			"block",
 		]);
+		expect(getVisibleAddFieldNames({ kind: "binding-source" })).toEqual([
+			"kind",
+			"name",
+			"block",
+			"attribute",
+		]);
 		expect(getVisibleAddFieldNames({ kind: "rest-resource" })).toEqual([
 			"kind",
 			"name",
@@ -117,6 +123,7 @@ describe("first-party TUI interaction models", () => {
 		expect(
 			sanitizeAddSubmitValues({
 				anchor: "",
+				attribute: " headline ",
 				block: "counter-card",
 				"alternate-render-targets": " email,mjml ",
 				"data-storage": "custom-table",
@@ -132,6 +139,33 @@ describe("first-party TUI interaction models", () => {
 			block: "counter-card",
 			kind: "variation",
 			name: "hero-card",
+		});
+
+		expect(
+			sanitizeAddSubmitValues({
+				attribute: " headline ",
+				block: "counter-card",
+				kind: "binding-source",
+				name: "hero-data",
+				template: "persistence",
+			}),
+		).toEqual({
+			attribute: "headline",
+			block: "counter-card",
+			kind: "binding-source",
+			name: "hero-data",
+		});
+
+		expect(
+			sanitizeAddSubmitValues({
+				attribute: "",
+				block: "",
+				kind: "binding-source",
+				name: "hero-data",
+			}),
+		).toEqual({
+			kind: "binding-source",
+			name: "hero-data",
 		});
 
 		expect(

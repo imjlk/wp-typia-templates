@@ -253,6 +253,15 @@ function AddFlowFields({
             options: workspaceBlockOptions,
           })
         : null,
+      visibleFields.has('attribute')
+        ? createElement(FirstPartyTextField, {
+            ...getWrappedFieldNeighbors(orderedVisibleFields, 'attribute'),
+            key: 'attribute',
+            label: 'Target attribute',
+            name: 'attribute',
+            placeholder: 'headline',
+          })
+        : null,
       visibleFields.has('namespace')
         ? createElement(FirstPartyTextField, {
             ...getWrappedFieldNeighbors(orderedVisibleFields, 'namespace'),

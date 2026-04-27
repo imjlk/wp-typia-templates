@@ -22,6 +22,7 @@ import {
 export const addFlowSchema = z.object({
   'alternate-render-targets': z.string().optional(),
   anchor: z.string().optional(),
+  attribute: z.string().optional(),
   block: z.string().optional(),
   'data-storage': z.string().optional(),
   'external-layer-id': z.string().optional(),
@@ -42,6 +43,7 @@ export type AddFlowValues = z.infer<typeof addFlowSchema>;
 
 const ADD_FIELD_HEIGHTS: Record<AddFieldName, number> = {
   anchor: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+  attribute: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
   block: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
   'data-storage': FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
   'alternate-render-targets': FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,

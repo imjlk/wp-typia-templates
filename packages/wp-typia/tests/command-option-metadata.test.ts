@@ -71,6 +71,22 @@ describe("command option metadata helpers", () => {
 		expect("dry-run" in resolved).toBe(false);
 	});
 
+	test("parses binding source target flags from shared add metadata", () => {
+		const parsed = parseCommandArgvWithMetadata(
+			["binding-source", "hero-data", "--block", "counter-card", "--attribute", "headline"],
+			{
+				extraBooleanOptionNames: ["help", "version"],
+				parser: buildCommandOptionParser(GLOBAL_OPTION_METADATA, ADD_OPTION_METADATA),
+			},
+		);
+
+		expect(parsed.flags).toEqual({
+			attribute: "headline",
+			block: "counter-card",
+		});
+		expect(parsed.positionals).toEqual(["binding-source", "hero-data"]);
+	});
+
 	test("parses sync preview flags from shared metadata", () => {
 		const parsed = parseCommandArgvWithMetadata(["--dry-run", "--check"], {
 			extraBooleanOptionNames: ["help", "version"],
