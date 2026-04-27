@@ -27,8 +27,11 @@ export const TYPESCRIPT_RUNTIME_PACKAGE_POLICIES = [
 		packageDir: "packages/wp-typia-project-tools",
 		packageName: "@wp-typia/project-tools",
 		reason:
-			"workspace inventory helpers used by add/doctor/migrations and exported workspace selection flows use the TypeScript compiler API at runtime",
-		requiredTypeScriptImportFiles: ["src/runtime/workspace-inventory.ts"],
+			"workspace inventory and generated workspace asset helpers used by add/doctor/migrations and exported workspace selection flows use the TypeScript compiler API at runtime",
+		requiredTypeScriptImportFiles: [
+			"src/runtime/cli-add-workspace-assets.ts",
+			"src/runtime/workspace-inventory.ts",
+		],
 		runtimeSourceRoots: ["src/runtime"],
 		typescriptPlacement: TYPESCRIPT_DEPENDENCY_POLICY.dependency,
 	},
