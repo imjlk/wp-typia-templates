@@ -106,6 +106,8 @@ export interface RunAddPatternCommandOptions {
 }
 
 export interface RunAddBindingSourceCommandOptions {
+	attributeName?: string;
+	blockName?: string;
 	bindingSourceName: string;
 	cwd?: string;
 }
@@ -683,7 +685,7 @@ export function formatAddHelpText(): string {
   wp-typia add block <name> --template <${ADD_BLOCK_TEMPLATE_IDS.join("|")}> [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--dry-run]
   wp-typia add variation <name> --block <block-slug> [--dry-run]
   wp-typia add pattern <name> [--dry-run]
-  wp-typia add binding-source <name> [--dry-run]
+  wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>] [--dry-run]
   wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--dry-run]
   wp-typia add ability <name> [--dry-run]
   wp-typia add ai-feature <name> [--namespace <vendor/v1>] [--dry-run]
@@ -697,7 +699,7 @@ Notes:
   \`query-loop\` is a create-time scaffold family. Use \`wp-typia create <project-dir> --template query-loop\` instead of \`wp-typia add block\`.
   \`add variation\` targets an existing block slug from \`scripts/block-config.ts\`.
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
-  \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.
+  \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`; pass \`--block\` and \`--attribute\` together to declare an end-to-end bindable attribute on an existing generated block.
   \`add rest-resource\` scaffolds plugin-level TypeScript REST contracts under \`src/rest/\` and PHP route glue under \`inc/rest/\`.
   \`add ability\` scaffolds typed workflow abilities under \`src/abilities/\` and server registration under \`inc/abilities/\`.
   \`add ai-feature\` scaffolds server-owned AI feature endpoints under \`src/ai-features/\` and PHP route glue under \`inc/ai-features/\`.

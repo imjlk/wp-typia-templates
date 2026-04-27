@@ -27,6 +27,8 @@ export interface WorkspacePatternInventoryEntry {
 }
 
 export interface WorkspaceBindingSourceInventoryEntry {
+	attribute?: string;
+	block?: string;
 	editorFile: string;
 	serverFile: string;
 	slug: string;
@@ -189,6 +191,8 @@ export const PATTERNS: WorkspacePatternConfig[] = [
 const BINDING_SOURCES_INTERFACE_SECTION = `
 
 export interface WorkspaceBindingSourceConfig {
+\tattribute?: string;
+\tblock?: string;
 \teditorFile: string;
 \tserverFile: string;
 \tslug: string;
@@ -512,6 +516,13 @@ function parseBindingSourceEntries(
 		}
 
 		return {
+			attribute: getOptionalStringProperty(
+				"BINDING_SOURCES",
+				elementIndex,
+				element,
+				"attribute",
+			),
+			block: getOptionalStringProperty("BINDING_SOURCES", elementIndex, element, "block"),
 			editorFile: getRequiredStringProperty("BINDING_SOURCES", elementIndex, element, "editorFile"),
 			serverFile: getRequiredStringProperty("BINDING_SOURCES", elementIndex, element, "serverFile"),
 			slug: getRequiredStringProperty("BINDING_SOURCES", elementIndex, element, "slug"),
@@ -1034,6 +1045,18 @@ export function updateWorkspaceInventorySource(
 		nextSource,
 		ADMIN_VIEW_CONFIG_ENTRY_MARKER,
 		adminViewEntries,
+	);
+	nextSource = ensureInterfaceField(
+		nextSource,
+		"WorkspaceBindingSourceConfig",
+		"attribute",
+		"\tattribute?: string;",
+	);
+	nextSource = ensureInterfaceField(
+		nextSource,
+		"WorkspaceBindingSourceConfig",
+		"block",
+		"\tblock?: string;",
 	);
 	nextSource = ensureInterfaceField(
 		nextSource,

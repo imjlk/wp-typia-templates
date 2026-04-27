@@ -297,8 +297,10 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
   'binding-source': async (context) => {
     const name = requireAddKindName(
       context,
-      '`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name>.',
+      '`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>].',
     );
+    const blockName = readOptionalStringFlag(context.flags, 'block');
+    const attributeName = readOptionalStringFlag(context.flags, 'attribute');
 
     return runRegisteredAddKind<AddBindingSourceResult>(context, {
       buildCompletion: (result) =>
@@ -306,12 +308,18 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
           kind: 'binding-source',
           projectDir: result.projectDir,
           values: {
+            ...(result.attributeName
+              ? { attributeName: result.attributeName }
+              : {}),
+            ...(result.blockSlug ? { blockSlug: result.blockSlug } : {}),
             bindingSourceSlug: result.bindingSourceSlug,
           },
         }),
       execute: (targetCwd) =>
         context.addRuntime.runAddBindingSourceCommand({
+          attributeName,
           bindingSourceName: name,
+          blockName,
           cwd: targetCwd,
         }),
     });

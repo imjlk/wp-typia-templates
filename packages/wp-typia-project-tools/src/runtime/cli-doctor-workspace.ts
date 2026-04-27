@@ -363,6 +363,113 @@ function checkWorkspaceBindingSourcesIndex(
 	);
 }
 
+function checkWorkspaceBindingTarget(
+	projectDir: string,
+	workspace: WorkspaceProject,
+	registeredBlockSlugs: Set<string>,
+	bindingSource: WorkspaceInventory["bindingSources"][number],
+): DoctorCheck | undefined {
+	const hasBlock = bindingSource.block !== undefined;
+	const hasAttribute = bindingSource.attribute !== undefined;
+	if (!hasBlock && !hasAttribute) {
+		return undefined;
+	}
+	if (!bindingSource.block || !bindingSource.attribute) {
+		return createDoctorCheck(
+			`Binding target ${bindingSource.slug}`,
+			"fail",
+			"Binding target entries must include both block and attribute.",
+		);
+	}
+	if (!registeredBlockSlugs.has(bindingSource.block)) {
+		return createDoctorCheck(
+			`Binding target ${bindingSource.slug}`,
+			"fail",
+			`Binding target references unknown block "${bindingSource.block}".`,
+		);
+	}
+
+	const blockJsonRelativePath = path.join(
+		"src",
+		"blocks",
+		bindingSource.block,
+		"block.json",
+	);
+	const blockJsonPath = path.join(projectDir, blockJsonRelativePath);
+	const issues: string[] = [];
+	try {
+		const blockJson = parseScaffoldBlockMetadata<Record<string, unknown> & { attributes?: unknown }>(
+			JSON.parse(fs.readFileSync(blockJsonPath, "utf8")),
+		);
+		const attributes = blockJson.attributes;
+		if (!attributes || typeof attributes !== "object" || Array.isArray(attributes)) {
+			issues.push(`${blockJsonRelativePath} must define an attributes object`);
+		} else {
+			const attributeConfig = (attributes as Record<string, unknown>)[bindingSource.attribute];
+			if (
+				!attributeConfig ||
+				typeof attributeConfig !== "object" ||
+				Array.isArray(attributeConfig)
+			) {
+				issues.push(
+					`${blockJsonRelativePath} must declare attribute "${bindingSource.attribute}"`,
+				);
+			}
+		}
+	} catch (error) {
+		issues.push(
+			error instanceof Error
+				? `Unable to read ${blockJsonRelativePath}: ${error.message}`
+				: `Unable to read ${blockJsonRelativePath}.`,
+		);
+	}
+
+	const serverPath = path.join(projectDir, bindingSource.serverFile);
+	if (fs.existsSync(serverPath)) {
+		const serverSource = fs.readFileSync(serverPath, "utf8");
+		const supportedAttributesFilter = `block_bindings_supported_attributes_${workspace.workspace.namespace}/${bindingSource.block}`;
+		if (!serverSource.includes(supportedAttributesFilter)) {
+			issues.push(
+				`${bindingSource.serverFile} must register ${supportedAttributesFilter}`,
+			);
+		}
+		if (!serverSource.includes(bindingSource.attribute)) {
+			issues.push(
+				`${bindingSource.serverFile} must expose attribute "${bindingSource.attribute}"`,
+			);
+		}
+	} else {
+		issues.push(`Missing ${bindingSource.serverFile}`);
+	}
+
+	const editorPath = path.join(projectDir, bindingSource.editorFile);
+	if (fs.existsSync(editorPath)) {
+		const editorSource = fs.readFileSync(editorPath, "utf8");
+		const blockName = `${workspace.workspace.namespace}/${bindingSource.block}`;
+		if (!editorSource.includes("BINDING_SOURCE_TARGET")) {
+			issues.push(`${bindingSource.editorFile} must export BINDING_SOURCE_TARGET`);
+		}
+		if (!editorSource.includes(`attribute: ${JSON.stringify(bindingSource.attribute)}`)) {
+			issues.push(
+				`${bindingSource.editorFile} must document target attribute "${bindingSource.attribute}"`,
+			);
+		}
+		if (!editorSource.includes(`block: ${JSON.stringify(blockName)}`)) {
+			issues.push(`${bindingSource.editorFile} must document target block "${blockName}"`);
+		}
+	} else {
+		issues.push(`Missing ${bindingSource.editorFile}`);
+	}
+
+	return createDoctorCheck(
+		`Binding target ${bindingSource.slug}`,
+		issues.length === 0 ? "pass" : "fail",
+		issues.length === 0
+			? `${bindingSource.block}.${bindingSource.attribute} is declared and supported`
+			: issues.join("; "),
+	);
+}
+
 function getWorkspaceRestResourceRequiredFiles(
 	restResource: WorkspaceInventory["restResources"][number],
 ): string[] {
@@ -1153,6 +1260,15 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 					bindingSource.editorFile,
 				]),
 			);
+			const bindingTargetCheck = checkWorkspaceBindingTarget(
+				workspace.projectDir,
+				workspace,
+				registeredBlockSlugs,
+				bindingSource,
+			);
+			if (bindingTargetCheck) {
+				checks.push(bindingTargetCheck);
+			}
 		}
 
 		if (inventory.restResources.length > 0) {

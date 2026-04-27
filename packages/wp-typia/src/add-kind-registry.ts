@@ -17,6 +17,7 @@ export type AddFieldName =
   | 'source'
   | 'template'
   | 'block'
+  | 'attribute'
   | 'anchor'
   | 'methods'
   | 'namespace'
@@ -87,17 +88,25 @@ export const ADD_KIND_REGISTRY = {
     completion: {
       nextSteps: (values) => [
         `Review src/bindings/${values.bindingSourceSlug}/server.php and src/bindings/${values.bindingSourceSlug}/editor.ts.`,
+        ...(values.blockSlug && values.attributeName
+          ? [
+              `Review src/blocks/${values.blockSlug}/block.json for the ${values.attributeName} bindable attribute.`,
+            ]
+          : []),
         'Run your workspace build or dev command to verify the binding source hooks and editor registration.',
       ],
       summaryLines: (values, projectDir) => [
         `Binding source: ${values.bindingSourceSlug}`,
+        ...(values.blockSlug && values.attributeName
+          ? [`Target: ${values.blockSlug}.${values.attributeName}`]
+          : []),
         `Project directory: ${projectDir}`,
       ],
       title: 'Added binding source',
     },
     description: 'Add a shared block bindings source',
     nameLabel: 'Binding source name',
-    visibleFieldNames: () => ['kind', 'name'],
+    visibleFieldNames: () => ['kind', 'name', 'block', 'attribute'],
   },
   block: {
     completion: {

@@ -10,6 +10,7 @@ export const fullRuntimeCommands = Object.freeze([
 export const longValueOptions = Object.freeze([
   "--alternate-render-targets",
   "--anchor",
+  "--attribute",
   "--block",
   "--config",
   "--current-migration-version",

@@ -185,6 +185,65 @@ test("binding source workflow preserves an existing src/bindings/index.js regist
   expect(bindingsIndexSource).toContain("import './news-data/editor';");
 }, 15_000);
 
+test("doctor fails when a binding source target attribute drifts from block metadata", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-binding-source-target-drift"
+  );
+
+  await scaffoldOfficialWorkspace(targetDir, {
+    description: "Demo workspace binding source target drift",
+    slug: "demo-workspace-binding-source-target-drift",
+    title: "Demo Workspace Binding Source Target Drift",
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+  runCli(
+    "node",
+    [entryPath, "add", "block", "counter-card", "--template", "basic"],
+    {
+      cwd: targetDir,
+    }
+  );
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "binding-source",
+      "hero-data",
+      "--block",
+      "counter-card",
+      "--attribute",
+      "headline",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const blockJsonPath = path.join(
+    targetDir,
+    "src",
+    "blocks",
+    "counter-card",
+    "block.json"
+  );
+  const blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8"));
+  delete blockJson.attributes.headline;
+  fs.writeFileSync(blockJsonPath, JSON.stringify(blockJson, null, 2), "utf8");
+
+  const checks = await getDoctorChecks(targetDir);
+  const bindingTargetCheck = checks.find(
+    (check) => check.label === "Binding target hero-data"
+  );
+
+  expect(bindingTargetCheck?.status).toBe("fail");
+  expect(bindingTargetCheck?.detail).toContain(
+    'must declare attribute "headline"'
+  );
+}, 15_000);
+
 test("doctor accepts workspaces that keep editor plugin registries in src/editor-plugins/index.js", async () => {
   const targetDir = path.join(
     tempRoot,

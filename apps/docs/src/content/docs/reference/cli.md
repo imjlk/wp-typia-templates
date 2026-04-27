@@ -73,6 +73,7 @@ wp-typia add block <name> --template basic
 wp-typia add variation <name> --block <block-slug>
 wp-typia add pattern <name>
 wp-typia add binding-source <name>
+wp-typia add binding-source <name> --block <block-slug|namespace/block-slug> --attribute <attribute>
 wp-typia add rest-resource <name> --namespace <vendor/v1> --methods GET,POST
 wp-typia add ability <name>
 wp-typia add ai-feature <name> --namespace <vendor/v1>

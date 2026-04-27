@@ -157,7 +157,8 @@ function AddFlowFields({
   const hookedBlockNameUsesSelect =
     kind === 'hooked-block' && workspaceBlockOptions.length > 0;
   const variationBlockUsesSelect =
-    kind === 'variation' && workspaceBlockOptions.length > 0;
+    (kind === 'variation' || kind === 'binding-source') &&
+    workspaceBlockOptions.length > 0;
 
   return createElement(
     FirstPartyFormViewport,
@@ -251,6 +252,15 @@ function AddFlowFields({
             label: 'Target block',
             name: 'block' satisfies AddSelectFieldName,
             options: workspaceBlockOptions,
+          })
+        : null,
+      visibleFields.has('attribute')
+        ? createElement(FirstPartyTextField, {
+            ...getWrappedFieldNeighbors(orderedVisibleFields, 'attribute'),
+            key: 'attribute',
+            label: 'Target attribute',
+            name: 'attribute',
+            placeholder: 'headline',
           })
         : null,
       visibleFields.has('namespace')

@@ -23,7 +23,7 @@ export function formatHelpText(): string {
   wp-typia add block <name> --template <basic|interactivity|persistence|compound> [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
   wp-typia add variation <name> --block <block-slug>
   wp-typia add pattern <name>
-  wp-typia add binding-source <name>
+  wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>]
   wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <method[,method...]>]
   wp-typia add ability <name>
   wp-typia add ai-feature <name> [--namespace <vendor/v1>]
@@ -51,7 +51,7 @@ Notes:
   \`query-loop\` is create-only. Use \`wp-typia create <project-dir> --template query-loop\`; \`wp-typia add block\` accepts only basic, interactivity, persistence, and compound families.
   \`add variation\` uses an existing workspace block from \`scripts/block-config.ts\`.
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.
-  \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`.
+  \`add binding-source\` scaffolds shared PHP and editor registration under \`src/bindings/\`; pass \`--block\` and \`--attribute\` together to declare a bindable generated-block attribute.
   \`add rest-resource\` scaffolds plugin-level TypeScript REST contracts under \`src/rest/\` and PHP route glue under \`inc/rest/\`.
   \`add ability\` scaffolds typed workflow abilities under \`src/abilities/\` and server registration under \`inc/abilities/\`.
   \`add ai-feature\` scaffolds server-owned AI feature endpoints under \`src/ai-features/\` and PHP route glue under \`inc/ai-features/\`.

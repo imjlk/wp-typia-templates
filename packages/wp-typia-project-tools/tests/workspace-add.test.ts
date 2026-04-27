@@ -2336,6 +2336,104 @@ test("canonical CLI can add a binding source to an official workspace template",
   ).toBe(true);
 }, 30_000);
 
+test("canonical CLI can add an end-to-end binding source target to an existing block", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-binding-source-target"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add binding source target",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-binding-source-target",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Binding Source Target",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+  runCli(
+    "node",
+    [entryPath, "add", "block", "counter-card", "--template", "basic"],
+    {
+      cwd: targetDir,
+    }
+  );
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "binding-source",
+      "hero-data",
+      "--block",
+      "demo-space/counter-card",
+      "--attribute",
+      "headline",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const blockJson = JSON.parse(
+    fs.readFileSync(
+      path.join(targetDir, "src", "blocks", "counter-card", "block.json"),
+      "utf8"
+    )
+  );
+  const bindingServerSource = fs.readFileSync(
+    path.join(targetDir, "src", "bindings", "hero-data", "server.php"),
+    "utf8"
+  );
+  const bindingEditorSource = fs.readFileSync(
+    path.join(targetDir, "src", "bindings", "hero-data", "editor.ts"),
+    "utf8"
+  );
+
+  expect(blockConfigSource).toContain('block: "counter-card"');
+  expect(blockConfigSource).toContain('attribute: "headline"');
+  expect(blockJson.attributes.headline).toEqual({ type: "string" });
+  expect(bindingServerSource).toContain(
+    "block_bindings_supported_attributes_demo-space/counter-card"
+  );
+  expect(bindingServerSource).toContain(
+    "function demo_space_hero_data_supported_binding_attributes"
+  );
+  expect(bindingServerSource).toContain("'headline'");
+  expect(bindingEditorSource).toContain("export const BINDING_SOURCE_TARGET");
+  expect(bindingEditorSource).toContain('block: "demo-space/counter-card"');
+  expect(bindingEditorSource).toContain('attribute: "headline"');
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ detail: string; label: string; status: string }>;
+  }>(doctorOutput);
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Binding target hero-data"
+    )?.status
+  ).toBe("pass");
+
+  runCli("npm", ["run", "build"], { cwd: targetDir });
+  expect(
+    fs.existsSync(path.join(targetDir, "build", "bindings", "index.js"))
+  ).toBe(true);
+}, 45_000);
+
 test("binding source workflow preserves existing files on duplicate failure", async () => {
   const targetDir = path.join(
     tempRoot,

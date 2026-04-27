@@ -153,6 +153,7 @@ bun install
 wp-typia add block counter-card --template basic
 wp-typia add block faq-stack --template compound --persistence-policy public --data-storage custom-table
 wp-typia add binding-source hero-data
+wp-typia add binding-source hero-data --block counter-card --attribute headline
 wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create
 wp-typia add editor-plugin review-workflow --slot sidebar
 wp-typia add editor-plugin seo-notes --slot document-setting-panel

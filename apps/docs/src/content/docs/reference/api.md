@@ -92,6 +92,7 @@ wp-typia add block counter-card --template basic
 wp-typia add variation hero-card --block counter-card
 wp-typia add pattern hero-layout
 wp-typia add binding-source hero-data
+wp-typia add binding-source hero-data --block counter-card --attribute headline
 wp-typia add hooked-block counter-card --anchor core/post-content --position after
 wp-typia templates list
 wp-typia templates inspect basic
@@ -119,6 +120,7 @@ wp-typia add block counter-card --template basic
 wp-typia add variation hero-card --block counter-card
 wp-typia add pattern hero-layout
 wp-typia add binding-source hero-data
+wp-typia add binding-source hero-data --block demo-space/counter-card --attribute headline
 wp-typia add hooked-block counter-card --anchor core/post-content --position after
 wp-typia add block faq-stack --template compound --persistence-policy public --data-storage custom-table
 ```
@@ -714,6 +716,7 @@ Official workspaces also support first-class variation, pattern, binding-source,
 wp-typia add variation hero-card --block counter-card
 wp-typia add pattern hero-layout
 wp-typia add binding-source hero-data
+wp-typia add binding-source hero-data --block counter-card --attribute headline
 wp-typia add ability review-workflow
 wp-typia add ai-feature brief-suggestions --namespace my-plugin/v1
 wp-typia add hooked-block counter-card --anchor core/post-content --position after
@@ -727,7 +730,11 @@ wired through the shared workspace bootstrap plus editor bundle. The generated
 starter contract keeps one field-keyed data map in each file, so the common
 follow-up is to edit `src/bindings/<name>/server.php` and
 `src/bindings/<name>/editor.ts` in parallel by replacing the default starter
-values for the fields you want to expose.
+values for the fields you want to expose. If you pass `--block` and
+`--attribute` together, the workflow also declares the target attribute in the
+generated block's `block.json`, registers the WordPress supported-attributes
+filter for that block, records the target in `scripts/block-config.ts`, and lets
+`wp-typia doctor` detect missing source/attribute wiring later.
 Workflow abilities are generated under `src/abilities/*/` plus
 `inc/abilities/*.php` and scaffold typed input/output contracts, JSON Schema
 sync, server-side Abilities API registration, and a lightweight admin/editor

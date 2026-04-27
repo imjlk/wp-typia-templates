@@ -3,13 +3,22 @@ import { promises as fsp } from "node:fs";
 import path from "node:path";
 
 import {
+	syncBlockMetadata,
+} from "@wp-typia/block-runtime/metadata-core";
+
+import {
 	resolveWorkspaceProject,
 	type WorkspaceProject,
 } from "./workspace-project.js";
-import { readWorkspaceInventory, appendWorkspaceInventoryEntries } from "./workspace-inventory.js";
+import {
+	readWorkspaceInventory,
+	appendWorkspaceInventoryEntries,
+	type WorkspaceInventory,
+} from "./workspace-inventory.js";
 import { toPascalCase, toTitleCase } from "./string-case.js";
 import {
 	findPhpFunctionRange,
+	escapeRegex,
 	hasPhpFunctionDefinition,
 	quotePhpString,
 	replacePhpFunctionDefinition,
@@ -24,6 +33,7 @@ import {
 	normalizeBlockSlug,
 	patchFile,
 	quoteTsString,
+	resolveWorkspaceBlock,
 	rollbackWorkspaceMutation,
 	type RunAddBindingSourceCommandOptions,
 	type RunAddEditorPluginCommandOptions,
@@ -40,6 +50,12 @@ const EDITOR_PLUGIN_EDITOR_SCRIPT = "build/editor-plugins/index.js";
 const EDITOR_PLUGIN_EDITOR_ASSET = "build/editor-plugins/index.asset.php";
 const EDITOR_PLUGIN_EDITOR_STYLE = "build/editor-plugins/style-index.css";
 const EDITOR_PLUGIN_EDITOR_STYLE_RTL = "build/editor-plugins/style-index-rtl.css";
+const BINDING_ATTRIBUTE_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/u;
+
+type BindingTarget = {
+	attributeName: string;
+	blockSlug: string;
+};
 
 function buildPatternConfigEntry(patternSlug: string): string {
 	return [
@@ -50,14 +66,58 @@ function buildPatternConfigEntry(patternSlug: string): string {
 	].join("\n");
 }
 
-function buildBindingSourceConfigEntry(bindingSourceSlug: string): string {
+function buildBindingSourceConfigEntry(
+	bindingSourceSlug: string,
+	target?: BindingTarget,
+): string {
 	return [
 		"\t{",
+		...(target ? [`\t\tattribute: ${quoteTsString(target.attributeName)},`] : []),
+		...(target ? [`\t\tblock: ${quoteTsString(target.blockSlug)},`] : []),
 		`\t\teditorFile: ${quoteTsString(`src/bindings/${bindingSourceSlug}/editor.ts`)},`,
 		`\t\tserverFile: ${quoteTsString(`src/bindings/${bindingSourceSlug}/server.php`)},`,
 		`\t\tslug: ${quoteTsString(bindingSourceSlug)},`,
 		"\t},",
 	].join("\n");
+}
+
+function assertValidBindingAttributeName(attributeName: string): string {
+	const trimmed = attributeName.trim();
+	if (!trimmed) {
+		throw new Error(
+			"`wp-typia add binding-source` requires --attribute <attribute> to include a value when --block is provided.",
+		);
+	}
+	if (!BINDING_ATTRIBUTE_NAME_PATTERN.test(trimmed)) {
+		throw new Error(
+			`Binding attribute "${attributeName}" must start with a letter and use only letters, numbers, underscores, or hyphens.`,
+		);
+	}
+
+	return trimmed;
+}
+
+function resolveBindingTargetBlockSlug(
+	blockName: string,
+	namespace: string,
+): string {
+	const trimmed = blockName.trim();
+	if (!trimmed) {
+		throw new Error(
+			"`wp-typia add binding-source` requires --block <block-slug|namespace/block-slug> to include a value when --attribute is provided.",
+		);
+	}
+
+	const [maybeNamespace, maybeSlug] = trimmed.includes("/")
+		? trimmed.split("/", 2)
+		: [undefined, trimmed];
+	if (maybeNamespace && maybeNamespace !== namespace) {
+		throw new Error(
+			`Binding target block "${trimmed}" uses namespace "${maybeNamespace}". Expected "${namespace}".`,
+		);
+	}
+
+	return normalizeBlockSlug(maybeSlug ?? "");
 }
 
 function buildEditorPluginConfigEntry(
@@ -102,12 +162,35 @@ function buildBindingSourceServerSource(
 	phpPrefix: string,
 	namespace: string,
 	textDomain: string,
+	target?: BindingTarget,
 ): string {
 	const bindingSourceTitle = toTitleCase(bindingSourceSlug);
 	const bindingSourcePhpId = bindingSourceSlug.replace(/-/g, "_");
 	const bindingSourceValueFunctionName = `${phpPrefix}_${bindingSourcePhpId}_binding_source_values`;
 	const bindingSourceResolveFunctionName = `${phpPrefix}_${bindingSourcePhpId}_resolve_binding_source_value`;
+	const bindingSourceSupportedAttributesFunctionName = `${phpPrefix}_${bindingSourcePhpId}_supported_binding_attributes`;
 	const starterValue = `${bindingSourceTitle} starter value`;
+	const supportedAttributesSource = target
+		? `
+if ( ! function_exists( '${bindingSourceSupportedAttributesFunctionName}' ) ) {
+\tfunction ${bindingSourceSupportedAttributesFunctionName}( array $supported_attributes ) : array {
+\t\tif ( ! in_array( ${quotePhpString(target.attributeName)}, $supported_attributes, true ) ) {
+\t\t\t$supported_attributes[] = ${quotePhpString(target.attributeName)};
+\t\t}
+
+\t\treturn $supported_attributes;
+\t}
+}
+`
+		: "";
+	const supportedAttributesHook = target
+		? `
+add_filter(
+\t${quotePhpString(`block_bindings_supported_attributes_${namespace}/${target.blockSlug}`)},
+\t${quotePhpString(bindingSourceSupportedAttributesFunctionName)}
+);
+`
+		: "";
 
 	return `<?php
 if ( ! defined( 'ABSPATH' ) ) {
@@ -137,6 +220,7 @@ if ( ! function_exists( '${bindingSourceResolveFunctionName}' ) ) {
 \t\treturn is_string( $value ) ? $value : '';
 \t}
 }
+${supportedAttributesSource}
 
 register_block_bindings_source(
 \t${quotePhpString(`${namespace}/${bindingSourceSlug}`)},
@@ -145,16 +229,28 @@ register_block_bindings_source(
 \t\t'get_value_callback' => ${quotePhpString(bindingSourceResolveFunctionName)},
 \t)
 );
-`;
+${supportedAttributesHook}`;
 }
 
 function buildBindingSourceEditorSource(
 	bindingSourceSlug: string,
 	namespace: string,
 	textDomain: string,
+	target?: BindingTarget,
 ): string {
 	const bindingSourceTitle = toTitleCase(bindingSourceSlug);
 	const starterValue = `${bindingSourceTitle} starter value`;
+	const bindingSourceName = `${namespace}/${bindingSourceSlug}`;
+	const targetSource = target
+		? `
+export const BINDING_SOURCE_TARGET = {
+\tattribute: ${quoteTsString(target.attributeName)},
+\tblock: ${quoteTsString(`${namespace}/${target.blockSlug}`)},
+\tfield: ${quoteTsString(bindingSourceSlug)},
+\tsource: ${quoteTsString(bindingSourceName)},
+} as const;
+`
+		: "";
 
 	return `import { registerBlockBindingsSource } from '@wordpress/blocks';
 import { __ } from '@wordpress/i18n';
@@ -168,13 +264,14 @@ interface BindingSourceRegistration {
 const BINDING_SOURCE_VALUES: Record<string, string> = {
 \t${quoteTsString(bindingSourceSlug)}: ${quoteTsString(starterValue)},
 };
+${targetSource}
 
 function resolveBindingSourceValue( field: string ): string {
 \treturn BINDING_SOURCE_VALUES[ field ] ?? '';
 }
 
 registerBlockBindingsSource( {
-\tname: ${quoteTsString(`${namespace}/${bindingSourceSlug}`)},
+\tname: ${quoteTsString(bindingSourceName)},
 \tlabel: __( ${quoteTsString(bindingSourceTitle)}, ${quoteTsString(textDomain)} ),
 \tgetFieldsList() {
 \t\treturn [
@@ -202,6 +299,91 @@ registerBlockBindingsSource( {
 \t},
 } );
 `;
+}
+
+function resolveBindingTarget(
+	options: Pick<RunAddBindingSourceCommandOptions, "attributeName" | "blockName">,
+	namespace: string,
+): BindingTarget | undefined {
+	const hasBlock = options.blockName !== undefined && options.blockName.trim().length > 0;
+	const hasAttribute =
+		options.attributeName !== undefined && options.attributeName.trim().length > 0;
+	if (!hasBlock && !hasAttribute) {
+		return undefined;
+	}
+	if (!hasBlock || !hasAttribute) {
+		throw new Error(
+			"`wp-typia add binding-source` requires --block and --attribute to be provided together.",
+		);
+	}
+
+	return {
+		attributeName: assertValidBindingAttributeName(options.attributeName ?? ""),
+		blockSlug: resolveBindingTargetBlockSlug(options.blockName ?? "", namespace),
+	};
+}
+
+function formatBindingAttributeTypeMember(attributeName: string): string {
+	const propertyName = /^[A-Za-z_$][\w$]*$/u.test(attributeName)
+		? attributeName
+		: JSON.stringify(attributeName);
+	return [
+		"\t/**",
+		"\t * Starter string attribute declared for WordPress Block Bindings.",
+		"\t */",
+		`\t${propertyName}?: string;`,
+	].join("\n");
+}
+
+async function ensureBindingTargetBlockAttributeType(
+	projectDir: string,
+	block: WorkspaceInventory["blocks"][number],
+	target: BindingTarget,
+): Promise<void> {
+	if (!block.attributeTypeName) {
+		throw new Error(
+			`Workspace block "${block.slug}" must include attributeTypeName in scripts/block-config.ts before it can receive binding-source targets.`,
+		);
+	}
+
+	const typesPath = path.join(projectDir, block.typesFile);
+	const source = await fsp.readFile(typesPath, "utf8");
+	const propertyNamePattern = new RegExp(
+		`^[\\t ]*(?:${escapeRegex(target.attributeName)}|${escapeRegex(
+			JSON.stringify(target.attributeName),
+		)})\\??:`,
+		"mu",
+	);
+	let nextSource = source;
+	if (!propertyNamePattern.test(source)) {
+		const interfacePattern = new RegExp(
+			`(export\\s+interface\\s+${escapeRegex(block.attributeTypeName)}\\s*\\{\\r?\\n)([\\s\\S]*?)(\\r?\\n\\})`,
+			"u",
+		);
+		nextSource = source.replace(interfacePattern, (match, start: string, body: string, end: string) => {
+			const lineEnding = start.endsWith("\r\n") ? "\r\n" : "\n";
+			const memberSource = formatBindingAttributeTypeMember(target.attributeName)
+				.split("\n")
+				.join(lineEnding);
+			return `${start}${body}${body.endsWith(lineEnding) ? "" : lineEnding}${memberSource}${end}`;
+		});
+		if (nextSource === source) {
+			throw new Error(
+				`Unable to locate interface ${block.attributeTypeName} in ${block.typesFile}.`,
+			);
+		}
+		await fsp.writeFile(typesPath, nextSource, "utf8");
+	}
+
+	await syncBlockMetadata({
+		blockJsonFile: path.join("src", "blocks", block.slug, "block.json"),
+		jsonSchemaFile: path.join("src", "blocks", block.slug, "typia.schema.json"),
+		manifestFile: path.join("src", "blocks", block.slug, "typia.manifest.json"),
+		openApiFile: path.join("src", "blocks", block.slug, "typia.openapi.json"),
+		projectRoot: projectDir,
+		sourceTypeName: block.attributeTypeName,
+		typesFile: block.typesFile,
+	});
 }
 
 function buildEditorPluginTypesSource(editorPluginSlug: string): string {
@@ -987,32 +1169,50 @@ export async function runAddPatternCommand({
  * Add one block binding source scaffold to an official workspace project.
  *
  * @param options Command options for the binding-source scaffold workflow.
+ * @param options.attributeName Optional generated block attribute to declare as
+ * bindable. Must be provided together with `blockName`.
+ * @param options.blockName Optional generated block slug or full block name to
+ * receive the bindable attribute wiring. Must be provided together with
+ * `attributeName`.
  * @param options.bindingSourceName Human-entered binding source name that will
  * be normalized and validated before files are written.
  * @param options.cwd Working directory used to resolve the nearest official
  * workspace. Defaults to `process.cwd()`.
  * @returns A promise that resolves with the normalized `bindingSourceSlug` and
- * owning `projectDir` after the server/editor files and inventory entry have
- * been written successfully.
+ * owning `projectDir` after the server/editor files, optional target block
+ * metadata, and inventory entry have been written successfully.
  * @throws {Error} When the command is run outside an official workspace, when
- * the slug is invalid, or when a conflicting file or inventory entry exists.
+ * the slug is invalid, when a binding target is incomplete or unknown, or when
+ * a conflicting file or inventory entry exists.
  */
 export async function runAddBindingSourceCommand({
+	attributeName,
 	bindingSourceName,
+	blockName,
 	cwd = process.cwd(),
 }: RunAddBindingSourceCommandOptions): Promise<{
+	attributeName?: string;
 	bindingSourceSlug: string;
+	blockSlug?: string;
 	projectDir: string;
 }> {
 	const workspace = resolveWorkspaceProject(cwd);
 	const bindingSourceSlug = assertValidGeneratedSlug(
 		"Binding source name",
 		normalizeBlockSlug(bindingSourceName),
-		"wp-typia add binding-source <name>",
+		"wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>]",
 	);
 
 	const inventory = readWorkspaceInventory(workspace.projectDir);
 	assertBindingSourceDoesNotExist(workspace.projectDir, bindingSourceSlug, inventory);
+	const target = resolveBindingTarget(
+		{
+			attributeName,
+			blockName,
+		},
+		workspace.workspace.namespace,
+	);
+	const targetBlock = target ? resolveWorkspaceBlock(inventory, target.blockSlug) : undefined;
 
 	const blockConfigPath = path.join(workspace.projectDir, "scripts", "block-config.ts");
 	const bootstrapPath = getWorkspaceBootstrapPath(workspace);
@@ -1020,8 +1220,26 @@ export async function runAddBindingSourceCommand({
 	const bindingSourceDir = path.join(workspace.projectDir, "src", "bindings", bindingSourceSlug);
 	const serverFilePath = path.join(bindingSourceDir, "server.php");
 	const editorFilePath = path.join(bindingSourceDir, "editor.ts");
+	const blockJsonPath = target
+		? path.join(workspace.projectDir, "src", "blocks", target.blockSlug, "block.json")
+		: undefined;
+	const targetGeneratedMetadataPaths = target
+		? [
+				path.join(workspace.projectDir, "src", "blocks", target.blockSlug, "typia.manifest.json"),
+				path.join(workspace.projectDir, "src", "blocks", target.blockSlug, "typia.openapi.json"),
+				path.join(workspace.projectDir, "src", "blocks", target.blockSlug, "typia.schema.json"),
+				path.join(workspace.projectDir, "src", "blocks", target.blockSlug, "typia-validator.php"),
+			]
+		: [];
 	const mutationSnapshot: WorkspaceMutationSnapshot = {
-		fileSources: await snapshotWorkspaceFiles([blockConfigPath, bootstrapPath, bindingsIndexPath]),
+		fileSources: await snapshotWorkspaceFiles([
+			blockConfigPath,
+			bootstrapPath,
+			bindingsIndexPath,
+			...(blockJsonPath ? [blockJsonPath] : []),
+			...(targetBlock ? [path.join(workspace.projectDir, targetBlock.typesFile)] : []),
+			...targetGeneratedMetadataPaths,
+		]),
 		snapshotDirs: [],
 		targetPaths: [bindingSourceDir],
 	};
@@ -1036,6 +1254,7 @@ export async function runAddBindingSourceCommand({
 				workspace.workspace.phpPrefix,
 				workspace.workspace.namespace,
 				workspace.workspace.textDomain,
+				target,
 			),
 			"utf8",
 		);
@@ -1045,15 +1264,20 @@ export async function runAddBindingSourceCommand({
 				bindingSourceSlug,
 				workspace.workspace.namespace,
 				workspace.workspace.textDomain,
+				target,
 			),
 			"utf8",
 		);
+		if (target && targetBlock) {
+			await ensureBindingTargetBlockAttributeType(workspace.projectDir, targetBlock, target);
+		}
 		await writeBindingSourceRegistry(workspace.projectDir, bindingSourceSlug);
 		await appendWorkspaceInventoryEntries(workspace.projectDir, {
-			bindingSourceEntries: [buildBindingSourceConfigEntry(bindingSourceSlug)],
+			bindingSourceEntries: [buildBindingSourceConfigEntry(bindingSourceSlug, target)],
 		});
 
 		return {
+			...(target ? { attributeName: target.attributeName, blockSlug: target.blockSlug } : {}),
 			bindingSourceSlug,
 			projectDir: workspace.projectDir,
 		};

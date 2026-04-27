@@ -37,4 +37,45 @@ describe("wp-typia add command bridge", () => {
 			fs.existsSync(path.join(projectDir, "src", "blocks", "promo-card", "block.json")),
 		).toBe(true);
 	});
+
+	test("passes binding-source target flags through the add bridge", async () => {
+		const projectDir = path.join(tempRoot, "demo-add-binding-target");
+
+		await scaffoldOfficialWorkspace(projectDir);
+		linkWorkspaceNodeModules(projectDir);
+		await executeAddCommand({
+			cwd: projectDir,
+			emitOutput: false,
+			flags: {
+				template: "basic",
+			},
+			interactive: false,
+			kind: "block",
+			name: "counter-card",
+		});
+
+		const payload = await executeAddCommand({
+			cwd: projectDir,
+			emitOutput: false,
+			flags: {
+				attribute: "headline",
+				block: "counter-card",
+			},
+			interactive: false,
+			kind: "binding-source",
+			name: "hero-data",
+		});
+
+		expect(payload?.summaryLines).toContain("Target: counter-card.headline");
+		expect(
+			fs.existsSync(path.join(projectDir, "src", "bindings", "hero-data", "server.php")),
+		).toBe(true);
+		const blockJson = JSON.parse(
+			fs.readFileSync(
+				path.join(projectDir, "src", "blocks", "counter-card", "block.json"),
+				"utf8",
+			),
+		);
+		expect(blockJson.attributes.headline).toEqual({ type: "string" });
+	});
 });
