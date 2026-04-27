@@ -5,6 +5,7 @@ import * as path from "node:path";
 import { cleanupScaffoldTempRoot, createBlockExternalFixturePath, createBlockSubsetFixturePath, createScaffoldTempRoot, entryPath, getCommandErrorMessage, runCapturedCli, runCli, scaffoldOfficialWorkspace, templateLayerAmbiguousFixturePath, templateLayerFixturePath } from "./helpers/scaffold-test-harness.js";
 import { CLI_DIAGNOSTIC_CODES, createCliCommandError, createCliDiagnosticCodeError, serializeCliDiagnosticError } from "../src/runtime/cli-diagnostics.js";
 import { formatHelpText, getDoctorChecks, getNextSteps, getOptionalOnboarding, runScaffoldFlow } from "../src/runtime/cli-core.js";
+import { assertValidEditorPluginSlot } from "../src/runtime/cli-add-shared.js";
 import { collectScaffoldAnswers } from "../src/runtime/scaffold.js";
 import { getQuickStartWorkflowNote } from "../src/runtime/scaffold-onboarding.js";
 
@@ -70,6 +71,16 @@ test("CLI diagnostics preserve explicit throw-site codes without message inferen
 
   expect(diagnostic.code).toBe("missing-argument");
   expect(diagnostic.message).toContain("Opaque scaffold preflight failure.");
+});
+
+test("editor plugin slot validation rejects inherited object keys", () => {
+  expect(assertValidEditorPluginSlot("PluginSidebar")).toBe("sidebar");
+  expect(assertValidEditorPluginSlot("PluginDocumentSettingPanel")).toBe(
+    "document-setting-panel"
+  );
+  expect(() => assertValidEditorPluginSlot("toString")).toThrow(
+    "Editor plugin slot must be one of:"
+  );
 });
 
 test("runScaffoldFlow defaults persistence scaffolds to custom-table and authenticated in non-interactive mode", async () => {

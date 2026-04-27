@@ -403,7 +403,7 @@ export function assertGeneratedProjectScaffold({
 			assertWorkspaceEditorPluginArtifacts(
 				projectDir,
 				normalizeBlockSlug(addEditorPluginName),
-				addEditorPluginSlot ?? "PluginSidebar",
+				addEditorPluginSlot ?? "sidebar",
 			);
 		}
 		if (addHookedBlockSlug && addHookedBlockAnchor && addHookedBlockPosition) {

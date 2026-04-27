@@ -6,6 +6,17 @@ import {
   run,
 } from "./generated-project-smoke-core.mjs";
 
+const EDITOR_PLUGIN_SMOKE_SLOT_ALIASES = new Map([
+	["PluginDocumentSettingPanel", "document-setting-panel"],
+	["PluginSidebar", "sidebar"],
+	["document-setting-panel", "document-setting-panel"],
+	["sidebar", "sidebar"],
+]);
+
+function normalizeEditorPluginSmokeSlot(slot = "sidebar") {
+	return EDITOR_PLUGIN_SMOKE_SLOT_ALIASES.get(slot) ?? slot;
+}
+
 function lintPhpArtifact(filePath) {
   if (!hasPhpBinary()) {
     return;
@@ -108,6 +119,7 @@ export function assertWorkspaceEditorPluginArtifacts(
 	editorPluginSlug,
 	slot,
 ) {
+	const normalizedSlot = normalizeEditorPluginSmokeSlot(slot);
 	const editorPluginDir = path.join(
 		projectDir,
 		"src",
@@ -115,12 +127,12 @@ export function assertWorkspaceEditorPluginArtifacts(
 		editorPluginSlug,
 	);
 	const entryPath = path.join(editorPluginDir, "index.tsx");
-	const sidebarPath = path.join(editorPluginDir, "Sidebar.tsx");
+	const surfacePath = path.join(editorPluginDir, "Surface.tsx");
 	const dataPath = path.join(editorPluginDir, "data.ts");
 	const typesPath = path.join(editorPluginDir, "types.ts");
 	const stylePath = path.join(editorPluginDir, "style.scss");
 
-	for (const filePath of [entryPath, sidebarPath, dataPath, typesPath, stylePath]) {
+	for (const filePath of [entryPath, surfacePath, dataPath, typesPath, stylePath]) {
 		if (!fs.existsSync(filePath)) {
 			throw new Error(`Expected workspace editor plugin file at ${filePath}`);
 		}
@@ -149,9 +161,26 @@ export function assertWorkspaceEditorPluginArtifacts(
 	}
 
 	const dataSource = fs.readFileSync(dataPath, "utf8");
-	if (!dataSource.includes(`EDITOR_PLUGIN_SLOT = "${slot}"`)) {
+	const surfaceSource = fs.readFileSync(surfacePath, "utf8");
+	if (!dataSource.includes(`EDITOR_PLUGIN_SLOT = "${normalizedSlot}"`)) {
 		throw new Error(
-			`Expected ${dataPath} to pin the ${slot} editor plugin slot.`,
+			`Expected ${dataPath} to pin the ${normalizedSlot} editor plugin slot.`,
+		);
+	}
+	if (
+		normalizedSlot === "document-setting-panel" &&
+		!surfaceSource.includes("PluginDocumentSettingPanel")
+	) {
+		throw new Error(
+			`Expected ${surfacePath} to render PluginDocumentSettingPanel for document-setting-panel.`,
+		);
+	}
+	if (
+		normalizedSlot === "sidebar" &&
+		!surfaceSource.includes("PluginSidebarMoreMenuItem")
+	) {
+		throw new Error(
+			`Expected ${surfacePath} to render PluginSidebarMoreMenuItem for sidebar.`,
 		);
 	}
 }

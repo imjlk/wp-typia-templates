@@ -65,6 +65,21 @@ export const EDITOR_PLUGIN_SLOT_ALIASES = {
 	sidebar: "sidebar",
 } as const satisfies Record<string, EditorPluginSlotId>;
 
+export function resolveEditorPluginSlotAlias(
+	slot: string,
+): EditorPluginSlotId | undefined {
+	const trimmed = slot.trim();
+	if (
+		!Object.prototype.hasOwnProperty.call(EDITOR_PLUGIN_SLOT_ALIASES, trimmed)
+	) {
+		return undefined;
+	}
+
+	return EDITOR_PLUGIN_SLOT_ALIASES[
+		trimmed as keyof typeof EDITOR_PLUGIN_SLOT_ALIASES
+	];
+}
+
 /**
  * Supported built-in block families accepted by `wp-typia add block --template`.
  */
@@ -388,8 +403,7 @@ export function assertValidHookAnchor(anchorBlockName: string): string {
  * @throws {Error} When the slot is not supported by the workspace scaffold.
  */
 export function assertValidEditorPluginSlot(slot = "sidebar"): EditorPluginSlotId {
-	const trimmed = slot.trim();
-	const alias = EDITOR_PLUGIN_SLOT_ALIASES[trimmed as keyof typeof EDITOR_PLUGIN_SLOT_ALIASES];
+	const alias = resolveEditorPluginSlotAlias(slot);
 	if (alias) {
 		return alias;
 	}
@@ -688,5 +702,5 @@ Notes:
   \`add ability\` scaffolds typed workflow abilities under \`src/abilities/\` and server registration under \`inc/abilities/\`.
   \`add ai-feature\` scaffolds server-owned AI feature endpoints under \`src/ai-features/\` and PHP route glue under \`inc/ai-features/\`.
   \`add hooked-block\` patches an existing workspace block's \`block.json\` \`blockHooks\` metadata.
-  \`add editor-plugin\` scaffolds a document-level editor extension under \`src/editor-plugins/\`; \`PluginSidebar\` remains accepted as a legacy alias for \`sidebar\`.`;
+  \`add editor-plugin\` scaffolds a document-level editor extension under \`src/editor-plugins/\`; legacy aliases \`PluginSidebar\` and \`PluginDocumentSettingPanel\` resolve to \`sidebar\` and \`document-setting-panel\`.`;
 }

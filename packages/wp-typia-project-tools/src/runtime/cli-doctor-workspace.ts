@@ -4,10 +4,10 @@ import path from "node:path";
 import { parseScaffoldBlockMetadata } from "@wp-typia/block-runtime/blocks";
 
 import {
-	EDITOR_PLUGIN_SLOT_ALIASES,
 	EDITOR_PLUGIN_SLOT_IDS,
 	REST_RESOURCE_METHOD_IDS,
 	REST_RESOURCE_NAMESPACE_PATTERN,
+	resolveEditorPluginSlotAlias,
 } from "./cli-add-shared.js";
 import {
 	HOOKED_BLOCK_ANCHOR_PATTERN,
@@ -706,10 +706,7 @@ function getWorkspaceEditorPluginRequiredFiles(
 function checkWorkspaceEditorPluginConfig(
 	editorPlugin: WorkspaceInventory["editorPlugins"][number],
 ): DoctorCheck {
-	const normalizedSlot =
-		EDITOR_PLUGIN_SLOT_ALIASES[
-			editorPlugin.slot as keyof typeof EDITOR_PLUGIN_SLOT_ALIASES
-		];
+	const normalizedSlot = resolveEditorPluginSlotAlias(editorPlugin.slot);
 	const isValidSlot = Boolean(normalizedSlot);
 
 	return createDoctorCheck(
