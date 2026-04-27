@@ -834,12 +834,12 @@ async function ensureAdminViewBuildScriptAnchors(workspace: WorkspaceProject): P
 		}
 
 		const currentSharedEntriesPattern =
-			/(\n\t\t['"]src\/editor-plugins\/index\.js['"],)(\n\t\])/u;
+			/(\r?\n\s*['"]src\/editor-plugins\/index\.js['"])\s*,?/u;
 		let nextSource = source.replace(
 			currentSharedEntriesPattern,
-			`$1
+			`$1,
 \t\t'src/admin-views/index.ts',
-\t\t'src/admin-views/index.js',$2`,
+\t\t'src/admin-views/index.js',`,
 		);
 		if (nextSource !== source) {
 			return nextSource;
@@ -858,13 +858,13 @@ async function ensureAdminViewBuildScriptAnchors(workspace: WorkspaceProject): P
 \t\t'src/admin-views/index.js',
 \t]`,
 		);
-		if (nextSource === source) {
-			throw new Error(
-				`Unable to update ${path.relative(workspace.projectDir, buildScriptPath)} for admin view shared entries.`,
-			);
+		if (nextSource !== source) {
+			return nextSource;
 		}
 
-		return nextSource;
+		throw new Error(
+			`Unable to update ${path.relative(workspace.projectDir, buildScriptPath)} for admin view shared entries.`,
+		);
 	});
 }
 

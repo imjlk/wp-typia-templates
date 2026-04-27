@@ -2793,7 +2793,7 @@ test("admin view workflow accepts formatted shared webpack entries", async () =>
       .readFileSync(buildScriptPath, "utf8")
       .replace(
         `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t\t'src/admin-views/index.ts',\n\t\t'src/admin-views/index.js',\n\t]`,
-        `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t]`
+        `[\n      \"src/bindings/index.ts\",\n      \"src/bindings/index.js\",\n      \"src/editor-plugins/index.ts\",\n      \"src/editor-plugins/index.js\"\n    ]`
       ),
     "utf8"
   );
