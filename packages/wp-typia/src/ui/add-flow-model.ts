@@ -34,6 +34,7 @@ export const addFlowSchema = z.object({
   'persistence-policy': z.string().optional(),
   position: z.string().optional(),
   slot: z.string().optional(),
+  source: z.string().optional(),
   template: z.string().optional(),
 });
 
@@ -52,6 +53,7 @@ const ADD_FIELD_HEIGHTS: Record<AddFieldName, number> = {
   'persistence-policy': FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
   position: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
   slot: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+  source: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
   template: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
 };
 
