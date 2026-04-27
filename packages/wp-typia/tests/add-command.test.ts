@@ -96,4 +96,92 @@ describe("wp-typia add command bridge", () => {
 		},
 		15_000,
 	);
+
+	test(
+		"passes block style and transform flags through the add bridge",
+		async () => {
+			const projectDir = path.join(tempRoot, "demo-add-style-transform");
+
+			await scaffoldOfficialWorkspace(projectDir);
+			linkWorkspaceNodeModules(projectDir);
+			await executeAddCommand({
+				cwd: projectDir,
+				emitOutput: false,
+				flags: {
+					template: "basic",
+				},
+				interactive: false,
+				kind: "block",
+				name: "counter-card",
+			});
+			await expect(
+				executeAddCommand({
+					cwd: projectDir,
+					emitOutput: false,
+					flags: {},
+					interactive: false,
+					kind: "style",
+					name: "callout-emphasis",
+				}),
+			).rejects.toThrow("`wp-typia add style` requires --block <block-slug>.");
+
+			const stylePayload = await executeAddCommand({
+				cwd: projectDir,
+				emitOutput: false,
+				flags: {
+					block: "counter-card",
+				},
+				interactive: false,
+				kind: "style",
+				name: "callout-emphasis",
+			});
+			const transformPayload = await executeAddCommand({
+				cwd: projectDir,
+				emitOutput: false,
+				flags: {
+					from: "core/quote",
+					to: "counter-card",
+				},
+				interactive: false,
+				kind: "transform",
+				name: "quote-to-counter",
+			});
+
+			expect(stylePayload?.summaryLines).toContain(
+				"Block style: callout-emphasis",
+			);
+			expect(transformPayload?.summaryLines).toContain(
+				"Block transform: quote-to-counter",
+			);
+			expect(transformPayload?.summaryLines).toContain("From: core/quote");
+			expect(transformPayload?.summaryLines).toContain(
+				"To: demo-space/counter-card",
+			);
+			expect(
+				fs.existsSync(
+					path.join(
+						projectDir,
+						"src",
+						"blocks",
+						"counter-card",
+						"styles",
+						"callout-emphasis.ts",
+					),
+				),
+			).toBe(true);
+			expect(
+				fs.existsSync(
+					path.join(
+						projectDir,
+						"src",
+						"blocks",
+						"counter-card",
+						"transforms",
+						"quote-to-counter.ts",
+					),
+				),
+			).toBe(true);
+		},
+		15_000,
+	);
 });

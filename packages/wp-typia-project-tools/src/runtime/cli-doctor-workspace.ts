@@ -50,6 +50,7 @@ const WORKSPACE_GENERATED_BLOCK_ARTIFACTS = [
 	"typia-validator.php",
 	"typia.openapi.json",
 ] as const;
+const WORKSPACE_FULL_BLOCK_NAME_PATTERN = /^[a-z][a-z0-9-]*\/[a-z][a-z0-9-]*$/u;
 
 function createDoctorCheck(
 	label: string,
@@ -1086,6 +1087,73 @@ function checkVariationEntrypoint(projectDir: string, blockSlug: string): Doctor
 	);
 }
 
+function checkBlockStyleEntrypoint(projectDir: string, blockSlug: string): DoctorCheck {
+	const entryPath = path.join(projectDir, "src", "blocks", blockSlug, "index.tsx");
+	if (!fs.existsSync(entryPath)) {
+		return createDoctorCheck(
+			`Block style entrypoint ${blockSlug}`,
+			"fail",
+			`Missing ${path.relative(projectDir, entryPath)}`,
+		);
+	}
+	const source = fs.readFileSync(entryPath, "utf8");
+	const hasImport = source.includes("./styles");
+	const hasCall = source.includes("registerWorkspaceBlockStyles()");
+	return createDoctorCheck(
+		`Block style entrypoint ${blockSlug}`,
+		hasImport && hasCall ? "pass" : "fail",
+		hasImport && hasCall
+			? "Block style registration hook is present"
+			: "Missing ./styles import or registerWorkspaceBlockStyles() call",
+	);
+}
+
+function checkBlockTransformEntrypoint(
+	projectDir: string,
+	blockSlug: string,
+): DoctorCheck {
+	const entryPath = path.join(projectDir, "src", "blocks", blockSlug, "index.tsx");
+	if (!fs.existsSync(entryPath)) {
+		return createDoctorCheck(
+			`Block transform entrypoint ${blockSlug}`,
+			"fail",
+			`Missing ${path.relative(projectDir, entryPath)}`,
+		);
+	}
+	const source = fs.readFileSync(entryPath, "utf8");
+	const hasImport = source.includes("./transforms");
+	const hasCall = source.includes("applyWorkspaceBlockTransforms(registration.settings)");
+	return createDoctorCheck(
+		`Block transform entrypoint ${blockSlug}`,
+		hasImport && hasCall ? "pass" : "fail",
+		hasImport && hasCall
+			? "Block transform registration hook is present"
+			: "Missing ./transforms import or applyWorkspaceBlockTransforms(registration.settings) call",
+	);
+}
+
+function checkBlockTransformConfig(
+	workspace: WorkspaceProject,
+	transform: WorkspaceInventory["blockTransforms"][number],
+): DoctorCheck {
+	const expectedTo = `${workspace.workspace.namespace}/${transform.block}`;
+	const issues: string[] = [];
+	if (!WORKSPACE_FULL_BLOCK_NAME_PATTERN.test(transform.from)) {
+		issues.push("from must use full namespace/block format");
+	}
+	if (transform.to !== expectedTo) {
+		issues.push(`to must equal "${expectedTo}" for workspace block "${transform.block}"`);
+	}
+
+	return createDoctorCheck(
+		`Block transform config ${transform.block}/${transform.slug}`,
+		issues.length === 0 ? "pass" : "fail",
+		issues.length === 0
+			? `${transform.from} transforms into ${transform.to}`
+			: issues.join("; "),
+	);
+}
+
 function checkMigrationWorkspaceHint(
 	workspace: WorkspaceProject,
 	packageJson: WorkspacePackageJson,
@@ -1204,7 +1272,7 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 			createDoctorCheck(
 				"Workspace inventory",
 				"pass",
-				`${inventory.blocks.length} block(s), ${inventory.variations.length} variation(s), ${inventory.patterns.length} pattern(s), ${inventory.bindingSources.length} binding source(s), ${inventory.restResources.length} REST resource(s), ${inventory.abilities.length} ability scaffold(s), ${inventory.aiFeatures.length} AI feature(s), ${inventory.editorPlugins.length} editor plugin(s), ${inventory.adminViews.length} admin view(s)`,
+				`${inventory.blocks.length} block(s), ${inventory.variations.length} variation(s), ${inventory.blockStyles.length} block style(s), ${inventory.blockTransforms.length} block transform(s), ${inventory.patterns.length} pattern(s), ${inventory.bindingSources.length} binding source(s), ${inventory.restResources.length} REST resource(s), ${inventory.abilities.length} ability scaffold(s), ${inventory.aiFeatures.length} AI feature(s), ${inventory.editorPlugins.length} editor plugin(s), ${inventory.adminViews.length} admin view(s)`,
 			),
 		);
 
@@ -1246,6 +1314,59 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 		}
 		for (const blockSlug of variationTargetBlocks) {
 			checks.push(checkVariationEntrypoint(workspace.projectDir, blockSlug));
+		}
+
+		const blockStyleTargetBlocks = new Set<string>();
+		for (const blockStyle of inventory.blockStyles) {
+			if (!registeredBlockSlugs.has(blockStyle.block)) {
+				checks.push(
+					createDoctorCheck(
+						`Block style ${blockStyle.block}/${blockStyle.slug}`,
+						"fail",
+						`Block style references unknown block "${blockStyle.block}"`,
+					),
+				);
+				continue;
+			}
+
+			blockStyleTargetBlocks.add(blockStyle.block);
+			checks.push(
+				checkExistingFiles(
+					workspace.projectDir,
+					`Block style ${blockStyle.block}/${blockStyle.slug}`,
+					[blockStyle.file],
+				),
+			);
+		}
+		for (const blockSlug of blockStyleTargetBlocks) {
+			checks.push(checkBlockStyleEntrypoint(workspace.projectDir, blockSlug));
+		}
+
+		const blockTransformTargetBlocks = new Set<string>();
+		for (const blockTransform of inventory.blockTransforms) {
+			if (!registeredBlockSlugs.has(blockTransform.block)) {
+				checks.push(
+					createDoctorCheck(
+						`Block transform ${blockTransform.block}/${blockTransform.slug}`,
+						"fail",
+						`Block transform references unknown block "${blockTransform.block}"`,
+					),
+				);
+				continue;
+			}
+
+			blockTransformTargetBlocks.add(blockTransform.block);
+			checks.push(checkBlockTransformConfig(workspace, blockTransform));
+			checks.push(
+				checkExistingFiles(
+					workspace.projectDir,
+					`Block transform ${blockTransform.block}/${blockTransform.slug}`,
+					[blockTransform.file],
+				),
+			);
+		}
+		for (const blockSlug of blockTransformTargetBlocks) {
+			checks.push(checkBlockTransformEntrypoint(workspace.projectDir, blockSlug));
 		}
 
 		const shouldCheckPatternBootstrap =

@@ -135,7 +135,7 @@ export const ADD_OPTION_METADATA = {
 		type: "string",
 	},
 	block: {
-		description: "Target block slug for variation and end-to-end binding-source workflows.",
+		description: "Target block slug for variation, style, and end-to-end binding-source workflows.",
 		type: "string",
 	},
 	"data-storage": {
@@ -161,6 +161,10 @@ export const ADD_OPTION_METADATA = {
 			"Compound-only InnerBlocks preset (freeform, ordered, horizontal, locked-structure).",
 		type: "string",
 	},
+	from: {
+		description: "Source block name for transform workflows.",
+		type: "string",
+	},
 	methods: {
 		description: "Comma-separated REST resource methods for rest-resource workflows.",
 		type: "string",
@@ -184,6 +188,10 @@ export const ADD_OPTION_METADATA = {
 	},
 	source: {
 		description: "Optional data source locator for admin-view workflows, such as rest-resource:products.",
+		type: "string",
+	},
+	to: {
+		description: "Target workspace block slug or full block name for transform workflows.",
 		type: "string",
 	},
 	template: {

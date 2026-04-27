@@ -593,6 +593,155 @@ test("variation workflow keeps registry identifiers unique for similar slugs", a
   runCli("npm", ["run", "build"], { cwd: targetDir });
 }, 60_000);
 
+test("canonical CLI can add block styles and transforms to an official workspace block", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-style-transform");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add style transform",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-style-transform",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Style Transform",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [entryPath, "add", "block", "counter-card", "--template", "basic"],
+    {
+      cwd: targetDir,
+    }
+  );
+  runCli(
+    "node",
+    [entryPath, "add", "style", "callout-emphasis", "--block", "counter-card"],
+    { cwd: targetDir }
+  );
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "transform",
+      "quote-to-counter",
+      "--from",
+      "core/quote",
+      "--to",
+      "counter-card",
+    ],
+    { cwd: targetDir }
+  );
+
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const blockIndexSource = fs.readFileSync(
+    path.join(targetDir, "src", "blocks", "counter-card", "index.tsx"),
+    "utf8"
+  );
+  const stylesIndexSource = fs.readFileSync(
+    path.join(targetDir, "src", "blocks", "counter-card", "styles", "index.ts"),
+    "utf8"
+  );
+  const styleSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "blocks",
+      "counter-card",
+      "styles",
+      "callout-emphasis.ts"
+    ),
+    "utf8"
+  );
+  const transformsIndexSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "blocks",
+      "counter-card",
+      "transforms",
+      "index.ts"
+    ),
+    "utf8"
+  );
+  const transformSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "blocks",
+      "counter-card",
+      "transforms",
+      "quote-to-counter.ts"
+    ),
+    "utf8"
+  );
+
+  expect(blockConfigSource).toContain("export const BLOCK_STYLES");
+  expect(blockConfigSource).toContain("export const BLOCK_TRANSFORMS");
+  expect(blockConfigSource).toContain('file: "src/blocks/counter-card/styles/callout-emphasis.ts"');
+  expect(blockConfigSource).toContain('file: "src/blocks/counter-card/transforms/quote-to-counter.ts"');
+  expect(blockConfigSource).toContain('from: "core/quote"');
+  expect(blockConfigSource).toContain('to: "demo-space/counter-card"');
+  expect(blockIndexSource).toContain("registerWorkspaceBlockStyles();");
+  expect(blockIndexSource).toContain(
+    "applyWorkspaceBlockTransforms(registration.settings);"
+  );
+  expect(stylesIndexSource).toContain("registerBlockStyle(metadata.name, style)");
+  expect(stylesIndexSource).toContain(
+    "workspaceBlockStyle_callout_emphasis"
+  );
+  expect(styleSource).toContain('name: "callout-emphasis"');
+  expect(styleSource).toContain("Callout Emphasis");
+  expect(transformsIndexSource).toContain("WORKSPACE_BLOCK_TRANSFORMS");
+  expect(transformSource).toContain('blocks: ["core/quote"]');
+  expect(transformSource).toContain("createBlock(metadata.name");
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ detail: string; label: string; status: string }>;
+  }>(doctorOutput);
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block style counter-card/callout-emphasis"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block style entrypoint counter-card"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block transform config counter-card/quote-to-counter"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block transform counter-card/quote-to-counter"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block transform entrypoint counter-card"
+    )?.status
+  ).toBe("pass");
+
+  runCli("npm", ["run", "build"], { cwd: targetDir });
+}, 60_000);
+
 test("canonical CLI can add hooked-block metadata to an official workspace block", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-hooked-block");
 

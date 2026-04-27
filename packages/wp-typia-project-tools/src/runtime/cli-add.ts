@@ -31,6 +31,8 @@ export {
 	runAddHookedBlockCommand,
 	runAddPatternCommand,
 	runAddRestResourceCommand,
+	runAddBlockStyleCommand,
+	runAddBlockTransformCommand,
 	runAddVariationCommand,
 } from "./cli-add-workspace.js";
 export { getWorkspaceBlockSelectOptions } from "./workspace-inventory.js";

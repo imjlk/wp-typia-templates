@@ -1120,6 +1120,27 @@ describe('wp-typia package', () => {
     ).toThrow('`wp-typia add variation` requires --block <block-slug>.');
   });
 
+  test('requires style and transform target flags', () => {
+    expect(() =>
+      runUtf8Command('node', [entryPath, 'add', 'style', 'callout-emphasis']),
+    ).toThrow('`wp-typia add style` requires --block <block-slug>.');
+    expect(() =>
+      runUtf8Command('node', [entryPath, 'add', 'transform', 'quote-to-card']),
+    ).toThrow('`wp-typia add transform` requires --from <namespace/block>.');
+    expect(() =>
+      runUtf8Command('node', [
+        entryPath,
+        'add',
+        'transform',
+        'quote-to-card',
+        '--from',
+        'core/quote',
+      ]),
+    ).toThrow(
+      '`wp-typia add transform` requires --to <block-slug|namespace/block-slug>.',
+    );
+  });
+
   test('requires --anchor and --position for add hooked-block', () => {
     expect(() =>
       runUtf8Command('node', [entryPath, 'add', 'hooked-block', 'promo-card']),
@@ -1525,8 +1546,10 @@ describe('wp-typia package', () => {
     expect(result.stdout).toContain('Usage:');
     expect(result.stdout).toContain('wp-typia add admin-view <name>');
     expect(result.stdout).toContain('wp-typia add block <name>');
+    expect(result.stdout).toContain('wp-typia add style <name>');
+    expect(result.stdout).toContain('wp-typia add transform <name>');
     expect(result.stderr).toContain(
-      '`wp-typia add` requires <kind>. Usage: wp-typia add <admin-view|block|variation|pattern|binding-source|rest-resource|ability|ai-feature|editor-plugin|hooked-block> ...',
+      '`wp-typia add` requires <kind>. Usage: wp-typia add <admin-view|block|variation|style|transform|pattern|binding-source|rest-resource|ability|ai-feature|editor-plugin|hooked-block> ...',
     );
   });
 
@@ -1549,6 +1572,12 @@ describe('wp-typia package', () => {
       );
       expect(capturedStdout.join('\n')).toContain(
         'wp-typia add ai-feature <name>',
+      );
+      expect(capturedStdout.join('\n')).toContain(
+        'wp-typia add style <name>',
+      );
+      expect(capturedStdout.join('\n')).toContain(
+        'wp-typia add transform <name>',
       );
       expect(capturedStdout.join('\n')).toContain(
         'wp-typia add editor-plugin <name>',
