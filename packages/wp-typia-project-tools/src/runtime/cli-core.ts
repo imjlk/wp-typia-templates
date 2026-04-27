@@ -8,6 +8,7 @@
  * Import `formatAddHelpText`, `runAddBlockCommand`,
  * `runAddVariationCommand`, `runAddPatternCommand`,
  * `runAddBindingSourceCommand`, `runAddHookedBlockCommand`,
+ * `runAddAdminViewCommand` for DataViews-backed admin screen scaffolds,
  * `runAddAbilityCommand` for typed workflow ability scaffolds,
  * and `HOOKED_BLOCK_POSITION_IDS`,
  * `getWorkspaceBlockSelectOptions`, and `seedWorkspaceMigrationProject` for
@@ -48,6 +49,7 @@ export {
 	EDITOR_PLUGIN_SLOT_IDS,
 	formatAddHelpText,
 	getWorkspaceBlockSelectOptions,
+	runAddAdminViewCommand,
 	runAddAbilityCommand,
 	runAddBindingSourceCommand,
 	runAddAiFeatureCommand,

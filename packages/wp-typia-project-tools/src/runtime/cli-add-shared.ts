@@ -26,6 +26,7 @@ export {
  * Supported top-level `wp-typia add` kinds exposed by the canonical CLI.
  */
 export const ADD_KIND_IDS = [
+	"admin-view",
 	"block",
 	"variation",
 	"pattern",
@@ -92,6 +93,23 @@ export interface RunAddRestResourceCommandOptions {
 	methods?: string;
 	namespace?: string;
 	restResourceName: string;
+}
+
+/**
+ * Options for `wp-typia add admin-view`.
+ *
+ * @property adminViewName Human-entered admin screen name that will be
+ * normalized into the generated slug.
+ * @property cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @property source Optional data source locator. The first supported source is
+ * `rest-resource:<slug>`, which wires the generated screen to an existing
+ * list-capable REST resource.
+ */
+export interface RunAddAdminViewCommandOptions {
+	adminViewName: string;
+	cwd?: string;
+	source?: string;
 }
 
 /**
@@ -513,6 +531,39 @@ export function assertRestResourceDoesNotExist(
 }
 
 /**
+ * Ensure a DataViews admin screen scaffold does not already exist on disk or in
+ * the workspace inventory.
+ *
+ * @param projectDir Workspace root directory.
+ * @param adminViewSlug Normalized admin screen slug.
+ * @param inventory Parsed workspace inventory.
+ * @throws {Error} When the directory, PHP bootstrap, or inventory entry already exists.
+ */
+export function assertAdminViewDoesNotExist(
+	projectDir: string,
+	adminViewSlug: string,
+	inventory: WorkspaceInventory,
+): void {
+	const adminViewDir = path.join(projectDir, "src", "admin-views", adminViewSlug);
+	const adminViewPhpPath = path.join(projectDir, "inc", "admin-views", `${adminViewSlug}.php`);
+	if (fs.existsSync(adminViewDir)) {
+		throw new Error(
+			`An admin view already exists at ${path.relative(projectDir, adminViewDir)}. Choose a different name.`,
+		);
+	}
+	if (fs.existsSync(adminViewPhpPath)) {
+		throw new Error(
+			`An admin view bootstrap already exists at ${path.relative(projectDir, adminViewPhpPath)}. Choose a different name.`,
+		);
+	}
+	if (inventory.adminViews.some((entry) => entry.slug === adminViewSlug)) {
+		throw new Error(
+			`An admin view inventory entry already exists for ${adminViewSlug}. Choose a different name.`,
+		);
+	}
+}
+
+/**
  * Ensure a workflow ability scaffold does not already exist on disk or in the
  * workspace inventory.
  *
@@ -605,6 +656,7 @@ export function assertEditorPluginDoesNotExist(projectDir: string, editorPluginS
  */
 export function formatAddHelpText(): string {
 	return `Usage:
+  wp-typia add admin-view <name> [--source <rest-resource:slug>] [--dry-run]
   wp-typia add block <name> --template <${ADD_BLOCK_TEMPLATE_IDS.join("|")}> [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--dry-run]
   wp-typia add variation <name> --block <block-slug> [--dry-run]
   wp-typia add pattern <name> [--dry-run]
@@ -618,6 +670,7 @@ export function formatAddHelpText(): string {
 Notes:
   \`wp-typia add\` runs only inside official ${WORKSPACE_TEMPLATE_PACKAGE} workspaces scaffolded via \`wp-typia create <project-dir> --template workspace\`.
   Pass \`--dry-run\` to preview the workspace files that would change without writing them.
+  \`add admin-view\` scaffolds an opt-in DataViews-powered WordPress admin screen under \`src/admin-views/\`; pass \`--source rest-resource:<slug>\` to reuse a list-capable REST resource.
   \`query-loop\` is a create-time scaffold family. Use \`wp-typia create <project-dir> --template query-loop\` instead of \`wp-typia add block\`.
   \`add variation\` targets an existing block slug from \`scripts/block-config.ts\`.
   \`add pattern\` scaffolds a namespaced PHP pattern shell under \`src/patterns/\`.

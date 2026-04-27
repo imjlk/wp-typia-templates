@@ -93,6 +93,21 @@ export interface WorkspaceAiFeatureInventoryEntry {
 }
 
 /**
+ * DataViews admin-screen entry parsed from `scripts/block-config.ts`.
+ *
+ * @property file Relative path to the generated admin view shared entry file.
+ * @property phpFile Relative path to the generated WordPress admin page glue.
+ * @property slug Normalized admin view slug.
+ * @property source Optional source locator such as `rest-resource:products`.
+ */
+export interface WorkspaceAdminViewInventoryEntry {
+	file: string;
+	phpFile: string;
+	slug: string;
+	source?: string;
+}
+
+/**
  * Editor-plugin entry parsed from `scripts/block-config.ts`.
  *
  * @property file Relative path to the generated editor plugin entry file.
@@ -106,12 +121,14 @@ export interface WorkspaceEditorPluginInventoryEntry {
 }
 
 export interface WorkspaceInventory {
+	adminViews: WorkspaceAdminViewInventoryEntry[];
 	bindingSources: WorkspaceBindingSourceInventoryEntry[];
 	blockConfigPath: string;
 	blocks: WorkspaceBlockInventoryEntry[];
 	abilities: WorkspaceAbilityInventoryEntry[];
 	aiFeatures: WorkspaceAiFeatureInventoryEntry[];
 	hasAbilitiesSection: boolean;
+	hasAdminViewsSection: boolean;
 	hasBindingSourcesSection: boolean;
 	hasAiFeaturesSection: boolean;
 	hasEditorPluginsSection: boolean;
@@ -132,6 +149,7 @@ export const BINDING_SOURCE_CONFIG_ENTRY_MARKER = "\t// wp-typia add binding-sou
 export const REST_RESOURCE_CONFIG_ENTRY_MARKER = "\t// wp-typia add rest-resource entries";
 export const ABILITY_CONFIG_ENTRY_MARKER = "\t// wp-typia add ability entries";
 export const AI_FEATURE_CONFIG_ENTRY_MARKER = "\t// wp-typia add ai-feature entries";
+export const ADMIN_VIEW_CONFIG_ENTRY_MARKER = "\t// wp-typia add admin-view entries";
 /**
  * Marker used to append generated editor-plugin entries into `EDITOR_PLUGINS`.
  */
@@ -268,6 +286,23 @@ const AI_FEATURES_CONST_SECTION = `
 
 export const AI_FEATURES: WorkspaceAiFeatureConfig[] = [
 \t// wp-typia add ai-feature entries
+];
+`;
+
+const ADMIN_VIEWS_INTERFACE_SECTION = `
+
+export interface WorkspaceAdminViewConfig {
+\tfile: string;
+\tphpFile: string;
+\tslug: string;
+\tsource?: string;
+}
+`;
+
+const ADMIN_VIEWS_CONST_SECTION = `
+
+export const ADMIN_VIEWS: WorkspaceAdminViewConfig[] = [
+\t// wp-typia add admin-view entries
 ];
 `;
 
@@ -662,6 +697,25 @@ function parseEditorPluginEntries(
 	});
 }
 
+function parseAdminViewEntries(
+	arrayLiteral: ts.ArrayLiteralExpression,
+): WorkspaceAdminViewInventoryEntry[] {
+	return arrayLiteral.elements.map((element, elementIndex) => {
+		if (!ts.isObjectLiteralExpression(element)) {
+			throw new Error(
+				`ADMIN_VIEWS[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
+			);
+		}
+
+		return {
+			file: getRequiredStringProperty("ADMIN_VIEWS", elementIndex, element, "file"),
+			phpFile: getRequiredStringProperty("ADMIN_VIEWS", elementIndex, element, "phpFile"),
+			slug: getRequiredStringProperty("ADMIN_VIEWS", elementIndex, element, "slug"),
+			source: getOptionalStringProperty("ADMIN_VIEWS", elementIndex, element, "source"),
+		};
+	});
+}
+
 /**
  * Parse workspace inventory entries from the source of `scripts/block-config.ts`.
  *
@@ -687,6 +741,7 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 	const restResourceArray = findExportedArrayLiteral(sourceFile, "REST_RESOURCES");
 	const abilityArray = findExportedArrayLiteral(sourceFile, "ABILITIES");
 	const aiFeatureArray = findExportedArrayLiteral(sourceFile, "AI_FEATURES");
+	const adminViewArray = findExportedArrayLiteral(sourceFile, "ADMIN_VIEWS");
 	const editorPluginArray = findExportedArrayLiteral(sourceFile, "EDITOR_PLUGINS");
 	if (variationArray.found && !variationArray.array) {
 		throw new Error("scripts/block-config.ts must export VARIATIONS as an array literal.");
@@ -706,18 +761,23 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 	if (aiFeatureArray.found && !aiFeatureArray.array) {
 		throw new Error("scripts/block-config.ts must export AI_FEATURES as an array literal.");
 	}
+	if (adminViewArray.found && !adminViewArray.array) {
+		throw new Error("scripts/block-config.ts must export ADMIN_VIEWS as an array literal.");
+	}
 	if (editorPluginArray.found && !editorPluginArray.array) {
 		throw new Error("scripts/block-config.ts must export EDITOR_PLUGINS as an array literal.");
 	}
 
 	return {
 		abilities: abilityArray.array ? parseAbilityEntries(abilityArray.array) : [],
+		adminViews: adminViewArray.array ? parseAdminViewEntries(adminViewArray.array) : [],
 		aiFeatures: aiFeatureArray.array ? parseAiFeatureEntries(aiFeatureArray.array) : [],
 		bindingSources: bindingSourceArray.array
 			? parseBindingSourceEntries(bindingSourceArray.array)
 			: [],
 		blocks: parseBlockEntries(blockArray.array),
 		hasAbilitiesSection: abilityArray.found,
+		hasAdminViewsSection: adminViewArray.found,
 		hasAiFeaturesSection: aiFeatureArray.found,
 		hasBindingSourcesSection: bindingSourceArray.found,
 		hasEditorPluginsSection: editorPluginArray.found,
@@ -830,6 +890,12 @@ function ensureWorkspaceInventorySections(source: string): string {
 	if (!/export\s+const\s+AI_FEATURES\b/u.test(nextSource)) {
 		nextSource += AI_FEATURES_CONST_SECTION;
 	}
+	if (!/export\s+interface\s+WorkspaceAdminViewConfig\b/u.test(nextSource)) {
+		nextSource += ADMIN_VIEWS_INTERFACE_SECTION;
+	}
+	if (!/export\s+const\s+ADMIN_VIEWS\b/u.test(nextSource)) {
+		nextSource += ADMIN_VIEWS_CONST_SECTION;
+	}
 	if (!/export\s+interface\s+WorkspaceEditorPluginConfig\b/u.test(nextSource)) {
 		nextSource += EDITOR_PLUGINS_INTERFACE_SECTION;
 	}
@@ -917,6 +983,7 @@ export function updateWorkspaceInventorySource(
 		blockEntries = [],
 		bindingSourceEntries = [],
 		abilityEntries = [],
+		adminViewEntries = [],
 		aiFeatureEntries = [],
 		editorPluginEntries = [],
 		patternEntries = [],
@@ -925,6 +992,7 @@ export function updateWorkspaceInventorySource(
 		transformSource,
 	}: {
 		abilityEntries?: string[];
+		adminViewEntries?: string[];
 		aiFeatureEntries?: string[];
 		blockEntries?: string[];
 		bindingSourceEntries?: string[];
@@ -961,6 +1029,11 @@ export function updateWorkspaceInventorySource(
 		nextSource,
 		AI_FEATURE_CONFIG_ENTRY_MARKER,
 		aiFeatureEntries,
+	);
+	nextSource = appendEntriesAtMarker(
+		nextSource,
+		ADMIN_VIEW_CONFIG_ENTRY_MARKER,
+		adminViewEntries,
 	);
 	nextSource = ensureInterfaceField(
 		nextSource,

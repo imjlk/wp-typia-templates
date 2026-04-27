@@ -35,6 +35,10 @@ const WORKSPACE_ABILITY_GLOB = "/inc/abilities/*.php";
 const WORKSPACE_ABILITY_EDITOR_SCRIPT = "build/abilities/index.js";
 const WORKSPACE_ABILITY_EDITOR_ASSET = "build/abilities/index.asset.php";
 const WORKSPACE_AI_FEATURE_GLOB = "/inc/ai-features/*.php";
+const WORKSPACE_ADMIN_VIEW_GLOB = "/inc/admin-views/*.php";
+const WORKSPACE_ADMIN_VIEW_SCRIPT = "build/admin-views/index.js";
+const WORKSPACE_ADMIN_VIEW_ASSET = "build/admin-views/index.asset.php";
+const WORKSPACE_ADMIN_VIEW_STYLE = "build/admin-views/style-index.css";
 const WORKSPACE_EDITOR_PLUGIN_EDITOR_SCRIPT = "build/editor-plugins/index.js";
 const WORKSPACE_EDITOR_PLUGIN_EDITOR_ASSET = "build/editor-plugins/index.asset.php";
 const WORKSPACE_EDITOR_PLUGIN_EDITOR_STYLE = "build/editor-plugins/style-index.css";
@@ -779,6 +783,163 @@ function checkWorkspaceEditorPluginIndex(
 	);
 }
 
+function getWorkspaceAdminViewRequiredFiles(
+	adminView: WorkspaceInventory["adminViews"][number],
+): string[] {
+	const adminViewDir = path.join("src", "admin-views", adminView.slug);
+
+	return Array.from(
+		new Set([
+			adminView.file,
+			adminView.phpFile,
+			path.join(adminViewDir, "Screen.tsx"),
+			path.join(adminViewDir, "config.ts"),
+			path.join(adminViewDir, "data.ts"),
+			path.join(adminViewDir, "style.scss"),
+			path.join(adminViewDir, "types.ts"),
+		]),
+	);
+}
+
+function checkWorkspaceAdminViewConfig(
+	adminView: WorkspaceInventory["adminViews"][number],
+	inventory: WorkspaceInventory,
+): DoctorCheck {
+	if (adminView.source === undefined) {
+		return createDoctorCheck(
+			`Admin view config ${adminView.slug}`,
+			"pass",
+			"Admin view uses a replaceable local fetcher",
+		);
+	}
+
+	const source = adminView.source.trim();
+	const sourceMatch = /^rest-resource:([a-z][a-z0-9-]*)$/u.exec(source);
+	const restResourceSlug = sourceMatch?.[1];
+	const restResource = restResourceSlug
+		? inventory.restResources.find((entry) => entry.slug === restResourceSlug)
+		: undefined;
+	const isValid = Boolean(restResource?.methods.includes("list"));
+
+	return createDoctorCheck(
+		`Admin view config ${adminView.slug}`,
+		isValid ? "pass" : "fail",
+		isValid
+			? `Admin view source ${source} is list-capable`
+			: "Admin view source must use rest-resource:<slug> and reference a list-capable REST resource",
+	);
+}
+
+function checkWorkspaceAdminViewBootstrap(
+	projectDir: string,
+	packageName: string,
+	phpPrefix: string,
+): DoctorCheck {
+	const packageBaseName = packageName.split("/").pop() ?? packageName;
+	const bootstrapPath = path.join(projectDir, `${packageBaseName}.php`);
+	if (!fs.existsSync(bootstrapPath)) {
+		return createDoctorCheck(
+			"Admin view bootstrap",
+			"fail",
+			`Missing ${path.basename(bootstrapPath)}`,
+		);
+	}
+
+	const source = fs.readFileSync(bootstrapPath, "utf8");
+	const loadFunctionName = `${phpPrefix}_load_admin_views`;
+	const loadHook = `add_action( 'plugins_loaded', '${loadFunctionName}' );`;
+	const hasLoaderHook = source.includes(loadHook);
+	const hasServerGlob = source.includes(WORKSPACE_ADMIN_VIEW_GLOB);
+
+	return createDoctorCheck(
+		"Admin view bootstrap",
+		hasLoaderHook && hasServerGlob ? "pass" : "fail",
+		hasLoaderHook && hasServerGlob
+			? "Admin view PHP loader hook is present"
+			: "Missing admin view PHP require glob or plugins_loaded hook",
+	);
+}
+
+function checkWorkspaceAdminViewIndex(
+	projectDir: string,
+	adminViews: WorkspaceInventory["adminViews"],
+): DoctorCheck {
+	const indexRelativePath = [
+		path.join("src", "admin-views", "index.ts"),
+		path.join("src", "admin-views", "index.js"),
+	].find((relativePath) => fs.existsSync(path.join(projectDir, relativePath)));
+
+	if (!indexRelativePath) {
+		return createDoctorCheck(
+			"Admin views index",
+			"fail",
+			"Missing src/admin-views/index.ts or src/admin-views/index.js",
+		);
+	}
+
+	const indexPath = path.join(projectDir, indexRelativePath);
+	const source = fs.readFileSync(indexPath, "utf8");
+	const missingImports = adminViews.filter((adminView) => {
+		const importPattern = new RegExp(
+			`['"\`]\\./${escapeRegex(adminView.slug)}(?:/[^'"\`]*)?['"\`]`,
+			"u",
+		);
+		return !importPattern.test(source);
+	});
+
+	return createDoctorCheck(
+		"Admin views index",
+		missingImports.length === 0 ? "pass" : "fail",
+		missingImports.length === 0
+			? "Admin view registrations are aggregated"
+			: `Missing admin view imports for: ${missingImports
+					.map((entry) => entry.slug)
+					.join(", ")}`,
+	);
+}
+
+function checkWorkspaceAdminViewPhp(
+	projectDir: string,
+	adminView: WorkspaceInventory["adminViews"][number],
+): DoctorCheck {
+	const phpPath = path.join(projectDir, adminView.phpFile);
+	if (!fs.existsSync(phpPath)) {
+		return createDoctorCheck(
+			`Admin view PHP ${adminView.slug}`,
+			"fail",
+			`Missing ${adminView.phpFile}`,
+		);
+	}
+
+	const source = fs.readFileSync(phpPath, "utf8");
+	const hasAdminMenu = source.includes("add_submenu_page");
+	const hasAdminEnqueue = source.includes("admin_enqueue_scripts");
+	const hasScript = source.includes(WORKSPACE_ADMIN_VIEW_SCRIPT);
+	const hasAsset = source.includes(WORKSPACE_ADMIN_VIEW_ASSET);
+	const hasStyle = source.includes(WORKSPACE_ADMIN_VIEW_STYLE);
+	const hasComponentsStyleDependency = source.includes("'wp-components'");
+
+	return createDoctorCheck(
+		`Admin view PHP ${adminView.slug}`,
+		hasAdminMenu &&
+			hasAdminEnqueue &&
+			hasScript &&
+			hasAsset &&
+			hasStyle &&
+			hasComponentsStyleDependency
+			? "pass"
+			: "fail",
+		hasAdminMenu &&
+			hasAdminEnqueue &&
+			hasScript &&
+			hasAsset &&
+			hasStyle &&
+			hasComponentsStyleDependency
+			? "Admin menu, script, style, and wp-components style dependency are wired"
+			: "Missing admin menu, enqueue hook, build/admin-views asset reference, or wp-components style dependency",
+	);
+}
+
 function checkVariationEntrypoint(projectDir: string, blockSlug: string): DoctorCheck {
 	const entryPath = path.join(projectDir, "src", "blocks", blockSlug, "index.tsx");
 	if (!fs.existsSync(entryPath)) {
@@ -918,7 +1079,7 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 			createDoctorCheck(
 				"Workspace inventory",
 				"pass",
-				`${inventory.blocks.length} block(s), ${inventory.variations.length} variation(s), ${inventory.patterns.length} pattern(s), ${inventory.bindingSources.length} binding source(s), ${inventory.restResources.length} REST resource(s), ${inventory.abilities.length} ability scaffold(s), ${inventory.aiFeatures.length} AI feature(s), ${inventory.editorPlugins.length} editor plugin(s)`,
+				`${inventory.blocks.length} block(s), ${inventory.variations.length} variation(s), ${inventory.patterns.length} pattern(s), ${inventory.bindingSources.length} binding source(s), ${inventory.restResources.length} REST resource(s), ${inventory.abilities.length} ability scaffold(s), ${inventory.aiFeatures.length} AI feature(s), ${inventory.editorPlugins.length} editor plugin(s), ${inventory.adminViews.length} admin view(s)`,
 			),
 		);
 
@@ -1073,6 +1234,30 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 				),
 			);
 			checks.push(checkWorkspaceEditorPluginConfig(editorPlugin));
+		}
+
+		if (inventory.adminViews.length > 0) {
+			checks.push(
+				checkWorkspaceAdminViewBootstrap(
+					workspace.projectDir,
+					workspace.packageName,
+					workspace.workspace.phpPrefix,
+				),
+			);
+			checks.push(
+				checkWorkspaceAdminViewIndex(workspace.projectDir, inventory.adminViews),
+			);
+		}
+		for (const adminView of inventory.adminViews) {
+			checks.push(checkWorkspaceAdminViewConfig(adminView, inventory));
+			checks.push(
+				checkExistingFiles(
+					workspace.projectDir,
+					`Admin view ${adminView.slug}`,
+					getWorkspaceAdminViewRequiredFiles(adminView),
+				),
+			);
+			checks.push(checkWorkspaceAdminViewPhp(workspace.projectDir, adminView));
 		}
 
 		const migrationWorkspaceCheck = checkMigrationWorkspaceHint(

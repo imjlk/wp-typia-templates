@@ -777,6 +777,8 @@ test("formatHelpText keeps migration UI flags out of external template usage", (
   expect(helpText).toContain("WP_TYPIA_ASCII=1 forces ASCII status markers");
   expect(helpText).toContain("non-empty NO_COLOR requests ASCII-safe markers");
   expect(helpText).toContain("`query-loop` is create-only.");
+  expect(helpText).toContain("wp-typia add admin-view <name>");
+  expect(helpText).toContain("src/admin-views/");
   expect(helpText).toContain("wp-typia add ai-feature <name>");
   expect(helpText).toContain(
     "wp-typia add ai-feature <name> [--namespace <vendor/v1>]"

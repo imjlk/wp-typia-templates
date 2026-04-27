@@ -201,6 +201,17 @@ function AddFlowFields({
             options: templateOptions,
           })
         : null,
+      visibleFields.has('source')
+        ? createElement(FirstPartyTextField, {
+            ...getWrappedFieldNeighbors(orderedVisibleFields, 'source'),
+            description:
+              'Optional data source locator, for example rest-resource:products',
+            key: 'source',
+            label: 'Data source',
+            name: 'source',
+            placeholder: 'rest-resource:products',
+          })
+        : null,
       visibleFields.has('alternate-render-targets')
         ? createElement(FirstPartyTextField, {
             ...getWrappedFieldNeighbors(

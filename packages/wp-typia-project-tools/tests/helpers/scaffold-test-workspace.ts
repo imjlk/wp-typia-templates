@@ -30,6 +30,7 @@ const workspacePackagePaths = {
 		"..",
 		"wp-typia-block-types",
 	),
+	"@wp-typia/dataviews": path.resolve(packageRoot, "..", "wp-typia-dataviews"),
 	"@wp-typia/project-tools": packageRoot,
 	"@wp-typia/rest": path.resolve(packageRoot, "..", "wp-typia-rest"),
 } as const;

@@ -86,6 +86,20 @@ function writeLegacyCompoundValidatorFixture(
   );
 }
 
+function replaceFixtureSource(
+  source: string,
+  searchValue: string | RegExp,
+  replaceValue: string,
+  label: string
+): string {
+  const nextSource = source.replace(searchValue, replaceValue);
+  if (nextSource === source) {
+    throw new Error(`Expected fixture rewrite to update ${label}.`);
+  }
+
+  return nextSource;
+}
+
 describe("@wp-typia/project-tools workspace add", () => {
   const tempRoot = createScaffoldTempRoot("wp-typia-workspace-add-");
 
@@ -511,6 +525,7 @@ test("canonical CLI can add a variation to an official workspace template", asyn
     )?.status
   ).toBe("pass");
 
+  linkWorkspaceNodeModules(targetDir);
   runCli("npm", ["run", "build"], { cwd: targetDir });
 }, 60_000);
 
@@ -2597,6 +2612,239 @@ test("canonical CLI can add a plugin-level REST resource to an official workspac
   typecheckGeneratedProject(targetDir);
 }, 30_000);
 
+test("canonical CLI can add a DataViews admin screen with a REST resource source", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-admin-view");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add admin view",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-view",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Admin View",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "rest-resource",
+      "snapshots",
+      "--namespace",
+      "demo-space/v1",
+      "--methods",
+      "list,read",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "admin-view",
+      "snapshots",
+      "--source",
+      "rest-resource:snapshots",
+    ],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(targetDir, "package.json"), "utf8")
+  ) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  };
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+  const bootstrapSource = fs.readFileSync(
+    path.join(targetDir, "demo-workspace-add-admin-view.php"),
+    "utf8"
+  );
+  const adminViewsIndexSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "index.ts"),
+    "utf8"
+  );
+  const entrySource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "snapshots", "index.tsx"),
+    "utf8"
+  );
+  const screenSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "snapshots", "Screen.tsx"),
+    "utf8"
+  );
+  const dataSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "snapshots", "data.ts"),
+    "utf8"
+  );
+  const configSource = fs.readFileSync(
+    path.join(targetDir, "src", "admin-views", "snapshots", "config.ts"),
+    "utf8"
+  );
+  const phpSource = fs.readFileSync(
+    path.join(targetDir, "inc", "admin-views", "snapshots.php"),
+    "utf8"
+  );
+
+  expect(packageJson.devDependencies?.["@wp-typia/dataviews"]).toBeTruthy();
+  expect(packageJson.dependencies?.["@wordpress/dataviews"]).toBeTruthy();
+  expect(blockConfigSource).toContain('slug: "snapshots"');
+  expect(blockConfigSource).toContain('source: "rest-resource:snapshots"');
+  expect(blockConfigSource).toContain(
+    'file: "src/admin-views/snapshots/index.tsx"'
+  );
+  expect(blockConfigSource).toContain(
+    'phpFile: "inc/admin-views/snapshots.php"'
+  );
+  expect(bootstrapSource).toContain("inc/admin-views/*.php");
+  expect(adminViewsIndexSource).toContain("import './snapshots';");
+  expect(entrySource).toContain("@wordpress/dataviews/build-style/style.css");
+  expect(entrySource).toContain("createRoot");
+  expect(screenSource).toContain("TypedDataViews");
+  expect(screenSource).toContain("isLoading");
+  expect(screenSource).toContain("paginationInfo");
+  expect(dataSource).toContain("listResource");
+  expect(dataSource).toContain("perPageParam: 'perPage'");
+  expect(dataSource).toContain("searchParam: false");
+  expect(dataSource).toContain('from "../../rest/snapshots/api"');
+  expect(dataSource).toContain('from "../../rest/snapshots/api-types"');
+  expect(dataSource).not.toContain("search: query.search");
+  expect(dataSource).toContain("if (!result.isValid || !result.data)");
+  expect(dataSource).toContain("const response = result.data");
+  expect(dataSource).toContain("paginationInfo");
+  expect(configSource).toContain("defineDataViews<SnapshotsAdminViewItem>");
+  expect(configSource).toContain("fields: ['id']");
+  expect(configSource).toContain("search: false");
+  expect(configSource).not.toContain("content");
+  expect(configSource).not.toContain("owner");
+  expect(configSource).not.toContain("titleField: 'title'");
+  expect(configSource).not.toContain("updatedAt");
+  expect(phpSource).toContain("add_submenu_page");
+  expect(phpSource).toContain("admin_enqueue_scripts");
+  expect(phpSource).toContain("build/admin-views/index.js");
+  expect(phpSource).toContain("build/admin-views/style-index.css");
+  expect(phpSource).toContain("'wp-components'");
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ detail: string; label: string; status: string }>;
+  }>(doctorOutput);
+  expect(
+    doctorChecks.checks.find((check) => check.label === "Admin view bootstrap")
+      ?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find((check) => check.label === "Admin views index")
+      ?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Admin view config snapshots"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find((check) => check.label === "Admin view snapshots")
+      ?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find((check) => check.label === "Admin view PHP snapshots")
+      ?.status
+  ).toBe("pass");
+
+  linkWorkspaceNodeModules(targetDir);
+  runCli("npm", ["run", "build"], { cwd: targetDir });
+  expect(
+    fs.existsSync(path.join(targetDir, "build", "admin-views", "index.js"))
+  ).toBe(true);
+  expect(
+    fs.existsSync(
+      path.join(targetDir, "build", "admin-views", "index.asset.php")
+    )
+  ).toBe(true);
+  expect(
+    fs.existsSync(
+      path.join(targetDir, "build", "admin-views", "style-index.css")
+    )
+  ).toBe(true);
+  typecheckGeneratedProject(targetDir);
+}, 60_000);
+
+test("admin view workflow accepts formatted shared webpack entries", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-add-admin-view-formatted-webpack"
+  );
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add admin view formatted webpack",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-admin-view-formatted-webpack",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Admin View Formatted Webpack",
+    },
+  });
+
+  const buildScriptPath = path.join(targetDir, "scripts", "build-workspace.mjs");
+  const webpackConfigPath = path.join(targetDir, "webpack.config.js");
+  fs.writeFileSync(
+    buildScriptPath,
+    replaceFixtureSource(
+      fs.readFileSync(buildScriptPath, "utf8"),
+      `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t\t'src/admin-views/index.ts',\n\t\t'src/admin-views/index.js',\n\t]`,
+      `[\n      \"src/bindings/index.ts\",\n      \"src/bindings/index.js\",\n      \"src/editor-plugins/index.ts\",\n      \"src/editor-plugins/index.js\"\n    ]`,
+      "formatted admin view build entries"
+    ),
+    "utf8"
+  );
+  fs.writeFileSync(
+    webpackConfigPath,
+    replaceFixtureSource(
+      fs.readFileSync(webpackConfigPath, "utf8"),
+      `\tfor ( const [ entryName, candidates ] of [\n\t\t[\n\t\t\t'bindings/index',\n\t\t\t[ 'src/bindings/index.ts', 'src/bindings/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'editor-plugins/index',\n\t\t\t[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'admin-views/index',\n\t\t\t[ 'src/admin-views/index.ts', 'src/admin-views/index.js' ],\n\t\t],\n\t] ) {\n\t\tfor ( const relativePath of candidates ) {\n\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\t\tcontinue;\n\t\t\t}\n\n\t\t\tentries.push( [ entryName, entryPath ] );\n\t\t\tbreak;\n\t\t}\n\t}`,
+      `\tfor ( const [ entryName, candidates ] of [\n\t\t[\n\t\t\t\"bindings/index\",\n\t\t\t[\n\t\t\t\t\"src/bindings/index.ts\",\n\t\t\t\t\"src/bindings/index.js\",\n\t\t\t],\n\t\t],\n\t\t[ \"editor-plugins/index\", [\n\t\t\t\"src/editor-plugins/index.ts\",\n\t\t\t\"src/editor-plugins/index.js\",\n\t\t] ],\n\t] ) {\n\t\tfor ( const relativePath of candidates ) {\n\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\t\tcontinue;\n\t\t\t}\n\n\t\t\tentries.push( [ entryName, entryPath ] );\n\t\t\tbreak;\n\t\t}\n\t}`,
+      "formatted admin view webpack entries"
+    ),
+    "utf8"
+  );
+
+  runCli("node", [entryPath, "add", "admin-view", "reports"], {
+    cwd: targetDir,
+  });
+
+  expect(fs.readFileSync(buildScriptPath, "utf8")).toContain(
+    "'src/admin-views/index.ts'"
+  );
+  expect(fs.readFileSync(webpackConfigPath, "utf8")).toContain(
+    "'admin-views/index'"
+  );
+}, 30_000);
+
 test("rest resource workflow repairs legacy sync-rest scripts before writing workspace resources", async () => {
   const targetDir = path.join(
     tempRoot,
@@ -3502,22 +3750,22 @@ test("editor plugin workflow repairs legacy workspace build config hooks", async
   const webpackConfigPath = path.join(targetDir, "webpack.config.js");
   fs.writeFileSync(
     buildScriptPath,
-    fs
-      .readFileSync(buildScriptPath, "utf8")
-      .replace(
-        `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t]`,
-        "[ 'src/bindings/index.ts', 'src/bindings/index.js' ]"
-      ),
+    replaceFixtureSource(
+      fs.readFileSync(buildScriptPath, "utf8"),
+      `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t\t'src/admin-views/index.ts',\n\t\t'src/admin-views/index.js',\n\t]`,
+      "[ 'src/bindings/index.ts', 'src/bindings/index.js' ]",
+      "legacy editor plugin build entries"
+    ),
     "utf8"
   );
   fs.writeFileSync(
     webpackConfigPath,
-    fs
-      .readFileSync(webpackConfigPath, "utf8")
-      .replace(
-        `\tfor ( const [ entryName, candidates ] of [\n\t\t[\n\t\t\t'bindings/index',\n\t\t\t[ 'src/bindings/index.ts', 'src/bindings/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'editor-plugins/index',\n\t\t\t[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],\n\t\t],\n\t] ) {\n\t\tfor ( const relativePath of candidates ) {\n\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\t\tcontinue;\n\t\t\t}\n\n\t\t\tentries.push( [ entryName, entryPath ] );\n\t\t\tbreak;\n\t\t}\n\t}`,
-        `\tfor ( const relativePath of [ 'src/bindings/index.ts', 'src/bindings/index.js' ] ) {\n\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\tcontinue;\n\t\t}\n\n\t\tentries.push( [ 'bindings/index', entryPath ] );\n\t\tbreak;\n\t}`
-      ),
+    replaceFixtureSource(
+      fs.readFileSync(webpackConfigPath, "utf8"),
+      `\tfor ( const [ entryName, candidates ] of [\n\t\t[\n\t\t\t'bindings/index',\n\t\t\t[ 'src/bindings/index.ts', 'src/bindings/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'editor-plugins/index',\n\t\t\t[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'admin-views/index',\n\t\t\t[ 'src/admin-views/index.ts', 'src/admin-views/index.js' ],\n\t\t],\n\t] ) {\n\t\tfor ( const relativePath of candidates ) {\n\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\t\tcontinue;\n\t\t\t}\n\n\t\t\tentries.push( [ entryName, entryPath ] );\n\t\t\tbreak;\n\t\t}\n\t}`,
+      `\tfor ( const relativePath of [ 'src/bindings/index.ts', 'src/bindings/index.js' ] ) {\n\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\tcontinue;\n\t\t}\n\n\t\tentries.push( [ 'bindings/index', entryPath ] );\n\t\tbreak;\n\t}`,
+      "legacy editor plugin webpack entries"
+    ),
     "utf8"
   );
 
@@ -3570,22 +3818,22 @@ test("editor plugin workflow repairs formatted legacy workspace build config hoo
   const webpackConfigPath = path.join(targetDir, "webpack.config.js");
   fs.writeFileSync(
     buildScriptPath,
-    fs
-      .readFileSync(buildScriptPath, "utf8")
-      .replace(
-        `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t]`,
-        `[\n      \"src/bindings/index.ts\",\n      \"src/bindings/index.js\",\n    ]`
-      ),
+    replaceFixtureSource(
+      fs.readFileSync(buildScriptPath, "utf8"),
+      `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t\t'src/admin-views/index.ts',\n\t\t'src/admin-views/index.js',\n\t]`,
+      `[\n      \"src/bindings/index.ts\",\n      \"src/bindings/index.js\",\n    ]`,
+      "formatted legacy editor plugin build entries"
+    ),
     "utf8"
   );
   fs.writeFileSync(
     webpackConfigPath,
-    fs
-      .readFileSync(webpackConfigPath, "utf8")
-      .replace(
-        `\tfor ( const [ entryName, candidates ] of [\n\t\t[\n\t\t\t'bindings/index',\n\t\t\t[ 'src/bindings/index.ts', 'src/bindings/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'editor-plugins/index',\n\t\t\t[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],\n\t\t],\n\t] ) {\n\t\tfor ( const relativePath of candidates ) {\n\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\t\tcontinue;\n\t\t\t}\n\n\t\t\tentries.push( [ entryName, entryPath ] );\n\t\t\tbreak;\n\t\t}\n\t}`,
-        `\tfor ( const relativePath of [\n\t\t\"src/bindings/index.ts\",\n\t\t\"src/bindings/index.js\",\n\t] ) {\n\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\tcontinue;\n\t\t}\n\n\t\tentries.push( [ \"bindings/index\", entryPath ] );\n\t\tbreak;\n\t}`
-      ),
+    replaceFixtureSource(
+      fs.readFileSync(webpackConfigPath, "utf8"),
+      `\tfor ( const [ entryName, candidates ] of [\n\t\t[\n\t\t\t'bindings/index',\n\t\t\t[ 'src/bindings/index.ts', 'src/bindings/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'editor-plugins/index',\n\t\t\t[ 'src/editor-plugins/index.ts', 'src/editor-plugins/index.js' ],\n\t\t],\n\t\t[\n\t\t\t'admin-views/index',\n\t\t\t[ 'src/admin-views/index.ts', 'src/admin-views/index.js' ],\n\t\t],\n\t] ) {\n\t\tfor ( const relativePath of candidates ) {\n\t\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\t\tcontinue;\n\t\t\t}\n\n\t\t\tentries.push( [ entryName, entryPath ] );\n\t\t\tbreak;\n\t\t}\n\t}`,
+      `\tfor ( const relativePath of [\n\t\t\"src/bindings/index.ts\",\n\t\t\"src/bindings/index.js\",\n\t] ) {\n\t\tconst entryPath = path.resolve( process.cwd(), relativePath );\n\t\tif ( ! fs.existsSync( entryPath ) ) {\n\t\t\tcontinue;\n\t\t}\n\n\t\tentries.push( [ \"bindings/index\", entryPath ] );\n\t\tbreak;\n\t}`,
+      "formatted legacy editor plugin webpack entries"
+    ),
     "utf8"
   );
 
@@ -3749,12 +3997,12 @@ test("editor plugin workflow accepts existing js shared entry hooks", async () =
   fs.writeFileSync(path.join(editorPluginsDir, "index.js"), "", "utf8");
   fs.writeFileSync(
     buildScriptPath,
-    fs
-      .readFileSync(buildScriptPath, "utf8")
-      .replace(
-        `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t]`,
-        `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.js',\n\t]`
-      ),
+    replaceFixtureSource(
+      fs.readFileSync(buildScriptPath, "utf8"),
+      `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.ts',\n\t\t'src/editor-plugins/index.js',\n\t\t'src/admin-views/index.ts',\n\t\t'src/admin-views/index.js',\n\t]`,
+      `[\n\t\t'src/bindings/index.ts',\n\t\t'src/bindings/index.js',\n\t\t'src/editor-plugins/index.js',\n\t]`,
+      "editor plugin js shared entry hooks"
+    ),
     "utf8"
   );
 

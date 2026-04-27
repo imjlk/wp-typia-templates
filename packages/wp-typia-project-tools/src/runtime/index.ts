@@ -7,6 +7,7 @@
  * and workspace-aware helpers such as `getWorkspaceBlockSelectOptions`,
  * `runAddBlockCommand`, `runAddVariationCommand`, `runAddPatternCommand`,
  * `runAddBindingSourceCommand`, `runAddEditorPluginCommand`,
+ * `runAddAdminViewCommand`,
  * `runAddHookedBlockCommand`,
  * `HOOKED_BLOCK_POSITION_IDS`, and `runDoctor`.
  */
@@ -181,6 +182,7 @@ export {
 	HOOKED_BLOCK_POSITION_IDS,
 	EDITOR_PLUGIN_SLOT_IDS,
 	isCliDiagnosticError,
+	runAddAdminViewCommand,
 	runAddAbilityCommand,
 	runAddAiFeatureCommand,
 	runAddBindingSourceCommand,

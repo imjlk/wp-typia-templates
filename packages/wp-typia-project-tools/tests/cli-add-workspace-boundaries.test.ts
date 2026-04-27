@@ -4,7 +4,7 @@ import path from "node:path";
 
 const runtimeRoot = path.join(import.meta.dir, "..", "src", "runtime");
 
-test("cli-add-workspace delegates asset, rest-resource, and ai-feature workflows to focused helpers", () => {
+test("cli-add-workspace delegates asset, rest-resource, ai-feature, and admin-view workflows to focused helpers", () => {
 	const addWorkspaceSource = fs.readFileSync(
 		path.join(runtimeRoot, "cli-add-workspace.ts"),
 		"utf8",
@@ -37,11 +37,17 @@ test("cli-add-workspace delegates asset, rest-resource, and ai-feature workflows
 		path.join(runtimeRoot, "cli-add-workspace-ai-source-emitters.ts"),
 		"utf8",
 	);
+	const adminViewSource = fs.readFileSync(
+		path.join(runtimeRoot, "cli-add-workspace-admin-view.ts"),
+		"utf8",
+	);
 
+	expect(addWorkspaceSource).toContain('from "./cli-add-workspace-admin-view.js"');
 	expect(addWorkspaceSource).toContain('from "./cli-add-workspace-assets.js"');
 	expect(addWorkspaceSource).toContain('from "./cli-add-workspace-rest.js"');
 	expect(addWorkspaceSource).toContain('from "./cli-add-workspace-ai.js"');
 	expect(addWorkspaceSource).toContain("runAddAiFeatureCommand");
+	expect(addWorkspaceSource).toContain("runAddAdminViewCommand");
 	expect(addWorkspaceSource).toContain("runAddBindingSourceCommand");
 	expect(addWorkspaceSource).toContain("runAddEditorPluginCommand");
 	expect(addWorkspaceSource).toContain("runAddPatternCommand");
@@ -54,6 +60,11 @@ test("cli-add-workspace delegates asset, rest-resource, and ai-feature workflows
 	expect(addWorkspaceSource).not.toContain("async function ensureEditorPluginBootstrapAnchors(");
 	expect(addWorkspaceSource).not.toContain("function buildRestResourceTypesSource(");
 	expect(addWorkspaceSource).not.toContain("async function ensureRestResourceBootstrapAnchors(");
+	expect(addWorkspaceSource).not.toContain("async function ensureAdminViewBootstrapAnchors(");
+	expect(addWorkspaceSource).not.toMatch(
+		/export\s*\{[^}]*ensureAdminViewBootstrapAnchors[^}]*\}/u,
+	);
+	expect(addWorkspaceSource).not.toContain("export async function runAddAdminViewCommand(");
 	expect(addWorkspaceSource).not.toContain("export async function runAddAiFeatureCommand(");
 	expect(addWorkspaceSource).not.toContain("export async function runAddPatternCommand(");
 	expect(addWorkspaceSource).not.toContain("export async function runAddBindingSourceCommand(");
@@ -87,4 +98,7 @@ test("cli-add-workspace delegates asset, rest-resource, and ai-feature workflows
 	expect(aiSourceEmittersSource).toContain("function buildAiFeatureDataSource(");
 	expect(aiAnchorsSource).toContain("async function ensureAiFeatureBootstrapAnchors(");
 	expect(aiAnchorsSource).toContain("async function ensureAiFeatureSyncRestAnchors(");
+	expect(adminViewSource).toContain("function buildAdminViewScreenSource(");
+	expect(adminViewSource).toContain("async function ensureAdminViewBootstrapAnchors(");
+	expect(adminViewSource).toContain("export async function runAddAdminViewCommand(");
 });
