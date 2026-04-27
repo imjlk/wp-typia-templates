@@ -103,6 +103,15 @@ function resolvePackageVersionRange(
 	}
 }
 
+function getAdminViewRelativeModuleSpecifier(adminViewSlug: string, workspaceFile: string): string {
+	const adminViewDir = `src/admin-views/${adminViewSlug}`;
+	const normalizedFile = workspaceFile.replace(/\\/gu, "/");
+	const modulePath = normalizedFile.replace(/\.[cm]?[jt]sx?$/u, "");
+	const relativeModulePath = path.posix.relative(adminViewDir, modulePath);
+
+	return relativeModulePath.startsWith(".") ? relativeModulePath : `./${relativeModulePath}`;
+}
+
 function parseAdminViewSource(source?: string): AdminViewSource | undefined {
 	const trimmed = source?.trim();
 	if (!trimmed) {
@@ -185,8 +194,12 @@ function buildAdminViewTypesSource(
 
 	if (restResource) {
 		const restPascalName = toPascalCase(restResource.slug);
+		const restTypesModule = getAdminViewRelativeModuleSpecifier(
+			adminViewSlug,
+			restResource.typesFile,
+		);
 
-		return `import type { ${restPascalName}Record } from '../../rest/${restResource.slug}/api-types';
+		return `import type { ${restPascalName}Record } from ${quoteTsString(restTypesModule)};
 
 export type ${itemTypeName} = ${restPascalName}Record;
 
@@ -230,13 +243,20 @@ function buildAdminViewConfigSource(
 	const itemTypeName = `${pascalName}AdminViewItem`;
 	const dataViewsName = `${camelName}AdminDataViews`;
 	const defaultViewFields = restResource
-		? "['title', 'content', 'updatedAt']"
+		? "['id']"
 		: "['title', 'status', 'updatedAt']";
-	const contextualFieldSource = restResource
-		? `\t\tcontent: {
-\t\t\tlabel: __( 'Content', ${quoteTsString(textDomain)} ),
-\t\t\tschema: { type: 'string' },
-\t\t},`
+	const searchEnabled = restResource ? "false" : "true";
+	const titleFieldSource = restResource ? "" : "\ttitleField: 'title',\n";
+	const defaultViewEnhancementsSource = restResource
+		? ""
+		: `\t\tsort: {
+\t\t\tdirection: 'desc',
+\t\t\tfield: 'updatedAt',
+\t\t},
+\t\ttitleField: 'title',
+`;
+	const additionalFieldsSource = restResource
+		? "\t\t// REST-backed screens start with the guaranteed ID column. Add project-owned fields here once they are declared on the REST record type."
 		: `\t\towner: {
 \t\t\tlabel: __( 'Owner', ${quoteTsString(textDomain)} ),
 \t\t\tschema: { type: 'string' },
@@ -252,37 +272,7 @@ function buildAdminViewConfigSource(
 \t\t\t\t},
 \t\t\t\ttype: 'string',
 \t\t\t},
-\t\t},`;
-
-	return `import { defineDataViews } from '@wp-typia/dataviews';
-import { __ } from '@wordpress/i18n';
-
-import type { ${itemTypeName} } from './types';
-
-export const ${dataViewsName} = defineDataViews<${itemTypeName}>({
-\tidField: 'id',
-\tsearch: true,
-\tsearchLabel: __( 'Search records', ${quoteTsString(textDomain)} ),
-\ttitleField: 'title',
-\tdefaultView: {
-\t\tfields: ${defaultViewFields},
-\t\tpage: 1,
-\t\tperPage: 10,
-\t\tsort: {
-\t\t\tdirection: 'desc',
-\t\t\tfield: 'updatedAt',
 \t\t},
-\t\ttitleField: 'title',
-\t\ttype: 'table',
-\t},
-\tfields: {
-\t\tid: {
-\t\t\tenableHiding: false,
-\t\t\tlabel: __( 'ID', ${quoteTsString(textDomain)} ),
-\t\t\treadOnly: true,
-\t\t\tschema: { type: 'integer' },
-\t\t},
-${contextualFieldSource}
 \t\ttitle: {
 \t\t\tenableGlobalSearch: true,
 \t\t\tenableSorting: true,
@@ -294,7 +284,33 @@ ${contextualFieldSource}
 \t\t\tlabel: __( 'Updated', ${quoteTsString(textDomain)} ),
 \t\t\tschema: { format: 'date-time', type: 'string' },
 \t\t\ttype: 'datetime',
+\t\t},`;
+
+	return `import { defineDataViews } from '@wp-typia/dataviews';
+import { __ } from '@wordpress/i18n';
+
+import type { ${itemTypeName} } from './types';
+
+export const ${dataViewsName} = defineDataViews<${itemTypeName}>({
+\tidField: 'id',
+\tsearch: ${searchEnabled},
+\tsearchLabel: __( 'Search records', ${quoteTsString(textDomain)} ),
+${titleFieldSource}
+\tdefaultView: {
+\t\tfields: ${defaultViewFields},
+\t\tpage: 1,
+\t\tperPage: 10,
+${defaultViewEnhancementsSource}
+\t\ttype: 'table',
+\t},
+\tfields: {
+\t\tid: {
+\t\t\tenableHiding: false,
+\t\t\tlabel: __( 'ID', ${quoteTsString(textDomain)} ),
+\t\t\treadOnly: true,
+\t\t\tschema: { type: 'integer' },
 \t\t},
+${additionalFieldsSource}
 \t},
 });
 `;
@@ -394,11 +410,19 @@ function buildRestAdminViewDataSource(
 	const dataSetTypeName = `${pascalName}AdminViewDataSet`;
 	const dataViewsName = `${camelName}AdminDataViews`;
 	const fetchName = `fetch${pascalName}AdminViewData`;
+	const restApiModule = getAdminViewRelativeModuleSpecifier(
+		adminViewSlug,
+		restResource.apiFile,
+	);
+	const restTypesModule = getAdminViewRelativeModuleSpecifier(
+		adminViewSlug,
+		restResource.typesFile,
+	);
 
 	return `import type { DataViewsView } from '@wp-typia/dataviews';
 
-import { listResource } from '../../rest/${restResource.slug}/api';
-import type { ${restPascalName}ListQuery } from '../../rest/${restResource.slug}/api-types';
+import { listResource } from ${quoteTsString(restApiModule)};
+import type { ${restPascalName}ListQuery } from ${quoteTsString(restTypesModule)};
 import { ${dataViewsName} } from './config';
 import type { ${dataSetTypeName}, ${itemTypeName} } from './types';
 
@@ -412,12 +436,17 @@ export async function ${fetchName}(
 ): Promise<${dataSetTypeName}> {
 \tconst query = ${dataViewsName}.toQueryArgs<${restPascalName}ListQuery>(view, {
 \t\tperPageParam: 'perPage',
+\t\tsearchParam: false,
 \t});
-\tconst response = await listResource({
+\tconst result = await listResource({
 \t\tpage: query.page,
 \t\tperPage: query.perPage,
-\t\tsearch: query.search,
 \t});
+\tif (!result.isValid || !result.data) {
+\t\tthrow new Error('Unable to load REST resource records.');
+\t}
+
+\tconst response = result.data;
 
 \treturn {
 \t\titems: response.items,
@@ -453,7 +482,7 @@ import { ${dataViewsName} } from './config';
 import { ${fetchName} } from './data';
 import type { ${dataSetTypeName}, ${itemTypeName} } from './types';
 
-const TypedDataViews = DataViews as <TItem extends object>(
+const TypedDataViews = DataViews as unknown as <TItem extends object>(
 \tprops: DataViewsConfig<TItem>,
 ) => ReturnType<typeof DataViews>;
 

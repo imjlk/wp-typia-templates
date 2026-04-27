@@ -2722,10 +2722,20 @@ test("canonical CLI can add a DataViews admin screen with a REST resource source
   expect(screenSource).toContain("paginationInfo");
   expect(dataSource).toContain("listResource");
   expect(dataSource).toContain("perPageParam: 'perPage'");
+  expect(dataSource).toContain("searchParam: false");
+  expect(dataSource).toContain('from "../../rest/snapshots/api"');
+  expect(dataSource).toContain('from "../../rest/snapshots/api-types"');
+  expect(dataSource).not.toContain("search: query.search");
+  expect(dataSource).toContain("if (!result.isValid || !result.data)");
+  expect(dataSource).toContain("const response = result.data");
   expect(dataSource).toContain("paginationInfo");
   expect(configSource).toContain("defineDataViews<SnapshotsAdminViewItem>");
-  expect(configSource).toContain("content");
+  expect(configSource).toContain("fields: ['id']");
+  expect(configSource).toContain("search: false");
+  expect(configSource).not.toContain("content");
   expect(configSource).not.toContain("owner");
+  expect(configSource).not.toContain("titleField: 'title'");
+  expect(configSource).not.toContain("updatedAt");
   expect(phpSource).toContain("add_submenu_page");
   expect(phpSource).toContain("admin_enqueue_scripts");
   expect(phpSource).toContain("build/admin-views/index.js");
@@ -2775,7 +2785,8 @@ test("canonical CLI can add a DataViews admin screen with a REST resource source
       path.join(targetDir, "build", "admin-views", "style-index.css")
     )
   ).toBe(true);
-}, 40_000);
+  typecheckGeneratedProject(targetDir);
+}, 60_000);
 
 test("admin view workflow accepts formatted shared webpack entries", async () => {
   const targetDir = path.join(
