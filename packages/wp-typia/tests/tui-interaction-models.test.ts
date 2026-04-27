@@ -21,6 +21,11 @@ describe("first-party TUI interaction models", () => {
 	});
 
 	test("add flow keeps visible field ordering stable across kind switches", () => {
+		expect(getVisibleAddFieldNames({ kind: "admin-view" })).toEqual([
+			"kind",
+			"name",
+			"source",
+		]);
 		expect(getVisibleAddFieldNames({ kind: "block", template: "basic" })).toEqual([
 			"kind",
 			"name",
@@ -127,6 +132,22 @@ describe("first-party TUI interaction models", () => {
 			block: "counter-card",
 			kind: "variation",
 			name: "hero-card",
+		});
+
+		expect(
+			sanitizeAddSubmitValues({
+				anchor: "",
+				block: "",
+				kind: "admin-view",
+				name: "reports",
+				position: "",
+				source: " rest-resource:reports ",
+				template: "persistence",
+			}),
+		).toEqual({
+			kind: "admin-view",
+			name: "reports",
+			source: "rest-resource:reports",
 		});
 
 		expect(
