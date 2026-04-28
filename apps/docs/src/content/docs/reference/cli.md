@@ -102,6 +102,19 @@ Common flags:
 The positional alias `wp-typia <project-dir>` remains available only for
 unambiguous create invocations with a single local project directory.
 
+### External template cache
+
+Remote template resolution keeps the existing timeout, size, and symlink guards.
+After those guards pass, npm templates with registry `integrity` or `shasum`
+metadata and GitHub templates with a resolvable remote revision are cached under
+the local OS temp cache. Cache keys include the source locator plus the resolved
+npm tarball integrity or GitHub revision so repeated scaffolds reuse only the
+same source.
+
+Set `WP_TYPIA_EXTERNAL_TEMPLATE_CACHE=0` to bypass the cache for a forced
+refresh. Set `WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR=/path/to/cache` to place the
+cache in a project- or CI-managed directory.
+
 ## `add`
 
 Extend an official wp-typia workspace from the workspace root.

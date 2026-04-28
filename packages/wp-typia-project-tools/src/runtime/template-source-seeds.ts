@@ -17,6 +17,10 @@ import {
   readJsonResponseWithLimit,
 } from './external-template-guards.js'
 import {
+  isExternalTemplateCacheEnabled,
+  resolveExternalTemplateSourceCache,
+} from './template-source-cache.js'
+import {
   CLI_DIAGNOSTIC_CODES,
   createCliDiagnosticCodeError,
 } from './cli-diagnostics.js'
@@ -46,6 +50,47 @@ function getUnknownNpmTemplateMessage(templateId: string): string {
     'Run `wp-typia templates list` to inspect available templates.',
     'If you meant an npm template package, verify the package name and configured npm registry.',
   ].join(' ')
+}
+
+function readOptionalDistString(
+  dist: Record<string, unknown>,
+  key: string,
+): string | null {
+  const value = dist[key]
+  return typeof value === 'string' && value.length > 0 ? value : null
+}
+
+async function downloadNpmTemplateTarball(
+  locator: NpmTemplateLocator,
+  resolvedVersion: string,
+  tarballUrl: string,
+  unpackDir: string,
+): Promise<void> {
+  const tarballResponse = await fetchWithExternalTemplateTimeout(tarballUrl, {
+    label: `downloading npm template tarball for ${locator.raw}@${resolvedVersion}`,
+  })
+  if (!tarballResponse.ok) {
+    throw new Error(
+      `Failed to download npm template tarball for ${locator.raw}: ${tarballResponse.status}`,
+    )
+  }
+
+  const tarballPath = path.join(path.dirname(unpackDir), 'template.tgz')
+  await fsp.mkdir(unpackDir, { recursive: true })
+  await fsp.writeFile(
+    tarballPath,
+    await readBufferResponseWithLimit(tarballResponse, {
+      label: `npm template tarball for ${locator.raw}@${resolvedVersion}`,
+      maxBytes: getExternalTemplateTarballMaxBytes(),
+    }),
+  )
+  await extractTarball({
+    cwd: unpackDir,
+    file: tarballPath,
+    strip: 1,
+  })
+  await fsp.rm(tarballPath, { force: true })
+  await assertNoSymlinks(unpackDir)
 }
 
 function selectRegistryVersion(
@@ -140,36 +185,64 @@ async function fetchNpmTemplateSource(
     )
   }
 
+  const tarballIntegrity = readOptionalDistString(
+    versionMetadata.dist,
+    'integrity',
+  )
+  const tarballShasum = readOptionalDistString(versionMetadata.dist, 'shasum')
+  if (tarballIntegrity || tarballShasum) {
+    const cachedSource = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: [
+          'npm',
+          registryBase,
+          locator.name,
+          locator.raw,
+          resolvedVersion,
+          tarballUrl,
+          tarballIntegrity ?? '',
+          tarballShasum ?? '',
+        ],
+        metadata: {
+          integrity: tarballIntegrity,
+          package: locator.name,
+          raw: locator.raw,
+          registry: registryBase,
+          shasum: tarballShasum,
+          tarball: tarballUrl,
+          version: resolvedVersion,
+        },
+        namespace: 'npm',
+      },
+      (unpackDir) =>
+        downloadNpmTemplateTarball(
+          locator,
+          resolvedVersion,
+          tarballUrl,
+          unpackDir,
+        ),
+    )
+    if (cachedSource) {
+      await assertNoSymlinks(cachedSource.sourceDir)
+      return {
+        blockDir: cachedSource.sourceDir,
+        rootDir: cachedSource.sourceDir,
+      }
+    }
+  }
+
   const { path: tempRoot, cleanup } = await createManagedTempRoot(
     'wp-typia-template-source-',
   )
 
   try {
-    const tarballResponse = await fetchWithExternalTemplateTimeout(tarballUrl, {
-      label: `downloading npm template tarball for ${locator.raw}@${resolvedVersion}`,
-    })
-    if (!tarballResponse.ok) {
-      throw new Error(
-        `Failed to download npm template tarball for ${locator.raw}: ${tarballResponse.status}`,
-      )
-    }
-
-    const tarballPath = path.join(tempRoot, 'template.tgz')
     const unpackDir = path.join(tempRoot, 'source')
-    await fsp.mkdir(unpackDir, { recursive: true })
-    await fsp.writeFile(
-      tarballPath,
-      await readBufferResponseWithLimit(tarballResponse, {
-        label: `npm template tarball for ${locator.raw}@${resolvedVersion}`,
-        maxBytes: getExternalTemplateTarballMaxBytes(),
-      }),
+    await downloadNpmTemplateTarball(
+      locator,
+      resolvedVersion,
+      tarballUrl,
+      unpackDir,
     )
-    await extractTarball({
-      cwd: unpackDir,
-      file: tarballPath,
-      strip: 1,
-    })
-    await assertNoSymlinks(unpackDir)
 
     return {
       blockDir: unpackDir,
@@ -299,73 +372,150 @@ export async function assertNoSymlinks(sourceDir: string): Promise<void> {
   }
 }
 
+function runGitTemplateCommand(
+  args: readonly string[],
+  label: string,
+): ReturnType<typeof spawnSync> {
+  const timeoutMs = getExternalTemplateTimeoutMs()
+  const result = spawnSync('git', args, {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+    timeout: timeoutMs,
+  })
+  if (result.error) {
+    const errorCode =
+      typeof result.error === 'object' &&
+      result.error !== null &&
+      'code' in result.error
+        ? String((result.error as { code: unknown }).code)
+        : ''
+    if (errorCode === 'ETIMEDOUT') {
+      throw createExternalTemplateTimeoutError(label, timeoutMs)
+    }
+    throw result.error
+  }
+  if (result.signal === 'SIGTERM' || result.signal === 'SIGKILL') {
+    throw createExternalTemplateTimeoutError(label, timeoutMs)
+  }
+
+  return result
+}
+
+function getGitHubTemplateRepositoryUrl(locator: GitHubTemplateLocator): string {
+  return `https://github.com/${locator.owner}/${locator.repo}.git`
+}
+
+function resolveGitHubTemplateDirectory(
+  checkoutDir: string,
+  locator: GitHubTemplateLocator,
+): string {
+  const sourceDir = path.resolve(checkoutDir, locator.sourcePath)
+  const relativeSourceDir = path.relative(checkoutDir, sourceDir)
+  if (relativeSourceDir.startsWith('..') || path.isAbsolute(relativeSourceDir)) {
+    throw new Error('GitHub template path must stay within the cloned repository.')
+  }
+  if (!fs.existsSync(sourceDir)) {
+    throw new Error(`GitHub template path does not exist: ${locator.sourcePath}`)
+  }
+  return sourceDir
+}
+
+function cloneGitHubTemplateSource(
+  locator: GitHubTemplateLocator,
+  checkoutDir: string,
+): void {
+  const args = ['clone', '--depth', '1']
+  if (locator.ref) {
+    args.push('--branch', locator.ref)
+  }
+  args.push(getGitHubTemplateRepositoryUrl(locator), checkoutDir)
+  const cloneResult = runGitTemplateCommand(
+    args,
+    `cloning GitHub template ${locator.owner}/${locator.repo}`,
+  )
+  if (cloneResult.status !== 0) {
+    throw new Error(
+      `Failed to clone GitHub template source ${locator.owner}/${locator.repo}.`,
+    )
+  }
+}
+
+function resolveGitHubTemplateCacheRevision(
+  locator: GitHubTemplateLocator,
+): string | null {
+  const ref = locator.ref ?? 'HEAD'
+  const result = runGitTemplateCommand(
+    ['ls-remote', getGitHubTemplateRepositoryUrl(locator), ref],
+    `checking GitHub template revision ${locator.owner}/${locator.repo}`,
+  )
+  if (result.status !== 0 || typeof result.stdout !== 'string') {
+    return null
+  }
+
+  const revisions = result.stdout
+    .split('\n')
+    .map((line) => line.trim().split(/\s+/u)[0])
+    .filter((revision) => /^[0-9a-f]{40}$/iu.test(revision))
+
+  return revisions.length > 0 ? revisions[revisions.length - 1] : null
+}
+
 async function resolveGitHubTemplateSource(
   locator: GitHubTemplateLocator,
 ): Promise<SeedSource> {
+  let cacheRevision: string | null = null
+  if (isExternalTemplateCacheEnabled()) {
+    try {
+      cacheRevision = resolveGitHubTemplateCacheRevision(locator)
+    } catch {
+      cacheRevision = null
+    }
+  }
+  if (cacheRevision) {
+    const cachedSource = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: [
+          'github',
+          locator.owner,
+          locator.repo,
+          locator.sourcePath,
+          locator.ref ?? '',
+          cacheRevision,
+        ],
+        metadata: {
+          owner: locator.owner,
+          ref: locator.ref,
+          repo: locator.repo,
+          revision: cacheRevision,
+          sourcePath: locator.sourcePath,
+        },
+        namespace: 'github',
+      },
+      async (checkoutDir) => {
+        cloneGitHubTemplateSource(locator, checkoutDir)
+      },
+    )
+    if (cachedSource) {
+      const sourceDir = resolveGitHubTemplateDirectory(
+        cachedSource.sourceDir,
+        locator,
+      )
+      await assertNoSymlinks(sourceDir)
+      return {
+        blockDir: sourceDir,
+        rootDir: sourceDir,
+      }
+    }
+  }
+
   const { path: remoteRoot, cleanup } = await createManagedTempRoot(
     'wp-typia-template-source-',
   )
   const checkoutDir = path.join(remoteRoot, 'source')
 
   try {
-    const args = ['clone', '--depth', '1']
-    if (locator.ref) {
-      args.push('--branch', locator.ref)
-    }
-    args.push(
-      `https://github.com/${locator.owner}/${locator.repo}.git`,
-      checkoutDir,
-    )
-    const cloneTimeoutMs = getExternalTemplateTimeoutMs()
-    const cloneResult = spawnSync('git', args, {
-      stdio: 'ignore',
-      timeout: cloneTimeoutMs,
-    })
-    if (cloneResult.error) {
-      const errorCode =
-        typeof cloneResult.error === 'object' &&
-        cloneResult.error !== null &&
-        'code' in cloneResult.error
-          ? String((cloneResult.error as { code: unknown }).code)
-          : ''
-      if (errorCode === 'ETIMEDOUT') {
-        throw createExternalTemplateTimeoutError(
-          `cloning GitHub template ${locator.owner}/${locator.repo}`,
-          cloneTimeoutMs,
-        )
-      }
-      throw cloneResult.error
-    }
-    if (
-      cloneResult.signal === 'SIGTERM' ||
-      cloneResult.signal === 'SIGKILL'
-    ) {
-      throw createExternalTemplateTimeoutError(
-        `cloning GitHub template ${locator.owner}/${locator.repo}`,
-        cloneTimeoutMs,
-      )
-    }
-    if (cloneResult.status !== 0) {
-      throw new Error(
-        `Failed to clone GitHub template source ${locator.owner}/${locator.repo}.`,
-      )
-    }
-
-    const sourceDir = path.resolve(checkoutDir, locator.sourcePath)
-    const relativeSourceDir = path.relative(checkoutDir, sourceDir)
-    if (
-      relativeSourceDir.startsWith('..') ||
-      path.isAbsolute(relativeSourceDir)
-    ) {
-      throw new Error(
-        'GitHub template path must stay within the cloned repository.',
-      )
-    }
-    if (!fs.existsSync(sourceDir)) {
-      throw new Error(
-        `GitHub template path does not exist: ${locator.sourcePath}`,
-      )
-    }
+    cloneGitHubTemplateSource(locator, checkoutDir)
+    const sourceDir = resolveGitHubTemplateDirectory(checkoutDir, locator)
     await assertNoSymlinks(sourceDir)
 
     return {
