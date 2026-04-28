@@ -75,8 +75,19 @@ type ExternalTemplateCacheMetadata = Record<string, string | null>
  * source/integrity tuple, and `metadata` is persisted to the marker file.
  */
 export interface ExternalTemplateCacheDescriptor {
+  /**
+   * Ordered values that deterministically identify one cached template source.
+   */
   keyParts: readonly string[]
+
+  /**
+   * Diagnostic values persisted to the cache marker after sanitization.
+   */
   metadata: ExternalTemplateCacheMetadata
+
+  /**
+   * Cache family scope, stored as a single safe directory segment.
+   */
   namespace: string
 }
 
@@ -84,7 +95,14 @@ export interface ExternalTemplateCacheDescriptor {
  * Result returned when a cache entry is reused or populated.
  */
 export interface ExternalTemplateCacheResolution {
+  /**
+   * Whether the returned source directory came from an existing cache entry.
+   */
   cacheHit: boolean
+
+  /**
+   * Populated or reused template source directory.
+   */
   sourceDir: string
 }
 
