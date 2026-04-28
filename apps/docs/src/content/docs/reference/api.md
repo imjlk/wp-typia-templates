@@ -163,10 +163,10 @@ Remote metadata fetches, tarball downloads, and executable config loading now
 run behind bounded timeout and size guards so malformed or hostile sources fail
 directly instead of hanging the CLI indefinitely.
 Remote npm templates with registry integrity metadata and GitHub templates with
-resolvable remote revisions are cached locally after those guards pass. Use
-`WP_TYPIA_EXTERNAL_TEMPLATE_CACHE=0` when you need a forced refresh, or set
-`WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR` to move the cache into a CI-controlled
-directory.
+resolvable remote revisions are cached in a private per-user local directory
+after those guards pass. Use `WP_TYPIA_EXTERNAL_TEMPLATE_CACHE=0` when you need
+a forced refresh, or set `WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR` to move the
+cache into a CI-controlled directory.
 
 That remote-template support is still seed-oriented. Reusable external layer
 packages on top of the built-in shared scaffold graph are now implemented

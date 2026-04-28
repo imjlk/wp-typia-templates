@@ -86,6 +86,27 @@ describe("@wp-typia/project-tools template sources", () => {
     return tarballPath;
   }
 
+  function findFileByName(rootDir: string, fileName: string): string | null {
+    if (!fs.existsSync(rootDir)) {
+      return null;
+    }
+
+    for (const entry of fs.readdirSync(rootDir, { withFileTypes: true })) {
+      const entryPath = path.join(rootDir, entry.name);
+      if (entry.isFile() && entry.name === fileName) {
+        return entryPath;
+      }
+      if (entry.isDirectory()) {
+        const nestedFilePath = findFileByName(entryPath, fileName);
+        if (nestedFilePath) {
+          return nestedFilePath;
+        }
+      }
+    }
+
+    return null;
+  }
+
 test("getTemplateVariables rejects slugs that normalize to an empty identifier", () => {
   expect(() =>
     getTemplateVariables("basic", {
@@ -371,9 +392,9 @@ test("npm template tarballs reuse the external template cache until integrity ch
   const npmTemplateRoot = fs.mkdtempSync(
     path.join(tempRoot, "npm-cache-template-")
   );
-  const registryBase = "https://registry.npmjs.org";
+  const registryBase = "https://token:secret@registry.npmjs.org";
   const metadataUrl = `${registryBase}/${encodeURIComponent(packageName)}`;
-  const tarballUrl = `${registryBase}/@demo/cache-template/-/cache-template-1.0.0.tgz`;
+  const tarballUrl = `${registryBase}/@demo/cache-template/-/cache-template-1.0.0.tgz?download-token=secret#debug`;
   const tarballPath = createMinimalNpmTemplateTarball(
     npmTemplateRoot,
     packageName,
@@ -445,6 +466,22 @@ test("npm template tarballs reuse the external template cache until integrity ch
     expect(fs.existsSync(path.join(second.rootDir, "package.json"))).toBe(
       true
     );
+
+    const cacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+    if (!cacheDir) {
+      throw new Error("Expected the template cache directory to be configured.");
+    }
+    const markerPath = findFileByName(
+      cacheDir,
+      "wp-typia-template-cache.json"
+    );
+    if (!markerPath) {
+      throw new Error("Expected a populated external template cache marker.");
+    }
+    const markerText = fs.readFileSync(markerPath, "utf8");
+    expect(markerText).not.toContain("keyParts");
+    expect(markerText).not.toContain("token:secret");
+    expect(markerText).not.toContain("download-token");
 
     integrity = "sha512-cache-two";
     shasum = "cache-two";

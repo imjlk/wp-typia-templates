@@ -23,9 +23,19 @@ export const EXTERNAL_TEMPLATE_CACHE_DIR_ENV =
 const CACHE_MARKER_FILE = 'wp-typia-template-cache.json'
 
 /**
+ * Private directory mode used for cache roots and entries on POSIX platforms.
+ */
+const PRIVATE_CACHE_DIRECTORY_MODE = 0o700
+
+/**
  * Normalized environment values that disable the cache.
  */
 const DISABLED_CACHE_VALUES = new Set(['0', 'false', 'no', 'off'])
+
+/**
+ * Metadata fields that may contain credentialed or signed URLs.
+ */
+const URL_LIKE_METADATA_KEY = /(url|uri|registry|tarball)/iu
 
 /**
  * Serializable metadata recorded in the cache marker for diagnostics.
@@ -76,8 +86,8 @@ export function isExternalTemplateCacheEnabled(
  * Resolves the external template source cache root directory.
  *
  * `WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR` overrides the location. Without an
- * override, wp-typia uses a `wp-typia-template-source-cache` directory inside
- * the operating system temp directory.
+ * override, wp-typia uses a per-user `wp-typia-template-source-cache-*`
+ * directory inside the operating system temp directory.
  *
  * @param env Environment object to inspect, defaulting to `process.env`.
  * @returns Absolute cache root directory path.
@@ -90,7 +100,10 @@ export function getExternalTemplateCacheRoot(
     return path.resolve(configuredCacheDir)
   }
 
-  return path.join(os.tmpdir(), 'wp-typia-template-source-cache')
+  return path.join(
+    os.tmpdir(),
+    `wp-typia-template-source-cache-${getCurrentUserCacheSegment()}`,
+  )
 }
 
 /**
@@ -116,24 +129,109 @@ async function pathExists(filePath: string): Promise<boolean> {
   }
 }
 
+function getCurrentUserCacheSegment(): string {
+  if (typeof process.getuid === 'function') {
+    return String(process.getuid())
+  }
+
+  try {
+    const safeUsername = os
+      .userInfo()
+      .username.trim()
+      .replace(/[^A-Za-z0-9._-]+/gu, '-')
+    return safeUsername.length > 0 ? safeUsername : 'user'
+  } catch {
+    return 'user'
+  }
+}
+
+function getCurrentUid(): number | null {
+  return typeof process.getuid === 'function' ? process.getuid() : null
+}
+
+async function isPrivateCacheDirectory(directory: string): Promise<boolean> {
+  try {
+    const stats = await fsp.lstat(directory)
+    if (!stats.isDirectory() || stats.isSymbolicLink()) {
+      return false
+    }
+
+    const currentUid = getCurrentUid()
+    if (currentUid !== null && stats.uid !== currentUid) {
+      return false
+    }
+
+    if (process.platform !== 'win32' && (stats.mode & 0o077) !== 0) {
+      return false
+    }
+
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function ensurePrivateCacheDirectory(directory: string): Promise<boolean> {
+  try {
+    await fsp.mkdir(directory, {
+      mode: PRIVATE_CACHE_DIRECTORY_MODE,
+      recursive: true,
+    })
+    if (process.platform !== 'win32') {
+      await fsp.chmod(directory, PRIVATE_CACHE_DIRECTORY_MODE)
+    }
+    return isPrivateCacheDirectory(directory)
+  } catch {
+    return false
+  }
+}
+
+function sanitizeCacheMetadataValue(key: string, value: string): string {
+  if (!URL_LIKE_METADATA_KEY.test(key)) {
+    return value
+  }
+
+  try {
+    const url = new URL(value)
+    url.username = ''
+    url.password = ''
+    url.search = ''
+    url.hash = ''
+    return url.toString()
+  } catch {
+    return value
+  }
+}
+
+function sanitizeCacheMetadata(
+  metadata: ExternalTemplateCacheMetadata,
+): ExternalTemplateCacheMetadata {
+  return Object.fromEntries(
+    Object.entries(metadata).map(([key, value]) => [
+      key,
+      value === null ? null : sanitizeCacheMetadataValue(key, value),
+    ]),
+  )
+}
+
 function getCacheEntryPaths(
   descriptor: ExternalTemplateCacheDescriptor,
 ): {
   cacheKey: string
+  cacheRoot: string
   entryDir: string
   markerPath: string
   namespaceDir: string
   sourceDir: string
 } {
   const cacheKey = createExternalTemplateCacheKey(descriptor.keyParts)
-  const namespaceDir = path.join(
-    getExternalTemplateCacheRoot(),
-    descriptor.namespace,
-  )
+  const cacheRoot = getExternalTemplateCacheRoot()
+  const namespaceDir = path.join(cacheRoot, descriptor.namespace)
   const entryDir = path.join(namespaceDir, cacheKey)
 
   return {
     cacheKey,
+    cacheRoot,
     entryDir,
     markerPath: path.join(entryDir, CACHE_MARKER_FILE),
     namespaceDir,
@@ -142,10 +240,15 @@ function getCacheEntryPaths(
 }
 
 async function isReusableCacheEntry(
+  entryDir: string,
   markerPath: string,
   sourceDir: string,
 ): Promise<boolean> {
-  return (await pathExists(markerPath)) && (await pathExists(sourceDir))
+  return (
+    (await isPrivateCacheDirectory(entryDir)) &&
+    (await pathExists(markerPath)) &&
+    (await pathExists(sourceDir))
+  )
 }
 
 /**
@@ -167,16 +270,21 @@ export async function resolveExternalTemplateSourceCache(
     return null
   }
 
-  const { cacheKey, entryDir, markerPath, namespaceDir, sourceDir } =
+  const { cacheKey, cacheRoot, entryDir, markerPath, namespaceDir, sourceDir } =
     getCacheEntryPaths(descriptor)
-  if (await isReusableCacheEntry(markerPath, sourceDir)) {
+  if (
+    !(await ensurePrivateCacheDirectory(cacheRoot)) ||
+    !(await ensurePrivateCacheDirectory(namespaceDir))
+  ) {
+    return null
+  }
+
+  if (await isReusableCacheEntry(entryDir, markerPath, sourceDir)) {
     return {
       cacheHit: true,
       sourceDir,
     }
   }
-
-  await fsp.mkdir(namespaceDir, { recursive: true })
 
   const temporaryEntryDir = path.join(
     namespaceDir,
@@ -187,7 +295,13 @@ export async function resolveExternalTemplateSourceCache(
   const temporarySourceDir = path.join(temporaryEntryDir, 'source')
 
   try {
-    await fsp.mkdir(temporarySourceDir, { recursive: true })
+    await fsp.mkdir(temporarySourceDir, {
+      mode: PRIVATE_CACHE_DIRECTORY_MODE,
+      recursive: true,
+    })
+    if (process.platform !== 'win32') {
+      await fsp.chmod(temporaryEntryDir, PRIVATE_CACHE_DIRECTORY_MODE)
+    }
     await populateSourceDir(temporarySourceDir)
     await fsp.writeFile(
       path.join(temporaryEntryDir, CACHE_MARKER_FILE),
@@ -195,8 +309,7 @@ export async function resolveExternalTemplateSourceCache(
         {
           createdAt: new Date().toISOString(),
           key: cacheKey,
-          keyParts: descriptor.keyParts,
-          metadata: descriptor.metadata,
+          metadata: sanitizeCacheMetadata(descriptor.metadata),
           namespace: descriptor.namespace,
         },
         null,
@@ -218,7 +331,7 @@ export async function resolveExternalTemplateSourceCache(
         : ''
     if (
       (errorCode === 'EEXIST' || errorCode === 'ENOTEMPTY') &&
-      (await isReusableCacheEntry(markerPath, sourceDir))
+      (await isReusableCacheEntry(entryDir, markerPath, sourceDir))
     ) {
       return {
         cacheHit: true,
