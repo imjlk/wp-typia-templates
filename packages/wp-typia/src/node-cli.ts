@@ -57,6 +57,7 @@ import {
   WP_TYPIA_CANONICAL_CREATE_USAGE,
   WP_TYPIA_CANONICAL_MIGRATE_USAGE,
   WP_TYPIA_FUTURE_COMMAND_TREE,
+  WP_TYPIA_NODE_FALLBACK_TOP_LEVEL_COMMAND_NAMES,
   WP_TYPIA_POSITIONAL_ALIAS_USAGE,
   normalizeWpTypiaArgv,
 } from './command-contract';
@@ -64,6 +65,17 @@ import {
 type GlobalFlags = {
   format?: string;
   id?: string;
+};
+type NodeFallbackTopLevelCommandName =
+  (typeof WP_TYPIA_NODE_FALLBACK_TOP_LEVEL_COMMAND_NAMES)[number];
+type NodeFallbackExecutableCommandName = Exclude<
+  NodeFallbackTopLevelCommandName,
+  'help' | 'version'
+>;
+type NodeFallbackDispatchContext = {
+  cwd: string;
+  mergedFlags: Record<string, unknown>;
+  positionals: string[];
 };
 
 const NODE_FALLBACK_OPTION_PARSER = buildCommandOptionParser(
@@ -284,6 +296,16 @@ function renderDoctorHelp() {
   ]);
 }
 
+const NODE_FALLBACK_HELP_RENDERERS = {
+  add: renderAddHelp,
+  create: renderCreateHelp,
+  doctor: renderDoctorHelp,
+  init: renderInitHelp,
+  migrate: renderMigrateHelp,
+  sync: renderSyncHelp,
+  templates: renderTemplatesHelp,
+} satisfies Record<NodeFallbackExecutableCommandName, () => void>;
+
 function renderVersion(
   options: {
     format?: string;
@@ -394,111 +416,68 @@ async function renderDoctorJson(): Promise<void> {
   }
 }
 
-export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
-  const normalizedArgv = normalizeWpTypiaArgv(argv);
-  const { argv: argvWithoutConfigOverride, configOverridePath } =
-    extractWpTypiaConfigOverride(normalizedArgv);
-  const { argv: cliArgv, flags } = parseGlobalFlags(argvWithoutConfigOverride);
-  const { flags: commandFlags, positionals } = parseArgv(cliArgv);
-  const rawMergedFlags: Record<string, unknown> = {
-    ...commandFlags,
-    ...flags,
-  };
-  const [command, subcommand] = positionals;
-  const helpRequested =
-    cliArgv.length === 0 ||
-    hasFlagBeforeTerminator(cliArgv, '--help') ||
-    command === 'help';
-  const helpTarget = command === 'help' ? subcommand : command;
-  const versionRequested =
-    hasFlagBeforeTerminator(cliArgv, '--version') || command === 'version';
-
-  if (helpRequested) {
-    if (helpTarget === 'templates') {
-      renderTemplatesHelp();
-      return;
-    }
-    if (helpTarget === 'create') {
-      renderCreateHelp();
-      return;
-    }
-    if (helpTarget === 'init') {
-      renderInitHelp();
-      return;
-    }
-    if (helpTarget === 'add') {
-      renderAddHelp();
-      return;
-    }
-    if (helpTarget === 'migrate') {
-      renderMigrateHelp();
-      return;
-    }
-    if (helpTarget === 'sync') {
-      renderSyncHelp();
-      return;
-    }
-    if (helpTarget === 'doctor') {
-      renderDoctorHelp();
-      return;
-    }
-    renderGeneralHelp();
-    return;
-  }
-
-  if (versionRequested) {
-    renderVersion({
-      format:
-        typeof rawMergedFlags.format === 'string'
-          ? rawMergedFlags.format
-          : undefined,
-    });
-    return;
-  }
-
-  const mergedFlags = await applyNodeFallbackConfigDefaults(
-    command,
-    subcommand,
-    rawMergedFlags,
-    configOverridePath,
-    process.cwd(),
-  );
-
-  if (command === 'templates') {
-    const templateId =
-      typeof mergedFlags.id === 'string'
-        ? mergedFlags.id
-        : (positionals[2] as string | undefined);
-    const resolvedSubcommand = templateId ? 'inspect' : (subcommand ?? 'list');
-    if (resolvedSubcommand !== 'list' && resolvedSubcommand !== 'inspect') {
+const NODE_FALLBACK_COMMAND_DISPATCHERS = {
+  add: async ({
+    cwd,
+    mergedFlags,
+    positionals,
+  }: NodeFallbackDispatchContext) => {
+    if (!positionals[1]) {
+      const { formatAddHelpText } =
+        await import('@wp-typia/project-tools/cli-add');
+      printLine(formatAddHelpText());
       throw createCliCommandError({
-        code: CLI_DIAGNOSTIC_CODES.INVALID_COMMAND,
-        command: 'templates',
+        code: CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+        command: 'add',
         detailLines: [
-          `Unknown templates subcommand "${resolvedSubcommand}". Expected list or inspect.`,
+          `\`wp-typia add\` requires <kind>. Usage: wp-typia add ${formatAddKindUsagePlaceholder()} ...`,
         ],
       });
     }
     if (mergedFlags.format === 'json') {
-      renderTemplatesJson(
-        {
-          format: mergedFlags.format as string | undefined,
-          id: templateId,
-        },
-        resolvedSubcommand,
+      let completion;
+      try {
+        completion = await executeAddCommand({
+          cwd,
+          emitOutput: false,
+          flags: mergedFlags,
+          interactive: false,
+          kind: positionals[1],
+          name: positionals[2],
+        });
+      } catch (error) {
+        throw createCliCommandError({
+          command: 'add',
+          error,
+        });
+      }
+      printLine(
+        JSON.stringify(
+          buildStructuredCompletionSuccessPayload('add', completion, {
+            dryRun: Boolean(mergedFlags['dry-run']),
+            kind: positionals[1],
+            name: positionals[2],
+            projectDir: extractCompletionProjectDir(completion) ?? cwd,
+          }),
+          null,
+          2,
+        ),
       );
       return;
     }
-    await executeTemplatesCommand({
-      flags: {
-        id: templateId,
-        subcommand: resolvedSubcommand,
-      },
+    await executeAddCommand({
+      cwd,
+      flags: mergedFlags,
+      interactive: false,
+      kind: positionals[1],
+      name: positionals[2],
     });
-    return;
-  }
-
-  if (command === 'create') {
+  },
+  create: async ({
+    cwd,
+    mergedFlags,
+    positionals,
+  }: NodeFallbackDispatchContext) => {
     const projectDir = positionals[1];
     if (!projectDir) {
       throw createCliCommandError({
@@ -513,7 +492,7 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
     let completion;
     try {
       completion = await executeCreateCommand({
-        cwd: process.cwd(),
+        cwd,
         emitOutput: mergedFlags.format !== 'json',
         flags: mergedFlags,
         interactive: false,
@@ -541,13 +520,22 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
         ),
       );
     }
-    return;
-  }
-
-  if (command === 'init') {
+  },
+  doctor: async ({ cwd, mergedFlags }: NodeFallbackDispatchContext) => {
+    if (mergedFlags.format === 'json') {
+      await renderDoctorJson();
+      return;
+    }
+    await executeDoctorCommand(cwd);
+  },
+  init: async ({
+    cwd,
+    mergedFlags,
+    positionals,
+  }: NodeFallbackDispatchContext) => {
     const plan = await executeInitCommand(
       {
-        cwd: process.cwd(),
+        cwd,
         projectDir: positionals[1],
       },
       {
@@ -565,90 +553,30 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
         ),
       );
     }
-    return;
-  }
-
-  if (command === 'add') {
-    if (!positionals[1]) {
-      const { formatAddHelpText } =
-        await import('@wp-typia/project-tools/cli-add');
-      printLine(formatAddHelpText());
-      throw createCliCommandError({
-        code: CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
-        command: 'add',
-        detailLines: [
-          `\`wp-typia add\` requires <kind>. Usage: wp-typia add ${formatAddKindUsagePlaceholder()} ...`,
-        ],
-      });
-    }
-    if (mergedFlags.format === 'json') {
-      let completion;
-      try {
-        completion = await executeAddCommand({
-          cwd: process.cwd(),
-          emitOutput: false,
-          flags: mergedFlags,
-          interactive: false,
-          kind: positionals[1],
-          name: positionals[2],
-        });
-      } catch (error) {
-        throw createCliCommandError({
-          command: 'add',
-          error,
-        });
-      }
-      printLine(
-        JSON.stringify(
-          buildStructuredCompletionSuccessPayload('add', completion, {
-            dryRun: Boolean(mergedFlags['dry-run']),
-            kind: positionals[1],
-            name: positionals[2],
-            projectDir:
-              extractCompletionProjectDir(completion) ?? process.cwd(),
-          }),
-          null,
-          2,
-        ),
-      );
-      return;
-    }
-    await executeAddCommand({
-      cwd: process.cwd(),
-      flags: mergedFlags,
-      interactive: false,
-      kind: positionals[1],
-      name: positionals[2],
-    });
-    return;
-  }
-
-  if (command === 'migrate') {
+  },
+  migrate: async ({
+    cwd,
+    mergedFlags,
+    positionals,
+  }: NodeFallbackDispatchContext) => {
     await executeMigrateCommand({
       command: positionals[1],
-      cwd: process.cwd(),
+      cwd,
       flags: mergedFlags,
     });
-    return;
-  }
-
-  if (command === 'doctor') {
-    if (mergedFlags.format === 'json') {
-      await renderDoctorJson();
-      return;
-    }
-    await executeDoctorCommand(process.cwd());
-    return;
-  }
-
-  if (command === 'sync') {
+  },
+  sync: async ({
+    cwd,
+    mergedFlags,
+    positionals,
+  }: NodeFallbackDispatchContext) => {
     try {
       const syncTarget = resolveSyncExecutionTarget(positionals[1]);
       const sync = await executeSyncCommand({
         captureOutput:
           mergedFlags.format === 'json' && !Boolean(mergedFlags['dry-run']),
         check: Boolean(mergedFlags.check),
-        cwd: process.cwd(),
+        cwd,
         dryRun: Boolean(mergedFlags['dry-run']),
         target: syncTarget,
       });
@@ -681,6 +609,118 @@ export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
         error,
       });
     }
+  },
+  templates: async ({
+    mergedFlags,
+    positionals,
+  }: NodeFallbackDispatchContext) => {
+    const subcommand = positionals[1];
+    const templateId =
+      typeof mergedFlags.id === 'string'
+        ? mergedFlags.id
+        : (positionals[2] as string | undefined);
+    const resolvedSubcommand = templateId ? 'inspect' : (subcommand ?? 'list');
+    if (resolvedSubcommand !== 'list' && resolvedSubcommand !== 'inspect') {
+      throw createCliCommandError({
+        code: CLI_DIAGNOSTIC_CODES.INVALID_COMMAND,
+        command: 'templates',
+        detailLines: [
+          `Unknown templates subcommand "${resolvedSubcommand}". Expected list or inspect.`,
+        ],
+      });
+    }
+    if (mergedFlags.format === 'json') {
+      renderTemplatesJson(
+        {
+          format: mergedFlags.format as string | undefined,
+          id: templateId,
+        },
+        resolvedSubcommand,
+      );
+      return;
+    }
+    await executeTemplatesCommand({
+      flags: {
+        id: templateId,
+        subcommand: resolvedSubcommand,
+      },
+    });
+  },
+} satisfies Record<
+  NodeFallbackExecutableCommandName,
+  (context: NodeFallbackDispatchContext) => Promise<void>
+>;
+
+export async function runNodeCli(argv = process.argv.slice(2)): Promise<void> {
+  const normalizedArgv = normalizeWpTypiaArgv(argv);
+  const { argv: argvWithoutConfigOverride, configOverridePath } =
+    extractWpTypiaConfigOverride(normalizedArgv);
+  const { argv: cliArgv, flags } = parseGlobalFlags(argvWithoutConfigOverride);
+  const { flags: commandFlags, positionals } = parseArgv(cliArgv);
+  const rawMergedFlags: Record<string, unknown> = {
+    ...commandFlags,
+    ...flags,
+  };
+  const [command, subcommand] = positionals;
+  const helpRequested =
+    cliArgv.length === 0 ||
+    hasFlagBeforeTerminator(cliArgv, '--help') ||
+    command === 'help';
+  const helpTarget = command === 'help' ? subcommand : command;
+  const versionRequested =
+    hasFlagBeforeTerminator(cliArgv, '--version') || command === 'version';
+
+  if (helpRequested) {
+    if (helpTarget) {
+      const helpRenderer =
+        NODE_FALLBACK_HELP_RENDERERS[
+          helpTarget as NodeFallbackExecutableCommandName
+        ];
+      if (helpRenderer) {
+        helpRenderer();
+        return;
+      }
+      if (helpTarget === 'help' || helpTarget === 'version') {
+        renderGeneralHelp();
+        return;
+      }
+    } else {
+      renderGeneralHelp();
+      return;
+    }
+    renderGeneralHelp();
+    return;
+  }
+
+  if (versionRequested) {
+    renderVersion({
+      format:
+        typeof rawMergedFlags.format === 'string'
+          ? rawMergedFlags.format
+          : undefined,
+    });
+    return;
+  }
+
+  const mergedFlags = await applyNodeFallbackConfigDefaults(
+    command,
+    subcommand,
+    rawMergedFlags,
+    configOverridePath,
+    process.cwd(),
+  );
+
+  const commandDispatcher =
+    command &&
+    NODE_FALLBACK_COMMAND_DISPATCHERS[
+      command as NodeFallbackExecutableCommandName
+    ];
+  if (commandDispatcher) {
+    await commandDispatcher({
+      cwd: process.cwd(),
+      mergedFlags,
+      positionals,
+    });
     return;
   }
 

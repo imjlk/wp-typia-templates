@@ -144,6 +144,10 @@ export type WpTypiaCommandTreeEntry = Extract<
   WpTypiaCommandRegistryEntry,
   { commandTree: true }
 >;
+export type WpTypiaNodeFallbackCommandName = Extract<
+  WpTypiaCommandRegistryEntry,
+  { nodeFallback: true }
+>['name'];
 export type WpTypiaTopLevelCommandName = WpTypiaCommandTreeEntry['name'];
 
 export const WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES =
@@ -154,7 +158,7 @@ export const WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES =
 export const WP_TYPIA_NODE_FALLBACK_TOP_LEVEL_COMMAND_NAMES =
   WP_TYPIA_COMMAND_REGISTRY.filter((command) => command.nodeFallback).map(
     (command) => command.name,
-  ) as readonly WpTypiaReservedTopLevelCommandName[];
+  ) as readonly WpTypiaNodeFallbackCommandName[];
 
 export const WP_TYPIA_TOP_LEVEL_COMMAND_NAMES =
   WP_TYPIA_COMMAND_REGISTRY.filter((command) => command.commandTree).map(
