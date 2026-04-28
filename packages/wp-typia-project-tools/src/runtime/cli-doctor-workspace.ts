@@ -62,13 +62,46 @@ const WORKSPACE_BLOCK_TRANSFORMS_IMPORT_PATTERN =
 	/^\s*import\s*\{\s*applyWorkspaceBlockTransforms\s*\}\s*from\s*["']\.\/transforms["']\s*;?\s*$/mu;
 const WORKSPACE_BLOCK_TRANSFORMS_CALL_PATTERN =
 	/applyWorkspaceBlockTransforms\s*\(\s*registration\s*\.\s*settings\s*\)\s*;?/u;
+const WORKSPACE_BLOCK_IFRAME_COMPATIBILITY_DOC_URL =
+	"https://developer.wordpress.org/block-editor/reference-guides/block-api/block-api-versions/block-migration-for-iframe-editor-compatibility/";
+const WORKSPACE_BLOCK_IFRAME_DIAGNOSTIC_CODES = {
+	API_VERSION: "wp-typia.workspace.block.iframe.api-version",
+	BLOCK_PROPS: "wp-typia.workspace.block.iframe.block-props",
+	EDITOR_GLOBALS: "wp-typia.workspace.block.iframe.editor-globals",
+	EDITOR_STYLES: "wp-typia.workspace.block.iframe.editor-styles",
+} as const;
+const WORKSPACE_BLOCK_EDITOR_SOURCE_FILE_PATTERN = /\.[cm]?[jt]sx?$/u;
+const WORKSPACE_BLOCK_EDITOR_SOURCE_BASENAMES = new Set([
+	"edit",
+	"editor",
+	"index",
+	"save",
+]);
+const WORKSPACE_BLOCK_EDITOR_SOURCE_DIRECTORIES = new Set([
+	"components",
+	"controls",
+	"editor",
+	"inspector",
+]);
+const WORKSPACE_BLOCK_LOCAL_STYLE_FILES = [
+	"editor.css",
+	"editor.scss",
+	"index.css",
+	"style.css",
+	"style.scss",
+];
+const WORKSPACE_BLOCK_IFRAME_GLOBAL_DOM_PATTERN =
+	/\b(?:document|window)\b|\b(?:parent|top)\b(?!\s*:)/gu;
+const WORKSPACE_BLOCK_PROPS_PATTERN =
+	/\buse(?:Block|InnerBlocks)Props(?:\.save)?\s*\(/u;
 
 function createDoctorCheck(
 	label: string,
 	status: DoctorCheck["status"],
 	detail: string,
+	code?: string,
 ): DoctorCheck {
-	return { detail, label, status };
+	return code ? { code, detail, label, status } : { detail, label, status };
 }
 
 function createDoctorScopeCheck(
@@ -166,6 +199,193 @@ function hasUncommentedPattern(source: string, pattern: RegExp): boolean {
 
 function hasExecutablePattern(source: string, pattern: RegExp): boolean {
 	return pattern.test(maskTypeScriptCommentsAndLiterals(source));
+}
+
+type WorkspaceBlockIframeMetadata = Record<string, unknown> & {
+	apiVersion?: unknown;
+	editorStyle?: unknown;
+	style?: unknown;
+};
+
+interface WorkspaceBlockEditorSource {
+	relativePath: string;
+	source: string;
+}
+
+function normalizePathSeparators(relativePath: string): string {
+	return relativePath.split(path.sep).join("/");
+}
+
+function hasRegisteredBlockAsset(value: unknown): boolean {
+	if (typeof value === "string") {
+		return value.trim().length > 0;
+	}
+	if (Array.isArray(value)) {
+		return value.some((entry) => hasRegisteredBlockAsset(entry));
+	}
+	return false;
+}
+
+function readWorkspaceBlockIframeMetadata(
+	projectDir: string,
+	blockSlug: string,
+): {
+	blockJsonRelativePath: string;
+	document?: WorkspaceBlockIframeMetadata;
+	error?: string;
+} {
+	const blockJsonRelativePath = path.join("src", "blocks", blockSlug, "block.json");
+	const blockJsonPath = path.join(projectDir, blockJsonRelativePath);
+
+	if (!fs.existsSync(blockJsonPath)) {
+		return {
+			blockJsonRelativePath,
+			error: `Missing ${blockJsonRelativePath}`,
+		};
+	}
+
+	try {
+		const parsed = JSON.parse(fs.readFileSync(blockJsonPath, "utf8"));
+		if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+			return {
+				blockJsonRelativePath,
+				error: `${blockJsonRelativePath} must contain a JSON object`,
+			};
+		}
+		return {
+			blockJsonRelativePath,
+			document: parsed as WorkspaceBlockIframeMetadata,
+		};
+	} catch (error) {
+		return {
+			blockJsonRelativePath,
+			error: error instanceof Error ? error.message : String(error),
+		};
+	}
+}
+
+function isWorkspaceBlockEditorSource(relativePath: string): boolean {
+	const normalizedPath = normalizePathSeparators(relativePath);
+	const normalizedLowerPath = normalizedPath.toLowerCase();
+	if (
+		!WORKSPACE_BLOCK_EDITOR_SOURCE_FILE_PATTERN.test(normalizedLowerPath) ||
+		/\.d\.[cm]?[jt]s$/u.test(normalizedLowerPath)
+	) {
+		return false;
+	}
+
+	const segments = normalizedLowerPath.split("/");
+	const fileName = segments[segments.length - 1] ?? "";
+	const baseName = fileName.replace(/\.[^.]+$/u, "");
+	if (WORKSPACE_BLOCK_EDITOR_SOURCE_BASENAMES.has(baseName)) {
+		return true;
+	}
+
+	return segments
+		.slice(0, -1)
+		.some((segment) => WORKSPACE_BLOCK_EDITOR_SOURCE_DIRECTORIES.has(segment));
+}
+
+function isWorkspaceBlockSaveSource(relativePath: string): boolean {
+	const fileName = normalizePathSeparators(relativePath).split("/").pop() ?? "";
+	return fileName.replace(/\.[^.]+$/u, "").toLowerCase() === "save";
+}
+
+function collectWorkspaceBlockEditorSources(
+	projectDir: string,
+	blockSlug: string,
+): WorkspaceBlockEditorSource[] {
+	const blockDir = path.join(projectDir, "src", "blocks", blockSlug);
+	if (!fs.existsSync(blockDir)) {
+		return [];
+	}
+
+	const sources: WorkspaceBlockEditorSource[] = [];
+	const visitDirectory = (directory: string) => {
+		for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+			const entryPath = path.join(directory, entry.name);
+			if (entry.isDirectory()) {
+				visitDirectory(entryPath);
+				continue;
+			}
+			if (!entry.isFile()) {
+				continue;
+			}
+
+			const relativePath = normalizePathSeparators(path.relative(projectDir, entryPath));
+			const blockRelativePath = path.relative(blockDir, entryPath);
+			if (!isWorkspaceBlockEditorSource(blockRelativePath)) {
+				continue;
+			}
+
+			sources.push({
+				relativePath,
+				source: fs.readFileSync(entryPath, "utf8"),
+			});
+		}
+	};
+
+	visitDirectory(blockDir);
+	return sources;
+}
+
+function getSourceLineNumber(source: string, index: number): number {
+	let lineNumber = 1;
+	for (let cursor = 0; cursor < index; cursor += 1) {
+		if (source[cursor] === "\n") {
+			lineNumber += 1;
+		}
+	}
+	return lineNumber;
+}
+
+function isGlobalDomAccessCandidate(
+	maskedSource: string,
+	index: number,
+	token: string,
+): boolean {
+	if (token === "document" || token === "window") {
+		return true;
+	}
+
+	const before = maskedSource.slice(0, index);
+	const after = maskedSource.slice(index + token.length);
+	const previousNonWhitespace = before.match(/\S(?=\s*$)/u)?.[0] ?? "";
+	const nextNonWhitespace = after.match(/^\s*(\S)/u)?.[1] ?? "";
+
+	if (previousNonWhitespace === "." || previousNonWhitespace === "{" || previousNonWhitespace === ",") {
+		return false;
+	}
+	if (nextNonWhitespace === ":") {
+		return false;
+	}
+	if (/\b(?:const|function|let|var)\s+$/u.test(before)) {
+		return false;
+	}
+
+	return true;
+}
+
+function findWorkspaceBlockGlobalDomAccesses(
+	sources: readonly WorkspaceBlockEditorSource[],
+): string[] {
+	const findings: string[] = [];
+	for (const { relativePath, source } of sources) {
+		const maskedSource = maskTypeScriptCommentsAndLiterals(source);
+		const matches = maskedSource.matchAll(WORKSPACE_BLOCK_IFRAME_GLOBAL_DOM_PATTERN);
+		for (const match of matches) {
+			const index = match.index ?? 0;
+			const matchedToken = match[0].replace(/\W+/gu, "");
+			if (!isGlobalDomAccessCandidate(maskedSource, index, matchedToken)) {
+				continue;
+			}
+			findings.push(`${relativePath}:${getSourceLineNumber(source, index)} (${matchedToken})`);
+			if (findings.length >= 5) {
+				return findings;
+			}
+		}
+	}
+	return findings;
 }
 
 function getWorkspaceBootstrapRelativePath(packageName: string): string {
@@ -388,6 +608,94 @@ function checkWorkspaceBlockCollectionImport(
 			? "Shared block collection import is present"
 			: `Missing a shared collection import like ${WORKSPACE_COLLECTION_IMPORT_LINE}`,
 	);
+}
+
+function checkWorkspaceBlockIframeCompatibility(
+	projectDir: string,
+	blockSlug: string,
+): DoctorCheck[] {
+	const metadataResult = readWorkspaceBlockIframeMetadata(projectDir, blockSlug);
+	if (!metadataResult.document) {
+		return [
+			createDoctorCheck(
+				`Block iframe/API v3 ${blockSlug}`,
+				"warn",
+				metadataResult.error ?? `Unable to inspect ${metadataResult.blockJsonRelativePath}`,
+				WORKSPACE_BLOCK_IFRAME_DIAGNOSTIC_CODES.API_VERSION,
+			),
+		];
+	}
+
+	const blockJson = metadataResult.document;
+	const apiVersion =
+		typeof blockJson.apiVersion === "number" && Number.isFinite(blockJson.apiVersion)
+			? blockJson.apiVersion
+			: null;
+	const blockDir = path.join(projectDir, "src", "blocks", blockSlug);
+	const localStyleFiles = WORKSPACE_BLOCK_LOCAL_STYLE_FILES.filter((fileName) =>
+		fs.existsSync(path.join(blockDir, fileName)),
+	).map((fileName) => normalizePathSeparators(path.join("src", "blocks", blockSlug, fileName)));
+	const hasRegisteredEditorStyles =
+		hasRegisteredBlockAsset(blockJson.style) ||
+		hasRegisteredBlockAsset(blockJson.editorStyle);
+	const editorSources = collectWorkspaceBlockEditorSources(projectDir, blockSlug);
+	const editorWrapperSources = editorSources.filter(
+		(source) => !isWorkspaceBlockSaveSource(source.relativePath),
+	);
+	const globalDomAccesses = findWorkspaceBlockGlobalDomAccesses(editorSources);
+	const hasBlockPropsUsage = editorSources.some(({ source }) =>
+		hasExecutablePattern(source, WORKSPACE_BLOCK_PROPS_PATTERN),
+	);
+	const hasEditorBlockPropsUsage = editorWrapperSources.some(({ source }) =>
+		hasExecutablePattern(source, WORKSPACE_BLOCK_PROPS_PATTERN),
+	);
+	const blockWrapperStatus: DoctorCheck["status"] =
+		editorWrapperSources.length === 0 || hasEditorBlockPropsUsage ? "pass" : "warn";
+	const blockWrapperDetail =
+		editorSources.length === 0
+			? "No editor-facing block source files found; general file checks will report missing entrypoints"
+			: editorWrapperSources.length === 0
+				? "No editor wrapper source files found; general file checks will report missing entrypoints"
+				: hasEditorBlockPropsUsage
+					? "Editor-facing sources use block wrapper props"
+					: hasBlockPropsUsage
+						? "Only save-facing useBlockProps.save() usage was detected. Confirm the editor wrapper also receives useBlockProps() or useInnerBlocksProps() before relying on iframe editor rendering."
+						: "No useBlockProps(), useBlockProps.save(), or useInnerBlocksProps() usage was detected in editor-facing sources. Confirm the block wrapper receives WordPress block editor props before relying on iframe editor rendering.";
+
+	return [
+		createDoctorCheck(
+			`Block iframe API version ${blockSlug}`,
+			apiVersion !== null && apiVersion >= 3 ? "pass" : "warn",
+			apiVersion !== null && apiVersion >= 3
+				? "block.json declares apiVersion 3 for iframe editor readiness"
+				: `Set ${metadataResult.blockJsonRelativePath} apiVersion to 3 after testing the block in iframe-enabled Post Editor and Site Editor contexts. WordPress recommends API v3 for iframe editor compatibility. See ${WORKSPACE_BLOCK_IFRAME_COMPATIBILITY_DOC_URL}`,
+			WORKSPACE_BLOCK_IFRAME_DIAGNOSTIC_CODES.API_VERSION,
+		),
+		createDoctorCheck(
+			`Block iframe styles ${blockSlug}`,
+			localStyleFiles.length === 0 || hasRegisteredEditorStyles ? "pass" : "warn",
+			localStyleFiles.length === 0
+				? "No local block stylesheet source files found to register"
+				: hasRegisteredEditorStyles
+					? "block.json registers block styles for iframe editor loading"
+					: `Found stylesheet source files (${localStyleFiles.join(", ")}) but block.json does not declare style or editorStyle. Register block content styles so iframe editors do not depend on parent admin styles.`,
+			WORKSPACE_BLOCK_IFRAME_DIAGNOSTIC_CODES.EDITOR_STYLES,
+		),
+		createDoctorCheck(
+			`Block iframe globals ${blockSlug}`,
+			globalDomAccesses.length === 0 ? "pass" : "warn",
+			globalDomAccesses.length === 0
+				? "No direct window/document/parent DOM access detected in editor-facing block sources"
+				: `Direct global DOM access detected at ${globalDomAccesses.join(", ")}. Prefer element.ownerDocument/defaultView via refs or useRefEffect for iframe editor content.`,
+			WORKSPACE_BLOCK_IFRAME_DIAGNOSTIC_CODES.EDITOR_GLOBALS,
+		),
+		createDoctorCheck(
+			`Block iframe wrapper ${blockSlug}`,
+			blockWrapperStatus,
+			blockWrapperDetail,
+			WORKSPACE_BLOCK_IFRAME_DIAGNOSTIC_CODES.BLOCK_PROPS,
+		),
+	];
 }
 
 function checkWorkspacePatternBootstrap(projectDir: string, packageName: string): DoctorCheck {
@@ -1391,6 +1699,7 @@ export function getWorkspaceDoctorChecks(cwd: string): DoctorCheck[] {
 			checks.push(checkWorkspaceBlockMetadata(workspace.projectDir, workspace, block));
 			checks.push(checkWorkspaceBlockHooks(workspace.projectDir, block.slug));
 			checks.push(checkWorkspaceBlockCollectionImport(workspace.projectDir, block.slug));
+			checks.push(...checkWorkspaceBlockIframeCompatibility(workspace.projectDir, block.slug));
 		}
 
 		const registeredBlockSlugs = new Set(inventory.blocks.map((block) => block.slug));

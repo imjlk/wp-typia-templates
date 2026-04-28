@@ -301,7 +301,7 @@ function renderDoctorHelp() {
     '',
     ...NODE_FALLBACK_RUNTIME_SUMMARY_LINES,
     '',
-    'Runs read-only environment readiness checks. Official wp-typia workspace roots also get inventory, source-tree drift, and shared convention checks.',
+    'Runs read-only environment readiness checks. Official wp-typia workspace roots also get inventory, source-tree drift, iframe/API v3 compatibility, and shared convention checks.',
     '',
     'Supported flags:',
     ...formatNodeFallbackOptionHelp(DOCTOR_OPTION_METADATA),

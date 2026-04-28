@@ -253,15 +253,18 @@ and fuzzing commands when you want to cover every configured legacy migration ve
 every configured block target in that workspace.
 
 `wp-typia doctor` is the lightweight read-only check for environment readiness,
-workspace inventory consistency, shared conventions, and current source-tree
-artifact drift. `wp-typia migrate doctor --all` is the deep migration audit for
-migration-enabled workspaces. It validates migration target alignment,
+workspace inventory consistency, shared conventions, current source-tree
+artifact drift, and iframe/API v3 compatibility readiness for workspace blocks.
+Iframe compatibility findings are emitted as non-failing `WARN` rows with
+machine-readable codes, so CI and IDE integrations can surface them without
+blocking unrelated checks. `wp-typia migrate doctor --all` is the deep migration
+audit for migration-enabled workspaces. It validates migration target alignment,
 snapshots, generated migration artifacts, and fixture coverage.
 
 In non-interactive shells, `wp-typia create`, `add`, `migrate`, and `doctor`
 now share the same summary-first failure layout. Root `doctor` still streams
-PASS/FAIL check rows plus a final summary, while the other commands render the
-shared diagnostic block only when they fail.
+PASS/WARN/FAIL check rows plus a final summary, while the other commands render
+the shared diagnostic block only when they fail.
 
 Compatibility note: `@wp-typia/project-tools` is the canonical programmatic package, `wp-typia` is the canonical CLI package, and `@wp-typia/block-runtime/*` is the maintained generated-project runtime helper surface.
 
