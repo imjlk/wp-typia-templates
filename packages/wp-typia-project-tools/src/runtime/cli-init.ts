@@ -1,6 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import {
+	CLI_DIAGNOSTIC_CODES,
+	createCliDiagnosticCodeError,
+} from "./cli-diagnostics.js";
 import { discoverMigrationInitLayout } from "./migration-project.js";
 import {
 	formatAddDevDependenciesCommand,
@@ -109,7 +113,15 @@ function readProjectPackageJson(projectDir: string): ProjectPackageJson | null {
 		return null;
 	}
 
-	return JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as ProjectPackageJson;
+	try {
+		return JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as ProjectPackageJson;
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		throw createCliDiagnosticCodeError(
+			CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+			`Unable to parse ${packageJsonPath}: ${message}`,
+		);
+	}
 }
 
 function inferInitPackageManager(

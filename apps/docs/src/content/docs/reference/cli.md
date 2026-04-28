@@ -27,6 +27,44 @@ shell `completions` require Bun 1.3.11+ or the standalone release binary.
 Status markers honor `WP_TYPIA_ASCII=1`, `WP_TYPIA_ASCII=0`, and `NO_COLOR` in
 the same way as generated project onboarding output.
 
+## Machine-readable diagnostics
+
+Commands that support `--format json` emit stable failure envelopes for CI, IDE,
+and wrapper integrations. The `error.code` field is the integration contract;
+human-readable `message`, `summary`, and `detailLines` can change as guidance
+improves.
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "missing-argument",
+    "command": "create",
+    "kind": "command-execution",
+    "tag": "CommandExecutionError"
+  }
+}
+```
+
+Known throw sites attach an explicit diagnostic code. Message-based inference is
+kept only as a compatibility fallback for legacy or untyped errors.
+
+| Code                         | Typical cause                                            | Recovery                                                                |
+| ---------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `command-execution`          | The command failed after preflight checks completed.     | Read the detail lines and rerun after fixing the underlying tool error. |
+| `configuration-missing`      | Required wp-typia configuration is missing.              | Add the missing config section or rerun the scaffold/init setup.        |
+| `dependencies-not-installed` | Project or workspace dependencies are not installed.     | Run the reported package-manager install command from the project root. |
+| `doctor-check-failed`        | One or more doctor checks failed.                        | Fix the failed doctor rows, then rerun `wp-typia doctor`.               |
+| `invalid-argument`           | An argument value is present but unsupported or invalid. | Correct the argument value using command help and the detail lines.     |
+| `invalid-command`            | The command or subcommand is not supported.              | Run `wp-typia --help` and switch to a listed command/subcommand.        |
+| `missing-argument`           | A required positional argument or flag value is missing. | Provide the missing value shown in the detail lines.                    |
+| `missing-build-artifact`     | The CLI package layout is missing bundled artifacts.     | Reinstall the package/binary or rebuild the workspace.                  |
+| `outside-project-root`       | The command ran outside a generated project/workspace.   | `cd` into the scaffolded root or rerun the scaffold/init flow.          |
+| `template-source-timeout`    | External template resolution timed out.                  | Retry with a reachable source, local path, or cached package.           |
+| `template-source-too-large`  | External template content exceeded the safety limit.     | Reduce the package size or use a smaller template layer.                |
+| `unknown-template`           | The requested template id is not registered.             | Run `wp-typia templates list` and use one of the listed ids.            |
+| `unsupported-command`        | The current runtime cannot execute that command surface. | Install Bun 1.3.11+ or use the standalone wp-typia binary if required.  |
+
 ## `create`
 
 Scaffold a new project.

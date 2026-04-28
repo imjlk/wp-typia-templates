@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as http from "node:http";
 import * as path from "node:path";
 import { cleanupScaffoldTempRoot, createBlockExternalFixturePath, createBlockSubsetFixturePath, createScaffoldTempRoot, entryPath, getCommandErrorMessage, runCapturedCli, runCli, scaffoldOfficialWorkspace, templateLayerAmbiguousFixturePath, templateLayerFixturePath } from "./helpers/scaffold-test-harness.js";
-import { CLI_DIAGNOSTIC_CODES, createCliCommandError, createCliDiagnosticCodeError, serializeCliDiagnosticError } from "../src/runtime/cli-diagnostics.js";
+import { CLI_DIAGNOSTIC_CODE_METADATA, CLI_DIAGNOSTIC_CODES, createCliCommandError, createCliDiagnosticCodeError, getCliDiagnosticCodeMetadata, serializeCliDiagnosticError } from "../src/runtime/cli-diagnostics.js";
 import { formatHelpText, getDoctorChecks, getNextSteps, getOptionalOnboarding, runScaffoldFlow } from "../src/runtime/cli-core.js";
 import { assertValidEditorPluginSlot } from "../src/runtime/cli-add-shared.js";
 import { collectScaffoldAnswers } from "../src/runtime/scaffold.js";
@@ -47,6 +47,88 @@ describe("@wp-typia/project-tools scaffold CLI flow", () => {
     };
   }
 
+  type StructuredCliFailurePayload = {
+    error: {
+      code: string;
+      command?: string;
+      detailLines?: string[];
+      kind: string;
+      message: string;
+      name: string;
+      summary?: string;
+      tag: string;
+    };
+    ok: false;
+  };
+
+  function parseStructuredCliFailure(output: string): StructuredCliFailurePayload {
+    for (let startIndex = output.indexOf("{"); startIndex !== -1; startIndex = output.indexOf("{", startIndex + 1)) {
+      let depth = 0;
+      let escaped = false;
+      let inString = false;
+
+      for (let index = startIndex; index < output.length; index += 1) {
+        const character = output[index];
+
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+        if (character === "\\") {
+          escaped = true;
+          continue;
+        }
+        if (character === "\"") {
+          inString = !inString;
+          continue;
+        }
+        if (inString) {
+          continue;
+        }
+        if (character === "{") {
+          depth += 1;
+          continue;
+        }
+        if (character !== "}") {
+          continue;
+        }
+
+        depth -= 1;
+        if (depth !== 0) {
+          continue;
+        }
+
+        try {
+          const parsed = JSON.parse(
+            output.slice(startIndex, index + 1)
+          ) as StructuredCliFailurePayload;
+          if (parsed.ok === false && typeof parsed.error?.code === "string") {
+            return parsed;
+          }
+        } catch {}
+
+        break;
+      }
+    }
+
+    throw new Error(`Expected a structured CLI failure payload in output: ${output}`);
+  }
+
+  function readStructuredCliFailure(
+    command: "bun" | "node",
+    args: string[],
+    options: Parameters<typeof runCli>[2] = {}
+  ): StructuredCliFailurePayload {
+    const output = getCommandErrorMessage(() =>
+      runCli(command, args, {
+        stdio: "pipe",
+        ...options,
+      })
+    );
+
+    return parseStructuredCliFailure(output);
+  }
+
 test("CLI diagnostics do not classify unknown template variants as missing templates", () => {
   const diagnostic = serializeCliDiagnosticError(
     createCliCommandError({
@@ -71,6 +153,103 @@ test("CLI diagnostics preserve explicit throw-site codes without message inferen
 
   expect(diagnostic.code).toBe("missing-argument");
   expect(diagnostic.message).toContain("Opaque scaffold preflight failure.");
+});
+
+test("CLI diagnostic metadata covers every stable code", () => {
+  const codes = Object.values(CLI_DIAGNOSTIC_CODES).sort();
+
+  expect(Object.keys(CLI_DIAGNOSTIC_CODE_METADATA).sort()).toEqual(codes);
+  for (const code of codes) {
+    const metadata = getCliDiagnosticCodeMetadata(code);
+    expect(metadata.cause.length).toBeGreaterThan(0);
+    expect(metadata.recovery.length).toBeGreaterThan(0);
+  }
+});
+
+test("node and bun entries keep structured diagnostic envelopes stable", () => {
+  for (const command of ["node", "bun"] as const) {
+    const payload = readStructuredCliFailure(command, [
+      entryPath,
+      "create",
+      "--format",
+      "json",
+    ]);
+
+    expect(payload.ok).toBe(false);
+    expect(payload.error.code).toBe("missing-argument");
+    expect(payload.error.command).toBe("create");
+    expect(payload.error.kind).toBe("command-execution");
+    expect(payload.error.name).toBe("CliDiagnosticError");
+    expect(payload.error.summary).toBe(
+      "Unable to complete the requested create workflow."
+    );
+    expect(payload.error.tag).toBe("CommandExecutionError");
+    expect(payload.error.detailLines).toContain(
+      "`wp-typia create` requires <project-dir>."
+    );
+  }
+});
+
+test("structured diagnostic codes cover representative CLI command failures", () => {
+  expect(
+    readStructuredCliFailure("node", [
+      entryPath,
+      "create",
+      "--format",
+      "json",
+    ]).error.code
+  ).toBe("missing-argument");
+
+  expect(
+    readStructuredCliFailure("node", [
+      entryPath,
+      "add",
+      "block",
+      "--format",
+      "json",
+    ]).error.code
+  ).toBe("missing-argument");
+
+  expect(
+    readStructuredCliFailure("node", [
+      entryPath,
+      "sync",
+      "legacy",
+      "--format",
+      "json",
+    ]).error.code
+  ).toBe("invalid-command");
+
+  const invalidInitDir = path.join(tempRoot, "invalid-init-package-json");
+  fs.mkdirSync(invalidInitDir, { recursive: true });
+  fs.writeFileSync(path.join(invalidInitDir, "package.json"), "{", "utf8");
+  expect(
+    readStructuredCliFailure(
+      "node",
+      [entryPath, "init", "--format", "json"],
+      {
+        cwd: invalidInitDir,
+      }
+    ).error.code
+  ).toBe("invalid-argument");
+
+  const unwritableDoctorDir = path.join(tempRoot, "doctor-unwritable-cwd");
+  fs.mkdirSync(unwritableDoctorDir, { recursive: true });
+  fs.chmodSync(unwritableDoctorDir, 0o555);
+  try {
+    const output = getCommandErrorMessage(() =>
+      runCli("node", [entryPath, "doctor", "--format", "json"], {
+        cwd: unwritableDoctorDir,
+        stdio: "pipe",
+      })
+    );
+
+    expect(output).toContain('"code": "doctor-check-failed"');
+    expect(output).toContain('"kind": "command-execution"');
+    expect(output).toContain('"tag": "CommandExecutionError"');
+  } finally {
+    fs.chmodSync(unwritableDoctorDir, 0o755);
+  }
 });
 
 test("editor plugin slot validation rejects inherited object keys", () => {

@@ -27,6 +27,79 @@ export const CLI_DIAGNOSTIC_CODES = {
 export type CliDiagnosticCode =
 	(typeof CLI_DIAGNOSTIC_CODES)[keyof typeof CLI_DIAGNOSTIC_CODES];
 
+export interface CliDiagnosticCodeMetadata {
+	cause: string;
+	recovery: string;
+}
+
+export const CLI_DIAGNOSTIC_CODE_METADATA = {
+	[CLI_DIAGNOSTIC_CODES.COMMAND_EXECUTION]: {
+		cause: "The command failed after argument parsing and preflight checks completed.",
+		recovery:
+			"Read the detail lines for the underlying tool failure, rerun with the same command once corrected, and report the full JSON envelope if the recovery is unclear.",
+	},
+	[CLI_DIAGNOSTIC_CODES.CONFIGURATION_MISSING]: {
+		cause: "A command needs configuration that is not present in the current project.",
+		recovery:
+			"Add the missing wp-typia config section or rerun the scaffold/init flow that creates the expected configuration.",
+	},
+	[CLI_DIAGNOSTIC_CODES.DEPENDENCIES_NOT_INSTALLED]: {
+		cause: "Generated project or workspace dependencies are missing from the local install.",
+		recovery:
+			"Run the package-manager install command from the reported project root, then rerun the wp-typia command.",
+	},
+	[CLI_DIAGNOSTIC_CODES.DOCTOR_CHECK_FAILED]: {
+		cause: "One or more doctor checks reported a failing environment or workspace row.",
+		recovery:
+			"Inspect the failed check labels and details, fix the reported drift or missing prerequisite, then rerun `wp-typia doctor`.",
+	},
+	[CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT]: {
+		cause: "An argument was present but did not match the supported value, shape, or project state.",
+		recovery:
+			"Correct the argument value using command help or the detail lines, then rerun the command.",
+	},
+	[CLI_DIAGNOSTIC_CODES.INVALID_COMMAND]: {
+		cause: "The command or subcommand is not part of the supported wp-typia command tree.",
+		recovery:
+			"Run `wp-typia --help` or the relevant command help and switch to a supported command/subcommand.",
+	},
+	[CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT]: {
+		cause: "A required positional argument or flag value was omitted.",
+		recovery:
+			"Provide the missing argument or flag value shown in the detail lines, then rerun the command.",
+	},
+	[CLI_DIAGNOSTIC_CODES.MISSING_BUILD_ARTIFACT]: {
+		cause: "The published or standalone CLI layout is missing bundled build artifacts.",
+		recovery:
+			"Reinstall the package or standalone binary, or rebuild the workspace before invoking the command again.",
+	},
+	[CLI_DIAGNOSTIC_CODES.OUTSIDE_PROJECT_ROOT]: {
+		cause: "The command was run outside a generated wp-typia project or official workspace root.",
+		recovery:
+			"Change into the scaffolded project/workspace root, or rerun the scaffold/init workflow that creates the expected root files.",
+	},
+	[CLI_DIAGNOSTIC_CODES.TEMPLATE_SOURCE_TIMEOUT]: {
+		cause: "External template resolution did not complete within the allowed time.",
+		recovery:
+			"Retry with a reachable template source, use a local path, or cache the template package before rerunning.",
+	},
+	[CLI_DIAGNOSTIC_CODES.TEMPLATE_SOURCE_TOO_LARGE]: {
+		cause: "External template content exceeded the safety size limit.",
+		recovery:
+			"Reduce the template package size or point wp-typia at a smaller official template layer.",
+	},
+	[CLI_DIAGNOSTIC_CODES.UNKNOWN_TEMPLATE]: {
+		cause: "The requested scaffold template or add-block template id is not registered.",
+		recovery:
+			"Run `wp-typia templates list` and rerun with one of the listed template ids.",
+	},
+	[CLI_DIAGNOSTIC_CODES.UNSUPPORTED_COMMAND]: {
+		cause: "The requested command exists conceptually but is not supported by the current runtime surface.",
+		recovery:
+			"Install Bun 1.3.11+ or use the standalone wp-typia binary when the detail lines say the Bun-powered runtime is required.",
+	},
+} satisfies Record<CliDiagnosticCode, CliDiagnosticCodeMetadata>;
+
 export type CliDiagnosticCodeError<TCode extends CliDiagnosticCode = CliDiagnosticCode> =
 	Error & { code: TCode };
 
@@ -215,6 +288,12 @@ function readCliDiagnosticCode(error: unknown): CliDiagnosticCode | null {
 	}
 
 	return null;
+}
+
+export function getCliDiagnosticCodeMetadata(
+	code: CliDiagnosticCode,
+): CliDiagnosticCodeMetadata {
+	return CLI_DIAGNOSTIC_CODE_METADATA[code];
 }
 
 /**

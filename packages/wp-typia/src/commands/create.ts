@@ -1,6 +1,7 @@
 import { createElement } from "react";
 
 import { defineCommand } from "@bunli/core";
+import { CLI_DIAGNOSTIC_CODES } from "@wp-typia/project-tools/cli-diagnostics";
 
 import {
 	buildCommandOptions,
@@ -44,6 +45,7 @@ export const createCommand = defineCommand({
 		const projectDir = args.positional[0];
 		if (!projectDir) {
 			emitCliDiagnosticFailure(args, {
+				code: CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
 				command: "create",
 				detailLines: [
 					"`wp-typia create` requires <project-dir>.",

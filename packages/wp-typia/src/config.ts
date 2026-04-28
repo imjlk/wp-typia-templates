@@ -3,6 +3,10 @@ import os from "node:os";
 import path from "node:path";
 
 import { isPlainObject as isRecord } from "@wp-typia/api-client/runtime-primitives";
+import {
+	CLI_DIAGNOSTIC_CODES,
+	createCliDiagnosticCodeError,
+} from "@wp-typia/project-tools/cli-diagnostics";
 
 export type WpTypiaSchemaSource = {
 	namespace: string;
@@ -86,7 +90,12 @@ async function readJsonFile(filePath: string): Promise<JsonRecord | null> {
 		) {
 			return null;
 		}
-		throw error;
+		const message = error instanceof Error ? error.message : String(error);
+		throw createCliDiagnosticCodeError(
+			CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+			`Unable to parse ${filePath}: ${message}`,
+			error instanceof Error ? { cause: error } : undefined,
+		);
 	}
 }
 

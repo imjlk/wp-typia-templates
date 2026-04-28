@@ -1,4 +1,5 @@
 import {
+	CLI_DIAGNOSTIC_CODES,
 	createCliCommandError,
 	formatDoctorCheckLine,
 	formatDoctorSummaryLine,
@@ -72,6 +73,7 @@ export async function runDoctor(
 	const failureDetailLines = getDoctorFailureDetailLines(checks);
 	if (failureDetailLines.length > 0) {
 		throw createCliCommandError({
+			code: CLI_DIAGNOSTIC_CODES.DOCTOR_CHECK_FAILED,
 			command: "doctor",
 			detailLines: failureDetailLines,
 			summary: "One or more doctor checks failed.",
