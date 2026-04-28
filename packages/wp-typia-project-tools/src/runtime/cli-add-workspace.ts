@@ -27,27 +27,39 @@ import {
 } from "./cli-add-shared.js";
 
 const VARIATIONS_IMPORT_LINE = "import { registerWorkspaceVariations } from './variations';";
+const VARIATIONS_IMPORT_PATTERN =
+	/import\s*\{\s*registerWorkspaceVariations\s*\}\s*from\s*["']\.\/variations["']\s*;?/u;
 const VARIATIONS_CALL_LINE = "registerWorkspaceVariations();";
 const VARIATIONS_CALL_PATTERN = /registerWorkspaceVariations\s*\(\s*\)\s*;/u;
 const BLOCK_STYLES_IMPORT_LINE = "import { registerWorkspaceBlockStyles } from './styles';";
+const BLOCK_STYLES_IMPORT_PATTERN =
+	/import\s*\{\s*registerWorkspaceBlockStyles\s*\}\s*from\s*["']\.\/styles["']\s*;?/u;
 const BLOCK_STYLES_CALL_LINE = "registerWorkspaceBlockStyles();";
 const BLOCK_STYLES_CALL_PATTERN = /registerWorkspaceBlockStyles\s*\(\s*\)\s*;/u;
 const BLOCK_TRANSFORMS_IMPORT_LINE =
 	"import { applyWorkspaceBlockTransforms } from './transforms';";
+const BLOCK_TRANSFORMS_IMPORT_PATTERN =
+	/import\s*\{\s*applyWorkspaceBlockTransforms\s*\}\s*from\s*["']\.\/transforms["']\s*;?/u;
 const BLOCK_TRANSFORMS_CALL_LINE = "applyWorkspaceBlockTransforms(registration.settings);";
 const BLOCK_TRANSFORMS_CALL_PATTERN =
 	/applyWorkspaceBlockTransforms\s*\(\s*registration\s*\.\s*settings\s*\)\s*;/u;
 const BLOCK_REGISTRATION_CALL_PATTERNS = [
-	/registerScaffoldBlockType\s*\([\s\S]*?\)\s*;/u,
-	/registerBlockType<[\s\S]*?\)\s*;/u,
-	/registerBlockType\([\s\S]*?\)\s*;/u,
+	/registerScaffoldBlockType\s*\([\s\S]*?\)\s*;?/u,
+	/registerBlockType<[\s\S]*?\)\s*;?/u,
+	/registerBlockType\([\s\S]*?\)\s*;?/u,
 ] as const;
 const SCAFFOLD_REGISTRATION_SETTINGS_CALL_PATTERN =
-	/registerScaffoldBlockType\s*\(\s*registration\s*\.\s*name\s*,\s*registration\s*\.\s*settings\s*\)\s*;/u;
+	/registerScaffoldBlockType\s*\(\s*registration\s*\.\s*name\s*,\s*registration\s*\.\s*settings\s*\)\s*;?/u;
 const FULL_BLOCK_NAME_PATTERN = /^[a-z][a-z0-9-]*\/[a-z][a-z0-9-]*$/u;
 
 function maskSourceSegment(segment: string): string {
 	return segment.replace(/[^\n\r]/gu, " ");
+}
+
+function maskTypeScriptComments(source: string): string {
+	return source
+		.replace(/\/\*[\s\S]*?\*\//gu, maskSourceSegment)
+		.replace(/\/\/[^\n\r]*/gu, maskSourceSegment);
 }
 
 // Preserve source offsets so executable-code match indexes still map to the original file.
@@ -124,6 +136,10 @@ function maskTypeScriptCommentsAndLiterals(source: string): string {
 
 function hasExecutablePattern(source: string, pattern: RegExp): boolean {
 	return pattern.test(maskTypeScriptCommentsAndLiterals(source));
+}
+
+function hasUncommentedPattern(source: string, pattern: RegExp): boolean {
+	return pattern.test(maskTypeScriptComments(source));
 }
 
 function findExecutablePatternMatch(
@@ -415,7 +431,7 @@ async function ensureVariationRegistrationHook(blockIndexPath: string): Promise<
 	await patchFile(blockIndexPath, (source) => {
 		let nextSource = source;
 
-		if (!nextSource.includes(VARIATIONS_IMPORT_LINE)) {
+		if (!hasUncommentedPattern(nextSource, VARIATIONS_IMPORT_PATTERN)) {
 			nextSource = `${VARIATIONS_IMPORT_LINE}\n${nextSource}`;
 		}
 
@@ -450,7 +466,7 @@ async function ensureBlockStyleRegistrationHook(blockIndexPath: string): Promise
 	await patchFile(blockIndexPath, (source) => {
 		let nextSource = source;
 
-		if (!nextSource.includes(BLOCK_STYLES_IMPORT_LINE)) {
+		if (!hasUncommentedPattern(nextSource, BLOCK_STYLES_IMPORT_PATTERN)) {
 			nextSource = `${BLOCK_STYLES_IMPORT_LINE}\n${nextSource}`;
 		}
 
@@ -485,7 +501,7 @@ async function ensureBlockTransformRegistrationHook(blockIndexPath: string): Pro
 	await patchFile(blockIndexPath, (source) => {
 		let nextSource = source;
 
-		if (!nextSource.includes(BLOCK_TRANSFORMS_IMPORT_LINE)) {
+		if (!hasUncommentedPattern(nextSource, BLOCK_TRANSFORMS_IMPORT_PATTERN)) {
 			nextSource = `${BLOCK_TRANSFORMS_IMPORT_LINE}\n${nextSource}`;
 		}
 

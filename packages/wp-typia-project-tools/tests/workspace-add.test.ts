@@ -621,10 +621,31 @@ test("canonical CLI can add block styles and transforms to an official workspace
       cwd: targetDir,
     }
   );
+  const blockIndexPath = path.join(
+    targetDir,
+    "src",
+    "blocks",
+    "counter-card",
+    "index.tsx"
+  );
   runCli(
     "node",
     [entryPath, "add", "style", "callout-emphasis", "--block", "counter-card"],
     { cwd: targetDir }
+  );
+  const semicolonlessBlockIndexSource = fs
+    .readFileSync(blockIndexPath, "utf8")
+    .replace(
+      "registerScaffoldBlockType(registration.name, registration.settings);",
+      "registerScaffoldBlockType(registration.name, registration.settings)"
+    );
+  fs.writeFileSync(
+    blockIndexPath,
+    [
+      'import { applyWorkspaceBlockTransforms } from "./transforms"',
+      semicolonlessBlockIndexSource,
+    ].join("\n"),
+    "utf8"
   );
   runCli(
     "node",
@@ -646,7 +667,7 @@ test("canonical CLI can add block styles and transforms to an official workspace
     "utf8"
   );
   const blockIndexSource = fs.readFileSync(
-    path.join(targetDir, "src", "blocks", "counter-card", "index.tsx"),
+    blockIndexPath,
     "utf8"
   );
   const stylesIndexSource = fs.readFileSync(
@@ -697,6 +718,14 @@ test("canonical CLI can add block styles and transforms to an official workspace
   expect(blockIndexSource).toContain(
     "applyWorkspaceBlockTransforms(registration.settings);"
   );
+  expect(blockIndexSource).toContain(
+    "applyWorkspaceBlockTransforms(registration.settings);\nregisterScaffoldBlockType(registration.name, registration.settings)"
+  );
+  expect(
+    blockIndexSource.match(
+      /import\s*\{\s*applyWorkspaceBlockTransforms\s*\}\s*from\s*["']\.\/transforms["']\s*;?/gu
+    )?.length ?? 0
+  ).toBe(1);
   expect(stylesIndexSource).toContain("registerBlockStyle(metadata.name, style)");
   expect(stylesIndexSource).toContain(
     "workspaceBlockStyle_callout_emphasis"
