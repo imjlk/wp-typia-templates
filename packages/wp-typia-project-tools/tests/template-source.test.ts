@@ -6,7 +6,10 @@ import * as path from "node:path";
 import { blockTypesPackageVersion, cleanupScaffoldTempRoot, createBlockExternalFixturePath, createBlockSubsetFixturePath, createScaffoldTempRoot, normalizedBlockRuntimePackageVersion, packageRoot, templateLayerFixturePath, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
 import { getTemplateVariables, scaffoldProject } from "../src/runtime/index.js";
 import { resolveTemplateId } from "../src/runtime/scaffold.js";
-import { resolveExternalTemplateSourceCache } from "../src/runtime/template-source-cache.js";
+import {
+  findReusableExternalTemplateSourceCache,
+  resolveExternalTemplateSourceCache,
+} from "../src/runtime/template-source-cache.js";
 import { copyRenderedDirectory } from "../src/runtime/template-render.js";
 import { parseGitHubTemplateLocator, parseNpmTemplateLocator, parseTemplateLocator, resolveTemplateSeed } from "../src/runtime/template-source.js";
 import { EXTERNAL_TEMPLATE_TRUST_WARNING } from "../src/runtime/template-source-external.js";
@@ -292,6 +295,100 @@ test("external template cache ignores corrupted source files", async () => {
 
     expect(secondResolution).toBeNull();
     expect(populated).toBe(true);
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
+test("external template cache rejects symlinked roots without chmoding targets", async () => {
+  if (process.platform === "win32") {
+    return;
+  }
+
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+  const targetDir = path.join(tempRoot, "symlink-cache-target");
+  const symlinkDir = path.join(tempRoot, "symlink-cache-root");
+  let populated = false;
+
+  fs.mkdirSync(targetDir, { recursive: true });
+  fs.chmodSync(targetDir, 0o755);
+  fs.symlinkSync(targetDir, symlinkDir, "dir");
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = symlinkDir;
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    const resolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["symlink-root"],
+        metadata: {},
+        namespace: "npm",
+      },
+      async (sourceDir) => {
+        populated = true;
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    expect(resolution).toBeNull();
+    expect(populated).toBe(false);
+    expect(fs.statSync(targetDir).mode & 0o077).not.toBe(0);
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
+test("external template cache can find reusable entries by metadata", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = path.join(
+    tempRoot,
+    "metadata-lookup-cache"
+  );
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    const resolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: [
+          "github",
+          "demo-owner",
+          "demo-repo",
+          "plugin",
+          "main",
+          "0123456789abcdef0123456789abcdef01234567",
+        ],
+        metadata: {
+          owner: "demo-owner",
+          ref: "main",
+          repo: "demo-repo",
+          revision: "0123456789abcdef0123456789abcdef01234567",
+          sourcePath: "plugin",
+        },
+        namespace: "github",
+      },
+      async (sourceDir) => {
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    expect(resolution?.cacheHit).toBe(false);
+
+    const lookupResolution = await findReusableExternalTemplateSourceCache({
+      metadata: {
+        owner: "demo-owner",
+        ref: "main",
+        repo: "demo-repo",
+        sourcePath: "plugin",
+      },
+      namespace: "github",
+    });
+
+    expect(lookupResolution?.cacheHit).toBe(true);
+    expect(lookupResolution?.sourceDir).toBe(resolution?.sourceDir);
   } finally {
     restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
     restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);

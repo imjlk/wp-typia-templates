@@ -17,6 +17,7 @@ import {
   readJsonResponseWithLimit,
 } from './external-template-guards.js'
 import {
+  findReusableExternalTemplateSourceCache,
   isExternalTemplateCacheEnabled,
   resolveExternalTemplateSourceCache,
 } from './template-source-cache.js'
@@ -555,6 +556,11 @@ type GitHubTemplateResolvedRevision = {
   revision: string
 }
 
+type GitHubTemplateCacheRevisionResolution = {
+  lookupUnavailable: boolean
+  revision: string | null
+}
+
 function pickGitHubTemplateCacheRevision(
   locator: GitHubTemplateLocator,
   revisions: readonly GitHubTemplateResolvedRevision[],
@@ -602,11 +608,11 @@ function pickGitHubTemplateCacheRevision(
  * Resolves a GitHub template ref to a stable revision for cache keying.
  *
  * @param locator GitHub template locator containing owner, repo, and optional ref.
- * @returns A commit-like SHA from `git ls-remote`, or `null` when unavailable.
+ * @returns Revision lookup result, including whether `git ls-remote` was unavailable.
  */
 function resolveGitHubTemplateCacheRevision(
   locator: GitHubTemplateLocator,
-): string | null {
+): GitHubTemplateCacheRevisionResolution {
   const result = runGitTemplateCommand(
     [
       'ls-remote',
@@ -617,7 +623,10 @@ function resolveGitHubTemplateCacheRevision(
     { captureOutput: true },
   )
   if (result.status !== 0 || typeof result.stdout !== 'string') {
-    return null
+    return {
+      lookupUnavailable: true,
+      revision: null,
+    }
   }
 
   const revisions = result.stdout
@@ -636,18 +645,67 @@ function resolveGitHubTemplateCacheRevision(
       (entry): entry is GitHubTemplateResolvedRevision => entry !== null,
     )
 
-  return pickGitHubTemplateCacheRevision(locator, revisions)
+  return {
+    lookupUnavailable: false,
+    revision: pickGitHubTemplateCacheRevision(locator, revisions),
+  }
+}
+
+function getGitHubTemplateCacheMetadata(
+  locator: GitHubTemplateLocator,
+  revision?: string,
+): Record<string, string | null> {
+  return {
+    ...(revision ? { revision } : {}),
+    owner: locator.owner,
+    ref: locator.ref,
+    repo: locator.repo,
+    sourcePath: locator.sourcePath,
+  }
+}
+
+async function reuseGitHubTemplateCacheByMetadata(
+  locator: GitHubTemplateLocator,
+): Promise<SeedSource | null> {
+  const cachedSource = await findReusableExternalTemplateSourceCache({
+    metadata: getGitHubTemplateCacheMetadata(locator),
+    namespace: 'github',
+  })
+  if (!cachedSource) {
+    return null
+  }
+
+  const sourceDir = resolveGitHubTemplateDirectory(
+    cachedSource.sourceDir,
+    locator,
+  )
+  await assertNoSymlinks(sourceDir)
+  return {
+    blockDir: sourceDir,
+    rootDir: sourceDir,
+  }
 }
 
 async function resolveGitHubTemplateSource(
   locator: GitHubTemplateLocator,
 ): Promise<SeedSource> {
+  const cacheEnabled = isExternalTemplateCacheEnabled()
+  let cacheRevisionLookupUnavailable = false
   let cacheRevision: string | null = null
-  if (isExternalTemplateCacheEnabled()) {
+  if (cacheEnabled) {
     try {
-      cacheRevision = resolveGitHubTemplateCacheRevision(locator)
+      const resolvedRevision = resolveGitHubTemplateCacheRevision(locator)
+      cacheRevision = resolvedRevision.revision
+      cacheRevisionLookupUnavailable = resolvedRevision.lookupUnavailable
     } catch {
       cacheRevision = null
+      cacheRevisionLookupUnavailable = true
+    }
+  }
+  if (cacheEnabled && !cacheRevision && cacheRevisionLookupUnavailable) {
+    const cachedSource = await reuseGitHubTemplateCacheByMetadata(locator)
+    if (cachedSource) {
+      return cachedSource
     }
   }
   if (cacheRevision) {
@@ -663,24 +721,21 @@ async function resolveGitHubTemplateSource(
             locator.ref ?? '',
             resolvedCacheRevision,
           ],
-          metadata: {
-            owner: locator.owner,
-            ref: locator.ref,
-            repo: locator.repo,
-            revision: resolvedCacheRevision,
-            sourcePath: locator.sourcePath,
-          },
+          metadata: getGitHubTemplateCacheMetadata(
+            locator,
+            resolvedCacheRevision,
+          ),
           namespace: 'github',
         },
         async (checkoutDir) => {
           cloneGitHubTemplateSource(locator, checkoutDir)
+          const sourceDir = resolveGitHubTemplateDirectory(checkoutDir, locator)
+          await assertNoSymlinks(sourceDir)
           pinGitHubTemplateCacheRevision(
             locator,
             checkoutDir,
             resolvedCacheRevision,
           )
-          const sourceDir = resolveGitHubTemplateDirectory(checkoutDir, locator)
-          await assertNoSymlinks(sourceDir)
         },
       )
       if (cachedSource) {

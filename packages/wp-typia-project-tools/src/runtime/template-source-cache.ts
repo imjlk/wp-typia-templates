@@ -107,6 +107,21 @@ export interface ExternalTemplateCacheResolution {
 }
 
 /**
+ * Metadata-only lookup descriptor for finding an existing reusable cache entry.
+ */
+export interface ExternalTemplateCacheLookupDescriptor {
+  /**
+   * Metadata fields that must match the sanitized marker metadata.
+   */
+  metadata: ExternalTemplateCacheMetadata
+
+  /**
+   * Cache family scope, stored as a single safe directory segment.
+   */
+  namespace: string
+}
+
+/**
  * Checks whether remote external template source caching is enabled.
  *
  * Caching is enabled by default. Set `WP_TYPIA_EXTERNAL_TEMPLATE_CACHE` to
@@ -244,8 +259,20 @@ async function ensurePrivateCacheDirectory(directory: string): Promise<boolean> 
       mode: PRIVATE_CACHE_DIRECTORY_MODE,
       recursive: true,
     })
+    const stats = await fsp.lstat(directory)
+    if (!stats.isDirectory() || stats.isSymbolicLink()) {
+      return false
+    }
+
+    const currentUid = getCurrentUid()
+    if (currentUid !== null && stats.uid !== currentUid) {
+      return false
+    }
+
     if (process.platform !== 'win32') {
-      await fsp.chmod(directory, PRIVATE_CACHE_DIRECTORY_MODE)
+      if ((stats.mode & 0o077) !== 0) {
+        await fsp.chmod(directory, PRIVATE_CACHE_DIRECTORY_MODE)
+      }
     }
     return isPrivateCacheDirectory(directory)
   } catch {
@@ -348,6 +375,132 @@ async function isReusableCacheEntry(
     (await pathExists(markerPath)) &&
     (await isDirectoryPath(sourceDir))
   )
+}
+
+function parseCacheMarkerMetadata(
+  markerText: string,
+): { createdAtMs: number; metadata: ExternalTemplateCacheMetadata } | null {
+  let marker: unknown
+  try {
+    marker = JSON.parse(markerText)
+  } catch {
+    return null
+  }
+  if (typeof marker !== 'object' || marker === null || Array.isArray(marker)) {
+    return null
+  }
+
+  const rawMetadata = (marker as { metadata?: unknown }).metadata
+  if (
+    typeof rawMetadata !== 'object' ||
+    rawMetadata === null ||
+    Array.isArray(rawMetadata)
+  ) {
+    return null
+  }
+
+  const metadata: ExternalTemplateCacheMetadata = {}
+  for (const [key, value] of Object.entries(rawMetadata)) {
+    if (typeof value !== 'string' && value !== null) {
+      return null
+    }
+    metadata[key] = value
+  }
+
+  const rawCreatedAt = (marker as { createdAt?: unknown }).createdAt
+  const createdAtMs =
+    typeof rawCreatedAt === 'string' ? Date.parse(rawCreatedAt) : 0
+
+  return {
+    createdAtMs: Number.isFinite(createdAtMs) ? createdAtMs : 0,
+    metadata,
+  }
+}
+
+function cacheMetadataMatches(
+  actual: ExternalTemplateCacheMetadata,
+  expected: ExternalTemplateCacheMetadata,
+): boolean {
+  return Object.entries(expected).every(([key, value]) => actual[key] === value)
+}
+
+/**
+ * Finds a reusable cache entry whose marker metadata includes the expected fields.
+ *
+ * This lookup is intended for resilient fallbacks where a caller cannot compute
+ * the exact deterministic key but can safely reuse a previously validated local
+ * cache entry for the same source identity.
+ *
+ * @param descriptor Cache namespace and marker metadata fields to match.
+ * @returns Existing cache resolution details, or `null` when no safe entry exists.
+ */
+export async function findReusableExternalTemplateSourceCache(
+  descriptor: ExternalTemplateCacheLookupDescriptor,
+): Promise<ExternalTemplateCacheResolution | null> {
+  if (!isExternalTemplateCacheEnabled()) {
+    return null
+  }
+
+  const cacheRoot = getExternalTemplateCacheRoot()
+  const namespaceDir = resolveCacheNamespaceDir(
+    cacheRoot,
+    descriptor.namespace,
+  )
+  if (!namespaceDir) {
+    return null
+  }
+  if (
+    !(await isPrivateCacheDirectory(cacheRoot)) ||
+    !(await isPrivateCacheDirectory(namespaceDir))
+  ) {
+    return null
+  }
+
+  let entries: fs.Dirent[]
+  try {
+    entries = await fsp.readdir(namespaceDir, { withFileTypes: true })
+  } catch {
+    return null
+  }
+
+  let bestEntry: { createdAtMs: number; sourceDir: string } | null = null
+  for (const entry of entries) {
+    if (!entry.isDirectory()) {
+      continue
+    }
+
+    const entryDir = path.join(namespaceDir, entry.name)
+    const markerPath = path.join(entryDir, CACHE_MARKER_FILE)
+    const sourceDir = path.join(entryDir, 'source')
+    if (!(await isReusableCacheEntry(entryDir, markerPath, sourceDir))) {
+      continue
+    }
+
+    let markerText: string
+    try {
+      markerText = await fsp.readFile(markerPath, 'utf8')
+    } catch {
+      continue
+    }
+
+    const marker = parseCacheMarkerMetadata(markerText)
+    if (!marker || !cacheMetadataMatches(marker.metadata, descriptor.metadata)) {
+      continue
+    }
+    if (!bestEntry || marker.createdAtMs > bestEntry.createdAtMs) {
+      bestEntry = {
+        createdAtMs: marker.createdAtMs,
+        sourceDir,
+      }
+    }
+  }
+
+  return bestEntry
+    ? {
+        cacheHit: true,
+        sourceDir: bestEntry.sourceDir,
+      }
+    : null
 }
 
 /**
