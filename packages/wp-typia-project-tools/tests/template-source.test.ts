@@ -587,6 +587,93 @@ test("npm template cache can be bypassed with an environment override", async ()
   }
 });
 
+test("npm template cache falls back when the cache directory is unavailable", async () => {
+  const packageName = "@demo/cache-unavailable-template";
+  const version = "1.0.0";
+  const npmTemplateRoot = fs.mkdtempSync(
+    path.join(tempRoot, "npm-cache-unavailable-template-")
+  );
+  const registryBase = "https://registry.npmjs.org";
+  const metadataUrl = `${registryBase}/${encodeURIComponent(packageName)}`;
+  const tarballUrl = `${registryBase}/@demo/cache-unavailable-template/-/cache-unavailable-template-1.0.0.tgz`;
+  const tarballPath = createMinimalNpmTemplateTarball(
+    npmTemplateRoot,
+    packageName,
+    version
+  );
+  const unavailableCachePath = path.join(npmTemplateRoot, "cache-file");
+  const originalFetch = globalThis.fetch;
+  const originalRegistry = process.env.NPM_CONFIG_REGISTRY;
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+  let tarballDownloads = 0;
+
+  fs.writeFileSync(unavailableCachePath, "not a directory", "utf8");
+  process.env.NPM_CONFIG_REGISTRY = registryBase;
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = unavailableCachePath;
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  globalThis.fetch = (async (input) => {
+    const requestUrl =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+        ? input.href
+        : input.url;
+    if (requestUrl === metadataUrl) {
+      return new Response(
+        JSON.stringify({
+          "dist-tags": {
+            latest: version,
+          },
+          versions: {
+            [version]: {
+              dist: {
+                integrity: "sha512-cache-unavailable",
+                shasum: "cache-unavailable",
+                tarball: tarballUrl,
+              },
+            },
+          },
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      );
+    }
+
+    if (requestUrl === tarballUrl) {
+      tarballDownloads += 1;
+      return new Response(fs.readFileSync(tarballPath), { status: 200 });
+    }
+
+    throw new Error(
+      `Unexpected fetch URL in npm template unavailable cache test: ${requestUrl}`
+    );
+  }) as typeof fetch;
+
+  try {
+    const locator = parseTemplateLocator(
+      "@demo/cache-unavailable-template@^1.0.0"
+    );
+    const first = await resolveTemplateSeed(locator, tempRoot);
+    const second = await resolveTemplateSeed(locator, tempRoot);
+
+    expect(tarballDownloads).toBe(2);
+    expect(second.rootDir).not.toBe(first.rootDir);
+
+    await first.cleanup?.();
+    await second.cleanup?.();
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreEnvValue("NPM_CONFIG_REGISTRY", originalRegistry);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
 test("local official external template configs honor --variant overrides", async () => {
   const targetDir = path.join(tempRoot, "demo-external-hero");
 

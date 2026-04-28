@@ -33,6 +33,22 @@ const PRIVATE_CACHE_DIRECTORY_MODE = 0o700
 const DISABLED_CACHE_VALUES = new Set(['0', 'false', 'no', 'off'])
 
 /**
+ * Filesystem errors that mean another writer published the same cache entry.
+ */
+const CACHE_PUBLISH_RACE_ERROR_CODES = new Set(['EEXIST', 'ENOTEMPTY'])
+
+/**
+ * Filesystem errors that make the optional cache unavailable.
+ */
+const CACHE_UNAVAILABLE_ERROR_CODES = new Set([
+  'EACCES',
+  'ENOSPC',
+  'ENOTDIR',
+  'EPERM',
+  'EROFS',
+])
+
+/**
  * Metadata fields that may contain credentialed or signed URLs.
  */
 const URL_LIKE_METADATA_KEY = /(url|uri|registry|tarball)/iu
@@ -126,6 +142,20 @@ async function pathExists(filePath: string): Promise<boolean> {
     return true
   } catch {
     return false
+  }
+}
+
+function getNodeErrorCode(error: unknown): string {
+  return typeof error === 'object' && error !== null && 'code' in error
+    ? String((error as { code: unknown }).code)
+    : ''
+}
+
+async function removeTemporaryCacheEntry(entryDir: string): Promise<void> {
+  try {
+    await fsp.rm(entryDir, { force: true, recursive: true })
+  } catch {
+    // Cache cleanup is best-effort; the caller can still continue uncached.
   }
 }
 
@@ -293,6 +323,7 @@ export async function resolveExternalTemplateSourceCache(
       .slice(2)}`,
   )
   const temporarySourceDir = path.join(temporaryEntryDir, 'source')
+  let populateFailed = false
 
   try {
     await fsp.mkdir(temporarySourceDir, {
@@ -302,7 +333,12 @@ export async function resolveExternalTemplateSourceCache(
     if (process.platform !== 'win32') {
       await fsp.chmod(temporaryEntryDir, PRIVATE_CACHE_DIRECTORY_MODE)
     }
-    await populateSourceDir(temporarySourceDir)
+    try {
+      await populateSourceDir(temporarySourceDir)
+    } catch (error) {
+      populateFailed = true
+      throw error
+    }
     await fsp.writeFile(
       path.join(temporaryEntryDir, CACHE_MARKER_FILE),
       `${JSON.stringify(
@@ -324,13 +360,14 @@ export async function resolveExternalTemplateSourceCache(
       sourceDir,
     }
   } catch (error) {
-    await fsp.rm(temporaryEntryDir, { force: true, recursive: true })
-    const errorCode =
-      typeof error === 'object' && error !== null && 'code' in error
-        ? String((error as { code: unknown }).code)
-        : ''
+    await removeTemporaryCacheEntry(temporaryEntryDir)
+    if (populateFailed) {
+      throw error
+    }
+
+    const errorCode = getNodeErrorCode(error)
     if (
-      (errorCode === 'EEXIST' || errorCode === 'ENOTEMPTY') &&
+      CACHE_PUBLISH_RACE_ERROR_CODES.has(errorCode) &&
       (await isReusableCacheEntry(entryDir, markerPath, sourceDir))
     ) {
       return {
@@ -338,7 +375,10 @@ export async function resolveExternalTemplateSourceCache(
         sourceDir,
       }
     }
-    if (errorCode === 'EEXIST' || errorCode === 'ENOTEMPTY') {
+    if (
+      CACHE_PUBLISH_RACE_ERROR_CODES.has(errorCode) ||
+      CACHE_UNAVAILABLE_ERROR_CODES.has(errorCode)
+    ) {
       return null
     }
     throw error

@@ -44,6 +44,33 @@ const USER_FACING_TEMPLATE_IDS = [
   OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
 ] as const
 
+const GITHUB_TEMPLATE_CACHE_REVISION_RACE_CODE =
+  'github-template-cache-revision-race'
+
+type GitHubTemplateCacheRevisionRaceError = Error & {
+  code: typeof GITHUB_TEMPLATE_CACHE_REVISION_RACE_CODE
+}
+
+function createGitHubTemplateCacheRevisionRaceError(
+  message: string,
+): GitHubTemplateCacheRevisionRaceError {
+  const error = new Error(message) as GitHubTemplateCacheRevisionRaceError
+  error.code = GITHUB_TEMPLATE_CACHE_REVISION_RACE_CODE
+  return error
+}
+
+function isGitHubTemplateCacheRevisionRaceError(
+  error: unknown,
+): error is GitHubTemplateCacheRevisionRaceError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: unknown }).code ===
+      GITHUB_TEMPLATE_CACHE_REVISION_RACE_CODE
+  )
+}
+
 function getUnknownNpmTemplateMessage(templateId: string): string {
   return [
     `Unknown template "${templateId}". Expected one of: ${USER_FACING_TEMPLATE_IDS.join(', ')}.`,
@@ -488,7 +515,7 @@ function pinGitHubTemplateCacheRevision(
     `fetching GitHub template revision ${locator.owner}/${locator.repo}`,
   )
   if (fetchResult.status !== 0) {
-    throw new Error(
+    throw createGitHubTemplateCacheRevisionRaceError(
       `Failed to fetch GitHub template revision ${cacheRevision} for ${locator.owner}/${locator.repo}.`,
     )
   }
@@ -498,13 +525,13 @@ function pinGitHubTemplateCacheRevision(
     `checking out GitHub template revision ${locator.owner}/${locator.repo}`,
   )
   if (checkoutResult.status !== 0) {
-    throw new Error(
+    throw createGitHubTemplateCacheRevisionRaceError(
       `Failed to check out GitHub template revision ${cacheRevision} for ${locator.owner}/${locator.repo}.`,
     )
   }
 
   if (readGitHubTemplateHeadRevision(checkoutDir) !== normalizedCacheRevision) {
-    throw new Error(
+    throw createGitHubTemplateCacheRevisionRaceError(
       `GitHub template checkout did not match resolved revision ${cacheRevision} for ${locator.owner}/${locator.repo}.`,
     )
   }
@@ -611,7 +638,10 @@ async function resolveGitHubTemplateSource(
           rootDir: sourceDir,
         }
       }
-    } catch {
+    } catch (error) {
+      if (!isGitHubTemplateCacheRevisionRaceError(error)) {
+        throw error
+      }
       // Fall back to the existing uncached clone path if revision pinning races.
     }
   }
