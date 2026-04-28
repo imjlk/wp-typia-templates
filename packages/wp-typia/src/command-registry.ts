@@ -140,10 +140,11 @@ export type WpTypiaReservedTopLevelCommandName =
   WpTypiaCommandRegistryEntry['name'];
 export type WpTypiaCommandOptionGroupName =
   WpTypiaCommandRegistryEntry['optionGroups'][number];
-export type WpTypiaTopLevelCommandName = Extract<
+export type WpTypiaCommandTreeEntry = Extract<
   WpTypiaCommandRegistryEntry,
   { commandTree: true }
->['name'];
+>;
+export type WpTypiaTopLevelCommandName = WpTypiaCommandTreeEntry['name'];
 
 export const WP_TYPIA_RESERVED_TOP_LEVEL_COMMAND_NAMES =
   WP_TYPIA_COMMAND_REGISTRY.map(
@@ -165,27 +166,26 @@ export const WP_TYPIA_BUN_REQUIRED_TOP_LEVEL_COMMAND_NAMES =
     (command) => command.name,
   ) as readonly WpTypiaReservedTopLevelCommandName[];
 
-export const WP_TYPIA_FUTURE_COMMAND_TREE = WP_TYPIA_COMMAND_REGISTRY.filter(
-  (
-    command,
-  ): command is Extract<WpTypiaCommandRegistryEntry, { commandTree: true }> =>
-    command.commandTree,
-).map((command) => ({
-  description: command.description,
-  name: command.name,
-  ...(command.subcommands ? { subcommands: command.subcommands } : {}),
-})) as ReadonlyArray<{
+export const WP_TYPIA_FUTURE_COMMAND_TREE: ReadonlyArray<{
   description: string;
   name: WpTypiaTopLevelCommandName;
   subcommands?: readonly string[];
-}>;
+}> = WP_TYPIA_COMMAND_REGISTRY.filter(
+  (command): command is WpTypiaCommandTreeEntry => command.commandTree,
+).map((command) => ({
+  description: command.description,
+  name: command.name,
+  subcommands: 'subcommands' in command ? command.subcommands : undefined,
+}));
+
+const commandOptionGroupNamesByTopLevelCommand = {} as Record<
+  WpTypiaReservedTopLevelCommandName,
+  readonly WpTypiaCommandOptionGroupName[]
+>;
+
+for (const command of WP_TYPIA_COMMAND_REGISTRY) {
+  commandOptionGroupNamesByTopLevelCommand[command.name] = command.optionGroups;
+}
 
 export const WP_TYPIA_COMMAND_OPTION_GROUP_NAMES_BY_TOP_LEVEL_COMMAND =
-  Object.fromEntries(
-    WP_TYPIA_COMMAND_REGISTRY.map((command) => [
-      command.name,
-      command.optionGroups,
-    ]),
-  ) as {
-    [Name in WpTypiaReservedTopLevelCommandName]: readonly WpTypiaCommandOptionGroupName[];
-  };
+  commandOptionGroupNamesByTopLevelCommand;

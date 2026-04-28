@@ -322,16 +322,6 @@ export const GLOBAL_OPTION_METADATA = {
   },
 } as const satisfies CommandOptionMetadataMap;
 
-export const COMMAND_OPTION_GROUP_NAMES = [
-  'global',
-  'create',
-  'add',
-  'migrate',
-  'sync',
-  'doctor',
-  'templates',
-] as const satisfies readonly CommandOptionGroupName[];
-
 export const COMMAND_OPTION_METADATA_BY_GROUP = {
   add: ADD_OPTION_METADATA,
   create: CREATE_OPTION_METADATA,
@@ -341,6 +331,10 @@ export const COMMAND_OPTION_METADATA_BY_GROUP = {
   sync: SYNC_OPTION_METADATA,
   templates: TEMPLATES_OPTION_METADATA,
 } as const satisfies Record<CommandOptionGroupName, CommandOptionMetadataMap>;
+
+export const COMMAND_OPTION_GROUP_NAMES = Object.keys(
+  COMMAND_OPTION_METADATA_BY_GROUP,
+) as CommandOptionGroupName[];
 
 export function collectCommandOptionMetadata(
   ...groupNames: readonly CommandOptionGroupName[]

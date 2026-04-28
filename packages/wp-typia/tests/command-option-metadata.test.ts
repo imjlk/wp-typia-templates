@@ -3,7 +3,9 @@ import { describe, expect, test } from 'bun:test';
 import {
   ALL_COMMAND_OPTION_METADATA,
   ADD_OPTION_METADATA,
+  buildArgvWalkerRoutingMetadata,
   buildCommandOptionParser,
+  COMMAND_OPTION_METADATA_BY_GROUP,
   COMMAND_ROUTING_METADATA,
   CREATE_OPTION_METADATA,
   DOCTOR_OPTION_METADATA,
@@ -160,7 +162,12 @@ describe('command option metadata helpers', () => {
     expect(parsed.positionals).toEqual(['doctor']);
   });
 
-  test('keeps sync metadata in the canonical routing aggregation', () => {
+  test('derives canonical routing metadata from every command option group', () => {
+    const expectedRoutingMetadata = buildArgvWalkerRoutingMetadata(
+      ...Object.values(COMMAND_OPTION_METADATA_BY_GROUP),
+    );
+
+    expect(COMMAND_ROUTING_METADATA).toEqual(expectedRoutingMetadata);
     expect(ALL_COMMAND_OPTION_METADATA.check).toEqual(
       SYNC_OPTION_METADATA.check,
     );
