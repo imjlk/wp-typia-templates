@@ -14,7 +14,9 @@
     "package.json"
   ],
   "scripts": {
-    "generate": "bun scripts/generate-bunli-metadata.ts",
+    "generate:routing": "node scripts/generate-routing-metadata.mjs",
+    "validate:routing": "node scripts/generate-routing-metadata.mjs --check",
+    "generate": "node scripts/generate-routing-metadata.mjs && bun scripts/generate-bunli-metadata.ts",
     "build": "bun run generate && bun scripts/build-bunli-runtime.ts",
     "build:standalone": "bun scripts/build-standalone-runtime.ts --targets native --outdir ./dist-standalone",
     "build:standalone:release": "bun scripts/build-standalone-runtime.ts --targets darwin-arm64,darwin-x64,linux-arm64,linux-x64,windows-x64 --outdir ./.cache/standalone/raw",

@@ -4,7 +4,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
-import { WP_TYPIA_TOP_LEVEL_COMMAND_NAMES } from '../src/command-contract';
+import {
+  WP_TYPIA_NODE_FALLBACK_TOP_LEVEL_COMMAND_NAMES,
+  WP_TYPIA_TOP_LEVEL_COMMAND_NAMES,
+} from '../src/command-contract';
 import {
   hasFlagBeforeTerminator,
   parseGlobalFlags,
@@ -595,12 +598,33 @@ describe('wp-typia package', () => {
     );
     expect(helpResult.stdout).toContain('Runtime: Node fallback');
     expect(helpResult.stdout).toContain('standalone wp-typia binary');
-    expect(helpResult.stdout).toContain('WP_TYPIA_ASCII=1 forces ASCII markers');
+    expect(helpResult.stdout).toContain(
+      'WP_TYPIA_ASCII=1 forces ASCII markers',
+    );
     expect(createHelpResult.status).toBe(0);
     expect(createHelpResult.stderr).toBe('');
     expect(createHelpResult.stdout).toContain('--external-layer-source');
     expect(createHelpResult.stdout).toContain('--external-layer-id');
     expect(createHelpResult.stdout).toContain('--alternate-render-targets');
+  });
+
+  test('keeps every node-fallback registry command wired to the fallback help path', () => {
+    for (const commandName of WP_TYPIA_NODE_FALLBACK_TOP_LEVEL_COMMAND_NAMES) {
+      const argv =
+        commandName === 'help' || commandName === 'version'
+          ? [entryPath, commandName]
+          : [entryPath, commandName, '--help'];
+      const result = runCapturedCommand(process.execPath, argv, {
+        env: withoutLocalBunEnv(),
+      });
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe('');
+      expect(result.stdout).not.toContain('does not support');
+      if (commandName !== 'version') {
+        expect(result.stdout).toContain('Runtime: Node fallback');
+      }
+    }
   });
 
   test('guides Bun-only commands toward standalone binaries when Bun is unavailable', () => {
@@ -746,6 +770,12 @@ describe('wp-typia package', () => {
       tarball?.files.some(
         (entry) => entry.path === 'bin/routing-metadata.generated.d.ts',
       ),
+    ).toBe(true);
+    expect(
+      tarball?.files.some((entry) => entry.path === 'bin/argv-walker.js'),
+    ).toBe(true);
+    expect(
+      tarball?.files.some((entry) => entry.path === 'bin/argv-walker.d.ts'),
     ).toBe(true);
     expect(
       tarball?.files.some((entry) => entry.path === 'bunli.config.ts'),
@@ -1573,9 +1603,7 @@ describe('wp-typia package', () => {
       expect(capturedStdout.join('\n')).toContain(
         'wp-typia add ai-feature <name>',
       );
-      expect(capturedStdout.join('\n')).toContain(
-        'wp-typia add style <name>',
-      );
+      expect(capturedStdout.join('\n')).toContain('wp-typia add style <name>');
       expect(capturedStdout.join('\n')).toContain(
         'wp-typia add transform <name>',
       );
