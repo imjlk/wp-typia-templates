@@ -6,6 +6,10 @@ import * as path from "node:path";
 import { blockTypesPackageVersion, cleanupScaffoldTempRoot, createBlockExternalFixturePath, createBlockSubsetFixturePath, createScaffoldTempRoot, normalizedBlockRuntimePackageVersion, packageRoot, templateLayerFixturePath, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
 import { getTemplateVariables, scaffoldProject } from "../src/runtime/index.js";
 import { resolveTemplateId } from "../src/runtime/scaffold.js";
+import {
+  findReusableExternalTemplateSourceCache,
+  resolveExternalTemplateSourceCache,
+} from "../src/runtime/template-source-cache.js";
 import { copyRenderedDirectory } from "../src/runtime/template-render.js";
 import { parseGitHubTemplateLocator, parseNpmTemplateLocator, parseTemplateLocator, resolveTemplateSeed } from "../src/runtime/template-source.js";
 import { EXTERNAL_TEMPLATE_TRUST_WARNING } from "../src/runtime/template-source-external.js";
@@ -46,6 +50,350 @@ describe("@wp-typia/project-tools template sources", () => {
       url: `http://127.0.0.1:${address.port}`,
     };
   }
+
+  function restoreEnvValue(name: string, previousValue: string | undefined): void {
+    if (previousValue === undefined) {
+      delete process.env[name];
+    } else {
+      process.env[name] = previousValue;
+    }
+  }
+
+  function createMinimalNpmTemplateTarball(
+    fixtureRoot: string,
+    packageName: string,
+    version: string
+  ): string {
+    const packageDir = path.join(fixtureRoot, "package");
+    const tarballPath = path.join(fixtureRoot, "template.tgz");
+
+    fs.mkdirSync(packageDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(packageDir, "package.json"),
+      JSON.stringify(
+        {
+          name: packageName,
+          version,
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(packageDir, "block.json"),
+      JSON.stringify({ name: "demo/cache-template", title: "Cache Template" }),
+      "utf8"
+    );
+    execFileSync("tar", ["-czf", tarballPath, "-C", fixtureRoot, "package"]);
+
+    return tarballPath;
+  }
+
+  function findFileByName(rootDir: string, fileName: string): string | null {
+    if (!fs.existsSync(rootDir)) {
+      return null;
+    }
+
+    for (const entry of fs.readdirSync(rootDir, { withFileTypes: true })) {
+      const entryPath = path.join(rootDir, entry.name);
+      if (entry.isFile() && entry.name === fileName) {
+        return entryPath;
+      }
+      if (entry.isDirectory()) {
+        const nestedFilePath = findFileByName(entryPath, fileName);
+        if (nestedFilePath) {
+          return nestedFilePath;
+        }
+      }
+    }
+
+    return null;
+  }
+
+test("external template cache rejects unsafe namespaces before populating", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+  let populated = false;
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = path.join(
+    tempRoot,
+    "unsafe-namespace-cache"
+  );
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    const resolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["unsafe"],
+        metadata: {},
+        namespace: "../escape",
+      },
+      async (sourceDir) => {
+        populated = true;
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    expect(resolution).toBeNull();
+    expect(populated).toBe(false);
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
+test("external template cache redacts malformed URL-like metadata", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+  const cacheDir = path.join(tempRoot, "redacted-marker-cache");
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = cacheDir;
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    const resolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["redacted-marker"],
+        metadata: {
+          raw: "safe diagnostic",
+          registry: "https://user:pass@example.test/registry?token=secret#hash",
+          tarball: "not a valid url with secret-token",
+        },
+        namespace: "metadata",
+      },
+      async (sourceDir) => {
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    expect(resolution?.cacheHit).toBe(false);
+
+    const markerPath = findFileByName(
+      cacheDir,
+      "wp-typia-template-cache.json"
+    );
+    if (!markerPath) {
+      throw new Error("Expected a populated external template cache marker.");
+    }
+
+    const markerText = fs.readFileSync(markerPath, "utf8");
+    expect(markerText).toContain("[redacted]");
+    expect(markerText).not.toContain("secret-token");
+    expect(markerText).not.toContain("user:pass");
+    expect(markerText).not.toContain("token=secret");
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
+test("external template cache treats populate filesystem errors as misses", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = path.join(
+    tempRoot,
+    "populate-error-cache"
+  );
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    const resolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["populate-error"],
+        metadata: {},
+        namespace: "npm",
+      },
+      async () => {
+        const error = new Error("cache volume full") as Error & {
+          code: string;
+        };
+        error.code = "ENOSPC";
+        throw error;
+      }
+    );
+
+    expect(resolution).toBeNull();
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
+test("external template cache keeps source populate failures visible", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = path.join(
+    tempRoot,
+    "populate-source-error-cache"
+  );
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    await expect(
+      resolveExternalTemplateSourceCache(
+        {
+          keyParts: ["populate-source-error"],
+          metadata: {},
+          namespace: "npm",
+        },
+        async () => {
+          throw new Error("download failed");
+        }
+      )
+    ).rejects.toThrow("download failed");
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
+test("external template cache ignores corrupted source files", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = path.join(
+    tempRoot,
+    "corrupted-source-cache"
+  );
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    const firstResolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["corrupted-source"],
+        metadata: {},
+        namespace: "npm",
+      },
+      async (sourceDir) => {
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    expect(firstResolution?.cacheHit).toBe(false);
+    if (!firstResolution) {
+      throw new Error("Expected a populated external template cache entry.");
+    }
+
+    fs.rmSync(firstResolution.sourceDir, { force: true, recursive: true });
+    fs.writeFileSync(firstResolution.sourceDir, "not a directory", "utf8");
+
+    let populated = false;
+    const secondResolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["corrupted-source"],
+        metadata: {},
+        namespace: "npm",
+      },
+      async (sourceDir) => {
+        populated = true;
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    expect(secondResolution).toBeNull();
+    expect(populated).toBe(true);
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
+test("external template cache rejects symlinked roots without chmoding targets", async () => {
+  if (process.platform === "win32") {
+    return;
+  }
+
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+  const targetDir = path.join(tempRoot, "symlink-cache-target");
+  const symlinkDir = path.join(tempRoot, "symlink-cache-root");
+  let populated = false;
+
+  fs.mkdirSync(targetDir, { recursive: true });
+  fs.chmodSync(targetDir, 0o755);
+  fs.symlinkSync(targetDir, symlinkDir, "dir");
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = symlinkDir;
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    const resolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["symlink-root"],
+        metadata: {},
+        namespace: "npm",
+      },
+      async (sourceDir) => {
+        populated = true;
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    expect(resolution).toBeNull();
+    expect(populated).toBe(false);
+    expect(fs.statSync(targetDir).mode & 0o077).not.toBe(0);
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
+test("external template cache can find reusable entries by metadata", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = path.join(
+    tempRoot,
+    "metadata-lookup-cache"
+  );
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    const resolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: [
+          "github",
+          "demo-owner",
+          "demo-repo",
+          "plugin",
+          "main",
+          "0123456789abcdef0123456789abcdef01234567",
+        ],
+        metadata: {
+          owner: "demo-owner",
+          ref: "main",
+          repo: "demo-repo",
+          revision: "0123456789abcdef0123456789abcdef01234567",
+          sourcePath: "plugin",
+        },
+        namespace: "github",
+      },
+      async (sourceDir) => {
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    expect(resolution?.cacheHit).toBe(false);
+
+    const lookupResolution = await findReusableExternalTemplateSourceCache({
+      metadata: {
+        owner: "demo-owner",
+        ref: "main",
+        repo: "demo-repo",
+        sourcePath: "plugin",
+      },
+      namespace: "github",
+    });
+
+    expect(lookupResolution?.cacheHit).toBe(true);
+    expect(lookupResolution?.sourceDir).toBe(resolution?.sourceDir);
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
 
 test("getTemplateVariables rejects slugs that normalize to an empty identifier", () => {
   expect(() =>
@@ -323,6 +671,294 @@ test("npm template tarballs that exceed the configured size limit fail early", a
         previousTarballLimit;
     }
     await server.close();
+  }
+});
+
+test("npm template tarballs reuse the external template cache until integrity changes", async () => {
+  const packageName = "@demo/cache-template";
+  const version = "1.0.0";
+  const npmTemplateRoot = fs.mkdtempSync(
+    path.join(tempRoot, "npm-cache-template-")
+  );
+  const registryBase = "https://token:secret@registry.npmjs.org";
+  const metadataUrl = `${registryBase}/${encodeURIComponent(packageName)}`;
+  const getTarballUrl = (): string =>
+    `${registryBase}/@demo/cache-template/-/cache-template-1.0.0.tgz?download-token=${tarballToken}#debug`;
+  const tarballPath = createMinimalNpmTemplateTarball(
+    npmTemplateRoot,
+    packageName,
+    version
+  );
+  const originalFetch = globalThis.fetch;
+  const originalRegistry = process.env.NPM_CONFIG_REGISTRY;
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+  let integrity = "sha512-cache-one";
+  let shasum = "cache-one";
+  let tarballToken = "cache-one";
+  let tarballDownloads = 0;
+
+  process.env.NPM_CONFIG_REGISTRY = registryBase;
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = path.join(
+    npmTemplateRoot,
+    "cache"
+  );
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  globalThis.fetch = (async (input) => {
+    const requestUrl =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+        ? input.href
+        : input.url;
+    if (requestUrl === metadataUrl) {
+      return new Response(
+        JSON.stringify({
+          "dist-tags": {
+            latest: version,
+          },
+          versions: {
+            [version]: {
+              dist: {
+                integrity,
+                shasum,
+                tarball: getTarballUrl(),
+              },
+            },
+          },
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      );
+    }
+
+    if (requestUrl === getTarballUrl()) {
+      tarballDownloads += 1;
+      return new Response(fs.readFileSync(tarballPath), { status: 200 });
+    }
+
+    throw new Error(
+      `Unexpected fetch URL in npm template cache test: ${requestUrl}`
+    );
+  }) as typeof fetch;
+
+  try {
+    const locator = parseTemplateLocator("@demo/cache-template@^1.0.0");
+    const first = await resolveTemplateSeed(locator, tempRoot);
+    tarballToken = "cache-two";
+    const second = await resolveTemplateSeed(locator, tempRoot);
+
+    expect(tarballDownloads).toBe(1);
+    expect(second.rootDir).toBe(first.rootDir);
+    expect(fs.existsSync(path.join(second.rootDir, "package.json"))).toBe(
+      true
+    );
+
+    const cacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+    if (!cacheDir) {
+      throw new Error("Expected the template cache directory to be configured.");
+    }
+    const markerPath = findFileByName(
+      cacheDir,
+      "wp-typia-template-cache.json"
+    );
+    if (!markerPath) {
+      throw new Error("Expected a populated external template cache marker.");
+    }
+    const markerText = fs.readFileSync(markerPath, "utf8");
+    expect(markerText).not.toContain("keyParts");
+    expect(markerText).not.toContain("token:secret");
+    expect(markerText).not.toContain("download-token");
+
+    integrity = "sha512-cache-two";
+    shasum = "cache-two";
+    tarballToken = "cache-three";
+
+    const third = await resolveTemplateSeed(locator, tempRoot);
+    expect(tarballDownloads).toBe(2);
+    expect(third.rootDir).not.toBe(first.rootDir);
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreEnvValue("NPM_CONFIG_REGISTRY", originalRegistry);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
+test("npm template cache can be bypassed with an environment override", async () => {
+  const packageName = "@demo/cache-bypass-template";
+  const version = "1.0.0";
+  const npmTemplateRoot = fs.mkdtempSync(
+    path.join(tempRoot, "npm-cache-bypass-template-")
+  );
+  const registryBase = "https://registry.npmjs.org";
+  const metadataUrl = `${registryBase}/${encodeURIComponent(packageName)}`;
+  const tarballUrl = `${registryBase}/@demo/cache-bypass-template/-/cache-bypass-template-1.0.0.tgz`;
+  const tarballPath = createMinimalNpmTemplateTarball(
+    npmTemplateRoot,
+    packageName,
+    version
+  );
+  const originalFetch = globalThis.fetch;
+  const originalRegistry = process.env.NPM_CONFIG_REGISTRY;
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+  let tarballDownloads = 0;
+
+  process.env.NPM_CONFIG_REGISTRY = registryBase;
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE = "0";
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = path.join(
+    npmTemplateRoot,
+    "cache"
+  );
+  globalThis.fetch = (async (input) => {
+    const requestUrl =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+        ? input.href
+        : input.url;
+    if (requestUrl === metadataUrl) {
+      return new Response(
+        JSON.stringify({
+          "dist-tags": {
+            latest: version,
+          },
+          versions: {
+            [version]: {
+              dist: {
+                integrity: "sha512-cache-bypass",
+                shasum: "cache-bypass",
+                tarball: tarballUrl,
+              },
+            },
+          },
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      );
+    }
+
+    if (requestUrl === tarballUrl) {
+      tarballDownloads += 1;
+      return new Response(fs.readFileSync(tarballPath), { status: 200 });
+    }
+
+    throw new Error(
+      `Unexpected fetch URL in npm template cache bypass test: ${requestUrl}`
+    );
+  }) as typeof fetch;
+
+  try {
+    const locator = parseTemplateLocator("@demo/cache-bypass-template@^1.0.0");
+    const first = await resolveTemplateSeed(locator, tempRoot);
+    const second = await resolveTemplateSeed(locator, tempRoot);
+
+    expect(tarballDownloads).toBe(2);
+    expect(second.rootDir).not.toBe(first.rootDir);
+
+    await first.cleanup?.();
+    await second.cleanup?.();
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreEnvValue("NPM_CONFIG_REGISTRY", originalRegistry);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
+test("npm template cache falls back when the cache directory is unavailable", async () => {
+  const packageName = "@demo/cache-unavailable-template";
+  const version = "1.0.0";
+  const npmTemplateRoot = fs.mkdtempSync(
+    path.join(tempRoot, "npm-cache-unavailable-template-")
+  );
+  const registryBase = "https://registry.npmjs.org";
+  const metadataUrl = `${registryBase}/${encodeURIComponent(packageName)}`;
+  const tarballUrl = `${registryBase}/@demo/cache-unavailable-template/-/cache-unavailable-template-1.0.0.tgz`;
+  const tarballPath = createMinimalNpmTemplateTarball(
+    npmTemplateRoot,
+    packageName,
+    version
+  );
+  const unavailableCachePath = path.join(npmTemplateRoot, "cache-file");
+  const originalFetch = globalThis.fetch;
+  const originalRegistry = process.env.NPM_CONFIG_REGISTRY;
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+  let tarballDownloads = 0;
+
+  fs.writeFileSync(unavailableCachePath, "not a directory", "utf8");
+  process.env.NPM_CONFIG_REGISTRY = registryBase;
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = unavailableCachePath;
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  globalThis.fetch = (async (input) => {
+    const requestUrl =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+        ? input.href
+        : input.url;
+    if (requestUrl === metadataUrl) {
+      return new Response(
+        JSON.stringify({
+          "dist-tags": {
+            latest: version,
+          },
+          versions: {
+            [version]: {
+              dist: {
+                integrity: "sha512-cache-unavailable",
+                shasum: "cache-unavailable",
+                tarball: tarballUrl,
+              },
+            },
+          },
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      );
+    }
+
+    if (requestUrl === tarballUrl) {
+      tarballDownloads += 1;
+      return new Response(fs.readFileSync(tarballPath), { status: 200 });
+    }
+
+    throw new Error(
+      `Unexpected fetch URL in npm template unavailable cache test: ${requestUrl}`
+    );
+  }) as typeof fetch;
+
+  try {
+    const locator = parseTemplateLocator(
+      "@demo/cache-unavailable-template@^1.0.0"
+    );
+    const first = await resolveTemplateSeed(locator, tempRoot);
+    const second = await resolveTemplateSeed(locator, tempRoot);
+
+    expect(tarballDownloads).toBe(2);
+    expect(second.rootDir).not.toBe(first.rootDir);
+
+    await first.cleanup?.();
+    await second.cleanup?.();
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreEnvValue("NPM_CONFIG_REGISTRY", originalRegistry);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
   }
 });
 

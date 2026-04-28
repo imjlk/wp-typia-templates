@@ -228,6 +228,12 @@ External template configs execute trusted JavaScript (`index.js` / `index.cjs` /
 Remote template metadata, tarball downloads, and executable config loading now
 run behind bounded timeout and size guards so malformed or hostile template
 sources fail more directly instead of blocking the CLI indefinitely.
+Remote npm templates with registry integrity metadata and GitHub templates with
+resolvable remote revisions are cached under a private per-user local temp cache
+so repeated scaffolds can reuse the same unpacked source. Set
+`WP_TYPIA_EXTERNAL_TEMPLATE_CACHE=0` to force a refresh, or
+`WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR=/path/to/cache` to place the cache in a
+project- or CI-managed directory.
 
 Remote template examples:
 

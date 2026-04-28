@@ -17,6 +17,11 @@ import {
   readJsonResponseWithLimit,
 } from './external-template-guards.js'
 import {
+  findReusableExternalTemplateSourceCache,
+  isExternalTemplateCacheEnabled,
+  resolveExternalTemplateSourceCache,
+} from './template-source-cache.js'
+import {
   CLI_DIAGNOSTIC_CODES,
   createCliDiagnosticCodeError,
 } from './cli-diagnostics.js'
@@ -40,12 +45,93 @@ const USER_FACING_TEMPLATE_IDS = [
   OFFICIAL_WORKSPACE_TEMPLATE_ALIAS,
 ] as const
 
+const GITHUB_TEMPLATE_CACHE_REVISION_RACE_CODE =
+  'github-template-cache-revision-race'
+
+type GitHubTemplateCacheRevisionRaceError = Error & {
+  code: typeof GITHUB_TEMPLATE_CACHE_REVISION_RACE_CODE
+}
+
+function createGitHubTemplateCacheRevisionRaceError(
+  message: string,
+): GitHubTemplateCacheRevisionRaceError {
+  const error = new Error(message) as GitHubTemplateCacheRevisionRaceError
+  error.code = GITHUB_TEMPLATE_CACHE_REVISION_RACE_CODE
+  return error
+}
+
+function isGitHubTemplateCacheRevisionRaceError(
+  error: unknown,
+): error is GitHubTemplateCacheRevisionRaceError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: unknown }).code ===
+      GITHUB_TEMPLATE_CACHE_REVISION_RACE_CODE
+  )
+}
+
 function getUnknownNpmTemplateMessage(templateId: string): string {
   return [
     `Unknown template "${templateId}". Expected one of: ${USER_FACING_TEMPLATE_IDS.join(', ')}.`,
     'Run `wp-typia templates list` to inspect available templates.',
     'If you meant an npm template package, verify the package name and configured npm registry.',
   ].join(' ')
+}
+
+function readOptionalDistString(
+  dist: Record<string, unknown>,
+  key: string,
+): string | null {
+  const value = dist[key]
+  return typeof value === 'string' && value.length > 0 ? value : null
+}
+
+function normalizeNpmRegistryCacheKey(registryBase: string): string {
+  try {
+    const url = new URL(registryBase)
+    url.username = ''
+    url.password = ''
+    url.search = ''
+    url.hash = ''
+    return url.toString().replace(/\/$/u, '')
+  } catch {
+    return registryBase
+  }
+}
+
+async function downloadNpmTemplateTarball(
+  locator: NpmTemplateLocator,
+  resolvedVersion: string,
+  tarballUrl: string,
+  unpackDir: string,
+): Promise<void> {
+  const tarballResponse = await fetchWithExternalTemplateTimeout(tarballUrl, {
+    label: `downloading npm template tarball for ${locator.raw}@${resolvedVersion}`,
+  })
+  if (!tarballResponse.ok) {
+    throw new Error(
+      `Failed to download npm template tarball for ${locator.raw}: ${tarballResponse.status}`,
+    )
+  }
+
+  const tarballPath = path.join(path.dirname(unpackDir), 'template.tgz')
+  await fsp.mkdir(unpackDir, { recursive: true })
+  await fsp.writeFile(
+    tarballPath,
+    await readBufferResponseWithLimit(tarballResponse, {
+      label: `npm template tarball for ${locator.raw}@${resolvedVersion}`,
+      maxBytes: getExternalTemplateTarballMaxBytes(),
+    }),
+  )
+  await extractTarball({
+    cwd: unpackDir,
+    file: tarballPath,
+    strip: 1,
+  })
+  await fsp.rm(tarballPath, { force: true })
+  await assertNoSymlinks(unpackDir)
 }
 
 function selectRegistryVersion(
@@ -140,36 +226,64 @@ async function fetchNpmTemplateSource(
     )
   }
 
+  const tarballIntegrity = readOptionalDistString(
+    versionMetadata.dist,
+    'integrity',
+  )
+  const tarballShasum = readOptionalDistString(versionMetadata.dist, 'shasum')
+  if (tarballIntegrity || tarballShasum) {
+    const registryCacheKey = normalizeNpmRegistryCacheKey(registryBase)
+    const cachedSource = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: [
+          'npm',
+          registryCacheKey,
+          locator.name,
+          locator.raw,
+          resolvedVersion,
+          tarballIntegrity ?? '',
+          tarballShasum ?? '',
+        ],
+        metadata: {
+          integrity: tarballIntegrity,
+          package: locator.name,
+          raw: locator.raw,
+          registry: registryBase,
+          shasum: tarballShasum,
+          tarball: tarballUrl,
+          version: resolvedVersion,
+        },
+        namespace: 'npm',
+      },
+      (unpackDir) =>
+        downloadNpmTemplateTarball(
+          locator,
+          resolvedVersion,
+          tarballUrl,
+          unpackDir,
+        ),
+    )
+    if (cachedSource) {
+      await assertNoSymlinks(cachedSource.sourceDir)
+      return {
+        blockDir: cachedSource.sourceDir,
+        rootDir: cachedSource.sourceDir,
+      }
+    }
+  }
+
   const { path: tempRoot, cleanup } = await createManagedTempRoot(
     'wp-typia-template-source-',
   )
 
   try {
-    const tarballResponse = await fetchWithExternalTemplateTimeout(tarballUrl, {
-      label: `downloading npm template tarball for ${locator.raw}@${resolvedVersion}`,
-    })
-    if (!tarballResponse.ok) {
-      throw new Error(
-        `Failed to download npm template tarball for ${locator.raw}: ${tarballResponse.status}`,
-      )
-    }
-
-    const tarballPath = path.join(tempRoot, 'template.tgz')
     const unpackDir = path.join(tempRoot, 'source')
-    await fsp.mkdir(unpackDir, { recursive: true })
-    await fsp.writeFile(
-      tarballPath,
-      await readBufferResponseWithLimit(tarballResponse, {
-        label: `npm template tarball for ${locator.raw}@${resolvedVersion}`,
-        maxBytes: getExternalTemplateTarballMaxBytes(),
-      }),
+    await downloadNpmTemplateTarball(
+      locator,
+      resolvedVersion,
+      tarballUrl,
+      unpackDir,
     )
-    await extractTarball({
-      cwd: unpackDir,
-      file: tarballPath,
-      strip: 1,
-    })
-    await assertNoSymlinks(unpackDir)
 
     return {
       blockDir: unpackDir,
@@ -299,73 +413,358 @@ export async function assertNoSymlinks(sourceDir: string): Promise<void> {
   }
 }
 
+function runGitTemplateCommand(
+  args: readonly string[],
+  label: string,
+  options: { captureOutput?: boolean } = {},
+): ReturnType<typeof spawnSync> {
+  const timeoutMs = getExternalTemplateTimeoutMs()
+  const result = options.captureOutput
+    ? spawnSync('git', args, {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        timeout: timeoutMs,
+      })
+    : spawnSync('git', args, {
+        stdio: 'ignore',
+        timeout: timeoutMs,
+      })
+  if (result.error) {
+    const errorCode =
+      typeof result.error === 'object' &&
+      result.error !== null &&
+      'code' in result.error
+        ? String((result.error as { code: unknown }).code)
+        : ''
+    if (errorCode === 'ETIMEDOUT') {
+      throw createExternalTemplateTimeoutError(label, timeoutMs)
+    }
+    throw result.error
+  }
+  if (result.signal === 'SIGTERM' || result.signal === 'SIGKILL') {
+    throw createExternalTemplateTimeoutError(label, timeoutMs)
+  }
+
+  return result
+}
+
+function getGitHubTemplateRepositoryUrl(locator: GitHubTemplateLocator): string {
+  return `https://github.com/${locator.owner}/${locator.repo}.git`
+}
+
+function resolveGitHubTemplateDirectory(
+  checkoutDir: string,
+  locator: GitHubTemplateLocator,
+): string {
+  const sourceDir = path.resolve(checkoutDir, locator.sourcePath)
+  const relativeSourceDir = path.relative(checkoutDir, sourceDir)
+  if (relativeSourceDir.startsWith('..') || path.isAbsolute(relativeSourceDir)) {
+    throw new Error('GitHub template path must stay within the cloned repository.')
+  }
+  if (!fs.existsSync(sourceDir)) {
+    throw new Error(`GitHub template path does not exist: ${locator.sourcePath}`)
+  }
+  return sourceDir
+}
+
+function cloneGitHubTemplateSource(
+  locator: GitHubTemplateLocator,
+  checkoutDir: string,
+): void {
+  const args = ['clone', '--depth', '1']
+  if (locator.ref) {
+    args.push('--branch', locator.ref)
+  }
+  args.push(getGitHubTemplateRepositoryUrl(locator), checkoutDir)
+  const cloneResult = runGitTemplateCommand(
+    args,
+    `cloning GitHub template ${locator.owner}/${locator.repo}`,
+  )
+  if (cloneResult.status !== 0) {
+    throw new Error(
+      `Failed to clone GitHub template source ${locator.owner}/${locator.repo}.`,
+    )
+  }
+}
+
+function readGitHubTemplateHeadRevision(checkoutDir: string): string | null {
+  const result = runGitTemplateCommand(
+    ['-C', checkoutDir, 'rev-parse', 'HEAD'],
+    'reading GitHub template checkout revision',
+    { captureOutput: true },
+  )
+  if (result.status !== 0 || typeof result.stdout !== 'string') {
+    return null
+  }
+
+  const revision = result.stdout.trim().split(/\s+/u)[0]
+  return /^[0-9a-f]{40}$/iu.test(revision) ? revision.toLowerCase() : null
+}
+
+function pinGitHubTemplateCacheRevision(
+  locator: GitHubTemplateLocator,
+  checkoutDir: string,
+  cacheRevision: string,
+): void {
+  const normalizedCacheRevision = cacheRevision.toLowerCase()
+  if (readGitHubTemplateHeadRevision(checkoutDir) === normalizedCacheRevision) {
+    return
+  }
+
+  const fetchResult = runGitTemplateCommand(
+    ['-C', checkoutDir, 'fetch', '--depth', '1', 'origin', cacheRevision],
+    `fetching GitHub template revision ${locator.owner}/${locator.repo}`,
+  )
+  if (fetchResult.status !== 0) {
+    throw createGitHubTemplateCacheRevisionRaceError(
+      `Failed to fetch GitHub template revision ${cacheRevision} for ${locator.owner}/${locator.repo}.`,
+    )
+  }
+
+  const checkoutResult = runGitTemplateCommand(
+    ['-C', checkoutDir, 'checkout', '--detach', cacheRevision],
+    `checking out GitHub template revision ${locator.owner}/${locator.repo}`,
+  )
+  if (checkoutResult.status !== 0) {
+    throw createGitHubTemplateCacheRevisionRaceError(
+      `Failed to check out GitHub template revision ${cacheRevision} for ${locator.owner}/${locator.repo}.`,
+    )
+  }
+
+  if (readGitHubTemplateHeadRevision(checkoutDir) !== normalizedCacheRevision) {
+    throw createGitHubTemplateCacheRevisionRaceError(
+      `GitHub template checkout did not match resolved revision ${cacheRevision} for ${locator.owner}/${locator.repo}.`,
+    )
+  }
+}
+
+function getGitHubTemplateRevisionPatterns(
+  locator: GitHubTemplateLocator,
+): string[] {
+  const ref = locator.ref ?? 'HEAD'
+  if (!locator.ref) {
+    return [ref]
+  }
+  if (ref.startsWith('refs/')) {
+    return [ref, `${ref}^{}`]
+  }
+  return [ref, `refs/heads/${ref}`, `refs/tags/${ref}`, `refs/tags/${ref}^{}`]
+}
+
+type GitHubTemplateResolvedRevision = {
+  resolvedRef: string
+  revision: string
+}
+
+type GitHubTemplateCacheRevisionResolution = {
+  lookupUnavailable: boolean
+  revision: string | null
+}
+
+function pickGitHubTemplateCacheRevision(
+  locator: GitHubTemplateLocator,
+  revisions: readonly GitHubTemplateResolvedRevision[],
+): string | null {
+  const ref = locator.ref ?? 'HEAD'
+  if (!locator.ref) {
+    return revisions[0]?.revision ?? null
+  }
+  if (!ref.startsWith('refs/')) {
+    const branchRevision = revisions.find(
+      (entry) => entry.resolvedRef === `refs/heads/${ref}`,
+    )
+    if (branchRevision) {
+      return branchRevision.revision
+    }
+
+    const peeledTagRevision = revisions.find(
+      (entry) => entry.resolvedRef === `refs/tags/${ref}^{}`,
+    )
+    if (peeledTagRevision) {
+      return peeledTagRevision.revision
+    }
+
+    const tagRevision = revisions.find(
+      (entry) => entry.resolvedRef === `refs/tags/${ref}`,
+    )
+    if (tagRevision) {
+      return tagRevision.revision
+    }
+  }
+  if (ref.startsWith('refs/tags/')) {
+    const peeledRevision = revisions.find(
+      (entry) => entry.resolvedRef === `${ref}^{}`,
+    )
+    if (peeledRevision) {
+      return peeledRevision.revision
+    }
+  }
+
+  const exactRevision = revisions.find((entry) => entry.resolvedRef === ref)
+  return (exactRevision ?? revisions[0])?.revision ?? null
+}
+
+/**
+ * Resolves a GitHub template ref to a stable revision for cache keying.
+ *
+ * @param locator GitHub template locator containing owner, repo, and optional ref.
+ * @returns Revision lookup result, including whether `git ls-remote` was unavailable.
+ */
+function resolveGitHubTemplateCacheRevision(
+  locator: GitHubTemplateLocator,
+): GitHubTemplateCacheRevisionResolution {
+  const result = runGitTemplateCommand(
+    [
+      'ls-remote',
+      getGitHubTemplateRepositoryUrl(locator),
+      ...getGitHubTemplateRevisionPatterns(locator),
+    ],
+    `checking GitHub template revision ${locator.owner}/${locator.repo}`,
+    { captureOutput: true },
+  )
+  if (result.status !== 0 || typeof result.stdout !== 'string') {
+    return {
+      lookupUnavailable: true,
+      revision: null,
+    }
+  }
+
+  const revisions = result.stdout
+    .split('\n')
+    .map((line) => {
+      const [revision, resolvedRef] = line.trim().split(/\s+/u)
+      if (!/^[0-9a-f]{40}$/iu.test(revision) || !resolvedRef) {
+        return null
+      }
+      return {
+        resolvedRef,
+        revision: revision.toLowerCase(),
+      }
+    })
+    .filter(
+      (entry): entry is GitHubTemplateResolvedRevision => entry !== null,
+    )
+
+  return {
+    lookupUnavailable: false,
+    revision: pickGitHubTemplateCacheRevision(locator, revisions),
+  }
+}
+
+function getGitHubTemplateCacheMetadata(
+  locator: GitHubTemplateLocator,
+  revision?: string,
+): Record<string, string | null> {
+  return {
+    ...(revision ? { revision } : {}),
+    owner: locator.owner,
+    ref: locator.ref,
+    repo: locator.repo,
+    sourcePath: locator.sourcePath,
+  }
+}
+
+async function reuseGitHubTemplateCacheByMetadata(
+  locator: GitHubTemplateLocator,
+): Promise<SeedSource | null> {
+  const cachedSource = await findReusableExternalTemplateSourceCache({
+    metadata: getGitHubTemplateCacheMetadata(locator),
+    namespace: 'github',
+  })
+  if (!cachedSource) {
+    return null
+  }
+
+  const sourceDir = resolveGitHubTemplateDirectory(
+    cachedSource.sourceDir,
+    locator,
+  )
+  await assertNoSymlinks(sourceDir)
+  return {
+    blockDir: sourceDir,
+    rootDir: sourceDir,
+  }
+}
+
 async function resolveGitHubTemplateSource(
   locator: GitHubTemplateLocator,
 ): Promise<SeedSource> {
+  const cacheEnabled = isExternalTemplateCacheEnabled()
+  let cacheRevisionLookupUnavailable = false
+  let cacheRevision: string | null = null
+  if (cacheEnabled) {
+    try {
+      const resolvedRevision = resolveGitHubTemplateCacheRevision(locator)
+      cacheRevision = resolvedRevision.revision
+      cacheRevisionLookupUnavailable = resolvedRevision.lookupUnavailable
+    } catch {
+      cacheRevision = null
+      cacheRevisionLookupUnavailable = true
+    }
+  }
+  if (cacheEnabled && !cacheRevision && cacheRevisionLookupUnavailable) {
+    const cachedSource = await reuseGitHubTemplateCacheByMetadata(locator)
+    if (cachedSource) {
+      return cachedSource
+    }
+  }
+  if (cacheRevision) {
+    const resolvedCacheRevision = cacheRevision
+    try {
+      const cachedSource = await resolveExternalTemplateSourceCache(
+        {
+          keyParts: [
+            'github',
+            locator.owner,
+            locator.repo,
+            locator.sourcePath,
+            locator.ref ?? '',
+            resolvedCacheRevision,
+          ],
+          metadata: getGitHubTemplateCacheMetadata(
+            locator,
+            resolvedCacheRevision,
+          ),
+          namespace: 'github',
+        },
+        async (checkoutDir) => {
+          cloneGitHubTemplateSource(locator, checkoutDir)
+          const sourceDir = resolveGitHubTemplateDirectory(checkoutDir, locator)
+          await assertNoSymlinks(sourceDir)
+          pinGitHubTemplateCacheRevision(
+            locator,
+            checkoutDir,
+            resolvedCacheRevision,
+          )
+        },
+      )
+      if (cachedSource) {
+        const sourceDir = resolveGitHubTemplateDirectory(
+          cachedSource.sourceDir,
+          locator,
+        )
+        await assertNoSymlinks(sourceDir)
+        return {
+          blockDir: sourceDir,
+          rootDir: sourceDir,
+        }
+      }
+    } catch (error) {
+      if (!isGitHubTemplateCacheRevisionRaceError(error)) {
+        throw error
+      }
+      // Fall back to the existing uncached clone path if revision pinning races.
+    }
+  }
+
   const { path: remoteRoot, cleanup } = await createManagedTempRoot(
     'wp-typia-template-source-',
   )
   const checkoutDir = path.join(remoteRoot, 'source')
 
   try {
-    const args = ['clone', '--depth', '1']
-    if (locator.ref) {
-      args.push('--branch', locator.ref)
-    }
-    args.push(
-      `https://github.com/${locator.owner}/${locator.repo}.git`,
-      checkoutDir,
-    )
-    const cloneTimeoutMs = getExternalTemplateTimeoutMs()
-    const cloneResult = spawnSync('git', args, {
-      stdio: 'ignore',
-      timeout: cloneTimeoutMs,
-    })
-    if (cloneResult.error) {
-      const errorCode =
-        typeof cloneResult.error === 'object' &&
-        cloneResult.error !== null &&
-        'code' in cloneResult.error
-          ? String((cloneResult.error as { code: unknown }).code)
-          : ''
-      if (errorCode === 'ETIMEDOUT') {
-        throw createExternalTemplateTimeoutError(
-          `cloning GitHub template ${locator.owner}/${locator.repo}`,
-          cloneTimeoutMs,
-        )
-      }
-      throw cloneResult.error
-    }
-    if (
-      cloneResult.signal === 'SIGTERM' ||
-      cloneResult.signal === 'SIGKILL'
-    ) {
-      throw createExternalTemplateTimeoutError(
-        `cloning GitHub template ${locator.owner}/${locator.repo}`,
-        cloneTimeoutMs,
-      )
-    }
-    if (cloneResult.status !== 0) {
-      throw new Error(
-        `Failed to clone GitHub template source ${locator.owner}/${locator.repo}.`,
-      )
-    }
-
-    const sourceDir = path.resolve(checkoutDir, locator.sourcePath)
-    const relativeSourceDir = path.relative(checkoutDir, sourceDir)
-    if (
-      relativeSourceDir.startsWith('..') ||
-      path.isAbsolute(relativeSourceDir)
-    ) {
-      throw new Error(
-        'GitHub template path must stay within the cloned repository.',
-      )
-    }
-    if (!fs.existsSync(sourceDir)) {
-      throw new Error(
-        `GitHub template path does not exist: ${locator.sourcePath}`,
-      )
-    }
+    cloneGitHubTemplateSource(locator, checkoutDir)
+    const sourceDir = resolveGitHubTemplateDirectory(checkoutDir, locator)
     await assertNoSymlinks(sourceDir)
 
     return {
