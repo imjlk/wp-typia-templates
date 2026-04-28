@@ -394,7 +394,8 @@ test("npm template tarballs reuse the external template cache until integrity ch
   );
   const registryBase = "https://token:secret@registry.npmjs.org";
   const metadataUrl = `${registryBase}/${encodeURIComponent(packageName)}`;
-  const tarballUrl = `${registryBase}/@demo/cache-template/-/cache-template-1.0.0.tgz?download-token=secret#debug`;
+  const getTarballUrl = (): string =>
+    `${registryBase}/@demo/cache-template/-/cache-template-1.0.0.tgz?download-token=${tarballToken}#debug`;
   const tarballPath = createMinimalNpmTemplateTarball(
     npmTemplateRoot,
     packageName,
@@ -406,6 +407,7 @@ test("npm template tarballs reuse the external template cache until integrity ch
   const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
   let integrity = "sha512-cache-one";
   let shasum = "cache-one";
+  let tarballToken = "cache-one";
   let tarballDownloads = 0;
 
   process.env.NPM_CONFIG_REGISTRY = registryBase;
@@ -432,7 +434,7 @@ test("npm template tarballs reuse the external template cache until integrity ch
               dist: {
                 integrity,
                 shasum,
-                tarball: tarballUrl,
+                tarball: getTarballUrl(),
               },
             },
           },
@@ -446,7 +448,7 @@ test("npm template tarballs reuse the external template cache until integrity ch
       );
     }
 
-    if (requestUrl === tarballUrl) {
+    if (requestUrl === getTarballUrl()) {
       tarballDownloads += 1;
       return new Response(fs.readFileSync(tarballPath), { status: 200 });
     }
@@ -459,6 +461,7 @@ test("npm template tarballs reuse the external template cache until integrity ch
   try {
     const locator = parseTemplateLocator("@demo/cache-template@^1.0.0");
     const first = await resolveTemplateSeed(locator, tempRoot);
+    tarballToken = "cache-two";
     const second = await resolveTemplateSeed(locator, tempRoot);
 
     expect(tarballDownloads).toBe(1);
@@ -485,6 +488,7 @@ test("npm template tarballs reuse the external template cache until integrity ch
 
     integrity = "sha512-cache-two";
     shasum = "cache-two";
+    tarballToken = "cache-three";
 
     const third = await resolveTemplateSeed(locator, tempRoot);
     expect(tarballDownloads).toBe(2);

@@ -60,6 +60,19 @@ function readOptionalDistString(
   return typeof value === 'string' && value.length > 0 ? value : null
 }
 
+function normalizeNpmRegistryCacheKey(registryBase: string): string {
+  try {
+    const url = new URL(registryBase)
+    url.username = ''
+    url.password = ''
+    url.search = ''
+    url.hash = ''
+    return url.toString().replace(/\/$/u, '')
+  } catch {
+    return registryBase
+  }
+}
+
 async function downloadNpmTemplateTarball(
   locator: NpmTemplateLocator,
   resolvedVersion: string,
@@ -191,15 +204,15 @@ async function fetchNpmTemplateSource(
   )
   const tarballShasum = readOptionalDistString(versionMetadata.dist, 'shasum')
   if (tarballIntegrity || tarballShasum) {
+    const registryCacheKey = normalizeNpmRegistryCacheKey(registryBase)
     const cachedSource = await resolveExternalTemplateSourceCache(
       {
         keyParts: [
           'npm',
-          registryBase,
+          registryCacheKey,
           locator.name,
           locator.raw,
           resolvedVersion,
-          tarballUrl,
           tarballIntegrity ?? '',
           tarballShasum ?? '',
         ],
