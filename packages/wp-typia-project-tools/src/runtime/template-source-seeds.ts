@@ -537,6 +537,19 @@ function pinGitHubTemplateCacheRevision(
   }
 }
 
+function getGitHubTemplateRevisionPatterns(
+  locator: GitHubTemplateLocator,
+): string[] {
+  const ref = locator.ref ?? 'HEAD'
+  if (!locator.ref) {
+    return [ref]
+  }
+  if (ref.startsWith('refs/')) {
+    return [ref, `${ref}^{}`]
+  }
+  return [ref, `refs/heads/${ref}`, `refs/tags/${ref}`, `refs/tags/${ref}^{}`]
+}
+
 /**
  * Resolves a GitHub template ref to a stable revision for cache keying.
  *
@@ -546,9 +559,12 @@ function pinGitHubTemplateCacheRevision(
 function resolveGitHubTemplateCacheRevision(
   locator: GitHubTemplateLocator,
 ): string | null {
-  const ref = locator.ref ?? 'HEAD'
   const result = runGitTemplateCommand(
-    ['ls-remote', getGitHubTemplateRepositoryUrl(locator), ref],
+    [
+      'ls-remote',
+      getGitHubTemplateRepositoryUrl(locator),
+      ...getGitHubTemplateRevisionPatterns(locator),
+    ],
     `checking GitHub template revision ${locator.owner}/${locator.repo}`,
     { captureOutput: true },
   )
