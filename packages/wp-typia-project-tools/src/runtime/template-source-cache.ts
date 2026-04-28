@@ -155,6 +155,15 @@ async function pathExists(filePath: string): Promise<boolean> {
   }
 }
 
+async function isDirectoryPath(directory: string): Promise<boolean> {
+  try {
+    const stats = await fsp.lstat(directory)
+    return stats.isDirectory() && !stats.isSymbolicLink()
+  } catch {
+    return false
+  }
+}
+
 function getNodeErrorCode(error: unknown): string {
   return typeof error === 'object' && error !== null && 'code' in error
     ? String((error as { code: unknown }).code)
@@ -319,7 +328,7 @@ async function isReusableCacheEntry(
   return (
     (await isPrivateCacheDirectory(entryDir)) &&
     (await pathExists(markerPath)) &&
-    (await pathExists(sourceDir))
+    (await isDirectoryPath(sourceDir))
   )
 }
 
@@ -409,6 +418,9 @@ export async function resolveExternalTemplateSourceCache(
   } catch (error) {
     await removeTemporaryCacheEntry(temporaryEntryDir)
     if (populateFailed) {
+      if (CACHE_UNAVAILABLE_ERROR_CODES.has(getNodeErrorCode(error))) {
+        return null
+      }
       throw error
     }
 

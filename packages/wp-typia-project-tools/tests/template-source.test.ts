@@ -185,6 +185,119 @@ test("external template cache redacts malformed URL-like metadata", async () => 
   }
 });
 
+test("external template cache treats populate filesystem errors as misses", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = path.join(
+    tempRoot,
+    "populate-error-cache"
+  );
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    const resolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["populate-error"],
+        metadata: {},
+        namespace: "npm",
+      },
+      async () => {
+        const error = new Error("cache volume full") as Error & {
+          code: string;
+        };
+        error.code = "ENOSPC";
+        throw error;
+      }
+    );
+
+    expect(resolution).toBeNull();
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
+test("external template cache keeps source populate failures visible", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = path.join(
+    tempRoot,
+    "populate-source-error-cache"
+  );
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    await expect(
+      resolveExternalTemplateSourceCache(
+        {
+          keyParts: ["populate-source-error"],
+          metadata: {},
+          namespace: "npm",
+        },
+        async () => {
+          throw new Error("download failed");
+        }
+      )
+    ).rejects.toThrow("download failed");
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
+test("external template cache ignores corrupted source files", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = path.join(
+    tempRoot,
+    "corrupted-source-cache"
+  );
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    const firstResolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["corrupted-source"],
+        metadata: {},
+        namespace: "npm",
+      },
+      async (sourceDir) => {
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    expect(firstResolution?.cacheHit).toBe(false);
+    if (!firstResolution) {
+      throw new Error("Expected a populated external template cache entry.");
+    }
+
+    fs.rmSync(firstResolution.sourceDir, { force: true, recursive: true });
+    fs.writeFileSync(firstResolution.sourceDir, "not a directory", "utf8");
+
+    let populated = false;
+    const secondResolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["corrupted-source"],
+        metadata: {},
+        namespace: "npm",
+      },
+      async (sourceDir) => {
+        populated = true;
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    expect(secondResolution).toBeNull();
+    expect(populated).toBe(true);
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
 test("getTemplateVariables rejects slugs that normalize to an empty identifier", () => {
   expect(() =>
     getTemplateVariables("basic", {
