@@ -410,6 +410,7 @@ async function renderDoctorJson(): Promise<void> {
   );
   if (checks.some((check) => check.status === 'fail')) {
     throw createCliCommandError({
+      code: CLI_DIAGNOSTIC_CODES.DOCTOR_CHECK_FAILED,
       command: 'doctor',
       detailLines: getDoctorFailureDetailLines(checks),
       summary: 'One or more doctor checks failed.',

@@ -17,7 +17,8 @@
  * `runAddRestResourceCommand` for plugin-level REST resource scaffolds,
  * `getDoctorChecks`, `runDoctor`, and `DoctorCheck` for diagnostics,
  * `createCliCommandError`, `createCliDiagnosticCodeError`,
- * `CLI_DIAGNOSTIC_CODES`, and `formatCliDiagnosticError` for shared
+ * `CLI_DIAGNOSTIC_CODES`, `CLI_DIAGNOSTIC_CODE_METADATA`,
+ * `getCliDiagnosticCodeMetadata`, and `formatCliDiagnosticError` for shared
  * non-interactive failure rendering and explicit diagnostic-code ownership,
  * `formatHelpText` for top-level CLI usage output, scaffold helpers such as
  * `createReadlinePrompt`, `getNextSteps`, `getOptionalOnboarding`,
@@ -32,10 +33,12 @@ export {
 	createCliCommandError,
 	createCliDiagnosticCodeError,
 	CliDiagnosticError,
+	CLI_DIAGNOSTIC_CODE_METADATA,
 	CLI_DIAGNOSTIC_CODES,
 	formatCliDiagnosticError,
 	formatDoctorCheckLine,
 	formatDoctorSummaryLine,
+	getCliDiagnosticCodeMetadata,
 	getDoctorFailureDetailLines,
 	getFailingDoctorChecks,
 	isCliDiagnosticError,
