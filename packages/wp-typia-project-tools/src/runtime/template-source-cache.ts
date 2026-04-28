@@ -4,21 +4,49 @@ import { promises as fsp } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
+/**
+ * Environment variable that disables external template cache reads and writes.
+ *
+ * Set to `0`, `false`, `no`, or `off` to bypass the cache.
+ */
 export const EXTERNAL_TEMPLATE_CACHE_ENV = 'WP_TYPIA_EXTERNAL_TEMPLATE_CACHE'
+
+/**
+ * Environment variable that overrides the external template cache root.
+ */
 export const EXTERNAL_TEMPLATE_CACHE_DIR_ENV =
   'WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR'
 
+/**
+ * Marker file written after a cache entry is fully populated.
+ */
 const CACHE_MARKER_FILE = 'wp-typia-template-cache.json'
+
+/**
+ * Normalized environment values that disable the cache.
+ */
 const DISABLED_CACHE_VALUES = new Set(['0', 'false', 'no', 'off'])
 
+/**
+ * Serializable metadata recorded in the cache marker for diagnostics.
+ */
 type ExternalTemplateCacheMetadata = Record<string, string | null>
 
+/**
+ * Describes a deterministic external template cache entry.
+ *
+ * `namespace` scopes independent cache families, `keyParts` identify the exact
+ * source/integrity tuple, and `metadata` is persisted to the marker file.
+ */
 export interface ExternalTemplateCacheDescriptor {
   keyParts: readonly string[]
   metadata: ExternalTemplateCacheMetadata
   namespace: string
 }
 
+/**
+ * Result returned when a cache entry is reused or populated.
+ */
 export interface ExternalTemplateCacheResolution {
   cacheHit: boolean
   sourceDir: string

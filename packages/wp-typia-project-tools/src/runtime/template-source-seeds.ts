@@ -497,6 +497,12 @@ function pinGitHubTemplateCacheRevision(
   }
 }
 
+/**
+ * Resolves a GitHub template ref to a stable revision for cache keying.
+ *
+ * @param locator GitHub template locator containing owner, repo, and optional ref.
+ * @returns A commit-like SHA from `git ls-remote`, or `null` when unavailable.
+ */
 function resolveGitHubTemplateCacheRevision(
   locator: GitHubTemplateLocator,
 ): string | null {
@@ -512,10 +518,29 @@ function resolveGitHubTemplateCacheRevision(
 
   const revisions = result.stdout
     .split('\n')
-    .map((line) => line.trim().split(/\s+/u)[0])
-    .filter((revision) => /^[0-9a-f]{40}$/iu.test(revision))
+    .map((line) => {
+      const [revision, resolvedRef] = line.trim().split(/\s+/u)
+      if (!/^[0-9a-f]{40}$/iu.test(revision) || !resolvedRef) {
+        return null
+      }
+      return {
+        resolvedRef,
+        revision: revision.toLowerCase(),
+      }
+    })
+    .filter(
+      (
+        entry,
+      ): entry is {
+        resolvedRef: string
+        revision: string
+      } => entry !== null,
+    )
 
-  return revisions.length > 0 ? revisions[0] : null
+  const peeledRevision = revisions.find((entry) =>
+    entry.resolvedRef.endsWith('^{}'),
+  )
+  return (peeledRevision ?? revisions[0])?.revision ?? null
 }
 
 async function resolveGitHubTemplateSource(
@@ -558,6 +583,8 @@ async function resolveGitHubTemplateSource(
             checkoutDir,
             resolvedCacheRevision,
           )
+          const sourceDir = resolveGitHubTemplateDirectory(checkoutDir, locator)
+          await assertNoSymlinks(sourceDir)
         },
       )
       if (cachedSource) {
