@@ -54,7 +54,9 @@ export type AddKindExecutionPlan<
   warnLine?: PrintLine;
 };
 
-type AddKindRegistryEntry = {
+type AddKindRegistryEntry<
+  TResult extends AddKindExecutionResultBase = AddKindExecutionResultBase,
+> = {
   completion: {
     nextSteps: (values: Record<string, string>) => string[];
     summaryLines: (
@@ -68,7 +70,8 @@ type AddKindRegistryEntry = {
   nameLabel: string;
   prepareExecution: (
     context: AddKindExecutionContext,
-  ) => Promise<AddKindExecutionPlan<any>>;
+  ) => Promise<AddKindExecutionPlan<TResult>>;
+  sortOrder: number;
   supportsDryRun: boolean;
   usage: string;
   visibleFieldNames: (options: {
@@ -171,12 +174,18 @@ function toExternalLayerPromptOptions(options: ExternalLayerSelectOption[]) {
   }));
 }
 
+function defineAddKindRegistryEntry<
+  TResult extends AddKindExecutionResultBase,
+>(entry: AddKindRegistryEntry<TResult>) {
+  return entry;
+}
+
 export function isAddPersistenceTemplate(template?: string): boolean {
   return template === 'persistence' || template === 'compound';
 }
 
 export const ADD_KIND_REGISTRY = {
-  'admin-view': {
+  'admin-view': defineAddKindRegistryEntry<AddAdminViewResult>({
     completion: {
       nextSteps: (values) => [
         `Review src/admin-views/${values.adminViewSlug}/ and inc/admin-views/${values.adminViewSlug}.php.`,
@@ -211,12 +220,13 @@ export const ADD_KIND_REGISTRY = {
         }),
       };
     },
+    sortOrder: 10,
     supportsDryRun: true,
     usage:
       'wp-typia add admin-view <name> [--source <rest-resource:slug>] [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'source'],
-  },
-  'binding-source': {
+  }),
+  'binding-source': defineAddKindRegistryEntry<AddBindingSourceResult>({
     completion: {
       nextSteps: (values) => [
         `Review src/bindings/${values.bindingSourceSlug}/server.php and src/bindings/${values.bindingSourceSlug}/editor.ts.`,
@@ -269,12 +279,13 @@ export const ADD_KIND_REGISTRY = {
         }),
       };
     },
+    sortOrder: 70,
     supportsDryRun: true,
     usage:
       'wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>] [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'block', 'attribute'],
-  },
-  block: {
+  }),
+  block: defineAddKindRegistryEntry<AddBlockResult>({
     completion: {
       nextSteps: () => [
         'Review the generated sources under src/blocks/ and the updated scripts/block-config.ts entry.',
@@ -373,6 +384,7 @@ export const ADD_KIND_REGISTRY = {
         warnLine: context.warnLine,
       };
     },
+    sortOrder: 20,
     supportsDryRun: true,
     usage:
       'wp-typia add block <name> [--template <basic|interactivity|persistence|compound>] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--dry-run]',
@@ -392,8 +404,8 @@ export const ADD_KIND_REGISTRY = {
         }
         return true;
       }),
-  },
-  ability: {
+  }),
+  ability: defineAddKindRegistryEntry<AddAbilityResult>({
     completion: {
       nextSteps: (values) => [
         `Review src/abilities/${values.abilitySlug}/ and inc/abilities/${values.abilitySlug}.php.`,
@@ -424,11 +436,12 @@ export const ADD_KIND_REGISTRY = {
         }),
       };
     },
+    sortOrder: 90,
     supportsDryRun: true,
     usage: 'wp-typia add ability <name> [--dry-run]',
     visibleFieldNames: () => ['kind', 'name'],
-  },
-  'editor-plugin': {
+  }),
+  'editor-plugin': defineAddKindRegistryEntry<AddEditorPluginResult>({
     completion: {
       nextSteps: (values) => [
         `Review src/editor-plugins/${values.editorPluginSlug}/.`,
@@ -463,12 +476,13 @@ export const ADD_KIND_REGISTRY = {
         }),
       };
     },
+    sortOrder: 120,
     supportsDryRun: true,
     usage:
       'wp-typia add editor-plugin <name> [--slot <sidebar|document-setting-panel>] [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'slot'],
-  },
-  'hooked-block': {
+  }),
+  'hooked-block': defineAddKindRegistryEntry<AddHookedBlockResult>({
     completion: {
       nextSteps: (values) => [
         `Review src/blocks/${values.blockSlug}/block.json for the new blockHooks entry.`,
@@ -519,12 +533,13 @@ export const ADD_KIND_REGISTRY = {
         }),
       };
     },
+    sortOrder: 110,
     supportsDryRun: true,
     usage:
       'wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild> [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'anchor', 'position'],
-  },
-  pattern: {
+  }),
+  pattern: defineAddKindRegistryEntry<AddPatternResult>({
     completion: {
       nextSteps: (values) => [
         `Review src/patterns/${values.patternSlug}.php.`,
@@ -555,11 +570,12 @@ export const ADD_KIND_REGISTRY = {
         }),
       };
     },
+    sortOrder: 60,
     supportsDryRun: true,
     usage: 'wp-typia add pattern <name> [--dry-run]',
     visibleFieldNames: () => ['kind', 'name'],
-  },
-  style: {
+  }),
+  style: defineAddKindRegistryEntry<AddBlockStyleResult>({
     completion: {
       nextSteps: (values) => [
         `Review src/blocks/${values.blockSlug}/styles/${values.styleSlug}.ts.`,
@@ -600,11 +616,12 @@ export const ADD_KIND_REGISTRY = {
         }),
       };
     },
+    sortOrder: 40,
     supportsDryRun: true,
     usage: 'wp-typia add style <name> --block <block-slug> [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'block'],
-  },
-  transform: {
+  }),
+  transform: defineAddKindRegistryEntry<AddBlockTransformResult>({
     completion: {
       nextSteps: (values) => [
         `Review src/blocks/${values.blockSlug}/transforms/${values.transformSlug}.ts.`,
@@ -656,12 +673,13 @@ export const ADD_KIND_REGISTRY = {
         }),
       };
     },
+    sortOrder: 50,
     supportsDryRun: true,
     usage:
       'wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug> [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'from', 'to'],
-  },
-  'rest-resource': {
+  }),
+  'rest-resource': defineAddKindRegistryEntry<AddRestResourceResult>({
     completion: {
       nextSteps: (values) => [
         `Review src/rest/${values.restResourceSlug}/ and inc/rest/${values.restResourceSlug}.php.`,
@@ -700,12 +718,13 @@ export const ADD_KIND_REGISTRY = {
         }),
       };
     },
+    sortOrder: 80,
     supportsDryRun: true,
     usage:
       'wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'namespace', 'methods'],
-  },
-  'ai-feature': {
+  }),
+  'ai-feature': defineAddKindRegistryEntry<AddAiFeatureResult>({
     completion: {
       nextSteps: (values) => [
         `Review src/ai-features/${values.aiFeatureSlug}/ and inc/ai-features/${values.aiFeatureSlug}.php.`,
@@ -742,12 +761,13 @@ export const ADD_KIND_REGISTRY = {
         warnLine: context.warnLine,
       };
     },
+    sortOrder: 100,
     supportsDryRun: true,
     usage:
       'wp-typia add ai-feature <name> [--namespace <vendor/v1>] [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'namespace'],
-  },
-  variation: {
+  }),
+  variation: defineAddKindRegistryEntry<AddVariationResult>({
     completion: {
       nextSteps: (values) => [
         `Review src/blocks/${values.blockSlug}/variations/${values.variationSlug}.ts.`,
@@ -788,14 +808,21 @@ export const ADD_KIND_REGISTRY = {
         }),
       };
     },
+    sortOrder: 30,
     supportsDryRun: true,
     usage: 'wp-typia add variation <name> --block <block-slug> [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'block'],
-  },
-} as const satisfies Record<CliAddRuntime.AddKindId, AddKindRegistryEntry>;
+  }),
+} as const satisfies Record<CliAddRuntime.AddKindId, AddKindRegistryEntry<any>>;
 
 export type AddKindId = keyof typeof ADD_KIND_REGISTRY;
-export const ADD_KIND_IDS = Object.keys(ADD_KIND_REGISTRY) as AddKindId[];
+export type AddKindExecutionPlanFor<TKey extends AddKindId> = Awaited<
+  ReturnType<(typeof ADD_KIND_REGISTRY)[TKey]['prepareExecution']>
+>;
+export const ADD_KIND_IDS = (Object.keys(ADD_KIND_REGISTRY) as AddKindId[]).sort(
+  (left, right) =>
+    ADD_KIND_REGISTRY[left].sortOrder - ADD_KIND_REGISTRY[right].sortOrder,
+);
 
 export function isAddKindId(value?: string): value is AddKindId {
   return (
@@ -804,11 +831,12 @@ export function isAddKindId(value?: string): value is AddKindId {
   );
 }
 
-export async function getAddKindExecutionPlan(
-  kind: AddKindId,
+export async function getAddKindExecutionPlan<TKey extends AddKindId>(
+  kind: TKey,
   context: AddKindExecutionContext,
-) {
-  return ADD_KIND_REGISTRY[kind].prepareExecution(context);
+): Promise<AddKindExecutionPlanFor<TKey>> {
+  return ADD_KIND_REGISTRY[kind]
+    .prepareExecution(context) as Promise<AddKindExecutionPlanFor<TKey>>;
 }
 
 export function buildAddKindCompletionDetails(

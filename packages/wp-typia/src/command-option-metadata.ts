@@ -211,7 +211,7 @@ export const ADD_OPTION_METADATA = {
   },
   template: {
     description:
-      'Optional built-in block family for the new block; interactive terminals prompt when omitted and non-interactive runs default to basic.',
+      'Optional built-in block family for the new block; interactive flows let you choose it when omitted and non-interactive runs default to basic.',
     type: 'string',
   },
   to: {

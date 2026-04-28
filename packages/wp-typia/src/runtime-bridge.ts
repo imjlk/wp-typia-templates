@@ -5,12 +5,14 @@ import {
 } from '@wp-typia/project-tools/cli-diagnostics';
 import {
   type AddKindExecutionPlan,
+  type AddKindExecutionPlanFor,
   type AddKindExecutionContext,
   type AddKindId,
   formatAddKindList,
   formatAddKindUsagePlaceholder,
   getAddKindExecutionPlan,
   isAddKindId,
+  supportsAddKindDryRun,
 } from './add-kind-registry';
 import { simulateWorkspaceAddDryRun } from './runtime-bridge-add-dry-run';
 import type { AlternateBufferCompletionPayload } from './ui/alternate-buffer-lifecycle';
@@ -194,8 +196,8 @@ async function executeWorkspaceAddWithOptionalDryRun<TResult>(options: {
   );
 }
 
-function executePreparedAddKind(
-  kind: AddKindId,
+function executePreparedAddKind<TKey extends AddKindId>(
+  kind: TKey,
   context: {
     cwd: string;
     dryRun: boolean;
@@ -219,6 +221,24 @@ function executePreparedAddKind(
     printLine: context.printLine,
     warnLine: plan.warnLine,
   });
+}
+
+async function executePlannedAddKind<TKey extends AddKindId>(
+  kind: TKey,
+  executionContext: AddKindExecutionContext,
+  context: {
+    cwd: string;
+    dryRun: boolean;
+    emitOutput: boolean | undefined;
+    printLine: PrintLine;
+  },
+): Promise<AlternateBufferCompletionPayload | void> {
+  const plan = await getAddKindExecutionPlan(kind, executionContext);
+  return executePreparedAddKind(
+    kind,
+    context,
+    plan as AddKindExecutionPlanFor<TKey> & AddKindExecutionPlan<any>,
+  );
 }
 
 const PACKAGE_MANAGER_PROMPT_OPTIONS = [
@@ -471,6 +491,12 @@ export async function executeAddCommand({
         `Unknown add kind "${kind}". Expected one of: ${formatAddKindList()}.`,
       );
     }
+    if (dryRun && !supportsAddKindDryRun(kind)) {
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
+        `\`wp-typia add ${kind}\` does not support \`--dry-run\` yet.`,
+      );
+    }
 
     const executionContext: AddKindExecutionContext = {
       addRuntime,
@@ -489,17 +515,15 @@ export async function executeAddCommand({
       name,
       warnLine,
     };
-    const plan = await getAddKindExecutionPlan(kind, executionContext);
-
-    return await executePreparedAddKind(
+    return await executePlannedAddKind(
       kind,
+      executionContext,
       {
         cwd,
         dryRun,
         emitOutput,
         printLine,
       },
-      plan,
     );
   } catch (error) {
     if (!shouldWrapCliCommandError({ emitOutput })) {

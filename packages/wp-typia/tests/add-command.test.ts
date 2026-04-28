@@ -238,4 +238,21 @@ describe('wp-typia add command bridge', () => {
       true,
     );
   });
+
+  test('keeps the canonical add kind order stable', () => {
+    expect(ADD_KIND_IDS).toEqual([
+      'admin-view',
+      'block',
+      'variation',
+      'style',
+      'transform',
+      'pattern',
+      'binding-source',
+      'rest-resource',
+      'ability',
+      'ai-feature',
+      'hooked-block',
+      'editor-plugin',
+    ]);
+  });
 });
