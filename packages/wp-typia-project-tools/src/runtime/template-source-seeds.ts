@@ -446,6 +446,57 @@ function cloneGitHubTemplateSource(
   }
 }
 
+function readGitHubTemplateHeadRevision(checkoutDir: string): string | null {
+  const result = runGitTemplateCommand(
+    ['-C', checkoutDir, 'rev-parse', 'HEAD'],
+    'reading GitHub template checkout revision',
+    { captureOutput: true },
+  )
+  if (result.status !== 0 || typeof result.stdout !== 'string') {
+    return null
+  }
+
+  const revision = result.stdout.trim().split(/\s+/u)[0]
+  return /^[0-9a-f]{40}$/iu.test(revision) ? revision.toLowerCase() : null
+}
+
+function pinGitHubTemplateCacheRevision(
+  locator: GitHubTemplateLocator,
+  checkoutDir: string,
+  cacheRevision: string,
+): void {
+  const normalizedCacheRevision = cacheRevision.toLowerCase()
+  if (readGitHubTemplateHeadRevision(checkoutDir) === normalizedCacheRevision) {
+    return
+  }
+
+  const fetchResult = runGitTemplateCommand(
+    ['-C', checkoutDir, 'fetch', '--depth', '1', 'origin', cacheRevision],
+    `fetching GitHub template revision ${locator.owner}/${locator.repo}`,
+  )
+  if (fetchResult.status !== 0) {
+    throw new Error(
+      `Failed to fetch GitHub template revision ${cacheRevision} for ${locator.owner}/${locator.repo}.`,
+    )
+  }
+
+  const checkoutResult = runGitTemplateCommand(
+    ['-C', checkoutDir, 'checkout', '--detach', cacheRevision],
+    `checking out GitHub template revision ${locator.owner}/${locator.repo}`,
+  )
+  if (checkoutResult.status !== 0) {
+    throw new Error(
+      `Failed to check out GitHub template revision ${cacheRevision} for ${locator.owner}/${locator.repo}.`,
+    )
+  }
+
+  if (readGitHubTemplateHeadRevision(checkoutDir) !== normalizedCacheRevision) {
+    throw new Error(
+      `GitHub template checkout did not match resolved revision ${cacheRevision} for ${locator.owner}/${locator.repo}.`,
+    )
+  }
+}
+
 function resolveGitHubTemplateCacheRevision(
   locator: GitHubTemplateLocator,
 ): string | null {
@@ -479,39 +530,49 @@ async function resolveGitHubTemplateSource(
     }
   }
   if (cacheRevision) {
-    const cachedSource = await resolveExternalTemplateSourceCache(
-      {
-        keyParts: [
-          'github',
-          locator.owner,
-          locator.repo,
-          locator.sourcePath,
-          locator.ref ?? '',
-          cacheRevision,
-        ],
-        metadata: {
-          owner: locator.owner,
-          ref: locator.ref,
-          repo: locator.repo,
-          revision: cacheRevision,
-          sourcePath: locator.sourcePath,
+    const resolvedCacheRevision = cacheRevision
+    try {
+      const cachedSource = await resolveExternalTemplateSourceCache(
+        {
+          keyParts: [
+            'github',
+            locator.owner,
+            locator.repo,
+            locator.sourcePath,
+            locator.ref ?? '',
+            resolvedCacheRevision,
+          ],
+          metadata: {
+            owner: locator.owner,
+            ref: locator.ref,
+            repo: locator.repo,
+            revision: resolvedCacheRevision,
+            sourcePath: locator.sourcePath,
+          },
+          namespace: 'github',
         },
-        namespace: 'github',
-      },
-      async (checkoutDir) => {
-        cloneGitHubTemplateSource(locator, checkoutDir)
-      },
-    )
-    if (cachedSource) {
-      const sourceDir = resolveGitHubTemplateDirectory(
-        cachedSource.sourceDir,
-        locator,
+        async (checkoutDir) => {
+          cloneGitHubTemplateSource(locator, checkoutDir)
+          pinGitHubTemplateCacheRevision(
+            locator,
+            checkoutDir,
+            resolvedCacheRevision,
+          )
+        },
       )
-      await assertNoSymlinks(sourceDir)
-      return {
-        blockDir: sourceDir,
-        rootDir: sourceDir,
+      if (cachedSource) {
+        const sourceDir = resolveGitHubTemplateDirectory(
+          cachedSource.sourceDir,
+          locator,
+        )
+        await assertNoSymlinks(sourceDir)
+        return {
+          blockDir: sourceDir,
+          rootDir: sourceDir,
+        }
       }
+    } catch {
+      // Fall back to the existing uncached clone path if revision pinning races.
     }
   }
 
