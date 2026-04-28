@@ -33,7 +33,27 @@ const BLOCK_STYLES_CALL_LINE = "registerWorkspaceBlockStyles();";
 const BLOCK_TRANSFORMS_IMPORT_LINE =
 	"import { applyWorkspaceBlockTransforms } from './transforms';";
 const BLOCK_TRANSFORMS_CALL_LINE = "applyWorkspaceBlockTransforms(registration.settings);";
+const SCAFFOLD_REGISTRATION_SETTINGS_CALL_PATTERN =
+	/registerScaffoldBlockType\s*\(\s*registration\s*\.\s*name\s*,\s*registration\s*\.\s*settings\s*\)\s*;/u;
 const FULL_BLOCK_NAME_PATTERN = /^[a-z][a-z0-9-]*\/[a-z][a-z0-9-]*$/u;
+
+function maskTypeScriptComments(source: string): string {
+	return source
+		.replace(/\/\*[\s\S]*?\*\//gu, (match) => match.replace(/[^\n\r]/gu, " "))
+		.replace(/\/\/[^\n\r]*/gu, (match) => " ".repeat(match.length));
+}
+
+function findScaffoldRegistrationSettingsCallStart(source: string): number | undefined {
+	const match = SCAFFOLD_REGISTRATION_SETTINGS_CALL_PATTERN.exec(
+		maskTypeScriptComments(source),
+	);
+
+	if (!match || match.index === undefined) {
+		return undefined;
+	}
+
+	return match.index;
+}
 
 function buildVariationConfigEntry(blockSlug: string, variationSlug: string): string {
 	return [
@@ -389,41 +409,26 @@ async function ensureBlockTransformRegistrationHook(blockIndexPath: string): Pro
 	await patchFile(blockIndexPath, (source) => {
 		let nextSource = source;
 
-		if (!nextSource.includes("registration.settings")) {
-			throw new Error(
-				`Unable to inject ${BLOCK_TRANSFORMS_CALL_LINE} into ${path.basename(
-					blockIndexPath,
-				)} because it does not expose a scaffold registration settings object.`,
-			);
-		}
-
 		if (!nextSource.includes(BLOCK_TRANSFORMS_IMPORT_LINE)) {
 			nextSource = `${BLOCK_TRANSFORMS_IMPORT_LINE}\n${nextSource}`;
 		}
 
 		if (!nextSource.includes(BLOCK_TRANSFORMS_CALL_LINE)) {
-			const callInsertionPatterns = [
-				/(registerScaffoldBlockType\([\s\S]*?\);\s*)/u,
-			];
-			let inserted = false;
+			const callStart = findScaffoldRegistrationSettingsCallStart(nextSource);
 
-			for (const pattern of callInsertionPatterns) {
-				const candidate = nextSource.replace(
-					pattern,
-					(match) => `${BLOCK_TRANSFORMS_CALL_LINE}\n${match}`,
-				);
-				if (candidate !== nextSource) {
-					nextSource = candidate;
-					inserted = true;
-					break;
-				}
-			}
-
-			if (!inserted) {
+			if (callStart === undefined) {
 				throw new Error(
-					`Unable to inject ${BLOCK_TRANSFORMS_CALL_LINE} into ${path.basename(blockIndexPath)}.`,
+					`Unable to inject ${BLOCK_TRANSFORMS_CALL_LINE} into ${path.basename(
+						blockIndexPath,
+					)} because it does not expose a scaffold registration settings object.`,
 				);
 			}
+
+			nextSource = [
+				nextSource.slice(0, callStart),
+				`${BLOCK_TRANSFORMS_CALL_LINE}\n`,
+				nextSource.slice(callStart),
+			].join("");
 		}
 
 		return nextSource;
@@ -708,6 +713,19 @@ export async function runAddVariationCommand({
 
 /**
  * Add one Block Styles registration to an existing workspace block.
+ *
+ * @param options Command options for the Block Styles scaffold workflow.
+ * @param options.blockName Target workspace block slug that will own the style.
+ * @param options.cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @param options.styleName Human-entered style name that will be normalized and
+ * validated before files are written.
+ * @returns A promise that resolves with the normalized `blockSlug`, `styleSlug`,
+ * and owning `projectDir` after the style module, style registry, entrypoint
+ * hook, and inventory entry have been written successfully.
+ * @throws {Error} When the command is run outside an official workspace, when
+ * the target block is unknown, when the style slug is invalid, or when a
+ * conflicting file or inventory entry already exists.
  */
 export async function runAddBlockStyleCommand({
 	blockName,
@@ -771,6 +789,27 @@ export async function runAddBlockStyleCommand({
 
 /**
  * Add one block-to-block transform registration to an existing workspace block.
+ *
+ * @param options Command options for the block transform scaffold workflow.
+ * @param options.cwd Working directory used to resolve the nearest official workspace.
+ * Defaults to `process.cwd()`.
+ * @param options.fromBlockName Source block name for `--from`. This must be the
+ * full `namespace/block` form because transforms may originate from WordPress
+ * core or third-party blocks outside the workspace.
+ * @param options.toBlockName Target block for `--to`. A workspace block slug is
+ * resolved against the workspace namespace, while a full `namespace/block` name
+ * must still point at an existing workspace block.
+ * @param options.transformName Human-entered transform name that will be
+ * normalized and validated before files are written.
+ * @returns A promise that resolves with the normalized target `blockSlug`,
+ * resolved `fromBlockName`, resolved `toBlockName`, `transformSlug`, and owning
+ * `projectDir` after the transform module, transform registry, entrypoint hook,
+ * and inventory entry have been written successfully.
+ * @throws {Error} When the command is run outside an official workspace, when
+ * the target block is unknown, when `--from` is not a full block name, when
+ * `--to` uses a non-workspace namespace, when the target block entrypoint does
+ * not expose `registration.settings`, when the transform slug is invalid, or
+ * when a conflicting file or inventory entry already exists.
  */
 export async function runAddBlockTransformCommand({
 	cwd = process.cwd(),

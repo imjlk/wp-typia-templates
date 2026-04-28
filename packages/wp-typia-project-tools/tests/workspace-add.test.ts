@@ -773,6 +773,7 @@ test("transform workflow rejects direct registerBlockType entrypoints without wr
       "import { registerBlockType } from '@wordpress/blocks';",
       "import metadata from './block.json';",
       "",
+      "// TODO: migrate to registerScaffoldBlockType(registration.name, registration.settings);",
       "registerBlockType(metadata.name, {",
       "\tedit: () => null,",
       "\tsave: () => null,",
