@@ -11,12 +11,14 @@ import { getWorkspaceDoctorChecks } from "./cli-doctor-workspace.js";
  * One doctor check rendered by the CLI diagnostics flow.
  */
 export interface DoctorCheck {
+	/** Stable machine-readable diagnostic id for structured integrations. */
+	code?: string;
 	/** Human-readable status detail rendered next to the label. */
 	detail: string;
 	/** Short label for the dependency, directory, or template check. */
 	label: string;
-	/** Final pass/fail status for this diagnostic row. */
-	status: "pass" | "fail";
+	/** Final pass/fail/warn status for this diagnostic row. */
+	status: "pass" | "fail" | "warn";
 }
 
 interface RunDoctorOptions {

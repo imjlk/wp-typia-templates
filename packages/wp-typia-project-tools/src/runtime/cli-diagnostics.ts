@@ -31,9 +31,10 @@ export type CliDiagnosticCodeError<TCode extends CliDiagnosticCode = CliDiagnost
 	Error & { code: TCode };
 
 type DoctorCheckLike = {
+	code?: string;
 	detail: string;
 	label: string;
-	status: "pass" | "fail";
+	status: "pass" | "fail" | "warn";
 };
 
 const DEFAULT_CLI_FAILURE_SUMMARIES: Record<string, string> = {
@@ -396,8 +397,10 @@ export function serializeCliDiagnosticError(error: unknown): {
  * Format one human-readable doctor check row.
  */
 export function formatDoctorCheckLine(check: DoctorCheckLike): string {
+	const statusLabel =
+		check.status === "pass" ? "PASS" : check.status === "warn" ? "WARN" : "FAIL";
 	return formatWrappedPrefixedLine(
-		`${check.status === "pass" ? "PASS" : "FAIL"} ${check.label}: `,
+		`${statusLabel} ${check.label}: `,
 		check.detail,
 		resolveCliWrapColumns(process.stdout.columns),
 	).join("\n");
@@ -417,9 +420,15 @@ export function getFailingDoctorChecks<TCheck extends DoctorCheckLike>(
  */
 export function formatDoctorSummaryLine(checks: readonly DoctorCheckLike[]): string {
 	const failedChecks = getFailingDoctorChecks(checks);
+	const warningCount = checks.filter((check) => check.status === "warn").length;
 	return formatWrappedPrefixedLine(
 		`${failedChecks.length === 0 ? "PASS" : "FAIL"} wp-typia doctor summary: `,
-		`${checks.length - failedChecks.length}/${checks.length} checks passed`,
+		[
+			`${checks.length - failedChecks.length - warningCount}/${checks.length} checks passed`,
+			warningCount > 0 ? `${warningCount} warning(s)` : null,
+		]
+			.filter((detail): detail is string => detail !== null)
+			.join(", "),
 		resolveCliWrapColumns(process.stdout.columns),
 	).join("\n");
 }

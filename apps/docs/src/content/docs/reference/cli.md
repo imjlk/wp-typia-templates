@@ -166,6 +166,17 @@ also get inventory, source-tree drift, and shared convention checks. Use
 `--format json` for CI, IDE, and wrapper integrations that need stable
 machine-readable check results.
 
+Workspace block diagnostics also include iframe/API v3 readiness rows. `WARN`
+rows do not fail `doctor`; treat them as compatibility follow-up before relying
+on iframe-enabled Post Editor or Site Editor rendering. The static checks cover
+`block.json` `apiVersion`, block stylesheet registration, direct
+`window`/`document`/parent DOM access in editor-facing sources, and detectable
+missing `useBlockProps`/`useInnerBlocksProps` wrapper usage. JSON output exposes
+stable check-level codes such as
+`wp-typia.workspace.block.iframe.api-version`. See WordPress' [iframe editor
+migration guide](https://developer.wordpress.org/block-editor/reference-guides/block-api/block-api-versions/block-migration-for-iframe-editor-compatibility/)
+for the platform rationale.
+
 ## `templates`
 
 Inspect scaffold templates.

@@ -98,6 +98,82 @@ test("doctor reports workspace discovery failures before workspace checks", asyn
   );
 });
 
+test("doctor reports iframe/API v3 compatibility warnings without failing", async () => {
+  const targetDir = path.join(
+    tempRoot,
+    "demo-workspace-iframe-compatibility-warnings"
+  );
+
+  await scaffoldOfficialWorkspace(targetDir, {
+    description: "Demo workspace iframe compatibility warnings",
+    slug: "demo-workspace-iframe-compatibility-warnings",
+    title: "Demo Workspace Iframe Compatibility Warnings",
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+  runCli(
+    "node",
+    [entryPath, "add", "block", "counter-card", "--template", "basic"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const blockDir = path.join(targetDir, "src", "blocks", "counter-card");
+  const blockJsonPath = path.join(blockDir, "block.json");
+  const blockJson = JSON.parse(fs.readFileSync(blockJsonPath, "utf8"));
+  blockJson.apiVersion = 2;
+  delete blockJson.style;
+  delete blockJson.editorStyle;
+  fs.writeFileSync(blockJsonPath, JSON.stringify(blockJson, null, 2), "utf8");
+
+  const editPath = path.join(blockDir, "edit.tsx");
+  fs.writeFileSync(
+    editPath,
+    `${fs
+      .readFileSync(editPath, "utf8")
+      .replace(/\buseBlockProps\b/gu, "usePlainBlockProps")}\ndocument.body.classList.contains('wp-admin');\n`,
+    "utf8"
+  );
+  const savePath = path.join(blockDir, "save.tsx");
+  fs.writeFileSync(
+    savePath,
+    fs.readFileSync(savePath, "utf8").replace(/\buseBlockProps\b/gu, "usePlainBlockProps"),
+    "utf8"
+  );
+
+  const humanOutput = runCli("node", [entryPath, "doctor"], {
+    cwd: targetDir,
+  });
+  expect(humanOutput).toContain("WARN Block iframe API version counter-card");
+  expect(humanOutput).toContain("PASS wp-typia doctor summary:");
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ code?: string; detail: string; label: string; status: string }>;
+  }>(doctorOutput);
+  const getCheck = (code: string) =>
+    doctorChecks.checks.find((check) => check.code === code);
+
+  expect(getCheck("wp-typia.workspace.block.iframe.api-version")?.status).toBe(
+    "warn"
+  );
+  expect(getCheck("wp-typia.workspace.block.iframe.editor-styles")?.status).toBe(
+    "warn"
+  );
+  expect(getCheck("wp-typia.workspace.block.iframe.editor-globals")?.detail).toContain(
+    "edit.tsx"
+  );
+  expect(getCheck("wp-typia.workspace.block.iframe.editor-globals")?.status).toBe(
+    "warn"
+  );
+  expect(getCheck("wp-typia.workspace.block.iframe.block-props")?.status).toBe(
+    "warn"
+  );
+}, 15_000);
+
 test("doctor accepts workspaces that keep binding registries in src/bindings/index.js", async () => {
   const targetDir = path.join(
     tempRoot,
