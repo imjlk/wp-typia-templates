@@ -91,7 +91,7 @@ const WORKSPACE_BLOCK_LOCAL_STYLE_FILES = [
 	"style.scss",
 ];
 const WORKSPACE_BLOCK_IFRAME_GLOBAL_DOM_PATTERN =
-	/\b(?:document|parent|top|window)\b/gu;
+	/\b(?:document|window)\b|\b(?:parent|top)\b(?!\s*:)/gu;
 const WORKSPACE_BLOCK_PROPS_PATTERN =
 	/\buse(?:Block|InnerBlocks)Props(?:\.save)?\s*\(/u;
 
@@ -339,6 +339,33 @@ function getSourceLineNumber(source: string, index: number): number {
 	return lineNumber;
 }
 
+function isGlobalDomAccessCandidate(
+	maskedSource: string,
+	index: number,
+	token: string,
+): boolean {
+	if (token === "document" || token === "window") {
+		return true;
+	}
+
+	const before = maskedSource.slice(0, index);
+	const after = maskedSource.slice(index + token.length);
+	const previousNonWhitespace = before.match(/\S(?=\s*$)/u)?.[0] ?? "";
+	const nextNonWhitespace = after.match(/^\s*(\S)/u)?.[1] ?? "";
+
+	if (previousNonWhitespace === "." || previousNonWhitespace === "{" || previousNonWhitespace === ",") {
+		return false;
+	}
+	if (nextNonWhitespace === ":") {
+		return false;
+	}
+	if (/\b(?:const|function|let|var)\s+$/u.test(before)) {
+		return false;
+	}
+
+	return true;
+}
+
 function findWorkspaceBlockGlobalDomAccesses(
 	sources: readonly WorkspaceBlockEditorSource[],
 ): string[] {
@@ -349,6 +376,9 @@ function findWorkspaceBlockGlobalDomAccesses(
 		for (const match of matches) {
 			const index = match.index ?? 0;
 			const matchedToken = match[0].replace(/\W+/gu, "");
+			if (!isGlobalDomAccessCandidate(maskedSource, index, matchedToken)) {
+				continue;
+			}
 			findings.push(`${relativePath}:${getSourceLineNumber(source, index)} (${matchedToken})`);
 			if (findings.length >= 5) {
 				return findings;

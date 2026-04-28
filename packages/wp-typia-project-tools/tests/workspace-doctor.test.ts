@@ -132,7 +132,7 @@ test("doctor reports iframe/API v3 compatibility warnings without failing", asyn
     editPath,
     `${fs
       .readFileSync(editPath, "utf8")
-      .replace(/\buseBlockProps\b/gu, "usePlainBlockProps")}\ndocument.body.classList.contains('wp-admin');\n`,
+      .replace(/\buseBlockProps\b/gu, "usePlainBlockProps")}\nconst iframeLayout = { parent: [], top: 0 };\ndocument.body.classList.contains('wp-admin');\n`,
     "utf8"
   );
   const humanOutput = runCli("node", [entryPath, "doctor"], {
@@ -158,6 +158,12 @@ test("doctor reports iframe/API v3 compatibility warnings without failing", asyn
   );
   expect(getCheck("wp-typia.workspace.block.iframe.editor-globals")?.detail).toContain(
     "edit.tsx"
+  );
+  expect(getCheck("wp-typia.workspace.block.iframe.editor-globals")?.detail).not.toContain(
+    "(parent)"
+  );
+  expect(getCheck("wp-typia.workspace.block.iframe.editor-globals")?.detail).not.toContain(
+    "(top)"
   );
   expect(getCheck("wp-typia.workspace.block.iframe.editor-globals")?.status).toBe(
     "warn"
