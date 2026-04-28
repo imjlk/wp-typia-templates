@@ -113,13 +113,15 @@ function readProjectPackageJson(projectDir: string): ProjectPackageJson | null {
 		return null;
 	}
 
+	const source = fs.readFileSync(packageJsonPath, "utf8");
 	try {
-		return JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as ProjectPackageJson;
+		return JSON.parse(source) as ProjectPackageJson;
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		throw createCliDiagnosticCodeError(
 			CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
 			`Unable to parse ${packageJsonPath}: ${message}`,
+			error instanceof Error ? { cause: error } : undefined,
 		);
 	}
 }

@@ -27,11 +27,19 @@ export const CLI_DIAGNOSTIC_CODES = {
 export type CliDiagnosticCode =
 	(typeof CLI_DIAGNOSTIC_CODES)[keyof typeof CLI_DIAGNOSTIC_CODES];
 
+/**
+ * Human-readable guidance attached to one stable CLI diagnostic code.
+ */
 export interface CliDiagnosticCodeMetadata {
+	/** Why this diagnostic code is emitted. */
 	cause: string;
+	/** The recommended recovery path for users and automation. */
 	recovery: string;
 }
 
+/**
+ * Stable cause and recovery metadata for every supported CLI diagnostic code.
+ */
 export const CLI_DIAGNOSTIC_CODE_METADATA = {
 	[CLI_DIAGNOSTIC_CODES.COMMAND_EXECUTION]: {
 		cause: "The command failed after argument parsing and preflight checks completed.",
@@ -290,6 +298,9 @@ function readCliDiagnosticCode(error: unknown): CliDiagnosticCode | null {
 	return null;
 }
 
+/**
+ * Look up cause and recovery guidance for a stable CLI diagnostic code.
+ */
 export function getCliDiagnosticCodeMetadata(
 	code: CliDiagnosticCode,
 ): CliDiagnosticCodeMetadata {

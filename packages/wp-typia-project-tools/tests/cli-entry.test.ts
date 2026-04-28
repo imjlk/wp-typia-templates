@@ -237,16 +237,17 @@ test("structured diagnostic codes cover representative CLI command failures", ()
   fs.mkdirSync(unwritableDoctorDir, { recursive: true });
   fs.chmodSync(unwritableDoctorDir, 0o555);
   try {
-    const output = getCommandErrorMessage(() =>
-      runCli("node", [entryPath, "doctor", "--format", "json"], {
+    const payload = readStructuredCliFailure(
+      "node",
+      [entryPath, "doctor", "--format", "json"],
+      {
         cwd: unwritableDoctorDir,
-        stdio: "pipe",
-      })
+      }
     );
 
-    expect(output).toContain('"code": "doctor-check-failed"');
-    expect(output).toContain('"kind": "command-execution"');
-    expect(output).toContain('"tag": "CommandExecutionError"');
+    expect(payload.error.code).toBe("doctor-check-failed");
+    expect(payload.error.kind).toBe("command-execution");
+    expect(payload.error.tag).toBe("CommandExecutionError");
   } finally {
     fs.chmodSync(unwritableDoctorDir, 0o755);
   }

@@ -77,10 +77,9 @@ function deepMerge<T extends JsonRecord>(base: T, incoming: JsonRecord): T {
 }
 
 async function readJsonFile(filePath: string): Promise<JsonRecord | null> {
+	let source: string;
 	try {
-		const source = await fs.readFile(filePath, "utf8");
-		const parsed = JSON.parse(source);
-		return isRecord(parsed) ? parsed : null;
+		source = await fs.readFile(filePath, "utf8");
 	} catch (error) {
 		if (
 			typeof error === "object" &&
@@ -90,6 +89,13 @@ async function readJsonFile(filePath: string): Promise<JsonRecord | null> {
 		) {
 			return null;
 		}
+		throw error;
+	}
+
+	try {
+		const parsed = JSON.parse(source);
+		return isRecord(parsed) ? parsed : null;
+	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		throw createCliDiagnosticCodeError(
 			CLI_DIAGNOSTIC_CODES.INVALID_ARGUMENT,
