@@ -135,18 +135,11 @@ test("doctor reports iframe/API v3 compatibility warnings without failing", asyn
       .replace(/\buseBlockProps\b/gu, "usePlainBlockProps")}\ndocument.body.classList.contains('wp-admin');\n`,
     "utf8"
   );
-  const savePath = path.join(blockDir, "save.tsx");
-  fs.writeFileSync(
-    savePath,
-    fs.readFileSync(savePath, "utf8").replace(/\buseBlockProps\b/gu, "usePlainBlockProps"),
-    "utf8"
-  );
-
   const humanOutput = runCli("node", [entryPath, "doctor"], {
     cwd: targetDir,
   });
   expect(humanOutput).toContain("WARN Block iframe API version counter-card");
-  expect(humanOutput).toContain("PASS wp-typia doctor summary:");
+  expect(humanOutput).toContain("WARN wp-typia doctor summary:");
 
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
     cwd: targetDir,
@@ -168,6 +161,9 @@ test("doctor reports iframe/API v3 compatibility warnings without failing", asyn
   );
   expect(getCheck("wp-typia.workspace.block.iframe.editor-globals")?.status).toBe(
     "warn"
+  );
+  expect(getCheck("wp-typia.workspace.block.iframe.block-props")?.detail).toContain(
+    "Only save-facing"
   );
   expect(getCheck("wp-typia.workspace.block.iframe.block-props")?.status).toBe(
     "warn"

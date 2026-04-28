@@ -91,7 +91,7 @@ const WORKSPACE_BLOCK_LOCAL_STYLE_FILES = [
 	"style.scss",
 ];
 const WORKSPACE_BLOCK_IFRAME_GLOBAL_DOM_PATTERN =
-	/\b(?:document|window)\b|\b(?:parent|top)\s*\./gu;
+	/\b(?:document|parent|top|window)\b/gu;
 const WORKSPACE_BLOCK_PROPS_PATTERN =
 	/\buse(?:Block|InnerBlocks)Props(?:\.save)?\s*\(/u;
 
@@ -266,14 +266,15 @@ function readWorkspaceBlockIframeMetadata(
 
 function isWorkspaceBlockEditorSource(relativePath: string): boolean {
 	const normalizedPath = normalizePathSeparators(relativePath);
+	const normalizedLowerPath = normalizedPath.toLowerCase();
 	if (
-		!WORKSPACE_BLOCK_EDITOR_SOURCE_FILE_PATTERN.test(normalizedPath) ||
-		/\.d\.[cm]?[jt]s$/u.test(normalizedPath)
+		!WORKSPACE_BLOCK_EDITOR_SOURCE_FILE_PATTERN.test(normalizedLowerPath) ||
+		/\.d\.[cm]?[jt]s$/u.test(normalizedLowerPath)
 	) {
 		return false;
 	}
 
-	const segments = normalizedPath.split("/");
+	const segments = normalizedLowerPath.split("/");
 	const fileName = segments[segments.length - 1] ?? "";
 	const baseName = fileName.replace(/\.[^.]+$/u, "");
 	if (WORKSPACE_BLOCK_EDITOR_SOURCE_BASENAMES.has(baseName)) {
@@ -283,6 +284,11 @@ function isWorkspaceBlockEditorSource(relativePath: string): boolean {
 	return segments
 		.slice(0, -1)
 		.some((segment) => WORKSPACE_BLOCK_EDITOR_SOURCE_DIRECTORIES.has(segment));
+}
+
+function isWorkspaceBlockSaveSource(relativePath: string): boolean {
+	const fileName = normalizePathSeparators(relativePath).split("/").pop() ?? "";
+	return fileName.replace(/\.[^.]+$/u, "").toLowerCase() === "save";
 }
 
 function collectWorkspaceBlockEditorSources(
@@ -583,7 +589,7 @@ function checkWorkspaceBlockIframeCompatibility(
 		return [
 			createDoctorCheck(
 				`Block iframe/API v3 ${blockSlug}`,
-				"fail",
+				"warn",
 				metadataResult.error ?? `Unable to inspect ${metadataResult.blockJsonRelativePath}`,
 				WORKSPACE_BLOCK_IFRAME_DIAGNOSTIC_CODES.API_VERSION,
 			),
@@ -603,10 +609,28 @@ function checkWorkspaceBlockIframeCompatibility(
 		hasRegisteredBlockAsset(blockJson.style) ||
 		hasRegisteredBlockAsset(blockJson.editorStyle);
 	const editorSources = collectWorkspaceBlockEditorSources(projectDir, blockSlug);
+	const editorWrapperSources = editorSources.filter(
+		(source) => !isWorkspaceBlockSaveSource(source.relativePath),
+	);
 	const globalDomAccesses = findWorkspaceBlockGlobalDomAccesses(editorSources);
 	const hasBlockPropsUsage = editorSources.some(({ source }) =>
 		hasExecutablePattern(source, WORKSPACE_BLOCK_PROPS_PATTERN),
 	);
+	const hasEditorBlockPropsUsage = editorWrapperSources.some(({ source }) =>
+		hasExecutablePattern(source, WORKSPACE_BLOCK_PROPS_PATTERN),
+	);
+	const blockWrapperStatus: DoctorCheck["status"] =
+		editorWrapperSources.length === 0 || hasEditorBlockPropsUsage ? "pass" : "warn";
+	const blockWrapperDetail =
+		editorSources.length === 0
+			? "No editor-facing block source files found; general file checks will report missing entrypoints"
+			: editorWrapperSources.length === 0
+				? "No editor wrapper source files found; general file checks will report missing entrypoints"
+				: hasEditorBlockPropsUsage
+					? "Editor-facing sources use block wrapper props"
+					: hasBlockPropsUsage
+						? "Only save-facing useBlockProps.save() usage was detected. Confirm the editor wrapper also receives useBlockProps() or useInnerBlocksProps() before relying on iframe editor rendering."
+						: "No useBlockProps(), useBlockProps.save(), or useInnerBlocksProps() usage was detected in editor-facing sources. Confirm the block wrapper receives WordPress block editor props before relying on iframe editor rendering.";
 
 	return [
 		createDoctorCheck(
@@ -637,12 +661,8 @@ function checkWorkspaceBlockIframeCompatibility(
 		),
 		createDoctorCheck(
 			`Block iframe wrapper ${blockSlug}`,
-			editorSources.length === 0 || hasBlockPropsUsage ? "pass" : "warn",
-			editorSources.length === 0
-				? "No editor-facing block source files found; general file checks will report missing entrypoints"
-				: hasBlockPropsUsage
-					? "Editor-facing sources use block wrapper props"
-					: "No useBlockProps(), useBlockProps.save(), or useInnerBlocksProps() usage was detected in editor-facing sources. Confirm the block wrapper receives WordPress block editor props before relying on iframe editor rendering.",
+			blockWrapperStatus,
+			blockWrapperDetail,
 			WORKSPACE_BLOCK_IFRAME_DIAGNOSTIC_CODES.BLOCK_PROPS,
 		),
 	];

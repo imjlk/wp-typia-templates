@@ -421,8 +421,10 @@ export function getFailingDoctorChecks<TCheck extends DoctorCheckLike>(
 export function formatDoctorSummaryLine(checks: readonly DoctorCheckLike[]): string {
 	const failedChecks = getFailingDoctorChecks(checks);
 	const warningCount = checks.filter((check) => check.status === "warn").length;
+	const summaryStatus =
+		failedChecks.length > 0 ? "FAIL" : warningCount > 0 ? "WARN" : "PASS";
 	return formatWrappedPrefixedLine(
-		`${failedChecks.length === 0 ? "PASS" : "FAIL"} wp-typia doctor summary: `,
+		`${summaryStatus} wp-typia doctor summary: `,
 		[
 			`${checks.length - failedChecks.length - warningCount}/${checks.length} checks passed`,
 			warningCount > 0 ? `${warningCount} warning(s)` : null,
