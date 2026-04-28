@@ -28,31 +28,122 @@ import {
 
 const VARIATIONS_IMPORT_LINE = "import { registerWorkspaceVariations } from './variations';";
 const VARIATIONS_CALL_LINE = "registerWorkspaceVariations();";
+const VARIATIONS_CALL_PATTERN = /registerWorkspaceVariations\s*\(\s*\)\s*;/u;
 const BLOCK_STYLES_IMPORT_LINE = "import { registerWorkspaceBlockStyles } from './styles';";
 const BLOCK_STYLES_CALL_LINE = "registerWorkspaceBlockStyles();";
+const BLOCK_STYLES_CALL_PATTERN = /registerWorkspaceBlockStyles\s*\(\s*\)\s*;/u;
 const BLOCK_TRANSFORMS_IMPORT_LINE =
 	"import { applyWorkspaceBlockTransforms } from './transforms';";
 const BLOCK_TRANSFORMS_CALL_LINE = "applyWorkspaceBlockTransforms(registration.settings);";
+const BLOCK_TRANSFORMS_CALL_PATTERN =
+	/applyWorkspaceBlockTransforms\s*\(\s*registration\s*\.\s*settings\s*\)\s*;/u;
+const BLOCK_REGISTRATION_CALL_PATTERNS = [
+	/registerScaffoldBlockType\s*\([\s\S]*?\)\s*;/u,
+	/registerBlockType<[\s\S]*?\)\s*;/u,
+	/registerBlockType\([\s\S]*?\)\s*;/u,
+] as const;
 const SCAFFOLD_REGISTRATION_SETTINGS_CALL_PATTERN =
 	/registerScaffoldBlockType\s*\(\s*registration\s*\.\s*name\s*,\s*registration\s*\.\s*settings\s*\)\s*;/u;
 const FULL_BLOCK_NAME_PATTERN = /^[a-z][a-z0-9-]*\/[a-z][a-z0-9-]*$/u;
 
-function maskTypeScriptComments(source: string): string {
-	return source
-		.replace(/\/\*[\s\S]*?\*\//gu, (match) => match.replace(/[^\n\r]/gu, " "))
-		.replace(/\/\/[^\n\r]*/gu, (match) => " ".repeat(match.length));
+function maskSourceSegment(segment: string): string {
+	return segment.replace(/[^\n\r]/gu, " ");
 }
 
-function findScaffoldRegistrationSettingsCallStart(source: string): number | undefined {
-	const match = SCAFFOLD_REGISTRATION_SETTINGS_CALL_PATTERN.exec(
-		maskTypeScriptComments(source),
-	);
+// Preserve source offsets so executable-code match indexes still map to the original file.
+function maskTypeScriptCommentsAndLiterals(source: string): string {
+	let maskedSource = "";
+	let index = 0;
 
-	if (!match || match.index === undefined) {
-		return undefined;
+	while (index < source.length) {
+		const current = source[index];
+		const next = source[index + 1];
+
+		if (current === "/" && next === "/") {
+			const start = index;
+			index += 2;
+
+			while (
+				index < source.length &&
+				source[index] !== "\n" &&
+				source[index] !== "\r"
+			) {
+				index += 1;
+			}
+
+			maskedSource += maskSourceSegment(source.slice(start, index));
+			continue;
+		}
+
+		if (current === "/" && next === "*") {
+			const start = index;
+			index += 2;
+
+			while (
+				index < source.length &&
+				!(source[index] === "*" && source[index + 1] === "/")
+			) {
+				index += 1;
+			}
+
+			index = Math.min(index + 2, source.length);
+			maskedSource += maskSourceSegment(source.slice(start, index));
+			continue;
+		}
+
+		if (current === "'" || current === '"' || current === "`") {
+			const start = index;
+			const quote = current;
+			index += 1;
+
+			while (index < source.length) {
+				const char = source[index];
+
+				if (char === "\\") {
+					index += 2;
+					continue;
+				}
+
+				index += 1;
+
+				if (char === quote) {
+					break;
+				}
+			}
+
+			maskedSource += maskSourceSegment(source.slice(start, index));
+			continue;
+		}
+
+		maskedSource += current;
+		index += 1;
 	}
 
-	return match.index;
+	return maskedSource;
+}
+
+function hasExecutablePattern(source: string, pattern: RegExp): boolean {
+	return pattern.test(maskTypeScriptCommentsAndLiterals(source));
+}
+
+function findExecutablePatternMatch(
+	source: string,
+	patterns: readonly RegExp[],
+): { end: number; start: number } | undefined {
+	const maskedSource = maskTypeScriptCommentsAndLiterals(source);
+
+	for (const pattern of patterns) {
+		const match = pattern.exec(maskedSource);
+
+		if (match && match.index !== undefined) {
+			return {
+				end: match.index + match[0].length,
+				start: match.index,
+			};
+		}
+	}
+
+	return undefined;
 }
 
 function buildVariationConfigEntry(blockSlug: string, variationSlug: string): string {
@@ -328,31 +419,24 @@ async function ensureVariationRegistrationHook(blockIndexPath: string): Promise<
 			nextSource = `${VARIATIONS_IMPORT_LINE}\n${nextSource}`;
 		}
 
-		if (!nextSource.includes(VARIATIONS_CALL_LINE)) {
-			const callInsertionPatterns = [
-				/(registerBlockType<[\s\S]*?\);\s*)/u,
-				/(registerBlockType\([\s\S]*?\);\s*)/u,
-			];
-			let inserted = false;
+		if (!hasExecutablePattern(nextSource, VARIATIONS_CALL_PATTERN)) {
+			const callRange = findExecutablePatternMatch(
+				nextSource,
+				BLOCK_REGISTRATION_CALL_PATTERNS,
+			);
 
-			for (const pattern of callInsertionPatterns) {
-				const candidate = nextSource.replace(
-					pattern,
-					(match) => `${match}\n${VARIATIONS_CALL_LINE}\n`,
-				);
-				if (candidate !== nextSource) {
-					nextSource = candidate;
-					inserted = true;
-					break;
-				}
-			}
-
-			if (!inserted) {
+			if (callRange) {
+				nextSource = [
+					nextSource.slice(0, callRange.end),
+					`\n${VARIATIONS_CALL_LINE}\n`,
+					nextSource.slice(callRange.end),
+				].join("");
+			} else {
 				nextSource = `${nextSource.trimEnd()}\n\n${VARIATIONS_CALL_LINE}\n`;
 			}
 		}
 
-		if (!nextSource.includes(VARIATIONS_CALL_LINE)) {
+		if (!hasExecutablePattern(nextSource, VARIATIONS_CALL_PATTERN)) {
 			throw new Error(
 				`Unable to inject ${VARIATIONS_CALL_LINE} into ${path.basename(blockIndexPath)}.`,
 			);
@@ -370,32 +454,24 @@ async function ensureBlockStyleRegistrationHook(blockIndexPath: string): Promise
 			nextSource = `${BLOCK_STYLES_IMPORT_LINE}\n${nextSource}`;
 		}
 
-		if (!nextSource.includes(BLOCK_STYLES_CALL_LINE)) {
-			const callInsertionPatterns = [
-				/(registerScaffoldBlockType\([\s\S]*?\);\s*)/u,
-				/(registerBlockType<[\s\S]*?\);\s*)/u,
-				/(registerBlockType\([\s\S]*?\);\s*)/u,
-			];
-			let inserted = false;
+		if (!hasExecutablePattern(nextSource, BLOCK_STYLES_CALL_PATTERN)) {
+			const callRange = findExecutablePatternMatch(
+				nextSource,
+				BLOCK_REGISTRATION_CALL_PATTERNS,
+			);
 
-			for (const pattern of callInsertionPatterns) {
-				const candidate = nextSource.replace(
-					pattern,
-					(match) => `${match}\n${BLOCK_STYLES_CALL_LINE}\n`,
-				);
-				if (candidate !== nextSource) {
-					nextSource = candidate;
-					inserted = true;
-					break;
-				}
-			}
-
-			if (!inserted) {
+			if (callRange) {
+				nextSource = [
+					nextSource.slice(0, callRange.end),
+					`\n${BLOCK_STYLES_CALL_LINE}\n`,
+					nextSource.slice(callRange.end),
+				].join("");
+			} else {
 				nextSource = `${nextSource.trimEnd()}\n\n${BLOCK_STYLES_CALL_LINE}\n`;
 			}
 		}
 
-		if (!nextSource.includes(BLOCK_STYLES_CALL_LINE)) {
+		if (!hasExecutablePattern(nextSource, BLOCK_STYLES_CALL_PATTERN)) {
 			throw new Error(
 				`Unable to inject ${BLOCK_STYLES_CALL_LINE} into ${path.basename(blockIndexPath)}.`,
 			);
@@ -413,10 +489,12 @@ async function ensureBlockTransformRegistrationHook(blockIndexPath: string): Pro
 			nextSource = `${BLOCK_TRANSFORMS_IMPORT_LINE}\n${nextSource}`;
 		}
 
-		if (!nextSource.includes(BLOCK_TRANSFORMS_CALL_LINE)) {
-			const callStart = findScaffoldRegistrationSettingsCallStart(nextSource);
+		if (!hasExecutablePattern(nextSource, BLOCK_TRANSFORMS_CALL_PATTERN)) {
+			const callRange = findExecutablePatternMatch(nextSource, [
+				SCAFFOLD_REGISTRATION_SETTINGS_CALL_PATTERN,
+			]);
 
-			if (callStart === undefined) {
+			if (!callRange) {
 				throw new Error(
 					`Unable to inject ${BLOCK_TRANSFORMS_CALL_LINE} into ${path.basename(
 						blockIndexPath,
@@ -425,9 +503,9 @@ async function ensureBlockTransformRegistrationHook(blockIndexPath: string): Pro
 			}
 
 			nextSource = [
-				nextSource.slice(0, callStart),
+				nextSource.slice(0, callRange.start),
 				`${BLOCK_TRANSFORMS_CALL_LINE}\n`,
-				nextSource.slice(callStart),
+				nextSource.slice(callRange.start),
 			].join("");
 		}
 
@@ -677,6 +755,7 @@ export async function runAddVariationCommand({
 	const variationsDir = path.join(workspace.projectDir, "src", "blocks", blockSlug, "variations");
 	const variationFilePath = path.join(variationsDir, `${variationSlug}.ts`);
 	const variationsIndexPath = path.join(variationsDir, "index.ts");
+	const shouldRemoveVariationsDirOnRollback = !fs.existsSync(variationsDir);
 	const mutationSnapshot: WorkspaceMutationSnapshot = {
 		fileSources: await snapshotWorkspaceFiles([
 			blockConfigPath,
@@ -684,7 +763,10 @@ export async function runAddVariationCommand({
 			variationsIndexPath,
 		]),
 		snapshotDirs: [],
-		targetPaths: [variationFilePath],
+		targetPaths: [
+			variationFilePath,
+			...(shouldRemoveVariationsDirOnRollback ? [variationsDir] : []),
+		],
 	};
 
 	try {
@@ -753,6 +835,7 @@ export async function runAddBlockStyleCommand({
 	const stylesDir = path.join(workspace.projectDir, "src", "blocks", blockSlug, "styles");
 	const styleFilePath = path.join(stylesDir, `${styleSlug}.ts`);
 	const stylesIndexPath = path.join(stylesDir, "index.ts");
+	const shouldRemoveStylesDirOnRollback = !fs.existsSync(stylesDir);
 	const mutationSnapshot: WorkspaceMutationSnapshot = {
 		fileSources: await snapshotWorkspaceFiles([
 			blockConfigPath,
@@ -760,7 +843,10 @@ export async function runAddBlockStyleCommand({
 			stylesIndexPath,
 		]),
 		snapshotDirs: [],
-		targetPaths: [styleFilePath],
+		targetPaths: [
+			styleFilePath,
+			...(shouldRemoveStylesDirOnRollback ? [stylesDir] : []),
+		],
 	};
 
 	try {
@@ -862,6 +948,7 @@ export async function runAddBlockTransformCommand({
 	);
 	const transformFilePath = path.join(transformsDir, `${transformSlug}.ts`);
 	const transformsIndexPath = path.join(transformsDir, "index.ts");
+	const shouldRemoveTransformsDirOnRollback = !fs.existsSync(transformsDir);
 	const mutationSnapshot: WorkspaceMutationSnapshot = {
 		fileSources: await snapshotWorkspaceFiles([
 			blockConfigPath,
@@ -869,7 +956,10 @@ export async function runAddBlockTransformCommand({
 			transformsIndexPath,
 		]),
 		snapshotDirs: [],
-		targetPaths: [transformFilePath],
+		targetPaths: [
+			transformFilePath,
+			...(shouldRemoveTransformsDirOnRollback ? [transformsDir] : []),
+		],
 	};
 
 	try {

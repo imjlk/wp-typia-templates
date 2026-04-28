@@ -767,20 +767,44 @@ test("transform workflow rejects direct registerBlockType entrypoints without wr
     "counter-card",
     "index.tsx"
   );
-  fs.writeFileSync(
-    blockIndexPath,
+  const directBlockIndexSource = [
+    "import { registerBlockType } from '@wordpress/blocks';",
+    "import metadata from './block.json';",
+    "",
+    "// TODO: migrate to registerScaffoldBlockType(registration.name, registration.settings);",
+    "registerBlockType(metadata.name, {",
+    "\tedit: () => null,",
+    "\tsave: () => null,",
+    "});",
+    "",
+  ].join("\n");
+  fs.writeFileSync(blockIndexPath, directBlockIndexSource, "utf8");
+
+  runCli(
+    "node",
     [
-      "import { registerBlockType } from '@wordpress/blocks';",
-      "import metadata from './block.json';",
-      "",
-      "// TODO: migrate to registerScaffoldBlockType(registration.name, registration.settings);",
-      "registerBlockType(metadata.name, {",
-      "\tedit: () => null,",
-      "\tsave: () => null,",
-      "});",
-      "",
-    ].join("\n"),
-    "utf8"
+      entryPath,
+      "add",
+      "style",
+      "callout-emphasis",
+      "--block",
+      "counter-card",
+    ],
+    { cwd: targetDir }
+  );
+  const originalBlockIndexSource = fs.readFileSync(blockIndexPath, "utf8");
+  const transformsDirPath = path.join(
+    targetDir,
+    "src",
+    "blocks",
+    "counter-card",
+    "transforms"
+  );
+
+  expect(
+    originalBlockIndexSource.indexOf("registerWorkspaceBlockStyles();")
+  ).toBeGreaterThan(
+    originalBlockIndexSource.indexOf("registerBlockType(metadata.name")
   );
 
   const commandError = getCommandErrorMessage(() =>
@@ -807,7 +831,9 @@ test("transform workflow rejects direct registerBlockType entrypoints without wr
   expect(commandError).toContain(
     "does not expose a scaffold registration settings object"
   );
+  expect(fs.readFileSync(blockIndexPath, "utf8")).toBe(originalBlockIndexSource);
   expect(blockConfigSource).not.toContain("quote-to-counter");
+  expect(fs.existsSync(transformsDirPath)).toBe(false);
   expect(
     fs.existsSync(
       path.join(
@@ -820,7 +846,7 @@ test("transform workflow rejects direct registerBlockType entrypoints without wr
       )
     )
   ).toBe(false);
-}, 20_000);
+}, 30_000);
 
 test("canonical CLI can add hooked-block metadata to an official workspace block", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-hooked-block");
