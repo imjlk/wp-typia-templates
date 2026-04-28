@@ -28,6 +28,11 @@ const CACHE_MARKER_FILE = 'wp-typia-template-cache.json'
 const PRIVATE_CACHE_DIRECTORY_MODE = 0o700
 
 /**
+ * Marker value used when URL-like metadata cannot be safely normalized.
+ */
+const REDACTED_CACHE_METADATA_VALUE = '[redacted]'
+
+/**
  * Normalized environment values that disable the cache.
  */
 const DISABLED_CACHE_VALUES = new Set(['0', 'false', 'no', 'off'])
@@ -52,6 +57,11 @@ const CACHE_UNAVAILABLE_ERROR_CODES = new Set([
  * Metadata fields that may contain credentialed or signed URLs.
  */
 const URL_LIKE_METADATA_KEY = /(url|uri|registry|tarball)/iu
+
+/**
+ * Cache namespaces must stay within one path segment under the cache root.
+ */
+const SAFE_CACHE_NAMESPACE_SEGMENT = /^[A-Za-z0-9_.-]+$/u
 
 /**
  * Serializable metadata recorded in the cache marker for diagnostics.
@@ -229,7 +239,7 @@ function sanitizeCacheMetadataValue(key: string, value: string): string {
     url.hash = ''
     return url.toString()
   } catch {
-    return value
+    return REDACTED_CACHE_METADATA_VALUE
   }
 }
 
@@ -244,6 +254,31 @@ function sanitizeCacheMetadata(
   )
 }
 
+function resolveCacheNamespaceDir(
+  cacheRoot: string,
+  namespace: string,
+): string | null {
+  if (
+    namespace === '.' ||
+    namespace === '..' ||
+    !SAFE_CACHE_NAMESPACE_SEGMENT.test(namespace)
+  ) {
+    return null
+  }
+
+  const namespaceDir = path.join(cacheRoot, namespace)
+  const relativeNamespaceDir = path.relative(cacheRoot, namespaceDir)
+  if (
+    relativeNamespaceDir.length === 0 ||
+    relativeNamespaceDir.startsWith('..') ||
+    path.isAbsolute(relativeNamespaceDir)
+  ) {
+    return null
+  }
+
+  return namespaceDir
+}
+
 function getCacheEntryPaths(
   descriptor: ExternalTemplateCacheDescriptor,
 ): {
@@ -253,10 +288,17 @@ function getCacheEntryPaths(
   markerPath: string
   namespaceDir: string
   sourceDir: string
-} {
+} | null {
   const cacheKey = createExternalTemplateCacheKey(descriptor.keyParts)
   const cacheRoot = getExternalTemplateCacheRoot()
-  const namespaceDir = path.join(cacheRoot, descriptor.namespace)
+  const namespaceDir = resolveCacheNamespaceDir(
+    cacheRoot,
+    descriptor.namespace,
+  )
+  if (!namespaceDir) {
+    return null
+  }
+
   const entryDir = path.join(namespaceDir, cacheKey)
 
   return {
@@ -300,8 +342,13 @@ export async function resolveExternalTemplateSourceCache(
     return null
   }
 
+  const cacheEntryPaths = getCacheEntryPaths(descriptor)
+  if (!cacheEntryPaths) {
+    return null
+  }
+
   const { cacheKey, cacheRoot, entryDir, markerPath, namespaceDir, sourceDir } =
-    getCacheEntryPaths(descriptor)
+    cacheEntryPaths
   if (
     !(await ensurePrivateCacheDirectory(cacheRoot)) ||
     !(await ensurePrivateCacheDirectory(namespaceDir))

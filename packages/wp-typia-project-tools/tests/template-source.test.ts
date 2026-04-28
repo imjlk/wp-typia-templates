@@ -6,6 +6,7 @@ import * as path from "node:path";
 import { blockTypesPackageVersion, cleanupScaffoldTempRoot, createBlockExternalFixturePath, createBlockSubsetFixturePath, createScaffoldTempRoot, normalizedBlockRuntimePackageVersion, packageRoot, templateLayerFixturePath, workspaceTemplatePackageManifest } from "./helpers/scaffold-test-harness.js";
 import { getTemplateVariables, scaffoldProject } from "../src/runtime/index.js";
 import { resolveTemplateId } from "../src/runtime/scaffold.js";
+import { resolveExternalTemplateSourceCache } from "../src/runtime/template-source-cache.js";
 import { copyRenderedDirectory } from "../src/runtime/template-render.js";
 import { parseGitHubTemplateLocator, parseNpmTemplateLocator, parseTemplateLocator, resolveTemplateSeed } from "../src/runtime/template-source.js";
 import { EXTERNAL_TEMPLATE_TRUST_WARNING } from "../src/runtime/template-source-external.js";
@@ -106,6 +107,83 @@ describe("@wp-typia/project-tools template sources", () => {
 
     return null;
   }
+
+test("external template cache rejects unsafe namespaces before populating", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+  let populated = false;
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = path.join(
+    tempRoot,
+    "unsafe-namespace-cache"
+  );
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    const resolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["unsafe"],
+        metadata: {},
+        namespace: "../escape",
+      },
+      async (sourceDir) => {
+        populated = true;
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    expect(resolution).toBeNull();
+    expect(populated).toBe(false);
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
+
+test("external template cache redacts malformed URL-like metadata", async () => {
+  const originalCache = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+  const originalCacheDir = process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR;
+  const cacheDir = path.join(tempRoot, "redacted-marker-cache");
+
+  process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR = cacheDir;
+  delete process.env.WP_TYPIA_EXTERNAL_TEMPLATE_CACHE;
+
+  try {
+    const resolution = await resolveExternalTemplateSourceCache(
+      {
+        keyParts: ["redacted-marker"],
+        metadata: {
+          raw: "safe diagnostic",
+          registry: "https://user:pass@example.test/registry?token=secret#hash",
+          tarball: "not a valid url with secret-token",
+        },
+        namespace: "metadata",
+      },
+      async (sourceDir) => {
+        fs.writeFileSync(path.join(sourceDir, "package.json"), "{}", "utf8");
+      }
+    );
+
+    expect(resolution?.cacheHit).toBe(false);
+
+    const markerPath = findFileByName(
+      cacheDir,
+      "wp-typia-template-cache.json"
+    );
+    if (!markerPath) {
+      throw new Error("Expected a populated external template cache marker.");
+    }
+
+    const markerText = fs.readFileSync(markerPath, "utf8");
+    expect(markerText).toContain("[redacted]");
+    expect(markerText).not.toContain("secret-token");
+    expect(markerText).not.toContain("user:pass");
+    expect(markerText).not.toContain("token=secret");
+  } finally {
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE", originalCache);
+    restoreEnvValue("WP_TYPIA_EXTERNAL_TEMPLATE_CACHE_DIR", originalCacheDir);
+  }
+});
 
 test("getTemplateVariables rejects slugs that normalize to an empty identifier", () => {
   expect(() =>
