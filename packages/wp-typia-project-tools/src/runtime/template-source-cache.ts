@@ -149,9 +149,6 @@ export async function resolveExternalTemplateSourceCache(
   }
 
   await fsp.mkdir(namespaceDir, { recursive: true })
-  if (await pathExists(entryDir)) {
-    await fsp.rm(entryDir, { force: true, recursive: true })
-  }
 
   const temporaryEntryDir = path.join(
     namespaceDir,
@@ -199,6 +196,9 @@ export async function resolveExternalTemplateSourceCache(
         cacheHit: true,
         sourceDir,
       }
+    }
+    if (errorCode === 'EEXIST' || errorCode === 'ENOTEMPTY') {
+      return null
     }
     throw error
   }
