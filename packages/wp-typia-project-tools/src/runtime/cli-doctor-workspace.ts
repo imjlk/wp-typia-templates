@@ -50,7 +50,7 @@ const WORKSPACE_GENERATED_BLOCK_ARTIFACTS = [
 	"typia-validator.php",
 	"typia.openapi.json",
 ] as const;
-const WORKSPACE_FULL_BLOCK_NAME_PATTERN = /^[a-z][a-z0-9-]*\/[a-z][a-z0-9-]*$/u;
+const WORKSPACE_FULL_BLOCK_NAME_PATTERN = /^[a-z0-9-]+\/[a-z0-9-]+$/u;
 
 function createDoctorCheck(
 	label: string,

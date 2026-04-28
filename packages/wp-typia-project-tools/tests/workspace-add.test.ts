@@ -655,7 +655,7 @@ test("canonical CLI can add block styles and transforms to an official workspace
       "transform",
       "quote-to-counter",
       "--from",
-      "core/quote",
+      "3d/quote",
       "--to",
       "counter-card",
     ],
@@ -712,7 +712,7 @@ test("canonical CLI can add block styles and transforms to an official workspace
   expect(blockConfigSource).toContain("export const BLOCK_TRANSFORMS");
   expect(blockConfigSource).toContain('file: "src/blocks/counter-card/styles/callout-emphasis.ts"');
   expect(blockConfigSource).toContain('file: "src/blocks/counter-card/transforms/quote-to-counter.ts"');
-  expect(blockConfigSource).toContain('from: "core/quote"');
+  expect(blockConfigSource).toContain('from: "3d/quote"');
   expect(blockConfigSource).toContain('to: "demo-space/counter-card"');
   expect(blockIndexSource).toContain("registerWorkspaceBlockStyles();");
   expect(blockIndexSource).toContain(
@@ -733,7 +733,7 @@ test("canonical CLI can add block styles and transforms to an official workspace
   expect(styleSource).toContain('name: "callout-emphasis"');
   expect(styleSource).toContain("Callout Emphasis");
   expect(transformsIndexSource).toContain("WORKSPACE_BLOCK_TRANSFORMS");
-  expect(transformSource).toContain('blocks: ["core/quote"]');
+  expect(transformSource).toContain('blocks: ["3d/quote"]');
   expect(transformSource).toContain("createBlock(metadata.name");
 
   const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {

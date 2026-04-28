@@ -50,7 +50,7 @@ const BLOCK_REGISTRATION_CALL_PATTERNS = [
 ] as const;
 const SCAFFOLD_REGISTRATION_SETTINGS_CALL_PATTERN =
 	/registerScaffoldBlockType\s*\(\s*registration\s*\.\s*name\s*,\s*registration\s*\.\s*settings\s*\)\s*;?/u;
-const FULL_BLOCK_NAME_PATTERN = /^[a-z][a-z0-9-]*\/[a-z][a-z0-9-]*$/u;
+const FULL_BLOCK_NAME_PATTERN = /^[a-z0-9-]+\/[a-z0-9-]+$/u;
 
 function maskSourceSegment(segment: string): string {
 	return segment.replace(/[^\n\r]/gu, " ");
