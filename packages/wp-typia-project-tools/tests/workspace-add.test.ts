@@ -593,6 +593,435 @@ test("variation workflow keeps registry identifiers unique for similar slugs", a
   runCli("npm", ["run", "build"], { cwd: targetDir });
 }, 60_000);
 
+test("canonical CLI can add block styles and transforms to an official workspace block", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-add-style-transform");
+
+  await scaffoldProject({
+    projectDir: targetDir,
+    templateId: workspaceTemplatePackageManifest.name,
+    packageManager: "npm",
+    noInstall: true,
+    answers: {
+      author: "Test Runner",
+      description: "Demo workspace add style transform",
+      namespace: "demo-space",
+      phpPrefix: "demo_space",
+      slug: "demo-workspace-add-style-transform",
+      textDomain: "demo-space",
+      title: "Demo Workspace Add Style Transform",
+    },
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+
+  runCli(
+    "node",
+    [entryPath, "add", "block", "counter-card", "--template", "basic"],
+    {
+      cwd: targetDir,
+    }
+  );
+  const blockIndexPath = path.join(
+    targetDir,
+    "src",
+    "blocks",
+    "counter-card",
+    "index.tsx"
+  );
+  fs.writeFileSync(
+    blockIndexPath,
+    `${fs.readFileSync(blockIndexPath, "utf8")}
+const copiedStyleImport = "import { registerWorkspaceBlockStyles } from './styles';";
+`,
+    "utf8"
+  );
+  runCli(
+    "node",
+    [entryPath, "add", "style", "callout-emphasis", "--block", "counter-card"],
+    { cwd: targetDir }
+  );
+  const semicolonlessBlockIndexSource = fs
+    .readFileSync(blockIndexPath, "utf8")
+    .replace(
+      "registerScaffoldBlockType(registration.name, registration.settings);",
+      "registerScaffoldBlockType(registration.name, registration.settings)"
+    );
+  fs.writeFileSync(
+    blockIndexPath,
+    [
+      'import { applyWorkspaceBlockTransforms } from "./transforms"',
+      semicolonlessBlockIndexSource,
+    ].join("\n"),
+    "utf8"
+  );
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "transform",
+      "quote-to-counter",
+      "--from",
+      "3d/quote",
+      "--to",
+      "counter-card",
+    ],
+    { cwd: targetDir }
+  );
+
+  const blockConfigPath = path.join(targetDir, "scripts", "block-config.ts");
+  let blockConfigSource = fs.readFileSync(blockConfigPath, "utf8");
+  let blockIndexSource = fs.readFileSync(
+    blockIndexPath,
+    "utf8"
+  );
+  const stylesIndexPath = path.join(
+    targetDir,
+    "src",
+    "blocks",
+    "counter-card",
+    "styles",
+    "index.ts"
+  );
+  const stylesIndexSource = fs.readFileSync(
+    stylesIndexPath,
+    "utf8"
+  );
+  const styleSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "blocks",
+      "counter-card",
+      "styles",
+      "callout-emphasis.ts"
+    ),
+    "utf8"
+  );
+  const transformsIndexPath = path.join(
+    targetDir,
+    "src",
+    "blocks",
+    "counter-card",
+    "transforms",
+    "index.ts"
+  );
+  let transformsIndexSource = fs.readFileSync(
+    transformsIndexPath,
+    "utf8"
+  );
+  const transformSource = fs.readFileSync(
+    path.join(
+      targetDir,
+      "src",
+      "blocks",
+      "counter-card",
+      "transforms",
+      "quote-to-counter.ts"
+    ),
+    "utf8"
+  );
+
+  expect(blockConfigSource).toContain("export const BLOCK_STYLES");
+  expect(blockConfigSource).toContain("export const BLOCK_TRANSFORMS");
+  expect(blockConfigSource).toContain('file: "src/blocks/counter-card/styles/callout-emphasis.ts"');
+  expect(blockConfigSource).toContain('file: "src/blocks/counter-card/transforms/quote-to-counter.ts"');
+  expect(blockConfigSource).toContain('from: "3d/quote"');
+  expect(blockConfigSource).toContain('to: "demo-space/counter-card"');
+  expect(blockIndexSource).toContain("registerWorkspaceBlockStyles();");
+  expect(blockIndexSource).toContain(
+    "applyWorkspaceBlockTransforms(registration.settings);"
+  );
+  expect(blockIndexSource).toContain(
+    "applyWorkspaceBlockTransforms(registration.settings);\nregisterScaffoldBlockType(registration.name, registration.settings)"
+  );
+  expect(
+    blockIndexSource.match(
+      /^\s*import\s*\{\s*registerWorkspaceBlockStyles\s*\}\s*from\s*["']\.\/styles["']\s*;?\s*$/gmu
+    )?.length ?? 0
+  ).toBe(1);
+  expect(
+    blockIndexSource.match(
+      /import\s*\{\s*applyWorkspaceBlockTransforms\s*\}\s*from\s*["']\.\/transforms["']\s*;?/gu
+    )?.length ?? 0
+  ).toBe(1);
+  expect(stylesIndexSource).toContain("registerBlockStyle(metadata.name, style)");
+  expect(stylesIndexSource).toContain(
+    "workspaceBlockStyle_callout_emphasis"
+  );
+  expect(styleSource).toContain('name: "callout-emphasis"');
+  expect(styleSource).toContain("Callout Emphasis");
+  expect(transformsIndexSource).toContain("WORKSPACE_BLOCK_TRANSFORMS");
+  expect(transformSource).toContain('blocks: ["3d/quote"]');
+  expect(transformSource).toContain("createBlock(metadata.name");
+
+  const semicolonlessTransformHookSource = replaceFixtureSource(
+    blockIndexSource,
+    "applyWorkspaceBlockTransforms(registration.settings);",
+    "applyWorkspaceBlockTransforms(registration.settings)",
+    "semicolonless transform hook"
+  );
+  fs.writeFileSync(blockIndexPath, semicolonlessTransformHookSource, "utf8");
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "transform",
+      "paragraph-to-counter",
+      "--from",
+      "core/paragraph",
+      "--to",
+      "counter-card",
+    ],
+    { cwd: targetDir }
+  );
+
+  blockConfigSource = fs.readFileSync(blockConfigPath, "utf8");
+  blockIndexSource = fs.readFileSync(blockIndexPath, "utf8");
+  transformsIndexSource = fs.readFileSync(transformsIndexPath, "utf8");
+  expect(blockConfigSource).toContain(
+    'file: "src/blocks/counter-card/transforms/paragraph-to-counter.ts"'
+  );
+  expect(blockConfigSource).toContain('from: "core/paragraph"');
+  expect(
+    blockIndexSource.match(
+      /applyWorkspaceBlockTransforms\s*\(\s*registration\s*\.\s*settings\s*\)/gu
+    )?.length ?? 0
+  ).toBe(1);
+  expect(transformsIndexSource).toContain("paragraph-to-counter");
+
+  const doctorOutput = runCli("node", [entryPath, "doctor", "--format", "json"], {
+    cwd: targetDir,
+  });
+  const doctorChecks = parseJsonObjectFromOutput<{
+    checks: Array<{ detail: string; label: string; status: string }>;
+  }>(doctorOutput);
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block style counter-card/callout-emphasis"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block style entrypoint counter-card"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block style registry counter-card"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block transform config counter-card/quote-to-counter"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block transform counter-card/quote-to-counter"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block transform config counter-card/paragraph-to-counter"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block transform counter-card/paragraph-to-counter"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block transform registry counter-card"
+    )?.status
+  ).toBe("pass");
+  expect(
+    doctorChecks.checks.find(
+      (check) => check.label === "Block transform entrypoint counter-card"
+    )?.status
+  ).toBe("pass");
+
+  let commentedHookSource = replaceFixtureSource(
+    blockIndexSource,
+    /import\s*\{\s*registerWorkspaceBlockStyles\s*\}\s*from\s*["']\.\/styles["']\s*;?/u,
+    "// import { registerWorkspaceBlockStyles } from './styles';",
+    "block style import hook"
+  );
+  commentedHookSource = replaceFixtureSource(
+    commentedHookSource,
+    /import\s*\{\s*applyWorkspaceBlockTransforms\s*\}\s*from\s*["']\.\/transforms["']\s*;?/u,
+    "// import { applyWorkspaceBlockTransforms } from './transforms';",
+    "block transform import hook"
+  );
+  commentedHookSource = replaceFixtureSource(
+    commentedHookSource,
+    /registerWorkspaceBlockStyles\s*\(\s*\)\s*;/u,
+    "// registerWorkspaceBlockStyles();",
+    "block style registration hook"
+  );
+  commentedHookSource = replaceFixtureSource(
+    commentedHookSource,
+    /applyWorkspaceBlockTransforms\s*\(\s*registration\s*\.\s*settings\s*\)\s*;?/u,
+    "// applyWorkspaceBlockTransforms(registration.settings);",
+    "block transform registration hook"
+  );
+  fs.writeFileSync(blockIndexPath, commentedHookSource, "utf8");
+
+  const commentedHookDoctorError = getCommandErrorMessage(() =>
+    runCli("node", [entryPath, "doctor", "--format", "json"], {
+      cwd: targetDir,
+    })
+  );
+  expect(commentedHookDoctorError).toContain("Block style entrypoint counter-card");
+  expect(commentedHookDoctorError).toContain("Block transform entrypoint counter-card");
+  expect(commentedHookDoctorError).toContain(
+    "Missing ./styles import or registerWorkspaceBlockStyles() call"
+  );
+  expect(commentedHookDoctorError).toContain(
+    "Missing ./transforms import or applyWorkspaceBlockTransforms(registration.settings) call"
+  );
+  fs.writeFileSync(blockIndexPath, blockIndexSource, "utf8");
+
+  fs.rmSync(stylesIndexPath);
+  const missingStyleRegistryDoctorError = getCommandErrorMessage(() =>
+    runCli("node", [entryPath, "doctor", "--format", "json"], {
+      cwd: targetDir,
+    })
+  );
+  expect(missingStyleRegistryDoctorError).toContain("Block style registry counter-card");
+  expect(missingStyleRegistryDoctorError).toContain(
+    "src/blocks/counter-card/styles/index.ts"
+  );
+  fs.writeFileSync(stylesIndexPath, stylesIndexSource, "utf8");
+
+  fs.rmSync(transformsIndexPath);
+  const missingTransformRegistryDoctorError = getCommandErrorMessage(() =>
+    runCli("node", [entryPath, "doctor", "--format", "json"], {
+      cwd: targetDir,
+    })
+  );
+  expect(missingTransformRegistryDoctorError).toContain(
+    "Block transform registry counter-card"
+  );
+  expect(missingTransformRegistryDoctorError).toContain(
+    "src/blocks/counter-card/transforms/index.ts"
+  );
+  fs.writeFileSync(transformsIndexPath, transformsIndexSource, "utf8");
+
+  runCli("npm", ["run", "build"], { cwd: targetDir });
+}, 60_000);
+
+test("transform workflow rejects direct registerBlockType entrypoints without writing partial files", async () => {
+  const targetDir = path.join(tempRoot, "demo-workspace-transform-direct-entry");
+
+  await scaffoldOfficialWorkspace(targetDir, {
+    description: "Demo workspace transform direct entry",
+    slug: "demo-workspace-transform-direct-entry",
+    title: "Demo Workspace Transform Direct Entry",
+  });
+
+  linkWorkspaceNodeModules(targetDir);
+  runCli(
+    "node",
+    [entryPath, "add", "block", "counter-card", "--template", "basic"],
+    {
+      cwd: targetDir,
+    }
+  );
+
+  const blockIndexPath = path.join(
+    targetDir,
+    "src",
+    "blocks",
+    "counter-card",
+    "index.tsx"
+  );
+  const directBlockIndexSource = [
+    "import { registerBlockType } from '@wordpress/blocks';",
+    "import metadata from './block.json';",
+    "",
+    "// TODO: migrate to registerScaffoldBlockType(registration.name, registration.settings);",
+    "registerBlockType(metadata.name, {",
+    "\tedit: () => null,",
+    "\tsave: () => null,",
+    "});",
+    "",
+  ].join("\n");
+  fs.writeFileSync(blockIndexPath, directBlockIndexSource, "utf8");
+
+  runCli(
+    "node",
+    [
+      entryPath,
+      "add",
+      "style",
+      "callout-emphasis",
+      "--block",
+      "counter-card",
+    ],
+    { cwd: targetDir }
+  );
+  const originalBlockIndexSource = fs.readFileSync(blockIndexPath, "utf8");
+  const transformsDirPath = path.join(
+    targetDir,
+    "src",
+    "blocks",
+    "counter-card",
+    "transforms"
+  );
+
+  expect(
+    originalBlockIndexSource.indexOf("registerWorkspaceBlockStyles();")
+  ).toBeGreaterThan(
+    originalBlockIndexSource.indexOf("registerBlockType(metadata.name")
+  );
+  expect(originalBlockIndexSource).toContain(
+    "});\nregisterWorkspaceBlockStyles();"
+  );
+
+  const commandError = getCommandErrorMessage(() =>
+    runCli(
+      "node",
+      [
+        entryPath,
+        "add",
+        "transform",
+        "quote-to-counter",
+        "--from",
+        "core/quote",
+        "--to",
+        "counter-card",
+      ],
+      { cwd: targetDir }
+    )
+  );
+  const blockConfigSource = fs.readFileSync(
+    path.join(targetDir, "scripts", "block-config.ts"),
+    "utf8"
+  );
+
+  expect(commandError).toContain(
+    "does not expose a scaffold registration settings object"
+  );
+  expect(fs.readFileSync(blockIndexPath, "utf8")).toBe(originalBlockIndexSource);
+  expect(blockConfigSource).not.toContain("quote-to-counter");
+  expect(fs.existsSync(transformsDirPath)).toBe(false);
+  expect(
+    fs.existsSync(
+      path.join(
+        targetDir,
+        "src",
+        "blocks",
+        "counter-card",
+        "transforms",
+        "quote-to-counter.ts"
+      )
+    )
+  ).toBe(false);
+}, 30_000);
+
 test("canonical CLI can add hooked-block metadata to an official workspace block", async () => {
   const targetDir = path.join(tempRoot, "demo-workspace-add-hooked-block");
 

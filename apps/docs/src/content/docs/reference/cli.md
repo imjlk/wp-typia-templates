@@ -71,6 +71,8 @@ Extend an official wp-typia workspace from the workspace root.
 ```bash
 wp-typia add block <name> --template basic
 wp-typia add variation <name> --block <block-slug>
+wp-typia add style <name> --block <block-slug>
+wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>
 wp-typia add pattern <name>
 wp-typia add binding-source <name>
 wp-typia add binding-source <name> --block <block-slug|namespace/block-slug> --attribute <attribute>
@@ -88,7 +90,9 @@ Common flags:
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `--template <basic \| interactivity \| persistence \| compound>` | Built-in block family for `add block`.                                                                                          |
 | `--dry-run`                                                      | Preview workspace file updates and completion guidance.                                                                         |
-| `--block <block-slug>`                                           | Target block for variation workflows.                                                                                           |
+| `--block <block-slug>`                                           | Target block for variation, style, and binding-source workflows.                                                                |
+| `--from <namespace/block>`                                       | Source block name for transform workflows.                                                                                      |
+| `--to <block-slug \| namespace/block-slug>`                      | Target workspace block for transform workflows.                                                                                 |
 | `--anchor <block-name>`                                          | Anchor block for hooked-block workflows.                                                                                        |
 | `--position <before \| after \| firstChild \| lastChild>`        | Hook position for hooked blocks.                                                                                                |
 | `--slot <sidebar \| document-setting-panel>`                     | Editor shell slot for editor-plugin scaffolds; legacy aliases `PluginSidebar` and `PluginDocumentSettingPanel` remain accepted. |
@@ -100,6 +104,11 @@ Common flags:
 | `--alternate-render-targets <list>`                              | Add alternate render targets for persistence-capable dynamic scaffolds.                                                         |
 | `--data-storage <post-meta \| custom-table>`                     | Select persistence storage.                                                                                                     |
 | `--persistence-policy <authenticated \| public>`                 | Select persistence write policy.                                                                                                |
+
+Use variations when you want alternate inserter presets for the same block,
+Block Styles when you want a named visual class for an existing block, transforms
+when users should convert content from another block type into your block, and
+patterns when you need a reusable PHP-registered content layout.
 
 Editor plugin scaffolds are slot-aware. The default `sidebar` slot generates a
 `PluginSidebar` shell with a matching more-menu entry, while

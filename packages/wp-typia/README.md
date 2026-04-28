@@ -13,6 +13,8 @@ Use this package for new projects:
 Extend an existing workspace with:
 
 - `wp-typia add block counter-card --template basic`
+- `wp-typia add style callout-emphasis --block counter-card`
+- `wp-typia add transform quote-to-counter --from core/quote --to counter-card`
 - `wp-typia add binding-source hero-data`
 - `wp-typia add binding-source hero-data --block counter-card --attribute headline`
 - `wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create`

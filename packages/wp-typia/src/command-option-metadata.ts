@@ -135,7 +135,7 @@ export const ADD_OPTION_METADATA = {
 		type: "string",
 	},
 	block: {
-		description: "Target block slug for variation and end-to-end binding-source workflows.",
+		description: "Target block slug for variation, style, and end-to-end binding-source workflows.",
 		type: "string",
 	},
 	"data-storage": {
@@ -154,6 +154,10 @@ export const ADD_OPTION_METADATA = {
 	},
 	"external-layer-source": {
 		description: "Local path, GitHub locator, or npm package that exposes wp-typia.layers.json for built-in block templates.",
+		type: "string",
+	},
+	from: {
+		description: "Source full block name (namespace/block) for transform workflows.",
 		type: "string",
 	},
 	"inner-blocks-preset": {
@@ -188,6 +192,10 @@ export const ADD_OPTION_METADATA = {
 	},
 	template: {
 		description: "Built-in block family for the new block.",
+		type: "string",
+	},
+	to: {
+		description: "Target workspace block slug or full block name for transform workflows.",
 		type: "string",
 	},
 } as const satisfies CommandOptionMetadataMap;

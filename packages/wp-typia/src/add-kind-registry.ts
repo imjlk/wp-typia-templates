@@ -2,6 +2,8 @@ export const ADD_KIND_IDS = [
   'admin-view',
   'block',
   'variation',
+  'style',
+  'transform',
   'pattern',
   'binding-source',
   'rest-resource',
@@ -17,12 +19,14 @@ export type AddFieldName =
   | 'source'
   | 'template'
   | 'block'
+  | 'from'
   | 'attribute'
   | 'anchor'
   | 'methods'
   | 'namespace'
   | 'position'
   | 'slot'
+  | 'to'
   | 'alternate-render-targets'
   | 'inner-blocks-preset'
   | 'data-storage'
@@ -207,6 +211,41 @@ export const ADD_KIND_REGISTRY = {
     description: 'Add a PHP block pattern shell',
     nameLabel: 'Pattern name',
     visibleFieldNames: () => ['kind', 'name'],
+  },
+  style: {
+    completion: {
+      nextSteps: (values) => [
+        `Review src/blocks/${values.blockSlug}/styles/${values.styleSlug}.ts.`,
+        'Run your workspace build or dev command to verify the new block style registration.',
+      ],
+      summaryLines: (values, projectDir) => [
+        `Block style: ${values.styleSlug}`,
+        `Target block: ${values.blockSlug}`,
+        `Project directory: ${projectDir}`,
+      ],
+      title: 'Added block style',
+    },
+    description: 'Add a Block Styles registration to an existing block',
+    nameLabel: 'Style name',
+    visibleFieldNames: () => ['kind', 'name', 'block'],
+  },
+  transform: {
+    completion: {
+      nextSteps: (values) => [
+        `Review src/blocks/${values.blockSlug}/transforms/${values.transformSlug}.ts.`,
+        'Run your workspace build or dev command to verify the new block transform registration.',
+      ],
+      summaryLines: (values, projectDir) => [
+        `Block transform: ${values.transformSlug}`,
+        `From: ${values.fromBlockName}`,
+        `To: ${values.toBlockName}`,
+        `Project directory: ${projectDir}`,
+      ],
+      title: 'Added block transform',
+    },
+    description: 'Add a block-to-block transform into a workspace block',
+    nameLabel: 'Transform name',
+    visibleFieldNames: () => ['kind', 'name', 'from', 'to'],
   },
   'rest-resource': {
     completion: {

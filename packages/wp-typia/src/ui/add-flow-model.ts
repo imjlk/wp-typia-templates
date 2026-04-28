@@ -27,6 +27,7 @@ export const addFlowSchema = z.object({
   'data-storage': z.string().optional(),
   'external-layer-id': z.string().optional(),
   'external-layer-source': z.string().optional(),
+  from: z.string().optional(),
   'inner-blocks-preset': z.string().optional(),
   kind: z.enum(ADD_KIND_IDS).default('block'),
   methods: z.string().optional(),
@@ -37,6 +38,7 @@ export const addFlowSchema = z.object({
   slot: z.string().optional(),
   source: z.string().optional(),
   template: z.string().optional(),
+  to: z.string().optional(),
 });
 
 export type AddFlowValues = z.infer<typeof addFlowSchema>;
@@ -47,6 +49,7 @@ const ADD_FIELD_HEIGHTS: Record<AddFieldName, number> = {
   block: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
   'data-storage': FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
   'alternate-render-targets': FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
+  from: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
   'inner-blocks-preset': FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
   kind: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
   methods: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
@@ -57,6 +60,7 @@ const ADD_FIELD_HEIGHTS: Record<AddFieldName, number> = {
   slot: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
   source: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
   template: FIRST_PARTY_SELECT_FIELD_BODY_HEIGHT,
+  to: FIRST_PARTY_TEXT_FIELD_BODY_HEIGHT,
 };
 
 export function isAddPersistenceTemplate(template?: string): boolean {

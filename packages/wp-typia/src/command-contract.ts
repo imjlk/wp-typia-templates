@@ -159,6 +159,8 @@ export const WP_TYPIA_FUTURE_COMMAND_TREE = [
     subcommands: [
       'block',
       'variation',
+      'style',
+      'transform',
       'pattern',
       'binding-source',
       'rest-resource',

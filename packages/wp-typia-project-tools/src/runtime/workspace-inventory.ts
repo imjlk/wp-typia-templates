@@ -21,6 +21,20 @@ export interface WorkspaceVariationInventoryEntry {
 	slug: string;
 }
 
+export interface WorkspaceBlockStyleInventoryEntry {
+	block: string;
+	file: string;
+	slug: string;
+}
+
+export interface WorkspaceBlockTransformInventoryEntry {
+	block: string;
+	file: string;
+	from: string;
+	slug: string;
+	to: string;
+}
+
 export interface WorkspacePatternInventoryEntry {
 	file: string;
 	slug: string;
@@ -127,12 +141,16 @@ export interface WorkspaceInventory {
 	bindingSources: WorkspaceBindingSourceInventoryEntry[];
 	blockConfigPath: string;
 	blocks: WorkspaceBlockInventoryEntry[];
+	blockStyles: WorkspaceBlockStyleInventoryEntry[];
+	blockTransforms: WorkspaceBlockTransformInventoryEntry[];
 	abilities: WorkspaceAbilityInventoryEntry[];
 	aiFeatures: WorkspaceAiFeatureInventoryEntry[];
 	hasAbilitiesSection: boolean;
 	hasAdminViewsSection: boolean;
 	hasBindingSourcesSection: boolean;
 	hasAiFeaturesSection: boolean;
+	hasBlockStylesSection: boolean;
+	hasBlockTransformsSection: boolean;
 	hasEditorPluginsSection: boolean;
 	hasPatternsSection: boolean;
 	hasRestResourcesSection: boolean;
@@ -146,6 +164,8 @@ export interface WorkspaceInventory {
 
 export const BLOCK_CONFIG_ENTRY_MARKER = "\t// wp-typia add block entries";
 export const VARIATION_CONFIG_ENTRY_MARKER = "\t// wp-typia add variation entries";
+export const BLOCK_STYLE_CONFIG_ENTRY_MARKER = "\t// wp-typia add style entries";
+export const BLOCK_TRANSFORM_CONFIG_ENTRY_MARKER = "\t// wp-typia add transform entries";
 export const PATTERN_CONFIG_ENTRY_MARKER = "\t// wp-typia add pattern entries";
 export const BINDING_SOURCE_CONFIG_ENTRY_MARKER = "\t// wp-typia add binding-source entries";
 export const REST_RESOURCE_CONFIG_ENTRY_MARKER = "\t// wp-typia add rest-resource entries";
@@ -170,6 +190,40 @@ const VARIATIONS_CONST_SECTION = `
 
 export const VARIATIONS: WorkspaceVariationConfig[] = [
 \t// wp-typia add variation entries
+];
+`;
+
+const BLOCK_STYLES_INTERFACE_SECTION = `
+
+export interface WorkspaceBlockStyleConfig {
+\tblock: string;
+\tfile: string;
+\tslug: string;
+}
+`;
+
+const BLOCK_STYLES_CONST_SECTION = `
+
+export const BLOCK_STYLES: WorkspaceBlockStyleConfig[] = [
+\t// wp-typia add style entries
+];
+`;
+
+const BLOCK_TRANSFORMS_INTERFACE_SECTION = `
+
+export interface WorkspaceBlockTransformConfig {
+\tblock: string;
+\tfile: string;
+\tfrom: string;
+\tslug: string;
+\tto: string;
+}
+`;
+
+const BLOCK_TRANSFORMS_CONST_SECTION = `
+
+export const BLOCK_TRANSFORMS: WorkspaceBlockTransformConfig[] = [
+\t// wp-typia add transform entries
 ];
 `;
 
@@ -490,6 +544,44 @@ function parseVariationEntries(
 	});
 }
 
+function parseBlockStyleEntries(
+	arrayLiteral: ts.ArrayLiteralExpression,
+): WorkspaceBlockStyleInventoryEntry[] {
+	return arrayLiteral.elements.map((element, elementIndex) => {
+		if (!ts.isObjectLiteralExpression(element)) {
+			throw new Error(
+				`BLOCK_STYLES[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
+			);
+		}
+
+		return {
+			block: getRequiredStringProperty("BLOCK_STYLES", elementIndex, element, "block"),
+			file: getRequiredStringProperty("BLOCK_STYLES", elementIndex, element, "file"),
+			slug: getRequiredStringProperty("BLOCK_STYLES", elementIndex, element, "slug"),
+		};
+	});
+}
+
+function parseBlockTransformEntries(
+	arrayLiteral: ts.ArrayLiteralExpression,
+): WorkspaceBlockTransformInventoryEntry[] {
+	return arrayLiteral.elements.map((element, elementIndex) => {
+		if (!ts.isObjectLiteralExpression(element)) {
+			throw new Error(
+				`BLOCK_TRANSFORMS[${elementIndex}] must be an object literal in scripts/block-config.ts.`,
+			);
+		}
+
+		return {
+			block: getRequiredStringProperty("BLOCK_TRANSFORMS", elementIndex, element, "block"),
+			file: getRequiredStringProperty("BLOCK_TRANSFORMS", elementIndex, element, "file"),
+			from: getRequiredStringProperty("BLOCK_TRANSFORMS", elementIndex, element, "from"),
+			slug: getRequiredStringProperty("BLOCK_TRANSFORMS", elementIndex, element, "slug"),
+			to: getRequiredStringProperty("BLOCK_TRANSFORMS", elementIndex, element, "to"),
+		};
+	});
+}
+
 function parsePatternEntries(arrayLiteral: ts.ArrayLiteralExpression): WorkspacePatternInventoryEntry[] {
 	return arrayLiteral.elements.map((element, elementIndex) => {
 		if (!ts.isObjectLiteralExpression(element)) {
@@ -747,6 +839,8 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 		throw new Error("scripts/block-config.ts must export a BLOCKS array.");
 	}
 	const variationArray = findExportedArrayLiteral(sourceFile, "VARIATIONS");
+	const blockStyleArray = findExportedArrayLiteral(sourceFile, "BLOCK_STYLES");
+	const blockTransformArray = findExportedArrayLiteral(sourceFile, "BLOCK_TRANSFORMS");
 	const patternArray = findExportedArrayLiteral(sourceFile, "PATTERNS");
 	const bindingSourceArray = findExportedArrayLiteral(sourceFile, "BINDING_SOURCES");
 	const restResourceArray = findExportedArrayLiteral(sourceFile, "REST_RESOURCES");
@@ -756,6 +850,12 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 	const editorPluginArray = findExportedArrayLiteral(sourceFile, "EDITOR_PLUGINS");
 	if (variationArray.found && !variationArray.array) {
 		throw new Error("scripts/block-config.ts must export VARIATIONS as an array literal.");
+	}
+	if (blockStyleArray.found && !blockStyleArray.array) {
+		throw new Error("scripts/block-config.ts must export BLOCK_STYLES as an array literal.");
+	}
+	if (blockTransformArray.found && !blockTransformArray.array) {
+		throw new Error("scripts/block-config.ts must export BLOCK_TRANSFORMS as an array literal.");
 	}
 	if (patternArray.found && !patternArray.array) {
 		throw new Error("scripts/block-config.ts must export PATTERNS as an array literal.");
@@ -786,11 +886,17 @@ export function parseWorkspaceInventorySource(source: string): Omit<WorkspaceInv
 		bindingSources: bindingSourceArray.array
 			? parseBindingSourceEntries(bindingSourceArray.array)
 			: [],
+		blockStyles: blockStyleArray.array ? parseBlockStyleEntries(blockStyleArray.array) : [],
+		blockTransforms: blockTransformArray.array
+			? parseBlockTransformEntries(blockTransformArray.array)
+			: [],
 		blocks: parseBlockEntries(blockArray.array),
 		hasAbilitiesSection: abilityArray.found,
 		hasAdminViewsSection: adminViewArray.found,
 		hasAiFeaturesSection: aiFeatureArray.found,
 		hasBindingSourcesSection: bindingSourceArray.found,
+		hasBlockStylesSection: blockStyleArray.found,
+		hasBlockTransformsSection: blockTransformArray.found,
 		hasEditorPluginsSection: editorPluginArray.found,
 		hasPatternsSection: patternArray.found,
 		hasRestResourcesSection: restResourceArray.found,
@@ -868,6 +974,18 @@ function ensureWorkspaceInventorySections(source: string): string {
 	}
 	if (!/export\s+const\s+VARIATIONS\b/u.test(nextSource)) {
 		nextSource += VARIATIONS_CONST_SECTION;
+	}
+	if (!/export\s+interface\s+WorkspaceBlockStyleConfig\b/u.test(nextSource)) {
+		nextSource += BLOCK_STYLES_INTERFACE_SECTION;
+	}
+	if (!/export\s+const\s+BLOCK_STYLES\b/u.test(nextSource)) {
+		nextSource += BLOCK_STYLES_CONST_SECTION;
+	}
+	if (!/export\s+interface\s+WorkspaceBlockTransformConfig\b/u.test(nextSource)) {
+		nextSource += BLOCK_TRANSFORMS_INTERFACE_SECTION;
+	}
+	if (!/export\s+const\s+BLOCK_TRANSFORMS\b/u.test(nextSource)) {
+		nextSource += BLOCK_TRANSFORMS_CONST_SECTION;
 	}
 
 	if (!/export\s+interface\s+WorkspacePatternConfig\b/u.test(nextSource)) {
@@ -980,7 +1098,8 @@ function ensureInterfaceField(
  * Update `scripts/block-config.ts` source text with additional inventory entries.
  *
  * Missing inventory sections for variations, patterns, binding sources, REST
- * resources, workflow abilities, AI features, and editor plugins are created
+ * resources, workflow abilities, AI features, editor plugins, block styles, and
+ * block transforms are created
  * automatically before new entries are appended at their marker comments.
  * When provided, `transformSource` runs before any entries are inserted.
  *
@@ -992,6 +1111,8 @@ export function updateWorkspaceInventorySource(
 	source: string,
 	{
 		blockEntries = [],
+		blockStyleEntries = [],
+		blockTransformEntries = [],
 		bindingSourceEntries = [],
 		abilityEntries = [],
 		adminViewEntries = [],
@@ -1006,6 +1127,8 @@ export function updateWorkspaceInventorySource(
 		adminViewEntries?: string[];
 		aiFeatureEntries?: string[];
 		blockEntries?: string[];
+		blockStyleEntries?: string[];
+		blockTransformEntries?: string[];
 		bindingSourceEntries?: string[];
 		editorPluginEntries?: string[];
 		patternEntries?: string[];
@@ -1020,6 +1143,16 @@ export function updateWorkspaceInventorySource(
 	}
 	nextSource = appendEntriesAtMarker(nextSource, BLOCK_CONFIG_ENTRY_MARKER, blockEntries);
 	nextSource = appendEntriesAtMarker(nextSource, VARIATION_CONFIG_ENTRY_MARKER, variationEntries);
+	nextSource = appendEntriesAtMarker(
+		nextSource,
+		BLOCK_STYLE_CONFIG_ENTRY_MARKER,
+		blockStyleEntries,
+	);
+	nextSource = appendEntriesAtMarker(
+		nextSource,
+		BLOCK_TRANSFORM_CONFIG_ENTRY_MARKER,
+		blockTransformEntries,
+	);
 	nextSource = appendEntriesAtMarker(nextSource, PATTERN_CONFIG_ENTRY_MARKER, patternEntries);
 	nextSource = appendEntriesAtMarker(
 		nextSource,

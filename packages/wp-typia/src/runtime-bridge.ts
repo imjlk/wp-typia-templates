@@ -123,6 +123,12 @@ type AddPatternResult = Awaited<ReturnType<AddRuntime['runAddPatternCommand']>>;
 type AddRestResourceResult = Awaited<
   ReturnType<AddRuntime['runAddRestResourceCommand']>
 >;
+type AddBlockStyleResult = Awaited<
+  ReturnType<AddRuntime['runAddBlockStyleCommand']>
+>;
+type AddBlockTransformResult = Awaited<
+  ReturnType<AddRuntime['runAddBlockTransformCommand']>
+>;
 type AddVariationResult = Awaited<
   ReturnType<AddRuntime['runAddVariationCommand']>
 >;
@@ -526,6 +532,78 @@ const ADD_KIND_EXECUTION_REGISTRY: Record<
         context.addRuntime.runAddPatternCommand({
           cwd: targetCwd,
           patternName: name,
+        }),
+    });
+  },
+  style: async (context) => {
+    const name = requireAddKindName(
+      context,
+      '`wp-typia add style` requires <name>. Usage: wp-typia add style <name> --block <block-slug>.',
+    );
+    const blockSlug = readOptionalStringFlag(context.flags, 'block');
+    if (!blockSlug) {
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+        '`wp-typia add style` requires --block <block-slug>.',
+      );
+    }
+
+    return runRegisteredAddKind<AddBlockStyleResult>(context, {
+      buildCompletion: (result) =>
+        buildAddCompletionPayload({
+          kind: 'style',
+          projectDir: result.projectDir,
+          values: {
+            blockSlug: result.blockSlug,
+            styleSlug: result.styleSlug,
+          },
+        }),
+      execute: (targetCwd) =>
+        context.addRuntime.runAddBlockStyleCommand({
+          blockName: blockSlug,
+          cwd: targetCwd,
+          styleName: name,
+        }),
+    });
+  },
+  transform: async (context) => {
+    const name = requireAddKindName(
+      context,
+      '`wp-typia add transform` requires <name>. Usage: wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>.',
+    );
+    const fromBlockName = readOptionalStringFlag(context.flags, 'from');
+    if (!fromBlockName) {
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+        '`wp-typia add transform` requires --from <namespace/block>.',
+      );
+    }
+    const toBlockName = readOptionalStringFlag(context.flags, 'to');
+    if (!toBlockName) {
+      throw createCliDiagnosticCodeError(
+        CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+        '`wp-typia add transform` requires --to <block-slug|namespace/block-slug>.',
+      );
+    }
+
+    return runRegisteredAddKind<AddBlockTransformResult>(context, {
+      buildCompletion: (result) =>
+        buildAddCompletionPayload({
+          kind: 'transform',
+          projectDir: result.projectDir,
+          values: {
+            blockSlug: result.blockSlug,
+            fromBlockName: result.fromBlockName,
+            toBlockName: result.toBlockName,
+            transformSlug: result.transformSlug,
+          },
+        }),
+      execute: (targetCwd) =>
+        context.addRuntime.runAddBlockTransformCommand({
+          cwd: targetCwd,
+          fromBlockName,
+          toBlockName,
+          transformName: name,
         }),
     });
   },

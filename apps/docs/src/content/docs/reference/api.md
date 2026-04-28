@@ -710,10 +710,12 @@ without changing the parent block's default seeded template for hidden child
 extensions, and it also supports visible container children plus nested ancestor
 chains for richer document-style layouts.
 
-Official workspaces also support first-class variation, pattern, binding-source, AI-feature, and hooked-block expansion:
+Official workspaces also support first-class variation, Block Styles, block transforms, pattern, binding-source, AI-feature, and hooked-block expansion:
 
 ```bash
 wp-typia add variation hero-card --block counter-card
+wp-typia add style callout-emphasis --block counter-card
+wp-typia add transform quote-to-counter --from core/quote --to counter-card
 wp-typia add pattern hero-layout
 wp-typia add binding-source hero-data
 wp-typia add binding-source hero-data --block counter-card --attribute headline
@@ -722,9 +724,15 @@ wp-typia add ai-feature brief-suggestions --namespace my-plugin/v1
 wp-typia add hooked-block counter-card --anchor core/post-content --position after
 ```
 
-Variations are generated under `src/blocks/<block>/variations/*.ts` and wired
-through the target block entrypoint. Patterns are generated as namespaced PHP
-shells under `src/patterns/*.php` and loaded by the workspace bootstrap.
+Variations are generated under `src/blocks/<block>/variations/*.ts`, styles
+under `src/blocks/<block>/styles/*.ts`, and transforms under
+`src/blocks/<block>/transforms/*.ts`; each flow is wired through the target
+block entrypoint and recorded in `scripts/block-config.ts`. Patterns are
+generated as namespaced PHP shells under `src/patterns/*.php` and loaded by the
+workspace bootstrap.
+Choose variations for alternate inserter presets, Block Styles for named visual
+class options on the same block, transforms for converting from another source
+block into the generated block, and patterns for reusable multi-block layouts.
 Binding sources are generated under `src/bindings/*/{server.php,editor.ts}` and
 wired through the shared workspace bootstrap plus editor bundle. The generated
 starter contract keeps one field-keyed data map in each file, so the common

@@ -87,6 +87,22 @@ describe("command option metadata helpers", () => {
 		expect(parsed.positionals).toEqual(["binding-source", "hero-data"]);
 	});
 
+	test("parses transform source and target flags from shared add metadata", () => {
+		const parsed = parseCommandArgvWithMetadata(
+			["transform", "quote-to-counter", "--from", "core/quote", "--to", "counter-card"],
+			{
+				extraBooleanOptionNames: ["help", "version"],
+				parser: buildCommandOptionParser(GLOBAL_OPTION_METADATA, ADD_OPTION_METADATA),
+			},
+		);
+
+		expect(parsed.flags).toEqual({
+			from: "core/quote",
+			to: "counter-card",
+		});
+		expect(parsed.positionals).toEqual(["transform", "quote-to-counter"]);
+	});
+
 	test("parses sync preview flags from shared metadata", () => {
 		const parsed = parseCommandArgvWithMetadata(["--dry-run", "--check"], {
 			extraBooleanOptionNames: ["help", "version"],

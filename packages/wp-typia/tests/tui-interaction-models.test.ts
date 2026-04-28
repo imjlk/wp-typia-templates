@@ -46,6 +46,17 @@ describe("first-party TUI interaction models", () => {
 			"name",
 			"block",
 		]);
+		expect(getVisibleAddFieldNames({ kind: "style" })).toEqual([
+			"kind",
+			"name",
+			"block",
+		]);
+		expect(getVisibleAddFieldNames({ kind: "transform" })).toEqual([
+			"kind",
+			"name",
+			"from",
+			"to",
+		]);
 		expect(getVisibleAddFieldNames({ kind: "binding-source" })).toEqual([
 			"kind",
 			"name",
@@ -166,6 +177,35 @@ describe("first-party TUI interaction models", () => {
 		).toEqual({
 			kind: "binding-source",
 			name: "hero-data",
+		});
+
+		expect(
+			sanitizeAddSubmitValues({
+				block: " counter-card ",
+				from: " core/quote ",
+				kind: "style",
+				name: "callout-emphasis",
+				to: "demo-space/counter-card",
+			}),
+		).toEqual({
+			block: "counter-card",
+			kind: "style",
+			name: "callout-emphasis",
+		});
+
+		expect(
+			sanitizeAddSubmitValues({
+				block: "counter-card",
+				from: " core/quote ",
+				kind: "transform",
+				name: "quote-to-counter",
+				to: " counter-card ",
+			}),
+		).toEqual({
+			from: "core/quote",
+			kind: "transform",
+			name: "quote-to-counter",
+			to: "counter-card",
 		});
 
 		expect(

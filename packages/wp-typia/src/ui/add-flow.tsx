@@ -156,8 +156,11 @@ function AddFlowFields({
   );
   const hookedBlockNameUsesSelect =
     kind === 'hooked-block' && workspaceBlockOptions.length > 0;
-  const variationBlockUsesSelect =
-    kind === 'variation' && workspaceBlockOptions.length > 0;
+  const targetBlockUsesSelect =
+    (kind === 'variation' || kind === 'style') &&
+    workspaceBlockOptions.length > 0;
+  const transformTargetUsesSelect =
+    kind === 'transform' && workspaceBlockOptions.length > 0;
 
   return createElement(
     FirstPartyFormViewport,
@@ -236,7 +239,7 @@ function AddFlowFields({
             options: compoundInnerBlocksPresetOptions,
           })
         : null,
-      visibleFields.has('block') && !variationBlockUsesSelect
+      visibleFields.has('block') && !targetBlockUsesSelect
         ? createElement(FirstPartyTextField, {
             ...getWrappedFieldNeighbors(orderedVisibleFields, 'block'),
             key: 'block-text',
@@ -244,12 +247,39 @@ function AddFlowFields({
             name: 'block',
           })
         : null,
-      variationBlockUsesSelect
+      targetBlockUsesSelect
         ? createElement(FirstPartySelectField, {
             ...getWrappedFieldNeighbors(orderedVisibleFields, 'block'),
             key: 'block-select',
             label: 'Target block',
             name: 'block' satisfies AddSelectFieldName,
+            options: workspaceBlockOptions,
+          })
+        : null,
+      visibleFields.has('from')
+        ? createElement(FirstPartyTextField, {
+            ...getWrappedFieldNeighbors(orderedVisibleFields, 'from'),
+            key: 'from',
+            label: 'Source block',
+            name: 'from',
+            placeholder: 'core/quote',
+          })
+        : null,
+      visibleFields.has('to') && !transformTargetUsesSelect
+        ? createElement(FirstPartyTextField, {
+            ...getWrappedFieldNeighbors(orderedVisibleFields, 'to'),
+            key: 'to',
+            label: 'Target block',
+            name: 'to',
+            placeholder: 'counter-card',
+          })
+        : null,
+      transformTargetUsesSelect
+        ? createElement(FirstPartySelectField, {
+            ...getWrappedFieldNeighbors(orderedVisibleFields, 'to'),
+            key: 'to-select',
+            label: 'Target block',
+            name: 'to' satisfies AddSelectFieldName,
             options: workspaceBlockOptions,
           })
         : null,

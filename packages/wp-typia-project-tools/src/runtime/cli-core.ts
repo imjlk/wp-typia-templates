@@ -54,6 +54,8 @@ export {
 	runAddBindingSourceCommand,
 	runAddAiFeatureCommand,
 	runAddBlockCommand,
+	runAddBlockStyleCommand,
+	runAddBlockTransformCommand,
 	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,
 	runAddPatternCommand,

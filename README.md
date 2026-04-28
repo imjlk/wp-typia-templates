@@ -17,7 +17,7 @@ It is built for projects where block attributes change over time, saved content 
 
 - long-lived blocks with changing attributes and compatibility pressure
 - blocks that need typed persistence or REST contracts
-- plugin workspaces that may grow into multi-block, variation, pattern, binding-source, or hooked-block workflows
+- plugin workspaces that may grow into multi-block, variation, style, transform, pattern, binding-source, or hooked-block workflows
 
 If you only need the smallest possible starter for a single block, `@wordpress/create-block` is still the better default.
 
@@ -152,6 +152,8 @@ cd my-plugin
 bun install
 wp-typia add block counter-card --template basic
 wp-typia add block faq-stack --template compound --persistence-policy public --data-storage custom-table
+wp-typia add style callout-emphasis --block counter-card
+wp-typia add transform quote-to-counter --from core/quote --to counter-card
 wp-typia add binding-source hero-data
 wp-typia add binding-source hero-data --block counter-card --attribute headline
 wp-typia add rest-resource snapshots --namespace my-plugin/v1 --methods list,read,create

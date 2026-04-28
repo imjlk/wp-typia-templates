@@ -15,6 +15,20 @@ export interface WorkspaceVariationConfig {
 	slug: string;
 }
 
+export interface WorkspaceBlockStyleConfig {
+	block: string;
+	file: string;
+	slug: string;
+}
+
+export interface WorkspaceBlockTransformConfig {
+	block: string;
+	file: string;
+	from: string;
+	slug: string;
+	to: string;
+}
+
 export interface WorkspacePatternConfig {
 	file: string;
 	slug: string;
@@ -56,6 +70,14 @@ export const BLOCKS: WorkspaceBlockConfig[] = [
 
 export const VARIATIONS: WorkspaceVariationConfig[] = [
 	// wp-typia add variation entries
+];
+
+export const BLOCK_STYLES: WorkspaceBlockStyleConfig[] = [
+	// wp-typia add style entries
+];
+
+export const BLOCK_TRANSFORMS: WorkspaceBlockTransformConfig[] = [
+	// wp-typia add transform entries
 ];
 
 export const PATTERNS: WorkspacePatternConfig[] = [

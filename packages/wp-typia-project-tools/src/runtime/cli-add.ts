@@ -24,9 +24,11 @@ export {
 } from "./cli-add-block.js";
 export {
 	runAddAdminViewCommand,
-	runAddBindingSourceCommand,
 	runAddAbilityCommand,
 	runAddAiFeatureCommand,
+	runAddBindingSourceCommand,
+	runAddBlockStyleCommand,
+	runAddBlockTransformCommand,
 	runAddEditorPluginCommand,
 	runAddHookedBlockCommand,
 	runAddPatternCommand,

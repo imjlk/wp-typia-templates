@@ -18,6 +18,7 @@ export const longValueOptions = Object.freeze([
   "--external-layer-id",
   "--external-layer-source",
   "--format",
+  "--from",
   "--from-migration-version",
   "--id",
   "--inner-blocks-preset",
@@ -36,6 +37,7 @@ export const longValueOptions = Object.freeze([
   "--source",
   "--template",
   "--text-domain",
+  "--to",
   "--to-migration-version",
   "--variant"
 ]);

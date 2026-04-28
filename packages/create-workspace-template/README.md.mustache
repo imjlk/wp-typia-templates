@@ -20,10 +20,13 @@ wp-typia add block counter-card --template persistence --data-storage custom-tab
 wp-typia add block faq-stack --template compound --data-storage custom-table --persistence-policy public
 ```
 
-Variations and patterns can also be added after the first block exists:
+Variations, block styles, transforms, patterns, and REST resources can also be
+added after the first block exists:
 
 ```bash
 wp-typia add variation hero-card --block counter-card
+wp-typia add style callout-emphasis --block counter-card
+wp-typia add transform quote-to-counter --from core/quote --to counter-card
 wp-typia add pattern hero-layout
 wp-typia add rest-resource snapshots --namespace {{namespace}}/v1 --methods list,read,create
 ```

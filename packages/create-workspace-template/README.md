@@ -12,6 +12,8 @@ The generated project starts with an empty `src/blocks/*` workspace shell and is
 
 ```bash
 wp-typia add block my-block --template basic
+wp-typia add style callout-emphasis --block my-block
+wp-typia add transform quote-to-block --from core/quote --to my-block
 wp-typia add binding-source hero-data
 wp-typia add binding-source hero-data --block my-block --attribute headline
 wp-typia add editor-plugin review-workflow --slot sidebar
