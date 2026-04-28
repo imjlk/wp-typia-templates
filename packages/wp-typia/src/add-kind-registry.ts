@@ -1,18 +1,21 @@
-export const ADD_KIND_IDS = [
-  'admin-view',
-  'block',
-  'variation',
-  'style',
-  'transform',
-  'pattern',
-  'binding-source',
-  'rest-resource',
-  'ability',
-  'ai-feature',
-  'editor-plugin',
-  'hooked-block',
-] as const;
-export type AddKindId = (typeof ADD_KIND_IDS)[number];
+import {
+  CLI_DIAGNOSTIC_CODES,
+  createCliDiagnosticCodeError,
+} from '@wp-typia/project-tools/cli-diagnostics';
+import type * as CliAddRuntime from '@wp-typia/project-tools/cli-add';
+import type { ReadlinePrompt } from '@wp-typia/project-tools/cli-prompt';
+
+type PrintLine = (line: string) => void;
+type AddRuntime = typeof CliAddRuntime;
+type AddKindExecutionResultBase = {
+  projectDir: string;
+};
+type ExternalLayerSelectOption = {
+  description?: string;
+  extends: string[];
+  id: string;
+};
+
 export type AddFieldName =
   | 'kind'
   | 'name'
@@ -32,6 +35,25 @@ export type AddFieldName =
   | 'data-storage'
   | 'persistence-policy';
 
+export type AddKindExecutionContext = {
+  addRuntime: AddRuntime;
+  cwd: string;
+  flags: Record<string, unknown>;
+  getOrCreatePrompt: () => Promise<ReadlinePrompt>;
+  isInteractiveSession: boolean;
+  name?: string;
+  warnLine: PrintLine;
+};
+
+export type AddKindExecutionPlan<
+  TResult extends AddKindExecutionResultBase = AddKindExecutionResultBase,
+> = {
+  execute: (cwd: string) => Promise<TResult>;
+  getValues: (result: TResult) => Record<string, string>;
+  getWarnings?: (result: TResult) => string[] | undefined;
+  warnLine?: PrintLine;
+};
+
 type AddKindRegistryEntry = {
   completion: {
     nextSteps: (values: Record<string, string>) => string[];
@@ -44,10 +66,46 @@ type AddKindRegistryEntry = {
   description: string;
   hiddenStringSubmitFields?: readonly string[];
   nameLabel: string;
+  prepareExecution: (
+    context: AddKindExecutionContext,
+  ) => Promise<AddKindExecutionPlan<any>>;
+  supportsDryRun: boolean;
+  usage: string;
   visibleFieldNames: (options: {
     template?: string;
   }) => readonly AddFieldName[];
 };
+
+type AddAdminViewResult = Awaited<
+  ReturnType<AddRuntime['runAddAdminViewCommand']>
+>;
+type AddAbilityResult = Awaited<ReturnType<AddRuntime['runAddAbilityCommand']>>;
+type AddBindingSourceResult = Awaited<
+  ReturnType<AddRuntime['runAddBindingSourceCommand']>
+>;
+type AddBlockResult = Awaited<ReturnType<AddRuntime['runAddBlockCommand']>>;
+type AddEditorPluginResult = Awaited<
+  ReturnType<AddRuntime['runAddEditorPluginCommand']>
+>;
+type AddAiFeatureResult = Awaited<
+  ReturnType<AddRuntime['runAddAiFeatureCommand']>
+>;
+type AddHookedBlockResult = Awaited<
+  ReturnType<AddRuntime['runAddHookedBlockCommand']>
+>;
+type AddPatternResult = Awaited<ReturnType<AddRuntime['runAddPatternCommand']>>;
+type AddRestResourceResult = Awaited<
+  ReturnType<AddRuntime['runAddRestResourceCommand']>
+>;
+type AddBlockStyleResult = Awaited<
+  ReturnType<AddRuntime['runAddBlockStyleCommand']>
+>;
+type AddBlockTransformResult = Awaited<
+  ReturnType<AddRuntime['runAddBlockTransformCommand']>
+>;
+type AddVariationResult = Awaited<
+  ReturnType<AddRuntime['runAddVariationCommand']>
+>;
 
 const BLOCK_VISIBLE_FIELD_ORDER = [
   'kind',
@@ -59,11 +117,58 @@ const BLOCK_VISIBLE_FIELD_ORDER = [
   'persistence-policy',
 ] as const satisfies ReadonlyArray<AddFieldName>;
 
-export function isAddKindId(value?: string): value is AddKindId {
-  return (
-    typeof value === 'string' &&
-    (ADD_KIND_IDS as readonly string[]).includes(value)
+function readOptionalStringFlag(
+  flags: Record<string, unknown>,
+  name: string,
+): string | undefined {
+  const value = flags[name];
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+      `\`--${name}\` requires a value.`,
+    );
+  }
+  return value;
+}
+
+function requireAddKindName(
+  context: AddKindExecutionContext,
+  message: string,
+): string {
+  if (!context.name) {
+    throw createCliDiagnosticCodeError(
+      CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+      message,
+    );
+  }
+
+  return context.name;
+}
+
+function formatExternalLayerSelectHint(
+  option: ExternalLayerSelectOption,
+): string | undefined {
+  const details = [
+    option.description,
+    option.extends.length > 0
+      ? `extends ${option.extends.join(', ')}`
+      : undefined,
+  ].filter(
+    (value): value is string => typeof value === 'string' && value.length > 0,
   );
+
+  return details.length > 0 ? details.join(' · ') : undefined;
+}
+
+function toExternalLayerPromptOptions(options: ExternalLayerSelectOption[]) {
+  return options.map((option) => ({
+    hint: formatExternalLayerSelectHint(option),
+    label: option.id,
+    value: option.id,
+  }));
 }
 
 export function isAddPersistenceTemplate(template?: string): boolean {
@@ -86,6 +191,29 @@ export const ADD_KIND_REGISTRY = {
     },
     description: 'Add an opt-in DataViews-powered admin screen',
     nameLabel: 'Admin view name',
+    async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add admin-view` requires <name>. Usage: wp-typia add admin-view <name> [--source <rest-resource:slug>].',
+      );
+      const source = readOptionalStringFlag(context.flags, 'source');
+
+      return {
+        execute: (cwd) =>
+          context.addRuntime.runAddAdminViewCommand({
+            adminViewName: name,
+            cwd,
+            source,
+          }),
+        getValues: (result: AddAdminViewResult) => ({
+          adminViewSlug: result.adminViewSlug,
+          ...(result.source ? { source: result.source } : {}),
+        }),
+      };
+    },
+    supportsDryRun: true,
+    usage:
+      'wp-typia add admin-view <name> [--source <rest-resource:slug>] [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'source'],
   },
   'binding-source': {
@@ -110,6 +238,40 @@ export const ADD_KIND_REGISTRY = {
     },
     description: 'Add a shared block bindings source',
     nameLabel: 'Binding source name',
+    async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add binding-source` requires <name>. Usage: wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>].',
+      );
+      const blockName = readOptionalStringFlag(context.flags, 'block');
+      const attributeName = readOptionalStringFlag(context.flags, 'attribute');
+      if (Boolean(blockName) !== Boolean(attributeName)) {
+        throw createCliDiagnosticCodeError(
+          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+          '`wp-typia add binding-source` requires --block and --attribute to be provided together.',
+        );
+      }
+
+      return {
+        execute: (cwd) =>
+          context.addRuntime.runAddBindingSourceCommand({
+            attributeName,
+            bindingSourceName: name,
+            blockName,
+            cwd,
+          }),
+        getValues: (result: AddBindingSourceResult) => ({
+          ...(result.attributeName
+            ? { attributeName: result.attributeName }
+            : {}),
+          ...(result.blockSlug ? { blockSlug: result.blockSlug } : {}),
+          bindingSourceSlug: result.bindingSourceSlug,
+        }),
+      };
+    },
+    supportsDryRun: true,
+    usage:
+      'wp-typia add binding-source <name> [--block <block-slug|namespace/block-slug> --attribute <attribute>] [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'block', 'attribute'],
   },
   block: {
@@ -128,6 +290,92 @@ export const ADD_KIND_REGISTRY = {
     description: 'Add a real block slice',
     hiddenStringSubmitFields: ['external-layer-id', 'external-layer-source'],
     nameLabel: 'Block name',
+    async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add block` requires <name>. Usage: wp-typia add block <name> [--template <basic|interactivity|persistence|compound>]',
+      );
+      const externalLayerId = readOptionalStringFlag(
+        context.flags,
+        'external-layer-id',
+      );
+      const externalLayerSource = readOptionalStringFlag(
+        context.flags,
+        'external-layer-source',
+      );
+      const shouldPromptForLayerSelection =
+        Boolean(externalLayerSource) &&
+        !Boolean(externalLayerId) &&
+        context.isInteractiveSession;
+      const selectPrompt = shouldPromptForLayerSelection
+        ? await context.getOrCreatePrompt()
+        : undefined;
+      const alternateRenderTargets = readOptionalStringFlag(
+        context.flags,
+        'alternate-render-targets',
+      );
+      const dataStorageMode = readOptionalStringFlag(
+        context.flags,
+        'data-storage',
+      );
+      const innerBlocksPreset = readOptionalStringFlag(
+        context.flags,
+        'inner-blocks-preset',
+      );
+      const persistencePolicy = readOptionalStringFlag(
+        context.flags,
+        'persistence-policy',
+      );
+      let resolvedTemplateId = readOptionalStringFlag(
+        context.flags,
+        'template',
+      ) as CliAddRuntime.AddBlockTemplateId | undefined;
+      if (!resolvedTemplateId && context.isInteractiveSession) {
+        const templatePrompt = await context.getOrCreatePrompt();
+        resolvedTemplateId = await templatePrompt.select(
+          'Select a block template',
+          context.addRuntime.ADD_BLOCK_TEMPLATE_IDS.map((templateId) => ({
+            hint: `Scaffold the ${templateId} block family`,
+            label: templateId,
+            value: templateId,
+          })),
+          1,
+        );
+      }
+      resolvedTemplateId ??= 'basic';
+
+      return {
+        execute: (cwd) =>
+          context.addRuntime.runAddBlockCommand({
+            alternateRenderTargets,
+            blockName: name,
+            cwd,
+            dataStorageMode,
+            externalLayerId,
+            externalLayerSource,
+            innerBlocksPreset,
+            persistencePolicy,
+            selectExternalLayerId: selectPrompt
+              ? (options) =>
+                  selectPrompt.select(
+                    'Select an external layer',
+                    toExternalLayerPromptOptions(options),
+                    1,
+                  )
+              : undefined,
+            templateId: resolvedTemplateId,
+          }),
+        getValues: (result: AddBlockResult) => ({
+          blockSlugs: result.blockSlugs.join(', '),
+          templateId: result.templateId,
+        }),
+        getWarnings: (result: AddBlockResult) => result.warnings,
+        warnLine: context.warnLine,
+      };
+    },
+    supportsDryRun: true,
+    usage:
+      'wp-typia add block <name> [--template <basic|interactivity|persistence|compound>] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>] [--dry-run]',
     visibleFieldNames: ({ template }) =>
       BLOCK_VISIBLE_FIELD_ORDER.filter((fieldName) => {
         if (fieldName === 'alternate-render-targets') {
@@ -159,6 +407,25 @@ export const ADD_KIND_REGISTRY = {
     },
     description: 'Add a typed server/client workflow ability scaffold',
     nameLabel: 'Ability name',
+    async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add ability` requires <name>. Usage: wp-typia add ability <name>.',
+      );
+
+      return {
+        execute: (cwd) =>
+          context.addRuntime.runAddAbilityCommand({
+            abilityName: name,
+            cwd,
+          }),
+        getValues: (result: AddAbilityResult) => ({
+          abilitySlug: result.abilitySlug,
+        }),
+      };
+    },
+    supportsDryRun: true,
+    usage: 'wp-typia add ability <name> [--dry-run]',
     visibleFieldNames: () => ['kind', 'name'],
   },
   'editor-plugin': {
@@ -176,6 +443,29 @@ export const ADD_KIND_REGISTRY = {
     },
     description: 'Add a slot-aware document editor extension shell',
     nameLabel: 'Editor plugin name',
+    async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add editor-plugin` requires <name>. Usage: wp-typia add editor-plugin <name> [--slot <sidebar|document-setting-panel>].',
+      );
+      const slot = readOptionalStringFlag(context.flags, 'slot');
+
+      return {
+        execute: (cwd) =>
+          context.addRuntime.runAddEditorPluginCommand({
+            cwd,
+            editorPluginName: name,
+            slot,
+          }),
+        getValues: (result: AddEditorPluginResult) => ({
+          editorPluginSlug: result.editorPluginSlug,
+          slot: result.slot,
+        }),
+      };
+    },
+    supportsDryRun: true,
+    usage:
+      'wp-typia add editor-plugin <name> [--slot <sidebar|document-setting-panel>] [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'slot'],
   },
   'hooked-block': {
@@ -194,6 +484,44 @@ export const ADD_KIND_REGISTRY = {
     },
     description: 'Add block.json hook metadata to an existing block',
     nameLabel: 'Target block',
+    async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add hooked-block` requires <block-slug>. Usage: wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild>.',
+      );
+      const anchorBlockName = readOptionalStringFlag(context.flags, 'anchor');
+      if (!anchorBlockName) {
+        throw createCliDiagnosticCodeError(
+          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+          '`wp-typia add hooked-block` requires --anchor <anchor-block-name>.',
+        );
+      }
+      const position = readOptionalStringFlag(context.flags, 'position');
+      if (!position) {
+        throw createCliDiagnosticCodeError(
+          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+          '`wp-typia add hooked-block` requires --position <before|after|firstChild|lastChild>.',
+        );
+      }
+
+      return {
+        execute: (cwd) =>
+          context.addRuntime.runAddHookedBlockCommand({
+            anchorBlockName,
+            blockName: name,
+            cwd,
+            position,
+          }),
+        getValues: (result: AddHookedBlockResult) => ({
+          anchorBlockName: result.anchorBlockName,
+          blockSlug: result.blockSlug,
+          position: result.position,
+        }),
+      };
+    },
+    supportsDryRun: true,
+    usage:
+      'wp-typia add hooked-block <block-slug> --anchor <anchor-block-name> --position <before|after|firstChild|lastChild> [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'anchor', 'position'],
   },
   pattern: {
@@ -210,6 +538,25 @@ export const ADD_KIND_REGISTRY = {
     },
     description: 'Add a PHP block pattern shell',
     nameLabel: 'Pattern name',
+    async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add pattern` requires <name>. Usage: wp-typia add pattern <name>.',
+      );
+
+      return {
+        execute: (cwd) =>
+          context.addRuntime.runAddPatternCommand({
+            cwd,
+            patternName: name,
+          }),
+        getValues: (result: AddPatternResult) => ({
+          patternSlug: result.patternSlug,
+        }),
+      };
+    },
+    supportsDryRun: true,
+    usage: 'wp-typia add pattern <name> [--dry-run]',
     visibleFieldNames: () => ['kind', 'name'],
   },
   style: {
@@ -227,6 +574,34 @@ export const ADD_KIND_REGISTRY = {
     },
     description: 'Add a Block Styles registration to an existing block',
     nameLabel: 'Style name',
+    async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add style` requires <name>. Usage: wp-typia add style <name> --block <block-slug>.',
+      );
+      const blockSlug = readOptionalStringFlag(context.flags, 'block');
+      if (!blockSlug) {
+        throw createCliDiagnosticCodeError(
+          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+          '`wp-typia add style` requires --block <block-slug>.',
+        );
+      }
+
+      return {
+        execute: (cwd) =>
+          context.addRuntime.runAddBlockStyleCommand({
+            blockName: blockSlug,
+            cwd,
+            styleName: name,
+          }),
+        getValues: (result: AddBlockStyleResult) => ({
+          blockSlug: result.blockSlug,
+          styleSlug: result.styleSlug,
+        }),
+      };
+    },
+    supportsDryRun: true,
+    usage: 'wp-typia add style <name> --block <block-slug> [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'block'],
   },
   transform: {
@@ -245,6 +620,45 @@ export const ADD_KIND_REGISTRY = {
     },
     description: 'Add a block-to-block transform into a workspace block',
     nameLabel: 'Transform name',
+    async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add transform` requires <name>. Usage: wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>.',
+      );
+      const fromBlockName = readOptionalStringFlag(context.flags, 'from');
+      if (!fromBlockName) {
+        throw createCliDiagnosticCodeError(
+          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+          '`wp-typia add transform` requires --from <namespace/block>.',
+        );
+      }
+      const toBlockName = readOptionalStringFlag(context.flags, 'to');
+      if (!toBlockName) {
+        throw createCliDiagnosticCodeError(
+          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+          '`wp-typia add transform` requires --to <block-slug|namespace/block-slug>.',
+        );
+      }
+
+      return {
+        execute: (cwd) =>
+          context.addRuntime.runAddBlockTransformCommand({
+            cwd,
+            fromBlockName,
+            toBlockName,
+            transformName: name,
+          }),
+        getValues: (result: AddBlockTransformResult) => ({
+          blockSlug: result.blockSlug,
+          fromBlockName: result.fromBlockName,
+          toBlockName: result.toBlockName,
+          transformSlug: result.transformSlug,
+        }),
+      };
+    },
+    supportsDryRun: true,
+    usage:
+      'wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug> [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'from', 'to'],
   },
   'rest-resource': {
@@ -263,6 +677,32 @@ export const ADD_KIND_REGISTRY = {
     },
     description: 'Add a plugin-level typed REST resource',
     nameLabel: 'REST resource name',
+    async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add rest-resource` requires <name>. Usage: wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create>].',
+      );
+      const methods = readOptionalStringFlag(context.flags, 'methods');
+      const namespace = readOptionalStringFlag(context.flags, 'namespace');
+
+      return {
+        execute: (cwd) =>
+          context.addRuntime.runAddRestResourceCommand({
+            cwd,
+            methods,
+            namespace,
+            restResourceName: name,
+          }),
+        getValues: (result: AddRestResourceResult) => ({
+          methods: result.methods.join(', '),
+          namespace: result.namespace,
+          restResourceSlug: result.restResourceSlug,
+        }),
+      };
+    },
+    supportsDryRun: true,
+    usage:
+      'wp-typia add rest-resource <name> [--namespace <vendor/v1>] [--methods <list,read,create,update,delete>] [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'namespace', 'methods'],
   },
   'ai-feature': {
@@ -280,6 +720,31 @@ export const ADD_KIND_REGISTRY = {
     },
     description: 'Add a server-owned WordPress AI feature endpoint',
     nameLabel: 'AI feature name',
+    async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add ai-feature` requires <name>. Usage: wp-typia add ai-feature <name> [--namespace <vendor/v1>].',
+      );
+      const namespace = readOptionalStringFlag(context.flags, 'namespace');
+
+      return {
+        execute: (cwd) =>
+          context.addRuntime.runAddAiFeatureCommand({
+            aiFeatureName: name,
+            cwd,
+            namespace,
+          }),
+        getValues: (result: AddAiFeatureResult) => ({
+          aiFeatureSlug: result.aiFeatureSlug,
+          namespace: result.namespace,
+        }),
+        getWarnings: (result: AddAiFeatureResult) => result.warnings,
+        warnLine: context.warnLine,
+      };
+    },
+    supportsDryRun: true,
+    usage:
+      'wp-typia add ai-feature <name> [--namespace <vendor/v1>] [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'namespace'],
   },
   variation: {
@@ -297,9 +762,54 @@ export const ADD_KIND_REGISTRY = {
     },
     description: 'Add a variation to an existing block',
     nameLabel: 'Variation name',
+    async prepareExecution(context) {
+      const name = requireAddKindName(
+        context,
+        '`wp-typia add variation` requires <name>. Usage: wp-typia add variation <name> --block <block-slug>',
+      );
+      const blockSlug = readOptionalStringFlag(context.flags, 'block');
+      if (!blockSlug) {
+        throw createCliDiagnosticCodeError(
+          CLI_DIAGNOSTIC_CODES.MISSING_ARGUMENT,
+          '`wp-typia add variation` requires --block <block-slug>.',
+        );
+      }
+
+      return {
+        execute: (cwd) =>
+          context.addRuntime.runAddVariationCommand({
+            blockName: blockSlug,
+            cwd,
+            variationName: name,
+          }),
+        getValues: (result: AddVariationResult) => ({
+          blockSlug: result.blockSlug,
+          variationSlug: result.variationSlug,
+        }),
+      };
+    },
+    supportsDryRun: true,
+    usage: 'wp-typia add variation <name> --block <block-slug> [--dry-run]',
     visibleFieldNames: () => ['kind', 'name', 'block'],
   },
-} as const satisfies Record<AddKindId, AddKindRegistryEntry>;
+} as const satisfies Record<CliAddRuntime.AddKindId, AddKindRegistryEntry>;
+
+export type AddKindId = keyof typeof ADD_KIND_REGISTRY;
+export const ADD_KIND_IDS = Object.keys(ADD_KIND_REGISTRY) as AddKindId[];
+
+export function isAddKindId(value?: string): value is AddKindId {
+  return (
+    typeof value === 'string' &&
+    (ADD_KIND_IDS as readonly string[]).includes(value)
+  );
+}
+
+export async function getAddKindExecutionPlan(
+  kind: AddKindId,
+  context: AddKindExecutionContext,
+) {
+  return ADD_KIND_REGISTRY[kind].prepareExecution(context);
+}
 
 export function buildAddKindCompletionDetails(
   kind: AddKindId,
@@ -325,10 +835,22 @@ export function formatAddKindUsagePlaceholder(): string {
   return `<${ADD_KIND_IDS.join('|')}>`;
 }
 
+export function getAddKindUsage(kind: AddKindId): string {
+  return ADD_KIND_REGISTRY[kind].usage;
+}
+
+export function supportsAddKindDryRun(kind: AddKindId): boolean {
+  return ADD_KIND_REGISTRY[kind].supportsDryRun;
+}
+
 export function getAddHiddenStringSubmitFieldNames(kind?: string): string[] {
   const resolvedKind = isAddKindId(kind) ? kind : 'block';
-  const entry: AddKindRegistryEntry = ADD_KIND_REGISTRY[resolvedKind];
-  return [...(entry.hiddenStringSubmitFields ?? [])];
+  const entry = ADD_KIND_REGISTRY[resolvedKind];
+  const hiddenStringSubmitFields =
+    'hiddenStringSubmitFields' in entry
+      ? entry.hiddenStringSubmitFields
+      : undefined;
+  return [...(hiddenStringSubmitFields ?? [])];
 }
 
 export function getAddKindOptions() {

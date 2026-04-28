@@ -20,7 +20,7 @@ export function formatHelpText(): string {
   wp-typia <project-dir> [create flags...]
   wp-typia init [project-dir]
   wp-typia add admin-view <name> [--source <rest-resource:slug>]
-  wp-typia add block <name> --template <basic|interactivity|persistence|compound> [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
+  wp-typia add block <name> [--template <basic|interactivity|persistence|compound>] [--external-layer-source <./path|github:owner/repo/path[#ref]|npm-package>] [--external-layer-id <layer-id>] [--inner-blocks-preset <freeform|ordered|horizontal|locked-structure>] [--alternate-render-targets <email,mjml,plain-text>] [--data-storage <post-meta|custom-table>] [--persistence-policy <authenticated|public>]
   wp-typia add variation <name> --block <block-slug>
   wp-typia add style <name> --block <block-slug>
   wp-typia add transform <name> --from <namespace/block> --to <block-slug|namespace/block-slug>
@@ -49,6 +49,7 @@ Notes:
   \`wp-typia <project-dir>\` remains a backward-compatible alias to \`create\` when \`<project-dir>\` is the only positional argument.
   \`wp-typia init\` is a preview-only retrofit planner for existing projects. It does not write files yet.
   Use \`--template workspace\` as shorthand for \`@wp-typia/create-workspace-template\`, the official empty workspace scaffold behind \`wp-typia add ...\`.
+  In interactive terminals, \`wp-typia add block <name>\` prompts for a template when \`--template\` is omitted; non-interactive runs default to \`basic\`.
   \`add admin-view\` scaffolds an opt-in DataViews-powered WordPress admin screen under \`src/admin-views/\`; pass \`--source rest-resource:<slug>\` to reuse a list-capable REST resource.
   \`query-loop\` is create-only. Use \`wp-typia create <project-dir> --template query-loop\`; \`wp-typia add block\` accepts only basic, interactivity, persistence, and compound families.
   \`add variation\` uses an existing workspace block from \`scripts/block-config.ts\`.
